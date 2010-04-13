@@ -64,22 +64,22 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
    * note : object_attributes is optionnal
    *        parent_directory_handle may be null for getting FS root.
    */
-  if (!p_object_handle || !p_context)
+  if(!p_object_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
   /* filename is NULL => lookup "/" */
-  if ((p_parent_directory_handle && !p_filename)
-      || (!p_parent_directory_handle && p_filename))
+  if((p_parent_directory_handle && !p_filename)
+     || (!p_parent_directory_handle && p_filename))
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
   /* get informations about the parent */
-  if (!p_parent_directory_handle)
+  if(!p_parent_directory_handle)
     {                           /* lookup '/' */
       TakeTokenFSCall();
       rc = lstat("/", &buffstat);
       errsv = errno;
       ReleaseTokenFSCall();
-      if (rc)
+      if(rc)
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_lookup);
     }
   else
@@ -87,7 +87,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
       status =
           fsal_internal_getPathFromHandle(p_context, p_parent_directory_handle, 1,
                                           &pathfsal, &buffstat);
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_lookup);
     }
 
@@ -112,18 +112,17 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_lookup);
     }
 
-  if (!p_parent_directory_handle)
+  if(!p_parent_directory_handle)
     {                           /* lookup '/' */
       /* convert struct stat to fsal_posixdb_fileinfo_t */
 
-      if (FSAL_IS_ERROR
-          (status = fsal_internal_posix2posixdb_fileinfo(&buffstat, &infofs)))
+      if(FSAL_IS_ERROR(status = fsal_internal_posix2posixdb_fileinfo(&buffstat, &infofs)))
         Return(status.major, status.minor, INDEX_FSAL_lookup);
 
       /* get The handle of '/' */
       status =
           fsal_internal_getInfoFromName(p_context, NULL, NULL, &infofs, p_object_handle);
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_lookup);
 
     }
@@ -137,29 +136,29 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
 
       /* check rights to enter into the directory */
       status = fsal_internal_testAccess(p_context, FSAL_X_OK, &buffstat, NULL);
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_lookup);
 
       /* stat the file to see if it exists and get some information */
       status = fsal_internal_appendFSALNameToFSALPath(&pathfsal, p_filename);
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_lookup);
 
       TakeTokenFSCall();
       rc = lstat(pathfsal.path, &buffstat);
       errsv = errno;
       ReleaseTokenFSCall();
-      if (rc)
+      if(rc)
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_lookup);
 
       /* getHandleFromName */
-      if (!FSAL_namecmp(p_filename, &FSAL_DOT))
+      if(!FSAL_namecmp(p_filename, &FSAL_DOT))
         {
           /* lookup "." */
           memcpy(p_object_handle, p_parent_directory_handle, sizeof(fsal_handle_t));
 
         }
-      else if (!FSAL_namecmp(p_filename, &FSAL_DOT_DOT))
+      else if(!FSAL_namecmp(p_filename, &FSAL_DOT_DOT))
         {
           /* lookup ".." */
           statusdb = fsal_posixdb_getParentDirHandle(p_context->p_conn,
@@ -170,27 +169,27 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
       else
         {
           /* convert struct stat to fsal_posixdb_fileinfo_t */
-          if (FSAL_IS_ERROR
-              (status = fsal_internal_posix2posixdb_fileinfo(&buffstat, &infofs)))
+          if(FSAL_IS_ERROR
+             (status = fsal_internal_posix2posixdb_fileinfo(&buffstat, &infofs)))
             Return(status.major, status.minor, INDEX_FSAL_lookup);
 
           /* get The handle of the file */
           status =
               fsal_internal_getInfoFromName(p_context, p_parent_directory_handle,
                                             p_filename, &infofs, p_object_handle);
-          if (FSAL_IS_ERROR(status))
+          if(FSAL_IS_ERROR(status))
             Return(status.major, status.minor, INDEX_FSAL_lookup);
         }
 
     }
 
-  if (p_object_attributes)
+  if(p_object_attributes)
     {
 
       /* convert posix attributes to fsal attributes */
       status = posix2fsal_attributes(&buffstat, p_object_attributes);
 
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
           FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -240,12 +239,12 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
    * note : object_attributes is optionnal.
    */
 
-  if (!object_handle || !p_context || !p_path)
+  if(!object_handle || !p_context || !p_path)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookupPath);
 
   /* test whether the path begins with a slash */
 
-  if (p_path->path[0] != '/')
+  if(p_path->path[0] != '/')
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_lookupPath);
 
   /* the pointer now points on the next name in the path,
@@ -253,12 +252,12 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
    */
 
   ptr_str = p_path->path + 1;
-  while (ptr_str[0] == '/')
+  while(ptr_str[0] == '/')
     ptr_str++;
 
   /* is the next name empty ? */
 
-  if (ptr_str[0] == '\0')
+  if(ptr_str[0] == '\0')
     b_is_last = TRUE;
 
   /* retrieves root directory */
@@ -270,12 +269,12 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
                        /* retrieves attributes if this is the last lookup : */
                        (b_is_last ? object_attributes : NULL));
 
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_lookupPath);
 
   /* exits if this was the last lookup */
 
-  if (b_is_last)
+  if(b_is_last)
     {
       (*object_handle) = out_hdl;
       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lookupPath);
@@ -283,7 +282,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
 
   /* proceed a step by step lookup */
 
-  while (ptr_str[0])
+  while(ptr_str[0])
     {
 
       fsal_handle_t in_hdl;
@@ -298,7 +297,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
       /* compute next name */
       dest_ptr = obj_name.name;
       obj_name.len = 0;
-      while (ptr_str[0] != '\0' && ptr_str[0] != '/')
+      while(ptr_str[0] != '\0' && ptr_str[0] != '/')
         {
           dest_ptr[0] = ptr_str[0];
           dest_ptr++;
@@ -309,11 +308,11 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
       dest_ptr[0] = '\0';
 
       /* skip multiple slashes */
-      while (ptr_str[0] == '/')
+      while(ptr_str[0] == '/')
         ptr_str++;
 
       /* is the next name empty ? */
-      if (ptr_str[0] == '\0')
+      if(ptr_str[0] == '\0')
         b_is_last = TRUE;
 
       /*call to FSAL_lookup */
@@ -324,7 +323,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
                            /* retrieves attributes if this is the last lookup : */
                            (b_is_last ? object_attributes : NULL));
 
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_lookupPath);
 
       /* ptr_str is ok, we are ready for next loop */
@@ -401,7 +400,7 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
      p_fsoot_handle->ns_handle = root_attr.FilesetHandle;
    */
 
-  if (p_fsroot_attributes)
+  if(p_fsroot_attributes)
     {
 
       /* convert hpss attributes to fsal attributes */

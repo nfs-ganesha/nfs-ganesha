@@ -64,7 +64,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
    *        parentdir_handle is mandatory,
    *        because, we do not allow to delete FS root !
    */
-  if (!parentdir_handle || !p_context || !p_object_name)
+  if(!parentdir_handle || !p_context || !p_object_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_unlink);
 
   TakeTokenFSCall();
@@ -76,14 +76,14 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
   /* >> get post op attributes for the parent, if they are asked,
    * and your filesystem didn't return them << */
 
-  if (parentdir_attributes)
+  if(parentdir_attributes)
     {
 
       st = FSAL_getattrs(parentdir_handle, p_context, parentdir_attributes);
 
       /* On error, we set a flag in the returned attributes */
 
-      if (FSAL_IS_ERROR(st))
+      if(FSAL_IS_ERROR(st))
         {
           FSAL_CLEAR_MASK(parentdir_attributes->asked_attributes);
           FSAL_SET_MASK(parentdir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

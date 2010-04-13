@@ -150,10 +150,10 @@ int CreateROOTFH4(nfs_fh4 * fh, compound_data_t * data)
 
   psfsentry = *(data->pseudofs->reverse_tab[0]);
 
-  if ((status = nfs4_AllocateFH(&(data->rootFH))) != NFS4_OK)
+  if((status = nfs4_AllocateFH(&(data->rootFH))) != NFS4_OK)
     return status;
 
-  if (!nfs4_PseudoToFhandle(&(data->rootFH), &psfsentry))
+  if(!nfs4_PseudoToFhandle(&(data->rootFH), &psfsentry))
     {
       return NFS4ERR_BADHANDLE;
     }
@@ -204,7 +204,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_PUTROOTFH;
   resp->nfs_resop4_u.opputrootfh.status = NFS4_OK;
 
-  if ((error = CreateROOTFH4(&(data->rootFH), data)) != NFS4_OK)
+  if((error = CreateROOTFH4(&(data->rootFH), data)) != NFS4_OK)
     {
       res_PUTROOTFH4.status = error;
       return res_PUTROOTFH4.status;
@@ -215,9 +215,9 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
   /* I copy the root FH to the currentFH and, if not already done, to the publicFH */
   /* For the moment, I choose to have rootFH = publicFH */
   /* For initial mounted_on_FH, I'll use the rootFH, this will change at junction traversal */
-  if (data->currentFH.nfs_fh4_len == 0)
+  if(data->currentFH.nfs_fh4_len == 0)
     {
-      if ((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
+      if((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
         {
           resp->nfs_resop4_u.opputrootfh.status = error;
           return error;
@@ -227,9 +227,9 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
          data->rootFH.nfs_fh4_len);
   data->currentFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
 
-  if (data->mounted_on_FH.nfs_fh4_len == 0)
+  if(data->mounted_on_FH.nfs_fh4_len == 0)
     {
-      if ((error = nfs4_AllocateFH(&(data->mounted_on_FH))) != NFS4_OK)
+      if((error = nfs4_AllocateFH(&(data->mounted_on_FH))) != NFS4_OK)
         {
           resp->nfs_resop4_u.opputrootfh.status = error;
           return error;
@@ -239,9 +239,9 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
          data->rootFH.nfs_fh4_len);
   data->mounted_on_FH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
 
-  if (data->publicFH.nfs_fh4_len == 0)
+  if(data->publicFH.nfs_fh4_len == 0)
     {
-      if ((error = nfs4_AllocateFH(&(data->publicFH))) != NFS4_OK)
+      if((error = nfs4_AllocateFH(&(data->publicFH))) != NFS4_OK)
         {
           resp->nfs_resop4_u.opputrootfh.status = error;
           return error;

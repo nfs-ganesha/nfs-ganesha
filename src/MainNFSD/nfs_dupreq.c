@@ -183,7 +183,7 @@ unsigned int get_rpc_xid(struct svc_req *reqp)
   struct udp_private2__ *pudpxp = (struct udp_private2__ *)(reqp->rq_xprt->xp_p2);
 
   /* The request is either UDP or TCP. If UDP Xid is null, then look for TCP xid */
-  if (reqp->rq_xprt->xp_p2 != NULL)
+  if(reqp->rq_xprt->xp_p2 != NULL)
     Xid = pudpxp->up_xid;       /* UDP XID */
   else
     Xid = ptcpxp->x_id;         /* TCP XID */
@@ -240,13 +240,13 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
   rc = HashTable_Del(ht_dupreq, &buffkey, NULL, NULL);
 
   /* if hashtable no such key => dupreq garbaged by another thread */
-  if (rc != HASHTABLE_SUCCESS && rc != HASHTABLE_ERROR_NO_SUCH_KEY)
+  if(rc != HASHTABLE_SUCCESS && rc != HASHTABLE_ERROR_NO_SUCH_KEY)
     return 1;                   /* Error while cleaning */
-  else if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
+  else if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
     return 0;                   /* don't free the dupreq twice */
 
   /* Locate the function descriptor associated with this cached request */
-  if (pdupreq->rq_prog == nfs_param.core_param.nfs_program)
+  if(pdupreq->rq_prog == nfs_param.core_param.nfs_program)
     {
       switch (pdupreq->rq_vers)
         {
@@ -270,7 +270,7 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
           break;
         }
     }
-  else if (pdupreq->rq_prog == nfs_param.core_param.mnt_program)
+  else if(pdupreq->rq_prog == nfs_param.core_param.mnt_program)
     {
       switch (pdupreq->rq_vers)
         {
@@ -401,7 +401,7 @@ int display_xid(hash_buffer_t * pbuff, char *str)
  */
 int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param)
 {
-  if ((ht_dupreq = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_dupreq = HashTable_Init(param.hash_param)) == NULL)
     {
       DisplayLog("NFS DUPREQ: Cannot init the duplicate request hash table");
       return -1;
@@ -445,7 +445,7 @@ int nfs_dupreq_add(long xid,
                (*p_dupreq_pool),
                nfs_param.worker_param.nb_dupreq_prealloc, dupreq_entry_t, next_alloc);
 
-  if (pdupreq == NULL)
+  if(pdupreq == NULL)
     return DUPREQ_INSERT_MALLOC_ERROR;
 
 #ifdef _DEBUG_MEMLEAKS
@@ -469,11 +469,11 @@ int nfs_dupreq_add(long xid,
   buffdata.pdata = (caddr_t) pdupreq;
   buffdata.len = sizeof(dupreq_entry_t);
 
-  if (HashTable_Set(ht_dupreq, &buffkey, &buffdata) != HASHTABLE_SUCCESS)
+  if(HashTable_Set(ht_dupreq, &buffkey, &buffdata) != HASHTABLE_SUCCESS)
     return DUPREQ_INSERT_MALLOC_ERROR;
 
   /* Add it to lru list */
-  if ((pentry = LRU_new_entry(lru_dupreq, &lru_status)) == NULL)
+  if((pentry = LRU_new_entry(lru_dupreq, &lru_status)) == NULL)
     return DUPREQ_INSERT_MALLOC_ERROR;
 
   /* I keep track of the xid too */
@@ -504,7 +504,7 @@ nfs_res_t nfs_dupreq_get(long xid, int *pstatus)
   buffkey.pdata = (caddr_t) xid;
   buffkey.len = 0;
 
-  if (HashTable_Get(ht_dupreq, &buffkey, &buffval) == HASHTABLE_SUCCESS)
+  if(HashTable_Get(ht_dupreq, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
       /* reset timestamp */
       ((dupreq_entry_t *) buffval.pdata)->timestamp = time(NULL);
@@ -543,7 +543,7 @@ int nfs_dupreq_gc_function(LRU_entry_t * pentry, void *addparam)
   pdupreq = (dupreq_entry_t *) (pentry->buffdata.pdata);
 
   /* Test if entry is expired */
-  if (time(NULL) - pdupreq->timestamp > nfs_param.core_param.expiration_dupreq)
+  if(time(NULL) - pdupreq->timestamp > nfs_param.core_param.expiration_dupreq)
     return LRU_LIST_SET_INVALID;
 
   return LRU_LIST_DO_NOT_SET_INVALID;

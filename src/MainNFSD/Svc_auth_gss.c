@@ -149,22 +149,22 @@ bool_t Svcauth_gss_set_svc_name(gss_name_t name)
 {
   OM_uint32 maj_stat, min_stat;
 
-  if (svcauth_gss_name != NULL)
+  if(svcauth_gss_name != NULL)
     {
       maj_stat = gss_release_name(&min_stat, &svcauth_gss_name);
 
-      if (maj_stat != GSS_S_COMPLETE)
+      if(maj_stat != GSS_S_COMPLETE)
         {
           return (FALSE);
         }
       svcauth_gss_name = NULL;
     }
-  if (svcauth_gss_name == GSS_C_NO_NAME)
+  if(svcauth_gss_name == GSS_C_NO_NAME)
     return (TRUE);
 
   maj_stat = gss_duplicate_name(&min_stat, name, &svcauth_gss_name);
 
-  if (maj_stat != GSS_S_COMPLETE)
+  if(maj_stat != GSS_S_COMPLETE)
     {
       return (FALSE);
     }
@@ -183,11 +183,11 @@ bool_t Svcauth_gss_import_name(char *service)
 
   maj_stat = gss_import_name(&min_stat, &namebuf, (gss_OID) gss_nt_service_name, &name);
 
-  if (maj_stat != GSS_S_COMPLETE)
+  if(maj_stat != GSS_S_COMPLETE)
     {
       return (FALSE);
     }
-  if (Svcauth_gss_set_svc_name(name) != TRUE)
+  if(Svcauth_gss_set_svc_name(name) != TRUE)
     {
       gss_release_name(&min_stat, &name);
       return (FALSE);
@@ -203,7 +203,7 @@ bool_t Svcauth_gss_acquire_cred(void)
                               GSS_C_NULL_OID_SET, GSS_C_ACCEPT,
                               &svcauth_gss_creds, NULL, NULL);
 
-  if (maj_stat != GSS_S_COMPLETE)
+  if(maj_stat != GSS_S_COMPLETE)
     {
       return (FALSE);
     }
@@ -216,7 +216,7 @@ static bool_t Svcauth_gss_release_cred(void)
 
   maj_stat = gss_release_cred(&min_stat, &svcauth_gss_creds);
 
-  if (maj_stat != GSS_S_COMPLETE)
+  if(maj_stat != GSS_S_COMPLETE)
     {
       return (FALSE);
     }
@@ -242,7 +242,7 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
   /* Deserialize arguments. */
   memset(&recv_tok, 0, sizeof(recv_tok));
 
-  if (!svc_getargs(rqst->rq_xprt, xdr_rpc_gss_init_args, (caddr_t) & recv_tok))
+  if(!svc_getargs(rqst->rq_xprt, xdr_rpc_gss_init_args, (caddr_t) & recv_tok))
     return (FALSE);
 
   gr->gr_major = gss_accept_sec_context(&gr->gr_minor,
@@ -255,9 +255,9 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
 
   svc_freeargs(rqst->rq_xprt, xdr_rpc_gss_init_args, (caddr_t) & recv_tok);
 
-  if (gr->gr_major != GSS_S_COMPLETE && gr->gr_major != GSS_S_CONTINUE_NEEDED)
+  if(gr->gr_major != GSS_S_COMPLETE && gr->gr_major != GSS_S_CONTINUE_NEEDED)
     {
-      if (log_badauth != NULL)
+      if(log_badauth != NULL)
         {
           (*log_badauth) (gr->gr_major,
                           gr->gr_minor, &rqst->rq_xprt->xp_raddr, log_badauth_data);
@@ -269,7 +269,7 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
    * ANDROS: krb5 mechglue returns ctx of size 8 - two pointers, 
    * one to the mechanism oid, one to the internal_ctx_id
    */
-  if ((gr->gr_ctx.value = mem_alloc(sizeof(gss_union_ctx_id_desc))) == NULL)
+  if((gr->gr_ctx.value = mem_alloc(sizeof(gss_union_ctx_id_desc))) == NULL)
     {
       fprintf(stderr, "svcauth_gss_accept_context: out of memory\n");
       goto errout;
@@ -287,11 +287,11 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
   gd->seq = gc->gc_seq;
   gd->win = gr->gr_win;
 
-  if (gr->gr_major == GSS_S_COMPLETE)
+  if(gr->gr_major == GSS_S_COMPLETE)
     {
 #ifdef SPKM
       /* spkm3: no src_name (anonymous) */
-      if (!g_OID_equal(gss_mech_spkm3, mech))
+      if(!g_OID_equal(gss_mech_spkm3, mech))
         {
 #endif
           maj_stat = gss_display_name(&min_stat, gd->client_name,
@@ -299,7 +299,7 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
 #ifdef SPKM
         }
 #endif
-      if (maj_stat != GSS_S_COMPLETE)
+      if(maj_stat != GSS_S_COMPLETE)
         {
         }
 #ifdef DEBUG
@@ -322,7 +322,7 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
       printf("gss_sign in sec_accept_context\n");
       maj_stat = gss_sign(&min_stat, gd->ctx, GSS_C_QOP_DEFAULT, &seqbuf, &gd->checksum);
 
-      if (maj_stat != GSS_S_COMPLETE)
+      if(maj_stat != GSS_S_COMPLETE)
         {
           goto errout;
         }
@@ -361,7 +361,7 @@ Svcauth_gss_validate(struct svc_req *rqst, struct svc_rpc_gss_data *gd,
   oa = &msg->rm_call.cb_cred;
   IXDR_PUT_ENUM(buf, oa->oa_flavor);
   IXDR_PUT_LONG(buf, oa->oa_length);
-  if (oa->oa_length)
+  if(oa->oa_length)
     {
       memcpy((caddr_t) buf, oa->oa_base, oa->oa_length);
       buf += RNDUP(oa->oa_length) / sizeof(int32_t);
@@ -382,11 +382,11 @@ Svcauth_gss_validate(struct svc_req *rqst, struct svc_rpc_gss_data *gd,
 
   maj_stat = gss_verify_mic(&min_stat, gd->ctx, &rpcbuf, &checksum, &qop_state);
 
-  if (maj_stat != GSS_S_COMPLETE)
+  if(maj_stat != GSS_S_COMPLETE)
     {
       log_sperror_gss(GssError, "gss_verify_mic", maj_stat, min_stat);
       printf("Error in gss_verify_mic: %s \n", GssError);
-      if (log_badverf != NULL)
+      if(log_badverf != NULL)
         (*log_badverf) (gd->client_name, svcauth_gss_name, rqst, msg, log_badverf_data);
       return (FALSE);
     }
@@ -399,7 +399,7 @@ static bool_t Svcauth_gss_nextverf(struct svc_req *rqst, u_int num)
   gss_buffer_desc signbuf;
   OM_uint32 maj_stat, min_stat;
 
-  if (rqst->rq_xprt->xp_auth == NULL)
+  if(rqst->rq_xprt->xp_auth == NULL)
     return (FALSE);
 
   gd = SVCAUTH_PRIVATE(rqst->rq_xprt->xp_auth);
@@ -411,7 +411,7 @@ static bool_t Svcauth_gss_nextverf(struct svc_req *rqst, u_int num)
 
   maj_stat = gss_get_mic(&min_stat, gd->ctx, gd->sec.qop, &signbuf, &gd->checksum);
 
-  if (maj_stat != GSS_S_COMPLETE)
+  if(maj_stat != GSS_S_COMPLETE)
     {
       return (FALSE);
     }
@@ -447,14 +447,14 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
 #endif
 
   /* Allocate and set up server auth handle. */
-  if (rqst->rq_xprt->xp_auth == NULL || rqst->rq_xprt->xp_auth == &Svc_auth_none)
+  if(rqst->rq_xprt->xp_auth == NULL || rqst->rq_xprt->xp_auth == &Svc_auth_none)
     {
-      if ((auth = calloc(sizeof(*auth), 1)) == NULL)
+      if((auth = calloc(sizeof(*auth), 1)) == NULL)
         {
           fprintf(stderr, "svcauth_gss: out_of_memory\n");
           return (AUTH_FAILED);
         }
-      if ((gd = calloc(sizeof(*gd), 1)) == NULL)
+      if((gd = calloc(sizeof(*gd), 1)) == NULL)
         {
           fprintf(stderr, "svcauth_gss: out_of_memory\n");
           free(auth);
@@ -468,7 +468,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
     gd = SVCAUTH_PRIVATE(rqst->rq_xprt->xp_auth);
 
   /* Deserialize client credentials. */
-  if (rqst->rq_cred.oa_length <= 0)
+  if(rqst->rq_cred.oa_length <= 0)
     return (AUTH_BADCRED);
 
   gc = (struct rpc_gss_cred *)rqst->rq_clntcred;
@@ -476,7 +476,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
 
   xdrmem_create(&xdrs, rqst->rq_cred.oa_base, rqst->rq_cred.oa_length, XDR_DECODE);
 
-  if (!xdr_rpc_gss_cred(&xdrs, gc))
+  if(!xdr_rpc_gss_cred(&xdrs, gc))
     {
       XDR_DESTROY(&xdrs);
       return (AUTH_BADCRED);
@@ -489,11 +489,11 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
 
         /** @todo Think about restoring the correct lines */
   //if( gd->established == 0 && gc->gc_proc == RPCSEC_GSS_DATA   )  
-  if (gc->gc_proc == RPCSEC_GSS_DATA)
+  if(gc->gc_proc == RPCSEC_GSS_DATA)
     {
 
       memcpy((char *)&gss_ctx_data, (char *)gc->gc_ctx.value, gc->gc_ctx.length);
-      if (!Gss_ctx_Hash_Get_Pointer(&gss_ctx_data, &gd))
+      if(!Gss_ctx_Hash_Get_Pointer(&gss_ctx_data, &gd))
         {
           DisplayLog("RPCSEC_GSS: /!\\ ERROR could not find gss context ");
           ret_freegc(AUTH_BADCRED);
@@ -504,7 +504,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
           /* If you 'mount -o sec=krb5i' you will have gc->gc_proc > RPCSEC_GSS_SVN_NONE, but the
            * negociation will have been made as if option was -o sec=krb5, the value of sec.svc has to be updated 
            * id the stored gd that we got fromn the hash */
-          if (gc->gc_svc != gd->sec.svc)
+          if(gc->gc_svc != gd->sec.svc)
             {
               gd->sec.svc = gc->gc_svc;
             }
@@ -513,7 +513,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
         }
     }
 #ifdef _DEBUG_RPCSEC_GSS
-  if (gd->ctx != NULL)
+  if(gd->ctx != NULL)
     memcpy(&buff64_2, gd->ctx, 8);
   else
     buff64_2 = 0LL;
@@ -527,29 +527,29 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
   retstat = AUTH_FAILED;
 
   /* Check version. */
-  if (gc->gc_v != RPCSEC_GSS_VERSION)
+  if(gc->gc_v != RPCSEC_GSS_VERSION)
     ret_freegc(AUTH_BADCRED);
 
   /* Check RPCSEC_GSS service. */
-  if (gc->gc_svc != RPCSEC_GSS_SVC_NONE &&
-      gc->gc_svc != RPCSEC_GSS_SVC_INTEGRITY && gc->gc_svc != RPCSEC_GSS_SVC_PRIVACY)
+  if(gc->gc_svc != RPCSEC_GSS_SVC_NONE &&
+     gc->gc_svc != RPCSEC_GSS_SVC_INTEGRITY && gc->gc_svc != RPCSEC_GSS_SVC_PRIVACY)
     ret_freegc(AUTH_BADCRED);
 
   /* Check sequence number. */
-  if (gd->established)
+  if(gd->established)
     {
-      if (gc->gc_seq > MAXSEQ)
+      if(gc->gc_seq > MAXSEQ)
         ret_freegc(RPCSEC_GSS_CTXPROBLEM);
 
-      if ((offset = gd->seqlast - gc->gc_seq) < 0)
+      if((offset = gd->seqlast - gc->gc_seq) < 0)
         {
           gd->seqlast = gc->gc_seq;
           offset = 0 - offset;
           gd->seqmask <<= offset;
           offset = 0;
         }
-      else if ((unsigned int)offset >= gd->win
-               || (gd->seqmask & (1 << (unsigned int)offset)))
+      else if((unsigned int)offset >= gd->win
+              || (gd->seqmask & (1 << (unsigned int)offset)))
         {
           *no_dispatch = 1;
           ret_freegc(RPCSEC_GSS_CTXPROBLEM);
@@ -558,7 +558,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       gd->seqmask |= (1 << offset);
     }
 
-  if (gd->established)
+  if(gd->established)
     {
       rqst->rq_clntname = (char *)gd->client_name;
       rqst->rq_svccred = (char *)gd->ctx;
@@ -570,16 +570,16 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
 
     case RPCSEC_GSS_INIT:
     case RPCSEC_GSS_CONTINUE_INIT:
-      if (rqst->rq_proc != NULLPROC)
+      if(rqst->rq_proc != NULLPROC)
         ret_freegc(AUTH_FAILED);        /* XXX ? */
 
-      if (!Svcauth_gss_acquire_cred())
+      if(!Svcauth_gss_acquire_cred())
         ret_freegc(AUTH_FAILED);
 
-      if (!Svcauth_gss_accept_sec_context(rqst, &gr))
+      if(!Svcauth_gss_accept_sec_context(rqst, &gr))
         ret_freegc(AUTH_REJECTEDCRED);
 
-      if (!Svcauth_gss_nextverf(rqst, htonl(gr.gr_win)))
+      if(!Svcauth_gss_nextverf(rqst, htonl(gr.gr_win)))
         {
           gss_release_buffer(&min_stat, &gr.gr_token);
           mem_free(gr.gr_ctx.value, sizeof(gss_union_ctx_id_desc));
@@ -600,15 +600,15 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       gss_release_buffer(&min_stat, &gr.gr_token);
       gss_release_buffer(&min_stat, &gd->checksum);
       mem_free(gr.gr_ctx.value, sizeof(gss_union_ctx_id_desc));
-      if (!call_stat)
+      if(!call_stat)
         ret_freegc(AUTH_FAILED);
 
-      if (gr.gr_major == GSS_S_COMPLETE)
+      if(gr.gr_major == GSS_S_COMPLETE)
         {
           gd->established = TRUE;
           /* Keep the gss context in a hash, gr.gr_ctx.value is used as key */
           memcpy((char *)&gss_ctx_data, (char *)gd->ctx, sizeof(gss_ctx_data));
-          if (!Gss_ctx_Hash_Set(&gss_ctx_data, gd))
+          if(!Gss_ctx_Hash_Set(&gss_ctx_data, gd))
             DisplayLog
                 ("RPCSEC_GSS: /!\\ ERROR, could not add context 0x%llx to hashtable",
                  buff64);
@@ -620,21 +620,21 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       break;
 
     case RPCSEC_GSS_DATA:
-      if (!Svcauth_gss_validate(rqst, gd, msg))
+      if(!Svcauth_gss_validate(rqst, gd, msg))
         ret_freegc(RPCSEC_GSS_CREDPROBLEM);
 
-      if (!Svcauth_gss_nextverf(rqst, htonl(gc->gc_seq)))
+      if(!Svcauth_gss_nextverf(rqst, htonl(gc->gc_seq)))
         ret_freegc(AUTH_FAILED);
       break;
 
     case RPCSEC_GSS_DESTROY:
-      if (rqst->rq_proc != NULLPROC)
+      if(rqst->rq_proc != NULLPROC)
         ret_freegc(AUTH_FAILED);        /* XXX ? */
 
-      if (!Svcauth_gss_validate(rqst, gd, msg))
+      if(!Svcauth_gss_validate(rqst, gd, msg))
         ret_freegc(RPCSEC_GSS_CREDPROBLEM);
 
-      if (!Svcauth_gss_nextverf(rqst, htonl(gc->gc_seq)))
+      if(!Svcauth_gss_nextverf(rqst, htonl(gc->gc_seq)))
         ret_freegc(AUTH_FAILED);
 
       *no_dispatch = TRUE;
@@ -642,14 +642,14 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       call_stat = svc_sendreply(rqst->rq_xprt, xdr_void, (caddr_t) NULL);
 
       memcpy((char *)&gss_ctx_data, (char *)gc->gc_ctx.value, gc->gc_ctx.length);
-      if (!Gss_ctx_Hash_Del(&gss_ctx_data))
+      if(!Gss_ctx_Hash_Del(&gss_ctx_data))
         {
           DisplayLog("RPCSEC_GSS: /!\\ ERROR, could not delete Gss Context from hash");
         }
       else
         printf("Gss_ctx_Hash_Del OK\n");
 
-      if (!Svcauth_gss_release_cred())
+      if(!Svcauth_gss_release_cred())
         ret_freegc(AUTH_FAILED);
 
       SVCAUTH_DESTROY(rqst->rq_xprt->xp_auth);
@@ -668,7 +668,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
 
   retstat = AUTH_OK;
  freegc:
-  if (retstat != AUTH_OK)
+  if(retstat != AUTH_OK)
     DisplayLog
         ("RPCSEC_GSS: /!\\ Call to Gssrpc__svcauth_gss - FAILED ---> (RQ:sock=%u)\n",
          rqst->rq_xprt->xp_sock);
@@ -690,7 +690,7 @@ static bool_t Svcauth_gss_destroy(SVCAUTH * auth)
   // gss_release_buffer(&min_stat, &gd->cname);
   // gss_release_buffer(&min_stat, &gd->checksum);
 
-  if (gd->client_name)
+  if(gd->client_name)
     gss_release_name(&min_stat, &gd->client_name);
 
         /** @todo BUGAZOMEU fix these two lines */
@@ -707,7 +707,7 @@ Svcauth_gss_wrap(SVCAUTH * auth, XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr
 
   gd = SVCAUTH_PRIVATE(auth);
 
-  if (!gd->established || gd->sec.svc == RPCSEC_GSS_SVC_NONE)
+  if(!gd->established || gd->sec.svc == RPCSEC_GSS_SVC_NONE)
     {
       return ((*xdr_func) (xdrs, xdr_ptr));
     }
@@ -722,7 +722,7 @@ Svcauth_gss_unwrap(SVCAUTH * auth, XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_p
 
   gd = SVCAUTH_PRIVATE(auth);
 
-  if (!gd->established || gd->sec.svc == RPCSEC_GSS_SVC_NONE)
+  if(!gd->established || gd->sec.svc == RPCSEC_GSS_SVC_NONE)
     {
       return ((*xdr_func) (xdrs, xdr_ptr));
     }
@@ -737,10 +737,10 @@ char *Svcauth_gss_get_principal(SVCAUTH * auth)
 
   gd = SVCAUTH_PRIVATE(auth);
 
-  if (gd->cname.length == 0)
+  if(gd->cname.length == 0)
     return (NULL);
 
-  if ((pname = malloc(gd->cname.length + 1)) == NULL)
+  if((pname = malloc(gd->cname.length + 1)) == NULL)
     return (NULL);
 
   memcpy(pname, gd->cname.value, gd->cname.length);

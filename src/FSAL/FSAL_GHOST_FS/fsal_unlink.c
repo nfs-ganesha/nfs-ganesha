@@ -35,7 +35,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
   /* sanity checks.
    * note : parentdir_attributes are optional.
    */
-  if (!parentdir_handle || !p_context)
+  if(!parentdir_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_unlink);
 
   /* test modification rights on parent directory.
@@ -46,7 +46,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
                       GHOSTFS_TEST_WRITE,
                       p_context->credential.user, p_context->credential.group);
 
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_unlink);
 
   /* @todo : check if the user is the owner of the file */
@@ -55,11 +55,11 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
                       p_object_name->name,      /* IN */
                       &ghost_attrs);    /* [IN/OUT ] */
 
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_unlink);
 
   /* set attributes if asked */
-  if (parentdir_attributes)
+  if(parentdir_attributes)
     ghost2fsal_attrs(parentdir_attributes, &ghost_attrs);
 
   /* GHOSTFS mkdir is done */

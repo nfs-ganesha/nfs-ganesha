@@ -44,7 +44,7 @@ fsal_status_t FSAL_static_fsinfo(fsal_handle_t * p_filehandle,  /* IN */
     )
 {
   /* sanity checks. */
-  if (!p_staticinfo)
+  if(!p_staticinfo)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_static_fsinfo);
 
   /* returning static info about the filesystem */
@@ -82,18 +82,18 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle, /* IN */
   struct statvfs buffstatvfs;
   int rc, errsv;
   /* sanity checks. */
-  if (!p_filehandle || !p_dynamicinfo || !p_context)
+  if(!p_filehandle || !p_dynamicinfo || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_dynamic_fsinfo);
 
   status = fsal_internal_Handle2FidPath(p_context, p_filehandle, &pathfsal);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_dynamic_fsinfo);
 
   TakeTokenFSCall();
   rc = statvfs(pathfsal.path, &buffstatvfs);
   errsv = errno;
   ReleaseTokenFSCall();
-  if (rc)
+  if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_dynamic_fsinfo);
 
   p_dynamicinfo->total_bytes = buffstatvfs.f_frsize * buffstatvfs.f_blocks;

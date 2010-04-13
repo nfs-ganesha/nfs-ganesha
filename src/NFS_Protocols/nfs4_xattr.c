@@ -225,7 +225,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
                     attrmasklen);
 #endif
 
-  for (i = 0; i < attrmasklen; i++)
+  for(i = 0; i < attrmasklen; i++)
     {
       attribute_to_set = attrmasklist[i];
 
@@ -256,9 +256,9 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 
           /* How many supported attributes ? Compute the result in variable named c and set attrvalslist_supported  */
           c = 0;
-          for (k = FATTR4_SUPPORTED_ATTRS; k <= FATTR4_MOUNTED_ON_FILEID; k++)
+          for(k = FATTR4_SUPPORTED_ATTRS; k <= FATTR4_MOUNTED_ON_FILEID; k++)
             {
-              if (fattr4tab[k].supported)
+              if(fattr4tab[k].supported)
                 {
                   attrvalslist_supported[c++] = k;
                 }
@@ -266,8 +266,8 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 
           /* Let set the reply bitmap */
           /** @todo: BUGAZOMEU: Allocation at NULL Adress here.... */
-          if ((supported_attrs.bitmap4_val =
-               (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
+          if((supported_attrs.bitmap4_val =
+              (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
             return -1;
           memset(supported_attrs.bitmap4_val, 0, 2 * sizeof(uint32_t));
           nfs4_list_to_bitmap4(&supported_attrs, &c, attrvalslist_supported);
@@ -290,7 +290,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
           LastOffset += sizeof(uint32_t);
 
           /* And then the data */
-          for (k = 0; k < supported_attrs.bitmap4_len; k++)
+          for(k = 0; k < supported_attrs.bitmap4_len; k++)
             {
               supported_attrs_val = htonl(supported_attrs.bitmap4_val[k]);
               memcpy((char *)(attrvalsBuffer + LastOffset), &supported_attrs_val,
@@ -305,7 +305,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 #endif
           op_attr_success = 1;
 
-          if (pfile_handle->xattr_pos == 1)
+          if(pfile_handle->xattr_pos == 1)
             file_type = htonl(NF4DIR);  /* There are only directories in the pseudo fs */
           else
             file_type = htonl(NF4REG);
@@ -526,7 +526,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
           /* XDR's special stuff for 32-bit alignment */
           len = objFH->nfs_fh4_len;
           off = 0;
-          while ((len + off) % 4 != 0)
+          while((len + off) % 4 != 0)
             {
               char c = '\0';
 
@@ -549,7 +549,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 #ifndef _XATTR_D_USE_SAME_INUM  /* I wrapped off this part of the code... Not sure it would be useful */
           file_id = nfs_htonl64(~(fsalattr.fileid));
 
-          if (pfile_handle->xattr_pos == 1)
+          if(pfile_handle->xattr_pos == 1)
             file_id = nfs_htonl64(~(fsalattr.fileid));
           else
             file_mode = nfs_htonl64(~(fsalattr.fileid)) - pfile_handle->xattr_pos + 1;
@@ -694,7 +694,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 #ifdef   _DEBUG_NFS_V4_XATTR
           printf("-----> Wanting FATTR4_MODE\n");
 #endif
-          if (pfile_handle->xattr_pos == 1)
+          if(pfile_handle->xattr_pos == 1)
             file_mode = htonl(0555);    /* Every pseudo fs object is dr-xr-xr-x */
           else
             file_mode = htonl(0644);    /* -rw-r--r-- */
@@ -733,13 +733,13 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
           printf("-----> Wanting FATTR4_OWNER\n");
 #endif
           /* Return the uid as a human readable utf8 string */
-          if (uid2utf8(NFS4_ROOT_UID, &file_owner) == 0)
+          if(uid2utf8(NFS4_ROOT_UID, &file_owner) == 0)
             {
               u_int utf8len = 0;
               u_int deltalen = 0;
 
               /* Take care of 32 bits alignment */
-              if (file_owner.utf8string_len % 4 == 0)
+              if(file_owner.utf8string_len % 4 == 0)
                 deltalen = 0;
               else
                 deltalen = 4 - file_owner.utf8string_len % 4;
@@ -756,7 +756,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
               Mem_Free((char *)file_owner.utf8string_val);
 
               /* Pad with zero to keep xdr alignement */
-              if (deltalen != 0)
+              if(deltalen != 0)
                 memset((char *)(attrvalsBuffer + LastOffset), 0, deltalen);
               LastOffset += deltalen;
 
@@ -771,13 +771,13 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
           printf("-----> Wanting FATTR4_OWNER_GROUP\n");
 #endif
           /* Return the uid as a human readable utf8 string */
-          if (gid2utf8(2, &file_owner_group) == 0)
+          if(gid2utf8(2, &file_owner_group) == 0)
             {
               u_int utf8len = 0;
               u_int deltalen = 0;
 
               /* Take care of 32 bits alignment */
-              if (file_owner_group.utf8string_len % 4 == 0)
+              if(file_owner_group.utf8string_len % 4 == 0)
                 deltalen = 0;
               else
                 deltalen = 4 - file_owner_group.utf8string_len % 4;
@@ -794,7 +794,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
               Mem_Free((char *)file_owner_group.utf8string_val);
 
               /* Pad with zero to keep xdr alignement */
-              if (deltalen != 0)
+              if(deltalen != 0)
                 memset((char *)(attrvalsBuffer + LastOffset), 0, deltalen);
               LastOffset += deltalen;
 
@@ -1011,14 +1011,14 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 #ifdef   _DEBUG_NFS_V4_XATTR
           printf("-----> Wanting FATTR4_MOUNTED_ON_FILEID\n");
 #endif
-          if (!nfs4_FhandleToFSAL
-              (&data->mounted_on_FH, &mounted_on_fsal_handle, data->pcontext))
+          if(!nfs4_FhandleToFSAL
+             (&data->mounted_on_FH, &mounted_on_fsal_handle, data->pcontext))
             {
-              if (FSAL_IS_ERROR
-                  (fsal_status =
-                   FSAL_DigestHandle(data->pcontext->export_context, FSAL_DIGEST_FILEID4,
-                                     &mounted_on_fsal_handle,
-                                     (caddr_t) & mounted_on_fileid)))
+              if(FSAL_IS_ERROR
+                 (fsal_status =
+                  FSAL_DigestHandle(data->pcontext->export_context, FSAL_DIGEST_FILEID4,
+                                    &mounted_on_fsal_handle,
+                                    (caddr_t) & mounted_on_fileid)))
                 {
                   op_attr_success = 0;
                 }
@@ -1045,14 +1045,14 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
         }                       /* switch( attr_to_set ) */
 
       /* Increase the Offset for the next operation if this was a success */
-      if (op_attr_success)
+      if(op_attr_success)
         {
           /* Set the returned bitmask */
           attrvalslist[j] = attribute_to_set;
           j += 1;
 
           /* Be carefull not to get out of attrvalsBuffer */
-          if (LastOffset > NFS4_ATTRVALS_BUFFLEN)
+          if(LastOffset > NFS4_ATTRVALS_BUFFLEN)
             return -1;
         }
 
@@ -1069,8 +1069,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 
   /* Set the bitmap for result */
   /** @todo: BUGAZOMEU: Allocation at NULL Adress here.... */
-  if ((Fattr->attrmask.bitmap4_val =
-       (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
+  if((Fattr->attrmask.bitmap4_val = (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
     return -1;
   memset(Fattr->attrmask.bitmap4_val, 0, 2 * sizeof(uint32_t));
 
@@ -1080,8 +1079,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
   Fattr->attr_vals.attrlist4_len = LastOffset;
 
   /** @todo: BUGAZOMEU: Allocation at NULL Adress here.... */
-  if ((Fattr->attr_vals.attrlist4_val =
-       Mem_Alloc(Fattr->attr_vals.attrlist4_len)) == NULL)
+  if((Fattr->attr_vals.attrlist4_val = Mem_Alloc(Fattr->attr_vals.attrlist4_len)) == NULL)
     return -1;
   memset(Fattr->attr_vals.attrlist4_val, 0, Fattr->attr_vals.attrlist4_len);
 
@@ -1151,8 +1149,8 @@ int nfs4_op_getattr_xattr(struct nfs_argop4 *op,
 
   res_GETATTR4.status = NFS4_OK;
 
-  if (nfs4_XattrToFattr(&(res_GETATTR4.GETATTR4res_u.resok4.obj_attributes),
-                        data, &(data->currentFH), &(arg_GETATTR4.attr_request)) != 0)
+  if(nfs4_XattrToFattr(&(res_GETATTR4.GETATTR4res_u.resok4.obj_attributes),
+                       data, &(data->currentFH), &(arg_GETATTR4.attr_request)) != 0)
     res_GETATTR4.status = NFS4ERR_SERVERFAULT;
   else
     res_GETATTR4.status = NFS4_OK;
@@ -1230,7 +1228,7 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
 
   /* Get the FSAL Handle fo the current object */
   pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
-  if (cache_status != CACHE_INODE_SUCCESS)
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
       res_LOOKUP4.status = nfs4_Errno(cache_status);
       return res_LOOKUP4.status;
@@ -1242,10 +1240,10 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
   strname[arg_LOOKUP4.objname.utf8string_len] = '\0';
 
   /* Build the FSAL name */
-  if ((cache_status = cache_inode_error_convert(FSAL_str2name(strname,
-                                                              MAXNAMLEN,
-                                                              &name))) !=
-      CACHE_INODE_SUCCESS)
+  if((cache_status = cache_inode_error_convert(FSAL_str2name(strname,
+                                                             MAXNAMLEN,
+                                                             &name))) !=
+     CACHE_INODE_SUCCESS)
     {
       res_LOOKUP4.status = nfs4_Errno(cache_status);
       return res_LOOKUP4.status;
@@ -1253,7 +1251,7 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
 
   /* Try to get a FSAL_XAttr of that name */
   fsal_status = FSAL_GetXAttrIdByName(pfsal_handle, &name, data->pcontext, &xattr_id);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       return NFS4ERR_NOENT;
     }
@@ -1377,7 +1375,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
                     dircount, maxcount, cookie, space_used, estimated_num_entries);
 
   /* If maxcount is too short, return NFS4ERR_TOOSMALL */
-  if (maxcount < sizeof(entry4) || estimated_num_entries == 0)
+  if(maxcount < sizeof(entry4) || estimated_num_entries == 0)
     {
       res_READDIR4.status = NFS4ERR_TOOSMALL;
       return res_READDIR4.status;
@@ -1392,24 +1390,24 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
    * For these reason, there will be an offset of 3 between NFS4 cookie and HPSS cookie */
 
   /* Do not use a cookie of 1 or 2 (reserved values) */
-  if (cookie == 1 || cookie == 2)
+  if(cookie == 1 || cookie == 2)
     {
       res_READDIR4.status = NFS4ERR_BAD_COOKIE;
       return res_READDIR4.status;
     }
 
-  if (cookie != 0)
+  if(cookie != 0)
     cookie = cookie - 2;        /* 0,1 and 2 are reserved, there is a delta of '3' because of this */
 
   /* Get only attributes that are allowed to be read */
-  if (!nfs4_Fattr_Check_Access_Bitmap(&arg_READDIR4.attr_request, FATTR4_ATTR_READ))
+  if(!nfs4_Fattr_Check_Access_Bitmap(&arg_READDIR4.attr_request, FATTR4_ATTR_READ))
     {
       res_READDIR4.status = NFS4ERR_INVAL;
       return res_READDIR4.status;
     }
 
   /* If maxcount is too short, return NFS4ERR_TOOSMALL */
-  if (maxcount < sizeof(entry4) || estimated_num_entries == 0)
+  if(maxcount < sizeof(entry4) || estimated_num_entries == 0)
     {
       res_READDIR4.status = NFS4ERR_TOOSMALL;
       return res_READDIR4.status;
@@ -1419,12 +1417,12 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
 #ifdef _WITH_COOKIE_VERIFIER
   /* BUGAZOMEU: management of the cookie verifier */
   memset(cookie_verifier, 0, NFS4_VERIFIER_SIZE);
-  if (NFS_SpecificConfig.UseCookieVerf == 1)
+  if(NFS_SpecificConfig.UseCookieVerf == 1)
     {
       memcpy(cookie_verifier, &ServerBootTime, sizeof(ServerBootTime));
-      if (cookie != 0)
+      if(cookie != 0)
         {
-          if (memcmp(cookie_verifier, arg_READDIR4.cookieverf, NFS4_VERIFIER_SIZE) != 0)
+          if(memcmp(cookie_verifier, arg_READDIR4.cookieverf, NFS4_VERIFIER_SIZE) != 0)
             {
               res_READDIR4.status = NFS4ERR_BAD_COOKIE;
               Mem_Free(entry_nfs_array);
@@ -1440,7 +1438,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
 
   /* Get the fsal_handle */
   pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
-  if (cache_status != CACHE_INODE_SUCCESS)
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
       res_READDIR4.status = NFS4ERR_SERVERFAULT;
       return res_READDIR4.status;
@@ -1452,13 +1450,13 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
                                 data->pcontext,
                                 xattrs_tab,
                                 estimated_num_entries, &nb_xattrs_read, &eod_met);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       res_READDIR4.status = NFS4ERR_SERVERFAULT;
       return res_READDIR4.status;
     }
 
-  if (eod_met == TRUE)
+  if(eod_met == TRUE)
     {
       /* This is the end of the directory */
       res_READDIR4.READDIR4res_u.resok4.reply.eof = TRUE;
@@ -1466,7 +1464,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
              NFS4_VERIFIER_SIZE);
     }
 
-  if (nb_xattrs_read == 0)
+  if(nb_xattrs_read == 0)
     {
       /* only . and .. */
       res_READDIR4.READDIR4res_u.resok4.reply.entries = NULL;
@@ -1477,9 +1475,9 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   else
     {
       /* Allocation of reply structures */
-      if ((entry_name_array =
-           (entry_name_array_item_t *) Mem_Alloc(estimated_num_entries *
-                                                 (FSAL_MAX_NAME_LEN + 1))) == NULL)
+      if((entry_name_array =
+          (entry_name_array_item_t *) Mem_Alloc(estimated_num_entries *
+                                                (FSAL_MAX_NAME_LEN + 1))) == NULL)
         {
           DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
@@ -1488,19 +1486,19 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
       memset((char *)entry_name_array, 0,
              estimated_num_entries * (FSAL_MAX_NAME_LEN + 1));
 
-      if ((entry_nfs_array =
-           (entry4 *) Mem_Alloc(estimated_num_entries * sizeof(entry4))) == NULL)
+      if((entry_nfs_array =
+          (entry4 *) Mem_Alloc(estimated_num_entries * sizeof(entry4))) == NULL)
         {
           DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
           return res_READDIR4.status;
         }
 
-      for (i = 0; i < nb_xattrs_read; i++)
+      for(i = 0; i < nb_xattrs_read; i++)
         {
           entry_nfs_array[i].name.utf8string_val = entry_name_array[i];
 
-          if (str2utf8(xattrs_tab[i].xattr_name.name, &entry_nfs_array[i].name) == -1)
+          if(str2utf8(xattrs_tab[i].xattr_name.name, &entry_nfs_array[i].name) == -1)
             {
               res_READDIR4.status = NFS4ERR_SERVERFAULT;
               return res_READDIR4.status;
@@ -1510,8 +1508,8 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
           entry_nfs_array[i].cookie = cookie + i + 2;   /* 0, 1 and 2 are reserved */
 
           file_handle.xattr_pos = xattrs_tab[i].xattr_id + 2;
-          if (nfs4_XattrToFattr(&(entry_nfs_array[i].attrs),
-                                data, &nfsfh, &(arg_READDIR4.attr_request)) != 0)
+          if(nfs4_XattrToFattr(&(entry_nfs_array[i].attrs),
+                               data, &nfsfh, &(arg_READDIR4.attr_request)) != 0)
             {
               /* Return the fattr4_rdattr_error , cf RFC3530, page 192 */
               entry_nfs_array[i].attrs.attrmask = RdAttrErrorBitmap;
@@ -1520,14 +1518,14 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
 
           /* Chain the entries together */
           entry_nfs_array[i].nextentry = NULL;
-          if (i != 0)
+          if(i != 0)
             entry_nfs_array[i - 1].nextentry = &(entry_nfs_array[i]);
 
           /* This test is there to avoid going further than the buffer provided by the client 
            * the factor "9/10" is there for safety. Its value could be change as beta tests will be done */
-          if ((caddr_t)
-              ((caddr_t) (&entry_nfs_array[i]) - (caddr_t) (&entry_nfs_array[0])) >
-              (caddr_t) (maxcount * 9 / 10))
+          if((caddr_t)
+             ((caddr_t) (&entry_nfs_array[i]) - (caddr_t) (&entry_nfs_array[0])) >
+             (caddr_t) (maxcount * 9 / 10))
             break;
 
         }                       /* for */
@@ -1537,7 +1535,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   /* Build the reply */
   memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf, cookie_verifier,
          NFS4_VERIFIER_SIZE);
-  if (i == 0)
+  if(i == 0)
     res_READDIR4.READDIR4res_u.resok4.reply.entries = NULL;
   else
     res_READDIR4.READDIR4res_u.resok4.reply.entries = entry_nfs_array;
@@ -1594,7 +1592,7 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
 
   /* Get the FSAL Handle fo the current object */
   pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
-  if (cache_status != CACHE_INODE_SUCCESS)
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
       res_LOOKUP4.status = nfs4_Errno(cache_status);
       return res_LOOKUP4.status;
@@ -1602,7 +1600,7 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
 
   /* Get the FSAL Handle fo the current object */
   pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
-  if (cache_status != CACHE_INODE_SUCCESS)
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
       res_LOOKUP4.status = nfs4_Errno(cache_status);
       return res_LOOKUP4.status;
@@ -1618,7 +1616,7 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
   xattr_id = pfile_handle->xattr_pos - 2;
 
   /* Get the xattr related to this xattr_id */
-  if ((buffer = (char *)Mem_Alloc(XATTR_BUFFERSIZE)) == NULL)
+  if((buffer = (char *)Mem_Alloc(XATTR_BUFFERSIZE)) == NULL)
     {
       res_READ4.status = NFS4ERR_SERVERFAULT;
       return res_READ4.status;
@@ -1630,7 +1628,7 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
                                        data->pcontext,
                                        buffer, XATTR_BUFFERSIZE, &size_returned);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       res_READ4.status = NFS4ERR_SERVERFAULT;
       return res_READ4.status;
@@ -1672,7 +1670,7 @@ int nfs4_op_write_xattr(struct nfs_argop4 *op,
 
   /* Get the FSAL Handle fo the current object */
   pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
-  if (cache_status != CACHE_INODE_SUCCESS)
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
       res_LOOKUP4.status = nfs4_Errno(cache_status);
       return res_LOOKUP4.status;
@@ -1680,7 +1678,7 @@ int nfs4_op_write_xattr(struct nfs_argop4 *op,
 
   /* Get the FSAL Handle fo the current object */
   pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
-  if (cache_status != CACHE_INODE_SUCCESS)
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
       res_LOOKUP4.status = nfs4_Errno(cache_status);
       return res_LOOKUP4.status;

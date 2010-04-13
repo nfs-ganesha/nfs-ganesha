@@ -103,29 +103,29 @@ void Xprt_register(SVCXPRT * xprt)
   register int sock = xprt->xp_sock;
 
 #ifdef FD_SETSIZE
-  if (gssrpc_svc_fdset_init == 0)
+  if(gssrpc_svc_fdset_init == 0)
     {
       FD_ZERO(&Svc_fdset);
       gssrpc_svc_fdset_init++;
     }
-  if (Xports == NULL)
+  if(Xports == NULL)
     {
       Xports = (SVCXPRT **) mem_alloc(FD_SETSIZE * sizeof(SVCXPRT *));
       memset(Xports, 0, FD_SETSIZE * sizeof(SVCXPRT *));
     }
-  if (sock < FD_SETSIZE)
+  if(sock < FD_SETSIZE)
     {
       Xports[sock] = xprt;
       FD_SET(sock, &Svc_fdset);
     }
 #else
-  if (sock < NOFILE)
+  if(sock < NOFILE)
     {
       Xports[sock] = xprt;
       svc_fds |= (1 << sock);
     }
 #endif                          /* def FD_SETSIZE */
-  if (sock > svc_maxfd)
+  if(sock > svc_maxfd)
     svc_maxfd = sock;
 }
 
@@ -137,21 +137,21 @@ void Xprt_unregister(SVCXPRT * xprt)
   register int sock = xprt->xp_sock;
 
 #ifdef FD_SETSIZE
-  if ((sock < FD_SETSIZE) && (Xports[sock] == xprt))
+  if((sock < FD_SETSIZE) && (Xports[sock] == xprt))
     {
       Xports[sock] = (SVCXPRT *) 0;
       FD_CLR(sock, &Svc_fdset);
     }
 #else
-  if ((sock < NOFILE) && (Xports[sock] == xprt))
+  if((sock < NOFILE) && (Xports[sock] == xprt))
     {
       Xports[sock] = (SVCXPRT *) 0;
       svc_fds &= ~(1 << sock);
     }
 #endif                          /* def FD_SETSIZE */
-  if (svc_maxfd <= sock)
+  if(svc_maxfd <= sock)
     {
-      while ((svc_maxfd > 0) && Xports[svc_maxfd] == 0)
+      while((svc_maxfd > 0) && Xports[svc_maxfd] == 0)
         svc_maxfd--;
     }
 }
@@ -170,14 +170,14 @@ Svc_register(SVCXPRT * xprt,
   struct svc_callout *prev;
   register struct svc_callout *s;
 
-  if ((s = Svc_find(prog, vers, &prev)) != NULL_SVC)
+  if((s = Svc_find(prog, vers, &prev)) != NULL_SVC)
     {
-      if (s->sc_dispatch == dispatch)
+      if(s->sc_dispatch == dispatch)
         goto pmap_it;           /* he is registering another xptr */
       return (FALSE);
     }
   s = (struct svc_callout *)mem_alloc(sizeof(struct svc_callout));
-  if (s == (struct svc_callout *)0)
+  if(s == (struct svc_callout *)0)
     {
       return (FALSE);
     }
@@ -188,7 +188,7 @@ Svc_register(SVCXPRT * xprt,
   svc_head = s;
  pmap_it:
   /* now register the information with the local binder service */
-  if (protocol)
+  if(protocol)
     {
       return (pmap_set(prog, vers, protocol, xprt->xp_port));
     }
@@ -203,9 +203,9 @@ void Svc_unregister(rpcprog_t prog, rpcvers_t vers)
   struct svc_callout *prev;
   register struct svc_callout *s;
 
-  if ((s = Svc_find(prog, vers, &prev)) == NULL_SVC)
+  if((s = Svc_find(prog, vers, &prev)) == NULL_SVC)
     return;
-  if (prev == NULL_SVC)
+  if(prev == NULL_SVC)
     {
       svc_head = s->sc_next;
     }
@@ -229,9 +229,9 @@ static struct svc_callout *Svc_find(rpcprog_t prog,
   register struct svc_callout *s, *p;
 
   p = NULL_SVC;
-  for (s = svc_head; s != NULL_SVC; s = s->sc_next)
+  for(s = svc_head; s != NULL_SVC; s = s->sc_next)
     {
-      if ((s->sc_prog == prog) && (s->sc_vers == vers))
+      if((s->sc_prog == prog) && (s->sc_vers == vers))
         goto done;
       p = s;
     }

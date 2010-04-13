@@ -32,12 +32,11 @@
  *        The returned lock descriptor
  */
 fsal_status_t FSAL_lock(fsal_file_t * obj_handle,       /* IN */
-                        fsal_lockdesc_t * ldesc,
-			fsal_boolean_t callback )        /*IN/OUT */
+                        fsal_lockdesc_t * ldesc, fsal_boolean_t callback)       /*IN/OUT */
 {
 
   /* sanity checks. */
-  if (!obj_handle || !ldesc)
+  if(!obj_handle || !ldesc)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock);
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock);
@@ -53,7 +52,7 @@ fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / 
 {
 
   /* sanity checks. */
-  if (!lock_descriptor)
+  if(!lock_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_changelock);
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_changelock);
@@ -70,7 +69,7 @@ fsal_status_t FSAL_unlock(fsal_file_t * obj_handle,     /* IN */
 {
 
   /* sanity checks. */
-  if (!obj_handle || !ldesc)
+  if(!obj_handle || !ldesc)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_unlock);
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_unlock);

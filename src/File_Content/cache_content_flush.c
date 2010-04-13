@@ -146,8 +146,8 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
   pclient->stat.func_stats.nb_call[CACHE_CONTENT_FLUSH] += 1;
 
   /* Get the fsal handle */
-  if ((pfsal_handle =
-       cache_inode_get_fsal_handle(pentry->pentry_inode, &cache_inode_status)) == NULL)
+  if((pfsal_handle =
+      cache_inode_get_fsal_handle(pentry->pentry_inode, &cache_inode_status)) == NULL)
     {
       *pstatus = CACHE_CONTENT_BAD_CACHE_INODE_ENTRY;
 
@@ -166,7 +166,7 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
   fsal_status =
       FSAL_str2path(pentry->local_fs_entry.cache_path_data, MAXPATHLEN, &local_path);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       *pstatus = CACHE_CONTENT_FSAL_ERROR;
 
@@ -181,15 +181,15 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
 #if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
   fsal_status =
       FSAL_rcp_by_name(&
-                       (pentry_inode->object.file.pentry_parent_open->object.dir_begin.
-                        handle), pentry_inode->object.file.pname, pcontext, &local_path,
-                       FSAL_RCP_LOCAL_TO_FS);
+                       (pentry_inode->object.file.pentry_parent_open->object.
+                        dir_begin.handle), pentry_inode->object.file.pname, pcontext,
+                       &local_path, FSAL_RCP_LOCAL_TO_FS);
 #else
   /* Write the data from the local data file to the fs file */
   fsal_status = FSAL_rcp(pfsal_handle, pcontext, &local_path, FSAL_RCP_LOCAL_TO_FS);
 #endif
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
 #if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
       DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
@@ -213,10 +213,10 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
     }
 
   /* To delete or not to delete ? That is the question ... */
-  if (flushhow == CACHE_CONTENT_FLUSH_AND_DELETE)
+  if(flushhow == CACHE_CONTENT_FLUSH_AND_DELETE)
     {
       /* Remove the index file from the data cache */
-      if (unlink(pentry->local_fs_entry.cache_path_index))
+      if(unlink(pentry->local_fs_entry.cache_path_index))
         {
           /* Unlock related Cache Inode pentry */
           V_w(&pentry->pentry_inode->lock);
@@ -228,7 +228,7 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
         }
 
       /* Remove the data file from the data cache */
-      if (unlink(pentry->local_fs_entry.cache_path_data))
+      if(unlink(pentry->local_fs_entry.cache_path_data))
         {
           /* Unlock related Cache Inode pentry */
           V_w(&pentry->pentry_inode->lock);
@@ -293,8 +293,8 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
   pentry_inode = (cache_entry_t *) pentry->pentry_inode;
 
   /* Get the fsal handle */
-  if ((pfsal_handle =
-       cache_inode_get_fsal_handle(pentry_inode, &cache_inode_status)) == NULL)
+  if((pfsal_handle =
+      cache_inode_get_fsal_handle(pentry_inode, &cache_inode_status)) == NULL)
     {
       *pstatus = CACHE_CONTENT_BAD_CACHE_INODE_ENTRY;
 
@@ -310,7 +310,7 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
   fsal_status =
       FSAL_str2path(pentry->local_fs_entry.cache_path_data, MAXPATHLEN, &local_path);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       *pstatus = CACHE_CONTENT_FSAL_ERROR;
 
@@ -321,7 +321,7 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
     }
 
   /* Stat the data file to check for incoherency (this can occur in a crash recovery context) */
-  if (stat(pentry->local_fs_entry.cache_path_data, &buffstat) == -1)
+  if(stat(pentry->local_fs_entry.cache_path_data, &buffstat) == -1)
     {
       *pstatus = CACHE_CONTENT_FSAL_ERROR;
 
@@ -335,15 +335,14 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
       return *pstatus;
     }
 #ifdef _DEBUG_FSAL
-  if (how == FORCE_FROM_FSAL)
+  if(how == FORCE_FROM_FSAL)
     printf("FORCE FROM FSAL\n");
   else
     printf("FORCE FROM FSAL PAS ACTIVE\n");
 #endif
 
-  if ((how != FORCE_FROM_FSAL)
-      && (buffstat.st_mtime >
-          (time_t) pentry_inode->object.file.attributes.mtime.seconds))
+  if((how != FORCE_FROM_FSAL)
+     && (buffstat.st_mtime > (time_t) pentry_inode->object.file.attributes.mtime.seconds))
     {
       *pstatus = CACHE_CONTENT_SUCCESS;
 
@@ -361,14 +360,14 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
 #if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
       fsal_status =
           FSAL_rcp_by_name(&
-                           (pentry_inode->object.file.pentry_parent_open->object.
-                            dir_begin.handle), pentry_inode->object.file.pname, pcontext,
-                           &local_path, FSAL_RCP_FS_TO_LOCAL);
+                           (pentry_inode->object.file.pentry_parent_open->
+                            object.dir_begin.handle), pentry_inode->object.file.pname,
+                           pcontext, &local_path, FSAL_RCP_FS_TO_LOCAL);
 #else
       /* Write the data from the local data file to the fs file */
       fsal_status = FSAL_rcp(pfsal_handle, pcontext, &local_path, FSAL_RCP_FS_TO_LOCAL);
 #endif
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = CACHE_CONTENT_FSAL_ERROR;
 

@@ -129,7 +129,7 @@ static inline unsigned long hash_peer(ino_t parent_inode, char *name)
 
   hash = 1;
 
-  for (curr = name; *curr != '\0'; curr++)
+  for(curr = name; *curr != '\0'; curr++)
     hash = ((hash << 5) - hash + (unsigned long)(*curr));
 
   return (hash ^ (unsigned long)parent_inode);

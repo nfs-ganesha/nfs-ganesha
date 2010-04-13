@@ -15,14 +15,14 @@ int main(int argc, char **argv)
   handle_map_param_t param;
   time_t now;
 
-  if (argc != 3 || (count = atoi(argv[2])) == 0)
+  if(argc != 3 || (count = atoi(argv[2])) == 0)
     {
       printf("usage: test_handle_mapping <db_dir> <db_count>\n");
       exit(1);
     }
 #ifndef _NO_BUDDY_SYSTEM
 
-  if ((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
+  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
       DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: Could not initialize memory manager");
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
   rc = HandleMap_Init(&param);
 
   printf("HandleMap_Init() = %d\n", rc);
-  if (rc)
+  if(rc)
     exit(rc);
 
   gettimeofday(&tv1, NULL);
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
 
   now = time(NULL);
 
-  for (i = 0; i < 10000; i++)
+  for(i = 0; i < 10000; i++)
     {
       nfs23_map_handle_t nfs23_digest;
       fsal_handle_t handle;
@@ -73,7 +73,7 @@ int main(int argc, char **argv)
       nfs23_digest.handle_hash = (1999 * i + now) % 479001599;
 
       rc = HandleMap_SetFH(&nfs23_digest, &handle);
-      if (rc && (rc != HANDLEMAP_EXISTS))
+      if(rc && (rc != HANDLEMAP_EXISTS))
         exit(rc);
     }
 
@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 
   /* Now get them ! */
 
-  for (i = 0; i < 10000; i++)
+  for(i = 0; i < 10000; i++)
     {
       nfs23_map_handle_t nfs23_digest;
       fsal_handle_t handle;
@@ -95,14 +95,14 @@ int main(int argc, char **argv)
       nfs23_digest.handle_hash = (1999 * i + now) % 479001599;
 
       rc = HandleMap_GetFH(&nfs23_digest, &handle);
-      if (rc)
+      if(rc)
         {
           printf("Error %d retrieving handle !\n", rc);
           exit(rc);
         }
 
       rc = HandleMap_DelFH(&nfs23_digest);
-      if (rc)
+      if(rc)
         {
           printf("Error %d deleting handle !\n", rc);
           exit(rc);

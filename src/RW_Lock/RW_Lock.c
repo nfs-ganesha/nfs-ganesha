@@ -54,7 +54,7 @@ int P_r(rw_lock_t * plock)
   plock->nbr_waiting++;
 
   /* no new read lock is granted if writters are waiting or active */
-  if (plock->nbw_active > 0 || plock->nbw_waiting > 0)
+  if(plock->nbw_active > 0 || plock->nbw_waiting > 0)
     pthread_cond_wait(&(plock->condRead), &(plock->mutexProtect));
 
   /* There is no active or waiting writters, readers can go ... */
@@ -81,7 +81,7 @@ int V_r(rw_lock_t * plock)
   plock->nbr_active--;
 
   /* I was the last active reader, and there are some waiting writters, I let one of them go */
-  if (plock->nbr_active == 0 && plock->nbw_waiting > 0)
+  if(plock->nbr_active == 0 && plock->nbw_waiting > 0)
     {
       print_lock("V_r.2 lecteur libere un redacteur", plock);
       pthread_cond_signal(&plock->condWrite);
@@ -106,7 +106,7 @@ int P_w(rw_lock_t * plock)
   plock->nbw_waiting++;
 
   /* nobody must be active obtain exclusive lock */
-  while (plock->nbr_active > 0 || plock->nbw_active > 0)
+  while(plock->nbr_active > 0 || plock->nbw_active > 0)
     pthread_cond_wait(&plock->condWrite, &plock->mutexProtect);
 
   /* I become active and no more waiting */
@@ -131,7 +131,7 @@ int V_w(rw_lock_t * plock)
   /* I was the active writter, I am not it any more */
   plock->nbw_active--;
 
-  if (plock->nbw_waiting > 0)
+  if(plock->nbw_waiting > 0)
     {
 
       print_lock("V_w.4 redacteur libere un lecteur", plock);
@@ -142,7 +142,7 @@ int V_w(rw_lock_t * plock)
       print_lock("V_w.5", plock);
 
     }
-  else if (plock->nbr_waiting > 0)
+  else if(plock->nbr_waiting > 0)
     {
       /* if readers are waiting, let them go */
       print_lock("V_w.2 redacteur libere les lecteurs", plock);
@@ -168,7 +168,7 @@ int rw_lock_downgrade(rw_lock_t * plock)
   /* I was the active writter, I am not it any more */
   plock->nbw_active--;
 
-  if (plock->nbr_waiting > 0)
+  if(plock->nbr_waiting > 0)
     {
 
       /* there are waiting readers, I let all the readers go */
@@ -199,17 +199,17 @@ int rw_lock_init(rw_lock_t * plock)
   pthread_mutexattr_t mutex_attr;
   pthread_condattr_t cond_attr;
 
-  if ((rc = pthread_mutexattr_init(&mutex_attr) != 0))
+  if((rc = pthread_mutexattr_init(&mutex_attr) != 0))
     return 1;
-  if ((rc = pthread_condattr_init(&cond_attr) != 0))
-    return 1;
-
-  if ((rc = pthread_mutex_init(&(plock->mutexProtect), &mutex_attr)) != 0)
+  if((rc = pthread_condattr_init(&cond_attr) != 0))
     return 1;
 
-  if ((rc = pthread_cond_init(&(plock->condRead), &cond_attr)) != 0)
+  if((rc = pthread_mutex_init(&(plock->mutexProtect), &mutex_attr)) != 0)
     return 1;
-  if ((rc = pthread_cond_init(&(plock->condWrite), &cond_attr)) != 0)
+
+  if((rc = pthread_cond_init(&(plock->condRead), &cond_attr)) != 0)
+    return 1;
+  if((rc = pthread_cond_init(&(plock->condWrite), &cond_attr)) != 0)
     return 1;
 
   plock->nbr_waiting = 0;
@@ -228,12 +228,12 @@ int rw_lock_destroy(rw_lock_t * plock)
 {
   int rc = 0;
 
-  if ((rc = pthread_mutex_destroy(&(plock->mutexProtect))) != 0)
+  if((rc = pthread_mutex_destroy(&(plock->mutexProtect))) != 0)
     return 1;
 
-  if ((rc = pthread_cond_destroy(&(plock->condWrite))) != 0)
+  if((rc = pthread_cond_destroy(&(plock->condWrite))) != 0)
     return 1;
-  if ((rc = pthread_cond_destroy(&(plock->condRead))) != 0)
+  if((rc = pthread_cond_destroy(&(plock->condRead))) != 0)
     return 1;
 
   memset(plock, 0, sizeof(rw_lock_t));

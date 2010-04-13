@@ -146,7 +146,7 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
   pclient->stat.func_stats.nb_call[CACHE_INODE_GET] += 1;
 
   /* Turn the input to a hash key */
-  if (cache_inode_fsaldata_2_key(&key, pfsdata, pclient))
+  if(cache_inode_fsaldata_2_key(&key, pfsdata, pclient))
     {
       *pstatus = CACHE_INODE_UNAPPROPRIATED_KEY;
 
@@ -176,7 +176,7 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
       /* If we ask for a dir cont (in this case pfsdata.cookie != FSAL_DIR_BEGINNING, we have 
        * a client who performs a readdir in the middle of a directory, when the direcctories
        * have been garbbage. we must search for the DIR_BEGIN related to this DIR_CONT */
-      if (pfsdata->cookie != DIR_START)
+      if(pfsdata->cookie != DIR_START)
         {
           /* added for sanity check */
           DisplayLog
@@ -196,14 +196,14 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
       /* First, call FSAL to know what the object is */
       fsal_attributes.asked_attributes = pclient->attrmask;
       fsal_status = FSAL_getattrs(&pfsdata->handle, pcontext, &fsal_attributes);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
 
           DisplayLog("cache_inode_get: line %u cache_inode_status=%u fsal_status=%u,%u ",
                      __LINE__, *pstatus, fsal_status.major, fsal_status.minor);
 
-          if (fsal_status.major == ERR_FSAL_STALE)
+          if(fsal_status.major == ERR_FSAL_STALE)
             {
               cache_inode_status_t kill_status;
 
@@ -211,8 +211,8 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
                   ("cache_inode_get: Stale FSAL File Handle detected for pentry = %p",
                    pentry);
 
-              if (cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
-                  CACHE_INODE_SUCCESS)
+              if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+                 CACHE_INODE_SUCCESS)
                 DisplayLog("cache_inode_get: Could not kill entry %p, status = %u",
                            pentry, kill_status);
 
@@ -229,7 +229,7 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
         }
 
       /* The type has to be set in the attributes */
-      if (!FSAL_TEST_MASK(fsal_attributes.supported_attributes, FSAL_ATTR_TYPE))
+      if(!FSAL_TEST_MASK(fsal_attributes.supported_attributes, FSAL_ATTR_TYPE))
         {
           *pstatus = CACHE_INODE_FSAL_ERROR;
 
@@ -245,14 +245,14 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
       /* Get the cache_inode file type */
       type = cache_inode_fsal_type_convert(fsal_attributes.type);
 
-      if (type == SYMBOLIC_LINK)
+      if(type == SYMBOLIC_LINK)
         {
           FSAL_CLEAR_MASK(fsal_attributes.asked_attributes);
           FSAL_SET_MASK(fsal_attributes.asked_attributes, pclient->attrmask);
           fsal_status =
               FSAL_readlink(&pfsdata->handle, pcontext, &create_arg.link_content,
                             &fsal_attributes);
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             {
               *pstatus = cache_inode_error_convert(fsal_status);
 
@@ -262,7 +262,7 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
               /* Free this key */
               cache_inode_release_fsaldata_key(&key, pclient);
 
-              if (fsal_status.major == ERR_FSAL_STALE)
+              if(fsal_status.major == ERR_FSAL_STALE)
                 {
                   cache_inode_status_t kill_status;
 
@@ -270,8 +270,8 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
                       ("cache_inode_get: Stale FSAL File Handle detected for pentry = %p",
                        pentry);
 
-                  if (cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
-                      CACHE_INODE_SUCCESS)
+                  if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+                     CACHE_INODE_SUCCESS)
                     DisplayLog("cache_inode_get: Could not kill entry %p, status = %u",
                                pentry, kill_status);
 
@@ -309,7 +309,7 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
     }
 
   /* If the obtained entry is dead, do not return it */
-  if (pentry->async_health != CACHE_INODE_ASYNC_STAYING_ALIVE)
+  if(pentry->async_health != CACHE_INODE_ASYNC_STAYING_ALIVE)
     {
       /* You tried to get a dead entry */
       *pstatus = CACHE_INODE_DEAD_ENTRY;
@@ -325,8 +325,8 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
 
   /* valid the found entry, if this is not feasable, returns nothing to the client */
   P(pentry->lock);
-  if ((*pstatus =
-       cache_inode_valid(pentry, CACHE_INODE_OP_GET, pclient)) != CACHE_INODE_SUCCESS)
+  if((*pstatus =
+      cache_inode_valid(pentry, CACHE_INODE_OP_GET, pclient)) != CACHE_INODE_SUCCESS)
     {
       V(pentry->lock);
       pentry = NULL;

@@ -208,7 +208,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
 
   /* Build candidate attributes */
   fsal_status = FSAL_merge_attrs(p_object_attributes, pattr, &candidate_attributes);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       *pstatus = cache_inode_error_convert(fsal_status);
       V(pentry->lock);
@@ -221,7 +221,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
 
   /* Check witinh the attributes is we can do this setattr or not */
   fsal_status = FSAL_setattr_access(pcontext, &candidate_attributes, p_object_attributes);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       *pstatus = cache_inode_error_convert(fsal_status);
       V(pentry->lock);
@@ -239,7 +239,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
                pclient->nb_pre_async_op_desc, cache_inode_async_op_desc_t, next_alloc);
   V(pclient->pool_lock);
 
-  if (pasyncopdesc == NULL)
+  if(pasyncopdesc == NULL)
     {
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_SETATTR] += 1;
@@ -265,7 +265,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
   pasyncopdesc->origine_pool = pclient->pool_async_op;
   pasyncopdesc->ppool_lock = &pclient->pool_lock;
 
-  if (gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
+  if(gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
     {
       /* Could'not get time of day... Stopping, this may need a major failure */
       DisplayLog("cache_inode_setattr: cannot get time of day... exiting");
@@ -273,7 +273,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
     }
 
   /* Affect the operation to a synclet */
-  if (cache_inode_post_async_op(pasyncopdesc, pentry, pstatus) != CACHE_INODE_SUCCESS)
+  if(cache_inode_post_async_op(pasyncopdesc, pentry, pstatus) != CACHE_INODE_SUCCESS)
     {
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_SETATTR] += 1;
@@ -287,13 +287,13 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
     }
 
   /* Update the cached attributes */
-  if ((candidate_attributes.asked_attributes & FSAL_ATTR_SIZE) ||
-      (candidate_attributes.asked_attributes & FSAL_ATTR_SPACEUSED))
+  if((candidate_attributes.asked_attributes & FSAL_ATTR_SIZE) ||
+     (candidate_attributes.asked_attributes & FSAL_ATTR_SPACEUSED))
     {
 
-      if (pentry->internal_md.type == REGULAR_FILE)
+      if(pentry->internal_md.type == REGULAR_FILE)
         {
-          if (pentry->object.file.pentry_content == NULL)
+          if(pentry->object.file.pentry_content == NULL)
             {
               /* Operation on a non data cached file */
               p_object_attributes->filesize = candidate_attributes.filesize;
@@ -311,35 +311,35 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
 #endif
             }
         }
-      else if (pattr->asked_attributes & FSAL_ATTR_SIZE)
+      else if(pattr->asked_attributes & FSAL_ATTR_SIZE)
         DisplayLog
             ("WARNING !!! cache_inode_setattr tryed to operate size on a non REGULAR_FILE type=%d",
              pentry->internal_md.type);
     }
 
-  if (candidate_attributes.asked_attributes &
-      (FSAL_ATTR_MODE | FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
+  if(candidate_attributes.asked_attributes &
+     (FSAL_ATTR_MODE | FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
     {
-      if (candidate_attributes.asked_attributes & FSAL_ATTR_MODE)
+      if(candidate_attributes.asked_attributes & FSAL_ATTR_MODE)
         p_object_attributes->mode = candidate_attributes.mode;
 
-      if (candidate_attributes.asked_attributes & FSAL_ATTR_OWNER)
+      if(candidate_attributes.asked_attributes & FSAL_ATTR_OWNER)
         p_object_attributes->owner = candidate_attributes.owner;
 
-      if (candidate_attributes.asked_attributes & FSAL_ATTR_GROUP)
+      if(candidate_attributes.asked_attributes & FSAL_ATTR_GROUP)
         p_object_attributes->group = candidate_attributes.group;
     }
 
-  if (candidate_attributes.asked_attributes &
-      (FSAL_ATTR_ATIME | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))
+  if(candidate_attributes.asked_attributes &
+     (FSAL_ATTR_ATIME | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))
     {
-      if (candidate_attributes.asked_attributes & FSAL_ATTR_ATIME)
+      if(candidate_attributes.asked_attributes & FSAL_ATTR_ATIME)
         p_object_attributes->atime = candidate_attributes.atime;
 
-      if (candidate_attributes.asked_attributes & FSAL_ATTR_CTIME)
+      if(candidate_attributes.asked_attributes & FSAL_ATTR_CTIME)
         p_object_attributes->ctime = candidate_attributes.ctime;
 
-      if (candidate_attributes.asked_attributes & FSAL_ATTR_MTIME)
+      if(candidate_attributes.asked_attributes & FSAL_ATTR_MTIME)
         p_object_attributes->mtime = candidate_attributes.mtime;
     }
 
@@ -353,7 +353,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
   V(pentry->lock);
 
   /* stat */
-  if (*pstatus != CACHE_INODE_SUCCESS)
+  if(*pstatus != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_SETATTR] += 1;
   else
     pclient->stat.func_stats.nb_success[CACHE_INODE_SETATTR] += 1;

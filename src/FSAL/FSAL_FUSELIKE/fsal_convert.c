@@ -38,13 +38,13 @@ int fsal2posix_testperm(fsal_accessflags_t testperm)
 
   int posix_testperm = 0;
 
-  if (testperm & FSAL_R_OK)
+  if(testperm & FSAL_R_OK)
     posix_testperm |= R_OK;
-  if (testperm & FSAL_W_OK)
+  if(testperm & FSAL_W_OK)
     posix_testperm |= W_OK;
-  if (testperm & FSAL_X_OK)
+  if(testperm & FSAL_X_OK)
     posix_testperm |= X_OK;
-  if (testperm & FSAL_F_OK)
+  if(testperm & FSAL_F_OK)
     posix_testperm |= F_OK;
 
   return posix_testperm;
@@ -67,7 +67,7 @@ int fuse2fsal_error(int errorcode, int noent_is_stale)
 
   int error_abs = errorcode > 0 ? errorcode : -errorcode;
 
-  if (noent_is_stale && (error_abs == ENOENT))
+  if(noent_is_stale && (error_abs == ENOENT))
     return ERR_FSAL_STALE;
 
   switch (error_abs)
@@ -199,14 +199,14 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
   fsal_attrib_mask_t supp_attr, unsupp_attr;
 
   /* sanity checks */
-  if (!p_buffstat || !p_fsalattr_out)
+  if(!p_buffstat || !p_fsalattr_out)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   /* check that asked attributes are supported */
   supp_attr = global_fs_info.supported_attrs;
 
   unsupp_attr = (p_fsalattr_out->asked_attributes) & (~supp_attr);
-  if (unsupp_attr)
+  if(unsupp_attr)
     {
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
                         "Unsupported attributes: %#llX", unsupp_attr);
@@ -215,81 +215,81 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
     }
 
   /* Fills the output struct */
-  if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
     {
       p_fsalattr_out->supported_attributes = supp_attr;
     }
-  if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_TYPE))
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_TYPE))
     {
       p_fsalattr_out->type = posix2fsal_type(p_buffstat->st_mode);
     }
-  if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SIZE))
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SIZE))
     {
       p_fsalattr_out->filesize = p_buffstat->st_size;
     }
-  if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FSID))
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FSID))
     {
       p_fsalattr_out->fsid = posix2fsal_fsid(p_buffstat->st_dev);
     }
-  if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ACL))
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ACL))
     {
 
       /* XXX : manage ACL */
       int i;
-      for (i = 0; i < FSAL_MAX_ACL; i++)
+      for(i = 0; i < FSAL_MAX_ACL; i++)
         {
           p_fsalattr_out->acls[i].type = FSAL_ACL_EMPTY;        /* empty ACL slot */
         }
 
     }
-  if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
     {
       p_fsalattr_out->fileid = (fsal_u64_t) (p_buffstat->st_ino);
     }
 
-  if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MODE))
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MODE))
     {
       p_fsalattr_out->mode = unix2fsal_mode(p_buffstat->st_mode);
     }
-  if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_NUMLINKS))
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_NUMLINKS))
     {
       p_fsalattr_out->numlinks = p_buffstat->st_nlink;
     }
-  if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_OWNER))
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_OWNER))
     {
       p_fsalattr_out->owner = p_buffstat->st_uid;
     }
-  if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_GROUP))
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_GROUP))
     {
       p_fsalattr_out->group = p_buffstat->st_gid;
     }
-  if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ATIME))
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ATIME))
     {
       p_fsalattr_out->atime = posix2fsal_time(p_buffstat->st_atime);
 
     }
 
-  if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CTIME))
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CTIME))
     {
       p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime);
     }
-  if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME))
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME))
     {
       p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime);
     }
 
-  if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
     {
       p_fsalattr_out->chgtime
           = posix2fsal_time(MAX_2(p_buffstat->st_mtime, p_buffstat->st_ctime));
     }
 
-  if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
     {
       p_fsalattr_out->spaceused = p_buffstat->st_blocks * S_BLKSIZE;
     }
 
-  if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_RAWDEV))
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_RAWDEV))
     {
       p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);    /* XXX: convert ? */
     }
@@ -390,28 +390,28 @@ mode_t fsal2unix_mode(fsal_accessmode_t fsal_mode)
 
   mode_t out_mode = 0;
 
-  if ((fsal_mode & FSAL_MODE_SUID))
+  if((fsal_mode & FSAL_MODE_SUID))
     out_mode |= S_ISUID;
-  if ((fsal_mode & FSAL_MODE_SGID))
+  if((fsal_mode & FSAL_MODE_SGID))
     out_mode |= S_ISGID;
 
-  if ((fsal_mode & FSAL_MODE_RUSR))
+  if((fsal_mode & FSAL_MODE_RUSR))
     out_mode |= S_IRUSR;
-  if ((fsal_mode & FSAL_MODE_WUSR))
+  if((fsal_mode & FSAL_MODE_WUSR))
     out_mode |= S_IWUSR;
-  if ((fsal_mode & FSAL_MODE_XUSR))
+  if((fsal_mode & FSAL_MODE_XUSR))
     out_mode |= S_IXUSR;
-  if ((fsal_mode & FSAL_MODE_RGRP))
+  if((fsal_mode & FSAL_MODE_RGRP))
     out_mode |= S_IRGRP;
-  if ((fsal_mode & FSAL_MODE_WGRP))
+  if((fsal_mode & FSAL_MODE_WGRP))
     out_mode |= S_IWGRP;
-  if ((fsal_mode & FSAL_MODE_XGRP))
+  if((fsal_mode & FSAL_MODE_XGRP))
     out_mode |= S_IXGRP;
-  if ((fsal_mode & FSAL_MODE_ROTH))
+  if((fsal_mode & FSAL_MODE_ROTH))
     out_mode |= S_IROTH;
-  if ((fsal_mode & FSAL_MODE_WOTH))
+  if((fsal_mode & FSAL_MODE_WOTH))
     out_mode |= S_IWOTH;
-  if ((fsal_mode & FSAL_MODE_XOTH))
+  if((fsal_mode & FSAL_MODE_XOTH))
     out_mode |= S_IXOTH;
 
   return out_mode;
@@ -432,30 +432,30 @@ fsal_accessmode_t unix2fsal_mode(mode_t unix_mode)
 
   fsal_accessmode_t fsalmode = 0;
 
-  if (unix_mode & S_ISUID)
+  if(unix_mode & S_ISUID)
     fsalmode |= FSAL_MODE_SUID;
-  if (unix_mode & S_ISGID)
+  if(unix_mode & S_ISGID)
     fsalmode |= FSAL_MODE_SGID;
 
-  if (unix_mode & S_IRUSR)
+  if(unix_mode & S_IRUSR)
     fsalmode |= FSAL_MODE_RUSR;
-  if (unix_mode & S_IWUSR)
+  if(unix_mode & S_IWUSR)
     fsalmode |= FSAL_MODE_WUSR;
-  if (unix_mode & S_IXUSR)
+  if(unix_mode & S_IXUSR)
     fsalmode |= FSAL_MODE_XUSR;
 
-  if (unix_mode & S_IRGRP)
+  if(unix_mode & S_IRGRP)
     fsalmode |= FSAL_MODE_RGRP;
-  if (unix_mode & S_IWGRP)
+  if(unix_mode & S_IWGRP)
     fsalmode |= FSAL_MODE_WGRP;
-  if (unix_mode & S_IXGRP)
+  if(unix_mode & S_IXGRP)
     fsalmode |= FSAL_MODE_XGRP;
 
-  if (unix_mode & S_IROTH)
+  if(unix_mode & S_IROTH)
     fsalmode |= FSAL_MODE_ROTH;
-  if (unix_mode & S_IWOTH)
+  if(unix_mode & S_IWOTH)
     fsalmode |= FSAL_MODE_WOTH;
-  if (unix_mode & S_IXOTH)
+  if(unix_mode & S_IXOTH)
     fsalmode |= FSAL_MODE_XOTH;
 
   return fsalmode;

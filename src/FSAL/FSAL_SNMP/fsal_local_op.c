@@ -137,17 +137,17 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
 
   /* sanity checks. */
 
-  if (!object_attributes || !p_context)
+  if(!object_attributes || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_test_access);
 
   /* If the FSAL_F_OK flag is set, returns ERR INVAL */
 
-  if (access_type & FSAL_F_OK)
+  if(access_type & FSAL_F_OK)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_test_access);
 
   /* test root access */
 
-  if (p_context->user_credential.user == 0)
+  if(p_context->user_credential.user == 0)
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
 
   /* unsatisfied permissions */
@@ -156,21 +156,21 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
 
   /* Test if file belongs to user. */
 
-  if (p_context->user_credential.user == object_attributes->owner)
+  if(p_context->user_credential.user == object_attributes->owner)
     {
 
-      if (object_attributes->mode & FSAL_MODE_RUSR)
+      if(object_attributes->mode & FSAL_MODE_RUSR)
         missing_access &= ~FSAL_R_OK;
 
-      if (object_attributes->mode & FSAL_MODE_WUSR)
+      if(object_attributes->mode & FSAL_MODE_WUSR)
         missing_access &= ~FSAL_W_OK;
 
-      if (object_attributes->mode & FSAL_MODE_XUSR)
+      if(object_attributes->mode & FSAL_MODE_XUSR)
         missing_access &= ~FSAL_X_OK;
 
       /*printf("MISSING ACCESS=%#o\n", missing_access ); */
 
-      if (missing_access == 0)
+      if(missing_access == 0)
         Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
       else
         Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
@@ -181,25 +181,25 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
 
   is_grp = (p_context->user_credential.group == object_attributes->group);
 
-  if (!is_grp)
+  if(!is_grp)
     {
       /* >> Test here if file belongs to user's alt groups << */
     }
 
   /* finally apply group rights */
 
-  if (is_grp)
+  if(is_grp)
     {
-      if (object_attributes->mode & FSAL_MODE_RGRP)
+      if(object_attributes->mode & FSAL_MODE_RGRP)
         missing_access &= ~FSAL_R_OK;
 
-      if (object_attributes->mode & FSAL_MODE_WGRP)
+      if(object_attributes->mode & FSAL_MODE_WGRP)
         missing_access &= ~FSAL_W_OK;
 
-      if (object_attributes->mode & FSAL_MODE_XGRP)
+      if(object_attributes->mode & FSAL_MODE_XGRP)
         missing_access &= ~FSAL_X_OK;
 
-      if (missing_access == 0)
+      if(missing_access == 0)
         Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
       else
         Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
@@ -208,18 +208,18 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
 
   /* test other perms */
 
-  if (object_attributes->mode & FSAL_MODE_ROTH)
+  if(object_attributes->mode & FSAL_MODE_ROTH)
     missing_access &= ~FSAL_R_OK;
 
-  if (object_attributes->mode & FSAL_MODE_WOTH)
+  if(object_attributes->mode & FSAL_MODE_WOTH)
     missing_access &= ~FSAL_W_OK;
 
-  if (object_attributes->mode & FSAL_MODE_XOTH)
+  if(object_attributes->mode & FSAL_MODE_XOTH)
     missing_access &= ~FSAL_X_OK;
 
   /** @todo: ACLs. */
 
-  if (missing_access == 0)
+  if(missing_access == 0)
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
   else
     Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
@@ -302,7 +302,7 @@ fsal_status_t FSAL_create_access(fsal_op_context_t * pcontext,  /* IN */
   fsal_status_t fsal_status;
 
   fsal_status = FSAL_test_access(pcontext, FSAL_W_OK, pattr);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_create_access);
 
   /* If this point is reached, then access is granted */
@@ -329,7 +329,7 @@ fsal_status_t FSAL_unlink_access(fsal_op_context_t * pcontext,  /* IN */
   fsal_status_t fsal_status;
 
   fsal_status = FSAL_test_access(pcontext, FSAL_W_OK, pattr);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_unlink_access);
 
   /* If this point is reached, then access is granted */
@@ -356,35 +356,35 @@ fsal_status_t FSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
                                fsal_attrib_list_t * pnew_attr,
                                fsal_attrib_list_t * presult_attr)
 {
-  if (pinit_attr == NULL || pnew_attr == NULL || presult_attr == NULL)
+  if(pinit_attr == NULL || pnew_attr == NULL || presult_attr == NULL)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_merge_attrs);
 
   /* The basis for the result attr is the fist argument */
   *presult_attr = *pinit_attr;
 
   /* Now deal with the attributes to be merged in this set of attributes */
-  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_MODE))
+  if(FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_MODE))
     presult_attr->mode = pnew_attr->mode;
 
-  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_OWNER))
+  if(FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_OWNER))
     presult_attr->owner = pnew_attr->owner;
 
-  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_GROUP))
+  if(FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_GROUP))
     presult_attr->group = pnew_attr->group;
 
-  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_SIZE))
+  if(FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_SIZE))
     presult_attr->filesize = pnew_attr->filesize;
 
-  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_SPACEUSED))
+  if(FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_SPACEUSED))
     presult_attr->spaceused = pnew_attr->spaceused;
 
-  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_ATIME))
+  if(FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_ATIME))
     {
       presult_attr->atime.seconds = pnew_attr->atime.seconds;
       presult_attr->atime.nseconds = pnew_attr->atime.nseconds;
     }
 
-  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_MTIME))
+  if(FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_MTIME))
     {
       presult_attr->mtime.seconds = pnew_attr->mtime.seconds;
       presult_attr->mtime.nseconds = pnew_attr->mtime.nseconds;

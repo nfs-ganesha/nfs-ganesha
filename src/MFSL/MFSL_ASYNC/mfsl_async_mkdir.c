@@ -130,7 +130,7 @@ fsal_status_t MFSL_mkdir_async_op(mfsl_async_op_desc_t * popasyncdesc)
                             &popasyncdesc->op_args.mkdir.dirname,
                             &popasyncdesc->fsal_op_context, &attrsrc, &attrdest);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       V(popasyncdesc->op_args.mkdir.pmfsl_obj_dirdest->lock);
 
@@ -145,11 +145,11 @@ fsal_status_t MFSL_mkdir_async_op(mfsl_async_op_desc_t * popasyncdesc)
 
   V(popasyncdesc->op_args.mkdir.pmfsl_obj_dirdest->lock);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   /* If user is not root, setattr to chown the entry */
-  if (popasyncdesc->op_args.mkdir.owner != 0)
+  if(popasyncdesc->op_args.mkdir.owner != 0)
     {
       chown_attr.asked_attributes = FSAL_ATTR_MODE | FSAL_ATTR_OWNER | FSAL_ATTR_GROUP;
       chown_attr.mode = popasyncdesc->op_args.mkdir.mode;
@@ -187,7 +187,7 @@ fsal_status_t MFSAL_mkdir_check_perms(mfsl_object_t * target_handle,
 
   fsal_status = FSAL_create_access(p_context, object_attributes);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   /** @todo : put some stuff in this function */
@@ -230,7 +230,7 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,       /* IN */
                                         p_dirname,
                                         p_context, p_mfsl_context, parent_attributes);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   P(p_mfsl_context->lock);
@@ -245,10 +245,10 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,       /* IN */
 
   V(p_mfsl_context->lock);
 
-  if (pasyncopdesc == NULL)
+  if(pasyncopdesc == NULL)
     MFSL_return(ERR_FSAL_INVAL, 0);
 
-  if (gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
+  if(gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
     {
       /* Could'not get time of day... Stopping, this may need a major failure */
       DisplayLog("MFSL_link: cannot get time of day... exiting");
@@ -281,7 +281,7 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,       /* IN */
   pasyncopdesc->op_res.mkdir.attr.supported_attributes =
       object_attributes->supported_attributes;
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   pasyncopdesc->op_func = MFSL_mkdir_async_op;
@@ -292,7 +292,7 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,       /* IN */
   pasyncopdesc->ptr_mfsl_context = (caddr_t) p_mfsl_context;
 
   fsal_status = MFSL_async_post(pasyncopdesc);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   /* Update the asynchronous metadata */
@@ -311,7 +311,7 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,       /* IN */
 
   newdir_pasyncdata->deleted = FALSE;
 
-  if (!mfsl_async_set_specdata(pnewdir_handle, newdir_pasyncdata))
+  if(!mfsl_async_set_specdata(pnewdir_handle, newdir_pasyncdata))
     MFSL_return(ERR_FSAL_SERVERFAULT, 0);
 
   /* Return the correct attributes */

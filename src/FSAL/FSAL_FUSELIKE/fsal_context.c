@@ -45,7 +45,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
   int rc;
 
   /* sanity check */
-  if (!p_export_context)
+  if(!p_export_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
 
   /* TODO */
@@ -66,7 +66,7 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
   int rc, i;
 
   /* sanity check */
-  if (!p_thr_context)
+  if(!p_thr_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
 
   /* initialy set the export entry to none */
@@ -122,7 +122,7 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
   fsal_status_t st;
 
   /* sanity check */
-  if (!p_thr_context || !p_export_context)
+  if(!p_thr_context || !p_export_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
 
   /* set the specific export context */

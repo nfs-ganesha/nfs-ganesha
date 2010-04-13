@@ -70,7 +70,7 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if (!parent_directory_handle || !p_context || !object_handle || !p_filename)
+  if(!parent_directory_handle || !p_context || !object_handle || !p_filename)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_create);
 
   /* OK */
@@ -129,7 +129,7 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if (!parent_directory_handle || !p_context || !object_handle || !p_dirname)
+  if(!parent_directory_handle || !p_context || !object_handle || !p_dirname)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mkdir);
 
   /* >> convert fsal args to your fs args.
@@ -191,12 +191,12 @@ fsal_status_t FSAL_link(fsal_handle_t * target_handle,  /* IN */
   /* sanity checks.
    * note : attributes is optional.
    */
-  if (!target_handle || !dir_handle || !p_context || !p_link_name)
+  if(!target_handle || !dir_handle || !p_context || !p_link_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_link);
 
   /* Tests if hardlinking is allowed by configuration. */
 
-  if (!global_fs_info.link_support)
+  if(!global_fs_info.link_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
 
   /* OK */
@@ -225,7 +225,7 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
   /* sanity checks.
    * note : link_attributes is optional.
    */
-  if (!parentdir_handle || !p_context || !nodetype || !dev || !p_node_name)
+  if(!parentdir_handle || !p_context || !nodetype || !dev || !p_node_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mknode);
 
   /* Not implemented */

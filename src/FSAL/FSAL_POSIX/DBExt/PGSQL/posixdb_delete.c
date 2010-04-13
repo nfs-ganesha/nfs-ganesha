@@ -21,7 +21,7 @@ fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
    * 1/ sanity check *
    *******************/
 
-  if (!p_conn || !p_parent_directory_handle || !p_filename)
+  if(!p_conn || !p_parent_directory_handle || !p_filename)
     ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
 
   CheckConn(p_conn);
@@ -41,7 +41,7 @@ fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
   p_res = PQexecPrepared(p_conn, "lookupHandleByNameFU", 3, paramValues, NULL, NULL, 0);
   CheckResult(p_res);
 
-  if (PQntuples(p_res) != 1)
+  if(PQntuples(p_res) != 1)
     {
       /* parent entry not found */
       RollbackTransaction(p_conn, p_res);
@@ -55,7 +55,7 @@ fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
 
   st = fsal_posixdb_internal_delete(p_conn, handleidparent_str, handletsparent_str,
                                     p_filename->name, p_object_info);
-  if (FSAL_POSIXDB_IS_ERROR(st))
+  if(FSAL_POSIXDB_IS_ERROR(st))
     {
       RollbackTransaction(p_conn, p_res);
       return st;
@@ -97,12 +97,12 @@ fsal_posixdb_status_t fsal_posixdb_deleteHandle(fsal_posixdb_conn * p_conn,     
   found = PQntuples(p_res);
   PQclear(p_res);
 
-  if (found)
+  if(found)
     {
       /* entry found */
       st = fsal_posixdb_recursiveDelete(p_conn, handleid_str, handlets_str,
                                         FSAL_TYPE_DIR);
-      if (FSAL_POSIXDB_IS_ERROR(st))
+      if(FSAL_POSIXDB_IS_ERROR(st))
         {
           RollbackTransaction(p_conn, p_res);
           return st;

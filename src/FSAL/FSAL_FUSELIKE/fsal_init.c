@@ -100,7 +100,7 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
 
   /* call filesystem's init */
 
-  if (p_fs_ops->init)
+  if(p_fs_ops->init)
     {
       fs_private_data = p_fs_ops->init(&conn);
     }
@@ -114,12 +114,12 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
    * getattr is mandatory !
    */
 
-  if (!p_fs_ops->getattr)
+  if(!p_fs_ops->getattr)
     return -ENOSYS;
 
   rc = p_fs_ops->getattr("/", &stbuf);
 
-  if (rc)
+  if(rc)
     {
       DisplayLogJdLevel(fsal_log, NIV_CRIT,
                         "FSAL INIT: Could not call initial 'getattr' on filesystem root");
@@ -130,7 +130,7 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
   /* generation based on ctime for avoiding stale handles */
   root_gen = stbuf.st_ctime;
 
-  if (stbuf.st_ino == 0)
+  if(stbuf.st_ino == 0)
     {
       /* filesystem does not provide inodes ! */
       DisplayLog("WARNING in lookup: filesystem does not provide inode numbers");
@@ -175,12 +175,12 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
 
   /* sanity check.  */
 
-  if (!init_info)
+  if(!init_info)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
 
   /* >> You can check args bellow << */
 
-  if (init_info->fsal_info.log_outputs.liste_voies == NULL)
+  if(init_info->fsal_info.log_outputs.liste_voies == NULL)
     {
       /* issue a warning on stderr */
       DisplayLog
@@ -192,12 +192,12 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
   status = fsal_internal_init_global(&(init_info->fsal_info),
                                      &(init_info->fs_common_info));
 
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_Init);
 
   /* initialize filesystem stuff */
 
-  if (rc = FS_Specific_Init(&init_info->fs_specific_info))
+  if(rc = FS_Specific_Init(&init_info->fs_specific_info))
     Return(ERR_FSAL_BAD_INIT, -rc, INDEX_FSAL_Init);
 
   /* Everything went OK. */

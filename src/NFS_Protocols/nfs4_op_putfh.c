@@ -158,30 +158,30 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   res_PUTFH4.status = NFS4_OK;
 
   /* If there is no FH */
-  if (nfs4_Is_Fh_Empty(&(arg_PUTFH4.object)))
+  if(nfs4_Is_Fh_Empty(&(arg_PUTFH4.object)))
     {
       res_PUTFH4.status = NFS4ERR_NOFILEHANDLE;
       return res_PUTFH4.status;
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(arg_PUTFH4.object)))
+  if(nfs4_Is_Fh_Invalid(&(arg_PUTFH4.object)))
     {
       res_PUTFH4.status = NFS4ERR_BADHANDLE;
       return res_PUTFH4.status;
     }
 
   /* Tests if teh Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(arg_PUTFH4.object)))
+  if(nfs4_Is_Fh_Expired(&(arg_PUTFH4.object)))
     {
       res_PUTFH4.status = NFS4ERR_FHEXPIRED;
       return res_PUTFH4.status;
     }
 
   /* If no currentFH were set, allocate one */
-  if (data->currentFH.nfs_fh4_len == 0)
+  if(data->currentFH.nfs_fh4_len == 0)
     {
-      if ((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
+      if((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
         {
           res_PUTFH4.status = error;
           return res_PUTFH4.status;
@@ -189,9 +189,9 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* The same is to be done with mounted_on_FH */
-  if (data->mounted_on_FH.nfs_fh4_len == 0)
+  if(data->mounted_on_FH.nfs_fh4_len == 0)
     {
-      if ((error = nfs4_AllocateFH(&(data->mounted_on_FH))) != NFS4_OK)
+      if((error = nfs4_AllocateFH(&(data->mounted_on_FH))) != NFS4_OK)
         {
           res_PUTFH4.status = error;
           return res_PUTFH4.status;
@@ -213,7 +213,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   DisplayLog("NFS4_OP_PUTFH CURRENTFH BEFORE: File handle = %s", outstr);
 #endif
   /* If the filehandle is not pseudo hs file handle, get the entry related to it, otherwise use fake values */
-  if (nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     {
       data->current_entry = NULL;
       data->current_filetype = DIR_BEGINNING;
@@ -222,9 +222,9 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   else
     {
       /* If data->exportp is null, a junction from pseudo fs was traversed, credp and exportp have to be updated */
-      if (data->pexport == NULL)
+      if(data->pexport == NULL)
         {
-          if ((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
+          if((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
             {
               res_PUTFH4.status = error;
               return res_PUTFH4.status;
@@ -232,17 +232,16 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
 
       /* Build the pentry */
-      if ((data->current_entry = nfs_FhandleToCache(NFS_V4,
-                                                    NULL,
-                                                    NULL,
-                                                    &(data->currentFH),
-                                                    NULL,
-                                                    NULL,
-                                                    &(res_PUTFH4.status),
-                                                    &attr,
-                                                    data->pcontext,
-                                                    data->pclient,
-                                                    data->ht, &rc)) == NULL)
+      if((data->current_entry = nfs_FhandleToCache(NFS_V4,
+                                                   NULL,
+                                                   NULL,
+                                                   &(data->currentFH),
+                                                   NULL,
+                                                   NULL,
+                                                   &(res_PUTFH4.status),
+                                                   &attr,
+                                                   data->pcontext,
+                                                   data->pclient, data->ht, &rc)) == NULL)
         {
           res_PUTFH4.status = NFS4ERR_BADHANDLE;
           return res_PUTFH4.status;

@@ -107,7 +107,7 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
   /* sanity checks.
    * note : object_attributes is optional in FSAL_access.
    */
-  if (!object_handle || !p_context)
+  if(!object_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_access);
 
   /* Setup results structures */
@@ -125,22 +125,22 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
   fsal_internal_proxy_create_fattr_bitmap(&bitmap);
 
   /* Set up access flags */
-  if (access_type & FSAL_R_OK)
+  if(access_type & FSAL_R_OK)
     accessflag |= ACCESS4_READ;
 
-  if (access_type & FSAL_X_OK)
+  if(access_type & FSAL_X_OK)
     accessflag |= ACCESS4_LOOKUP;
 
-  if (access_type & FSAL_W_OK)
+  if(access_type & FSAL_W_OK)
     accessflag |= (ACCESS4_MODIFY & ACCESS4_EXTEND);
 
-  if (access_type & FSAL_F_OK)
+  if(access_type & FSAL_F_OK)
     accessflag |= ACCESS4_LOOKUP;
 
   /* >> convert your fsal access type to your FS access type << */
 
   /* Get NFSv4 File handle */
-  if (fsal_internal_proxy_extract_fh(&nfs4fh, object_handle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, object_handle) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_access);
 
 #define FSAL_ACCESS_IDX_OP_PUTFH    0
@@ -151,23 +151,23 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
   COMPOUNDV4_ARG_ADD_OP_ACCESS(argnfs4, accessflag);
   COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, bitmap);
 
-  resnfs4.resarray.resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
-      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
-  resnfs4.resarray.resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
-      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
+  resnfs4.resarray.resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
-      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+  resnfs4.resarray.resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
       (char *)&fattr_internal;
-  resnfs4.resarray.resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
-      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+  resnfs4.resarray.resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
       sizeof(fattr_internal);
 
   TakeTokenFSCall();
 
   /* Call the NFSv4 function */
   COMPOUNDV4_EXECUTE(p_context, argnfs4, resnfs4, rc);
-  if (rc != RPC_SUCCESS)
+  if(rc != RPC_SUCCESS)
     {
       ReleaseTokenFSCall();
 
@@ -177,20 +177,21 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
   ReleaseTokenFSCall();
 
   /* >> convert the returned code, an return it on error << */
-  if (resnfs4.status != NFS4_OK)
+  if(resnfs4.status != NFS4_OK)
     return fsal_internal_proxy_error_convert(resnfs4.status, INDEX_FSAL_access);
 
   /* get attributes if object_attributes is not null.
    * If an error occures during getattr operation,
    * an error bit is set in the output structure.
    */
-  if (object_attributes)
+  if(object_attributes)
     {
       /* Use NFSv4 service function to build the FSAL_attr */
-      if (nfs4_Fattr_To_FSAL_attr(object_attributes,
-                                  &resnfs4.resarray.
-                                  resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.
-                                  opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
+      if(nfs4_Fattr_To_FSAL_attr(object_attributes,
+                                 &resnfs4.
+                                 resarray.resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].
+                                 nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
+                                 obj_attributes) != 1)
         {
           FSAL_CLEAR_MASK(object_attributes->asked_attributes);
           FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

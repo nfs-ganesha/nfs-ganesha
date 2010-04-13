@@ -154,42 +154,42 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
   res_SETATTR4.status = NFS4_OK;
 
   /* If there is no FH */
-  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
+  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
       res_SETATTR4.status = NFS4ERR_NOFILEHANDLE;
       return res_SETATTR4.status;
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
       res_SETATTR4.status = NFS4ERR_BADHANDLE;
       return res_SETATTR4.status;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
       res_SETATTR4.status = NFS4ERR_FHEXPIRED;
       return res_SETATTR4.status;
     }
 
   /* Pseudo Fs is explictely a Read-Only File system */
-  if (nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     {
       res_SETATTR4.status = NFS4ERR_ROFS;
       return res_SETATTR4.status;
     }
 
   /* Get only attributes that are allowed to be read */
-  if (!nfs4_Fattr_Check_Access(&arg_SETATTR4.obj_attributes, FATTR4_ATTR_WRITE))
+  if(!nfs4_Fattr_Check_Access(&arg_SETATTR4.obj_attributes, FATTR4_ATTR_WRITE))
     {
       res_SETATTR4.status = NFS4ERR_INVAL;
       return res_SETATTR4.status;
     }
 
   /* Ask only for supported attributes */
-  if (!nfs4_Fattr_Supported(&arg_SETATTR4.obj_attributes))
+  if(!nfs4_Fattr_Supported(&arg_SETATTR4.obj_attributes))
     {
       res_SETATTR4.status = NFS4ERR_ATTRNOTSUPP;
       return res_SETATTR4.status;
@@ -198,13 +198,13 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
   /* Convert the fattr4 in the request to a nfs3_sattr structure */
   rc = nfs4_Fattr_To_FSAL_attr(&sattr, &(arg_SETATTR4.obj_attributes));
 
-  if (rc == 0)
+  if(rc == 0)
     {
       res_SETATTR4.status = NFS4ERR_ATTRNOTSUPP;
       return res_SETATTR4.status;
     }
 
-  if (rc == -1)
+  if(rc == -1)
     {
       res_SETATTR4.status = NFS4ERR_BADXDR;
       return res_SETATTR4.status;
@@ -214,23 +214,23 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
    * trunc may change Xtime so we have to start with trunc and finish
    * by the mtime and atime 
    */
-  if (FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_SIZE))
+  if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_SIZE))
     {
       /* Setting the size of a directory is prohibited */
-      if (data->current_filetype == DIR_BEGINNING
-          || data->current_filetype == DIR_CONTINUE)
+      if(data->current_filetype == DIR_BEGINNING
+         || data->current_filetype == DIR_CONTINUE)
         {
           res_SETATTR4.status = NFS4ERR_ISDIR;
           return res_SETATTR4.status;
         }
 
-      if ((cache_status = cache_inode_truncate(data->current_entry,
-                                               sattr.filesize,
-                                               &parent_attr,
-                                               data->ht,
-                                               data->pclient,
-                                               data->pcontext,
-                                               &cache_status)) != CACHE_INODE_SUCCESS)
+      if((cache_status = cache_inode_truncate(data->current_entry,
+                                              sattr.filesize,
+                                              &parent_attr,
+                                              data->ht,
+                                              data->pclient,
+                                              data->pcontext,
+                                              &cache_status)) != CACHE_INODE_SUCCESS)
         {
           res_SETATTR4.status = nfs4_Errno(cache_status);
           return res_SETATTR4.status;
@@ -238,20 +238,20 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
     }
 
   /* Now, we set the mode */
-  if (FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MODE) ||
-      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_OWNER) ||
-      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_GROUP) ||
-      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MTIME) ||
-      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME))
+  if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MODE) ||
+     FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_OWNER) ||
+     FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_GROUP) ||
+     FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MTIME) ||
+     FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME))
     {
       /* Check for root access when using chmod */
-      if (FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MODE))
+      if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MODE))
         {
-          if (((sattr.mode & 0x800) &&
-               ((data->pexport->options & EXPORT_OPTION_NOSUID) == EXPORT_OPTION_NOSUID))
-              || ((sattr.mode & 0x400)
-                  && ((data->pexport->options & EXPORT_OPTION_NOSGID) ==
-                      EXPORT_OPTION_NOSGID)))
+          if(((sattr.mode & 0x800) &&
+              ((data->pexport->options & EXPORT_OPTION_NOSUID) == EXPORT_OPTION_NOSUID))
+             || ((sattr.mode & 0x400)
+                 && ((data->pexport->options & EXPORT_OPTION_NOSGID) ==
+                     EXPORT_OPTION_NOSGID)))
             {
               res_SETATTR4.status = NFS4ERR_PERM;
               return res_SETATTR4.status;
@@ -263,7 +263,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
 
       /* Set the atime and mtime (ctime is not setable) */
       /** @todo : check correctness of this block... looks suspicious */
-      if (FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME) == SET_TO_SERVER_TIME4)
+      if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME) == SET_TO_SERVER_TIME4)
         {
           sattr.atime.seconds = t.tv_sec;
           sattr.atime.nseconds = t.tv_usec;
@@ -271,18 +271,18 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
 
       /* Should we use the time from the client handside or from the server handside ? */
       /** @todo : check correctness of this block... looks suspicious */
-      if (FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MTIME) == SET_TO_SERVER_TIME4)
+      if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MTIME) == SET_TO_SERVER_TIME4)
         {
           sattr.mtime.seconds = t.tv_sec;
           sattr.mtime.nseconds = t.tv_usec;
         }
 #endif
 
-      if (cache_inode_setattr(data->current_entry,
-                              &sattr,
-                              data->ht,
-                              data->pclient,
-                              data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+      if(cache_inode_setattr(data->current_entry,
+                             &sattr,
+                             data->ht,
+                             data->pclient,
+                             data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
         {
           res_SETATTR4.status = nfs4_Errno(cache_status);
           return res_SETATTR4.status;
@@ -292,8 +292,8 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
   /* Set the replyed structure */
   res_SETATTR4.attrsset.bitmap4_len = arg_SETATTR4.obj_attributes.attrmask.bitmap4_len;
 
-  if ((res_SETATTR4.attrsset.bitmap4_val =
-       (uint32_t *) Mem_Alloc(res_SETATTR4.attrsset.bitmap4_len * sizeof(u_int))) == NULL)
+  if((res_SETATTR4.attrsset.bitmap4_val =
+      (uint32_t *) Mem_Alloc(res_SETATTR4.attrsset.bitmap4_len * sizeof(u_int))) == NULL)
     {
       res_SETATTR4.status = NFS4ERR_SERVERFAULT;
       return res_SETATTR4.status;
@@ -323,7 +323,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
  */
 void nfs4_op_setattr_Free(SETATTR4res * resp)
 {
-  if (resp->status == NFS4_OK)
+  if(resp->status == NFS4_OK)
     Mem_Free(resp->attrsset.bitmap4_val);
   return;
 }                               /* nfs4_op_setattr_Free */

@@ -175,13 +175,13 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
   memset(pres, 0, sizeof(nfs_res_t));
 
 #ifdef _DETECT_MEMCORRUPT
-  if (!BuddyCheck(parg->arg_mnt))
+  if(!BuddyCheck(parg->arg_mnt))
     {
       fprintf(stderr, "Memory corruption in mnt_Mnt. arg_mnt = %p\n", parg->arg_mnt);
     }
 #endif
 
-  if (parg->arg_mnt == NULL)
+  if(parg->arg_mnt == NULL)
     {
       DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
                         "/!\\ | MOUNT: NULL path passed as Mount argument !!!");
@@ -197,13 +197,13 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
   /*
    * Find the export for the dirname (using as well Path or Tag ) 
    */
-  for (p_current_item = pexport; p_current_item != NULL;
-       p_current_item = p_current_item->next)
+  for(p_current_item = pexport; p_current_item != NULL;
+      p_current_item = p_current_item->next)
     {
-      if (exportPath[0] != '/')
+      if(exportPath[0] != '/')
         {
           /* The input value may be a "Tag" */
-          if (!strcmp(exportPath, p_current_item->FS_tag))
+          if(!strcmp(exportPath, p_current_item->FS_tag))
             {
               strncpy(exported_path, p_current_item->fullpath, MAXPATHLEN);
               bytag = TRUE;
@@ -213,19 +213,19 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
       else
         {
           /* Make sure the path in export entry ends with a '/', if not adds one */
-          if (p_current_item->fullpath[strlen(p_current_item->fullpath) - 1] == '/')
+          if(p_current_item->fullpath[strlen(p_current_item->fullpath) - 1] == '/')
             strncpy(tmplist_path, p_current_item->fullpath, MAXPATHLEN);
           else
             snprintf(tmplist_path, MAXPATHLEN, "%s/", p_current_item->fullpath);
 
           /* Make sure that the argument from MNT ends with a '/', if not adds one */
-          if (exportPath[strlen(exportPath) - 1] == '/')
+          if(exportPath[strlen(exportPath) - 1] == '/')
             strncpy(tmpexport_path, exportPath, MAXPATHLEN);
           else
             snprintf(tmpexport_path, MAXPATHLEN, "%s/", exportPath);
 
           /* Is tmplist_path a subdirectory of tmpexport_path ? */
-          if (!strncmp(tmplist_path, tmpexport_path, strlen(tmplist_path)))
+          if(!strncmp(tmplist_path, tmpexport_path, strlen(tmplist_path)))
             {
               strncpy(exported_path, p_current_item->fullpath, MAXPATHLEN);
               break;
@@ -237,7 +237,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
    * it points to the asked export entry.
    */
 
-  if (!p_current_item)
+  if(!p_current_item)
     {
       DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
                         "MOUNT: Export entry %s not found", exportPath);
@@ -270,9 +270,9 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
    */
 
   pfsal_handle = p_current_item->proot_handle;
-  if (!(bytag == TRUE || !strncmp(tmpexport_path, tmplist_path, MAXPATHLEN)))
+  if(!(bytag == TRUE || !strncmp(tmpexport_path, tmplist_path, MAXPATHLEN)))
     {
-      if (FSAL_IS_ERROR(FSAL_str2path(tmpexport_path, MAXPATHLEN, &fsal_path)))
+      if(FSAL_IS_ERROR(FSAL_str2path(tmpexport_path, MAXPATHLEN, &fsal_path)))
         {
           switch (preq->rq_vers)
             {
@@ -287,7 +287,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
           return NFS_REQ_OK;
         }
 
-      if (FSAL_IS_ERROR(FSAL_lookupPath(&fsal_path, pcontext, pfsal_handle, NULL)))
+      if(FSAL_IS_ERROR(FSAL_lookupPath(&fsal_path, pcontext, pfsal_handle, NULL)))
         {
           switch (preq->rq_vers)
             {
@@ -307,8 +307,8 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
   switch (preq->rq_vers)
     {
     case MOUNT_V1:
-      if (!nfs2_FSALToFhandle(&(pres->res_mnt1.fhstatus2_u.directory),
-                              pfsal_handle, p_current_item))
+      if(!nfs2_FSALToFhandle(&(pres->res_mnt1.fhstatus2_u.directory),
+                             pfsal_handle, p_current_item))
         {
           pres->res_mnt1.status = NFSERR_IO;
         }
@@ -319,14 +319,14 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
       break;
 
     case MOUNT_V3:
-      if ((pres->res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val =
-           Mem_Alloc(NFS3_FHSIZE)) == NULL)
+      if((pres->res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val =
+          Mem_Alloc(NFS3_FHSIZE)) == NULL)
         pres->res_mnt3.fhs_status = MNT3ERR_INVAL;      /* BUGAZOMEU: pas forcement le meilleur code retour ... */
       else
         {
-          if (!nfs3_FSALToFhandle
-              ((nfs_fh3 *) & (pres->res_mnt3.mountres3_u.mountinfo.fhandle), pfsal_handle,
-               p_current_item))
+          if(!nfs3_FSALToFhandle
+             ((nfs_fh3 *) & (pres->res_mnt3.mountres3_u.mountinfo.fhandle), pfsal_handle,
+              p_current_item))
             {
               pres->res_mnt3.fhs_status = MNT3ERR_INVAL;
             }
@@ -342,14 +342,14 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
     }
 
   /* Return the supported authentication flavor in V3 */
-  if (preq->rq_vers == MOUNT_V3)
+  if(preq->rq_vers == MOUNT_V3)
     {
-      if (p_current_item->options & EXPORT_OPTION_AUTH_NONE)
+      if(p_current_item->options & EXPORT_OPTION_AUTH_NONE)
         auth_flavor[index_auth++] = AUTH_NONE;
-      if (p_current_item->options & EXPORT_OPTION_AUTH_UNIX)
+      if(p_current_item->options & EXPORT_OPTION_AUTH_UNIX)
         auth_flavor[index_auth++] = AUTH_UNIX;
 #ifdef _USE_GSSRPC
-      if (nfs_param.krb5_param.active_krb5 == TRUE)
+      if(nfs_param.krb5_param.active_krb5 == TRUE)
         {
           auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;
           auth_flavor[index_auth++] = MNT_RPC_GSS_INTEGRITY;
@@ -361,12 +361,12 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
                         "MOUNT: Entry support %d different flavours", index_auth);
 
 #define RES_MOUNTINFO pres->res_mnt3.mountres3_u.mountinfo
-      if ((RES_MOUNTINFO.auth_flavors.auth_flavors_val =
-           (int *)Mem_Alloc(index_auth * sizeof(int))) == NULL)
+      if((RES_MOUNTINFO.auth_flavors.auth_flavors_val =
+          (int *)Mem_Alloc(index_auth * sizeof(int))) == NULL)
         return NFS_REQ_DROP;
 
       RES_MOUNTINFO.auth_flavors.auth_flavors_len = index_auth;
-      for (i = 0; i < index_auth; i++)
+      for(i = 0; i < index_auth; i++)
         RES_MOUNTINFO.auth_flavors.auth_flavors_val[i] = auth_flavor[i];
     }
 
@@ -374,7 +374,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
   /* @todo: BUGAZOMEU; seul AUTHUNIX est supporte */
   hostname = ((struct authunix_parms *)(preq->rq_clntcred))->aup_machname;
 
-  if (!nfs_Add_MountList_Entry(hostname, exportPath))
+  if(!nfs_Add_MountList_Entry(hostname, exportPath))
     {
       DisplayLogJd(pclient->log_outputs,
                    "MOUNT: /!\\ | Error when adding entry (%s,%s) to the mount list",
@@ -406,10 +406,10 @@ void mnt1_Mnt_Free(nfs_res_t * pres)
 
 void mnt3_Mnt_Free(nfs_res_t * pres)
 {
-  if (pres->res_mnt3.fhs_status == MNT3_OK)
+  if(pres->res_mnt3.fhs_status == MNT3_OK)
     {
-      Mem_Free((char *)pres->res_mnt3.mountres3_u.mountinfo.
-               auth_flavors.auth_flavors_val);
+      Mem_Free((char *)pres->res_mnt3.mountres3_u.mountinfo.auth_flavors.
+               auth_flavors_val);
       Mem_Free((char *)pres->res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val);
     }
   return;

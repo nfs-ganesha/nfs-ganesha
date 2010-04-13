@@ -190,7 +190,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
 #ifndef _NO_BUDDY_SYSTEM
 
-  if ((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
+  if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
     {
       /* Failed init */
       DisplayLog("Memory manager could not be initialized");
@@ -198,10 +198,10 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
     }
 #endif
 
-  for (;;)
+  for(;;)
     {
       /* Get a worker to do the job */
-      if ((worker_index = nfs_rpc_get_worker_index(FALSE)) < 0)
+      if((worker_index = nfs_rpc_get_worker_index(FALSE)) < 0)
         {
           DisplayLog("CRITICAL ERROR: Couldn't choose a worker !!");
           return NULL;
@@ -228,7 +228,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
       V(workers_data[worker_index].request_pool_mutex);
 
-      if (pnfsreq == NULL)
+      if(pnfsreq == NULL)
         {
           DisplayLogLevel(NIV_CRIT,
                           "CRITICAL ERROR: empty request pool for the chosen worker ! Exiting...");
@@ -236,7 +236,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
         }
 
       xprt = Xports[tcp_sock];
-      if (xprt == NULL)
+      if(xprt == NULL)
         {
           /* But do we control sock? */
           DisplayLogLevel(NIV_CRIT,
@@ -291,9 +291,9 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
       pnfsreq->ipproto = IPPROTO_TCP;
 
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
-      if (pnfsreq->xprt->xp_fd != tcp_sock)
+      if(pnfsreq->xprt->xp_fd != tcp_sock)
 #else
-      if (pnfsreq->xprt->xp_sock != tcp_sock)
+      if(pnfsreq->xprt->xp_sock != tcp_sock)
 #endif
         DisplayLog
             ("TCP SOCKET MANAGER : /!\\ Trying to access a bad socket ! Check the source file=%s, line=%s",
@@ -316,7 +316,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
       /* If status is ok, the request will be processed by the related
        * worker, otherwise, it should be released by being tagged as invalid*/
-      if (!pnfsreq->status)
+      if(!pnfsreq->status)
         {
           /* RPC over TCP specific: RPC/UDP's xprt know only one state: XPRT_IDLE, because UDP is mostly
            * a stateless protocol. With RPC/TCP, they can be XPRT_DIED especially when the client closes
@@ -324,13 +324,13 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
           stat = SVC_STAT(pnfsreq->xprt);
 
-          if (stat == XPRT_DIED)
+          if(stat == XPRT_DIED)
             {
               DisplayLogLevel(NIV_DEBUG,
                               "TCP SOCKET MANAGER Sock=%d: the client disappeared... Stopping thread ",
                               tcp_sock);
 
-              if (Xports[tcp_sock] != NULL)
+              if(Xports[tcp_sock] != NULL)
                 SVC_DESTROY(Xports[tcp_sock]);
               else
                 DisplayLog
@@ -343,7 +343,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
               return NULL;
             }
-          else if (stat == XPRT_MOREREQS)
+          else if(stat == XPRT_MOREREQS)
             {
               DisplayLogLevel(NIV_DEBUG,
                               "TCP SOCKET MANAGER Sock=%d: XPRT has MOREREQS status",
@@ -368,9 +368,8 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
           P(workers_data[worker_index].mutex_req_condvar);
           P(workers_data[worker_index].request_pool_mutex);
 
-          if ((pentry =
-               LRU_new_entry(workers_data[worker_index].pending_request,
-                             &status)) == NULL)
+          if((pentry =
+              LRU_new_entry(workers_data[worker_index].pending_request, &status)) == NULL)
             {
               V(workers_data[worker_index].mutex_req_condvar);
               V(workers_data[worker_index].request_pool_mutex);
@@ -382,7 +381,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
           pentry->buffdata.pdata = (caddr_t) pnfsreq;
           pentry->buffdata.len = sizeof(*pnfsreq);
 
-          if (pthread_cond_signal(&(workers_data[worker_index].req_condvar)) == -1)
+          if(pthread_cond_signal(&(workers_data[worker_index].req_condvar)) == -1)
             {
               V(workers_data[worker_index].mutex_req_condvar);
               V(workers_data[worker_index].request_pool_mutex);
@@ -398,7 +397,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 #endif
 
           P(mutex_cond_xprt[tcp_sock]);
-          while (etat_xprt[tcp_sock] != 1)
+          while(etat_xprt[tcp_sock] != 1)
             {
               pthread_cond_wait(&(condvar_xprt[tcp_sock]), &(mutex_cond_xprt[tcp_sock]));
             }

@@ -67,11 +67,11 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
   fsal_status_t fsal_status;
   fsal_handle_t filehandle;
 
-  if (!dirhandle || !filename || !p_context || !file_descriptor)
+  if(!dirhandle || !filename || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
   fsal_status = FSAL_lookup(dirhandle, filename, p_context, &filehandle, file_attributes);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   return FSAL_open(&filehandle, p_context, openflags, file_descriptor, file_attributes);
@@ -129,26 +129,26 @@ fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
   /* sanity checks.
    * note : file_attributes is optional.
    */
-  if (!p_filehandle || !p_context || !p_file_descriptor)
+  if(!p_filehandle || !p_context || !p_file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
 
   status =
       fsal_internal_getPathFromHandle(p_context, p_filehandle, 0, &fsalpath, &buffstat);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_open);
 
   status =
       fsal_internal_testAccess(p_context,
                                openflags & FSAL_O_RDONLY ? FSAL_R_OK : FSAL_W_OK,
                                &buffstat, NULL);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_open);
 
   /* convert fsal open flags to posix open flags */
   rc = fsal2posix_openflags(openflags, &posix_flags);
 
   /* flags conflicts. */
-  if (rc)
+  if(rc)
     {
       DisplayLogJdLevel(fsal_log, NIV_EVENT,
                         "Invalid/conflicting flags : %#X", openflags);
@@ -161,7 +161,7 @@ fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
   errsv = errno;
   ReleaseTokenFSCall();
 
-  if (!(p_file_descriptor->p_file))
+  if(!(p_file_descriptor->p_file))
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_open);
 #else
   p_file_descriptor->filefd = open(fsalpath.path, posix_flags);
@@ -173,12 +173,12 @@ fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
   p_file_descriptor->ro = openflags & FSAL_O_RDONLY;
 
   /* output attributes */
-  if (p_file_attributes)
+  if(p_file_attributes)
     {
 
       status = posix2fsal_attributes(&buffstat, p_file_attributes);
 
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_file_attributes->asked_attributes);
           FSAL_SET_MASK(p_file_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -229,7 +229,7 @@ fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
 
   /* sanity checks. */
 
-  if (!p_file_descriptor || !buffer || !p_read_amount || !p_end_of_file)
+  if(!p_file_descriptor || !buffer || !p_read_amount || !p_end_of_file)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_read);
 
   /** @todo: manage fsal_size_t to size_t convertion */
@@ -237,7 +237,7 @@ fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
 
   /* positioning */
 
-  if (p_seek_descriptor)
+  if(p_seek_descriptor)
     {
 
       switch (p_seek_descriptor->whence)
@@ -272,7 +272,7 @@ fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
           break;
         }
 
-      if (rc)
+      if(rc)
         {
 
           DisplayLogJdLevel(fsal_log, NIV_EVENT,
@@ -298,10 +298,10 @@ fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
 
   /** @todo: manage ssize_t to fsal_size_t convertion */
 
-  if (feof(p_file_descriptor->p_file))
+  if(feof(p_file_descriptor->p_file))
     *p_end_of_file = 1;
 
-  if (nb_read == 0 && ferror(p_file_descriptor->p_file))
+  if(nb_read == 0 && ferror(p_file_descriptor->p_file))
     {
       Return(posix2fsal_error(EBADF), EBADF, INDEX_FSAL_read);
     }
@@ -327,7 +327,7 @@ fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
   char c;
 
   /* sanity checks. */
-  if (!p_file_descriptor || !buffer || !p_read_amount || !p_end_of_file)
+  if(!p_file_descriptor || !buffer || !p_read_amount || !p_end_of_file)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_read);
 
   /** @todo: manage fsal_size_t to size_t convertion */
@@ -335,7 +335,7 @@ fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
 
   /* positioning */
 
-  if (p_seek_descriptor)
+  if(p_seek_descriptor)
     {
 
       switch (p_seek_descriptor->whence)
@@ -349,7 +349,7 @@ fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
                      p_seek_descriptor->whence);
           errsv = errno;
 
-          if (rc)
+          if(rc)
             {
               DisplayLogJdLevel(fsal_log, NIV_EVENT,
                                 "Error in posix fseek operation (whence=%s, offset=%lld)",
@@ -381,7 +381,7 @@ fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
 
           rc = pread(p_file_descriptor->filefd, &c, 1,
                      p_seek_descriptor->offset + i_size);
-          if (rc == 0)
+          if(rc == 0)
             *p_end_of_file = 1;
 
           ReleaseTokenFSCall();
@@ -399,10 +399,10 @@ fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
     }
 
   /** @todo: manage ssize_t to fsal_size_t convertion */
-  if (nb_read == -1)
+  if(nb_read == -1)
     Return(posix2fsal_error(EBADF), EBADF, INDEX_FSAL_read);
 
-  if (nb_read == 0 && i_size != 0)
+  if(nb_read == 0 && i_size != 0)
     *p_end_of_file = 1;
 
   *p_read_amount = nb_read;
@@ -447,10 +447,10 @@ fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
   int rc, errsv;
 
   /* sanity checks. */
-  if (!p_file_descriptor || !buffer || !p_write_amount)
+  if(!p_file_descriptor || !buffer || !p_write_amount)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_write);
 
-  if (p_file_descriptor->ro)
+  if(p_file_descriptor->ro)
     Return(ERR_FSAL_PERM, 0, INDEX_FSAL_write);
 
   /** @todo: manage fsal_size_t to size_t convertion */
@@ -458,7 +458,7 @@ fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
 
   /* positioning */
 
-  if (p_seek_descriptor)
+  if(p_seek_descriptor)
     {
 
       switch (p_seek_descriptor->whence)
@@ -493,7 +493,7 @@ fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
           break;
         }
 
-      if (rc)
+      if(rc)
         {
 
           DisplayLogJdLevel(fsal_log, NIV_EVENT,
@@ -533,7 +533,7 @@ fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
 
   /** @todo: manage ssize_t to fsal_size_t convertion */
 
-  if (nb_written <= 0 && ferror(p_file_descriptor->p_file))
+  if(nb_written <= 0 && ferror(p_file_descriptor->p_file))
     {
       Return(posix2fsal_error(EBADF), EBADF, INDEX_FSAL_write);
     }
@@ -559,7 +559,7 @@ fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
   int rc, errsv;
 
   /* sanity checks. */
-  if (!p_file_descriptor || !buffer || !p_write_amount)
+  if(!p_file_descriptor || !buffer || !p_write_amount)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_read);
 
   /** @todo: manage fsal_size_t to size_t convertion */
@@ -567,7 +567,7 @@ fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
 
   /* positioning */
 
-  if (p_seek_descriptor)
+  if(p_seek_descriptor)
     {
 
       switch (p_seek_descriptor->whence)
@@ -581,7 +581,7 @@ fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
                      p_seek_descriptor->whence);
           errsv = errno;
 
-          if (rc)
+          if(rc)
             {
               DisplayLogJdLevel(fsal_log, NIV_EVENT,
                                 "Error in posix fseek operation (whence=%s, offset=%lld)",
@@ -627,7 +627,7 @@ fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
     }
 
   /** @todo: manage ssize_t to fsal_size_t convertion */
-  if (nb_written == -1)
+  if(nb_written == -1)
     Return(posix2fsal_error(EBADF), EBADF, INDEX_FSAL_write);
 
   *p_write_amount = nb_written;
@@ -657,7 +657,7 @@ fsal_status_t FSAL_close(fsal_file_t * p_file_descriptor        /* IN */
   int rc, errsv;
 
   /* sanity checks. */
-  if (!p_file_descriptor)
+  if(!p_file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
 
   /* call to close */
@@ -674,7 +674,7 @@ fsal_status_t FSAL_close(fsal_file_t * p_file_descriptor        /* IN */
 
   ReleaseTokenFSCall();
 
-  if (rc)
+  if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_close);
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);

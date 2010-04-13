@@ -92,21 +92,21 @@ const char *nettype;            /* Networktype token */
 
 /* VARIABLES PROTECTED BY xprtlist_lock: xprtlist */
 
-  if ((handle = __rpc_setconf(nettype)) == NULL)
+  if((handle = __rpc_setconf(nettype)) == NULL)
     {
       warnx("svc_create: unknown protocol");
       return (0);
     }
-  while ((nconf = __rpc_getconf(handle)) != NULL)
+  while((nconf = __rpc_getconf(handle)) != NULL)
     {
       mutex_lock(&xprtlist_lock);
-      for (l = xprtlist; l; l = l->next)
+      for(l = xprtlist; l; l = l->next)
         {
-          if (strcmp(l->xprt->xp_netid, nconf->nc_netid) == 0)
+          if(strcmp(l->xprt->xp_netid, nconf->nc_netid) == 0)
             {
               /* Found an old one, use it */
               (void)rpcb_unset(prognum, versnum, nconf);
-              if (Svc_reg(l->xprt, prognum, versnum, dispatch, nconf) == FALSE)
+              if(Svc_reg(l->xprt, prognum, versnum, dispatch, nconf) == FALSE)
                 warnx("svc_create: could not register prog %u vers %u on %s",
                       (unsigned)prognum, (unsigned)versnum, nconf->nc_netid);
               else
@@ -114,14 +114,14 @@ const char *nettype;            /* Networktype token */
               break;
             }
         }
-      if (l == NULL)
+      if(l == NULL)
         {
           /* It was not found. Now create a new one */
           xprt = Svc_tp_create(dispatch, prognum, versnum, nconf);
-          if (xprt)
+          if(xprt)
             {
               l = (struct xlist *)malloc(sizeof(*l));
-              if (l == NULL)
+              if(l == NULL)
                 {
                   warnx("svc_create: no memory");
                   mutex_unlock(&xprtlist_lock);
@@ -156,20 +156,20 @@ const struct netconfig *nconf;  /* Netconfig structure for the network */
 {
   SVCXPRT *xprt;
 
-  if (nconf == NULL)
+  if(nconf == NULL)
     {
       warnx("svc_tp_create: invalid netconfig structure for prog %u vers %u",
             (unsigned)prognum, (unsigned)versnum);
       return (NULL);
     }
   xprt = Svc_tli_create(RPC_ANYFD, nconf, NULL, 0, 0);
-  if (xprt == NULL)
+  if(xprt == NULL)
     {
       return (NULL);
     }
   /*LINTED const castaway */
   (void)rpcb_unset(prognum, versnum, (struct netconfig *)nconf);
-  if (Svc_reg(xprt, prognum, versnum, dispatch, nconf) == FALSE)
+  if(Svc_reg(xprt, prognum, versnum, dispatch, nconf) == FALSE)
     {
       warnx("svc_tp_create: Could not register prog %u vers %u on %s",
             (unsigned)prognum, (unsigned)versnum, nconf->nc_netid);
@@ -201,15 +201,15 @@ u_int recvsz;                   /* Max recvsize */
   struct sockaddr_storage ss;
   socklen_t slen;
 
-  if (fd == RPC_ANYFD)
+  if(fd == RPC_ANYFD)
     {
-      if (nconf == NULL)
+      if(nconf == NULL)
         {
           warnx("svc_tli_create: invalid netconfig");
           return (NULL);
         }
       fd = __rpc_nconf2fd(nconf);
-      if (fd == -1)
+      if(fd == -1)
         {
           warnx("svc_tli_create: could not open connection for %s", nconf->nc_netid);
           return (NULL);
@@ -222,7 +222,7 @@ u_int recvsz;                   /* Max recvsize */
       /*
        * It is an open descriptor. Get the transport info.
        */
-      if (!__rpc_fd2sockinfo(fd, &si))
+      if(!__rpc_fd2sockinfo(fd, &si))
         {
           warnx("svc_tli_create: could not get transport information");
           return (NULL);
@@ -232,15 +232,15 @@ u_int recvsz;                   /* Max recvsize */
   /*
    * If the fd is unbound, try to bind it.
    */
-  if (madefd || !__rpc_sockisbound(fd))
+  if(madefd || !__rpc_sockisbound(fd))
     {
-      if (bindaddr == NULL)
+      if(bindaddr == NULL)
         {
-          if (bindresvport(fd, NULL) < 0)
+          if(bindresvport(fd, NULL) < 0)
             {
               memset(&ss, 0, sizeof ss);
               ss.ss_family = si.si_af;
-              if (bind(fd, (struct sockaddr *)(void *)&ss, (socklen_t) si.si_alen) < 0)
+              if(bind(fd, (struct sockaddr *)(void *)&ss, (socklen_t) si.si_alen) < 0)
                 {
                   warnx("svc_tli_create: could not bind to anonymous port");
                   goto freedata;
@@ -250,7 +250,7 @@ u_int recvsz;                   /* Max recvsize */
         }
       else
         {
-          if (bind(fd, (struct sockaddr *)bindaddr->addr.buf, (socklen_t) si.si_alen) < 0)
+          if(bind(fd, (struct sockaddr *)bindaddr->addr.buf, (socklen_t) si.si_alen) < 0)
             {
               warnx("svc_tli_create: could not bind to requested address");
               goto freedata;
@@ -266,19 +266,19 @@ u_int recvsz;                   /* Max recvsize */
     {
     case SOCK_STREAM:
       slen = sizeof ss;
-      if (getpeername(fd, (struct sockaddr *)(void *)&ss, &slen) == 0)
+      if(getpeername(fd, (struct sockaddr *)(void *)&ss, &slen) == 0)
         {
           /* accepted socket */
           xprt = svc_fd_create(fd, sendsz, recvsz);
         }
       else
         xprt = svc_vc_create(fd, sendsz, recvsz);
-      if (!nconf || !xprt)
+      if(!nconf || !xprt)
         break;
 #if 0
       /* XXX fvdl */
-      if (strcmp(nconf->nc_protofmly, "inet") == 0 ||
-          strcmp(nconf->nc_protofmly, "inet6") == 0)
+      if(strcmp(nconf->nc_protofmly, "inet") == 0 ||
+         strcmp(nconf->nc_protofmly, "inet6") == 0)
         (void)__svc_vc_setflag(xprt, TRUE);
 #endif
       break;
@@ -290,7 +290,7 @@ u_int recvsz;                   /* Max recvsize */
       goto freedata;
     }
 
-  if (xprt == NULL)
+  if(xprt == NULL)
     /*
      * The error messages here are spitted out by the lower layers:
      * svc_vc_create(), svc_fd_create() and svc_dg_create().
@@ -300,7 +300,7 @@ u_int recvsz;                   /* Max recvsize */
   /* Fill in type of service */
   xprt->xp_type = __rpc_socktype2seman(si.si_socktype);
 
-  if (nconf)
+  if(nconf)
     {
       xprt->xp_netid = strdup(nconf->nc_netid);
       xprt->xp_tp = strdup(nconf->nc_device);
@@ -308,11 +308,11 @@ u_int recvsz;                   /* Max recvsize */
   return (xprt);
 
  freedata:
-  if (madefd)
+  if(madefd)
     (void)close(fd);
-  if (xprt)
+  if(xprt)
     {
-      if (!madefd)              /* so that svc_destroy doesnt close fd */
+      if(!madefd)               /* so that svc_destroy doesnt close fd */
         xprt->xp_fd = RPC_ANYFD;
       SVC_DESTROY(xprt);
     }

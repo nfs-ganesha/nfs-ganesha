@@ -170,7 +170,7 @@ int nfs_Link(nfs_arg_t * parg,
   short to_exportid;
   short from_exportid;
 
-  if (preq->rq_vers == NFS_V3)
+  if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */
       pres->res_link3.LINK3res_u.resfail.file_attributes.attributes_follow = FALSE;
@@ -180,30 +180,30 @@ int nfs_Link(nfs_arg_t * parg,
     }
 
   /* Get entry for parent directory */
-  if ((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
-                                          &(parg->arg_link2.to.dir),
-                                          &(parg->arg_link3.link.dir),
-                                          NULL,
-                                          &(pres->res_stat2),
-                                          &(pres->res_link3.status),
-                                          NULL,
-                                          &parent_attr,
-                                          pcontext, pclient, ht, &rc)) == NULL)
+  if((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
+                                         &(parg->arg_link2.to.dir),
+                                         &(parg->arg_link3.link.dir),
+                                         NULL,
+                                         &(pres->res_stat2),
+                                         &(pres->res_link3.status),
+                                         NULL,
+                                         &parent_attr,
+                                         pcontext, pclient, ht, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       return rc;
     }
   ppre_attr = &parent_attr;
 
-  if ((target_pentry = nfs_FhandleToCache(preq->rq_vers,
-                                          &(parg->arg_link2.from),
-                                          &(parg->arg_link3.file),
-                                          NULL,
-                                          &(pres->res_stat2),
-                                          &(pres->res_link3.status),
-                                          NULL,
-                                          &target_attr,
-                                          pcontext, pclient, ht, &rc)) == NULL)
+  if((target_pentry = nfs_FhandleToCache(preq->rq_vers,
+                                         &(parg->arg_link2.from),
+                                         &(parg->arg_link3.file),
+                                         NULL,
+                                         &(pres->res_stat2),
+                                         &(pres->res_link3.status),
+                                         NULL,
+                                         &target_attr,
+                                         pcontext, pclient, ht, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       return rc;
@@ -216,7 +216,7 @@ int nfs_Link(nfs_arg_t * parg,
   /*
    * Sanity checks: 
    */
-  if (parent_filetype != DIR_BEGINNING && parent_filetype != DIR_CONTINUE)
+  if(parent_filetype != DIR_BEGINNING && parent_filetype != DIR_CONTINUE)
     {
       switch (preq->rq_vers)
         {
@@ -248,11 +248,11 @@ int nfs_Link(nfs_arg_t * parg,
       }
     }
 
-  if (str_link_name == NULL || strlen(str_link_name) == 0)
+  if(str_link_name == NULL || strlen(str_link_name) == 0)
     {
-      if (preq->rq_vers == NFS_V2)
+      if(preq->rq_vers == NFS_V2)
         pres->res_stat2 = NFSERR_IO;
-      if (preq->rq_vers == NFS_V3)
+      if(preq->rq_vers == NFS_V3)
         pres->res_link3.status = NFS3ERR_INVAL;
     }
   else
@@ -261,34 +261,34 @@ int nfs_Link(nfs_arg_t * parg,
        * Both objects have to be in the same filesystem 
        */
 
-      if (to_exportid != from_exportid)
+      if(to_exportid != from_exportid)
         {
-          if (preq->rq_vers == NFS_V2)
+          if(preq->rq_vers == NFS_V2)
             pres->res_stat2 = NFSERR_PERM;
-          if (preq->rq_vers == NFS_V3)
+          if(preq->rq_vers == NFS_V3)
             pres->res_link3.status = NFS3ERR_XDEV;
         }
       else
         {
           /* Make the link */
-          if ((cache_status = cache_inode_error_convert(FSAL_str2name(str_link_name,
-                                                                      FSAL_MAX_NAME_LEN,
-                                                                      &link_name))) ==
-              CACHE_INODE_SUCCESS)
+          if((cache_status = cache_inode_error_convert(FSAL_str2name(str_link_name,
+                                                                     FSAL_MAX_NAME_LEN,
+                                                                     &link_name))) ==
+             CACHE_INODE_SUCCESS)
             {
-              if (cache_inode_link(target_pentry,
-                                   parent_pentry,
-                                   &link_name,
-                                   &attr,
-                                   ht,
-                                   pclient,
-                                   pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+              if(cache_inode_link(target_pentry,
+                                  parent_pentry,
+                                  &link_name,
+                                  &attr,
+                                  ht,
+                                  pclient,
+                                  pcontext, &cache_status) == CACHE_INODE_SUCCESS)
                 {
-                  if (cache_inode_getattr(parent_pentry,
-                                          &attr_parent_after,
-                                          ht,
-                                          pclient,
-                                          pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                  if(cache_inode_getattr(parent_pentry,
+                                         &attr_parent_after,
+                                         ht,
+                                         pclient,
+                                         pcontext, &cache_status) == CACHE_INODE_SUCCESS)
                     {
                       switch (preq->rq_vers)
                         {
@@ -305,8 +305,8 @@ int nfs_Link(nfs_arg_t * parg,
                           nfs_SetPostOpAttr(pcontext, pexport,
                                             target_pentry,
                                             &attr,
-                                            &(pres->res_link3.LINK3res_u.resok.
-                                              file_attributes));
+                                            &(pres->res_link3.LINK3res_u.
+                                              resok.file_attributes));
 
                           /*
                            * Build Weak Cache Coherency
@@ -331,7 +331,7 @@ int nfs_Link(nfs_arg_t * parg,
     }
 
   /* If we are here, there was an error */
-  if (nfs_RetryableError(cache_status))
+  if(nfs_RetryableError(cache_status))
     {
       return NFS_REQ_DROP;
     }

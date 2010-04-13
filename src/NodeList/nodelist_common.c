@@ -28,7 +28,7 @@ int nodelist_common_string_get_token(char *string, char *separators_list, int to
   fstatus =
       _nodelist_common_string_get_token_common(string, separators_list, &token_nb,
                                                token_id, p_token);
-  if (*p_token != NULL)
+  if(*p_token != NULL)
     fstatus = 0;
   else
     fstatus = -1;
@@ -96,35 +96,35 @@ int nodelist_common_string_appends_and_extends(char **p_io_string,
   char *default_separator = " ";
   char *local_separator;
 
-  if (*p_io_string != NULL && string2append != NULL)
+  if(*p_io_string != NULL && string2append != NULL)
     {
 
-      if (separator != NULL)
+      if(separator != NULL)
         local_separator = separator;
       else
         local_separator = default_separator;
 
-      if (strlen(*p_io_string) == 0)
+      if(strlen(*p_io_string) == 0)
         local_separator = "";
 
       output_string_length = strlen(*p_io_string);
       separator_length = strlen(local_separator);
       append_length = strlen(string2append);
       new_string_length = output_string_length + separator_length + append_length;
-      if (new_string_length > *p_current_length)
+      if(new_string_length > *p_current_length)
         {
           new_output_length = *p_current_length;
-          while (new_string_length > new_output_length)
+          while(new_string_length > new_output_length)
             new_output_length += inc_length;
           *p_io_string =
               (char *)realloc(*p_io_string, (new_output_length + 1) * sizeof(char));
-          if (*p_io_string != NULL)
+          if(*p_io_string != NULL)
             *p_current_length = new_output_length;
           else
             *p_current_length = 0;
         }
 
-      if (*p_io_string != NULL)
+      if(*p_io_string != NULL)
         {
 
           strncpy(*p_io_string + output_string_length, local_separator, separator_length);
@@ -169,9 +169,9 @@ int nodelist_common_extended2condensed_nodelist(char *src_list, char **p_dst_lis
   nodelist_nodelist_t nodelist;
 
   status = nodelist_nodelist_init(&nodelist, &src_list, 1);
-  if (status == 0)
+  if(status == 0)
     {
-      if (nodelist_nodelist_get_compacted_string(&nodelist, p_dst_list) == 0)
+      if(nodelist_nodelist_get_compacted_string(&nodelist, p_dst_list) == 0)
         fstatus = nodelist_nodelist_nodes_quantity(&nodelist);
       else
         fstatus = -1;
@@ -215,9 +215,9 @@ int nodelist_common_condensed2extended_nodelist(char *src_list, char **p_dst_lis
   nodelist_nodelist_t nodelist;
 
   status = nodelist_nodelist_init(&nodelist, &src_list, 1);
-  if (status == 0)
+  if(status == 0)
     {
-      if (nodelist_nodelist_get_extended_string(&nodelist, p_dst_list) == 0)
+      if(nodelist_nodelist_get_extended_string(&nodelist, p_dst_list) == 0)
         fstatus = nodelist_nodelist_nodes_quantity(&nodelist);
       else
         fstatus = -1;
@@ -247,13 +247,13 @@ static char *get_next_token(char *workingstr, char separator)
   char *current = workingstr;
   int in_bracket = 0;
 
-  while (*current)
+  while(*current)
     {
-      if (!in_bracket && (*current == '['))
+      if(!in_bracket && (*current == '['))
         in_bracket = 1;
-      else if (in_bracket && (*current == ']'))
+      else if(in_bracket && (*current == ']'))
         in_bracket = 0;
-      else if (!in_bracket && (*current == separator))
+      else if(!in_bracket && (*current == separator))
         return current;
 
       current++;
@@ -287,14 +287,14 @@ int _nodelist_common_string_get_token_common(char *string, char *separators_list
   /*
      First we check that pointers are not NULL
    */
-  if (string != NULL && separators_list != NULL)
+  if(string != NULL && separators_list != NULL)
     {
       string_length = strlen(string);
       separators_list_length = strlen(separators_list);
       /*
          Then, that their lengths are not null
        */
-      if (string_length != 0 && separators_list_length != 0)
+      if(string_length != 0 && separators_list_length != 0)
         {
           /*
              Then, the separators research loop start
@@ -303,21 +303,21 @@ int _nodelist_common_string_get_token_common(char *string, char *separators_list
           old_pointer = working_string;
           local_token_nb = 1;
           end_of_loop = 0;
-          while (!end_of_loop)
+          while(!end_of_loop)
             {
               best_pointer = NULL;
               /*
                  Search the first occurence of a separator
                */
-              for (i = 0; i < separators_list_length; i++)
+              for(i = 0; i < separators_list_length; i++)
                 {
                   current_pointer =
                       get_next_token(working_string, *(separators_list + i));
-                  if (best_pointer == NULL)
+                  if(best_pointer == NULL)
                     {
                       best_pointer = current_pointer;
                     }
-                  else if (best_pointer > current_pointer && current_pointer != NULL)
+                  else if(best_pointer > current_pointer && current_pointer != NULL)
                     {
                       best_pointer = current_pointer;
                     }
@@ -325,14 +325,14 @@ int _nodelist_common_string_get_token_common(char *string, char *separators_list
               /*
                  If this token must be extracted, extract it
                */
-              if (token_id == local_token_nb && (*p_token) == NULL)
+              if(token_id == local_token_nb && (*p_token) == NULL)
                 {
-                  if (best_pointer == NULL)
+                  if(best_pointer == NULL)
                     copy_length = strlen(old_pointer);
                   else
                     copy_length = (size_t) (best_pointer - old_pointer);
                   *p_token = (char *)malloc((copy_length + 1) * sizeof(char));
-                  if (*p_token != NULL)
+                  if(*p_token != NULL)
                     {
                       (*p_token)[copy_length] = '\0';
                       strncpy(*p_token, old_pointer, copy_length);
@@ -346,7 +346,7 @@ int _nodelist_common_string_get_token_common(char *string, char *separators_list
               /*
                  If no more occurences, break the loop
                */
-              if (best_pointer == NULL)
+              if(best_pointer == NULL)
                 {
                   end_of_loop = 1;
                 }

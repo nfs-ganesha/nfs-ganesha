@@ -127,13 +127,13 @@ int semaphore_init(semaphore_t * sem, int value)
 
   int retval;
 
-  if (!sem)
+  if(!sem)
     return EINVAL;
 
-  if (retval = pthread_mutex_init(&sem->mutex, NULL))
+  if(retval = pthread_mutex_init(&sem->mutex, NULL))
     return retval;
 
-  if (retval = pthread_cond_init(&sem->cond, NULL))
+  if(retval = pthread_cond_init(&sem->cond, NULL))
     return retval;
 
   sem->count = value;
@@ -145,7 +145,7 @@ int semaphore_init(semaphore_t * sem, int value)
 int semaphore_destroy(semaphore_t * sem)
 {
 
-  if (!sem)
+  if(!sem)
     return EINVAL;
 
   pthread_cond_destroy(&sem->cond);
@@ -158,7 +158,7 @@ int semaphore_destroy(semaphore_t * sem)
 int semaphore_P(semaphore_t * sem)
 {
 
-  if (!sem)
+  if(!sem)
     return EINVAL;
 
   /* enters into the critical section */
@@ -166,7 +166,7 @@ int semaphore_P(semaphore_t * sem)
 
   sem->count--;
   /* If there are no more tokens : wait */
-  while (sem->count < 0)
+  while(sem->count < 0)
     pthread_cond_wait(&sem->cond, &sem->mutex);
 
   /* leaves the critical section */
@@ -183,7 +183,7 @@ int semaphore_V(semaphore_t * sem)
   sem->count++;
 
   /* If a thread was waiting, gives it a token */
-  if (sem->count <= 0)
+  if(sem->count <= 0)
     pthread_cond_signal(&sem->cond);
 
   /* leaves the critical section */

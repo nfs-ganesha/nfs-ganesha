@@ -96,12 +96,12 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
   int rc;
 
   /* sanity check.  */
-  if (!init_info)
+  if(!init_info)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
 
   /* Check for very important args */
 
-  if (init_info->fsal_info.log_outputs.liste_voies == NULL)
+  if(init_info->fsal_info.log_outputs.liste_voies == NULL)
     {
       /* issue a warning on stderr */
       DisplayLog
@@ -114,17 +114,17 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
                                      &(init_info->fs_common_info),
                                      &(init_info->fs_specific_info));
 
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_Init);
 
   /* FS Specific initialization. */
 
   /* Define the password file path used by PostgreSQL */
 #if defined(_USE_PGSQL)
-  if (!init_info->fs_specific_info.dbparams.passwdfile[0] == '\0')
+  if(!init_info->fs_specific_info.dbparams.passwdfile[0] == '\0')
     {
       rc = setenv("PGPASSFILE", init_info->fs_specific_info.dbparams.passwdfile, 1);
-      if (rc != 0)
+      if(rc != 0)
         DisplayLog("FSAL INIT: *** WARNING: Could not set POSTGRESQL keytab path.");
     }
 #elif defined (_USE_MYSQL)

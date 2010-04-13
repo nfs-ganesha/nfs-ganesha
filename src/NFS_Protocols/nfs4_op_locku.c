@@ -162,28 +162,28 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 #else
 
   /* If there is no FH */
-  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
+  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
       res_LOCKU4.status = NFS4ERR_NOFILEHANDLE;
       return res_LOCKU4.status;
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
       res_LOCKU4.status = NFS4ERR_BADHANDLE;
       return res_LOCKU4.status;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
       res_LOCKU4.status = NFS4ERR_FHEXPIRED;
       return res_LOCKU4.status;
     }
 
   /* Commit is done only on a file */
-  if (data->current_filetype != REGULAR_FILE)
+  if(data->current_filetype != REGULAR_FILE)
     {
       /* Type of the entry is not correct */
       switch (data->current_filetype)
@@ -199,7 +199,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* Lock length should not be 0 */
-  if (arg_LOCKU4.length == 0LL)
+  if(arg_LOCKU4.length == 0LL)
     {
       res_LOCKU4.status = NFS4ERR_INVAL;
       return res_LOCKU4.status;
@@ -207,10 +207,10 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* Check for range overflow 
    * Remember that a length with all bits set to 1 means "lock until the end of file" (RFC3530, page 157) */
-  if (arg_LOCKU4.length != 0xffffffffffffffffLL)
+  if(arg_LOCKU4.length != 0xffffffffffffffffLL)
     {
       /* Comparing beyond 2^64 is not possible int 64 bits precision, but off+len > 2^64 is equivalent to len > 2^64 - off */
-      if (arg_LOCKU4.length > (0xffffffffffffffffLL - arg_LOCKU4.offset))
+      if(arg_LOCKU4.length > (0xffffffffffffffffLL - arg_LOCKU4.offset))
         {
           res_LOCKU4.status = NFS4ERR_INVAL;
           return res_LOCKU4.status;
@@ -218,19 +218,19 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* Check for correctness of the provided stateid */
-  if ((rc =
-       nfs4_Check_Stateid(&arg_LOCKU4.lock_stateid, data->current_entry, 0LL)) != NFS4_OK)
+  if((rc =
+      nfs4_Check_Stateid(&arg_LOCKU4.lock_stateid, data->current_entry, 0LL)) != NFS4_OK)
     {
       res_LOCKU4.status = rc;
       return res_LOCKU4.status;
     }
 
   /* Get the related state */
-  if (cache_inode_get_state(arg_LOCKU4.lock_stateid.other,
-                            &pstate_found,
-                            data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_get_state(arg_LOCKU4.lock_stateid.other,
+                           &pstate_found,
+                           data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
     {
-      if (cache_status == CACHE_INODE_NOT_FOUND)
+      if(cache_status == CACHE_INODE_NOT_FOUND)
         res_LOCKU4.status = NFS4ERR_LOCK_RANGE;
       else
         res_LOCKU4.status = nfs4_Errno(cache_status);
@@ -239,16 +239,16 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* Check the seqid */
-  if ((arg_LOCKU4.seqid != pstate_found->powner->seqid) &&
-      (arg_LOCKU4.seqid != pstate_found->powner->seqid + 1))
+  if((arg_LOCKU4.seqid != pstate_found->powner->seqid) &&
+     (arg_LOCKU4.seqid != pstate_found->powner->seqid + 1))
     {
       res_LOCKU4.status = NFS4ERR_BAD_SEQID;
       return res_LOCKU4.status;
     }
 
   /* Check the seqid for the lock */
-  if ((arg_LOCKU4.lock_stateid.seqid != pstate_found->seqid) &&
-      (arg_LOCKU4.lock_stateid.seqid != pstate_found->seqid + 1))
+  if((arg_LOCKU4.lock_stateid.seqid != pstate_found->seqid) &&
+     (arg_LOCKU4.lock_stateid.seqid != pstate_found->seqid + 1))
     {
       res_LOCKU4.status = NFS4ERR_BAD_SEQID;
       return res_LOCKU4.status;
@@ -256,10 +256,10 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* Increment the seqid for the open-stateid related to this lock */
   pstate_open = (cache_inode_state_t *) (pstate_found->state_data.lock.popenstate);
-  if (pstate_open != NULL)
+  if(pstate_open != NULL)
     {
       pstate_open->seqid += 1;    /** @todo BUGAZOMEU may not be useful */
-      if (pstate_open->state_data.share.lockheld > 0)
+      if(pstate_open->state_data.share.lockheld > 0)
         pstate_open->state_data.share.lockheld -= 1;
     }
 
@@ -278,8 +278,8 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   V(pstate_found->powner->related_owner->lock);
 
   /* Remove the state associated with the lock */
-  if (cache_inode_del_state(pstate_found,
-                            data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_del_state(pstate_found,
+                           data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_LOCKU4.status = nfs4_Errno(cache_status);
       return res_LOCKU4.status;

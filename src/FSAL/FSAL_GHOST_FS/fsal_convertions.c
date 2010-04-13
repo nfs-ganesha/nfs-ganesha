@@ -44,23 +44,23 @@ fsal_accessmode_t ghost2fsal_mode(GHOSTFS_perm_t mode)
 
   fsal_accessmode_t out_mode = 0;
 
-  if ((mode & GHOSTFS_UR))
+  if((mode & GHOSTFS_UR))
     out_mode |= FSAL_MODE_RUSR;
-  if ((mode & GHOSTFS_UW))
+  if((mode & GHOSTFS_UW))
     out_mode |= FSAL_MODE_WUSR;
-  if ((mode & GHOSTFS_UX))
+  if((mode & GHOSTFS_UX))
     out_mode |= FSAL_MODE_XUSR;
-  if ((mode & GHOSTFS_GR))
+  if((mode & GHOSTFS_GR))
     out_mode |= FSAL_MODE_RGRP;
-  if ((mode & GHOSTFS_GW))
+  if((mode & GHOSTFS_GW))
     out_mode |= FSAL_MODE_WGRP;
-  if ((mode & GHOSTFS_GX))
+  if((mode & GHOSTFS_GX))
     out_mode |= FSAL_MODE_XGRP;
-  if ((mode & GHOSTFS_OR))
+  if((mode & GHOSTFS_OR))
     out_mode |= FSAL_MODE_ROTH;
-  if ((mode & GHOSTFS_OW))
+  if((mode & GHOSTFS_OW))
     out_mode |= FSAL_MODE_WOTH;
-  if ((mode & GHOSTFS_OX))
+  if((mode & GHOSTFS_OX))
     out_mode |= FSAL_MODE_XOTH;
 
   return out_mode;
@@ -73,23 +73,23 @@ GHOSTFS_perm_t fsal2ghost_mode(fsal_accessmode_t mode)
 
   GHOSTFS_perm_t out_mode = 0;
 
-  if ((mode & FSAL_MODE_RUSR))
+  if((mode & FSAL_MODE_RUSR))
     out_mode |= GHOSTFS_UR;
-  if ((mode & FSAL_MODE_WUSR))
+  if((mode & FSAL_MODE_WUSR))
     out_mode |= GHOSTFS_UW;
-  if ((mode & FSAL_MODE_XUSR))
+  if((mode & FSAL_MODE_XUSR))
     out_mode |= GHOSTFS_UX;
-  if ((mode & FSAL_MODE_RGRP))
+  if((mode & FSAL_MODE_RGRP))
     out_mode |= GHOSTFS_GR;
-  if ((mode & FSAL_MODE_WGRP))
+  if((mode & FSAL_MODE_WGRP))
     out_mode |= GHOSTFS_GW;
-  if ((mode & FSAL_MODE_XGRP))
+  if((mode & FSAL_MODE_XGRP))
     out_mode |= GHOSTFS_GX;
-  if ((mode & FSAL_MODE_ROTH))
+  if((mode & FSAL_MODE_ROTH))
     out_mode |= GHOSTFS_OR;
-  if ((mode & FSAL_MODE_WOTH))
+  if((mode & FSAL_MODE_WOTH))
     out_mode |= GHOSTFS_OW;
-  if ((mode & FSAL_MODE_XOTH))
+  if((mode & FSAL_MODE_XOTH))
     out_mode |= GHOSTFS_OX;
 
   return out_mode;
@@ -112,11 +112,11 @@ GHOSTFS_testperm_t fsal2ghost_testperm(fsal_accessflags_t testperm)
 {
 
   GHOSTFS_testperm_t outtest = 0;
-  if (testperm & FSAL_R_OK)
+  if(testperm & FSAL_R_OK)
     outtest |= GHOSTFS_TEST_READ;
-  if (testperm & FSAL_W_OK)
+  if(testperm & FSAL_W_OK)
     outtest |= GHOSTFS_TEST_WRITE;
-  if (testperm & FSAL_X_OK)
+  if(testperm & FSAL_X_OK)
     outtest |= GHOSTFS_TEST_EXEC;
 
   return outtest;
@@ -137,28 +137,28 @@ mode_t fsal2unix_mode(fsal_accessmode_t fsal_mode)
 
   mode_t out_mode = 0;
 
-  if ((fsal_mode & FSAL_MODE_SUID))
+  if((fsal_mode & FSAL_MODE_SUID))
     out_mode |= S_ISUID;
-  if ((fsal_mode & FSAL_MODE_SGID))
+  if((fsal_mode & FSAL_MODE_SGID))
     out_mode |= S_ISGID;
 
-  if ((fsal_mode & FSAL_MODE_RUSR))
+  if((fsal_mode & FSAL_MODE_RUSR))
     out_mode |= S_IRUSR;
-  if ((fsal_mode & FSAL_MODE_WUSR))
+  if((fsal_mode & FSAL_MODE_WUSR))
     out_mode |= S_IWUSR;
-  if ((fsal_mode & FSAL_MODE_XUSR))
+  if((fsal_mode & FSAL_MODE_XUSR))
     out_mode |= S_IXUSR;
-  if ((fsal_mode & FSAL_MODE_RGRP))
+  if((fsal_mode & FSAL_MODE_RGRP))
     out_mode |= S_IRGRP;
-  if ((fsal_mode & FSAL_MODE_WGRP))
+  if((fsal_mode & FSAL_MODE_WGRP))
     out_mode |= S_IWGRP;
-  if ((fsal_mode & FSAL_MODE_XGRP))
+  if((fsal_mode & FSAL_MODE_XGRP))
     out_mode |= S_IXGRP;
-  if ((fsal_mode & FSAL_MODE_ROTH))
+  if((fsal_mode & FSAL_MODE_ROTH))
     out_mode |= S_IROTH;
-  if ((fsal_mode & FSAL_MODE_WOTH))
+  if((fsal_mode & FSAL_MODE_WOTH))
     out_mode |= S_IWOTH;
-  if ((fsal_mode & FSAL_MODE_XOTH))
+  if((fsal_mode & FSAL_MODE_XOTH))
     out_mode |= S_IXOTH;
 
   return out_mode;
@@ -179,30 +179,30 @@ fsal_accessmode_t unix2fsal_mode(mode_t unix_mode)
 
   fsal_accessmode_t fsalmode = 0;
 
-  if (unix_mode & S_ISUID)
+  if(unix_mode & S_ISUID)
     fsalmode |= FSAL_MODE_SUID;
-  if (unix_mode & S_ISGID)
+  if(unix_mode & S_ISGID)
     fsalmode |= FSAL_MODE_SGID;
 
-  if (unix_mode & S_IRUSR)
+  if(unix_mode & S_IRUSR)
     fsalmode |= FSAL_MODE_RUSR;
-  if (unix_mode & S_IWUSR)
+  if(unix_mode & S_IWUSR)
     fsalmode |= FSAL_MODE_WUSR;
-  if (unix_mode & S_IXUSR)
+  if(unix_mode & S_IXUSR)
     fsalmode |= FSAL_MODE_XUSR;
 
-  if (unix_mode & S_IRGRP)
+  if(unix_mode & S_IRGRP)
     fsalmode |= FSAL_MODE_RGRP;
-  if (unix_mode & S_IWGRP)
+  if(unix_mode & S_IWGRP)
     fsalmode |= FSAL_MODE_WGRP;
-  if (unix_mode & S_IXGRP)
+  if(unix_mode & S_IXGRP)
     fsalmode |= FSAL_MODE_XGRP;
 
-  if (unix_mode & S_IROTH)
+  if(unix_mode & S_IROTH)
     fsalmode |= FSAL_MODE_ROTH;
-  if (unix_mode & S_IWOTH)
+  if(unix_mode & S_IWOTH)
     fsalmode |= FSAL_MODE_WOTH;
-  if (unix_mode & S_IXOTH)
+  if(unix_mode & S_IXOTH)
     fsalmode |= FSAL_MODE_XOTH;
 
   return fsalmode;
@@ -257,69 +257,69 @@ int ghost2fsal_error(int code)
 int ghost2fsal_attrs(fsal_attrib_list_t * p_fsal_attrs, GHOSTFS_Attrs_t * p_ghost_attrs)
 {
   /* Fills the output struct */
-  if (FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_SUPPATTR))
+  if(FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_SUPPATTR))
     {
       p_fsal_attrs->supported_attributes = GHOSTFS_SUPPORTED_ATTRIBUTES;
     }
-  if (FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_TYPE))
+  if(FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_TYPE))
     {
       p_fsal_attrs->type = ghost2fsal_type(p_ghost_attrs->type);
     }
-  if (FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_SIZE))
+  if(FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_SIZE))
     {
       p_fsal_attrs->filesize = p_ghost_attrs->size;
     }
-  if (FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_FSID))
+  if(FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_FSID))
     {
       /* constant FSID for ghostFS */
       p_fsal_attrs->fsid.major = 1;
       p_fsal_attrs->fsid.minor = 1;
     }
-  if (FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_FILEID))
+  if(FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_FILEID))
     {
       p_fsal_attrs->fileid = (unsigned int)p_ghost_attrs->inode;
     }
-  if (FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_MODE))
+  if(FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_MODE))
     {
       p_fsal_attrs->mode = ghost2fsal_mode(p_ghost_attrs->mode);
     }
-  if (FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_NUMLINKS))
+  if(FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_NUMLINKS))
     {
       p_fsal_attrs->numlinks = p_ghost_attrs->linkcount;
     }
-  if (FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_OWNER))
+  if(FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_OWNER))
     {
       p_fsal_attrs->owner = (fsal_uid_t) p_ghost_attrs->uid;
     }
-  if (FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_GROUP))
+  if(FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_GROUP))
     {
       p_fsal_attrs->group = (fsal_gid_t) p_ghost_attrs->gid;
     }
-  if (FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_ATIME))
+  if(FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_ATIME))
     {
       p_fsal_attrs->atime.seconds = p_ghost_attrs->atime;
       p_fsal_attrs->atime.nseconds = 0;
     }
-  if (FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_CTIME))
+  if(FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_CTIME))
     {
       p_fsal_attrs->ctime.seconds = p_ghost_attrs->ctime;
       p_fsal_attrs->ctime.nseconds = 0;
     }
-  if (FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_MTIME))
+  if(FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_MTIME))
     {
       p_fsal_attrs->mtime.seconds = p_ghost_attrs->mtime;
       p_fsal_attrs->mtime.nseconds = 0;
     }
-  if (FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_CREATION))
+  if(FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_CREATION))
     {
       p_fsal_attrs->creation.seconds = p_ghost_attrs->creationTime;
       p_fsal_attrs->creation.nseconds = 0;
     }
-  if (FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_SPACEUSED))
+  if(FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_SPACEUSED))
     {
       p_fsal_attrs->spaceused = p_ghost_attrs->size;
     }
-  if (FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_CHGTIME))
+  if(FSAL_TEST_MASK(p_fsal_attrs->asked_attributes, FSAL_ATTR_CHGTIME))
     {
       p_fsal_attrs->chgtime.seconds = p_ghost_attrs->ctime;
       p_fsal_attrs->chgtime.nseconds = 0;

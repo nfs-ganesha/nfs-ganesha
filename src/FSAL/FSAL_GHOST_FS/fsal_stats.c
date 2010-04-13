@@ -26,7 +26,7 @@ void FSAL_get_stats(fsal_statistics_t * stats,  /* OUT */
   SetFuncID(INDEX_FSAL_get_stats);
 
   /* sanity check. */
-  if (!stats)
+  if(!stats)
     return;
 
   /* returns stats for this thread. */

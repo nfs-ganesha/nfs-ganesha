@@ -176,7 +176,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
   switch (rq_vers)
     {
     case NFS_V4:
-      if (!nfs4_FhandleToFSAL(pfh4, &fsal_data.handle, pcontext))
+      if(!nfs4_FhandleToFSAL(pfh4, &fsal_data.handle, pcontext))
         {
           *prc = NFS_REQ_DROP;
           *pstatus4 = NFS4ERR_BADHANDLE;
@@ -186,7 +186,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
       break;
 
     case NFS_V3:
-      if (!nfs3_FhandleToFSAL(pfh3, &fsal_data.handle, pcontext))
+      if(!nfs3_FhandleToFSAL(pfh3, &fsal_data.handle, pcontext))
         {
           *prc = NFS_REQ_DROP;
           *pstatus3 = NFS3ERR_BADHANDLE;
@@ -196,7 +196,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
       break;
 
     case NFS_V2:
-      if (!nfs2_FhandleToFSAL(pfh2, &fsal_data.handle, pcontext))
+      if(!nfs2_FhandleToFSAL(pfh2, &fsal_data.handle, pcontext))
         {
           *prc = NFS_REQ_DROP;
           *pstatus2 = NFSERR_STALE;
@@ -210,8 +210,8 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
   print_buff((char *)&fsal_data.handle, sizeof(fsal_data.handle));
 #endif
 
-  if ((pentry = cache_inode_get(&fsal_data,
-                                &attr, ht, pclient, pcontext, &cache_status)) == NULL)
+  if((pentry = cache_inode_get(&fsal_data,
+                               &attr, ht, pclient, pcontext, &cache_status)) == NULL)
     {
       switch (rq_vers)
         {
@@ -231,7 +231,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
       return NULL;
     }
 
-  if (pattr != NULL)
+  if(pattr != NULL)
     *pattr = attr;
 
   return pentry;
@@ -255,20 +255,20 @@ int nfs_SetPostOpAttr(fsal_op_context_t * pcontext,
                       cache_entry_t * pentry,
                       fsal_attrib_list_t * pfsal_attr, post_op_attr * presult)
 {
-  if (pentry == NULL)
+  if(pentry == NULL)
     {
       presult->attributes_follow = FALSE;
       return 0;
     }
 
-  if (pfsal_attr == NULL)
+  if(pfsal_attr == NULL)
     {
       presult->attributes_follow = FALSE;
       return 0;
     }
 
-  if (nfs3_FSALattr_To_Fattr(pexport, pfsal_attr, &(presult->post_op_attr_u.attributes))
-      == 0)
+  if(nfs3_FSALattr_To_Fattr(pexport, pfsal_attr, &(presult->post_op_attr_u.attributes))
+     == 0)
     presult->attributes_follow = FALSE;
   else
     presult->attributes_follow = TRUE;
@@ -290,7 +290,7 @@ int nfs_SetPostOpAttr(fsal_op_context_t * pcontext,
  */
 void nfs_SetPreOpAttr(fsal_attrib_list_t * pfsal_attr, pre_op_attr * pattr)
 {
-  if (pfsal_attr == NULL)
+  if(pfsal_attr == NULL)
     {
       pattr->attributes_follow = FALSE;
     }
@@ -356,7 +356,7 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
   switch (cache_status)
     {
     case CACHE_INODE_IO_ERROR:
-      if (nfs_param.core_param.drop_io_errors)
+      if(nfs_param.core_param.drop_io_errors)
         {
           /* Drop the request */
           return TRUE;
@@ -369,7 +369,7 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
       break;
 
     case CACHE_INODE_INVALID_ARGUMENT:
-      if (nfs_param.core_param.drop_inval_errors)
+      if(nfs_param.core_param.drop_inval_errors)
         {
           /* Drop the request */
           return TRUE;
@@ -455,21 +455,21 @@ void nfs_SetFailedStatus(fsal_op_context_t * pcontext,
   switch (version)
     {
     case NFS_V2:
-      if (status != CACHE_INODE_SUCCESS)        /* Should not use success to address a failed status */
+      if(status != CACHE_INODE_SUCCESS) /* Should not use success to address a failed status */
         *pstatus2 = nfs2_Errno(status);
       break;
 
     case NFS_V3:
-      if (status != CACHE_INODE_SUCCESS)        /* Should not use success to address a failed status */
+      if(status != CACHE_INODE_SUCCESS) /* Should not use success to address a failed status */
         *pstatus3 = nfs3_Errno(status);
 
-      if (ppost_op_attr != NULL)
+      if(ppost_op_attr != NULL)
         nfs_SetPostOpAttr(pcontext, pexport, pentry0, NULL, ppost_op_attr);
 
-      if (pwcc_data1 != NULL)
+      if(pwcc_data1 != NULL)
         nfs_SetWccData(pcontext, pexport, pentry1, ppre_vattr1, NULL, pwcc_data1);
 
-      if (pwcc_data2 != NULL)
+      if(pwcc_data2 != NULL)
         nfs_SetWccData(pcontext, pexport, pentry2, ppre_vattr2, NULL, pwcc_data2);
       break;
 
@@ -613,14 +613,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   LastOffset = 0;
   j = 0;
 
-  for (i = 0; i < attrmasklen; i++)
+  for(i = 0; i < attrmasklen; i++)
     {
       attribute_to_set = attrmasklist[i];
 
 #ifdef _USE_NFS4_1
-      if (attrmasklist[i] > FATTR4_FS_CHARSET_CAP)
+      if(attrmasklist[i] > FATTR4_FS_CHARSET_CAP)
 #else
-      if (attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
+      if(attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
 #endif
         {
           /* Erroneous value... skip */
@@ -651,9 +651,9 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
           /* How many supported attributes ? Compute the result in variable named c */
           c = 0;
-          for (k = FATTR4_SUPPORTED_ATTRS; k <= FATTR4_MOUNTED_ON_FILEID; k++)
+          for(k = FATTR4_SUPPORTED_ATTRS; k <= FATTR4_MOUNTED_ON_FILEID; k++)
             {
-              if (fattr4tab[k].supported)
+              if(fattr4tab[k].supported)
                 {
                   attrvalslist_supported[c++] = k;
                 }
@@ -665,8 +665,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 #endif
 
           /* Let set the reply bitmap */
-          if ((supported_attrs.bitmap4_val =
-               (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
+          if((supported_attrs.bitmap4_val =
+              (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
             return -1;
           memset(supported_attrs.bitmap4_val, 0, 2 * sizeof(uint32_t));
 
@@ -694,7 +694,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           LastOffset += sizeof(uint32_t);
 
           /* And then the data */
-          for (k = 0; k < supported_attrs.bitmap4_len; k++)
+          for(k = 0; k < supported_attrs.bitmap4_len; k++)
             {
               supported_attrs_val = htonl(supported_attrs.bitmap4_val[k]);
               memcpy((char *)(attrvalsBuffer + LastOffset), &supported_attrs_val,
@@ -750,7 +750,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
         case FATTR4_FH_EXPIRE_TYPE:
           /* For the moment, we handle only the persistent filehandle */
-          if (nfs_param.nfsv4_param.fh_expire == TRUE)
+          if(nfs_param.nfsv4_param.fh_expire == TRUE)
             expire_type = htonl(FH4_VOLATILE_ANY);
           else
             expire_type = htonl(FH4_PERSISTENT);
@@ -812,7 +812,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
           /* If object is a directory attached to a referral, then a different fsid is to be returned
            * to tell the client that a different fs is being crossed */
-          if (nfs4_Is_Fh_Referral(objFH))
+          if(nfs4_Is_Fh_Referral(objFH))
             {
               fsid.major = ~(nfs_htonl64((uint64_t) pexport->filesystem_id.major));
               fsid.minor = ~(nfs_htonl64((uint64_t) pexport->filesystem_id.minor));
@@ -833,14 +833,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_LEASE_TIME:
-          if (!statfscalled)
+          if(!statfscalled)
             {
-              if ((cache_status = cache_inode_statfs(data->current_entry,
-                                                     &staticinfo,
-                                                     &dynamicinfo,
-                                                     data->pcontext,
-                                                     &cache_status)) !=
-                  CACHE_INODE_SUCCESS)
+              if((cache_status = cache_inode_statfs(data->current_entry,
+                                                    &staticinfo,
+                                                    &dynamicinfo,
+                                                    data->pcontext,
+                                                    &cache_status)) !=
+                 CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
                   break;
@@ -898,14 +898,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_CASE_INSENSITIVE:
-          if (!statfscalled)
+          if(!statfscalled)
             {
-              if ((cache_status = cache_inode_statfs(data->current_entry,
-                                                     &staticinfo,
-                                                     &dynamicinfo,
-                                                     data->pcontext,
-                                                     &cache_status)) !=
-                  CACHE_INODE_SUCCESS)
+              if((cache_status = cache_inode_statfs(data->current_entry,
+                                                    &staticinfo,
+                                                    &dynamicinfo,
+                                                    data->pcontext,
+                                                    &cache_status)) !=
+                 CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
                   break;
@@ -922,14 +922,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
         case FATTR4_CASE_PRESERVING:
           /* HPSS is case preserving */
-          if (!statfscalled)
+          if(!statfscalled)
             {
-              if ((cache_status = cache_inode_statfs(data->current_entry,
-                                                     &staticinfo,
-                                                     &dynamicinfo,
-                                                     data->pcontext,
-                                                     &cache_status)) !=
-                  CACHE_INODE_SUCCESS)
+              if((cache_status = cache_inode_statfs(data->current_entry,
+                                                    &staticinfo,
+                                                    &dynamicinfo,
+                                                    data->pcontext,
+                                                    &cache_status)) !=
+                 CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
                   break;
@@ -946,14 +946,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
         case FATTR4_CHOWN_RESTRICTED:
           /* chown is restricted to root */
-          if (!statfscalled)
+          if(!statfscalled)
             {
-              if ((cache_status = cache_inode_statfs(data->current_entry,
-                                                     &staticinfo,
-                                                     &dynamicinfo,
-                                                     data->pcontext,
-                                                     &cache_status)) !=
-                  CACHE_INODE_SUCCESS)
+              if((cache_status = cache_inode_statfs(data->current_entry,
+                                                    &staticinfo,
+                                                    &dynamicinfo,
+                                                    data->pcontext,
+                                                    &cache_status)) !=
+                 CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
                   break;
@@ -981,7 +981,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           /* XDR's special stuff for 32-bit alignment */
           len = objFH->nfs_fh4_len;
           off = 0;
-          while ((len + off) % 4 != 0)
+          while((len + off) % 4 != 0)
             {
               char c = '\0';
 
@@ -1003,14 +1003,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_FILES_AVAIL:
-          if (!statfscalled)
+          if(!statfscalled)
             {
-              if ((cache_status = cache_inode_statfs(data->current_entry,
-                                                     &staticinfo,
-                                                     &dynamicinfo,
-                                                     data->pcontext,
-                                                     &cache_status)) !=
-                  CACHE_INODE_SUCCESS)
+              if((cache_status = cache_inode_statfs(data->current_entry,
+                                                    &staticinfo,
+                                                    &dynamicinfo,
+                                                    data->pcontext,
+                                                    &cache_status)) !=
+                 CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
                   break;
@@ -1026,14 +1026,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_FILES_FREE:
-          if (!statfscalled)
+          if(!statfscalled)
             {
-              if ((cache_status = cache_inode_statfs(data->current_entry,
-                                                     &staticinfo,
-                                                     &dynamicinfo,
-                                                     data->pcontext,
-                                                     &cache_status)) !=
-                  CACHE_INODE_SUCCESS)
+              if((cache_status = cache_inode_statfs(data->current_entry,
+                                                    &staticinfo,
+                                                    &dynamicinfo,
+                                                    data->pcontext,
+                                                    &cache_status)) !=
+                 CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
                   break;
@@ -1049,14 +1049,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_FILES_TOTAL:
-          if (!statfscalled)
+          if(!statfscalled)
             {
-              if ((cache_status = cache_inode_statfs(data->current_entry,
-                                                     &staticinfo,
-                                                     &dynamicinfo,
-                                                     data->pcontext,
-                                                     &cache_status)) !=
-                  CACHE_INODE_SUCCESS)
+              if((cache_status = cache_inode_statfs(data->current_entry,
+                                                    &staticinfo,
+                                                    &dynamicinfo,
+                                                    data->pcontext,
+                                                    &cache_status)) !=
+                 CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
                   break;
@@ -1072,14 +1072,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_FS_LOCATIONS:
-          if (data->current_entry->internal_md.type != DIR_BEGINNING)
+          if(data->current_entry->internal_md.type != DIR_BEGINNING)
             {
               op_attr_success = 0;
               break;
             }
 
-          if (!nfs4_referral_str_To_Fattr_fs_location
-              (data->current_entry->object.dir_begin.referral, tmp_buff, &tmp_int))
+          if(!nfs4_referral_str_To_Fattr_fs_location
+             (data->current_entry->object.dir_begin.referral, tmp_buff, &tmp_int))
             {
               op_attr_success = 0;
               break;
@@ -1116,14 +1116,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_MAXLINK:
-          if (!statfscalled)
+          if(!statfscalled)
             {
-              if ((cache_status = cache_inode_statfs(data->current_entry,
-                                                     &staticinfo,
-                                                     &dynamicinfo,
-                                                     data->pcontext,
-                                                     &cache_status)) !=
-                  CACHE_INODE_SUCCESS)
+              if((cache_status = cache_inode_statfs(data->current_entry,
+                                                    &staticinfo,
+                                                    &dynamicinfo,
+                                                    data->pcontext,
+                                                    &cache_status)) !=
+                 CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
                   break;
@@ -1138,14 +1138,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_MAXNAME:
-          if (!statfscalled)
+          if(!statfscalled)
             {
-              if ((cache_status = cache_inode_statfs(data->current_entry,
-                                                     &staticinfo,
-                                                     &dynamicinfo,
-                                                     data->pcontext,
-                                                     &cache_status)) !=
-                  CACHE_INODE_SUCCESS)
+              if((cache_status = cache_inode_statfs(data->current_entry,
+                                                    &staticinfo,
+                                                    &dynamicinfo,
+                                                    data->pcontext,
+                                                    &cache_status)) !=
+                 CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
                   break;
@@ -1160,14 +1160,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_MAXREAD:
-          if (!statfscalled)
+          if(!statfscalled)
             {
-              if ((cache_status = cache_inode_statfs(data->current_entry,
-                                                     &staticinfo,
-                                                     &dynamicinfo,
-                                                     data->pcontext,
-                                                     &cache_status)) !=
-                  CACHE_INODE_SUCCESS)
+              if((cache_status = cache_inode_statfs(data->current_entry,
+                                                    &staticinfo,
+                                                    &dynamicinfo,
+                                                    data->pcontext,
+                                                    &cache_status)) !=
+                 CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
                   break;
@@ -1182,14 +1182,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_MAXWRITE:
-          if (!statfscalled)
+          if(!statfscalled)
             {
-              if ((cache_status = cache_inode_statfs(data->current_entry,
-                                                     &staticinfo,
-                                                     &dynamicinfo,
-                                                     data->pcontext,
-                                                     &cache_status)) !=
-                  CACHE_INODE_SUCCESS)
+              if((cache_status = cache_inode_statfs(data->current_entry,
+                                                    &staticinfo,
+                                                    &dynamicinfo,
+                                                    data->pcontext,
+                                                    &cache_status)) !=
+                 CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
                   break;
@@ -1222,14 +1222,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
         case FATTR4_NO_TRUNC:
           /* File's names are not truncated, an error is returned is name is too long */
-          if (!statfscalled)
+          if(!statfscalled)
             {
-              if ((cache_status = cache_inode_statfs(data->current_entry,
-                                                     &staticinfo,
-                                                     &dynamicinfo,
-                                                     data->pcontext,
-                                                     &cache_status)) !=
-                  CACHE_INODE_SUCCESS)
+              if((cache_status = cache_inode_statfs(data->current_entry,
+                                                    &staticinfo,
+                                                    &dynamicinfo,
+                                                    data->pcontext,
+                                                    &cache_status)) !=
+                 CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
                   break;
@@ -1255,13 +1255,13 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
         case FATTR4_OWNER:
           /* Return the uid as a human readable utf8 string */
-          if (uid2utf8(pattr->owner, &file_owner) == 0)
+          if(uid2utf8(pattr->owner, &file_owner) == 0)
             {
               u_int utf8len = 0;
               u_int deltalen = 0;
 
               /* Take care of 32 bits alignment */
-              if (file_owner.utf8string_len % 4 == 0)
+              if(file_owner.utf8string_len % 4 == 0)
                 deltalen = 0;
               else
                 deltalen = 4 - file_owner.utf8string_len % 4;
@@ -1278,7 +1278,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
               Mem_Free((char *)file_owner.utf8string_val);
 
               /* Pad with zero to keep xdr alignement */
-              if (deltalen != 0)
+              if(deltalen != 0)
                 memset((char *)(attrvalsBuffer + LastOffset), 0, deltalen);
               LastOffset += deltalen;
 
@@ -1291,13 +1291,13 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
         case FATTR4_OWNER_GROUP:
           /* Return the gid as a human-readable utf8 string */
-          if (gid2utf8(pattr->group, &file_owner_group) == 0)
+          if(gid2utf8(pattr->group, &file_owner_group) == 0)
             {
               u_int utf8len = 0;
               u_int deltalen = 0;
 
               /* Take care of 32 bits alignment */
-              if (file_owner_group.utf8string_len % 4 == 0)
+              if(file_owner_group.utf8string_len % 4 == 0)
                 deltalen = 0;
               else
                 deltalen = 4 - file_owner_group.utf8string_len % 4;
@@ -1314,7 +1314,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
               Mem_Free((char *)file_owner_group.utf8string_val);
 
               /* Pad with zero to keep xdr alignement */
-              if (deltalen != 0)
+              if(deltalen != 0)
                 memset((char *)(attrvalsBuffer + LastOffset), 0, deltalen);
               LastOffset += deltalen;
 
@@ -1358,14 +1358,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_SPACE_AVAIL:
-          if (!statfscalled)
+          if(!statfscalled)
             {
-              if ((cache_status = cache_inode_statfs(data->current_entry,
-                                                     &staticinfo,
-                                                     &dynamicinfo,
-                                                     data->pcontext,
-                                                     &cache_status)) !=
-                  CACHE_INODE_SUCCESS)
+              if((cache_status = cache_inode_statfs(data->current_entry,
+                                                    &staticinfo,
+                                                    &dynamicinfo,
+                                                    data->pcontext,
+                                                    &cache_status)) !=
+                 CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
                   break;
@@ -1381,14 +1381,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_SPACE_FREE:
-          if (!statfscalled)
+          if(!statfscalled)
             {
-              if ((cache_status = cache_inode_statfs(data->current_entry,
-                                                     &staticinfo,
-                                                     &dynamicinfo,
-                                                     data->pcontext,
-                                                     &cache_status)) !=
-                  CACHE_INODE_SUCCESS)
+              if((cache_status = cache_inode_statfs(data->current_entry,
+                                                    &staticinfo,
+                                                    &dynamicinfo,
+                                                    data->pcontext,
+                                                    &cache_status)) !=
+                 CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
                   break;
@@ -1404,14 +1404,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_SPACE_TOTAL:
-          if (!statfscalled)
+          if(!statfscalled)
             {
-              if ((cache_status = cache_inode_statfs(data->current_entry,
-                                                     &staticinfo,
-                                                     &dynamicinfo,
-                                                     data->pcontext,
-                                                     &cache_status)) !=
-                  CACHE_INODE_SUCCESS)
+              if((cache_status = cache_inode_statfs(data->current_entry,
+                                                    &staticinfo,
+                                                    &dynamicinfo,
+                                                    data->pcontext,
+                                                    &cache_status)) !=
+                 CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
                   break;
@@ -1573,14 +1573,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
         }                       /* switch( attribute_to_set ) */
 
       /* Increase the Offset for the next operation if this was a success */
-      if (op_attr_success)
+      if(op_attr_success)
         {
           /* Set the returned bitmask */
           attrvalslist[j] = attribute_to_set;
           j += 1;
 
           /* Be carefull not to get out of attrvalsBuffer */
-          if (LastOffset > ATTRVALS_BUFFLEN)
+          if(LastOffset > ATTRVALS_BUFFLEN)
             return -1;
         }
 
@@ -1592,8 +1592,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 #endif
 
   /* Set the bitmap for result */
-  if ((Fattr->attrmask.bitmap4_val =
-       (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
+  if((Fattr->attrmask.bitmap4_val = (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
     return -1;
   memset((char *)Fattr->attrmask.bitmap4_val, 0, 2 * sizeof(uint32_t));
 
@@ -1606,15 +1605,15 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
   /* Set the attrlist4 */
   Fattr->attr_vals.attrlist4_len = LastOffset;
-  if (LastOffset != 0)          /* No need to allocate an empty buffer */
+  if(LastOffset != 0)           /* No need to allocate an empty buffer */
     {
 #ifdef _DEBUG_MEMLEAKS
       /* For debugging memory leaks */
       BuddySetDebugLabel("FSALattr_To_Fattr:attrvals");
 #endif
 
-      if ((Fattr->attr_vals.attrlist4_val =
-           Mem_Alloc(Fattr->attr_vals.attrlist4_len)) == NULL)
+      if((Fattr->attr_vals.attrlist4_val =
+          Mem_Alloc(Fattr->attr_vals.attrlist4_len)) == NULL)
         return -1;
       memset((char *)Fattr->attr_vals.attrlist4_val, 0, Fattr->attr_vals.attrlist4_len);
       memcpy(Fattr->attr_vals.attrlist4_val, attrvalsBuffer,
@@ -1647,12 +1646,12 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
 {
   struct timeval t;
 
-  if (pFSAL_attr == NULL || psattr == NULL)
+  if(pFSAL_attr == NULL || psattr == NULL)
     return 0;
 
   pFSAL_attr->asked_attributes = 0;
 
-  if (psattr->mode.set_it == TRUE)
+  if(psattr->mode.set_it == TRUE)
     {
 #ifdef _DEBUG_NFSPROTO
       printf("nfs3_Sattr_To_FSALattr: mode = %o\n", psattr->mode.set_mode3_u.mode);
@@ -1661,7 +1660,7 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
       pFSAL_attr->asked_attributes |= FSAL_ATTR_MODE;
     }
 
-  if (psattr->uid.set_it == TRUE)
+  if(psattr->uid.set_it == TRUE)
     {
 #ifdef _DEBUG_NFSPROTO
       printf("nfs3_Sattr_To_FSALattr: uid = %d\n", psattr->uid.set_uid3_u.uid);
@@ -1670,7 +1669,7 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
       pFSAL_attr->asked_attributes |= FSAL_ATTR_OWNER;
     }
 
-  if (psattr->gid.set_it == TRUE)
+  if(psattr->gid.set_it == TRUE)
     {
 #ifdef _DEBUG_NFSPROTO
       printf("nfs3_Sattr_To_FSALattr: gid = %d\n", psattr->gid.set_gid3_u.gid);
@@ -1679,7 +1678,7 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
       pFSAL_attr->asked_attributes |= FSAL_ATTR_GROUP;
     }
 
-  if (psattr->size.set_it == TRUE)
+  if(psattr->size.set_it == TRUE)
     {
 #ifdef  _DEBUG_NFSPROTO
       printf("nfs3_Sattr_To_FSALattr: size = %lld\n", psattr->size.set_size3_u.size);
@@ -1691,14 +1690,14 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
       pFSAL_attr->asked_attributes |= FSAL_ATTR_SPACEUSED;
     }
 
-  if (psattr->atime.set_it != DONT_CHANGE)
+  if(psattr->atime.set_it != DONT_CHANGE)
     {
 #ifdef _DEBUG_NFSPROTO
       printf("nfs3_Sattr_To_FSALattr: set=%d atime = %d,%d\n",
              psattr->atime.set_it, psattr->atime.set_atime_u.atime.seconds,
              psattr->atime.set_atime_u.atime.nseconds);
 #endif
-      if (psattr->atime.set_it == SET_TO_CLIENT_TIME)
+      if(psattr->atime.set_it == SET_TO_CLIENT_TIME)
         {
           pFSAL_attr->atime.seconds = psattr->atime.set_atime_u.atime.seconds;
           pFSAL_attr->atime.nseconds = psattr->atime.set_atime_u.atime.nseconds;
@@ -1714,14 +1713,14 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
       pFSAL_attr->asked_attributes |= FSAL_ATTR_ATIME;
     }
 
-  if (psattr->mtime.set_it != DONT_CHANGE)
+  if(psattr->mtime.set_it != DONT_CHANGE)
     {
 #ifdef _DEBUG_NFSPROTO
       printf("nfs3_Sattr_To_FSALattr: set=%d mtime = %d,%d\n",
              psattr->atime.set_it, psattr->mtime.set_mtime_u.mtime.seconds,
              psattr->mtime.set_mtime_u.mtime.nseconds);
 #endif
-      if (psattr->mtime.set_it == SET_TO_CLIENT_TIME)
+      if(psattr->mtime.set_it == SET_TO_CLIENT_TIME)
         {
           pFSAL_attr->mtime.seconds = psattr->mtime.set_mtime_u.mtime.seconds;
           pFSAL_attr->mtime.nseconds = psattr->mtime.set_mtime_u.mtime.nseconds;
@@ -1757,7 +1756,7 @@ int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
                            fattr2 * pFattr)     /* Out: file attributes */
 {
   /* Badly formed arguments */
-  if (pFSAL_attr == NULL || pFattr == NULL)
+  if(pFSAL_attr == NULL || pFattr == NULL)
     return 0;
 
   /* @todo BUGAZOMEU: sanity check on attribute mask (does the FSAL support the attributes required to support NFSv2 ? */
@@ -1821,7 +1820,7 @@ int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
        pFattr->fsid);
 #endif
 
-  if (pFSAL_attr->filesize > NFS2_MAX_FILESIZE)
+  if(pFSAL_attr->filesize > NFS2_MAX_FILESIZE)
     pFattr->size = NFS2_MAX_FILESIZE;
   else
     pFattr->size = pFSAL_attr->filesize;
@@ -1829,10 +1828,10 @@ int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
   pFattr->blocksize = DEV_BSIZE;
 
   pFattr->blocks = pFattr->size >> 9;   /* dividing by 512 */
-  if (pFattr->size % DEV_BSIZE != 0)
+  if(pFattr->size % DEV_BSIZE != 0)
     pFattr->blocks += 1;
 
-  if (pFSAL_attr->type == FSAL_TYPE_CHR || pFSAL_attr->type == FSAL_TYPE_BLK)
+  if(pFSAL_attr->type == FSAL_TYPE_CHR || pFSAL_attr->type == FSAL_TYPE_BLK)
     pFattr->rdev = pFSAL_attr->rawdev.major;
   else
     pFattr->rdev = 0;
@@ -1865,17 +1864,17 @@ int nfs4_SetCompoundExport(compound_data_t * data)
   short exportid;
 
   /* This routine is not related to pseudo fs file handle, do not handle them */
-  if (nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     return NFS4_OK;
 
   /* Get the export id */
-  if ((exportid = nfs4_FhandleToExportId(&(data->currentFH))) == 0)
+  if((exportid = nfs4_FhandleToExportId(&(data->currentFH))) == 0)
     return NFS4ERR_BADHANDLE;
 
-  if ((data->pexport = nfs_Get_export_by_id(data->pfullexportlist, exportid)) == NULL)
+  if((data->pexport = nfs_Get_export_by_id(data->pfullexportlist, exportid)) == NULL)
     return NFS4ERR_BADHANDLE;
 
-  if (nfs4_MakeCred(data) != NFS4_OK)
+  if(nfs4_MakeCred(data) != NFS4_OK)
     return NFS4ERR_WRONGSEC;
 
   return NFS4_OK;
@@ -1901,7 +1900,7 @@ int nfs4_FhandleToExId(nfs_fh4 * fh4p, unsigned short *ExIdp)
   pfhandle4 = (file_handle_v4_t *) (fh4p->nfs_fh4_val);
 
   /* The function should not be used on a pseudo fhandle */
-  if (pfhandle4->pseudofs_flag == TRUE)
+  if(pfhandle4->pseudofs_flag == TRUE)
     return FALSE;
 
   *ExIdp = pfhandle4->exportid;
@@ -1928,8 +1927,8 @@ void nfs4_stringid_split(char *buff, char *uidname, char *domainname)
   char *c = NULL;
   unsigned int i = 0;
 
-  for (c = buff, i = 0; *c != '\0'; c++, i++)
-    if (*c == '@')
+  for(c = buff, i = 0; *c != '\0'; c++, i++)
+    if(*c == '@')
       break;
 
   strcpy(uidname, buff);
@@ -1955,18 +1954,18 @@ void nfs4_stringid_split(char *buff, char *uidname, char *domainname)
  */
 int utf82str(char *str, utf8string * utf8str)
 {
-  if (utf8str == NULL || utf8str->utf8string_len == 0)
+  if(utf8str == NULL || utf8str->utf8string_len == 0)
     return -1;
 
   /* BUGAZOMEU: TO BE DONE: use STUFF ALLOCATOR here */
-  if (str == NULL)
+  if(str == NULL)
     {
 #ifdef _DEBUG_MEMLEAKS
       /* For debugging memory leaks */
       BuddySetDebugLabel("utf82str");
 #endif
 
-      if ((str = (char *)Mem_Alloc(utf8str->utf8string_len + 1)) == NULL)
+      if((str = (char *)Mem_Alloc(utf8str->utf8string_len + 1)) == NULL)
         return NFS4ERR_SERVERFAULT;
 
 #ifdef _DEBUG_MEMLEAKS
@@ -2004,7 +2003,7 @@ int str2utf8(char *str, utf8string * utf8str)
   len = strlen(buff);
 
   /* BUGAZOMEU: TO BE DONE: use STUFF ALLOCATOR here */
-  if (utf8str->utf8string_val == NULL)
+  if(utf8str->utf8string_val == NULL)
     return -1;
 
   utf8str->utf8string_len = len;
@@ -2088,19 +2087,19 @@ void nfs4_bitmap4_to_list(bitmap4 * b, uint_t * plen, uint32_t * pval)
   uint_t index = 0;
   uint_t offset = 0;
 #ifdef _DEBUG_NFS_V4
-  if (b->bitmap4_len > 0)
+  if(b->bitmap4_len > 0)
     printf("Bitmap: Len = %u Val = %u|%u\n", b->bitmap4_len, b->bitmap4_val[0],
            b->bitmap4_val[1]);
   else
     printf("Bitmap: Len = %u ... \n", b->bitmap4_len);
 #endif
 
-  for (offset = 0; offset < b->bitmap4_len; offset++)
+  for(offset = 0; offset < b->bitmap4_len; offset++)
     {
-      for (i = 0; i < 32; i++)
+      for(i = 0; i < 32; i++)
         {
           val = 1 << i;         /* Compute 2**i */
-          if (b->bitmap4_val[offset] & val)
+          if(b->bitmap4_val[offset] & val)
             pval[index++] = i + 32 * offset;
         }
     }
@@ -2172,14 +2171,14 @@ void nfs4_list_to_bitmap4(bitmap4 * b, uint_t * plen, uint32_t * pval)
   b->bitmap4_val[1] = 0;
 
   b->bitmap4_len = 1;
-  for (i = 0; i < *plen; i++)
+  for(i = 0; i < *plen; i++)
     {
       intpos = pval[i] / 32;
       bitpos = pval[i] % 32;
       val = 1 << bitpos;
       b->bitmap4_val[intpos] |= val;
 
-      if (intpos != 0)
+      if(intpos != 0)
         b->bitmap4_len = 2;
     }
 #ifdef _DEBUG_NFS_V4
@@ -2210,7 +2209,7 @@ int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
                            fsal_attrib_list_t * FSAL_attr,      /* In: file attributes */
                            fattr3 * Fattr)      /* Out: file attributes */
 {
-  if (FSAL_attr == NULL || Fattr == NULL)
+  if(FSAL_attr == NULL || Fattr == NULL)
     return 0;
 
   switch (FSAL_attr->type)
@@ -2256,7 +2255,7 @@ int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
   Fattr->size = FSAL_attr->filesize;
   Fattr->used = FSAL_attr->spaceused;
 
-  if (FSAL_attr->type == FSAL_TYPE_CHR || FSAL_attr->type == FSAL_TYPE_BLK)
+  if(FSAL_attr->type == FSAL_TYPE_CHR || FSAL_attr->type == FSAL_TYPE_BLK)
     {
       Fattr->rdev.specdata1 = FSAL_attr->rawdev.major;
       Fattr->rdev.specdata2 = FSAL_attr->rawdev.minor;
@@ -2308,25 +2307,25 @@ int nfs2_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
 
   FSAL_CLEAR_MASK(pFSAL_attr->asked_attributes);
 
-  if (Fattr->mode != (unsigned int)-1)
+  if(Fattr->mode != (unsigned int)-1)
     {
       pFSAL_attr->mode = unix2fsal_mode(Fattr->mode);
       FSAL_SET_MASK(pFSAL_attr->asked_attributes, FSAL_ATTR_MODE);
     }
 
-  if (Fattr->uid != (unsigned int)-1)
+  if(Fattr->uid != (unsigned int)-1)
     {
       pFSAL_attr->owner = Fattr->uid;
       FSAL_SET_MASK(pFSAL_attr->asked_attributes, FSAL_ATTR_OWNER);
     }
 
-  if (Fattr->gid != (unsigned int)-1)
+  if(Fattr->gid != (unsigned int)-1)
     {
       pFSAL_attr->group = Fattr->gid;
       FSAL_SET_MASK(pFSAL_attr->asked_attributes, FSAL_ATTR_GROUP);
     }
 
-  if (Fattr->size != (unsigned int)-1)
+  if(Fattr->size != (unsigned int)-1)
     {
       /* Both FSAL_ATTR_SIZE and FSAL_ATTR_SPACEUSED are to be managed */
       pFSAL_attr->filesize = (fsal_size_t) Fattr->size;
@@ -2339,7 +2338,7 @@ int nfs2_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
    * this means we must set atime and mtime
    * to server time (NFS Illustrated p. 98)
    */
-  if (Fattr->mtime.useconds == 1000000)
+  if(Fattr->mtime.useconds == 1000000)
     {
       gettimeofday(&t, NULL);
 
@@ -2352,11 +2351,11 @@ int nfs2_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
     {
       /* set atime to client */
 
-      if (Fattr->atime.seconds != (unsigned int)-1)
+      if(Fattr->atime.seconds != (unsigned int)-1)
         {
           pFSAL_attr->atime.seconds = Fattr->atime.seconds;
 
-          if (Fattr->atime.seconds != (unsigned int)-1)
+          if(Fattr->atime.seconds != (unsigned int)-1)
             pFSAL_attr->atime.nseconds = Fattr->atime.useconds * 1000;
           else
             pFSAL_attr->atime.nseconds = 0;     /* ignored */
@@ -2366,11 +2365,11 @@ int nfs2_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
 
       /* set mtime to client */
 
-      if (Fattr->mtime.seconds != (unsigned int)-1)
+      if(Fattr->mtime.seconds != (unsigned int)-1)
         {
           pFSAL_attr->mtime.seconds = Fattr->mtime.seconds;
 
-          if (Fattr->mtime.seconds != (unsigned int)-1)
+          if(Fattr->mtime.seconds != (unsigned int)-1)
             pFSAL_attr->mtime.nseconds = Fattr->mtime.useconds * 1000;
           else
             pFSAL_attr->mtime.nseconds = 0;     /* ignored */
@@ -2403,28 +2402,28 @@ int nfs4_Fattr_Check_Access(fattr4 * Fattr, int access)
   uint32_t attrmasklen = 0;
 
   /* Parameter sanity check */
-  if (Fattr == NULL)
+  if(Fattr == NULL)
     return 0;
 
-  if (access != FATTR4_ATTR_READ && access != FATTR4_ATTR_WRITE)
+  if(access != FATTR4_ATTR_READ && access != FATTR4_ATTR_WRITE)
     return 0;
 
   /* Convert the attribute bitmap to an attribute list */
   nfs4_bitmap4_to_list(&(Fattr->attrmask), &attrmasklen, attrmasklist);
 
-  for (i = 0; i < attrmasklen; i++)
+  for(i = 0; i < attrmasklen; i++)
     {
 #ifdef _USE_NFS4_1
-      if (attrmasklist[i] > FATTR4_FS_CHARSET_CAP)
+      if(attrmasklist[i] > FATTR4_FS_CHARSET_CAP)
 #else
-      if (attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
+      if(attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
 #endif
         {
           /* Erroneous value... skip */
           continue;
         }
 
-      if (((int)fattr4tab[attrmasklist[i]].access & access) != access)
+      if(((int)fattr4tab[attrmasklist[i]].access & access) != access)
         return 0;
     }
 
@@ -2452,24 +2451,24 @@ int nfs4_Fattr_Check_Access_Bitmap(bitmap4 * pbitmap, int access)
   uint32_t attrmasklen = 0;
 
   /* Parameter sanity check */
-  if (pbitmap == NULL)
+  if(pbitmap == NULL)
     return 0;
 
-  if (access != FATTR4_ATTR_READ && access != FATTR4_ATTR_WRITE)
+  if(access != FATTR4_ATTR_READ && access != FATTR4_ATTR_WRITE)
     return 0;
 
   /* Convert the attribute bitmap to an attribute list */
   nfs4_bitmap4_to_list(pbitmap, &attrmasklen, attrmasklist);
 
-  for (i = 0; i < attrmasklen; i++)
+  for(i = 0; i < attrmasklen; i++)
     {
-      if (attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
+      if(attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
         {
           /* Erroneous value... skip */
           continue;
         }
 
-      if (((int)fattr4tab[attrmasklist[i]].access & access) != access)
+      if(((int)fattr4tab[attrmasklist[i]].access & access) != access)
         return 0;
     }
 
@@ -2496,17 +2495,17 @@ int nfs4_Fattr_Supported(fattr4 * Fattr)
   uint32_t attrmasklen = 0;
 
   /* Parameter sanity check */
-  if (Fattr == NULL)
+  if(Fattr == NULL)
     return 0;
 
   /* Convert the attribute bitmap to an attribute list */
   nfs4_bitmap4_to_list(&(Fattr->attrmask), &attrmasklen, attrmasklist);
 
-  for (i = 0; i < attrmasklen; i++)
+  for(i = 0; i < attrmasklen; i++)
     {
 
 #ifndef _USE_NFS4_1
-      if (attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
+      if(attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
         {
           /* Erroneous value... skip */
           continue;
@@ -2517,7 +2516,7 @@ int nfs4_Fattr_Supported(fattr4 * Fattr)
       printf("nfs4_Fattr_Supported  ==============> %s supported flag=%u\n",
              fattr4tab[attrmasklist[i]].name, fattr4tab[attrmasklist[i]].supported);
 #endif
-      if (!fattr4tab[attrmasklist[i]].supported)
+      if(!fattr4tab[attrmasklist[i]].supported)
         return 0;
     }
 
@@ -2544,17 +2543,17 @@ int nfs4_Fattr_Supported_Bitmap(bitmap4 * pbitmap)
   uint32_t attrmasklen = 0;
 
   /* Parameter sanity check */
-  if (pbitmap == NULL)
+  if(pbitmap == NULL)
     return 0;
 
   /* Convert the attribute bitmap to an attribute list */
   nfs4_bitmap4_to_list(pbitmap, &attrmasklen, attrmasklist);
 
-  for (i = 0; i < attrmasklen; i++)
+  for(i = 0; i < attrmasklen; i++)
     {
 
 #ifndef _USE_NFS4_1
-      if (attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
+      if(attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
         {
           /* Erroneous value... skip */
           continue;
@@ -2565,7 +2564,7 @@ int nfs4_Fattr_Supported_Bitmap(bitmap4 * pbitmap)
       printf("nfs4_Fattr_Supported  ==============> %s supported flag=%u\n",
              fattr4tab[attrmasklist[i]].name, fattr4tab[attrmasklist[i]].supported);
 #endif
-      if (!fattr4tab[attrmasklist[i]].supported)
+      if(!fattr4tab[attrmasklist[i]].supported)
         return 0;
     }
 
@@ -2597,13 +2596,13 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
   u_int len = 0;
   uint32_t attribute_to_set = 0;
 
-  if (Fattr1 == NULL)
+  if(Fattr1 == NULL)
     return FALSE;
 
-  if (Fattr2 == NULL)
+  if(Fattr2 == NULL)
     return FALSE;
 
-  if (Fattr1->attrmask.bitmap4_len != Fattr2->attrmask.bitmap4_len)     /* different mask */
+  if(Fattr1->attrmask.bitmap4_len != Fattr2->attrmask.bitmap4_len)      /* different mask */
     return FALSE;
 
   /* Convert the attribute bitmap to an attribute list */
@@ -2611,18 +2610,18 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
   nfs4_bitmap4_to_list(&(Fattr2->attrmask), &attrmasklen2, attrmasklist2);
 
   /* Should not occur, bu this is a sanity check */
-  if (attrmasklen1 != attrmasklen2)
+  if(attrmasklen1 != attrmasklen2)
     return FALSE;
 
-  for (i = 0; i < attrmasklen1; i++)
+  for(i = 0; i < attrmasklen1; i++)
     {
-      if (attrmasklist1[i] != attrmasklist2[i])
+      if(attrmasklist1[i] != attrmasklist2[i])
         return 0;
 
-      if (attrmasklist1[i] == FATTR4_RDATTR_ERROR)
+      if(attrmasklist1[i] == FATTR4_RDATTR_ERROR)
         return -1;
 
-      if (attrmasklist2[i] == FATTR4_RDATTR_ERROR)
+      if(attrmasklist2[i] == FATTR4_RDATTR_ERROR)
         return -1;
     }
 
@@ -2630,7 +2629,7 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
   LastOffset = 0;
   len = 0;
 
-  for (i = 0; i < attrmasklen1; i++)
+  for(i = 0; i < attrmasklen1; i++)
     {
       attribute_to_set = attrmasklist1[i];
 
@@ -2651,7 +2650,7 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
           len = htonl(len);
           LastOffset += sizeof(u_int);
 
-          for (k = 0; k < len; k++)
+          for(k = 0; k < len; k++)
             {
               cmp += memcmp((char *)(Fattr1->attr_vals.attrlist4_val + LastOffset),
                             (char *)(Fattr2->attr_vals.attrlist4_val + LastOffset),
@@ -2737,7 +2736,7 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
           break;
         }
     }
-  if (cmp == 0)
+  if(cmp == 0)
     return TRUE;
   else
     return FALSE;
@@ -2783,11 +2782,11 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
   fattr4_time_modify attr_time_modify;
   fattr4_time_metadata attr_time_metadata;
 
-  if (pFSAL_attr == NULL || Fattr == NULL)
+  if(pFSAL_attr == NULL || Fattr == NULL)
     return -1;
 
   /* Check attributes data */
-  if (Fattr->attr_vals.attrlist4_val == NULL)
+  if(Fattr->attr_vals.attrlist4_val == NULL)
     return -1;
 
   /* Convert the attribute bitmap to an attribute list */
@@ -2800,14 +2799,14 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
   /* Init */
   pFSAL_attr->asked_attributes = 0;
 
-  for (i = 0; i < attrmasklen; i++)
+  for(i = 0; i < attrmasklen; i++)
     {
       attribute_to_set = attrmasklist[i];
 
 #ifdef _USE_NFS4_1
-      if (attrmasklist[i] > FATTR4_FS_CHARSET_CAP)
+      if(attrmasklist[i] > FATTR4_FS_CHARSET_CAP)
 #else
-      if (attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
+      if(attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
 #endif
         {
           /* Erroneous value... skip */
@@ -2946,7 +2945,7 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
           buffer[len] = '\0';
 
           /* Do not forget that xdr_opaque are aligned on 32bit long words */
-          while ((len % 4) != 0)
+          while((len % 4) != 0)
             len += 1;
 
           LastOffset += len;
@@ -2973,7 +2972,7 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
           buffer[len] = '\0';
 
           /* Do not forget that xdr_opaque are aligned on 32bit long words */
-          while ((len % 4) != 0)
+          while((len % 4) != 0)
             len += 1;
 
           LastOffset += len;
@@ -3068,7 +3067,7 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
 
           LastOffset += sizeof(time_how4);
 
-          if (ntohl(attr_time_set.set_it) == SET_TO_SERVER_TIME4)
+          if(ntohl(attr_time_set.set_it) == SET_TO_SERVER_TIME4)
             {
               pFSAL_attr->atime.seconds = time(NULL);   /* Use current server's time */
               pFSAL_attr->atime.nseconds = 0;
@@ -3101,7 +3100,7 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
 
           LastOffset += sizeof(time_how4);
 
-          if (ntohl(attr_time_set.set_it) == SET_TO_SERVER_TIME4)
+          if(ntohl(attr_time_set.set_it) == SET_TO_SERVER_TIME4)
             {
               pFSAL_attr->mtime.seconds = time(NULL);   /* Use current server's time */
               pFSAL_attr->mtime.nseconds = 0;
@@ -3520,7 +3519,7 @@ int nfs4_AllocateFH(nfs_fh4 * fh)
 {
   char __attribute__ ((__unused__)) funcname[] = "AllocateFH4";
 
-  if (fh == NULL)
+  if(fh == NULL)
     return NFS4ERR_SERVERFAULT;
 
 #ifdef _DEBUG_MEMLEAKS
@@ -3530,7 +3529,7 @@ int nfs4_AllocateFH(nfs_fh4 * fh)
 
   /* Allocating the filehandle in memory */
   fh->nfs_fh4_len = sizeof(file_handle_v4_t);
-  if ((fh->nfs_fh4_val = (char *)Mem_Alloc(fh->nfs_fh4_len)) == NULL)
+  if((fh->nfs_fh4_val = (char *)Mem_Alloc(fh->nfs_fh4_len)) == NULL)
     {
       DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
       return NFS4ERR_RESOURCE;
@@ -3563,17 +3562,17 @@ int nfs4_MakeCred(compound_data_t * data)
 
   pworker = (nfs_worker_data_t *) data->pclient->pworker;
 
-  if (nfs_export_check_access(&pworker->hostaddr,
-                              data->reqp,
-                              data->pexport,
-                              nfs_param.core_param.nfs_program,
-                              nfs_param.core_param.mnt_program,
-                              pworker->ht_ip_stats,
-                              pworker->ip_stats_pool, &related_client) == FALSE)
+  if(nfs_export_check_access(&pworker->hostaddr,
+                             data->reqp,
+                             data->pexport,
+                             nfs_param.core_param.nfs_program,
+                             nfs_param.core_param.mnt_program,
+                             pworker->ht_ip_stats,
+                             pworker->ip_stats_pool, &related_client) == FALSE)
     return NFS4ERR_WRONGSEC;
 
-  if (nfs_build_fsal_context(data->reqp, &related_client, data->pexport, data->pcontext)
-      == FALSE)
+  if(nfs_build_fsal_context(data->reqp, &related_client, data->pexport, data->pcontext)
+     == FALSE)
     return NFS4ERR_WRONGSEC;
 
   return NFS4_OK;

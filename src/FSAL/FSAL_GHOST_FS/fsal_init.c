@@ -29,16 +29,16 @@ static int CreateInitDir(ghostfs_dir_def_t * p_dir)
   strcpy(buff, p_dir->path);
 
   /* tokenizes the dir path */
-  if (buff[0] != '/')
+  if(buff[0] != '/')
     return -1;
 
-  if (GHOSTFS_GetRoot(&handle))
+  if(GHOSTFS_GetRoot(&handle))
     return -1;
 
   cur_str = buff + 1;
 
   cur_str = strtok(cur_str, "/");
-  if (cur_str == NULL)
+  if(cur_str == NULL)
     return -1;
 
   do
@@ -46,7 +46,7 @@ static int CreateInitDir(ghostfs_dir_def_t * p_dir)
       int rc;
       rc = GHOSTFS_Lookup(handle, cur_str, &next_handle);
 
-      if (rc == ERR_GHOSTFS_NOENT)
+      if(rc == ERR_GHOSTFS_NOENT)
         {
           DisplayLogJdLevel(fsal_log, NIV_EVENT,
                             "FSAL: Creating predefined directory '%s'", cur_str);
@@ -59,14 +59,14 @@ static int CreateInitDir(ghostfs_dir_def_t * p_dir)
                              fsal2ghost_mode(p_dir->dir_mode), &next_handle, NULL);
         }
 
-      if (rc != 0)
+      if(rc != 0)
         return -1;
 
       handle = next_handle;
       cur_str = strtok(NULL, "/");
 
     }
-  while ((cur_str != NULL) && (cur_str[0] != '\0'));
+  while((cur_str != NULL) && (cur_str[0] != '\0'));
 
   return 0;
 
@@ -107,7 +107,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
   SetFuncID(INDEX_FSAL_Init);
 
   /* sanity check.  */
-  if (!init_info)
+  if(!init_info)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
 
   param.root_mode = fsal2ghost_mode(init_info->fs_specific_info.root_mode);
@@ -124,7 +124,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
 
   rc = GHOSTFS_Init(param);
 
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_Init);
 
   /* proceeds FSAL initialization */
@@ -148,10 +148,10 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
 
   /* now, create predefined directories, according to parameters */
 
-  for (p_cur = init_info->fs_specific_info.dir_list; p_cur != NULL; p_cur = p_cur->next)
+  for(p_cur = init_info->fs_specific_info.dir_list; p_cur != NULL; p_cur = p_cur->next)
     {
       rc = CreateInitDir(p_cur);
-      if (rc)
+      if(rc)
         DisplayLogJdLevel(fsal_log, NIV_CRIT,
                           "FSAL: /!\\ WARNING /!\\ Could not create init dir '%s'",
                           p_cur->path);

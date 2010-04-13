@@ -152,7 +152,7 @@ fsal_status_t MFSAL_unlink_check_perms(mfsl_object_t * dir_handle,      /* IN */
 
   fsal_status = FSAL_unlink_access(p_context, dir_attributes);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   /** @todo : put some stuff in this function */
@@ -190,17 +190,17 @@ fsal_status_t MFSL_unlink(mfsl_object_t * dir_handle,   /* IN */
                p_mfsl_context->pool_async_op,
                mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
 
-  if (pasyncopdesc == NULL)
+  if(pasyncopdesc == NULL)
     MFSL_return(ERR_FSAL_INVAL, 0);
 
-  if (gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
+  if(gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
     {
       /* Could'not get time of day... Stopping, this may need a major failure */
       DisplayLog("MFSL_link: cannot get time of day... exiting");
       exit(1);
     }
 
-  if (!mfsl_async_get_specdata(dir_handle, &dir_pasyncdata))
+  if(!mfsl_async_get_specdata(dir_handle, &dir_pasyncdata))
     {
       /* Target is not yet asynchronous */
 
@@ -218,7 +218,7 @@ fsal_status_t MFSL_unlink(mfsl_object_t * dir_handle,   /* IN */
                                          p_object_name,
                                          dir_attributes, p_context, p_mfsl_context);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   DisplayLogJdLevel(p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p",
@@ -236,7 +236,7 @@ fsal_status_t MFSL_unlink(mfsl_object_t * dir_handle,   /* IN */
   pasyncopdesc->ptr_mfsl_context = (caddr_t) p_mfsl_context;
 
   fsal_status = MFSL_async_post(pasyncopdesc);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   /* Update the asynchronous metadata */
@@ -244,10 +244,10 @@ fsal_status_t MFSL_unlink(mfsl_object_t * dir_handle,   /* IN */
   dir_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec;  /** @todo: there may be a coefficient to be applied here */
   dir_handle->health = MFSL_ASYNC_ASYNCHRONOUS;
 
-  if (!mfsl_async_set_specdata(dir_handle, dir_pasyncdata))
+  if(!mfsl_async_set_specdata(dir_handle, dir_pasyncdata))
     MFSL_return(ERR_FSAL_SERVERFAULT, 0);
 
-  if (!mfsl_async_get_specdata(object_handle, &obj_pasyncdata))
+  if(!mfsl_async_get_specdata(object_handle, &obj_pasyncdata))
     {
       /* The object to be deleted is not asynchronous, but it has
        * has to become asynchronous to be correctly managed until the FSAL deletes it */
@@ -260,13 +260,13 @@ fsal_status_t MFSL_unlink(mfsl_object_t * dir_handle,   /* IN */
     }
 
   /* Depending on the value of numlinks, the object should be deleted or not */
-  if ((obj_pasyncdata->async_attr.numlinks > 1)
-      && (obj_pasyncdata->async_attr.type == FSAL_TYPE_FILE))
+  if((obj_pasyncdata->async_attr.numlinks > 1)
+     && (obj_pasyncdata->async_attr.type == FSAL_TYPE_FILE))
     obj_pasyncdata->async_attr.numlinks -= 1;
   else
     obj_pasyncdata->deleted = TRUE;
 
-  if (!mfsl_async_set_specdata(object_handle, obj_pasyncdata))
+  if(!mfsl_async_set_specdata(object_handle, obj_pasyncdata))
     MFSL_return(ERR_FSAL_SERVERFAULT, 0);
 
   /* Return the correct attributes */

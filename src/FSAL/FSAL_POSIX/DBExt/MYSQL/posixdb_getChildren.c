@@ -37,7 +37,7 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      
   fsal_posixdb_status_t st;
 
   /* sanity check */
-  if (!p_conn || !p_parent_directory_handle || !(p_children) || !p_count)
+  if(!p_conn || !p_parent_directory_handle || !(p_children) || !p_count)
     ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
 
   snprintf(query, 2048, "SELECT Handle.handleid, Handle.handlets, Parent.name, "
@@ -48,19 +48,19 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      
            p_parent_directory_handle->id, p_parent_directory_handle->ts);
 
   st = db_exec_sql(p_conn, query, &res);
-  if (FSAL_POSIXDB_IS_ERROR(st))
+  if(FSAL_POSIXDB_IS_ERROR(st))
     return st;
 
   *p_count = mysql_num_rows(res);
 
-  if (*p_count == 0)
+  if(*p_count == 0)
     {
       *p_children = NULL;
       mysql_free_result(res);
       ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
     }
 
-  if (max_count && (*p_count > max_count))
+  if(max_count && (*p_count > max_count))
     {
       *p_children = NULL;
       mysql_free_result(res);
@@ -70,18 +70,18 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      
     }
 
   *p_children = (fsal_posixdb_child *) Mem_Alloc(sizeof(fsal_posixdb_child) * (*p_count));
-  if (*p_children == NULL)
+  if(*p_children == NULL)
     {
       mysql_free_result(res);
       ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
     }
 
-  for (i = 0; i < *p_count; i++)
+  for(i = 0; i < *p_count; i++)
     {
       MYSQL_ROW row;
 
       row = mysql_fetch_row(res);
-      if (!row)
+      if(!row)
         {
           /* Error */
           mysql_free_result(res);

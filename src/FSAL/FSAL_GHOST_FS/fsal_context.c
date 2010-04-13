@@ -47,7 +47,7 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
   SetFuncID(INDEX_FSAL_InitClientContext);
 
   /* sanity check */
-  if (!p_thr_context)
+  if(!p_thr_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
 
   /* not used */
@@ -76,7 +76,7 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
   SetFuncID(INDEX_FSAL_GetClientContext);
 
   /* sanity check */
-  if (!p_thr_context || !p_export_context)
+  if(!p_thr_context || !p_export_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
 
   /* set the export specific context */

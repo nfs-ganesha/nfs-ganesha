@@ -159,14 +159,14 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
   sigemptyset(&sigset_in);
   sigaddset(&sigset_in, SIGPIPE);
 
-  if (sigprocmask(SIG_BLOCK, &sigset_in, &sigset_out) == -1)
+  if(sigprocmask(SIG_BLOCK, &sigset_in, &sigset_out) == -1)
     return -1;
 
 #ifdef _HANDLE_MAPPING
 
   /* Initialize NFSv2/3 handle mapping management */
 
-  if (fs_init_info->enable_handle_mapping)
+  if(fs_init_info->enable_handle_mapping)
     {
       int rc;
       handle_map_param_t param;
@@ -181,7 +181,7 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
 
       rc = HandleMap_Init(&param);
 
-      if (rc)
+      if(rc)
         return rc;
     }
 #endif
@@ -192,9 +192,9 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
   pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
   pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE);
 
-  if ((rc = pthread_create(&thrid_clientid_renewer,
-                           &attr_thr,
-                           FSAL_proxy_clientid_renewer_thread, (void *)NULL) != 0))
+  if((rc = pthread_create(&thrid_clientid_renewer,
+                          &attr_thr,
+                          FSAL_proxy_clientid_renewer_thread, (void *)NULL) != 0))
     {
       DisplayErrorLog(ERR_SYS, ERR_PTHREAD_CREATE, rc);
       exit(1);
@@ -233,12 +233,12 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
 
   /* sanity check.  */
 
-  if (!init_info)
+  if(!init_info)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
 
   /* >> You can check args bellow << */
 
-  if (init_info->fsal_info.log_outputs.liste_voies == NULL)
+  if(init_info->fsal_info.log_outputs.liste_voies == NULL)
     {
       /* issue a warning on stderr */
       DisplayLog
@@ -250,12 +250,12 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
   status = fsal_internal_init_global(&(init_info->fsal_info),
                                      &(init_info->fs_common_info));
 
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_Init);
 
   /* >> You can also initialize some filesystem stuff << */
 
-  if (rc = FS_Specific_Init(&init_info->fs_specific_info))
+  if(rc = FS_Specific_Init(&init_info->fs_specific_info))
     Return(ERR_FSAL_BAD_INIT, -rc, INDEX_FSAL_Init);
 
   /* Everything went OK. */
@@ -270,11 +270,11 @@ fsal_status_t FSAL_terminate()
 #ifdef _HANDLE_MAPPING
   int rc;
 
-  if (global_fsal_proxy_specific_info.enable_handle_mapping)
+  if(global_fsal_proxy_specific_info.enable_handle_mapping)
     {
       rc = HandleMap_Flush();
 
-      if (rc)
+      if(rc)
         ReturnCode(ERR_FSAL_SERVERFAULT, rc);
     }
 #endif

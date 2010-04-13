@@ -158,7 +158,7 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   DisplayLogLevel(NIV_DEBUG, "RENEW Client id = %llx", arg_RENEW4.clientid);
 
   /* Is this an existing client id ? */
-  if (nfs_client_id_get(arg_RENEW4.clientid, &nfs_clientid) == CLIENT_ID_SUCCESS)
+  if(nfs_client_id_get(arg_RENEW4.clientid, &nfs_clientid) == CLIENT_ID_SUCCESS)
     {
       nfs_clientid.last_renew = time(NULL);
       res_RENEW4.status = NFS4_OK;      /* Regular exit */

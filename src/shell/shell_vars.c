@@ -136,7 +136,7 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT;
 
 static void init_keys(void)
 {
-  if (pthread_key_create(&thread_key, NULL) == -1)
+  if(pthread_key_create(&thread_key, NULL) == -1)
     printf("Error %d creating pthread key for thread %p : %s\n",
            errno, (caddr_t) pthread_self(), strerror(errno));
 
@@ -150,7 +150,7 @@ static shell_variable_t *GetVarTable()
 {
 
   /* first, we init the keys if this is the first time */
-  if (pthread_once(&once_key, init_keys) != 0)
+  if(pthread_once(&once_key, init_keys) != 0)
     {
       printf("Error %d calling pthread_once for thread %p : %s\n",
              errno, (caddr_t) pthread_self(), strerror(errno));
@@ -174,9 +174,9 @@ void SetVarTable(shell_variable_t * var_table)
 void print_varlist(FILE * output, int is_dlen)
 {
   shell_variable_t *current = GetVarTable();
-  while (current)
+  while(current)
     {
-      if (is_dlen)
+      if(is_dlen)
         fprintf(output, "\t%s (%d Bytes)\n", current->var_name, current->datalen - 1);
       else
         fprintf(output, "\t%s\n", current->var_name);
@@ -188,9 +188,9 @@ void print_varlist(FILE * output, int is_dlen)
 static shell_variable_t *find_var(char *str)
 {
   shell_variable_t *current = GetVarTable();
-  while (current)
+  while(current)
     {
-      if (!strncmp(current->var_name, str, MAX_VAR_LEN))
+      if(!strncmp(current->var_name, str, MAX_VAR_LEN))
         return current;
       current = current->next;
     }
@@ -210,7 +210,7 @@ static shell_variable_t *create_var(char *str)
   new_item->datalen = 0;
 
   /* inserting */
-  if (var_table)
+  if(var_table)
     var_table->prev = new_item;
   new_item->next = var_table;
   new_item->prev = NULL;
@@ -225,7 +225,7 @@ static void set_var(shell_variable_t * var, char *value)
   int dlen;
 
   /* clears old value, if any */
-  if (var->var_value)
+  if(var->var_value)
     {
       Mem_Free(var->var_value);
       var->var_value = NULL;
@@ -245,7 +245,7 @@ static void del_var(shell_variable_t * var)
 
   /* remove from the list */
 
-  if (var->prev)
+  if(var->prev)
     {
       var->prev->next = var->next;
     }
@@ -254,13 +254,13 @@ static void del_var(shell_variable_t * var)
       SetVarTable(var->next);
     }
 
-  if (var->next)
+  if(var->next)
     {
       var->next->prev = var->prev;
     }
 
   /* free */
-  if (var->var_value)
+  if(var->var_value)
     Mem_Free(var->var_value);
 
   Mem_Free((caddr_t) var);
@@ -280,20 +280,20 @@ int is_authorized_varname(char *str)
   int len = 0;
 
   /* special var $? */
-  if (!strcmp(str, "?"))
+  if(!strcmp(str, "?"))
     return 1;
 
-  while (str[len])
+  while(str[len])
     {
       char c = str[len];
-      if (!IS_LETTER(c) &&
-          !IS_LETTER_CAP(c) && !IS_NUMERIC(c) && (c != '.') && (c != '_') && (c != ':'))
+      if(!IS_LETTER(c) &&
+         !IS_LETTER_CAP(c) && !IS_NUMERIC(c) && (c != '.') && (c != '_') && (c != ':'))
         {
           return 0;
         }
 
       len++;
-      if (len > MAX_VAR_LEN)
+      if(len > MAX_VAR_LEN)
         return 0;
     }
 
@@ -307,7 +307,7 @@ int is_authorized_varname(char *str)
 char *get_var_value(char *varname)
 {
   shell_variable_t *var;
-  if (var = find_var(varname))
+  if(var = find_var(varname))
     {
       return var->var_value;
     }
@@ -324,11 +324,11 @@ int set_var_value(char *varname, char *var_value)
 {
   shell_variable_t *var;
   /* if the value doesn't exist, create it */
-  if (!(var = find_var(varname)))
+  if(!(var = find_var(varname)))
     {
       var = create_var(varname);
     }
-  if (!var)
+  if(!var)
     return 1;
   set_var(var, var_value);
 
@@ -343,7 +343,7 @@ int free_var(char *varname)
 
   shell_variable_t *var;
   /* if the value doesn't exist, error */
-  if (!(var = find_var(varname)))
+  if(!(var = find_var(varname)))
     {
       return 1;
     }

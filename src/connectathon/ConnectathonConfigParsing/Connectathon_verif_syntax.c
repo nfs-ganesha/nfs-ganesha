@@ -7,7 +7,7 @@ int main(int argc, char **argv)
   char *filename;
   struct testparam *param;
 
-  if ((argc > 1) && (argv[1]))
+  if((argc > 1) && (argv[1]))
     {
       filename = argv[1];
     }
@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     }
 
   param = readin_config(filename);
-  if (param == NULL)
+  if(param == NULL)
     return -1;
 
   free_testparam(param);

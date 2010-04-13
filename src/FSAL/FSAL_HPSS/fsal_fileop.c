@@ -69,11 +69,11 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
   fsal_status_t fsal_status;
   fsal_handle_t filehandle;
 
-  if (!dirhandle || !filename || !p_context || !file_descriptor)
+  if(!dirhandle || !filename || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
   fsal_status = FSAL_lookup(dirhandle, filename, p_context, &filehandle, file_attributes);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   return FSAL_open(&filehandle, p_context, openflags, file_descriptor, file_attributes);
@@ -131,12 +131,12 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
   /* sanity checks.
    * note : file_attributes is optional.
    */
-  if (!filehandle || !p_context || !file_descriptor)
+  if(!filehandle || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
 
   /* check if it is a file */
 
-  if (filehandle->obj_type != FSAL_TYPE_FILE)
+  if(filehandle->obj_type != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
     }
@@ -147,7 +147,7 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
 
   /* flags conflicts. */
 
-  if (rc)
+  if(rc)
     {
       DisplayLogJdLevel(fsal_log, NIV_EVENT,
                         "Invalid/conflicting flags : %#X", openflags);
@@ -173,9 +173,9 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
   /* /!\ rc is the file descriptor number !!! */
 
   /* The HPSS_ENOENT error actually means that handle is STALE */
-  if (rc == HPSS_ENOENT)
+  if(rc == HPSS_ENOENT)
     Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_open);
-  else if (rc < 0)
+  else if(rc < 0)
     Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_open);
 
   /* fills output struct */
@@ -187,7 +187,7 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
 
   /* set output attributes if asked */
 
-  if (file_attributes)
+  if(file_attributes)
     {
 
       fsal_status_t status;
@@ -195,7 +195,7 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
       status = hpss2fsal_attributes(&(filehandle->ns_handle),
                                     &hpss_attributes, file_attributes);
 
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(file_attributes->asked_attributes);
           FSAL_SET_MASK(file_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -249,7 +249,7 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
   off_t seekoffset = 0;
   /* sanity checks. */
 
-  if (!file_descriptor || !buffer || !read_amount || !end_of_file)
+  if(!file_descriptor || !buffer || !read_amount || !end_of_file)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_read);
 
   /** @todo: manage fsal_size_t to size_t convertion */
@@ -257,7 +257,7 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
 
   /* positioning */
 
-  if (seek_descriptor)
+  if(seek_descriptor)
     {
 
       switch (seek_descriptor->whence)
@@ -299,7 +299,7 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
           break;
         }
 
-      if (seekoffset < 0)
+      if(seekoffset < 0)
         {
           error = (int)seekoffset;
 
@@ -328,7 +328,7 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
 
   /** @todo: manage ssize_t to fsal_size_t convertion */
 
-  if (nb_read < 0)
+  if(nb_read < 0)
     {
       error = (int)nb_read;
       Return(hpss2fsal_error(error), -error, INDEX_FSAL_read);
@@ -382,7 +382,7 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
   off_t seekoffset = 0;
 
   /* sanity checks. */
-  if (!file_descriptor || !buffer || !write_amount)
+  if(!file_descriptor || !buffer || !write_amount)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_write);
 
   /** @todo: manage fsal_size_t to size_t convertion */
@@ -390,7 +390,7 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
 
   /* positioning */
 
-  if (seek_descriptor)
+  if(seek_descriptor)
     {
 
       switch (seek_descriptor->whence)
@@ -432,7 +432,7 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
           break;
         }
 
-      if (seekoffset < 0)
+      if(seekoffset < 0)
         {
           error = (int)seekoffset;
 
@@ -461,7 +461,7 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
 
   /** @todo: manage ssize_t to fsal_size_t convertion */
 
-  if (nb_written < 0)
+  if(nb_written < 0)
     {
       error = (int)nb_written;
       Return(hpss2fsal_error(error), -error, INDEX_FSAL_write);
@@ -496,7 +496,7 @@ fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
   int rc;
 
   /* sanity checks. */
-  if (!file_descriptor)
+  if(!file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
 
   /* call to close */
@@ -507,7 +507,7 @@ fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
 
   ReleaseTokenFSCall();
 
-  if (rc)
+  if(rc)
     Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_close);
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);

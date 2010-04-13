@@ -141,7 +141,7 @@ void *stats_thread(void *addr)
   SetNameFunction("stat_thr");
 
 #ifndef _NO_BUDDY_SYSTEM
-  if ((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
+  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
       DisplayLog("NFS STATS : Memory manager could not be initialized, exiting...");
@@ -151,14 +151,14 @@ void *stats_thread(void *addr)
 #endif
 
   /* Open the stats file, in append mode */
-  if ((stats_file = fopen(nfs_param.core_param.stats_file_path, "a")) == NULL)
+  if((stats_file = fopen(nfs_param.core_param.stats_file_path, "a")) == NULL)
     {
       DisplayLog("NFS STATS : Could not open stats file %s, no stats will be made...",
                  nfs_param.core_param.stats_file_path);
       return NULL;
     }
 
-  if (stat(nfs_param.core_param.stats_file_path, &statref) != 0)
+  if(stat(nfs_param.core_param.stats_file_path, &statref) != 0)
     {
       DisplayLog("NFS STATS : Could not get inode for %s, no stats will be made...",
                  nfs_param.core_param.stats_file_path);
@@ -167,13 +167,13 @@ void *stats_thread(void *addr)
     }
 #ifdef _SNMP_ADM_ACTIVE
   /* start snmp library */
-  if (stats_snmp(workers_data) == 0)
+  if(stats_snmp(workers_data) == 0)
     DisplayLog("NFS STATS: SNMP stats service was started successfully");
   else
     DisplayLog("NFS STATS: ERROR starting SNMP stats export thread");
 #endif /*_SNMP_ADM_ACTIVE*/
 
-  while (1)
+  while(1)
     {
       /* Initial wait */
       sleep(nfs_param.core_param.stats_update_delay);
@@ -182,26 +182,26 @@ void *stats_thread(void *addr)
       DisplayLogLevel(NIV_EVENT, "NFS STATS : now dumping stats");
 
       /* Stats main loop */
-      if (stat(nfs_param.core_param.stats_file_path, &stattest) == 0)
+      if(stat(nfs_param.core_param.stats_file_path, &stattest) == 0)
         {
-          if (stattest.st_ino != statref.st_ino)
+          if(stattest.st_ino != statref.st_ino)
             reopen_stats = TRUE;
         }
       else
         {
-          if (errno == ENOENT)
+          if(errno == ENOENT)
             reopen_stats = TRUE;
         }
 
       /* Check is file has changed (the inode number will be different) */
-      if (reopen_stats == TRUE)
+      if(reopen_stats == TRUE)
         {
           /* Stats file has changed */
           DisplayLog
               ("NFS STATS : stats file has changed or was removed, I close and reopen it");
           fflush(stats_file);
           fclose(stats_file);
-          if ((stats_file = fopen(nfs_param.core_param.stats_file_path, "a")) == NULL)
+          if((stats_file = fopen(nfs_param.core_param.stats_file_path, "a")) == NULL)
             {
               DisplayLog
                   ("NFS STATS : Could not open stats file %s, no further stats will be made...",
@@ -244,7 +244,7 @@ void *stats_thread(void *addr)
              sizeof(unsigned int) * CACHE_INODE_NB_COMMAND);
 
       /* Merging the cache inode stats for every thread */
-      for (i = 0; i < nfs_param.core_param.nb_worker; i++)
+      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
         {
           global_cache_inode_stat.nb_gc_lru_active +=
               workers_data[i].cache_inode_client.stat.nb_gc_lru_active;
@@ -253,20 +253,20 @@ void *stats_thread(void *addr)
           global_cache_inode_stat.nb_call_total +=
               workers_data[i].cache_inode_client.stat.nb_call_total;
 
-          for (j = 0; j < CACHE_INODE_NB_COMMAND; j++)
+          for(j = 0; j < CACHE_INODE_NB_COMMAND; j++)
             {
-              if (i == 0)
+              if(i == 0)
                 {
                   global_cache_inode_stat.func_stats.nb_success[j] =
                       workers_data[i].cache_inode_client.stat.func_stats.nb_success[j];
                   global_cache_inode_stat.func_stats.nb_call[j] =
                       workers_data[i].cache_inode_client.stat.func_stats.nb_call[j];
                   global_cache_inode_stat.func_stats.nb_err_retryable[j] =
-                      workers_data[i].cache_inode_client.stat.func_stats.
-                      nb_err_retryable[j];
+                      workers_data[i].cache_inode_client.stat.
+                      func_stats.nb_err_retryable[j];
                   global_cache_inode_stat.func_stats.nb_err_unrecover[j] =
-                      workers_data[i].cache_inode_client.stat.func_stats.
-                      nb_err_unrecover[j];
+                      workers_data[i].cache_inode_client.stat.
+                      func_stats.nb_err_unrecover[j];
                 }
               else
                 {
@@ -275,11 +275,11 @@ void *stats_thread(void *addr)
                   global_cache_inode_stat.func_stats.nb_call[j] +=
                       workers_data[i].cache_inode_client.stat.func_stats.nb_call[j];
                   global_cache_inode_stat.func_stats.nb_err_retryable[j] +=
-                      workers_data[i].cache_inode_client.stat.func_stats.
-                      nb_err_retryable[j];
+                      workers_data[i].cache_inode_client.stat.
+                      func_stats.nb_err_retryable[j];
                   global_cache_inode_stat.func_stats.nb_err_unrecover[j] +=
-                      workers_data[i].cache_inode_client.stat.func_stats.
-                      nb_err_unrecover[j];
+                      workers_data[i].cache_inode_client.stat.
+                      func_stats.nb_err_unrecover[j];
                 }
 
             }
@@ -292,7 +292,7 @@ void *stats_thread(void *addr)
               global_cache_inode_stat.nb_gc_lru_total,
               global_cache_inode_stat.nb_gc_lru_active);
 
-      for (j = 0; j < CACHE_INODE_NB_COMMAND; j++)
+      for(j = 0; j < CACHE_INODE_NB_COMMAND; j++)
         fprintf(stats_file, "|%u,%u,%u,%u",
                 global_cache_inode_stat.func_stats.nb_call[j],
                 global_cache_inode_stat.func_stats.nb_success[j],
@@ -332,7 +332,7 @@ void *stats_thread(void *addr)
       average_pending_request = 0;
       len_pending_request = 0;
 
-      for (i = 0; i < nfs_param.core_param.nb_worker; i++)
+      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
         {
           global_worker_stat.nb_total_req += workers_data[i].stats.nb_total_req;
           global_worker_stat.nb_udp_req += workers_data[i].stats.nb_udp_req;
@@ -348,9 +348,9 @@ void *stats_thread(void *addr)
           global_worker_stat.stat_req.nb_nfs4_req +=
               workers_data[i].stats.stat_req.nb_nfs4_req;
 
-          for (j = 0; j < MNT_V1_NB_COMMAND; j++)
+          for(j = 0; j < MNT_V1_NB_COMMAND; j++)
             {
-              if (i == 0)
+              if(i == 0)
                 {
                   global_worker_stat.stat_req.stat_req_mnt1[j].total =
                       workers_data[i].stats.stat_req.stat_req_mnt1[j].total;
@@ -370,9 +370,9 @@ void *stats_thread(void *addr)
                 }
             }
 
-          for (j = 0; j < MNT_V3_NB_COMMAND; j++)
+          for(j = 0; j < MNT_V3_NB_COMMAND; j++)
             {
-              if (i == 0)
+              if(i == 0)
                 {
                   global_worker_stat.stat_req.stat_req_mnt3[j].total =
                       workers_data[i].stats.stat_req.stat_req_mnt3[j].total;
@@ -392,9 +392,9 @@ void *stats_thread(void *addr)
                 }
             }
 
-          for (j = 0; j < NFS_V2_NB_COMMAND; j++)
+          for(j = 0; j < NFS_V2_NB_COMMAND; j++)
             {
-              if (i == 0)
+              if(i == 0)
                 {
                   global_worker_stat.stat_req.stat_req_nfs2[j].total =
                       workers_data[i].stats.stat_req.stat_req_nfs2[j].total;
@@ -414,9 +414,9 @@ void *stats_thread(void *addr)
                 }
             }
 
-          for (j = 0; j < NFS_V3_NB_COMMAND; j++)
+          for(j = 0; j < NFS_V3_NB_COMMAND; j++)
             {
-              if (i == 0)
+              if(i == 0)
                 {
                   global_worker_stat.stat_req.stat_req_nfs3[j].total =
                       workers_data[i].stats.stat_req.stat_req_nfs3[j].total;
@@ -436,9 +436,9 @@ void *stats_thread(void *addr)
                 }
             }
 
-          for (j = 0; j < NFS_V4_NB_COMMAND; j++)
+          for(j = 0; j < NFS_V4_NB_COMMAND; j++)
             {
-              if (i == 0)
+              if(i == 0)
                 {
                   global_worker_stat.stat_req.stat_req_nfs4[j].total =
                       workers_data[i].stats.stat_req.stat_req_nfs4[j].total;
@@ -463,10 +463,10 @@ void *stats_thread(void *addr)
               workers_data[i].pending_request->nb_entry -
               workers_data[i].pending_request->nb_invalid;
 
-          if (len_pending_request < min_pending_request)
+          if(len_pending_request < min_pending_request)
             min_pending_request = len_pending_request;
 
-          if (len_pending_request > max_pending_request)
+          if(len_pending_request > max_pending_request)
             max_pending_request = len_pending_request;
 
           total_pending_request += len_pending_request;
@@ -490,7 +490,7 @@ void *stats_thread(void *addr)
 
       fprintf(stats_file, "MNT V1 REQUEST,%s;%u", strdate,
               global_worker_stat.stat_req.nb_mnt1_req);
-      for (j = 0; j < MNT_V1_NB_COMMAND; j++)
+      for(j = 0; j < MNT_V1_NB_COMMAND; j++)
         fprintf(stats_file, "|%u,%u,%u",
                 global_worker_stat.stat_req.stat_req_mnt1[j].total,
                 global_worker_stat.stat_req.stat_req_mnt1[j].success,
@@ -499,7 +499,7 @@ void *stats_thread(void *addr)
 
       fprintf(stats_file, "MNT V3 REQUEST,%s;%u", strdate,
               global_worker_stat.stat_req.nb_mnt3_req);
-      for (j = 0; j < MNT_V3_NB_COMMAND; j++)
+      for(j = 0; j < MNT_V3_NB_COMMAND; j++)
         fprintf(stats_file, "|%u,%u,%u",
                 global_worker_stat.stat_req.stat_req_mnt3[j].total,
                 global_worker_stat.stat_req.stat_req_mnt3[j].success,
@@ -508,7 +508,7 @@ void *stats_thread(void *addr)
 
       fprintf(stats_file, "NFS V2 REQUEST,%s;%u", strdate,
               global_worker_stat.stat_req.nb_nfs2_req);
-      for (j = 0; j < NFS_V2_NB_COMMAND; j++)
+      for(j = 0; j < NFS_V2_NB_COMMAND; j++)
         fprintf(stats_file, "|%u,%u,%u",
                 global_worker_stat.stat_req.stat_req_nfs2[j].total,
                 global_worker_stat.stat_req.stat_req_nfs2[j].success,
@@ -517,7 +517,7 @@ void *stats_thread(void *addr)
 
       fprintf(stats_file, "NFS V3 REQUEST,%s;%u", strdate,
               global_worker_stat.stat_req.nb_nfs3_req);
-      for (j = 0; j < NFS_V3_NB_COMMAND; j++)
+      for(j = 0; j < NFS_V3_NB_COMMAND; j++)
         fprintf(stats_file, "|%u,%u,%u",
                 global_worker_stat.stat_req.stat_req_nfs3[j].total,
                 global_worker_stat.stat_req.stat_req_nfs3[j].success,
@@ -526,7 +526,7 @@ void *stats_thread(void *addr)
 
       fprintf(stats_file, "NFS V4 REQUEST,%s;%u", strdate,
               global_worker_stat.stat_req.nb_nfs4_req);
-      for (j = 0; j < NFS_V4_NB_COMMAND; j++)
+      for(j = 0; j < NFS_V4_NB_COMMAND; j++)
         fprintf(stats_file, "|%u,%u,%u",
                 global_worker_stat.stat_req.stat_req_nfs4[j].total,
                 global_worker_stat.stat_req.stat_req_nfs4[j].success,
@@ -616,10 +616,10 @@ void *stats_thread(void *addr)
       memset(&global_fsal_stat, 0, sizeof(fsal_statistics_t));
       total_fsal_calls = 0;
 
-      for (i = 0; i < nfs_param.core_param.nb_worker; i++)
+      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
         {
 
-          for (j = 0; j < FSAL_NB_FUNC; j++)
+          for(j = 0; j < FSAL_NB_FUNC; j++)
             {
               total_fsal_calls += workers_data[i].stats.fsal_stats.func_stats.nb_call[j];
 
@@ -636,7 +636,7 @@ void *stats_thread(void *addr)
         }
 
       fprintf(stats_file, "FSAL_CALLS,%s;%llu", strdate, total_fsal_calls);
-      for (j = 0; j < FSAL_NB_FUNC; j++)
+      for(j = 0; j < FSAL_NB_FUNC; j++)
         fprintf(stats_file, "|%u,%u,%u,%u",
                 global_fsal_stat.func_stats.nb_call[j],
                 global_fsal_stat.func_stats.nb_success[j],
@@ -650,7 +650,7 @@ void *stats_thread(void *addr)
 
       memset(&global_buddy_stat, 0, sizeof(buddy_stats_t));
 
-      for (i = 0; i < nfs_param.core_param.nb_worker; i++)
+      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
         {
 
           global_buddy_stat.TotalMemSpace +=
@@ -662,16 +662,15 @@ void *stats_thread(void *addr)
           global_buddy_stat.StdUsedSpace +=
               workers_data[i].stats.buddy_stats.StdUsedSpace;
 
-          if (workers_data[i].stats.buddy_stats.StdUsedSpace >
-              global_buddy_stat.WM_StdUsedSpace)
+          if(workers_data[i].stats.buddy_stats.StdUsedSpace >
+             global_buddy_stat.WM_StdUsedSpace)
             global_buddy_stat.WM_StdUsedSpace =
                 workers_data[i].stats.buddy_stats.StdUsedSpace;
 
           global_buddy_stat.NbStdPages += workers_data[i].stats.buddy_stats.NbStdPages;
           global_buddy_stat.NbStdUsed += workers_data[i].stats.buddy_stats.NbStdUsed;
 
-          if (workers_data[i].stats.buddy_stats.NbStdUsed >
-              global_buddy_stat.WM_NbStdUsed)
+          if(workers_data[i].stats.buddy_stats.NbStdUsed > global_buddy_stat.WM_NbStdUsed)
             global_buddy_stat.WM_NbStdUsed = workers_data[i].stats.buddy_stats.NbStdUsed;
 
         }

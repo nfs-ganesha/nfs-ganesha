@@ -56,7 +56,7 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
   /* sanity checks
    * note : dir_attributes is optionnal.
    */
-  if (!dir_handle || !p_context || !dir_descriptor)
+  if(!dir_handle || !p_context || !dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_opendir);
 
   /* Test access rights for this directory
@@ -64,7 +64,7 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
 
   st = FSAL_access(dir_handle, p_context, FSAL_R_OK, dir_attributes);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     Return(st.major, st.minor, INDEX_FSAL_opendir);
 
   /* if everything is OK, fills the dir_desc structure */
@@ -137,7 +137,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
   /* sanity checks */
 
-  if (!dir_descriptor || !pdirent || !end_position || !nb_entries || !end_of_dir)
+  if(!dir_descriptor || !pdirent || !end_position || !nb_entries || !end_of_dir)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
   /* handle provides : suppattr, type, fileid */
@@ -148,7 +148,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
   /* if the handle cannot provide the requested attributes,
    * we have to retrieve file attributes. */
 
-  if (get_attr_mask & (~handle_attr_mask))
+  if(get_attr_mask & (~handle_attr_mask))
     bool_getattr_in = TRUE;
   else
     bool_getattr_in = FALSE;
@@ -163,7 +163,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
   /* while we haven't filled the output buffer
    * and the end of dir has not been reached :
    */
-  while ((current_nb_entries < max_dir_entries) && (!bool_eod_out))
+  while((current_nb_entries < max_dir_entries) && (!bool_eod_out))
     {
 
       missing_entries = max_dir_entries - current_nb_entries;
@@ -171,7 +171,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
       /* If the requested count is smaller than the default FSAL_READDIR_SIZE,
        * we use a smaller output buffer.
        */
-      if (missing_entries < FSAL_READDIR_SIZE)
+      if(missing_entries < FSAL_READDIR_SIZE)
         buff_size_in = missing_entries * sizeof(ns_DirEntry_t);
       else
         buff_size_in = FSAL_READDIR_SIZE * sizeof(ns_DirEntry_t);
@@ -190,14 +190,14 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
       ReleaseTokenFSCall();
 
-      if (rc < 0)
+      if(rc < 0)
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_readdir);
       else
         returned = rc;
 
       /* Fills the fsal dirent list. */
 
-      for (i = 0; i < returned; i++)
+      for(i = 0; i < returned; i++)
         {
 
           pdirent[current_nb_entries].handle.ns_handle = outbuff[i].ObjHandle;
@@ -215,7 +215,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
           /* set asked attributes */
           pdirent[current_nb_entries].attributes.asked_attributes = get_attr_mask;
 
-          if (bool_getattr_in)
+          if(bool_getattr_in)
             {
 
               /* convert HPSS attributes to fsal attributes */
@@ -224,16 +224,16 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
                                         &pdirent[current_nb_entries].attributes);
 
               /* on error, we set a special bit in the mask. */
-              if (FSAL_IS_ERROR(st))
+              if(FSAL_IS_ERROR(st))
                 {
-                  FSAL_CLEAR_MASK(pdirent[current_nb_entries].attributes.
-                                  asked_attributes);
+                  FSAL_CLEAR_MASK(pdirent[current_nb_entries].
+                                  attributes.asked_attributes);
                   FSAL_SET_MASK(pdirent[current_nb_entries].attributes.asked_attributes,
                                 FSAL_ATTR_RDATTR_ERR);
                 }
 
             }
-          else if (get_attr_mask)
+          else if(get_attr_mask)
             {
 
               /* extract asked attributes from file handle */
@@ -241,10 +241,10 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
                                              &pdirent[current_nb_entries].attributes);
 
               /* on error, we set a special bit in the mask. */
-              if (FSAL_IS_ERROR(st))
+              if(FSAL_IS_ERROR(st))
                 {
-                  FSAL_CLEAR_MASK(pdirent[current_nb_entries].attributes.
-                                  asked_attributes);
+                  FSAL_CLEAR_MASK(pdirent[current_nb_entries].
+                                  attributes.asked_attributes);
                   FSAL_SET_MASK(pdirent[current_nb_entries].attributes.asked_attributes,
                                 FSAL_ATTR_RDATTR_ERR);
                 }
@@ -252,7 +252,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
             }
 
           /* set the previous' next */
-          if (current_nb_entries)
+          if(current_nb_entries)
             pdirent[current_nb_entries - 1].nextentry = &(pdirent[current_nb_entries]);
 
           /* current's next */
@@ -303,7 +303,7 @@ fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
   int rc;
 
   /* sanity checks */
-  if (!dir_descriptor)
+  if(!dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_closedir);
 
   /* fill dir_descriptor with zeros */

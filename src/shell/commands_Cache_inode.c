@@ -176,7 +176,7 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT;
 
 static void init_keys(void)
 {
-  if (pthread_key_create(&thread_key, NULL) == -1)
+  if(pthread_key_create(&thread_key, NULL) == -1)
     printf("Error %d creating pthread key for thread %p : %s\n",
            errno, (caddr_t) pthread_self(), strerror(errno));
 
@@ -192,7 +192,7 @@ static cmdCacheInode_thr_info_t *GetCacheInodeContext()
   cmdCacheInode_thr_info_t *p_current_thread_vars;
 
   /* first, we init the keys if this is the first time */
-  if (pthread_once(&once_key, init_keys) != 0)
+  if(pthread_once(&once_key, init_keys) != 0)
     {
       printf("Error %d calling pthread_once for thread %p : %s\n",
              errno, (caddr_t) pthread_self(), strerror(errno));
@@ -202,7 +202,7 @@ static cmdCacheInode_thr_info_t *GetCacheInodeContext()
   p_current_thread_vars = (cmdCacheInode_thr_info_t *) pthread_getspecific(thread_key);
 
   /* we allocate the thread context if this is the first time */
-  if (p_current_thread_vars == NULL)
+  if(p_current_thread_vars == NULL)
     {
 
       /* allocates thread structure */
@@ -210,7 +210,7 @@ static cmdCacheInode_thr_info_t *GetCacheInodeContext()
           (cmdCacheInode_thr_info_t *) Mem_Alloc(sizeof(cmdCacheInode_thr_info_t));
 
       /* panic !!! */
-      if (p_current_thread_vars == NULL)
+      if(p_current_thread_vars == NULL)
         {
           printf("%p:commands_Cache_inode: Not enough memory\n",
                  (caddr_t) pthread_self());
@@ -250,7 +250,7 @@ static int InitThread(cmdCacheInode_thr_info_t * thr_info)
 
   st = FSAL_InitClientContext(&thr_info->context);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     {
       printf
           ("%p:commands_Cache_inode: Error %d initializing context for thread (FSAL_InitThreadCred)\n",
@@ -262,7 +262,7 @@ static int InitThread(cmdCacheInode_thr_info_t * thr_info)
 
   pw_struct = getpwuid(uid);
 
-  if (pw_struct == NULL)
+  if(pw_struct == NULL)
     {
       printf("commands_Cache_inode: Unknown user %u\n", uid);
       return 1;
@@ -271,7 +271,7 @@ static int InitThread(cmdCacheInode_thr_info_t * thr_info)
   st = FSAL_GetClientContext(&thr_info->context, &thr_info->exp_context,
                              uid, pw_struct->pw_gid, NULL, 0);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     {
       printf
           ("%p:commands_Cache_inode: Error %d getting contexte for uid %d (FSAL_GetUserCred)\n",
@@ -292,11 +292,11 @@ static int InitClient(cmdCacheInode_thr_info_t * thr_info)
   strcpy(thr_info->current_path, "/");
 
   /* Init the cache_inode client */
-  if (cache_inode_client_init(&thr_info->client, cache_client_param, 0, NULL) != 0)
+  if(cache_inode_client_init(&thr_info->client, cache_client_param, 0, NULL) != 0)
     return 1;
 
   /* Init the cache content client */
-  if (cache_content_client_init(&thr_info->dc_client, datacache_client_param) != 0)
+  if(cache_content_client_init(&thr_info->dc_client, datacache_client_param) != 0)
     return 1;
 
   thr_info->client.pcontent_client = (caddr_t) & thr_info->dc_client;
@@ -314,15 +314,15 @@ cmdCacheInode_thr_info_t *RetrieveInitializedContext()
 
   context = GetCacheInodeContext();
 
-  if (context->is_thread_init != TRUE)
-    if (InitThread(context))
+  if(context->is_thread_init != TRUE)
+    if(InitThread(context))
       {
         printf("Error occured during thread initialization.\n");
         return NULL;
       }
 
-  if (context->is_client_init != TRUE)
-    if (InitClient(context))
+  if(context->is_client_init != TRUE)
+    if(InitClient(context))
       {
         printf("Error occured during client initialization.\n");
         return NULL;
@@ -341,7 +341,7 @@ void Cache_inode_layer_SetLogLevel(int log_lvl)
   pthread_mutex_lock(&mutex_log);
 
   /* first time */
-  if (log_level == -1)
+  if(log_level == -1)
     {
       log_level = log_lvl;
       voie_cache.fd = fileno(stderr);
@@ -352,7 +352,7 @@ void Cache_inode_layer_SetLogLevel(int log_lvl)
       log_level = log_lvl;
       /* changing log level */
       curr = log_desc_cache.liste_voies;
-      while (curr)
+      while(curr)
         {
           curr->niveau = log_level;
           curr = curr->suivante;
@@ -414,20 +414,20 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
   curr = str_path;
   next_name = str_path;
 
-  if (str_path[0] == '@')
+  if(str_path[0] == '@')
     {
       /* It is a file handle */
       int rc;
 
       rc = sscanHandle(&(fsdata.handle), str_path + 1);
 
-      if (rc <= 0)
+      if(rc <= 0)
         {
           fprintf(output, "Invalid FileHandle: %s\n", str_path);
           return -1;
         }
 
-      if (str_path[rc + 1] != '\0')
+      if(str_path[rc + 1] != '\0')
         {
           fprintf(output, "Invalid FileHandle: %s\n", str_path);
           return -1;
@@ -435,12 +435,12 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
 
       /* Get the corresponding pentry */
       fsdata.cookie = 0;
-      if ((pentry_tmp = cache_inode_get(&fsdata,
-                                        &attrlookup,
-                                        ht,
-                                        &context->client,
-                                        &context->context,
-                                        &context->cache_status)) == NULL)
+      if((pentry_tmp = cache_inode_get(&fsdata,
+                                       &attrlookup,
+                                       ht,
+                                       &context->client,
+                                       &context->context,
+                                       &context->cache_status)) == NULL)
         {
           log_fprintf(output, "Error executing cache_inode_get( \"%s\" ) : %J%r\n",
                       str_path, ERR_CACHE_INODE, context->cache_status);
@@ -454,7 +454,7 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
       return 0;
 
     }
-  else if (str_path[0] == '/')
+  else if(str_path[0] == '/')
     {
       /* absolute path, starting from "/", with a relative path */
       curr++;
@@ -463,7 +463,7 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
       strncpy(tmp_path, "/", FSAL_MAX_PATH_LEN);
 
       /* the the directory  is /, return */
-      if (str_path[1] == '\0')
+      if(str_path[1] == '\0')
         {
           strncpy(io_global_path, tmp_path, size_global_path);
           *pnew_pentry = pentry_lookup;
@@ -482,16 +482,16 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
     {
 
       /* tokenize to the next '/' */
-      while ((curr[0] != '\0') && (curr[0] != '/'))
+      while((curr[0] != '\0') && (curr[0] != '/'))
         curr++;
 
-      if (!curr[0])
+      if(!curr[0])
         last = 1;               /* remembers if it was the last dir */
 
       curr[0] = '\0';
 
       /* build the name */
-      if (FSAL_IS_ERROR(st = FSAL_str2name(next_name, FSAL_MAX_PATH_LEN, &name)))
+      if(FSAL_IS_ERROR(st = FSAL_str2name(next_name, FSAL_MAX_PATH_LEN, &name)))
         {
           fprintf(output, "Error executing FSAL_str2name:");
           print_fsal_status(output, st);
@@ -501,13 +501,13 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
 
       /* lookup this name */
 
-      if ((pentry_tmp = cache_inode_lookup(pentry_lookup,
-                                           &name,
-                                           &attrlookup,
-                                           ht,
-                                           &context->client,
-                                           &context->context,
-                                           &context->cache_status)) == NULL)
+      if((pentry_tmp = cache_inode_lookup(pentry_lookup,
+                                          &name,
+                                          &attrlookup,
+                                          ht,
+                                          &context->client,
+                                          &context->context,
+                                          &context->cache_status)) == NULL)
         {
           log_fprintf(output,
                       "Error executing cache_inode_lookup( \"%s\", \"%s\" ) : %J%r\n",
@@ -524,22 +524,22 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
       strncat(tmp_path, next_name, FSAL_MAX_PATH_LEN);
 
       /* updates cursors */
-      if (!last)
+      if(!last)
         {
           curr++;
           next_name = curr;
           /* ignore successive slashes */
-          while ((curr[0] != '\0') && (curr[0] == '/'))
+          while((curr[0] != '\0') && (curr[0] == '/'))
             {
               curr++;
               next_name = curr;
             }
-          if (!curr[0])
+          if(!curr[0])
             last = 1;           /* it is the last dir */
         }
 
     }
-  while (!last);
+  while(!last);
 
   /* everything is OK, apply changes */
   clean_path(tmp_path, size_global_path);
@@ -566,7 +566,7 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   cmdCacheInode_thr_info_t *context;
 
   /* geting the hostname */
-  if (gethostname(localmachine, sizeof(localmachine)) != 0)
+  if(gethostname(localmachine, sizeof(localmachine)) != 0)
     {
       DisplayErrorLog(ERR_SYS, ERR_GETHOSTNAME, errno);
       exit(1);
@@ -575,7 +575,7 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
     SetNameHost(localmachine);
 
   /* Parse config file */
-  if ((config_file = config_ParseFile(filename)) == NULL)
+  if((config_file = config_ParseFile(filename)) == NULL)
     {
       fprintf(output, "init_cache: Error parsing %s: %s\n", filename,
               config_GetErrorMsg());
@@ -590,8 +590,8 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
 
   context = GetCacheInodeContext();
 
-  if (context->is_thread_init != TRUE)
-    if (InitThread(context))
+  if(context->is_thread_init != TRUE)
+    if(InitThread(context))
       {
         fprintf(output, "Error ossured during thread initialization.\n");
         return 1;
@@ -599,7 +599,7 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
 
   /* Reading the hash parameter */
   rc = cache_inode_read_conf_hash_parameter(config_file, &cache_param);
-  if (rc != CACHE_INODE_SUCCESS)
+  if(rc != CACHE_INODE_SUCCESS)
     {
       log_fprintf(output, "Error executing cache_inode_read_conf_hash_parameter : %J%r\n",
                   ERR_CACHE_INODE, rc);
@@ -613,27 +613,27 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   cache_param.hparam.key_to_str = NULL;
   cache_param.hparam.val_to_str = NULL;
 
-  if (flag_v)
+  if(flag_v)
     cache_inode_print_conf_hash_parameter(output, cache_param);
 
-  if ((ht = cache_inode_init(cache_param, &context->cache_status)) == NULL)
+  if((ht = cache_inode_init(cache_param, &context->cache_status)) == NULL)
     {
       fprintf(output, "Error %d while init hash\n ", context->cache_status);
       return 1;
     }
-  else if (flag_v)
+  else if(flag_v)
     fprintf(output, "\tHash Table address = %p\n", ht);
 
   /* Get the gc policy */
   rc = cache_inode_read_conf_gc_policy(config_file, &gcpol);
-  if (rc != CACHE_INODE_SUCCESS)
+  if(rc != CACHE_INODE_SUCCESS)
     {
       log_fprintf(output, "Error executing cache_inode_read_conf_gc_policy : %J%r\n",
                   ERR_CACHE_INODE, rc);
       return 1;
     }
 
-  if (flag_v)
+  if(flag_v)
     cache_inode_print_conf_gc_policy(output, gcpol);
 
   /* retrieve lower layer info */
@@ -641,21 +641,21 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   /* Getting the root of the FS */
 #ifdef _USE_PROXY
   /*if( FSAL_IS_ERROR( status = FSAL_str2path( "/users/thomas/./", FSAL_MAX_PATH_LEN, &pathroot ) ) ) */
-  if (FSAL_IS_ERROR(status = FSAL_str2path("/", FSAL_MAX_PATH_LEN, &pathroot)))
+  if(FSAL_IS_ERROR(status = FSAL_str2path("/", FSAL_MAX_PATH_LEN, &pathroot)))
     {
       DisplayErrorFlux(output, ERR_FSAL, status.major, status.minor);
       return 1;
     }
 
-  if (FSAL_IS_ERROR
-      (status = FSAL_lookupPath(&pathroot, &context->context, &root_handle, NULL)))
+  if(FSAL_IS_ERROR
+     (status = FSAL_lookupPath(&pathroot, &context->context, &root_handle, NULL)))
     {
       DisplayErrorFlux(output, ERR_FSAL, status.major, status.minor);
       return 1;
     }
 #else
-  if (FSAL_IS_ERROR
-      (status = FSAL_lookup(NULL, NULL, &context->context, &root_handle, NULL)))
+  if(FSAL_IS_ERROR
+     (status = FSAL_lookup(NULL, NULL, &context->context, &root_handle, NULL)))
     {
       DisplayErrorFlux(output, ERR_FSAL, status.major, status.minor);
       return 1;
@@ -666,7 +666,7 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
 
   FSAL_CLEAR_MASK(attrs.asked_attributes);
   FSAL_SET_MASK(attrs.asked_attributes, FSAL_ATTR_SUPPATTR);
-  if (FSAL_IS_ERROR(status = FSAL_getattrs(&root_handle, &context->context, &attrs)))
+  if(FSAL_IS_ERROR(status = FSAL_getattrs(&root_handle, &context->context, &attrs)))
     {
       fprintf(output, "Error executing FSAL_getattrs:");
       print_fsal_status(output, status);
@@ -682,7 +682,7 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
 
   /* We need a cache_client to acces the cache */
   rc = cache_inode_read_conf_client_parameter(config_file, &cache_client_param);
-  if (rc != CACHE_INODE_SUCCESS)
+  if(rc != CACHE_INODE_SUCCESS)
     {
       log_fprintf(output,
                   "Error executing cache_inode_read_conf_client_parameter : %J%r\n",
@@ -692,7 +692,7 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
 
   /* We need a cache_client to acces the datacache */
   rc = cache_content_read_conf_client_parameter(config_file, &datacache_client_param);
-  if (rc != CACHE_CONTENT_SUCCESS)
+  if(rc != CACHE_CONTENT_SUCCESS)
     {
       log_fprintf(output,
                   "Error executing cache_content_read_conf_client_parameter : %J%r\n",
@@ -705,7 +705,7 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   datacache_client_param.lru_param.entry_to_str = lru_entry_to_str ;
   datacache_client_param.lru_param.clean_entry = lru_clean_entry ;
 */
-  if (flag_v)
+  if(flag_v)
     {
 
       cache_inode_print_conf_client_parameter(output, cache_client_param);
@@ -713,7 +713,7 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
     }
 
   /* Reading the datacache core parameter */
-  if (rc != CACHE_INODE_SUCCESS)
+  if(rc != CACHE_INODE_SUCCESS)
     {
       log_fprintf(output,
                   "Error executing cache_content_read_conf_core_parameter : %J%r\n",
@@ -722,22 +722,22 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
     }
 
   /* Init the cache_inode client */
-  if (cache_inode_client_init(&context->client, cache_client_param, 0, NULL) != 0)
+  if(cache_inode_client_init(&context->client, cache_client_param, 0, NULL) != 0)
     return 1;
 
 #ifdef _USE_ASYNC_CACHE_INODE
   /* Start the TAD and synclets for writeback cache inode */
   cache_inode_async_init(cache_client_param);
 
-  if (cache_inode_async_precreate_object
-      (&context->client, DIR_BEGINNING, &context->exp_context) == -1)
+  if(cache_inode_async_precreate_object
+     (&context->client, DIR_BEGINNING, &context->exp_context) == -1)
     {
       DisplayLog("NFS INIT: /!\\ Impossible to pre-create asynchronous direcory pool");
       exit(1);
     }
 
-  if (cache_inode_async_precreate_object
-      (&context->client, REGULAR_FILE, &context->exp_context) == -1)
+  if(cache_inode_async_precreate_object
+     (&context->client, REGULAR_FILE, &context->exp_context) == -1)
     {
       DisplayLog("NFS INIT: /!\\ Impossible to pre-create asynchronous file pool");
       exit(1);
@@ -745,7 +745,7 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
 #endif
 
   /* Init the cache content client */
-  if (cache_content_client_init(&context->dc_client, datacache_client_param) != 0)
+  if(cache_content_client_init(&context->dc_client, datacache_client_param) != 0)
     return 1;
 
   context->client.pcontent_client = (caddr_t) & context->dc_client;
@@ -753,15 +753,15 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   fsdata.cookie = 0;
   fsdata.handle = root_handle;
 
-  if ((context->pentry = cache_inode_make_root(&fsdata, ht, &context->client,
-                                               &context->context,
-                                               &context->cache_status)) == NULL)
+  if((context->pentry = cache_inode_make_root(&fsdata, ht, &context->client,
+                                              &context->context,
+                                              &context->cache_status)) == NULL)
     {
       DisplayLogFlux(output, "Error: can't init fs's root");
       return 1;
     }
 
-  if (cache_content_init_dir(datacache_client_param, EXPORT_ID) != 0)
+  if(cache_content_init_dir(datacache_client_param, EXPORT_ID) != 0)
     {
       DisplayLogFlux(output, "Error: can't init datacache directory");
       return 1;
@@ -773,7 +773,7 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
 
   pentry_root = context->pentry;
 
-  if (flag_v)
+  if(flag_v)
     fprintf(output, "\tCache_inode successfully initialized.\n");
 
   cache_init = TRUE;
@@ -803,7 +803,7 @@ int fn_Cache_inode_cache_init(int argc, /* IN : number of args in argv */
       "usage: init_cache [options] <ganesha_config_file>\n"
       "options :\n" "\t-h print this help\n" "\t-v verbose mode\n";
 
-  if (ht != NULL)
+  if(ht != NULL)
     {
       fprintf(output, "\tCache_inode is already initialized\n");
       return 0;
@@ -811,12 +811,12 @@ int fn_Cache_inode_cache_init(int argc, /* IN : number of args in argv */
 
   /* analysing options */
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "init_cache: warning: option 'v' has been specified more than once.\n");
           else
@@ -824,7 +824,7 @@ int fn_Cache_inode_cache_init(int argc, /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "init_cache: warning: option 'h' has been specified more than once.\n");
           else
@@ -838,14 +838,14 @@ int fn_Cache_inode_cache_init(int argc, /* IN : number of args in argv */
         }                       /* switch */
     }                           /* while */
 
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_init);
       return 0;
     }
 
   /* verifies mandatory argument */
-  if (Optind != (argc - 1))
+  if(Optind != (argc - 1))
     {
       /* too much or not enough arguments */
       err_flag++;
@@ -853,7 +853,7 @@ int fn_Cache_inode_cache_init(int argc, /* IN : number of args in argv */
   else
     filename = argv[Optind];
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_init);
       return -1;
@@ -875,14 +875,14 @@ int fn_Cache_inode_pwd(int argc,        /* IN : number of args in argv */
   cmdCacheInode_thr_info_t *context;
   context = RetrieveInitializedContext();
 
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
     }
 
-  if ((pfsal_handle =
-       cache_inode_get_fsal_handle(context->pentry, &context->cache_status)) == NULL)
+  if((pfsal_handle =
+      cache_inode_get_fsal_handle(context->pentry, &context->cache_status)) == NULL)
     {
       return 1;
     }
@@ -909,14 +909,14 @@ int fn_Cache_inode_cd(int argc, /* IN : number of args in argv */
 
   static char help_cd[] = "usage: cd <path>\n";
 
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "\tCache is not initialized\n");
       return -1;
     }
 
   /* Exactly one arg expected */
-  if (argc != 2)
+  if(argc != 2)
     {
       fprintf(output, help_cd);
       return -1;
@@ -926,24 +926,24 @@ int fn_Cache_inode_cd(int argc, /* IN : number of args in argv */
 
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
-  if ((rc =
-       cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, argv[1], context->pentry,
-                       &new_pentry, output)) != 0)
+  if((rc =
+      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, argv[1], context->pentry,
+                      &new_pentry, output)) != 0)
     return rc;
 
-  if (new_pentry->internal_md.type != DIR_BEGINNING)
+  if(new_pentry->internal_md.type != DIR_BEGINNING)
     {
       fprintf(output, "Error: %s is not a directory\n", glob_path);
       return ENOTDIR;
     }
 
-  if ((context->cache_status = cache_inode_access(new_pentry,
-                                                  FSAL_X_OK,
-                                                  ht,
-                                                  &context->client,
-                                                  &context->context,
-                                                  &context->cache_status)) !=
-      CACHE_INODE_SUCCESS)
+  if((context->cache_status = cache_inode_access(new_pentry,
+                                                 FSAL_X_OK,
+                                                 ht,
+                                                 &context->client,
+                                                 &context->context,
+                                                 &context->cache_status)) !=
+     CACHE_INODE_SUCCESS)
     {
       log_fprintf(output, "Error executing cache_inode_access : %J%r\n",
                   ERR_CACHE_INODE, context->cache_status);
@@ -980,7 +980,7 @@ int fn_Cache_inode_stat(int argc,       /* IN : number of args in argv */
   int err_flag = 0;
   char *file = NULL;
 
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "\tCache_inode is not initialized\n");
       return -1;
@@ -991,20 +991,20 @@ int fn_Cache_inode_stat(int argc,       /* IN : number of args in argv */
   /* analysing options */
   getopt_init();
 
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
 
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "stat: warning: option 'v' has been specified more than once.\n");
           else
             flag_v++;
           break;
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "stat: warning: option 'h' has been specified more than once.\n");
           else
@@ -1018,7 +1018,7 @@ int fn_Cache_inode_stat(int argc,       /* IN : number of args in argv */
     }
 
   /* Exactly one arg expected */
-  if (Optind != (argc - 1))
+  if(Optind != (argc - 1))
     {
       err_flag++;
     }
@@ -1027,7 +1027,7 @@ int fn_Cache_inode_stat(int argc,       /* IN : number of args in argv */
       file = argv[Optind];
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_stat);
       return -1;
@@ -1037,18 +1037,17 @@ int fn_Cache_inode_stat(int argc,       /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves object handle */
-  if (rc = cache_solvepath(glob_path,
-                           FSAL_MAX_PATH_LEN,
-                           file, context->pentry, &pentry_stat, output))
+  if(rc = cache_solvepath(glob_path,
+                          FSAL_MAX_PATH_LEN, file, context->pentry, &pentry_stat, output))
     return rc;
 
   /* Get the attributes */
-  if (cache_inode_getattr(pentry_stat,
-                          &attrs,
-                          ht,
-                          &context->client,
-                          &context->context,
-                          &context->cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_getattr(pentry_stat,
+                         &attrs,
+                         ht,
+                         &context->client,
+                         &context->context,
+                         &context->cache_status) != CACHE_INODE_SUCCESS)
     {
       log_fprintf(output, "Error executing cache_inode_getattr( \"%s\" ) : %J%r\n",
                   file, ERR_CACHE_INODE, context->cache_status);
@@ -1082,7 +1081,7 @@ int fn_Cache_inode_gc(int argc, /* IN : number of args in argv */
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -1093,12 +1092,12 @@ int fn_Cache_inode_gc(int argc, /* IN : number of args in argv */
   /* analysing options */
   getopt_init();
 
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "ls: warning: option 'v' has been specified more than once.\n");
           else
@@ -1106,7 +1105,7 @@ int fn_Cache_inode_gc(int argc, /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "ls: warning: option 'h' has been specified more than once.\n");
           else
@@ -1120,13 +1119,13 @@ int fn_Cache_inode_gc(int argc, /* IN : number of args in argv */
         }
     }                           /* while */
 
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_gc);
       return 0;
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_gc);
       return -1;
@@ -1134,7 +1133,7 @@ int fn_Cache_inode_gc(int argc, /* IN : number of args in argv */
 
   cache_inode_set_gc_policy(gcpol);
 
-  if (cache_inode_gc(ht, &context->client, &context->cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_gc(ht, &context->client, &context->cache_status) != CACHE_INODE_SUCCESS)
     {
       log_fprintf(output, "Error executing cache_inode_gc : %J%r\n",
                   ERR_CACHE_INODE, context->cache_status);
@@ -1192,7 +1191,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -1203,12 +1202,12 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
   /* analysing options */
   getopt_init();
 
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "ls: warning: option 'v' has been specified more than once.\n");
           else
@@ -1216,7 +1215,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "ls: warning: option 'h' has been specified more than once.\n");
           else
@@ -1224,7 +1223,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
           break;
 
         case 'd':
-          if (flag_d)
+          if(flag_d)
             fprintf(output,
                     "ls: warning: option 'd' has been specified more than once.\n");
           else
@@ -1232,7 +1231,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
           break;
 
         case 'l':
-          if (flag_l)
+          if(flag_l)
             fprintf(output,
                     "ls: warning: option 'l' has been specified more than once.\n");
           else
@@ -1240,7 +1239,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
           break;
 
         case 'L':
-          if (flag_L)
+          if(flag_L)
             fprintf(output,
                     "ls: warning: option 'L' has been specified more than once.\n");
           else
@@ -1248,7 +1247,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
           break;
 
         case 'S':
-          if (flag_S)
+          if(flag_S)
             fprintf(output,
                     "ls: warning: option 'S' has been specified more than once.\n");
           else
@@ -1256,7 +1255,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
           break;
 
         case 'z':
-          if (flag_z)
+          if(flag_z)
             fprintf(output,
                     "ls: warning: option 'z' has been specified more than once.\n");
           else
@@ -1264,7 +1263,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
           break;
 
         case 'H':
-          if (flag_H)
+          if(flag_H)
             fprintf(output,
                     "ls: warning: option 'H' has been specified more than once.\n");
           else
@@ -1278,25 +1277,25 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
         }
     }                           /* while */
 
-  if (flag_l + flag_S + flag_L + flag_H > 1)
+  if(flag_l + flag_S + flag_L + flag_H > 1)
     {
       fprintf(output, "ls: conflict between options l,S,L\n");
       err_flag++;
     }
 
-  if (flag_z + flag_v > 1)
+  if(flag_z + flag_v > 1)
     {
       fprintf(output, "ls: can't use -z and -v at the same time\n");
       err_flag++;
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_ls);
       return 0;
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_ls);
       return -1;
@@ -1305,14 +1304,14 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* first, retrieve the argument (if any) */
-  if (Optind == argc - 1)
+  if(Optind == argc - 1)
     {
       str_name = argv[Optind];
 
       /* retrieving handle */
-      if (rc = cache_solvepath(glob_path,
-                               FSAL_MAX_PATH_LEN,
-                               str_name, context->pentry, &pentry_tmp, output))
+      if(rc = cache_solvepath(glob_path,
+                              FSAL_MAX_PATH_LEN,
+                              str_name, context->pentry, &pentry_tmp, output))
         return rc;
 
     }
@@ -1322,25 +1321,25 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
       pentry_tmp = context->pentry;
     }
 
-  if (flag_v)
+  if(flag_v)
     fprintf(output, "proceeding ls (via Cache_inode) on \"%s\"\n", glob_path);
 
   /*
    * if the object is a file or a directoy with the -d option specified,
    * we only show its info and exit.
    */
-  if ((pentry_tmp->internal_md.type != DIR_BEGINNING) || flag_d)
+  if((pentry_tmp->internal_md.type != DIR_BEGINNING) || flag_d)
     {
-      if (pentry_tmp->internal_md.type == SYMBOLIC_LINK)
+      if(pentry_tmp->internal_md.type == SYMBOLIC_LINK)
         {
-          if (cache_inode_readlink(pentry_tmp,
-                                   &symlink_path,
-                                   ht,
-                                   &context->client,
-                                   &context->context,
-                                   &context->cache_status) != CACHE_INODE_SUCCESS)
+          if(cache_inode_readlink(pentry_tmp,
+                                  &symlink_path,
+                                  ht,
+                                  &context->client,
+                                  &context->context,
+                                  &context->cache_status) != CACHE_INODE_SUCCESS)
             {
-              if (!flag_z)
+              if(!flag_z)
                 log_fprintf(output, "Error executing cache_inode_readlink : %J%r\n",
                             ERR_CACHE_INODE, context->cache_status);
 
@@ -1348,42 +1347,42 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
             }
         }
 
-      if (cache_inode_getattr(pentry_tmp,
-                              &attrs,
-                              ht,
-                              &context->client,
-                              &context->context,
-                              &context->cache_status) != CACHE_INODE_SUCCESS)
+      if(cache_inode_getattr(pentry_tmp,
+                             &attrs,
+                             ht,
+                             &context->client,
+                             &context->context,
+                             &context->cache_status) != CACHE_INODE_SUCCESS)
         {
-          if (!flag_z)
+          if(!flag_z)
             log_fprintf(output, "Error executing cache_inode_getattr : %J%r\n",
                         ERR_CACHE_INODE, context->cache_status);
 
           return context->cache_status;
         }
 
-      if (flag_l)
+      if(flag_l)
         {
-          if (!flag_z)
+          if(!flag_z)
             print_item_line(output, &attrs, str_name, symlink_path.path);
         }
-      else if (flag_S)
+      else if(flag_S)
         {
-          if (!flag_z)
+          if(!flag_z)
             {
               fprintf(output, "%s :\n", str_name);
               print_fsal_attributes(attrs, output);
             }
         }
-      else if (flag_H)
+      else if(flag_H)
         {
-          if (!flag_z)
+          if(!flag_z)
             {
               char buff[128];
 
-              if ((pfsal_handle =
-                   cache_inode_get_fsal_handle(pentry_tmp,
-                                               &context->cache_status)) == NULL)
+              if((pfsal_handle =
+                  cache_inode_get_fsal_handle(pentry_tmp,
+                                              &context->cache_status)) == NULL)
                 {
                   return 1;
                 }
@@ -1391,15 +1390,15 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
               fprintf(output, "%s (@%s)\n", str_name, buff);
             }
         }
-      else if (flag_L)
+      else if(flag_L)
         {
-          if (!flag_z)
+          if(!flag_z)
             {
-              if (context->pentry->internal_md.type != REGULAR_FILE)
+              if(context->pentry->internal_md.type != REGULAR_FILE)
                 fprintf(output, "%p N/A  \t\t%s\n", pentry_tmp, str_name);
               else
                 {
-                  if (context->pentry->object.file.pentry_content == NULL)
+                  if(context->pentry->object.file.pentry_content == NULL)
                     fprintf(output, "%p (not cached) \t%s\n", context->pentry, str_name);
                   else
                     fprintf(output, "%p %p \t%s\n",
@@ -1410,7 +1409,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
         }
       else                      /* only prints the name */
         {
-          if (!flag_z)
+          if(!flag_z)
             fprintf(output, "%s\n", str_name);
         }
 
@@ -1421,49 +1420,49 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
 
   begin_cookie = 0;
   eod_met = UNASSIGNED_EOD;
-  while (eod_met != END_OF_DIR)
+  while(eod_met != END_OF_DIR)
     {
 
-      if (flag_v)
+      if(flag_v)
         fprintf(output, "-->cache_inode_readdir(path=%s,cookie=%d)\n",
                 glob_path, begin_cookie);
 
-      if (cache_inode_readdir(pentry_tmp,
-                              begin_cookie,
-                              CACHE_INODE_SHELL_READDIR_SIZE,
-                              &nbfound,
-                              &end_cookie,
-                              &eod_met,
-                              dirent_array,
-                              cookie_array,
-                              ht,
-                              &context->client,
-                              &context->context,
-                              &context->cache_status) != CACHE_INODE_SUCCESS)
+      if(cache_inode_readdir(pentry_tmp,
+                             begin_cookie,
+                             CACHE_INODE_SHELL_READDIR_SIZE,
+                             &nbfound,
+                             &end_cookie,
+                             &eod_met,
+                             dirent_array,
+                             cookie_array,
+                             ht,
+                             &context->client,
+                             &context->context,
+                             &context->cache_status) != CACHE_INODE_SUCCESS)
         {
           fprintf(output, "Error %d in cache_inode_readdir\n", context->cache_status);
           return context->cache_status;
         }
 
-      for (i = 0; i < nbfound; i++)
+      for(i = 0; i < nbfound; i++)
         {
-          if (!strcmp(str_name, "."))
+          if(!strcmp(str_name, "."))
             strncpy(item_path, dirent_array[i].name.name, FSAL_MAX_PATH_LEN);
-          else if (str_name[strlen(str_name) - 1] == '/')
+          else if(str_name[strlen(str_name) - 1] == '/')
             snprintf(item_path, FSAL_MAX_PATH_LEN, "%s%s", str_name,
                      dirent_array[i].name.name);
           else
             snprintf(item_path, FSAL_MAX_PATH_LEN, "%s/%s", str_name,
                      dirent_array[i].name.name);
 
-          if (dirent_array[i].pentry->internal_md.type == SYMBOLIC_LINK)
+          if(dirent_array[i].pentry->internal_md.type == SYMBOLIC_LINK)
             {
-              if (cache_inode_readlink(dirent_array[i].pentry,
-                                       &symlink_path,
-                                       ht,
-                                       &context->client,
-                                       &context->context,
-                                       &context->cache_status) != CACHE_INODE_SUCCESS)
+              if(cache_inode_readlink(dirent_array[i].pentry,
+                                      &symlink_path,
+                                      ht,
+                                      &context->client,
+                                      &context->context,
+                                      &context->cache_status) != CACHE_INODE_SUCCESS)
                 {
                   log_fprintf(output, "Error executing cache_inode_readlink : %J%r\n",
                               ERR_CACHE_INODE, context->cache_status);
@@ -1471,14 +1470,14 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                 }
             }
 
-          if (flag_l)
+          if(flag_l)
             {
-              if (cache_inode_getattr(dirent_array[i].pentry,
-                                      &attrs,
-                                      ht,
-                                      &context->client,
-                                      &context->context,
-                                      &context->cache_status) != CACHE_INODE_SUCCESS)
+              if(cache_inode_getattr(dirent_array[i].pentry,
+                                     &attrs,
+                                     ht,
+                                     &context->client,
+                                     &context->context,
+                                     &context->cache_status) != CACHE_INODE_SUCCESS)
                 {
                   log_fprintf(output, "Error executing cache_inode_getattr : %J%r\n",
                               ERR_CACHE_INODE, context->cache_status);
@@ -1488,32 +1487,32 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
 
               print_item_line(output, &attrs, item_path, symlink_path.path);
             }
-          else if (flag_S)
+          else if(flag_S)
             {
               fprintf(output, "%s :\n", item_path);
-              if (cache_inode_getattr(dirent_array[i].pentry,
-                                      &attrs,
-                                      ht,
-                                      &context->client,
-                                      &context->context,
-                                      &context->cache_status) != CACHE_INODE_SUCCESS)
+              if(cache_inode_getattr(dirent_array[i].pentry,
+                                     &attrs,
+                                     ht,
+                                     &context->client,
+                                     &context->context,
+                                     &context->cache_status) != CACHE_INODE_SUCCESS)
                 {
                   log_fprintf(output, "Error executing cache_inode_getattr : %J%r\n",
                               ERR_CACHE_INODE, context->cache_status);
                   return context->cache_status;
                 }
-              if (!flag_z)
+              if(!flag_z)
                 print_fsal_attributes(attrs, output);
             }
-          else if (flag_L)
+          else if(flag_L)
             {
-              if (!flag_z)
+              if(!flag_z)
                 {
-                  if (dirent_array[i].pentry->internal_md.type != REGULAR_FILE)
+                  if(dirent_array[i].pentry->internal_md.type != REGULAR_FILE)
                     fprintf(output, "%p N/A \t\t%s\n", dirent_array[i].pentry, item_path);
                   else
                     {
-                      if (dirent_array[i].pentry->object.file.pentry_content == NULL)
+                      if(dirent_array[i].pentry->object.file.pentry_content == NULL)
                         fprintf(output, "%p (not cached) \t%s\n", dirent_array[i].pentry,
                                 item_path);
                       else
@@ -1524,15 +1523,15 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                     }
                 }
             }
-          else if (flag_H)
+          else if(flag_H)
             {
-              if (!flag_z)
+              if(!flag_z)
                 {
                   char buff[128];
 
-                  if ((pfsal_handle =
-                       cache_inode_get_fsal_handle(dirent_array[i].pentry,
-                                                   &context->cache_status)) == NULL)
+                  if((pfsal_handle =
+                      cache_inode_get_fsal_handle(dirent_array[i].pentry,
+                                                  &context->cache_status)) == NULL)
                     {
                       return 1;
                     }
@@ -1542,7 +1541,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
             }
           else
             {
-              if (!flag_z)
+              if(!flag_z)
                 fprintf(output, "%s\n", item_path);
             }
         }
@@ -1571,7 +1570,7 @@ int fn_Cache_inode_callstat(int argc,   /* IN : number of args in argv */
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -1584,7 +1583,7 @@ int fn_Cache_inode_callstat(int argc,   /* IN : number of args in argv */
   fprintf(output,
           "Function             | Nb_Calls    | Success     | Retryable   | Unrecoverable\n");
   /* content */
-  for (i = 0; i < CACHE_INODE_NB_COMMAND; i++)
+  for(i = 0; i < CACHE_INODE_NB_COMMAND; i++)
     fprintf(output, "%-20s | %11u | %11u | %11u | %11u\n",
             cache_inode_function_names[i],
             context->client.stat.func_stats.nb_call[i],
@@ -1664,7 +1663,7 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -1674,12 +1673,12 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
 
   /* analysing options */
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "mkdir: warning: option 'v' has been specified more than once.\n");
           else
@@ -1687,7 +1686,7 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "mkdir: warning: option 'h' has been specified more than once.\n");
           else
@@ -1701,7 +1700,7 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_mkdir);
       return 0;
@@ -1709,7 +1708,7 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
 
   /* Exactly 1 or 2 args expected */
 
-  if (Optind != (argc - 2) && Optind != (argc - 1))
+  if(Optind != (argc - 2) && Optind != (argc - 1))
     {
       err_flag++;
     }
@@ -1718,7 +1717,7 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
       strncpy(tmp_path, argv[Optind], FSAL_MAX_PATH_LEN);
       split_path(tmp_path, &path, &file);
 
-      if (Optind == (argc - 1))
+      if(Optind == (argc - 1))
         {
           mode = 0755;
         }
@@ -1729,42 +1728,42 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
           mode = atomode(strmode);
         }
 
-      if (mode < 0)
+      if(mode < 0)
         err_flag++;
       else
         {
           fsalmode = 0;
 
-          if (mode & S_ISUID)
+          if(mode & S_ISUID)
             fsalmode |= FSAL_MODE_SUID;
-          if (mode & S_ISGID)
+          if(mode & S_ISGID)
             fsalmode |= FSAL_MODE_SGID;
 
-          if (mode & S_IRUSR)
+          if(mode & S_IRUSR)
             fsalmode |= FSAL_MODE_RUSR;
-          if (mode & S_IWUSR)
+          if(mode & S_IWUSR)
             fsalmode |= FSAL_MODE_WUSR;
-          if (mode & S_IXUSR)
+          if(mode & S_IXUSR)
             fsalmode |= FSAL_MODE_XUSR;
 
-          if (mode & S_IRGRP)
+          if(mode & S_IRGRP)
             fsalmode |= FSAL_MODE_RGRP;
-          if (mode & S_IWGRP)
+          if(mode & S_IWGRP)
             fsalmode |= FSAL_MODE_WGRP;
-          if (mode & S_IXGRP)
+          if(mode & S_IXGRP)
             fsalmode |= FSAL_MODE_XGRP;
 
-          if (mode & S_IROTH)
+          if(mode & S_IROTH)
             fsalmode |= FSAL_MODE_ROTH;
-          if (mode & S_IWOTH)
+          if(mode & S_IWOTH)
             fsalmode |= FSAL_MODE_WOTH;
-          if (mode & S_IXOTH)
+          if(mode & S_IXOTH)
             fsalmode |= FSAL_MODE_XOTH;
 
         }
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_mkdir);
       return -1;
@@ -1774,15 +1773,15 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves path handle */
-  if (rc =
-      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, path, context->pentry, &new_hdl,
-                      output))
+  if(rc =
+     cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, path, context->pentry, &new_hdl,
+                     output))
     return rc;
 
   /* create fsal_name_t */
   st = FSAL_str2name(file, 256, &objname);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     {
       fprintf(output, "Error executing FSAL_str2name:");
       print_fsal_status(output, st);
@@ -1800,7 +1799,7 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
                                   &context->client,
                                   &context->context, &context->cache_status);
 
-  if ((subdir_hdl == NULL) || (context->cache_status != 0))
+  if((subdir_hdl == NULL) || (context->cache_status != 0))
     {
       log_fprintf(output, "Error executing cache_inode_create(DIR_BEGINNING) : %J%r\n",
                   ERR_CACHE_INODE, context->cache_status);
@@ -1808,7 +1807,7 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
       return context->cache_status;
     }
 
-  if (flag_v)
+  if(flag_v)
     {
       fprintf(output, "%s/%s successfully created (handle=%p) \n", glob_path, file,
               subdir_hdl);
@@ -1853,7 +1852,7 @@ int fn_Cache_inode_link(int argc,       /* IN : number of args in argv */
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -1863,12 +1862,12 @@ int fn_Cache_inode_link(int argc,       /* IN : number of args in argv */
 
   /* analysing options */
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "hardlink: warning: option 'v' has been specified more than once.\n");
           else
@@ -1876,7 +1875,7 @@ int fn_Cache_inode_link(int argc,       /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "hardlink: warning: option 'h' has been specified more than once.\n");
           else
@@ -1890,14 +1889,14 @@ int fn_Cache_inode_link(int argc,       /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_hardlink);
       return 0;
     }
 
   /* There should be exactly 2 arguments */
-  if (Optind == (argc - 2))
+  if(Optind == (argc - 2))
     {
       target = argv[Optind];
 
@@ -1909,7 +1908,7 @@ int fn_Cache_inode_link(int argc,       /* IN : number of args in argv */
       err_flag++;
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_hardlink);
       return -1;
@@ -1920,20 +1919,20 @@ int fn_Cache_inode_link(int argc,       /* IN : number of args in argv */
   strncpy(glob_path_link, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves path handle */
-  if (rc =
-      cache_solvepath(glob_path_target, FSAL_MAX_PATH_LEN, target, context->pentry,
-                      &target_hdl, output))
+  if(rc =
+     cache_solvepath(glob_path_target, FSAL_MAX_PATH_LEN, target, context->pentry,
+                     &target_hdl, output))
     return rc;
 
-  if (rc =
-      cache_solvepath(glob_path_link, FSAL_MAX_PATH_LEN, path, context->pentry, &dir_hdl,
-                      output))
+  if(rc =
+     cache_solvepath(glob_path_link, FSAL_MAX_PATH_LEN, path, context->pentry, &dir_hdl,
+                     output))
     return rc;
 
   /* create fsal_name_t */
   st = FSAL_str2name(name, 256, &link_name);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     {
       fprintf(output, "Error executing FSAL_str2name:");
       print_fsal_status(output, st);
@@ -1941,20 +1940,20 @@ int fn_Cache_inode_link(int argc,       /* IN : number of args in argv */
       return st.major;
     }
 
-  if (cache_inode_link(target_hdl,
-                       dir_hdl,
-                       &link_name,
-                       &attrlink,
-                       ht,
-                       &context->client,
-                       &context->context, &context->cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_link(target_hdl,
+                      dir_hdl,
+                      &link_name,
+                      &attrlink,
+                      ht,
+                      &context->client,
+                      &context->context, &context->cache_status) != CACHE_INODE_SUCCESS)
     {
       log_fprintf(output, "Error executing cache_inode_link : %J%r\n",
                   ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
     }
 
-  if (flag_v)
+  if(flag_v)
     {
       fprintf(output, "hardlink successfully created \n");
     }
@@ -1998,7 +1997,7 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -2008,12 +2007,12 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
 
   /* analysing options */
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "ln: warning: option 'v' has been specified more than once.\n");
           else
@@ -2021,7 +2020,7 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "ln: warning: option 'h' has been specified more than once.\n");
           else
@@ -2035,14 +2034,14 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_ln);
       return 0;
     }
 
   /* Exactly 2 args expected */
-  if (Optind != (argc - 2))
+  if(Optind != (argc - 2))
     {
       err_flag++;
     }
@@ -2054,7 +2053,7 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
 
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_ln);
       return -1;
@@ -2064,15 +2063,15 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves path handle */
-  if (rc =
-      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, path, context->pentry, &new_hdl,
-                      output))
+  if(rc =
+     cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, path, context->pentry, &new_hdl,
+                     output))
     return rc;
 
   /* create fsal_name_t */
   st = FSAL_str2name(file, 256, &objname);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     {
       fprintf(output, "Error executing FSAL_str2name:");
       print_fsal_status(output, st);
@@ -2083,7 +2082,7 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
   /* create fsal_path_t */
   st = FSAL_str2path(content, 256, &create_arg.link_content);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     {
       fprintf(output, "Error executing FSAL_str2path:");
       print_fsal_status(output, st);
@@ -2091,16 +2090,15 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
       return st.major;
     }
 
-  if ((subdir_hdl = cache_inode_create(new_hdl,
-                                       &objname,
-                                       SYMBOLIC_LINK,
-                                       fsalmode,
-                                       &create_arg,
-                                       &attrsymlink,
-                                       ht,
-                                       &context->client,
-                                       &context->context,
-                                       &context->cache_status)) == NULL)
+  if((subdir_hdl = cache_inode_create(new_hdl,
+                                      &objname,
+                                      SYMBOLIC_LINK,
+                                      fsalmode,
+                                      &create_arg,
+                                      &attrsymlink,
+                                      ht,
+                                      &context->client,
+                                      &context->context, &context->cache_status)) == NULL)
     {
       log_fprintf(output, "Error executing cache_inode_create(SYMBOLIC_LINK) : %J%r\n",
                   ERR_CACHE_INODE, context->cache_status);
@@ -2108,7 +2106,7 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
       return context->cache_status;
     }
 
-  if (flag_v)
+  if(flag_v)
     {
       fprintf(output, "%s/%s successfully created (handle=%p) \n", glob_path, file,
               subdir_hdl);
@@ -2152,7 +2150,7 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -2162,12 +2160,12 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
 
   /* analysing options */
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "create: warning: option 'v' has been specified more than once.\n");
           else
@@ -2175,7 +2173,7 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "create: warning: option 'h' has been specified more than once.\n");
           else
@@ -2189,14 +2187,14 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_create);
       return 0;
     }
 
   /* 1 or 2 args expected */
-  if (Optind != (argc - 2) && Optind != (argc - 1))
+  if(Optind != (argc - 2) && Optind != (argc - 1))
     {
       err_flag++;
     }
@@ -2206,7 +2204,7 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
       strncpy(tmp_path, argv[Optind], FSAL_MAX_PATH_LEN);
       split_path(tmp_path, &path, &file);
 
-      if (Optind == (argc - 1))
+      if(Optind == (argc - 1))
         {
           mode = 0755;
         }
@@ -2217,44 +2215,44 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
           mode = atomode(strmode);
         }
 
-      if (mode < 0)
+      if(mode < 0)
         err_flag++;
       else
         {
 
           fsalmode = 0;
 
-          if (mode & S_ISUID)
+          if(mode & S_ISUID)
             fsalmode |= FSAL_MODE_SUID;
-          if (mode & S_ISGID)
+          if(mode & S_ISGID)
             fsalmode |= FSAL_MODE_SGID;
 
-          if (mode & S_IRUSR)
+          if(mode & S_IRUSR)
             fsalmode |= FSAL_MODE_RUSR;
-          if (mode & S_IWUSR)
+          if(mode & S_IWUSR)
             fsalmode |= FSAL_MODE_WUSR;
-          if (mode & S_IXUSR)
+          if(mode & S_IXUSR)
             fsalmode |= FSAL_MODE_XUSR;
 
-          if (mode & S_IRGRP)
+          if(mode & S_IRGRP)
             fsalmode |= FSAL_MODE_RGRP;
-          if (mode & S_IWGRP)
+          if(mode & S_IWGRP)
             fsalmode |= FSAL_MODE_WGRP;
-          if (mode & S_IXGRP)
+          if(mode & S_IXGRP)
             fsalmode |= FSAL_MODE_XGRP;
 
-          if (mode & S_IROTH)
+          if(mode & S_IROTH)
             fsalmode |= FSAL_MODE_ROTH;
-          if (mode & S_IWOTH)
+          if(mode & S_IWOTH)
             fsalmode |= FSAL_MODE_WOTH;
-          if (mode & S_IXOTH)
+          if(mode & S_IXOTH)
             fsalmode |= FSAL_MODE_XOTH;
 
         }
 
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_create);
       return -1;
@@ -2264,15 +2262,15 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves path handle */
-  if (rc =
-      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, path, context->pentry, &new_hdl,
-                      output))
+  if(rc =
+     cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, path, context->pentry, &new_hdl,
+                     output))
     return rc;
 
   /* create fsal_name_t */
   st = FSAL_str2name(file, 256, &objname);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     {
       fprintf(output, "Error executing FSAL_str2name:");
       print_fsal_status(output, st);
@@ -2280,16 +2278,15 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
       return st.major;
     }
 
-  if ((subdir_hdl = cache_inode_create(new_hdl,
-                                       &objname,
-                                       REGULAR_FILE,
-                                       fsalmode,
-                                       NULL,
-                                       &attrcreate,
-                                       ht,
-                                       &context->client,
-                                       &context->context,
-                                       &context->cache_status)) == NULL)
+  if((subdir_hdl = cache_inode_create(new_hdl,
+                                      &objname,
+                                      REGULAR_FILE,
+                                      fsalmode,
+                                      NULL,
+                                      &attrcreate,
+                                      ht,
+                                      &context->client,
+                                      &context->context, &context->cache_status)) == NULL)
     {
       log_fprintf(output, "Error executing cache_inode_create(DIR_BEGINNING) : %J%r\n",
                   ERR_CACHE_INODE, context->cache_status);
@@ -2297,7 +2294,7 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
       return context->cache_status;
     }
 
-  if (flag_v)
+  if(flag_v)
     {
       fprintf(output, "%s/%s successfully created (handle=%p) \n", glob_path, file,
               subdir_hdl);
@@ -2342,7 +2339,7 @@ int fn_Cache_inode_rename(int argc,     /* IN : number of args in argv */
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -2352,12 +2349,12 @@ int fn_Cache_inode_rename(int argc,     /* IN : number of args in argv */
 
   /* analysing options */
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "rename: warning: option 'v' has been specified more than once.\n");
           else
@@ -2365,7 +2362,7 @@ int fn_Cache_inode_rename(int argc,     /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "rename: warning: option 'h' has been specified more than once.\n");
           else
@@ -2379,14 +2376,14 @@ int fn_Cache_inode_rename(int argc,     /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_rename);
       return 0;
     }
 
   /* Exactly 2 args expected */
-  if (Optind != (argc - 2))
+  if(Optind != (argc - 2))
     {
       err_flag++;
     }
@@ -2399,13 +2396,13 @@ int fn_Cache_inode_rename(int argc,     /* IN : number of args in argv */
       split_path(tmp_path2, &tgt_path, &tgt_file);
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_rename);
       return -1;
     }
 
-  if (flag_v)
+  if(flag_v)
     fprintf(output, "Renaming %s (dir %s) to %s (dir %s)\n", src_file, src_path, tgt_file,
             tgt_path);
 
@@ -2414,21 +2411,21 @@ int fn_Cache_inode_rename(int argc,     /* IN : number of args in argv */
   strncpy(tgt_glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves paths handles */
-  if (rc = cache_solvepath(src_glob_path,
-                           FSAL_MAX_PATH_LEN,
-                           src_path, context->pentry, &src_path_pentry, output))
+  if(rc = cache_solvepath(src_glob_path,
+                          FSAL_MAX_PATH_LEN,
+                          src_path, context->pentry, &src_path_pentry, output))
     return rc;
 
-  if (rc = cache_solvepath(tgt_glob_path,
-                           FSAL_MAX_PATH_LEN,
-                           tgt_path, context->pentry, &tgt_path_pentry, output))
+  if(rc = cache_solvepath(tgt_glob_path,
+                          FSAL_MAX_PATH_LEN,
+                          tgt_path, context->pentry, &tgt_path_pentry, output))
     return rc;
 
   /* create fsal_name_t */
 
   st = FSAL_str2name(src_file, 256, &src_name);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     {
       fprintf(output, "Error executing FSAL_str2name:");
       print_fsal_status(output, st);
@@ -2438,7 +2435,7 @@ int fn_Cache_inode_rename(int argc,     /* IN : number of args in argv */
 
   st = FSAL_str2name(tgt_file, 256, &tgt_name);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     {
       fprintf(output, "Error executing FSAL_str2name:");
       print_fsal_status(output, st);
@@ -2447,16 +2444,15 @@ int fn_Cache_inode_rename(int argc,     /* IN : number of args in argv */
     }
 
   /* Rename operation */
-  if (cache_inode_rename(src_path_pentry,
-                         &src_name,
-                         tgt_path_pentry,
-                         &tgt_name,
-                         &attrsrc,
-                         &attrdest,
-                         ht,
-                         &context->client,
-                         &context->context,
-                         &context->cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_rename(src_path_pentry,
+                        &src_name,
+                        tgt_path_pentry,
+                        &tgt_name,
+                        &attrsrc,
+                        &attrdest,
+                        ht,
+                        &context->client,
+                        &context->context, &context->cache_status) != CACHE_INODE_SUCCESS)
     {
       log_fprintf(output, "Error executing cache_inode_rename : %J%r\n",
                   ERR_CACHE_INODE, context->cache_status);
@@ -2464,7 +2460,7 @@ int fn_Cache_inode_rename(int argc,     /* IN : number of args in argv */
       return context->cache_status;
     }
 
-  if (flag_v)
+  if(flag_v)
     fprintf(output, "%s/%s successfully renamed to %s/%s\n",
             src_glob_path, src_file, tgt_glob_path, tgt_file);
 
@@ -2499,7 +2495,7 @@ int fn_Cache_inode_unlink(int argc,     /* IN : number of args in argv */
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -2509,12 +2505,12 @@ int fn_Cache_inode_unlink(int argc,     /* IN : number of args in argv */
 
   /* analysing options */
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "unlink: warning: option 'v' has been specified more than once.\n");
           else
@@ -2522,7 +2518,7 @@ int fn_Cache_inode_unlink(int argc,     /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "unlink: warning: option 'h' has been specified more than once.\n");
           else
@@ -2536,14 +2532,14 @@ int fn_Cache_inode_unlink(int argc,     /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_ln);
       return 0;
     }
 
   /* Exactly 2 args expected */
-  if (Optind != (argc - 1))
+  if(Optind != (argc - 1))
     {
       err_flag++;
     }
@@ -2554,7 +2550,7 @@ int fn_Cache_inode_unlink(int argc,     /* IN : number of args in argv */
 
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_ln);
       return -1;
@@ -2564,15 +2560,15 @@ int fn_Cache_inode_unlink(int argc,     /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves path handle */
-  if (rc =
-      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, path, context->pentry, &new_hdl,
-                      output))
+  if(rc =
+     cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, path, context->pentry, &new_hdl,
+                     output))
     return rc;
 
   /* create fsal_name_t */
   st = FSAL_str2name(file, 256, &objname);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     {
       fprintf(output, "Error executing FSAL_str2name:");
       print_fsal_status(output, st);
@@ -2580,7 +2576,7 @@ int fn_Cache_inode_unlink(int argc,     /* IN : number of args in argv */
       return st.major;
     }
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     {
       fprintf(output, "Error executing FSAL_str2path:");
       print_fsal_status(output, st);
@@ -2592,14 +2588,14 @@ int fn_Cache_inode_unlink(int argc,     /* IN : number of args in argv */
                      &objname,
                      &attrparent,
                      ht, &context->client, &context->context, &context->cache_status);
-  if (context->cache_status != CACHE_INODE_SUCCESS)
+  if(context->cache_status != CACHE_INODE_SUCCESS)
     {
       log_fprintf(output, "Error executing cache_inode_remove : %J%r\n",
                   ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
     }
 
-  if (flag_v)
+  if(flag_v)
     {
       fprintf(output, "%s/%s successfully unlinked\n", glob_path, file);
     }
@@ -2640,7 +2636,7 @@ int fn_Cache_inode_setattr(int argc,    /* IN : number of args in argv */
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -2651,12 +2647,12 @@ int fn_Cache_inode_setattr(int argc,    /* IN : number of args in argv */
   /* analysing options */
   getopt_init();
 
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "setattr: warning: option 'v' has been specified more than once.\n");
           else
@@ -2664,7 +2660,7 @@ int fn_Cache_inode_setattr(int argc,    /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "setattr: warning: option 'h' has been specified more than once.\n");
           else
@@ -2678,7 +2674,7 @@ int fn_Cache_inode_setattr(int argc,    /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
 
       shell_attribute_t *curr_attr;
@@ -2690,7 +2686,7 @@ int fn_Cache_inode_setattr(int argc,    /* IN : number of args in argv */
 
       /* print attribute list */
 
-      for (curr_attr = shell_attr_list; curr_attr->attr_type != ATTR_NONE; curr_attr++)
+      for(curr_attr = shell_attr_list; curr_attr->attr_type != ATTR_NONE; curr_attr++)
         {
           switch (curr_attr->attr_type)
             {
@@ -2718,7 +2714,7 @@ int fn_Cache_inode_setattr(int argc,    /* IN : number of args in argv */
 
   /* Exactly 2 args expected (path and attributes list) */
 
-  if (Optind != (argc - 2))
+  if(Optind != (argc - 2))
     {
       err_flag++;
     }
@@ -2728,7 +2724,7 @@ int fn_Cache_inode_setattr(int argc,    /* IN : number of args in argv */
       attr_list = argv[Optind + 1];
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_setattr);
       return -1;
@@ -2738,9 +2734,9 @@ int fn_Cache_inode_setattr(int argc,    /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieve handle to the file whose attributes are to be changed */
-  if (rc =
-      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                      output))
+  if(rc =
+     cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
+                     output))
     return rc;
 
   /* Convert the peer (attr_name,attr_val) to an FSAL attribute structure. */
@@ -2771,18 +2767,18 @@ int fn_Cache_inode_setattr(int argc,    /* IN : number of args in argv */
     }
 
   /* if verbose mode is on, we print the attributes to be set */
-  if (flag_v)
+  if(flag_v)
     {
       print_fsal_attributes(set_attrs, output);
     }
 
   /* executes set attrs */
-  if ((cache_status = cache_inode_setattr(obj_hdl,
-                                          &set_attrs,
-                                          ht,
-                                          &context->client,
-                                          &context->context,
-                                          &context->cache_status)) != CACHE_INODE_SUCCESS)
+  if((cache_status = cache_inode_setattr(obj_hdl,
+                                         &set_attrs,
+                                         ht,
+                                         &context->client,
+                                         &context->context,
+                                         &context->cache_status)) != CACHE_INODE_SUCCESS)
 
     {
       log_fprintf(output, "Error executing cache_inode_setattr : %J%r\n",
@@ -2840,7 +2836,7 @@ int fn_Cache_inode_access(int argc,     /* IN : number of args in argv */
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -2851,12 +2847,12 @@ int fn_Cache_inode_access(int argc,     /* IN : number of args in argv */
   /* analysing options */
 
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "access: warning: option 'v' has been specified more than once.\n");
           else
@@ -2864,7 +2860,7 @@ int fn_Cache_inode_access(int argc,     /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "access: warning: option 'h' has been specified more than once.\n");
           else
@@ -2879,7 +2875,7 @@ int fn_Cache_inode_access(int argc,     /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       /* print usage */
       fprintf(output, help_access);
@@ -2887,7 +2883,7 @@ int fn_Cache_inode_access(int argc,     /* IN : number of args in argv */
     }
 
   /* Exactly 2 args expected */
-  if (Optind != (argc - 2))
+  if(Optind != (argc - 2))
     {
       err_flag++;
     }
@@ -2897,7 +2893,7 @@ int fn_Cache_inode_access(int argc,     /* IN : number of args in argv */
       file = argv[Optind + 1];
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_access);
       return -1;
@@ -2907,38 +2903,38 @@ int fn_Cache_inode_access(int argc,     /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieve handle to the file whose permissions are to be tested */
-  if (rc =
-      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                      output))
+  if(rc =
+     cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
+                     output))
     return rc;
 
   /* Convert the permission string to an fsal access test. */
   test_perms = 0;
 
-  for (i = 0; i < strlen(str_perms); i++)
+  for(i = 0; i < strlen(str_perms); i++)
     {
       switch (str_perms[i])
         {
         case 'F':
-          if (flag_v)
+          if(flag_v)
             fprintf(output, "F_OK flag\n");
           test_perms |= FSAL_F_OK;
           break;
 
         case 'R':
-          if (flag_v)
+          if(flag_v)
             fprintf(output, "R_OK flag\n");
           test_perms |= FSAL_R_OK;
           break;
 
         case 'W':
-          if (flag_v)
+          if(flag_v)
             fprintf(output, "W_OK flag\n");
           test_perms |= FSAL_W_OK;
           break;
 
         case 'X':
-          if (flag_v)
+          if(flag_v)
             fprintf(output, "X_OK flag\n");
           test_perms |= FSAL_X_OK;
           break;
@@ -2952,13 +2948,13 @@ int fn_Cache_inode_access(int argc,     /* IN : number of args in argv */
 
   /* Call to FSAL */
 
-  if ((context->cache_status = cache_inode_access(obj_hdl,
-                                                  test_perms,
-                                                  ht,
-                                                  &context->client,
-                                                  &context->context,
-                                                  &context->cache_status)) !=
-      CACHE_INODE_SUCCESS)
+  if((context->cache_status = cache_inode_access(obj_hdl,
+                                                 test_perms,
+                                                 ht,
+                                                 &context->client,
+                                                 &context->context,
+                                                 &context->cache_status)) !=
+     CACHE_INODE_SUCCESS)
     {
       log_fprintf(output, "Error executing cache_inode_access : %J%r\n",
                   ERR_CACHE_INODE, context->cache_status);
@@ -2999,7 +2995,7 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -3010,12 +3006,12 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
   /* analysing options */
 
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "access: warning: option 'v' has been specified more than once.\n");
           else
@@ -3023,7 +3019,7 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "access: warning: option 'h' has been specified more than once.\n");
           else
@@ -3038,7 +3034,7 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       /* print usage */
       fprintf(output, help_data_cache);
@@ -3046,7 +3042,7 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
     }
 
   /* Exactly 1 args expected */
-  if (Optind != (argc - 1))
+  if(Optind != (argc - 1))
     {
       err_flag++;
     }
@@ -3055,7 +3051,7 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
       file = argv[Optind];
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_data_cache);
       return -1;
@@ -3065,13 +3061,13 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieve handle to the file whose permissions are to be tested */
-  if (rc =
-      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                      output))
+  if(rc =
+     cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
+                     output))
     return rc;
 
 #ifdef _USE_PROXY
-  if (FSAL_IS_ERROR(FSAL_str2name(file, MAXPATHLEN, &name)))
+  if(FSAL_IS_ERROR(FSAL_str2name(file, MAXPATHLEN, &name)))
     {
       context->cache_status = CACHE_INODE_FSAL_ERROR;
       log_fprintf(output, "Error opening file during cache_inode_add_cache : %J%r\n",
@@ -3080,13 +3076,13 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
 
     }
 
-  if (cache_inode_open_by_name(context->pentry,
-                               &name,
-                               obj_hdl,
-                               &context->client,
-                               FSAL_O_RDWR,
-                               &context->context,
-                               &context->cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_open_by_name(context->pentry,
+                              &name,
+                              obj_hdl,
+                              &context->client,
+                              FSAL_O_RDWR,
+                              &context->context,
+                              &context->cache_status) != CACHE_INODE_SUCCESS)
     {
       log_fprintf(output, "Error opening file during cache_inode_add_cache : %J%r\n",
                   ERR_CACHE_INODE, context->cache_status);
@@ -3094,18 +3090,18 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
     }
 #endif
 
-  if (flag_v)
+  if(flag_v)
     printf("---> data_cache using pentry_inode = %p\n", obj_hdl);
 
-  if (cache_inode_add_data_cache(obj_hdl, ht, &context->client, &context->context,
-                                 &context->cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_add_data_cache(obj_hdl, ht, &context->client, &context->context,
+                                &context->cache_status) != CACHE_INODE_SUCCESS)
     {
       log_fprintf(output, "Error executing cache_inode_add_cache : %J%r\n",
                   ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
     }
 
-  if (flag_v)
+  if(flag_v)
     {
       fprintf(output, "Entry %p is now boud to datacache entry %p\n", obj_hdl,
               obj_hdl->object.file.pentry_content);
@@ -3138,7 +3134,7 @@ int fn_Cache_inode_release_cache(int argc,      /* IN : number of args in argv *
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -3149,12 +3145,12 @@ int fn_Cache_inode_release_cache(int argc,      /* IN : number of args in argv *
   /* analysing options */
 
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "access: warning: option 'v' has been specified more than once.\n");
           else
@@ -3162,7 +3158,7 @@ int fn_Cache_inode_release_cache(int argc,      /* IN : number of args in argv *
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "access: warning: option 'h' has been specified more than once.\n");
           else
@@ -3177,7 +3173,7 @@ int fn_Cache_inode_release_cache(int argc,      /* IN : number of args in argv *
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       /* print usage */
       fprintf(output, help_release_cache);
@@ -3185,7 +3181,7 @@ int fn_Cache_inode_release_cache(int argc,      /* IN : number of args in argv *
     }
 
   /* Exactly 1 args expected */
-  if (Optind != (argc - 1))
+  if(Optind != (argc - 1))
     {
       err_flag++;
     }
@@ -3194,7 +3190,7 @@ int fn_Cache_inode_release_cache(int argc,      /* IN : number of args in argv *
       file = argv[Optind];
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_release_cache);
       return -1;
@@ -3204,21 +3200,21 @@ int fn_Cache_inode_release_cache(int argc,      /* IN : number of args in argv *
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieve handle to the file whose permissions are to be tested */
-  if (rc =
-      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                      output))
+  if(rc =
+     cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
+                     output))
     return rc;
 
-  if (cache_inode_release_data_cache
-      (obj_hdl, ht, &context->client, &context->context,
-       &context->cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_release_data_cache
+     (obj_hdl, ht, &context->client, &context->context,
+      &context->cache_status) != CACHE_INODE_SUCCESS)
     {
       log_fprintf(output, "Error executing cache_inode_release_cache : %J%r\n",
                   ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
     }
 
-  if (flag_v)
+  if(flag_v)
     {
       fprintf(output, "Entry %p is no more bounded to datacache\n", obj_hdl);
     }
@@ -3247,7 +3243,7 @@ int fn_Cache_inode_recover_cache(int argc,      /* IN : number of args in argv *
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -3258,12 +3254,12 @@ int fn_Cache_inode_recover_cache(int argc,      /* IN : number of args in argv *
   /* analysing options */
 
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "access: warning: option 'v' has been specified more than once.\n");
           else
@@ -3271,7 +3267,7 @@ int fn_Cache_inode_recover_cache(int argc,      /* IN : number of args in argv *
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "access: warning: option 'h' has been specified more than once.\n");
           else
@@ -3286,7 +3282,7 @@ int fn_Cache_inode_recover_cache(int argc,      /* IN : number of args in argv *
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       /* print usage */
       fprintf(output, help_recover_cache);
@@ -3294,31 +3290,31 @@ int fn_Cache_inode_recover_cache(int argc,      /* IN : number of args in argv *
     }
 
   /* Exactly 1 args expected */
-  if (Optind != argc)
+  if(Optind != argc)
     {
       err_flag++;
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_recover_cache);
       return -1;
     }
 
-  if (cache_content_crash_recover(EXPORT_ID,
-                                  0,
-                                  1,
-                                  (cache_content_client_t *) context->client.
-                                  pcontent_client, &context->client, ht,
-                                  &context->context,
-                                  &cache_content_status) != CACHE_CONTENT_SUCCESS)
+  if(cache_content_crash_recover(EXPORT_ID,
+                                 0,
+                                 1,
+                                 (cache_content_client_t *) context->
+                                 client.pcontent_client, &context->client, ht,
+                                 &context->context,
+                                 &cache_content_status) != CACHE_CONTENT_SUCCESS)
     {
       fprintf(output, "Error executing cache_content_crash_recover: %d\n",
               cache_content_status);
       return cache_content_status;
     }
 
-  if (flag_v)
+  if(flag_v)
     {
       fprintf(output, "Data cache has been recovered\n");
     }
@@ -3351,7 +3347,7 @@ int fn_Cache_inode_refresh_cache(int argc,      /* IN : number of args in argv *
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -3362,12 +3358,12 @@ int fn_Cache_inode_refresh_cache(int argc,      /* IN : number of args in argv *
   /* analysing options */
 
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "access: warning: option 'v' has been specified more than once.\n");
           else
@@ -3375,7 +3371,7 @@ int fn_Cache_inode_refresh_cache(int argc,      /* IN : number of args in argv *
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "access: warning: option 'h' has been specified more than once.\n");
           else
@@ -3390,7 +3386,7 @@ int fn_Cache_inode_refresh_cache(int argc,      /* IN : number of args in argv *
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       /* print usage */
       fprintf(output, help_refresh_cache);
@@ -3398,7 +3394,7 @@ int fn_Cache_inode_refresh_cache(int argc,      /* IN : number of args in argv *
     }
 
   /* Exactly 1 args expected */
-  if (Optind != (argc - 1))
+  if(Optind != (argc - 1))
     {
       err_flag++;
     }
@@ -3407,7 +3403,7 @@ int fn_Cache_inode_refresh_cache(int argc,      /* IN : number of args in argv *
       file = argv[Optind];
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_refresh_cache);
       return -1;
@@ -3417,29 +3413,29 @@ int fn_Cache_inode_refresh_cache(int argc,      /* IN : number of args in argv *
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieve handle to the file whose permissions are to be tested */
-  if (rc =
-      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                      output))
+  if(rc =
+     cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
+                     output))
     return rc;
 
-  if (obj_hdl->object.file.pentry_content == NULL)
+  if(obj_hdl->object.file.pentry_content == NULL)
     {
       fprintf(output, "Error: this entry is not data cached\n");
       return 1;
     }
 
-  if (cache_content_refresh(obj_hdl->object.file.pentry_content,
-                            (cache_content_client_t *) context->client.pcontent_client,
-                            &context->context,
-                            FORCE_FROM_FSAL,
-                            &cache_content_status) != CACHE_CONTENT_SUCCESS)
+  if(cache_content_refresh(obj_hdl->object.file.pentry_content,
+                           (cache_content_client_t *) context->client.pcontent_client,
+                           &context->context,
+                           FORCE_FROM_FSAL,
+                           &cache_content_status) != CACHE_CONTENT_SUCCESS)
     {
       fprintf(output, "Error executing cache_content_refresh: %d\n",
               cache_content_status);
       return cache_content_status;
     }
 
-  if (flag_v)
+  if(flag_v)
     {
       fprintf(output, "Entry %p has been refreshed\n", obj_hdl);
     }
@@ -3472,7 +3468,7 @@ int fn_Cache_inode_flush_cache(int argc,        /* IN : number of args in argv *
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -3483,12 +3479,12 @@ int fn_Cache_inode_flush_cache(int argc,        /* IN : number of args in argv *
   /* analysing options */
 
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "access: warning: option 'v' has been specified more than once.\n");
           else
@@ -3496,7 +3492,7 @@ int fn_Cache_inode_flush_cache(int argc,        /* IN : number of args in argv *
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "access: warning: option 'h' has been specified more than once.\n");
           else
@@ -3511,7 +3507,7 @@ int fn_Cache_inode_flush_cache(int argc,        /* IN : number of args in argv *
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       /* print usage */
       fprintf(output, help_flush_cache);
@@ -3519,7 +3515,7 @@ int fn_Cache_inode_flush_cache(int argc,        /* IN : number of args in argv *
     }
 
   /* Exactly 1 args expected */
-  if (Optind != (argc - 1))
+  if(Optind != (argc - 1))
     {
       err_flag++;
     }
@@ -3528,7 +3524,7 @@ int fn_Cache_inode_flush_cache(int argc,        /* IN : number of args in argv *
       file = argv[Optind];
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_flush_cache);
       return -1;
@@ -3538,28 +3534,28 @@ int fn_Cache_inode_flush_cache(int argc,        /* IN : number of args in argv *
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieve handle to the file whose permissions are to be tested */
-  if (rc =
-      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                      output))
+  if(rc =
+     cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
+                     output))
     return rc;
 
-  if (obj_hdl->object.file.pentry_content == NULL)
+  if(obj_hdl->object.file.pentry_content == NULL)
     {
       fprintf(output, "Error: this entry is not data cached\n");
       return 1;
     }
 
-  if (cache_content_flush(obj_hdl->object.file.pentry_content,
-                          CACHE_CONTENT_FLUSH_AND_DELETE,
-                          (cache_content_client_t *) context->client.pcontent_client,
-                          &context->context,
-                          &cache_content_status) != CACHE_CONTENT_SUCCESS)
+  if(cache_content_flush(obj_hdl->object.file.pentry_content,
+                         CACHE_CONTENT_FLUSH_AND_DELETE,
+                         (cache_content_client_t *) context->client.pcontent_client,
+                         &context->context,
+                         &cache_content_status) != CACHE_CONTENT_SUCCESS)
     {
       fprintf(output, "Error executing cache_content_flush: %d\n", cache_content_status);
       return cache_content_status;
     }
 
-  if (flag_v)
+  if(flag_v)
     {
       fprintf(output, "Entry %p has been flushed\n", obj_hdl);
     }
@@ -3634,7 +3630,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -3645,12 +3641,12 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
   /* analysing options */
   getopt_init();
 
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "read: warning: option 'v' has been specified more than once.\n");
           else
@@ -3658,7 +3654,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "read: warning: option 'h' has been specified more than once.\n");
           else
@@ -3666,10 +3662,10 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
           break;
 
         case 'A':
-          if (flag_A)
+          if(flag_A)
             fprintf(output,
                     "read: warning: option 'A' has been specified more than once.\n");
-          else if (flag_X)
+          else if(flag_X)
             {
               fprintf(output, "read: option 'A' conflicts with option 'X'.\n");
               err_flag++;
@@ -3679,10 +3675,10 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
           break;
 
         case 'X':
-          if (flag_X)
+          if(flag_X)
             fprintf(output,
                     "read: warning: option 'X' has been specified more than once.\n");
-          else if (flag_A)
+          else if(flag_A)
             {
               fprintf(output, "read: option 'X' conflicts with option 'A'.\n");
               err_flag++;
@@ -3692,7 +3688,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
           break;
 
         case 'B':
-          if (flag_B)
+          if(flag_B)
             fprintf(output,
                     "read: warning: option 'B' has been specified more than once.\n");
           else
@@ -3703,7 +3699,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
           break;
 
         case 's':
-          if (flag_s)
+          if(flag_s)
             fprintf(output,
                     "read: warning: option 's' has been specified more than once.\n");
           else
@@ -3721,7 +3717,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       /* print usage */
       fprintf(output, help_read);
@@ -3729,7 +3725,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
     }
 
   /* Exactly 1 args expected */
-  if (Optind != (argc - 2))
+  if(Optind != (argc - 2))
     {
       err_flag++;
     }
@@ -3739,7 +3735,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
       file = argv[Optind + 1];
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_read);
       return -1;
@@ -3749,34 +3745,34 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieve handle to the file whose permissions are to be tested */
-  if (rc =
-      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                      output))
+  if(rc =
+     cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
+                     output))
     return rc;
 
   /* Sanity check */
-  if (obj_hdl->internal_md.type != REGULAR_FILE)
+  if(obj_hdl->internal_md.type != REGULAR_FILE)
     {
       fprintf(output, "Error: This entry is no REGULAR_FILE\n");
       return 1;
     }
 
   /* Is this entry cached ? */
-  if (obj_hdl->object.file.pentry_content == NULL)
+  if(obj_hdl->object.file.pentry_content == NULL)
     {
-      if (flag_v)
+      if(flag_v)
         fprintf(output, "Warning: This entry is not data cached\n");
     }
 
   /* check argument types */
 
-  if (flag_B)
+  if(flag_B)
     {
       /* Try to convert the str_block_size to fsal_size_t */
 
       rc = ato64(str_block_size, &block_size);
 
-      if (rc == -1)
+      if(rc == -1)
         {
           fprintf(output, "read: error: invalid block size \"%s\"\n", str_block_size);
           err_flag++;
@@ -3784,13 +3780,13 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
 
     }
 
-  if (flag_s)
+  if(flag_s)
     {
       /* Try to parse the argument */
 
       str_seek_offset = strchr(str_seek_type, ',');
 
-      if (str_seek_offset == NULL)
+      if(str_seek_offset == NULL)
         {
           fprintf(output,
                   "read: error: invalid seek specifier \"%s\". <seek_type>,<offset> expected.\n",
@@ -3798,7 +3794,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
           err_flag++;
         }
 
-      if (!err_flag)
+      if(!err_flag)
         {
           int sign = 1;
 
@@ -3807,11 +3803,11 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
 
           /* Check seek type */
 
-          if (!strncmp(str_seek_type, "CUR", 256))
+          if(!strncmp(str_seek_type, "CUR", 256))
             seek_desc.whence = FSAL_SEEK_CUR;
-          else if (!strncmp(str_seek_type, "SET", 256))
+          else if(!strncmp(str_seek_type, "SET", 256))
             seek_desc.whence = FSAL_SEEK_SET;
-          else if (!strncmp(str_seek_type, "END", 256))
+          else if(!strncmp(str_seek_type, "END", 256))
             seek_desc.whence = FSAL_SEEK_END;
           else
             {
@@ -3838,12 +3834,12 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
 
           rc = ato64(str_seek_offset, (unsigned long long *)&seek_desc.offset);
 
-          if (rc == -1)
+          if(rc == -1)
             {
               fprintf(output, "read: error: invalid offset \"%s\".\n", str_seek_offset);
               err_flag++;
             }
-          else if (sign < 0)
+          else if(sign < 0)
             seek_desc.offset = -seek_desc.offset;
 
         }
@@ -3851,7 +3847,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
     }
   /* else default seeking : SET,0 */
 
-  if (!strcasecmp(str_total_bytes, "all"))
+  if(!strcasecmp(str_total_bytes, "all"))
     {
       total_bytes = 0;
     }
@@ -3859,7 +3855,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
     {
       rc = ato64(str_total_bytes, &total_bytes);
 
-      if (rc == -1)
+      if(rc == -1)
         {
           fprintf(output,
                   "read: error: invalid read size \"%s\". \"all\" or <nb_bytes> expected.\n",
@@ -3868,13 +3864,13 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
         }
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_read);
       return -1;
     }
 
-  if (flag_v)
+  if(flag_v)
     {
       /* print a sum-up of read parameters */
       fprintf(output,
@@ -3889,7 +3885,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
   /* alloc a buffer */
   p_read_buff = Mem_Alloc(block_size);
 
-  if (p_read_buff == NULL)
+  if(p_read_buff == NULL)
     {
       fprintf(output,
               "read: error: Not enough memory to allocate read buffer (%llu Bytes).\n",
@@ -3900,20 +3896,20 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
   gettimeofday(&timer_start, NULL);
 
   /* while EOF is not reached, and read<asked (when total_bytes!=0) */
-  while (!is_eof && !((total_bytes != 0) && (total_nb_read >= total_bytes)))
+  while(!is_eof && !((total_bytes != 0) && (total_nb_read >= total_bytes)))
     {
-      if (cache_inode_rdwr(obj_hdl,
-                           CACHE_INODE_READ,
-                           &seek_desc,
-                           block_size,
-                           &once_nb_read,
-                           &fsal_attr,
-                           (caddr_t) p_read_buff,
-                           &is_eof,
-                           ht,
-                           &context->client,
-                           &context->context,
-                           TRUE, &context->cache_status) != CACHE_INODE_SUCCESS)
+      if(cache_inode_rdwr(obj_hdl,
+                          CACHE_INODE_READ,
+                          &seek_desc,
+                          block_size,
+                          &once_nb_read,
+                          &fsal_attr,
+                          (caddr_t) p_read_buff,
+                          &is_eof,
+                          ht,
+                          &context->client,
+                          &context->context,
+                          TRUE, &context->cache_status) != CACHE_INODE_SUCCESS)
         {
           log_fprintf(output, "Error executing cache_inode_read : %J%r\n",
                       ERR_CACHE_INODE, context->cache_status);
@@ -3928,16 +3924,16 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
 #endif
 
       /* print what was read. */
-      if (flag_A)
+      if(flag_A)
         {
           fsal_size_t index;
-          for (index = 0; index < once_nb_read; index++)
+          for(index = 0; index < once_nb_read; index++)
             fprintf(output, "%c.", p_read_buff[index]);
         }
-      else if (flag_X)
+      else if(flag_X)
         {
           fsal_size_t index;
-          for (index = 0; index < once_nb_read; index++)
+          for(index = 0; index < once_nb_read; index++)
             fprintf(output, "%.2X ", p_read_buff[index]);
         }
       else
@@ -3945,13 +3941,13 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
 
       /* update stats */
 
-      if (once_nb_read > 0)
+      if(once_nb_read > 0)
         nb_block_read++;
 
       total_nb_read += once_nb_read;
 
       /* flush */
-      if (nb_block_read % 10)
+      if(nb_block_read % 10)
         fflush(output);
 
       /* Update the seek descriptor */
@@ -3965,7 +3961,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
   /* newline after read blocks */
   fprintf(output, "\n");
 
-  if (flag_v)
+  if(flag_v)
     {
       double bandwidth;
 
@@ -4067,7 +4063,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -4078,12 +4074,12 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
   /* analysing options */
   getopt_init();
 
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "write: warning: option 'v' has been specified more than once.\n");
           else
@@ -4091,7 +4087,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "write: warning: option 'h' has been specified more than once.\n");
           else
@@ -4099,7 +4095,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
           break;
 
         case 'N':
-          if (flag_N)
+          if(flag_N)
             fprintf(output,
                     "write: warning: option 'N' has been specified more than once.\n");
           else
@@ -4110,7 +4106,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
           break;
 
         case 's':
-          if (flag_s)
+          if(flag_s)
             fprintf(output,
                     "write: warning: option 's' has been specified more than once.\n");
           else
@@ -4122,10 +4118,10 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
           break;
 
         case 'A':
-          if (flag_A)
+          if(flag_A)
             fprintf(output,
                     "write: warning: option 'A' has been specified more than once.\n");
-          else if (flag_X)
+          else if(flag_X)
             {
               fprintf(output, "write: option 'A' conflicts with option 'X'.\n");
               err_flag++;
@@ -4138,10 +4134,10 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
           break;
 
         case 'X':
-          if (flag_X)
+          if(flag_X)
             fprintf(output,
                     "write: warning: option 'X' has been specified more than once.\n");
-          else if (flag_A)
+          else if(flag_A)
             {
               fprintf(output, "write: option 'X' conflicts with option 'A'.\n");
               err_flag++;
@@ -4160,7 +4156,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       /* print usage */
       fprintf(output, help_write);
@@ -4168,7 +4164,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
     }
 
   /* Exactly 1 args expected */
-  if (Optind != (argc - 1))
+  if(Optind != (argc - 1))
     {
       err_flag++;
     }
@@ -4177,7 +4173,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
       file = argv[Optind];
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_write);
       return -1;
@@ -4187,34 +4183,34 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieve handle to the file whose permissions are to be tested */
-  if (rc =
-      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                      output))
+  if(rc =
+     cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
+                     output))
     return rc;
 
   /* Sanity check */
-  if (obj_hdl->internal_md.type != REGULAR_FILE)
+  if(obj_hdl->internal_md.type != REGULAR_FILE)
     {
       fprintf(output, "Error: This entry is no REGULAR_FILE\n");
       return 1;
     }
 
   /* Is this entry cached ? */
-  if (obj_hdl->object.file.pentry_content == NULL)
+  if(obj_hdl->object.file.pentry_content == NULL)
     {
-      if (flag_v)
+      if(flag_v)
         fprintf(output, "Warning: This entry is not data cached\n");
     }
 
   /* check argument types */
 
-  if (flag_N)
+  if(flag_N)
     {
       /* Try to convert the str_times to nb_times */
 
       rc = ato64(str_times, &nb_times);
 
-      if (rc == -1)
+      if(rc == -1)
         {
           fprintf(output, "write: error: invalid number \"%s\"\n", str_times);
           return EINVAL;
@@ -4222,7 +4218,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
 
     }
 
-  if (flag_s)
+  if(flag_s)
     {
       int sign = 1;
 
@@ -4230,7 +4226,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
 
       str_seek_offset = strchr(str_seek_type, ',');
 
-      if (str_seek_offset == NULL)
+      if(str_seek_offset == NULL)
         {
           fprintf(output,
                   "write: error: invalid seek specifier \"%s\". <seek_type>,<offset> expected.\n",
@@ -4243,11 +4239,11 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
 
       /* Check seek type */
 
-      if (!strncmp(str_seek_type, "CUR", 256))
+      if(!strncmp(str_seek_type, "CUR", 256))
         seek_desc.whence = FSAL_SEEK_CUR;
-      else if (!strncmp(str_seek_type, "SET", 256))
+      else if(!strncmp(str_seek_type, "SET", 256))
         seek_desc.whence = FSAL_SEEK_SET;
-      else if (!strncmp(str_seek_type, "END", 256))
+      else if(!strncmp(str_seek_type, "END", 256))
         seek_desc.whence = FSAL_SEEK_END;
       else
         {
@@ -4274,30 +4270,30 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
 
       rc = ato64(str_seek_offset, (unsigned long long *)&seek_desc.offset);
 
-      if (rc == -1)
+      if(rc == -1)
         {
           fprintf(output, "write: error: invalid offset \"%s\".\n", str_seek_offset);
           return EINVAL;
         }
-      else if (sign < 0)
+      else if(sign < 0)
         seek_desc.offset = -seek_desc.offset;
 
     }
   /* else default seeking : SET,0 */
 
-  if (flag_A)
+  if(flag_A)
     {
       datasize = strlen(str_ascii) + 1; /* Include null termination char. */
       databuff = str_ascii;
     }
 
-  if (flag_X)
+  if(flag_X)
     {
       size_t length = strlen(str_hexa);
 
       datasize = (length >> 1);
 
-      if (length % 2)
+      if(length % 2)
         {
 
           /* if it is not odd: error */
@@ -4310,7 +4306,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
 
       databuff = Mem_Alloc(datasize + 1);
 
-      if (databuff == NULL)
+      if(databuff == NULL)
         {
           fprintf(output, "write: error: Not enough memory to allocate %llu Bytes.\n",
                   (unsigned long long)datasize);
@@ -4322,7 +4318,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
       /* try to convert the string to hexa */
       rc = sscanmem(databuff, datasize, str_hexa);
 
-      if (rc != (int)(2 * datasize))
+      if(rc != (int)(2 * datasize))
         {
           /* if it is not odd: error */
           fprintf(output, "write: error: \"%s\" in not a valid hexa format.\n", str_hexa);
@@ -4334,7 +4330,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
 
     }
 
-  if (flag_v)
+  if(flag_v)
     {
       /* print a sum-up of write parameters */
       fprintf(output, "Write options: Data length: %llu x %llu Bytes, Seek: %s%+lld\n",
@@ -4356,20 +4352,20 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
 
   /* write loop */
 
-  while (nb_block_written < nb_times)
+  while(nb_block_written < nb_times)
     {
-      if (cache_inode_rdwr(obj_hdl,
-                           CACHE_INODE_WRITE,
-                           &seek_desc,
-                           block_size,
-                           &size_written_once,
-                           &fsal_attr,
-                           (caddr_t) databuff,
-                           &fsal_eof,
-                           ht,
-                           &context->client,
-                           &context->context,
-                           TRUE, &context->cache_status) != CACHE_INODE_SUCCESS)
+      if(cache_inode_rdwr(obj_hdl,
+                          CACHE_INODE_WRITE,
+                          &seek_desc,
+                          block_size,
+                          &size_written_once,
+                          &fsal_attr,
+                          (caddr_t) databuff,
+                          &fsal_eof,
+                          ht,
+                          &context->client,
+                          &context->context,
+                          TRUE, &context->cache_status) != CACHE_INODE_SUCCESS)
         {
           log_fprintf(output, "Error executing cache_inode_write : %J%r\n",
                       ERR_CACHE_INODE, context->cache_status);
@@ -4381,13 +4377,13 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
 
       /* update stats */
 
-      if (size_written_once > 0)
+      if(size_written_once > 0)
         nb_block_written++;
 
       size_written += size_written_once;
 
       /* flush */
-      if (nb_block_written % 10)
+      if(nb_block_written % 10)
         fflush(output);
 
       /* Update the seek descriptor */
@@ -4400,7 +4396,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
   /* newline after written blocks */
   fprintf(output, "\n");
 
-  if (flag_v)
+  if(flag_v)
     {
       double bandwidth;
 
@@ -4420,7 +4416,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
 
     }
 
-  if (flag_X)
+  if(flag_X)
     Mem_Free(databuff);
 
   return 0;
@@ -4447,7 +4443,7 @@ int fn_Cache_inode_su(int argc, /* IN : number of args in argv */
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -4456,7 +4452,7 @@ int fn_Cache_inode_su(int argc, /* IN : number of args in argv */
   context = RetrieveInitializedContext();
 
   /* UID arg expected */
-  if (argc != 2)
+  if(argc != 2)
     {
       fprintf(output, help_su);
       return -1;
@@ -4466,9 +4462,9 @@ int fn_Cache_inode_su(int argc, /* IN : number of args in argv */
       str_uid = argv[1];
     }
 
-  if (isdigit(str_uid[0]))
+  if(isdigit(str_uid[0]))
     {
-      if ((uid = my_atoi(str_uid)) == (uid_t) - 1)
+      if((uid = my_atoi(str_uid)) == (uid_t) - 1)
         {
           fprintf(output, "Error: invalid uid \"%s\"\n", str_uid);
           return -1;
@@ -4480,7 +4476,7 @@ int fn_Cache_inode_su(int argc, /* IN : number of args in argv */
       pw_struct = getpwnam(str_uid);
     }
 
-  if (pw_struct == NULL)
+  if(pw_struct == NULL)
     {
       fprintf(output, "Unknown user %s\n", str_uid);
       return errno;
@@ -4491,12 +4487,12 @@ int fn_Cache_inode_su(int argc, /* IN : number of args in argv */
   fprintf(output, "Changing user to : %s ( uid = %d, gid = %d )\n",
           pw_struct->pw_name, pw_struct->pw_uid, pw_struct->pw_gid);
 
-  if (nb_grp > 1)
+  if(nb_grp > 1)
     {
       fprintf(output, "altgroups = ");
-      for (i = 1; i < nb_grp; i++)
+      for(i = 1; i < nb_grp; i++)
         {
-          if (i == 1)
+          if(i == 1)
             fprintf(output, "%d", groups_tab[i]);
           else
             fprintf(output, ", %d", groups_tab[i]);
@@ -4507,7 +4503,7 @@ int fn_Cache_inode_su(int argc, /* IN : number of args in argv */
   st = FSAL_GetClientContext(&context->context, &context->exp_context,
                              pw_struct->pw_uid, pw_struct->pw_gid, groups_tab, nb_grp);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     {
       fprintf(output, "Error executing FSAL_GetUserCred:");
       print_fsal_status(output, st);
@@ -4537,21 +4533,21 @@ int fn_Cache_inode_open_by_name(int argc,       /* IN : number of args in argv *
 
   static char help_cd[] = "usage: open_by_name <path> \n";
 
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "\tCache is not initialized\n");
       return -1;
     }
 
   /* Exactly two arg expected */
-  if (argc != 2)
+  if(argc != 2)
     {
       fprintf(output, help_cd);
       return -1;
     }
 
   /* Convert filename to fsal_name_t */
-  if (FSAL_IS_ERROR(st = FSAL_str2name(argv[1], FSAL_MAX_PATH_LEN, &filename)))
+  if(FSAL_IS_ERROR(st = FSAL_str2name(argv[1], FSAL_MAX_PATH_LEN, &filename)))
     {
       fprintf(output, "Error executing FSAL_str2name:\n");
       print_fsal_status(output, st);
@@ -4565,27 +4561,27 @@ int fn_Cache_inode_open_by_name(int argc,       /* IN : number of args in argv *
 
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
-  if ((pentry_file = cache_inode_lookup(context->pentry,
-                                        &filename,
-                                        &file_attr,
-                                        ht,
-                                        &context->client,
-                                        &context->context,
-                                        &context->cache_status)) == NULL)
+  if((pentry_file = cache_inode_lookup(context->pentry,
+                                       &filename,
+                                       &file_attr,
+                                       ht,
+                                       &context->client,
+                                       &context->context,
+                                       &context->cache_status)) == NULL)
     {
       fprintf(output, "Error: cannot lookup %s in %s : %u\n", argv[1], glob_path,
               context->cache_status);
       return -1;
     }
 
-  if ((context->cache_status = cache_inode_open_by_name(context->pentry,
-                                                        &filename,
-                                                        pentry_file,
-                                                        &context->client,
-                                                        FSAL_O_RDWR,
-                                                        &context->context,
-                                                        &context->cache_status)) !=
-      CACHE_INODE_SUCCESS)
+  if((context->cache_status = cache_inode_open_by_name(context->pentry,
+                                                       &filename,
+                                                       pentry_file,
+                                                       &context->client,
+                                                       FSAL_O_RDWR,
+                                                       &context->context,
+                                                       &context->cache_status)) !=
+     CACHE_INODE_SUCCESS)
     {
       log_fprintf(output, "Error executing cache_inode_open_by_name : %J%r\n",
                   ERR_CACHE_INODE, context->cache_status);
@@ -4619,7 +4615,7 @@ int fn_Cache_inode_close(int argc,      /* IN : number of args in argv */
   cmdCacheInode_thr_info_t *context;
 
   /* is the fs initialized ? */
-  if (!cache_init)
+  if(!cache_init)
     {
       fprintf(output, "Error: Cache is not initialized\n");
       return -1;
@@ -4630,12 +4626,12 @@ int fn_Cache_inode_close(int argc,      /* IN : number of args in argv */
   /* analysing options */
 
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "access: warning: option 'v' has been specified more than once.\n");
           else
@@ -4643,7 +4639,7 @@ int fn_Cache_inode_close(int argc,      /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "access: warning: option 'h' has been specified more than once.\n");
           else
@@ -4658,7 +4654,7 @@ int fn_Cache_inode_close(int argc,      /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       /* print usage */
       fprintf(output, help_flush_cache);
@@ -4666,7 +4662,7 @@ int fn_Cache_inode_close(int argc,      /* IN : number of args in argv */
     }
 
   /* Exactly 1 args expected */
-  if (Optind != (argc - 1))
+  if(Optind != (argc - 1))
     {
       err_flag++;
     }
@@ -4675,7 +4671,7 @@ int fn_Cache_inode_close(int argc,      /* IN : number of args in argv */
       file = argv[Optind];
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_flush_cache);
       return -1;
@@ -4685,22 +4681,22 @@ int fn_Cache_inode_close(int argc,      /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieve handle to the file whose permissions are to be tested */
-  if (rc =
-      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                      output))
+  if(rc =
+     cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
+                     output))
     return rc;
 
-  if (obj_hdl->object.file.pentry_content == NULL)
+  if(obj_hdl->object.file.pentry_content == NULL)
     {
       fprintf(output, "Error: this entry is not data cached\n");
       return 1;
     }
 #ifdef _TOTO
-  if (cache_content_flush(obj_hdl->object.file.pentry_content,
-                          CACHE_CONTENT_FLUSH_AND_DELETE,
-                          (cache_content_client_t *) context->client.pcontent_client,
-                          &context->context,
-                          &cache_content_status) != CACHE_CONTENT_SUCCESS)
+  if(cache_content_flush(obj_hdl->object.file.pentry_content,
+                         CACHE_CONTENT_FLUSH_AND_DELETE,
+                         (cache_content_client_t *) context->client.pcontent_client,
+                         &context->context,
+                         &cache_content_status) != CACHE_CONTENT_SUCCESS)
     {
       fprintf(output, "Error executing cache_content_flush: %d\n", cache_content_status);
       return cache_content_status;
@@ -4708,7 +4704,7 @@ int fn_Cache_inode_close(int argc,      /* IN : number of args in argv */
 #endif
   fprintf(output, "not implemented yet\n");
 
-  if (flag_v)
+  if(flag_v)
     {
       fprintf(output, "Entry %p has been flushed\n", obj_hdl);
     }

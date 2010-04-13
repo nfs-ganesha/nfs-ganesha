@@ -166,7 +166,7 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
                   p_flush_data->thread_index);
 
 #ifndef _NO_BUDDY_SYSTEM
-  if ((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
+  if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
     {
       /* Failed init */
       DisplayLog
@@ -181,7 +181,7 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
   /* Initialisation of credential for current thread */
   DisplayLog("NFS DATACACHE FLUSHER THREAD #%u : Initialization of thread's credential",
              p_flush_data->thread_index);
-  if (FSAL_IS_ERROR(FSAL_InitClientContext(&(fsal_context[p_flush_data->thread_index]))))
+  if(FSAL_IS_ERROR(FSAL_InitClientContext(&(fsal_context[p_flush_data->thread_index]))))
     {
       /* Failed init */
       DisplayLog
@@ -191,10 +191,10 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
     }
 
   /* check for each pexport entry to get those who are data cached */
-  for (pexport = nfs_param.pexportlist; pexport != NULL; pexport = pexport->next)
+  for(pexport = nfs_param.pexportlist; pexport != NULL; pexport = pexport->next)
     {
 
-      if (pexport->options & EXPORT_OPTION_USE_DATACACHE)
+      if(pexport->options & EXPORT_OPTION_USE_DATACACHE)
         {
           DisplayLog("Starting flush on Export Entry #%u", pexport->id);
 
@@ -202,26 +202,26 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
               FSAL_GetClientContext(&(fsal_context[p_flush_data->thread_index]),
                                     &pexport->FS_export_context, 0, -1, NULL, 0);
 
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             DisplayErrorLog(ERR_FSAL, fsal_status.major, fsal_status.minor);
 
           /* XXX: all entries are put in the same export_id path with id=0 */
           snprintf(cache_sub_dir, MAXPATHLEN, "%s/export_id=%d",
                    nfs_param.cache_layers_param.cache_content_client_param.cache_dir, 0);
 
-          if (cache_content_emergency_flush(cache_sub_dir,
-                                            nfs_start_info.flush_behaviour,
-                                            nfs_start_info.lw_mark_trigger,
-                                            nfs_param.cache_layers_param.dcgcpol.
-                                            emergency_grace_delay,
-                                            p_flush_data->thread_index,
-                                            nfs_start_info.nb_flush_threads,
-                                            &p_flush_data->nb_flushed,
-                                            &p_flush_data->nb_too_young,
-                                            &p_flush_data->nb_errors,
-                                            &p_flush_data->nb_orphans,
-                                            &(fsal_context[p_flush_data->thread_index]),
-                                            &content_status) != CACHE_CONTENT_SUCCESS)
+          if(cache_content_emergency_flush(cache_sub_dir,
+                                           nfs_start_info.flush_behaviour,
+                                           nfs_start_info.lw_mark_trigger,
+                                           nfs_param.cache_layers_param.
+                                           dcgcpol.emergency_grace_delay,
+                                           p_flush_data->thread_index,
+                                           nfs_start_info.nb_flush_threads,
+                                           &p_flush_data->nb_flushed,
+                                           &p_flush_data->nb_too_young,
+                                           &p_flush_data->nb_errors,
+                                           &p_flush_data->nb_orphans,
+                                           &(fsal_context[p_flush_data->thread_index]),
+                                           &content_status) != CACHE_CONTENT_SUCCESS)
             {
               DisplayLog("Flush on Export Entry #%u failed", pexport->id);
             }

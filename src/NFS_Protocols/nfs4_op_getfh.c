@@ -145,28 +145,28 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 #endif
 
   /* If there is no FH */
-  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
+  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
       resp->nfs_resop4_u.opgetfh.status = NFS4ERR_NOFILEHANDLE;
       return NFS4ERR_NOFILEHANDLE;
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
       resp->nfs_resop4_u.opgetfh.status = NFS4ERR_BADHANDLE;
       return NFS4ERR_BADHANDLE;
     }
 
   /* Tests if teh Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
       resp->nfs_resop4_u.opgetfh.status = NFS4ERR_FHEXPIRED;
       return NFS4ERR_FHEXPIRED;
     }
 
   /* Test if the filehandle is related to a referral */
-  if (nfs4_Is_Fh_Referral(&(data->currentFH)))
+  if(nfs4_Is_Fh_Referral(&(data->currentFH)))
     {
       resp->nfs_resop4_u.opgetfh.status = NFS4ERR_MOVED;
       return NFS4ERR_MOVED;
@@ -174,9 +174,9 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* Copy the filehandle to the reply structure */
   resp->nfs_resop4_u.opgetfh.status = NFS4_OK;
 
-  if ((error =
-       nfs4_AllocateFH(&(resp->nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object))) !=
-      NFS4_OK)
+  if((error =
+      nfs4_AllocateFH(&(resp->nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object))) !=
+     NFS4_OK)
     {
       resp->nfs_resop4_u.opgetfh.status = error;
       return error;
@@ -209,7 +209,7 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
  */
 void nfs4_op_getfh_Free(GETFH4res * resp)
 {
-  if (resp->status == NFS4_OK)
+  if(resp->status == NFS4_OK)
     Mem_Free(resp->GETFH4res_u.resok4.object.nfs_fh4_val);
   return;
 }                               /* nfs4_op_getfh_Free */

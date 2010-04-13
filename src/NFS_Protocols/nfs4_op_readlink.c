@@ -157,28 +157,28 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
   res_READLINK4.status = NFS4_OK;
 
   /* If there is no FH */
-  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
+  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
       res_READLINK4.status = NFS4ERR_NOFILEHANDLE;
       return NFS4ERR_NOFILEHANDLE;
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
       res_READLINK4.status = NFS4ERR_BADHANDLE;
       return NFS4ERR_BADHANDLE;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
       res_READLINK4.status = NFS4ERR_FHEXPIRED;
       return NFS4ERR_FHEXPIRED;
     }
 
   /* You can readlink only on a link ... */
-  if (data->current_filetype != SYMBOLIC_LINK)
+  if(data->current_filetype != SYMBOLIC_LINK)
     {
       /* As said on page 194 of RFC3530, return NFS4ERR_INVAL in this case */
       res_READLINK4.status = NFS4ERR_INVAL;
@@ -186,11 +186,11 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
     }
 
   /* Using cache_inode_readlink */
-  if (cache_inode_readlink(data->current_entry,
-                           &symlink_path,
-                           data->ht,
-                           data->pclient,
-                           data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+  if(cache_inode_readlink(data->current_entry,
+                          &symlink_path,
+                          data->ht,
+                          data->pclient,
+                          data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
       /* Alloc read link */
 #ifdef _DEBUG_MEMLEAKS
@@ -198,8 +198,8 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
       BuddySetDebugLabel("nfs4_op_readlink");
 #endif
 
-      if ((res_READLINK4.READLINK4res_u.resok4.link.utf8string_val =
-           (char *)Mem_Alloc(symlink_path.len)) == NULL)
+      if((res_READLINK4.READLINK4res_u.resok4.link.utf8string_val =
+          (char *)Mem_Alloc(symlink_path.len)) == NULL)
         {
           res_READLINK4.status = NFS4ERR_INVAL;
           return res_READLINK4.status;
@@ -210,8 +210,8 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
 #endif
 
       /* convert the fsal path to a utf8 string */
-      if (str2utf8((char *)symlink_path.path, &res_READLINK4.READLINK4res_u.resok4.link)
-          == -1)
+      if(str2utf8((char *)symlink_path.path, &res_READLINK4.READLINK4res_u.resok4.link)
+         == -1)
         {
           res_READLINK4.status = NFS4ERR_INVAL;
           return res_READLINK4.status;
@@ -237,7 +237,7 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
  */
 void nfs4_op_readlink_Free(READLINK4res * resp)
 {
-  if (resp->status == NFS4_OK && resp->READLINK4res_u.resok4.link.utf8string_len > 0)
+  if(resp->status == NFS4_OK && resp->READLINK4res_u.resok4.link.utf8string_len > 0)
     Mem_Free((char *)resp->READLINK4res_u.resok4.link.utf8string_val);
 
   return;

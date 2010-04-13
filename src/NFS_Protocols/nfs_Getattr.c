@@ -159,28 +159,28 @@ int nfs_Getattr(nfs_arg_t * parg,
   cache_inode_status_t cache_status;
   int rc = 0;
 
-  if ((pentry = nfs_FhandleToCache(preq->rq_vers,
-                                   &(parg->arg_getattr2),
-                                   &(parg->arg_getattr3.object),
-                                   NULL,
-                                   &(pres->res_attr2.status),
-                                   &(pres->res_getattr3.status),
-                                   NULL, &attr, pcontext, pclient, ht, &rc)) == NULL)
+  if((pentry = nfs_FhandleToCache(preq->rq_vers,
+                                  &(parg->arg_getattr2),
+                                  &(parg->arg_getattr3.object),
+                                  NULL,
+                                  &(pres->res_attr2.status),
+                                  &(pres->res_getattr3.status),
+                                  NULL, &attr, pcontext, pclient, ht, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       return rc;
     }
 
-  if ((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_getattr3.object))))
+  if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_getattr3.object))))
     return nfs3_Getattr_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
 
   /*
    * Get attributes.  Use NULL for the file name since we have the
    * vnode to define the file. 
    */
-  if (cache_inode_getattr(pentry,
-                          &attr,
-                          ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+  if(cache_inode_getattr(pentry,
+                         &attr,
+                         ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
       /*
        * Client API should be keeping us from crossing junctions,
@@ -192,8 +192,8 @@ int nfs_Getattr(nfs_arg_t * parg,
 
         case NFS_V2:
           /* Copy data from vattr to Attributes */
-          if (nfs2_FSALattr_To_Fattr(pexport, &attr,
-                                     &(pres->res_attr2.ATTR2res_u.attributes)) == 0)
+          if(nfs2_FSALattr_To_Fattr(pexport, &attr,
+                                    &(pres->res_attr2.ATTR2res_u.attributes)) == 0)
             {
               nfs_SetFailedStatus(pcontext, pexport,
                                   preq->rq_vers,
@@ -207,9 +207,9 @@ int nfs_Getattr(nfs_arg_t * parg,
           break;
 
         case NFS_V3:
-          if (nfs3_FSALattr_To_Fattr(pexport, &attr,
-                                     &(pres->res_getattr3.GETATTR3res_u.resok.
-                                       obj_attributes)) == 0)
+          if(nfs3_FSALattr_To_Fattr(pexport, &attr,
+                                    &(pres->res_getattr3.GETATTR3res_u.
+                                      resok.obj_attributes)) == 0)
             {
               nfs_SetFailedStatus(pcontext, pexport,
                                   preq->rq_vers,

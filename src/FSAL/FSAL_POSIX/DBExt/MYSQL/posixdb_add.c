@@ -34,9 +34,9 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
    *******************/
 
   /* parent_directory and filename are NULL only if it is the root directory */
-  if (!p_conn || !p_object_info || !p_object_handle
-      || (p_filename && !p_parent_directory_handle)
-      || (!p_filename && p_parent_directory_handle))
+  if(!p_conn || !p_object_info || !p_object_handle
+     || (p_filename && !p_parent_directory_handle)
+     || (!p_filename && p_parent_directory_handle))
     ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
 
 #ifdef _DEBUG_FSAL
@@ -50,7 +50,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
    * 2/ check that parent handle exists
    ***************************************/
 
-  if (p_parent_directory_handle)        /* the root has no parent */
+  if(p_parent_directory_handle) /* the root has no parent */
     {
       snprintf(query, 4096,
                "SELECT Handle.deviceid, Handle.inode, Handle.nlink, Handle.ctime, Handle.ftype "
@@ -58,10 +58,10 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
                p_parent_directory_handle->id, p_parent_directory_handle->ts);
 
       st = db_exec_sql(p_conn, query, &res);
-      if (FSAL_POSIXDB_IS_ERROR(st))
+      if(FSAL_POSIXDB_IS_ERROR(st))
         goto rollback;
 
-      if (mysql_num_rows(res) < 1)
+      if(mysql_num_rows(res) < 1)
         {
           /* parent entry not found */
           mysql_free_result(res);
@@ -81,15 +81,15 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
            "FOR UPDATE", p_object_info->devid, p_object_info->inode);
 
   st = db_exec_sql(p_conn, query, &res);
-  if (FSAL_POSIXDB_IS_ERROR(st))
+  if(FSAL_POSIXDB_IS_ERROR(st))
     goto rollback;
 
   found = (mysql_num_rows(res) == 1);
 
-  if (found)
+  if(found)
     {
       row = mysql_fetch_row(res);
-      if (!row)
+      if(!row)
         {
           /* Error */
           mysql_free_result(res);
@@ -111,7 +111,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
       mysql_free_result(res);
 
       /* check the consistency of the handle */
-      if (fsal_posixdb_consistency_check(&(p_object_handle->info), p_object_info))
+      if(fsal_posixdb_consistency_check(&(p_object_handle->info), p_object_info))
         {
           /* consistency check failed */
           /* p_object_handle has been filled in order to be able to fix the consistency later */
@@ -120,8 +120,8 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
         }
 
       /* update nlink & ctime if needed */
-      if (p_object_info->nlink != p_object_handle->info.nlink
-          || p_object_info->ctime != p_object_handle->info.ctime)
+      if(p_object_info->nlink != p_object_handle->info.nlink
+         || p_object_info->ctime != p_object_handle->info.ctime)
         {
 
           snprintf(query, 4096, "UPDATE Handle "
@@ -133,7 +133,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
           p_object_handle->info = *p_object_info;
 
           st = db_exec_sql(p_conn, query, NULL);
-          if (FSAL_POSIXDB_IS_ERROR(st))
+          if(FSAL_POSIXDB_IS_ERROR(st))
             goto rollback;
         }
 
@@ -157,7 +157,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
                (unsigned int)p_object_info->ctime, (unsigned int)p_object_info->ftype);
 
       st = db_exec_sql(p_conn, query, NULL);
-      if (FSAL_POSIXDB_IS_ERROR(st))
+      if(FSAL_POSIXDB_IS_ERROR(st))
         goto rollback;
 
       p_object_handle->id = mysql_insert_id(&p_conn->db_conn);
@@ -172,22 +172,22 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
    ************************************************/
   snprintf(query, 4096, "SELECT handleid, handlets "
            "FROM Parent WHERE handleidparent=%llu AND handletsparent=%u AND name='%s'",
-           p_parent_directory_handle ? p_parent_directory_handle->id : p_object_handle->
-           id,
-           p_parent_directory_handle ? p_parent_directory_handle->ts : p_object_handle->
-           ts, p_filename ? p_filename->name : "");
+           p_parent_directory_handle ? p_parent_directory_handle->
+           id : p_object_handle->id,
+           p_parent_directory_handle ? p_parent_directory_handle->
+           ts : p_object_handle->ts, p_filename ? p_filename->name : "");
 
   st = db_exec_sql(p_conn, query, &res);
-  if (FSAL_POSIXDB_IS_ERROR(st))
+  if(FSAL_POSIXDB_IS_ERROR(st))
     goto rollback;
 
   /* res contains handleid & handlets */
   found = (mysql_num_rows(res) == 1);
 
-  if (found)
+  if(found)
     {
       row = mysql_fetch_row(res);
-      if (!row)
+      if(!row)
         {
           /* Error */
           mysql_free_result(res);
@@ -200,7 +200,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
       mysql_free_result(res);
 
       /* update the Parent entry if necessary (there entry exists with another handle) */
-      if ((id != p_object_handle->id) || (ts != p_object_handle->ts))
+      if((id != p_object_handle->id) || (ts != p_object_handle->ts))
         {
           /* steps :
              - check the nlink value of the Parent entry to be overwritten
@@ -220,16 +220,16 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
 
           /* check the nlink value of the entry to be updated */
           st = db_exec_sql(p_conn, query, &res);
-          if (FSAL_POSIXDB_IS_ERROR(st))
+          if(FSAL_POSIXDB_IS_ERROR(st))
             goto rollback;
 
           found = (mysql_num_rows(res) == 1);
 
-          if (found)
+          if(found)
             {
 
               row = mysql_fetch_row(res);
-              if (!row)
+              if(!row)
                 {
                   /* Error */
                   mysql_free_result(res);
@@ -251,7 +251,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
                                              p_parent_directory_handle->ts
                                              : p_object_handle->ts,
                                              p_filename ? p_filename->name : "", nlink);
-              if (FSAL_POSIXDB_IS_ERROR(st))
+              if(FSAL_POSIXDB_IS_ERROR(st))
                 goto rollback;
             }
           else
@@ -276,7 +276,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
       add_parent_entry = TRUE;
     }
 
-  if (add_parent_entry)
+  if(add_parent_entry)
     {
       /* add a Parent entry */
 
@@ -290,7 +290,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
                p_object_handle->id, p_object_handle->ts);
 
       st = db_exec_sql(p_conn, query, NULL);
-      if (FSAL_POSIXDB_IS_ERROR(st))
+      if(FSAL_POSIXDB_IS_ERROR(st))
         goto rollback;
 
       /* XXX : is it possible to have unique key violation ? */

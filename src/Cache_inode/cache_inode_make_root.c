@@ -128,15 +128,15 @@ cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t * pfsdata,
   cache_inode_parent_entry_t *next_parent_entry = NULL;
 
   /* sanity check */
-  if (pstatus == NULL)
+  if(pstatus == NULL)
     return NULL;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* BUGAZOMEU: gestion de junctions, : peut etre pas correct de faire pointer root sur lui meme */
-  if ((pentry = cache_inode_new_entry(pfsdata, NULL, DIR_BEGINNING, NULL, NULL, ht, pclient, pcontext, FALSE,   /* This is a population, not a creation */
-                                      pstatus)) != NULL)
+  if((pentry = cache_inode_new_entry(pfsdata, NULL, DIR_BEGINNING, NULL, NULL, ht, pclient, pcontext, FALSE,    /* This is a population, not a creation */
+                                     pstatus)) != NULL)
     {
 
 #ifdef _DEBUG_MEMLEAKS
@@ -153,7 +153,7 @@ cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t * pfsdata,
       BuddySetDebugLabel("N/A");
 #endif
 
-      if (next_parent_entry == NULL)
+      if(next_parent_entry == NULL)
         {
           *pstatus = CACHE_INODE_MALLOC_ERROR;
           pentry = NULL;

@@ -182,7 +182,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
   res_EXCHANGE_ID4.eir_status = NFS4_OK;
 
   /* Compute the client id */
-  if (nfs_client_id_basic_compute(str_client, &clientid) != CLIENT_ID_SUCCESS)
+  if(nfs_client_id_basic_compute(str_client, &clientid) != CLIENT_ID_SUCCESS)
     {
       res_EXCHANGE_ID4.eir_status = NFS4ERR_SERVERFAULT;
       return res_EXCHANGE_ID4.eir_status;
@@ -191,14 +191,14 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
                   clientid, str_client);
 
   /* Check flags value (test EID4) */
-  if (arg_EXCHANGE_ID4.eia_flags & all_eia_flags != arg_EXCHANGE_ID4.eia_flags)
+  if(arg_EXCHANGE_ID4.eia_flags & all_eia_flags != arg_EXCHANGE_ID4.eia_flags)
     {
       res_EXCHANGE_ID4.eir_status = NFS4ERR_INVAL;
       return res_EXCHANGE_ID4.eir_status;
     }
 
   /* Does this id already exists ? */
-  if (nfs_client_id_get(clientid, &nfs_clientid) == CLIENT_ID_SUCCESS)
+  if(nfs_client_id_get(clientid, &nfs_clientid) == CLIENT_ID_SUCCESS)
     {
       /* Client id already in use */
       DisplayLogLevel(NIV_DEBUG,
@@ -206,12 +206,12 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
                       clientid, nfs_clientid.client_name);
 
       /* Principals are the same, check content of the setclientid request */
-      if (nfs_clientid.confirmed == CONFIRMED_CLIENT_ID)
+      if(nfs_clientid.confirmed == CONFIRMED_CLIENT_ID)
         {
 #ifdef _NFSV4_COMPARE_CRED_IN_EXCHANGE_ID
           /* Check if client id has same credentials */
-          if (nfs_compare_clientcred(&(nfs_clientid.credential), &(data->credential)) ==
-              FALSE)
+          if(nfs_compare_clientcred(&(nfs_clientid.credential), &(data->credential)) ==
+             FALSE)
             {
               DisplayLogLevel(NIV_DEBUG,
                               "EXCHANGE_ID Confirmed ClientId %llx -> '%s': Credential do not match... Return NFS4ERR_CLID_INUSE",
@@ -242,9 +242,9 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
                           "EXCHANGE_ID Confirmed ClientId %llx already in use for client '%s'",
                           clientid, nfs_clientid.client_name);
 
-          if (strncmp
-              (nfs_clientid.incoming_verifier,
-               arg_EXCHANGE_ID4.eia_clientowner.co_verifier, NFS4_VERIFIER_SIZE))
+          if(strncmp
+             (nfs_clientid.incoming_verifier,
+              arg_EXCHANGE_ID4.eia_clientowner.co_verifier, NFS4_VERIFIER_SIZE))
             {
               DisplayLogLevel(NIV_DEBUG,
                               "EXCHANGE_ID Confirmed ClientId %llx already in use for client '%s', verifier do not match...",
@@ -258,8 +258,8 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
               strncpy(nfs_clientid.client_name,
                       arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_val,
                       arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_len);
-              nfs_clientid.client_name[arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.
-                                       co_ownerid_len] = '\0';
+              nfs_clientid.client_name[arg_EXCHANGE_ID4.eia_clientowner.
+                                       co_ownerid.co_ownerid_len] = '\0';
 
               strncpy(nfs_clientid.incoming_verifier,
                       arg_EXCHANGE_ID4.eia_clientowner.co_verifier, NFS4_VERIFIER_SIZE);
@@ -269,8 +269,8 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
               nfs_clientid.clientid = clientid;
               nfs_clientid.last_renew = 0;
 
-              if (nfs_client_id_set(clientid, nfs_clientid, pworker->clientid_pool) !=
-                  CLIENT_ID_SUCCESS)
+              if(nfs_client_id_set(clientid, nfs_clientid, pworker->clientid_pool) !=
+                 CLIENT_ID_SUCCESS)
                 {
                   res_EXCHANGE_ID4.eir_status = NFS4ERR_SERVERFAULT;
                   return res_EXCHANGE_ID4.eir_status;
@@ -299,8 +299,8 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
       strncpy(nfs_clientid.client_name,
               arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_val,
               arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_len);
-      nfs_clientid.client_name[arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.
-                               co_ownerid_len] = '\0';
+      nfs_clientid.client_name[arg_EXCHANGE_ID4.eia_clientowner.
+                               co_ownerid.co_ownerid_len] = '\0';
 
       strncpy(nfs_clientid.incoming_verifier,
               arg_EXCHANGE_ID4.eia_clientowner.co_verifier, NFS4_VERIFIER_SIZE);
@@ -314,15 +314,15 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
       nfs_clientid.create_session_sequence = 1;
       nfs_clientid.credential = data->credential;
 
-      if (gethostname(nfs_clientid.server_owner, MAXNAMLEN) == -1)
+      if(gethostname(nfs_clientid.server_owner, MAXNAMLEN) == -1)
         {
           res_EXCHANGE_ID4.eir_status = NFS4ERR_SERVERFAULT;
           return res_EXCHANGE_ID4.eir_status;
         }
       strncpy(nfs_clientid.server_scope, nfs_clientid.server_owner, MAXNAMLEN);
 
-      if (nfs_client_id_add(clientid, nfs_clientid, pworker->clientid_pool) !=
-          CLIENT_ID_SUCCESS)
+      if(nfs_client_id_add(clientid, nfs_clientid, pworker->clientid_pool) !=
+         CLIENT_ID_SUCCESS)
         {
           res_EXCHANGE_ID4.eir_status = NFS4ERR_SERVERFAULT;
           return res_EXCHANGE_ID4.eir_status;
@@ -343,26 +343,27 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_state_protect.spr_how = SP4_NONE;
 
-  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.
-      so_major_id_len = strlen(nfs_clientid.server_owner);
-  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.
-      so_major_id_val = Mem_Alloc(strlen(nfs_clientid.server_owner));
-  memcpy(res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.
-         so_major_id_val, nfs_clientid.server_owner, strlen(nfs_clientid.server_owner));
+  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.
+      so_major_id.so_major_id_len = strlen(nfs_clientid.server_owner);
+  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.
+      so_major_id.so_major_id_val = Mem_Alloc(strlen(nfs_clientid.server_owner));
+  memcpy(res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.
+         so_major_id.so_major_id_val, nfs_clientid.server_owner,
+         strlen(nfs_clientid.server_owner));
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_minor_id = 0;
 
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.eir_server_scope_len =
       strlen(nfs_clientid.server_scope);
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.eir_server_scope_val =
       Mem_Alloc(strlen(nfs_clientid.server_scope));
-  memcpy(res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.
-         eir_server_scope_val, nfs_clientid.server_owner,
+  memcpy(res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.
+         eir_server_scope.eir_server_scope_val, nfs_clientid.server_owner,
          strlen(nfs_clientid.server_owner));
 
-  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_impl_id.
-      eir_server_impl_id_len = 0;
-  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_impl_id.
-      eir_server_impl_id_val = NULL;
+  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.
+      eir_server_impl_id.eir_server_impl_id_len = 0;
+  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.
+      eir_server_impl_id.eir_server_impl_id_val = NULL;
 
   DisplayLogLevel(NIV_DEBUG, "EXCHANGE_ID reply :ClientId=%llx",
                   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_clientid);
@@ -384,7 +385,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 void nfs41_op_exchange_id_Free(EXCHANGE_ID4res * resp)
 {
   Mem_Free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.eir_server_scope_val);
-  Mem_Free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.
-           so_major_id_val);
+  Mem_Free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.
+           so_major_id.so_major_id_val);
   return;
 }                               /* nfs41_op_exchange_id_Free */

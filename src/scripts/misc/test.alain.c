@@ -23,7 +23,7 @@ main(int argc, char **argv)
   sprintf(name, "%s/toto", path);
 
   err = stat(path, &stbuf);
-  if (err == -1)
+  if(err == -1)
     {
       printf("repertoire vide : stat erreur\n");
     }
@@ -32,7 +32,7 @@ main(int argc, char **argv)
       printf("repertoire vide : stat OK\n");
     };
 
-  if ((err == -1) || ((stbuf.st_mode & S_IFMT) != S_IFDIR))
+  if((err == -1) || ((stbuf.st_mode & S_IFMT) != S_IFDIR))
     {
       printf("repertoire vide : pas un repertoire\n");
     }
@@ -45,7 +45,7 @@ main(int argc, char **argv)
   system(cmde);
 
   err = stat(path, &stbuf);
-  if (err == -1)
+  if(err == -1)
     {
       printf("repertoire contenant 1 fichier : stat erreur\n");
     }
@@ -54,7 +54,7 @@ main(int argc, char **argv)
       printf("repertoire contenant 1 fichier : stat OK\n");
     };
 
-  if ((err == -1) || ((stbuf.st_mode & S_IFMT) != S_IFDIR))
+  if((err == -1) || ((stbuf.st_mode & S_IFMT) != S_IFDIR))
     {
       printf("repertoire contenant 1 fichier : pas un repertoire\n");
     }
@@ -66,10 +66,10 @@ main(int argc, char **argv)
   unlink(name);
 
   rc = -1;
-  while (rc != 0)
+  while(rc != 0)
     {
       err = stat(path, &stbuf);
-      if (err == -1)
+      if(err == -1)
         {
           printf("apres destruction du fichier : stat erreur\n");
         }
@@ -78,7 +78,7 @@ main(int argc, char **argv)
           printf("apres destruction du fichier : stat OK\n");
         };
 
-      if ((err == -1) || ((stbuf.st_mode & S_IFMT) != S_IFDIR))
+      if((err == -1) || ((stbuf.st_mode & S_IFMT) != S_IFDIR))
         {
           printf("apres destruction du fichier : pas un repertoire\n");
         }

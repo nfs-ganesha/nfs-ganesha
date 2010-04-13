@@ -147,31 +147,26 @@ typedef struct pnfs_client__
 
 typedef struct pnfs_ds_file__
 {
-  nfs_fh4 handle ;
-  stateid4 stateid ;
-} pnfs_ds_file_t ;
+  nfs_fh4 handle;
+  stateid4 stateid;
+} pnfs_ds_file_t;
 
 /* Mandatory functions */
 int pnfs_init(pnfs_client_t * pnfsclient,
               pnfs_layoutfile_parameter_t * pnfs_layout_param);
 
-int pnfs_create_ds_file( pnfs_client_t  * pnfsclient, 
-			 fattr4_fileid    fileid,
-                         pnfs_ds_file_t * pfile ) ;
+int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
+                        fattr4_fileid fileid, pnfs_ds_file_t * pfile);
 
-int pnfs_unlink_ds_file( pnfs_client_t  * pnfsclient, 
-                         fattr4_fileid    fileid,
-                         pnfs_ds_file_t * pfile ) ; 
+int pnfs_unlink_ds_file(pnfs_client_t * pnfsclient,
+                        fattr4_fileid fileid, pnfs_ds_file_t * pfile);
 
 /* Internal functions */
 int pnfs_connect(pnfs_client_t * pnfsclient,
                  pnfs_layoutfile_parameter_t * pnfs_layout_param);
 
-int pnfs_do_mount(pnfs_client_t * pnfsclient,
-                  pnfs_ds_parameter_t * pds_param);
+int pnfs_do_mount(pnfs_client_t * pnfsclient, pnfs_ds_parameter_t * pds_param);
 
-int pnfs_lookupPath(pnfs_client_t * pnfsclient, 
-                    char *p_path, 
-                    nfs_fh4 * object_handle);
+int pnfs_lookupPath(pnfs_client_t * pnfsclient, char *p_path, nfs_fh4 * object_handle);
 
 #endif                          /* _PNFS_LAYOUT4_NFSV4_1_FILES_H */

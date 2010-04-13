@@ -65,7 +65,7 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
   /* sanity checks.
    * note : object_attributes is optional in FSAL_access.
    */
-  if (!object_handle || !p_context)
+  if(!object_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_access);
 
   /* >> convert your fsal access type to your FS access type << */
@@ -82,14 +82,14 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
    * If an error occures during getattr operation,
    * an error bit is set in the output structure.
    */
-  if (object_attributes)
+  if(object_attributes)
     {
       fsal_status_t status;
 
       status = FSAL_getattrs(object_handle, p_context, object_attributes);
 
       /* on error, we set a special bit in the mask. */
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(object_attributes->asked_attributes);
           FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

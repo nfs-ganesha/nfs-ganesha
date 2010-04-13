@@ -146,15 +146,15 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
 #endif
 
   /* sanity check */
-  if ((pentry->gc_lru_entry != NULL) &&
-      ((cache_entry_t *) pentry->gc_lru_entry->buffdata.pdata) != pentry)
+  if((pentry->gc_lru_entry != NULL) &&
+     ((cache_entry_t *) pentry->gc_lru_entry->buffdata.pdata) != pentry)
     {
       DisplayLogJdLevel(pgcparam->pclient->log_outputs, NIV_CRIT,
                         "cache_inode_gc_clean_entry: LRU entry pointed by this pentry doesn't match the GC LRU");
     }
 
   /* Get the FSAL handle */
-  if ((pfsal_handle = cache_inode_get_fsal_handle(pentry, &status)) == NULL)
+  if((pfsal_handle = cache_inode_get_fsal_handle(pentry, &status)) == NULL)
     {
       DisplayLogJdLevel(pgcparam->pclient->log_outputs, NIV_CRIT,
                         "cache_inode_gc_clean_entry: unable to retrieve pentry's specific filesystem info");
@@ -163,13 +163,13 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
 
   fsaldata.handle = *pfsal_handle;
 
-  if (pentry->internal_md.type != DIR_CONTINUE)
+  if(pentry->internal_md.type != DIR_CONTINUE)
     fsaldata.cookie = DIR_START;
   else
     fsaldata.cookie = pentry->object.dir_cont.dir_cont_pos;
 
   /* Use the handle to build the key */
-  if (cache_inode_fsaldata_2_key(&key, &fsaldata, pgcparam->pclient))
+  if(cache_inode_fsaldata_2_key(&key, &fsaldata, pgcparam->pclient))
     {
       DisplayLogJdLevel(pgcparam->pclient->log_outputs, NIV_CRIT,
                         "cache_inode_gc_clean_entry: could not build hashtable key");
@@ -182,7 +182,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
   /* use the key to delete the entry */
   rc = HashTable_Del(pgcparam->ht, &key, &old_key, &old_value);
 
-  if ((rc != HASHTABLE_SUCCESS) && (rc != HASHTABLE_ERROR_NO_SUCH_KEY))
+  if((rc != HASHTABLE_SUCCESS) && (rc != HASHTABLE_ERROR_NO_SUCH_KEY))
     {
       DisplayLogJdLevel(pgcparam->pclient->log_outputs, NIV_CRIT,
                         "cache_inode_gc_clean_entry: entry could not be deleted, status = %d",
@@ -192,7 +192,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
 
       return LRU_LIST_DO_NOT_SET_INVALID;
     }
-  else if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
+  else if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
     {
       DisplayLogJdLevel(pgcparam->pclient->log_outputs, NIV_EVENT,
                         "cache_inode_gc_clean_entry: entry already deleted, type=%d, status=%d",
@@ -203,7 +203,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
     }
 
   /* Clean up the associated ressources in the FSAL */
-  if (FSAL_IS_ERROR(fsal_status = FSAL_CleanObjectResources(pfsal_handle)))
+  if(FSAL_IS_ERROR(fsal_status = FSAL_CleanObjectResources(pfsal_handle)))
     {
       DisplayLogJdLevel(pgcparam->pclient->log_outputs, NIV_CRIT,
                         "cache_inode_gc_clean_entry: Could'nt free FSAL ressources fsal_status.major=%u",
@@ -218,7 +218,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
 
   /* Sanity check: old_value.pdata is expected to be equal to pentry,
    * and is released later in this function */
-  if ((cache_entry_t *) old_value.pdata != pentry)
+  if((cache_entry_t *) old_value.pdata != pentry)
     {
       DisplayLogJdLevel(pgcparam->pclient->log_outputs, NIV_CRIT,
                         "cache_inode_gc_clean_entry: unexpected pdata %p from hash table (pentry=%p)",
@@ -229,7 +229,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
 
   /* Recover the parent list entries */
   parent_iter = pentry->parent_list;
-  while (parent_iter != NULL)
+  while(parent_iter != NULL)
     {
       parent_iter_next = parent_iter->next_parent;
 
@@ -243,14 +243,14 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
 #endif
 
   /* If entry is a DIR_CONTINUE or a DIR_BEGINNING, release pdir_data */
-  if (pentry->internal_md.type == DIR_BEGINNING)
+  if(pentry->internal_md.type == DIR_BEGINNING)
     {
       /* Put the pentry back to the pool */
       RELEASE_PREALLOC(pentry->object.dir_begin.pdir_data,
                        pgcparam->pclient->pool_dir_data, next_alloc);
     }
 
-  if (pentry->internal_md.type == DIR_CONTINUE)
+  if(pentry->internal_md.type == DIR_CONTINUE)
     {
       /* Put the pentry back to the pool */
       RELEASE_PREALLOC(pentry->object.dir_cont.pdir_data,
@@ -296,10 +296,10 @@ static int cache_inode_gc_invalidate_related_dirent(cache_entry_t * pentry,
   cache_inode_parent_entry_t *parent_iter = NULL;
 
   /* Set the cache status as INVALID in the directory entries */
-  for (parent_iter = pentry->parent_list; parent_iter != NULL;
-       parent_iter = parent_iter->next_parent)
+  for(parent_iter = pentry->parent_list; parent_iter != NULL;
+      parent_iter = parent_iter->next_parent)
     {
-      if (parent_iter->parent == NULL)
+      if(parent_iter->parent == NULL)
         {
           DisplayLogJdLevel(pgcparam->pclient->log_outputs, NIV_DEBUG,
                             "cache_inode_gc_invalidate_related_dirent: pentry %p has no parent, no dirent to be removed...",
@@ -311,8 +311,8 @@ static int cache_inode_gc_invalidate_related_dirent(cache_entry_t * pentry,
       P_w(&parent_iter->parent->lock);
 
       /* Check for type of the parent */
-      if (parent_iter->parent->internal_md.type != DIR_BEGINNING &&
-          parent_iter->parent->internal_md.type != DIR_CONTINUE)
+      if(parent_iter->parent->internal_md.type != DIR_BEGINNING &&
+         parent_iter->parent->internal_md.type != DIR_CONTINUE)
         {
           V_w(&parent_iter->parent->lock);
           /* Major parent incoherency: parent is no directory */
@@ -322,9 +322,9 @@ static int cache_inode_gc_invalidate_related_dirent(cache_entry_t * pentry,
         }
 
       /* Set the entry as invalid in the dirent array */
-      if (parent_iter->parent->internal_md.type == DIR_BEGINNING)
+      if(parent_iter->parent->internal_md.type == DIR_BEGINNING)
         {
-          if (parent_iter->subdirpos > CHILDREN_ARRAY_SIZE)
+          if(parent_iter->subdirpos > CHILDREN_ARRAY_SIZE)
             {
               V_w(&parent_iter->parent->lock);
               DisplayLog
@@ -335,9 +335,8 @@ static int cache_inode_gc_invalidate_related_dirent(cache_entry_t * pentry,
             }
           else
             {
-              parent_iter->parent->object.dir_begin.pdir_data->dir_entries[parent_iter->
-                                                                           subdirpos].
-                  active = INVALID;
+              parent_iter->parent->object.dir_begin.pdir_data->
+                  dir_entries[parent_iter->subdirpos].active = INVALID;
               /* Garbage invalidates the effet of the readdir previously made */
               parent_iter->parent->object.dir_begin.has_been_readdir = CACHE_INODE_NO;
               parent_iter->parent->object.dir_begin.nbactive -= 1;
@@ -345,7 +344,7 @@ static int cache_inode_gc_invalidate_related_dirent(cache_entry_t * pentry,
         }
       else
         {
-          if (parent_iter->subdirpos > CHILDREN_ARRAY_SIZE)
+          if(parent_iter->subdirpos > CHILDREN_ARRAY_SIZE)
             {
               V_w(&parent_iter->parent->lock);
               DisplayLog
@@ -356,9 +355,8 @@ static int cache_inode_gc_invalidate_related_dirent(cache_entry_t * pentry,
             }
           else
             {
-              parent_iter->parent->object.dir_cont.pdir_data->dir_entries[parent_iter->
-                                                                          subdirpos].
-                  active = INVALID;
+              parent_iter->parent->object.dir_cont.pdir_data->
+                  dir_entries[parent_iter->subdirpos].active = INVALID;
               parent_iter->parent->object.dir_cont.nbactive -= 1;
             }
         }
@@ -399,14 +397,14 @@ int cache_inode_gc_suppress_file(cache_entry_t * pentry,
 #endif
 
   /* Remove refences in the parent entries */
-  if (cache_inode_gc_invalidate_related_dirent(pentry, pgcparam) != LRU_LIST_SET_INVALID)
+  if(cache_inode_gc_invalidate_related_dirent(pentry, pgcparam) != LRU_LIST_SET_INVALID)
     {
       V_w(&pentry->lock);
       return LRU_LIST_DO_NOT_SET_INVALID;
     }
 
   /* Clean the entry */
-  if (cache_inode_gc_clean_entry(pentry, pgcparam) != LRU_LIST_SET_INVALID)
+  if(cache_inode_gc_clean_entry(pentry, pgcparam) != LRU_LIST_SET_INVALID)
     return LRU_LIST_DO_NOT_SET_INVALID;
 
   /* Mutex has already been freed at destruction time */
@@ -437,7 +435,7 @@ int cache_inode_gc_suppress_directory(cache_entry_t * pentry,
   P_w(&pentry->lock);
   pentry->internal_md.valid_state = INVALID;
 
-  if (cache_inode_is_dir_empty(pentry) != CACHE_INODE_SUCCESS)
+  if(cache_inode_is_dir_empty(pentry) != CACHE_INODE_SUCCESS)
     {
       V_w(&pentry->lock);
 
@@ -458,7 +456,7 @@ int cache_inode_gc_suppress_directory(cache_entry_t * pentry,
 #endif
 
   /* Remove refences in the parent entries */
-  if (cache_inode_gc_invalidate_related_dirent(pentry, pgcparam) != LRU_LIST_SET_INVALID)
+  if(cache_inode_gc_invalidate_related_dirent(pentry, pgcparam) != LRU_LIST_SET_INVALID)
     {
       V_w(&pentry->lock);
       return LRU_LIST_DO_NOT_SET_INVALID;
@@ -466,11 +464,11 @@ int cache_inode_gc_suppress_directory(cache_entry_t * pentry,
 
   /* Remove the whole dir_chain from the cache */
   pentry_iter = pentry->object.dir_begin.pdir_cont;
-  while (pentry_iter != NULL)
+  while(pentry_iter != NULL)
     {
       pentry_iter_save = pentry_iter->object.dir_cont.pdir_cont;
 
-      if (cache_inode_gc_clean_entry(pentry_iter, pgcparam) != LRU_LIST_SET_INVALID)
+      if(cache_inode_gc_clean_entry(pentry_iter, pgcparam) != LRU_LIST_SET_INVALID)
         {
           V_w(&pentry->lock);
           return LRU_LIST_DO_NOT_SET_INVALID;
@@ -479,7 +477,7 @@ int cache_inode_gc_suppress_directory(cache_entry_t * pentry,
       pentry_iter = pentry_iter_save;
     }
 
-  if (cache_inode_gc_clean_entry(pentry, pgcparam) != LRU_LIST_SET_INVALID)
+  if(cache_inode_gc_clean_entry(pentry, pgcparam) != LRU_LIST_SET_INVALID)
     {
       V_w(&pentry->lock);
       return LRU_LIST_DO_NOT_SET_INVALID;
@@ -519,25 +517,24 @@ int cache_inode_gc_function(LRU_entry_t * plru_entry, void *addparam)
   pentry = (cache_entry_t *) (plru_entry->buffdata.pdata);
 
   /* Get the entry time (the larger value in read_time and mod_time ) */
-  if (pentry->internal_md.read_time > pentry->internal_md.mod_time)
+  if(pentry->internal_md.read_time > pentry->internal_md.mod_time)
     entry_time = pentry->internal_md.read_time;
   else
     entry_time = pentry->internal_md.mod_time;
 
   allocated = pentry->internal_md.alloc_time;
 
-  if (pgcparam->nb_to_be_purged != 0)
+  if(pgcparam->nb_to_be_purged != 0)
     {
       DisplayLogJdLevel(pgcparam->pclient->log_outputs, NIV_FULL_DEBUG,
                         "We still need %d entries to be garbaged",
                         pgcparam->nb_to_be_purged);
 
       /* Should we get ride of this entry ? */
-      if ((pentry->internal_md.type == DIR_BEGINNING) &&
-          (cache_inode_gc_policy.directory_expiration_delay > 0))
+      if((pentry->internal_md.type == DIR_BEGINNING) &&
+         (cache_inode_gc_policy.directory_expiration_delay > 0))
         {
-          if (current_time - entry_time >
-              cache_inode_gc_policy.directory_expiration_delay)
+          if(current_time - entry_time > cache_inode_gc_policy.directory_expiration_delay)
             {
               /* Entry should be tagged invalid */
               DisplayLogJdLevel(pgcparam->pclient->log_outputs, NIV_DEBUG,
@@ -551,11 +548,11 @@ int cache_inode_gc_function(LRU_entry_t * plru_entry, void *addparam)
                               pentry, current_time - entry_time, current_time - allocated,
                               cache_inode_gc_policy.directory_expiration_delay);
         }
-      else if ((pentry->internal_md.type == REGULAR_FILE
-                || pentry->internal_md.type == SYMBOLIC_LINK)
-               && (cache_inode_gc_policy.file_expiration_delay > 0))
+      else if((pentry->internal_md.type == REGULAR_FILE
+               || pentry->internal_md.type == SYMBOLIC_LINK)
+              && (cache_inode_gc_policy.file_expiration_delay > 0))
         {
-          if (current_time - entry_time > cache_inode_gc_policy.file_expiration_delay)
+          if(current_time - entry_time > cache_inode_gc_policy.file_expiration_delay)
             {
               /* Entry should be suppress and tagged invalid */
               DisplayLogJdLevel(pgcparam->pclient->log_outputs, NIV_DEBUG,
@@ -642,10 +639,10 @@ cache_inode_status_t cache_inode_gc(hash_table_t * ht,
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* Is this time to gc ? */
-  if (pclient->call_since_last_gc < cache_inode_gc_policy.nb_call_before_gc)
+  if(pclient->call_since_last_gc < cache_inode_gc_policy.nb_call_before_gc)
     return *pstatus;
 
-  if (time(NULL) - pclient->time_of_last_gc < (int)(cache_inode_gc_policy.run_interval))
+  if(time(NULL) - pclient->time_of_last_gc < (int)(cache_inode_gc_policy.run_interval))
     return *pstatus;
 
   /* Actual GC will be made */
@@ -658,7 +655,7 @@ cache_inode_status_t cache_inode_gc(hash_table_t * ht,
   /* 1st ; we get the hash table size to see if garbage is required */
   hash_size = HashTable_GetSize(ht);
 
-  if (hash_size > cache_inode_gc_policy.hwmark_nb_entries)
+  if(hash_size > cache_inode_gc_policy.hwmark_nb_entries)
     {
       /*
        * Garbage collection is made in several steps
@@ -679,9 +676,8 @@ cache_inode_status_t cache_inode_gc(hash_table_t * ht,
                         pclient->lru_gc->nb_entry, gcparam.nb_to_be_purged);
 
       invalid_before_gc = pclient->lru_gc->nb_invalid;
-      if (LRU_invalidate_by_function
-          (pclient->lru_gc, cache_inode_gc_function,
-           (void *)&gcparam) != LRU_LIST_SUCCESS)
+      if(LRU_invalidate_by_function
+         (pclient->lru_gc, cache_inode_gc_function, (void *)&gcparam) != LRU_LIST_SUCCESS)
         {
           *pstatus = CACHE_INODE_LRU_ERROR;
           return *pstatus;
@@ -690,7 +686,7 @@ cache_inode_status_t cache_inode_gc(hash_table_t * ht,
       invalid_after_gc = pclient->lru_gc->nb_invalid;
 
       /* Removes the LRU entries and put them back to the pool */
-      if (LRU_gc_invalid(pclient->lru_gc, NULL) != LRU_LIST_SUCCESS)
+      if(LRU_gc_invalid(pclient->lru_gc, NULL) != LRU_LIST_SUCCESS)
         {
           *pstatus = CACHE_INODE_LRU_ERROR;
           return *pstatus;
@@ -706,7 +702,7 @@ cache_inode_status_t cache_inode_gc(hash_table_t * ht,
     {
       /* no garbage is required, just gets ride of the invalid in tyhe LRU list */
       /* Removes the LRU entries and put them back to the pool */
-      if (LRU_gc_invalid(pclient->lru_gc, NULL) != LRU_LIST_SUCCESS)
+      if(LRU_gc_invalid(pclient->lru_gc, NULL) != LRU_LIST_SUCCESS)
         {
           *pstatus = CACHE_INODE_LRU_ERROR;
           return *pstatus;
@@ -733,10 +729,9 @@ int cache_inode_gc_fd_func(LRU_entry_t * plru_entry, void *addparam)
 
   /* check if a file descriptor is opened on the file for a long time */
 
-  if ((pentry->internal_md.type == REGULAR_FILE)
-      && (pentry->object.file.open_fd.fileno != 0)
-      && (time(NULL) - pentry->object.file.open_fd.last_op >
-          pgcparam->pclient->retention))
+  if((pentry->internal_md.type == REGULAR_FILE)
+     && (pentry->object.file.open_fd.fileno != 0)
+     && (time(NULL) - pentry->object.file.open_fd.last_op > pgcparam->pclient->retention))
     {
       P_w(&pentry->lock);
       cache_inode_close(pentry, pgcparam->pclient, &status);
@@ -746,7 +741,7 @@ int cache_inode_gc_fd_func(LRU_entry_t * plru_entry, void *addparam)
     }
 
   /* return true for continuing */
-  if (pgcparam->nb_to_be_purged == 0)
+  if(pgcparam->nb_to_be_purged == 0)
     return FALSE;
   else
     return TRUE;
@@ -764,19 +759,19 @@ cache_inode_status_t cache_inode_gc_fd(cache_inode_client_t * pclient,
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* nothing to do if there is no fd cache */
-  if (!pclient->use_cache)
+  if(!pclient->use_cache)
     return *pstatus;
 
   /* do not garbage FD too frequently (wait at least for fd retention) */
-  if (time(NULL) - pclient->time_of_last_gc_fd < pclient->retention)
+  if(time(NULL) - pclient->time_of_last_gc_fd < pclient->retention)
     return *pstatus;
 
   gcparam.ht = NULL;            /* not used */
   gcparam.pclient = pclient;
   gcparam.nb_to_be_purged = pclient->max_fd_per_thread;
 
-  if (LRU_apply_function(pclient->lru_gc, cache_inode_gc_fd_func, (void *)&gcparam) !=
-      LRU_LIST_SUCCESS)
+  if(LRU_apply_function(pclient->lru_gc, cache_inode_gc_fd_func, (void *)&gcparam) !=
+     LRU_LIST_SUCCESS)
     {
       *pstatus = CACHE_INODE_LRU_ERROR;
       return *pstatus;

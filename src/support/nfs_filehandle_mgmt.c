@@ -204,7 +204,7 @@ int nfs4_FhandleToFSAL(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
 #endif
 
   /* Verify the len */
-  if (pfh4->nfs_fh4_len != sizeof(file_handle_v4_t))
+  if(pfh4->nfs_fh4_len != sizeof(file_handle_v4_t))
     return 0;                   /* Corrupted FH */
 
   /* Cast the fh as a non opaque structure */
@@ -212,18 +212,18 @@ int nfs4_FhandleToFSAL(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
 
   /* Check the cksum */
   memcpy((char *)&checksum, &(pfile_handle->checksum), sizeof(checksum));
-  if (checksum != nfs4_FhandleCheckSum(pfile_handle))
+  if(checksum != nfs4_FhandleCheckSum(pfile_handle))
     return 0;                   /* Corrupted FH */
 
   /* The filehandle should not be related to pseudo fs */
-  if (pfile_handle->pseudofs_id != 0 || pfile_handle->pseudofs_flag != FALSE)
+  if(pfile_handle->pseudofs_id != 0 || pfile_handle->pseudofs_flag != FALSE)
     return 0;                   /* Bad FH */
 
   /* Fill in the fs opaque part */
   fsal_status =
       FSAL_ExpandHandle(pcontext->export_context, FSAL_DIGEST_NFSV4,
                         (caddr_t) & (pfile_handle->fsopaque), pfsalhandle);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return 0;                   /* Corrupted (or stale) FH */
 #ifdef _DEBUG_FILEHANDLE
   print_buff((char *)pfsalhandle, sizeof(fsal_handle_t));
@@ -253,7 +253,7 @@ int nfs3_FhandleToFSAL(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
   print_fhandle3(*pfh3);
 #endif
   /* Verify the len */
-  if (pfh3->data.data_len != sizeof(file_handle_v3_t))
+  if(pfh3->data.data_len != sizeof(file_handle_v3_t))
     return 0;                   /* Corrupted FH */
 
   /* Cast the fh as a non opaque structure */
@@ -261,7 +261,7 @@ int nfs3_FhandleToFSAL(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
 
   /* Check the cksum */
   memcpy((char *)&checksum, pfile_handle->checksum, sizeof(checksum));
-  if (checksum != nfs3_FhandleCheckSum(pfile_handle))
+  if(checksum != nfs3_FhandleCheckSum(pfile_handle))
     {
       DisplayLog
           ("Invalid checksum in NFSv3 handle. checksum from handle:%llX, expected:%llX",
@@ -273,7 +273,7 @@ int nfs3_FhandleToFSAL(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
   fsal_status =
       FSAL_ExpandHandle(pcontext->export_context, FSAL_DIGEST_NFSV3,
                         (caddr_t) & (pfile_handle->fsopaque), pfsalhandle);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return 0;                   /* Corrupted FH */
 
 #ifdef _DEBUG_FILEHANDLE
@@ -306,14 +306,14 @@ int nfs2_FhandleToFSAL(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
   print_fhandle2(*pfh2);
 #endif
   /* Check the cksum */
-  if (pfile_handle->checksum != nfs2_FhandleCheckSum(pfile_handle))
+  if(pfile_handle->checksum != nfs2_FhandleCheckSum(pfile_handle))
     return 0;                   /* Corrupted FH */
 
   /* Fill in the fs opaque part */
   fsal_status =
       FSAL_ExpandHandle(pcontext->export_context, FSAL_DIGEST_NFSV2,
                         (caddr_t) & (pfile_handle->fsopaque), pfsalhandle);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return 0;                   /* Corrupted FH */
 
 #ifdef _DEBUG_FILEHANDLE
@@ -349,7 +349,7 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
   fsal_status =
       FSAL_DigestHandle(&data->pexport->FS_export_context, FSAL_DIGEST_NFSV4, pfsalhandle,
                         (caddr_t) & file_handle.fsopaque);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return 0;
 
   /* keep track of the export id */
@@ -366,7 +366,7 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
   file_handle.refid = 0;
 
   /* if FH expires, set it there */
-  if (nfs_param.nfsv4_param.fh_expire == TRUE)
+  if(nfs_param.nfsv4_param.fh_expire == TRUE)
     {
       printf("Un fh expirable a ete cree\n");
       file_handle.srvboot_time = ServerBootTime;
@@ -421,7 +421,7 @@ int nfs3_FSALToFhandle(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
   fsal_status =
       FSAL_DigestHandle(&pexport->FS_export_context, FSAL_DIGEST_NFSV3, pfsalhandle,
                         (caddr_t) & file_handle.fsopaque);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return 0;
 
   /* keep track of the export id */
@@ -478,7 +478,7 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
   fsal_status =
       FSAL_DigestHandle(&pexport->FS_export_context, FSAL_DIGEST_NFSV2, pfsalhandle,
                         (caddr_t) & file_handle.fsopaque);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return 0;
 
   /* keep track of the export id */
@@ -517,7 +517,7 @@ short nfs4_FhandleToExportId(nfs_fh4 * pfh4)
 
   pfile_handle = (file_handle_v4_t *) (pfh4->nfs_fh4_val);
 
-  if (pfile_handle == NULL)
+  if(pfile_handle == NULL)
     return -1;                  /* Badly formed arguments */
 
   return pfile_handle->exportid;
@@ -540,7 +540,7 @@ short nfs3_FhandleToExportId(nfs_fh3 * pfh3)
 
   pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
 
-  if (pfile_handle == NULL)
+  if(pfile_handle == NULL)
     return -1;                  /* Badly formed argument */
 
 #ifdef _DEBUG_FILEHANDLE
@@ -566,7 +566,7 @@ short nfs2_FhandleToExportId(fhandle2 * pfh2)
 
   pfile_handle = (file_handle_v2_t *) (*pfh2);
 
-  if (pfile_handle == NULL)
+  if(pfile_handle == NULL)
     return -1;                  /* Badly formed argument */
 
   return pfile_handle->exportid;
@@ -587,7 +587,7 @@ int nfs3_Is_Fh_Xattr(nfs_fh3 * pfh)
 {
   file_handle_v3_t *pfhandle3;
 
-  if (pfh == NULL)
+  if(pfh == NULL)
     return 0;
 
   pfhandle3 = (file_handle_v3_t *) (pfh->data.data_val);
@@ -608,10 +608,10 @@ int nfs3_Is_Fh_Xattr(nfs_fh3 * pfh)
  */
 int nfs4_Is_Fh_Empty(nfs_fh4 * pfh)
 {
-  if (pfh == NULL)
+  if(pfh == NULL)
     return NFS4ERR_NOFILEHANDLE;
 
-  if (pfh->nfs_fh4_len == 0)
+  if(pfh->nfs_fh4_len == 0)
     return NFS4ERR_NOFILEHANDLE;
 
   return 0;
@@ -632,7 +632,7 @@ int nfs4_Is_Fh_Xattr(nfs_fh4 * pfh)
 {
   file_handle_v4_t *pfhandle4;
 
-  if (pfh == NULL)
+  if(pfh == NULL)
     return 0;
 
   pfhandle4 = (file_handle_v4_t *) (pfh->nfs_fh4_val);
@@ -655,7 +655,7 @@ int nfs4_Is_Fh_Pseudo(nfs_fh4 * pfh)
 {
   file_handle_v4_t *pfhandle4;
 
-  if (pfh == NULL)
+  if(pfh == NULL)
     return 0;
 
   pfhandle4 = (file_handle_v4_t *) (pfh->nfs_fh4_val);
@@ -678,15 +678,15 @@ int nfs4_Is_Fh_Expired(nfs_fh4 * pfh)
 {
   file_handle_v4_t *pfilehandle4;
 
-  if (pfh == NULL)
+  if(pfh == NULL)
     return NFS4ERR_BADHANDLE;
 
   pfilehandle4 = (file_handle_v4_t *) pfh;
 
-  if ((nfs_param.nfsv4_param.fh_expire == TRUE)
-      && (pfilehandle4->srvboot_time != (unsigned int)ServerBootTime))
+  if((nfs_param.nfsv4_param.fh_expire == TRUE)
+     && (pfilehandle4->srvboot_time != (unsigned int)ServerBootTime))
     {
-      if (nfs_param.nfsv4_param.returns_err_fh_expired == TRUE)
+      if(nfs_param.nfsv4_param.returns_err_fh_expired == TRUE)
         return NFS4ERR_FHEXPIRED;
     }
 
@@ -706,13 +706,13 @@ int nfs4_Is_Fh_Expired(nfs_fh4 * pfh)
  */
 int nfs4_Is_Fh_Invalid(nfs_fh4 * pfh)
 {
-  if (pfh == NULL)
+  if(pfh == NULL)
     return NFS4ERR_BADHANDLE;
 
-  if (pfh->nfs_fh4_len > sizeof(file_handle_v4_t))
+  if(pfh->nfs_fh4_len > sizeof(file_handle_v4_t))
     return NFS4ERR_BADHANDLE;
 
-  if (pfh->nfs_fh4_val == NULL)
+  if(pfh->nfs_fh4_val == NULL)
     return NFS4ERR_BADHANDLE;
 
   return NFS4_OK;
@@ -733,13 +733,13 @@ int nfs4_Is_Fh_Referral(nfs_fh4 * pfh)
 {
   file_handle_v4_t *pfhandle4;
 
-  if (pfh == NULL)
+  if(pfh == NULL)
     return 0;
 
   pfhandle4 = (file_handle_v4_t *) (pfh->nfs_fh4_val);
 
   /* Referrals are fh whose pseudofs_id is set without pseudofs_flag set */
-  if (pfhandle4->refid > 0)
+  if(pfhandle4->refid > 0)
     {
       return TRUE;
     }
@@ -829,7 +829,7 @@ void print_fhandle2(fhandle2 fh)
   unsigned int i = 0;
 
   printf("File Handle V2: ");
-  for (i = 0; i < 32; i++)
+  for(i = 0; i < 32; i++)
     printf("%02X", fh[i]);
   printf("\n");
 }                               /* print_fhandle2 */
@@ -839,7 +839,7 @@ void sprint_fhandle2(char *str, fhandle2 fh)
   unsigned int i = 0;
 
   sprintf(str, "File Handle V2: ");
-  for (i = 0; i < 32; i++)
+  for(i = 0; i < 32; i++)
     sprintf(str, "%02X", fh[i]);
 }                               /* sprint_fhandle2 */
 
@@ -859,7 +859,7 @@ void print_fhandle3(nfs_fh3 fh)
   unsigned int i = 0;
 
   printf("  File Handle V3 : Len=%u ", fh.data.data_len);
-  for (i = 0; i < fh.data.data_len; i++)
+  for(i = 0; i < fh.data.data_len; i++)
     printf("%02X", fh.data.data_val[i]);
   printf("\n");
 }                               /* print_fhandle3 */
@@ -869,7 +869,7 @@ void sprint_fhandle3(char *str, nfs_fh3 fh)
   unsigned int i = 0;
 
   sprintf(str, "  File Handle V3 : Len=%u ", fh.data.data_len);
-  for (i = 0; i < fh.data.data_len; i++)
+  for(i = 0; i < fh.data.data_len; i++)
     sprintf(str, "%02X", fh.data.data_val[i]);
 }                               /* sprint_fhandle3 */
 
@@ -889,7 +889,7 @@ void print_fhandle4(nfs_fh4 fh)
   unsigned int i = 0;
 
   printf("  File Handle V4 : Len=%u ", fh.nfs_fh4_len);
-  for (i = 0; i < fh.nfs_fh4_len; i++)
+  for(i = 0; i < fh.nfs_fh4_len; i++)
     printf("%02X", fh.nfs_fh4_val[i]);
   printf("\n");
 }                               /* print_fhandle4 */
@@ -899,7 +899,7 @@ void sprint_fhandle4(char *str, nfs_fh4 fh)
   unsigned int i = 0;
 
   sprintf(str, "  File Handle V4 : Len=%u ", fh.nfs_fh4_len);
-  for (i = 0; i < fh.nfs_fh4_len; i++)
+  for(i = 0; i < fh.nfs_fh4_len; i++)
     sprintf(str, "%02X", fh.nfs_fh4_val[i]);
 }                               /* sprint_fhandle4 */
 
@@ -920,7 +920,7 @@ void print_buff(char *buff, int len)
   int i = 0;
 
   printf("  Len=%u Buff=%p Val: ", len, buff);
-  for (i = 0; i < len; i++)
+  for(i = 0; i < len; i++)
     printf("%02X", buff[i]);
   printf("\n");
 }                               /* print_buff */
@@ -930,7 +930,7 @@ void sprint_buff(char *str, char *buff, int len)
   int i = 0;
 
   sprintf(str, "  Len=%u Buff=%p Val: ", len, buff);
-  for (i = 0; i < len; i++)
+  for(i = 0; i < len; i++)
     sprintf(str, "%02X", buff[i]);
 }                               /* sprint_buff */
 
@@ -979,7 +979,7 @@ void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr)
 
   sprintf(outstr, "File handle V4 = { Length = %d  Val = ", fh4p->nfs_fh4_len);
 
-  for (i = 0; i < fh4p->nfs_fh4_len; i++)
+  for(i = 0; i < fh4p->nfs_fh4_len; i++)
     {
       sprintf(&(tmpstr[i * 2]), "%02X", (unsigned char)fh4p->nfs_fh4_val[i]);
     }

@@ -64,7 +64,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
    *        parentdir_handle is mandatory,
    *        because, we do not allow to delete FS root !
    */
-  if (!parentdir_handle || !p_context || !p_object_name)
+  if(!parentdir_handle || !p_context || !p_object_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_unlink);
 
   /* Action depends on the object type to be deleted.
@@ -76,7 +76,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
                    &obj_handle, /* OUT */
                    NULL);       /* IN/OUT */
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     Return(st.major, st.minor, INDEX_FSAL_unlink);
 
   switch (obj_handle.obj_type)
@@ -95,9 +95,9 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
 
       /* The EEXIST error is actually an NOTEMPTY error. */
 
-      if (rc == EEXIST || rc == -EEXIST)
+      if(rc == EEXIST || rc == -EEXIST)
         Return(ERR_FSAL_NOTEMPTY, -rc, INDEX_FSAL_unlink);
-      else if (rc)
+      else if(rc)
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_unlink);
 
       break;
@@ -114,7 +114,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
 
       ReleaseTokenFSCall();
 
-      if (rc)
+      if(rc)
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_unlink);
 
       break;
@@ -130,7 +130,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
 
       ReleaseTokenFSCall();
 
-      if (rc)
+      if(rc)
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_unlink);
 
       break;
@@ -150,14 +150,14 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
    * if they are asked.
    */
 
-  if (parentdir_attributes)
+  if(parentdir_attributes)
     {
 
       st = FSAL_getattrs(parentdir_handle, p_context, parentdir_attributes);
 
       /* On error, we set a flag in the returned attributes */
 
-      if (FSAL_IS_ERROR(st))
+      if(FSAL_IS_ERROR(st))
         {
           FSAL_CLEAR_MASK(parentdir_attributes->asked_attributes);
           FSAL_SET_MASK(parentdir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

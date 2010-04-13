@@ -103,14 +103,14 @@ SVCXPRT *xprt;
   sock = xprt->xp_fd;
 
   P_w(&Svc_fd_lock);
-  if (Xports == NULL)
+  if(Xports == NULL)
     {
       Xports = (SVCXPRT **) Mem_Alloc(FD_SETSIZE * sizeof(SVCXPRT *));
-      if (Xports == NULL)
+      if(Xports == NULL)
         return;
       memset(Xports, '\0', FD_SETSIZE * sizeof(SVCXPRT *));
     }
-  if (sock < FD_SETSIZE)
+  if(sock < FD_SETSIZE)
     {
       Xports[sock] = xprt;
       FD_SET(sock, &Svc_fdset);
@@ -142,22 +142,22 @@ bool_t dolock;
 
   sock = xprt->xp_fd;
 
-  if (dolock)
+  if(dolock)
     P_w(&Svc_fd_lock);
 
-  if ((sock < FD_SETSIZE) && (Xports[sock] == xprt))
+  if((sock < FD_SETSIZE) && (Xports[sock] == xprt))
     {
       Xports[sock] = NULL;
       FD_CLR(sock, &Svc_fdset);
-      if (sock >= svc_maxfd)
+      if(sock >= svc_maxfd)
         {
-          for (svc_maxfd--; svc_maxfd >= 0; svc_maxfd--)
-            if (Xports[svc_maxfd])
+          for(svc_maxfd--; svc_maxfd >= 0; svc_maxfd--)
+            if(Xports[svc_maxfd])
               break;
         }
     }
 
-  if (dolock)
+  if(dolock)
     V_w(&Svc_fd_lock);
 }
 
@@ -182,14 +182,14 @@ int protocol;
   assert(xprt != NULL);
   assert(dispatch != NULL);
 
-  if ((s = Svc_find((rpcprog_t) prog, (rpcvers_t) vers, &prev, NULL)) != NULL)
+  if((s = Svc_find((rpcprog_t) prog, (rpcvers_t) vers, &prev, NULL)) != NULL)
     {
-      if (s->sc_dispatch == dispatch)
+      if(s->sc_dispatch == dispatch)
         goto pmap_it;           /* he is registering another xptr */
       return (FALSE);
     }
   s = Mem_Alloc(sizeof(struct svc_callout));
-  if (s == NULL)
+  if(s == NULL)
     {
       return (FALSE);
     }
@@ -200,7 +200,7 @@ int protocol;
   svc_head = s;
  pmap_it:
   /* now register the information with the local binder service */
-  if (protocol)
+  if(protocol)
     {
       return (pmap_set(prog, vers, protocol, xprt->xp_port));
     }
@@ -217,9 +217,9 @@ u_long vers;
   struct svc_callout *prev;
   struct svc_callout *s;
 
-  if ((s = Svc_find((rpcprog_t) prog, (rpcvers_t) vers, &prev, NULL)) == NULL)
+  if((s = Svc_find((rpcprog_t) prog, (rpcvers_t) vers, &prev, NULL)) == NULL)
     return;
-  if (prev == NULL)
+  if(prev == NULL)
     {
       svc_head = s->sc_next;
     }
@@ -249,10 +249,10 @@ char *netid;
   assert(prev != NULL);
 
   p = NULL;
-  for (s = svc_head; s != NULL; s = s->sc_next)
+  for(s = svc_head; s != NULL; s = s->sc_next)
     {
-      if (((s->sc_prog == prog) && (s->sc_vers == vers)) &&
-          ((netid == NULL) || (s->sc_netid == NULL) || (strcmp(netid, s->sc_netid) == 0)))
+      if(((s->sc_prog == prog) && (s->sc_vers == vers)) &&
+         ((netid == NULL) || (s->sc_netid == NULL) || (strcmp(netid, s->sc_netid) == 0)))
         break;
       p = s;
     }

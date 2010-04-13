@@ -156,28 +156,28 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   res_REMOVE4.status = NFS4_OK;
 
   /* If there is no FH */
-  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
+  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
       res_REMOVE4.status = NFS4ERR_NOFILEHANDLE;
       return res_REMOVE4.status;
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
       res_REMOVE4.status = NFS4ERR_BADHANDLE;
       return res_REMOVE4.status;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
       res_REMOVE4.status = NFS4ERR_FHEXPIRED;
       return res_REMOVE4.status;
     }
 
   /* Pseudo Fs is explictely a Read-Only File system */
-  if (nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     {
       res_REMOVE4.status = NFS4ERR_ROFS;
       return res_REMOVE4.status;
@@ -193,21 +193,21 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   /* The operation delete object named arg_REMOVE4.target in directory pointed bt cuurentFH */
   /* Make sur the currentFH is pointed a directory */
-  if (data->current_filetype != DIR_BEGINNING && data->current_filetype != DIR_CONTINUE)
+  if(data->current_filetype != DIR_BEGINNING && data->current_filetype != DIR_CONTINUE)
     {
       res_REMOVE4.status = NFS4ERR_NOTDIR;
       return res_REMOVE4.status;
     }
 
   /* Check for name length */
-  if (arg_REMOVE4.target.utf8string_len > FSAL_MAX_NAME_LEN)
+  if(arg_REMOVE4.target.utf8string_len > FSAL_MAX_NAME_LEN)
     {
       res_REMOVE4.status = NFS4ERR_NAMETOOLONG;
       return res_REMOVE4.status;
     }
 
   /* get the filename from the argument, it should not be empty */
-  if (arg_REMOVE4.target.utf8string_len == 0)
+  if(arg_REMOVE4.target.utf8string_len == 0)
     {
       res_REMOVE4.status = NFS4ERR_INVAL;
       return res_REMOVE4.status;
@@ -215,29 +215,29 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   /* NFS4_OP_REMOVE can delete files as well as directory, it replaces NFS3_RMDIR and NFS3_REMOVE
    * because of this, we have to know if object is a directory or not */
-  if ((cache_status =
-       cache_inode_error_convert(FSAL_buffdesc2name
-                                 ((fsal_buffdesc_t *) & arg_REMOVE4.target,
-                                  &name))) != CACHE_INODE_SUCCESS)
+  if((cache_status =
+      cache_inode_error_convert(FSAL_buffdesc2name
+                                ((fsal_buffdesc_t *) & arg_REMOVE4.target,
+                                 &name))) != CACHE_INODE_SUCCESS)
     {
       res_REMOVE4.status = nfs4_Errno(cache_status);
       return res_REMOVE4.status;
     }
 
   /* Test RM7: remiving '.' should return NFS4ERR_BADNAME */
-  if (!FSAL_namecmp(&name, &FSAL_DOT) || !FSAL_namecmp(&name, &FSAL_DOT_DOT))
+  if(!FSAL_namecmp(&name, &FSAL_DOT) || !FSAL_namecmp(&name, &FSAL_DOT_DOT))
     {
       res_REMOVE4.status = NFS4ERR_BADNAME;
       return res_REMOVE4.status;
     }
 
-  if ((cache_status = cache_inode_remove(parent_entry,
-                                         &name,
-                                         &attr_parent,
-                                         data->ht,
-                                         data->pclient,
-                                         data->pcontext,
-                                         &cache_status)) != CACHE_INODE_SUCCESS)
+  if((cache_status = cache_inode_remove(parent_entry,
+                                        &name,
+                                        &attr_parent,
+                                        data->ht,
+                                        data->pclient,
+                                        data->pcontext,
+                                        &cache_status)) != CACHE_INODE_SUCCESS)
     {
       res_REMOVE4.status = nfs4_Errno(cache_status);
       return res_REMOVE4.status;

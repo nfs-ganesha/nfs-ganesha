@@ -112,7 +112,7 @@
 
 static int nlm_should_track(nlm_lock_t * nlmb)
 {
-  if (nlmb->state == NLM4_GRANTED)
+  if(nlmb->state == NLM4_GRANTED)
     return 1;
   /*
    * FIXME!! we should also track NLM4_BLOCKED locks
@@ -157,7 +157,7 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
 
   /* Convert file handle into a cache entry */
   arg = &parg->arg_nlm4_lock;
-  if (!nfs3_FhandleToFSAL((nfs_fh3 *) & (arg->alock.fh), &fsal_data.handle, pcontext))
+  if(!nfs3_FhandleToFSAL((nfs_fh3 *) & (arg->alock.fh), &fsal_data.handle, pcontext))
     {
       /* handle is not valid */
       pres->res_nlm4.stat.stat = NLM4_STALE_FH;
@@ -169,8 +169,8 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
     }
   /* Now get the cached inode attributes */
   fsal_data.cookie = DIR_START;
-  if ((pentry = cache_inode_get(&fsal_data, &attr, ht,
-                                pclient, pcontext, &cache_status)) == NULL)
+  if((pentry = cache_inode_get(&fsal_data, &attr, ht,
+                               pclient, pcontext, &cache_status)) == NULL)
     {
       /* handle is not valid */
       pres->res_nlm4.stat.stat = NLM4_STALE_FH;
@@ -178,7 +178,7 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
     }
   fd = &pentry->object.file.open_fd.fd;
   lock_desc = nlm_lock_to_fsal_lockdesc(&(arg->alock), arg->exclusive);
-  if (!lock_desc)
+  if(!lock_desc)
     {
       pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
       return NFS_REQ_OK;
@@ -190,20 +190,20 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
    * the lock to the block list
    */
   nlmb = nlm_add_to_locklist(&(arg->alock), arg->exclusive);
-  if (!nlmb)
+  if(!nlmb)
     {
       pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
       return NFS_REQ_OK;
     }
 
   retval = FSAL_lock(fd, lock_desc, arg->block);
-  if (!FSAL_IS_ERROR(retval))
+  if(!FSAL_IS_ERROR(retval))
     {
       pres->res_nlm4.stat.stat = NLM4_GRANTED;
     }
   else
     {
-      if (fsal_is_retryable(retval) && arg->block)
+      if(fsal_is_retryable(retval) && arg->block)
         {
           /* FIXME!! fsal_is_retryable don't check for EACCESS */
           pres->res_nlm4.stat.stat = NLM4_BLOCKED;
@@ -214,10 +214,10 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
         }
     }
 
-  if (!nlmb)
+  if(!nlmb)
     {
       nlmb->state = pres->res_nlm4.stat.stat;
-      if (!nlm_should_track(nlmb))
+      if(!nlm_should_track(nlmb))
         nlm_remove_from_locklist(nlmb);
     }
   Mem_Free(lock_desc);

@@ -147,7 +147,7 @@ fsal_status_t MFSAL_truncate_check_perms(mfsl_object_t * filehandle,
 
   fsal_status = FSAL_test_access(p_context, FSAL_W_OK, &pspecdata->async_attr);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
@@ -188,10 +188,10 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle, /* IN */
 
   V(p_mfsl_context->lock);
 
-  if (pasyncopdesc == NULL)
+  if(pasyncopdesc == NULL)
     MFSL_return(ERR_FSAL_INVAL, 0);
 
-  if (gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
+  if(gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
     {
       /* Could'not get time of day... Stopping, this may need a major failure */
       DisplayLog("MFSL_truncate: cannot get time of day... exiting");
@@ -199,7 +199,7 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle, /* IN */
     }
 
   /* Is the object asynchronous ? */
-  if (!mfsl_async_get_specdata(filehandle, &pasyncdata))
+  if(!mfsl_async_get_specdata(filehandle, &pasyncdata))
     {
       /* Not yet asynchronous object */
       P(p_mfsl_context->lock);
@@ -218,7 +218,7 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle, /* IN */
   fsal_status =
       MFSAL_truncate_check_perms(filehandle, pasyncdata, p_context, p_mfsl_context);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   DisplayLogJdLevel(p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p",
@@ -236,7 +236,7 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle, /* IN */
   pasyncopdesc->ptr_mfsl_context = (caddr_t) p_mfsl_context;
 
   fsal_status = MFSL_async_post(pasyncopdesc);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   /* Update the associated times for this object */
@@ -248,7 +248,7 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle, /* IN */
   /* Set output attributes */
   *object_attributes = pasyncdata->async_attr;
 
-  if (!mfsl_async_set_specdata(filehandle, pasyncdata))
+  if(!mfsl_async_set_specdata(filehandle, pasyncdata))
     MFSL_return(ERR_FSAL_SERVERFAULT, 0);
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);

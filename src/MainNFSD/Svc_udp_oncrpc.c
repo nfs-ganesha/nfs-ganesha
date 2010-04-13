@@ -102,9 +102,9 @@ SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz)
   struct sockaddr_in addr;
   unsigned long len = sizeof(struct sockaddr_in);
 
-  if (sock == RPC_ANYSOCK)
+  if(sock == RPC_ANYSOCK)
     {
-      if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+      if((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
         {
           perror("Svcudp_create: socket creation problem");
           return ((SVCXPRT *) NULL);
@@ -114,34 +114,34 @@ SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz)
 
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
-  if (bindresvport(sock, &addr))
+  if(bindresvport(sock, &addr))
     {
       addr.sin_port = 0;
       (void)bind(sock, (struct sockaddr *)&addr, len);
     }
 
-  if (getsockname(sock, (struct sockaddr *)&addr, (socklen_t *) & len) != 0)
+  if(getsockname(sock, (struct sockaddr *)&addr, (socklen_t *) & len) != 0)
     {
       perror("Svcudp_create - cannot getsockname");
-      if (madesock)
+      if(madesock)
         (void)close(sock);
       return ((SVCXPRT *) NULL);
     }
 
   xprt = (SVCXPRT *) Mem_Alloc(sizeof(SVCXPRT));
-  if (xprt == NULL)
+  if(xprt == NULL)
     {
       return (NULL);
     }
 
   su = (struct Svcudp_data *)Mem_Alloc(sizeof(*su));
 
-  if (su == NULL)
+  if(su == NULL)
     {
       return (NULL);
     }
   su->su_iosz = ((MAX(sendsz, recvsz) + 3) / 4) * 4;
-  if ((rpc_buffer(xprt) = Mem_Alloc(su->su_iosz)) == NULL)
+  if((rpc_buffer(xprt) = Mem_Alloc(su->su_iosz)) == NULL)
     {
       return (NULL);
     }
@@ -208,17 +208,17 @@ static bool_t Svcudp_recv(register SVCXPRT * xprt, struct rpc_msg *msg)
                   0, (struct sockaddr *)&(xprt->xp_raddr), &(xprt->xp_addrlen));
 #endif
 
-  if (rlen == -1 && errno == EINTR)
+  if(rlen == -1 && errno == EINTR)
     goto again;
 
-  if (rlen == -1 || rlen < 4 * sizeof(u_int32_t))
+  if(rlen == -1 || rlen < 4 * sizeof(u_int32_t))
     return (FALSE);
 
   xdrs->x_op = XDR_DECODE;
 
   XDR_SETPOS(xdrs, 0);
 
-  if (!xdr_callmsg(xdrs, msg))
+  if(!xdr_callmsg(xdrs, msg))
     return (FALSE);
 
   su->su_xid = msg->rm_xid;
@@ -238,30 +238,30 @@ static bool_t Svcudp_reply(register SVCXPRT * xprt, struct rpc_msg *msg)
   XDR_SETPOS(xdrs, 0);
   msg->rm_xid = su->su_xid;
 
-  if (msg->rm_reply.rp_stat == MSG_ACCEPTED && msg->rm_reply.rp_acpt.ar_stat == SUCCESS)
+  if(msg->rm_reply.rp_stat == MSG_ACCEPTED && msg->rm_reply.rp_acpt.ar_stat == SUCCESS)
     {
       xdr_proc = msg->acpted_rply.ar_results.proc;
       xdr_where = msg->acpted_rply.ar_results.where;
       msg->acpted_rply.ar_results.proc = (xdrproc_t) xdr_void;
       msg->acpted_rply.ar_results.where = NULL;
 
-      if (!xdr_replymsg(xdrs, msg) ||
-          !SVCAUTH_WRAP(xprt->xp_auth, xdrs, xdr_proc, xdr_where))
+      if(!xdr_replymsg(xdrs, msg) ||
+         !SVCAUTH_WRAP(xprt->xp_auth, xdrs, xdr_proc, xdr_where))
         return (FALSE);
     }
-  else if (!xdr_replymsg(xdrs, msg))
+  else if(!xdr_replymsg(xdrs, msg))
     {
       return (FALSE);
     }
   slen = (int)XDR_GETPOS(xdrs);
 
 #ifdef _FREEBSD
-  if (sendto(xprt->xp_fd,
+  if(sendto(xprt->xp_fd,
 #else
-  if (sendto(xprt->xp_sock,
+  if(sendto(xprt->xp_sock,
 #endif
-             rpc_buffer(xprt),
-             slen, 0, (struct sockaddr *)&(xprt->xp_raddr), xprt->xp_addrlen) != slen)
+            rpc_buffer(xprt),
+            slen, 0, (struct sockaddr *)&(xprt->xp_raddr), xprt->xp_addrlen) != slen)
     {
       return (FALSE);
     }

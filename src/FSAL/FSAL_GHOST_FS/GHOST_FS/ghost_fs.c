@@ -126,13 +126,13 @@ static GHOSTFS_item_t *GetEntry_From_Handle(GHOSTFS_handle_t handle)
 {
   GHOSTFS_item_t *p_entry;
 
-  if (!handle.inode)
+  if(!handle.inode)
     return NULL;
 
   p_entry = (GHOSTFS_item_t *) handle.inode;
 
   /* check the magic number */
-  if (p_entry->magic != handle.magic)
+  if(p_entry->magic != handle.magic)
     return NULL;
 
   /* the entry seems to be OK, return it */
@@ -153,7 +153,7 @@ static GHOSTFS_item_t *create_new_ghostfs_entry(GHOSTFS_typeitem_t type)
 
   memset(p_entry, 0, sizeof(GHOSTFS_item_t));
 
-  if (p_entry == NULL)
+  if(p_entry == NULL)
     return NULL;
 
   rw_lock_init(&p_entry->entry_lock);
@@ -185,13 +185,13 @@ static int Add_Dir_Entry(GHOSTFS_item_t * dir_item,
 {
   GHOSTFS_dirlist_t *p_entry;
 
-  if ((dir_item == NULL) || (object_name == NULL) || (object_handle.inode == NULL))
+  if((dir_item == NULL) || (object_name == NULL) || (object_handle.inode == NULL))
     return ERR_GHOSTFS_INTERNAL;
 
   /* allocates a dirent */
   p_entry = (GHOSTFS_dirlist_t *) Mem_Alloc(sizeof(GHOSTFS_dirlist_t));
 
-  if (p_entry == NULL)
+  if(p_entry == NULL)
     return ERR_GHOSTFS_MALLOC;
 
   memset(p_entry, 0, sizeof(GHOSTFS_dirlist_t));
@@ -201,7 +201,7 @@ static int Add_Dir_Entry(GHOSTFS_item_t * dir_item,
   p_entry->next = NULL;
 
   /* insertion */
-  if (dir_item->ITEM_DIR.lastentry == NULL)
+  if(dir_item->ITEM_DIR.lastentry == NULL)
     {
       dir_item->ITEM_DIR.direntries = dir_item->ITEM_DIR.lastentry = p_entry;
     }
@@ -228,9 +228,9 @@ static int Find_Entry(GHOSTFS_item_t * p_parent,
 
   dirl = p_parent->ITEM_DIR.direntries;
 
-  while (dirl)
+  while(dirl)
     {
-      if (!strncmp(dirl->name, entry_name, GHOSTFS_MAX_FILENAME))
+      if(!strncmp(dirl->name, entry_name, GHOSTFS_MAX_FILENAME))
         {
           *p_found_hdl = dirl->handle;
 
@@ -257,9 +257,9 @@ static int Rename_Entry(GHOSTFS_item_t * p_parent,
 
   dirl = p_parent->ITEM_DIR.direntries;
 
-  while (dirl)
+  while(dirl)
     {
-      if (!strncmp(dirl->name, entry_old_name, GHOSTFS_MAX_FILENAME))
+      if(!strncmp(dirl->name, entry_old_name, GHOSTFS_MAX_FILENAME))
         {
           strncpy(dirl->name, entry_new_name, GHOSTFS_MAX_FILENAME);
 
@@ -286,9 +286,9 @@ static int Change_Entry_Handle(GHOSTFS_item_t * p_parent,
 
   dirl = p_parent->ITEM_DIR.direntries;
 
-  while (dirl)
+  while(dirl)
     {
-      if (!strncmp(dirl->name, entry_name, GHOSTFS_MAX_FILENAME))
+      if(!strncmp(dirl->name, entry_name, GHOSTFS_MAX_FILENAME))
         {
           dirl->handle = entry_handle;
 
@@ -316,20 +316,20 @@ static int Remove_Entry(GHOSTFS_item_t * p_parent, char *entry_name)
   last = NULL;
   dirl = p_parent->ITEM_DIR.direntries;
 
-  while (dirl)
+  while(dirl)
     {
-      if (!strncmp(dirl->name, entry_name, GHOSTFS_MAX_FILENAME))
+      if(!strncmp(dirl->name, entry_name, GHOSTFS_MAX_FILENAME))
         {
           /* item found */
 
           /* if it was the first entry */
-          if (last == NULL)
+          if(last == NULL)
             p_parent->ITEM_DIR.direntries = dirl->next;
           else
             last->next = dirl->next;
 
           /* if it was the last entry */
-          if (dirl == p_parent->ITEM_DIR.lastentry)
+          if(dirl == p_parent->ITEM_DIR.lastentry)
             p_parent->ITEM_DIR.lastentry = last;
 
           return ERR_GHOSTFS_NO_ERROR;
@@ -346,13 +346,13 @@ static int Remove_Entry(GHOSTFS_item_t * p_parent, char *entry_name)
 static int is_name_ok(char *name)
 {
 
-  if (name[0] == '\0')
+  if(name[0] == '\0')
     return FALSE;
-  if (!strcmp(name, "."))
+  if(!strcmp(name, "."))
     return FALSE;
-  if (!strcmp(name, ".."))
+  if(!strcmp(name, ".."))
     return FALSE;
-  if (strchr(name, '/') != NULL)
+  if(strchr(name, '/') != NULL)
     return FALSE;
 
   return TRUE;
@@ -364,10 +364,10 @@ static int is_empty_dir(GHOSTFS_item_t * p_dir)
 
   dirl = p_dir->ITEM_DIR.direntries;
 
-  while (dirl)
+  while(dirl)
     {
-      if (strncmp(dirl->name, ".", GHOSTFS_MAX_FILENAME) &&
-          strncmp(dirl->name, "..", GHOSTFS_MAX_FILENAME))
+      if(strncmp(dirl->name, ".", GHOSTFS_MAX_FILENAME) &&
+         strncmp(dirl->name, "..", GHOSTFS_MAX_FILENAME))
         {
           /* not empty */
           return FALSE;
@@ -407,7 +407,7 @@ int GHOSTFS_Init(GHOSTFS_parameter_t init_cfg)
   GHOSTFS_handle_t roothandle;
 
   /* checks whether the FS is already loaded. */
-  if (p_root)
+  if(p_root)
     return ERR_GHOSTFS_ALREADYINIT;
 
   /* saves the configuration */
@@ -416,7 +416,7 @@ int GHOSTFS_Init(GHOSTFS_parameter_t init_cfg)
   /* creates the root entry */
   p_root = create_new_ghostfs_entry(GHOSTFS_DIR);
 
-  if (p_root == NULL)
+  if(p_root == NULL)
     return ERR_GHOSTFS_MALLOC;
 
   /* fill directory attributes */
@@ -443,17 +443,17 @@ int GHOSTFS_Init(GHOSTFS_parameter_t init_cfg)
 
   /* add . and .. entries */
   rc = Add_Dir_Entry(p_root, roothandle, ".");
-  if (rc)
+  if(rc)
     {
       V_w(&p_root->entry_lock);
       return rc;
     }
   p_root->linkcount++;
 
-  if (config.dot_dot_root_eq_root)
+  if(config.dot_dot_root_eq_root)
     {
       rc = Add_Dir_Entry(p_root, roothandle, "..");
-      if (rc)
+      if(rc)
         {
           V_w(&p_root->entry_lock);
           return rc;
@@ -473,11 +473,11 @@ int GHOSTFS_Init(GHOSTFS_parameter_t init_cfg)
 int GHOSTFS_GetRoot(GHOSTFS_handle_t * root_handle)
 {
   /* checks args. */
-  if (!root_handle)
+  if(!root_handle)
     return ERR_GHOSTFS_ARGS;
 
   /* checks whether the FS has been intialized. */
-  if (!p_root)
+  if(!p_root)
     return ERR_GHOSTFS_NOTINIT;
 
   /* we kwnow that the root will never be deleted,
@@ -500,31 +500,31 @@ int GHOSTFS_Lookup(GHOSTFS_handle_t handle_parent,
   GHOSTFS_item_t *p_parent;
 
   /* checks whether the FS has been initialized. */
-  if (!p_root)
+  if(!p_root)
     return ERR_GHOSTFS_NOTINIT;
 
   /* checks args. */
-  if (!p_handle || !ghostfs_name)
+  if(!p_handle || !ghostfs_name)
     return ERR_GHOSTFS_ARGS;
 
   /* sets null handle for output */
   memset(p_handle, 0, sizeof(GHOSTFS_handle_t));
 
   /* verifies that there is no slash in the name */
-  if (strchr(ghostfs_name, '/'))
+  if(strchr(ghostfs_name, '/'))
     return ERR_GHOSTFS_ARGS;
 
   /* convert inode to item adress */
   p_parent = GetEntry_From_Handle(handle_parent);
 
-  if (p_parent == NULL)
+  if(p_parent == NULL)
     return ERR_GHOSTFS_STALE;
 
   /* lock the directory for reading */
   P_r(&p_parent->entry_lock);
 
   /* check object type */
-  if (p_parent->type != GHOSTFS_DIR)
+  if(p_parent->type != GHOSTFS_DIR)
     {
       V_r(&p_parent->entry_lock);
       return ERR_GHOSTFS_NOTDIR;
@@ -544,15 +544,15 @@ int GHOSTFS_GetAttrs(GHOSTFS_handle_t handle, GHOSTFS_Attrs_t * object_attribute
   GHOSTFS_item_t *p_item;
 
   /* checks whether the FS has been loaded. */
-  if (!p_root)
+  if(!p_root)
     return ERR_GHOSTFS_NOTINIT;
 
   /* checks args. */
-  if (!object_attributes)
+  if(!object_attributes)
     return ERR_GHOSTFS_ARGS;
 
   p_item = GetEntry_From_Handle(handle);
-  if (p_item == NULL)
+  if(p_item == NULL)
     return ERR_GHOSTFS_STALE;
 
   /* locks the entry for reading */
@@ -579,20 +579,20 @@ int GHOSTFS_Access(GHOSTFS_handle_t handle,
   GHOSTFS_item_t *p_item;
 
   /* checks whether the FS has been loaded. */
-  if (!p_root)
+  if(!p_root)
     return ERR_GHOSTFS_NOTINIT;
 
   /* convert inode to item adress */
 
   p_item = GetEntry_From_Handle(handle);
-  if (p_item == NULL)
+  if(p_item == NULL)
     return ERR_GHOSTFS_STALE;
 
   /* locks the entry for reading */
   P_r(&p_item->entry_lock);
 
   /* if the user is root he can always access the file */
-  if ((userid == 0) && config.root_access)
+  if((userid == 0) && config.root_access)
     {
       V_r(&p_item->entry_lock);
       return ERR_GHOSTFS_NO_ERROR;
@@ -610,9 +610,9 @@ int GHOSTFS_Access(GHOSTFS_handle_t handle,
 
   /* computes mask */
   result_mask = 0;
-  if (is_owner)
+  if(is_owner)
     result_mask |= (mask & (test_set << 6));
-  else if (is_grp)
+  else if(is_grp)
     result_mask |= (mask & (test_set << 3));
   else
     result_mask |= (mask & test_set);
@@ -622,7 +622,7 @@ int GHOSTFS_Access(GHOSTFS_handle_t handle,
          mask, test_set, (is_owner ? "yes" : "no"), (is_grp ? "yes" : "no"), result_mask);
 #endif
 
-  if (result_mask)
+  if(result_mask)
     return ERR_GHOSTFS_NO_ERROR;
   else
     return ERR_GHOSTFS_ACCES;
@@ -635,31 +635,31 @@ int GHOSTFS_ReadLink(GHOSTFS_handle_t handle, char *buffer, GHOSTFS_mdsize_t buf
   GHOSTFS_item_t *p_item;
 
   /* checks whether the FS has been loaded. */
-  if (!p_root)
+  if(!p_root)
     return ERR_GHOSTFS_NOTINIT;
 
   /* checks args. */
-  if (!buffer)
+  if(!buffer)
     return ERR_GHOSTFS_ARGS;
 
   /* convert inode to item adress */
 
   p_item = GetEntry_From_Handle(handle);
-  if (p_item == NULL)
+  if(p_item == NULL)
     return ERR_GHOSTFS_STALE;
 
   /* locks the entry for reading */
   P_r(&p_item->entry_lock);
 
   /* check type */
-  if (p_item->type != GHOSTFS_LNK)
+  if(p_item->type != GHOSTFS_LNK)
     {
       V_r(&p_item->entry_lock);
       return ERR_GHOSTFS_NOTLNK;
     }
 
   /* verifies buffer length including '\0' */
-  if (buff_size < strlen(p_item->ITEM_SYMLNK.linkdata) + 1)
+  if(buff_size < strlen(p_item->ITEM_SYMLNK.linkdata) + 1)
     {
       V_r(&p_item->entry_lock);
       return ERR_GHOSTFS_TOOSMALL;
@@ -680,24 +680,24 @@ int GHOSTFS_Opendir(GHOSTFS_handle_t handle, dir_descriptor_t * dir)
   GHOSTFS_item_t *p_item;
 
   /* checks whether the FS has been loaded. */
-  if (!p_root)
+  if(!p_root)
     return ERR_GHOSTFS_NOTINIT;
 
   /* checks args. */
-  if (!dir)
+  if(!dir)
     return ERR_GHOSTFS_ARGS;
 
   /* convert inode to item adress */
 
   p_item = GetEntry_From_Handle(handle);
-  if (p_item == NULL)
+  if(p_item == NULL)
     return ERR_GHOSTFS_STALE;
 
   /* locks the entry for reading */
   P_r(&p_item->entry_lock);
 
   /* check type */
-  if (p_item->type != GHOSTFS_DIR)
+  if(p_item->type != GHOSTFS_DIR)
     {
       V_r(&p_item->entry_lock);
       return ERR_GHOSTFS_NOTDIR;
@@ -723,27 +723,27 @@ int GHOSTFS_Readdir(dir_descriptor_t * dir, GHOSTFS_dirent_t * dirent)
   GHOSTFS_item_t *p_dir;
 
   /* checks whether the FS has been loaded. */
-  if (!p_root)
+  if(!p_root)
     return ERR_GHOSTFS_NOTINIT;
 
   /* checks args. */
-  if (!dir)
+  if(!dir)
     return ERR_GHOSTFS_ARGS;
-  if (!dirent)
+  if(!dirent)
     return ERR_GHOSTFS_ARGS;
 
   p_dir = GetEntry_From_Handle(dir->handle);
 
   /* sanity checks on dir descriptor */
-  if ((p_dir == NULL)
-      || (dir->master_record == NULL)
-      || (dir->handle.inode != p_dir->inode)
-      || (dir->handle.magic != p_dir->magic)
-      || (dir->master_record != &(p_dir->ITEM_DIR)) || (p_dir->type != GHOSTFS_DIR))
+  if((p_dir == NULL)
+     || (dir->master_record == NULL)
+     || (dir->handle.inode != p_dir->inode)
+     || (dir->handle.magic != p_dir->magic)
+     || (dir->master_record != &(p_dir->ITEM_DIR)) || (p_dir->type != GHOSTFS_DIR))
     return ERR_GHOSTFS_NOTOPENED;
 
   /* end of dir ? */
-  if (!dir->current_dir_entry)
+  if(!dir->current_dir_entry)
     return ERR_GHOSTFS_ENDOFDIR;
 
   /* fill in dirent */
@@ -762,25 +762,25 @@ int GHOSTFS_Seekdir(dir_descriptor_t * dir, GHOSTFS_cookie_t cookie)
   GHOSTFS_item_t *p_dir;
 
   /* checks whether the FS has been loaded. */
-  if (!p_root)
+  if(!p_root)
     return ERR_GHOSTFS_NOTINIT;
 
   /* checks args. */
-  if (!dir)
+  if(!dir)
     return ERR_GHOSTFS_ARGS;
 
   p_dir = GetEntry_From_Handle(dir->handle);
 
   /* sanity checks on dir descriptor */
-  if ((p_dir == NULL)
-      || (dir->master_record == NULL)
-      || (dir->handle.inode != p_dir->inode)
-      || (dir->handle.magic != p_dir->magic)
-      || (dir->master_record != &(p_dir->ITEM_DIR)) || (p_dir->type != GHOSTFS_DIR))
+  if((p_dir == NULL)
+     || (dir->master_record == NULL)
+     || (dir->handle.inode != p_dir->inode)
+     || (dir->handle.magic != p_dir->magic)
+     || (dir->master_record != &(p_dir->ITEM_DIR)) || (p_dir->type != GHOSTFS_DIR))
     return ERR_GHOSTFS_NOTOPENED;
 
   /* updates dir descriptor */
-  if (cookie == NULL)
+  if(cookie == NULL)
     {
       /* begin of the directory */
       dir->current_dir_entry = dir->master_record->direntries;
@@ -801,21 +801,21 @@ int GHOSTFS_Closedir(dir_descriptor_t * dir)
   GHOSTFS_item_t *p_dir;
 
   /* checks whether the FS has been loaded. */
-  if (!p_root)
+  if(!p_root)
     return ERR_GHOSTFS_NOTINIT;
 
   /* checks args. */
-  if (!dir)
+  if(!dir)
     return ERR_GHOSTFS_ARGS;
 
   p_dir = GetEntry_From_Handle(dir->handle);
 
   /* sanity checks on dir descriptor */
-  if ((p_dir == NULL)
-      || (dir->master_record == NULL)
-      || (dir->handle.inode != p_dir->inode)
-      || (dir->handle.magic != p_dir->magic)
-      || (dir->master_record != &(p_dir->ITEM_DIR)) || (p_dir->type != GHOSTFS_DIR))
+  if((p_dir == NULL)
+     || (dir->master_record == NULL)
+     || (dir->handle.inode != p_dir->inode)
+     || (dir->handle.magic != p_dir->magic)
+     || (dir->master_record != &(p_dir->ITEM_DIR)) || (p_dir->type != GHOSTFS_DIR))
     return ERR_GHOSTFS_NOTOPENED;
 
   /* unlocking the directory */
@@ -835,11 +835,11 @@ int GHOSTFS_SetAttrs(GHOSTFS_handle_t handle,
   GHOSTFS_setattr_mask_t editable;
 
   /* checks whether the FS has been loaded. */
-  if (!p_root)
+  if(!p_root)
     return ERR_GHOSTFS_NOTINIT;
 
   p_item = GetEntry_From_Handle(handle);
-  if (p_item == NULL)
+  if(p_item == NULL)
     return ERR_GHOSTFS_STALE;
 
   /* locks the entry for modification */
@@ -847,7 +847,7 @@ int GHOSTFS_SetAttrs(GHOSTFS_handle_t handle,
 
   /* check settable attributes */
 
-  if (p_item->type == GHOSTFS_FILE)
+  if(p_item->type == GHOSTFS_FILE)
     editable =
         (SETATTR_UID | SETATTR_GID | SETATTR_MODE | SETATTR_ATIME | SETATTR_MTIME |
          SETATTR_SIZE);
@@ -855,29 +855,29 @@ int GHOSTFS_SetAttrs(GHOSTFS_handle_t handle,
     editable = (SETATTR_UID | SETATTR_GID | SETATTR_MODE | SETATTR_ATIME | SETATTR_MTIME);
 
   /* check for unsupported atributes */
-  if (setattr_mask & ~editable)
+  if(setattr_mask & ~editable)
     {
       V_w(&p_item->entry_lock);
       return ERR_GHOSTFS_ATTR_NOT_SUPP;
     }
 
   /* operations restricted to root */
-  if (setattr_mask & SETATTR_UID)
+  if(setattr_mask & SETATTR_UID)
     p_item->attributes.uid = attrs_values.uid;
 
-  if (setattr_mask & SETATTR_GID)
+  if(setattr_mask & SETATTR_GID)
     p_item->attributes.gid = attrs_values.gid;
 
-  if (setattr_mask & SETATTR_MODE)
+  if(setattr_mask & SETATTR_MODE)
     p_item->attributes.mode = attrs_values.mode & 0777;
 
-  if (setattr_mask & SETATTR_ATIME)
+  if(setattr_mask & SETATTR_ATIME)
     p_item->attributes.atime = attrs_values.atime;
 
-  if (setattr_mask & SETATTR_MTIME)
+  if(setattr_mask & SETATTR_MTIME)
     p_item->attributes.mtime = attrs_values.mtime;
 
-  if (setattr_mask & SETATTR_UID)
+  if(setattr_mask & SETATTR_UID)
     p_item->attributes.uid = attrs_values.uid;
 
   V_w(&p_item->entry_lock);
@@ -899,27 +899,27 @@ int GHOSTFS_MkDir(GHOSTFS_handle_t parent_handle,
   GHOSTFS_item_t *p_newdir;
 
   /* checks whether the FS is already loaded. */
-  if (!p_root)
+  if(!p_root)
     return ERR_GHOSTFS_NOTINIT;
 
   /* checks args. */
-  if (!new_dir_name)
+  if(!new_dir_name)
     return ERR_GHOSTFS_ARGS;
-  if (!p_new_dir_handle)
+  if(!p_new_dir_handle)
     return ERR_GHOSTFS_ARGS;
-  if (!is_name_ok(new_dir_name))
+  if(!is_name_ok(new_dir_name))
     return ERR_GHOSTFS_ARGS;
 
   /* get the parent and lock it for writing */
 
   p_parent = GetEntry_From_Handle(parent_handle);
-  if (p_parent == NULL)
+  if(p_parent == NULL)
     return ERR_GHOSTFS_STALE;
 
   P_w(&p_parent->entry_lock);
 
   /* check type */
-  if (p_parent->type != GHOSTFS_DIR)
+  if(p_parent->type != GHOSTFS_DIR)
     {
       V_w(&p_parent->entry_lock);
       return ERR_GHOSTFS_NOTDIR;
@@ -929,13 +929,13 @@ int GHOSTFS_MkDir(GHOSTFS_handle_t parent_handle,
 
   rc = Find_Entry(p_parent, new_dir_name, &tmphandle);
 
-  if (rc == 0)
+  if(rc == 0)
     {
       V_w(&p_parent->entry_lock);
       return ERR_GHOSTFS_EXIST;
     }
 
-  if (rc != ERR_GHOSTFS_NOENT)
+  if(rc != ERR_GHOSTFS_NOENT)
     {
       V_w(&p_parent->entry_lock);
       return rc;
@@ -944,7 +944,7 @@ int GHOSTFS_MkDir(GHOSTFS_handle_t parent_handle,
   /* creates the new entry */
   p_newdir = create_new_ghostfs_entry(GHOSTFS_DIR);
 
-  if (p_newdir == NULL)
+  if(p_newdir == NULL)
     {
       V_w(&p_parent->entry_lock);
       return ERR_GHOSTFS_MALLOC;
@@ -972,7 +972,7 @@ int GHOSTFS_MkDir(GHOSTFS_handle_t parent_handle,
   /* add '.' entry into the new directory */
 
   rc = Add_Dir_Entry(p_newdir, *p_new_dir_handle, ".");
-  if (rc)
+  if(rc)
     {
       V_w(&p_parent->entry_lock);
       V_w(&p_newdir->entry_lock);
@@ -983,7 +983,7 @@ int GHOSTFS_MkDir(GHOSTFS_handle_t parent_handle,
   /* add '..' entry into the new directory */
 
   rc = Add_Dir_Entry(p_newdir, parent_handle, "..");
-  if (rc)
+  if(rc)
     {
       V_w(&p_parent->entry_lock);
       V_w(&p_newdir->entry_lock);
@@ -994,7 +994,7 @@ int GHOSTFS_MkDir(GHOSTFS_handle_t parent_handle,
   /* add named entry into the parent directory */
 
   rc = Add_Dir_Entry(p_parent, *p_new_dir_handle, new_dir_name);
-  if (rc)
+  if(rc)
     {
       V_w(&p_parent->entry_lock);
       V_w(&p_newdir->entry_lock);
@@ -1007,7 +1007,7 @@ int GHOSTFS_MkDir(GHOSTFS_handle_t parent_handle,
 
   /* return new dir attributes (if asked) */
 
-  if (p_new_dir_attrs != NULL)
+  if(p_new_dir_attrs != NULL)
     fill_attributes(p_newdir, p_new_dir_attrs);
 
   /* unlock and return */
@@ -1034,27 +1034,27 @@ int GHOSTFS_Create(GHOSTFS_handle_t parent_handle,
   GHOSTFS_item_t *p_new_file;
 
   /* checks whether the FS is already loaded. */
-  if (!p_root)
+  if(!p_root)
     return ERR_GHOSTFS_NOTINIT;
 
   /* checks args. */
-  if (!new_file_name)
+  if(!new_file_name)
     return ERR_GHOSTFS_ARGS;
-  if (!p_new_file_handle)
+  if(!p_new_file_handle)
     return ERR_GHOSTFS_ARGS;
-  if (!is_name_ok(new_file_name))
+  if(!is_name_ok(new_file_name))
     return ERR_GHOSTFS_ARGS;
 
   /* get the parent and lock it for writing */
 
   p_parent = GetEntry_From_Handle(parent_handle);
-  if (p_parent == NULL)
+  if(p_parent == NULL)
     return ERR_GHOSTFS_STALE;
 
   P_w(&p_parent->entry_lock);
 
   /* check type */
-  if (p_parent->type != GHOSTFS_DIR)
+  if(p_parent->type != GHOSTFS_DIR)
     {
       V_w(&p_parent->entry_lock);
       return ERR_GHOSTFS_NOTDIR;
@@ -1064,13 +1064,13 @@ int GHOSTFS_Create(GHOSTFS_handle_t parent_handle,
 
   rc = Find_Entry(p_parent, new_file_name, &tmphandle);
 
-  if (rc == 0)
+  if(rc == 0)
     {
       V_w(&p_parent->entry_lock);
       return ERR_GHOSTFS_EXIST;
     }
 
-  if (rc != ERR_GHOSTFS_NOENT)
+  if(rc != ERR_GHOSTFS_NOENT)
     {
       V_w(&p_parent->entry_lock);
       return rc;
@@ -1079,7 +1079,7 @@ int GHOSTFS_Create(GHOSTFS_handle_t parent_handle,
   /* creates the new entry */
   p_new_file = create_new_ghostfs_entry(GHOSTFS_FILE);
 
-  if (p_new_file == NULL)
+  if(p_new_file == NULL)
     {
       V_w(&p_parent->entry_lock);
       return ERR_GHOSTFS_MALLOC;
@@ -1103,7 +1103,7 @@ int GHOSTFS_Create(GHOSTFS_handle_t parent_handle,
   /* add named entry into the parent directory */
 
   rc = Add_Dir_Entry(p_parent, *p_new_file_handle, new_file_name);
-  if (rc)
+  if(rc)
     {
       V_w(&p_parent->entry_lock);
       V_w(&p_new_file->entry_lock);
@@ -1116,7 +1116,7 @@ int GHOSTFS_Create(GHOSTFS_handle_t parent_handle,
 
   /* return new file attributes (if asked) */
 
-  if (p_new_file_attrs != NULL)
+  if(p_new_file_attrs != NULL)
     fill_attributes(p_new_file, p_new_file_attrs);
 
   /* unlock and return */
@@ -1138,25 +1138,25 @@ int GHOSTFS_Link(GHOSTFS_handle_t parent_handle,
   GHOSTFS_item_t *p_object;
 
   /* checks whether the FS is already loaded. */
-  if (!p_root)
+  if(!p_root)
     return ERR_GHOSTFS_NOTINIT;
 
   /* checks args. */
-  if (!new_link_name)
+  if(!new_link_name)
     return ERR_GHOSTFS_ARGS;
-  if (!is_name_ok(new_link_name))
+  if(!is_name_ok(new_link_name))
     return ERR_GHOSTFS_ARGS;
 
   /* get the parent and lock it for writing */
 
   p_parent = GetEntry_From_Handle(parent_handle);
-  if (p_parent == NULL)
+  if(p_parent == NULL)
     return ERR_GHOSTFS_STALE;
 
   P_w(&p_parent->entry_lock);
 
   /* check type */
-  if (p_parent->type != GHOSTFS_DIR)
+  if(p_parent->type != GHOSTFS_DIR)
     {
       V_w(&p_parent->entry_lock);
       return ERR_GHOSTFS_NOTDIR;
@@ -1166,13 +1166,13 @@ int GHOSTFS_Link(GHOSTFS_handle_t parent_handle,
 
   rc = Find_Entry(p_parent, new_link_name, &tmphandle);
 
-  if (rc == 0)
+  if(rc == 0)
     {
       V_w(&p_parent->entry_lock);
       return ERR_GHOSTFS_EXIST;
     }
 
-  if (rc != ERR_GHOSTFS_NOENT)
+  if(rc != ERR_GHOSTFS_NOENT)
     {
       V_w(&p_parent->entry_lock);
       return rc;
@@ -1181,13 +1181,13 @@ int GHOSTFS_Link(GHOSTFS_handle_t parent_handle,
   /* get the target item and lock it for mofification */
   p_object = GetEntry_From_Handle(target_handle);
 
-  if (p_object == NULL)
+  if(p_object == NULL)
     {
       V_w(&p_parent->entry_lock);
       return ERR_GHOSTFS_STALE;
     }
 
-  if (p_object->type == GHOSTFS_DIR)
+  if(p_object->type == GHOSTFS_DIR)
     {
       V_w(&p_parent->entry_lock);
       return ERR_GHOSTFS_ISDIR;
@@ -1198,7 +1198,7 @@ int GHOSTFS_Link(GHOSTFS_handle_t parent_handle,
   /* add named entry into the parent directory */
 
   rc = Add_Dir_Entry(p_parent, target_handle, new_link_name);
-  if (rc)
+  if(rc)
     {
       V_w(&p_parent->entry_lock);
       V_w(&p_object->entry_lock);
@@ -1212,7 +1212,7 @@ int GHOSTFS_Link(GHOSTFS_handle_t parent_handle,
 
   /* return new file attributes (if asked) */
 
-  if (p_link_attrs != NULL)
+  if(p_link_attrs != NULL)
     fill_attributes(p_object, p_link_attrs);
 
   /* unlock and return */
@@ -1240,27 +1240,27 @@ int GHOSTFS_Symlink(GHOSTFS_handle_t parent_handle,
   GHOSTFS_item_t *p_new_lnk;
 
   /* checks whether the FS is already loaded. */
-  if (!p_root)
+  if(!p_root)
     return ERR_GHOSTFS_NOTINIT;
 
   /* checks args. */
-  if (!new_symlink_name)
+  if(!new_symlink_name)
     return ERR_GHOSTFS_ARGS;
-  if (!p_new_symlink_handle)
+  if(!p_new_symlink_handle)
     return ERR_GHOSTFS_ARGS;
-  if (!is_name_ok(new_symlink_name))
+  if(!is_name_ok(new_symlink_name))
     return ERR_GHOSTFS_ARGS;
 
   /* get the parent and lock it for writing */
 
   p_parent = GetEntry_From_Handle(parent_handle);
-  if (p_parent == NULL)
+  if(p_parent == NULL)
     return ERR_GHOSTFS_STALE;
 
   P_w(&p_parent->entry_lock);
 
   /* check type */
-  if (p_parent->type != GHOSTFS_DIR)
+  if(p_parent->type != GHOSTFS_DIR)
     {
       V_w(&p_parent->entry_lock);
       return ERR_GHOSTFS_NOTDIR;
@@ -1270,13 +1270,13 @@ int GHOSTFS_Symlink(GHOSTFS_handle_t parent_handle,
 
   rc = Find_Entry(p_parent, new_symlink_name, &tmphandle);
 
-  if (rc == 0)
+  if(rc == 0)
     {
       V_w(&p_parent->entry_lock);
       return ERR_GHOSTFS_EXIST;
     }
 
-  if (rc != ERR_GHOSTFS_NOENT)
+  if(rc != ERR_GHOSTFS_NOENT)
     {
       V_w(&p_parent->entry_lock);
       return rc;
@@ -1285,7 +1285,7 @@ int GHOSTFS_Symlink(GHOSTFS_handle_t parent_handle,
   /* creates the new entry */
   p_new_lnk = create_new_ghostfs_entry(GHOSTFS_LNK);
 
-  if (p_new_lnk == NULL)
+  if(p_new_lnk == NULL)
     {
       V_w(&p_parent->entry_lock);
       return ERR_GHOSTFS_MALLOC;
@@ -1309,7 +1309,7 @@ int GHOSTFS_Symlink(GHOSTFS_handle_t parent_handle,
   /* add named entry into the parent directory */
 
   rc = Add_Dir_Entry(p_parent, *p_new_symlink_handle, new_symlink_name);
-  if (rc)
+  if(rc)
     {
       V_w(&p_parent->entry_lock);
       V_w(&p_new_lnk->entry_lock);
@@ -1322,7 +1322,7 @@ int GHOSTFS_Symlink(GHOSTFS_handle_t parent_handle,
 
   /* return new file attributes (if asked) */
 
-  if (p_new_symlink_attrs != NULL)
+  if(p_new_symlink_attrs != NULL)
     fill_attributes(p_new_lnk, p_new_symlink_attrs);
 
   /* unlock and return */
@@ -1347,27 +1347,27 @@ int GHOSTFS_Unlink(GHOSTFS_handle_t parent_handle,      /* IN */
 
   /* checks whether the FS is already loaded. */
 
-  if (!p_root)
+  if(!p_root)
     return ERR_GHOSTFS_NOTINIT;
 
   /* checks args. */
 
-  if (!object_name)
+  if(!object_name)
     return ERR_GHOSTFS_ARGS;
-  if (!is_name_ok(object_name))
+  if(!is_name_ok(object_name))
     return ERR_GHOSTFS_ARGS;
 
   /* get the parent and lock it for writing */
 
   p_parent = GetEntry_From_Handle(parent_handle);
-  if (p_parent == NULL)
+  if(p_parent == NULL)
     return ERR_GHOSTFS_STALE;
 
   P_w(&p_parent->entry_lock);
 
   /* check type */
 
-  if (p_parent->type != GHOSTFS_DIR)
+  if(p_parent->type != GHOSTFS_DIR)
     {
       V_w(&p_parent->entry_lock);
       return ERR_GHOSTFS_NOTDIR;
@@ -1377,7 +1377,7 @@ int GHOSTFS_Unlink(GHOSTFS_handle_t parent_handle,      /* IN */
 
   rc = Find_Entry(p_parent, object_name, &obj_handle);
 
-  if (rc)
+  if(rc)
     {
       V_w(&p_parent->entry_lock);
       return rc;
@@ -1386,14 +1386,14 @@ int GHOSTFS_Unlink(GHOSTFS_handle_t parent_handle,      /* IN */
   /* get the object to be deleted and lock it for writing */
 
   p_object = GetEntry_From_Handle(obj_handle);
-  if (p_object == NULL)
+  if(p_object == NULL)
     return ERR_GHOSTFS_STALE;
 
   P_w(&p_object->entry_lock);
 
   /* test if it is a non empty directory */
 
-  if (p_object->type == GHOSTFS_DIR && !is_empty_dir(p_object))
+  if(p_object->type == GHOSTFS_DIR && !is_empty_dir(p_object))
     {
       V_w(&p_object->entry_lock);
       V_w(&p_parent->entry_lock);
@@ -1402,7 +1402,7 @@ int GHOSTFS_Unlink(GHOSTFS_handle_t parent_handle,      /* IN */
 
   /* removes the object from the directory */
 
-  if ((rc = Remove_Entry(p_parent, object_name)))
+  if((rc = Remove_Entry(p_parent, object_name)))
     {
       V_w(&p_object->entry_lock);
       V_w(&p_parent->entry_lock);
@@ -1416,14 +1416,14 @@ int GHOSTFS_Unlink(GHOSTFS_handle_t parent_handle,      /* IN */
    * the list and then the directory itself.
    * update parent's linkcount.
    */
-  if (p_object->type == GHOSTFS_DIR)
+  if(p_object->type == GHOSTFS_DIR)
     {
       GHOSTFS_dirlist_t *dirl;
       GHOSTFS_dirlist_t *next;
 
       dirl = p_object->ITEM_DIR.direntries;
 
-      while (dirl)
+      while(dirl)
         {
           next = dirl->next;
           Mem_Free(dirl);
@@ -1446,7 +1446,7 @@ int GHOSTFS_Unlink(GHOSTFS_handle_t parent_handle,      /* IN */
 
       p_object->linkcount--;
 
-      if (p_object->linkcount == 0)
+      if(p_object->linkcount == 0)
         {
           /* destroy the entry */
           rw_lock_destroy(&p_object->entry_lock);
@@ -1466,7 +1466,7 @@ int GHOSTFS_Unlink(GHOSTFS_handle_t parent_handle,      /* IN */
 
   /* send back parent object attributes */
 
-  if (p_parent_attrs != NULL)
+  if(p_parent_attrs != NULL)
     fill_attributes(p_parent, p_parent_attrs);
 
   /* unlock the parent and return */
@@ -1499,29 +1499,29 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
 
   /* checks whether the FS is already loaded. */
 
-  if (!p_root)
+  if(!p_root)
     return ERR_GHOSTFS_NOTINIT;
 
   /* checks args. */
 
-  if (!src_name)
+  if(!src_name)
     return ERR_GHOSTFS_ARGS;
-  if (!tgt_name)
+  if(!tgt_name)
     return ERR_GHOSTFS_ARGS;
-  if (!is_name_ok(tgt_name))
+  if(!is_name_ok(tgt_name))
     return ERR_GHOSTFS_ARGS;
 
   /* if the source directory = target directory, lock only once */
-  if (src_eq_tgt)
+  if(src_eq_tgt)
     {
       /* get the parent and lock it for writing */
 
       p_parent1 = GetEntry_From_Handle(src_dir_handle);
-      if (p_parent1 == NULL)
+      if(p_parent1 == NULL)
         return ERR_GHOSTFS_STALE;
 
       /* check type */
-      if (p_parent1->type != GHOSTFS_DIR)
+      if(p_parent1->type != GHOSTFS_DIR)
         return ERR_GHOSTFS_NOTDIR;
 
       P_w(&p_parent1->entry_lock);
@@ -1535,15 +1535,15 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
       p_parent1 = GetEntry_From_Handle(src_dir_handle);
       p_parent2 = GetEntry_From_Handle(tgt_dir_handle);
 
-      if (p_parent1 == NULL || p_parent2 == NULL)
+      if(p_parent1 == NULL || p_parent2 == NULL)
         return ERR_GHOSTFS_STALE;
 
       /* check type */
-      if (p_parent1->type != GHOSTFS_DIR || p_parent2->type != GHOSTFS_DIR)
+      if(p_parent1->type != GHOSTFS_DIR || p_parent2->type != GHOSTFS_DIR)
         return ERR_GHOSTFS_NOTDIR;
 
       /* always lock dirs in the same order for avoiding deadlocks */
-      if (src_dir_handle.inode > tgt_dir_handle.inode)
+      if(src_dir_handle.inode > tgt_dir_handle.inode)
         {
           P_w(&p_parent1->entry_lock);
           P_w(&p_parent2->entry_lock);
@@ -1559,20 +1559,20 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
 
   rc = Find_Entry(p_parent1, src_name, &srchandle);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       V_w(&p_parent1->entry_lock);
-      if (!src_eq_tgt)
+      if(!src_eq_tgt)
         V_w(&p_parent2->entry_lock);
       return rc;
     }
 
   p_object1 = GetEntry_From_Handle(srchandle);
 
-  if (p_object1 == NULL)
+  if(p_object1 == NULL)
     {
       V_w(&p_parent1->entry_lock);
-      if (!src_eq_tgt)
+      if(!src_eq_tgt)
         V_w(&p_parent2->entry_lock);
       return ERR_GHOSTFS_STALE;
     }
@@ -1582,12 +1582,12 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
   target_exists = FALSE;
   rc = Find_Entry(p_parent2, tgt_name, &tmphandle);
 
-  if (rc == 0)
+  if(rc == 0)
     target_exists = TRUE;
-  else if (rc != ERR_GHOSTFS_NOENT)
+  else if(rc != ERR_GHOSTFS_NOENT)
     {
       V_w(&p_parent1->entry_lock);
-      if (!src_eq_tgt)
+      if(!src_eq_tgt)
         V_w(&p_parent2->entry_lock);
       return rc;
     }
@@ -1595,11 +1595,11 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
   /* 3 - if source handle = destination handle,
    *     return attributes and do nothing.
    */
-  if ((srchandle.inode == tmphandle.inode) && (tmphandle.magic == tgt_dir_handle.magic))
+  if((srchandle.inode == tmphandle.inode) && (tmphandle.magic == tgt_dir_handle.magic))
     {
-      if (p_src_dir_attrs)
+      if(p_src_dir_attrs)
         fill_attributes(p_parent1, p_src_dir_attrs);
-      if (p_tgt_dir_attrs)
+      if(p_tgt_dir_attrs)
         fill_attributes(p_parent2, p_tgt_dir_attrs);
 #ifdef _DEBUG_GHOST_FS
       printf("src=tgt\n");
@@ -1609,16 +1609,16 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
     }
 
   /* 4- if the target exists it must be compatible (for removal) */
-  if (target_exists)
+  if(target_exists)
     {
       /* get target object */
 
       p_object2 = GetEntry_From_Handle(tmphandle);
 
-      if (p_object2 == NULL)
+      if(p_object2 == NULL)
         {
           V_w(&p_parent1->entry_lock);
-          if (!src_eq_tgt)
+          if(!src_eq_tgt)
             V_w(&p_parent2->entry_lock);
           return ERR_GHOSTFS_STALE;
         }
@@ -1631,18 +1631,18 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
 #ifdef _DEBUG_GHOST_FS
       printf("type1=%d, type2=%d, dir=%d\n", p_object1->type, p_object2->type,
              GHOSTFS_DIR);
-      if (p_object2->type == GHOSTFS_DIR)
+      if(p_object2->type == GHOSTFS_DIR)
         printf("2 empty : %d\n", is_empty_dir(p_object2));
 #endif
 
-      if ((p_object1->type == GHOSTFS_DIR) && (p_object2->type == GHOSTFS_DIR))
+      if((p_object1->type == GHOSTFS_DIR) && (p_object2->type == GHOSTFS_DIR))
         {
 
-          if (!is_empty_dir(p_object2))
+          if(!is_empty_dir(p_object2))
             {
               V_w(&p_object2->entry_lock);
               V_w(&p_parent1->entry_lock);
-              if (!src_eq_tgt)
+              if(!src_eq_tgt)
                 V_w(&p_parent2->entry_lock);
               return ERR_GHOSTFS_NOTEMPTY;
             }
@@ -1654,11 +1654,11 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
 
           /* removes the object from the directory */
 
-          if ((rc = Remove_Entry(p_parent2, tgt_name)))
+          if((rc = Remove_Entry(p_parent2, tgt_name)))
             {
               V_w(&p_object2->entry_lock);
               V_w(&p_parent1->entry_lock);
-              if (!src_eq_tgt)
+              if(!src_eq_tgt)
                 V_w(&p_parent2->entry_lock);
               return rc;
             }
@@ -1673,7 +1673,7 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
 
           dirl = p_object2->ITEM_DIR.direntries;
 
-          while (dirl)
+          while(dirl)
             {
               next = dirl->next;
               Mem_Free(dirl);
@@ -1688,17 +1688,17 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
           Mem_Free(p_object2);
 
         }
-      else if ((p_object1->type != GHOSTFS_DIR) && (p_object2->type != GHOSTFS_DIR))
+      else if((p_object1->type != GHOSTFS_DIR) && (p_object2->type != GHOSTFS_DIR))
         {
           /* compatible types, we remove the target file/link */
 
           /* removes the object from the directory */
 
-          if ((rc = Remove_Entry(p_parent2, tgt_name)))
+          if((rc = Remove_Entry(p_parent2, tgt_name)))
             {
               V_w(&p_object2->entry_lock);
               V_w(&p_parent1->entry_lock);
-              if (!src_eq_tgt)
+              if(!src_eq_tgt)
                 V_w(&p_parent2->entry_lock);
               return rc;
             }
@@ -1712,7 +1712,7 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
 
           p_object2->linkcount--;
 
-          if (p_object2->linkcount == 0)
+          if(p_object2->linkcount == 0)
             {
               /* destroy the entry */
               rw_lock_destroy(&p_object2->entry_lock);
@@ -1730,7 +1730,7 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
           /* incompatible types or non empty target dir, return an error */
           V_w(&p_object2->entry_lock);
           V_w(&p_parent1->entry_lock);
-          if (!src_eq_tgt)
+          if(!src_eq_tgt)
             V_w(&p_parent2->entry_lock);
           return ERR_GHOSTFS_EXIST;
         }
@@ -1740,12 +1740,12 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
   /* end if target exists */
   /* ---- at this point, we are sure the target does not exist ---- */
   /* if the source and target parents are the same */
-  if (src_eq_tgt)
+  if(src_eq_tgt)
     {
       /* directly rename the item in the directory entries */
       rc = Rename_Entry(p_parent1, src_name, tgt_name);
 
-      if (rc != 0)
+      if(rc != 0)
         {
           /* unexpected error !!! */
           V_w(&p_parent1->entry_lock);
@@ -1753,7 +1753,7 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
         }
 
     }                           /* end if srcpath = tgtpath */
-  else if (p_object1->type == GHOSTFS_DIR)
+  else if(p_object1->type == GHOSTFS_DIR)
     {
       /* we must remove the directory from the source dir,
        * and put it into the new dir.
@@ -1766,7 +1766,7 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
 
       /* removes the dir from the parent */
 
-      if ((rc = Remove_Entry(p_parent1, src_name)))
+      if((rc = Remove_Entry(p_parent1, src_name)))
         {
           /* unexpected error !!! */
           V_w(&p_object1->entry_lock);
@@ -1781,7 +1781,7 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
       /* replace the '..' entry with the new directory handle */
       rc = Change_Entry_Handle(p_object1, "..", tgt_dir_handle);
 
-      if (rc != 0)
+      if(rc != 0)
         {
           /* unexpected error !!! */
           V_w(&p_object1->entry_lock);
@@ -1798,7 +1798,7 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
 
       /* insert the directory into the target dir */
 
-      if ((rc = Add_Dir_Entry(p_parent2, srchandle, tgt_name)))
+      if((rc = Add_Dir_Entry(p_parent2, srchandle, tgt_name)))
         {
           /* unexpected error !!! */
           V_w(&p_object1->entry_lock);
@@ -1823,7 +1823,7 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
 
       /* removes the object from the parent */
 
-      if ((rc = Remove_Entry(p_parent1, src_name)))
+      if((rc = Remove_Entry(p_parent1, src_name)))
         {
           /* unexpected error !!! */
           V_w(&p_object1->entry_lock);
@@ -1837,7 +1837,7 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
 
       /* insert the object into the target dir */
 
-      if ((rc = Add_Dir_Entry(p_parent2, srchandle, tgt_name)))
+      if((rc = Add_Dir_Entry(p_parent2, srchandle, tgt_name)))
         {
           /* unexpected error !!! */
           V_w(&p_object1->entry_lock);
@@ -1853,13 +1853,13 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
 
   /* copy attributes if needed, and return */
 
-  if (p_src_dir_attrs)
+  if(p_src_dir_attrs)
     fill_attributes(p_parent1, p_src_dir_attrs);
-  if (p_tgt_dir_attrs)
+  if(p_tgt_dir_attrs)
     fill_attributes(p_parent2, p_tgt_dir_attrs);
 
   V_w(&p_parent1->entry_lock);
-  if (!src_eq_tgt)
+  if(!src_eq_tgt)
     V_w(&p_parent2->entry_lock);
   return ERR_GHOSTFS_NO_ERROR;
 

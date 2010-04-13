@@ -71,7 +71,7 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
   /* sanity checks.
    * note : object_attributes is optionnal in FSAL_getattrs.
    */
-  if (!object_handle || !p_context)
+  if(!object_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_access);
 
   /* converts fsal access type to ghostfs access type */
@@ -81,14 +81,14 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
   rc = GHOSTFS_Access((GHOSTFS_handle_t) (*object_handle), test,
                       p_context->credential.user, p_context->credential.group);
 
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_access);
 
   /* get attributes if object_attributes is not null.
    * If an error occures during getattr operation,
    * it is returned, even though the access operation succeeded.
    */
-  if (object_attributes)
+  if(object_attributes)
     {
       fsal_status_t status;
 

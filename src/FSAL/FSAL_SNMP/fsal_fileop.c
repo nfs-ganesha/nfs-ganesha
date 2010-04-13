@@ -68,11 +68,11 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
   fsal_status_t fsal_status;
   fsal_handle_t filehandle;
 
-  if (!dirhandle || !filename || !p_context || !file_descriptor)
+  if(!dirhandle || !filename || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
   fsal_status = FSAL_lookup(dirhandle, filename, p_context, &filehandle, file_attributes);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   return FSAL_open(&filehandle, p_context, openflags, file_descriptor, file_attributes);
@@ -127,13 +127,13 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
   /* sanity checks.
    * note : file_attributes is optional.
    */
-  if (!filehandle || !p_context || !file_descriptor)
+  if(!filehandle || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
 
   /* check if this is a file if the information
    * is stored into the handle */
 
-  if (filehandle->object_type_reminder != FSAL_NODETYPE_LEAF)
+  if(filehandle->object_type_reminder != FSAL_NODETYPE_LEAF)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
     }
@@ -148,15 +148,15 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
    * FSAL_O_TRUNC: ok, because it is the actually behavior when writting data 
    */
 
-  if (openflags & FSAL_O_RDWR)
+  if(openflags & FSAL_O_RDWR)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
 
   /* FSAL_O_TRUNC and FSAL_O_APPEND are incompatible with reading data */
-  if ((openflags & FSAL_O_RDONLY) && (openflags & (FSAL_O_TRUNC | FSAL_O_APPEND)))
+  if((openflags & FSAL_O_RDONLY) && (openflags & (FSAL_O_TRUNC | FSAL_O_APPEND)))
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
 
   /* FSAL_O_APPEND et FSAL_O_TRUNC cannot be used together */
-  if ((openflags & FSAL_O_APPEND) && (openflags & FSAL_O_TRUNC))
+  if((openflags & FSAL_O_APPEND) && (openflags & FSAL_O_TRUNC))
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
 
   /* save data to filedesc */
@@ -164,21 +164,21 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
   file_descriptor->file_handle = *filehandle;
   file_descriptor->p_context = p_context;
 
-  if (openflags & FSAL_O_RDONLY)
+  if(openflags & FSAL_O_RDONLY)
     file_descriptor->rw_mode = FSAL_MODE_READ;
   else
     file_descriptor->rw_mode = FSAL_MODE_WRITE;
 
   /* if attributes are asked, get them */
 
-  if (file_attributes)
+  if(file_attributes)
     {
       fsal_status_t status;
 
       status = FSAL_getattrs(filehandle, p_context, file_attributes);
 
       /* on error, we set a special bit in the mask. */
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(file_attributes->asked_attributes);
           FSAL_SET_MASK(file_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -231,24 +231,24 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
 
   /* sanity checks. */
 
-  if (!file_descriptor || !buffer || !read_amount || !end_of_file)
+  if(!file_descriptor || !buffer || !read_amount || !end_of_file)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_read);
 
   /* check that file has been opened in read mode  */
-  if (file_descriptor->rw_mode != FSAL_MODE_READ)
+  if(file_descriptor->rw_mode != FSAL_MODE_READ)
     Return(ERR_FSAL_NOT_OPENED, 0, INDEX_FSAL_read);
 
   /* seek operations are not allowed */
 
-  if (seek_descriptor && seek_descriptor->whence == FSAL_SEEK_END)
+  if(seek_descriptor && seek_descriptor->whence == FSAL_SEEK_END)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_read);
 
-  if (seek_descriptor && seek_descriptor->whence == FSAL_SEEK_SET
-      && seek_descriptor->offset != 0)
+  if(seek_descriptor && seek_descriptor->whence == FSAL_SEEK_SET
+     && seek_descriptor->offset != 0)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_read);
 
-  if (seek_descriptor && seek_descriptor->whence == FSAL_SEEK_CUR
-      && seek_descriptor->offset != 0)
+  if(seek_descriptor && seek_descriptor->whence == FSAL_SEEK_CUR
+     && seek_descriptor->offset != 0)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_read);
 
   /* now proceed a SNMP GET request */
@@ -263,9 +263,9 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
   ReleaseTokenFSCall();
 
   /* convert error code in case of error */
-  if (rc != SNMPERR_SUCCESS && snmp2fsal_error(rc) != ERR_FSAL_NOENT)
+  if(rc != SNMPERR_SUCCESS && snmp2fsal_error(rc) != ERR_FSAL_NOENT)
     Return(snmp2fsal_error(rc), rc, INDEX_FSAL_read);
-  else if (snmp2fsal_error(rc) == ERR_FSAL_NOENT)
+  else if(snmp2fsal_error(rc) == ERR_FSAL_NOENT)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_read);
 
   /* copy data to output buffer */
@@ -273,7 +273,7 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
   rc = snmp_object2str(file_descriptor->p_context->snmp_response->variables,
                        (char *)buffer, &sz);
 
-  if (rc != ERR_FSAL_NO_ERROR)
+  if(rc != ERR_FSAL_NO_ERROR)
     Return(rc, 0, INDEX_FSAL_read);
 
   *read_amount = sz;
@@ -325,11 +325,11 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
   netsnmp_variable_list *p_var;
 
   /* sanity checks. */
-  if (!file_descriptor || !buffer || !write_amount)
+  if(!file_descriptor || !buffer || !write_amount)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_write);
 
   /* check that file has been opened in write mode  */
-  if (file_descriptor->rw_mode != FSAL_MODE_WRITE)
+  if(file_descriptor->rw_mode != FSAL_MODE_WRITE)
     Return(ERR_FSAL_NOT_OPENED, 0, INDEX_FSAL_write);
 
 #ifdef _DEBUG_FSAL
@@ -338,15 +338,15 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
 
   /* seek operations are not allowed */
 
-  if (seek_descriptor && seek_descriptor->whence == FSAL_SEEK_END)
+  if(seek_descriptor && seek_descriptor->whence == FSAL_SEEK_END)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_write);
 
-  if (seek_descriptor && seek_descriptor->whence == FSAL_SEEK_SET
-      && seek_descriptor->offset != 0)
+  if(seek_descriptor && seek_descriptor->whence == FSAL_SEEK_SET
+     && seek_descriptor->offset != 0)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_write);
 
-  if (seek_descriptor && seek_descriptor->whence == FSAL_SEEK_CUR
-      && seek_descriptor->offset != 0)
+  if(seek_descriptor && seek_descriptor->whence == FSAL_SEEK_CUR
+     && seek_descriptor->offset != 0)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_write);
 
   /* first, we make a get request, in order to know the object type */
@@ -359,34 +359,34 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
   ReleaseTokenFSCall();
 
   /* convert error code in case of error */
-  if (rc != SNMPERR_SUCCESS && snmp2fsal_error(rc) != ERR_FSAL_NOENT)
+  if(rc != SNMPERR_SUCCESS && snmp2fsal_error(rc) != ERR_FSAL_NOENT)
     Return(snmp2fsal_error(rc), rc, INDEX_FSAL_write);
-  else if (snmp2fsal_error(rc) == ERR_FSAL_NOENT)
+  else if(snmp2fsal_error(rc) == ERR_FSAL_NOENT)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_write);
 
   p_var = file_descriptor->p_context->snmp_response->variables;
 
   /* check type */
 
-  if (p_var == NULL
-      || p_var->type == SNMP_NOSUCHOBJECT
-      || p_var->type == SNMP_NOSUCHINSTANCE || p_var->type == SNMP_ENDOFMIBVIEW)
+  if(p_var == NULL
+     || p_var->type == SNMP_NOSUCHOBJECT
+     || p_var->type == SNMP_NOSUCHINSTANCE || p_var->type == SNMP_ENDOFMIBVIEW)
     Return(ERR_FSAL_STALE, p_var->type, INDEX_FSAL_write);
 
   /* copy to a temporary buffer */
-  if (buffer_size > FSALSNMP_MAX_FILESIZE)
+  if(buffer_size > FSALSNMP_MAX_FILESIZE)
     Return(ERR_FSAL_FBIG, 0, INDEX_FSAL_write);
 
   memcpy(tmp_buf, buffer, buffer_size);
   sz = buffer_size;
 
   /* remove '\n' at the end or before the final '\0' */
-  if (sz > 0 && tmp_buf[sz - 1] == '\n')
+  if(sz > 0 && tmp_buf[sz - 1] == '\n')
     {
       tmp_buf[sz - 1] = '\0';
       sz--;
     }
-  else if (sz > 1 && tmp_buf[sz - 2] == '\n')
+  else if(sz > 1 && tmp_buf[sz - 2] == '\n')
     {
       tmp_buf[sz - 2] = '\0';
       sz--;
@@ -404,9 +404,9 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
   ReleaseTokenFSCall();
 
   /* convert error code in case of error */
-  if (rc != SNMPERR_SUCCESS && snmp2fsal_error(rc) != ERR_FSAL_NOENT)
+  if(rc != SNMPERR_SUCCESS && snmp2fsal_error(rc) != ERR_FSAL_NOENT)
     Return(snmp2fsal_error(rc), rc, INDEX_FSAL_write);
-  else if (snmp2fsal_error(rc) == ERR_FSAL_NOENT)
+  else if(snmp2fsal_error(rc) == ERR_FSAL_NOENT)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_write);
 
   *write_amount = buffer_size;
@@ -436,7 +436,7 @@ fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
   int rc;
 
   /* sanity checks. */
-  if (!file_descriptor)
+  if(!file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
 
   memset(file_descriptor, 0, sizeof(fsal_file_t));

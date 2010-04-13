@@ -46,7 +46,7 @@ int pnfs_connect(pnfs_client_t * pnfsclient,
   int sock;
   struct sockaddr_in addr_rpc;
 
-  if (!pnfsclient || !pnfs_layout_param)
+  if(!pnfsclient || !pnfs_layout_param)
     return -1;
 
   memset(&addr_rpc, 0, sizeof(addr_rpc));
@@ -54,13 +54,13 @@ int pnfs_connect(pnfs_client_t * pnfsclient,
   addr_rpc.sin_family = AF_INET;
   addr_rpc.sin_addr.s_addr = pnfs_layout_param->ds_param[0].ipaddr;
 
-  if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+  if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
       DisplayLog("PNFS_LAYOUT INIT: cannot create a tcp socket");
       return -1;
     }
 
-  if (connect(sock, (struct sockaddr *)&addr_rpc, sizeof(addr_rpc)) < 0)
+  if(connect(sock, (struct sockaddr *)&addr_rpc, sizeof(addr_rpc)) < 0)
     {
       DisplayLog("pNFS_LAYOUT INIT : Cannot connect to server addr=%u.%u.%u.%u port=%u",
                  (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0xFF000000) >> 24,
@@ -71,11 +71,11 @@ int pnfs_connect(pnfs_client_t * pnfsclient,
       return -1;
     }
 
-  if ((pnfsclient->rpc_client = clnttcp_create(&addr_rpc,
-                                               pnfs_layout_param->ds_param[0].prognum,
-                                               PNFS_NFS4,
-                                               &sock,
-                                               PNFS_SENDSIZE, PNFS_RECVSIZE)) == NULL)
+  if((pnfsclient->rpc_client = clnttcp_create(&addr_rpc,
+                                              pnfs_layout_param->ds_param[0].prognum,
+                                              PNFS_NFS4,
+                                              &sock,
+                                              PNFS_SENDSIZE, PNFS_RECVSIZE)) == NULL)
     {
       DisplayLog
           ("PNFS_LAYOUT INIT : Cannot contact server addr=%x.%x.%x.%x port=%u prognum=%u using NFSv4 protocol",
@@ -89,7 +89,7 @@ int pnfs_connect(pnfs_client_t * pnfsclient,
       return -1;
     }
 
-  if ((pnfsclient->rpc_client ->cl_auth = authunix_create_default()) == NULL)
+  if((pnfsclient->rpc_client->cl_auth = authunix_create_default()) == NULL)
     {
       return -1;
     }

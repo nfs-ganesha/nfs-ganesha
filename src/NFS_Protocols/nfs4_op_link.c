@@ -157,58 +157,58 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   res_LINK4.status = NFS4_OK;
 
   /* If there is no FH */
-  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
+  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
       res_LINK4.status = NFS4ERR_NOFILEHANDLE;
       return res_LINK4.status;
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
       res_LINK4.status = NFS4ERR_BADHANDLE;
       return res_LINK4.status;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
       res_LINK4.status = NFS4ERR_FHEXPIRED;
       return res_LINK4.status;
     }
 
   /* If there is no FH */
-  if (nfs4_Is_Fh_Empty(&(data->savedFH)))
+  if(nfs4_Is_Fh_Empty(&(data->savedFH)))
     {
       res_LINK4.status = NFS4ERR_NOFILEHANDLE;
       return res_LINK4.status;
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(data->savedFH)))
+  if(nfs4_Is_Fh_Invalid(&(data->savedFH)))
     {
       res_LINK4.status = NFS4ERR_BADHANDLE;
       return res_LINK4.status;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(data->savedFH)))
+  if(nfs4_Is_Fh_Expired(&(data->savedFH)))
     {
       res_LINK4.status = NFS4ERR_FHEXPIRED;
       return res_LINK4.status;
     }
 
   /* Pseudo Fs is explictely a Read-Only File system */
-  if (nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     {
       res_LINK4.status = NFS4ERR_ROFS;
       return res_LINK4.status;
     }
 
   /* If data->exportp is null, a junction from pseudo fs was traversed, credp and exportp have to be updated */
-  if (data->pexport == NULL)
+  if(data->pexport == NULL)
     {
-      if ((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
+      if((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
         {
           res_LINK4.status = error;
           return res_LINK4.status;
@@ -221,39 +221,39 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
    */
 
   /* Crossing device is not allowed */
-  if (((file_handle_v4_t *) (data->currentFH.nfs_fh4_val))->exportid !=
-      ((file_handle_v4_t *) (data->savedFH.nfs_fh4_val))->exportid)
+  if(((file_handle_v4_t *) (data->currentFH.nfs_fh4_val))->exportid !=
+     ((file_handle_v4_t *) (data->savedFH.nfs_fh4_val))->exportid)
     {
       res_LINK4.status = NFS4ERR_XDEV;
       return res_LINK4.status;
     }
 
   /* If name is empty, return EINVAL */
-  if (arg_LINK4.newname.utf8string_len == 0)
+  if(arg_LINK4.newname.utf8string_len == 0)
     {
       res_LINK4.status = NFS4ERR_INVAL;
       return res_LINK4.status;
     }
 
   /* Check for name to long */
-  if (arg_LINK4.newname.utf8string_len > FSAL_MAX_NAME_LEN)
+  if(arg_LINK4.newname.utf8string_len > FSAL_MAX_NAME_LEN)
     {
       res_LINK4.status = NFS4ERR_NAMETOOLONG;
       return res_LINK4.status;
     }
 
   /* Convert the UFT8 objname to a regular string */
-  if ((cache_status =
-       cache_inode_error_convert(FSAL_buffdesc2name
-                                 ((fsal_buffdesc_t *) & arg_LINK4.newname,
-                                  &newname))) != CACHE_INODE_SUCCESS)
+  if((cache_status =
+      cache_inode_error_convert(FSAL_buffdesc2name
+                                ((fsal_buffdesc_t *) & arg_LINK4.newname,
+                                 &newname))) != CACHE_INODE_SUCCESS)
     {
       res_LINK4.status = nfs4_Errno(cache_status);
       return res_LINK4.status;
     }
 
   /* Sanity check: never create a link named '.' or '..' */
-  if (!FSAL_namecmp(&newname, &FSAL_DOT) || !FSAL_namecmp(&newname, &FSAL_DOT_DOT))
+  if(!FSAL_namecmp(&newname, &FSAL_DOT) || !FSAL_namecmp(&newname, &FSAL_DOT_DOT))
     {
       res_LINK4.status = NFS4ERR_BADNAME;
       return res_LINK4.status;
@@ -263,26 +263,26 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   dir_pentry = data->current_entry;
 
   /* Destination FH (the currentFH) must be a directory */
-  if (data->current_filetype != DIR_BEGINNING && data->current_filetype != DIR_CONTINUE)
+  if(data->current_filetype != DIR_BEGINNING && data->current_filetype != DIR_CONTINUE)
     {
       res_LINK4.status = NFS4ERR_NOTDIR;
       return res_LINK4.status;
     }
 
   /* Target object (the savedFH) must not be a directory */
-  if (data->saved_filetype == DIR_BEGINNING || data->saved_filetype == DIR_CONTINUE)
+  if(data->saved_filetype == DIR_BEGINNING || data->saved_filetype == DIR_CONTINUE)
     {
       res_LINK4.status = NFS4ERR_ISDIR;
       return res_LINK4.status;
     }
 
   /* We have to keep track of the 'change' file attribute for reply structure */
-  if ((cache_status = cache_inode_getattr(dir_pentry,
-                                          &attr,
-                                          data->ht,
-                                          data->pclient,
-                                          data->pcontext,
-                                          &cache_status)) != CACHE_INODE_SUCCESS)
+  if((cache_status = cache_inode_getattr(dir_pentry,
+                                         &attr,
+                                         data->ht,
+                                         data->pclient,
+                                         data->pcontext,
+                                         &cache_status)) != CACHE_INODE_SUCCESS)
     {
       res_LINK4.status = nfs4_Errno(cache_status);
       return res_LINK4.status;
@@ -294,13 +294,13 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   file_pentry = data->saved_entry;
 
   /* make the link */
-  if (cache_inode_link(file_pentry,
-                       dir_pentry,
-                       &newname,
-                       &attr,
-                       data->ht,
-                       data->pclient,
-                       data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_link(file_pentry,
+                      dir_pentry,
+                      &newname,
+                      &attr,
+                      data->ht,
+                      data->pclient,
+                      data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_LINK4.status = nfs4_Errno(cache_status);
       return res_LINK4.status;

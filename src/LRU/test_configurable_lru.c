@@ -146,12 +146,12 @@ int do_new(LRU_list_t * plru, int key)
   LRU_entry_t *pentry = NULL;
   LRU_status_t status;
 
-  if ((tmpkey = (char *)malloc(STRSIZE)) == NULL)
+  if((tmpkey = (char *)malloc(STRSIZE)) == NULL)
     return -1;
 
   sprintf(tmpkey, "%d", key);
 
-  if ((pentry = LRU_new_entry(plru, &status)) == NULL)
+  if((pentry = LRU_new_entry(plru, &status)) == NULL)
     {
       free(tmpkey);
       return status;
@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
 
   BuddyInit(NULL);
 
-  if ((plru = LRU_Init(param, &status)) == NULL)
+  if((plru = LRU_Init(param, &status)) == NULL)
     {
       printf("Test ECHOUE : Mauvaise init\n");
       exit(1);
@@ -214,36 +214,36 @@ int main(int argc, char *argv[])
 
   printf("============ Debut de l'interactif =================\n");
 
-  while (ok)
+  while(ok)
     {
       /* Code interactif, pompe sur le test rbt de Jacques */
       fputs("> ", stdout);
-      if ((p = fgets(buf, LENBUF, stdin)) == NULL)
+      if((p = fgets(buf, LENBUF, stdin)) == NULL)
         {
           printf("fin des commandes\n");
           ok = 0;
           continue;
         }
-      if ((p = strchr(buf, '\n')) != NULL)
+      if((p = strchr(buf, '\n')) != NULL)
         *p = '\0';
 
       rc = sscanf(buf, "%c %d %d", &c, &key, &expected_rc);
-      if (c == '#')
+      if(c == '#')
         {
           /* # indique un commentaire */
           continue;
         }
-      else if (c == ' ' || c == '\t' || rc == -1)
+      else if(c == ' ' || c == '\t' || rc == -1)
         {
           /* Cas d'une ligne vide */
-          if (rc > 1)
+          if(rc > 1)
             printf("Erreur de syntaxe : mettre un diese au debut d'un commentaire\n");
 
           continue;
         }
       else
         {
-          if (rc != 3)
+          if(rc != 3)
             {
               printf("Erreur de syntaxe : sscanf retourne %d au lieu de 3\n", rc);
               continue;
@@ -259,7 +259,7 @@ int main(int argc, char *argv[])
 
           hrc = do_invalidate(plru, key);
 
-          if (hrc != expected_rc)
+          if(hrc != expected_rc)
             printf(">>>> ERREUR: invalidate  %d : %d != %d (expected)\n", key, hrc,
                    expected_rc);
           else
@@ -272,7 +272,7 @@ int main(int argc, char *argv[])
 
           hrc = do_new(plru, key);
 
-          if (hrc != expected_rc)
+          if(hrc != expected_rc)
             printf(">>>> ERREUR: new %d : %d != %d (expected)\n", key, hrc, expected_rc);
           else
             printf(">>>> OK new %d\n", key);
@@ -284,7 +284,7 @@ int main(int argc, char *argv[])
 
           hrc = do_gc(plru);
 
-          if (hrc != expected_rc)
+          if(hrc != expected_rc)
             printf(">>>> ERREUR: gc %d: %d != %d (expected)\n", key, hrc, expected_rc);
           else
             printf(">>>> OK new  %d\n", key);

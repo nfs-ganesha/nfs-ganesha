@@ -161,9 +161,9 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
   pclient->stat.func_stats.nb_call[CACHE_INODE_CREATE] += 1;
 
   /* Check if the required type is correct, with this function, we manage file, dir and symlink */
-  if (type != REGULAR_FILE && type != DIR_BEGINNING && type != SYMBOLIC_LINK
-      && type != SOCKET_FILE && type != FIFO_FILE && type != CHARACTER_FILE
-      && type != BLOCK_FILE)
+  if(type != REGULAR_FILE && type != DIR_BEGINNING && type != SYMBOLIC_LINK
+     && type != SOCKET_FILE && type != FIFO_FILE && type != CHARACTER_FILE
+     && type != BLOCK_FILE)
     {
       *pstatus = CACHE_INODE_BAD_TYPE;
 
@@ -174,12 +174,9 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
     }
 
   /* Check if caller is allowed to perform the operation */
-  if( ( status = cache_inode_access( pentry_parent,
-				     FSAL_W_OK,
-		                     ht,
-				     pclient,
-				     pcontext, 
-                                     &status ) ) != CACHE_INODE_SUCCESS )
+  if((status = cache_inode_access(pentry_parent,
+                                  FSAL_W_OK,
+                                  ht, pclient, pcontext, &status)) != CACHE_INODE_SUCCESS)
     {
       *pstatus = status;
 
@@ -188,18 +185,17 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
 
       /* pentry is a directory */
       return NULL;
-     }
-
+    }
 
   /* Check if an entry of the same name exists */
-  if ((pentry = cache_inode_lookup(pentry_parent,
-                                   pname,
-                                   &object_attributes,
-                                   ht, pclient, pcontext, pstatus)) != NULL)
+  if((pentry = cache_inode_lookup(pentry_parent,
+                                  pname,
+                                  &object_attributes,
+                                  ht, pclient, pcontext, pstatus)) != NULL)
     {
       *pstatus = CACHE_INODE_ENTRY_EXISTS;
 
-      if (pentry->internal_md.type != type)
+      if(pentry->internal_md.type != type)
         {
           /* Incompatible types, returns NULL */
 
@@ -223,10 +219,10 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
   /* Get the lock for the parent */
   P_w(&pentry_parent->lock);
 
-  if (pentry_parent->internal_md.type == DIR_BEGINNING)
+  if(pentry_parent->internal_md.type == DIR_BEGINNING)
     dir_handle = pentry_parent->object.dir_begin.handle;
 
-  if (pentry_parent->internal_md.type == DIR_CONTINUE)
+  if(pentry_parent->internal_md.type == DIR_CONTINUE)
     {
       P_r(&pentry_parent->object.dir_cont.pdir_begin->lock);
       dir_handle = pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.handle;
@@ -359,12 +355,12 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
     }
 
   /* Check for the result */
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       *pstatus = cache_inode_error_convert(fsal_status);
       V_w(&pentry_parent->lock);
 
-      if (fsal_status.major == ERR_FSAL_STALE)
+      if(fsal_status.major == ERR_FSAL_STALE)
         {
           cache_inode_status_t kill_status;
 
@@ -372,8 +368,8 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
               ("cache_inode_create: Stale FSAL File Handle detected for pentry = %p",
                pentry_parent);
 
-          if (cache_inode_kill_entry(pentry_parent, ht, pclient, &kill_status) !=
-              CACHE_INODE_SUCCESS)
+          if(cache_inode_kill_entry(pentry_parent, ht, pclient, &kill_status) !=
+             CACHE_INODE_SUCCESS)
             DisplayLog("cache_inode_create: Could not kill entry %p, status = %u",
                        pentry_parent, kill_status);
 
@@ -395,8 +391,8 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
       fsal_data.cookie = DIR_START;
 
       /* This call will return NULL if failed */
-      if ((pentry = cache_inode_new_entry(&fsal_data, &object_attributes, type, pcreate_arg, NULL, ht, pclient, pcontext, TRUE, /* This is a creation and not a population */
-                                          pstatus)) == NULL)
+      if((pentry = cache_inode_new_entry(&fsal_data, &object_attributes, type, pcreate_arg, NULL, ht, pclient, pcontext, TRUE,  /* This is a creation and not a population */
+                                         pstatus)) == NULL)
         {
           *pstatus = CACHE_INODE_INSERT_ERROR;
           V_w(&pentry_parent->lock);
@@ -412,13 +408,12 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
 #endif
 
       /* Add this entry to the directory */
-      if (cache_inode_add_cached_dirent(pentry_parent,
-                                        pname,
-                                        pentry,
-                                        NULL,
-                                        ht,
-                                        pclient,
-                                        pcontext, pstatus) != CACHE_INODE_SUCCESS)
+      if(cache_inode_add_cached_dirent(pentry_parent,
+                                       pname,
+                                       pentry,
+                                       NULL,
+                                       ht,
+                                       pclient, pcontext, pstatus) != CACHE_INODE_SUCCESS)
         {
           V_w(&pentry_parent->lock);
 
@@ -430,7 +425,7 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
     }
 
   /* Update the parent cached attributes */
-  if (pentry_parent->internal_md.type == DIR_BEGINNING)
+  if(pentry_parent->internal_md.type == DIR_BEGINNING)
     {
       pentry_parent->object.dir_begin.attributes.mtime.seconds = time(NULL);
       pentry_parent->object.dir_begin.attributes.mtime.nseconds = 0;
@@ -440,7 +435,7 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
       /* if the created object is a directory, it contains a link
        * to its parent : '..'. Thus the numlink attr must be increased.
        */
-      if (type == DIR_BEGINNING)
+      if(type == DIR_BEGINNING)
         {
           pentry_parent->object.dir_begin.attributes.numlinks++;
         }
@@ -449,20 +444,20 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
   else
     {
       /* DIR_CONTINUE */
-      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime.
-          seconds = time(NULL);
-      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime.
-          seconds = 0;
+      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
+          mtime.seconds = time(NULL);
+      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
+          mtime.seconds = 0;
       pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.ctime =
           pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime;
 
       /* if the created object is a directory, it contains a link
        * to its parent : '..'. Thus the numlink attr must be increased.
        */
-      if (type == DIR_BEGINNING)
+      if(type == DIR_BEGINNING)
         {
-          pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
-              numlinks++;
+          pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.
+              attributes.numlinks++;
         }
 
     }
@@ -477,7 +472,7 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
   V_w(&pentry_parent->lock);
 
   /* stat */
-  if (*pstatus != CACHE_INODE_SUCCESS)
+  if(*pstatus != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_CREATE] += 1;
   else
     pclient->stat.func_stats.nb_success[CACHE_INODE_CREATE] += 1;

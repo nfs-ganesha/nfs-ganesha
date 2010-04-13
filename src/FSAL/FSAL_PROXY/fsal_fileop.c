@@ -121,14 +121,14 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
   /* sanity checks.
    * note : file_attributes is optional.
    */
-  if (!dirhandle || !filename || !p_context || !file_descriptor)
+  if(!dirhandle || !filename || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
 #ifdef _DEBUG_FSAL
   PRINT_HANDLE("FSAL_open", dirhandle);
 #endif
 
-  if (dirhandle->object_type_reminder != FSAL_TYPE_DIR)
+  if(dirhandle->object_type_reminder != FSAL_TYPE_DIR)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open_by_name);
     }
@@ -158,14 +158,14 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
 
   memset((char *)&name, 0, sizeof(component4));
   name.utf8string_val = nameval;
-  if (fsal_internal_proxy_fsal_name_2_utf8(filename, &name) == FALSE)
+  if(fsal_internal_proxy_fsal_name_2_utf8(filename, &name) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
   convert_bitmap.bitmap4_val = bitmap_conv_val;
   convert_bitmap.bitmap4_len = 2;
 
   /* Get NFSv4 File handle */
-  if (fsal_internal_proxy_extract_fh(&nfs4fh, dirhandle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, dirhandle) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
   bitmap.bitmap4_val = bitmap_open;
@@ -174,14 +174,14 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
   fsal_internal_proxy_create_fattr_bitmap(&bitmap);
 
   share_access = 0;
-  if (openflags & FSAL_O_RDWR == FSAL_O_RDWR)
+  if(openflags & FSAL_O_RDWR == FSAL_O_RDWR)
     share_access |= OPEN4_SHARE_ACCESS_BOTH;
 
-  if (openflags & FSAL_O_RDONLY == FSAL_O_RDONLY)
+  if(openflags & FSAL_O_RDONLY == FSAL_O_RDONLY)
     share_access |= OPEN4_SHARE_ACCESS_READ;
 
-  if ((openflags & FSAL_O_WRONLY == FSAL_O_WRONLY) ||
-      (openflags & FSAL_O_APPEND == FSAL_O_APPEND))
+  if((openflags & FSAL_O_WRONLY == FSAL_O_WRONLY) ||
+     (openflags & FSAL_O_APPEND == FSAL_O_APPEND))
     share_access |= OPEN4_SHARE_ACCESS_WRITE;
 
   /* >> you can check if this is a file if the information
@@ -197,33 +197,34 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
   COMPOUNDV4_ARG_ADD_OP_GETFH(argnfs4);
   COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, bitmap);
 
-  resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_OPEN_NOCREATE].nfs_resop4_u.opopen.
-      OPEN4res_u.resok4.attrset.bitmap4_val = bitmap_res;
-  resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_OPEN_NOCREATE].nfs_resop4_u.opopen.
-      OPEN4res_u.resok4.attrset.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_OPEN_NOCREATE].nfs_resop4_u.
+      opopen.OPEN4res_u.resok4.attrset.bitmap4_val = bitmap_res;
+  resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_OPEN_NOCREATE].nfs_resop4_u.
+      opopen.OPEN4res_u.resok4.attrset.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
-      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_getattr_res;
-  resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
-      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val =
+      bitmap_getattr_res;
+  resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
-      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+  resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
       (char *)&fattr_internal;
-  resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
-      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+  resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
       sizeof(fattr_internal);
 
-  resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_GETFH].nfs_resop4_u.opgetfh.GETFH4res_u.
-      resok4.object.nfs_fh4_val = (char *)padfilehandle;
-  resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_GETFH].nfs_resop4_u.opgetfh.GETFH4res_u.
-      resok4.object.nfs_fh4_len = FSAL_PROXY_FILEHANDLE_MAX_LEN;
+  resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
+      GETFH4res_u.resok4.object.nfs_fh4_val = (char *)padfilehandle;
+  resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
+      GETFH4res_u.resok4.object.nfs_fh4_len = FSAL_PROXY_FILEHANDLE_MAX_LEN;
 
   TakeTokenFSCall();
 
   /* Call the NFSv4 function */
   COMPOUNDV4_EXECUTE(p_context, argnfs4, resnfs4, rc);
-  if (rc != RPC_SUCCESS)
+  if(rc != RPC_SUCCESS)
     {
       ReleaseTokenFSCall();
       Return(ERR_FSAL_IO, rc, INDEX_FSAL_open_by_name);
@@ -232,14 +233,14 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
   ReleaseTokenFSCall();
 
   /* >> convert error code, and return on error << */
-  if (resnfs4.status != NFS4_OK)
+  if(resnfs4.status != NFS4_OK)
     return fsal_internal_proxy_error_convert(resnfs4.status, INDEX_FSAL_open_by_name);
 
   /* Use NFSv4 service function to build the FSAL_attr */
-  if (nfs4_Fattr_To_FSAL_attr(&attributes,
-                              &resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_GETATTR].
-                              nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
-                              obj_attributes) != 1)
+  if(nfs4_Fattr_To_FSAL_attr(&attributes,
+                             &resnfs4.resarray.
+                             resarray_val[FSAL_OPEN_IDX_OP_GETATTR].nfs_resop4_u.
+                             opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
     {
       FSAL_CLEAR_MASK(file_attributes->asked_attributes);
       FSAL_SET_MASK(file_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -247,17 +248,17 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open_by_name);
     }
 
-  if (file_attributes)
+  if(file_attributes)
     {
       memcpy(file_attributes, &attributes, sizeof(attributes));
     }
 
   /* >> fill output struct << */
   /* Build the handle */
-  if (fsal_internal_proxy_create_fh
-      (&resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
-       GETFH4res_u.resok4.object, FSAL_TYPE_FILE, attributes.fileid,
-       &file_descriptor->fhandle) == FALSE)
+  if(fsal_internal_proxy_create_fh
+     (&resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_GETFH].nfs_resop4_u.
+      opgetfh.GETFH4res_u.resok4.object, FSAL_TYPE_FILE, attributes.fileid,
+      &file_descriptor->fhandle) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
   file_descriptor->openflags = openflags;
@@ -266,18 +267,18 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
 
   /* Keep the returned stateid for later use */
   file_descriptor->stateid.seqid =
-      resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_OPEN_NOCREATE].nfs_resop4_u.opopen.
-      OPEN4res_u.resok4.stateid.seqid;
+      resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_OPEN_NOCREATE].nfs_resop4_u.
+      opopen.OPEN4res_u.resok4.stateid.seqid;
   memcpy((char *)file_descriptor->stateid.other,
-         resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_OPEN_NOCREATE].nfs_resop4_u.
-         opopen.OPEN4res_u.resok4.stateid.other, 12);
+         resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_OPEN_NOCREATE].
+         nfs_resop4_u.opopen.OPEN4res_u.resok4.stateid.other, 12);
 
   /* See if a OPEN_CONFIRM is required */
-  if (resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_OPEN_NOCREATE].nfs_resop4_u.opopen.
-      OPEN4res_u.resok4.rflags & OPEN4_RESULT_CONFIRM)
+  if(resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_OPEN_NOCREATE].nfs_resop4_u.
+     opopen.OPEN4res_u.resok4.rflags & OPEN4_RESULT_CONFIRM)
     {
       fsal_status = FSAL_proxy_open_confirm(file_descriptor);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_open_by_name);
     }
 
@@ -343,14 +344,14 @@ static fsal_status_t FSAL_open_stateless(fsal_handle_t * filehandle,    /* IN */
   /* sanity checks.
    * note : file_attributes is optional.
    */
-  if (!filehandle || !p_context || !file_descriptor)
+  if(!filehandle || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
 
 #ifdef _DEBUG_FSAL
   PRINT_HANDLE("FSAL_open_stateless", filehandle);
 #endif
 
-  if (filehandle->object_type_reminder != FSAL_TYPE_FILE)
+  if(filehandle->object_type_reminder != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
     }
@@ -367,7 +368,7 @@ static fsal_status_t FSAL_open_stateless(fsal_handle_t * filehandle,    /* IN */
   fsal_internal_proxy_setup_fattr(&fattr_internal);
 
   /* Get NFSv4 File handle */
-  if (fsal_internal_proxy_extract_fh(&nfs4fh, filehandle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, filehandle) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
 
   bitmap.bitmap4_val = bitmap_open;
@@ -375,14 +376,14 @@ static fsal_status_t FSAL_open_stateless(fsal_handle_t * filehandle,    /* IN */
   fsal_internal_proxy_create_fattr_bitmap(&bitmap);
 
   share_access = 0;
-  if (openflags & FSAL_O_RDWR == FSAL_O_RDWR)
+  if(openflags & FSAL_O_RDWR == FSAL_O_RDWR)
     share_access |= OPEN4_SHARE_ACCESS_BOTH;
 
-  if (openflags & FSAL_O_RDONLY == FSAL_O_RDONLY)
+  if(openflags & FSAL_O_RDONLY == FSAL_O_RDONLY)
     share_access |= OPEN4_SHARE_ACCESS_READ;
 
-  if ((openflags & FSAL_O_WRONLY == FSAL_O_WRONLY) ||
-      (openflags & FSAL_O_APPEND == FSAL_O_APPEND))
+  if((openflags & FSAL_O_WRONLY == FSAL_O_WRONLY) ||
+     (openflags & FSAL_O_APPEND == FSAL_O_APPEND))
     share_access |= OPEN4_SHARE_ACCESS_WRITE;
 
   /* >> you can check if this is a file if the information
@@ -392,24 +393,24 @@ static fsal_status_t FSAL_open_stateless(fsal_handle_t * filehandle,    /* IN */
   COMPOUNDV4_ARG_ADD_OP_PUTFH(argnfs4, nfs4fh);
   COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, bitmap);
 
-  resnfs4.resarray.resarray_val[FSAL_OPEN_STATELESS_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val =
+  resnfs4.resarray.resarray_val[FSAL_OPEN_STATELESS_IDX_OP_GETATTR].
+      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val =
       bitmap_getattr_res;
-  resnfs4.resarray.resarray_val[FSAL_OPEN_STATELESS_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_OPEN_STATELESS_IDX_OP_GETATTR].
+      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_OPEN_STATELESS_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+  resnfs4.resarray.resarray_val[FSAL_OPEN_STATELESS_IDX_OP_GETATTR].
+      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
       (char *)&fattr_internal;
-  resnfs4.resarray.resarray_val[FSAL_OPEN_STATELESS_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+  resnfs4.resarray.resarray_val[FSAL_OPEN_STATELESS_IDX_OP_GETATTR].
+      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
       sizeof(fattr_internal);
 
   TakeTokenFSCall();
 
   /* Call the NFSv4 function */
   COMPOUNDV4_EXECUTE(p_context, argnfs4, resnfs4, rc);
-  if (rc != RPC_SUCCESS)
+  if(rc != RPC_SUCCESS)
     {
       ReleaseTokenFSCall();
       Return(ERR_FSAL_IO, rc, INDEX_FSAL_open);
@@ -418,17 +419,16 @@ static fsal_status_t FSAL_open_stateless(fsal_handle_t * filehandle,    /* IN */
   ReleaseTokenFSCall();
 
   /* >> convert error code, and return on error << */
-  if (resnfs4.status != NFS4_OK)
+  if(resnfs4.status != NFS4_OK)
     return fsal_internal_proxy_error_convert(resnfs4.status, INDEX_FSAL_open);
 
   /* Use NFSv4 service function to build the FSAL_attr */
-  if (file_attributes)
+  if(file_attributes)
     {
-      if (nfs4_Fattr_To_FSAL_attr(&attributes,
-                                  &resnfs4.resarray.resarray_val
-                                  [FSAL_OPEN_STATELESS_IDX_OP_GETATTR].
-                                  nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
-                                  obj_attributes) != 1)
+      if(nfs4_Fattr_To_FSAL_attr(&attributes,
+                                 &resnfs4.resarray.resarray_val
+                                 [FSAL_OPEN_STATELESS_IDX_OP_GETATTR].nfs_resop4_u.
+                                 opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
         {
           FSAL_CLEAR_MASK(file_attributes->asked_attributes);
           FSAL_SET_MASK(file_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -501,13 +501,13 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
   /* sanity checks.
    * note : file_attributes is optional.
    */
-  if (!filehandle || !p_context || !file_descriptor)
+  if(!filehandle || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
 
   /* >> you can check if this is a file if the information
    * is stored into the handle << */
 
-  if (filehandle->object_type_reminder != FSAL_TYPE_FILE)
+  if(filehandle->object_type_reminder != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
     }
@@ -568,10 +568,10 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
 
   /* sanity checks. */
 
-  if (!file_descriptor || !buffer || !read_amount || !end_of_file)
+  if(!file_descriptor || !buffer || !read_amount || !end_of_file)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_read);
 
-  if (seek_descriptor == NULL)
+  if(seek_descriptor == NULL)
     offset = file_descriptor->current_offset;
   else
     {
@@ -601,7 +601,7 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
   argnfs4.argarray.argarray_len = 0;
 
   /* Get NFSv4 File handle */
-  if (fsal_internal_proxy_extract_fh(&nfs4fh, &(file_descriptor->fhandle)) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, &(file_descriptor->fhandle)) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_read);
 
 #define FSAL_READ_IDX_OP_PUTFH   0
@@ -610,14 +610,14 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
   COMPOUNDV4_ARG_ADD_OP_PUTFH(argnfs4, nfs4fh);
   COMPOUNDV4_ARG_ADD_OP_READ(argnfs4, &(file_descriptor->stateid), offset, buffer_size);
 
-  resnfs4.resarray.resarray_val[FSAL_READ_IDX_OP_READ].nfs_resop4_u.opread.READ4res_u.
-      resok4.data.data_val = buffer;
+  resnfs4.resarray.resarray_val[FSAL_READ_IDX_OP_READ].nfs_resop4_u.opread.
+      READ4res_u.resok4.data.data_val = buffer;
 
   TakeTokenFSCall();
 
   /* Call the NFSv4 function */
   COMPOUNDV4_EXECUTE(file_descriptor->pcontext, argnfs4, resnfs4, rc);
-  if (rc != RPC_SUCCESS)
+  if(rc != RPC_SUCCESS)
     {
       ReleaseTokenFSCall();
 
@@ -627,21 +627,21 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
   ReleaseTokenFSCall();
 
   /* >> convert error code, and return on error << */
-  if (resnfs4.status != NFS4_OK)
+  if(resnfs4.status != NFS4_OK)
     return fsal_internal_proxy_error_convert(resnfs4.status, INDEX_FSAL_read);
 
   /* >> dont forget setting output vars : read_amount, end_of_file << */
   *end_of_file =
-      resnfs4.resarray.resarray_val[FSAL_READ_IDX_OP_READ].nfs_resop4_u.opread.READ4res_u.
-      resok4.eof;
+      resnfs4.resarray.resarray_val[FSAL_READ_IDX_OP_READ].nfs_resop4_u.opread.
+      READ4res_u.resok4.eof;
   *read_amount =
-      resnfs4.resarray.resarray_val[FSAL_READ_IDX_OP_READ].nfs_resop4_u.opread.READ4res_u.
-      resok4.data.data_len;
+      resnfs4.resarray.resarray_val[FSAL_READ_IDX_OP_READ].nfs_resop4_u.opread.
+      READ4res_u.resok4.data.data_len;
 
   /* update the offset within the fsal_fd_t */
   file_descriptor->current_offset +=
-      resnfs4.resarray.resarray_val[FSAL_READ_IDX_OP_READ].nfs_resop4_u.opread.READ4res_u.
-      resok4.data.data_len;
+      resnfs4.resarray.resarray_val[FSAL_READ_IDX_OP_READ].nfs_resop4_u.opread.
+      READ4res_u.resok4.data.data_len;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_read);
 
@@ -694,10 +694,10 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
   nfs_resop4 resoparray[FSAL_WRITE_NB_OP_ALLOC];
 
   /* sanity checks. */
-  if (!file_descriptor || !buffer || !write_amount)
+  if(!file_descriptor || !buffer || !write_amount)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_write);
 
-  if (seek_descriptor == NULL)
+  if(seek_descriptor == NULL)
     offset = file_descriptor->current_offset;
   else
     {
@@ -727,7 +727,7 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
   argnfs4.argarray.argarray_len = 0;
 
   /* Get NFSv4 File handle */
-  if (fsal_internal_proxy_extract_fh(&nfs4fh, &(file_descriptor->fhandle)) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, &(file_descriptor->fhandle)) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_write);
 
 #define FSAL_READ_IDX_OP_PUTFH    0
@@ -741,7 +741,7 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
 
   /* Call the NFSv4 function */
   COMPOUNDV4_EXECUTE(file_descriptor->pcontext, argnfs4, resnfs4, rc);
-  if (rc != RPC_SUCCESS)
+  if(rc != RPC_SUCCESS)
     {
       ReleaseTokenFSCall();
 
@@ -751,18 +751,18 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
   ReleaseTokenFSCall();
 
   /* >> convert error code, and return on error << */
-  if (resnfs4.status != NFS4_OK)
+  if(resnfs4.status != NFS4_OK)
     return fsal_internal_proxy_error_convert(resnfs4.status, INDEX_FSAL_write);
 
   /* Set write_amount */
   *write_amount =
-      (fsal_size_t) resnfs4.resarray.resarray_val[FSAL_READ_IDX_OP_WRITE].nfs_resop4_u.
-      opwrite.WRITE4res_u.resok4.count;
+      (fsal_size_t) resnfs4.resarray.resarray_val[FSAL_READ_IDX_OP_WRITE].
+      nfs_resop4_u.opwrite.WRITE4res_u.resok4.count;
 
   /* update the offset within the fsal_fd_t */
   file_descriptor->current_offset +=
-      resnfs4.resarray.resarray_val[FSAL_READ_IDX_OP_WRITE].nfs_resop4_u.opwrite.
-      WRITE4res_u.resok4.count;
+      resnfs4.resarray.resarray_val[FSAL_READ_IDX_OP_WRITE].nfs_resop4_u.
+      opwrite.WRITE4res_u.resok4.count;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_write);
 }                               /* FSAL_write */
@@ -804,15 +804,15 @@ fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
   argnfs4.argarray.argarray_len = 0;
 
   /* sanity checks. */
-  if (!file_descriptor)
+  if(!file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
 
   /* Check if this was a "stateless" open, then nothing is to be done at close */
-  if (!memcmp(file_descriptor->stateid.other, All_Zero, 12))
+  if(!memcmp(file_descriptor->stateid.other, All_Zero, 12))
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
 
   /* Get NFSv4 File handle */
-  if (fsal_internal_proxy_extract_fh(&nfs4fh, &(file_descriptor->fhandle)) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, &(file_descriptor->fhandle)) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
 
 #define FSAL_CLOSE_IDX_OP_PUTFH 0
@@ -824,7 +824,7 @@ fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
 
   /* Call the NFSv4 function */
   COMPOUNDV4_EXECUTE(file_descriptor->pcontext, argnfs4, resnfs4, rc);
-  if (rc != RPC_SUCCESS)
+  if(rc != RPC_SUCCESS)
     {
       ReleaseTokenFSCall();
 
@@ -834,7 +834,7 @@ fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
   ReleaseTokenFSCall();
 
   /* >> convert error code, and return on error << */
-  if (resnfs4.status != NFS4_OK)
+  if(resnfs4.status != NFS4_OK)
     return fsal_internal_proxy_error_convert(resnfs4.status, INDEX_FSAL_close);
 
   /* Update fd structure */
@@ -882,7 +882,7 @@ fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
   nfs_resop4 resoparray[FSAL_CLOSE_BY_FILEID_NB_OP];
 
   /* sanity checks. */
-  if (!file_descriptor)
+  if(!file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close_by_fileid);
 
   /* Setup results structures */
@@ -896,14 +896,14 @@ fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
 
   /* Get NFSv4 File handle */
 
-  if (fsal_internal_proxy_extract_fh
-      (&nfs4fh_hldir, &(file_descriptor->pcontext->openfh_wd_handle)) == FALSE)
+  if(fsal_internal_proxy_extract_fh
+     (&nfs4fh_hldir, &(file_descriptor->pcontext->openfh_wd_handle)) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close_by_fileid);
 
   snprintf(filename, MAXNAMLEN, ".ganesha.open_by_fid.%llu", fileid);
   name.utf8string_val = nameval;
 
-  if (str2utf8(filename, &name) == -1)
+  if(str2utf8(filename, &name) == -1)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close_by_fileid);
 
 #define FSAL_CLOSE_BY_FILEID_IDX_OP_PUTFH    0
@@ -916,7 +916,7 @@ fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
 
   /* Call the NFSv4 function */
   COMPOUNDV4_EXECUTE(file_descriptor->pcontext, argnfs4, resnfs4, rc);
-  if (rc != RPC_SUCCESS)
+  if(rc != RPC_SUCCESS)
     {
       ReleaseTokenFSCall();
 
@@ -1016,14 +1016,14 @@ fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
   /* sanity checks.
    * note : file_attributes is optional.
    */
-  if (!filehandle || !p_context || !file_descriptor)
+  if(!filehandle || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_fileid);
 
 #ifdef _DEBUG_FSAL
   PRINT_HANDLE("FSAL_open", dirhandle);
 #endif
 
-  if (filehandle->object_type_reminder != FSAL_TYPE_FILE)
+  if(filehandle->object_type_reminder != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open_by_fileid);
     }
@@ -1054,20 +1054,20 @@ fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
   snprintf(filename, MAXNAMLEN, ".ganesha.open_by_fid.%llu", fileid);
   name.utf8string_val = nameval;
 
-  if (str2utf8(filename, &name) == -1)
+  if(str2utf8(filename, &name) == -1)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_fileid);
 
   convert_bitmap.bitmap4_val = bitmap_conv_val;
   convert_bitmap.bitmap4_len = 2;
 
   /* Get NFSv4 File handle */
-  if (fsal_internal_proxy_extract_fh(&nfs4fh, filehandle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, filehandle) == FALSE)
     {
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_fileid);
     }
 
-  if (fsal_internal_proxy_extract_fh(&nfs4fh_hldir, &(p_context->openfh_wd_handle)) ==
-      FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh_hldir, &(p_context->openfh_wd_handle)) ==
+     FALSE)
     {
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_fileid);
     }
@@ -1076,14 +1076,14 @@ fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
   fsal_internal_proxy_create_fattr_bitmap(&bitmap);
 
   share_access = 0;
-  if (openflags & FSAL_O_RDWR == FSAL_O_RDWR)
+  if(openflags & FSAL_O_RDWR == FSAL_O_RDWR)
     share_access |= OPEN4_SHARE_ACCESS_BOTH;
 
-  if (openflags & FSAL_O_RDONLY == FSAL_O_RDONLY)
+  if(openflags & FSAL_O_RDONLY == FSAL_O_RDONLY)
     share_access |= OPEN4_SHARE_ACCESS_READ;
 
-  if ((openflags & FSAL_O_WRONLY == FSAL_O_WRONLY) ||
-      (openflags & FSAL_O_APPEND == FSAL_O_APPEND))
+  if((openflags & FSAL_O_WRONLY == FSAL_O_WRONLY) ||
+     (openflags & FSAL_O_APPEND == FSAL_O_APPEND))
     share_access |= OPEN4_SHARE_ACCESS_WRITE;
 
   /* >> you can check if this is a file if the information
@@ -1105,33 +1105,34 @@ fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
   COMPOUNDV4_ARG_ADD_OP_GETFH(argnfs4);
   COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, bitmap);
 
-  resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_OPEN_NOCREATE].nfs_resop4_u.opopen.
-      OPEN4res_u.resok4.attrset.bitmap4_val = bitmap_res;
-  resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_OPEN_NOCREATE].nfs_resop4_u.opopen.
-      OPEN4res_u.resok4.attrset.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_OPEN_NOCREATE].nfs_resop4_u.
+      opopen.OPEN4res_u.resok4.attrset.bitmap4_val = bitmap_res;
+  resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_OPEN_NOCREATE].nfs_resop4_u.
+      opopen.OPEN4res_u.resok4.attrset.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
-      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_getattr_res;
-  resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
-      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val =
+      bitmap_getattr_res;
+  resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
-      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+  resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
       (char *)&fattr_internal;
-  resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
-      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+  resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
       sizeof(fattr_internal);
 
-  resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
-      GETFH4res_u.resok4.object.nfs_fh4_val = (char *)padfilehandle;
-  resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
-      GETFH4res_u.resok4.object.nfs_fh4_len = FSAL_PROXY_FILEHANDLE_MAX_LEN;
+  resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETFH].nfs_resop4_u.
+      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val = (char *)padfilehandle;
+  resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETFH].nfs_resop4_u.
+      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len = FSAL_PROXY_FILEHANDLE_MAX_LEN;
 
   TakeTokenFSCall();
 
   /* Call the NFSv4 function */
   COMPOUNDV4_EXECUTE(p_context, argnfs4, resnfs4, rc);
-  if (rc != RPC_SUCCESS)
+  if(rc != RPC_SUCCESS)
     {
       ReleaseTokenFSCall();
 
@@ -1141,16 +1142,17 @@ fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
   ReleaseTokenFSCall();
 
   /* >> convert error code, and return on error << */
-  if (resnfs4.status != NFS4_OK)
+  if(resnfs4.status != NFS4_OK)
     {
       return fsal_internal_proxy_error_convert(resnfs4.status, INDEX_FSAL_open_by_fileid);
     }
 
   /* Use NFSv4 service function to build the FSAL_attr */
-  if (nfs4_Fattr_To_FSAL_attr(&attributes,
-                              &resnfs4.resarray.
-                              resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETATTR].nfs_resop4_u.
-                              opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
+  if(nfs4_Fattr_To_FSAL_attr(&attributes,
+                             &resnfs4.
+                             resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETATTR].
+                             nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
+                             obj_attributes) != 1)
     {
       FSAL_CLEAR_MASK(file_attributes->asked_attributes);
       FSAL_SET_MASK(file_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -1158,25 +1160,25 @@ fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open_by_fileid);
     }
 
-  if (file_attributes)
+  if(file_attributes)
     {
       memcpy(file_attributes, &attributes, sizeof(attributes));
     }
 
   /* Keep the returned stateid for later use */
   file_descriptor->stateid.seqid =
-      resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_OPEN_NOCREATE].nfs_resop4_u.opopen.
-      OPEN4res_u.resok4.stateid.seqid;
+      resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_OPEN_NOCREATE].nfs_resop4_u.
+      opopen.OPEN4res_u.resok4.stateid.seqid;
   memcpy((char *)file_descriptor->stateid.other,
-         resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_OPEN_NOCREATE].nfs_resop4_u.
-         opopen.OPEN4res_u.resok4.stateid.other, 12);
+         resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_OPEN_NOCREATE].
+         nfs_resop4_u.opopen.OPEN4res_u.resok4.stateid.other, 12);
 
   /* >> fill output struct << */
   /* Build the handle */
-  if (fsal_internal_proxy_create_fh
-      (&resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
-       GETFH4res_u.resok4.object, FSAL_TYPE_FILE, attributes.fileid,
-       &file_descriptor->fhandle) == FALSE)
+  if(fsal_internal_proxy_create_fh
+     (&resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETFH].nfs_resop4_u.
+      opgetfh.GETFH4res_u.resok4.object, FSAL_TYPE_FILE, attributes.fileid,
+      &file_descriptor->fhandle) == FALSE)
     {
       Mem_Free((char *)name.utf8string_val);
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_fileid);
@@ -1187,11 +1189,11 @@ fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
   file_descriptor->pcontext = p_context;
 
   /* See if a OPEN_CONFIRM is required */
-  if (resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_OPEN_NOCREATE].nfs_resop4_u.
-      opopen.OPEN4res_u.resok4.rflags & OPEN4_RESULT_CONFIRM)
+  if(resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_OPEN_NOCREATE].
+     nfs_resop4_u.opopen.OPEN4res_u.resok4.rflags & OPEN4_RESULT_CONFIRM)
     {
       fsal_status = FSAL_proxy_open_confirm(file_descriptor);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_open);
     }
 

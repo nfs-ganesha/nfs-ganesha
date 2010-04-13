@@ -151,15 +151,15 @@ int nfs4_is_lease_expired(cache_entry_t * pentry)
 {
   nfs_client_id_t nfs_clientid;
 
-  if (pentry->internal_md.type != REGULAR_FILE)
+  if(pentry->internal_md.type != REGULAR_FILE)
     return 0;
 
 #ifdef BUGAZOMEU
-  if (pentry->object.file.state_v4 == NULL)
+  if(pentry->object.file.state_v4 == NULL)
     return 0;
 
-  if (nfs_client_id_get(pentry->object.file.state_v4->clientid4, &nfs_clientid) !=
-      CLIENT_ID_SUCCESS)
+  if(nfs_client_id_get(pentry->object.file.state_v4->clientid4, &nfs_clientid) !=
+     CLIENT_ID_SUCCESS)
     return 0;                   /* No client id, manage it as non-expired */
 
 #ifdef _FULL_DEBUG
@@ -174,7 +174,7 @@ int nfs4_is_lease_expired(cache_entry_t * pentry)
 #endif
 
   /* Check is lease is still valid */
-  if (time(NULL) - nfs_clientid.last_renew > (int)nfs_param.nfsv4_param.lease_lifetime)
+  if(time(NULL) - nfs_clientid.last_renew > (int)nfs_param.nfsv4_param.lease_lifetime)
     return 1;
   else
     return 0;

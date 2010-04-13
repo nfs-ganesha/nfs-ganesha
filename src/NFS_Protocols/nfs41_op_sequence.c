@@ -151,20 +151,20 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
   res_SEQUENCE4.sr_status = NFS4_OK;
 
   /* OP_SEQUENCE is always the first operation of the request */
-  if (data->oppos != 0)
+  if(data->oppos != 0)
     {
       res_SEQUENCE4.sr_status = NFS4ERR_SEQUENCE_POS;
       return res_SEQUENCE4.sr_status;
     }
 
-  if (!nfs41_Session_Get_Pointer(arg_SEQUENCE4.sa_sessionid, &psession))
+  if(!nfs41_Session_Get_Pointer(arg_SEQUENCE4.sa_sessionid, &psession))
     {
       res_SEQUENCE4.sr_status = NFS4ERR_BADSESSION;
       return res_SEQUENCE4.sr_status;
     }
 
   /* Check is slot is compliant with ca_maxrequests */
-  if (arg_SEQUENCE4.sa_slotid >= psession->fore_channel_attrs.ca_maxrequests)
+  if(arg_SEQUENCE4.sa_slotid >= psession->fore_channel_attrs.ca_maxrequests)
     {
       res_SEQUENCE4.sr_status = NFS4ERR_BADSLOT;
       return res_SEQUENCE4.sr_status;
@@ -174,13 +174,11 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
   data->use_drc = FALSE;
 
   P(psession->slots[arg_SEQUENCE4.sa_slotid].lock);
-  if (psession->slots[arg_SEQUENCE4.sa_slotid].sequence + 1 !=
-      arg_SEQUENCE4.sa_sequenceid)
+  if(psession->slots[arg_SEQUENCE4.sa_slotid].sequence + 1 != arg_SEQUENCE4.sa_sequenceid)
     {
-      if (psession->slots[arg_SEQUENCE4.sa_slotid].sequence ==
-          arg_SEQUENCE4.sa_sequenceid)
+      if(psession->slots[arg_SEQUENCE4.sa_slotid].sequence == arg_SEQUENCE4.sa_sequenceid)
         {
-          if (psession->slots[arg_SEQUENCE4.sa_slotid].cache_used == TRUE)
+          if(psession->slots[arg_SEQUENCE4.sa_slotid].cache_used == TRUE)
             {
               /* Replay operation through the DRC */
               data->use_drc = TRUE;
@@ -216,7 +214,7 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
   res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_target_highest_slotid = arg_SEQUENCE4.sa_slotid;    /* Maybe not the best choice */
   res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_status_flags = 0;   /* What is to be set here ? */
 
-  if (arg_SEQUENCE4.sa_cachethis == TRUE)
+  if(arg_SEQUENCE4.sa_cachethis == TRUE)
     {
       data->pcached_res = psession->slots[arg_SEQUENCE4.sa_slotid].cached_result;
       psession->slots[arg_SEQUENCE4.sa_slotid].cache_used = TRUE;

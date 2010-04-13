@@ -42,7 +42,7 @@ void testparam_init_defaults(struct testparam *t)
 
 void free_btest(struct btest *b)
 {
-  if (b->nextbtest != NULL)
+  if(b->nextbtest != NULL)
     free_btest(b->nextbtest);
   free(b);
   return;
@@ -71,9 +71,9 @@ struct btest *get_btest_args(struct testparam *param, enum test_number k)
 {
   struct btest *it = param->btest;
 
-  while (it)
+  while(it)
     {
-      if (it->num == k || it->num2 == k)
+      if(it->num == k || it->num2 == k)
         return it;
       it = it->nextbtest;
     }
@@ -83,13 +83,13 @@ struct btest *get_btest_args(struct testparam *param, enum test_number k)
 
 struct testparam *readin_config(char *fname)
 {
-  if ((yyin = fopen(fname, "r")) == NULL)
+  if((yyin = fopen(fname, "r")) == NULL)
     {
       fprintf(stderr, "can't open %s: %s\n", fname, strerror(errno));
       return NULL;
     }
 
-  if (yyparse() != 0)
+  if(yyparse() != 0)
     {
       fprintf(stderr, "error parsing or activating the config file: %s\n", fname);
       return NULL;

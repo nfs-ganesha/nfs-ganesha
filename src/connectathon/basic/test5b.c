@@ -87,9 +87,9 @@ int main(int argc, char *argv[])
   setbuf(stdout, NULL);
   Myname = *argv++;
   argc--;
-  while (argc && **argv == '-')
+  while(argc && **argv == '-')
     {
-      for (opts = &argv[0][1]; *opts; opts++)
+      for(opts = &argv[0][1]; *opts; opts++)
         {
           switch (*opts)
             {
@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
       argv++;
     }
 
-  if (argc)
+  if(argc)
     {
       config_file = *argv;
       argc--;
@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-  if (argc != 0)
+  if(argc != 0)
     {
       fprintf(stderr, "too many parameters");
       usage();
@@ -140,14 +140,14 @@ int main(int argc, char *argv[])
     }
 
   param = readin_config(config_file);
-  if (param == NULL)
+  if(param == NULL)
     {
       fprintf(stderr, "Nothing built\n");
       exit(1);
     }
 
   b = get_btest_args(param, FIVE);
-  if (b == NULL)
+  if(b == NULL)
     {
       fprintf(stderr, "Missing basic test number 5 in the config file '%s'\n",
               config_file);
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-  if (b->count == -1)
+  if(b->count == -1)
     {
       fprintf(stderr,
               "Missing 'count' parameter in the config file '%s' for the basic test number 5\n",
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
       free_testparam(param);
       exit(1);
     }
-  if (b->size == -1)
+  if(b->size == -1)
     {
       fprintf(stderr,
               "Missing 'size' parameter in the config file '%s' for the basic test number 5\n",
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
 
   free_testparam(param);
 
-  if (!Fflag)
+  if(!Fflag)
     {
       Tflag = 0;
       count = 1;
@@ -195,35 +195,35 @@ int main(int argc, char *argv[])
   mtestdir(test_dir);
 
   starttime();
-  for (ct = 0; ct < count; ct++)
+  for(ct = 0; ct < count; ct++)
     {
-      if ((fd = open(bigfile, roflags)) < 0)
+      if((fd = open(bigfile, roflags)) < 0)
         {
           error("can't open '%s'", bigfile);
           exit(1);
         }
 #ifdef MMAP
       maddr = mmap((caddr_t) 0, (size_t) size, PROT_READ, MAP_PRIVATE, fd, (off_t) 0);
-      if (maddr == MAP_FAILED)
+      if(maddr == MAP_FAILED)
         {
           error("can't mmap '%s'", bigfile);
           exit(1);
         }
-      if (msync(maddr, (size_t) size, MS_INVALIDATE) < 0)
+      if(msync(maddr, (size_t) size, MS_INVALIDATE) < 0)
         {
           error("can't invalidate pages for '%s'", bigfile);
           exit(1);
         }
-      if (munmap(maddr, (size_t) size) < 0)
+      if(munmap(maddr, (size_t) size) < 0)
         {
           error("can't munmap '%s'", bigfile);
           exit(1);
         }
 #endif
-      for (si = size; si > 0; si -= bytes)
+      for(si = size; si > 0; si -= bytes)
         {
           bytes = MIN(BUFSZ, si);
-          if (read(fd, buf, bytes) != bytes)
+          if(read(fd, buf, bytes) != bytes)
             {
               error("'%s' read failed", bigfile);
               exit(1);
@@ -235,10 +235,10 @@ int main(int argc, char *argv[])
 
   fprintf(stdout, "\tread %ld byte file %d times", (long)size, count);
 
-  if (Tflag)
+  if(Tflag)
     {
       etime = (double)time.tv_sec + (double)time.tv_usec / 1000000.0;
-      if (etime != 0.0)
+      if(etime != 0.0)
         {
           fprintf(stdout, " in %ld.%02ld seconds (%ld bytes/sec)",
                   (long)time.tv_sec, (long)time.tv_usec / 10000,
@@ -252,19 +252,19 @@ int main(int argc, char *argv[])
     }
   fprintf(stdout, "\n");
 
-  if (unlink(bigfile) < 0)
+  if(unlink(bigfile) < 0)
     {
       error("can't unlink '%s'", bigfile);
       exit(1);
     }
 
-  if ((log = fopen(log_file, "a")) == NULL)
+  if((log = fopen(log_file, "a")) == NULL)
     {
       printf("Enable to open the file '%s'\n", log_file);
       complete();
     }
 #ifdef _TOTO
-  if (etime != 0.0)
+  if(etime != 0.0)
     {
       fprintf(log, "b5b\t%d\t%d\t%ld.%02ld\t%ld\n", (long)size, count, (long)time.tv_sec,
               (long)time.tv_usec / 10000, (long)((double)size * ((double)count / etime)));

@@ -32,7 +32,7 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if (!filehandle || !p_context)
+  if(!filehandle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
   /* GHOSTFS is read only */

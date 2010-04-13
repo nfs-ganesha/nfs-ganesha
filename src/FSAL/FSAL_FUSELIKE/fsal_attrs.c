@@ -59,19 +59,19 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
   /* sanity checks.
    * note : object_attributes is mandatory in FSAL_getattrs.
    */
-  if (!filehandle || !p_context || !object_attributes)
+  if(!filehandle || !p_context || !object_attributes)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
 
   /* get the full path for the object */
   rc = NamespacePath(filehandle->inode, filehandle->device, filehandle->validator,
                      object_path);
-  if (rc)
+  if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_getattrs);
 
   /* set context for the next operation, so it can be retrieved by FS thread */
   fsal_set_thread_context(p_context);
 
-  if (p_fs_ops->getattr)
+  if(p_fs_ops->getattr)
     {
       TakeTokenFSCall();
 
@@ -79,7 +79,7 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
 
       ReleaseTokenFSCall();
 
-      if (rc)
+      if(rc)
         Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_getattrs);
     }
   else
@@ -111,7 +111,7 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
 
   status = posix2fsal_attributes(&obj_stat, object_attributes);
 
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     {
       FSAL_CLEAR_MASK(object_attributes->asked_attributes);
       FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -171,7 +171,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if (!filehandle || !p_context || !attrib_set)
+  if(!filehandle || !p_context || !attrib_set)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_setattrs);
 
   /* local copy of attributes */
@@ -181,11 +181,11 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
 
   /* Is it allowed to change times ? */
 
-  if (!global_fs_info.cansettime)
+  if(!global_fs_info.cansettime)
     {
 
-      if (attrs.asked_attributes
-          & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))
+      if(attrs.asked_attributes
+         & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))
         {
 
           /* handled as an unsettable attribute. */
@@ -196,7 +196,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
 
   /* apply umask, if mode attribute is to be changed */
 
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MODE))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MODE))
     {
       attrs.mode &= (~global_fs_info.umask);
     }
@@ -205,7 +205,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
 
   rc = NamespacePath(filehandle->inode, filehandle->device, filehandle->validator,
                      object_path);
-  if (rc)
+  if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_setattrs);
 
   /* set context for the next operation, so it can be retrieved by FS thread */
@@ -214,7 +214,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
   /**********
    *  CHMOD *
    **********/
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MODE))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MODE))
     {
       /* /!\ this must be ignored for symlinks */
       /* We must retrieve initial value of atime and mtime because
@@ -226,10 +226,10 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
 
       status = FSAL_getattrs(filehandle, p_context, &tmp_attrs);
 
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_setattrs);
 
-      if ((tmp_attrs.type != FSAL_TYPE_LNK) && (p_fs_ops->chmod != NULL))
+      if((tmp_attrs.type != FSAL_TYPE_LNK) && (p_fs_ops->chmod != NULL))
         {
           TakeTokenFSCall();
           rc = p_fs_ops->chmod(object_path, fsal2unix_mode(attrs.mode));
@@ -238,7 +238,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
 #ifdef _DEBUG_FSAL
           printf("chmod: status = %d\n", rc);
 #endif
-          if (rc)
+          if(rc)
             Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
         }
       /* else : ignored */
@@ -248,10 +248,10 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
   /*************
    *  TRUNCATE *
    *************/
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_SIZE))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_SIZE))
     {
 
-      if (p_fs_ops->truncate)
+      if(p_fs_ops->truncate)
         {
           TakeTokenFSCall();
           rc = p_fs_ops->truncate(object_path, (off_t) attrs.filesize);
@@ -260,7 +260,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
 #ifdef _DEBUG_FSAL
           printf("truncate: status = %d\n", rc);
 #endif
-          if (rc)
+          if(rc)
             Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
         }
       /* else : ignored */
@@ -270,10 +270,9 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
   /***********
    *  CHOWN  *
    ***********/
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_OWNER))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_OWNER))
     {
-      if ((p_context->credential.user != 0)
-          && (p_context->credential.user != attrs.owner))
+      if((p_context->credential.user != 0) && (p_context->credential.user != attrs.owner))
         {
           DisplayLogJdLevel(fsal_log, NIV_EVENT,
                             "FSAL_setattr: Denied user %d to change object's owner to %d",
@@ -282,10 +281,10 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
         }
     }
 
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_GROUP))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_GROUP))
     {
-      if ((p_context->credential.user != 0)
-          && (p_context->credential.group != attrs.group))
+      if((p_context->credential.user != 0)
+         && (p_context->credential.group != attrs.group))
         {
           DisplayLogJdLevel(fsal_log, NIV_EVENT,
                             "FSAL_setattr: Denied user %d (group %d) to change object's group to %d",
@@ -295,9 +294,9 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
         }
     }
 
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
     {
-      if (p_fs_ops->chown)
+      if(p_fs_ops->chown)
         {
           TakeTokenFSCall();
           rc = p_fs_ops->chown(object_path,
@@ -311,7 +310,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
 #ifdef _DEBUG_FSAL
           printf("chown: status = %d\n", rc);
 #endif
-          if (rc)
+          if(rc)
             Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
         }
       /* else : ignored */
@@ -320,7 +319,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
   /***********
    *  UTIME  *
    ***********/
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME | FSAL_ATTR_MTIME))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME | FSAL_ATTR_MTIME))
     {
 
       /* We must retrieve initial value of atime and mtime because
@@ -333,12 +332,12 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
 
       status = FSAL_getattrs(filehandle, p_context, &tmp_attrs);
 
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_setattrs);
 
       /* utimens is provided */
 
-      if (p_fs_ops->utimens)
+      if(p_fs_ops->utimens)
         {
           struct timespec tv[2];
 
@@ -363,10 +362,10 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
 #ifdef _DEBUG_FSAL
           printf("utimens: status = %d\n", rc);
 #endif
-          if (rc)
+          if(rc)
             Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
         }
-      else if (p_fs_ops->utime)
+      else if(p_fs_ops->utime)
         {
           /* utime is provided */
           struct utimbuf utb;
@@ -385,7 +384,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
 #ifdef _DEBUG_FSAL
           printf("utime: status = %d\n", rc);
 #endif
-          if (rc)
+          if(rc)
             Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
         }
       /* else : ignored */
@@ -394,13 +393,13 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
 
   /* atime/mtime */
   /* Optionaly fill output attributes. */
-  if (object_attributes)
+  if(object_attributes)
     {
 
       status = FSAL_getattrs(filehandle, p_context, object_attributes);
 
       /* on error, we set a special bit in the mask. */
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(object_attributes->asked_attributes);
           FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

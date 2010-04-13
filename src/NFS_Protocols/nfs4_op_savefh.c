@@ -157,7 +157,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   resp->nfs_resop4_u.opsavefh.status = NFS4_OK;
 
   /* If there is no currentFH, teh  return an error */
-  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
+  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
       /* There is no current FH, return NFS4ERR_NOFILEHANDLE */
       resp->nfs_resop4_u.opsavefh.status = NFS4ERR_NOFILEHANDLE;
@@ -165,23 +165,23 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
       resp->nfs_resop4_u.opgetfh.status = NFS4ERR_BADHANDLE;
       return NFS4ERR_BADHANDLE;
     }
 
   /* Tests if teh Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
       resp->nfs_resop4_u.opgetfh.status = NFS4ERR_FHEXPIRED;
       return NFS4ERR_FHEXPIRED;
     }
 
   /* If the savefh is not allocated, do it now */
-  if (data->savedFH.nfs_fh4_len == 0)
+  if(data->savedFH.nfs_fh4_len == 0)
     {
-      if ((error = nfs4_AllocateFH(&(data->savedFH))) != NFS4_OK)
+      if((error = nfs4_AllocateFH(&(data->savedFH))) != NFS4_OK)
         {
           resp->nfs_resop4_u.opsavefh.status = error;
           return error;
@@ -198,7 +198,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
 #ifdef _DEBUG_NFS_V4
   printf("SAVEDFH: File handle = { Length = %d  Val = ", data->savedFH.nfs_fh4_len);
-  for (i = 0; i < data->savedFH.nfs_fh4_len; i++)
+  for(i = 0; i < data->savedFH.nfs_fh4_len; i++)
     printf("%02X", data->savedFH.nfs_fh4_val[i]);
   printf(" }\n");
 #endif

@@ -209,17 +209,17 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
   PseudoFs->root.parent = &(PseudoFs->root);    /* root is its own parent */
 
   /* Allocation of the parsing table */
-  for (i = 0; i < NB_TOK_PATH; i++)
-    if ((PathTok[i] = (char *)Mem_Alloc(MAXNAMLEN)) == NULL)
+  for(i = 0; i < NB_TOK_PATH; i++)
+    if((PathTok[i] = (char *)Mem_Alloc(MAXNAMLEN)) == NULL)
       return ENOMEM;
 
-  while (entry)
+  while(entry)
     {
       /* To not forget to init "/" entry */
       PseudoFsCurrent = &(PseudoFs->root);
       PseudoFs->reverse_tab[0] = &(PseudoFs->root);
 
-      if (entry->options & EXPORT_OPTION_PSEUDO)
+      if(entry->options & EXPORT_OPTION_PSEUDO)
         {
           DisplayLogLevel(NIV_FULL_DEBUG, "BUILDING PSEUDOFS: Id          = %d",
                           entry->id);
@@ -238,9 +238,9 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
 
           /* Parsing the path */
           strncpy(tmp_pseudopath, entry->pseudopath, MAXPATHLEN);
-          if ((NbTokPath =
-               nfs_ParseConfLine(PathTok, NB_TOK_PATH, tmp_pseudopath, find_slash,
-                                 find_endLine)) < 0)
+          if((NbTokPath =
+              nfs_ParseConfLine(PathTok, NB_TOK_PATH, tmp_pseudopath, find_slash,
+                                find_endLine)) < 0)
             {
               /* Path is badly formed */
               DisplayLog("BUILDING PSEUDOFS: Invalid 'pseudo' option: %s",
@@ -249,7 +249,7 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
             }
 
           /* there must be a leading '/' in the pseudo path */
-          if (entry->pseudopath[0] != '/')
+          if(entry->pseudopath[0] != '/')
             {
               /* Path is badly formed */
               DisplayLog("Pseudo Path '%s' is badly formed", entry->pseudopath);
@@ -260,25 +260,25 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
            * we can avoid looking at PathTok[0] which is necessary '\0'. That's 
            * the reason why we start looping at pos = 1 */
 #ifdef _DEBUG_NFS_V4
-          for (j = 1; j < NbTokPath; j++)
+          for(j = 1; j < NbTokPath; j++)
             printf("     tokens are #%s#\n", PathTok[j]);
 #endif
 
-          for (j = 1; j < NbTokPath; j++)
+          for(j = 1; j < NbTokPath; j++)
             {
               found = 0;
-              for (iterPseudoFs = PseudoFsCurrent->sons; iterPseudoFs != NULL;
-                   iterPseudoFs = iterPseudoFs->next)
+              for(iterPseudoFs = PseudoFsCurrent->sons; iterPseudoFs != NULL;
+                  iterPseudoFs = iterPseudoFs->next)
                 {
                   /* Looking for a matching entry */
-                  if (!strcmp(iterPseudoFs->name, PathTok[j]))
+                  if(!strcmp(iterPseudoFs->name, PathTok[j]))
                     {
                       found = 1;
                       break;
                     }
                 }               /* for iterPseudoFs */
 
-              if (found)
+              if(found)
                 {
                   /* a matching entry was found in the tree */
                   PseudoFsCurrent = iterPseudoFs;
@@ -286,8 +286,8 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
               else
                 {
                   /* a new entry is to be created */
-                  if ((newPseudoFsEntry =
-                       (pseudofs_entry_t *) Mem_Alloc(sizeof(pseudofs_entry_t))) == NULL)
+                  if((newPseudoFsEntry =
+                      (pseudofs_entry_t *) Mem_Alloc(sizeof(pseudofs_entry_t))) == NULL)
                     return ENOMEM;
 
                   /* Creating the new entry, allocate an id for it and add it to reverse tab */
@@ -303,7 +303,7 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
                            PseudoFsCurrent->fullname, PathTok[j]);
 
                   /* Step into the new entry and attach it to the tree */
-                  if (PseudoFsCurrent->sons == NULL)
+                  if(PseudoFsCurrent->sons == NULL)
                     PseudoFsCurrent->sons = newPseudoFsEntry;
                   else
                     {
@@ -327,7 +327,7 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
     }                           /* while( entry ) */
 
   /* desalocation of the parsing table */
-  for (i = 0; i < NB_TOK_PATH; i++)
+  for(i = 0; i < NB_TOK_PATH; i++)
     Mem_Free(PathTok[i]);
 
   return (0);
@@ -445,14 +445,14 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
                     attrmasklen);
 #endif
 
-  if (attrmasklen == 0)
+  if(attrmasklen == 0)
     {
       Bitmap->bitmap4_len = 0;
       Bitmap->bitmap4_val = 0;
       return 0;                 /* Nothing to be done */
     }
 
-  for (i = 0; i < attrmasklen; i++)
+  for(i = 0; i < attrmasklen; i++)
     {
       attribute_to_set = attrmasklist[i];
 
@@ -483,9 +483,9 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 
           /* How many supported attributes ? Compute the result in variable named c and set attrvalslist_supported  */
           c = 0;
-          for (k = FATTR4_SUPPORTED_ATTRS; k <= FATTR4_MOUNTED_ON_FILEID; k++)
+          for(k = FATTR4_SUPPORTED_ATTRS; k <= FATTR4_MOUNTED_ON_FILEID; k++)
             {
-              if (fattr4tab[k].supported)
+              if(fattr4tab[k].supported)
                 {
                   attrvalslist_supported[c++] = k;
                 }
@@ -493,8 +493,8 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 
           /* Let set the reply bitmap */
           /** @todo: BUGAZOMEU: Allocation at NULL Adress here.... */
-          if ((supported_attrs.bitmap4_val =
-               (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
+          if((supported_attrs.bitmap4_val =
+              (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
             return -1;
           memset(supported_attrs.bitmap4_val, 0, 2 * sizeof(uint32_t));
           nfs4_list_to_bitmap4(&supported_attrs, &c, attrvalslist_supported);
@@ -517,7 +517,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           LastOffset += sizeof(uint32_t);
 
           /* And then the data */
-          for (k = 0; k < supported_attrs.bitmap4_len; k++)
+          for(k = 0; k < supported_attrs.bitmap4_len; k++)
             {
               supported_attrs_val = htonl(supported_attrs.bitmap4_val[k]);
               memcpy((char *)(attrvalsBuffer + LastOffset), &supported_attrs_val,
@@ -615,7 +615,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           printf("-----> Wanting FATTR4_FSID\n");
 #endif
           /* The file system id (should be unique per fileset according to the HPSS logic) */
-          if (psfsp->junction_export == NULL)
+          if(psfsp->junction_export == NULL)
             {
               fsid.major = nfs_htonl64(152LL);
               fsid.minor = nfs_htonl64(152LL);
@@ -757,7 +757,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           /* XDR's special stuff for 32-bit alignment */
           len = objFH->nfs_fh4_len;
           off = 0;
-          while ((len + off) % 4 != 0)
+          while((len + off) % 4 != 0)
             {
               char c = '\0';
 
@@ -950,13 +950,13 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           printf("-----> Wanting FATTR4_OWNER\n");
 #endif
           /* Return the uid as a human readable utf8 string */
-          if (uid2utf8(NFS4_ROOT_UID, &file_owner) == 0)
+          if(uid2utf8(NFS4_ROOT_UID, &file_owner) == 0)
             {
               u_int utf8len = 0;
               u_int deltalen = 0;
 
               /* Take care of 32 bits alignment */
-              if (file_owner.utf8string_len % 4 == 0)
+              if(file_owner.utf8string_len % 4 == 0)
                 deltalen = 0;
               else
                 deltalen = 4 - file_owner.utf8string_len % 4;
@@ -973,7 +973,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
               Mem_Free((char *)file_owner.utf8string_val);
 
               /* Pad with zero to keep xdr alignement */
-              if (deltalen != 0)
+              if(deltalen != 0)
                 memset((char *)(attrvalsBuffer + LastOffset), 0, deltalen);
               LastOffset += deltalen;
 
@@ -988,13 +988,13 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           printf("-----> Wanting FATTR4_OWNER_GROUP\n");
 #endif
           /* Return the uid as a human readable utf8 string */
-          if (gid2utf8(2, &file_owner_group) == 0)
+          if(gid2utf8(2, &file_owner_group) == 0)
             {
               u_int utf8len = 0;
               u_int deltalen = 0;
 
               /* Take care of 32 bits alignment */
-              if (file_owner_group.utf8string_len % 4 == 0)
+              if(file_owner_group.utf8string_len % 4 == 0)
                 deltalen = 0;
               else
                 deltalen = 4 - file_owner_group.utf8string_len % 4;
@@ -1011,7 +1011,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
               Mem_Free((char *)file_owner_group.utf8string_val);
 
               /* Pad with zero to keep xdr alignement */
-              if (deltalen != 0)
+              if(deltalen != 0)
                 memset((char *)(attrvalsBuffer + LastOffset), 0, deltalen);
               LastOffset += deltalen;
 
@@ -1245,14 +1245,14 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
         }                       /* switch( attr_to_set ) */
 
       /* Increase the Offset for the next operation if this was a success */
-      if (op_attr_success)
+      if(op_attr_success)
         {
           /* Set the returned bitmask */
           attrvalslist[j] = attribute_to_set;
           j += 1;
 
           /* Be carefull not to get out of attrvalsBuffer */
-          if (LastOffset > NFS4_ATTRVALS_BUFFLEN)
+          if(LastOffset > NFS4_ATTRVALS_BUFFLEN)
             return -1;
         }
 
@@ -1269,8 +1269,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 
   /* Set the bitmap for result */
   /** @todo: BUGAZOMEU: Allocation at NULL Adress here.... */
-  if ((Fattr->attrmask.bitmap4_val =
-       (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
+  if((Fattr->attrmask.bitmap4_val = (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
     return -1;
   memset(Fattr->attrmask.bitmap4_val, 0, 2 * sizeof(uint32_t));
 
@@ -1280,8 +1279,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
   Fattr->attr_vals.attrlist4_len = LastOffset;
 
   /** @todo: BUGAZOMEU: Allocation at NULL Adress here.... */
-  if ((Fattr->attr_vals.attrlist4_val =
-       Mem_Alloc(Fattr->attr_vals.attrlist4_len)) == NULL)
+  if((Fattr->attr_vals.attrlist4_val = Mem_Alloc(Fattr->attr_vals.attrlist4_len)) == NULL)
     return -1;
   memset(Fattr->attr_vals.attrlist4_val, 0, Fattr->attr_vals.attrlist4_len);
 
@@ -1318,7 +1316,7 @@ int nfs4_FhandleToPseudo(nfs_fh4 * fh4p, pseudofs_t * psfstree,
   pfhandle4 = (file_handle_v4_t *) (fh4p->nfs_fh4_val);
 
   /* The function must be called with a fh pointed to a pseudofs entry */
-  if (pfhandle4->pseudofs_flag == FALSE)
+  if(pfhandle4->pseudofs_flag == FALSE)
     return FALSE;
 
   /* Get the object pointer by using the reverse tab in the pseudofs structure */
@@ -1380,10 +1378,10 @@ int nfs4_CreateROOTFH4(nfs_fh4 * fh4p, compound_data_t * data)
   DisplayLogLevel(NIV_FULL_DEBUG, "CREATE ROOTFH (pseudo): root to pseudofs = #%s#",
                   psfsentry.name);
 
-  if ((status = nfs4_AllocateFH(&(data->rootFH))) != NFS4_OK)
+  if((status = nfs4_AllocateFH(&(data->rootFH))) != NFS4_OK)
     return status;
 
-  if (!nfs4_PseudoToFhandle(&(data->rootFH), &psfsentry))
+  if(!nfs4_PseudoToFhandle(&(data->rootFH), &psfsentry))
     {
       DisplayLogLevel(NIV_FULL_DEBUG,
                       "CREATE ROOTFH (pseudo): Creation of root fh is impossible");
@@ -1393,7 +1391,7 @@ int nfs4_CreateROOTFH4(nfs_fh4 * fh4p, compound_data_t * data)
   /* Test */
 #ifdef _DEBUG_NFS_V4
   printf("File handle = { Length = %d  Val = ", data->rootFH.nfs_fh4_len);
-  for (i = 0; i < data->rootFH.nfs_fh4_len; i++)
+  for(i = 0; i < data->rootFH.nfs_fh4_len; i++)
     printf("%02X", data->rootFH.nfs_fh4_val[i]);
   printf(" } \n");
 #endif
@@ -1426,16 +1424,16 @@ int nfs4_op_getattr_pseudo(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_GETATTR;
 
   /* Get the pseudo entry related to this fhandle */
-  if (!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
+  if(!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
     {
       res_GETATTR4.status = NFS4ERR_BADHANDLE;
       return res_GETATTR4.status;
     }
 
   /* All directories in pseudo fs have the same Fattr */
-  if (nfs4_PseudoToFattr(&psfsentry,
-                         &(res_GETATTR4.GETATTR4res_u.resok4.obj_attributes),
-                         data, &(data->currentFH), &(arg_GETATTR4.attr_request)) != 0)
+  if(nfs4_PseudoToFattr(&psfsentry,
+                        &(res_GETATTR4.GETATTR4res_u.resok4.obj_attributes),
+                        data, &(data->currentFH), &(arg_GETATTR4.attr_request)) != 0)
     res_GETATTR4.status = NFS4ERR_SERVERFAULT;
   else
     res_GETATTR4.status = NFS4_OK;
@@ -1529,33 +1527,33 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   name[arg_LOOKUP4.objname.utf8string_len] = '\0';
 
   /* Get the pseudo fs entry related to the file handle */
-  if (!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
+  if(!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
     {
       res_LOOKUP4.status = NFS4ERR_BADHANDLE;
       return res_LOOKUP4.status;
     }
 
   found = FALSE;
-  for (iter = psfsentry.sons; iter != NULL; iter = iter->next)
+  for(iter = psfsentry.sons; iter != NULL; iter = iter->next)
     {
-      if (!strcmp(iter->name, name))
+      if(!strcmp(iter->name, name))
         {
           found = TRUE;
           break;
         }
     }
 
-  if (!found)
+  if(!found)
     {
       res_LOOKUP4.status = NFS4ERR_NOENT;
       return res_LOOKUP4.status;
     }
 
   /* A matching entry was found */
-  if (iter->junction_export == NULL)
+  if(iter->junction_export == NULL)
     {
       /* The entry is not a junction, we stay within the pseudo fs */
-      if (!nfs4_PseudoToFhandle(&(data->currentFH), iter))
+      if(!nfs4_PseudoToFhandle(&(data->currentFH), iter))
         {
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
           return res_LOOKUP4.status;
@@ -1572,7 +1570,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       strncpy(data->MntPath, iter->fullname, NFS_MAXPATHLEN);
 
       /* Build credentials */
-      if (nfs4_MakeCred(data) != 0)
+      if(nfs4_MakeCred(data) != 0)
         {
           DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
                             NIV_MAJOR,
@@ -1583,9 +1581,9 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         }
 
       /* Build fsal data for creation of the first entry */
-      if (FSAL_IS_ERROR
-          ((fsal_status =
-            FSAL_str2path(data->pexport->fullpath, strsize, &exportpath_fsal))))
+      if(FSAL_IS_ERROR
+         ((fsal_status =
+           FSAL_str2path(data->pexport->fullpath, strsize, &exportpath_fsal))))
         {
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
           return res_LOOKUP4.status;
@@ -1593,14 +1591,13 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
 
       /* Lookup the FSAL to build the fsal handle */
 #ifdef _USE_MFSL
-      if (FSAL_IS_ERROR(fsal_status = MFSL_lookupPath(&exportpath_fsal,
-                                                      data->pcontext,
-                                                      &data->pclient->mfsl_context,
-                                                      &mobject, NULL)))
+      if(FSAL_IS_ERROR(fsal_status = MFSL_lookupPath(&exportpath_fsal,
+                                                     data->pcontext,
+                                                     &data->pclient->mfsl_context,
+                                                     &mobject, NULL)))
 #else
-      if (FSAL_IS_ERROR(fsal_status = FSAL_lookupPath(&exportpath_fsal,
-                                                      data->pcontext,
-                                                      &fsal_handle, NULL)))
+      if(FSAL_IS_ERROR(fsal_status = FSAL_lookupPath(&exportpath_fsal,
+                                                     data->pcontext, &fsal_handle, NULL)))
 #endif
         {
           DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
@@ -1618,9 +1615,9 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       fsal_handle = mobject.handle;
 #endif
 
-      if (data->mounted_on_FH.nfs_fh4_len == 0)
+      if(data->mounted_on_FH.nfs_fh4_len == 0)
         {
-          if ((error = nfs4_AllocateFH(&(data->mounted_on_FH))) != NFS4_OK)
+          if((error = nfs4_AllocateFH(&(data->mounted_on_FH))) != NFS4_OK)
             {
               DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
                                 NIV_MAJOR,
@@ -1630,9 +1627,9 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
             }
         }
 
-      if (data->currentFH.nfs_fh4_len == 0)
+      if(data->currentFH.nfs_fh4_len == 0)
         {
-          if ((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
+          if((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
             {
               DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
                                 NIV_MAJOR,
@@ -1643,7 +1640,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         }
 
       /* Build the nfs4 handle */
-      if (!nfs4_FSALToFhandle(&data->currentFH, &fsal_handle, data))
+      if(!nfs4_FSALToFhandle(&data->currentFH, &fsal_handle, data))
         {
           DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
                             NIV_MAJOR,
@@ -1660,10 +1657,10 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       /* Add the entry to the cache as a root (BUGAZOMEU: make it a junction entry when junction is available) */
       fsdata.handle = fsal_handle;
       fsdata.cookie = 0;
-      if ((pentry = cache_inode_make_root(&fsdata,
-                                          data->ht,
-                                          ((cache_inode_client_t *) data->pclient),
-                                          data->pcontext, &cache_status)) == NULL)
+      if((pentry = cache_inode_make_root(&fsdata,
+                                         data->ht,
+                                         ((cache_inode_client_t *) data->pclient),
+                                         data->pcontext, &cache_status)) == NULL)
         {
           DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
                             NIV_MAJOR,
@@ -1674,11 +1671,11 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         }
 
       /* Get the attributes (costless: the attributes was cached when the root pentry was created */
-      if (cache_inode_getattr(pentry,
-                              &attr,
-                              data->ht,
-                              ((cache_inode_client_t *) data->pclient),
-                              data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+      if(cache_inode_getattr(pentry,
+                             &attr,
+                             data->ht,
+                             ((cache_inode_client_t *) data->pclient),
+                             data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
         {
           DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
                             NIV_MAJOR,
@@ -1723,21 +1720,21 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_LOOKUPP;
 
   /* Get the pseudo fs entry related to the file handle */
-  if (!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
+  if(!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
     {
       res_LOOKUPP4.status = NFS4ERR_BADHANDLE;
       return res_LOOKUPP4.status;
     }
 
   /* lookupp on the root on the pseudofs should return NFS4ERR_NOENT (RFC3530, page 166) */
-  if (!memcmp(&psfsentry, data->pseudofs->reverse_tab[0], sizeof(psfsentry)))
+  if(!memcmp(&psfsentry, data->pseudofs->reverse_tab[0], sizeof(psfsentry)))
     {
       res_LOOKUPP4.status = NFS4ERR_NOENT;
       return res_LOOKUPP4.status;
     }
 
   /* A matching entry was found */
-  if (!nfs4_PseudoToFhandle(&(data->currentFH), psfsentry.parent))
+  if(!nfs4_PseudoToFhandle(&(data->currentFH), psfsentry.parent))
     {
       res_LOOKUPP4.status = NFS4ERR_SERVERFAULT;
       return res_LOOKUPP4.status;
@@ -1829,14 +1826,14 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                     dircount, maxcount, cookie, space_used, estimated_num_entries);
 
   /* If maxcount is too short, return NFS4ERR_TOOSMALL */
-  if (maxcount < sizeof(entry4) || estimated_num_entries == 0)
+  if(maxcount < sizeof(entry4) || estimated_num_entries == 0)
     {
       res_READDIR4.status = NFS4ERR_TOOSMALL;
       return res_READDIR4.status;
     }
 
   /* Now resolve the file handle to pseudo fs */
-  if (!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
+  if(!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
     {
       res_READDIR4.status = NFS4ERR_BADHANDLE;
       return res_READDIR4.status;
@@ -1845,7 +1842,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                     "PSEUDOFS READDIR in #%s#", psfsentry.name);
 
   /* If this a junction filehandle ? */
-  if (psfsentry.junction_export != NULL)
+  if(psfsentry.junction_export != NULL)
     {
       /* This is a junction */
       DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
@@ -1858,7 +1855,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       strncpy(data->MntPath, psfsentry.fullname, NFS_MAXPATHLEN);
 
       /* Build the credentials */
-      if (nfs4_MakeCred(data) != 0)
+      if(nfs4_MakeCred(data) != 0)
         {
           DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
                             NIV_MAJOR,
@@ -1868,9 +1865,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           return res_READDIR4.status;
         }
       /* Build fsal data for creation of the first entry */
-      if (FSAL_IS_ERROR
-          ((fsal_status =
-            FSAL_str2path(data->pexport->fullpath, strsize, &exportpath_fsal))))
+      if(FSAL_IS_ERROR
+         ((fsal_status =
+           FSAL_str2path(data->pexport->fullpath, strsize, &exportpath_fsal))))
         {
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
           return res_READDIR4.status;
@@ -1878,14 +1875,13 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
       /* Lookup the FSAL to build the fsal handle */
 #ifdef _USE_MFSL
-      if (FSAL_IS_ERROR(fsal_status = MFSL_lookupPath(&exportpath_fsal,
-                                                      data->pcontext,
-                                                      &data->pclient->mfsl_context,
-                                                      &mobject, NULL)))
+      if(FSAL_IS_ERROR(fsal_status = MFSL_lookupPath(&exportpath_fsal,
+                                                     data->pcontext,
+                                                     &data->pclient->mfsl_context,
+                                                     &mobject, NULL)))
 #else
-      if (FSAL_IS_ERROR(fsal_status = FSAL_lookupPath(&exportpath_fsal,
-                                                      data->pcontext,
-                                                      &fsal_handle, NULL)))
+      if(FSAL_IS_ERROR(fsal_status = FSAL_lookupPath(&exportpath_fsal,
+                                                     data->pcontext, &fsal_handle, NULL)))
 #endif
         {
           DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
@@ -1903,9 +1899,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       fsal_handle = mobject.handle;
 #endif
 
-      if (data->mounted_on_FH.nfs_fh4_len == 0)
+      if(data->mounted_on_FH.nfs_fh4_len == 0)
         {
-          if ((error = nfs4_AllocateFH(&(data->mounted_on_FH))) != NFS4_OK)
+          if((error = nfs4_AllocateFH(&(data->mounted_on_FH))) != NFS4_OK)
             {
               DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
                                 NIV_MAJOR,
@@ -1915,9 +1911,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
             }
         }
 
-      if (data->currentFH.nfs_fh4_len == 0)
+      if(data->currentFH.nfs_fh4_len == 0)
         {
-          if ((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
+          if((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
             {
               DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
                                 NIV_MAJOR,
@@ -1928,7 +1924,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
         }
 
       /* Build the nfs4 handle */
-      if (!nfs4_FSALToFhandle(&data->currentFH, &fsal_handle, data))
+      if(!nfs4_FSALToFhandle(&data->currentFH, &fsal_handle, data))
         {
           DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
                             NIV_MAJOR,
@@ -1945,10 +1941,10 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       /* Add the entry to the cache as a root (BUGAZOMEU: make it a junction entry when junction is available) */
       fsdata.handle = fsal_handle;
       fsdata.cookie = 0;
-      if ((pentry = cache_inode_make_root(&fsdata,
-                                          data->ht,
-                                          ((cache_inode_client_t *) data->pclient),
-                                          data->pcontext, &cache_status)) == NULL)
+      if((pentry = cache_inode_make_root(&fsdata,
+                                         data->ht,
+                                         ((cache_inode_client_t *) data->pclient),
+                                         data->pcontext, &cache_status)) == NULL)
         {
           DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
                             NIV_MAJOR,
@@ -1959,11 +1955,11 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
         }
 
       /* Get the attributes (costless: the attributes was cached when the root pentry was created */
-      if (cache_inode_getattr(pentry,
-                              &attr,
-                              data->ht,
-                              ((cache_inode_client_t *) data->pclient),
-                              data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+      if(cache_inode_getattr(pentry,
+                             &attr,
+                             data->ht,
+                             ((cache_inode_client_t *) data->pclient),
+                             data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
         {
           DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
                             NIV_MAJOR,
@@ -1981,9 +1977,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
     }
 
   /* Allocation of the entries array */
-  if ((entry_name_array =
-       (entry_name_array_item_t *) Mem_Alloc(estimated_num_entries *
-                                             (FSAL_MAX_NAME_LEN + 1))) == NULL)
+  if((entry_name_array =
+      (entry_name_array_item_t *) Mem_Alloc(estimated_num_entries *
+                                            (FSAL_MAX_NAME_LEN + 1))) == NULL)
     {
       DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
       res_READDIR4.status = NFS4ERR_SERVERFAULT;
@@ -1991,8 +1987,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
     }
   memset((char *)entry_name_array, 0, estimated_num_entries * (FSAL_MAX_NAME_LEN + 1));
 
-  if ((entry_nfs_array =
-       (entry4 *) Mem_Alloc(estimated_num_entries * sizeof(entry4))) == NULL)
+  if((entry_nfs_array =
+      (entry4 *) Mem_Alloc(estimated_num_entries * sizeof(entry4))) == NULL)
     {
       DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
       res_READDIR4.status = NFS4ERR_SERVERFAULT;
@@ -2003,12 +1999,12 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 #ifdef _WITH_COOKIE_VERIFIER
   /* BUGAZOMEU: management of the cookie verifier */
   memset(cookie_verifier, 0, NFS4_VERIFIER_SIZE);
-  if (NFS_SpecificConfig.UseCookieVerf == 1)
+  if(NFS_SpecificConfig.UseCookieVerf == 1)
     {
       memcpy(cookie_verifier, &ServerBootTime, sizeof(ServerBootTime));
-      if (cookie != 0)
+      if(cookie != 0)
         {
-          if (memcmp(cookie_verifier, arg_READDIR4.cookieverf, NFS4_VERIFIER_SIZE) != 0)
+          if(memcmp(cookie_verifier, arg_READDIR4.cookieverf, NFS4_VERIFIER_SIZE) != 0)
             {
               res_READDIR4.status = NFS4ERR_BAD_COOKIE;
               Mem_Free(entry_nfs_array);
@@ -2027,16 +2023,16 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
   /* make sure to start at the right position given by the cookie */
   iter = psfsentry.sons;
-  if (cookie != 0)
+  if(cookie != 0)
     {
-      for (; iter != NULL; iter = iter->next)
-        if ((iter->pseudo_id + 3) == cookie)
+      for(; iter != NULL; iter = iter->next)
+        if((iter->pseudo_id + 3) == cookie)
           break;
     }
 
   /* Here, where are sure that iter is set to the position indicated eventually by the cookie */
   i = 0;
-  for (; iter != NULL; iter = iter->next)
+  for(; iter != NULL; iter = iter->next)
     {
       DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
                         NIV_FULL_DEBUG, "PSEUDO FS: Found entry %s", iter->name);
@@ -2048,17 +2044,17 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       entry_nfs_array[i].cookie = iter->pseudo_id + 3;
 
       /* If file handle is asked in the attributes, provide it */
-      if (arg_READDIR4.attr_request.bitmap4_val[0] & FATTR4_FILEHANDLE)
+      if(arg_READDIR4.attr_request.bitmap4_val[0] & FATTR4_FILEHANDLE)
         {
-          if (entryFH.nfs_fh4_len == 0)
+          if(entryFH.nfs_fh4_len == 0)
             {
-              if (nfs4_AllocateFH(&entryFH) != NFS4_OK)
+              if(nfs4_AllocateFH(&entryFH) != NFS4_OK)
                 {
                   return res_READDIR4.status;
                 }
             }
 
-          if (!nfs4_PseudoToFhandle(&entryFH, iter))
+          if(!nfs4_PseudoToFhandle(&entryFH, iter))
             {
               res_READDIR4.status = NFS4ERR_SERVERFAULT;
               Mem_Free(entry_nfs_array);
@@ -2066,9 +2062,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
             }
         }
 
-      if (nfs4_PseudoToFattr(iter,
-                             &(entry_nfs_array[i].attrs),
-                             data, &entryFH, &(arg_READDIR4.attr_request)) != 0)
+      if(nfs4_PseudoToFattr(iter,
+                            &(entry_nfs_array[i].attrs),
+                            data, &entryFH, &(arg_READDIR4.attr_request)) != 0)
         {
           /* Should never occured, but the is no reason for leaving the section without any information */
           entry_nfs_array[i].attrs.attrmask = RdAttrErrorBitmap;
@@ -2077,22 +2073,22 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
       /* Chain the entry together */
       entry_nfs_array[i].nextentry = NULL;
-      if (i != 0)
+      if(i != 0)
         entry_nfs_array[i - 1].nextentry = &(entry_nfs_array[i]);
 
       /* Increment the counter */
       i += 1;
 
       /* Did we reach the maximum number of entries */
-      if (i == estimated_num_entries)
+      if(i == estimated_num_entries)
         break;
     }
 
   /* Resize entry_nfs_array */
   /* @todo : Is this reallocation actually needed ? */
 #ifdef BUGAZOMEU
-  if (i < estimated_num_entries)
-    if ((entry_nfs_array = Mem_Realloc(entry_nfs_array, i * sizeof(entry4))) == NULL)
+  if(i < estimated_num_entries)
+    if((entry_nfs_array = Mem_Realloc(entry_nfs_array, i * sizeof(entry4))) == NULL)
       {
         DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
         res_READDIR4.status = NFS4ERR_SERVERFAULT;
@@ -2103,13 +2099,13 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   /* Build the reply */
   memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf, cookie_verifier,
          NFS4_VERIFIER_SIZE);
-  if (i == 0)
+  if(i == 0)
     res_READDIR4.READDIR4res_u.resok4.reply.entries = NULL;
   else
     res_READDIR4.READDIR4res_u.resok4.reply.entries = entry_nfs_array;
 
   /* did we reach the end ? */
-  if (iter == NULL)
+  if(iter == NULL)
     {
       /* Yes, we did */
       res_READDIR4.READDIR4res_u.resok4.reply.eof = TRUE;

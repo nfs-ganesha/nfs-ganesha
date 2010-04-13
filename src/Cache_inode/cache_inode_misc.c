@@ -131,11 +131,11 @@ int cache_inode_compare_key_fsal(hash_buffer_t * buff1, hash_buffer_t * buff2)
   cache_inode_fsal_data_t *pfsdata2 = NULL;
 
   /* Test if one of teh entries are NULL */
-  if (buff1->pdata == NULL)
+  if(buff1->pdata == NULL)
     return (buff2->pdata == NULL) ? 0 : 1;
   else
     {
-      if (buff2->pdata == NULL)
+      if(buff2->pdata == NULL)
         return -1;              /* left member is the greater one */
       else
         {
@@ -181,12 +181,12 @@ int cache_inode_fsaldata_2_key(hash_buffer_t * pkey, cache_inode_fsal_data_t * p
   BuddySetDebugLabel("cache_inode_fsal_data_t:conversion");
 #endif
 
-  if (pclient != NULL)
+  if(pclient != NULL)
     {
       GET_PREALLOC(ppoolfsdata,
                    pclient->pool_key,
                    pclient->nb_prealloc, cache_inode_fsal_data_t, next_alloc);
-      if (ppoolfsdata == NULL)
+      if(ppoolfsdata == NULL)
         {
           DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
                             "Can't allocate a new key from cache pool");
@@ -282,7 +282,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
   pclient->stat.func_stats.nb_call[CACHE_INODE_NEW_ENTRY] += 1;
 
   /* Turn the input to a hash key */
-  if (cache_inode_fsaldata_2_key(&key, pfsdata, NULL))
+  if(cache_inode_fsaldata_2_key(&key, pfsdata, NULL))
     {
       *pstatus = CACHE_INODE_UNAPPROPRIATED_KEY;
 
@@ -294,7 +294,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
     }
 
   /* Check if the entry doesn't already exists */
-  if (HashTable_Get(ht, &key, &value) == HASHTABLE_SUCCESS)
+  if(HashTable_Get(ht, &key, &value) == HASHTABLE_SUCCESS)
     {
       /* Entry is already in the cache, do not add it */
       pentry = (cache_entry_t *) value.pdata;
@@ -316,7 +316,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
 
   GET_PREALLOC(pentry,
                pclient->pool_entry, pclient->nb_prealloc, cache_entry_t, next_alloc);
-  if (pentry == NULL)
+  if(pentry == NULL)
     {
       DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
                         "Can't allocate a new entry from cache pool");
@@ -333,12 +333,12 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
 #endif
 
   /* if entry is of tyep DIR_CONTINUE or DIR_BEGINNING, it should have a pdir_data */
-  if (type == DIR_BEGINNING || type == DIR_CONTINUE)
+  if(type == DIR_BEGINNING || type == DIR_CONTINUE)
     {
       GET_PREALLOC(pdir_data,
                    pclient->pool_dir_data,
                    pclient->nb_pre_dir_data, cache_inode_dir_data_t, next_alloc);
-      if (pdir_data == NULL)
+      if(pdir_data == NULL)
         {
           DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
                             "Can't allocate a new dir_data from cache pool");
@@ -350,7 +350,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
           return NULL;
         }
 
-      if (type == DIR_BEGINNING)
+      if(type == DIR_BEGINNING)
         pentry->object.dir_begin.pdir_data = pdir_data;
       else
         pentry->object.dir_cont.pdir_data = pdir_data;
@@ -362,7 +362,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
   BuddySetDebugLabel("N/A");
 #endif
 
-  if (rw_lock_init(&(pentry->lock)) != 0)
+  if(rw_lock_init(&(pentry->lock)) != 0)
     {
       RELEASE_PREALLOC(pentry, pclient->pool_entry, next_alloc);
       DisplayErrorJd(pclient->log_outputs, ERR_SYS, ERR_PTHREAD_MUTEX_INIT, errno);
@@ -377,15 +377,15 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
   /* Call FSAL to get information about the object if not provided, except for DIR_CONTINUE 
    * that points to their DIR_BEGINNING .
    * If attributes are provided as pfsal_attr parameter, use them. Call FSAL_getattrs otherwise. */
-  if (pfsal_attr == NULL)
+  if(pfsal_attr == NULL)
     {
       /* No attributes are provided, use FSAL_getattrs to query them. */
-      if (type != DIR_CONTINUE)
+      if(type != DIR_CONTINUE)
         {
           fsal_attributes.asked_attributes = pclient->attrmask;
           fsal_status = FSAL_getattrs(&pfsdata->handle, pcontext, &fsal_attributes);
 
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             {
               /* Put the entry back in its pool */
               DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
@@ -393,7 +393,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
               RELEASE_PREALLOC(pentry, pclient->pool_entry, next_alloc);
               *pstatus = cache_inode_error_convert(fsal_status);
 
-              if (fsal_status.major == ERR_FSAL_STALE)
+              if(fsal_status.major == ERR_FSAL_STALE)
                 {
                   cache_inode_status_t kill_status;
 
@@ -401,8 +401,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
                       ("cache_inode_new_entry: Stale FSAL File Handle detected for pentry = %p",
                        pentry);
 
-                  if (cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
-                      CACHE_INODE_SUCCESS)
+                  if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+                     CACHE_INODE_SUCCESS)
                     DisplayLog
                         ("cache_inode_new_entry: Could not kill entry %p, status = %u",
                          pentry, kill_status);
@@ -482,7 +482,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       pentry->object.dir_begin.nbdircont = 0;
       pentry->object.dir_begin.referral = NULL;
 
-      for (i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+      for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
         {
           pentry->object.dir_begin.pdir_data->dir_entries[i].active = INVALID;
           pentry->object.dir_begin.pdir_data->dir_entries[i].pentry = NULL;
@@ -527,7 +527,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       pentry->mobject.handle = pentry->object.dir_cont.pdir_begin->mobject.handle;
 #endif
       pentry->object.dir_cont.nbactive = 0;
-      for (i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+      for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
         {
           pentry->object.dir_cont.pdir_data->dir_entries[i].active = INVALID;
           pentry->object.dir_cont.pdir_data->dir_entries[i].pentry = NULL;
@@ -546,7 +546,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       pentry->object.symlink.attributes = fsal_attributes;
       fsal_status =
           FSAL_pathcpy(&pentry->object.symlink.content, &pcreate_arg->link_content);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
           DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
@@ -614,7 +614,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
     }
 
   /* Turn the input to a hash key */
-  if (cache_inode_fsaldata_2_key(&key, pfsdata, pclient))
+  if(cache_inode_fsaldata_2_key(&key, pfsdata, pclient))
     {
       *pstatus = CACHE_INODE_UNAPPROPRIATED_KEY;
 
@@ -629,9 +629,9 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
   value.pdata = (caddr_t) pentry;
   value.len = sizeof(cache_entry_t);
 
-  if ((rc =
-       HashTable_Test_And_Set(ht, &key, &value,
-                              HASHTABLE_SET_HOW_SET_NO_OVERWRITE)) != HASHTABLE_SUCCESS)
+  if((rc =
+      HashTable_Test_And_Set(ht, &key, &value,
+                             HASHTABLE_SET_HOW_SET_NO_OVERWRITE)) != HASHTABLE_SUCCESS)
     {
       /* Put the entry back in its pool */
       RELEASE_PREALLOC(pentry, pclient->pool_entry, next_alloc);
@@ -650,29 +650,28 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
 
   /* if entry is a REGULAR_FILE and has a related data cache entry from a previous server instance that crashed, recover it */
   /* This is done only when this is not a creation (when creating a new file, it is impossible to have it cached)           */
-  if (type == REGULAR_FILE && create_flag == FALSE)
+  if(type == REGULAR_FILE && create_flag == FALSE)
     {
       cache_content_test_cached(pentry,
                                 (cache_content_client_t *) pclient->pcontent_client,
                                 pcontext, &cache_content_status);
 
-      if (cache_content_status == CACHE_CONTENT_SUCCESS)
+      if(cache_content_status == CACHE_CONTENT_SUCCESS)
         {
           DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
                             "cache_inode_new_entry: Entry %p is already datacached, recovering...",
                             pentry);
 
           /* Adding the cached entry to the data cache */
-          if ((pentry->object.file.pentry_content = cache_content_new_entry(pentry,
-                                                                            NULL,
-                                                                            (cache_content_client_t
-                                                                             *)
-                                                                            pclient->
-                                                                            pcontent_client,
-                                                                            RECOVER_ENTRY,
-                                                                            pcontext,
-                                                                            &cache_content_status))
-              == NULL)
+          if((pentry->object.file.pentry_content = cache_content_new_entry(pentry,
+                                                                           NULL,
+                                                                           (cache_content_client_t
+                                                                            *)
+                                                                           pclient->pcontent_client,
+                                                                           RECOVER_ENTRY,
+                                                                           pcontext,
+                                                                           &cache_content_status))
+             == NULL)
             {
               DisplayLogJd(pclient->log_outputs,
                            "Error recovering cached data for pentry %p", pentry);
@@ -682,9 +681,9 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
                               "Cached data added successfully for pentry %p", pentry);
 
           /* Recover the size from the data cache too... */
-          if ((size_in_cache =
-               cache_content_get_cached_size((cache_content_entry_t *) pentry->object.
-                                             file.pentry_content)) == -1)
+          if((size_in_cache =
+              cache_content_get_cached_size((cache_content_entry_t *) pentry->object.file.
+                                            pentry_content)) == -1)
             {
               DisplayLogJd(pclient->log_outputs,
                            "Error when recovering size in cache for pentry %p", pentry);
@@ -858,26 +857,26 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
   buddy_stats_t __attribute__ ((__unused__)) bstats;
 #endif
 
-  if (pentry == NULL)
+  if(pentry == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
   /* for DIR_CONTINUES, process the call on main dir entry */
-  if (pentry->internal_md.type == DIR_CONTINUE)
+  if(pentry->internal_md.type == DIR_CONTINUE)
     {
       return cache_inode_valid(pentry->object.dir_cont.pdir_begin, op, pclient);
     }
 
   /* Invalidate former entry if needed */
-  if (pentry->gc_lru != NULL && pentry->gc_lru_entry)
+  if(pentry->gc_lru != NULL && pentry->gc_lru_entry)
     {
-      if (LRU_invalidate(pentry->gc_lru, pentry->gc_lru_entry) != LRU_LIST_SUCCESS)
+      if(LRU_invalidate(pentry->gc_lru, pentry->gc_lru_entry) != LRU_LIST_SUCCESS)
         {
           RELEASE_PREALLOC(pentry, pclient->pool_entry, next_alloc);
           return CACHE_INODE_LRU_ERROR;
         }
     }
 
-  if ((plru_entry = LRU_new_entry(pclient->lru_gc, &lru_status)) == NULL)
+  if((plru_entry = LRU_new_entry(pclient->lru_gc, &lru_status)) == NULL)
     {
       RELEASE_PREALLOC(pentry, pclient->pool_entry, next_alloc);
       return CACHE_INODE_LRU_ERROR;
@@ -892,10 +891,10 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
   /* Update internal md */
   pentry->internal_md.valid_state = VALID;
 
-  if (op == CACHE_INODE_OP_GET)
+  if(op == CACHE_INODE_OP_GET)
     pentry->internal_md.read_time = time(NULL);
 
-  if (op == CACHE_INODE_OP_SET)
+  if(op == CACHE_INODE_OP_SET)
     {
       pentry->internal_md.mod_time = time(NULL);
       pentry->internal_md.refresh_time = pentry->internal_md.mod_time;
@@ -912,16 +911,16 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
        pentry->object.file.open_fd.last_op, time(NULL),
        time(NULL) - pentry->object.file.open_fd.last_op, pclient->retention);
 #endif
-  if (pentry->internal_md.type == REGULAR_FILE)
+  if(pentry->internal_md.type == REGULAR_FILE)
     {
-      if (pclient->use_cache == 1)
+      if(pclient->use_cache == 1)
         {
-          if (pentry->object.file.open_fd.fileno != 0)
+          if(pentry->object.file.open_fd.fileno != 0)
             {
-              if (time(NULL) - pentry->object.file.open_fd.last_op > pclient->retention)
+              if(time(NULL) - pentry->object.file.open_fd.last_op > pclient->retention)
                 {
-                  if (cache_inode_close(pentry, pclient, &cache_status) !=
-                      CACHE_INODE_SUCCESS)
+                  if(cache_inode_close(pentry, pclient, &cache_status) !=
+                     CACHE_INODE_SUCCESS)
                     {
                       /* Bad close */
                       return cache_status;
@@ -934,14 +933,14 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
       pclient_content = (cache_content_client_t *) pclient->pcontent_client;
       pentry_content = (cache_content_entry_t *) pentry->object.file.pentry_content;
 
-      if (pentry_content != NULL)
-        if (pclient_content->use_cache == 1)
-          if (pentry_content->local_fs_entry.opened_file.local_fd > 0)
-            if (time(NULL) - pentry_content->local_fs_entry.opened_file.last_op >
-                pclient_content->retention)
-              if (cache_content_close
-                  (pentry_content, pclient_content,
-                   &cache_content_status) != CACHE_CONTENT_SUCCESS)
+      if(pentry_content != NULL)
+        if(pclient_content->use_cache == 1)
+          if(pentry_content->local_fs_entry.opened_file.local_fd > 0)
+            if(time(NULL) - pentry_content->local_fs_entry.opened_file.last_op >
+               pclient_content->retention)
+              if(cache_content_close
+                 (pentry_content, pclient_content,
+                  &cache_content_status) != CACHE_CONTENT_SUCCESS)
                 return CACHE_INODE_CACHE_CONTENT_ERROR;
     }
 #ifdef _DEBUG_CACHE_INODE
@@ -972,7 +971,7 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
 #endif
 
   /* Call LRU_gc_invalid to get ride of the unused invalid lru entries */
-  if (LRU_gc_invalid(pclient->lru_gc, NULL) != LRU_LIST_SUCCESS)
+  if(LRU_gc_invalid(pclient->lru_gc, NULL) != LRU_LIST_SUCCESS)
     return CACHE_INODE_LRU_ERROR;
 
   return CACHE_INODE_SUCCESS;
@@ -1144,7 +1143,7 @@ fsal_handle_t *cache_inode_get_fsal_handle(cache_entry_t * pentry,
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
 
-  if (pentry == NULL)
+  if(pentry == NULL)
     {
       preturned_handle = NULL;
       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
@@ -1206,21 +1205,21 @@ int cache_inode_type_are_rename_compatible(cache_entry_t * pentry_src,
                                            cache_entry_t * pentry_dest)
 {
   /* Manage the case where pentry is DIR_CONTINUE */
-  if (pentry_src->internal_md.type == DIR_CONTINUE)
+  if(pentry_src->internal_md.type == DIR_CONTINUE)
     return cache_inode_type_are_rename_compatible(pentry_src->object.dir_cont.pdir_begin,
                                                   pentry_dest);
 
-  if (pentry_dest->internal_md.type == DIR_CONTINUE)
+  if(pentry_dest->internal_md.type == DIR_CONTINUE)
     return cache_inode_type_are_rename_compatible(pentry_src,
-                                                  pentry_dest->object.dir_cont.
-                                                  pdir_begin);
+                                                  pentry_dest->object.
+                                                  dir_cont.pdir_begin);
 
   /* TRUE is both entries are non directories or to directories and the second is empty */
-  if (pentry_src->internal_md.type == DIR_BEGINNING)
+  if(pentry_src->internal_md.type == DIR_BEGINNING)
     {
-      if (pentry_dest->internal_md.type == DIR_BEGINNING)
+      if(pentry_dest->internal_md.type == DIR_BEGINNING)
         {
-          if (cache_inode_is_dir_empty(pentry_dest) == CACHE_INODE_SUCCESS)
+          if(cache_inode_is_dir_empty(pentry_dest) == CACHE_INODE_SUCCESS)
             return TRUE;
           else
             return FALSE;
@@ -1231,7 +1230,7 @@ int cache_inode_type_are_rename_compatible(cache_entry_t * pentry_src,
   else
     {
       /* pentry_src is not a directory */
-      if (pentry_dest->internal_md.type == DIR_BEGINNING)
+      if(pentry_dest->internal_md.type == DIR_BEGINNING)
         return FALSE;
       else
         return TRUE;
@@ -1271,8 +1270,8 @@ void cache_inode_print_dir(cache_entry_t * cache_entry_root)
   cache_entry_t *cache_entry_iter = NULL;
   int i = 0;
 
-  if (cache_entry_root->internal_md.type != DIR_BEGINNING &&
-      cache_entry_root->internal_md.type != DIR_CONTINUE)
+  if(cache_entry_root->internal_md.type != DIR_BEGINNING &&
+     cache_entry_root->internal_md.type != DIR_CONTINUE)
     {
       printf("This entry is not a directory segment\n");
       return;
@@ -1280,11 +1279,11 @@ void cache_inode_print_dir(cache_entry_t * cache_entry_root)
 
   cache_entry_iter = cache_entry_root;
 
-  while (cache_entry_iter != NULL)
+  while(cache_entry_iter != NULL)
     {
-      if (cache_entry_iter->internal_md.type == DIR_BEGINNING)
+      if(cache_entry_iter->internal_md.type == DIR_BEGINNING)
         {
-          for (i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+          for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
             printf("Name = %s, DIR_BEGINNING entry = %p, active=%d, i=%d\n",
                    cache_entry_iter->object.dir_begin.pdir_data->dir_entries[i].name.name,
                    cache_entry_iter->object.dir_begin.pdir_data->dir_entries[i].pentry,
@@ -1295,7 +1294,7 @@ void cache_inode_print_dir(cache_entry_t * cache_entry_root)
         }
       else
         {
-          for (i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+          for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
             printf("Name = %s, DIR_CONTINUE entry = %p, active=%d, i=%d\n",
                    cache_entry_iter->object.dir_cont.pdir_data->dir_entries[i].name.name,
                    cache_entry_iter->object.dir_cont.pdir_data->dir_entries[i].pentry,
@@ -1327,11 +1326,11 @@ cache_inode_status_t cache_inode_dump_content(char *path, cache_entry_t * pentry
 
   char buff[CACHE_INODE_DUMP_LEN];
 
-  if (pentry->internal_md.type != REGULAR_FILE)
+  if(pentry->internal_md.type != REGULAR_FILE)
     return CACHE_INODE_BAD_TYPE;
 
   /* Open the index file */
-  if ((stream = fopen(path, "w")) == NULL)
+  if((stream = fopen(path, "w")) == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
   /* Dump the information */
@@ -1368,7 +1367,7 @@ cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pent
   char buff[CACHE_INODE_DUMP_LEN];
 
   /* Open the index file */
-  if ((stream = fopen(path, "r")) == NULL)
+  if((stream = fopen(path, "r")) == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
   /* The entry is a file (only file inode are dumped), in state VALID for the gc (not garbageable) */
@@ -1385,7 +1384,7 @@ cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pent
   fscanf(stream, "internal:export_id=%s\n", buff);
 
   fscanf(stream, "file: FSAL handle=%s", buff);
-  if (sscanHandle(&(pentry->object.file.handle), buff) < 0)
+  if(sscanHandle(&(pentry->object.file.handle), buff) < 0)
     {
       /* expected = 2*sizeof(fsal_handle_t) in hexa representation */
       DisplayLog
@@ -1419,10 +1418,10 @@ static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry,
   cache_inode_parent_entry_t *parent_iter = NULL;
 
   /* Set the cache status as INVALID in the directory entries */
-  for (parent_iter = pentry->parent_list; parent_iter != NULL;
-       parent_iter = parent_iter->next_parent)
+  for(parent_iter = pentry->parent_list; parent_iter != NULL;
+      parent_iter = parent_iter->next_parent)
     {
-      if (parent_iter->parent == NULL)
+      if(parent_iter->parent == NULL)
         {
           DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
                             "cache_inode_gc_invalidate_related_dirent: pentry %p has no parent, no dirent to be removed...",
@@ -1434,8 +1433,8 @@ static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry,
       P_w(&parent_iter->parent->lock);
 
       /* Check for type of the parent */
-      if (parent_iter->parent->internal_md.type != DIR_BEGINNING &&
-          parent_iter->parent->internal_md.type != DIR_CONTINUE)
+      if(parent_iter->parent->internal_md.type != DIR_BEGINNING &&
+         parent_iter->parent->internal_md.type != DIR_CONTINUE)
         {
           V_w(&parent_iter->parent->lock);
           /* Major parent incoherency: parent is no directory */
@@ -1445,9 +1444,9 @@ static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry,
         }
 
       /* Set the entry as invalid in the dirent array */
-      if (parent_iter->parent->internal_md.type == DIR_BEGINNING)
+      if(parent_iter->parent->internal_md.type == DIR_BEGINNING)
         {
-          if (parent_iter->subdirpos > CHILDREN_ARRAY_SIZE)
+          if(parent_iter->subdirpos > CHILDREN_ARRAY_SIZE)
             {
               V_w(&parent_iter->parent->lock);
               DisplayLog
@@ -1458,9 +1457,8 @@ static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry,
             }
           else
             {
-              parent_iter->parent->object.dir_begin.pdir_data->dir_entries[parent_iter->
-                                                                           subdirpos].
-                  active = INVALID;
+              parent_iter->parent->object.dir_begin.pdir_data->
+                  dir_entries[parent_iter->subdirpos].active = INVALID;
               /* Garbagge invalidates the effet of the readdir previously made */
               parent_iter->parent->object.dir_begin.has_been_readdir = CACHE_INODE_NO;
               parent_iter->parent->object.dir_begin.nbactive -= 1;
@@ -1468,7 +1466,7 @@ static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry,
         }
       else
         {
-          if (parent_iter->subdirpos > CHILDREN_ARRAY_SIZE)
+          if(parent_iter->subdirpos > CHILDREN_ARRAY_SIZE)
             {
               V_w(&parent_iter->parent->lock);
               DisplayLog
@@ -1479,9 +1477,8 @@ static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry,
             }
           else
             {
-              parent_iter->parent->object.dir_cont.pdir_data->dir_entries[parent_iter->
-                                                                          subdirpos].
-                  active = INVALID;
+              parent_iter->parent->object.dir_cont.pdir_data->
+                  dir_entries[parent_iter->subdirpos].active = INVALID;
               parent_iter->parent->object.dir_cont.nbactive -= 1;
             }
         }
@@ -1525,17 +1522,17 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
 
   DisplayLog("Using cache_inode_kill_entry for entry %p", pentry);
 
-  if (pstatus == NULL)
+  if(pstatus == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
-  if (pentry == NULL || pclient == NULL || ht == NULL)
+  if(pentry == NULL || pclient == NULL || ht == NULL)
     {
       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
       return *pstatus;
     }
 
   /* Get the FSAL handle */
-  if ((pfsal_handle = cache_inode_get_fsal_handle(pentry, pstatus)) == NULL)
+  if((pfsal_handle = cache_inode_get_fsal_handle(pentry, pstatus)) == NULL)
     {
       DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
                         "cache_inode_kill_entry: unable to retrieve pentry's specific filesystem info");
@@ -1543,9 +1540,9 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
     }
 
   /* Invalidate the related LRU gc entry (no more required) */
-  if (pentry->gc_lru_entry != NULL)
+  if(pentry->gc_lru_entry != NULL)
     {
-      if (LRU_invalidate(pentry->gc_lru, pentry->gc_lru_entry) != LRU_LIST_SUCCESS)
+      if(LRU_invalidate(pentry->gc_lru, pentry->gc_lru_entry) != LRU_LIST_SUCCESS)
         {
           *pstatus = CACHE_INODE_LRU_ERROR;
           return *pstatus;
@@ -1554,13 +1551,13 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
 
   fsaldata.handle = *pfsal_handle;
 
-  if (pentry->internal_md.type == DIR_CONTINUE)
+  if(pentry->internal_md.type == DIR_CONTINUE)
     fsaldata.cookie = pentry->object.dir_cont.dir_cont_pos;
   else
     fsaldata.cookie = DIR_START;
 
   /* Use the handle to build the key */
-  if (cache_inode_fsaldata_2_key(&key, &fsaldata, pclient))
+  if(cache_inode_fsaldata_2_key(&key, &fsaldata, pclient))
     {
       DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
                         "cache_inode_kill_entry: could not build hashtable key");
@@ -1571,15 +1568,15 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
     }
 
   /* Remove the whole dir_chain from the cache */
-  if (pentry->internal_md.type == DIR_BEGINNING)
+  if(pentry->internal_md.type == DIR_BEGINNING)
     {
       pentry_iter = pentry->object.dir_begin.pdir_cont;
-      while (pentry_iter != NULL)
+      while(pentry_iter != NULL)
         {
           pentry_iter_save = pentry_iter->object.dir_cont.pdir_cont;
 
-          if (cache_inode_kill_entry(pentry_iter, ht, pclient, &kill_status) !=
-              CACHE_INODE_SUCCESS)
+          if(cache_inode_kill_entry(pentry_iter, ht, pclient, &kill_status) !=
+             CACHE_INODE_SUCCESS)
             DisplayLog("cache_inode_kill_entry: could not kill pentry %p of type %u",
                        pentry_iter, pentry_iter->internal_md.type);
 
@@ -1591,7 +1588,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
   cache_inode_invalidate_related_dirent(pentry, pclient);
 
   /* use the key to delete the entry */
-  if ((rc = HashTable_Del(ht, &key, &old_key, &old_value)) != HASHTABLE_SUCCESS)
+  if((rc = HashTable_Del(ht, &key, &old_key, &old_value)) != HASHTABLE_SUCCESS)
     {
       DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
                         "cache_inode_kill_entry: entry could not be deleted, status = %d",
@@ -1604,7 +1601,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
     }
 
   /* Clean up the associated ressources in the FSAL */
-  if (FSAL_IS_ERROR(fsal_status = FSAL_CleanObjectResources(pfsal_handle)))
+  if(FSAL_IS_ERROR(fsal_status = FSAL_CleanObjectResources(pfsal_handle)))
     {
       DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
                         "cache_inode_kill_entry: Could'nt free FSAL ressources fsal_status.major=%u",
@@ -1616,7 +1613,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
 
   /* Sanity check: old_value.pdata is expected to be equal to pentry,
    * and is released later in this function */
-  if ((cache_entry_t *) old_value.pdata != pentry)
+  if((cache_entry_t *) old_value.pdata != pentry)
     {
       DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
                         "cache_inode_kill_entry: unexpected pdata %p from hash table (pentry=%p)",
@@ -1628,7 +1625,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
 
   /* Recover the parent list entries */
   parent_iter = pentry->parent_list;
-  while (parent_iter != NULL)
+  while(parent_iter != NULL)
     {
       parent_iter_next = parent_iter->next_parent;
 
@@ -1638,23 +1635,23 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
     }
 
   /* If entry is datacached, remove it from the cache */
-  if (pentry->internal_md.type == REGULAR_FILE)
+  if(pentry->internal_md.type == REGULAR_FILE)
     {
       cache_content_status_t cache_content_status;
 
-      if (pentry->object.file.pentry_content != NULL)
-        if (cache_content_release_entry
-            ((cache_content_entry_t *) pentry->object.file.pentry_content,
-             (cache_content_client_t *) pclient->pcontent_client,
-             &cache_content_status) != CACHE_CONTENT_SUCCESS)
+      if(pentry->object.file.pentry_content != NULL)
+        if(cache_content_release_entry
+           ((cache_content_entry_t *) pentry->object.file.pentry_content,
+            (cache_content_client_t *) pclient->pcontent_client,
+            &cache_content_status) != CACHE_CONTENT_SUCCESS)
           DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
                             "Could not removed datacached entry for pentry %p", pentry);
     }
 
   /* If entry is a DIR_CONTINUE or a DIR_BEGINNING, release pdir_data */
-  if (pentry->internal_md.type == DIR_BEGINNING)
+  if(pentry->internal_md.type == DIR_BEGINNING)
     {
-      for (i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+      for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
         {
           pentry->object.dir_begin.pdir_data->dir_entries[i].active = INVALID;
           pentry->object.dir_begin.pdir_data->dir_entries[i].pentry = NULL;
@@ -1664,9 +1661,9 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
                        next_alloc);
     }
 
-  if (pentry->internal_md.type == DIR_CONTINUE)
+  if(pentry->internal_md.type == DIR_CONTINUE)
     {
-      for (i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+      for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
         {
           pentry->object.dir_cont.pdir_data->dir_entries[i].active = INVALID;
           pentry->object.dir_cont.pdir_data->dir_entries[i].pentry = NULL;
@@ -1696,7 +1693,7 @@ void cache_inode_print_srvhandle(char *comment, cache_entry_t * pentry)
   char tag[30];
   char outstr[1024];
 
-  if (pentry == NULL)
+  if(pentry == NULL)
     return;
 
   switch (pentry->internal_md.type)

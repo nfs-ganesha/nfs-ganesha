@@ -186,30 +186,30 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   resp->nfs_resop4_u.oplookupp.status = NFS4_OK;
 
   /* If there is no FH */
-  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
+  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
       res_LOOKUPP4.status = NFS4ERR_NOFILEHANDLE;
       return res_LOOKUPP4.status;
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
       res_LOOKUPP4.status = NFS4ERR_BADHANDLE;
       return res_LOOKUPP4.status;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
       res_LOOKUPP4.status = NFS4ERR_FHEXPIRED;
       return res_LOOKUPP4.status;
     }
 
   /* looking up for parent directory from ROOTFH return NFS4ERR_NOENT (RFC3530, page 166) */
-  if (data->currentFH.nfs_fh4_len == data->rootFH.nfs_fh4_len
-      && memcmp(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
-                data->currentFH.nfs_fh4_len) == 0)
+  if(data->currentFH.nfs_fh4_len == data->rootFH.nfs_fh4_len
+     && memcmp(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
+               data->currentFH.nfs_fh4_len) == 0)
     {
       /* Nothing to do, just reply with success */
       res_LOOKUPP4.status = NFS4ERR_NOENT;
@@ -217,17 +217,17 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
     }
 
   /* If in pseudoFS, proceed with pseudoFS specific functions */
-  if (nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     return nfs4_op_lookupp_pseudo(op, data, resp);
 
   /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
-  if (nfs4_Is_Fh_Xattr(&(data->currentFH)))
+  if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_lookupp_xattr(op, data, resp);
 
   /* If data->exportp is null, a junction from pseudo fs was traversed, credp and exportp have to be updated */
-  if (data->pexport == NULL)
+  if(data->pexport == NULL)
     {
-      if ((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
+      if((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
         {
           res_LOOKUPP4.status = error;
           return res_LOOKUPP4.status;
@@ -240,23 +240,23 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   name = FSAL_DOT_DOT;
 
   /* BUGAZOMEU: Faire la gestion des cross junction traverse */
-  if ((file_pentry = cache_inode_lookup(dir_pentry,
-                                        &name,
-                                        &attrlookup,
-                                        data->ht,
-                                        data->pclient,
-                                        data->pcontext, &cache_status)) != NULL)
+  if((file_pentry = cache_inode_lookup(dir_pentry,
+                                       &name,
+                                       &attrlookup,
+                                       data->ht,
+                                       data->pclient,
+                                       data->pcontext, &cache_status)) != NULL)
     {
       /* Extract the fsal attributes from the cache inode pentry */
       pfsal_handle = cache_inode_get_fsal_handle(file_pentry, &cache_status);
-      if (cache_status != CACHE_INODE_SUCCESS)
+      if(cache_status != CACHE_INODE_SUCCESS)
         {
           res_LOOKUPP4.status = NFS4ERR_SERVERFAULT;
           return res_LOOKUPP4.status;
         }
 
       /* Convert it to a file handle */
-      if (!nfs4_FSALToFhandle(&data->currentFH, pfsal_handle, data))
+      if(!nfs4_FSALToFhandle(&data->currentFH, pfsal_handle, data))
         {
           res_LOOKUPP4.status = NFS4ERR_SERVERFAULT;
           return res_LOOKUPP4.status;
@@ -281,8 +281,8 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
    * and contains the code for the error */
 
   /* If NFS4ERR_SYMLINK should be returned for a symlink instead of ENOTDIR */
-  if ((cache_status == CACHE_INODE_NOT_A_DIRECTORY) &&
-      (dir_pentry->internal_md.type == SYMBOLIC_LINK))
+  if((cache_status == CACHE_INODE_NOT_A_DIRECTORY) &&
+     (dir_pentry->internal_md.type == SYMBOLIC_LINK))
     res_LOOKUPP4.status = NFS4ERR_SYMLINK;
   else
     res_LOOKUPP4.status = nfs4_Errno(cache_status);

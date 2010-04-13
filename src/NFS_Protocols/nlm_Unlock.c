@@ -146,7 +146,7 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
 
   /* Convert file handle into a cache entry */
   arg = &parg->arg_nlm4_unlock;
-  if (!nfs3_FhandleToFSAL((nfs_fh3 *) & (arg->alock.fh), &fsal_data.handle, pcontext))
+  if(!nfs3_FhandleToFSAL((nfs_fh3 *) & (arg->alock.fh), &fsal_data.handle, pcontext))
     {
       /* handle is not valid */
       pres->res_nlm4.stat.stat = NLM4_STALE_FH;
@@ -158,8 +158,8 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
     }
   /* Now get the cached inode attributes */
   fsal_data.cookie = DIR_START;
-  if ((pentry = cache_inode_get(&fsal_data, &attr, ht,
-                                pclient, pcontext, &cache_status)) == NULL)
+  if((pentry = cache_inode_get(&fsal_data, &attr, ht,
+                               pclient, pcontext, &cache_status)) == NULL)
     {
       /* handle is not valid */
       pres->res_nlm4.stat.stat = NLM4_STALE_FH;
@@ -167,13 +167,13 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
     }
   fd = &pentry->object.file.open_fd.fd;
   lock_desc = nlm_lock_to_fsal_lockdesc(&(arg->alock), 0);
-  if (!lock_desc)
+  if(!lock_desc)
     {
       pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
       return NFS_REQ_OK;
     }
   nlmb = nlm_find_lock_entry(&(arg->alock), 0, NLM4_GRANTED);
-  if (!nlmb)
+  if(!nlmb)
     {
       /*FIXME!! XNFS doesn't say what should be the return */
       pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
@@ -182,7 +182,7 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
     }
 
   retval = FSAL_unlock(fd, lock_desc);
-  if (!FSAL_IS_ERROR(retval))
+  if(!FSAL_IS_ERROR(retval))
     {
       pres->res_nlm4.stat.stat = NLM4_GRANTED;
       nlm_delete_lock_entry(nlmb, &(arg->alock));

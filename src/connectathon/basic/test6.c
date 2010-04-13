@@ -99,9 +99,9 @@ int main(int argc, char *argv[])
   setbuf(stdout, NULL);
   Myname = *argv++;
   argc--;
-  while (argc && **argv == '-')
+  while(argc && **argv == '-')
     {
-      for (opts = &argv[0][1]; *opts; opts++)
+      for(opts = &argv[0][1]; *opts; opts++)
         {
           switch (*opts)
             {
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
       argv++;
     }
 
-  if (argc)
+  if(argc)
     {
       config_file = *argv;
       argc--;
@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-  if (argc != 0)
+  if(argc != 0)
     {
       fprintf(stderr, "too many parameters");
       usage();
@@ -156,14 +156,14 @@ int main(int argc, char *argv[])
     }
 
   param = readin_config(config_file);
-  if (param == NULL)
+  if(param == NULL)
     {
       fprintf(stderr, "Nothing built\n");
       exit(1);
     }
 
   b = get_btest_args(param, SIX);
-  if (b == NULL)
+  if(b == NULL)
     {
       fprintf(stderr, "Missing basic test number 6 in the config file '%s'\n",
               config_file);
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-  if (b->files == -1)
+  if(b->files == -1)
     {
       fprintf(stderr,
               "Missing 'files' parameter in the config file '%s' for the basic test number 6\n",
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
       free_testparam(param);
       exit(1);
     }
-  if (b->count == -1)
+  if(b->count == -1)
     {
       fprintf(stderr,
               "Missing 'count' parameter in the config file '%s' for the basic test number 6\n",
@@ -198,19 +198,19 @@ int main(int argc, char *argv[])
 
   nmoffset = strlen(fname);
 
-  if (!Fflag)
+  if(!Fflag)
     {
       Tflag = 0;
       count = 1;
     }
 
-  if (count > files)
+  if(count > files)
     {
       fprintf(stderr, "count (%d) can't be greater than files (%d)", count, files);
       exit(1);
     }
 
-  if (files > MAXFILES)
+  if(files > MAXFILES)
     {
       fprintf(stderr, "too many files requested (max is %d)", MAXFILES);
       exit(1);
@@ -218,7 +218,7 @@ int main(int argc, char *argv[])
 
   fprintf(stdout, "%s: readdir\n", Myname);
 
-  if (!Nflag)
+  if(!Nflag)
     testdir(test_dir);
   else
     mtestdir(test_dir);
@@ -226,26 +226,26 @@ int main(int argc, char *argv[])
   dirtree(1, files, 0, fname, dname, &totfiles, &totdirs);
 
   starttime();
-  if ((dir = opendir(".")) == NULL)
+  if((dir = opendir(".")) == NULL)
     {
       error("can't opendir %s", ".");
       exit(1);
     }
 
-  for (ct = 0; ct < count; ct++)
+  for(ct = 0; ct < count; ct++)
     {
       rewinddir(dir);
       dot = 0;
       dotdot = 0;
       err = 0;
-      for (i = 0; i < sizeof(bitmap); i++)
+      for(i = 0; i < sizeof(bitmap); i++)
         bitmap[i] = 0;
-      while ((dp = readdir(dir)) != NULL)
+      while((dp = readdir(dir)) != NULL)
         {
           entries++;
-          if (strcmp(".", dp->d_name) == 0)
+          if(strcmp(".", dp->d_name) == 0)
             {
-              if (dot)
+              if(dot)
                 {
                   /* already read dot */
                   error("'.' dir entry read twice");
@@ -254,9 +254,9 @@ int main(int argc, char *argv[])
               dot++;
               continue;
             }
-          else if (strcmp("..", dp->d_name) == 0)
+          else if(strcmp("..", dp->d_name) == 0)
             {
-              if (dotdot)
+              if(dotdot)
                 {
                   /* already read dotdot */
                   error("'..' dir entry read twice");
@@ -272,9 +272,9 @@ int main(int argc, char *argv[])
            */
           /* If we don't have our own directory, ignore
              such errors (if Iflag set). */
-          if (strncmp(dp->d_name, fname, nmoffset))
+          if(strncmp(dp->d_name, fname, nmoffset))
             {
-              if (Iflag)
+              if(Iflag)
                 continue;
               else
                 {
@@ -286,12 +286,12 @@ int main(int argc, char *argv[])
           /* get ptr to numeric part of name */
           p = dp->d_name + nmoffset;
           fi = atoi(p);
-          if (fi < 0 || fi >= MAXFILES)
+          if(fi < 0 || fi >= MAXFILES)
             {
               error("unexpected dir entry '%s'", dp->d_name);
               exit(1);
             }
-          if (BIT(fi))
+          if(BIT(fi))
             {
               error("duplicate '%s' dir entry read", dp->d_name);
               err++;
@@ -299,28 +299,28 @@ int main(int argc, char *argv[])
           else
             SETBIT(fi);
         }                       /* end readdir loop */
-      if (!dot)
+      if(!dot)
         {
           error("didn't read '.' dir entry, pass %d", ct);
           err++;
         }
-      if (!dotdot)
+      if(!dotdot)
         {
           error("didn't read '..' dir entry, pass %d", ct);
           err++;
         }
-      for (fi = 0; fi < ct; fi++)
+      for(fi = 0; fi < ct; fi++)
         {
-          if (BIT(fi))
+          if(BIT(fi))
             {
               sprintf(str, "%s%d", fname, fi);
               error("unlinked '%s' dir entry read pass %d", str, ct);
               err++;
             }
         }
-      for (fi = ct; fi < files; fi++)
+      for(fi = ct; fi < files; fi++)
         {
-          if (!BIT(fi))
+          if(!BIT(fi))
             {
               sprintf(str, "%s%d", fname, fi);
               error("\
@@ -328,13 +328,13 @@ didn't read expected '%s' dir entry, pass %d", str, ct);
               err++;
             }
         }
-      if (err)
+      if(err)
         {
           error("Test failed with %d errors", err);
           exit(1);
         }
       sprintf(str, "%s%d", fname, ct);
-      if (unlink(str) < 0)
+      if(unlink(str) < 0)
         {
           error("can't unlink %s", str);
           exit(1);
@@ -345,7 +345,7 @@ didn't read expected '%s' dir entry, pass %d", str, ct);
   endtime(&time);
 
   fprintf(stdout, "\t%d entries read, %d files", entries, files);
-  if (Tflag)
+  if(Tflag)
     {
       fprintf(stdout, " in %ld.%02ld seconds",
               (long)time.tv_sec, (long)time.tv_usec / 10000);
@@ -354,7 +354,7 @@ didn't read expected '%s' dir entry, pass %d", str, ct);
 
   rmdirtree(1, files, 0, fname, dname, &totfiles, &totdirs, 1);
 
-  if ((log = fopen(log_file, "a")) == NULL)
+  if((log = fopen(log_file, "a")) == NULL)
     {
       printf("Enable to open the file '%s'\n", log_file);
       complete();

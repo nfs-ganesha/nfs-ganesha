@@ -116,8 +116,8 @@ fsal_status_t MFSL_link_async_op(mfsl_async_op_desc_t * popasyncdesc)
   DisplayLogLevel(NIV_DEBUG, "Making asynchronous FSAL_link for async op %p",
                   popasyncdesc);
 
-  if (popasyncdesc->op_args.link.pmobject_src !=
-      popasyncdesc->op_args.link.pmobject_dirdest)
+  if(popasyncdesc->op_args.link.pmobject_src !=
+     popasyncdesc->op_args.link.pmobject_dirdest)
     {
       P(popasyncdesc->op_args.link.pmobject_src->lock);
       P(popasyncdesc->op_args.link.pmobject_dirdest->lock);
@@ -133,8 +133,8 @@ fsal_status_t MFSL_link_async_op(mfsl_async_op_desc_t * popasyncdesc)
                           &popasyncdesc->fsal_op_context,
                           &popasyncdesc->op_res.link.attr);
 
-  if (popasyncdesc->op_args.link.pmobject_src !=
-      popasyncdesc->op_args.link.pmobject_dirdest)
+  if(popasyncdesc->op_args.link.pmobject_src !=
+     popasyncdesc->op_args.link.pmobject_dirdest)
     {
       V(popasyncdesc->op_args.link.pmobject_src->lock);
       V(popasyncdesc->op_args.link.pmobject_dirdest->lock);
@@ -174,7 +174,7 @@ fsal_status_t MFSAL_link_check_perms(mfsl_object_t * target_handle,     /* IN */
 
   fsal_status = FSAL_link_access(p_context, &dir_pspecdata->async_attr);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   /** @todo : put some stuff in this function */
@@ -219,17 +219,17 @@ fsal_status_t MFSL_link(mfsl_object_t * target_handle,  /* IN */
 
   V(p_mfsl_context->lock);
 
-  if (pasyncopdesc == NULL)
+  if(pasyncopdesc == NULL)
     MFSL_return(ERR_FSAL_INVAL, 0);
 
-  if (gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
+  if(gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
     {
       /* Could'not get time of day... Stopping, this may need a major failure */
       DisplayLog("MFSL_link: cannot get time of day... exiting");
       exit(1);
     }
 
-  if (!mfsl_async_get_specdata(target_handle, &tgt_pasyncdata))
+  if(!mfsl_async_get_specdata(target_handle, &tgt_pasyncdata))
     {
       /* Target is not yet asynchronous */
       P(p_mfsl_context->lock);
@@ -245,7 +245,7 @@ fsal_status_t MFSL_link(mfsl_object_t * target_handle,  /* IN */
       tgt_pasyncdata->async_attr = *tgt_attributes;
     }
 
-  if (!mfsl_async_get_specdata(dir_handle, &dir_pasyncdata))
+  if(!mfsl_async_get_specdata(dir_handle, &dir_pasyncdata))
     {
       /* Target is not yet asynchronous */
       P(p_mfsl_context->lock);
@@ -267,7 +267,7 @@ fsal_status_t MFSL_link(mfsl_object_t * target_handle,  /* IN */
                                        tgt_pasyncdata,
                                        dir_pasyncdata, p_context, p_mfsl_context);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   DisplayLogJdLevel(p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p",
@@ -285,7 +285,7 @@ fsal_status_t MFSL_link(mfsl_object_t * target_handle,  /* IN */
   pasyncopdesc->ptr_mfsl_context = (caddr_t) p_mfsl_context;
 
   fsal_status = MFSL_async_post(pasyncopdesc);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   /* Update the asynchronous metadata */
@@ -296,10 +296,10 @@ fsal_status_t MFSL_link(mfsl_object_t * target_handle,  /* IN */
   dir_pasyncdata->async_attr.ctime.seconds = pasyncopdesc->op_time.tv_sec;
   dir_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec;  /** @todo: there may be a coefficient to be applied here */
 
-  if (!mfsl_async_set_specdata(target_handle, tgt_pasyncdata))
+  if(!mfsl_async_set_specdata(target_handle, tgt_pasyncdata))
     MFSL_return(ERR_FSAL_SERVERFAULT, 0);
 
-  if (!mfsl_async_set_specdata(dir_handle, dir_pasyncdata))
+  if(!mfsl_async_set_specdata(dir_handle, dir_pasyncdata))
     MFSL_return(ERR_FSAL_SERVERFAULT, 0);
 
   target_handle->health = MFSL_ASYNC_ASYNCHRONOUS;

@@ -168,7 +168,7 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
   char *file_name = NULL;
   fsal_name_t name;
 
-  if (preq->rq_vers == NFS_V3)
+  if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */
       pres->res_remove3.REMOVE3res_u.resfail.dir_wcc.before.attributes_follow = FALSE;
@@ -177,15 +177,15 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
     }
 
   /* Convert file handle into a pentry */
-  if ((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
-                                          &(parg->arg_readlink2),
-                                          &(parg->arg_readlink3.symlink),
-                                          NULL,
-                                          &(pres->res_readlink2.status),
-                                          &(pres->res_readlink3.status),
-                                          NULL,
-                                          &pre_parent_attr,
-                                          pcontext, pclient, ht, &rc)) == NULL)
+  if((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
+                                         &(parg->arg_readlink2),
+                                         &(parg->arg_readlink3.symlink),
+                                         NULL,
+                                         &(pres->res_readlink2.status),
+                                         &(pres->res_readlink3.status),
+                                         NULL,
+                                         &pre_parent_attr,
+                                         pcontext, pclient, ht, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       return rc;
@@ -201,7 +201,7 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
    * Sanity checks: new directory name must be non-null; parent must be
    * a directory. 
    */
-  if (filetype != DIR_BEGINNING && filetype != DIR_CONTINUE)
+  if(filetype != DIR_BEGINNING && filetype != DIR_CONTINUE)
     {
       switch (preq->rq_vers)
         {
@@ -226,28 +226,28 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
       break;
     }
 
-  if (file_name == NULL || strlen(file_name) == 0)
+  if(file_name == NULL || strlen(file_name) == 0)
     {
       cache_status = CACHE_INODE_INVALID_ARGUMENT;      /* for lack of better... */
     }
   else
     {
 
-      if ((cache_status = cache_inode_error_convert(FSAL_str2name(file_name,
-                                                                  FSAL_MAX_NAME_LEN,
-                                                                  &name))) ==
-          CACHE_INODE_SUCCESS)
+      if((cache_status = cache_inode_error_convert(FSAL_str2name(file_name,
+                                                                 FSAL_MAX_NAME_LEN,
+                                                                 &name))) ==
+         CACHE_INODE_SUCCESS)
         {
           /*
            * Lookup to the child entry to check if it is a directory 
            *
            */
-          if ((pentry_child = cache_inode_lookup(parent_pentry,
-                                                 &name,
-                                                 &pentry_child_attr,
-                                                 ht,
-                                                 pclient,
-                                                 pcontext, &cache_status)) != NULL)
+          if((pentry_child = cache_inode_lookup(parent_pentry,
+                                                &name,
+                                                &pentry_child_attr,
+                                                ht,
+                                                pclient,
+                                                pcontext, &cache_status)) != NULL)
             {
               /* Extract the filetype */
               childtype = cache_inode_fsal_type_convert(pentry_child_attr.type);
@@ -255,7 +255,7 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
               /*
                * Sanity check: make sure we are about to remove a directory 
                */
-              if (childtype == DIR_BEGINNING || childtype == DIR_CONTINUE)
+              if(childtype == DIR_BEGINNING || childtype == DIR_CONTINUE)
                 {
                   switch (preq->rq_vers)
                     {
@@ -275,12 +275,12 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
               /*
                * Remove the entry. 
                */
-              if (cache_inode_remove(parent_pentry,
-                                     &name,
-                                     &parent_attr,
-                                     ht,
-                                     pclient,
-                                     pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+              if(cache_inode_remove(parent_pentry,
+                                    &name,
+                                    &parent_attr,
+                                    ht,
+                                    pclient,
+                                    pcontext, &cache_status) == CACHE_INODE_SUCCESS)
                 {
                   switch (preq->rq_vers)
                     {
@@ -317,7 +317,7 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
                       &(pres->res_remove3.REMOVE3res_u.resfail.dir_wcc),
                       NULL, NULL, NULL);
 
-  if (nfs_RetryableError(cache_status))
+  if(nfs_RetryableError(cache_status))
     {
       return NFS_REQ_DROP;
     }

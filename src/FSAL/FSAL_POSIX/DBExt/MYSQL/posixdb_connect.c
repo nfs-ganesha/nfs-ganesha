@@ -22,7 +22,7 @@ static int ReadPasswordFromFile(char *filename, char *password)
   int rc;
 
   passfile = fopen(filename, "r");
-  if (!passfile)
+  if(!passfile)
     {
       rc = errno;
       strerror_r(rc, errstr, 1024);
@@ -30,7 +30,7 @@ static int ReadPasswordFromFile(char *filename, char *password)
       return rc;
     }
   fscanf(passfile, "%1024s", password);
-  if (ferror(passfile))
+  if(ferror(passfile))
     {
       rc = errno;
       strerror_r(rc, errstr, 1024);
@@ -52,13 +52,13 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
 
   /* read password from password file */
   rc = ReadPasswordFromFile(dbparams->passwdfile, password);
-  if (rc)
+  if(rc)
     ReturnCode(ERR_FSAL_POSIXDB_CMDFAILED, rc);
 
   /* resolve the port number */
-  if (dbparams->port[0] != '\0')
+  if(dbparams->port[0] != '\0')
     {
-      if (!isdigit(dbparams->port[0]))
+      if(!isdigit(dbparams->port[0]))
         {
           DisplayLog
               ("Numerical value expected for database port number (invalid value: %s)",
@@ -72,14 +72,14 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
     port = 0;
 
   *p_conn = (fsal_posixdb_conn *) Mem_Alloc(sizeof(fsal_posixdb_conn));
-  if (*p_conn == NULL)
+  if(*p_conn == NULL)
     {
       DisplayLog("ERROR: failed to allocate memory");
       ReturnCode(ERR_FSAL_POSIXDB_NO_MEM, errno);
     }
 
   /* Init client structure */
-  if (mysql_init(&(*p_conn)->db_conn) == NULL)
+  if(mysql_init(&(*p_conn)->db_conn) == NULL)
     {
       Mem_Free(*p_conn);
       DisplayLog("ERROR: failed to create MySQL client struct");
@@ -94,8 +94,8 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
 #endif
 
   /* connect to server */
-  if (!mysql_real_connect(&(*p_conn)->db_conn, dbparams->host, dbparams->login,
-                          password, dbparams->dbname, port, NULL, 0))
+  if(!mysql_real_connect(&(*p_conn)->db_conn, dbparams->host, dbparams->login,
+                         password, dbparams->dbname, port, NULL, 0))
     {
       int rc;
       DisplayLog("Failed to connect to MySQL server: Error: %s",
@@ -148,8 +148,8 @@ fsal_posixdb_status_t fsal_posixdb_initPreparedQueries(fsal_posixdb_conn * p_con
       p_conn->stmt_tab[BUILDONEPATH] = mysql_stmt_init(&p_conn->db_conn);
 
       /* retry if connection to server failed */
-      if ((p_conn->stmt_tab[BUILDONEPATH] == NULL)
-          && db_is_retryable(mysql_errno(&p_conn->db_conn)))
+      if((p_conn->stmt_tab[BUILDONEPATH] == NULL)
+         && db_is_retryable(mysql_errno(&p_conn->db_conn)))
         {
           DisplayLog("Connection to database lost in %s()... Retrying in %u sec.",
                      __FUNCTION__, retry);
@@ -162,9 +162,9 @@ fsal_posixdb_status_t fsal_posixdb_initPreparedQueries(fsal_posixdb_conn * p_con
         break;
 
     }
-  while (1);
+  while(1);
 
-  if (!p_conn->stmt_tab[BUILDONEPATH])
+  if(!p_conn->stmt_tab[BUILDONEPATH])
     ReturnCode(ERR_FSAL_POSIXDB_CMDFAILED, mysql_errno(&p_conn->db_conn));
 
   /* another retry loop */
@@ -177,7 +177,7 @@ fsal_posixdb_status_t fsal_posixdb_initPreparedQueries(fsal_posixdb_conn * p_con
       rc = mysql_stmt_prepare(p_conn->stmt_tab[BUILDONEPATH], buildonepath_query,
                               strlen(buildonepath_query));
 
-      if (rc && db_is_retryable(mysql_stmt_errno(p_conn->stmt_tab[BUILDONEPATH])))
+      if(rc && db_is_retryable(mysql_stmt_errno(p_conn->stmt_tab[BUILDONEPATH])))
         {
           DisplayLog("Connection to database lost in %s()... Retrying in %u sec.",
                      __FUNCTION__, retry);
@@ -191,9 +191,9 @@ fsal_posixdb_status_t fsal_posixdb_initPreparedQueries(fsal_posixdb_conn * p_con
         break;
 
     }
-  while (1);
+  while(1);
 
-  if (rc)
+  if(rc)
     {
       DisplayLog("Failed to create prepared statement: Error: %s (query='%s')",
                  mysql_stmt_error(p_conn->stmt_tab[BUILDONEPATH]), buildonepath_query);

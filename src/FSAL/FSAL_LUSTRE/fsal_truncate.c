@@ -60,12 +60,12 @@ fsal_status_t FSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if (!p_filehandle || !p_context)
+  if(!p_filehandle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
   /* get the path of the file and its handle */
   st = fsal_internal_Handle2FidPath(p_context, p_filehandle, &fsalpath);
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     ReturnStatus(st, INDEX_FSAL_truncate);
 
   /* Executes the POSIX truncate operation */
@@ -76,23 +76,23 @@ fsal_status_t FSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
   ReleaseTokenFSCall();
 
   /* convert return code */
-  if (rc)
+  if(rc)
     {
-      if (errsv == ENOENT)
+      if(errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_truncate);
       else
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_truncate);
     }
 
   /* Optionally retrieve attributes */
-  if (p_object_attributes)
+  if(p_object_attributes)
     {
 
       fsal_status_t st;
 
       st = FSAL_getattrs(p_filehandle, p_context, p_object_attributes);
 
-      if (FSAL_IS_ERROR(st))
+      if(FSAL_IS_ERROR(st))
         {
           FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
           FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

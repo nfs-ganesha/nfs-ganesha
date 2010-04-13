@@ -64,7 +64,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
    *        parentdir_handle is mandatory,
    *        because, we do not allow to delete FS root !
    */
-  if (!parentdir_handle || !p_context || !p_object_name)
+  if(!parentdir_handle || !p_context || !p_object_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_unlink);
 
   /* OK */

@@ -13,7 +13,7 @@ struct ganefuse_context *ganefuse_get_context(void)
 
   p_ctx = fsal_get_thread_context();
 
-  if (p_ctx == NULL)
+  if(p_ctx == NULL)
     return NULL;
 
   return &(p_ctx->ganefuse_context);

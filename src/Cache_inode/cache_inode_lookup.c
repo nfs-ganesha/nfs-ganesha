@@ -158,11 +158,11 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
   pclient->stat.func_stats.nb_call[CACHE_INODE_LOOKUP] += 1;
 
   /* Get lock on the pentry */
-  if (use_mutex == TRUE)
+  if(use_mutex == TRUE)
     P_r(&pentry_parent->lock);
 
-  if (pentry_parent->internal_md.type != DIR_BEGINNING &&
-      pentry_parent->internal_md.type != DIR_CONTINUE)
+  if(pentry_parent->internal_md.type != DIR_BEGINNING &&
+     pentry_parent->internal_md.type != DIR_CONTINUE)
     {
       /* Parent is no directory base, return NULL */
       *pstatus = CACHE_INODE_NOT_A_DIRECTORY;
@@ -170,18 +170,18 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
       /* stats */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUP] += 1;
 
-      if (use_mutex == TRUE)
+      if(use_mutex == TRUE)
         V_r(&pentry_parent->lock);
 
       return NULL;
     }
 
   /* if name is ".", use the input value */
-  if (!FSAL_namecmp(pname, &FSAL_DOT))
+  if(!FSAL_namecmp(pname, &FSAL_DOT))
     {
       pentry = pentry_parent;
     }
-  else if (!FSAL_namecmp(pname, &FSAL_DOT_DOT))
+  else if(!FSAL_namecmp(pname, &FSAL_DOT_DOT))
     {
       /* Directory do only have exactly one parent. This a limitation in all FS, which 
        * implies that hard link are forbidden on directories (so that they exists only in one dir)
@@ -195,12 +195,12 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
       /* This is a "regular lookup" (not on "." or "..") */
 
       /* Check is user (as specified by the credentials) is authorized to lookup the directory or not */
-      if (cache_inode_access_no_mutex(pentry_parent,
-                                      FSAL_X_OK,
-                                      ht,
-                                      pclient, pcontext, pstatus) != CACHE_INODE_SUCCESS)
+      if(cache_inode_access_no_mutex(pentry_parent,
+                                     FSAL_X_OK,
+                                     ht,
+                                     pclient, pcontext, pstatus) != CACHE_INODE_SUCCESS)
         {
-          if (use_mutex == TRUE)
+          if(use_mutex == TRUE)
             V_r(&pentry_parent->lock);
 
           pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_GETATTR] += 1;
@@ -214,21 +214,21 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
       do
         {
           /* Is this entry known ? */
-          if (pdir_chain->internal_md.type == DIR_BEGINNING)
+          if(pdir_chain->internal_md.type == DIR_BEGINNING)
             {
-              for (i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+              for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
                 {
-                  if (pdir_chain->object.dir_begin.pdir_data->dir_entries[i].active ==
-                      VALID)
-                    if (!FSAL_namecmp
-                        (pname,
-                         &(pentry_parent->object.dir_begin.pdir_data->dir_entries[i].
-                           name)))
+                  if(pdir_chain->object.dir_begin.pdir_data->dir_entries[i].active ==
+                     VALID)
+                    if(!FSAL_namecmp
+                       (pname,
+                        &(pentry_parent->object.dir_begin.pdir_data->
+                          dir_entries[i].name)))
                       {
                         /* Entry was found */
                         pentry =
-                            pentry_parent->object.dir_begin.pdir_data->dir_entries[i].
-                            pentry;
+                            pentry_parent->object.dir_begin.pdir_data->
+                            dir_entries[i].pentry;
                         DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
                                           "Cache Hit detected (dir_begin)");
                         break;
@@ -236,7 +236,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                 }
 
               /* Do we have to go on browsing the cache_inode ? */
-              if (pdir_chain->object.dir_begin.end_of_dir == END_OF_DIR)
+              if(pdir_chain->object.dir_begin.end_of_dir == END_OF_DIR)
                 {
                   break;
                 }
@@ -247,13 +247,13 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
           else
             {
               /* The element in the dir_chain is a DIR_CONTINUE */
-              for (i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+              for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
                 {
-                  if (pdir_chain->object.dir_cont.pdir_data->dir_entries[i].active ==
-                      VALID)
-                    if (!FSAL_namecmp
-                        (pname,
-                         &(pdir_chain->object.dir_cont.pdir_data->dir_entries[i].name)))
+                  if(pdir_chain->object.dir_cont.pdir_data->dir_entries[i].active ==
+                     VALID)
+                    if(!FSAL_namecmp
+                       (pname,
+                        &(pdir_chain->object.dir_cont.pdir_data->dir_entries[i].name)))
                       {
                         /* Entry was found */
                         pentry =
@@ -265,7 +265,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                 }
 
               /* Do we have to go on browsing the cache_inode ? */
-              if (pdir_chain->object.dir_cont.end_of_dir == END_OF_DIR)
+              if(pdir_chain->object.dir_cont.end_of_dir == END_OF_DIR)
                 {
                   break;
                 }
@@ -275,25 +275,25 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
             }
 
         }
-      while (pentry == NULL);
+      while(pentry == NULL);
 
       /* At this point, if pentry == NULL, we are not looking for a known son, query fsal for lookup */
-      if (pentry == NULL)
+      if(pentry == NULL)
         {
           DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG, "Cache Miss detected");
 
-          if (pentry_parent->internal_md.type == DIR_BEGINNING)
+          if(pentry_parent->internal_md.type == DIR_BEGINNING)
             dir_handle = pentry_parent->object.dir_begin.handle;
 
-          if (pentry_parent->internal_md.type == DIR_CONTINUE)
+          if(pentry_parent->internal_md.type == DIR_CONTINUE)
             {
-              if (use_mutex == TRUE)
+              if(use_mutex == TRUE)
                 P_r(&pentry_parent->object.dir_cont.pdir_begin->lock);
 
               dir_handle =
                   pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.handle;
 
-              if (use_mutex == TRUE)
+              if(use_mutex == TRUE)
                 V_r(&pentry_parent->object.dir_cont.pdir_begin->lock);
             }
 
@@ -301,7 +301,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
 #ifdef _USE_MFSL
 
 #ifdef _USE_MFSL_ASYNC
-          if (!mfsl_async_is_object_asynchronous(&pentry_parent->mobject))
+          if(!mfsl_async_is_object_asynchronous(&pentry_parent->mobject))
             {
               /* If the parent is asynchronous, rely on the content of the cache inode parent entry 
                *  /!\ If the fs behind the FSAL is touched in a non-nfs way, there will be huge incoherencies */
@@ -330,15 +330,15 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                           &object_attributes);
 #endif                          /* _USE_MFSL */
 
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             {
               *pstatus = cache_inode_error_convert(fsal_status);
 
-              if (use_mutex == TRUE)
+              if(use_mutex == TRUE)
                 V_r(&pentry_parent->lock);
 
               /* Stale File Handle to be detected and managed */
-              if (fsal_status.major == ERR_FSAL_STALE)
+              if(fsal_status.major == ERR_FSAL_STALE)
                 {
                   cache_inode_status_t kill_status;
 
@@ -346,8 +346,8 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                       ("cache_inode_lookup: Stale FSAL File Handle detected for pentry = %p",
                        pentry_parent);
 
-                  if (cache_inode_kill_entry(pentry_parent, ht, pclient, &kill_status) !=
-                      CACHE_INODE_SUCCESS)
+                  if(cache_inode_kill_entry(pentry_parent, ht, pclient, &kill_status) !=
+                     CACHE_INODE_SUCCESS)
                     DisplayLog
                         ("cache_inode_pentry_parent: Could not kill entry %p, status = %u",
                          pentry_parent, kill_status);
@@ -364,7 +364,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
           type = cache_inode_fsal_type_convert(object_attributes.type);
 
           /* If entry is a symlink, this value for be cached */
-          if (type == SYMBOLIC_LINK)
+          if(type == SYMBOLIC_LINK)
             {
 #ifdef _USE_MFSL
               fsal_status =
@@ -375,14 +375,14 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                   FSAL_readlink(&object_handle, pcontext, &create_arg.link_content,
                                 &object_attributes);
 #endif
-              if (FSAL_IS_ERROR(fsal_status))
+              if(FSAL_IS_ERROR(fsal_status))
                 {
                   *pstatus = cache_inode_error_convert(fsal_status);
-                  if (use_mutex == TRUE)
+                  if(use_mutex == TRUE)
                     V_r(&pentry_parent->lock);
 
                   /* Stale File Handle to be detected and managed */
-                  if (fsal_status.major == ERR_FSAL_STALE)
+                  if(fsal_status.major == ERR_FSAL_STALE)
                     {
                       cache_inode_status_t kill_status;
 
@@ -390,8 +390,8 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                           ("cache_inode_lookup: Stale FSAL File Handle detected for pentry = %p",
                            pentry_parent);
 
-                      if (cache_inode_kill_entry(pentry_parent, ht, pclient, &kill_status)
-                          != CACHE_INODE_SUCCESS)
+                      if(cache_inode_kill_entry(pentry_parent, ht, pclient, &kill_status)
+                         != CACHE_INODE_SUCCESS)
                         DisplayLog
                             ("cache_inode_pentry_parent: Could not kill entry %p, status = %u",
                              pentry_parent, kill_status);
@@ -414,10 +414,10 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
 #endif
           new_entry_fsdata.cookie = 0;
 
-          if ((pentry = cache_inode_new_entry(&new_entry_fsdata, &object_attributes, type, &create_arg, NULL, ht, pclient, pcontext, FALSE,     /* This is a population and not a creation */
-                                              pstatus)) == NULL)
+          if((pentry = cache_inode_new_entry(&new_entry_fsdata, &object_attributes, type, &create_arg, NULL, ht, pclient, pcontext, FALSE,      /* This is a population and not a creation */
+                                             pstatus)) == NULL)
             {
-              if (use_mutex == TRUE)
+              if(use_mutex == TRUE)
                 V_r(&pentry_parent->lock);
 
               /* stats */
@@ -433,10 +433,10 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                                                        NULL,
                                                        ht, pclient, pcontext, pstatus);
 
-          if (cache_status != CACHE_INODE_SUCCESS
-              && cache_status != CACHE_INODE_ENTRY_EXISTS)
+          if(cache_status != CACHE_INODE_SUCCESS
+             && cache_status != CACHE_INODE_ENTRY_EXISTS)
             {
-              if (use_mutex == TRUE)
+              if(use_mutex == TRUE)
                 V_r(&pentry_parent->lock);
 
               /* stats */
@@ -453,11 +453,11 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
 
   *pstatus = cache_inode_valid(pentry_parent, CACHE_INODE_OP_GET, pclient);
 
-  if (use_mutex == TRUE)
+  if(use_mutex == TRUE)
     V_r(&pentry_parent->lock);
 
   /* stat */
-  if (*pstatus != CACHE_INODE_SUCCESS)
+  if(*pstatus != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_LOOKUP] += 1;
   else
     pclient->stat.func_stats.nb_success[CACHE_INODE_LOOKUP] += 1;

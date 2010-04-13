@@ -59,14 +59,14 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
   int rc;
 
   /* sanity check */
-  if ((p_export_context == NULL) || (p_export_path == NULL))
+  if((p_export_context == NULL) || (p_export_path == NULL))
     {
       DisplayLogLevel(NIV_CRIT, "NULL mandatory argument passed to %s()", __FUNCTION__);
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
     }
 
   /* convert to canonical path */
-  if (!realpath(p_export_path->path, rpath))
+  if(!realpath(p_export_path->path, rpath))
     {
       rc = errno;
       DisplayLogLevel(NIV_CRIT, "Error %d in realpath(%s): %s",
@@ -79,7 +79,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
 
   fp = setmntent(MOUNTED, "r");
 
-  if (fp == NULL)
+  if(fp == NULL)
     {
       rc = errno;
       DisplayLogLevel(NIV_CRIT, "Error %d in setmntent(%s): %s", rc, MOUNTED,
@@ -87,16 +87,16 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
       Return(posix2fsal_error(rc), rc, INDEX_FSAL_BuildExportContext);
     }
 
-  while ((p_mnt = getmntent(fp)) != NULL)
+  while((p_mnt = getmntent(fp)) != NULL)
     {
       /* get the longer path that matches export path */
 
-      if (p_mnt->mnt_dir != NULL)
+      if(p_mnt->mnt_dir != NULL)
         {
 
           pathlen = strlen(p_mnt->mnt_dir);
 
-          if ((pathlen > outlen) && !strcmp(p_mnt->mnt_dir, "/"))
+          if((pathlen > outlen) && !strcmp(p_mnt->mnt_dir, "/"))
             {
               DisplayLogLevel(NIV_DEBUG,
                               "Root mountpoint is allowed for matching %s, type=%s, fs=%s",
@@ -107,9 +107,9 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
               strncpy(fs_spec, p_mnt->mnt_fsname, MAXPATHLEN);
             }
           /* in other cases, the filesystem must be <mountpoint>/<smthg> or <mountpoint>\0 */
-          else if ((pathlen > outlen) &&
-                   !strncmp(rpath, p_mnt->mnt_dir, pathlen) &&
-                   ((rpath[pathlen] == '/') || (rpath[pathlen] == '\0')))
+          else if((pathlen > outlen) &&
+                  !strncmp(rpath, p_mnt->mnt_dir, pathlen) &&
+                  ((rpath[pathlen] == '/') || (rpath[pathlen] == '\0')))
             {
               DisplayLogLevel(NIV_FULL_DEBUG, "%s is under mountpoint %s, type=%s, fs=%s",
                               rpath, p_mnt->mnt_dir, p_mnt->mnt_type, p_mnt->mnt_fsname);
@@ -122,7 +122,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
         }
     }
 
-  if (outlen <= 0)
+  if(outlen <= 0)
     {
       DisplayLogLevel(NIV_CRIT, "No mount entry matches '%s' in %s", rpath, MOUNTED);
       endmntent(fp);
@@ -134,7 +134,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
                   mntdir, type, fs_spec);
 
   /* Check it is a Lustre FS */
-  if (!llapi_is_lustre_mnttype(type))
+  if(!llapi_is_lustre_mnttype(type))
     {
       DisplayLogLevel(NIV_CRIT,
                       "/!\\ ERROR /!\\ '%s' (type: %s) is not recognized as a Lustre Filesystem",
@@ -144,7 +144,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
     }
 
   /* retrieve export info */
-  if (stat(rpath, &pathstat) != 0)
+  if(stat(rpath, &pathstat) != 0)
     {
       rc = errno;
       DisplayLogLevel(NIV_CRIT, "/!\\ ERROR /!\\ Couldn't stat '%s': %s", rpath,
@@ -168,7 +168,7 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 {
 
   /* sanity check */
-  if (!p_thr_context)
+  if(!p_thr_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
 
   /* initialy set the export entry to none */
@@ -214,7 +214,7 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
   unsigned int i;
 
   /* sanity check */
-  if (!p_thr_context || !p_export_context)
+  if(!p_thr_context || !p_export_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
 
   /* set the export specific context */
@@ -224,14 +224,14 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
   p_thr_context->credential.user = uid;
   p_thr_context->credential.group = gid;
 
-  if (ng > FSAL_NGROUPS_MAX)
+  if(ng > FSAL_NGROUPS_MAX)
     ng = FSAL_NGROUPS_MAX;
-  if ((ng > 0) && (alt_groups == NULL))
+  if((ng > 0) && (alt_groups == NULL))
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
 
   p_thr_context->credential.nbgroups = ng;
 
-  for (i = 0; i < ng; i++)
+  for(i = 0; i < ng; i++)
     p_thr_context->credential.alt_groups[i] = alt_groups[i];
 #if defined( _DEBUG_FSAL )
 
@@ -241,7 +241,7 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tuid = %d, gid = %d",
                     p_thr_context->credential.user, p_thr_context->credential.group);
 
-  for (i = 0; i < p_thr_context->credential.nbgroups; i++)
+  for(i = 0; i < p_thr_context->credential.nbgroups; i++)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
                       p_thr_context->credential.alt_groups[i]);
 

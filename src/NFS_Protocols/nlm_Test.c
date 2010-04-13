@@ -151,7 +151,7 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
    */
   /* FIXME!! right now we look at only nfs3 handles */
   arg = &parg->arg_nlm4_test;
-  if (!nfs3_FhandleToFSAL((nfs_fh3 *) & (arg->alock.fh), &fsal_data.handle, pcontext))
+  if(!nfs3_FhandleToFSAL((nfs_fh3 *) & (arg->alock.fh), &fsal_data.handle, pcontext))
     {
       /* handle is not valid */
       pres->res_nlm4test.test_stat.stat = NLM4_STALE_FH;
@@ -163,8 +163,8 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
     }
   /* Now get the cached inode attributes */
   fsal_data.cookie = DIR_START;
-  if ((pentry = cache_inode_get(&fsal_data, &attr, ht,
-                                pclient, pcontext, &cache_status)) == NULL)
+  if((pentry = cache_inode_get(&fsal_data, &attr, ht,
+                               pclient, pcontext, &cache_status)) == NULL)
     {
       /* handle is not valid */
       pres->res_nlm4test.test_stat.stat = NLM4_STALE_FH;
@@ -172,7 +172,7 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
     }
   fd = &pentry->object.file.open_fd.fd;
   lock_desc = nlm_lock_to_fsal_lockdesc(&(arg->alock), arg->exclusive);
-  if (!lock_desc)
+  if(!lock_desc)
     {
       pres->res_nlm4test.test_stat.stat = NLM4_DENIED_NOLOCKS;
       /* FIXME!!
@@ -183,7 +183,7 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
     }
 
   retval = FSAL_getlock(fd, lock_desc);
-  if (!FSAL_IS_ERROR(retval))
+  if(!FSAL_IS_ERROR(retval))
     {
       lock_desc->flock.l_type = F_UNLCK;
 

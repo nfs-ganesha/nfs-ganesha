@@ -266,7 +266,7 @@ int shell_BarrierInit(int nb_threads)
 
   P(barrier_mutex);
 
-  if (total_nb_threads == -1)
+  if(total_nb_threads == -1)
     {
       total_nb_threads = nb_threads;
       V(barrier_mutex);
@@ -287,7 +287,7 @@ static int shell_BarrierWait()
 
   /* not used in a single thread environment */
 
-  if (total_nb_threads == -1)
+  if(total_nb_threads == -1)
     {
       V(barrier_mutex);
       return SHELL_ERROR;
@@ -299,7 +299,7 @@ static int shell_BarrierWait()
 
   /* test for condition */
 
-  if (nb_waiting_threads == total_nb_threads)
+  if(nb_waiting_threads == total_nb_threads)
     {
       /* reset the number of waiting threads */
       nb_waiting_threads = 0;
@@ -331,7 +331,7 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT;
 
 static void init_keys(void)
 {
-  if (pthread_key_create(&thread_key, NULL) == -1)
+  if(pthread_key_create(&thread_key, NULL) == -1)
     printf("Error %d creating pthread key for thread %p : %s\n",
            errno, (caddr_t) pthread_self(), strerror(errno));
 
@@ -348,7 +348,7 @@ static shell_state_t *GetShellContext()
   shell_state_t *p_current_thread_vars;
 
   /* first, we init the keys if this is the first time */
-  if (pthread_once(&once_key, init_keys) != 0)
+  if(pthread_once(&once_key, init_keys) != 0)
     {
       printf("Error %d calling pthread_once for thread %p : %s\n",
              errno, (caddr_t) pthread_self(), strerror(errno));
@@ -358,14 +358,14 @@ static shell_state_t *GetShellContext()
   p_current_thread_vars = (shell_state_t *) pthread_getspecific(thread_key);
 
   /* we allocate the thread context if this is the first time */
-  if (p_current_thread_vars == NULL)
+  if(p_current_thread_vars == NULL)
     {
 
       /* allocates thread structure */
       p_current_thread_vars = (shell_state_t *) Mem_Alloc(sizeof(shell_state_t));
 
       /* panic !!! */
-      if (p_current_thread_vars == NULL)
+      if(p_current_thread_vars == NULL)
         {
           printf("%p:ganeshell: Not enough memory\n", (caddr_t) pthread_self());
           return NULL;
@@ -416,7 +416,7 @@ int shell_Init(int verbose, char *input_file, char *prompt, int shell_index)
 
   /* Init Buddy allocator */
 
-  if ((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
+  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* can't use shell tracing functions there */
       fprintf(stderr, "Error %d initializing Buddy allocator.\n", rc);
@@ -435,7 +435,7 @@ int shell_Init(int verbose, char *input_file, char *prompt, int shell_index)
   SetNameFunction("shell");
 
   /* getting the hostname */
-  if (gethostname(localmachine, sizeof(localmachine)) != 0)
+  if(gethostname(localmachine, sizeof(localmachine)) != 0)
     {
       fprintf(stderr, "Error %d calling gethostname.\n", errno);
       return errno;
@@ -451,25 +451,25 @@ int shell_Init(int verbose, char *input_file, char *prompt, int shell_index)
 
   /* Initializes verbose mode. */
 
-  if (rc = shell_SetVerbose(context, (verbose ? "1" : "0")))
+  if(rc = shell_SetVerbose(context, (verbose ? "1" : "0")))
     return rc;
 
-  if (rc = shell_SetDbgLvl(context, "NIV_EVENT"))
+  if(rc = shell_SetDbgLvl(context, "NIV_EVENT"))
     return rc;
 
   /* Then, initializes input file. */
 
-  if (rc = shell_SetInput(context, input_file))
+  if(rc = shell_SetInput(context, input_file))
     return rc;
 
   /* Initialize prompt */
 
-  if (rc = shell_SetPrompt(context, prompt))
+  if(rc = shell_SetPrompt(context, prompt))
     return rc;
 
   /* Initialize Shell id */
 
-  if (rc = shell_SetShellId(context, shell_index))
+  if(rc = shell_SetShellId(context, shell_index))
     return rc;
 
   return SHELL_SUCCESS;
@@ -487,18 +487,18 @@ static char *shell_readline(shell_state_t * context, char *s, int n, FILE * stre
 
 #ifdef HAVE_LIBREADLINE
 
-  if (interactive)
+  if(interactive)
     {
       /* use readline */
       l = readline((retval ? retval : ""));
-      if (l)
+      if(l)
         {
           strncpy(s, l, n);
 
           /* add line to history, if it is not empty */
           l = skipblanks2(l);
 
-          if (l != NULL)
+          if(l != NULL)
             add_history(l);
 
           return s;
@@ -510,7 +510,7 @@ static char *shell_readline(shell_state_t * context, char *s, int n, FILE * stre
     return fgets(s, n, stream);
 
 #else
-  if (interactive)
+  if(interactive)
     printf("%s", (retval ? retval : ""));
 
   return fgets(s, n, stream);
@@ -532,8 +532,8 @@ int shell_Launch()
 
   shell_state_t *context = GetShellContext();
 
-  while (shell_readline(context, cmdline, MAX_LINE_LEN,
-                        context->input_stream, context->interactive) != NULL)
+  while(shell_readline(context, cmdline, MAX_LINE_LEN,
+                       context->input_stream, context->interactive) != NULL)
     {
 
       /* Increments line number */
@@ -542,16 +542,16 @@ int shell_Launch()
 
       /* Parse command line */
 
-      if (shell_ParseLine(cmdline, arglist, &argcount))
+      if(shell_ParseLine(cmdline, arglist, &argcount))
         continue;
 
       /* nothing to do if the line is empty. */
-      if (argcount == 0)
+      if(argcount == 0)
         continue;
 
       /* Evaluates arguments */
 
-      if (shell_SolveArgs(argcount, arglist, alloctab))
+      if(shell_SolveArgs(argcount, arglist, alloctab))
         continue;
 
       /* Execute command */
@@ -578,7 +578,7 @@ static char *skipblanks(char *str)
 
   char *curr = str;
 
-  while (1)
+  while(1)
     {
 
       switch (*curr)
@@ -611,7 +611,7 @@ static char *skipblanks2(char *str)
 
   char *curr = str;
 
-  while (1)
+  while(1)
     {
 
       switch (*curr)
@@ -650,7 +650,7 @@ static char *nextblank(char *str)
 
   char *curr = str;
 
-  while (1)
+  while(1)
     {
 
       switch (*curr)
@@ -659,7 +659,7 @@ static char *nextblank(char *str)
           /* end of lines */
         case ' ':
         case '\t':
-          if (!dquote_string && !squote_string && !bquote_string)
+          if(!dquote_string && !squote_string && !bquote_string)
             return curr;
           else
             curr++;
@@ -678,7 +678,7 @@ static char *nextblank(char *str)
 
         case '"':
           /* start or end of double quoted string */
-          if (dquote_string)
+          if(dquote_string)
             dquote_string = 0;
           else
             (dquote_string) = 1;
@@ -687,7 +687,7 @@ static char *nextblank(char *str)
 
         case '\'':
           /* start or end of single quoted string */
-          if (squote_string)
+          if(squote_string)
             squote_string = 0;
           else
             (squote_string) = 1;
@@ -696,7 +696,7 @@ static char *nextblank(char *str)
 
         case '`':
           /* start or end of back-quoted string */
-          if (bquote_string)
+          if(bquote_string)
             bquote_string = 0;
           else
             (bquote_string) = 1;
@@ -710,7 +710,7 @@ static char *nextblank(char *str)
 
       /* escape ? */
 
-      if (escaped && (*curr != '\0'))
+      if(escaped && (*curr != '\0'))
         {
           escaped = 0;
           curr++;
@@ -739,13 +739,13 @@ int shell_ParseLine(char *in_out_line, char **out_arglist, int *p_argcount)
 
   /* While there is something after the Oblivion... */
 
-  while (curr_pos = skipblanks(curr_pos))
+  while(curr_pos = skipblanks(curr_pos))
     {
       out_arglist[(*p_argcount)] = curr_pos;
       (*p_argcount)++;
       curr_pos = nextblank(curr_pos);
 
-      if (*curr_pos == '\0')
+      if(*curr_pos == '\0')
         break;
       else
         *curr_pos = '\0';
@@ -768,14 +768,14 @@ static int unescape(char *str)
   char *src = str;
   char *tgt = str;
 
-  while (*src != '\0')
+  while(*src != '\0')
     {
-      if (*src == '\\')
+      if(*src == '\\')
         {
           src++;
 
           /* escaped null char */
-          if (*src == '\0')
+          if(*src == '\0')
             {
 #ifdef _DEBUG_SHELL
               printf("UNESCAPE ERROR >>>>>>>>>> [%s][%c][%c]\n", str, *src, *tgt);
@@ -785,7 +785,7 @@ static int unescape(char *str)
 
         }
 
-      if (tgt != src)
+      if(tgt != src)
         *tgt = *src;
 
       src++;
@@ -793,7 +793,7 @@ static int unescape(char *str)
     }
 
   /* final zero */
-  if (tgt != src)
+  if(tgt != src)
     *tgt = *src;
 
   return SHELL_SUCCESS;
@@ -810,9 +810,9 @@ static int remove_quotes(char quote, char **pstr)
 
   size_t len = strlen(*pstr);
 
-  if (len <= 1)
+  if(len <= 1)
     return SHELL_ERROR;
-  if ((*pstr)[len - 1] != quote)
+  if((*pstr)[len - 1] != quote)
     return SHELL_ERROR;
 
   (*pstr)[len - 1] = '\0';
@@ -846,29 +846,29 @@ int shell_SolveArgs(int argc, char **in_out_argv, int *out_allocated)
 
 #ifdef _DEBUG_SHELL
   printf("SOLVE:");
-  for (i = 0; i < argc; i++)
+  for(i = 0; i < argc; i++)
     printf("[%s]", in_out_argv[i]);
   printf("\n");
 #endif
 
-  for (i = 0; i < argc; i++)
+  for(i = 0; i < argc; i++)
     {
 
       out_allocated[i] = FALSE;
 
       /* double quotes */
 
-      if (in_out_argv[i][0] == '"')
+      if(in_out_argv[i][0] == '"')
         {
 
-          if (remove_quotes('"', &(in_out_argv[i])))
+          if(remove_quotes('"', &(in_out_argv[i])))
             {
               shell_PrintError(context, "Syntax error: Missing closing quotes");
               error = SHELL_SYNTAX_ERROR;
               break;
             }
 
-          if (unescape(in_out_argv[i]))
+          if(unescape(in_out_argv[i]))
             {
               shell_PrintError(context, "Syntax error: Invalid escape sequence");
               error = SHELL_SYNTAX_ERROR;
@@ -879,17 +879,17 @@ int shell_SolveArgs(int argc, char **in_out_argv, int *out_allocated)
 
       /* single quotes */
 
-      else if (in_out_argv[i][0] == '\'')
+      else if(in_out_argv[i][0] == '\'')
         {
 
-          if (remove_quotes('\'', &(in_out_argv[i])))
+          if(remove_quotes('\'', &(in_out_argv[i])))
             {
               shell_PrintError(context, "Syntax error: Missing closing quote");
               error = SHELL_SYNTAX_ERROR;
               break;
             }
 
-          if (unescape(in_out_argv[i]))
+          if(unescape(in_out_argv[i]))
             {
               shell_PrintError(context, "Syntax error: Invalid escape sequence");
               error = SHELL_SYNTAX_ERROR;
@@ -900,12 +900,12 @@ int shell_SolveArgs(int argc, char **in_out_argv, int *out_allocated)
 
       /* var name */
 
-      else if (in_out_argv[i][0] == '$')
+      else if(in_out_argv[i][0] == '$')
         {
 
           char *value = get_var_value(&(in_out_argv[i][1]));
 
-          if (value)
+          if(value)
             in_out_argv[i] = value;
           else
             {
@@ -920,7 +920,7 @@ int shell_SolveArgs(int argc, char **in_out_argv, int *out_allocated)
 
       /* command */
 
-      else if (in_out_argv[i][0] == '`')
+      else if(in_out_argv[i][0] == '`')
         {
 
           char *arglist[MAX_ARGS];
@@ -929,14 +929,14 @@ int shell_SolveArgs(int argc, char **in_out_argv, int *out_allocated)
 
           /* remove quotes */
 
-          if (remove_quotes('`', &(in_out_argv[i])))
+          if(remove_quotes('`', &(in_out_argv[i])))
             {
               shell_PrintError(context, "Syntax error: Missing closing backquote");
               error = SHELL_SYNTAX_ERROR;
               break;
             }
 
-          if (unescape(in_out_argv[i]))
+          if(unescape(in_out_argv[i]))
             {
               shell_PrintError(context, "Syntax error: Invalid escape sequence");
               error = SHELL_SYNTAX_ERROR;
@@ -945,7 +945,7 @@ int shell_SolveArgs(int argc, char **in_out_argv, int *out_allocated)
 
           /* Parse command line */
 
-          if (shell_ParseLine(in_out_argv[i], arglist, &argcount))
+          if(shell_ParseLine(in_out_argv[i], arglist, &argcount))
             {
               error = SHELL_SYNTAX_ERROR;
               break;
@@ -953,7 +953,7 @@ int shell_SolveArgs(int argc, char **in_out_argv, int *out_allocated)
 
           /* nothing to do if the command is empty. */
 
-          if (argcount == 0)
+          if(argcount == 0)
             {
 
               /* empty output */
@@ -974,7 +974,7 @@ int shell_SolveArgs(int argc, char **in_out_argv, int *out_allocated)
 
               /* Evaluates arguments */
 
-              if (shell_SolveArgs(argcount, arglist, alloctab))
+              if(shell_SolveArgs(argcount, arglist, alloctab))
                 {
                   error = SHELL_SYNTAX_ERROR;
                   break;
@@ -982,7 +982,7 @@ int shell_SolveArgs(int argc, char **in_out_argv, int *out_allocated)
 
               /* create pipe for command output */
 
-              if (pipe(fd))
+              if(pipe(fd))
                 {
 
                   snprintf(tracebuff, TRACEBUFFSIZE, "Can't create pipe: %s (%d)",
@@ -1001,7 +1001,7 @@ int shell_SolveArgs(int argc, char **in_out_argv, int *out_allocated)
 
               output_stream = fdopen(fd[1], "a");
 
-              if (output_stream == NULL)
+              if(output_stream == NULL)
                 {
 
                   snprintf(tracebuff, TRACEBUFFSIZE, "Can't open pipe stream: %s (%d)",
@@ -1041,7 +1041,7 @@ int shell_SolveArgs(int argc, char **in_out_argv, int *out_allocated)
               /* close pipe */
               close(fd[0]);
 
-              if (rc == -1)
+              if(rc == -1)
                 {
                   snprintf(tracebuff, TRACEBUFFSIZE, "Cannot read from pipe: %s (%d)",
                            strerror(errno), errno);
@@ -1055,7 +1055,7 @@ int shell_SolveArgs(int argc, char **in_out_argv, int *out_allocated)
 
               in_out_argv[i] = Mem_Alloc(rc + 1);
 
-              if (in_out_argv[i] == NULL)
+              if(in_out_argv[i] == NULL)
                 {
                   shell_PrintError(context, "Malloc error");
                   error = -1;
@@ -1078,7 +1078,7 @@ int shell_SolveArgs(int argc, char **in_out_argv, int *out_allocated)
       /*  normal arg  */
       else
         {
-          if (unescape(in_out_argv[i]))
+          if(unescape(in_out_argv[i]))
             {
               shell_PrintError(context, "Syntax error: Invalid escape sequence");
               error = SHELL_SYNTAX_ERROR;
@@ -1091,7 +1091,7 @@ int shell_SolveArgs(int argc, char **in_out_argv, int *out_allocated)
 
   /* the case when we exited the for because of an error. */
 
-  if (error)
+  if(error)
     {
       /* free allocated strings */
       shell_CleanArgs(i + 1, in_out_argv, out_allocated);
@@ -1117,10 +1117,10 @@ void shell_CleanArgs(int argc, char **in_out_argv, int *in_allocated)
 
   int i;
 
-  for (i = 0; i < argc; i++)
+  for(i = 0; i < argc; i++)
     {
 
-      if (in_allocated[i])
+      if(in_allocated[i])
         {
           Mem_Free(in_out_argv[i]);
           in_out_argv[i] = NULL;
@@ -1157,9 +1157,9 @@ int shell_Execute(int argc, char **argv, FILE * output)
 
   /* First, look at shell internal commands */
 
-  for (i = 0; shell_commands[i].command_name; i++)
+  for(i = 0; shell_commands[i].command_name; i++)
     {
-      if (!strcmp(argv[0], shell_commands[i].command_name))
+      if(!strcmp(argv[0], shell_commands[i].command_name))
         {
           command_func = shell_commands[i].command_func;
           break;
@@ -1168,12 +1168,12 @@ int shell_Execute(int argc, char **argv, FILE * output)
 
   /* If not found, look at shell utils commands */
 
-  if (!command_func)
+  if(!command_func)
     {
 
-      for (i = 0; shell_utils[i].command_name; i++)
+      for(i = 0; shell_utils[i].command_name; i++)
         {
-          if (!strcmp(argv[0], shell_utils[i].command_name))
+          if(!strcmp(argv[0], shell_utils[i].command_name))
             {
               command_func = shell_utils[i].command_func;
               break;
@@ -1184,16 +1184,16 @@ int shell_Execute(int argc, char **argv, FILE * output)
 
   /* If not found, look at layer commands */
 
-  if (!command_func)
+  if(!command_func)
     {
       layer_def_t *current_layer = shell_GetLayer(context);
 
-      if (current_layer)
+      if(current_layer)
         {
 
-          for (i = 0; current_layer->command_list[i].command_name; i++)
+          for(i = 0; current_layer->command_list[i].command_name; i++)
             {
-              if (!strcmp(argv[0], current_layer->command_list[i].command_name))
+              if(!strcmp(argv[0], current_layer->command_list[i].command_name))
                 {
                   command_func = current_layer->command_list[i].command_func;
 
@@ -1210,7 +1210,7 @@ int shell_Execute(int argc, char **argv, FILE * output)
 
   /* if command_func */
   /* command not found */
-  if (!command_func)
+  if(!command_func)
     {
       snprintf(tracebuff, TRACEBUFFSIZE, "%s: command not found", argv[0]);
       shell_PrintError(context, tracebuff);
@@ -1219,26 +1219,26 @@ int shell_Execute(int argc, char **argv, FILE * output)
 
   /* verbose trace */
 
-  if (shell_GetVerbose(context))
+  if(shell_GetVerbose(context))
     {
       tracebuff[0] = '\0';
-      for (i = 0; i < argc; i++)
+      for(i = 0; i < argc; i++)
         {
           /* + 1 = size of the additional char ( + or space) */
           size_t len1 = strlen(tracebuff) + 1;
           size_t len2 = strlen(argv[i]);
 
-          if (len1 > TRACEBUFFSIZE - 1)
+          if(len1 > TRACEBUFFSIZE - 1)
             break;
 
-          if (i != 0)
+          if(i != 0)
             strcat(tracebuff, " ");
           else
             strcat(tracebuff, "+");
 
-          if (len1 + len2 > TRACEBUFFSIZE - 1)
+          if(len1 + len2 > TRACEBUFFSIZE - 1)
             {
-              if (TRACEBUFFSIZE - 6 - len1 > 0)
+              if(TRACEBUFFSIZE - 6 - len1 > 0)
                 strncat(tracebuff, argv[i], TRACEBUFFSIZE - 6 - len1);
 
               strcat(tracebuff, "[...]");
@@ -1293,7 +1293,7 @@ void shell_PrintTrace(shell_state_t * context, char *msg)
 
   char *input_name;
 
-  if (shell_GetVerbose(context))
+  if(shell_GetVerbose(context))
     {
       input_name = get_var_value("INPUT");
 
@@ -1322,9 +1322,9 @@ int shell_SetLayer(shell_state_t * context, char *layer_name)
 
   /* search for layer */
 
-  for (i = 0; layer_list[i].layer_name; i++)
+  for(i = 0; layer_list[i].layer_name; i++)
     {
-      if (!strcasecmp(layer_name, layer_list[i].layer_name))
+      if(!strcasecmp(layer_name, layer_list[i].layer_name))
         {
           layer = &layer_list[i];
           break;
@@ -1333,7 +1333,7 @@ int shell_SetLayer(shell_state_t * context, char *layer_name)
 
   /* saves current layer */
 
-  if (layer)
+  if(layer)
     {
       /* saves layer pointer */
 
@@ -1343,7 +1343,7 @@ int shell_SetLayer(shell_state_t * context, char *layer_name)
 
       rc = set_var_value("LAYER", layer->layer_name);
 
-      if (rc != 0)
+      if(rc != 0)
         {
           snprintf(tracebuff, TRACEBUFFSIZE,
                    "Error %d setting LAYER value to %s", rc, layer->layer_name);
@@ -1393,7 +1393,7 @@ int shell_SetStatus(shell_state_t * context, int returned_status)
 
   rc = set_var_value("STATUS", str_int);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       snprintf(tracebuff, TRACEBUFFSIZE,
                "Error %d setting STATUS value to %s", rc, str_int);
@@ -1402,7 +1402,7 @@ int shell_SetStatus(shell_state_t * context, int returned_status)
 
   rc = set_var_value("?", str_int);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       snprintf(tracebuff, TRACEBUFFSIZE, "Error %d setting ? value to %s", rc, str_int);
       shell_PrintError(context, tracebuff);
@@ -1431,15 +1431,15 @@ int shell_SetVerbose(shell_state_t * context, char *str_verbose)
   int rc;
   char tracebuff[TRACEBUFFSIZE];
 
-  if (!strcasecmp(str_verbose, "ON") ||
-      !strcasecmp(str_verbose, "TRUE") ||
-      !strcasecmp(str_verbose, "YES") || !strcmp(str_verbose, "1"))
+  if(!strcasecmp(str_verbose, "ON") ||
+     !strcasecmp(str_verbose, "TRUE") ||
+     !strcasecmp(str_verbose, "YES") || !strcmp(str_verbose, "1"))
     {
       context->verbose = TRUE;
 
       rc = set_var_value("VERBOSE", "1");
 
-      if (rc != 0)
+      if(rc != 0)
         {
           snprintf(tracebuff, TRACEBUFFSIZE,
                    "Error %d setting VERBOSE value to %s", rc, "1");
@@ -1449,15 +1449,15 @@ int shell_SetVerbose(shell_state_t * context, char *str_verbose)
       return SHELL_SUCCESS;
 
     }
-  else if (!strcasecmp(str_verbose, "OFF") ||
-           !strcasecmp(str_verbose, "FALSE") ||
-           !strcasecmp(str_verbose, "NO") || !strcmp(str_verbose, "0"))
+  else if(!strcasecmp(str_verbose, "OFF") ||
+          !strcasecmp(str_verbose, "FALSE") ||
+          !strcasecmp(str_verbose, "NO") || !strcmp(str_verbose, "0"))
     {
       context->verbose = FALSE;
 
       rc = set_var_value("VERBOSE", "0");
 
-      if (rc != 0)
+      if(rc != 0)
         {
           snprintf(tracebuff, TRACEBUFFSIZE,
                    "Error %d setting VERBOSE value to %s", rc, "0");
@@ -1498,7 +1498,7 @@ int shell_SetDbgLvl(shell_state_t * context, char *str_debug_level)
 
   level_debug = ReturnLevelAscii(str_debug_level);
 
-  if (level_debug != -1)
+  if(level_debug != -1)
     {
       /* set shell state */
       context->debug_level = level_debug;
@@ -1510,7 +1510,7 @@ int shell_SetDbgLvl(shell_state_t * context, char *str_debug_level)
 
       rc = set_var_value("DEBUG_LEVEL", str_debug_level);
 
-      if (rc != 0)
+      if(rc != 0)
         {
           snprintf(tracebuff, TRACEBUFFSIZE,
                    "Error %d setting DEBUG_LEVEL value to %s", rc, str_debug_level);
@@ -1519,7 +1519,7 @@ int shell_SetDbgLvl(shell_state_t * context, char *str_debug_level)
 
       rc = set_var_value("DBG_LVL", str_debug_level);
 
-      if (rc != 0)
+      if(rc != 0)
         {
           snprintf(tracebuff, TRACEBUFFSIZE,
                    "Error %d setting DBG_LVL value to %s", rc, str_debug_level);
@@ -1565,9 +1565,9 @@ int shell_SetInput(shell_state_t * context, char *file_name)
   int rc;
   char tracebuff[TRACEBUFFSIZE];
 
-  if (file_name)
+  if(file_name)
     {
-      if ((stream = fopen(file_name, "r")) == NULL)
+      if((stream = fopen(file_name, "r")) == NULL)
         {
           snprintf(tracebuff, TRACEBUFFSIZE, "Can't open \"%s\": %s (%d)",
                    file_name, strerror(errno), errno);
@@ -1576,10 +1576,10 @@ int shell_SetInput(shell_state_t * context, char *file_name)
         }
 
       /* close previous filestream and reset line number */
-      if (context->input_stream != NULL)
+      if(context->input_stream != NULL)
         {
           /* don't close stdin */
-          if (context->input_stream != stdin)
+          if(context->input_stream != stdin)
             fclose(context->input_stream);
 
           shell_SetLine(context, 0);
@@ -1590,7 +1590,7 @@ int shell_SetInput(shell_state_t * context, char *file_name)
 
       rc = set_var_value("INPUT", file_name);
 
-      if (rc != 0)
+      if(rc != 0)
         {
           snprintf(tracebuff, TRACEBUFFSIZE,
                    "Error %d setting INPUT value to \"%s\"", rc, file_name);
@@ -1603,7 +1603,7 @@ int shell_SetInput(shell_state_t * context, char *file_name)
 
       rc = set_var_value("INTERACTIVE", "0");
 
-      if (rc != 0)
+      if(rc != 0)
         {
           snprintf(tracebuff, TRACEBUFFSIZE,
                    "Error %d setting INTERACTIVE value to %s", rc, "0");
@@ -1621,10 +1621,10 @@ int shell_SetInput(shell_state_t * context, char *file_name)
       stream = stdin;
 
       /* close previous filestream and reset line number */
-      if (context->input_stream != NULL)
+      if(context->input_stream != NULL)
         {
           /* don't close stdin */
-          if (context->input_stream != stdin)
+          if(context->input_stream != stdin)
             fclose(context->input_stream);
           shell_SetLine(context, 0);
         }
@@ -1634,7 +1634,7 @@ int shell_SetInput(shell_state_t * context, char *file_name)
 
       rc = set_var_value("INPUT", "<stdin>");
 
-      if (rc != 0)
+      if(rc != 0)
         {
           snprintf(tracebuff, TRACEBUFFSIZE,
                    "Error %d setting INPUT value to %s", rc, "<stdin>");
@@ -1647,7 +1647,7 @@ int shell_SetInput(shell_state_t * context, char *file_name)
 
       rc = set_var_value("INTERACTIVE", "1");
 
-      if (rc != 0)
+      if(rc != 0)
         {
           snprintf(tracebuff, TRACEBUFFSIZE,
                    "Error %d setting INTERACTIVE value to %s", rc, "1");
@@ -1669,7 +1669,7 @@ int shell_SetInput(shell_state_t * context, char *file_name)
  */
 FILE *shell_GetInputStream(shell_state_t * context)
 {
-  if (context->input_stream)
+  if(context->input_stream)
     return context->input_stream;
   else
     return stdin;
@@ -1684,7 +1684,7 @@ int shell_SetPrompt(shell_state_t * context, char *str_prompt)
   int rc = set_var_value("PROMPT", str_prompt);
   char tracebuff[TRACEBUFFSIZE];
 
-  if (rc != 0)
+  if(rc != 0)
     {
       snprintf(tracebuff, TRACEBUFFSIZE,
                "Error %d setting PROMPT value to \"%s\"", rc, str_prompt);
@@ -1717,7 +1717,7 @@ int shell_SetShellId(shell_state_t * context, int shell_index)
 
   rc = set_var_value("SHELLID", str);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       snprintf(tracebuff, TRACEBUFFSIZE,
                "Error %d setting SHELLID value to \"%s\"", rc, str);
@@ -1743,7 +1743,7 @@ int shell_SetLine(shell_state_t * context, int lineno)
 
   rc = set_var_value("LINE", str_line);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       snprintf(tracebuff, TRACEBUFFSIZE,
                "Error %d setting LINE value to \"%s\"", rc, str_line);
@@ -1779,9 +1779,9 @@ int shellcmd_help(int argc,     /* IN : number of args in argv */
 
   /* check args */
 
-  if (argc > 1)
+  if(argc > 1)
     {
-      for (i = 1; i < argc; i++)
+      for(i = 1; i < argc; i++)
         {
           snprintf(tracebuff, TRACEBUFFSIZE,
                    "%s: Unexpected argument \"%s\"", argv[0], argv[i]);
@@ -1793,7 +1793,7 @@ int shellcmd_help(int argc,     /* IN : number of args in argv */
 
   fprintf(output, "Shell built-in commands:\n");
 
-  for (i = 0; shell_commands[i].command_name; i++)
+  for(i = 0; shell_commands[i].command_name; i++)
     {
       fprintf(output, "   %15s: %s\n", shell_commands[i].command_name,
               shell_commands[i].command_help);
@@ -1803,7 +1803,7 @@ int shellcmd_help(int argc,     /* IN : number of args in argv */
 
   fprintf(output, "\nShell tools commands:\n");
 
-  for (i = 0; shell_utils[i].command_name; i++)
+  for(i = 0; shell_utils[i].command_name; i++)
     {
       fprintf(output, "   %15s: %s\n", shell_utils[i].command_name,
               shell_utils[i].command_help);
@@ -1813,7 +1813,7 @@ int shellcmd_help(int argc,     /* IN : number of args in argv */
 
   fprintf(output, "\nLayers list:\n");
 
-  for (i = 0; layer_list[i].layer_name; i++)
+  for(i = 0; layer_list[i].layer_name; i++)
     {
       fprintf(output, "   %15s: %s\n", layer_list[i].layer_name,
               layer_list[i].layer_description);
@@ -1821,12 +1821,12 @@ int shellcmd_help(int argc,     /* IN : number of args in argv */
 
   /* Layer commands */
 
-  if (current_layer)
+  if(current_layer)
     {
 
       fprintf(output, "\n%s layer commands:\n", current_layer->layer_name);
 
-      for (i = 0; current_layer->command_list[i].command_name; i++)
+      for(i = 0; current_layer->command_list[i].command_name; i++)
         {
           fprintf(output, "   %15s: %s\n", current_layer->command_list[i].command_name,
                   current_layer->command_list[i].command_help);
@@ -1859,7 +1859,7 @@ int shellcmd_if(int argc,       /* IN : number of args in argv */
       "Ex: if eq -n $STATUS 0 ? print \"status=0\" : print \"status<>0\" \n";
 
   /* first, check that there is a test */
-  if (argc > 1)
+  if(argc > 1)
     {
 
       index_test = 1;
@@ -1868,10 +1868,10 @@ int shellcmd_if(int argc,       /* IN : number of args in argv */
 
       /* look for command 1 */
 
-      while ((i < argc) && strcmp(argv[i], "?"))
+      while((i < argc) && strcmp(argv[i], "?"))
         i++;
 
-      if (i + 1 < argc)
+      if(i + 1 < argc)
         {
           longueur_test = i - index_test;
           index_cmd1 = i + 1;
@@ -1880,10 +1880,10 @@ int shellcmd_if(int argc,       /* IN : number of args in argv */
 
           /* look for command 2 */
 
-          while ((i < argc) && strcmp(argv[i], ":"))
+          while((i < argc) && strcmp(argv[i], ":"))
             i++;
 
-          if (i + 1 < argc)
+          if(i + 1 < argc)
             {
               longueur_cmd1 = i - index_cmd1;
               index_cmd2 = i + 1;
@@ -1904,7 +1904,7 @@ int shellcmd_if(int argc,       /* IN : number of args in argv */
 
   /* test or cmd1 missing */
 
-  if ((longueur_test <= 0) || (longueur_cmd1 <= 0))
+  if((longueur_test <= 0) || (longueur_cmd1 <= 0))
     {
       fprintf(output, help_if);
       return SHELL_SYNTAX_ERROR;
@@ -1915,11 +1915,11 @@ int shellcmd_if(int argc,       /* IN : number of args in argv */
   rc = shell_Execute(longueur_test, &(argv[index_test]), output);
 
   /* if rc is not null, executes command 1 */
-  if (rc)
+  if(rc)
     {
       return shell_Execute(longueur_cmd1, &(argv[index_cmd1]), output);
     }
-  else if (longueur_cmd2 > 0)
+  else if(longueur_cmd2 > 0)
     {
       return shell_Execute(longueur_cmd2, &(argv[index_cmd2]), output);
     }
@@ -1938,9 +1938,9 @@ int shellcmd_interactive(int argc,      /* IN : number of args in argv */
 
   /* check args */
 
-  if (argc > 1)
+  if(argc > 1)
     {
-      for (i = 1; i < argc; i++)
+      for(i = 1; i < argc; i++)
         {
           snprintf(tracebuff, TRACEBUFFSIZE,
                    "%s: Unexpected argument \"%s\"", argv[0], argv[i]);
@@ -1967,7 +1967,7 @@ int shellcmd_set(int argc,      /* IN : number of args in argv */
 
   /* check args */
 
-  if (argc < 3)
+  if(argc < 3)
     {
       snprintf(tracebuff, TRACEBUFFSIZE,
                "%s: Usage: %s <var_name> <expr1> [<expr2> ...<exprN>]", argv[0], argv[0]);
@@ -1982,8 +1982,8 @@ int shellcmd_set(int argc,      /* IN : number of args in argv */
 
   /* concatenation of strings */
 
-  for (i = 2; i < argc; i++)
-    if (concat(varvalue, argv[i], MAX_OUTPUT_LEN) == NULL)
+  for(i = 2; i < argc; i++)
+    if(concat(varvalue, argv[i], MAX_OUTPUT_LEN) == NULL)
       {
         shell_PrintError(GetShellContext(), "Output too large.");
         return SHELL_ERROR;
@@ -1991,11 +1991,11 @@ int shellcmd_set(int argc,      /* IN : number of args in argv */
 
   /* special variables */
 
-  if (!strcmp(varname, "INPUT"))
+  if(!strcmp(varname, "INPUT"))
     {
       return shell_SetInput(GetShellContext(), varvalue);
     }
-  else if (!strcmp(varname, "INTERACTIVE"))
+  else if(!strcmp(varname, "INTERACTIVE"))
     {
       snprintf(tracebuff, TRACEBUFFSIZE,
                "%s: cannot set \"%s\": set the value of \"INPUT\" or use the \"interactive\" command instead.",
@@ -2005,27 +2005,27 @@ int shellcmd_set(int argc,      /* IN : number of args in argv */
       return SHELL_ERROR;
 
     }
-  else if (!strcmp(varname, "LAYER"))
+  else if(!strcmp(varname, "LAYER"))
     {
       return shell_SetLayer(GetShellContext(), varvalue);
     }
-  else if (!strcmp(varname, "STATUS") || !strcmp(varname, "?"))
+  else if(!strcmp(varname, "STATUS") || !strcmp(varname, "?"))
     {
       return shell_SetStatus(GetShellContext(), my_atoi(varvalue));
     }
-  else if (!strcmp(varname, "VERBOSE"))
+  else if(!strcmp(varname, "VERBOSE"))
     {
       return shell_SetVerbose(GetShellContext(), varvalue);
     }
-  else if (!strcmp(varname, "DEBUG_LEVEL") || !strcmp(varname, "DBG_LVL"))
+  else if(!strcmp(varname, "DEBUG_LEVEL") || !strcmp(varname, "DBG_LVL"))
     {
       return shell_SetDbgLvl(GetShellContext(), varvalue);
     }
-  else if (!strcmp(varname, "PROMPT"))
+  else if(!strcmp(varname, "PROMPT"))
     {
       return shell_SetPrompt(GetShellContext(), varvalue);
     }
-  else if (!strcmp(varname, "LINE"))
+  else if(!strcmp(varname, "LINE"))
     {
       snprintf(tracebuff, TRACEBUFFSIZE, "%s: cannot set \"%s\".", argv[0], varname);
       shell_PrintError(GetShellContext(), tracebuff);
@@ -2036,7 +2036,7 @@ int shellcmd_set(int argc,      /* IN : number of args in argv */
 
       /* other variables */
 
-      if (!is_authorized_varname(varname))
+      if(!is_authorized_varname(varname))
         {
           snprintf(tracebuff, TRACEBUFFSIZE, "%s: Invalid variable name \"%s\".", argv[0],
                    varname);
@@ -2044,7 +2044,7 @@ int shellcmd_set(int argc,      /* IN : number of args in argv */
           return SHELL_ERROR;
         }
 
-      if (set_var_value(varname, varvalue))
+      if(set_var_value(varname, varvalue))
         {
           snprintf(tracebuff, TRACEBUFFSIZE, "%s: Error setting the value of \"%s\".",
                    argv[0], varname);
@@ -2071,7 +2071,7 @@ int shellcmd_unset(int argc,    /* IN : number of args in argv */
   char tracebuff[TRACEBUFFSIZE];
   int error = SHELL_SUCCESS;
 
-  if (argc <= 1)
+  if(argc <= 1)
     {
       snprintf(tracebuff, TRACEBUFFSIZE, "%s: Missing argument: <var name>", argv[0]);
       shell_PrintError(GetShellContext(), tracebuff);
@@ -2079,15 +2079,15 @@ int shellcmd_unset(int argc,    /* IN : number of args in argv */
       return SHELL_SYNTAX_ERROR;
     }
 
-  for (arg_idx = 1; arg_idx < argc; arg_idx++)
+  for(arg_idx = 1; arg_idx < argc; arg_idx++)
     {
 
       /* check if it is not a special var */
 
-      for (i = 0; shell_special_vars[i] != NULL; i++)
+      for(i = 0; shell_special_vars[i] != NULL; i++)
         {
 
-          if (!strcmp(shell_special_vars[i], argv[arg_idx]))
+          if(!strcmp(shell_special_vars[i], argv[arg_idx]))
             {
 
               snprintf(tracebuff, TRACEBUFFSIZE,
@@ -2103,7 +2103,7 @@ int shellcmd_unset(int argc,    /* IN : number of args in argv */
 
       /* unset the variable */
 
-      if (free_var(argv[arg_idx]))
+      if(free_var(argv[arg_idx]))
         {
           snprintf(tracebuff, TRACEBUFFSIZE,
                    "%s: Variable not found: \"%s\"", argv[0], argv[arg_idx]);
@@ -2128,7 +2128,7 @@ int shellcmd_print(int argc,    /* IN : number of args in argv */
   int i;
 
   /* print args */
-  for (i = 1; i < argc; i++)
+  for(i = 1; i < argc; i++)
     fprintf(output, "%s", argv[i]);
 
   fprintf(output, "\n");
@@ -2147,9 +2147,9 @@ int shellcmd_varlist(int argc,  /* IN : number of args in argv */
 
   /* check args */
 
-  if (argc > 1)
+  if(argc > 1)
     {
-      for (i = 1; i < argc; i++)
+      for(i = 1; i < argc; i++)
         {
           snprintf(tracebuff, TRACEBUFFSIZE,
                    "%s: Unexpected argument \"%s\"", argv[0], argv[i]);
@@ -2180,13 +2180,13 @@ int shellcmd_time(int argc,     /* IN : number of args in argv */
   int rc;
 
   /* first, check that there is a test */
-  if (argc < 2)
+  if(argc < 2)
     {
       fprintf(output, help_time);
       return SHELL_SYNTAX_ERROR;
     }
 
-  if (gettimeofday(&timer_start, NULL) == -1)
+  if(gettimeofday(&timer_start, NULL) == -1)
     {
       fprintf(output, "Error retrieving system time.\n");
       return SHELL_ERROR;
@@ -2194,7 +2194,7 @@ int shellcmd_time(int argc,     /* IN : number of args in argv */
 
   rc = shell_Execute(argc - 1, &(argv[1]), output);
 
-  if (gettimeofday(&timer_stop, NULL) == -1)
+  if(gettimeofday(&timer_stop, NULL) == -1)
     {
       fprintf(output, "Error retrieving system time.\n");
       return SHELL_ERROR;
@@ -2218,9 +2218,9 @@ int shellcmd_quit(int argc,     /* IN : number of args in argv */
 
   /* check args */
 
-  if (argc > 1)
+  if(argc > 1)
     {
-      for (i = 1; i < argc; i++)
+      for(i = 1; i < argc; i++)
         {
           snprintf(tracebuff, TRACEBUFFSIZE,
                    "%s: Unexpected argument \"%s\"", argv[0], argv[i]);
@@ -2243,9 +2243,9 @@ int shellcmd_barrier(int argc,  /* IN : number of args in argv */
 
   /* check args */
 
-  if (argc > 1)
+  if(argc > 1)
     {
-      for (i = 1; i < argc; i++)
+      for(i = 1; i < argc; i++)
         {
           snprintf(tracebuff, TRACEBUFFSIZE,
                    "%s: Unexpected argument \"%s\"", argv[0], argv[i]);
@@ -2255,7 +2255,7 @@ int shellcmd_barrier(int argc,  /* IN : number of args in argv */
 
   /* call shell_BarrierWait */
 
-  if (shell_BarrierWait())
+  if(shell_BarrierWait())
     {
       snprintf(tracebuff, TRACEBUFFSIZE,
                "%s: barrier cannot be used in a single thread/script environment.",

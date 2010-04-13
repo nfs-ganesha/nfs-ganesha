@@ -74,7 +74,7 @@ do {                                                                            
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate_session.csa_sec_parms.csa_sec_parms_len = 0 ;                     \
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate_session.csa_sec_parms.csa_sec_parms_val = 0 ;                     \
   argcompound.argarray.argarray_len += 1 ;                                                                                                                     \
-} while( 0 )                 
+} while( 0 )
 
 /* OP specific macros */
 #define COMPOUNDV41_ARG_ADD_OP_PUTROOTFH( argcompound )                                             \
@@ -122,7 +122,7 @@ do {                                                                            
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsequence.sa_highest_slotid = 1 ;        \
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsequence.sa_cachethis = FALSE ;         \
   argcompound.argarray.argarray_len += 1 ;                                                                                    \
-} while( 0 ) 
+} while( 0 )
 
 #define COMPOUNDV41_ARG_ADD_OP_PUTFH( argcompound, __nfs4fh )                                                                           \
 do {                                                                                                                                    \
@@ -162,14 +162,12 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                                                                                \
 } while ( 0 )
 
-
 #define COMPOUNDV41_ARG_ADD_OP_REMOVE( argcompound, inname )                                                    \
 do {                                                                                                           \
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_REMOVE ;                \
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opremove.target = inname ; \
   argcompound.argarray.argarray_len += 1 ;                                                                     \
 } while ( 0 )
-
 
 #define COMPOUNDV41_ARG_ADD_OP_SAVEFH( argcompound )                                             \
 do {                                                                                            \

@@ -149,10 +149,10 @@ int CreatePUBFH4(nfs_fh4 * fh, compound_data_t * data)
 
   psfsentry = *(data->pseudofs->reverse_tab[0]);
 
-  if ((status = nfs4_AllocateFH(&(data->publicFH))) != NFS4_OK)
+  if((status = nfs4_AllocateFH(&(data->publicFH))) != NFS4_OK)
     return status;
 
-  if (!nfs4_PseudoToFhandle(&(data->publicFH), &psfsentry))
+  if(!nfs4_PseudoToFhandle(&(data->publicFH), &psfsentry))
     {
       return NFS4ERR_BADHANDLE;
     }
@@ -199,7 +199,7 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
   return resp->nfs_resop4_u.opputpubfh.status;
 
   /* For now, GANESHA makes no difference betzeen cwPUBLICFH and ROOTFH */
-  if ((error = CreatePUBFH4(&(data->publicFH), data)) != NFS4_OK)
+  if((error = CreatePUBFH4(&(data->publicFH), data)) != NFS4_OK)
     {
       res_PUTPUBFH4.status = error;
       return res_PUTPUBFH4.status;
@@ -209,7 +209,7 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
   memset(resp, 0, sizeof(struct nfs_resop4));
 
   /* If there is no currentFH, teh  return an error */
-  if (nfs4_Is_Fh_Empty(&(data->publicFH)))
+  if(nfs4_Is_Fh_Empty(&(data->publicFH)))
     {
       /* There is no current FH, return NFS4ERR_NOFILEHANDLE */
       resp->nfs_resop4_u.opputpubfh.status = NFS4ERR_NOFILEHANDLE;
@@ -217,14 +217,14 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(data->publicFH)))
+  if(nfs4_Is_Fh_Invalid(&(data->publicFH)))
     {
       resp->nfs_resop4_u.opputpubfh.status = NFS4ERR_BADHANDLE;
       return resp->nfs_resop4_u.opputpubfh.status;
     }
 
   /* Tests if teh Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(data->publicFH)))
+  if(nfs4_Is_Fh_Expired(&(data->publicFH)))
     {
       resp->nfs_resop4_u.opputpubfh.status = NFS4ERR_FHEXPIRED;
       return resp->nfs_resop4_u.opputpubfh.status;
@@ -233,9 +233,9 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
   /* I copy the root FH to the currentFH and, if not already done, to the publicFH */
   /* For the moment, I choose to have rootFH = publicFH */
   /* For initial mounted_on_FH, I'll use the rootFH, this will change at junction traversal */
-  if (data->currentFH.nfs_fh4_len == 0)
+  if(data->currentFH.nfs_fh4_len == 0)
     {
-      if ((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
+      if((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
         {
           resp->nfs_resop4_u.opputpubfh.status = error;
           return error;

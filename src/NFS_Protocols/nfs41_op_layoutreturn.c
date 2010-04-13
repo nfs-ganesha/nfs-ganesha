@@ -156,28 +156,28 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
 #else
 
   /* If there is no FH */
-  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
+  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
       res_LAYOUTRETURN4.lorr_status = NFS4ERR_NOFILEHANDLE;
       return res_LAYOUTRETURN4.lorr_status;
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
       res_LAYOUTRETURN4.lorr_status = NFS4ERR_BADHANDLE;
       return res_LAYOUTRETURN4.lorr_status;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
       res_LAYOUTRETURN4.lorr_status = NFS4ERR_FHEXPIRED;
       return res_LAYOUTRETURN4.lorr_status;
     }
 
   /* Commit is done only on a file */
-  if (data->current_filetype != REGULAR_FILE)
+  if(data->current_filetype != REGULAR_FILE)
     {
       /* Type of the entry is not correct */
       switch (data->current_filetype)
@@ -191,13 +191,12 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
           break;
         }
 
-       return res_LAYOUTRETURN4.lorr_status ;
+      return res_LAYOUTRETURN4.lorr_status;
     }
-
 
   res_LAYOUTRETURN4.lorr_status = NFS4_OK;
   return res_LAYOUTRETURN4.lorr_status;
-#endif /* _USE_PNFS */
+#endif                          /* _USE_PNFS */
 }                               /* nfs41_op_layoutreturn */
 
 /**

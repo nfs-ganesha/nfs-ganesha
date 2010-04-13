@@ -140,14 +140,14 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
   pclient->stat.nb_call_total += 1;
   pclient->stat.func_stats.nb_call[CACHE_INODE_TRUNCATE] += 1;
 
-  if (use_mutex)
+  if(use_mutex)
     P(pentry->lock);
 
   /* Only regular files can be truncated */
-  if (pentry->internal_md.type != REGULAR_FILE)
+  if(pentry->internal_md.type != REGULAR_FILE)
     {
       *pstatus = CACHE_INODE_BAD_TYPE;
-      if (use_mutex)
+      if(use_mutex)
         V(pentry->lock);
 
       /* stats */
@@ -157,15 +157,15 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
     }
 
   /* Calls file content cache to operate on the cache */
-  if (pentry->object.file.pentry_content != NULL)
+  if(pentry->object.file.pentry_content != NULL)
     {
-      if (cache_content_truncate(pentry->object.file.pentry_content,
-                                 length,
-                                 (cache_content_client_t *) pclient->pcontent_client,
-                                 &cache_content_status) != CACHE_CONTENT_SUCCESS)
+      if(cache_content_truncate(pentry->object.file.pentry_content,
+                                length,
+                                (cache_content_client_t *) pclient->pcontent_client,
+                                &cache_content_status) != CACHE_CONTENT_SUCCESS)
         {
           *pstatus = cache_content_error_convert(cache_content_status);
-          if (use_mutex)
+          if(use_mutex)
             V(pentry->lock);
 
           /* stats */
@@ -175,8 +175,8 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
         }
 
       /* Cache truncate succeeded, we must now update the size in the attributes */
-      if ((pentry->object.file.attributes.asked_attributes & FSAL_ATTR_SIZE) ||
-          (pentry->object.file.attributes.asked_attributes & FSAL_ATTR_SPACEUSED))
+      if((pentry->object.file.attributes.asked_attributes & FSAL_ATTR_SIZE) ||
+         (pentry->object.file.attributes.asked_attributes & FSAL_ATTR_SPACEUSED))
         {
           pentry->object.file.attributes.filesize = length;
           pentry->object.file.attributes.spaceused = length;
@@ -194,16 +194,16 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
       fsal_status = FSAL_truncate(&pentry->object.file.handle, pcontext, length, &pentry->object.file.open_fd.fd,       /* Used only with FSAL_PROXY */
                                   &pentry->object.file.attributes);
 
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
-          if (use_mutex)
+          if(use_mutex)
             V(pentry->lock);
 
           /* stats */
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_TRUNCATE] += 1;
 
-          if (fsal_status.major == ERR_FSAL_STALE)
+          if(fsal_status.major == ERR_FSAL_STALE)
             {
               cache_inode_status_t kill_status;
 
@@ -211,8 +211,8 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
                   ("cache_inode_truncate: Stale FSAL File Handle detected for pentry = %p",
                    pentry);
 
-              if (cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
-                  CACHE_INODE_SUCCESS)
+              if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+                 CACHE_INODE_SUCCESS)
                 DisplayLog("cache_inode_truncate: Could not kill entry %p, status = %u",
                            pentry, kill_status);
 
@@ -227,14 +227,14 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
   *pstatus = cache_inode_valid(pentry, CACHE_INODE_OP_SET, pclient);
 
   /* Regular exit */
-  if (use_mutex)
+  if(use_mutex)
     V(pentry->lock);
 
   /* Returns the attributes */
   *pattr = pentry->object.file.attributes;
 
   /* stat */
-  if (*pstatus != CACHE_INODE_SUCCESS)
+  if(*pstatus != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_TRUNCATE] += 1;
   else
     pclient->stat.func_stats.nb_success[CACHE_INODE_TRUNCATE] += 1;

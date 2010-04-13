@@ -161,15 +161,15 @@ int nfs3_Pathconf(nfs_arg_t * parg,
   pres->res_pathconf3.PATHCONF3res_u.resfail.obj_attributes.attributes_follow = FALSE;
 
   /* Convert file handle into a fsal_handle */
-  if (nfs3_FhandleToFSAL(&(parg->arg_access3.object), &fsal_data.handle, pcontext) == 0)
+  if(nfs3_FhandleToFSAL(&(parg->arg_access3.object), &fsal_data.handle, pcontext) == 0)
     return NFS_REQ_DROP;
 
   /* Set cookie to zero */
   fsal_data.cookie = DIR_START;
 
   /* Get the entry in the cache_inode */
-  if ((pentry = cache_inode_get(&fsal_data,
-                                &attr, ht, pclient, pcontext, &cache_status)) == NULL)
+  if((pentry = cache_inode_get(&fsal_data,
+                               &attr, ht, pclient, pcontext, &cache_status)) == NULL)
     {
       /* Stale NFS FH ? */
       pres->res_pathconf3.status = NFS3ERR_STALE;
@@ -177,8 +177,8 @@ int nfs3_Pathconf(nfs_arg_t * parg,
     }
 
   /* Get the filesystem information */
-  if (cache_inode_statfs(pentry, &staticinfo, &dynamicinfo, pcontext, &cache_status) !=
-      CACHE_INODE_SUCCESS)
+  if(cache_inode_statfs(pentry, &staticinfo, &dynamicinfo, pcontext, &cache_status) !=
+     CACHE_INODE_SUCCESS)
     {
       pres->res_pathconf3.status = nfs3_Errno(cache_status);
       return NFS_REQ_OK;

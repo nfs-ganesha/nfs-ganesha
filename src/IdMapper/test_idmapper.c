@@ -66,13 +66,13 @@ int idmap_computer_hash_value(char *name, uint32_t * phashval)
   uint64_t i8;
   uint64_t l;
 
-  if (name == NULL || phashval == NULL)
+  if(name == NULL || phashval == NULL)
     return CLIENT_ID_INVALID_ARGUMENT;
 
   memset(padded_name, 0, PWENT_MAX_LEN);
 
   /* Copy the string to the padded one */
-  for (i = 0; i < strnlen(name, PWENT_MAX_LEN); padded_name[i] = name[i], i++) ;
+  for(i = 0; i < strnlen(name, PWENT_MAX_LEN); padded_name[i] = name[i], i++) ;
 
 #ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
   printf("%s \n", padded_name);
@@ -85,7 +85,7 @@ int idmap_computer_hash_value(char *name, uint32_t * phashval)
    * Proceeding with the next 9 bytes pack will produce a new value that is xored with the
    * one of the previous iteration */
 
-  for (offset = 0; offset < PWENT_MAX_LEN; offset += 8)
+  for(offset = 0; offset < PWENT_MAX_LEN; offset += 8)
     {
       /* input name is ascii string, remove 8th bit on each byte, not significant */
       i1 = padded_name[offset + 0];
@@ -132,7 +132,7 @@ int idmap_computer_hash_value(char *name, uint32_t * phashval)
 #endif
     }
 
-  if (computed_value > 0x00000000FFFFFFFFLL)
+  if(computed_value > 0x00000000FFFFFFFFLL)
     computed_value = (computed_value >> 32) ^ (computed_value & 0x00000000FFFFFFFFLL);
 
 #ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
@@ -150,10 +150,10 @@ main(int argc, char *argv[])
   uint32_t valeur;
   int i;
 
-  if (argc == 1)
+  if(argc == 1)
     exit(0);
 
-  for (i = 1; i < argc; i++)
+  for(i = 1; i < argc; i++)
     {
       strncpy(name, argv[i], 30);
 

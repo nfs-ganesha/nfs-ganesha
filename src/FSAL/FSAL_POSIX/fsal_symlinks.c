@@ -57,11 +57,11 @@ fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
   /* sanity checks.
    * note : link_attributes is optional.
    */
-  if (!p_linkhandle || !p_context || !p_link_content)
+  if(!p_linkhandle || !p_context || !p_link_content)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readlink);
 
   status = fsal_internal_getPathFromHandle(p_context, p_linkhandle, 0, &fsalpath, NULL);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_readlink);
 
   memset(link_content_out, 0, FSAL_MAX_PATH_LEN);
@@ -74,26 +74,26 @@ fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
   ReleaseTokenFSCall();
 
   /* rc is the length for the symlink content or -1 on error !!! */
-  if (rc < 0)
+  if(rc < 0)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_readlink);
 
   /* convert char * to fsal_path_t */
 
   status = FSAL_str2path(link_content_out, FSAL_MAX_PATH_LEN, p_link_content);
 
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_readlink);
 
   /* retrieves object attributes, if asked */
 
-  if (p_link_attributes)
+  if(p_link_attributes)
     {
 
       status = FSAL_getattrs(p_linkhandle, p_context, p_link_attributes);
 
       /* On error, we set a flag in the returned attributes */
 
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_link_attributes->asked_attributes);
           FSAL_SET_MASK(p_link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -153,28 +153,28 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
   /* sanity checks.
    * note : link_attributes is optional.
    */
-  if (!p_parent_directory_handle ||
-      !p_context || !p_link_handle || !p_linkname || !p_linkcontent)
+  if(!p_parent_directory_handle ||
+     !p_context || !p_link_handle || !p_linkname || !p_linkcontent)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_symlink);
 
   /* Tests if symlinking is allowed by configuration. */
 
-  if (!global_fs_info.symlink_support)
+  if(!global_fs_info.symlink_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_symlink);
 
   /* build the new path and check the permissions on the parent directory */
   status =
       fsal_internal_getPathFromHandle(p_context, p_parent_directory_handle, 1, &fsalpath,
                                       &buffstat);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_symlink);
 
   status = fsal_internal_testAccess(p_context, FSAL_W_OK, &buffstat, NULL);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_symlink);
 
   status = fsal_internal_appendFSALNameToFSALPath(&fsalpath, p_linkname);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_symlink);
 
   /* create the symlink on the filesystem. */
@@ -184,7 +184,7 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
   errsv = errno;
   ReleaseTokenFSCall();
 
-  if (rc)
+  if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
 
   /* stat the file & add it to the database */
@@ -193,15 +193,15 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
   errsv = errno;
   ReleaseTokenFSCall();
 
-  if (rc)
+  if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
 
-  if (FSAL_IS_ERROR(status = fsal_internal_posix2posixdb_fileinfo(&buffstat, &infofs)))
+  if(FSAL_IS_ERROR(status = fsal_internal_posix2posixdb_fileinfo(&buffstat, &infofs)))
     Return(status.major, status.minor, INDEX_FSAL_symlink);
-  if (FSAL_IS_ERROR
-      (status =
-       fsal_internal_posixdb_add_entry(p_context->p_conn, p_linkname, &infofs,
-                                       p_parent_directory_handle, p_link_handle)))
+  if(FSAL_IS_ERROR
+     (status =
+      fsal_internal_posixdb_add_entry(p_context->p_conn, p_linkname, &infofs,
+                                      p_parent_directory_handle, p_link_handle)))
     Return(status.major, status.minor, INDEX_FSAL_symlink);
 
   /* chown the symlink to the current user */
@@ -211,17 +211,17 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
   errsv = errno;
   ReleaseTokenFSCall();
 
-  if (rc)
+  if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
 
   /* get attributes if asked */
 
-  if (p_link_attributes)
+  if(p_link_attributes)
     {
 
       status = posix2fsal_attributes(&buffstat, p_link_attributes);
 
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_link_attributes->asked_attributes);
           FSAL_SET_MASK(p_link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

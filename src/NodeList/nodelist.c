@@ -56,14 +56,14 @@ nodelist_nodelist_non_recursive_intersects(nodelist_nodelist_t * first_list,
   int same_pattern = 0;
 
   /* first list must not be empty */
-  if (first_list->rangelist.ranges_nb <= 0)
+  if(first_list->rangelist.ranges_nb <= 0)
     return fstatus;
 
   /* test if the two lists represent the same node name pattern (prefix...suffix) */
   same_pattern = nodelist_nodelist_equal_patterns(first_list, second_list);
 
   /* we go further only if they represent the same node name pattern */
-  if (same_pattern)
+  if(same_pattern)
     {
       /* now we just have to test if ranges array intersect */
       fstatus = nodelist_rangelist_intersects(&(first_list->rangelist),
@@ -95,19 +95,19 @@ nodelist_nodelist_intersects(nodelist_nodelist_t * first_list,
   list2 = second_list;
   /* we have to check that at least one sub list of the second arg list */
   /* intersects with one sublist of the fist arg */
-  while (list2 != NULL)
+  while(list2 != NULL)
     {
       list1 = first_list;
-      while (list1 != NULL)
+      while(list1 != NULL)
         {
           fstatus = nodelist_nodelist_non_recursive_intersects(list1, list2);
           /* intersects! break! */
-          if (fstatus)
+          if(fstatus)
             break;
           list1 = list1->next;
         }
       /* intersects! break! */
-      if (fstatus)
+      if(fstatus)
         break;
       list2 = list2->next;
     }
@@ -132,13 +132,13 @@ nodelist_nodelist_non_recursive_includes(nodelist_nodelist_t * first_list,
   int fstatus = 0;
   int same_pattern = 0;
   /* lists must not be empty */
-  if (first_list->rangelist.ranges_nb <= 0 || second_list->rangelist.ranges_nb <= 0)
+  if(first_list->rangelist.ranges_nb <= 0 || second_list->rangelist.ranges_nb <= 0)
     return fstatus;
   /* test if the two lists represent the same node name pattern (prefix...suffix) */
   same_pattern = nodelist_nodelist_equal_patterns(first_list, second_list);
 
   /* we go further only if they represent the same node name pattern */
-  if (same_pattern)
+  if(same_pattern)
     {
       /* now we juste have to test if second list ranges are included in the first list ranges */
       fstatus =
@@ -169,19 +169,19 @@ nodelist_nodelist_includes(nodelist_nodelist_t * first_list,
   list2 = second_list;
   /* we have to check that every node list in the second arg */
   /* are included in one list of the fist arg */
-  while (list2 != NULL)
+  while(list2 != NULL)
     {
       list1 = first_list;
-      while (list1 != NULL)
+      while(list1 != NULL)
         {
           fstatus = nodelist_nodelist_non_recursive_includes(list1, list2);
           /* included! go to next second list sublist */
-          if (fstatus)
+          if(fstatus)
             break;
           list1 = list1->next;
         }
       /* this second list sublist is not included, so break with fstatus=0 */
-      if (fstatus == 0)
+      if(fstatus == 0)
         break;
       list2 = list2->next;
     }
@@ -230,11 +230,11 @@ int nodelist_common_split_nodelist_entry(char *list, char **p_prefix, char **p_i
 
   /* get prefix */
   prefix = (char *)malloc((strlen(list) + 1) * sizeof(char));
-  if (prefix != NULL)
+  if(prefix != NULL)
     {
-      while (*prefix_end != '[' && !isdigit(*prefix_end) && prefix_end < list_end)
+      while(*prefix_end != '[' && !isdigit(*prefix_end) && prefix_end < list_end)
         prefix_end++;
-      if (prefix_end != prefix_begin && prefix_end <= list_end)
+      if(prefix_end != prefix_begin && prefix_end <= list_end)
         {
           memcpy(prefix, list, (prefix_end - prefix_begin) * sizeof(char));
           prefix[prefix_end - prefix_begin] = '\0';
@@ -251,31 +251,31 @@ int nodelist_common_split_nodelist_entry(char *list, char **p_prefix, char **p_i
 
   /* get idlist */
   /* search for idlist begin */
-  if (prefix != NULL)
+  if(prefix != NULL)
     idlist_begin = prefix_end;
   else
     idlist_begin = list;
-  while (*idlist_begin == '[' && idlist_begin < list_end)
+  while(*idlist_begin == '[' && idlist_begin < list_end)
     idlist_begin++;
   idlist_end = idlist_begin;
-  if (idlist_begin < list_end)
+  if(idlist_begin < list_end)
     {
       /* search for idlist end */
-      while ((isdigit(*idlist_end) || *idlist_end == ',' || *idlist_end == '-')
-             && idlist_end < list_end)
+      while((isdigit(*idlist_end) || *idlist_end == ',' || *idlist_end == '-')
+            && idlist_end < list_end)
         {
           idlist_end++;
         }
       /* remove trailing dash, like in node%d-eth */
-      if (*(idlist_end - 1) == '-')
+      if(*(idlist_end - 1) == '-')
         {
           idlist_end--;
-          while (*(idlist_end - 1) == '-')
+          while(*(idlist_end - 1) == '-')
             idlist_end--;
         }
       /* dump idlist */
       idlist = (char *)malloc((idlist_end - idlist_begin + 1) * sizeof(char));
-      if (idlist != NULL)
+      if(idlist != NULL)
         {
           memcpy(idlist, idlist_begin, (idlist_end - idlist_begin) * sizeof(char));
           idlist[idlist_end - idlist_begin] = '\0';
@@ -289,13 +289,13 @@ int nodelist_common_split_nodelist_entry(char *list, char **p_prefix, char **p_i
   /* get suffix */
   /* search for suffix begin */
   suffix_begin = idlist_end;
-  while (*suffix_begin == ']' && suffix_begin < list_end)
+  while(*suffix_begin == ']' && suffix_begin < list_end)
     suffix_begin++;
   /* dump suffix */
-  if (suffix_begin != list_end)
+  if(suffix_begin != list_end)
     {
       suffix = (char *)malloc((list_end - suffix_begin + 1) * sizeof(char));
-      if (suffix != NULL)
+      if(suffix != NULL)
         {
           memcpy(suffix, suffix_begin, (list_end - suffix_begin) * sizeof(char));
           suffix[list_end - suffix_begin] = '\0';
@@ -306,7 +306,7 @@ int nodelist_common_split_nodelist_entry(char *list, char **p_prefix, char **p_i
         }
     }
 
-  if (fstatus != 0)
+  if(fstatus != 0)
     {
       xfree(prefix);
       xfree(idlist);
@@ -333,21 +333,21 @@ int nodelist_nodelist_init(nodelist_nodelist_t * nodelist, char **lists, int lis
   fstatus += nodelist_rangelist_init(&(nodelist->rangelist));
   fstatus += nodelist_nodepattern_init(&(nodelist->pattern));
 
-  if (fstatus == 0)
+  if(fstatus == 0)
     {
-      for (i = 0; i < lists_nb; i++)
+      for(i = 0; i < lists_nb; i++)
         {
           list = lists[i];
 
           /* set operation if required */
-          if (strlen(list) == 1)
+          if(strlen(list) == 1)
             {
-              if (*list == '-')
+              if(*list == '-')
                 {
                   operation = 2;
                   continue;
                 }
-              if (*list == '+')
+              if(*list == '+')
                 {
                   operation = 1;
                   continue;
@@ -375,7 +375,7 @@ int nodelist_nodelist_init(nodelist_nodelist_t * nodelist, char **lists, int lis
         }
     }
 
-  if (fstatus)
+  if(fstatus)
     return -1;
   else
     return fstatus;
@@ -386,7 +386,7 @@ int nodelist_nodelist_free_contents(nodelist_nodelist_t * nodelist)
 
   int fstatus = -1;
 
-  if (nodelist->next != NULL)
+  if(nodelist->next != NULL)
     nodelist_nodelist_free_contents(nodelist->next);
   nodelist->next = NULL;
   nodelist_nodepattern_free_contents(&(nodelist->pattern));
@@ -419,10 +419,10 @@ nodelist_nodelist_copy(nodelist_nodelist_t * dest_list, nodelist_nodelist_t * sr
   nodelist_nodelist_free_contents(dest_list);
 
   pwldest = &dest_list;
-  if (nodelist_nodelist_init(*pwldest, NULL, 0) == 0)
+  if(nodelist_nodelist_init(*pwldest, NULL, 0) == 0)
     {
 
-      if (src_list->pattern.prefix == NULL && src_list->pattern.suffix == NULL)
+      if(src_list->pattern.prefix == NULL && src_list->pattern.suffix == NULL)
         {
           // second list is empty... so initialization will be sufficient
           fstatus = 0;
@@ -431,12 +431,12 @@ nodelist_nodelist_copy(nodelist_nodelist_t * dest_list, nodelist_nodelist_t * sr
         {
 
           pwlsrc = &src_list;
-          while (*pwlsrc != NULL)
+          while(*pwlsrc != NULL)
             {
               fstatus = -1;
 
-              if (nodelist_nodepattern_init_by_copy
-                  (&((*pwldest)->pattern), &((*pwlsrc)->pattern)) != 0)
+              if(nodelist_nodepattern_init_by_copy
+                 (&((*pwldest)->pattern), &((*pwlsrc)->pattern)) != 0)
                 {
                   // unable to copy pattern, break
                   fstatus = -2;
@@ -444,11 +444,11 @@ nodelist_nodelist_copy(nodelist_nodelist_t * dest_list, nodelist_nodelist_t * sr
                 }
               else
                 {
-                  if ((*pwlsrc)->pattern.basic != 1)
+                  if((*pwlsrc)->pattern.basic != 1)
                     {
                       // add ids
-                      if (nodelist_rangelist_init_by_copy
-                          (&((*pwldest)->rangelist), &((*pwlsrc)->rangelist)) != 0)
+                      if(nodelist_rangelist_init_by_copy
+                         (&((*pwldest)->rangelist), &((*pwlsrc)->rangelist)) != 0)
                         {
                           // unable to copy range list, break
                           fstatus = -3;
@@ -462,7 +462,7 @@ nodelist_nodelist_copy(nodelist_nodelist_t * dest_list, nodelist_nodelist_t * sr
               pwlsrc = &((*pwlsrc)->next);
             }
 
-          if (fstatus != 0)
+          if(fstatus != 0)
             nodelist_nodelist_free_contents(dest_list);
 
         }
@@ -484,7 +484,7 @@ nodelist_nodelist_copy(nodelist_nodelist_t * dest_list, nodelist_nodelist_t * sr
 int nodelist_nodelist_is_empty(nodelist_nodelist_t * nodelist)
 {
 
-  if (nodelist->pattern.prefix == NULL && nodelist->pattern.suffix == NULL)
+  if(nodelist->pattern.prefix == NULL && nodelist->pattern.suffix == NULL)
     {
       return 1;
     }
@@ -515,13 +515,13 @@ nodelist_nodelist_add_nodelist(nodelist_nodelist_t * nodelist,
   nodelist_nodelist_t **pwlsrc;
 
   /* If second list is emty, nothing to add */
-  if (nodelist_nodelist_is_empty(second_list))
+  if(nodelist_nodelist_is_empty(second_list))
     {
       return 0;
     }
 
   /* If nodelist is empty, duplicate second_list! */
-  if (nodelist_nodelist_is_empty(nodelist))
+  if(nodelist_nodelist_is_empty(nodelist))
     {
       fstatus = nodelist_nodelist_copy(nodelist, second_list);
     }
@@ -530,19 +530,19 @@ nodelist_nodelist_add_nodelist(nodelist_nodelist_t * nodelist,
     {
 
       pwlsrc = &second_list;
-      while (*pwlsrc != NULL)
+      while(*pwlsrc != NULL)
         {
 
           /* try to add src sublist to an existant dest list sublist */
           pwldest = &nodelist;
-          while (*pwldest != NULL)
+          while(*pwldest != NULL)
             {
 
               /* if patterns equal, try to add ids and break */
-              if (nodelist_nodepattern_equals
-                  ((&(*pwldest)->pattern), &((*pwlsrc)->pattern)))
+              if(nodelist_nodepattern_equals
+                 ((&(*pwldest)->pattern), &((*pwlsrc)->pattern)))
                 {
-                  if ((*pwldest)->pattern.padding < (*pwlsrc)->pattern.padding)
+                  if((*pwldest)->pattern.padding < (*pwlsrc)->pattern.padding)
                     nodelist_nodepattern_set_padding(&((*pwldest)->pattern),
                                                      (*pwlsrc)->pattern.padding);
                   fstatus =
@@ -555,18 +555,18 @@ nodelist_nodelist_add_nodelist(nodelist_nodelist_t * nodelist,
             }
 
           /* add a new sublist to dest list if no equivalent pattern list was found */
-          if (*pwldest == NULL)
+          if(*pwldest == NULL)
             {
               *pwldest = (nodelist_nodelist_t *) malloc(sizeof(nodelist_nodelist_t));
-              if (*pwldest != NULL)
+              if(*pwldest != NULL)
                 {
                   fstatus = nodelist_nodelist_init(*pwldest, NULL, 0);
-                  if (fstatus == 0)
+                  if(fstatus == 0)
                     {
                       fstatus =
                           nodelist_nodepattern_init_by_copy(&((*pwldest)->pattern),
                                                             &((*pwlsrc)->pattern));
-                      if (fstatus == 0)
+                      if(fstatus == 0)
                         {
                           fstatus =
                               nodelist_rangelist_add_rangelist(&((*pwldest)->rangelist),
@@ -577,7 +577,7 @@ nodelist_nodelist_add_nodelist(nodelist_nodelist_t * nodelist,
             }
 
           /* fstatus != 0 means that an error occured, break */
-          if (fstatus != 0)
+          if(fstatus != 0)
             {
               break;
             }
@@ -613,13 +613,13 @@ nodelist_nodelist_remove_nodelist(nodelist_nodelist_t * nodelist,
   nodelist_nodelist_t **pwlsrc;
 
   /* If second list is emty, nothing to remove */
-  if (nodelist_nodelist_is_empty(second_list))
+  if(nodelist_nodelist_is_empty(second_list))
     {
       return 0;
     }
 
   /* If nodelist is empty, nothing to remove */
-  if (nodelist_nodelist_is_empty(nodelist))
+  if(nodelist_nodelist_is_empty(nodelist))
     {
       return 0;
     }
@@ -629,30 +629,29 @@ nodelist_nodelist_remove_nodelist(nodelist_nodelist_t * nodelist,
 
       /* initialize work list by copying the first nodelist */
       fstatus = nodelist_nodelist_init(&worklist, NULL, 0);
-      if (fstatus == 0)
+      if(fstatus == 0)
         {
 
           pwldest = &nodelist;
-          while (*pwldest != NULL)
+          while(*pwldest != NULL)
             {
 
               add_flag = 1;
               pwlsrc = &second_list;
-              while (*pwlsrc != NULL)
+              while(*pwlsrc != NULL)
                 {
 
                   /* if patterns equal, try to remove ids and break */
-                  if (nodelist_nodepattern_equals
-                      ((&(*pwldest)->pattern), &((*pwlsrc)->pattern)))
+                  if(nodelist_nodepattern_equals
+                     ((&(*pwldest)->pattern), &((*pwlsrc)->pattern)))
                     {
                       add_flag = 0;
-                      if ((*pwldest)->pattern.basic == 0)
+                      if((*pwldest)->pattern.basic == 0)
                         {
                           fstatus +=
                               nodelist_rangelist_remove_rangelist(&
                                                                   ((*pwldest)->rangelist),
-                                                                  &((*pwlsrc)->
-                                                                    rangelist));
+                                                                  &((*pwlsrc)->rangelist));
                         }
                       else
                         fstatus = 0;
@@ -663,21 +662,21 @@ nodelist_nodelist_remove_nodelist(nodelist_nodelist_t * nodelist,
                   pwlsrc = &((*pwlsrc)->next);  /* increment src sublist */
                 }
 
-              if (fstatus)
+              if(fstatus)
                 break;
 
-              if (add_flag == 1)
+              if(add_flag == 1)
                 {
                   fstatus += nodelist_nodelist_add_nodelist(&worklist, *pwldest);
                 }
 
-              if (fstatus)
+              if(fstatus)
                 break;
 
               pwldest = &((*pwldest)->next);    /* increment dest sublist */
             }
 
-          if (fstatus == 0)
+          if(fstatus == 0)
             {
               fstatus = nodelist_nodelist_copy(nodelist, &worklist);
             }
@@ -705,29 +704,29 @@ int nodelist_nodelist_add_nodes(nodelist_nodelist_t * nodelist, char *list)
 
   nodelist_nodelist_t wlist;
 
-  if (nodelist_common_string_get_tokens_quantity(list, ",", &token_nb) == 0)
+  if(nodelist_common_string_get_tokens_quantity(list, ",", &token_nb) == 0)
     {
       token = NULL;
 
-      for (i = 1; i <= token_nb; i++)
+      for(i = 1; i <= token_nb; i++)
         {
-          if (nodelist_common_string_get_token(list, ",", i, &token) == 0)
+          if(nodelist_common_string_get_token(list, ",", i, &token) == 0)
             {
 
               status =
                   nodelist_common_split_nodelist_entry(token, &prefix, &idlist, &suffix);
-              if (status)
+              if(status)
                 {
                   fstatus = -1;
                 }
               else
                 {
                   fstatus = nodelist_nodelist_init(&wlist, NULL, 0);
-                  if (fstatus == 0)
+                  if(fstatus == 0)
                     {
                       nodelist_nodepattern_set_prefix(&(wlist.pattern), prefix);
                       nodelist_nodepattern_set_suffix(&(wlist.pattern), suffix);
-                      if (idlist != NULL)
+                      if(idlist != NULL)
                         {
                           wlist.pattern.basic = 0;
                           fstatus = nodelist_nodelist_add_ids(&wlist, idlist);
@@ -771,28 +770,28 @@ int nodelist_nodelist_remove_nodes(nodelist_nodelist_t * nodelist, char *list)
 
   nodelist_nodelist_t wlist;
 
-  if (nodelist_common_string_get_tokens_quantity(list, ",", &token_nb) == 0)
+  if(nodelist_common_string_get_tokens_quantity(list, ",", &token_nb) == 0)
     {
       token = NULL;
-      for (i = 1; i <= token_nb; i++)
+      for(i = 1; i <= token_nb; i++)
         {
-          if (nodelist_common_string_get_token(list, ",", i, &token) == 0)
+          if(nodelist_common_string_get_token(list, ",", i, &token) == 0)
             {
 
               status =
                   nodelist_common_split_nodelist_entry(token, &prefix, &idlist, &suffix);
-              if (status)
+              if(status)
                 {
                   fstatus = -1;
                 }
               else
                 {
                   fstatus = nodelist_nodelist_init(&wlist, NULL, 0);
-                  if (fstatus == 0)
+                  if(fstatus == 0)
                     {
                       nodelist_nodepattern_set_prefix(&(wlist.pattern), prefix);
                       nodelist_nodepattern_set_suffix(&(wlist.pattern), suffix);
-                      if (idlist != NULL)
+                      if(idlist != NULL)
                         {
                           wlist.pattern.basic = 0;
                           fstatus = nodelist_nodelist_add_ids(&wlist, idlist);
@@ -829,7 +828,7 @@ int nodelist_nodelist_add_nodes_range(nodelist_nodelist_t * nodelist, long int f
 
   nodelist_range_t r;
 
-  if (from_id <= to_id)
+  if(from_id <= to_id)
     {
       r.from = from_id;
       r.to = to_id;
@@ -853,13 +852,13 @@ long int nodelist_nodelist_non_recursive_nodes_quantity(nodelist_nodelist_t * no
   long int i;
 
   quantity = 0;
-  if (nodelist->pattern.basic == 1)
+  if(nodelist->pattern.basic == 1)
     {
       quantity++;
     }
   else
     {
-      for (i = 0; i < nodelist->rangelist.ranges_nb; i++)
+      for(i = 0; i < nodelist->rangelist.ranges_nb; i++)
         {
           quantity +=
               (nodelist->rangelist.array[i].to - nodelist->rangelist.array[i].from + 1);
@@ -878,7 +877,7 @@ long int nodelist_nodelist_nodes_quantity(nodelist_nodelist_t * nodelist)
 
   quantity = 0;
   nlist = nodelist;
-  while (nlist != NULL)
+  while(nlist != NULL)
     {
       quantity += nodelist_nodelist_non_recursive_nodes_quantity(nlist);
       nlist = nlist->next;
@@ -908,13 +907,13 @@ int nodelist_nodelist_get_extended_string(nodelist_nodelist_t * nodelist, char *
   char *suffix;
 
   output_string = (char *)malloc(output_string_size * sizeof(char));
-  if (output_string)
+  if(output_string)
     {
       output_string[0] = '\0';
 
       /* node list sublist loop */
       nlist = nodelist;
-      while (nlist != NULL)
+      while(nlist != NULL)
         {
 
           /* build sublist padded id format */
@@ -923,24 +922,24 @@ int nodelist_nodelist_get_extended_string(nodelist_nodelist_t * nodelist, char *
           snprintf(id_print_format, 128, "%%s%%0.%uu%%s", nlist->pattern.padding);
 
           node_string_size = 0;
-          if (prefix != NULL)
+          if(prefix != NULL)
             node_string_size += strlen(prefix);
-          if (suffix != NULL)
+          if(suffix != NULL)
             node_string_size += strlen(suffix);
           node_string_size += MAX_LONG_INT_STRING_SIZE;
           node_string = (char *)malloc(node_string_size * sizeof(char));
-          if (node_string != NULL)
+          if(node_string != NULL)
             {
 
-              if (nlist->pattern.basic == 1)
+              if(nlist->pattern.basic == 1)
                 {
                   /* add basic node */
                   snprintf(node_string, node_string_size, "%s%s",
                            (prefix == NULL) ? "" : prefix,
                            (suffix == NULL) ? "" : suffix);
-                  if (nodelist_common_string_appends_and_extends
-                      (&output_string, &output_string_size, node_string_size, node_string,
-                       ","))
+                  if(nodelist_common_string_appends_and_extends
+                     (&output_string, &output_string_size, node_string_size, node_string,
+                      ","))
                     {
                       fstatus = -1;
                     }
@@ -952,18 +951,18 @@ int nodelist_nodelist_get_extended_string(nodelist_nodelist_t * nodelist, char *
               else
                 {
                   /* add enumerated nodes */
-                  for (i = 0; i < nlist->rangelist.ranges_nb; i++)
+                  for(i = 0; i < nlist->rangelist.ranges_nb; i++)
                     {
-                      for (j = nlist->rangelist.array[i].from;
-                           j <= nlist->rangelist.array[i].to; j++)
+                      for(j = nlist->rangelist.array[i].from;
+                          j <= nlist->rangelist.array[i].to; j++)
                         {
 
                           snprintf(node_string, node_string_size, id_print_format,
                                    (prefix == NULL) ? "" : prefix, j,
                                    (suffix == NULL) ? "" : suffix);
-                          if (nodelist_common_string_appends_and_extends
-                              (&output_string, &output_string_size, node_string_size,
-                               node_string, ","))
+                          if(nodelist_common_string_appends_and_extends
+                             (&output_string, &output_string_size, node_string_size,
+                              node_string, ","))
                             {
                               fstatus = -1;
                             }
@@ -981,7 +980,7 @@ int nodelist_nodelist_get_extended_string(nodelist_nodelist_t * nodelist, char *
           nlist = nlist->next;
         }
 
-      if (fstatus != 0)
+      if(fstatus != 0)
         {
           free(output_string);
         }
@@ -1026,39 +1025,39 @@ int nodelist_nodelist_get_compacted_string(nodelist_nodelist_t * nodelist,
 
   /* initialize output string */
   output_string = (char *)malloc(output_string_size * sizeof(char));
-  if (output_string)
+  if(output_string)
     {
       output_string[0] = '\0';
 
       /* node list sublist loop */
       nlist = nodelist;
-      while (nlist != NULL)
+      while(nlist != NULL)
         {
 
           prefix = nlist->pattern.prefix;
           suffix = nlist->pattern.suffix;
 
           nodes_nb = nodelist_nodelist_non_recursive_nodes_quantity(nlist);
-          if (nodes_nb == 0)
+          if(nodes_nb == 0)
             {
               free(output_string);
               return fstatus;
             }
-          else if (nodes_nb == 1)
+          else if(nodes_nb == 1)
             brackets_flag = 0;
           else
             brackets_flag = 1;
 
-          if (nlist->pattern.basic == 1)
+          if(nlist->pattern.basic == 1)
             {
               /* in case of basic node, just add it */
               ranges_string_size = 1;   // \0
-              if (prefix != NULL)
+              if(prefix != NULL)
                 ranges_string_size += strlen(prefix);
-              if (suffix != NULL)
+              if(suffix != NULL)
                 ranges_string_size += strlen(suffix);
               ranges_string = (char *)malloc(ranges_string_size * sizeof(char));
-              if (ranges_string != NULL)
+              if(ranges_string != NULL)
                 {
                   snprintf(ranges_string, ranges_string_size, "%s%s",
                            (prefix == NULL) ? "" : prefix,
@@ -1078,34 +1077,34 @@ int nodelist_nodelist_get_compacted_string(nodelist_nodelist_t * nodelist,
 
               ranges_string_size = 1024;
               ranges_string = (char *)malloc(ranges_string_size * sizeof(char));
-              if (ranges_string != NULL)
+              if(ranges_string != NULL)
                 {
                   ranges_string[0] = '\0';
                   /* add prefix */
-                  if (prefix != NULL)
+                  if(prefix != NULL)
                     nodelist_common_string_appends_and_extends(&ranges_string,
                                                                &ranges_string_size,
                                                                strlen(prefix), prefix,
                                                                "");
-                  if (brackets_flag)
+                  if(brackets_flag)
                     nodelist_common_string_appends_and_extends(&ranges_string,
                                                                &ranges_string_size, 1,
                                                                "[", "");
                   range_string = (char *)malloc(range_string_size * sizeof(char));
-                  if (range_string != NULL)
+                  if(range_string != NULL)
                     {
                       range_string[0] = '\0';
-                      for (i = 0; i < nlist->rangelist.ranges_nb; i++)
+                      for(i = 0; i < nlist->rangelist.ranges_nb; i++)
                         {
                           from = nlist->rangelist.array[i].from;
                           to = nlist->rangelist.array[i].to;
-                          if (from == to)
+                          if(from == to)
                             snprintf(range_string, range_string_size, id_print_format,
                                      from);
                           else
                             snprintf(range_string, range_string_size,
                                      id_range_print_format, from, to);
-                          if (i == 0)
+                          if(i == 0)
                             fstatus =
                                 nodelist_common_string_appends_and_extends(&ranges_string,
                                                                            &ranges_string_size,
@@ -1119,7 +1118,7 @@ int nodelist_nodelist_get_compacted_string(nodelist_nodelist_t * nodelist,
                                                                            range_string_size,
                                                                            range_string,
                                                                            ",");
-                          if (fstatus)
+                          if(fstatus)
                             {
                               fstatus = -1;
                               break;
@@ -1131,12 +1130,12 @@ int nodelist_nodelist_get_compacted_string(nodelist_nodelist_t * nodelist,
                         }
                       free(range_string);
                     }
-                  if (brackets_flag)
+                  if(brackets_flag)
                     nodelist_common_string_appends_and_extends(&ranges_string,
                                                                &ranges_string_size, 1,
                                                                "]", "");
                   /* add suffix */
-                  if (suffix != NULL)
+                  if(suffix != NULL)
                     nodelist_common_string_appends_and_extends(&ranges_string,
                                                                &ranges_string_size,
                                                                strlen(suffix), suffix,
@@ -1145,14 +1144,14 @@ int nodelist_nodelist_get_compacted_string(nodelist_nodelist_t * nodelist,
             }
 
           /* add current list to global list */
-          if (ranges_string == NULL)
+          if(ranges_string == NULL)
             {
               fstatus = -1;
               break;
             }
-          if (nodelist_common_string_appends_and_extends
-              (&output_string, &output_string_size, ranges_string_size, ranges_string,
-               ","))
+          if(nodelist_common_string_appends_and_extends
+             (&output_string, &output_string_size, ranges_string_size, ranges_string,
+              ","))
             {
               fstatus = -1;
               free(ranges_string);
@@ -1163,7 +1162,7 @@ int nodelist_nodelist_get_compacted_string(nodelist_nodelist_t * nodelist,
           nlist = nlist->next;
         }
 
-      if (fstatus != 0)
+      if(fstatus != 0)
         {
           free(output_string);
         }
@@ -1220,19 +1219,19 @@ nodelist_nodepattern_init_by_copy(nodelist_nodepattern_t * np,
   np->basic = npin->basic;
   np->prefix = NULL;
   np->suffix = NULL;
-  if (npin->prefix != NULL)
+  if(npin->prefix != NULL)
     {
       np->prefix = strdup(npin->prefix);
-      if (np->prefix == NULL)
+      if(np->prefix == NULL)
         {
           nodelist_nodepattern_free_contents(np);
           return fstatus;
         }
     }
-  if (npin->suffix != NULL)
+  if(npin->suffix != NULL)
     {
       np->suffix = strdup(npin->suffix);
-      if (np->suffix == NULL)
+      if(np->suffix == NULL)
         {
           nodelist_nodepattern_free_contents(np);
           return fstatus;
@@ -1271,7 +1270,7 @@ int nodelist_nodepattern_free_contents(nodelist_nodepattern_t * np)
 int nodelist_nodepattern_set_padding(nodelist_nodepattern_t * np, int padding)
 {
   int fstatus = -1;
-  if (np != NULL)
+  if(np != NULL)
     {
       np->padding = padding;
       fstatus = 0;
@@ -1291,11 +1290,11 @@ int nodelist_nodepattern_set_padding(nodelist_nodepattern_t * np, int padding)
 int nodelist_nodepattern_set_prefix(nodelist_nodepattern_t * np, char *prefix)
 {
   int fstatus = -1;
-  if (np != NULL && prefix != NULL)
+  if(np != NULL && prefix != NULL)
     {
       xfree(np->prefix);
       np->prefix = strdup(prefix);
-      if (np->prefix != NULL)
+      if(np->prefix != NULL)
         fstatus = 0;
     }
   return fstatus;
@@ -1313,11 +1312,11 @@ int nodelist_nodepattern_set_prefix(nodelist_nodepattern_t * np, char *prefix)
 int nodelist_nodepattern_set_suffix(nodelist_nodepattern_t * np, char *suffix)
 {
   int fstatus = -1;
-  if (np != NULL && suffix != NULL)
+  if(np != NULL && suffix != NULL)
     {
       xfree(np->suffix);
       np->suffix = strdup(suffix);
-      if (np->suffix != NULL)
+      if(np->suffix != NULL)
         fstatus = 0;
     }
   return fstatus;
@@ -1334,7 +1333,7 @@ int nodelist_nodepattern_set_suffix(nodelist_nodepattern_t * np, char *suffix)
 int nodelist_nodepattern_set_basic(nodelist_nodepattern_t * np)
 {
   int fstatus = -1;
-  if (np != NULL)
+  if(np != NULL)
     {
       np->basic = 1;
       fstatus = 0;
@@ -1353,7 +1352,7 @@ int nodelist_nodepattern_set_basic(nodelist_nodepattern_t * np)
 int nodelist_nodepattern_unset_basic(nodelist_nodepattern_t * np)
 {
   int fstatus = -1;
-  if (np != NULL)
+  if(np != NULL)
     {
       np->basic = 0;
       fstatus = 0;
@@ -1375,40 +1374,40 @@ int
 nodelist_nodepattern_equals(nodelist_nodepattern_t * np1, nodelist_nodepattern_t * np2)
 {
   int fstatus = -1;
-  if (np1 != NULL && np2 != NULL)
+  if(np1 != NULL && np2 != NULL)
     {
       fstatus = 0;
 /*       /\* same padding ? *\/ */
 /*       if(np1->padding!=np2->padding) */
 /* 	return fstatus; */
       /* same basic flag ? */
-      if (np1->basic != np2->basic)
+      if(np1->basic != np2->basic)
         return fstatus;
       /* same prefix or lack of prefix ? */
-      if (np1->prefix != NULL && np2->prefix != NULL)
+      if(np1->prefix != NULL && np2->prefix != NULL)
         {
-          if (strcmp(np1->prefix, np2->prefix) != 0)
+          if(strcmp(np1->prefix, np2->prefix) != 0)
             return fstatus;
         }
-      else if (np1->prefix == NULL && np2->prefix != NULL)
+      else if(np1->prefix == NULL && np2->prefix != NULL)
         {
           return fstatus;
         }
-      else if (np1->prefix != NULL && np2->prefix == NULL)
+      else if(np1->prefix != NULL && np2->prefix == NULL)
         {
           return fstatus;
         }
       /* same suffix or lack of suffix ? */
-      if (np1->suffix != NULL && np2->suffix != NULL)
+      if(np1->suffix != NULL && np2->suffix != NULL)
         {
-          if (strcmp(np1->suffix, np2->suffix) != 0)
+          if(strcmp(np1->suffix, np2->suffix) != 0)
             return fstatus;
         }
-      else if (np1->suffix == NULL && np2->suffix != NULL)
+      else if(np1->suffix == NULL && np2->suffix != NULL)
         {
           return fstatus;
         }
-      else if (np1->suffix != NULL && np2->suffix == NULL)
+      else if(np1->suffix != NULL && np2->suffix == NULL)
         {
           return fstatus;
         }

@@ -91,21 +91,21 @@ int HPSSFSAL_FileSetAttrHandle(ns_ObjHandle_t * ObjHandle,      /* IN  - parent 
    */
 
   error = API_ClientAPIInit(&threadcontext);
-  if (error != 0)
+  if(error != 0)
     API_RETURN(error);
 
   /*
    *  Check that the object handle is not NULL.
    */
 
-  if (ObjHandle == (ns_ObjHandle_t *) NULL)
+  if(ObjHandle == (ns_ObjHandle_t *) NULL)
     API_RETURN(-EINVAL);
 
   /*
    *  Check that the pathname the string is not the NULL string.
    */
 
-  if (Path != NULL && *Path == '\0')
+  if(Path != NULL && *Path == '\0')
     API_RETURN(-ENOENT);
 
   /*
@@ -113,7 +113,7 @@ int HPSSFSAL_FileSetAttrHandle(ns_ObjHandle_t * ObjHandle,      /* IN  - parent 
    *  current thread context.
    */
 
-  if (Ucred == (TYPE_CRED_HPSS *) NULL)
+  if(Ucred == (TYPE_CRED_HPSS *) NULL)
     ucred_ptr = &threadcontext->UserCred;
   else
     ucred_ptr = Ucred;
@@ -233,7 +233,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
    *  Make sure that AttrIn and AttrOut are not NULL.
    */
 
-  if ((AttrIn == (hpss_fileattr_t *) NULL) || (AttrOut == (hpss_fileattr_t *) NULL))
+  if((AttrIn == (hpss_fileattr_t *) NULL) || (AttrOut == (hpss_fileattr_t *) NULL))
     {
       return (-EFAULT);
     }
@@ -242,7 +242,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
    *  We do not allow the bitfile id to be changed via this interface.
    */
 
-  if (chkbit64m(SelFlagsIn, CORE_ATTR_BIT_FILE_ID))
+  if(chkbit64m(SelFlagsIn, CORE_ATTR_BIT_FILE_ID))
     {
       return (-EINVAL);
     }
@@ -276,7 +276,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
    */
 
 #if !defined(API_DMAP_GATEWAY)
-  if (chkbit64m(SelFlagsIn, CORE_ATTR_ACCOUNT) && !chkbit64m(SelFlagsIn, CORE_ATTR_UID))
+  if(chkbit64m(SelFlagsIn, CORE_ATTR_ACCOUNT) && !chkbit64m(SelFlagsIn, CORE_ATTR_UID))
     {
       return (-EPERM);
     }
@@ -287,7 +287,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
    */
 
   path_object = (char *)malloc(HPSS_MAX_PATH_NAME);
-  if (path_object == NULL)
+  if(path_object == NULL)
     {
       return (-ENOMEM);
     }
@@ -370,7 +370,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
 #endif
                            NULL);
 
-  if (error != 0)
+  if(error != 0)
     {
       API_DEBUG_FPRINTF(DebugFile, &RequestID,
                         "%s: Could get attributes, error=%d\n", function_name, error);
@@ -383,7 +383,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
        * the object is its own parent.
        */
 
-      if (obj_handle.Flags & NS_OH_FLAG_FILESET_ROOT)
+      if(obj_handle.Flags & NS_OH_FLAG_FILESET_ROOT)
         {
           memcpy(&attr_parent, &attr, sizeof(attr_parent));
           strcpy(path_object, ".");
@@ -403,14 +403,14 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
        *  image how that can happen - but...), then set an error.
        */
 
-      if (chkbit64m(SelFlagsIn, CORE_ATTR_COS_ID)
-          && (attr_parent.COSId != 0) && (AttrIn->Attrs.COSId != attr_parent.COSId))
+      if(chkbit64m(SelFlagsIn, CORE_ATTR_COS_ID)
+         && (attr_parent.COSId != 0) && (AttrIn->Attrs.COSId != attr_parent.COSId))
         {
           error = -EPERM;
           API_DEBUG_FPRINTF(DebugFile, &RequestID,
                             "%s: File is in a fileset with an"
                             " assigned COS.\n", function_name);
-          if (path_object != NULL)
+          if(path_object != NULL)
             free(path_object);
           return (error);
         }
@@ -426,7 +426,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
       call_type = API_DetermineCall(attr_parent.FilesetType, &error);
 #endif
 
-      if (call_type == API_CALL_DMG)
+      if(call_type == API_CALL_DMG)
         {
 
 #if defined ( API_DMAP_SUPPORT ) && !defined ( API_DMAP_GATEWAY )
@@ -470,7 +470,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
            * Owner
            */
 
-          if (chkbit64m(SelFlagsIn, CORE_ATTR_UID))
+          if(chkbit64m(SelFlagsIn, CORE_ATTR_UID))
             {
               /*
                *  The dmg doesn't know anything about the account id, yet
@@ -491,7 +491,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
            * Group
            */
 
-          if (chkbit64m(SelFlagsIn, CORE_ATTR_GID))
+          if(chkbit64m(SelFlagsIn, CORE_ATTR_GID))
             {
               dmg_attr_bits = bld64m(high32m(dmg_attr_bits),
                                      (low32m(dmg_attr_bits) | CHANGE_GROUP));
@@ -503,37 +503,37 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
            * Permissions
            */
 
-          if (chkbit64m(SelFlagsIn, CORE_ATTR_USER_PERMS))
+          if(chkbit64m(SelFlagsIn, CORE_ATTR_USER_PERMS))
             {
               dmg_attr_bits = bld64m(high32m(dmg_attr_bits),
                                      (low32m(dmg_attr_bits) | CHANGE_MODE));
               dmg_attr_in.Attrs.Attrs.UserPerms = AttrIn->Attrs.UserPerms;
             }
-          if (chkbit64m(SelFlagsIn, CORE_ATTR_GROUP_PERMS))
+          if(chkbit64m(SelFlagsIn, CORE_ATTR_GROUP_PERMS))
             {
               dmg_attr_bits = bld64m(high32m(dmg_attr_bits),
                                      (low32m(dmg_attr_bits) | CHANGE_MODE));
               dmg_attr_in.Attrs.Attrs.GroupPerms = AttrIn->Attrs.GroupPerms;
             }
-          if (chkbit64m(SelFlagsIn, CORE_ATTR_OTHER_PERMS))
+          if(chkbit64m(SelFlagsIn, CORE_ATTR_OTHER_PERMS))
             {
               dmg_attr_bits = bld64m(high32m(dmg_attr_bits),
                                      (low32m(dmg_attr_bits) | CHANGE_MODE));
               dmg_attr_in.Attrs.Attrs.OtherPerms = AttrIn->Attrs.OtherPerms;
             }
-          if (chkbit64m(SelFlagsIn, CORE_ATTR_SET_UID))
+          if(chkbit64m(SelFlagsIn, CORE_ATTR_SET_UID))
             {
               dmg_attr_bits = bld64m(high32m(dmg_attr_bits),
                                      (low32m(dmg_attr_bits) | CHANGE_MODE));
               dmg_attr_in.Attrs.Attrs.SetUIDBit = AttrIn->Attrs.SetUIDBit;
             }
-          if (chkbit64m(SelFlagsIn, CORE_ATTR_SET_GID))
+          if(chkbit64m(SelFlagsIn, CORE_ATTR_SET_GID))
             {
               dmg_attr_bits = bld64m(high32m(dmg_attr_bits),
                                      (low32m(dmg_attr_bits) | CHANGE_MODE));
               dmg_attr_in.Attrs.Attrs.SetGIDBit = AttrIn->Attrs.SetGIDBit;
             }
-          if (chkbit64m(SelFlagsIn, CORE_ATTR_SET_STICKY))
+          if(chkbit64m(SelFlagsIn, CORE_ATTR_SET_STICKY))
             {
               dmg_attr_bits = bld64m(high32m(dmg_attr_bits),
                                      (low32m(dmg_attr_bits) | CHANGE_MODE));
@@ -544,14 +544,14 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
            * Modification/Access times
            */
 
-          if (chkbit64m(SelFlagsIn, CORE_ATTR_TIME_LAST_READ))
+          if(chkbit64m(SelFlagsIn, CORE_ATTR_TIME_LAST_READ))
             {
               dmg_attr_bits = bld64m(high32m(dmg_attr_bits),
                                      (low32m(dmg_attr_bits) | CHANGE_UTIME));
               dmg_attr_in.Attrs.Attrs.TimeLastRead = AttrIn->Attrs.TimeLastRead;
             }
 
-          if (chkbit64m(SelFlagsIn, CORE_ATTR_TIME_LAST_WRITTEN))
+          if(chkbit64m(SelFlagsIn, CORE_ATTR_TIME_LAST_WRITTEN))
             {
               dmg_attr_bits = bld64m(high32m(dmg_attr_bits),
                                      (low32m(dmg_attr_bits) | CHANGE_UTIME));
@@ -562,7 +562,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
            * Size
            */
 
-          if (chkbit64m(SelFlagsIn, CORE_ATTR_DATA_LENGTH))
+          if(chkbit64m(SelFlagsIn, CORE_ATTR_DATA_LENGTH))
             {
               dmg_attr_bits = bld64m(high32m(dmg_attr_bits),
                                      (low32m(dmg_attr_bits) | CHANGE_FILESIZE));
@@ -580,7 +580,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
                                    dmg_attr_bits,
                                    &dmg_attr_in, acl_options, &dmg_attr_out);
 
-          if (error != 0)
+          if(error != 0)
             {
               API_DEBUG_FPRINTF(DebugFile, &RequestID,
                                 "%s: API_dmg_SetAttrs() failed,"
@@ -626,7 +626,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
         }                       /* end "if call_type == DMG" */
 #endif                          /* end of version < 7 */
 
-      if (error == 0)
+      if(error == 0)
         {
           /*
            *  In most calls that might have to call the gateway, there would
@@ -663,7 +663,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
            *  but not both.
            */
 
-          if (chkbit64m(SelFlagsIn, CORE_ATTR_UID))
+          if(chkbit64m(SelFlagsIn, CORE_ATTR_UID))
             {
               /*
                * Do account validation -
@@ -672,7 +672,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
 
               error = hpss_LocateServerByUUID(RequestID,
                                               obj_handle.CoreServerUUID, &ls_map);
-              if (error != 0)
+              if(error != 0)
                 {
                   API_DEBUG_FPRINTF(DebugFile, &RequestID,
                                     "%s: Could not get location, error=%d\n",
@@ -688,7 +688,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
                                             ThreadContext,
                                             obj_handle.CoreServerUUID,
                                             RequestID, &ls_map.SiteId, &cur_acct_code);
-                  if (error != 0)
+                  if(error != 0)
                     {
                       API_DEBUG_FPRINTF(DebugFile, &RequestID,
                                         "%s: couldn't determine"
@@ -725,7 +725,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
                                                    attr.GID, cur_acct_code, &acct_code);
 #endif
 
-                      if (error != 0)
+                      if(error != 0)
                         {
                           API_DEBUG_FPRINTF(DebugFile, &RequestID,
                                             "%s: av_cli_ValidateChown"
@@ -736,14 +736,14 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
                     }
                 }
 
-              if (error == 0)
+              if(error == 0)
                 {
                   AttrIn->Attrs.Account = acct_code;
                   SelFlagsIn = orbit64m(SelFlagsIn, CORE_ATTR_ACCOUNT);
                 }
 
             }
-          else if (chkbit64m(SelFlagsIn, CORE_ATTR_ACCOUNT))
+          else if(chkbit64m(SelFlagsIn, CORE_ATTR_ACCOUNT))
             {
               /*
                * User is setting account id, but not uid. 
@@ -756,7 +756,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
 
               error = hpss_LocateServerByUUID(RequestID,
                                               obj_handle.CoreServerUUID, &ls_map);
-              if (error != 0)
+              if(error != 0)
                 {
                   API_DEBUG_FPRINTF(DebugFile, &RequestID,
                                     "%s: Could not get location, error=%d\n",
@@ -789,7 +789,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
                                                 attr.Account,
                                                 AttrIn->Attrs.Account, &acct_code);
 #endif
-                  if (error != 0)
+                  if(error != 0)
                     {
                       API_DEBUG_FPRINTF(DebugFile, &RequestID,
                                         "%s: av_cli_ValidateChacct failed."
@@ -800,7 +800,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
                 }
             }
 
-          if (error == 0)
+          if(error == 0)
             {
               (void)memset(AttrOut, 0, sizeof(*AttrOut));
 
@@ -812,7 +812,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
                                         SelFlagsIn,
                                         &AttrIn->Attrs, return_flags, &AttrOut->Attrs);
 
-              if (error != 0)
+              if(error != 0)
                 {
                   API_DEBUG_FPRINTF(DebugFile, &RequestID,
                                     "%s: Could not set attributes,"
@@ -826,7 +826,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
    * Free the locally used path name
    */
 
-  if (path_object != NULL)
+  if(path_object != NULL)
     free(path_object);
 
   /*
@@ -835,7 +835,7 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
    *  dmg; it doesn't return any out bits.
    */
 
-  if (SelFlagsOut)
+  if(SelFlagsOut)
     *SelFlagsOut = return_flags;
 
   return (error);

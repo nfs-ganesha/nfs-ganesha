@@ -138,28 +138,28 @@ fsal_status_t MFSL_Init(mfsl_parameter_t * init_info    /* IN */
   pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE);
 
   /* Allocate the synclet related structure */
-  if ((mfsl_async_synclet_thrid =
-       (pthread_t *) Mem_Alloc(init_info->nb_synclet * sizeof(pthread_t))) == NULL)
+  if((mfsl_async_synclet_thrid =
+      (pthread_t *) Mem_Alloc(init_info->nb_synclet * sizeof(pthread_t))) == NULL)
     MFSL_return(ERR_FSAL_NOMEM, errno);
 
-  if ((synclet_data =
-       (mfsl_synclet_data_t *) Mem_Alloc(init_info->nb_synclet *
-                                         sizeof(mfsl_synclet_data_t))) == NULL)
+  if((synclet_data =
+      (mfsl_synclet_data_t *) Mem_Alloc(init_info->nb_synclet *
+                                        sizeof(mfsl_synclet_data_t))) == NULL)
     MFSL_return(ERR_FSAL_NOMEM, errno);
 
-  for (i = 0; i < init_info->nb_synclet; i++)
+  for(i = 0; i < init_info->nb_synclet; i++)
     {
       synclet_data[i].my_index = i;
-      if (pthread_cond_init(&synclet_data[i].op_condvar, NULL) != 0)
+      if(pthread_cond_init(&synclet_data[i].op_condvar, NULL) != 0)
         MFSL_return(ERR_FSAL_INVAL, 0);
 
-      if (pthread_mutex_init(&synclet_data[i].mutex_op_condvar, NULL) != 0)
+      if(pthread_mutex_init(&synclet_data[i].mutex_op_condvar, NULL) != 0)
         MFSL_return(ERR_FSAL_INVAL, 0);
 
-      if (pthread_mutex_init(&synclet_data[i].mutex_op_lru, NULL) != 0)
+      if(pthread_mutex_init(&synclet_data[i].mutex_op_lru, NULL) != 0)
         MFSL_return(ERR_FSAL_INVAL, 0);
 
-      if ((synclet_data[i].op_lru = LRU_Init(mfsl_param.lru_param, &lru_status)) == NULL)
+      if((synclet_data[i].op_lru = LRU_Init(mfsl_param.lru_param, &lru_status)) == NULL)
         MFSL_return(ERR_FSAL_INVAL, 0);
 
       synclet_data[i].passcounter = 0;
@@ -167,19 +167,19 @@ fsal_status_t MFSL_Init(mfsl_parameter_t * init_info    /* IN */
     }                           /* for */
 
   /* Now start the threads */
-  if ((rc = pthread_create(&mfsl_async_adt_thrid,
-                           &attr_thr,
-                           mfsl_async_asynchronous_dispatcher_thread, (void *)NULL)) != 0)
+  if((rc = pthread_create(&mfsl_async_adt_thrid,
+                          &attr_thr,
+                          mfsl_async_asynchronous_dispatcher_thread, (void *)NULL)) != 0)
     MFSL_return(ERR_FSAL_SERVERFAULT, -rc);
 
-  for (i = 0; i < init_info->nb_synclet; i++)
+  for(i = 0; i < init_info->nb_synclet; i++)
     {
-      if ((rc = pthread_create(&mfsl_async_synclet_thrid[i],
-                               &attr_thr, mfsl_async_synclet_thread, (void *)i)) != 0)
+      if((rc = pthread_create(&mfsl_async_synclet_thrid[i],
+                              &attr_thr, mfsl_async_synclet_thread, (void *)i)) != 0)
         MFSL_return(ERR_FSAL_SERVERFAULT, -rc);
     }
 
-  if (!mfsl_async_hash_init())
+  if(!mfsl_async_hash_init())
     MFSL_return(ERR_FSAL_SERVERFAULT, 0);
 
   /* Regular Exit */

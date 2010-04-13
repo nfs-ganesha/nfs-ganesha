@@ -149,7 +149,7 @@ static void action_sigusr1(int sig)
   DisplayLog("SIGUSR1_HANDLER: Receveid SIGUSR1.... signal will be managed");
 
   /* Set variable force_flush_by_signal that is used in file content cache gc thread */
-  if (force_flush_by_signal)
+  if(force_flush_by_signal)
     {
       DisplayLog("SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
       force_flush_by_signal = FALSE;
@@ -169,9 +169,9 @@ static void action_sigusr1(int sig)
 
 static void action_sigterm(int sig)
 {
-  if (sig == SIGTERM)
+  if(sig == SIGTERM)
     DisplayLog("SIGTERM_HANDLER: Receveid SIGTERM.... initiating daemon shutdown");
-  else if (sig == SIGINT)
+  else if(sig == SIGINT)
     DisplayLog("SIGINT_HANDLER: Receveid SIGINT.... initiating daemon shutdown");
 
   nfs_stop();
@@ -203,15 +203,15 @@ int main(int argc, char *argv[])
   /* retrieve executable file's name */
   strncpy(ganesha_exec_path, argv[0], MAXPATHLEN);
 
-  if ((tempo_exec_name = strrchr(argv[0], '/')) != NULL)
+  if((tempo_exec_name = strrchr(argv[0], '/')) != NULL)
     strcpy((char *)exec_name, tempo_exec_name + 1);
 
-  if (*exec_name == '\0')
+  if(*exec_name == '\0')
     strcpy((char *)exec_name, argv[0]);
 
   /* get host name */
 
-  if (gethostname(localmachine, sizeof(localmachine)) != 0)
+  if(gethostname(localmachine, sizeof(localmachine)) != 0)
     {
       fprintf(stderr, "Could not get local host name, exiting...");
       exit(1);
@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
     strncpy(host_name, localmachine, MAXHOSTNAMELEN);
 
   /* now parsing options with getopt */
-  while ((c = getopt(argc, argv, options)) != EOF)
+  while((c = getopt(argc, argv, options)) != EOF)
     {
       switch (c)
         {
@@ -240,7 +240,7 @@ int main(int argc, char *argv[])
         case 'N':
           /* debug level */
           debug_level = ReturnLevelAscii(optarg);
-          if (debug_level == -1)
+          if(debug_level == -1)
             {
               fprintf(stderr,
                       "Invalid value for option 'N': NIV_NULL, NIV_MAJ, NIV_CRIT, NIV_EVENT, NIV_DEBUG or NIV_FULL_DEBUG expected.\n");
@@ -283,7 +283,7 @@ int main(int argc, char *argv[])
           my_nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
           my_nfs_start_info.lw_mark_trigger = FALSE;
 
-          if (my_nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
+          if(my_nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
             my_nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
           break;
 
@@ -294,7 +294,7 @@ int main(int argc, char *argv[])
           my_nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
           my_nfs_start_info.lw_mark_trigger = FALSE;
 
-          if (my_nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
+          if(my_nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
             my_nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
           break;
 
@@ -305,7 +305,7 @@ int main(int argc, char *argv[])
           my_nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
           my_nfs_start_info.lw_mark_trigger = TRUE;
 
-          if (my_nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
+          if(my_nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
             my_nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
           break;
 
@@ -321,14 +321,14 @@ int main(int argc, char *argv[])
 
   /* initialize memory and logging */
 
-  if (nfs_prereq_init(exec_name, host_name, debug_level, log_path))
+  if(nfs_prereq_init(exec_name, host_name, debug_level, log_path))
     {
       fprintf(stderr, "NFS MAIN: Error initializing NFSd prerequisites\n");
       exit(1);
     }
 
   /* Start in background, if wanted */
-  if (detach_flag)
+  if(detach_flag)
     {
       /* Step 1: forking a service process */
       switch (son_pid = fork())
@@ -342,7 +342,7 @@ int main(int argc, char *argv[])
         case 0:
           /* This code is within the son (that will actually work)
            * Let's make it the leader of its group of process */
-          if (setsid() == -1)
+          if(setsid() == -1)
             {
               DisplayErrorLog(ERR_SYS, ERR_SETSID, errno);
               DisplayLog("Could nout start nfs daemon, exiting...");
@@ -365,7 +365,7 @@ int main(int argc, char *argv[])
   memset(&act_sigusr1, 0, sizeof(act_sigusr1));
   act_sigusr1.sa_flags = 0;
   act_sigusr1.sa_handler = action_sigusr1;
-  if (sigaction(SIGUSR1, &act_sigusr1, NULL) == -1)
+  if(sigaction(SIGUSR1, &act_sigusr1, NULL) == -1)
     {
       DisplayErrorLog(ERR_SYS, ERR_SIGACTION, errno);
       exit(1);
@@ -377,8 +377,8 @@ int main(int argc, char *argv[])
   memset(&act_sigterm, 0, sizeof(act_sigterm));
   act_sigterm.sa_flags = 0;
   act_sigterm.sa_handler = action_sigterm;
-  if (sigaction(SIGTERM, &act_sigterm, NULL) == -1
-      || sigaction(SIGINT, &act_sigterm, NULL) == -1)
+  if(sigaction(SIGTERM, &act_sigterm, NULL) == -1
+     || sigaction(SIGINT, &act_sigterm, NULL) == -1)
     {
       DisplayErrorLog(ERR_SYS, ERR_SIGACTION, errno);
       exit(1);
@@ -389,7 +389,7 @@ int main(int argc, char *argv[])
 
   /* initialize default parameters */
 
-  if (nfs_set_param_default(&nfs_param))
+  if(nfs_set_param_default(&nfs_param))
     {
       DisplayLog("NFS MAIN: Error setting default parameters.");
       exit(1);
@@ -397,7 +397,7 @@ int main(int argc, char *argv[])
 
   /* parse configuration file */
 
-  if (nfs_set_param_from_conf(&nfs_param, &my_nfs_start_info, my_config_path))
+  if(nfs_set_param_from_conf(&nfs_param, &my_nfs_start_info, my_config_path))
     {
       DisplayLog("NFS MAIN: Error parsing configuration file.");
       exit(1);
@@ -405,7 +405,7 @@ int main(int argc, char *argv[])
 
   /* check parameters consitency */
 
-  if (nfs_check_param_consistency(&nfs_param))
+  if(nfs_check_param_consistency(&nfs_param))
     {
       DisplayLog("NFS MAIN: Inconsistent parameters found");
       DisplayLog

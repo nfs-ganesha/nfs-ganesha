@@ -150,7 +150,7 @@ static struct tm *Localtime_r(const time_t * p_time, struct tm *p_tm)
 {
   struct tm *p_tmp_tm;
 
-  if (!p_tm)
+  if(!p_tm)
     {
       errno = EFAULT;
       return NULL;
@@ -177,7 +177,7 @@ static int DisplayError(int num_error, int status);
 /* Init of pthread_keys */
 static void init_keys(void)
 {
-  if (pthread_key_create(&thread_key, NULL) == -1)
+  if(pthread_key_create(&thread_key, NULL) == -1)
     DisplayError(ERR_PTHREAD_KEY_CREATE, errno);
 
   return;
@@ -193,7 +193,7 @@ static ThreadLogContext_t *Log_GetThreadContext()
   ThreadLogContext_t *p_current_thread_vars;
 
   /* first, we init the keys if this is the first time */
-  if (pthread_once(&once_key, init_keys) != 0)
+  if(pthread_once(&once_key, init_keys) != 0)
     {
       DisplayError(ERR_PTHREAD_ONCE, errno);
       return NULL;
@@ -202,7 +202,7 @@ static ThreadLogContext_t *Log_GetThreadContext()
   p_current_thread_vars = (ThreadLogContext_t *) pthread_getspecific(thread_key);
 
   /* we allocate the thread key if this is the first time */
-  if (p_current_thread_vars == NULL)
+  if(p_current_thread_vars == NULL)
     {
 
       /* allocates thread structure */
@@ -212,7 +212,7 @@ static ThreadLogContext_t *Log_GetThreadContext()
       printf("malloc => %p\n", p_current_thread_vars);
 #endif
 
-      if (p_current_thread_vars == NULL)
+      if(p_current_thread_vars == NULL)
         {
           DisplayError(ERR_MALLOC, errno);
           return NULL;
@@ -249,8 +249,8 @@ int ReturnLevelAscii(char *LevelEnAscii)
 {
   int i = 0;
 
-  for (i = 0; i < NB_LOG_LEVEL; i++)
-    if (!strcmp(tabLogLevel[i].str, LevelEnAscii))
+  for(i = 0; i < NB_LOG_LEVEL; i++)
+    if(!strcmp(tabLogLevel[i].str, LevelEnAscii))
       return tabLogLevel[i].value;
 
   /* Si rien n'est trouve on retourne -1 */
@@ -261,8 +261,8 @@ char *ReturnLevelInt(int level)
 {
   int i = 0;
 
-  for (i = 0; i < NB_LOG_LEVEL; i++)
-    if (tabLogLevel[i].value == level)
+  for(i = 0; i < NB_LOG_LEVEL; i++)
+    if(tabLogLevel[i].value == level)
       return tabLogLevel[i].str;
 
   /* Si on n'a rien trouve on retourne NULL */
@@ -367,7 +367,7 @@ static void ArmeSignal(int signal, void (*action) ())
   act.sa_handler = action;
   sigemptyset(&act.sa_mask);
 
-  if (sigaction(signal, &act, NULL) == -1)
+  if(sigaction(signal, &act, NULL) == -1)
     {
       DisplayError(ERR_SIGACTION, errno);
       snprintf(buffer, 1024, "Impossible de controler %d", signal);
@@ -395,7 +395,7 @@ int ReturnLevelDebug()
 
 int SetLevelDebug(int level_to_set)
 {
-  if (level_to_set < 0)
+  if(level_to_set < 0)
     level_to_set = 0;
 
   niveau_debug = level_to_set;
@@ -408,7 +408,7 @@ static void IncrementeLevelDebug()
   char buffer[1024];
 
   niveau_debug += 1;
-  if (niveau_debug >= NB_LOG_LEVEL)
+  if(niveau_debug >= NB_LOG_LEVEL)
     niveau_debug = NB_LOG_LEVEL - 1;
 
   snprintf(buffer, 1024, "SIGUSR1 recu -> Level de debug: %s = %d ",
@@ -422,7 +422,7 @@ static void DecrementeLevelDebug()
   char buffer[1024];
 
   niveau_debug -= 1;
-  if (niveau_debug < 0)
+  if(niveau_debug < 0)
     niveau_debug = 0;
 
   snprintf(buffer, 1024, "SIGUSR2 recu -> Level de debug: %s = %d ",
@@ -440,7 +440,7 @@ int InitDebug(int level_to_set)
   tab_family[0].tab_err = (family_error_t *) tab_systeme_err;
   strcpy(tab_family[0].name_family, "Errors Systeme UNIX");
 
-  for (i = 1; i < MAX_NUM_FAMILY; i++)
+  for(i = 1; i < MAX_NUM_FAMILY; i++)
     tab_family[i].num_family = UNUSED_SLOT;
 
   /* On impose le niveau de debug */
@@ -561,12 +561,12 @@ static int DisplayLogPath_valist(char *path, char *format, va_list arguments)
 
   DisplayLogString_valist(tampon, format, arguments);
 
-  if (path[0] != '\0')
+  if(path[0] != '\0')
     {
 #ifdef _LOCK_LOG
-      if ((fd = open(path, O_WRONLY | O_SYNC | O_APPEND | O_CREAT, masque_log)) != -1)
+      if((fd = open(path, O_WRONLY | O_SYNC | O_APPEND | O_CREAT, masque_log)) != -1)
 #else
-      if ((fd = open(path, O_WRONLY | O_NONBLOCK | O_APPEND | O_CREAT, masque_log)) != -1)
+      if((fd = open(path, O_WRONLY | O_NONBLOCK | O_APPEND | O_CREAT, masque_log)) != -1)
 #endif
         {
           /* Si la creation ou l'ouverture du fichier est OK */
@@ -581,7 +581,7 @@ static int DisplayLogPath_valist(char *path, char *format, va_list arguments)
           lock_file.l_len = 0;
 
 #ifdef _LOCK_LOG
-          if (fcntl(fd, F_SETLKW, (char *)&lock_file) != -1)
+          if(fcntl(fd, F_SETLKW, (char *)&lock_file) != -1)
             {
 #endif
               /* Si la prise du verrou est OK */
@@ -667,7 +667,7 @@ int DisplayLogStringLevel(char *tampon, int level, char *format, ...)
 
   va_start(arguments, format);
 
-  if (level <= niveau_debug)
+  if(level <= niveau_debug)
     {
       rc = DisplayLogString_valist(tampon, format, arguments);
     }
@@ -687,7 +687,7 @@ int DisplayLogFluxLevel(FILE * flux, int level, char *format, ...)
 
   va_start(arguments, format);
 
-  if (level <= niveau_debug)
+  if(level <= niveau_debug)
     rc = DisplayLogFlux_valist(flux, format, arguments);
   else
     rc = SUCCES;
@@ -705,7 +705,7 @@ int DisplayLogFdLevel(int fd, int level, char *format, ...)
 
   va_start(arguments, format);
 
-  if (level <= niveau_debug)
+  if(level <= niveau_debug)
     rc = DisplayLogFd_valist(fd, format, arguments);
   else
     rc = SUCCES;
@@ -723,7 +723,7 @@ int DisplayLogLevel(int level, char *format, ...)
 
   va_start(arguments, format);
 
-  if (level <= niveau_debug)
+  if(level <= niveau_debug)
     rc = DisplayLog_valist(format, arguments);
   else
     rc = SUCCES;
@@ -741,7 +741,7 @@ int DisplayLogPathLevel(char *path, int level, char *format, ...)
 
   va_start(arguments, format);
 
-  if (level <= niveau_debug)
+  if(level <= niveau_debug)
     rc = DisplayLogPath_valist(path, format, arguments);
   else
     rc = SUCCES;
@@ -763,20 +763,20 @@ int AddFamilyError(int num_family, char *name_family, family_error_t * tab_err)
   int i = 0;
 
   /* Le numero de la family est entre -1 et MAX_NUM_FAMILY */
-  if ((num_family < -1) || (num_family >= MAX_NUM_FAMILY))
+  if((num_family < -1) || (num_family >= MAX_NUM_FAMILY))
     return -1;
 
   /* On n'occupe pas 0 car ce sont les erreurs du systeme */
-  if (num_family == 0)
+  if(num_family == 0)
     return -1;
 
   /* On cherche une entree vacante */
-  for (i = 0; i < MAX_NUM_FAMILY; i++)
-    if (tab_family[i].num_family == UNUSED_SLOT)
+  for(i = 0; i < MAX_NUM_FAMILY; i++)
+    if(tab_family[i].num_family == UNUSED_SLOT)
       break;
 
   /* On verifie que la table n'est pas pleine */
-  if (i == MAX_NUM_FAMILY)
+  if(i == MAX_NUM_FAMILY)
     return -1;
 
   tab_family[i].num_family = (num_family != -1) ? num_family : i;
@@ -790,8 +790,8 @@ int RemoveFamilyError(int num_family)
 {
   int i = 0;
 
-  for (i = 0; i < MAX_NUM_FAMILY; i++)
-    if (tab_family[i].num_family == num_family)
+  for(i = 0; i < MAX_NUM_FAMILY; i++)
+    if(tab_family[i].num_family == num_family)
       {
         tab_family[i].num_family = UNUSED_SLOT;
         return i;
@@ -805,8 +805,8 @@ char *ReturnNameFamilyError(int num_family)
 {
   int i = 0;
 
-  for (i = 0; i < MAX_NUM_FAMILY; i++)
-    if (tab_family[i].num_family == num_family)
+  for(i = 0; i < MAX_NUM_FAMILY; i++)
+    if(tab_family[i].num_family == num_family)
       {
         /* A quoi sert cette ligne ??????!!!!!! */
         /* tab_family[i].num_family = UNUSED_SLOT ; */
@@ -822,9 +822,9 @@ static family_error_t *TrouveTabErr(int num_family)
 {
   int i = 0;
 
-  for (i = 0; i < MAX_NUM_FAMILY; i++)
+  for(i = 0; i < MAX_NUM_FAMILY; i++)
     {
-      if (tab_family[i].num_family == num_family)
+      if(tab_family[i].num_family == num_family)
         {
           return tab_family[i].tab_err;
         }
@@ -842,7 +842,7 @@ static family_error_t TrouveErr(family_error_t * tab_err, int num)
   do
     {
 
-      if (tab_err[i].numero == num || tab_err[i].numero == ERR_NULL)
+      if(tab_err[i].numero == num || tab_err[i].numero == ERR_NULL)
         {
           returned_err = tab_err[i];
           break;
@@ -850,7 +850,7 @@ static family_error_t TrouveErr(family_error_t * tab_err, int num)
 
       i += 1;
     }
-  while (1);
+  while(1);
 
   return returned_err;
 }                               /* TrouveErr */
@@ -862,13 +862,13 @@ static int FaireLogError(char *buffer, int num_family, int num_error, int status
   family_error_t the_error;
 
   /* Find the family */
-  if ((tab_err = TrouveTabErr(num_family)) == NULL)
+  if((tab_err = TrouveTabErr(num_family)) == NULL)
     return -1;
 
   /* find the error */
   the_error = TrouveErr(tab_err, num_error);
 
-  if (status == 0)
+  if(status == 0)
     {
       return sprintf(buffer, "Error %s : %s : status %d : Line %d",
                      the_error.label, the_error.msg, status, ma_ligne);
@@ -885,7 +885,7 @@ int DisplayErrorStringLine(char *tampon, int num_family, int num_error, int stat
 {
   char buffer[STR_LEN_TXT];
 
-  if (FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
+  if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
 
   return DisplayLogString(tampon, "%s", buffer);
@@ -896,7 +896,7 @@ int DisplayErrorFluxLine(FILE * flux, int num_family, int num_error, int status,
 {
   char buffer[STR_LEN_TXT];
 
-  if (FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
+  if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
 
   return DisplayLogFlux(flux, "%s", buffer);
@@ -906,7 +906,7 @@ int DisplayErrorFdLine(int fd, int num_family, int num_error, int status, int ma
 {
   char buffer[STR_LEN_TXT];
 
-  if (FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
+  if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
 
   return DisplayLogFd(fd, "%s", buffer);
@@ -916,7 +916,7 @@ int DisplayErrorLogLine(int num_family, int num_error, int status, int ma_ligne)
 {
   char buffer[STR_LEN_TXT];
 
-  if (FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
+  if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
 
   return DisplayLog("%s", buffer);
@@ -929,7 +929,7 @@ int AddLogStreamJd(log_t * pjd, type_log_stream_t type, desc_log_stream_t desc_v
   log_stream_t *nouvelle_voie;
 
   /* On alloue une nouvelle voie */
-  if ((nouvelle_voie = (log_stream_t *) malloc(sizeof(log_stream_t))) == NULL)
+  if((nouvelle_voie = (log_stream_t *) malloc(sizeof(log_stream_t))) == NULL)
     return -1;
 
   nouvelle_voie->desc = desc_voie;
@@ -939,7 +939,7 @@ int AddLogStreamJd(log_t * pjd, type_log_stream_t type, desc_log_stream_t desc_v
   nouvelle_voie->aiguillage = aiguillage;
   nouvelle_voie->suivante = NULL;
 
-  if (pjd->nb_voies == 0)
+  if(pjd->nb_voies == 0)
     {
       pjd->liste_voies = nouvelle_voie;
       pjd->fin_liste_voies = nouvelle_voie;
@@ -961,7 +961,7 @@ int DisplayLogJdLevel(log_t jd, int level, char *format, ...)
   log_stream_t *pvoie = NULL;
 
   /* On regarde pour toutes les voies */
-  for (pvoie = jd.liste_voies; pvoie != NULL; pvoie = pvoie->suivante)
+  for(pvoie = jd.liste_voies; pvoie != NULL; pvoie = pvoie->suivante)
     {
       /* restart from first arg for each log stream */
       va_start(arguments, format);
@@ -972,18 +972,18 @@ int DisplayLogJdLevel(log_t jd, int level, char *format, ...)
         {
         case SUP:
           /* Attention a l'ordre des gravites (inverse) */
-          if ((unsigned int)level <= pvoie->niveau)
+          if((unsigned int)level <= pvoie->niveau)
             ecrire_msg = 1;
           break;
 
         case INF:
           /* Attention, l'ordre est inverse */
-          if ((unsigned int)level >= pvoie->niveau)
+          if((unsigned int)level >= pvoie->niveau)
             ecrire_msg = 1;
 
           break;
         case EXACT:
-          if ((unsigned int)level == pvoie->niveau)
+          if((unsigned int)level == pvoie->niveau)
             ecrire_msg = 1;
           break;
         default:
@@ -991,7 +991,7 @@ int DisplayLogJdLevel(log_t jd, int level, char *format, ...)
         }                       /* switch */
 
       /* Ecriture du message */
-      if (ecrire_msg == 1)
+      if(ecrire_msg == 1)
         {
           switch (pvoie->type)
             {
@@ -1032,7 +1032,7 @@ int DisplayLogJd(log_t jd, char *format, ...)
   log_stream_t *pvoie = NULL;
 
   /* On regarde pour toutes les voies */
-  for (pvoie = jd.liste_voies; pvoie != NULL; pvoie = pvoie->suivante)
+  for(pvoie = jd.liste_voies; pvoie != NULL; pvoie = pvoie->suivante)
     {
       /* restart from first arg for each log stream. */
       va_start(arguments, format);
@@ -1071,7 +1071,7 @@ int DisplayErrorJdLine(log_t jd, int num_family, int num_error, int status, int 
 {
   char buffer[STR_LEN_TXT];
 
-  if (FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
+  if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
 
   return DisplayLogJd(jd, "%s", buffer);
@@ -1159,7 +1159,7 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
       len = 0;
 
       /* On affiche d'abord tout ce qui est avant un % */
-      while (*iterformat != '\0' && *iterformat != '%')
+      while(*iterformat != '\0' && *iterformat != '%')
         {
 #ifdef _DEBUG_LOG
           printf("##### iterformat = #%s#\n", iterformat);
@@ -1167,7 +1167,7 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
           ONE_STEP;
         }
 
-      if (*iterformat == '\0')
+      if(*iterformat == '\0')
         break;
       else
         endofstr = iterformat;
@@ -1176,7 +1176,7 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
       ONE_STEP;
 
       /* On traite les arguments positionnels */
-      while (isdigit(*iterformat) || *iterformat == '$')
+      while(isdigit(*iterformat) || *iterformat == '$')
         {
           ONE_STEP;
         }
@@ -1214,10 +1214,10 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
             }
           break;
         }
-      while (1);                /* Pas vraiment une boucle infinie en fait */
+      while(1);                 /* Pas vraiment une boucle infinie en fait */
 
       /* La taille du champ */
-      if (*iterformat == '*')
+      if(*iterformat == '*')
         {
           /* On garde le '*' */
           ONE_STEP;
@@ -1226,7 +1226,7 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
           precision_in_valist += 1;
 
           /* On garde la taille du champs */
-          while (isdigit(*iterformat) || *iterformat == '$')
+          while(isdigit(*iterformat) || *iterformat == '$')
             {
               ONE_STEP;
             }
@@ -1234,28 +1234,28 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
 
       /* if( *iterformat == '*' ) */
       /* La precision */
-      if (*iterformat == '.')
+      if(*iterformat == '.')
         {
           /* On garde le '.' */
           ONE_STEP;
 
-          if (*iterformat == '*')
+          if(*iterformat == '*')
             {
               /* On garde le '*' */
               ONE_STEP;
 
               /* On garde la taille du champs */
-              while (isdigit(*iterformat) || *iterformat == '$')
+              while(isdigit(*iterformat) || *iterformat == '$')
                 {
                   ONE_STEP;
                 }
             }                   /* if( *iterformat == '*' ) */
           else
             {
-              if (isdigit(*iterformat))
+              if(isdigit(*iterformat))
                 {
 
-                  while (isdigit(*iterformat) || *iterformat == '$')
+                  while(isdigit(*iterformat) || *iterformat == '$')
                     {
                       ONE_STEP;
                     }
@@ -1302,7 +1302,7 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
           /* long int, peut etre double */
           ONE_STEP;
           typelg = LONG_LG;
-          if (*iterformat == 'l')
+          if(*iterformat == 'l')
             {
               ONE_STEP;
               typelg = LONG_LONG_LG;
@@ -1450,7 +1450,7 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
       printf("subformat = #%s# len =%d\n", subformat, len);
 #endif
 
-      if (type != EXTENDED_TYPE)
+      if(type != EXTENDED_TYPE)
         {
           va_list tmp_args;
 
@@ -1466,7 +1466,7 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
           /*
            * Si un truc genre %*.*d est utilise, on doit consommer un entier qui contient la precision pour chaque "*"
            */
-          while (precision_in_valist != 0)
+          while(precision_in_valist != 0)
             {
               va_arg(arguments, int);
               precision_in_valist -= 1;
@@ -1565,7 +1565,7 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
 
           /* si le subformat est de type "toto titi tutu %X",
            * on ajoute le "toto titi tutu " dans la chaine de sortie */
-          if (strlen(subformat) > 2)
+          if(strlen(subformat) > 2)
             strncat(out, subformat, strlen(subformat) - 2);
 
           switch (type_ext)
@@ -1615,7 +1615,7 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
 
             case ERRNUM_SHORT:
               /* Un numero d'erreur dans la family courante (ERR_POSIX par defaut) */
-              if ((tab_err = TrouveTabErr(err_family)) == NULL)
+              if((tab_err = TrouveTabErr(err_family)) == NULL)
                 {
                   snprintf(tmpout, MAX_STR_TOK, "?");
                   break;
@@ -1627,7 +1627,7 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
 
             case ERRNUM_LONG:
               /* Un numero d'erreur dans la family courante (ERR_POSIX par defaut) */
-              if ((tab_err = TrouveTabErr(err_family)) == NULL)
+              if((tab_err = TrouveTabErr(err_family)) == NULL)
                 {
                   snprintf(tmpout, MAX_STR_TOK, "?");
                   break;
@@ -1640,7 +1640,7 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
 
             case ERRCTX_SHORT:
               /* Un numero de contexte dans la family courante (ERR_SYS par defaut) */
-              if ((tab_err = TrouveTabErr(ctx_family)) == NULL)
+              if((tab_err = TrouveTabErr(ctx_family)) == NULL)
                 {
                   snprintf(tmpout, MAX_STR_TOK, "?");
                   break;
@@ -1652,7 +1652,7 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
 
             case ERRCTX_LONG:
               /* Un numero de contexte dans la family courante (ERR_SYS par defaut) */
-              if ((tab_err = TrouveTabErr(ctx_family)) == NULL)
+              if((tab_err = TrouveTabErr(ctx_family)) == NULL)
                 {
                   snprintf(tmpout, MAX_STR_TOK, "?");
                   break;
@@ -1676,13 +1676,13 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
       printf("=================\n");
 #endif
     }
-  while (*iterformat != '\0');
+  while(*iterformat != '\0');
 
   /* Le pas oublie la fin du format, qui est tout a la queue */
 #ifdef _DEBUG_LOG
   printf("DEBUG : ptrsub = #%s#   endofstr = #%s#\n", ptrsub, endofstr);
 #endif
-  if (*endofstr == '%')
+  if(*endofstr == '%')
     ptrsub = iterformat;        /* Pour clore l'iteration */
   strncat(out, ptrsub, taille);
 

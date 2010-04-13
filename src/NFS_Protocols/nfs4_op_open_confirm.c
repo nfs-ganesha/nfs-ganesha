@@ -152,28 +152,28 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   res_OPEN_CONFIRM4.status = NFS4_OK;
 
   /* If there is no FH */
-  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
+  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
       res_OPEN_CONFIRM4.status = NFS4ERR_NOFILEHANDLE;
       return res_OPEN_CONFIRM4.status;
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
       res_OPEN_CONFIRM4.status = NFS4ERR_BADHANDLE;
       return res_OPEN_CONFIRM4.status;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
       res_OPEN_CONFIRM4.status = NFS4ERR_FHEXPIRED;
       return res_OPEN_CONFIRM4.status;
     }
 
   /* Should not operate on non-file objects */
-  if (data->current_entry->internal_md.type != REGULAR_FILE)
+  if(data->current_entry->internal_md.type != REGULAR_FILE)
     {
       switch (data->current_entry->internal_md.type)
         {
@@ -191,18 +191,18 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
     }
 
   /* Does the stateid match ? */
-  if ((rc =
-       nfs4_Check_Stateid(&arg_OPEN_CONFIRM4.open_stateid, data->current_entry,
-                          0LL)) != NFS4_OK)
+  if((rc =
+      nfs4_Check_Stateid(&arg_OPEN_CONFIRM4.open_stateid, data->current_entry,
+                         0LL)) != NFS4_OK)
     {
       res_OPEN_CONFIRM4.status = rc;
       return res_OPEN_CONFIRM4.status;
     }
 
   /* Get the related state */
-  if (cache_inode_get_state(arg_OPEN_CONFIRM4.open_stateid.other,
-                            &pstate_found,
-                            data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_get_state(arg_OPEN_CONFIRM4.open_stateid.other,
+                           &pstate_found,
+                           data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_OPEN_CONFIRM4.status = nfs4_Errno(cache_status);
       return res_OPEN_CONFIRM4.status;
@@ -210,16 +210,16 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
 
   /* If opened file is already confirmed, retrun NFS4ERR_BAD_STATEID */
   P(pstate_found->powner->lock);
-  if (pstate_found->powner->confirmed == TRUE)
+  if(pstate_found->powner->confirmed == TRUE)
     {
       V(pstate_found->powner->lock);
       res_OPEN_CONFIRM4.status = NFS4ERR_BAD_STATEID;
       return res_OPEN_CONFIRM4.status;
     }
 
-  if (pstate_found->powner->seqid != arg_OPEN_CONFIRM4.seqid)
+  if(pstate_found->powner->seqid != arg_OPEN_CONFIRM4.seqid)
     {
-      if (pstate_found->powner->seqid + 1 != arg_OPEN_CONFIRM4.seqid)
+      if(pstate_found->powner->seqid + 1 != arg_OPEN_CONFIRM4.seqid)
         {
           V(pstate_found->powner->lock);
           res_OPEN_CONFIRM4.status = NFS4ERR_BAD_SEQID;
@@ -234,8 +234,8 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
 
   /* Update the state */
   pstate_found->seqid += 1;
-  if (cache_inode_update_state(pstate_found,
-                               data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_update_state(pstate_found,
+                              data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_OPEN_CONFIRM4.status = nfs4_Errno(cache_status);
       return res_OPEN_CONFIRM4.status;

@@ -103,7 +103,7 @@ generic_item *config_CreateBlock(char *blockname, list_items * list)
 
   strncpy(new->item.block.block_name, blockname, MAXSTRLEN);
 
-  if (list)
+  if(list)
     {
       new->item.block.block_content = *list;
       free(list);
@@ -139,7 +139,7 @@ generic_item *config_CreateAffect(char *varname, char *varval)
  */
 void config_AddItem(list_items * list, generic_item * item)
 {
-  if ((*list) == NULL)
+  if((*list) == NULL)
     {
       (*list) = item;
     }
@@ -159,15 +159,15 @@ static void print_list_ident(FILE * output, list_items * list, unsigned int inde
   generic_item *curr_item;
 
   /* sanity check */
-  if (!list)
+  if(!list)
     return;
 
   curr_item = (*list);
 
-  while (curr_item)
+  while(curr_item)
     {
 
-      if (curr_item->type == TYPE_BLOCK)
+      if(curr_item->type == TYPE_BLOCK)
         {
           fprintf(output, "%*s<BLOCK '%s'>\n", indent, " ",
                   curr_item->item.block.block_name);
@@ -203,17 +203,17 @@ static void free_list_items_recurse(list_items * list)
   generic_item *next_item;
 
   /* sanity check */
-  if (!list)
+  if(!list)
     return;
 
   curr_item = (*list);
 
-  while (curr_item)
+  while(curr_item)
     {
 
       next_item = curr_item->next;
 
-      if (curr_item->type == TYPE_BLOCK)
+      if(curr_item->type == TYPE_BLOCK)
         {
           free_list_items_recurse(&curr_item->item.block.block_content);
         }

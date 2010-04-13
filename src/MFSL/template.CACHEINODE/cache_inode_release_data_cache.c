@@ -119,7 +119,7 @@ cache_inode_status_t cache_inode_release_data_cache(cache_entry_t * pentry,
   P(pentry->lock);
 
   /* Operate only on a regular file */
-  if (pentry->internal_md.type != REGULAR_FILE)
+  if(pentry->internal_md.type != REGULAR_FILE)
     {
       *pstatus = CACHE_INODE_BAD_TYPE;
       V(pentry->lock);
@@ -130,7 +130,7 @@ cache_inode_status_t cache_inode_release_data_cache(cache_entry_t * pentry,
       return *pstatus;
     }
 
-  if (pentry->object.file.pentry_content == NULL)
+  if(pentry->object.file.pentry_content == NULL)
     {
       /* The object is not cached */
       *pstatus = CACHE_INODE_CACHE_CONTENT_EMPTY;
@@ -143,10 +143,10 @@ cache_inode_status_t cache_inode_release_data_cache(cache_entry_t * pentry,
       return *pstatus;
     }
 
-  if (cache_content_release_entry
-      ((cache_content_entry_t *) pentry->object.file.pentry_content,
-       (cache_content_client_t *) pclient->pcontent_client,
-       &cache_content_status) != CACHE_CONTENT_SUCCESS)
+  if(cache_content_release_entry
+     ((cache_content_entry_t *) pentry->object.file.pentry_content,
+      (cache_content_client_t *) pclient->pcontent_client,
+      &cache_content_status) != CACHE_CONTENT_SUCCESS)
     {
       *pstatus = cache_content_error_convert(cache_content_status);
       V(pentry->lock);

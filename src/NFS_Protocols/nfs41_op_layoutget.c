@@ -147,18 +147,17 @@
 
 int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
                        struct nfs_resop4 *resp)
-{  
+{
   cache_inode_state_data_t candidate_data;
   cache_inode_state_type_t candidate_type;
   cache_inode_state_t *file_state = NULL;
   cache_inode_status_t cache_status;
   cache_inode_state_t *pstate_exists = NULL;
-  nfsv4_1_file_layout4 * pfile_layout = NULL ;
-  nfs_fh4 * pnfsfh4 = NULL ;
-  int rc ;
+  nfsv4_1_file_layout4 *pfile_layout = NULL;
+  nfs_fh4 *pnfsfh4 = NULL;
+  int rc;
 
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutget";
-  
 
   /* Lock are not supported */
   resp->resop = NFS4_OP_LAYOUTGET;
@@ -169,28 +168,28 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
 #else
 
   /* If there is no FH */
-  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
+  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
       res_LAYOUTGET4.logr_status = NFS4ERR_NOFILEHANDLE;
       return res_LAYOUTGET4.logr_status;
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
       res_LAYOUTGET4.logr_status = NFS4ERR_BADHANDLE;
       return res_LAYOUTGET4.logr_status;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
       res_LAYOUTGET4.logr_status = NFS4ERR_FHEXPIRED;
       return res_LAYOUTGET4.logr_status;
     }
 
   /* Commit is done only on a file */
-  if (data->current_filetype != REGULAR_FILE)
+  if(data->current_filetype != REGULAR_FILE)
     {
       /* Type of the entry is not correct */
       switch (data->current_filetype)
@@ -204,106 +203,112 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
           break;
         }
 
-       return res_LAYOUTGET4.logr_status ;
+      return res_LAYOUTGET4.logr_status;
     }
 
   /* Parameters's consistency */
-  if( arg_LAYOUTGET4.loga_length < arg_LAYOUTGET4.loga_minlength )
-   {
-     res_LAYOUTGET4.logr_status = NFS4ERR_INVAL;
-     return res_LAYOUTGET4.logr_status ;
-   }
+  if(arg_LAYOUTGET4.loga_length < arg_LAYOUTGET4.loga_minlength)
+    {
+      res_LAYOUTGET4.logr_status = NFS4ERR_INVAL;
+      return res_LAYOUTGET4.logr_status;
+    }
 
   /* Check stateid correctness */
-  if ((rc = nfs4_Check_Stateid(&arg_LAYOUTGET4.loga_stateid,
-                               data->current_entry,
-                               data->psession->clientid)) != NFS4_OK)
-   {
-     res_LAYOUTGET4.logr_status = rc;
-     return res_LAYOUTGET4.logr_status ;
+  if((rc = nfs4_Check_Stateid(&arg_LAYOUTGET4.loga_stateid,
+                              data->current_entry, data->psession->clientid)) != NFS4_OK)
+    {
+      res_LAYOUTGET4.logr_status = rc;
+      return res_LAYOUTGET4.logr_status;
     }
 
   /* For the moment, only LAYOUT4_FILE is supported */
-  switch( arg_LAYOUTGET4.loga_layout_type )
-   {
-     case LAYOUT4_NFSV4_1_FILES:
-        /* Continue on proceeding the request */
-	break ;
+  switch (arg_LAYOUTGET4.loga_layout_type)
+    {
+    case LAYOUT4_NFSV4_1_FILES:
+      /* Continue on proceeding the request */
+      break;
 
-     default: 
-        res_LAYOUTGET4.logr_status = NFS4ERR_NOTSUPP;
-        return res_LAYOUTGET4.logr_status;
-	break ;
-   } /* switch( arg_LAYOUTGET4.loga_layout_type ) */
+    default:
+      res_LAYOUTGET4.logr_status = NFS4ERR_NOTSUPP;
+      return res_LAYOUTGET4.logr_status;
+      break;
+    }                           /* switch( arg_LAYOUTGET4.loga_layout_type ) */
 
   /* Get the related powner (from a previously made call to OPEN) */
-  if (cache_inode_get_state(arg_LAYOUTGET4.loga_stateid.other,
-                             &pstate_exists,
-                             data->pclient,
-                             &cache_status) != CACHE_INODE_SUCCESS)
-        {
-          if (cache_status == CACHE_INODE_NOT_FOUND)
-              res_LAYOUTGET4.logr_status = NFS4ERR_STALE_STATEID;
-          else
-              res_LAYOUTGET4.logr_status = NFS4ERR_INVAL;
-
-          return res_LAYOUTGET4.logr_status;
-        }
-
-
-
-   /* Add a pstate */ 
-   candidate_type = CACHE_INODE_STATE_LAYOUT;
-   candidate_data.layout.layout_type = arg_LAYOUTGET4.loga_layout_type ;
-   candidate_data.layout.iomode = arg_LAYOUTGET4.loga_iomode ;
-   candidate_data.layout.offset = arg_LAYOUTGET4.loga_offset ;
-   candidate_data.layout.length = arg_LAYOUTGET4.loga_length ;
-   candidate_data.layout.minlength = arg_LAYOUTGET4.loga_minlength ;
-
-   /* Add the lock state to the lock table */
-   if (cache_inode_add_state(data->current_entry,
-                              candidate_type,
-                              &candidate_data,
-                              pstate_exists->powner,
-                              data->pclient,
-                              data->pcontext,
-                              &file_state, &cache_status) != CACHE_INODE_SUCCESS)
-      {
+  if(cache_inode_get_state(arg_LAYOUTGET4.loga_stateid.other,
+                           &pstate_exists,
+                           data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+    {
+      if(cache_status == CACHE_INODE_NOT_FOUND)
         res_LAYOUTGET4.logr_status = NFS4ERR_STALE_STATEID;
-        return res_LAYOUTGET4.logr_status;
-      }
- 
+      else
+        res_LAYOUTGET4.logr_status = NFS4ERR_INVAL;
+
+      return res_LAYOUTGET4.logr_status;
+    }
+
+  /* Add a pstate */
+  candidate_type = CACHE_INODE_STATE_LAYOUT;
+  candidate_data.layout.layout_type = arg_LAYOUTGET4.loga_layout_type;
+  candidate_data.layout.iomode = arg_LAYOUTGET4.loga_iomode;
+  candidate_data.layout.offset = arg_LAYOUTGET4.loga_offset;
+  candidate_data.layout.length = arg_LAYOUTGET4.loga_length;
+  candidate_data.layout.minlength = arg_LAYOUTGET4.loga_minlength;
+
+  /* Add the lock state to the lock table */
+  if(cache_inode_add_state(data->current_entry,
+                           candidate_type,
+                           &candidate_data,
+                           pstate_exists->powner,
+                           data->pclient,
+                           data->pcontext,
+                           &file_state, &cache_status) != CACHE_INODE_SUCCESS)
+    {
+      res_LAYOUTGET4.logr_status = NFS4ERR_STALE_STATEID;
+      return res_LAYOUTGET4.logr_status;
+    }
+
   /* set the returned status */
-  
+
   /* No return on close for the moment */
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_return_on_close = FALSE ;
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_return_on_close = FALSE;
 
   /* Manages the stateid */
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_stateid.seqid = 1 ;
-  memcpy(res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_stateid.other, file_state->stateid_other, 12);
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_stateid.seqid = 1;
+  memcpy(res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_stateid.other,
+         file_state->stateid_other, 12);
 
   /* Now the layout specific information */
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_len = 1 ; /** @todo manages more than one segment */
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val = (layout4 *)Mem_Alloc( sizeof(  layout4 ) ) ;
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_len = 1;  /** @todo manages more than one segment */
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val =
+      (layout4 *) Mem_Alloc(sizeof(layout4));
 
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_offset = arg_LAYOUTGET4.loga_offset ;
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_length = 0xFFFFFFFFLL ; /* Whole file */
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_iomode = arg_LAYOUTGET4.loga_iomode ;
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.loc_type = LAYOUT4_NFSV4_1_FILES ;
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.loc_body.loc_body_len = sizeof( nfsv4_1_file_layout4 ) ; 
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.loc_body.loc_body_val = Mem_Alloc( sizeof( nfsv4_1_file_layout4 ) ) ; 
-  pfile_layout = (nfsv4_1_file_layout4 *)res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.loc_body.loc_body_val ; 
-  memset( pfile_layout->nfl_deviceid, 0, NFS4_DEVICEID4_SIZE ) ;
-  pfile_layout->nfl_deviceid[0] = 1 ;
-  pfile_layout->nfl_util = 0x2000 ; /** @TODO do not know why I should set this value */ 
-  pfile_layout->nfl_first_stripe_index = 0 ;
-  pfile_layout->nfl_pattern_offset = 0 ;
-  pfile_layout->nfl_fh_list.nfl_fh_list_len = 1 ;
-  pfile_layout->nfl_fh_list.nfl_fh_list_val = &(data->current_entry->object.file.pnfs_file.ds_file.handle );
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_offset =
+      arg_LAYOUTGET4.loga_offset;
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_length = 0xFFFFFFFFLL;   /* Whole file */
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_iomode =
+      arg_LAYOUTGET4.loga_iomode;
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.
+      loc_type = LAYOUT4_NFSV4_1_FILES;
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.
+      loc_body.loc_body_len = sizeof(nfsv4_1_file_layout4);
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.
+      loc_body.loc_body_val = Mem_Alloc(sizeof(nfsv4_1_file_layout4));
+  pfile_layout =
+      (nfsv4_1_file_layout4 *) res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.
+      logr_layout_val[0].lo_content.loc_body.loc_body_val;
+  memset(pfile_layout->nfl_deviceid, 0, NFS4_DEVICEID4_SIZE);
+  pfile_layout->nfl_deviceid[0] = 1;
+  pfile_layout->nfl_util = 0x2000;  /** @TODO do not know why I should set this value */
+  pfile_layout->nfl_first_stripe_index = 0;
+  pfile_layout->nfl_pattern_offset = 0;
+  pfile_layout->nfl_fh_list.nfl_fh_list_len = 1;
+  pfile_layout->nfl_fh_list.nfl_fh_list_val =
+      &(data->current_entry->object.file.pnfs_file.ds_file.handle);
 
   res_LAYOUTGET4.logr_status = NFS4_OK;
   return res_LAYOUTGET4.logr_status;
-#endif /* _USE_PNFS */
+#endif                          /* _USE_PNFS */
 }                               /* nfs41_op_layoutget */
 
 /**
@@ -316,13 +321,14 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
  * @return nothing (void function )
  * 
  */
-void nfs41_op_layoutget_Free( LAYOUTGET4res * resp)
+void nfs41_op_layoutget_Free(LAYOUTGET4res * resp)
 {
-  if( resp->logr_status == NFS4_OK )
-   {
-     Mem_Free( (char *)resp->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val ) ;
-     Mem_Free( (char *)resp->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.loc_body.loc_body_val ) ;
-   }
+  if(resp->logr_status == NFS4_OK)
+    {
+      Mem_Free((char *)resp->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val);
+      Mem_Free((char *)resp->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
+               lo_content.loc_body.loc_body_val);
+    }
 
   return;
 }                               /* nfs41_op_layoutget_Free */

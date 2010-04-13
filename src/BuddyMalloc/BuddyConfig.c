@@ -101,12 +101,12 @@ static int check_2power(unsigned long long tested_size)
 {
   int i;
 
-  for (i = 0; i < 64; i++)
+  for(i = 0; i < 64; i++)
     {
       /* if the first detected bit equals tested_size,
        * it's OK.
        */
-      if ((tested_size & (1 << i)) == tested_size)
+      if((tested_size & (1 << i)) == tested_size)
         return TRUE;
     }
   return FALSE;
@@ -115,7 +115,7 @@ static int check_2power(unsigned long long tested_size)
 
 int Buddy_set_default_parameter(buddy_parameter_t * out_parameter)
 {
-  if (out_parameter == NULL)
+  if(out_parameter == NULL)
     return BUDDY_ERR_EFAULT;
 
   *out_parameter = default_buddy_parameter;
@@ -136,13 +136,13 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
 
   /* cannot read item */
 
-  if (block == NULL)
+  if(block == NULL)
     {
       DisplayLog("BUDDY LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
                  CONF_LABEL_BUDDY);
       return BUDDY_ERR_ENOENT;
     }
-  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       DisplayLog("BUDDY LOAD PARAMETER: Item \"%s\" is expected to be a block",
                  CONF_LABEL_BUDDY);
@@ -153,14 +153,14 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
 
   var_max = config_GetNbItems(block);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
 
       item = config_GetItemByIndex(block, var_index);
 
       err = config_GetKeyValue(item, &key_name, &key_value);
-      if (err)
+      if(err)
         {
           DisplayLog
               ("BUDDY LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
@@ -168,11 +168,11 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
           return BUDDY_ERR_EFAULT;
         }
 
-      if (!STRCMP(key_name, "Page_Size"))
+      if(!STRCMP(key_name, "Page_Size"))
         {
           size_t page_size;
 
-          if (s_read_size(key_value, &page_size) || !check_2power(page_size))
+          if(s_read_size(key_value, &page_size) || !check_2power(page_size))
             {
               DisplayLog
                   ("BUDDY LOAD PARAMETER: ERROR: Unexpected value for %s: must be a 2^n value.",
@@ -183,13 +183,13 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
           out_parameter->memory_area_size = page_size;
 
         }
-      else if (!STRCMP(key_name, "Enable_OnDemand_Alloc"))
+      else if(!STRCMP(key_name, "Enable_OnDemand_Alloc"))
         {
           int bool;
 
           bool = StrToBoolean(key_value);
 
-          if (bool == -1)
+          if(bool == -1)
             {
               DisplayLog
                   ("BUDDY LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
@@ -200,13 +200,13 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
           out_parameter->on_demand_alloc = bool;
 
         }
-      else if (!STRCMP(key_name, "Enable_Extra_Alloc"))
+      else if(!STRCMP(key_name, "Enable_Extra_Alloc"))
         {
           int bool;
 
           bool = StrToBoolean(key_value);
 
-          if (bool == -1)
+          if(bool == -1)
             {
               DisplayLog
                   ("BUDDY LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
@@ -217,13 +217,13 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
           out_parameter->extra_alloc = bool;
 
         }
-      else if (!STRCMP(key_name, "Enable_GC"))
+      else if(!STRCMP(key_name, "Enable_GC"))
         {
           int bool;
 
           bool = StrToBoolean(key_value);
 
-          if (bool == -1)
+          if(bool == -1)
             {
               DisplayLog
                   ("BUDDY LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
@@ -234,12 +234,12 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
           out_parameter->free_areas = bool;
 
         }
-      else if (!STRCMP(key_name, "GC_Keep_Factor"))
+      else if(!STRCMP(key_name, "GC_Keep_Factor"))
         {
 
           int keep_factor = s_read_int(key_value);
 
-          if (keep_factor < 1)
+          if(keep_factor < 1)
             {
               DisplayLog
                   ("BUDDY LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
@@ -250,12 +250,12 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
           out_parameter->keep_factor = keep_factor;
 
         }
-      else if (!STRCMP(key_name, "GC_Keep_Min"))
+      else if(!STRCMP(key_name, "GC_Keep_Min"))
         {
 
           int keep_min = s_read_int(key_value);
 
-          if (keep_min < 0)
+          if(keep_min < 0)
             {
               DisplayLog
                   ("BUDDY LOAD PARAMETER: ERROR: Unexpected value for %s: null or positive integer expected.",
@@ -266,7 +266,7 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
           out_parameter->keep_minimum = keep_min;
 
         }
-      else if (!STRCMP(key_name, "LogFile"))
+      else if(!STRCMP(key_name, "LogFile"))
         {
 
           strncpy(out_parameter->buddy_error_file, key_value, 256);

@@ -82,7 +82,7 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT;
 /* init keys */
 static void init_keys(void)
 {
-  if (pthread_key_create(&key_stats, NULL) == -1)
+  if(pthread_key_create(&key_stats, NULL) == -1)
     DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_KEY_CREATE, errno);
 
   return;
@@ -106,12 +106,12 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
   /* verify index */
 
-  if (function_index >= FSAL_NB_FUNC)
+  if(function_index >= FSAL_NB_FUNC)
     return;
 
   /* first, we init the keys if this is the first time */
 
-  if (pthread_once(&once_key, init_keys) != 0)
+  if(pthread_once(&once_key, init_keys) != 0)
     {
       DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_ONCE, errno);
       return;
@@ -123,13 +123,13 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
   /* we allocate stats if this is the first time */
 
-  if (bythread_stat == NULL)
+  if(bythread_stat == NULL)
     {
       int i;
 
       bythread_stat = (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t));
 
-      if (bythread_stat == NULL)
+      if(bythread_stat == NULL)
         {
           DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
           return;
@@ -137,7 +137,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
       /* inits the struct */
 
-      for (i = 0; i < FSAL_NB_FUNC; i++)
+      for(i = 0; i < FSAL_NB_FUNC; i++)
         {
           bythread_stat->func_stats.nb_call[i] = 0;
           bythread_stat->func_stats.nb_success[i] = 0;
@@ -152,13 +152,13 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
   /* we increment the values */
 
-  if (bythread_stat)
+  if(bythread_stat)
     {
       bythread_stat->func_stats.nb_call[function_index]++;
 
-      if (!FSAL_IS_ERROR(status))
+      if(!FSAL_IS_ERROR(status))
         bythread_stat->func_stats.nb_success[function_index]++;
-      else if (fsal_is_retryable(status))
+      else if(fsal_is_retryable(status))
         bythread_stat->func_stats.nb_err_retryable[function_index]++;
       else
         bythread_stat->func_stats.nb_err_unrecover[function_index]++;
@@ -183,7 +183,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
   fsal_statistics_t *bythread_stat = NULL;
 
   /* first, we init the keys if this is the first time */
-  if (pthread_once(&once_key, init_keys) != 0)
+  if(pthread_once(&once_key, init_keys) != 0)
     {
       DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_ONCE, errno);
       return;
@@ -193,19 +193,19 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
   bythread_stat = (fsal_statistics_t *) pthread_getspecific(key_stats);
 
   /* we allocate stats if this is the first time */
-  if (bythread_stat == NULL)
+  if(bythread_stat == NULL)
     {
       int i;
 
       bythread_stat = (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t));
 
-      if (bythread_stat == NULL)
+      if(bythread_stat == NULL)
         {
           DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
           return;
         }
       /* inits the struct */
-      for (i = 0; i < FSAL_NB_FUNC; i++)
+      for(i = 0; i < FSAL_NB_FUNC; i++)
         {
           bythread_stat->func_stats.nb_call[i] = 0;
           bythread_stat->func_stats.nb_success[i] = 0;
@@ -218,7 +218,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
 
     }
 
-  if (output_stats)
+  if(output_stats)
     (*output_stats) = (*bythread_stat);
 
   return;
@@ -246,7 +246,7 @@ void fsal_internal_SetCredentialLifetime(fsal_uint_t lifetime_in)
 void TakeTokenFSCall()
 {
   /* no limits */
-  if (limit_calls == FALSE)
+  if(limit_calls == FALSE)
     return;
 
   /* there is a limit */
@@ -257,7 +257,7 @@ void TakeTokenFSCall()
 void ReleaseTokenFSCall()
 {
   /* no limits */
-  if (limit_calls == FALSE)
+  if(limit_calls == FALSE)
     return;
 
   /* there is a limit */
@@ -327,14 +327,14 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 {
 
   /* sanity check */
-  if (!fsal_info || !fs_common_info || !fs_specific_info)
+  if(!fsal_info || !fs_common_info || !fs_specific_info)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   /* Setting log info */
   fsal_log = fsal_info->log_outputs;
 
   /* inits FS call semaphore */
-  if (fsal_info->max_fs_calls > 0)
+  if(fsal_info->max_fs_calls > 0)
     {
       int rc;
 
@@ -342,7 +342,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
       rc = semaphore_init(&sem_fs_calls, fsal_info->max_fs_calls);
 
-      if (rc != 0)
+      if(rc != 0)
         ReturnCode(ERR_FSAL_SERVERFAULT, rc);
 
       DisplayLogJdLevel(fsal_log, NIV_DEBUG,
@@ -409,17 +409,17 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
   /* Analyzing fs_common_info struct */
 
-  if ((fs_common_info->behaviors.maxfilesize != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.maxlink != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.maxnamelen != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.maxpathlen != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.no_trunc != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.case_insensitive != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.case_preserving != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.named_attr != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.lease_time != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.supported_attrs != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.homogenous != FSAL_INIT_FS_DEFAULT))
+  if((fs_common_info->behaviors.maxfilesize != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.maxlink != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.maxnamelen != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.maxpathlen != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.no_trunc != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.case_insensitive != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.case_preserving != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.named_attr != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.lease_time != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.supported_attrs != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.homogenous != FSAL_INIT_FS_DEFAULT))
     ReturnCode(ERR_FSAL_NOTSUPP, 0);
 
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);
@@ -454,7 +454,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
                     global_fs_info.supported_attrs);
 
   /* initialize database cache */
-  if (fsal_posixdb_cache_init())
+  if(fsal_posixdb_cache_init())
     ReturnCode(ERR_FSAL_FAULT, 0);
 
 #ifndef _DEBUG_FSAL
@@ -518,7 +518,7 @@ fsal_status_t fsal_internal_posix2posixdb_fileinfo(struct stat *buffstat,
                                                    fsal_posixdb_fileinfo_t * info)
 {
   /* sanity check */
-  if (!info || !buffstat)
+  if(!info || !buffstat)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   memset(info, 0, sizeof(fsal_posixdb_fileinfo_t));
@@ -541,20 +541,20 @@ fsal_status_t fsal_internal_posixdb_add_entry(fsal_posixdb_conn * p_conn,
 {
   fsal_posixdb_status_t stdb;
 
-  if (!p_info || !p_conn || !p_new_handle)      /* p_filename & p_dir_handle can be NULL for the root */
+  if(!p_info || !p_conn || !p_new_handle)       /* p_filename & p_dir_handle can be NULL for the root */
     ReturnCode(ERR_FSAL_FAULT, 0);
 
  add:
   stdb = fsal_posixdb_add(p_conn, p_info, p_dir_handle, p_filename, p_new_handle);
 
-  if (stdb.major == ERR_FSAL_POSIXDB_CONSISTENCY)
+  if(stdb.major == ERR_FSAL_POSIXDB_CONSISTENCY)
     {                           /* there is already an entry with this path, but it's an inconsistent one */
       stdb = fsal_posixdb_deleteHandle(p_conn, p_new_handle);
-      if (FSAL_POSIXDB_IS_ERROR(stdb))
+      if(FSAL_POSIXDB_IS_ERROR(stdb))
         return posixdb2fsal_error(stdb);
       goto add;
     }
-  else if (FSAL_POSIXDB_IS_ERROR(stdb))
+  else if(FSAL_POSIXDB_IS_ERROR(stdb))
     {
       return posixdb2fsal_error(stdb);
     }
@@ -574,13 +574,13 @@ fsal_status_t fsal_internal_appendFSALNameToFSALPath(fsal_path_t * p_path,
                                                      fsal_name_t * p_name)
 {
   char *end;
-  if (!p_path || !p_name)
+  if(!p_path || !p_name)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   end = p_path->path + p_path->len - 1;
-  if (*end != '/')
+  if(*end != '/')
     {
-      if (p_path->len + 1 + p_name->len > FSAL_MAX_PATH_LEN)
+      if(p_path->len + 1 + p_name->len > FSAL_MAX_PATH_LEN)
         ReturnCode(ERR_FSAL_NAMETOOLONG, 0);
       p_path->len += p_name->len + 1;
       end++;
@@ -590,7 +590,7 @@ fsal_status_t fsal_internal_appendFSALNameToFSALPath(fsal_path_t * p_path,
     }
   else
     {
-      if (p_path->len + p_name->len > FSAL_MAX_PATH_LEN)
+      if(p_path->len + p_name->len > FSAL_MAX_PATH_LEN)
         ReturnCode(ERR_FSAL_NAMETOOLONG, 0);
       p_path->len += p_name->len;
       end++;
@@ -616,7 +616,7 @@ fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,    
   fsal_posixdb_fileinfo_t infofs;
   fsal_path_t paths[global_fs_info.maxlink];
 
-  if (!p_context || !p_handle || !p_fsalpath)
+  if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   /* if there is a path in the fsal_handle_t variable, then try to use it instead of querying the database for it */
@@ -627,21 +627,21 @@ fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,    
                                             paths,
                                             (is_dir ? 1 : global_fs_info.maxlink),
                                             &count);
-  if (FSAL_POSIXDB_IS_ERROR(statusdb)
-      && FSAL_IS_ERROR(status = posixdb2fsal_error(statusdb)))
+  if(FSAL_POSIXDB_IS_ERROR(statusdb)
+     && FSAL_IS_ERROR(status = posixdb2fsal_error(statusdb)))
     return status;
 
   /* if !p_buffstat, then we do not stat the path to test if file is valid */
-  if (p_buffstat)
+  if(p_buffstat)
     {
-      for (i = 0; i < count; i++)
+      for(i = 0; i < count; i++)
         {
           TakeTokenFSCall();
           rc = lstat(paths[i].path, p_buffstat);
           errsv = errno;
           ReleaseTokenFSCall();
 
-          if (rc)
+          if(rc)
             {
               /* error : delete the bad path from the database */
               char dirc[FSAL_MAX_PATH_LEN];
@@ -663,7 +663,7 @@ fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,    
               /* get the handle of /path/to */
               status = FSAL_lookupPath(&parentdir, p_context, &parenthdl, NULL);
 
-              if (!FSAL_IS_ERROR(status))
+              if(!FSAL_IS_ERROR(status))
                 {
                   statusdb =
                       fsal_posixdb_delete(p_context->p_conn, &parenthdl, &filename, NULL);
@@ -677,21 +677,21 @@ fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,    
               break;
             }
         }
-      if (i == count)
+      if(i == count)
         ReturnCode(ERR_FSAL_STALE, 0);
 
       /* check consistency */
       status = fsal_internal_posix2posixdb_fileinfo(p_buffstat, &infofs);
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         return status;
 
-      if (fsal_posixdb_consistency_check(&(p_handle->info), &infofs))
+      if(fsal_posixdb_consistency_check(&(p_handle->info), &infofs))
         {
           /* not consistent !! */
           /* delete the stale handle */
           statusdb = fsal_posixdb_deleteHandle(p_context->p_conn, p_handle);
-          if (FSAL_POSIXDB_IS_ERROR(statusdb)
-              && FSAL_IS_ERROR(status = posixdb2fsal_error(statusdb)))
+          if(FSAL_POSIXDB_IS_ERROR(statusdb)
+             && FSAL_IS_ERROR(status = posixdb2fsal_error(statusdb)))
             return status;
 
           ReturnCode(ERR_FSAL_STALE, 0);
@@ -741,12 +741,12 @@ fsal_status_t fsal_internal_getInfoFromName(fsal_op_context_t * p_context,      
     case ERR_FSAL_POSIXDB_NOERR:
       /* No error, the object is in the database */
       /* check consistency */
-      if (fsal_posixdb_consistency_check(&(p_object_handle->info), p_infofs))
+      if(fsal_posixdb_consistency_check(&(p_object_handle->info), p_infofs))
         {
           /* Entry not consistent */
           /* Delete the Handle entry, then add a new one (with a Parent entry) */
           stdb = fsal_posixdb_deleteHandle(p_context->p_conn, p_object_handle);
-          if (FSAL_POSIXDB_IS_ERROR(stdb) && FSAL_IS_ERROR(st = posixdb2fsal_error(stdb)))
+          if(FSAL_POSIXDB_IS_ERROR(stdb) && FSAL_IS_ERROR(st = posixdb2fsal_error(stdb)))
             return st;
           /* don't break, add a new entry */
         }
@@ -760,12 +760,12 @@ fsal_status_t fsal_internal_getInfoFromName(fsal_op_context_t * p_context,      
                                            p_fsalname,
                                            p_infofs,
                                            p_parent_dir_handle, p_object_handle);
-      if (FSAL_IS_ERROR(st))
+      if(FSAL_IS_ERROR(st))
         return st;
       break;
     default:
       /* error */
-      if (FSAL_IS_ERROR(st = posixdb2fsal_error(stdb)))
+      if(FSAL_IS_ERROR(st = posixdb2fsal_error(stdb)))
         return st;
     }
 
@@ -805,15 +805,15 @@ fsal_status_t fsal_internal_getInfoFromChildrenList(fsal_op_context_t * p_contex
   unsigned int count;
 
   /* sanity check */
-  if (!p_context || !p_parent_dir_handle || !p_fsalname || (!p_children && children_count)
-      || !p_object_handle)
+  if(!p_context || !p_parent_dir_handle || !p_fsalname || (!p_children && children_count)
+     || !p_object_handle)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   /* check if the filename is in the list */
-  for (count = 0; count < children_count; count++)
+  for(count = 0; count < children_count; count++)
     {
       cmp = FSAL_namecmp(p_fsalname, &(p_children[count].name));
-      if (!cmp)
+      if(!cmp)
         break;
       /* maybe a sorted list could give better result */
     }
@@ -823,14 +823,14 @@ fsal_status_t fsal_internal_getInfoFromChildrenList(fsal_op_context_t * p_contex
     case 0:
       /* Entry found : check consistency */
 
-      if (fsal_posixdb_consistency_check(&(p_children[count].handle.info), p_infofs))
+      if(fsal_posixdb_consistency_check(&(p_children[count].handle.info), p_infofs))
         {
           /* Entry not consistent */
           /* Delete the Handle entry, then add a new one (with a Parent entry) */
           stdb =
               fsal_posixdb_deleteHandle(p_context->p_conn, &(p_children[count].handle));
 
-          if (FSAL_POSIXDB_IS_ERROR(stdb) && FSAL_IS_ERROR(st = posixdb2fsal_error(stdb)))
+          if(FSAL_POSIXDB_IS_ERROR(stdb) && FSAL_IS_ERROR(st = posixdb2fsal_error(stdb)))
             return st;
 
           /* don't break, add a new entry */
@@ -848,7 +848,7 @@ fsal_status_t fsal_internal_getInfoFromChildrenList(fsal_op_context_t * p_contex
                                            p_fsalname,
                                            p_infofs,
                                            p_parent_dir_handle, p_object_handle);
-      if (FSAL_IS_ERROR(st))
+      if(FSAL_IS_ERROR(st))
         return st;
     }
 
@@ -872,24 +872,24 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
   /* sanity checks. */
 
-  if ((!p_object_attributes && !p_buffstat) || !p_context)
+  if((!p_object_attributes && !p_buffstat) || !p_context)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   /* If the FSAL_F_OK flag is set, returns ERR INVAL */
 
-  if (access_type & FSAL_F_OK)
+  if(access_type & FSAL_F_OK)
     ReturnCode(ERR_FSAL_INVAL, 0);
 
   /* test root access */
 
-  if (p_context->credential.user == 0)
+  if(p_context->credential.user == 0)
     ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
   /* unsatisfied flags */
 
   missing_access = access_type;
 
-  if (p_object_attributes)
+  if(p_object_attributes)
     {
       uid = p_object_attributes->owner;
       gid = p_object_attributes->group;
@@ -904,23 +904,23 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
   /* Test if file belongs to user. */
 
-  if (p_context->credential.user == uid)
+  if(p_context->credential.user == uid)
     {
 
 #if defined( _DEBUG_FSAL )
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "File belongs to user %d", uid);
 #endif
 
-      if (mode & FSAL_MODE_RUSR)
+      if(mode & FSAL_MODE_RUSR)
         missing_access &= ~FSAL_R_OK;
 
-      if (mode & FSAL_MODE_WUSR)
+      if(mode & FSAL_MODE_WUSR)
         missing_access &= ~FSAL_W_OK;
 
-      if (mode & FSAL_MODE_XUSR)
+      if(mode & FSAL_MODE_XUSR)
         missing_access &= ~FSAL_X_OK;
 
-      if (missing_access == 0)
+      if(missing_access == 0)
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
       else
         ReturnCode(ERR_FSAL_ACCESS, 0);
@@ -932,46 +932,46 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
   is_grp = (p_context->credential.group == gid);
 
 # ifdef _DEBUG_FSAL
-  if (is_grp)
+  if(is_grp)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "File belongs to user's group %d",
                       p_context->credential.group);
 # endif
 
   /* Test if file belongs to alt user's groups */
 
-  if (!is_grp)
+  if(!is_grp)
     {
-      for (i = 0; i < p_context->credential.nbgroups; i++)
+      for(i = 0; i < p_context->credential.nbgroups; i++)
         {
           is_grp = (p_context->credential.alt_groups[i] == gid);
 
 #ifdef _DEBUG_FSAL
-          if (is_grp)
+          if(is_grp)
             DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
                               "File belongs to user's alt group %d",
                               p_context->credential.alt_groups[i]);
 #endif
 
           // exits loop if found
-          if (is_grp)
+          if(is_grp)
             break;
         }
     }
 
   /* finally apply group rights */
 
-  if (is_grp)
+  if(is_grp)
     {
-      if (mode & FSAL_MODE_RGRP)
+      if(mode & FSAL_MODE_RGRP)
         missing_access &= ~FSAL_R_OK;
 
-      if (mode & FSAL_MODE_WGRP)
+      if(mode & FSAL_MODE_WGRP)
         missing_access &= ~FSAL_W_OK;
 
-      if (mode & FSAL_MODE_XGRP)
+      if(mode & FSAL_MODE_XGRP)
         missing_access &= ~FSAL_X_OK;
 
-      if (missing_access == 0)
+      if(missing_access == 0)
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
       else
         ReturnCode(ERR_FSAL_ACCESS, 0);
@@ -980,18 +980,18 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
   /* test other perms */
 
-  if (mode & FSAL_MODE_ROTH)
+  if(mode & FSAL_MODE_ROTH)
     missing_access &= ~FSAL_R_OK;
 
-  if (mode & FSAL_MODE_WOTH)
+  if(mode & FSAL_MODE_WOTH)
     missing_access &= ~FSAL_W_OK;
 
-  if (mode & FSAL_MODE_XOTH)
+  if(mode & FSAL_MODE_XOTH)
     missing_access &= ~FSAL_X_OK;
 
   /* XXX ACLs. */
 
-  if (missing_access == 0)
+  if(missing_access == 0)
     ReturnCode(ERR_FSAL_NO_ERROR, 0);
   else
     ReturnCode(ERR_FSAL_ACCESS, 0);

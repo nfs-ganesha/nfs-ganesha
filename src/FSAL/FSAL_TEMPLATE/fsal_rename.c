@@ -76,8 +76,8 @@ fsal_status_t FSAL_rename(fsal_handle_t * old_parentdir_handle, /* IN */
   /* sanity checks.
    * note : src/tgt_dir_attributes are optional.
    */
-  if (!old_parentdir_handle ||
-      !new_parentdir_handle || !p_old_name || !p_new_name || !p_context)
+  if(!old_parentdir_handle ||
+     !new_parentdir_handle || !p_old_name || !p_new_name || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_rename);
 
   TakeTokenFSCall();
@@ -91,13 +91,13 @@ fsal_status_t FSAL_rename(fsal_handle_t * old_parentdir_handle, /* IN */
   /* >> get last parent post op attributes if asked
    * For example : << */
 
-  if (src_dir_attributes)
+  if(src_dir_attributes)
     {
       fsal_status_t st;
 
       st = FSAL_getattrs(old_parentdir_handle, p_context, src_dir_attributes);
 
-      if (FSAL_IS_ERROR(st))
+      if(FSAL_IS_ERROR(st))
         {
           FSAL_CLEAR_MASK(src_dir_attributes->asked_attributes);
           FSAL_SET_MASK(src_dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -108,14 +108,14 @@ fsal_status_t FSAL_rename(fsal_handle_t * old_parentdir_handle, /* IN */
   /* >> get new parent post op attributes if asked
    * For example : << */
 
-  if (tgt_dir_attributes)
+  if(tgt_dir_attributes)
     {
       fsal_status_t st;
 
       /* optimization when src=tgt : */
 
-      if (!FSAL_handlecmp(old_parentdir_handle, new_parentdir_handle, &st)
-          && src_dir_attributes)
+      if(!FSAL_handlecmp(old_parentdir_handle, new_parentdir_handle, &st)
+         && src_dir_attributes)
         {
 
           /* If source dir = target dir, we just copy the attributes.
@@ -131,7 +131,7 @@ fsal_status_t FSAL_rename(fsal_handle_t * old_parentdir_handle, /* IN */
           /* get attributes */
           st = FSAL_getattrs(new_parentdir_handle, p_context, tgt_dir_attributes);
 
-          if (FSAL_IS_ERROR(st))
+          if(FSAL_IS_ERROR(st))
             {
               FSAL_CLEAR_MASK(tgt_dir_attributes->asked_attributes);
               FSAL_SET_MASK(tgt_dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

@@ -133,8 +133,7 @@ cache_inode_status_t cache_inode_getattr(cache_entry_t * pentry, fsal_attrib_lis
   fsal_status_t fsal_status;
 
   /* sanity check */
-  if (pentry == NULL || pattr == NULL || ht == NULL || pclient == NULL
-      || pcontext == NULL)
+  if(pentry == NULL || pattr == NULL || ht == NULL || pclient == NULL || pcontext == NULL)
     {
       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
       return *pstatus;
@@ -149,8 +148,8 @@ cache_inode_status_t cache_inode_getattr(cache_entry_t * pentry, fsal_attrib_lis
 
   /* Lock the entry */
   P_w(&pentry->lock);
-  if (cache_inode_renew_entry(pentry, pattr, ht, pclient, pcontext, pstatus) !=
-      CACHE_INODE_SUCCESS)
+  if(cache_inode_renew_entry(pentry, pattr, ht, pclient, pcontext, pstatus) !=
+     CACHE_INODE_SUCCESS)
     {
       V_w(&pentry->lock);
       pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_GETATTR] += 1;
@@ -162,7 +161,7 @@ cache_inode_status_t cache_inode_getattr(cache_entry_t * pentry, fsal_attrib_lis
 
   cache_inode_get_attributes(pentry, pattr);
 
-  if (FSAL_TEST_MASK(pattr->asked_attributes, FSAL_ATTR_RDATTR_ERR))
+  if(FSAL_TEST_MASK(pattr->asked_attributes, FSAL_ATTR_RDATTR_ERR))
     {
       switch (pentry->internal_md.type)
         {
@@ -197,12 +196,12 @@ cache_inode_status_t cache_inode_getattr(cache_entry_t * pentry, fsal_attrib_lis
 
       /* An error occured when trying to get the attributes, they have to be renewed */
       fsal_status = FSAL_getattrs(pfsal_handle, pcontext, pattr);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
           V_r(&pentry->lock);
 
-          if (fsal_status.major == ERR_FSAL_STALE)
+          if(fsal_status.major == ERR_FSAL_STALE)
             {
               cache_inode_status_t kill_status;
 
@@ -210,8 +209,8 @@ cache_inode_status_t cache_inode_getattr(cache_entry_t * pentry, fsal_attrib_lis
                   ("cache_inode_getattr: Stale FSAL File Handle detected for pentry = %p",
                    pentry);
 
-              if (cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
-                  CACHE_INODE_SUCCESS)
+              if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+                 CACHE_INODE_SUCCESS)
                 DisplayLog("cache_inode_getattr: Could not kill entry %p, status = %u",
                            pentry, kill_status);
 
@@ -233,7 +232,7 @@ cache_inode_status_t cache_inode_getattr(cache_entry_t * pentry, fsal_attrib_lis
   V_r(&pentry->lock);
 
   /* stat */
-  if (*pstatus != CACHE_INODE_SUCCESS)
+  if(*pstatus != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_GETATTR] += 1;
   else
     pclient->stat.func_stats.nb_success[CACHE_INODE_GETATTR] += 1;

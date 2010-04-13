@@ -68,7 +68,7 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if (!p_parent_directory_handle || !p_context || !p_object_handle || !p_filename)
+  if(!p_parent_directory_handle || !p_context || !p_object_handle || !p_filename)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_create);
 
   /* convert fsal mode to unix mode. */
@@ -85,19 +85,19 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
   status =
       fsal_internal_getPathFromHandle(p_context, p_parent_directory_handle, 1, &fsalpath,
                                       &buffstat);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_create);
 
   /* Check the user can write in the directory, and check the setgid bit on the directory */
-  if (buffstat.st_mode & S_ISGID)
+  if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
 
   status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_create);
 
   status = fsal_internal_appendFSALNameToFSALPath(&fsalpath, p_filename);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_create);
 
   /* call to API */
@@ -106,12 +106,12 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
   /* create the file */
   fd = open(fsalpath.path, O_CREAT | O_WRONLY | O_TRUNC | O_EXCL, unix_mode);   /* error if the file already exists */
   errsv = errno;
-  if (fd == -1)
+  if(fd == -1)
     goto releaseToken;
   /* close the file descriptor */
   rc = close(fd);
   errsv = errno;
-  if (rc)
+  if(rc)
     goto releaseToken;
   /* stat the new file */
   rc = lstat(fsalpath.path, &buffstat);
@@ -120,22 +120,22 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
  releaseToken:
   ReleaseTokenFSCall();
 
-  if (fd == -1 || rc)
+  if(fd == -1 || rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
 
   /* add the file to the database */
-  if (FSAL_IS_ERROR(status = fsal_internal_posix2posixdb_fileinfo(&buffstat, &info)))
+  if(FSAL_IS_ERROR(status = fsal_internal_posix2posixdb_fileinfo(&buffstat, &info)))
     Return(status.major, status.minor, INDEX_FSAL_create);
-  if (FSAL_IS_ERROR
-      (status =
-       fsal_internal_posixdb_add_entry(p_context->p_conn, p_filename, &info,
-                                       p_parent_directory_handle, p_object_handle)))
+  if(FSAL_IS_ERROR
+     (status =
+      fsal_internal_posixdb_add_entry(p_context->p_conn, p_filename, &info,
+                                      p_parent_directory_handle, p_object_handle)))
     Return(status.major, status.minor, INDEX_FSAL_create);
 
   /* the file has been created */
   /* chown the file to the current user */
 
-  if (p_context->credential.user != geteuid())
+  if(p_context->credential.user != geteuid())
     {
       TakeTokenFSCall();
       /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
@@ -143,7 +143,7 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
                   setgid_bit ? -1 : (int)p_context->credential.group);
       errsv = errno;
       ReleaseTokenFSCall();
-      if (rc)
+      if(rc)
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
 
       buffstat.st_uid = p_context->credential.user;
@@ -152,13 +152,13 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
 
   /* add the file to the database */
 
-  if (p_object_attributes)
+  if(p_object_attributes)
     {
 
       /* convert POSIX attributes to fsal attributes */
       status = posix2fsal_attributes(&buffstat, p_object_attributes);
       /* on error, we set a special bit in the mask. */
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
           FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -220,7 +220,7 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if (!p_parent_directory_handle || !p_context || !p_object_handle || !p_dirname)
+  if(!p_parent_directory_handle || !p_context || !p_object_handle || !p_dirname)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mkdir);
 
   /* convert FSAL mode to HPSS mode. */
@@ -233,47 +233,47 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
   status =
       fsal_internal_getPathFromHandle(p_context, p_parent_directory_handle, 1, &fsalpath,
                                       &buffstat);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_mkdir);
 
   /* Check the user can write in the directory, and check the setgid bit on the directory */
-  if (buffstat.st_mode & S_ISGID)
+  if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
 
   status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_mkdir);
 
   status = fsal_internal_appendFSALNameToFSALPath(&fsalpath, p_dirname);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_mkdir);
 
   /* creates the directory and stats it */
   TakeTokenFSCall();
 
   rc = mkdir(fsalpath.path, unix_mode);
-  if (!rc)
+  if(!rc)
     rc = lstat(fsalpath.path, &buffstat);
   errsv = errno;
 
   ReleaseTokenFSCall();
 
-  if (rc)
+  if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
 
   /* add the directory to the database */
-  if (FSAL_IS_ERROR(status = fsal_internal_posix2posixdb_fileinfo(&buffstat, &info)))
+  if(FSAL_IS_ERROR(status = fsal_internal_posix2posixdb_fileinfo(&buffstat, &info)))
     Return(status.major, status.minor, INDEX_FSAL_mkdir);
-  if (FSAL_IS_ERROR
-      (status =
-       fsal_internal_posixdb_add_entry(p_context->p_conn, p_dirname, &info,
-                                       p_parent_directory_handle, p_object_handle)))
+  if(FSAL_IS_ERROR
+     (status =
+      fsal_internal_posixdb_add_entry(p_context->p_conn, p_dirname, &info,
+                                      p_parent_directory_handle, p_object_handle)))
     Return(status.major, status.minor, INDEX_FSAL_mkdir);
 
   /* the directory has been created */
   /* chown the file to the current user/group */
 
-  if (p_context->credential.user != geteuid())
+  if(p_context->credential.user != geteuid())
     {
       TakeTokenFSCall();
       /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
@@ -281,7 +281,7 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
                   setgid_bit ? -1 : (int)p_context->credential.group);
       errsv = errno;
       ReleaseTokenFSCall();
-      if (rc)
+      if(rc)
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
 
       buffstat.st_uid = p_context->credential.user;
@@ -289,14 +289,14 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
     }
 
   /* Fills the attributes if needed */
-  if (p_object_attributes)
+  if(p_object_attributes)
     {
 
       status = posix2fsal_attributes(&buffstat, p_object_attributes);
 
       /* on error, we set a special bit in the mask. */
 
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
           FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -356,12 +356,12 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   /* sanity checks.
    * note : attributes is optional.
    */
-  if (!p_target_handle || !p_dir_handle || !p_context || !p_link_name)
+  if(!p_target_handle || !p_dir_handle || !p_context || !p_link_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_link);
 
   /* Tests if hardlinking is allowed by configuration. */
 
-  if (!global_fs_info.link_support)
+  if(!global_fs_info.link_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
 
 #ifdef _DEBUG_FSAL
@@ -373,7 +373,7 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   status =
       fsal_internal_getPathFromHandle(p_context, p_target_handle, 0, &fsalpath_old,
                                       &buffstat);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     {
       Return(status.major, status.minor, INDEX_FSAL_link);
     }
@@ -382,16 +382,16 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   status =
       fsal_internal_getPathFromHandle(p_context, p_dir_handle, 1, &fsalpath_new,
                                       &buffstat_dir);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_link);
 
   status =
       fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_dir, NULL);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_link);
 
   status = fsal_internal_appendFSALNameToFSALPath(&fsalpath_new, p_link_name);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_link);
 
   /* Create the link on the filesystem */
@@ -400,30 +400,30 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   rc = link(fsalpath_old.path, fsalpath_new.path);
   errsv = errno;
   ReleaseTokenFSCall();
-  if (rc)
+  if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_link);
 
   /* add the link in the database */
   buffstat.st_nlink++;          /* avoid to stat the new file */
   status = fsal_internal_posix2posixdb_fileinfo(&buffstat, &info);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_link);
 
-  if (FSAL_IS_ERROR
-      (status =
-       fsal_internal_posixdb_add_entry(p_context->p_conn, p_link_name, &info,
-                                       p_dir_handle, &newhandle)))
+  if(FSAL_IS_ERROR
+     (status =
+      fsal_internal_posixdb_add_entry(p_context->p_conn, p_link_name, &info,
+                                      p_dir_handle, &newhandle)))
     Return(status.major, status.minor, INDEX_FSAL_link);
 
   /* optionnaly get attributes */
 
-  if (p_attributes)
+  if(p_attributes)
     {
       TakeTokenFSCall();
       rc = lstat(fsalpath_old.path, &buffstat);
       errsv = errno;
       ReleaseTokenFSCall();
-      if (rc)
+      if(rc)
         {
           status.major = posix2fsal_error(errsv);
           status.minor = errsv;
@@ -434,7 +434,7 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
         }
 
       /* on error, we set a special bit in the mask. */
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_attributes->asked_attributes);
           FSAL_SET_MASK(p_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -477,7 +477,7 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
   /* sanity checks.
    * note : link_attributes is optional.
    */
-  if (!parentdir_handle || !p_context || !p_node_name)
+  if(!parentdir_handle || !p_context || !p_node_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mknode);
 
   unix_mode = fsal2unix_mode(accessmode);
@@ -488,14 +488,14 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
   switch (nodetype)
     {
     case FSAL_TYPE_BLK:
-      if (!dev)
+      if(!dev)
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mknode);
       unix_mode |= S_IFBLK;
       unix_dev = (dev->major << 8) | (dev->minor & 0xFF);
       break;
 
     case FSAL_TYPE_CHR:
-      if (!dev)
+      if(!dev)
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mknode);
       unix_mode |= S_IFCHR;
       unix_dev = (dev->major << 8) | (dev->minor & 0xFF);
@@ -519,48 +519,48 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
   status =
       fsal_internal_getPathFromHandle(p_context, parentdir_handle, 1, &fsalpath,
                                       &buffstat);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_mknode);
 
   /* Check the user can write in the directory, and check weither the setgid bit on the directory */
-  if (buffstat.st_mode & S_ISGID)
+  if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
 
   status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_mknode);
 
   status = fsal_internal_appendFSALNameToFSALPath(&fsalpath, p_node_name);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_mknode);
 
   /* creates the node, then stats it */
   TakeTokenFSCall();
 
   rc = mknod(fsalpath.path, unix_mode, unix_dev);
-  if (!rc)
+  if(!rc)
     rc = lstat(fsalpath.path, &buffstat);
   errsv = errno;
 
   ReleaseTokenFSCall();
 
-  if (rc)
+  if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mknode);
 
   /* add the object to the database */
-  if (FSAL_IS_ERROR(status = fsal_internal_posix2posixdb_fileinfo(&buffstat, &info)))
+  if(FSAL_IS_ERROR(status = fsal_internal_posix2posixdb_fileinfo(&buffstat, &info)))
     Return(status.major, status.minor, INDEX_FSAL_mknode);
 
-  if (FSAL_IS_ERROR
-      (status =
-       fsal_internal_posixdb_add_entry(p_context->p_conn, p_node_name, &info,
-                                       parentdir_handle, p_object_handle)))
+  if(FSAL_IS_ERROR
+     (status =
+      fsal_internal_posixdb_add_entry(p_context->p_conn, p_node_name, &info,
+                                      parentdir_handle, p_object_handle)))
     Return(status.major, status.minor, INDEX_FSAL_mknode);
 
   /* the node has been created */
   /* chown the file to the current user/group */
 
-  if (p_context->credential.user != geteuid())
+  if(p_context->credential.user != geteuid())
     {
       TakeTokenFSCall();
 
@@ -571,7 +571,7 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
 
       ReleaseTokenFSCall();
 
-      if (rc)
+      if(rc)
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mknode);
 
       buffstat.st_uid = p_context->credential.user;
@@ -579,14 +579,14 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
     }
 
   /* Fills the attributes if needed */
-  if (node_attributes)
+  if(node_attributes)
     {
 
       status = posix2fsal_attributes(&buffstat, node_attributes);
 
       /* on error, we set a special bit in the mask. */
 
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(node_attributes->asked_attributes);
           FSAL_SET_MASK(node_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

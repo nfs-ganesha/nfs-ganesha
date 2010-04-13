@@ -150,7 +150,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
   BuddySetDebugLabel("cache_content_entry_t");
 #endif
 
-  if (pentry_inode == NULL)
+  if(pentry_inode == NULL)
     {
       *pstatus = CACHE_CONTENT_INVALID_ARGUMENT;
 
@@ -160,7 +160,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
       return NULL;
     }
 
-  if (how != RENEW_ENTRY)
+  if(how != RENEW_ENTRY)
     {
       /* Get the entry from the preallocated pool */
       GET_PREALLOC(pfc_pentry,
@@ -172,7 +172,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
       BuddySetDebugLabel("N/A");
 #endif
 
-      if (pfc_pentry == NULL)
+      if(pfc_pentry == NULL)
         {
           *pstatus = CACHE_CONTENT_MALLOC_ERROR;
 
@@ -192,11 +192,10 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
     }
 
   /* Set the path to the local files */
-  if ((status = cache_content_create_name(pfc_pentry->local_fs_entry.cache_path_index,
-                                          CACHE_CONTENT_INDEX_FILE,
-                                          pcontext,
-                                          pentry_inode,
-                                          pclient)) != CACHE_CONTENT_SUCCESS)
+  if((status = cache_content_create_name(pfc_pentry->local_fs_entry.cache_path_index,
+                                         CACHE_CONTENT_INDEX_FILE,
+                                         pcontext,
+                                         pentry_inode, pclient)) != CACHE_CONTENT_SUCCESS)
     {
       RELEASE_PREALLOC(pfc_pentry, pclient->pool_entry, next_alloc);
 
@@ -211,11 +210,10 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
       return NULL;
     }
 
-  if ((status = cache_content_create_name(pfc_pentry->local_fs_entry.cache_path_data,
-                                          CACHE_CONTENT_DATA_FILE,
-                                          pcontext,
-                                          pentry_inode,
-                                          pclient)) != CACHE_CONTENT_SUCCESS)
+  if((status = cache_content_create_name(pfc_pentry->local_fs_entry.cache_path_data,
+                                         CACHE_CONTENT_DATA_FILE,
+                                         pcontext,
+                                         pentry_inode, pclient)) != CACHE_CONTENT_SUCCESS)
     {
       RELEASE_PREALLOC(pfc_pentry, pclient->pool_entry, next_alloc);
 
@@ -252,8 +250,8 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
   pfc_pentry->local_fs_entry.opened_file.last_op = 0;
 
   /* Dump the inode entry to the index file */
-  if (cache_inode_dump_content(pfc_pentry->local_fs_entry.cache_path_index, pentry_inode)
-      != CACHE_INODE_SUCCESS)
+  if(cache_inode_dump_content(pfc_pentry->local_fs_entry.cache_path_index, pentry_inode)
+     != CACHE_INODE_SUCCESS)
     {
 
       RELEASE_PREALLOC(pfc_pentry, pclient->pool_entry, next_alloc);
@@ -270,9 +268,9 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
     }
 
   /* Create the data file if entry is not recoverd (in this case, it already exists) */
-  if (how == ADD_ENTRY || how == RENEW_ENTRY)
+  if(how == ADD_ENTRY || how == RENEW_ENTRY)
     {
-      if ((tmpfd = creat(pfc_pentry->local_fs_entry.cache_path_data, 0750)) == -1)
+      if((tmpfd = creat(pfc_pentry->local_fs_entry.cache_path_data, 0750)) == -1)
         {
           RELEASE_PREALLOC(pfc_pentry, pclient->pool_entry, next_alloc);
 
@@ -300,15 +298,15 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
   pfc_pentry->pentry_inode = pentry_inode;
 
   /* Data cache is considered as more pertinent as data below in case of crash recovery */
-  if (how != RECOVER_ENTRY)
+  if(how != RECOVER_ENTRY)
     {
       /* Get the file content from the FSAL, populate the data cache */
-      if (pclient->flush_force_fsal == 0)
+      if(pclient->flush_force_fsal == 0)
         cache_content_refresh(pfc_pentry, pclient, pcontext, DEFAULT_REFRESH, &status);
       else
         cache_content_refresh(pfc_pentry, pclient, pcontext, FORCE_FROM_FSAL, &status);
 
-      if (status != CACHE_CONTENT_SUCCESS)
+      if(status != CACHE_CONTENT_SUCCESS)
         {
           RELEASE_PREALLOC(pfc_pentry, pclient->pool_entry, next_alloc);
 

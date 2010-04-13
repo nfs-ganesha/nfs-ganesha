@@ -26,8 +26,8 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
      * 1/ sanity check *
      *******************/
 
-  if (!p_conn || !p_object_info || !p_parent_directory_handle_old || !p_filename_old
-      || !p_parent_directory_handle_new || !p_filename_new)
+  if(!p_conn || !p_object_info || !p_parent_directory_handle_old || !p_filename_old
+     || !p_parent_directory_handle_new || !p_filename_new)
     ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
 
   BeginTransaction(p_conn);
@@ -44,9 +44,9 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
    */
 
   /* check if info is in cache or if this info is inconsistent */
-  if (!fsal_posixdb_GetInodeCache(p_parent_directory_handle_old)
-      || fsal_posixdb_consistency_check(&(p_parent_directory_handle_old->info),
-                                        p_object_info))
+  if(!fsal_posixdb_GetInodeCache(p_parent_directory_handle_old)
+     || fsal_posixdb_consistency_check(&(p_parent_directory_handle_old->info),
+                                       p_object_info))
     {
       snprintf(query, 4096,
                "SELECT Parent.handleid, Parent.handlets, Handle.deviceid, Handle.inode, "
@@ -58,10 +58,10 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
                p_filename_old->name);
 
       st = db_exec_sql(p_conn, query, &res);
-      if (FSAL_POSIXDB_IS_ERROR(st))
+      if(FSAL_POSIXDB_IS_ERROR(st))
         goto rollback;
 
-      if (mysql_num_rows(res) != 1)
+      if(mysql_num_rows(res) != 1)
         {
           /* parent entry not found */
           mysql_free_result(res);
@@ -70,7 +70,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
         }
 
       row = mysql_fetch_row(res);
-      if (!row)
+      if(!row)
         {
           /* Error */
           mysql_free_result(res);
@@ -84,8 +84,8 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
 
       /* check consistency */
 
-      if (fsal_posixdb_consistency_check
-          (&(p_parent_directory_handle_old->info), p_object_info))
+      if(fsal_posixdb_consistency_check
+         (&(p_parent_directory_handle_old->info), p_object_info))
         {
           DisplayLog("Consistency check failed while renaming a file : Handle deleted");
           st = fsal_posixdb_recursiveDelete(p_conn, atoll(row[0]), atoi(row[1]),
@@ -121,13 +121,13 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
            p_filename_new->name);
 
   st = db_exec_sql(p_conn, query, &res);
-  if (FSAL_POSIXDB_IS_ERROR(st))
+  if(FSAL_POSIXDB_IS_ERROR(st))
     goto rollback;
 
-  if (mysql_num_rows(res) > 0)
+  if(mysql_num_rows(res) > 0)
     {
       row = mysql_fetch_row(res);
-      if (!row)
+      if(!row)
         {
           /* Error */
           mysql_free_result(res);
@@ -140,7 +140,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
                                      p_parent_directory_handle_new->ts,
                                      p_filename_new->name, atoi(row[4]) /* nlink */ );
 
-      if (FSAL_POSIXDB_IS_ERROR(st) && !FSAL_POSIXDB_IS_NOENT(st))
+      if(FSAL_POSIXDB_IS_ERROR(st) && !FSAL_POSIXDB_IS_NOENT(st))
         {
           mysql_free_result(res);
           goto rollback;
@@ -169,11 +169,11 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
 
       st = db_exec_sql(p_conn, query, NULL);
 
-      if (!FSAL_POSIXDB_IS_ERROR(st))
+      if(!FSAL_POSIXDB_IS_ERROR(st))
         {
           /* how many rows updated ? */
 
-          if (mysql_affected_rows(&p_conn->db_conn) == 1)
+          if(mysql_affected_rows(&p_conn->db_conn) == 1)
             {
               /* there was 1 update */
               st.major = ERR_FSAL_POSIXDB_NOERR;
@@ -211,13 +211,13 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
                        p_parent_directory_handle_new->ts, p_filename_new->name);
 
               st = db_exec_sql(p_conn, query, &res);
-              if (FSAL_POSIXDB_IS_ERROR(st))
+              if(FSAL_POSIXDB_IS_ERROR(st))
                 goto rollback;
 
-              if (mysql_num_rows(res) > 0)
+              if(mysql_num_rows(res) > 0)
                 {
                   row = mysql_fetch_row(res);
-                  if (!row)
+                  if(!row)
                     {
                       /* Error */
                       mysql_free_result(res);
@@ -227,7 +227,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
 
                   st = fsal_posixdb_deleteParent(p_conn, atoll(row[0]), atoi(row[1]), p_parent_directory_handle_new->id, p_parent_directory_handle_new->ts, p_filename_new->name, atoi(row[4]));        /* nlink */
 
-                  if (FSAL_POSIXDB_IS_ERROR(st) && !FSAL_POSIXDB_IS_NOENT(st))
+                  if(FSAL_POSIXDB_IS_ERROR(st) && !FSAL_POSIXDB_IS_NOENT(st))
                     {
                       mysql_free_result(res);
                       break;
@@ -247,9 +247,9 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
         }
 
     }
-  while (re_update);
+  while(re_update);
 
-  if (FSAL_POSIXDB_IS_ERROR(st))
+  if(FSAL_POSIXDB_IS_ERROR(st))
     goto rollback;
   else
     return EndTransaction(p_conn);

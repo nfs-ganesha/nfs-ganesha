@@ -161,7 +161,7 @@ static struct timeval time_diff(struct timeval time_from, struct timeval time_to
 
   struct timeval result;
 
-  if (time_to.tv_usec < time_from.tv_usec)
+  if(time_to.tv_usec < time_from.tv_usec)
     {
       result.tv_sec = time_to.tv_sec - time_from.tv_sec - 1;
       result.tv_usec = 1000000 + time_to.tv_usec - time_from.tv_usec;
@@ -190,21 +190,21 @@ void *TEST1(void *arg)
 
   printf("%d:BuddyInit(%llu)=%d\n", th, MEM_SIZE, rc = BuddyInit(&parameter));
 
-  if (rc)
+  if(rc)
     exit(1);
 
-  for (i = 0; i < NB_STR; i++)
+  for(i = 0; i < NB_STR; i++)
     {
       unsigned int j;
       size_t len;
 
       len = (unsigned long)my_rand() % 100;
-      if (len == 0)
+      if(len == 0)
         len = 1;
 
       strings[i].str = BuddyMalloc(len);
 
-      if (!strings[i].str)
+      if(!strings[i].str)
         {
           printf("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %d : %d *****\n", th, len,
                  BuddyErrno);
@@ -214,7 +214,7 @@ void *TEST1(void *arg)
 
       strings[i].len = len;
 
-      for (j = 0; j < len - 1; j++)
+      for(j = 0; j < len - 1; j++)
         {
           strings[i].str[j] = '0' + j;
         }
@@ -226,12 +226,12 @@ void *TEST1(void *arg)
 
   /* now, check for integrity */
 
-  for (i = 0; i < NB_STR; i++)
+  for(i = 0; i < NB_STR; i++)
     {
 #ifdef _DEBUG_MEMALLOC
       printf("%d>%d:%d:%s\n", th, strings[i].len, strlen(strings[i].str), strings[i].str);
 #endif
-      if (strings[i].len - 1 != (int)strlen(strings[i].str))
+      if(strings[i].len - 1 != (int)strlen(strings[i].str))
         printf("************ INTEGRITY ERROR !!! ************\n");
 
       usleep(1000);             /* for mixing threads actions */
@@ -272,26 +272,26 @@ void *TEST2(void *arg)
 
   printf("%d:BuddyInit(%llu)=%d\n", th, MEM_SIZE, rc = BuddyInit(&parameter));
 
-  if (rc)
+  if(rc)
     exit(1);
 
   total = MEM_SIZE;
 
   gettimeofday(&tv1, NULL);
 
-  for (i = 0; i < NB_LOOP2; i++)
+  for(i = 0; i < NB_LOOP2; i++)
     {
 
       size_t len;
       caddr_t ptr;
 
       len = my_rand() % total;
-      if (len == 0)
+      if(len == 0)
         len = 1;
 
       ptr = BuddyMalloc(len);
 
-      if (!ptr)
+      if(!ptr)
         {
           printf("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu : %d *****\n", th,
                  (unsigned long long)len, BuddyErrno);
@@ -345,22 +345,22 @@ void *TEST3(void *arg)
 
   printf("%d:BuddyInit(%llu)=%d\n", th, MEM_SIZE, rc = BuddyInit(&parameter));
 
-  if (rc)
+  if(rc)
     exit(1);
 
-  for (i = 0; i < NB_LOOP3; i++)
+  for(i = 0; i < NB_LOOP3; i++)
     {
 
       size_t len;
       caddr_t ptr;
 
       len = my_rand() % total;
-      if (len == 0)
+      if(len == 0)
         len = 1;
 
       ptr = BuddyMalloc(len);
 
-      if (!ptr)
+      if(!ptr)
         {
           printf("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu :%d *****\n", th,
                  (unsigned long long)len, BuddyErrno);
@@ -375,10 +375,10 @@ void *TEST3(void *arg)
 #endif
 
       /* 32 bits alignment test */
-      if ((unsigned long)ptr & 3)
+      if((unsigned long)ptr & 3)
         printf("%d:32 bits alignment ERROR\n", th);
       /* 64 bits alignment test */
-      if ((unsigned long)ptr & 7)
+      if((unsigned long)ptr & 7)
         printf("%d:64 bits alignment ERROR\n", th);
 
     }
@@ -417,16 +417,16 @@ void *TEST4(void *arg)
   printf("%d:BuddyInit(%llu)=%d\n", th, MEM_SIZE, rc =
          BuddyInit(&parameter_realloc_small));
 
-  if (rc)
+  if(rc)
     exit(1);
 
   /* initial allocation */
-  for (j = 0; j < NB_SIMULTANEOUS; j++)
+  for(j = 0; j < NB_SIMULTANEOUS; j++)
     {
 
       pointer[j] = BuddyMalloc(current);
 
-      if (!pointer[j])
+      if(!pointer[j])
         {
           printf("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu :%d *****\n", th,
                  (unsigned long long)current, BuddyErrno);
@@ -438,7 +438,7 @@ void *TEST4(void *arg)
         }
 
       /* initial affectation */
-      for (i = 0; i < current; i++)
+      for(i = 0; i < current; i++)
         {
           pointer[j][i] = (char)(i % 256);
         }
@@ -454,16 +454,16 @@ void *TEST4(void *arg)
   old = current;
   current <<= 1;
 
-  while (current < total)
+  while(current < total)
     {
 
       /* realloc the pointer */
-      for (j = 0; j < NB_SIMULTANEOUS; j++)
+      for(j = 0; j < NB_SIMULTANEOUS; j++)
         {
 
           new_pointer[j] = BuddyRealloc(pointer[j], current);
 
-          if (!new_pointer[j])
+          if(!new_pointer[j])
             {
               printf("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu :%d *****\n", th,
                      (unsigned long long)current, BuddyErrno);
@@ -476,9 +476,9 @@ void *TEST4(void *arg)
             }
 
           /* verifies the content of the new area */
-          for (i = 0; i < old; i++)
+          for(i = 0; i < old; i++)
             {
-              if (new_pointer[j][i] != (char)(i % 256))
+              if(new_pointer[j][i] != (char)(i % 256))
                 {
                   printf("%d:**** INTEGRITY ERROR : ptr[%d] != %d *****\n", th, i,
                          i % 256);
@@ -486,7 +486,7 @@ void *TEST4(void *arg)
             }
 
           /* sets the content of the new area */
-          for (i = old; i < current; i++)
+          for(i = old; i < current; i++)
             {
               new_pointer[j][i] = (char)(i % 256);
             }
@@ -528,21 +528,21 @@ void *TEST5(void *arg)
 
   printf("%d:BuddyInit(%llu)=%d\n", th, MEM_SIZE, rc = BuddyInit(&parameter));
 
-  if (rc)
+  if(rc)
     exit(1);
 
-  for (i = 0; i < NB_STR; i++)
+  for(i = 0; i < NB_STR; i++)
     {
       int j;
       int len;
 
       len = (unsigned long)my_rand() % 100;
-      if (len == 0)
+      if(len == 0)
         len = 1;
 
       strings[i].str = BuddyCalloc(len, sizeof(char));
 
-      if (!strings[i].str)
+      if(!strings[i].str)
         {
           printf("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %d : %d *****\n", th, len,
                  BuddyErrno);
@@ -552,17 +552,17 @@ void *TEST5(void *arg)
 
       strings[i].len = len;
 
-      for (j = 0; j < len - 1; j++)
+      for(j = 0; j < len - 1; j++)
         {
           /* verifies that it was NULL */
-          if (strings[i].str[j])
+          if(strings[i].str[j])
             {
               printf("%d:**** MEMSET ERROR : string[%d].str[%d] != 0 *****\n", th, i, j);
             }
           strings[i].str[j] = '0' + j;
         }
 
-      if (strings[i].str[j])
+      if(strings[i].str[j])
         printf("%d:**** MEMSET ERROR : string[%d].str[%d] != 0 *****\n", th, i, j);
       strings[i].str[j] = '\0';
 
@@ -574,12 +574,12 @@ void *TEST5(void *arg)
 
   /* Now check for integrity */
 
-  for (i = 0; i < NB_STR; i++)
+  for(i = 0; i < NB_STR; i++)
     {
 #ifdef _DEBUG_MEMALLOC
       printf("%d>%d:%d:%s\n", th, strings[i].len, strlen(strings[i].str), strings[i].str);
 #endif
-      if (strings[i].len - 1 != (int)strlen(strings[i].str))
+      if(strings[i].len - 1 != (int)strlen(strings[i].str))
         printf("************ INTEGRITY ERROR !!! ************\n");
 
       usleep(1000);             /* for mixing threads actions */
@@ -593,18 +593,18 @@ void *TEST5(void *arg)
 
   /* starts the test again, now that the memory is "dirty" */
 
-  for (i = 0; i < NB_STR; i++)
+  for(i = 0; i < NB_STR; i++)
     {
       int j;
       int len;
 
       len = (unsigned long)my_rand() % 100;
-      if (len == 0)
+      if(len == 0)
         len = 1;
 
       strings[i].str = BuddyCalloc(len, sizeof(char));
 
-      if (!strings[i].str)
+      if(!strings[i].str)
         {
           printf("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %d : %d *****\n", th, len,
                  BuddyErrno);
@@ -614,17 +614,17 @@ void *TEST5(void *arg)
 
       strings[i].len = len;
 
-      for (j = 0; j < len - 1; j++)
+      for(j = 0; j < len - 1; j++)
         {
           /* verifies that it was NULL */
-          if (strings[i].str[j])
+          if(strings[i].str[j])
             {
               printf("%d:**** MEMSET ERROR : string[%d].str[%d] != 0 *****\n", th, i, j);
             }
           strings[i].str[j] = '0' + j;
         }
 
-      if (strings[i].str[j])
+      if(strings[i].str[j])
         printf("%d:**** MEMSET ERROR : string[%d].str[%d] != 0 *****\n", th, i, j);
       strings[i].str[j] = '\0';
 
@@ -636,12 +636,12 @@ void *TEST5(void *arg)
 
   /* Now check for integrity */
 
-  for (i = 0; i < NB_STR; i++)
+  for(i = 0; i < NB_STR; i++)
     {
 #ifdef _DEBUG_MEMALLOC
       printf("%d>%d:%d:%s\n", th, strings[i].len, strlen(strings[i].str), strings[i].str);
 #endif
-      if (strings[i].len - 1 != (int)strlen(strings[i].str))
+      if(strings[i].len - 1 != (int)strlen(strings[i].str))
         printf("************ INTEGRITY ERROR !!! ************\n");
 
       usleep(1000);             /* for mixing threads actions */
@@ -689,7 +689,7 @@ void *TEST6(void *arg)
 
   printf("%d:BuddyInit(%llu)=%d\n", th, MEM_SIZE, rc = BuddyInit(&parameter_realloc));
 
-  if (rc)
+  if(rc)
     exit(1);
 
 #ifdef _DEBUG_MEMALLOC
@@ -700,7 +700,7 @@ void *TEST6(void *arg)
   DisplayMemoryMap(stdout);
 #endif
 
-  while (total < NB_PAGES * MEM_SIZE)
+  while(total < NB_PAGES * MEM_SIZE)
     {
 
       size_t len;
@@ -710,7 +710,7 @@ void *TEST6(void *arg)
 
       ptr = BuddyMalloc(len);
 
-      if (!ptr)
+      if(!ptr)
         {
           printf("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu :%d *****\n", th,
                  (unsigned long long)len, BuddyErrno);
@@ -759,14 +759,14 @@ void *TEST7(void *arg)
   InitDebug(NIV_DEBUG);
 #endif
 
-  for (i = 0; i < NB_ITEM7; i++)
+  for(i = 0; i < NB_ITEM7; i++)
     table_alloc[i] = NULL;
 
   print_mallinfo();
 
   printf("%d:BuddyInit(%llu)=%d\n", th, MEM_SIZE, rc = BuddyInit(&parameter_realloc));
 
-  if (rc)
+  if(rc)
     exit(1);
 
 #ifdef _DEBUG_MEMALLOC
@@ -777,7 +777,7 @@ void *TEST7(void *arg)
   DisplayMemoryMap(stdout);
 #endif
 
-  for (i = 0; i < NB_LOOP7; i++)
+  for(i = 0; i < NB_LOOP7; i++)
     {
 
       size_t len;
@@ -787,7 +787,7 @@ void *TEST7(void *arg)
 
       index = (unsigned long)my_rand() % NB_ITEM7;
 
-      if (table_alloc[index] == NULL)
+      if(table_alloc[index] == NULL)
         {
           /* the slot is empty, alloc some memory */
 
@@ -799,7 +799,7 @@ void *TEST7(void *arg)
 
           ptr = BuddyMalloc(len);
 
-          if (!ptr)
+          if(!ptr)
             {
               printf("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu :%d *****\n", th,
                      (unsigned long long)len, BuddyErrno);
@@ -845,9 +845,9 @@ void *TEST7(void *arg)
   print_mallinfo();
 
   /* Free everything */
-  for (index = 0; index < NB_ITEM7; index++)
+  for(index = 0; index < NB_ITEM7; index++)
     {
-      if (table_alloc[index])
+      if(table_alloc[index])
         BuddyFree(table_alloc[index]);
     }
 
@@ -894,13 +894,13 @@ void *TEST8(void *arg)
   InitDebug(NIV_DEBUG);
 #endif
 
-  for (i = 0; i < NB_ITEM8; i++)
+  for(i = 0; i < NB_ITEM8; i++)
     table_alloc[i] = NULL;
 
   printf("%d:BuddyInit(%llu)=%d\n", th, MEM_SIZE_SMALL, rc =
          BuddyInit(&parameter_realloc_small));
 
-  if (rc)
+  if(rc)
     exit(1);
 
 #ifdef _DEBUG_MEMALLOC
@@ -913,7 +913,7 @@ void *TEST8(void *arg)
 
   printf("ThreadId;TotalSize;UsedSize;NbPages;UsedPages\n");
 
-  for (i = 0; i < NB_LOOP8; i++)
+  for(i = 0; i < NB_LOOP8; i++)
     {
 
       size_t len;
@@ -923,7 +923,7 @@ void *TEST8(void *arg)
 
       index = (unsigned long)my_rand() % NB_ITEM8;
 
-      if (table_alloc[index] == NULL)
+      if(table_alloc[index] == NULL)
         {
           /* the slot is empty, alloc some memory */
 
@@ -935,7 +935,7 @@ void *TEST8(void *arg)
 
           ptr = BuddyMalloc(len);
 
-          if (!ptr)
+          if(!ptr)
             {
               printf("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu :%d *****\n", th,
                      (unsigned long long)len, BuddyErrno);
@@ -975,7 +975,7 @@ void *TEST8(void *arg)
              stats.NbStdPages, stats.NbStdUsed);
 #else
 
-      if ((stats.NbStdPages != last_pages) || (stats.NbStdUsed != last_used))
+      if((stats.NbStdPages != last_pages) || (stats.NbStdUsed != last_used))
         {
           printf("%d;%u;%u;\n", th, stats.NbStdPages, stats.NbStdUsed);
           last_pages = stats.NbStdPages;
@@ -1007,16 +1007,16 @@ void *TEST9(void *arg)
 
   printf("%d:BuddyInit(%llu)=%d\n", th, MEM_SIZE, rc = BuddyInit(&parameter));
 
-  if (rc)
+  if(rc)
     exit(1);
 
-  for (i = 0; i < NB_STR; i++)
+  for(i = 0; i < NB_STR; i++)
     {
       int j;
       int len;
 
       len = (unsigned long)my_rand() % 100;
-      if (len == 0)
+      if(len == 0)
         len = 1;
 
       snprintf(labels[i], 64, "%d-%d-%d", th, i, len);
@@ -1025,7 +1025,7 @@ void *TEST9(void *arg)
 
       strings[i].str = BuddyMalloc(len);
 
-      if (!strings[i].str)
+      if(!strings[i].str)
         {
           printf("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %d : %d *****\n", th, len,
                  BuddyErrno);
@@ -1050,7 +1050,7 @@ void *TEST9(void *arg)
          BuddyCountDebugLabel(labels[0]));
 
   /* get labels for each string */
-  for (i = 0; i < NB_STR; i++)
+  for(i = 0; i < NB_STR; i++)
     {
       printf("%d: Label[%d]= %s = %s\n", th, i, labels[i],
              BuddyGetDebugLabel(strings[i].str));
@@ -1086,7 +1086,7 @@ void *TESTA(void *arg)
 
   printf("%d:BuddyInit(%llu)=%d\n", th, MEM_SIZE, rc = BuddyInit(&parameter_realloc));
 
-  for (nloop = 0; nloop < NB_LOOPA; nloop++)
+  for(nloop = 0; nloop < NB_LOOPA; nloop++)
     {
 
       /* find a free place and allocates some memory */
@@ -1097,7 +1097,7 @@ void *TESTA(void *arg)
           P(testA_mutex);
 
           /* exits loop if the slot is empty */
-          if (tab_alloc_testA[slot] == NULL)
+          if(tab_alloc_testA[slot] == NULL)
             break;
 
           /* else, sleep for a while */
@@ -1106,10 +1106,10 @@ void *TESTA(void *arg)
           slot = (slot + 1) % NB_ITEMA;
 
         }
-      while (1);
+      while(1);
 
       len = my_rand() % total;
-      if (len == 0)
+      if(len == 0)
         len = 1;
 
       tab_alloc_testA[slot] = BuddyMalloc(len);
@@ -1131,7 +1131,7 @@ void *TESTA(void *arg)
           P(testA_mutex);
 
           /* exits loop if the slot is empty */
-          if (tab_alloc_testA[slot] != NULL)
+          if(tab_alloc_testA[slot] != NULL)
             break;
 
           /* else, sleep for a while */
@@ -1141,7 +1141,7 @@ void *TESTA(void *arg)
           slot = (slot + 1) % NB_ITEMA;
 
         }
-      while (1);
+      while(1);
 
       printf("Thread %d frees slot %u = %p\n", th, slot, tab_alloc_testA[slot]);
 
@@ -1272,14 +1272,14 @@ int main(int argc, char **argv)
   SetNameFileLog("/dev/tty");
   SetNamePgm("test_buddy");
 
-  for (th_index = 0; th_index < NB_THREADS; th_index++)
+  for(th_index = 0; th_index < NB_THREADS; th_index++)
     {
       pthread_attr_init(&th_attr[th_index]);
 /*    pthread_attr_setscope(&th_attr[th_index],PTHREAD_SCOPE_SYSTEM);*/
       pthread_attr_setdetachstate(&th_attr[th_index], PTHREAD_CREATE_JOINABLE);
     }
 
-  if (argc <= 1)
+  if(argc <= 1)
     {
       printf("%s\n", usage);
       exit(1);
@@ -1287,74 +1287,74 @@ int main(int argc, char **argv)
 
   srand(time(NULL) + getpid());
 
-  if (!strcmp(argv[1], "1"))
+  if(!strcmp(argv[1], "1"))
     TEST1(0);
 
-  else if (!strcmp(argv[1], "2"))
+  else if(!strcmp(argv[1], "2"))
     TEST2(0);
 
-  else if (!strcmp(argv[1], "3"))
+  else if(!strcmp(argv[1], "3"))
     TEST3(0);
 
-  else if (!strcmp(argv[1], "4"))
+  else if(!strcmp(argv[1], "4"))
     TEST4(0);
 
-  else if (!strcmp(argv[1], "5"))
+  else if(!strcmp(argv[1], "5"))
     TEST5(0);
 
-  else if (!strcmp(argv[1], "6"))
+  else if(!strcmp(argv[1], "6"))
     TEST6(0);
 
-  else if (!strcmp(argv[1], "7"))
+  else if(!strcmp(argv[1], "7"))
     TEST7(0);
 
-  else if (!strcmp(argv[1], "8"))
+  else if(!strcmp(argv[1], "8"))
     TEST8(0);
 
-  else if (!strcmp(argv[1], "9"))
+  else if(!strcmp(argv[1], "9"))
     TEST9(0);
 
-  else if (!strcmp(argv[1], "B"))
+  else if(!strcmp(argv[1], "B"))
     TESTB(0);
 
-  else if (!strcmp(argv[1], "1mt"))
+  else if(!strcmp(argv[1], "1mt"))
     LAUNCH_THREADS(TEST1, NB_THREADS);
 
-  else if (!strcmp(argv[1], "2mt"))
+  else if(!strcmp(argv[1], "2mt"))
     LAUNCH_THREADS(TEST2, NB_THREADS);
 
-  else if (!strcmp(argv[1], "3mt"))
+  else if(!strcmp(argv[1], "3mt"))
     LAUNCH_THREADS(TEST3, NB_THREADS);
 
-  else if (!strcmp(argv[1], "4mt"))
+  else if(!strcmp(argv[1], "4mt"))
     LAUNCH_THREADS(TEST4, NB_THREADS);
 
-  else if (!strcmp(argv[1], "5mt"))
+  else if(!strcmp(argv[1], "5mt"))
     LAUNCH_THREADS(TEST5, NB_THREADS);
 
-  else if (!strcmp(argv[1], "6mt"))
+  else if(!strcmp(argv[1], "6mt"))
     LAUNCH_THREADS(TEST6, NB_THREADS);
 
-  else if (!strcmp(argv[1], "7mt"))
+  else if(!strcmp(argv[1], "7mt"))
     LAUNCH_THREADS(TEST7, NB_THREADS);
 
-  else if (!strcmp(argv[1], "8mt"))
+  else if(!strcmp(argv[1], "8mt"))
     LAUNCH_THREADS(TEST8, NB_THREADS);
 
-  else if (!strcmp(argv[1], "9mt"))
+  else if(!strcmp(argv[1], "9mt"))
     LAUNCH_THREADS(TEST9, NB_THREADS);
 
-  else if (!strcmp(argv[1], "A"))
+  else if(!strcmp(argv[1], "A"))
     {
       int i;
       /* initialization of the test */
-      for (i = 0; i < NB_ITEMA; i++)
+      for(i = 0; i < NB_ITEMA; i++)
         tab_alloc_testA[i] = NULL;
 
       LAUNCH_THREADS(TESTA, NB_THREADS);
     }
 
-  else if (!strcmp(argv[1], "Bmt"))
+  else if(!strcmp(argv[1], "Bmt"))
     LAUNCH_THREADS(TESTB, NB_THREADS);
 
   else

@@ -114,8 +114,8 @@ static void cache_inode_lock_print(cache_entry_t * pentry)
       ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_print !!!!!!!!!!!!!!!!!!!!!!!!!\n");
   return;
 #ifdef BUGAZOMEU
-  if (pentry->internal_md.type == REGULAR_FILE)
-    if (piter_state->state_type == CACHE_INODE_STATE_SHARE)
+  if(pentry->internal_md.type == REGULAR_FILE)
+    if(piter_state->state_type == CACHE_INODE_STATE_SHARE)
       printf
           ("       piter_lock=%p   next=%p prev=%p         offset=%llu      length=%llu\n",
            piter_state, piter_state->next, piter_state->prev,
@@ -145,25 +145,25 @@ cache_inode_status_t cache_inode_lock_check_conflicting_range(cache_entry_t * pe
                                                               cache_inode_status_t *
                                                               pstatus)
 {
-  if (pstatus == NULL)
+  if(pstatus == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
   /* pentry should be there */
-  if (pentry == NULL)
+  if(pentry == NULL)
     {
       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
       return *pstatus;
     }
 
   /* pentry should be a file */
-  if (pentry->internal_md.type != REGULAR_FILE)
+  if(pentry->internal_md.type != REGULAR_FILE)
     {
       *pstatus = CACHE_INODE_BAD_TYPE;
       return *pstatus;
     }
 
   /* CACHE_INODE_LOCK_OFFSET_EOF should have been handled sooner, use "absolute" length */
-  if (length == CACHE_INODE_LOCK_OFFSET_EOF)
+  if(length == CACHE_INODE_LOCK_OFFSET_EOF)
     {
       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
       return *pstatus;
@@ -175,10 +175,10 @@ cache_inode_status_t cache_inode_lock_check_conflicting_range(cache_entry_t * pe
   return *pstatus;
 
 #ifdef BUGAZOMEU
-  for (piter_state = pentry->object.file.state_v4; piter_state != NULL;
-       piter_state = piter_state->next)
+  for(piter_state = pentry->object.file.state_v4; piter_state != NULL;
+      piter_state = piter_state->next)
     {
-      if (piter_state->state_type != CACHE_INODE_STATE_LOCK)
+      if(piter_state->state_type != CACHE_INODE_STATE_LOCK)
         continue;
 
       printf
@@ -187,20 +187,20 @@ cache_inode_status_t cache_inode_lock_check_conflicting_range(cache_entry_t * pe
            lock_type, piter_state->data.lock.lock_type);
 
       /* Check for a "conflict on the left" */
-      if ((offset <= piter_state->data.lock.offset) &&
-          ((offset + length) >= piter_state->data.lock.offset))
+      if((offset <= piter_state->data.lock.offset) &&
+         ((offset + length) >= piter_state->data.lock.offset))
         found = TRUE;
 
       /* Check for a "conflict on the right" */
-      if ((offset >= piter_state->data.lock.offset) &&
-          (offset <= (piter_state->data.lock.offset + piter_state->data.lock.length)))
+      if((offset >= piter_state->data.lock.offset) &&
+         (offset <= (piter_state->data.lock.offset + piter_state->data.lock.length)))
         found = TRUE;
 
-      if (found)
+      if(found)
         {
           /* No conflict on read lock */
-          if ((piter_state->data.lock.lock_type == CACHE_INODE_WRITE_LT)
-              || (lock_type == CACHE_INODE_WRITE_LT))
+          if((piter_state->data.lock.lock_type == CACHE_INODE_WRITE_LT)
+             || (lock_type == CACHE_INODE_WRITE_LT))
             {
               *ppfilelock = piter_state;
               *pstatus = CACHE_INODE_LOCK_CONFLICT;
@@ -210,7 +210,7 @@ cache_inode_status_t cache_inode_lock_check_conflicting_range(cache_entry_t * pe
 
       /* Locks are supposed to be ordered by their range. Stop search is lock is "on the right" 
        * of the right extremity of the requested lock */
-      if ((offset + length) < piter_state->data.lock.offset)
+      if((offset + length) < piter_state->data.lock.offset)
         break;
     }
 
@@ -236,7 +236,7 @@ cache_inode_status_t cache_inode_lock_test(cache_entry_t * pentry,
   cache_inode_lock_check_conflicting_range(pentry, offset, length, lock_type, pstatus);
   V_r(&pentry->lock);
 
-  if (*pstatus == CACHE_INODE_SUCCESS)
+  if(*pstatus == CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOCKT] += 1;
   else
     pclient->stat.func_stats.nb_success[CACHE_INODE_LOCK_CREATE] += 1;
@@ -263,22 +263,22 @@ void cache_inode_lock_insert(cache_entry_t * pentry, cache_inode_state_t * pfile
   printf
       ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_insert !!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
-  if (pentry == NULL)
+  if(pentry == NULL)
     return;
 
-  if (pentry->internal_md.type != REGULAR_FILE)
+  if(pentry->internal_md.type != REGULAR_FILE)
     return;
 
 #ifdef BUGAZOMEU
-  for (piter_state = pentry->object.file.state_v4; piter_state != NULL;
-       piter_state_prev = piter_state, piter_state = piter_state->next)
+  for(piter_state = pentry->object.file.state_v4; piter_state != NULL;
+      piter_state_prev = piter_state, piter_state = piter_state->next)
     {
-      if (pfilelock->data.lock.offset > piter_state->data.lock.offset)
+      if(pfilelock->data.lock.offset > piter_state->data.lock.offset)
         break;
     }
 
   /* At this line, piter_lock is the position before the new lock should be inserted */
-  if (piter_state == NULL)
+  if(piter_state == NULL)
     {
       /* Lock is to be inserted at the end of list */
       pfilelock->next = NULL;
@@ -340,7 +340,7 @@ cache_inode_status_t cache_inode_lock_create(cache_entry_t * pentry,
                                              cache_inode_client_t * pclient,
                                              cache_inode_status_t * pstatus)
 {
-  if (pstatus == NULL)
+  if(pstatus == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
@@ -356,7 +356,7 @@ cache_inode_status_t cache_inode_lock_create(cache_entry_t * pentry,
   pclient->stat.func_stats.nb_call[CACHE_INODE_LOCK_CREATE] += 1;
 
   /* pentry should be there */
-  if (pentry == NULL)
+  if(pentry == NULL)
     {
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOCK_CREATE] += 1;
@@ -366,7 +366,7 @@ cache_inode_status_t cache_inode_lock_create(cache_entry_t * pentry,
     }
 
   /* pentry should be a file */
-  if (pentry->internal_md.type != REGULAR_FILE)
+  if(pentry->internal_md.type != REGULAR_FILE)
     {
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOCK_CREATE] += 1;
@@ -376,9 +376,9 @@ cache_inode_status_t cache_inode_lock_create(cache_entry_t * pentry,
     }
 
   /* Use absolute offset, manage CACHE_INODE_LOCK_OFFSET_EOF here */
-  if (length == CACHE_INODE_LOCK_OFFSET_EOF)
+  if(length == CACHE_INODE_LOCK_OFFSET_EOF)
     {
-      if (offset > pentry->object.file.attributes.filesize)
+      if(offset > pentry->object.file.attributes.filesize)
         {
           /* stat */
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOCK_CREATE] += 1;
@@ -398,12 +398,11 @@ cache_inode_status_t cache_inode_lock_create(cache_entry_t * pentry,
   P_w(&pentry->lock);
 
   /* Check if lock is conflicting with an existing one */
-  if (cache_inode_lock_check_conflicting_range(pentry,
-                                               offset,
-                                               abslength,
-                                               lock_type,
-                                               ppfilelock,
-                                               pstatus) != CACHE_INODE_SUCCESS)
+  if(cache_inode_lock_check_conflicting_range(pentry,
+                                              offset,
+                                              abslength,
+                                              lock_type,
+                                              ppfilelock, pstatus) != CACHE_INODE_SUCCESS)
     {
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOCK_CREATE] += 1;
@@ -418,7 +417,7 @@ cache_inode_status_t cache_inode_lock_create(cache_entry_t * pentry,
                pclient->pool_state_v4,
                pclient->nb_pre_state_v4, cache_inode_state_v4_t, next);
 
-  if (pfilelock == NULL)
+  if(pfilelock == NULL)
     {
       DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
                         "Can't allocate a new file lock from cache pool");

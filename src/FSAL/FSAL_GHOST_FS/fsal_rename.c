@@ -38,22 +38,22 @@ fsal_status_t FSAL_rename(fsal_handle_t * old_parentdir_handle, /* IN */
   /* sanity checks.
    * note : src/tgt_dir_attributes are optional.
    */
-  if (!old_parentdir_handle ||
-      !new_parentdir_handle || !p_old_name || !p_new_name || !p_context)
+  if(!old_parentdir_handle ||
+     !new_parentdir_handle || !p_old_name || !p_new_name || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_rename);
 
   rc = GHOSTFS_Rename((GHOSTFS_handle_t) * old_parentdir_handle,
                       (GHOSTFS_handle_t) * new_parentdir_handle,
                       p_old_name->name, p_new_name->name, &src_attr, &tgt_attr);
 
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_rename);
 
   /* set attributes if asked */
-  if (src_dir_attributes)
+  if(src_dir_attributes)
     ghost2fsal_attrs(src_dir_attributes, &src_attr);
 
-  if (tgt_dir_attributes)
+  if(tgt_dir_attributes)
     ghost2fsal_attrs(tgt_dir_attributes, &tgt_attr);
 
   /* GHOSTFS rename is done */

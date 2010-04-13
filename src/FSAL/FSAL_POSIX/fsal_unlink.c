@@ -57,7 +57,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
   fsal_posixdb_fileinfo_t info;
 
   /* sanity checks. */
-  if (!p_parent_directory_handle || !p_context || !p_object_name)
+  if(!p_parent_directory_handle || !p_context || !p_object_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_unlink);
 
   /* check credential */
@@ -67,11 +67,11 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
   status =
       fsal_internal_getPathFromHandle(p_context, p_parent_directory_handle, 1, &fsalpath,
                                       &buffstat_parent);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_unlink);
 
   status = fsal_internal_appendFSALNameToFSALPath(&fsalpath, p_object_name);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_unlink);
 
   /* 
@@ -82,10 +82,10 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
   rc = lstat(fsalpath.path, &buffstat);
   errsv = errno;
   ReleaseTokenFSCall();
-  if (rc)
+  if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_unlink);
 
-  if (FSAL_IS_ERROR(status = fsal_internal_posix2posixdb_fileinfo(&buffstat, &info)))
+  if(FSAL_IS_ERROR(status = fsal_internal_posix2posixdb_fileinfo(&buffstat, &info)))
     Return(status.major, status.minor, INDEX_FSAL_unlink);
 
   /**************************************************************
@@ -93,7 +93,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
    **************************************************************/
 
   statusdb = fsal_posixdb_lockHandleForUpdate(p_context->p_conn, &info);
-  if (FSAL_IS_ERROR(status = posixdb2fsal_error(statusdb)))
+  if(FSAL_IS_ERROR(status = posixdb2fsal_error(statusdb)))
     {
       fsal_posixdb_cancelHandleLock(p_context->p_conn);
       Return(status.major, status.minor, INDEX_FSAL_unlink);
@@ -102,18 +102,17 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
   /****************
    * CHECK ACCESS *
    ****************/
-  if ((buffstat_parent.st_mode & S_ISVTX)       /* Sticky bit on the directory => the user who wants to delete the file must own it or its parent dir */
-      && buffstat_parent.st_uid != p_context->credential.user
-      && buffstat.st_uid != p_context->credential.user && p_context->credential.user != 0)
+  if((buffstat_parent.st_mode & S_ISVTX)        /* Sticky bit on the directory => the user who wants to delete the file must own it or its parent dir */
+     && buffstat_parent.st_uid != p_context->credential.user
+     && buffstat.st_uid != p_context->credential.user && p_context->credential.user != 0)
     {
       fsal_posixdb_cancelHandleLock(p_context->p_conn);
       Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_unlink);
     }
 
-  if (FSAL_IS_ERROR
-      (status =
-       fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_parent,
-                                NULL)))
+  if(FSAL_IS_ERROR
+     (status =
+      fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_parent, NULL)))
     {
       fsal_posixdb_cancelHandleLock(p_context->p_conn);
       Return(status.major, status.minor, INDEX_FSAL_unlink);
@@ -127,7 +126,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
   rc = (S_ISDIR(buffstat.st_mode)) ? rmdir(fsalpath.path) : unlink(fsalpath.path);
   errsv = errno;
   ReleaseTokenFSCall();
-  if (rc)
+  if(rc)
     {
       fsal_posixdb_cancelHandleLock(p_context->p_conn);
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_unlink);
@@ -149,7 +148,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
       /* nothing to do */
       break;
     default:
-      if (FSAL_IS_ERROR(status = posixdb2fsal_error(statusdb)))
+      if(FSAL_IS_ERROR(status = posixdb2fsal_error(statusdb)))
         Return(status.major, status.minor, INDEX_FSAL_unlink);
     }
 
@@ -157,10 +156,10 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
    * FILL THE ATTRIBUTES *
    ***********************/
 
-  if (p_parent_directory_attributes)
+  if(p_parent_directory_attributes)
     {
       status = posix2fsal_attributes(&buffstat_parent, p_parent_directory_attributes);
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_parent_directory_attributes->asked_attributes);
           FSAL_SET_MASK(p_parent_directory_attributes->asked_attributes,

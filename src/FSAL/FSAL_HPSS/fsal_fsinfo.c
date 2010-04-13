@@ -50,7 +50,7 @@ fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,    /* IN */
 {
   /* sanity checks. */
   /* for HPSS, handle and credential are not used. */
-  if (!staticinfo)
+  if(!staticinfo)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_static_fsinfo);
 
   /* returning static info about the filesystem */
@@ -95,12 +95,12 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
   int rc;
 
   /* sanity checks. */
-  if (!filehandle || !dynamicinfo || !p_context)
+  if(!filehandle || !dynamicinfo || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_dynamic_fsinfo);
 
   /* retrieves the default cos (or the user defined cos for this fileset) */
 
-  if (p_context->export_context->default_cos != 0)
+  if(p_context->export_context->default_cos != 0)
     {
       cos_export = p_context->export_context->default_cos;
     }
@@ -120,7 +120,7 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
                                      NULL, attrBits, &fsattrs);
       ReleaseTokenFSCall();
 
-      if (rc)
+      if(rc)
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
 
       cos_export = fsattrs.ClassOfService;
@@ -131,11 +131,11 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
   rc = hpss_Statfs(p_context->export_context->default_cos, &hpss_statfs);
   ReleaseTokenFSCall();
 
-  if (rc)
+  if(rc)
     Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
 
   /* retrieves the default cos (or the user defined cos for this fileset) */
-  if (p_context->export_context->default_cos != 0)
+  if(p_context->export_context->default_cos != 0)
     {
       cos_export = p_context->export_context->default_cos;
     }
@@ -155,7 +155,7 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
                                      NULL, attrBits, &fsattrs);
       ReleaseTokenFSCall();
 
-      if (rc)
+      if(rc)
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
 
       cos_export = fsattrs.ClassOfService;
@@ -166,13 +166,13 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
   rc = hpss_Statfs(p_context->export_context->default_cos, &hpss_statfs);
   ReleaseTokenFSCall();
 
-  if (rc)
+  if(rc)
     Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
 
   /* then retrieve info about this cos */
 #ifdef BUGAZOMEU
   /* retrieves the default cos (or the user defined cos for this fileset) */
-  if (DefaultCosId != 0)
+  if(DefaultCosId != 0)
     {
       cos_export = DefaultCosId;
     }
@@ -191,7 +191,7 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
       rc = HPSSFSAL_GetRoot(&rootattr);
       ReleaseTokenFSCall();
 
-      if (rc)
+      if(rc)
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
 
       fshdl = rootattr.ObjectHandle;
@@ -205,13 +205,13 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
       rc = hpss_FilesetGetAttributes(NULL, NULL, &fshdl, NULL, attrBits, &fsattrs);
       ReleaseTokenFSCall();
 
-      if (rc)
+      if(rc)
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
 
       cos_export = fsattrs.ClassOfService;
 
       /* @todo : sometimes NULL ??? */
-      if (cos_export == 0)
+      if(cos_export == 0)
         cos_export = 1;
 
     }
@@ -222,12 +222,12 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
   rc = hpss_Statfs(cos_export, &hpss_statfs);
   ReleaseTokenFSCall();
 
-  if (rc)
+  if(rc)
     Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
 
   /* @todo :  sometimes hpss_statfs.f_blocks < hpss_statfs.f_bfree !!! */
 
-  if (dynamicinfo->total_bytes > dynamicinfo->free_bytes)
+  if(dynamicinfo->total_bytes > dynamicinfo->free_bytes)
     {
       dynamicinfo->total_bytes = hpss_statfs.f_blocks * hpss_statfs.f_bsize;
       dynamicinfo->free_bytes = hpss_statfs.f_bfree * hpss_statfs.f_bsize;

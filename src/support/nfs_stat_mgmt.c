@@ -160,7 +160,7 @@ void nfs_stat_update(nfs_stat_type_t type,
 {
   nfs_request_stat_item_t *pitem = NULL;
 
-  if (preq->rq_prog == nfs_param.core_param.nfs_program)
+  if(preq->rq_prog == nfs_param.core_param.nfs_program)
     {
       switch (preq->rq_vers)
         {
@@ -177,6 +177,7 @@ void nfs_stat_update(nfs_stat_type_t type,
         case NFS_V4:
           pitem = &pstat_req->stat_req_nfs4[preq->rq_proc];
           pstat_req->nb_nfs4_req += 1;
+
           break;
 
         default:
@@ -188,7 +189,7 @@ void nfs_stat_update(nfs_stat_type_t type,
           break;
         }
     }
-  else if (preq->rq_prog == nfs_param.core_param.mnt_program)
+  else if(preq->rq_prog == nfs_param.core_param.mnt_program)
     {
       switch (preq->rq_vers)
         {
@@ -211,7 +212,7 @@ void nfs_stat_update(nfs_stat_type_t type,
           break;
         }
     }
-  else if (preq->rq_prog == nfs_param.core_param.nlm_program)
+  else if(preq->rq_prog == nfs_param.core_param.nlm_program)
     {
       switch (preq->rq_vers)
         {

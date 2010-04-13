@@ -56,7 +56,7 @@ fsal_posixdb_status_t fsal_posixdb_cancelHandleLock(fsal_posixdb_conn * p_conn /
   PGresult *p_res;
   PGTransactionStatusType transStatus = PQtransactionStatus(p_conn);
 
-  if (transStatus == PQTRANS_ACTIVE || transStatus == PQTRANS_INTRANS)
+  if(transStatus == PQTRANS_ACTIVE || transStatus == PQTRANS_INTRANS)
     {
       RollbackTransaction(p_conn, p_res);
     }

@@ -125,7 +125,7 @@ int nfs4_Set_Fh_Referral(nfs_fh4 * pfh)
 {
   file_handle_v4_t *pfhandle4;
 
-  if (pfh == NULL)
+  if(pfh == NULL)
     return 0;
 
   pfhandle4 = (file_handle_v4_t *) (pfh->nfs_fh4_val);
@@ -153,13 +153,13 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
 
   char *ptr = NULL;
 
-  if (!str || !buff)
+  if(!str || !buff)
     return 0;
 
   strncpy(str, input_str, MAXPATHLEN);
 
   /* Find the ":" in the string */
-  for (ptr = str; *ptr != ':'; ptr++) ;
+  for(ptr = str; *ptr != ':'; ptr++) ;
   *ptr = '\0';
   ptr += 1;
 
@@ -167,40 +167,40 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
   strncpy(remote_part, ptr, MAXPATHLEN);
 
   /* Each part should not start with a leading slash */
-  if (local_part[0] == '/')
+  if(local_part[0] == '/')
     strncpy(local_part, str + 1, MAXPATHLEN);
 
-  if (remote_part[0] == '/')
+  if(remote_part[0] == '/')
     strncpy(remote_part, ptr + 1, MAXPATHLEN);
 
   /* Find the "@" in the remote_part */
-  for (ptr = remote_part; *ptr != '@'; ptr++) ;
+  for(ptr = remote_part; *ptr != '@'; ptr++) ;
   *ptr = '\0';
   ptr += 1;
 
   strncpy(server_part, ptr, MAXPATHLEN);
 
   local_comp[0] = local_part;
-  for (ptr = local_part; *ptr != '\0'; ptr++)
-    if (*ptr == '/')
+  for(ptr = local_part; *ptr != '\0'; ptr++)
+    if(*ptr == '/')
       {
         local_comp[nb_comp_local] = ptr + 1;
         nb_comp_local += 1;
       }
-  for (tmp_int = 0; tmp_int < nb_comp_local; tmp_int++)
+  for(tmp_int = 0; tmp_int < nb_comp_local; tmp_int++)
     {
       ptr = local_comp[tmp_int] - 1;
       *ptr = '\0';
     }
 
   remote_comp[0] = remote_part;
-  for (ptr = remote_part; *ptr != '\0'; ptr++)
-    if (*ptr == '/')
+  for(ptr = remote_part; *ptr != '\0'; ptr++)
+    if(*ptr == '/')
       {
         remote_comp[nb_comp_remote] = ptr + 1;
         nb_comp_remote += 1;
       }
-  for (tmp_int = 0; tmp_int < nb_comp_remote; tmp_int++)
+  for(tmp_int = 0; tmp_int < nb_comp_remote; tmp_int++)
     {
       ptr = remote_comp[tmp_int] - 1;
       *ptr = '\0';
@@ -213,11 +213,11 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
   printf("--> %s\n", input_str);
 
   printf("   %u comp local\n", nb_comp_local);
-  for (tmp_int = 0; tmp_int < nb_comp_local; tmp_int++)
+  for(tmp_int = 0; tmp_int < nb_comp_local; tmp_int++)
     printf("     #%s#\n", local_comp[tmp_int]);
 
   printf("   %u comp remote\n", nb_comp_remote);
-  for (tmp_int = 0; tmp_int < nb_comp_remote; tmp_int++)
+  for(tmp_int = 0; tmp_int < nb_comp_remote; tmp_int++)
     printf("     #%s#\n", remote_comp[tmp_int]);
 
   printf("   server = #%s#\n", server_part);
@@ -229,7 +229,7 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
   lastoff += sizeof(u_int);
 
   /* 2- each component in local path */
-  for (i = 0; i < nb_comp_local; i++)
+  for(i = 0; i < nb_comp_local; i++)
     {
       /* The length for the string */
       tmp_int = htonl(strlen(local_comp[i]));
@@ -241,7 +241,7 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
       lastoff += strlen(local_comp[i]);
 
       /* The XDR padding  : strings must be aligned to 32bits fields */
-      if ((strlen(local_comp[i]) % 4) == 0)
+      if((strlen(local_comp[i]) % 4) == 0)
         delta_xdr = 0;
       else
         {
@@ -271,7 +271,7 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
   lastoff += strlen(server_part);
 
   /* 7- XDR padding for server's string */
-  if ((strlen(server_part) % 4) == 0)
+  if((strlen(server_part) % 4) == 0)
     delta_xdr = 0;
   else
     {
@@ -286,7 +286,7 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
   lastoff += sizeof(u_int);
 
   /* 9- each component in local path */
-  for (i = 0; i < nb_comp_remote; i++)
+  for(i = 0; i < nb_comp_remote; i++)
     {
       /* The length for the string */
       tmp_int = htonl(strlen(remote_comp[i]));
@@ -298,7 +298,7 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
       lastoff += strlen(remote_comp[i]);
 
       /* The XDR padding  : strings must be aligned to 32bits fields */
-      if ((strlen(remote_comp[i]) % 4) == 0)
+      if((strlen(remote_comp[i]) % 4) == 0)
         delta_xdr = 0;
       else
         {

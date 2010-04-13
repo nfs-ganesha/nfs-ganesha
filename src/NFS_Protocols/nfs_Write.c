@@ -177,7 +177,7 @@ int nfs_Write(nfs_arg_t * parg,
 
   datapol.UseMaxCacheSize = FALSE;
 
-  if (preq->rq_vers == NFS_V3)
+  if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */
       pres->res_write3.WRITE3res_u.resfail.file_wcc.before.attributes_follow = FALSE;
@@ -186,19 +186,19 @@ int nfs_Write(nfs_arg_t * parg,
     }
 
   /* Convert file handle into a cache entry */
-  if ((pentry = nfs_FhandleToCache(preq->rq_vers,
-                                   &(parg->arg_write2.file),
-                                   &(parg->arg_write3.file),
-                                   NULL,
-                                   &(pres->res_attr2.status),
-                                   &(pres->res_write3.status),
-                                   NULL, &pre_attr, pcontext, pclient, ht, &rc)) == NULL)
+  if((pentry = nfs_FhandleToCache(preq->rq_vers,
+                                  &(parg->arg_write2.file),
+                                  &(parg->arg_write3.file),
+                                  NULL,
+                                  &(pres->res_attr2.status),
+                                  &(pres->res_write3.status),
+                                  NULL, &pre_attr, pcontext, pclient, ht, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       return rc;
     }
 
-  if ((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_write3.file))))
+  if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_write3.file))))
     return nfs3_Write_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
 
   /* get directory attributes before action (for V3 reply) */
@@ -208,7 +208,7 @@ int nfs_Write(nfs_arg_t * parg,
   filetype = cache_inode_fsal_type_convert(pre_attr.type);
 
   /* Sanity check: write only a regular file */
-  if (filetype != REGULAR_FILE)
+  if(filetype != REGULAR_FILE)
     {
       switch (preq->rq_vers)
         {
@@ -222,7 +222,7 @@ int nfs_Write(nfs_arg_t * parg,
           break;
 
         case NFS_V3:
-          if (filetype == DIR_BEGINNING || filetype == DIR_CONTINUE)
+          if(filetype == DIR_BEGINNING || filetype == DIR_CONTINUE)
             pres->res_write3.status = NFS3ERR_ISDIR;
           else
             pres->res_write3.status = NFS3ERR_INVAL;
@@ -234,7 +234,7 @@ int nfs_Write(nfs_arg_t * parg,
   /* For MDONLY export, reject write operation */
   /* Request of type MDONLY_RO were rejected at the nfs_rpc_dispatcher level */
   /* This is done by replying EDQUOT (this error is known for not disturbing the client's requests cache */
-  if (pexport->access_type == ACCESSTYPE_MDONLY)
+  if(pexport->access_type == ACCESSTYPE_MDONLY)
     {
       switch (preq->rq_vers)
         {
@@ -265,7 +265,7 @@ int nfs_Write(nfs_arg_t * parg,
   switch (preq->rq_vers)
     {
     case NFS_V2:
-      if (ppre_attr && ppre_attr->filesize > NFS2_MAX_FILESIZE)
+      if(ppre_attr && ppre_attr->filesize > NFS2_MAX_FILESIZE)
         {
           /*
            *  V2 clients don't understand filesizes >
@@ -287,15 +287,15 @@ int nfs_Write(nfs_arg_t * parg,
       offset = parg->arg_write3.offset;
       size = parg->arg_write3.count;
 
-      if (size > parg->arg_write3.data.data_len)
+      if(size > parg->arg_write3.data.data_len)
         {
           /* should never happen */
           pres->res_write3.status = NFS3ERR_INVAL;
           return NFS_REQ_OK;
         }
 
-      if ((nfs_param.core_param.use_nfs_commit == TRUE) &&
-          (parg->arg_write3.stable == UNSTABLE))
+      if((nfs_param.core_param.use_nfs_commit == TRUE) &&
+         (parg->arg_write3.stable == UNSTABLE))
         {
           stable_flag = FALSE;
         }
@@ -311,9 +311,9 @@ int nfs_Write(nfs_arg_t * parg,
       /*
        * do not exceed maxium READ/WRITE offset if set
        */
-      if ((pexport->options & EXPORT_OPTION_MAXOFFSETWRITE) ==
-          EXPORT_OPTION_MAXOFFSETWRITE)
-        if ((fsal_off_t) (size + offset) > pexport->MaxOffsetWrite)
+      if((pexport->options & EXPORT_OPTION_MAXOFFSETWRITE) ==
+         EXPORT_OPTION_MAXOFFSETWRITE)
+        if((fsal_off_t) (size + offset) > pexport->MaxOffsetWrite)
           {
 
             DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
@@ -350,8 +350,8 @@ int nfs_Write(nfs_arg_t * parg,
        * We should take care not to exceed FSINFO wtmax
        * field for the size 
        */
-      if (((pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE) &&
-          size > pexport->MaxWrite)
+      if(((pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE) &&
+         size > pexport->MaxWrite)
         {
           /*
            * The client asked for too much data, we
@@ -364,7 +364,7 @@ int nfs_Write(nfs_arg_t * parg,
       break;
     }
 
-  if (size == 0)
+  if(size == 0)
     {
       cache_status = CACHE_INODE_SUCCESS;
       written_size = 0;
@@ -377,13 +377,13 @@ int nfs_Write(nfs_arg_t * parg,
       datapol.UseMaxCacheSize = pexport->options & EXPORT_OPTION_MAXCACHESIZE;
       datapol.MaxCacheSize = pexport->MaxCacheSize;
 
-      if ((pexport->options & EXPORT_OPTION_USE_DATACACHE) &&
-          (cache_content_cache_behaviour(pentry,
-                                         &datapol,
-                                         (cache_content_client_t *)
-                                         pclient->pcontent_client,
-                                         &content_status) == CACHE_CONTENT_FULLY_CACHED)
-          && (pentry->object.file.pentry_content == NULL))
+      if((pexport->options & EXPORT_OPTION_USE_DATACACHE) &&
+         (cache_content_cache_behaviour(pentry,
+                                        &datapol,
+                                        (cache_content_client_t *)
+                                        pclient->pcontent_client,
+                                        &content_status) == CACHE_CONTENT_FULLY_CACHED)
+         && (pentry->object.file.pentry_content == NULL))
         {
           /* Entry is not in datacache, but should be in, cache it .
            * Several threads may call this function at the first time and a race condition can occur here
@@ -393,11 +393,11 @@ int nfs_Write(nfs_arg_t * parg,
 
           /* Status is set in last argument */
           cache_inode_add_data_cache(pentry, ht, pclient, pcontext, &cache_status);
-          if ((cache_status != CACHE_INODE_SUCCESS) &&
-              (cache_status != CACHE_INODE_CACHE_CONTENT_EXISTS))
+          if((cache_status != CACHE_INODE_SUCCESS) &&
+             (cache_status != CACHE_INODE_CACHE_CONTENT_EXISTS))
             {
               /* If we are here, there was an error */
-              if (nfs_RetryableError(cache_status))
+              if(nfs_RetryableError(cache_status))
                 {
                   return NFS_REQ_DROP;
                 }
@@ -422,17 +422,17 @@ int nfs_Write(nfs_arg_t * parg,
       seek_descriptor.whence = FSAL_SEEK_SET;
       seek_descriptor.offset = offset;
 
-      if (cache_inode_rdwr(pentry,
-                           CACHE_CONTENT_WRITE,
-                           &seek_descriptor,
-                           size,
-                           &written_size,
-                           &attr,
-                           data,
-                           &eof_met,
-                           ht,
-                           pclient,
-                           pcontext, stable_flag, &cache_status) == CACHE_INODE_SUCCESS)
+      if(cache_inode_rdwr(pentry,
+                          CACHE_CONTENT_WRITE,
+                          &seek_descriptor,
+                          size,
+                          &written_size,
+                          &attr,
+                          data,
+                          &eof_met,
+                          ht,
+                          pclient,
+                          pcontext, stable_flag, &cache_status) == CACHE_INODE_SUCCESS)
         {
 
           switch (preq->rq_vers)
@@ -457,7 +457,7 @@ int nfs_Write(nfs_arg_t * parg,
               pres->res_write3.WRITE3res_u.resok.count = written_size;
 
               /* How do we commit data ? */
-              if (stable_flag == TRUE)
+              if(stable_flag == TRUE)
                 {
                   pres->res_write3.WRITE3res_u.resok.committed = FILE_SYNC;
                 }
@@ -483,7 +483,7 @@ int nfs_Write(nfs_arg_t * parg,
 #endif
 
   /* If we are here, there was an error */
-  if (nfs_RetryableError(cache_status))
+  if(nfs_RetryableError(cache_status))
     {
       return NFS_REQ_DROP;
     }

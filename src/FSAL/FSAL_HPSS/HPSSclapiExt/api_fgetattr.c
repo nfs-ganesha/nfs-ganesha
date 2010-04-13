@@ -106,21 +106,21 @@ int HPSSFSAL_GetRawAttrHandle(ns_ObjHandle_t * ObjHandle,       /* IN - parent o
    */
 
   error = API_ClientAPIInit(&threadcontext);
-  if (error != 0)
+  if(error != 0)
     API_RETURN(error);
 
   /*
    *  Check that the object handle is not NULL.
    */
 
-  if (ObjHandle == (ns_ObjHandle_t *) NULL)
+  if(ObjHandle == (ns_ObjHandle_t *) NULL)
     API_RETURN(-EINVAL);
 
   /*
    *  Check that the pathname the string is not the NULL string.
    */
 
-  if (Path != NULL && *Path == '\0')
+  if(Path != NULL && *Path == '\0')
     API_RETURN(-ENOENT);
 
   /*
@@ -128,7 +128,7 @@ int HPSSFSAL_GetRawAttrHandle(ns_ObjHandle_t * ObjHandle,       /* IN - parent o
    *  current thread context.
    */
 
-  if (Ucred == (TYPE_CRED_HPSS *) NULL)
+  if(Ucred == (TYPE_CRED_HPSS *) NULL)
     ucred_ptr = &threadcontext->UserCred;
   else
     ucred_ptr = Ucred;
@@ -158,12 +158,12 @@ int HPSSFSAL_GetRawAttrHandle(ns_ObjHandle_t * ObjHandle,       /* IN - parent o
    * WE DON'T WANT TO Convert the HPSS attributes to HPSS VFS attributes !!!
    */
 
-  if (AttrsOut != (hpss_Attrs_t *) NULL)
+  if(AttrsOut != (hpss_Attrs_t *) NULL)
     {
       *AttrsOut = file_attrs_out.Attrs;
     }
 
-  if (HandleOut != (ns_ObjHandle_t *) NULL)
+  if(HandleOut != (ns_ObjHandle_t *) NULL)
     {
       *HandleOut = file_attrs_out.ObjectHandle;
     }
@@ -250,37 +250,37 @@ static int HPSSFSAL_Common_FileGetAttributes(apithrdstate_t * ThreadContext,    
   xattr_options = 0;
   xattr_ptr = NULL;
 
-  if (XAttrOut != NULL)
+  if(XAttrOut != NULL)
     {
       memset(XAttrOut, 0, sizeof(hpss_xfileattr_t));
       xattr_options_cnt = 0;
       xattr_ptr = XAttrOut->SCAttrib;
-      if ((Flags & API_GET_STATS_FOR_LEVEL) != 0)
+      if((Flags & API_GET_STATS_FOR_LEVEL) != 0)
         {
           xattr_options_cnt++;
           xattr_options |= CORE_GETATTRS_STATS_FOR_LEVEL;
         }
-      if ((Flags & API_GET_STATS_FOR_1STLEVEL) != 0)
+      if((Flags & API_GET_STATS_FOR_1STLEVEL) != 0)
         {
           xattr_options_cnt++;
           xattr_options |= CORE_GETATTRS_STATS_1ST_LEVEL;
         }
-      if ((Flags & API_GET_STATS_OPTIMIZE) != 0)
+      if((Flags & API_GET_STATS_OPTIMIZE) != 0)
         {
           xattr_options_cnt++;
           xattr_options |= CORE_GETATTRS_STATS_OPTIMIZE;
         }
-      if ((Flags & API_GET_STATS_FOR_ALL_LEVELS) != 0)
+      if((Flags & API_GET_STATS_FOR_ALL_LEVELS) != 0)
         {
           xattr_options_cnt++;
           xattr_options |= CORE_GETATTRS_STATS_ALL_LEVELS;
         }
-      if (xattr_options_cnt > 1)
+      if(xattr_options_cnt > 1)
         {
           return (-EINVAL);
         }
 #if ( HPSS_LEVEL >= 622 )
-      if ((Flags & API_GET_XATTRS_NO_BLOCK) != 0)
+      if((Flags & API_GET_XATTRS_NO_BLOCK) != 0)
         xattr_options |= CORE_GETATTRS_NO_BLOCK;
 #endif
     }
@@ -314,12 +314,12 @@ static int HPSSFSAL_Common_FileGetAttributes(apithrdstate_t * ThreadContext,    
 #endif
                            NULL, xattr_ptr);
 
-  if (error != 0)
+  if(error != 0)
     {
       API_DEBUG_FPRINTF(DebugFile, &RequestID,
                         "%s: Could not get attributes, error=%d\n", function_name, error);
     }
-  else if (XAttrOut != NULL)
+  else if(XAttrOut != NULL)
     {
       XAttrOut->ObjectHandle = AttrOut->ObjectHandle;
       XAttrOut->Attrs = AttrOut->Attrs;
@@ -330,7 +330,7 @@ static int HPSSFSAL_Common_FileGetAttributes(apithrdstate_t * ThreadContext,    
    *  the authorization ticket that we received
    */
 
-  if (error == 0 && AuthzTicket != (TYPE_TOKEN_HPSS *) NULL)
+  if(error == 0 && AuthzTicket != (TYPE_TOKEN_HPSS *) NULL)
     {
       *AuthzTicket = ta;
     }
@@ -399,14 +399,14 @@ int HPSSFSAL_FileGetXAttributesHandle(ns_ObjHandle_t * ObjHandle,       /* IN - 
    */
 
   error = API_ClientAPIInit(&threadcontext);
-  if (error != 0)
+  if(error != 0)
     API_RETURN(error);
 
   /*
    *  Check that the return attribute pointer is not NULL.
    */
 
-  if (AttrOut == (hpss_xfileattr_t *) NULL)
+  if(AttrOut == (hpss_xfileattr_t *) NULL)
     API_RETURN(-EFAULT);
 
   /*
@@ -441,7 +441,7 @@ int HPSSFSAL_FileGetXAttributesHandle(ns_ObjHandle_t * ObjHandle,       /* IN - 
                                    API_CHASE_ALL,
                                    StorageLevel, ucred_ptr, &file_attrs, AttrOut);
 
-  if (error != 0)
+  if(error != 0)
     xdr_free((xdrproc_t) xdr_bf_sc_attrib_t, (void *)AttrOut->SCAttrib);
 
   API_RETURN(error);

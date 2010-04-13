@@ -62,7 +62,7 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
   /* sanity checks.
    * note : link_attributes is optional.
    */
-  if (!linkhandle || !p_context || !p_link_content)
+  if(!linkhandle || !p_context || !p_link_content)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readlink);
 
   TakeTokenFSCall();
@@ -79,12 +79,12 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
 
   st = FSAL_str2path(link_content_out, FSAL_MAX_PATH_LEN, p_link_content);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     Return(st.major, st.minor, INDEX_FSAL_readlink);
 
   /* retrieves object attributes, if asked */
 
-  if (link_attributes)
+  if(link_attributes)
     {
 
       fsal_status_t status;
@@ -93,7 +93,7 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
 
       /* On error, we set a flag in the returned attributes */
 
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(link_attributes->asked_attributes);
           FSAL_SET_MASK(link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -154,13 +154,13 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
   /* sanity checks.
    * note : link_attributes is optional.
    */
-  if (!parent_directory_handle ||
-      !p_context || !link_handle || !p_linkname || !p_linkcontent)
+  if(!parent_directory_handle ||
+     !p_context || !link_handle || !p_linkname || !p_linkcontent)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_symlink);
 
   /* Tests if symlinking is allowed by configuration. */
 
-  if (!global_fs_info.symlink_support)
+  if(!global_fs_info.symlink_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_symlink);
 
   TakeTokenFSCall();
@@ -173,7 +173,7 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
 
   /* >> set output handle << */
 
-  if (link_attributes)
+  if(link_attributes)
     {
 
       /* >> fill output attributes if they are asked << */

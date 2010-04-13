@@ -56,10 +56,10 @@ main(int argc, char **argv)
   node_head = &head;
   RBT_HEAD_INIT(node_head);
 
-  while (ok)
+  while(ok)
     {
       RBT_VERIFY(node_head, pn, rc);
-      if (rc)
+      if(rc)
         {
           printf("verify retourne %d, noeud 0x%lx\n", rc, pn);
           print_node(node_head);
@@ -67,17 +67,17 @@ main(int argc, char **argv)
 
       fputs("> ", stdout);
       p = fgets(buf, LENBUF, stdin);
-      if (p == 0)
+      if(p == 0)
         {
           printf("fin des commandes\n");
           ok = 0;
           continue;
         }
       p = strchr(buf, '\n');
-      if (p)
+      if(p)
         *p = '\0';
       rc = sscanf(buf, "%c %d", &c, &val);
-      if (rc != 2)
+      if(rc != 2)
         {
           printf("scanf retourne %d\n", rc);
           continue;
@@ -87,7 +87,7 @@ main(int argc, char **argv)
       switch (c)
         {
         case 'a':
-          if (node_free)
+          if(node_free)
             {
               qn = node_free;
               node_free = node_free->next;
@@ -95,11 +95,11 @@ main(int argc, char **argv)
           else
             {
               qn = (struct rbt_node *)malloc(RBT_NUM * sizeof(struct rbt_node));
-              if (qn)
+              if(qn)
                 {
                   i = RBT_NUM - 2;
                   node_free = qn + 1;
-                  for (pn = node_free; i; pn++, i--)
+                  for(pn = node_free; i; pn++, i--)
                     {
                       pn->next = pn + 1;
                     }
@@ -124,7 +124,7 @@ main(int argc, char **argv)
 
         case 'f':
           RBT_FIND(node_head, pn, val);
-          if ((pn == 0) || (RBT_VALUE(pn) != val))
+          if((pn == 0) || (RBT_VALUE(pn) != val))
             {
               printf("node %d pas trouve\n", val);
               continue;
@@ -133,12 +133,12 @@ main(int argc, char **argv)
 
         case 'l':
           RBT_FIND_LEFT(node_head, pn, val);
-          if (pn == 0)
+          if(pn == 0)
             {
               printf("node %d pas trouve\n", val);
               continue;
             }
-          if (RBT_VALUE(pn) != val)
+          if(RBT_VALUE(pn) != val)
             {
               printf("mauvais node 0x%lx (%d) pour la valeur %d\n",
                      pn, RBT_VALUE(pn), val);
@@ -147,7 +147,7 @@ main(int argc, char **argv)
             }
           qn = pn;
           RBT_DECREMENT(qn);
-          if (qn && (RBT_VALUE(qn) == val))
+          if(qn && (RBT_VALUE(qn) == val))
             {
               printf("mauvais node 0x%lx pour la valeur %d\n", qn, val);
               print_node(node_head);
@@ -165,7 +165,7 @@ main(int argc, char **argv)
 
         case 'r':
           RBT_FIND(node_head, pn, val);
-          if ((pn == 0) || (RBT_VALUE(pn) != val))
+          if((pn == 0) || (RBT_VALUE(pn) != val))
             {
               printf("node %d pas trouve\n", val);
               continue;

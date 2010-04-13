@@ -147,8 +147,8 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_SECINFO;
   res_SECINFO4.status = NFS4_OK;
 
-  if ((res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val =
-       (secinfo4 *) Mem_Alloc(2 * sizeof(secinfo4))) == NULL)
+  if((res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val =
+      (secinfo4 *) Mem_Alloc(2 * sizeof(secinfo4))) == NULL)
     {
       res_SECINFO4.status = NFS4ERR_SERVERFAULT;
       return res_SECINFO4.status;
