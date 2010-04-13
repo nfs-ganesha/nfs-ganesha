@@ -117,7 +117,7 @@ u_int recvsize;
   socklen_t slen;
 
   /* __rpc_fd2sockinfo is private in libtirpc, it may change */
-  if (!__rpc_fd2sockinfo(fd, &si))
+  if(!__rpc_fd2sockinfo(fd, &si))
     {
       warnx(svc_dg_str, svc_dg_err1);
       return (NULL);
@@ -127,22 +127,22 @@ u_int recvsize;
    */
   sendsize = __rpc_get_t_size(si.si_af, si.si_proto, (int)sendsize);
   recvsize = __rpc_get_t_size(si.si_af, si.si_proto, (int)recvsize);
-  if ((sendsize == 0) || (recvsize == 0))
+  if((sendsize == 0) || (recvsize == 0))
     {
       warnx(svc_dg_str, svc_dg_err2);
       return (NULL);
     }
 
   xprt = (SVCXPRT *) Mem_Alloc(sizeof(SVCXPRT));
-  if (xprt == NULL)
+  if(xprt == NULL)
     goto freedata;
   memset(xprt, 0, sizeof(SVCXPRT));
 
   su = (struct svc_dg_data *)Mem_Alloc(sizeof(*su));
-  if (su == NULL)
+  if(su == NULL)
     goto freedata;
   su->su_iosz = ((MAX(sendsize, recvsize) + 3) / 4) * 4;
-  if ((rpc_buffer(xprt) = Mem_Alloc(su->su_iosz)) == NULL)
+  if((rpc_buffer(xprt) = Mem_Alloc(su->su_iosz)) == NULL)
     goto freedata;
   xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt), su->su_iosz, XDR_DECODE);
   su->su_cache = NULL;
@@ -153,7 +153,7 @@ u_int recvsize;
   xprt->xp_rtaddr.maxlen = sizeof(struct sockaddr_storage);
 
   slen = sizeof ss;
-  if (getsockname(fd, (struct sockaddr *)(void *)&ss, &slen) < 0)
+  if(getsockname(fd, (struct sockaddr *)(void *)&ss, &slen) < 0)
     goto freedata;
   xprt->xp_ltaddr.buf = Mem_Alloc(sizeof(struct sockaddr_storage));
   xprt->xp_ltaddr.maxlen = sizeof(struct sockaddr_storage);
@@ -164,9 +164,9 @@ u_int recvsize;
   return (xprt);
  freedata:
   (void)warnx(svc_dg_str, __no_mem_str);
-  if (xprt)
+  if(xprt)
     {
-      if (su)
+      if(su)
         (void)Mem_Free(su);
       (void)Mem_Free(xprt);
     }
@@ -195,20 +195,20 @@ struct rpc_msg *msg;
   alen = sizeof(struct sockaddr_storage);
   rlen = recvfrom(xprt->xp_fd, rpc_buffer(xprt), su->su_iosz, 0,
                   (struct sockaddr *)(void *)&ss, &alen);
-  if (rlen == -1 && errno == EINTR)
+  if(rlen == -1 && errno == EINTR)
     goto again;
-  if (rlen == -1 || (rlen < (ssize_t) (4 * sizeof(u_int32_t))))
+  if(rlen == -1 || (rlen < (ssize_t) (4 * sizeof(u_int32_t))))
     return (FALSE);
-  if (xprt->xp_rtaddr.len < alen)
+  if(xprt->xp_rtaddr.len < alen)
     {
-      if (xprt->xp_rtaddr.len != 0)
+      if(xprt->xp_rtaddr.len != 0)
         Mem_Free(xprt->xp_rtaddr.buf);
       xprt->xp_rtaddr.buf = Mem_Alloc(alen);
       xprt->xp_rtaddr.len = alen;
     }
   memcpy(xprt->xp_rtaddr.buf, &ss, alen);
 #ifdef PORTMAP
-  if (ss.ss_family == AF_INET6)
+  if(ss.ss_family == AF_INET6)
     {
       xprt->xp_raddr = *(struct sockaddr_in6 *)xprt->xp_rtaddr.buf;
       xprt->xp_addrlen = sizeof(struct sockaddr_in6);
@@ -216,14 +216,14 @@ struct rpc_msg *msg;
 #endif                          /* PORTMAP */
   xdrs->x_op = XDR_DECODE;
   XDR_SETPOS(xdrs, 0);
-  if (!xdr_callmsg(xdrs, msg))
+  if(!xdr_callmsg(xdrs, msg))
     {
       return (FALSE);
     }
   su->su_xid = msg->rm_xid;
-  if (su->su_cache != NULL)
+  if(su->su_cache != NULL)
     {
-      if (cache_get(xprt, msg, &reply, &replylen))
+      if(cache_get(xprt, msg, &reply, &replylen))
         {
           (void)sendto(xprt->xp_fd, reply, replylen, 0,
                        (struct sockaddr *)(void *)&ss, alen);
@@ -245,15 +245,15 @@ struct rpc_msg *msg;
   xdrs->x_op = XDR_ENCODE;
   XDR_SETPOS(xdrs, 0);
   msg->rm_xid = su->su_xid;
-  if (xdr_replymsg(xdrs, msg))
+  if(xdr_replymsg(xdrs, msg))
     {
       slen = XDR_GETPOS(xdrs);
-      if (sendto(xprt->xp_fd, rpc_buffer(xprt), slen, 0,
-                 (struct sockaddr *)xprt->xp_rtaddr.buf,
-                 (socklen_t) xprt->xp_rtaddr.len) == (ssize_t) slen)
+      if(sendto(xprt->xp_fd, rpc_buffer(xprt), slen, 0,
+                (struct sockaddr *)xprt->xp_rtaddr.buf,
+                (socklen_t) xprt->xp_rtaddr.len) == (ssize_t) slen)
         {
           stat = TRUE;
-          if (su->su_cache)
+          if(su->su_cache)
             cache_set(xprt, slen);
         }
     }
@@ -285,16 +285,16 @@ SVCXPRT *xprt;
   struct svc_dg_data *su = su_data(xprt);
 
   Xprt_unregister(xprt);
-  if (xprt->xp_fd != -1)
+  if(xprt->xp_fd != -1)
     (void)close(xprt->xp_fd);
   XDR_DESTROY(&(su->su_xdrs));
   (void)Mem_Free(rpc_buffer(xprt));
   (void)Mem_Free(su);
-  if (xprt->xp_rtaddr.buf)
+  if(xprt->xp_rtaddr.buf)
     (void)Mem_Free(xprt->xp_rtaddr.buf);
-  if (xprt->xp_ltaddr.buf)
+  if(xprt->xp_ltaddr.buf)
     (void)Mem_Free(xprt->xp_ltaddr.buf);
-  if (xprt->xp_tp)
+  if(xprt->xp_tp)
     (void)free(xprt->xp_tp);
   (void)Mem_Free(xprt);
 }
@@ -317,7 +317,7 @@ SVCXPRT *xprt;
 /* VARIABLES PROTECTED BY ops_lock: ops */
 
   P(ops_lock);
-  if (ops.xp_recv == NULL)
+  if(ops.xp_recv == NULL)
     {
       ops.xp_recv = Svc_dg_recv;
       ops.xp_stat = Svc_dg_stat;
@@ -418,14 +418,14 @@ u_int size;
   struct cl_cache *uc;
 
   P(dupreq_lock);
-  if (su->su_cache != NULL)
+  if(su->su_cache != NULL)
     {
       (void)warnx(cache_enable_str, enable_err, " ");
       V(dupreq_lock);
       return (0);
     }
   uc = ALLOC(struct cl_cache, 1);
-  if (uc == NULL)
+  if(uc == NULL)
     {
       warnx(cache_enable_str, alloc_err, " ");
       V(dupreq_lock);
@@ -434,7 +434,7 @@ u_int size;
   uc->uc_size = size;
   uc->uc_nextvictim = 0;
   uc->uc_entries = ALLOC(cache_ptr, size * SPARSENESS);
-  if (uc->uc_entries == NULL)
+  if(uc->uc_entries == NULL)
     {
       warnx(cache_enable_str, alloc_err, "data");
       FREE(uc, struct cl_cache, 1);
@@ -443,7 +443,7 @@ u_int size;
     }
   MEMZERO(uc->uc_entries, cache_ptr, size * SPARSENESS);
   uc->uc_fifo = ALLOC(cache_ptr, size);
-  if (uc->uc_fifo == NULL)
+  if(uc->uc_fifo == NULL)
     {
       warnx(cache_enable_str, alloc_err, "fifo");
       FREE(uc->uc_entries, cache_ptr, size * SPARSENESS);
@@ -491,13 +491,13 @@ size_t replylen;
    * reusing an old entry, or by mallocing a new one
    */
   victim = uc->uc_fifo[uc->uc_nextvictim];
-  if (victim != NULL)
+  if(victim != NULL)
     {
       loc = CACHE_LOC(xprt, victim->cache_xid);
-      for (vicp = &uc->uc_entries[loc];
-           *vicp != NULL && *vicp != victim; vicp = &(*vicp)->cache_next)
+      for(vicp = &uc->uc_entries[loc];
+          *vicp != NULL && *vicp != victim; vicp = &(*vicp)->cache_next)
         ;
-      if (*vicp == NULL)
+      if(*vicp == NULL)
         {
           warnx(cache_set_str, cache_set_err1);
           V(dupreq_lock);
@@ -509,14 +509,14 @@ size_t replylen;
   else
     {
       victim = ALLOC(struct cache_node, 1);
-      if (victim == NULL)
+      if(victim == NULL)
         {
           warnx(cache_set_str, cache_set_err2);
           V(dupreq_lock);
           return;
         }
       newbuf = Mem_Alloc(su->su_iosz);
-      if (newbuf == NULL)
+      if(newbuf == NULL)
         {
           warnx(cache_set_str, cache_set_err3);
           FREE(victim, struct cache_node, 1);
@@ -529,7 +529,7 @@ size_t replylen;
    * Store it away
    */
 #ifdef RPC_CACHE_DEBUG
-  if (nconf = getnetconfigent(xprt->xp_netid))
+  if(nconf = getnetconfigent(xprt->xp_netid))
     {
       uaddr = taddr2uaddr(nconf, &xprt->xp_rtaddr);
       freenetconfigent(nconf);
@@ -578,17 +578,17 @@ size_t *replylenp;
 
   P(dupreq_lock);
   loc = CACHE_LOC(xprt, su->su_xid);
-  for (ent = uc->uc_entries[loc]; ent != NULL; ent = ent->cache_next)
+  for(ent = uc->uc_entries[loc]; ent != NULL; ent = ent->cache_next)
     {
-      if (ent->cache_xid == su->su_xid &&
-          ent->cache_proc == msg->rm_call.cb_proc &&
-          ent->cache_vers == msg->rm_call.cb_vers &&
-          ent->cache_prog == msg->rm_call.cb_prog &&
-          ent->cache_addr.len == xprt->xp_rtaddr.len &&
-          (memcmp(ent->cache_addr.buf, xprt->xp_rtaddr.buf, xprt->xp_rtaddr.len) == 0))
+      if(ent->cache_xid == su->su_xid &&
+         ent->cache_proc == msg->rm_call.cb_proc &&
+         ent->cache_vers == msg->rm_call.cb_vers &&
+         ent->cache_prog == msg->rm_call.cb_prog &&
+         ent->cache_addr.len == xprt->xp_rtaddr.len &&
+         (memcmp(ent->cache_addr.buf, xprt->xp_rtaddr.buf, xprt->xp_rtaddr.len) == 0))
         {
 #ifdef RPC_CACHE_DEBUG
-          if (nconf = getnetconfigent(xprt->xp_netid))
+          if(nconf = getnetconfigent(xprt->xp_netid))
             {
               uaddr = taddr2uaddr(nconf, &xprt->xp_rtaddr);
               freenetconfigent(nconf);

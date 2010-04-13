@@ -150,13 +150,13 @@ static unsigned int cache_inode_async_choose_synclet(void)
 
       /* chose the smallest queue */
 
-      for (i = (last + 1) % client_parameter.nb_synclet, cpt = 0;
-           cpt < client_parameter.nb_synclet;
-           cpt++, i = (i + 1) % client_parameter.nb_synclet)
+      for(i = (last + 1) % client_parameter.nb_synclet, cpt = 0;
+          cpt < client_parameter.nb_synclet;
+          cpt++, i = (i + 1) % client_parameter.nb_synclet)
         {
           /* Choose only fully initialized workers and that does not gc */
 
-          if (synclet_data[i].op_lru->nb_entry < min_number_pending)
+          if(synclet_data[i].op_lru->nb_entry < min_number_pending)
             {
               synclet_chosen = i;
               min_number_pending = synclet_data[i].op_lru->nb_entry;
@@ -164,7 +164,7 @@ static unsigned int cache_inode_async_choose_synclet(void)
         }
 
     }
-  while (synclet_chosen == NO_VALUE_CHOOSEN);
+  while(synclet_chosen == NO_VALUE_CHOOSEN);
 
   last = synclet_chosen;
 
@@ -199,19 +199,19 @@ void cache_inode_async_init(cache_inode_client_parameter_t param)
   DisplayLog("Starting writeback threads");
 
   /* Init the LRU and its associated mutex */
-  if ((rc = pthread_mutexattr_init(&mutexattr)) != 0)
+  if((rc = pthread_mutexattr_init(&mutexattr)) != 0)
     {
       DisplayErrorLog(ERR_SYS, ERR_PTHREAD_MUTEX_INIT, rc);
       exit(1);
     }
 
-  if ((rc = pthread_condattr_init(&condattr)) != 0)
+  if((rc = pthread_condattr_init(&condattr)) != 0)
     {
       DisplayErrorLog(ERR_SYS, ERR_PTHREAD_COND_INIT, rc);
       exit(1);
     }
 
-  if ((rc = pthread_mutex_init(&mutex_async_pentries_list, &mutexattr)) != 0)
+  if((rc = pthread_mutex_init(&mutex_async_pentries_list, &mutexattr)) != 0)
     {
       DisplayErrorLog(ERR_SYS, ERR_PTHREAD_MUTEX_INIT, rc);
       exit(1);
@@ -225,26 +225,25 @@ void cache_inode_async_init(cache_inode_client_parameter_t param)
 #endif
 
   /* Starting the threads */
-  if ((rc = pthread_create(&cache_inode_dta_thrid,
-                           &attr_thr,
-                           cache_inode_asynchronous_dispatcher_thread,
-                           (void *)NULL)) != 0)
+  if((rc = pthread_create(&cache_inode_dta_thrid,
+                          &attr_thr,
+                          cache_inode_asynchronous_dispatcher_thread, (void *)NULL)) != 0)
     {
       DisplayErrorLog(ERR_SYS, ERR_PTHREAD_CREATE, rc);
       exit(1);
     }
 
-  if ((cache_inode_synclet_thrid =
-       (pthread_t *) Mem_Alloc(param.nb_synclet * sizeof(pthread_t))) == NULL)
+  if((cache_inode_synclet_thrid =
+      (pthread_t *) Mem_Alloc(param.nb_synclet * sizeof(pthread_t))) == NULL)
     {
       DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
       exit(1);
     }
 
-  if ((synclet_data =
-       (cache_inode_synclet_data_t *) Mem_Alloc(param.nb_synclet *
-                                                sizeof(cache_inode_synclet_data_t))) ==
-      NULL)
+  if((synclet_data =
+      (cache_inode_synclet_data_t *) Mem_Alloc(param.nb_synclet *
+                                               sizeof(cache_inode_synclet_data_t))) ==
+     NULL)
     {
       DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
       exit(1);
@@ -253,30 +252,30 @@ void cache_inode_async_init(cache_inode_client_parameter_t param)
   DisplayLog("MD WRITEBACK STARTUP: writeback dispatcher started successfully");
 
   /* Prepare and launch the synclets */
-  for (i = 0; i < param.nb_synclet; i++)
+  for(i = 0; i < param.nb_synclet; i++)
     {
       /* Init the synclet data */
-      if ((rc = pthread_mutex_init(&(synclet_data[i].mutex_op_condvar), &mutexattr)) != 0)
+      if((rc = pthread_mutex_init(&(synclet_data[i].mutex_op_condvar), &mutexattr)) != 0)
         {
           DisplayErrorLog(ERR_SYS, ERR_PTHREAD_MUTEX_INIT, rc);
           exit(1);
         }
 
-      if ((rc = pthread_cond_init(&(synclet_data[i].op_condvar), &condattr)) != 0)
+      if((rc = pthread_cond_init(&(synclet_data[i].op_condvar), &condattr)) != 0)
         {
           DisplayErrorLog(ERR_SYS, ERR_PTHREAD_MUTEX_INIT, rc);
           exit(1);
         }
 
-      if ((synclet_data[i].op_lru = LRU_Init(param.lru_async_param, &lru_status)) == NULL)
+      if((synclet_data[i].op_lru = LRU_Init(param.lru_async_param, &lru_status)) == NULL)
         {
           DisplayErrorLog(ERR_LRU, ERR_LRU_LIST_INIT, lru_status);
           exit(1);
         }
 
       /* Now start the synclet */
-      if ((rc = pthread_create(&(cache_inode_synclet_thrid[i]),
-                               &attr_thr, cache_inode_synclet_thread, (void *)i)) != 0)
+      if((rc = pthread_create(&(cache_inode_synclet_thrid[i]),
+                              &attr_thr, cache_inode_synclet_thread, (void *)i)) != 0)
         {
           DisplayErrorLog(ERR_SYS, ERR_PTHREAD_CREATE, rc);
           exit(1);
@@ -286,7 +285,7 @@ void cache_inode_async_init(cache_inode_client_parameter_t param)
 
       /* Init the root fsal_op_context that is used for internal ops in the asyncops */
       fsal_status = FSAL_InitClientContext(&synclet_data[i].root_fsal_context);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           DisplayLog
               ("MD WRITEBACK STARTUP: Can't init FSAL context for synclet %u fsal_status=(%u,%u)... exiting",
@@ -322,17 +321,17 @@ static void cache_inode_async_alloc_precreated(cache_inode_client_t * pclient,
     {
     case DIR_BEGINNING:
     case DIR_CONTINUE:
-      if ((pclient->dir_pool_handle =
-           (fsal_handle_t *) Mem_Alloc(sizeof(fsal_handle_t) *
-                                       pclient->nb_pre_create_dirs)) == NULL)
+      if((pclient->dir_pool_handle =
+          (fsal_handle_t *) Mem_Alloc(sizeof(fsal_handle_t) *
+                                      pclient->nb_pre_create_dirs)) == NULL)
         {
           DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
 
-      if ((pclient->dir_pool_fileid =
-           (fsal_u64_t *) Mem_Alloc(sizeof(fsal_u64_t) * pclient->nb_pre_create_dirs)) ==
-          NULL)
+      if((pclient->dir_pool_fileid =
+          (fsal_u64_t *) Mem_Alloc(sizeof(fsal_u64_t) * pclient->nb_pre_create_dirs)) ==
+         NULL)
         {
           DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
           exit(1);
@@ -341,17 +340,17 @@ static void cache_inode_async_alloc_precreated(cache_inode_client_t * pclient,
       break;
 
     case REGULAR_FILE:
-      if ((pclient->file_pool_handle =
-           (fsal_handle_t *) Mem_Alloc(sizeof(fsal_handle_t) *
-                                       pclient->nb_pre_create_files)) == NULL)
+      if((pclient->file_pool_handle =
+          (fsal_handle_t *) Mem_Alloc(sizeof(fsal_handle_t) *
+                                      pclient->nb_pre_create_files)) == NULL)
         {
           DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
 
-      if ((pclient->file_pool_fileid =
-           (fsal_u64_t *) Mem_Alloc(sizeof(fsal_u64_t) * pclient->nb_pre_create_files)) ==
-          NULL)
+      if((pclient->file_pool_fileid =
+          (fsal_u64_t *) Mem_Alloc(sizeof(fsal_u64_t) * pclient->nb_pre_create_files)) ==
+         NULL)
         {
           DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
           exit(1);
@@ -387,14 +386,14 @@ fsal_handle_t *cache_inode_async_get_preallocated(cache_inode_client_t * pclient
   fsal_handle_t *pfsal_handle = NULL;
   unsigned int index = 0;
 
-  if (pclient == NULL || pfileid == NULL || pstatus == NULL)
+  if(pclient == NULL || pfileid == NULL || pstatus == NULL)
     return NULL;
 
   switch (type)
     {
     case DIR_BEGINNING:
     case DIR_CONTINUE:
-      if (pclient->avail_precreated_dirs > 0)
+      if(pclient->avail_precreated_dirs > 0)
         {
           index = pclient->nb_pre_create_dirs - pclient->avail_precreated_dirs;
           pfsal_handle = &pclient->dir_pool_handle[index];
@@ -405,14 +404,14 @@ fsal_handle_t *cache_inode_async_get_preallocated(cache_inode_client_t * pclient
       else
         {
           /* I create a new pool and recall the function is successful */
-          if (cache_inode_async_precreate_object(pclient, type, pexport_context) > 0)
+          if(cache_inode_async_precreate_object(pclient, type, pexport_context) > 0)
             return cache_inode_async_get_preallocated(pclient, type, pfileid,
                                                       pexport_context, pstatus);
         }
       break;
 
     case REGULAR_FILE:
-      if (pclient->avail_precreated_files > 0)
+      if(pclient->avail_precreated_files > 0)
         {
           index = pclient->nb_pre_create_files - pclient->avail_precreated_files;
           pfsal_handle = &pclient->file_pool_handle[index];
@@ -423,7 +422,7 @@ fsal_handle_t *cache_inode_async_get_preallocated(cache_inode_client_t * pclient
       else
         {
           /* I create a new pool and recall the function is successful */
-          if (cache_inode_async_precreate_object(pclient, type, pexport_context) > 0)
+          if(cache_inode_async_precreate_object(pclient, type, pexport_context) > 0)
             return cache_inode_async_get_preallocated(pclient, type, pfileid,
                                                       pexport_context, pstatus);
         }
@@ -453,10 +452,10 @@ cache_inode_status_t cache_inode_async_op_reduce(cache_inode_async_op_desc_t *
                                                  ppasyncoplistres,
                                                  cache_inode_status_t * pstatus)
 {
-  if (pstatus == NULL)
+  if(pstatus == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
-  if (pasyncoplist == NULL || ppasyncoplistres == NULL)
+  if(pasyncoplist == NULL || ppasyncoplistres == NULL)
     {
       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
       return *pstatus;
@@ -493,10 +492,10 @@ cache_inode_status_t cache_inode_process_async_op(cache_inode_async_op_desc_t *
   fsal_status_t fsal_status;
 
   /* Sanity check */
-  if (pstatus == NULL)
+  if(pstatus == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
-  if (pasyncopdesc == NULL || pentry == NULL)
+  if(pasyncopdesc == NULL || pentry == NULL)
     {
       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
       return *pstatus;
@@ -508,7 +507,7 @@ cache_inode_status_t cache_inode_process_async_op(cache_inode_async_op_desc_t *
 
   fsal_status = (pasyncopdesc->op_func) (pasyncopdesc);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       *pstatus = cache_inode_error_convert(fsal_status);
       return *pstatus;
@@ -542,10 +541,10 @@ cache_inode_status_t cache_inode_post_async_op(cache_inode_async_op_desc_t * pop
   cache_inode_async_op_desc_t *piter_opdesc = NULL;
 
   /* Sanity check */
-  if (pstatus == NULL)
+  if(pstatus == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
-  if (popdesc == NULL || pentry == NULL)
+  if(popdesc == NULL || pentry == NULL)
     {
       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
       return *pstatus;
@@ -555,10 +554,10 @@ cache_inode_status_t cache_inode_post_async_op(cache_inode_async_op_desc_t * pop
    * have this pointer NULL means that the pentry have no pending op yet and then needs to be put to the list */
   P(mutex_async_pentries_list);
 
-  if (pentry->pending_ops == NULL)
+  if(pentry->pending_ops == NULL)
     {
       /* Entry has to be added ro async_pentries_list */
-      if (async_pentries_list == NULL)
+      if(async_pentries_list == NULL)
         async_pentries_list = pentry;
       else
         async_pentries_list->next_asyncop = pentry;
@@ -567,7 +566,7 @@ cache_inode_status_t cache_inode_post_async_op(cache_inode_async_op_desc_t * pop
   V(mutex_async_pentries_list);
 
   popdesc->next = NULL;
-  if (pentry->pending_ops == NULL)
+  if(pentry->pending_ops == NULL)
     {
       /* Add op to pending_ops */
       pentry->pending_ops = popdesc;
@@ -575,9 +574,9 @@ cache_inode_status_t cache_inode_post_async_op(cache_inode_async_op_desc_t * pop
   else
     {
       /* Go to the end of the list of pending ops... */
-      for (piter_opdesc = pentry->pending_ops; piter_opdesc != NULL;
-           piter_opdesc = piter_opdesc->next)
-        if (piter_opdesc->next == NULL)
+      for(piter_opdesc = pentry->pending_ops; piter_opdesc != NULL;
+          piter_opdesc = piter_opdesc->next)
+        if(piter_opdesc->next == NULL)
           {
             piter_opdesc->next = popdesc;
             break;
@@ -634,8 +633,8 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
    * expire until data exists in File Content Cache, to avoid attributes incoherency */
 
   /* @todo: BUGAZOMEU: I got serious doubts on the following blocks: possible trouble if using data caching */
-  if (pentry->internal_md.type == REGULAR_FILE &&
-      pentry->object.file.pentry_content != NULL)
+  if(pentry->internal_md.type == REGULAR_FILE &&
+     pentry->object.file.pentry_content != NULL)
     {
       /* Successfull exit without having nothing to do ... */
       *pstatus = CACHE_INODE_SUCCESS;
@@ -643,8 +642,8 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
     }
 
   /* Do we use getattr/mtime checking */
-  if (pentry->internal_md.type == DIR_BEGINNING &&
-      pentry->object.dir_begin.has_been_readdir == CACHE_INODE_YES)
+  if(pentry->internal_md.type == DIR_BEGINNING &&
+     pentry->object.dir_begin.has_been_readdir == CACHE_INODE_YES)
     {
       /* This checking is to be done ... */
       pfsal_handle = &pentry->object.dir_begin.handle;
@@ -654,11 +653,11 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
 
       fsal_status = FSAL_getattrs(pfsal_handle, pcontext, &object_attributes);
 
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
 
-          if (fsal_status.major == ERR_FSAL_STALE)
+          if(fsal_status.major == ERR_FSAL_STALE)
             {
               cache_inode_status_t kill_status;
 
@@ -672,8 +671,8 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
         }
 
       /* Compare the FSAL mtime and the cached mtime */
-      if (pentry->object.dir_begin.attributes.mtime.seconds <
-          object_attributes.mtime.seconds)
+      if(pentry->object.dir_begin.attributes.mtime.seconds <
+         object_attributes.mtime.seconds)
         {
           /* Cached directory content is obsolete, it must be renewed */
           pentry->object.dir_begin.attributes = object_attributes;
@@ -690,11 +689,11 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
 
   /* if( pentry->internal_md.type == DIR_BEGINNING &&... */
   /* Check for dir content expiration */
-  if (pentry->internal_md.type == DIR_BEGINNING &&
-      pentry->object.dir_begin.has_been_readdir == CACHE_INODE_YES)
+  if(pentry->internal_md.type == DIR_BEGINNING &&
+     pentry->object.dir_begin.has_been_readdir == CACHE_INODE_YES)
     {
       /* Do the getattr if it had not being done before */
-      if (pfsal_handle == NULL)
+      if(pfsal_handle == NULL)
         {
           pfsal_handle = &pentry->object.dir_begin.handle;
 
@@ -703,11 +702,11 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
 
           fsal_status = FSAL_getattrs(pfsal_handle, pcontext, &object_attributes);
 
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             {
               *pstatus = cache_inode_error_convert(fsal_status);
 
-              if (fsal_status.major == ERR_FSAL_STALE)
+              if(fsal_status.major == ERR_FSAL_STALE)
                 {
                   cache_inode_status_t kill_status;
 
@@ -735,8 +734,8 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
 
   /* if( pentry->internal_md.type == DIR_BEGINNING && ... */
   /* if the directory has not been readdir, only update its attributes */
-  else if (pentry->internal_md.type == DIR_BEGINNING &&
-           pentry->object.dir_begin.has_been_readdir != CACHE_INODE_YES)
+  else if(pentry->internal_md.type == DIR_BEGINNING &&
+          pentry->object.dir_begin.has_been_readdir != CACHE_INODE_YES)
     {
       pfsal_handle = &pentry->object.dir_begin.handle;
 
@@ -745,11 +744,11 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
 
       fsal_status = FSAL_getattrs(pfsal_handle, pcontext, &object_attributes);
 
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
 
-          if (fsal_status.major == ERR_FSAL_STALE)
+          if(fsal_status.major == ERR_FSAL_STALE)
             {
               cache_inode_status_t kill_status;
 
@@ -772,8 +771,8 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
 
   /* else if( pentry->internal_md.type == DIR_BEGINNING && ... */
   /* Check for attributes expiration in other cases */
-  else if (pentry->internal_md.type != DIR_CONTINUE &&
-           pentry->internal_md.type != DIR_BEGINNING)
+  else if(pentry->internal_md.type != DIR_CONTINUE &&
+          pentry->internal_md.type != DIR_BEGINNING)
     {
       switch (pentry->internal_md.type)
         {
@@ -796,11 +795,11 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
       /* Call FSAL to get the attributes */
       object_attributes.asked_attributes = FSAL_ATTRS_POSIX;
       fsal_status = FSAL_getattrs(pfsal_handle, pcontext, &object_attributes);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
 
-          if (fsal_status.major == ERR_FSAL_STALE)
+          if(fsal_status.major == ERR_FSAL_STALE)
             {
               cache_inode_status_t kill_status;
 
@@ -840,7 +839,7 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
 
   /* if(  pentry->internal_md.type   != DIR_CONTINUE && ... */
   /* Check for link content expiration */
-  if (pentry->internal_md.type == SYMBOLIC_LINK)
+  if(pentry->internal_md.type == SYMBOLIC_LINK)
     {
       pfsal_handle = &pentry->object.symlink.handle;
 
@@ -849,12 +848,12 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
 
       fsal_status =
           FSAL_readlink(pfsal_handle, pcontext, &link_content, &object_attributes);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
           /* stats */
 
-          if (fsal_status.major == ERR_FSAL_STALE)
+          if(fsal_status.major == ERR_FSAL_STALE)
             {
               cache_inode_status_t kill_status;
 
@@ -869,7 +868,7 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
       else
         {
           fsal_status = FSAL_pathcpy(&pentry->object.symlink.content, &link_content);
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             {
               *pstatus = cache_inode_error_convert(fsal_status);
               /* stats */
@@ -926,7 +925,7 @@ int cache_inode_async_precreated_name(fsal_name_t * pname,
 
   fsal_status = FSAL_str2name(objname, MAXNAMLEN, pname);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       DisplayLog("cache_inode_async_precreate_object failed: error in FSAL_lookupPath");
       DisplayErrorLog(ERR_FSAL, fsal_status.major, fsal_status.minor);
@@ -973,7 +972,7 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
   fsal_status =
       FSAL_GetClientContext(&root_fsal_context, pexport_context, 0, -1, NULL, 0);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       DisplayLog
           ("cache_inode_async_precreate_object failed: error in FSAL_GetClientContext");
@@ -983,19 +982,19 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
 
   /* Get the precreated directory pool handle */
   fsal_status = FSAL_str2path(client_parameter.pre_create_obj_dir, MAXPATHLEN, &path);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       DisplayLog("cache_inode_async_precreate_object failed: error in FSAL_str2path");
       DisplayErrorLog(ERR_FSAL, fsal_status.major, fsal_status.minor);
       return -1;
     }
 
-  if (once == 0)
+  if(once == 0)
     {
       attr.asked_attributes = FSAL_ATTRS_POSIX;
       fsal_status = FSAL_lookupPath(&path,
                                     &root_fsal_context, &pre_created_dir_handle, &attr);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           DisplayLog
               ("cache_inode_async_precreate_object failed: error in FSAL_lookupPath");
@@ -1009,11 +1008,11 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
     {
     case DIR_BEGINNING:
     case DIR_CONTINUE:
-      for (i = 0; i < pclient->nb_pre_create_dirs; i++)
+      for(i = 0; i < pclient->nb_pre_create_dirs; i++)
         {
-          if (cache_inode_async_precreated_name(&name,
-                                                pclient,
-                                                object_type, pexport_context) != 0)
+          if(cache_inode_async_precreated_name(&name,
+                                               pclient,
+                                               object_type, pexport_context) != 0)
             {
               DisplayLog
                   ("cache_inode_async_precreate_object failed: error in creating name");
@@ -1028,7 +1027,7 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
                                    (fsal_accessmode_t) 0777,
                                    &pclient->dir_pool_handle[i], &attr);
 
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             {
               DisplayLog
                   ("cache_inode_async_precreate_object failed: error in FSAL_mkdir");
@@ -1041,7 +1040,7 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
 
           fsal_status = FSAL_str2name(destname, MAXNAMLEN, &fileidname);
 
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             {
               DisplayLog
                   ("cache_inode_async_precreate_object failed: error in FSAL_str2name");
@@ -1057,7 +1056,7 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
                                     &fileidname,
                                     &root_fsal_context, &attr_src, &attr_dest);
 
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             {
               DisplayLog
                   ("cache_inode_async_precreate_object failed: error in FSAL_rename");
@@ -1074,11 +1073,11 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
       break;
 
     case REGULAR_FILE:
-      for (i = 0; i < pclient->nb_pre_create_files; i++)
+      for(i = 0; i < pclient->nb_pre_create_files; i++)
         {
-          if (cache_inode_async_precreated_name(&name,
-                                                pclient,
-                                                object_type, pexport_context) != 0)
+          if(cache_inode_async_precreated_name(&name,
+                                               pclient,
+                                               object_type, pexport_context) != 0)
             {
               DisplayLog
                   ("cache_inode_async_precreate_object failed: error in creating name");
@@ -1094,7 +1093,7 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
                                     (fsal_accessmode_t) 0777,
                                     &pclient->file_pool_handle[i], &attr);
 
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             {
               DisplayLog
                   ("cache_inode_async_precreate_object failed: error in FSAL_create");
@@ -1109,7 +1108,7 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
 
           fsal_status = FSAL_str2name(destname, MAXNAMLEN, &fileidname);
 
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             {
               DisplayLog
                   ("cache_inode_async_precreate_object failed: error in FSAL_str2name");
@@ -1123,7 +1122,7 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
                                     &fileidname,
                                     &root_fsal_context, &attr_src, &attr_dest);
 
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             {
               DisplayLog
                   ("cache_inode_async_precreate_object failed: error in FSAL_rename");
@@ -1176,7 +1175,7 @@ void *cache_inode_synclet_thread(void *Arg)
   SetNameFunction(namestr);
   DisplayLog("Started", index);
 
-  if ((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
+  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
       DisplayLog("Memory manager could not be initialized, exiting...");
@@ -1184,28 +1183,28 @@ void *cache_inode_synclet_thread(void *Arg)
     }
   DisplayLog("Memory manager successfully initialized");
 
-  while (1)
+  while(1)
     {
       /* Waiting for the ATD to submit some stuff in the op_lru pending list */
       P(synclet_data[index].mutex_op_condvar);
-      while (synclet_data[index].op_lru->nb_entry ==
-             synclet_data[index].op_lru->nb_invalid)
+      while(synclet_data[index].op_lru->nb_entry ==
+            synclet_data[index].op_lru->nb_invalid)
         pthread_cond_wait(&(synclet_data[index].op_condvar),
                           &(synclet_data[index].mutex_op_condvar));
 
       DisplayLogLevel(NIV_DEBUG, "I have an entry to deal with");
 
-      for (pentry_lru = synclet_data[index].op_lru->LRU; pentry_lru != NULL;
-           pentry_lru = pentry_lru->next)
+      for(pentry_lru = synclet_data[index].op_lru->LRU; pentry_lru != NULL;
+          pentry_lru = pentry_lru->next)
         {
-          if (pentry_lru->valid_state == LRU_ENTRY_VALID)
+          if(pentry_lru->valid_state == LRU_ENTRY_VALID)
             {
               found = TRUE;
               break;
             }
         }
 
-      if (!found)
+      if(!found)
         {
           V(synclet_data[index].mutex_op_condvar);
           DisplayLogLevel(NIV_MAJOR, "/!\\ Received a signal but no entry to manage... ");
@@ -1223,15 +1222,15 @@ void *cache_inode_synclet_thread(void *Arg)
       P(pentry->lock);
 
       /* Possible to pending ops reduction */
-      if (cache_inode_async_op_reduce(pentry->pending_ops, &pasyncoplist, &cache_status)
-          != CACHE_INODE_SUCCESS)
+      if(cache_inode_async_op_reduce(pentry->pending_ops, &pasyncoplist, &cache_status)
+         != CACHE_INODE_SUCCESS)
         {
           DisplayLogLevel(NIV_MAJOR,
                           "Couldn't reduce pending async op list for pentry %p", pentry);
         }
 
-      for (piter_opdesc = pasyncoplist; piter_opdesc != NULL;
-           piter_opdesc = piter_opdesc->next)
+      for(piter_opdesc = pasyncoplist; piter_opdesc != NULL;
+          piter_opdesc = piter_opdesc->next)
         {
           DisplayLogLevel(NIV_DEBUG, "I will proceed Asyncop=%p on entry=%p",
                           piter_opdesc, pentry);
@@ -1247,10 +1246,10 @@ void *cache_inode_synclet_thread(void *Arg)
           pthread_mutex_unlock(piter_opdesc->ppool_lock);
         }
 
-      if ((cache_status = cache_inode_resync_entry(pentry,
-                                                   pentry->pending_ops->ht,
-                                                   &pentry->pending_ops->fsal_op_context,
-                                                   &cache_status)) != CACHE_INODE_SUCCESS)
+      if((cache_status = cache_inode_resync_entry(pentry,
+                                                  pentry->pending_ops->ht,
+                                                  &pentry->pending_ops->fsal_op_context,
+                                                  &cache_status)) != CACHE_INODE_SUCCESS)
         {
           DisplayLog("/!\\ Could not resync pentry %p\n");
         }
@@ -1264,7 +1263,7 @@ void *cache_inode_synclet_thread(void *Arg)
 
       /* End of work: invalidate this LRU entry */
       P(synclet_data[index].mutex_op_condvar);
-      if (LRU_invalidate(synclet_data[index].op_lru, pentry_lru) != LRU_LIST_SUCCESS)
+      if(LRU_invalidate(synclet_data[index].op_lru, pentry_lru) != LRU_LIST_SUCCESS)
         {
           DisplayLog
               ("Incoherency: released entry for dispatch could not be tagged invalid");
@@ -1275,13 +1274,12 @@ void *cache_inode_synclet_thread(void *Arg)
       passcounter += 1;
 
       /* If neeeded, perform GC on LRU */
-      if (client_parameter.nb_before_gc < passcounter)
+      if(client_parameter.nb_before_gc < passcounter)
         {
           /* Its time for LRU gc */
           passcounter = 0;
 
-          if (LRU_gc_invalid(synclet_data[index].op_lru, (void *)NULL) !=
-              LRU_LIST_SUCCESS)
+          if(LRU_gc_invalid(synclet_data[index].op_lru, (void *)NULL) != LRU_LIST_SUCCESS)
             {
               DisplayLog("/!\\  Could not recover invalid entries from LRU...");
             }
@@ -1312,7 +1310,7 @@ void *cache_inode_asynchronous_dispatcher_thread(void *Arg)
   LRU_status_t lru_status;
 
   SetNameFunction("ATD");
-  while (1)
+  while(1)
     {
      /** @todo: BUGAZOMEU a call to usleep may provide a finer control */
       sleep(client_parameter.atd_sleeptime);
@@ -1320,8 +1318,8 @@ void *cache_inode_asynchronous_dispatcher_thread(void *Arg)
 
       P(mutex_async_pentries_list);
 
-      for (pentry_iter = async_pentries_list; pentry_iter != NULL;
-           pentry_iter = pentry_iter->next_asyncop)
+      for(pentry_iter = async_pentries_list; pentry_iter != NULL;
+          pentry_iter = pentry_iter->next_asyncop)
         {
           DisplayLogLevel(NIV_DEBUG, "Pentry %p needs md-writeback operations to be made",
                           pentry_iter);
@@ -1330,8 +1328,8 @@ void *cache_inode_asynchronous_dispatcher_thread(void *Arg)
           synclet_index = cache_inode_async_choose_synclet();
 
           P(synclet_data[synclet_index].mutex_op_condvar);
-          if ((pentry_lru =
-               LRU_new_entry(synclet_data[synclet_index].op_lru, &lru_status)) == NULL)
+          if((pentry_lru =
+              LRU_new_entry(synclet_data[synclet_index].op_lru, &lru_status)) == NULL)
             {
               DisplayLogLevel(NIV_MAJOR,
                               "Error while inserting entry to synclet #%u... exiting",
@@ -1342,7 +1340,7 @@ void *cache_inode_asynchronous_dispatcher_thread(void *Arg)
           pentry_lru->buffdata.pdata = (caddr_t) pentry_iter;
           pentry_lru->buffdata.len = 0;
 
-          if (pthread_cond_signal(&(synclet_data[synclet_index].op_condvar)) == -1)
+          if(pthread_cond_signal(&(synclet_data[synclet_index].op_condvar)) == -1)
             {
               V(synclet_data[synclet_index].mutex_op_condvar);
               DisplayLog("Cond signal failed for Synclet#%u , errno = %d", synclet_index,

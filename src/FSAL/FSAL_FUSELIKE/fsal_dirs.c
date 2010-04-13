@@ -57,13 +57,13 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
   /* sanity checks
    * note : dir_attributes is optionnal.
    */
-  if (!dir_handle || !p_context || !dir_descriptor)
+  if(!dir_handle || !p_context || !dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_opendir);
 
   /* get the full path for this directory */
   rc = NamespacePath(dir_handle->inode, dir_handle->device, dir_handle->validator,
                      object_path);
-  if (rc)
+  if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_opendir);
 
   memset(dir_descriptor, 0, sizeof(fsal_dir_t));
@@ -73,13 +73,13 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
 
   /* check opendir call */
 
-  if (p_fs_ops->opendir)
+  if(p_fs_ops->opendir)
     {
       TakeTokenFSCall();
       rc = p_fs_ops->opendir(object_path, &(dir_descriptor->dir_info));
       ReleaseTokenFSCall();
 
-      if (rc)
+      if(rc)
         Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_opendir);
     }
   else
@@ -95,14 +95,14 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
   dir_descriptor->context = *p_context;
 
   /* optionaly get attributes */
-  if (dir_attributes)
+  if(dir_attributes)
     {
       fsal_status_t status;
 
       status = FSAL_getattrs(dir_handle, p_context, dir_attributes);
 
       /* on error, we set a special bit in the mask. */
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(dir_attributes->asked_attributes);
           FSAL_SET_MASK(dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -137,9 +137,9 @@ static void fill_dirent(fsal_dirent_t * to_be_filled,
   struct stat tmp_statbuff;
   int err = FALSE;
 
-  if (stbuf)
+  if(stbuf)
     {
-      if (stbuf->st_ino == 0)
+      if(stbuf->st_ino == 0)
         {
           DisplayLogJdLevel(fsal_log, NIV_DEBUG,
                             "WARNING in fill_dirent: Filesystem doesn't provide inode numbers !!!");
@@ -165,7 +165,7 @@ static void fill_dirent(fsal_dirent_t * to_be_filled,
            to_be_filled->attributes.type, tmp_statbuff.st_mode,
            to_be_filled->attributes.mode);
 #endif
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(to_be_filled->attributes.asked_attributes);
           /* set getattr error bit in attr mask */
@@ -178,11 +178,11 @@ static void fill_dirent(fsal_dirent_t * to_be_filled,
    * or if values seem to be inconsistent,
    * proceed a lookup afterward */
 
-  if (!stbuf
-      || (stbuf->st_ino == 0)
-      || err
-      || to_be_filled->attributes.type == (fsal_nodetype_t) - 1
-      || to_be_filled->attributes.mode == 0 || to_be_filled->attributes.numlinks == 0)
+  if(!stbuf
+     || (stbuf->st_ino == 0)
+     || err
+     || to_be_filled->attributes.type == (fsal_nodetype_t) - 1
+     || to_be_filled->attributes.mode == 0 || to_be_filled->attributes.numlinks == 0)
     {
       FSAL_CLEAR_MASK(to_be_filled->attributes.asked_attributes);
       /* we only known entry name, we tag it for a later lookup.
@@ -203,11 +203,11 @@ static int ganefuse_fill_dir(void *buf, const char *name,
   fsal_dirent_t *tab;
   unsigned int i;
 
-  if (!dirbuff)
+  if(!dirbuff)
     return 1;
 
   /* missing name parameter */
-  if (!name)
+  if(!name)
     {
       dirbuff->status.major = ERR_FSAL_INVAL;
       dirbuff->status.minor = 0;
@@ -215,11 +215,11 @@ static int ganefuse_fill_dir(void *buf, const char *name,
     }
 
   /* if this is . or .., ignore */
-  if (!strcmp(name, ".") || !strcmp(name, ".."))
+  if(!strcmp(name, ".") || !strcmp(name, ".."))
     return 0;
 
   /* full output buffer */
-  if (dirbuff->nb_entries == dirbuff->max_entries)
+  if(dirbuff->nb_entries == dirbuff->max_entries)
     {
       /* should not have been called */
       dirbuff->status.major = ERR_FSAL_SERVERFAULT;
@@ -230,7 +230,7 @@ static int ganefuse_fill_dir(void *buf, const char *name,
   tab = dirbuff->p_entries;
 
   /* offset is provided */
-  if (off)
+  if(off)
     {
       i = dirbuff->nb_entries;
       fill_dirent(&(tab[i]), dirbuff->getattr_mask, name, stbuf, off);
@@ -239,7 +239,7 @@ static int ganefuse_fill_dir(void *buf, const char *name,
     {
       /* no offset is provided, we must skip some entries */
 
-      if (dirbuff->curr_off < dirbuff->begin_off)
+      if(dirbuff->curr_off < dirbuff->begin_off)
         {
           /* skip entry and go to the next */
           dirbuff->curr_off++;
@@ -255,7 +255,7 @@ static int ganefuse_fill_dir(void *buf, const char *name,
 
   dirbuff->nb_entries++;
 
-  if (dirbuff->nb_entries == dirbuff->max_entries)
+  if(dirbuff->nb_entries == dirbuff->max_entries)
     return 1;
   else
     return 0;
@@ -322,17 +322,17 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
   /* sanity checks */
 
-  if (!dir_descriptor || !pdirent || !end_position || !nb_entries || !end_of_dir)
+  if(!dir_descriptor || !pdirent || !end_position || !nb_entries || !end_of_dir)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
   /* get the full path for dir inode */
   rc = NamespacePath(dir_descriptor->dir_handle.inode,
                      dir_descriptor->dir_handle.device,
                      dir_descriptor->dir_handle.validator, dir_path);
-  if (rc)
+  if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_readdir);
 
-  if (!p_fs_ops->readdir && !p_fs_ops->getdir)
+  if(!p_fs_ops->readdir && !p_fs_ops->getdir)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_readdir);
 
   /* set context so it can be retrieved by FS */
@@ -351,7 +351,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
   TakeTokenFSCall();
 
-  if (p_fs_ops->readdir)
+  if(p_fs_ops->readdir)
     rc = p_fs_ops->readdir(dir_path, (void *)&reqbuff, ganefuse_fill_dir,
                            start_position, &dir_descriptor->dir_info);
   else
@@ -359,14 +359,14 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
   ReleaseTokenFSCall();
 
-  if (rc)
+  if(rc)
     Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_readdir);
-  else if (FSAL_IS_ERROR(reqbuff.status))
+  else if(FSAL_IS_ERROR(reqbuff.status))
     Return(reqbuff.status.major, reqbuff.status.minor, INDEX_FSAL_readdir);
 
   /* if no entry found */
 
-  if (reqbuff.nb_entries == 0)
+  if(reqbuff.nb_entries == 0)
     {
       *end_position = start_position;
       *end_of_dir = TRUE;
@@ -386,11 +386,11 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
    * - adding dir entries to namespace
    */
 
-  for (i = 0; i < reqbuff.nb_entries; i++)
+  for(i = 0; i < reqbuff.nb_entries; i++)
     {
       /* 1) chaining entries together */
 
-      if (i == reqbuff.nb_entries - 1)
+      if(i == reqbuff.nb_entries - 1)
         {                       /* last entry */
           pdirent[i].nextentry = NULL;
           *end_position = pdirent[i].cookie;
@@ -400,7 +400,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
       /* 2) check weither the filesystem provided stat buff */
 
-      if (pdirent[i].handle.inode == INODE_TO_BE_COMPLETED)
+      if(pdirent[i].handle.inode == INODE_TO_BE_COMPLETED)
         {
           /* If not, make a lookup operation for this entry.
            * (this with automatically add it to namespace) */
@@ -415,7 +415,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
                            &dir_descriptor->context,
                            &pdirent[i].handle, &pdirent[i].attributes);
 
-          if (FSAL_IS_ERROR(st))
+          if(FSAL_IS_ERROR(st))
             Return(st.major, st.minor, INDEX_FSAL_readdir);
         }
       else
@@ -424,7 +424,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
            *    Also set a validator for this entry.
            */
 
-          if (strcmp(pdirent[i].name.name, ".") && strcmp(pdirent[i].name.name, ".."))
+          if(strcmp(pdirent[i].name.name, ".") && strcmp(pdirent[i].name.name, ".."))
             {
 #ifdef _DEBUG_FSAL
               printf("adding entry to namespace: %lX.%ld %s\n",
@@ -477,17 +477,17 @@ fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
   char dir_path[FSAL_MAX_PATH_LEN];
 
   /* sanity checks */
-  if (!dir_descriptor)
+  if(!dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_closedir);
 
   /* get the full path for dir inode */
   rc = NamespacePath(dir_descriptor->dir_handle.inode,
                      dir_descriptor->dir_handle.device,
                      dir_descriptor->dir_handle.validator, dir_path);
-  if (rc)
+  if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_closedir);
 
-  if (!p_fs_ops->releasedir)
+  if(!p_fs_ops->releasedir)
     /* ignore this call */
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_closedir);
 
@@ -502,7 +502,7 @@ fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
 
   ReleaseTokenFSCall();
 
-  if (rc)
+  if(rc)
     Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_closedir);
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_closedir);

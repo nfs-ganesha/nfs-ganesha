@@ -38,7 +38,7 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if (!parent_directory_handle || !p_context || !object_handle)
+  if(!parent_directory_handle || !p_context || !object_handle)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_create);
 
   /* test modification rights on parent directory.
@@ -49,7 +49,7 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
                       GHOSTFS_TEST_WRITE,
                       p_context->credential.user, p_context->credential.group);
 
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_create);
 
   rc = GHOSTFS_Create((GHOSTFS_handle_t) * parent_directory_handle,
@@ -58,14 +58,14 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
                       p_context->credential.group,
                       fsal2ghost_mode(accessmode), &new_handle, &ghost_attrs);
 
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_create);
 
   /* set the output handle */
   *object_handle = (fsal_handle_t) new_handle;
 
   /* set attributes if asked */
-  if (object_attributes)
+  if(object_attributes)
     ghost2fsal_attrs(object_attributes, &ghost_attrs);
 
   /* GHOSTFS create is done */
@@ -91,7 +91,7 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if (!parent_directory_handle || !p_context || !object_handle)
+  if(!parent_directory_handle || !p_context || !object_handle)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mkdir);
 
   /* test modification rights on parent directory.
@@ -102,7 +102,7 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
                       GHOSTFS_TEST_WRITE,
                       p_context->credential.user, p_context->credential.group);
 
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_mkdir);
 
   rc = GHOSTFS_MkDir((GHOSTFS_handle_t) * parent_directory_handle,
@@ -111,14 +111,14 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
                      p_context->credential.group,
                      fsal2ghost_mode(accessmode), &new_handle, &ghost_attrs);
 
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_mkdir);
 
   /* set the output handle */
   *object_handle = (fsal_handle_t) new_handle;
 
   /* set attributes if asked */
-  if (object_attributes)
+  if(object_attributes)
     ghost2fsal_attrs(object_attributes, &ghost_attrs);
 
   /* GHOSTFS mkdir is done */
@@ -143,7 +143,7 @@ fsal_status_t FSAL_link(fsal_handle_t * target_handle,  /* IN */
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if (!dir_handle || !p_link_name || !p_context || !target_handle)
+  if(!dir_handle || !p_link_name || !p_context || !target_handle)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_link);
 
   /* test modification rights on parent directory.
@@ -154,17 +154,17 @@ fsal_status_t FSAL_link(fsal_handle_t * target_handle,  /* IN */
                       GHOSTFS_TEST_WRITE,
                       p_context->credential.user, p_context->credential.group);
 
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_link);
 
   rc = GHOSTFS_Link((GHOSTFS_handle_t) * dir_handle,
                     p_link_name->name, (GHOSTFS_handle_t) * target_handle, &ghost_attrs);
 
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_link);
 
   /* set attributes if asked */
-  if (attributes)
+  if(attributes)
     ghost2fsal_attrs(attributes, &ghost_attrs);
 
   /* GHOSTFS create is done */
@@ -189,7 +189,7 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
   /* sanity checks.
    * note : link_attributes is optional.
    */
-  if (!parentdir_handle || !p_context || !nodetype || !dev)
+  if(!parentdir_handle || !p_context || !nodetype || !dev)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mknode);
 
   /* GHOSTFS is read only */

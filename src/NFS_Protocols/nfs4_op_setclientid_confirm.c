@@ -163,17 +163,17 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
   /* DisplayLogLevel( NIV_DEBUG, "SETCLIENTID_CONFIRM Verifier = #%s#", arg_SETCLIENTID_CONFIRM4.setclientid_confirm ) ; */
 
   /* Does this id already exists ? */
-  if (nfs_client_id_get(clientid, &nfs_clientid) == CLIENT_ID_SUCCESS)
+  if(nfs_client_id_get(clientid, &nfs_clientid) == CLIENT_ID_SUCCESS)
     {
       /* The client id should not be confirmed */
-      if (nfs_clientid.confirmed == CONFIRMED_CLIENT_ID)
+      if(nfs_clientid.confirmed == CONFIRMED_CLIENT_ID)
         {
           /* Client id was already confirmed and is then in use, this is NFS4ERR_CLID_INUSE if not same client */
 
           /* Check the verifier */
-          if (strncmp
-              (nfs_clientid.verifier, arg_SETCLIENTID_CONFIRM4.setclientid_confirm,
-               NFS4_VERIFIER_SIZE))
+          if(strncmp
+             (nfs_clientid.verifier, arg_SETCLIENTID_CONFIRM4.setclientid_confirm,
+              NFS4_VERIFIER_SIZE))
             {
               /* Bad verifier */
               res_SETCLIENTID_CONFIRM4.status = NFS4ERR_CLID_INUSE;
@@ -182,7 +182,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
         }
       else
         {
-          if (nfs_clientid.confirmed == REBOOTED_CLIENT_ID)
+          if(nfs_clientid.confirmed == REBOOTED_CLIENT_ID)
             {
               DisplayLogLevel(NIV_DEBUG,
                               "SETCLIENTID_CONFIRM clientid = %llx, client was rebooted, getting ride of old state from previous client instance",
@@ -196,8 +196,8 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
           nfs_clientid.last_renew = time(NULL);
 
           /* Set the new value */
-          if (nfs_client_id_set(clientid, nfs_clientid, pworker->clientid_pool) !=
-              CLIENT_ID_SUCCESS)
+          if(nfs_client_id_set(clientid, nfs_clientid, pworker->clientid_pool) !=
+             CLIENT_ID_SUCCESS)
             {
               res_SETCLIENTID_CONFIRM4.status = NFS4ERR_SERVERFAULT;
               return res_SETCLIENTID_CONFIRM4.status;

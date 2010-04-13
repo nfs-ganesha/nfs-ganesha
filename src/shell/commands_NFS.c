@@ -229,9 +229,9 @@ writeverf3 NFS3_write_verifier;
 void print_nfs_res(nfs_res_t * p_res)
 {
   int index;
-  for (index = 0; index < sizeof(nfs_res_t); index++)
+  for(index = 0; index < sizeof(nfs_res_t); index++)
     {
-      if ((index + 1) % 32 == 0)
+      if((index + 1) % 32 == 0)
         printf("%02X\n", ((char *)p_res)[index]);
       else
         printf("%02X.", ((char *)p_res)[index]);
@@ -325,7 +325,7 @@ static void init_keys(void)
 {
   time_t ServerBootTime = time(NULL);
 
-  if (pthread_key_create(&thread_key, NULL) == -1)
+  if(pthread_key_create(&thread_key, NULL) == -1)
     printf("Error %d creating pthread key for thread %p : %s\n",
            errno, (caddr_t) pthread_self(), strerror(errno));
 
@@ -340,7 +340,7 @@ cmdnfs_thr_info_t *GetNFSClient()
   cmdnfs_thr_info_t *p_thr_info;
 
   /* first, we init the keys if this is the first time */
-  if (pthread_once(&once_key, init_keys) != 0)
+  if(pthread_once(&once_key, init_keys) != 0)
     {
       printf("Error %d calling pthread_once for thread %p : %s\n",
              errno, (caddr_t) pthread_self(), strerror(errno));
@@ -350,14 +350,14 @@ cmdnfs_thr_info_t *GetNFSClient()
   p_thr_info = (cmdnfs_thr_info_t *) pthread_getspecific(thread_key);
 
   /* we allocate the thread context if this is the first time */
-  if (p_thr_info == NULL)
+  if(p_thr_info == NULL)
     {
 
       /* allocates thread structure */
       p_thr_info = (cmdnfs_thr_info_t *) Mem_Alloc(sizeof(cmdnfs_thr_info_t));
 
       /* panic !!! */
-      if (p_thr_info == NULL)
+      if(p_thr_info == NULL)
         {
           printf("%p:commands_NFS: Not enough memory\n", (caddr_t) pthread_self());
           return NULL;
@@ -385,16 +385,16 @@ int InitNFSClient(cmdnfs_thr_info_t * p_thr_info)
   fsal_status_t st;
   struct passwd *pw_struct;
 
-  if (p_thr_info == NULL)
+  if(p_thr_info == NULL)
     return -1;
 
-  if (p_thr_info->is_thread_init == TRUE)
+  if(p_thr_info->is_thread_init == TRUE)
     return 0;
 
   /* for the moment, create export context for root fileset */
   st = FSAL_BuildExportContext(&p_thr_info->exp_context, NULL, NULL);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     {
       printf
           ("%p:commands_NFS: Error %d initializing credentials for thread (FSAL_InitThreadCred)\n",
@@ -406,7 +406,7 @@ int InitNFSClient(cmdnfs_thr_info_t * p_thr_info)
 
   st = FSAL_InitClientContext(&p_thr_info->context);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     {
       printf
           ("%p:commands_NFS: Error %d initializing credentials for thread (FSAL_InitThreadCred)\n",
@@ -417,7 +417,7 @@ int InitNFSClient(cmdnfs_thr_info_t * p_thr_info)
   uid = getuid();
   pw_struct = getpwuid(uid);
 
-  if (pw_struct == NULL)
+  if(pw_struct == NULL)
     {
       printf("commands_NFS: Unknown user %u\n", uid);
       return errno;
@@ -426,7 +426,7 @@ int InitNFSClient(cmdnfs_thr_info_t * p_thr_info)
   st = FSAL_GetClientContext(&p_thr_info->context, &p_thr_info->exp_context,
                              uid, pw_struct->pw_gid, NULL, 0);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     {
       printf("%p:commands_NFS: Error %d getting contexte for uid %d (FSAL_GetUserCred)\n",
              (caddr_t) pthread_self(), st.major, uid);
@@ -439,11 +439,11 @@ int InitNFSClient(cmdnfs_thr_info_t * p_thr_info)
   p_thr_info->authunix_struct.aup_len = 0; /** @todo No secondary groups support. */
 
   /* Init the cache_inode client */
-  if (cache_inode_client_init(&p_thr_info->client, cache_client_param, 0, NULL) != 0)
+  if(cache_inode_client_init(&p_thr_info->client, cache_client_param, 0, NULL) != 0)
     return 1;
 
   /* Init the cache content client */
-  if (cache_content_client_init(&p_thr_info->dc_client, datacache_client_param) != 0)
+  if(cache_content_client_init(&p_thr_info->dc_client, datacache_client_param) != 0)
     return 1;
 
   p_thr_info->client.pcontent_client = (caddr_t) & p_thr_info->dc_client;
@@ -487,17 +487,17 @@ int nfs_init(char *filename, int flag_v, FILE * output)
 
   config_file = config_ParseFile(filename);
 
-  if (!config_file)
+  if(!config_file)
     {
       fprintf(output, "nfs_init: Error parsing %s: %s\n", filename, config_GetErrorMsg());
       return -1;
     }
 
-  if ((rc =
-       cache_content_read_conf_client_parameter(config_file,
-                                                &nfs_param.cache_layers_param.
-                                                cache_content_client_param)) !=
-      CACHE_CONTENT_SUCCESS)
+  if((rc =
+      cache_content_read_conf_client_parameter(config_file,
+                                               &nfs_param.
+                                               cache_layers_param.cache_content_client_param))
+     != CACHE_CONTENT_SUCCESS)
     {
       fprintf(output, "nfs_init: Error %d reading cache content parameters.\n", -rc);
       return -1;
@@ -507,14 +507,14 @@ int nfs_init(char *filename, int flag_v, FILE * output)
 
   rc = ReadExports(config_file, &pexportlist);
 
-  if (rc < 0)
+  if(rc < 0)
     {
       fprintf(output, "nfs_init: Error %d while parsing exports file.\n", -rc);
       return -1;
     }
 
   /* initalize export entries */
-  if (rc = nfs_export_create_root_entry(pexportlist, ht) != TRUE)
+  if(rc = nfs_export_create_root_entry(pexportlist, ht) != TRUE)
     {
       fprintf(output, "nfs_init: Error %d initializing root entries, exiting...", -rc);
       return -1;
@@ -522,7 +522,7 @@ int nfs_init(char *filename, int flag_v, FILE * output)
 
   /* geting the hostname */
   rc = gethostname(localmachine, sizeof(localmachine));
-  if (rc != 0)
+  if(rc != 0)
     {
       fprintf(output, "nfs_init: Error %d while getting hostname.\n", rc);
       return -1;
@@ -532,7 +532,7 @@ int nfs_init(char *filename, int flag_v, FILE * output)
 
   is_nfs_layer_initialized = TRUE;
 
-  if (flag_v)
+  if(flag_v)
     fprintf(output, "\tNFS layer successfully initialized.\n");
 
   return 0;
@@ -558,7 +558,7 @@ int fn_nfs_init(int argc,       /* IN : number of args in argv */
       "usage: nfs_init [options] <ganesha_config_file>\n"
       "options :\n" "\t-h print this help\n" "\t-v verbose mode\n";
 
-  if (is_nfs_layer_initialized != FALSE)
+  if(is_nfs_layer_initialized != FALSE)
     {
       fprintf(output, "\tNFS layer is already initialized.\n");
       return 0;
@@ -566,12 +566,12 @@ int fn_nfs_init(int argc,       /* IN : number of args in argv */
 
   /* analysing options */
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "nfs_init: warning: option 'v' has been specified more than once.\n");
           else
@@ -579,7 +579,7 @@ int fn_nfs_init(int argc,       /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "nfs_init: warning: option 'h' has been specified more than once.\n");
           else
@@ -593,14 +593,14 @@ int fn_nfs_init(int argc,       /* IN : number of args in argv */
         }                       /* switch */
     }                           /* while */
 
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_nfs_init);
       return 0;
     }
 
   /* verifies mandatory argument */
-  if (Optind != (argc - 1))
+  if(Optind != (argc - 1))
     {
       /* too much or not enough arguments */
       err_flag++;
@@ -608,7 +608,7 @@ int fn_nfs_init(int argc,       /* IN : number of args in argv */
   else
     filename = argv[Optind];
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_nfs_init);
       return -1;
@@ -635,7 +635,7 @@ int fn_MNT1_command(int argc,   /* IN : number of args in argv */
   int rc;
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -643,25 +643,25 @@ int fn_MNT1_command(int argc,   /* IN : number of args in argv */
 
   p_thr_info = GetNFSClient();
 
-  if (p_thr_info->is_thread_init != TRUE)
+  if(p_thr_info->is_thread_init != TRUE)
     {
-      if (rc = InitNFSClient(p_thr_info))
+      if(rc = InitNFSClient(p_thr_info))
         {
           fprintf(output, "\t%s: Error %d during thread initialization.\n", argv[0], rc);
           return -1;
         }
     }
 
-  while (funcdesc->func_name != NULL)
+  while(funcdesc->func_name != NULL)
     {
-      if (!strcmp(funcdesc->func_name, argv[0]))
+      if(!strcmp(funcdesc->func_name, argv[0]))
         {
 
           /* encoding args */
 
-          if (funcdesc->func_encode(CMDNFS_ENCODE,
-                                    argc - 1, argv + 1,
-                                    0, NULL, (caddr_t) & nfs_arg) == FALSE)
+          if(funcdesc->func_encode(CMDNFS_ENCODE,
+                                   argc - 1, argv + 1,
+                                   0, NULL, (caddr_t) & nfs_arg) == FALSE)
             {
               fprintf(output, "%s: bad arguments.\n", argv[0]);
               fprintf(output, "Usage: %s\n", funcdesc->func_help);
@@ -725,7 +725,7 @@ int fn_MNT3_command(int argc,   /* IN : number of args in argv */
   int rc;
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -733,25 +733,25 @@ int fn_MNT3_command(int argc,   /* IN : number of args in argv */
 
   p_thr_info = GetNFSClient();
 
-  if (p_thr_info->is_thread_init != TRUE)
+  if(p_thr_info->is_thread_init != TRUE)
     {
-      if (rc = InitNFSClient(p_thr_info))
+      if(rc = InitNFSClient(p_thr_info))
         {
           fprintf(output, "\t%s: Error %d during thread initialization.\n", argv[0], rc);
           return -1;
         }
     }
 
-  while (funcdesc->func_name != NULL)
+  while(funcdesc->func_name != NULL)
     {
-      if (!strcmp(funcdesc->func_name, argv[0]))
+      if(!strcmp(funcdesc->func_name, argv[0]))
         {
 
           /* encoding args */
 
-          if (funcdesc->func_encode(CMDNFS_ENCODE,
-                                    argc - 1, argv + 1,
-                                    0, NULL, (caddr_t) & nfs_arg) == FALSE)
+          if(funcdesc->func_encode(CMDNFS_ENCODE,
+                                   argc - 1, argv + 1,
+                                   0, NULL, (caddr_t) & nfs_arg) == FALSE)
             {
               fprintf(output, "%s: bad arguments.\n", argv[0]);
               fprintf(output, "Usage: %s\n", funcdesc->func_help);
@@ -817,7 +817,7 @@ int fn_NFS2_command(int argc,   /* IN : number of args in argv */
   short exportid;
   exportlist_t *pexport;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -825,25 +825,25 @@ int fn_NFS2_command(int argc,   /* IN : number of args in argv */
 
   p_thr_info = GetNFSClient();
 
-  if (p_thr_info->is_thread_init != TRUE)
+  if(p_thr_info->is_thread_init != TRUE)
     {
-      if (rc = InitNFSClient(p_thr_info))
+      if(rc = InitNFSClient(p_thr_info))
         {
           fprintf(output, "\t%s: Error %d during thread initialization.\n", argv[0], rc);
           return -1;
         }
     }
 
-  while (funcdesc->func_name != NULL)
+  while(funcdesc->func_name != NULL)
     {
-      if (!strcmp(funcdesc->func_name, argv[0]))
+      if(!strcmp(funcdesc->func_name, argv[0]))
         {
 
           /* encoding args */
 
-          if (funcdesc->func_encode(CMDNFS_ENCODE,
-                                    argc - 1, argv + 1,
-                                    0, NULL, (caddr_t) & nfs_arg) == FALSE)
+          if(funcdesc->func_encode(CMDNFS_ENCODE,
+                                   argc - 1, argv + 1,
+                                   0, NULL, (caddr_t) & nfs_arg) == FALSE)
             {
               fprintf(output, "%s: bad arguments.\n", argv[0]);
               fprintf(output, "Usage: %s\n", funcdesc->func_help);
@@ -857,10 +857,10 @@ int fn_NFS2_command(int argc,   /* IN : number of args in argv */
           req.rq_clntcred = (caddr_t) & p_thr_info->authunix_struct;
 
           /* the only function that doesn't take a filehandle */
-          if (funcdesc->func_call != nfs_Null)
+          if(funcdesc->func_call != nfs_Null)
             {
               exportid = nfs2_FhandleToExportId((fhandle2 *) & nfs_arg);
-              if ((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+              if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
                 {
                   /* invalid handle */
                   fprintf(output, "\t%s: Bad arguments: Invalid file handle.\n", argv[0]);
@@ -924,7 +924,7 @@ int fn_NFS3_command(int argc,   /* IN : number of args in argv */
   short exportid;
   exportlist_t *pexport;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -932,25 +932,25 @@ int fn_NFS3_command(int argc,   /* IN : number of args in argv */
 
   p_thr_info = GetNFSClient();
 
-  if (p_thr_info->is_thread_init != TRUE)
+  if(p_thr_info->is_thread_init != TRUE)
     {
-      if (rc = InitNFSClient(p_thr_info))
+      if(rc = InitNFSClient(p_thr_info))
         {
           fprintf(output, "\t%s: Error %d during thread initialization.\n", argv[0], rc);
           return -1;
         }
     }
 
-  while (funcdesc->func_name != NULL)
+  while(funcdesc->func_name != NULL)
     {
-      if (!strcmp(funcdesc->func_name, argv[0]))
+      if(!strcmp(funcdesc->func_name, argv[0]))
         {
 
           /* encoding args */
 
-          if (funcdesc->func_encode(CMDNFS_ENCODE,
-                                    argc - 1, argv + 1,
-                                    0, NULL, (caddr_t) & nfs_arg) == FALSE)
+          if(funcdesc->func_encode(CMDNFS_ENCODE,
+                                   argc - 1, argv + 1,
+                                   0, NULL, (caddr_t) & nfs_arg) == FALSE)
             {
               fprintf(output, "%s: bad arguments.\n", argv[0]);
               fprintf(output, "Usage: %s\n", funcdesc->func_help);
@@ -964,10 +964,10 @@ int fn_NFS3_command(int argc,   /* IN : number of args in argv */
           req.rq_clntcred = (caddr_t) & p_thr_info->authunix_struct;
 
           /* the only function that doesn't take a filehandle */
-          if (funcdesc->func_call != nfs_Null)
+          if(funcdesc->func_call != nfs_Null)
             {
               exportid = nfs3_FhandleToExportId((nfs_fh3 *) & nfs_arg);
-              if ((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+              if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
                 {
                   /* invalid handle */
                   fprintf(output, "\t%s: Bad arguments: Invalid file handle.\n", argv[0]);
@@ -1047,12 +1047,12 @@ static int nfs_solvepath(cmdnfs_thr_info_t * p_thr_info, char *io_global_path,  
   curr = str_path;
   next_name = str_path;
 
-  if (str_path[0] == '@')
+  if(str_path[0] == '@')
     {
 
       rc = cmdnfs_fhandle3(CMDNFS_ENCODE, 1, &pstr_path, 0, NULL, (caddr_t) & hdl_param);
 
-      if (rc != TRUE)
+      if(rc != TRUE)
         {
           fprintf(output, "Invalid FileHandle: %s\n", str_path);
           return -1;
@@ -1067,7 +1067,7 @@ static int nfs_solvepath(cmdnfs_thr_info_t * p_thr_info, char *io_global_path,  
       return 0;
 
     }
-  else if (str_path[0] == '/')
+  else if(str_path[0] == '/')
     {
       /* absolute path, starting from "/", with a relative path */
       curr++;
@@ -1076,7 +1076,7 @@ static int nfs_solvepath(cmdnfs_thr_info_t * p_thr_info, char *io_global_path,  
       strncpy(tmp_path, "/", NFS2_MAXPATHLEN);
 
       /* the the directory  is /, return */
-      if (str_path[1] == '\0')
+      if(str_path[1] == '\0')
         {
           strncpy(io_global_path, tmp_path, size_global_path);
           *pnew_hdl = hdl_lookup;
@@ -1094,10 +1094,10 @@ static int nfs_solvepath(cmdnfs_thr_info_t * p_thr_info, char *io_global_path,  
   do
     {
       /* tokenize to the next '/' */
-      while ((curr[0] != '\0') && (curr[0] != '/'))
+      while((curr[0] != '\0') && (curr[0] != '/'))
         curr++;
 
-      if (!curr[0])
+      if(!curr[0])
         last = 1;               /* remembers if it was the last dir */
 
       curr[0] = '\0';
@@ -1114,7 +1114,7 @@ static int nfs_solvepath(cmdnfs_thr_info_t * p_thr_info, char *io_global_path,  
       req.rq_clntcred = (caddr_t) & p_thr_info->authunix_struct;
 
       exportid = nfs3_FhandleToExportId(&dirop_arg.dir);
-      if ((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+      if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
         {
           /* invalid handle */
           fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1128,14 +1128,14 @@ static int nfs_solvepath(cmdnfs_thr_info_t * p_thr_info, char *io_global_path,  
                       &(p_thr_info->context),
                       &(p_thr_info->client), ht, &req, (nfs_res_t *) & lookup_res);
 
-      if (rc != 0)
+      if(rc != 0)
         {
           fprintf(output, "Error %d in nfs_Lookup.\n", rc);
           return rc;
         }
 
       rc = lookup_res.status;
-      if (rc != NFS3_OK)
+      if(rc != NFS3_OK)
         {
           nfs3_Lookup_Free((nfs_res_t *) & lookup_res);
           fprintf(output, "Error %d in NFSv3 protocol: %s\n", rc, nfsstat3_to_str(rc));
@@ -1152,22 +1152,22 @@ static int nfs_solvepath(cmdnfs_thr_info_t * p_thr_info, char *io_global_path,  
       strncat(tmp_path, next_name, FSAL_MAX_PATH_LEN);
 
       /* updates cursors */
-      if (!last)
+      if(!last)
         {
           curr++;
           next_name = curr;
           /* ignore successive slashes */
-          while ((curr[0] != '\0') && (curr[0] == '/'))
+          while((curr[0] != '\0') && (curr[0] == '/'))
             {
               curr++;
               next_name = curr;
             }
-          if (!curr[0])
+          if(!curr[0])
             last = 1;           /* it is the last dir */
         }
 
     }
-  while (!last);
+  while(!last);
 
   /* everything is OK, apply changes */
   clean_path(tmp_path, size_global_path);
@@ -1198,7 +1198,7 @@ static int nfs_getattr(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_hdl,
   set_nfs_fh3(&nfshdl, p_hdl);
 
   exportid = nfs3_FhandleToExportId(&nfshdl);
-  if ((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1210,14 +1210,14 @@ static int nfs_getattr(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_hdl,
                    &(p_thr_info->context),
                    &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       fprintf(output, "Error %d in nfs_Getattr.\n", rc);
       return rc;
     }
 
   rc = res.status;
-  if (rc != NFS3_OK)
+  if(rc != NFS3_OK)
     {
       fprintf(output, "Error %d in NFSv3 protocol: %s\n", rc, nfsstat3_to_str(rc));
 
@@ -1255,7 +1255,7 @@ static int nfs_access(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_hdl, nfs3_
   req.rq_clntcred = (caddr_t) & p_thr_info->authunix_struct;
 
   exportid = nfs3_FhandleToExportId(&arg.object);
-  if ((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1267,14 +1267,14 @@ static int nfs_access(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_hdl, nfs3_
                    &(p_thr_info->context),
                    &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       fprintf(output, "Error %d in nfs_Access.\n", rc);
       return rc;
     }
 
   rc = res.status;
-  if (rc != NFS3_OK)
+  if(rc != NFS3_OK)
     {
       fprintf(output, "Error %d in NFSv3 protocol: %s\n", rc, nfsstat3_to_str(rc));
       nfs3_Access_Free((nfs_res_t *) & res);
@@ -1310,7 +1310,7 @@ static int nfs_readlink(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_hdl,
   req.rq_clntcred = (caddr_t) & p_thr_info->authunix_struct;
 
   exportid = nfs3_FhandleToExportId(&nfshdl);
-  if ((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1322,14 +1322,14 @@ static int nfs_readlink(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_hdl,
                     &(p_thr_info->context),
                     &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       fprintf(output, "Error %d in nfs_Readlink.\n", rc);
       return rc;
     }
 
   rc = res.status;
-  if (rc != NFS3_OK)
+  if(rc != NFS3_OK)
     {
       fprintf(output, "Error %d in NFSv3 protocol: %s\n", rc, nfsstat3_to_str(rc));
       nfs3_Readlink_Free((nfs_res_t *) & res);
@@ -1372,7 +1372,7 @@ static int nfs_readdirplus(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_dir_h
   req.rq_clntcred = (caddr_t) & p_thr_info->authunix_struct;
 
   exportid = nfs3_FhandleToExportId(&arg.dir);
-  if ((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1386,7 +1386,7 @@ static int nfs_readdirplus(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_dir_h
                         &(p_thr_info->context),
                         &(p_thr_info->client), ht, &req, (nfs_res_t *) p_res);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       Mem_Free(p_res);
       fprintf(output, "Error %d in nfs3_Readdirplus.\n", rc);
@@ -1394,7 +1394,7 @@ static int nfs_readdirplus(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_dir_h
     }
 
   rc = p_res->status;
-  if (rc != NFS3_OK)
+  if(rc != NFS3_OK)
     {
       nfs3_Readdirplus_Free((nfs_res_t *) p_res);
       Mem_Free(p_res);
@@ -1413,7 +1413,7 @@ static int nfs_readdirplus(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_dir_h
 
 void nfs_readdirplus_free(nfs_res_t * to_free)
 {
-  if (to_free == NULL)
+  if(to_free == NULL)
     return;
 
   nfs3_Readdirplus_Free((nfs_res_t *) to_free);
@@ -1444,7 +1444,7 @@ static int nfs_create(cmdnfs_thr_info_t * p_thr_info,
   req.rq_clntcred = (caddr_t) & p_thr_info->authunix_struct;
 
   exportid = nfs3_FhandleToExportId(&arg.where.dir);
-  if ((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1452,8 +1452,8 @@ static int nfs_create(cmdnfs_thr_info_t * p_thr_info,
     }
 
   /* empty sattr3 list */
-  if (cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL,
-                    (caddr_t) & (arg.how.createhow3_u.obj_attributes)) == FALSE)
+  if(cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL,
+                   (caddr_t) & (arg.how.createhow3_u.obj_attributes)) == FALSE)
     {
       /* invalid handle */
       fprintf(output, "\tError encoding nfs arguments.\n");
@@ -1469,14 +1469,14 @@ static int nfs_create(cmdnfs_thr_info_t * p_thr_info,
                   &(p_thr_info->context),
                   &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       fprintf(output, "Error %d in nfs_Create.\n", rc);
       return rc;
     }
 
   rc = res.status;
-  if (rc != NFS3_OK)
+  if(rc != NFS3_OK)
     {
       fprintf(output, "Error %d in NFSv3 protocol: %s\n", rc, nfsstat3_to_str(rc));
       nfs_Create_Free((nfs_res_t *) & res);
@@ -1484,7 +1484,7 @@ static int nfs_create(cmdnfs_thr_info_t * p_thr_info,
     }
 
   /* object handle */
-  if (res.CREATE3res_u.resok.obj.handle_follows)
+  if(res.CREATE3res_u.resok.obj.handle_follows)
     set_shell_fh3(p_obj_hdl, &res.CREATE3res_u.resok.obj.post_op_fh3_u.handle);
   else
     fprintf(output, "Warning: nfs_Create did not return file handle.\n");
@@ -1518,7 +1518,7 @@ static int nfs_mkdir(cmdnfs_thr_info_t * p_thr_info,
   arg.where.name = obj_name;
 
   exportid = nfs3_FhandleToExportId(&arg.where.dir);
-  if ((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1526,8 +1526,8 @@ static int nfs_mkdir(cmdnfs_thr_info_t * p_thr_info,
     }
 
   /* empty sattr3 list */
-  if (cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL,
-                    (caddr_t) & (arg.attributes)) == FALSE)
+  if(cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL,
+                   (caddr_t) & (arg.attributes)) == FALSE)
     {
       /* invalid handle */
       fprintf(output, "\tError encoding nfs arguments.\n");
@@ -1543,14 +1543,14 @@ static int nfs_mkdir(cmdnfs_thr_info_t * p_thr_info,
                  &(p_thr_info->context),
                  &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       fprintf(output, "Error %d in nfs_Mkdir.\n", rc);
       return rc;
     }
 
   rc = res.status;
-  if (rc != NFS3_OK)
+  if(rc != NFS3_OK)
     {
       fprintf(output, "Error %d in NFSv3 protocol: %s\n", rc, nfsstat3_to_str(rc));
       nfs_Mkdir_Free((nfs_res_t *) & res);
@@ -1558,7 +1558,7 @@ static int nfs_mkdir(cmdnfs_thr_info_t * p_thr_info,
     }
 
   /* object handle */
-  if (res.MKDIR3res_u.resok.obj.handle_follows)
+  if(res.MKDIR3res_u.resok.obj.handle_follows)
     set_shell_fh3(p_obj_hdl, &res.MKDIR3res_u.resok.obj.post_op_fh3_u.handle);
   else
     fprintf(output, "Warning: nfs_Mkdir did not return file handle.\n");
@@ -1592,7 +1592,7 @@ static int nfs_rmdir(cmdnfs_thr_info_t * p_thr_info,
 
   /* extract expoort id */
   exportid = nfs3_FhandleToExportId(&arg.dir);
-  if ((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1604,14 +1604,14 @@ static int nfs_rmdir(cmdnfs_thr_info_t * p_thr_info,
                  &(p_thr_info->context),
                  &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       fprintf(output, "Error %d in nfs_Rmdir.\n", rc);
       return rc;
     }
 
   rc = res.status;
-  if (rc != NFS3_OK)
+  if(rc != NFS3_OK)
     {
       fprintf(output, "Error %d in NFSv3 protocol: %s\n", rc, nfsstat3_to_str(rc));
       nfs_Rmdir_Free((nfs_res_t *) & res);
@@ -1647,7 +1647,7 @@ static int nfs_remove(cmdnfs_thr_info_t * p_thr_info,
   /* extract export id */
 
   exportid = nfs3_FhandleToExportId(&arg.dir);
-  if ((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1659,14 +1659,14 @@ static int nfs_remove(cmdnfs_thr_info_t * p_thr_info,
                   &(p_thr_info->context),
                   &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       fprintf(output, "Error %d in nfs_Remove.\n", rc);
       return rc;
     }
 
   rc = res.status;
-  if (rc != NFS3_OK)
+  if(rc != NFS3_OK)
     {
       fprintf(output, "Error %d in NFSv3 protocol: %s\n", rc, nfsstat3_to_str(rc));
       nfs_Remove_Free((nfs_res_t *) & res);
@@ -1702,7 +1702,7 @@ static int nfs_setattr(cmdnfs_thr_info_t * p_thr_info,
 
   /* extract export id */
   exportid = nfs3_FhandleToExportId(&arg.object);
-  if ((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1714,14 +1714,14 @@ static int nfs_setattr(cmdnfs_thr_info_t * p_thr_info,
                    &(p_thr_info->context),
                    &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       fprintf(output, "Error %d in nfs_Setattr.\n", rc);
       return rc;
     }
 
   rc = res.status;
-  if (rc != NFS3_OK)
+  if(rc != NFS3_OK)
     {
       fprintf(output, "Error %d in NFSv3 protocol: %s\n", rc, nfsstat3_to_str(rc));
       nfs_Setattr_Free((nfs_res_t *) & res);
@@ -1759,7 +1759,7 @@ static int nfs_rename(cmdnfs_thr_info_t * p_thr_info,
 
   /* extract export id */
   exportid = nfs3_FhandleToExportId(&arg.from.dir);
-  if ((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1771,14 +1771,14 @@ static int nfs_rename(cmdnfs_thr_info_t * p_thr_info,
                   &(p_thr_info->context),
                   &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       fprintf(output, "Error %d in nfs_Rename.\n", rc);
       return rc;
     }
 
   rc = res.status;
-  if (rc != NFS3_OK)
+  if(rc != NFS3_OK)
     {
       fprintf(output, "Error %d in NFSv3 protocol: %s\n", rc, nfsstat3_to_str(rc));
       nfs_Rename_Free((nfs_res_t *) & res);
@@ -1815,7 +1815,7 @@ static int nfs_link(cmdnfs_thr_info_t * p_thr_info,
 
   /* extract export id */
   exportid = nfs3_FhandleToExportId(&arg.file);
-  if ((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1827,14 +1827,14 @@ static int nfs_link(cmdnfs_thr_info_t * p_thr_info,
                 &(p_thr_info->context),
                 &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       fprintf(output, "Error %d in nfs_Link.\n", rc);
       return rc;
     }
 
   rc = res.status;
-  if (rc != NFS3_OK)
+  if(rc != NFS3_OK)
     {
       fprintf(output, "Error %d in NFSv3 protocol: %s\n", rc, nfsstat3_to_str(rc));
       nfs_Link_Free((nfs_res_t *) & res);
@@ -1872,7 +1872,7 @@ static int nfs_symlink(cmdnfs_thr_info_t * p_thr_info,
   arg.symlink.symlink_data = link_content;
 
   exportid = nfs3_FhandleToExportId(&arg.where.dir);
-  if ((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1884,14 +1884,14 @@ static int nfs_symlink(cmdnfs_thr_info_t * p_thr_info,
                    &(p_thr_info->context),
                    &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       fprintf(output, "Error %d in nfs_Symlink.\n", rc);
       return rc;
     }
 
   rc = res.status;
-  if (rc != NFS3_OK)
+  if(rc != NFS3_OK)
     {
       fprintf(output, "Error %d in NFSv3 protocol: %s\n", rc, nfsstat3_to_str(rc));
       /* free nfs call resources */
@@ -1900,7 +1900,7 @@ static int nfs_symlink(cmdnfs_thr_info_t * p_thr_info,
     }
 
   /* returned handle */
-  if (res.SYMLINK3res_u.resok.obj.handle_follows)
+  if(res.SYMLINK3res_u.resok.obj.handle_follows)
     {
       set_shell_fh3(p_link_hdl, &res.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle);
     }
@@ -1934,7 +1934,7 @@ int fn_nfs_mount(int argc,      /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -1943,9 +1943,9 @@ int fn_nfs_mount(int argc,      /* IN : number of args in argv */
   p_thr_info = GetNFSClient();
 
   /* We only need to init thread in mount command. */
-  if (p_thr_info->is_thread_init != TRUE)
+  if(p_thr_info->is_thread_init != TRUE)
     {
-      if (rc = InitNFSClient(p_thr_info))
+      if(rc = InitNFSClient(p_thr_info))
         {
           fprintf(output, "\t%s: Error %d during thread initialization.\n", argv[0], rc);
           return -1;
@@ -1954,15 +1954,15 @@ int fn_nfs_mount(int argc,      /* IN : number of args in argv */
 
   /* check if a path has already been mounted */
 
-  if (p_thr_info->is_mounted_path != FALSE)
+  if(p_thr_info->is_mounted_path != FALSE)
     {
       fprintf(output, "%s: a path is already mounted. Use \"umount\" command first.\n",
               argv[0]);
       return -1;
     }
 
-  if (cmdnfs_dirpath(CMDNFS_ENCODE,
-                     argc - 1, argv + 1, 0, NULL, (caddr_t) & nfs_arg) == FALSE)
+  if(cmdnfs_dirpath(CMDNFS_ENCODE,
+                    argc - 1, argv + 1, 0, NULL, (caddr_t) & nfs_arg) == FALSE)
     {
       fprintf(output, "%s: bad arguments.\n", argv[0]);
       fprintf(output, "Usage: mount <path>.\n");
@@ -1984,14 +1984,14 @@ int fn_nfs_mount(int argc,      /* IN : number of args in argv */
 
   cmdnfs_dirpath(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & nfs_arg);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       fprintf(output, "%s: Error %d in mnt_Mnt.\n", argv[0], rc);
       return rc;
     }
 
   rc = p_mountres->fhs_status;
-  if (rc != MNT3_OK)
+  if(rc != MNT3_OK)
     {
       mnt3_Mnt_Free(&nfs_res);
       fprintf(output, "%s: Error %d in MNT3 protocol.\n", argv[0], rc);
@@ -2031,7 +2031,7 @@ int fn_nfs_umount(int argc,     /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -2040,9 +2040,9 @@ int fn_nfs_umount(int argc,     /* IN : number of args in argv */
   p_thr_info = GetNFSClient();
 
   /* We only need to init thread in mount command. */
-  if (p_thr_info->is_thread_init != TRUE)
+  if(p_thr_info->is_thread_init != TRUE)
     {
-      if (rc = InitNFSClient(p_thr_info))
+      if(rc = InitNFSClient(p_thr_info))
         {
           fprintf(output, "\t%s: Error %d during thread initialization.\n", argv[0], rc);
           return -1;
@@ -2051,21 +2051,21 @@ int fn_nfs_umount(int argc,     /* IN : number of args in argv */
 
   /* check if a path has already been mounted */
 
-  if (p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != TRUE)
     {
       fprintf(output, "%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
     }
 
-  if (cmdnfs_dirpath(CMDNFS_ENCODE,
-                     argc - 1, argv + 1, 0, NULL, (caddr_t) & nfs_arg) == FALSE)
+  if(cmdnfs_dirpath(CMDNFS_ENCODE,
+                    argc - 1, argv + 1, 0, NULL, (caddr_t) & nfs_arg) == FALSE)
     {
       fprintf(output, "%s: bad arguments.\n", argv[0]);
       fprintf(output, "Usage: umount <path>.\n");
       return -1;
     }
 
-  if (strncmp(argv[1], p_thr_info->mounted_path, NFS2_MAXPATHLEN))
+  if(strncmp(argv[1], p_thr_info->mounted_path, NFS2_MAXPATHLEN))
     {
       fprintf(output, "%s: this path is not mounted.\n", argv[0]);
       fprintf(output, "Current monted path : %s.\n", p_thr_info->mounted_path);
@@ -2087,7 +2087,7 @@ int fn_nfs_umount(int argc,     /* IN : number of args in argv */
 
   cmdnfs_dirpath(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & nfs_arg);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       fprintf(output, "%s: Error %d in mnt_Umnt.\n", argv[0], rc);
       return rc;
@@ -2108,7 +2108,7 @@ int fn_nfs_pwd(int argc,        /* IN : number of args in argv */
   char buff[2 * NFS3_FHSIZE + 1];
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -2118,7 +2118,7 @@ int fn_nfs_pwd(int argc,        /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if (p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != TRUE)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2182,7 +2182,7 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -2192,7 +2192,7 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if (p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != TRUE)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2201,12 +2201,12 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
   /* analysing options */
   getopt_init();
 
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "ls: warning: option 'v' has been specified more than once.\n");
           else
@@ -2214,7 +2214,7 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "ls: warning: option 'h' has been specified more than once.\n");
           else
@@ -2222,7 +2222,7 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
           break;
 
         case 'd':
-          if (flag_d)
+          if(flag_d)
             fprintf(output,
                     "ls: warning: option 'd' has been specified more than once.\n");
           else
@@ -2230,7 +2230,7 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
           break;
 
         case 'l':
-          if (flag_l)
+          if(flag_l)
             fprintf(output,
                     "ls: warning: option 'l' has been specified more than once.\n");
           else
@@ -2238,7 +2238,7 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
           break;
 
         case 'S':
-          if (flag_S)
+          if(flag_S)
             fprintf(output,
                     "ls: warning: option 'S' has been specified more than once.\n");
           else
@@ -2246,7 +2246,7 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
           break;
 
         case 'z':
-          if (flag_z)
+          if(flag_z)
             fprintf(output,
                     "ls: warning: option 'z' has been specified more than once.\n");
           else
@@ -2254,7 +2254,7 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
           break;
 
         case 'H':
-          if (flag_H)
+          if(flag_H)
             fprintf(output,
                     "ls: warning: option 'H' has been specified more than once.\n");
           else
@@ -2268,25 +2268,25 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
         }
     }                           /* while */
 
-  if (flag_l + flag_S + flag_H > 1)
+  if(flag_l + flag_S + flag_H > 1)
     {
       fprintf(output, "ls: conflict between options l,S,H\n");
       err_flag++;
     }
 
-  if (flag_z + flag_v > 1)
+  if(flag_z + flag_v > 1)
     {
       fprintf(output, "ls: can't use -z and -v at the same time\n");
       err_flag++;
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_ls);
       return 0;
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_ls);
       return -1;
@@ -2296,16 +2296,15 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
   strncpy(glob_path, p_thr_info->current_path, NFS2_MAXPATHLEN);
 
   /* first, retrieve the argument (if any) */
-  if (Optind == argc - 1)
+  if(Optind == argc - 1)
     {
       str_name = argv[Optind];
 
       /* retrieving handle */
-      if (rc = nfs_solvepath(p_thr_info,
-                             glob_path,
-                             NFS2_MAXPATHLEN,
-                             str_name,
-                             &p_thr_info->current_path_hdl, &handle_tmp, output))
+      if(rc = nfs_solvepath(p_thr_info,
+                            glob_path,
+                            NFS2_MAXPATHLEN,
+                            str_name, &p_thr_info->current_path_hdl, &handle_tmp, output))
         return rc;
     }
   else
@@ -2314,40 +2313,40 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
       handle_tmp = p_thr_info->current_path_hdl;
     }
 
-  if (flag_v)
+  if(flag_v)
     fprintf(output, "proceeding ls (using NFS protocol) on \"%s\"\n", glob_path);
 
-  if (rc = nfs_getattr(p_thr_info, &handle_tmp, &attrs, output))
+  if(rc = nfs_getattr(p_thr_info, &handle_tmp, &attrs, output))
     return rc;
 
   /*
    * if the object is a file or a directoy with the -d option specified,
    * we only show its info and exit.
    */
-  if ((attrs.type != NF3DIR) || flag_d)
+  if((attrs.type != NF3DIR) || flag_d)
     {
-      if ((attrs.type == NF3LNK) && flag_l)
+      if((attrs.type == NF3LNK) && flag_l)
         {
-          if (rc = nfs_readlink(p_thr_info, &handle_tmp, linkdata, output))
+          if(rc = nfs_readlink(p_thr_info, &handle_tmp, linkdata, output))
             return rc;
         }
 
-      if (flag_l)
+      if(flag_l)
         {
-          if (!flag_z)
+          if(!flag_z)
             print_nfsitem_line(output, &attrs, str_name, linkdata);
         }
-      else if (flag_S)
+      else if(flag_S)
         {
-          if (!flag_z)
+          if(!flag_z)
             {
               fprintf(output, "%s :\n", str_name);
               print_nfs_attributes(&attrs, output);
             }
         }
-      else if (flag_H)
+      else if(flag_H)
         {
-          if (!flag_z)
+          if(!flag_z)
             {
               char buff[2 * NFS3_FHSIZE + 1];
 
@@ -2358,7 +2357,7 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
         }
       else                      /* only prints the name */
         {
-          if (!flag_z)
+          if(!flag_z)
             fprintf(output, "%s\n", str_name);
         }
 
@@ -2371,38 +2370,38 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
   eod_met = FALSE;
   memset(&cookieverf, 0, sizeof(cookieverf3));
 
-  while (!eod_met)
+  while(!eod_met)
     {
 
-      if (flag_v)
+      if(flag_v)
         fprintf(output, "-->nfs3_Readdirplus( path=%s, cookie=%llu )\n",
                 glob_path, begin_cookie);
 
-      if (rc = nfs_readdirplus(p_thr_info, &handle_tmp, begin_cookie, &cookieverf,      /* IN/OUT */
-                               &dirlist, &to_free, output))
+      if(rc = nfs_readdirplus(p_thr_info, &handle_tmp, begin_cookie, &cookieverf,       /* IN/OUT */
+                              &dirlist, &to_free, output))
         return rc;
 
       p_entry = dirlist.entries;
 
-      while (p_entry)
+      while(p_entry)
         {
-          if (!strcmp(str_name, "."))
+          if(!strcmp(str_name, "."))
             strncpy(item_path, p_entry->name, NFS2_MAXPATHLEN);
-          else if (str_name[strlen(str_name) - 1] == '/')
+          else if(str_name[strlen(str_name) - 1] == '/')
             snprintf(item_path, NFS2_MAXPATHLEN, "%s%s", str_name, p_entry->name);
           else
             snprintf(item_path, NFS2_MAXPATHLEN, "%s/%s", str_name, p_entry->name);
 
           /* interpreting post-op attributes */
 
-          if (p_entry->name_attributes.attributes_follow)
+          if(p_entry->name_attributes.attributes_follow)
             p_attrs = &p_entry->name_attributes.post_op_attr_u.attributes;
           else
             p_attrs = NULL;
 
           /* interpreting post-op handle */
 
-          if (p_entry->name_handle.handle_follows)
+          if(p_entry->name_handle.handle_follows)
             {
               set_shell_fh3(&hdl, &p_entry->name_handle.post_op_fh3_u.handle);
               p_hdl = &hdl;
@@ -2410,25 +2409,25 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
           else
             p_hdl = NULL;
 
-          if ((p_attrs != NULL) && (p_hdl != NULL) && (p_attrs->type == NF3LNK))
+          if((p_attrs != NULL) && (p_hdl != NULL) && (p_attrs->type == NF3LNK))
             {
-              if (rc = nfs_readlink(p_thr_info, p_hdl, linkdata, output))
+              if(rc = nfs_readlink(p_thr_info, p_hdl, linkdata, output))
                 return rc;
             }
 
-          if ((p_attrs != NULL) && flag_l)
+          if((p_attrs != NULL) && flag_l)
             {
               print_nfsitem_line(output, p_attrs, item_path, linkdata);
             }
-          else if ((p_attrs != NULL) && flag_S)
+          else if((p_attrs != NULL) && flag_S)
             {
               fprintf(output, "%s :\n", item_path);
-              if (!flag_z)
+              if(!flag_z)
                 print_nfs_attributes(p_attrs, output);
             }
-          else if ((p_hdl != NULL) && flag_H)
+          else if((p_hdl != NULL) && flag_H)
             {
-              if (!flag_z)
+              if(!flag_z)
                 {
                   char buff[2 * NFS3_FHSIZE + 1];
 
@@ -2439,7 +2438,7 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
             }
           else
             {
-              if (!flag_z)
+              if(!flag_z)
                 fprintf(output, "%s\n", item_path);
             }
 
@@ -2474,7 +2473,7 @@ int fn_nfs_cd(int argc,         /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -2484,14 +2483,14 @@ int fn_nfs_cd(int argc,         /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if (p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != TRUE)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
     }
 
   /* Exactly one arg expected */
-  if (argc != 2)
+  if(argc != 2)
     {
       fprintf(output, help_cd);
       return -1;
@@ -2499,17 +2498,17 @@ int fn_nfs_cd(int argc,         /* IN : number of args in argv */
 
   strncpy(glob_path, p_thr_info->current_path, NFS2_MAXPATHLEN);
 
-  if (rc =
-      nfs_solvepath(p_thr_info, glob_path, NFS2_MAXPATHLEN,
-                    argv[1], &p_thr_info->current_path_hdl, &new_hdl, output))
+  if(rc =
+     nfs_solvepath(p_thr_info, glob_path, NFS2_MAXPATHLEN,
+                   argv[1], &p_thr_info->current_path_hdl, &new_hdl, output))
     return rc;
 
   /* verify if the object is a directory */
 
-  if (rc = nfs_getattr(p_thr_info, &new_hdl, &attrs, output))
+  if(rc = nfs_getattr(p_thr_info, &new_hdl, &attrs, output))
     return rc;
 
-  if (attrs.type != NF3DIR)
+  if(attrs.type != NF3DIR)
     {
       fprintf(output, "Error: %s is not a directory\n", glob_path);
       return ENOTDIR;
@@ -2517,10 +2516,10 @@ int fn_nfs_cd(int argc,         /* IN : number of args in argv */
 
   /* verify lookup permission  */
   mask = ACCESS3_LOOKUP;
-  if (rc = nfs_access(p_thr_info, &new_hdl, &mask, output))
+  if(rc = nfs_access(p_thr_info, &new_hdl, &mask, output))
     return rc;
 
-  if (!(mask & ACCESS3_LOOKUP))
+  if(!(mask & ACCESS3_LOOKUP))
     {
       fprintf(output, "Error: %s: permission denied.\n", glob_path);
       return EACCES;
@@ -2572,7 +2571,7 @@ int fn_nfs_create(int argc,     /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -2582,7 +2581,7 @@ int fn_nfs_create(int argc,     /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if (p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != TRUE)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2590,12 +2589,12 @@ int fn_nfs_create(int argc,     /* IN : number of args in argv */
 
   /* analysing options */
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "create: warning: option 'v' has been specified more than once.\n");
           else
@@ -2603,7 +2602,7 @@ int fn_nfs_create(int argc,     /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "create: warning: option 'h' has been specified more than once.\n");
           else
@@ -2617,14 +2616,14 @@ int fn_nfs_create(int argc,     /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_create);
       return 0;
     }
 
   /* Exactly 2 args expected */
-  if (Optind != (argc - 2))
+  if(Optind != (argc - 2))
     {
       err_flag++;
     }
@@ -2637,11 +2636,11 @@ int fn_nfs_create(int argc,     /* IN : number of args in argv */
 
       /* converting mode string to posix mode */
       mode = atomode(strmode);
-      if (mode < 0)
+      if(mode < 0)
         err_flag++;
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_create);
       return -1;
@@ -2651,14 +2650,14 @@ int fn_nfs_create(int argc,     /* IN : number of args in argv */
   strncpy(glob_path, p_thr_info->current_path, NFS2_MAXPATHLEN);
 
   /* retrieves path handle */
-  if (rc = nfs_solvepath(p_thr_info, glob_path, NFS2_MAXPATHLEN,
-                         path, &p_thr_info->current_path_hdl, &subdir_hdl, output))
+  if(rc = nfs_solvepath(p_thr_info, glob_path, NFS2_MAXPATHLEN,
+                        path, &p_thr_info->current_path_hdl, &subdir_hdl, output))
     return rc;
 
-  if (rc = nfs_create(p_thr_info, &subdir_hdl, file, mode, &new_hdl, output))
+  if(rc = nfs_create(p_thr_info, &subdir_hdl, file, mode, &new_hdl, output))
     return rc;
 
-  if (flag_v)
+  if(flag_v)
     {
       char buff[2 * NFS3_FHSIZE + 1];
       snprintmem(buff, 2 * NFS3_FHSIZE + 1, (caddr_t) new_hdl.data_val, new_hdl.data_len);
@@ -2699,7 +2698,7 @@ int fn_nfs_mkdir(int argc,      /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -2709,7 +2708,7 @@ int fn_nfs_mkdir(int argc,      /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if (p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != TRUE)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2717,12 +2716,12 @@ int fn_nfs_mkdir(int argc,      /* IN : number of args in argv */
 
   /* analysing options */
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "mkdir: warning: option 'v' has been specified more than once.\n");
           else
@@ -2730,7 +2729,7 @@ int fn_nfs_mkdir(int argc,      /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "mkdir: warning: option 'h' has been specified more than once.\n");
           else
@@ -2744,14 +2743,14 @@ int fn_nfs_mkdir(int argc,      /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_mkdir);
       return 0;
     }
 
   /* Exactly 2 args expected */
-  if (Optind != (argc - 2))
+  if(Optind != (argc - 2))
     {
       err_flag++;
     }
@@ -2764,11 +2763,11 @@ int fn_nfs_mkdir(int argc,      /* IN : number of args in argv */
 
       /* converting mode string to posix mode */
       mode = atomode(strmode);
-      if (mode < 0)
+      if(mode < 0)
         err_flag++;
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_mkdir);
       return -1;
@@ -2778,14 +2777,14 @@ int fn_nfs_mkdir(int argc,      /* IN : number of args in argv */
   strncpy(glob_path, p_thr_info->current_path, NFS2_MAXPATHLEN);
 
   /* retrieves path handle */
-  if (rc = nfs_solvepath(p_thr_info, glob_path, NFS2_MAXPATHLEN,
-                         path, &p_thr_info->current_path_hdl, &subdir_hdl, output))
+  if(rc = nfs_solvepath(p_thr_info, glob_path, NFS2_MAXPATHLEN,
+                        path, &p_thr_info->current_path_hdl, &subdir_hdl, output))
     return rc;
 
-  if (rc = nfs_mkdir(p_thr_info, &subdir_hdl, file, mode, &new_hdl, output))
+  if(rc = nfs_mkdir(p_thr_info, &subdir_hdl, file, mode, &new_hdl, output))
     return rc;
 
-  if (flag_v)
+  if(flag_v)
     {
       char buff[2 * NFS3_FHSIZE + 1];
       snprintmem(buff, 2 * NFS3_FHSIZE + 1, (caddr_t) new_hdl.data_val, new_hdl.data_len);
@@ -2825,7 +2824,7 @@ int fn_nfs_unlink(int argc,     /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -2835,7 +2834,7 @@ int fn_nfs_unlink(int argc,     /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if (p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != TRUE)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2843,12 +2842,12 @@ int fn_nfs_unlink(int argc,     /* IN : number of args in argv */
 
   /* analysing options */
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "unlink: warning: option 'v' has been specified more than once.\n");
           else
@@ -2856,7 +2855,7 @@ int fn_nfs_unlink(int argc,     /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "unlink: warning: option 'h' has been specified more than once.\n");
           else
@@ -2870,14 +2869,14 @@ int fn_nfs_unlink(int argc,     /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_unlink);
       return 0;
     }
 
   /* Exactly 1 args expected */
-  if (Optind != (argc - 1))
+  if(Optind != (argc - 1))
     {
       err_flag++;
     }
@@ -2891,44 +2890,44 @@ int fn_nfs_unlink(int argc,     /* IN : number of args in argv */
   strncpy(glob_path_parent, p_thr_info->current_path, NFS2_MAXPATHLEN);
 
   /* retrieves parent dir handle */
-  if (rc = nfs_solvepath(p_thr_info, glob_path_parent, NFS2_MAXPATHLEN,
-                         path, &p_thr_info->current_path_hdl, &subdir_hdl, output))
+  if(rc = nfs_solvepath(p_thr_info, glob_path_parent, NFS2_MAXPATHLEN,
+                        path, &p_thr_info->current_path_hdl, &subdir_hdl, output))
     return rc;
 
   /* copy parent path */
   strncpy(glob_path_object, glob_path_parent, NFS2_MAXPATHLEN);
 
   /* lookup on child object */
-  if (rc = nfs_solvepath(p_thr_info, glob_path_object, NFS2_MAXPATHLEN,
-                         file, &subdir_hdl, &obj_hdl, output))
+  if(rc = nfs_solvepath(p_thr_info, glob_path_object, NFS2_MAXPATHLEN,
+                        file, &subdir_hdl, &obj_hdl, output))
     return rc;
 
   /* get attributes of child object */
-  if (flag_v)
+  if(flag_v)
     fprintf(output, "Getting attributes for %s...\n", glob_path_object);
 
-  if (rc = nfs_getattr(p_thr_info, &obj_hdl, &attrs, output))
+  if(rc = nfs_getattr(p_thr_info, &obj_hdl, &attrs, output))
     return rc;
 
-  if (attrs.type != NF3DIR)
+  if(attrs.type != NF3DIR)
     {
-      if (flag_v)
+      if(flag_v)
         fprintf(output, "%s is not a directory: calling nfs3_remove...\n",
                 glob_path_object);
 
-      if (rc = nfs_remove(p_thr_info, &subdir_hdl, file, output))
+      if(rc = nfs_remove(p_thr_info, &subdir_hdl, file, output))
         return rc;
     }
   else
     {
-      if (flag_v)
+      if(flag_v)
         fprintf(output, "%s is a directory: calling nfs3_rmdir...\n", glob_path_object);
 
-      if (rc = nfs_rmdir(p_thr_info, &subdir_hdl, file, output))
+      if(rc = nfs_rmdir(p_thr_info, &subdir_hdl, file, output))
         return rc;
     }
 
-  if (flag_v)
+  if(flag_v)
     fprintf(output, "%s successfully removed.\n", glob_path_object);
 
   return 0;
@@ -2966,7 +2965,7 @@ int fn_nfs_setattr(int argc,    /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -2976,7 +2975,7 @@ int fn_nfs_setattr(int argc,    /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if (p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != TRUE)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2985,12 +2984,12 @@ int fn_nfs_setattr(int argc,    /* IN : number of args in argv */
   /* analysing options */
   getopt_init();
 
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "setattr: warning: option 'v' has been specified more than once.\n");
           else
@@ -2998,7 +2997,7 @@ int fn_nfs_setattr(int argc,    /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "setattr: warning: option 'h' has been specified more than once.\n");
           else
@@ -3012,7 +3011,7 @@ int fn_nfs_setattr(int argc,    /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       /* print usage */
       fprintf(output, help_setattr);
@@ -3021,7 +3020,7 @@ int fn_nfs_setattr(int argc,    /* IN : number of args in argv */
 
   /* Exactly 2 args expected */
 
-  if (Optind != (argc - 2))
+  if(Optind != (argc - 2))
     {
       err_flag++;
     }
@@ -3031,7 +3030,7 @@ int fn_nfs_setattr(int argc,    /* IN : number of args in argv */
       attr_string = argv[Optind + 1];
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_setattr);
       return -1;
@@ -3041,14 +3040,14 @@ int fn_nfs_setattr(int argc,    /* IN : number of args in argv */
   strncpy(glob_path, p_thr_info->current_path, NFS2_MAXPATHLEN);
 
   /* retrieve handle to the file whose attributes are to be changed */
-  if (rc =
-      nfs_solvepath(p_thr_info, glob_path, NFS2_MAXPATHLEN, file,
-                    &p_thr_info->current_path_hdl, &obj_hdl, output))
+  if(rc =
+     nfs_solvepath(p_thr_info, glob_path, NFS2_MAXPATHLEN, file,
+                   &p_thr_info->current_path_hdl, &obj_hdl, output))
     return rc;
 
   /* Convert the peer (attr_name,attr_val) to an sattr3 structure. */
-  if (cmdnfs_sattr3(CMDNFS_ENCODE,
-                    1, &attr_string, 0, NULL, (caddr_t) & set_attrs) == FALSE)
+  if(cmdnfs_sattr3(CMDNFS_ENCODE,
+                   1, &attr_string, 0, NULL, (caddr_t) & set_attrs) == FALSE)
     {
       fprintf(output, "Invalid nfs arguments.\n");
       fprintf(output, help_setattr);
@@ -3056,10 +3055,10 @@ int fn_nfs_setattr(int argc,    /* IN : number of args in argv */
     }
 
   /* executes set attrs */
-  if (rc = nfs_setattr(p_thr_info, &obj_hdl, &set_attrs, output))
+  if(rc = nfs_setattr(p_thr_info, &obj_hdl, &set_attrs, output))
     return rc;
 
-  if (flag_v)
+  if(flag_v)
     fprintf(output, "Attributes of \"%s\" successfully changed.\n", glob_path);
 
   return 0;
@@ -3095,7 +3094,7 @@ int fn_nfs_rename(int argc,     /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -3105,7 +3104,7 @@ int fn_nfs_rename(int argc,     /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if (p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != TRUE)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -3113,19 +3112,19 @@ int fn_nfs_rename(int argc,     /* IN : number of args in argv */
 
   /* analysing options */
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "rename: warning: option 'v' has been specified more than once.\n");
           else
             flag_v++;
           break;
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "rename: warning: option 'h' has been specified more than once.\n");
           else
@@ -3138,14 +3137,14 @@ int fn_nfs_rename(int argc,     /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_rename);
       return 0;
     }
 
   /* Exactly 2 args expected */
-  if (Optind != (argc - 2))
+  if(Optind != (argc - 2))
     {
       err_flag++;
     }
@@ -3160,13 +3159,13 @@ int fn_nfs_rename(int argc,     /* IN : number of args in argv */
 
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_rename);
       return -1;
     }
 
-  if (flag_v)
+  if(flag_v)
     fprintf(output, "Renaming %s (dir %s) to %s (dir %s)\n",
             src_file, src_path, tgt_file, tgt_path);
 
@@ -3175,26 +3174,26 @@ int fn_nfs_rename(int argc,     /* IN : number of args in argv */
   strncpy(tgt_glob_path, p_thr_info->current_path, NFS2_MAXPATHLEN);
 
   /* retrieves paths handles */
-  if (rc =
-      nfs_solvepath(p_thr_info, src_glob_path, NFS2_MAXPATHLEN,
-                    src_path, &p_thr_info->current_path_hdl, &src_path_handle, output))
+  if(rc =
+     nfs_solvepath(p_thr_info, src_glob_path, NFS2_MAXPATHLEN,
+                   src_path, &p_thr_info->current_path_hdl, &src_path_handle, output))
     return rc;
 
-  if (rc =
-      nfs_solvepath(p_thr_info, tgt_glob_path, NFS2_MAXPATHLEN,
-                    tgt_path, &p_thr_info->current_path_hdl, &tgt_path_handle, output))
+  if(rc =
+     nfs_solvepath(p_thr_info, tgt_glob_path, NFS2_MAXPATHLEN,
+                   tgt_path, &p_thr_info->current_path_hdl, &tgt_path_handle, output))
     return rc;
 
   /* Rename operation */
 
-  if (rc = nfs_rename(p_thr_info, &src_path_handle,     /* IN */
-                      src_file, /* IN */
-                      &tgt_path_handle, /* IN */
-                      tgt_file, /* IN */
-                      output))
+  if(rc = nfs_rename(p_thr_info, &src_path_handle,      /* IN */
+                     src_file,  /* IN */
+                     &tgt_path_handle,  /* IN */
+                     tgt_file,  /* IN */
+                     output))
     return rc;
 
-  if (flag_v)
+  if(flag_v)
     fprintf(output, "%s/%s successfully renamed to %s/%s\n",
             src_glob_path, src_file, tgt_glob_path, tgt_file);
 
@@ -3235,7 +3234,7 @@ int fn_nfs_hardlink(int argc,   /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -3245,7 +3244,7 @@ int fn_nfs_hardlink(int argc,   /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if (p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != TRUE)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -3253,19 +3252,19 @@ int fn_nfs_hardlink(int argc,   /* IN : number of args in argv */
 
   /* analysing options */
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "hardlink: warning: option 'v' has been specified more than once.\n");
           else
             flag_v++;
           break;
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "hardlink: warning: option 'h' has been specified more than once.\n");
           else
@@ -3278,7 +3277,7 @@ int fn_nfs_hardlink(int argc,   /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_hardlink);
       return 0;
@@ -3286,7 +3285,7 @@ int fn_nfs_hardlink(int argc,   /* IN : number of args in argv */
 
   /* 2 args expected */
 
-  if (Optind == (argc - 2))
+  if(Optind == (argc - 2))
     {
 
       target = argv[Optind];
@@ -3300,7 +3299,7 @@ int fn_nfs_hardlink(int argc,   /* IN : number of args in argv */
       err_flag++;
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_hardlink);
       return -1;
@@ -3311,15 +3310,15 @@ int fn_nfs_hardlink(int argc,   /* IN : number of args in argv */
   strncpy(glob_path_link, p_thr_info->current_path, NFS2_MAXPATHLEN);
 
   /* retrieves path handle for target */
-  if (rc =
-      nfs_solvepath(p_thr_info, glob_path_target, NFS2_MAXPATHLEN,
-                    target, &p_thr_info->current_path_hdl, &target_hdl, output))
+  if(rc =
+     nfs_solvepath(p_thr_info, glob_path_target, NFS2_MAXPATHLEN,
+                   target, &p_thr_info->current_path_hdl, &target_hdl, output))
     return rc;
 
   /* retrieves path handle for parent dir */
-  if (rc =
-      nfs_solvepath(p_thr_info, glob_path_link, NFS2_MAXPATHLEN,
-                    path, &p_thr_info->current_path_hdl, &dir_hdl, output))
+  if(rc =
+     nfs_solvepath(p_thr_info, glob_path_link, NFS2_MAXPATHLEN,
+                   path, &p_thr_info->current_path_hdl, &dir_hdl, output))
     return rc;
 
   rc = nfs_link(p_thr_info, &target_hdl,        /* IN - target file */
@@ -3327,10 +3326,10 @@ int fn_nfs_hardlink(int argc,   /* IN : number of args in argv */
                 name,           /* IN - link name */
                 output);        /* OUT - new attributes */
 
-  if (rc)
+  if(rc)
     return rc;
 
-  if (flag_v)
+  if(flag_v)
     fprintf(output, "%s/%s <=> %s successfully created\n", path, name, glob_path_target);
 
   return 0;
@@ -3368,7 +3367,7 @@ int fn_nfs_ln(int argc,         /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -3378,7 +3377,7 @@ int fn_nfs_ln(int argc,         /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if (p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != TRUE)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -3386,19 +3385,19 @@ int fn_nfs_ln(int argc,         /* IN : number of args in argv */
 
   /* analysing options */
   getopt_init();
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "ln: warning: option 'v' has been specified more than once.\n");
           else
             flag_v++;
           break;
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "ln: warning: option 'h' has been specified more than once.\n");
           else
@@ -3411,7 +3410,7 @@ int fn_nfs_ln(int argc,         /* IN : number of args in argv */
         }
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_ln);
       return 0;
@@ -3419,7 +3418,7 @@ int fn_nfs_ln(int argc,         /* IN : number of args in argv */
 
   /* 2 args expected */
 
-  if (Optind == (argc - 2))
+  if(Optind == (argc - 2))
     {
 
       content = argv[Optind];
@@ -3433,7 +3432,7 @@ int fn_nfs_ln(int argc,         /* IN : number of args in argv */
       err_flag++;
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_ln);
       return -1;
@@ -3443,14 +3442,14 @@ int fn_nfs_ln(int argc,         /* IN : number of args in argv */
   strncpy(glob_path, p_thr_info->current_path, NFS2_MAXPATHLEN);
 
   /* retrieves path handle */
-  if (rc =
-      nfs_solvepath(p_thr_info, glob_path, NFS2_MAXPATHLEN,
-                    path, &p_thr_info->current_path_hdl, &path_hdl, output))
+  if(rc =
+     nfs_solvepath(p_thr_info, glob_path, NFS2_MAXPATHLEN,
+                   path, &p_thr_info->current_path_hdl, &path_hdl, output))
     return rc;
 
   /* Prepare link attributes : empty sattr3 list */
 
-  if (cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL, (caddr_t) & set_attrs) == FALSE)
+  if(cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL, (caddr_t) & set_attrs) == FALSE)
     {
       /* invalid handle */
       fprintf(output, "\tError encoding nfs arguments.\n");
@@ -3464,10 +3463,10 @@ int fn_nfs_ln(int argc,         /* IN : number of args in argv */
                    &link_hdl,   /* OUT - link handle */
                    output);
 
-  if (rc)
+  if(rc)
     return rc;
 
-  if (flag_v)
+  if(flag_v)
     {
       char buff[2 * NFS3_FHSIZE + 1];
       snprintmem(buff, 2 * NFS3_FHSIZE + 1, (caddr_t) link_hdl.data_val,
@@ -3509,7 +3508,7 @@ int fn_nfs_stat(int argc,       /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -3519,7 +3518,7 @@ int fn_nfs_stat(int argc,       /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if (p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != TRUE)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -3528,12 +3527,12 @@ int fn_nfs_stat(int argc,       /* IN : number of args in argv */
   /* analysing options */
   getopt_init();
 
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "stat: warning: option 'v' has been specified more than once.\n");
           else
@@ -3541,7 +3540,7 @@ int fn_nfs_stat(int argc,       /* IN : number of args in argv */
           break;
 
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "stat: warning: option 'h' has been specified more than once.\n");
           else
@@ -3549,7 +3548,7 @@ int fn_nfs_stat(int argc,       /* IN : number of args in argv */
           break;
 
         case 'z':
-          if (flag_z)
+          if(flag_z)
             fprintf(output,
                     "stat: warning: option 'z' has been specified more than once.\n");
           else
@@ -3557,7 +3556,7 @@ int fn_nfs_stat(int argc,       /* IN : number of args in argv */
           break;
 
         case 'H':
-          if (flag_H)
+          if(flag_H)
             fprintf(output,
                     "stat: warning: option 'H' has been specified more than once.\n");
           else
@@ -3571,19 +3570,19 @@ int fn_nfs_stat(int argc,       /* IN : number of args in argv */
         }
     }                           /* while */
 
-  if (flag_z + flag_v > 1)
+  if(flag_z + flag_v > 1)
     {
       fprintf(output, "stat: can't use -z and -v at the same time\n");
       err_flag++;
     }
 
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_stat);
       return 0;
     }
 
-  if (Optind != argc - 1)
+  if(Optind != argc - 1)
     {
       fprintf(output, "stat: Missing argument: <path>\n");
       err_flag++;
@@ -3593,7 +3592,7 @@ int fn_nfs_stat(int argc,       /* IN : number of args in argv */
       str_name = argv[Optind];
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_stat);
       return -1;
@@ -3603,21 +3602,21 @@ int fn_nfs_stat(int argc,       /* IN : number of args in argv */
   strncpy(glob_path, p_thr_info->current_path, NFS2_MAXPATHLEN);
 
   /* retrieving handle */
-  if (rc = nfs_solvepath(p_thr_info,
-                         glob_path,
-                         NFS2_MAXPATHLEN,
-                         str_name, &p_thr_info->current_path_hdl, &handle_tmp, output))
+  if(rc = nfs_solvepath(p_thr_info,
+                        glob_path,
+                        NFS2_MAXPATHLEN,
+                        str_name, &p_thr_info->current_path_hdl, &handle_tmp, output))
     return rc;
 
-  if (flag_v)
+  if(flag_v)
     fprintf(output, "proceeding stat (using NFS protocol) on \"%s\"\n", glob_path);
 
-  if (rc = nfs_getattr(p_thr_info, &handle_tmp, &attrs, output))
+  if(rc = nfs_getattr(p_thr_info, &handle_tmp, &attrs, output))
     return rc;
 
-  if (flag_H)
+  if(flag_H)
     {
-      if (!flag_z)
+      if(!flag_z)
         {
           char buff[2 * NFS3_FHSIZE + 1];
 
@@ -3626,7 +3625,7 @@ int fn_nfs_stat(int argc,       /* IN : number of args in argv */
           fprintf(output, "%s (@%s)\n", str_name, buff);
         }
     }
-  else if (!flag_z)
+  else if(!flag_z)
     {
       /*fprintf(output,"%s :\n",str_name); */
       print_nfs_attributes(&attrs, output);
@@ -3654,14 +3653,14 @@ int fn_nfs_su(int argc,         /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
     }
 
   /* UID arg expected */
-  if (argc != 2)
+  if(argc != 2)
     {
       fprintf(output, help_su);
       return -1;
@@ -3673,18 +3672,18 @@ int fn_nfs_su(int argc,         /* IN : number of args in argv */
 
   p_thr_info = GetNFSClient();
 
-  if (p_thr_info->is_thread_init != TRUE)
+  if(p_thr_info->is_thread_init != TRUE)
     {
-      if (rc = InitNFSClient(p_thr_info))
+      if(rc = InitNFSClient(p_thr_info))
         {
           fprintf(output, "\t%s: Error %d during thread initialization.\n", argv[0], rc);
           return -1;
         }
     }
 
-  if (isdigit(str_uid[0]))
+  if(isdigit(str_uid[0]))
     {
-      if ((uid = my_atoi(str_uid)) == (uid_t) - 1)
+      if((uid = my_atoi(str_uid)) == (uid_t) - 1)
         {
           fprintf(output, "Error: invalid uid \"%s\"\n", str_uid);
           return -1;
@@ -3696,7 +3695,7 @@ int fn_nfs_su(int argc,         /* IN : number of args in argv */
       pw_struct = getpwnam(str_uid);
     }
 
-  if (pw_struct == NULL)
+  if(pw_struct == NULL)
     {
       fprintf(output, "Unknown user %s\n", str_uid);
       return errno;
@@ -3707,12 +3706,12 @@ int fn_nfs_su(int argc,         /* IN : number of args in argv */
   fprintf(output, "Changing user to : %s ( uid = %d, gid = %d )\n",
           pw_struct->pw_name, pw_struct->pw_uid, pw_struct->pw_gid);
 
-  if (nb_grp > 1)
+  if(nb_grp > 1)
     {
       fprintf(output, "altgroups = ");
-      for (i = 1; i < nb_grp; i++)
+      for(i = 1; i < nb_grp; i++)
         {
-          if (i == 1)
+          if(i == 1)
             fprintf(output, "%d", groups_tab[i]);
           else
             fprintf(output, ", %d", groups_tab[i]);
@@ -3723,7 +3722,7 @@ int fn_nfs_su(int argc,         /* IN : number of args in argv */
   st = FSAL_GetClientContext(&p_thr_info->context, &p_thr_info->exp_context,
                              pw_struct->pw_uid, pw_struct->pw_gid, groups_tab, nb_grp);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     {
       fprintf(output, "Error executing FSAL_GetUserCred:");
       print_fsal_status(output, st);
@@ -3744,7 +3743,7 @@ int fn_nfs_id(int argc,         /* IN : number of args in argv */
   int rc;
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if (is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != TRUE)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -3752,9 +3751,9 @@ int fn_nfs_id(int argc,         /* IN : number of args in argv */
 
   p_thr_info = GetNFSClient();
 
-  if (p_thr_info->is_thread_init != TRUE)
+  if(p_thr_info->is_thread_init != TRUE)
     {
-      if (rc = InitNFSClient(p_thr_info))
+      if(rc = InitNFSClient(p_thr_info))
         {
           fprintf(output, "\t%s: Error %d during thread initialization.\n", argv[0], rc);
           return -1;

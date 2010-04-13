@@ -76,17 +76,17 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
    * note : object_attributes is optionnal
    *        parent_directory_handle may be null for getting FS root.
    */
-  if (!object_handle || !p_context)
+  if(!object_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
-  if (!parent_directory_handle)
+  if(!parent_directory_handle)
     {
 
       /* check that p_filename is NULL,
        * else, parent_directory_handle should not
        * be NULL.
        */
-      if (p_filename != NULL)
+      if(p_filename != NULL)
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       /* root handle = fileset root handle */
@@ -95,7 +95,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
       object_handle->ns_handle = p_context->export_context->fileset_root_handle;
 
       /* retrieves root attributes, if asked. */
-      if (object_attributes)
+      if(object_attributes)
         {
           fsal_status_t status;
 
@@ -103,7 +103,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 
           /* On error, we set a flag in the returned attributes */
 
-          if (FSAL_IS_ERROR(status))
+          if(FSAL_IS_ERROR(status))
             {
               FSAL_CLEAR_MASK(object_attributes->asked_attributes);
               FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -115,7 +115,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
     {
 
       /* the filename should not be null */
-      if (p_filename == NULL)
+      if(p_filename == NULL)
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       /* Be careful about junction crossing, symlinks, hardlinks,... */
@@ -155,30 +155,30 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
      *     Thus, in this case, we must double check
      *     by checking the directory handle.
      */
-      if (rc == HPSS_ENOTDIR)
+      if(rc == HPSS_ENOTDIR)
         {
-          if (HPSSFSAL_IsStaleHandle(&parent_directory_handle->ns_handle,
-                                     &p_context->credential.hpss_usercred))
+          if(HPSSFSAL_IsStaleHandle(&parent_directory_handle->ns_handle,
+                                    &p_context->credential.hpss_usercred))
             {
               Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_lookup);
             }
         }
 
-      if (rc)
+      if(rc)
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_lookup);
 
       /* set output handle */
       object_handle->obj_type = hpss2fsal_type(obj_hdl.Type);
       object_handle->ns_handle = obj_hdl;
 
-      if (object_attributes)
+      if(object_attributes)
         {
 
           /* convert hpss attributes to fsal attributes */
 
           status = hpss2fsal_attributes(&obj_hdl, &obj_attr, object_attributes);
 
-          if (FSAL_IS_ERROR(status))
+          if(FSAL_IS_ERROR(status))
             Return(status.major, status.minor, INDEX_FSAL_lookup);
 
         }
@@ -230,10 +230,10 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
   /* sanity checks
    * note : p_fsroot_attributes is optionnal
    */
-  if (!p_junction_handle || !p_fsoot_handle || !p_context)
+  if(!p_junction_handle || !p_fsoot_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookupJunction);
 
-  if (p_junction_handle->obj_type != FSAL_TYPE_JUNCTION)
+  if(p_junction_handle->obj_type != FSAL_TYPE_JUNCTION)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_lookupJunction);
 
   /* call to HPSS client api */
@@ -246,14 +246,14 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
 
   ReleaseTokenFSCall();
 
-  if (rc)
+  if(rc)
     Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_lookupJunction);
 
   /* set output handle */
   p_fsoot_handle->obj_type = hpss2fsal_type(root_attr.FilesetHandle.Type);
   p_fsoot_handle->ns_handle = root_attr.FilesetHandle;
 
-  if (p_fsroot_attributes)
+  if(p_fsroot_attributes)
     {
 
       /* convert hpss attributes to fsal attributes */
@@ -261,7 +261,7 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
       status = hpss2fsal_attributes(&root_attr.FilesetHandle,
                                     &root_attr, p_fsroot_attributes);
 
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_lookupJunction);
 
     }
@@ -320,12 +320,12 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
    * note : object_attributes is optionnal.
    */
 
-  if (!object_handle || !p_context || !p_path)
+  if(!object_handle || !p_context || !p_path)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookupPath);
 
   /* test whether the path begins with a slash */
 
-  if (p_path->path[0] != '/')
+  if(p_path->path[0] != '/')
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_lookupPath);
 
   /* the pointer now points on the next name in the path,
@@ -333,12 +333,12 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
    */
 
   ptr_str = p_path->path + 1;
-  while (ptr_str[0] == '/')
+  while(ptr_str[0] == '/')
     ptr_str++;
 
   /* is the next name empty ? */
 
-  if (ptr_str[0] == '\0')
+  if(ptr_str[0] == '\0')
     b_is_last = TRUE;
 
   /* retrieves root directory */
@@ -350,12 +350,12 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
                        /* retrieves attributes if this is the last lookup : */
                        (b_is_last ? object_attributes : NULL));
 
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_lookupPath);
 
   /* exits if this was the last lookup */
 
-  if (b_is_last)
+  if(b_is_last)
     {
       (*object_handle) = out_hdl;
       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lookupPath);
@@ -363,7 +363,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
 
   /* proceed a step by step lookup */
 
-  while (ptr_str[0])
+  while(ptr_str[0])
     {
 
       fsal_handle_t in_hdl;
@@ -378,7 +378,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
       /* compute next name */
       obj_name.len = 0;
       dest_ptr = obj_name.name;
-      while (ptr_str[0] != '\0' && ptr_str[0] != '/')
+      while(ptr_str[0] != '\0' && ptr_str[0] != '/')
         {
           dest_ptr[0] = ptr_str[0];
           dest_ptr++;
@@ -389,11 +389,11 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
       dest_ptr[0] = '\0';
 
       /* skip multiple slashes */
-      while (ptr_str[0] == '/')
+      while(ptr_str[0] == '/')
         ptr_str++;
 
       /* is the next name empty ? */
-      if (ptr_str[0] == '\0')
+      if(ptr_str[0] == '\0')
         b_is_last = TRUE;
 
       /*call to FSAL_lookup */
@@ -404,13 +404,13 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
                            /* retrieves attributes if this is the last lookup : */
                            (b_is_last ? object_attributes : NULL));
 
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_lookupPath);
 
       /* if the target object is a junction, an we allow cross junction lookups,
        * we cross it.
        */
-      if (global_fs_info.auth_exportpath_xdev && (out_hdl.obj_type == FSAL_TYPE_JUNCTION))
+      if(global_fs_info.auth_exportpath_xdev && (out_hdl.obj_type == FSAL_TYPE_JUNCTION))
         {
           fsal_handle_t tmp_hdl;
 

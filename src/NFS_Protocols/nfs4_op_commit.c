@@ -161,28 +161,28 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 #endif
 
   /* If there is no FH */
-  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
+  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
       res_COMMIT4.status = NFS4ERR_NOFILEHANDLE;
       return res_COMMIT4.status;
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
       res_COMMIT4.status = NFS4ERR_BADHANDLE;
       return res_COMMIT4.status;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
       res_COMMIT4.status = NFS4ERR_FHEXPIRED;
       return res_COMMIT4.status;
     }
 
   /* Commit is done only on a file */
-  if (data->current_filetype != REGULAR_FILE)
+  if(data->current_filetype != REGULAR_FILE)
     {
       /* Type of the entry is not correct */
       switch (data->current_filetype)
@@ -200,13 +200,13 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_COMMIT4.status;
     }
 
-  if (cache_inode_commit(data->current_entry,
-                         arg_COMMIT4.offset,
-                         arg_COMMIT4.count,
-                         &attr,
-                         data->ht,
-                         data->pclient,
-                         data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_commit(data->current_entry,
+                        arg_COMMIT4.offset,
+                        arg_COMMIT4.count,
+                        &attr,
+                        data->ht,
+                        data->pclient,
+                        data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_COMMIT4.status = NFS4ERR_INVAL;
       return res_COMMIT4.status;

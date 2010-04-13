@@ -48,12 +48,12 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
   /* sanity checks.
    * note : object_attributes is mandatory in FSAL_getattrs.
    */
-  if (!filehandle || !p_context || !object_attributes)
+  if(!filehandle || !p_context || !object_attributes)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
 
   rc = GHOSTFS_GetAttrs((GHOSTFS_handle_t) (*filehandle), &ghost_attrs);
 
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_getattrs);
 
   /* Credentials are not tested because
@@ -66,7 +66,7 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
 
   /* tests whether we can supply all asked attributes */
   unsupp_attr = (object_attributes->asked_attributes) & (~supp_attr);
-  if (unsupp_attr)
+  if(unsupp_attr)
     {
       DisplayLogJdLevel(fsal_log, NIV_MAJOR,
                         "Unsupported attributes: %#llX removing it from asked attributes ",
@@ -108,17 +108,17 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if (!filehandle || !p_context || !attrib_set)
+  if(!filehandle || !p_context || !attrib_set)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_setattrs);
 
   /* first convert attributes and mask */
 
-  if (FSAL_TEST_MASK(attrib_set->asked_attributes, FSAL_ATTR_SIZE))
+  if(FSAL_TEST_MASK(attrib_set->asked_attributes, FSAL_ATTR_SIZE))
     {
       set_mask |= SETATTR_SIZE;
       ghost_attrs.size = attrib_set->filesize;
     }
-  if (FSAL_TEST_MASK(attrib_set->asked_attributes, FSAL_ATTR_MODE))
+  if(FSAL_TEST_MASK(attrib_set->asked_attributes, FSAL_ATTR_MODE))
     {
       set_mask |= SETATTR_MODE;
       ghost_attrs.mode = fsal2ghost_mode(attrib_set->mode);
@@ -127,37 +127,37 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
   /* ghostfs does not check chown restrictions,
    * so we check this for it. */
 
-  if (FSAL_TEST_MASK(attrib_set->asked_attributes, FSAL_ATTR_OWNER))
+  if(FSAL_TEST_MASK(attrib_set->asked_attributes, FSAL_ATTR_OWNER))
     {
 
-      if (p_context->credential.user != 0)
+      if(p_context->credential.user != 0)
         Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
 
       set_mask |= SETATTR_UID;
       ghost_attrs.uid = attrib_set->owner;
     }
 
-  if (FSAL_TEST_MASK(attrib_set->asked_attributes, FSAL_ATTR_GROUP))
+  if(FSAL_TEST_MASK(attrib_set->asked_attributes, FSAL_ATTR_GROUP))
     {
-      if (p_context->credential.user != 0)
+      if(p_context->credential.user != 0)
         Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
 
       set_mask |= SETATTR_GID;
       ghost_attrs.gid = attrib_set->group;
     }
 
-  if (FSAL_TEST_MASK(attrib_set->asked_attributes, FSAL_ATTR_ATIME))
+  if(FSAL_TEST_MASK(attrib_set->asked_attributes, FSAL_ATTR_ATIME))
     {
       set_mask |= SETATTR_ATIME;
       ghost_attrs.atime = attrib_set->atime.seconds;
     }
-  if (FSAL_TEST_MASK(attrib_set->asked_attributes, FSAL_ATTR_MTIME))
+  if(FSAL_TEST_MASK(attrib_set->asked_attributes, FSAL_ATTR_MTIME))
     {
       set_mask |= SETATTR_MTIME;
       ghost_attrs.mtime = attrib_set->mtime.seconds;
     }
 
-  if (attrib_set->asked_attributes & ~SETTABLE_ATTRIBUTES)
+  if(attrib_set->asked_attributes & ~SETTABLE_ATTRIBUTES)
     {
       printf("FSAL: To be set %llX, Settable %llX\n",
              (unsigned long long)object_attributes->asked_attributes,
@@ -169,15 +169,15 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
   /* appel a setattr */
   rc = GHOSTFS_SetAttrs((GHOSTFS_handle_t) (*filehandle), set_mask, ghost_attrs);
 
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_setattrs);
 
-  if (object_attributes)
+  if(object_attributes)
     {
       fsal_status_t status = FSAL_getattrs(filehandle, p_context, object_attributes);
 
       /* on error, we set a special bit in the mask. */
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(object_attributes->asked_attributes);
           FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

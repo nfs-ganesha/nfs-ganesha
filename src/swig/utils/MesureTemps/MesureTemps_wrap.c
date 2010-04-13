@@ -336,13 +336,13 @@ extern "C"
   SWIGRUNTIME int
       SWIG_TypeNameComp(const char *f1, const char *l1, const char *f2, const char *l2)
   {
-    for (; (f1 != l1) && (f2 != l2); ++f1, ++f2)
+    for(; (f1 != l1) && (f2 != l2); ++f1, ++f2)
       {
-        while ((*f1 == ' ') && (f1 != l1))
+        while((*f1 == ' ') && (f1 != l1))
           ++f1;
-        while ((*f2 == ' ') && (f2 != l2))
+        while((*f2 == ' ') && (f2 != l2))
           ++f2;
-        if (*f1 != *f2)
+        if(*f1 != *f2)
           return (*f1 > *f2) ? 1 : -1;
       }
     return (l1 - f1) - (l2 - f2);
@@ -357,15 +357,15 @@ extern "C"
     int equiv = 0;
     const char *te = tb + strlen(tb);
     const char *ne = nb;
-    while (!equiv && *ne)
+    while(!equiv && *ne)
       {
-        for (nb = ne; *ne; ++ne)
+        for(nb = ne; *ne; ++ne)
           {
-            if (*ne == '|')
+            if(*ne == '|')
               break;
           }
         equiv = (SWIG_TypeNameComp(nb, ne, tb, te) == 0) ? 1 : 0;
-        if (*ne)
+        if(*ne)
           ++ne;
       }
     return equiv;
@@ -380,15 +380,15 @@ extern "C"
     int equiv = 0;
     const char *te = tb + strlen(tb);
     const char *ne = nb;
-    while (!equiv && *ne)
+    while(!equiv && *ne)
       {
-        for (nb = ne; *ne; ++ne)
+        for(nb = ne; *ne; ++ne)
           {
-            if (*ne == '|')
+            if(*ne == '|')
               break;
           }
         equiv = (SWIG_TypeNameComp(nb, ne, tb, te) == 0) ? 1 : 0;
-        if (*ne)
+        if(*ne)
           ++ne;
       }
     return equiv;
@@ -445,12 +445,12 @@ extern "C"
   SWIGRUNTIME swig_type_info *SWIG_TypeDynamicCast(swig_type_info * ty, void **ptr)
   {
     swig_type_info *lastty = ty;
-    if (!ty || !ty->dcast)
+    if(!ty || !ty->dcast)
       return ty;
-    while (ty && (ty->dcast))
+    while(ty && (ty->dcast))
       {
         ty = (*ty->dcast) (ptr);
-        if (ty)
+        if(ty)
           lastty = ty;
       }
     return lastty;
@@ -474,14 +474,14 @@ extern "C"
        type, separated by vertical-bar characters.  We choose
        to print the last name, as it is often (?) the most
        specific. */
-    if (!type)
+    if(!type)
       return NULL;
-    if (type->str != NULL)
+    if(type->str != NULL)
       {
         const char *last_name = type->str;
         const char *s;
-        for (s = type->str; *s; s++)
-          if (*s == '|')
+        for(s = type->str; *s; s++)
+          if(*s == '|')
             last_name = s + 1;
         return last_name;
       }
@@ -498,12 +498,12 @@ extern "C"
     /* if (ti->clientdata == clientdata) return; */
     ti->clientdata = clientdata;
 
-    while (cast)
+    while(cast)
       {
-        if (!cast->converter)
+        if(!cast->converter)
           {
             swig_type_info *tc = cast->type;
-            if (!tc->clientdata)
+            if(!tc->clientdata)
               {
                 SWIG_TypeClientData(tc, clientdata);
               }
@@ -532,7 +532,7 @@ extern "C"
     swig_module_info *iter = start;
     do
       {
-        if (iter->size)
+        if(iter->size)
           {
             register size_t l = 0;
             register size_t r = iter->size - 1;
@@ -541,16 +541,16 @@ extern "C"
                 /* since l+r >= 0, we can (>> 1) instead (/ 2) */
                 register size_t i = (l + r) >> 1;
                 const char *iname = iter->types[i]->name;
-                if (iname)
+                if(iname)
                   {
                     register int compare = strcmp(name, iname);
-                    if (compare == 0)
+                    if(compare == 0)
                       {
                         return iter->types[i];
                       }
-                    else if (compare < 0)
+                    else if(compare < 0)
                       {
-                        if (i)
+                        if(i)
                           {
                             r = i - 1;
                           }
@@ -559,7 +559,7 @@ extern "C"
                             break;
                           }
                       }
-                    else if (compare > 0)
+                    else if(compare > 0)
                       {
                         l = i + 1;
                       }
@@ -569,11 +569,11 @@ extern "C"
                     break;      /* should never happen */
                   }
               }
-            while (l <= r);
+            while(l <= r);
           }
         iter = iter->next;
       }
-    while (iter != end);
+    while(iter != end);
     return 0;
   }
 
@@ -592,7 +592,7 @@ extern "C"
   {
     /* STEP 1: Search the name field using binary search */
     swig_type_info *ret = SWIG_MangledTypeQueryModule(start, end, name);
-    if (ret)
+    if(ret)
       {
         return ret;
       }
@@ -604,14 +604,14 @@ extern "C"
         do
           {
             register size_t i = 0;
-            for (; i < iter->size; ++i)
+            for(; i < iter->size; ++i)
               {
-                if (iter->types[i]->str && (SWIG_TypeEquiv(iter->types[i]->str, name)))
+                if(iter->types[i]->str && (SWIG_TypeEquiv(iter->types[i]->str, name)))
                   return iter->types[i];
               }
             iter = iter->next;
           }
-        while (iter != end);
+        while(iter != end);
       }
 
     /* neither found a match */
@@ -626,7 +626,7 @@ extern "C"
     static const char hex[17] = "0123456789abcdef";
     register const unsigned char *u = (unsigned char *)ptr;
     register const unsigned char *eu = u + sz;
-    for (; u != eu; ++u)
+    for(; u != eu; ++u)
       {
         register unsigned char uu = *u;
         *(c++) = hex[(uu & 0xf0) >> 4];
@@ -642,20 +642,20 @@ extern "C"
   {
     register unsigned char *u = (unsigned char *)ptr;
     register const unsigned char *eu = u + sz;
-    for (; u != eu; ++u)
+    for(; u != eu; ++u)
       {
         register char d = *(c++);
         register unsigned char uu;
-        if ((d >= '0') && (d <= '9'))
+        if((d >= '0') && (d <= '9'))
           uu = ((d - '0') << 4);
-        else if ((d >= 'a') && (d <= 'f'))
+        else if((d >= 'a') && (d <= 'f'))
           uu = ((d - ('a' - 10)) << 4);
         else
           return (char *)0;
         d = *(c++);
-        if ((d >= '0') && (d <= '9'))
+        if((d >= '0') && (d <= '9'))
           uu |= (d - '0');
-        else if ((d >= 'a') && (d <= 'f'))
+        else if((d >= 'a') && (d <= 'f'))
           uu |= (d - ('a' - 10));
         else
           return (char *)0;
@@ -670,11 +670,11 @@ extern "C"
   SWIGRUNTIME char *SWIG_PackVoidPtr(char *buff, void *ptr, const char *name, size_t bsz)
   {
     char *r = buff;
-    if ((2 * sizeof(void *) + 2) > bsz)
+    if((2 * sizeof(void *) + 2) > bsz)
       return 0;
     *(r++) = '_';
     r = SWIG_PackData(r, &ptr, sizeof(void *));
-    if (strlen(name) + 1 > (bsz - (r - buff)))
+    if(strlen(name) + 1 > (bsz - (r - buff)))
       return 0;
     strcpy(r, name);
     return buff;
@@ -682,9 +682,9 @@ extern "C"
 
   SWIGRUNTIME const char *SWIG_UnpackVoidPtr(const char *c, void **ptr, const char *name)
   {
-    if (*c != '_')
+    if(*c != '_')
       {
-        if (strcmp(c, "NULL") == 0)
+        if(strcmp(c, "NULL") == 0)
           {
             *ptr = (void *)0;
             return name;
@@ -702,11 +702,11 @@ extern "C"
   {
     char *r = buff;
     size_t lname = (name ? strlen(name) : 0);
-    if ((2 * sz + 2 + lname) > bsz)
+    if((2 * sz + 2 + lname) > bsz)
       return 0;
     *(r++) = '_';
     r = SWIG_PackData(r, ptr, sz);
-    if (lname)
+    if(lname)
       {
         strncpy(r, name, lname + 1);
       }
@@ -720,9 +720,9 @@ extern "C"
   SWIGRUNTIME const char *SWIG_UnpackDataName(const char *c, void *ptr, size_t sz,
                                               const char *name)
   {
-    if (*c != '_')
+    if(*c != '_')
       {
-        if (strcmp(c, "NULL") == 0)
+        if(strcmp(c, "NULL") == 0)
           {
             memset(ptr, 0, sz);
             return name;
@@ -1047,7 +1047,7 @@ extern "C"
 #  if (PERL_VERSION < 6)
      croak("%_", err);
 #  else
-    if (SvOK(err) && !SvROK(err))
+    if(SvOK(err) && !SvROK(err))
        croak("%_", err);
      croak(Nullch);
 #  endif
@@ -1058,9 +1058,9 @@ extern "C"
 #include <stdlib.h>
   SWIGRUNTIME const char *SWIG_Perl_TypeProxyName(const swig_type_info * type)
   {
-    if (!type)
+    if(!type)
       return NULL;
-    if (type->clientdata != NULL)
+    if(type->clientdata != NULL)
       {
         return (const char *)type->clientdata;
       }
@@ -1089,24 +1089,24 @@ extern "C"
     void *voidptr = (void *)0;
     SV *tsv = 0;
     /* If magical, apply more magic */
-    if (SvGMAGICAL(sv))
+    if(SvGMAGICAL(sv))
       mg_get(sv);
 
     /* Check to see if this is an object */
-    if (sv_isobject(sv))
+    if(sv_isobject(sv))
       {
         IV tmp = 0;
         tsv = (SV *) SvRV(sv);
-        if ((SvTYPE(tsv) == SVt_PVHV))
+        if((SvTYPE(tsv) == SVt_PVHV))
           {
             MAGIC *mg;
-            if (SvMAGICAL(tsv))
+            if(SvMAGICAL(tsv))
               {
                 mg = mg_find(tsv, 'P');
-                if (mg)
+                if(mg)
                   {
                     sv = mg->mg_obj;
-                    if (sv_isobject(sv))
+                    if(sv_isobject(sv))
                       {
                         tsv = (SV *) SvRV(sv);
                         tmp = SvIV(tsv);
@@ -1124,14 +1124,14 @@ extern "C"
           }
         voidptr = INT2PTR(void *, tmp);
       }
-    else if (!SvOK(sv))
+    else if(!SvOK(sv))
       {                         /* Check for undef */
         *(ptr) = (void *)0;
         return SWIG_OK;
       }
-    else if (SvTYPE(sv) == SVt_RV)
+    else if(SvTYPE(sv) == SVt_RV)
       {                         /* Check for NULL pointer */
-        if (!SvROK(sv))
+        if(!SvROK(sv))
           {
             *(ptr) = (void *)0;
             return SWIG_OK;
@@ -1145,12 +1145,12 @@ extern "C"
       {                         /* Don't know what it is */
         return SWIG_ERROR;
       }
-    if (_t)
+    if(_t)
       {
         /* Now see if the types match */
         char *_c = HvNAME(SvSTASH(SvRV(sv)));
         tc = SWIG_TypeProxyCheck(_c, _t);
-        if (!tc)
+        if(!tc)
           {
             return SWIG_ERROR;
           }
@@ -1164,7 +1164,7 @@ extern "C"
     /* 
      *  DISOWN implementation: we need a perl guru to check this one.
      */
-    if (tsv && (flags & SWIG_POINTER_DISOWN))
+    if(tsv && (flags & SWIG_POINTER_DISOWN))
       {
         /* 
          *  almost copy paste code from below SWIG_POINTER_OWN setting
@@ -1172,14 +1172,14 @@ extern "C"
         SV *obj = sv;
         HV *stash = SvSTASH(SvRV(obj));
         GV *gv = *(GV **) hv_fetch(stash, "OWNER", 5, TRUE);
-        if (isGV(gv))
+        if(isGV(gv))
           {
             HV *hv = GvHVn(gv);
             /*
              * To set ownership (see below), a newSViv(1) entry is added. 
              * Hence, to remove ownership, we delete the entry.
              */
-            if (hv_exists_ent(hv, obj, 0))
+            if(hv_exists_ent(hv, obj, 0))
               {
                 hv_delete_ent(hv, obj, 0, 0);
               }
@@ -1192,7 +1192,7 @@ extern "C"
       SWIG_Perl_MakePtr(SWIG_MAYBE_PERL_OBJECT SV * sv, void *ptr, swig_type_info * t,
                         int flags)
   {
-    if (ptr && (flags & SWIG_SHADOW))
+    if(ptr && (flags & SWIG_SHADOW))
       {
         SV *self;
         SV *obj = newSV(0);
@@ -1200,11 +1200,11 @@ extern "C"
         HV *stash;
         sv_setref_pv(obj, (char *)SWIG_Perl_TypeProxyName(t), ptr);
         stash = SvSTASH(SvRV(obj));
-        if (flags & SWIG_POINTER_OWN)
+        if(flags & SWIG_POINTER_OWN)
           {
             HV *hv;
             GV *gv = *(GV **) hv_fetch(stash, "OWNER", 5, TRUE);
-            if (!isGV(gv))
+            if(!isGV(gv))
               gv_init(gv, stash, "OWNER", 5, FALSE);
             hv = GvHVn(gv);
             hv_store_ent(hv, obj, newSViv(1), 0);
@@ -1236,7 +1236,7 @@ extern "C"
   {
     char result[1024];
     char *r = result;
-    if ((2 * sz + 1 + strlen(SWIG_Perl_TypeProxyName(type))) > 1000)
+    if((2 * sz + 1 + strlen(SWIG_Perl_TypeProxyName(type))) > 1000)
       return;
     *(r++) = '_';
     r = SWIG_PackData(r, ptr, sz);
@@ -1260,18 +1260,18 @@ extern "C"
     swig_cast_info *tc;
     const char *c = 0;
 
-    if ((!obj) || (!SvOK(obj)))
+    if((!obj) || (!SvOK(obj)))
       return SWIG_ERROR;
     c = SvPV(obj, PL_na);
     /* Pointer values must start with leading underscore */
-    if (*c != '_')
+    if(*c != '_')
       return SWIG_ERROR;
     c++;
     c = SWIG_UnpackData(c, ptr, sz);
-    if (ty)
+    if(ty)
       {
         tc = SWIG_TypeCheck(c, ty);
-        if (!tc)
+        if(!tc)
           return SWIG_ERROR;
       }
     return SWIG_OK;
@@ -1353,12 +1353,12 @@ extern "C"
     SV *pointer;
 
     /* first check if pointer already created */
-    if (!type_pointer)
+    if(!type_pointer)
       {
         pointer =
             get_sv("swig_runtime_data::type_pointer" SWIG_RUNTIME_VERSION
                    SWIG_TYPE_TABLE_NAME, FALSE);
-        if (pointer && SvOK(pointer))
+        if(pointer && SvOK(pointer))
           {
             type_pointer = INT2PTR(swig_type_info **, SvIV(pointer));
           }
@@ -1516,7 +1516,7 @@ SWIGINTERN swig_type_info *SWIG_pchar_descriptor()
 {
   static int init = 0;
   static swig_type_info *info = 0;
-  if (!init)
+  if(!init)
     {
       info = SWIG_TypeQuery("_p_char");
       init = 1;
@@ -1526,16 +1526,16 @@ SWIGINTERN swig_type_info *SWIG_pchar_descriptor()
 
 SWIGINTERN int SWIG_AsCharPtrAndSize(SV * obj, char **cptr, size_t * psize, int *alloc)
 {
-  if (SvPOK(obj))
+  if(SvPOK(obj))
     {
       STRLEN len = 0;
       char *cstr = SvPV(obj, len);
       size_t size = len + 1;
-      if (cptr)
+      if(cptr)
         {
-          if (alloc)
+          if(alloc)
             {
-              if (*alloc == SWIG_NEWOBJ)
+              if(*alloc == SWIG_NEWOBJ)
                 {
                   *cptr =
                       (char *)memcpy((char *)malloc((size) * sizeof(char)), cstr,
@@ -1548,23 +1548,23 @@ SWIGINTERN int SWIG_AsCharPtrAndSize(SV * obj, char **cptr, size_t * psize, int 
                 }
             }
         }
-      if (psize)
+      if(psize)
         *psize = size;
       return SWIG_OK;
     }
   else
     {
       swig_type_info *pchar_descriptor = SWIG_pchar_descriptor();
-      if (pchar_descriptor)
+      if(pchar_descriptor)
         {
           char *vptr = 0;
-          if (SWIG_ConvertPtr(obj, (void **)&vptr, pchar_descriptor, 0) == SWIG_OK)
+          if(SWIG_ConvertPtr(obj, (void **)&vptr, pchar_descriptor, 0) == SWIG_OK)
             {
-              if (cptr)
+              if(cptr)
                 *cptr = vptr;
-              if (psize)
+              if(psize)
                 *psize = vptr ? (strlen(vptr) + 1) : 0;
-              if (alloc)
+              if(alloc)
                 *alloc = SWIG_OLDOBJ;
               return SWIG_OK;
             }
@@ -1576,9 +1576,9 @@ SWIGINTERN int SWIG_AsCharPtrAndSize(SV * obj, char **cptr, size_t * psize, int 
 SWIGINTERNINLINE SV *SWIG_FromCharPtrAndSize(const char *carray, size_t size)
 {
   SV *obj = sv_newmortal();
-  if (size && carray)
+  if(size && carray)
     {
-      if (carray[size - 1] == 0)
+      if(carray[size - 1] == 0)
         {
           sv_setpv(obj, carray);
         }
@@ -1649,12 +1649,12 @@ extern "C"
       int argvi = 0;
        dXSARGS;
 
-      if ((items < 2) || (items > 2))
+      if((items < 2) || (items > 2))
         {
           SWIG_croak("Usage: Temps_secondes_set(self,secondes);");
         }
       res1 = SWIG_ConvertPtr(ST(0), &argp1, SWIGTYPE_p_Temps, 0 | 0);
-      if (!SWIG_IsOK(res1))
+      if(!SWIG_IsOK(res1))
         {
           SWIG_exception_fail(SWIG_ArgError(res1),
                               "in method '" "Temps_secondes_set" "', argument " "1"
@@ -1663,13 +1663,13 @@ extern "C"
       arg1 = (struct Temps *)(argp1);
       {
         res2 = SWIG_ConvertPtr(ST(1), &argp2, SWIGTYPE_p_ulong, 0);
-        if (!SWIG_IsOK(res2))
+        if(!SWIG_IsOK(res2))
           {
             SWIG_exception_fail(SWIG_ArgError(res2),
                                 "in method '" "Temps_secondes_set" "', argument " "2"
                                 " of type '" "ulong" "'");
           }
-        if (!argp2)
+        if(!argp2)
           {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '"
@@ -1681,7 +1681,7 @@ extern "C"
             arg2 = *((ulong *) (argp2));
           }
       }
-      if (arg1)
+      if(arg1)
         (arg1)->secondes = arg2;
 
       XSRETURN(argvi);
@@ -1701,12 +1701,12 @@ extern "C"
       int argvi = 0;
       dXSARGS;
 
-      if ((items < 1) || (items > 1))
+      if((items < 1) || (items > 1))
         {
           SWIG_croak("Usage: Temps_secondes_get(self);");
         }
       res1 = SWIG_ConvertPtr(ST(0), &argp1, SWIGTYPE_p_Temps, 0 | 0);
-      if (!SWIG_IsOK(res1))
+      if(!SWIG_IsOK(res1))
         {
           SWIG_exception_fail(SWIG_ArgError(res1),
                               "in method '" "Temps_secondes_get" "', argument " "1"
@@ -1740,12 +1740,12 @@ extern "C"
       int argvi = 0;
       dXSARGS;
 
-      if ((items < 2) || (items > 2))
+      if((items < 2) || (items > 2))
         {
           SWIG_croak("Usage: Temps_micro_secondes_set(self,micro_secondes);");
         }
       res1 = SWIG_ConvertPtr(ST(0), &argp1, SWIGTYPE_p_Temps, 0 | 0);
-      if (!SWIG_IsOK(res1))
+      if(!SWIG_IsOK(res1))
         {
           SWIG_exception_fail(SWIG_ArgError(res1),
                               "in method '" "Temps_micro_secondes_set" "', argument " "1"
@@ -1754,13 +1754,13 @@ extern "C"
       arg1 = (struct Temps *)(argp1);
       {
         res2 = SWIG_ConvertPtr(ST(1), &argp2, SWIGTYPE_p_ulong, 0);
-        if (!SWIG_IsOK(res2))
+        if(!SWIG_IsOK(res2))
           {
             SWIG_exception_fail(SWIG_ArgError(res2),
                                 "in method '" "Temps_micro_secondes_set" "', argument "
                                 "2" " of type '" "ulong" "'");
           }
-        if (!argp2)
+        if(!argp2)
           {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '"
@@ -1772,7 +1772,7 @@ extern "C"
             arg2 = *((ulong *) (argp2));
           }
       }
-      if (arg1)
+      if(arg1)
         (arg1)->micro_secondes = arg2;
 
       XSRETURN(argvi);
@@ -1792,12 +1792,12 @@ extern "C"
       int argvi = 0;
       dXSARGS;
 
-      if ((items < 1) || (items > 1))
+      if((items < 1) || (items > 1))
         {
           SWIG_croak("Usage: Temps_micro_secondes_get(self);");
         }
       res1 = SWIG_ConvertPtr(ST(0), &argp1, SWIGTYPE_p_Temps, 0 | 0);
-      if (!SWIG_IsOK(res1))
+      if(!SWIG_IsOK(res1))
         {
           SWIG_exception_fail(SWIG_ArgError(res1),
                               "in method '" "Temps_micro_secondes_get" "', argument " "1"
@@ -1826,7 +1826,7 @@ extern "C"
       int argvi = 0;
       dXSARGS;
 
-      if ((items < 0) || (items > 0))
+      if((items < 0) || (items > 0))
         {
           SWIG_croak("Usage: new_Temps();");
         }
@@ -1850,12 +1850,12 @@ extern "C"
       int argvi = 0;
       dXSARGS;
 
-      if ((items < 1) || (items > 1))
+      if((items < 1) || (items > 1))
         {
           SWIG_croak("Usage: delete_Temps(self);");
         }
       res1 = SWIG_ConvertPtr(ST(0), &argp1, SWIGTYPE_p_Temps, SWIG_POINTER_DISOWN | 0);
-      if (!SWIG_IsOK(res1))
+      if(!SWIG_IsOK(res1))
         {
           SWIG_exception_fail(SWIG_ArgError(res1),
                               "in method '" "delete_Temps" "', argument " "1" " of type '"
@@ -1883,12 +1883,12 @@ extern "C"
       int argvi = 0;
       dXSARGS;
 
-      if ((items < 2) || (items > 2))
+      if((items < 2) || (items > 2))
         {
           SWIG_croak("Usage: MesureTemps(struct Temps *,struct Temps *);");
         }
       res1 = SWIG_ConvertPtr(ST(0), &argp1, SWIGTYPE_p_Temps, 0 | 0);
-      if (!SWIG_IsOK(res1))
+      if(!SWIG_IsOK(res1))
         {
           SWIG_exception_fail(SWIG_ArgError(res1),
                               "in method '" "MesureTemps" "', argument " "1" " of type '"
@@ -1896,7 +1896,7 @@ extern "C"
         }
       arg1 = (struct Temps *)(argp1);
       res2 = SWIG_ConvertPtr(ST(1), &argp2, SWIGTYPE_p_Temps, 0 | 0);
-      if (!SWIG_IsOK(res2))
+      if(!SWIG_IsOK(res2))
         {
           SWIG_exception_fail(SWIG_ArgError(res2),
                               "in method '" "MesureTemps" "', argument " "2" " of type '"
@@ -1926,19 +1926,19 @@ extern "C"
       int argvi = 0;
       dXSARGS;
 
-      if ((items < 2) || (items > 2))
+      if((items < 2) || (items > 2))
         {
           SWIG_croak("Usage: ConvertiTempsChaine(struct Temps,char *);");
         }
       {
         res1 = SWIG_ConvertPtr(ST(0), &argp1, SWIGTYPE_p_Temps, 0);
-        if (!SWIG_IsOK(res1))
+        if(!SWIG_IsOK(res1))
           {
             SWIG_exception_fail(SWIG_ArgError(res1),
                                 "in method '" "ConvertiTempsChaine" "', argument " "1"
                                 " of type '" "struct Temps" "'");
           }
-        if (!argp1)
+        if(!argp1)
           {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '"
@@ -1951,7 +1951,7 @@ extern "C"
           }
       }
       res2 = SWIG_AsCharPtrAndSize(ST(1), &buf2, NULL, &alloc2);
-      if (!SWIG_IsOK(res2))
+      if(!SWIG_IsOK(res2))
         {
           SWIG_exception_fail(SWIG_ArgError(res2),
                               "in method '" "ConvertiTempsChaine" "', argument " "2"
@@ -1961,11 +1961,11 @@ extern "C"
       result = (char *)ConvertiTempsChaine(arg1, arg2);
       ST(argvi) = SWIG_FromCharPtr(result);
       argvi++;
-      if (alloc2 == SWIG_NEWOBJ)
+      if(alloc2 == SWIG_NEWOBJ)
         free((char *)buf2);
       XSRETURN(argvi);
  fail:
-      if (alloc2 == SWIG_NEWOBJ)
+      if(alloc2 == SWIG_NEWOBJ)
         free((char *)buf2);
       SWIG_croak_null();
     }
@@ -1985,12 +1985,12 @@ extern "C"
       int argvi = 0;
       dXSARGS;
 
-      if ((items < 2) || (items > 2))
+      if((items < 2) || (items > 2))
         {
           SWIG_croak("Usage: ConvertiChaineTemps(char *,struct Temps *);");
         }
       res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
-      if (!SWIG_IsOK(res1))
+      if(!SWIG_IsOK(res1))
         {
           SWIG_exception_fail(SWIG_ArgError(res1),
                               "in method '" "ConvertiChaineTemps" "', argument " "1"
@@ -1998,7 +1998,7 @@ extern "C"
         }
       arg1 = buf1;
       res2 = SWIG_ConvertPtr(ST(1), &argp2, SWIGTYPE_p_Temps, 0 | 0);
-      if (!SWIG_IsOK(res2))
+      if(!SWIG_IsOK(res2))
         {
           SWIG_exception_fail(SWIG_ArgError(res2),
                               "in method '" "ConvertiChaineTemps" "', argument " "2"
@@ -2009,12 +2009,12 @@ extern "C"
       ST(argvi) =
           SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Temps, 0 | SWIG_SHADOW);
       argvi++;
-      if (alloc1 == SWIG_NEWOBJ)
+      if(alloc1 == SWIG_NEWOBJ)
         free((char *)buf1);
 
       XSRETURN(argvi);
  fail:
-      if (alloc1 == SWIG_NEWOBJ)
+      if(alloc1 == SWIG_NEWOBJ)
         free((char *)buf1);
 
       SWIG_croak_null();
@@ -2030,12 +2030,12 @@ extern "C"
       int argvi = 0;
       dXSARGS;
 
-      if ((items < 1) || (items > 1))
+      if((items < 1) || (items > 1))
         {
           SWIG_croak("Usage: StartTime(start_time);");
         }
       res1 = SWIG_ConvertPtr(ST(0), &argp1, SWIGTYPE_p_Temps, 0 | 0);
-      if (!SWIG_IsOK(res1))
+      if(!SWIG_IsOK(res1))
         {
           SWIG_exception_fail(SWIG_ArgError(res1),
                               "in method '" "StartTime" "', argument " "1" " of type '"
@@ -2063,12 +2063,12 @@ extern "C"
       int argvi = 0;
       dXSARGS;
 
-      if ((items < 2) || (items > 2))
+      if((items < 2) || (items > 2))
         {
           SWIG_croak("Usage: EndTime(start_time,end_time);");
         }
       res1 = SWIG_ConvertPtr(ST(0), &argp1, SWIGTYPE_p_Temps, 0 | 0);
-      if (!SWIG_IsOK(res1))
+      if(!SWIG_IsOK(res1))
         {
           SWIG_exception_fail(SWIG_ArgError(res1),
                               "in method '" "EndTime" "', argument " "1" " of type '"
@@ -2076,7 +2076,7 @@ extern "C"
         }
       arg1 = (struct Temps *)(argp1);
       res2 = SWIG_ConvertPtr(ST(1), &argp2, SWIGTYPE_p_Temps, 0 | 0);
-      if (!SWIG_IsOK(res2))
+      if(!SWIG_IsOK(res2))
         {
           SWIG_exception_fail(SWIG_ArgError(res2),
                               "in method '" "EndTime" "', argument " "2" " of type '"
@@ -2201,7 +2201,7 @@ SWIGRUNTIME void SWIG_InitializeModule(void *clientdata)
 
   clientdata = clientdata;
 
-  if (init_run)
+  if(init_run)
     return;
   init_run = 1;
 
@@ -2211,7 +2211,7 @@ SWIGRUNTIME void SWIG_InitializeModule(void *clientdata)
 
   /* Try and load any already created modules */
   module_head = SWIG_GetModule(clientdata);
-  if (module_head)
+  if(module_head)
     {
       swig_module.next = module_head->next;
       module_head->next = &swig_module;
@@ -2227,7 +2227,7 @@ SWIGRUNTIME void SWIG_InitializeModule(void *clientdata)
 #ifdef SWIGRUNTIME_DEBUG
   printf("SWIG_InitializeModule: size %d\n", swig_module.size);
 #endif
-  for (i = 0; i < swig_module.size; ++i)
+  for(i = 0; i < swig_module.size; ++i)
     {
       swig_type_info *type = 0;
       swig_type_info *ret;
@@ -2238,19 +2238,19 @@ SWIGRUNTIME void SWIG_InitializeModule(void *clientdata)
 #endif
 
       /* if there is another module already loaded */
-      if (swig_module.next != &swig_module)
+      if(swig_module.next != &swig_module)
         {
           type =
               SWIG_MangledTypeQueryModule(swig_module.next, &swig_module,
                                           swig_module.type_initial[i]->name);
         }
-      if (type)
+      if(type)
         {
           /* Overwrite clientdata field */
 #ifdef SWIGRUNTIME_DEBUG
           printf("SWIG_InitializeModule: found type %s\n", type->name);
 #endif
-          if (swig_module.type_initial[i]->clientdata)
+          if(swig_module.type_initial[i]->clientdata)
             {
               type->clientdata = swig_module.type_initial[i]->clientdata;
 #ifdef SWIGRUNTIME_DEBUG
@@ -2265,26 +2265,26 @@ SWIGRUNTIME void SWIG_InitializeModule(void *clientdata)
 
       /* Insert casting types */
       cast = swig_module.cast_initial[i];
-      while (cast->type)
+      while(cast->type)
         {
           /* Don't need to add information already in the list */
           ret = 0;
 #ifdef SWIGRUNTIME_DEBUG
           printf("SWIG_InitializeModule: look cast %s\n", cast->type->name);
 #endif
-          if (swig_module.next != &swig_module)
+          if(swig_module.next != &swig_module)
             {
               ret =
                   SWIG_MangledTypeQueryModule(swig_module.next, &swig_module,
                                               cast->type->name);
 #ifdef SWIGRUNTIME_DEBUG
-              if (ret)
+              if(ret)
                 printf("SWIG_InitializeModule: found cast %s\n", ret->name);
 #endif
             }
-          if (ret)
+          if(ret)
             {
-              if (type == swig_module.type_initial[i])
+              if(type == swig_module.type_initial[i])
                 {
 #ifdef SWIGRUNTIME_DEBUG
                   printf("SWIG_InitializeModule: skip old type %s\n", ret->name);
@@ -2297,20 +2297,20 @@ SWIGRUNTIME void SWIG_InitializeModule(void *clientdata)
                   /* Check for casting already in the list */
                   swig_cast_info *ocast = SWIG_TypeCheck(ret->name, type);
 #ifdef SWIGRUNTIME_DEBUG
-                  if (ocast)
+                  if(ocast)
                     printf("SWIG_InitializeModule: skip old cast %s\n", ret->name);
 #endif
-                  if (!ocast)
+                  if(!ocast)
                     ret = 0;
                 }
             }
 
-          if (!ret)
+          if(!ret)
             {
 #ifdef SWIGRUNTIME_DEBUG
               printf("SWIG_InitializeModule: adding cast %s\n", cast->type->name);
 #endif
-              if (type->cast)
+              if(type->cast)
                 {
                   type->cast->prev = cast;
                   cast->next = type->cast;
@@ -2326,12 +2326,12 @@ SWIGRUNTIME void SWIG_InitializeModule(void *clientdata)
 
 #ifdef SWIGRUNTIME_DEBUG
   printf("**** SWIG_InitializeModule: Cast List ******\n");
-  for (i = 0; i < swig_module.size; ++i)
+  for(i = 0; i < swig_module.size; ++i)
     {
       int j = 0;
       swig_cast_info *cast = swig_module.cast_initial[i];
       printf("SWIG_InitializeModule: type %d %s\n", i, swig_module.type_initial[i]->name);
-      while (cast->type)
+      while(cast->type)
         {
           printf("SWIG_InitializeModule: cast type %s\n", cast->type->name);
           cast++;
@@ -2354,20 +2354,20 @@ SWIGRUNTIME void SWIG_PropagateClientData(void)
   swig_cast_info *equiv;
   static int init_run = 0;
 
-  if (init_run)
+  if(init_run)
     return;
   init_run = 1;
 
-  for (i = 0; i < swig_module.size; i++)
+  for(i = 0; i < swig_module.size; i++)
     {
-      if (swig_module.types[i]->clientdata)
+      if(swig_module.types[i]->clientdata)
         {
           equiv = swig_module.types[i]->cast;
-          while (equiv)
+          while(equiv)
             {
-              if (!equiv->converter)
+              if(!equiv->converter)
                 {
-                  if (equiv->type && !equiv->type->clientdata)
+                  if(equiv->type && !equiv->type->clientdata)
                     SWIG_TypeClientData(equiv->type, swig_module.types[i]->clientdata);
                 }
               equiv = equiv->next;
@@ -2395,17 +2395,17 @@ XS(SWIG_init)
   SWIG_InitializeModule(0);
 
   /* Install commands */
-  for (i = 0; swig_commands[i].name; i++)
+  for(i = 0; swig_commands[i].name; i++)
     {
       newXS((char *)swig_commands[i].name, swig_commands[i].wrapper, (char *)__FILE__);
     }
 
   /* Install variables */
-  for (i = 0; swig_variables[i].name; i++)
+  for(i = 0; swig_variables[i].name; i++)
     {
       SV *sv;
       sv = get_sv((char *)swig_variables[i].name, TRUE | 0x2);
-      if (swig_variables[i].type)
+      if(swig_variables[i].type)
         {
           SWIG_MakePtr(sv, (void *)1, *swig_variables[i].type, 0);
         }
@@ -2418,7 +2418,7 @@ XS(SWIG_init)
     }
 
   /* Install constant */
-  for (i = 0; swig_constants[i].type; i++)
+  for(i = 0; swig_constants[i].type; i++)
     {
       SV *sv;
       sv = get_sv((char *)swig_constants[i].name, TRUE | 0x2);

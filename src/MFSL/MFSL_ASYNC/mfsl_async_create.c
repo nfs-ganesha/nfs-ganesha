@@ -130,7 +130,7 @@ fsal_status_t MFSL_create_async_op(mfsl_async_op_desc_t * popasyncdesc)
                             &(popasyncdesc->op_args.create.pmfsl_obj_dirdest->handle),
                             &popasyncdesc->op_args.create.filename,
                             &popasyncdesc->fsal_op_context, &attrsrc, &attrdest);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       V(popasyncdesc->op_args.create.pmfsl_obj_dirdest->lock);
 
@@ -143,7 +143,7 @@ fsal_status_t MFSL_create_async_op(mfsl_async_op_desc_t * popasyncdesc)
                             &popasyncdesc->fsal_op_context,
                             &handle, &popasyncdesc->op_res.create.attr);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       V(popasyncdesc->op_args.create.pmfsl_obj_dirdest->lock);
 
@@ -151,7 +151,7 @@ fsal_status_t MFSL_create_async_op(mfsl_async_op_desc_t * popasyncdesc)
     }
 
   /* If user is not root, setattr to chown the entry */
-  if (popasyncdesc->op_args.create.owner != 0)
+  if(popasyncdesc->op_args.create.owner != 0)
     {
       chown_attr.asked_attributes = FSAL_ATTR_MODE | FSAL_ATTR_OWNER | FSAL_ATTR_GROUP;
       chown_attr.mode = popasyncdesc->op_args.create.mode;
@@ -191,7 +191,7 @@ fsal_status_t MFSAL_create_check_perms(mfsl_object_t * target_handle,
 
   fsal_status = FSAL_create_access(p_context, object_attributes);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   /** @todo : put some stuff in this function */
@@ -235,7 +235,7 @@ fsal_status_t MFSL_create(mfsl_object_t * parent_directory_handle,      /* IN */
                                          p_dirname,
                                          p_context, p_mfsl_context, parent_attributes);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   P(p_mfsl_context->lock);
@@ -250,10 +250,10 @@ fsal_status_t MFSL_create(mfsl_object_t * parent_directory_handle,      /* IN */
 
   V(p_mfsl_context->lock);
 
-  if (pasyncopdesc == NULL)
+  if(pasyncopdesc == NULL)
     MFSL_return(ERR_FSAL_INVAL, 0);
 
-  if (gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
+  if(gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
     {
       /* Could'not get time of day... Stopping, this may need a major failure */
       DisplayLog("MFSL_create: cannot get time of day... exiting");
@@ -289,7 +289,7 @@ fsal_status_t MFSL_create(mfsl_object_t * parent_directory_handle,      /* IN */
 
   pasyncopdesc->ptr_mfsl_context = (caddr_t) p_mfsl_context;
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   pasyncopdesc->op_func = MFSL_create_async_op;
@@ -298,7 +298,7 @@ fsal_status_t MFSL_create(mfsl_object_t * parent_directory_handle,      /* IN */
       synclet_data[pasyncopdesc->related_synclet_index].root_fsal_context;
 
   fsal_status = MFSL_async_post(pasyncopdesc);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   /* Update the asynchronous metadata */
@@ -317,7 +317,7 @@ fsal_status_t MFSL_create(mfsl_object_t * parent_directory_handle,      /* IN */
 
   newfile_pasyncdata->deleted = FALSE;
 
-  if (!mfsl_async_set_specdata(pnewfile_handle, newfile_pasyncdata))
+  if(!mfsl_async_set_specdata(pnewfile_handle, newfile_pasyncdata))
     MFSL_return(ERR_FSAL_SERVERFAULT, 0);
 
   /* Return the correct attributes */

@@ -156,75 +156,75 @@ int nfs4_op_nverify(struct nfs_argop4 *op,
   res_NVERIFY4.status = NFS4_OK;
 
   /* If there is no FH */
-  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
+  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
       res_NVERIFY4.status = NFS4ERR_NOFILEHANDLE;
       return NFS4ERR_NOFILEHANDLE;
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
       res_NVERIFY4.status = NFS4ERR_BADHANDLE;
       return NFS4ERR_BADHANDLE;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
       res_NVERIFY4.status = NFS4ERR_FHEXPIRED;
       return NFS4ERR_FHEXPIRED;
     }
 
   /* operation is always permitted on pseudofs */
-  if (nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     {
       res_NVERIFY4.status = NFS4_OK;
       return res_NVERIFY4.status;
     }
 
   /* Get only attributes that are allowed to be read */
-  if (!nfs4_Fattr_Check_Access(&arg_NVERIFY4.obj_attributes, FATTR4_ATTR_READ))
+  if(!nfs4_Fattr_Check_Access(&arg_NVERIFY4.obj_attributes, FATTR4_ATTR_READ))
     {
       res_NVERIFY4.status = NFS4ERR_INVAL;
       return res_NVERIFY4.status;
     }
 
   /* Ask only for supported attributes */
-  if (!nfs4_Fattr_Supported(&arg_NVERIFY4.obj_attributes))
+  if(!nfs4_Fattr_Supported(&arg_NVERIFY4.obj_attributes))
     {
       res_NVERIFY4.status = NFS4ERR_ATTRNOTSUPP;
       return res_NVERIFY4.status;
     }
 
   /* Get the cache inode attribute */
-  if ((cache_status = cache_inode_getattr(data->current_entry,
-                                          &file_attr,
-                                          data->ht,
-                                          data->pclient,
-                                          data->pcontext,
-                                          &cache_status)) != CACHE_INODE_SUCCESS)
+  if((cache_status = cache_inode_getattr(data->current_entry,
+                                         &file_attr,
+                                         data->ht,
+                                         data->pclient,
+                                         data->pcontext,
+                                         &cache_status)) != CACHE_INODE_SUCCESS)
     {
       res_NVERIFY4.status = NFS4ERR_INVAL;
       return res_NVERIFY4.status;
     }
 
-  if (nfs4_FSALattr_To_Fattr(data->pexport,
-                             &file_attr,
-                             &file_attr4,
-                             data,
-                             &(data->currentFH),
-                             &(arg_NVERIFY4.obj_attributes.attrmask)) != 0)
+  if(nfs4_FSALattr_To_Fattr(data->pexport,
+                            &file_attr,
+                            &file_attr4,
+                            data,
+                            &(data->currentFH),
+                            &(arg_NVERIFY4.obj_attributes.attrmask)) != 0)
     {
       res_NVERIFY4.status = NFS4ERR_SERVERFAULT;
       return res_NVERIFY4.status;
     }
 
-  if ((rc = nfs4_Fattr_cmp(&(arg_NVERIFY4.obj_attributes), &file_attr4)) == FALSE)
+  if((rc = nfs4_Fattr_cmp(&(arg_NVERIFY4.obj_attributes), &file_attr4)) == FALSE)
     res_NVERIFY4.status = NFS4_OK;
   else
     {
-      if (rc == -1)
+      if(rc == -1)
         res_NVERIFY4.status = NFS4ERR_INVAL;
       else
         res_NVERIFY4.status = NFS4ERR_SAME;

@@ -179,7 +179,7 @@ struct tm *Localtime_r(const time_t * p_time, struct tm *p_tm)
 {
   struct tm *p_tmp_tm;
 
-  if (!p_tm)
+  if(!p_tm)
     {
       errno = EFAULT;
       return NULL;
@@ -212,10 +212,10 @@ int my_atoi(char *str)
   int i;
   int out = 0;
 
-  for (i = 0; str[i]; i++)
+  for(i = 0; str[i]; i++)
     {
 
-      if ((str[i] < '0') || (str[i] > '9'))
+      if((str[i] < '0') || (str[i] > '9'))
         return -1;              /* error */
       else
         {
@@ -224,7 +224,7 @@ int my_atoi(char *str)
         }
     }
 
-  if (i == 0)
+  if(i == 0)
     return -1;
 
   return out;
@@ -246,10 +246,10 @@ int atomode(char *str)
   int i;
   int out = 0;
 
-  for (i = 0; str[i]; i++)
+  for(i = 0; str[i]; i++)
     {
 
-      if ((str[i] < '0') || (str[i] > '7'))
+      if((str[i] < '0') || (str[i] > '7'))
         return -1;              /* error */
       else
         {
@@ -258,7 +258,7 @@ int atomode(char *str)
         }
     }
 
-  if (i < 3)
+  if(i < 3)
     return -1;
 
   return out;
@@ -271,13 +271,13 @@ int ato64(char *str, unsigned long long *out64)
   int i;
   unsigned long long out = 0;
 
-  if (!out64)
+  if(!out64)
     return -1;
 
-  for (i = 0; str[i]; i++)
+  for(i = 0; str[i]; i++)
     {
 
-      if ((str[i] < '0') || (str[i] > '9'))
+      if((str[i] < '0') || (str[i] > '9'))
         return -1;              /* error */
       else
         {
@@ -286,7 +286,7 @@ int ato64(char *str, unsigned long long *out64)
         }
     }
 
-  if (i == 0)
+  if(i == 0)
     return -1;
 
   *out64 = out;
@@ -312,9 +312,9 @@ time_t atotime(char *str)
   /* parsing year */
 
   j = 0;
-  for (i = 0; i < 4; i++)
+  for(i = 0; i < 4; i++)
     {
-      if (!str[i])
+      if(!str[i])
         return (time_t) - 1;
       tmp_str[j] = str[i];
       j++;
@@ -323,7 +323,7 @@ time_t atotime(char *str)
   j++;
 
   rc = my_atoi(tmp_str);
-  if (rc == -1)
+  if(rc == -1)
     return (time_t) - 1;
 
   time_struct.tm_year = rc - 1900;
@@ -333,9 +333,9 @@ time_t atotime(char *str)
   /* parsing month */
 
   j = 0;
-  for (i = 4; i < 6; i++)
+  for(i = 4; i < 6; i++)
     {
-      if (!str[i])
+      if(!str[i])
         return (time_t) - 1;
       tmp_str[j] = str[i];
       j++;
@@ -344,7 +344,7 @@ time_t atotime(char *str)
   j++;
 
   rc = my_atoi(tmp_str);
-  if (rc == -1)
+  if(rc == -1)
     return (time_t) - 1;
 
   time_struct.tm_mon = rc - 1;
@@ -354,9 +354,9 @@ time_t atotime(char *str)
   /* parsing day of month */
 
   j = 0;
-  for (i = 6; i < 8; i++)
+  for(i = 6; i < 8; i++)
     {
-      if (!str[i])
+      if(!str[i])
         return (time_t) - 1;
       tmp_str[j] = str[i];
       j++;
@@ -365,7 +365,7 @@ time_t atotime(char *str)
   j++;
 
   rc = my_atoi(tmp_str);
-  if (rc == -1)
+  if(rc == -1)
     return (time_t) - 1;
 
   time_struct.tm_mday = rc;
@@ -375,9 +375,9 @@ time_t atotime(char *str)
   /* parsing hour */
 
   j = 0;
-  for (i = 8; i < 10; i++)
+  for(i = 8; i < 10; i++)
     {
-      if (!str[i])
+      if(!str[i])
         return (time_t) - 1;
       tmp_str[j] = str[i];
       j++;
@@ -386,7 +386,7 @@ time_t atotime(char *str)
   j++;
 
   rc = my_atoi(tmp_str);
-  if (rc == -1)
+  if(rc == -1)
     return (time_t) - 1;
 
   time_struct.tm_hour = rc;
@@ -396,9 +396,9 @@ time_t atotime(char *str)
   /* parsing minute */
 
   j = 0;
-  for (i = 10; i < 12; i++)
+  for(i = 10; i < 12; i++)
     {
-      if (!str[i])
+      if(!str[i])
         return (time_t) - 1;
       tmp_str[j] = str[i];
       j++;
@@ -407,7 +407,7 @@ time_t atotime(char *str)
   j++;
 
   rc = my_atoi(tmp_str);
-  if (rc == -1)
+  if(rc == -1)
     return (time_t) - 1;
 
   time_struct.tm_min = rc;
@@ -417,9 +417,9 @@ time_t atotime(char *str)
   /* parsing seconds */
 
   j = 0;
-  for (i = 12; i < 14; i++)
+  for(i = 12; i < 14; i++)
     {
-      if (!str[i])
+      if(!str[i])
         return (time_t) - 1;
       tmp_str[j] = str[i];
       j++;
@@ -428,7 +428,7 @@ time_t atotime(char *str)
   j++;
 
   rc = my_atoi(tmp_str);
-  if (rc == -1)
+  if(rc == -1)
     return (time_t) - 1;
 
   time_struct.tm_sec = rc;
@@ -436,7 +436,7 @@ time_t atotime(char *str)
 /*  printf("Sec: %d\n",rc);*/
 
   /* too many char */
-  if (str[i])
+  if(str[i])
     return (time_t) - 1;
 
   /* actively determines whether it is daylight time or not. */
@@ -464,14 +464,14 @@ void split_path(char *in_path, char **p_path, char **p_file)
   size_t len, index;
 
   /* sanity check */
-  if (!in_path || !p_path || !p_file)
+  if(!in_path || !p_path || !p_file)
     return;
 
   len = strlen(in_path);
 
   /* If the length is not 1 and the last char is '/' we remove it. */
 
-  while ((len > 1) && (in_path[len - 1] == '/'))
+  while((len > 1) && (in_path[len - 1] == '/'))
     {
       in_path[len - 1] = '\0';
       len--;
@@ -480,7 +480,7 @@ void split_path(char *in_path, char **p_path, char **p_file)
   /* Now, we look for the last '/', if any. */
 
   index = len - 1;
-  while ((index > 0) && (in_path[index] != '/'))
+  while((index > 0) && (in_path[index] != '/'))
     {
       index--;
     }
@@ -491,7 +491,7 @@ void split_path(char *in_path, char **p_path, char **p_file)
    * toto
    */
 
-  if ((index == 0) && (in_path[index] == '/'))
+  if((index == 0) && (in_path[index] == '/'))
     {
 
       /* '/' is the first char */
@@ -500,7 +500,7 @@ void split_path(char *in_path, char **p_path, char **p_file)
       return;
 
     }
-  else if (in_path[index] == '/')
+  else if(in_path[index] == '/')
     {
 
       in_path[index] = '\0';
@@ -509,7 +509,7 @@ void split_path(char *in_path, char **p_path, char **p_file)
       return;
 
     }
-  else if (index == 0)
+  else if(index == 0)
     {
 
       /* no '/' found */
@@ -541,7 +541,7 @@ char *time2str(time_t time_in, char *str_out)
   paramtm.tm_sec = 1;
   jan_1 = mktime(&paramtm);
 
-  if (time_in < jan_1)
+  if(time_in < jan_1)
     {                           /* if dates back to last year : MM dd YYYY */
       strftime(str_out, TIME_STRLEN, "%b %e %Y ", Localtime_r(&time_in, &paramtm));
     }
@@ -576,13 +576,13 @@ void clean_path(char *str, int len)
 
   /* removes double slashes */
     /**************************/
-  while (str[indexsrc] && (indexsrc + 1 < len))
+  while(str[indexsrc] && (indexsrc + 1 < len))
     {
-      while ((indexsrc + 1 < len) && (str[indexsrc] == '/') && (str[indexsrc + 1] == '/'))
+      while((indexsrc + 1 < len) && (str[indexsrc] == '/') && (str[indexsrc + 1] == '/'))
         indexsrc++;
       str[indexdest++] = str[indexsrc++];
     }
-  if (!str[indexsrc])
+  if(!str[indexsrc])
     str[indexdest] = str[indexsrc];
 
   /* removes '/./' and '/.\0' */
@@ -592,9 +592,9 @@ void clean_path(char *str, int len)
      so '/./' will be detected in the next loop. */
 #ifdef _TOTO
   length = strlen(str);
-  if (length >= 2)
+  if(length >= 2)
     {
-      if ((str[length - 1] == '.') && (str[length - 2] == '/'))
+      if((str[length - 1] == '.') && (str[length - 2] == '/'))
         {
           str[length] = '/';
           str[length + 1] = '\0';
@@ -605,13 +605,13 @@ void clean_path(char *str, int len)
   /* detects and removes '/./' */
 
   sdd_index = (char *)strstr(str, "/./");
-  while (sdd_index)
+  while(sdd_index)
     {
 
       /* we copy everything after "/./" to sdd_index */
       indexsrc = 3;             /* index in sdd_index */
       indexdest = 1;            /* index in sdd_index */
-      while (sdd_index[indexdest] = sdd_index[indexsrc])
+      while(sdd_index[indexdest] = sdd_index[indexsrc])
         {
           indexdest++;
           indexsrc++;
@@ -627,10 +627,9 @@ void clean_path(char *str, int len)
   /* if the path ends with /.., we add a slash at the end,
      so '/../' will be detected in the next loop. */
   length = strlen(str);
-  if (length >= 3)
+  if(length >= 3)
     {
-      if ((str[length - 1] == '.') && (str[length - 2] == '.')
-          && (str[length - 3] == '/'))
+      if((str[length - 1] == '.') && (str[length - 2] == '.') && (str[length - 3] == '/'))
         {
           str[length] = '/';
           str[length + 1] = '\0';
@@ -641,22 +640,22 @@ void clean_path(char *str, int len)
 
   sdd_index = (char *)strstr(str, "/../");
 
-  while (sdd_index)
+  while(sdd_index)
     {
 
       /* look for the first '/' that preceeds sdd_index */
-      for (slash_index = sdd_index - 1; (slash_index >= str) && (slash_index[0] != '/');
-           slash_index--) ;
+      for(slash_index = sdd_index - 1; (slash_index >= str) && (slash_index[0] != '/');
+          slash_index--) ;
 
       /* if found, removes rep/../ path */
 
-      if ((slash_index[0] == '/') && (slash_index >= str))
+      if((slash_index[0] == '/') && (slash_index >= str))
         {
 
           /* we copy everything after "/../" to slash_index */
           indexsrc = 4;         /* index in sdd_index */
           indexdest = 1;        /* index in slash_index */
-          while (slash_index[indexdest] = sdd_index[indexsrc])
+          while(slash_index[indexdest] = sdd_index[indexsrc])
             {
               indexdest++;
               indexsrc++;
@@ -671,7 +670,7 @@ void clean_path(char *str, int len)
           /* If the path begins with a filehandle,
              we replace @handle/../ by @handle/..> */
 
-          if (str[0] == '@')
+          if(str[0] == '@')
             {
 
               sdd_index[3] = '>';
@@ -683,7 +682,7 @@ void clean_path(char *str, int len)
 
               indexsrc = 3;     /* index in str */
               indexdest = 0;    /* index in str */
-              while (str[indexdest] = str[indexsrc])
+              while(str[indexdest] = str[indexsrc])
                 {
                   indexdest++;
                   indexsrc++;
@@ -699,9 +698,9 @@ void clean_path(char *str, int len)
   /* removes final slash */
     /***********************/
   length = strlen(str);
-  if (length > 1)
+  if(length > 1)
     {
-      if (str[length - 1] == '/')
+      if(str[length - 1] == '/')
         str[length - 1] = '\0';
     }
 
@@ -747,39 +746,39 @@ void print_fsal_status(FILE * output, fsal_status_t status)
 void print_fsal_attrib_mask(fsal_attrib_mask_t mask, FILE * output)
 {
 
-  if (FSAL_TEST_MASK(mask, FSAL_ATTR_SUPPATTR))
+  if(FSAL_TEST_MASK(mask, FSAL_ATTR_SUPPATTR))
     fprintf(output, "\tFSAL_ATTR_SUPPATTR\n");
-  if (FSAL_TEST_MASK(mask, FSAL_ATTR_TYPE))
+  if(FSAL_TEST_MASK(mask, FSAL_ATTR_TYPE))
     fprintf(output, "\tFSAL_ATTR_TYPE\n");
-  if (FSAL_TEST_MASK(mask, FSAL_ATTR_SIZE))
+  if(FSAL_TEST_MASK(mask, FSAL_ATTR_SIZE))
     fprintf(output, "\tFSAL_ATTR_SIZE\n");
-  if (FSAL_TEST_MASK(mask, FSAL_ATTR_FSID))
+  if(FSAL_TEST_MASK(mask, FSAL_ATTR_FSID))
     fprintf(output, "\tFSAL_ATTR_FSID\n");
-  if (FSAL_TEST_MASK(mask, FSAL_ATTR_ACL))
+  if(FSAL_TEST_MASK(mask, FSAL_ATTR_ACL))
     fprintf(output, "\tFSAL_ATTR_ACL \n");
-  if (FSAL_TEST_MASK(mask, FSAL_ATTR_FILEID))
+  if(FSAL_TEST_MASK(mask, FSAL_ATTR_FILEID))
     fprintf(output, "\tFSAL_ATTR_FILEID\n");
-  if (FSAL_TEST_MASK(mask, FSAL_ATTR_MODE))
+  if(FSAL_TEST_MASK(mask, FSAL_ATTR_MODE))
     fprintf(output, "\tFSAL_ATTR_MODE\n");
-  if (FSAL_TEST_MASK(mask, FSAL_ATTR_NUMLINKS))
+  if(FSAL_TEST_MASK(mask, FSAL_ATTR_NUMLINKS))
     fprintf(output, "\tFSAL_ATTR_NUMLINKS\n");
-  if (FSAL_TEST_MASK(mask, FSAL_ATTR_OWNER))
+  if(FSAL_TEST_MASK(mask, FSAL_ATTR_OWNER))
     fprintf(output, "\tFSAL_ATTR_OWNER\n");
-  if (FSAL_TEST_MASK(mask, FSAL_ATTR_GROUP))
+  if(FSAL_TEST_MASK(mask, FSAL_ATTR_GROUP))
     fprintf(output, "\tFSAL_ATTR_GROUP\n");
-  if (FSAL_TEST_MASK(mask, FSAL_ATTR_RAWDEV))
+  if(FSAL_TEST_MASK(mask, FSAL_ATTR_RAWDEV))
     fprintf(output, "\tFSAL_ATTR_RAWDEV\n");
-  if (FSAL_TEST_MASK(mask, FSAL_ATTR_ATIME))
+  if(FSAL_TEST_MASK(mask, FSAL_ATTR_ATIME))
     fprintf(output, "\tFSAL_ATTR_ATIME\n");
-  if (FSAL_TEST_MASK(mask, FSAL_ATTR_CREATION))
+  if(FSAL_TEST_MASK(mask, FSAL_ATTR_CREATION))
     fprintf(output, "\tFSAL_ATTR_CREATION\n");
-  if (FSAL_TEST_MASK(mask, FSAL_ATTR_CTIME))
+  if(FSAL_TEST_MASK(mask, FSAL_ATTR_CTIME))
     fprintf(output, "\tFSAL_ATTR_CTIME\n");
-  if (FSAL_TEST_MASK(mask, FSAL_ATTR_MTIME))
+  if(FSAL_TEST_MASK(mask, FSAL_ATTR_MTIME))
     fprintf(output, "\tFSAL_ATTR_MTIME\n");
-  if (FSAL_TEST_MASK(mask, FSAL_ATTR_SPACEUSED))
+  if(FSAL_TEST_MASK(mask, FSAL_ATTR_SPACEUSED))
     fprintf(output, "\tFSAL_ATTR_SPACEUSED\n");
-  if (FSAL_TEST_MASK(mask, FSAL_ATTR_MOUNTFILEID))
+  if(FSAL_TEST_MASK(mask, FSAL_ATTR_MOUNTFILEID))
     fprintf(output, "\tFSAL_ATTR_MOUNTFILEID\n");
 
 }
@@ -825,37 +824,37 @@ char *strtype(fsal_nodetype_t type)
 void print_fsal_attributes(fsal_attrib_list_t attrs, FILE * output)
 {
 
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_TYPE))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_TYPE))
     fprintf(output, "\tType : %s\n", strtype(attrs.type));
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_SIZE))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_SIZE))
     fprintf(output, "\tSize : %llu\n", attrs.filesize);
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_FSID))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_FSID))
     fprintf(output, "\tfsId : %llu.%llu\n", attrs.fsid.major, attrs.fsid.minor);
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ACL))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ACL))
     fprintf(output, "\tACL List : (printing not implemented)\n");
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_FILEID))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_FILEID))
     fprintf(output, "\tFileId : %#llx\n", attrs.fileid);
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MODE))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MODE))
     fprintf(output, "\tMode : %#o\n", attrs.mode);
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_NUMLINKS))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_NUMLINKS))
     fprintf(output, "\tNumlinks : %u\n", (unsigned int)attrs.numlinks);
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_OWNER))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_OWNER))
     fprintf(output, "\tuid : %d\n", attrs.owner);
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_GROUP))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_GROUP))
     fprintf(output, "\tgid : %d\n", attrs.group);
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_RAWDEV))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_RAWDEV))
     fprintf(output, "\tRawdev ...\n");
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME))
     fprintf(output, "\tatime : %s", ctime((time_t *) & attrs.atime.seconds));
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_CREATION))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_CREATION))
     fprintf(output, "\tcreation time : %s", ctime((time_t *) & attrs.creation.seconds));
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_CTIME))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_CTIME))
     fprintf(output, "\tctime : %s", ctime((time_t *) & attrs.ctime.seconds));
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME))
     fprintf(output, "\tmtime : %s", ctime((time_t *) & attrs.mtime.seconds));
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_SPACEUSED))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_SPACEUSED))
     fprintf(output, "\tspaceused : %llu\n", attrs.spaceused);
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MOUNTFILEID))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MOUNTFILEID))
     fprintf(output, "\tmounted_on_fileid : %#llx\n", attrs.mounted_on_fileid);
 
 }
@@ -882,7 +881,7 @@ void print_item_line(FILE * out, fsal_attrib_list_t * attrib, char *name, char *
 
   char buff[256];
 
-  if (FSAL_TEST_MASK(attrib->asked_attributes, FSAL_ATTR_FILEID))
+  if(FSAL_TEST_MASK(attrib->asked_attributes, FSAL_ATTR_FILEID))
     {
       /* print inode */
       fprintf(out, "%10llx ", attrib->fileid);
@@ -916,23 +915,23 @@ void print_item_line(FILE * out, fsal_attrib_list_t * attrib, char *name, char *
       fprintf(out, "?");
     }
 
-  if (FSAL_TEST_MASK(attrib->asked_attributes, FSAL_ATTR_MODE))
+  if(FSAL_TEST_MASK(attrib->asked_attributes, FSAL_ATTR_MODE))
     {
 
       /* printing rights */
       print_mask(out, attrib->mode, FSAL_MODE_RUSR, "r");
       print_mask(out, attrib->mode, FSAL_MODE_WUSR, "w");
 
-      if (attrib->mode & FSAL_MODE_SUID)
+      if(attrib->mode & FSAL_MODE_SUID)
         {
-          if (attrib->mode & FSAL_MODE_XUSR)
+          if(attrib->mode & FSAL_MODE_XUSR)
             fprintf(out, "s");
           else
             fprintf(out, "S");
         }
       else
         {
-          if (attrib->mode & FSAL_MODE_XUSR)
+          if(attrib->mode & FSAL_MODE_XUSR)
             fprintf(out, "x");
           else
             fprintf(out, "-");
@@ -941,16 +940,16 @@ void print_item_line(FILE * out, fsal_attrib_list_t * attrib, char *name, char *
       print_mask(out, attrib->mode, FSAL_MODE_RGRP, "r");
       print_mask(out, attrib->mode, FSAL_MODE_WGRP, "w");
 
-      if (attrib->mode & FSAL_MODE_SGID)
+      if(attrib->mode & FSAL_MODE_SGID)
         {
-          if (attrib->mode & FSAL_MODE_XGRP)
+          if(attrib->mode & FSAL_MODE_XGRP)
             fprintf(out, "s");
           else
             fprintf(out, "l");
         }
       else
         {
-          if (attrib->mode & FSAL_MODE_XGRP)
+          if(attrib->mode & FSAL_MODE_XGRP)
             fprintf(out, "x");
           else
             fprintf(out, "-");
@@ -960,31 +959,31 @@ void print_item_line(FILE * out, fsal_attrib_list_t * attrib, char *name, char *
       print_mask(out, attrib->mode, FSAL_MODE_XOTH, "x");
     }
 
-  if (FSAL_TEST_MASK(attrib->asked_attributes, FSAL_ATTR_NUMLINKS))
+  if(FSAL_TEST_MASK(attrib->asked_attributes, FSAL_ATTR_NUMLINKS))
     {
       /* print linkcount */
       fprintf(out, " %3u", (unsigned int)attrib->numlinks);
     }
 
-  if (FSAL_TEST_MASK(attrib->asked_attributes, FSAL_ATTR_OWNER))
+  if(FSAL_TEST_MASK(attrib->asked_attributes, FSAL_ATTR_OWNER))
     {
       /* print uid */
       fprintf(out, " %8d", attrib->owner);
     }
 
-  if (FSAL_TEST_MASK(attrib->asked_attributes, FSAL_ATTR_GROUP))
+  if(FSAL_TEST_MASK(attrib->asked_attributes, FSAL_ATTR_GROUP))
     {
       /* print gid */
       fprintf(out, " %8d", attrib->group);
     }
 
-  if (FSAL_TEST_MASK(attrib->asked_attributes, FSAL_ATTR_SIZE))
+  if(FSAL_TEST_MASK(attrib->asked_attributes, FSAL_ATTR_SIZE))
     {
       /* print size */
       fprintf(out, " %15llu", attrib->filesize);
     }
 
-  if (FSAL_TEST_MASK(attrib->asked_attributes, FSAL_ATTR_MTIME))
+  if(FSAL_TEST_MASK(attrib->asked_attributes, FSAL_ATTR_MTIME))
     {
       /* print mtime */
       fprintf(out, " %15s", time2str(attrib->mtime.seconds, buff));
@@ -993,7 +992,7 @@ void print_item_line(FILE * out, fsal_attrib_list_t * attrib, char *name, char *
   /* print name */
   fprintf(out, " %s", name);
 
-  if (attrib->type == FSAL_TYPE_LNK)
+  if(attrib->type == FSAL_TYPE_LNK)
     fprintf(out, " -> %s", target);
 
   fprintf(out, "\n");
@@ -1028,7 +1027,7 @@ int MkFSALSetAttrStruct(char *attribute_list, fsal_attrib_list_t * fsal_set_attr
 
   /* sanity checks */
 
-  if (!attribute_list || !fsal_set_attr_struct)
+  if(!attribute_list || !fsal_set_attr_struct)
     return EFAULT;
 
   /* init output struct */
@@ -1045,26 +1044,26 @@ int MkFSALSetAttrStruct(char *attribute_list, fsal_attrib_list_t * fsal_set_attr
   /* get the first token */
   attrib_str = strtok_r(attrib_list_tmp, ",", &next_str);
 
-  if (attrib_str == NULL)
+  if(attrib_str == NULL)
     return EINVAL;
 
-  while (attrib_str != NULL)
+  while(attrib_str != NULL)
     {
       /* retrieving attribute value */
       attrib_str = strtok_r(attrib_str, "=", &value_str);
 
-      if ((attrib_str == NULL) || (value_str == NULL))
+      if((attrib_str == NULL) || (value_str == NULL))
         return EINVAL;
 
       printf("Attribute: \"%s\", Value: \"%s\"\n", attrib_str, value_str);
 
       /* look for the attribute to be set. */
 
-      for (current_attr = shell_attr_list;
-           current_attr->attr_type != ATTR_NONE; current_attr++)
+      for(current_attr = shell_attr_list;
+          current_attr->attr_type != ATTR_NONE; current_attr++)
         {
 
-          if (!strcasecmp(current_attr->attr_name, attrib_str))
+          if(!strcasecmp(current_attr->attr_name, attrib_str))
             {
 
               /* exists loop */
@@ -1075,7 +1074,7 @@ int MkFSALSetAttrStruct(char *attribute_list, fsal_attrib_list_t * fsal_set_attr
 
       /* attribute not found */
 
-      if (current_attr->attr_type == ATTR_NONE)
+      if(current_attr->attr_type == ATTR_NONE)
         return ENOENT;
 
       FSAL_SET_MASK(fsal_set_attr_struct->asked_attributes, current_attr->attr_mask);
@@ -1087,7 +1086,7 @@ int MkFSALSetAttrStruct(char *attribute_list, fsal_attrib_list_t * fsal_set_attr
         case ATTR_32:
 
           param_32 = my_atoi(value_str);
-          if (param_32 == -1)
+          if(param_32 == -1)
             return EINVAL;
           p_32 = (int *)((caddr_t) fsal_set_attr_struct + current_attr->attr_offset);
 
@@ -1098,7 +1097,7 @@ int MkFSALSetAttrStruct(char *attribute_list, fsal_attrib_list_t * fsal_set_attr
         case ATTR_64:
 
           rc = ato64(value_str, &param_64);
-          if (rc == -1)
+          if(rc == -1)
             return EINVAL;
           p_64 =
               (unsigned long long *)((caddr_t) fsal_set_attr_struct +
@@ -1111,7 +1110,7 @@ int MkFSALSetAttrStruct(char *attribute_list, fsal_attrib_list_t * fsal_set_attr
         case ATTR_OCTAL:       /* only for modes */
 
           param_32 = atomode(value_str);
-          if (param_32 == -1)
+          if(param_32 == -1)
             return EINVAL;
           p_32 = (int *)((caddr_t) fsal_set_attr_struct + current_attr->attr_offset);
 
@@ -1122,7 +1121,7 @@ int MkFSALSetAttrStruct(char *attribute_list, fsal_attrib_list_t * fsal_set_attr
         case ATTR_TIME:
 
           param_time = atotime(value_str);
-          if (param_time == (time_t) - 1)
+          if(param_time == (time_t) - 1)
             return EINVAL;
           p_time =
               (time_t *) ((caddr_t) fsal_set_attr_struct + current_attr->attr_offset);
@@ -1140,7 +1139,7 @@ int MkFSALSetAttrStruct(char *attribute_list, fsal_attrib_list_t * fsal_set_attr
       next_str = NULL;          /* paranoid setting */
       value_str = NULL;         /* paranoid setting */
 
-      if (attrib_str != NULL)
+      if(attrib_str != NULL)
         attrib_str = strtok_r(attrib_str, ",", &next_str);
 
     }
@@ -1157,7 +1156,7 @@ struct timeval time_diff(struct timeval time_from, struct timeval time_to)
 
   struct timeval result;
 
-  if (time_to.tv_usec < time_from.tv_usec)
+  if(time_to.tv_usec < time_from.tv_usec)
     {
       result.tv_sec = time_to.tv_sec - time_from.tv_sec - 1;
       result.tv_usec = 1000000 + time_to.tv_usec - time_from.tv_usec;
@@ -1181,7 +1180,7 @@ char *concat(char *str1, char *str2, size_t max_len)
   len1 = strlen(str1);
   len2 = strlen(str2);
 
-  if (len1 + len2 + 1 > max_len)
+  if(len1 + len2 + 1 > max_len)
     return NULL;
 
   return strcat(str1, str2);
@@ -1195,35 +1194,35 @@ int getugroups(int maxcount, gid_t * grouplist, char *username, gid_t gid)
   register char **cp;
   register int count = 0;
 
-  if (gid != (gid_t) - 1)
+  if(gid != (gid_t) - 1)
     {
-      if (maxcount != 0)
+      if(maxcount != 0)
         grouplist[count] = gid;
 
       count++;
     }
 
   setgrent();
-  while ((grp = getgrent()) != 0)
+  while((grp = getgrent()) != 0)
     {
-      for (cp = grp->gr_mem; *cp; ++cp)
+      for(cp = grp->gr_mem; *cp; ++cp)
         {
           int n;
 
-          if (strcmp(username, *cp))
+          if(strcmp(username, *cp))
             continue;
 
           /* see if this group number is already in the list */
-          for (n = 0; n < count; ++n)
-            if (grouplist && grouplist[n] == grp->gr_gid)
+          for(n = 0; n < count; ++n)
+            if(grouplist && grouplist[n] == grp->gr_gid)
               break;
 
           /* add the group to the list */
-          if (n == count)
+          if(n == count)
             {
-              if (maxcount != 0)
+              if(maxcount != 0)
                 {
-                  if (count >= maxcount)
+                  if(count >= maxcount)
                     {
                       endgrent();
                       return count;

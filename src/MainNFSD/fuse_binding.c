@@ -149,7 +149,7 @@ static void action_sigusr1(int sig)
   DisplayLog("NFS_MAIN_SIGUSR1_HANDLER: Receveid SIGUSR1.... signal will be managed");
 
   /* Set variable force_flush_by_signal that is used in file content cache gc thread */
-  if (force_flush_by_signal)
+  if(force_flush_by_signal)
     {
       DisplayLog("NFS_MAIN_SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
       force_flush_by_signal = FALSE;
@@ -165,7 +165,7 @@ static void init_log(log_t * p_log_outputs, char *alt_file)
 {
   desc_log_stream_t log_stream;
 
-  if ((p_log_outputs->nb_voies == 0) && (strlen(alt_file) > 0))
+  if((p_log_outputs->nb_voies == 0) && (strlen(alt_file) > 0))
     {
       strcpy(log_stream.path, alt_file);
 
@@ -204,15 +204,15 @@ int ganefuse_main(int argc, char *argv[],
   /* retrieve executable file's name */
   strncpy(ganesha_exec_path, argv[0], MAXPATHLEN);
 
-  if ((tempo_exec_name = strrchr(argv_local[0], '/')) != NULL)
+  if((tempo_exec_name = strrchr(argv_local[0], '/')) != NULL)
     strcpy((char *)exec_name, tempo_exec_name + 1);
 
-  if (*exec_name == '\0')
+  if(*exec_name == '\0')
     strcpy((char *)exec_name, argv_local[0]);
 
   /* get host name */
 
-  if (gethostname(localmachine, sizeof(localmachine)) != 0)
+  if(gethostname(localmachine, sizeof(localmachine)) != 0)
     {
       fprintf(stderr, "Could not get local host name, exiting...");
       exit(1);
@@ -221,7 +221,7 @@ int ganefuse_main(int argc, char *argv[],
     strncpy(host_name, localmachine, MAXHOSTNAMELEN);
 
   /* now parsing options with getopt */
-  while ((c = getopt(argc_local, argv_local, options)) != EOF)
+  while((c = getopt(argc_local, argv_local, options)) != EOF)
     {
 
       switch (c)
@@ -242,7 +242,7 @@ int ganefuse_main(int argc, char *argv[],
         case 'N':
           /* debug level */
           debug_level = ReturnLevelAscii(optarg);
-          if (debug_level == -1)
+          if(debug_level == -1)
             {
               fprintf(stderr,
                       "Invalid value for option 'N': NIV_NULL, NIV_MAJ, NIV_CRIT, NIV_EVENT, NIV_DEBUG or NIV_FULL_DEBUG expected.\n");
@@ -285,7 +285,7 @@ int ganefuse_main(int argc, char *argv[],
           nfs_start_info.flush_behaviour = CACHE_CONTENT_FLUSH_AND_DELETE;
           nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
 
-          if (nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
+          if(nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
             nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
           break;
 
@@ -295,7 +295,7 @@ int ganefuse_main(int argc, char *argv[],
           nfs_start_info.flush_behaviour = CACHE_CONTENT_FLUSH_SYNC_ONLY;
           nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
 
-          if (nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
+          if(nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
             nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
           break;
 
@@ -316,14 +316,14 @@ int ganefuse_main(int argc, char *argv[],
 
   /* initialize memory and logging */
 
-  if (nfs_prereq_init(exec_name, host_name, debug_level, log_path))
+  if(nfs_prereq_init(exec_name, host_name, debug_level, log_path))
     {
       fprintf(stderr, "NFS MAIN: Error initializing NFSd prerequisites\n");
       exit(1);
     }
 
   /* Start in background, if wanted */
-  if (detach_flag)
+  if(detach_flag)
     {
       /* Step 1: forking a service process */
       switch (son_pid = fork())
@@ -337,7 +337,7 @@ int ganefuse_main(int argc, char *argv[],
         case 0:
           /* This code is within the son (that will actually work)
            * Let's make it the leader of its group of process */
-          if (setsid() == -1)
+          if(setsid() == -1)
             {
               DisplayErrorLog(ERR_SYS, ERR_SETSID, errno);
               DisplayLog("Could nout start nfs daemon, exiting...");
@@ -360,7 +360,7 @@ int ganefuse_main(int argc, char *argv[],
   memset(&act_sigusr1, 0, sizeof(act_sigusr1));
   act_sigusr1.sa_flags = 0;
   act_sigusr1.sa_handler = action_sigusr1;
-  if (sigaction(SIGUSR1, &act_sigusr1, NULL) == -1)
+  if(sigaction(SIGUSR1, &act_sigusr1, NULL) == -1)
     {
       DisplayErrorLog(ERR_SYS, ERR_SIGACTION, errno);
       exit(1);
@@ -372,7 +372,7 @@ int ganefuse_main(int argc, char *argv[],
 
   /* initialize default parameters */
 
-  if (nfs_set_param_default(&nfs_param))
+  if(nfs_set_param_default(&nfs_param))
     {
       DisplayLog("NFS MAIN: Error setting default parameters.");
       exit(1);
@@ -383,9 +383,9 @@ int ganefuse_main(int argc, char *argv[],
 
   /* parse configuration file (if specified) */
 
-  if (strlen(config_path) > 0)
+  if(strlen(config_path) > 0)
     {
-      if (nfs_set_param_from_conf(&nfs_param, &nfs_start_info, config_path))
+      if(nfs_set_param_from_conf(&nfs_param, &nfs_start_info, config_path))
         {
           DisplayLog("NFS MAIN: Error parsing configuration file.");
           exit(1);
@@ -405,12 +405,12 @@ int ganefuse_main(int argc, char *argv[],
            log_path);
 
 #ifndef _NO_BUDDY_SYSTEM
-  if (!nfs_param.buddy_param_worker.buddy_error_file[0])
+  if(!nfs_param.buddy_param_worker.buddy_error_file[0])
     strcpy(nfs_param.buddy_param_worker.buddy_error_file, log_path);
 #endif
 
 #ifdef _SNMP_ADM_ACTIVE
-  if (!nfs_param.extern_param.snmp_adm.snmp_log_file[0])
+  if(!nfs_param.extern_param.snmp_adm.snmp_log_file[0])
     strcpy(nfs_param.extern_param.snmp_adm.snmp_log_file, log_path);
 #endif
 
@@ -418,10 +418,10 @@ int ganefuse_main(int argc, char *argv[],
    * in config file (always '/')
    */
 
-  if (!nfs_param.pexportlist)
+  if(!nfs_param.pexportlist)
     {
       nfs_param.pexportlist = BuildDefaultExport();
-      if (nfs_param.pexportlist == NULL)
+      if(nfs_param.pexportlist == NULL)
         {
           DisplayLog("NFS MAIN: Could not create export entry for '/'");
           exit(1);
@@ -429,12 +429,12 @@ int ganefuse_main(int argc, char *argv[],
     }
 
   /* if this is a single threaded application, set worker count */
-  if (single_threaded)
+  if(single_threaded)
     nfs_param.core_param.nb_worker = 1;
 
   /* check parameters consitency */
 
-  if (nfs_check_param_consistency(&nfs_param))
+  if(nfs_check_param_consistency(&nfs_param))
     {
       DisplayLog("NFS MAIN: Inconsistent parameters found");
       DisplayLog

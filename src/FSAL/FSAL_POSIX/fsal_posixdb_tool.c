@@ -43,13 +43,13 @@ void populatedb(fsal_posixdb_conn * p_conn, char *path)
   struct stat buffstat;
   char *begin, *end, backup;
 
-  if (path[0] != '/')
+  if(path[0] != '/')
     {
       fputs("Error : you should provide a complete path", stderr);
       return;
     }
 
-  if (path[strlen(path) - 1] != '/')
+  if(path[strlen(path) - 1] != '/')
     strcat(path, "/");
 
   /* add the path (given in arguments) to the database */
@@ -58,14 +58,14 @@ void populatedb(fsal_posixdb_conn * p_conn, char *path)
   fsal_internal_posixdb_add_entry(p_conn, NULL, &info, NULL, &handle_parent);
 
   begin = end = path;
-  while (*end != '\0')
+  while(*end != '\0')
     {
-      while (*begin == '/')
+      while(*begin == '/')
         begin++;
-      if (*begin == '\0')
+      if(*begin == '\0')
         break;
       end = begin + 1;
-      while (*end != '/' && *end != '\0')
+      while(*end != '/' && *end != '\0')
         end++;
       backup = *end;
       *end = '\0';
@@ -99,13 +99,13 @@ void add_dir(fsal_posixdb_conn * p_conn, char *path, fsal_handle_t * p_dir_handl
   fsal_posixdb_fileinfo_t info;
   fsal_name_t fsalname;
 
-  if ((dirp = opendir(path)))
+  if((dirp = opendir(path)))
     {
-      while (!readdir_r(dirp, &dpe, &dp) && dp)
+      while(!readdir_r(dirp, &dpe, &dp) && dp)
         {
-          if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
+          if(!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
             continue;
-          if (!strcmp(dp->d_name, ".snapshot"))
+          if(!strcmp(dp->d_name, ".snapshot"))
             {
               fputs("(ignoring .snapshot)", stderr);
               continue;
@@ -118,12 +118,12 @@ void add_dir(fsal_posixdb_conn * p_conn, char *path, fsal_handle_t * p_dir_handl
           FSAL_str2name(dp->d_name, FSAL_MAX_NAME_LEN, &fsalname);
           st = fsal_internal_posixdb_add_entry(p_conn, &fsalname, &info, p_dir_handle,
                                                &new_handle);
-          if (FSAL_IS_ERROR(st))
+          if(FSAL_IS_ERROR(st))
             {
               fprintf(stderr, "[Error %i/%i]\n", st.major, st.minor);
               return;
             }
-          if (S_ISDIR(buffstat.st_mode))
+          if(S_ISDIR(buffstat.st_mode))
             {
               strcat(path_temp, "/");
               add_dir(p_conn, path_temp, &new_handle);
@@ -138,7 +138,7 @@ void emptydb(fsal_posixdb_conn * p_conn)
   fsal_posixdb_status_t st;
 
   st = fsal_posixdb_flush(p_conn);
-  if (FSAL_POSIXDB_IS_ERROR(st))
+  if(FSAL_POSIXDB_IS_ERROR(st))
     {
       fprintf(stderr, "Error (%i/%i) while emptying the database\n", st.major, st.minor);
     }
@@ -159,12 +159,12 @@ void find(fsal_posixdb_conn * p_conn)
                                     NULL,       /* filename */
                                     NULL,       /* path */
                                     &handle_root);
-  if (FSAL_POSIXDB_IS_NOENT(st))
+  if(FSAL_POSIXDB_IS_NOENT(st))
     {
       fputs("Error : Root handle not found. Is the database empty ?", stderr);
       return;
     }
-  else if (FSAL_POSIXDB_IS_ERROR(st))
+  else if(FSAL_POSIXDB_IS_ERROR(st))
     {
       fprintf(stderr, "Error (%i/%i) while getting root handle\n", st.major, st.minor);
       return;
@@ -182,17 +182,17 @@ void display_directory(fsal_posixdb_conn * p_conn, fsal_handle_t * p_handle_pare
   unsigned int count, i;
 
   st = fsal_posixdb_getChildren(p_conn, p_handle_parent, 0, &p_children, &count);
-  if (FSAL_POSIXDB_IS_ERROR(st))
+  if(FSAL_POSIXDB_IS_ERROR(st))
     {
       fprintf(stderr, "Error (%i/%i) while getting children of %s\n", st.major, st.minor,
               basedir);
       return;
     }
-  for (i = 0; i < count; i++)
+  for(i = 0; i < count; i++)
     {
       printf("%llu %s/%s\n", (unsigned long long int)p_children[i].handle.info.inode,
              basedir, p_children[i].name.name);
-      if (p_children[i].handle.info.ftype == FSAL_TYPE_DIR)
+      if(p_children[i].handle.info.ftype == FSAL_TYPE_DIR)
         {
           char basedir_new[FSAL_MAX_PATH_LEN];
           strncpy(basedir_new, basedir, FSAL_MAX_PATH_LEN);
@@ -240,11 +240,11 @@ int main(int argc, char **argv)
   strcpy(dbparams.dbname, "posixdb");
 
   /* What is the executable file's name */
-  if (*exec_name == '\0')
+  if(*exec_name == '\0')
     strcpy((char *)exec_name, basename(argv[0]));
 
   /* now parsing options with getopt */
-  while ((c = getopt(argc, argv, options)) != EOF)
+  while((c = getopt(argc, argv, options)) != EOF)
     {
       switch (c)
         {
@@ -276,31 +276,31 @@ int main(int argc, char **argv)
         }
     }
 
-  if (optind == argc)
+  if(optind == argc)
     {
       fprintf(stderr, "No operation specified.\n");
       fprintf(stderr, usage, exec_name);
       exit(0);
     }
-  if (optind < argc)
+  if(optind < argc)
     {
-      if (!strcmp(argv[optind], "test_connection"))
+      if(!strcmp(argv[optind], "test_connection"))
         {
           op = OP_TESTCONN;
         }
-      else if (!strcmp(argv[optind], "empty_database"))
+      else if(!strcmp(argv[optind], "empty_database"))
         {
           op = OP_EMPTYDB;
         }
-      else if (!strcmp(argv[optind], "find"))
+      else if(!strcmp(argv[optind], "find"))
         {
           op = OP_FIND;
         }
-      else if (!strcmp(argv[optind], "populate"))
+      else if(!strcmp(argv[optind], "populate"))
         {
           op = OP_POPULATE;
           optind++;
-          if (optind < argc)
+          if(optind < argc)
             {
               strncpy(path, argv[optind], MAXPATHLEN);
             }
@@ -323,16 +323,16 @@ int main(int argc, char **argv)
 #endif
 
   /* Connecting to database */
-  if (*(dbparams.passwdfile) != '\0')
+  if(*(dbparams.passwdfile) != '\0')
     {
       rc = setenv("PGPASSFILE", dbparams.passwdfile, 1);
-      if (rc != 0)
+      if(rc != 0)
         fputs("Could not set POSTGRESQL keytab path.", stderr);
     }
 
   fprintf(stderr, "Opening database connection to %s...\n", dbparams.host);
   statusdb = fsal_posixdb_connect(&dbparams, &p_conn);
-  if (FSAL_POSIXDB_IS_ERROR(statusdb))
+  if(FSAL_POSIXDB_IS_ERROR(statusdb))
     {
       fprintf(stderr, "Error %i. exiting.\n", statusdb.minor);
       exit(-1);

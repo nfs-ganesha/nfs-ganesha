@@ -137,14 +137,14 @@ fsal_status_t mfsl_async_init_symlinkdir(fsal_op_context_t * pcontext)
   fsal_path_t fsal_path;
 
   fsal_status = FSAL_str2path(mfsl_param.tmp_symlink_dir, MAXPATHLEN, &fsal_path);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       DisplayLog("Impossible to convert path %s", mfsl_param.tmp_symlink_dir);
       exit(1);
     }
 
   fsal_status = FSAL_lookupPath(&fsal_path, pcontext, &tmp_symlink_dirhandle, &dir_attr);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       DisplayLog
           ("Impossible to lookup directory %s to be used to store precreated objects: status=(%u,%u)",
@@ -188,14 +188,14 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
   fsal_status.minor = 0;
 
   fsal_status = FSAL_str2path(mfsl_param.pre_create_obj_dir, MAXPATHLEN, &fsal_path);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       DisplayLog("Impossible to convert path %s", mfsl_param.pre_create_obj_dir);
       exit(1);
     }
 
   fsal_status = FSAL_lookupPath(&fsal_path, pcontext, &dir_handle, &dir_attr);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       DisplayLog
           ("Impossible to lookup directory %s to be used to store precreated objects: status=(%u,%u)",
@@ -203,10 +203,10 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
       exit(1);
     }
 
-  while (eod == FALSE)
+  while(eod == FALSE)
     {
       fsal_status = FSAL_opendir(&dir_handle, pcontext, &dir_descriptor, &dir_attr);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           DisplayLog
               ("Impossible to opendir directory %s to be used to store precreated objects: status=(%u,%u)",
@@ -219,7 +219,7 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
                                  FSAL_ATTRS_MANDATORY,
                                  NB_DIRENT_CLEAN * sizeof(fsal_dirent_t),
                                  dirent, &end_cookie, &nb_entries, &eod);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           DisplayLog
               ("Impossible to readdir directory %s to be used to store precreated objects: status=(%u,%u)",
@@ -228,7 +228,7 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
         }
 
       fsal_status = FSAL_closedir(&dir_descriptor);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           DisplayLog
               ("Impossible to closedir directory %s to be used to store precreated objects: status=(%u,%u)",
@@ -236,16 +236,16 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
           exit(1);
         }
 
-      for (nb_count = 0; nb_count < nb_entries; nb_count++)
+      for(nb_count = 0; nb_count < nb_entries; nb_count++)
         {
           fsal_status = FSAL_unlink(&dir_handle,
                                     &dirent[nb_count].name, pcontext, &dir_attr);
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             {
-              if (fsal_status.major != ERR_FSAL_NOTEMPTY)
+              if(fsal_status.major != ERR_FSAL_NOTEMPTY)
                 {
 #ifdef _USE_PROXY
-                  if (fsal_status.minor == NFS4ERR_GRACE)
+                  if(fsal_status.minor == NFS4ERR_GRACE)
                     DisplayLog
                         ("The remote server is within grace period. Wait for grace period to end and retry");
                   else
@@ -257,12 +257,12 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
                 }
               else
                 {
-                  while (subeod == FALSE)
+                  while(subeod == FALSE)
                     {
                       /* non empty directory, cleanup it too.. */
                       fsal_status = FSAL_opendir(&dirent[nb_count].handle,
                                                  pcontext, &subdir_descriptor, &dir_attr);
-                      if (FSAL_IS_ERROR(fsal_status))
+                      if(FSAL_IS_ERROR(fsal_status))
                         {
                           DisplayLog
                               ("Impossible to opendir directory %s/%s to be used to store precreated objects: status=(%u,%u)",
@@ -277,7 +277,7 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
                                                  NB_DIRENT_CLEAN * sizeof(fsal_dirent_t),
                                                  subdirent,
                                                  &subend_cookie, &subnb_entries, &subeod);
-                      if (FSAL_IS_ERROR(fsal_status))
+                      if(FSAL_IS_ERROR(fsal_status))
                         {
                           DisplayLog
                               ("Impossible to readdir directory %s/%s to be used to store precreated objects: status=(%u,%u)",
@@ -287,7 +287,7 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
                         }
 
                       fsal_status = FSAL_closedir(&subdir_descriptor);
-                      if (FSAL_IS_ERROR(fsal_status))
+                      if(FSAL_IS_ERROR(fsal_status))
                         {
                           DisplayLog
                               ("Impossible to closedir directory %s to be used to store precreated objects: status=(%u,%u)",
@@ -296,17 +296,17 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
                           exit(1);
                         }
 
-                      for (subnb_count = 0; subnb_count < subnb_entries; subnb_count++)
+                      for(subnb_count = 0; subnb_count < subnb_entries; subnb_count++)
                         {
                           fsal_status = FSAL_unlink(&dirent[nb_count].handle,
                                                     &subdirent[subnb_count].name,
                                                     pcontext, &dir_attr);
-                          if (FSAL_IS_ERROR(fsal_status))
+                          if(FSAL_IS_ERROR(fsal_status))
                             {
-                              if (fsal_status.major != ERR_FSAL_NOTEMPTY)
+                              if(fsal_status.major != ERR_FSAL_NOTEMPTY)
                                 {
 #ifdef _USE_PROXY
-                                  if (fsal_status.minor == NFS4ERR_GRACE)
+                                  if(fsal_status.minor == NFS4ERR_GRACE)
                                     DisplayLog
                                         ("The remote server is within grace period. Wait for grace period to end and retry");
                                   else
@@ -363,7 +363,7 @@ fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t * pcontex
   fsal_status.minor = 0;
 
   fsal_status = FSAL_str2path(mfsl_param.pre_create_obj_dir, MAXPATHLEN, &fsal_path);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       DisplayLog("Impossible to convert path %s", mfsl_param.pre_create_obj_dir);
       exit(1);
@@ -372,11 +372,11 @@ fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t * pcontex
   dir_attr.asked_attributes = FSAL_ATTRS_POSIX;
   dir_attr.supported_attributes = FSAL_ATTRS_POSIX;
 
-  if (dir_handle_set == 0)
+  if(dir_handle_set == 0)
     {
       fsal_status =
           FSAL_lookupPath(&fsal_path, pcontext, &dir_handle_precreate, &dir_attr);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           DisplayLog
               ("Impossible to lookup directory %s to be used to store precreated objects: status=(%u,%u)",
@@ -387,14 +387,14 @@ fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t * pcontex
       dir_handle_set = 1;
     }
 
-  for (piter = pool_dirs; piter != NULL; piter = piter->next_alloc)
+  for(piter = pool_dirs; piter != NULL; piter = piter->next_alloc)
     {
-      if (piter->inited != 0)
+      if(piter->inited != 0)
         continue;
 
       snprintf(newdirpath, MAXNAMLEN, "dir.%u.%lu.%u", pid, me, counter++);
       fsal_status = FSAL_str2name(newdirpath, MAXNAMLEN, &fsal_name);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           DisplayLog("Impossible to convert name %s", newdirpath);
           exit(1);
@@ -413,7 +413,7 @@ fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t * pcontex
                                pcontext,
                                0777,
                                &(pprecreated->mobject.handle), &(pprecreated->attr));
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           DisplayLog("Impossible to mkdir %s/%s, status=(%u,%u)",
                      mfsl_param.pre_create_obj_dir, newdirpath, fsal_status.major,
@@ -457,7 +457,7 @@ fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t * pcontext,
   fsal_status.minor = 0;
 
   fsal_status = FSAL_str2path(mfsl_param.pre_create_obj_dir, MAXPATHLEN, &fsal_path);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       DisplayLog("Impossible to convert path %s", mfsl_param.pre_create_obj_dir);
       exit(1);
@@ -465,11 +465,11 @@ fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t * pcontext,
 
   dir_attr.asked_attributes = FSAL_ATTRS_POSIX;
   dir_attr.supported_attributes = FSAL_ATTRS_POSIX;
-  if (dir_handle_set == 0)
+  if(dir_handle_set == 0)
     {
       fsal_status =
           FSAL_lookupPath(&fsal_path, pcontext, &dir_handle_precreate, &dir_attr);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           DisplayLog
               ("Impossible to lookup directory %s to be used to store precreated objects: status=(%u,%u)",
@@ -480,14 +480,14 @@ fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t * pcontext,
       dir_handle_set = 1;
     }
 
-  for (piter = pool_files; piter != NULL; piter = piter->next_alloc)
+  for(piter = pool_files; piter != NULL; piter = piter->next_alloc)
     {
-      if (piter->inited != 0)
+      if(piter->inited != 0)
         continue;
 
       snprintf(newdirpath, MAXNAMLEN, "file.%u.%lu.%u", pid, me, counter++);
       fsal_status = FSAL_str2name(newdirpath, MAXNAMLEN, &fsal_name);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           DisplayLog("Impossible to convert name %s", newdirpath);
           exit(1);
@@ -506,7 +506,7 @@ fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t * pcontext,
                                 pcontext,
                                 0777,
                                 &(pprecreated->mobject.handle), &(pprecreated->attr));
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           DisplayLog("Impossible to create %s/%s, status=(%u,%u)",
                      mfsl_param.pre_create_obj_dir, newdirpath, fsal_status.major,
@@ -554,7 +554,7 @@ fsal_status_t MFSL_GetContext(mfsl_context_t * pcontext,
   status.major = ERR_FSAL_NO_ERROR;
   status.minor = 0;
 
-  if (pthread_mutex_init(&pcontext->lock, NULL) != 0)
+  if(pthread_mutex_init(&pcontext->lock, NULL) != 0)
     MFSL_return(ERR_FSAL_SERVERFAULT, errno);
 
   pcontext->synclet_index = 0;  /* only one synclet for now */
@@ -596,7 +596,7 @@ fsal_status_t MFSL_ASYNC_GetSyncletContext(mfsl_synclet_context_t * pcontext,
   status.major = ERR_FSAL_NO_ERROR;
   status.minor = 0;
 
-  if (pthread_mutex_init(&pcontext->lock, NULL) != 0)
+  if(pthread_mutex_init(&pcontext->lock, NULL) != 0)
     MFSL_return(ERR_FSAL_SERVERFAULT, errno);
 
   return status;
@@ -622,7 +622,7 @@ fsal_status_t MFSL_ASYNC_RefreshContextDirs(mfsl_context_t * pcontext,
   status.major = ERR_FSAL_NO_ERROR;
   status.minor = 0;
 
-  if (pcontext->pool_dirs == NULL)
+  if(pcontext->pool_dirs == NULL)
     {
       STUFF_PREALLOC_CONSTRUCT(pcontext->pool_dirs,
                                mfsl_param.nb_pre_create_dirs,
@@ -631,7 +631,7 @@ fsal_status_t MFSL_ASYNC_RefreshContextDirs(mfsl_context_t * pcontext,
       pcontext->avail_pool_dirs = mfsl_param.nb_pre_create_dirs;
 
       status = mfsl_async_init_precreated_directories(pfsal_context, pcontext->pool_dirs);
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         return status;
     }
 
@@ -660,7 +660,7 @@ fsal_status_t MFSL_ASYNC_RefreshContextFiles(mfsl_context_t * pcontext,
   status.major = ERR_FSAL_NO_ERROR;
   status.minor = 0;
 
-  if (pcontext->pool_files == NULL)
+  if(pcontext->pool_files == NULL)
     {
       STUFF_PREALLOC_CONSTRUCT(pcontext->pool_files,
                                mfsl_param.nb_pre_create_files,
@@ -669,7 +669,7 @@ fsal_status_t MFSL_ASYNC_RefreshContextFiles(mfsl_context_t * pcontext,
       pcontext->avail_pool_files = mfsl_param.nb_pre_create_files;
 
       status = mfsl_async_init_precreated_files(pfsal_context, pcontext->pool_files);
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         return status;
     }
 
@@ -698,29 +698,29 @@ fsal_status_t MFSL_RefreshContext(mfsl_context_t * pcontext,
   status.major = ERR_FSAL_NO_ERROR;
   status.minor = 0;
 
-  if (!pcontext->pool_dirs || !pcontext->pool_files)
+  if(!pcontext->pool_dirs || !pcontext->pool_files)
     {
       status = FSAL_BuildExportContext(&fsal_export_context, NULL, NULL);
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         return status;
 
       status = FSAL_GetClientContext(pfsal_context, &fsal_export_context, 0, 0, NULL, 0);
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         return status;
     }
 
   /*  if( !pcontext->pool_dirs || !pcontext->pool_files ) */
-  if (pcontext->pool_dirs == NULL)
+  if(pcontext->pool_dirs == NULL)
     {
       status = MFSL_ASYNC_RefreshContextDirs(pcontext, pfsal_context);
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         return status;
     }
 
-  if (pcontext->pool_files == NULL)
+  if(pcontext->pool_files == NULL)
     {
       status = MFSL_ASYNC_RefreshContextFiles(pcontext, pfsal_context);
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         return status;
     }
 
@@ -763,10 +763,10 @@ fsal_status_t MFSL_ASYNC_RefreshSyncletContext(mfsl_synclet_context_t * pcontext
  */
 int MFSL_ASYNC_is_synced(mfsl_object_t * mobject)
 {
-  if (mobject == NULL)
+  if(mobject == NULL)
     return FALSE;
 
-  if (mobject->health == MFSL_ASYNC_SYNCHRONOUS)
+  if(mobject->health == MFSL_ASYNC_SYNCHRONOUS)
     return TRUE;
 
   /* in all other case, returns FALSE */

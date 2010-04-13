@@ -147,7 +147,7 @@ int mnt_UmntAll(nfs_arg_t * parg /* IN     */ ,
                     "REQUEST PROCESSING: Calling mnt_UmntAll");
 
   /* Just empty the Mount list, take void as argument and returns void */
-  if (!nfs_Purge_MountList())
+  if(!nfs_Purge_MountList())
     {
       /* Purge mount list failed */
       DisplayLogJd(pclient->log_outputs,

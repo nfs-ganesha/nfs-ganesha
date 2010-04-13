@@ -123,9 +123,9 @@ SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz)
   struct sockaddr_in addr;
   int len = sizeof(struct sockaddr_in);
 
-  if (sock == RPC_ANYSOCK)
+  if(sock == RPC_ANYSOCK)
     {
-      if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+      if((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
         {
           perror("svcudp_create: socket creation problem");
           return ((SVCXPRT *) NULL);
@@ -137,32 +137,32 @@ SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz)
   addr.sin_len = sizeof(addr);
 #endif
   addr.sin_family = AF_INET;
-  if (bindresvport(sock, &addr))
+  if(bindresvport(sock, &addr))
     {
       addr.sin_port = 0;
       (void)bind(sock, (struct sockaddr *)&addr, len);
     }
-  if (getsockname(sock, (struct sockaddr *)&addr, &len) != 0)
+  if(getsockname(sock, (struct sockaddr *)&addr, &len) != 0)
     {
       perror("svcudp_create - cannot getsockname");
-      if (madesock)
+      if(madesock)
         (void)close(sock);
       return ((SVCXPRT *) NULL);
     }
   xprt = (SVCXPRT *) mem_alloc(sizeof(SVCXPRT));
-  if (xprt == NULL)
+  if(xprt == NULL)
     {
       (void)fprintf(stderr, "svcudp_create: out of memory\n");
       return (NULL);
     }
   su = (struct svcudp_data *)mem_alloc(sizeof(*su));
-  if (su == NULL)
+  if(su == NULL)
     {
       (void)fprintf(stderr, "svcudp_create: out of memory\n");
       return (NULL);
     }
   su->su_iosz = ((MAX(sendsz, recvsz) + 3) / 4) * 4;
-  if ((rpc_buffer(xprt) = mem_alloc(su->su_iosz)) == NULL)
+  if((rpc_buffer(xprt) = mem_alloc(su->su_iosz)) == NULL)
     {
       (void)fprintf(stderr, "svcudp_create: out of memory\n");
       return (NULL);
@@ -210,9 +210,9 @@ static bool_t Svcudp_recv(register SVCXPRT * xprt, struct rpc_msg *msg)
   dummy.msg_namelen = xprt->xp_laddrlen = sizeof(struct sockaddr_in);
   dummy.msg_name = (char *)&xprt->xp_laddr;
   rlen = recvmsg(xprt->xp_sock, &dummy, MSG_PEEK);
-  if (rlen == -1)
+  if(rlen == -1)
     {
-      if (errno == EINTR)
+      if(errno == EINTR)
         goto again;
       else
         return (FALSE);
@@ -221,13 +221,13 @@ static bool_t Svcudp_recv(register SVCXPRT * xprt, struct rpc_msg *msg)
   xprt->xp_addrlen = sizeof(struct sockaddr_in);
   rlen = recvfrom(xprt->xp_sock, rpc_buffer(xprt), (int)su->su_iosz,
                   0, (struct sockaddr *)&(xprt->xp_raddr), &(xprt->xp_addrlen));
-  if (rlen == -1 && errno == EINTR)
+  if(rlen == -1 && errno == EINTR)
     goto again;
-  if (rlen < (int)4 * sizeof(uint32_t))
+  if(rlen < (int)4 * sizeof(uint32_t))
     return (FALSE);
   xdrs->x_op = XDR_DECODE;
   XDR_SETPOS(xdrs, 0);
-  if (!xdr_callmsg(xdrs, msg))
+  if(!xdr_callmsg(xdrs, msg))
     return (FALSE);
   su->su_xid = msg->rm_xid;
 
@@ -245,7 +245,7 @@ static bool_t Svcudp_reply(register SVCXPRT * xprt, struct rpc_msg *msg)
   caddr_t xdr_location;
   bool_t has_args;
 
-  if (msg->rm_reply.rp_stat == MSG_ACCEPTED && msg->rm_reply.rp_acpt.ar_stat == SUCCESS)
+  if(msg->rm_reply.rp_stat == MSG_ACCEPTED && msg->rm_reply.rp_acpt.ar_stat == SUCCESS)
     {
       has_args = TRUE;
       xdr_results = msg->acpted_rply.ar_results.proc;
@@ -260,12 +260,12 @@ static bool_t Svcudp_reply(register SVCXPRT * xprt, struct rpc_msg *msg)
   xdrs->x_op = XDR_ENCODE;
   XDR_SETPOS(xdrs, 0);
   msg->rm_xid = su->su_xid;
-  if (xdr_replymsg(xdrs, msg) &&
-      (!has_args || (SVCAUTH_WRAP(xprt->xp_auth, xdrs, xdr_results, xdr_location))))
+  if(xdr_replymsg(xdrs, msg) &&
+     (!has_args || (SVCAUTH_WRAP(xprt->xp_auth, xdrs, xdr_results, xdr_location))))
     {
       slen = (int)XDR_GETPOS(xdrs);
-      if (sendto(xprt->xp_sock, rpc_buffer(xprt), slen, 0,
-                 (struct sockaddr *)&(xprt->xp_raddr), xprt->xp_addrlen) == slen)
+      if(sendto(xprt->xp_sock, rpc_buffer(xprt), slen, 0,
+                (struct sockaddr *)&(xprt->xp_raddr), xprt->xp_addrlen) == slen)
         {
           stat = TRUE;
         }
@@ -275,7 +275,7 @@ static bool_t Svcudp_reply(register SVCXPRT * xprt, struct rpc_msg *msg)
 
 static bool_t Svcudp_getargs(SVCXPRT * xprt, xdrproc_t xdr_args, void *args_ptr)
 {
-  if (!SVCAUTH_UNWRAP(xprt->xp_auth, &(su_data(xprt)->su_xdrs), xdr_args, args_ptr))
+  if(!SVCAUTH_UNWRAP(xprt->xp_auth, &(su_data(xprt)->su_xdrs), xdr_args, args_ptr))
     {
       (void)Svcudp_freeargs(xprt, xdr_args, args_ptr);
       return FALSE;
@@ -296,10 +296,10 @@ static void Svcudp_destroy(register SVCXPRT * xprt)
   register struct svcudp_data *su = su_data(xprt);
 
   Xprt_unregister(xprt);
-  if (xprt->xp_sock != -1)
+  if(xprt->xp_sock != -1)
     (void)close(xprt->xp_sock);
   xprt->xp_sock = -1;
-  if (xprt->xp_auth != NULL)
+  if(xprt->xp_auth != NULL)
     {
       SVCAUTH_DESTROY(xprt->xp_auth);
       xprt->xp_auth = NULL;

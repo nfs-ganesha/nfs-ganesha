@@ -121,9 +121,9 @@
 
 #ifdef _USE_PNFS
 #include "pnfs.h"
-#endif /* _USE_PNFS */
+#endif                          /* _USE_PNFS */
 
-#endif /* _USE_NFS4_1 */
+#endif                          /* _USE_NFS4_1 */
 
 /* Some habits concerning mutex management */
 #ifndef P
@@ -369,7 +369,6 @@ typedef struct cache_inode_deleg__
   unsigned int nothing;
 } cache_inode_deleg_t;
 
-
 typedef struct cache_inode_layout__
 {
 #ifdef _USE_PNFS
@@ -379,10 +378,9 @@ typedef struct cache_inode_layout__
   length4 length;
   length4 minlength;
 #else
-  int nothing ;
+  int nothing;
 #endif
-} cache_inode_layout_t ;
-
+} cache_inode_layout_t;
 
 typedef struct cache_inode_unstable_data__
 {
@@ -401,7 +399,7 @@ typedef struct cache_entry__
 #ifdef _USE_PROXY
       fsal_name_t *pname;                                            /**< Pointer to filename, for PROXY only                  */
       struct cache_entry__ *pentry_parent_open;                      /**< Parent associated with pname, for PROXY only         */
-#endif /* _USE_PROXY */
+#endif                          /* _USE_PROXY */
       fsal_attrib_list_t attributes;                                 /**< The FSAL Attributes                                  */
       void *pentry_content;                                          /**< Entry in file content cache (NULL if not cached)     */
       cache_inode_opened_file_t open_fd;                             /**< Cached fsal_file_t for optimized access              */
@@ -409,8 +407,8 @@ typedef struct cache_entry__
       void *pstate_tail;                                             /**< Current pointer for the state chain                  */
       cache_inode_unstable_data_t unstable_data;                     /**< Unstable data, for use with WRITE/COMMIT             */
 #ifdef _USE_PNFS
-      pnfs_file_t pnfs_file ;
-#endif /* _USE_PNFS */
+      pnfs_file_t pnfs_file;
+#endif                          /* _USE_PNFS */
     } file;                                   /**< file related filed     */
 
     struct cache_inode_symlink__ symlink;     /**< symlink related field  */

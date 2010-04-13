@@ -131,32 +131,32 @@ int Getopt(int argc, char *argv[], char *opts)
   register int c;
   register char *cp;
 
-  if (sp == 1)
+  if(sp == 1)
     {
-      if (Optind >= argc || argv[Optind][0] != '-' || argv[Optind][1] == '\0')
+      if(Optind >= argc || argv[Optind][0] != '-' || argv[Optind][1] == '\0')
         return (EOF);
-      else if (strcmp(argv[Optind], "--") == 0)
+      else if(strcmp(argv[Optind], "--") == 0)
         {
           Optind++;
           return (EOF);
         }
     }
   Optopt = c = argv[Optind][sp];
-  if (c == ':' || (cp = index(opts, c)) == NULL)
+  if(c == ':' || (cp = index(opts, c)) == NULL)
     {
       ERR(": illegal option -- ", c);
-      if (argv[Optind][++sp] == '\0')
+      if(argv[Optind][++sp] == '\0')
         {
           Optind++;
           sp = 1;
         }
       return ('?');
     }
-  if (*++cp == ':')
+  if(*++cp == ':')
     {
-      if (argv[Optind][sp + 1] != '\0')
+      if(argv[Optind][sp + 1] != '\0')
         Optarg = &argv[Optind++][sp + 1];
-      else if (++Optind >= argc)
+      else if(++Optind >= argc)
         {
           ERR(": option requires an argument -- ", c);
           sp = 1;
@@ -168,7 +168,7 @@ int Getopt(int argc, char *argv[], char *opts)
     }
   else
     {
-      if (argv[Optind][++sp] == '\0')
+      if(argv[Optind][++sp] == '\0')
         {
           sp = 1;
           Optind++;

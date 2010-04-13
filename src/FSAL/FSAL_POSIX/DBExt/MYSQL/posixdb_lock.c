@@ -34,7 +34,7 @@ fsal_posixdb_status_t fsal_posixdb_lockHandleForUpdate(fsal_posixdb_conn * p_con
            "FOR UPDATE", p_info->devid, p_info->inode);
 
   st = db_exec_sql(p_conn, query, &res);
-  if (FSAL_POSIXDB_IS_ERROR(st))
+  if(FSAL_POSIXDB_IS_ERROR(st))
     {
       RollbackTransaction(p_conn);
       return st;

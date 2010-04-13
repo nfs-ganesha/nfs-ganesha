@@ -70,9 +70,9 @@ fsal_status_t FSAL_lock(fsal_file_t * obj_handle,
    * a child and do a waiting lock
    */
   retval = fcntl(fd, F_SETLK, &ldesc->flock);
-  if (retval && ((errno == EACCES) || (errno == EAGAIN)))
+  if(retval && ((errno == EACCES) || (errno == EAGAIN)))
     {
-      if (blocking)
+      if(blocking)
         {
           /*
            * Conflicting lock present create a child and
@@ -100,7 +100,7 @@ fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / 
 {
 
   /* sanity checks. */
-  if (!lock_descriptor)
+  if(!lock_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_changelock);
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_changelock);
@@ -119,7 +119,7 @@ fsal_status_t FSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
   errno = 0;
   ldesc->flock.l_type = F_UNLCK;
   retval = fcntl(fd, F_SETLK, &ldesc->flock);
-  if (retval)
+  if(retval)
     Return(posix2fsal_error(errno), errno, INDEX_FSAL_unlock);
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_unlock);
@@ -132,7 +132,7 @@ fsal_status_t FSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 
   errno = 0;
   retval = fcntl(fd, F_GETLK, &ldesc->flock);
-  if (retval)
+  if(retval)
     Return(posix2fsal_error(errno), errno, INDEX_FSAL_getlock);
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_getlock);

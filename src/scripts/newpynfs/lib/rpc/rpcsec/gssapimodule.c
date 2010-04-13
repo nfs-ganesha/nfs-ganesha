@@ -48,13 +48,13 @@ static PyObject *gssapi_importName(PyObject * self, PyObject * args)
   gss_name_t name = NULL;
   PyObject *rv, *bufname;
 
-  if (!PyArg_ParseTuple(args, "s#|s#", &string, &len, &type_name, &type_len))
+  if(!PyArg_ParseTuple(args, "s#|s#", &string, &len, &type_name, &type_len))
     return NULL;
 
   sname.value = string;
   sname.length = len;
 
-  if (type_len && type_name)
+  if(type_len && type_name)
     {
       type.length = type_len;
       type.elements = type_name;
@@ -68,7 +68,7 @@ static PyObject *gssapi_importName(PyObject * self, PyObject * args)
   bufname = PyBuffer_FromMemory(name, strlen((char *)name) + 1);
 
   rv = Py_BuildValue("{sisisN}", "major", major, "minor", minor, "name", bufname);
-  if (!rv)
+  if(!rv)
     {
       Py_DECREF(bufname);
     }
@@ -111,15 +111,15 @@ static PyObject *gssapi_initSecContext(PyObject * self, PyObject * args)
   gss_buffer_desc send_token, rcv_token, *rcv_tokenp = GSS_C_NO_BUFFER;
   PyObject *rv;
 
-  if (!PyArg_ParseTuple(args, "t#|z#z#z#z#llO!",
-                        &in_name, &in_name_len,
-                        &in_token, &in_token_len,
-                        &in_context, &in_context_len,
-                        &in_mech, &in_mech_len,
-                        &in_cred, &in_cred_len, &in_flags, &in_time))
+  if(!PyArg_ParseTuple(args, "t#|z#z#z#z#llO!",
+                       &in_name, &in_name_len,
+                       &in_token, &in_token_len,
+                       &in_context, &in_context_len,
+                       &in_mech, &in_mech_len,
+                       &in_cred, &in_cred_len, &in_flags, &in_time))
     return NULL;
 
-  if (!is_string(in_name, in_name_len))
+  if(!is_string(in_name, in_name_len))
     {
       PyErr_SetString(PyExc_TypeError,
                       "'name' must be null-terminated string with no embedded nulls");
@@ -127,21 +127,21 @@ static PyObject *gssapi_initSecContext(PyObject * self, PyObject * args)
     }
 
   /* Set defaults */
-  if (in_token && in_token_len)
+  if(in_token && in_token_len)
     {
       rcv_token.value = in_token;
       rcv_token.length = in_token_len;
       rcv_tokenp = &rcv_token;
     }
-  if (in_context && in_context_len)
+  if(in_context && in_context_len)
     ctx = (void *)in_context;
-  if (in_mech && in_mech_len)
+  if(in_mech && in_mech_len)
     {
       mechdata.length = in_mech_len;
       mechdata.elements = in_mech;
       mechp = &mechdata;
     }
-  if (in_cred && in_cred_len)
+  if(in_cred && in_cred_len)
     cred = (void *)in_cred;
 
   /* Call function */
@@ -150,17 +150,17 @@ static PyObject *gssapi_initSecContext(PyObject * self, PyObject * args)
                                rcv_tokenp, &actual_mech,
                                &send_token, &out_flags, &out_time);
   out_context = PyBuffer_FromMemory(ctx, 4);
-  if (out_context == NULL)
+  if(out_context == NULL)
     goto error;
   out_mech = PyBuffer_FromMemory(actual_mech, 4);
-  if (out_mech == NULL)
+  if(out_mech == NULL)
     goto error;
 
   rv = Py_BuildValue("{sisisNss#sNsisi}", "major", major, "minor", minor,
                      "context", out_context,
                      "token", send_token.value, send_token.length,
                      "mech", out_mech, "flags", out_flags, "time", out_time);
-  if (rv)
+  if(rv)
     return rv;
 
  error:
@@ -187,9 +187,9 @@ static PyObject *gssapi_verifyMIC(PyObject * self, PyObject * args)
   /* Local variables */
   gss_buffer_desc token, message;
 
-  if (!PyArg_ParseTuple(args, "z#s#s#",
-                        &in_context, &in_context_len,
-                        &in_msg, &in_msg_len, &in_token, &in_token_len))
+  if(!PyArg_ParseTuple(args, "z#s#s#",
+                       &in_context, &in_context_len,
+                       &in_msg, &in_msg_len, &in_token, &in_token_len))
     return NULL;
 
   message.value = in_msg;
@@ -218,8 +218,8 @@ static PyObject *gssapi_getMIC(PyObject * self, PyObject * args)
   /* Local variables */
   gss_buffer_desc out_token, message;
 
-  if (!PyArg_ParseTuple(args, "t#s#|i",
-                        &in_context, &in_context_len, &in_msg, &in_msg_len, &qop))
+  if(!PyArg_ParseTuple(args, "t#s#|i",
+                       &in_context, &in_context_len, &in_msg, &in_msg_len, &qop))
     return NULL;
 
   message.value = in_msg;
@@ -252,9 +252,9 @@ static PyObject *gssapi_wrap(PyObject * self, PyObject * args)
   /* Local variables */
   gss_buffer_desc out_msg, msg;
 
-  if (!PyArg_ParseTuple(args, "t#s#|ii",
-                        &in_context, &in_context_len,
-                        &in_msg, &in_msg_len, &in_confidential, &qop))
+  if(!PyArg_ParseTuple(args, "t#s#|ii",
+                       &in_context, &in_context_len,
+                       &in_msg, &in_msg_len, &in_confidential, &qop))
     return NULL;
 
   msg.value = in_msg;
@@ -287,7 +287,7 @@ static PyObject *gssapi_unwrap(PyObject * self, PyObject * args)
   /* Local variables */
   gss_buffer_desc out_msg, msg;
 
-  if (!PyArg_ParseTuple(args, "t#s#", &in_context, &in_context_len, &in_msg, &in_msg_len))
+  if(!PyArg_ParseTuple(args, "t#s#", &in_context, &in_context_len, &in_msg, &in_msg_len))
     return NULL;
 
   msg.value = in_msg;
@@ -409,11 +409,11 @@ PyMODINIT_FUNC initgssapi(void)
 
   /* This is the critical line */
   m = Py_InitModule3("gssapi", GssapiMethods, "Wrapper for C gssapi routines");
-  if (m == NULL)
+  if(m == NULL)
     return;
 
   /* Add GSS_S_* constants */
-  for (i = 0; major_codes[i].name; i++)
+  for(i = 0; major_codes[i].name; i++)
     {
       PyModule_AddIntConstant(m, major_codes[i].name, major_codes[i].value);
     }

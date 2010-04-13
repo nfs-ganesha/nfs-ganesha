@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 
   config_file_t config;
 
-  if ((argc > 1) && (argv[1]))
+  if((argc > 1) && (argv[1]))
     {
       fichier = argv[1];
     }
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 
   /* test de la syntaxe du fichier */
   config = config_ParseFile(fichier);
-  if (config == NULL)
+  if(config == NULL)
     {
       errtxt = config_GetErrorMsg();
       fprintf(stderr, "Erreur de parsing de %s : %s\n", argv[1], errtxt);

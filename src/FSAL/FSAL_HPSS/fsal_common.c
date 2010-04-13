@@ -32,12 +32,12 @@ int HPSSFSAL_GetFilesetRoot(char *fileset_name, ns_ObjHandle_t * p_root_hdl)
 
   /* if fileset_name is null, root fileset is returned */
 
-  if (fileset_name == NULL || fileset_name[0] == '\0')
+  if(fileset_name == NULL || fileset_name[0] == '\0')
     {
       hpss_fileattr_t root_attr;
 
       rc = hpss_FileGetAttributes("/", &root_attr);
-      if (rc)
+      if(rc)
         return rc;
 
       *p_root_hdl = root_attr.ObjectHandle;
@@ -54,7 +54,7 @@ int HPSSFSAL_GetFilesetRoot(char *fileset_name, ns_ObjHandle_t * p_root_hdl)
 
       rc = hpss_FilesetGetAttributes(fileset_name, NULL, NULL, NULL, attrBits, &fsattrs);
 
-      if (rc)
+      if(rc)
         return rc;
 
       *p_root_hdl = fsattrs.FilesetHandle;
@@ -114,7 +114,7 @@ int HPSSFSAL_IsStaleHandle(ns_ObjHandle_t * p_hdl, TYPE_CRED_HPSS * p_cred)
 
   ReleaseTokenFSCall();
 
-  if ((rc == HPSS_ENOENT) || (rc == HPSS_ENOTDIR))
+  if((rc == HPSS_ENOENT) || (rc == HPSS_ENOTDIR))
     return TRUE;
 
   return FALSE;

@@ -239,21 +239,21 @@ int nfs_ParseConfLine(char *Argv[],
   char *p2 = NULL;              /* Pointeur sur la fin du token   */
 
   /* iteration and checking for array bounds */
-  for (; output_value < nbArgv;)
+  for(; output_value < nbArgv;)
     {
 
-      if (*p1 == '\0')
+      if(*p1 == '\0')
         return output_value;
 
       /* Je recherche le premier caractere valide */
-      for (; *p1 == ' ' || *p1 == '\t'; p1++) ;
+      for(; *p1 == ' ' || *p1 == '\t'; p1++) ;
 
       /* p1 pointe sur un debut de token, je cherche la fin */
       /* La fin est un blanc, une fin de chaine ou un CR    */
-      for (p2 = p1; !separator_function(*p2) && !endLine_func(*p2); p2++) ;
+      for(p2 = p1; !separator_function(*p2) && !endLine_func(*p2); p2++) ;
 
       /* Possible arret a cet endroit */
-      if (endLine_func(*p2))
+      if(endLine_func(*p2))
         endLine = TRUE;
 
       /* je valide la lecture du token */
@@ -261,7 +261,7 @@ int nfs_ParseConfLine(char *Argv[],
       strcpy(Argv[output_value++], p1);
 
       /* Je me prepare pour la suite */
-      if (!endLine)
+      if(!endLine)
         {
           p2 += 1;
           p1 = p2;
@@ -272,7 +272,7 @@ int nfs_ParseConfLine(char *Argv[],
     }                           /* for( ; ; ) */
 
   /* out of bounds */
-  if (output_value >= nbArgv)
+  if(output_value >= nbArgv)
     return -1;
 
   return -2;
@@ -310,7 +310,7 @@ static struct hostent *nfs_LookupHostAddr(char *host)
   struct sockaddr_in6 *paddrv6 = (struct sockaddr_in6 *)&addrv6;
 
   /* First try gethhostbyname */
-  if ((output = gethostbyname(host)) == NULL)
+  if((output = gethostbyname(host)) == NULL)
     {
       /* Convert from dotted notation to adddress format */
       hostaddr = inet_addr(host);
@@ -320,12 +320,12 @@ static struct hostent *nfs_LookupHostAddr(char *host)
     }
 #ifdef _USE_TIRPC_IPV6
   /* if output == NULL it may be an IPv6 address */
-  if (output == NULL)
+  if(output == NULL)
     {
-      if ((output = gethostbyname2(host, AF_INET6)) == NULL)
+      if((output = gethostbyname2(host, AF_INET6)) == NULL)
         {
           /* Maybe an address in the ASCII format */
-          if (inet_pton(AF_INET6, host, paddrv6->sin6_addr.s6_addr))
+          if(inet_pton(AF_INET6, host, paddrv6->sin6_addr.s6_addr))
             {
               output = gethostbyaddr(paddrv6->sin6_addr.s6_addr,
                                      sizeof(paddrv6->sin6_addr.s6_addr), AF_INET6);
@@ -386,13 +386,13 @@ int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
 
   net_addr = inet_network(host);
 
-  if (net_addr == (in_addr_t) - 1)
+  if(net_addr == (in_addr_t) - 1)
     {
       /*
        * Not a valid dotted IP address. Check for host name. 
        */
 
-      if ((host_ent = gethostbyname(host)) != NULL)
+      if((host_ent = gethostbyname(host)) != NULL)
         {
           /*
            * A valid hostname. Just copy the hostent address. 
@@ -409,10 +409,10 @@ int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
            */
 
           net_ent = getnetbyname(host);
-          if (net_ent == NULL)
+          if(net_ent == NULL)
             {
               error = errno;
-              if (error == 0)
+              if(error == 0)
                 error = ENOENT;
               endnetent();
             }
@@ -429,46 +429,46 @@ int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
    * class, and compute the network mask.  
    */
 
-  if (error == 0 && compute_mask)
+  if(error == 0 && compute_mask)
     {
 
-      if ((net_addr & 0xffffff00) == 0)
+      if((net_addr & 0xffffff00) == 0)
         net_addr <<= 24;
-      else if ((net_addr & 0xffff0000) == 0)
+      else if((net_addr & 0xffff0000) == 0)
         net_addr <<= 16;
-      else if ((net_addr & 0xff000000) == 0)
+      else if((net_addr & 0xff000000) == 0)
         net_addr <<= 8;
       class = (net_addr & 0xc0000000) >> 30;
       switch (class)
         {
         case 0:                /* class A address           */
         case 1:
-          if ((net_addr & 0x00ffffff) == 0)
+          if((net_addr & 0x00ffffff) == 0)
             net_mask = 0xff000000;
-          else if ((net_addr & 0x0000ffff) == 0)
+          else if((net_addr & 0x0000ffff) == 0)
             net_mask = 0xffff0000;
-          else if ((net_addr & 0x000000ff) == 0)
+          else if((net_addr & 0x000000ff) == 0)
             net_mask = 0xffffff00;
           break;
         case 2:                /* class B address           */
-          if ((net_addr & 0x0000ffff) == 0)
+          if((net_addr & 0x0000ffff) == 0)
             net_mask = 0xffff0000;
-          else if ((net_addr & 0x000000ff) == 0)
+          else if((net_addr & 0x000000ff) == 0)
             net_mask = 0xffffff00;
           break;
         case 3:                /* class C address            */
-          if ((net_addr & 0x000000ff) == 0)
+          if((net_addr & 0x000000ff) == 0)
             net_mask = 0xffffff00;
           break;
         default:
           break;
         }
     }
-  if (error == 0)
+  if(error == 0)
     {
-      if (netAddr != (unsigned long *)NULL)
+      if(netAddr != (unsigned long *)NULL)
         *netAddr = net_addr;
-      if (netMask != (unsigned long *)NULL)
+      if(netMask != (unsigned long *)NULL)
         *netMask = net_mask;
     }
   return (error);
@@ -510,11 +510,11 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
 
   p_clients = ExportEntry->clients.clientarray;
 
-  if (p_clients == NULL)
+  if(p_clients == NULL)
     return ENOMEM;
 
   /* It's now time to set the information related to the new clients */
-  for (i = j; i < j + new_clients_number; i++)
+  for(i = j; i < j + new_clients_number; i++)
     {
       /* cleans the export entry */
       memset(&p_clients[i], 0, sizeof(exportlist_client_entry_t));
@@ -526,7 +526,7 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
       p_clients[i].options |= option;
 
       /* using netdb to get information about the hostname */
-      if (client_hostname[0] == '@')
+      if(client_hostname[0] == '@')
         {
 
           /* Entry is a netgroup definition */
@@ -542,11 +542,11 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
                  p_clients[i].client.netgroup.netgroupname);
 #endif
         }
-      else if ((hostEntry = nfs_LookupHostAddr(client_hostname)) != NULL)
+      else if((hostEntry = nfs_LookupHostAddr(client_hostname)) != NULL)
         {
 
           /* Entry is a hostif */
-          if (hostEntry->h_addrtype == AF_INET)
+          if(hostEntry->h_addrtype == AF_INET)
             {
               memcpy(&(p_clients[i].client.hostif.clientaddr), hostEntry->h_addr,
                      hostEntry->h_length);
@@ -570,9 +570,9 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
               p_clients[i].type = HOSTIF_CLIENT_V6;
             }
         }
-      else if (((error = nfs_LookupNetworkAddr(client_hostname,
-                                               (unsigned long *)&netAddr,
-                                               (unsigned long *)&netMask))) == 0)
+      else if(((error = nfs_LookupNetworkAddr(client_hostname,
+                                              (unsigned long *)&netAddr,
+                                              (unsigned long *)&netMask))) == 0)
         {
           /* Entry is a network definition */
           p_clients[i].client.network.netaddr = netAddr;
@@ -595,16 +595,16 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
           /* this may be  a wildcarded host */
           /* Lookup into the string to see if it contains '*' or '?' */
           is_wildcarded_host = FALSE;
-          for (l = 0; l < strlen(client_hostname); l++)
+          for(l = 0; l < strlen(client_hostname); l++)
             {
-              if ((client_hostname[l] == '*') || (client_hostname[l] == '?'))
+              if((client_hostname[l] == '*') || (client_hostname[l] == '?'))
                 {
                   is_wildcarded_host = TRUE;
                   break;
                 }
             }
 
-          if (is_wildcarded_host == TRUE)
+          if(is_wildcarded_host == TRUE)
             {
               p_clients[i].type = WILDCARDHOST_CLIENT;
               strncpy(p_clients[i].client.wildcard.wildcard, client_hostname,
@@ -667,7 +667,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   /* allocates export entry */
   p_entry = (exportlist_t *) Mem_Alloc(sizeof(exportlist_t));
 
-  if (p_entry == NULL)
+  if(p_entry == NULL)
     return Mem_Errno;
 
   /** @todo set default values here */
@@ -702,7 +702,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
   /* parse options for this export entry */
 
-  for (i = 0; i < config_GetNbItems(block); i++)
+  for(i = 0; i < config_GetNbItems(block); i++)
     {
       config_item_t item;
 
@@ -711,7 +711,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
       /* get var name and value */
       rc = config_GetKeyValue(item, &var_name, &var_value);
 
-      if ((rc != 0) || (var_value == NULL))
+      if((rc != 0) || (var_value == NULL))
         {
           Mem_Free(p_entry);
           DisplayLog("NFS READ_EXPORT: ERROR: internal error %d", rc);
@@ -719,14 +719,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           return -1;
         }
 
-      if (!STRCMP(var_name, CONF_EXPORT_ID))
+      if(!STRCMP(var_name, CONF_EXPORT_ID))
         {
 
           long int export_id;
           char *end_ptr;
 
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_ID) == FLAG_EXPORT_ID)
+          if((set_options & FLAG_EXPORT_ID) == FLAG_EXPORT_ID)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_ID);
               continue;
@@ -736,14 +736,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           errno = 0;
           export_id = strtol(var_value, &end_ptr, 10);
 
-          if (end_ptr == NULL || *end_ptr != '\0' || errno != 0)
+          if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: Invalid export_id: \"%s\"", var_value);
               err_flag = TRUE;
               continue;
             }
 
-          if (export_id <= 0 || export_id > USHRT_MAX)
+          if(export_id <= 0 || export_id > USHRT_MAX)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: Export_id out of range: \"%ld\"",
                          export_id);
@@ -758,16 +758,16 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_ID;
 
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_PATH))
+      else if(!STRCMP(var_name, CONF_EXPORT_PATH))
         {
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_PATH) == FLAG_EXPORT_PATH)
+          if((set_options & FLAG_EXPORT_PATH) == FLAG_EXPORT_PATH)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_PATH);
               continue;
             }
 
-          if (*var_value == '\0')
+          if(*var_value == '\0')
             {
               DisplayLog("NFS READ_EXPORT: ERROR: Empty export path");
               err_flag = TRUE;
@@ -785,7 +785,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_PATH;
 
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_ROOT))
+      else if(!STRCMP(var_name, CONF_EXPORT_ROOT))
         {
           char *expended_node_list;
 
@@ -798,7 +798,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           count =
               nodelist_common_condensed2extended_nodelist(var_value, &expended_node_list);
 
-          if (count <= 0)
+          if(count <= 0)
             {
               err_flag = TRUE;
               DisplayLog
@@ -807,7 +807,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
               continue;
             }
-          else if (count > EXPORT_MAX_CLIENTS)
+          else if(count > EXPORT_MAX_CLIENTS)
             {
               err_flag = TRUE;
               DisplayLog("NFS READ_EXPORT: ERROR: Client list too long (%d>%d)",
@@ -816,7 +816,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
             }
 
           /* allocate clients strings  */
-          for (idx = 0; idx < count; idx++)
+          for(idx = 0; idx < count; idx++)
             {
               client_list[idx] = (char *)Mem_Alloc(EXPORT_MAX_CLIENTLEN);
               client_list[idx][0] = '\0';
@@ -831,13 +831,13 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           /* free the buffer the nodelist module has allocated */
           free(expended_node_list);
 
-          if (rc < 0)
+          if(rc < 0)
             {
               err_flag = TRUE;
               DisplayLog("NFS READ_EXPORT: ERROR: Client list too long (>%d)", count);
 
               /* free client strings */
-              for (idx = 0; idx < count; idx++)
+              for(idx = 0; idx < count; idx++)
                 Mem_Free((caddr_t) client_list[idx]);
 
               continue;
@@ -846,14 +846,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           rc = nfs_AddClientsToExportList(p_entry,
                                           rc, (char **)client_list, EXPORT_OPTION_ROOT);
 
-          if (rc != 0)
+          if(rc != 0)
             {
               err_flag = TRUE;
               DisplayLog("NFS READ_EXPORT: ERROR: Invalid client found in \"%s\"",
                          var_value);
 
               /* free client strings */
-              for (idx = 0; idx < count; idx++)
+              for(idx = 0; idx < count; idx++)
                 Mem_Free((caddr_t) client_list[idx]);
 
               continue;
@@ -862,7 +862,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           /* everything is OK */
 
           /* free client strings */
-          for (idx = 0; idx < count; idx++)
+          for(idx = 0; idx < count; idx++)
             Mem_Free((caddr_t) client_list[idx]);
 
           /* Notice that as least one of the two options
@@ -871,7 +871,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_ROOT_OR_ACCESS;
 
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_ACCESS))
+      else if(!STRCMP(var_name, CONF_EXPORT_ACCESS))
         {
           char *expended_node_list;
 
@@ -884,7 +884,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           count =
               nodelist_common_condensed2extended_nodelist(var_value, &expended_node_list);
 
-          if (count <= 0)
+          if(count <= 0)
             {
               err_flag = TRUE;
               DisplayLog
@@ -893,7 +893,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
               continue;
             }
-          else if (count > EXPORT_MAX_CLIENTS)
+          else if(count > EXPORT_MAX_CLIENTS)
             {
               err_flag = TRUE;
               DisplayLog("NFS READ_EXPORT: ERROR: Client list too long (%d>%d)",
@@ -902,7 +902,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
             }
 
           /* allocate clients strings  */
-          for (idx = 0; idx < count; idx++)
+          for(idx = 0; idx < count; idx++)
             {
               client_list[idx] = (char *)Mem_Alloc(EXPORT_MAX_CLIENTLEN);
               client_list[idx][0] = '\0';
@@ -917,13 +917,13 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           /* free the buffer the nodelist module has allocated */
           free(expended_node_list);
 
-          if (rc < 0)
+          if(rc < 0)
             {
               err_flag = TRUE;
               DisplayLog("NFS READ_EXPORT: ERROR: Client list too long (>%d)", count);
 
               /* free client strings */
-              for (idx = 0; idx < count; idx++)
+              for(idx = 0; idx < count; idx++)
                 Mem_Free((caddr_t) client_list[idx]);
 
               continue;
@@ -932,14 +932,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           rc = nfs_AddClientsToExportList(p_entry, rc,
                                           (char **)client_list, EXPORT_OPTION_ACCESS);
 
-          if (rc != 0)
+          if(rc != 0)
             {
               err_flag = TRUE;
               DisplayLog("NFS READ_EXPORT: ERROR: Invalid client found in \"%s\"",
                          var_value);
 
               /* free client strings */
-              for (idx = 0; idx < count; idx++)
+              for(idx = 0; idx < count; idx++)
                 Mem_Free((caddr_t) client_list[idx]);
 
               continue;
@@ -948,7 +948,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           /* everything is OK */
 
           /* free client strings */
-          for (idx = 0; idx < count; idx++)
+          for(idx = 0; idx < count; idx++)
             Mem_Free((caddr_t) client_list[idx]);
 
           /* Notice that as least one of the two options
@@ -957,17 +957,17 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_ROOT_OR_ACCESS;
 
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_PSEUDO))
+      else if(!STRCMP(var_name, CONF_EXPORT_PSEUDO))
         {
 
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_PSEUDO) == FLAG_EXPORT_PSEUDO)
+          if((set_options & FLAG_EXPORT_PSEUDO) == FLAG_EXPORT_PSEUDO)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_PSEUDO);
               continue;
             }
 
-          if (*var_value != '/')
+          if(*var_value != '/')
             {
               DisplayLog
                   ("NFS READ_EXPORT: ERROR: Pseudo path must begin with a slash (invalid pseudo path: %s).",
@@ -982,33 +982,33 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           p_entry->options |= EXPORT_OPTION_PSEUDO;
 
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_REFERRAL))
+      else if(!STRCMP(var_name, CONF_EXPORT_REFERRAL))
         {
           strncpy(p_entry->referral, var_value, MAXPATHLEN);
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_ACCESSTYPE))
+      else if(!STRCMP(var_name, CONF_EXPORT_ACCESSTYPE))
         {
 
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_ACCESSTYPE) == FLAG_EXPORT_ACCESSTYPE)
+          if((set_options & FLAG_EXPORT_ACCESSTYPE) == FLAG_EXPORT_ACCESSTYPE)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_ACCESSTYPE);
               continue;
             }
 
-          if (!STRCMP(var_value, "RW"))
+          if(!STRCMP(var_value, "RW"))
             {
               p_entry->access_type = ACCESSTYPE_RW;
             }
-          else if (!STRCMP(var_value, "RO"))
+          else if(!STRCMP(var_value, "RO"))
             {
               p_entry->access_type = ACCESSTYPE_RO;
             }
-          else if (!STRCMP(var_value, "MDONLY"))
+          else if(!STRCMP(var_value, "MDONLY"))
             {
               p_entry->access_type = ACCESSTYPE_MDONLY;
             }
-          else if (!STRCMP(var_value, "MDONLY_RO"))
+          else if(!STRCMP(var_value, "MDONLY_RO"))
             {
               p_entry->access_type = ACCESSTYPE_MDONLY_RO;
             }
@@ -1024,7 +1024,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_ACCESSTYPE;
 
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_NFS_PROTO))
+      else if(!STRCMP(var_name, CONF_EXPORT_NFS_PROTO))
         {
 
 #     define MAX_NFSPROTO      10       /* large enough !!! */
@@ -1034,7 +1034,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           int idx, count;
 
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_NFS_PROTO) == FLAG_EXPORT_NFS_PROTO)
+          if((set_options & FLAG_EXPORT_NFS_PROTO) == FLAG_EXPORT_NFS_PROTO)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_NFS_PROTO);
               continue;
@@ -1045,7 +1045,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                                 | EXPORT_OPTION_NFSV3 | EXPORT_OPTION_NFSV4);
 
           /* allocate nfs vers strings */
-          for (idx = 0; idx < MAX_NFSPROTO; idx++)
+          for(idx = 0; idx < MAX_NFSPROTO; idx++)
             nfsvers_list[idx] = (char *)Mem_Alloc(MAX_NFSPROTO_LEN);
 
           /*
@@ -1054,14 +1054,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           count = nfs_ParseConfLine(nfsvers_list, MAX_NFSPROTO,
                                     var_value, find_comma, find_endLine);
 
-          if (count < 0)
+          if(count < 0)
             {
               err_flag = TRUE;
               DisplayLog("NFS READ_EXPORT: ERROR: NFS protocols list too long (>%d)",
                          MAX_NFSPROTO);
 
               /* free sec strings */
-              for (idx = 0; idx < MAX_NFSPROTO; idx++)
+              for(idx = 0; idx < MAX_NFSPROTO; idx++)
                 Mem_Free((caddr_t) nfsvers_list[idx]);
 
               continue;
@@ -1069,17 +1069,17 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* add each Nfs protocol flag to the option field.  */
 
-          for (idx = 0; idx < count; idx++)
+          for(idx = 0; idx < count; idx++)
             {
-              if (!STRCMP(nfsvers_list[idx], "2"))
+              if(!STRCMP(nfsvers_list[idx], "2"))
                 {
                   p_entry->options |= EXPORT_OPTION_NFSV2;
                 }
-              else if (!STRCMP(nfsvers_list[idx], "3"))
+              else if(!STRCMP(nfsvers_list[idx], "3"))
                 {
                   p_entry->options |= EXPORT_OPTION_NFSV3;
                 }
-              else if (!STRCMP(nfsvers_list[idx], "4"))
+              else if(!STRCMP(nfsvers_list[idx], "4"))
                 {
                   p_entry->options |= EXPORT_OPTION_NFSV4;
                 }
@@ -1093,18 +1093,18 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
             }
 
           /* free sec strings */
-          for (idx = 0; idx < MAX_NFSPROTO; idx++)
+          for(idx = 0; idx < MAX_NFSPROTO; idx++)
             Mem_Free((caddr_t) nfsvers_list[idx]);
 
           /* check that at least one nfs protocol has been specified */
-          if ((p_entry->options & (EXPORT_OPTION_NFSV2
-                                   | EXPORT_OPTION_NFSV3 | EXPORT_OPTION_NFSV4)) == 0)
+          if((p_entry->options & (EXPORT_OPTION_NFSV2
+                                  | EXPORT_OPTION_NFSV3 | EXPORT_OPTION_NFSV4)) == 0)
             DisplayLog("NFS READ_EXPORT: WARNING: /!\\ Empty NFS_protocols list");
 
           set_options |= FLAG_EXPORT_NFS_PROTO;
 
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_TRANS_PROTO))
+      else if(!STRCMP(var_name, CONF_EXPORT_TRANS_PROTO))
         {
 
 #     define MAX_TRANSPROTO      10     /* large enough !!! */
@@ -1114,7 +1114,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           int idx, count;
 
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_TRANS_PROTO) == FLAG_EXPORT_TRANS_PROTO)
+          if((set_options & FLAG_EXPORT_TRANS_PROTO) == FLAG_EXPORT_TRANS_PROTO)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_TRANS_PROTO);
               continue;
@@ -1124,7 +1124,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           p_entry->options &= ~(EXPORT_OPTION_UDP | EXPORT_OPTION_TCP);
 
           /* allocate TRANS vers strings */
-          for (idx = 0; idx < MAX_TRANSPROTO; idx++)
+          for(idx = 0; idx < MAX_TRANSPROTO; idx++)
             transproto_list[idx] = (char *)Mem_Alloc(MAX_TRANSPROTO_LEN);
 
           /*
@@ -1133,14 +1133,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           count = nfs_ParseConfLine(transproto_list, MAX_TRANSPROTO,
                                     var_value, find_comma, find_endLine);
 
-          if (count < 0)
+          if(count < 0)
             {
               err_flag = TRUE;
               DisplayLog("NFS READ_EXPORT: ERROR: Protocol list too long (>%d)",
                          MAX_TRANSPROTO);
 
               /* free sec strings */
-              for (idx = 0; idx < MAX_TRANSPROTO; idx++)
+              for(idx = 0; idx < MAX_TRANSPROTO; idx++)
                 Mem_Free((caddr_t) transproto_list[idx]);
 
               continue;
@@ -1148,13 +1148,13 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* add each TRANS protocol flag to the option field.  */
 
-          for (idx = 0; idx < count; idx++)
+          for(idx = 0; idx < count; idx++)
             {
-              if (!STRCMP(transproto_list[idx], "UDP"))
+              if(!STRCMP(transproto_list[idx], "UDP"))
                 {
                   p_entry->options |= EXPORT_OPTION_UDP;
                 }
-              else if (!STRCMP(transproto_list[idx], "TCP"))
+              else if(!STRCMP(transproto_list[idx], "TCP"))
                 {
                   p_entry->options |= EXPORT_OPTION_TCP;
                 }
@@ -1168,24 +1168,24 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
             }
 
           /* free sec strings */
-          for (idx = 0; idx < MAX_TRANSPROTO; idx++)
+          for(idx = 0; idx < MAX_TRANSPROTO; idx++)
             Mem_Free((caddr_t) transproto_list[idx]);
 
           /* check that at least one TRANS protocol has been specified */
-          if ((p_entry->options & (EXPORT_OPTION_UDP | EXPORT_OPTION_TCP)) == 0)
+          if((p_entry->options & (EXPORT_OPTION_UDP | EXPORT_OPTION_TCP)) == 0)
             DisplayLog("TRANS READ_EXPORT: WARNING: /!\\ Empty protocol list");
 
           set_options |= FLAG_EXPORT_TRANS_PROTO;
 
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_ANON_ROOT))
+      else if(!STRCMP(var_name, CONF_EXPORT_ANON_ROOT))
         {
 
           long int anon_uid;
           char *end_ptr;
 
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_ANON_ROOT) == FLAG_EXPORT_ANON_ROOT)
+          if((set_options & FLAG_EXPORT_ANON_ROOT) == FLAG_EXPORT_ANON_ROOT)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_ANON_ROOT);
               continue;
@@ -1196,7 +1196,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           anon_uid = strtol(var_value, &end_ptr, 10);
 
-          if (end_ptr == NULL || *end_ptr != '\0' || errno != 0)
+          if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: Invalid Anonymous_root_uid: \"%s\"",
                          var_value);
@@ -1211,7 +1211,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_ANON_ROOT;
 
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_SECTYPE))
+      else if(!STRCMP(var_name, CONF_EXPORT_SECTYPE))
         {
 #     define MAX_SECTYPE      10        /* large enough !!! */
 #     define MAX_SECTYPE_LEN  256       /* so is it !!! */
@@ -1220,7 +1220,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           int idx, count;
 
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_SECTYPE) == FLAG_EXPORT_SECTYPE)
+          if((set_options & FLAG_EXPORT_SECTYPE) == FLAG_EXPORT_SECTYPE)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_SECTYPE);
               continue;
@@ -1234,7 +1234,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                                 | EXPORT_OPTION_RPCSEC_GSS_PRIV);
 
           /* allocate sec strings */
-          for (idx = 0; idx < MAX_SECTYPE; idx++)
+          for(idx = 0; idx < MAX_SECTYPE; idx++)
             sec_list[idx] = (char *)Mem_Alloc(MAX_SECTYPE_LEN);
 
           /*
@@ -1243,14 +1243,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           count = nfs_ParseConfLine(sec_list, MAX_SECTYPE,
                                     var_value, find_comma, find_endLine);
 
-          if (count < 0)
+          if(count < 0)
             {
               err_flag = TRUE;
               DisplayLog("NFS READ_EXPORT: ERROR: SecType list too long (>%d)",
                          MAX_SECTYPE);
 
               /* free sec strings */
-              for (idx = 0; idx < MAX_SECTYPE; idx++)
+              for(idx = 0; idx < MAX_SECTYPE; idx++)
                 Mem_Free((caddr_t) sec_list[idx]);
 
               continue;
@@ -1258,25 +1258,25 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* add each sectype flag to the option field.  */
 
-          for (idx = 0; idx < count; idx++)
+          for(idx = 0; idx < count; idx++)
             {
-              if (!STRCMP(sec_list[idx], "none"))
+              if(!STRCMP(sec_list[idx], "none"))
                 {
                   p_entry->options |= EXPORT_OPTION_AUTH_NONE;
                 }
-              else if (!STRCMP(sec_list[idx], "sys"))
+              else if(!STRCMP(sec_list[idx], "sys"))
                 {
                   p_entry->options |= EXPORT_OPTION_AUTH_UNIX;
                 }
-              else if (!STRCMP(sec_list[idx], "krb5"))
+              else if(!STRCMP(sec_list[idx], "krb5"))
                 {
                   p_entry->options |= EXPORT_OPTION_RPCSEC_GSS_NONE;
                 }
-              else if (!STRCMP(sec_list[idx], "krb5i"))
+              else if(!STRCMP(sec_list[idx], "krb5i"))
                 {
                   p_entry->options |= EXPORT_OPTION_RPCSEC_GSS_INTG;
                 }
-              else if (!STRCMP(sec_list[idx], "krb5p"))
+              else if(!STRCMP(sec_list[idx], "krb5p"))
                 {
                   p_entry->options |= EXPORT_OPTION_RPCSEC_GSS_PRIV;
                 }
@@ -1290,27 +1290,27 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
             }
 
           /* free sec strings */
-          for (idx = 0; idx < MAX_SECTYPE; idx++)
+          for(idx = 0; idx < MAX_SECTYPE; idx++)
             Mem_Free((caddr_t) sec_list[idx]);
 
           /* check that at least one sectype has been specified */
-          if ((p_entry->options & (EXPORT_OPTION_AUTH_NONE
-                                   | EXPORT_OPTION_AUTH_UNIX
-                                   | EXPORT_OPTION_RPCSEC_GSS_NONE
-                                   | EXPORT_OPTION_RPCSEC_GSS_INTG
-                                   | EXPORT_OPTION_RPCSEC_GSS_PRIV)) == 0)
+          if((p_entry->options & (EXPORT_OPTION_AUTH_NONE
+                                  | EXPORT_OPTION_AUTH_UNIX
+                                  | EXPORT_OPTION_RPCSEC_GSS_NONE
+                                  | EXPORT_OPTION_RPCSEC_GSS_INTG
+                                  | EXPORT_OPTION_RPCSEC_GSS_PRIV)) == 0)
             DisplayLog("NFS READ_EXPORT: WARNING: /!\\ Empty SecType");
 
           set_options |= FLAG_EXPORT_SECTYPE;
 
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_MAX_READ))
+      else if(!STRCMP(var_name, CONF_EXPORT_MAX_READ))
         {
           long long int size;
           char *end_ptr;
 
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_MAX_READ) == FLAG_EXPORT_MAX_READ)
+          if((set_options & FLAG_EXPORT_MAX_READ) == FLAG_EXPORT_MAX_READ)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_MAX_READ);
               continue;
@@ -1319,14 +1319,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           errno = 0;
           size = strtoll(var_value, &end_ptr, 10);
 
-          if (end_ptr == NULL || *end_ptr != '\0' || errno != 0)
+          if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: Invalid MaxRead: \"%s\"", var_value);
               err_flag = TRUE;
               continue;
             }
 
-          if (size < 0)
+          if(size < 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: MaxRead out of range: %lld", size);
               err_flag = TRUE;
@@ -1340,13 +1340,13 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_MAX_READ;
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_MAX_WRITE))
+      else if(!STRCMP(var_name, CONF_EXPORT_MAX_WRITE))
         {
           long long int size;
           char *end_ptr;
 
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_MAX_WRITE) == FLAG_EXPORT_MAX_WRITE)
+          if((set_options & FLAG_EXPORT_MAX_WRITE) == FLAG_EXPORT_MAX_WRITE)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_MAX_WRITE);
               continue;
@@ -1355,14 +1355,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           errno = 0;
           size = strtoll(var_value, &end_ptr, 10);
 
-          if (end_ptr == NULL || *end_ptr != '\0' || errno != 0)
+          if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: Invalid MaxWrite: \"%s\"", var_value);
               err_flag = TRUE;
               continue;
             }
 
-          if (size < 0)
+          if(size < 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: MaxWrite out of range: %lld", size);
               err_flag = TRUE;
@@ -1376,13 +1376,13 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_MAX_WRITE;
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_PREF_READ))
+      else if(!STRCMP(var_name, CONF_EXPORT_PREF_READ))
         {
           long long int size;
           char *end_ptr;
 
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_PREF_READ) == FLAG_EXPORT_PREF_READ)
+          if((set_options & FLAG_EXPORT_PREF_READ) == FLAG_EXPORT_PREF_READ)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_PREF_READ);
               continue;
@@ -1391,14 +1391,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           errno = 0;
           size = strtoll(var_value, &end_ptr, 10);
 
-          if (end_ptr == NULL || *end_ptr != '\0' || errno != 0)
+          if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: Invalid PrefRead: \"%s\"", var_value);
               err_flag = TRUE;
               continue;
             }
 
-          if (size < 0)
+          if(size < 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: PrefRead out of range: %lld", size);
               err_flag = TRUE;
@@ -1412,13 +1412,13 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_PREF_READ;
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_PREF_WRITE))
+      else if(!STRCMP(var_name, CONF_EXPORT_PREF_WRITE))
         {
           long long int size;
           char *end_ptr;
 
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_PREF_WRITE) == FLAG_EXPORT_PREF_WRITE)
+          if((set_options & FLAG_EXPORT_PREF_WRITE) == FLAG_EXPORT_PREF_WRITE)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_PREF_WRITE);
               continue;
@@ -1427,14 +1427,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           errno = 0;
           size = strtoll(var_value, &end_ptr, 10);
 
-          if (end_ptr == NULL || *end_ptr != '\0' || errno != 0)
+          if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: Invalid PrefWrite: \"%s\"", var_value);
               err_flag = TRUE;
               continue;
             }
 
-          if (size < 0)
+          if(size < 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: PrefWrite out of range: %lld", size);
               err_flag = TRUE;
@@ -1448,13 +1448,13 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_PREF_WRITE;
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_PREF_READDIR))
+      else if(!STRCMP(var_name, CONF_EXPORT_PREF_READDIR))
         {
           long long int size;
           char *end_ptr;
 
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_PREF_READDIR) == FLAG_EXPORT_PREF_READDIR)
+          if((set_options & FLAG_EXPORT_PREF_READDIR) == FLAG_EXPORT_PREF_READDIR)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_PREF_READDIR);
               continue;
@@ -1463,7 +1463,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           errno = 0;
           size = strtoll(var_value, &end_ptr, 10);
 
-          if (end_ptr == NULL || *end_ptr != '\0' || errno != 0)
+          if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: Invalid PrefReaddir: \"%s\"",
                          var_value);
@@ -1471,7 +1471,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               continue;
             }
 
-          if (size < 0)
+          if(size < 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: PrefReaddir out of range: %lld", size);
               err_flag = TRUE;
@@ -1485,13 +1485,13 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_PREF_READDIR;
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_PREF_WRITE))
+      else if(!STRCMP(var_name, CONF_EXPORT_PREF_WRITE))
         {
           long long int size;
           char *end_ptr;
 
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_PREF_WRITE) == FLAG_EXPORT_PREF_WRITE)
+          if((set_options & FLAG_EXPORT_PREF_WRITE) == FLAG_EXPORT_PREF_WRITE)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_PREF_WRITE);
               continue;
@@ -1500,14 +1500,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           errno = 0;
           size = strtoll(var_value, &end_ptr, 10);
 
-          if (end_ptr == NULL || *end_ptr != '\0' || errno != 0)
+          if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: Invalid PrefWrite: \"%s\"", var_value);
               err_flag = TRUE;
               continue;
             }
 
-          if (size < 0)
+          if(size < 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: PrefWrite out of range: %lld", size);
               err_flag = TRUE;
@@ -1522,13 +1522,13 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_PREF_WRITE;
 
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_FSID))
+      else if(!STRCMP(var_name, CONF_EXPORT_FSID))
         {
           long long int major, minor;
           char *end_ptr;
 
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_FSID) == FLAG_EXPORT_FSID)
+          if((set_options & FLAG_EXPORT_FSID) == FLAG_EXPORT_FSID)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_FSID);
               continue;
@@ -1538,7 +1538,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           errno = 0;
           major = strtoll(var_value, &end_ptr, 10);
 
-          if (end_ptr == NULL || *end_ptr != '.' || errno != 0)
+          if(end_ptr == NULL || *end_ptr != '.' || errno != 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: Invalid filesystem_id: \"%s\"",
                          var_value);
@@ -1551,7 +1551,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           errno = 0;
           minor = strtoll(end_ptr, &end_ptr, 10);
 
-          if (end_ptr == NULL || *end_ptr != '\0' || errno != 0)
+          if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: Invalid filesystem_id: \"%s\"",
                          var_value);
@@ -1559,7 +1559,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               continue;
             }
 
-          if (major < 0 || minor < 0)
+          if(major < 0 || minor < 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: filesystem_id out of range: %lld.%lld",
                          major, minor);
@@ -1575,10 +1575,10 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_FSID;
 
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_NOSUID))
+      else if(!STRCMP(var_name, CONF_EXPORT_NOSUID))
         {
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_NOSUID) == FLAG_EXPORT_NOSUID)
+          if((set_options & FLAG_EXPORT_NOSUID) == FLAG_EXPORT_NOSUID)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_NOSUID);
               continue;
@@ -1607,10 +1607,10 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_NOSUID;
 
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_NOSGID))
+      else if(!STRCMP(var_name, CONF_EXPORT_NOSGID))
         {
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_NOSGID) == FLAG_EXPORT_NOSGID)
+          if((set_options & FLAG_EXPORT_NOSGID) == FLAG_EXPORT_NOSGID)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_NOSGID);
               continue;
@@ -1636,10 +1636,10 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_NOSGID;
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_PRIVILEGED_PORT))
+      else if(!STRCMP(var_name, CONF_EXPORT_PRIVILEGED_PORT))
         {
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_PRIVILEGED_PORT) == FLAG_EXPORT_PRIVILEGED_PORT)
+          if((set_options & FLAG_EXPORT_PRIVILEGED_PORT) == FLAG_EXPORT_PRIVILEGED_PORT)
             {
               DEFINED_TWICE_WARNING(FLAG_EXPORT_PRIVILEGED_PORT);
               continue;
@@ -1664,10 +1664,10 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
             }
           set_options |= FLAG_EXPORT_PRIVILEGED_PORT;
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_USE_DATACACHE))
+      else if(!STRCMP(var_name, CONF_EXPORT_USE_DATACACHE))
         {
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_USE_DATACACHE) == FLAG_EXPORT_USE_DATACACHE)
+          if((set_options & FLAG_EXPORT_USE_DATACACHE) == FLAG_EXPORT_USE_DATACACHE)
             {
               DEFINED_TWICE_WARNING(FLAG_EXPORT_USE_DATACACHE);
               continue;
@@ -1692,10 +1692,10 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
             }
           set_options |= FLAG_EXPORT_USE_DATACACHE;
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_FS_SPECIFIC))
+      else if(!STRCMP(var_name, CONF_EXPORT_FS_SPECIFIC))
         {
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_FS_SPECIFIC) == FLAG_EXPORT_FS_SPECIFIC)
+          if((set_options & FLAG_EXPORT_FS_SPECIFIC) == FLAG_EXPORT_FS_SPECIFIC)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_FS_SPECIFIC);
               continue;
@@ -1706,10 +1706,10 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_FS_SPECIFIC;
 
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_FS_TAG))
+      else if(!STRCMP(var_name, CONF_EXPORT_FS_TAG))
         {
           /* check if it has not already been set */
-          if ((set_options & FLAG_EXPORT_FS_TAG) == FLAG_EXPORT_FS_TAG)
+          if((set_options & FLAG_EXPORT_FS_TAG) == FLAG_EXPORT_FS_TAG)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_FS_TAG);
               continue;
@@ -1720,7 +1720,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_FS_TAG;
 
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_MAX_OFF_WRITE))
+      else if(!STRCMP(var_name, CONF_EXPORT_MAX_OFF_WRITE))
         {
           long long int offset;
           char *end_ptr;
@@ -1728,7 +1728,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           errno = 0;
           offset = strtoll(var_value, &end_ptr, 10);
 
-          if (end_ptr == NULL || *end_ptr != '\0' || errno != 0)
+          if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: Invalid MaxOffsetWrite: \"%s\"",
                          var_value);
@@ -1744,7 +1744,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_MAX_OFF_WRITE;
 
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_MAX_CACHE_SIZE))
+      else if(!STRCMP(var_name, CONF_EXPORT_MAX_CACHE_SIZE))
         {
           long long int offset;
           char *end_ptr;
@@ -1752,7 +1752,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           errno = 0;
           offset = strtoll(var_value, &end_ptr, 10);
 
-          if (end_ptr == NULL || *end_ptr != '\0' || errno != 0)
+          if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: Invalid MaxCacheSize: \"%s\"",
                          var_value);
@@ -1768,7 +1768,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_MAX_CACHE_SIZE;
 
         }
-      else if (!STRCMP(var_name, CONF_EXPORT_MAX_OFF_READ))
+      else if(!STRCMP(var_name, CONF_EXPORT_MAX_OFF_READ))
         {
           long long int offset;
           char *end_ptr;
@@ -1776,7 +1776,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           errno = 0;
           offset = strtoll(var_value, &end_ptr, 10);
 
-          if (end_ptr == NULL || *end_ptr != '\0' || errno != 0)
+          if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               DisplayLog("NFS READ_EXPORT: ERROR: Invalid MaxOffsetRead: \"%s\"",
                          var_value);
@@ -1801,21 +1801,21 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
   /** check for mandatory options */
 
-  if ((set_options & mandatory_options) != mandatory_options)
+  if((set_options & mandatory_options) != mandatory_options)
     {
-      if ((set_options & FLAG_EXPORT_ID) != FLAG_EXPORT_ID)
+      if((set_options & FLAG_EXPORT_ID) != FLAG_EXPORT_ID)
         DisplayLog("NFS READ_EXPORT: ERROR: Missing mandatory parameter %s",
                    CONF_EXPORT_ID);
 
-      if ((set_options & FLAG_EXPORT_PATH) != FLAG_EXPORT_PATH)
+      if((set_options & FLAG_EXPORT_PATH) != FLAG_EXPORT_PATH)
         DisplayLog("NFS READ_EXPORT: ERROR: Missing mandatory parameter %s",
                    CONF_EXPORT_PATH);
 
-      if ((set_options & FLAG_EXPORT_ROOT_OR_ACCESS) != FLAG_EXPORT_ROOT_OR_ACCESS)
+      if((set_options & FLAG_EXPORT_ROOT_OR_ACCESS) != FLAG_EXPORT_ROOT_OR_ACCESS)
         DisplayLog("NFS READ_EXPORT: ERROR: Missing mandatory parameter %s or %s",
                    CONF_EXPORT_ROOT, CONF_EXPORT_ACCESS);
 
-      if ((set_options & FLAG_EXPORT_PSEUDO) != FLAG_EXPORT_PSEUDO)
+      if((set_options & FLAG_EXPORT_PSEUDO) != FLAG_EXPORT_PSEUDO)
         DisplayLog("NFS READ_EXPORT: ERROR: Missing mandatory parameter %s",
                    CONF_EXPORT_PSEUDO);
 
@@ -1825,7 +1825,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   /* check if there had any error.
    * if so, free the p_entry and return an error.
    */
-  if (err_flag)
+  if(err_flag)
     {
       Mem_Free(p_entry);
       return -1;
@@ -1856,7 +1856,7 @@ exportlist_t *BuildDefaultExport()
   /* allocates new export entry */
   p_entry = (exportlist_t *) Mem_Alloc(sizeof(exportlist_t));
 
-  if (p_entry == NULL)
+  if(p_entry == NULL)
     return NULL;
 
   /** @todo set default values here */
@@ -1902,7 +1902,7 @@ exportlist_t *BuildDefaultExport()
    */
   rc = nfs_AddClientsToExportList(p_entry, 1, client_root_access, EXPORT_OPTION_ROOT);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       DisplayLog("NFS READ_EXPORT: ERROR: Invalid client \"%s\"", client_root_access);
       return NULL;
@@ -1935,7 +1935,7 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
 
   int nb_entries = 0;
 
-  if (!ppexportlist)
+  if(!ppexportlist)
     return -EFAULT;
 
   *ppexportlist = NULL;
@@ -1943,26 +1943,26 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
   /* get the number of blocks in the configuration file */
   nb_blk = config_GetNbBlocks(in_config);
 
-  if (nb_blk < 0)
+  if(nb_blk < 0)
     return -1;
 
   /* Iteration on config file blocks. */
-  for (i = 0; i < nb_blk; i++)
+  for(i = 0; i < nb_blk; i++)
     {
       config_item_t block;
 
       block = config_GetBlockByIndex(in_config, i);
 
-      if (block == NULL)
+      if(block == NULL)
         return -1;
 
       /* get the name of the block */
       blk_name = config_GetBlockName(block);
 
-      if (blk_name == NULL)
+      if(blk_name == NULL)
         return -1;
 
-      if (!STRCMP(blk_name, CONF_LABEL_EXPORT))
+      if(!STRCMP(blk_name, CONF_LABEL_EXPORT))
         {
 
           rc = BuildExportEntry(block, &p_export_item);
@@ -1970,7 +1970,7 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
           /* If the entry is errorneous, ignore it
            * and continue checking syntax of other entries.
            */
-          if (rc != 0)
+          if(rc != 0)
             {
               err_flag = TRUE;
               continue;
@@ -1978,7 +1978,7 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
 
           p_export_item->next = NULL;
 
-          if (*ppexportlist == NULL)
+          if(*ppexportlist == NULL)
             {
               *ppexportlist = p_export_item;
             }
@@ -1994,7 +1994,7 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
 
     }
 
-  if (err_flag)
+  if(err_flag)
     {
       return -1;
     }
@@ -2015,24 +2015,24 @@ static int export_client_match(unsigned int addr,
   char hostname[MAXHOSTNAMELEN];
 
 #ifdef _DEBUG_DISPATCH
-  if (export_option & EXPORT_OPTION_ROOT)
+  if(export_option & EXPORT_OPTION_ROOT)
     printf("Looking for root access entries\n");
-  if (export_option & EXPORT_OPTION_ACCESS)
+  if(export_option & EXPORT_OPTION_ACCESS)
     printf("Looking for access only entries\n");
 #endif
 
-  for (i = 0; i < pexport->clients.num_clients; i++)
+  for(i = 0; i < pexport->clients.num_clients; i++)
     {
 
       /* only match the specified flags */
-      if ((pexport->clients.clientarray[i].options & export_option) != export_option)
+      if((pexport->clients.clientarray[i].options & export_option) != export_option)
         continue;
 
       switch (pexport->clients.clientarray[i].type)
         {
         case HOSTIF_CLIENT:
 
-          if (pexport->clients.clientarray[i].client.hostif.clientaddr == addr)
+          if(pexport->clients.clientarray[i].client.hostif.clientaddr == addr)
             {
 #ifdef _DEBUG_DISPATCH
               printf("This matches host adress\n");
@@ -2046,22 +2046,22 @@ static int export_client_match(unsigned int addr,
 
 #ifdef _DEBUG_DISPATCH
           printf("Test net %d.%d.%d.%d in %d.%d.%d.%d ??\n",
-                 (unsigned int)(pexport->clients.clientarray[i].client.
-                                network.netaddr >> 24),
+                 (unsigned int)(pexport->clients.clientarray[i].client.network.
+                                netaddr >> 24),
                  (unsigned
-                  int)((pexport->clients.clientarray[i].client.
-                        network.netaddr >> 16) & 0xFF),
+                  int)((pexport->clients.clientarray[i].client.network.
+                        netaddr >> 16) & 0xFF),
                  (unsigned
-                  int)((pexport->clients.clientarray[i].client.
-                        network.netaddr >> 8) & 0xFF),
-                 (unsigned int)(pexport->clients.clientarray[i].client.
-                                network.netaddr & 0xFF), (unsigned int)(addr >> 24),
+                  int)((pexport->clients.clientarray[i].client.network.
+                        netaddr >> 8) & 0xFF),
+                 (unsigned int)(pexport->clients.clientarray[i].client.network.
+                                netaddr & 0xFF), (unsigned int)(addr >> 24),
                  (unsigned int)(addr >> 16) & 0xFF, (unsigned int)(addr >> 8) & 0xFF,
                  (unsigned int)(addr & 0xFF));
 #endif
 
-          if ((pexport->clients.clientarray[i].client.network.netmask & addr) ==
-              pexport->clients.clientarray[i].client.network.netaddr)
+          if((pexport->clients.clientarray[i].client.network.netmask & addr) ==
+             pexport->clients.clientarray[i].client.network.netaddr)
             {
 #ifdef _DEBUG_DISPATCH
               printf("This matches network adress\n");
@@ -2073,12 +2073,12 @@ static int export_client_match(unsigned int addr,
 
         case NETGROUP_CLIENT:
           /* Try to get the entry from th IP/name cache */
-          if ((rc = nfs_ip_name_get(addr, hostname)) != IP_NAME_SUCCESS)
+          if((rc = nfs_ip_name_get(addr, hostname)) != IP_NAME_SUCCESS)
             {
-              if (rc == IP_NAME_NOT_FOUND)
+              if(rc == IP_NAME_NOT_FOUND)
                 {
                   /* IPaddr was not cached, add it to the cache */
-                  if (nfs_ip_name_add(addr, hostname) != IP_NAME_SUCCESS)
+                  if(nfs_ip_name_add(addr, hostname) != IP_NAME_SUCCESS)
                     {
                       /* Major failure, name could not be resolved */
                       break;
@@ -2087,9 +2087,9 @@ static int export_client_match(unsigned int addr,
             }
 
           /* At this point 'hostname' should contain the name that was found */
-          if (innetgr
-              (pexport->clients.clientarray[i].client.netgroup.netgroupname, hostname,
-               NULL, NULL) == 1)
+          if(innetgr
+             (pexport->clients.clientarray[i].client.netgroup.netgroupname, hostname,
+              NULL, NULL) == 1)
             {
               *pclient_found = pexport->clients.clientarray[i];
               return TRUE;
@@ -2098,12 +2098,12 @@ static int export_client_match(unsigned int addr,
 
         case WILDCARDHOST_CLIENT:
           /* Try to get the entry from th IP/name cache */
-          if ((rc = nfs_ip_name_get(addr, hostname)) != IP_NAME_SUCCESS)
+          if((rc = nfs_ip_name_get(addr, hostname)) != IP_NAME_SUCCESS)
             {
-              if (rc == IP_NAME_NOT_FOUND)
+              if(rc == IP_NAME_NOT_FOUND)
                 {
                   /* IPaddr was not cached, add it to the cache */
-                  if (nfs_ip_name_add(addr, hostname) != IP_NAME_SUCCESS)
+                  if(nfs_ip_name_add(addr, hostname) != IP_NAME_SUCCESS)
                     {
                       /* Major failure, name could not be resolved */
 #ifdef _DEBUG_DISPATCH
@@ -2123,9 +2123,9 @@ static int export_client_match(unsigned int addr,
 #endif
 
           /* At this point 'hostname' should contain the name that was found */
-          if (fnmatch
-              (pexport->clients.clientarray[i].client.wildcard.wildcard, hostname,
-               FNM_PATHNAME) == 0)
+          if(fnmatch
+             (pexport->clients.clientarray[i].client.wildcard.wildcard, hostname,
+              FNM_PATHNAME) == 0)
             {
               *pclient_found = pexport->clients.clientarray[i];
               return TRUE;
@@ -2164,17 +2164,17 @@ static int export_client_matchv6(struct in6_addr *paddrv6,
   char hostname[MAXHOSTNAMELEN];
 
 #ifdef _DEBUG_DISPATCH
-  if (export_option & EXPORT_OPTION_ROOT)
+  if(export_option & EXPORT_OPTION_ROOT)
     printf("Looking for root access entries\n");
-  if (export_option & EXPORT_OPTION_ACCESS)
+  if(export_option & EXPORT_OPTION_ACCESS)
     printf("Looking for access only entries\n");
 #endif
 
-  for (i = 0; i < pexport->clients.num_clients; i++)
+  for(i = 0; i < pexport->clients.num_clients; i++)
     {
 
       /* only match the specified flags */
-      if ((pexport->clients.clientarray[i].options & export_option) != export_option)
+      if((pexport->clients.clientarray[i].options & export_option) != export_option)
         continue;
 
       switch (pexport->clients.clientarray[i].type)
@@ -2187,7 +2187,7 @@ static int export_client_matchv6(struct in6_addr *paddrv6,
           break;
 
         case HOSTIF_CLIENT_V6:
-          if (!memcmp(pexport->clients.clientarray[i].client.hostif.clientaddr6.s6_addr, paddrv6->s6_addr, 16)) /* Remember that IPv6 address are 128 bits = 16 bytes long */
+          if(!memcmp(pexport->clients.clientarray[i].client.hostif.clientaddr6.s6_addr, paddrv6->s6_addr, 16))  /* Remember that IPv6 address are 128 bits = 16 bytes long */
             {
 #ifdef _DEBUG_DISPATCH
               printf("This matches host adress in IPv6\n");
@@ -2252,37 +2252,37 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
   memset(pclient_found, 0, sizeof(exportlist_client_entry_t));
 
   /* PROC NULL is always authorized, in all protocols */
-  if (ptr_req->rq_proc == 0)
+  if(ptr_req->rq_proc == 0)
     return TRUE;
 
   /* If mount protocol is called, just check that AUTH_NONE is not used */
-  if (ptr_req->rq_prog == mnt_prog)
+  if(ptr_req->rq_prog == mnt_prog)
     {
-      if (ptr_req->rq_cred.oa_flavor != AUTH_NONE)
+      if(ptr_req->rq_cred.oa_flavor != AUTH_NONE)
         return TRUE;
       else
         return FALSE;
     }
 #ifdef _USE_TIPRC_IPV6
-  if (psockaddr_in->sin_family == AF_INET)
+  if(psockaddr_in->sin_family == AF_INET)
 #endif
     /* Increment the stats per client address (for IPv4 Only) */
-    if ((rc =
-         nfs_ip_stats_incr(ht_ip_stats, addr, nfs_prog, mnt_prog,
-                           ptr_req)) == IP_STATS_NOT_FOUND)
+    if((rc =
+        nfs_ip_stats_incr(ht_ip_stats, addr, nfs_prog, mnt_prog,
+                          ptr_req)) == IP_STATS_NOT_FOUND)
       {
-        if (nfs_ip_stats_add(ht_ip_stats, addr, ip_stats_pool) == IP_STATS_SUCCESS)
+        if(nfs_ip_stats_add(ht_ip_stats, addr, ip_stats_pool) == IP_STATS_SUCCESS)
           rc = nfs_ip_stats_incr(ht_ip_stats, addr, nfs_prog, mnt_prog, ptr_req);
       }
 #ifdef _USE_TIRPC_IPV6
-  if (psockaddr_in->sin_family == AF_INET)
+  if(psockaddr_in->sin_family == AF_INET)
     {
 #endif                          /* _USE_TIRPC_IPV6 */
       /* check if any root access export matches this client */
-      if (export_client_match(addr, pexport, pclient_found, EXPORT_OPTION_ROOT))
+      if(export_client_match(addr, pexport, pclient_found, EXPORT_OPTION_ROOT))
         return TRUE;
       /* else, check if any access only export matches this client */
-      else if (export_client_match(addr, pexport, pclient_found, EXPORT_OPTION_ACCESS))
+      else if(export_client_match(addr, pexport, pclient_found, EXPORT_OPTION_ACCESS))
         return TRUE;
 #ifdef _USE_TIRPC_IPV6
     }
@@ -2304,30 +2304,28 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
        * |---------------------------------------------------------------|
        * |            0          |        FFFF       |    IPv4 address   | 
        * |---------------------------------------------------------------|   */
-      if (!memcmp(psockaddr_in6->sin6_addr.s6_addr, ten_bytes_all_0, 10) &&
-          !memcmp((char *)(psockaddr_in6->sin6_addr.s6_addr + 10),
-                  (char *)&two_bytes_all_1, 2))
+      if(!memcmp(psockaddr_in6->sin6_addr.s6_addr, ten_bytes_all_0, 10) &&
+         !memcmp((char *)(psockaddr_in6->sin6_addr.s6_addr + 10),
+                 (char *)&two_bytes_all_1, 2))
         {
           /* This is an IPv4 address mapped to an IPv6 one. Extract the IPv4 address and proceed with IPv4 autentication */
           memcpy((char *)&addr, (char *)(psockaddr_in6->sin6_addr.s6_addr + 12), 4);
 
           /* Proceed with IPv4 dedicated function */
           /* check if any root access export matches this client */
-          if (export_client_match(addr, pexport, pclient_found, EXPORT_OPTION_ROOT))
+          if(export_client_match(addr, pexport, pclient_found, EXPORT_OPTION_ROOT))
             return TRUE;
           /* else, check if any access only export matches this client */
-          else if (export_client_match
-                   (addr, pexport, pclient_found, EXPORT_OPTION_ACCESS))
+          else if(export_client_match(addr, pexport, pclient_found, EXPORT_OPTION_ACCESS))
             return TRUE;
         }
 
-      if (export_client_matchv6
-          (&(psockaddr_in6->sin6_addr), pexport, pclient_found, EXPORT_OPTION_ROOT))
+      if(export_client_matchv6
+         (&(psockaddr_in6->sin6_addr), pexport, pclient_found, EXPORT_OPTION_ROOT))
         return TRUE;
       /* else, check if any access only export matches this client */
-      else if (export_client_matchv6
-               (&(psockaddr_in6->sin6_addr), pexport, pclient_found,
-                EXPORT_OPTION_ACCESS))
+      else if(export_client_matchv6
+              (&(psockaddr_in6->sin6_addr), pexport, pclient_found, EXPORT_OPTION_ACCESS))
         return TRUE;
     }
 #endif                          /* _USE_TIRPC_IPV6 */
@@ -2366,7 +2364,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
   fsal_staticfsinfo_t *pstaticinfo = NULL;
   fsal_op_context_t context;
 
-  if (once == 0)
+  if(once == 0)
     {
       /* setting the 'small_client' structure */
       small_client_param.lru_param.nb_entry_prealloc = 10;
@@ -2383,7 +2381,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       small_client_param.attrmask = FSAL_ATTR_MASK_V2_V3;
 
       /* creating the 'small_client' */
-      if (cache_inode_client_init(&small_client, small_client_param, 255, NULL))
+      if(cache_inode_client_init(&small_client, small_client_param, 255, NULL))
         {
           DisplayLog
               ("NFS_STARTUP: CRITICAL: small cache inode client could not be allocated, exiting...");
@@ -2393,9 +2391,9 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
         DisplayLog("NFS STARTUP: small cache inode client successfully initialized");
 
       /* creating the datacache client for recovering data cache */
-      if (cache_content_client_init
-          (&recover_datacache_client,
-           nfs_param.cache_layers_param.cache_content_client_param))
+      if(cache_content_client_init
+         (&recover_datacache_client,
+          nfs_param.cache_layers_param.cache_content_client_param))
         {
           DisplayLog
               ("NFS_STARTUP: CRITICAL: cache content client (for datacache recovery) could not be allocated, exiting...");
@@ -2408,7 +2406,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       /* Get the context for FSAL super user */
       fsal_status = FSAL_InitClientContext(&context);
 
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           DisplayLog("NFS STARTUP: Couldn't get the context for FSAL super user");
           return FALSE;
@@ -2416,10 +2414,10 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 
       /* loop the export list */
 
-      for (pcurrent = pexportlist; pcurrent != NULL; pcurrent = pcurrent->next)
+      for(pcurrent = pexportlist; pcurrent != NULL; pcurrent = pcurrent->next)
         {
 #ifdef _USE_MFSL_ASYNC
-          if (!(pcurrent->options & EXPORT_OPTION_USE_DATACACHE))
+          if(!(pcurrent->options & EXPORT_OPTION_USE_DATACACHE))
             {
               DisplayLog
                   ("NFS STARTUP: ERROR : the export entry iId=%u, Export Path=%s must have datacache enabled... exiting",
@@ -2428,8 +2426,8 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
             }
 #endif
           /* Build the FSAL path */
-          if (FSAL_IS_ERROR((fsal_status = FSAL_str2path(pcurrent->fullpath,
-                                                         strsize, &exportpath_fsal))))
+          if(FSAL_IS_ERROR((fsal_status = FSAL_str2path(pcurrent->fullpath,
+                                                        strsize, &exportpath_fsal))))
             return FALSE;
 
           /* inits context for the current export entry */
@@ -2438,7 +2436,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
               FSAL_BuildExportContext(&pcurrent->FS_export_context, &exportpath_fsal,
                                       pcurrent->FS_specific);
 
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             {
               DisplayLog("NFS STARTUP: Couldn't build export context for %s",
                          pcurrent->fullpath);
@@ -2450,16 +2448,15 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
               FSAL_GetClientContext(&context, &pcurrent->FS_export_context, 0, 0, NULL,
                                     0);
 
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             {
               DisplayLog("NFS STARTUP: Couldn't get the credentials for FSAL super user");
               return FALSE;
             }
 
           /* Lookup for the FSAL Path */
-          if (FSAL_IS_ERROR((fsal_status = FSAL_lookupPath(&exportpath_fsal,
-                                                           &context,
-                                                           &fsal_handle, NULL))))
+          if(FSAL_IS_ERROR((fsal_status = FSAL_lookupPath(&exportpath_fsal,
+                                                          &context, &fsal_handle, NULL))))
             {
               DisplayLog
                   ("NFS STARTUP: Couldn't access the root of the exported namespace, ExportId=%u Path=%s FSAL_ERROR=(%u,%u)",
@@ -2472,7 +2469,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 
           pcurrent->proot_handle = (fsal_handle_t *) Mem_Alloc(sizeof(fsal_handle_t));
 
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             {
               DisplayLog("NFS STARTUP: Couldn't allocate memory");
               return FALSE;
@@ -2484,10 +2481,10 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
           fsdata.handle = fsal_handle;
           fsdata.cookie = 0;
 
-          if ((pentry = cache_inode_make_root(&fsdata,
-                                              ht,
-                                              &small_client,
-                                              &context, &cache_status)) == NULL)
+          if((pentry = cache_inode_make_root(&fsdata,
+                                             ht,
+                                             &small_client,
+                                             &context, &cache_status)) == NULL)
             {
               DisplayLog
                   ("NFS STARTUP: /!\\ | Error when creating root cached entry for %s, export_id=%d, cache_status=%d",
@@ -2500,19 +2497,19 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
                             pcurrent->fullpath, pcurrent->id);
 
           /* Get FSAL specific info for this entry */
-          if ((pstaticinfo =
-               (fsal_staticfsinfo_t *) Mem_Alloc((sizeof(fsal_staticfsinfo_t)))) == NULL)
+          if((pstaticinfo =
+              (fsal_staticfsinfo_t *) Mem_Alloc((sizeof(fsal_staticfsinfo_t)))) == NULL)
             return FALSE;
 
-          if (FSAL_IS_ERROR
-              ((fsal_status = FSAL_static_fsinfo(&fsal_handle, &context, pstaticinfo))))
+          if(FSAL_IS_ERROR
+             ((fsal_status = FSAL_static_fsinfo(&fsal_handle, &context, pstaticinfo))))
             return FALSE;
 
           /* Attach to the exportlist entry */
           pcurrent->fs_static_info = pstaticinfo;
 
           /* Set the pentry as a referral if needed */
-          if (strcmp(pcurrent->referral, ""))
+          if(strcmp(pcurrent->referral, ""))
             {
               /* Set the cache_entry object as a referral by setting the 'referral' field */
               pentry->object.dir_begin.referral = pcurrent->referral;
@@ -2521,13 +2518,13 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
             }
 #ifdef _CRASH_RECOVERY_AT_STARTUP
           /* Recover the datacache from a previous crah */
-          if (pcurrent->options & EXPORT_OPTION_USE_DATACACHE)
+          if(pcurrent->options & EXPORT_OPTION_USE_DATACACHE)
             {
               DisplayLogLevel(NIV_EVENT, "Recovering Data Cache for export id %u",
                               pcurrent->id);
-              if (cache_content_crash_recover
-                  (pcurrent->id, &recover_datacache_client, &small_client, ht, &context,
-                   &cache_content_status) != CACHE_CONTENT_SUCCESS)
+              if(cache_content_crash_recover
+                 (pcurrent->id, &recover_datacache_client, &small_client, ht, &context,
+                  &cache_content_status) != CACHE_CONTENT_SUCCESS)
                 {
                   DisplayLogLevel(NIV_EVENT,
                                   "Datacache for export id %u is not recoverable: error = %d",

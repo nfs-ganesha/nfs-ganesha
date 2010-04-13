@@ -61,16 +61,16 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if (!filehandle || !p_context)
+  if(!filehandle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
-  if (!p_fs_ops->truncate)
+  if(!p_fs_ops->truncate)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_truncate);
 
   /* get the full path for the object */
   rc = NamespacePath(filehandle->inode, filehandle->device, filehandle->validator,
                      object_path);
-  if (rc)
+  if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_truncate);
 
   /* set context for the next operation, so it can be retrieved by FS thread */
@@ -80,17 +80,17 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
   rc = p_fs_ops->truncate(object_path, (off_t) length);
   ReleaseTokenFSCall();
 
-  if (rc)
+  if(rc)
     Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_truncate);
 
-  if (object_attributes)
+  if(object_attributes)
     {
 
       fsal_status_t st;
 
       st = FSAL_getattrs(filehandle, p_context, object_attributes);
 
-      if (FSAL_IS_ERROR(st))
+      if(FSAL_IS_ERROR(st))
         {
           FSAL_CLEAR_MASK(object_attributes->asked_attributes);
           FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

@@ -158,7 +158,7 @@ int util_timer(int argc,        /* IN : number of args in argv */
     )
 {
 
-  if (argc != 2)
+  if(argc != 2)
     {
       fprintf(output, "Usage: %s start|print|stop.\n", argv[0]);
       return -1;
@@ -166,16 +166,16 @@ int util_timer(int argc,        /* IN : number of args in argv */
 
   /* Timer start command */
 
-  if (!strcmp(argv[1], "start"))
+  if(!strcmp(argv[1], "start"))
     {
 
-      if (timer_state)
+      if(timer_state)
         {
           fprintf(output, "Timer already started.\n");
           return -1;
         }
 
-      if (gettimeofday(&timer_start, NULL) == -1)
+      if(gettimeofday(&timer_start, NULL) == -1)
         {
           fprintf(output, "Error retrieving system time.\n");
           return -1;
@@ -190,16 +190,16 @@ int util_timer(int argc,        /* IN : number of args in argv */
 
   /* Timer stop command */
 
-  if (!strcmp(argv[1], "stop"))
+  if(!strcmp(argv[1], "stop"))
     {
 
-      if (!timer_state)
+      if(!timer_state)
         {
           fprintf(output, "Timer is not started.\n");
           return -1;
         }
 
-      if (gettimeofday(&timer_end, NULL) == -1)
+      if(gettimeofday(&timer_end, NULL) == -1)
         {
           fprintf(output, "Error retrieving system time.\n");
           return -1;
@@ -214,16 +214,16 @@ int util_timer(int argc,        /* IN : number of args in argv */
 
   /* Timer print command */
 
-  if (!strcmp(argv[1], "print"))
+  if(!strcmp(argv[1], "print"))
     {
 
-      if (timer_state)
+      if(timer_state)
         {
 
           struct timeval timer_tmp;
 
           /* timer is running, print current enlapsed time */
-          if (gettimeofday(&timer_tmp, NULL) == -1)
+          if(gettimeofday(&timer_tmp, NULL) == -1)
             {
               fprintf(output, "Error retrieving system time.\n");
               return -1;
@@ -264,7 +264,7 @@ int util_sleep(int argc,        /* IN : number of args in argv */
   unsigned long sleep_time;
   int rc;
 
-  if (argc != 2)
+  if(argc != 2)
     {
       fprintf(output, "Usage: %s <int value>\n", argv[0]);
       return -1;
@@ -273,7 +273,7 @@ int util_sleep(int argc,        /* IN : number of args in argv */
   /* conversion */
   rc = my_atoi(argv[1]);
 
-  if (rc < 0)
+  if(rc < 0)
     {
       fprintf(output, "Usage: %s <int value> (%s is not a positive integer)\n", argv[0],
               argv[1]);
@@ -303,7 +303,7 @@ int util_shell(int argc,        /* IN : number of args in argv */
   char command_line[1024] = "";
   char buffer[1024];
 
-  if (argc < 2)
+  if(argc < 2)
     {
       fprintf(output, "Usage: %s <shell_cmd> [arg1 arg2 ...]\n", argv[0]);
       return -1;
@@ -311,10 +311,10 @@ int util_shell(int argc,        /* IN : number of args in argv */
 
   /* builds the command line */
 
-  for (i = 1; i < argc; i++)
+  for(i = 1; i < argc; i++)
     {
       strncat(command_line, argv[i], strlen(command_line) - 1024 - 1);
-      if (i != argc - 1)
+      if(i != argc - 1)
         strncat(command_line, " ", strlen(command_line) - 1024 - 1);
     }
 
@@ -322,7 +322,7 @@ int util_shell(int argc,        /* IN : number of args in argv */
 
   cmd_output = popen(command_line, "r");
 
-  if (cmd_output == NULL)
+  if(cmd_output == NULL)
     {
       fprintf(output, "shell: popen error %d\n", errno);
       return -1;
@@ -330,7 +330,7 @@ int util_shell(int argc,        /* IN : number of args in argv */
 
   /* copy the shell ouput to the command output stream */
 
-  while (fgets(buffer, sizeof(buffer), cmd_output) != NULL)
+  while(fgets(buffer, sizeof(buffer), cmd_output) != NULL)
     {
       fputs(buffer, output);
     }
@@ -397,7 +397,7 @@ int util_meminfo(int argc,      /* IN : number of args in argv */
   fprintf(output, "      Nb of Std Pages Used: %lu  (Watermark: %lu)\n",
           (unsigned long)bstats.NbStdUsed, (unsigned long)bstats.WM_NbStdUsed);
 
-  if (bstats.NbStdUsed > 0)
+  if(bstats.NbStdUsed > 0)
     {
       fprintf(output, "      Memory Fragmentation: %.2f %%\n",
               100.0 -
@@ -445,11 +445,11 @@ int util_cmp(int argc,          /* IN : number of args in argv */
   /* the value to been returned, according to argv[0] */
   int value_if_equal = FALSE;
 
-  if (!strcmp(argv[0], "eq"))
+  if(!strcmp(argv[0], "eq"))
     value_if_equal = TRUE;
-  else if (!strcmp(argv[0], "ne"))
+  else if(!strcmp(argv[0], "ne"))
     value_if_equal = FALSE;
-  else if (!strcmp(argv[0], "cmp"))
+  else if(!strcmp(argv[0], "cmp"))
     value_if_equal = FALSE;
   /* unexpected !!! */
   else
@@ -461,12 +461,12 @@ int util_cmp(int argc,          /* IN : number of args in argv */
   /* reinits Getopt processing */
   Optind = 1;
 
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(output,
                     "%s: warning: option 'h' has been specified more than once.\n",
                     argv[0]);
@@ -475,7 +475,7 @@ int util_cmp(int argc,          /* IN : number of args in argv */
           break;
 
         case 'i':
-          if (flag_i)
+          if(flag_i)
             fprintf(output,
                     "%s: warning: option 'i' has been specified more than once.\n",
                     argv[0]);
@@ -484,7 +484,7 @@ int util_cmp(int argc,          /* IN : number of args in argv */
           break;
 
         case 'n':
-          if (flag_n)
+          if(flag_n)
             fprintf(output,
                     "%s: warning: option 'n' has been specified more than once.\n",
                     argv[0]);
@@ -493,7 +493,7 @@ int util_cmp(int argc,          /* IN : number of args in argv */
           break;
 
         case 'v':
-          if (flag_v)
+          if(flag_v)
             fprintf(output,
                     "%s: warning: option 'v' has been specified more than once.\n",
                     argv[0]);
@@ -509,21 +509,21 @@ int util_cmp(int argc,          /* IN : number of args in argv */
     }
 
   /* help flag */
-  if (flag_h)
+  if(flag_h)
     {
       fprintf(output, help_cmp, argv[0]);
       return -1;
     }
 
   /* check conflicts */
-  if (flag_i + flag_n > 1)
+  if(flag_i + flag_n > 1)
     {
       fprintf(output, "%s: conflict between options -i, -n\n", argv[0]);
       err_flag++;
     }
 
   /* check arg number */
-  if (Optind != (argc - 2))
+  if(Optind != (argc - 2))
     {
       /* too much or not enough arguments */
       err_flag++;
@@ -535,52 +535,52 @@ int util_cmp(int argc,          /* IN : number of args in argv */
     }
 
   /* error */
-  if (err_flag)
+  if(err_flag)
     {
       fprintf(output, help_cmp, argv[0]);
       return -1;
     }
 
-  if (!flag_i && !flag_n)
+  if(!flag_i && !flag_n)
     {
       /* normal comparison */
       rc = strcmp(str1, str2);
     }
-  else if (flag_i)
+  else if(flag_i)
     {
       /* case insensitive comparison */
       rc = strcasecmp(str1, str2);
     }
-  else if (flag_n)
+  else if(flag_n)
     {
       int a, b;
 
-      if (str1[0] == '-')
+      if(str1[0] == '-')
         a = my_atoi(str1 + 1);
       else
         a = my_atoi(str1);
 
-      if (a < 0)
+      if(a < 0)
         {
           fprintf(output, "cmp: invalid integer value %s\n", str1);
           return -1;
         }
 
-      if (str1[0] == '-')
+      if(str1[0] == '-')
         a = -a;
 
-      if (str2[0] == '-')
+      if(str2[0] == '-')
         b = my_atoi(str2 + 1);
       else
         b = my_atoi(str2);
 
-      if (b < 0)
+      if(b < 0)
         {
           fprintf(output, "cmp: invalid integer value %s\n", str2);
           return -1;
         }
 
-      if (str2[0] == '-')
+      if(str2[0] == '-')
         b = -b;
 
       rc = b - a;
@@ -589,16 +589,16 @@ int util_cmp(int argc,          /* IN : number of args in argv */
 
   /* return values */
 
-  if (rc == 0)
+  if(rc == 0)
     {
-      if (flag_v)
+      if(flag_v)
         fprintf(output, "arg1 = arg2\n");
 
       return value_if_equal;
     }
   else
     {
-      if (flag_v)
+      if(flag_v)
         fprintf(output, "arg1 <> arg2\n");
 
       return (!value_if_equal);
@@ -626,9 +626,9 @@ static void diff(FILE * output, char *str1, char *str2)
       char1 = str_line1;
       char2 = str_line2;
 
-      while (*char1 == *char2)
+      while(*char1 == *char2)
         {
-          if ((*char1 == '\0') || (*char1 == '\n'))
+          if((*char1 == '\0') || (*char1 == '\n'))
             break;
 
           char1++;
@@ -636,39 +636,39 @@ static void diff(FILE * output, char *str1, char *str2)
         }
 
       /* different ? */
-      if (*char1 != *char2)
+      if(*char1 != *char2)
         {
 
           /* prints from the beggining of the line to the end */
-          if (*str_line1)
+          if(*str_line1)
             fprintf(output, "\t<- ");
 
-          while ((*str_line1) && (*str_line1 != '\n'))
+          while((*str_line1) && (*str_line1 != '\n'))
             {
               putc(*str_line1, output);
               str_line1++;
             }
 
           /* skip the final \n  */
-          if (*str_line1)
+          if(*str_line1)
             str_line1++;
 
-          if (*str_line2)
+          if(*str_line2)
             fprintf(output, "\n\t-> ");
 
-          while ((*str_line2) && (*str_line2 != '\n'))
+          while((*str_line2) && (*str_line2 != '\n'))
             {
               putc(*str_line2, output);
               str_line2++;
             }
           /* skip the final \n  */
-          if (*str_line2)
+          if(*str_line2)
             str_line2++;
 
           putc('\n', output);
 
         }
-      else if (*char1 == '\n')
+      else if(*char1 == '\n')
         {
           /* end of line */
           str_line1 = char1 + 1;
@@ -681,7 +681,7 @@ static void diff(FILE * output, char *str1, char *str2)
         }
 
     }
-  while (1);
+  while(1);
 
   return;
 
@@ -693,7 +693,7 @@ int util_diff(int argc,         /* IN : number of args in argv */
     )
 {
 
-  if (argc != 3)
+  if(argc != 3)
     {
       fprintf(output, "Usage: %s <expr1> <expr2>\n", argv[0]);
       return -1;
@@ -713,10 +713,10 @@ static void wc(FILE * output, char *str)
   int nb_NL = 0;
   char *curr = str;
 
-  while (*curr)
+  while(*curr)
     {
       nb_char++;
-      if (*curr == '\n')
+      if(*curr == '\n')
         nb_NL++;
       curr++;
     }
@@ -732,7 +732,7 @@ int util_wc(int argc,           /* IN : number of args in argv */
     )
 {
 
-  if (argc != 2)
+  if(argc != 2)
     {
       fprintf(output, "Usage: %s <expr>\n", argv[0]);
       return -1;
@@ -754,7 +754,7 @@ int util_chomp(int argc,        /* IN : number of args in argv */
   char *in;
   char *out;
 
-  if (argc != 2)
+  if(argc != 2)
     {
       fprintf(output, "Usage: %s <expr>\n", argv[0]);
       return -1;
@@ -764,12 +764,12 @@ int util_chomp(int argc,        /* IN : number of args in argv */
 
   len = strlen(in);
 
-  if (in[len - 1] == '\n')
+  if(in[len - 1] == '\n')
     {
 
       out = (char *)Mem_Alloc(len + 1);
 
-      if (out == NULL)
+      if(out == NULL)
         return Mem_Errno;
 
       /* local copy */

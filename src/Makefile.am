@@ -100,7 +100,7 @@ RPMARGS= --with fuse
 endif
 
 indent:
-	find . -name '*.[ch]' ! -path './rpm/*' -exec indent -linux -nut -bl -bls -i2 -l90 -lc90 -nce {} \;
+	find . -name '*.[ch]' ! -path './rpm/*' -exec indent -linux -nsaf -nsai -nsaw -nut -bl -bls -i2 -l90 -lc90 -nce {} \;
 
 if USE_FSAL_HPSS
 rpm: nfs-ganesha.spec dist 

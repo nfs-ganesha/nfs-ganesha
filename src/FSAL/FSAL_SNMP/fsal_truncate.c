@@ -59,12 +59,12 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if (!filehandle || !p_context)
+  if(!filehandle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
   /* >> check object type if it's stored into the filehandle << */
 
-  if (filehandle->object_type_reminder != FSAL_NODETYPE_LEAF)
+  if(filehandle->object_type_reminder != FSAL_NODETYPE_LEAF)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_truncate);
     }
@@ -73,14 +73,14 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
 
   /* Optionnaly retrieve post op attributes
    */
-  if (object_attributes)
+  if(object_attributes)
     {
 
       fsal_status_t st;
 
       st = FSAL_getattrs(filehandle, p_context, object_attributes);
 
-      if (FSAL_IS_ERROR(st))
+      if(FSAL_IS_ERROR(st))
         {
           FSAL_CLEAR_MASK(object_attributes->asked_attributes);
           FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

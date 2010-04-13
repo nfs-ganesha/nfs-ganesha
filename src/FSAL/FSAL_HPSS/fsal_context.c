@@ -45,29 +45,29 @@ static int Getsubopt(char **optionp, const char *const *tokens, char **valuep)
   char *endp, *vstart;
   int cnt;
 
-  if (**optionp == '\0')
+  if(**optionp == '\0')
     return -1;
 
   /* Find end of next token.  */
   endp = strchr(*optionp, ',');
-  if (endp == NULL)
+  if(endp == NULL)
     endp = strchr(*optionp, '\0');
 
   /* Find start of value.  */
   vstart = memchr(*optionp, '=', endp - *optionp);
-  if (vstart == NULL)
+  if(vstart == NULL)
     vstart = endp;
 
   /* Try to match the characters between *OPTIONP and VSTART against
      one of the TOKENS.  */
-  for (cnt = 0; tokens[cnt] != NULL; ++cnt)
-    if (memcmp(*optionp, tokens[cnt], vstart - *optionp) == 0
-        && tokens[cnt][vstart - *optionp] == '\0')
+  for(cnt = 0; tokens[cnt] != NULL; ++cnt)
+    if(memcmp(*optionp, tokens[cnt], vstart - *optionp) == 0
+       && tokens[cnt][vstart - *optionp] == '\0')
       {
         /* We found the current option in TOKENS.  */
         *valuep = vstart != endp ? vstart + 1 : NULL;
 
-        if (*endp != '\0')
+        if(*endp != '\0')
           *endp++ = '\0';
         *optionp = endp;
 
@@ -77,7 +77,7 @@ static int Getsubopt(char **optionp, const char *const *tokens, char **valuep)
   /* The current suboption does not match any option.  */
   *valuep = *optionp;
 
-  if (*endp != '\0')
+  if(*endp != '\0')
     *endp++ = '\0';
   *optionp = endp;
 
@@ -111,10 +111,10 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
   int rc;
 
   /* sanity check */
-  if (!p_export_context)
+  if(!p_export_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
 
-  if ((fs_specific_options != NULL) && (fs_specific_options[0] != '\0'))
+  if((fs_specific_options != NULL) && (fs_specific_options[0] != '\0'))
     {
 
       /* cleans the export context */
@@ -134,7 +134,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
 
         case COS_OPTION:
           read_cos = atoi(value);
-          if (read_cos <= 0)
+          if(read_cos <= 0)
             {
               DisplayLog
                   ("FSAL LOAD PARAMETER: ERROR: Unexpected value for EXPORT::FS_Specific::%s : ( %s ) positive integer expected.",
@@ -160,7 +160,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
 
   rc = HPSSFSAL_GetFilesetRoot(filesetname, &p_export_context->fileset_root_handle);
 
-  if (rc != 0)
+  if(rc != 0)
     {
       DisplayLog
           ("FSAL LOAD PARAMETER: ERROR: Could not get root handle for fileset \"%s\"",
@@ -178,7 +178,7 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
   int rc, i;
 
   /* sanity check */
-  if (!p_thr_context)
+  if(!p_thr_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
 
   /* initialy set the export entry to none */
@@ -189,13 +189,13 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
   /* We set umask to 0.
    * The specified umask is applied later (before calling HPSS API functions)
    */
-  if (rc = hpss_LoadThreadState(0, 0, NULL))
+  if(rc = hpss_LoadThreadState(0, 0, NULL))
     {
       Return(ERR_FSAL_PERM, -rc, INDEX_FSAL_GetClientContext);
     }
 
   /* get associated user p_cred */
-  if (rc = hpss_GetThreadUcred(&(p_thr_context->credential.hpss_usercred)))
+  if(rc = hpss_GetThreadUcred(&(p_thr_context->credential.hpss_usercred)))
     {
       Return(ERR_FSAL_PERM, -rc, INDEX_FSAL_InitClientContext);
     }
@@ -214,7 +214,7 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tName = %s",
                     p_thr_context->credential.hpss_usercred.SecPWent.Name);
 
-  for (i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
+  for(i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
                       p_thr_context->credential.hpss_usercred.AltGroups[i]);
 
@@ -229,7 +229,7 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tName = %s",
                     p_thr_context->credential.hpss_usercred.Name);
 
-  for (i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
+  for(i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
                       p_thr_context->credential.hpss_usercred.AltGroups[i]);
 
@@ -244,7 +244,7 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tName = %s",
                     p_thr_context->credential.hpss_usercred.Name);
 
-  for (i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
+  for(i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
                       p_thr_context->credential.hpss_usercred.AltGroups[i]);
 
@@ -291,14 +291,14 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
   fsal_status_t st;
 
   /* sanity check */
-  if (!p_thr_context || !p_export_context)
+  if(!p_thr_context || !p_export_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
 
   /* if the credential is too old, renew it */
-  if (time(NULL) - p_thr_context->credential.last_update > (int)CredentialLifetime)
+  if(time(NULL) - p_thr_context->credential.last_update > (int)CredentialLifetime)
     {
       st = FSAL_InitClientContext(p_thr_context);
-      if (FSAL_IS_ERROR(st))
+      if(FSAL_IS_ERROR(st))
         return st;
     }
 
@@ -322,15 +322,15 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
   p_thr_context->credential.hpss_usercred.Gid = gid;
 #endif
 
-  if (ng > HPSS_NGROUPS_MAX)
+  if(ng > HPSS_NGROUPS_MAX)
     ng = HPSS_NGROUPS_MAX;
 
-  if ((ng > 0) && (alt_groups == NULL))
+  if((ng > 0) && (alt_groups == NULL))
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
 
   p_thr_context->credential.hpss_usercred.NumGroups = ng;
 
-  for (i = 0; i < ng; i++)
+  for(i = 0; i < ng; i++)
     p_thr_context->credential.hpss_usercred.AltGroups[i] = alt_groups[i];
 
 #if defined( _DEBUG_FSAL ) && (HPSS_MAJOR_VERSION == 5)
@@ -344,7 +344,7 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tName = %s",
                     p_thr_context->credential.hpss_usercred.SecPWent.Name);
 
-  for (i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
+  for(i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
                       p_thr_context->credential.hpss_usercred.AltGroups[i]);
 
@@ -359,7 +359,7 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tName = %s",
                     p_thr_context->credential.hpss_usercred.Name);
 
-  for (i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
+  for(i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
                       p_thr_context->credential.hpss_usercred.AltGroups[i]);
 
@@ -374,7 +374,7 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tName = %s",
                     p_thr_context->credential.hpss_usercred.Name);
 
-  for (i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
+  for(i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
                       p_thr_context->credential.hpss_usercred.AltGroups[i]);
 

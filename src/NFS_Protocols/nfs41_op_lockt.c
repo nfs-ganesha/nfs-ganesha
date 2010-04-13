@@ -163,28 +163,28 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 #else
 
   /* If there is no FH */
-  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
+  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
       res_LOCKT4.status = NFS4ERR_NOFILEHANDLE;
       return res_LOCKT4.status;
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
       res_LOCKT4.status = NFS4ERR_BADHANDLE;
       return res_LOCKT4.status;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
       res_LOCKT4.status = NFS4ERR_FHEXPIRED;
       return res_LOCKT4.status;
     }
 
   /* Commit is done only on a file */
-  if (data->current_filetype != REGULAR_FILE)
+  if(data->current_filetype != REGULAR_FILE)
     {
       /* Type of the entry is not correct */
       switch (data->current_filetype)
@@ -201,7 +201,7 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   /* Lock length should not be 0 */
-  if (arg_LOCKT4.length == 0LL)
+  if(arg_LOCKT4.length == 0LL)
     {
       res_LOCKT4.status = NFS4ERR_INVAL;
       return res_LOCKT4.status;
@@ -209,11 +209,11 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   /* Check for range overflow 
    * Remember that a length with all bits set to 1 means "lock until the end of file" (RFC3530, page 157) */
-  if (arg_LOCKT4.length != 0xffffffffffffffffLL)
+  if(arg_LOCKT4.length != 0xffffffffffffffffLL)
     {
       /* Comparing beyond 2^64 is not possible int 64 bits precision, 
        * but off+len > 2^64 is equivalent to len > 2^64 - off */
-      if (arg_LOCKT4.length > (0xffffffffffffffffLL - arg_LOCKT4.offset))
+      if(arg_LOCKT4.length > (0xffffffffffffffffLL - arg_LOCKT4.offset))
         {
           res_LOCKT4.status = NFS4ERR_INVAL;
           return res_LOCKT4.status;
@@ -228,16 +228,16 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                 &pstate_found,
                                 pstate_found,
                                 data->pclient, data->pcontext, &cache_status);
-      if ((cache_status == CACHE_INODE_STATE_ERROR)
-          || (cache_status == CACHE_INODE_INVALID_ARGUMENT))
+      if((cache_status == CACHE_INODE_STATE_ERROR)
+         || (cache_status == CACHE_INODE_INVALID_ARGUMENT))
         {
           res_LOCKT4.status = NFS4ERR_INVAL;
           return res_LOCKT4.status;
         }
 
-      if (pstate_found != NULL)
+      if(pstate_found != NULL)
         {
-          if (pstate_found->state_type == CACHE_INODE_STATE_LOCK)
+          if(pstate_found->state_type == CACHE_INODE_STATE_LOCK)
             {
 
               /* We found a lock, check is they overlap */
@@ -249,33 +249,33 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
               /* Locks overlap is a <= a1 < b or a < b1 <= b */
               overlap = FALSE;
-              if (a <= a1)
+              if(a <= a1)
                 {
-                  if (a1 < b)
+                  if(a1 < b)
                     overlap = TRUE;
                 }
               else
                 {
-                  if (a < b1)
+                  if(a < b1)
                     {
-                      if (b1 <= b)
+                      if(b1 <= b)
                         overlap = TRUE;
                     }
                 }
 
-              if (overlap == TRUE)
+              if(overlap == TRUE)
                 {
-                  if ((arg_LOCKT4.locktype != READ_LT)
-                      || (pstate_found->state_data.lock.lock_type != READ_LT))
+                  if((arg_LOCKT4.locktype != READ_LT)
+                     || (pstate_found->state_data.lock.lock_type != READ_LT))
                     {
                       /* Overlapping lock is found, if owner is different than the calling owner, return NFS4ERR_DENIED */
-                      if ((arg_LOCKT4.owner.owner.owner_len ==
-                           pstate_found->powner->owner_len)
-                          &&
-                          (!memcmp
-                           (arg_LOCKT4.owner.owner.owner_val,
-                            pstate_found->powner->owner_val,
-                            pstate_found->powner->owner_len)))
+                      if((arg_LOCKT4.owner.owner.owner_len ==
+                          pstate_found->powner->owner_len)
+                         &&
+                         (!memcmp
+                          (arg_LOCKT4.owner.owner.owner_val,
+                           pstate_found->powner->owner_val,
+                           pstate_found->powner->owner_len)))
                         {
                           /* The calling state owner is the same. There is a discussion on this case at page 161 of RFC3530. I choose to ignore this
                            * lock and continue iterating on the other states */
@@ -301,7 +301,7 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
             }
         }
     }
-  while (pstate_found != NULL);
+  while(pstate_found != NULL);
 
   /* Succssful exit, no conflicting lock were found */
   res_LOCKT4.status = NFS4_OK;

@@ -87,9 +87,9 @@ int main(int argc, char *argv[])
   setbuf(stdout, NULL);
   Myname = *argv++;
   argc--;
-  while (argc && **argv == '-')
+  while(argc && **argv == '-')
     {
-      for (opts = &argv[0][1]; *opts; opts++)
+      for(opts = &argv[0][1]; *opts; opts++)
         {
           switch (*opts)
             {
@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
       argv++;
     }
 
-  if (argc)
+  if(argc)
     {
       config_file = *argv;
       argc--;
@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-  if (argc != 0)
+  if(argc != 0)
     {
       fprintf(stderr, "too many parameters");
       usage();
@@ -140,14 +140,14 @@ int main(int argc, char *argv[])
     }
 
   param = readin_config(config_file);
-  if (param == NULL)
+  if(param == NULL)
     {
       fprintf(stderr, "Nothing built\n");
       exit(1);
     }
 
   b = get_btest_args(param, NINE);
-  if (b == NULL)
+  if(b == NULL)
     {
       fprintf(stderr, "Missing basic test number 9 in the config file '%s'\n",
               config_file);
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-  if (b->count == -1)
+  if(b->count == -1)
     {
       fprintf(stderr,
               "Missing 'count' parameter in the config file '%s' for the basic test number 9\n",
@@ -169,13 +169,13 @@ int main(int argc, char *argv[])
 
   free_testparam(param);
 
-  if (!Fflag)
+  if(!Fflag)
     {
       Tflag = 0;
       count = 1;
     }
 
-  if (!Nflag)
+  if(!Nflag)
     testdir(test_dir);
   else
     mtestdir(test_dir);
@@ -187,20 +187,20 @@ int main(int argc, char *argv[])
 #endif
 
   starttime();
-  for (ct = 0; ct < count; ct++)
+  for(ct = 0; ct < count; ct++)
     {
 #ifdef SVR4
-      if (statvfs(".", &sfsb) < 0)
+      if(statvfs(".", &sfsb) < 0)
         {
           error("can't do statvfs on \".\"");
           exit(1);
         }
 #else
 #ifdef SVR3
-      if (statfs(".", &sfsb, sizeof(sfsb), 0) < 0)
+      if(statfs(".", &sfsb, sizeof(sfsb), 0) < 0)
         {
 #else
-      if (statfs(".", &sfsb) < 0)
+      if(statfs(".", &sfsb) < 0)
         {
 #endif
           error("can't do statfs on \".\"");
@@ -215,14 +215,14 @@ int main(int argc, char *argv[])
 #else
   fprintf(stdout, "\t%d statfs calls", count);
 #endif
-  if (Tflag)
+  if(Tflag)
     {
       fprintf(stdout, " in %ld.%02ld seconds",
               (long)time.tv_sec, (long)time.tv_usec / 10000);
     }
   fprintf(stdout, "\n");
 
-  if ((log = fopen(log_file, "a")) == NULL)
+  if((log = fopen(log_file, "a")) == NULL)
     {
       printf("Enable to open the file '%s'\n", log_file);
       complete();

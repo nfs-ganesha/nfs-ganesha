@@ -107,7 +107,7 @@ fsal_status_t MFSL_open_by_name(mfsl_object_t * dirhandle,      /* IN */
                                 fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
     /** @todo: quick and dirty work-around */
-  if (dirhandle->health != MFSL_ASYNC_SYNCHRONOUS)
+  if(dirhandle->health != MFSL_ASYNC_SYNCHRONOUS)
     MFSL_return(ERR_FSAL_NO_ERROR, 0);
 
   return FSAL_open_by_name(&dirhandle->handle,

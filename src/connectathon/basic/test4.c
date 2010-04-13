@@ -76,9 +76,9 @@ int main(int argc, char *argv[])
   setbuf(stdout, NULL);
   Myname = *argv++;
   argc--;
-  while (argc && **argv == '-')
+  while(argc && **argv == '-')
     {
-      for (opts = &argv[0][1]; *opts; opts++)
+      for(opts = &argv[0][1]; *opts; opts++)
         {
           switch (*opts)
             {
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
       argv++;
     }
 
-  if (argc)
+  if(argc)
     {
       config_file = *argv;
       argc--;
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-  if (argc != 0)
+  if(argc != 0)
     {
       fprintf(stderr, "too many parameters");
       usage();
@@ -129,14 +129,14 @@ int main(int argc, char *argv[])
     }
 
   param = readin_config(config_file);
-  if (param == NULL)
+  if(param == NULL)
     {
       fprintf(stderr, "Nothing built\n");
       exit(1);
     }
 
   b = get_btest_args(param, FOUR);
-  if (b == NULL)
+  if(b == NULL)
     {
       fprintf(stderr, "Missing basic test number 4 in the config file '%s'\n",
               config_file);
@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-  if (b->files == -1)
+  if(b->files == -1)
     {
       fprintf(stderr,
               "Missing 'files' parameter in the config file '%s' for the basic test number 4\n",
@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
       free_testparam(param);
       exit(1);
     }
-  if (b->count == -1)
+  if(b->count == -1)
     {
       fprintf(stderr,
               "Missing 'count' parameter in the config file '%s' for the basic test number 4\n",
@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
 
   free_testparam(param);
 
-  if (!Fflag)
+  if(!Fflag)
     {
       Tflag = 0;
       count = 1;
@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
 
   fprintf(stdout, "%s: setattr, getattr, and lookup\n", Myname);
 
-  if (!Nflag)
+  if(!Nflag)
     testdir(test_dir);
   else
     mtestdir(test_dir);
@@ -185,37 +185,37 @@ int main(int argc, char *argv[])
   dirtree(1, files, 0, fname, dname, &totfiles, &totdirs);
 
   starttime();
-  for (ct = 0; ct < count; ct++)
+  for(ct = 0; ct < count; ct++)
     {
-      for (fi = 0; fi < files; fi++)
+      for(fi = 0; fi < files; fi++)
         {
           sprintf(str, "%s%d", fname, fi);
-          if (chmod(str, CHMOD_NONE) < 0)
+          if(chmod(str, CHMOD_NONE) < 0)
             {
               error("can't chmod %o %s", CHMOD_NONE, str);
               exit(0);
             }
-          if (stat(str, &statb) < 0)
+          if(stat(str, &statb) < 0)
             {
               error("can't stat %s after CMOD_NONE", str);
               exit(1);
             }
-          if ((statb.st_mode & CHMOD_MASK) != CHMOD_NONE)
+          if((statb.st_mode & CHMOD_MASK) != CHMOD_NONE)
             {
               error("%s has mode %o after chmod 0", str, (statb.st_mode & 0777));
               exit(1);
             }
-          if (chmod(str, CHMOD_RW) < 0)
+          if(chmod(str, CHMOD_RW) < 0)
             {
               error("can't chmod %o %s", CHMOD_RW, str);
               exit(0);
             }
-          if (stat(str, &statb) < 0)
+          if(stat(str, &statb) < 0)
             {
               error("can't stat %s after CHMOD_RW", str);
               exit(1);
             }
-          if ((statb.st_mode & CHMOD_MASK) != CHMOD_RW)
+          if((statb.st_mode & CHMOD_MASK) != CHMOD_RW)
             {
               error("%s has mode %o after chmod 0666", str, (statb.st_mode & 0777));
               exit(1);
@@ -225,14 +225,14 @@ int main(int argc, char *argv[])
   endtime(&time);
 
   fprintf(stdout, "\t%d chmods and stats on %d files", files * count * 2, files);
-  if (Tflag)
+  if(Tflag)
     {
       fprintf(stdout, " in %ld.%02ld seconds",
               (long)time.tv_sec, (long)time.tv_usec / 10000);
     }
   fprintf(stdout, "\n");
 
-  if ((log = fopen(log_file, "a")) == NULL)
+  if((log = fopen(log_file, "a")) == NULL)
     {
       printf("Enable to open the file '%s'\n", log_file);
       complete();

@@ -149,15 +149,15 @@ fsal_status_t MFSL_setattrs_check_perms(mfsl_object_t * filehandle,     /* IN */
   fsal_status_t fsal_status;
 
   /* Root is the only one that can chown or chgrp */
-  if (attrib_set->asked_attributes & (FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
+  if(attrib_set->asked_attributes & (FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
     {
-      if (p_context->user_credential.user != 0)
+      if(p_context->user_credential.user != 0)
         MFSL_return(ERR_FSAL_ACCESS, 0);
     }
 
   fsal_status = FSAL_setattr_access(p_context, attrib_set, &pspecdata->async_attr);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
@@ -197,10 +197,10 @@ fsal_status_t MFSL_setattrs(mfsl_object_t * filehandle, /* IN */
 
   V(p_mfsl_context->lock);
 
-  if (pasyncopdesc == NULL)
+  if(pasyncopdesc == NULL)
     MFSL_return(ERR_FSAL_INVAL, 0);
 
-  if (gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
+  if(gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
     {
       /* Could'not get time of day... Stopping, this may need a major failure */
       DisplayLog("MFSL_setattrs: cannot get time of day... exiting");
@@ -208,7 +208,7 @@ fsal_status_t MFSL_setattrs(mfsl_object_t * filehandle, /* IN */
     }
 
   /* Is the object asynchronous ? */
-  if (!mfsl_async_get_specdata(filehandle, &pasyncdata))
+  if(!mfsl_async_get_specdata(filehandle, &pasyncdata))
     {
       /* Not yet asynchronous object */
       P(p_mfsl_context->lock);
@@ -228,7 +228,7 @@ fsal_status_t MFSL_setattrs(mfsl_object_t * filehandle, /* IN */
       MFSL_setattrs_check_perms(filehandle, pasyncdata, p_context, p_mfsl_context,
                                 attrib_set);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   DisplayLogJdLevel(p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p",
@@ -246,7 +246,7 @@ fsal_status_t MFSL_setattrs(mfsl_object_t * filehandle, /* IN */
   pasyncopdesc->ptr_mfsl_context = (caddr_t) p_mfsl_context;
 
   fsal_status = MFSL_async_post(pasyncopdesc);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   /* Update the associated times for this object */
@@ -255,39 +255,39 @@ fsal_status_t MFSL_setattrs(mfsl_object_t * filehandle, /* IN */
   filehandle->health = MFSL_ASYNC_ASYNCHRONOUS;
 
   /* merge the attributes to the asynchronous attributes */
-  if ((attrib_set->asked_attributes & FSAL_ATTR_SIZE) ||
-      (attrib_set->asked_attributes & FSAL_ATTR_SPACEUSED))
+  if((attrib_set->asked_attributes & FSAL_ATTR_SIZE) ||
+     (attrib_set->asked_attributes & FSAL_ATTR_SPACEUSED))
     {
       /* Operation on a non data cached file */
       pasyncdata->async_attr.filesize = attrib_set->filesize;
       pasyncdata->async_attr.spaceused = attrib_set->spaceused;
     }
 
-  if (attrib_set->asked_attributes & (FSAL_ATTR_MODE | FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
+  if(attrib_set->asked_attributes & (FSAL_ATTR_MODE | FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
     {
-      if (attrib_set->asked_attributes & FSAL_ATTR_MODE)
+      if(attrib_set->asked_attributes & FSAL_ATTR_MODE)
         pasyncdata->async_attr.mode = attrib_set->mode;
 
-      if (attrib_set->asked_attributes & FSAL_ATTR_OWNER)
+      if(attrib_set->asked_attributes & FSAL_ATTR_OWNER)
         pasyncdata->async_attr.owner = attrib_set->owner;
 
-      if (attrib_set->asked_attributes & FSAL_ATTR_GROUP)
+      if(attrib_set->asked_attributes & FSAL_ATTR_GROUP)
         pasyncdata->async_attr.group = attrib_set->group;
     }
 
-  if (attrib_set->asked_attributes & (FSAL_ATTR_ATIME | FSAL_ATTR_MTIME))
+  if(attrib_set->asked_attributes & (FSAL_ATTR_ATIME | FSAL_ATTR_MTIME))
     {
-      if (attrib_set->asked_attributes & FSAL_ATTR_ATIME)
+      if(attrib_set->asked_attributes & FSAL_ATTR_ATIME)
         pasyncdata->async_attr.atime = attrib_set->atime;
 
-      if (attrib_set->asked_attributes & FSAL_ATTR_MTIME)
+      if(attrib_set->asked_attributes & FSAL_ATTR_MTIME)
         pasyncdata->async_attr.mtime = attrib_set->mtime;
     }
 
   /* Set output attributes */
   *object_attributes = pasyncdata->async_attr;
 
-  if (!mfsl_async_set_specdata(filehandle, pasyncdata))
+  if(!mfsl_async_set_specdata(filehandle, pasyncdata))
     MFSL_return(ERR_FSAL_SERVERFAULT, 0);
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);

@@ -58,19 +58,19 @@ void fsal_interval_proxy_fsalattr2bitmap4(fsal_attrib_list_t * pfsalattr,
   uint32_t tmpattrlist[100];
   uint32_t attrlen = 0;
 
-  if (FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_SIZE))
+  if(FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_SIZE))
     tmpattrlist[attrlen++] = FATTR4_SIZE;
-  if (FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_MODE))
+  if(FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_MODE))
     tmpattrlist[attrlen++] = FATTR4_MODE;
-  if (FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_OWNER))
+  if(FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_OWNER))
     tmpattrlist[attrlen++] = FATTR4_OWNER;
-  if (FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_GROUP))
+  if(FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_GROUP))
     tmpattrlist[attrlen++] = FATTR4_OWNER_GROUP;
-  if (FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_ATIME))
+  if(FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_ATIME))
     tmpattrlist[attrlen++] = FATTR4_TIME_ACCESS_SET;
-  if (FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_MTIME))
+  if(FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_MTIME))
     tmpattrlist[attrlen++] = FATTR4_TIME_MODIFY_SET;
-  if (FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_CTIME))
+  if(FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_CTIME))
     tmpattrlist[attrlen++] = FATTR4_TIME_METADATA;
 
   nfs4_list_to_bitmap4(pbitmap, &attrlen, tmpattrlist);
@@ -400,7 +400,7 @@ int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
   char outstr[1024];
 #endif
 
-  if (pnfs4_handle == NULL || pfsal_handle == NULL)
+  if(pnfs4_handle == NULL || pfsal_handle == NULL)
     return FALSE;
 
 #ifdef _DEBUG_FSAL
@@ -416,7 +416,7 @@ int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
          pnfs4_handle->nfs_fh4_len);
 
 #ifdef _DEBUG_FSAL
-  if (type == FSAL_TYPE_FILE)
+  if(type == FSAL_TYPE_FILE)
     {
       nfs_fh4 tmpfh;
 
@@ -428,9 +428,8 @@ int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
            outstr, fileid);
     }
 
-  if (memcmp
-      (pfsal_handle->srv_handle_val, pnfs4_handle->nfs_fh4_val,
-       pnfs4_handle->nfs_fh4_len))
+  if(memcmp
+     (pfsal_handle->srv_handle_val, pnfs4_handle->nfs_fh4_val, pnfs4_handle->nfs_fh4_len))
     DisplayLog
         ("CRITICAL ERROR: ==========> Filehandle mismatch n ifsal_internal_proxy_create");
 
@@ -456,7 +455,7 @@ int fsal_internal_proxy_extract_fh(nfs_fh4 * pnfs4_handle, fsal_handle_t * pfsal
   char outstr[1024];
 #endif
 
-  if (pnfs4_handle == NULL || pfsal_handle == NULL)
+  if(pnfs4_handle == NULL || pfsal_handle == NULL)
     return FALSE;
 
   pnfs4_handle->nfs_fh4_len = pfsal_handle->srv_handle_len;
@@ -487,11 +486,11 @@ int fsal_internal_proxy_fsal_name_2_utf8(fsal_name_t * pname, utf8string * utf8s
   char tmpstr[FSAL_MAX_NAME_LEN];
   fsal_status_t fsal_status;
 
-  if (pname == NULL || utf8str == NULL)
+  if(pname == NULL || utf8str == NULL)
     return FALSE;
 
   fsal_status = FSAL_name2str(pname, tmpstr, FSAL_MAX_NAME_LEN);
-  if (fsal_status.major != ERR_FSAL_NO_ERROR)
+  if(fsal_status.major != ERR_FSAL_NO_ERROR)
     return FALSE;
 
 #ifdef _DEBUG_MEMLEAKS
@@ -499,9 +498,9 @@ int fsal_internal_proxy_fsal_name_2_utf8(fsal_name_t * pname, utf8string * utf8s
   BuddySetDebugLabel("fsal_internal_proxy_fsal_name_2_utf8");
 #endif
 
-  if (utf8str->utf8string_len == 0)
+  if(utf8str->utf8string_len == 0)
     {
-      if ((utf8str->utf8string_val = (char *)Mem_Alloc(pname->len)) == NULL)
+      if((utf8str->utf8string_val = (char *)Mem_Alloc(pname->len)) == NULL)
         return FALSE;
       else
         utf8str->utf8string_len = pname->len;
@@ -511,7 +510,7 @@ int fsal_internal_proxy_fsal_name_2_utf8(fsal_name_t * pname, utf8string * utf8s
   BuddySetDebugLabel("N/A");
 #endif
 
-  if (str2utf8(tmpstr, utf8str) == -1)
+  if(str2utf8(tmpstr, utf8str) == -1)
     return FALSE;
   return TRUE;
 }                               /* fsal_internal_proxy_fsal_name_2_utf8 */
@@ -533,11 +532,11 @@ int fsal_internal_proxy_fsal_path_2_utf8(fsal_path_t * ppath, utf8string * utf8s
   char tmpstr[FSAL_MAX_PATH_LEN];
   fsal_status_t fsal_status;
 
-  if (ppath == NULL || utf8str == NULL)
+  if(ppath == NULL || utf8str == NULL)
     return FALSE;
 
   fsal_status = FSAL_path2str(ppath, tmpstr, FSAL_MAX_NAME_LEN);
-  if (fsal_status.major != ERR_FSAL_NO_ERROR)
+  if(fsal_status.major != ERR_FSAL_NO_ERROR)
     return FALSE;
 
 #ifdef _DEBUG_MEMLEAKS
@@ -545,9 +544,9 @@ int fsal_internal_proxy_fsal_path_2_utf8(fsal_path_t * ppath, utf8string * utf8s
   BuddySetDebugLabel("fsal_internal_proxy_fsal_path_2_utf8");
 #endif
 
-  if (utf8str->utf8string_len == 0)
+  if(utf8str->utf8string_len == 0)
     {
-      if ((utf8str->utf8string_val = (char *)Mem_Alloc(ppath->len)) == NULL)
+      if((utf8str->utf8string_val = (char *)Mem_Alloc(ppath->len)) == NULL)
         return FALSE;
       else
         utf8str->utf8string_len = ppath->len;
@@ -557,7 +556,7 @@ int fsal_internal_proxy_fsal_path_2_utf8(fsal_path_t * ppath, utf8string * utf8s
   BuddySetDebugLabel("N/A");
 #endif
 
-  if (str2utf8(tmpstr, utf8str) == -1)
+  if(str2utf8(tmpstr, utf8str) == -1)
     return FALSE;
 
   return TRUE;
@@ -580,14 +579,14 @@ int fsal_internal_proxy_fsal_utf8_2_path(fsal_path_t * ppath, utf8string * utf8s
   char tmpstr[FSAL_MAX_PATH_LEN];
   fsal_status_t fsal_status;
 
-  if (ppath == NULL || utf8str == NULL)
+  if(ppath == NULL || utf8str == NULL)
     return FALSE;
 
-  if (utf82str(tmpstr, utf8str) == -1)
+  if(utf82str(tmpstr, utf8str) == -1)
     return FALSE;
 
   fsal_status = FSAL_str2path(tmpstr, FSAL_MAX_PATH_LEN, ppath);
-  if (fsal_status.major != ERR_FSAL_NO_ERROR)
+  if(fsal_status.major != ERR_FSAL_NO_ERROR)
     return FALSE;
 
   return TRUE;
@@ -610,14 +609,14 @@ int fsal_internal_proxy_fsal_utf8_2_name(fsal_name_t * pname, utf8string * utf8s
   char tmpstr[FSAL_MAX_NAME_LEN];
   fsal_status_t fsal_status;
 
-  if (pname == NULL || utf8str == NULL)
+  if(pname == NULL || utf8str == NULL)
     return FALSE;
 
-  if (utf82str(tmpstr, utf8str) == -1)
+  if(utf82str(tmpstr, utf8str) == -1)
     return FALSE;
 
   fsal_status = FSAL_str2name(tmpstr, FSAL_MAX_NAME_LEN, pname);
-  if (fsal_status.major != ERR_FSAL_NO_ERROR)
+  if(fsal_status.major != ERR_FSAL_NO_ERROR)
     return FALSE;
 
   return TRUE;
@@ -646,11 +645,11 @@ int proxy_Fattr_To_FSAL_dynamic_fsinfo(fsal_dynamicfsinfo_t * pdynamicinfo,
   uint32_t attribute_to_set = 0;
   uint64_t tmp_uint64 = 0LL;
 
-  if (pdynamicinfo == NULL || Fattr == NULL)
+  if(pdynamicinfo == NULL || Fattr == NULL)
     return -1;
 
   /* Check attributes data */
-  if (Fattr->attr_vals.attrlist4_val == NULL)
+  if(Fattr->attr_vals.attrlist4_val == NULL)
     return -1;
 
   /* Convert the attribute bitmap to an attribute list */
@@ -663,11 +662,11 @@ int proxy_Fattr_To_FSAL_dynamic_fsinfo(fsal_dynamicfsinfo_t * pdynamicinfo,
   /* Init */
   memset((char *)pdynamicinfo, 0, sizeof(fsal_dynamicfsinfo_t));
 
-  for (i = 0; i < attrmasklen; i++)
+  for(i = 0; i < attrmasklen; i++)
     {
       attribute_to_set = attrmasklist[i];
 
-      if (attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
+      if(attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
         {
           /* Erroneous value... skip */
           continue;
@@ -802,11 +801,11 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
   nfs_fh4 nfshandle;
   bool_t compute_fh = FALSE;
 
-  if (pFSAL_attr == NULL || Fattr == NULL)
+  if(pFSAL_attr == NULL || Fattr == NULL)
     return -1;
 
   /* Check attributes data */
-  if (Fattr->attr_vals.attrlist4_val == NULL)
+  if(Fattr->attr_vals.attrlist4_val == NULL)
     return -1;
 
   /* Convert the attribute bitmap to an attribute list */
@@ -819,11 +818,11 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
   /* Init */
   pFSAL_attr->asked_attributes = 0;
 
-  for (i = 0; i < attrmasklen; i++)
+  for(i = 0; i < attrmasklen; i++)
     {
       attribute_to_set = attrmasklist[i];
 
-      if (attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
+      if(attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
         {
           /* Erroneous value... skip */
           continue;
@@ -961,7 +960,7 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
           buffer[len] = '\0';
 
           /* Do not forget that xdr_opaque are aligned on 32bit long words */
-          while ((len % 4) != 0)
+          while((len % 4) != 0)
             len += 1;
 
           LastOffset += len;
@@ -988,7 +987,7 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
           buffer[len] = '\0';
 
           /* Do not forget that xdr_opaque are aligned on 32bit long words */
-          while ((len % 4) != 0)
+          while((len % 4) != 0)
             len += 1;
 
           LastOffset += len;
@@ -1081,7 +1080,7 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
                  (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
                  sizeof(fattr4_time_access_set));
 
-          if (ntohl(attr_time_set.set_it) == SET_TO_SERVER_TIME4)
+          if(ntohl(attr_time_set.set_it) == SET_TO_SERVER_TIME4)
             {
               pFSAL_attr->atime.seconds = time(NULL);   /* Use current server's time */
               pFSAL_attr->atime.nseconds = 0;
@@ -1106,7 +1105,7 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
                  (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
                  sizeof(fattr4_time_modify_set));
 
-          if (ntohl(attr_time_set.set_it) == SET_TO_SERVER_TIME4)
+          if(ntohl(attr_time_set.set_it) == SET_TO_SERVER_TIME4)
             {
               pFSAL_attr->mtime.seconds = time(NULL);   /* Use current server's time */
               pFSAL_attr->mtime.nseconds = 0;
@@ -1170,7 +1169,7 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
         }                       /* switch */
     }                           /* for */
 
-  if (compute_fh)
+  if(compute_fh)
     {
       phandle->fileid4 = pFSAL_attr->fileid;
     }
@@ -1196,7 +1195,7 @@ fsal_status_t fsal_internal_set_auth_gss(fsal_op_context_t * p_thr_context)
   mechgssbuff.length = strlen(mechgssbuff.value);
 
   printf("----> %p\n", p_thr_context->rpc_client);
-  if ((maj_stat = gss_str_to_oid(&min_stat, &mechgssbuff, &mechOid)) != GSS_S_COMPLETE)
+  if((maj_stat = gss_str_to_oid(&min_stat, &mechgssbuff, &mechOid)) != GSS_S_COMPLETE)
     Return(ERR_FSAL_SEC, maj_stat, INDEX_FSAL_InitClientContext);
 
   /* Authentification avec RPCSEC_GSS */
@@ -1204,10 +1203,10 @@ fsal_status_t fsal_internal_set_auth_gss(fsal_op_context_t * p_thr_context)
   rpcsec_gss_data.qop = GSS_C_QOP_DEFAULT;
   rpcsec_gss_data.svc = global_fsal_proxy_specific_info.sec_type;
 
-  if ((p_thr_context->rpc_client->cl_auth =
-       authgss_create_default(p_thr_context->rpc_client,
-                              global_fsal_proxy_specific_info.remote_principal,
-                              &rpcsec_gss_data)) == NULL)
+  if((p_thr_context->rpc_client->cl_auth =
+      authgss_create_default(p_thr_context->rpc_client,
+                             global_fsal_proxy_specific_info.remote_principal,
+                             &rpcsec_gss_data)) == NULL)
     Return(ERR_FSAL_SEC, 0, INDEX_FSAL_InitClientContext);
 #endif
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
@@ -1239,21 +1238,21 @@ int fsal_internal_ClientReconnect(fsal_op_context_t * p_thr_context)
   addr_rpc.sin_family = AF_INET;
   addr_rpc.sin_addr.s_addr = p_thr_context->srv_addr;
 
-  if (!strcmp(p_thr_context->srv_proto, "udp"))
+  if(!strcmp(p_thr_context->srv_proto, "udp"))
     {
-      if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+      if((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
         return -1;
 
-      if ((p_thr_context->rpc_client = clntudp_bufcreate(&addr_rpc,
-                                                         p_thr_context->srv_prognum,
-                                                         FSAL_PROXY_NFS_V4,
-                                                         (struct timeval)
-                                                         {
-                                                         25, 0},
-                                                         &sock,
-                                                         p_thr_context->srv_sendsize,
-                                                         p_thr_context->srv_recvsize)) ==
-          NULL)
+      if((p_thr_context->rpc_client = clntudp_bufcreate(&addr_rpc,
+                                                        p_thr_context->srv_prognum,
+                                                        FSAL_PROXY_NFS_V4,
+                                                        (struct timeval)
+                                                        {
+                                                        25, 0},
+                                                        &sock,
+                                                        p_thr_context->srv_sendsize,
+                                                        p_thr_context->srv_recvsize)) ==
+         NULL)
         {
 
           DisplayLog
@@ -1267,16 +1266,16 @@ int fsal_internal_ClientReconnect(fsal_op_context_t * p_thr_context)
           return -1;
         }
     }
-  else if (!strcmp(p_thr_context->srv_proto, "tcp"))
+  else if(!strcmp(p_thr_context->srv_proto, "tcp"))
     {
-      if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+      if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
         {
           DisplayLog("FSAL RECONNECT: cannot create a tcp socket");
 
           return -1;
         }
 
-      if (connect(sock, (struct sockaddr *)&addr_rpc, sizeof(addr_rpc)) < 0)
+      if(connect(sock, (struct sockaddr *)&addr_rpc, sizeof(addr_rpc)) < 0)
         {
           DisplayLog("FSAL RECONNECT : Cannot connect to server addr=%u.%u.%u.%u port=%u",
                      (ntohl(p_thr_context->srv_addr) & 0xFF000000) >> 24,
@@ -1288,13 +1287,13 @@ int fsal_internal_ClientReconnect(fsal_op_context_t * p_thr_context)
           return -1;
         }
 
-      if ((p_thr_context->rpc_client = clnttcp_create(&addr_rpc,
-                                                      p_thr_context->srv_prognum,
-                                                      FSAL_PROXY_NFS_V4,
-                                                      &sock,
-                                                      p_thr_context->srv_sendsize,
-                                                      p_thr_context->srv_recvsize)) ==
-          NULL)
+      if((p_thr_context->rpc_client = clnttcp_create(&addr_rpc,
+                                                     p_thr_context->srv_prognum,
+                                                     FSAL_PROXY_NFS_V4,
+                                                     &sock,
+                                                     p_thr_context->srv_sendsize,
+                                                     p_thr_context->srv_recvsize)) ==
+         NULL)
         {
           DisplayLog
               ("FSAL RECONNECT : Cannot contact server addr=%x.%x.%x.%x port=%u prognum=%u using NFSv4 protocol",
@@ -1312,29 +1311,29 @@ int fsal_internal_ClientReconnect(fsal_op_context_t * p_thr_context)
       return -1;
     }
 #ifdef _USE_GSSRPC
-  if (global_fsal_proxy_specific_info.active_krb5 == TRUE)
+  if(global_fsal_proxy_specific_info.active_krb5 == TRUE)
     {
       fsal_status = fsal_internal_set_auth_gss(p_thr_context);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         return -1;
     }
   else
 #endif
-  if ((p_thr_context->rpc_client->cl_auth = authunix_create_default()) == NULL)
+  if((p_thr_context->rpc_client->cl_auth = authunix_create_default()) == NULL)
     {
       return -1;
     }
 
   /* test if the newly created context can 'ping' the server via PROC_NULL */
-  if ((rc = clnt_call(p_thr_context->rpc_client, NFSPROC4_NULL,
-                      (xdrproc_t) xdr_void, (caddr_t) NULL,
-                      (xdrproc_t) xdr_void, (caddr_t) NULL, timeout)) != RPC_SUCCESS)
+  if((rc = clnt_call(p_thr_context->rpc_client, NFSPROC4_NULL,
+                     (xdrproc_t) xdr_void, (caddr_t) NULL,
+                     (xdrproc_t) xdr_void, (caddr_t) NULL, timeout)) != RPC_SUCCESS)
     {
       return -1;
     }
 
   fsal_status = FSAL_proxy_setclientid(p_thr_context);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return -1;
 
   return 0;
@@ -1357,16 +1356,16 @@ int FSAL_proxy_set_hldir(fsal_op_context_t * p_thr_context, char *hl_path)
   fsal_path_t fsal_path;
   fsal_status_t fsal_status;
 
-  if (p_thr_context == NULL || hl_path == NULL)
+  if(p_thr_context == NULL || hl_path == NULL)
     return -1;
 
-  if (FSAL_IS_ERROR(FSAL_str2path(hl_path, MAXPATHLEN, &fsal_path)))
+  if(FSAL_IS_ERROR(FSAL_str2path(hl_path, MAXPATHLEN, &fsal_path)))
     return -1;
 
   fsal_status = FSAL_lookupPath(&fsal_path,
                                 p_thr_context, &(p_thr_context->openfh_wd_handle), NULL);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return -1;
 
   return 0;
@@ -1400,7 +1399,7 @@ fsal_status_t FSAL_proxy_open_confirm(fsal_file_t * pfd)
   nfs_resop4 resoparray[FSAL_PROXY_OPEN_CONFIRM_NB_OP_ALLOC];
   struct timeval timeout = { 25, 0 };
 
-  if (pfd == NULL)
+  if(pfd == NULL)
     {
       fsal_status.major = ERR_FSAL_FAULT;
       fsal_status.minor = 0;
@@ -1408,7 +1407,7 @@ fsal_status_t FSAL_proxy_open_confirm(fsal_file_t * pfd)
       return fsal_status;
     }
 
-  if (pfd->pcontext == NULL)
+  if(pfd->pcontext == NULL)
     {
       printf("===================> FSAL_proxy_open_confirm: Non initialized fd !!!!!");
       fsal_status.major = ERR_FSAL_FAULT;
@@ -1417,7 +1416,7 @@ fsal_status_t FSAL_proxy_open_confirm(fsal_file_t * pfd)
       return fsal_status;
     }
   /* Get NFSv4 File handle */
-  if (fsal_internal_proxy_extract_fh(&nfs4fh, &pfd->fhandle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, &pfd->fhandle) == FALSE)
     {
       fsal_status.major = ERR_FSAL_FAULT;
       fsal_status.minor = 0;
@@ -1436,19 +1435,19 @@ fsal_status_t FSAL_proxy_open_confirm(fsal_file_t * pfd)
   COMPOUNDV4_ARG_ADD_OP_PUTFH(argnfs4, nfs4fh);
   argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].argop =
       NFS4_OP_OPEN_CONFIRM;
-  argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_argop4_u.
-      opopen_confirm.open_stateid.seqid = pfd->stateid.seqid;
-  memcpy((char *)argnfs4.argarray.
-         argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_argop4_u.
-         opopen_confirm.open_stateid.other, (char *)pfd->stateid.other, 12);
-  argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_argop4_u.
-      opopen_confirm.seqid = pfd->stateid.seqid + 1;
+  argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
+      nfs_argop4_u.opopen_confirm.open_stateid.seqid = pfd->stateid.seqid;
+  memcpy((char *)argnfs4.
+         argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
+         nfs_argop4_u.opopen_confirm.open_stateid.other, (char *)pfd->stateid.other, 12);
+  argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
+      nfs_argop4_u.opopen_confirm.seqid = pfd->stateid.seqid + 1;
   argnfs4.argarray.argarray_len = 2;
 
   TakeTokenFSCall();
   /* Call the NFSv4 function */
   COMPOUNDV4_EXECUTE(pfd->pcontext, argnfs4, resnfs4, rc);
-  if (rc != RPC_SUCCESS)
+  if(rc != RPC_SUCCESS)
     {
       ReleaseTokenFSCall();
 
@@ -1460,7 +1459,7 @@ fsal_status_t FSAL_proxy_open_confirm(fsal_file_t * pfd)
   ReleaseTokenFSCall();
 
   /* set the error is res if not NFS4_OK */
-  if (resnfs4.status != NFS4_OK)
+  if(resnfs4.status != NFS4_OK)
     {
       fsal_status.major = ERR_FSAL_IO;
       fsal_status.minor = resnfs4.status;
@@ -1469,12 +1468,13 @@ fsal_status_t FSAL_proxy_open_confirm(fsal_file_t * pfd)
     }
   /* Update the file descriptor with the new stateid */
   pfd->stateid.seqid =
-      resnfs4.resarray.resarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
-      nfs_resop4_u.opopen_confirm.OPEN_CONFIRM4res_u.resok4.open_stateid.seqid;
+      resnfs4.resarray.
+      resarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_resop4_u.
+      opopen_confirm.OPEN_CONFIRM4res_u.resok4.open_stateid.seqid;
   memcpy((char *)pfd->stateid.other,
-         (char *)resnfs4.resarray.
-         resarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_resop4_u.
-         opopen_confirm.OPEN_CONFIRM4res_u.resok4.open_stateid.other, 12);
+         (char *)resnfs4.
+         resarray.resarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
+         nfs_resop4_u.opopen_confirm.OPEN_CONFIRM4res_u.resok4.open_stateid.other, 12);
 
   fsal_status.major = ERR_FSAL_NO_ERROR;
   fsal_status.minor = NFS4_OK;
@@ -1495,9 +1495,9 @@ void *FSAL_proxy_change_user(fsal_op_context_t * p_thr_context)
       break;
 
     case AUTH_UNIX:
-      if (!done)
+      if(!done)
         {
-          if (gethostname(hostname, MAXNAMLEN) == -1)
+          if(gethostname(hostname, MAXNAMLEN) == -1)
             strncpy(hostname, "NFS-GANESHA/Proxy", MAXNAMLEN);
 
           done = TRUE;
@@ -1505,14 +1505,14 @@ void *FSAL_proxy_change_user(fsal_op_context_t * p_thr_context)
       auth_destroy(p_thr_context->rpc_client->cl_auth);
 
       p_thr_context->rpc_client->cl_auth = authunix_create(hostname,
-                                                           p_thr_context->user_credential.
-                                                           user,
-                                                           p_thr_context->user_credential.
-                                                           group,
-                                                           p_thr_context->user_credential.
-                                                           nbgroups,
-                                                           p_thr_context->user_credential.
-                                                           alt_groups);
+                                                           p_thr_context->
+                                                           user_credential.user,
+                                                           p_thr_context->
+                                                           user_credential.group,
+                                                           p_thr_context->
+                                                           user_credential.nbgroups,
+                                                           p_thr_context->
+                                                           user_credential.alt_groups);
       break;
 #ifdef _USE_GSSRPC
     case RPCSEC_GSS:

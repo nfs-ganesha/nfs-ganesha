@@ -206,11 +206,11 @@ int mfsl_async_compare_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
   mfsl_object_t *mobject2 = NULL;
 
   /* Test if one of teh entries are NULL */
-  if (buff1->pdata == NULL)
+  if(buff1->pdata == NULL)
     return (buff2->pdata == NULL) ? 0 : 1;
   else
     {
-      if (buff2->pdata == NULL)
+      if(buff2->pdata == NULL)
         return -1;              /* left member is the greater one */
       else
         {
@@ -239,7 +239,7 @@ int mfsl_async_hash_init(void)
   mfsl_hparam.val_to_str = mfsl_async_display_not_implemented;
 
   /* Init de la table */
-  if ((mfsl_ht = HashTable_Init(mfsl_hparam)) == NULL)
+  if((mfsl_ht = HashTable_Init(mfsl_hparam)) == NULL)
     return 0;
 
   return 1;
@@ -262,7 +262,7 @@ int mfsl_async_set_specdata(mfsl_object_t * key, mfsl_object_specific_data_t * v
   rc = HashTable_Test_And_Set(mfsl_ht, &buffkey, &buffdata,
                               HASHTABLE_SET_HOW_SET_OVERWRITE);
 
-  if (rc != HASHTABLE_SUCCESS && rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
+  if(rc != HASHTABLE_SUCCESS && rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
     return 0;
 
 #ifdef _DEBUG_HASHTABLE
@@ -279,7 +279,7 @@ int mfsl_async_get_specdata(mfsl_object_t * key, mfsl_object_specific_data_t ** 
   int status;
   int rc = 0;
 
-  if (key == NULL || ppvalue == NULL)
+  if(key == NULL || ppvalue == NULL)
     return 0;
 
 #ifdef _DEBUG_HASHTABLE
@@ -290,7 +290,7 @@ int mfsl_async_get_specdata(mfsl_object_t * key, mfsl_object_specific_data_t ** 
   buffkey.len = sizeof(mfsl_object_t);
 
   rc = HashTable_Get(mfsl_ht, &buffkey, &buffval);
-  if (rc == HASHTABLE_SUCCESS)
+  if(rc == HASHTABLE_SUCCESS)
     {
       *ppvalue = (mfsl_object_specific_data_t *) (buffval.pdata);
       status = 1;
@@ -308,13 +308,13 @@ int mfsl_async_remove_specdata(mfsl_object_t * key)
   hash_buffer_t buffkey, old_key;
   int status;
 
-  if (key == NULL)
+  if(key == NULL)
     return 0;
 
   buffkey.pdata = (caddr_t) key;
   buffkey.len = sizeof(mfsl_object_t);
 
-  if (HashTable_Del(mfsl_ht, &buffkey, &old_key, NULL) == HASHTABLE_SUCCESS)
+  if(HashTable_Del(mfsl_ht, &buffkey, &old_key, NULL) == HASHTABLE_SUCCESS)
     {
       status = 1;
         /** @todo release previously allocated specdata */
@@ -335,7 +335,7 @@ int mfsl_async_is_object_asynchronous(mfsl_object_t * object)
   int status;
   int rc = 0;
 
-  if (object == NULL)
+  if(object == NULL)
     return 0;
 
 #ifdef _DEBUG_HASHTABLE
@@ -346,7 +346,7 @@ int mfsl_async_is_object_asynchronous(mfsl_object_t * object)
   buffkey.len = sizeof(mfsl_object_t);
 
   rc = HashTable_Get(mfsl_ht, &buffkey, &buffval);
-  if (rc == HASHTABLE_SUCCESS)
+  if(rc == HASHTABLE_SUCCESS)
     status = 1;
   else
     status = 0;

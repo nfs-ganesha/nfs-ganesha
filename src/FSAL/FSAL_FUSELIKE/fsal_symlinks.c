@@ -64,19 +64,19 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
   /* sanity checks.
    * note : link_attributes is optional.
    */
-  if (!linkhandle || !p_context || !p_link_content)
+  if(!linkhandle || !p_context || !p_link_content)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readlink);
 
   /* get the full path for this inode */
   rc = NamespacePath(linkhandle->inode, linkhandle->device, linkhandle->validator,
                      object_path);
-  if (rc)
+  if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_readlink);
 
   /* set context for the next operation, so it can be retrieved by FS thread */
   fsal_set_thread_context(p_context);
 
-  if (p_fs_ops->readlink)
+  if(p_fs_ops->readlink)
     {
       TakeTokenFSCall();
 
@@ -84,7 +84,7 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
 
       ReleaseTokenFSCall();
 
-      if (rc)
+      if(rc)
         Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_readlink);
 
     }
@@ -96,12 +96,12 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
 
   st = FSAL_str2path(link_content_out, FSAL_MAX_PATH_LEN, p_link_content);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     Return(st.major, st.minor, INDEX_FSAL_readlink);
 
   /* retrieves object attributes, if asked */
 
-  if (link_attributes)
+  if(link_attributes)
     {
 
       fsal_status_t status;
@@ -110,7 +110,7 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
 
       /* On error, we set a flag in the returned attributes */
 
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(link_attributes->asked_attributes);
           FSAL_SET_MASK(link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -174,20 +174,20 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
   /* sanity checks.
    * note : link_attributes is optional.
    */
-  if (!parent_directory_handle ||
-      !p_context || !link_handle || !p_linkname || !p_linkcontent)
+  if(!parent_directory_handle ||
+     !p_context || !link_handle || !p_linkname || !p_linkcontent)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_symlink);
 
   /* Tests if symlinking is allowed by configuration and filesystem. */
 
-  if (!global_fs_info.symlink_support || !p_fs_ops->symlink)
+  if(!global_fs_info.symlink_support || !p_fs_ops->symlink)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_symlink);
 
   /* get the full path for parent inode */
   rc = NamespacePath(parent_directory_handle->inode,
                      parent_directory_handle->device,
                      parent_directory_handle->validator, parent_path);
-  if (rc)
+  if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_symlink);
 
   /* append child name to parent path */
@@ -202,12 +202,12 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
 
   ReleaseTokenFSCall();
 
-  if (rc)
+  if(rc)
     Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_symlink);
 
   /* set the owner for the newly created entry */
 
-  if (p_fs_ops->chown)
+  if(p_fs_ops->chown)
     {
       TakeTokenFSCall();
       rc = p_fs_ops->chown(child_path, p_context->credential.user,
@@ -217,7 +217,7 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
 #ifdef _DEBUG_FSAL
       printf("chown: status = %d\n", rc);
 #endif
-      if (rc)
+      if(rc)
         Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_symlink);
     }
 
@@ -227,7 +227,7 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
   rc = p_fs_ops->getattr(child_path, &buffstat);
   ReleaseTokenFSCall();
 
-  if (rc)
+  if(rc)
     Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_symlink);
 
   link_handle->validator = buffstat.st_ctime;
@@ -243,11 +243,11 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
   link_handle->inode = buffstat.st_ino;
   link_handle->device = buffstat.st_dev;
 
-  if (link_attributes)
+  if(link_attributes)
     {
       fsal_status_t status = posix2fsal_attributes(&buffstat, link_attributes);
 
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(link_attributes->asked_attributes);
           FSAL_SET_MASK(link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

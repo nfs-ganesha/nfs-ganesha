@@ -200,19 +200,19 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 #endif
 
   /* Is this a xattr FH ? */
-  if (nfs3_Is_Fh_Xattr(&(parg->arg_readdirplus3.dir)))
+  if(nfs3_Is_Fh_Xattr(&(parg->arg_readdirplus3.dir)))
     return nfs3_Readdirplus_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
 
   /* Convert file handle into a vnode */
   /* BUGAZOMEU : rajouter acces direct au DIR_CONTINUE */
-  if ((dir_pentry = nfs_FhandleToCache(preq->rq_vers,
-                                       NULL,
-                                       &(parg->arg_readdirplus3.dir),
-                                       NULL,
-                                       NULL,
-                                       &(pres->res_readdirplus3.status),
-                                       NULL,
-                                       &dir_attr, pcontext, pclient, ht, &rc)) == NULL)
+  if((dir_pentry = nfs_FhandleToCache(preq->rq_vers,
+                                      NULL,
+                                      &(parg->arg_readdirplus3.dir),
+                                      NULL,
+                                      NULL,
+                                      &(pres->res_readdirplus3.status),
+                                      NULL,
+                                      &dir_attr, pcontext, pclient, ht, &rc)) == NULL)
     {
       /* return NFS_REQ_DROP ; */
       return rc;
@@ -223,7 +223,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 
   /* Sanity checks -- must be a directory */
 
-  if ((dir_filetype != DIR_BEGINNING) && (dir_filetype != DIR_CONTINUE))
+  if((dir_filetype != DIR_BEGINNING) && (dir_filetype != DIR_CONTINUE))
     {
       pres->res_readdirplus3.status = NFS3ERR_NOTDIR;
       return NFS_REQ_OK;
@@ -240,7 +240,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
    * value) 
    */
 
-  if (pexport->UseCookieVerifier)
+  if(pexport->UseCookieVerifier)
     memcpy(cookie_verifier, &(dir_attr.mtime), sizeof(dir_attr.mtime));
 
   /*
@@ -248,14 +248,14 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
    * zero 
    */
 
-  if (pexport->UseCookieVerifier && (begin_cookie != 0))
+  if(pexport->UseCookieVerifier && (begin_cookie != 0))
     {
       /*
        * Not the first call, so we have to check the cookie
        * verifier 
        */
-      if (memcmp(cookie_verifier, parg->arg_readdirplus3.cookieverf, NFS3_COOKIEVERFSIZE)
-          != 0)
+      if(memcmp(cookie_verifier, parg->arg_readdirplus3.cookieverf, NFS3_COOKIEVERFSIZE)
+         != 0)
         {
           pres->res_readdirplus3.status = NFS3ERR_BAD_COOKIE;
 
@@ -267,9 +267,9 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
   BuddySetDebugLabel("cache_inode_dir_entry_t in nfs3_Readdirplus");
 #endif
 
-  if ((dirent_array =
-       (cache_inode_dir_entry_t *) Mem_Alloc(estimated_num_entries *
-                                             sizeof(cache_inode_dir_entry_t))) == NULL)
+  if((dirent_array =
+      (cache_inode_dir_entry_t *) Mem_Alloc(estimated_num_entries *
+                                            sizeof(cache_inode_dir_entry_t))) == NULL)
     {
       pres->res_readdirplus3.status = NFS3ERR_IO;
       return NFS_REQ_DROP;
@@ -279,8 +279,8 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
   BuddySetDebugLabel("cookie array in nfs3_Readdirplus");
 #endif
 
-  if ((cookie_array =
-       (unsigned int *)Mem_Alloc(estimated_num_entries * sizeof(unsigned int))) == NULL)
+  if((cookie_array =
+      (unsigned int *)Mem_Alloc(estimated_num_entries * sizeof(unsigned int))) == NULL)
     {
       Mem_Free((char *)dirent_array);
       pres->res_readdirplus3.status = NFS3ERR_IO;
@@ -291,7 +291,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
   pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof = FALSE;
 
   /* How many entries will we retry from cache_inode ? */
-  if (begin_cookie > 1)
+  if(begin_cookie > 1)
     {
       asked_num_entries = estimated_num_entries;
       cache_inode_cookie = begin_cookie - 2;
@@ -306,29 +306,29 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 #define RES_READDIRPLUS_REPLY pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply
 
   /* Call readdir */
-  if (cache_inode_readdir(dir_pentry,
-                          cache_inode_cookie,
-                          asked_num_entries,
-                          &num_entries,
-                          &end_cookie,
-                          &eod_met,
-                          dirent_array,
-                          cookie_array,
-                          ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+  if(cache_inode_readdir(dir_pentry,
+                         cache_inode_cookie,
+                         asked_num_entries,
+                         &num_entries,
+                         &end_cookie,
+                         &eod_met,
+                         dirent_array,
+                         cookie_array,
+                         ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
 #ifdef _DEBUG_NFS_READDIR
       printf
           ("-- Readdirplus3 -> Call to cache_inode_readdir( cookie=%d, asked=%d ) -> num_entries = %d\n",
            cache_inode_cookie, asked_num_entries, num_entries);
 
-      if (eod_met == END_OF_DIR)
+      if(eod_met == END_OF_DIR)
         {
           printf("+++++++++++++++++++++++++++++++++++++++++> EOD MET \n");
         }
 #endif
 
       /* If nothing was found, return nothing, but if cookie=0, we should return . and .. */
-      if ((num_entries == 0) && (asked_num_entries != 0) && (begin_cookie > 1))
+      if((num_entries == 0) && (asked_num_entries != 0) && (begin_cookie > 1))
         {
           pres->res_readdirplus3.status = NFS3_OK;
           pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries = NULL;
@@ -337,8 +337,8 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
           nfs_SetPostOpAttr(pcontext, pexport,
                             dir_pentry,
                             NULL,
-                            &(pres->res_readdirplus3.READDIRPLUS3res_u.resok.
-                              dir_attributes));
+                            &(pres->res_readdirplus3.READDIRPLUS3res_u.
+                              resok.dir_attributes));
 
           memcpy(pres->res_readdirplus3.READDIRPLUS3res_u.resok.cookieverf,
                  cookie_verifier, sizeof(cookieverf3));
@@ -354,7 +354,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
               (entry_name_array_item_t *) Mem_Alloc(estimated_num_entries *
                                                     (FSAL_MAX_NAME_LEN + 1));
 
-          if (entry_name_array == NULL)
+          if(entry_name_array == NULL)
             {
               Mem_Free((char *)dirent_array);
               Mem_Free((char *)cookie_array);
@@ -367,7 +367,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
           pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries =
               (entryplus3 *) Mem_Alloc(estimated_num_entries * sizeof(entryplus3));
 
-          if (pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries == NULL)
+          if(pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries == NULL)
             {
               Mem_Free((char *)dirent_array);
               Mem_Free((char *)cookie_array);
@@ -388,7 +388,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
           BuddySetDebugLabel("N/A");
 #endif
 
-          if (fh3_array == NULL)
+          if(fh3_array == NULL)
             {
               Mem_Free((char *)dirent_array);
               Mem_Free((char *)cookie_array);
@@ -400,14 +400,14 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
           delta = 0;
 
           /* manage . and .. */
-          if (begin_cookie == 0)
+          if(begin_cookie == 0)
             {
               /* Fill in '.' */
-              if (estimated_num_entries > 0)
+              if(estimated_num_entries > 0)
                 {
-                  if ((pfsal_handle = cache_inode_get_fsal_handle(dir_pentry,
-                                                                  &cache_status_gethandle))
-                      == NULL)
+                  if((pfsal_handle = cache_inode_get_fsal_handle(dir_pentry,
+                                                                 &cache_status_gethandle))
+                     == NULL)
                     {
                       Mem_Free((char *)dirent_array);
                       Mem_Free((char *)cookie_array);
@@ -421,21 +421,22 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                   FSAL_DigestHandle(pcontext->export_context,
                                     FSAL_DIGEST_FILEID3,
                                     pfsal_handle,
-                                    (caddr_t) & (RES_READDIRPLUS_REPLY.entries[0].
-                                                 fileid));
+                                    (caddr_t) & (RES_READDIRPLUS_REPLY.
+                                                 entries[0].fileid));
 
                   RES_READDIRPLUS_REPLY.entries[0].name = entry_name_array[0];
                   strcpy(RES_READDIRPLUS_REPLY.entries[0].name, ".");
 
                   RES_READDIRPLUS_REPLY.entries[0].cookie = 1;
 
-                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[0].
-                      name_handle.post_op_fh3_u.handle.data.data_val =
+                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
+                      entries[0].name_handle.post_op_fh3_u.handle.data.data_val =
                       (char *)fh3_array[0];
 
-                  if (nfs3_FSALToFhandle
-                      (&pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[0].
-                       name_handle.post_op_fh3_u.handle, pfsal_handle, pexport) == 0)
+                  if(nfs3_FSALToFhandle
+                     (&pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
+                      entries[0].name_handle.post_op_fh3_u.handle, pfsal_handle,
+                      pexport) == 0)
                     {
                       Mem_Free((char *)dirent_array);
                       Mem_Free((char *)cookie_array);
@@ -453,17 +454,17 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                   cache_inode_get_attributes(dir_pentry, &entry_attr);
 
                   /* Set PostPoFh3 structure */
-                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[0].
-                      name_handle.handle_follows = TRUE;
-                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[0].
-                      name_handle.post_op_fh3_u.handle.data.data_len =
+                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
+                      entries[0].name_handle.handle_follows = TRUE;
+                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
+                      entries[0].name_handle.post_op_fh3_u.handle.data.data_len =
                       sizeof(file_handle_v3_t);
 
                   nfs_SetPostOpAttr(pcontext, pexport,
                                     dir_pentry,
                                     &entry_attr,
-                                    &(pres->res_readdirplus3.READDIRPLUS3res_u.resok.
-                                      reply.entries[0].name_attributes));
+                                    &(pres->res_readdirplus3.READDIRPLUS3res_u.
+                                      resok.reply.entries[0].name_attributes));
 
                   delta += 1;
                 }
@@ -471,16 +472,16 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
             }
 
           /* Fill in '..' */
-          if (begin_cookie <= 1)
+          if(begin_cookie <= 1)
             {
-              if (estimated_num_entries > delta)
+              if(estimated_num_entries > delta)
                 {
-                  if ((pentry_dot_dot = cache_inode_lookupp(dir_pentry,
-                                                            ht,
-                                                            pclient,
-                                                            pcontext,
-                                                            &cache_status_gethandle)) ==
-                      NULL)
+                  if((pentry_dot_dot = cache_inode_lookupp(dir_pentry,
+                                                           ht,
+                                                           pclient,
+                                                           pcontext,
+                                                           &cache_status_gethandle)) ==
+                     NULL)
                     {
                       Mem_Free((char *)dirent_array);
                       Mem_Free((char *)cookie_array);
@@ -491,9 +492,9 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                       return NFS_REQ_OK;
                     }
 
-                  if ((pfsal_handle = cache_inode_get_fsal_handle(pentry_dot_dot,
-                                                                  &cache_status_gethandle))
-                      == NULL)
+                  if((pfsal_handle = cache_inode_get_fsal_handle(pentry_dot_dot,
+                                                                 &cache_status_gethandle))
+                     == NULL)
                     {
                       Mem_Free((char *)dirent_array);
                       Mem_Free((char *)cookie_array);
@@ -507,20 +508,21 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                   FSAL_DigestHandle(pcontext->export_context,
                                     FSAL_DIGEST_FILEID3,
                                     pfsal_handle,
-                                    (caddr_t) & (RES_READDIRPLUS_REPLY.entries[delta].
-                                                 fileid));
+                                    (caddr_t) & (RES_READDIRPLUS_REPLY.
+                                                 entries[delta].fileid));
 
                   RES_READDIRPLUS_REPLY.entries[delta].name = entry_name_array[delta];
                   strcpy(RES_READDIRPLUS_REPLY.entries[delta].name, "..");
 
                   /* Getting a file handle */
-                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[delta].
-                      name_handle.post_op_fh3_u.handle.data.data_val =
+                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
+                      entries[delta].name_handle.post_op_fh3_u.handle.data.data_val =
                       (char *)fh3_array[delta];
 
-                  if (nfs3_FSALToFhandle
-                      (&pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[0].
-                       name_handle.post_op_fh3_u.handle, pfsal_handle, pexport) == 0)
+                  if(nfs3_FSALToFhandle
+                     (&pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
+                      entries[0].name_handle.post_op_fh3_u.handle, pfsal_handle,
+                      pexport) == 0)
                     {
                       Mem_Free((char *)dirent_array);
                       Mem_Free((char *)cookie_array);
@@ -540,23 +542,23 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                   cache_inode_get_attributes(pentry_dot_dot, &entry_attr);
 
                   /* Set PostPoFh3 structure */
-                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[delta].
-                      name_handle.handle_follows = TRUE;
-                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[delta].
-                      name_handle.post_op_fh3_u.handle.data.data_len =
+                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
+                      entries[delta].name_handle.handle_follows = TRUE;
+                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
+                      entries[delta].name_handle.post_op_fh3_u.handle.data.data_len =
                       sizeof(file_handle_v3_t);
 
                   nfs_SetPostOpAttr(pcontext, pexport,
                                     pentry_dot_dot,
                                     &entry_attr,
-                                    &(pres->res_readdirplus3.READDIRPLUS3res_u.resok.
-                                      reply.entries[delta].name_attributes));
+                                    &(pres->res_readdirplus3.READDIRPLUS3res_u.
+                                      resok.reply.entries[delta].name_attributes));
 
                 }
               RES_READDIRPLUS_REPLY.entries[0].nextentry =
                   &(RES_READDIRPLUS_REPLY.entries[delta]);
 
-              if (num_entries > delta + 1)      /* not 0 ??? */
+              if(num_entries > delta + 1)       /* not 0 ??? */
                 RES_READDIRPLUS_REPLY.entries[delta].nextentry =
                     &(RES_READDIRPLUS_REPLY.entries[delta + 1]);
               else
@@ -565,7 +567,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
               delta += 1;
             }
           /* if( begin_cookie == 0 ) */
-          for (i = delta; i < num_entries + delta; i++)
+          for(i = delta; i < num_entries + delta; i++)
             {
               unsigned long needed;
 
@@ -577,9 +579,9 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
               /* printf( "==============> i=%d sizeof(entryplus3)=%d needed=%d space_used=%d maxcount=%d num_entries=%d asked_num_entries=%d\n",
                  i, sizeof( entryplus3 ), needed, space_used, maxcount, num_entries, asked_num_entries ) ; */
 #endif
-              if ((space_used += needed) > maxcount)
+              if((space_used += needed) > maxcount)
                 {
-                  if (i == delta)
+                  if(i == delta)
                     {
                       /*
                        * Not enough room to make even a single reply 
@@ -599,9 +601,9 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
               /*
                * Get information specific to this entry
                */
-              if ((pfsal_handle =
-                   cache_inode_get_fsal_handle(dirent_array[i - delta].pentry,
-                                               &cache_status_gethandle)) == NULL)
+              if((pfsal_handle =
+                  cache_inode_get_fsal_handle(dirent_array[i - delta].pentry,
+                                              &cache_status_gethandle)) == NULL)
                 {
                   Mem_Free((char *)dirent_array);
                   Mem_Free((char *)cookie_array);
@@ -622,7 +624,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                             FSAL_MAX_NAME_LEN);
               RES_READDIRPLUS_REPLY.entries[i].name = entry_name_array[i];
 
-              if (i != num_entries + delta - 1)
+              if(i != num_entries + delta - 1)
                 RES_READDIRPLUS_REPLY.entries[i].cookie = cookie_array[i + 1 - delta] + 2;
               else
                 RES_READDIRPLUS_REPLY.entries[i].cookie = end_cookie + 2;
@@ -632,13 +634,14 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 
               cache_inode_get_attributes(dirent_array[i - delta].pentry, &entry_attr);
 
-              pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].name_handle.
-                  post_op_fh3_u.handle.data.data_val = (char *)fh3_array[i];
+              pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].
+                  name_handle.post_op_fh3_u.handle.data.data_val = (char *)fh3_array[i];
 
               /* Compute the NFSv3 file handle */
-              if (nfs3_FSALToFhandle
-                  (&pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].
-                   name_handle.post_op_fh3_u.handle, pfsal_handle, pexport) == 0)
+              if(nfs3_FSALToFhandle
+                 (&pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
+                  entries[i].name_handle.post_op_fh3_u.handle, pfsal_handle,
+                  pexport) == 0)
                 {
                   Mem_Free((char *)dirent_array);
                   Mem_Free((char *)cookie_array);
@@ -658,19 +661,20 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 #endif
 
               /* Set PostPoFh3 structure */
-              pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].name_handle.
-                  handle_follows = TRUE;
-              pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].name_handle.
-                  post_op_fh3_u.handle.data.data_len = sizeof(file_handle_v3_t);
+              pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].
+                  name_handle.handle_follows = TRUE;
+              pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].
+                  name_handle.post_op_fh3_u.handle.data.data_len =
+                  sizeof(file_handle_v3_t);
 
               nfs_SetPostOpAttr(pcontext, pexport,
                                 dirent_array[i - delta].pentry,
                                 &entry_attr,
-                                &(pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
-                                  entries[i].name_attributes));
+                                &(pres->res_readdirplus3.READDIRPLUS3res_u.resok.
+                                  reply.entries[i].name_attributes));
 
               RES_READDIRPLUS_REPLY.entries[i].nextentry = NULL;
-              if (i != 0)
+              if(i != 0)
                 RES_READDIRPLUS_REPLY.entries[i - 1].nextentry =
                     &(RES_READDIRPLUS_REPLY.entries[i]);
             }
@@ -689,7 +693,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 
       pres->res_readdirplus3.status = NFS3_OK;
 
-      if ((eod_met == END_OF_DIR) && (i == num_entries + delta))
+      if((eod_met == END_OF_DIR) && (i == num_entries + delta))
         {
           /* End of directory */
 #ifdef _DEBUG_NFS_READDIR
@@ -728,7 +732,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
   Mem_Free((char *)fh3_array);
 
   /* Is this a retryable error */
-  if (nfs_RetryableError(cache_status))
+  if(nfs_RetryableError(cache_status))
     return NFS_REQ_DROP;
 
   /* Set failed status */
@@ -755,13 +759,12 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 void nfs3_Readdirplus_Free(nfs_res_t * resp)
 {
 #define PRESREADDIRPLUSREPLY resp->res_readdirplus3.READDIRPLUS3res_u.resok.reply
-  if ((resp->res_readdirplus3.status == NFS3_OK) &&
-      (PRESREADDIRPLUSREPLY.entries != NULL))
+  if((resp->res_readdirplus3.status == NFS3_OK) && (PRESREADDIRPLUSREPLY.entries != NULL))
     {
       /* All is allocated as a single array */
       Mem_Free(PRESREADDIRPLUSREPLY.entries[0].name);
-      Mem_Free(PRESREADDIRPLUSREPLY.entries[0].name_handle.post_op_fh3_u.handle.data.
-               data_val);
+      Mem_Free(PRESREADDIRPLUSREPLY.entries[0].name_handle.post_op_fh3_u.handle.
+               data.data_val);
       Mem_Free(PRESREADDIRPLUSREPLY.entries);
     }
 }                               /*  nfs3_Readdirplus_Free */

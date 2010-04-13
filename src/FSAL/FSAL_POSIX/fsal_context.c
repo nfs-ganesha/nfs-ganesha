@@ -31,29 +31,29 @@ static int Getsubopt(char **optionp, const char *const *tokens, char **valuep)
   char *endp, *vstart;
   int cnt;
 
-  if (**optionp == '\0')
+  if(**optionp == '\0')
     return -1;
 
   /* Find end of next token.  */
   endp = strchr(*optionp, ',');
-  if (endp == NULL)
+  if(endp == NULL)
     endp = strchr(*optionp, '\0');
 
   /* Find start of value.  */
   vstart = memchr(*optionp, '=', endp - *optionp);
-  if (vstart == NULL)
+  if(vstart == NULL)
     vstart = endp;
 
   /* Try to match the characters between *OPTIONP and VSTART against
      one of the TOKENS.  */
-  for (cnt = 0; tokens[cnt] != NULL; ++cnt)
-    if (memcmp(*optionp, tokens[cnt], vstart - *optionp) == 0
-        && tokens[cnt][vstart - *optionp] == '\0')
+  for(cnt = 0; tokens[cnt] != NULL; ++cnt)
+    if(memcmp(*optionp, tokens[cnt], vstart - *optionp) == 0
+       && tokens[cnt][vstart - *optionp] == '\0')
       {
         /* We found the current option in TOKENS.  */
         *valuep = vstart != endp ? vstart + 1 : NULL;
 
-        if (*endp != '\0')
+        if(*endp != '\0')
           *endp++ = '\0';
         *optionp = endp;
 
@@ -63,7 +63,7 @@ static int Getsubopt(char **optionp, const char *const *tokens, char **valuep)
   /* The current suboption does not match any option.  */
   *valuep = *optionp;
 
-  if (*endp != '\0')
+  if(*endp != '\0')
     *endp++ = '\0';
   *optionp = endp;
 
@@ -96,14 +96,14 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
   fsal_posixdb_status_t st;
 
   /* sanity check */
-  if (!p_thr_context)
+  if(!p_thr_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
 
   /* initialy set the export entry to none */
   p_thr_context->export_context = NULL;
 
   st = fsal_posixdb_connect(&global_posixdb_params, &(p_thr_context->p_conn));
-  if (FSAL_POSIXDB_IS_ERROR(st))
+  if(FSAL_POSIXDB_IS_ERROR(st))
     {
       DisplayLogLevel(NIV_CRIT,
                       "CRITICAL ERROR: Worker could not connect to database !!!");
@@ -170,7 +170,7 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
   unsigned int i;
 
   /* sanity check */
-  if (!p_thr_context || !p_export_context)
+  if(!p_thr_context || !p_export_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
 
   /* set the export specific context */
@@ -180,14 +180,14 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
   p_thr_context->credential.user = uid;
   p_thr_context->credential.group = gid;
 
-  if (ng > FSAL_NGROUPS_MAX)
+  if(ng > FSAL_NGROUPS_MAX)
     ng = FSAL_NGROUPS_MAX;
-  if ((ng > 0) && (alt_groups == NULL))
+  if((ng > 0) && (alt_groups == NULL))
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
 
   p_thr_context->credential.nbgroups = ng;
 
-  for (i = 0; i < ng; i++)
+  for(i = 0; i < ng; i++)
     p_thr_context->credential.alt_groups[i] = alt_groups[i];
 #if defined( _DEBUG_FSAL )
 
@@ -197,7 +197,7 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tuid = %d, gid = %d",
                     p_thr_context->credential.user, p_thr_context->credential.group);
 
-  for (i = 0; i < p_thr_context->credential.nbgroups; i++)
+  for(i = 0; i < p_thr_context->credential.nbgroups; i++)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
                       p_thr_context->credential.alt_groups[i]);
 

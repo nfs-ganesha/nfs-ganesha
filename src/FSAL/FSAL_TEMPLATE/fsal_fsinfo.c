@@ -45,7 +45,7 @@ fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,    /* IN */
 {
   /* sanity checks. */
   /* for HPSS, handle and credential are not used. */
-  if (!staticinfo)
+  if(!staticinfo)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_static_fsinfo);
 
   /* returning static info about the filesystem */
@@ -81,7 +81,7 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
 {
 
   /* sanity checks. */
-  if (!filehandle || !dynamicinfo || !p_context)
+  if(!filehandle || !dynamicinfo || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_dynamic_fsinfo);
 
   TakeTokenFSCall();

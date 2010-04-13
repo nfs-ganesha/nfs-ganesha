@@ -72,7 +72,7 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
   /* sanity checks
    * note : dir_attributes is optionnal.
    */
-  if (!dir_handle || !p_context || !dir_descriptor)
+  if(!dir_handle || !p_context || !dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_opendir);
 
 #ifdef _DEBUG_FSAL
@@ -155,7 +155,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
   /* sanity checks */
 
-  if (!dir_descriptor || !pdirent || !end_position || !nb_entries || !end_of_dir)
+  if(!dir_descriptor || !pdirent || !end_position || !nb_entries || !end_of_dir)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
 #ifdef _DEBUG_FSAL
@@ -185,14 +185,14 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
   /* How much data should I read ? */
   nbreaddir = buffersize / (sizeof(fsal_dirent_t));
-  if (nbreaddir > FSAL_READDIR_SIZE)
+  if(nbreaddir > FSAL_READDIR_SIZE)
     nbreaddir = FSAL_READDIR_SIZE;
 
   memset((char *)tabentry4, 0, FSAL_READDIR_SIZE * sizeof(entry4));
   memset((char *)tabentry4name, 0, FSAL_READDIR_SIZE * MAXNAMLEN);
   memset((char *)tabentry4attr, 0,
          FSAL_READDIR_SIZE * sizeof(fsal_proxy_internal_fattr_readdir_t));
-  for (i = 0; i < nbreaddir; i++)
+  for(i = 0; i < nbreaddir; i++)
     {
       fsal_internal_proxy_setup_readdir_fattr(&tabentry4attr[i]);
 
@@ -206,11 +206,11 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
       tabentry4[i].attrs.attrmask.bitmap4_val = tabentry4bitmap[i];
       tabentry4[i].attrs.attrmask.bitmap4_len = 2;
     }
-  resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.opreaddir.
-      READDIR4res_u.resok4.reply.entries = (entry4 *) tabentry4;
+  resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.
+      opreaddir.READDIR4res_u.resok4.reply.entries = (entry4 *) tabentry4;
 
   /* >> Call your filesystem lookup function here << */
-  if (fsal_internal_proxy_extract_fh(&nfs4fh, &dir_descriptor->fhandle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, &dir_descriptor->fhandle) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
   /** @todo : use NFS4_OP_VERIFY to implement a cache validator, BUGAZOMEU */
@@ -221,7 +221,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
   TakeTokenFSCall();
   /* Call the NFSv4 function */
   COMPOUNDV4_EXECUTE(dir_descriptor->pcontext, argnfs4, resnfs4, rc);
-  if (rc != RPC_SUCCESS)
+  if(rc != RPC_SUCCESS)
     {
       ReleaseTokenFSCall();
 
@@ -229,12 +229,12 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
     }
   ReleaseTokenFSCall();
 
-  if (resnfs4.status != NFS4_OK)
+  if(resnfs4.status != NFS4_OK)
     return fsal_internal_proxy_error_convert(resnfs4.status, INDEX_FSAL_readdir);
 
   /* Set the reply structure */
-  if (resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.opreaddir.
-      READDIR4res_u.resok4.reply.eof == TRUE)
+  if(resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.
+     opreaddir.READDIR4res_u.resok4.reply.eof == TRUE)
     {
       *end_of_dir = TRUE;
     }
@@ -248,13 +248,13 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
    */
 
   /* Don't forget setting output vars : end_position, nb_entries, end_of_dir  */
-  for (piter_entry =
-       resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.opreaddir.
-       READDIR4res_u.resok4.reply.entries; piter_entry != NULL;
-       piter_entry = piter_entry->nextentry)
+  for(piter_entry =
+      resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.
+      opreaddir.READDIR4res_u.resok4.reply.entries; piter_entry != NULL;
+      piter_entry = piter_entry->nextentry)
     {
-      if (proxy_Fattr_To_FSAL_attr(&pdirent[cpt].attributes,
-                                   &(pdirent[cpt].handle), &(piter_entry->attrs)) != 1)
+      if(proxy_Fattr_To_FSAL_attr(&pdirent[cpt].attributes,
+                                  &(pdirent[cpt].handle), &(piter_entry->attrs)) != 1)
         {
           FSAL_CLEAR_MASK(pdirent[cpt].attributes.asked_attributes);
           FSAL_SET_MASK(pdirent[cpt].attributes.asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -262,13 +262,13 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
           Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
         }
 
-      if (fsal_internal_proxy_fsal_utf8_2_name(&(pdirent[cpt].name),
-                                               &(piter_entry->name)) == FALSE)
+      if(fsal_internal_proxy_fsal_utf8_2_name(&(pdirent[cpt].name),
+                                              &(piter_entry->name)) == FALSE)
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
       /* Link the entries together */
       pdirent[cpt].nextentry = NULL;    /* Will be overwritten if there is an entry behind, stay NULL if not */
-      if (cpt != 0)
+      if(cpt != 0)
         pdirent[cpt - 1].nextentry = &pdirent[cpt];
 
       /* Set end position */
@@ -277,7 +277,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
       /* Get ready for next pdirent */
       cpt += 1;
 
-      if (cpt >= FSAL_READDIR_SIZE)
+      if(cpt >= FSAL_READDIR_SIZE)
         break;
     }
 
@@ -306,7 +306,7 @@ fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
 {
 
   /* sanity checks */
-  if (!dir_descriptor)
+  if(!dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_closedir);
 
   dir_descriptor->pcontext = NULL;

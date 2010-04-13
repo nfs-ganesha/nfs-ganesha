@@ -19,7 +19,7 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
                          dbparams->login,       /* Login */
                          NULL   /* Password is in a file */
       );
-  if ((st = PQstatus(*p_conn)) == CONNECTION_OK)
+  if((st = PQstatus(*p_conn)) == CONNECTION_OK)
     {
       /*
          prepared statements

@@ -54,13 +54,13 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
 
   *status = FSAL_STATUS_NO_ERROR;
 
-  if (!handle1 || !handle2)
+  if(!handle1 || !handle2)
     {
       status->major = ERR_FSAL_FAULT;
       return -1;
     }
 
-  if (handle1->oid_len != handle2->oid_len)
+  if(handle1->oid_len != handle2->oid_len)
     return (handle1->oid_len - handle2->oid_len);
   return memcmp(handle1->oid_tab, handle2->oid_tab, handle1->oid_len * sizeof(oid));
 
@@ -87,7 +87,7 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
   unsigned int i;
   unsigned int h = 1 + cookie;
 
-  for (i = 0; i < p_handle->oid_len; i++)
+  for(i = 0; i < p_handle->oid_len; i++)
     h = (691 * h ^ (unsigned int)p_handle->oid_tab[i]) % 479001599;
 
   return h % index_size;
@@ -110,7 +110,7 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
   unsigned int i;
   unsigned int h = 1 + cookie;
 
-  for (i = 0; i < p_handle->oid_len; i++)
+  for(i = 0; i < p_handle->oid_len; i++)
     h = (857 * h ^ (unsigned int)p_handle->oid_tab[i]) % 715827883;
 
   return h;
@@ -186,7 +186,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
   unsigned char *curr_addr;
 
   /* sanity checks */
-  if (!in_fsal_handle || !out_buff || !p_expcontext)
+  if(!in_fsal_handle || !out_buff || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   switch (output_type)
@@ -229,7 +229,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
       nb_oids = in_fsal_handle->oid_len - root_len;
 
       /* if buffer is too small, no need to continue */
-      if (nb_oids > 23)
+      if(nb_oids > 23)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       p_digest->relative_oid_len = nb_oids;
@@ -238,14 +238,14 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
       nb_short = 0;
       nb_int = 0;
 
-      for (i = root_len; i < in_fsal_handle->oid_len; i++)
+      for(i = root_len; i < in_fsal_handle->oid_len; i++)
         {
-          if (in_fsal_handle->oid_tab[i] > MAX_SHORT_VAL)
+          if(in_fsal_handle->oid_tab[i] > MAX_SHORT_VAL)
             {
               int_tab_indexes[nb_int] = i - root_len;
               nb_int++;
             }
-          else if (in_fsal_handle->oid_tab[i] > MAX_CHAR_VAL)
+          else if(in_fsal_handle->oid_tab[i] > MAX_CHAR_VAL)
             {
               short_tab_indexes[nb_short] = i - root_len;
               nb_short++;
@@ -254,7 +254,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
       /* 3 bytes for each short : 1 for its index and 2 for its storage */
       /* 5 bytes for each int : 1 for its index and 4 for its storage */
-      if (3 * nb_short + 5 * nb_int + (nb_oids - nb_short - nb_int) > 23)
+      if(3 * nb_short + 5 * nb_int + (nb_oids - nb_short - nb_int) > 23)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       /* fill the digest header */
@@ -265,25 +265,25 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
       curr_addr = p_digest->char_tab;
 
-      for (i = 0; i < nb_short; i++)
+      for(i = 0; i < nb_short; i++)
         {
           *curr_addr = (unsigned char)short_tab_indexes[i];
           curr_addr++;
         }
 
-      for (i = 0; i < nb_int; i++)
+      for(i = 0; i < nb_int; i++)
         {
           *curr_addr = (unsigned char)int_tab_indexes[i];
           curr_addr++;
         }
 
       /* now store each oid */
-      for (i = 0; i < nb_oids; i++)
+      for(i = 0; i < nb_oids; i++)
         {
           /* if the oid is bigger that short, write 4 bytes */
-          if (in_fsal_handle->oid_tab[i + root_len] > MAX_SHORT_VAL)
+          if(in_fsal_handle->oid_tab[i + root_len] > MAX_SHORT_VAL)
             {
-              if (curr_addr + 4 > (unsigned char *)out_buff + FSAL_DIGEST_SIZE_HDLV2)
+              if(curr_addr + 4 > (unsigned char *)out_buff + FSAL_DIGEST_SIZE_HDLV2)
                 ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
               curr_addr[3] =
@@ -298,9 +298,9 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
               curr_addr += 4;
             }
           /* if the oid is bigger that byte, write 2 bytes */
-          else if (in_fsal_handle->oid_tab[i + root_len] > MAX_CHAR_VAL)
+          else if(in_fsal_handle->oid_tab[i + root_len] > MAX_CHAR_VAL)
             {
-              if (curr_addr + 2 > (unsigned char *)out_buff + FSAL_DIGEST_SIZE_HDLV2)
+              if(curr_addr + 2 > (unsigned char *)out_buff + FSAL_DIGEST_SIZE_HDLV2)
                 ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
               curr_addr[1] =
@@ -312,7 +312,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
             }
           else                  /* write 1 byte */
             {
-              if (curr_addr + 1 > (unsigned char *)out_buff + FSAL_DIGEST_SIZE_HDLV2)
+              if(curr_addr + 1 > (unsigned char *)out_buff + FSAL_DIGEST_SIZE_HDLV2)
                 ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
               curr_addr[0] =
@@ -390,7 +390,7 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
   unsigned int *curr_int_idx;
 
   /* sanity checks */
-  if (!out_fsal_handle || !in_buff || !p_expcontext)
+  if(!out_fsal_handle || !in_buff || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   switch (in_type)
@@ -440,14 +440,14 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
       curr_int_idx = int_tab_indexes;
 
       /* retrieve short and int indexes */
-      for (i = 0; i < nb_short; i++)
+      for(i = 0; i < nb_short; i++)
         {
           *curr_short_idx = *curr_addr;
           curr_short_idx++;
           curr_addr++;
         }
 
-      for (i = 0; i < nb_int; i++)
+      for(i = 0; i < nb_int; i++)
         {
           *curr_int_idx = *curr_addr;
           curr_int_idx++;
@@ -459,10 +459,10 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
       curr_int_idx = int_tab_indexes;
 
       /* now, read the oid values */
-      for (i = 0; i < p_digest->relative_oid_len; i++)
+      for(i = 0; i < p_digest->relative_oid_len; i++)
         {
           /* is the current oid on 32 bits ?  */
-          if ((curr_int_idx < int_tab_indexes + nb_int) && (i == *curr_int_idx))
+          if((curr_int_idx < int_tab_indexes + nb_int) && (i == *curr_int_idx))
             {
               /* read 4 bytes */
               out_fsal_handle->oid_tab[i + root_len] =
@@ -472,8 +472,8 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
               curr_addr += 4;
               curr_int_idx++;
             }
-          else if ((curr_short_idx < short_tab_indexes + nb_short)
-                   && (i == *curr_short_idx))
+          else if((curr_short_idx < short_tab_indexes + nb_short)
+                  && (i == *curr_short_idx))
             {
               /* read 2 bytes */
               out_fsal_handle->oid_tab[i + root_len] =
@@ -515,7 +515,7 @@ fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
   log_t no_logging = LOG_INITIALIZER;
 
   /* defensive programming... */
-  if (out_parameter == NULL)
+  if(out_parameter == NULL)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   /* init logging to no logging */
@@ -531,7 +531,7 @@ fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
 {
   /* defensive programming... */
-  if (out_parameter == NULL)
+  if(out_parameter == NULL)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   /* set default values for all parameters of fs_common_info */
@@ -567,7 +567,7 @@ fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_paramet
 fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
 {
   /* defensive programming... */
-  if (out_parameter == NULL)
+  if(out_parameter == NULL)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   out_parameter->fs_specific_info.snmp_version = SNMP_VERSION_2c;
@@ -631,13 +631,13 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
   /* cannot read item */
 
-  if (block == NULL)
+  if(block == NULL)
     {
       DisplayLog("FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
                  CONF_LABEL_FSAL);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }
-  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       DisplayLog("FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
                  CONF_LABEL_FSAL);
@@ -648,14 +648,14 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
   var_max = config_GetNbItems(block);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
 
       item = config_GetItemByIndex(block, var_index);
 
       err = config_GetKeyValue(item, &key_name, &key_value);
-      if (err)
+      if(err)
         {
           DisplayLog
               ("FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
@@ -663,11 +663,11 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
           ReturnCode(ERR_FSAL_SERVERFAULT, err);
         }
 
-      if (!STRCMP(key_name, "DebugLevel"))
+      if(!STRCMP(key_name, "DebugLevel"))
         {
           DebugLevel = ReturnLevelAscii(key_value);
 
-          if (DebugLevel == -1)
+          if(DebugLevel == -1)
             {
               DisplayLog("FSAL LOAD PARAMETER: ERROR: Invalid debug level name: \"%s\".",
                          key_value);
@@ -675,18 +675,18 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
             }
 
         }
-      else if (!STRCMP(key_name, "LogFile"))
+      else if(!STRCMP(key_name, "LogFile"))
         {
 
           LogFile = key_value;
 
         }
-      else if (!STRCMP(key_name, "Max_FS_calls"))
+      else if(!STRCMP(key_name, "Max_FS_calls"))
         {
 
           int maxcalls = s_read_int(key_value);
 
-          if (maxcalls < 0)
+          if(maxcalls < 0)
             {
               DisplayLog
                   ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: null or positive integer expected.",
@@ -709,7 +709,7 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
   /* init logging */
 
-  if (LogFile)
+  if(LogFile)
     {
       desc_log_stream_t log_stream;
 
@@ -717,7 +717,7 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
       /* Default : NIV_CRIT */
 
-      if (DebugLevel == -1)
+      if(DebugLevel == -1)
         AddLogStreamJd(&(out_parameter->fsal_info.log_outputs),
                        V_FILE, log_stream, NIV_CRIT, SUP);
       else
@@ -744,13 +744,13 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
   block = config_FindItemByName(in_config, CONF_LABEL_FS_COMMON);
 
   /* cannot read item */
-  if (block == NULL)
+  if(block == NULL)
     {
       DisplayLog("FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
                  CONF_LABEL_FS_COMMON);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }
-  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       DisplayLog("FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
                  CONF_LABEL_FS_COMMON);
@@ -771,14 +771,14 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
   var_max = config_GetNbItems(block);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
 
       item = config_GetItemByIndex(block, var_index);
 
       err = config_GetKeyValue(item, &key_name, &key_value);
-      if (err)
+      if(err)
         {
           DisplayLog
               ("FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
@@ -787,12 +787,12 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
         }
 
       /* does the variable exists ? */
-      if (!STRCMP(key_name, "link_support"))
+      if(!STRCMP(key_name, "link_support"))
         {
 
           int bool = StrToBoolean(key_value);
 
-          if (bool == -1)
+          if(bool == -1)
             {
               DisplayLog
                   ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
@@ -807,11 +807,11 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
                              FSAL_INIT_MAX_LIMIT, bool);
 
         }
-      else if (!STRCMP(key_name, "symlink_support"))
+      else if(!STRCMP(key_name, "symlink_support"))
         {
           int bool = StrToBoolean(key_value);
 
-          if (bool == -1)
+          if(bool == -1)
             {
               DisplayLog
                   ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
@@ -825,11 +825,11 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
           FSAL_SET_INIT_INFO(out_parameter->fs_common_info, symlink_support,
                              FSAL_INIT_MAX_LIMIT, bool);
         }
-      else if (!STRCMP(key_name, "cansettime"))
+      else if(!STRCMP(key_name, "cansettime"))
         {
           int bool = StrToBoolean(key_value);
 
-          if (bool == -1)
+          if(bool == -1)
             {
               DisplayLog
                   ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
@@ -844,11 +844,11 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
                              FSAL_INIT_MAX_LIMIT, bool);
 
         }
-      else if (!STRCMP(key_name, "maxread"))
+      else if(!STRCMP(key_name, "maxread"))
         {
           fsal_u64_t size;
 
-          if (s_read_int64(key_value, &size))
+          if(s_read_int64(key_value, &size))
             {
               DisplayLog
                   ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
@@ -860,11 +860,11 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
                              FSAL_INIT_FORCE_VALUE, size);
 
         }
-      else if (!STRCMP(key_name, "maxwrite"))
+      else if(!STRCMP(key_name, "maxwrite"))
         {
           fsal_u64_t size;
 
-          if (s_read_int64(key_value, &size))
+          if(s_read_int64(key_value, &size))
             {
               DisplayLog
                   ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
@@ -876,11 +876,11 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
                              FSAL_INIT_FORCE_VALUE, size);
 
         }
-      else if (!STRCMP(key_name, "umask"))
+      else if(!STRCMP(key_name, "umask"))
         {
           int mode = s_read_octal(key_value);
 
-          if (mode < 0)
+          if(mode < 0)
             {
               DisplayLog
                   ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: octal expected.",
@@ -892,11 +892,11 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
                              FSAL_INIT_FORCE_VALUE, unix2fsal_mode(mode));
 
         }
-      else if (!STRCMP(key_name, "auth_xdev_export"))
+      else if(!STRCMP(key_name, "auth_xdev_export"))
         {
           int bool = StrToBoolean(key_value);
 
-          if (bool == -1)
+          if(bool == -1)
             {
               DisplayLog
                   ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
@@ -907,11 +907,11 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
           FSAL_SET_INIT_INFO(out_parameter->fs_common_info, auth_exportpath_xdev,
                              FSAL_INIT_FORCE_VALUE, bool);
         }
-      else if (!STRCMP(key_name, "xattr_access_rights"))
+      else if(!STRCMP(key_name, "xattr_access_rights"))
         {
           int mode = s_read_octal(key_value);
 
-          if (mode < 0)
+          if(mode < 0)
             {
               DisplayLog
                   ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: octal expected.",
@@ -952,13 +952,13 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
   block = config_FindItemByName(in_config, CONF_LABEL_FS_SPECIFIC);
 
   /* cannot read item */
-  if (block == NULL)
+  if(block == NULL)
     {
       DisplayLog("FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
                  CONF_LABEL_FS_SPECIFIC);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }
-  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       DisplayLog("FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
                  CONF_LABEL_FS_SPECIFIC);
@@ -969,14 +969,14 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
 
   var_max = config_GetNbItems(block);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
 
       item = config_GetItemByIndex(block, var_index);
 
       err = config_GetKeyValue(item, &key_name, &key_value);
-      if (err)
+      if(err)
         {
           DisplayLog
               ("FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
@@ -986,11 +986,11 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
 
       /* what parameter is it ? */
 
-      if (!STRCMP(key_name, "snmp_version"))
+      if(!STRCMP(key_name, "snmp_version"))
         {
           long version = StrToSNMPVersion(key_value);
 
-          if (version == -1)
+          if(version == -1)
             {
               DisplayLog
                   ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 1, 2c or 3 expected.",
@@ -1000,20 +1000,20 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
           out_parameter->fs_specific_info.snmp_version = version;
 
         }
-      else if (!STRCMP(key_name, "snmp_server"))
+      else if(!STRCMP(key_name, "snmp_server"))
         {
           strncpy(out_parameter->fs_specific_info.snmp_server, key_value, HOST_NAME_MAX);
         }
-      else if (!STRCMP(key_name, "community"))
+      else if(!STRCMP(key_name, "community"))
         {
           strncpy(out_parameter->fs_specific_info.community, key_value,
                   COMMUNITY_MAX_LEN);
         }
-      else if (!STRCMP(key_name, "nb_retries"))
+      else if(!STRCMP(key_name, "nb_retries"))
         {
           int retries = s_read_int(key_value);
 
-          if (retries < 0)
+          if(retries < 0)
             {
               DisplayLog
                   ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: null or positive integer expected.",
@@ -1023,11 +1023,11 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
           out_parameter->fs_specific_info.nb_retries = retries;
 
         }
-      else if (!STRCMP(key_name, "microsec_timeout"))
+      else if(!STRCMP(key_name, "microsec_timeout"))
         {
           int timeout = s_read_int(key_value);
 
-          if (timeout < 0)
+          if(timeout < 0)
             {
               DisplayLog
                   ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: null or positive integer expected.",
@@ -1037,11 +1037,11 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
           out_parameter->fs_specific_info.microsec_timeout = timeout;
 
         }
-      else if (!STRCMP(key_name, "enable_descriptions"))
+      else if(!STRCMP(key_name, "enable_descriptions"))
         {
           int bool = StrToBoolean(key_value);
 
-          if (bool == -1)
+          if(bool == -1)
             {
               DisplayLog
                   ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
@@ -1051,15 +1051,15 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
           out_parameter->fs_specific_info.enable_descriptions = bool;
 
         }
-      else if (!STRCMP(key_name, "client_name"))
+      else if(!STRCMP(key_name, "client_name"))
         {
           strncpy(out_parameter->fs_specific_info.client_name, key_value, 256);
         }
-      else if (!STRCMP(key_name, "snmp_getbulk_count"))
+      else if(!STRCMP(key_name, "snmp_getbulk_count"))
         {
           int count = s_read_int(key_value);
 
-          if (count <= 0)
+          if(count <= 0)
             {
               DisplayLog
                   ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
@@ -1069,27 +1069,27 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
           out_parameter->fs_specific_info.getbulk_count = count;
 
         }
-      else if (!STRCMP(key_name, "auth_proto"))
+      else if(!STRCMP(key_name, "auth_proto"))
         {
           strncpy(out_parameter->fs_specific_info.auth_proto, key_value,
                   FSAL_MAX_PROTO_LEN);
         }
-      else if (!STRCMP(key_name, "enc_proto"))
+      else if(!STRCMP(key_name, "enc_proto"))
         {
           strncpy(out_parameter->fs_specific_info.enc_proto, key_value,
                   FSAL_MAX_PROTO_LEN);
         }
-      else if (!STRCMP(key_name, "username"))
+      else if(!STRCMP(key_name, "username"))
         {
           strncpy(out_parameter->fs_specific_info.username, key_value,
                   FSAL_MAX_USERNAME_LEN);
         }
-      else if (!STRCMP(key_name, "auth_phrase"))
+      else if(!STRCMP(key_name, "auth_phrase"))
         {
           strncpy(out_parameter->fs_specific_info.auth_phrase, key_value,
                   FSAL_MAX_PHRASE_LEN);
         }
-      else if (!STRCMP(key_name, "enc_phrase"))
+      else if(!STRCMP(key_name, "enc_phrase"))
         {
           strncpy(out_parameter->fs_specific_info.enc_phrase, key_value,
                   FSAL_MAX_PHRASE_LEN);

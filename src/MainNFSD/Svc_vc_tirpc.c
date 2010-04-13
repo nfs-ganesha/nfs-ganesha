@@ -163,18 +163,18 @@ u_int recvsize;
   socklen_t slen;
 
   r = (struct cf_rendezvous *)Mem_Alloc(sizeof(*r));
-  if (r == NULL)
+  if(r == NULL)
     {
       warnx("Svc_vc_create: out of memory");
       goto cleanup_svc_vc_create;
     }
-  if (!__rpc_fd2sockinfo(fd, &si))
+  if(!__rpc_fd2sockinfo(fd, &si))
     return NULL;
   r->sendsize = __rpc_get_t_size(si.si_af, si.si_proto, (int)sendsize);
   r->recvsize = __rpc_get_t_size(si.si_af, si.si_proto, (int)recvsize);
   r->maxrec = __svc_maxrec;
   xprt = (SVCXPRT *) Mem_Alloc(sizeof(SVCXPRT));
-  if (xprt == NULL)
+  if(xprt == NULL)
     {
       warnx("Svc_vc_create: out of memory");
       goto cleanup_svc_vc_create;
@@ -190,7 +190,7 @@ u_int recvsize;
 
   slen = sizeof(struct sockaddr_storage);
   listen(fd, SOMAXCONN);
-  if (getsockname(fd, (struct sockaddr *)(void *)&sslocal, &slen) < 0)
+  if(getsockname(fd, (struct sockaddr *)(void *)&sslocal, &slen) < 0)
     {
       warnx("Svc_vc_create: could not retrieve local addr");
       goto cleanup_svc_vc_create;
@@ -198,7 +198,7 @@ u_int recvsize;
 
   xprt->xp_ltaddr.maxlen = xprt->xp_ltaddr.len = sizeof(sslocal);
   xprt->xp_ltaddr.buf = Mem_Alloc((size_t) sizeof(sslocal));
-  if (xprt->xp_ltaddr.buf == NULL)
+  if(xprt->xp_ltaddr.buf == NULL)
     {
       warnx("Svc_vc_create: no mem for local addr");
       goto cleanup_svc_vc_create;
@@ -210,7 +210,7 @@ u_int recvsize;
 
   return (xprt);
  cleanup_svc_vc_create:
-  if (r != NULL)
+  if(r != NULL)
     Mem_Free(r);
   return (NULL);
 }
@@ -232,30 +232,30 @@ u_int recvsize;
   assert(fd != -1);
 
   ret = Makefd_xprt(fd, sendsize, recvsize);
-  if (ret == NULL)
+  if(ret == NULL)
     return NULL;
 
   slen = sizeof(struct sockaddr_storage);
-  if (getsockname(fd, (struct sockaddr *)(void *)&ss, &slen) < 0)
+  if(getsockname(fd, (struct sockaddr *)(void *)&ss, &slen) < 0)
     {
       warnx("Svc_fd_create: could not retrieve local addr");
       goto freedata;
     }
   ret->xp_ltaddr.maxlen = ret->xp_ltaddr.len = sizeof(ss);
   ret->xp_ltaddr.buf = Mem_Alloc((size_t) sizeof(ss));
-  if (ret->xp_ltaddr.buf == NULL)
+  if(ret->xp_ltaddr.buf == NULL)
     {
       warnx("Svc_fd_create: no mem for local addr");
       goto freedata;
     }
   memcpy(ret->xp_ltaddr.buf, &ss, (size_t) sizeof(ss));
   slen = sizeof(struct sockaddr_storage);
-  if (getpeername(fd, (struct sockaddr *)(void *)&ss, &slen) < 0)
+  if(getpeername(fd, (struct sockaddr *)(void *)&ss, &slen) < 0)
     {
       warnx("Svc_fd_create: could not retrieve remote addr");
       goto freedata;
     }
-  if (ss.ss_family == AF_INET)
+  if(ss.ss_family == AF_INET)
     {
       map_ipv4_to_ipv6((struct sockaddr_in *)&ss, &sin6);
     }
@@ -265,17 +265,17 @@ u_int recvsize;
     }
   ret->xp_rtaddr.maxlen = ret->xp_rtaddr.len = sizeof(ss);
   ret->xp_rtaddr.buf = Mem_Alloc((size_t) sizeof(ss));
-  if (ret->xp_rtaddr.buf == NULL)
+  if(ret->xp_rtaddr.buf == NULL)
     {
       warnx("Svc_fd_create: no mem for local addr");
       goto freedata;
     }
-  if (ss.ss_family == AF_INET)
+  if(ss.ss_family == AF_INET)
     memcpy(ret->xp_rtaddr.buf, &ss, (size_t) sizeof(ss));
   else
     memcpy(ret->xp_rtaddr.buf, &sin6, (size_t) sizeof(ss));
 #ifdef PORTMAP
-  if (sin6.sin6_family == AF_INET6 || sin6.sin6_family == AF_LOCAL)
+  if(sin6.sin6_family == AF_INET6 || sin6.sin6_family == AF_LOCAL)
     {
       memcpy(&ret->xp_raddr, ret->xp_rtaddr.buf, sizeof(struct sockaddr_in6));
       ret->xp_addrlen = sizeof(struct sockaddr_in6);
@@ -285,7 +285,7 @@ u_int recvsize;
   return ret;
 
  freedata:
-  if (ret->xp_ltaddr.buf != NULL)
+  if(ret->xp_ltaddr.buf != NULL)
     Mem_Free(ret->xp_ltaddr.buf);
 
   return NULL;
@@ -304,14 +304,14 @@ u_int recvsize;
   assert(fd != -1);
 
   xprt = (SVCXPRT *) Mem_Alloc(sizeof(SVCXPRT));
-  if (xprt == NULL)
+  if(xprt == NULL)
     {
       warnx("svc_vc: Makefd_xprt: out of memory");
       goto done;
     }
   memset(xprt, 0, sizeof *xprt);
   cd = (struct cf_conn *)Mem_Alloc(sizeof(struct cf_conn));
-  if (cd == NULL)
+  if(cd == NULL)
     {
       warnx("svc_tcp: Makefd_xprt: out of memory");
       Mem_Free(xprt);
@@ -325,7 +325,7 @@ u_int recvsize;
   Svc_vc_ops(xprt);             /* truely deals with calls */
   xprt->xp_port = 0;            /* this is a connection, not a rendezvouser */
   xprt->xp_fd = fd;
-  if (__rpc_fd2sockinfo(fd, &si) && __rpc_sockinfo2netid(&si, &netid))
+  if(__rpc_fd2sockinfo(fd, &si) && __rpc_sockinfo2netid(&si, &netid))
     xprt->xp_netid = strdup(netid);
 
   Xprt_register(xprt);
@@ -357,17 +357,17 @@ struct rpc_msg *msg;
   r = (struct cf_rendezvous *)xprt->xp_p1;
  again:
   len = sizeof(struct sockaddr_storage);
-  if ((sock = accept(xprt->xp_fd, (struct sockaddr *)(void *)&addr, &len)) < 0)
+  if((sock = accept(xprt->xp_fd, (struct sockaddr *)(void *)&addr, &len)) < 0)
     {
       printf("Error in accept xp_fd=%u line=%u file=%s, errno=%u\n", xprt->xp_fd,
              __LINE__, __FILE__, errno);
-      if (errno == EINTR)
+      if(errno == EINTR)
         goto again;
       /*
        * Clean out the most idle file descriptor when we're
        * running out.
        */
-      if (errno == EMFILE || errno == ENFILE)
+      if(errno == EMFILE || errno == ENFILE)
         {
           cleanfds = Svc_fdset;
           __svc_clean_idle(&cleanfds, 0, FALSE);
@@ -380,7 +380,7 @@ struct rpc_msg *msg;
    */
 
   newxprt = Makefd_xprt(sock, r->sendsize, r->recvsize);
-  if (addr.ss_family == AF_INET)
+  if(addr.ss_family == AF_INET)
     {
       map_ipv4_to_ipv6((struct sockaddr_in *)&addr, &sin6);
     }
@@ -389,22 +389,22 @@ struct rpc_msg *msg;
       memcpy(&sin6, &addr, len);
     }
   newxprt->xp_rtaddr.buf = Mem_Alloc(len);
-  if (newxprt->xp_rtaddr.buf == NULL)
+  if(newxprt->xp_rtaddr.buf == NULL)
     return (FALSE);
 
-  if (addr.ss_family == AF_INET)
+  if(addr.ss_family == AF_INET)
     memcpy(newxprt->xp_rtaddr.buf, &addr, len);
   else
     memcpy(newxprt->xp_rtaddr.buf, &sin6, len);
   newxprt->xp_rtaddr.maxlen = newxprt->xp_rtaddr.len = len;
 #ifdef PORTMAP
-  if (sin6.sin6_family == AF_INET6 || sin6.sin6_family == AF_LOCAL)
+  if(sin6.sin6_family == AF_INET6 || sin6.sin6_family == AF_LOCAL)
     {
       memcpy(&newxprt->xp_raddr, newxprt->xp_rtaddr.buf, sizeof(struct sockaddr_in6));
       newxprt->xp_addrlen = sizeof(struct sockaddr_in6);
     }
 #endif                          /* PORTMAP */
-  if (__rpc_fd2sockinfo(sock, &si) && si.si_proto == IPPROTO_TCP)
+  if(__rpc_fd2sockinfo(sock, &si) && si.si_proto == IPPROTO_TCP)
     {
       len = 1;
       /* XXX fvdl - is this useful? */
@@ -417,14 +417,14 @@ struct rpc_msg *msg;
   cd->sendsize = r->sendsize;
   cd->maxrec = r->maxrec;
 
-  if (cd->maxrec != 0)
+  if(cd->maxrec != 0)
     {
       flags = fcntl(sock, F_GETFL, 0);
-      if (flags == -1)
+      if(flags == -1)
         return (FALSE);
       /*if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) == -1)
          return (FALSE); */
-      if (cd->recvsize > cd->maxrec)
+      if(cd->recvsize > cd->maxrec)
         cd->recvsize = cd->maxrec;
       cd->nonblock = TRUE;
       __xdrrec_setnonblock(&cd->xdrs, cd->maxrec);
@@ -440,7 +440,7 @@ struct rpc_msg *msg;
 
   FD_CLR(newxprt->xp_fd, &Svc_fdset);
 
-  if (pthread_cond_init(&condvar_xprt[newxprt->xp_fd], NULL) != 0)
+  if(pthread_cond_init(&condvar_xprt[newxprt->xp_fd], NULL) != 0)
     return FALSE;
 
   /* Init the mutex */
@@ -448,9 +448,9 @@ struct rpc_msg *msg;
 
   etat_xprt[newxprt->xp_fd] = 0;
 
-  if ((rc =
-       pthread_create(&sockmgr_thrid, &attr_thr, rpc_tcp_socket_manager_thread,
-                      (void *)(newxprt->xp_fd))) != 0)
+  if((rc =
+      pthread_create(&sockmgr_thrid, &attr_thr, rpc_tcp_socket_manager_thread,
+                     (void *)(newxprt->xp_fd))) != 0)
     return FALSE;
 
   return (FALSE);               /* there is never an rpc msg to be processed */
@@ -480,9 +480,9 @@ SVCXPRT *xprt;
 
   cd = (struct cf_conn *)xprt->xp_p1;
 
-  if (xprt->xp_fd != RPC_ANYFD)
+  if(xprt->xp_fd != RPC_ANYFD)
     (void)close(xprt->xp_fd);
-  if (xprt->xp_port != 0)
+  if(xprt->xp_port != 0)
     {
       /* a rendezvouser socket */
       r = (struct cf_rendezvous *)xprt->xp_p1;
@@ -495,13 +495,13 @@ SVCXPRT *xprt;
       XDR_DESTROY(&(cd->xdrs));
       Mem_Free(cd);
     }
-  if (xprt->xp_rtaddr.buf)
+  if(xprt->xp_rtaddr.buf)
     Mem_Free(xprt->xp_rtaddr.buf);
-  if (xprt->xp_ltaddr.buf)
+  if(xprt->xp_ltaddr.buf)
     Mem_Free(xprt->xp_ltaddr.buf);
-  if (xprt->xp_tp)
+  if(xprt->xp_tp)
     free(xprt->xp_tp);
-  if (xprt->xp_netid)
+  if(xprt->xp_netid)
     free(xprt->xp_netid);
   Mem_Free(xprt);
 }
@@ -522,7 +522,7 @@ void *in;
   struct cf_rendezvous *cfp;
 
   cfp = (struct cf_rendezvous *)xprt->xp_p1;
-  if (cfp == NULL)
+  if(cfp == NULL)
     return (FALSE);
   switch (rq)
     {
@@ -563,17 +563,17 @@ int len;
 
   cfp = (struct cf_conn *)xprt->xp_p1;
 
-  if (cfp->nonblock)
+  if(cfp->nonblock)
     {
       len = read(sock, buf, (size_t) len);
-      if (len < 0)
+      if(len < 0)
         {
-          if (errno == EAGAIN)
+          if(errno == EAGAIN)
             len = 0;
           else
             goto fatal_err;
         }
-      if (len != 0)
+      if(len != 0)
         gettimeofday(&cfp->last_recv_time, NULL);
       return len;
     }
@@ -586,7 +586,7 @@ int len;
       switch (poll(&pollfd, 1, milliseconds))
         {
         case -1:
-          if (errno == EINTR)
+          if(errno == EINTR)
             continue;
          /*FALLTHROUGH*/ case 0:
           goto fatal_err;
@@ -595,9 +595,9 @@ int len;
           break;
         }
     }
-  while ((pollfd.revents & POLLIN) == 0);
+  while((pollfd.revents & POLLIN) == 0);
 
-  if ((len = read(sock, buf, (size_t) len)) > 0)
+  if((len = read(sock, buf, (size_t) len)) > 0)
     {
       gettimeofday(&cfp->last_recv_time, NULL);
       return (len);
@@ -627,20 +627,20 @@ int len;
 
   cd = (struct cf_conn *)xprt->xp_p1;
 
-  if (cd->nonblock)
+  if(cd->nonblock)
     gettimeofday(&tv0, NULL);
 
-  for (cnt = len; cnt > 0; cnt -= i, buf += i)
+  for(cnt = len; cnt > 0; cnt -= i, buf += i)
     {
       i = write(xprt->xp_fd, buf, (size_t) cnt);
-      if (i < 0)
+      if(i < 0)
         {
-          if (errno != EAGAIN || !cd->nonblock)
+          if(errno != EAGAIN || !cd->nonblock)
             {
               cd->strm_stat = XPRT_DIED;
               return (-1);
             }
-          if (cd->nonblock && i != cnt)
+          if(cd->nonblock && i != cnt)
             {
               /*
                * For non-blocking connections, do not
@@ -650,7 +650,7 @@ int len;
                * XXX 2 is an arbitrary amount.
                */
               gettimeofday(&tv1, NULL);
-              if (tv1.tv_sec - tv0.tv_sec >= 2)
+              if(tv1.tv_sec - tv0.tv_sec >= 2)
                 {
                   cd->strm_stat = XPRT_DIED;
                   return (-1);
@@ -671,9 +671,9 @@ SVCXPRT *xprt;
 
   cd = (struct cf_conn *)(xprt->xp_p1);
 
-  if (cd->strm_stat == XPRT_DIED)
+  if(cd->strm_stat == XPRT_DIED)
     return (XPRT_DIED);
-  if (!xdrrec_eof(&(cd->xdrs)))
+  if(!xdrrec_eof(&(cd->xdrs)))
     return (XPRT_MOREREQS);
   return (XPRT_IDLE);
 }
@@ -691,15 +691,15 @@ struct rpc_msg *msg;
   cd = (struct cf_conn *)(xprt->xp_p1);
   xdrs = &(cd->xdrs);
 
-  if (cd->nonblock)
+  if(cd->nonblock)
     {
-      if (!__xdrrec_getrec(xdrs, &cd->strm_stat, TRUE))
+      if(!__xdrrec_getrec(xdrs, &cd->strm_stat, TRUE))
         return FALSE;
     }
 
   xdrs->x_op = XDR_DECODE;
   (void)xdrrec_skiprecord(xdrs);
-  if (xdr_callmsg(xdrs, msg))
+  if(xdr_callmsg(xdrs, msg))
     {
       cd->x_id = msg->rm_xid;
       return (TRUE);
@@ -766,7 +766,7 @@ SVCXPRT *xprt;
 /* VARIABLES PROTECTED BY ops_lock: ops, ops2 */
 
   P(ops_lock);
-  if (ops.xp_recv == NULL)
+  if(ops.xp_recv == NULL)
     {
       ops.xp_recv = Svc_vc_recv;
       ops.xp_stat = Svc_vc_stat;
@@ -789,7 +789,7 @@ SVCXPRT *xprt;
   extern pthread_mutex_t ops_lock;
 
   P(ops_lock);
-  if (ops.xp_recv == NULL)
+  if(ops.xp_recv == NULL)
     {
       ops.xp_recv = Rendezvous_request;
       ops.xp_stat = Rendezvous_stat;
@@ -817,10 +817,10 @@ int __rpc_get_local_uid(SVCXPRT * transp, uid_t * uid)
 
   sock = transp->xp_fd;
   sa = (struct sockaddr *)transp->xp_rtaddr.buf;
-  if (sa->sa_family == AF_LOCAL)
+  if(sa->sa_family == AF_LOCAL)
     {
       ret = getpeereid(sock, &euid, &egid);
-      if (ret == 0)
+      if(ret == 0)
         *uid = euid;
       return (ret);
     }
@@ -845,28 +845,27 @@ bool_t __svc_clean_idle(fd_set * fds, int timeout, bool_t cleanblock)
   least_active = NULL;
 
   P_w(&Svc_fd_lock);
-  for (i = ncleaned = 0; i <= svc_maxfd; i++)
+  for(i = ncleaned = 0; i <= svc_maxfd; i++)
     {
-      if (FD_ISSET(i, fds))
+      if(FD_ISSET(i, fds))
         {
           xprt = Xports[i];
-          if (xprt == NULL || xprt->xp_ops == NULL ||
-              xprt->xp_ops->xp_recv != Svc_vc_recv)
+          if(xprt == NULL || xprt->xp_ops == NULL || xprt->xp_ops->xp_recv != Svc_vc_recv)
             continue;
           cd = (struct cf_conn *)xprt->xp_p1;
-          if (!cleanblock && !cd->nonblock)
+          if(!cleanblock && !cd->nonblock)
             continue;
-          if (timeout == 0)
+          if(timeout == 0)
             {
               timersub(&tv, &cd->last_recv_time, &tdiff);
-              if (timercmp(&tdiff, &tmax, >))
+              if(timercmp(&tdiff, &tmax, >))
                 {
                   tmax = tdiff;
                   least_active = xprt;
                 }
               continue;
             }
-          if (tv.tv_sec - cd->last_recv_time.tv_sec > timeout)
+          if(tv.tv_sec - cd->last_recv_time.tv_sec > timeout)
             {
               __Xprt_unregister_unlocked(xprt);
               __Svc_vc_dodestroy(xprt);
@@ -874,7 +873,7 @@ bool_t __svc_clean_idle(fd_set * fds, int timeout, bool_t cleanblock)
             }
         }
     }
-  if (timeout == 0 && least_active != NULL)
+  if(timeout == 0 && least_active != NULL)
     {
       __Xprt_unregister_unlocked(least_active);
       __Svc_vc_dodestroy(least_active);

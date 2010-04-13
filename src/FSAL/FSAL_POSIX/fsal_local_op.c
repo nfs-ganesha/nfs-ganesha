@@ -188,11 +188,11 @@ fsal_status_t FSAL_rename_access(fsal_op_context_t * pcontext,  /* IN */
   fsal_status_t fsal_status;
 
   fsal_status = FSAL_test_access(pcontext, FSAL_W_OK, pattrsrc);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_rename_access);
 
   fsal_status = FSAL_test_access(pcontext, FSAL_W_OK, pattrdest);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_rename_access);
 
   /* If this point is reached, then access is granted */
@@ -219,7 +219,7 @@ fsal_status_t FSAL_create_access(fsal_op_context_t * pcontext,  /* IN */
   fsal_status_t fsal_status;
 
   fsal_status = FSAL_test_access(pcontext, FSAL_W_OK, pattr);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_create_access);
 
   /* If this point is reached, then access is granted */
@@ -246,7 +246,7 @@ fsal_status_t FSAL_unlink_access(fsal_op_context_t * pcontext,  /* IN */
   fsal_status_t fsal_status;
 
   fsal_status = FSAL_test_access(pcontext, FSAL_W_OK, pattr);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_unlink_access);
 
   /* If this point is reached, then access is granted */
@@ -275,7 +275,7 @@ fsal_status_t FSAL_link_access(fsal_op_context_t * pcontext,    /* IN */
   fsal_status_t fsal_status;
 
   fsal_status = FSAL_test_access(pcontext, FSAL_W_OK, pattr);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_unlink_access);
 
   /* If this point is reached, then access is granted */
@@ -301,35 +301,35 @@ fsal_status_t FSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
                                fsal_attrib_list_t * pnew_attr,
                                fsal_attrib_list_t * presult_attr)
 {
-  if (pinit_attr == NULL || pnew_attr == NULL || presult_attr == NULL)
+  if(pinit_attr == NULL || pnew_attr == NULL || presult_attr == NULL)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_merge_attrs);
 
   /* The basis for the result attr is the fist argument */
   *presult_attr = *pinit_attr;
 
   /* Now deal with the attributes to be merged in this set of attributes */
-  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_MODE))
+  if(FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_MODE))
     presult_attr->mode = pnew_attr->mode;
 
-  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_OWNER))
+  if(FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_OWNER))
     presult_attr->owner = pnew_attr->owner;
 
-  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_GROUP))
+  if(FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_GROUP))
     presult_attr->group = pnew_attr->group;
 
-  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_SIZE))
+  if(FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_SIZE))
     presult_attr->filesize = pnew_attr->filesize;
 
-  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_SPACEUSED))
+  if(FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_SPACEUSED))
     presult_attr->spaceused = pnew_attr->spaceused;
 
-  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_ATIME))
+  if(FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_ATIME))
     {
       presult_attr->atime.seconds = pnew_attr->atime.seconds;
       presult_attr->atime.nseconds = pnew_attr->atime.nseconds;
     }
 
-  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_MTIME))
+  if(FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_MTIME))
     {
       presult_attr->mtime.seconds = pnew_attr->mtime.seconds;
       presult_attr->mtime.nseconds = pnew_attr->mtime.nseconds;

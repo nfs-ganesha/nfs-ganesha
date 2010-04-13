@@ -62,7 +62,7 @@ fsal_status_t FSAL_access(fsal_handle_t * p_object_handle,      /* IN */
   /* sanity checks.
    * note : object_attributes is optionnal in FSAL_getattrs.
    */
-  if (!p_object_handle || !p_context)
+  if(!p_object_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_access);
 
   /* 
@@ -70,7 +70,7 @@ fsal_status_t FSAL_access(fsal_handle_t * p_object_handle,      /* IN */
    * it is returned, even though the access operation succeeded.
    */
 
-  if (p_object_attributes)
+  if(p_object_attributes)
     {
 
       FSAL_SET_MASK(p_object_attributes->asked_attributes,
@@ -78,7 +78,7 @@ fsal_status_t FSAL_access(fsal_handle_t * p_object_handle,      /* IN */
       status = FSAL_getattrs(p_object_handle, p_context, p_object_attributes);
 
       /* on error, we set a special bit in the mask. */
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
           FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -100,7 +100,7 @@ fsal_status_t FSAL_access(fsal_handle_t * p_object_handle,      /* IN */
       status = FSAL_getattrs(p_object_handle, p_context, &attrs);
 
       /* on error, we set a special bit in the mask. */
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_access);
 
       status = fsal_internal_testAccess(p_context, access_type, NULL, &attrs);

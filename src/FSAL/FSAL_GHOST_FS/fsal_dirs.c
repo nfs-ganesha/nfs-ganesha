@@ -52,7 +52,7 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
   /* sanity checks
    * note : dir_attributes is optionnal.
    */
-  if (!dir_handle || !p_context || !dir_descriptor)
+  if(!dir_handle || !p_context || !dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_opendir);
 
   /* test access perms. For other FS than GHOST_FS,
@@ -62,12 +62,12 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
                       GHOSTFS_TEST_READ,
                       p_context->credential.user, p_context->credential.group);
 
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_opendir);
 
   rc = GHOSTFS_Opendir((GHOSTFS_handle_t) (*dir_handle), &dir);
 
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_opendir);
 
   /* building dir descriptor */
@@ -78,7 +78,7 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
    * If an error occures during getattr operation,
    * it is returned, even though the opendir operation succeeded.
    */
-  if (dir_attributes)
+  if(dir_attributes)
     {
 
       fsal_status_t status;
@@ -125,17 +125,17 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
   SetFuncID(INDEX_FSAL_readdir);
 
   /* sanity checks */
-  if (!dir_descriptor || !pdirent || !end_position || !nb_entries || !end_of_dir)
+  if(!dir_descriptor || !pdirent || !end_position || !nb_entries || !end_of_dir)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
   /* seeking directory position  */
   rc = GHOSTFS_Seekdir(&(dir_descriptor->dir_descriptor), start_position.cookie);
 
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_readdir);
 
   /* how many entries can we get ? */
-  if (buffersize < sizeof(fsal_dirent_t))
+  if(buffersize < sizeof(fsal_dirent_t))
     Return(ERR_FSAL_TOOSMALL, 0, INDEX_FSAL_readdir);
   max_entries = buffersize / sizeof(fsal_dirent_t);
 
@@ -148,28 +148,28 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
   /* retrieving entries */
 
-  while (*nb_entries < max_entries)
+  while(*nb_entries < max_entries)
     {
 
       /* processing a readdir */
       rc = GHOSTFS_Readdir(&(dir_descriptor->dir_descriptor), &entry);
 
-      if (rc == ERR_GHOSTFS_ENDOFDIR)
+      if(rc == ERR_GHOSTFS_ENDOFDIR)
         {
           /* updates ouputs and return */
-          if (last_ent)
+          if(last_ent)
             last_ent->nextentry = NULL;
           (*end_of_dir) = TRUE;
           end_position->cookie = last_cookie;
           Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
         }
-      else if (rc != 0)
+      else if(rc != 0)
         {
           Return(ghost2fsal_error(rc), rc, INDEX_FSAL_readdir);
         }
 
       /* we have just read an entry */
-      if (last_ent)
+      if(last_ent)
         last_ent->nextentry = curr_ent;
       curr_ent->handle = (fsal_handle_t) entry.handle;
       strncpy(curr_ent->name.name, entry.name, FSAL_MAX_NAME_LEN);
@@ -206,7 +206,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
     }
   /* update outputs and return */
   end_position->cookie = last_cookie;
-  if (last_ent)
+  if(last_ent)
     last_ent->nextentry = NULL;
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
 
@@ -222,7 +222,7 @@ fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
   SetFuncID(INDEX_FSAL_closedir);
 
   /* sanity checks */
-  if (!dir_descriptor)
+  if(!dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_closedir);
 
   /* calling GHOSTFS closedir */

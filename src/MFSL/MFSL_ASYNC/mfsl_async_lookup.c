@@ -126,13 +126,13 @@ fsal_status_t MFSL_lookup(mfsl_object_t * parent_directory_handle,      /* IN */
                             p_context, &object_handle->handle, object_attributes);
   V(parent_directory_handle->lock);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
-  if (mfsl_async_get_specdata(object_handle, &pasyncdata))
+  if(mfsl_async_get_specdata(object_handle, &pasyncdata))
     {
       /* if object is asynchronous and deleted, then return ENOENT */
-      if (pasyncdata->deleted == TRUE)
+      if(pasyncdata->deleted == TRUE)
         MFSL_return(ERR_FSAL_NOENT, ENOENT);
     }
 

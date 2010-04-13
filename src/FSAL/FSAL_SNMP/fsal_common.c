@@ -25,12 +25,12 @@ void BuildRootHandle(fsal_handle_t * p_hdl)
 
 int ParseSNMPPath(char *in_path, fsal_handle_t * out_handle)
 {
-  if (!in_path || !out_handle)
+  if(!in_path || !out_handle)
     return ERR_FSAL_FAULT;
 
   out_handle->oid_len = MAX_OID_LEN;
 
-  if (!snmp_parse_oid(in_path, out_handle->oid_tab, &out_handle->oid_len))
+  if(!snmp_parse_oid(in_path, out_handle->oid_tab, &out_handle->oid_len))
     return ERR_FSAL_NOENT;
 
   return ERR_FSAL_NO_ERROR;
@@ -43,13 +43,13 @@ int IssueSNMPQuery(fsal_op_context_t * p_context, oid * oid_tab, int oid_len,
   char oid_str[FSAL_MAX_PATH_LEN] = "";
 
   /* sanity checks  */
-  if (!p_context || !oid_tab || !p_req_desc)
+  if(!p_context || !oid_tab || !p_req_desc)
     return (SNMPERR_MAX - 1);
 
   /* clean the thread context before issuing the request */
-  if (p_context->snmp_response)
+  if(p_context->snmp_response)
     {
-      if (p_context->snmp_response->variables)
+      if(p_context->snmp_response->variables)
         {
           snmp_free_varbind(p_context->snmp_response->variables);
           p_context->snmp_response->variables = NULL;
@@ -68,7 +68,7 @@ int IssueSNMPQuery(fsal_op_context_t * p_context, oid * oid_tab, int oid_len,
   /* now create the request to be sent */
   p_context->snmp_request = snmp_pdu_create(p_req_desc->request_type);
 
-  if (p_context->snmp_request == NULL)
+  if(p_context->snmp_request == NULL)
     return snmp_errno;
 
   /* used for logging  */
@@ -145,9 +145,9 @@ int IssueSNMPQuery(fsal_op_context_t * p_context, oid * oid_tab, int oid_len,
   rc = snmp_synch_response(p_context->snmp_session, p_context->snmp_request,
                            &(p_context->snmp_response));
 
-  if (rc)
+  if(rc)
     return snmp_errno;
-  else if (!p_context->snmp_response)
+  else if(!p_context->snmp_response)
     return SNMP_ERR_GENERR;
   else
     return p_context->snmp_response->errstat;
@@ -163,25 +163,25 @@ struct tree *FSAL_GetTree(oid * objid, int objidlen, struct tree *subtree,
 {
   struct tree *return_tree = NULL;
 
-  for (; subtree; subtree = subtree->next_peer)
+  for(; subtree; subtree = subtree->next_peer)
     {
-      if (*objid == subtree->subid)
+      if(*objid == subtree->subid)
         goto found;
     }
 
   return NULL;
 
  found:
-  while (subtree->next_peer && subtree->next_peer->subid == *objid)
+  while(subtree->next_peer && subtree->next_peer->subid == *objid)
     subtree = subtree->next_peer;
 
-  if (return_nearest_parent)
+  if(return_nearest_parent)
     {
       /* if child not found, return nearest parent */
-      if (objidlen > 1)
+      if(objidlen > 1)
         return_tree = FSAL_GetTree(objid + 1, objidlen - 1, subtree->child_list, TRUE);
 
-      if (return_tree != NULL)
+      if(return_tree != NULL)
         return return_tree;
       else
         return subtree;
@@ -189,10 +189,10 @@ struct tree *FSAL_GetTree(oid * objid, int objidlen, struct tree *subtree,
     }
   else                          /* only return node when it is found */
     {
-      if (objidlen == 1)
+      if(objidlen == 1)
         return subtree;
 
-      if (objidlen > 1)
+      if(objidlen > 1)
         return FSAL_GetTree(objid + 1, objidlen - 1, subtree->child_list, FALSE);
 
       /* no node for root */
@@ -204,11 +204,11 @@ struct tree *FSAL_GetTree(oid * objid, int objidlen, struct tree *subtree,
 struct tree *GetMIBNode(fsal_op_context_t * p_context, fsal_handle_t * p_handle,
                         int return_nearest_parent)
 {
-  if (!p_context || !p_handle)
+  if(!p_context || !p_handle)
     return NULL;
 
   /* SNMP root "." has no proper tree node */
-  if (p_handle->object_type_reminder == FSAL_NODETYPE_ROOT || p_handle->oid_len == 0)
+  if(p_handle->object_type_reminder == FSAL_NODETYPE_ROOT || p_handle->oid_len == 0)
     return NULL;
 
   /* in the other cases, get the node from the export context  */
@@ -220,11 +220,11 @@ struct tree *GetMIBChildList(fsal_op_context_t * p_context, fsal_handle_t * p_ha
 {
   struct tree *obj_tree;
 
-  if (!p_context || !p_handle)
+  if(!p_context || !p_handle)
     return NULL;
 
   /* root's child pointer is the whole MIB tree */
-  if (p_handle->object_type_reminder == FSAL_NODETYPE_ROOT || p_handle->oid_len == 0)
+  if(p_handle->object_type_reminder == FSAL_NODETYPE_ROOT || p_handle->oid_len == 0)
     return p_context->export_context->root_mib_tree;    /* it should be the tree retruned by read_all_mibs */
 
   /* retrieve object associated subtree, and return its childs  */
@@ -232,7 +232,7 @@ struct tree *GetMIBChildList(fsal_op_context_t * p_context, fsal_handle_t * p_ha
       FSAL_GetTree(p_handle->oid_tab, p_handle->oid_len,
                    p_context->export_context->root_mib_tree, FALSE);
 
-  if (obj_tree == NULL)
+  if(obj_tree == NULL)
     return NULL;
 
   return obj_tree->child_list;
@@ -258,13 +258,13 @@ int HasSNMPChilds(fsal_op_context_t * p_context, fsal_handle_t * p_handle)
   req_desc.request_type = SNMP_MSG_GETNEXT;
   rc = IssueSNMPQuery(p_context, p_handle->oid_tab, p_handle->oid_len, &req_desc);
 
-  if (rc != SNMPERR_SUCCESS && snmp2fsal_error(rc) != ERR_FSAL_NOENT)
+  if(rc != SNMPERR_SUCCESS && snmp2fsal_error(rc) != ERR_FSAL_NOENT)
     return -1;
 
-  if (snmp2fsal_error(rc) == ERR_FSAL_NOENT
-      || p_context->snmp_response->variables->type == SNMP_NOSUCHOBJECT
-      || p_context->snmp_response->variables->type == SNMP_NOSUCHINSTANCE
-      || p_context->snmp_response->variables->type == SNMP_ENDOFMIBVIEW)
+  if(snmp2fsal_error(rc) == ERR_FSAL_NOENT
+     || p_context->snmp_response->variables->type == SNMP_NOSUCHOBJECT
+     || p_context->snmp_response->variables->type == SNMP_NOSUCHINSTANCE
+     || p_context->snmp_response->variables->type == SNMP_ENDOFMIBVIEW)
     return 0;                   /* no childs, return 0 */
 
   /* it is a root node if getnext returned a child of it */
@@ -280,11 +280,11 @@ int HasSNMPChilds(fsal_op_context_t * p_context, fsal_handle_t * p_handle)
  */
 netsnmp_variable_list *GetNextResponse(fsal_op_context_t * p_context)
 {
-  if (!p_context)
+  if(!p_context)
     return NULL;
 
   /* initialize or increment current_response */
-  if (p_context->current_response == NULL)
+  if(p_context->current_response == NULL)
     p_context->current_response = p_context->snmp_response->variables;
   else
     p_context->current_response = p_context->current_response->next_variable;
@@ -302,11 +302,11 @@ int fsal_oid_cmp(oid * oid_tab1, oid * oid_tab2, unsigned int count)
 {
   unsigned int i;
 
-  for (i = 0; i < count; i++)
+  for(i = 0; i < count; i++)
     {
-      if (oid_tab1[i] < oid_tab2[i])
+      if(oid_tab1[i] < oid_tab2[i])
         return -1;
-      if (oid_tab1[i] > oid_tab2[i])
+      if(oid_tab1[i] > oid_tab2[i])
         return 1;
     }
   return 0;
@@ -314,14 +314,14 @@ int fsal_oid_cmp(oid * oid_tab1, oid * oid_tab2, unsigned int count)
 
 long StrToSNMPVersion(char *str)
 {
-  if (str == NULL)
+  if(str == NULL)
     return -1;
 
-  if (!strcmp(str, "1"))
+  if(!strcmp(str, "1"))
     return SNMP_VERSION_1;
-  if (!strcasecmp(str, "2c"))
+  if(!strcasecmp(str, "2c"))
     return SNMP_VERSION_2c;
-  if (!strcmp(str, "3"))
+  if(!strcmp(str, "3"))
     return SNMP_VERSION_3;
 
   return -1;

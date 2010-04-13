@@ -52,7 +52,7 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
   /* sanity checks.
    * note : object_attributes is mandatory in FSAL_getattrs.
    */
-  if (!filehandle || !p_context || !object_attributes)
+  if(!filehandle || !p_context || !object_attributes)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
 
   TakeTokenFSCall();
@@ -116,7 +116,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if (!filehandle || !p_context || !attrib_set)
+  if(!filehandle || !p_context || !attrib_set)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_setattrs);
 
   /* local copy of attributes */
@@ -126,11 +126,11 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
 
   /* Is it allowed to change times ? */
 
-  if (!global_fs_info.cansettime)
+  if(!global_fs_info.cansettime)
     {
 
-      if (attrs.asked_attributes
-          & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))
+      if(attrs.asked_attributes
+         & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))
         {
 
           /* handled as an unsettable attribute. */
@@ -141,7 +141,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
 
   /* apply umask, if mode attribute is to be changed */
 
-  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MODE))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MODE))
     {
       attrs.mode &= (~global_fs_info.umask);
     }
@@ -161,13 +161,13 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
    * return object attributes, you may do something
    * like that : << */
 
-  if (object_attributes)
+  if(object_attributes)
     {
 
       status = FSAL_getattrs(filehandle, p_context, object_attributes);
 
       /* on error, we set a special bit in the mask. */
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(object_attributes->asked_attributes);
           FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

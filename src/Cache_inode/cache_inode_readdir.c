@@ -138,8 +138,8 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* Sanity check */
-  if (pentry_parent->internal_md.type != DIR_BEGINNING &&
-      pentry_parent->internal_md.type != DIR_CONTINUE)
+  if(pentry_parent->internal_md.type != DIR_BEGINNING &&
+     pentry_parent->internal_md.type != DIR_CONTINUE)
     {
       *pstatus = CACHE_INODE_BAD_TYPE;
 
@@ -153,23 +153,23 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
   do
     {
       /* Is this entry known ? */
-      if (pdir_chain->internal_md.type == DIR_BEGINNING)
+      if(pdir_chain->internal_md.type == DIR_BEGINNING)
         {
-          for (i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+          for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
             {
 #ifdef _DEBUG_CACHE_INODE
               printf("DIR_BEGINNING %d | %d | %s | %s\n",
                      pdir_chain->object.dir_begin.pdir_data->dir_entries[i].active,
-                     pdir_chain->object.dir_begin.pdir_data->dir_entries[i].pentry->
-                     internal_md.valid_state, pname->name,
+                     pdir_chain->object.dir_begin.pdir_data->dir_entries[i].
+                     pentry->internal_md.valid_state, pname->name,
                      pdir_chain->object.dir_begin.pdir_data->dir_entries[i].name.name);
 #endif
-              if (pdir_chain->object.dir_begin.pdir_data->dir_entries[i].active == VALID
-                  && pdir_chain->object.dir_begin.pdir_data->dir_entries[i].pentry->
-                  internal_md.valid_state == VALID
-                  && !FSAL_namecmp(pname,
-                                   &(pdir_chain->object.dir_begin.pdir_data->
-                                     dir_entries[i].name)))
+              if(pdir_chain->object.dir_begin.pdir_data->dir_entries[i].active == VALID
+                 && pdir_chain->object.dir_begin.pdir_data->dir_entries[i].
+                 pentry->internal_md.valid_state == VALID
+                 && !FSAL_namecmp(pname,
+                                  &(pdir_chain->object.dir_begin.
+                                    pdir_data->dir_entries[i].name)))
                 {
                   /* Entry was found */
                   pentry = pdir_chain->object.dir_begin.pdir_data->dir_entries[i].pentry;
@@ -178,12 +178,12 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
                 }
             }
 
-          if (pentry != NULL)
+          if(pentry != NULL)
             break;              /* Exit the do...while loop */
 
           /* Do we have to go on browsing the cache_inode ? */
           /* We have to check if eod is reached and no pentry found */
-          if (pdir_chain->object.dir_begin.end_of_dir == END_OF_DIR)
+          if(pdir_chain->object.dir_begin.end_of_dir == END_OF_DIR)
             {
               pentry = NULL;
               *pstatus = CACHE_INODE_NOT_FOUND;
@@ -196,7 +196,7 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
       else
         {
           /* Entry is no DIR_BEGINNING, it is of type DIR_CONTINUE */
-          for (i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+          for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
             {
               /*
                  printf( "DIR_CONTINUE %d | %d | %s | %s\n", 
@@ -205,12 +205,12 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
                  name.name, 
                  pdir_chain->object.dir_cont.pdir_data->dir_entries[i].name.name ) ; */
 
-              if (pdir_chain->object.dir_cont.pdir_data->dir_entries[i].active == VALID &&
-                  pdir_chain->object.dir_cont.pdir_data->dir_entries[i].pentry->
-                  internal_md.valid_state == VALID
-                  && !FSAL_namecmp(pname,
-                                   &(pdir_chain->object.dir_cont.pdir_data->
-                                     dir_entries[i].name)))
+              if(pdir_chain->object.dir_cont.pdir_data->dir_entries[i].active == VALID &&
+                 pdir_chain->object.dir_cont.pdir_data->dir_entries[i].
+                 pentry->internal_md.valid_state == VALID
+                 && !FSAL_namecmp(pname,
+                                  &(pdir_chain->object.dir_cont.pdir_data->dir_entries[i].
+                                    name)))
                 {
                   /* Entry was found */
                   pentry = pdir_chain->object.dir_cont.pdir_data->dir_entries[i].pentry;
@@ -219,11 +219,11 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
                 }
             }
 
-          if (pentry != NULL)
+          if(pentry != NULL)
             break;              /* Exit the do...while loop */
 
           /* Do we have to go on browsing the cache_inode ? */
-          if (pdir_chain->object.dir_cont.end_of_dir == END_OF_DIR)
+          if(pdir_chain->object.dir_cont.end_of_dir == END_OF_DIR)
             {
               pentry = NULL;
               *pstatus = CACHE_INODE_NOT_FOUND;
@@ -234,10 +234,10 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
         }
 
     }
-  while (pentry == NULL);
+  while(pentry == NULL);
 
   /* Did we find something */
-  if (pentry != NULL)
+  if(pentry != NULL)
     {
       /* Yes, we did ! */
       switch (dirent_op)
@@ -246,13 +246,13 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
           /* Related DIR_BEGINNING or DIR_CONTINUE is pointed by pdir_chain, entry is the i-th is dir_entries 
            * The dirent entry is removed by being set invalid */
 
-          if (pdir_chain->internal_md.type == DIR_BEGINNING)
+          if(pdir_chain->internal_md.type == DIR_BEGINNING)
             {
               pdir_chain->object.dir_begin.pdir_data->dir_entries[i].active = INVALID;
               pdir_chain->object.dir_begin.nbactive -= 1;
               *pstatus = CACHE_INODE_SUCCESS;
             }
-          else if (pdir_chain->internal_md.type == DIR_CONTINUE)
+          else if(pdir_chain->internal_md.type == DIR_CONTINUE)
             {
               pdir_chain->object.dir_cont.pdir_data->dir_entries[i].active = INVALID;
               pdir_chain->object.dir_cont.nbactive -= 1;
@@ -264,22 +264,22 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
 
         case CACHE_INODE_DIRENT_OP_RENAME:
           /* Entry to rename is the i-th in pdir_chain */
-          if (pdir_chain->internal_md.type == DIR_BEGINNING)
+          if(pdir_chain->internal_md.type == DIR_BEGINNING)
             {
               fsal_status =
                   FSAL_namecpy(&
-                               (pdir_chain->object.dir_begin.pdir_data->dir_entries[i].
-                                name), newname);
+                               (pdir_chain->object.dir_begin.pdir_data->
+                                dir_entries[i].name), newname);
             }
           else
             {
               fsal_status =
                   FSAL_namecpy(&
-                               (pdir_chain->object.dir_cont.pdir_data->dir_entries[i].
-                                name), newname);
+                               (pdir_chain->object.dir_cont.pdir_data->
+                                dir_entries[i].name), newname);
             }
 
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             {
               *pstatus = cache_inode_error_convert(fsal_status);
             }
@@ -326,8 +326,8 @@ cache_entry_t *cache_inode_lookup_cached_dirent(cache_entry_t * pentry_parent,
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* Sanity check */
-  if (pentry_parent->internal_md.type != DIR_BEGINNING &&
-      pentry_parent->internal_md.type != DIR_CONTINUE)
+  if(pentry_parent->internal_md.type != DIR_BEGINNING &&
+     pentry_parent->internal_md.type != DIR_CONTINUE)
     {
       *pstatus = CACHE_INODE_BAD_TYPE;
       return NULL;
@@ -382,8 +382,8 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pentry_parent
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* Sanity check */
-  if (pentry_parent->internal_md.type != DIR_BEGINNING &&
-      pentry_parent->internal_md.type != DIR_CONTINUE)
+  if(pentry_parent->internal_md.type != DIR_BEGINNING &&
+     pentry_parent->internal_md.type != DIR_CONTINUE)
     {
       *pstatus = CACHE_INODE_BAD_TYPE;
       return *pstatus;
@@ -395,18 +395,18 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pentry_parent
   do
     {
 
-      if (pdir_chain->internal_md.type == DIR_BEGINNING)
+      if(pdir_chain->internal_md.type == DIR_BEGINNING)
         {
           /* DIR_BEGINNING management */
 
-          if (pdir_chain->object.dir_begin.nbactive != CHILDREN_ARRAY_SIZE)
+          if(pdir_chain->object.dir_begin.nbactive != CHILDREN_ARRAY_SIZE)
             {
-              for (i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+              for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
                 {
-                  if (pdir_chain->object.dir_begin.pdir_data->dir_entries[i].active ==
-                      INVALID
-                      || pdir_chain->object.dir_begin.pdir_data->dir_entries[i].pentry ==
-                      NULL)
+                  if(pdir_chain->object.dir_begin.pdir_data->dir_entries[i].active ==
+                     INVALID
+                     || pdir_chain->object.dir_begin.pdir_data->dir_entries[i].pentry ==
+                     NULL)
                     {
                       /* slot found */
                       pentry = pdir_chain;
@@ -417,7 +417,7 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pentry_parent
             }
 
           /* Next step */
-          if (pdir_chain->object.dir_begin.end_of_dir == END_OF_DIR)
+          if(pdir_chain->object.dir_begin.end_of_dir == END_OF_DIR)
             {
               /* Entry was not found, break the main loop */
               break;
@@ -428,18 +428,18 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pentry_parent
             }
 
         }
-      else if (pdir_chain->internal_md.type == DIR_CONTINUE)
+      else if(pdir_chain->internal_md.type == DIR_CONTINUE)
         {
           /* DIR_CONTINUE management */
 
-          if (pdir_chain->object.dir_cont.nbactive != CHILDREN_ARRAY_SIZE)
+          if(pdir_chain->object.dir_cont.nbactive != CHILDREN_ARRAY_SIZE)
             {
-              for (i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+              for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
                 {
-                  if (pdir_chain->object.dir_cont.pdir_data->dir_entries[i].active ==
-                      INVALID
-                      || pdir_chain->object.dir_cont.pdir_data->dir_entries[i].pentry ==
-                      NULL)
+                  if(pdir_chain->object.dir_cont.pdir_data->dir_entries[i].active ==
+                     INVALID
+                     || pdir_chain->object.dir_cont.pdir_data->dir_entries[i].pentry ==
+                     NULL)
                     {
                       pentry = pdir_chain;
                       slot_index = i;
@@ -449,7 +449,7 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pentry_parent
             }
 
           /* Next step */
-          if (pdir_chain->object.dir_cont.end_of_dir == END_OF_DIR)
+          if(pdir_chain->object.dir_cont.end_of_dir == END_OF_DIR)
             {
               /* Entry was not found, break the main loop */
               break;
@@ -469,10 +469,10 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pentry_parent
         }
 
     }
-  while (pentry == NULL);
+  while(pentry == NULL);
 
   /* If pentry is NULL, all the dirent are full and a new entry is needed */
-  if (pentry == NULL)
+  if(pentry == NULL)
     {
       /* Pointer pentry is NULL, a new entry DIR_CONTINUE is required */
 
@@ -496,10 +496,10 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pentry_parent
         }
 
       /* Allocate a new DIR_CONTINUE to the dir chain if needed */
-      if (pentry == NULL)
+      if(pentry == NULL)
 
-        if ((pentry = cache_inode_new_entry(&fsdata, NULL, DIR_CONTINUE, NULL, pdir_chain, ht, pclient, pcontext, FALSE,        /* this is population, no creation */
-                                            pstatus)) == NULL)
+        if((pentry = cache_inode_new_entry(&fsdata, NULL, DIR_CONTINUE, NULL, pdir_chain, ht, pclient, pcontext, FALSE, /* this is population, no creation */
+                                           pstatus)) == NULL)
           {
             return *pstatus;
           }
@@ -551,7 +551,7 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pentry_parent
   BuddySetDebugLabel("N/A");
 #endif
 
-  if (next_parent_entry == NULL)
+  if(next_parent_entry == NULL)
     {
       *pstatus = CACHE_INODE_MALLOC_ERROR;
       pentry = NULL;
@@ -563,7 +563,7 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pentry_parent
   next_parent_entry->parent = NULL;
   next_parent_entry->next_parent = NULL;
 
-  if (pentry->internal_md.type == DIR_BEGINNING)
+  if(pentry->internal_md.type == DIR_BEGINNING)
     {
       pentry->object.dir_begin.nbactive += 1;
 
@@ -573,7 +573,7 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pentry_parent
       fsal_status =
           FSAL_namecpy(&pentry->object.dir_begin.pdir_data->dir_entries[slot_index].name,
                        pname);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = CACHE_INODE_FSAL_ERROR;
           pentry->object.dir_begin.nbactive -= 1;
@@ -592,7 +592,7 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pentry_parent
       fsal_status =
           FSAL_namecpy(&pentry->object.dir_cont.pdir_data->dir_entries[slot_index].name,
                        pname);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = CACHE_INODE_FSAL_ERROR;
           pentry->object.dir_cont.nbactive -= 1;
@@ -608,7 +608,7 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pentry_parent
   next_parent_entry->next_parent = pentry_added->parent_list;
   pentry_added->parent_list = next_parent_entry;
 
-  if (ppentry_next != NULL)
+  if(ppentry_next != NULL)
     {
       *ppentry_next = pentry;
     }
@@ -643,7 +643,7 @@ cache_inode_status_t cache_inode_invalidate_all_cached_dirent(cache_entry_t * pe
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* Only DIR_BEGINNING entries are concerned */
-  if (pentry_dir->internal_md.type != DIR_BEGINNING)
+  if(pentry_dir->internal_md.type != DIR_BEGINNING)
     {
       *pstatus = CACHE_INODE_BAD_TYPE;
       return *pstatus;
@@ -652,16 +652,16 @@ cache_inode_status_t cache_inode_invalidate_all_cached_dirent(cache_entry_t * pe
   /* Get ride of entries cached in the DIR_BEGINNING */
   pentry = pentry_dir;
 
-  for (i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+  for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
     pentry->object.dir_begin.pdir_data->dir_entries[i].active = INVALID;
   pentry->object.dir_begin.nbactive = 0;
 
   /* Loop on the next DIR_CONTINUE */
   pentry = pentry->object.dir_begin.pdir_cont;
 
-  while (pentry != NULL)
+  while(pentry != NULL)
     {
-      for (i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+      for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
         pentry->object.dir_cont.pdir_data->dir_entries[i].active = INVALID;
       pentry->object.dir_cont.nbactive = 0;
 
@@ -706,29 +706,29 @@ cache_inode_status_t cache_inode_remove_cached_dirent(cache_entry_t * pentry_par
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* Sanity check */
-  if (pentry_parent->internal_md.type != DIR_BEGINNING &&
-      pentry_parent->internal_md.type != DIR_CONTINUE)
+  if(pentry_parent->internal_md.type != DIR_BEGINNING &&
+     pentry_parent->internal_md.type != DIR_CONTINUE)
     {
       *pstatus = CACHE_INODE_BAD_TYPE;
       return *pstatus;
     }
 
   /* BUGAZOMEU: Ne pas oublier de jarter un dir_cont dont toutes les entrees sont inactives */
-  if ((removed_pentry = cache_inode_operate_cached_dirent(pentry_parent,
-                                                          pname,
-                                                          NULL,
-                                                          CACHE_INODE_DIRENT_OP_REMOVE,
-                                                          pstatus)) == NULL)
+  if((removed_pentry = cache_inode_operate_cached_dirent(pentry_parent,
+                                                         pname,
+                                                         NULL,
+                                                         CACHE_INODE_DIRENT_OP_REMOVE,
+                                                         pstatus)) == NULL)
     return *pstatus;
 
   /* Remove the parent entry from the entry whose dirent is removed */
-  for (previous_iter = NULL, parent_iter = removed_pentry->parent_list;
-       (parent_iter != NULL) && (parent_iter->parent != NULL);
-       previous_iter = parent_iter, parent_iter = parent_iter->next_parent)
+  for(previous_iter = NULL, parent_iter = removed_pentry->parent_list;
+      (parent_iter != NULL) && (parent_iter->parent != NULL);
+      previous_iter = parent_iter, parent_iter = parent_iter->next_parent)
     {
-      if (parent_iter->parent == pentry_parent ||
-          (parent_iter->parent->internal_md.type == DIR_CONTINUE &&
-           parent_iter->parent->object.dir_cont.pdir_begin == pentry_parent))
+      if(parent_iter->parent == pentry_parent ||
+         (parent_iter->parent->internal_md.type == DIR_CONTINUE &&
+          parent_iter->parent->object.dir_cont.pdir_begin == pentry_parent))
         {
           found = 1;
           break;
@@ -736,13 +736,13 @@ cache_inode_status_t cache_inode_remove_cached_dirent(cache_entry_t * pentry_par
     }
 
   /* Check for pentry cache inconsistency */
-  if (!found)
+  if(!found)
     {
       *pstatus = CACHE_INODE_INCONSISTENT_ENTRY;
     }
   else
     {
-      if (previous_iter == NULL)
+      if(previous_iter == NULL)
         {
           /* this is the first parent */
           removed_pentry->parent_list = parent_iter->next_parent;
@@ -804,14 +804,14 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* Only DIR_BEGINNING entries are concerned */
-  if (pentry_dir->internal_md.type != DIR_BEGINNING)
+  if(pentry_dir->internal_md.type != DIR_BEGINNING)
     {
       *pstatus = CACHE_INODE_BAD_TYPE;
       return *pstatus;
     }
 #ifdef _USE_MFSL_ASYNC
   /* If entry is asynchronous (via MFSL), it should not be repopulated until it is synced */
-  if (MFSL_ASYNC_is_synced(&pentry_dir->mobject) == FALSE)
+  if(MFSL_ASYNC_is_synced(&pentry_dir->mobject) == FALSE)
     {
       /* Directory is asynchronous, do not repopulate it and let it
        * in the state 'has_been_readdir == FALSE' */
@@ -821,16 +821,16 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
 #endif
 
   /* If directory is already populated , there is no job to do */
-  if (pentry_dir->object.dir_begin.has_been_readdir == CACHE_INODE_YES)
+  if(pentry_dir->object.dir_begin.has_been_readdir == CACHE_INODE_YES)
     {
       *pstatus = CACHE_INODE_SUCCESS;
       return *pstatus;
     }
 
   /* Invalidate all the dirents */
-  if (cache_inode_invalidate_all_cached_dirent(pentry_dir,
-                                               ht,
-                                               pclient, pstatus) != CACHE_INODE_SUCCESS)
+  if(cache_inode_invalidate_all_cached_dirent(pentry_dir,
+                                              ht,
+                                              pclient, pstatus) != CACHE_INODE_SUCCESS)
     return *pstatus;
 
   /* Open the directory */
@@ -843,11 +843,11 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
   fsal_status = FSAL_opendir(&pentry_dir->object.dir_begin.handle,
                              pcontext, &fsal_dirhandle, &dir_attributes);
 #endif
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       *pstatus = cache_inode_error_convert(fsal_status);
 
-      if (fsal_status.major == ERR_FSAL_STALE)
+      if(fsal_status.major == ERR_FSAL_STALE)
         {
           cache_inode_status_t kill_status;
 
@@ -855,8 +855,8 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
               ("cache_inode_readdir: Stale FSAL File Handle detected for pentry = %p",
                pentry_dir);
 
-          if (cache_inode_kill_entry(pentry_dir, ht, pclient, &kill_status) !=
-              CACHE_INODE_SUCCESS)
+          if(cache_inode_kill_entry(pentry_dir, ht, pclient, &kill_status) !=
+             CACHE_INODE_SUCCESS)
             DisplayLog("cache_inode_readdir: Could not kill entry %p, status = %u",
                        pentry_dir, kill_status);
 
@@ -888,13 +888,13 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
                                  array_dirent, &end_cookie, &nbfound, &fsal_eod);
 #endif
 
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
           return *pstatus;
         }
 
-      for (iter = 0; iter < nbfound; iter++)
+      for(iter = 0; iter < nbfound; iter++)
         {
           DisplayLogJdLevel(pclient->log_outputs,
                             NIV_FULL_DEBUG,
@@ -902,8 +902,8 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
                             array_dirent[iter].name.name);
 
           /* It is not needed to cache '.' and '..' */
-          if (!FSAL_namecmp(&(array_dirent[iter].name), &FSAL_DOT) ||
-              !FSAL_namecmp(&(array_dirent[iter].name), &FSAL_DOT_DOT))
+          if(!FSAL_namecmp(&(array_dirent[iter].name), &FSAL_DOT) ||
+             !FSAL_namecmp(&(array_dirent[iter].name), &FSAL_DOT_DOT))
             {
               DisplayLogJdLevel(pclient->log_outputs,
                                 NIV_FULL_DEBUG,
@@ -912,9 +912,9 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
             }
 
           /* If dir entry is a symbolic link, its content has to be read */
-          if ((type =
-               cache_inode_fsal_type_convert(array_dirent[iter].attributes.type)) ==
-              SYMBOLIC_LINK)
+          if((type =
+              cache_inode_fsal_type_convert(array_dirent[iter].attributes.type)) ==
+             SYMBOLIC_LINK)
             {
 #ifdef _USE_MFSL
               mfsl_object_t tmp_mfsl;
@@ -932,11 +932,11 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
                                           pcontext,
                                           &create_arg.link_content, &object_attributes);
 #endif
-              if (FSAL_IS_ERROR(fsal_status))
+              if(FSAL_IS_ERROR(fsal_status))
                 {
                   *pstatus = cache_inode_error_convert(fsal_status);
 
-                  if (fsal_status.major == ERR_FSAL_STALE)
+                  if(fsal_status.major == ERR_FSAL_STALE)
                     {
                       cache_inode_status_t kill_status;
 
@@ -944,8 +944,8 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
                           ("cache_inode_readdir: Stale FSAL File Handle detected for pentry = %p",
                            pentry_dir);
 
-                      if (cache_inode_kill_entry(pentry_dir, ht, pclient, &kill_status) !=
-                          CACHE_INODE_SUCCESS)
+                      if(cache_inode_kill_entry(pentry_dir, ht, pclient, &kill_status) !=
+                         CACHE_INODE_SUCCESS)
                         DisplayLog
                             ("cache_inode_readdir: Could not kill entry %p, status = %u",
                              pentry_dir, kill_status);
@@ -961,8 +961,8 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
           new_entry_fsdata.handle = array_dirent[iter].handle;
           new_entry_fsdata.cookie = 0;
 
-          if ((pentry = cache_inode_new_entry(&new_entry_fsdata, &array_dirent[iter].attributes, type, &create_arg, NULL, ht, pclient, pcontext, FALSE, /* This is population and no creation */
-                                              pstatus)) == NULL)
+          if((pentry = cache_inode_new_entry(&new_entry_fsdata, &array_dirent[iter].attributes, type, &create_arg, NULL, ht, pclient, pcontext, FALSE,  /* This is population and no creation */
+                                             pstatus)) == NULL)
             return *pstatus;
 
           cache_status = cache_inode_add_cached_dirent(pentry_parent,
@@ -971,8 +971,8 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
                                                        &next_pentry_parent,
                                                        ht, pclient, pcontext, pstatus);
 
-          if (cache_status != CACHE_INODE_SUCCESS
-              && cache_status != CACHE_INODE_ENTRY_EXISTS)
+          if(cache_status != CACHE_INODE_SUCCESS
+             && cache_status != CACHE_INODE_ENTRY_EXISTS)
             return *pstatus;
 
         }
@@ -983,7 +983,7 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
       /* Get prepared for next step */
       begin_cookie = end_cookie;
     }
-  while (fsal_eod != TRUE);
+  while(fsal_eod != TRUE);
 
   /* Close the directory */
 #ifdef _USE_MFSL
@@ -991,7 +991,7 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
 #else
   fsal_status = FSAL_closedir(&fsal_dirhandle);
 #endif
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       *pstatus = cache_inode_error_convert(fsal_status);
       return *pstatus;
@@ -1062,7 +1062,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
 #endif
 
   /* Sanity check */
-  if (nbwanted == 0)
+  if(nbwanted == 0)
     {
       /* Asking for nothing is not a crime !!!!! 
        * build a 'dummy' return in this case */
@@ -1079,8 +1079,8 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
   P_w(&dir_pentry->lock);
 
   /* Renew the entry (to avoid having it being garbagged */
-  if (cache_inode_renew_entry(dir_pentry, NULL, ht, pclient, pcontext, pstatus) !=
-      CACHE_INODE_SUCCESS)
+  if(cache_inode_renew_entry(dir_pentry, NULL, ht, pclient, pcontext, pstatus) !=
+     CACHE_INODE_SUCCESS)
     {
       pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_GETATTR] += 1;
       V_w(&dir_pentry->lock);
@@ -1088,8 +1088,8 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
     }
 
   /* readdir can be done only with a directory */
-  if (dir_pentry->internal_md.type != DIR_BEGINNING &&
-      dir_pentry->internal_md.type != DIR_CONTINUE)
+  if(dir_pentry->internal_md.type != DIR_BEGINNING &&
+     dir_pentry->internal_md.type != DIR_CONTINUE)
     {
       V_w(&dir_pentry->lock);
       *pstatus = CACHE_INODE_BAD_TYPE;
@@ -1101,9 +1101,9 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
     }
 
   /* Check is user (as specified by the credentials) is authorized to read the directory or not */
-  if (cache_inode_access_no_mutex(dir_pentry,
-                                  FSAL_R_OK,
-                                  ht, pclient, pcontext, pstatus) != CACHE_INODE_SUCCESS)
+  if(cache_inode_access_no_mutex(dir_pentry,
+                                 FSAL_R_OK,
+                                 ht, pclient, pcontext, pstatus) != CACHE_INODE_SUCCESS)
     {
       V_w(&dir_pentry->lock);
 
@@ -1112,16 +1112,16 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
     }
 
   /* Is the directory fully cached (this is done if a readdir call if done on the directory) */
-  if (dir_pentry->internal_md.type == DIR_BEGINNING)
+  if(dir_pentry->internal_md.type == DIR_BEGINNING)
     {
-      if (dir_pentry->object.dir_begin.has_been_readdir != CACHE_INODE_YES)
+      if(dir_pentry->object.dir_begin.has_been_readdir != CACHE_INODE_YES)
         {
 
           /* populate the cache */
-          if (cache_inode_readdir_populate(dir_pentry,
-                                           ht,
-                                           pclient,
-                                           pcontext, pstatus) != CACHE_INODE_SUCCESS)
+          if(cache_inode_readdir_populate(dir_pentry,
+                                          ht,
+                                          pclient,
+                                          pcontext, pstatus) != CACHE_INODE_SUCCESS)
             {
               /* stats */
               pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_READDIR] += 1;
@@ -1144,14 +1144,14 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
        * it means that dir_chain was populated and this means a former call to cache_inode_readdir_populate. Later evolution
        * of the code could make 'has_been_readdir' returned from CACHE_INODE_YES to CACHE_INODE_NO during garbagge collection.
        * In this case, the following lines wil become necessary, but for now they are just here as 'defensive coding' */
-      if (tstflag != CACHE_INODE_YES)
+      if(tstflag != CACHE_INODE_YES)
         {
 
           /* populate the cache */
-          if (cache_inode_readdir_populate(dir_pentry->object.dir_cont.pdir_begin,
-                                           ht,
-                                           pclient,
-                                           pcontext, pstatus) != CACHE_INODE_SUCCESS)
+          if(cache_inode_readdir_populate(dir_pentry->object.dir_cont.pdir_begin,
+                                          ht,
+                                          pclient,
+                                          pcontext, pstatus) != CACHE_INODE_SUCCESS)
             {
               /* stats */
               pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_READDIR] += 1;
@@ -1181,7 +1181,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
   *peod_met = TO_BE_CONTINUED;
 
   /* Do we start to read the directory from the beginning ? */
-  if (cookie == 0)
+  if(cookie == 0)
     {
       /* First call: the two first entries should be '.' and '..' */
     }
@@ -1190,23 +1190,23 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
   nbdirchain = 0;
   pentry_to_read = dir_pentry;
 
-  while (cookie - first_pentry_cookie >= CHILDREN_ARRAY_SIZE)   /* ????? */
+  while(cookie - first_pentry_cookie >= CHILDREN_ARRAY_SIZE)    /* ????? */
     {
       nbdirchain += 1;
 
-      if (pentry_to_read->internal_md.type == DIR_BEGINNING)
+      if(pentry_to_read->internal_md.type == DIR_BEGINNING)
         {
           /* if cookie - first_pentry_cookie is bigger than  CHILDREN_ARRAY_SIZE
            * then the provided cookie was far too big for this pdir_chain. The 
            * client to cache_inode tried to read beyond the end of directory.
            * In this case, return that EOD was met, but no entries found. */
 
-          if (pentry_to_read->object.dir_begin.end_of_dir == END_OF_DIR)
+          if(pentry_to_read->object.dir_begin.end_of_dir == END_OF_DIR)
             {
               /* stats */
               pclient->stat.func_stats.nb_success[CACHE_INODE_READDIR] += 1;
 
-              if (pentry_to_read->internal_md.type == DIR_BEGINNING)
+              if(pentry_to_read->internal_md.type == DIR_BEGINNING)
                 *pstatus = cache_inode_valid(pentry_to_read, CACHE_INODE_OP_GET, pclient);
               else
                 *pstatus = CACHE_INODE_SUCCESS;
@@ -1230,7 +1230,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
         }
       else
         {
-          if (pentry_to_read->object.dir_cont.end_of_dir == END_OF_DIR)
+          if(pentry_to_read->object.dir_cont.end_of_dir == END_OF_DIR)
             {
               V_r(&dir_pentry->lock);
 
@@ -1271,12 +1271,12 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
 
   cookie_iter = cookie;
 
-  for (i = 0; i < nbwanted;)    /* i is incremented when something is found */
+  for(i = 0; i < nbwanted;)     /* i is incremented when something is found */
     {
-      if (pentry_to_read->internal_md.type == DIR_BEGINNING)
+      if(pentry_to_read->internal_md.type == DIR_BEGINNING)
         {
-          if (pentry_to_read->object.dir_begin.pdir_data->
-              dir_entries[cookie_iter % CHILDREN_ARRAY_SIZE].active == VALID)
+          if(pentry_to_read->object.dir_begin.
+             pdir_data->dir_entries[cookie_iter % CHILDREN_ARRAY_SIZE].active == VALID)
             {
               /* another entry was add to the result array */
               dirent_array[i] =
@@ -1286,8 +1286,8 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
 #ifdef _DEBUG_CACHE_INODE
               printf("--> Cache_inode_readdir: Found slot with file named %s\n",
                      pentry_to_read->object.dir_begin.pdir_data->dir_entries[cookie_iter %
-                                                                             CHILDREN_ARRAY_SIZE].
-                     name.name);
+                                                                             CHILDREN_ARRAY_SIZE].name.
+                     name);
 #endif
               /* Step to next iter */
               *pnbfound += 1;
@@ -1297,8 +1297,8 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
         }
       else
         {
-          if (pentry_to_read->object.dir_cont.pdir_data->
-              dir_entries[cookie_iter % CHILDREN_ARRAY_SIZE].active == VALID)
+          if(pentry_to_read->object.dir_cont.
+             pdir_data->dir_entries[cookie_iter % CHILDREN_ARRAY_SIZE].active == VALID)
             {
               /* another entry was add to the result array */
               dirent_array[i] =
@@ -1308,8 +1308,8 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
 #ifdef _DEBUG_CACHE_INODE
               printf("--> Cache_inode_readdir: Found slot with file named %s\n",
                      pentry_to_read->object.dir_cont.pdir_data->dir_entries[cookie_iter %
-                                                                            CHILDREN_ARRAY_SIZE].
-                     name.name);
+                                                                            CHILDREN_ARRAY_SIZE].name.
+                     name);
               fflush(stdout);
 #endif
               /* Step to next iter */
@@ -1323,12 +1323,12 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
       cookie_iter += 1;
       *pend_cookie = cookie_iter;
 
-      if ((cookie_iter % CHILDREN_ARRAY_SIZE) == 0)
+      if((cookie_iter % CHILDREN_ARRAY_SIZE) == 0)
         {
           /* It's time to step to the next dir_cont */
-          if (pentry_to_read->internal_md.type == DIR_BEGINNING)
+          if(pentry_to_read->internal_md.type == DIR_BEGINNING)
             {
-              if (pentry_to_read->object.dir_begin.end_of_dir == END_OF_DIR)
+              if(pentry_to_read->object.dir_begin.end_of_dir == END_OF_DIR)
                 {
                   /* End of dir is reached */
                   *peod_met = END_OF_DIR;
@@ -1347,7 +1347,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
             }
           else
             {
-              if (pentry_to_read->object.dir_cont.end_of_dir == END_OF_DIR)
+              if(pentry_to_read->object.dir_cont.end_of_dir == END_OF_DIR)
                 {
                   /* End of dir is reached */
                   *peod_met = END_OF_DIR;
@@ -1368,7 +1368,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
       /* if( cookie_iter == CHILDREN_ARRAY_SIZE ) */
     }                           /* for( i = 0 ; i < nbwanted ; i ++ ) */
 
-  if (pentry_to_read->internal_md.type == DIR_BEGINNING)
+  if(pentry_to_read->internal_md.type == DIR_BEGINNING)
     *pstatus = cache_inode_valid(pentry_to_read, CACHE_INODE_OP_GET, pclient);
   else
     *pstatus = CACHE_INODE_SUCCESS;
@@ -1376,7 +1376,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
   V_r(&dir_pentry->lock);
 
   /* stat */
-  if (*pstatus != CACHE_INODE_SUCCESS)
+  if(*pstatus != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_READDIR] += 1;
   else
     pclient->stat.func_stats.nb_success[CACHE_INODE_READDIR] += 1;

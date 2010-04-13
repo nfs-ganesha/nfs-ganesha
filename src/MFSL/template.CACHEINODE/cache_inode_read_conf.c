@@ -127,12 +127,11 @@ cache_inode_status_t cache_inode_read_conf_hash_parameter(config_file_t in_confi
   char *key_value;
 
   /* Is the config tree initialized ? */
-  if (in_config == NULL || pparam == NULL)
+  if(in_config == NULL || pparam == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
   /* Get the config BLOCK */
-  if ((blk_index =
-       config_GetBlockIndexByName(in_config, CONF_LABEL_CACHE_INODE_HASH)) < 0)
+  if((blk_index = config_GetBlockIndexByName(in_config, CONF_LABEL_CACHE_INODE_HASH)) < 0)
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_CACHE_INODE_HASH ) ; */
       return CACHE_INODE_NOT_FOUND;
@@ -140,11 +139,11 @@ cache_inode_status_t cache_inode_read_conf_hash_parameter(config_file_t in_confi
 
   var_max = config_GetNbKeys(in_config, blk_index);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       /* Get key's name */
-      if ((err = config_GetKeyValue(in_config,
-                                    blk_index, var_index, &key_name, &key_value)) != 0)
+      if((err = config_GetKeyValue(in_config,
+                                   blk_index, var_index, &key_name, &key_value)) != 0)
         {
           fprintf(stderr,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
@@ -152,15 +151,15 @@ cache_inode_status_t cache_inode_read_conf_hash_parameter(config_file_t in_confi
           return CACHE_INODE_INVALID_ARGUMENT;
         }
 
-      if (!strcasecmp(key_name, "Index_Size"))
+      if(!strcasecmp(key_name, "Index_Size"))
         {
           pparam->hparam.index_size = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Alphabet_Length"))
+      else if(!strcasecmp(key_name, "Alphabet_Length"))
         {
           pparam->hparam.alphabet_length = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
+      else if(!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
         {
           pparam->hparam.nb_node_prealloc = atoi(key_value);
         }
@@ -203,12 +202,12 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
   char *LogFile = NULL;
 
   /* Is the config tree initialized ? */
-  if (in_config == NULL || pparam == NULL)
+  if(in_config == NULL || pparam == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
   /* Get the config BLOCK */
-  if ((blk_index =
-       config_GetBlockIndexByName(in_config, CONF_LABEL_CACHE_INODE_CLIENT)) < 0)
+  if((blk_index =
+      config_GetBlockIndexByName(in_config, CONF_LABEL_CACHE_INODE_CLIENT)) < 0)
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_CACHE_INODE_CLIENT ) ; */
       return CACHE_INODE_NOT_FOUND;
@@ -216,11 +215,11 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
 
   var_max = config_GetNbKeys(in_config, blk_index);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       /* Get key's name */
-      if ((err = config_GetKeyValue(in_config,
-                                    blk_index, var_index, &key_name, &key_value)) != 0)
+      if((err = config_GetKeyValue(in_config,
+                                   blk_index, var_index, &key_name, &key_value)) != 0)
         {
           fprintf(stderr,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
@@ -228,95 +227,95 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
           return CACHE_INODE_INVALID_ARGUMENT;
         }
 
-      if (!strcasecmp(key_name, "LRU_Prealloc_PoolSize"))
+      if(!strcasecmp(key_name, "LRU_Prealloc_PoolSize"))
         {
           pparam->lru_param.nb_entry_prealloc = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "LRU_Nb_Call_Gc_invalid"))
+      else if(!strcasecmp(key_name, "LRU_Nb_Call_Gc_invalid"))
         {
           pparam->lru_param.nb_call_gc_invalid = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Entry_Prealloc_PoolSize"))
+      else if(!strcasecmp(key_name, "Entry_Prealloc_PoolSize"))
         {
           pparam->nb_prealloc_entry = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "DirData_Prealloc_PoolSize"))
+      else if(!strcasecmp(key_name, "DirData_Prealloc_PoolSize"))
         {
           pparam->nb_pre_dir_data = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "ParentData_Prealloc_PoolSize"))
+      else if(!strcasecmp(key_name, "ParentData_Prealloc_PoolSize"))
         {
           pparam->nb_pre_parent = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "State_v4_Prealloc_PoolSize"))
+      else if(!strcasecmp(key_name, "State_v4_Prealloc_PoolSize"))
         {
           pparam->nb_pre_state_v4 = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Async_Op_Prealloc_Poolsize"))
+      else if(!strcasecmp(key_name, "Async_Op_Prealloc_Poolsize"))
         {
           pparam->nb_pre_async_op_desc = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Attr_Expiration_Time"))
+      else if(!strcasecmp(key_name, "Attr_Expiration_Time"))
         {
           pparam->grace_period_attr = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Symlink_Expiration_Time"))
+      else if(!strcasecmp(key_name, "Symlink_Expiration_Time"))
         {
           pparam->grace_period_link = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Directory_Expiration_Time"))
+      else if(!strcasecmp(key_name, "Directory_Expiration_Time"))
         {
           pparam->grace_period_dirent = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Use_Getattr_Directory_Invalidation"))
+      else if(!strcasecmp(key_name, "Use_Getattr_Directory_Invalidation"))
         {
           pparam->getattr_dir_invalidation = StrToBoolean(key_value);
         }
-      else if (!strcasecmp(key_name, "Use_Test_Access"))
+      else if(!strcasecmp(key_name, "Use_Test_Access"))
         {
           pparam->use_test_access = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Max_Fd"))
+      else if(!strcasecmp(key_name, "Max_Fd"))
         {
           pparam->max_fd_per_thread = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "OpenFile_Retention"))
+      else if(!strcasecmp(key_name, "OpenFile_Retention"))
         {
           pparam->retention = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Use_OpenClose_cache"))
+      else if(!strcasecmp(key_name, "Use_OpenClose_cache"))
         {
           pparam->use_cache = StrToBoolean(key_value);
         }
-      else if (!strcasecmp(key_name, "Nb_Synclet"))
+      else if(!strcasecmp(key_name, "Nb_Synclet"))
         {
           pparam->nb_synclet = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "ATD_SleepTime"))
+      else if(!strcasecmp(key_name, "ATD_SleepTime"))
         {
           pparam->atd_sleeptime = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Nb_Sync_Before_GC"))
+      else if(!strcasecmp(key_name, "Nb_Sync_Before_GC"))
         {
           pparam->nb_before_gc = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "PreCreatedObject_Directory"))
+      else if(!strcasecmp(key_name, "PreCreatedObject_Directory"))
         {
           strncpy(pparam->pre_create_obj_dir, key_value, MAXPATHLEN);
         }
-      else if (!strcasecmp(key_name, "Nb_PreCreated_Directories"))
+      else if(!strcasecmp(key_name, "Nb_PreCreated_Directories"))
         {
           pparam->nb_pre_create_dirs = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Nb_PreCreated_Files"))
+      else if(!strcasecmp(key_name, "Nb_PreCreated_Files"))
         {
           pparam->nb_pre_create_files = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "DebugLevel"))
+      else if(!strcasecmp(key_name, "DebugLevel"))
         {
           DebugLevel = ReturnLevelAscii(key_value);
 
-          if (DebugLevel == -1)
+          if(DebugLevel == -1)
             {
               DisplayLog
                   ("cache_inode_read_conf: ERROR: Invalid debug level name: \"%s\".",
@@ -324,7 +323,7 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
               return CACHE_INODE_INVALID_ARGUMENT;
             }
         }
-      else if (!strcasecmp(key_name, "LogFile"))
+      else if(!strcasecmp(key_name, "LogFile"))
         {
 
           LogFile = key_value;
@@ -341,7 +340,7 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
 
   /* init logging */
 
-  if (LogFile)
+  if(LogFile)
     {
       desc_log_stream_t log_stream;
 
@@ -349,7 +348,7 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
 
       /* Default : NIV_EVENT */
 
-      if (DebugLevel == -1)
+      if(DebugLevel == -1)
         AddLogStreamJd(&(pparam->log_outputs), V_FILE, log_stream, NIV_CRIT, SUP);
       else
         AddLogStreamJd(&(pparam->log_outputs), V_FILE, log_stream, DebugLevel, SUP);
@@ -382,12 +381,12 @@ cache_inode_status_t cache_inode_read_conf_gc_policy(config_file_t in_config,
   char *key_value;
 
   /* Is the config tree initialized ? */
-  if (in_config == NULL || ppolicy == NULL)
+  if(in_config == NULL || ppolicy == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
   /* Get the config BLOCK */
-  if ((blk_index =
-       config_GetBlockIndexByName(in_config, CONF_LABEL_CACHE_INODE_GCPOL)) < 0)
+  if((blk_index =
+      config_GetBlockIndexByName(in_config, CONF_LABEL_CACHE_INODE_GCPOL)) < 0)
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_CACHE_INODE_GCPOL ) ; */
       return CACHE_INODE_NOT_FOUND;
@@ -395,11 +394,11 @@ cache_inode_status_t cache_inode_read_conf_gc_policy(config_file_t in_config,
 
   var_max = config_GetNbKeys(in_config, blk_index);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       /* Get key's name */
-      if ((err = config_GetKeyValue(in_config,
-                                    blk_index, var_index, &key_name, &key_value)) != 0)
+      if((err = config_GetKeyValue(in_config,
+                                   blk_index, var_index, &key_name, &key_value)) != 0)
         {
           fprintf(stderr,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
@@ -407,27 +406,27 @@ cache_inode_status_t cache_inode_read_conf_gc_policy(config_file_t in_config,
           return CACHE_INODE_INVALID_ARGUMENT;
         }
 
-      if (!strcasecmp(key_name, "File_Lifetime"))
+      if(!strcasecmp(key_name, "File_Lifetime"))
         {
           ppolicy->file_expiration_delay = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Directory_Lifetime"))
+      else if(!strcasecmp(key_name, "Directory_Lifetime"))
         {
           ppolicy->directory_expiration_delay = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "NbEntries_HighWater"))
+      else if(!strcasecmp(key_name, "NbEntries_HighWater"))
         {
           ppolicy->hwmark_nb_entries = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "NbEntries_LowWater"))
+      else if(!strcasecmp(key_name, "NbEntries_LowWater"))
         {
           ppolicy->lwmark_nb_entries = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Runtime_Interval"))
+      else if(!strcasecmp(key_name, "Runtime_Interval"))
         {
           ppolicy->run_interval = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Nb_Call_Before_GC"))
+      else if(!strcasecmp(key_name, "Nb_Call_Before_GC"))
         {
           ppolicy->nb_call_before_gc = atoi(key_value);
         }

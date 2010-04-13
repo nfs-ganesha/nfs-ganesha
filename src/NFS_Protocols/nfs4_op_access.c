@@ -157,36 +157,36 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   res_ACCESS4.status = NFS4_OK;
 
   /* If there is no FH */
-  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
+  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
       res_ACCESS4.status = NFS4ERR_NOFILEHANDLE;
       return res_ACCESS4.status;
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
       res_ACCESS4.status = NFS4ERR_BADHANDLE;
       return res_ACCESS4.status;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
       res_ACCESS4.status = NFS4ERR_FHEXPIRED;
       return res_ACCESS4.status;
     }
 
   /* If Filehandle points to a pseudo fs entry, manage it via pseudofs specific functions */
-  if (nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     return nfs4_op_access_pseudo(op, data, resp);
 
   /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
-  if (nfs4_Is_Fh_Xattr(&(data->currentFH)))
+  if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_access_xattr(op, data, resp);
 
   /* Check for input parameter's sanity */
-  if (arg_ACCESS4.access > max_access)
+  if(arg_ACCESS4.access > max_access)
     {
       res_ACCESS4.status = NFS4ERR_INVAL;
       return res_ACCESS4.status;
@@ -212,9 +212,9 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 #endif
 
 #if !defined( _USE_HPSS )
-  if (credentials.user == attr.owner)
+  if(credentials.user == attr.owner)
 #else
-  if (credentials.hpss_usercred.Uid == attr.owner)
+  if(credentials.hpss_usercred.Uid == attr.owner)
 #endif
     {
       read_flag = FSAL_MODE_RUSR;
@@ -222,9 +222,9 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       exec_flag = FSAL_MODE_XUSR;
     }
 #if !defined( _USE_HPSS )
-  else if (credentials.group == attr.group)  /** @todo make smater group ownership test */
+  else if(credentials.group == attr.group)   /** @todo make smater group ownership test */
 #else
-  else if (credentials.hpss_usercred.Gid == attr.group)
+  else if(credentials.hpss_usercred.Gid == attr.group)
 #endif
     {
       read_flag = FSAL_MODE_RGRP;
@@ -238,96 +238,96 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       exec_flag = FSAL_MODE_XOTH;
     }
 
-  if (arg_ACCESS4.access & ACCESS4_READ)
+  if(arg_ACCESS4.access & ACCESS4_READ)
     {
       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_READ;
 #if !defined( _USE_HPSS )
-      if ((attr.mode & read_flag)
-          || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
+      if((attr.mode & read_flag)
+         || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
 #else
-      if ((attr.mode & read_flag)
-          || ((data->pexport->options & EXPORT_OPTION_ROOT)
-              && credentials.hpss_usercred.Uid == 0))
+      if((attr.mode & read_flag)
+         || ((data->pexport->options & EXPORT_OPTION_ROOT)
+             && credentials.hpss_usercred.Uid == 0))
 #endif
         {
           res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_READ;
         }
     }
 
-  if ((arg_ACCESS4.access & ACCESS4_LOOKUP) && (attr.type == FSAL_TYPE_DIR))
+  if((arg_ACCESS4.access & ACCESS4_LOOKUP) && (attr.type == FSAL_TYPE_DIR))
     {
       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_LOOKUP;
 #if !defined( _USE_HPSS )
-      if ((attr.mode & exec_flag)
-          || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
+      if((attr.mode & exec_flag)
+         || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
 #else
-      if ((attr.mode & exec_flag)
-          || ((data->pexport->options & EXPORT_OPTION_ROOT)
-              && credentials.hpss_usercred.Uid == 0))
+      if((attr.mode & exec_flag)
+         || ((data->pexport->options & EXPORT_OPTION_ROOT)
+             && credentials.hpss_usercred.Uid == 0))
 #endif
         {
           res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_LOOKUP;
         }
     }
 
-  if (arg_ACCESS4.access & ACCESS4_MODIFY)
+  if(arg_ACCESS4.access & ACCESS4_MODIFY)
     {
       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_MODIFY;
 #if !defined( _USE_HPSS )
-      if ((attr.mode & write_flag)
-          || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
+      if((attr.mode & write_flag)
+         || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
 #else
-      if ((attr.mode & write_flag)
-          || ((data->pexport->options & EXPORT_OPTION_ROOT)
-              && credentials.hpss_usercred.Uid == 0))
+      if((attr.mode & write_flag)
+         || ((data->pexport->options & EXPORT_OPTION_ROOT)
+             && credentials.hpss_usercred.Uid == 0))
 #endif
         {
           res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_MODIFY;
         }
     }
 
-  if (arg_ACCESS4.access & ACCESS4_EXTEND)
+  if(arg_ACCESS4.access & ACCESS4_EXTEND)
     {
       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_EXTEND;
 #if !defined( _USE_HPSS )
-      if ((attr.mode & write_flag)
-          || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
+      if((attr.mode & write_flag)
+         || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
 #else
-      if ((attr.mode & write_flag)
-          || ((data->pexport->options & EXPORT_OPTION_ROOT)
-              && credentials.hpss_usercred.Uid == 0))
+      if((attr.mode & write_flag)
+         || ((data->pexport->options & EXPORT_OPTION_ROOT)
+             && credentials.hpss_usercred.Uid == 0))
 #endif
         {
           res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_EXTEND;
         }
     }
 
-  if ((arg_ACCESS4.access & ACCESS4_DELETE) && (attr.type == FSAL_TYPE_DIR))
+  if((arg_ACCESS4.access & ACCESS4_DELETE) && (attr.type == FSAL_TYPE_DIR))
     {
       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_DELETE;
 #if !defined( _USE_HPSS )
-      if ((attr.mode & write_flag)
-          || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
+      if((attr.mode & write_flag)
+         || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
 #else
-      if ((attr.mode & write_flag)
-          || ((data->pexport->options & EXPORT_OPTION_ROOT)
-              && credentials.hpss_usercred.Uid == 0))
+      if((attr.mode & write_flag)
+         || ((data->pexport->options & EXPORT_OPTION_ROOT)
+             && credentials.hpss_usercred.Uid == 0))
 #endif
         {
           res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_DELETE;
         }
     }
 
-  if ((arg_ACCESS4.access & ACCESS4_EXECUTE) && (attr.type != FSAL_TYPE_DIR))
+  if((arg_ACCESS4.access & ACCESS4_EXECUTE) && (attr.type != FSAL_TYPE_DIR))
     {
       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_EXECUTE;
 #if !defined( _USE_HPSS )
-      if ((attr.mode & exec_flag)
-          || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
+      if((attr.mode & exec_flag)
+         || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
 #else
-      if ((attr.mode & exec_flag)
-          || ((data->pexport->options & EXPORT_OPTION_ROOT)
-              && credentials.hpss_usercred.Uid == 0))
+      if((attr.mode & exec_flag)
+         || ((data->pexport->options & EXPORT_OPTION_ROOT)
+             && credentials.hpss_usercred.Uid == 0))
 #endif
         {
           res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_EXECUTE;

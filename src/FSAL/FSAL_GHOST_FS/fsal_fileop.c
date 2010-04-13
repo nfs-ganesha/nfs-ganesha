@@ -67,11 +67,11 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
   fsal_status_t fsal_status;
   fsal_handle_t filehandle;
 
-  if (!dirhandle || !filename || !p_context || !file_descriptor)
+  if(!dirhandle || !filename || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
   fsal_status = FSAL_lookup(dirhandle, filename, p_context, &filehandle, file_attributes);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   return FSAL_open(&filehandle, p_context, openflags, file_descriptor, file_attributes);
@@ -100,7 +100,7 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
   /* sanity checks.
    * note : file_attributes is optional.
    */
-  if (!filehandle || !p_context || !file_descriptor)
+  if(!filehandle || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open);
@@ -120,7 +120,7 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
   SetFuncID(INDEX_FSAL_read);
 
   /* sanity checks. */
-  if (!file_descriptor || !seek_descriptor || !buffer || !read_amount || !end_of_file)
+  if(!file_descriptor || !seek_descriptor || !buffer || !read_amount || !end_of_file)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_read);
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_read);
@@ -139,7 +139,7 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
   SetFuncID(INDEX_FSAL_write);
 
   /* sanity checks. */
-  if (!file_descriptor || !seek_descriptor || !buffer || !write_amount)
+  if(!file_descriptor || !seek_descriptor || !buffer || !write_amount)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_write);
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_write);
@@ -153,7 +153,7 @@ fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
   SetFuncID(INDEX_FSAL_close);
 
   /* sanity checks. */
-  if (!file_descriptor)
+  if(!file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_close);

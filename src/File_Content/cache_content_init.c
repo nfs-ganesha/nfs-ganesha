@@ -124,7 +124,7 @@ int cache_content_init(cache_content_client_parameter_t param,
                        cache_content_status_t * pstatus)
 {
   /* Try to create the cache directory */
-  if (mkdir(param.cache_dir, 0750) != 0 && errno != EEXIST)
+  if(mkdir(param.cache_dir, 0750) != 0 && errno != EEXIST)
     {
       /* Cannot create the directory for caching data */
       fprintf(stderr, "Can't create cache dir = %s, error = ( %d, %s )\n",
@@ -155,7 +155,7 @@ int cache_content_init_dir(cache_content_client_parameter_t param,
 
   snprintf(path_to_dir, MAXPATHLEN, "%s/export_id=%d", param.cache_dir, 0);
 
-  if (mkdir(path_to_dir, 0750) != 0 && errno != EEXIST)
+  if(mkdir(path_to_dir, 0750) != 0 && errno != EEXIST)
     {
       return -1;
     }
@@ -202,7 +202,7 @@ int cache_content_client_init(cache_content_client_t * pclient,
   BuddySetDebugLabel("N/A");
 # endif
 
-  if (pclient->pool_entry == NULL)
+  if(pclient->pool_entry == NULL)
     {
       DisplayLogJd(pclient->log_outputs,
                    "Error : can't init data_cache client entry pool");

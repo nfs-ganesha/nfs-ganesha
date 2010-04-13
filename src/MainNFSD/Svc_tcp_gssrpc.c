@@ -160,9 +160,9 @@ SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize)
   struct sockaddr_in addr;
   int len = sizeof(struct sockaddr_in);
 
-  if (sock == RPC_ANYSOCK)
+  if(sock == RPC_ANYSOCK)
     {
-      if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+      if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
         {
           perror("svctcp_.c - udp socket creation problem");
           return ((SVCXPRT *) NULL);
@@ -174,27 +174,27 @@ SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize)
   addr.sin_len = sizeof(addr);
 #endif
   addr.sin_family = AF_INET;
-  if (bindresvport(sock, &addr))
+  if(bindresvport(sock, &addr))
     {
       addr.sin_port = 0;
       (void)bind(sock, (struct sockaddr *)&addr, len);
     }
-  if (getsockname(sock, (struct sockaddr *)&addr, &len) != 0)
+  if(getsockname(sock, (struct sockaddr *)&addr, &len) != 0)
     {
       perror("svc_tcp.c - cannot getsockname");
-      if (madesock)
+      if(madesock)
         (void)close(sock);
       return ((SVCXPRT *) NULL);
     }
-  if (listen(sock, 2) != 0)
+  if(listen(sock, 2) != 0)
     {
       perror("svctcp_.c - cannot listen");
-      if (madesock)
+      if(madesock)
         (void)close(sock);
       return ((SVCXPRT *) NULL);
     }
   r = (struct tcp_rendezvous *)mem_alloc(sizeof(*r));
-  if (r == NULL)
+  if(r == NULL)
     {
       (void)fprintf(stderr, "svctcp_create: out of memory\n");
       return (NULL);
@@ -202,7 +202,7 @@ SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize)
   r->sendsize = sendsize;
   r->recvsize = recvsize;
   xprt = (SVCXPRT *) mem_alloc(sizeof(SVCXPRT));
-  if (xprt == NULL)
+  if(xprt == NULL)
     {
       (void)fprintf(stderr, "svctcp_create: out of memory\n");
       return (NULL);
@@ -235,13 +235,13 @@ static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
   register struct tcp_conn *cd;
 
   xprt = (SVCXPRT *) mem_alloc(sizeof(SVCXPRT));
-  if (xprt == (SVCXPRT *) NULL)
+  if(xprt == (SVCXPRT *) NULL)
     {
       (void)fprintf(stderr, "svc_tcp: makefd_xprt: out of memory\n");
       goto done;
     }
   cd = (struct tcp_conn *)mem_alloc(sizeof(struct tcp_conn));
-  if (cd == (struct tcp_conn *)NULL)
+  if(cd == (struct tcp_conn *)NULL)
     {
       (void)fprintf(stderr, "svc_tcp: makefd_xprt: out of memory\n");
       mem_free((char *)xprt, sizeof(SVCXPRT));
@@ -281,13 +281,13 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt, struct rpc_msg *msg)
   r = (struct tcp_rendezvous *)xprt->xp_p1;
  again:
   len = llen = sizeof(struct sockaddr_in);
-  if ((sock = accept(xprt->xp_sock, (struct sockaddr *)&addr, &len)) < 0)
+  if((sock = accept(xprt->xp_sock, (struct sockaddr *)&addr, &len)) < 0)
     {
-      if (errno == EINTR)
+      if(errno == EINTR)
         goto again;
       return (FALSE);
     }
-  if (getsockname(sock, &laddr, &llen) < 0)
+  if(getsockname(sock, &laddr, &llen) < 0)
     return (FALSE);
 
   /*
@@ -306,17 +306,17 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt, struct rpc_msg *msg)
 
   FD_CLR(xprt->xp_sock, &Svc_fdset);
 
-  if (pthread_cond_init(&condvar_xprt[xprt->xp_sock], NULL) != 0)
+  if(pthread_cond_init(&condvar_xprt[xprt->xp_sock], NULL) != 0)
     return FALSE;
 
-  if (pthread_mutex_init(&mutex_cond_xprt[xprt->xp_sock], NULL) != 0)
+  if(pthread_mutex_init(&mutex_cond_xprt[xprt->xp_sock], NULL) != 0)
     return FALSE;
 
   etat_xprt[xprt->xp_sock] = 0;
 
-  if ((rc =
-       pthread_create(&sockmgr_thrid, &attr_thr, rpc_tcp_socket_manager_thread,
-                      (void *)(xprt->xp_sock))) != 0)
+  if((rc =
+      pthread_create(&sockmgr_thrid, &attr_thr, rpc_tcp_socket_manager_thread,
+                     (void *)(xprt->xp_sock))) != 0)
     {
       return FALSE;
     }
@@ -336,7 +336,7 @@ static void Svctcp_destroy(register SVCXPRT * xprt)
 
   Xprt_unregister(xprt);
   (void)close(xprt->xp_sock);
-  if (xprt->xp_port != 0)
+  if(xprt->xp_port != 0)
     {
       /* a rendezvouser socket */
       xprt->xp_port = 0;
@@ -346,7 +346,7 @@ static void Svctcp_destroy(register SVCXPRT * xprt)
       /* an actual connection socket */
       XDR_DESTROY(&(cd->xdrs));
     }
-  if (xprt->xp_auth != NULL)
+  if(xprt->xp_auth != NULL)
     {
       SVCAUTH_DESTROY(xprt->xp_auth);
       xprt->xp_auth = NULL;
@@ -390,17 +390,17 @@ static int Readtcp(char *xprtptr, caddr_t buf, register int len)
     {
       readfds = mask;
       tout = wait_per_try;
-      if (select(sock + 1, &readfds, (fd_set *) NULL, (fd_set *) NULL, &tout) <= 0)
+      if(select(sock + 1, &readfds, (fd_set *) NULL, (fd_set *) NULL, &tout) <= 0)
         {
-          if (errno == EINTR)
+          if(errno == EINTR)
             {
               continue;
             }
           goto fatal_err;
         }
     }
-  while (loopcond);
-  if ((len = read(sock, buf, (size_t) len)) > 0)
+  while(loopcond);
+  if((len = read(sock, buf, (size_t) len)) > 0)
     {
       return (len);
     }
@@ -418,9 +418,9 @@ static int Writetcp(char *xprtptr, caddr_t buf, int len)
   register SVCXPRT *xprt = (SVCXPRT *) (void *)xprtptr;
   register int i, cnt;
 
-  for (cnt = len; cnt > 0; cnt -= i, buf += i)
+  for(cnt = len; cnt > 0; cnt -= i, buf += i)
     {
-      if ((i = write(xprt->xp_sock, buf, (size_t) cnt)) < 0)
+      if((i = write(xprt->xp_sock, buf, (size_t) cnt)) < 0)
         {
           ((struct tcp_conn *)(xprt->xp_p1))->strm_stat = XPRT_DIED;
           return (-1);
@@ -433,9 +433,9 @@ static enum xprt_stat Svctcp_stat(SVCXPRT * xprt)
 {
   register struct tcp_conn *cd = (struct tcp_conn *)(xprt->xp_p1);
 
-  if (cd->strm_stat == XPRT_DIED)
+  if(cd->strm_stat == XPRT_DIED)
     return (XPRT_DIED);
-  if (!xdrrec_eof(&(cd->xdrs)))
+  if(!xdrrec_eof(&(cd->xdrs)))
     return (XPRT_MOREREQS);
   return (XPRT_IDLE);
 }
@@ -447,7 +447,7 @@ static bool_t Svctcp_recv(SVCXPRT * xprt, register struct rpc_msg *msg)
 
   xdrs->x_op = XDR_DECODE;
   (void)xdrrec_skiprecord(xdrs);
-  if (xdr_callmsg(xdrs, msg))
+  if(xdr_callmsg(xdrs, msg))
     {
       cd->x_id = msg->rm_xid;
       return (TRUE);
@@ -457,8 +457,8 @@ static bool_t Svctcp_recv(SVCXPRT * xprt, register struct rpc_msg *msg)
 
 static bool_t Svctcp_getargs(SVCXPRT * xprt, xdrproc_t xdr_args, void *args_ptr)
 {
-  if (!SVCAUTH_UNWRAP(xprt->xp_auth,
-                      &(((struct tcp_conn *)(xprt->xp_p1))->xdrs), xdr_args, args_ptr))
+  if(!SVCAUTH_UNWRAP(xprt->xp_auth,
+                     &(((struct tcp_conn *)(xprt->xp_p1))->xdrs), xdr_args, args_ptr))
     {
       (void)Svctcp_freeargs(xprt, xdr_args, args_ptr);
       return FALSE;
@@ -484,7 +484,7 @@ static bool_t Svctcp_reply(SVCXPRT * xprt, register struct rpc_msg *msg)
   caddr_t xdr_location;
   bool_t has_args;
 
-  if (msg->rm_reply.rp_stat == MSG_ACCEPTED && msg->rm_reply.rp_acpt.ar_stat == SUCCESS)
+  if(msg->rm_reply.rp_stat == MSG_ACCEPTED && msg->rm_reply.rp_acpt.ar_stat == SUCCESS)
     {
       has_args = TRUE;
       xdr_results = msg->acpted_rply.ar_results.proc;
@@ -499,8 +499,8 @@ static bool_t Svctcp_reply(SVCXPRT * xprt, register struct rpc_msg *msg)
   xdrs->x_op = XDR_ENCODE;
   msg->rm_xid = cd->x_id;
   stat = FALSE;
-  if (xdr_replymsg(xdrs, msg) &&
-      (!has_args || (SVCAUTH_WRAP(xprt->xp_auth, xdrs, xdr_results, xdr_location))))
+  if(xdr_replymsg(xdrs, msg) &&
+     (!has_args || (SVCAUTH_WRAP(xprt->xp_auth, xdrs, xdr_results, xdr_location))))
     {
       stat = TRUE;
     }

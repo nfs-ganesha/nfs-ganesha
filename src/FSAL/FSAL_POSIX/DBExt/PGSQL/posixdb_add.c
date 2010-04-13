@@ -33,9 +33,9 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
    *******************/
 
   /* parent_directory and filename are NULL only if it is the root directory */
-  if (!p_conn || !p_object_info || !p_object_handle
-      || (p_filename && !p_parent_directory_handle) || (!p_filename
-                                                        && p_parent_directory_handle))
+  if(!p_conn || !p_object_info || !p_object_handle
+     || (p_filename && !p_parent_directory_handle) || (!p_filename
+                                                       && p_parent_directory_handle))
     ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
 
   CheckConn(p_conn);
@@ -53,7 +53,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
    * 2/ we check the parent handle *
    *********************************/
 
-  if (p_parent_directory_handle)
+  if(p_parent_directory_handle)
     {                           /* the root has no parent */
       snprintf(handleidparent_str, MAX_HANDLEIDSTR_SIZE, "%llu",
                p_parent_directory_handle->id);
@@ -64,7 +64,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
       p_res = PQexecPrepared(p_conn, "lookupHandle", 2, paramValues, NULL, NULL, 0);
       CheckResult(p_res);
 
-      if (PQntuples(p_res) != 1)
+      if(PQntuples(p_res) != 1)
         {
           /* parent entry not found */
           RollbackTransaction(p_conn, p_res);
@@ -85,7 +85,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
   CheckResult(p_res);
   found = (PQntuples(p_res) == 1);
 
-  if (found)
+  if(found)
     {                           /* a Handle (that matches devid & inode) already exists */
       /* fill 'info' with information about the handle in the database */
       posixdb_internal_fillFileinfoFromStrValues(&(p_object_handle->info), NULL, NULL, PQgetvalue(p_res, 0, 2), /* nlink */
@@ -102,7 +102,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
       p_object_handle->ts = atoi(handlets_str);
 
       /* check the consistency of the handle */
-      if (fsal_posixdb_consistency_check(&(p_object_handle->info), p_object_info))
+      if(fsal_posixdb_consistency_check(&(p_object_handle->info), p_object_info))
         {
           /* consistency check failed */
           /* p_object_handle has been filled in order to be able to fix the consistency later */
@@ -111,8 +111,8 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
         }
 
       /* update nlink & ctime if needed */
-      if (p_object_info->nlink != p_object_handle->info.nlink
-          || p_object_info->ctime != p_object_handle->info.ctime)
+      if(p_object_info->nlink != p_object_handle->info.nlink
+         || p_object_info->ctime != p_object_handle->info.ctime)
         {
           char nlink_str[MAX_NLINKSTR_SIZE];
           char ctime_str[MAX_CTIMESTR_SIZE];
@@ -186,11 +186,11 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
   found = (PQntuples(p_res) == 1);
   paramValues[3] = handleid_str;
   paramValues[4] = handlets_str;
-  if (found)
+  if(found)
     {
       /* update the Parent entry if necessary (there entry exists with another handle) */
-      if ((fsal_u64_t) atoll(PQgetvalue(p_res, 0, 0)) != p_object_handle->id
-          || atoi(PQgetvalue(p_res, 0, 1)) != p_object_handle->ts)
+      if((fsal_u64_t) atoll(PQgetvalue(p_res, 0, 0)) != p_object_handle->id
+         || atoi(PQgetvalue(p_res, 0, 1)) != p_object_handle->ts)
         {
           /* steps :
              - check the nlink value of the Parent entry to be overwritten
@@ -214,7 +214,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
 
           found = (PQntuples(p_res) == 1);
 
-          if (found)
+          if(found)
             {                   /* we have retrieved the handle information of the bad entry */
               nlink = atoi(PQgetvalue(p_res, 0, 4));
               PQclear(p_res);   /* clear old res before a new query */
@@ -227,7 +227,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
                                              p_parent_directory_handle ?
                                              handletsparent_str : handlets_str,
                                              p_filename ? p_filename->name : "", nlink);
-              if (FSAL_POSIXDB_IS_ERROR(st))
+              if(FSAL_POSIXDB_IS_ERROR(st))
                 {
                   RollbackTransaction(p_conn, p_res);
                   return st;

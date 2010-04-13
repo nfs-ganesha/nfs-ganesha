@@ -129,7 +129,7 @@ void print_export_list(exports export_list)
 
   exports p_expnode = export_list;
 
-  while (p_expnode)
+  while(p_expnode)
     {
 
       groups p_group;
@@ -138,7 +138,7 @@ void print_export_list(exports export_list)
       printf("exportnode.ex_groups = {\n");
 
       p_group = p_expnode->ex_groups;
-      while (p_group)
+      while(p_group)
         {
           printf("  \"%s\"\n", p_group->gr_name);
           p_group = p_group->gr_next;
@@ -160,7 +160,7 @@ int test_mnt_Null()
   printf("MNTPROC_NULL()=%d\n", rc);
 
   /* Must return MNT3_OK */
-  if (rc == MNT3_OK)
+  if(rc == MNT3_OK)
     {
       printf("TEST MNT_NULL : OK\n");
       return 0;
@@ -192,7 +192,7 @@ int test_mnt_Export()
   /* rc must be OK and result.res_mntexport must be NULL */
   printf("MNTPROC_EXPORT(NULL)=(%d,%p)\n", rc, result.res_mntexport);
 
-  if ((rc == MNT3_OK) && (result.res_mntexport == NULL))
+  if((rc == MNT3_OK) && (result.res_mntexport == NULL))
     {
       printf("TEST MNT_EXPORT : OK\n\n");
     }
@@ -204,7 +204,7 @@ int test_mnt_Export()
 
   /* TEST 2 : MNT_EXPORT complex */
 
-  if ((mysock = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+  if((mysock = socket(PF_INET, SOCK_STREAM, 0)) == -1)
     {
       printf("socket ERROR %d : %s\n", errno, strerror(errno));
     }
@@ -213,13 +213,13 @@ int test_mnt_Export()
   in_addr.sin_addr.s_addr = INADDR_ANY;
   in_addr.sin_port = htons(5100);
 
-  if (bind(mysock, (struct sockaddr *)&in_addr, sizeof(in_addr)) == -1)
+  if(bind(mysock, (struct sockaddr *)&in_addr, sizeof(in_addr)) == -1)
     {
       printf("bind ERROR %d : %s\n", errno, strerror(errno));
     }
 
   size = sizeof(struct sockaddr);
-  if (getsockname(mysock, (struct sockaddr *)&addr, (socklen_t *) & size) == -1)
+  if(getsockname(mysock, (struct sockaddr *)&addr, (socklen_t *) & size) == -1)
     {
       printf("getsockname ERROR %d : %s\n", errno, strerror(errno));
     }
@@ -228,7 +228,7 @@ int test_mnt_Export()
 
   /* Building an export list */
 
-  for (i = 0; i < NB_EXPORT_ENTRIES; i++)
+  for(i = 0; i < NB_EXPORT_ENTRIES; i++)
     {
 
       /* pour alleger les notations */
@@ -241,7 +241,7 @@ int test_mnt_Export()
       snprintf(export_entries[i].fullpath, MAXPATHLEN, "/fullpath-%d", i);
 
       /* linking to the next element. */
-      if ((i + 1) < NB_EXPORT_ENTRIES)
+      if((i + 1) < NB_EXPORT_ENTRIES)
         export_entries[i].next = &(export_entries[i + 1]);
       else
         export_entries[i].next = NULL;
@@ -309,7 +309,7 @@ int test_mnt_Export()
   /* rc must be OK and result.res_mntexport must be NULL */
   printf("MNTPROC_EXPORT(entries)=(%d,%p)\n", rc, result.res_mntexport);
 
-  if ((rc == MNT3_OK) && (result.res_mntexport != NULL))
+  if((rc == MNT3_OK) && (result.res_mntexport != NULL))
     {
       printf("TEST MNT_EXPORT : OK\n\n");
     }

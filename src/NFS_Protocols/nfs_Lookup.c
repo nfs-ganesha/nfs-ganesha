@@ -163,20 +163,20 @@ int nfs_Lookup(nfs_arg_t * parg,
   fsal_handle_t *pfsal_handle;
   int rc;
 
-  if (preq->rq_vers == NFS_V3)
+  if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */
       pres->res_lookup3.LOOKUP3res_u.resfail.dir_attributes.attributes_follow = FALSE;
     }
 
-  if ((pentry_dir = nfs_FhandleToCache(preq->rq_vers,
-                                       &(parg->arg_lookup2.dir),
-                                       &(parg->arg_lookup3.what.dir),
-                                       NULL,
-                                       &(pres->res_dirop2.status),
-                                       &(pres->res_lookup3.status),
-                                       NULL,
-                                       &attrdir, pcontext, pclient, ht, &rc)) == NULL)
+  if((pentry_dir = nfs_FhandleToCache(preq->rq_vers,
+                                      &(parg->arg_lookup2.dir),
+                                      &(parg->arg_lookup3.what.dir),
+                                      NULL,
+                                      &(pres->res_dirop2.status),
+                                      &(pres->res_lookup3.status),
+                                      NULL,
+                                      &attrdir, pcontext, pclient, ht, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       return rc;
@@ -198,43 +198,42 @@ int nfs_Lookup(nfs_arg_t * parg,
 
 #ifndef _NO_XATTRD
   /* Is this a .xattr.d.<object> name ? */
-  if (nfs_XattrD_Name(strpath, strname))
+  if(nfs_XattrD_Name(strpath, strname))
     {
       strpath = strname;
       xattr_found = TRUE;
     }
 #endif
 
-  if ((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_lookup3.what.dir))))
+  if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_lookup3.what.dir))))
     return nfs3_Lookup_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
 
-  if ((cache_status = cache_inode_error_convert(FSAL_str2name(strpath,
-                                                              FSAL_MAX_NAME_LEN,
-                                                              &name))) ==
-      CACHE_INODE_SUCCESS)
+  if((cache_status = cache_inode_error_convert(FSAL_str2name(strpath,
+                                                             FSAL_MAX_NAME_LEN,
+                                                             &name))) ==
+     CACHE_INODE_SUCCESS)
     {
       /* BUGAZOMEU: Faire la gestion des cross junction traverse */
-      if ((pentry_file = cache_inode_lookup(pentry_dir,
-                                            &name,
-                                            &attr,
-                                            ht,
-                                            pclient, pcontext, &cache_status)) != NULL)
+      if((pentry_file = cache_inode_lookup(pentry_dir,
+                                           &name,
+                                           &attr,
+                                           ht, pclient, pcontext, &cache_status)) != NULL)
         {
           /* Do not forget cross junction management */
           pfsal_handle = cache_inode_get_fsal_handle(pentry_file, &cache_status);
-          if (cache_status == CACHE_INODE_SUCCESS)
+          if(cache_status == CACHE_INODE_SUCCESS)
             {
               switch (preq->rq_vers)
                 {
                 case NFS_V2:
                   /* Build file handle */
-                  if (nfs2_FSALToFhandle
-                      (&(pres->res_dirop2.DIROP2res_u.diropok.file), pfsal_handle,
-                       pexport))
+                  if(nfs2_FSALToFhandle
+                     (&(pres->res_dirop2.DIROP2res_u.diropok.file), pfsal_handle,
+                      pexport))
                     {
-                      if (nfs2_FSALattr_To_Fattr(pexport, &attr,
-                                                 &(pres->res_dirop2.DIROP2res_u.diropok.
-                                                   attributes)))
+                      if(nfs2_FSALattr_To_Fattr(pexport, &attr,
+                                                &(pres->res_dirop2.DIROP2res_u.
+                                                  diropok.attributes)))
                         {
                           pres->res_dirop2.status = NFS_OK;
                         }
@@ -243,33 +242,33 @@ int nfs_Lookup(nfs_arg_t * parg,
 
                 case NFS_V3:
                   /* Build FH */
-                  if ((pres->res_lookup3.LOOKUP3res_u.resok.object.data.data_val =
-                       Mem_Alloc(NFS3_FHSIZE)) == NULL)
+                  if((pres->res_lookup3.LOOKUP3res_u.resok.object.data.data_val =
+                      Mem_Alloc(NFS3_FHSIZE)) == NULL)
                     pres->res_lookup3.status = NFS3ERR_INVAL;
                   else
                     {
-                      if (nfs3_FSALToFhandle
-                          ((nfs_fh3 *) &
-                           (pres->res_lookup3.LOOKUP3res_u.resok.object.data),
-                           pfsal_handle, pexport))
+                      if(nfs3_FSALToFhandle
+                         ((nfs_fh3 *) &
+                          (pres->res_lookup3.LOOKUP3res_u.resok.object.data),
+                          pfsal_handle, pexport))
                         {
 
 #ifndef _NO_XATTRD
                           /* If this is a xattr ghost directory name, update the FH */
-                          if (xattr_found == TRUE)
+                          if(xattr_found == TRUE)
                             {
                               pres->res_lookup3.status =
                                   nfs3_fh_to_xattrfh((nfs_fh3 *) &
-                                                     (pres->res_lookup3.LOOKUP3res_u.
-                                                      resok.object.data),
-                                                     (nfs_fh3 *) & (pres->res_lookup3.
-                                                                    LOOKUP3res_u.resok.
-                                                                    object.data));
+                                                     (pres->res_lookup3.
+                                                      LOOKUP3res_u.resok.object.data),
+                                                     (nfs_fh3 *) & (pres->
+                                                                    res_lookup3.LOOKUP3res_u.
+                                                                    resok.object.data));
                               /* Build entry attributes */
                               nfs_SetPostOpXAttrDir(pcontext, pexport,
                                                     &attr,
-                                                    &(pres->res_lookup3.LOOKUP3res_u.
-                                                      resok.obj_attributes));
+                                                    &(pres->res_lookup3.
+                                                      LOOKUP3res_u.resok.obj_attributes));
 
                             }
                           else
@@ -278,15 +277,15 @@ int nfs_Lookup(nfs_arg_t * parg,
                             nfs_SetPostOpAttr(pcontext, pexport,
                                               pentry_file,
                                               &attr,
-                                              &(pres->res_lookup3.LOOKUP3res_u.resok.
-                                                obj_attributes));
+                                              &(pres->res_lookup3.LOOKUP3res_u.
+                                                resok.obj_attributes));
 
                           /* Build directory attributes */
                           nfs_SetPostOpAttr(pcontext, pexport,
                                             pentry_dir,
                                             &attrdir,
-                                            &(pres->res_lookup3.LOOKUP3res_u.resok.
-                                              dir_attributes));
+                                            &(pres->res_lookup3.LOOKUP3res_u.
+                                              resok.dir_attributes));
 
                           pres->res_lookup3.status = NFS3_OK;
                         }       /* if */
@@ -299,12 +298,12 @@ int nfs_Lookup(nfs_arg_t * parg,
 
   /* if( ( cache_status = cache_inode_error_convert... */
   /* If we are here, there was an error */
-  if (nfs_RetryableError(cache_status))
+  if(nfs_RetryableError(cache_status))
     {
       return NFS_REQ_DROP;
     }
 
-  if (cache_status != CACHE_INODE_SUCCESS)
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
       nfs_SetFailedStatus(pcontext, pexport,
                           preq->rq_vers,
@@ -329,7 +328,7 @@ int nfs_Lookup(nfs_arg_t * parg,
  */
 void nfs3_Lookup_Free(nfs_res_t * resp)
 {
-  if (resp->res_lookup3.status == NFS3_OK)
+  if(resp->res_lookup3.status == NFS3_OK)
     Mem_Free(resp->res_lookup3.LOOKUP3res_u.resok.object.data.data_val);
 }                               /* nfs_Lookup_Free */
 

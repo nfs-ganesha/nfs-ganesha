@@ -144,15 +144,15 @@ void nfsidmap_logger(const char *str, ...)
 
 int nfsidmap_set_conf()
 {
-  if (!nfsidmap_conf_read)
+  if(!nfsidmap_conf_read)
     {
 
       /* nfs4_set_debug(NFSIDMAP_VERBOSITY,&nfsidmap_logger); */
 
-      if (nfs4_init_name_mapping(_PATH_IDMAPDCONF))
+      if(nfs4_init_name_mapping(_PATH_IDMAPDCONF))
         return 0;
 
-      if (nfs4_get_default_domain(NULL, idmap_domain, sizeof(idmap_domain)))
+      if(nfs4_get_default_domain(NULL, idmap_domain, sizeof(idmap_domain)))
         return 0;
 
       nfsidmap_conf_read = TRUE;
@@ -177,29 +177,29 @@ int uid2name(char *name, uid_t * puid)
 {
   char fqname[MAXNAMLEN];
 #ifdef _USE_NFSIDMAP
-  if (!nfsidmap_set_conf())
+  if(!nfsidmap_set_conf())
     return 0;
 
-  if (unamemap_get(*puid, name) == ID_MAPPER_SUCCESS)
+  if(unamemap_get(*puid, name) == ID_MAPPER_SUCCESS)
     {
       return 1;
     }
   else
     {
-      if (!nfsidmap_set_conf())
+      if(!nfsidmap_set_conf())
         return 0;
 
-      if (nfs4_uid_to_name(*puid, idmap_domain, name, MAXNAMLEN))
+      if(nfs4_uid_to_name(*puid, idmap_domain, name, MAXNAMLEN))
         return 0;
 
       strncpy(fqname, name, MAXNAMLEN);
-      if (strchr(name, '@') == NULL)
+      if(strchr(name, '@') == NULL)
         {
           sprintf(fqname, "%s@%s", name, idmap_domain);
           strncpy(name, fqname, MAXNAMLEN);
         }
 
-      if (uidmap_add(fqname, *puid) != ID_MAPPER_SUCCESS)
+      if(uidmap_add(fqname, *puid) != ID_MAPPER_SUCCESS)
         return 0;
     }
   return 1;
@@ -209,20 +209,20 @@ int uid2name(char *name, uid_t * puid)
   struct passwd *pp;
   char buff[MAXPATHLEN];
 
-  if (unamemap_get(*puid, name) == ID_MAPPER_SUCCESS)
+  if(unamemap_get(*puid, name) == ID_MAPPER_SUCCESS)
     {
       return 1;
     }
   else
     {
 #ifdef _SOLARIS
-      if (getpwuid_r(*puid, &p, buff, MAXPATHLEN) != 0)
+      if(getpwuid_r(*puid, &p, buff, MAXPATHLEN) != 0)
 #else
-      if (getpwuid_r(*puid, &p, buff, MAXPATHLEN, &pp) != 0)
+      if(getpwuid_r(*puid, &p, buff, MAXPATHLEN, &pp) != 0)
 #endif                          /* _SOLARIS */
         return 0;
 
-      if (uidmap_add(name, *puid) != ID_MAPPER_SUCCESS)
+      if(uidmap_add(name, *puid) != ID_MAPPER_SUCCESS)
         return 0;
 
     }
@@ -255,7 +255,7 @@ int name2uid(char *name, uid_t * puid)
 
   /* NFsv4 specific features: RPCSEC_GSS will provide user like nfs/<host>
    * choice is made to map them to root */
-  if (!strncmp(name, "nfs/", 4))
+  if(!strncmp(name, "nfs/", 4))
     {
       /* This is a "root" request made from the hostbased nfs principal, use root */
       *puid = 0;
@@ -263,42 +263,42 @@ int name2uid(char *name, uid_t * puid)
       return 1;
     }
 
-  if (uidmap_get(name, (unsigned long *)&uid) == ID_MAPPER_SUCCESS)
+  if(uidmap_get(name, (unsigned long *)&uid) == ID_MAPPER_SUCCESS)
     {
       *puid = uid;
     }
   else
     {
 #ifdef _USE_NFSIDMAP
-      if (!nfsidmap_set_conf())
+      if(!nfsidmap_set_conf())
         return 0;
 
       /* obtain fully qualified name */
       strncpy(fqname, name, MAXNAMLEN - 1);
-      if (strchr(name, '@') == NULL)
+      if(strchr(name, '@') == NULL)
         sprintf(fqname, "%s@%s", name, idmap_domain);
 
-      if (nfs4_name_to_uid(fqname, puid))
+      if(nfs4_name_to_uid(fqname, puid))
         return 0;
 
-      if (uidmap_add(fqname, *puid) != ID_MAPPER_SUCCESS)
+      if(uidmap_add(fqname, *puid) != ID_MAPPER_SUCCESS)
         return 0;
 
 #ifdef _USE_GSSRPC
       /* nfs4_gss_princ_to_ids required to extract uid/gid from gss creds
        * XXX: currently uses unqualified name as per libnfsidmap comments */
-      if (nfs4_gss_princ_to_ids("krb5", name, &gss_uid, &gss_gid))
+      if(nfs4_gss_princ_to_ids("krb5", name, &gss_uid, &gss_gid))
         return 0;
-      if (uidgidmap_add(gss_uid, gss_gid) != ID_MAPPER_SUCCESS)
+      if(uidgidmap_add(gss_uid, gss_gid) != ID_MAPPER_SUCCESS)
         return 0;
 #endif                          /* _USE_GSSRPC */
 
 #else                           /* _USE_NFSIDMAP */
 
 #ifdef _SOLARIS
-      if (getpwnam_r(name, &passwd, buff, MAXPATHLEN) != 0)
+      if(getpwnam_r(name, &passwd, buff, MAXPATHLEN) != 0)
 #else
-      if (getpwnam_r(name, &passwd, buff, MAXPATHLEN, &ppasswd) != 0)
+      if(getpwnam_r(name, &passwd, buff, MAXPATHLEN, &ppasswd) != 0)
 #endif                          /* _SOLARIS */
         {
           *puid = -1;
@@ -308,10 +308,10 @@ int name2uid(char *name, uid_t * puid)
         {
           *puid = passwd.pw_uid;
 #ifdef _USE_GSSRPC
-          if (uidgidmap_add(passwd.pw_uid, passwd.pw_gid) != ID_MAPPER_SUCCESS)
+          if(uidgidmap_add(passwd.pw_uid, passwd.pw_gid) != ID_MAPPER_SUCCESS)
             return 0;
 #endif                          /* _USE_GSSRPC */
-          if (uidmap_add(name, passwd.pw_uid) != ID_MAPPER_SUCCESS)
+          if(uidmap_add(name, passwd.pw_uid) != ID_MAPPER_SUCCESS)
             return 0;
 
         }
@@ -340,39 +340,39 @@ int gid2name(char *name, gid_t * pgid)
   char buff[MAXPATHLEN];
 #ifdef _USE_NFSIDMAP
 
-  if (gnamemap_get(*pgid, name) == ID_MAPPER_SUCCESS)
+  if(gnamemap_get(*pgid, name) == ID_MAPPER_SUCCESS)
     {
       return 1;
     }
   else
     {
-      if (!nfsidmap_set_conf())
+      if(!nfsidmap_set_conf())
         return 0;
 
-      if (nfs4_gid_to_name(*pgid, idmap_domain, name, MAXNAMLEN))
+      if(nfs4_gid_to_name(*pgid, idmap_domain, name, MAXNAMLEN))
         return 0;
 
-      if (gidmap_add(name, *pgid) != ID_MAPPER_SUCCESS)
+      if(gidmap_add(name, *pgid) != ID_MAPPER_SUCCESS)
         return 0;
     }
 
   return 1;
 
 #else
-  if (gnamemap_get(*pgid, name) == ID_MAPPER_SUCCESS)
+  if(gnamemap_get(*pgid, name) == ID_MAPPER_SUCCESS)
     {
       return 1;
     }
   else
     {
 #ifdef _SOLARIS
-      if (getgrgid_r(*pgid, &g, buff, MAXPATHLEN) != 0)
+      if(getgrgid_r(*pgid, &g, buff, MAXPATHLEN) != 0)
 #else
-      if (getgrgid_r(*pgid, &g, buff, MAXPATHLEN, &pg) != 0)
+      if(getgrgid_r(*pgid, &g, buff, MAXPATHLEN, &pg) != 0)
 #endif                          /* _SOLARIS */
         return 0;
 
-      if (gidmap_add(name, *pgid) != ID_MAPPER_SUCCESS)
+      if(gidmap_add(name, *pgid) != ID_MAPPER_SUCCESS)
         return 0;
 
       strncpy(name, g.gr_name, MAXNAMLEN);
@@ -401,28 +401,28 @@ int name2gid(char *name, gid_t * pgid)
   static char buff[MAXPATHLEN]; /* Working area for getgrnam_r */
   gid_t gid;
 
-  if (gidmap_get(name, (unsigned long *)&gid) == ID_MAPPER_SUCCESS)
+  if(gidmap_get(name, (unsigned long *)&gid) == ID_MAPPER_SUCCESS)
     {
       *pgid = gid;
     }
   else
     {
 #ifdef _USE_NFSIDMAP
-      if (!nfsidmap_set_conf())
+      if(!nfsidmap_set_conf())
         return 0;
 
-      if (nfs4_name_to_gid(name, pgid))
+      if(nfs4_name_to_gid(name, pgid))
         return 0;
 
-      if (gidmap_add(name, *pgid) != ID_MAPPER_SUCCESS)
+      if(gidmap_add(name, *pgid) != ID_MAPPER_SUCCESS)
         return 0;
 
 #else
 
 #ifdef _SOLARIS
-      if (getgrnam_r(name, &g, buff, MAXPATHLEN) != 0)
+      if(getgrnam_r(name, &g, buff, MAXPATHLEN) != 0)
 #else
-      if (getgrnam_r(name, &g, buff, MAXPATHLEN, &pg) != 0)
+      if(getgrnam_r(name, &g, buff, MAXPATHLEN, &pg) != 0)
 #endif
         {
           *pgid = -1;
@@ -432,7 +432,7 @@ int name2gid(char *name, gid_t * pgid)
         {
           *pgid = g.gr_gid;
 
-          if (gidmap_add(name, g.gr_gid) != ID_MAPPER_SUCCESS)
+          if(gidmap_add(name, g.gr_gid) != ID_MAPPER_SUCCESS)
             return 0;
 
         }
@@ -458,7 +458,7 @@ int uid2str(uid_t uid, char *str)
   char buffer[MAXNAMLEN];
   uid_t local_uid = uid;
 
-  if (uid2name(buffer, &local_uid) == 0)
+  if(uid2name(buffer, &local_uid) == 0)
     return -1;
 #ifndef _USE_NFSIDMAP
   return sprintf(str, "%s@%s", buffer, nfs_param.nfsv4_param.domainname);
@@ -485,7 +485,7 @@ int gid2str(gid_t gid, char *str)
   char buffer[MAXNAMLEN];
   gid_t local_gid = gid;
 
-  if (gid2name(buffer, &local_gid) == 0)
+  if(gid2name(buffer, &local_gid) == 0)
     return -1;
 
 #ifndef _USE_NFSIDMAP
@@ -513,7 +513,7 @@ int uid2utf8(uid_t uid, utf8string * utf8str)
   char buff[MAXNAMLEN];
   unsigned int len = 0;
 
-  if (uid2str(uid, buff) == -1)
+  if(uid2str(uid, buff) == -1)
     return -1;
 
   len = strlen(buff);
@@ -524,7 +524,7 @@ int uid2utf8(uid_t uid, utf8string * utf8str)
   BuddySetDebugLabel("uid2utf8");
 #endif
 
-  if ((utf8str->utf8string_val = (char *)Mem_Alloc(len)) == NULL)
+  if((utf8str->utf8string_val = (char *)Mem_Alloc(len)) == NULL)
     return -1;
   else
     utf8str->utf8string_len = len;
@@ -555,7 +555,7 @@ int gid2utf8(gid_t gid, utf8string * utf8str)
   char buff[MAXNAMLEN];
   unsigned int len = 0;
 
-  if (gid2str(gid, buff) == -1)
+  if(gid2str(gid, buff) == -1)
     return -1;
 
   len = strlen(buff);
@@ -567,7 +567,7 @@ int gid2utf8(gid_t gid, utf8string * utf8str)
   BuddySetDebugLabel("gid2utf8");
 #endif
 
-  if ((utf8str->utf8string_val = (char *)Mem_Alloc(len)) == NULL)
+  if((utf8str->utf8string_val = (char *)Mem_Alloc(len)) == NULL)
     return -1;
   else
     utf8str->utf8string_len = len;
@@ -597,7 +597,7 @@ int utf82uid(utf8string * utf8str, uid_t * Uid)
   char uidname[MAXNAMLEN];
   char domainname[MAXNAMLEN];
 
-  if (utf8str->utf8string_len == 0)
+  if(utf8str->utf8string_len == 0)
     {
       *Uid = -1;                /* Nobofy */
       return -1;
@@ -635,7 +635,7 @@ int utf82gid(utf8string * utf8str, gid_t * Gid)
   char gidname[MAXNAMLEN];
   char domainname[MAXNAMLEN];
 
-  if (utf8str->utf8string_len == 0)
+  if(utf8str->utf8string_len == 0)
     {
       *Gid = -1;                /* Nobody */
       return 0;

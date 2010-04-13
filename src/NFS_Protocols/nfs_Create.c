@@ -171,13 +171,13 @@ int nfs_Create(nfs_arg_t * parg,
   cache_inode_file_type_t parent_filetype;
   fsal_handle_t *pfsal_handle;
 
-  if ((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_create3.where.dir))))
+  if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_create3.where.dir))))
     {
       DisplayLogLevel(NIV_DEBUG, "Create new xattr \"%s\"", parg->arg_create3.where.name);
       return nfs3_Create_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
     }
 
-  if (preq->rq_vers == NFS_V3)
+  if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */
       pres->res_create3.CREATE3res_u.resfail.dir_wcc.before.attributes_follow = FALSE;
@@ -185,15 +185,15 @@ int nfs_Create(nfs_arg_t * parg,
       ppre_attr = NULL;
     }
 
-  if ((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
-                                          &(parg->arg_create2.where.dir),
-                                          &(parg->arg_create3.where.dir),
-                                          NULL,
-                                          &(pres->res_dirop2.status),
-                                          &(pres->res_create3.status),
-                                          NULL,
-                                          &parent_attr,
-                                          pcontext, pclient, ht, &rc)) == NULL)
+  if((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
+                                         &(parg->arg_create2.where.dir),
+                                         &(parg->arg_create3.where.dir),
+                                         NULL,
+                                         &(pres->res_dirop2.status),
+                                         &(pres->res_create3.status),
+                                         NULL,
+                                         &parent_attr,
+                                         pcontext, pclient, ht, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       return rc;
@@ -209,7 +209,7 @@ int nfs_Create(nfs_arg_t * parg,
    * Sanity checks: new file name must be non-null; parent must be a
    * directory. 
    */
-  if ((parent_filetype != DIR_BEGINNING) && (parent_filetype != DIR_CONTINUE))
+  if((parent_filetype != DIR_BEGINNING) && (parent_filetype != DIR_CONTINUE))
     {
       switch (preq->rq_vers)
         {
@@ -230,7 +230,7 @@ int nfs_Create(nfs_arg_t * parg,
     case NFS_V2:
       str_file_name = parg->arg_create2.where.name;
 
-      if (parg->arg_create2.attributes.mode != (unsigned int)-1)
+      if(parg->arg_create2.attributes.mode != (unsigned int)-1)
         {
           mode = unix2fsal_mode(parg->arg_create2.attributes.mode);
         }
@@ -243,7 +243,7 @@ int nfs_Create(nfs_arg_t * parg,
 
     case NFS_V3:
       str_file_name = parg->arg_create3.where.name;
-      if (parg->arg_create3.how.mode == EXCLUSIVE)
+      if(parg->arg_create3.how.mode == EXCLUSIVE)
         {
           /*
            * Client has not provided mode information.
@@ -254,28 +254,28 @@ int nfs_Create(nfs_arg_t * parg,
 
           mode = 0;
         }
-      else if (parg->arg_create3.how.createhow3_u.obj_attributes.mode.set_it == TRUE)
+      else if(parg->arg_create3.how.createhow3_u.obj_attributes.mode.set_it == TRUE)
         mode =
-            unix2fsal_mode(parg->arg_create3.how.createhow3_u.obj_attributes.mode.
-                           set_mode3_u.mode);
+            unix2fsal_mode(parg->arg_create3.how.createhow3_u.obj_attributes.
+                           mode.set_mode3_u.mode);
       else
         mode = 0;
       break;
     }
 
-  if (str_file_name == NULL || strlen(str_file_name) == 0)
+  if(str_file_name == NULL || strlen(str_file_name) == 0)
     {
-      if (preq->rq_vers == NFS_V2)
+      if(preq->rq_vers == NFS_V2)
         pres->res_dirop2.status = NFSERR_IO;
-      if (preq->rq_vers == NFS_V3)
+      if(preq->rq_vers == NFS_V3)
         pres->res_create3.status = NFS3ERR_INVAL;
     }
   else
     {
-      if ((cache_status = cache_inode_error_convert(FSAL_str2name(str_file_name,
-                                                                  FSAL_MAX_NAME_LEN,
-                                                                  &file_name))) ==
-          CACHE_INODE_SUCCESS)
+      if((cache_status = cache_inode_error_convert(FSAL_str2name(str_file_name,
+                                                                 FSAL_MAX_NAME_LEN,
+                                                                 &file_name))) ==
+         CACHE_INODE_SUCCESS)
         {
           /*
            * Lookup file to see if it exists.  If so, use it.  Otherwise
@@ -286,14 +286,14 @@ int nfs_Create(nfs_arg_t * parg,
                                            &attr,
                                            ht, pclient, pcontext, &cache_status_lookup);
 
-          if ((cache_status_lookup == CACHE_INODE_NOT_FOUND) ||
-              ((cache_status_lookup == CACHE_INODE_SUCCESS)
-               && (parg->arg_create3.how.mode == UNCHECKED)))
+          if((cache_status_lookup == CACHE_INODE_NOT_FOUND) ||
+             ((cache_status_lookup == CACHE_INODE_SUCCESS)
+              && (parg->arg_create3.how.mode == UNCHECKED)))
 
             {
               /* Create the file */
-              if ((parg->arg_create3.how.mode == UNCHECKED)
-                  && (cache_status_lookup == CACHE_INODE_SUCCESS))
+              if((parg->arg_create3.how.mode == UNCHECKED)
+                 && (cache_status_lookup == CACHE_INODE_SUCCESS))
                 {
                   cache_status = CACHE_INODE_SUCCESS;
                   attr_newfile = attr;
@@ -307,7 +307,7 @@ int nfs_Create(nfs_arg_t * parg,
                                                  &attr_newfile,
                                                  ht, pclient, pcontext, &cache_status);
 
-              if (file_pentry != NULL)
+              if(file_pentry != NULL)
                 {
                   /*
                    * Look at sattr to see if some attributes are to be set at creation time 
@@ -318,8 +318,8 @@ int nfs_Create(nfs_arg_t * parg,
                     {
                     case NFS_V2:
 
-                      if (nfs2_Sattr_To_FSALattr(&attributes_create,
-                                                 &parg->arg_create2.attributes) == 0)
+                      if(nfs2_Sattr_To_FSALattr(&attributes_create,
+                                                &parg->arg_create2.attributes) == 0)
                         {
                           pres->res_dirop2.status = NFSERR_IO;
                           return NFS_REQ_OK;
@@ -329,9 +329,9 @@ int nfs_Create(nfs_arg_t * parg,
 
                     case NFS_V3:
 
-                      if (nfs3_Sattr_To_FSALattr(&attributes_create,
-                                                 &parg->arg_create3.how.createhow3_u.
-                                                 obj_attributes) == 0)
+                      if(nfs3_Sattr_To_FSALattr(&attributes_create,
+                                                &parg->arg_create3.how.
+                                                createhow3_u.obj_attributes) == 0)
                         {
                           pres->res_create3.status = NFS3ERR_INVAL;
                           return NFS_REQ_OK;
@@ -341,28 +341,28 @@ int nfs_Create(nfs_arg_t * parg,
 
                   /* Mode is managed above (in cache_inode_create), there is no need 
                    * to manage it */
-                  if (attributes_create.asked_attributes & FSAL_ATTR_MODE)
+                  if(attributes_create.asked_attributes & FSAL_ATTR_MODE)
                     attributes_create.asked_attributes &= ~FSAL_ATTR_MODE;
 
                   /* Some clients (like Solaris 10) try to set the size of the file to 0
                    * at creation time. The FSAL create empty file, so we ignore this */
-                  if (attributes_create.asked_attributes & FSAL_ATTR_SIZE)
+                  if(attributes_create.asked_attributes & FSAL_ATTR_SIZE)
                     attributes_create.asked_attributes &= ~FSAL_ATTR_SIZE;
 
-                  if (attributes_create.asked_attributes & FSAL_ATTR_SPACEUSED)
+                  if(attributes_create.asked_attributes & FSAL_ATTR_SPACEUSED)
                     attributes_create.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
 
                   /* Are there attributes to be set (additional to the mode) ? */
-                  if (attributes_create.asked_attributes != 0ULL &&
-                      attributes_create.asked_attributes != FSAL_ATTR_MODE)
+                  if(attributes_create.asked_attributes != 0ULL &&
+                     attributes_create.asked_attributes != FSAL_ATTR_MODE)
                     {
                       /* A call to cache_inode_setattr is required */
-                      if (cache_inode_setattr(file_pentry,
-                                              &attributes_create,
-                                              ht,
-                                              pclient,
-                                              pcontext,
-                                              &cache_status) != CACHE_INODE_SUCCESS)
+                      if(cache_inode_setattr(file_pentry,
+                                             &attributes_create,
+                                             ht,
+                                             pclient,
+                                             pcontext,
+                                             &cache_status) != CACHE_INODE_SUCCESS)
                         {
                           /* If we are here, there was an error */
                           nfs_SetFailedStatus(pcontext, pexport,
@@ -373,22 +373,22 @@ int nfs_Create(nfs_arg_t * parg,
                                               NULL, NULL,
                                               parent_pentry,
                                               ppre_attr,
-                                              &(pres->res_create3.CREATE3res_u.resfail.
-                                                dir_wcc), NULL, NULL, NULL);
+                                              &(pres->res_create3.CREATE3res_u.
+                                                resfail.dir_wcc), NULL, NULL, NULL);
 
-                          if (nfs_RetryableError(cache_status))
+                          if(nfs_RetryableError(cache_status))
                             return NFS_REQ_DROP;
 
                           return NFS_REQ_OK;
                         }
 
                       /* Get the resulting attributes from the Cache Inode */
-                      if (cache_inode_getattr(file_pentry,
-                                              &attr_newfile,
-                                              ht,
-                                              pclient,
-                                              pcontext,
-                                              &cache_status) != CACHE_INODE_SUCCESS)
+                      if(cache_inode_getattr(file_pentry,
+                                             &attr_newfile,
+                                             ht,
+                                             pclient,
+                                             pcontext,
+                                             &cache_status) != CACHE_INODE_SUCCESS)
                         {
                           /* If we are here, there was an error */
 
@@ -400,10 +400,10 @@ int nfs_Create(nfs_arg_t * parg,
                                               NULL, NULL,
                                               parent_pentry,
                                               ppre_attr,
-                                              &(pres->res_create3.CREATE3res_u.resfail.
-                                                dir_wcc), NULL, NULL, NULL);
+                                              &(pres->res_create3.CREATE3res_u.
+                                                resfail.dir_wcc), NULL, NULL, NULL);
 
-                          if (nfs_RetryableError(cache_status))
+                          if(nfs_RetryableError(cache_status))
                             return NFS_REQ_DROP;
 
                           return NFS_REQ_OK;
@@ -415,22 +415,23 @@ int nfs_Create(nfs_arg_t * parg,
                    * Get the FSAL handle for this entry 
                    */
                   pfsal_handle = cache_inode_get_fsal_handle(file_pentry, &cache_status);
-                  if (cache_status == CACHE_INODE_SUCCESS)
+                  if(cache_status == CACHE_INODE_SUCCESS)
                     {
 
                       switch (preq->rq_vers)
                         {
                         case NFS_V2:
                           /* Build file handle */
-                          if (nfs2_FSALToFhandle
-                              (&(pres->res_dirop2.DIROP2res_u.diropok.file), pfsal_handle,
-                               pexport) == 0)
+                          if(nfs2_FSALToFhandle
+                             (&(pres->res_dirop2.DIROP2res_u.diropok.file), pfsal_handle,
+                              pexport) == 0)
                             pres->res_dirop2.status = NFSERR_IO;
                           else
                             {
-                              if (!nfs2_FSALattr_To_Fattr(pexport, &attr_newfile,
-                                                          &(pres->res_dirop2.DIROP2res_u.
-                                                            diropok.attributes)))
+                              if(!nfs2_FSALattr_To_Fattr(pexport, &attr_newfile,
+                                                         &(pres->res_dirop2.
+                                                           DIROP2res_u.diropok.
+                                                           attributes)))
                                 pres->res_dirop2.status = NFSERR_IO;
                               else
                                 pres->res_dirop2.status = NFS_OK;
@@ -444,8 +445,9 @@ int nfs_Create(nfs_arg_t * parg,
                           BuddySetDebugLabel("Filehandle V3 in nfs3_Create");
 #endif
                           /* Build file handle */
-                          if ((pres->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.
-                               handle.data.data_val = Mem_Alloc(NFS3_FHSIZE)) == NULL)
+                          if((pres->res_create3.CREATE3res_u.resok.obj.
+                              post_op_fh3_u.handle.data.data_val =
+                              Mem_Alloc(NFS3_FHSIZE)) == NULL)
                             {
                               pres->res_create3.status = NFS3ERR_IO;
                               return NFS_REQ_OK;
@@ -455,12 +457,12 @@ int nfs_Create(nfs_arg_t * parg,
                           BuddySetDebugLabel("N/A");
 #endif
                           /* Set Post Op Fh3 structure */
-                          if (nfs3_FSALToFhandle
-                              (&pres->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.
-                               handle, pfsal_handle, pexport) == 0)
+                          if(nfs3_FSALToFhandle
+                             (&pres->res_create3.CREATE3res_u.resok.obj.
+                              post_op_fh3_u.handle, pfsal_handle, pexport) == 0)
                             {
-                              Mem_Free((char *)pres->res_create3.CREATE3res_u.resok.obj.
-                                       post_op_fh3_u.handle.data.data_val);
+                              Mem_Free((char *)pres->res_create3.CREATE3res_u.resok.
+                                       obj.post_op_fh3_u.handle.data.data_val);
 
                               pres->res_create3.status = NFS3ERR_BADHANDLE;
                               return NFS_REQ_OK;
@@ -468,8 +470,8 @@ int nfs_Create(nfs_arg_t * parg,
 
                           /* Set Post Op Fh3 structure */
                           pres->res_create3.CREATE3res_u.resok.obj.handle_follows = TRUE;
-                          pres->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.handle.
-                              data.data_len = sizeof(file_handle_v3_t);
+                          pres->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.
+                              handle.data.data_len = sizeof(file_handle_v3_t);
 
                           /* Get the attributes of the parent after the operation */
                           cache_inode_get_attributes(parent_pentry, &attr_parent_after);
@@ -478,8 +480,8 @@ int nfs_Create(nfs_arg_t * parg,
                           nfs_SetPostOpAttr(pcontext, pexport,
                                             file_pentry,
                                             &attr_newfile,
-                                            &(pres->res_create3.CREATE3res_u.resok.
-                                              obj_attributes));
+                                            &(pres->res_create3.CREATE3res_u.
+                                              resok.obj_attributes));
 
                           /*
                            * Build Weak Cache Coherency
@@ -500,7 +502,7 @@ int nfs_Create(nfs_arg_t * parg,
             }
           else
             {
-              if (cache_status_lookup == CACHE_INODE_SUCCESS)
+              if(cache_status_lookup == CACHE_INODE_SUCCESS)
                 {
                   /* Trying to create a file that already exists */
                   cache_status = CACHE_INODE_ENTRY_EXISTS;
@@ -562,7 +564,7 @@ int nfs_Create(nfs_arg_t * parg,
                       NULL, NULL, NULL);
 
   /* If we are here, there was an error */
-  if (nfs_RetryableError(cache_status))
+  if(nfs_RetryableError(cache_status))
     {
       return NFS_REQ_DROP;
     }
@@ -580,7 +582,7 @@ int nfs_Create(nfs_arg_t * parg,
  */
 void nfs_Create_Free(nfs_res_t * resp)
 {
-  if ((resp->res_create3.status == NFS3_OK) &&
-      (resp->res_create3.CREATE3res_u.resok.obj.handle_follows == TRUE))
+  if((resp->res_create3.status == NFS3_OK) &&
+     (resp->res_create3.CREATE3res_u.resok.obj.handle_follows == TRUE))
     Mem_Free(resp->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.handle.data.data_val);
 }

@@ -32,10 +32,10 @@ int s_read_int(char *str)
   int i;
   int out = 0;
 
-  for (i = 0; str[i]; i++)
+  for(i = 0; str[i]; i++)
     {
 
-      if ((str[i] < '0') || (str[i] > '9'))
+      if((str[i] < '0') || (str[i] > '9'))
         return -1;              /* error */
       else
         {
@@ -44,7 +44,7 @@ int s_read_int(char *str)
         }
     }
 
-  if (i == 0)
+  if(i == 0)
     return -1;
 
   return out;
@@ -65,10 +65,10 @@ int s_read_octal(char *str)
   int i;
   int out = 0;
 
-  for (i = 0; str[i]; i++)
+  for(i = 0; str[i]; i++)
     {
 
-      if ((str[i] < '0') || (str[i] > '7'))
+      if((str[i] < '0') || (str[i] > '7'))
         return -1;              /* error */
       else
         {
@@ -77,7 +77,7 @@ int s_read_octal(char *str)
         }
     }
 
-  if (i == 0)
+  if(i == 0)
     return -1;
 
   return out;
@@ -98,13 +98,13 @@ int s_read_int64(char *str, unsigned long long *out64)
   int i;
   unsigned long long out = 0;
 
-  if (!out64)
+  if(!out64)
     return -1;
 
-  for (i = 0; str[i]; i++)
+  for(i = 0; str[i]; i++)
     {
 
-      if ((str[i] < '0') || (str[i] > '9'))
+      if((str[i] < '0') || (str[i] > '9'))
         return -1;              /* error */
       else
         {
@@ -113,7 +113,7 @@ int s_read_int64(char *str, unsigned long long *out64)
         }
     }
 
-  if (i == 0)
+  if(i == 0)
     return -1;
 
   *out64 = out;
@@ -126,13 +126,13 @@ int s_read_size(char *str, size_t * p_size)
   int i;
   size_t out = 0;
 
-  if (!p_size)
+  if(!p_size)
     return -1;
 
-  for (i = 0; str[i]; i++)
+  for(i = 0; str[i]; i++)
     {
 
-      if ((str[i] < '0') || (str[i] > '9'))
+      if((str[i] < '0') || (str[i] > '9'))
         return -1;              /* error */
       else
         {
@@ -141,7 +141,7 @@ int s_read_size(char *str, size_t * p_size)
         }
     }
 
-  if (i == 0)
+  if(i == 0)
     return -1;
 
   *p_size = out;
@@ -156,13 +156,13 @@ int s_read_size(char *str, size_t * p_size)
  */
 int StrToBoolean(char *str)
 {
-  if (str == NULL)
+  if(str == NULL)
     return -1;
 
-  if (!strcasecmp(str, "1") || !strcasecmp(str, "TRUE") || !strcasecmp(str, "YES"))
+  if(!strcasecmp(str, "1") || !strcasecmp(str, "TRUE") || !strcasecmp(str, "YES"))
     return 1;
 
-  if (!strcasecmp(str, "0") || !strcasecmp(str, "FALSE") || !strcasecmp(str, "NO"))
+  if(!strcasecmp(str, "0") || !strcasecmp(str, "FALSE") || !strcasecmp(str, "NO"))
     return 0;
 
   return -1;
@@ -191,11 +191,11 @@ int snprintmem(char *target, int tgt_size, caddr_t source, int mem_size)
   char *str = target;           /* the current position in target buffer */
   int wrote = 0;
 
-  for (c = (unsigned char *)source; c < ((unsigned char *)source + mem_size); c++)
+  for(c = (unsigned char *)source; c < ((unsigned char *)source + mem_size); c++)
     {
       int tmp_wrote;
 
-      if (wrote >= tgt_size)
+      if(wrote >= tgt_size)
         {
           target[tgt_size - 1] = '\0';
           break;
@@ -245,21 +245,21 @@ int sscanmem(caddr_t target, int tgt_size, const char *str_source)
 
   p_src = str_source;
 
-  for (p_mem = (unsigned char *)target; p_mem < ((unsigned char *)target + tgt_size);
-       p_mem++)
+  for(p_mem = (unsigned char *)target; p_mem < ((unsigned char *)target + tgt_size);
+      p_mem++)
     {
 
       unsigned char tmp_val;
 
       /* we must read 2 bytes (written in hexa) to have 1 target byte value. */
-      if ((*p_src == '\0') || (*(p_src + 1) == '\0'))
+      if((*p_src == '\0') || (*(p_src + 1) == '\0'))
         {
           /* error, the source string is too small */
           return -1;
         }
 
       /* they must be hexa values */
-      if (!IS_HEXA(*p_src) || !IS_HEXA(*(p_src + 1)))
+      if(!IS_HEXA(*p_src) || !IS_HEXA(*(p_src + 1)))
         {
           return -1;
         }

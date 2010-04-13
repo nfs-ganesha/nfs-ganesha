@@ -28,7 +28,7 @@ int main(int argc, char **argv)
   int is_over;
   unsigned long to_purge;
 
-  if (argc != 2)
+  if(argc != 2)
     printf("Usage: %s <fs_path>\n", argv[0]);
   path = argv[1];
 

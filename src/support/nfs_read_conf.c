@@ -187,16 +187,16 @@ int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * ppara
   config_item_t block;
 
   /* Is the config tree initialized ? */
-  if (in_config == NULL || pparam == NULL)
+  if(in_config == NULL || pparam == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
   /* Get the config BLOCK */
-  if ((block = config_FindItemByName(in_config, CONF_LABEL_NFS_WORKER)) == NULL)
+  if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_WORKER)) == NULL)
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_WORKER  ) ; */
       return 1;
     }
-  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return 1;
@@ -204,14 +204,14 @@ int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * ppara
 
   var_max = config_GetNbItems(block);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
 
       item = config_GetItemByIndex(block, var_index);
 
       /* Get key's name */
-      if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
+      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           fprintf(stderr,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
@@ -219,35 +219,35 @@ int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * ppara
           return CACHE_INODE_INVALID_ARGUMENT;
         }
 
-      if (!strcasecmp(key_name, "Pending_Job_Prealloc"))
+      if(!strcasecmp(key_name, "Pending_Job_Prealloc"))
         {
           pparam->nb_pending_prealloc = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Nb_Before_GC"))
+      else if(!strcasecmp(key_name, "Nb_Before_GC"))
         {
           pparam->nb_before_gc = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Nb_DupReq_Prealloc"))
+      else if(!strcasecmp(key_name, "Nb_DupReq_Prealloc"))
         {
           pparam->nb_dupreq_prealloc = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Nb_DupReq_Before_GC"))
+      else if(!strcasecmp(key_name, "Nb_DupReq_Before_GC"))
         {
           pparam->nb_dupreq_before_gc = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Nb_Client_Id_Prealloc"))
+      else if(!strcasecmp(key_name, "Nb_Client_Id_Prealloc"))
         {
           pparam->nb_client_id_prealloc = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Nb_IP_Stats_Prealloc"))
+      else if(!strcasecmp(key_name, "Nb_IP_Stats_Prealloc"))
         {
           pparam->nb_ip_stats_prealloc = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "LRU_Pending_Job_Prealloc_PoolSize"))
+      else if(!strcasecmp(key_name, "LRU_Pending_Job_Prealloc_PoolSize"))
         {
           pparam->lru_param.nb_entry_prealloc = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "LRU_DupReq_Prealloc_PoolSize"))
+      else if(!strcasecmp(key_name, "LRU_DupReq_Prealloc_PoolSize"))
         {
           pparam->lru_dupreq.nb_entry_prealloc = atoi(key_value);
         }
@@ -286,16 +286,16 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
   config_item_t block;
 
   /* Is the config tree initialized ? */
-  if (in_config == NULL || pparam == NULL)
+  if(in_config == NULL || pparam == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
   /* Get the config BLOCK */
-  if ((block = config_FindItemByName(in_config, CONF_LABEL_NFS_CORE)) == NULL)
+  if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_CORE)) == NULL)
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_CORE  ) ; */
       return 1;
     }
-  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return 1;
@@ -303,14 +303,14 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
 
   var_max = config_GetNbItems(block);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
 
       item = config_GetItemByIndex(block, var_index);
 
       /* Get key's name */
-      if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
+      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           fprintf(stderr,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
@@ -318,71 +318,71 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
           return CACHE_INODE_INVALID_ARGUMENT;
         }
 
-      if (!strcasecmp(key_name, "Nb_Worker"))
+      if(!strcasecmp(key_name, "Nb_Worker"))
         {
           pparam->nb_worker = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Nb_MaxConcurrentGC"))
+      else if(!strcasecmp(key_name, "Nb_MaxConcurrentGC"))
         {
           pparam->nb_max_concurrent_gc = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "DupReq_Expiration"))
+      else if(!strcasecmp(key_name, "DupReq_Expiration"))
         {
           pparam->expiration_dupreq = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Use_NFS_Commit"))
+      else if(!strcasecmp(key_name, "Use_NFS_Commit"))
         {
           pparam->use_nfs_commit = StrToBoolean(key_value);
         }
-      else if (!strcasecmp(key_name, "NFS_Port"))
+      else if(!strcasecmp(key_name, "NFS_Port"))
         {
           pparam->nfs_port = (unsigned short)atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Drop_IO_Errors"))
+      else if(!strcasecmp(key_name, "Drop_IO_Errors"))
         {
           pparam->drop_io_errors = StrToBoolean(key_value);
         }
-      else if (!strcasecmp(key_name, "Drop_Inval_Errors"))
+      else if(!strcasecmp(key_name, "Drop_Inval_Errors"))
         {
           pparam->drop_inval_errors = StrToBoolean(key_value);
         }
-      else if (!strcasecmp(key_name, "MNT_Port"))
+      else if(!strcasecmp(key_name, "MNT_Port"))
         {
           pparam->mnt_port = (unsigned short)atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "NFS_Program"))
+      else if(!strcasecmp(key_name, "NFS_Program"))
         {
           pparam->nfs_program = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "MNT_Program"))
+      else if(!strcasecmp(key_name, "MNT_Program"))
         {
           pparam->mnt_program = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "NLM_Program"))
+      else if(!strcasecmp(key_name, "NLM_Program"))
         {
           pparam->nlm_program = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Core_Dump_Size"))
+      else if(!strcasecmp(key_name, "Core_Dump_Size"))
         {
           pparam->core_dump_size = atol(key_value);
         }
-      else if (!strcasecmp(key_name, "Nb_Max_Fd"))
+      else if(!strcasecmp(key_name, "Nb_Max_Fd"))
         {
           pparam->nb_max_fd = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Stats_File_Path"))
+      else if(!strcasecmp(key_name, "Stats_File_Path"))
         {
           strncpy(pparam->stats_file_path, key_value, MAXPATHLEN);
         }
-      else if (!strcasecmp(key_name, "Stats_Update_Delay"))
+      else if(!strcasecmp(key_name, "Stats_Update_Delay"))
         {
           pparam->stats_update_delay = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Dump_Stats_Per_Client"))
+      else if(!strcasecmp(key_name, "Dump_Stats_Per_Client"))
         {
           pparam->dump_stats_per_client = StrToBoolean(key_value);
         }
-      else if (!strcasecmp(key_name, "Stats_Per_Client_Directory"))
+      else if(!strcasecmp(key_name, "Stats_Per_Client_Directory"))
         {
           strncpy(pparam->stats_per_client_directory, key_value, MAXPATHLEN);
         }
@@ -422,16 +422,16 @@ int nfs_read_dupreq_hash_conf(config_file_t in_config,
   config_item_t block;
 
   /* Is the config tree initialized ? */
-  if (in_config == NULL || pparam == NULL)
+  if(in_config == NULL || pparam == NULL)
     return -1;
 
   /* Get the config BLOCK */
-  if ((block = config_FindItemByName(in_config, CONF_LABEL_NFS_DUPREQ)) == NULL)
+  if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_DUPREQ)) == NULL)
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_DUPREQ ) ; */
       return 1;
     }
-  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return 1;
@@ -439,14 +439,14 @@ int nfs_read_dupreq_hash_conf(config_file_t in_config,
 
   var_max = config_GetNbItems(block);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
 
       item = config_GetItemByIndex(block, var_index);
 
       /* Get key's name */
-      if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
+      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           fprintf(stderr,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
@@ -454,15 +454,15 @@ int nfs_read_dupreq_hash_conf(config_file_t in_config,
           return -1;
         }
 
-      if (!strcasecmp(key_name, "Index_Size"))
+      if(!strcasecmp(key_name, "Index_Size"))
         {
           pparam->hash_param.index_size = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Alphabet_Length"))
+      else if(!strcasecmp(key_name, "Alphabet_Length"))
         {
           pparam->hash_param.alphabet_length = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
+      else if(!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
         {
           pparam->hash_param.nb_node_prealloc = atoi(key_value);
         }
@@ -500,16 +500,16 @@ int nfs_read_ip_name_conf(config_file_t in_config, nfs_ip_name_parameter_t * ppa
   config_item_t block;
 
   /* Is the config tree initialized ? */
-  if (in_config == NULL || pparam == NULL)
+  if(in_config == NULL || pparam == NULL)
     return -1;
 
   /* Get the config BLOCK */
-  if ((block = config_FindItemByName(in_config, CONF_LABEL_NFS_IP_NAME)) == NULL)
+  if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_IP_NAME)) == NULL)
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_IP_NAME ) ; */
       return 1;
     }
-  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return 1;
@@ -517,14 +517,14 @@ int nfs_read_ip_name_conf(config_file_t in_config, nfs_ip_name_parameter_t * ppa
 
   var_max = config_GetNbItems(block);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
 
       item = config_GetItemByIndex(block, var_index);
 
       /* Get key's name */
-      if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
+      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           fprintf(stderr,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
@@ -532,23 +532,23 @@ int nfs_read_ip_name_conf(config_file_t in_config, nfs_ip_name_parameter_t * ppa
           return -1;
         }
 
-      if (!strcasecmp(key_name, "Index_Size"))
+      if(!strcasecmp(key_name, "Index_Size"))
         {
           pparam->hash_param.index_size = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Alphabet_Length"))
+      else if(!strcasecmp(key_name, "Alphabet_Length"))
         {
           pparam->hash_param.alphabet_length = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
+      else if(!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
         {
           pparam->hash_param.nb_node_prealloc = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Expiration_Time"))
+      else if(!strcasecmp(key_name, "Expiration_Time"))
         {
           pparam->expiration_time = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Map"))
+      else if(!strcasecmp(key_name, "Map"))
         {
           strncpy(pparam->mapfile, key_value, MAXPATHLEN);
         }
@@ -586,11 +586,11 @@ int nfs_read_client_id_conf(config_file_t in_config, nfs_client_id_parameter_t *
   config_item_t block;
 
   /* Is the config tree initialized ? */
-  if (in_config == NULL || pparam == NULL)
+  if(in_config == NULL || pparam == NULL)
     return -1;
 
   /* Get the config BLOCK */
-  if ((block = config_FindItemByName(in_config, CONF_LABEL_CLIENT_ID)) == NULL)
+  if((block = config_FindItemByName(in_config, CONF_LABEL_CLIENT_ID)) == NULL)
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_CLIENT_ID ) ; */
       return 1;
@@ -598,14 +598,14 @@ int nfs_read_client_id_conf(config_file_t in_config, nfs_client_id_parameter_t *
 
   var_max = config_GetNbItems(block);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
 
       item = config_GetItemByIndex(block, var_index);
 
       /* Get key's name */
-      if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
+      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           fprintf(stderr,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
@@ -613,15 +613,15 @@ int nfs_read_client_id_conf(config_file_t in_config, nfs_client_id_parameter_t *
           return -1;
         }
 
-      if (!strcasecmp(key_name, "Index_Size"))
+      if(!strcasecmp(key_name, "Index_Size"))
         {
           pparam->hash_param.index_size = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Alphabet_Length"))
+      else if(!strcasecmp(key_name, "Alphabet_Length"))
         {
           pparam->hash_param.alphabet_length = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
+      else if(!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
         {
           pparam->hash_param.nb_node_prealloc = atoi(key_value);
         }
@@ -659,11 +659,11 @@ int nfs_read_state_id_conf(config_file_t in_config, nfs_state_id_parameter_t * p
   config_item_t block;
 
   /* Is the config tree initialized ? */
-  if (in_config == NULL || pparam == NULL)
+  if(in_config == NULL || pparam == NULL)
     return -1;
 
   /* Get the config BLOCK */
-  if ((block = config_FindItemByName(in_config, CONF_LABEL_STATE_ID)) == NULL)
+  if((block = config_FindItemByName(in_config, CONF_LABEL_STATE_ID)) == NULL)
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_STATE_ID ) ; */
       return 1;
@@ -671,14 +671,14 @@ int nfs_read_state_id_conf(config_file_t in_config, nfs_state_id_parameter_t * p
 
   var_max = config_GetNbItems(block);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
 
       item = config_GetItemByIndex(block, var_index);
 
       /* Get key's name */
-      if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
+      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           fprintf(stderr,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
@@ -686,15 +686,15 @@ int nfs_read_state_id_conf(config_file_t in_config, nfs_state_id_parameter_t * p
           return -1;
         }
 
-      if (!strcasecmp(key_name, "Index_Size"))
+      if(!strcasecmp(key_name, "Index_Size"))
         {
           pparam->hash_param.index_size = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Alphabet_Length"))
+      else if(!strcasecmp(key_name, "Alphabet_Length"))
         {
           pparam->hash_param.alphabet_length = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
+      else if(!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
         {
           pparam->hash_param.nb_node_prealloc = atoi(key_value);
         }
@@ -721,11 +721,11 @@ int nfs_read_session_id_conf(config_file_t in_config, nfs_session_id_parameter_t
   config_item_t block;
 
   /* Is the config tree initialized ? */
-  if (in_config == NULL || pparam == NULL)
+  if(in_config == NULL || pparam == NULL)
     return -1;
 
   /* Get the config BLOCK */
-  if ((block = config_FindItemByName(in_config, CONF_LABEL_SESSION_ID)) == NULL)
+  if((block = config_FindItemByName(in_config, CONF_LABEL_SESSION_ID)) == NULL)
     {
       fprintf(stderr, "Cannot read item \"%s\" from configuration file\n",
               CONF_LABEL_STATE_ID);
@@ -734,14 +734,14 @@ int nfs_read_session_id_conf(config_file_t in_config, nfs_session_id_parameter_t
 
   var_max = config_GetNbItems(block);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
 
       item = config_GetItemByIndex(block, var_index);
 
       /* Get key's name */
-      if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
+      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           fprintf(stderr,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
@@ -749,15 +749,15 @@ int nfs_read_session_id_conf(config_file_t in_config, nfs_session_id_parameter_t
           return -1;
         }
 
-      if (!strcasecmp(key_name, "Index_Size"))
+      if(!strcasecmp(key_name, "Index_Size"))
         {
           pparam->hash_param.index_size = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Alphabet_Length"))
+      else if(!strcasecmp(key_name, "Alphabet_Length"))
         {
           pparam->hash_param.alphabet_length = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
+      else if(!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
         {
           pparam->hash_param.nb_node_prealloc = atoi(key_value);
         }
@@ -785,17 +785,17 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
   struct hostent *hp = NULL;
 
   /* Is the config tree initialized ? */
-  if (in_config == NULL || pparam == NULL)
+  if(in_config == NULL || pparam == NULL)
     return -1;
 
   /* Get the config BLOCK */
-  if ((block = config_FindItemByName(in_config, CONF_LABEL_PNFS)) == NULL)
+  if((block = config_FindItemByName(in_config, CONF_LABEL_PNFS)) == NULL)
     {
       fprintf(stderr, "Cannot read item \"%s\" from configuration file\n",
               CONF_LABEL_PNFS);
       return 1;
     }
-  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return 1;
@@ -803,31 +803,31 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
 
   var_max = config_GetNbItems(block);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
 
       item = config_GetItemByIndex(block, var_index);
 
       /* Get key's name */
-      if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
+      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           fprintf(stderr,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
                   var_index, CONF_LABEL_PNFS);
           return -1;
         }
-      else if (!strcasecmp(key_name, "Stripe_Size"))
+      else if(!strcasecmp(key_name, "Stripe_Size"))
         {
           pparam->layoutfile.stripe_size = StrToBoolean(key_value);
         }
-      else if (!strcasecmp(key_name, "Stripe_Width"))
+      else if(!strcasecmp(key_name, "Stripe_Width"))
         {
           pparam->layoutfile.stripe_width = StrToBoolean(key_value);
         }
-      else if (!strcasecmp(key_name, "DS_Addr"))
+      else if(!strcasecmp(key_name, "DS_Addr"))
         {
-          if (isdigit(key_value[0]))
+          if(isdigit(key_value[0]))
             {
               /* Address begin with a digit, it is a address in the dotted form, translate it */
               pparam->layoutfile.ds_param[0].ipaddr = inet_addr(key_value);
@@ -835,7 +835,7 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
           else
             {
               /* This is a serveur name that is to be resolved. Use gethostbyname */
-              if ((hp = gethostbyname(key_value)) == NULL)
+              if((hp = gethostbyname(key_value)) == NULL)
                 {
                   DisplayLog("PNFS LOAD PARAMETER: ERROR: Unexpected value for %s",
                              key_name);
@@ -844,19 +844,19 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
               memcpy(&pparam->layoutfile.ds_param[0].ipaddr, hp->h_addr, hp->h_length);
             }
         }
-      else if (!strcasecmp(key_name, "DS_Ip_Port"))
+      else if(!strcasecmp(key_name, "DS_Ip_Port"))
         {
           pparam->layoutfile.ds_param[0].ipport = htons((unsigned short)atoi(key_value));
         }
-      else if (!strcasecmp(key_name, "DS_ProgNum"))
+      else if(!strcasecmp(key_name, "DS_ProgNum"))
         {
           pparam->layoutfile.ds_param[0].prognum = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "DS_Root_Path"))
+      else if(!strcasecmp(key_name, "DS_Root_Path"))
         {
           strncpy(pparam->layoutfile.ds_param[0].rootpath, key_value, MAXPATHLEN);
         }
-      else if (!strcasecmp(key_name, "DS_Id"))
+      else if(!strcasecmp(key_name, "DS_Id"))
         {
           pparam->layoutfile.ds_param[0].id = atoi(key_value);
         }
@@ -897,16 +897,16 @@ int nfs_read_uidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
   config_item_t block;
 
   /* Is the config tree initialized ? */
-  if (in_config == NULL || pparam == NULL)
+  if(in_config == NULL || pparam == NULL)
     return -1;
 
   /* Get the config BLOCK */
-  if ((block = config_FindItemByName(in_config, CONF_LABEL_UID_MAPPER)) == NULL)
+  if((block = config_FindItemByName(in_config, CONF_LABEL_UID_MAPPER)) == NULL)
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_CLIENT_ID ) ; */
       return 1;
     }
-  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return 1;
@@ -914,14 +914,14 @@ int nfs_read_uidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
 
   var_max = config_GetNbItems(block);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
 
       item = config_GetItemByIndex(block, var_index);
 
       /* Get key's name */
-      if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
+      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           fprintf(stderr,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
@@ -929,19 +929,19 @@ int nfs_read_uidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
           return -1;
         }
 
-      if (!strcasecmp(key_name, "Index_Size"))
+      if(!strcasecmp(key_name, "Index_Size"))
         {
           pparam->hash_param.index_size = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Alphabet_Length"))
+      else if(!strcasecmp(key_name, "Alphabet_Length"))
         {
           pparam->hash_param.alphabet_length = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
+      else if(!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
         {
           pparam->hash_param.nb_node_prealloc = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Map"))
+      else if(!strcasecmp(key_name, "Map"))
         {
           strncpy(pparam->mapfile, key_value, MAXPATHLEN);
         }
@@ -979,16 +979,16 @@ int nfs_read_gidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
   config_item_t block;
 
   /* Is the config tree initialized ? */
-  if (in_config == NULL || pparam == NULL)
+  if(in_config == NULL || pparam == NULL)
     return -1;
 
   /* Get the config BLOCK */
-  if ((block = config_FindItemByName(in_config, CONF_LABEL_GID_MAPPER)) == NULL)
+  if((block = config_FindItemByName(in_config, CONF_LABEL_GID_MAPPER)) == NULL)
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_CLIENT_ID ) ; */
       return 1;
     }
-  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return 1;
@@ -996,14 +996,14 @@ int nfs_read_gidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
 
   var_max = config_GetNbItems(block);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
 
       item = config_GetItemByIndex(block, var_index);
 
       /* Get key's name */
-      if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
+      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           fprintf(stderr,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
@@ -1011,19 +1011,19 @@ int nfs_read_gidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
           return -1;
         }
 
-      if (!strcasecmp(key_name, "Index_Size"))
+      if(!strcasecmp(key_name, "Index_Size"))
         {
           pparam->hash_param.index_size = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Alphabet_Length"))
+      else if(!strcasecmp(key_name, "Alphabet_Length"))
         {
           pparam->hash_param.alphabet_length = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
+      else if(!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
         {
           pparam->hash_param.nb_node_prealloc = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Map"))
+      else if(!strcasecmp(key_name, "Map"))
         {
           strncpy(pparam->mapfile, key_value, MAXPATHLEN);
         }
@@ -1061,16 +1061,16 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
   config_item_t block;
 
   /* Is the config tree initialized ? */
-  if (in_config == NULL || pparam == NULL)
+  if(in_config == NULL || pparam == NULL)
     return -1;
 
   /* Get the config BLOCK */
-  if ((block = config_FindItemByName(in_config, CONF_LABEL_NFS_KRB5)) == NULL)
+  if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_KRB5)) == NULL)
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_KRB5 ) ; */
       return 1;
     }
-  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return 1;
@@ -1078,14 +1078,14 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
 
   var_max = config_GetNbItems(block);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
 
       item = config_GetItemByIndex(block, var_index);
 
       /* Get key's name */
-      if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
+      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           fprintf(stderr,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
@@ -1093,15 +1093,15 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
           return -1;
         }
 
-      if (!strcasecmp(key_name, "PrincipalName"))
+      if(!strcasecmp(key_name, "PrincipalName"))
         {
           strncpy(pparam->principal, key_value, MAXNAMLEN);
         }
-      else if (!strcasecmp(key_name, "KeytabPath"))
+      else if(!strcasecmp(key_name, "KeytabPath"))
         {
           strncpy(pparam->keytab, key_value, MAXPATHLEN);
         }
-      else if (!strcasecmp(key_name, "Active_krb5"))
+      else if(!strcasecmp(key_name, "Active_krb5"))
         {
           pparam->active_krb5 = StrToBoolean(key_value);
         }
@@ -1139,16 +1139,16 @@ int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * p
   config_item_t block;
 
   /* Is the config tree initialized ? */
-  if (in_config == NULL || pparam == NULL)
+  if(in_config == NULL || pparam == NULL)
     return -1;
 
   /* Get the config BLOCK */
-  if ((block = config_FindItemByName(in_config, CONF_LABEL_NFS_VERSION4)) == NULL)
+  if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_VERSION4)) == NULL)
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_VERSION4 ) ; */
       return 1;
     }
-  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return 1;
@@ -1156,14 +1156,14 @@ int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * p
 
   var_max = config_GetNbItems(block);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
 
       item = config_GetItemByIndex(block, var_index);
 
       /* Get key's name */
-      if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
+      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           fprintf(stderr,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
@@ -1171,27 +1171,27 @@ int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * p
           return -1;
         }
 
-      if (!strcasecmp(key_name, "Lease_Lifetime"))
+      if(!strcasecmp(key_name, "Lease_Lifetime"))
         {
           pparam->lease_lifetime = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "DomainName"))
+      else if(!strcasecmp(key_name, "DomainName"))
         {
           strncpy(pparam->domainname, key_value, MAXNAMLEN);
         }
-      else if (!strcasecmp(key_name, "IdmapConf"))
+      else if(!strcasecmp(key_name, "IdmapConf"))
         {
           strncpy(pparam->idmapconf, key_value, MAXPATHLEN);
         }
-      else if (!strcasecmp(key_name, "FH_Expire"))
+      else if(!strcasecmp(key_name, "FH_Expire"))
         {
           pparam->fh_expire = StrToBoolean(key_value);
         }
-      else if (!strcasecmp(key_name, "Returns_ERR_FH_EXPIRED"))
+      else if(!strcasecmp(key_name, "Returns_ERR_FH_EXPIRED"))
         {
           pparam->returns_err_fh_expired = StrToBoolean(key_value);
         }
-      else if (!strcasecmp(key_name, "Use_OPEN_CONFIRM"))
+      else if(!strcasecmp(key_name, "Use_OPEN_CONFIRM"))
         {
           pparam->use_open_confirm = StrToBoolean(key_value);
         }

@@ -144,7 +144,7 @@ int display_open_owner_key(hash_buffer_t * pbuff, char *str)
 
   cache_inode_open_owner_name_t *pname = (cache_inode_open_owner_name_t *) pbuff->pdata;
 
-  for (i = 0; i < pname->owner_len; i++)
+  for(i = 0; i < pname->owner_len; i++)
     len += sprintf(&(strtmp[i * 2]), "%02x", (unsigned char)pname->owner_val[i]);
 
   return len + sprintf(str, "clientid=%llu owner=(%u|%s)",
@@ -159,7 +159,7 @@ int display_open_owner_val(hash_buffer_t * pbuff, char *str)
 
   cache_inode_open_owner_t *powner = (cache_inode_open_owner_t *) (pbuff->pdata);
 
-  for (i = 0; i < powner->owner_len; i++)
+  for(i = 0; i < powner->owner_len; i++)
     len += sprintf(&(strtmp[i * 2]), "%02x", (unsigned char)powner->owner_val[i]);
 
   return len + sprintf(str, "clientid=%llu owner=(%u|%s) confirmed=%u seqid=%u",
@@ -183,13 +183,13 @@ int compare_open_owner(hash_buffer_t * buff1, hash_buffer_t * buff2)
   cache_inode_open_owner_name_t *pname1 = (cache_inode_open_owner_name_t *) buff1->pdata;
   cache_inode_open_owner_name_t *pname2 = (cache_inode_open_owner_name_t *) buff2->pdata;
 
-  if (pname1 == NULL || pname2 == NULL)
+  if(pname1 == NULL || pname2 == NULL)
     return 1;
 
-  if (pname1->clientid != pname2->clientid)
+  if(pname1->clientid != pname2->clientid)
     return 1;
 
-  if (pname1->owner_len != pname2->owner_len)
+  if(pname1->owner_len != pname2->owner_len)
     return 1;
 
   return memcmp((char *)pname1->owner_val, (char *)pname2->owner_val, pname1->owner_len);
@@ -207,7 +207,7 @@ unsigned long open_owner_value_hash_func(hash_parameter_t * p_hparam,
       (cache_inode_open_owner_name_t *) buffclef->pdata;
 
   /* Compute the sum of all the characters */
-  for (i = 0; i < pname->owner_len; i++)
+  for(i = 0; i < pname->owner_len; i++)
     {
       c = ((char *)pname->owner_val)[i];
       sum += c;
@@ -235,7 +235,7 @@ unsigned long open_owner_rbt_hash_func(hash_parameter_t * p_hparam,
   unsigned long res = 0;
 
   /* Compute the sum of all the characters */
-  for (i = 0; i < pname->owner_len; i++)
+  for(i = 0; i < pname->owner_len; i++)
     {
       c = ((char *)pname->owner_val)[i];
       sum += c;
@@ -264,7 +264,7 @@ unsigned long open_owner_rbt_hash_func(hash_parameter_t * p_hparam,
 int nfs4_Init_open_owner(nfs_open_owner_parameter_t param)
 {
 
-  if ((ht_open_owner = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_open_owner = HashTable_Init(param.hash_param)) == NULL)
     {
       DisplayLog("NFS STATE_ID: Cannot init State Id cache");
       return -1;
@@ -308,9 +308,9 @@ int nfs_open_owner_Set(cache_inode_open_owner_name_t * pname,
   powner->counter = open_owner_counter;
   V(open_owner_counter_lock);
 
-  if (HashTable_Test_And_Set
-      (ht_open_owner, &buffkey, &buffval,
-       HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS)
+  if(HashTable_Test_And_Set
+     (ht_open_owner, &buffkey, &buffval,
+      HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS)
     return 0;
 
   return 1;
@@ -337,7 +337,7 @@ int nfs_open_owner_Get(cache_inode_open_owner_name_t * pname,
   buffkey.pdata = (caddr_t) pname;
   buffkey.len = sizeof(cache_inode_open_owner_name_t);
 
-  if (HashTable_Get(ht_open_owner, &buffkey, &buffval) != HASHTABLE_SUCCESS)
+  if(HashTable_Get(ht_open_owner, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
       return 0;
     }
@@ -377,7 +377,7 @@ int nfs_open_owner_Get_Pointer(cache_inode_open_owner_name_t * pname,
   buffkey.pdata = (caddr_t) pname;
   buffkey.len = sizeof(cache_inode_open_owner_name_t);
 
-  if (HashTable_Get(ht_open_owner, &buffkey, &buffval) != HASHTABLE_SUCCESS)
+  if(HashTable_Get(ht_open_owner, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
 #ifdef _DEBUG_OPEN_OWNER_HASH
       printf("nfs_open_owner_Get_Pointer => NOTFOUND\n");
@@ -415,7 +415,7 @@ int nfs_open_owner_Update(cache_inode_open_owner_name_t * pname,
   buffkey.pdata = (caddr_t) pname;
   buffkey.len = sizeof(cache_inode_open_owner_name_t);
 
-  if (HashTable_Get(ht_open_owner, &buffkey, &buffval) != HASHTABLE_SUCCESS)
+  if(HashTable_Get(ht_open_owner, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
       return 0;
     }
@@ -443,7 +443,7 @@ int nfs_open_owner_Del(cache_inode_open_owner_name_t * pname)
   buffkey.pdata = (caddr_t) pname;
   buffkey.len = sizeof(cache_inode_open_owner_name_t);
 
-  if (HashTable_Del(ht_open_owner, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
+  if(HashTable_Del(ht_open_owner, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
     {
       /* free the key that was stored in hash table */
       Mem_Free((void *)old_key.pdata);
@@ -473,7 +473,7 @@ void nfs_open_owner_PrintAll(void)
 int nfs_convert_open_owner(open_owner4 * pnfsowner,
                            cache_inode_open_owner_name_t * pname_owner)
 {
-  if (pnfsowner == NULL || pname_owner == NULL)
+  if(pnfsowner == NULL || pname_owner == NULL)
     return 0;
 
   pname_owner->clientid = pnfsowner->clientid;

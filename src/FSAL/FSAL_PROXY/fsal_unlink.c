@@ -98,7 +98,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
    *        parentdir_handle is mandatory,
    *        because, we do not allow to delete FS root !
    */
-  if (!parentdir_handle || !p_context || !p_object_name)
+  if(!parentdir_handle || !p_context || !p_object_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_unlink);
 
   /* Setup results structures */
@@ -117,12 +117,12 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
 
   fsal_internal_proxy_create_fattr_bitmap(&bitmap);
 
-  if (fsal_internal_proxy_extract_fh(&nfs4fh, parentdir_handle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, parentdir_handle) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_unlink);
 
   memset((char *)&name, 0, sizeof(component4));
   name.utf8string_val = nameval;
-  if (fsal_internal_proxy_fsal_name_2_utf8(p_object_name, &name) == FALSE)
+  if(fsal_internal_proxy_fsal_name_2_utf8(p_object_name, &name) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_unlink);
 
 #define FSAL_UNLINK_IDX_OP_PUTFH      0
@@ -133,23 +133,23 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
   COMPOUNDV4_ARG_ADD_OP_REMOVE(argnfs4, name);
   COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, bitmap);
 
-  resnfs4.resarray.resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
-      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
-  resnfs4.resarray.resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
-      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
+  resnfs4.resarray.resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
-      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+  resnfs4.resarray.resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
       (char *)&fattr_internal;
-  resnfs4.resarray.resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
-      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+  resnfs4.resarray.resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
       sizeof(fattr_internal);
 
   TakeTokenFSCall();
 
   /* Call the NFSv4 function */
   COMPOUNDV4_EXECUTE(p_context, argnfs4, resnfs4, rc);
-  if (rc != RPC_SUCCESS)
+  if(rc != RPC_SUCCESS)
     {
       ReleaseTokenFSCall();
 
@@ -158,19 +158,20 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
 
   ReleaseTokenFSCall();
 
-  if (resnfs4.status != NFS4_OK)
+  if(resnfs4.status != NFS4_OK)
     return fsal_internal_proxy_error_convert(resnfs4.status, INDEX_FSAL_unlink);
 
   /* >> get post op attributes for the parent, if they are asked,
    * and your filesystem didn't return them << */
 
-  if (parentdir_attributes)
+  if(parentdir_attributes)
     {
 
-      if (nfs4_Fattr_To_FSAL_attr(parentdir_attributes,
-                                  &resnfs4.resarray.
-                                  resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.
-                                  opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
+      if(nfs4_Fattr_To_FSAL_attr(parentdir_attributes,
+                                 &resnfs4.
+                                 resarray.resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].
+                                 nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
+                                 obj_attributes) != 1)
         {
           FSAL_CLEAR_MASK(parentdir_attributes->asked_attributes);
           FSAL_SET_MASK(parentdir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

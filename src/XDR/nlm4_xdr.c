@@ -10,7 +10,7 @@ bool_t xdr_int32_t(XDR * xdrs, int32_t * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_int(xdrs, objp))
+  if(!xdr_int(xdrs, objp))
     return FALSE;
   return TRUE;
 }
@@ -19,7 +19,7 @@ bool_t xdr_uint32_t(XDR * xdrs, uint32_t * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_u_int(xdrs, objp))
+  if(!xdr_u_int(xdrs, objp))
     return FALSE;
   return TRUE;
 }
@@ -28,7 +28,7 @@ bool_t xdr_int64_t(XDR * xdrs, int64_t * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_quad_t(xdrs, objp))
+  if(!xdr_quad_t(xdrs, objp))
     return FALSE;
   return TRUE;
 }
@@ -37,7 +37,7 @@ bool_t xdr_uint64_t(XDR * xdrs, uint64_t * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_u_quad_t(xdrs, objp))
+  if(!xdr_u_quad_t(xdrs, objp))
     return FALSE;
   return TRUE;
 }
@@ -47,7 +47,7 @@ bool_t xdr_nlm4_stats(XDR * xdrs, nlm4_stats * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_enum(xdrs, (enum_t *) objp))
+  if(!xdr_enum(xdrs, (enum_t *) objp))
     return FALSE;
   return TRUE;
 }
@@ -56,7 +56,7 @@ bool_t xdr_nlm4_stat(XDR * xdrs, nlm4_stat * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_nlm4_stats(xdrs, &objp->stat))
+  if(!xdr_nlm4_stats(xdrs, &objp->stat))
     return FALSE;
   return TRUE;
 }
@@ -65,9 +65,9 @@ bool_t xdr_nlm4_res(XDR * xdrs, nlm4_res * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_netobj(xdrs, &objp->cookie))
+  if(!xdr_netobj(xdrs, &objp->cookie))
     return FALSE;
-  if (!xdr_nlm4_stat(xdrs, &objp->stat))
+  if(!xdr_nlm4_stat(xdrs, &objp->stat))
     return FALSE;
   return TRUE;
 }
@@ -76,15 +76,15 @@ bool_t xdr_nlm4_holder(XDR * xdrs, nlm4_holder * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_bool(xdrs, &objp->exclusive))
+  if(!xdr_bool(xdrs, &objp->exclusive))
     return FALSE;
-  if (!xdr_int32_t(xdrs, &objp->svid))
+  if(!xdr_int32_t(xdrs, &objp->svid))
     return FALSE;
-  if (!xdr_netobj(xdrs, &objp->oh))
+  if(!xdr_netobj(xdrs, &objp->oh))
     return FALSE;
-  if (!xdr_uint64_t(xdrs, &objp->l_offset))
+  if(!xdr_uint64_t(xdrs, &objp->l_offset))
     return FALSE;
-  if (!xdr_uint64_t(xdrs, &objp->l_len))
+  if(!xdr_uint64_t(xdrs, &objp->l_len))
     return FALSE;
   return TRUE;
 }
@@ -93,12 +93,12 @@ bool_t xdr_nlm4_testrply(XDR * xdrs, nlm4_testrply * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_nlm4_stats(xdrs, &objp->stat))
+  if(!xdr_nlm4_stats(xdrs, &objp->stat))
     return FALSE;
   switch (objp->stat)
     {
     case NLM4_DENIED:
-      if (!xdr_nlm4_holder(xdrs, &objp->nlm4_testrply_u.holder))
+      if(!xdr_nlm4_holder(xdrs, &objp->nlm4_testrply_u.holder))
         return FALSE;
       break;
     default:
@@ -111,9 +111,9 @@ bool_t xdr_nlm4_testres(XDR * xdrs, nlm4_testres * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_netobj(xdrs, &objp->cookie))
+  if(!xdr_netobj(xdrs, &objp->cookie))
     return FALSE;
-  if (!xdr_nlm4_testrply(xdrs, &objp->test_stat))
+  if(!xdr_nlm4_testrply(xdrs, &objp->test_stat))
     return FALSE;
   return TRUE;
 }
@@ -122,17 +122,17 @@ bool_t xdr_nlm4_lock(XDR * xdrs, nlm4_lock * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_string(xdrs, &objp->caller_name, LM_MAXSTRLEN))
+  if(!xdr_string(xdrs, &objp->caller_name, LM_MAXSTRLEN))
     return FALSE;
-  if (!xdr_netobj(xdrs, &objp->fh))
+  if(!xdr_netobj(xdrs, &objp->fh))
     return FALSE;
-  if (!xdr_netobj(xdrs, &objp->oh))
+  if(!xdr_netobj(xdrs, &objp->oh))
     return FALSE;
-  if (!xdr_int32_t(xdrs, &objp->svid))
+  if(!xdr_int32_t(xdrs, &objp->svid))
     return FALSE;
-  if (!xdr_uint64_t(xdrs, &objp->l_offset))
+  if(!xdr_uint64_t(xdrs, &objp->l_offset))
     return FALSE;
-  if (!xdr_uint64_t(xdrs, &objp->l_len))
+  if(!xdr_uint64_t(xdrs, &objp->l_len))
     return FALSE;
   return TRUE;
 }
@@ -141,17 +141,17 @@ bool_t xdr_nlm4_lockargs(XDR * xdrs, nlm4_lockargs * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_netobj(xdrs, &objp->cookie))
+  if(!xdr_netobj(xdrs, &objp->cookie))
     return FALSE;
-  if (!xdr_bool(xdrs, &objp->block))
+  if(!xdr_bool(xdrs, &objp->block))
     return FALSE;
-  if (!xdr_bool(xdrs, &objp->exclusive))
+  if(!xdr_bool(xdrs, &objp->exclusive))
     return FALSE;
-  if (!xdr_nlm4_lock(xdrs, &objp->alock))
+  if(!xdr_nlm4_lock(xdrs, &objp->alock))
     return FALSE;
-  if (!xdr_bool(xdrs, &objp->reclaim))
+  if(!xdr_bool(xdrs, &objp->reclaim))
     return FALSE;
-  if (!xdr_int32_t(xdrs, &objp->state))
+  if(!xdr_int32_t(xdrs, &objp->state))
     return FALSE;
   return TRUE;
 }
@@ -160,13 +160,13 @@ bool_t xdr_nlm4_cancargs(XDR * xdrs, nlm4_cancargs * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_netobj(xdrs, &objp->cookie))
+  if(!xdr_netobj(xdrs, &objp->cookie))
     return FALSE;
-  if (!xdr_bool(xdrs, &objp->block))
+  if(!xdr_bool(xdrs, &objp->block))
     return FALSE;
-  if (!xdr_bool(xdrs, &objp->exclusive))
+  if(!xdr_bool(xdrs, &objp->exclusive))
     return FALSE;
-  if (!xdr_nlm4_lock(xdrs, &objp->alock))
+  if(!xdr_nlm4_lock(xdrs, &objp->alock))
     return FALSE;
   return TRUE;
 }
@@ -175,11 +175,11 @@ bool_t xdr_nlm4_testargs(XDR * xdrs, nlm4_testargs * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_netobj(xdrs, &objp->cookie))
+  if(!xdr_netobj(xdrs, &objp->cookie))
     return FALSE;
-  if (!xdr_bool(xdrs, &objp->exclusive))
+  if(!xdr_bool(xdrs, &objp->exclusive))
     return FALSE;
-  if (!xdr_nlm4_lock(xdrs, &objp->alock))
+  if(!xdr_nlm4_lock(xdrs, &objp->alock))
     return FALSE;
   return TRUE;
 }
@@ -188,9 +188,9 @@ bool_t xdr_nlm4_unlockargs(XDR * xdrs, nlm4_unlockargs * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_netobj(xdrs, &objp->cookie))
+  if(!xdr_netobj(xdrs, &objp->cookie))
     return FALSE;
-  if (!xdr_nlm4_lock(xdrs, &objp->alock))
+  if(!xdr_nlm4_lock(xdrs, &objp->alock))
     return FALSE;
   return TRUE;
 }
@@ -199,7 +199,7 @@ bool_t xdr_fsh4_mode(XDR * xdrs, fsh4_mode * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_enum(xdrs, (enum_t *) objp))
+  if(!xdr_enum(xdrs, (enum_t *) objp))
     return FALSE;
   return TRUE;
 }
@@ -208,7 +208,7 @@ bool_t xdr_fsh4_access(XDR * xdrs, fsh4_access * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_enum(xdrs, (enum_t *) objp))
+  if(!xdr_enum(xdrs, (enum_t *) objp))
     return FALSE;
   return TRUE;
 }
@@ -217,15 +217,15 @@ bool_t xdr_nlm4_share(XDR * xdrs, nlm4_share * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_string(xdrs, &objp->caller_name, LM_MAXSTRLEN))
+  if(!xdr_string(xdrs, &objp->caller_name, LM_MAXSTRLEN))
     return FALSE;
-  if (!xdr_netobj(xdrs, &objp->fh))
+  if(!xdr_netobj(xdrs, &objp->fh))
     return FALSE;
-  if (!xdr_netobj(xdrs, &objp->oh))
+  if(!xdr_netobj(xdrs, &objp->oh))
     return FALSE;
-  if (!xdr_fsh4_mode(xdrs, &objp->mode))
+  if(!xdr_fsh4_mode(xdrs, &objp->mode))
     return FALSE;
-  if (!xdr_fsh4_access(xdrs, &objp->access))
+  if(!xdr_fsh4_access(xdrs, &objp->access))
     return FALSE;
   return TRUE;
 }
@@ -234,11 +234,11 @@ bool_t xdr_nlm4_shareargs(XDR * xdrs, nlm4_shareargs * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_netobj(xdrs, &objp->cookie))
+  if(!xdr_netobj(xdrs, &objp->cookie))
     return FALSE;
-  if (!xdr_nlm4_share(xdrs, &objp->share))
+  if(!xdr_nlm4_share(xdrs, &objp->share))
     return FALSE;
-  if (!xdr_bool(xdrs, &objp->reclaim))
+  if(!xdr_bool(xdrs, &objp->reclaim))
     return FALSE;
   return TRUE;
 }
@@ -247,11 +247,11 @@ bool_t xdr_nlm4_shareres(XDR * xdrs, nlm4_shareres * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_netobj(xdrs, &objp->cookie))
+  if(!xdr_netobj(xdrs, &objp->cookie))
     return FALSE;
-  if (!xdr_nlm4_stats(xdrs, &objp->stat))
+  if(!xdr_nlm4_stats(xdrs, &objp->stat))
     return FALSE;
-  if (!xdr_int32_t(xdrs, &objp->sequence))
+  if(!xdr_int32_t(xdrs, &objp->sequence))
     return FALSE;
   return TRUE;
 }
@@ -260,9 +260,9 @@ bool_t xdr_nlm4_notify(XDR * xdrs, nlm4_notify * objp)
 {
   register int32_t *buf;
 
-  if (!xdr_string(xdrs, &objp->name, LM_MAXNAMELEN))
+  if(!xdr_string(xdrs, &objp->name, LM_MAXNAMELEN))
     return FALSE;
-  if (!xdr_int64_t(xdrs, &objp->state))
+  if(!xdr_int64_t(xdrs, &objp->state))
     return FALSE;
   return TRUE;
 }

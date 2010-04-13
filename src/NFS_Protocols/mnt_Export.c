@@ -173,7 +173,7 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
   memset(pres, 0, sizeof(nfs_res_t));
 
   /* for each existing export entry */
-  while (p_current_item)
+  while(p_current_item)
     {
 
       exports new_expnode;      /* the export node to be added to the list */
@@ -206,7 +206,7 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
 
       /* we convert the group list */
 
-      if (p_current_item->clients.num_clients > 0)
+      if(p_current_item->clients.num_clients > 0)
         {
 
           /* Alias, to make the code slim... */
@@ -219,12 +219,12 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
           /* paranoid command, to avoid parasites in the allocated strcuture. */
           memset(new_expnode->ex_groups, 0, p_clients->num_clients * sizeof(groupnode));
 
-          for (i = 0; i < p_clients->num_clients; i++)
+          for(i = 0; i < p_clients->num_clients; i++)
             {
 
               /* ---- gr_next ----- */
 
-              if ((i + 1) == p_clients->num_clients)    /* this is the last item */
+              if((i + 1) == p_clients->num_clients)     /* this is the last item */
                 new_expnode->ex_groups[i].gr_next = NULL;
               else              /* other items point to the next memory slot */
                 new_expnode->ex_groups[i].gr_next = &(new_expnode->ex_groups[i + 1]);
@@ -240,9 +240,9 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
 
                   /* clears memory : */
                   memset(new_expnode->ex_groups[i].gr_name, 0, INET_ADDRSTRLEN + 1);
-                  if (inet_ntop
-                      (AF_INET, &(p_clients->clientarray[i].client.hostif.clientaddr),
-                       new_expnode->ex_groups[i].gr_name, INET_ADDRSTRLEN) == NULL)
+                  if(inet_ntop
+                     (AF_INET, &(p_clients->clientarray[i].client.hostif.clientaddr),
+                      new_expnode->ex_groups[i].gr_name, INET_ADDRSTRLEN) == NULL)
                     {
                       strncpy(new_expnode->ex_groups[i].gr_name, "Invalid Host address",
                               MAXHOSTNAMELEN);
@@ -257,9 +257,9 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
 
                   /* clears memory : */
                   memset(new_expnode->ex_groups[i].gr_name, 0, INET_ADDRSTRLEN + 1);
-                  if (inet_ntop
-                      (AF_INET, &(p_clients->clientarray[i].client.network.netaddr),
-                       new_expnode->ex_groups[i].gr_name, INET_ADDRSTRLEN) == NULL)
+                  if(inet_ntop
+                     (AF_INET, &(p_clients->clientarray[i].client.network.netaddr),
+                      new_expnode->ex_groups[i].gr_name, INET_ADDRSTRLEN) == NULL)
                     {
                       strncpy(new_expnode->ex_groups[i].gr_name,
                               "Invalid Network address", MAXHOSTNAMELEN);
@@ -341,7 +341,7 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
 
       /* we insert the export node to the export list */
 
-      if (p_exp_out)
+      if(p_exp_out)
         {
           p_exp_current->ex_next = new_expnode;
           p_exp_current = new_expnode;

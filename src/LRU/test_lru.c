@@ -147,19 +147,19 @@ int main(int argc, char *argv[])
 
   BuddyInit(NULL);
 
-  if ((plru = LRU_Init(param, &status)) == NULL)
+  if((plru = LRU_Init(param, &status)) == NULL)
     {
       printf("Test ECHOUE : Mauvaise init\n");
       exit(1);
     }
 
-  for (i = 0; i < MAXTEST; i++)
+  for(i = 0; i < MAXTEST; i++)
     {
 #ifdef _DEBUG_LRU
       printf("Ajout de l'entree %d\n", i);
 #endif
       sprintf(strtab[i], "%d", i);
-      if ((entry = LRU_new_entry(plru, &status)) == NULL)
+      if((entry = LRU_new_entry(plru, &status)) == NULL)
         {
 
           printf("Test ECHOUE : Mauvais ajout d'entree, status = %d\n", status);
@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
       entry->buffdata.pdata = strtab[i];
       entry->buffdata.len = strlen(strtab[i]);
 
-      if (i == KEPT_ENTRY)
+      if(i == KEPT_ENTRY)
         kept_entry = entry;
     }
 
@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
   LRU_Print(plru);
 #endif
 
-  if (LRU_gc_invalid(plru, NULL) != LRU_LIST_SUCCESS)
+  if(LRU_gc_invalid(plru, NULL) != LRU_LIST_SUCCESS)
     {
       printf("Test ECHOUE : Mauvais gc\n");
       exit(1);

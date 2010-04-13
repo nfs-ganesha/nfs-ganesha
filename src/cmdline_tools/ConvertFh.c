@@ -115,7 +115,7 @@ void print_buffer(caddr_t buffer, size_t sz_returned)
   int ascii, numeric, hexa;
 
   /* print the value */
-  if (sz_returned == 0)
+  if(sz_returned == 0)
     {
       printf("(empty)\n");
       return;
@@ -125,52 +125,52 @@ void print_buffer(caddr_t buffer, size_t sz_returned)
   ascii = numeric = hexa = FALSE;
 
   /* is it ascii ? */
-  if (strlen(buffer) == sz_returned - 1 || strlen(buffer) == sz_returned)
+  if(strlen(buffer) == sz_returned - 1 || strlen(buffer) == sz_returned)
     {
       char *str = buffer;
       int tmp_is_ascii = TRUE;
 
-      for (i = 0; i < strlen(str); i++)
+      for(i = 0; i < strlen(str); i++)
         {
-          if (!isprint(str[i]) && !isspace(str[i]))
+          if(!isprint(str[i]) && !isspace(str[i]))
             {
               tmp_is_ascii = FALSE;
               break;
             }
         }
-      if (tmp_is_ascii)
+      if(tmp_is_ascii)
         ascii = TRUE;
     }
 
   /* is it numeric ? */
-  if (!ascii)
+  if(!ascii)
     {
-      if (sz_returned == 1 || sz_returned == 2 || sz_returned == 4 || sz_returned == 8)
+      if(sz_returned == 1 || sz_returned == 2 || sz_returned == 4 || sz_returned == 8)
         numeric = TRUE;
       else
         hexa = TRUE;
     }
 
-  if (ascii)
+  if(ascii)
     {
       printf("%s\n", buffer);
     }
-  else if (numeric)
+  else if(numeric)
     {
-      if (sz_returned == 1)
+      if(sz_returned == 1)
         printf("%hhu\n", buffer[0]);
-      else if (sz_returned == 2)
+      else if(sz_returned == 2)
         printf("%hu\n", *((unsigned short *)buffer));
-      else if (sz_returned == 4)
+      else if(sz_returned == 4)
         printf("%u\n", *((unsigned int *)buffer));
-      else if (sz_returned == 8)
+      else if(sz_returned == 8)
         printf("%llu\n", *((unsigned long long *)buffer));
       else
         {
-          for (i = 0; i < sz_returned; i += 8)
+          for(i = 0; i < sz_returned; i += 8)
             {
               unsigned long long *p64 = (unsigned long long *)(buffer + i);
-              if (i == 0)
+              if(i == 0)
                 printf("%llu", *p64);
               else
                 printf(".%llu", *p64);
@@ -178,10 +178,10 @@ void print_buffer(caddr_t buffer, size_t sz_returned)
           printf("\n");
         }
     }
-  else if (hexa)                /* hexa */
+  else if(hexa)                 /* hexa */
     {
       printf("0x");
-      for (i = 0; i < sz_returned; i++)
+      for(i = 0; i < sz_returned; i++)
         {
           unsigned char val = buffer[i];
           printf("%hhX", val);
@@ -237,13 +237,13 @@ int main(int argc, char *argv[])
   ServerBootTime = time(NULL);
 
   /* What is the executable file's name */
-  if ((tempo_exec_name = strrchr(argv[0], '/')) != NULL)
+  if((tempo_exec_name = strrchr(argv[0], '/')) != NULL)
     strcpy((char *)exec_name, tempo_exec_name + 1);
 
   strncpy(path_cfg, DEFAULT_CONFIG_FILE, MAXPATHLEN);
 
   /* now parsing options with getopt */
-  while ((c = getopt(argc, argv, options)) != EOF)
+  while((c = getopt(argc, argv, options)) != EOF)
     {
       switch (c)
         {
@@ -262,7 +262,7 @@ int main(int argc, char *argv[])
           break;
 
         case 'i':
-          if (sscanf(optarg, "%llu", &objid) != 1)
+          if(sscanf(optarg, "%llu", &objid) != 1)
             {
               fprintf(stderr, "Invalid object_id %s (base-10 integer expected)\n",
                       optarg);
@@ -273,7 +273,7 @@ int main(int argc, char *argv[])
 
         case 'v':
           nfs_version = atoi(optarg);
-          if ((nfs_version < 2) || (nfs_version > 4))
+          if((nfs_version < 2) || (nfs_version > 4))
             {
               fprintf(stderr, "Invalid nfs version %u\n", nfs_version);
               exit(1);
@@ -286,7 +286,7 @@ int main(int argc, char *argv[])
         }
     }
 
-  if (!flag_i && (optind != argc - 1))
+  if(!flag_i && (optind != argc - 1))
     {
       printf("Missing argument: <NFS_FileHandle>\n");
       printf(usage, exec_name);
@@ -295,7 +295,7 @@ int main(int argc, char *argv[])
 
   /* initialize memory and logging */
 
-  if (nfs_prereq_init("convert_fh", "localhost", NIV_MAJ, "/dev/tty"))
+  if(nfs_prereq_init("convert_fh", "localhost", NIV_MAJ, "/dev/tty"))
     {
       fprintf(stderr, "Error initializing logging and memory\n");
       exit(1);
@@ -303,7 +303,7 @@ int main(int argc, char *argv[])
 
   /* initialize default parameters */
 
-  if (nfs_set_param_default(&nfs_param))
+  if(nfs_set_param_default(&nfs_param))
     {
       DisplayLog("Error setting default parameters.");
       exit(1);
@@ -311,7 +311,7 @@ int main(int argc, char *argv[])
 
   /* parse configuration file */
 
-  if (nfs_set_param_from_conf(&nfs_param, &nfs_start_info, path_cfg))
+  if(nfs_set_param_from_conf(&nfs_param, &nfs_start_info, path_cfg))
     {
       DisplayLog("Error parsing configuration file '%s'", path_cfg);
       exit(1);
@@ -319,13 +319,13 @@ int main(int argc, char *argv[])
 
   /* check parameters consitency */
 
-  if (nfs_check_param_consistency(&nfs_param))
+  if(nfs_check_param_consistency(&nfs_param))
     {
       DisplayLog("Inconsistent parameters found");
       exit(1);
     }
 
-  if (!nfs_param.pexportlist)
+  if(!nfs_param.pexportlist)
     {
       fprintf(stderr, "No export entries found in configuration file !!!\n");
       return -1;
@@ -334,11 +334,11 @@ int main(int argc, char *argv[])
   pexportlist = nfs_param.pexportlist;
 
   /* not initialization is needed for converting fileid to path in datacache */
-  if (!flag_i)
+  if(!flag_i)
     {
 
       fsal_status = FSAL_Init(&nfs_param.fsal_param);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           /* Failed init */
           fprintf(stderr, "FSAL library could not be initialized, major=%d minor=%d\n",
@@ -351,7 +351,7 @@ int main(int argc, char *argv[])
       switch (nfs_version)
         {
         case 2:
-          if (sscanmem(filehandle_v2, sizeof(file_handle_v2_t), (char *)str) == -1)
+          if(sscanmem(filehandle_v2, sizeof(file_handle_v2_t), (char *)str) == -1)
             {
               fprintf(stderr, "Bad FH as input (expected size: %lu bytes)\n",
                       (unsigned long)sizeof(file_handle_v2_t));
@@ -363,7 +363,7 @@ int main(int argc, char *argv[])
           break;
 
         case 3:
-          if (sscanmem(buffer, sizeof(file_handle_v3_t), (char *)str) == -1)
+          if(sscanmem(buffer, sizeof(file_handle_v3_t), (char *)str) == -1)
             {
               fprintf(stderr, "Bad FH as input (expected size: %lu bytes)\n",
                       (unsigned long)sizeof(file_handle_v3_t));
@@ -376,7 +376,7 @@ int main(int argc, char *argv[])
           break;
 
         case 4:
-          if (sscanmem(buffer, sizeof(file_handle_v4_t), (char *)str) == -1)
+          if(sscanmem(buffer, sizeof(file_handle_v4_t), (char *)str) == -1)
             {
               fprintf(stderr, "Bad FH as input (expected size: %lu bytes)\n",
                       (unsigned long)sizeof(file_handle_v4_t));
@@ -389,7 +389,7 @@ int main(int argc, char *argv[])
           break;
 
         }
-      if ((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+      if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
         {
           fprintf(stderr, "NFS FH has exportid %u which is invalid....\n", exportid);
           exit(1);
@@ -399,10 +399,10 @@ int main(int argc, char *argv[])
 
       FSAL_str2path(pexport->fullpath, MAXPATHLEN, &export_path);
 
-      if (FSAL_IS_ERROR
-          (fsal_status =
-           FSAL_BuildExportContext(&fsal_export_context, &export_path,
-                                   pexport->FS_specific)))
+      if(FSAL_IS_ERROR
+         (fsal_status =
+          FSAL_BuildExportContext(&fsal_export_context, &export_path,
+                                  pexport->FS_specific)))
         {
           fprintf(stderr, "Error in FSAL_BuildExportContext, major=%u, minor=%u\n",
                   fsal_status.major, fsal_status.minor);
@@ -410,7 +410,7 @@ int main(int argc, char *argv[])
         }
 
       fsal_status = FSAL_InitClientContext(&fsal_op_context);
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           /* Failed init */
           fprintf(stderr, "Could not init client context... major=%d minor=%d\n",
@@ -421,7 +421,7 @@ int main(int argc, char *argv[])
       fsal_status = FSAL_GetClientContext(&fsal_op_context,
                                           &fsal_export_context, 0, 0, NULL, 0);
 
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           /* Failed init */
           fprintf(stderr, "Could not get cred for uid=%d gid=%d, major=%d minor=%d\n",
@@ -433,7 +433,7 @@ int main(int argc, char *argv[])
       switch (nfs_version)
         {
         case 2:
-          if (!nfs2_FhandleToFSAL(&filehandle_v2, &fsal_data.handle, &fsal_op_context))
+          if(!nfs2_FhandleToFSAL(&filehandle_v2, &fsal_data.handle, &fsal_op_context))
             {
               fprintf(stderr, "Cannot convert Fhandle to FSAL\n");
               exit(1);
@@ -441,7 +441,7 @@ int main(int argc, char *argv[])
           break;
 
         case 3:
-          if (!nfs3_FhandleToFSAL(&filehandle_v3, &fsal_data.handle, &fsal_op_context))
+          if(!nfs3_FhandleToFSAL(&filehandle_v3, &fsal_data.handle, &fsal_op_context))
             {
               fprintf(stderr, "Cannot convert Fhandle to FSAL\n");
               exit(1);
@@ -449,7 +449,7 @@ int main(int argc, char *argv[])
           break;
 
         case 4:
-          if (!nfs4_FhandleToFSAL(&filehandle_v4, &fsal_data.handle, &fsal_op_context))
+          if(!nfs4_FhandleToFSAL(&filehandle_v4, &fsal_data.handle, &fsal_op_context))
             {
               fprintf(stderr, "Cannot convert Fhandle to FSAL\n");
               exit(1);
@@ -469,14 +469,14 @@ int main(int argc, char *argv[])
       cookie = XATTRS_READLIST_FROM_BEGINNING;
       eol = FALSE;
 
-      while (!eol)
+      while(!eol)
         {
           unsigned int index;
 
           fsal_status = FSAL_ListXAttrs(&fsal_data.handle, cookie, &fsal_op_context,
                                         xattr_array, 256, &nb_returned, &eol);
 
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             {
               fprintf(stderr, "Error executing FSAL_ListXAttrs\n");
               exit(1);
@@ -484,7 +484,7 @@ int main(int argc, char *argv[])
 
           /* list attributes and get their value */
 
-          for (index = 0; index < nb_returned; index++)
+          for(index = 0; index < nb_returned; index++)
             {
               cookie = xattr_array[index].xattr_cookie;
 
@@ -496,7 +496,7 @@ int main(int argc, char *argv[])
                                            &fsal_op_context, attr_buffer, 4096,
                                            &sz_returned);
 
-              if (FSAL_IS_ERROR(fsal_status))
+              if(FSAL_IS_ERROR(fsal_status))
                 {
                   fprintf(stderr, "Error executing FSAL_GetXAttrValueByName\n");
                 }
@@ -513,7 +513,7 @@ int main(int argc, char *argv[])
           FSAL_DigestHandle(&fsal_export_context, FSAL_DIGEST_FILEID4, &fsal_data.handle,
                             (caddr_t) & objid);
 
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           fprintf(stderr, "Error retrieving fileid from handle\n");
         }
@@ -533,7 +533,7 @@ int main(int argc, char *argv[])
    */
   nb_char = snprintf(entry_path, MAXPATHLEN, "export_id=%d", 0);
 
-  for (i = 0; i <= 8; i += 8)
+  for(i = 0; i <= 8; i += 8)
     {
       /* concatenation of hashval */
       nb_char += snprintf((char *)(entry_path + nb_char), MAXPATHLEN - nb_char,

@@ -115,7 +115,7 @@ cache_content_status_t cache_content_truncate(cache_content_entry_t * pentry,
   *pstatus = CACHE_CONTENT_SUCCESS;
 
   /* Perform the truncate operation */
-  if (truncate(pentry->local_fs_entry.cache_path_data, (off_t) length) != 0)
+  if(truncate(pentry->local_fs_entry.cache_path_data, (off_t) length) != 0)
     {
       /* Operation failed */
 

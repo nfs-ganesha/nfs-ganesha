@@ -183,8 +183,8 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
   pclient->stat.func_stats.nb_call[CACHE_INODE_LINK] += 1;
 
   /* Is the destination a directory ? */
-  if (pentry_dir_dest->internal_md.type != DIR_BEGINNING &&
-      pentry_dir_dest->internal_md.type != DIR_CONTINUE)
+  if(pentry_dir_dest->internal_md.type != DIR_BEGINNING &&
+     pentry_dir_dest->internal_md.type != DIR_CONTINUE)
     {
       /* Bad type .... */
       *pstatus = CACHE_INODE_BAD_TYPE;
@@ -194,10 +194,10 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
     }
 
   /* Check if an entry of the same name doesn't exist in the destination directory */
-  if ((pentry_lookup = cache_inode_lookup(pentry_dir_dest,
-                                          plink_name,
-                                          &lookup_attributes,
-                                          ht, pclient, pcontext, pstatus)) != NULL)
+  if((pentry_lookup = cache_inode_lookup(pentry_dir_dest,
+                                         plink_name,
+                                         &lookup_attributes,
+                                         ht, pclient, pcontext, pstatus)) != NULL)
     {
       /* There exists such an entry... */
       *pstatus = CACHE_INODE_ENTRY_EXISTS;
@@ -207,8 +207,8 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
     }
 
   /* The pentry to be hardlinked can't be a DIR_BEGINNING or a DIR_CONTINUE */
-  if (pentry_src->internal_md.type == DIR_BEGINNING ||
-      pentry_src->internal_md.type == DIR_CONTINUE)
+  if(pentry_src->internal_md.type == DIR_BEGINNING ||
+     pentry_src->internal_md.type == DIR_CONTINUE)
     {
       /* Bad type .... */
       *pstatus = CACHE_INODE_BAD_TYPE;
@@ -281,8 +281,8 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
     }
 
   /* If object is a data cached regular file, keeps it mtime and size, STEP 1 */
-  if ((pentry_src->internal_md.type == REGULAR_FILE)
-      && (pentry_src->object.file.pentry_content != NULL))
+  if((pentry_src->internal_md.type == REGULAR_FILE)
+     && (pentry_src->object.file.pentry_content != NULL))
     {
       save_mtime = pentry_src->object.file.attributes.mtime;
       save_size = pentry_src->object.file.attributes.filesize;
@@ -293,13 +293,13 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
   cache_inode_get_attributes(pentry_dir_dest, &dirdest_attr);
 
   fsal_status = FSAL_link_access(pcontext, &dirdest_attr);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       *pstatus = cache_inode_error_convert(fsal_status);
       V(pentry_dir_dest->lock);
       V(pentry_src->lock);
 
-      if (fsal_status.major == ERR_FSAL_STALE)
+      if(fsal_status.major == ERR_FSAL_STALE)
         {
           cache_inode_status_t kill_status;
           fsal_status_t getattr_status;
@@ -310,27 +310,27 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
 
           /* Use FSAL_getattrs to find which entry is staled */
           getattr_status = FSAL_getattrs(&handle_src, pcontext, &link_attributes);
-          if (getattr_status.major == ERR_FSAL_ACCESS)
+          if(getattr_status.major == ERR_FSAL_ACCESS)
             {
               DisplayLog
                   ("cache_inode_link: Stale FSAL File Handle detected for pentry = %p",
                    pentry_src);
 
-              if (cache_inode_kill_entry(pentry_src, ht, pclient, &kill_status) !=
-                  CACHE_INODE_SUCCESS)
+              if(cache_inode_kill_entry(pentry_src, ht, pclient, &kill_status) !=
+                 CACHE_INODE_SUCCESS)
                 DisplayLog("cache_inode_link: Could not kill entry %p, status = %u",
                            pentry_src, kill_status);
             }
 
           getattr_status = FSAL_getattrs(&handle_dest, pcontext, &link_attributes);
-          if (getattr_status.major == ERR_FSAL_ACCESS)
+          if(getattr_status.major == ERR_FSAL_ACCESS)
             {
               DisplayLog
                   ("cache_inode_link: Stale FSAL File Handle detected for pentry = %p",
                    pentry_dir_dest);
 
-              if (cache_inode_kill_entry(pentry_dir_dest, ht, pclient, &kill_status) !=
-                  CACHE_INODE_SUCCESS)
+              if(cache_inode_kill_entry(pentry_dir_dest, ht, pclient, &kill_status) !=
+                 CACHE_INODE_SUCCESS)
                 DisplayLog("cache_inode_link: Could not kill entry %p, status = %u",
                            pentry_dir_dest, kill_status);
             }
@@ -348,7 +348,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
                pclient->nb_pre_async_op_desc, cache_inode_async_op_desc_t, next_alloc);
   V(pclient->pool_lock);
 
-  if (pasyncopdesc == NULL)
+  if(pasyncopdesc == NULL)
     {
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK] += 1;
@@ -376,7 +376,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
   pasyncopdesc->origine_pool = pclient->pool_async_op;
   pasyncopdesc->ppool_lock = &pclient->pool_lock;
 
-  if (gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
+  if(gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
     {
       /* Could'not get time of day... Stopping, this may need a major failure */
       DisplayLog("cache_inode_setattr: cannot get time of day... exiting");
@@ -384,7 +384,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
     }
 
   /* Affect the operation to a synclet */
-  if (cache_inode_post_async_op(pasyncopdesc, pentry_src, pstatus) != CACHE_INODE_SUCCESS)
+  if(cache_inode_post_async_op(pasyncopdesc, pentry_src, pstatus) != CACHE_INODE_SUCCESS)
     {
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK] += 1;
@@ -403,7 +403,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
     {
     case REGULAR_FILE:
       /* If object is a data cached regular file, keeps it mtime and size, STEP 2 */
-      if (pentry_src->object.file.pentry_content != NULL)
+      if(pentry_src->object.file.pentry_content != NULL)
         {
           pentry_src->object.file.attributes.mtime = save_mtime;
           pentry_src->object.file.attributes.filesize = save_size;
@@ -443,12 +443,11 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
     }
 
   /* Add the new entry in the destination directory */
-  if (cache_inode_add_cached_dirent(pentry_dir_dest,
-                                    plink_name,
-                                    pentry_src,
-                                    NULL,
-                                    ht,
-                                    pclient, pcontext, &status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_add_cached_dirent(pentry_dir_dest,
+                                   plink_name,
+                                   pentry_src,
+                                   NULL,
+                                   ht, pclient, pcontext, &status) != CACHE_INODE_SUCCESS)
     {
       V(pentry_dir_dest->lock);
       V(pentry_src->lock);
@@ -467,7 +466,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
   V(pentry_src->lock);
 
   /* stats */
-  if (*pstatus != CACHE_INODE_SUCCESS)
+  if(*pstatus != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_LINK] += 1;
   else
     pclient->stat.func_stats.nb_success[CACHE_INODE_LINK] += 1;

@@ -85,24 +85,24 @@ int HPSSFSAL_MkdirHandle(ns_ObjHandle_t * ObjHandle,    /* IN - handle of parent
    */
 
   error = API_ClientAPIInit(&threadcontext);
-  if (error != 0)
+  if(error != 0)
     API_RETURN(error);
 
   /*
    *  Check that the object handle is not NULL.
    */
 
-  if (ObjHandle == (ns_ObjHandle_t *) NULL)
+  if(ObjHandle == (ns_ObjHandle_t *) NULL)
     API_RETURN(-EINVAL);
 
   /*
    *  Check that there is a name for the new object
    */
 
-  if (Path == NULL)
+  if(Path == NULL)
     API_RETURN(-EFAULT);
 
-  if (*Path == '\0')
+  if(*Path == '\0')
     API_RETURN(-ENOENT);
 
   /*
@@ -110,7 +110,7 @@ int HPSSFSAL_MkdirHandle(ns_ObjHandle_t * ObjHandle,    /* IN - handle of parent
    *  current thread context.
    */
 
-  if (Ucred == (TYPE_CRED_HPSS *) NULL)
+  if(Ucred == (TYPE_CRED_HPSS *) NULL)
     ucred_ptr = &threadcontext->UserCred;
   else
     ucred_ptr = Ucred;
@@ -211,13 +211,13 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
    */
 
   path_parent = malloc(HPSS_MAX_PATH_NAME);
-  if (path_parent == NULL)
+  if(path_parent == NULL)
     {
       return (-ENOMEM);
     }
 
   path_newdir = malloc(HPSS_MAX_PATH_NAME);
-  if (path_newdir == NULL)
+  if(path_newdir == NULL)
     {
       free(path_parent);
       return (-ENOMEM);
@@ -225,7 +225,7 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
 
   error = API_DivideFilePath(Path, path_parent, path_newdir);
 
-  if (error != 0)
+  if(error != 0)
     {
       free(path_parent);
       free(path_newdir);
@@ -276,7 +276,7 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
 #endif
                            NULL, NULL, NULL, NULL);
 
-  if (error != 0)
+  if(error != 0)
     {
       API_DEBUG_FPRINTF(DebugFile, &rqstid,
                         "%s: Could not get attributes.\n", function_name);
@@ -289,7 +289,7 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
        *  appropriately.
        */
 
-      if (RetAttrs != (hpss_Attrs_t *) NULL)
+      if(RetAttrs != (hpss_Attrs_t *) NULL)
         {
           select_flags = API_AddAllRegisterValues(MAX_CORE_ATTR_INDEX);
         }
@@ -306,7 +306,7 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
                                 ThreadContext,
                                 objhandle_parent.CoreServerUUID,
                                 rqstid, &siteId, &temp_acct_code);
-      if (error != 0)
+      if(error != 0)
         {
           API_DEBUG_FPRINTF(DebugFile, &rqstid,
                             "%s: Could not determine which"
@@ -335,7 +335,7 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
                                         attr_parent.Account, &new_acct_code);
 #endif
 
-          if (error != 0)
+          if(error != 0)
             {
               API_DEBUG_FPRINTF(DebugFile, &rqstid,
                                 "%s: Could not validate"
@@ -344,7 +344,7 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
         }
     }
 
-  if (error == 0)
+  if(error == 0)
     {
 
 #if HPSS_MAJOR_VERSION < 7
@@ -388,7 +388,7 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
                                  NULL,  /* cos hints priority */
                                  dm_handle, (unsigned32 *) & dm_handle_length, NULL);   /* cos hints out */
 
-          if (error != 0)
+          if(error != 0)
             {
               API_DEBUG_FPRINTF(DebugFile, &rqstid,
                                 "%s: API_dmg_Create failed.\n", function_name);
@@ -403,7 +403,7 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
                * this point; the object should be a directory.
                */
 
-              if (RetObjHandle || RetVAttrs)
+              if(RetObjHandle || RetVAttrs)
                 {
                   error = API_TraversePath(ThreadContext,
                                            rqstid,
@@ -421,7 +421,7 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
                                            NULL,
                                            NULL, &attr_newdir_out, NULL, NULL, NULL);
 
-                  if (error != 0)
+                  if(error != 0)
                     {
                       API_DEBUG_FPRINTF(DebugFile, &rqstid,
                                         "%s: Could not get attributes"
@@ -465,7 +465,7 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
            * the directory.
            */
 
-          if (attr_parent.FilesetType == CORE_FS_TYPE_MIRRORED)
+          if(attr_parent.FilesetType == CORE_FS_TYPE_MIRRORED)
             {
               attr_newdir_in.UID = Ucred->SecPWent.Uid;
               attr_newdir_in.GID = Ucred->SecPWent.Gid;
@@ -491,7 +491,7 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
                                  &attr_newdir_in,
                                  select_flags, &attr_newdir_out, &objhandle_newdir);
 
-          if (error != 0)
+          if(error != 0)
             {
               API_DEBUG_FPRINTF(DebugFile, &rqstid,
                                 "%s: Could not create directory"
@@ -504,7 +504,7 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
           break;
 
         default:
-          if (error == 0)
+          if(error == 0)
             error = EIO;
           API_DEBUG_FPRINTF(DebugFile, &rqstid,
                             "%s: Bad case from DetermineCall().\n", function_name);
@@ -518,12 +518,12 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
   /*
    *  Convert the returned attributes, if necessary.
    */
-  if (RetAttrs != (hpss_Attrs_t *) NULL)
+  if(RetAttrs != (hpss_Attrs_t *) NULL)
     {
       *RetAttrs = attr_newdir_out;
     }
 
-  if (RetObjHandle != (ns_ObjHandle_t *) NULL)
+  if(RetObjHandle != (ns_ObjHandle_t *) NULL)
     *RetObjHandle = objhandle_newdir;
 
   free(path_newdir);

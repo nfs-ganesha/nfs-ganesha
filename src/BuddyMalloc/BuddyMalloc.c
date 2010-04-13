@@ -288,7 +288,7 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT;
 
 static void init_keys(void)
 {
-  if (pthread_key_create(&thread_key, NULL) == -1)
+  if(pthread_key_create(&thread_key, NULL) == -1)
     fprintf(stderr, "Error %d creating pthread key for thread %p : %s\n",
             errno, (BUDDY_ADDR_T) pthread_self(), strerror(errno));
 
@@ -305,7 +305,7 @@ static BuddyThreadContext_t *GetThreadContext()
   BuddyThreadContext_t *p_current_thread_vars;
 
   /* first, we init the keys if this is the first time */
-  if (pthread_once(&once_key, init_keys) != 0)
+  if(pthread_once(&once_key, init_keys) != 0)
     {
       fprintf(stderr, "Error %d calling pthread_once for thread %p : %s\n",
               errno, (BUDDY_ADDR_T) pthread_self(), strerror(errno));
@@ -315,7 +315,7 @@ static BuddyThreadContext_t *GetThreadContext()
   p_current_thread_vars = (BuddyThreadContext_t *) pthread_getspecific(thread_key);
 
   /* we allocate the thread context if this is the first time */
-  if (p_current_thread_vars == NULL)
+  if(p_current_thread_vars == NULL)
     {
 
       /* allocates thread structure */
@@ -323,7 +323,7 @@ static BuddyThreadContext_t *GetThreadContext()
           (BuddyThreadContext_t *) malloc(sizeof(BuddyThreadContext_t));
 
       /* panic !!! */
-      if (p_current_thread_vars == NULL)
+      if(p_current_thread_vars == NULL)
         {
           fprintf(stderr, "%p:BuddyMalloc: Not enough memory\n",
                   (BUDDY_ADDR_T) pthread_self());
@@ -373,7 +373,7 @@ int *p_BuddyErrno()
    * However, we can't store it in the thread context.
    * so we return a pointer to this error code.
    */
-  if (!context)
+  if(!context)
     return &ErrMalloc;
   else
     return &(context->Errno);
@@ -407,7 +407,7 @@ static void BuddyPrintLog(char *logfile, char *format, ...)
   heure = time(NULL);
   localtime_r(&heure, &the_date);
 
-  if ((log_stream = fopen(logfile, "a")) == NULL)
+  if((log_stream = fopen(logfile, "a")) == NULL)
     {
       /* il could not open file, log to stderr */
 
@@ -449,14 +449,14 @@ static unsigned int Log2Ceil(size_t i_size)
   unsigned int k = 0;
   size_t local_size = 1;
 
-  while (local_size < i_size)
+  while(local_size < i_size)
     {
 
       local_size <<= 1;
       k++;
 
       /* the size can't exceed 2^63 */
-      if (k >= BUDDY_MAX_LOG2_SIZE)
+      if(k >= BUDDY_MAX_LOG2_SIZE)
         return 0;
     }
 
@@ -483,14 +483,14 @@ static void remove_allocated_block(BuddyThreadContext_t * context, BuddyBlock_t 
   p_prev_block = NULL;
 
   /* browsing allocated blocks list */
-  for (p_curr_block = context->p_allocated;
-       p_curr_block != NULL; p_curr_block = p_curr_block->Header.p_next_allocated)
+  for(p_curr_block = context->p_allocated;
+      p_curr_block != NULL; p_curr_block = p_curr_block->Header.p_next_allocated)
     {
       /* the block to be removed */
-      if (p_curr_block == p_block)
+      if(p_curr_block == p_block)
         {
           /* if the block is the first of the list */
-          if (p_prev_block == NULL)
+          if(p_prev_block == NULL)
             {
               context->p_allocated = p_curr_block->Header.p_next_allocated;
             }
@@ -515,10 +515,10 @@ static BuddyBlock_t *find_previous_allocated(BuddyThreadContext_t * context,
   BuddyBlockPtr_t p_max_block = NULL;   /* the max block that is smaller that p_block */
 
   /* browsing allocated blocks list */
-  for (p_curr_block = context->p_allocated;
-       p_curr_block != NULL; p_curr_block = p_curr_block->Header.p_next_allocated)
+  for(p_curr_block = context->p_allocated;
+      p_curr_block != NULL; p_curr_block = p_curr_block->Header.p_next_allocated)
     {
-      if ((p_curr_block > p_max_block) && (p_curr_block < p_block))
+      if((p_curr_block > p_max_block) && (p_curr_block < p_block))
         p_max_block = p_curr_block;
     }
 
@@ -534,17 +534,17 @@ static void Insert_FreeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_bu
   BuddyBlock_t *next;
 
   /* check current magic number */
-  if (p_buddyblock->Header.MagicNumber != MAGIC_NUMBER_FREE)
+  if(p_buddyblock->Header.MagicNumber != MAGIC_NUMBER_FREE)
     BuddyPrintLog(context->Config.buddy_error_file,
                   "/!\\ ***** Insert_FreeBlock: CRITICAL WARNING : block %p has been overwritten or is not a buddy block (Magic number %8X<>%8X)****** /!\\\n",
                   p_buddyblock, p_buddyblock->Header.MagicNumber, MAGIC_NUMBER_FREE);
 
   /* Is there already a free block in the list ? */
-  if ((next = context->MemDesc[p_buddyblock->Header.StdInfo.k_size]) != NULL)
+  if((next = context->MemDesc[p_buddyblock->Header.StdInfo.k_size]) != NULL)
     {
 
       /* check current magic number */
-      if (next->Header.MagicNumber != MAGIC_NUMBER_FREE)
+      if(next->Header.MagicNumber != MAGIC_NUMBER_FREE)
         BuddyPrintLog(context->Config.buddy_error_file,
                       "/!\\ ***** Insert_FreeBlock: CRITICAL WARNING : next block %p has been overwritten or is not a buddy block (Magic number %8X<>%8X)****** /!\\\n",
                       next, next->Header.MagicNumber, MAGIC_NUMBER_FREE);
@@ -584,7 +584,7 @@ static void Remove_FreeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_bu
   BuddyBlock_t *next;
 
   /* check current magic number */
-  if (p_buddyblock->Header.MagicNumber != MAGIC_NUMBER_FREE)
+  if(p_buddyblock->Header.MagicNumber != MAGIC_NUMBER_FREE)
     BuddyPrintLog(context->Config.buddy_error_file,
                   "/!\\ ***** Remove_FreeBlock: CRITICAL WARNING : block %p has been overwritten or is not a buddy block (Magic number %8X<>%8X)****** /!\\\n",
                   p_buddyblock, p_buddyblock->Header.MagicNumber, MAGIC_NUMBER_FREE);
@@ -592,10 +592,10 @@ static void Remove_FreeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_bu
   prev = p_buddyblock->Content.FreeBlockInfo.PrevBlock;
   next = p_buddyblock->Content.FreeBlockInfo.NextBlock;
 
-  if (prev)
+  if(prev)
     {
       /* check current magic number */
-      if (prev->Header.MagicNumber != MAGIC_NUMBER_FREE)
+      if(prev->Header.MagicNumber != MAGIC_NUMBER_FREE)
         BuddyPrintLog(context->Config.buddy_error_file,
                       "/!\\ ***** Remove_FreeBlock: CRITICAL WARNING : prev block %p has been overwritten or is not a buddy block (Magic number %8X<>%8X)****** /!\\\n",
                       prev, prev->Header.MagicNumber, MAGIC_NUMBER_FREE);
@@ -606,10 +606,10 @@ static void Remove_FreeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_bu
       context->MemDesc[p_buddyblock->Header.StdInfo.k_size] = next;
     }
 
-  if (next)
+  if(next)
     {
       /* check current magic number */
-      if (next->Header.MagicNumber != MAGIC_NUMBER_FREE)
+      if(next->Header.MagicNumber != MAGIC_NUMBER_FREE)
         BuddyPrintLog(context->Config.buddy_error_file,
                       "/!\\ ***** Remove_FreeBlock: CRITICAL WARNING : next block %p has been overwritten or is not a buddy block (Magic number %8X<>%8X)****** /!\\\n",
                       next, next->Header.MagicNumber, MAGIC_NUMBER_FREE);
@@ -664,7 +664,7 @@ static BuddyBlock_t *Get_BuddyBlock(BuddyThreadContext_t * context,
 static void UpdateStats_InsertStdPage(BuddyThreadContext_t * context)
 {
 
-  if (!context)
+  if(!context)
     return;
 
   /* total space allocated */
@@ -673,14 +673,14 @@ static void UpdateStats_InsertStdPage(BuddyThreadContext_t * context)
 
   /* total space allocated watermark */
 
-  if (context->Stats.TotalMemSpace > context->Stats.WM_TotalMemSpace)
+  if(context->Stats.TotalMemSpace > context->Stats.WM_TotalMemSpace)
     context->Stats.WM_TotalMemSpace = context->Stats.TotalMemSpace;
 
   /* The same thing only for standard pages. */
 
   context->Stats.StdMemSpace += context->Stats.StdPageSize;
 
-  if (context->Stats.StdMemSpace > context->Stats.WM_StdMemSpace)
+  if(context->Stats.StdMemSpace > context->Stats.WM_StdMemSpace)
     context->Stats.WM_StdMemSpace = context->Stats.StdMemSpace;
 
   /* Amount of client alllocated space stays the same */
@@ -699,7 +699,7 @@ static void UpdateStats_InsertStdPage(BuddyThreadContext_t * context)
 static void UpdateStats_RemoveStdPage(BuddyThreadContext_t * context)
 {
 
-  if (!context)
+  if(!context)
     return;
 
   /* total space allocated */
@@ -724,12 +724,12 @@ static void UpdateStats_RemoveStdPage(BuddyThreadContext_t * context)
 static void UpdateStats_UseStdPage(BuddyThreadContext_t * context)
 {
 
-  if (!context)
+  if(!context)
     return;
 
   context->Stats.NbStdUsed++;
 
-  if (context->Stats.NbStdUsed > context->Stats.WM_NbStdUsed)
+  if(context->Stats.NbStdUsed > context->Stats.WM_NbStdUsed)
     context->Stats.WM_NbStdUsed = context->Stats.NbStdUsed;
 
   return;
@@ -743,7 +743,7 @@ static void UpdateStats_UseStdPage(BuddyThreadContext_t * context)
 static void UpdateStats_FreeStdPage(BuddyThreadContext_t * context)
 {
 
-  if (!context)
+  if(!context)
     return;
 
   context->Stats.NbStdUsed--;
@@ -760,12 +760,12 @@ static void UpdateStats_FreeStdPage(BuddyThreadContext_t * context)
 static void UpdateStats_UseStdMemSpace(BuddyThreadContext_t * context, size_t amount)
 {
 
-  if (!context)
+  if(!context)
     return;
 
   context->Stats.StdUsedSpace += amount;
 
-  if (context->Stats.StdUsedSpace > context->Stats.WM_StdUsedSpace)
+  if(context->Stats.StdUsedSpace > context->Stats.WM_StdUsedSpace)
     context->Stats.WM_StdUsedSpace = context->Stats.StdUsedSpace;
 
   return;
@@ -779,7 +779,7 @@ static void UpdateStats_UseStdMemSpace(BuddyThreadContext_t * context, size_t am
 static void UpdateStats_FreeStdMemSpace(BuddyThreadContext_t * context, size_t amount)
 {
 
-  if (!context)
+  if(!context)
     return;
 
   context->Stats.StdUsedSpace -= amount;
@@ -795,35 +795,35 @@ static void UpdateStats_FreeStdMemSpace(BuddyThreadContext_t * context, size_t a
 static void UpdateStats_AddExtraPage(BuddyThreadContext_t * context, size_t alloc_size)
 {
 
-  if (!context)
+  if(!context)
     return;
 
   context->Stats.TotalMemSpace += alloc_size;
 
   /* total space allocated watermark */
 
-  if (context->Stats.TotalMemSpace > context->Stats.WM_TotalMemSpace)
+  if(context->Stats.TotalMemSpace > context->Stats.WM_TotalMemSpace)
     context->Stats.WM_TotalMemSpace = context->Stats.TotalMemSpace;
 
   /* Extra space allocated */
 
   context->Stats.ExtraMemSpace += alloc_size;
 
-  if (context->Stats.ExtraMemSpace > context->Stats.WM_ExtraMemSpace)
+  if(context->Stats.ExtraMemSpace > context->Stats.WM_ExtraMemSpace)
     context->Stats.WM_ExtraMemSpace = context->Stats.ExtraMemSpace;
 
   /* page sizes */
 
-  if ((context->Stats.MinExtraPageSize > alloc_size)
-      || (context->Stats.MinExtraPageSize == 0))
+  if((context->Stats.MinExtraPageSize > alloc_size)
+     || (context->Stats.MinExtraPageSize == 0))
     context->Stats.MinExtraPageSize = alloc_size;
 
-  if (context->Stats.MaxExtraPageSize < alloc_size)
+  if(context->Stats.MaxExtraPageSize < alloc_size)
     context->Stats.MaxExtraPageSize = alloc_size;
 
   context->Stats.NbExtraPages++;
 
-  if (context->Stats.NbExtraPages > context->Stats.WM_NbExtraPages)
+  if(context->Stats.NbExtraPages > context->Stats.WM_NbExtraPages)
     context->Stats.WM_NbExtraPages = context->Stats.NbExtraPages;
 
   return;
@@ -837,7 +837,7 @@ static void UpdateStats_AddExtraPage(BuddyThreadContext_t * context, size_t allo
 static void UpdateStats_RemoveExtraPage(BuddyThreadContext_t * context, size_t alloc_size)
 {
 
-  if (!context)
+  if(!context)
     return;
 
   context->Stats.TotalMemSpace -= alloc_size;
@@ -863,7 +863,7 @@ BuddyBlock_t *NewStdPage(BuddyThreadContext_t * context)
   unsigned int k_size;
   size_t allocation;
 
-  if (!context)
+  if(!context)
     return NULL;
 
   k_size = context->k_size;
@@ -876,7 +876,7 @@ BuddyBlock_t *NewStdPage(BuddyThreadContext_t * context)
          pthread_self(), p_block, (unsigned long long)allocation, k_size);
 #endif
 
-  if (!p_block)
+  if(!p_block)
     return NULL;
 
   /* the block is the parent block itself */
@@ -910,20 +910,20 @@ static void Garbage_StdPages(BuddyThreadContext_t * context,
 {
 
   /* sanity checks */
-  if (!context || !p_last_free_block)
+  if(!context || !p_last_free_block)
     return;
-  if (!context->Config.free_areas)
+  if(!context->Config.free_areas)
     return;
 
   /* We must keep at least 'keep_minimum' standard pages */
 
-  if (context->Stats.NbStdPages <= context->Config.keep_minimum)
+  if(context->Stats.NbStdPages <= context->Config.keep_minimum)
     return;
 
   /* We must keep at least Nb_used x keep_factor */
 
-  if (context->Stats.NbStdPages <=
-      (context->Config.keep_factor * context->Stats.NbStdUsed))
+  if(context->Stats.NbStdPages <=
+     (context->Config.keep_factor * context->Stats.NbStdUsed))
     return;
 
   /* We can free this page */
@@ -953,9 +953,9 @@ BUDDY_ADDR_T AllocLargeBlock(BuddyThreadContext_t * context, size_t Size)
   size_t total_size = Size + size_header64;
 
   /* sanity checks */
-  if (!context)
+  if(!context)
     return NULL;
-  if (!context->Config.extra_alloc)
+  if(!context->Config.extra_alloc)
     {
       context->Errno = BUDDY_ERR_EINVAL;
       return NULL;
@@ -968,7 +968,7 @@ BUDDY_ADDR_T AllocLargeBlock(BuddyThreadContext_t * context, size_t Size)
          pthread_self(), p_block, (unsigned long long)total_size);
 #endif
 
-  if (!p_block)
+  if(!p_block)
     {
       context->Errno = BUDDY_ERR_MALLOC;
       return NULL;
@@ -1023,9 +1023,9 @@ void FreeLargeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_block)
   size_t page_size;
 
   /* sanity checks */
-  if (!context || !p_block)
+  if(!context || !p_block)
     return;
-  if (!IS_EXTRA_BLOCK(p_block))
+  if(!IS_EXTRA_BLOCK(p_block))
     return;
 
   page_size = p_block->Header.ExtraInfo;
@@ -1058,12 +1058,12 @@ static void CheckBlocksToBeFreed(BuddyThreadContext_t * context)
       P(context->ToBeFreed_mutex);
 
       p_block_to_free = context->ToBeFreed_list;
-      if (p_block_to_free)
+      if(p_block_to_free)
         context->ToBeFreed_list = p_block_to_free->Content.NextToBeFreed;
 
       V(context->ToBeFreed_mutex);
 
-      if (p_block_to_free == NULL)
+      if(p_block_to_free == NULL)
         break;
 
 #ifdef _DEBUG_MEMALLOC
@@ -1074,7 +1074,7 @@ static void CheckBlocksToBeFreed(BuddyThreadContext_t * context)
       __BuddyFree(context, p_block_to_free);
 
     }
-  while (1);
+  while(1);
 
 }
 
@@ -1097,12 +1097,12 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
   /* Ensure thread safety. */
   context = GetThreadContext();
 
-  if (!context)
+  if(!context)
     return BUDDY_ERR_MALLOC;
 
   /* Is the memory descriptor already initialized ? */
 
-  if (context->initialized)
+  if(context->initialized)
     {
 #ifdef _DEBUG_MEMALLOC
       printf("The memory descriptor is already initialized for thread %p.\n",
@@ -1115,7 +1115,7 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
 
   /* First, check configuration. */
 
-  if (p_buddy_init_info)
+  if(p_buddy_init_info)
     context->Config = *p_buddy_init_info;
   else
     context->Config = default_buddy_parameter;
@@ -1123,7 +1123,7 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
   /* check for minimum size :
    * this must be greater than the size of a Buddy block desc.*/
 
-  if (context->Config.memory_area_size <= (size_header64 + MIN_ALLOC_SIZE))
+  if(context->Config.memory_area_size <= (size_header64 + MIN_ALLOC_SIZE))
     {
       printf("Invalid size %llu (too small).\n",
              (unsigned long long)context->Config.memory_area_size);
@@ -1132,7 +1132,7 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
 
   /* computes the log2 of memory area's size */
 
-  if (!(m = Log2Ceil(context->Config.memory_area_size)))
+  if(!(m = Log2Ceil(context->Config.memory_area_size)))
     {
       printf("Invalid size %llu (too large).\n",
              (unsigned long long)context->Config.memory_area_size);
@@ -1146,7 +1146,7 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
 
   /* Init memory map */
 
-  for (i = 0; i < BUDDY_MAX_LOG2_SIZE; i++)
+  for(i = 0; i < BUDDY_MAX_LOG2_SIZE; i++)
     context->MemDesc[i] = NULL;
 
   /* Init stats */
@@ -1170,7 +1170,7 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
   context->Stats.WM_NbExtraPages = 0;
 
 #ifndef _MONOTHREAD_MEMALLOC
-  if (pthread_mutex_init(&context->ToBeFreed_mutex, NULL) != 0)
+  if(pthread_mutex_init(&context->ToBeFreed_mutex, NULL) != 0)
     return BUDDY_ERR_EINVAL;
   context->ToBeFreed_list = NULL;
 #endif
@@ -1188,7 +1188,7 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
          size_header64);
 #endif
 
-  if (p_block)
+  if(p_block)
     return BUDDY_SUCCESS;
   else
     return BUDDY_ERR_MALLOC;
@@ -1215,21 +1215,21 @@ unsigned int BuddyPreferedPoolCount(unsigned int min_count, size_t type_size)
 
   context = GetThreadContext();
 
-  if (min_size < MIN_ALLOC_SIZE)
+  if(min_size < MIN_ALLOC_SIZE)
     sizelog2 = Log2Ceil(MIN_ALLOC_SIZE + size_header64);
   else
     sizelog2 = Log2Ceil(min_size + size_header64);
 
   /* If it is greater that buddy pages, an extra allocation
    * will be necessary. In this case, count doesn't matter */
-  if (sizelog2 > context->k_size)
+  if(sizelog2 > context->k_size)
     return min_count;
 
   /* now, make the opposite computation */
   prefered_size = (1 << sizelog2) - size_header64;
   prefered_count = prefered_size / type_size;
 
-  if (prefered_count == 0)
+  if(prefered_count == 0)
     return 1;
 
   return prefered_count;
@@ -1251,11 +1251,11 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
   context = GetThreadContext();
 
   /* sanity checks */
-  if (!context)
+  if(!context)
     return NULL;
 
   /* Not initialized */
-  if (!context->initialized)
+  if(!context->initialized)
     {
       context->Errno = BUDDY_ERR_NOTINIT;
       return NULL;
@@ -1266,10 +1266,10 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
 #endif
 
   /* No need to alloc something if asked size is 0 !!! */
-  if (Size == 0)
+  if(Size == 0)
     return NULL;
 
-  if (Size < MIN_ALLOC_SIZE)
+  if(Size < MIN_ALLOC_SIZE)
     sizelog2 = Log2Ceil(MIN_ALLOC_SIZE + size_header64);
   else
     sizelog2 = Log2Ceil(Size + size_header64);
@@ -1281,10 +1281,10 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
    * We handle the request using AllocLargeBlock( context, size ).
    */
 
-  if (allocation > (1ULL << context->k_size))
+  if(allocation > (1ULL << context->k_size))
     {
 
-      if (context->Config.extra_alloc)
+      if(context->Config.extra_alloc)
         {
           /* extra block are allowed */
           return AllocLargeBlock(context, Size);
@@ -1300,7 +1300,7 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
 
           context->Errno = BUDDY_ERR_OUTOFMEM;
 
-          if (do_exit_on_error)
+          if(do_exit_on_error)
             exit(1);
 
           return NULL;
@@ -1316,7 +1316,7 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
    * in the block pool.
    */
 
-  while ((i < BUDDY_MAX_LOG2_SIZE) && (!context->MemDesc[i]))
+  while((i < BUDDY_MAX_LOG2_SIZE) && (!context->MemDesc[i]))
     {
       i++;
     }
@@ -1325,12 +1325,12 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
   printf("i=%u\n", i);
 #endif
 
-  if (i < BUDDY_MAX_LOG2_SIZE)
+  if(i < BUDDY_MAX_LOG2_SIZE)
     {
       /* 1st case : a block is available */
       p_block = context->MemDesc[i];
     }
-  else if (context->Config.on_demand_alloc)
+  else if(context->Config.on_demand_alloc)
     {
       /* 2nd case :
        * No memory block available.
@@ -1341,14 +1341,14 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
       /* add a new page */
       p_block = NewStdPage(context);
 
-      if (!p_block)
+      if(!p_block)
         {
           context->Errno = BUDDY_ERR_MALLOC;
 
           BuddyPrintLog(context->Config.buddy_error_file,
                         "BuddyMalloc: NOT ENOUGH MEMORY !!!\n");
 
-          if (do_exit_on_error)
+          if(do_exit_on_error)
             exit(1);
 
           return NULL;
@@ -1363,7 +1363,7 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
              (BUDDY_ADDR_T) pthread_self(), (unsigned long long)Size);
 #endif
 
-      if (do_exit_on_error)
+      if(do_exit_on_error)
         exit(1);
 
       context->Errno = BUDDY_ERR_OUTOFMEM;
@@ -1377,8 +1377,8 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
 
   /* If it was a whole page, we notice that it becomes used */
 
-  if ((p_block->Header.Base_ptr == (BUDDY_ADDR_T) p_block)
-      && (p_block->Header.StdInfo.Base_kSize == p_block->Header.StdInfo.k_size))
+  if((p_block->Header.Base_ptr == (BUDDY_ADDR_T) p_block)
+     && (p_block->Header.StdInfo.Base_kSize == p_block->Header.StdInfo.k_size))
     {
 
       UpdateStats_UseStdPage(context);
@@ -1387,7 +1387,7 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
 
   /* Iteratively splits the block. */
 
-  while (p_block->Header.StdInfo.k_size > sizelog2)
+  while(p_block->Header.StdInfo.k_size > sizelog2)
     {
 
       BuddyBlock_t *p_buddy;
@@ -1474,16 +1474,16 @@ static void __BuddyFree(BuddyThreadContext_t * context, BuddyBlock_t * p_block)
 #endif
 
   /* If it is an ExtraBlock, we free it using FreeLargeBlock */
-  if (IS_EXTRA_BLOCK(p_block))
+  if(IS_EXTRA_BLOCK(p_block))
     {
       FreeLargeBlock(context, p_block);
       return;
     }
 
   /* Sanity checks for std blocks */
-  if (((BUDDY_ADDR_T) p_block < p_block->Header.Base_ptr) ||
-      ((BUDDY_ADDR_T) p_block > p_block->Header.Base_ptr +
-       (1 << p_block->Header.StdInfo.Base_kSize)))
+  if(((BUDDY_ADDR_T) p_block < p_block->Header.Base_ptr) ||
+     ((BUDDY_ADDR_T) p_block > p_block->Header.Base_ptr +
+      (1 << p_block->Header.StdInfo.Base_kSize)))
     {
       context->Errno = BUDDY_ERR_EINVAL;
       return;
@@ -1498,9 +1498,9 @@ static void __BuddyFree(BuddyThreadContext_t * context, BuddyBlock_t * p_block)
 
   /* merge free blocks. */
 
-  for (p_block_tmp = p_block;
-       p_block_tmp->Header.StdInfo.k_size < p_block_tmp->Header.StdInfo.Base_kSize;
-       p_block_tmp->Header.StdInfo.k_size++)
+  for(p_block_tmp = p_block;
+      p_block_tmp->Header.StdInfo.k_size < p_block_tmp->Header.StdInfo.Base_kSize;
+      p_block_tmp->Header.StdInfo.k_size++)
     {
 
       BuddyBlock_t *p_buddy;
@@ -1514,8 +1514,8 @@ static void __BuddyFree(BuddyThreadContext_t * context, BuddyBlock_t * p_block)
              (p_buddy->Header.status ? "RESERV" : " FREE "));
 #endif
 
-      if ((p_buddy->Header.status == RESERVED_BLOCK) ||
-          (p_buddy->Header.StdInfo.k_size != p_block_tmp->Header.StdInfo.k_size))
+      if((p_buddy->Header.status == RESERVED_BLOCK) ||
+         (p_buddy->Header.StdInfo.k_size != p_block_tmp->Header.StdInfo.k_size))
         /* stop merging */
         break;
 
@@ -1530,7 +1530,7 @@ static void __BuddyFree(BuddyThreadContext_t * context, BuddyBlock_t * p_block)
       /* the address of the merged blockset is the smallest
        * of its components addresses.
        */
-      if (p_buddy < p_block_tmp)
+      if(p_buddy < p_block_tmp)
         {
           p_block_tmp = p_buddy;
         }
@@ -1543,15 +1543,15 @@ static void __BuddyFree(BuddyThreadContext_t * context, BuddyBlock_t * p_block)
 
   /* update stats */
 
-  if ((p_block_tmp->Header.Base_ptr == (BUDDY_ADDR_T) p_block_tmp)
-      && (p_block_tmp->Header.StdInfo.Base_kSize == p_block_tmp->Header.StdInfo.k_size))
+  if((p_block_tmp->Header.Base_ptr == (BUDDY_ADDR_T) p_block_tmp)
+     && (p_block_tmp->Header.StdInfo.Base_kSize == p_block_tmp->Header.StdInfo.k_size))
     {
 
       UpdateStats_FreeStdPage(context);
 
       /* if garbage collection is enabled, run it */
 
-      if (context->Config.free_areas)
+      if(context->Config.free_areas)
         {
           Garbage_StdPages(context, p_block_tmp);
         }
@@ -1577,18 +1577,18 @@ void BuddyFree(BUDDY_ADDR_T ptr)
 #endif
 
   /* Nothing appends if ptr is NULL. */
-  if (!ptr)
+  if(!ptr)
     return;
 
   /* Ensure thread safety. */
   context = GetThreadContext();
 
   /* Something very wrong occured !! */
-  if (!context)
+  if(!context)
     return;
 
   /* Not initialized */
-  if (!context->initialized)
+  if(!context->initialized)
     {
       context->Errno = BUDDY_ERR_NOTINIT;
       return;
@@ -1602,7 +1602,7 @@ void BuddyFree(BUDDY_ADDR_T ptr)
     {
     case FREE_BLOCK:
       /* check for magic number */
-      if (p_block->Header.MagicNumber != MAGIC_NUMBER_FREE)
+      if(p_block->Header.MagicNumber != MAGIC_NUMBER_FREE)
         {
 #ifdef _DEBUG_MEMLEAKS
           BuddyBlock_t *guilt_block;
@@ -1618,7 +1618,7 @@ void BuddyFree(BUDDY_ADDR_T ptr)
                         p_block->Header.label_file, p_block->Header.label_func,
                         p_block->Header.label_line, p_block->Header.label_user_defined);
 
-          if ((guilt_block = find_previous_allocated(context, p_block)) != NULL)
+          if((guilt_block = find_previous_allocated(context, p_block)) != NULL)
             BuddyPrintLog(context->Config.buddy_error_file,
                           "/!\\ ***** The guilt block is %p->%p : %s:%s:%u:%s *****\n",
                           guilt_block,
@@ -1638,7 +1638,7 @@ void BuddyFree(BUDDY_ADDR_T ptr)
 
     case RESERVED_BLOCK:
       /* check for magic number */
-      if (p_block->Header.MagicNumber != MAGIC_NUMBER_USED)
+      if(p_block->Header.MagicNumber != MAGIC_NUMBER_USED)
         {
 #ifdef _DEBUG_MEMLEAKS
           BuddyBlock_t *guilt_block;
@@ -1654,7 +1654,7 @@ void BuddyFree(BUDDY_ADDR_T ptr)
                         p_block->Header.label_file, p_block->Header.label_func,
                         p_block->Header.label_line, p_block->Header.label_user_defined);
 
-          if ((guilt_block = find_previous_allocated(context, p_block)) != NULL)
+          if((guilt_block = find_previous_allocated(context, p_block)) != NULL)
             BuddyPrintLog(context->Config.buddy_error_file,
                           "/!\\ ***** The guilt block is %p->%p : %s:%s:%u:%s *****\n",
                           guilt_block,
@@ -1680,7 +1680,7 @@ void BuddyFree(BUDDY_ADDR_T ptr)
     }
 
   /* is it already free ? */
-  if (p_block->Header.status == FREE_BLOCK)
+  if(p_block->Header.status == FREE_BLOCK)
     {
       BuddyPrintLog(context->Config.buddy_error_file,
                     "/!\\ ***** WARNING : double free detected for %p ***** /!\\\n", ptr);
@@ -1689,7 +1689,7 @@ void BuddyFree(BUDDY_ADDR_T ptr)
 
   /* check owner thread */
 
-  if (p_block->Header.OwnerThread != pthread_self())
+  if(p_block->Header.OwnerThread != pthread_self())
     {
 #ifndef _MONOTHREAD_MEMALLOC
 
@@ -1756,11 +1756,11 @@ BUDDY_ADDR_T BuddyRealloc(BUDDY_ADDR_T ptr, size_t Size)
 #endif
 
   /*  If ptr is NULL, the call is equivalent to malloc(size) */
-  if (ptr == NULL)
+  if(ptr == NULL)
     return BuddyMalloc(Size);
 
   /* if size is equal to zero, the  call is equivalent to free(ptr) */
-  if (Size == 0)
+  if(Size == 0)
     {
       BuddyFree(ptr);
       return NULL;
@@ -1770,13 +1770,13 @@ BUDDY_ADDR_T BuddyRealloc(BUDDY_ADDR_T ptr, size_t Size)
   context = GetThreadContext();
 
   /* sanity check */
-  if (!context)
+  if(!context)
     return NULL;
 
   /* checking arguments */
 
   /* Not initialized */
-  if (!context->initialized)
+  if(!context->initialized)
     {
       context->Errno = BUDDY_ERR_NOTINIT;
       return NULL;
@@ -1786,7 +1786,7 @@ BUDDY_ADDR_T BuddyRealloc(BUDDY_ADDR_T ptr, size_t Size)
   p_block = (BuddyBlock_t *) (ptr - size_header64);
 
   /* it should not be free */
-  if (p_block->Header.status != RESERVED_BLOCK)
+  if(p_block->Header.status != RESERVED_BLOCK)
     {
       context->Errno = BUDDY_ERR_EINVAL;
       return NULL;
@@ -1796,13 +1796,13 @@ BUDDY_ADDR_T BuddyRealloc(BUDDY_ADDR_T ptr, size_t Size)
   new_ptr = BuddyMalloc(Size);
 
   /* is there enough memory ? */
-  if (!new_ptr)
+  if(!new_ptr)
     return NULL;
 
   /* copying the old memory area to the new one. */
   /* size of user space = total size of block - size of header */
 
-  if (IS_EXTRA_BLOCK(p_block))
+  if(IS_EXTRA_BLOCK(p_block))
     {
 
 #ifdef _DEBUG_MEMALLOC
@@ -1851,7 +1851,7 @@ BUDDY_ADDR_T BuddyCalloc(size_t NumberOfElements, size_t ElementSize)
   BUDDY_ADDR_T ptr;
   ptr = BuddyMalloc(NumberOfElements * ElementSize);
 
-  if (!ptr)
+  if(!ptr)
     return NULL;
 
 #ifdef _DEBUG_MEMALLOC
@@ -1878,7 +1878,7 @@ void BuddyDumpMem(FILE * output)
   context = GetThreadContext();
 
   /* sanity check */
-  if (!context)
+  if(!context)
     return;
 
   /* print statistics */
@@ -1906,7 +1906,7 @@ void BuddyDumpMem(FILE * output)
           (BUDDY_ADDR_T) pthread_self(), (unsigned long)context->Stats.NbStdUsed,
           (unsigned long)context->Stats.WM_NbStdUsed);
 
-  if (context->Stats.NbStdUsed > 0)
+  if(context->Stats.NbStdUsed > 0)
     {
       fprintf(output, "%p:       Memory Fragmentation: %.2f %%\n",
               (BUDDY_ADDR_T) pthread_self(),
@@ -1919,11 +1919,11 @@ void BuddyDumpMem(FILE * output)
 
   exist = 0;
 
-  for (i = 0; i < BUDDY_MAX_LOG2_SIZE; i++)
+  for(i = 0; i < BUDDY_MAX_LOG2_SIZE; i++)
     {
 
       BuddyBlock_t *p_block = context->MemDesc[i];
-      while (p_block)
+      while(p_block)
         {
 
           exist = 1;
@@ -1940,14 +1940,14 @@ void BuddyDumpMem(FILE * output)
             /* dump memory state to see if there is any gardening from outside... */
             unsigned char *c;   /* the current char to be printed */
 
-            for (c = (unsigned char *)p_block;
-                 c < ((unsigned char *)p_block + sizeof(BuddyBlock_t)); c++)
+            for(c = (unsigned char *)p_block;
+                c < ((unsigned char *)p_block + sizeof(BuddyBlock_t)); c++)
               fprintf(output, "%.2X", (unsigned char)*c);
 
             fprintf(output, "\n", (unsigned char)*c);
 
-            for (c = (unsigned char *)p_block;
-                 c < ((unsigned char *)p_block + sizeof(BuddyBlock_t)); c++)
+            for(c = (unsigned char *)p_block;
+                c < ((unsigned char *)p_block + sizeof(BuddyBlock_t)); c++)
               fprintf(output, "%c.", (unsigned char)*c);
 
             fprintf(output, "\n", (unsigned char)*c);
@@ -1960,7 +1960,7 @@ void BuddyDumpMem(FILE * output)
         }
     }
 
-  if (!exist)
+  if(!exist)
     fprintf(output, "%p: No free blocks\n", (BUDDY_ADDR_T) pthread_self());
 
   fprintf(output, "\n");
@@ -1987,12 +1987,12 @@ void BuddyDumpMem(FILE * output)
     BuddyBlockPtr_t p_curr_block;
 
     /* browsing allocated blocks list */
-    for (p_curr_block = context->p_allocated;
-         p_curr_block != NULL; p_curr_block = p_curr_block->Header.p_next_allocated)
+    for(p_curr_block = context->p_allocated;
+        p_curr_block != NULL; p_curr_block = p_curr_block->Header.p_next_allocated)
       {
 
         /* If it is an ExtraBlock, we free it using FreeLargeBlock */
-        if (IS_EXTRA_BLOCK(p_curr_block))
+        if(IS_EXTRA_BLOCK(p_curr_block))
           {
 
             fprintf(output,
@@ -2030,14 +2030,14 @@ void BuddyGetStats(buddy_stats_t * budd_stats)
   BuddyThreadContext_t *context;
 
   /* sanity check */
-  if (!budd_stats)
+  if(!budd_stats)
     return;
 
   /* Ensure thread safety. */
   context = GetThreadContext();
 
   /* sanity check */
-  if (!context)
+  if(!context)
     return;
 
   *budd_stats = context->Stats;
@@ -2088,10 +2088,10 @@ int _BuddySetDebugLabel(const char *file, const char *func, const unsigned int l
    * However, we can't store it in the thread context.
    * so we return a pointer to this error code.
    */
-  if (!context)
+  if(!context)
     return BUDDY_ERR_MALLOC;
 
-  if (!label)
+  if(!label)
     return BUDDY_ERR_EINVAL;
 
   context->label_user_defined = label;
@@ -2111,18 +2111,18 @@ const char *BuddyGetDebugLabel(BUDDY_ADDR_T ptr)
   BuddyThreadContext_t *context;
 
   /* Nothing is returned if ptr is NULL. */
-  if (!ptr)
+  if(!ptr)
     return NULL;
 
   /* Ensure thread safety. */
   context = GetThreadContext();
 
   /* Something very wrong occured !! */
-  if (!context)
+  if(!context)
     return NULL;
 
   /* Not initialized */
-  if (!context->initialized)
+  if(!context->initialized)
     {
       context->Errno = BUDDY_ERR_NOTINIT;
       return NULL;
@@ -2150,18 +2150,18 @@ int BuddyCountDebugLabel(char *label)
    * However, we can't store it in the thread context.
    * so we return a pointer to this error code.
    */
-  if (!context)
+  if(!context)
     return -BUDDY_ERR_MALLOC;
 
-  if (!label)
+  if(!label)
     return -BUDDY_ERR_EINVAL;
 
   /* browsing allocated blocks list */
-  for (p_curr_block = context->p_allocated;
-       p_curr_block != NULL; p_curr_block = p_curr_block->Header.p_next_allocated)
+  for(p_curr_block = context->p_allocated;
+      p_curr_block != NULL; p_curr_block = p_curr_block->Header.p_next_allocated)
     {
 
-      if (!strcmp(p_curr_block->Header.label_user_defined, label))
+      if(!strcmp(p_curr_block->Header.label_user_defined, label))
         {
           count++;
         }
@@ -2194,15 +2194,15 @@ static unsigned int hash_label(const char *file, const char *func,
   const char *str;
 
   str = file;
-  while (c = *str++)
+  while(c = *str++)
     hash = ((hash << 5) + hash) + c;
 
   str = func;
-  while (c = *str++)
+  while(c = *str++)
     hash = ((hash << 5) + hash) + c;
 
   str = label;
-  while (c = *str++)
+  while(c = *str++)
     hash = ((hash << 5) + hash) + c;
 
   hash = (hash ^ line) % hash_sz;
@@ -2226,11 +2226,11 @@ static void hash_label_add(const char *file, const char *func, const unsigned in
 
   p_list = label_hash[h];
 
-  for (p_curr = p_list; p_curr != NULL; p_curr = p_curr->next)
+  for(p_curr = p_list; p_curr != NULL; p_curr = p_curr->next)
     {
-      if (!strcmp(file, p_curr->file)
-          && !strcmp(func, p_curr->func)
-          && !strcmp(label, p_curr->user_label) && (line == p_curr->line))
+      if(!strcmp(file, p_curr->file)
+         && !strcmp(func, p_curr->func)
+         && !strcmp(label, p_curr->user_label) && (line == p_curr->line))
         {
           p_curr->count++;
           return;
@@ -2256,9 +2256,9 @@ static void hash_label_free(label_info_list_t * label_hash[], unsigned int hash_
   label_info_list_t *p_next;
   label_info_list_t *p_curr;
 
-  for (i = 0; i < hash_sz; i++)
+  for(i = 0; i < hash_sz; i++)
     {
-      for (p_curr = label_hash[i]; p_curr != NULL; p_curr = p_next)
+      for(p_curr = label_hash[i]; p_curr != NULL; p_curr = p_next)
         {
           p_next = p_curr->next;
           free(p_curr);
@@ -2277,15 +2277,15 @@ static void hash_label_display(label_info_list_t * label_hash[], unsigned int ha
   max_func = strlen("function");
   max_descr = strlen("description");
 
-  for (i = 0; i < hash_sz; i++)
+  for(i = 0; i < hash_sz; i++)
     {
-      for (p_curr = label_hash[i]; p_curr != NULL; p_curr = p_curr->next)
+      for(p_curr = label_hash[i]; p_curr != NULL; p_curr = p_curr->next)
         {
-          if (strlen(p_curr->file) > max_file)
+          if(strlen(p_curr->file) > max_file)
             max_file = strlen(p_curr->file);
-          if (strlen(p_curr->func) > max_func)
+          if(strlen(p_curr->func) > max_func)
             max_func = strlen(p_curr->func);
-          if (strlen(p_curr->user_label) > max_descr)
+          if(strlen(p_curr->user_label) > max_descr)
             max_descr = strlen(p_curr->user_label);
         }
     }
@@ -2293,9 +2293,9 @@ static void hash_label_display(label_info_list_t * label_hash[], unsigned int ha
   printf("%-*s | %-*s | %5s | %-*s | %s\n", max_file, "file", max_func, "function",
          "line", max_descr, "description", "count");
 
-  for (i = 0; i < hash_sz; i++)
+  for(i = 0; i < hash_sz; i++)
     {
-      for (p_curr = label_hash[i]; p_curr != NULL; p_curr = p_curr->next)
+      for(p_curr = label_hash[i]; p_curr != NULL; p_curr = p_curr->next)
         {
           printf("%-*s | %-*s | %5u | %-*s | %u\n", max_file, p_curr->file, max_func,
                  p_curr->func, p_curr->line, max_descr, p_curr->user_label,
@@ -2318,17 +2318,17 @@ void BuddyLabelsSummary()
 
   context = GetThreadContext();
 
-  if (!context)
+  if(!context)
     return;
 
   /* init hash */
-  for (i = 0; i < LBL_HASH_SZ; i++)
+  for(i = 0; i < LBL_HASH_SZ; i++)
     label_hash[i] = NULL;
 
   /* count all allocated blocks */
 
-  for (p_curr_block = context->p_allocated;
-       p_curr_block != NULL; p_curr_block = p_curr_block->Header.p_next_allocated)
+  for(p_curr_block = context->p_allocated;
+      p_curr_block != NULL; p_curr_block = p_curr_block->Header.p_next_allocated)
     {
 
       hash_label_add(p_curr_block->Header.label_file,
@@ -2358,12 +2358,12 @@ void DisplayMemoryMap()
 
   context = GetThreadContext();
 
-  if (!context)
+  if(!context)
     return;
 
   /* first, sort the allocated block list */
-  for (p_curr_block = context->p_allocated;
-       p_curr_block != NULL; p_curr_block = p_next_block)
+  for(p_curr_block = context->p_allocated;
+      p_curr_block != NULL; p_curr_block = p_next_block)
     {
       /* remember the next block */
       p_next_block = p_curr_block->Header.p_next_allocated;
@@ -2372,13 +2372,13 @@ void DisplayMemoryMap()
       p_last = NULL;
 
       /* insert it at the good location */
-      while (p_curr && (p_curr < p_curr_block))
+      while(p_curr && (p_curr < p_curr_block))
         {
           p_last = p_curr;
           p_curr = p_curr->Header.p_next_allocated;
         }
 
-      if (!p_last)
+      if(!p_last)
         {
           /* insert as the first */
           p_curr_block->Header.p_next_allocated = p_ordered_list;
@@ -2400,12 +2400,12 @@ void DisplayMemoryMap()
 
   /* now print the allocation map */
 
-  for (p_curr_block = context->p_allocated;
-       p_curr_block != NULL; p_curr_block = p_curr_block->Header.p_next_allocated)
+  for(p_curr_block = context->p_allocated;
+      p_curr_block != NULL; p_curr_block = p_curr_block->Header.p_next_allocated)
     {
 
       /* do not display extra blocks */
-      if (IS_EXTRA_BLOCK(p_curr_block))
+      if(IS_EXTRA_BLOCK(p_curr_block))
         {
           printf("Extra block: [ size=%lu ]\n",
                  (unsigned long)p_curr_block->Header.ExtraInfo);
@@ -2414,7 +2414,7 @@ void DisplayMemoryMap()
         }
 
       /* is it the first block of the page ? */
-      if (is_first)
+      if(is_first)
         {
           diff =
               (BUDDY_PTRDIFF_T) p_curr_block -
@@ -2422,10 +2422,10 @@ void DisplayMemoryMap()
 
           /* which size ? */
           nb_space = diff / DISPLAY_SPACE_UNIT;
-          if (diff > 0)
+          if(diff > 0)
             nb_space++;
 
-          for (i = 0; i < nb_space; i++)
+          for(i = 0; i < nb_space; i++)
             printf(" ");
 
           is_first = FALSE;
@@ -2433,7 +2433,7 @@ void DisplayMemoryMap()
 
       /* display block according to its size */
 
-      if ((1 << p_curr_block->Header.StdInfo.k_size) < DISPLAY_SPACE_UNIT)
+      if((1 << p_curr_block->Header.StdInfo.k_size) < DISPLAY_SPACE_UNIT)
         printf("|");
       else
         {
@@ -2444,9 +2444,9 @@ void DisplayMemoryMap()
                p_curr_block->Header.StdInfo.user_size) / DISPLAY_SPACE_UNIT;
 
           printf("[");
-          for (i = 0; i < nb_space - nb_dash; i++)
+          for(i = 0; i < nb_space - nb_dash; i++)
             printf("#");
-          for (i = 0; i < nb_dash; i++)
+          for(i = 0; i < nb_dash; i++)
             printf(".");
 
           printf("]");
@@ -2454,14 +2454,14 @@ void DisplayMemoryMap()
 
       /* check next block address */
 
-      if (!p_curr_block->Header.p_next_allocated)
+      if(!p_curr_block->Header.p_next_allocated)
         {
           is_first = TRUE;
           printf("\n");
           return;
         }
-      else if (p_curr_block->Header.Base_ptr !=
-               p_curr_block->Header.p_next_allocated->Header.Base_ptr)
+      else if(p_curr_block->Header.Base_ptr !=
+              p_curr_block->Header.p_next_allocated->Header.Base_ptr)
         {
           /* another page or extra block */
           is_first = TRUE;
@@ -2475,10 +2475,10 @@ void DisplayMemoryMap()
 
           /* which size ? */
           nb_space = (diff / DISPLAY_SPACE_UNIT);
-          if (diff > 0)
+          if(diff > 0)
             nb_space++;
 
-          for (i = 0; i < nb_space; i++)
+          for(i = 0; i < nb_space; i++)
             printf(" ");
         }
     }
@@ -2496,18 +2496,18 @@ int BuddyCheck(BUDDY_ADDR_T ptr)
   BuddyThreadContext_t *context;
 
   /* return 0 if ptr is NULL. */
-  if (!ptr)
+  if(!ptr)
     return 0;
 
   /* Ensure thread safety. */
   context = GetThreadContext();
 
   /* Something very wrong occured !! */
-  if (!context)
+  if(!context)
     return 0;
 
   /* Not initialized */
-  if (!context->initialized)
+  if(!context->initialized)
     {
       context->Errno = BUDDY_ERR_NOTINIT;
       return 0;
@@ -2521,7 +2521,7 @@ int BuddyCheck(BUDDY_ADDR_T ptr)
     {
     case FREE_BLOCK:
       /* check for magic number */
-      if (p_block->Header.MagicNumber != MAGIC_NUMBER_FREE)
+      if(p_block->Header.MagicNumber != MAGIC_NUMBER_FREE)
         {
 #ifdef _DEBUG_MEMLEAKS
           BuddyBlock_t *guilt_block;
@@ -2537,7 +2537,7 @@ int BuddyCheck(BUDDY_ADDR_T ptr)
                         p_block->Header.label_file, p_block->Header.label_func,
                         p_block->Header.label_line, p_block->Header.label_user_defined);
 
-          if ((guilt_block = find_previous_allocated(context, p_block)) != NULL)
+          if((guilt_block = find_previous_allocated(context, p_block)) != NULL)
             BuddyPrintLog(context->Config.buddy_error_file,
                           "/!\\ ***** The guilt block is %p->%p : %s:%s:%u:%s *****\n",
                           guilt_block,
@@ -2558,7 +2558,7 @@ int BuddyCheck(BUDDY_ADDR_T ptr)
 
     case RESERVED_BLOCK:
       /* check for magic number */
-      if (p_block->Header.MagicNumber != MAGIC_NUMBER_USED)
+      if(p_block->Header.MagicNumber != MAGIC_NUMBER_USED)
         {
 #ifdef _DEBUG_MEMLEAKS
           BuddyBlock_t *guilt_block;
@@ -2574,7 +2574,7 @@ int BuddyCheck(BUDDY_ADDR_T ptr)
                         p_block->Header.label_file, p_block->Header.label_func,
                         p_block->Header.label_line, p_block->Header.label_user_defined);
 
-          if ((guilt_block = find_previous_allocated(context, p_block)) != NULL)
+          if((guilt_block = find_previous_allocated(context, p_block)) != NULL)
             BuddyPrintLog(context->Config.buddy_error_file,
                           "/!\\ ***** The guilt block is %p->%p : %s:%s:%u:%s *****\n",
                           guilt_block,
@@ -2601,7 +2601,7 @@ int BuddyCheck(BUDDY_ADDR_T ptr)
     }
 
   /* is it already free ? */
-  if (p_block->Header.status == FREE_BLOCK)
+  if(p_block->Header.status == FREE_BLOCK)
     {
 #ifdef _DEBUG_MEMLEAKS
       BuddyBlock_t *guilt_block;
@@ -2617,7 +2617,7 @@ int BuddyCheck(BUDDY_ADDR_T ptr)
                     p_block->Header.label_file, p_block->Header.label_func,
                     p_block->Header.label_line, p_block->Header.label_user_defined);
 
-      if ((guilt_block = find_previous_allocated(context, p_block)) != NULL)
+      if((guilt_block = find_previous_allocated(context, p_block)) != NULL)
         BuddyPrintLog(context->Config.buddy_error_file,
                       "/!\\ ***** guilt block may be %p->%p : %s:%s:%u:%s *****\n",
                       guilt_block,
@@ -2633,7 +2633,7 @@ int BuddyCheck(BUDDY_ADDR_T ptr)
       return 0;
     }
 
-  if (p_block->Header.OwnerThread != pthread_self())
+  if(p_block->Header.OwnerThread != pthread_self())
     {
       BuddyPrintLog(context->Config.buddy_error_file,
                     "/!\\ ***** BuddyCheck: WARNING : block %p has been allocated by another thread !!!! (%p<>%p)****** /!\\\n",
@@ -2650,13 +2650,13 @@ int BuddyCheck(BUDDY_ADDR_T ptr)
     }
 
   /* If it is an ExtraBlock, its OK */
-  if (IS_EXTRA_BLOCK(p_block))
+  if(IS_EXTRA_BLOCK(p_block))
     return 1;
 
   /* Std blocks sanity checks */
-  if (((BUDDY_ADDR_T) p_block < p_block->Header.Base_ptr) ||
-      ((BUDDY_ADDR_T) p_block > p_block->Header.Base_ptr +
-       (1 << p_block->Header.StdInfo.Base_kSize)))
+  if(((BUDDY_ADDR_T) p_block < p_block->Header.Base_ptr) ||
+     ((BUDDY_ADDR_T) p_block > p_block->Header.Base_ptr +
+      (1 << p_block->Header.StdInfo.Base_kSize)))
     {
       context->Errno = BUDDY_ERR_EINVAL;
       return 0;

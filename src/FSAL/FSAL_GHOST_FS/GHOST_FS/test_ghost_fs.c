@@ -93,8 +93,8 @@ int is_num(char *str)
 {
 
   int i;
-  for (i = 0; str[i]; i++)
-    if ((str[i] < '0') || (str[i] > '9'))
+  for(i = 0; str[i]; i++)
+    if((str[i] < '0') || (str[i] > '9'))
       return FALSE;
 
   return TRUE;
@@ -120,12 +120,12 @@ void print_item(FILE * out, GHOSTFS_Attrs_t * attrib, char *name, char *target)
   char buff[256];
   int i;
 
-  if (!attrib || !name)
+  if(!attrib || !name)
     {
       fprintf(stderr, "attrib=%p name=%p\n", attrib, name);
       exit(-1);
     }
-  if ((attrib->type == GHOSTFS_LNK) && !target)
+  if((attrib->type == GHOSTFS_LNK) && !target)
     {
       fprintf(stderr, "target=%p\n", target);
       exit(-1);
@@ -180,7 +180,7 @@ void print_item(FILE * out, GHOSTFS_Attrs_t * attrib, char *name, char *target)
 #else
   ctime_r(&attrib->mtime, buff, 256);
 #endif
-  for (i = 0; (buff[i] != '\n') && (i < 255); i++) ;
+  for(i = 0; (buff[i] != '\n') && (i < 255); i++) ;
 
   buff[i] = '\0';
   fprintf(out, " %25s", buff);
@@ -188,7 +188,7 @@ void print_item(FILE * out, GHOSTFS_Attrs_t * attrib, char *name, char *target)
   /* print name */
   fprintf(out, " %s", name);
 
-  if (attrib->type == GHOSTFS_LNK)
+  if(attrib->type == GHOSTFS_LNK)
     fprintf(out, " -> %s", target);
 
   fprintf(out, "\n");
@@ -208,31 +208,31 @@ void print_dir_rec(FILE * out, GHOSTFS_handle_t dir_handle, char *fullpath,
   GHOSTFS_Attrs_t item_attr;
 
   /* build indent string */
-  for (i = 0; (i < indent) && (i < 79); i++)
+  for(i = 0; (i < indent) && (i < 79); i++)
     indent_str[i] = ' ';
   indent_str[i] = '\0';
 
   /* directory name : */
   fprintf(out, "%s%s:\n", indent_str, fullpath);
 
-  if (rc = GHOSTFS_Opendir(dir_handle, &dir))
+  if(rc = GHOSTFS_Opendir(dir_handle, &dir))
     Exit(rc, "GHOSTFS_Opendir");
 
   /* read direntries */
-  while (!(rc = GHOSTFS_Readdir(&dir, &dirent)))
+  while(!(rc = GHOSTFS_Readdir(&dir, &dirent)))
     {
 
       /* indenting */
       fprintf(out, "%s", indent_str);
 
       /* getting attrs */
-      if (rc = GHOSTFS_GetAttrs(dirent.handle, &item_attr))
+      if(rc = GHOSTFS_GetAttrs(dirent.handle, &item_attr))
         Exit(rc, "GHOSTFS_GetAttrs");
 
       switch (item_attr.type)
         {
         case GHOSTFS_LNK:
-          if (rc = GHOSTFS_ReadLink(dirent.handle, link, 256))
+          if(rc = GHOSTFS_ReadLink(dirent.handle, link, 256))
             Exit(rc, "GHOSTFS_Readlink");
           print_item(out, &item_attr, dirent.name, link);
           break;
@@ -241,7 +241,7 @@ void print_dir_rec(FILE * out, GHOSTFS_handle_t dir_handle, char *fullpath,
           break;
         case GHOSTFS_DIR:
           print_item(out, &item_attr, dirent.name, NULL);
-          if (strcmp(dirent.name, ".") && strcmp(dirent.name, ".."))
+          if(strcmp(dirent.name, ".") && strcmp(dirent.name, ".."))
             {
               snprintf(next_path, GHOSTFS_MAX_PATH, "%s/%s", fullpath, dirent.name);
               print_dir_rec(out, dirent.handle, next_path, indent + 1);
@@ -253,10 +253,10 @@ void print_dir_rec(FILE * out, GHOSTFS_handle_t dir_handle, char *fullpath,
 
     }
 
-  if (rc != ERR_GHOSTFS_ENDOFDIR)
+  if(rc != ERR_GHOSTFS_ENDOFDIR)
     Exit(rc, "GHOSTFS_Readdir");
 
-  if (rc = GHOSTFS_Closedir(&dir))
+  if(rc = GHOSTFS_Closedir(&dir))
     Exit(rc, "GHOSTFS_Closedir");
 
 }
@@ -274,11 +274,11 @@ void *ls(void *out)
 
   printf("Thread %p writing to FILE * %p\n", (caddr_t) pthread_self(), out);
 
-  if (rc = GHOSTFS_GetRoot(&root_handle))
+  if(rc = GHOSTFS_GetRoot(&root_handle))
     Exit(rc, "GHOSTFS_GetRoot");
 
   /* printing root */
-  if (rc = GHOSTFS_GetAttrs(root_handle, &root_attributes))
+  if(rc = GHOSTFS_GetAttrs(root_handle, &root_attributes))
     Exit(rc, "GHOSTFS_GetAttrs");
 
   print_item(out, &root_attributes, "/", NULL);
@@ -309,12 +309,12 @@ void launch_ls(char *output1, char *output2)
   printf("Launching ls test -> %s %s\n", basename(output1), basename(output2));
 
   /* open outputs */
-  if (!(out1 = fopen(output1, "w")))
+  if(!(out1 = fopen(output1, "w")))
     {
       perror("launch_ls");
       exit(errno);
     }
-  if (!(out2 = fopen(output2, "w")))
+  if(!(out2 = fopen(output2, "w")))
     {
       perror("launch_ls");
       exit(errno);
@@ -329,12 +329,12 @@ void launch_ls(char *output1, char *output2)
   INIT_PTHREAD_ATTR(attrworkers[0]);
   INIT_PTHREAD_ATTR(attrworkers[1]);
 
-  if (pthread_create(&(workers[0]), &(attrworkers[0]), ls, (void *)out1))
+  if(pthread_create(&(workers[0]), &(attrworkers[0]), ls, (void *)out1))
     {
       printf("Error launching ls thread 1\n");
       exit(-1);
     }
-  if (pthread_create(&(workers[1]), &(attrworkers[1]), ls, (void *)out2))
+  if(pthread_create(&(workers[1]), &(attrworkers[1]), ls, (void *)out2))
     {
       printf("Error launching ls thread 2\n");
       exit(-1);
@@ -369,13 +369,13 @@ GHOSTFS_handle_t Lookup(char *path)
 
   /* Looking up for path */
 
-  if (path[0] != '/')
+  if(path[0] != '/')
     {
       printf("Invalid path : %s\n", path);
       exit(-1);
     }
 
-  if (rc = GHOSTFS_GetRoot(&handle))
+  if(rc = GHOSTFS_GetRoot(&handle))
     Exit(rc, "GHOSTFS_GetRoot");
 
   printf("Root = %p.%u\n", handle.inode, handle.magic);
@@ -383,10 +383,10 @@ GHOSTFS_handle_t Lookup(char *path)
   p_tok = &(path[1]);
 
   /* strtok with '/' */
-  while (p_tok = (char *)strtok_r(p_tok, "/", &p_tok_new))
+  while(p_tok = (char *)strtok_r(p_tok, "/", &p_tok_new))
     {
 
-      if (rc = GHOSTFS_Lookup(handle, p_tok, &handle_new))
+      if(rc = GHOSTFS_Lookup(handle, p_tok, &handle_new))
         Exit(rc, "GHOSTFS_Lookup");
 
       printf("Lookup( %p.%u , '%s' ) = %p.%u\n", handle.inode, handle.magic,
@@ -455,10 +455,10 @@ void launch_mkdir(char *name, int uid, int gid)
   int rc;
 
   /* get root handle */
-  if (rc = GHOSTFS_GetRoot(&root_handle))
+  if(rc = GHOSTFS_GetRoot(&root_handle))
     Exit(rc, "GHOSTFS_GetRoot");
 
-  if (rc = GHOSTFS_MkDir(root_handle, name, uid, gid, 0750, &new_handle, NULL))
+  if(rc = GHOSTFS_MkDir(root_handle, name, uid, gid, 0750, &new_handle, NULL))
     Exit(rc, "GHOSTFS_MkDir");
 
   /* filesystem content */
@@ -466,16 +466,16 @@ void launch_mkdir(char *name, int uid, int gid)
   print_dir_rec(stdout, root_handle, "", 0);
 
   printf("\nTesting EEXIST error :\n");
-  if (rc = GHOSTFS_MkDir(root_handle, name, uid, gid, 0750, &new_handle, NULL))
+  if(rc = GHOSTFS_MkDir(root_handle, name, uid, gid, 0750, &new_handle, NULL))
     printf("GHOSTFS_MkDir returned %d\n", rc);
 
   printf("\nCreating some subdirectories :\n");
 
-  if (rc = GHOSTFS_MkDir(new_handle, "subdir.1", uid, gid, 0750, &tmp_handle, NULL))
+  if(rc = GHOSTFS_MkDir(new_handle, "subdir.1", uid, gid, 0750, &tmp_handle, NULL))
     Exit(rc, "GHOSTFS_MkDir");
-  if (rc = GHOSTFS_MkDir(new_handle, "subdir.2", uid, gid, 0750, &tmp_handle, NULL))
+  if(rc = GHOSTFS_MkDir(new_handle, "subdir.2", uid, gid, 0750, &tmp_handle, NULL))
     Exit(rc, "GHOSTFS_MkDir");
-  if (rc = GHOSTFS_MkDir(new_handle, "subdir.3", uid, gid, 0750, &tmp_handle, NULL))
+  if(rc = GHOSTFS_MkDir(new_handle, "subdir.3", uid, gid, 0750, &tmp_handle, NULL))
     Exit(rc, "GHOSTFS_MkDir");
 
   printf("\nFilesystem content :\n");
@@ -515,31 +515,31 @@ int main(int argc, char **argv)
 
   action = ACTION_NULL;
 
-  if (argc > 1)
+  if(argc > 1)
     {
-      if (!strcmp(argv[1], "-acces"))
+      if(!strcmp(argv[1], "-acces"))
         action = ACTION_ACCES;
-      else if (!strcmp(argv[1], "-ls"))
+      else if(!strcmp(argv[1], "-ls"))
         action = ACTION_LS;
-      else if (!strcmp(argv[1], "-mkdir"))
+      else if(!strcmp(argv[1], "-mkdir"))
         action = ACTION_MKDIR;
     }
 
-  if ((action == ACTION_ACCES || action == ACTION_MKDIR) && (argc == 5))
+  if((action == ACTION_ACCES || action == ACTION_MKDIR) && (argc == 5))
     {
 
       lookup_path = argv[2];
       str_uid = argv[3];
       str_gid = argv[4];
 
-      if (!is_num(str_uid))
+      if(!is_num(str_uid))
         {
           printf("Invalid uid : %s\n", str_uid);
           exit(-1);
         }
       uid = atoi(str_uid);
 
-      if (!is_num(str_gid))
+      if(!is_num(str_gid))
         {
           printf("Invalid gid : %s\n", str_gid);
           exit(-1);
@@ -547,7 +547,7 @@ int main(int argc, char **argv)
       gid = atoi(str_gid);
 
     }
-  else if ((action == ACTION_LS) && (argc == 4))
+  else if((action == ACTION_LS) && (argc == 4))
     {
 
       output1 = argv[2];
@@ -565,7 +565,7 @@ int main(int argc, char **argv)
 #endif
 
   /* Loads the filesystem structure */
-  if (rc = GHOSTFS_Init(config_ghostfs))
+  if(rc = GHOSTFS_Init(config_ghostfs))
     Exit(rc, "GHOSTFS_Init");
 
   switch (action)

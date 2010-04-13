@@ -69,9 +69,9 @@ int main(int argc, char *argv[])
   setbuf(stdout, NULL);
   Myname = *argv++;
   argc--;
-  while (argc && **argv == '-')
+  while(argc && **argv == '-')
     {
-      for (opts = &argv[0][1]; *opts; opts++)
+      for(opts = &argv[0][1]; *opts; opts++)
         {
           switch (*opts)
             {
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
       argv++;
     }
 
-  if (argc)
+  if(argc)
     {
       config_file = *argv;
       argc--;
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-  if (argc != 0)
+  if(argc != 0)
     {
       fprintf(stderr, "too many parameters");
       usage();
@@ -122,14 +122,14 @@ int main(int argc, char *argv[])
     }
 
   param = readin_config(config_file);
-  if (param == NULL)
+  if(param == NULL)
     {
       fprintf(stderr, "Nothing built\n");
       exit(1);
     }
 
   b = get_btest_args(param, TWO);
-  if (b == NULL)
+  if(b == NULL)
     {
       fprintf(stderr, "Missing basic test number 2 in the config file '%s'\n",
               config_file);
@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-  if (b->levels == -1)
+  if(b->levels == -1)
     {
       fprintf(stderr,
               "Missing 'levels' parameter in the config file '%s' for the basic test number 2\n",
@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
       free_testparam(param);
       exit(1);
     }
-  if (b->files == -1)
+  if(b->files == -1)
     {
       fprintf(stderr,
               "Missing 'files' parameter in the config file '%s' for the basic test number 2\n",
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
       free_testparam(param);
       exit(1);
     }
-  if (b->dirs == -1)
+  if(b->dirs == -1)
     {
       fprintf(stderr,
               "Missing 'dirs' parameter in the config file '%s' for the basic test number 2\n",
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 
   free_testparam(param);
 
-  if (!Fflag)
+  if(!Fflag)
     {
       Tflag = 0;
       levels = 2;
@@ -181,16 +181,16 @@ int main(int argc, char *argv[])
 
   fprintf(stdout, "%s: File and directory removal test\n", Myname);
 
-  if (mtestdir(test_dir))
+  if(mtestdir(test_dir))
     {
       sprintf(str, "test1 -s %s %d %d %d %s %s",
               Nflag ? "-n" : "", levels, files, dirs, fname, dname);
-      if (system(str) != 0)
+      if(system(str) != 0)
         {
           error("can't make directroy tree to remove");
           exit(1);
         }
-      if (mtestdir(test_dir))
+      if(mtestdir(test_dir))
         {
           error("still can't go to test directory");
           exit(1);
@@ -203,14 +203,14 @@ int main(int argc, char *argv[])
 
   fprintf(stdout,
           "\tremoved %d files %d directories %d levels deep", totfiles, totdirs, levels);
-  if (Tflag)
+  if(Tflag)
     {
       fprintf(stdout, " in %ld.%02ld seconds",
               (long)time.tv_sec, (long)time.tv_usec / 10000);
     }
   fprintf(stdout, "\n");
 
-  if ((log = fopen(log_file, "a")) == NULL)
+  if((log = fopen(log_file, "a")) == NULL)
     {
       printf("Enable to open the file '%s'\n", log_file);
       complete();

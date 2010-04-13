@@ -50,10 +50,10 @@ static int HPSSFSAL_SecInit(fs_specific_initinfo_t * hpss_init_info)
   hpss_rpc_auth_type_t auth_type;
 
   rc = hpss_GetAuthType(FSAL_auth_mech, &auth_type);
-  if (rc != 0)
+  if(rc != 0)
     return rc;
 
-  if (auth_type != hpss_rpc_auth_type_keytab && auth_type != hpss_rpc_auth_type_keyfile)
+  if(auth_type != hpss_rpc_auth_type_keytab && auth_type != hpss_rpc_auth_type_keyfile)
     {
       return ERR_FSAL_INVAL;
     }
@@ -132,12 +132,12 @@ static int HPSSFSAL_Init(fs_specific_initinfo_t * hpss_init_info)
   int rc = 0;
   api_config_t hpss_config;
 
-  if (!hpss_init_info)
+  if(!hpss_init_info)
     return ERR_FSAL_FAULT;
 
   /* First, get current values for config. */
 
-  if (rc = hpss_GetConfiguration(&hpss_config))
+  if(rc = hpss_GetConfiguration(&hpss_config))
     return rc;
 
 #if HPSS_MAJOR_VERSION == 5
@@ -160,7 +160,7 @@ static int HPSSFSAL_Init(fs_specific_initinfo_t * hpss_init_info)
 
   /* retrieve authentication mechanism */
 
-  if (hpss_init_info->behaviors.AuthnMech == FSAL_INIT_FORCE_VALUE)
+  if(hpss_init_info->behaviors.AuthnMech == FSAL_INIT_FORCE_VALUE)
     {
       FSAL_auth_mech = hpss_init_info->hpss_config.AuthnMech;
       hpss_config.AuthnMech = hpss_init_info->hpss_config.AuthnMech;
@@ -170,28 +170,28 @@ static int HPSSFSAL_Init(fs_specific_initinfo_t * hpss_init_info)
       FSAL_auth_mech = hpss_config.AuthnMech;
     }
 
-  if (hpss_init_info->behaviors.NumRetries == FSAL_INIT_FORCE_VALUE)
+  if(hpss_init_info->behaviors.NumRetries == FSAL_INIT_FORCE_VALUE)
     hpss_config.NumRetries = hpss_init_info->hpss_config.NumRetries;
 
-  if (hpss_init_info->behaviors.BusyRetries == FSAL_INIT_FORCE_VALUE)
+  if(hpss_init_info->behaviors.BusyRetries == FSAL_INIT_FORCE_VALUE)
     hpss_config.BusyRetries = hpss_init_info->hpss_config.BusyRetries;
 
-  if (hpss_init_info->behaviors.BusyDelay == FSAL_INIT_FORCE_VALUE)
+  if(hpss_init_info->behaviors.BusyDelay == FSAL_INIT_FORCE_VALUE)
     hpss_config.BusyDelay = hpss_init_info->hpss_config.BusyDelay;
 
-  if (hpss_init_info->behaviors.BusyRetries == FSAL_INIT_FORCE_VALUE)
+  if(hpss_init_info->behaviors.BusyRetries == FSAL_INIT_FORCE_VALUE)
     hpss_config.BusyRetries = hpss_init_info->hpss_config.BusyRetries;
 
-  if (hpss_init_info->behaviors.MaxConnections == FSAL_INIT_FORCE_VALUE)
+  if(hpss_init_info->behaviors.MaxConnections == FSAL_INIT_FORCE_VALUE)
     hpss_config.MaxConnections = hpss_init_info->hpss_config.MaxConnections;
 
-  if (hpss_init_info->behaviors.Principal == FSAL_INIT_FORCE_VALUE)
+  if(hpss_init_info->behaviors.Principal == FSAL_INIT_FORCE_VALUE)
     strcpy(FSAL_PrincipalName, hpss_init_info->Principal);
 
-  if (hpss_init_info->behaviors.KeytabPath == FSAL_INIT_FORCE_VALUE)
+  if(hpss_init_info->behaviors.KeytabPath == FSAL_INIT_FORCE_VALUE)
     strcpy(FSAL_KeytabPath, hpss_init_info->KeytabPath);
 
-  if (hpss_init_info->behaviors.DebugPath == FSAL_INIT_FORCE_VALUE)
+  if(hpss_init_info->behaviors.DebugPath == FSAL_INIT_FORCE_VALUE)
     {
       strcpy(hpss_config.DebugPath, hpss_init_info->hpss_config.DebugPath);
       hpss_config.DebugValue |= API_DEBUG_ERROR | API_DEBUG_REQUEST | API_DEBUG_TRACE;
@@ -261,12 +261,12 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
 
   /* sanity check.  */
 
-  if (!init_info)
+  if(!init_info)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
 
   /* Check for very important args */
 
-  if (init_info->fsal_info.log_outputs.liste_voies == NULL)
+  if(init_info->fsal_info.log_outputs.liste_voies == NULL)
     {
       /* issue a warning on stderr */
       DisplayLog
@@ -274,7 +274,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     }
 #if HPSS_MAJOR_VERSION == 5
 
-  if (init_info->fs_specific_info.behaviors.KeytabPath == FSAL_INIT_FS_DEFAULT)
+  if(init_info->fs_specific_info.behaviors.KeytabPath == FSAL_INIT_FS_DEFAULT)
     {
       /* issue a warning on stderr if no credential is specified */
       DisplayLog
@@ -284,7 +284,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
            CONF_LABEL_FS_SPECIFIC);
     }
 
-  if (init_info->fs_specific_info.behaviors.PrincipalName == FSAL_INIT_FS_DEFAULT)
+  if(init_info->fs_specific_info.behaviors.PrincipalName == FSAL_INIT_FS_DEFAULT)
     {
       /* issue a warning on stderr if no credential is specified */
       DisplayLog
@@ -295,7 +295,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     }
 #elif HPSS_MAJOR_VERSION >= 6
 
-  if (init_info->fs_specific_info.behaviors.AuthnMech == FSAL_INIT_FS_DEFAULT)
+  if(init_info->fs_specific_info.behaviors.AuthnMech == FSAL_INIT_FS_DEFAULT)
     {
       /* issue a warning on stderr if no credential is specified */
       DisplayLog
@@ -305,7 +305,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
            CONF_LABEL_FS_SPECIFIC);
     }
 
-  if (init_info->fs_specific_info.behaviors.KeytabPath == FSAL_INIT_FS_DEFAULT)
+  if(init_info->fs_specific_info.behaviors.KeytabPath == FSAL_INIT_FS_DEFAULT)
     {
       /* issue a warning on stderr if no credential is specified */
       DisplayLog
@@ -315,7 +315,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
            CONF_LABEL_FS_SPECIFIC);
     }
 
-  if (init_info->fs_specific_info.behaviors.Principal == FSAL_INIT_FS_DEFAULT)
+  if(init_info->fs_specific_info.behaviors.Principal == FSAL_INIT_FS_DEFAULT)
     {
       /* issue a warning on stderr if no credential is specified */
       DisplayLog
@@ -331,18 +331,18 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
   status = fsal_internal_init_global(&(init_info->fsal_info),
                                      &(init_info->fs_common_info));
 
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_Init);
 
   /* configure HPSS cl api  
      (and retrieve current PrincipalName and KeytabName) */
 
-  if (rc = HPSSFSAL_Init(&init_info->fs_specific_info))
+  if(rc = HPSSFSAL_Init(&init_info->fs_specific_info))
     Return(ERR_FSAL_BAD_INIT, -rc, INDEX_FSAL_Init);
 
   /* Init security context */
 
-  if (rc = HPSSFSAL_SecInit(&init_info->fs_specific_info))
+  if(rc = HPSSFSAL_SecInit(&init_info->fs_specific_info))
     Return(ERR_FSAL_SEC, -rc, INDEX_FSAL_Init);
 
   /* sets the credential renewal time */
@@ -362,8 +362,8 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     {
     case FSAL_INIT_FORCE_VALUE:
       /* force the value in any case */
-      fsal_internal_SetReturnInconsistentDirent(init_info->fs_specific_info.
-                                                ReturnInconsistentDirent);
+      fsal_internal_SetReturnInconsistentDirent(init_info->
+                                                fs_specific_info.ReturnInconsistentDirent);
       break;
       /* In the other cases, we keep the default value. */
     }

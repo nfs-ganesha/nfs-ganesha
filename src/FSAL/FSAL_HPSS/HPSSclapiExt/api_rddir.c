@@ -99,7 +99,7 @@ int HPSSFSAL_ReadRawAttrsHandle(ns_ObjHandle_t * ObjHandle,     /* IN - director
    */
 
   error = API_ClientAPIInit(&threadcontext);
-  if (error != 0)
+  if(error != 0)
     {
       API_RETURN(error);
     }
@@ -109,7 +109,7 @@ int HPSSFSAL_ReadRawAttrsHandle(ns_ObjHandle_t * ObjHandle,     /* IN - director
    * valid object handle.
    */
 
-  if (ObjHandle == NULL || BufferSize == 0)
+  if(ObjHandle == NULL || BufferSize == 0)
     {
       API_RETURN(-EINVAL);
     }
@@ -118,7 +118,7 @@ int HPSSFSAL_ReadRawAttrsHandle(ns_ObjHandle_t * ObjHandle,     /* IN - director
    *  Make sure we got a non-NULL dirent pointer.
    */
 
-  if ((DirentPtr == NULL) || (End == NULL) || (OffsetOut == NULL))
+  if((DirentPtr == NULL) || (End == NULL) || (OffsetOut == NULL))
     {
       API_RETURN(-EFAULT);
     }
@@ -128,7 +128,7 @@ int HPSSFSAL_ReadRawAttrsHandle(ns_ObjHandle_t * ObjHandle,     /* IN - director
    *  current thread context.
    */
 
-  if (Ucred == (sec_cred_t *) NULL)
+  if(Ucred == (sec_cred_t *) NULL)
     ucred_ptr = &threadcontext->UserCred;
   else
     ucred_ptr = Ucred;
@@ -231,7 +231,7 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
   direntbuf.DirEntry.DirEntry_len = 0;
   direntbuf.DirEntry.DirEntry_val = NULL;
 
-  if (GetAttributes == TRUE)
+  if(GetAttributes == TRUE)
     {
       /*
        * Ask for all the attributes that are managed by the
@@ -271,7 +271,7 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
    * when a directory entry has no associated entry in the FS...
    * In this case, we return null object attributes.
    */
-  if ((error == HPSS_ENOENT) && IgnInconstitMd)
+  if((error == HPSS_ENOENT) && IgnInconstitMd)
     {
       select_flags = cast64m(0);
 
@@ -284,13 +284,13 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
                                OffsetIn, BufferSize, select_flags, End, &direntbuf);
     }
 
-  if (error != 0)
+  if(error != 0)
     {
       API_DEBUG_FPRINTF(DebugFile, &rqstid,
                         "%s: Could not read directory entries.\n", function_name);
     }
 
-  if (error == 0)
+  if(error == 0)
     {
 
       /*
@@ -301,9 +301,9 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
       cnt = 0;
 
 #if HPSS_LEVEL >= 622
-      for (i = 0; i < direntbuf.DirEntry.DirEntry_len && i < entry_cnt; ++i)
+      for(i = 0; i < direntbuf.DirEntry.DirEntry_len && i < entry_cnt; ++i)
 #else
-      for (i = 0; i < direntbuf.DirEntry.DirEntry_len; ++i)
+      for(i = 0; i < direntbuf.DirEntry.DirEntry_len; ++i)
 #endif
         {
           direntptr = &(direntbuf.DirEntry.DirEntry_val[i]);
@@ -316,8 +316,8 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
            * points.
            */
 
-          if (((ChaseOptions & API_CHASE_JUNCTION) != 0)
-              && direntptr->Attrs.Type == NS_OBJECT_TYPE_JUNCTION)
+          if(((ChaseOptions & API_CHASE_JUNCTION) != 0)
+             && direntptr->Attrs.Type == NS_OBJECT_TYPE_JUNCTION)
             {
               hpss_Attrs_t attrs;
               ns_ObjHandle_t obj_handle;
@@ -345,7 +345,7 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
 #endif
                                        NULL, NULL);
 
-              if (error != 0)
+              if(error != 0)
                 {
                   /*
                    * If we can't find out what the junction points
@@ -374,9 +374,9 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
 
         }
 
-      if (error == 0)
+      if(error == 0)
         {
-          if (direntbuf.DirEntry.DirEntry_len > 0)
+          if(direntbuf.DirEntry.DirEntry_len > 0)
             *OffsetOut = outptr->ObjOffset;
           else
             *OffsetOut = cast64m(0);
@@ -390,7 +390,7 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
         }
     }
 
-  if (direntbuf.DirEntry.DirEntry_val != NULL)
+  if(direntbuf.DirEntry.DirEntry_val != NULL)
     {
       free(direntbuf.DirEntry.DirEntry_val);
     }

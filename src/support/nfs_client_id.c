@@ -163,8 +163,8 @@ unsigned long client_id_value_hash_func_reverse(hash_parameter_t * p_hparam,
   unsigned char c;
 
   /* Compute the sum of all the characters */
-  for (i = 0, c = ((char *)buffclef->pdata)[0]; ((char *)buffclef->pdata)[i] != '\0';
-       c = ((char *)buffclef->pdata)[++i], sum += c) ;
+  for(i = 0, c = ((char *)buffclef->pdata)[0]; ((char *)buffclef->pdata)[i] != '\0';
+      c = ((char *)buffclef->pdata)[++i], sum += c) ;
 
   return (unsigned long)(sum % p_hparam->index_size);
 }                               /*  client_id_reverse_value_hash_func */
@@ -205,7 +205,7 @@ unsigned long client_id_rbt_hash_func_reverse(hash_parameter_t * p_hparam,
 {
   clientid4 result;
 
-  if (nfs_client_id_compute((char *)buffclef->pdata, &result) != CLIENT_ID_SUCCESS)
+  if(nfs_client_id_compute((char *)buffclef->pdata, &result) != CLIENT_ID_SUCCESS)
     return 0;
 
   return ((unsigned long)(result & 0x00000000FFFFFFFFLL));
@@ -318,13 +318,13 @@ int nfs_client_id_add(clientid4 clientid,
   BuddySetDebugLabel("N/A");
 #endif
 
-  if (pnfs_client_id == NULL)
+  if(pnfs_client_id == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
-  if ((pclientid = (clientid4 *) Mem_Alloc(sizeof(clientid4))) == NULL)
+  if((pclientid = (clientid4 *) Mem_Alloc(sizeof(clientid4))) == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
-  if ((buffkey_reverse.pdata = (caddr_t) Mem_Alloc(MAXNAMLEN)) == NULL)
+  if((buffkey_reverse.pdata = (caddr_t) Mem_Alloc(MAXNAMLEN)) == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this, 
@@ -337,9 +337,9 @@ int nfs_client_id_add(clientid4 clientid,
   buffdata.pdata = (caddr_t) pnfs_client_id;
   buffdata.len = sizeof(nfs_client_id_t);
 
-  if (HashTable_Test_And_Set
-      (ht_client_id, &buffkey, &buffdata,
-       HASHTABLE_SET_HOW_SET_OVERWRITE) != HASHTABLE_SUCCESS)
+  if(HashTable_Test_And_Set
+     (ht_client_id, &buffkey, &buffdata,
+      HASHTABLE_SET_HOW_SET_OVERWRITE) != HASHTABLE_SUCCESS)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
   /* Keep information in reverse hash table */
@@ -349,9 +349,9 @@ int nfs_client_id_add(clientid4 clientid,
   buffdata_reverse.pdata = (caddr_t) pnfs_client_id;
   buffdata_reverse.len = sizeof(nfs_client_id_t);
 
-  if (HashTable_Test_And_Set
-      (ht_client_id_reverse, &buffkey_reverse, &buffdata_reverse,
-       HASHTABLE_SET_HOW_SET_OVERWRITE) != HASHTABLE_SUCCESS)
+  if(HashTable_Test_And_Set
+     (ht_client_id_reverse, &buffkey_reverse, &buffdata_reverse,
+      HASHTABLE_SET_HOW_SET_OVERWRITE) != HASHTABLE_SUCCESS)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
 #ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
@@ -405,13 +405,13 @@ int nfs_client_id_set(clientid4 clientid,
   BuddySetDebugLabel("N/A");
 #endif
 
-  if (pnfs_client_id == NULL)
+  if(pnfs_client_id == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
-  if ((pclientid = (clientid4 *) Mem_Alloc(sizeof(clientid4))) == NULL)
+  if((pclientid = (clientid4 *) Mem_Alloc(sizeof(clientid4))) == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
-  if ((buffkey_reverse.pdata = (caddr_t) Mem_Alloc(MAXNAMLEN)) == NULL)
+  if((buffkey_reverse.pdata = (caddr_t) Mem_Alloc(MAXNAMLEN)) == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this, 
@@ -424,9 +424,9 @@ int nfs_client_id_set(clientid4 clientid,
   buffdata.pdata = (caddr_t) pnfs_client_id;
   buffdata.len = sizeof(nfs_client_id_t);
 
-  if (HashTable_Test_And_Set
-      (ht_client_id, &buffkey, &buffdata,
-       HASHTABLE_SET_HOW_SET_OVERWRITE) != HASHTABLE_SUCCESS)
+  if(HashTable_Test_And_Set
+     (ht_client_id, &buffkey, &buffdata,
+      HASHTABLE_SET_HOW_SET_OVERWRITE) != HASHTABLE_SUCCESS)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
   /* Reverse hashtable */
@@ -436,9 +436,9 @@ int nfs_client_id_set(clientid4 clientid,
   buffdata_reverse.pdata = (caddr_t) pnfs_client_id;
   buffdata_reverse.len = sizeof(nfs_client_id_t);
 
-  if (HashTable_Test_And_Set
-      (ht_client_id_reverse, &buffkey_reverse, &buffdata_reverse,
-       HASHTABLE_SET_HOW_SET_OVERWRITE) != HASHTABLE_SUCCESS)
+  if(HashTable_Test_And_Set
+     (ht_client_id_reverse, &buffkey_reverse, &buffdata_reverse,
+      HASHTABLE_SET_HOW_SET_OVERWRITE) != HASHTABLE_SUCCESS)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
   return CLIENT_ID_SUCCESS;
@@ -464,17 +464,17 @@ int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res)
   nfs_client_id_t *pnfs_client_id = NULL;
   clientid4 *pclientid = NULL;
 
-  if (client_id_res == NULL)
+  if(client_id_res == NULL)
     return CLIENT_ID_INVALID_ARGUMENT;
 
-  if ((pclientid = (clientid4 *) Mem_Alloc(sizeof(clientid4))) == NULL)
+  if((pclientid = (clientid4 *) Mem_Alloc(sizeof(clientid4))) == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
   *pclientid = clientid;
   buffkey.pdata = (caddr_t) pclientid;
   buffkey.len = sizeof(clientid4);
 
-  if (HashTable_Get(ht_client_id, &buffkey, &buffval) == HASHTABLE_SUCCESS)
+  if(HashTable_Get(ht_client_id, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
       pnfs_client_id = (nfs_client_id_t *) buffval.pdata;
 
@@ -506,17 +506,17 @@ int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id
   int status;
   clientid4 *pclientid = NULL;
 
-  if (ppclient_id_res == NULL)
+  if(ppclient_id_res == NULL)
     return CLIENT_ID_INVALID_ARGUMENT;
 
-  if ((pclientid = (clientid4 *) Mem_Alloc(sizeof(clientid4))) == NULL)
+  if((pclientid = (clientid4 *) Mem_Alloc(sizeof(clientid4))) == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
   *pclientid = clientid;
   buffkey.pdata = (caddr_t) pclientid;
   buffkey.len = sizeof(clientid4);
 
-  if (HashTable_Get(ht_client_id, &buffkey, &buffval) == HASHTABLE_SUCCESS)
+  if(HashTable_Get(ht_client_id, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
       *ppclient_id_res = (nfs_client_id_t *) buffval.pdata;
 
@@ -547,13 +547,13 @@ int nfs_client_id_get_reverse(char *key, nfs_client_id_t * client_id_res)
   int status;
   nfs_client_id_t *pnfs_client_id = NULL;
 
-  if (client_id_res == NULL)
+  if(client_id_res == NULL)
     return CLIENT_ID_INVALID_ARGUMENT;
 
   buffkey.pdata = (caddr_t) key;
   buffkey.len = MAXNAMLEN;
 
-  if (HashTable_Get(ht_client_id_reverse, &buffkey, &buffval) == HASHTABLE_SUCCESS)
+  if(HashTable_Get(ht_client_id_reverse, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
       pnfs_client_id = (nfs_client_id_t *) buffval.pdata;
 
@@ -586,7 +586,7 @@ int nfs_client_id_remove(clientid4 clientid, nfs_client_id_t * nfs_client_id_poo
   nfs_client_id_t *pnfs_client_id = NULL;
   clientid4 *pclientid = NULL;
 
-  if ((pclientid = (clientid4 *) Mem_Alloc(sizeof(clientid4))) == NULL)
+  if((pclientid = (clientid4 *) Mem_Alloc(sizeof(clientid4))) == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
   *pclientid = clientid;
@@ -595,7 +595,7 @@ int nfs_client_id_remove(clientid4 clientid, nfs_client_id_t * nfs_client_id_poo
 
   /* Remove entry */
 
-  if (HashTable_Del(ht_client_id, &buffkey, &old_key, &old_value) != HASHTABLE_SUCCESS)
+  if(HashTable_Del(ht_client_id, &buffkey, &old_key, &old_value) != HASHTABLE_SUCCESS)
     {
       Mem_Free(pclientid);
       return CLIENT_ID_NOT_FOUND;
@@ -607,8 +607,8 @@ int nfs_client_id_remove(clientid4 clientid, nfs_client_id_t * nfs_client_id_poo
   buffkey.pdata = pnfs_client_id->client_name;
   buffkey.len = MAXNAMLEN;
 
-  if (HashTable_Del(ht_client_id_reverse, &buffkey, &old_key_reverse, &old_value) !=
-      HASHTABLE_SUCCESS)
+  if(HashTable_Del(ht_client_id_reverse, &buffkey, &old_key_reverse, &old_value) !=
+     HASHTABLE_SUCCESS)
     {
       RELEASE_PREALLOC(pnfs_client_id, nfs_client_id_pool, next_alloc);
       Mem_Free(old_key.pdata);
@@ -638,7 +638,7 @@ int nfs_client_id_remove(clientid4 clientid, nfs_client_id_t * nfs_client_id_poo
  */
 int nfs_Init_client_id(nfs_client_id_parameter_t param)
 {
-  if ((ht_client_id = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_client_id = HashTable_Init(param.hash_param)) == NULL)
     {
       DisplayLog("NFS CLIENT_ID: Cannot init Client Id cache");
       return -1;
@@ -660,7 +660,7 @@ int nfs_Init_client_id(nfs_client_id_parameter_t param)
  */
 int nfs_Init_client_id_reverse(nfs_client_id_parameter_t param)
 {
-  if ((ht_client_id_reverse = HashTable_Init(param.hash_param_reverse)) == NULL)
+  if((ht_client_id_reverse = HashTable_Init(param.hash_param_reverse)) == NULL)
     {
       DisplayLog("NFS CLIENT_ID: Cannot init Client Id cache");
       return -1;
@@ -676,12 +676,12 @@ int nfs_client_id_basic_compute(char *name, clientid4 * pclientid)
   unsigned int i = 0;
   unsigned int sum = 0;
 
-  if (name == NULL || pclientid == NULL)
+  if(name == NULL || pclientid == NULL)
     return CLIENT_ID_INVALID_ARGUMENT;
 
   strncpy(stock, name, MAXNAMLEN);
 
-  for (str = stock, i = 0; *str != '\0'; str++, i++)
+  for(str = stock, i = 0; *str != '\0'; str++, i++)
     sum += (unsigned int)(str[i] * 10 ^ i);
 
   *pclientid = (clientid4) sum;
@@ -716,13 +716,13 @@ int nfs_client_id_compute(char *name, clientid4 * pclientid)
   uint64_t i9;
   uint64_t l;
 
-  if (name == NULL || pclientid == NULL)
+  if(name == NULL || pclientid == NULL)
     return CLIENT_ID_INVALID_ARGUMENT;
 
   memset(padded_name, 0, CLIENT_ID_MAX_LEN);
 
   /* Copy the string to the padded one */
-  for (i = 0; i < strnlen(name, CLIENT_ID_MAX_LEN); padded_name[i] = name[i], i++) ;
+  for(i = 0; i < strnlen(name, CLIENT_ID_MAX_LEN); padded_name[i] = name[i], i++) ;
 
 #ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
   printf("%s :", padded_name);
@@ -735,7 +735,7 @@ int nfs_client_id_compute(char *name, clientid4 * pclientid)
    * Proceeding with the next 9 bytes pack will produce a new value that is xored with the 
    * one of the previous iteration */
 
-  for (offset = 0; offset < CLIENT_ID_MAX_LEN; offset += 9)
+  for(offset = 0; offset < CLIENT_ID_MAX_LEN; offset += 9)
     {
       /* input name is ascii string, remove 8th bit on each byte, not significant */
       i1 = padded_name[offset + 0] & 0x7F;

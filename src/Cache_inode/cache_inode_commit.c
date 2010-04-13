@@ -145,27 +145,27 @@ cache_inode_status_t cache_inode_commit(cache_entry_t * pentry,
   fsal_size_t size_io_done;
   fsal_boolean_t eof;
 
-  if (pentry->object.file.unstable_data.buffer == NULL)
+  if(pentry->object.file.unstable_data.buffer == NULL)
     {
       *pstatus = CACHE_INODE_SUCCESS;
       return *pstatus;
     }
 
-  if (count == 0 || count == 0xFFFFFFFFL)
+  if(count == 0 || count == 0xFFFFFFFFL)
     {
       /* Count = 0 means "flush all data to permanent storage */
       seek_descriptor.offset = pentry->object.file.unstable_data.offset;
       seek_descriptor.whence = FSAL_SEEK_SET;
 
-      if (cache_inode_rdwr(pentry,
-                           CACHE_INODE_WRITE,
-                           &seek_descriptor,
-                           pentry->object.file.unstable_data.length,
-                           &size_io_done,
-                           pfsal_attr,
-                           pentry->object.file.unstable_data.buffer,
-                           &eof,
-                           ht, pclient, pcontext, TRUE, pstatus) != CACHE_INODE_SUCCESS)
+      if(cache_inode_rdwr(pentry,
+                          CACHE_INODE_WRITE,
+                          &seek_descriptor,
+                          pentry->object.file.unstable_data.length,
+                          &size_io_done,
+                          pfsal_attr,
+                          pentry->object.file.unstable_data.buffer,
+                          &eof,
+                          ht, pclient, pcontext, TRUE, pstatus) != CACHE_INODE_SUCCESS)
         return *pstatus;
 
       P_w(&pentry->lock);
@@ -178,7 +178,7 @@ cache_inode_status_t cache_inode_commit(cache_entry_t * pentry,
     }
   else
     {
-      if (offset < pentry->object.file.unstable_data.offset)
+      if(offset < pentry->object.file.unstable_data.offset)
         {
           *pstatus = CACHE_INODE_INVALID_ARGUMENT;
           return *pstatus;

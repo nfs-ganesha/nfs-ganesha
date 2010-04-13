@@ -109,15 +109,15 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
   fsal_status_t fsal_status;
 
   /* Sanity Check */
-  if (pentry == NULL || pclient == NULL || pcontext == NULL || pstatus == NULL)
+  if(pentry == NULL || pclient == NULL || pcontext == NULL || pstatus == NULL)
     {
-      if (pstatus != NULL)
+      if(pstatus != NULL)
         *pstatus = CACHE_INODE_INVALID_ARGUMENT;
       return CACHE_INODE_INVALID_ARGUMENT;
     }
 
   /* Entry should not be dead */
-  if (pentry->async_health != CACHE_INODE_ASYNC_STAYING_ALIVE)
+  if(pentry->async_health != CACHE_INODE_ASYNC_STAYING_ALIVE)
     {
       *pstatus = CACHE_INODE_DEAD_ENTRY;
       return *pstatus;
@@ -133,8 +133,8 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
   /* Lock the entry */
   P(pentry->lock);
 
-  if (cache_inode_renew_entry(pentry, NULL, ht, pclient, pcontext, pstatus) !=
-      CACHE_INODE_SUCCESS)
+  if(cache_inode_renew_entry(pentry, NULL, ht, pclient, pcontext, pstatus) !=
+     CACHE_INODE_SUCCESS)
     {
       pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_READLINK] += 1;
       V(pentry->lock);
@@ -161,12 +161,12 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
 
     case SYMBOLIC_LINK:
       fsal_status = FSAL_pathcpy(plink_content, &(pentry->object.symlink.content));
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
           V(pentry->lock);
 
-          if (fsal_status.major == ERR_FSAL_STALE)
+          if(fsal_status.major == ERR_FSAL_STALE)
             {
               cache_inode_status_t kill_status;
 
@@ -174,8 +174,8 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
                   ("cache_inode_readlink: Stale FSAL File Handle detected for pentry = %p",
                    pentry);
 
-              if (cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
-                  CACHE_INODE_SUCCESS)
+              if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+                 CACHE_INODE_SUCCESS)
                 DisplayLog("cache_inode_readlink: Could not kill entry %p, status = %u",
                            pentry, kill_status);
 
@@ -195,7 +195,7 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
   V(pentry->lock);
 
   /* stat */
-  if (*pstatus != CACHE_INODE_SUCCESS)
+  if(*pstatus != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_READLINK] += 1;
   else
     pclient->stat.func_stats.nb_success[CACHE_INODE_READLINK] += 1;

@@ -56,7 +56,7 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
   /* sanity checks
    * note : dir_attributes is optionnal.
    */
-  if (!dir_handle || !p_context || !dir_descriptor)
+  if(!dir_handle || !p_context || !dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_opendir);
 
   /* >> You can prepare your directory for beeing read  
@@ -114,7 +114,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
   /* sanity checks */
 
-  if (!dir_descriptor || !pdirent || !end_position || !nb_entries || !end_of_dir)
+  if(!dir_descriptor || !pdirent || !end_position || !nb_entries || !end_of_dir)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
   TakeTokenFSCall();
@@ -157,7 +157,7 @@ fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
   int rc;
 
   /* sanity checks */
-  if (!dir_descriptor)
+  if(!dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_closedir);
 
   /* >> release the resources used for reading your directory << */

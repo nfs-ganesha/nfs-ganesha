@@ -151,7 +151,7 @@ int mnt_Umnt(nfs_arg_t * parg /* IN     */ ,
   /* @todo: BUGAZOMEU; seul AUTHUNIX est supporte */
   hostname = ((struct authunix_parms *)(preq->rq_clntcred))->aup_machname;
 
-  if (hostname == NULL)
+  if(hostname == NULL)
     {
       DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
                         "/!\\ | UMOUNT: NULL passed as Umount argument !!!");
@@ -159,7 +159,7 @@ int mnt_Umnt(nfs_arg_t * parg /* IN     */ ,
     }
 
   /* BUGAZOMEU: pas de verif sur le path */
-  if (!nfs_Remove_MountList_Entry(hostname, NULL))
+  if(!nfs_Remove_MountList_Entry(hostname, NULL))
     {
       DisplayLogJd(pclient->log_outputs,
                    "UMOUNT: /!\\ | Cannot remove mount entry for client %s", hostname);

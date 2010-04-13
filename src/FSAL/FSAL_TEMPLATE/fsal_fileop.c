@@ -67,13 +67,13 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
   /* sanity checks.
    * note : file_attributes is optional.
    */
-  if (!filehandle || !p_context || !file_descriptor)
+  if(!filehandle || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
 
   /* >> you can check if this is a file if the information
    * is stored into the handle << */
 
-  if (filehandle->object_type_reminder != FSAL_TYPE_FILE)
+  if(filehandle->object_type_reminder != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
     }
@@ -91,7 +91,7 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
 
   /* >> fill output struct << */
 
-  if (file_attributes)
+  if(file_attributes)
     {
       /* >> set output attributes if asked << */
     }
@@ -149,11 +149,11 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
   fsal_status_t fsal_status;
   fsal_handle_t filehandle;
 
-  if (!dirhandle || !filename || !p_context || !file_descriptor)
+  if(!dirhandle || !filename || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
   fsal_status = FSAL_lookup(dirhandle, filename, p_context, &filehandle, file_attributes);
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   return FSAL_open(&filehandle, p_context, openflags, file_descriptor, file_attributes);
@@ -198,7 +198,7 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
 
   /* sanity checks. */
 
-  if (!file_descriptor || !buffer || !read_amount || !end_of_file)
+  if(!file_descriptor || !buffer || !read_amount || !end_of_file)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_read);
 
   TakeTokenFSCall();
@@ -249,7 +249,7 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
 {
 
   /* sanity checks. */
-  if (!file_descriptor || !buffer || !write_amount)
+  if(!file_descriptor || !buffer || !write_amount)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_write);
 
   TakeTokenFSCall();
@@ -287,7 +287,7 @@ fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
   int rc;
 
   /* sanity checks. */
-  if (!file_descriptor)
+  if(!file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
 
   TakeTokenFSCall();

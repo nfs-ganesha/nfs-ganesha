@@ -152,37 +152,37 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
   res_OPEN_DOWNGRADE4.status = NFS4_OK;
 
   /* If there is no FH */
-  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
+  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
       res_OPEN_DOWNGRADE4.status = NFS4ERR_NOFILEHANDLE;
       return res_OPEN_DOWNGRADE4.status;
     }
 
   /* If the filehandle is invalid */
-  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
       res_OPEN_DOWNGRADE4.status = NFS4ERR_BADHANDLE;
       return res_OPEN_DOWNGRADE4.status;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
       res_OPEN_DOWNGRADE4.status = NFS4ERR_FHEXPIRED;
       return res_OPEN_DOWNGRADE4.status;
     }
 
   /* Commit is done only on a file */
-  if (data->current_filetype != REGULAR_FILE)
+  if(data->current_filetype != REGULAR_FILE)
     {
       res_OPEN_DOWNGRADE4.status = NFS4ERR_INVAL;
       return res_OPEN_DOWNGRADE4.status;
     }
 
   /* Get the state */
-  if (cache_inode_get_state(arg_OPEN_DOWNGRADE4.open_stateid.other,
-                            &pstate_found,
-                            data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_get_state(arg_OPEN_DOWNGRADE4.open_stateid.other,
+                           &pstate_found,
+                           data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_OPEN_DOWNGRADE4.status = nfs4_Errno(cache_status);
       return res_OPEN_DOWNGRADE4.status;

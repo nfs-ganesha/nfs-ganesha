@@ -159,20 +159,20 @@ int nfs_Readlink(nfs_arg_t * parg,
   fsal_path_t symlink_data;
   char *ptr = NULL;
 
-  if (preq->rq_vers == NFS_V3)
+  if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */
       pres->res_readlink3.READLINK3res_u.resfail.symlink_attributes.attributes_follow =
           FALSE;
     }
   /* Convert file handle into a vnode */
-  if ((pentry = nfs_FhandleToCache(preq->rq_vers,
-                                   &(parg->arg_readlink2),
-                                   &(parg->arg_readlink3.symlink),
-                                   NULL,
-                                   &(pres->res_readlink2.status),
-                                   &(pres->res_readlink3.status),
-                                   NULL, &attr, pcontext, pclient, ht, &rc)) == NULL)
+  if((pentry = nfs_FhandleToCache(preq->rq_vers,
+                                  &(parg->arg_readlink2),
+                                  &(parg->arg_readlink3.symlink),
+                                  NULL,
+                                  &(pres->res_readlink2.status),
+                                  &(pres->res_readlink3.status),
+                                  NULL, &attr, pcontext, pclient, ht, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       return rc;
@@ -182,7 +182,7 @@ int nfs_Readlink(nfs_arg_t * parg,
   filetype = cache_inode_fsal_type_convert(attr.type);
 
   /* Sanity Check: the pentry must be a link */
-  if (filetype != SYMBOLIC_LINK)
+  if(filetype != SYMBOLIC_LINK)
     {
       switch (preq->rq_vers)
         {
@@ -198,11 +198,11 @@ int nfs_Readlink(nfs_arg_t * parg,
 
   /* if */
   /* Perform readlink on the pentry */
-  if (cache_inode_readlink(pentry,
-                           &symlink_data,
-                           ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+  if(cache_inode_readlink(pentry,
+                          &symlink_data,
+                          ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
-      if ((ptr = Mem_Alloc(FSAL_MAX_NAME_LEN)) == NULL)
+      if((ptr = Mem_Alloc(FSAL_MAX_NAME_LEN)) == NULL)
         {
           switch (preq->rq_vers)
             {
@@ -231,8 +231,8 @@ int nfs_Readlink(nfs_arg_t * parg,
           nfs_SetPostOpAttr(pcontext, pexport,
                             pentry,
                             &attr,
-                            &(pres->res_readlink3.READLINK3res_u.resok.
-                              symlink_attributes));
+                            &(pres->res_readlink3.READLINK3res_u.
+                              resok.symlink_attributes));
           pres->res_readlink3.status = NFS3_OK;
           break;
         }
@@ -240,7 +240,7 @@ int nfs_Readlink(nfs_arg_t * parg,
     }
 
   /* If we are here, there was an error */
-  if (nfs_RetryableError(cache_status))
+  if(nfs_RetryableError(cache_status))
     {
       return NFS_REQ_DROP;
     }
@@ -267,7 +267,7 @@ int nfs_Readlink(nfs_arg_t * parg,
  */
 void nfs2_Readlink_Free(nfs_res_t * resp)
 {
-  if (resp->res_readlink2.status == NFS_OK)
+  if(resp->res_readlink2.status == NFS_OK)
     Mem_Free(resp->res_readlink2.READLINK2res_u.data);
 }                               /* nfs2_Readlink_Free */
 
@@ -281,6 +281,6 @@ void nfs2_Readlink_Free(nfs_res_t * resp)
  */
 void nfs3_Readlink_Free(nfs_res_t * resp)
 {
-  if (resp->res_readlink3.status == NFS3_OK)
+  if(resp->res_readlink3.status == NFS3_OK)
     Mem_Free(resp->res_readlink3.READLINK3res_u.resok.data);
 }                               /* nfs3_Readlink_Free */

@@ -124,7 +124,7 @@ cache_inode_status_t cache_inode_add_data_cache(cache_entry_t * pentry,
 
   P_w(&pentry->lock);
   /* Operate only on a regular file */
-  if (pentry->internal_md.type != REGULAR_FILE)
+  if(pentry->internal_md.type != REGULAR_FILE)
     {
       *pstatus = CACHE_INODE_BAD_TYPE;
       V_w(&pentry->lock);
@@ -135,7 +135,7 @@ cache_inode_status_t cache_inode_add_data_cache(cache_entry_t * pentry,
       return *pstatus;
     }
 
-  if (pentry->object.file.pentry_content != NULL)
+  if(pentry->object.file.pentry_content != NULL)
     {
       /* The object is already cached */
       *pstatus = CACHE_INODE_CACHE_CONTENT_EXISTS;
@@ -147,11 +147,11 @@ cache_inode_status_t cache_inode_add_data_cache(cache_entry_t * pentry,
       return *pstatus;
     }
 
-  if ((pentry_content = cache_content_new_entry(pentry,
-                                                NULL,
-                                                (cache_content_client_t *)
-                                                pclient->pcontent_client, ADD_ENTRY,
-                                                pcontext, &cache_content_status)) == NULL)
+  if((pentry_content = cache_content_new_entry(pentry,
+                                               NULL,
+                                               (cache_content_client_t *)
+                                               pclient->pcontent_client, ADD_ENTRY,
+                                               pcontext, &cache_content_status)) == NULL)
     {
       *pstatus = cache_content_error_convert(cache_content_status);
       V_w(&pentry->lock);

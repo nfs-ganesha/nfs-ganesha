@@ -79,9 +79,9 @@ int main(int argc, char *argv[])
   setbuf(stdout, NULL);
   Myname = *argv++;
   argc--;
-  while (argc && **argv == '-')
+  while(argc && **argv == '-')
     {
-      for (opts = &argv[0][1]; *opts; opts++)
+      for(opts = &argv[0][1]; *opts; opts++)
         {
           switch (*opts)
             {
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
       argv++;
     }
 
-  if (argc)
+  if(argc)
     {
       config_file = *argv;
       argc--;
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-  if (argc != 0)
+  if(argc != 0)
     {
       fprintf(stderr, "too many parameters");
       usage();
@@ -132,14 +132,14 @@ int main(int argc, char *argv[])
     }
 
   param = readin_config(config_file);
-  if (param == NULL)
+  if(param == NULL)
     {
       fprintf(stderr, "Nothing built\n");
       exit(1);
     }
 
   b = get_btest_args(param, SEVEN);
-  if (b == NULL)
+  if(b == NULL)
     {
       fprintf(stderr, "Missing basic test number 7 in the config file '%s'\n",
               config_file);
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-  if (b->files == -1)
+  if(b->files == -1)
     {
       fprintf(stderr,
               "Missing 'files' parameter in the config file '%s' for the basic test number 7\n",
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
       free_testparam(param);
       exit(1);
     }
-  if (b->count == -1)
+  if(b->count == -1)
     {
       fprintf(stderr,
               "Missing 'count' parameter in the config file '%s' for the basic test number 7\n",
@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
 
   free_testparam(param);
 
-  if (!Fflag)
+  if(!Fflag)
     {
       Tflag = 0;
       count = 1;
@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
 
   fprintf(stdout, "%s: link and rename\n", Myname);
 
-  if (!Nflag)
+  if(!Nflag)
     testdir(test_dir);
   else
     mtestdir(test_dir);
@@ -189,90 +189,90 @@ int main(int argc, char *argv[])
   dirtree(1, files, 0, fname, dname, &totfiles, &totdirs);
 
   starttime();
-  for (ct = 0; ct < count; ct++)
+  for(ct = 0; ct < count; ct++)
     {
-      for (fi = 0; fi < files; fi++)
+      for(fi = 0; fi < files; fi++)
         {
           sprintf(str, "%s%d", fname, fi);
           sprintf(new, "%s%d", nname, fi);
-          if (rename(str, new) < 0)
+          if(rename(str, new) < 0)
             {
               error("can't rename %s to %s", str, new);
               exit(1);
             }
-          if (stat(str, &statb) == 0)
+          if(stat(str, &statb) == 0)
             {
               error("%s exists after rename to %s", str, new);
               exit(1);
             }
-          if (stat(new, &statb) < 0)
+          if(stat(new, &statb) < 0)
             {
               error("can't stat %s after rename from %s", new, str);
               exit(1);
             }
-          if (statb.st_nlink != 1)
+          if(statb.st_nlink != 1)
             {
               error("%s has %d links after rename (expect 1)", new, statb.st_nlink);
               exit(1);
             }
 #ifndef DOSorWIN32
-          if (link(new, str) < 0)
+          if(link(new, str) < 0)
             {
               oerrno = errno;
               error("can't link %s to %s", new, str);
               errno = oerrno;
-              if (errno == EOPNOTSUPP)
+              if(errno == EOPNOTSUPP)
                 complete();
               exit(1);
             }
-          if (stat(new, &statb) < 0)
+          if(stat(new, &statb) < 0)
             {
               error("can't stat %s after link", new);
               exit(1);
             }
-          if (statb.st_nlink != 2)
+          if(statb.st_nlink != 2)
             {
               error("%s has %d links after link (expect 2)", new, statb.st_nlink);
               exit(1);
             }
-          if (stat(str, &statb) < 0)
+          if(stat(str, &statb) < 0)
             {
               error("can't stat %s after link", str);
               exit(1);
             }
-          if (statb.st_nlink != 2)
+          if(statb.st_nlink != 2)
             {
               error("%s has %d links after link (expect 2)", str, statb.st_nlink);
               exit(1);
             }
-          if (unlink(new) < 0)
+          if(unlink(new) < 0)
             {
               error("can't unlink %s", new);
               exit(1);
             }
-          if (stat(str, &statb) < 0)
+          if(stat(str, &statb) < 0)
             {
               error("can't stat %s after unlink %s", str, new);
               exit(1);
             }
-          if (statb.st_nlink != 1)
+          if(statb.st_nlink != 1)
             {
               error("%s has %d links after unlink (expect 1)", str, statb.st_nlink);
               exit(1);
             }
 #else                           /* DOSorWIN32 */
           /* just rename back to orig name */
-          if (rename(new, str) < 0)
+          if(rename(new, str) < 0)
             {
               error("can't rename %s to %s", new, str);
               exit(1);
             }
-          if (stat(str, &statb) < 0)
+          if(stat(str, &statb) < 0)
             {
               error("can't find %s after rename", str);
               exit(1);
             }
-          if (stat(new, &statb) == 0)
+          if(stat(new, &statb) == 0)
             {
               error("still found %s after rename", new);
               exit(1);
@@ -283,7 +283,7 @@ int main(int argc, char *argv[])
 
   endtime(&time);
   fprintf(stdout, "\t%d renames and links on %d files", files * count * 2, files);
-  if (Tflag)
+  if(Tflag)
     {
       fprintf(stdout, " in %ld.%02ld seconds",
               (long)time.tv_sec, (long)time.tv_usec / 10000);
@@ -293,7 +293,7 @@ int main(int argc, char *argv[])
   /* Cleanup files left around */
   rmdirtree(1, files, 0, fname, dname, &totfiles, &totdirs, 1);
 
-  if ((log = fopen(log_file, "a")) == NULL)
+  if((log = fopen(log_file, "a")) == NULL)
     {
       printf("Enable to open the file '%s'\n", log_file);
       complete();

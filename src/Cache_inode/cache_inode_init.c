@@ -125,7 +125,7 @@ hash_table_t *cache_inode_init(cache_inode_parameter_t param,
 
   ht = HashTable_Init(param.hparam);
 
-  if (ht != NULL)
+  if(ht != NULL)
     *pstatus = CACHE_INODE_SUCCESS;
   else
     *pstatus = CACHE_INODE_INVALID_ARGUMENT;
@@ -183,7 +183,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
 
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_entry, pclient->nb_prealloc, cache_entry_t, next_alloc);
-  if (pclient->pool_entry == NULL)
+  if(pclient->pool_entry == NULL)
     {
       DisplayLogJd(pclient->log_outputs,
                    "Error : can't init cache_inode client entry pool");
@@ -199,7 +199,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_dir_data,
                  pclient->nb_pre_dir_data, cache_inode_dir_data_t, next_alloc);
-  if (pclient->pool_dir_data == NULL)
+  if(pclient->pool_dir_data == NULL)
     {
       DisplayLogJd(pclient->log_outputs,
                    "Error : can't init cache_inode client dir data pool");
@@ -215,7 +215,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_parent,
                  pclient->nb_pre_parent, cache_inode_parent_entry_t, next_alloc);
-  if (pclient->pool_parent == NULL)
+  if(pclient->pool_parent == NULL)
     {
       DisplayLogJd(pclient->log_outputs,
                    "Error : can't init cache_inode client parent link pool");
@@ -231,7 +231,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_state_v4,
                  pclient->nb_pre_state_v4, cache_inode_state_t, next);
-  if (pclient->pool_state_v4 == NULL)
+  if(pclient->pool_state_v4 == NULL)
     {
       DisplayLogJd(pclient->log_outputs,
                    "Error : can't init cache_inode client state v4 pool");
@@ -240,7 +240,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
 
   STUFF_PREALLOC(pclient->pool_open_owner,
                  pclient->nb_pre_state_v4, cache_inode_open_owner_t, next);
-  if (pclient->pool_open_owner == NULL)
+  if(pclient->pool_open_owner == NULL)
     {
       DisplayLogJd(pclient->log_outputs,
                    "Error : can't init cache_inode client open owner pool");
@@ -249,7 +249,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
 
   STUFF_PREALLOC(pclient->pool_open_owner_name,
                  pclient->nb_pre_state_v4, cache_inode_open_owner_name_t, next);
-  if (pclient->pool_open_owner_name == NULL)
+  if(pclient->pool_open_owner_name == NULL)
     {
       DisplayLogJd(pclient->log_outputs,
                    "Error : can't init cache_inode client open owner name pool");
@@ -259,7 +259,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   STUFF_PREALLOC(pclient->pool_session,
                  pclient->nb_pre_state_v4, nfs41_session_t, next_alloc);
 
-  if (pclient->pool_session == NULL)
+  if(pclient->pool_session == NULL)
     {
       DisplayLogJd(pclient->log_outputs,
                    "Error : can't init cache_inode client session pool");
@@ -283,7 +283,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   BuddySetDebugLabel("N/A");
 # endif
 
-  if (pclient->pool_key == NULL)
+  if(pclient->pool_key == NULL)
     {
       DisplayLogJd(pclient->log_outputs,
                    "Error : can't init cache_inode client key pool");
@@ -291,7 +291,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
     }
 #endif
 
-  if ((pclient->lru_gc = LRU_Init(param.lru_param, &lru_status)) == NULL)
+  if((pclient->lru_gc = LRU_Init(param.lru_param, &lru_status)) == NULL)
     {
       DisplayLogJd(pclient->log_outputs, "Error : can't init cache_inode client lru gc");
       return 1;

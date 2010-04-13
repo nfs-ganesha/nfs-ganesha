@@ -56,12 +56,12 @@ fsal_status_t FSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
   /* sanity checks
    * note : dir_attributes is optionnal.
    */
-  if (!p_dir_handle || !p_context || !p_dir_descriptor)
+  if(!p_dir_handle || !p_context || !p_dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_opendir);
 
   /* get the path of the directory */
   status = fsal_internal_Handle2FidPath(p_context, p_dir_handle, &fsalpath);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_opendir);
 
   /* get directory metadata */
@@ -69,10 +69,10 @@ fsal_status_t FSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
   rc = lstat(fsalpath.path, &buffstat);
   ReleaseTokenFSCall();
 
-  if (rc != 0)
+  if(rc != 0)
     {
       rc = errno;
-      if (rc == ENOENT)
+      if(rc == ENOENT)
         Return(ERR_FSAL_STALE, rc, INDEX_FSAL_opendir);
       else
         Return(posix2fsal_error(rc), rc, INDEX_FSAL_opendir);
@@ -80,7 +80,7 @@ fsal_status_t FSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
 
   /* Test access rights for this directory */
   status = fsal_internal_testAccess(p_context, FSAL_R_OK, &buffstat, NULL);
-  if (FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_opendir);
 
   /* if everything is OK, fills the dir_desc structure : */
@@ -88,17 +88,17 @@ fsal_status_t FSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
   TakeTokenFSCall();
   p_dir_descriptor->p_dir = opendir(fsalpath.path);
   ReleaseTokenFSCall();
-  if (!p_dir_descriptor->p_dir)
+  if(!p_dir_descriptor->p_dir)
     Return(posix2fsal_error(errno), errno, INDEX_FSAL_opendir);
 
   memcpy(&(p_dir_descriptor->context), p_context, sizeof(fsal_op_context_t));
   memcpy(&(p_dir_descriptor->path), &fsalpath, sizeof(fsal_path_t));
   memcpy(&(p_dir_descriptor->handle), p_dir_handle, sizeof(fsal_handle_t));
 
-  if (p_dir_attributes)
+  if(p_dir_attributes)
     {
       status = posix2fsal_attributes(&buffstat, p_dir_attributes);
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_dir_attributes->asked_attributes);
           FSAL_SET_MASK(p_dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -163,8 +163,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
   /* sanity checks */
   /*****************/
 
-  if (!p_dir_descriptor || !p_pdirent || !p_end_position || !p_nb_entries
-      || !p_end_of_dir)
+  if(!p_dir_descriptor || !p_pdirent || !p_end_position || !p_nb_entries || !p_end_of_dir)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
   max_dir_entries = (buffersize / sizeof(fsal_dirent_t));
@@ -173,7 +172,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
   /* seek into the directory */
   /***************************/
   errno = 0;
-  if (start_position.cookie == 0)
+  if(start_position.cookie == 0)
     {
       rewinddir(p_dir_descriptor->p_dir);
       rc = errno;
@@ -184,7 +183,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
       rc = errno;
     }
 
-  if (rc)
+  if(rc)
     Return(posix2fsal_error(rc), rc, INDEX_FSAL_readdir);
 
   /************************/
@@ -192,7 +191,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
   /************************/
 
   *p_nb_entries = 0;
-  while (*p_nb_entries < max_dir_entries)
+  while(*p_nb_entries < max_dir_entries)
     {
     /***********************/
       /* read the next entry */
@@ -200,13 +199,13 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
       TakeTokenFSCall();
       rc = readdir_r(p_dir_descriptor->p_dir, &dpe, &dp);
       ReleaseTokenFSCall();
-      if (rc)
+      if(rc)
         {
           rc = errno;
           Return(posix2fsal_error(rc), rc, INDEX_FSAL_readdir);
         }
       /* End of directory */
-      if (!dp)
+      if(!dp)
         {
           *p_end_of_dir = 1;
           break;
@@ -217,19 +216,18 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
     /***********************************/
 
       /* skip . and .. */
-      if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
+      if(!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
         continue;
 
       /* build the full path of the file into "fsalpath */
-      if (FSAL_IS_ERROR
-          (st =
-           FSAL_str2name(dp->d_name, FSAL_MAX_NAME_LEN,
-                         &(p_pdirent[*p_nb_entries].name))))
+      if(FSAL_IS_ERROR
+         (st =
+          FSAL_str2name(dp->d_name, FSAL_MAX_NAME_LEN, &(p_pdirent[*p_nb_entries].name))))
         ReturnStatus(st, INDEX_FSAL_readdir);
 
       memcpy(&fsalpath, &(p_dir_descriptor->path), sizeof(fsal_path_t));
       st = fsal_internal_appendNameToPath(&fsalpath, &(p_pdirent[*p_nb_entries].name));
-      if (FSAL_IS_ERROR(st))
+      if(FSAL_IS_ERROR(st))
         ReturnStatus(st, INDEX_FSAL_readdir);
 
       /* get object handle */
@@ -238,7 +236,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
                                      &(p_pdirent[*p_nb_entries].handle));
       ReleaseTokenFSCall();
 
-      if (FSAL_IS_ERROR(st))
+      if(FSAL_IS_ERROR(st))
         ReturnStatus(st, INDEX_FSAL_readdir);
 
     /************************
@@ -248,7 +246,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
 
       st = FSAL_getattrs(&(p_pdirent[*p_nb_entries].handle), &p_dir_descriptor->context,
                          &p_pdirent[*p_nb_entries].attributes);
-      if (FSAL_IS_ERROR(st))
+      if(FSAL_IS_ERROR(st))
         {
           FSAL_CLEAR_MASK(p_pdirent[*p_nb_entries].attributes.asked_attributes);
           FSAL_SET_MASK(p_pdirent[*p_nb_entries].attributes.asked_attributes,
@@ -257,7 +255,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
 
       p_pdirent[*p_nb_entries].cookie.cookie = telldir(p_dir_descriptor->p_dir);
       p_pdirent[*p_nb_entries].nextentry = NULL;
-      if (*p_nb_entries)
+      if(*p_nb_entries)
         p_pdirent[*p_nb_entries - 1].nextentry = &(p_pdirent[*p_nb_entries]);
 
       (*p_end_position) = p_pdirent[*p_nb_entries].cookie;
@@ -286,16 +284,16 @@ fsal_status_t FSAL_closedir(fsal_dir_t * p_dir_descriptor       /* IN */
   int rc;
 
   /* sanity checks */
-  if (!p_dir_descriptor)
+  if(!p_dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_closedir);
 
 #ifdef _USE_POSIXDB_READDIR_BLOCK
-  if (p_dir_descriptor->p_dbentries)
+  if(p_dir_descriptor->p_dbentries)
     Mem_Free(p_dir_descriptor->p_dbentries);
 #endif
 
   rc = closedir(p_dir_descriptor->p_dir);
-  if (rc != 0)
+  if(rc != 0)
     Return(posix2fsal_error(errno), errno, INDEX_FSAL_closedir);
 
   /* fill dir_descriptor with zeros */

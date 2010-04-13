@@ -201,11 +201,11 @@ int bugdelete_key_array[] = { 4738,
 int compare_string_buffer(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
   /* Test if one of teh entries are NULL */
-  if (buff1->pdata == NULL)
+  if(buff1->pdata == NULL)
     return (buff2->pdata == NULL) ? 0 : 1;
   else
     {
-      if (buff2->pdata == NULL)
+      if(buff2->pdata == NULL)
         return -1;              /* left member is the greater one */
       else
         return strcmp(buff1->pdata, buff2->pdata);
@@ -255,7 +255,7 @@ int main(int argc, char *argv[])
   BuddyInit(NULL);
 
   /* Init de la table */
-  if ((ht = HashTable_Init(hparam)) == NULL)
+  if((ht = HashTable_Init(hparam)) == NULL)
     {
       printf("Test ECHOUE : Mauvaise init\n");
       exit(1);
@@ -264,7 +264,7 @@ int main(int argc, char *argv[])
   MesureTemps(&debut, NULL);
   printf("Creation de la table\n");
 
-  for (i = 0; i < MAXTEST; i++)
+  for(i = 0; i < MAXTEST; i++)
     {
       sprintf(strtab[i], "%d", i);
 
@@ -303,7 +303,7 @@ int main(int argc, char *argv[])
   printf("Maintenant, j'essaye de recuperer %d entrees (prises au hasard, ou presque) \n",
          MAXGET);
   MesureTemps(&debut, NULL);
-  for (i = 0; i < MAXGET; i++)
+  for(i = 0; i < MAXGET; i++)
     {
       random_val = random() % MAXTEST;
       sprintf(tmpstr, "%d", random_val);
@@ -314,7 +314,7 @@ int main(int argc, char *argv[])
 #ifdef _DEBUG_HASHTABLE
       printf("\tLecture  de key = %s  --> %s\n", buffkey2.pdata, buffval2.pdata);
 #endif
-      if (rc != HASHTABLE_SUCCESS)
+      if(rc != HASHTABLE_SUCCESS)
         {
           printf("Erreur lors de la lecture de %d = %d\n", i, rc);
           printf("Test ECHOUE : la valeur lue est incorrecte\n");
@@ -342,7 +342,7 @@ int main(int argc, char *argv[])
   srandom(getpid());
 
   MesureTemps(&debut, NULL);
-  for (i = 0; i < MAXDESTROY; i++)
+  for(i = 0; i < MAXDESTROY; i++)
     {
       random_val = bugdelete_key_array[i];
       sprintf(tmpstr, "%d", random_val);
@@ -354,7 +354,7 @@ int main(int argc, char *argv[])
              simple_hash_func(&hparam, &buffkey), rbt_hash_func(&hparam, &buffkey));
 
       rc = HashTable_Del(ht, &buffkey, NULL, NULL);
-      if (rc != HASHTABLE_SUCCESS)
+      if(rc != HASHTABLE_SUCCESS)
         {
           printf("Erreur lors de la destruction de %d = %d\n", random_val, rc);
           printf("Test ECHOUE : effacement incorrect\n");
@@ -370,7 +370,7 @@ int main(int argc, char *argv[])
   printf("Maintenant, j'essaye de recuperer %d entrees (eventuellement detruites) \n",
          MAXGET);
   MesureTemps(&debut, NULL);
-  for (i = 0; i < MAXGET; i++)
+  for(i = 0; i < MAXGET; i++)
     {
       random_val = random() % MAXTEST;
       sprintf(tmpstr, "%d", random_val);
@@ -391,7 +391,7 @@ int main(int argc, char *argv[])
   rc = HashTable_Test_And_Set(ht, &buffkey, &buffval, HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
   printf("La valeur doit etre HASHTABLE_ERROR_KEY_ALREADY_EXISTS  = %d --> %d\n",
          HASHTABLE_ERROR_KEY_ALREADY_EXISTS, rc);
-  if (rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
+  if(rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
     {
       printf("Test ECHOUE : Clef redondante\n");
       exit(1);
@@ -425,27 +425,27 @@ int main(int argc, char *argv[])
        statistiques.computed.average_rbt_num_node);
 
   /* Test sur la pertinence des valeurs de statistiques */
-  if (statistiques.dynamic.ok.nb_set != MAXTEST)
+  if(statistiques.dynamic.ok.nb_set != MAXTEST)
     {
       printf("Test ECHOUE : statistiques incorrectes: ok.nb_set \n");
       exit(1);
     }
 
-  if (statistiques.dynamic.ok.nb_get + statistiques.dynamic.notfound.nb_get !=
-      2 * MAXGET + 3)
+  if(statistiques.dynamic.ok.nb_get + statistiques.dynamic.notfound.nb_get !=
+     2 * MAXGET + 3)
     {
       printf("Test ECHOUE : statistiques incorrectes: *.nb_get \n");
       exit(1);
     }
 
-  if (statistiques.dynamic.ok.nb_del != MAXDESTROY + 1
-      || statistiques.dynamic.notfound.nb_del != 1)
+  if(statistiques.dynamic.ok.nb_del != MAXDESTROY + 1
+     || statistiques.dynamic.notfound.nb_del != 1)
     {
       printf("Test ECHOUE : statistiques incorrectes: *.nb_del \n");
       exit(1);
     }
 
-  if (statistiques.dynamic.err.nb_test != 1)
+  if(statistiques.dynamic.err.nb_test != 1)
     {
       printf("Test ECHOUE : statistiques incorrectes: err.nb_test \n");
       exit(1);

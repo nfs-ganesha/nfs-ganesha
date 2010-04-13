@@ -35,16 +35,16 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
   /* sanity checks.
    * note : link_attributes is optional.
    */
-  if (!linkhandle || !p_context || !p_link_content)
+  if(!linkhandle || !p_context || !p_link_content)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readlink);
 
   rc = GHOSTFS_ReadLink((GHOSTFS_handle_t) (*linkhandle),
                         p_link_content->path, FSAL_MAX_PATH_LEN);
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_readlink);
 
   /* retrieves object attributes, if asked */
-  if (link_attributes)
+  if(link_attributes)
     {
 
       fsal_status_t status;
@@ -88,8 +88,8 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if (!parent_directory_handle ||
-      !p_linkname || !p_linkcontent || !link_handle || !p_context)
+  if(!parent_directory_handle ||
+     !p_linkname || !p_linkcontent || !link_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_symlink);
 
   /* test modification rights on parent directory.
@@ -100,7 +100,7 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
                       GHOSTFS_TEST_WRITE,
                       p_context->credential.user, p_context->credential.group);
 
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_symlink);
 
   rc = GHOSTFS_Symlink((GHOSTFS_handle_t) * parent_directory_handle,
@@ -110,14 +110,14 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
                        p_context->credential.group,
                        fsal2ghost_mode(accessmode), &new_handle, &ghost_attrs);
 
-  if (rc)
+  if(rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_symlink);
 
   /* set the output handle */
   *link_handle = (fsal_handle_t) new_handle;
 
   /* set attributes if asked */
-  if (link_attributes)
+  if(link_attributes)
     ghost2fsal_attrs(link_attributes, &ghost_attrs);
 
   /* GHOSTFS create is done */

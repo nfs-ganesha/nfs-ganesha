@@ -151,7 +151,7 @@ void *Test1(void *arg)
   DisplayErrorFlux(stderr, 3, ERR_PIPO_1, 1);
 
   /* teste si le nom du thread est reste le meme depuis le debut : */
-  if (strcmp(ReturnNameFunction(), (char *)arg))
+  if(strcmp(ReturnNameFunction(), (char *)arg))
     {
 
       printf("***** ERROR: initial function name \"%s\" differs from \"%s\" *****\n",
@@ -173,12 +173,12 @@ static char usage[] = "usage:\n\ttest_liblog STD|MT";
 int main(int argc, char *argv[])
 {
 
-  if (argc == 2)
+  if(argc == 2)
     {
 
       /* TEST 1 Standard */
 
-      if (!strcmp(argv[1], "STD"))
+      if(!strcmp(argv[1], "STD"))
         {
 
           int rc;
@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
 
       /* TEST 1 multithread */
 
-      else if (!strcmp(argv[1], "MT"))
+      else if(!strcmp(argv[1], "MT"))
         {
 
           /* multithread test */
@@ -214,14 +214,14 @@ int main(int argc, char *argv[])
           printf("La famille qui a ete ajoutee est %s\n", ReturnNameFamilyError(3));
 
           /* creation of attributes */
-          for (th_index = 0; th_index < NB_THREADS; th_index++)
+          for(th_index = 0; th_index < NB_THREADS; th_index++)
             {
               pthread_attr_init(&th_attr[th_index]);
               pthread_attr_setdetachstate(&th_attr[th_index], PTHREAD_CREATE_JOINABLE);
             }
 
           /* creation of threads with their names */
-          for (i = 0; i < NB_THREADS; i++)
+          for(i = 0; i < NB_THREADS; i++)
             {
               int rc;
               char *thread_name = malloc(256);
@@ -230,10 +230,10 @@ int main(int argc, char *argv[])
             }
 
           /* waiting for threads termination */
-          for (i = 0; i < NB_THREADS; i++)
+          for(i = 0; i < NB_THREADS; i++)
             {
               pthread_join(threads[i], &result);
-              if (result)
+              if(result)
                 return 1;
             }
 

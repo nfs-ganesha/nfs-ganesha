@@ -66,47 +66,47 @@ int *totdirs;
   int f, d;
   char name[MAXPATHLEN];
 
-  if (lev-- == 0)
+  if(lev-- == 0)
     {
       return;
     }
-  for (f = 0; f < files; f++)
+  for(f = 0; f < files; f++)
     {
-      if (Dflag == 0)
+      if(Dflag == 0)
         sprintf(name, "%s%d", fname, f);
       else
         sprintf(name, "%s%d.%d", fname, lev, f);
-      if ((fd = creat(name, CHMOD_RW)) < 0)
+      if((fd = creat(name, CHMOD_RW)) < 0)
         {
           error("creat %s failed", name);
           exit(1);
         }
       (*totfiles)++;
-      if (close(fd) < 0)
+      if(close(fd) < 0)
         {
           error("close %d failed", fd);
           exit(1);
         }
     }
-  for (d = 0; d < dirs; d++)
+  for(d = 0; d < dirs; d++)
     {
-      if (Dflag == 0)
+      if(Dflag == 0)
         sprintf(name, "%s%d", dname, d);
       else
         sprintf(name, "%s%d.%d", dname, lev, d);
-      if (unix_mkdir(name, 0777) < 0)
+      if(unix_mkdir(name, 0777) < 0)
         {
           error("mkdir %s failed", name);
           exit(1);
         }
       (*totdirs)++;
-      if (unix_chdir(name) < 0)
+      if(unix_chdir(name) < 0)
         {
           error("chdir %s failed", name);
           exit(1);
         }
       dirtree(lev, files, dirs, fname, dname, totfiles, totdirs);
-      if (unix_chdir("..") < 0)
+      if(unix_chdir("..") < 0)
         {
           error("chdir .. failed");
           exit(1);
@@ -139,43 +139,43 @@ int ignore;
   int f, d;
   char name[MAXPATHLEN];
 
-  if (lev-- == 0)
+  if(lev-- == 0)
     {
       return;
     }
-  for (f = 0; f < files; f++)
+  for(f = 0; f < files; f++)
     {
-      if (Dflag == 0)
+      if(Dflag == 0)
         sprintf(name, "%s%d", fname, f);
       else
         sprintf(name, "%s%d.%d", fname, lev, f);
-      if (unlink(name) < 0 && !ignore)
+      if(unlink(name) < 0 && !ignore)
         {
           error("unlink %s failed", name);
           exit(1);
         }
       (*totfiles)++;
     }
-  for (d = 0; d < dirs; d++)
+  for(d = 0; d < dirs; d++)
     {
-      if (Dflag == 0)
+      if(Dflag == 0)
         sprintf(name, "%s%d", dname, d);
       else
         sprintf(name, "%s%d.%d", dname, lev, d);
-      if (unix_chdir(name) < 0)
+      if(unix_chdir(name) < 0)
         {
-          if (ignore)
+          if(ignore)
             continue;
           error("chdir %s failed", name);
           exit(1);
         }
       rmdirtree(lev, files, dirs, fname, dname, totfiles, totdirs, ignore);
-      if (unix_chdir("..") < 0)
+      if(unix_chdir("..") < 0)
         {
           error("chdir .. failed");
           exit(1);
         }
-      if (rmdir(name) < 0)
+      if(rmdir(name) < 0)
         {
           error("rmdir %s failed", name);
           exit(1);
@@ -195,14 +195,14 @@ void error(char *str, ...)
   oerrno = errno;
 
   va_start(ap, str);
-  if ((ret = getcwd(path, sizeof(path))) == NULL)
+  if((ret = getcwd(path, sizeof(path))) == NULL)
     fprintf(stderr, "%s: getcwd failed\n", Myname);
   else
     fprintf(stderr, "\t%s: (%s) ", Myname, path);
   vfprintf(stderr, str, ap);
   va_end(ap);
 
-  if (oerrno)
+  if(oerrno)
     {
       errno = oerrno;
       perror(" ");
@@ -212,7 +212,7 @@ void error(char *str, ...)
       fprintf(stderr, "\n");
     }
   fflush(stderr);
-  if (ret == NULL)
+  if(ret == NULL)
     exit(1);
 }
 #else
@@ -225,13 +225,13 @@ char *str;
   char path[MAXPATHLEN];
 
   oerrno = errno;
-  if ((ret = getcwd(path, sizeof(path))) == NULL)
+  if((ret = getcwd(path, sizeof(path))) == NULL)
     fprintf(stderr, "%s: getcwd failed\n", Myname);
   else
     fprintf(stderr, "\t%s: (%s) ", Myname, path);
 
   fprintf(stderr, str, ar1, ar2, ar3, ar4, ar5, ar6, ar7, ar8, ar9);
-  if (oerrno)
+  if(oerrno)
     {
       errno = oerrno;
       perror(" ");
@@ -241,7 +241,7 @@ char *str;
       fprintf(stderr, "\n");
     }
   fflush(stderr);
-  if (ret == NULL)
+  if(ret == NULL)
     exit(1);
 }
 #endif                          /* STDARG */
@@ -266,7 +266,7 @@ struct timeval *tv;
 {
 
   gettimeofday(&te, (struct timezone *)0);
-  if (te.tv_usec < ts.tv_usec)
+  if(te.tv_usec < ts.tv_usec)
     {
       te.tv_sec--;
       te.tv_usec += 1000000;
@@ -278,7 +278,7 @@ struct timeval *tv;
    * DOS uses time since midnight, so it could go negative if the
    * test spans midnight.  If that happens, add a day.
    */
-  if (tv->tv_sec < 0)
+  if(tv->tv_sec < 0)
     tv->tv_sec += 24 * 3600;
 #endif
 }
@@ -297,20 +297,20 @@ char *dir;
    *  check for env variable NFSTESTDIR.  If that is not
    *  set, use the compiled-in TESTDIR.
    */
-  if (dir == NULL)
+  if(dir == NULL)
     {
       error("Non specified test directory");
       exit(1);
     }
 
-  if (stat(dir, &statb) == 0)
+  if(stat(dir, &statb) == 0)
     {
       sprintf(str, "rm -r %s", dir);
 #ifdef WIN16
-      if (rmdir(dir) < 0)
+      if(rmdir(dir) < 0)
         {
 #else
-      if (system(str) != 0)
+      if(system(str) != 0)
         {
 #endif
           error("can't remove old test directory %s", dir);
@@ -318,12 +318,12 @@ char *dir;
         }
     }
 
-  if (unix_mkdir(dir, 0777) < 0)
+  if(unix_mkdir(dir, 0777) < 0)
     {
       error("can't create test directory %s", dir);
       exit(1);
     }
-  if (unix_chdir(dir) < 0)
+  if(unix_chdir(dir) < 0)
     {
       error("can't chdir to test directory %s", dir);
       exit(1);
@@ -341,13 +341,13 @@ char *dir;
    *  check for env variable NFSTESTDIR.  If that is not
    *  set, use the compiled-in TESTDIR.
    */
-  if (dir == NULL)
+  if(dir == NULL)
     {
       error("Non specified test directory");
       exit(1);
     }
 
-  if (unix_chdir(dir) < 0)
+  if(unix_chdir(dir) < 0)
     {
       error("can't chdir to test directory %s", dir);
       return (-1);
@@ -367,7 +367,7 @@ char *label;
   long val;
 
   val = atol(parm);
-  if (val < min)
+  if(val < min)
     {
       error("Illegal %s parameter %ld, must be at least %ld", label, val, min);
       exit(1);
@@ -464,10 +464,10 @@ static void chdrive(char *path)
 {
   int desireddrive;
 
-  if (path[1] == ':')
+  if(path[1] == ':')
     {
       desireddrive = toupper(path[0]) - ('A' - 1);
-      if (_chdrive(desireddrive))
+      if(_chdrive(desireddrive))
         {
           error("can't change to drive %c:", path[0]);
           exit(1);
@@ -497,10 +497,10 @@ int statfs(char *path, struct statfs *buf)
   unsigned clust;
   char rootpath[MAXPATHLEN];
 
-  for (i = 0; i < sizeof(*buf); i++)
+  for(i = 0; i < sizeof(*buf); i++)
     *p++ = (char)-1;
   buf->f_type = 0;              /* that's what the man page says */
-  if (path[1] == ':')
+  if(path[1] == ':')
     drive = toupper(path[0]) - ('A' - 1);
   else
     drive = _getdrive();
@@ -511,7 +511,7 @@ int statfs(char *path, struct statfs *buf)
   p = strtok(rootpath, "\\");
   *p++ = '\\';
   *p = '\0';
-  if (!GetDiskFreeSpace(rootpath, &sect_per_clust, &bytes_per_sect, &free_clust, &clust))
+  if(!GetDiskFreeSpace(rootpath, &sect_per_clust, &bytes_per_sect, &free_clust, &clust))
     {
       printf("GetDiskFreeSpace failed\n");
       return -1;
@@ -563,17 +563,17 @@ DIR *opendir(char *dirname)
 
   strcpy(pattern, dirname);
   strcat(pattern, "\\*.*");
-  if (diropen)
+  if(diropen)
     return NULL;
   diropen = 1;
   dirlist = (struct dirent *)malloc(512 * sizeof(struct dirent));
-  if (dirlist == NULL)
+  if(dirlist == NULL)
     return NULL;
 
-  if (win32_findfirst(pattern))
+  if(win32_findfirst(pattern))
     return NULL;
   findt_to_dirent(&dirlist[0]);
-  for (i = 1; !win32_findnext(); i++)
+  for(i = 1; !win32_findnext(); i++)
     {
       findt_to_dirent(&dirlist[i]);
     }
@@ -591,13 +591,13 @@ void rewinddir(DIR * dirp)
 
   dirp = dirp;                  /* shut up compiler */
 
-  if (win32_findfirst(pattern))
+  if(win32_findfirst(pattern))
     {
       error("rewind failed");
       exit(1);
     }
   findt_to_dirent(&dirlist[0]);
-  for (i = 1; !win32_findnext(); i++)
+  for(i = 1; !win32_findnext(); i++)
     {
       findt_to_dirent(&dirlist[i]);
     }
@@ -616,7 +616,7 @@ long telldir(DIR * dirp)
 void seekdir(DIR * dirp, long loc)
 {
   dirp = dirp;                  /* keep compiler happy */
-  if (loc <= (long)maxentry)
+  if(loc <= (long)maxentry)
     currententry = (int)loc;
   /* else seekdir silently fails */
 }
@@ -624,7 +624,7 @@ void seekdir(DIR * dirp, long loc)
 struct dirent *readdir(DIR * dirp)
 {
   dirp = dirp;                  /* shut up compiler */
-  if (currententry > maxentry)
+  if(currententry > maxentry)
     return (struct dirent *)NULL;
   else
     {
@@ -640,7 +640,7 @@ void findt_to_dirent(struct dirent *d)
 static void copynametolower(char *dest, char *src)
 {
   int i;
-  for (i = 0; dest[i] = (char)tolower((int)src[i]); i++)
+  for(i = 0; dest[i] = (char)tolower((int)src[i]); i++)
     {
       /* null body */
     }
@@ -668,12 +668,12 @@ static void chdrive(path)
 char *path;
 {
   int desireddrive, drive;
-  if (path[1] == ':')
+  if(path[1] == ':')
     {
       desireddrive = toupper(path[0]) - ('A' - 1);
       _dos_setdrive(desireddrive, &drive);
       _dos_getdrive(&drive);
-      if (drive != desireddrive)
+      if(drive != desireddrive)
         {
           error("can't change to drive %c:", path[0]);
           exit(1);
@@ -700,14 +700,14 @@ struct statfs *buf;
   unsigned drive;
   struct diskfree_t diskspace;
 
-  for (i = 0; i < sizeof(*buf); i++)
+  for(i = 0; i < sizeof(*buf); i++)
     *p++ = (char)-1;
   buf->f_type = 0;              /* that's what the man page says */
-  if (path[1] == ':')
+  if(path[1] == ':')
     drive = toupper(path[0]) - ('A' - 1);
   else
     _dos_getdrive(&drive);
-  if (_dos_getdiskfree(drive, &diskspace))
+  if(_dos_getdiskfree(drive, &diskspace))
     return -1;
   buf->f_bsize = diskspace.bytes_per_sector;
   buf->f_blocks = (long)diskspace.total_clusters * diskspace.sectors_per_cluster;
@@ -738,16 +738,16 @@ char *dirname;
 
   strcpy(pattern, dirname);
   strcat(pattern, "\\*.*");
-  if (diropen)
+  if(diropen)
     return NULL;
   diropen = 1;
   dirlist = (struct dirent *)malloc(512 * sizeof(struct dirent));
-  if (dirlist == NULL)
+  if(dirlist == NULL)
     return NULL;
-  if (_dos_findfirst(pattern, attributes, &findtst))
+  if(_dos_findfirst(pattern, attributes, &findtst))
     return NULL;
   findt_to_dirent(&findtst, &dirlist[0]);
-  for (i = 1; !_dos_findnext(&findtst); i++)
+  for(i = 1; !_dos_findnext(&findtst); i++)
     {
       findt_to_dirent(&findtst, &dirlist[i]);
     }
@@ -763,13 +763,13 @@ DIR *dirp;
   unsigned int attributes = _A_NORMAL | _A_RDONLY | _A_HIDDEN | _A_SUBDIR;
 
   dirp = dirp;                  /* shut up compiler */
-  if (_dos_findfirst(pattern, attributes, &findtst))
+  if(_dos_findfirst(pattern, attributes, &findtst))
     {
       error("rewind failed");
       exit(1);
     }
   findt_to_dirent(&findtst, &dirlist[0]);
-  for (i = 1; !_dos_findnext(&findtst); i++)
+  for(i = 1; !_dos_findnext(&findtst); i++)
     {
       findt_to_dirent(&findtst, &dirlist[i]);
     }
@@ -789,7 +789,7 @@ DIR *dirp;
 long loc;
 {
   dirp = dirp;                  /* keep compiler happy */
-  if (loc <= (long)maxentry)
+  if(loc <= (long)maxentry)
     currententry = (int)loc;
   /* else seekdir silently fails */
 }
@@ -798,7 +798,7 @@ struct dirent *readdir(dirp)
 DIR *dirp;
 {
   dirp = dirp;                  /* shut up compiler */
-  if (currententry > maxentry)
+  if(currententry > maxentry)
     return (struct dirent *)NULL;
   else
     {
@@ -818,7 +818,7 @@ char *dest;
 char *src;
 {
   int i;
-  for (i = 0; dest[i] = (char)tolower((int)src[i]); i++)
+  for(i = 0; dest[i] = (char)tolower((int)src[i]); i++)
     {
       /* null body */
     }

@@ -139,7 +139,7 @@ int display_session_id_key(hash_buffer_t * pbuff, char *str)
   unsigned int i = 0;
   unsigned int len = 0;
 
-  for (i = 0; i < NFS4_SESSIONID_SIZE; i++)
+  for(i = 0; i < NFS4_SESSIONID_SIZE; i++)
     len += sprintf(&(str[i * 2]), "%02x", (unsigned char)pbuff->pdata[i]);
   return len;
 }                               /* display_session_id_val */
@@ -164,7 +164,7 @@ unsigned long session_id_value_hash_func(hash_parameter_t * p_hparam,
   unsigned char c;
 
   /* Compute the sum of all the characters */
-  for (i = 0; i < NFS4_SESSIONID_SIZE; i++)
+  for(i = 0; i < NFS4_SESSIONID_SIZE; i++)
     {
       c = ((char *)buffclef->pdata)[i];
       sum += c;
@@ -189,7 +189,7 @@ unsigned long session_id_rbt_hash_func(hash_parameter_t * p_hparam,
   unsigned int i = 0;
 
   printf("         ----- session_id_rbt_hash_func : ");
-  for (i = 0; i < NFS4_SESSIONID_SIZE; i++)
+  for(i = 0; i < NFS4_SESSIONID_SIZE; i++)
     printf("%02x", (unsigned char)buffclef->pdata[i]);
   printf("\n");
 #endif
@@ -218,7 +218,7 @@ unsigned long session_id_rbt_hash_func(hash_parameter_t * p_hparam,
  */
 int nfs41_Init_session_id(nfs_session_id_parameter_t param)
 {
-  if ((ht_session_id = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_session_id = HashTable_Init(param.hash_param)) == NULL)
     {
       DisplayLog("NFS SESSION_ID: Cannot init Session Id cache");
       return -1;
@@ -277,13 +277,13 @@ int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
   int i = 0;
 
   printf("         -----  SetSSession : ");
-  for (i = 0; i < NFS4_SESSIONID_SIZE; i++)
+  for(i = 0; i < NFS4_SESSIONID_SIZE; i++)
     printf("%02x", (unsigned char)sessionid[i]);
 
   printf("\n");
 #endif
 
-  if ((buffkey.pdata = (caddr_t) Mem_Alloc(NFS4_SESSIONID_SIZE)) == NULL)
+  if((buffkey.pdata = (caddr_t) Mem_Alloc(NFS4_SESSIONID_SIZE)) == NULL)
     return 0;
   memcpy(buffkey.pdata, sessionid, NFS4_SESSIONID_SIZE);
   buffkey.len = NFS4_SESSIONID_SIZE;
@@ -291,9 +291,9 @@ int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
   buffval.pdata = (caddr_t) psession_data;
   buffval.len = sizeof(nfs41_session_t);
 
-  if (HashTable_Test_And_Set
-      (ht_session_id, &buffkey, &buffval,
-       HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS)
+  if(HashTable_Test_And_Set
+     (ht_session_id, &buffkey, &buffval,
+      HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS)
     return 0;
 
   return 1;
@@ -321,7 +321,7 @@ int nfs41_Session_Get(char sessionid[NFS4_SESSIONID_SIZE],
   int i = 0;
 
   printf("         -----  GetSessionId : ");
-  for (i = 0; i < NFS4_SESSIONID_SIZE; i++)
+  for(i = 0; i < NFS4_SESSIONID_SIZE; i++)
     printf("%02x", (unsigned char)sessionid[i]);
   printf("\n");
 #endif
@@ -329,7 +329,7 @@ int nfs41_Session_Get(char sessionid[NFS4_SESSIONID_SIZE],
   buffkey.pdata = (caddr_t) sessionid;
   buffkey.len = NFS4_SESSIONID_SIZE;
 
-  if (HashTable_Get(ht_session_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
+  if(HashTable_Get(ht_session_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
 #ifdef _DEBUG_SESSIONS
       printf("---> nfs41_Session_Get  NOT FOUND !!!!!!\n");
@@ -366,7 +366,7 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
   int i = 0;
 
   printf("         -----  Get_PointerSession : ");
-  for (i = 0; i < NFS4_SESSIONID_SIZE; i++)
+  for(i = 0; i < NFS4_SESSIONID_SIZE; i++)
     printf("%02x", (unsigned char)sessionid[i]);
   printf("\n");
 #endif
@@ -374,7 +374,7 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
   buffkey.pdata = (caddr_t) sessionid;
   buffkey.len = NFS4_SESSIONID_SIZE;
 
-  if (HashTable_Get(ht_session_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
+  if(HashTable_Get(ht_session_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
 #ifdef _DEBUG_SESSIONS
       printf("---> nfs41_Session_Get_Pointer  NOT FOUND !!!!!!\n");
@@ -412,7 +412,7 @@ int nfs41_Session_Update(char sessionid[NFS4_SESSIONID_SIZE],
   int i = 0;
 
   printf("         -----  UpdateSession : ");
-  for (i = 0; i < NFS4_SESSIONID_SIZE; i++)
+  for(i = 0; i < NFS4_SESSIONID_SIZE; i++)
     printf("%02x", (unsigned char)sessionid[i]);
   printf("\n");
 #endif
@@ -420,7 +420,7 @@ int nfs41_Session_Update(char sessionid[NFS4_SESSIONID_SIZE],
   buffkey.pdata = (caddr_t) sessionid;
   buffkey.len = NFS4_SESSIONID_SIZE;
 
-  if (HashTable_Get(ht_session_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
+  if(HashTable_Get(ht_session_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
 #ifdef _DEBUG_SESSIONS
       printf("---> nfs41_Session_Update  NOT FOUND !!!!!!\n");
@@ -454,7 +454,7 @@ int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
   int i = 0;
 
   printf("         -----  DelSession : ");
-  for (i = 0; i < NFS4_SESSIONID_SIZE; i++)
+  for(i = 0; i < NFS4_SESSIONID_SIZE; i++)
     printf("%02x", (unsigned char)sessionid[i]);
   printf("\n");
 #endif
@@ -462,7 +462,7 @@ int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
   buffkey.pdata = (caddr_t) sessionid;
   buffkey.len = NFS4_SESSIONID_SIZE;
 
-  if (HashTable_Del(ht_session_id, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
+  if(HashTable_Del(ht_session_id, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
     {
       /* free the key that was stored in hash table */
       Mem_Free((void *)old_key.pdata);

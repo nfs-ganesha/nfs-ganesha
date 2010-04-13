@@ -85,12 +85,12 @@ fsal_status_t FSAL_proxy_setclientid(fsal_op_context_t * p_context)
 
   /* sanity checks.
    */
-  if (!p_context)
+  if(!p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
 
   /* Client id negociation is to be done only one time for the whole FSAL */
   P(fsal_clientid_mutex);
-  if (done == 0)
+  if(done == 0)
     {
       /* Setup results structures */
       argnfs4.argarray.argarray_val = argoparray;
@@ -126,7 +126,7 @@ fsal_status_t FSAL_proxy_setclientid(fsal_op_context_t * p_context)
 
       /* Call the NFSv4 function */
       COMPOUNDV4_EXECUTE(p_context, argnfs4, resnfs4, rc);
-      if (rc != RPC_SUCCESS)
+      if(rc != RPC_SUCCESS)
         {
           ReleaseTokenFSCall();
 
@@ -137,7 +137,7 @@ fsal_status_t FSAL_proxy_setclientid(fsal_op_context_t * p_context)
 
       ReleaseTokenFSCall();
 
-      if (resnfs4.status != NFS4_OK)
+      if(resnfs4.status != NFS4_OK)
         {
           V(fsal_clientid_mutex);
           return fsal_internal_proxy_error_convert(resnfs4.status,
@@ -145,8 +145,8 @@ fsal_status_t FSAL_proxy_setclientid(fsal_op_context_t * p_context)
         }
 
       resultclientid =
-          resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.
-          resok4.clientid;
+          resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.
+          SETCLIENTID4res_u.resok4.clientid;
 
       /* Step 2: Confirm the client id */
       argnfs4.minorversion = 0;
@@ -156,17 +156,18 @@ fsal_status_t FSAL_proxy_setclientid(fsal_op_context_t * p_context)
 
       argnfs4.argarray.argarray_val[0].argop = NFS4_OP_SETCLIENTID_CONFIRM;
       argnfs4.argarray.argarray_val[0].nfs_argop4_u.opsetclientid_confirm.clientid =
-          resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.
-          resok4.clientid;
-      memcpy((char *)argnfs4.argarray.argarray_val[0].nfs_argop4_u.opsetclientid_confirm.
-             setclientid_confirm,
-             (char *)resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.
-             SETCLIENTID4res_u.resok4.setclientid_confirm, NFS4_VERIFIER_SIZE);
+          resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.
+          SETCLIENTID4res_u.resok4.clientid;
+      memcpy((char *)argnfs4.argarray.argarray_val[0].nfs_argop4_u.
+             opsetclientid_confirm.setclientid_confirm,
+             (char *)resnfs4.resarray.resarray_val[0].nfs_resop4_u.
+             opsetclientid.SETCLIENTID4res_u.resok4.setclientid_confirm,
+             NFS4_VERIFIER_SIZE);
       argnfs4.argarray.argarray_len = 1;
 
       /* Call the NFSv4 function */
       COMPOUNDV4_EXECUTE(p_context, argnfs4, resnfs4, rc);
-      if (rc != RPC_SUCCESS)
+      if(rc != RPC_SUCCESS)
         {
           ReleaseTokenFSCall();
 
@@ -177,7 +178,7 @@ fsal_status_t FSAL_proxy_setclientid(fsal_op_context_t * p_context)
 
       ReleaseTokenFSCall();
 
-      if (resnfs4.status != NFS4_OK)
+      if(resnfs4.status != NFS4_OK)
         return fsal_internal_proxy_error_convert(resnfs4.status,
                                                  INDEX_FSAL_InitClientContext);
 
@@ -228,7 +229,7 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
   sleep(6);    /** @todo: use getattr to have an actual value of server's lease duration */
 
 #ifndef _NO_BUDDY_SYSTEM
-  if ((rc = BuddyInit(&buddy_param)) != BUDDY_SUCCESS)
+  if((rc = BuddyInit(&buddy_param)) != BUDDY_SUCCESS)
     {
       /* Failed init */
       DisplayLog
@@ -240,7 +241,7 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
   memset((char *)&fsal_context, 0, sizeof(fsal_op_context_t));
   fsal_status = FSAL_InitClientContext(p_context);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       DisplayLog
           ("FSAL_proxy_clientid_refresher_thread: FSAL error(%u,%u) during init... exiting",
@@ -260,14 +261,14 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
   argnfs4.argarray.argarray_val[0].nfs_argop4_u.oprenew.clientid = fsal_clientid;
   argnfs4.argarray.argarray_len = 1;
 
-  while (1)
+  while(1)
     {
 
       /* Call the NFSv4 function */
       TakeTokenFSCall();
 
       COMPOUNDV4_EXECUTE(p_context, argnfs4, resnfs4, rc);
-      if (rc != RPC_SUCCESS)
+      if(rc != RPC_SUCCESS)
         {
           ReleaseTokenFSCall();
 
@@ -277,7 +278,7 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
 
       ReleaseTokenFSCall();
 
-      if (resnfs4.status != NFS4_OK)
+      if(resnfs4.status != NFS4_OK)
         DisplayLog
             ("FSAL_PROXY: /!\\ NFSv4 error %u occured when trying to new clienitf %llu",
              resnfs4.status, fsal_clientid);

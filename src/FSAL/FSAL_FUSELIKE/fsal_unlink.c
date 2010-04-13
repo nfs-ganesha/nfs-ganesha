@@ -69,7 +69,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
    *        parentdir_handle is mandatory,
    *        because, we do not allow to delete FS root !
    */
-  if (!parentdir_handle || !p_context || !p_object_name)
+  if(!parentdir_handle || !p_context || !p_object_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_unlink);
 
   /* set current FS context */
@@ -79,7 +79,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
 
   rc = NamespacePath(parentdir_handle->inode,
                      parentdir_handle->device, parentdir_handle->validator, parent_path);
-  if (rc)
+  if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_unlink);
 
   /* We have to know what type of entry it is,
@@ -93,17 +93,17 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
   rc = p_fs_ops->getattr(child_path, &stbuff);
   ReleaseTokenFSCall();
 
-  if (rc)
+  if(rc)
     Return(fuse2fsal_error(rc, FALSE), rc, INDEX_FSAL_unlink);
 
   /* check type */
 
-  if (posix2fsal_type(stbuff.st_mode) == FSAL_TYPE_DIR)
+  if(posix2fsal_type(stbuff.st_mode) == FSAL_TYPE_DIR)
     {
       /* proceed rmdir call */
 
       /* operation not provided by filesystem */
-      if (!p_fs_ops->rmdir)
+      if(!p_fs_ops->rmdir)
         Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_unlink);
 
       TakeTokenFSCall();
@@ -116,7 +116,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
       /* proceed unlink call */
 
       /* operation not provided by filesystem */
-      if (!p_fs_ops->unlink)
+      if(!p_fs_ops->unlink)
         Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_unlink);
 
       TakeTokenFSCall();
@@ -125,23 +125,23 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
 
     }
 
-  if (rc == 0 || rc == -ENOENT)
+  if(rc == 0 || rc == -ENOENT)
     {
       /* remove the entry from namespace */
       NamespaceRemove(parentdir_handle->inode, parentdir_handle->device,
                       parentdir_handle->validator, p_object_name->name);
     }
 
-  if (rc)
+  if(rc)
     Return(fuse2fsal_error(rc, FALSE), rc, INDEX_FSAL_unlink);
 
-  if (parentdir_attributes)
+  if(parentdir_attributes)
     {
       st = FSAL_getattrs(parentdir_handle, p_context, parentdir_attributes);
 
       /* On error, we set a flag in the returned attributes */
 
-      if (FSAL_IS_ERROR(st))
+      if(FSAL_IS_ERROR(st))
         {
           FSAL_CLEAR_MASK(parentdir_attributes->asked_attributes);
           FSAL_SET_MASK(parentdir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

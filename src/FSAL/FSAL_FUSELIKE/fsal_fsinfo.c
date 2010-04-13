@@ -55,7 +55,7 @@ fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,    /* IN */
 {
   /* sanity checks. */
   /* for HPSS, handle and credential are not used. */
-  if (!staticinfo)
+  if(!staticinfo)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_static_fsinfo);
 
   /* returning static info about the filesystem */
@@ -95,25 +95,25 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
   char object_path[FSAL_MAX_PATH_LEN];
 
   /* sanity checks. */
-  if (!filehandle || !dynamicinfo || !p_context)
+  if(!filehandle || !dynamicinfo || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_dynamic_fsinfo);
 
   /* get the full path for the object */
   rc = NamespacePath(filehandle->inode,
                      filehandle->device, filehandle->validator, object_path);
-  if (rc)
+  if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_dynamic_fsinfo);
 
   /* set context for the next operation, so it can be retrieved by FS thread */
   fsal_set_thread_context(p_context);
 
-  if (p_fs_ops->statfs)
+  if(p_fs_ops->statfs)
     {
       TakeTokenFSCall();
       rc = p_fs_ops->statfs(object_path, &stbuff);
       ReleaseTokenFSCall();
 
-      if (rc)
+      if(rc)
         Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_dynamic_fsinfo);
 
       dynamicinfo->total_bytes = stbuff.f_frsize * stbuff.f_blocks;
@@ -141,7 +141,7 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
     }
 
   /* return time precision depending on utime calls implemented */
-  if (p_fs_ops->utimens)
+  if(p_fs_ops->utimens)
     {
       dynamicinfo->time_delta.seconds = 0;
       dynamicinfo->time_delta.nseconds = 1;

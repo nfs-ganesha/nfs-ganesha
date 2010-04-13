@@ -135,7 +135,7 @@ cache_inode_status_t cache_inode_access_sw(cache_entry_t * pentry,
   fsal_handle_t *pfsal_handle = NULL;
 
   /* Entry should not be dead */
-  if (pentry->async_health != CACHE_INODE_ASYNC_STAYING_ALIVE)
+  if(pentry->async_health != CACHE_INODE_ASYNC_STAYING_ALIVE)
     {
       *pstatus = CACHE_INODE_DEAD_ENTRY;
       return *pstatus;
@@ -148,14 +148,14 @@ cache_inode_status_t cache_inode_access_sw(cache_entry_t * pentry,
   pclient->stat.nb_call_total += 1;
   pclient->stat.func_stats.nb_call[CACHE_INODE_ACCESS] += 1;
 
-  if (use_mutex)
+  if(use_mutex)
     P(pentry->lock);
 
   /* We do no explicit access test in FSAL for FSAL_F_OK: it is considered that if 
    * an entry resides in the cache_inode, then a FSAL_getattrs was successfully made
    * to populate the cache entry, this means that the entry exists. For this reason, 
    * F_OK is managed internally */
-  if (access_type != FSAL_F_OK)
+  if(access_type != FSAL_F_OK)
     {
       /* We get ride of F_OK */
       used_access_type = access_type & ~FSAL_F_OK;
@@ -167,7 +167,7 @@ cache_inode_status_t cache_inode_access_sw(cache_entry_t * pentry,
        * to take benefit of the previously cached attributes. This behavior
        * is configurable via the configuration file. */
 
-      if (pclient->use_test_access == 1)
+      if(pclient->use_test_access == 1)
         {
           /* We get the attributes */
           cache_inode_get_attributes(pentry, &attr);
@@ -176,9 +176,9 @@ cache_inode_status_t cache_inode_access_sw(cache_entry_t * pentry,
         }
       else
         {
-          if ((pfsal_handle = cache_inode_get_fsal_handle(pentry, pstatus)) == NULL)
+          if((pfsal_handle = cache_inode_get_fsal_handle(pentry, pstatus)) == NULL)
             {
-              if (use_mutex)
+              if(use_mutex)
                 V(pentry->lock);
               return *pstatus;
             }
@@ -186,12 +186,12 @@ cache_inode_status_t cache_inode_access_sw(cache_entry_t * pentry,
           fsal_status = FSAL_access(pfsal_handle, pcontext, used_access_type, &attr);
         }
 
-      if (FSAL_IS_ERROR(fsal_status))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
           pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_ACCESS] += 1;
 
-          if (fsal_status.major == ERR_FSAL_STALE)
+          if(fsal_status.major == ERR_FSAL_STALE)
             {
               cache_inode_status_t kill_status;
 
@@ -199,8 +199,8 @@ cache_inode_status_t cache_inode_access_sw(cache_entry_t * pentry,
                   ("cache_inode_access: Stale FSAL File Handle detected for pentry = %p",
                    pentry);
 
-              if (cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
-                  CACHE_INODE_SUCCESS)
+              if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+                 CACHE_INODE_SUCCESS)
                 DisplayLog("cache_inode_access: Could not kill entry %p, status = %u",
                            pentry, kill_status);
 
@@ -214,21 +214,21 @@ cache_inode_status_t cache_inode_access_sw(cache_entry_t * pentry,
 
     }
 
-  if (*pstatus != CACHE_INODE_SUCCESS)
+  if(*pstatus != CACHE_INODE_SUCCESS)
     {
-      if (use_mutex)
+      if(use_mutex)
         V(pentry->lock);
 
       return *pstatus;
     }
   /* stats and validation */
-  if ((cache_status =
-       cache_inode_valid(pentry, CACHE_INODE_OP_GET, pclient)) != CACHE_INODE_SUCCESS)
+  if((cache_status =
+      cache_inode_valid(pentry, CACHE_INODE_OP_GET, pclient)) != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_ACCESS] += 1;
   else
     pclient->stat.func_stats.nb_success[CACHE_INODE_ACCESS] += 1;
 
-  if (use_mutex)
+  if(use_mutex)
     V(pentry->lock);
 
   return *pstatus;

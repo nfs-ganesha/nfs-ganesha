@@ -69,7 +69,7 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
   /* sanity checks.
    * note : object_attributes is optional in FSAL_access.
    */
-  if (!object_handle || !p_context)
+  if(!object_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_access);
 
   FSAL_CLEAR_MASK(attrs.asked_attributes);
@@ -77,12 +77,12 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
 
   st = FSAL_getattrs(object_handle, p_context, &attrs);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     Return(st.major, st.minor, INDEX_FSAL_access);
 
   /* set attributes if needed, then call test_access.
    */
-  if (object_attributes)
+  if(object_attributes)
     {
       *object_attributes = attrs;
     }

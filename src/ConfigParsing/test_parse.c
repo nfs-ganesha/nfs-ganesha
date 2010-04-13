@@ -8,7 +8,7 @@ int main(int argc, char **argv)
   char *fichier;
   char *errtxt;
 
-  if ((argc > 1) && (argv[1]))
+  if((argc > 1) && (argv[1]))
     {
       fichier = argv[1];
     }
@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 
   printf("config_pointer = %p\n", config);
 
-  if (config == NULL)
+  if(config == NULL)
     {
       errtxt = config_GetErrorMsg();
       fprintf(stderr, "Erreur de parsing de %s : %s\n", argv[1], errtxt);
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     char *val_a;
     config_item_t block, item;
 
-    for (i = 0; i < config_GetNbBlocks(config); i++)
+    for(i = 0; i < config_GetNbBlocks(config); i++)
       {
 
         int j;
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 
         printf("bloc %s\n", config_GetBlockName(block));
 
-        if ((val_a = config_GetKeyValueByName(block, "b")))
+        if((val_a = config_GetKeyValueByName(block, "b")))
           {
             printf("%s.b est defini et vaut %s\n", config_GetBlockName(block), val_a);
           }
@@ -59,12 +59,12 @@ int main(int argc, char **argv)
           }
 
         /* parcours des variables du block */
-        for (j = 0; j < config_GetNbItems(block); j++)
+        for(j = 0; j < config_GetNbItems(block); j++)
           {
 
             item = config_GetItemByIndex(block, j);
 
-            if (config_ItemType(item) == CONFIG_ITEM_VAR)
+            if(config_ItemType(item) == CONFIG_ITEM_VAR)
               {
                 config_GetKeyValue(item, &nom, &val);
                 printf("\t%s = %s\n", nom, val);
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 
   printf("config_pointer = %p\n", config);
 
-  if (config == NULL)
+  if(config == NULL)
     {
       errtxt = config_GetErrorMsg();
       fprintf(stderr, "Erreur de 2e parsing de %s : %s\n", argv[1], errtxt);

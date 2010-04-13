@@ -162,7 +162,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   DisplayLogLevel(NIV_DEBUG, "CREATE_SESSION clientid = %llx", clientid);
 
   /* Does this id already exists ? */
-  if (nfs_client_id_Get_Pointer(clientid, &pnfs_clientid) != CLIENT_ID_SUCCESS)
+  if(nfs_client_id_Get_Pointer(clientid, &pnfs_clientid) != CLIENT_ID_SUCCESS)
     {
       /* The client id does not exist: stale client id */
       res_CREATE_SESSION4.csr_status = NFS4ERR_STALE_CLIENTID;
@@ -171,11 +171,11 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
 
   data->use_drc = FALSE;
 
-  if (data->oppos == 0)
+  if(data->oppos == 0)
     {
       /* Special case : the request is used without use of OP_SEQUENCE */
-      if ((arg_CREATE_SESSION4.csa_sequence + 1 == pnfs_clientid->create_session_sequence)
-          && (pnfs_clientid->create_session_slot.cache_used == TRUE))
+      if((arg_CREATE_SESSION4.csa_sequence + 1 == pnfs_clientid->create_session_sequence)
+         && (pnfs_clientid->create_session_slot.cache_used == TRUE))
         {
           data->use_drc = TRUE;
           data->pcached_res = pnfs_clientid->create_session_slot.cached_result;
@@ -183,7 +183,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
           res_CREATE_SESSION4.csr_status = NFS4_OK;
           return res_CREATE_SESSION4.csr_status;
         }
-      else if (arg_CREATE_SESSION4.csa_sequence != pnfs_clientid->create_session_sequence)
+      else if(arg_CREATE_SESSION4.csa_sequence != pnfs_clientid->create_session_sequence)
         {
           res_CREATE_SESSION4.csr_status = NFS4ERR_SEQ_MISORDERED;
           return res_CREATE_SESSION4.csr_status;
@@ -202,14 +202,14 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
                data->pclient->pool_session,
                data->pclient->nb_pre_state_v4, nfs41_session_t, next_alloc);
 
-  if (pnfs41_session == NULL)
+  if(pnfs41_session == NULL)
     {
       res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT;
       return res_CREATE_SESSION4.csr_status;
     }
 
   /* Check flags value (test CSESS15) */
-  if (arg_CREATE_SESSION4.csa_flags > CREATE_SESSION4_FLAG_CONN_RDMA)
+  if(arg_CREATE_SESSION4.csa_flags > CREATE_SESSION4_FLAG_CONN_RDMA)
     {
       res_CREATE_SESSION4.csr_status = NFS4ERR_INVAL;
       return res_CREATE_SESSION4.csr_status;
@@ -226,7 +226,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   pnfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
   pnfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
 
-  if (nfs41_Build_sessionid(&clientid, pnfs41_session->session_id) != 1)
+  if(nfs41_Build_sessionid(&clientid, pnfs41_session->session_id) != 1)
     {
       res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT;
       return res_CREATE_SESSION4.csr_status;
@@ -249,7 +249,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   data->pcached_res = pnfs_clientid->create_session_slot.cached_result;
   pnfs_clientid->create_session_slot.cache_used = TRUE;
 
-  if (!nfs41_Session_Set(pnfs41_session->session_id, pnfs41_session))
+  if(!nfs41_Session_Set(pnfs41_session->session_id, pnfs41_session))
     {
       res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT;     /* Maybe a more precise status would be better */
       return res_CREATE_SESSION4.csr_status;

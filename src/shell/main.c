@@ -147,7 +147,7 @@ void *LaunchShell(void *arg)
 
   rc = shell_Init(verbose, p_info->script_file, p_info->prompt, p_info->shell_id);
 
-  if (rc)
+  if(rc)
     {
       fprintf(stderr, "GANESHELL: ERROR %d in shell_Init\n", rc);
       p_info->status = rc;
@@ -156,7 +156,7 @@ void *LaunchShell(void *arg)
 
   rc = shell_Launch();
 
-  if (rc)
+  if(rc)
     {
       fprintf(stderr, "GANESHELL: ERROR %d in shell_Launch\n", rc);
       p_info->status = rc;
@@ -199,12 +199,12 @@ int main(int argc, char **argv)
   /* reinits Getopt processing */
   Optind = 1;
 
-  while ((option = Getopt(argc, argv, format)) != -1)
+  while((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
         {
         case 'h':
-          if (flag_h)
+          if(flag_h)
             fprintf(stderr,
                     "%s: warning: option 'h' has been specified more than once.\n",
                     progname);
@@ -221,7 +221,7 @@ int main(int argc, char **argv)
           break;
 
         case 'n':
-          if (nb_instance)
+          if(nb_instance)
             fprintf(stderr,
                     "%s: warning: option 'n' has been specified more than once.\n",
                     progname);
@@ -231,7 +231,7 @@ int main(int argc, char **argv)
           break;
 
         case 'v':
-          if (verbose)
+          if(verbose)
             fprintf(stderr,
                     "%s: warning: option 'v' has been specified more than once.\n",
                     progname);
@@ -247,7 +247,7 @@ int main(int argc, char **argv)
     }
 
   /* help flag */
-  if (flag_h || err_flag)
+  if(flag_h || err_flag)
     {
       fprintf(stderr, help, basename(progname));
       exit(err_flag);
@@ -258,15 +258,15 @@ int main(int argc, char **argv)
 #endif
 
   /* case when the 'n' option is specified */
-  if (nb_instance != 0)
+  if(nb_instance != 0)
     {
       int i;
       /* case when there two or more threads */
 
-      for (i = 0; i < nb_instance; i++)
+      for(i = 0; i < nb_instance; i++)
         {
 
-          if (verbose)
+          if(verbose)
             fprintf(stderr, "Starting thread %d using file %s...\n",
                     nb_threads, argv[Optind]);
 
@@ -280,7 +280,7 @@ int main(int argc, char **argv)
 
           nb_threads++;
 
-          if (nb_threads >= NBTHRMAX)
+          if(nb_threads >= NBTHRMAX)
             {
               fprintf(stderr, "GANESHELL: Too much threads (%d > %d)\n", nb_threads,
                       NBTHRMAX);
@@ -293,7 +293,7 @@ int main(int argc, char **argv)
 
       rc = shell_BarrierInit(nb_threads);
 
-      if (rc)
+      if(rc)
         {
           fprintf(stderr, "GANESHELL: ERROR %d in shell_BarrierInit\n", rc);
           exit(1);
@@ -301,12 +301,12 @@ int main(int argc, char **argv)
 
       /* launching threads */
 
-      for (i = 0; i < nb_threads; i++)
+      for(i = 0; i < nb_threads; i++)
         {
           rc = pthread_create(&thrlist[i].thread,
                               &thrlist[i].attrs, LaunchShell, &thrlist[i]);
 
-          if (rc)
+          if(rc)
             {
               fprintf(stderr, "GANESHELL: ERROR %d in pthread_create\n", rc);
               exit(1);
@@ -316,7 +316,7 @@ int main(int argc, char **argv)
 
       /* waiting for thread termination */
 
-      for (i = 0; i < nb_threads; i++)
+      for(i = 0; i < nb_threads; i++)
         {
           void *ret;
           pthread_join(thrlist[i].thread, &ret);
@@ -327,17 +327,17 @@ int main(int argc, char **argv)
 
     }
   /* case when there is only zero or one script file */
-  else if (Optind >= (argc - 1))
+  else if(Optind >= (argc - 1))
     {
 
-      if (Optind == (argc - 1))
+      if(Optind == (argc - 1))
         {
           script_file = argv[Optind];
         }
 
       rc = shell_Init(verbose, script_file, prompt, 0);
 
-      if (rc)
+      if(rc)
         {
           fprintf(stderr, "GANESHELL: ERROR %d in shell_Init\n", rc);
           exit(1);
@@ -345,7 +345,7 @@ int main(int argc, char **argv)
 
       rc = shell_Launch();
 
-      if (rc)
+      if(rc)
         {
           fprintf(stderr, "GANESHELL: ERROR %d in shell_Launch\n", rc);
           exit(1);
@@ -359,10 +359,10 @@ int main(int argc, char **argv)
       int i;
       /* case when there two or more threads */
 
-      for (i = Optind; i < argc; i++)
+      for(i = Optind; i < argc; i++)
         {
 
-          if (verbose)
+          if(verbose)
             fprintf(stderr, "Starting thread %d using file %s...\n", nb_threads, argv[i]);
 
           thrlist[nb_threads].shell_id = nb_threads;
@@ -375,7 +375,7 @@ int main(int argc, char **argv)
 
           nb_threads++;
 
-          if (nb_threads >= NBTHRMAX)
+          if(nb_threads >= NBTHRMAX)
             {
               fprintf(stderr, "GANESHELL: Too much threads (%d > %d)\n", nb_threads,
                       NBTHRMAX);
@@ -388,7 +388,7 @@ int main(int argc, char **argv)
 
       rc = shell_BarrierInit(nb_threads);
 
-      if (rc)
+      if(rc)
         {
           fprintf(stderr, "GANESHELL: ERROR %d in shell_BarrierInit\n", rc);
           exit(1);
@@ -396,12 +396,12 @@ int main(int argc, char **argv)
 
       /* launching threads */
 
-      for (i = 0; i < nb_threads; i++)
+      for(i = 0; i < nb_threads; i++)
         {
           rc = pthread_create(&thrlist[i].thread,
                               &thrlist[i].attrs, LaunchShell, &thrlist[i]);
 
-          if (rc)
+          if(rc)
             {
               fprintf(stderr, "GANESHELL: ERROR %d in pthread_create\n", rc);
               exit(1);
@@ -411,7 +411,7 @@ int main(int argc, char **argv)
 
       /* waiting for thread termination */
 
-      for (i = 0; i < nb_threads; i++)
+      for(i = 0; i < nb_threads; i++)
         {
           void *ret;
           pthread_join(thrlist[i].thread, &ret);

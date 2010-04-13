@@ -69,21 +69,21 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
    * note : object_attributes is optionnal
    *        parent_directory_handle may be null for getting FS root.
    */
-  if (!object_handle || !p_context)
+  if(!object_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
   memset(object_handle, 0, sizeof(fsal_handle_t));
 
   /* retrieves root handle */
 
-  if (!parent_directory_handle)
+  if(!parent_directory_handle)
     {
 
       /* check that p_filename is NULL,
        * else, parent_directory_handle should not
        * be NULL.
        */
-      if (p_filename != NULL)
+      if(p_filename != NULL)
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       /* retrieve root filehandle here */
@@ -91,7 +91,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 
       /* retrieves root attributes, if asked */
 
-      if (object_attributes)
+      if(object_attributes)
         {
           fsal_status_t status;
 
@@ -99,7 +99,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 
           /* On error, we set a flag in the returned attributes */
 
-          if (FSAL_IS_ERROR(status))
+          if(FSAL_IS_ERROR(status))
             {
               FSAL_CLEAR_MASK(object_attributes->asked_attributes);
               FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -116,7 +116,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
       fsal_request_desc_t query_desc;
 
       /* the filename should not be null */
-      if (p_filename == NULL)
+      if(p_filename == NULL)
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
 #ifdef _DEBUG_FSAL
@@ -142,22 +142,22 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 
       /* look up for . or .. on root */
 
-      if (!FSAL_namecmp(p_filename, &FSAL_DOT)
-          || (!FSAL_namecmp(p_filename, &FSAL_DOT_DOT)
-              && parent_directory_handle->oid_len == 0))
+      if(!FSAL_namecmp(p_filename, &FSAL_DOT)
+         || (!FSAL_namecmp(p_filename, &FSAL_DOT_DOT)
+             && parent_directory_handle->oid_len == 0))
         {
           FSAL_OID_DUP(object_handle, parent_directory_handle->oid_tab,
                        parent_directory_handle->oid_len);
           object_handle->object_type_reminder =
               parent_directory_handle->object_type_reminder;
 
-          if (object_attributes)
+          if(object_attributes)
             {
               rc = snmp2fsal_attributes(object_handle, NULL,
                                         GetMIBNode(p_context, object_handle, TRUE),
                                         object_attributes);
 
-              if (rc != 0)
+              if(rc != 0)
                 {
                   FSAL_CLEAR_MASK(object_attributes->asked_attributes);
                   FSAL_SET_MASK(object_attributes->asked_attributes,
@@ -170,27 +170,27 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
         }
 
       /* lookup up for parent entry  */
-      if (!FSAL_namecmp(p_filename, &FSAL_DOT_DOT))
+      if(!FSAL_namecmp(p_filename, &FSAL_DOT_DOT))
         {
           printf("lookup for parent (oid len = %u)\n", parent_directory_handle->oid_len);
 
           FSAL_OID_DUP(object_handle, parent_directory_handle->oid_tab,
                        parent_directory_handle->oid_len - 1);
 
-          if (object_handle->oid_len == 0)
+          if(object_handle->oid_len == 0)
             object_handle->object_type_reminder = FSAL_NODETYPE_ROOT;
           else
             object_handle->object_type_reminder = FSAL_NODETYPE_NODE;
 
           printf("parent handle has (oid len = %u)\n", object_handle->oid_len);
 
-          if (object_attributes)
+          if(object_attributes)
             {
               rc = snmp2fsal_attributes(object_handle, NULL,
                                         GetMIBNode(p_context, object_handle, TRUE),
                                         object_attributes);
 
-              if (rc != 0)
+              if(rc != 0)
                 {
                   FSAL_CLEAR_MASK(object_attributes->asked_attributes);
                   FSAL_SET_MASK(object_attributes->asked_attributes,
@@ -204,15 +204,15 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 
       /* first, we check if the object name is available in the MIB */
 
-      for (curr_child = GetMIBChildList(p_context, parent_directory_handle);
-           curr_child != NULL; curr_child = curr_child->next_peer)
+      for(curr_child = GetMIBChildList(p_context, parent_directory_handle);
+          curr_child != NULL; curr_child = curr_child->next_peer)
         {
 #ifdef _DEBUG_FSAL
           printf("CHILD = %s (%lu)\n", curr_child->label, curr_child->subid);
 #endif
 
-          if (curr_child->label
-              && !strncmp(p_filename->name, curr_child->label, FSAL_MAX_NAME_LEN))
+          if(curr_child->label
+             && !strncmp(p_filename->name, curr_child->label, FSAL_MAX_NAME_LEN))
             {
 #ifdef _DEBUG_FSAL
               printf("MATCHES !!!!\n");
@@ -225,7 +225,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
               object_handle->oid_tab[object_handle->oid_len - 1] = curr_child->subid;
 
               /* if it has some childs, we are sure its a node */
-              if (curr_child->child_list)
+              if(curr_child->child_list)
                 {
                   type_ok = TRUE;
                   object_handle->object_type_reminder = FSAL_NODETYPE_NODE;
@@ -239,7 +239,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
             }                   /* endif label match */
         }                       /* end for child list  */
 
-      if (!found)
+      if(!found)
         {
           unsigned long subid;
 
@@ -254,7 +254,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 #endif
 
           /* the object is not numerical and could not be found  */
-          if (end_ptr != NULL && *end_ptr != '\0')
+          if(end_ptr != NULL && *end_ptr != '\0')
             Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_lookup);
 
           /* build the handle from parsed value */
@@ -265,7 +265,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
         }
 
       /* type has not been set using the MIB */
-      if (!type_ok)
+      if(!type_ok)
         {
 
           /* we make snmp GET for checking existence
@@ -282,13 +282,13 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 
           printf("rc = %d, snmp_errno = %d\n", rc, snmp_errno);
 
-          if (rc != 0 && snmp2fsal_error(rc) != ERR_FSAL_NOENT)
+          if(rc != 0 && snmp2fsal_error(rc) != ERR_FSAL_NOENT)
             Return(snmp2fsal_error(rc), rc, INDEX_FSAL_lookup);
 
-          if (snmp2fsal_error(rc) == ERR_FSAL_NOENT
-              || p_context->snmp_response->variables->type == SNMP_NOSUCHOBJECT
-              || p_context->snmp_response->variables->type == SNMP_NOSUCHINSTANCE
-              || p_context->snmp_response->variables->type == SNMP_ENDOFMIBVIEW)
+          if(snmp2fsal_error(rc) == ERR_FSAL_NOENT
+             || p_context->snmp_response->variables->type == SNMP_NOSUCHOBJECT
+             || p_context->snmp_response->variables->type == SNMP_NOSUCHINSTANCE
+             || p_context->snmp_response->variables->type == SNMP_ENDOFMIBVIEW)
             {
               /* if it has childs, it is a NODE, else, return ENOENT */
               switch (HasSNMPChilds(p_context, object_handle))
@@ -316,17 +316,18 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
       /* if it was not found by name, we try to get the MIB node with the found handle
        * (or its nearest parent)
        */
-      if (!found)
+      if(!found)
         curr_child = GetMIBNode(p_context, object_handle, TRUE);
 
-      if (object_attributes)
+      if(object_attributes)
         {
           rc = snmp2fsal_attributes(object_handle,
                                     (object_handle->object_type_reminder ==
-                                     FSAL_NODETYPE_LEAF ? p_context->snmp_response->
-                                     variables : NULL), curr_child, object_attributes);
+                                     FSAL_NODETYPE_LEAF ? p_context->
+                                     snmp_response->variables : NULL), curr_child,
+                                    object_attributes);
 
-          if (rc != 0)
+          if(rc != 0)
             {
               FSAL_CLEAR_MASK(object_attributes->asked_attributes);
               FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -380,7 +381,7 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
   /* sanity checks
    * note : p_fsroot_attributes is optionnal
    */
-  if (!p_junction_handle || !p_fsoot_handle || !p_context)
+  if(!p_junction_handle || !p_fsoot_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookupJunction);
 
   /* no junctions in SNMP */
@@ -439,18 +440,18 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
    * note : object_attributes is optionnal.
    */
 
-  if (!object_handle || !p_context || !p_path)
+  if(!object_handle || !p_context || !p_path)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookupPath);
 
   /* test whether the path begins with a slash */
 
-  if (p_path->path[0] != '/')
+  if(p_path->path[0] != '/')
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_lookupPath);
 
   /* First, we check that the path begins with the export path */
-  if (strncmp
-      (p_context->export_context->root_path.path, p_path->path,
-       p_context->export_context->root_path.len))
+  if(strncmp
+     (p_context->export_context->root_path.path, p_path->path,
+      p_context->export_context->root_path.len))
     {
       DisplayLogJdLevel(fsal_log, NIV_CRIT,
                         "ERROR: FSAL_lookupPath was called on a path that doesn't match export info (path=%s, export=%s)",
@@ -463,24 +464,24 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
   ptr_str = p_path->path + p_context->export_context->root_path.len;
 
   /* skip slashes */
-  while (ptr_str[0] == '/')
+  while(ptr_str[0] == '/')
     ptr_str++;
 
   /* is the next name empty ? */
 
-  if (ptr_str[0] == '\0')
+  if(ptr_str[0] == '\0')
     b_is_last = TRUE;
 
   /* retrieves root directory */
 
   out_hdl = p_context->export_context->root_handle;
 
-  if (b_is_last && object_attributes)
+  if(b_is_last && object_attributes)
     {
       rc = snmp2fsal_attributes(&out_hdl, NULL, p_context->export_context->root_mib_tree,
                                 object_attributes);
 
-      if (rc != ERR_FSAL_NO_ERROR)
+      if(rc != ERR_FSAL_NO_ERROR)
         {
           FSAL_CLEAR_MASK(object_attributes->asked_attributes);
           FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -489,7 +490,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
 
   /* exits if this was the last lookup */
 
-  if (b_is_last)
+  if(b_is_last)
     {
       (*object_handle) = out_hdl;
       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lookupPath);
@@ -497,7 +498,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
 
   /* proceed a step by step lookup */
 
-  while (ptr_str[0])
+  while(ptr_str[0])
     {
 
       fsal_handle_t in_hdl;
@@ -510,7 +511,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
       /* compute next name */
       obj_name.len = 0;
       dest_ptr = obj_name.name;
-      while (ptr_str[0] != '\0' && ptr_str[0] != '/')
+      while(ptr_str[0] != '\0' && ptr_str[0] != '/')
         {
           dest_ptr[0] = ptr_str[0];
           dest_ptr++;
@@ -521,11 +522,11 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
       dest_ptr[0] = '\0';
 
       /* skip multiple slashes */
-      while (ptr_str[0] == '/')
+      while(ptr_str[0] == '/')
         ptr_str++;
 
       /* is the next name empty ? */
-      if (ptr_str[0] == '\0')
+      if(ptr_str[0] == '\0')
         b_is_last = TRUE;
 
       /*call to FSAL_lookup */
@@ -536,7 +537,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
                            /* retrieves attributes if this is the last lookup : */
                            (b_is_last ? object_attributes : NULL));
 
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_lookupPath);
 
       /* ptr_str is ok, we are ready for next loop */

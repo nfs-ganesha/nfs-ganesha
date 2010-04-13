@@ -130,7 +130,7 @@ int mnt1_remote_Null(CLIENT * clnt /* IN  */ ,
                      nfs_res_t * pres /* OUT */ )
 {
   ////printf("REQUEST PROCESSING: Calling mnt1_remote_Null\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -155,7 +155,7 @@ int mnt1_remote_Mnt(CLIENT * clnt /* IN  */ ,
                     nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt1_remote_Mnt\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -181,7 +181,7 @@ int mnt1_remote_Dump(CLIENT * clnt /* IN  */ ,
                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt1_remote_Dump\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -207,7 +207,7 @@ int mnt1_remote_Umnt(CLIENT * clnt /* IN  */ ,
                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt1_remote_Umnt\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -232,7 +232,7 @@ int mnt1_remote_UmntAll(CLIENT * clnt /* IN  */ ,
                         nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt1_remote_UmntAll\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -257,7 +257,7 @@ int mnt1_remote_Export(CLIENT * clnt /* IN  */ ,
                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt1_remote_Export\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -283,7 +283,7 @@ int mnt3_remote_Null(CLIENT * clnt /* IN  */ ,
                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt3_remote_Null\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -308,7 +308,7 @@ int mnt3_remote_Mnt(CLIENT * clnt /* IN  */ ,
                     nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt3_remote_Mnt\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -334,7 +334,7 @@ int mnt3_remote_Dump(CLIENT * clnt /* IN  */ ,
                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt3_remote_Dump\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -360,7 +360,7 @@ int mnt3_remote_Umnt(CLIENT * clnt /* IN  */ ,
                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt3_remote_Umnt\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -385,7 +385,7 @@ int mnt3_remote_UmntAll(CLIENT * clnt /* IN  */ ,
                         nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt3_remote_UmntAll\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -410,7 +410,7 @@ int mnt3_remote_Export(CLIENT * clnt /* IN  */ ,
                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt3_remote_Export\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -436,7 +436,7 @@ int nfs2_remote_Null(CLIENT * clnt /* IN  */ ,
                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Null\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -461,7 +461,7 @@ int nfs2_remote_Getattr(CLIENT * clnt /* IN  */ ,
                         nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Getattr\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -487,7 +487,7 @@ int nfs2_remote_Setattr(CLIENT * clnt /* IN  */ ,
                         nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Setattr\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -513,7 +513,7 @@ int nfs2_remote_Root(CLIENT * clnt /* IN  */ ,
                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Root\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -538,7 +538,7 @@ int nfs2_remote_Lookup(CLIENT * clnt /* IN  */ ,
                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Lookup\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -564,7 +564,7 @@ int nfs2_remote_Readlink(CLIENT * clnt /* IN  */ ,
                          nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Readlink\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -590,7 +590,7 @@ int nfs2_remote_Read(CLIENT * clnt /* IN  */ ,
                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Read\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -616,7 +616,7 @@ int nfs2_remote_Writecache(CLIENT * clnt /* IN  */ ,
                            nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Writecache\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -641,7 +641,7 @@ int nfs2_remote_Write(CLIENT * clnt /* IN  */ ,
                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Write\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -667,7 +667,7 @@ int nfs2_remote_Create(CLIENT * clnt /* IN  */ ,
                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Create\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -693,7 +693,7 @@ int nfs2_remote_Remove(CLIENT * clnt /* IN  */ ,
                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Remove\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -719,7 +719,7 @@ int nfs2_remote_Rename(CLIENT * clnt /* IN  */ ,
                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Rename\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -745,7 +745,7 @@ int nfs2_remote_Link(CLIENT * clnt /* IN  */ ,
                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Link\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -771,7 +771,7 @@ int nfs2_remote_Symlink(CLIENT * clnt /* IN  */ ,
                         nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Symlink\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -797,7 +797,7 @@ int nfs2_remote_Mkdir(CLIENT * clnt /* IN  */ ,
                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Mkdir\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -823,7 +823,7 @@ int nfs2_remote_Rmdir(CLIENT * clnt /* IN  */ ,
                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Rmdir\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -849,7 +849,7 @@ int nfs2_remote_Readdir(CLIENT * clnt /* IN  */ ,
                         nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Readdir\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -875,7 +875,7 @@ int nfs2_remote_Fsstat(CLIENT * clnt /* IN  */ ,
                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Fsstat\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -901,7 +901,7 @@ int nfs3_remote_Null(CLIENT * clnt /* IN  */ ,
                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Null\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -926,7 +926,7 @@ int nfs3_remote_Getattr(CLIENT * clnt /* IN  */ ,
                         nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Getattr\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -952,7 +952,7 @@ int nfs3_remote_Setattr(CLIENT * clnt /* IN  */ ,
                         nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Setattr\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -978,7 +978,7 @@ int nfs3_remote_Lookup(CLIENT * clnt /* IN  */ ,
                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Lookup\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1004,7 +1004,7 @@ int nfs3_remote_Readlink(CLIENT * clnt /* IN  */ ,
                          nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Readlink\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1030,7 +1030,7 @@ int nfs3_remote_Read(CLIENT * clnt /* IN  */ ,
                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Read\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1056,7 +1056,7 @@ int nfs3_remote_Write(CLIENT * clnt /* IN  */ ,
                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Write\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1082,7 +1082,7 @@ int nfs3_remote_Create(CLIENT * clnt /* IN  */ ,
                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Create\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1108,7 +1108,7 @@ int nfs3_remote_Remove(CLIENT * clnt /* IN  */ ,
                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Remove\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1134,7 +1134,7 @@ int nfs3_remote_Rename(CLIENT * clnt /* IN  */ ,
                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Rename\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1160,7 +1160,7 @@ int nfs3_remote_Link(CLIENT * clnt /* IN  */ ,
                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Link\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1186,7 +1186,7 @@ int nfs3_remote_Symlink(CLIENT * clnt /* IN  */ ,
                         nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Symlink\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1212,7 +1212,7 @@ int nfs3_remote_Mkdir(CLIENT * clnt /* IN  */ ,
                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Mkdir\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1238,7 +1238,7 @@ int nfs3_remote_Rmdir(CLIENT * clnt /* IN  */ ,
                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Rmdir\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1264,7 +1264,7 @@ int nfs3_remote_Readdir(CLIENT * clnt /* IN  */ ,
                         nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Readdir\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1290,7 +1290,7 @@ int nfs3_remote_Fsstat(CLIENT * clnt /* IN  */ ,
                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Fsstat\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1316,7 +1316,7 @@ int nfs3_remote_Access(CLIENT * clnt /* IN  */ ,
                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Access\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1342,7 +1342,7 @@ int nfs3_remote_Readdirplus(CLIENT * clnt /* IN  */ ,
                             nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Readdirplus\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1368,7 +1368,7 @@ int nfs3_remote_Fsinfo(CLIENT * clnt /* IN  */ ,
                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Fsinfo\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1394,7 +1394,7 @@ int nfs3_remote_Pathconf(CLIENT * clnt /* IN  */ ,
                          nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Pathconf\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1420,7 +1420,7 @@ int nfs3_remote_Commit(CLIENT * clnt /* IN  */ ,
                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Commit\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1446,7 +1446,7 @@ int nfs3_remote_Mknod(CLIENT * clnt /* IN  */ ,
                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Mknod\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1470,7 +1470,7 @@ int nfs4_remote_Null(CLIENT * clnt /* IN  */ )
   COMPOUND4args parg;
   COMPOUND4res pres;
 //      printf("REQUEST PROCESSING: Calling nfs4_remote_Null\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }
@@ -1495,7 +1495,7 @@ int nfs4_remote_COMPOUND(CLIENT * clnt /* IN  */ ,
                          COMPOUND4res * pres /* OUT */ )
 {
 //      printf("REQUEST PROCESSING: Calling nfs4_remote_COMPOUND\n");
-  if (clnt == NULL)
+  if(clnt == NULL)
     {
       return -1;
     }

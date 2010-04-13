@@ -140,7 +140,7 @@ int display_state_id_key(hash_buffer_t * pbuff, char *str)
   unsigned int i = 0;
   unsigned int len = 0;
 
-  for (i = 0; i < 12; i++)
+  for(i = 0; i < 12; i++)
     len += sprintf(&(str[i * 2]), "%02x", (unsigned char)pbuff->pdata[i]);
   return len;
 }                               /* display_state_id_val */
@@ -168,7 +168,7 @@ unsigned long state_id_value_hash_func(hash_parameter_t * p_hparam,
   unsigned char c;
 
   /* Compute the sum of all the characters */
-  for (i = 0; i < 12; i++)
+  for(i = 0; i < 12; i++)
     {
       c = ((char *)buffclef->pdata)[i];
       sum += c;
@@ -192,7 +192,7 @@ unsigned long state_id_rbt_hash_func(hash_parameter_t * p_hparam,
   unsigned int i = 0;
 
   printf("         ----- state_id_rbt_hash_func : ");
-  for (i = 0; i < 12; i++)
+  for(i = 0; i < 12; i++)
     printf("%02x", (unsigned char)buffclef->pdata[i]);
   printf("\n");
 #endif
@@ -223,7 +223,7 @@ int nfs4_Init_state_id(nfs_state_id_parameter_t param)
   /* Init  all_one */
   memset(all_one, 0xFF, 12);
 
-  if ((ht_state_id = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_state_id = HashTable_Init(param.hash_param)) == NULL)
     {
       DisplayLog("NFS STATE_ID: Cannot init State Id cache");
       return -1;
@@ -256,19 +256,19 @@ int nfs4_BuildStateId_Other(cache_entry_t * pentry,
   u_int16_t srvboot_digest = 0;
   uint32_t open_owner_digest = 0;
 
-  if (pcontext == NULL)
+  if(pcontext == NULL)
     return 0;
 
-  if (pentry == NULL)
+  if(pentry == NULL)
     return 0;
 
-  if (popen_owner == NULL)
+  if(popen_owner == NULL)
     return 0;
 
-  if (pentry->internal_md.type != REGULAR_FILE)
+  if(pentry->internal_md.type != REGULAR_FILE)
     return 0;
 
-  if (other == NULL)
+  if(other == NULL)
     return 0;
 
 #ifdef _DEBUG_STATES
@@ -277,10 +277,10 @@ int nfs4_BuildStateId_Other(cache_entry_t * pentry,
 #endif
 
   /* Get several digests to build the stateid : the server boot time, the fileid and a monotonic counter */
-  if (FSAL_IS_ERROR(FSAL_DigestHandle(pcontext->export_context,
-                                      FSAL_DIGEST_FILEID3,
-                                      &(pentry->object.file.handle),
-                                      (caddr_t) & fileid_digest)))
+  if(FSAL_IS_ERROR(FSAL_DigestHandle(pcontext->export_context,
+                                     FSAL_DIGEST_FILEID3,
+                                     &(pentry->object.file.handle),
+                                     (caddr_t) & fileid_digest)))
     return 0;
 
   srvboot_digest = (u_int16_t) (ServerBootTime & 0x0000FFFF);;
@@ -319,13 +319,13 @@ int nfs4_State_Set(char other[12], cache_inode_state_t * pstate_data)
   int i = 0;
 
   printf("         -----  SetStateid : ");
-  for (i = 0; i < 12; i++)
+  for(i = 0; i < 12; i++)
     printf("%02x", (unsigned char)other[i]);
 
   printf("\n");
 #endif
 
-  if ((buffkey.pdata = (caddr_t) Mem_Alloc(12)) == NULL)
+  if((buffkey.pdata = (caddr_t) Mem_Alloc(12)) == NULL)
     return 0;
   memcpy(buffkey.pdata, other, 12);
   buffkey.len = 12;
@@ -333,9 +333,9 @@ int nfs4_State_Set(char other[12], cache_inode_state_t * pstate_data)
   buffval.pdata = (caddr_t) pstate_data;
   buffval.len = sizeof(cache_inode_state_t);
 
-  if (HashTable_Test_And_Set
-      (ht_state_id, &buffkey, &buffval,
-       HASHTABLE_SET_HOW_SET_OVERWRITE) != HASHTABLE_SUCCESS)
+  if(HashTable_Test_And_Set
+     (ht_state_id, &buffkey, &buffval,
+      HASHTABLE_SET_HOW_SET_OVERWRITE) != HASHTABLE_SUCCESS)
     return 0;
 
   return 1;
@@ -362,7 +362,7 @@ int nfs4_State_Get(char other[12], cache_inode_state_t * pstate_data)
   int i = 0;
 
   printf("         -----  GetStateid : ");
-  for (i = 0; i < 12; i++)
+  for(i = 0; i < 12; i++)
     printf("%02x", (unsigned char)other[i]);
   printf("\n");
 #endif
@@ -370,7 +370,7 @@ int nfs4_State_Get(char other[12], cache_inode_state_t * pstate_data)
   buffkey.pdata = (caddr_t) other;
   buffkey.len = 12;
 
-  if (HashTable_Get(ht_state_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
+  if(HashTable_Get(ht_state_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
 #ifdef _DEBUG_STATES
       printf("---> nfs4_State_Get  NOT FOUND !!!!!!\n");
@@ -406,7 +406,7 @@ int nfs4_State_Get_Pointer(char other[12], cache_inode_state_t * *pstate_data)
   int i = 0;
 
   printf("         -----  Get_PointerStateid : ");
-  for (i = 0; i < 12; i++)
+  for(i = 0; i < 12; i++)
     printf("%02x", (unsigned char)other[i]);
   printf("\n");
 #endif
@@ -414,7 +414,7 @@ int nfs4_State_Get_Pointer(char other[12], cache_inode_state_t * *pstate_data)
   buffkey.pdata = (caddr_t) other;
   buffkey.len = 12;
 
-  if (HashTable_Get(ht_state_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
+  if(HashTable_Get(ht_state_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
 #ifdef _DEBUG_STATES
       printf("---> nfs4_State_Get_Pointer  NOT FOUND !!!!!!\n");
@@ -451,7 +451,7 @@ int nfs4_State_Update(char other[12], cache_inode_state_t * pstate_data)
   int i = 0;
 
   printf("         -----  UpdateStateid : ");
-  for (i = 0; i < 12; i++)
+  for(i = 0; i < 12; i++)
     printf("%02x", (unsigned char)other[i]);
   printf("\n");
 #endif
@@ -459,7 +459,7 @@ int nfs4_State_Update(char other[12], cache_inode_state_t * pstate_data)
   buffkey.pdata = (caddr_t) other;
   buffkey.len = 12;
 
-  if (HashTable_Get(ht_state_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
+  if(HashTable_Get(ht_state_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
 #ifdef _DEBUG_STATES
       printf("---> nfs4_State_Update  NOT FOUND !!!!!!\n");
@@ -493,7 +493,7 @@ int nfs4_State_Del(char other[12])
   int i = 0;
 
   printf("         -----  DelStateid : ");
-  for (i = 0; i < 12; i++)
+  for(i = 0; i < 12; i++)
     printf("%02x", (unsigned char)other[i]);
   printf("\n");
 #endif
@@ -501,7 +501,7 @@ int nfs4_State_Del(char other[12])
   buffkey.pdata = (caddr_t) other;
   buffkey.len = 12;
 
-  if (HashTable_Del(ht_state_id, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
+  if(HashTable_Del(ht_state_id, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
     {
       /* free the key that was stored in hash table */
       Mem_Free((void *)old_key.pdata);
@@ -537,29 +537,29 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
   int i = 0;
 
   printf("         -----  CheckStateid : ");
-  for (i = 0; i < 12; i++)
+  for(i = 0; i < 12; i++)
     printf("%02x", (unsigned char)pstate->other[i]);
   printf("\n");
 #endif
 
-  if (pstate == NULL)
+  if(pstate == NULL)
     return NFS4ERR_SERVERFAULT;
 
-  if (pentry == NULL)
+  if(pentry == NULL)
     return NFS4ERR_SERVERFAULT;
 
-  if (pentry->internal_md.type != REGULAR_FILE)
+  if(pentry->internal_md.type != REGULAR_FILE)
     return NFS4ERR_SERVERFAULT;
 
   /* Try to get the related state */
-  if (!nfs4_State_Get(pstate->other, &state))
+  if(!nfs4_State_Get(pstate->other, &state))
     {
       /* State not found : return NFS4ERR_BAD_STATEID, RFC3530 page 129 */
       return NFS4ERR_BAD_STATEID;
     }
 #ifdef _DEBUG_STATES
   printf("         -----  CheckStateid state found : ");
-  for (i = 0; i < 12; i++)
+  for(i = 0; i < 12; i++)
     printf("%02x", (unsigned char)state.stateid_other[i]);
   printf("\n");
 #endif
@@ -567,16 +567,16 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
   /* Get the related clientid */
   /* If call from NFSv4.1 request, the clientid is provided through the session's structure, 
    * with NFSv4.0, the clientid is related to the stateid itself */
-  if (clientid == 0LL)
+  if(clientid == 0LL)
     {
-      if (nfs_client_id_get(state.powner->clientid, &nfs_clientid) != CLIENT_ID_SUCCESS)
+      if(nfs_client_id_get(state.powner->clientid, &nfs_clientid) != CLIENT_ID_SUCCESS)
         return NFS4ERR_BAD_STATEID;     /* Refers to a non-existing client... */
     }
 
   /* Check if stateid was made from this server instance */
   memcpy((char *)&time_digest, pstate->other, 2);
 
-  if ((u_int16_t) (ServerBootTime & 0x0000FFFF) != time_digest)
+  if((u_int16_t) (ServerBootTime & 0x0000FFFF) != time_digest)
     return NFS4ERR_STALE_STATEID;
 
   return NFS4_OK;

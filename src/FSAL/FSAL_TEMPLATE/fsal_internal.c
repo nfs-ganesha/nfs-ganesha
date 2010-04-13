@@ -85,7 +85,7 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT;
 /* init keys */
 static void init_keys(void)
 {
-  if (pthread_key_create(&key_stats, NULL) == -1)
+  if(pthread_key_create(&key_stats, NULL) == -1)
     DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_KEY_CREATE, errno);
 
   return;
@@ -109,12 +109,12 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
   /* verify index */
 
-  if (function_index >= FSAL_NB_FUNC)
+  if(function_index >= FSAL_NB_FUNC)
     return;
 
   /* first, we init the keys if this is the first time */
 
-  if (pthread_once(&once_key, init_keys) != 0)
+  if(pthread_once(&once_key, init_keys) != 0)
     {
       DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_ONCE, errno);
       return;
@@ -126,20 +126,20 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
   /* we allocate stats if this is the first time */
 
-  if (bythread_stat == NULL)
+  if(bythread_stat == NULL)
     {
       int i;
 
       bythread_stat = (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t));
 
-      if (bythread_stat == NULL)
+      if(bythread_stat == NULL)
         {
           DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
         }
 
       /* inits the struct */
 
-      for (i = 0; i < FSAL_NB_FUNC; i++)
+      for(i = 0; i < FSAL_NB_FUNC; i++)
         {
           bythread_stat->func_stats.nb_call[i] = 0;
           bythread_stat->func_stats.nb_success[i] = 0;
@@ -154,13 +154,13 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
   /* we increment the values */
 
-  if (bythread_stat)
+  if(bythread_stat)
     {
       bythread_stat->func_stats.nb_call[function_index]++;
 
-      if (!FSAL_IS_ERROR(status))
+      if(!FSAL_IS_ERROR(status))
         bythread_stat->func_stats.nb_success[function_index]++;
-      else if (fsal_is_retryable(status))
+      else if(fsal_is_retryable(status))
         bythread_stat->func_stats.nb_err_retryable[function_index]++;
       else
         bythread_stat->func_stats.nb_err_unrecover[function_index]++;
@@ -185,7 +185,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
   fsal_statistics_t *bythread_stat = NULL;
 
   /* first, we init the keys if this is the first time */
-  if (pthread_once(&once_key, init_keys) != 0)
+  if(pthread_once(&once_key, init_keys) != 0)
     {
       DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_ONCE, errno);
       return;
@@ -195,16 +195,16 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
   bythread_stat = (fsal_statistics_t *) pthread_getspecific(key_stats);
 
   /* we allocate stats if this is the first time */
-  if (bythread_stat == NULL)
+  if(bythread_stat == NULL)
     {
       int i;
 
-      if ((bythread_stat =
-           (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t))) == NULL)
+      if((bythread_stat =
+          (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t))) == NULL)
         DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
 
       /* inits the struct */
-      for (i = 0; i < FSAL_NB_FUNC; i++)
+      for(i = 0; i < FSAL_NB_FUNC; i++)
         {
           bythread_stat->func_stats.nb_call[i] = 0;
           bythread_stat->func_stats.nb_success[i] = 0;
@@ -217,7 +217,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
 
     }
 
-  if (output_stats)
+  if(output_stats)
     (*output_stats) = (*bythread_stat);
 
   return;
@@ -230,7 +230,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
 void TakeTokenFSCall()
 {
   /* no limits */
-  if (limit_calls == FALSE)
+  if(limit_calls == FALSE)
     return;
 
   /* there is a limit */
@@ -241,7 +241,7 @@ void TakeTokenFSCall()
 void ReleaseTokenFSCall()
 {
   /* no limits */
-  if (limit_calls == FALSE)
+  if(limit_calls == FALSE)
     return;
 
   /* there is a limit */
@@ -310,14 +310,14 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 {
 
   /* sanity check */
-  if (!fsal_info || !fs_common_info)
+  if(!fsal_info || !fs_common_info)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   /* Setting log info */
   fsal_log = fsal_info->log_outputs;
 
   /* inits FS call semaphore */
-  if (fsal_info->max_fs_calls > 0)
+  if(fsal_info->max_fs_calls > 0)
     {
       int rc;
 
@@ -325,7 +325,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
       rc = semaphore_init(&sem_fs_calls, fsal_info->max_fs_calls);
 
-      if (rc != 0)
+      if(rc != 0)
         ReturnCode(ERR_FSAL_SERVERFAULT, rc);
 
       DisplayLogJdLevel(fsal_log, NIV_DEBUG,
@@ -344,17 +344,17 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
   /* Analyzing fs_common_info struct */
 
-  if ((fs_common_info->behaviors.maxfilesize != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.maxlink != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.maxnamelen != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.maxpathlen != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.no_trunc != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.case_insensitive != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.case_preserving != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.named_attr != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.lease_time != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.supported_attrs != FSAL_INIT_FS_DEFAULT) ||
-      (fs_common_info->behaviors.homogenous != FSAL_INIT_FS_DEFAULT))
+  if((fs_common_info->behaviors.maxfilesize != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.maxlink != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.maxnamelen != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.maxpathlen != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.no_trunc != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.case_insensitive != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.case_preserving != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.named_attr != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.lease_time != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.supported_attrs != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.homogenous != FSAL_INIT_FS_DEFAULT))
     ReturnCode(ERR_FSAL_NOTSUPP, 0);
 
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);

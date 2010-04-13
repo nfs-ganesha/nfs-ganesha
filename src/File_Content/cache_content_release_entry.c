@@ -140,7 +140,7 @@ cache_content_status_t cache_content_release_entry(cache_content_entry_t * pentr
   pentry->pentry_inode->object.file.pentry_content = NULL;
 
   /* close the associated opened file */
-  if (pentry->local_fs_entry.opened_file.local_fd > 0)
+  if(pentry->local_fs_entry.opened_file.local_fd > 0)
     {
       close(pentry->local_fs_entry.opened_file.local_fd);
       pentry->local_fs_entry.opened_file.last_op = 0;
@@ -150,9 +150,9 @@ cache_content_status_t cache_content_release_entry(cache_content_entry_t * pentr
   RELEASE_PREALLOC(pentry, pclient->pool_entry, next_alloc);
 
   /* Remove the index file */
-  if (unlink(pentry->local_fs_entry.cache_path_index) != 0)
+  if(unlink(pentry->local_fs_entry.cache_path_index) != 0)
     {
-      if (errno != ENOENT)
+      if(errno != ENOENT)
         DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
                           "cache_content_release_entry: error when unlinking index file %s, errno = ( %d, '%s' )",
                           pentry->local_fs_entry.cache_path_index,
@@ -160,9 +160,9 @@ cache_content_status_t cache_content_release_entry(cache_content_entry_t * pentr
     }
 
   /* Remove the data file */
-  if (unlink(pentry->local_fs_entry.cache_path_data) != 0)
+  if(unlink(pentry->local_fs_entry.cache_path_data) != 0)
     {
-      if (errno != ENOENT)
+      if(errno != ENOENT)
         DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
                           "cache_content_release_entry: error when unlinking index file %s, errno = ( %d, '%s' )",
                           pentry->local_fs_entry.cache_path_data, errno, strerror(errno));

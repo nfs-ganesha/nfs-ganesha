@@ -8,7 +8,7 @@ int main(int argc, char **argv)
   struct testparam *param;
   struct btest *b;
 
-  if ((argc > 1) && (argv[1]))
+  if((argc > 1) && (argv[1]))
     {
       filename = argv[1];
     }
@@ -19,7 +19,7 @@ int main(int argc, char **argv)
     }
 
   param = readin_config(filename);
-  if (param == NULL)
+  if(param == NULL)
     {
       fprintf(stdout, "Nothing built\n");
       return -1;
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
 
   /* basic test 1 */
   b = get_btest_args(param, ONE);
-  if (b == NULL)
+  if(b == NULL)
     {
       fprintf(stdout, "Missing basic test number 1\n");
       free_testparam(param);
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 
   /* basic test 2 */
   b = get_btest_args(param, TWO);
-  if (b == NULL)
+  if(b == NULL)
     {
       fprintf(stdout, "Missing basic test number 2\n");
       free_testparam(param);
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 
   /* basic test 3 */
   b = get_btest_args(param, THREE);
-  if (b == NULL)
+  if(b == NULL)
     {
       fprintf(stdout, "Missing basic test number 3\n");
       free_testparam(param);
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
 
   /* basic test 4 */
   b = get_btest_args(param, FOUR);
-  if (b == NULL)
+  if(b == NULL)
     {
       fprintf(stdout, "Missing basic test number 4\n");
       free_testparam(param);
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
 
   /* basic test 5 */
   b = get_btest_args(param, FIVE);
-  if (b == NULL)
+  if(b == NULL)
     {
       fprintf(stdout, "Missing basic test number 5\n");
       free_testparam(param);
@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 
   /* basic test 6 */
   b = get_btest_args(param, SIX);
-  if (b == NULL)
+  if(b == NULL)
     {
       fprintf(stdout, "Missing basic test number 6\n");
       free_testparam(param);
@@ -121,7 +121,7 @@ int main(int argc, char **argv)
 
   /* basic test 7 */
   b = get_btest_args(param, SEVEN);
-  if (b == NULL)
+  if(b == NULL)
     {
       fprintf(stdout, "Missing basic test number 7\n");
       free_testparam(param);
@@ -137,7 +137,7 @@ int main(int argc, char **argv)
 
   /* basic test 8 */
   b = get_btest_args(param, EIGHT);
-  if (b == NULL)
+  if(b == NULL)
     {
       fprintf(stdout, "Missing basic test number 8\n");
       free_testparam(param);
@@ -152,7 +152,7 @@ int main(int argc, char **argv)
 
   /* basic test 9 */
   b = get_btest_args(param, NINE);
-  if (b == NULL)
+  if(b == NULL)
     {
       fprintf(stdout, "Missing basic test number 9\n");
       free_testparam(param);

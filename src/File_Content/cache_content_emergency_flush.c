@@ -196,7 +196,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
 
   *pstatus = CACHE_CONTENT_SUCCESS;
 
-  if (cache_content_local_cache_opendir(cachedir, &directory) == FALSE)
+  if(cache_content_local_cache_opendir(cachedir, &directory) == FALSE)
     {
       DisplayLog("cache_content_emergency_flush can't open directory %s, errno=%u (%s)",
                  cachedir, cache_content_dir_errno, strerror(cache_content_dir_errno));
@@ -204,18 +204,18 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
       return *pstatus;
     }
 
-  while (cache_content_local_cache_dir_iter(&directory, &dir_entry, index, mod))
+  while(cache_content_local_cache_dir_iter(&directory, &dir_entry, index, mod))
     {
-      if ((lw_mark_trigger_flag == TRUE)
-          && (local_flushhow == CACHE_CONTENT_FLUSH_AND_DELETE))
+      if((lw_mark_trigger_flag == TRUE)
+         && (local_flushhow == CACHE_CONTENT_FLUSH_AND_DELETE))
         {
           passcounter += 1;
 
-          if (passcounter == 100)
+          if(passcounter == 100)
             {
               passcounter = 0;
 
-              if (statfs(cachedir, &info_fs) != 0)
+              if(statfs(cachedir, &info_fs) != 0)
                 {
                   DisplayLog("Error getting local filesystem info: path=%s errno=%u\n",
                              cachedir, errno);
@@ -240,7 +240,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                               "Datacache: %s: %.2f%% used, low_wm = %.2f%%, high_wm = %.2f%%",
                               cachedir, tx_used, lw, hw);
 
-              if (tx_used < nfs_param.cache_layers_param.dcgcpol.lwmark_df)
+              if(tx_used < nfs_param.cache_layers_param.dcgcpol.lwmark_df)
                 {
                   /* No need to purge more, downgrade to sync mode */
                   local_flushhow = CACHE_CONTENT_FLUSH_SYNC_ONLY;
@@ -251,9 +251,9 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
         }
 
       /* Manage only index files */
-      if (!strcmp(dir_entry.d_name + strlen(dir_entry.d_name) - 5, "index"))
+      if(!strcmp(dir_entry.d_name + strlen(dir_entry.d_name) - 5, "index"))
         {
-          if ((inum = cache_content_get_inum(dir_entry.d_name)) == -1)
+          if((inum = cache_content_get_inum(dir_entry.d_name)) == -1)
             {
               DisplayLog("Bad file name %s found in cache", dir_entry.d_name);
               continue;
@@ -263,7 +263,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
 
           snprintf(indexpath, MAXPATHLEN, "%s/%s", cachedir, dir_entry.d_name);
 
-          if ((stream = fopen(indexpath, "r")) == NULL)
+          if((stream = fopen(indexpath, "r")) == NULL)
             return CACHE_CONTENT_LOCAL_CACHE_ERROR;
 
           fscanf(stream, "internal:read_time=%s\n", buff);
@@ -271,7 +271,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
           fscanf(stream, "internal:export_id=%s\n", buff);
           fscanf(stream, "file: FSAL handle=%s", buff);
 
-          if (sscanHandle(&fsal_handle, buff) < 0)
+          if(sscanHandle(&fsal_handle, buff) < 0)
             {
               /* expected = 2*sizeof(fsal_handle_t) in hexa representation */
               DisplayLog
@@ -287,7 +287,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
           cache_content_get_datapath(cachedir, inum, datapath);
 
           /* Stat the data file to now if it is eligible or not */
-          if (stat(datapath, &buffstat) == -1)
+          if(stat(datapath, &buffstat) == -1)
             {
               DisplayLog
                   ("Can't stat file %s errno=%u(%s), continuing with next entries...",
@@ -298,11 +298,11 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
           /* Get the max into atime, mtime, ctime */
           max_acmtime = 0;
 
-          if (buffstat.st_atime > max_acmtime)
+          if(buffstat.st_atime > max_acmtime)
             max_acmtime = buffstat.st_atime;
-          if (buffstat.st_mtime > max_acmtime)
+          if(buffstat.st_mtime > max_acmtime)
             max_acmtime = buffstat.st_mtime;
-          if (buffstat.st_ctime > max_acmtime)
+          if(buffstat.st_ctime > max_acmtime)
             max_acmtime = buffstat.st_ctime;
 
 #ifdef _DEBUG_CACHE_CONTENT
@@ -311,10 +311,10 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                time(NULL), max_acmtime, time(NULL) - max_acmtime, grace_period);
 #endif
 
-          if (time(NULL) - max_acmtime < grace_period)
+          if(time(NULL) - max_acmtime < grace_period)
             {
               /* update stats, if provided */
-              if (p_nb_too_young != NULL)
+              if(p_nb_too_young != NULL)
                 *p_nb_too_young += 1;
 
               DisplayLog("File %s is too young to die, preserving it...", datapath);
@@ -333,7 +333,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
           printf("====> Fileid = %llu %llx\n", fileid, fileid);
 #endif
 
-          if (!FSAL_IS_ERROR(fsal_status))
+          if(!FSAL_IS_ERROR(fsal_status))
             {
               fsal_status = FSAL_rcp_by_fileid(&fsal_handle,
                                                fileid,
@@ -341,28 +341,28 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                                                &fsal_path, FSAL_RCP_LOCAL_TO_FS);
             }
 #else
-          if (!FSAL_IS_ERROR(fsal_status))
+          if(!FSAL_IS_ERROR(fsal_status))
             {
               fsal_status = FSAL_rcp(&fsal_handle,
                                      pcontext, &fsal_path, FSAL_RCP_LOCAL_TO_FS);
             }
 #endif
 
-          if (FSAL_IS_ERROR(fsal_status))
+          if(FSAL_IS_ERROR(fsal_status))
             {
-              if ((fsal_status.major == ERR_FSAL_NOENT) ||
-                  (fsal_status.major == ERR_FSAL_STALE))
+              if((fsal_status.major == ERR_FSAL_NOENT) ||
+                 (fsal_status.major == ERR_FSAL_STALE))
                 {
                   DisplayLog
                       ("Cached entry %x doesn't exist anymore in FSAL, removing....",
                        inum);
 
                   /* update stats, if provided */
-                  if (p_nb_orphans != NULL)
+                  if(p_nb_orphans != NULL)
                     *p_nb_orphans += 1;
 
                   /* Remove the index file from the data cache */
-                  if (unlink(indexpath))
+                  if(unlink(indexpath))
                     {
                       DisplayLog("Can't unlink flushed index %s, errno=%u(%s)", indexpath,
                                  errno, strerror(errno));
@@ -370,7 +370,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                     }
 
                   /* Remove the data file from the data cache */
-                  if (unlink(datapath))
+                  if(unlink(datapath))
                     {
                       DisplayLog("Can't unlink flushed index %s, errno=%u(%s)", datapath,
                                  errno, strerror(errno));
@@ -380,7 +380,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
               else
                 {
                   /* update stats, if provided */
-                  if (p_nb_errors != NULL)
+                  if(p_nb_errors != NULL)
                     *p_nb_errors += 1;
 
                   DisplayLog
@@ -392,14 +392,14 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
             {
               /* success */
               /* update stats, if provided */
-              if (p_nb_flushed != NULL)
+              if(p_nb_flushed != NULL)
                 *p_nb_flushed += 1;
 
               switch (local_flushhow)
                 {
                 case CACHE_CONTENT_FLUSH_AND_DELETE:
                   /* Remove the index file from the data cache */
-                  if (unlink(indexpath))
+                  if(unlink(indexpath))
                     {
                       DisplayLog("Can't unlink flushed index %s, errno=%u(%s)", indexpath,
                                  errno, strerror(errno));
@@ -407,7 +407,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                     }
 
                   /* Remove the data file from the data cache */
-                  if (unlink(datapath))
+                  if(unlink(datapath))
                     {
                       DisplayLog("Can't unlink flushed index %s, errno=%u(%s)", datapath,
                                  errno, strerror(errno));

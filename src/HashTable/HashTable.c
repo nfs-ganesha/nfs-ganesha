@@ -285,7 +285,7 @@ unsigned long simple_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buff
   char c = 0;
   char *sobj = (char *)(buffclef->pdata);
 
-  for (i = 0; i < buffclef->len; i++)
+  for(i = 0; i < buffclef->len; i++)
     {
       c = sobj[i];
       h = (p_hparam->alphabet_length * h + (unsigned int)c) % p_hparam->index_size;
@@ -370,7 +370,7 @@ static hash_data_t *PreAllocPdata(int nb_alloc)
 
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pdata, (unsigned int)nb_alloc, hash_data_t, next_alloc);
-  if (pdata == NULL)
+  if(pdata == NULL)
     return NULL;
 #endif
 
@@ -409,7 +409,7 @@ static struct rbt_node *PreAllocNode(int nb_alloc)
 
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pnode, (unsigned int)nb_alloc, rbt_node_t, next);
-  if (pnode == NULL)
+  if(pnode == NULL)
     return NULL;
 #endif
 
@@ -446,7 +446,7 @@ static int Key_Locate(hash_table_t * ht, hash_buffer_t * buffkey, unsigned int h
   int found = 0;
 
   /* Sanity check */
-  if (ht == NULL || buffkey == NULL || ppnode == NULL)
+  if(ht == NULL || buffkey == NULL || ppnode == NULL)
     return HASHTABLE_ERROR_INVALID_ARGUMENT;
 
   /* Find the head of the rbt */
@@ -456,15 +456,15 @@ static int Key_Locate(hash_table_t * ht, hash_buffer_t * buffkey, unsigned int h
   RBT_FIND_LEFT(tete_rbt, pn, rbt_value);
 
   /* Find was successfull ? */
-  if (pn == NULL)
+  if(pn == NULL)
     return HASHTABLE_ERROR_NO_SUCH_KEY;
 
   /* For each entry with this value, compare the key value */
-  while ((pn != 0) && (RBT_VALUE(pn) == rbt_value))
+  while((pn != 0) && (RBT_VALUE(pn) == rbt_value))
     {
       pdata = (hash_data_t *) RBT_OPAQ(pn);
       /* Verify the key value : this function returns 0 if key are indentical */
-      if (!ht->parameter.compare_key(buffkey, &(pdata->buffkey)))
+      if(!ht->parameter.compare_key(buffkey, &(pdata->buffkey)))
         {
           found = 1;
           break;                /* exit the while loop */
@@ -473,7 +473,7 @@ static int Key_Locate(hash_table_t * ht, hash_buffer_t * buffkey, unsigned int h
     }                           /* while */
 
   /* We didn't find anything */
-  if (!found)
+  if(!found)
     return HASHTABLE_ERROR_NO_SUCH_KEY;
 
   /* Key was found */
@@ -514,48 +514,48 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
   pthread_mutexattr_t mutexattr;
 
   /* Sanity check */
-  if ((ht = (hash_table_t *) Mem_Alloc(sizeof(hash_table_t))) == NULL)
+  if((ht = (hash_table_t *) Mem_Alloc(sizeof(hash_table_t))) == NULL)
     return NULL;
 
   /* we have to keep the discriminant values */
   ht->parameter = hparam;
 
-  if (pthread_mutexattr_init(&mutexattr) != 0)
+  if(pthread_mutexattr_init(&mutexattr) != 0)
     return NULL;
 
   /* Initialization of the node array */
-  if ((ht->array_rbt =
-       (struct rbt_head *)Mem_Alloc(sizeof(struct rbt_head) * hparam.index_size)) == NULL)
+  if((ht->array_rbt =
+      (struct rbt_head *)Mem_Alloc(sizeof(struct rbt_head) * hparam.index_size)) == NULL)
     return NULL;
 
   /* Initialization of the stat array */
-  if ((ht->stat_dynamic =
-       (hash_stat_dynamic_t *) Mem_Alloc(sizeof(hash_stat_dynamic_t) *
-                                         hparam.index_size)) == NULL)
+  if((ht->stat_dynamic =
+      (hash_stat_dynamic_t *) Mem_Alloc(sizeof(hash_stat_dynamic_t) *
+                                        hparam.index_size)) == NULL)
     return NULL;
 
   /* Initialization of the semaphores array */
-  if ((ht->array_lock =
-       (rw_lock_t *) Mem_Alloc(sizeof(rw_lock_t) * hparam.index_size)) == NULL)
+  if((ht->array_lock =
+      (rw_lock_t *) Mem_Alloc(sizeof(rw_lock_t) * hparam.index_size)) == NULL)
     return NULL;
 
   /* Initialize the array of pre-allocated node */
-  if ((ht->node_prealloc =
-       (struct rbt_node **)Mem_Alloc(sizeof(struct rbt_node *) * hparam.index_size)) ==
-      NULL)
+  if((ht->node_prealloc =
+      (struct rbt_node **)Mem_Alloc(sizeof(struct rbt_node *) * hparam.index_size)) ==
+     NULL)
     return NULL;
 
-  if ((ht->pdata_prealloc =
-       (hash_data_t **) Mem_Alloc(sizeof(hash_data_t *) * hparam.index_size)) == NULL)
+  if((ht->pdata_prealloc =
+      (hash_data_t **) Mem_Alloc(sizeof(hash_data_t *) * hparam.index_size)) == NULL)
     return NULL;
 
-  for (i = 0; i < hparam.index_size; i++)
+  for(i = 0; i < hparam.index_size; i++)
     {
 #ifndef _NO_BLOCK_PREALLOC
-      if ((ht->node_prealloc[i] = PreAllocNode(hparam.nb_node_prealloc)) == NULL)
+      if((ht->node_prealloc[i] = PreAllocNode(hparam.nb_node_prealloc)) == NULL)
         return NULL;
 
-      if ((ht->pdata_prealloc[i] = PreAllocPdata(hparam.nb_node_prealloc)) == NULL)
+      if((ht->pdata_prealloc[i] = PreAllocPdata(hparam.nb_node_prealloc)) == NULL)
         return NULL;
 #else
       ht->node_prealloc[i] = PreAllocNode(hparam.nb_node_prealloc);
@@ -564,13 +564,13 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
     }
 
   /* Initialize each of the RB-Tree, mutexes and stats */
-  for (i = 0; i < hparam.index_size; i++)
+  for(i = 0; i < hparam.index_size; i++)
     {
       /* RBT Init */
       RBT_HEAD_INIT(&(ht->array_rbt[i]));
 
       /* Mutex Init */
-      if (rw_lock_init(&(ht->array_lock[i])) != 0)
+      if(rw_lock_init(&(ht->array_lock[i])) != 0)
         return NULL;
 
       /* Initialization of the stats structure */
@@ -625,11 +625,11 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
   hash_data_t *pdata = NULL;
 
   /* Sanity check */
-  if (ht == NULL)
+  if(ht == NULL)
     return HASHTABLE_ERROR_INVALID_ARGUMENT;
-  else if (buffkey == NULL)
+  else if(buffkey == NULL)
     return HASHTABLE_ERROR_INVALID_ARGUMENT;
-  else if (buffval == NULL)
+  else if(buffval == NULL)
     return HASHTABLE_ERROR_INVALID_ARGUMENT;
 
   /* Find the RB Tree to be used */
@@ -644,17 +644,17 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
   /* acquire mutex for protection */
   P_w(&(ht->array_lock[hashval]));
 
-  if (Key_Locate(ht, buffkey, hashval, rbt_value, &pn) == HASHTABLE_SUCCESS)
+  if(Key_Locate(ht, buffkey, hashval, rbt_value, &pn) == HASHTABLE_SUCCESS)
     {
       /* An entry of that key already exists */
-      if (how == HASHTABLE_SET_HOW_TEST_ONLY)
+      if(how == HASHTABLE_SET_HOW_TEST_ONLY)
         {
           ht->stat_dynamic[hashval].ok.nb_test += 1;
           V_w(&(ht->array_lock[hashval]));
           return HASHTABLE_SUCCESS;
         }
 
-      if (how == HASHTABLE_SET_HOW_SET_NO_OVERWRITE)
+      if(how == HASHTABLE_SET_HOW_SET_NO_OVERWRITE)
         {
           ht->stat_dynamic[hashval].err.nb_test += 1;
           V_w(&(ht->array_lock[hashval]));
@@ -670,7 +670,7 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
   else
     {
       /* No entry of that key, add it to the trees */
-      if (how == HASHTABLE_SET_HOW_TEST_ONLY)
+      if(how == HASHTABLE_SET_HOW_TEST_ONLY)
         {
           ht->stat_dynamic[hashval].notfound.nb_test += 1;
           V_w(&(ht->array_lock[hashval]));
@@ -688,7 +688,7 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
       /* First get a new entry in the preallocated node array */
       GET_PREALLOC(qn, ht->node_prealloc[hashval], ht->parameter.nb_node_prealloc,
                    rbt_node_t, next);
-      if (qn == NULL)
+      if(qn == NULL)
         {
           ht->stat_dynamic[hashval].err.nb_set += 1;
           V_w(&(ht->array_lock[hashval]));
@@ -700,7 +700,7 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
 #endif
       GET_PREALLOC(pdata, ht->pdata_prealloc[hashval], ht->parameter.nb_node_prealloc,
                    hash_data_t, next_alloc);
-      if (pdata == NULL)
+      if(pdata == NULL)
         {
           ht->stat_dynamic[hashval].err.nb_set += 1;
           V_w(&(ht->array_lock[hashval]));
@@ -763,7 +763,7 @@ int HashTable_Get(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * bu
   int rc = 0;
 
   /* Sanity check */
-  if (ht == NULL || buffkey == NULL || buffval == NULL)
+  if(ht == NULL || buffkey == NULL || buffval == NULL)
     return HASHTABLE_ERROR_INVALID_ARGUMENT;
 
   /* Find the RB Tree to be processed */
@@ -777,7 +777,7 @@ int HashTable_Get(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * bu
   P_r(&(ht->array_lock[hashval]));
 
   /* I get the node with this value that is located on the left (first with this value in the rbtree) */
-  if ((rc = Key_Locate(ht, buffkey, hashval, rbt_value, &pn)) != HASHTABLE_SUCCESS)
+  if((rc = Key_Locate(ht, buffkey, hashval, rbt_value, &pn)) != HASHTABLE_SUCCESS)
     {
       ht->stat_dynamic[hashval].notfound.nb_get += 1;
       V_r(&(ht->array_lock[hashval]));
@@ -826,7 +826,7 @@ int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
   int rc = 0;
 
   /* Sanity check */
-  if (ht == NULL || buffkey == NULL)
+  if(ht == NULL || buffkey == NULL)
     return HASHTABLE_ERROR_INVALID_ARGUMENT;
 
   /* Find the RB Tree to be processed */
@@ -839,7 +839,7 @@ int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
   P_w(&(ht->array_lock[hashval]));
 
   /* We didn't find anything */
-  if ((rc = Key_Locate(ht, buffkey, hashval, rbt_value, &pn)) != HASHTABLE_SUCCESS)
+  if((rc = Key_Locate(ht, buffkey, hashval, rbt_value, &pn)) != HASHTABLE_SUCCESS)
     {
       ht->stat_dynamic[hashval].notfound.nb_del += 1;
       V_w(&(ht->array_lock[hashval]));
@@ -849,10 +849,10 @@ int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
   pdata = (hash_data_t *) RBT_OPAQ(pn);
 
   /* Return the key buffer back to the end user if pusedbuffkey isn't NULL */
-  if (p_usedbuffkey != NULL)
+  if(p_usedbuffkey != NULL)
     *p_usedbuffkey = pdata->buffkey;
 
-  if (p_usedbuffdata != NULL)
+  if(p_usedbuffdata != NULL)
     *p_usedbuffdata = pdata->buffval;
 
   /* Key was found */
@@ -897,7 +897,7 @@ void HashTable_GetStats(hash_table_t * ht, hash_stat_t * hstat)
   unsigned int i = 0;
 
   /* Sanity check */
-  if (ht == NULL || hstat == NULL)
+  if(ht == NULL || hstat == NULL)
     return;
 
   /* Firt, copy the dynamic values */
@@ -925,12 +925,12 @@ void HashTable_GetStats(hash_table_t * ht, hash_stat_t * hstat)
   hstat->dynamic.notfound.nb_get = 0;
   hstat->dynamic.notfound.nb_del = 0;
 
-  for (i = 0; i < ht->parameter.index_size; i++)
+  for(i = 0; i < ht->parameter.index_size; i++)
     {
-      if (ht->array_rbt[i].rbt_num_node > hstat->computed.max_rbt_num_node)
+      if(ht->array_rbt[i].rbt_num_node > hstat->computed.max_rbt_num_node)
         hstat->computed.max_rbt_num_node = ht->array_rbt[i].rbt_num_node;
 
-      if (ht->array_rbt[i].rbt_num_node < hstat->computed.min_rbt_num_node)
+      if(ht->array_rbt[i].rbt_num_node < hstat->computed.min_rbt_num_node)
         hstat->computed.min_rbt_num_node = ht->array_rbt[i].rbt_num_node;
 
       hstat->computed.average_rbt_num_node += ht->array_rbt[i].rbt_num_node;
@@ -976,10 +976,10 @@ unsigned int HashTable_GetSize(hash_table_t * ht)
   unsigned int nb_entries = 0;
 
   /* Sanity check */
-  if (ht == NULL)
+  if(ht == NULL)
     return HASHTABLE_ERROR_INVALID_ARGUMENT;
 
-  for (i = 0; i < ht->parameter.index_size; i++)
+  for(i = 0; i < ht->parameter.index_size; i++)
     nb_entries += ht->stat_dynamic[i].nb_entries;
 
   return nb_entries;
@@ -1013,7 +1013,7 @@ void HashTable_Print(hash_table_t * ht)
   unsigned long hashval;
 
   /* Sanity check */
-  if (ht == NULL)
+  if(ht == NULL)
     return;
 
 #ifdef _DEBUG_HASHTABLE
@@ -1022,14 +1022,14 @@ void HashTable_Print(hash_table_t * ht)
        ht->parameter.index_size);
 #endif
 
-  for (i = 0; i < ht->parameter.index_size; i++)
+  for(i = 0; i < ht->parameter.index_size; i++)
     nb_entries += ht->stat_dynamic[i].nb_entries;
 
 #ifndef _DEBUG_HASHTABLE
   printf("The hash contains %d entries\n", nb_entries);
 #endif
 
-  for (i = 0; i < ht->parameter.index_size; i++)
+  for(i = 0; i < ht->parameter.index_size; i++)
     {
       tete_rbt = &((ht->array_rbt)[i]);
 #ifdef _DEBUG_HASHTABLE

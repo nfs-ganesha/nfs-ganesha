@@ -207,13 +207,13 @@ static void split_credname(gss_buffer_desc credname, char *username, char *domai
 {
   char *ptr = NULL;
   int pos = 0;
-  if (credname.value == NULL)
+  if(credname.value == NULL)
     return;
 
   ptr = (char *)credname.value;
-  for (pos = 0; pos < credname.length; pos++)
+  for(pos = 0; pos < credname.length; pos++)
     {
-      if (ptr[pos] == '@' && pos + 1 < credname.length)
+      if(ptr[pos] == '@' && pos + 1 < credname.length)
         {
           strncpy(username, ptr, pos);
           username[pos] = '\0';
@@ -274,16 +274,16 @@ exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exp
   exportlist_t *piter;
   int found = 0;
 
-  for (piter = exportroot; piter != NULL; piter = piter->next)
+  for(piter = exportroot; piter != NULL; piter = piter->next)
     {
-      if (piter->id == exportid)
+      if(piter->id == exportid)
         {
           found = 1;
           break;
         }
     }                           /* for */
 
-  if (found == 0)
+  if(found == 0)
     return NULL;
   else
     return piter;
@@ -377,8 +377,7 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
              gd->ctx, ptr);
 #endif
 
-      if ((maj_stat = gss_oid_to_str(&min_stat,
-                                     gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
+      if((maj_stat = gss_oid_to_str(&min_stat, gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
         {
           fprintf(stderr, "Erreur de gss_oid_to_str: %u|%u\n", maj_stat, min_stat);
           exit(1);
@@ -397,10 +396,10 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
 #endif
 
       /* Convert to uid */
-      if (!name2uid(username, &caller_uid))
+      if(!name2uid(username, &caller_uid))
         return FALSE;
 
-      if (uidgidmap_get(caller_uid, &caller_gid) != ID_MAPPER_SUCCESS)
+      if(uidgidmap_get(caller_uid, &caller_gid) != ID_MAPPER_SUCCESS)
         {
           DisplayLogLevel(NIV_MAJOR,
                           "NFS_DISPATCH: FAILURE: Could not resolve uidgid map for %u",
@@ -429,7 +428,7 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
     }                           /* switch( ptr_req->rq_cred.oa_flavor ) */
 
   /* Do we have root access ? */
-  if ((caller_uid == 0) && !(pexport_client->options & EXPORT_OPTION_ROOT))
+  if((caller_uid == 0) && !(pexport_client->options & EXPORT_OPTION_ROOT))
     {
       /* caller_uid = ANON_UID ; */
       caller_uid = pexport->anonymous_uid;
@@ -441,7 +440,7 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
                                       &pexport->FS_export_context,
                                       caller_uid, caller_gid, caller_garray, caller_glen);
 
-  if (FSAL_IS_ERROR(fsal_status))
+  if(FSAL_IS_ERROR(fsal_status))
     {
       DisplayLogLevel(NIV_EVENT,
                       "NFS DISPATCHER: FAILURE: Could not get credentials for (uid=%d,gid=%d), fsal error=(%d,%d)",
@@ -469,30 +468,30 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
  */
 int nfs_compare_clientcred(nfs_client_cred_t * pcred1, nfs_client_cred_t * pcred2)
 {
-  if (pcred1 == NULL)
+  if(pcred1 == NULL)
     return FALSE;
-  if (pcred2 == NULL)
-    return FALSE;
-
-  if (pcred1->flavor != pcred2->flavor)
+  if(pcred2 == NULL)
     return FALSE;
 
-  if (pcred1->length != pcred2->length)
+  if(pcred1->flavor != pcred2->flavor)
+    return FALSE;
+
+  if(pcred1->length != pcred2->length)
     return FALSE;
 
   switch (pcred1->flavor)
     {
     case AUTH_UNIX:
-      if (pcred1->auth_union.auth_unix.aup_uid != pcred2->auth_union.auth_unix.aup_uid)
+      if(pcred1->auth_union.auth_unix.aup_uid != pcred2->auth_union.auth_unix.aup_uid)
         return FALSE;
-      if (pcred1->auth_union.auth_unix.aup_gid != pcred2->auth_union.auth_unix.aup_gid)
+      if(pcred1->auth_union.auth_unix.aup_gid != pcred2->auth_union.auth_unix.aup_gid)
         return FALSE;
-      if (pcred1->auth_union.auth_unix.aup_time != pcred2->auth_union.auth_unix.aup_time)
+      if(pcred1->auth_union.auth_unix.aup_time != pcred2->auth_union.auth_unix.aup_time)
         return FALSE;
       break;
 
     default:
-      if (memcmp(&pcred1->auth_union, &pcred2->auth_union, pcred1->length))
+      if(memcmp(&pcred1->auth_union, &pcred2->auth_union, pcred1->length))
         return FALSE;
       break;
     }
@@ -519,7 +518,7 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
   char errbuff[1024];
 #endif
 
-  if (reqp == NULL || pcred == NULL)
+  if(reqp == NULL || pcred == NULL)
     return -1;
 
   pcred->flavor = reqp->rq_cred.oa_flavor;
@@ -550,8 +549,7 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
       pcred->auth_union.auth_gss.gss_context_id = gd->ctx;
       strncpy(pcred->auth_union.auth_gss.cname, gd->cname.value, NFS_CLIENT_NAME_LEN);
 
-      if ((maj_stat = gss_oid_to_str(&min_stat,
-                                     gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
+      if((maj_stat = gss_oid_to_str(&min_stat, gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
         {
           convert_gss_status2str(errbuff, maj_stat, min_stat);
           DisplayLog("GSSAPI ERROR: %u|%u = %s", maj_stat, min_stat, errbuff);

@@ -158,20 +158,20 @@ int nfs_Fsstat(nfs_arg_t * parg,
   fsal_attrib_list_t attr;
   int rc = 0;
 
-  if (preq->rq_vers == NFS_V3)
+  if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */
       pres->res_fsstat3.FSSTAT3res_u.resfail.obj_attributes.attributes_follow = FALSE;
     }
 
   /* convert file handle to vnode */
-  if ((pentry = nfs_FhandleToCache(preq->rq_vers,
-                                   &(parg->arg_lookup2.dir),
-                                   &(parg->arg_lookup3.what.dir),
-                                   NULL,
-                                   &(pres->res_statfs2.status),
-                                   &(pres->res_fsstat3.status),
-                                   NULL, NULL, pcontext, pclient, ht, &rc)) == NULL)
+  if((pentry = nfs_FhandleToCache(preq->rq_vers,
+                                  &(parg->arg_lookup2.dir),
+                                  &(parg->arg_lookup3.what.dir),
+                                  NULL,
+                                  &(pres->res_statfs2.status),
+                                  &(pres->res_fsstat3.status),
+                                  NULL, NULL, pcontext, pclient, ht, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       /* return NFS_REQ_DROP ; */
@@ -180,17 +180,17 @@ int nfs_Fsstat(nfs_arg_t * parg,
 
   /* Get statistics and convert from cache */
 
-  if ((cache_status = cache_inode_statfs(pentry,
-                                         &staticinfo,
-                                         &dynamicinfo,
-                                         pcontext, &cache_status)) == CACHE_INODE_SUCCESS)
+  if((cache_status = cache_inode_statfs(pentry,
+                                        &staticinfo,
+                                        &dynamicinfo,
+                                        pcontext, &cache_status)) == CACHE_INODE_SUCCESS)
     {
       /* This call is costless, the pentry was cached during call to nfs_FhandleToCache */
-      if ((cache_status = cache_inode_getattr(pentry,
-                                              &attr,
-                                              ht,
-                                              pclient, pcontext,
-                                              &cache_status)) == CACHE_INODE_SUCCESS)
+      if((cache_status = cache_inode_getattr(pentry,
+                                             &attr,
+                                             ht,
+                                             pclient, pcontext,
+                                             &cache_status)) == CACHE_INODE_SUCCESS)
         {
 #ifdef  _DEBUG_NFSPROTO
           printf
@@ -249,7 +249,7 @@ int nfs_Fsstat(nfs_arg_t * parg,
     }
 
   /* At this point we met an error */
-  if (nfs_RetryableError(cache_status))
+  if(nfs_RetryableError(cache_status))
     return NFS_REQ_DROP;
 
   nfs_SetFailedStatus(pcontext, pexport,

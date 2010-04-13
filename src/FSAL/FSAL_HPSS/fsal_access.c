@@ -69,7 +69,7 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
   /* sanity checks.
    * note : object_attributes is optionnal in FSAL_getattrs.
    */
-  if (!object_handle || !p_context)
+  if(!object_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_access);
 
   /* converts fsal access type to hpss access type */
@@ -93,23 +93,23 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
 
   /* convert returned code */
   /* The HPSS_ENOENT error actually means that handle is STALE */
-  if (rc == HPSS_ENOENT)
+  if(rc == HPSS_ENOENT)
     Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_access);
-  else if (rc)
+  else if(rc)
     Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_access);
 
   /* get attributes if object_attributes is not null.
    * If an error occures during getattr operation,
    * it is returned, even though the access operation succeeded.
    */
-  if (object_attributes)
+  if(object_attributes)
     {
       fsal_status_t status;
 
       status = FSAL_getattrs(object_handle, p_context, object_attributes);
 
       /* on error, we set a special bit in the mask. */
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(object_attributes->asked_attributes);
           FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

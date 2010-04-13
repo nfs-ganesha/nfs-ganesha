@@ -205,11 +205,11 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
   char *LogFile = NULL;
 
   /* Is the config tree initialized ? */
-  if (in_config == NULL || pparam == NULL)
+  if(in_config == NULL || pparam == NULL)
     MFSL_return(ERR_FSAL_INVAL, 0);
 
   /* Get the config BLOCK */
-  if ((block = config_FindItemByName(in_config, CONF_LABEL_MFSL_ASYNC)) == NULL)
+  if((block = config_FindItemByName(in_config, CONF_LABEL_MFSL_ASYNC)) == NULL)
     {
       DisplayLog("/!\\ Cannot read item \"%s\" from configuration file\n",
                  CONF_LABEL_MFSL_ASYNC);
@@ -217,13 +217,13 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
     }
   var_max = config_GetNbItems(block);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
 
       item = config_GetItemByIndex(block, var_index);
 
-      if ((err = config_GetKeyValue(item, &key_name, &key_value)) > 0)
+      if((err = config_GetKeyValue(item, &key_name, &key_value)) > 0)
         {
           DisplayLog
               ("MFSL ASYNC LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
@@ -231,7 +231,7 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
           MFSL_return(ERR_FSAL_SERVERFAULT, err);
         }
 
-      if (!strcasecmp(key_name, "Nb_Synclet"))
+      if(!strcasecmp(key_name, "Nb_Synclet"))
         {
           DisplayLog
               ("MFSL ASYNC LOAD PARAMETER: the asyncop scheduler is not yet implemented. Only one synclet managed");
@@ -241,47 +241,47 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
           //pparam->nb_synclet = atoi( key_value ) ;
           pparam->nb_synclet = 1;
         }
-      else if (!strcasecmp(key_name, "Async_Window_sec"))
+      else if(!strcasecmp(key_name, "Async_Window_sec"))
         {
           pparam->async_window_sec = atoi(key_value);   /* Asynchronous Task Dispatcher sleeping time */
         }
-      else if (!strcasecmp(key_name, "Async_Window_usec"))
+      else if(!strcasecmp(key_name, "Async_Window_usec"))
         {
           pparam->async_window_usec = atoi(key_value);  /* Asynchronous Task Dispatcher sleeping time */
         }
-      else if (!strcasecmp(key_name, "Nb_Sync_Before_GC"))
+      else if(!strcasecmp(key_name, "Nb_Sync_Before_GC"))
         {
           pparam->nb_before_gc = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "PreCreatedObject_Directory"))
+      else if(!strcasecmp(key_name, "PreCreatedObject_Directory"))
         {
           strncpy(pparam->pre_create_obj_dir, key_value, MAXPATHLEN);
         }
-      else if (!strcasecmp(key_name, "Tmp_Symlink_Directory"))
+      else if(!strcasecmp(key_name, "Tmp_Symlink_Directory"))
         {
           strncpy(pparam->tmp_symlink_dir, key_value, MAXPATHLEN);
         }
-      else if (!strcasecmp(key_name, "Nb_PreCreated_Directories"))
+      else if(!strcasecmp(key_name, "Nb_PreCreated_Directories"))
         {
           pparam->nb_pre_create_dirs = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Nb_PreCreated_Files"))
+      else if(!strcasecmp(key_name, "Nb_PreCreated_Files"))
         {
           pparam->nb_pre_create_files = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "LRU_Prealloc_PoolSize"))
+      else if(!strcasecmp(key_name, "LRU_Prealloc_PoolSize"))
         {
           pparam->lru_param.nb_entry_prealloc = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "LRU_Nb_Call_Gc_invalid"))
+      else if(!strcasecmp(key_name, "LRU_Nb_Call_Gc_invalid"))
         {
           pparam->lru_param.nb_call_gc_invalid = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "DebugLevel"))
+      else if(!strcasecmp(key_name, "DebugLevel"))
         {
           DebugLevel = ReturnLevelAscii(key_value);
 
-          if (DebugLevel == -1)
+          if(DebugLevel == -1)
             {
               DisplayLog
                   ("cache_content_read_conf: ERROR: Invalid debug level name: \"%s\".",
@@ -289,7 +289,7 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
               MFSL_return(ERR_FSAL_INVAL, 0);
             }
         }
-      else if (!strcasecmp(key_name, "LogFile"))
+      else if(!strcasecmp(key_name, "LogFile"))
         {
           LogFile = key_value;
         }
@@ -304,7 +304,7 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
 
     }                           /* for */
 
-  if (LogFile)
+  if(LogFile)
     {
       desc_log_stream_t log_stream;
 
@@ -312,7 +312,7 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
 
       /* Default : NIV_CRIT */
 
-      if (DebugLevel == -1)
+      if(DebugLevel == -1)
         AddLogStreamJd(&log_outputs, V_FILE, log_stream, NIV_CRIT, SUP);
       else
         AddLogStreamJd(&log_outputs, V_FILE, log_stream, DebugLevel, SUP);

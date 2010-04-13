@@ -82,30 +82,30 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
 
   /* sanity checks. */
 
-  if (!filehandle || !p_context || !p_local_path)
+  if(!filehandle || !p_context || !p_local_path)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_rcp);
 
   to_local = ((transfer_opt & FSAL_RCP_FS_TO_LOCAL) == FSAL_RCP_FS_TO_LOCAL);
   to_fs = ((transfer_opt & FSAL_RCP_LOCAL_TO_FS) == FSAL_RCP_LOCAL_TO_FS);
 
 #ifdef  _DEBUG_FSAL
-  if (to_local)
+  if(to_local)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
                       "FSAL_rcp: FSAL -> local file (%s)", p_local_path->path);
 
-  if (to_fs)
+  if(to_fs)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
                       "FSAL_rcp: local file -> FSAL (%s)", p_local_path->path);
 #endif
 
   /* must give the sens of transfert (exactly one) */
 
-  if ((!to_local && !to_fs) || (to_local && to_fs))
+  if((!to_local && !to_fs) || (to_local && to_fs))
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_rcp);
 
   /* first, open local file with the correct flags */
 
-  if (to_fs)
+  if(to_fs)
     {
       local_flags = O_RDONLY;
     }
@@ -113,10 +113,10 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
     {
       local_flags = O_WRONLY | O_TRUNC;
 
-      if ((transfer_opt & FSAL_RCP_LOCAL_CREAT) == FSAL_RCP_LOCAL_CREAT)
+      if((transfer_opt & FSAL_RCP_LOCAL_CREAT) == FSAL_RCP_LOCAL_CREAT)
         local_flags |= O_CREAT;
 
-      if ((transfer_opt & FSAL_RCP_LOCAL_EXCL) == FSAL_RCP_LOCAL_EXCL)
+      if((transfer_opt & FSAL_RCP_LOCAL_EXCL) == FSAL_RCP_LOCAL_EXCL)
         local_flags |= O_EXCL;
 
     }
@@ -128,19 +128,19 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
 
     msg[0] = '\0';
 
-    if ((local_flags & O_RDONLY) == O_RDONLY)
+    if((local_flags & O_RDONLY) == O_RDONLY)
       strcat(msg, "O_RDONLY ");
 
-    if ((local_flags & O_WRONLY) == O_WRONLY)
+    if((local_flags & O_WRONLY) == O_WRONLY)
       strcat(msg, "O_WRONLY ");
 
-    if ((local_flags & O_TRUNC) == O_TRUNC)
+    if((local_flags & O_TRUNC) == O_TRUNC)
       strcat(msg, "O_TRUNC ");
 
-    if ((local_flags & O_CREAT) == O_CREAT)
+    if((local_flags & O_CREAT) == O_CREAT)
       strcat(msg, "O_CREAT ");
 
-    if ((local_flags & O_EXCL) == O_EXCL)
+    if((local_flags & O_EXCL) == O_EXCL)
       strcat(msg, "O_EXCL ");
 
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Openning local file %s with flags: %s",
@@ -151,21 +151,21 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
 
   local_fd = open(p_local_path->path, local_flags, 0644);
 
-  if (local_fd == -1)
+  if(local_fd == -1)
     {
       Return(hpss2fsal_error(errno), errno, INDEX_FSAL_rcp);
     }
 
   /* call FSAL_open with the correct flags */
 
-  if (to_fs)
+  if(to_fs)
     {
       fs_flags = FSAL_O_WRONLY | FSAL_O_TRUNC;
 
       /* invalid flags for local to filesystem */
 
-      if (((transfer_opt & FSAL_RCP_LOCAL_CREAT) == FSAL_RCP_LOCAL_CREAT)
-          || ((transfer_opt & FSAL_RCP_LOCAL_EXCL) == FSAL_RCP_LOCAL_EXCL))
+      if(((transfer_opt & FSAL_RCP_LOCAL_CREAT) == FSAL_RCP_LOCAL_CREAT)
+         || ((transfer_opt & FSAL_RCP_LOCAL_EXCL) == FSAL_RCP_LOCAL_EXCL))
         {
           /* clean & return */
           close(local_fd);
@@ -184,13 +184,13 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
 
     msg[0] = '\0';
 
-    if ((fs_flags & FSAL_O_RDONLY) == FSAL_O_RDONLY)
+    if((fs_flags & FSAL_O_RDONLY) == FSAL_O_RDONLY)
       strcat(msg, "FSAL_O_RDONLY ");
 
-    if ((fs_flags & FSAL_O_WRONLY) == FSAL_O_WRONLY)
+    if((fs_flags & FSAL_O_WRONLY) == FSAL_O_WRONLY)
       strcat(msg, "FSAL_O_WRONLY ");
 
-    if ((fs_flags & FSAL_O_TRUNC) == FSAL_O_TRUNC)
+    if((fs_flags & FSAL_O_TRUNC) == FSAL_O_TRUNC)
       strcat(msg, "FSAL_O_TRUNC ");
 
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Openning FSAL file with flags: %s", msg);
@@ -200,7 +200,7 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
 
   st = FSAL_open(filehandle, p_context, fs_flags, &fs_fd, NULL);
 
-  if (FSAL_IS_ERROR(st))
+  if(FSAL_IS_ERROR(st))
     {
       /* clean & return */
       close(local_fd);
@@ -216,7 +216,7 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
 
   IObuffer = (caddr_t) Mem_Alloc(RCP_BUFFER_SIZE);
 
-  if (IObuffer == NULL)
+  if(IObuffer == NULL)
     {
       /* clean & return */
       close(local_fd);
@@ -226,7 +226,7 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
 
   /* read/write loop */
 
-  while (!eof)
+  while(!eof)
     {
       /* initialize error code */
       st = FSAL_STATUS_NO_ERROR;
@@ -237,11 +237,11 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
 
       /* read */
 
-      if (to_fs)                /* from local filesystem */
+      if(to_fs)                 /* from local filesystem */
         {
           local_size = read(local_fd, IObuffer, RCP_BUFFER_SIZE);
 
-          if (local_size == -1)
+          if(local_size == -1)
             {
               st.major = ERR_FSAL_IO;
               st.minor = errno;
@@ -256,26 +256,26 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
           fs_size = 0;
           st = FSAL_read(&fs_fd, NULL, RCP_BUFFER_SIZE, IObuffer, &fs_size, &eof);
 
-          if (FSAL_IS_ERROR(st))
+          if(FSAL_IS_ERROR(st))
             break;              /* exit loop */
 
         }
 
       /* write (if not eof) */
 
-      if (!eof || ((!to_fs) && (fs_size > 0)))
+      if(!eof || ((!to_fs) && (fs_size > 0)))
         {
 
 #ifdef  _DEBUG_FSAL
           DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Write a block to destination");
 #endif
 
-          if (to_fs)            /* to FSAL filesystem */
+          if(to_fs)             /* to FSAL filesystem */
             {
 
               st = FSAL_write(&fs_fd, NULL, local_size, IObuffer, &fs_size);
 
-              if (FSAL_IS_ERROR(st))
+              if(FSAL_IS_ERROR(st))
                 break;          /* exit loop */
 
             }
@@ -284,7 +284,7 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
 
               local_size = write(local_fd, IObuffer, fs_size);
 
-              if (local_size == -1)
+              if(local_size == -1)
                 {
                   st.major = ERR_FSAL_IO;
                   st.minor = errno;

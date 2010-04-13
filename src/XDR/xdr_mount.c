@@ -32,7 +32,7 @@ mountstat3 *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if (!xdr_enum(xdrs, (enum_t *) objp))
+  if(!xdr_enum(xdrs, (enum_t *) objp))
     return (FALSE);
   return (TRUE);
 }
@@ -48,8 +48,8 @@ fhandle3 *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if (!xdr_bytes
-      (xdrs, (char **)&objp->fhandle3_val, (u_int *) & objp->fhandle3_len, NFS3_FHSIZE))
+  if(!xdr_bytes
+     (xdrs, (char **)&objp->fhandle3_val, (u_int *) & objp->fhandle3_len, NFS3_FHSIZE))
     return (FALSE);
   return (TRUE);
 }
@@ -65,7 +65,7 @@ dirpath *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if (!xdr_string(xdrs, objp, MNTPATHLEN))
+  if(!xdr_string(xdrs, objp, MNTPATHLEN))
     return (FALSE);
   return (TRUE);
 }
@@ -81,7 +81,7 @@ name *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if (!xdr_string(xdrs, objp, MNTNAMLEN))
+  if(!xdr_string(xdrs, objp, MNTNAMLEN))
     return (FALSE);
   return (TRUE);
 }
@@ -97,8 +97,8 @@ groups *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if (!xdr_pointer
-      (xdrs, (char **)objp, sizeof(struct groupnode), (xdrproc_t) xdr_groupnode))
+  if(!xdr_pointer
+     (xdrs, (char **)objp, sizeof(struct groupnode), (xdrproc_t) xdr_groupnode))
     return (FALSE);
   return (TRUE);
 }
@@ -114,9 +114,9 @@ groupnode *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if (!xdr_name(xdrs, &objp->gr_name))
+  if(!xdr_name(xdrs, &objp->gr_name))
     return (FALSE);
-  if (!xdr_groups(xdrs, &objp->gr_next))
+  if(!xdr_groups(xdrs, &objp->gr_next))
     return (FALSE);
   return (TRUE);
 }
@@ -132,8 +132,8 @@ exports *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if (!xdr_pointer
-      (xdrs, (char **)objp, sizeof(struct exportnode), (xdrproc_t) xdr_exportnode))
+  if(!xdr_pointer
+     (xdrs, (char **)objp, sizeof(struct exportnode), (xdrproc_t) xdr_exportnode))
     return (FALSE);
   return (TRUE);
 }
@@ -149,11 +149,11 @@ exportnode *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if (!xdr_dirpath(xdrs, &objp->ex_dir))
+  if(!xdr_dirpath(xdrs, &objp->ex_dir))
     return (FALSE);
-  if (!xdr_groups(xdrs, &objp->ex_groups))
+  if(!xdr_groups(xdrs, &objp->ex_groups))
     return (FALSE);
-  if (!xdr_exports(xdrs, &objp->ex_next))
+  if(!xdr_exports(xdrs, &objp->ex_next))
     return (FALSE);
   return (TRUE);
 }
@@ -169,8 +169,8 @@ mountlist *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if (!xdr_pointer
-      (xdrs, (char **)objp, sizeof(struct mountbody), (xdrproc_t) xdr_mountbody))
+  if(!xdr_pointer
+     (xdrs, (char **)objp, sizeof(struct mountbody), (xdrproc_t) xdr_mountbody))
     return (FALSE);
   return (TRUE);
 }
@@ -186,11 +186,11 @@ mountbody *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if (!xdr_name(xdrs, &objp->ml_hostname))
+  if(!xdr_name(xdrs, &objp->ml_hostname))
     return (FALSE);
-  if (!xdr_dirpath(xdrs, &objp->ml_directory))
+  if(!xdr_dirpath(xdrs, &objp->ml_directory))
     return (FALSE);
-  if (!xdr_mountlist(xdrs, &objp->ml_next))
+  if(!xdr_mountlist(xdrs, &objp->ml_next))
     return (FALSE);
   return (TRUE);
 }
@@ -206,12 +206,12 @@ mountres3_ok *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if (!xdr_fhandle3(xdrs, &objp->fhandle))
+  if(!xdr_fhandle3(xdrs, &objp->fhandle))
     return (FALSE);
-  if (!xdr_array
-      (xdrs, (char **)&objp->auth_flavors.auth_flavors_val,
-       (u_int *) & objp->auth_flavors.auth_flavors_len, ~0, sizeof(int),
-       (xdrproc_t) xdr_int))
+  if(!xdr_array
+     (xdrs, (char **)&objp->auth_flavors.auth_flavors_val,
+      (u_int *) & objp->auth_flavors.auth_flavors_len, ~0, sizeof(int),
+      (xdrproc_t) xdr_int))
     return (FALSE);
   return (TRUE);
 }
@@ -227,12 +227,12 @@ mountres3 *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if (!xdr_mountstat3(xdrs, &objp->fhs_status))
+  if(!xdr_mountstat3(xdrs, &objp->fhs_status))
     return (FALSE);
   switch (objp->fhs_status)
     {
     case MNT3_OK:
-      if (!xdr_mountres3_ok(xdrs, &objp->mountres3_u.mountinfo))
+      if(!xdr_mountres3_ok(xdrs, &objp->mountres3_u.mountinfo))
         return (FALSE);
       break;
     }

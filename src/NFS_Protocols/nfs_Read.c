@@ -172,26 +172,26 @@ int nfs_Read(nfs_arg_t * parg,
 
   datapol.UseMaxCacheSize = FALSE;
 
-  if (preq->rq_vers == NFS_V3)
+  if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */
       pres->res_read3.READ3res_u.resfail.file_attributes.attributes_follow = FALSE;
     }
 
   /* Convert file handle into a cache entry */
-  if ((pentry = nfs_FhandleToCache(preq->rq_vers,
-                                   &(parg->arg_read2.file),
-                                   &(parg->arg_read3.file),
-                                   NULL,
-                                   &(pres->res_read2.status),
-                                   &(pres->res_read3.status),
-                                   NULL, &pre_attr, pcontext, pclient, ht, &rc)) == NULL)
+  if((pentry = nfs_FhandleToCache(preq->rq_vers,
+                                  &(parg->arg_read2.file),
+                                  &(parg->arg_read3.file),
+                                  NULL,
+                                  &(pres->res_read2.status),
+                                  &(pres->res_read3.status),
+                                  NULL, &pre_attr, pcontext, pclient, ht, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       return rc;
     }
 
-  if ((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_read3.file))))
+  if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_read3.file))))
     return nfs3_Read_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
 
   /* get directory attributes before action (for V3 reply) */
@@ -201,7 +201,7 @@ int nfs_Read(nfs_arg_t * parg,
   filetype = cache_inode_fsal_type_convert(pre_attr.type);
 
   /* Sanity check: read only from a regular file */
-  if (filetype != REGULAR_FILE)
+  if(filetype != REGULAR_FILE)
     {
       switch (preq->rq_vers)
         {
@@ -214,7 +214,7 @@ int nfs_Read(nfs_arg_t * parg,
           break;
 
         case NFS_V3:
-          if (filetype == DIR_BEGINNING || filetype == DIR_CONTINUE)
+          if(filetype == DIR_BEGINNING || filetype == DIR_CONTINUE)
             pres->res_read3.status = NFS3ERR_ISDIR;
           else
             pres->res_read3.status = NFS3ERR_INVAL;
@@ -227,8 +227,8 @@ int nfs_Read(nfs_arg_t * parg,
   /* For MDONLY export, reject write operation */
   /* Request of type MDONLY_RO were rejected at the nfs_rpc_dispatcher level */
   /* This is done by replying EDQUOT (this error is known for not disturbing the client's requests cache */
-  if (pexport->access_type == ACCESSTYPE_MDONLY
-      || pexport->access_type == ACCESSTYPE_MDONLY_RO)
+  if(pexport->access_type == ACCESSTYPE_MDONLY
+     || pexport->access_type == ACCESSTYPE_MDONLY_RO)
     {
       switch (preq->rq_vers)
         {
@@ -273,8 +273,8 @@ int nfs_Read(nfs_arg_t * parg,
       /* 
        * do not exceed maxium READ/WRITE offset if set 
        */
-      if ((pexport->options & EXPORT_OPTION_MAXOFFSETREAD) == EXPORT_OPTION_MAXOFFSETREAD)
-        if ((fsal_off_t) (offset + size) > pexport->MaxOffsetRead)
+      if((pexport->options & EXPORT_OPTION_MAXOFFSETREAD) == EXPORT_OPTION_MAXOFFSETREAD)
+        if((fsal_off_t) (offset + size) > pexport->MaxOffsetRead)
           {
 
             DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
@@ -309,8 +309,8 @@ int nfs_Read(nfs_arg_t * parg,
        * We should not exceed the FSINFO rtmax field for
        * the size 
        */
-      if (((pexport->options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD) &&
-          size > pexport->MaxRead)
+      if(((pexport->options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD) &&
+         size > pexport->MaxRead)
         {
           /*
            * The client asked for too much, normally
@@ -323,7 +323,7 @@ int nfs_Read(nfs_arg_t * parg,
       break;
     }
 
-  if (size == 0)
+  if(size == 0)
     {
       cache_status = CACHE_INODE_SUCCESS;
       read_size = 0;
@@ -333,7 +333,7 @@ int nfs_Read(nfs_arg_t * parg,
     {
       data = Mem_Alloc(size);
 
-      if (data == NULL)
+      if(data == NULL)
         {
           return NFS_REQ_DROP;
         }
@@ -345,18 +345,18 @@ int nfs_Read(nfs_arg_t * parg,
       datapol.MaxCacheSize = pexport->MaxCacheSize;
 
       /* If export is not cached, cache it now */
-      if ((pexport->options & EXPORT_OPTION_USE_DATACACHE) &&
-          (cache_content_cache_behaviour(pentry,
-                                         &datapol,
-                                         (cache_content_client_t *)
-                                         pclient->pcontent_client,
-                                         &content_status) == CACHE_CONTENT_FULLY_CACHED)
-          && (pentry->object.file.pentry_content == NULL))
+      if((pexport->options & EXPORT_OPTION_USE_DATACACHE) &&
+         (cache_content_cache_behaviour(pentry,
+                                        &datapol,
+                                        (cache_content_client_t *)
+                                        pclient->pcontent_client,
+                                        &content_status) == CACHE_CONTENT_FULLY_CACHED)
+         && (pentry->object.file.pentry_content == NULL))
         {
           /* Entry is not in datacache, but should be in, cache it */
           cache_inode_add_data_cache(pentry, ht, pclient, pcontext, &cache_status);
-          if ((cache_status != CACHE_INODE_SUCCESS) &&
-              (cache_status != CACHE_INODE_CACHE_CONTENT_EXISTS))
+          if((cache_status != CACHE_INODE_SUCCESS) &&
+             (cache_status != CACHE_INODE_CACHE_CONTENT_EXISTS))
             {
               /* Entry is not in datacache, but should be in, cache it .
                * Several threads may call this function at the first time and a race condition can occur here
@@ -365,7 +365,7 @@ int nfs_Read(nfs_arg_t * parg,
                * with error CACHE_INODE_CACHE_CONTENT_EXISTS which is not a pathological thing here */
 
               /* If we are here, there was an error */
-              if (nfs_RetryableError(cache_status))
+              if(nfs_RetryableError(cache_status))
                 {
                   return NFS_REQ_DROP;
                 }
@@ -383,16 +383,16 @@ int nfs_Read(nfs_arg_t * parg,
             }
         }
 
-      if (cache_inode_rdwr(pentry,
-                           CACHE_CONTENT_READ,
-                           &seek_descriptor,
-                           size,
-                           &read_size,
-                           &attr,
-                           data,
-                           &eof_met,
-                           ht,
-                           pclient, pcontext, TRUE, &cache_status) == CACHE_INODE_SUCCESS)
+      if(cache_inode_rdwr(pentry,
+                          CACHE_CONTENT_READ,
+                          &seek_descriptor,
+                          size,
+                          &read_size,
+                          &attr,
+                          data,
+                          &eof_met,
+                          ht,
+                          pclient, pcontext, TRUE, &cache_status) == CACHE_INODE_SUCCESS)
 
         {
           switch (preq->rq_vers)
@@ -413,7 +413,7 @@ int nfs_Read(nfs_arg_t * parg,
 
               /* Did we reach eof ? */
               /* BUGAZOMEU use eof */
-              if ((offset + read_size) >= attr.filesize)
+              if((offset + read_size) >= attr.filesize)
                 pres->res_read3.READ3res_u.resok.eof = TRUE;
 
               /* Build Post Op Attributes */
@@ -437,7 +437,7 @@ int nfs_Read(nfs_arg_t * parg,
     }
 
   /* If we are here, there was an error */
-  if (nfs_RetryableError(cache_status))
+  if(nfs_RetryableError(cache_status))
     {
       return NFS_REQ_DROP;
     }
@@ -464,8 +464,8 @@ int nfs_Read(nfs_arg_t * parg,
  */
 void nfs2_Read_Free(nfs_res_t * resp)
 {
-  if ((resp->res_read2.status == NFS_OK) &&
-      (resp->res_read2.READ2res_u.readok.data.nfsdata2_len != 0))
+  if((resp->res_read2.status == NFS_OK) &&
+     (resp->res_read2.READ2res_u.readok.data.nfsdata2_len != 0))
     Mem_Free(resp->res_read2.READ2res_u.readok.data.nfsdata2_val);
 }                               /* nfs2_Read_Free */
 
@@ -479,7 +479,7 @@ void nfs2_Read_Free(nfs_res_t * resp)
  */
 void nfs3_Read_Free(nfs_res_t * resp)
 {
-  if ((resp->res_read3.status == NFS3_OK) &&
-      (resp->res_read3.READ3res_u.resok.data.data_len != 0))
+  if((resp->res_read3.status == NFS3_OK) &&
+     (resp->res_read3.READ3res_u.resok.data.data_len != 0))
     Mem_Free(resp->res_read3.READ3res_u.resok.data.data_val);
 }                               /* nfs3_Read_Free */

@@ -162,7 +162,7 @@ static int init_db_thread_info(db_thread_info_t * p_thr_info)
 {
   unsigned int i;
 
-  if (!p_thr_info)
+  if(!p_thr_info)
     return HANDLEMAP_INTERNAL_ERROR;
 
   memset(p_thr_info, 0, sizeof(db_thread_info_t));
@@ -174,13 +174,13 @@ static int init_db_thread_info(db_thread_info_t * p_thr_info)
 
   p_thr_info->work_queue.nb_waiting = 0;
 
-  if (pthread_mutex_init(&p_thr_info->work_queue.queues_mutex, NULL))
+  if(pthread_mutex_init(&p_thr_info->work_queue.queues_mutex, NULL))
     return HANDLEMAP_SYSTEM_ERROR;
 
-  if (pthread_cond_init(&p_thr_info->work_queue.work_avail_condition, NULL))
+  if(pthread_cond_init(&p_thr_info->work_queue.work_avail_condition, NULL))
     return HANDLEMAP_SYSTEM_ERROR;
 
-  if (pthread_cond_init(&p_thr_info->work_queue.work_done_condition, NULL))
+  if(pthread_cond_init(&p_thr_info->work_queue.work_done_condition, NULL))
     return HANDLEMAP_SYSTEM_ERROR;
 
   /* init thread status */
@@ -188,12 +188,12 @@ static int init_db_thread_info(db_thread_info_t * p_thr_info)
 
   p_thr_info->db_conn = NULL;
 
-  for (i = 0; i < STATEMENT_COUNT; i++)
+  for(i = 0; i < STATEMENT_COUNT; i++)
     p_thr_info->prep_stmt[i] = NULL;
 
   /* init memory pool */
 
-  if (pthread_mutex_init(&p_thr_info->pool_mutex, NULL))
+  if(pthread_mutex_init(&p_thr_info->pool_mutex, NULL))
     return HANDLEMAP_SYSTEM_ERROR;
 
   p_thr_info->dbop_pool = NULL;
@@ -223,9 +223,9 @@ static int init_database_access(db_thread_info_t * p_thr_info)
 
   rc = sqlite3_open(db_file, &p_thr_info->db_conn);
 
-  if (rc != 0)
+  if(rc != 0)
     {
-      if (p_thr_info->db_conn)
+      if(p_thr_info->db_conn)
         {
           DisplayLogJdLevel(fsal_log, NIV_CRIT,
                             "ERROR: could not connect to SQLite3 database (file %s): %s",
@@ -251,7 +251,7 @@ static int init_database_access(db_thread_info_t * p_thr_info)
   /* no need for the result, just the number of rows returned */
   sqlite3_free_table(result);
 
-  if (rows != 1)
+  if(rows != 1)
     {
       /* table must be created */
       rc = sqlite3_exec(p_thr_info->db_conn,
@@ -313,7 +313,7 @@ static int db_load_operation(db_thread_info_t * p_info, hash_table_t * p_hash)
   CheckStep(p_info->db_conn, rc, p_info->prep_stmt[LOAD_ALL_STATEMENT]);
 
   /* something to read */
-  while (rc == SQLITE_ROW)
+  while(rc == SQLITE_ROW)
     {
       object_id = sqlite3_column_int64(p_info->prep_stmt[LOAD_ALL_STATEMENT], 0);
       handle_hash = sqlite3_column_int(p_info->prep_stmt[LOAD_ALL_STATEMENT], 1);
@@ -326,7 +326,7 @@ static int db_load_operation(db_thread_info_t * p_info, hash_table_t * p_hash)
 
       rc = handle_mapping_hash_add(p_hash, object_id, handle_hash, &fsal_handle);
 
-      if (rc == 0)
+      if(rc == 0)
         nb_loaded++;
       else
         DisplayLogJdLevel(fsal_log, NIV_CRIT,
@@ -422,7 +422,7 @@ static int dbop_push(flusher_queue_t * p_queue, db_op_item_t * p_op)
 
       p_op->p_next = NULL;
 
-      if (p_queue->highprio_last == NULL)
+      if(p_queue->highprio_last == NULL)
         {
           /* first operation */
           p_queue->highprio_first = p_op;
@@ -444,7 +444,7 @@ static int dbop_push(flusher_queue_t * p_queue, db_op_item_t * p_op)
 
       p_op->p_next = NULL;
 
-      if (p_queue->lowprio_last == NULL)
+      if(p_queue->lowprio_last == NULL)
         {
           /* first operation */
           p_queue->lowprio_first = p_op;
@@ -489,7 +489,7 @@ static void *database_worker_thread(void *arg)
 
 #ifndef _NO_BUDDY_SYSTEM
 
-  if ((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
+  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
       DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: Could not initialize memory manager");
@@ -499,7 +499,7 @@ static void *database_worker_thread(void *arg)
 
   rc = init_database_access(p_info);
 
-  if (rc != HANDLEMAP_SUCCESS)
+  if(rc != HANDLEMAP_SUCCESS)
     {
       /* Failed init */
       DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: Database initialization error %d",
@@ -508,7 +508,7 @@ static void *database_worker_thread(void *arg)
     }
 
   /* main loop */
-  while (1)
+  while(1)
     {
 
       /* Is "work done" or "work available" condition verified ? */
@@ -516,15 +516,15 @@ static void *database_worker_thread(void *arg)
       P(p_info->work_queue.queues_mutex);
 
       /* nothing to be done ? */
-      while (p_info->work_queue.highprio_first == NULL
-             && p_info->work_queue.lowprio_first == NULL)
+      while(p_info->work_queue.highprio_first == NULL
+            && p_info->work_queue.lowprio_first == NULL)
         {
           to_be_done = NULL;
           p_info->work_queue.status = IDLE;
           pthread_cond_signal(&p_info->work_queue.work_done_condition);
 
           /* if termination is requested, exit */
-          if (do_terminate)
+          if(do_terminate)
             {
               p_info->work_queue.status = FINISHED;
               V(p_info->work_queue.queues_mutex);
@@ -541,33 +541,33 @@ static void *database_worker_thread(void *arg)
        * then the lower priority.
        */
 
-      if (p_info->work_queue.highprio_first != NULL)
+      if(p_info->work_queue.highprio_first != NULL)
         {
           /* take the next item in the list */
           to_be_done = p_info->work_queue.highprio_first;
           p_info->work_queue.highprio_first = to_be_done->p_next;
 
           /* still any entries in the list ? */
-          if (p_info->work_queue.highprio_first == NULL)
+          if(p_info->work_queue.highprio_first == NULL)
             p_info->work_queue.highprio_last = NULL;
           /* it it the last entry ? */
-          else if (p_info->work_queue.highprio_first->p_next == NULL)
+          else if(p_info->work_queue.highprio_first->p_next == NULL)
             p_info->work_queue.highprio_last = p_info->work_queue.highprio_first;
 
           /* something to do */
           p_info->work_queue.status = WORKING;
         }
-      else if (p_info->work_queue.lowprio_first != NULL)
+      else if(p_info->work_queue.lowprio_first != NULL)
         {
           /* take the next item in the list */
           to_be_done = p_info->work_queue.lowprio_first;
           p_info->work_queue.lowprio_first = to_be_done->p_next;
 
           /* still any entries in the list ? */
-          if (p_info->work_queue.lowprio_first == NULL)
+          if(p_info->work_queue.lowprio_first == NULL)
             p_info->work_queue.lowprio_last = NULL;
           /* it it the last entry ? */
-          else if (p_info->work_queue.lowprio_first->p_next == NULL)
+          else if(p_info->work_queue.lowprio_first->p_next == NULL)
             p_info->work_queue.lowprio_last = p_info->work_queue.lowprio_first;
 
           /* something to do */
@@ -630,7 +630,7 @@ int handlemap_db_count(const char *dir)
 
   dir_hdl = opendir(dir);
 
-  if (dir_hdl == NULL)
+  if(dir_hdl == NULL)
     {
       DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: could not access directory %s: %s",
                         dir, strerror(errno));
@@ -641,23 +641,23 @@ int handlemap_db_count(const char *dir)
     {
       rc = readdir_r(dir_hdl, &direntry, &cookie);
 
-      if (rc == 0 && cookie != NULL)
+      if(rc == 0 && cookie != NULL)
         {
           /* go to the next loop if the entry is . or .. */
-          if (!strcmp(".", direntry.d_name) || !strcmp("..", direntry.d_name))
+          if(!strcmp(".", direntry.d_name) || !strcmp("..", direntry.d_name))
             continue;
 
           /* does it match the expected db pattern ? */
-          if (!fnmatch(db_pattern, direntry.d_name, FNM_PATHNAME))
+          if(!fnmatch(db_pattern, direntry.d_name, FNM_PATHNAME))
             count++;
 
         }
-      else if (rc == 0 && cookie == NULL)
+      else if(rc == 0 && cookie == NULL)
         {
           /* end of dir */
           end_of_dir = TRUE;
         }
-      else if (errno != 0)
+      else if(errno != 0)
         {
           /* error */
           DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: error reading directory %s: %s",
@@ -673,7 +673,7 @@ int handlemap_db_count(const char *dir)
         }
 
     }
-  while (!end_of_dir);
+  while(!end_of_dir);
 
   closedir(dir_hdl);
 
@@ -711,7 +711,7 @@ int handlemap_db_init(const char *db_dir,
   strncpy(dbmap_dir, db_dir, MAXPATHLEN);
   strncpy(db_tmpdir, tmp_dir, MAXPATHLEN);
 
-  if (db_count > MAX_DB)
+  if(db_count > MAX_DB)
     return HANDLEMAP_INVALID_PARAM;
 
   nb_db_threads = db_count;
@@ -723,17 +723,17 @@ int handlemap_db_init(const char *db_dir,
 
   /* initialize structures for each thread and launch it */
 
-  for (i = 0; i < nb_db_threads; i++)
+  for(i = 0; i < nb_db_threads; i++)
     {
       rc = init_db_thread_info(&db_thread[i]);
-      if (rc)
+      if(rc)
         return rc;
 
       db_thread[i].thr_index = i;
 
       rc = pthread_create(&db_thread[i].thr_id, NULL, database_worker_thread,
                           &db_thread[i]);
-      if (rc)
+      if(rc)
         return HANDLEMAP_SYSTEM_ERROR;
     }
 
@@ -750,9 +750,9 @@ static void wait_thread_jobs_finished(db_thread_info_t * p_thr_info)
   /* wait until the thread has no more tasks in its queue
    * and it is no more working
    */
-  while (p_thr_info->work_queue.highprio_first != NULL
-         || p_thr_info->work_queue.lowprio_first != NULL
-         || p_thr_info->work_queue.status == WORKING)
+  while(p_thr_info->work_queue.highprio_first != NULL
+        || p_thr_info->work_queue.lowprio_first != NULL
+        || p_thr_info->work_queue.status == WORKING)
     pthread_cond_wait(&p_thr_info->work_queue.work_done_condition,
                       &p_thr_info->work_queue.queues_mutex);
 
@@ -773,7 +773,7 @@ int handlemap_db_reaload_all(hash_table_t * target_hash)
   int rc;
 
   /* give the job to all threads */
-  for (i = 0; i < nb_db_threads; i++)
+  for(i = 0; i < nb_db_threads; i++)
     {
       /* get a new db operation  */
       P(db_thread[i].pool_mutex);
@@ -782,7 +782,7 @@ int handlemap_db_reaload_all(hash_table_t * target_hash)
 
       V(db_thread[i].pool_mutex);
 
-      if (!new_task)
+      if(!new_task)
         return HANDLEMAP_SYSTEM_ERROR;
 
       /* can you fill it ? */
@@ -791,13 +791,13 @@ int handlemap_db_reaload_all(hash_table_t * target_hash)
 
       rc = dbop_push(&db_thread[i].work_queue, new_task);
 
-      if (rc)
+      if(rc)
         return rc;
     }
 
   /* wait for all threads to finish their job */
 
-  for (i = 0; i < nb_db_threads; i++)
+  for(i = 0; i < nb_db_threads; i++)
     {
       wait_thread_jobs_finished(&db_thread[i]);
     }
@@ -817,7 +817,7 @@ int handlemap_db_insert(nfs23_map_handle_t * p_in_nfs23_digest,
   db_op_item_t *new_task;
   int rc;
 
-  if (!synchronous)
+  if(!synchronous)
     {
       /* which thread is going to handle this inode ? */
 
@@ -830,7 +830,7 @@ int handlemap_db_insert(nfs23_map_handle_t * p_in_nfs23_digest,
 
       V(db_thread[i].pool_mutex);
 
-      if (!new_task)
+      if(!new_task)
         return HANDLEMAP_SYSTEM_ERROR;
 
       /* fill the task info */
@@ -840,7 +840,7 @@ int handlemap_db_insert(nfs23_map_handle_t * p_in_nfs23_digest,
 
       rc = dbop_push(&db_thread[i].work_queue, new_task);
 
-      if (rc)
+      if(rc)
         return rc;
     }
   /* else: @todo not supported yet */
@@ -871,7 +871,7 @@ int handlemap_db_delete(nfs23_map_handle_t * p_in_nfs23_digest)
 
   V(db_thread[i].pool_mutex);
 
-  if (!new_task)
+  if(!new_task)
     return HANDLEMAP_SYSTEM_ERROR;
 
   /* fill the task info */
@@ -880,7 +880,7 @@ int handlemap_db_delete(nfs23_map_handle_t * p_in_nfs23_digest)
 
   rc = dbop_push(&db_thread[i].work_queue, new_task);
 
-  if (rc)
+  if(rc)
     return rc;
 
   return HANDLEMAP_SUCCESS;
@@ -899,7 +899,7 @@ int handlemap_db_flush()
   struct timeval tdiff;
   unsigned int to_sync = 0;
 
-  for (i = 0; i < nb_db_threads; i++)
+  for(i = 0; i < nb_db_threads; i++)
     {
       to_sync += db_thread[i].work_queue.nb_waiting;
     }
@@ -912,7 +912,7 @@ int handlemap_db_flush()
 
   /* wait for all threads to finish their job */
 
-  for (i = 0; i < nb_db_threads; i++)
+  for(i = 0; i < nb_db_threads; i++)
     {
       wait_thread_jobs_finished(&db_thread[i]);
     }

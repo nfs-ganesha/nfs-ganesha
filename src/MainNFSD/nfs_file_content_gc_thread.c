@@ -151,7 +151,7 @@ int ___cache_content_invalidate_flushed(LRU_entry_t * plru_entry, void *addparam
   pentry = (cache_content_entry_t *) plru_entry->buffdata.pdata;
   pclient = (cache_content_client_t *) addparam;
 
-  if (pentry->local_fs_entry.sync_state != SYNC_OK)
+  if(pentry->local_fs_entry.sync_state != SYNC_OK)
     {
       /* Entry is not to be set invalid */
       return LRU_LIST_DO_NOT_SET_INVALID;
@@ -178,17 +178,17 @@ int file_content_gc_manage_entry(LRU_entry_t * plru_entry, void *addparam)
   pentry = (cache_content_entry_t *) plru_entry->buffdata.pdata;
   pexport = (exportlist_t *) addparam;
 
-  if (pentry->local_fs_entry.sync_state == SYNC_OK)
+  if(pentry->local_fs_entry.sync_state == SYNC_OK)
     {
       /* No flush needed */
       return TRUE;
     }
-  if ((cache_content_status = cache_content_flush(pentry,
-                                                  CACHE_CONTENT_FLUSH_AND_DELETE,
-                                                  &fcc_gc_data.cache_content_client,
-                                                  &fsal_context,
-                                                  &cache_content_status)) !=
-      CACHE_CONTENT_SUCCESS)
+  if((cache_content_status = cache_content_flush(pentry,
+                                                 CACHE_CONTENT_FLUSH_AND_DELETE,
+                                                 &fcc_gc_data.cache_content_client,
+                                                 &fsal_context,
+                                                 &cache_content_status)) !=
+     CACHE_CONTENT_SUCCESS)
     {
       DisplayLog("NFS FILE CONTENT GARBAGE COLLECTION : /!\\ Can't flush %s : error %d",
                  pentry->local_fs_entry.cache_path_data, cache_content_status);
@@ -220,33 +220,31 @@ void *file_content_gc_thread(void *IndexArg)
 
   debuglevelstr = ReturnLevelInt(fcc_debug_level);
 
-  while (1)
+  while(1)
     {
       /* Sleep until some work is to be done */
       sleep(nfs_param.cache_layers_param.dcgcpol.run_interval);
 
       DisplayLogLevel(NIV_EVENT, "NFS FILE CONTENT GARBAGE COLLECTION : awakening...");
 
-      for (pexport = nfs_param.pexportlist; pexport != NULL; pexport = pexport->next)
+      for(pexport = nfs_param.pexportlist; pexport != NULL; pexport = pexport->next)
         {
-          if (pexport->options & EXPORT_OPTION_USE_DATACACHE)
+          if(pexport->options & EXPORT_OPTION_USE_DATACACHE)
             {
               snprintf(cache_sub_dir, MAXPATHLEN, "%s/export_id=%d",
                        nfs_param.cache_layers_param.cache_content_client_param.cache_dir,
                        0);
 
-              if ((cache_content_status = cache_content_check_threshold(cache_sub_dir,
-                                                                        nfs_param.
-                                                                        cache_layers_param.
-                                                                        dcgcpol.lwmark_df,
-                                                                        nfs_param.
-                                                                        cache_layers_param.
-                                                                        dcgcpol.hwmark_df,
-                                                                        &is_hw_reached,
-                                                                        &nb_blocks_to_manage))
-                  == CACHE_CONTENT_SUCCESS)
+              if((cache_content_status = cache_content_check_threshold(cache_sub_dir,
+                                                                       nfs_param.cache_layers_param.dcgcpol.
+                                                                       lwmark_df,
+                                                                       nfs_param.cache_layers_param.dcgcpol.
+                                                                       hwmark_df,
+                                                                       &is_hw_reached,
+                                                                       &nb_blocks_to_manage))
+                 == CACHE_CONTENT_SUCCESS)
                 {
-                  if (is_hw_reached)
+                  if(is_hw_reached)
                     {
                       DisplayLogLevel(NIV_EVENT,
                                       "NFS FILE CONTENT GARBAGE COLLECTION : High Water Mark is  reached, %llu blocks to be removed",
@@ -259,7 +257,7 @@ void *file_content_gc_thread(void *IndexArg)
                                     "NFS FILE CONTENT GARBAGE COLLECTION : High Water Mark is not reached");
 
                   /* Use signal management */
-                  if (force_flush_by_signal == TRUE)
+                  if(force_flush_by_signal == TRUE)
                     {
                       some_flush_to_do = TRUE;
                       break;
@@ -268,19 +266,19 @@ void *file_content_gc_thread(void *IndexArg)
             }
         }                       /* for */
 
-      if (debuglevelstr)
+      if(debuglevelstr)
         snprintf(command, 2 * MAXPATHLEN, "%s -f %s -N %s -L %s",
                  ganesha_exec_path, config_path, debuglevelstr, fcc_log_path);
       else
         snprintf(command, 2 * MAXPATHLEN, "%s -f %s -N NIV_MAJ -L %s",
                  ganesha_exec_path, config_path, fcc_log_path);
 
-      if (some_flush_to_do)
+      if(some_flush_to_do)
         strncat(command, " -P 3", 2 * MAXPATHLEN);      /* Sync and erase */
       else
         strncat(command, " -S 3", 2 * MAXPATHLEN);      /* Sync Only */
 
-      if ((command_stream = popen(command, "r")) == NULL)
+      if((command_stream = popen(command, "r")) == NULL)
         DisplayLog("NFS FILE CONTENT GARBAGE COLLECTION : /!\\ Cannot lauch command %s",
                    command);
       else

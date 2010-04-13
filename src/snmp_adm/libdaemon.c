@@ -48,7 +48,7 @@ int root_oid_len = 0;
 
 static void *pool(void *v)
 {
-  while (running)
+  while(running)
     {
       agent_check_and_process(1);       /* 0 == don't block */
     }
@@ -63,9 +63,9 @@ static void *polling_fct(void *arg)
 {
   polling_arg *parg = (polling_arg *) arg;
 
-  for (;;)
+  for(;;)
     {
-      if (parg->test_fct(parg->args) == 1)
+      if(parg->test_fct(parg->args) == 1)
         snmp_adm_send_trap(parg->type, parg->value);
       sleep(parg->second);
     }
@@ -80,7 +80,7 @@ static int get_conf_from_env()
   char *ptr, *save;
   int pos = 0;
 
-  if (!str_root)
+  if(!str_root)
     {
       /*no environment var, use default */
       oid tmp_root[] = { DEFAULT_ROOT_OID };
@@ -94,16 +94,16 @@ static int get_conf_from_env()
        */
 
       /* compute length */
-      for (ptr = str_root; *ptr != '\0'; ptr++)
-        if (*ptr == '.')
+      for(ptr = str_root; *ptr != '\0'; ptr++)
+        if(*ptr == '.')
           root_oid_len++;
 
       root_oid = malloc(root_oid_len * sizeof(oid));
 
       /* create root array */
       save = str_root + 1;
-      for (ptr = str_root + 1; *ptr != '\0'; ptr++)
-        if (*ptr == '.' || ptr == '\0')
+      for(ptr = str_root + 1; *ptr != '\0'; ptr++)
+        if(*ptr == '.' || ptr == '\0')
           {
             *ptr = '\0';
             /*FIXME arch spec? */
@@ -188,11 +188,11 @@ static void get_oid(oid * myoid, int branch, size_t * plen)
 
   myoid[(*plen)++] = product_id;
   myoid[(*plen)++] = branch;
-  if (branch == STAT_OID)
+  if(branch == STAT_OID)
     myoid[(*plen)++] = stat_num++;
-  else if (branch == CONF_OID)
+  else if(branch == CONF_OID)
     myoid[(*plen)++] = conf_num++;
-  else if (branch == PROC_OID)
+  else if(branch == PROC_OID)
     myoid[(*plen)++] = proc_num++;
 
   (*plen)++;
@@ -212,7 +212,7 @@ static int register_scal_instance(int type, const register_scal * instance)
   oid myoid[MAX_OID_LEN];
   size_t len;
 
-  if (instance->value != NULL)
+  if(instance->value != NULL)
     {
       /* create a register object of scalar type.                
          we know we need 4 netsnmp register objects to record a scalar
@@ -251,8 +251,8 @@ static int register_get_set_instance(int branch, const register_get_set * instan
   oid myoid[MAX_OID_LEN];
   size_t len;
 
-  if (instance->getter != NULL &&
-      !(instance->access == SNMP_ADM_ACCESS_RW && instance->setter == NULL))
+  if(instance->getter != NULL &&
+     !(instance->access == SNMP_ADM_ACCESS_RW && instance->setter == NULL))
     {
 
       get_oid(myoid, branch, &len);
@@ -301,7 +301,7 @@ static int register_proc_instance(const register_proc * instance)
   proc_info *p_info;
   int tab_reg_offset = 0;
 
-  if (instance->myproc == NULL)
+  if(instance->myproc == NULL)
     {
       snmp_adm_log("Cannot register NULL procedure for \"%s\"", instance->label);
       return 1;
@@ -331,12 +331,12 @@ static int register_proc_instance(const register_proc * instance)
 
   /* input */
   p_info->inputs = malloc(p_info->nb_in * sizeof(snmp_adm_type_union *));
-  for (j = 0; j < p_info->nb_in; j++)
+  for(j = 0; j < p_info->nb_in; j++)
     p_info->inputs[j] = calloc(1, sizeof(snmp_adm_type_union));
 
   /* output */
   p_info->outputs = malloc(p_info->nb_out * sizeof(snmp_adm_type_union *));
-  for (j = 0; j < p_info->nb_out; j++)
+  for(j = 0; j < p_info->nb_out; j++)
     p_info->outputs[j] = calloc(1, sizeof(snmp_adm_type_union));
 
   /* This function will register two value in the tree (name and desc) 
@@ -357,7 +357,7 @@ static int register_proc_instance(const register_proc * instance)
 
   /* values are like scalars */
   /* input */
-  for (i = 0; i < instance->nb_in; i++)
+  for(i = 0; i < instance->nb_in; i++)
     {
       myoid[len - 2] = INPUT_OID;
       myoid[len - 1] = i;
@@ -366,7 +366,7 @@ static int register_proc_instance(const register_proc * instance)
       tab_reg_offset += 2;
     }
   /* output */
-  for (i = 0; i < instance->nb_out; i++)
+  for(i = 0; i < instance->nb_out; i++)
     {
       myoid[len - 2] = OUTPUT_OID;
       myoid[len - 1] = i;
@@ -388,16 +388,16 @@ static void free_register_info(register_info * ptr)
   free(ptr->reg);
   ptr->reg = NULL;
 
-  if (ptr->type == PROC)
+  if(ptr->type == PROC)
     {
       pinfo = ptr->function_info.proc;
-      for (i = 0; i < pinfo->nb_in; i++)
+      for(i = 0; i < pinfo->nb_in; i++)
         free(pinfo->inputs[i]);
 
       free(pinfo->inputs);
       pinfo->inputs = NULL;
 
-      for (i = 0; i < pinfo->nb_out; i++)
+      for(i = 0; i < pinfo->nb_out; i++)
         free(pinfo->outputs[i]);
 
       free(pinfo->outputs);
@@ -405,7 +405,7 @@ static void free_register_info(register_info * ptr)
 
       free(pinfo);
     }
-  else if (ptr->type == GET_SET)
+  else if(ptr->type == GET_SET)
     {
       gsinfo = ptr->function_info.get_set;
       free(gsinfo);
@@ -433,7 +433,7 @@ int snmp_adm_config_daemon(char *agent_x_socket, char *filelog, int prod_id)
                         NETSNMP_DS_AGENT_X_SOCKET, agent_x_socket);
 
   /* error logging */
-  if (strncmp(filelog, "syslog", 10) == 0)
+  if(strncmp(filelog, "syslog", 10) == 0)
     {
       snmp_enable_syslog();
       issyslog = 1;
@@ -441,11 +441,11 @@ int snmp_adm_config_daemon(char *agent_x_socket, char *filelog, int prod_id)
   else
     snmp_enable_filelog(filelog, 1);    /* 1:append 0:write */
 
-  if (get_conf_from_env() == 0)
+  if(get_conf_from_env() == 0)
     {
       int i, len = 1024, write = 0, offset = 0;
       char buf[1024];
-      for (i = 0; i < root_oid_len; i++)
+      for(i = 0; i < root_oid_len; i++)
         {
           offset += write;
           len -= write;
@@ -466,7 +466,7 @@ int snmp_adm_config_daemon(char *agent_x_socket, char *filelog, int prod_id)
   err_init = init_agent("libdaemon");
   init_snmp("libdaemon");
 
-  if (!err_init)
+  if(!err_init)
     configured = 1;
   return err_init;
 }
@@ -486,11 +486,11 @@ int snmp_adm_register_scalars(int branch, register_scal * tab, int len)
 {
   int i, err;
 
-  for (i = 0; i < len; i++)
+  for(i = 0; i < len; i++)
     {
       /* register the instance and save info  */
       err = register_scal_instance(branch, &(tab[i]));
-      if (err)
+      if(err)
         {
           snmp_adm_log("ERROR registering %s %s",
                        ((branch == CONF_OID) ? "conf " : "stat "), tab[i].label);
@@ -517,11 +517,11 @@ int snmp_adm_register_get_set_function(int branch, register_get_set * tab, int l
 {
   int i, err;
 
-  for (i = 0; i < len; i++)
+  for(i = 0; i < len; i++)
     {
       /* register the instance and save info  */
       err = register_get_set_instance(branch, &(tab[i]));
-      if (err)
+      if(err)
         {
           snmp_adm_log("ERROR registering getset %s %s",
                        ((branch == CONF_OID) ? "conf " : "stat "), tab[i].label);
@@ -549,10 +549,10 @@ int snmp_adm_register_procedure(register_proc * tab, int len)
 {
   int i, err;
 
-  for (i = 0; i < len; i++)
+  for(i = 0; i < len; i++)
     {
       err = register_proc_instance(&(tab[i]));
-      if (err)
+      if(err)
         {
           snmp_adm_log("register proc %s", tab[i].label);
           return 1;
@@ -577,20 +577,20 @@ int snmp_adm_unregister(char *label)
 
   prev = register_info_list;
 
-  for (ptr = register_info_list; ptr; ptr = ptr->next)
+  for(ptr = register_info_list; ptr; ptr = ptr->next)
     {
-      if (strncmp(ptr->label, label, strlen(label)) == 0)
+      if(strncmp(ptr->label, label, strlen(label)) == 0)
         break;
       prev = ptr;
     }
 
-  if (ptr)
+  if(ptr)
     {
       /* unlink */
       prev->next = ptr->next;
       /* unreg */
-      for (i = 0; i < ptr->reg_len; i++)
-        if (unreg_instance(ptr->reg[i]) != MIB_UNREGISTERED_OK)
+      for(i = 0; i < ptr->reg_len; i++)
+        if(unreg_instance(ptr->reg[i]) != MIB_UNREGISTERED_OK)
           return 1;
       /* free */
       free_register_info(ptr);
@@ -647,7 +647,7 @@ void snmp_adm_send_trap(unsigned char type, snmp_adm_type_union value)
       vars.type = ASN_OCTET_STR;
       break;
     }
-  if (!err)
+  if(!err)
     send_trap_vars(6, 0, &vars);
 }
 
@@ -664,12 +664,12 @@ int snmp_adm_register_poll_trap(unsigned int second, trap_test test_fct, void *a
 {
   static int capacity = 10;
 
-  if (polling_list_size == 0)
+  if(polling_list_size == 0)
     {
       polling_threads = malloc(capacity * sizeof(pthread_t));
       polling_args = malloc(capacity * sizeof(polling_arg));
     }
-  if (polling_list_size >= capacity - 1)
+  if(polling_list_size >= capacity - 1)
     {
       capacity *= 2;
       polling_threads = realloc(polling_threads, sizeof(pthread_t) * capacity);
@@ -699,17 +699,17 @@ void snmp_adm_close()
 
   running = 0;
 
-  if (thread_id)
+  if(thread_id)
     {
       err = pthread_cancel(thread_id);
-      if (!err)
+      if(!err)
         pthread_join(thread_id, NULL);
     }
-  for (ptr = register_info_list; ptr;)
+  for(ptr = register_info_list; ptr;)
     {
       next = ptr->next;
 
-      for (i = 0; i < ptr->reg_len; i++)
+      for(i = 0; i < ptr->reg_len; i++)
         unreg_instance(ptr->reg[i]);
       free_register_info(ptr);
       free(ptr);
@@ -718,10 +718,10 @@ void snmp_adm_close()
     }
   register_info_list = NULL;
 
-  for (i = 0; i < polling_list_size; i++)
+  for(i = 0; i < polling_list_size; i++)
     {
       err = pthread_cancel(polling_threads[i]);
-      if (!err)
+      if(!err)
         pthread_join(polling_threads[i], NULL);
     }
   free(polling_threads);
@@ -730,7 +730,7 @@ void snmp_adm_close()
   polling_threads = NULL;
   polling_args = NULL;
 
-  if (root_oid)
+  if(root_oid)
     free(root_oid);
 
   snmp_adm_log("terminated");
@@ -748,12 +748,12 @@ int snmp_adm_start()
 {
   int err;
 
-  if (registered == 0)
+  if(registered == 0)
     {
       snmp_adm_log("Warning nothing has been registered !");
       return 1;
     }
-  if (configured == 0)
+  if(configured == 0)
     {
       snmp_adm_log("Warning snmp is not configured !\t"
                    "Did you called config_daemon? snmpd is running?");
@@ -761,7 +761,7 @@ int snmp_adm_start()
     }
 
   err = pthread_create(&thread_id, NULL, pool, NULL);
-  if (err)
+  if(err)
     {
       snmp_adm_log("cannot create thread");
       snmp_adm_close();
@@ -783,7 +783,7 @@ void snmp_adm_log(char *format, ...)
 
   va_start(pa, format);
 
-  if (issyslog)
+  if(issyslog)
     {
       vsnprintf(msg_buf, 256, format, pa);
       snmp_log(LOG_NOTICE, msg_buf);
@@ -798,7 +798,7 @@ void snmp_adm_log(char *format, ...)
       static pid_t pid = 0;
       static char constant_buf[256];
 
-      if (!pid)
+      if(!pid)
         {
           int name_len;
           /* first call, let's configure */

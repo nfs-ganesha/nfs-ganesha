@@ -378,16 +378,15 @@ int log_sperror_gss(char *outmsg, char *tag, OM_uint32 maj_stat, OM_uint32 min_s
   int msg_ctx = 0;
   FILE *tmplog;
 
-  if (gss_display_status(&smin,
-                         maj_stat,
-                         GSS_C_GSS_CODE,
-                         GSS_C_NULL_OID, &msg_ctx, &msg) != GSS_S_COMPLETE)
+  if(gss_display_status(&smin,
+                        maj_stat,
+                        GSS_C_GSS_CODE, GSS_C_NULL_OID, &msg_ctx, &msg) != GSS_S_COMPLETE)
     return FALSE;
 
-  if (gss_display_status(&smin,
-                         min_stat,
-                         GSS_C_MECH_CODE,
-                         GSS_C_NULL_OID, &msg_ctx, &msg2) != GSS_S_COMPLETE)
+  if(gss_display_status(&smin,
+                        min_stat,
+                        GSS_C_MECH_CODE,
+                        GSS_C_NULL_OID, &msg_ctx, &msg2) != GSS_S_COMPLETE)
     return FALSE;
 
   sprintf(outmsg, "%s - %s : %s ", tag, (char *)msg.value, (char *)msg2.value);

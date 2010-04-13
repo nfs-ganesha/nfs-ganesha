@@ -141,7 +141,8 @@ static char *mnt_function_names[] = {
   "MNT_null", "MNT_mount", "MNT_dump", "MNT_umount", "MNT_umountall", "MNT_export"
 };
 
-#define NFS_V4_NB_OPERATION 39
+#define NFS_V40_NB_OPERATION 39
+#define NFS_V41_NB_OPERATION 58
 
 typedef enum nfs_stat_type__
 { GANESHA_STAT_SUCCESS = 0,
@@ -171,7 +172,8 @@ typedef struct nfs_request_stat__
   nfs_request_stat_item_t stat_req_nfs2[NFS_V2_NB_COMMAND];
   nfs_request_stat_item_t stat_req_nfs3[NFS_V3_NB_COMMAND];
   nfs_request_stat_item_t stat_req_nfs4[NFS_V4_NB_COMMAND];
-  nfs_request_stat_item_t stat_op_nfs4[NFS_V4_NB_OPERATION];
+  nfs_request_stat_item_t stat_op_nfs40[NFS_V40_NB_OPERATION];
+  nfs_request_stat_item_t stat_op_nfs41[NFS_V41_NB_OPERATION];
   nfs_request_stat_item_t stat_req_nlm4[NLM_V4_NB_OPERATION];
 } nfs_request_stat_t;
 

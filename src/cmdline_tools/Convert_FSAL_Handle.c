@@ -124,11 +124,11 @@ int main(int argc, char *argv[])
   ServerBootTime = time(NULL);
 
   /* What is the executable file's name */
-  if ((tempo_exec_name = strrchr(argv[0], '/')) != NULL)
+  if((tempo_exec_name = strrchr(argv[0], '/')) != NULL)
     strcpy((char *)exec_name, tempo_exec_name + 1);
 
   /* now parsing options with getopt */
-  while ((c = getopt(argc, argv, options)) != EOF)
+  while((c = getopt(argc, argv, options)) != EOF)
     {
       switch (c)
         {
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
         }
     }
 
-  if (optind != argc - 1)
+  if(optind != argc - 1)
     {
       printf("Missing argument: <FSAL_Handle>\n");
       printf(usage, exec_name);

@@ -69,7 +69,7 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
   /* sanity checks.
    * note : object_attributes is optional in FSAL_access.
    */
-  if (!object_handle || !p_context)
+  if(!object_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_access);
 
   /* convert fsal access mask to FUSE access mask */
@@ -79,13 +79,13 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
   rc = NamespacePath(object_handle->inode, object_handle->device,
                      object_handle->validator, object_path);
 
-  if (rc)
+  if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_access);
 
   /* set context for the next operation, so it can be retrieved by FS thread */
   fsal_set_thread_context(p_context);
 
-  if (p_fs_ops->access)
+  if(p_fs_ops->access)
     {
 
       TakeTokenFSCall();
@@ -95,10 +95,10 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
       ReleaseTokenFSCall();
 
       /* TODO : remove entry from namespace if entry is stale */
-      if (rc)
+      if(rc)
         Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_access);
     }
-  else if (p_fs_ops->getattr)
+  else if(p_fs_ops->getattr)
     {
       /* we emulate 'access' call using getattr + fsal_test_access
        * from attributes value (mode, owner, group, ...)
@@ -113,12 +113,12 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
 
       status = FSAL_getattrs(object_handle, p_context, &tmp_attrs);
 
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_access);
 
       status = FSAL_test_access(p_context, access_type, &tmp_attrs);
 
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_access);
 
     }
@@ -128,14 +128,14 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
    * If an error occures during getattr operation,
    * an error bit is set in the output structure.
    */
-  if (object_attributes)
+  if(object_attributes)
     {
       fsal_status_t status;
 
       status = FSAL_getattrs(object_handle, p_context, object_attributes);
 
       /* on error, we set a special bit in the mask. */
-      if (FSAL_IS_ERROR(status))
+      if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(object_attributes->asked_attributes);
           FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -190,12 +190,12 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
 
   /* sanity checks. */
 
-  if (!object_attributes || !p_context)
+  if(!object_attributes || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_test_access);
 
   /* If the FSAL_F_OK flag is set, returns ERR INVAL */
 
-  if (access_type & FSAL_F_OK)
+  if(access_type & FSAL_F_OK)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_test_access);
 
 #ifdef _DEBUG_FSAL
@@ -205,7 +205,7 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
 
   /* test root access */
 
-  if (p_context->credential.user == 0)
+  if(p_context->credential.user == 0)
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
 
   /* unsatisfied permissions */
@@ -214,19 +214,19 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
 
   /* Test if file belongs to user. */
 
-  if (p_context->credential.user == object_attributes->owner)
+  if(p_context->credential.user == object_attributes->owner)
     {
 
-      if (object_attributes->mode & FSAL_MODE_RUSR)
+      if(object_attributes->mode & FSAL_MODE_RUSR)
         missing_access &= ~FSAL_R_OK;
 
-      if (object_attributes->mode & FSAL_MODE_WUSR)
+      if(object_attributes->mode & FSAL_MODE_WUSR)
         missing_access &= ~FSAL_W_OK;
 
-      if (object_attributes->mode & FSAL_MODE_XUSR)
+      if(object_attributes->mode & FSAL_MODE_XUSR)
         missing_access &= ~FSAL_X_OK;
 
-      if (missing_access == 0)
+      if(missing_access == 0)
         Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
       else
         Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
@@ -241,18 +241,18 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
 
   /* finally apply group rights */
 
-  if (is_grp)
+  if(is_grp)
     {
-      if (object_attributes->mode & FSAL_MODE_RGRP)
+      if(object_attributes->mode & FSAL_MODE_RGRP)
         missing_access &= ~FSAL_R_OK;
 
-      if (object_attributes->mode & FSAL_MODE_WGRP)
+      if(object_attributes->mode & FSAL_MODE_WGRP)
         missing_access &= ~FSAL_W_OK;
 
-      if (object_attributes->mode & FSAL_MODE_XGRP)
+      if(object_attributes->mode & FSAL_MODE_XGRP)
         missing_access &= ~FSAL_X_OK;
 
-      if (missing_access == 0)
+      if(missing_access == 0)
         Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
       else
         Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
@@ -261,18 +261,18 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
 
   /* test other perms */
 
-  if (object_attributes->mode & FSAL_MODE_ROTH)
+  if(object_attributes->mode & FSAL_MODE_ROTH)
     missing_access &= ~FSAL_R_OK;
 
-  if (object_attributes->mode & FSAL_MODE_WOTH)
+  if(object_attributes->mode & FSAL_MODE_WOTH)
     missing_access &= ~FSAL_W_OK;
 
-  if (object_attributes->mode & FSAL_MODE_XOTH)
+  if(object_attributes->mode & FSAL_MODE_XOTH)
     missing_access &= ~FSAL_X_OK;
 
   /** @todo: ACLs. */
 
-  if (missing_access == 0)
+  if(missing_access == 0)
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
   else
     Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);

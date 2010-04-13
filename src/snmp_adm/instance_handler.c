@@ -38,18 +38,18 @@ static int check_procedure_access(netsnmp_handler_registration * reginfo)
   int conf_stat_len = root_oid_len + 5;
   int numproc_pos = reginfo->rootoid_len - 5;
 
-  if (reginfo->rootoid_len == conf_stat_len)
+  if(reginfo->rootoid_len == conf_stat_len)
     /* we are a stat or conf, nothing to do */
     return 0;
 
-  for (info = register_info_list; info; info = info->next)
-    if (info->type == PROC &&
-        info->function_info.proc->num == reginfo->rootoid[numproc_pos])
+  for(info = register_info_list; info; info = info->next)
+    if(info->type == PROC &&
+       info->function_info.proc->num == reginfo->rootoid[numproc_pos])
       break;
 
-  if (!info || info->function_info.proc->trigger == SNMP_ADM_PROGRESS
-      || info->function_info.proc->trigger == SNMP_ADM_DONE
-      || info->function_info.proc->trigger == SNMP_ADM_ERROR)
+  if(!info || info->function_info.proc->trigger == SNMP_ADM_PROGRESS
+     || info->function_info.proc->trigger == SNMP_ADM_DONE
+     || info->function_info.proc->trigger == SNMP_ADM_ERROR)
     return 1;
   return 0;
 
@@ -76,14 +76,14 @@ int instance_string_handler(netsnmp_mib_handler * handler,
       /*
        * update current
        */
-      if (check_procedure_access(reginfo))
+      if(check_procedure_access(reginfo))
         {
           netsnmp_request_set_error(requests, SNMP_ERR_READONLY);
           return SNMP_ERR_READONLY;
         }
 
       len = strlen((char *)requests->requestvb->val.string);
-      if (len > SNMP_ADM_MAX_STR)
+      if(len > SNMP_ADM_MAX_STR)
         netsnmp_request_set_error(requests, SNMP_ERR_BADVALUE);
       else
         {
@@ -121,7 +121,7 @@ int instance_int_handler(netsnmp_mib_handler * handler,
       /*
        * update current
        */
-      if (check_procedure_access(reginfo))
+      if(check_procedure_access(reginfo))
         {
           netsnmp_request_set_error(requests, SNMP_ERR_READONLY);
           return SNMP_ERR_READONLY;
@@ -151,7 +151,7 @@ int instance_real_handler(netsnmp_mib_handler * handler,
        */
     case MODE_GET:
       err = real2str(str, *it);
-      if (!err)
+      if(!err)
         snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
                                  (u_char *) str, strlen(str));
       else
@@ -162,13 +162,13 @@ int instance_real_handler(netsnmp_mib_handler * handler,
       /*
        * update current
        */
-      if (check_procedure_access(reginfo))
+      if(check_procedure_access(reginfo))
         {
           netsnmp_request_set_error(requests, SNMP_ERR_READONLY);
           return SNMP_ERR_READONLY;
         }
       err = str2real(&tmp_it, (char *)(requests->requestvb->val.string));
-      if (!err)
+      if(!err)
         *it = tmp_it;
       else
         netsnmp_request_set_error(requests, SNMP_ERR_BADVALUE);
@@ -196,7 +196,7 @@ int instance_bigint_handler(netsnmp_mib_handler * handler,
        */
     case MODE_GET:
       err = big2str(str, *it);
-      if (!err)
+      if(!err)
         snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
                                  (u_char *) str, strlen(str));
       else
@@ -207,13 +207,13 @@ int instance_bigint_handler(netsnmp_mib_handler * handler,
       /*
        * update current
        */
-      if (check_procedure_access(reginfo))
+      if(check_procedure_access(reginfo))
         {
           netsnmp_request_set_error(requests, SNMP_ERR_READONLY);
           return SNMP_ERR_READONLY;
         }
       err = str2big(&tmp_it, (char *)(requests->requestvb->val.string));
-      if (!err)
+      if(!err)
         *it = tmp_it;
       else
         netsnmp_request_set_error(requests, SNMP_ERR_BADVALUE);
@@ -247,7 +247,7 @@ int instance_time_handler(netsnmp_mib_handler * handler,
       /*
        * update current
        */
-      if (check_procedure_access(reginfo))
+      if(check_procedure_access(reginfo))
         {
           netsnmp_request_set_error(requests, SNMP_ERR_READONLY);
           return SNMP_ERR_READONLY;
@@ -283,7 +283,7 @@ int instance_ip_handler(netsnmp_mib_handler * handler,
       /*
        * update current
        */
-      if (check_procedure_access(reginfo))
+      if(check_procedure_access(reginfo))
         {
           netsnmp_request_set_error(requests, SNMP_ERR_READONLY);
           return SNMP_ERR_READONLY;
@@ -315,13 +315,13 @@ int instance_get_set_handler(netsnmp_mib_handler * handler,
   branch = reginfo->rootoid[reginfo->rootoid_len - 4];
 
   /* look for our get_set */
-  for (info = register_info_list; info; info = info->next)
-    if (info->type == GET_SET &&
-        info->function_info.get_set->num == num_stat_conf &&
-        info->function_info.get_set->branch == branch)
+  for(info = register_info_list; info; info = info->next)
+    if(info->type == GET_SET &&
+       info->function_info.get_set->num == num_stat_conf &&
+       info->function_info.get_set->branch == branch)
       break;
 
-  if (!info)
+  if(!info)
     {                           /* not found */
       netsnmp_request_set_error(requests, SNMP_ERR_GENERR);
       return SNMP_ERR_GENERR;
@@ -338,7 +338,7 @@ int instance_get_set_handler(netsnmp_mib_handler * handler,
       /* call the function */
       err =
           info->function_info.get_set->getter(&var, info->function_info.get_set->opt_arg);
-      if (err)
+      if(err)
         {
           snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
                                    (u_char *) "SNMP_ADM_ERROR", strlen("SNMP_ADM_ERROR"));
@@ -357,7 +357,7 @@ int instance_get_set_handler(netsnmp_mib_handler * handler,
           break;
         case SNMP_ADM_REAL:
           err = real2str(str, var.real);
-          if (!err)
+          if(!err)
             snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
                                      (u_char *) str, strlen(str));
           else
@@ -365,7 +365,7 @@ int instance_get_set_handler(netsnmp_mib_handler * handler,
           break;
         case SNMP_ADM_BIGINT:
           err = big2str(str, var.bigint);
-          if (!err)
+          if(!err)
             snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
                                      (u_char *) str, strlen(str));
           else
@@ -407,14 +407,14 @@ int instance_get_set_handler(netsnmp_mib_handler * handler,
           netsnmp_request_set_error(requests, SNMP_ERR_BADVALUE);
         }
 
-      if (!err)
+      if(!err)
         {
           /* call the function */
           err_fct =
               info->function_info.get_set->setter(&var,
                                                   info->function_info.get_set->opt_arg);
 
-          if (err_fct)
+          if(err_fct)
             netsnmp_request_set_error(requests, SNMP_ERR_BADVALUE);
         }
       else
@@ -435,7 +435,7 @@ static void *launch_proc(void *arg)
       pinfo->myproc((const snmp_adm_type_union **)pinfo->inputs, pinfo->outputs,
                     pinfo->opt_arg);
 
-  if (err)
+  if(err)
     pinfo->trigger = SNMP_ADM_ERROR;
   else
     pinfo->trigger = SNMP_ADM_DONE;
@@ -459,11 +459,11 @@ int instance_proc_handler(netsnmp_mib_handler * handler,
   /* what node do you want? */
   num_proc = reginfo->rootoid[reginfo->rootoid_len - 2];
 
-  for (info = register_info_list; info; info = info->next)
-    if (info->type == PROC && info->function_info.proc->num == num_proc)
+  for(info = register_info_list; info; info = info->next)
+    if(info->type == PROC && info->function_info.proc->num == num_proc)
       break;
 
-  if (!info)
+  if(!info)
     {                           /* not found */
       netsnmp_request_set_error(requests, SNMP_ERR_GENERR);
       return SNMP_ERR_GENERR;
@@ -487,13 +487,13 @@ int instance_proc_handler(netsnmp_mib_handler * handler,
           return SNMP_ERR_GENERR;
         case SNMP_ADM_DONE:
         case SNMP_ADM_ERROR:
-          if ((*requests->requestvb->val.integer) == 0)
+          if((*requests->requestvb->val.integer) == 0)
             {
               /* raz */
-              for (i = 0; i < pinfo->nb_in; i++)
+              for(i = 0; i < pinfo->nb_in; i++)
                 memset(pinfo->inputs[i], 0, sizeof(snmp_adm_type_union));
 
-              for (i = 0; i < pinfo->nb_out; i++)
+              for(i = 0; i < pinfo->nb_out; i++)
                 memset(pinfo->outputs[i], 0, sizeof(snmp_adm_type_union));
 
               pinfo->trigger = SNMP_ADM_READY;

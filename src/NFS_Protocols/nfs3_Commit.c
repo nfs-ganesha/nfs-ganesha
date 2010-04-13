@@ -163,26 +163,26 @@ int nfs3_Commit(nfs_arg_t * parg,
   ppre_attr = NULL;
 
   /* Convert file handle into a fsal_handle */
-  if (nfs3_FhandleToFSAL(&(parg->arg_commit3.file), &fsal_data.handle, pcontext) == 0)
+  if(nfs3_FhandleToFSAL(&(parg->arg_commit3.file), &fsal_data.handle, pcontext) == 0)
     return NFS_REQ_DROP;
 
   /* Set cookie to 0 */
   fsal_data.cookie = DIR_START;
 
   /* Get the entry in the cache_inode */
-  if ((pentry = cache_inode_get(&fsal_data,
-                                &pre_attr, ht, pclient, pcontext, &cache_status)) == NULL)
+  if((pentry = cache_inode_get(&fsal_data,
+                               &pre_attr, ht, pclient, pcontext, &cache_status)) == NULL)
     {
       /* Stale NFS FH ? */
       pres->res_commit3.status = NFS3ERR_STALE;
       return NFS_REQ_OK;
     }
 
-  if (cache_inode_commit(pentry,
-                         parg->arg_commit3.offset,
-                         parg->arg_commit3.count,
-                         &pre_attr,
-                         ht, pclient, pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_commit(pentry,
+                        parg->arg_commit3.offset,
+                        parg->arg_commit3.count,
+                        &pre_attr,
+                        ht, pclient, pcontext, &cache_status) != CACHE_INODE_SUCCESS)
     {
       pres->res_commit3.status = NFS3ERR_IO;;
 

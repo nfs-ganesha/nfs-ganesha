@@ -243,7 +243,7 @@ int nfs_ip_name_add(unsigned int ipaddr, char *hostname)
   BuddySetDebugLabel("N/A");
 #endif
 
-  if (pnfs_ip_name == NULL)
+  if(pnfs_ip_name == NULL)
     return IP_NAME_INSERT_MALLOC_ERROR;
 
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this, 
@@ -252,7 +252,7 @@ int nfs_ip_name_add(unsigned int ipaddr, char *hostname)
   buffkey.len = 0;
 
   /* Ask for the name to be cached */
-  if ((hp = gethostbyaddr((char *)&local_ipaddr, length, AF_INET)) == NULL)
+  if((hp = gethostbyaddr((char *)&local_ipaddr, length, AF_INET)) == NULL)
     {
       Mem_Free((void *)pnfs_ip_name);
       return IP_NAME_NETDB_ERROR;
@@ -266,7 +266,7 @@ int nfs_ip_name_add(unsigned int ipaddr, char *hostname)
   buffdata.pdata = (caddr_t) pnfs_ip_name;
   buffdata.len = sizeof(nfs_ip_name_t);
 
-  if (HashTable_Set(ht_ip_name, &buffkey, &buffdata) != HASHTABLE_SUCCESS)
+  if(HashTable_Set(ht_ip_name, &buffkey, &buffdata) != HASHTABLE_SUCCESS)
     return IP_NAME_INSERT_MALLOC_ERROR;
 
   /* Copy the value for the caller */
@@ -298,7 +298,7 @@ int nfs_ip_name_get(unsigned int ipaddr, char *hostname)
   buffkey.pdata = (caddr_t) local_ipaddr;
   buffkey.len = 0;
 
-  if (HashTable_Get(ht_ip_name, &buffkey, &buffval) == HASHTABLE_SUCCESS)
+  if(HashTable_Get(ht_ip_name, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
       pnfs_ip_name = (nfs_ip_name_t *) buffval.pdata;
       strncpy(hostname, pnfs_ip_name->hostname, MAXHOSTNAMELEN);
@@ -333,7 +333,7 @@ int nfs_ip_name_remove(int ipaddr)
   buffkey.pdata = (caddr_t) local_ipaddr;
   buffkey.len = 0;
 
-  if (HashTable_Del(ht_ip_name, &buffkey, NULL, &old_value) == HASHTABLE_SUCCESS)
+  if(HashTable_Del(ht_ip_name, &buffkey, NULL, &old_value) == HASHTABLE_SUCCESS)
     {
       pnfs_ip_name = (nfs_ip_name_t *) old_value.pdata;
       Mem_Free((void *)pnfs_ip_name);
@@ -359,7 +359,7 @@ int nfs_ip_name_remove(int ipaddr)
  */
 int nfs_Init_ip_name(nfs_ip_name_parameter_t param)
 {
-  if ((ht_ip_name = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_ip_name = HashTable_Init(param.hash_param)) == NULL)
     {
       DisplayLog("NFS IP_NAME: Cannot init IP/name cache");
       return -1;
@@ -389,7 +389,7 @@ int nfs_ip_name_populate(char *path)
 
   config_file = config_ParseFile(path);
 
-  if (!config_file)
+  if(!config_file)
     {
       DisplayLog("Can't open file %s", path);
 
@@ -397,12 +397,12 @@ int nfs_ip_name_populate(char *path)
     }
 
   /* Get the config BLOCK */
-  if ((block = config_FindItemByName(config_file, CONF_LABEL_IP_NAME_HOSTS)) == NULL)
+  if((block = config_FindItemByName(config_file, CONF_LABEL_IP_NAME_HOSTS)) == NULL)
     {
       DisplayLog("Can't get label %s in file %s", CONF_LABEL_IP_NAME_HOSTS, path);
       return IP_NAME_NOT_FOUND;
     }
-  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return IP_NAME_NOT_FOUND;
@@ -410,14 +410,14 @@ int nfs_ip_name_populate(char *path)
 
   var_max = config_GetNbItems(block);
 
-  for (var_index = 0; var_index < var_max; var_index++)
+  for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
 
       item = config_GetItemByIndex(block, var_index);
 
       /* Get key's name */
-      if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
+      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           fprintf(stderr,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
@@ -429,7 +429,7 @@ int nfs_ip_name_populate(char *path)
       long_ipaddr = ipaddr;
 
       /* Entry to be cached */
-      if ((pnfs_ip_name = (nfs_ip_name_t *) Mem_Alloc(sizeof(nfs_ip_name_t))) == NULL)
+      if((pnfs_ip_name = (nfs_ip_name_t *) Mem_Alloc(sizeof(nfs_ip_name_t))) == NULL)
         return ID_MAPPER_INSERT_MALLOC_ERROR;
 
       /* I build the data with the request pointer that should be in state 'IN USE' */
@@ -446,7 +446,7 @@ int nfs_ip_name_populate(char *path)
 
       buffkey.len = 0;
 
-      if (HashTable_Set(ht_ip_name, &buffkey, &buffdata) != HASHTABLE_SUCCESS)
+      if(HashTable_Set(ht_ip_name, &buffkey, &buffdata) != HASHTABLE_SUCCESS)
         return IP_NAME_INSERT_MALLOC_ERROR;
 
     }

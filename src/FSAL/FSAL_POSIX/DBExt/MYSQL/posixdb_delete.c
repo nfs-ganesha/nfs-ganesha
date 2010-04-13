@@ -22,7 +22,7 @@ fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
      * 1/ sanity check *
      *******************/
 
-  if (!p_conn || !p_parent_directory_handle || !p_filename)
+  if(!p_conn || !p_parent_directory_handle || !p_filename)
     ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
 
   BeginTransaction(p_conn);
@@ -40,10 +40,10 @@ fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
            p_parent_directory_handle->ts, p_filename->name);
 
   st = db_exec_sql(p_conn, query, &res);
-  if (FSAL_POSIXDB_IS_ERROR(st))
+  if(FSAL_POSIXDB_IS_ERROR(st))
     goto rollback;
 
-  if (mysql_num_rows(res) != 1)
+  if(mysql_num_rows(res) != 1)
     {
       /* parent entry not found */
       mysql_free_result(res);
@@ -59,7 +59,7 @@ fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
   st = fsal_posixdb_internal_delete(p_conn, p_parent_directory_handle->id,
                                     p_parent_directory_handle->ts,
                                     p_filename->name, p_object_info);
-  if (FSAL_POSIXDB_IS_ERROR(st))
+  if(FSAL_POSIXDB_IS_ERROR(st))
     goto rollback;
 
   return EndTransaction(p_conn);
@@ -94,18 +94,18 @@ fsal_posixdb_status_t fsal_posixdb_deleteHandle(fsal_posixdb_conn * p_conn,     
            p_parent_directory_handle->id, p_parent_directory_handle->ts);
 
   st = db_exec_sql(p_conn, query, &res);
-  if (FSAL_POSIXDB_IS_ERROR(st))
+  if(FSAL_POSIXDB_IS_ERROR(st))
     goto rollback;
 
   found = mysql_num_rows(res);
   mysql_free_result(res);
 
-  if (found)
+  if(found)
     {
       /* entry found */
       st = fsal_posixdb_recursiveDelete(p_conn, p_parent_directory_handle->id,
                                         p_parent_directory_handle->ts, FSAL_TYPE_DIR);
-      if (FSAL_POSIXDB_IS_ERROR(st))
+      if(FSAL_POSIXDB_IS_ERROR(st))
         goto rollback;
     }
 
