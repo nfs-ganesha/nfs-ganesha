@@ -152,6 +152,13 @@ typedef enum nfs_stat_type__
 /* we support only upto NLMPROC4_UNLOCK */
 #define NLM_V4_NB_OPERATION 5
 
+typedef struct nfs_op_stat_item__
+{
+  unsigned int total;
+  unsigned int success;
+  unsigned int failed;
+} nfs_op_stat_item_t;
+
 typedef struct nfs_request_stat_item__
 {
   unsigned int total;
@@ -172,8 +179,8 @@ typedef struct nfs_request_stat__
   nfs_request_stat_item_t stat_req_nfs2[NFS_V2_NB_COMMAND];
   nfs_request_stat_item_t stat_req_nfs3[NFS_V3_NB_COMMAND];
   nfs_request_stat_item_t stat_req_nfs4[NFS_V4_NB_COMMAND];
-  nfs_request_stat_item_t stat_op_nfs40[NFS_V40_NB_OPERATION];
-  nfs_request_stat_item_t stat_op_nfs41[NFS_V41_NB_OPERATION];
+  nfs_op_stat_item_t stat_op_nfs40[NFS_V40_NB_OPERATION];
+  nfs_op_stat_item_t stat_op_nfs41[NFS_V41_NB_OPERATION];
   nfs_request_stat_item_t stat_req_nlm4[NLM_V4_NB_OPERATION];
 } nfs_request_stat_t;
 

@@ -1218,14 +1218,14 @@ void nfs_reset_stats(void)
         {
           workers_data[i].stats.stat_req.stat_op_nfs40[j].total = 0;
           workers_data[i].stats.stat_req.stat_op_nfs40[j].success = 0;
-          workers_data[i].stats.stat_req.stat_op_nfs40[j].dropped = 0;
+          workers_data[i].stats.stat_req.stat_op_nfs40[j].failed = 0;
         }
 
       for(j = 0; j < NFS_V41_NB_OPERATION; j++)
         {
           workers_data[i].stats.stat_req.stat_op_nfs41[j].total = 0;
           workers_data[i].stats.stat_req.stat_op_nfs41[j].success = 0;
-          workers_data[i].stats.stat_req.stat_op_nfs41[j].dropped = 0;
+          workers_data[i].stats.stat_req.stat_op_nfs41[j].failed = 0;
         }
 
       workers_data[i].stats.last_stat_update = 0;

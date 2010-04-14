@@ -849,6 +849,11 @@ int nfs4_cb_recall(struct nfs_cb_argop4 *op,
 int nfs4_cb_illegal(struct nfs_cb_argop4 *op,
                     compound_data_t * data, struct nfs_cb_resop4 *resp);
 
+/* Stats management for NFSv4 */
+int nfs4_op_stat_update(nfs_arg_t * parg /* IN     */ ,
+                        nfs_res_t * pres /* IN    */,
+		        nfs_request_stat_t * pstat_req /* OUT */ ) ;
+
 /* @}
  * -- End of NFS protocols functions. --
  */
