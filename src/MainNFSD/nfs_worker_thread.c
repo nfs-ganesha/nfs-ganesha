@@ -848,6 +848,12 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   nfs_stat_update(stat_type, &(pworker_data->stats.stat_req), ptr_req);
   pworker_data->stats.nb_total_req += 1;
 
+  /* Perform NFSv4 operations statistics if required */
+  if(  ptr_req->rq_vers == NFS_V4 )
+   if(  ptr_req->rq_proc == NFSPROC4_COMPOUND )
+     nfs4_op_stat_update( &arg_nfs, &res_nfs, &(pworker_data->stats.stat_req ) ) ;
+
+
   pworker_data->current_xid = 0;        /* No more xid managed */
 
   /* If request is dropped, no return to the client */

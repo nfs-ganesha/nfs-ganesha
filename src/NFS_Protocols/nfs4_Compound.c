@@ -898,7 +898,6 @@ void nfs4_Compound_Free(nfs_res_t * pres)
  */
 void compound_data_Free(compound_data_t * data)
 {
-
   if(data->currentFH.nfs_fh4_val != NULL)
     Mem_Free((char *)data->currentFH.nfs_fh4_val);
 
@@ -915,3 +914,60 @@ void compound_data_Free(compound_data_t * data)
     Mem_Free((char *)data->mounted_on_FH.nfs_fh4_val);
 
 }                               /* compound_data_Free */
+
+/**
+ *    
+ *  nfs4_op_stat_update: updates the NFSv4 operations specific statistics for a COMPOUND4 requests (either v4.0 or v4.1).
+ *
+ *  Updates the NFSv4 operations specific statistics for a COMPOUND4 requests (either v4.0 or v4.1).
+ * 
+ *  @param parg argument for the COMPOUND4 request
+ *  @param pres result for the COMPOUND4 request
+ *  @param pstat_req pointer to the worker's structure for NFSv4 stats
+ * 
+ * @return -1 if failed 0 otherwise 
+ *
+ */             
+
+int nfs4_op_stat_update(nfs_arg_t * parg /* IN     */ ,
+                        nfs_res_t * pres /* IN    */,
+		        nfs_request_stat_t * pstat_req /* OUT */ )
+{
+  int i = 0 ;
+
+  switch( parg->arg_compound4.minorversion) 
+   {
+      case 0:
+        for( i = 0 ; i < pres->res_compound4.resarray.resarray_len ; i++ )
+          {
+              pstat_req->stat_op_nfs40[pres->res_compound4.resarray.resarray_val[i].resop].total += 1 ;
+
+             /* All operations's reply structures start with their status, whatever the name of this field */
+             if( pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opaccess.status == NFS4_OK )
+	       pstat_req->stat_op_nfs40[pres->res_compound4.resarray.resarray_val[i].resop].success += 1 ;
+	     else
+	       pstat_req->stat_op_nfs40[pres->res_compound4.resarray.resarray_val[i].resop].failed += 1 ;
+          }
+        break ;
+
+      case 1:
+        for( i = 0 ; i < pres->res_compound4.resarray.resarray_len ; i++ )
+          {
+              pstat_req->stat_op_nfs41[pres->res_compound4.resarray.resarray_val[i].resop].total += 1 ;
+
+             /* All operations's reply structures start with their status, whatever the name of this field */
+             if( pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opaccess.status == NFS4_OK )
+	       pstat_req->stat_op_nfs41[pres->res_compound4.resarray.resarray_val[i].resop].success += 1 ;
+	     else
+	       pstat_req->stat_op_nfs41[pres->res_compound4.resarray.resarray_val[i].resop].failed += 1 ;
+          }
+
+        break ;
+
+      default:
+	/* Bad parameter */
+	return -1 ;
+   }
+  return 0 ;
+} /* nfs4_op_stat_update */
+

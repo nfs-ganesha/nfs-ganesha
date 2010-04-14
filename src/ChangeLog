@@ -338,5 +338,6 @@
         - Export Access Type "MDONLY" was not managed when using NFSv4
 	- Add safety check to cache_inode_remove/cache_inode_create and cache_inode_link 
           to prevent from non allowed access.
+	- Statistics for NFSv4.0 and NFSv4.1 operations have been added
 
 
