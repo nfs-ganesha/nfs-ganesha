@@ -45,6 +45,30 @@ my @nfs3_fn_names =
 
 my @nfs4_fn_names = ( "null", "compound" );
 
+
+my @nfs40_op_names = 
+( "n/a", "n/a", "n/a", "access", "close", "commit", "create",
+"delegpurge", "delegreturn", "getattr", "getfh", "link", 
+"lock", "lockt", "locku", "lookup", "lookupp", "nverify", "open",
+"openattr", "open_confirm", "open_downgrade", "putfh", "putpubfh",
+"putrootfh", "read", "readdir", "readlink", "remove", "rename", 
+"renew", "restorefh", "savefh", "secinfo", "setattr", "setclientid",
+"setclientid_confirm", "verify", "write", "release_lockowner" ) ;
+
+my @nfs41_op_names = 
+( "n/a", "n/a", "n/a", "access", "close", "commit", "create",
+"delegpurge", "delegreturn", "getattr", "getfh", "link", 
+"lock", "lockt", "locku", "lookup", "lookupp", "nverify", "open",
+"openattr", "open_confirm", "open_downgrade", "putfh", "putpubfh",
+"putrootfh", "read", "readdir", "readlink", "remove", "rename", 
+"renew", "restorefh", "savefh", "secinfo", "setattr", "setclientid",
+"setclientid_confirm", "verify", "write", "release_lockowner", 
+"backchanelle_ctl", "bind_conn_to_session", "exchange_id", 
+"create_session", "destroy_session", "free_stateid", "get_dir_delegation",
+"getdeviceinfo", "getdevicelist", "layoutcommit", "layoutget", "layoutreturn",
+"secinfo_no_name", "sequence", "set_ssv", "test_stateid", "want_delegation",
+"destroy_clientid", "reclaim_complete" ) ;
+
 my @fsal_fn_names = (
   "lookup",   "access",   "create", "mkdir",   "truncate",
   "getattrs", "setattrs", "link",   "opendir", "readdir",
@@ -231,10 +255,10 @@ while (my $ligne=<STATS>)
         if ( $fn_index == 0 )
         {
           # print header the first time
-          printf( "%15s | %10s | %10s | %10s | %10s\n", "FUNCTION", "NB_CALLS", "OK", "RETRYABLE", "UNRECOV." );
+          printf( "%20s | %10s | %10s | %10s | %10s\n", "FUNCTION", "NB_CALLS", "OK", "RETRYABLE", "UNRECOV." );
         }
         
-        printf( "%15s | %10d | %10d | %10d | %10d\n", $cache_inode_fn_names[$fn_index],
+        printf( "%20s | %10d | %10d | %10d | %10d\n", $cache_inode_fn_names[$fn_index],
                 $nb_appels, $nb_succes, $nb_retryable, $nb_unrecov );        
         
         $fn_index ++;        
@@ -275,10 +299,10 @@ while (my $ligne=<STATS>)
         if ( $fn_index == 0 )
         {
           # print header the first time
-          printf( "%15s | %10s | %10s | %7s | %8s\n", "FUNCTION", "OK", "NOT_FOUND", "ERRORS", "HITS" );
+          printf( "%20s | %10s | %10s | %7s | %8s\n", "FUNCTION", "OK", "NOT_FOUND", "ERRORS", "HITS" );
         }
         
-        printf( "%15s | %10d | %10d | %7d | %7.2f%%\n", $cache_inode_hash_fn_names[$fn_index],
+        printf( "%20s | %10d | %10d | %7d | %7.2f%%\n", $cache_inode_hash_fn_names[$fn_index],
                 $nb_ok, $nb_notfound, $nb_err, $pct_hit );
         
         $fn_index ++;        
@@ -309,10 +333,10 @@ while (my $ligne=<STATS>)
         if ( $fn_index == 0 )
         {
           # print header the first time
-          printf( "%15s | %10s | %10s | %10s | %10s\n", "FUNCTION", "NB_CALLS", "OK", "RETRYABLE", "UNRECOV." );
+          printf( "%20s | %10s | %10s | %10s | %10s\n", "FUNCTION", "NB_CALLS", "OK", "RETRYABLE", "UNRECOV." );
         }
         
-        printf( "%15s | %10d | %10d | %10d | %10d\n", $fsal_fn_names[$fn_index],
+        printf( "%20s | %10d | %10d | %10d | %10d\n", $fsal_fn_names[$fn_index],
                 $nb_appels, $nb_succes, $nb_retryable, $nb_unrecov );
         
         $fn_index ++;        
@@ -372,10 +396,10 @@ while (my $ligne=<STATS>)
         if ( $fn_index == 0 )
         {
           # print header the first time
-          printf( "%15s | %10s | %10s | %10s\n", "FUNCTION", "NB_CALLS", "OK", "DROPPED");
+          printf( "%20s | %10s | %10s | %10s\n", "FUNCTION", "NB_CALLS", "OK", "DROPPED");
         }
         
-        printf( "%15s | %10d | %10d | %10d \n", $mount_fn_names[$fn_index],
+        printf( "%20s | %10d | %10d | %10d \n", $mount_fn_names[$fn_index],
                 $nb_tot, $nb_ok, $nb_dropp );
         
         $fn_index ++;
@@ -405,22 +429,22 @@ while (my $ligne=<STATS>)
         if ( $fn_index == 0 )
         {
           # print header the first time
-          printf( "%15s | %10s | %10s | %10s\n", "FUNCTION", "NB_CALLS", "OK", "DROPPED");
+          printf( "%20s | %10s | %10s | %10s\n", "FUNCTION", "NB_CALLS", "OK", "DROPPED");
         }
         
         if ( $vers == 2 )
         {
-          printf( "%15s | %10d | %10d | %10d \n", $nfs2_fn_names[$fn_index],
+          printf( "%20s | %10d | %10d | %10d \n", $nfs2_fn_names[$fn_index],
                    $nb_tot, $nb_ok, $nb_dropp );
         }
         elsif ( $vers == 3 )
         {
-          printf( "%15s | %10d | %10d | %10d \n", $nfs3_fn_names[$fn_index],
+          printf( "%20s | %10d | %10d | %10d \n", $nfs3_fn_names[$fn_index],
                    $nb_tot, $nb_ok, $nb_dropp );
         }
         elsif ( $vers == 4 )
         {
-          printf( "%15s | %10d | %10d | %10d \n", $nfs4_fn_names[$fn_index],
+          printf( "%20s | %10d | %10d | %10d \n", $nfs4_fn_names[$fn_index],
                    $nb_tot, $nb_ok, $nb_dropp );
         }
         
@@ -429,6 +453,50 @@ while (my $ligne=<STATS>)
       }
     
     }
+    elsif ( $tag =~ m/NFS V4\.(.) OPERATIONS/ )
+    {
+      my $minorversion = $1;
+      
+      next if ( ! ( $reste =~ m/^([^|]+)(.*)/ ) );  # go to next line
+
+      my $total = $1;
+      $reste = $2;
+      
+      print "Nb requests : $total\n\n";      
+ 
+      my $fn_index = 0;
+      
+      while (  $reste =~ m/\|([^,]+),([^,]+),([^|]+)(.*)/ )
+      {
+        my $nb_tot = $1;
+        my $nb_ok = $2;
+        my $nb_failed = $3;
+        $reste = $4;
+        
+        if ( $fn_index == 0 )
+        {
+          # print header the first time
+          printf( "%20s | %10s | %10s | %10s\n", "FUNCTION", "NB_CALLS", "OK", "failed");
+        }
+      
+       if( $minorversion == 0 ) 
+        {
+          printf( "%20s | %10d | %10d | %10d \n", $nfs40_op_names[$fn_index],
+                  $nb_tot, $nb_ok, $nb_failed );
+        }
+       elsif( $minorversion == 1 )
+        {
+          printf( "%20s | %10d | %10d | %10d \n", $nfs41_op_names[$fn_index],
+                  $nb_tot, $nb_ok, $nb_failed );
+        }
+
+        $fn_index ++;
+      
+      }
+    
+    }
+
+
     elsif ( $tag eq "BUDDY_MEMORY" )
     {
       next if ( ! ( $reste =~ m/^([^,]+),([^,]+),([^,]+)\|([^,]+),([^,]+),([^,]+)\|([^,]+),([^,]+),([^,]+),([^,]+)/ ) );  # go to next line

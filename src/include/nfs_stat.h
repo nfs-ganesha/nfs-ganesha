@@ -173,6 +173,8 @@ typedef struct nfs_request_stat__
   unsigned int nb_nfs2_req;
   unsigned int nb_nfs3_req;
   unsigned int nb_nfs4_req;
+  unsigned int nb_nfs40_op;
+  unsigned int nb_nfs41_op;
   unsigned int nb_nlm4_req;
   nfs_request_stat_item_t stat_req_mnt1[MNT_V1_NB_COMMAND];
   nfs_request_stat_item_t stat_req_mnt3[MNT_V3_NB_COMMAND];
