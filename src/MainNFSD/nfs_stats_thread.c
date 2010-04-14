@@ -347,6 +347,10 @@ void *stats_thread(void *addr)
               workers_data[i].stats.stat_req.nb_nfs3_req;
           global_worker_stat.stat_req.nb_nfs4_req +=
               workers_data[i].stats.stat_req.nb_nfs4_req;
+	  global_worker_stat.stat_req.nb_nfs40_op +=
+              workers_data[i].stats.stat_req.nb_nfs40_op ;
+	  global_worker_stat.stat_req.nb_nfs41_op +=
+              workers_data[i].stats.stat_req.nb_nfs41_op ;
 
           for(j = 0; j < MNT_V1_NB_COMMAND; j++)
             {
@@ -565,7 +569,7 @@ void *stats_thread(void *addr)
                 global_worker_stat.stat_req.stat_req_nfs4[j].dropped);
       fprintf(stats_file, "\n");
 
-      fprintf(stats_file, "NFS V4.0 OPERATIONS,%s", strdate ) ;
+      fprintf(stats_file, "NFS V4.0 OPERATIONS,%s;%u", strdate, global_worker_stat.stat_req.nb_nfs40_op ) ;
       for( j = 0 ; j < NFS_V40_NB_OPERATION ; j++ )
         fprintf(stats_file, "|%u,%u,%u",
                 global_worker_stat.stat_req.stat_op_nfs40[j].total,
@@ -573,7 +577,7 @@ void *stats_thread(void *addr)
                 global_worker_stat.stat_req.stat_op_nfs40[j].failed);
       fprintf(stats_file, "\n");
 
-      fprintf(stats_file, "NFS V4.1 OPERATIONS,%s", strdate ) ;
+      fprintf(stats_file, "NFS V4.1 OPERATIONS,%s;%u", strdate, global_worker_stat.stat_req.nb_nfs41_op ) ;
       for( j = 0 ; j < NFS_V41_NB_OPERATION ; j++ )
         fprintf(stats_file, "|%u,%u,%u",
                 global_worker_stat.stat_req.stat_op_nfs41[j].total,

@@ -940,6 +940,7 @@ int nfs4_op_stat_update(nfs_arg_t * parg /* IN     */ ,
       case 0:
         for( i = 0 ; i < pres->res_compound4.resarray.resarray_len ; i++ )
           {
+	      pstat_req->nb_nfs40_op += 1 ;
               pstat_req->stat_op_nfs40[pres->res_compound4.resarray.resarray_val[i].resop].total += 1 ;
 
              /* All operations's reply structures start with their status, whatever the name of this field */
@@ -953,6 +954,7 @@ int nfs4_op_stat_update(nfs_arg_t * parg /* IN     */ ,
       case 1:
         for( i = 0 ; i < pres->res_compound4.resarray.resarray_len ; i++ )
           {
+	      pstat_req->nb_nfs41_op += 1 ;
               pstat_req->stat_op_nfs41[pres->res_compound4.resarray.resarray_val[i].resop].total += 1 ;
 
              /* All operations's reply structures start with their status, whatever the name of this field */
