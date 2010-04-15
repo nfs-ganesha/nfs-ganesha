@@ -187,6 +187,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   uint32_t tmp_attr[2];
   uint_t tmp_int = 2;
 
+  int pnfs_status ;
+
   pworker = (nfs_worker_data_t *) data->pclient->pworker;
 
   /* If there is no FH */
@@ -770,6 +772,23 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                   pentry_newfile = pentry_lookup;
                 }
             }
+
+#ifdef _USE_PNFS
+          /* Create Data Server Objects associated with the file if required */
+          if( data->pexport->options & EXPORT_OPTION_USE_PNFS )
+           {
+                if( ( pnfs_status = pnfs_create_ds_file( data->ppnfsclient,
+		 				         pentry_newfile->object.file.attributes.fileid, 
+						         &pentry_newfile->object.file.pnfs_file.ds_file ) ) != NFS4_OK )
+                 {
+                    DisplayLogLevel(NIV_DEBUG, "OPEN PNFS CREATE DS FILE : Error %u", pnfs_status ) ;
+
+		    res_OPEN4.status = pnfs_status ;
+                    return res_OPEN4.status;
+                 }
+           }
+#endif /* _USE_PNFS */
+
 
           /* Prepare state management structure */
           candidate_type = CACHE_INODE_STATE_SHARE;

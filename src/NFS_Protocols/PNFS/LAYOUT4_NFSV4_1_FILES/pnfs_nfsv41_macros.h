@@ -181,26 +181,6 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                         \
 } while ( 0 )
 
-#define COMPOUNDV41_ARG_ADD_OP_READ( argcompound, instateid, inoffset, incount )                                                                \
-do {                                                                                                                                           \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_READ ;                                                  \
-  memcpy( &argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opread.stateid, instateid, sizeof( stateid4 ) ) ; \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opread.offset = inoffset ;                                 \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opread.count  = incount ;                                  \
-  argcompound.argarray.argarray_len += 1 ;                                                                                                     \
-} while ( 0 )
-
-#define COMPOUNDV41_ARG_ADD_OP_WRITE( argcompound, instateid, inoffset, indatabuffval, indatabufflen )                                           \
-do {                                                                                                                                            \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_WRITE ;                                                  \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opwrite.stable= DATA_SYNC4 ;                                \
-  memcpy( &argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opwrite.stateid, instateid, sizeof( stateid4 ) ) ; \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opwrite.offset = inoffset ;                                 \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opwrite.data.data_val = indatabuffval ;                     \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opwrite.data.data_len = indatabufflen ;                     \
-  argcompound.argarray.argarray_len += 1 ;                                                                                                      \
-} while ( 0 )
-
 #define COMPOUNDV41_EXECUTE_SIMPLE( pclient, argcompound, rescompound )    \
    clnt_call( pclient->rpc_client, NFSPROC4_COMPOUND,                      \
               (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argcompound,         \

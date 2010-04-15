@@ -158,6 +158,9 @@ int pnfs_init(pnfs_client_t * pnfsclient,
 int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
                         fattr4_fileid fileid, pnfs_ds_file_t * pfile);
 
+int pnfs_lookup_ds_file(pnfs_client_t * pnfsclient,
+                        fattr4_fileid fileid, pnfs_ds_file_t * pfile) ;
+
 int pnfs_unlink_ds_file(pnfs_client_t * pnfsclient,
                         fattr4_fileid fileid, pnfs_ds_file_t * pfile);
 

@@ -37,7 +37,7 @@
 
 #define PNFS_LAYOUTFILE_CREATE_VAL_BUFFER  1024
 
-int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
+int pnfs_lookup_ds_file(pnfs_client_t * pnfsclient,
                         fattr4_fileid fileid, pnfs_ds_file_t * pfile)
 {
   COMPOUND4args argnfs4;
@@ -104,4 +104,4 @@ int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
       opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val;
 
   return resnfs4.status;
-}                               /* pnfs_create_ds_file */
+}                               /* pnfs_lookup_ds_file */

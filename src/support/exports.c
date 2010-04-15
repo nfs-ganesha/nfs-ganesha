@@ -172,6 +172,7 @@ cache_content_client_t recover_datacache_client;
 #define CONF_EXPORT_MAX_OFF_READ       "MaxOffsetRead"
 #define CONF_EXPORT_MAX_CACHE_SIZE     "MaxCacheSize"
 #define CONF_EXPORT_REFERRAL           "Referral"
+#define CONF_EXPORT_PNFS               "Use_pNFS"
 
 /** @todo : add encrypt handles option */
 
@@ -202,6 +203,7 @@ cache_content_client_t recover_datacache_client;
 #define FLAG_EXPORT_MAX_OFF_WRITE   0x00400000
 #define FLAG_EXPORT_MAX_OFF_READ    0x00800000
 #define FLAG_EXPORT_MAX_CACHE_SIZE  0x01000000
+#define FLAG_EXPORT_USE_PNFS        0x02000000
 
 int local_lru_inode_entry_to_str(LRU_data_t data, char *str)
 {
@@ -696,6 +698,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->MaxRead = (fsal_size_t) 16384;
   p_entry->PrefWrite = (fsal_size_t) 16384;
   p_entry->PrefRead = (fsal_size_t) 16384;
+  p_entry->PrefReaddir = (fsal_size_t)16384 ; 
 
   strcpy(p_entry->FS_specific, "");
   strcpy(p_entry->FS_tag, "");
@@ -1692,6 +1695,34 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
             }
           set_options |= FLAG_EXPORT_USE_DATACACHE;
         }
+      else if(!STRCMP(var_name, CONF_EXPORT_PNFS))
+        {
+          /* check if it has not already been set */
+          if((set_options & FLAG_EXPORT_USE_PNFS) == FLAG_EXPORT_USE_PNFS)
+            {
+              DEFINED_TWICE_WARNING(FLAG_EXPORT_USE_PNFS);
+              continue;
+            }
+
+          switch (StrToBoolean(var_value))
+            {
+            case 1:
+              p_entry->options |= EXPORT_OPTION_USE_PNFS;
+              break;
+
+            case 0:
+              /*default (false) */
+              break;
+
+            default:           /* error */
+              DisplayLog
+                  ("NFS READ_EXPORT: ERROR: Invalid value for '%s' (%s): TRUE or FALSE expected.",
+                   var_name, var_value);
+              err_flag = TRUE;
+              continue;
+            }
+          set_options |= EXPORT_OPTION_USE_PNFS;
+        }
       else if(!STRCMP(var_name, CONF_EXPORT_FS_SPECIFIC))
         {
           /* check if it has not already been set */
@@ -1885,6 +1916,7 @@ exportlist_t *BuildDefaultExport()
   p_entry->MaxRead = (fsal_size_t) 16384;
   p_entry->PrefWrite = (fsal_size_t) 16384;
   p_entry->PrefRead = (fsal_size_t) 16384;
+  p_entry->PrefReaddir = (fsal_size_t) 16384;
 
   strcpy(p_entry->FS_specific, "");
   strcpy(p_entry->FS_tag, "ganesha");
