@@ -359,9 +359,6 @@ typedef struct compoud_data
   bool_t use_drc;                                     /**< Set to TRUE if session DRC is to be used                      */
   uint32_t oppos;                                     /**< Position of the operation within the request processed        */
   nfs41_session_t *psession;                          /**< Related session (found by OP_SEQUENCE)                        */
-#ifdef _USE_PNFS
-  pnfs_client_t  * ppnfsclient ;
-#endif /* _USE_PNFS */
 #endif /* USE_NFS4_1 */
 } compound_data_t;
 

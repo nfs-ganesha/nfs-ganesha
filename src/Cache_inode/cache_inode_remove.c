@@ -263,6 +263,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
   cache_inode_status_t status;
   cache_content_status_t cache_content_status;
   int to_remove_numlinks = 0;
+  int pnfs_status ; 
 
   /* stats */
   pclient->stat.nb_call_total += 1;
@@ -377,10 +378,6 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
 
   if(status == CACHE_INODE_SUCCESS)
     {
-#ifdef _USE_PNFS
-     /* Remove ressources allocated for the file in pNFS implementation */
-#endif 
-
       /* Remove the file from FSAL */
       after_attr.asked_attributes = pclient->attrmask;
 #ifdef _USE_MFSL
@@ -529,6 +526,21 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
                                     cache_content_status);
                 }
             }
+#ifdef _USE_PNFS
+	  if(to_remove_entry->object.file.pnfs_file.ds_file.allocated == TRUE )
+	   {
+	     if( ( pnfs_status = pnfs_unlink_ds_file( &pclient->pnfsclient,
+		 				      to_remove_entry->object.file.attributes.fileid, 
+						      &to_remove_entry->object.file.pnfs_file.ds_file ) ) != NFS4_OK )
+             {
+               DisplayLogLevel(NIV_DEBUG, "OPEN PNFS CREATE DS FILE : Error %u", pnfs_status ) ;
+
+	       *pstatus = CACHE_INODE_IO_ERROR ;
+               return *pstatus ;
+             }
+
+           }
+#endif 
         }
 
       /* browse and clean all DIR_CONTINUEs */

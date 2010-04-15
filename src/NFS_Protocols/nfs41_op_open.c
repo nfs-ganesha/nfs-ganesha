@@ -188,6 +188,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   uint_t tmp_int = 2;
 
   int pnfs_status ;
+  cache_inode_create_arg_t create_arg;
 
   pworker = (nfs_worker_data_t *) data->pclient->pworker;
 
@@ -748,16 +749,26 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           printf("    OPEN open.how = %d\n", arg_OPEN4.openhow.openflag4_u.how.mode);
 #endif
 
+create_arg.use_pnfs = FALSE ;
+#ifdef _USE_PNFS
+          /*  set the file has "managed via pNFS" */
+          if( data->pexport->options & EXPORT_OPTION_USE_PNFS )
+		create_arg.use_pnfs = TRUE ;
+#endif /* _USE_PNFS */
+
+
+
           /* Create the file, if we reach this point, it does not exist, we can create it */
           if((pentry_newfile = cache_inode_create(pentry_parent,
                                                   &filename,
                                                   REGULAR_FILE,
                                                   mode,
-                                                  NULL,
+                                                  &create_arg,
                                                   &attr_newfile,
                                                   data->ht,
                                                   data->pclient,
-                                                  data->pcontext, &cache_status)) == NULL)
+                                                  data->pcontext, 
+                                                  &cache_status)) == NULL)
             {
               /* If the file already exists, this is not an error if open mode is UNCHECKED */
               if(cache_status != CACHE_INODE_ENTRY_EXISTS)
@@ -772,23 +783,6 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                   pentry_newfile = pentry_lookup;
                 }
             }
-
-#ifdef _USE_PNFS
-          /* Create Data Server Objects associated with the file if required */
-          if( data->pexport->options & EXPORT_OPTION_USE_PNFS )
-           {
-                if( ( pnfs_status = pnfs_create_ds_file( data->ppnfsclient,
-		 				         pentry_newfile->object.file.attributes.fileid, 
-						         &pentry_newfile->object.file.pnfs_file.ds_file ) ) != NFS4_OK )
-                 {
-                    DisplayLogLevel(NIV_DEBUG, "OPEN PNFS CREATE DS FILE : Error %u", pnfs_status ) ;
-
-		    res_OPEN4.status = pnfs_status ;
-                    return res_OPEN4.status;
-                 }
-           }
-#endif /* _USE_PNFS */
-
 
           /* Prepare state management structure */
           candidate_type = CACHE_INODE_STATE_SHARE;

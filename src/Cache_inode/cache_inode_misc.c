@@ -462,6 +462,10 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       pentry->object.file.pentry_parent_open = NULL;
 #endif
 
+#ifdef _USE_PNFS
+      pentry->object.file.pnfs_file.ds_file.allocated = FALSE ;
+#endif
+
       break;
 
     case DIR_BEGINNING:

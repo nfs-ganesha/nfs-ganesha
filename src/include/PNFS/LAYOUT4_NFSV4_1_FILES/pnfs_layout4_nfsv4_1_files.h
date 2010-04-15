@@ -147,6 +147,7 @@ typedef struct pnfs_client__
 
 typedef struct pnfs_ds_file__
 {
+  bool_t allocated ;
   nfs_fh4 handle;
   stateid4 stateid;
 } pnfs_ds_file_t;
