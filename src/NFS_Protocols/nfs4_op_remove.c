@@ -242,6 +242,8 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       res_REMOVE4.status = nfs4_Errno(cache_status);
       return res_REMOVE4.status;
     }
+#ifdef _USE_PNFS
+#endif
 
   /* We have to keep track of the 'change' file attribute for reply structure */
   memset(&(res_REMOVE4.REMOVE4res_u.resok4.cinfo.before), 0, sizeof(changeid4));

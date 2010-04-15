@@ -377,6 +377,10 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
 
   if(status == CACHE_INODE_SUCCESS)
     {
+#ifdef _USE_PNFS
+     /* Remove ressources allocated for the file in pNFS implementation */
+#endif 
+
       /* Remove the file from FSAL */
       after_attr.asked_attributes = pclient->attrmask;
 #ifdef _USE_MFSL

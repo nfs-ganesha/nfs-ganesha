@@ -511,9 +511,6 @@ typedef struct nfs_worker_data__
   unsigned int gc_in_progress;
   unsigned int current_xid;
   fsal_op_context_t thread_fsal_context;
-#ifdef _USE_PNFS
-  pnfs_client_t pnfs_client;
-#endif                          /* _USE_PNFS */
 } nfs_worker_data_t;
 
 /* flush thread data */

@@ -278,6 +278,7 @@ typedef struct exportlist__
 #define EXPORT_OPTION_MAXOFFSETWRITE  0x04000000        /* Maximum Offset for write is set */
 #define EXPORT_OPTION_MAXOFFSETREAD   0x08000000        /* Maximum Offset for read is set  */
 #define EXPORT_OPTION_MAXCACHESIZE    0x10000000        /* Maximum Offset for read is set  */
+#define EXPORT_OPTION_USE_PNFS        0x20000000        /* Using pNFS or not using pNFS ?  */
 
 /* NFS4 specific structures */
 
@@ -358,7 +359,10 @@ typedef struct compoud_data
   bool_t use_drc;                                     /**< Set to TRUE if session DRC is to be used                      */
   uint32_t oppos;                                     /**< Position of the operation within the request processed        */
   nfs41_session_t *psession;                          /**< Related session (found by OP_SEQUENCE)                        */
-#endif
+#ifdef _USE_PNFS
+  pnfs_client_t  * ppnfsclient ;
+#endif /* _USE_PNFS */
+#endif /* USE_NFS4_1 */
 } compound_data_t;
 
 /* Export list related functions */

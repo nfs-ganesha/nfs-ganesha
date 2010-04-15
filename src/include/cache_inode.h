@@ -544,7 +544,10 @@ typedef struct cache_inode_client__
   cache_inode_open_owner_name_t *pool_open_owner_name;             /**< Pool for NFSv4 files's open_owner                        */
 #ifdef _USE_NFS4_1
   nfs41_session_t *pool_session;                                   /**< Pool for NFSv4.1 session                                 */
-#endif
+#ifdef _USE_PNFS
+  pnfs_client_t    pnfsclient;                                     /**< pNFS client structure                                    */
+#endif /* _USE_PNFS */
+#endif /* _USE_NFS4_1 */
   unsigned int nb_prealloc;                                        /**< Size of the preallocated pool                            */
   unsigned int nb_pre_dir_data;                                    /**< Number of preallocated pdir data buffers                 */
   unsigned int nb_pre_parent;                                      /**< Number of preallocated parent list entries               */
