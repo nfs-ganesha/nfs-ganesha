@@ -369,9 +369,6 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   data.pcached_res = NULL;
   data.use_drc = FALSE;
   data.psession = NULL;
-#ifdef _USE_PNFS
-  data.ppnfsclient = &pclient->pnfsclient ;
-#endif /* _USE_PNFS */
 #endif /* _USE_NFS4_1 */
 
   strcpy(data.MntPath, "/");

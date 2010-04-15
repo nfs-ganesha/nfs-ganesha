@@ -595,6 +595,7 @@ typedef union cache_inode_create_arg__
 {
   fsal_path_t link_content;
   fsal_dev_t dev_spec;
+  bool_t     use_pnfs ;
 } cache_inode_create_arg_t;
 
 #define DIR_START     0

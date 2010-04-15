@@ -96,6 +96,7 @@ int pnfs_lookup_ds_file(pnfs_client_t * pnfsclient,
       return resnfs4.status;
     }
 
+  pfile->allocated = TRUE ;
   pfile->handle.nfs_fh4_len =
       resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.
       opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len;
