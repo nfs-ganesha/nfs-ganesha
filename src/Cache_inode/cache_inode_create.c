@@ -436,6 +436,8 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
 		 				    pentry->object.file.attributes.fileid, 
 						    &pentry->object.file.pnfs_file.ds_file ) ) != NFS4_OK )
              {
+               V_w(&pentry_parent->lock);
+
                DisplayLogLevel(NIV_DEBUG, "OPEN PNFS CREATE DS FILE : Error %u", pnfs_status ) ;
 
 	       *pstatus = CACHE_INODE_IO_ERROR ;

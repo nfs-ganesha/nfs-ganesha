@@ -75,7 +75,7 @@ int pnfs_init(pnfs_client_t * pnfsclient, pnfs_layoutfile_parameter_t * pnfs_lay
                  pnfs_layout_param->ds_param[0].rootpath);
       exit(1);
     }
-  DisplayLogLevel(NIV_DEBUG, "PNFS INIT: pNFS engine could get DS's rootFH");
+  DisplayLogLevel(NIV_DEBUG, "PNFS INIT: pNFS engine successfully got DS's rootFH");
 
   return 0;
 }                               /* pnfs_init */

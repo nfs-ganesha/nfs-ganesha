@@ -1052,6 +1052,71 @@ static const fattr4_dent_t __attribute__ ((__unused__)) fattr4tab[] =
   ,
   {
   "FATTR4_MOUNTED_ON_FILEID", 55, 1, sizeof(fattr4_mounted_on_fileid), FATTR4_ATTR_READ}
+#ifdef _USE_NFS4_1
+  , 
+  {
+  "FATTR4_DIR_NOTIF_DELAY", 56, 0, sizeof( fattr4_dir_notif_delay ), FATTR4_DIR_NOTIF_DELAY}
+  ,
+  {
+  "FATTR4_DIRENT_NOTIF_DELAY", 57, 0, sizeof( fattr4_dirent_notif_delay ),FATTR4_DIRENT_NOTIF_DELAY}
+  ,
+  { 
+  "FATTR4_DACL", 58, 0, sizeof( fattr4_dacl ), FATTR4_DACL}
+  ,
+  {
+  "FATTR4_SACL", 59, 0, sizeof( fattr4_sacl ), FATTR4_SACL}
+  ,
+  {
+  "FATTR4_CHANGE_POLICY", 60, 0, sizeof( fattr4_change_policy ), FATTR4_CHANGE_POLICY}
+  ,
+  {
+  "FATTR4_FS_STATUS", 61, 0, sizeof( fattr4_fs_status ), FATTR4_FS_STATUS}
+  ,
+  {
+  "FATTR4_FS_LAYOUT_TYPES", 62, 1, sizeof( fattr4_fs_layout_types ), FATTR4_FS_LAYOUT_TYPES}
+  ,
+  {
+  "FATTR4_LAYOUT_HINT", 63, 0, sizeof( fattr4_layout_hint ), FATTR4_LAYOUT_HINT}
+  ,
+  {
+  "FATTR4_LAYOUT_TYPES", 64, 0, sizeof( fattr4_layout_types ), FATTR4_LAYOUT_TYPES}
+  ,
+  {
+  "FATTR4_LAYOUT_BLKSIZE", 65, 1, sizeof( fattr4_layout_blksize ), FATTR4_LAYOUT_BLKSIZE}
+  , 
+  {
+  "FATTR4_LAYOUT_ALIGNMENT", 66, 0, sizeof( fattr4_layout_alignment ), FATTR4_LAYOUT_ALIGNMENT}
+  ,
+  {
+  "FATTR4_FS_LOCATIONS_INFO", 67, 0, sizeof( fattr4_fs_locations_info ), FATTR4_FS_LOCATIONS_INFO}
+  ,
+  {
+  "FATTR4_MDSTHRESHOLD", 68, 0, sizeof( fattr4_mdsthreshold ), FATTR4_MDSTHRESHOLD}
+  ,
+  {
+  "FATTR4_RETENTION_GET", 69, 0, sizeof( fattr4_retention_get ), FATTR4_RETENTION_GET}
+  ,
+  {
+  "FATTR4_RETENTION_SET", 70, 0, sizeof( fattr4_retention_set ), FATTR4_RETENTION_SET}
+  ,
+  {
+  "FATTR4_RETENTEVT_GET", 71, 0, sizeof( fattr4_retentevt_get ), FATTR4_RETENTEVT_GET}
+  ,
+  {
+  "FATTR4_RETENTEVT_SET", 72, 0, sizeof( fattr4_retentevt_set ), FATTR4_RETENTEVT_SET}
+  ,
+  {
+  "FATTR4_RETENTION_HOLD", 73, 0, sizeof( fattr4_retention_hold ), FATTR4_RETENTION_HOLD}
+  ,
+  {
+  "FATTR4_MODE_SET_MASKED", 74, 0, sizeof( fattr4_mode_set_masked ), FATTR4_MODE_SET_MASKED}
+  ,
+  {
+  "FATTR4_SUPPATTR_EXCLCREAT", 75,1, sizeof( fattr4_suppattr_exclcreat ), FATTR4_SUPPATTR_EXCLCREAT}
+  ,
+  {
+  "FATTR4_FS_CHARSET_CAP", 76, 0, sizeof( fattr4_fs_charset_cap ), FATTR4_FS_CHARSET_CAP}
+#endif /* _USE_NFS4_1 */
 };
 
 /* BUGAZOMEU: Some definitions to be removed. FSAL parameters to be used instead */

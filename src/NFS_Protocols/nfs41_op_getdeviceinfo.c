@@ -149,6 +149,7 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
 #define res_GETDEVICEINFO4  resp->nfs_resop4_u.opgetdeviceinfo
 
   resp->resop = NFS4_OP_GETDEVICEINFO;
+
   res_GETDEVICEINFO4.gdir_status = NFS4_OK;
 
   return res_GETDEVICEINFO4.gdir_status;
