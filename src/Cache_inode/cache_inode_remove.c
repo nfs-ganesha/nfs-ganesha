@@ -535,6 +535,13 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
              {
                DisplayLogLevel(NIV_DEBUG, "OPEN PNFS CREATE DS FILE : Error %u", pnfs_status ) ;
 
+               if(use_mutex)
+                {
+                  V_w(&to_remove_entry->lock);
+                  V_w(&pentry->lock);
+                 }
+
+
 	       *pstatus = CACHE_INODE_IO_ERROR ;
                return *pstatus ;
              }

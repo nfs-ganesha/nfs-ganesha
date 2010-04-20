@@ -404,6 +404,10 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
   fattr4_quota_avail_soft quota_avail_soft;
   fattr4_quota_used quota_used;
   fattr4_mounted_on_fileid mounted_on_fileid;
+#ifdef _USE_NFS4_1
+  fattr4_fs_layout_types layout_types;
+  layouttype4 layouts[1];
+#endif
 
   u_int fhandle_len = 0;
   uint32_t supported_attrs_len = 0;
@@ -418,17 +422,29 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
   unsigned int attrmasklen = 0;
   unsigned int attribute_to_set = 0;
 
+#ifdef _USE_NFS4_1
+  unsigned int attrvalslist_supported[FATTR4_FS_CHARSET_CAP];
+  unsigned int attrmasklist[FATTR4_FS_CHARSET_CAP];  /* List cannot be longer than FATTR4_FS_CHARSET_CAP */
+  unsigned int attrvalslist[FATTR4_FS_CHARSET_CAP];  /* List cannot be longer than FATTR4_FS_CHARSET_CAP */
+#else
   unsigned int attrvalslist_supported[FATTR4_MOUNTED_ON_FILEID];
   unsigned int attrmasklist[FATTR4_MOUNTED_ON_FILEID];  /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
   unsigned int attrvalslist[FATTR4_MOUNTED_ON_FILEID];  /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
+#endif
   char attrvalsBuffer[ATTRVALS_BUFFLEN];
 
   char __attribute__ ((__unused__)) funcname[] = "nfs4_PseudoToFattr";
 
   /* memset to make sure the arrays are initiated to 0 */
   memset(attrvalsBuffer, 0, NFS4_ATTRVALS_BUFFLEN);
-  memset(&attrmasklist, 0, FATTR4_MOUNTED_ON_FILEID * sizeof(unsigned int));
-  memset(&attrvalslist, 0, FATTR4_MOUNTED_ON_FILEID * sizeof(unsigned int));
+#ifdef _USE_NFS4_1
+  memset((uint32_t *) attrmasklist, 0, FATTR4_FS_CHARSET_CAP * sizeof(uint32_t));
+  memset((uint32_t *) attrvalslist, 0, FATTR4_FS_CHARSET_CAP * sizeof(uint32_t));
+#else
+  memset((uint32_t *) attrmasklist, 0, FATTR4_MOUNTED_ON_FILEID * sizeof(uint32_t));
+  memset((uint32_t *) attrvalslist, 0, FATTR4_MOUNTED_ON_FILEID * sizeof(uint32_t));
+#endif
+
 
   /* Convert the attribute bitmap to an attribute list */
   nfs4_bitmap4_to_list(Bitmap, &attrmasklen, attrmasklist);
@@ -483,7 +499,11 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 
           /* How many supported attributes ? Compute the result in variable named c and set attrvalslist_supported  */
           c = 0;
+#ifdef _USE_NFS4_1
+          for(k = FATTR4_SUPPORTED_ATTRS; k <= FATTR4_FS_CHARSET_CAP; k++)
+#else
           for(k = FATTR4_SUPPORTED_ATTRS; k <= FATTR4_MOUNTED_ON_FILEID; k++)
+#endif
             {
               if(fattr4tab[k].supported)
                 {
@@ -492,11 +512,18 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
             }
 
           /* Let set the reply bitmap */
-          /** @todo: BUGAZOMEU: Allocation at NULL Adress here.... */
+#ifdef _USE_NFS4_1
+          if((supported_attrs.bitmap4_val =
+              (uint32_t *) Mem_Alloc(3 * sizeof(uint32_t))) == NULL)
+            return -1;
+          memset(supported_attrs.bitmap4_val, 0, 3 * sizeof(uint32_t));
+#else
           if((supported_attrs.bitmap4_val =
               (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
             return -1;
           memset(supported_attrs.bitmap4_val, 0, 2 * sizeof(uint32_t));
+#endif
+
           nfs4_list_to_bitmap4(&supported_attrs, &c, attrvalslist_supported);
 
 #ifdef _DEBUG_NFS_V4_PSEUDO
@@ -1235,6 +1262,24 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
           break;
+
+#ifdef _USE_NFS4_1
+        case FATTR4_FS_LAYOUT_TYPES:
+          layout_types.fattr4_fs_layout_types_len = htonl(1);
+          memcpy((char *)(attrvalsBuffer + LastOffset),
+                 &layout_types.fattr4_fs_layout_types_len, sizeof(u_int));
+          LastOffset += sizeof(u_int);
+
+          layout_types.fattr4_fs_layout_types_val = layouts;
+          layouts[0] = htonl(LAYOUT4_NFSV4_1_FILES);
+          memcpy((char *)(attrvalsBuffer + LastOffset),
+                 layout_types.fattr4_fs_layout_types_val, sizeof(layouttype4));
+          LastOffset += sizeof(layouttype4);
+
+          op_attr_success = 1;
+          break;
+#endif
+
 
         default:
           DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,

@@ -302,9 +302,12 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
   pfile_layout->nfl_util = 0x2000;  /** @TODO do not know why I should set this value */
   pfile_layout->nfl_first_stripe_index = 0;
   pfile_layout->nfl_pattern_offset = 0;
-  pfile_layout->nfl_fh_list.nfl_fh_list_len = 1;
-  pfile_layout->nfl_fh_list.nfl_fh_list_val =
-      &(data->current_entry->object.file.pnfs_file.ds_file.handle);
+  pfile_layout->nfl_fh_list.nfl_fh_list_len = htonl( 1 ); /* Without htol, xdr within NFSv4 will be quite unhappy... */
+  pfile_layout->nfl_fh_list.nfl_fh_list_val = (nfs_fh4 *)Mem_Alloc( sizeof( nfs_fh4 ) ) ;
+  pfile_layout->nfl_fh_list.nfl_fh_list_val[0].nfs_fh4_len =  /* Same thing as stated above */
+      htonl( data->current_entry->object.file.pnfs_file.ds_file.handle.nfs_fh4_len ) ;
+  pfile_layout->nfl_fh_list.nfl_fh_list_val[0].nfs_fh4_val =
+      data->current_entry->object.file.pnfs_file.ds_file.handle.nfs_fh4_val;
 
   res_LAYOUTGET4.logr_status = NFS4_OK;
   return res_LAYOUTGET4.logr_status;

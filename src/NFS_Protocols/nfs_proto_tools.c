@@ -570,11 +570,12 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   int op_attr_success = 0;
   char __attribute__ ((__unused__)) funcname[] = "nfs4_FSALattr_To_Fattr";
 
-  unsigned int attrvalslist_supported[FATTR4_MOUNTED_ON_FILEID];
 #ifdef _USE_NFS4_1
+  unsigned int attrvalslist_supported[FATTR4_FS_CHARSET_CAP];
   uint32_t attrmasklist[FATTR4_FS_CHARSET_CAP]; /* List cannot be longer than FATTR4_FS_CHARSET_CAP */
   uint32_t attrvalslist[FATTR4_FS_CHARSET_CAP]; /* List cannot be longer than FATTR4_FS_CHARSET_CAP */
 #else
+  unsigned int attrvalslist_supported[FATTR4_MOUNTED_ON_FILEID];
   uint32_t attrmasklist[FATTR4_MOUNTED_ON_FILEID];      /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
   uint32_t attrvalslist[FATTR4_MOUNTED_ON_FILEID];      /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
 #endif
@@ -651,7 +652,11 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
           /* How many supported attributes ? Compute the result in variable named c */
           c = 0;
+#ifdef _USE_NFS4_1
+          for(k = FATTR4_SUPPORTED_ATTRS; k <= FATTR4_FS_CHARSET_CAP; k++)
+#else
           for(k = FATTR4_SUPPORTED_ATTRS; k <= FATTR4_MOUNTED_ON_FILEID; k++)
+#endif
             {
               if(fattr4tab[k].supported)
                 {
@@ -665,10 +670,17 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 #endif
 
           /* Let set the reply bitmap */
+#ifdef _USE_NFS4_1
+          if((supported_attrs.bitmap4_val =
+              (uint32_t *) Mem_Alloc(3 * sizeof(uint32_t))) == NULL)
+            return -1;
+          memset(supported_attrs.bitmap4_val, 0, 3 * sizeof(uint32_t));
+#else
           if((supported_attrs.bitmap4_val =
               (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
             return -1;
           memset(supported_attrs.bitmap4_val, 0, 2 * sizeof(uint32_t));
+#endif
 
           nfs4_list_to_bitmap4(&supported_attrs, &c, attrvalslist_supported);
 

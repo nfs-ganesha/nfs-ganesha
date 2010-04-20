@@ -218,7 +218,7 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
   *pstatus = CACHE_INODE_SUCCESS;
   return *pstatus;
 
-}                               /* cache_content_open */
+}                               /* cache_inode_open */
 
 /**
  *
