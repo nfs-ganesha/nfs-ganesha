@@ -145,14 +145,21 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdeviceinfo";
 
+  resp->resop = NFS4_OP_GETDEVICEINFO;
+
+#ifndef _USE_PNFS
+  res_GETDEVICEINFO4.gdir_status = NFS4ERR_NOTSUPP;
+  return res_LAYOUTGET4.logr_status;
+#else
+
 #define arg_GETDEVICEINFO4  op->nfs_argop4_u.opgetdeviceinfo
 #define res_GETDEVICEINFO4  resp->nfs_resop4_u.opgetdeviceinfo
 
-  resp->resop = NFS4_OP_GETDEVICEINFO;
 
   res_GETDEVICEINFO4.gdir_status = NFS4_OK;
 
   return res_GETDEVICEINFO4.gdir_status;
+#endif /* _USE_PNFS */
 }                               /* nfs41_op_exchange_id */
 
 /**
