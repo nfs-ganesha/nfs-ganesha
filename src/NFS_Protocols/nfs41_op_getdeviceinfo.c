@@ -192,8 +192,9 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
  */
 void nfs41_op_getdeviceinfo_Free(GETDEVICEINFO4res * resp)
 {
-  if( resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.da_addr_body_val != NULL )
-    Mem_Free( resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.da_addr_body_val ) ;
+  if( resp->gdir_status == NFS4_OK )
+    if( resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.da_addr_body_val != NULL )
+      Mem_Free( resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.da_addr_body_val ) ;
 
   return;
 }                               /* nfs41_op_exchange_id_Free */

@@ -149,6 +149,7 @@ typedef struct pnfs_client__
 typedef struct pnfs_ds_file__
 {
   bool_t allocated ;
+  unsigned int deviceid ;
   nfs_fh4 handle;
   stateid4 stateid;
 } pnfs_ds_file_t;
@@ -167,6 +168,7 @@ int pnfs_unlink_ds_file(pnfs_client_t * pnfsclient,
                         fattr4_fileid fileid, pnfs_ds_file_t * pfile);
 
 void pnfs_encode_getdeviceinfo( char * buff, unsigned int * plen );
+void pnfs_encode_layoutget( pnfs_ds_file_t * pds_file, char * buff, unsigned int * plen ) ;
 
 /* Internal functions */
 int pnfs_connect(pnfs_client_t * pnfsclient,

@@ -122,6 +122,7 @@ int pnfs_open_ds_file(pnfs_client_t * pnfsclient,
       resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_OPEN_IDX_OP_GETFH].nfs_resop4_u.
       opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val;
   pfile->allocated = TRUE ;
+  pfile->deviceid = 1 ;
 
   if(resnfs4.status != NFS4_OK)
     {
