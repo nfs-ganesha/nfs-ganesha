@@ -831,6 +831,9 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
             {
               /* Address begin with a digit, it is a address in the dotted form, translate it */
               pparam->layoutfile.ds_param[0].ipaddr = inet_addr(key_value);
+              
+              /* Keep this address in the ascii format as well (for GETDEVICEINFO) */
+              strncpy(  pparam->layoutfile.ds_param[0].ipaddr_ascii, key_value, MAXNAMLEN ) ;
             }
           else
             {

@@ -468,6 +468,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->pnfs_param.layoutfile.stripe_size = 8192;
 
   p_nfs_param->pnfs_param.layoutfile.ds_param[0].ipaddr = htonl(0x7F000001);
+  strncpy( p_nfs_param->pnfs_param.layoutfile.ds_param[0].ipaddr_ascii, "127.0.0.1", MAXNAMLEN ) ;
   p_nfs_param->pnfs_param.layoutfile.ds_param[0].ipport = htons(2049);
   p_nfs_param->pnfs_param.layoutfile.ds_param[0].prognum = 100003;
   p_nfs_param->pnfs_param.layoutfile.ds_param[0].id = 1;

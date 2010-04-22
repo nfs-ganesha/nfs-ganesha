@@ -127,6 +127,7 @@ typedef struct pnfs_ds_parameter__
   unsigned short ipport;
   unsigned int prognum;
   char rootpath[MAXPATHLEN];
+  char ipaddr_ascii[MAXNAMLEN] ;
   unsigned int id;
 } pnfs_ds_parameter_t;
 
@@ -164,6 +165,8 @@ int pnfs_lookup_ds_file(pnfs_client_t * pnfsclient,
 
 int pnfs_unlink_ds_file(pnfs_client_t * pnfsclient,
                         fattr4_fileid fileid, pnfs_ds_file_t * pfile);
+
+void pnfs_encode_getdeviceinfo( char * buff, unsigned int * plen );
 
 /* Internal functions */
 int pnfs_connect(pnfs_client_t * pnfsclient,
