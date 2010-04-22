@@ -1,0 +1,787 @@
+
+
+
+
+
+
+Internet Engineering Task Force (IETF)                         M. Eisler
+Request for Comments: 5665                                        NetApp
+Updates: 1833                                               January 2010
+Category: Standards Track
+ISSN: 2070-1721
+
+
+          IANA Considerations for Remote Procedure Call (RPC)
+           Network Identifiers and Universal Address Formats
+
+Abstract
+
+   This document lists IANA Considerations for Remote Procedure Call
+   (RPC) Network Identifiers (netids) and RPC Universal Network
+   Addresses (uaddrs).  This document updates, but does not replace, RFC
+   1833.
+
+Status of This Memo
+
+   This is an Internet Standards Track document.
+
+   This document is a product of the Internet Engineering Task Force
+   (IETF).  It represents the consensus of the IETF community.  It has
+   received public review and has been approved for publication by the
+   Internet Engineering Steering Group (IESG).  Further information on
+   Internet Standards is available in Section 2 of RFC 5741.
+
+   Information about the current status of this document, any errata,
+   and how to provide feedback on it may be obtained at
+   http://www.rfc-editor.org/info/rfc5665.
+
+Copyright Notice
+
+   Copyright (c) 2010 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents
+   (http://trustee.ietf.org/license-info) in effect on the date of
+   publication of this document.  Please review these documents
+   carefully, as they describe your rights and restrictions with respect
+   to this document.  Code Components extracted from this document must
+   include Simplified BSD License text as described in Section 4.e of
+   the Trust Legal Provisions and are provided without warranty as
+   described in the Simplified BSD License.
+
+
+
+
+
+
+Eisler                       Standards Track                    [Page 1]
+
+RFC 5665                       RPC Netids                   January 2010
+
+
+Table of Contents
+
+   1. Introduction and Motivation .....................................3
+   2. Requirements Language ...........................................3
+   3. Considerations for the Netid of the Stream Control
+      Transmission Protocol ...........................................3
+   4. Security Considerations .........................................3
+   5. IANA Considerations .............................................3
+      5.1. IANA Considerations for Netids .............................4
+           5.1.1. Initial Registry ....................................6
+           5.1.2. Updating Registrations ..............................8
+      5.2. IANA Considerations for Uaddr Formats ......................8
+           5.2.1. Initial Registry ....................................9
+           5.2.2. Updating Registrations .............................10
+           5.2.3. Uaddr Formats ......................................10
+                  5.2.3.1. Uaddr Format for System V Release
+                           4 Loopback Transports .....................10
+                  5.2.3.2. Uaddr Format for Netid "-" ................10
+                  5.2.3.3. Uaddr Format for Most IPv4 Transports .....11
+                  5.2.3.4. Uaddr Format for Most IPv6 Transports .....11
+                  5.2.3.5. Uaddr Format for ICMP over IPv4 and IPv6 ..11
+      5.3. Cross Referencing between the Netid and Format Registry ...12
+      5.4. Port Assignment for NFS over SCTP .........................12
+   6. References .....................................................12
+      6.1. Normative References ......................................12
+      6.2. Informative References ....................................12
+   Appendix A.  Acknowledgments ......................................14
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Eisler                       Standards Track                    [Page 2]
+
+RFC 5665                       RPC Netids                   January 2010
+
+
+1.  Introduction and Motivation
+
+   The concepts of an RPC (defined in RFC 5531 [4]) Network Identifier
+   (netid) and an RPC Universal Address (uaddr) were introduced in RFC
+   1833 [1] for distinguishing network addresses of multiple protocols
+   and representing those addresses in a canonical form.  RFC 1833
+   states that a netid "is defined by a system administrator based on
+   local conventions, and cannot be depended on to have the same value
+   on every system".  (The netid is contained in the field r_netid of
+   the data type rpcb_entry, and the uaddr is contained in the field
+   r_addr of the same data type, where rpcb_entry is defined in RFC
+   1833.)  Since the publication of RFC 1833, it has been found that
+   protocols like Network File System version 4 (NFSv4.0) [5] and RPC/
+   RDMA (Remote Direct Memory Access) [6] depend on consistent values of
+   netids and representations of uaddrs.  Current practices tend to
+   ensure this consistency.  Thus, this document identifies the
+   considerations for IANA to establish registries of netids and uaddr
+   formats for RPC and specifies the initial content of the two
+   registries.
+
+2.  Requirements Language
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in RFC 2119 [2].
+
+3.  Considerations for the Netid of the Stream Control Transmission
+    Protocol
+
+   The Stream Control Transmission Protocol (SCTP) (described in RFC
+   4960 [7]) is a connection-oriented protocol that supports both byte-
+   streamed and record-oriented data transfer.  When the "sctp" and
+   "sctp6" netids are used, the Open Network Computing (ONC) RPC Record
+   Marking standard (see Section 11 of RFC 5531 [4]) is not used;
+   instead, SCTP's native record-oriented data transfer is used.
+
+4.  Security Considerations
+
+   Since this document is only concerned with the IANA management of the
+   Network Identifier (netid) and Universal Network Addresses (uaddrs)
+   format registry, it raises no new security issues.
+
+5.  IANA Considerations
+
+   This section uses terms that are defined in RFC 5226 [8].
+
+
+
+
+
+
+Eisler                       Standards Track                    [Page 3]
+
+RFC 5665                       RPC Netids                   January 2010
+
+
+5.1.  IANA Considerations for Netids
+
+   IANA has created a registry called "ONC RPC Netids".  The remainder
+   of this section describes the registry.
+
+   All assignments to the ONC RPC Netids registry are made on one of two
+   bases:
+
+   o  A First Come First Served basis subregistry per Section 4.1 of RFC
+      5226.
+
+   o  A Standards Action basis subregistry per Section 4.1 of RFC 5226.
+
+   The eXternal Data Representation (XDR) encoding allows netids to be
+   up to 2^32 - 1 octets in length, but the registry will only allow a
+   much shorter length.  Assignments made on a Standards Action basis
+   should be assigned netids 1 to 8 octets long.  Assignments made on a
+   First Come First Served basis should be assigned netids 9 to 128
+   octets long.  Some exceptions are listed in Table 2.
+
+   Some portion of the netid name space is Reserved:
+
+   o  All netids, regardless of length, that start with the prefixes
+      "STDS" or "FCFS" are Reserved, in order to extend the name space
+      of either Standards Action or First Come First Served bases.
+
+   o  To give the IESG the flexibility in the future to permit Private
+      and Experimental Uses, all netids with the prefixes "PRIV" or
+      "EXPE" are Reserved.
+
+   o  To prevent confusion with the control protocol by the same name
+      [9], netids with the prefix "ICMP" are Reserved.
+
+   o  Since netids are not constructed in an explicit hierarchical
+      manner, this document does not provide for Hierarchical Allocation
+      of netids.  Nonetheless, all netids containing the octet "." are
+      Reserved for future possible provision of Hierarchical Allocation.
+
+   o  The zero length netid is Reserved.
+
+   A recommended convention for netids corresponding to transports that
+   work over the IPv6 protocol is to have "6" as the last character in
+   the netid's name.
+
+   There are two subregistries of netids: one for Standards Action
+   assignments and one for First Come First Served assignments.  Each
+   registry of netids is a list of assignments, each containing five
+   fields for each assignment.
+
+
+
+Eisler                       Standards Track                    [Page 4]
+
+RFC 5665                       RPC Netids                   January 2010
+
+
+   1.  A US-ASCII string name that is the actual netid.  The netid
+       should be 1 to 8 octets long for the Standards Action
+       subregistry, and 9 to 128 octets long for the First Come First
+       Served subregistry.  The netid MUST NOT conflict with any other
+       registered netid.  Despite the fact that netids are case
+       sensitive, the netid, when mapped to all upper case, MUST NOT
+       conflict with the value of any other registered netid after the
+       registered netid is mapped to upper case.  In addition, when
+       mapped to upper case, the prefix of the netid MUST NOT be equal
+       to a Reserved prefix.
+
+   2.  A constant name that can be used for software programs that wish
+       to use the transport protocol associated with the netid.  The
+       name of the constant typically has the prefix "NC_", and a suffix
+       equal to the upper-case version of the netid.  This constant name
+       should be a constant that is valid in the 'C' programming
+       language.  This constant name MUST NOT conflict with any other
+       netid constant name.  Constant names with the prefix "NC_STDS",
+       "NC_FCFS", "NC_PRIV", "NC_EXPE", and "NC_ICMP" are Reserved.
+       Constant names with a prefix of "NC_" and a total length of 11
+       characters or less should be for assignments made on the
+       Standards Action basis.  The constant "NC_" is Reserved.  The
+       constant name can be 1 to 131 octets long.
+
+       Given the typical derivation of the constant name from the netid,
+       the registration of the constant might be considered redundant.
+       This is not always true.  For example, a netid might use a
+       character that is not valid in the programming language.  The
+       first entry of Table 1 provides such an example.
+
+   3.  A description and/or a reference to a description of how the
+       netid will be used.  For assignments made on a First Come First
+       Served basis, the description should include, if applicable, a
+       reference to the transport and network protocols corresponding to
+       the netid.  For assignments made on a Standards Action basis, the
+       description field must include the RFC numbers of the protocol
+       associated with the netid, including, if applicable, RFC numbers
+       of the transport and network protocols.
+
+   4.  A point of contact of the registrant.  For assignments made on a
+       First Come First Served basis:
+
+       *  the point of contact should include an email address.
+
+       *  subject to authorization by a Designated Expert, the point of
+          contact may be omitted for extraordinary situations, such as
+          the registration of a commonly used netid where the owner is
+          unknown.
+
+
+
+Eisler                       Standards Track                    [Page 5]
+
+RFC 5665                       RPC Netids                   January 2010
+
+
+       For assignments made on a Standards Action basis, the point of
+       contact is always determined by IESG.
+
+   5.  A numerical value, used to cross reference the netid assignment
+       with an assignment in the uaddr format registry (see
+       Section 5.2).  If the registrant is registering a netid that
+       cross references an existing assignment in the uaddr format
+       registry, then the registrant provides the actual value of the
+       cross reference along with the date the registrant retrieved the
+       cross reference value from the uaddr format registry.  If the
+       registrant is registering both a new netid and new uaddr format,
+       then the registrant provides a value of TBD1 in the netid
+       request, and uses TBD1 in the uaddr format request.  IANA will
+       then substitute TBD1 for the cross reference number IANA
+       allocates.  Note that if a document requests multiple netid and
+       uaddr assignments, each additional uaddr format cross reference
+       will be identified as TBD2, TBD3, ..., etc.
+
+5.1.1.  Initial Registry
+
+   The initial list of netids is broken into two subregistries: those
+   assigned on a First Come First Served basis in Table 1 and those
+   assigned on a Standards Action basis in Table 2.  These lists will
+   change as IANA registers additional netids as needed, and the
+   authoritative list of registered netids will always live with IANA.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Eisler                       Standards Track                    [Page 6]
+
+RFC 5665                       RPC Netids                   January 2010
+
+
+   +-------------+--------------+---------------------------+-----+----+
+   | Netid       | Constant     | Description and/or        | PoC | CR |
+   |             | Name         | Reference                 |     |    |
+   +-------------+--------------+---------------------------+-----+----+
+   | "-"         | NC_NOPROTO   | RFC1833 [1],              |     | 1  |
+   |             |              | Section 5.2.3.2 of RFC    |     |    |
+   |             |              | 5665                      |     |    |
+   | "ticlts"    | NC_TICLTS    | The loop back             |     | 0  |
+   |             |              | connectionless transport  |     |    |
+   |             |              | used in System V Release  |     |    |
+   |             |              | 4 and other operating     |     |    |
+   |             |              | systems.  Although this   |     |    |
+   |             |              | assignment is made on a   |     |    |
+   |             |              | First Come First Served   |     |    |
+   |             |              | basis and is fewer than   |     |    |
+   |             |              | nine characters long, the |     |    |
+   |             |              | exception is authorized.  |     |    |
+   |             |              | See [10].                 |     |    |
+   | "ticots"    | NC_TICOTS    | The loop back             |     | 0  |
+   |             |              | connection-oriented       |     |    |
+   |             |              | transport used in System  |     |    |
+   |             |              | V Release 4 and other     |     |    |
+   |             |              | operating systems.  See   |     |    |
+   |             |              | [10].  Although this      |     |    |
+   |             |              | assignment is made on a   |     |    |
+   |             |              | First Come First Served   |     |    |
+   |             |              | basis and is fewer than   |     |    |
+   |             |              | nine characters long, the |     |    |
+   |             |              | exception is authorized.  |     |    |
+   | "ticotsord" | NC_TICOTSORD | The loop back             |     | 0  |
+   |             |              | connection-oriented with  |     |    |
+   |             |              | orderly-release transport |     |    |
+   |             |              | used in System V Release  |     |    |
+   |             |              | 4 and other operating     |     |    |
+   |             |              | systems.  See [10].       |     |    |
+   +-------------+--------------+---------------------------+-----+----+
+
+        Table 1: Initial First Come First Served Netid Assignments
+
+   PoC: Point of Contact.
+
+   CR: Cross Reference to the Uaddr Format Registry.
+
+
+
+
+
+
+
+
+
+Eisler                       Standards Track                    [Page 7]
+
+RFC 5665                       RPC Netids                   January 2010
+
+
+   +---------+----------+----------------------------------+------+----+
+   | Netid   | Constant | RFC(s) and Description (if       | PoC  | CR |
+   |         | Name     | needed)                          |      |    |
+   +---------+----------+----------------------------------+------+----+
+   | "rdma"  | NC_RDMA  | RFC 5666 [6], RFC 791 [11]       | IESG | 2  |
+   | "rdma6" | NC_RDMA6 | RFC 5666 [6], RFC 2460 [12]      | IESG | 3  |
+   | "sctp"  | NC_SCTP  | RFC 4960 [7], RFC 791 [11],      | IESG | 2  |
+   |         |          | Section 3 of RFC 5665            |      |    |
+   | "sctp6" | NC_SCTP6 | RFC 4960 [7], RFC 2460 [12],     | IESG | 3  |
+   |         |          | Section 3 of RFC 5665            |      |    |
+   | "tcp"   | NC_TCP   | RFC 793 [13], RFC 791 [11],      | IESG | 2  |
+   |         |          | Section 11 of RFC 5531 [4]       |      |    |
+   | "tcp6"  | NC_TCP6  | RFC 793 [13], RFC 2460 [12],     | IESG | 3  |
+   |         |          | Section 11 of RFC 5531 [4]       |      |    |
+   | "udp"   | NC_UDP   | RFC 768 [14], RFC 791 [11]       | IESG | 2  |
+   | "udp6"  | NC_UDP6  | RFC 768 [14], RFC 2460 [12]      | IESG | 3  |
+   +---------+----------+----------------------------------+------+----+
+
+            Table 2: Initial Standards Action Netid Assignments
+
+5.1.2.  Updating Registrations
+
+   Per Section 5.2 of RFC 5226, the registrant is always permitted to
+   update a registration made on a First Come First Served basis
+   "subject to the same constraints and review as with new
+   registrations".  The IESG or a Designated Expert is permitted to
+   update any registration made on a First Come First Served basis,
+   which normally is done when the PoC cannot be reached in order to
+   make necessary updates.  Examples where an update would be needed
+   include, but are not limited to: the email address or other contact
+   information becomes invalid; the reference to the corresponding
+   protocol becomes obsolete or unavailable; RFC 1833 is updated or
+   replaced in such a way that the scope of netids changes, requiring
+   additional fields in the assignment.
+
+   Only the IESG, on the advice of a Designated Expert, can update a
+   registration made on a Standards Action basis.
+
+5.2.  IANA Considerations for Uaddr Formats
+
+   IANA has created a registry called "ONC RPC Uaddr Format Registry"
+   (called the "format registry" for the remainder of this document).
+   The remainder of this section describes the registry.
+
+
+
+
+
+
+
+
+Eisler                       Standards Track                    [Page 8]
+
+RFC 5665                       RPC Netids                   January 2010
+
+
+   All assignments to the format registry are made on one of two bases:
+
+   o  First Come First Served basis per Section 4.1 of RFC 5226.
+
+   o  Standards Action per Section 4.1 of RFC 5226.
+
+   The registry of formats is a list of assignments, each containing
+   four fields for each assignment.
+
+   1.  The basis for the assignment, which can be either FCFS for First
+       Come First Served assignments or STDS for Standards Action
+       assignments.
+
+   2.  A description and/or reference to a description of the actual
+       uaddr format.  Assignments made on a Standards Action basis
+       always have a reference to an RFC.
+
+   3.  For assignments made on a First Come First Served basis, a point
+       of contact, including an email address.  Subject to authorization
+       by a Designated Expert, the point of contact may be omitted for
+       extraordinary situations, such as the registration of a commonly
+       used format where the owner is unknown.  For assignments made on
+       a Standards Action basis, the point of contact is always
+       determined by the IESG.
+
+   4.  A numerical value, used to cross reference the format assignment
+       with an assignment in the netid registry.  The registrant
+       provides a value of TBD1 for the cross reference field when
+       requesting an assignment.  IANA will assign TBD1 to a real value.
+       Note that if a document requests multiple uaddr assignments, each
+       additional uaddr format cross reference will be identified as
+       TBD2, TBD3, ..., etc.
+
+   All requests for assignments to the format registry on a Standards
+   Action basis are only for Standards Track RFCs approved by the IESG.
+
+5.2.1.  Initial Registry
+
+   The initial list of formats is in Table 3.  This list will change as
+   IANA registers additional formats as needed, and the authoritative
+   list of registered formats will always live with IANA.
+
+
+
+
+
+
+
+
+
+
+Eisler                       Standards Track                    [Page 9]
+
+RFC 5665                       RPC Netids                   January 2010
+
+
+   +-------+-----------------------------------------------+------+----+
+   | Basis | Description and/or Reference                  | PoC  | CR |
+   +-------+-----------------------------------------------+------+----+
+   | FCFS  | System V Release 4 loopback transport uaddr   |      | 0  |
+   |       | format.  Section 5.2.3.1 of RFC 5665          |      |    |
+   | FCFS  | Uaddr format for NC_NOPROTO.  Section 5.2.3.2 |      | 1  |
+   |       | of RFC 5665                                   |      |    |
+   | STDS  | Uaddr format for IPv4 transports.             | IESG | 2  |
+   |       | Section 5.2.3.3 of RFC 5665                   |      |    |
+   | STDS  | Uaddr format for IPv6 transports.             | IESG | 3  |
+   |       | Section 5.2.3.4 of RFC 5665                   |      |    |
+   +-------+-----------------------------------------------+------+----+
+
+                    Table 3: Initial Format Assignments
+
+5.2.2.  Updating Registrations
+
+   The registrant is always permitted to update a registration made on a
+   First Come First Served basis "subject to the same constraints and
+   review as with new registrations."  The IESG is permitted to update
+   any registration made on a First Come First Served basis, which
+   normally is done when the PoC cannot be reached in order to make
+   necessary updates.  Examples where an update would be needed include,
+   but are not limited to: the email address or other contact
+   information becomes invalid; the reference to the format description
+   becomes obsolete or unavailable; RFC 1833 is updated or replaced in
+   such a way that the scope of uaddr formats changes, requiring
+   additional fields in the assignment.
+
+   Only the IESG, on the advice of a Designated Expert, can update a
+   registration made on a Standards Action basis.
+
+5.2.3.  Uaddr Formats
+
+5.2.3.1.  Uaddr Format for System V Release 4 Loopback Transports
+
+   Although RFC 1833 specifies the uaddr as the XDR data type string
+   (hence, limited to US-ASCII), implementations of the System V Release
+   4 loopback transports will use an opaque string of octets.  Thus, the
+   format of a loopback transport address is any non-zero length array
+   of octets.
+
+5.2.3.2.  Uaddr Format for Netid "-"
+
+   There is no address format for netid "-".  This netid is apparently
+   for internal use for supporting some implementations of RFC 1833.
+
+
+
+
+
+Eisler                       Standards Track                   [Page 10]
+
+RFC 5665                       RPC Netids                   January 2010
+
+
+5.2.3.3.  Uaddr Format for Most IPv4 Transports
+
+   Most transport protocols that operate over IPv4 use 16-bit port
+   numbers, including RDMA [6], SCTP [7], TCP [13], and UDP [14].  The
+   format of the uaddr for the above 16-bit port transports (when used
+   over IPv4) is the US-ASCII string:
+
+      h1.h2.h3.h4.p1.p2
+
+   The prefix "h1.h2.h3.h4" is the standard textual form for
+   representing an IPv4 address, which is always four octets long.
+   Assuming big-endian ordering, h1, h2, h3, and h4 are, respectively,
+   the first through fourth octets each converted to ASCII-decimal.  The
+   suffix "p1.p2" is a textual form for representing a service port.
+   Assuming big-endian ordering, p1 and p2 are, respectively, the first
+   and second octets each converted to ASCII-decimal.  For example, if a
+   host, in big-endian order, has an address in hexadecimal of
+   0xC0000207 and there is a service listening on, in big-endian order,
+   port 0xCB51 (decimal 52049), then the complete uaddr is
+   "192.0.2.7.203.81".
+
+5.2.3.4.  Uaddr Format for Most IPv6 Transports
+
+   Most transport protocols that operate over IPv6 use 16-bit port
+   numbers, including RDMA [6], SCTP [7], TCP [13], and UDP [14].  The
+   format of the uaddr for the above 16-bit port transports (when used
+   over IPv6) is the US-ASCII string:
+
+      x1:x2:x3:x4:x5:x6:x7:x8.p1.p2
+
+   The suffix "p1.p2" is the service port, and is computed the same way
+   as with uaddrs for transports over IPv4 (see Section 5.2.3.3).  The
+   prefix "x1:x2:x3:x4:x5:x6:x7:x8" is the preferred textual form for
+   representing an IPv6 address as defined in Section 2.2 of RFC 4291
+   [3].  Additionally, the two alternative forms specified in Section
+   2.2 of RFC 4291 are also acceptable.
+
+5.2.3.5.  Uaddr Format for ICMP over IPv4 and IPv6
+
+   As ICMP is not a true transport, there is no uaddr format for ICMP.
+   The netid assignments "icmp" and "icmp6" and their shared uaddr
+   "format" are listed to prevent any registrant from allocating the
+   netids "icmp" and "icmp6" for a purpose that would likely cause
+   confusion.
+
+
+
+
+
+
+
+Eisler                       Standards Track                   [Page 11]
+
+RFC 5665                       RPC Netids                   January 2010
+
+
+5.3.  Cross Referencing between the Netid and Format Registry
+
+   The last field of the netids registry is used to cross reference with
+   the last field of the format registry.  IANA is under no obligation
+   to maintain the same numeric values in cross references when updating
+   each registry; i.e., IANA is free to "re-number" these corresponding
+   fields.  However, if IANA does so, both the netid and format
+   registries must be updated atomically.
+
+5.4.  Port Assignment for NFS over SCTP
+
+   Port 2049 is assigned to NFS over SCTP for the sctp and sctp6 netids.
+
+6.  References
+
+6.1.  Normative References
+
+   [1]   Srinivasan, R., "Binding Protocols for ONC RPC Version 2",
+         RFC 1833, August 1995.
+
+   [2]   Bradner, S., "Key words for use in RFCs to Indicate Requirement
+         Levels", BCP 14, RFC 2119, March 1997.
+
+   [3]   Hinden, R. and S. Deering, "IP Version 6 Addressing
+         Architecture", RFC 4291, February 2006.
+
+6.2.  Informative References
+
+   [4]   Thurlow, R., "RPC: Remote Procedure Call Protocol Specification
+         Version 2", RFC 5531, May 2009.
+
+   [5]   Shepler, S., Callaghan, B., Robinson, D., Thurlow, R., Beame,
+         C., Eisler, M., and D. Noveck, "Network File System (NFS)
+         version 4 Protocol", RFC 3530, April 2003.
+
+   [6]   Talpey, T. and B. Callaghan, "Remote Direct Memory Access
+         Transport for Remote Procedure Call", RFC 5666, January 2010.
+
+   [7]   Stewart, R., Ed., "Stream Control Transmission Protocol",
+         RFC 4960, September 2007.
+
+   [8]   Narten, T. and H. Alvestrand, "Guidelines for Writing an IANA
+         Considerations Section in RFCs", BCP 26, RFC 5226, May 2008.
+
+   [9]   Postel, J., "Internet Control Message Protocol", STD 5,
+         RFC 792, September 1981.
+
+
+
+
+
+Eisler                       Standards Track                   [Page 12]
+
+RFC 5665                       RPC Netids                   January 2010
+
+
+   [10]  American Telephone and Telegraph Company, "UNIX System V,
+         Release 4 Programmer's Guide: Networking Interfaces, ISBN
+         0139470786", 1990.
+
+   [11]  Postel, J., "Internet Protocol", STD 5, RFC 791,
+         September 1981.
+
+   [12]  Deering, S. and R. Hinden, "Internet Protocol, Version 6 (IPv6)
+         Specification", RFC 2460, December 1998.
+
+   [13]  Postel, J., "Transmission Control Protocol", STD 7, RFC 793,
+         September 1981.
+
+   [14]  Postel, J., "User Datagram Protocol", STD 6, RFC 768,
+         August 1980.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Eisler                       Standards Track                   [Page 13]
+
+RFC 5665                       RPC Netids                   January 2010
+
+
+Appendix A.  Acknowledgments
+
+   Lisa Dusseault, Lars Eggert, Pasi Eronen, Tim Polk, Juergen
+   Schoenwaelder, and Robert Sparks reviewed the document and gave
+   valuable feedback.
+
+Author's Address
+
+   Mike Eisler
+   NetApp
+   5765 Chase Point Circle
+   Colorado Springs, CO  80919
+   US
+
+   Phone: +1-719-599-9026
+   EMail: mike@eisler.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Eisler                       Standards Track                   [Page 14]
+
