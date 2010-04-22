@@ -30,27 +30,16 @@
 #include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
 #include "nfs_core.h"
 
-void local_print_buff(char *buff, int len)
-{
-  int i = 0;
-
-  printf("  Len=%u|%x Buff=%p Val: ", len, len, buff);
-  for(i = 0; i < len; i++)
-    printf("%02X ", buff[i]);
-  printf("\n");
-}                             
-
 /**
  *
  * pnfs_encode_getdeviceinfo: encodes the addr_body_val structure in GETDEVICEINFO.
  *
  * Encode the addr_body_val structure in GETDEVICEINFO.
  *
- * @param pnfsclient        [INOUT] pointer to the pnfsclient structure (client to the ds).
- * @param pnfs_layout_param [IN]    pointer to pnfs layoutfile configuration
+ * @param buff [OUT] buffer in which XDR encoding will be made
+ * @param plen [OUT] length of buffer
  *
  * @return  nothing (void function)
- * @return -1 if one of its argument is NULL, exists if failed
  *
  */
 
@@ -68,7 +57,6 @@ void pnfs_encode_getdeviceinfo( char * buff, unsigned int * plen )
   int32 = htonl( 1 ) ;
   memcpy( (char *)(buff+offset), (char *)&int32, sizeof( int32 ) );
   offset +=  sizeof( int32 ) ;
-
 
   /* nflda_stripe_indices.nflda_stripe_indices_val */
   int32 = 0 ; 
@@ -118,8 +106,6 @@ void pnfs_encode_getdeviceinfo( char * buff, unsigned int * plen )
    offset += tmplen + padlen ;
 
    *plen = offset ;
-
-   local_print_buff( buff, offset ) ;
 } /* pnfs_encode_getdeviceinfo */
 
 

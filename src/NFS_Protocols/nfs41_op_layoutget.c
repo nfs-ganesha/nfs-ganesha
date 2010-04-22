@@ -153,19 +153,26 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
   cache_inode_state_t *file_state = NULL;
   cache_inode_status_t cache_status;
   cache_inode_state_t *pstate_exists = NULL;
-  nfsv4_1_file_layout4 *pfile_layout = NULL;
-  nfs_fh4 *pnfsfh4 = NULL;
   int rc;
 
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutget";
 
-  /* Lock are not supported */
-  resp->resop = NFS4_OP_LAYOUTGET;
-
 #ifndef _USE_PNFS
+  resp->resop = NFS4_OP_LAYOUTGET;
   res_LAYOUTGET4.logr_status = NFS4ERR_NOTSUPP;
   return res_LAYOUTGET4.logr_status;
 #else
+  char * buff = NULL ;
+  unsigned int lenbuff = 0 ;
+
+  /* Lock are not supported */
+  resp->resop = NFS4_OP_LAYOUTGET;
+
+  if( ( buff = Mem_Alloc( 1024 ) ) == NULL )
+   {
+     res_LAYOUTGET4.logr_status = NFS4ERR_SERVERFAULT ;
+     return res_LAYOUTGET4.logr_status ;
+   }
 
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))
@@ -285,29 +292,18 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
 
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_offset =
       arg_LAYOUTGET4.loga_offset;
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_length = 0xFFFFFFFFLL;   /* Whole file */
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_length = 0xFFFFFFFFFFFFFFFFLL;   /* Whole file */
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_iomode =
       arg_LAYOUTGET4.loga_iomode;
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.
       loc_type = LAYOUT4_NFSV4_1_FILES;
+
+  pnfs_encode_layoutget( &data->current_entry->object.file.pnfs_file.ds_file, buff, &lenbuff ) ;
+
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.
-      loc_body.loc_body_len = sizeof(nfsv4_1_file_layout4);
+      loc_body.loc_body_len = lenbuff,
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.
-      loc_body.loc_body_val = Mem_Alloc(sizeof(nfsv4_1_file_layout4));
-  pfile_layout =
-      (nfsv4_1_file_layout4 *) res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.
-      logr_layout_val[0].lo_content.loc_body.loc_body_val;
-  memset(pfile_layout->nfl_deviceid, 0, NFS4_DEVICEID4_SIZE);
-  pfile_layout->nfl_deviceid[0] = 1;
-  pfile_layout->nfl_util = 0x2000;  /** @TODO do not know why I should set this value */
-  pfile_layout->nfl_first_stripe_index = 0;
-  pfile_layout->nfl_pattern_offset = 0;
-  pfile_layout->nfl_fh_list.nfl_fh_list_len = htonl( 1 ); /* Without htol, xdr within NFSv4 will be quite unhappy... */
-  pfile_layout->nfl_fh_list.nfl_fh_list_val = (nfs_fh4 *)Mem_Alloc( sizeof( nfs_fh4 ) ) ;
-  pfile_layout->nfl_fh_list.nfl_fh_list_val[0].nfs_fh4_len =  /* Same thing as stated above */
-      htonl( data->current_entry->object.file.pnfs_file.ds_file.handle.nfs_fh4_len ) ;
-  pfile_layout->nfl_fh_list.nfl_fh_list_val[0].nfs_fh4_val =
-      data->current_entry->object.file.pnfs_file.ds_file.handle.nfs_fh4_val;
+      loc_body.loc_body_val = buff ;
 
   res_LAYOUTGET4.logr_status = NFS4_OK;
   return res_LAYOUTGET4.logr_status;
@@ -328,9 +324,10 @@ void nfs41_op_layoutget_Free(LAYOUTGET4res * resp)
 {
   if(resp->logr_status == NFS4_OK)
     {
-      Mem_Free((char *)resp->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val);
-      Mem_Free((char *)resp->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
-               lo_content.loc_body.loc_body_val);
+      if( resp->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
+               lo_content.loc_body.loc_body_val != NULL )
+        Mem_Free((char *)resp->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
+                 lo_content.loc_body.loc_body_val);
     }
 
   return;
