@@ -283,7 +283,8 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
   /* Manages the stateid */
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_stateid.seqid = 1;
   memcpy(res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_stateid.other,
-         file_state->stateid_other, 12);
+         arg_LAYOUTGET4.loga_stateid.other, 12);
+         //file_state->stateid_other, 12);
 
   /* Now the layout specific information */
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_len = 1;  /** @todo manages more than one segment */

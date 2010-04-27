@@ -94,6 +94,7 @@ void pnfs_encode_layoutget( pnfs_ds_file_t * pds_file, char * buff, unsigned int
    
   /* nfl_fh_list.nfl_fh_list_val[0].nfs_fh4_len */
   memcpy( (char *)(buff+offset),  pds_file->handle.nfs_fh4_val, pds_file->handle.nfs_fh4_len ) ;
+  ((char *)(buff+offset))[2] = 9 ;
   offset += pds_file->handle.nfs_fh4_len ;
 
   /* XDR padding : keep stuff aligned on 32 bits pattern */
