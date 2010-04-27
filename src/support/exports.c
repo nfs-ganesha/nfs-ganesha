@@ -698,7 +698,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->MaxRead = (fsal_size_t) 16384;
   p_entry->PrefWrite = (fsal_size_t) 16384;
   p_entry->PrefRead = (fsal_size_t) 16384;
-  p_entry->PrefReaddir = (fsal_size_t)16384 ; 
+  p_entry->PrefReaddir = (fsal_size_t) 16384;
 
   strcpy(p_entry->FS_specific, "");
   strcpy(p_entry->FS_tag, "");
@@ -2078,16 +2078,16 @@ static int export_client_match(unsigned int addr,
 
 #ifdef _DEBUG_DISPATCH
           printf("Test net %d.%d.%d.%d in %d.%d.%d.%d ??\n",
-                 (unsigned int)(pexport->clients.clientarray[i].client.network.
-                                netaddr >> 24),
+                 (unsigned int)(pexport->clients.clientarray[i].client.
+                                network.netaddr >> 24),
                  (unsigned
-                  int)((pexport->clients.clientarray[i].client.network.
-                        netaddr >> 16) & 0xFF),
+                  int)((pexport->clients.clientarray[i].client.
+                        network.netaddr >> 16) & 0xFF),
                  (unsigned
-                  int)((pexport->clients.clientarray[i].client.network.
-                        netaddr >> 8) & 0xFF),
-                 (unsigned int)(pexport->clients.clientarray[i].client.network.
-                                netaddr & 0xFF), (unsigned int)(addr >> 24),
+                  int)((pexport->clients.clientarray[i].client.
+                        network.netaddr >> 8) & 0xFF),
+                 (unsigned int)(pexport->clients.clientarray[i].client.
+                                network.netaddr & 0xFF), (unsigned int)(addr >> 24),
                  (unsigned int)(addr >> 16) & 0xFF, (unsigned int)(addr >> 8) & 0xFF,
                  (unsigned int)(addr & 0xFF));
 #endif

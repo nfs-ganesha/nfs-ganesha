@@ -37,7 +37,7 @@ void local_print_buff(char *buff, int len)
   for(i = 0; i < len; i++)
     printf("%02X ", buff[i]);
   printf("\n");
-}                             
+}
 
 /**
  *
@@ -53,67 +53,66 @@ void local_print_buff(char *buff, int len)
  *
  */
 
-void pnfs_encode_layoutget( pnfs_ds_file_t * pds_file, char * buff, unsigned int * plen )
+void pnfs_encode_layoutget(pnfs_ds_file_t * pds_file, char *buff, unsigned int *plen)
 {
-  unsigned int offset = 0 ;
-  uint32_t int32 = 0 ;
-  int64_t int64 = 0LL ;
-  unsigned int padlen = 0 ;
+  unsigned int offset = 0;
+  uint32_t int32 = 0;
+  int64_t int64 = 0LL;
+  unsigned int padlen = 0;
   char deviceid[NFS4_DEVICEID4_SIZE];
 
   /* nfl_deviceid */
-  memset( deviceid, 0, NFS4_DEVICEID4_SIZE) ;
-  deviceid[0] = pds_file->deviceid ;
-  memcpy( (char *)(buff+offset), deviceid, NFS4_DEVICEID4_SIZE ) ;
-  offset += NFS4_DEVICEID4_SIZE ;
+  memset(deviceid, 0, NFS4_DEVICEID4_SIZE);
+  deviceid[0] = pds_file->deviceid;
+  memcpy((char *)(buff + offset), deviceid, NFS4_DEVICEID4_SIZE);
+  offset += NFS4_DEVICEID4_SIZE;
 
   /* nfl_util */
-  int32 = htonl( 0x2000 ) ;
-  memcpy( (char *)(buff+offset), (char *)&int32, sizeof( int32 ) );
-  offset += sizeof( int32 ) ;
+  int32 = htonl(0x2000);
+  memcpy((char *)(buff + offset), (char *)&int32, sizeof(int32));
+  offset += sizeof(int32);
 
   /* nfl_first_stripe_index */
-  int32 = 0 ;
-  memcpy( (char *)(buff+offset), (char *)&int32, sizeof( int32 ) );
-  offset += sizeof( int32 ) ;
+  int32 = 0;
+  memcpy((char *)(buff + offset), (char *)&int32, sizeof(int32));
+  offset += sizeof(int32);
 
   /* nfl_pattern_offset */
-  int64 = 0LL ;
-  memcpy( (char *)(buff+offset), (char *)&int64, sizeof( int64 ) );
-  offset += sizeof( int64 ) ;
+  int64 = 0LL;
+  memcpy((char *)(buff + offset), (char *)&int64, sizeof(int64));
+  offset += sizeof(int64);
 
   /* nfl_fh_list.nfl_fh_list_len */
-  int32 = htonl( 1 ) ;
-  memcpy( (char *)(buff+offset), (char *)&int32, sizeof( int32 ) );
-  offset += sizeof( int32 ) ;
+  int32 = htonl(1);
+  memcpy((char *)(buff + offset), (char *)&int32, sizeof(int32));
+  offset += sizeof(int32);
 
   /* nfl_fh_list.nfl_fh_list_val[0].nfs_fh4_len */
-  int32 = htonl( pds_file->handle.nfs_fh4_len ) ;
-  memcpy( (char *)(buff+offset), (char *)&int32, sizeof( int32 ) );
-  offset += sizeof( int32 ) ;
-   
+  int32 = htonl(pds_file->handle.nfs_fh4_len);
+  memcpy((char *)(buff + offset), (char *)&int32, sizeof(int32));
+  offset += sizeof(int32);
+
   /* nfl_fh_list.nfl_fh_list_val[0].nfs_fh4_len */
-  memcpy( (char *)(buff+offset),  pds_file->handle.nfs_fh4_val, pds_file->handle.nfs_fh4_len ) ;
+  memcpy((char *)(buff + offset), pds_file->handle.nfs_fh4_val,
+         pds_file->handle.nfs_fh4_len);
 
   /* Turn the file handle to a 'DS file handle' */
-  if( pds_file->is_ganesha == FALSE )
-     ((char *)(buff+offset))[2] = 9 ;
+  if(pds_file->is_ganesha == FALSE)
+    ((char *)(buff + offset))[2] = 9;
 
   /* Update the offset for encoding */
-  offset += pds_file->handle.nfs_fh4_len ;
+  offset += pds_file->handle.nfs_fh4_len;
 
   /* XDR padding : keep stuff aligned on 32 bits pattern */
-  if( pds_file->handle.nfs_fh4_len % 4 == 0)
-     padlen = 0;
+  if(pds_file->handle.nfs_fh4_len % 4 == 0)
+    padlen = 0;
   else
-     padlen = 4 - ( pds_file->handle.nfs_fh4_len  % 4 ) ;
+    padlen = 4 - (pds_file->handle.nfs_fh4_len % 4);
 
-  if( padlen > 0 )
-    memset( (char *)(buff+offset), 0, padlen ) ;
+  if(padlen > 0)
+    memset((char *)(buff + offset), 0, padlen);
 
-  offset += padlen ;
+  offset += padlen;
 
-  *plen = offset ;
-} /* pnfs_encode_layoutget */
-
-
+  *plen = offset;
+}                               /* pnfs_encode_layoutget */

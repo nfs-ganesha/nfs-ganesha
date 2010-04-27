@@ -96,7 +96,7 @@ static family_error_t tab_test_err[] = {
 /**
  *  Tests about Log streams and special printf functions.
  */
-void *Test1(void *arg)
+int Test1(void *arg)
 {
 
   char tampon[255];
@@ -156,14 +156,23 @@ void *Test1(void *arg)
 
       printf("***** ERROR: initial function name \"%s\" differs from \"%s\" *****\n",
              (char *)arg, ReturnNameHost());
-      return (void *)1;
+      return 1;
 
     }
 
   printf("Test reussi: Les tests sont passes avec succes\n");
 
-  return (void *)0;
+  return 0;
 
+}
+
+void *run_Test1(void *arg)
+{
+  unsigned long long rc_long;
+
+  rc_long = (unsigned long long)Test1(arg);
+
+  return (void *)rc_long;
 }
 
 static char usage[] = "usage:\n\ttest_liblog STD|MT";
@@ -190,7 +199,7 @@ int main(int argc, char *argv[])
           printf("AddFamilyError = %d\n", AddFamilyError(3, "Family Pipo", tab_test_err));
           printf("La famille qui a ete ajoutee est %s\n", ReturnNameFamilyError(3));
 
-          rc = (int)Test1((void *)"monothread");
+          rc = Test1((void *)"monothread");
           return rc;
 
         }
@@ -226,7 +235,8 @@ int main(int argc, char *argv[])
               int rc;
               char *thread_name = malloc(256);
               snprintf(thread_name, 256, "thread %d", i);
-              rc = pthread_create(&(threads[i]), &th_attr[i], Test1, (void *)thread_name);
+              rc = pthread_create(&(threads[i]), &th_attr[i], run_Test1,
+                                  (void *)thread_name);
             }
 
           /* waiting for threads termination */

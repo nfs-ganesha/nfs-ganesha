@@ -101,7 +101,7 @@
 #include "stuff_alloc.h"
 #ifdef _USE_PNFS
 #include "pnfs.h"
-#endif /* _USE_PNFS */
+#endif                          /* _USE_PNFS */
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -155,7 +155,7 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
   fsal_handle_t dir_handle;
   cache_inode_fsal_data_t fsal_data;
   cache_inode_status_t status;
-  int  pnfs_status ;
+  int pnfs_status;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
@@ -429,20 +429,22 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
     }
 
 #ifdef _USE_PNFS
-    if( type == REGULAR_FILE )
-       if( pcreate_arg != NULL )
-         if( pcreate_arg->use_pnfs == TRUE )
-           if( ( pnfs_status = pnfs_create_ds_file( &pclient->pnfsclient,
-		 				    pentry->object.file.attributes.fileid, 
-						    &pentry->object.file.pnfs_file.ds_file ) ) != NFS4_OK )
-             {
-               V_w(&pentry_parent->lock);
+  if(type == REGULAR_FILE)
+    if(pcreate_arg != NULL)
+      if(pcreate_arg->use_pnfs == TRUE)
+        if((pnfs_status = pnfs_create_ds_file(&pclient->pnfsclient,
+                                              pentry->object.file.attributes.fileid,
+                                              &pentry->object.file.pnfs_file.ds_file)) !=
+           NFS4_OK)
+          {
+            V_w(&pentry_parent->lock);
 
-               DisplayLogLevel(NIV_DEBUG, "OPEN PNFS CREATE DS FILE : Error %u", pnfs_status ) ;
+            DisplayLogLevel(NIV_DEBUG, "OPEN PNFS CREATE DS FILE : Error %u",
+                            pnfs_status);
 
-	       *pstatus = CACHE_INODE_IO_ERROR ;
-               return NULL ;
-             }
+            *pstatus = CACHE_INODE_IO_ERROR;
+            return NULL;
+          }
 #endif
 
   /* Update the parent cached attributes */
@@ -465,22 +467,20 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
   else
     {
       /* DIR_CONTINUE */
-      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
-          mtime.seconds = time(NULL);
-      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
-          mtime.seconds = 0;
+      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime.
+          seconds = time(NULL);
+      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime.
+          seconds = 0;
       pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.ctime =
           pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime;
-
-
 
       /* if the created object is a directory, it contains a link
        * to its parent : '..'. Thus the numlink attr must be increased.
        */
       if(type == DIR_BEGINNING)
         {
-          pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.
-              attributes.numlinks++;
+          pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
+              numlinks++;
         }
 
     }

@@ -323,9 +323,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
         {
           rc = snmp2fsal_attributes(object_handle,
                                     (object_handle->object_type_reminder ==
-                                     FSAL_NODETYPE_LEAF ? p_context->
-                                     snmp_response->variables : NULL), curr_child,
-                                    object_attributes);
+                                     FSAL_NODETYPE_LEAF ? p_context->snmp_response->
+                                     variables : NULL), curr_child, object_attributes);
 
           if(rc != 0)
             {

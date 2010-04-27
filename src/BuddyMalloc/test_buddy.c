@@ -206,8 +206,8 @@ void *TEST1(void *arg)
 
       if(!strings[i].str)
         {
-          printf("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %d : %d *****\n", th, len,
-                 BuddyErrno);
+          printf("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %lld : %d *****\n", th,
+                 (long long int)len, BuddyErrno);
           strings[i].len = 0;
           continue;
         }

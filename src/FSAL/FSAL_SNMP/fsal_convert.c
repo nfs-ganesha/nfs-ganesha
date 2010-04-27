@@ -295,9 +295,8 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
       if(p_in_var->val.counter64)
         {
           int64 =
-              (((unsigned long long)p_in_var->val.
-                counter64->high) << 32) | (unsigned long long)p_in_var->val.counter64->
-              low;
+              (((unsigned long long)p_in_var->val.counter64->
+                high) << 32) | (unsigned long long)p_in_var->val.counter64->low;
           written = snprintf(p_out_string, *in_out_len, "%llu\n", int64);
         }
       else

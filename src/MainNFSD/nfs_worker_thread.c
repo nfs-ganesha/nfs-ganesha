@@ -849,10 +849,9 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   pworker_data->stats.nb_total_req += 1;
 
   /* Perform NFSv4 operations statistics if required */
-  if(  ptr_req->rq_vers == NFS_V4 )
-   if(  ptr_req->rq_proc == NFSPROC4_COMPOUND )
-     nfs4_op_stat_update( &arg_nfs, &res_nfs, &(pworker_data->stats.stat_req ) ) ;
-
+  if(ptr_req->rq_vers == NFS_V4)
+    if(ptr_req->rq_proc == NFSPROC4_COMPOUND)
+      nfs4_op_stat_update(&arg_nfs, &res_nfs, &(pworker_data->stats.stat_req));
 
   pworker_data->current_xid = 0;        /* No more xid managed */
 
@@ -1112,7 +1111,7 @@ void *worker_thread(void *IndexArg)
   DisplayLogLevel(NIV_DEBUG,
                   "NFS WORKER #%d: Cache Content client successfully initialized", index);
 
-               /* _USE_PNFS */
+  /* _USE_PNFS */
 
   /* The worker thread is not garbagging anything at the time it starts */
   pmydata->gc_in_progress = FALSE;
@@ -1131,7 +1130,7 @@ void *worker_thread(void *IndexArg)
     }
   DisplayLogLevel(NIV_DEBUG,
                   "NFS WORKER #%d: pNFS engine successfully initialized", index);
-#endif           
+#endif
   /* notify dispatcher it is ready */
   pmydata->is_ready = TRUE;
 
