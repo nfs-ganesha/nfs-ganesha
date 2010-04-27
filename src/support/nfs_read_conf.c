@@ -868,6 +868,10 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
         {
           pparam->layoutfile.ds_param[0].id = atoi(key_value);
         }
+      else if(!strcasecmp(key_name, "DS_Is_Ganesha" ))
+        {
+          pparam->layoutfile.ds_param[0].is_ganesha = StrToBoolean(key_value);
+        }
       else
         {
           fprintf(stderr,
