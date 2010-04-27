@@ -155,29 +155,32 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
   return res_res_GETDEVICEINFO4.gdir_status;
 #else
 
-  char * buff = NULL ;
-  unsigned int lenbuff = 0 ;
+  char *buff = NULL;
+  unsigned int lenbuff = 0;
 
-  if( ( buff = Mem_Alloc( 1024 ) ) == NULL )
-   {
-     res_GETDEVICEINFO4.gdir_status = NFS4ERR_SERVERFAULT;
-     return res_GETDEVICEINFO4.gdir_status;
-   }
-  
+  if((buff = Mem_Alloc(1024)) == NULL)
+    {
+      res_GETDEVICEINFO4.gdir_status = NFS4ERR_SERVERFAULT;
+      return res_GETDEVICEINFO4.gdir_status;
+    }
+
   /** @todo handle multiple DS here when this will be implemented (switch on deviceid arg) */
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_notification.bitmap4_len = 0 ;  
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_notification.bitmap4_val = NULL ;  
+  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_notification.bitmap4_len = 0;
+  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_notification.bitmap4_val = NULL;
 
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_layout_type = LAYOUT4_NFSV4_1_FILES ;
+  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_layout_type =
+      LAYOUT4_NFSV4_1_FILES;
 
-  pnfs_encode_getdeviceinfo( buff, &lenbuff ) ;
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.da_addr_body_len =  lenbuff ;
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.da_addr_body_val =  buff ;
+  pnfs_encode_getdeviceinfo(buff, &lenbuff);
+  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
+      da_addr_body_len = lenbuff;
+  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
+      da_addr_body_val = buff;
 
   res_GETDEVICEINFO4.gdir_status = NFS4_OK;
 
   return res_GETDEVICEINFO4.gdir_status;
-#endif /* _USE_PNFS */
+#endif                          /* _USE_PNFS */
 }                               /* nfs41_op_exchange_id */
 
 /**
@@ -192,9 +195,11 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
  */
 void nfs41_op_getdeviceinfo_Free(GETDEVICEINFO4res * resp)
 {
-  if( resp->gdir_status == NFS4_OK )
-    if( resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.da_addr_body_val != NULL )
-      Mem_Free( resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.da_addr_body_val ) ;
+  if(resp->gdir_status == NFS4_OK)
+    if(resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
+       da_addr_body_val != NULL)
+      Mem_Free(resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
+               da_addr_body_val);
 
   return;
 }                               /* nfs41_op_exchange_id_Free */

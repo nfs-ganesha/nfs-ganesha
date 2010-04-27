@@ -197,7 +197,7 @@ int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
     }
 
   /* For the moment, returns no new size */
-  res_LAYOUTCOMMIT4.LAYOUTCOMMIT4res_u.locr_resok4.locr_newsize.ns_sizechanged = FALSE ;
+  res_LAYOUTCOMMIT4.LAYOUTCOMMIT4res_u.locr_resok4.locr_newsize.ns_sizechanged = FALSE;
 
   res_LAYOUTCOMMIT4.locr_status = NFS4_OK;
 

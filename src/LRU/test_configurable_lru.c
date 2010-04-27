@@ -122,7 +122,8 @@ LRU_entry_t *tabentry[MAXTEST];
 
 static int print_entry(LRU_data_t data, char *str)
 {
-  return snprintf(str, LRU_DISPLAY_STRLEN, "%s, len=%d", (char *)data.pdata, data.len);
+  return snprintf(str, LRU_DISPLAY_STRLEN, "%s, len=%llu", (char *)data.pdata,
+                  (unsigned long long)data.len);
 }                               /* print_entry */
 
 static int clean_entry(LRU_entry_t * pentry, void *addparam)

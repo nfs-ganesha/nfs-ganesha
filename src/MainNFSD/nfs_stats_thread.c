@@ -262,11 +262,11 @@ void *stats_thread(void *addr)
                   global_cache_inode_stat.func_stats.nb_call[j] =
                       workers_data[i].cache_inode_client.stat.func_stats.nb_call[j];
                   global_cache_inode_stat.func_stats.nb_err_retryable[j] =
-                      workers_data[i].cache_inode_client.stat.
-                      func_stats.nb_err_retryable[j];
+                      workers_data[i].cache_inode_client.stat.func_stats.
+                      nb_err_retryable[j];
                   global_cache_inode_stat.func_stats.nb_err_unrecover[j] =
-                      workers_data[i].cache_inode_client.stat.
-                      func_stats.nb_err_unrecover[j];
+                      workers_data[i].cache_inode_client.stat.func_stats.
+                      nb_err_unrecover[j];
                 }
               else
                 {
@@ -275,11 +275,11 @@ void *stats_thread(void *addr)
                   global_cache_inode_stat.func_stats.nb_call[j] +=
                       workers_data[i].cache_inode_client.stat.func_stats.nb_call[j];
                   global_cache_inode_stat.func_stats.nb_err_retryable[j] +=
-                      workers_data[i].cache_inode_client.stat.
-                      func_stats.nb_err_retryable[j];
+                      workers_data[i].cache_inode_client.stat.func_stats.
+                      nb_err_retryable[j];
                   global_cache_inode_stat.func_stats.nb_err_unrecover[j] +=
-                      workers_data[i].cache_inode_client.stat.
-                      func_stats.nb_err_unrecover[j];
+                      workers_data[i].cache_inode_client.stat.func_stats.
+                      nb_err_unrecover[j];
                 }
 
             }
@@ -347,10 +347,10 @@ void *stats_thread(void *addr)
               workers_data[i].stats.stat_req.nb_nfs3_req;
           global_worker_stat.stat_req.nb_nfs4_req +=
               workers_data[i].stats.stat_req.nb_nfs4_req;
-	  global_worker_stat.stat_req.nb_nfs40_op +=
-              workers_data[i].stats.stat_req.nb_nfs40_op ;
-	  global_worker_stat.stat_req.nb_nfs41_op +=
-              workers_data[i].stats.stat_req.nb_nfs41_op ;
+          global_worker_stat.stat_req.nb_nfs40_op +=
+              workers_data[i].stats.stat_req.nb_nfs40_op;
+          global_worker_stat.stat_req.nb_nfs41_op +=
+              workers_data[i].stats.stat_req.nb_nfs41_op;
 
           for(j = 0; j < MNT_V1_NB_COMMAND; j++)
             {
@@ -461,38 +461,50 @@ void *stats_thread(void *addr)
                       workers_data[i].stats.stat_req.stat_req_nfs4[j].dropped;
                 }
             }
-      
-         for( j = 0 ; j < NFS_V40_NB_OPERATION ; j++ )
-           {
-	      if(i == 0 )
-               {
-		 global_worker_stat.stat_req.stat_op_nfs40[j].total = workers_data[i].stats.stat_req.stat_op_nfs40[j].total ;
-		 global_worker_stat.stat_req.stat_op_nfs40[j].success = workers_data[i].stats.stat_req.stat_op_nfs40[j].success ;
-		 global_worker_stat.stat_req.stat_op_nfs40[j].failed = workers_data[i].stats.stat_req.stat_op_nfs40[j].failed ;
-               }
-              else
-               {
-		 global_worker_stat.stat_req.stat_op_nfs40[j].total += workers_data[i].stats.stat_req.stat_op_nfs40[j].total ;
-		 global_worker_stat.stat_req.stat_op_nfs40[j].success += workers_data[i].stats.stat_req.stat_op_nfs40[j].success ;
-		 global_worker_stat.stat_req.stat_op_nfs40[j].failed += workers_data[i].stats.stat_req.stat_op_nfs40[j].failed ;
-               }
-           }
 
-         for( j = 0 ; j < NFS_V41_NB_OPERATION ; j++ )
-           {
-	      if(i == 0 )
-               {
-		 global_worker_stat.stat_req.stat_op_nfs41[j].total = workers_data[i].stats.stat_req.stat_op_nfs41[j].total ;
-		 global_worker_stat.stat_req.stat_op_nfs41[j].success = workers_data[i].stats.stat_req.stat_op_nfs41[j].success ;
-		 global_worker_stat.stat_req.stat_op_nfs41[j].failed = workers_data[i].stats.stat_req.stat_op_nfs41[j].failed ;
-               }
+          for(j = 0; j < NFS_V40_NB_OPERATION; j++)
+            {
+              if(i == 0)
+                {
+                  global_worker_stat.stat_req.stat_op_nfs40[j].total =
+                      workers_data[i].stats.stat_req.stat_op_nfs40[j].total;
+                  global_worker_stat.stat_req.stat_op_nfs40[j].success =
+                      workers_data[i].stats.stat_req.stat_op_nfs40[j].success;
+                  global_worker_stat.stat_req.stat_op_nfs40[j].failed =
+                      workers_data[i].stats.stat_req.stat_op_nfs40[j].failed;
+                }
               else
-               {
-		 global_worker_stat.stat_req.stat_op_nfs41[j].total += workers_data[i].stats.stat_req.stat_op_nfs41[j].total ;
-		 global_worker_stat.stat_req.stat_op_nfs41[j].success += workers_data[i].stats.stat_req.stat_op_nfs41[j].success ;
-		 global_worker_stat.stat_req.stat_op_nfs41[j].failed += workers_data[i].stats.stat_req.stat_op_nfs41[j].failed ;
-               }
-           }
+                {
+                  global_worker_stat.stat_req.stat_op_nfs40[j].total +=
+                      workers_data[i].stats.stat_req.stat_op_nfs40[j].total;
+                  global_worker_stat.stat_req.stat_op_nfs40[j].success +=
+                      workers_data[i].stats.stat_req.stat_op_nfs40[j].success;
+                  global_worker_stat.stat_req.stat_op_nfs40[j].failed +=
+                      workers_data[i].stats.stat_req.stat_op_nfs40[j].failed;
+                }
+            }
+
+          for(j = 0; j < NFS_V41_NB_OPERATION; j++)
+            {
+              if(i == 0)
+                {
+                  global_worker_stat.stat_req.stat_op_nfs41[j].total =
+                      workers_data[i].stats.stat_req.stat_op_nfs41[j].total;
+                  global_worker_stat.stat_req.stat_op_nfs41[j].success =
+                      workers_data[i].stats.stat_req.stat_op_nfs41[j].success;
+                  global_worker_stat.stat_req.stat_op_nfs41[j].failed =
+                      workers_data[i].stats.stat_req.stat_op_nfs41[j].failed;
+                }
+              else
+                {
+                  global_worker_stat.stat_req.stat_op_nfs41[j].total +=
+                      workers_data[i].stats.stat_req.stat_op_nfs41[j].total;
+                  global_worker_stat.stat_req.stat_op_nfs41[j].success +=
+                      workers_data[i].stats.stat_req.stat_op_nfs41[j].success;
+                  global_worker_stat.stat_req.stat_op_nfs41[j].failed +=
+                      workers_data[i].stats.stat_req.stat_op_nfs41[j].failed;
+                }
+            }
 
           /* Computing the pending request stats */
           len_pending_request =
@@ -569,22 +581,23 @@ void *stats_thread(void *addr)
                 global_worker_stat.stat_req.stat_req_nfs4[j].dropped);
       fprintf(stats_file, "\n");
 
-      fprintf(stats_file, "NFS V4.0 OPERATIONS,%s;%u", strdate, global_worker_stat.stat_req.nb_nfs40_op ) ;
-      for( j = 0 ; j < NFS_V40_NB_OPERATION ; j++ )
+      fprintf(stats_file, "NFS V4.0 OPERATIONS,%s;%u", strdate,
+              global_worker_stat.stat_req.nb_nfs40_op);
+      for(j = 0; j < NFS_V40_NB_OPERATION; j++)
         fprintf(stats_file, "|%u,%u,%u",
                 global_worker_stat.stat_req.stat_op_nfs40[j].total,
                 global_worker_stat.stat_req.stat_op_nfs40[j].success,
                 global_worker_stat.stat_req.stat_op_nfs40[j].failed);
       fprintf(stats_file, "\n");
 
-      fprintf(stats_file, "NFS V4.1 OPERATIONS,%s;%u", strdate, global_worker_stat.stat_req.nb_nfs41_op ) ;
-      for( j = 0 ; j < NFS_V41_NB_OPERATION ; j++ )
+      fprintf(stats_file, "NFS V4.1 OPERATIONS,%s;%u", strdate,
+              global_worker_stat.stat_req.nb_nfs41_op);
+      for(j = 0; j < NFS_V41_NB_OPERATION; j++)
         fprintf(stats_file, "|%u,%u,%u",
                 global_worker_stat.stat_req.stat_op_nfs41[j].total,
                 global_worker_stat.stat_req.stat_op_nfs41[j].success,
                 global_worker_stat.stat_req.stat_op_nfs41[j].failed);
       fprintf(stats_file, "\n");
-
 
       /* Printing the cache inode hash stat */
       nfs_dupreq_get_stats(&hstat);

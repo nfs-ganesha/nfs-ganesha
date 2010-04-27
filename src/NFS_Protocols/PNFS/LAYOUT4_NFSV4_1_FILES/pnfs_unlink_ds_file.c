@@ -79,7 +79,7 @@ int pnfs_unlink_ds_file(pnfs_client_t * pnfsclient,
     }
 
   /* Free the ressources */
-  Mem_Free( (char *)pfile->handle.nfs_fh4_val ) ; 
+  Mem_Free((char *)pfile->handle.nfs_fh4_val);
 
   return resnfs4.status;
 }                               /* pnfs_create_ds_file */

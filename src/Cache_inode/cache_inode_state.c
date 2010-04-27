@@ -148,8 +148,8 @@ int cache_inode_state_conflict(cache_inode_state_t * pstate,
       break;                    /* lock conflict is managed in the NFS request */
 
     case CACHE_INODE_STATE_LAYOUT:
-      rc = FALSE ; /** @todo No conflict management on layout for now */
-      break ;
+      rc = FALSE;  /** @todo No conflict management on layout for now */
+      break;
 
     case CACHE_INODE_STATE_DELEG:
     default:

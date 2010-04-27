@@ -468,7 +468,8 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->pnfs_param.layoutfile.stripe_size = 8192;
 
   p_nfs_param->pnfs_param.layoutfile.ds_param[0].ipaddr = htonl(0x7F000001);
-  strncpy( p_nfs_param->pnfs_param.layoutfile.ds_param[0].ipaddr_ascii, "127.0.0.1", MAXNAMLEN ) ;
+  strncpy(p_nfs_param->pnfs_param.layoutfile.ds_param[0].ipaddr_ascii, "127.0.0.1",
+          MAXNAMLEN);
   p_nfs_param->pnfs_param.layoutfile.ds_param[0].ipport = htons(2049);
   p_nfs_param->pnfs_param.layoutfile.ds_param[0].prognum = 100003;
   p_nfs_param->pnfs_param.layoutfile.ds_param[0].id = 1;
@@ -935,9 +936,8 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
   /* Cache inode parameters : hash table */
   if((cache_inode_status =
       cache_inode_read_conf_hash_parameter(config_struct,
-                                           &p_nfs_param->
-                                           cache_layers_param.cache_param)) !=
-     CACHE_INODE_SUCCESS)
+                                           &p_nfs_param->cache_layers_param.
+                                           cache_param)) != CACHE_INODE_SUCCESS)
     {
       if(cache_inode_status == CACHE_INODE_NOT_FOUND)
         DisplayLog
@@ -975,7 +975,9 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 
   /* Cache inode client parameters */
   if((cache_inode_status = cache_inode_read_conf_client_parameter(config_struct,
-                                                                  &p_nfs_param->cache_layers_param.cache_inode_client_param))
+                                                                  &p_nfs_param->
+                                                                  cache_layers_param.
+                                                                  cache_inode_client_param))
      != CACHE_INODE_SUCCESS)
     {
       if(cache_inode_status == CACHE_INODE_NOT_FOUND)
@@ -993,7 +995,9 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 
   /* Data cache client parameters */
   if((cache_content_status = cache_content_read_conf_client_parameter(config_struct,
-                                                                      &p_nfs_param->cache_layers_param.cache_content_client_param))
+                                                                      &p_nfs_param->
+                                                                      cache_layers_param.
+                                                                      cache_content_client_param))
      != CACHE_CONTENT_SUCCESS)
     {
       if(cache_content_status == CACHE_CONTENT_NOT_FOUND)
@@ -1806,9 +1810,8 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
 
   /* Allocate the directories for the datacache */
   if(cache_content_prepare_directories(nfs_param.pexportlist,
-                                       nfs_param.
-                                       cache_layers_param.cache_content_client_param.
-                                       cache_dir,
+                                       nfs_param.cache_layers_param.
+                                       cache_content_client_param.cache_dir,
                                        &content_status) != CACHE_CONTENT_SUCCESS)
     {
       DisplayLog

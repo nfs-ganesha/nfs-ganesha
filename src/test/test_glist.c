@@ -35,7 +35,7 @@
  */
 
 #include <stdio.h>
-#include "list.h"
+#include "nlm_list.h"
 
 struct myteststruct
 {

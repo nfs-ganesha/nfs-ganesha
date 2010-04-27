@@ -162,17 +162,17 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
   res_LAYOUTGET4.logr_status = NFS4ERR_NOTSUPP;
   return res_LAYOUTGET4.logr_status;
 #else
-  char * buff = NULL ;
-  unsigned int lenbuff = 0 ;
+  char *buff = NULL;
+  unsigned int lenbuff = 0;
 
   /* Lock are not supported */
   resp->resop = NFS4_OP_LAYOUTGET;
 
-  if( ( buff = Mem_Alloc( 1024 ) ) == NULL )
-   {
-     res_LAYOUTGET4.logr_status = NFS4ERR_SERVERFAULT ;
-     return res_LAYOUTGET4.logr_status ;
-   }
+  if((buff = Mem_Alloc(1024)) == NULL)
+    {
+      res_LAYOUTGET4.logr_status = NFS4ERR_SERVERFAULT;
+      return res_LAYOUTGET4.logr_status;
+    }
 
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))
@@ -284,7 +284,7 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_stateid.seqid = 1;
   memcpy(res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_stateid.other,
          arg_LAYOUTGET4.loga_stateid.other, 12);
-         //file_state->stateid_other, 12);
+  //file_state->stateid_other, 12);
 
   /* Now the layout specific information */
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_len = 1;  /** @todo manages more than one segment */
@@ -296,15 +296,17 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_length = 0xFFFFFFFFFFFFFFFFLL;   /* Whole file */
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_iomode =
       arg_LAYOUTGET4.loga_iomode;
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.
-      loc_type = LAYOUT4_NFSV4_1_FILES;
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
+      lo_content.loc_type = LAYOUT4_NFSV4_1_FILES;
 
-  pnfs_encode_layoutget( &data->current_entry->object.file.pnfs_file.ds_file, buff, &lenbuff ) ;
+  pnfs_encode_layoutget(&data->current_entry->object.file.pnfs_file.ds_file, buff,
+                        &lenbuff);
 
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.
-      loc_body.loc_body_len = lenbuff,
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.
-      loc_body.loc_body_val = buff ;
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
+      lo_content.loc_body.loc_body_len =
+      lenbuff,
+      res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
+      lo_content.loc_body.loc_body_val = buff;
 
   res_LAYOUTGET4.logr_status = NFS4_OK;
   return res_LAYOUTGET4.logr_status;
@@ -325,10 +327,10 @@ void nfs41_op_layoutget_Free(LAYOUTGET4res * resp)
 {
   if(resp->logr_status == NFS4_OK)
     {
-      if( resp->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
-               lo_content.loc_body.loc_body_val != NULL )
-        Mem_Free((char *)resp->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
-                 lo_content.loc_body.loc_body_val);
+      if(resp->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.
+         loc_body.loc_body_val != NULL)
+        Mem_Free((char *)resp->LAYOUTGET4res_u.logr_resok4.logr_layout.
+                 logr_layout_val[0].lo_content.loc_body.loc_body_val);
     }
 
   return;

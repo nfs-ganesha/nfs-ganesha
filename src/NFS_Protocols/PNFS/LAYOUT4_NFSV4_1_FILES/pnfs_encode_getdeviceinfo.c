@@ -45,67 +45,65 @@
 
 extern nfs_parameter_t nfs_param;
 
-void pnfs_encode_getdeviceinfo( char * buff, unsigned int * plen )
+void pnfs_encode_getdeviceinfo(char *buff, unsigned int *plen)
 {
-  unsigned int offset = 0 ;
-  uint32_t int32 = 0 ;
-  char tmpchar[MAXNAMLEN] ;
-  unsigned int tmplen = 0 ;
-  unsigned int padlen = 0 ;
- 
+  unsigned int offset = 0;
+  uint32_t int32 = 0;
+  char tmpchar[MAXNAMLEN];
+  unsigned int tmplen = 0;
+  unsigned int padlen = 0;
+
   /* nflda_stripe_indices.nflda_stripe_indices_len */
-  int32 = htonl( 1 ) ;
-  memcpy( (char *)(buff+offset), (char *)&int32, sizeof( int32 ) );
-  offset +=  sizeof( int32 ) ;
+  int32 = htonl(1);
+  memcpy((char *)(buff + offset), (char *)&int32, sizeof(int32));
+  offset += sizeof(int32);
 
   /* nflda_stripe_indices.nflda_stripe_indices_val */
-  int32 = 0 ; 
-  memcpy( (char *)(buff+offset), (char *)&int32, sizeof( int32 ) );
-  offset +=  sizeof( int32 ) ;
+  int32 = 0;
+  memcpy((char *)(buff + offset), (char *)&int32, sizeof(int32));
+  offset += sizeof(int32);
 
   /* nflda_multipath_ds_list.nflda_multipath_ds_list_len */
-  int32 = htonl( 1 ) ;
-  memcpy( (char *)(buff+offset), (char *)&int32, sizeof( int32 ) );
-  offset +=  sizeof( int32 ) ;
+  int32 = htonl(1);
+  memcpy((char *)(buff + offset), (char *)&int32, sizeof(int32));
+  offset += sizeof(int32);
 
   /* nflda_multipath_ds_list.nflda_multipath_ds_list_val[0].multipath_list4_len */
-  int32 = htonl( 1 ) ;
-  memcpy( (char *)(buff+offset), (char *)&int32, sizeof( int32 ) );
-  offset +=  sizeof( int32 ) ;
+  int32 = htonl(1);
+  memcpy((char *)(buff + offset), (char *)&int32, sizeof(int32));
+  offset += sizeof(int32);
 
-   /* nflda_multipath_ds_list.nflda_multipath_ds_list_val[0].multipath_list4_val[0].na_r_netid */
-   int32 = htonl( 3 ) ; /* because strlen( "tcp" ) = 3 */
-   memcpy( (char *)(buff+offset), (char *)&int32, sizeof( int32 ) );
-   offset +=  sizeof( int32 ) ;
+  /* nflda_multipath_ds_list.nflda_multipath_ds_list_val[0].multipath_list4_val[0].na_r_netid */
+  int32 = htonl(3);             /* because strlen( "tcp" ) = 3 */
+  memcpy((char *)(buff + offset), (char *)&int32, sizeof(int32));
+  offset += sizeof(int32);
 
-   memset( tmpchar, 0, MAXNAMLEN ) ;
-   strncpy( tmpchar, "tcp", MAXNAMLEN );
-   memcpy( (char *)(buff+offset), tmpchar, 4 ) ; /* 4 bytes = 3 bytes for "tcp" and 1 to keep XDR alignment */
-   offset += 4 ;
-   
-   /* nflda_multipath_ds_list.nflda_multipath_ds_list_val[0].multipath_list4_val[0].na_r_addr */
-   memset( tmpchar, 0, MAXNAMLEN ) ;
-   snprintf( tmpchar, MAXNAMLEN, "%s.%u.%u",
-	     nfs_param.pnfs_param.layoutfile.ds_param[0].ipaddr_ascii,
-             nfs_param.pnfs_param.layoutfile.ds_param[0].ipport & 0x0F, 
-             nfs_param.pnfs_param.layoutfile.ds_param[0].ipport >> 8) ;
-   tmplen = strnlen( tmpchar, MAXNAMLEN ) ;
+  memset(tmpchar, 0, MAXNAMLEN);
+  strncpy(tmpchar, "tcp", MAXNAMLEN);
+  memcpy((char *)(buff + offset), tmpchar, 4);  /* 4 bytes = 3 bytes for "tcp" and 1 to keep XDR alignment */
+  offset += 4;
 
-   /* XDR padding : keep stuff aligned on 32 bits pattern */
-   if( tmplen % 4 == 0)
-     padlen = 0;
-   else
-     padlen = 4 - ( tmplen % 4 ) ;
+  /* nflda_multipath_ds_list.nflda_multipath_ds_list_val[0].multipath_list4_val[0].na_r_addr */
+  memset(tmpchar, 0, MAXNAMLEN);
+  snprintf(tmpchar, MAXNAMLEN, "%s.%u.%u",
+           nfs_param.pnfs_param.layoutfile.ds_param[0].ipaddr_ascii,
+           nfs_param.pnfs_param.layoutfile.ds_param[0].ipport & 0x0F,
+           nfs_param.pnfs_param.layoutfile.ds_param[0].ipport >> 8);
+  tmplen = strnlen(tmpchar, MAXNAMLEN);
 
-   /* len of na_r_addr */
-   int32 = htonl( tmplen ) ; 
-   memcpy( (char *)(buff+offset), (char *)&int32, sizeof( int32 ) );
-   offset +=  sizeof( int32 ) ;
+  /* XDR padding : keep stuff aligned on 32 bits pattern */
+  if(tmplen % 4 == 0)
+    padlen = 0;
+  else
+    padlen = 4 - (tmplen % 4);
 
-   memcpy( (char *)(buff+offset), tmpchar, tmplen+padlen );
-   offset += tmplen + padlen ;
+  /* len of na_r_addr */
+  int32 = htonl(tmplen);
+  memcpy((char *)(buff + offset), (char *)&int32, sizeof(int32));
+  offset += sizeof(int32);
 
-   *plen = offset ;
-} /* pnfs_encode_getdeviceinfo */
+  memcpy((char *)(buff + offset), tmpchar, tmplen + padlen);
+  offset += tmplen + padlen;
 
-
+  *plen = offset;
+}                               /* pnfs_encode_getdeviceinfo */

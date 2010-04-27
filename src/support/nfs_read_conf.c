@@ -831,9 +831,9 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
             {
               /* Address begin with a digit, it is a address in the dotted form, translate it */
               pparam->layoutfile.ds_param[0].ipaddr = inet_addr(key_value);
-              
+
               /* Keep this address in the ascii format as well (for GETDEVICEINFO) */
-              strncpy( pparam->layoutfile.ds_param[0].ipaddr_ascii, key_value, MAXNAMLEN ) ;
+              strncpy(pparam->layoutfile.ds_param[0].ipaddr_ascii, key_value, MAXNAMLEN);
             }
           else
             {
@@ -845,11 +845,16 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
                   return -1;
                 }
               memcpy(&pparam->layoutfile.ds_param[0].ipaddr, hp->h_addr, hp->h_length);
-              snprintf( pparam->layoutfile.ds_param[0].ipaddr_ascii, MAXNAMLEN, "%u.%u.%u.%u",
-                        ((unsigned int)ntohl(pparam->layoutfile.ds_param[0].ipaddr) & 0xFF000000 ) >> 24,
-                        ((unsigned int)ntohl(pparam->layoutfile.ds_param[0].ipaddr) & 0x00FF0000 ) >> 16,
-                        ((unsigned int)ntohl(pparam->layoutfile.ds_param[0].ipaddr) & 0x0000FF00 ) >> 8,
-                        (unsigned int)ntohl(pparam->layoutfile.ds_param[0].ipaddr) & 0x000000FF ) ;
+              snprintf(pparam->layoutfile.ds_param[0].ipaddr_ascii, MAXNAMLEN,
+                       "%u.%u.%u.%u",
+                       ((unsigned int)ntohl(pparam->layoutfile.ds_param[0].ipaddr) &
+                        0xFF000000) >> 24,
+                       ((unsigned int)ntohl(pparam->layoutfile.ds_param[0].ipaddr) &
+                        0x00FF0000) >> 16,
+                       ((unsigned int)ntohl(pparam->layoutfile.ds_param[0].ipaddr) &
+                        0x0000FF00) >> 8,
+                       (unsigned int)ntohl(pparam->layoutfile.ds_param[0].
+                                           ipaddr) & 0x000000FF);
             }
         }
       else if(!strcasecmp(key_name, "DS_Ip_Port"))
@@ -868,7 +873,7 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
         {
           pparam->layoutfile.ds_param[0].id = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "DS_Is_Ganesha" ))
+      else if(!strcasecmp(key_name, "DS_Is_Ganesha"))
         {
           pparam->layoutfile.ds_param[0].is_ganesha = StrToBoolean(key_value);
         }

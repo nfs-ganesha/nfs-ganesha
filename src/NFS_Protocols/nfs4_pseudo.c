@@ -424,8 +424,8 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 
 #ifdef _USE_NFS4_1
   unsigned int attrvalslist_supported[FATTR4_FS_CHARSET_CAP];
-  unsigned int attrmasklist[FATTR4_FS_CHARSET_CAP];  /* List cannot be longer than FATTR4_FS_CHARSET_CAP */
-  unsigned int attrvalslist[FATTR4_FS_CHARSET_CAP];  /* List cannot be longer than FATTR4_FS_CHARSET_CAP */
+  unsigned int attrmasklist[FATTR4_FS_CHARSET_CAP];     /* List cannot be longer than FATTR4_FS_CHARSET_CAP */
+  unsigned int attrvalslist[FATTR4_FS_CHARSET_CAP];     /* List cannot be longer than FATTR4_FS_CHARSET_CAP */
 #else
   unsigned int attrvalslist_supported[FATTR4_MOUNTED_ON_FILEID];
   unsigned int attrmasklist[FATTR4_MOUNTED_ON_FILEID];  /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
@@ -444,7 +444,6 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
   memset((uint32_t *) attrmasklist, 0, FATTR4_MOUNTED_ON_FILEID * sizeof(uint32_t));
   memset((uint32_t *) attrvalslist, 0, FATTR4_MOUNTED_ON_FILEID * sizeof(uint32_t));
 #endif
-
 
   /* Convert the attribute bitmap to an attribute list */
   nfs4_bitmap4_to_list(Bitmap, &attrmasklen, attrmasklist);
@@ -1279,7 +1278,6 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           op_attr_success = 1;
           break;
 #endif
-
 
         default:
           DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
