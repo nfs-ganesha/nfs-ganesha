@@ -129,6 +129,7 @@ typedef struct pnfs_ds_parameter__
   char rootpath[MAXPATHLEN];
   char ipaddr_ascii[MAXNAMLEN] ;
   unsigned int id;
+  bool_t is_ganesha ;
 } pnfs_ds_parameter_t;
 
 typedef struct pnfs_layoutfile_parameter__
@@ -150,6 +151,7 @@ typedef struct pnfs_ds_file__
 {
   bool_t allocated ;
   unsigned int deviceid ;
+  bool_t is_ganesha ;
   nfs_fh4 handle;
   stateid4 stateid;
 } pnfs_ds_file_t;
