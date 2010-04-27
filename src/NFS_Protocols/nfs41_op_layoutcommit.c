@@ -148,6 +148,9 @@
 int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
                           struct nfs_resop4 *resp)
 {
+  cache_inode_status_t cache_status ;
+  fsal_attrib_list_t   fsal_attr ;
+
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutcommit";
   /* Lock are not supported */
   resp->resop = NFS4_OP_LAYOUTCOMMIT;
@@ -193,6 +196,19 @@ int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
           break;
         }
 
+      return res_LAYOUTCOMMIT4.locr_status;
+    }
+
+  /* Update the mds */
+  if( cache_inode_truncate( data->current_entry,
+                            (fsal_size_t)arg_LAYOUTCOMMIT4.loca_length,
+                             &fsal_attr,
+                             data->ht,
+                             data->pclient,
+                             data->pcontext,
+                             &cache_status ) != CACHE_INODE_SUCCESS)
+    {
+      res_LAYOUTCOMMIT4.locr_status = nfs4_Errno(cache_status);
       return res_LAYOUTCOMMIT4.locr_status;
     }
 
