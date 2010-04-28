@@ -6,7 +6,20 @@
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  *
- * PUT LGPL HERE
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * 
  * ---------------------------------------
  */
 
@@ -3241,8 +3254,9 @@ int fn_Cache_inode_recover_cache(int argc,      /* IN : number of args in argv *
   if(cache_content_crash_recover(EXPORT_ID,
                                  0,
                                  1,
-                                 (cache_content_client_t *) context->client.
-                                 pcontent_client, &context->client, ht, &context->context,
+                                 (cache_content_client_t *) context->
+                                 client.pcontent_client, &context->client, ht,
+                                 &context->context,
                                  &cache_content_status) != CACHE_CONTENT_SUCCESS)
     {
       fprintf(output, "Error executing cache_content_crash_recover: %d\n",

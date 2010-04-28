@@ -6,7 +6,20 @@
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  *
- * PUT LGPL HERE
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * 
  * ---------------------------------------
  */
 
@@ -118,9 +131,9 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
 #if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
   fsal_status =
       FSAL_rcp_by_name(&
-                       (pentry_inode->object.file.pentry_parent_open->object.dir_begin.
-                        handle), pentry_inode->object.file.pname, pcontext, &local_path,
-                       FSAL_RCP_LOCAL_TO_FS);
+                       (pentry_inode->object.file.pentry_parent_open->object.
+                        dir_begin.handle), pentry_inode->object.file.pname, pcontext,
+                       &local_path, FSAL_RCP_LOCAL_TO_FS);
 #else
   /* Write the data from the local data file to the fs file */
   fsal_status = FSAL_rcp(pfsal_handle, pcontext, &local_path, FSAL_RCP_LOCAL_TO_FS);
@@ -297,9 +310,9 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
 #if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
       fsal_status =
           FSAL_rcp_by_name(&
-                           (pentry_inode->object.file.pentry_parent_open->object.
-                            dir_begin.handle), pentry_inode->object.file.pname, pcontext,
-                           &local_path, FSAL_RCP_FS_TO_LOCAL);
+                           (pentry_inode->object.file.pentry_parent_open->
+                            object.dir_begin.handle), pentry_inode->object.file.pname,
+                           pcontext, &local_path, FSAL_RCP_FS_TO_LOCAL);
 #else
       /* Write the data from the local data file to the fs file */
       fsal_status = FSAL_rcp(pfsal_handle, pcontext, &local_path, FSAL_RCP_FS_TO_LOCAL);

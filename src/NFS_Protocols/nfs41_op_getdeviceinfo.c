@@ -6,7 +6,20 @@
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  *
- * PUT LGPL HERE
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * 
  * ---------------------------------------
  */
 
@@ -89,7 +102,7 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
 
 #ifndef _USE_PNFS
   res_GETDEVICEINFO4.gdir_status = NFS4ERR_NOTSUPP;
-  return res_res_GETDEVICEINFO4.gdir_status;
+  return res_GETDEVICEINFO4.gdir_status;
 #else
 
   char *buff = NULL;
@@ -109,10 +122,10 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
       LAYOUT4_NFSV4_1_FILES;
 
   pnfs_encode_getdeviceinfo(buff, &lenbuff);
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
-      da_addr_body_len = lenbuff;
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
-      da_addr_body_val = buff;
+  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.
+      da_addr_body.da_addr_body_len = lenbuff;
+  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.
+      da_addr_body.da_addr_body_val = buff;
 
   res_GETDEVICEINFO4.gdir_status = NFS4_OK;
 
@@ -133,10 +146,10 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
 void nfs41_op_getdeviceinfo_Free(GETDEVICEINFO4res * resp)
 {
   if(resp->gdir_status == NFS4_OK)
-    if(resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
-       da_addr_body_val != NULL)
-      Mem_Free(resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
-               da_addr_body_val);
+    if(resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.
+       da_addr_body.da_addr_body_val != NULL)
+      Mem_Free(resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.
+               da_addr_body.da_addr_body_val);
 
   return;
 }                               /* nfs41_op_exchange_id_Free */

@@ -5,7 +5,20 @@
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
- * PUT LGPL HERE
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * 
  * ---------------------------------------
  */
 
@@ -199,11 +212,11 @@ void *stats_thread(void *addr)
                   global_cache_inode_stat.func_stats.nb_call[j] =
                       workers_data[i].cache_inode_client.stat.func_stats.nb_call[j];
                   global_cache_inode_stat.func_stats.nb_err_retryable[j] =
-                      workers_data[i].cache_inode_client.stat.func_stats.
-                      nb_err_retryable[j];
+                      workers_data[i].cache_inode_client.stat.
+                      func_stats.nb_err_retryable[j];
                   global_cache_inode_stat.func_stats.nb_err_unrecover[j] =
-                      workers_data[i].cache_inode_client.stat.func_stats.
-                      nb_err_unrecover[j];
+                      workers_data[i].cache_inode_client.stat.
+                      func_stats.nb_err_unrecover[j];
                 }
               else
                 {
@@ -212,11 +225,11 @@ void *stats_thread(void *addr)
                   global_cache_inode_stat.func_stats.nb_call[j] +=
                       workers_data[i].cache_inode_client.stat.func_stats.nb_call[j];
                   global_cache_inode_stat.func_stats.nb_err_retryable[j] +=
-                      workers_data[i].cache_inode_client.stat.func_stats.
-                      nb_err_retryable[j];
+                      workers_data[i].cache_inode_client.stat.
+                      func_stats.nb_err_retryable[j];
                   global_cache_inode_stat.func_stats.nb_err_unrecover[j] +=
-                      workers_data[i].cache_inode_client.stat.func_stats.
-                      nb_err_unrecover[j];
+                      workers_data[i].cache_inode_client.stat.
+                      func_stats.nb_err_unrecover[j];
                 }
 
             }

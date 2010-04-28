@@ -6,7 +6,20 @@
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  *
- * PUT LGPL HERE
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * 
  * ---------------------------------------
  */
 
@@ -169,8 +182,8 @@ int nfs_Lookup(nfs_arg_t * parg,
                       pexport))
                     {
                       if(nfs2_FSALattr_To_Fattr(pexport, &attr,
-                                                &(pres->res_dirop2.DIROP2res_u.diropok.
-                                                  attributes)))
+                                                &(pres->res_dirop2.DIROP2res_u.
+                                                  diropok.attributes)))
                         {
                           pres->res_dirop2.status = NFS_OK;
                         }
@@ -196,16 +209,16 @@ int nfs_Lookup(nfs_arg_t * parg,
                             {
                               pres->res_lookup3.status =
                                   nfs3_fh_to_xattrfh((nfs_fh3 *) &
-                                                     (pres->res_lookup3.LOOKUP3res_u.
-                                                      resok.object.data),
-                                                     (nfs_fh3 *) & (pres->res_lookup3.
-                                                                    LOOKUP3res_u.resok.
-                                                                    object.data));
+                                                     (pres->res_lookup3.
+                                                      LOOKUP3res_u.resok.object.data),
+                                                     (nfs_fh3 *) & (pres->
+                                                                    res_lookup3.LOOKUP3res_u.
+                                                                    resok.object.data));
                               /* Build entry attributes */
                               nfs_SetPostOpXAttrDir(pcontext, pexport,
                                                     &attr,
-                                                    &(pres->res_lookup3.LOOKUP3res_u.
-                                                      resok.obj_attributes));
+                                                    &(pres->res_lookup3.
+                                                      LOOKUP3res_u.resok.obj_attributes));
 
                             }
                           else
@@ -214,15 +227,15 @@ int nfs_Lookup(nfs_arg_t * parg,
                             nfs_SetPostOpAttr(pcontext, pexport,
                                               pentry_file,
                                               &attr,
-                                              &(pres->res_lookup3.LOOKUP3res_u.resok.
-                                                obj_attributes));
+                                              &(pres->res_lookup3.LOOKUP3res_u.
+                                                resok.obj_attributes));
 
                           /* Build directory attributes */
                           nfs_SetPostOpAttr(pcontext, pexport,
                                             pentry_dir,
                                             &attrdir,
-                                            &(pres->res_lookup3.LOOKUP3res_u.resok.
-                                              dir_attributes));
+                                            &(pres->res_lookup3.LOOKUP3res_u.
+                                              resok.dir_attributes));
 
                           pres->res_lookup3.status = NFS3_OK;
                         }       /* if */

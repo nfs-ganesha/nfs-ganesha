@@ -6,7 +6,20 @@
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  *
- * PUT LGPL HERE
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * 
  * ---------------------------------------
  */
 
@@ -85,8 +98,8 @@
 int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
                           struct nfs_resop4 *resp)
 {
-  cache_inode_status_t cache_status ;
-  fsal_attrib_list_t   fsal_attr ;
+  cache_inode_status_t cache_status;
+  fsal_attrib_list_t fsal_attr;
 
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutcommit";
   /* Lock are not supported */
@@ -137,13 +150,12 @@ int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
     }
 
   /* Update the mds */
-  if( cache_inode_truncate( data->current_entry,
-                            (fsal_size_t)arg_LAYOUTCOMMIT4.loca_length,
-                             &fsal_attr,
-                             data->ht,
-                             data->pclient,
-                             data->pcontext,
-                             &cache_status ) != CACHE_INODE_SUCCESS)
+  if(cache_inode_truncate(data->current_entry,
+                          (fsal_size_t) arg_LAYOUTCOMMIT4.loca_length,
+                          &fsal_attr,
+                          data->ht,
+                          data->pclient,
+                          data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_LAYOUTCOMMIT4.locr_status = nfs4_Errno(cache_status);
       return res_LAYOUTCOMMIT4.locr_status;

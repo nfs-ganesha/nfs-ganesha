@@ -6,7 +6,20 @@
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  *
- * PUT LGPL HERE
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * 
  * ---------------------------------------
  */
 
@@ -411,10 +424,10 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
   else
     {
       /* DIR_CONTINUE */
-      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime.
-          seconds = time(NULL);
-      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime.
-          seconds = 0;
+      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
+          mtime.seconds = time(NULL);
+      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
+          mtime.seconds = 0;
       pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.ctime =
           pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime;
 
@@ -423,8 +436,8 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
        */
       if(type == DIR_BEGINNING)
         {
-          pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
-              numlinks++;
+          pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.
+              attributes.numlinks++;
         }
 
     }

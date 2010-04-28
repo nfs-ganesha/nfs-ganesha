@@ -8,7 +8,20 @@
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  *
- * PUT LGPL HERE
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * 
  * ---------------------------------------
  */
 
@@ -127,8 +140,8 @@ static unsigned long hash_digest_idx(hash_parameter_t * p_conf, hash_buffer_t * 
 
   hash =
       (p_conf->alphabet_length +
-       ((unsigned long)p_digest->nfs23_digest.object_id ^ (unsigned int)p_digest->
-        nfs23_digest.handle_hash));
+       ((unsigned long)p_digest->nfs23_digest.
+        object_id ^ (unsigned int)p_digest->nfs23_digest.handle_hash));
   hash = (743 * hash + 1999) % p_conf->index_size;
 
   return hash;

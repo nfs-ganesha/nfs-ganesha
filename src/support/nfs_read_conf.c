@@ -5,7 +5,20 @@
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  *
- * PUT LGPL HERE
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * 
  * ---------------------------------------
  */
 
@@ -790,8 +803,8 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
                         0x00FF0000) >> 16,
                        ((unsigned int)ntohl(pparam->layoutfile.ds_param[0].ipaddr) &
                         0x0000FF00) >> 8,
-                       (unsigned int)ntohl(pparam->layoutfile.ds_param[0].
-                                           ipaddr) & 0x000000FF);
+                       (unsigned int)ntohl(pparam->layoutfile.
+                                           ds_param[0].ipaddr) & 0x000000FF);
             }
         }
       else if(!strcasecmp(key_name, "DS_Ip_Port"))
