@@ -340,5 +340,7 @@
           to prevent from non allowed access.
 	- Statistics for NFSv4.0 and NFSv4.1 operations have been added
         - Bug Fix: default value for FSINFO3::dtpref was 0. Value 16384 is now used.
+        - Early (unstable) implementation of pNFS provided. Will continue and be stabilized in later releases.
+
 
 
