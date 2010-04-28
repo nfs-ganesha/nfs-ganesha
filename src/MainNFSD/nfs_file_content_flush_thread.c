@@ -6,7 +6,20 @@
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  *
- * PUT LGPL HERE
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * 
  * ---------------------------------------
  */
 
@@ -149,8 +162,8 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
           if(cache_content_emergency_flush(cache_sub_dir,
                                            nfs_start_info.flush_behaviour,
                                            nfs_start_info.lw_mark_trigger,
-                                           nfs_param.cache_layers_param.dcgcpol.
-                                           emergency_grace_delay,
+                                           nfs_param.cache_layers_param.
+                                           dcgcpol.emergency_grace_delay,
                                            p_flush_data->thread_index,
                                            nfs_start_info.nb_flush_threads,
                                            &p_flush_data->nb_flushed,

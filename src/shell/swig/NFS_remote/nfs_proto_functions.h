@@ -6,7 +6,20 @@
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  *
- * PUT LGPL HERE
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * 
  * ---------------------------------------
  */
 
@@ -965,8 +978,8 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,    /* Out: File attributes  */
                             fattr4 * pFattr);   /* In: File attributes   */
 
-                                                                                                                                                                                                                                                                                                                                                  /* time_how4          * mtime_set, *//* Out: How to set mtime */
-                                                                                                                                                                                                                                                                                                                                                                                  /* time_how4          * atimen_set ) ; *//* Out: How to set atime */
+                                                                                                                                                                                                                                                                                                                                                                                       /* time_how4          * mtime_set, *//* Out: How to set mtime */
+                                                                                                                                                                                                                                                                                                                                                                                                                           /* time_how4          * atimen_set ) ; *//* Out: How to set atime */
 
 void nfs4_list_to_bitmap4(bitmap4 * b, uint_t * plen, uint32_t * pval);
 void nfs4_bitmap4_to_list(bitmap4 * b, uint_t * plen, uint32_t * pval);

@@ -6,7 +6,20 @@
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  *
- * PUT LGPL HERE
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * 
  * ---------------------------------------
  */
 
@@ -193,8 +206,8 @@ int nfs_Create(nfs_arg_t * parg,
         }
       else if(parg->arg_create3.how.createhow3_u.obj_attributes.mode.set_it == TRUE)
         mode =
-            unix2fsal_mode(parg->arg_create3.how.createhow3_u.obj_attributes.mode.
-                           set_mode3_u.mode);
+            unix2fsal_mode(parg->arg_create3.how.createhow3_u.obj_attributes.
+                           mode.set_mode3_u.mode);
       else
         mode = 0;
       break;
@@ -267,8 +280,8 @@ int nfs_Create(nfs_arg_t * parg,
                     case NFS_V3:
 
                       if(nfs3_Sattr_To_FSALattr(&attributes_create,
-                                                &parg->arg_create3.how.createhow3_u.
-                                                obj_attributes) == 0)
+                                                &parg->arg_create3.how.
+                                                createhow3_u.obj_attributes) == 0)
                         {
                           pres->res_create3.status = NFS3ERR_INVAL;
                           return NFS_REQ_OK;
@@ -310,8 +323,8 @@ int nfs_Create(nfs_arg_t * parg,
                                               NULL, NULL,
                                               parent_pentry,
                                               ppre_attr,
-                                              &(pres->res_create3.CREATE3res_u.resfail.
-                                                dir_wcc), NULL, NULL, NULL);
+                                              &(pres->res_create3.CREATE3res_u.
+                                                resfail.dir_wcc), NULL, NULL, NULL);
 
                           if(nfs_RetryableError(cache_status))
                             return NFS_REQ_DROP;
@@ -337,8 +350,8 @@ int nfs_Create(nfs_arg_t * parg,
                                               NULL, NULL,
                                               parent_pentry,
                                               ppre_attr,
-                                              &(pres->res_create3.CREATE3res_u.resfail.
-                                                dir_wcc), NULL, NULL, NULL);
+                                              &(pres->res_create3.CREATE3res_u.
+                                                resfail.dir_wcc), NULL, NULL, NULL);
 
                           if(nfs_RetryableError(cache_status))
                             return NFS_REQ_DROP;
@@ -366,8 +379,9 @@ int nfs_Create(nfs_arg_t * parg,
                           else
                             {
                               if(!nfs2_FSALattr_To_Fattr(pexport, &attr_newfile,
-                                                         &(pres->res_dirop2.DIROP2res_u.
-                                                           diropok.attributes)))
+                                                         &(pres->res_dirop2.
+                                                           DIROP2res_u.diropok.
+                                                           attributes)))
                                 pres->res_dirop2.status = NFSERR_IO;
                               else
                                 pres->res_dirop2.status = NFS_OK;
@@ -381,8 +395,9 @@ int nfs_Create(nfs_arg_t * parg,
                           BuddySetDebugLabel("Filehandle V3 in nfs3_Create");
 #endif
                           /* Build file handle */
-                          if((pres->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.
-                              handle.data.data_val = Mem_Alloc(NFS3_FHSIZE)) == NULL)
+                          if((pres->res_create3.CREATE3res_u.resok.obj.
+                              post_op_fh3_u.handle.data.data_val =
+                              Mem_Alloc(NFS3_FHSIZE)) == NULL)
                             {
                               pres->res_create3.status = NFS3ERR_IO;
                               return NFS_REQ_OK;
@@ -393,11 +408,11 @@ int nfs_Create(nfs_arg_t * parg,
 #endif
                           /* Set Post Op Fh3 structure */
                           if(nfs3_FSALToFhandle
-                             (&pres->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.
-                              handle, pfsal_handle, pexport) == 0)
+                             (&pres->res_create3.CREATE3res_u.resok.obj.
+                              post_op_fh3_u.handle, pfsal_handle, pexport) == 0)
                             {
-                              Mem_Free((char *)pres->res_create3.CREATE3res_u.resok.obj.
-                                       post_op_fh3_u.handle.data.data_val);
+                              Mem_Free((char *)pres->res_create3.CREATE3res_u.resok.
+                                       obj.post_op_fh3_u.handle.data.data_val);
 
                               pres->res_create3.status = NFS3ERR_BADHANDLE;
                               return NFS_REQ_OK;
@@ -405,8 +420,8 @@ int nfs_Create(nfs_arg_t * parg,
 
                           /* Set Post Op Fh3 structure */
                           pres->res_create3.CREATE3res_u.resok.obj.handle_follows = TRUE;
-                          pres->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.handle.
-                              data.data_len = sizeof(file_handle_v3_t);
+                          pres->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.
+                              handle.data.data_len = sizeof(file_handle_v3_t);
 
                           /* Get the attributes of the parent after the operation */
                           cache_inode_get_attributes(parent_pentry, &attr_parent_after);
@@ -415,8 +430,8 @@ int nfs_Create(nfs_arg_t * parg,
                           nfs_SetPostOpAttr(pcontext, pexport,
                                             file_pentry,
                                             &attr_newfile,
-                                            &(pres->res_create3.CREATE3res_u.resok.
-                                              obj_attributes));
+                                            &(pres->res_create3.CREATE3res_u.
+                                              resok.obj_attributes));
 
                           /*
                            * Build Weak Cache Coherency

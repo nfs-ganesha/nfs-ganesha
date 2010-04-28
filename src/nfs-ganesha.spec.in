@@ -191,7 +191,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files common
 %defattr(-,root,root,-)
-%doc Docs/nfs-ganesha-userguide.pdf Docs/nfs-ganesha-adminguide.pdf Docs/nfs-ganeshell-userguide.pdf Docs/nfs-ganesha-ganestat.pdf Docs/using_ganeshell.pdf Docs/nfs-ganesha-convert_fh.pdf Docs/using_*_fsal.pdf
+%doc LICENSE.txt Docs/nfs-ganesha-userguide.pdf Docs/nfs-ganesha-adminguide.pdf Docs/nfs-ganeshell-userguide.pdf Docs/nfs-ganesha-ganestat.pdf Docs/using_ganeshell.pdf Docs/nfs-ganesha-convert_fh.pdf Docs/using_*_fsal.pdf
 %doc Docs/ganesha_snmp_adm.pdf
 %dir %{_sysconfdir}/ganesha/
 %dir %{_datadir}/%{name}
