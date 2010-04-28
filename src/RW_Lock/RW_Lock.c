@@ -9,6 +9,7 @@
  *
  * The fact that you are presently reading this means that you have had
  * knowledge of the CeCILL license (http://www.cecill.info) and that you
+ * PUT LGPL HERE
  * accept its terms.
  */
 /*

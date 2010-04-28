@@ -2,7 +2,7 @@ Name: @PACKAGE@
 Version: @VERSION@ 
 Release: 1%{?dist}
 Summary: NFS Server running in user space with large cache 
-License: CeCILL-C
+License: LGPL
 Group: Applications/System
 %if %{?_with_postgresql:1}%{!?_with_postgresql:0}
 BuildRequires:  postgresql-devel >= 7.1
@@ -191,7 +191,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files common
 %defattr(-,root,root,-)
-%doc Licence_CeCILL-English.txt  Licence_CeCILL-French.txt Docs/nfs-ganesha-userguide.pdf Docs/nfs-ganesha-adminguide.pdf Docs/nfs-ganeshell-userguide.pdf Docs/nfs-ganesha-ganestat.pdf Docs/using_ganeshell.pdf Docs/nfs-ganesha-convert_fh.pdf Docs/using_*_fsal.pdf
+%doc Docs/nfs-ganesha-userguide.pdf Docs/nfs-ganesha-adminguide.pdf Docs/nfs-ganeshell-userguide.pdf Docs/nfs-ganesha-ganestat.pdf Docs/using_ganeshell.pdf Docs/nfs-ganesha-convert_fh.pdf Docs/using_*_fsal.pdf
 %doc Docs/ganesha_snmp_adm.pdf
 %dir %{_sysconfdir}/ganesha/
 %dir %{_datadir}/%{name}

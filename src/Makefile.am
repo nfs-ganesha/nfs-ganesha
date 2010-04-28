@@ -120,8 +120,6 @@ endif
 
 EXTRA_DIST=nfs-ganesha.spec           \
            COMPILING_HOWTO.txt        \
-           Licence_CeCILL-French.txt  \
-           Licence_CeCILL-English.txt \
            ganesha.vim                \
            ganesha_au.vim             \
            ChangeLog                  \

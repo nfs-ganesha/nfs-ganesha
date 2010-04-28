@@ -6,7 +6,7 @@ AC_INIT( [nfs-ganesha], [0.99.64], [philippe.deniel@cea.fr,thomas.leibovici@cea.
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AC_REVISION([Compiles:  i386/x86_64. FSAL:  POSIX/SNMP/PROXY/HPSS/FUSELIKE/LUSTRE(all prod) .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod), MFSL_ASYNC(beta) Early pNFS (alpha) ])
+AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/SNMP/PROXY/HPSS/FUSELIKE/LUSTRE(all prod) .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod), MFSL_ASYNC(beta) Early pNFS (alpha) ])
 
 # Init Automake
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
