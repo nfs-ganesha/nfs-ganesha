@@ -4,6 +4,17 @@
 
 <p>
 <ul>
+       <li>
+        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/nfs-ganesha/0.99.64">NFS-GANESHA v 0.99.64</a><br>
+        <ul>
+	<li>RPM Packaging : add chkconfig --add in %post</li>
+	<li>Export Access Type "MDONLY" was not managed when using NFSv4</li>
+	<li>Add safety check to cache_inode_remove/cache_inode_create and cache_inode_link to prevent from non allowed access</li>
+        <li>Statistics for NFSv4.0 and NFSv4.1 operations have been added</li>
+	<li>Bug Fix: default value for FSINFO3::dtpref was 0. Value 16384 is now used</li>	
+	<li>Early (unstable) implementation of pNFS provided. Will continue and be stabilized in later releases</li>
+        </ul>
+        </li>
 	<li>
         <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/nfs-ganesha/0.99.63">NFS-GANESHA v 0.99.63</a><br>
 	<ul>
