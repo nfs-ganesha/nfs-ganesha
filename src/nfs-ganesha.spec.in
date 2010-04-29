@@ -296,6 +296,7 @@ chkconfig --add nfs-ganesha.snmp
 - Add safety check to cache_inode_remove/cache_inode_create and cache_inode_link to prevent from non allowed access.
 - Statistics for NFSv4.0 and NFSv4.1 operations have been added
 - Bug Fix: default value for FSINFO3::dtpref was 0. Value 16384 is now used.
+- Bug Fix: OPEN4 returns NFS4ERR_ROFS when used from the pseudofs
 - Early (unstable) implementation of pNFS provided. Will continue and be stabilized in later releases.
 - Project is now released under the terms of the LGPLv3
 
