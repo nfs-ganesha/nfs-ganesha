@@ -331,7 +331,7 @@
 	- Option "-nce" added to 'make indent'
 	- Bug fix : It was impossible to mount an exported entry's sub directory
 
-0.99.64 -
+0.99.64 - Thu 29 Apr 2010
 	- pNFS implementation for LAYOUT4_FILE starts with this version
         - Function to initiates connection/NFsv4.1 sessions with the DS are done
         - RPM Packaging : add chkconfig --add in %post

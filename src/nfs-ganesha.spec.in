@@ -290,6 +290,14 @@ chkconfig --add nfs-ganesha.snmp
 
 
 %changelog
+* Thu Apr 29  2010 Philippe Deniel <philippe.deniel@cea.fr> 0.99.64-1
+- RPM Packaging : add chkconfig --add in %post
+- Export Access Type "MDONLY" was not managed when using NFSv4
+- Add safety check to cache_inode_remove/cache_inode_create and cache_inode_link to prevent from non allowed access.
+- Statistics for NFSv4.0 and NFSv4.1 operations have been added
+- Bug Fix: default value for FSINFO3::dtpref was 0. Value 16384 is now used.
+- Early (unstable) implementation of pNFS provided. Will continue and be stabilized in later releases.
+
 * Thu Mar 25  2010 Philippe Deniel <philippe.deniel@cea.fr> 0.99.63-1
 - A big patch provided by Aneesh Kumar (aneesh.kumar@linux.vnet.ibm.com) implements the NLMv4 protocol
 - A "indent" target has been add to the src/Makefile.am . 
