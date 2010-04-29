@@ -17,10 +17,10 @@
 <meta name="Author" 	CONTENT="Thomas LEIBOVICI, Philippe DENIEL">
 <meta name="Expires" 	CONTENT="never">
 <meta name="Generator" 	CONTENT="vim">
-<meta name="Copyright" 	CONTENT="CeCILL license, CEA/DAM 2008">
+<meta name="Copyright" 	CONTENT="CEA/DAM 2008">
 
 <meta name="Subject" 	CONTENT="NFS-GANESHA, an NFS server running in user-space">
-<meta name="Keywords" 	CONTENT="NFS, Network File System, GANESHA, CeCILL, CEA, POSIX, SNMP, Proxy, FUSE, NFSv4">
+<meta name="Keywords" 	CONTENT="NFS, Network File System, GANESHA, LGPL, CEA, POSIX, SNMP, Proxy, FUSE, NFSv4">
 
 
 <title>NFS-GANESHA: Project Web Site</title>
@@ -140,9 +140,9 @@
                   <tr> <td><a href="https://lists.sourceforge.net/lists/listinfo/nfs-ganesha-announce" target="_blank" class="quicklinks">NFS-GANESHA's announcement mailing-list</a></td> </tr>
                   <tr> <td><a href="https://lists.sourceforge.net/lists/listinfo/nfs-ganesha-devel" target="_blank" class="quicklinks">NFS-GANESHA's development mailing-list</a></td> </tr>
                   <tr> <td><a href="https://lists.sourceforge.net/lists/listinfo/nfs-ganesha-support" target="_blank" class="quicklinks">NFS-GANESHA's support mailing-list</a></td> </tr>
-                  <tr> <td><a href="http://www.cecill.info/index.en.html" target="_blank" class="quicklinks">CeCILL license</a></td> </tr>
                   <tr> <td><a href="http://www.cea.fr" target="_blank" class="quicklinks">CEA web site</a></td> </tr>
 		  <tr> <td><a href="http://www.usenix.org/fast10/going">  <img src="http://www.usenix.org/events/fast10/art/fast10_going.jpg" border="0" width="169" height="77" alt="I'm going to FAST '10">  </a> </td></tr>
+		  <tr> <td><a href="http://www.gnu.org/licenses/lgpl.html">  <img src="http://www.gnu.org/graphics/lgplv3-147x51.png" border="0" width="169" height="77" alt="LGPLv3 Logo">  </a> </td></tr>
                 </table></td>
               </tr>
             </table></td>
@@ -171,7 +171,7 @@
   </tr>
   <tr>
     <td align="center">
-    <p id="links"><a href="http://www.cea.fr/" class="quicklinks">CEA</a> | <a href="http://www-ccrt.cea.fr/" class="quicklinks">CCRT</a> | <a href="http://www.cecill.info/index.en.html" class="quicklinks">Terms of Use</a></p>
+    <p id="links"><a href="http://www.cea.fr/" class="quicklinks">CEA</a> | <a href="http://www-ccrt.cea.fr/" class="quicklinks">CCRT</a> </p>
 
 </td>
   </tr>

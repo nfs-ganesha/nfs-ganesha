@@ -200,6 +200,7 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
   fsal_size_t save_filesize;
   fsal_size_t save_spaceused;
   fsal_time_t save_mtime;
+  int pnfs_status ;
 
   if((pentry_dir == NULL) || (pname == NULL) || (pentry_file == NULL) ||
      (pclient == NULL) || (pcontext == NULL) || (pstatus == NULL))
@@ -317,6 +318,39 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
 #endif
 
     }
+
+#ifdef _USE_PNFS
+    if((pnfs_status = pnfs_lookup_ds_file( &pclient->pnfsclient,
+                                           pentry_file->object.file.attributes.fileid,
+                                           &pentry_file->object.file.pnfs_file.ds_file)) != NFS4_OK )
+          {
+            DisplayLogLevel(NIV_DEBUG, "OPEN PNFS LOOKUP DS FILE : Error %u",
+                            pnfs_status);
+
+            if( pnfs_status == NFS4ERR_NOENT )
+             {
+                   if((pnfs_status = pnfs_create_ds_file(&pclient->pnfsclient,
+                                                         pentry_file->object.file.attributes.fileid,
+                                                         &pentry_file->object.file.pnfs_file.ds_file)) !=
+                                                           NFS4_OK)
+          		{
+
+		            DisplayLogLevel(NIV_DEBUG, "OPEN PNFS CREATE DS FILE : Error %u",
+                		            pnfs_status);
+
+		            *pstatus = CACHE_INODE_IO_ERROR;
+            		    return *pstatus;
+          		}
+             }
+            else
+             {
+                *pstatus = CACHE_INODE_IO_ERROR;
+                return *pstatus;
+              }
+          }
+#endif
+
+
 
   /* regular exit */
   pentry_file->object.file.open_fd.last_op = time(NULL);
