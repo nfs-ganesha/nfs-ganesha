@@ -163,6 +163,13 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_OPEN4.status;
     }
 
+  /* This can't be done on the pseudofs */
+  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+    {
+         res_OPEN4.status = NFS4ERR_ROFS;
+         return res_OPEN4.status;
+    }
+
   /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_open_xattr(op, data, resp);
