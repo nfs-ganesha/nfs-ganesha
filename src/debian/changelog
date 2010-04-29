@@ -5,6 +5,7 @@ nfs-ganesha (0.99.64-1) stable; urgency=low
   * Statistics for NFSv4.0 and NFSv4.1 operations have been added
   * Bug Fix: default value for FSINFO3::dtpref was 0. Value 16384 is now used.
   * Early (unstable) implementation of pNFS provided. Will continue and be stabilized in later releases.
+  * Project is now released under the terms of the LGPLv3
 
  -- Philippe Deniel <philippe.deniel@cea.fr>  Thu, 29 Apr 2010 13:14:00 -0600
 
