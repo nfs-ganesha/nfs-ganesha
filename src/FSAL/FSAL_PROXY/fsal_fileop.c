@@ -135,7 +135,7 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
 
   /* Create the owner */
   snprintf(owner_val, FSAL_PROXY_OWNER_LEN, "GANESHA/PROXY: pid=%u ctx=%p file=%llu",
-           getpid(), p_context, p_context->file_counter);
+           getpid(), p_context, (unsigned long long int)p_context->file_counter);
   owner_len = strnlen(owner_val, FSAL_PROXY_OWNER_LEN);
   p_context->file_counter += 1;
 
@@ -1030,7 +1030,7 @@ fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
 
   /* Create the owner */
   snprintf(owner_val, FSAL_PROXY_OWNER_LEN, "GANESHA/PROXY: pid=%u ctx=%p file=%llu",
-           getpid(), p_context, p_context->file_counter);
+           getpid(), p_context, (unsigned long long int)p_context->file_counter);
   owner_len = strnlen(owner_val, FSAL_PROXY_OWNER_LEN);
   p_context->file_counter += 1;
 

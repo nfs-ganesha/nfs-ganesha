@@ -142,7 +142,7 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
         }
 
       pentry->object.file.open_fd.fileno =
-          (int)FSAL_FILENO(&(pentry->object.file.open_fd.fd));
+          FSAL_FILENO(&(pentry->object.file.open_fd.fd));
       pentry->object.file.open_fd.openflags = openflags;
 
 #ifdef _DEBUG_CACHE_INODE

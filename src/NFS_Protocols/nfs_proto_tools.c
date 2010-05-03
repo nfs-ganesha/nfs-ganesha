@@ -1422,13 +1422,24 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           op_attr_success = 0;  /* should never be used here outside FSAL_PROXY */
 #else
           time_access_set.set_it = htonl(SET_TO_CLIENT_TIME4);
-          time_access_set.settime4_u.time.seconds =
-              nfs_htonl64((int64_t) pattr->atime.seconds);
-          time_access_set.settime4_u.time.nseconds = htonl(pattr->atime.nseconds);
+          memcpy( (char *)(attrvalsBuffer + LastOffset),
+                  & time_access_set.set_it,
+                  sizeof( time_how4 ) ) ;
+          LastOffset +=  sizeof(time_how4);
 
-          memcpy((char *)(attrvalsBuffer + LastOffset), &time_access_set,
-                 fattr4tab[attribute_to_set].size_fattr4);
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          time_access_set.settime4_u.time.seconds =
+              nfs_htonl64((int64_t) pattr->mtime.seconds);
+          memcpy( (char *)(attrvalsBuffer + LastOffset),
+		  &time_access_set.settime4_u.time.seconds,
+		  sizeof( int64_t ) ) ;
+          LastOffset +=  sizeof(int64_t);
+
+          time_access_set.settime4_u.time.nseconds = htonl(pattr->mtime.nseconds);
+          memcpy( (char *)(attrvalsBuffer + LastOffset),
+		  &time_access_set.settime4_u.time.nseconds,
+		  sizeof( uint32_t ) ) ;
+	  LastOffset += sizeof(uint32_t) ;
+
           op_attr_success = 1;
 #endif
           break;
@@ -1491,13 +1502,24 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           op_attr_success = 0;  /* should never be used here outside FSAL_PROXY */
 #else
           time_modify_set.set_it = htonl(SET_TO_CLIENT_TIME4);
+          memcpy( (char *)(attrvalsBuffer + LastOffset),
+                  &time_modify_set.set_it,
+                  sizeof( time_how4 ) ) ;
+          LastOffset +=  sizeof(time_how4);
+
           time_modify_set.settime4_u.time.seconds =
               nfs_htonl64((int64_t) pattr->mtime.seconds);
-          time_modify_set.settime4_u.time.nseconds = htonl(pattr->mtime.nseconds);
+          memcpy( (char *)(attrvalsBuffer + LastOffset),
+		  &time_modify_set.settime4_u.time.seconds,
+		  sizeof( int64_t ) ) ;
+          LastOffset +=  sizeof(int64_t);
 
-          memcpy((char *)(attrvalsBuffer + LastOffset), &time_modify_set,
-                 fattr4tab[attribute_to_set].size_fattr4);
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          time_modify_set.settime4_u.time.nseconds = htonl(pattr->mtime.nseconds);
+          memcpy( (char *)(attrvalsBuffer + LastOffset),
+		  &time_modify_set.settime4_u.time.nseconds,
+		  sizeof( uint32_t ) ) ;
+	  LastOffset += sizeof(uint32_t) ;
+
           op_attr_success = 1;
 #endif
           break;
