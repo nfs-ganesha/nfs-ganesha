@@ -179,7 +179,7 @@ typedef struct fsal_file__
   fsal_op_context_t *pcontext;
 } fsal_file_t;
 
-# define FSAL_FILENO(_pf) ((int)(_pf))
+# define FSAL_FILENO(_pf) ((_pf))
 
 typedef nfs_cookie4 fsal_cookie_t;
 

@@ -134,7 +134,7 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
 
   /* Create the owner */
   snprintf(owner_val, FSAL_PROXY_OWNER_LEN, "GANESHA/PROXY: pid=%u ctx=%p file=%llu",
-           getpid(), p_context, p_context->file_counter);
+           getpid(), p_context, (unsigned long long int)p_context->file_counter);
   owner_len = strnlen(owner_val, FSAL_PROXY_OWNER_LEN);
   p_context->file_counter += 1;
 

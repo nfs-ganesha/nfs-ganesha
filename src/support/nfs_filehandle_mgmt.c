@@ -160,11 +160,6 @@ int nfs4_FhandleToFSAL(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
   /* Cast the fh as a non opaque structure */
   pfile_handle = (file_handle_v4_t *) (pfh4->nfs_fh4_val);
 
-  /* Check the cksum */
-  memcpy((char *)&checksum, &(pfile_handle->checksum), sizeof(checksum));
-  if(checksum != nfs4_FhandleCheckSum(pfile_handle))
-    return 0;                   /* Corrupted FH */
-
   /* The filehandle should not be related to pseudo fs */
   if(pfile_handle->pseudofs_id != 0 || pfile_handle->pseudofs_flag != FALSE)
     return 0;                   /* Bad FH */
@@ -290,7 +285,6 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
 {
   fsal_status_t fsal_status;
   file_handle_v4_t file_handle;
-  unsigned long long cksum;
 
   /* zero-ification of the buffer to be used as handle */
   memset(pfh4->nfs_fh4_val, 0, sizeof(file_handle_v4_t));
@@ -305,14 +299,10 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
   /* keep track of the export id */
   file_handle.exportid = data->pexport->id;
 
-  /* A very basic checksum */
-  memset((char *)&file_handle.checksum, 0, 16); /* NFS checksum is 16 bytes long */
-  cksum = nfs4_FhandleCheckSum(&file_handle);
-  memcpy((char *)&file_handle.checksum, &cksum, sizeof(cksum));
-
   /* No Pseudo fs here */
   file_handle.pseudofs_id = 0;
   file_handle.pseudofs_flag = FALSE;
+  file_handle.ds_flag = 0 ;
   file_handle.refid = 0;
 
   /* if FH expires, set it there */
