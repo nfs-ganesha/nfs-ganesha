@@ -1,0 +1,57 @@
+diff --git a/src/include/nfs_stat.h b/src/include/nfs_stat.h
+index 38f10b8..aef5b7e 100644
+--- a/src/include/nfs_stat.h
++++ b/src/include/nfs_stat.h
+@@ -142,6 +142,9 @@ static char * mnt_function_names[]={
+ typedef enum nfs_stat_type__ { GANESHA_STAT_SUCCESS       = 0 ,
+                                GANESHA_STAT_DROP          = 1 } nfs_stat_type_t ;
+ 
++/* we support only upto NLMPROC4_UNLOCK */
++#define NLM_V4_NB_OPERATION 5
++
+ typedef struct nfs_request_stat_item__
+ {
+   unsigned int total ;
+@@ -157,12 +160,14 @@ typedef struct nfs_request_stat__
+   unsigned int nb_nfs2_req ;
+   unsigned int nb_nfs3_req ;
+   unsigned int nb_nfs4_req ;
++  unsigned int nb_nlm4_req ;
+   nfs_request_stat_item_t stat_req_mnt1[MNT_V1_NB_COMMAND] ;
+   nfs_request_stat_item_t stat_req_mnt3[MNT_V3_NB_COMMAND] ;
+   nfs_request_stat_item_t stat_req_nfs2[NFS_V2_NB_COMMAND] ;
+   nfs_request_stat_item_t stat_req_nfs3[NFS_V3_NB_COMMAND] ;
+   nfs_request_stat_item_t stat_req_nfs4[NFS_V4_NB_COMMAND] ;
+   nfs_request_stat_item_t stat_op_nfs4[NFS_V4_NB_OPERATION] ;
++  nfs_request_stat_item_t stat_req_nlm4[NLM_V4_NB_OPERATION];
+ } nfs_request_stat_t ;
+ 
+ 
+diff --git a/src/support/nfs_stat_mgmt.c b/src/support/nfs_stat_mgmt.c
+index 0b44cb4..17182de 100644
+--- a/src/support/nfs_stat_mgmt.c
++++ b/src/support/nfs_stat_mgmt.c
+@@ -210,6 +210,22 @@ void nfs_stat_update( nfs_stat_type_t        type,
+           break ;
+         }
+     }
++  else if( preq->rq_prog == nfs_param.core_param.nlm_program )
++    {
++      switch( preq->rq_vers )
++        {
++        case NLM4_VERS:
++          pitem = &pstat_req->stat_req_nlm4[preq->rq_proc] ;
++          pstat_req->nb_nlm4_req += 1 ;
++          break ;
++        default:
++          /* Bad vers ? */
++          DisplayLog( "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %s", __FILE__, __LINE__ ) ;
++          return ;
++          break ;
++        }
++    }
++
+   else
+     {
+       /* Bad program ? */
+

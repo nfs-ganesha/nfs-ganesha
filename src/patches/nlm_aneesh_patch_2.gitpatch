@@ -1,0 +1,247 @@
+diff --git a/src/MainNFSD/nfs_worker_thread.c b/src/MainNFSD/nfs_worker_thread.c
+index 1e01e95..b33a03b 100644
+--- a/src/MainNFSD/nfs_worker_thread.c
++++ b/src/MainNFSD/nfs_worker_thread.c
+@@ -119,6 +119,7 @@
+ #include "nfs23.h"
+ #include "nfs4.h"
+ #include "mount.h"
++#include "nlm4.h"
+ #include "nfs_core.h"
+ #include "cache_inode.h"
+ #include "cache_content.h"
+@@ -241,6 +242,16 @@ const nfs_function_desc_t mnt3_func_desc[] =
+   {mnt_Export , mnt_Export_Free,  (xdrproc_t)xdr_void,     (xdrproc_t)xdr_exports,   "mnt_Export",  NOTHING_SPECIAL }
+ };
+ 
++const nfs_function_desc_t nlm4_func_desc[] =
++{
++  {
++   nlm_Null, nlm_Null_Free,
++   (xdrproc_t)xdr_void, (xdrproc_t)xdr_void,
++   "nlm_Null",  NOTHING_SPECIAL
++  },
++};
++
++
+ /**
+  * nfs_rpc_execute: main rpc dispatcher routine
+  *
+@@ -366,6 +377,31 @@ static void nfs_rpc_execute( nfs_request_data_t * preqnfs,
+           
+         } /* switch( ptr_req->vers ) */
+     }
++  else if( ptr_req->rq_prog == nfs_param.core_param.nlm_program )
++    {
++
++      switch( ptr_req->rq_vers )
++        {
++        case NLM4_VERS:
++	  if( ptr_req->rq_proc > NLMPROC4_NULL ) {
++	        DisplayLog( "NFS DISPATCHER: NLM proc number %d unknown", ptr_req->rq_proc) ;
++		printf("Unhandled NLM request: Program %d, Version %d, Function %d\n",
++                   ptr_req->rq_prog, ptr_req->rq_vers, ptr_req->rq_proc ) ;
++
++		svcerr_decode( ptr_svc ) ;
++		return ;
++	 }
++	 funcdesc = nlm4_func_desc[ptr_req->rq_proc] ;
++	 break ;
++
++        default:
++          /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
++          DisplayLog( "NFS DISPATCHER: NLM Protocol version %d unknown", ptr_req->rq_vers ) ;
++          svcerr_decode( ptr_svc ) ;
++          return ;
++          break ;
++        } /* switch( ptr_req->vers ) */
++    }
+   else
+     {
+       /* We should never go there (this situation is filtered in nfs_rpc_getreq) */ 
+@@ -550,6 +586,11 @@ static void nfs_rpc_execute( nfs_request_data_t * preqnfs,
+       /* Always use the whole export list for mount protocol */
+       pexport = nfs_param.pexportlist ;
+     } /* switch( ptr_req->rq_prog ) */
++  else if( ptr_req->rq_prog == nfs_param.core_param.nlm_program )
++    {
++      /* Always use the whole export list for NLM protocol (FIXME !! Verify) */
++      pexport = nfs_param.pexportlist ;
++    }
+ 
+   /* Do not call a MAKES_WRITE function on a read-only export entry */
+   if( ( funcdesc.dispatch_behaviour & MAKES_WRITE ) 
+diff --git a/src/NFS_Protocols/Makefile.am b/src/NFS_Protocols/Makefile.am
+index e5cbd76..f3c8bcd 100644
+--- a/src/NFS_Protocols/Makefile.am
++++ b/src/NFS_Protocols/Makefile.am
+@@ -6,7 +6,8 @@ noinst_LTLIBRARIES            = libnfsproto.la
+ 
+ check_PROGRAMS                = test_mnt_proto
+ 
+-libnfsproto_la_SOURCES = mnt_Null.c                       \
++libnfsproto_la_SOURCES = nlm_Null.c			 \
++			 mnt_Null.c                       \
+                          mnt_Export.c                     \
+                          mnt_Mnt.c                        \
+                          mnt_Dump.c                       \
+diff --git a/src/NFS_Protocols/nlm_Null.c b/src/NFS_Protocols/nlm_Null.c
+new file mode 100644
+index 0000000..3dbf7f5
+--- /dev/null
++++ b/src/NFS_Protocols/nlm_Null.c
+@@ -0,0 +1,116 @@
++/*
++ * Copyright IBM Corporation, 2010
++ *  Contributor: Aneesh Kumar K.v  <aneesh.kumar@linux.vnet.ibm.com>
++ *
++ *
++ * This software is a server that implements the NFS protocol.
++ *
++ *
++ * This software is governed by the CeCILL  license under French law and
++ * abiding by the rules of distribution of free software.  You can  use,
++ * modify and/ or redistribute the software under the terms of the CeCILL
++ * license as circulated by CEA, CNRS and INRIA at the following URL
++ * "http://www.cecill.info".
++ *
++ * As a counterpart to the access to the source code and  rights to copy,
++ * modify and redistribute granted by the license, users are provided only
++ * with a limited warranty  and the software's author,  the holder of the
++ * economic rights,  and the successive licensors  have only  limited
++ * liability.
++ *
++ * In this respect, the user's attention is drawn to the risks associated
++ * with loading,  using,  modifying and/or developing or reproducing the
++ * software by the user in light of its specific status of free software,
++ * that may mean  that it is complicated to manipulate,  and  that  also
++ * therefore means  that it is reserved for developers  and  experienced
++ * professionals having in-depth computer knowledge. Users are therefore
++ * encouraged to load and test the software's suitability as regards their
++ * requirements in conditions enabling the security of their systems and/or
++ * data to be ensured and,  more generally, to use and operate it in the
++ * same conditions as regards security.
++ *
++ * The fact that you are presently reading this means that you have had
++ * knowledge of the CeCILL license and that you accept its terms.
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include "config.h"
++#endif
++
++#ifdef _SOLARIS
++#include "solaris_port.h"
++#endif
++
++#include <stdio.h>
++#include <string.h>
++#include <pthread.h>
++#include <fcntl.h>
++#include <sys/file.h>  /* for having FNDELAY */
++#include "HashData.h"
++#include "HashTable.h"
++#ifdef _USE_GSSRPC
++#include <gssrpc/types.h>
++#include <gssrpc/rpc.h>
++#include <gssrpc/auth.h>
++#include <gssrpc/pmap_clnt.h>
++#else
++#include <rpc/types.h>
++#include <rpc/rpc.h>
++#include <rpc/auth.h>
++#include <rpc/pmap_clnt.h>
++#endif
++#include "log_functions.h"
++#include "stuff_alloc.h"
++#include "nfs23.h"
++#include "nfs4.h"
++#include "nfs_core.h"
++#include "cache_inode.h"
++#include "cache_content.h"
++#include "nfs_exports.h"
++#include "nfs_creds.h"
++#include "nfs_tools.h"
++#include "mount.h"
++#include "nfs_proto_functions.h"
++
++/**
++ * nlm_Null: The Mount proc null function, for all versions.
++ *
++ * The MOUNT proc null function, for all versions.
++ *
++ *  @param parg        [IN]    ignored
++ *  @param pexportlist [IN]    ignored
++ *  @param pcontextp   [IN]    ignored
++ *  @param pclient     [INOUT] ignored
++ *  @param ht          [INOUT] ignored
++ *  @param preq        [IN]    ignored
++ *  @param pres        [OUT]   ignored
++ *
++ */
++
++int nlm_Null( nfs_arg_t            * parg    /* IN     */,
++              exportlist_t         * pexport /* IN     */,
++              fsal_op_context_t    * pcontext   /* IN     */,
++              cache_inode_client_t * pclient /* INOUT  */,
++              hash_table_t         * ht      /* INOUT  */,
++              struct svc_req       * preq    /* IN     */,
++              nfs_res_t            * pres    /* OUT    */ )
++{
++	DisplayLogJdLevel( pclient->log_outputs, NIV_FULL_DEBUG,
++			"REQUEST PROCESSING: Calling nlm_Null" ) ;
++	/* 0 is success */
++	return 0;
++}
++
++/**
++ * nlm_Null_Free: Frees the result structure allocated for nlm_Null
++ *
++ * Frees the result structure allocated for nlm_Null. Does Nothing in fact.
++ *
++ * @param pres        [INOUT]   Pointer to the result structure.
++ *
++ */
++void nlm_Null_Free( nfs_res_t * pres )
++{
++  return ;
++}
+diff --git a/src/include/nfs_proto_functions.h b/src/include/nfs_proto_functions.h
+index 2b5feed..4f68b3c 100644
+--- a/src/include/nfs_proto_functions.h
++++ b/src/include/nfs_proto_functions.h
+@@ -296,6 +296,23 @@ int mnt_Export(  nfs_arg_t            * parg    /* IN  */,
+  * -- End of MNT protocol functions. --
+  */
+ 
++/**
++ * @defgroup NLMprocs    NLM protocol functions.
++ *
++ * @{
++ */
++
++int nlm_Null(  nfs_arg_t            * parg    /* IN  */,
++               exportlist_t         * pexport /* IN  */,
++               fsal_op_context_t          * pcontext   /* IN  */,
++               cache_inode_client_t * pclient /* IN  */,
++               hash_table_t         * ht      /* INOUT */,
++               struct svc_req       * preq    /* IN  */,
++               nfs_res_t            * pres    /* OUT */ ) ;
++
++/* @}
++ * -- End of NLM protocol functions. --
++ */
+ 
+ /**
+  * @defgroup NFSprocs    NFS protocols functions.
+@@ -917,6 +934,8 @@ void mnt_Null_Free( nfs_res_t * pres ) ;
+ void mnt_Umnt_Free( nfs_res_t * pres ) ;
+ void mnt_UmntAll_Free( nfs_res_t * pres ) ;
+ 
++void nlm_Null_Free( nfs_res_t * pres ) ;
++
+ void nfs_Null_Free( nfs_res_t * resp ) ;
+ void nfs_Getattr_Free( nfs_res_t * resp ) ;
+ void nfs_Setattr_Free( nfs_res_t * resp ) ;
+

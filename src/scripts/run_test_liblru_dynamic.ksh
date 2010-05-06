@@ -1,5 +1,4 @@
 #!/bin/ksh 
 
-OS=`archi -M`
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../../lib/$OS
-../../bin/$OS/test_liblru_dynamic
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../../lib/
+../../bin/test_liblru_dynamic

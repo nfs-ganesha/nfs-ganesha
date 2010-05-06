@@ -1,0 +1,13 @@
+--- ConfigParsing/analyse.c.old	2009-03-23 13:26:14.000000000 +0100
++++ ConfigParsing/analyse.c	2009-03-23 13:26:34.000000000 +0100
+@@ -105,7 +105,10 @@ generic_item * config_CreateBlock(char *
+     strncpy( new->item.block.block_name, blockname, MAXSTRLEN );
+             
+     if ( list )
++    {
+         new->item.block.block_content = *list;
++	free(list);
++    }
+     else
+         new->item.block.block_content = NULL;
+     
