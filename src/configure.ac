@@ -189,6 +189,15 @@ fi
 AM_CONDITIONAL(USE_NLM, test "$enable_nlm" = "yes")
 
 
+# QUOTA
+GA_ENABLE_AM_CONDITION([quota],[enable quota support],[USE_QUOTA])
+
+if test "$enable_quota" == "yes"; then
+        AC_DEFINE(_USE_QUOTA,1,[enable quota support])
+fi
+AM_CONDITIONAL(USE_QUOTA, test "$enable_quota" = "yes")
+
+
 # PNFS (requires NFSv4.1)
 GA_ENABLE_AM_CONDITION([pnfs],[enable pNFS support (NFSv4.1 support is mandatory)],[USE_PNFS])
 
