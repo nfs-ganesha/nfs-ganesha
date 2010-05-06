@@ -3,7 +3,29 @@
  * It was generated using rpcgen.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef _SOLARIS
+#include "solaris_port.h"
+#endif
+
+#ifdef _USE_GSSRPC
+#include <gssrpc/types.h>
+#include <gssrpc/rpc.h>
+#else
+#include <rpc/types.h>
+#include <rpc/rpc.h>
+#endif
+
 #include "nlm4.h"
+
+#ifdef _USE_GSSRPC
+/* These prototypes are missing in gssrpc/xdr.h */
+bool_t xdr_longlong_t(XDR * __xdrs, quad_t * __llp);
+bool_t xdr_u_longlong_t(XDR * __xdrs, u_quad_t * __ullp);
+#endif
 
 bool_t xdr_nlm4_stats(XDR * xdrs, nlm4_stats * objp)
 {
