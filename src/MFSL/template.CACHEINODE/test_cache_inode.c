@@ -178,8 +178,8 @@ main(int argc, char *argv[])
 #if defined( _USE_GHOSTFS )
   if(FSAL_IS_ERROR(status = FSAL_str2path(configfile,
                                           strlen(configfile) + 1,
-                                          &(init_param.
-                                            fs_specific_info.definition_file))))
+                                          &(init_param.fs_specific_info.
+                                            definition_file))))
     {
       DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
     }

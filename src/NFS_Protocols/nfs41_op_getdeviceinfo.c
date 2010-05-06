@@ -122,10 +122,10 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
       LAYOUT4_NFSV4_1_FILES;
 
   pnfs_encode_getdeviceinfo(buff, &lenbuff);
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.
-      da_addr_body.da_addr_body_len = lenbuff;
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.
-      da_addr_body.da_addr_body_val = buff;
+  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
+      da_addr_body_len = lenbuff;
+  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
+      da_addr_body_val = buff;
 
   res_GETDEVICEINFO4.gdir_status = NFS4_OK;
 
@@ -146,10 +146,10 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
 void nfs41_op_getdeviceinfo_Free(GETDEVICEINFO4res * resp)
 {
   if(resp->gdir_status == NFS4_OK)
-    if(resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.
-       da_addr_body.da_addr_body_val != NULL)
-      Mem_Free(resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.
-               da_addr_body.da_addr_body_val);
+    if(resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
+       da_addr_body_val != NULL)
+      Mem_Free(resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
+               da_addr_body_val);
 
   return;
 }                               /* nfs41_op_exchange_id_Free */

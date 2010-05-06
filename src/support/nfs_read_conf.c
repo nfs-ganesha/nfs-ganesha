@@ -803,8 +803,8 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
                         0x00FF0000) >> 16,
                        ((unsigned int)ntohl(pparam->layoutfile.ds_param[0].ipaddr) &
                         0x0000FF00) >> 8,
-                       (unsigned int)ntohl(pparam->layoutfile.
-                                           ds_param[0].ipaddr) & 0x000000FF);
+                       (unsigned int)ntohl(pparam->layoutfile.ds_param[0].
+                                           ipaddr) & 0x000000FF);
             }
         }
       else if(!strcasecmp(key_name, "DS_Ip_Port"))

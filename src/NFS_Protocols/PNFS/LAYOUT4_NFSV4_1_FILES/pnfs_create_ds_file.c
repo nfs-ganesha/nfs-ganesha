@@ -94,14 +94,14 @@ int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
   buffmode = htonl(0644);
   inattr.attr_vals.attrlist4_val = (char *)&buffmode;
 
-  resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
-      GETFH4res_u.resok4.object.nfs_fh4_val =
+  resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_GETFH].nfs_resop4_u.
+      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val =
       (char *)Mem_Alloc(PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN);
 
-  resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_OPEN].nfs_resop4_u.
-      opopen.OPEN4res_u.resok4.attrset.bitmap4_val = bitmap_res;
-  resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_OPEN].nfs_resop4_u.
-      opopen.OPEN4res_u.resok4.attrset.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_OPEN].nfs_resop4_u.opopen.
+      OPEN4res_u.resok4.attrset.bitmap4_val = bitmap_res;
+  resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_OPEN].nfs_resop4_u.opopen.
+      OPEN4res_u.resok4.attrset.bitmap4_len = 2;
 
   if(str2utf8(filename, &name) == -1)
     return NFS4ERR_SERVERFAULT;
@@ -120,17 +120,18 @@ int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
 
   /* Get information from reply */
   pfile->stateid.seqid =
-      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_OPEN].nfs_resop4_u.
-      opopen.OPEN4res_u.resok4.stateid.seqid;
+      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_OPEN].
+      nfs_resop4_u.opopen.OPEN4res_u.resok4.stateid.seqid;
   memcpy((char *)pfile->stateid.other,
-         (char *)resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_OPEN].
-         nfs_resop4_u.opopen.OPEN4res_u.resok4.stateid.other, 12);
+         (char *)resnfs4.resarray.
+         resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_OPEN].nfs_resop4_u.opopen.OPEN4res_u.
+         resok4.stateid.other, 12);
   pfile->handle.nfs_fh4_len =
-      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_GETFH].nfs_resop4_u.
-      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len;
+      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_GETFH].
+      nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len;
   pfile->handle.nfs_fh4_val =
-      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_GETFH].nfs_resop4_u.
-      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val;
+      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_GETFH].
+      nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val;
   pfile->allocated = TRUE;
   pfile->deviceid = 1;
   pfile->is_ganesha = FALSE;

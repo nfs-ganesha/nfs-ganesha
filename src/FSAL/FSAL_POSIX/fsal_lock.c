@@ -84,23 +84,18 @@ fsal_status_t FSAL_lock(fsal_file_t * obj_handle,
    * a child and do a waiting lock
    */
   retval = fcntl(fd, F_SETLK, &ldesc->flock);
-  if(retval && ((errno == EACCES) || (errno == EAGAIN)))
+  if(retval)
     {
-      if(blocking)
+      if((errno == EACCES) || (errno == EAGAIN))
         {
-          /*
-           * Conflicting lock present create a child and
-           * do F_SETLKW if we can block. The lock is already
-           * added to the blocking list.
-           */
-          do_blocking_lock(obj_handle, ldesc);
-          /* We need to send NLM4_BLOCKED reply */
-          Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock);
+          if(blocking)
+            {
+              do_blocking_lock(obj_handle, ldesc);
+            }
         }
       Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock);
-
     }
-  /* granted lock. Now ask NSM to monitor the host */
+  /* granted lock */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lock);
 }
 

@@ -72,8 +72,8 @@ int pnfs_lookup_ds_file(pnfs_client_t * pnfsclient,
 
   snprintf(filename, MAXNAMLEN, "fileid=%llu", (unsigned long long)fileid);
 
-  resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
-      GETFH4res_u.resok4.object.nfs_fh4_val =
+  resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.
+      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val =
       (char *)Mem_Alloc(PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN);
 
   if(str2utf8(filename, &name) == -1)
@@ -101,11 +101,11 @@ int pnfs_lookup_ds_file(pnfs_client_t * pnfsclient,
   pfile->is_ganesha = FALSE;
 
   pfile->handle.nfs_fh4_len =
-      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.
-      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len;
+      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].
+      nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len;
   pfile->handle.nfs_fh4_val =
-      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.
-      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val;
+      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].
+      nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val;
 
   return resnfs4.status;
 }                               /* pnfs_lookup_ds_file */

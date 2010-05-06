@@ -119,6 +119,8 @@ typedef union nfs_arg__
   nlm4_lockargs arg_nlm4_lock;
   nlm4_cancargs arg_nlm4_cancel;
   nlm4_unlockargs arg_nlm4_unlock;
+  nlm4_sm_notifyargs arg_nlm4_sm_notify;
+  nlm4_res arg_nlm4_res;
 } nfs_arg_t;
 
 typedef union nfs_res__
@@ -295,6 +297,46 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
                 hash_table_t * ht /* INOUT  */ ,
                 struct svc_req *preq /* IN     */ ,
                 nfs_res_t * pres /* OUT    */ );
+
+int nlm4_Sm_Notify(nfs_arg_t * parg /* IN     */ ,
+                   exportlist_t * pexport /* IN     */ ,
+                   fsal_op_context_t * pcontext /* IN     */ ,
+                   cache_inode_client_t * pclient /* INOUT  */ ,
+                   hash_table_t * ht /* INOUT  */ ,
+                   struct svc_req *preq /* IN     */ ,
+                   nfs_res_t * pres /* OUT    */ );
+
+int nlm4_Test_Message(nfs_arg_t * parg /* IN     */ ,
+                      exportlist_t * pexport /* IN     */ ,
+                      fsal_op_context_t * pcontext /* IN     */ ,
+                      cache_inode_client_t * pclient /* INOUT  */ ,
+                      hash_table_t * ht /* INOUT  */ ,
+                      struct svc_req *preq /* IN     */ ,
+                      nfs_res_t * pres /* OUT    */ );
+
+int nlm4_Cancel_Message(nfs_arg_t * parg /* IN     */ ,
+                        exportlist_t * pexport /* IN     */ ,
+                        fsal_op_context_t * pcontext /* IN     */ ,
+                        cache_inode_client_t * pclient /* INOUT  */ ,
+                        hash_table_t * ht /* INOUT  */ ,
+                        struct svc_req *preq /* IN     */ ,
+                        nfs_res_t * pres /* OUT    */ );
+
+int nlm4_Lock_Message(nfs_arg_t * parg /* IN     */ ,
+                      exportlist_t * pexport /* IN     */ ,
+                      fsal_op_context_t * pcontext /* IN     */ ,
+                      cache_inode_client_t * pclient /* INOUT  */ ,
+                      hash_table_t * ht /* INOUT  */ ,
+                      struct svc_req *preq /* IN     */ ,
+                      nfs_res_t * pres /* OUT    */ );
+
+int nlm4_Unlock_Message(nfs_arg_t * parg /* IN     */ ,
+                        exportlist_t * pexport /* IN     */ ,
+                        fsal_op_context_t * pcontext /* IN     */ ,
+                        cache_inode_client_t * pclient /* INOUT  */ ,
+                        hash_table_t * ht /* INOUT  */ ,
+                        struct svc_req *preq /* IN     */ ,
+                        nfs_res_t * pres /* OUT    */ );
 
 /* @}
  * -- End of NLM protocol functions. --
@@ -1106,6 +1148,11 @@ void nlm4_Test_Free(nfs_res_t * pres);
 void nlm4_Lock_Free(nfs_res_t * pres);
 void nlm4_Cancel_Free(nfs_res_t * pres);
 void nlm4_Unlock_Free(nfs_res_t * pres);
+void nlm4_Sm_Notify_Free(nfs_res_t * pres);
+void nlm4_Test_Message_Free(nfs_res_t * pres);
+void nlm4_Cancel_Message_Free(nfs_res_t * pres);
+void nlm4_Lock_Message_Free(nfs_res_t * pres);
+void nlm4_Unlock_Message_Free(nfs_res_t * pres);
 
 void nfs_Null_Free(nfs_res_t * resp);
 void nfs_Getattr_Free(nfs_res_t * resp);
@@ -1335,8 +1382,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                            fattr4 * Fattr,
                            compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap);
 
-                                                                                                                                                                                                                                                                                                                                                                                       /* time_how4          * mtime_set, *//* Out: How to set mtime */
-                                                                                                                                                                                                                                                                                                                                                                                                                           /* time_how4          * atimen_set ) ; *//* Out: How to set atime */
+                                                                                                                                                                                                                                                                                                                                                                                                                            /* time_how4          * mtime_set, *//* Out: How to set mtime */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    /* time_how4          * atimen_set ) ; *//* Out: How to set atime */
 
 void nfs4_list_to_bitmap4(bitmap4 * b, uint_t * plen, uint32_t * pval);
 void nfs4_bitmap4_to_list(bitmap4 * b, uint_t * plen, uint32_t * pval);

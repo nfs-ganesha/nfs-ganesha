@@ -5,44 +5,6 @@
 
 #include "nlm4.h"
 
-#if 0
-bool_t xdr_int32_t(XDR * xdrs, int32_t * objp)
-{
-  register int32_t *buf;
-
-  if(!xdr_int(xdrs, objp))
-    return FALSE;
-  return TRUE;
-}
-
-bool_t xdr_uint32_t(XDR * xdrs, uint32_t * objp)
-{
-  register int32_t *buf;
-
-  if(!xdr_u_int(xdrs, objp))
-    return FALSE;
-  return TRUE;
-}
-
-bool_t xdr_int64_t(XDR * xdrs, int64_t * objp)
-{
-  register int32_t *buf;
-
-  if(!xdr_quad_t(xdrs, objp))
-    return FALSE;
-  return TRUE;
-}
-
-bool_t xdr_uint64_t(XDR * xdrs, uint64_t * objp)
-{
-  register int32_t *buf;
-
-  if(!xdr_u_quad_t(xdrs, objp))
-    return FALSE;
-  return TRUE;
-}
-#endif
-
 bool_t xdr_nlm4_stats(XDR * xdrs, nlm4_stats * objp)
 {
   register int32_t *buf;
@@ -263,6 +225,20 @@ bool_t xdr_nlm4_notify(XDR * xdrs, nlm4_notify * objp)
   if(!xdr_string(xdrs, &objp->name, LM_MAXNAMELEN))
     return FALSE;
   if(!xdr_int64_t(xdrs, &objp->state))
+    return FALSE;
+  return TRUE;
+}
+
+bool_t xdr_nlm4_sm_notifyargs(XDR * xdrs, nlm4_sm_notifyargs * objp)
+{
+  register int32_t *buf;
+
+  int i;
+  if(!xdr_string(xdrs, &objp->name, SM_MAXSTRLEN))
+    return FALSE;
+  if(!xdr_int32_t(xdrs, &objp->state))
+    return FALSE;
+  if(!xdr_opaque(xdrs, objp->priv, SM_PRIV_SZ))
     return FALSE;
   return TRUE;
 }

@@ -82,25 +82,23 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
               struct svc_req *preq /* IN     */ ,
               nfs_res_t * pres /* OUT    */ )
 {
-  fsal_file_t *fd;
-  fsal_status_t retval;
   nlm4_testargs *arg;
   cache_entry_t *pentry;
   fsal_attrib_list_t attr;
-  fsal_lockdesc_t *lock_desc;
+  nlm_lock_entry_t *nlm_entry;
   cache_inode_status_t cache_status;
   cache_inode_fsal_data_t fsal_data;
 
   DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
                     "REQUEST PROCESSING: Calling nlm_Test");
 
-  /* Convert file handle into a cache entry */
+  if(in_nlm_grace_period())
+    {
+      pres->res_nlm4test.test_stat.stat = NLM4_DENIED_GRACE_PERIOD;
+      return NFS_REQ_OK;
+    }
 
-  /* FIXME!!
-   * NFS helper functions are really confusing. So code
-   * it here.
-   */
-  /* FIXME!! right now we look at only nfs3 handles */
+  /* Convert file handle into a cache entry */
   arg = &parg->arg_nlm4_test;
   if(!nfs3_FhandleToFSAL((nfs_fh3 *) & (arg->alock.fh), &fsal_data.handle, pcontext))
     {
@@ -121,31 +119,19 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
       pres->res_nlm4test.test_stat.stat = NLM4_STALE_FH;
       return NFS_REQ_OK;
     }
-  fd = &pentry->object.file.open_fd.fd;
-  lock_desc = nlm_lock_to_fsal_lockdesc(&(arg->alock), arg->exclusive);
-  if(!lock_desc)
+  nlm_entry = nlm_overlapping_entry(&(arg->alock), arg->exclusive);
+  if(!nlm_entry)
     {
-      pres->res_nlm4test.test_stat.stat = NLM4_DENIED_NOLOCKS;
-      /* FIXME!!
-       * should we update the attribute values here now that
-       * now that we are able to find the inode
-       */
-      return NFS_REQ_OK;
-    }
-
-  retval = FSAL_getlock(fd, lock_desc);
-  if(!FSAL_IS_ERROR(retval))
-    {
-      lock_desc->flock.l_type = F_UNLCK;
-
-      /* we can place the lock */
       pres->res_nlm4test.test_stat.stat = NLM4_GRANTED;
-      Mem_Free(lock_desc);
-      return NFS_REQ_OK;
+    }
+  else
+    {
+      pres->res_nlm4test.test_stat.stat = NLM4_DENIED;
+      nlm_lock_entry_to_nlm_holder(nlm_entry,
+                                   &pres->res_nlm4test.test_stat.nlm4_testrply_u.holder);
+      nlm_lock_entry_dec_ref(nlm_entry);
     }
 
-  pres->res_nlm4test.test_stat.stat = NLM4_DENIED_NOLOCKS;
-  Mem_Free(lock_desc);
   return NFS_REQ_OK;
 }
 

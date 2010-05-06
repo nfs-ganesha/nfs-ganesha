@@ -58,6 +58,7 @@ struct myteststruct
 };
 
 struct glist_head mytestglist;
+struct glist_head mytestglist_new;
 
 static void print_glist(struct glist_head *head)
 {
@@ -77,7 +78,10 @@ int main(int argc, char *argv[])
   struct myteststruct node2;
   struct myteststruct node3;
   struct myteststruct node4;
+  struct myteststruct node1_new;
+  struct myteststruct node2_new;
   init_glist(&mytestglist);
+  init_glist(&mytestglist_new);
   node1.value = 10;
   node2.value = 11;
   node3.value = 12;
@@ -92,6 +96,18 @@ int main(int argc, char *argv[])
   print_glist(&mytestglist);
   printf("Delete test\n");
   glist_del(&node2.glist);
+  print_glist(&mytestglist);
+  node1_new.value = 15;
+  node2_new.value = 16;
+  glist_add(&mytestglist_new, &node1_new.glist);
+  glist_add(&mytestglist_new, &node2_new.glist);
+  printf("Add the below two list\n");
+  printf("list1\n");
+  print_glist(&mytestglist);
+  printf("list2\n");
+  print_glist(&mytestglist_new);
+  glist_add_list_tail(&mytestglist, &mytestglist_new);
+  printf("combined list\n");
   print_glist(&mytestglist);
   return 0;
 }

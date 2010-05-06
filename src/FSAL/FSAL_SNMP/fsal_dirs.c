@@ -256,8 +256,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
                   if(rc != ERR_FSAL_NO_ERROR)
                     {
-                      FSAL_CLEAR_MASK(pdirent[cur_nb_entries].
-                                      attributes.asked_attributes);
+                      FSAL_CLEAR_MASK(pdirent[cur_nb_entries].attributes.
+                                      asked_attributes);
                       FSAL_SET_MASK(pdirent[cur_nb_entries].attributes.asked_attributes,
                                     FSAL_ATTR_RDATTR_ERR);
                     }
@@ -369,8 +369,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
                   if(rc != ERR_FSAL_NO_ERROR)
                     {
-                      FSAL_CLEAR_MASK(pdirent[cur_nb_entries].
-                                      attributes.asked_attributes);
+                      FSAL_CLEAR_MASK(pdirent[cur_nb_entries].attributes.
+                                      asked_attributes);
                       FSAL_SET_MASK(pdirent[cur_nb_entries].attributes.asked_attributes,
                                     FSAL_ATTR_RDATTR_ERR);
                     }
@@ -437,10 +437,10 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 #ifdef _DEBUG_FSAL
               printf("FOUND A NEW SUBDIR = %s (%ld) (cookie->%ld)\n",
                      pdirent[cur_nb_entries].name.name,
-                     pdirent[cur_nb_entries].handle.oid_tab[dir_descriptor->
-                                                            node_handle.oid_len],
-                     pdirent[cur_nb_entries].cookie.
-                     oid_tab[pdirent[cur_nb_entries].cookie.oid_len - 1]);
+                     pdirent[cur_nb_entries].handle.oid_tab[dir_descriptor->node_handle.
+                                                            oid_len],
+                     pdirent[cur_nb_entries].cookie.oid_tab[pdirent[cur_nb_entries].
+                                                            cookie.oid_len - 1]);
 #endif
 
               /* set entry attributes  */
@@ -453,8 +453,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
                   if(rc != ERR_FSAL_NO_ERROR)
                     {
-                      FSAL_CLEAR_MASK(pdirent[cur_nb_entries].
-                                      attributes.asked_attributes);
+                      FSAL_CLEAR_MASK(pdirent[cur_nb_entries].attributes.
+                                      asked_attributes);
                       FSAL_SET_MASK(pdirent[cur_nb_entries].attributes.asked_attributes,
                                     FSAL_ATTR_RDATTR_ERR);
                     }

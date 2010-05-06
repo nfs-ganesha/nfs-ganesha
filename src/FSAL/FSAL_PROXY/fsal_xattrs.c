@@ -148,7 +148,8 @@ int get_clientid(fsal_handle_t * p_objecthandle,        /* IN */
   if(!p_objecthandle || !p_context || !p_output_size)
     return ERR_FSAL_FAULT;
 
-  snprintf((char *)buffer_addr, buffer_size, "%llX",(unsigned long long int) p_context->clientid);
+  snprintf((char *)buffer_addr, buffer_size, "%llX",
+           (unsigned long long int)p_context->clientid);
 
   *p_output_size = strlen((char *)buffer_addr) + 1;
 
