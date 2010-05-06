@@ -5,14 +5,21 @@ noinst_LTLIBRARIES            = libnfs_mnt_xdr.la
 
 libnfs_mnt_xdr_la_SOURCES = xdr_mount.c           \
                             xdr_nfs23.c           \
-                            xdr_rquota.c          \
                             ../include/nfs23.h    \
                             ../include/mount.h    \
                             ../include/nfs_core.h \
                             ../include/extended_types.h
 
+if USE_QUOTA
+libnfs_mnt_xdr_la_SOURCES += xdr_rquota.c \
+                             ../include/rquota.h
+endif
+
 if USE_NLM
-libnfs_mnt_xdr_la_SOURCES += xdr_nlm4.c xdr_nsm.c
+libnfs_mnt_xdr_la_SOURCES += xdr_nlm4.c        \
+                             xdr_nsm.c         \
+                             ../include/nlm4.h \
+                             ../include/nsm.h
 endif
 
 if USE_NFS4_1
