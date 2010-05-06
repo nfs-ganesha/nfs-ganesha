@@ -265,17 +265,21 @@ const nfs_function_desc_t nlm4_func_desc[] = {
                         nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t) xdr_void,
                         (xdrproc_t) xdr_void, "nlm4_Granted", NOTHING_SPECIAL},
   [NLMPROC4_TEST_MSG] = {
-                         nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t) xdr_void,
-                         (xdrproc_t) xdr_void, "nlm4_Test_msg", NOTHING_SPECIAL},
+                         nlm4_Test_Message, nlm4_Test_Message_Free,
+                         (xdrproc_t) xdr_nlm4_testargs,
+                         (xdrproc_t) xdr_void, "nlm4_Test_msg", NEEDS_CRED},
   [NLMPROC4_LOCK_MSG] = {
-                         nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t) xdr_void,
-                         (xdrproc_t) xdr_void, "nlm4_Lock_msg", NOTHING_SPECIAL},
+                         nlm4_Lock_Message, nlm4_Lock_Message_Free,
+                         (xdrproc_t) xdr_nlm4_lockargs,
+                         (xdrproc_t) xdr_void, "nlm4_Lock_msg", NEEDS_CRED},
   [NLMPROC4_CANCEL_MSG] = {
-                           nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t) xdr_void,
-                           (xdrproc_t) xdr_void, "nlm4_Cancel_msg", NOTHING_SPECIAL},
+                           nlm4_Cancel_Message, nlm4_Cancel_Message_Free,
+                           (xdrproc_t) xdr_nlm4_cancargs,
+                           (xdrproc_t) xdr_void, "nlm4_Cancel_msg", NEEDS_CRED},
   [NLMPROC4_UNLOCK_MSG] = {
-                           nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t) xdr_void,
-                           (xdrproc_t) xdr_void, "nlm4_Unlock_msg", NOTHING_SPECIAL},
+                           nlm4_Unlock_Message, nlm4_Unlock_Message_Free,
+                           (xdrproc_t) xdr_nlm4_unlockargs,
+                           (xdrproc_t) xdr_void, "nlm4_Unlock_msg", NEEDS_CRED},
   [NLMPROC4_GRANTED_MSG] = {
                             nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t) xdr_void,
                             (xdrproc_t) xdr_void, "nlm4_Granted_msg", NOTHING_SPECIAL},
@@ -294,11 +298,10 @@ const nfs_function_desc_t nlm4_func_desc[] = {
   [NLMPROC4_GRANTED_RES] = {
                             nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t) xdr_void,
                             (xdrproc_t) xdr_void, "nlm4_Granted_res", NOTHING_SPECIAL},
-/* gap fill */
-  [16] = {
-          nlm4_Unsupported, nlm4_Unsupported_Free,
-          (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
-          "nlm4_Granted_res", NOTHING_SPECIAL},
+  [NLMPROC4_SM_NOTIFY] = {
+                          nlm4_Sm_Notify, nlm4_Sm_Notify_Free,
+                          (xdrproc_t) xdr_nlm4_sm_notifyargs, (xdrproc_t) xdr_void,
+                          "nlm4_sm_notify", NOTHING_SPECIAL},
   [17] = {
           nlm4_Unsupported, nlm4_Unsupported_Free,
           (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
@@ -465,9 +468,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
           if(ptr_req->rq_proc > NLMPROC4_FREE_ALL)
             {
               DisplayLog("NFS DISPATCHER: NLM proc number %d unknown", ptr_req->rq_proc);
-              printf("Unhandled NLM request: Program %d, Version %d, Function %d\n",
-                     (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
-
               svcerr_decode(ptr_svc);
               return;
             }

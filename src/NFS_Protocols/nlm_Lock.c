@@ -61,17 +61,6 @@
 #include "nfs_proto_functions.h"
 #include "nlm_util.h"
 
-static int nlm_should_track(nlm_lock_t * nlmb)
-{
-  if(nlmb->state == NLM4_GRANTED)
-    return 1;
-  /*
-   * FIXME!! we should also track NLM4_BLOCKED locks
-   * when we do problem blocke lock support
-   */
-  return 0;
-}
-
 /**
  * nlm4_Lock: Set a range lock
  *
@@ -93,13 +82,10 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
               struct svc_req *preq /* IN     */ ,
               nfs_res_t * pres /* OUT    */ )
 {
-  fsal_file_t *fd;
-  fsal_status_t retval;
   nlm4_lockargs *arg;
   cache_entry_t *pentry;
   fsal_attrib_list_t attr;
-  fsal_lockdesc_t *lock_desc;
-  nlm_lock_t *nlmb = NULL;
+  nlm_lock_entry_t *nlm_entry = NULL;
   cache_inode_status_t cache_status;
   cache_inode_fsal_data_t fsal_data;
 
@@ -127,51 +113,45 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
       pres->res_nlm4.stat.stat = NLM4_STALE_FH;
       return NFS_REQ_OK;
     }
-  fd = &pentry->object.file.open_fd.fd;
-  lock_desc = nlm_lock_to_fsal_lockdesc(&(arg->alock), arg->exclusive);
-  if(!lock_desc)
+
+  /* allow only reclaim lock request during recovery */
+  if(in_nlm_grace_period() && !arg->reclaim)
     {
+      pres->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
+      return NFS_REQ_OK;
+    }
+  if(!in_nlm_grace_period() && arg->reclaim)
+    {
+      pres->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
+      return NFS_REQ_OK;
+    }
+
+  /* add the host to monitor list */
+  if(nlm_monitor_host(arg->alock.caller_name))
+    {
+      /*
+       * ok failed to register monitor for the host
+       */
+      DisplayLog("Failed to register a monitor for the host %s\n",
+                 arg->alock.caller_name);
       pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
       return NFS_REQ_OK;
+
     }
   /*
-   * add to the lock list expecting that we will probably block
-   * This make sure that FSAL can safely create a child and wait
-   * on lock without worrying about whether we were able to add
-   * the lock to the block list
+   * Add lock details to the lock list. This check for conflicting
+   * locks and add entry with correct state value.
    */
-  nlmb = nlm_add_to_locklist(&(arg->alock), arg->exclusive);
-  if(!nlmb)
+  nlm_entry = nlm_add_to_locklist(arg);
+  if(!nlm_entry)
     {
+      /* We failed to create a lock entry and add to the list */
+      nlm_unmonitor_host(arg->alock.caller_name);
       pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
       return NFS_REQ_OK;
     }
-
-  retval = FSAL_lock(fd, lock_desc, arg->block);
-  if(!FSAL_IS_ERROR(retval))
-    {
-      pres->res_nlm4.stat.stat = NLM4_GRANTED;
-    }
-  else
-    {
-      if(fsal_is_retryable(retval) && arg->block)
-        {
-          /* FIXME!! fsal_is_retryable don't check for EACCESS */
-          pres->res_nlm4.stat.stat = NLM4_BLOCKED;
-        }
-      else
-        {
-          pres->res_nlm4.stat.stat = NLM4_DENIED;
-        }
-    }
-
-  if(!nlmb)
-    {
-      nlmb->state = pres->res_nlm4.stat.stat;
-      if(!nlm_should_track(nlmb))
-        nlm_remove_from_locklist(nlmb);
-    }
-  Mem_Free(lock_desc);
+  pres->res_nlm4.stat.stat = nlm_entry->state;
+  nlm_lock_entry_dec_ref(nlm_entry);
   return NFS_REQ_OK;
 }
 

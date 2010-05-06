@@ -41,7 +41,7 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          ../include/stuff_alloc.h
 
 if USE_NLM
-libsupport_la_SOURCES += nlm_util.c 
+libsupport_la_SOURCES += nlm_util.c nlm_async.c nlm4_send_reply.c nsm.c
 endif
 
 if USE_NFS4_1

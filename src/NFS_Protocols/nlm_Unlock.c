@@ -34,6 +34,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
+#include <assert.h>
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -82,18 +83,22 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
                 struct svc_req *preq /* IN     */ ,
                 nfs_res_t * pres /* OUT    */ )
 {
-  nlm_lock_t *nlmb;
-  fsal_file_t *fd;
-  fsal_status_t retval;
+  int lck_cnt, lck_state;
   nlm4_unlockargs *arg;
   cache_entry_t *pentry;
   fsal_attrib_list_t attr;
-  fsal_lockdesc_t *lock_desc;
+  nlm_lock_entry_t *nlm_entry;
   cache_inode_status_t cache_status;
   cache_inode_fsal_data_t fsal_data;
 
   DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
                     "REQUEST PROCESSING: Calling nlm4_Lock");
+
+  if(in_nlm_grace_period())
+    {
+      pres->res_nlm4test.test_stat.stat = NLM4_DENIED_GRACE_PERIOD;
+      return NFS_REQ_OK;
+    }
 
   /* Convert file handle into a cache entry */
   arg = &parg->arg_nlm4_unlock;
@@ -116,40 +121,31 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
       pres->res_nlm4.stat.stat = NLM4_STALE_FH;
       return NFS_REQ_OK;
     }
-  fd = &pentry->object.file.open_fd.fd;
-  lock_desc = nlm_lock_to_fsal_lockdesc(&(arg->alock), 0);
-  if(!lock_desc)
-    {
-      pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
-      return NFS_REQ_OK;
-    }
-  nlmb = nlm_find_lock_entry(&(arg->alock), 0, NLM4_GRANTED);
-  if(!nlmb)
-    {
-      /*FIXME!! XNFS doesn't say what should be the return */
-      pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
-      Mem_Free(lock_desc);
-      return NFS_REQ_OK;
-    }
 
-  retval = FSAL_unlock(fd, lock_desc);
-  if(!FSAL_IS_ERROR(retval))
+  /*
+   * nlm_find_lock_entry with state NLM4_GRANTED will search for lock
+   * in both blocked and granted state. We can get an unlock request
+   * even for a lock in blocked state because grant rpc response could
+   * get dropped and the client can think that lock is granted but the
+   * server still consider it locked.
+   */
+  nlm_entry = nlm_find_lock_entry(&(arg->alock), 0, NLM4_GRANTED);
+  if(!nlm_entry)
     {
-      pres->res_nlm4.stat.stat = NLM4_GRANTED;
-      nlm_delete_lock_entry(nlmb, &(arg->alock));
-      Mem_Free(lock_desc);
+      pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
       return NFS_REQ_OK;
     }
-  else
-    {
-      /*FIXME check with RFC Whether we can return nlm4_denied */
-      pres->res_nlm4.stat.stat = NLM4_DENIED;
-      Mem_Free(lock_desc);
-      return NFS_REQ_OK;
-    }
-  /*FIXME check with RFC Whether we can return nlm4_denied */
-  pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
-  Mem_Free(lock_desc);
+  lck_state = nlm_lock_entry_get_state(nlm_entry);
+  pres->res_nlm4.stat.stat = NLM4_GRANTED;
+  lck_cnt = nlm_delete_lock_entry(&(arg->alock));
+  nlm_unmonitor_host(arg->alock.caller_name);
+  /*
+   * Now check whether we have blocked locks.
+   * if found grant them the lock
+   */
+  if(lck_state == NLM4_GRANTED)
+    nlm_grant_blocked_locks(&(arg->alock.fh));
+  nlm_lock_entry_dec_ref(nlm_entry);
   return NFS_REQ_OK;
 }
 

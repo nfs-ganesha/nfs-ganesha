@@ -61,12 +61,10 @@
 #include "nfs_proto_functions.h"
 #include "nlm_util.h"
 
-static void do_cancel_lock(nlm_lock_t * nlmb)
+static void do_cancel_lock(nlm_lock_entry_t * nlm_entry)
 {
-  /* kill the child waiting on the lock */
-
   /* remove the lock from the blocklist */
-  nlm_remove_from_locklist(nlmb);
+  nlm_remove_from_locklist(nlm_entry);
 }
 
 /**
@@ -90,17 +88,21 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
                 struct svc_req *preq /* IN     */ ,
                 nfs_res_t * pres /* OUT    */ )
 {
-  nlm_lock_t *nlmb;
-  fsal_file_t *fd;
-  fsal_status_t retval;
   nlm4_cancargs *arg;
   cache_entry_t *pentry;
   fsal_attrib_list_t attr;
+  nlm_lock_entry_t *nlm_entry;
   cache_inode_status_t cache_status;
   cache_inode_fsal_data_t fsal_data;
 
   DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
                     "REQUEST PROCESSING: Calling nlm4_Lock");
+
+  if(in_nlm_grace_period())
+    {
+      pres->res_nlm4test.test_stat.stat = NLM4_DENIED_GRACE_PERIOD;
+      return NFS_REQ_OK;
+    }
 
   /* Convert file handle into a cache entry */
   arg = &parg->arg_nlm4_cancel;
@@ -123,14 +125,14 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
       pres->res_nlm4.stat.stat = NLM4_STALE_FH;
       return NFS_REQ_OK;
     }
-  fd = &pentry->object.file.open_fd.fd;
-  nlmb = nlm_find_lock_entry(&(arg->alock), arg->exclusive, NLM4_BLOCKED);
-  if(!nlmb)
+  nlm_entry = nlm_find_lock_entry(&(arg->alock), arg->exclusive, NLM4_BLOCKED);
+  if(!nlm_entry)
     {
       pres->res_nlm4.stat.stat = NLM4_DENIED;
       return NFS_REQ_OK;
     }
-  do_cancel_lock(nlmb);
+  do_cancel_lock(nlm_entry);
+  nlm_lock_entry_dec_ref(nlm_entry);
   pres->res_nlm4.stat.stat = NLM4_GRANTED;
   return NFS_REQ_OK;
 }                               /* nlm4_Cancel */

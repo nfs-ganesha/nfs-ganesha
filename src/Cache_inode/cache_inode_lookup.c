@@ -172,13 +172,13 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                      VALID)
                     if(!FSAL_namecmp
                        (pname,
-                        &(pentry_parent->object.dir_begin.pdir_data->
-                          dir_entries[i].name)))
+                        &(pentry_parent->object.dir_begin.pdir_data->dir_entries[i].
+                          name)))
                       {
                         /* Entry was found */
                         pentry =
-                            pentry_parent->object.dir_begin.pdir_data->
-                            dir_entries[i].pentry;
+                            pentry_parent->object.dir_begin.pdir_data->dir_entries[i].
+                            pentry;
                         DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
                                           "Cache Hit detected (dir_begin)");
                         break;

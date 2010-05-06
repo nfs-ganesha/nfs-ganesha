@@ -16,6 +16,8 @@ extern "C"
 #define LM_MAXSTRLEN 1024
 #define LM_MAXNAMELEN 1025
 #define MAXNETOBJ_SZ 1024
+#define SM_MAXSTRLEN 1024
+#define SM_PRIV_SZ 16
 
   typedef int int32_t;
 
@@ -177,6 +179,15 @@ extern "C"
   };
   typedef struct nlm4_notify nlm4_notify;
 
+  struct nlm4_sm_notifyargs
+  {
+    char *name;
+    int32_t state;
+    char priv[SM_PRIV_SZ];
+  };
+  typedef struct nlm4_sm_notifyargs nlm4_sm_notifyargs;
+  extern void nlm_init(void);
+
 #define NLMPROG 100021
 #define NLM4_VERS 4
 
@@ -229,6 +240,9 @@ extern "C"
 #define NLMPROC4_GRANTED_RES 15
   extern void *nlmproc4_granted_res_4(nlm4_res *, CLIENT *);
   extern void *nlmproc4_granted_res_4_svc(nlm4_res *, struct svc_req *);
+#define NLMPROC4_SM_NOTIFY 16
+  extern void *nlmproc4_sm_notify_4(nlm4_sm_notifyargs *, CLIENT *);
+  extern void *nlmproc4_sm_notify_4_svc(nlm4_sm_notifyargs *, struct svc_req *);
 #define NLMPROC4_SHARE 20
   extern nlm4_shareres *nlmproc4_share_4(nlm4_shareargs *, CLIENT *);
   extern nlm4_shareres *nlmproc4_share_4_svc(nlm4_shareargs *, struct svc_req *);
@@ -292,6 +306,9 @@ extern "C"
 #define NLMPROC4_GRANTED_RES 15
   extern void *nlmproc4_granted_res_4();
   extern void *nlmproc4_granted_res_4_svc();
+#define NLMPROC4_SM_NOTIFY 16
+  extern void *nlmproc4_sm_notify_4();
+  extern void *nlmproc4_sm_notify_4_svc();
 #define NLMPROC4_SHARE 20
   extern nlm4_shareres *nlmproc4_share_4();
   extern nlm4_shareres *nlmproc4_share_4_svc();
@@ -331,6 +348,7 @@ extern "C"
   extern bool_t xdr_nlm4_shareargs(XDR *, nlm4_shareargs *);
   extern bool_t xdr_nlm4_shareres(XDR *, nlm4_shareres *);
   extern bool_t xdr_nlm4_notify(XDR *, nlm4_notify *);
+  extern bool_t xdr_nlm4_sm_notifyargs(XDR *, nlm4_sm_notifyargs *);
 
 #else                           /* K&R C */
   extern bool_t xdr_int32_t();
@@ -354,10 +372,12 @@ extern "C"
   extern bool_t xdr_nlm4_shareargs();
   extern bool_t xdr_nlm4_shareres();
   extern bool_t xdr_nlm4_notify();
+  extern bool_t xdr_nlm4_sm_notifyargs();
 
 #endif                          /* K&R C */
 
 #ifdef __cplusplus
 }
 #endif
+
 #endif                          /* !_NLM4_H_RPCGEN */

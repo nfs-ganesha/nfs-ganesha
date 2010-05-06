@@ -11,7 +11,7 @@ libnfs_mnt_xdr_la_SOURCES = xdr_mount.c           \
                             ../include/extended_types.h
 
 if USE_NLM
-libnfs_mnt_xdr_la_SOURCES += nlm4_xdr.c
+libnfs_mnt_xdr_la_SOURCES += nlm4_xdr.c nsm_xdr.c
 endif
 
 if USE_NFS4_1

@@ -358,8 +358,8 @@ void mnt3_Mnt_Free(nfs_res_t * pres)
 {
   if(pres->res_mnt3.fhs_status == MNT3_OK)
     {
-      Mem_Free((char *)pres->res_mnt3.mountres3_u.mountinfo.auth_flavors.
-               auth_flavors_val);
+      Mem_Free((char *)pres->res_mnt3.mountres3_u.mountinfo.
+               auth_flavors.auth_flavors_val);
       Mem_Free((char *)pres->res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val);
     }
   return;

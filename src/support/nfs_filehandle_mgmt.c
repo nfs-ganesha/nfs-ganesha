@@ -302,7 +302,7 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
   /* No Pseudo fs here */
   file_handle.pseudofs_id = 0;
   file_handle.pseudofs_flag = FALSE;
-  file_handle.ds_flag = 0 ;
+  file_handle.ds_flag = 0;
   file_handle.refid = 0;
 
   /* if FH expires, set it there */

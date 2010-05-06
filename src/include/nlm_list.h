@@ -96,6 +96,29 @@ static inline void glist_del(struct glist_head *node)
   node->prev = NULL;
 }
 
+static inline void glist_add_list_tail(struct glist_head *list, struct glist_head *new)
+{
+  struct glist_head *first = new->next;
+  struct glist_head *last = new->prev;
+
+  if(new->next == new->prev)
+    {
+      /* nothing to add */
+      return;
+    }
+
+  first->prev = list->prev;
+  list->prev->next = first;
+
+  last->next = list;
+  list->prev = last;
+}
+
+static inline int glist_empty(struct glist_head *head)
+{
+  return head->next == head;
+}
+
 #define glist_for_each(node, head) \
 	for(node = (head)->next; node != head; node = node->next)
 
@@ -105,3 +128,7 @@ static inline void glist_del(struct glist_head *node)
 
 #define glist_entry(node, type, member) \
 	container_of(node, type, member)
+
+#define glist_for_each_safe(node, noden, head)			    \
+  for (node = (head)->next, noden = node->next; node != (head);	    \
+       node = noden, noden = node->next)

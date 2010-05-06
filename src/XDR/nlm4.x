@@ -5,6 +5,9 @@ const LM_MAXSTRLEN = 1024;
 const LM_MAXNAMELEN = 1025;
 const MAXNETOBJ_SZ = 1024;
 
+/* NSM related constatnts */
+const SM_MAXSTRLEN = 1024;
+const SM_PRIV_SZ   = 16;
 /*
  * Basic typedefs for RFC 1832 data type definitions
  */
@@ -135,6 +138,15 @@ struct nlm4_notify {
 	int64_t state;
 };
 
+struct nlm4_sm_notifyargs {
+	string name<SM_MAXSTRLEN>;
+	int32_t state;
+	opaque priv[SM_PRIV_SZ];
+};
+
+#ifdef RPC_HDR
+%extern void nlm_init(void);
+#endif
 
 program NLMPROG {
 	version NLM4_VERS {
@@ -154,6 +166,7 @@ program NLMPROG {
 		void NLMPROC4_CANCEL_RES(nlm4_res)			= 13;
 		void NLMPROC4_UNLOCK_RES(nlm4_res)			= 14;
 		void NLMPROC4_GRANTED_RES(nlm4_res)			= 15;
+		void NLMPROC4_SM_NOTIFY(nlm4_sm_notifyargs)		= 16;
 		nlm4_shareres NLMPROC4_SHARE(nlm4_shareargs)		= 20;
 		nlm4_shareres NLMPROC4_UNSHARE(nlm4_shareargs)		= 21;
 		nlm4_res NLMPROC4_NM_LOCK(nlm4_lockargs)		= 22;

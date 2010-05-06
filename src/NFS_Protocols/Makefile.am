@@ -99,11 +99,17 @@ libnfsproto_la_SOURCES = mnt_Export.c			  \
                          ../include/nfs_file_handle.h
 
 if USE_NLM
-libnfsproto_la_SOURCES += nlm_Unlock.c	  \
-                          nlm_Cancel.c	  \
-                          nlm_Lock.c	  \
-                          nlm_Test.c	  \
-                          nlm_Null.c			  
+libnfsproto_la_SOURCES += nlm_Unlock.c	  	\
+                          nlm_Cancel.c	  	\
+                          nlm_Lock.c	  	\
+                          nlm_Test.c	  	\
+                          nlm_Null.c	  	\
+                          nlm_Sm_Notify.c 	\
+                          nlm_Test_Message.c	\
+                          nlm_Cancel_Message.c	\
+                          nlm_Lock_Message.c	\
+                          nlm_Unlock_Message.c  \
+                          nlm_Granted_Res.c
 endif
 
 

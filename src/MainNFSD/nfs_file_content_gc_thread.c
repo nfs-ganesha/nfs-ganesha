@@ -186,10 +186,12 @@ void *file_content_gc_thread(void *IndexArg)
                        0);
 
               if((cache_content_status = cache_content_check_threshold(cache_sub_dir,
-                                                                       nfs_param.cache_layers_param.dcgcpol.
-                                                                       lwmark_df,
-                                                                       nfs_param.cache_layers_param.dcgcpol.
-                                                                       hwmark_df,
+                                                                       nfs_param.
+                                                                       cache_layers_param.
+                                                                       dcgcpol.lwmark_df,
+                                                                       nfs_param.
+                                                                       cache_layers_param.
+                                                                       dcgcpol.hwmark_df,
                                                                        &is_hw_reached,
                                                                        &nb_blocks_to_manage))
                  == CACHE_CONTENT_SUCCESS)

@@ -34,7 +34,7 @@ int nsm_monitor(char *host)
   enum clnt_stat ret;
   struct mon nsm_mon;
   struct sm_stat_res res;
-  struct timeval tout  = { 5, 0 };
+  struct timeval tout = { 5, 0 };
 
   nsm_mon.mon_id.mon_name = strdup(host);
   nsm_mon.mon_id.my_id.my_name = strdup("localhost");
@@ -45,7 +45,7 @@ int nsm_monitor(char *host)
 
   /* create a connection to nsm on the localhost */
   clnt = clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
-  if (!clnt)
+  if(!clnt)
     {
       free(nsm_mon.mon_id.mon_name);
       free(nsm_mon.mon_id.my_id.my_name);
@@ -53,16 +53,16 @@ int nsm_monitor(char *host)
     }
 
   ret = clnt_call(clnt, SM_MON,
-		  (xdrproc_t)xdr_mon, (caddr_t)&nsm_mon,
-		  (xdrproc_t)xdr_sm_stat_res, (caddr_t)&res, tout);
-  if (ret != RPC_SUCCESS)
+                  (xdrproc_t) xdr_mon, (caddr_t) & nsm_mon,
+                  (xdrproc_t) xdr_sm_stat_res, (caddr_t) & res, tout);
+  if(ret != RPC_SUCCESS)
     {
       free(nsm_mon.mon_id.mon_name);
       free(nsm_mon.mon_id.my_id.my_name);
       clnt_destroy(clnt);
       return -1;
     }
-  if (res.res_stat != STAT_SUCC)
+  if(res.res_stat != STAT_SUCC)
     {
       free(nsm_mon.mon_id.mon_name);
       free(nsm_mon.mon_id.my_id.my_name);
@@ -82,7 +82,7 @@ int nsm_unmonitor(char *host)
   enum clnt_stat ret;
   struct sm_stat res;
   struct mon_id nsm_mon_id;
-  struct timeval tout  = { 5, 0 };
+  struct timeval tout = { 5, 0 };
 
   nsm_mon_id.mon_name = strdup(host);
   nsm_mon_id.my_id.my_name = strdup("localhost");
@@ -92,7 +92,7 @@ int nsm_unmonitor(char *host)
 
   /* create a connection to nsm on the localhost */
   clnt = clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
-  if (!clnt)
+  if(!clnt)
     {
       free(nsm_mon_id.mon_name);
       free(nsm_mon_id.my_id.my_name);
@@ -100,9 +100,9 @@ int nsm_unmonitor(char *host)
     }
 
   ret = clnt_call(clnt, SM_UNMON,
-		  (xdrproc_t)xdr_mon_id, (caddr_t)&nsm_mon_id,
-		  (xdrproc_t)xdr_sm_stat, (caddr_t)&res, tout);
-  if (ret != RPC_SUCCESS)
+                  (xdrproc_t) xdr_mon_id, (caddr_t) & nsm_mon_id,
+                  (xdrproc_t) xdr_sm_stat, (caddr_t) & res, tout);
+  if(ret != RPC_SUCCESS)
     {
       free(nsm_mon_id.mon_name);
       free(nsm_mon_id.my_id.my_name);
@@ -121,7 +121,7 @@ int nsm_unmonitor_all(void)
   enum clnt_stat ret;
   struct sm_stat res;
   struct my_id nsm_id;
-  struct timeval tout  = { 5, 0 };
+  struct timeval tout = { 5, 0 };
 
   nsm_id.my_name = strdup("localhost");
   nsm_id.my_prog = NLMPROG;
@@ -130,16 +130,16 @@ int nsm_unmonitor_all(void)
 
   /* create a connection to nsm on the localhost */
   clnt = clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
-  if (!clnt)
+  if(!clnt)
     {
       free(nsm_id.my_name);
       return -1;
     }
 
   ret = clnt_call(clnt, SM_UNMON_ALL,
-		  (xdrproc_t)xdr_my_id, (caddr_t)&nsm_id,
-		  (xdrproc_t)xdr_sm_stat, (caddr_t)&res, tout);
-  if (ret != RPC_SUCCESS)
+                  (xdrproc_t) xdr_my_id, (caddr_t) & nsm_id,
+                  (xdrproc_t) xdr_sm_stat, (caddr_t) & res, tout);
+  if(ret != RPC_SUCCESS)
     {
       free(nsm_id.my_name);
       clnt_destroy(clnt);

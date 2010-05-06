@@ -345,4 +345,4 @@
         - Project is now released under LGPLv3
 
 0.99.65 - 
-
+	- Integration of a patch from Aneesh Kumar that implements Async NLM and NSM support
