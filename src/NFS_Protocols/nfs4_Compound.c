@@ -198,7 +198,7 @@ static const nfs4_op_desc_t optab4v1[] = {
   {"OP_TEST_STATEID", NFS4_OP_TEST_STATEID, nfs4_op_illegal},   /* tbd */
   {"OP_WANT_DELEGATION", NFS4_OP_WANT_DELEGATION, nfs4_op_illegal},     /* tbd */
   {"OP_DESTROY_CLIENTID", NFS4_OP_DESTROY_CLIENTID, nfs4_op_illegal},   /* tbd */
-  {"OP_RECLAIM_COMPLETE", NFS4_OP_RECLAIM_COMPLETE, nfs4_op_illegal},   /* tbd */
+  {"OP_RECLAIM_COMPLETE", NFS4_OP_RECLAIM_COMPLETE, nfs41_op_reclaim_complete}, 
   {"OP_ILLEGAL", NFS4_OP_ILLEGAL, nfs4_op_illegal}
 };
 #endif                          /* _USE_NFS4_1 */
@@ -808,6 +808,9 @@ void nfs4_Compound_Free(nfs_res_t * pres)
         case NFS4_OP_WANT_DELEGATION:
         case NFS4_OP_DESTROY_CLIENTID:
         case NFS4_OP_RECLAIM_COMPLETE:
+          nfs41_op_reclaim_complete_Free(&
+                                      (pres->res_compound4.resarray.resarray_val[i].
+                                       nfs_resop4_u.opreclaim_complete));
 #endif
 
         case NFS4_OP_ILLEGAL:
