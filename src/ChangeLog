@@ -346,3 +346,6 @@
 
 0.99.65 - 
 	- Integration of a patch from Aneesh Kumar that implements Async NLM and NSM support
+	- A patch from Frank Filz related to POSIX behavior when opening file
+	- Bug Fix : missing AM_FLAGS prevented from compiling with pNFS and
+	  POSIX based FSAL using MySQL. 

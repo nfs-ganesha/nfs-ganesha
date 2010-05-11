@@ -98,51 +98,14 @@
 int nfs41_op_reclaim_complete(struct nfs_argop4 *op, compound_data_t * data,
                           struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutreturn";
+  char __attribute__ ((__unused__)) funcname[] = "nfs41_op_reclaim_complete";
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_RECLAIM_COMPLETE4.rcr_status = NFS4ERR_NOFILEHANDLE;
-      return res_RECLAIM_COMPLETE4.rcr_status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_RECLAIM_COMPLETE4.rcr_status = NFS4ERR_BADHANDLE;
-      return res_RECLAIM_COMPLETE4.rcr_status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_RECLAIM_COMPLETE4.rcr_status = NFS4ERR_FHEXPIRED;
-      return res_RECLAIM_COMPLETE4.rcr_status;
-    }
-
-  /* Commit is done only on a file */
-  if(data->current_filetype != REGULAR_FILE)
-    {
-      /* Type of the entry is not correct */
-      switch (data->current_filetype)
-        {
-        case DIR_BEGINNING:
-        case DIR_CONTINUE:
-          res_RECLAIM_COMPLETE4.rcr_status = NFS4ERR_ISDIR;
-          break;
-        default:
-          res_RECLAIM_COMPLETE4.rcr_status = NFS4ERR_INVAL;
-          break;
-        }
-
-      return res_RECLAIM_COMPLETE4.rcr_status;
-    }
+  resp->resop = NFS4_OP_RECLAIM_COMPLETE;
 
   res_RECLAIM_COMPLETE4.rcr_status = NFS4_OK;
   return res_RECLAIM_COMPLETE4.rcr_status;
-}                               /* nfs41_op_layoutreturn */
-
+}             /* nfs41_op_reclaim_complete */
+  
 /**
  * nfs41_op_reclaim_complete_Free: frees what was allocared to handle nfs41_op_layoutreturn.
  * 
