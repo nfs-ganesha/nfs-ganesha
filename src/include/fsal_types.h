@@ -438,6 +438,7 @@ typedef struct fsal_attrib_list__
 
 typedef fsal_ushort_t fsal_accessflags_t;
 
+#define	FSAL_OWNER_OK   8       /* Allow owner override */
 #define	FSAL_R_OK	4       /* Test for Read permission */
 #define	FSAL_W_OK	2       /* Test for Write permission */
 #define	FSAL_X_OK	1       /* Test for execute permission */
