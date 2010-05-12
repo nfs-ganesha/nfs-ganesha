@@ -349,3 +349,4 @@
 	- A patch from Frank Filz related to POSIX behavior when opening file
 	- Bug Fix : missing AM_FLAGS prevented from compiling with pNFS and
 	  POSIX based FSAL using MySQL. 
+        - add '--enable-ds' in configure to configure nfs-ganesha as a NFSv4.1 server usable as a pNFS Data Server
