@@ -6,7 +6,7 @@ AC_INIT( [nfs-ganesha], [0.99.65], [philippe.deniel@cea.fr,thomas.leibovici@cea.
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/SNMP/PROXY/HPSS/FUSELIKE/LUSTRE(all prod) .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod), MFSL_ASYNC(beta) Early pNFS (alpha) ])
+AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/SNMP/PROXY/HPSS/FUSELIKE/LUSTRE(all prod)/XFS(alpha) .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod), MFSL_ASYNC(beta) Early pNFS (alpha) ])
 
 # Init Automake
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
@@ -319,7 +319,7 @@ fi
 
 
 # FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE (default=PROXY)],[specify the type of filesystem to be exported] ),
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS (default=PROXY)],[specify the type of filesystem to be exported] ),
 	     FSAL="$withval", FSAL="PROXY")
 
 # exporting USE_FSAL_... for conditional compilation
@@ -329,7 +329,8 @@ AM_CONDITIONAL(USE_FSAL_POSIX,   test "$FSAL" = "POSIX")
 AM_CONDITIONAL(USE_FSAL_PROXY,   test "$FSAL" = "PROXY")
 AM_CONDITIONAL(USE_FSAL_SNMP,    test "$FSAL" = "SNMP")
 AM_CONDITIONAL(USE_FSAL_FUSE,    test "$FSAL" = "FUSE")
-AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "LUSTRE")
+AM_CONDITIONAL(USE_FSAL_LUSTRE,  test "$FSAL" = "LUSTRE")
+AM_CONDITIONAL(USE_FSAL_XFS,     test "$FSAL" = "XFS")
 AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
 
 # NFSv4.0 NFSv4.1 switch
@@ -433,11 +434,18 @@ case $FSAL in
 		FS_NAME="fuse"
 		;;
 	LUSTRE)
-		AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystems])
+		AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystem])
 		FSAL_CFLAGS=
                 FSAL_LDFLAGS="-llustreapi"
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
 		FS_NAME="lustre"
+		;;
+	XFS)
+		AC_DEFINE([_USE_XFS], 1, [GANESHA exports XFS Filesystem])
+		FSAL_CFLAGS=
+                FSAL_LDFLAGS="-lhandle"
+		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsalxfshandle.la"
+		FS_NAME="xfs"
 		;;
 
 	POSIX)
@@ -599,6 +607,7 @@ AC_CONFIG_FILES([include/Makefile
                  include/FSAL/FSAL_SNMP/Makefile
                  include/FSAL/FSAL_FUSELIKE/Makefile
                  include/FSAL/FSAL_LUSTRE/Makefile
+                 include/FSAL/FSAL_XFS/Makefile
                  include/MFSL/Makefile
                  include/MFSL/MFSL_NULL/Makefile
                  include/MFSL/MFSL_ASYNC/Makefile
@@ -639,6 +648,7 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_SNMP/Makefile
 		 FSAL/FSAL_FUSELIKE/Makefile
 		 FSAL/FSAL_LUSTRE/Makefile
+		 FSAL/FSAL_XFS/Makefile
 		 FSAL/FSAL_TEMPLATE/Makefile
 		 MFSL/Makefile
 		 MFSL/MFSL_NULL/Makefile                 

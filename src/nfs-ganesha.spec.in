@@ -49,6 +49,18 @@ It comes with various backend modules to support different file systems
 and namespaces. This package provides support for NFS-GANESHA as a PROXY.
 %endif
 
+%if %{?_with_xfs:1}%{!?_with_xfs:0}
+%package xfs
+Summary: The NFS-GANESHA server compiled as a XFS 
+Group: Applications/System
+Requires: %{name}-common = %{version}-%{release}
+
+%description xfs
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various backend modules to support different file systems
+and namespaces. This package provides support for NFS-GANESHA used on top on XFS.
+%endif
+
 
 %if %{?_with_posix:1}%{!?_with_posix:0}
 %package posix
@@ -65,6 +77,19 @@ Requires: %{name}-common = %{version}-%{release}
 NFS-GANESHA is a NFS Server running in user space with a large cache.
 It comes with various backend modules to support different file systems
 and namespaces. This package provides support for GANESHA using the POSIX
+interface.
+%endif
+
+%if %{?_with_lustre:1}%{!?_lustre:0}
+%package lustre
+Summary: The NFS-GANESHA server compiled for using the LUSTRE interface 
+Group: Applications/System
+Requires: %{name}-common = %{version}-%{release}
+
+%description lustre
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various backend modules to support different file systems
+and namespaces. This package provides support for GANESHA using the LUSTRE
 interface.
 %endif
 
@@ -161,6 +186,14 @@ install -m 644 FSAL/FSAL_POSIX/DBExt/MYSQL/posixdb_mysql5.sql  $RPM_BUILD_ROOT%{
 install -m 755 nfs-ganesha.proxy.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.proxy
 install -m 644 config_samples/proxy.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
+%if %{?_with_xfs:1}%{!?_with_xfs:0}
+install -m 755 nfs-ganesha.xfs.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.xfs
+install -m 644 config_samples/xfs.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+%endif
+%if %{?_with_lustre:1}%{!?_with_lustre:0}
+install -m 755 nfs-ganesha.lustre.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.lustre
+install -m 644 config_samples/lustre.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+%endif
 %if %{?_with_snmp:1}%{!?_with_snmp:0}
 install -m 755 nfs-ganesha.snmp.init                           $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.snmp
 install -m 644 config_samples/snmp.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
@@ -211,6 +244,25 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/proxy.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha.proxy
 %config %{_sysconfdir}/ganesha/proxy.ganesha*
+%endif
+
+%if %{?_with_xfs:1}%{!?_with_xfs:0}
+%files xfs
+%defattr(-,root,root,-)
+%{_bindir}/xfs.ganesha.*
+%{_bindir}/xfs.ganeshell
+%{_sysconfdir}/init.d/nfs-ganesha.xfs
+%config %{_sysconfdir}/ganesha/xfs.ganesha*
+%endif
+
+
+%if %{?_with_lustre:1}%{!?_with_lustre:0}
+%files lustre
+%defattr(-,root,root,-)
+%{_bindir}/lustre.ganesha.*
+%{_bindir}/lustre.ganeshell
+%{_sysconfdir}/init.d/nfs-ganesha.lustre
+%config %{_sysconfdir}/ganesha/lustre.ganesha*
 %endif
 
 
@@ -266,6 +318,16 @@ rm -rf $RPM_BUILD_ROOT
 %if %{?_with_proxy:1}%{!?_with_proxy:0}
 %post proxy
 chkconfig --add nfs-ganesha.proxy
+%endif
+
+%if %{?_with_xfs:1}%{!?_with_xfs:0}
+%post xfs
+chkconfig --add nfs-ganesha.xfs
+%endif
+
+%if %{?_with_lustre:1}%{!?_with_lustre:0}
+%post lustre
+chkconfig --add nfs-ganesha.lustre
 %endif
 
 %if %{?_with_posix:1}%{!?_with_posix:0}
