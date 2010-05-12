@@ -198,6 +198,15 @@ fi
 AM_CONDITIONAL(USE_QUOTA, test "$enable_quota" = "yes")
 
 
+# PNFS/DS
+GA_ENABLE_AM_CONDITION([ds],[enable pNFS DS support],[USE_DS])
+
+if test "$enable_ds" == "yes"; then
+        AC_DEFINE(_USE_QUOTA,1,[enable pNFS DS support])
+fi
+AM_CONDITIONAL(USE_DS, test "$enable_ds" = "yes")
+
+
 # PNFS (requires NFSv4.1)
 GA_ENABLE_AM_CONDITION([pnfs],[enable pNFS support (NFSv4.1 support is mandatory)],[USE_PNFS])
 
@@ -207,6 +216,7 @@ if test "$enable_pnfs" == "yes"; then
 	PNFS_LIB="\$(top_builddir)/NFS_Protocols/PNFS/LAYOUT4_NFSV4_1_FILES/libpnfslayoutfile.la"
 fi
 AM_CONDITIONAL(USE_PNFS, test "$enable_pnfs" = "yes")
+
 
 
 # TI-RPC
@@ -542,12 +552,20 @@ case $NFS4_MINOR in
 		AC_MSG_ERROR([This NFSv4 minor version is not supported])
 esac
 
-# Sanity check : np pnfs if NFS4_MINOR is not NFSv4.1
+# Sanity check : no pnfs if NFS4_MINOR is not NFSv4.1
 if [[  $enable_pnfs == "yes" ]] ; then
   if [[ $NFS4_MINOR == "0" ]] ; then
      AC_MSG_ERROR("You must activate NFSv4.1 support to enable pnfs support" )
   fi
 fi
+
+# Sanity check : no ds if NFS4_MINOR is not NFSv4.1
+if [[  $enable_ds == "yes" ]] ; then
+  if [[ $NFS4_MINOR == "0" ]] ; then
+     AC_MSG_ERROR("You must activate NFSv4.1 support to enable pnfs DS support" )
+  fi
+fi
+
 
 # MFSL_ASYNC should not be used with HPSS
 if [[ $FSAL == "HPSS" ]] ; then
