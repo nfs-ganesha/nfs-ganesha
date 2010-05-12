@@ -287,8 +287,14 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
       EXCHGID4_FLAG_USE_PNFS_MDS | EXCHGID4_FLAG_USE_PNFS_DS |
       EXCHGID4_FLAG_SUPP_MOVED_REFER;
 #else
+#ifdef _USE_DS
+  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags =
+      EXCHGID4_FLAG_USE_PNFS_MDS | EXCHGID4_FLAG_USE_PNFS_DS |
+      EXCHGID4_FLAG_SUPP_MOVED_REFER;
+#else
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags =
       EXCHGID4_FLAG_USE_NON_PNFS | EXCHGID4_FLAG_SUPP_MOVED_REFER;
+#endif /* USE_DS */
 #endif                          /* USE_PNFS */
 
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_state_protect.spr_how = SP4_NONE;

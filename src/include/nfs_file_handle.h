@@ -77,8 +77,8 @@ typedef struct file_handle_v3__
 typedef struct file_handle_v4__
 {
   unsigned short pseudofs_id;   /* Id for the pseudo fs related to this fh  len = 2 bytes   */
-  unsigned char pseudofs_flag;  /* TRUE if FH is within pseudofs            len = 1 byte    */
   unsigned char ds_flag;        /* TRUE if FH is a 'DS file handle'         len = 1 byte    */
+  unsigned char pseudofs_flag;  /* TRUE if FH is within pseudofs            len = 1 byte    */
   unsigned int exportid;        /* must be correlated to exportlist_t::id   len = 4 bytes   */
   unsigned short refid;         /* used for referral                        len = 2 bytes   */
   unsigned int srvboot_time;    /* 0 if FH won't expire                     len = 4 bytes   */
@@ -125,6 +125,7 @@ int nfs4_Is_Fh_Pseudo(nfs_fh4 * pfh);
 int nfs4_Is_Fh_Expired(nfs_fh4 * pfh);
 int nfs4_Is_Fh_Invalid(nfs_fh4 * pfh);
 int nfs4_Is_Fh_Referral(nfs_fh4 * pfh);
+int nfs4_Is_Fh_DSHandle(nfs_fh4 * pfh);
 
 /* This one is used to detect Xattr related FH */
 int nfs3_Is_Fh_Xattr(nfs_fh3 * pfh);
