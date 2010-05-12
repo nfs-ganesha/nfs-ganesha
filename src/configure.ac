@@ -202,7 +202,7 @@ AM_CONDITIONAL(USE_QUOTA, test "$enable_quota" = "yes")
 GA_ENABLE_AM_CONDITION([ds],[enable pNFS DS support],[USE_DS])
 
 if test "$enable_ds" == "yes"; then
-        AC_DEFINE(_USE_QUOTA,1,[enable pNFS DS support])
+        AC_DEFINE(_USE_DS,1,[enable pNFS DS support])
 fi
 AM_CONDITIONAL(USE_DS, test "$enable_ds" = "yes")
 
