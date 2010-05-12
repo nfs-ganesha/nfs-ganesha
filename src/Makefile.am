@@ -95,6 +95,14 @@ if USE_FSAL_PROXY
 RPMARGS= --with proxy
 endif
 
+if USE_FSAL_LUSTRE
+RPMARGS= --with lustre
+endif
+
+if USE_FSAL_XFS
+RPMARGS= --with xfs
+endif
+
 if USE_FSAL_FUSE
 RPMARGS= --with fuse
 endif
