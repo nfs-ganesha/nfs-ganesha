@@ -1390,9 +1390,13 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       else
         DisplayLogLevel(NIV_EVENT,
                         "NFS_INIT: Gss Context Cache successfully initialized");
-
-    }                           /*  if( nfs_param.krb5_param.active_krb5 ) */
 #endif                          /* _USE_GSSRPC */
+
+#ifdef HAVE_KRB5
+#ifdef _HAVE_GSSAPI
+    }                           /*  if( nfs_param.krb5_param.active_krb5 ) */
+#endif
+#endif
 
   /* RPC Initialisation */
   if(nfs_Init_svc() != 0)
