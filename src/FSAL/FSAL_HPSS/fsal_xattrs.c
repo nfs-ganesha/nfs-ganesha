@@ -17,7 +17,10 @@
 
 #include <hpss_uuid.h>
 #include <hpss_errno.h>
+
+#if HPSS_LEVEL >= 730
 #include <hpss_xml.h>
+#endif
 
 /* generic definitions for extended attributes */
 
