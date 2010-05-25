@@ -350,3 +350,10 @@
 	- Bug Fix : missing AM_FLAGS prevented from compiling with pNFS and
 	  POSIX based FSAL using MySQL. 
         - add '--enable-ds' in configure to configure nfs-ganesha as a NFSv4.1 server usable as a pNFS Data Server
+	- FSAL_LUSTRE : add lockdesc support
+        - Bug Fix: nfs4_op_access was not managing secondary groups properly. It now relyes on the FSAL for this.
+	- Default value for FSAL_MODE_SUID and FSAL_MODE_SGID have changed.
+        - Add log trace when a operation is refused due to a setuid/setgid bit violation
+        - Bug Fix : in NFSv4, file were created with mode = 0000 . This was a trouble with certain FSAL
+
+

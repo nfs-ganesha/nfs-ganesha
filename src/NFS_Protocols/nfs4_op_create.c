@@ -105,7 +105,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   cache_inode_status_t cache_status;
   int convrc = 0;
 
-  fsal_accessmode_t mode = 0000;
+  fsal_accessmode_t mode = 0600;
   fsal_name_t name;
 
   cache_inode_create_arg_t create_arg;

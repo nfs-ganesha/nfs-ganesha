@@ -112,7 +112,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   int retval;
   fsal_name_t filename;
   bool_t AttrProvided = FALSE;
-  fsal_accessmode_t mode = 0000;
+  fsal_accessmode_t mode = 0600;
   nfs_fh4 newfh4;
   nfs_client_id_t nfs_clientid;
   nfs_worker_data_t *pworker = NULL;
