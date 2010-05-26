@@ -48,15 +48,32 @@
 #include "config_parsing.h"
 #include "err_fsal.h"
 
-#define LPX64 "%#llx"
-#include <asm/types.h>
-#include <lustre/liblustreapi.h>
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif /* _GNU_SOURCE */
+
+#ifndef _ATFILE_SOURCE
+#define _ATFILE_SOURCE
+#endif  /* _ATFILE_SOURCE */
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/syscall.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <xfs/xfs.h>
+#include <xfs/handle.h>
+#include <xfs/parent.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
 
 /*
  * labels in the config file
  */
 
-#define CONF_LABEL_FS_SPECIFIC   "LUSTRE"
+#define CONF_LABEL_FS_SPECIFIC   "XFS"
 
 /* -------------------------------------------
  *      POSIX FS dependant definitions
@@ -89,14 +106,17 @@ typedef struct fsal_path__
 #define FSAL_NAME_INITIALIZER {"",0}
 #define FSAL_PATH_INITIALIZER {"",0}
 
+#define FSAL_XFS_HANDLE_LEN 64
+#define FSAL_XFS_FSHANDLE_LEN 64
+
 static const fsal_name_t FSAL_DOT = { ".", 1 };
 static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
 typedef struct
 {
-  lustre_fid fid;
-  /* used for FSAL_DIGEST_FILEID */
-  unsigned long long inode;
+  char handle_val[FSAL_XFS_HANDLE_LEN] ;
+  unsigned int handle_len ;
+  uint64_t inode ;
 } fsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */
@@ -112,8 +132,12 @@ typedef struct fsal_cred__
 typedef struct fsal_export_context_t
 {
   char mount_point[FSAL_MAX_PATH_LEN];
+  char mount_point_handle[FSAL_XFS_HANDLE_LEN] ;
+  char mount_point_fshandle[FSAL_XFS_FSHANDLE_LEN] ;
+  
   unsigned int mnt_len;         /* for optimizing concatenation */
-  dev_t dev_id;
+  unsigned int mnt_fslen;         /* for optimizing concatenation */
+  unsigned int dev_id ;
 } fsal_export_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( _pexport_context ) (uint64_t)((_pexport_context)->dev_id)
@@ -129,7 +153,7 @@ typedef struct
 
 typedef struct fs_specific_initinfo__
 {
-  int dummy;
+  char xfs_mount_point[MAXPATHLEN] ;
 } fs_specific_initinfo_t;
 
 /**< directory cookie */
@@ -140,7 +164,11 @@ typedef struct fsal_cookie__
 
 static const fsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
 
-typedef void *fsal_lockdesc_t;   /**< not implemented for now */
+typedef struct fsal_lockdesc__
+{
+  struct flock flock;
+} fsal_lockdesc_t;
+
 
 /* Directory stream descriptor. */
 

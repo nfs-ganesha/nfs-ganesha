@@ -53,6 +53,44 @@ and namespaces. This package provides support for NFS-GANESHA as a PROXY.
 %package xfs
 Summary: The NFS-GANESHA server compiled as a XFS 
 Group: Applications/System
+%if %{?_with_posix:1}%{!?_with_posix:0}
+%package posix
+Summary: The NFS-GANESHA server compiled for using the POSIX interface 
+Group: Applications/System
+%if %{?_with_postgresql:1}%{!?_with_postgresql:0}
+Requires: postgresql >= 7.1  postgresql-server >= 7.1
+%else
+Requires: mysql >= 5.0  mysql-server >= 5.0
+%endif
+Requires: %{name}-common = %{version}-%{release}
+
+%description posix
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various backend modules to support different file systems
+and namespaces. This package provides support for GANESHA using the POSIX
+interface.
+%endif
+
+%if %{?_with_lustre:1}%{!?_lustre:0}
+%package lustre
+Summary: The NFS-GANESHA server compiled for using the LUSTRE interface 
+Group: Applications/System
+Requires: %{name}-common = %{version}-%{release}
+
+%description lustre
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various backend modules to support different file systems
+and namespaces. This package provides support for GANESHA using the LUSTRE
+interface.
+%endif
+
+
+%if %{?_with_snmp:1}%{!?_with_snmp:0}
+%package snmp
+Summary: The NFS-GANESHA server compiled as a NFS gateway to SNMP. 
+Group: Applications/System
+Requires: xfsprogs
+BuildRequires: xfsprogs-devel
 Requires: %{name}-common = %{version}-%{release}
 
 %description xfs
