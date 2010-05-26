@@ -113,11 +113,18 @@ void ReleaseTokenFSCall();
                return (_struct_status_);                     \
               } while(0)
 
+
 /**
- * Append a fsal_name to an fsal_path to have the full path of a file from its name and its parent path
+ * Gets a fd from a handle 
  */
-fsal_status_t fsal_internal_appendNameToPath(fsal_path_t * p_path,
-                                             const fsal_name_t * p_name);
+fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,  
+				       fsal_handle_t * phandle,
+                                       int * pfd,
+                                       int oflags ) ;
+
+fsal_status_t fsal_internal_fd2handle( fsal_op_context_t * p_context,  
+                                       int fd, 
+				       fsal_handle_t * phandle ) ;
 
 /**
  * Build .lustre/fid path associated to a handle.

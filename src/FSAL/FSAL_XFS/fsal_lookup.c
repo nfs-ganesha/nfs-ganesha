@@ -81,6 +81,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
 
   int parentfd ;
   int objectfd ;
+  int errsrv ;
 
   /* sanity checks
    * note : object_attributes is optionnal
@@ -116,15 +117,16 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
     }
 
   /* retrieve directory attributes */
-
-  status = fsal_internal_Handle2FidPath(p_context, p_parent_directory_handle, &pathfsal);
+  TakeTokenFSCall();
+  status =  fsal_internal_handle2fd( p_context, p_parent_directory_handle, &parentfd, O_DIRECTORY ) ;
+  ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_lookup);
 
   /* get directory metadata */
   TakeTokenFSCall();
-  rc = lstat(pathfsal.path, &buffstat);
-  errsv = errno;
+  rc = fstat( parentfd, &buffstat);
+  errsrv = errno ;
   ReleaseTokenFSCall();
 
   if(rc)
@@ -167,16 +169,25 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_lookup);
 
-  status = fsal_internal_appendNameToPath(&pathfsal, p_filename);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_lookup);
-
   /* get file handle, it it exists */
   TakeTokenFSCall();
-  status = fsal_internal_Path2Handle(p_context, &pathfsal, p_object_handle);
+  objectfd = openat( parentfd, p_filename->name, O_RDONLY, 0600 ) ;
+  errsrv = errno ;
   ReleaseTokenFSCall();
-  if(FSAL_IS_ERROR(status))
+
+  if( objectfd < 0 )
+    {
+     close( parentfd ) ;
+     Return( posix2fsal_error( errsrv ), errsrv,  INDEX_FSAL_lookup);
+    }
+
+  status = fsal_internal_fd2handle(  p_context, objectfd, p_object_handle ) ;
+  close( parentfd ) ;
+  close( objectfd ) ;
+
+  if( FSAL_IS_ERROR( status ) )
     ReturnStatus(status, INDEX_FSAL_lookup);
+
 
   /* get object attributes */
   if(p_object_attributes)
