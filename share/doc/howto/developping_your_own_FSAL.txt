@@ -16,63 +16,37 @@ only some basic utility functions, but without any
 filesystem processing (empty prototypes).
 Let's name it 'FSAL_MYFS' for this tutorial.
 
-Then, you have to create a specific Makefile into the "src/Makefile.FS" directory,
-and call it "Makefile.<the name of your filesystem>", "Makefile.MYFS" for example.
-(you can take Makefile.template as model)
+Edit the 'configure.ac' file to define compilation flags for this new FSAL:
+- add 'MYFS' to the brief help of the '--with-fsal' option:
+	AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=PROXY|POSIX|...|MYFS ...
+- define an automake condition, so you can add an FSAL switch to makefiles:
+	AM_CONDITIONAL(USE_FSAL_MYFS,    test "$FSAL" = "MYFS")
+- add a 'MYFS' case in the following switch:
 
-In this file, you can define some variables that are filesystem dependant :
+case $FSAL in
+	MYFS)
+		AC_DEFINE([_USE_MYFS], 1, [GANESHA is compiled with MYFS FSAL])
+		# FS specific compilation flags
+		FSAL_CFLAGS="-I/opt/myfs/include"
+		# FS specific linking flags
+		FSAL_LDFLAGS="-L/opt/myfs/lib -Wl,-rpath,/opt/myfs/lib -lmyfs"
+		# path to FSAL libraries in GANESHA source tree
+        	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_MYFS/libfsalmyfs.la \$(top_builddir)/FSAL/FSAL_MYFS/subdir/libmyfs_tools.la"
+               	FS_NAME="myfs"
+		;;
 
-- FLAG_FS: this is the compilation flag that will be used when compiling
-           GANESHA for your filesystem. At least, you must have "-D_USE_<your fs name>"
-           This will be used for some filesystem type switches, when compiling FSAL
-           and other layers.
-           Example: FLAG_FS  = -D_USE_MYFS
+Add a path to the FSAL Makefile in AC_CONFIG_FILES directive:
+                 include/FSAL/FSAL_MYFS/Makefile
 
-- INCP_FS: if you need some specific includes for accessing your filesystem,
-           you can specify their path using this variable.
-           Example: INCP_FS = -I/usr/local/MYFS/include
+In "src/FSAL/Makefile.am", add a case for this new FSAL:
+if USE_FSAL_MYFS
+SUBDIRS = FSAL_MYFS
+endif
 
-- LIBP_FS: if you need some specific libraries for accessing your filesystem,
-           you can specify their path using this variable.
-           Example: LIBP_FS = -L/usr/local/MYFS/lib
+Create and fill "src/FSAL/FSAL_MYFS/Makefile.am".
 
-- LIB_FS_FLAG: if you need some specific libraries for accessing your filesystem,
-           you can specify the option used for linking.
-           Example: LIB_FS_FLAG = -Wl,-rpath,/usr/local/MYFS/lib -lmyfs_api
-
-- LIB_FILE_FS: you can specify the path of your filesystem API libraries using this
-           parameter, so it will be used for compilation dependances checking.
-           If a library modification time changes, a 'make' command will
-           then result in relinking GANESHA.
-           Example: LIB_FILE_FS = /usr/local/MYFS/lib/libmyfs_api.a
-           
-- FSAL_LIB: the name of the FSAL library that will be generated.
-           Example: FSAL_LIB = fsal_myfs
-
-- FS_DIRS: this specifies the name of your FSAL directory (the one you
-           created from FSAL_TEMPLATE).
-           Example: FS_DIRS = FSAL_MYFS
-
-- NFS_DAEMON_NAME: this is the name of the GANESHA binary that will be
-           generated for this filesystem.
-           Example: NFS_DAEMON_NAME = myfs.ganesha.nfsd
-
-- FS_SHELL_NAME: this is the name of the GANESHA's debug tool that will be
-           generated for this filesystem.
-           Example: FS_SHELL_NAME = myfs.ganeshell
-
-- FS_CONVERTFH_NAME: this is the name of the filehandle conversion tool
-           that will be generated for this filesystem.
-           Example: FS_CONVERTFH_NAME = myfs.ganesha.convertfh
-
-
-Once this Makefile is created, you can compile a GANESHA instance
-for your filesystem by executing 'gmake ALL FS=<your FS name>' into the MainNFSD
-directory.
-For example, if your Makefile is called 'Makefile.MYFS', you can compile
-using the following command :
-gmake ALL FS=MYFS
-
+Finally, run 'autoreconf' in project root to regenerate './configure' and
+Makefile.
 
 FSAL includes
 =============
