@@ -132,11 +132,11 @@ typedef struct fsal_cred__
 typedef struct fsal_export_context_t
 {
   char mount_point[FSAL_MAX_PATH_LEN];
-  char mount_point_handle[FSAL_XFS_HANDLE_LEN] ;
-  char mount_point_fshandle[FSAL_XFS_FSHANDLE_LEN] ;
+  char mnt_handle_val[FSAL_XFS_HANDLE_LEN] ;
+  char mnt_fshandle_val[FSAL_XFS_FSHANDLE_LEN] ;
   
-  unsigned int mnt_len;         /* for optimizing concatenation */
-  unsigned int mnt_fslen;         /* for optimizing concatenation */
+  unsigned int mnt_handle_len;         /* for optimizing concatenation */
+  unsigned int mnt_fshandle_len;         /* for optimizing concatenation */
   unsigned int dev_id ;
 } fsal_export_context_t;
 

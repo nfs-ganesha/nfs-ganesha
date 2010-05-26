@@ -58,108 +58,33 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
   size_t pathlen, outlen;
   int rc;
 
+  char *  handle  ;
+  size_t  handle_len = 0 ;
+
   /* sanity check */
   if((p_export_context == NULL) || (p_export_path == NULL))
     {
       DisplayLogLevel(NIV_CRIT, "NULL mandatory argument passed to %s()", __FUNCTION__);
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
-    }
+    } 
 
-  /* convert to canonical path */
-  if(!realpath(p_export_path->path, rpath))
-    {
-      rc = errno;
-      DisplayLogLevel(NIV_CRIT, "Error %d in realpath(%s): %s",
-                      rc, p_export_path->path, strerror(rc));
-      Return(posix2fsal_error(rc), rc, INDEX_FSAL_BuildExportContext);
-    }
+  /* Do the path_to_fshandle call to init the xfs's libhandle */
+  strncpy(  p_export_context->mount_point, fs_specific_options, MAXPATHLEN ) ;
 
-  /* open mnt file */
-  outlen = 0;
+  /* /!\ fs_specific_options contains the full path of the xfs filesystem root */
+  if( ( rc = path_to_fshandle( fs_specific_options,  (void **)(&handle), &handle_len) ) < 0 )
+    Return( ERR_FSAL_FAULT, errno, INDEX_FSAL_BuildExportContext ) ;
 
-  fp = setmntent(MOUNTED, "r");
+  memcpy(  p_export_context->mnt_fshandle_val, handle, handle_len ) ;
+  p_export_context->mnt_fshandle_len = handle_len ;
 
-  if(fp == NULL)
-    {
-      rc = errno;
-      DisplayLogLevel(NIV_CRIT, "Error %d in setmntent(%s): %s", rc, MOUNTED,
-                      strerror(rc));
-      Return(posix2fsal_error(rc), rc, INDEX_FSAL_BuildExportContext);
-    }
+  if( ( rc = path_to_handle( fs_specific_options,  (void **)(&handle), &handle_len) ) < 0 )
+    Return( ERR_FSAL_FAULT, errno, INDEX_FSAL_BuildExportContext ) ;
 
-  while((p_mnt = getmntent(fp)) != NULL)
-    {
-      /* get the longer path that matches export path */
+  memcpy(  p_export_context->mnt_handle_val, handle, handle_len ) ;
+  p_export_context->mnt_handle_len = handle_len ;
 
-      if(p_mnt->mnt_dir != NULL)
-        {
-
-          pathlen = strlen(p_mnt->mnt_dir);
-
-          if((pathlen > outlen) && !strcmp(p_mnt->mnt_dir, "/"))
-            {
-              DisplayLogLevel(NIV_DEBUG,
-                              "Root mountpoint is allowed for matching %s, type=%s, fs=%s",
-                              rpath, p_mnt->mnt_type, p_mnt->mnt_fsname);
-              outlen = pathlen;
-              strncpy(mntdir, p_mnt->mnt_dir, MAXPATHLEN);
-              strncpy(type, p_mnt->mnt_type, 256);
-              strncpy(fs_spec, p_mnt->mnt_fsname, MAXPATHLEN);
-            }
-          /* in other cases, the filesystem must be <mountpoint>/<smthg> or <mountpoint>\0 */
-          else if((pathlen > outlen) &&
-                  !strncmp(rpath, p_mnt->mnt_dir, pathlen) &&
-                  ((rpath[pathlen] == '/') || (rpath[pathlen] == '\0')))
-            {
-              DisplayLogLevel(NIV_FULL_DEBUG, "%s is under mountpoint %s, type=%s, fs=%s",
-                              rpath, p_mnt->mnt_dir, p_mnt->mnt_type, p_mnt->mnt_fsname);
-
-              outlen = pathlen;
-              strncpy(mntdir, p_mnt->mnt_dir, MAXPATHLEN);
-              strncpy(type, p_mnt->mnt_type, 256);
-              strncpy(fs_spec, p_mnt->mnt_fsname, MAXPATHLEN);
-            }
-        }
-    }
-
-  if(outlen <= 0)
-    {
-      DisplayLogLevel(NIV_CRIT, "No mount entry matches '%s' in %s", rpath, MOUNTED);
-      endmntent(fp);
-      Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_BuildExportContext);
-    }
-
-  /* display the mnt entry found */
-  DisplayLogLevel(NIV_EVENT, "'%s' matches mount point '%s', type=%s, fs=%s", rpath,
-                  mntdir, type, fs_spec);
-
-  /* Check it is a Lustre FS */
-  if(!llapi_is_lustre_mnttype(type))
-    {
-      DisplayLogLevel(NIV_CRIT,
-                      "/!\\ ERROR /!\\ '%s' (type: %s) is not recognized as a Lustre Filesystem",
-                      rpath, type);
-      endmntent(fp);
-      Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_BuildExportContext);
-    }
-
-  /* retrieve export info */
-  if(stat(rpath, &pathstat) != 0)
-    {
-      rc = errno;
-      DisplayLogLevel(NIV_CRIT, "/!\\ ERROR /!\\ Couldn't stat '%s': %s", rpath,
-                      strerror(rc));
-      endmntent(fp);
-
-      Return(posix2fsal_error(rc), rc, INDEX_FSAL_BuildExportContext);
-    }
-
-  /* all checks are OK, fill export context */
-  strncpy(p_export_context->mount_point, mntdir, FSAL_MAX_PATH_LEN);
-  p_export_context->mnt_len = strlen(mntdir);
-  p_export_context->dev_id = pathstat.st_dev;
-
-  endmntent(fp);
+  p_export_context->dev_id = 1 ; /** @todo BUGAZOMEU : put something smarter here, using setmntent */
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 }

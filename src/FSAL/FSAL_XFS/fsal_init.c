@@ -140,11 +140,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_Init);
 
-  /* Do the path_to_fshandle call to init the xfs's libhandle */
-  if( ( rc = path_to_fshandle( init_info->fs_specific_info.xfs_mount_point,  (void **)(&fshandle), &fshandlelen) ) < 0 )
-    Return( ERR_FSAL_FAULT, errno, INDEX_FSAL_Init ) ;
-
-  /* Regular exit */
+   /* Regular exit */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);
 
 }
