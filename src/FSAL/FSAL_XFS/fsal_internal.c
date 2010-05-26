@@ -477,43 +477,95 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-/** 
- * @brief p_path <- p_path + '/' + p_name
- * 
- * @param p_path 
- * @param p_name 
- * 
- * @return 
- */
-fsal_status_t fsal_internal_appendNameToPath(fsal_path_t * p_path,
-                                             const fsal_name_t * p_name)
+
+fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,  
+				       fsal_handle_t * phandle,
+                                       int * pfd,
+                                       int oflags )
 {
-  char *end;
-  if(!p_path || !p_name)
+  int rc = 0 ;
+
+  if( !phandle || !pfd || !p_context)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  end = p_path->path + p_path->len - 1;
-  if(*end != '/')
-    {
-      if(p_path->len + 1 + p_name->len > FSAL_MAX_PATH_LEN)
-        ReturnCode(ERR_FSAL_NAMETOOLONG, 0);
-      p_path->len += p_name->len + 1;
-      end++;
-      *end = '/';
-      end++;
-      strcpy(end, p_name->name);
-    }
-  else
-    {
-      if(p_path->len + p_name->len > FSAL_MAX_PATH_LEN)
-        ReturnCode(ERR_FSAL_NAMETOOLONG, 0);
-      p_path->len += p_name->len;
-      end++;
-      strcpy(end, p_name->name);
-    }
+  if( ( rc = open_by_handle( phandle->handle_val, phandle->handle_len, oflags ) ) < 0 )
+    ReturnCode(posix2fsal_error(errno), errno ) ;
+
+  *pfd = rc ;
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+} /* fsal_internal_handle2fd */
+
+fsal_status_t fsal_internal_fd2handle( fsal_op_context_t * p_context,  
+                                       int fd, 
+				       fsal_handle_t * phandle ) 
+{
+  int rc = 0 ;
+  struct stat ino;
+
+  char * handle_val ;
+  size_t handle_len ;
+
+  if( !phandle ||  !p_context)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  memset(phandle, 0, sizeof(fsal_handle_t));
+  
+  /* retrieve inode */
+  rc = fstat( fd, &ino);
+  if(rc)
+    ReturnCode(posix2fsal_error(errno), errno);
+  phandle->inode = ino.st_ino;
+
+  if( ( rc = fd_to_handle( fd,  (void **)(&handle_val), &handle_len ) ) < 0 )
+    ReturnCode(  posix2fsal_error(errno), errno  ) ;
+
+  memcpy( phandle->handle_val, handle_val, handle_len ) ;
+  phandle->handle_len = handle_len ;
+
+
+  free_handle( handle_val, handle_len ) ;
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+} /* fsal_internal_fd2handle */
+
+fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
+                                        fsal_path_t * p_fsalpath,       /* IN */
+                                        fsal_handle_t * p_handle /* OUT */ )
+{
+  int rc;
+  struct stat ino;
+  int objectfd ; 
+
+  if(!p_context || !p_handle || !p_fsalpath)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  memset(p_handle, 0, sizeof(fsal_handle_t));
+
+#ifdef _DEBUG_FSAL
+  DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle for %s", p_fsalpath->path);
+#endif
+
+ if( ( objectfd = open(p_fsalpath->path, O_RDONLY, 0600 ) ) < 0 )
+  ReturnCode(posix2fsal_error(errno), errno);
+
+
+  /* retrieve inode */
+  rc = fstat( objectfd, &ino);
+
+#ifdef _DEBUG_FSAL
+  if(rc)
+    DisplayLogLevel(NIV_FULL_DEBUG, "lstat(%s)=%d, errno=%d", p_fsalpath->path, rc,
+                    errno);
+#endif
+  if(rc)
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  p_handle->inode = ino.st_ino;
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
+
 
 /*
    Check the access from an existing fsal_attrib_list_t or struct stat
