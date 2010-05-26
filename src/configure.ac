@@ -442,6 +442,8 @@ case $FSAL in
 		;;
 	XFS)
 		AC_DEFINE([_USE_XFS], 1, [GANESHA exports XFS Filesystem])
+                AC_CHECK_HEADERS([xfs/xfs.h])
+                AC_CHECK_HEADERS([xfs/handle.h])
 		FSAL_CFLAGS=
                 FSAL_LDFLAGS="-lhandle"
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsalxfshandle.la"

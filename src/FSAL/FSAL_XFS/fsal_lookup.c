@@ -79,6 +79,9 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
   struct stat buffstat;
   fsal_path_t pathfsal;
 
+  int parentfd ;
+  int objectfd ;
+
   /* sanity checks
    * note : object_attributes is optionnal
    *        parent_directory_handle may be null for getting FS root.
@@ -95,15 +98,9 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
   if(!p_parent_directory_handle)
     {
       /* get handle for the mount point  */
-      FSAL_str2path(p_context->export_context->mount_point,
-                    p_context->export_context->mnt_len, &pathfsal);
-      TakeTokenFSCall();
-      status = fsal_internal_Path2Handle(p_context, &pathfsal, p_object_handle);
-      ReleaseTokenFSCall();
-
-      if(FSAL_IS_ERROR(status))
-        ReturnStatus(status, INDEX_FSAL_lookup);
-
+      memcpy( p_object_handle->handle_val, p_context->export_context->mnt_handle_val, p_context->export_context->mnt_handle_len ) ;
+      p_object_handle->handle_len =  p_context->export_context->mnt_handle_len ;
+      
       /* get attributes, if asked */
       if(p_object_attributes)
         {
