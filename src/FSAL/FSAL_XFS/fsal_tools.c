@@ -1,6 +1,28 @@
 /*
- * vim:expandtab:shiftwidth=4:tabstop=4:
+ * vim:expandtab:shiftwidth=8:tabstop=8:
+ *
+ * Copyright CEA/DAM/DIF  (2008)
+ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
+ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * ------------- 
  */
+
 
 /**
  * \file    fsal_tools.c
@@ -25,7 +47,7 @@
 
 char *FSAL_GetFSName()
 {
-  return "POSIX";
+  return "XFS";
 }
 
 /** 
@@ -56,10 +78,10 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
       return -1;
     }
 
-  return (handle1->fid.f_seq != handle2->fid.f_seq)
-      || (handle1->fid.f_oid != handle2->fid.f_oid)
-      || (handle1->fid.f_ver != handle2->fid.f_ver);
+  if( handle1->handle_len != handle2->handle_len )
+    return 1 ;
 
+  return memcmp( handle1->handle_val, handle2->handle_val, handle2->handle_len ) ;
 }
 
 /**
@@ -75,18 +97,41 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
  *
  * \return The hash value
  */
-
 unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
                                       unsigned int cookie,
                                       unsigned int alphabet_len, unsigned int index_size)
 {
-  unsigned long long lval;
+  unsigned int cpt = 0;
+  unsigned int sum = 0;
+  unsigned int extract = 0;
+  unsigned int mod;
 
-  /* polynom of prime numbers */
-  lval = 3 * cookie * alphabet_len + 1873 * p_handle->fid.f_seq
-      + 3511 * p_handle->fid.f_oid + 2999 * p_handle->fid.f_ver + 10267;
+  /* XXX If the handle is not 32 bits-aligned, the last loop will get uninitialized
+   * chars after the end of the handle. We must avoid this by skipping the last loop
+   * and doing a special processing for the last bytes */
 
-  return lval % index_size;
+  mod = p_handle->handle_len % sizeof(unsigned int);
+
+  sum = cookie;
+  for(cpt = 0; cpt < p_handle->handle_len - mod; cpt += sizeof(unsigned int))
+    {
+      memcpy(&extract, &(p_handle->handle_val[cpt]), sizeof(unsigned int));
+      sum = (3 * sum + 5 * extract + 1999) % index_size;
+    }
+
+  if(mod)
+    {
+      extract = 0;
+      for(cpt = p_handle->handle_len - mod; cpt < p_handle->handle_len; cpt++)
+        {
+          /* shift of 1 byte */
+          extract <<= 8;
+          extract |= (unsigned int)p_handle->handle_val[cpt];
+        }
+      sum = (3 * sum + 5 * extract + 1999) % index_size;
+    }
+
+  return sum;
 }
 
 /*
@@ -103,13 +148,38 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
 
 unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cookie)
 {
-  unsigned long long lval;
+  unsigned int h = 0;
+  unsigned int cpt = 0;
+  unsigned int extract = 0;
+  unsigned int mod;
 
-  /* polynom of prime numbers */
-  lval = 2239 * cookie + 3559 * p_handle->fid.f_seq + 5 * p_handle->fid.f_oid
-      + 1409 * p_handle->fid.f_ver + 20011;
+  h = cookie;
 
-  return high32m(lval) ^ low32m(lval);
+  /* XXX If the handle is not 32 bits-aligned, the last loop will get uninitialized
+   * chars after the end of the handle. We must avoid this by skipping the last loop
+   * and doing a special processing for the last bytes */
+
+  mod = p_handle->handle_len % sizeof(unsigned int);
+
+  for(cpt = 0; cpt < p_handle->handle_len - mod; cpt += sizeof(unsigned int))
+    {
+      memcpy(&extract, &(p_handle->handle_val[cpt]), sizeof(unsigned int));
+      h = (857 * h ^ extract) % 715827883;
+    }
+
+  if(mod)
+    {
+      extract = 0;
+      for(cpt = p_handle->handle_len - mod; cpt < p_handle->handle_len; cpt++)
+        {
+          /* shift of 1 byte */
+          extract <<= 8;
+          extract |= (unsigned int)p_handle->handle_val[cpt];
+        }
+      h = (857 * h ^ extract) % 715827883;
+    }
+
+  return h;
 }
 
 /**
@@ -706,6 +776,59 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
                                                         fsal_parameter_t * out_parameter)
 {
+  int err;
+  int var_max, var_index;
+  char *key_name;
+  char *key_value;
+  config_item_t block;
+
+  block = config_FindItemByName(in_config, CONF_LABEL_FS_SPECIFIC);
+
+  /* cannot read item */
+  if(block == NULL)
+    {
+      DisplayLog("FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
+                 CONF_LABEL_FS_SPECIFIC);
+      ReturnCode(ERR_FSAL_NOENT, 0);
+    }
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    {
+      DisplayLog("FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
+                 CONF_LABEL_FS_SPECIFIC);
+      ReturnCode(ERR_FSAL_INVAL, 0);
+    }
+
+  var_max = config_GetNbItems(block);
+
+  for(var_index = 0; var_index < var_max; var_index++)
+    {
+      config_item_t item;
+
+      item = config_GetItemByIndex(block, var_index);
+
+      err = config_GetKeyValue(item, &key_name, &key_value);
+      if(err)
+        {
+          DisplayLog
+              ("FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
+               var_index, CONF_LABEL_FS_SPECIFIC);
+          ReturnCode(ERR_FSAL_SERVERFAULT, err);
+        }
+      /* does the variable exists ? */
+      if(!STRCMP(key_name, "XfsMountPoint"))
+        {
+
+          strncpy( out_parameter->fs_specific_info.xfs_mount_point, key_value, MAXPATHLEN ) ;
+        }
+      else
+        {
+          DisplayLog
+              ("FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
+               key_name, CONF_LABEL_FS_SPECIFIC);
+          ReturnCode(ERR_FSAL_INVAL, 0);
+        }
+
+    }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 

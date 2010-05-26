@@ -1,5 +1,26 @@
 /*
- * vim:expandtab:shiftwidth=4:tabstop=4:
+ * vim:expandtab:shiftwidth=8:tabstop=8:
+ *
+ * Copyright CEA/DAM/DIF  (2008)
+ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
+ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * ------------- 
  */
 
 /**
@@ -490,90 +511,6 @@ fsal_status_t fsal_internal_appendNameToPath(fsal_path_t * p_path,
       end++;
       strcpy(end, p_name->name);
     }
-
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}
-
-#define FIDDIR      ".lustre/fid"
-#define FIDDIRLEN   11
-
-/**
- * Build .lustre/fid path associated to a handle.
- */
-fsal_status_t fsal_internal_Handle2FidPath(fsal_op_context_t * p_context,       /* IN */
-                                           fsal_handle_t * p_handle,    /* IN */
-                                           fsal_path_t * p_fsalpath /* OUT */ )
-{
-  char *curr = p_fsalpath->path;
-
-  if(!p_context || !p_context->export_context || !p_handle || !p_fsalpath)
-    ReturnCode(ERR_FSAL_FAULT, 0);
-
-  /* filesystem root */
-  strcpy(p_fsalpath->path, p_context->export_context->mount_point);
-  curr += p_context->export_context->mnt_len;
-
-  /* fid directory */
-  strcpy(curr, "/" FIDDIR "/");
-  curr += FIDDIRLEN + 2;
-
-  /* add fid string */
-  curr += sprintf(curr, DFID_NOBRACE, PFID(&p_handle->fid));
-
-  p_fsalpath->len = (curr - p_fsalpath->path);
-
-#ifdef _DEBUG_FSAL
-  DisplayLogLevel(NIV_FULL_DEBUG, "FidPath=%s (len %u)", p_fsalpath->path,
-                  p_fsalpath->len);
-#endif
-
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}
-
-/**
- * Get the handle for a path (posix or fid path)
- */
-fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
-                                        fsal_path_t * p_fsalpath,       /* IN */
-                                        fsal_handle_t * p_handle /* OUT */ )
-{
-  int rc;
-  struct stat ino;
-  lustre_fid fid;
-
-  if(!p_context || !p_handle || !p_fsalpath)
-    ReturnCode(ERR_FSAL_FAULT, 0);
-
-  memset(p_handle, 0, sizeof(fsal_handle_t));
-
-#ifdef _DEBUG_FSAL
-  DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle for %s", p_fsalpath->path);
-#endif
-
-  rc = llapi_path2fid(p_fsalpath->path, &fid);
-
-#ifdef _DEBUG_FSAL
-  DisplayLogLevel(NIV_FULL_DEBUG, "llapi_path2fid(%s): status=%d, fid=" DFID_NOBRACE,
-                  p_fsalpath->path, rc, PFID(&fid));
-#endif
-
-  if(rc)
-    ReturnCode(posix2fsal_error(-rc), -rc);
-
-  p_handle->fid = fid;
-
-  /* retrieve inode */
-  rc = lstat(p_fsalpath->path, &ino);
-
-#ifdef _DEBUG_FSAL
-  if(rc)
-    DisplayLogLevel(NIV_FULL_DEBUG, "lstat(%s)=%d, errno=%d", p_fsalpath->path, rc,
-                    errno);
-#endif
-  if(rc)
-    ReturnCode(posix2fsal_error(errno), errno);
-
-  p_handle->inode = ino.st_ino;
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

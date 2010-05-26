@@ -1,5 +1,26 @@
 /*
- * vim:expandtab:shiftwidth=4:tabstop=4:
+ * vim:expandtab:shiftwidth=8:tabstop=8:
+ *
+ * Copyright CEA/DAM/DIF  (2008)
+ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
+ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * ------------- 
  */
 
 /**
@@ -91,8 +112,11 @@
 fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     )
 {
+  char *  fshandle  ;
+  size_t  fshandlelen = 0 ;
 
   fsal_status_t status;
+  int rc = 0 ;
 
   /* sanity check.  */
   if(!init_info)
@@ -116,8 +140,11 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_Init);
 
-  /* No FS Specific initialization. */
+  /* Do the path_to_fshandle call to init the xfs's libhandle */
+  if( ( rc = path_to_fshandle( init_info->fs_specific_info.xfs_mount_point,  (void **)(&fshandle), &fshandlelen) ) < 0 )
+    Return( ERR_FSAL_FAULT, errno, INDEX_FSAL_Init ) ;
 
+  /* Regular exit */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);
 
 }
