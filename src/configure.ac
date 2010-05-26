@@ -434,6 +434,10 @@ case $FSAL in
 		FS_NAME="fuse"
 		;;
 	LUSTRE)
+		AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
+		if test "x$have_lustre2_api" != "xyes" ; then
+	            AC_MSG_ERROR([Lustre 2.x and liblustreapi are required])
+		fi
 		AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystem])
 		FSAL_CFLAGS=
                 FSAL_LDFLAGS="-llustreapi"

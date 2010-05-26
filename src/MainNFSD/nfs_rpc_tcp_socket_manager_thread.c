@@ -47,7 +47,6 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
-#include <gssapi/gssapi.h>
 #include <sys/select.h>
 #include "HashData.h"
 #include "HashTable.h"
@@ -55,6 +54,7 @@
 #if defined( _USE_TIRPC )
 #include <rpc/rpc.h>
 #elif defined( _USE_GSSRPC )
+#include <gssapi/gssapi.h>
 #include <gssrpc/rpc.h>
 #include <gssrpc/svc.h>
 #include <gssrpc/pmap_clnt.h>
