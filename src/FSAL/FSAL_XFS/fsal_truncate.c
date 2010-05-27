@@ -1,5 +1,26 @@
 /*
- * vim:expandtab:shiftwidth=4:tabstop=4:
+ * vim:expandtab:shiftwidth=8:tabstop=8:
+ *
+ * Copyright CEA/DAM/DIF  (2008)
+ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
+ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * ------------- 
  */
 
 /**
@@ -54,7 +75,7 @@ fsal_status_t FSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
 {
 
   int rc, errsv;
-  fsal_path_t fsalpath;
+  int fd ;
   fsal_status_t st;
 
   /* sanity checks.
@@ -64,16 +85,21 @@ fsal_status_t FSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
   /* get the path of the file and its handle */
-  st = fsal_internal_Handle2FidPath(p_context, p_filehandle, &fsalpath);
+  TakeTokenFSCall();
+  st = fsal_internal_handle2fd( p_context, p_filehandle , &fd, O_RDWR ) ;
+  ReleaseTokenFSCall();
+
   if(FSAL_IS_ERROR(st))
     ReturnStatus(st, INDEX_FSAL_truncate);
 
   /* Executes the POSIX truncate operation */
 
   TakeTokenFSCall();
-  rc = truncate(fsalpath.path, length);
+  rc = ftruncate(fd , length);
   errsv = errno;
   ReleaseTokenFSCall();
+
+  close( fd ) ;
 
   /* convert return code */
   if(rc)

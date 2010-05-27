@@ -179,7 +179,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   /* No 'cd .' is allowed return NFS4ERR_BADNAME in this case */
   /* No 'cd .. is allowed, return EINVAL in this case. NFS4_OP_LOOKUPP should be use instead */
-  if(!FSAL_namecmp(&name, &FSAL_DOT) || !FSAL_namecmp(&name, &FSAL_DOT_DOT))
+  if(!FSAL_namecmp(&name, (fsal_name_t *)&FSAL_DOT) || !FSAL_namecmp(&name, (fsal_name_t *)&FSAL_DOT_DOT))
     {
       res_LOOKUP4.status = NFS4ERR_BADNAME;
       return res_LOOKUP4.status;

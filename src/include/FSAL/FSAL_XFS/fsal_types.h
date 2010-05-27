@@ -174,9 +174,10 @@ typedef struct fsal_lockdesc__
 
 typedef struct fsal_dir__
 {
-  DIR *p_dir;
+  int fd ;
   fsal_op_context_t context;    /* credential for accessing the directory */
   fsal_path_t path;
+  unsigned int dir_offset ;
   fsal_handle_t handle;
 } fsal_dir_t;
 

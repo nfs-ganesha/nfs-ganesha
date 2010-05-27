@@ -852,8 +852,8 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
                             array_dirent[iter].name.name);
 
           /* It is not needed to cache '.' and '..' */
-          if(!FSAL_namecmp(&(array_dirent[iter].name), &FSAL_DOT) ||
-             !FSAL_namecmp(&(array_dirent[iter].name), &FSAL_DOT_DOT))
+          if(!FSAL_namecmp(&(array_dirent[iter].name), (fsal_name_t  *)&FSAL_DOT) ||
+             !FSAL_namecmp(&(array_dirent[iter].name), (fsal_name_t  *)&FSAL_DOT_DOT))
             {
               DisplayLogJdLevel(pclient->log_outputs,
                                 NIV_FULL_DEBUG,

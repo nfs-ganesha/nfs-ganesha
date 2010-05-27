@@ -64,9 +64,9 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
                             fsal_attrib_list_t * p_object_attributes    /* IN/OUT */
     )
 {
-  int rc;
+  int rc, errsv;
   fsal_status_t st;
-  fsal_path_t fsalpath;
+  int fd ;
   struct stat buffstat;
 
   /* sanity checks.
@@ -75,23 +75,27 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
   if(!p_filehandle || !p_context || !p_object_attributes)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
 
-  /* get the path of the file */
-  st = fsal_internal_Handle2FidPath(p_context, p_filehandle, &fsalpath);
+  TakeTokenFSCall();
+  st = fsal_internal_handle2fd( p_context, p_filehandle , &fd, O_RDONLY ) ;
+  ReleaseTokenFSCall();
+
   if(FSAL_IS_ERROR(st))
     ReturnStatus(st, INDEX_FSAL_getattrs);
 
   /* get file metadata */
   TakeTokenFSCall();
-  rc = lstat(fsalpath.path, &buffstat);
+  rc = fstat( fd, &buffstat);
+  errsv = errno ;
   ReleaseTokenFSCall();
+
+  close( fd ) ;
 
   if(rc != 0)
     {
-      rc = errno;
-      if(rc == ENOENT)
-        Return(ERR_FSAL_STALE, rc, INDEX_FSAL_getattrs);
+      if( errsv == ENOENT)
+        Return(ERR_FSAL_STALE,  errsv, INDEX_FSAL_getattrs);
       else
-        Return(posix2fsal_error(rc), rc, INDEX_FSAL_getattrs);
+        Return(posix2fsal_error( errsv),  errsv, INDEX_FSAL_getattrs);
     }
 
   /* convert attributes */
@@ -143,7 +147,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
   fsal_status_t status;
   fsal_attrib_list_t attrs;
 
-  fsal_path_t fsalpath;
+  int fd ;
   struct stat buffstat;
 
   /* sanity checks.
@@ -176,19 +180,22 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
       attrs.mode &= (~global_fs_info.umask);
     }
 
-  /* convert handle into path */
-  status = fsal_internal_Handle2FidPath(p_context, p_filehandle, &fsalpath);
+  TakeTokenFSCall();
+  status = fsal_internal_handle2fd( p_context, p_filehandle , &fd, O_RDWR ) ;
+  ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_setattrs);
 
   /* get current attributes */
   TakeTokenFSCall();
-  rc = lstat(fsalpath.path, &buffstat);
+  rc = fstat( fd, &buffstat);
   errsv = errno;
   ReleaseTokenFSCall();
 
   if(rc != 0)
     {
+      close( fd ) ;
+
       if(errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_setattrs);
       else
@@ -220,7 +227,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
             }
 
           TakeTokenFSCall();
-          rc = chmod(fsalpath.path, fsal2unix_mode(attrs.mode));
+          rc = fchmod( fd, fsal2unix_mode(attrs.mode));
           errsv = errno;
           ReleaseTokenFSCall();
 
@@ -297,7 +304,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
 #endif
 
       TakeTokenFSCall();
-      rc = lchown(fsalpath.path,
+      rc = fchown(fd,
                   FSAL_TEST_MASK(attrs.asked_attributes,
                                  FSAL_ATTR_OWNER) ? (int)attrs.owner : -1,
                   FSAL_TEST_MASK(attrs.asked_attributes,
@@ -330,17 +337,22 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME | FSAL_ATTR_MTIME))
     {
 
-      struct utimbuf timebuf;
+      struct timeval timebuf[2];
 
-      timebuf.actime =
+      /* Atime */
+      timebuf[0].tv_sec = 
           (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME) ? (time_t) attrs.
            atime.seconds : buffstat.st_atime);
-      timebuf.modtime =
+      timebuf[0].tv_usec = 0 ;
+
+      /* Mtime */
+      timebuf[1].tv_sec = 
           (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t) attrs.
            mtime.seconds : buffstat.st_mtime);
+      timebuf[1].tv_usec = 0 ;
 
       TakeTokenFSCall();
-      rc = utime(fsalpath.path, &timebuf);
+      rc = futimes( fd, timebuf);
       errsv = errno;
       ReleaseTokenFSCall();
       if(rc)

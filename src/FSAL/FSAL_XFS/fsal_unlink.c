@@ -1,5 +1,26 @@
 /*
- * vim:expandtab:shiftwidth=4:tabstop=4:
+ * vim:expandtab:shiftwidth=8:tabstop=8:
+ *
+ * Copyright CEA/DAM/DIF  (2008)
+ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
+ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * ------------- 
  */
 
 /**
@@ -53,24 +74,28 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
   fsal_status_t status;
   int rc, errsv;
   struct stat buffstat, buffstat_parent;
-  fsal_path_t fsalpath;
+  int fd ;
 
   /* sanity checks. */
   if(!p_parent_directory_handle || !p_context || !p_object_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_unlink);
 
   /* build the FID path */
-  status = fsal_internal_Handle2FidPath(p_context, p_parent_directory_handle, &fsalpath);
+  TakeTokenFSCall();
+  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_RDWR ) ;
+  ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_unlink);
 
   /* get directory metadata */
   TakeTokenFSCall();
-  rc = lstat(fsalpath.path, &buffstat_parent);
+  rc = fstat(fd, &buffstat_parent);
   errsv = errno;
   ReleaseTokenFSCall();
   if(rc)
     {
+      close( fd ) ;
+
       if(errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_unlink);
       else
@@ -78,17 +103,17 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
     }
 
   /* build the child path */
-  status = fsal_internal_appendNameToPath(&fsalpath, p_object_name);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_unlink);
 
   /* get file metadata */
   TakeTokenFSCall();
-  rc = lstat(fsalpath.path, &buffstat);
+  rc = fstatat( fd, p_object_name->name, &buffstat_parent, AT_SYMLINK_NOFOLLOW );
   errsv = errno;
   ReleaseTokenFSCall();
   if(rc)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_unlink);
+   {
+    close( fd ) ;
+    Return(posix2fsal_error(errno), errno, INDEX_FSAL_unlink);
+   }
 
   /* check access rights */
 
@@ -97,6 +122,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
      && buffstat_parent.st_uid != p_context->credential.user
      && buffstat.st_uid != p_context->credential.user && p_context->credential.user != 0)
     {
+      close( fd ) ;
       Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_unlink);
     }
 
@@ -111,9 +137,12 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
    ******************************/
   TakeTokenFSCall();
   /* If the object to delete is a directory, use 'rmdir' to delete the object, else use 'unlink' */
-  rc = (S_ISDIR(buffstat.st_mode)) ? rmdir(fsalpath.path) : unlink(fsalpath.path);
+  rc = (S_ISDIR(buffstat.st_mode)) ? unlinkat(fd, p_object_name->name, AT_REMOVEDIR ) : unlinkat(fd, p_object_name->name, 0 ) ;
   errsv = errno;
   ReleaseTokenFSCall();
+ 
+  close( fd ) ;
+
   if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_unlink);
 
