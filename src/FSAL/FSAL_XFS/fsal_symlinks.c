@@ -1,5 +1,26 @@
 /*
- * vim:expandtab:shiftwidth=4:tabstop=4:
+ * vim:expandtab:shiftwidth=8:tabstop=8:
+ *
+ * Copyright CEA/DAM/DIF  (2008)
+ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
+ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * ------------- 
  */
 
 /**
@@ -61,16 +82,12 @@ fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
   if(!p_linkhandle || !p_context || !p_link_content)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readlink);
 
-  status = fsal_internal_Handle2FidPath(p_context, p_linkhandle, &fsalpath);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_readlink);
-
   memset(link_content_out, 0, FSAL_MAX_PATH_LEN);
 
   /* Read the link on the filesystem */
 
   TakeTokenFSCall();
-  rc = readlink(fsalpath.path, link_content_out, FSAL_MAX_PATH_LEN);
+  rc = readlink_by_handle( p_linkhandle->handle_val, p_linkhandle->handle_len, link_content_out, FSAL_MAX_PATH_LEN);
   errsv = errno;
   ReleaseTokenFSCall();
 
@@ -146,7 +163,7 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
 
   int rc, errsv;
   fsal_status_t status;
-  fsal_path_t fsalpath;
+  int fd ;
   struct stat buffstat;
   int setgid_bit = FALSE;
 
@@ -162,19 +179,23 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
   if(!global_fs_info.symlink_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_symlink);
 
-  /* build the new path and check the permissions on the parent directory */
-  status = fsal_internal_Handle2FidPath(p_context, p_parent_directory_handle, &fsalpath);
+  TakeTokenFSCall();
+  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_RDWR ) ;
+  ReleaseTokenFSCall();
+
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_symlink);
 
   /* retrieve directory metadata, for checking access */
   TakeTokenFSCall();
-  rc = lstat(fsalpath.path, &buffstat);
+  rc = fstat( fd, &buffstat);
   errsv = errno;
   ReleaseTokenFSCall();
 
   if(rc)
     {
+      close( fd ) ;
+
       if(errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_symlink);
       else
@@ -190,34 +211,28 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
 
   /* build symlink path */
 
-  status = fsal_internal_appendNameToPath(&fsalpath, p_linkname);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_symlink);
-
   /* create the symlink on the filesystem. */
 
   TakeTokenFSCall();
-  rc = symlink(p_linkcontent->path, fsalpath.path);
+  rc = symlinkat(p_linkcontent->path, fd, p_linkname->name );
   errsv = errno;
   ReleaseTokenFSCall();
 
   if(rc)
+   {
+    close( fd ) ;
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
-
-  /* Get symlink handle */
-  TakeTokenFSCall();
-  status = fsal_internal_Path2Handle(p_context, &fsalpath, p_link_handle);
-  ReleaseTokenFSCall();
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_lookup);
+   }
 
   /* chown the symlink to the current user/group */
 
   TakeTokenFSCall();
-  rc = lchown(fsalpath.path, p_context->credential.user,
-              setgid_bit ? -1 : p_context->credential.group);
+  rc = fchownat(fd, p_linkname->name , p_context->credential.user,
+              setgid_bit ? -1 : p_context->credential.group, AT_SYMLINK_NOFOLLOW );
   errsv = errno;
   ReleaseTokenFSCall();
+
+  close( fd ) ;
 
   if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);

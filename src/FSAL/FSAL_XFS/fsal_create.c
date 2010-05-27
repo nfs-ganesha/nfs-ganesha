@@ -58,11 +58,11 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
     )
 {
 
-  int rc, fd, errsv;
+  int rc, errsv;
   int setgid_bit = 0;
   fsal_status_t status;
 
-  fsal_path_t fsalpath;
+  int fd, newfd ;
   struct stat buffstat;
   mode_t unix_mode;
 
@@ -82,18 +82,21 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Creation mode: 0%o", accessmode);
 #endif
 
-  /* build the destination path */
-  status = fsal_internal_Handle2FidPath(p_context, p_parent_directory_handle, &fsalpath);
+  TakeTokenFSCall();
+  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_RDWR ) ;
+  ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_create);
 
   /* retrieve directory metadata */
   TakeTokenFSCall();
-  rc = lstat(fsalpath.path, &buffstat);
+  rc = fstat( fd, &buffstat);
   errsv = errno;
   ReleaseTokenFSCall();
   if(rc)
     {
+      close( fd ) ;
+
       if(errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_create);
       else
@@ -109,27 +112,24 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_create);
 
-  /* build new entry path */
-  status = fsal_internal_appendNameToPath(&fsalpath, p_filename);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_create);
-
   /* call to filesystem */
 
   TakeTokenFSCall();
   /* create the file.
    * O_EXCL=>  error if the file already exists */
-  fd = open(fsalpath.path, O_CREAT | O_WRONLY | O_TRUNC | O_EXCL, unix_mode);
+  newfd = openat( fd, p_filename->name, O_CREAT | O_WRONLY | O_TRUNC | O_EXCL, unix_mode);
   errsv = errno;
 
-  if(fd == -1)
+ close( fd ) ;
+
+  if( newfd == -1)
     {
       ReleaseTokenFSCall();
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
     }
 
   /* close the file descriptor */
-  rc = close(fd);
+  rc = close(newfd);
   errsv = errno;
   if(rc)
     {
@@ -138,7 +138,7 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
     }
 
   /* get the new file handle */
-  status = fsal_internal_Path2Handle(p_context, &fsalpath, p_object_handle);
+  status = fsal_internal_fd2handle(p_context, newfd, p_object_handle);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
@@ -151,13 +151,20 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
     {
       TakeTokenFSCall();
       /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-      rc = lchown(fsalpath.path, p_context->credential.user,
+      rc = fchown( fd , p_context->credential.user,
                   setgid_bit ? -1 : (int)p_context->credential.group);
       errsv = errno;
       ReleaseTokenFSCall();
       if(rc)
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
+       {
+         close( fd ) ;
+         close( newfd ) ;
+         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
+       }
     }
+
+  close( fd ) ;
+  close( newfd ) ;
 
   /* retrieve file attributes */
   if(p_object_attributes)
@@ -221,7 +228,7 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
   struct stat buffstat;
   mode_t unix_mode;
   fsal_status_t status;
-  fsal_path_t fsalpath;
+  int fd, newfd ;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -235,18 +242,22 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
   /* Apply umask */
   unix_mode = unix_mode & ~global_fs_info.umask;
 
-  /* build the destination path */
-  status = fsal_internal_Handle2FidPath(p_context, p_parent_directory_handle, &fsalpath);
+  TakeTokenFSCall();
+  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_RDWR ) ;
+  ReleaseTokenFSCall();
+
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_mkdir);
 
   /* get directory metadata */
   TakeTokenFSCall();
-  rc = lstat(fsalpath.path, &buffstat);
+  rc = fstat( fd, &buffstat);
   errsv = errno;
   ReleaseTokenFSCall();
   if(rc)
     {
+      close( fd ) ;
+
       if(errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_create);
       else
@@ -264,27 +275,38 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
 
   /* build new entry path */
 
-  status = fsal_internal_appendNameToPath(&fsalpath, p_dirname);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_mkdir);
-
   /* creates the directory and get its handle */
 
   TakeTokenFSCall();
-  rc = mkdir(fsalpath.path, unix_mode);
+  rc = mkdirat( fd, p_dirname->name, unix_mode);
   errsv = errno;
   if(rc)
     {
+      close( fd ) ;
+
       ReleaseTokenFSCall();
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
     }
 
   /* get the new handle */
-  status = fsal_internal_Path2Handle(p_context, &fsalpath, p_object_handle);
+
+  if( ( newfd = openat( fd, p_dirname->name, O_RDONLY|O_DIRECTORY, 0600 ) ) < 0 )
+   {
+      errsv = errno ;
+      close( fd ) ;
+      ReleaseTokenFSCall();
+      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
+   }
+  
+  status = fsal_internal_fd2handle(p_context, newfd, p_object_handle);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
+   {
+    close( fd ) ; 
+    close( newfd ) ;
     ReturnStatus(status, INDEX_FSAL_mkdir);
+   }
 
   /* the directory has been created */
   /* chown the file to the current user/group */
@@ -293,13 +315,20 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
     {
       TakeTokenFSCall();
       /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-      rc = lchown(fsalpath.path, p_context->credential.user,
+      rc = fchown( newfd, p_context->credential.user,
                   setgid_bit ? -1 : (int)p_context->credential.group);
       errsv = errno;
       ReleaseTokenFSCall();
       if(rc)
+      {
+        close( fd ) ;
+        close( newfd ) ;
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
+      }
     }
+
+  close( fd ) ;
+  close( newfd ) ;
 
   /* retrieve file attributes */
   if(p_object_attributes)
@@ -359,7 +388,7 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
 
   int rc, errsv;
   fsal_status_t status;
-  fsal_path_t fsalpath_old, fsalpath_new;
+  int srcfd, dstfd ;
   struct stat buffstat_dir;
 
   /* sanity checks.
@@ -378,24 +407,33 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
 #endif
 
   /* get the target handle access by fid */
-  status = fsal_internal_Handle2FidPath(p_context, p_target_handle, &fsalpath_old);
+  TakeTokenFSCall();
+  status = fsal_internal_handle2fd( p_context, p_target_handle , &srcfd, O_RDWR ) ;
+  ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_link);
 
   /* build the destination path and check permissions on the directory */
-  status = fsal_internal_Handle2FidPath(p_context, p_dir_handle, &fsalpath_new);
+  TakeTokenFSCall();
+  status = fsal_internal_handle2fd( p_context, p_dir_handle , &dstfd, O_RDWR ) ;
+  ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
+   {
+    close( srcfd ) ;
     ReturnStatus(status, INDEX_FSAL_link);
-
+   }
   /* retrieve target directory metadata */
 
   TakeTokenFSCall();
-  rc = lstat(fsalpath_new.path, &buffstat_dir);
+  rc = fstat( dstfd, &buffstat_dir);
   errsv = errno;
   ReleaseTokenFSCall();
 
   if(rc)
     {
+      close( srcfd ) ;
+      close( dstfd ) ;
+
       if(errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_link);
       else
@@ -408,15 +446,10 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_link);
 
-  /* build the new entry path */
-  status = fsal_internal_appendNameToPath(&fsalpath_new, p_link_name);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_link);
-
   /* Create the link on the filesystem */
 
   TakeTokenFSCall();
-  rc = link(fsalpath_old.path, fsalpath_new.path);
+  //rc = linkat(oldfd, fsalpath_new.path);
   errsv = errno;
   ReleaseTokenFSCall();
   if(rc)
@@ -462,7 +495,7 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
   int setgid_bit = 0;
   struct stat buffstat;
   fsal_status_t status;
-  fsal_path_t fsalpath;
+  int fd, newfd ;
 
   mode_t unix_mode = 0;
   dev_t unix_dev = 0;
@@ -509,18 +542,23 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
     }
 
   /* build the directory path */
-  status = fsal_internal_Handle2FidPath(p_context, parentdir_handle, &fsalpath);
+  TakeTokenFSCall();
+  status = fsal_internal_handle2fd( p_context, parentdir_handle , &fd, O_RDWR ) ;
+  ReleaseTokenFSCall();
+
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_mknode);
 
   /* retrieve directory attributes */
   TakeTokenFSCall();
-  rc = lstat(fsalpath.path, &buffstat);
+  rc = fstat( fd, &buffstat);
   errsv = errno;
   ReleaseTokenFSCall();
 
   if(rc)
     {
+      close( fd ) ;
+
       if(errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_mknode);
       else
@@ -535,27 +573,36 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_mknode);
 
-  status = fsal_internal_appendNameToPath(&fsalpath, p_node_name);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_mknode);
-
   /* creates the node, then stats it */
   TakeTokenFSCall();
-  rc = mknod(fsalpath.path, unix_mode, unix_dev);
+  rc = mknodat( fd, p_node_name->name, unix_mode, unix_dev);
   errsv = errno;
 
   if(rc)
     {
+      close( fd ) ;
       ReleaseTokenFSCall();
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mknode);
     }
 
-  /* get the new object handle */
-  status = fsal_internal_Path2Handle(p_context, &fsalpath, p_object_handle);
+  /* get the new object handle */ 
+  if( ( newfd = openat( fd, p_node_name->name, O_RDONLY, 0600 ) ) < 0 )
+   {
+      errsv = errno ;
+      close( fd ) ;
+      ReleaseTokenFSCall();
+      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
+   }
+
+  status = fsal_internal_fd2handle(p_context, newfd, p_object_handle);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
+  {
+    close( fd ) ;
+    close( newfd ) ;
     ReturnStatus(status, INDEX_FSAL_mknode);
+  }
 
   /* the node has been created */
   /* chown the file to the current user/group */
@@ -565,15 +612,22 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
       TakeTokenFSCall();
 
       /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-      rc = lchown(fsalpath.path, p_context->credential.user,
+      rc = fchown( newfd, p_context->credential.user,
                   setgid_bit ? -1 : (int)p_context->credential.group);
       errsv = errno;
 
       ReleaseTokenFSCall();
 
       if(rc)
+       {
+        close( fd ) ;
+        close( newfd ) ;
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mknode);
+       }
     }
+
+  close( fd ) ;
+  close( newfd ) ;
 
   /* Fills the attributes if needed */
   if(node_attributes)

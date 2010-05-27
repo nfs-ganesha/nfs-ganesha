@@ -178,7 +178,7 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   /* Test RM7: remiving '.' should return NFS4ERR_BADNAME */
-  if(!FSAL_namecmp(&name, &FSAL_DOT) || !FSAL_namecmp(&name, &FSAL_DOT_DOT))
+  if(!FSAL_namecmp(&name, (fsal_name_t *)&FSAL_DOT) || !FSAL_namecmp(&name, (fsal_name_t *)&FSAL_DOT_DOT))
     {
       res_REMOVE4.status = NFS4ERR_BADNAME;
       return res_REMOVE4.status;

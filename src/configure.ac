@@ -450,7 +450,7 @@ case $FSAL in
                 AC_CHECK_HEADERS([xfs/handle.h])
 		FSAL_CFLAGS=
                 FSAL_LDFLAGS="-lhandle"
-		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsalxfshandle.la"
+		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_XFS/libfsalxfs.la"
 		FS_NAME="xfs"
 		;;
 

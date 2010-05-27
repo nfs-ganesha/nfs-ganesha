@@ -118,7 +118,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
 
   /* retrieve directory attributes */
   TakeTokenFSCall();
-  status =  fsal_internal_handle2fd( p_context, p_parent_directory_handle, &parentfd, O_DIRECTORY ) ;
+  status =  fsal_internal_handle2fd( p_context, p_parent_directory_handle, &parentfd, O_RDONLY ) ;
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_lookup);

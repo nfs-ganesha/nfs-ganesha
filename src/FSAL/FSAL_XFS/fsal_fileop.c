@@ -1,5 +1,26 @@
 /*
- * vim:expandtab:shiftwidth=4:tabstop=4:
+ * vim:expandtab:shiftwidth=8:tabstop=8:
+ *
+ * Copyright CEA/DAM/DIF  (2008)
+ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
+ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * ------------- 
  */
 
 /**
@@ -118,7 +139,7 @@ fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
   int rc, errsv;
   fsal_status_t status;
 
-  fsal_path_t fsalpath;
+  int fd ; 
   struct stat buffstat;
   int posix_flags = 0;
 
@@ -127,32 +148,6 @@ fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
    */
   if(!p_filehandle || !p_context || !p_file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
-
-  status = fsal_internal_Handle2FidPath(p_context, p_filehandle, &fsalpath);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_open);
-
-  /* retrieve file attributes for checking access rights */
-
-  TakeTokenFSCall();
-  rc = lstat(fsalpath.path, &buffstat);
-  errsv = errno;
-  ReleaseTokenFSCall();
-
-  if(rc)
-    {
-      if(errsv == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_open);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_open);
-    }
-
-  status =
-      fsal_internal_testAccess(p_context,
-                               openflags & FSAL_O_RDONLY ? FSAL_R_OK : FSAL_W_OK,
-                               &buffstat, NULL);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_open);
 
   /* convert fsal open flags to posix open flags */
   rc = fsal2posix_openflags(openflags, &posix_flags);
@@ -166,12 +161,43 @@ fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
     }
 
   TakeTokenFSCall();
-  p_file_descriptor->fd = open(fsalpath.path, posix_flags, 0644);
+  status = fsal_internal_handle2fd( p_context, p_filehandle , &fd, posix_flags ) ;
+  ReleaseTokenFSCall();
+
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_open);
+
+  /* retrieve file attributes for checking access rights */
+
+  TakeTokenFSCall();
+  rc = fstat( fd, &buffstat);
   errsv = errno;
   ReleaseTokenFSCall();
 
-  if(p_file_descriptor->fd == -1)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_open);
+  if(rc)
+    {
+      close( fd ) ;
+
+      if(errsv == ENOENT)
+        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_open);
+      else
+        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_open);
+    }
+
+  status =
+      fsal_internal_testAccess(p_context,
+                               openflags & FSAL_O_RDONLY ? FSAL_R_OK : FSAL_W_OK,
+                               &buffstat, NULL);
+  if(FSAL_IS_ERROR(status))
+   {
+     close( fd ) ;
+     ReturnStatus(status, INDEX_FSAL_open);
+   }
+
+  TakeTokenFSCall();
+  p_file_descriptor->fd = fd ;
+  errsv = errno;
+  ReleaseTokenFSCall();
 
   /* set the read-only flag of the file descriptor */
   p_file_descriptor->ro = openflags & FSAL_O_RDONLY;

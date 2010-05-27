@@ -1,6 +1,28 @@
 /*
- * vim:expandtab:shiftwidth=4:tabstop=4:
+ * vim:expandtab:shiftwidth=8:tabstop=8:
+ *
+ * Copyright CEA/DAM/DIF  (2008)
+ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
+ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * ------------- 
  */
+
 
 /**
  *
@@ -66,7 +88,7 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
   int rc, errsv;
   fsal_status_t status;
   struct stat old_parent_buffstat, new_parent_buffstat, buffstat;
-  fsal_path_t old_fsalpath, new_fsalpath;
+  int old_parent_fd, new_parent_fd ;
   int src_equal_tgt = FALSE;
 
   /* sanity checks.
@@ -78,14 +100,17 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
 
   /* Get directory access path by fid */
 
-  status = fsal_internal_Handle2FidPath(p_context, p_old_parentdir_handle, &old_fsalpath);
+  TakeTokenFSCall();
+  status = fsal_internal_handle2fd( p_context, p_old_parentdir_handle, &old_parent_fd, O_RDWR ) ;
+  ReleaseTokenFSCall();
+ 
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_rename);
 
   /* retrieve directory metadata for checking access rights */
 
   TakeTokenFSCall();
-  rc = lstat(old_fsalpath.path, &old_parent_buffstat);
+  rc = fstat( old_parent_fd, &old_parent_buffstat);
   errsv = errno;
   ReleaseTokenFSCall();
 
@@ -100,20 +125,24 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
   /* optimisation : don't do the job twice if source dir = dest dir  */
   if(!FSAL_handlecmp(p_old_parentdir_handle, p_new_parentdir_handle, &status))
     {
-      FSAL_pathcpy(&new_fsalpath, &old_fsalpath);
+      new_parent_fd = old_parent_fd ;
       src_equal_tgt = TRUE;
       new_parent_buffstat = old_parent_buffstat;
     }
   else
     {
-      status =
-          fsal_internal_Handle2FidPath(p_context, p_new_parentdir_handle, &new_fsalpath);
-      if(FSAL_IS_ERROR(status))
-        ReturnStatus(status, INDEX_FSAL_rename);
+      TakeTokenFSCall();
+      status = fsal_internal_handle2fd( p_context, p_new_parentdir_handle, &new_parent_fd, O_RDWR ) ;
+      ReleaseTokenFSCall();
 
+      if(FSAL_IS_ERROR(status))
+       {
+        close( old_parent_fd ) ;
+        ReturnStatus(status, INDEX_FSAL_rename);
+       }
       /* retrieve destination attrs */
       TakeTokenFSCall();
-      rc = lstat(new_fsalpath.path, &new_parent_buffstat);
+      rc = fstat(new_parent_fd, &new_parent_buffstat);
       errsv = errno;
       ReleaseTokenFSCall();
 
@@ -145,16 +174,8 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
     }
 
   /* build file paths */
-
-  status = fsal_internal_appendNameToPath(&old_fsalpath, p_old_name);
-  if(FSAL_IS_ERROR(status))
-    Return(status.major, status.minor, INDEX_FSAL_rename);
-  status = fsal_internal_appendNameToPath(&new_fsalpath, p_new_name);
-  if(FSAL_IS_ERROR(status))
-    Return(status.major, status.minor, INDEX_FSAL_rename);
-
   TakeTokenFSCall();
-  rc = lstat(old_fsalpath.path, &buffstat);
+  rc = fstatat(old_parent_fd, p_old_name->name, &buffstat, AT_SYMLINK_NOFOLLOW );
   errsv = errno;
   ReleaseTokenFSCall();
   if(rc)
@@ -172,27 +193,43 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
   if(new_parent_buffstat.st_mode & S_ISVTX)
     {
       TakeTokenFSCall();
-      rc = lstat(new_fsalpath.path, &buffstat);
+      rc = fstatat(new_parent_fd, p_new_name->name, &buffstat, AT_SYMLINK_NOFOLLOW );
       errsv = errno;
       ReleaseTokenFSCall();
-      if(rc)
+
+      if( rc < 0 )
         {
           if(errsv != ENOENT)
+           {
+            close( old_parent_fd ) ;
+            close( new_parent_fd ) ;
             Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
+           }
         }
-      else if(new_parent_buffstat.st_uid != p_context->credential.user
+      else 
+       {
+
+        if(new_parent_buffstat.st_uid != p_context->credential.user
               && buffstat.st_uid != p_context->credential.user
               && p_context->credential.user != 0)
-        Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
+         {
+           close( old_parent_fd ) ;
+           close( new_parent_fd ) ;
+           Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
+         }
+       }
     }
 
   /*************************************
    * Rename the file on the filesystem *
    *************************************/
   TakeTokenFSCall();
-  rc = rename(old_fsalpath.path, new_fsalpath.path);
+  rc = renameat( old_parent_fd, p_old_name->name,
+                 new_parent_fd, p_new_name->name );
   errsv = errno;
   ReleaseTokenFSCall();
+  close( old_parent_fd ) ;
+  close( new_parent_fd ) ;
 
   if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);

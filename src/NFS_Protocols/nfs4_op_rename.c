@@ -215,14 +215,14 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   /* Sanuty check: never rename to '.' or '..' */
-  if(!FSAL_namecmp(&newname, &FSAL_DOT) || !FSAL_namecmp(&newname, &FSAL_DOT_DOT))
+  if(!FSAL_namecmp(&newname, (fsal_name_t *)&FSAL_DOT) || !FSAL_namecmp(&newname, (fsal_name_t *)&FSAL_DOT_DOT))
     {
       res_RENAME4.status = NFS4ERR_BADNAME;
       return res_RENAME4.status;
     }
 
   /* Sanuty check: never rename to '.' or '..' */
-  if(!FSAL_namecmp(&oldname, &FSAL_DOT) || !FSAL_namecmp(&oldname, &FSAL_DOT_DOT))
+  if(!FSAL_namecmp(&oldname, (fsal_name_t *)&FSAL_DOT) || !FSAL_namecmp(&oldname, (fsal_name_t *)&FSAL_DOT_DOT))
     {
       res_RENAME4.status = NFS4ERR_BADNAME;
       return res_RENAME4.status;

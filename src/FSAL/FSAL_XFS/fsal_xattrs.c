@@ -10,15 +10,18 @@
 #include "config.h"
 #endif
 
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif                          /* _SOLARIS */
-
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 
-#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+
+
+/* Those definitions are only used for attributes emulated by FSAL.
+ * For FUSE filesystems, we call FS primitives directly.
+ */
+#if 0
 
 /* generic definitions for extended attributes */
 
@@ -58,25 +61,19 @@ typedef struct fsal_xattr_def__
 } fsal_xattr_def_t;
 
 /*
- * XATTRS GET/SET FUNCTIONS
+ * DEFINE HERE YOUR GET/SET FUNCTIONS
  */
 
-int get_svr_addr(fsal_handle_t * p_objecthandle,        /* IN */
-                 fsal_op_context_t * p_context, /* IN */
-                 caddr_t buffer_addr,   /* IN/OUT */
-                 size_t buffer_size,    /* IN */
-                 size_t * p_output_size)        /* OUT */
+int get_void_attr(fsal_handle_t * p_objecthandle,       /* IN */
+                  fsal_op_context_t * p_context,        /* IN */
+                  caddr_t buffer_addr,  /* IN/OUT */
+                  size_t buffer_size,   /* IN */
+                  size_t * p_output_size)       /* OUT */
 {
-  uint32_t addr;
-
   if(!p_objecthandle || !p_context || !p_output_size)
     return ERR_FSAL_FAULT;
 
-  addr = ntohl(p_context->srv_addr);
-
-  snprintf((char *)buffer_addr, buffer_size, "%u.%u.%u.%u",
-           (addr & 0xFF000000) >> 24,
-           (addr & 0x00FF0000) >> 16, (addr & 0x0000FF00) >> 8, (addr & 0x000000FF));
+  snprintf((char *)buffer_addr, buffer_size, "Hello World !");
 
   *p_output_size = strlen((char *)buffer_addr) + 1;
 
@@ -84,207 +81,13 @@ int get_svr_addr(fsal_handle_t * p_objecthandle,        /* IN */
 
 }
 
-int get_svr_port(fsal_handle_t * p_objecthandle,        /* IN */
-                 fsal_op_context_t * p_context, /* IN */
-                 caddr_t buffer_addr,   /* IN/OUT */
-                 size_t buffer_size,    /* IN */
-                 size_t * p_output_size)        /* OUT */
-{
-  uint16_t port;
-
-  if(!p_objecthandle || !p_context || !p_output_size)
-    return ERR_FSAL_FAULT;
-
-  port = ntohs(p_context->srv_port);
-
-  snprintf((char *)buffer_addr, buffer_size, "%hu", port);
-
-  *p_output_size = strlen((char *)buffer_addr) + 1;
-
-  return 0;
-
-}
-
-int get_prognum(fsal_handle_t * p_objecthandle, /* IN */
-                fsal_op_context_t * p_context,  /* IN */
-                caddr_t buffer_addr,    /* IN/OUT */
-                size_t buffer_size,     /* IN */
-                size_t * p_output_size) /* OUT */
-{
-  if(!p_objecthandle || !p_context || !p_output_size)
-    return ERR_FSAL_FAULT;
-
-  snprintf((char *)buffer_addr, buffer_size, "%u", p_context->srv_prognum);
-
-  *p_output_size = strlen((char *)buffer_addr) + 1;
-
-  return 0;
-
-}
-
-int get_proto(fsal_handle_t * p_objecthandle,   /* IN */
-              fsal_op_context_t * p_context,    /* IN */
-              caddr_t buffer_addr,      /* IN/OUT */
-              size_t buffer_size,       /* IN */
-              size_t * p_output_size)   /* OUT */
-{
-  if(!p_objecthandle || !p_context || !p_output_size)
-    return ERR_FSAL_FAULT;
-
-  snprintf((char *)buffer_addr, buffer_size, "%s", p_context->srv_proto);
-
-  *p_output_size = strlen((char *)buffer_addr) + 1;
-
-  return 0;
-
-}
-
-int get_clientid(fsal_handle_t * p_objecthandle,        /* IN */
-                 fsal_op_context_t * p_context, /* IN */
-                 caddr_t buffer_addr,   /* IN/OUT */
-                 size_t buffer_size,    /* IN */
-                 size_t * p_output_size)        /* OUT */
-{
-  if(!p_objecthandle || !p_context || !p_output_size)
-    return ERR_FSAL_FAULT;
-
-  snprintf((char *)buffer_addr, buffer_size, "%llX",
-           (unsigned long long int)p_context->clientid);
-
-  *p_output_size = strlen((char *)buffer_addr) + 1;
-
-  return 0;
-
-}
-
-int get_type(fsal_handle_t * p_objecthandle,    /* IN */
-             fsal_op_context_t * p_context,     /* IN */
-             caddr_t buffer_addr,       /* IN/OUT */
-             size_t buffer_size,        /* IN */
-             size_t * p_output_size)    /* OUT */
-{
-  if(!p_objecthandle || !p_context || !p_output_size)
-    return ERR_FSAL_FAULT;
-
-  switch (p_objecthandle->object_type_reminder)
-    {
-    case FSAL_TYPE_DIR:
-      strncpy((char *)buffer_addr, "directory", buffer_size);
-      break;
-
-    case FSAL_TYPE_FILE:
-      strncpy((char *)buffer_addr, "file", buffer_size);
-      break;
-
-    case FSAL_TYPE_LNK:
-      strncpy((char *)buffer_addr, "symlink", buffer_size);
-      break;
-
-    case FSAL_TYPE_JUNCTION:
-      strncpy((char *)buffer_addr, "junction", buffer_size);
-      break;
-
-    default:
-      strncpy((char *)buffer_addr, "other/unknown", buffer_size);
-      break;
-    }
-
-  ((char *)buffer_addr)[strlen((char *)buffer_addr)] = '\n';
-  *p_output_size = strlen((char *)buffer_addr) + 1;
-  return 0;
-
-}
-
-int get_ts(fsal_handle_t * p_objecthandle,      /* IN */
-           fsal_op_context_t * p_context,       /* IN */
-           caddr_t buffer_addr, /* IN/OUT */
-           size_t buffer_size,  /* IN */
-           size_t * p_output_size)      /* OUT */
-{
-  if(!p_objecthandle || !p_context || !p_output_size)
-    return ERR_FSAL_FAULT;
-
-  /* assuming buffer size is large enough for an int ! */
-
-  memcpy(buffer_addr, &p_objecthandle->timestamp, sizeof(p_objecthandle->timestamp));
-  *p_output_size = sizeof(p_objecthandle->timestamp);
-
-  return 0;
-
-}
-
-int print_ts(caddr_t InBuff, size_t InSize, caddr_t OutBuff, size_t * pOutSize)
-{
-  unsigned int date = 0;
-  struct tm date_tm;
-
-  memcpy((char *)&date, InBuff, sizeof(date));
-
-  /* localtime_r( &date, &date_tm ) ;
-
-   *pOutSize = strftime( OutBuff, *pOutSize, "%F %T", &date_tm ) ; */
-  *pOutSize = snprintf(OutBuff, *pOutSize, "%u", date);
-
-  return 0;
-}                               /* print_file_cos */
-
-int get_svr_handle(fsal_handle_t * p_objecthandle,      /* IN */
-                   fsal_op_context_t * p_context,       /* IN */
-                   caddr_t buffer_addr, /* IN/OUT */
-                   size_t buffer_size,  /* IN */
-                   size_t * p_output_size)      /* OUT */
-{
-  if(!p_objecthandle || !p_context || !p_output_size)
-    return ERR_FSAL_FAULT;
-
-  /* truncate it if buffer is too small */
-  if(p_objecthandle->srv_handle_len > buffer_size)
-    {
-      memcpy(buffer_addr, p_objecthandle->srv_handle_val, buffer_size);
-      *p_output_size = buffer_size;
-    }
-  else
-    {
-      memcpy(buffer_addr, p_objecthandle->srv_handle_val, p_objecthandle->srv_handle_len);
-      *p_output_size = p_objecthandle->srv_handle_len;
-    }
-
-  return 0;
-
-}
-
-int print_srv_handle(caddr_t InBuff, size_t InSize, caddr_t OutBuff, size_t * pOutSize)
-{
-  unsigned int i = 0;
-  size_t MaxSize = (InSize < *pOutSize / 2) ? InSize : *pOutSize / 2;
-
-  for(i = 0; i < MaxSize; i++)
-    *pOutSize +=
-        sprintf(&(((char *)OutBuff)[i * 2]), "%02x",
-                (unsigned char)(((char *)InBuff)[i]));
-
-  return 0;
-}                               /* print_srv_handle */
-
-/* ATTRIBUTES LIST */
+/* DEFINE HERE YOUR ATTRIBUTES LIST */
 
 static fsal_xattr_def_t xattr_list[] = {
-  {"type", get_type, NULL, NULL, XATTR_FOR_ALL | XATTR_RO},
-  {"timestamp", get_ts, NULL, print_ts, XATTR_FOR_ALL | XATTR_RO},
-  {"remote_handle", get_svr_handle, NULL, print_srv_handle, XATTR_FOR_ALL | XATTR_RO},
-  {"client_id", get_clientid, NULL, NULL, XATTR_FOR_ALL | XATTR_RO},
-  {"remote_server_addr", get_svr_addr, NULL, NULL, XATTR_FOR_ALL | XATTR_RO},
-  {"remote_server_port", get_svr_port, NULL, NULL, XATTR_FOR_ALL | XATTR_RO},
-  {"nfs_prognum", get_prognum, NULL, NULL, XATTR_FOR_ALL | XATTR_RO},
-  {"protocol", get_proto, NULL, NULL, XATTR_FOR_ALL | XATTR_RO}
+  {"hello_world", get_void_attr, NULL, NULL, XATTR_FOR_ALL | XATTR_RO}
 };
 
-#define XATTR_COUNT 8
-
-/* we assume that this number is < 254 */
-#if ( XATTR_COUNT > 254 )
-#error "ERROR: xattr count > 254"
-#endif
+#define XATTR_COUNT 1
 
 /* YOUR SHOULD NOT HAVE TO MODIFY THE FOLLOWING FUNCTIONS */
 
@@ -306,7 +109,12 @@ int do_match_type(int xattr_flag, fsal_nodetype_t obj_type)
       return ((xattr_flag & XATTR_FOR_ALL) == XATTR_FOR_ALL);
     }
 }
+#else
 
+#define XATTR_COUNT 0
+#endif
+
+#if 0
 static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
                                           fsal_attrib_list_t * p_xattr_attrs,
                                           unsigned int attr_index)
@@ -433,6 +241,7 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
   return 0;
 
 }
+#endif
 
 /**
  * Get the attributes of an extended attribute from its index.
@@ -458,6 +267,10 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
   if(!p_objecthandle || !p_context || !p_attrs)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetXAttrAttrs);
 
+  /* @todo: to be implemented */
+
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_GetXAttrAttrs);
+#if 0
   /* check that this index match the type of entry */
   if(xattr_id >= XATTR_COUNT
      || !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->object_type_reminder))
@@ -485,6 +298,7 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
     }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrAttrs);
+#endif
 
 }                               /* FSAL_GetXAttrAttrs */
 
@@ -509,14 +323,22 @@ fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
                               int *end_of_list  /* OUT */
     )
 {
+  int rc;
   unsigned int index;
   unsigned int out_index;
+  char object_path[FSAL_MAX_PATH_LEN];
   fsal_status_t st;
   fsal_attrib_list_t file_attrs;
 
   /* sanity checks */
   if(!p_objecthandle || !p_context || !xattrs_tab || !p_nb_returned || !end_of_list)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_ListXAttrs);
+
+  /* @todo: to be implemented */
+
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_ListXAttrs);
+
+#if 0
 
   /* object attributes we want to retrieve from parent */
   file_attrs.asked_attributes = FSAL_ATTR_MODE | FSAL_ATTR_FILEID | FSAL_ATTR_OWNER
@@ -562,6 +384,7 @@ fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
   *end_of_list = (index == XATTR_COUNT);
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_ListXAttrs);
+#endif
 
 }
 
@@ -584,8 +407,7 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
     )
 {
   int rc;
-  char buff[MAXPATHLEN];
-
+#if 0
   /* sanity checks */
   if(!p_objecthandle || !p_context || !p_output_size || !buffer_addr)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetXAttrValue);
@@ -598,20 +420,9 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
     }
 
   /* get the value */
-  if(xattr_list[xattr_id].print_func == NULL)
-    {
-      rc = xattr_list[xattr_id].get_func(p_objecthandle,
-                                         p_context,
-                                         buffer_addr, buffer_size, p_output_size);
-    }
-  else
-    {
-      rc = xattr_list[xattr_id].get_func(p_objecthandle,
-                                         p_context, buff, MAXPATHLEN, p_output_size);
-
-      xattr_list[xattr_id].print_func(buff, MAXPATHLEN, buffer_addr, p_output_size);
-    }
-
+  rc = xattr_list[xattr_id].get_func(p_objecthandle,
+                                     p_context, buffer_addr, buffer_size, p_output_size);
+#endif
   Return(rc, 0, INDEX_FSAL_GetXAttrValue);
 
 }
@@ -622,7 +433,7 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
  * \param p_objecthandle Handle of the object you want to get attribute for.
  * \param xattr_name the name of the attribute to be read.
  * \param pxattr_id found xattr_id
- *   
+ *    
  * \return ERR_FSAL_NO_ERROR if xattr_name exists, ERR_FSAL_NOENT otherwise
  */
 fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
@@ -634,13 +445,14 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
   unsigned int index;
   int found = FALSE;
 
+#if 0
   /* sanity checks */
   if(!p_objecthandle || !xattr_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetXAttrValue);
 
   for(index = 0; index < XATTR_COUNT; index++)
     {
-      if(do_match_type(xattr_list[index].flags, p_objecthandle->object_type_reminder)
+      if(do_match_type(xattr_list[index].flags, p_objecthandle->info.ftype)
          && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
         {
           found = TRUE;
@@ -655,6 +467,9 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
     }
   else
     Return(ERR_FSAL_NOENT, ENOENT, INDEX_FSAL_GetXAttrValue);
+#endif
+
+  Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_GetXAttrValue);
 }                               /* FSAL_GetXAttrIdByName */
 
 /**
@@ -682,7 +497,7 @@ fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,  /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetXAttrValue);
 
   /* look for this name */
-
+#if 0
   for(index = 0; index < XATTR_COUNT; index++)
     {
       if(do_match_type(xattr_list[index].flags, p_objecthandle->object_type_reminder)
@@ -694,7 +509,7 @@ fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,  /* IN */
 
         }
     }
-
+#endif
   /* not found */
   Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_GetXAttrValue);
 
