@@ -319,7 +319,7 @@ fi
 
 
 # FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS (default=PROXY)],[specify the type of filesystem to be exported] ),
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS (default=PROXY)],[specify the type of filesystem to be exported] ),
 	     FSAL="$withval", FSAL="PROXY")
 
 # exporting USE_FSAL_... for conditional compilation
@@ -331,6 +331,7 @@ AM_CONDITIONAL(USE_FSAL_SNMP,    test "$FSAL" = "SNMP")
 AM_CONDITIONAL(USE_FSAL_FUSE,    test "$FSAL" = "FUSE")
 AM_CONDITIONAL(USE_FSAL_LUSTRE,  test "$FSAL" = "LUSTRE")
 AM_CONDITIONAL(USE_FSAL_XFS,     test "$FSAL" = "XFS")
+AM_CONDITIONAL(USE_FSAL_GPFS,     test "$FSAL" = "GPFS")
 AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
 
 # NFSv4.0 NFSv4.1 switch
@@ -452,6 +453,14 @@ case $FSAL in
                 FSAL_LDFLAGS="-lhandle"
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_XFS/libfsalxfs.la"
 		FS_NAME="xfs"
+		;;
+
+	GPFS)
+		AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
+		FSAL_CFLAGS=
+                FSAL_LDFLAGS=""
+		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_GPFS/libfsalgpfs.la"
+		FS_NAME="gpfs"
 		;;
 
 	POSIX)
@@ -614,6 +623,7 @@ AC_CONFIG_FILES([include/Makefile
                  include/FSAL/FSAL_FUSELIKE/Makefile
                  include/FSAL/FSAL_LUSTRE/Makefile
                  include/FSAL/FSAL_XFS/Makefile
+                 include/FSAL/FSAL_GPFS/Makefile
                  include/MFSL/Makefile
                  include/MFSL/MFSL_NULL/Makefile
                  include/MFSL/MFSL_ASYNC/Makefile
@@ -655,6 +665,7 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_FUSELIKE/Makefile
 		 FSAL/FSAL_LUSTRE/Makefile
 		 FSAL/FSAL_XFS/Makefile
+		 FSAL/FSAL_GPFS/Makefile
 		 FSAL/FSAL_TEMPLATE/Makefile
 		 MFSL/Makefile
 		 MFSL/MFSL_NULL/Makefile                 
