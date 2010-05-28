@@ -220,6 +220,10 @@ typedef enum fsal_nodetype__
 
 #include "FSAL/FSAL_XFS/fsal_types.h"
 
+#elif defined ( _USE_GPFS )
+
+#include "FSAL/FSAL_GPFS/fsal_types.h"
+
 #elif defined ( _USE_TEMPLATE ) /* <- place here your own define */
 
 #include "FSAL/FSAL_TEMPLATE/fsal_types.h"
