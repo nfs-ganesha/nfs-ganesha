@@ -355,5 +355,6 @@
 	- Default value for FSAL_MODE_SUID and FSAL_MODE_SGID have changed.
         - Add log trace when a operation is refused due to a setuid/setgid bit violation
         - Bug Fix : in NFSv4, file were created with mode = 0000 . This was a trouble with certain FSAL
+        - Bug fix: Double close in log_functions.c 
 
 

@@ -180,7 +180,7 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_symlink);
 
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_DIRECTORY ) ;
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))

@@ -140,16 +140,6 @@ fsal_status_t FSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
  *        - Another error code if an error occured.
  */
 
-static void print_buff(char *buff, int len)
-{
-  int i = 0;
-
-  printf("  Len=%u|0x%x Buff=%p Val: ", len, len, buff);
-  for(i = 0; i < len; i++)
-    printf("%02X ", buff[i]);
-  printf("\n");
-}
-
 struct linux_dirent {
            long           d_ino;
            long           d_off; /* Be careful, SYS_getdents is a 32 bits call */
@@ -175,6 +165,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
   struct linux_dirent * dp = NULL ;
   int bpos = 0 ;
   int tmpfd = 0 ;
+ 
+  char d_type ;
 
   int errsv=0, rc=0;
 
@@ -232,8 +224,6 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
           break;
         }
 
-    print_buff( buff, rc ) ;
-
     /***********************************/
       /* Get information about the entry */
     /***********************************/
@@ -241,6 +231,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
     for( bpos = 0 ; bpos < rc ; )
      {
        dp = (struct linux_dirent *)(buff+bpos) ;
+       d_type = *(buff + bpos + dp->d_reclen - 1) ; /** @todo not used for the moment. Waiting for information on symlink management */
        bpos +=  dp->d_reclen ;
 
       /* printf( "\tino=%8ld|%8lx off=%d|%x reclen=%d|%x name=%s|%d\n", dp->d_ino, dp->d_ino, (int)dp->d_off, (int)dp->d_off, 
@@ -259,9 +250,9 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
           (st =
            FSAL_str2name(dp->d_name, FSAL_MAX_NAME_LEN, &(p_pdirent[*p_nb_entries].name))))
          ReturnStatus(st, INDEX_FSAL_readdir);
-
-      if( ( tmpfd = openat( p_dir_descriptor->fd, dp->d_name, O_RDONLY, 0600 ) ) < 0 )
-         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_readdir);
+     
+      	if( ( tmpfd = openat( p_dir_descriptor->fd, dp->d_name, O_RDONLY, 0600 ) ) < 0 )
+         		Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_readdir);
 
       /* get object handle */
       TakeTokenFSCall();
