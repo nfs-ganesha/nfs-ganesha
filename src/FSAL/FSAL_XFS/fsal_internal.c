@@ -44,9 +44,16 @@
 #include "SemN.h"
 #include "fsal_convert.h"
 #include <libgen.h>             /* used for 'dirname' */
-
 #include <pthread.h>
 #include <string.h>
+#include <sys/types.h>
+#include <xfs/xfs.h>
+#include <xfs/handle.h>
+#include <xfs/parent.h>
+
+/* Add missing prototype in xfs/*.h */
+int fd_to_handle(int fd, void **hanp, size_t *hlen);
+
 
 /* credential lifetime (1h) */
 fsal_uint_t CredentialLifetime = 3600;

@@ -83,7 +83,7 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
 #endif
 
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_DIRECTORY ) ;
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_create);
@@ -128,6 +128,9 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
     }
 
+  /* get the new file handle */
+  status = fsal_internal_fd2handle(p_context, newfd, p_object_handle);
+
   /* close the file descriptor */
   rc = close(newfd);
   errsv = errno;
@@ -137,8 +140,6 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
     }
 
-  /* get the new file handle */
-  status = fsal_internal_fd2handle(p_context, newfd, p_object_handle);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
@@ -243,7 +244,7 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
   unix_mode = unix_mode & ~global_fs_info.umask;
 
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_DIRECTORY ) ;
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
@@ -408,14 +409,14 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
 
   /* get the target handle access by fid */
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_target_handle , &srcfd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, p_target_handle , &srcfd, O_DIRECTORY ) ;
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_link);
 
   /* build the destination path and check permissions on the directory */
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_dir_handle , &dstfd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, p_dir_handle , &dstfd, O_DIRECTORY ) ;
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
    {
@@ -543,7 +544,7 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
 
   /* build the directory path */
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, parentdir_handle , &fd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, parentdir_handle , &fd, O_DIRECTORY ) ;
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))

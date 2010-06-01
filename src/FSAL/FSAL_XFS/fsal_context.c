@@ -62,7 +62,8 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
   size_t  handle_len = 0 ;
 
   /* sanity check */
-  if((p_export_context == NULL) || (p_export_path == NULL))
+  if(p_export_context == NULL )
+  //if((p_export_context == NULL) || (p_export_path == NULL))
     {
       DisplayLogLevel(NIV_CRIT, "NULL mandatory argument passed to %s()", __FUNCTION__);
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);

@@ -358,7 +358,11 @@ int Init_Thread_Context(FILE * output, cmdfsal_thr_info_t * context, int flag_v)
   struct passwd *pw_struct;
 
   /* for the moment, create export context for root fileset */
+#ifdef _USE_XFS
+  st = FSAL_BuildExportContext(&context->exp_context, NULL, "/xfs");
+#else
   st = FSAL_BuildExportContext(&context->exp_context, NULL, NULL);
+#endif
 
   if(FSAL_IS_ERROR(st))
     {
