@@ -150,7 +150,8 @@ typedef struct
 
 typedef struct fs_specific_initinfo__
 {
-  char gpfs_mount_point[MAXPATHLEN] ;
+  char gpfs_mount_point[MAXPATHLEN];
+  char open_by_handle_dev_file[MAXPATHLEN];
 } fs_specific_initinfo_t;
 
 /**< directory cookie */
