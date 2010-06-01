@@ -530,7 +530,6 @@ fsal_status_t fsal_internal_fd2handle( fsal_op_context_t * p_context,
   memcpy( phandle->handle_val, handle_val, handle_len ) ;
   phandle->handle_len = handle_len ;
 
-
   free_handle( handle_val, handle_len ) ;
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
