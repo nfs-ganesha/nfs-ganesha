@@ -140,9 +140,19 @@ fsal_status_t FSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
  *        - Another error code if an error occured.
  */
 
+static void print_buff(char *buff, int len)
+{
+  int i = 0;
+
+  printf("  Len=%u|0x%x Buff=%p Val: ", len, len, buff);
+  for(i = 0; i < len; i++)
+    printf("%02X ", buff[i]);
+  printf("\n");
+}
+
 struct linux_dirent {
            long           d_ino;
-           off_t          d_off;
+           long           d_off; /* Be careful, SYS_getdents is a 32 bits call */
            unsigned short d_reclen;
            char           d_name[];
     };
@@ -161,13 +171,14 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
 {
   fsal_status_t st;
   fsal_count_t max_dir_entries;
-  char buf[BUF_SIZE] ;
-  struct linux_dirent * dp ;
-  int bpos;
-  int tmpfd ;
+  char buff[BUF_SIZE] ;
+  struct linux_dirent * dp = NULL ;
+  int bpos = 0 ;
+  int tmpfd = 0 ;
 
-  int errsv, rc;
+  int errsv=0, rc=0;
 
+  memset( buff, 0, BUF_SIZE ) ;
 
   /*****************/
   /* sanity checks */
@@ -207,7 +218,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
       /* read the next entry */
     /***********************/
       TakeTokenFSCall();
-      rc = syscall( SYS_getdents, p_dir_descriptor->fd, buf, BUF_SIZE) ; 
+      rc = syscall( SYS_getdents, p_dir_descriptor->fd, buff, BUF_SIZE) ; 
       ReleaseTokenFSCall();
       if(rc < 0 )
         {
@@ -221,20 +232,26 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
           break;
         }
 
+    print_buff( buff, rc ) ;
+
     /***********************************/
       /* Get information about the entry */
     /***********************************/
   
     for( bpos = 0 ; bpos < rc ; )
      {
-       dp = (struct linux_dirent *)(buf+bpos) ;
+       dp = (struct linux_dirent *)(buff+bpos) ;
        bpos +=  dp->d_reclen ;
+
+      /* printf( "\tino=%8ld|%8lx off=%d|%x reclen=%d|%x name=%s|%d\n", dp->d_ino, dp->d_ino, (int)dp->d_off, (int)dp->d_off, 
+               dp->d_reclen, dp->d_reclen, dp->d_name, (int)dp->d_name[0]  ) ; */
+
 
        if( !(*p_nb_entries < max_dir_entries) )
          break ;
 
        /* skip . and .. */
-       if(!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
+       if(!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, "..") )
          continue;
 
        /* build the full path of the file into "fsalpath */
