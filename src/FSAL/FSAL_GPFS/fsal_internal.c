@@ -38,6 +38,7 @@
 #include "config.h"
 #endif
 
+#include <sys/ioctl.h>
 #include  "fsal.h"
 #include "fsal_internal.h"
 #include "stuff_alloc.h"
@@ -482,12 +483,20 @@ fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,
                                        int * pfd,
                                        int oflags )
 {
+  int char_fd = 0;
   int rc = 0 ;
+  struct open_arg oarg;
 
   if( !phandle || !pfd || !p_context)
     ReturnCode(ERR_FSAL_FAULT, 0);
+  
+  char_fd = p_context->export_context->open_by_handle_fd;
+  
+  oarg.mountdirfd = p_context->export_context->mount_root_fd;
+  oarg.handle = &phandle->handle;
+  oarg.flags = oflags;
 
-  if( ( rc = open_by_handle( phandle->handle_val, phandle->handle_len, oflags ) ) < 0 )
+  if( ( rc = ioctl( char_fd, OPENHANDLE_OPEN_BY_HANDLE, &oarg ) ) < 0 )
     ReturnCode(posix2fsal_error(errno), errno ) ;
 
   *pfd = rc ;
@@ -495,72 +504,69 @@ fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 } /* fsal_internal_handle2fd */
 
-fsal_status_t fsal_internal_fd2handle( fsal_op_context_t * p_context,  
-                                       int fd, 
-				       fsal_handle_t * phandle ) 
-{
-  int rc = 0 ;
-  struct stat ino;
+/* fsal_status_t fsal_internal_fd2handle( fsal_op_context_t * p_context,   */
+/*                                        int fd,  */
+/* 				       fsal_handle_t * phandle )  */
+/* { */
+/*   int rc = 0 ; */
+/*   struct stat ino; */
 
-  char * handle_val ;
-  size_t handle_len ;
+/*   char * handle_val ; */
+/*   size_t handle_len ; */
 
-  if( !phandle ||  !p_context)
-    ReturnCode(ERR_FSAL_FAULT, 0);
+/*   if( !phandle ||  !p_context) */
+/*     ReturnCode(ERR_FSAL_FAULT, 0); */
 
-  memset(phandle, 0, sizeof(fsal_handle_t));
+/*   memset(phandle, 0, sizeof(fsal_handle_t)); */
   
-  /* retrieve inode */
-  rc = fstat( fd, &ino);
-  if(rc)
-    ReturnCode(posix2fsal_error(errno), errno);
-  phandle->inode = ino.st_ino;
+/*   /\* retrieve inode *\/ */
+/*   rc = fstat( fd, &ino); */
+/*   if(rc) */
+/*     ReturnCode(posix2fsal_error(errno), errno); */
+/*   phandle->inode = ino.st_ino; */
 
-  if( ( rc = fd_to_handle( fd,  (void **)(&handle_val), &handle_len ) ) < 0 )
-    ReturnCode(  posix2fsal_error(errno), errno  ) ;
+/*   if( ( rc = fd_to_handle( fd,  (void **)(&handle_val), &handle_len ) ) < 0 ) */
+/*     ReturnCode(  posix2fsal_error(errno), errno  ) ; */
 
-  memcpy( phandle->handle_val, handle_val, handle_len ) ;
-  phandle->handle_len = handle_len ;
+/*   memcpy( phandle->handle_val, handle_val, handle_len ) ; */
+/*   phandle->handle_len = handle_len ; */
 
 
-  free_handle( handle_val, handle_len ) ;
+/*   free_handle( handle_val, handle_len ) ; */
 
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
-} /* fsal_internal_fd2handle */
+/*   ReturnCode(ERR_FSAL_NO_ERROR, 0); */
+/* } /\* fsal_internal_fd2handle *\/ */
 
 fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
                                         fsal_path_t * p_fsalpath,       /* IN */
                                         fsal_handle_t * p_handle /* OUT */ )
 {
   int rc;
-  struct stat ino;
+  struct name_handle_arg harg;
   int objectfd ; 
+  int char_fd;
 
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  memset(p_handle, 0, sizeof(fsal_handle_t));
+  /* Because p_handle is already allocated to, we need to realloc to
+     the right size here. */
+  /* TODO: the size should be something other than 20 */
+  /* p_handle->handle = realloc(p_handle->handle, sizeof(struct file_handle) + 20); */
+  /* p_handle->handle.handle_size = 20; */
+
+  harg.name = p_fsalpath->path;
+  harg.flag = 0;
+  harg.handle = &p_handle->handle;
 
 #ifdef _DEBUG_FSAL
   DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle for %s", p_fsalpath->path);
 #endif
 
- if( ( objectfd = open(p_fsalpath->path, O_RDONLY, 0600 ) ) < 0 )
-  ReturnCode(posix2fsal_error(errno), errno);
+  char_fd = p_context->export_context->open_by_handle_fd;
 
-
-  /* retrieve inode */
-  rc = fstat( objectfd, &ino);
-
-#ifdef _DEBUG_FSAL
-  if(rc)
-    DisplayLogLevel(NIV_FULL_DEBUG, "lstat(%s)=%d, errno=%d", p_fsalpath->path, rc,
-                    errno);
-#endif
-  if(rc)
+  if( ( rc = ioctl(char_fd, OPENHANDLE_NAME_TO_HANDLE, &harg) ) < 0 )
     ReturnCode(posix2fsal_error(errno), errno);
-
-  p_handle->inode = ino.st_ino;
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
