@@ -68,6 +68,33 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
     } 
 
+  /* save open-by-handle char device */
+  fd = open(init_info->fs_specific_info.open_by_handle_dev_file, O_RDWR);
+  if (!fd)
+    {
+      DisplayLog
+	("FSAL INIT: ERROR: : %s (item %s)",
+	 key_name, CONF_LABEL_FS_SPECIFIC, errno);
+      ReturnCode(ERR_FSAL_INVAL, 0);
+    }
+  p_export_context->open_by_handle_fd = fd;  
+
+
+  /* save file descriptor to root of mount */
+  fd = open(init_info->fs_specific_info.gpfs_mount_point, O_RDWR);
+  if (!fd)
+    {
+      close(p_export_context->open_by_handle_fd);
+      DisplayLog
+	("FSAL INIT: ERROR: : %s (item %s)",
+	 key_name, CONF_LABEL_FS_SPECIFIC, errno);
+      ReturnCode(ERR_FSAL_INVAL, 0);
+    }
+  p_export_context->mount_root_fd = fd;
+
+  /* save filesystem ID */
+  
+
   /* Do the path_to_fshandle call to init the gpfs's libhandle */
   strncpy(  p_export_context->mount_point, fs_specific_options, MAXPATHLEN ) ;
 

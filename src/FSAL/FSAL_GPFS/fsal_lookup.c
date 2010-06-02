@@ -159,9 +159,9 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
     }
 
 #ifdef _DEBUG_FSAL
-  fprintf(stderr, "lookup of %#llx:%#x:%#x/%s\n", p_parent_directory_handle->seq,
-          p_parent_directory_handle->oid, p_parent_directory_handle->ver,
-          p_filename->name);
+  //  fprintf(stderr, "lookup of %#llx:%#x:%#x/%s\n", p_parent_directory_handle->seq,
+  //          p_parent_directory_handle->oid, p_parent_directory_handle->ver,
+  //          p_filename->name);
 #endif
 
   /* check rights to enter into the directory */

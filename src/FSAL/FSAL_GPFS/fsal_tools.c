@@ -78,10 +78,11 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
       return -1;
     }
 
-  if( handle1->handle_len != handle2->handle_len )
-    return 1 ;
-
-  return memcmp( handle1->handle_val, handle2->handle_val, handle2->handle_len ) ;
+  if ( strncmp(handle1->f_handle, handle2->f_handle, 20)
+       && (handle1->fs_handle[0] == handle2->fs_handle[0])
+       && (handle1->fs_handle[1] == handle2->fs_handle[1]) )
+    return 1;
+  return 0;
 }
 
 /**
