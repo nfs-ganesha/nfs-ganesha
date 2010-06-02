@@ -92,7 +92,7 @@ static fsal_xattr_def_t xattr_list[] = {
 /* YOUR SHOULD NOT HAVE TO MODIFY THE FOLLOWING FUNCTIONS */
 
 /* test if an object has a given attribute */
-int do_match_type(int xattr_flag, fsal_nodetype_t obj_type)
+int do_match_type(int xattr_flag, int obj_type)
 {
   switch (obj_type)
     {
@@ -273,7 +273,7 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
 #if 0
   /* check that this index match the type of entry */
   if(xattr_id >= XATTR_COUNT
-     || !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->handle->handle_type))
+     || !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->handle.handle_type))
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrAttrs);
     }
@@ -356,7 +356,7 @@ fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
   for(index = cookie, out_index = 0;
       index < XATTR_COUNT && out_index < xattrs_tabsize; index++)
     {
-      if(do_match_type(xattr_list[index].flags, p_objecthandle->handle->handle_type))
+      if(do_match_type(xattr_list[index].flags, p_objecthandle->handle.handle_type))
         {
           /* fills an xattr entry */
           xattrs_tab[out_index].xattr_id = index;
@@ -414,7 +414,7 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
 
   /* check that this index match the type of entry */
   if(xattr_id >= XATTR_COUNT
-     || !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->handle->handle_type))
+     || !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->handle.handle_type))
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrValue);
     }
@@ -452,7 +452,7 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
 
   for(index = 0; index < XATTR_COUNT; index++)
     {
-      if(do_match_type(xattr_list[index].flags, p_objecthandle->info.ftype)
+      if(do_match_type(xattr_list[index].flags, p_objecthandle->handle.handle_type)
          && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
         {
           found = TRUE;
@@ -500,7 +500,7 @@ fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,  /* IN */
 #if 0
   for(index = 0; index < XATTR_COUNT; index++)
     {
-      if(do_match_type(xattr_list[index].flags, p_objecthandle->handle->handle_type)
+      if(do_match_type(xattr_list[index].flags, p_objecthandle->handle.handle_type)
          && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
         {
 
