@@ -37,7 +37,7 @@
 #include <sys/stat.h>
 
 /* defined the set of attributes supported with POSIX */
-#define POSIX_SUPPORTED_ATTRIBUTES (                                       \
+#define GPFS_SUPPORTED_ATTRIBUTES (                                       \
           FSAL_ATTR_SUPPATTR | FSAL_ATTR_TYPE     | FSAL_ATTR_SIZE      | \
           FSAL_ATTR_FSID     |  FSAL_ATTR_FILEID  | \
           FSAL_ATTR_MODE     | FSAL_ATTR_NUMLINKS | FSAL_ATTR_OWNER     | \
