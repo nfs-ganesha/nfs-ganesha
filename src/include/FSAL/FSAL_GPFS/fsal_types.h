@@ -150,9 +150,8 @@ struct readlink_arg {
 
 typedef struct
 {
-  char handle_val[FSAL_GPFS_HANDLE_LEN] ;
-  unsigned int handle_len ;
-  ino_t inode ;
+  unsigned int fsid[2];
+  struct file_handle handle;
 } fsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */
@@ -168,12 +167,15 @@ typedef struct fsal_cred__
 typedef struct fsal_export_context_t
 {
   char mount_point[FSAL_MAX_PATH_LEN];
-  char mnt_handle_val[FSAL_GPFS_HANDLE_LEN] ;
-  char mnt_fshandle_val[FSAL_GPFS_FSHANDLE_LEN] ;
+  //  char mnt_handle_val[FSAL_GPFS_HANDLE_LEN] ;
+  //  char mnt_fshandle_val[FSAL_GPFS_FSHANDLE_LEN] ;
   
-  unsigned int mnt_handle_len;         /* for optimizing concatenation */
-  unsigned int mnt_fshandle_len;         /* for optimizing concatenation */
-  unsigned int dev_id ;
+  //  unsigned int mnt_handle_len;         /* for optimizing concatenation */
+  //  unsigned int mnt_fshandle_len;         /* for optimizing concatenation */
+  //  unsigned int dev_id ;
+  int open_by_handle_fd;
+  int mount_root_fd;
+  unsigned int fs_handle[2];
 } fsal_export_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( _pexport_context ) (uint64_t)((_pexport_context)->dev_id)
