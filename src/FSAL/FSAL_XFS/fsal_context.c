@@ -53,6 +53,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
   char mntdir[MAXPATHLEN];
   char fs_spec[MAXPATHLEN];
 
+  char * first_xfs_dir = NULL ;
   char type[256];
 
   size_t pathlen, outlen;
@@ -62,24 +63,92 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
   size_t  handle_len = 0 ;
 
   /* sanity check */
-  if(p_export_context == NULL )
-  //if((p_export_context == NULL) || (p_export_path == NULL))
+  if( p_export_context == NULL) 
     {
       DisplayLogLevel(NIV_CRIT, "NULL mandatory argument passed to %s()", __FUNCTION__);
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
     } 
 
-  /* Do the path_to_fshandle call to init the xfs's libhandle */
-  strncpy(  p_export_context->mount_point, fs_specific_options, MAXPATHLEN ) ;
+  outlen = 0;
 
-  /* /!\ fs_specific_options contains the full path of the xfs filesystem root */
-  if( ( rc = path_to_fshandle( fs_specific_options,  (void **)(&handle), &handle_len) ) < 0 )
+  if( p_export_path != NULL )
+    strncpy( rpath, p_export_path->path, MAXPATHLEN ) ;
+
+ /* open mnt file */
+  fp = setmntent(MOUNTED, "r");
+
+  if(fp == NULL)
+    {
+      rc = errno;
+      DisplayLogLevel(NIV_CRIT, "Error %d in setmntent(%s): %s", rc, MOUNTED,
+                      strerror(rc));
+      Return(posix2fsal_error(rc), rc, INDEX_FSAL_BuildExportContext);
+    }
+
+  while((p_mnt = getmntent(fp)) != NULL)
+    {
+      /* get the longer path xfs related export that matches export path */
+
+      if(p_mnt->mnt_dir != NULL)
+        {
+
+          pathlen = strlen(p_mnt->mnt_dir);
+
+          if( strncmp( p_mnt->mnt_type, "xfs", 256 ) )
+            continue ;
+
+          if( first_xfs_dir == NULL )
+            first_xfs_dir = p_mnt->mnt_dir ;
+
+          if((pathlen > outlen) && !strcmp(p_mnt->mnt_dir, "/"))
+            {
+              DisplayLogLevel(NIV_DEBUG,
+                              "Root mountpoint is allowed for matching %s, type=%s, fs=%s",
+                              rpath, p_mnt->mnt_type, p_mnt->mnt_fsname);
+              outlen = pathlen;
+              strncpy(mntdir, p_mnt->mnt_dir, MAXPATHLEN);
+              strncpy(type, p_mnt->mnt_type, 256);
+              strncpy(fs_spec, p_mnt->mnt_fsname, MAXPATHLEN);
+            }
+          /* in other cases, the filesystem must be <mountpoint>/<smthg> or <mountpoint>\0 */
+          else if((pathlen > outlen) &&
+                  !strncmp(rpath, p_mnt->mnt_dir, pathlen) &&
+                  ((rpath[pathlen] == '/') || (rpath[pathlen] == '\0')))
+            {
+              DisplayLogLevel(NIV_FULL_DEBUG, "%s is under mountpoint %s, type=%s, fs=%s",
+                              rpath, p_mnt->mnt_dir, p_mnt->mnt_type, p_mnt->mnt_fsname);
+
+              outlen = pathlen;
+              strncpy(mntdir, p_mnt->mnt_dir, MAXPATHLEN);
+              strncpy(type, p_mnt->mnt_type, 256);
+              strncpy(fs_spec, p_mnt->mnt_fsname, MAXPATHLEN);
+            }
+        }
+    }
+
+  if(outlen <= 0)
+    {
+      if( p_export_path == NULL )
+        strncpy( mntdir, first_xfs_dir, MAXPATHLEN ) ;
+      else
+        {
+          DisplayLogLevel(NIV_CRIT, "No mount entry matches '%s' in %s", rpath, MOUNTED);
+          endmntent(fp);
+          Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_BuildExportContext);
+        }
+    }
+
+
+  /* Do the path_to_fshandle call to init the xfs's libhandle */
+  strncpy(  p_export_context->mount_point, mntdir, MAXPATHLEN ) ;
+
+  if( ( rc = path_to_fshandle( mntdir,  (void **)(&handle), &handle_len) ) < 0 )
     Return( ERR_FSAL_FAULT, errno, INDEX_FSAL_BuildExportContext ) ;
 
   memcpy(  p_export_context->mnt_fshandle_val, handle, handle_len ) ;
   p_export_context->mnt_fshandle_len = handle_len ;
 
-  if( ( rc = path_to_handle( fs_specific_options,  (void **)(&handle), &handle_len) ) < 0 )
+  if( ( rc = path_to_handle( mntdir,  (void **)(&handle), &handle_len) ) < 0 )
     Return( ERR_FSAL_FAULT, errno, INDEX_FSAL_BuildExportContext ) ;
 
   memcpy(  p_export_context->mnt_handle_val, handle, handle_len ) ;
