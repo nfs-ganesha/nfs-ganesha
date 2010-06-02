@@ -122,16 +122,15 @@ fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,
                                        int * pfd,
                                        int oflags ) ;
 
+fsal_status_t fsal_internal_handle_at( fsal_op_context_t * p_context,  /* IN */
+                                       int dfd,
+                                       fsal_name_t * p_fsalname,       /* IN */
+                                       fsal_handle_t * p_handle /* OUT */ );
+
 fsal_status_t fsal_internal_fd2handle( fsal_op_context_t * p_context,  
                                        int fd, 
 				       fsal_handle_t * phandle ) ;
 
-/**
- * Build .lustre/fid path associated to a handle.
- */
-fsal_status_t fsal_internal_Handle2FidPath(fsal_op_context_t * p_context,       /* IN */
-                                           fsal_handle_t * p_handle,    /* IN */
-                                           fsal_path_t * p_fsalpath /* OUT */ );
 
 /**
  * Get the handle for a path (posix or fid path)

@@ -120,10 +120,9 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
   newfd = openat( fd, p_filename->name, O_CREAT | O_WRONLY | O_TRUNC | O_EXCL, unix_mode);
   errsv = errno;
 
- close( fd ) ;
-
   if( newfd == -1)
     {
+      close(fd);
       ReleaseTokenFSCall();
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
     }
@@ -133,12 +132,15 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
   errsv = errno;
   if(rc)
     {
+      close(fd);
       ReleaseTokenFSCall();
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
     }
 
   /* get the new file handle */
-  status = fsal_internal_fd2handle(p_context, newfd, p_object_handle);
+
+  /* TODO: this has a race, but for now we can't do much about it */
+  status = fsal_internal_handle_at(p_context, fd, p_filename, p_object_handle);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
