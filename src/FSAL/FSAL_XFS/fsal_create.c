@@ -33,7 +33,6 @@ static int linkat2( int srcfd, int dirdestfd, char * destname )
      return -1 ;
 
    return linkat( 0, pathproccontent, dirdestfd, destname, 0 ) ;
-   
 } /* linkat2 */
  
 /**
