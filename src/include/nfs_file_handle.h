@@ -68,8 +68,7 @@ typedef struct file_handle_v3__
 {
   char checksum[16];            /* FH checksum, for encryption support      len = 16 bytes  */
   unsigned short exportid;      /* must be correlated to exportlist_t::id   len = 2 bytes   */
-  char fsopaque[25];            /* persistent part of FSAL handle, opaque   len = 25 bytes  */
-  /* char           reserved[18] ; *//* what's left...                     len = 18 bytes  */
+  char fsopaque[43];            /* persistent part of FSAL handle, opaque   len = 41 bytes  */
   char xattr_pos;               /* Used for xattr management                len = 1  byte  */
 } file_handle_v3_t;
 
@@ -82,11 +81,7 @@ typedef struct file_handle_v4__
   unsigned int exportid;        /* must be correlated to exportlist_t::id   len = 4 bytes   */
   unsigned short refid;         /* used for referral                        len = 2 bytes   */
   unsigned int srvboot_time;    /* 0 if FH won't expire                     len = 4 bytes   */
-#ifdef _USE_PROXY
   char fsopaque[93];            /* persistent part of FSAL handle */
-#else
-  char fsopaque[22];
-#endif
   char xattr_pos;               /*                                          len = 1 byte    */
 } file_handle_v4_t;
 

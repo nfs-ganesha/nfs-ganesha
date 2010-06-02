@@ -790,6 +790,7 @@ fsal_status_t fsal_internal_inum2handle( fsal_op_context_t * p_context,
 
   memcpy( phandle->handle_val, &xfsfilehandle, sizeof( xfs_filehandle_t ) ) ;
   phandle->handle_len = sizeof( xfs_filehandle_t )  ;
+  phandle->inode = inum ;
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 } /* fsal_handle2fd_xfs_specific */
