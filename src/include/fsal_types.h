@@ -706,8 +706,8 @@ typedef struct fsal_buffdesc__
 /* output digest sizes */
 
 #define FSAL_DIGEST_SIZE_HDLV2 25
-#define FSAL_DIGEST_SIZE_HDLV3 25
-#define FSAL_DIGEST_SIZE_HDLV4 25
+#define FSAL_DIGEST_SIZE_HDLV3 43
+#define FSAL_DIGEST_SIZE_HDLV4 93
 
 #define FSAL_DIGEST_SIZE_FILEID2 (sizeof(int))
 #define FSAL_DIGEST_SIZE_FILEID3 (sizeof(fsal_u64_t))
