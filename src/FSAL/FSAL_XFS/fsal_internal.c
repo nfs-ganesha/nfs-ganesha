@@ -540,7 +540,6 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
                                         fsal_handle_t * p_handle /* OUT */ )
 {
   int rc;
-  struct stat ino;
   int objectfd ; 
 
   if(!p_context || !p_handle || !p_fsalpath)
@@ -555,22 +554,10 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
  if( ( objectfd = open(p_fsalpath->path, O_RDONLY, 0600 ) ) < 0 )
   ReturnCode(posix2fsal_error(errno), errno);
 
-
-  /* retrieve inode */
-  rc = fstat( objectfd, &ino);
-
-#ifdef _DEBUG_FSAL
-  if(rc)
-    DisplayLogLevel(NIV_FULL_DEBUG, "lstat(%s)=%d, errno=%d", p_fsalpath->path, rc,
-                    errno);
-#endif
-  if(rc)
-    ReturnCode(posix2fsal_error(errno), errno);
-
-  p_handle->inode = ino.st_ino;
-
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}
+ return fsal_internal_fd2handle( p_context,  
+                                 objectfd, 
+				 p_handle ) ;
+} /* fsal_internal_Path2Handle */
 
 
 /*
