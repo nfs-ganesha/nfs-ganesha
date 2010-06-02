@@ -477,6 +477,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
+fsal_status_t fsal_internal_handle_at( 
 
 fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,  
 				       fsal_handle_t * phandle,
@@ -537,6 +538,43 @@ fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,
 /*   ReturnCode(ERR_FSAL_NO_ERROR, 0); */
 /* } /\* fsal_internal_fd2handle *\/ */
 
+fsal_status_t fsal_internal_handle_at(fsal_op_context_t * p_context, /* IN */
+                                      int dfd, /* IN */
+                                      fsal_name_t * p_fsalname,       /* IN */
+                                      fsal_handle_t * p_handle /* OUT
+                                                                  */ )                       
+{
+  int rc;
+  struct name_handle_arg harg;
+  int objectfd ; 
+  int char_fd;
+
+  if(!p_context || !p_handle || !p_fsalname)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  /* Because p_handle is already allocated to, we need to realloc to
+     the right size here. */
+  /* TODO: the size should be something other than 20 */
+  /* p_handle->handle = realloc(p_handle->handle, sizeof(struct file_handle) + 20); */
+  /* p_handle->handle.handle_size = 20; */
+
+  harg.dfd = dfd;
+  harg.name = p_fsalname->name;
+  harg.flag = 0;
+  harg.handle = &p_handle->handle;
+
+#ifdef _DEBUG_FSAL
+  DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle at for %s", p_fsalname->name);
+#endif
+
+  char_fd = p_context->export_context->open_by_handle_fd;
+
+  if( ( rc = ioctl(char_fd, OPENHANDLE_NAME_TO_HANDLE, &harg) ) < 0 )
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}  
+
 fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
                                         fsal_path_t * p_fsalpath,       /* IN */
                                         fsal_handle_t * p_handle /* OUT */ )
@@ -555,6 +593,7 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
   /* p_handle->handle = realloc(p_handle->handle, sizeof(struct file_handle) + 20); */
   /* p_handle->handle.handle_size = 20; */
 
+  harg.dfd = AT_FDCWD;
   harg.name = p_fsalpath->path;
   harg.flag = 0;
   harg.handle = &p_handle->handle;
