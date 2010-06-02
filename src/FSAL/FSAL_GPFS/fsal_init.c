@@ -38,6 +38,9 @@
 
 #include "fsal.h"
 #include "fsal_internal.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 /* Macros for analysing parameters. */
 #define SET_BITMAP_PARAM( api_cfg, p_init_info, _field )      \
@@ -123,20 +126,15 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
 
   /* Check for very important args */
-
   if(init_info->fsal_info.log_outputs.liste_voies == NULL)
-    {
-      /* issue a warning on stderr */
-      DisplayLog
-          ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
-    }
+    /* issue a warning on stderr */
+    DisplayLog
+      ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
 
   /* proceeds FSAL internal initialization */
-
   status = fsal_internal_init_global(&(init_info->fsal_info),
                                      &(init_info->fs_common_info),
                                      &(init_info->fs_specific_info));
-
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_Init);
 
