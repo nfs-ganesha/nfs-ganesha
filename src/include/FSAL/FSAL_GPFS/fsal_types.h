@@ -109,6 +109,45 @@ typedef struct fsal_path__
 static const fsal_name_t FSAL_DOT = { ".", 1 };
 static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
+/** the following come from using the character driver */
+
+#define AT_FDCWD   -100
+
+#define OPENHANDLE_HANDLE_LEN 20
+#define OPENHANDLE_DRIVER_MAGIC     'O'
+#define OPENHANDLE_OPEN_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 1, struct open_arg)
+#define OPENHANDLE_LINK_BY_FD     _IOWR(OPENHANDLE_DRIVER_MAGIC, 2, struct link_arg)
+#define OPENHANDLE_READLINK_BY_FD _IOWR(OPENHANDLE_DRIVER_MAGIC, 3, struct readlink_arg)
+
+/*FIXME!!  need compat arg or rework the structure */
+struct file_handle {
+	int handle_size;
+	int handle_type;
+	/* file identifier */
+	unsigned char f_handle[0];
+};
+
+struct open_arg {
+	int mountdirfd;
+	int flags;
+	int openfd;
+	struct file_handle *handle;
+};
+
+struct link_arg {
+	int file_fd;
+	int dir_fd;
+	char *name;
+};
+
+struct readlink_arg {
+	int fd;
+	char *buffer;
+	int size;
+};
+/** end of open by handle structures */
+
+
 typedef struct
 {
   char handle_val[FSAL_GPFS_HANDLE_LEN] ;
