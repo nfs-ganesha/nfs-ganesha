@@ -58,7 +58,7 @@ fsal_uint_t CredentialLifetime = 3600;
 fsal_staticfsinfo_t global_fs_info;
 
 /* filesystem info for HPSS */
-static fsal_staticfsinfo_t default_posix_info = {
+static fsal_staticfsinfo_t default_gpfs_info = {
   0xFFFFFFFFFFFFFFFFLL,         /* max file size (64bits) */
   _POSIX_LINK_MAX,              /* max links */
   FSAL_MAX_NAME_LEN,            /* max filename */
@@ -77,7 +77,7 @@ static fsal_staticfsinfo_t default_posix_info = {
   FSAL_ACLSUPPORT_ALLOW,        /* ACL support */
   TRUE,                         /* can change times */
   TRUE,                         /* homogenous */
-  POSIX_SUPPORTED_ATTRIBUTES,   /* supported attributes */
+  GPFS_SUPPORTED_ATTRIBUTES,   /* supported attributes */
   0,                            /* maxread size */
   0,                            /* maxwrite size */
   0,                            /* default umask */
@@ -372,7 +372,6 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
       DisplayLogJdLevel(fsal_log, NIV_DEBUG,
                         "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
                         fsal_info->max_fs_calls);
-
     }
   else
     {
@@ -381,52 +380,52 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
     }
 
   /* setting default values. */
-  global_fs_info = default_posix_info;
+  global_fs_info = default_gpfs_info;
 
 #ifdef _DEBUG_FSAL
 
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "{");
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxfilesize  = %llX    ",
-                    default_posix_info.maxfilesize);
+                    default_gpfs_info.maxfilesize);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxlink  = %lu   ",
-                    default_posix_info.maxlink);
+                    default_gpfs_info.maxlink);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxnamelen  = %lu  ",
-                    default_posix_info.maxnamelen);
+                    default_gpfs_info.maxnamelen);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxpathlen  = %lu  ",
-                    default_posix_info.maxpathlen);
+                    default_gpfs_info.maxpathlen);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  no_trunc  = %d ",
-                    default_posix_info.no_trunc);
+                    default_gpfs_info.no_trunc);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  chown_restricted  = %d ",
-                    default_posix_info.chown_restricted);
+                    default_gpfs_info.chown_restricted);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  case_insensitive  = %d ",
-                    default_posix_info.case_insensitive);
+                    default_gpfs_info.case_insensitive);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  case_preserving  = %d ",
-                    default_posix_info.case_preserving);
+                    default_gpfs_info.case_preserving);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  fh_expire_type  = %hu ",
-                    default_posix_info.fh_expire_type);
+                    default_gpfs_info.fh_expire_type);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  link_support  = %d  ",
-                    default_posix_info.link_support);
+                    default_gpfs_info.link_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  symlink_support  = %d  ",
-                    default_posix_info.symlink_support);
+                    default_gpfs_info.symlink_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  lock_support  = %d  ",
-                    default_posix_info.lock_support);
+                    default_gpfs_info.lock_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  named_attr  = %d  ",
-                    default_posix_info.named_attr);
+                    default_gpfs_info.named_attr);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  unique_handles  = %d  ",
-                    default_posix_info.unique_handles);
+                    default_gpfs_info.unique_handles);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  acl_support  = %hu  ",
-                    default_posix_info.acl_support);
+                    default_gpfs_info.acl_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  cansettime  = %d  ",
-                    default_posix_info.cansettime);
+                    default_gpfs_info.cansettime);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  homogenous  = %d  ",
-                    default_posix_info.homogenous);
+                    default_gpfs_info.homogenous);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  supported_attrs  = %llX  ",
-                    default_posix_info.supported_attrs);
+                    default_gpfs_info.supported_attrs);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxread  = %llX     ",
-                    default_posix_info.maxread);
+                    default_gpfs_info.maxread);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxwrite  = %llX     ",
-                    default_posix_info.maxwrite);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  umask  = %X ", default_posix_info.umask);
+                    default_gpfs_info.maxwrite);
+  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  umask  = %X ", default_gpfs_info.umask);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "}");
 
 #endif
@@ -463,11 +462,11 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 #ifdef _DEBUG_FSAL
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
                     "Supported attributes constant = 0x%llX.",
-                    POSIX_SUPPORTED_ATTRIBUTES);
+                    GPFS_SUPPORTED_ATTRIBUTES);
 
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
                     "Supported attributes default = 0x%llX.",
-                    default_posix_info.supported_attrs);
+                    default_gpfs_info.supported_attrs);
 #endif
 
   DisplayLogJdLevel(fsal_log, NIV_DEBUG,
