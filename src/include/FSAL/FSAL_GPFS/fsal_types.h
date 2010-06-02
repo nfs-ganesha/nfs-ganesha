@@ -115,6 +115,7 @@ static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
 #define OPENHANDLE_HANDLE_LEN 20
 #define OPENHANDLE_DRIVER_MAGIC     'O'
+#define OPENHANDLE_NAME_TO_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 0, struct name_handle_arg)
 #define OPENHANDLE_OPEN_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 1, struct open_arg)
 #define OPENHANDLE_LINK_BY_FD     _IOWR(OPENHANDLE_DRIVER_MAGIC, 2, struct link_arg)
 #define OPENHANDLE_READLINK_BY_FD _IOWR(OPENHANDLE_DRIVER_MAGIC, 3, struct readlink_arg)
@@ -125,6 +126,12 @@ struct file_handle {
 	int handle_type;
 	/* file identifier */
 	unsigned char f_handle[0];
+};
+
+struct name_handle_arg {
+	char *name;
+	int flag;
+	struct file_handle *handle;
 };
 
 struct open_arg {
