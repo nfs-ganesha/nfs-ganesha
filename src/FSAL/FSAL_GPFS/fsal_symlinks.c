@@ -85,9 +85,8 @@ fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
   memset(link_content_out, 0, FSAL_MAX_PATH_LEN);
 
   /* Read the link on the filesystem */
-
   TakeTokenFSCall();
-  rc = readlink_by_handle( p_linkhandle->handle_val, p_linkhandle->handle_len, link_content_out, FSAL_MAX_PATH_LEN);
+  rc = readlink_by_handle( NULL, 0, link_content_out, FSAL_MAX_PATH_LEN);
   errsv = errno;
   ReleaseTokenFSCall();
 
