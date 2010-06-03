@@ -74,7 +74,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
     } 
 
   /* save file descriptor to root of GPFS share*/
-  fd = open(p_export_path->path,O_RDONLY);
+  fd = open(p_export_path->path, O_RDONLY | O_DIRECTORY);
   if (fd < 0)
     {
       close(open_by_handle_fd);
