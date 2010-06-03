@@ -58,6 +58,9 @@ fsal_uint_t CredentialLifetime = 3600;
  */
 fsal_staticfsinfo_t global_fs_info;
 
+char open_by_handle_path[MAXPATHLEN];
+int open_by_handle_fd;
+
 /* filesystem info for HPSS */
 static fsal_staticfsinfo_t default_gpfs_info = {
   0xFFFFFFFFFFFFFFFFLL,         /* max file size (64bits) */
