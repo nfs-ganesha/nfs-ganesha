@@ -79,7 +79,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
     {
       close(open_by_handle_fd);
       DisplayLog
-	("FSAL INIT: ERROR: Could not open GPFS mount point: rc = %d", errno);
+	("FSAL BUILD EXPORT CONTEXT: ERROR: Could not open GPFS mount point: rc = %d", errno);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
   p_export_context->mount_root_fd = fd;
@@ -99,12 +99,12 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
   status = fsal_internal_Path2Handle(&op_context,
 				     p_export_path,
 				     &(p_export_context->mount_root_handle));
-  if (status.major != ERR_FSAL_NO_ERROR)
+  if (FSAL_IS_ERROR(status))
     {
       close(open_by_handle_fd);
       close(p_export_context->mount_root_fd);
       DisplayLog
-	("FSAL INIT: ERROR: Conversion from gpfs"
+	("FSAL BUILD EXPORT CONTEXT: ERROR: Conversion from gpfs"
 	 "filesystem root path to handle failed.");
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
