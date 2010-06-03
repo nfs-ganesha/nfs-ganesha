@@ -476,7 +476,6 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-
 fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,  
 				       fsal_handle_t * phandle,
                                        int * pfd,
@@ -714,4 +713,14 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
   else
     ReturnCode(ERR_FSAL_ACCESS, 0);
 
+}
+
+/**
+ * Access a link by a file handle.
+ */
+fsal_status_t  fsal_readlink_by_handle(fsal_handle_t * p_handle, char *__buf, int maxlen)
+{
+  __buf = NULL;
+  ReturnCode(ERR_FSAL_INVAL, 0);
+  /* ReturnCode(ERR_FSAL_NO_ERROR, 0); */
 }
