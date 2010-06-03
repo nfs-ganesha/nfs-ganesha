@@ -183,6 +183,7 @@ typedef struct fsal_export_context_t
   //  unsigned int dev_id ;
   int open_by_handle_fd;
   int mount_root_fd;
+  struct file_handle mount_root_handle;
   unsigned int fsid[2];
 } fsal_export_context_t;
 
