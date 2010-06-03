@@ -499,6 +499,8 @@ fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,
   char_fd = p_context->export_context->open_by_handle_fd;
   
   oarg.mountdirfd = p_context->export_context->mount_root_fd;
+ 
+  phandle->handle.handle_size = 20;
   oarg.handle = &phandle->handle;
   oarg.flags = oflags;
 
@@ -539,6 +541,7 @@ fsal_status_t fsal_internal_handle_at(int dfd, /* IN */
   harg.dfd = dfd;
   harg.name = p_fsalname->name;
   harg.flag = 0;
+  p_handle->handle.handle_size = 20;
   harg.handle = &p_handle->handle;
 
 #ifdef _DEBUG_FSAL
@@ -574,6 +577,7 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
   /* TODO: the size should be something other than 20 */
   /* p_handle->handle = realloc(p_handle->handle, sizeof(struct file_handle) + 20); */
   /* p_handle->handle.handle_size = 20; */
+  p_handle->handle.handle_size = 20;
 
   harg.dfd = AT_FDCWD;
   harg.name = p_fsalpath->path;
@@ -602,6 +606,8 @@ fsal_status_t  fsal_readlink_by_handle(fsal_op_context_t * p_context, fsal_handl
   int char_fd;
   fsal_status_t status;
   struct readlink_arg readlinkarg;
+
+  p_handle->handle.handle_size = 20;
 
   status = fsal_internal_handle2fd( p_context, p_handle , &fd, O_RDONLY );
 
