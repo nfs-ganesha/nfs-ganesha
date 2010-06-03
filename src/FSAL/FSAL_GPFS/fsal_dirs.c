@@ -248,8 +248,10 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
 
       /* get object handle */
       TakeTokenFSCall();
-      st = fsal_internal_fd2handle(&p_dir_descriptor->context, tmpfd,
-                                     &(p_pdirent[*p_nb_entries].handle));
+
+      /* TODO: this has a race, but for now we can't do much about it */
+      st = fsal_internal_handle_at(p_dir_descriptor->fd, dp->d_name, &(p_pdirent[*p_nb_entries].handle));
+
       close( tmpfd ) ;
       ReleaseTokenFSCall();
 

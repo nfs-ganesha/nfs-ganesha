@@ -517,8 +517,7 @@ fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,
  *
  */
 
-fsal_status_t fsal_internal_handle_at(fsal_op_context_t * p_context, /* IN */
-                                      int dfd, /* IN */
+fsal_status_t fsal_internal_handle_at(int dfd, /* IN */
                                       fsal_name_t * p_fsalname,       /* IN */
                                       fsal_handle_t * p_handle /* OUT
                                                                   */ )                       
@@ -526,9 +525,9 @@ fsal_status_t fsal_internal_handle_at(fsal_op_context_t * p_context, /* IN */
   int rc;
   struct name_handle_arg harg;
   int objectfd ; 
-  int char_fd;
+  int char_fd = 0;
 
-  if(!p_context || !p_handle || !p_fsalname)
+  if(!p_handle || !p_fsalname)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   /* Because p_handle is already allocated to, we need to realloc to
@@ -545,8 +544,6 @@ fsal_status_t fsal_internal_handle_at(fsal_op_context_t * p_context, /* IN */
 #ifdef _DEBUG_FSAL
   DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle at for %s", p_fsalname->name);
 #endif
-
-  char_fd = p_context->export_context->open_by_handle_fd;
 
   if( ( rc = ioctl(char_fd, OPENHANDLE_NAME_TO_HANDLE, &harg) ) < 0 )
     ReturnCode(posix2fsal_error(errno), errno);

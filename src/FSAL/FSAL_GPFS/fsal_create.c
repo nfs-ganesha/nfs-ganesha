@@ -140,7 +140,7 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
   /* get the new file handle */
 
   /* TODO: this has a race, but for now we can't do much about it */
-  status = fsal_internal_handle_at(p_context, fd, p_filename, p_object_handle);
+  status = fsal_internal_handle_at(fd, p_filename, p_object_handle);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
@@ -300,7 +300,7 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
    }
   
-  status = fsal_internal_fd2handle(p_context, newfd, p_object_handle);
+  status = fsal_internal_handle_at(fd, p_dirname, p_object_handle);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
@@ -596,7 +596,7 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
    }
 
-  status = fsal_internal_fd2handle(p_context, newfd, p_object_handle);
+  status = fsal_internal_handle_at( fd, p_node_name, p_object_handle);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))

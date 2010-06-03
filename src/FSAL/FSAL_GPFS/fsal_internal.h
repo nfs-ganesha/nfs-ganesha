@@ -122,8 +122,7 @@ fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,
                                        int * pfd,
                                        int oflags ) ;
 
-fsal_status_t fsal_internal_handle_at( fsal_op_context_t * p_context,  /* IN */
-                                       int dfd,
+fsal_status_t fsal_internal_handle_at(int dfd,
                                        fsal_name_t * p_fsalname,       /* IN */
                                        fsal_handle_t * p_handle /* OUT */ );
 /**
