@@ -541,6 +541,7 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
 {
   int rc;
   int objectfd ; 
+  fsal_status_t st ;
 
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -554,9 +555,11 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
  if( ( objectfd = open(p_fsalpath->path, O_RDONLY, 0600 ) ) < 0 )
   ReturnCode(posix2fsal_error(errno), errno);
 
- return fsal_internal_fd2handle( p_context,  
-                                 objectfd, 
-				 p_handle ) ;
+ st = fsal_internal_fd2handle( p_context,  
+                               objectfd, 
+			       p_handle ) ;
+  close( objectfd ) ;
+  return st ;
 } /* fsal_internal_Path2Handle */
 
 
