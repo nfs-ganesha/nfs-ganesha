@@ -1,4 +1,4 @@
-**
+/**
  *
  * \file    fsal_xattrs.c
  * \author  $Author: leibovic $

@@ -56,7 +56,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
   char type[256];
 
   size_t pathlen, outlen;
-  int rc;
+  int rc, fd;
 
   char *  handle  ;
   size_t  handle_len = 0 ;
@@ -69,40 +69,41 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
     } 
 
   /* save open-by-handle char device */
-  fd = open(init_info->fs_specific_info.open_by_handle_dev_file, O_RDWR);
+  //  fd = open(->fs_specific_info.open_by_handle_dev_file, O_RDWR);
+  fd = open(fs_specific_options, O_RDWR);
   if (!fd)
     {
       DisplayLog
-	("FSAL INIT: ERROR: : %s (item %s)",
-	 key_name, CONF_LABEL_FS_SPECIFIC, errno);
+	("FSAL INIT: ERROR: Could not open open-by-handle character device file: rc = %d",
+	 errno);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
   p_export_context->open_by_handle_fd = fd;  
 
 
   /* save file descriptor to root of mount */
-  fd = open(init_info->fs_specific_info.gpfs_mount_point, O_RDWR);
+
+  //  fd = open(->fs_specific_info.gpfs_mount_point, O_RDWR);
+  fd = open(p_export_path->path,O_RDWR);
   if (!fd)
     {
       close(p_export_context->open_by_handle_fd);
       DisplayLog
-	("FSAL INIT: ERROR: : %s (item %s)",
-	 key_name, CONF_LABEL_FS_SPECIFIC, errno);
+	("FSAL INIT: ERROR: Could not open GPFS mount point: rc = %d", errno);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
   p_export_context->mount_root_fd = fd;
 
   /* save filesystem ID */
-  
 
   /* Do the path_to_fshandle call to init the gpfs's libhandle */
   strncpy(  p_export_context->mount_point, fs_specific_options, MAXPATHLEN ) ;
 
   /* /!\ fs_specific_options contains the full path of the gpfs filesystem root */
-  if( ( rc = path_to_fshandle( fs_specific_options,  (void **)(&handle), &handle_len) ) < 0 )
+  /*  if( ( rc = path_to_fshandle( fs_specific_options,  (void **)(&handle), &handle_len) ) < 0 )
     Return( ERR_FSAL_FAULT, errno, INDEX_FSAL_BuildExportContext ) ;
 
-  memcpy(  p_export_context->mnt_fshandle_val, handle, handle_len ) ;
+  memcpy(  p_export_context->mount_root_handle, handle, handle_len ) ;
   p_export_context->mnt_fshandle_len = handle_len ;
 
   if( ( rc = path_to_handle( fs_specific_options,  (void **)(&handle), &handle_len) ) < 0 )
@@ -110,8 +111,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
 
   memcpy(  p_export_context->mnt_handle_val, handle, handle_len ) ;
   p_export_context->mnt_handle_len = handle_len ;
-
-  p_export_context->dev_id = 1 ; /** @todo BUGAZOMEU : put something smarter here, using setmntent */
+  */
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 }
