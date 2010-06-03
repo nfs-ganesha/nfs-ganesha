@@ -27,10 +27,15 @@ static int linkat2( int srcfd, int dirdestfd, char * destname )
    char procpath[MAXPATHLEN] ;
    char pathproccontent[MAXPATHLEN] ;
 
+   memset( procpath, 0, MAXPATHLEN ) ;
+   memset( pathproccontent, 0, MAXPATHLEN ) ;
+
    snprintf( procpath, MAXPATHLEN, "/proc/%u/fd/%u", getpid(), srcfd ) ;
 
    if( readlink( procpath, pathproccontent, MAXPATHLEN ) == -1 )
      return -1 ;
+
+   printf( "%s  -> (%d,%s)\n", pathproccontent, dirdestfd, destname ) ;
 
    return linkat( 0, pathproccontent, dirdestfd, destname, 0 ) ;
 } /* linkat2 */
