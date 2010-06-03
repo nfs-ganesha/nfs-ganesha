@@ -131,7 +131,6 @@ fsal_status_t fsal_internal_fd2handle( fsal_op_context_t * p_context,
                                        int fd, 
 				       fsal_handle_t * phandle ) ;
 
-
 /**
  * Get the handle for a path (posix or fid path)
  */
@@ -148,3 +147,9 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
                                        struct stat *p_buffstat, /* IN, optional */
                                        fsal_attrib_list_t *
                                        p_object_attributes /* IN, optional */ );
+
+/**
+ * Access a link by a file handle.
+ */
+fsal_status_t  fsal_readlink_by_handle(fsal_handle_t * p_handle, char *__buf, int maxlen);
+
