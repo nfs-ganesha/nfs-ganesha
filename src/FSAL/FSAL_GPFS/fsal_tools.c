@@ -78,10 +78,14 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
       return -1;
     }
 
-  if ( strncmp(handle1->f_handle, handle2->f_handle, 20)
-       && (handle1->fs_handle[0] == handle2->fs_handle[0])
-       && (handle1->fs_handle[1] == handle2->fs_handle[1]) )
-    return 1;
+  if ( handle1->handle.handle_size != handle2->handle.handle_size )
+    return -2;
+
+  if ( strncmp(handle1->handle.f_handle, handle2->handle.f_handle, handle1->handle.handle_size)
+       && (handle1->fsid[0] == handle2->fsid[0])
+       && (handle1->fsid[1] == handle2->fsid[1]) )
+    return -3;
+
   return 0;
 }
 
@@ -111,23 +115,23 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
    * chars after the end of the handle. We must avoid this by skipping the last loop
    * and doing a special processing for the last bytes */
 
-  mod = p_handle->handle_len % sizeof(unsigned int);
+  mod = p_handle->handle.handle_size % sizeof(unsigned int);
 
   sum = cookie;
-  for(cpt = 0; cpt < p_handle->handle_len - mod; cpt += sizeof(unsigned int))
+  for(cpt = 0; cpt < p_handle->handle.handle_size - mod; cpt += sizeof(unsigned int))
     {
-      memcpy(&extract, &(p_handle->handle_val[cpt]), sizeof(unsigned int));
+      memcpy(&extract, &(p_handle->handle.f_handle[cpt]), sizeof(unsigned int));
       sum = (3 * sum + 5 * extract + 1999) % index_size;
     }
 
   if(mod)
     {
       extract = 0;
-      for(cpt = p_handle->handle_len - mod; cpt < p_handle->handle_len; cpt++)
+      for(cpt = p_handle->handle.handle_size - mod; cpt < p_handle->handle.handle_size; cpt++)
         {
           /* shift of 1 byte */
           extract <<= 8;
-          extract |= (unsigned int)p_handle->handle_val[cpt];
+          extract |= (unsigned int)p_handle->handle.f_handle[cpt];
         }
       sum = (3 * sum + 5 * extract + 1999) % index_size;
     }
@@ -160,22 +164,22 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
    * chars after the end of the handle. We must avoid this by skipping the last loop
    * and doing a special processing for the last bytes */
 
-  mod = p_handle->handle_len % sizeof(unsigned int);
+  mod = p_handle->handle.handle_size % sizeof(unsigned int);
 
-  for(cpt = 0; cpt < p_handle->handle_len - mod; cpt += sizeof(unsigned int))
+  for(cpt = 0; cpt < p_handle->handle.handle_size - mod; cpt += sizeof(unsigned int))
     {
-      memcpy(&extract, &(p_handle->handle_val[cpt]), sizeof(unsigned int));
+      memcpy(&extract, &(p_handle->handle.f_handle[cpt]), sizeof(unsigned int));
       h = (857 * h ^ extract) % 715827883;
     }
 
   if(mod)
     {
       extract = 0;
-      for(cpt = p_handle->handle_len - mod; cpt < p_handle->handle_len; cpt++)
+      for(cpt = p_handle->handle.handle_size - mod; cpt < p_handle->handle.handle_size; cpt++)
         {
           /* shift of 1 byte */
           extract <<= 8;
-          extract |= (unsigned int)p_handle->handle_val[cpt];
+          extract |= (unsigned int)p_handle->handle.f_handle[cpt];
         }
       h = (857 * h ^ extract) % 715827883;
     }
@@ -205,8 +209,6 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
                                 caddr_t out_buff        /* OUT */
     )
 {
-  unsigned int ino32;
-
   /* sanity checks */
   if(!p_in_fsal_handle || !out_buff || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -221,7 +223,8 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV2);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(fsal_handle_t));
+      memcpy(out_buff, p_in_fsal_handle->handle.f_handle,
+	     p_in_fsal_handle->handle.handle_size);
       break;
 
     case FSAL_DIGEST_NFSV3:
@@ -230,7 +233,8 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV3);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(fsal_handle_t));
+      memcpy(out_buff, p_in_fsal_handle->handle.f_handle,
+	     p_in_fsal_handle->handle.handle_size);
       break;
 
     case FSAL_DIGEST_NFSV4:
@@ -239,17 +243,17 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(fsal_handle_t));
+      memcpy(out_buff, p_in_fsal_handle->handle.f_handle,
+	     p_in_fsal_handle->handle.handle_size);
       break;
 
       /* FileId digest for NFSv2 */
     case FSAL_DIGEST_FILEID2:
 
-      ino32 = low32m(p_in_fsal_handle->inode);
-
       /* sanity check about output size */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID2);
-      memcpy(out_buff, &ino32, sizeof(int));
+      memcpy(out_buff, p_in_fsal_handle->handle.f_handle,
+	     sizeof(int));
 
       break;
 
@@ -258,14 +262,16 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
       /* sanity check about output size */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID3);
-      memcpy(out_buff, &(p_in_fsal_handle->inode), sizeof(fsal_u64_t));
+      memcpy(out_buff, p_in_fsal_handle->handle.f_handle,
+	     sizeof(fsal_u64_t));
       break;
 
       /* FileId digest for NFSv4 */
     case FSAL_DIGEST_FILEID4:
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID4);
-      memcpy(out_buff, &(p_in_fsal_handle->inode), sizeof(fsal_u64_t));
+      memcpy(out_buff, p_in_fsal_handle->handle.f_handle,
+	     sizeof(fsal_u64_t));
       break;
 
     default:
