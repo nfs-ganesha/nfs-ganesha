@@ -35,8 +35,6 @@ static int linkat2( int srcfd, int dirdestfd, char * destname )
    if( readlink( procpath, pathproccontent, MAXPATHLEN ) == -1 )
      return -1 ;
 
-   printf( "%s  -> (%d,%s)\n", pathproccontent, dirdestfd, destname ) ;
-
    return linkat( 0, pathproccontent, dirdestfd, destname, 0 ) ;
 } /* linkat2 */
  
@@ -139,10 +137,10 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
   newfd = openat( fd, p_filename->name, O_CREAT | O_WRONLY | O_TRUNC | O_EXCL, unix_mode);
   errsv = errno;
 
- close( fd ) ;
 
   if( newfd == -1)
     {
+      close( fd ) ;
       ReleaseTokenFSCall();
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
     }
@@ -150,20 +148,14 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
   /* get the new file handle */
   status = fsal_internal_fd2handle(p_context, newfd, p_object_handle);
 
-  /* close the file descriptor */
-  rc = close(newfd);
-  errsv = errno;
-  if(rc)
-    {
-      ReleaseTokenFSCall();
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
-    }
-
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
+   {
+     close( fd ) ;
+     close( newfd ) ;
     ReturnStatus(status, INDEX_FSAL_create);
-
+   }
   /* the file has been created */
   /* chown the file to the current user */
 
