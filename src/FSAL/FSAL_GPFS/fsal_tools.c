@@ -47,7 +47,7 @@
 
 char *FSAL_GetFSName()
 {
-  return "XFS";
+  return "GPFS";
 }
 
 /** 
