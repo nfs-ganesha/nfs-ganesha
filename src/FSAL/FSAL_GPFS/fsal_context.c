@@ -74,12 +74,12 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
     } 
 
   /* save file descriptor to root of GPFS share*/
-  fd = open(p_export_path->path,O_RDWR);
+  fd = open(p_export_path->path,O_RDONLY);
   if (fd < 0)
     {
       close(open_by_handle_fd);
       DisplayLog
-	("FSAL BUILD EXPORT CONTEXT: ERROR: Could not open GPFS mount point: rc = %d", errno);
+	("FSAL BUILD EXPORT CONTEXT: ERROR: Could not open GPFS mount point %s: rc = %d", p_export_path->path, errno);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
   p_export_context->mount_root_fd = fd;
