@@ -125,7 +125,7 @@ struct file_handle {
   int handle_size;
   int handle_type;
   /* file identifier */
-  unsigned char f_handle[0];
+  unsigned char f_handle[20];
 };
 
 struct name_handle_arg {
