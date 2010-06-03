@@ -86,13 +86,12 @@ fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
 
   /* Read the link on the filesystem */
   TakeTokenFSCall();
-  rc = readlink_by_handle(p_linkhandle, link_content_out, FSAL_MAX_PATH_LEN);
+  status = fsal_readlink_by_handle(p_context, p_linkhandle, link_content_out, FSAL_MAX_PATH_LEN);
   errsv = errno;
   ReleaseTokenFSCall();
 
-  /* rc is the length for the symlink content or -1 on error !!! */
-  if(rc < 0)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_readlink);
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_readlink);
 
   /* convert char * to fsal_path_t */
   status = FSAL_str2path(link_content_out, FSAL_MAX_PATH_LEN, p_link_content);
