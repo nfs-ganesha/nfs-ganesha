@@ -456,8 +456,11 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   status =
       fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_dir, NULL);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_link);
-
+   {
+     close( srcfd ),
+     close( dstfd ) ;
+     ReturnStatus(status, INDEX_FSAL_link);
+   }
   /* Create the link on the filesystem */
 
   TakeTokenFSCall();
@@ -465,8 +468,11 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   errsv = errno;
   ReleaseTokenFSCall();
   if(rc)
+   {
+    close( srcfd ),
+    close( dstfd ) ;
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_link);
-
+   }
   /* optionnaly get attributes */
 
   if(p_attributes)
@@ -482,6 +488,8 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
     }
 
   /* OK */
+  close( srcfd ) ;
+  close( dstfd ) ;
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_link);
 
 }
