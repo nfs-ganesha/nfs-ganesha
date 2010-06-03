@@ -477,6 +477,13 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
+/***
+ *
+ * fsal_internal_handle2fd - convert an internal handle to a file
+ * descriptor
+ *
+ */
+
 fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,  
 				       fsal_handle_t * phandle,
                                        int * pfd,
@@ -501,40 +508,14 @@ fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,
   *pfd = rc ;
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
-} /* fsal_internal_handle2fd */
+}
 
-/* fsal_status_t fsal_internal_fd2handle( fsal_op_context_t * p_context,   */
-/*                                        int fd,  */
-/* 				       fsal_handle_t * phandle )  */
-/* { */
-/*   int rc = 0 ; */
-/*   struct stat ino; */
-
-/*   char * handle_val ; */
-/*   size_t handle_len ; */
-
-/*   if( !phandle ||  !p_context) */
-/*     ReturnCode(ERR_FSAL_FAULT, 0); */
-
-/*   memset(phandle, 0, sizeof(fsal_handle_t)); */
-  
-/*   /\* retrieve inode *\/ */
-/*   rc = fstat( fd, &ino); */
-/*   if(rc) */
-/*     ReturnCode(posix2fsal_error(errno), errno); */
-/*   phandle->inode = ino.st_ino; */
-
-/*   if( ( rc = fd_to_handle( fd,  (void **)(&handle_val), &handle_len ) ) < 0 ) */
-/*     ReturnCode(  posix2fsal_error(errno), errno  ) ; */
-
-/*   memcpy( phandle->handle_val, handle_val, handle_len ) ; */
-/*   phandle->handle_len = handle_len ; */
-
-
-/*   free_handle( handle_val, handle_len ) ; */
-
-/*   ReturnCode(ERR_FSAL_NO_ERROR, 0); */
-/* } /\* fsal_internal_fd2handle *\/ */
+/***
+ *
+ * fsal_internal_handle_at - generate a handle for a file in a
+ * particular open directory.  Needed during FSAL_create
+ *
+ */
 
 fsal_status_t fsal_internal_handle_at(fsal_op_context_t * p_context, /* IN */
                                       int dfd, /* IN */
@@ -610,6 +591,38 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
 
   if( ( rc = ioctl(char_fd, OPENHANDLE_NAME_TO_HANDLE, &harg) ) < 0 )
     ReturnCode(posix2fsal_error(errno), errno);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
+ * Access a link by a file handle.
+ */
+fsal_status_t  fsal_readlink_by_handle(fsal_op_context_t * p_context, fsal_handle_t * p_handle, char *__buf, int maxlen)
+{
+  int fd;
+  int rc;
+  int char_fd;
+  fsal_status_t status;
+  struct readlink_arg readlinkarg;
+
+  status = fsal_internal_handle2fd( p_context, p_handle , &fd, O_RDONLY );
+
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_open);
+
+  memset(__buf, 0, maxlen);
+  readlinkarg.fd = fd;
+  readlinkarg.buffer = __buf;
+  readlinkarg.size = maxlen;
+
+  char_fd = p_context->export_context->open_by_handle_fd;
+
+  if ( (rc = ioctl(char_fd, OPENHANDLE_READLINK_BY_FD, &readlinkarg) ) < 0 )
+  {
+    Return(rc, 0, INDEX_FSAL_readlink);
+
+  }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -765,12 +778,3 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
 }
 
-/**
- * Access a link by a file handle.
- */
-fsal_status_t  fsal_readlink_by_handle(fsal_handle_t * p_handle, char *__buf, int maxlen)
-{
-  __buf = NULL;
-  ReturnCode(ERR_FSAL_INVAL, 0);
-  /* ReturnCode(ERR_FSAL_NO_ERROR, 0); */
-}
