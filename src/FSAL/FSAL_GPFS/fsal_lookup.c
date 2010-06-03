@@ -183,7 +183,9 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
      Return( posix2fsal_error( errsrv ), errsrv,  INDEX_FSAL_lookup);
     }
 
-  status = fsal_internal_fd2handle(  p_context, objectfd, p_object_handle ) ;
+  
+  /* This might be a race, but it's the best we can currently do */
+  status = fsal_internal_handle_at( parentfd, p_filename->name, p_object_handle ) ;
   close( parentfd ) ;
   close( objectfd ) ;
 
