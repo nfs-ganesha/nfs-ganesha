@@ -492,14 +492,11 @@ fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,
                                        int * pfd,
                                        int oflags )
 {
-  int char_fd = 0;
   int rc = 0 ;
   struct open_arg oarg;
 
   if( !phandle || !pfd || !p_context)
     ReturnCode(ERR_FSAL_FAULT, 0);
-  
-  char_fd = p_context->export_context->open_by_handle_fd;
   
   oarg.mountdirfd = p_context->export_context->mount_root_fd;
  
@@ -507,7 +504,7 @@ fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,
   oarg.handle = &phandle->handle;
   oarg.flags = oflags;
 
-  if( ( rc = ioctl( char_fd, OPENHANDLE_OPEN_BY_HANDLE, &oarg ) ) < 0 )
+  if( ( rc = ioctl( open_by_handle_fd, OPENHANDLE_OPEN_BY_HANDLE, &oarg ) ) < 0 )
     ReturnCode(posix2fsal_error(errno), errno ) ;
 
   *pfd = rc ;
@@ -530,7 +527,6 @@ fsal_status_t fsal_internal_handle_at(int dfd, /* IN */
   int rc;
   struct name_handle_arg harg;
   int objectfd ; 
-  int char_fd = 0;
 
   if(!p_handle || !p_fsalname)
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -551,7 +547,7 @@ fsal_status_t fsal_internal_handle_at(int dfd, /* IN */
   DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle at for %s", p_fsalname->name);
 #endif
 
-  if( ( rc = ioctl(char_fd, OPENHANDLE_NAME_TO_HANDLE, &harg) ) < 0 )
+  if( ( rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg) ) < 0 )
     ReturnCode(posix2fsal_error(errno), errno);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
@@ -570,7 +566,6 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
   int rc;
   struct name_handle_arg harg;
   int objectfd ; 
-  int char_fd;
 
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -591,9 +586,7 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
   DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle for %s", p_fsalpath->path);
 #endif
 
-  char_fd = p_context->export_context->open_by_handle_fd;
-
-  if( ( rc = ioctl(char_fd, OPENHANDLE_NAME_TO_HANDLE, &harg) ) < 0 )
+  if( ( rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg) ) < 0 )
     ReturnCode(posix2fsal_error(errno), errno);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
@@ -622,9 +615,7 @@ fsal_status_t  fsal_readlink_by_handle(fsal_op_context_t * p_context, fsal_handl
   readlinkarg.buffer = __buf;
   readlinkarg.size = maxlen;
 
-  char_fd = p_context->export_context->open_by_handle_fd;
-
-  if ( (rc = ioctl(char_fd, OPENHANDLE_READLINK_BY_FD, &readlinkarg) ) < 0 )
+  if ( (rc = ioctl(open_by_handle_fd, OPENHANDLE_READLINK_BY_FD, &readlinkarg) ) < 0 )
   {
     Return(rc, 0, INDEX_FSAL_readlink);
 
