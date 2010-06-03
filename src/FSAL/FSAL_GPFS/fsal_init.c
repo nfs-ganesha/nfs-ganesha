@@ -131,6 +131,17 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     DisplayLog
       ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
 
+  /* save open-by-handle char device */
+  memcpy(open_by_handle_path, init_info->fs_specific_info.open_by_handle_dev_file, MAXPATHLEN);
+  open_by_handle_fd = open(init_info->fs_specific_info.open_by_handle_dev_file, O_RDWR);
+  if (!open_by_handle_fd)
+    {
+      DisplayLog
+	("FSAL INIT: ERROR: Could not open open-by-handle character device file: rc = %d",
+	 errno);
+      ReturnCode(ERR_FSAL_INVAL, 0);
+    }
+
   /* proceeds FSAL internal initialization */
   status = fsal_internal_init_global(&(init_info->fsal_info),
                                      &(init_info->fs_common_info),
