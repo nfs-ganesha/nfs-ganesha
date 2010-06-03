@@ -59,9 +59,12 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
   size_t pathlen, outlen;
   int rc, fd;
 
-  char *  handle  ;
-  size_t  handle_len = 0 ;
+  char *  handle;
+  size_t  handle_len = 0;
   struct statfs stat_buf;
+
+  fsal_status_t status;
+  fsal_op_context_t op_context;
 
   /* sanity check */
   if((p_export_context == NULL) || (p_export_path == NULL))
@@ -70,22 +73,11 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
     } 
 
-  /* save open-by-handle char device */
-  fd = open(fs_specific_options, O_RDWR);
-  if (!fd)
-    {
-      DisplayLog
-	("FSAL INIT: ERROR: Could not open open-by-handle character device file: rc = %d",
-	 errno);
-      ReturnCode(ERR_FSAL_INVAL, 0);
-    }
-  p_export_context->open_by_handle_fd = fd;  
-
-  /* save file descriptor to root of mount */
+  /* save file descriptor to root of GPFS share*/
   fd = open(p_export_path->path,O_RDWR);
   if (!fd)
     {
-      close(p_export_context->open_by_handle_fd);
+      close(open_by_handle_fd);
       DisplayLog
 	("FSAL INIT: ERROR: Could not open GPFS mount point: rc = %d", errno);
       ReturnCode(ERR_FSAL_INVAL, 0);
@@ -101,22 +93,21 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
   p_export_context->fsid[0] = stat_buf.f_fsid.__val[0];
   p_export_context->fsid[1] = stat_buf.f_fsid.__val[1];
 
-  /* Do the path_to_fshandle call to init the gpfs's libhandle */
-  strncpy(  p_export_context->mount_point, fs_specific_options, MAXPATHLEN ) ;
-
-  /* /!\ fs_specific_options contains the full path of the gpfs filesystem root */
-  /*  if( ( rc = path_to_fshandle( fs_specific_options,  (void **)(&handle), &handle_len) ) < 0 )
-    Return( ERR_FSAL_FAULT, errno, INDEX_FSAL_BuildExportContext ) ;
-
-  memcpy(  p_export_context->mount_root_handle, handle, handle_len ) ;
-  p_export_context->mnt_fshandle_len = handle_len ;
-
-  if( ( rc = path_to_handle( fs_specific_options,  (void **)(&handle), &handle_len) ) < 0 )
-    Return( ERR_FSAL_FAULT, errno, INDEX_FSAL_BuildExportContext ) ;
-
-  memcpy(  p_export_context->mnt_handle_val, handle, handle_len ) ;
-  p_export_context->mnt_handle_len = handle_len ;
-  */
+  /* save file handle to root of GPFS share*/
+  op_context.export_context = p_export_context;
+  // op_context.credential = ???
+  status = fsal_internal_Path2Handle(&op_context,
+				     p_export_path,
+				     &(p_export_context->mount_root_handle));
+  if (status.major != ERR_FSAL_NO_ERROR)
+    {
+      close(open_by_handle_fd);
+      close(p_export_context->mount_root_fd);
+      DisplayLog
+	("FSAL INIT: ERROR: Conversion from gpfs"
+	 "filesystem root path to handle failed.");
+      ReturnCode(ERR_FSAL_INVAL, 0);
+    }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 }

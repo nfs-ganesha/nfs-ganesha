@@ -100,9 +100,9 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
     {
       /* get handle for the mount point  */
       memcpy( p_object_handle->handle.f_handle,
-	      p_context->export_context->mount_root_handle.f_handle,
-	      sizeof(p_context->export_context->mount_root_handle.handle_size) );
-      p_object_handle->handle.handle_size =  p_context->export_context->mount_root_handle.handle_size;
+	      p_context->export_context->mount_root_handle.handle.f_handle,
+	      sizeof(p_context->export_context->mount_root_handle.handle.handle_size) );
+      p_object_handle->handle.handle_size =  p_context->export_context->mount_root_handle.handle.handle_size;
       
       /* get attributes, if asked */
       if(p_object_attributes)
