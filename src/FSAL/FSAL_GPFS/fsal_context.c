@@ -24,6 +24,7 @@
 #include <pthread.h>
 #include <mntent.h>             /* for handling mntent */
 #include <libgen.h>             /* for dirname */
+#include <sys/vfs.h>            /* for fsid */
 
 /**
  * @defgroup FSALCredFunctions Credential handling functions.
@@ -60,6 +61,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
 
   char *  handle  ;
   size_t  handle_len = 0 ;
+  struct statfs stat_buf;
 
   /* sanity check */
   if((p_export_context == NULL) || (p_export_path == NULL))
@@ -69,7 +71,6 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
     } 
 
   /* save open-by-handle char device */
-  //  fd = open(->fs_specific_info.open_by_handle_dev_file, O_RDWR);
   fd = open(fs_specific_options, O_RDWR);
   if (!fd)
     {
@@ -80,10 +81,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
     }
   p_export_context->open_by_handle_fd = fd;  
 
-
   /* save file descriptor to root of mount */
-
-  //  fd = open(->fs_specific_info.gpfs_mount_point, O_RDWR);
   fd = open(p_export_path->path,O_RDWR);
   if (!fd)
     {
@@ -95,6 +93,13 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
   p_export_context->mount_root_fd = fd;
 
   /* save filesystem ID */
+  rc = statfs(p_export_path->path, &stat_buf);
+  if ( rc ) {
+    fprintf(stderr, "statfs call failed on file %s: %d\n", p_export_path->path, rc);
+    ReturnCode(ERR_FSAL_INVAL, 0);
+  }
+  p_export_context->fsid[0] = stat_buf.f_fsid.__val[0];
+  p_export_context->fsid[1] = stat_buf.f_fsid.__val[1];
 
   /* Do the path_to_fshandle call to init the gpfs's libhandle */
   strncpy(  p_export_context->mount_point, fs_specific_options, MAXPATHLEN ) ;
