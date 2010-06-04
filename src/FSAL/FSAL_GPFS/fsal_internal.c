@@ -537,10 +537,9 @@ fsal_status_t fsal_internal_handle_at(int dfd, /* IN */
   /* p_handle->handle = realloc(p_handle->handle, sizeof(struct file_handle) + 20); */
   /* p_handle->handle.handle_size = 20; */
 
-  memset(harg.handle, 0, sizeof(struct file_handle));
+  harg.handle = &p_handle->handle;
   harg.handle->handle_size = 20;
-
-  harg.name = strndup(p_fsalname->name, FSAL_MAX_PATH_LEN);
+  harg.name = p_fsalname->name;
   harg.dfd = dfd;
   harg.flag = 0;
 
@@ -549,13 +548,7 @@ fsal_status_t fsal_internal_handle_at(int dfd, /* IN */
 #endif
 
   if( ( rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg) ) < 0 )
-  {
-    free(harg.name);
     ReturnCode(posix2fsal_error(errno), errno);
-  }
-
-  memcpy(&p_handle->handle, &harg.handle, sizeof(struct file_handle));
-  free(harg.name);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }  
@@ -581,9 +574,9 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
      the right size here. */
   /* TODO: the size should be something other than 20 */
   /* p_handle->handle = realloc(p_handle->handle, sizeof(struct file_handle) + 20); */
-  memset(harg.handle, 0, sizeof(struct file_handle));
+  harg.handle = &p_handle->handle;
   harg.handle->handle_size = 20;
-  harg.name = strndup(p_fsalpath->path, FSAL_MAX_PATH_LEN);
+  harg.name = p_fsalpath->path;
   harg.dfd = AT_FDCWD;
   harg.flag = 0;
 
@@ -592,13 +585,7 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
 #endif
 
   if( ( rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg) ) < 0 )
-  {
-    free(harg.name);
     ReturnCode(posix2fsal_error(errno), errno);
-  }
-
-  free(harg.name);
-  memcpy(&p_handle->handle, &harg.handle, sizeof(struct file_handle));
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
