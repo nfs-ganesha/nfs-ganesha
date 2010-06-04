@@ -116,7 +116,7 @@ int nfs41_op_reclaim_complete(struct nfs_argop4 *op, compound_data_t * data,
  * @return nothing (void function )
  * 
  */
-void nfs41_op_reclaim_complete_Free(LOCK4res * resp)
+void nfs41_op_reclaim_complete_Free(RECLAIM_COMPLETE4res * resp)
 {
   /* Nothing to Mem_Free */
   return;

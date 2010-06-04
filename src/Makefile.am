@@ -48,6 +48,8 @@ deb:
 
 rpms: rpm srpm
 
+codecheck:
+	 cppcheck -v --force --enable=all -I`pwd`/include . 2>cppcheck.log
 doc:
 	curdir=`pwd` ; for i in $(DOCDIRS) ; do cd $$i ; make doc ; cd $$curdir ; done
 

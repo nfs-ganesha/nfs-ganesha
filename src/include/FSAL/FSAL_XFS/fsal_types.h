@@ -117,6 +117,7 @@ typedef struct
   char handle_val[FSAL_XFS_HANDLE_LEN] ;
   unsigned int handle_len ;
   uint32_t inode ;
+  char type ;
 } fsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */

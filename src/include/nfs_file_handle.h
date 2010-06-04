@@ -57,18 +57,16 @@
 /* This must be exactly 32 bytes long, and aligned on 32 bits */
 typedef struct file_handle_v2__
 {
-  unsigned int checksum;        /* FH checksum, for encryption support      len = 4 bytes  */
   unsigned short exportid;      /* must be correlated to exportlist_t::id   len = 2 bytes  */
-  char fsopaque[25];            /* persistent part of FSAL handle, opaque   len = 25 bytes */
+  char fsopaque[29];            /* persistent part of FSAL handle, opaque   len = 25 bytes */
   char xattr_pos;               /* Used for xattr management                len = 1  byte  */
 } file_handle_v2_t;
 
 /* This is up to 64 bytes long, aligned on 32 bits */
 typedef struct file_handle_v3__
 {
-  char checksum[16];            /* FH checksum, for encryption support      len = 16 bytes  */
   unsigned short exportid;      /* must be correlated to exportlist_t::id   len = 2 bytes   */
-  char fsopaque[43];            /* persistent part of FSAL handle, opaque   len = 41 bytes  */
+  char fsopaque[61];            /* persistent part of FSAL handle, opaque   len = 41 bytes  */
   char xattr_pos;               /* Used for xattr management                len = 1  byte  */
 } file_handle_v3_t;
 
@@ -102,11 +100,6 @@ int nfs3_FSALToFhandle(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
                        exportlist_t * pexport);
 int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
                        exportlist_t * pexport);
-
-/* Computation of file handle checksum */
-unsigned int nfs2_FhandleCheckSum(file_handle_v2_t * pfh);
-unsigned long long nfs3_FhandleCheckSum(file_handle_v3_t * pfh);
-unsigned long long nfs4_FhandleCheckSum(file_handle_v4_t * pfh);
 
 /* Extraction of export id from a file handle */
 short nfs2_FhandleToExportId(fhandle2 * pfh2);
