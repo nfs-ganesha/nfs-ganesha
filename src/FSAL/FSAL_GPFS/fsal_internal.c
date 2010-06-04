@@ -537,11 +537,11 @@ fsal_status_t fsal_internal_handle_at(int dfd, /* IN */
   /* p_handle->handle = realloc(p_handle->handle, sizeof(struct file_handle) + 20); */
   /* p_handle->handle.handle_size = 20; */
 
+  memset(harg.handle, 0, sizeof(struct file_handle));
+  harg.handle->handle_size = 20;
+  memcpy(harg.name, p_fsalname->name, FSAL_MAX_PATH_LEN);
   harg.dfd = dfd;
-  harg.name = p_fsalname->name;
   harg.flag = 0;
-  p_handle->handle.handle_size = 20;
-  harg.handle = &p_handle->handle;
 
 #ifdef _DEBUG_FSAL
   DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle at for %s", p_fsalname->name);
@@ -549,6 +549,8 @@ fsal_status_t fsal_internal_handle_at(int dfd, /* IN */
 
   if( ( rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg) ) < 0 )
     ReturnCode(posix2fsal_error(errno), errno);
+
+  memcpy(&p_handle->handle, &harg.handle, sizeof(struct file_handle));
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }  
