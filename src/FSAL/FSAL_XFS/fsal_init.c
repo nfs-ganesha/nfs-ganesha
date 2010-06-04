@@ -112,11 +112,7 @@
 fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     )
 {
-  char *  fshandle  ;
-  size_t  fshandlelen = 0 ;
-
-  fsal_status_t status;
-  int rc = 0 ;
+  fsal_status_t status ;
 
   /* sanity check.  */
   if(!init_info)

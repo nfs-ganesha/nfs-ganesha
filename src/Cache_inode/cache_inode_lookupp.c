@@ -125,7 +125,7 @@ cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
       /* NO, the parent is not cached, query FSAL to get it and cache the result */
       object_attributes.asked_attributes = pclient->attrmask;
       fsal_status =
-          FSAL_lookup(&pentry->object.dir_begin.handle, &FSAL_DOT_DOT, pcontext,
+          FSAL_lookup(&pentry->object.dir_begin.handle, (fsal_name_t *)&FSAL_DOT_DOT, pcontext,
                       &fsdata.handle, &object_attributes);
 
       if(FSAL_IS_ERROR(fsal_status))

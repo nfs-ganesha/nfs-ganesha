@@ -106,7 +106,7 @@ typedef struct fsal_path__
 #define FSAL_NAME_INITIALIZER {"",0}
 #define FSAL_PATH_INITIALIZER {"",0}
 
-#define FSAL_XFS_HANDLE_LEN 64
+#define FSAL_XFS_HANDLE_LEN 29
 #define FSAL_XFS_FSHANDLE_LEN 64
 
 static const fsal_name_t FSAL_DOT = { ".", 1 };
@@ -116,7 +116,8 @@ typedef struct
 {
   char handle_val[FSAL_XFS_HANDLE_LEN] ;
   unsigned int handle_len ;
-  uint64_t inode ;
+  uint32_t inode ;
+  char type ;
 } fsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */

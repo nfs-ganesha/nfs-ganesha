@@ -127,11 +127,11 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
     }
 
   /* if name is ".", use the input value */
-  if(!FSAL_namecmp(pname, &FSAL_DOT))
+  if(!FSAL_namecmp(pname, (fsal_name_t *)&FSAL_DOT))
     {
       pentry = pentry_parent;
     }
-  else if(!FSAL_namecmp(pname, &FSAL_DOT_DOT))
+  else if(!FSAL_namecmp(pname, (fsal_name_t *)&FSAL_DOT_DOT))
     {
       /* Directory do only have exactly one parent. This a limitation in all FS, which 
        * implies that hard link are forbidden on directories (so that they exists only in one dir)

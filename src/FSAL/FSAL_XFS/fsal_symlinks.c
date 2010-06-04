@@ -164,7 +164,7 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
   int rc, errsv;
   fsal_status_t status;
   int fd ;
-  struct stat buffstat;
+  struct stat buffstat, lbuffstat;
   int setgid_bit = FALSE;
 
   /* sanity checks.
@@ -180,7 +180,7 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_symlink);
 
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_DIRECTORY ) ;
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
@@ -209,7 +209,6 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_symlink);
 
-  /* build symlink path */
 
   /* create the symlink on the filesystem. */
 
@@ -232,20 +231,38 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
   errsv = errno;
   ReleaseTokenFSCall();
 
-  close( fd ) ;
-
   if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
+
+  /* Build fsal_handle_t */
+     /* build symlink path */
+  TakeTokenFSCall();
+  rc = fstatat( fd, p_linkname->name, &lbuffstat, AT_SYMLINK_NOFOLLOW);
+  errsv = errno;
+  ReleaseTokenFSCall();
+  if(rc)
+   {
+    close( fd ) ;
+    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
+   }
+
+ 
+  close( fd ) ;
+
+  status = fsal_internal_inum2handle( p_context,  
+                                      lbuffstat.st_ino,    
+		   	              p_link_handle ) ;
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_symlink);
 
   /* get attributes if asked */
 
   if(p_link_attributes)
     {
 
-      status = FSAL_getattrs(p_link_handle, p_context, p_link_attributes);
+      status = posix2fsal_attributes(&lbuffstat, p_link_attributes);
 
       /* On error, we set a flag in the returned attributes */
-
       if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_link_attributes->asked_attributes);

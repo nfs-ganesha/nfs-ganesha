@@ -314,13 +314,13 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
       /* NFSV3 handle digest */
     case FSAL_DIGEST_NFSV3:
       memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
+      memcpy(p_out_fsal_handle, in_buff, sizeof( fsal_handle_t ) ) ;
       break;
 
       /* NFSV4 handle digest */
     case FSAL_DIGEST_NFSV4:
       memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
+      memcpy(p_out_fsal_handle, in_buff, sizeof( fsal_handle_t ) ) ;
       break;
 
     default:
@@ -776,59 +776,6 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
                                                         fsal_parameter_t * out_parameter)
 {
-  int err;
-  int var_max, var_index;
-  char *key_name;
-  char *key_value;
-  config_item_t block;
-
-  block = config_FindItemByName(in_config, CONF_LABEL_FS_SPECIFIC);
-
-  /* cannot read item */
-  if(block == NULL)
-    {
-      DisplayLog("FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
-                 CONF_LABEL_FS_SPECIFIC);
-      ReturnCode(ERR_FSAL_NOENT, 0);
-    }
-  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
-    {
-      DisplayLog("FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
-                 CONF_LABEL_FS_SPECIFIC);
-      ReturnCode(ERR_FSAL_INVAL, 0);
-    }
-
-  var_max = config_GetNbItems(block);
-
-  for(var_index = 0; var_index < var_max; var_index++)
-    {
-      config_item_t item;
-
-      item = config_GetItemByIndex(block, var_index);
-
-      err = config_GetKeyValue(item, &key_name, &key_value);
-      if(err)
-        {
-          DisplayLog
-              ("FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
-               var_index, CONF_LABEL_FS_SPECIFIC);
-          ReturnCode(ERR_FSAL_SERVERFAULT, err);
-        }
-      /* does the variable exists ? */
-      if(!STRCMP(key_name, "XfsMountPoint"))
-        {
-
-          strncpy( out_parameter->fs_specific_info.xfs_mount_point, key_value, MAXPATHLEN ) ;
-        }
-      else
-        {
-          DisplayLog
-              ("FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
-               key_name, CONF_LABEL_FS_SPECIFIC);
-          ReturnCode(ERR_FSAL_INVAL, 0);
-        }
-
-    }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 

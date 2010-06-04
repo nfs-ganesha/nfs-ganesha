@@ -193,7 +193,6 @@ int nfs3_FhandleToFSAL(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
 {
   fsal_status_t fsal_status;
   file_handle_v3_t *pfile_handle;
-  unsigned long long checksum;
 #ifdef _DEBUG_FILEHANDLE
   print_fhandle3(*pfh3);
 #endif
@@ -203,16 +202,6 @@ int nfs3_FhandleToFSAL(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
 
   /* Cast the fh as a non opaque structure */
   pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
-
-  /* Check the cksum */
-  memcpy((char *)&checksum, pfile_handle->checksum, sizeof(checksum));
-  if(checksum != nfs3_FhandleCheckSum(pfile_handle))
-    {
-      DisplayLog
-          ("Invalid checksum in NFSv3 handle. checksum from handle:%llX, expected:%llX",
-           checksum, nfs3_FhandleCheckSum(pfile_handle));
-      return 0;                 /* Corrupted FH */
-    }
 
   /* Fill in the fs opaque part */
   fsal_status =
@@ -250,10 +239,6 @@ int nfs2_FhandleToFSAL(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
 #ifdef _DEBUG_FILEHANDLE
   print_fhandle2(*pfh2);
 #endif
-  /* Check the cksum */
-  if(pfile_handle->checksum != nfs2_FhandleCheckSum(pfile_handle))
-    return 0;                   /* Corrupted FH */
-
   /* Fill in the fs opaque part */
   fsal_status =
       FSAL_ExpandHandle(pcontext->export_context, FSAL_DIGEST_NFSV2,
@@ -370,11 +355,6 @@ int nfs3_FSALToFhandle(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
   /* Set the last byte */
   file_handle.xattr_pos = 0;
 
-  /* A very basic checksum */
-  memset((char *)&file_handle.checksum, 0, 16); /* NFSv3 checksum is 16 bytes long */
-  cksum = nfs3_FhandleCheckSum(&file_handle);
-  memcpy((char *)&file_handle.checksum, &cksum, sizeof(cksum));
-
   /* Set the len */
   pfh3->data.data_len = sizeof(file_handle_v3_t);
 
@@ -406,7 +386,6 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
 {
   fsal_status_t fsal_status;
   file_handle_v2_t file_handle;
-  unsigned int checksum;
 #ifdef _DEBUG_FILEHANDLE
   print_buff((char *)pfsalhandle, sizeof(fsal_handle_t));
 #endif
@@ -423,10 +402,6 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
 
   /* keep track of the export id */
   file_handle.exportid = pexport->id;
-
-  /* A very basic checksum */
-  checksum = nfs2_FhandleCheckSum(&file_handle);
-  memcpy((char *)&file_handle.checksum, &checksum, sizeof(checksum));
 
   /* Set the last byte */
   file_handle.xattr_pos = 0;
@@ -686,72 +661,6 @@ int nfs4_Is_Fh_Referral(nfs_fh4 * pfh)
 
   return FALSE;
 }                               /* nfs4_Is_Fh_Referral */
-
-/**
- *
- * nfs2_FhandleCheckSum
- *
- * Computes the checksum associated with a nfsv2 file handle.
- *
- * @param pfh [IN] pointer to the file handle whose checksum is to be computed.
- *
- * @return the computed checksum.
- *
- */
-unsigned int nfs2_FhandleCheckSum(file_handle_v2_t * pfh)
-{
-  unsigned int cksum;
-
-  cksum =
-      (unsigned int)pfh->exportid + (unsigned int)pfh->fsopaque[1] +
-      (unsigned int)pfh->fsopaque[3] + (unsigned int)pfh->fsopaque[5];
-
-  return cksum;
-}                               /* nfs2_FhandleCheckSum */
-
-/**
- *
- * nfs3_FhandleCheckSum
- *
- * Computes the checksum associated with a nfsv3 file handle.
- *
- * @param pfh [IN] pointer to the file handle whose checksum is to be computed.
- *
- * @return the computed checksum.
- *
- */
-unsigned long long nfs3_FhandleCheckSum(file_handle_v3_t * pfh)
-{
-  unsigned long long cksum;
-
-  cksum =
-      (unsigned long long)pfh->exportid + (unsigned long long)pfh->fsopaque[1] +
-      (unsigned long long)pfh->fsopaque[3] + (unsigned long long)pfh->fsopaque[5];
-
-  return cksum;
-}                               /* nfs3_FhandleCheckSum */
-
-/**
- *
- * nfs4_FhandleCheckSum
- *
- * Computes the checksum associated with a nfsv4 file handle.
- *
- * @param pfh [IN] pointer to the file handle whose checksum is to be computed.
- *
- * @return the computed checksum.
- *
- */
-unsigned long long nfs4_FhandleCheckSum(file_handle_v4_t * pfh)
-{
-  unsigned long long cksum;
-
-  cksum =
-      (unsigned long long)pfh->exportid + (unsigned long long)pfh->fsopaque[1] +
-      (unsigned long long)pfh->fsopaque[3] + (unsigned long long)pfh->fsopaque[5];
-
-  return cksum;
-}                               /* nfs4_FhandleCheckSum */
 
 /**
  *

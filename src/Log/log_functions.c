@@ -515,12 +515,7 @@ static int DisplayLogPath_valist(char *path, char *format, va_list arguments)
     {
 #ifdef _LOCK_LOG
       if((fd = open(path, O_WRONLY | O_SYNC | O_APPEND | O_CREAT, masque_log)) != -1)
-#else
-      if((fd = open(path, O_WRONLY | O_NONBLOCK | O_APPEND | O_CREAT, masque_log)) != -1)
-#endif
         {
-          /* Si la creation ou l'ouverture du fichier est OK */
-
           /* un verrou sur fichier */
           struct flock lock_file;
 
@@ -530,24 +525,18 @@ static int DisplayLogPath_valist(char *path, char *format, va_list arguments)
           lock_file.l_start = 0;
           lock_file.l_len = 0;
 
-#ifdef _LOCK_LOG
           if(fcntl(fd, F_SETLKW, (char *)&lock_file) != -1)
             {
-#endif
               /* Si la prise du verrou est OK */
               write(fd, tampon, strlen(tampon));
 
-#ifdef _LOCK_LOG
               /* Relache du verrou sur fichier */
               lock_file.l_type = F_UNLCK;
               fcntl(fd, F_SETLKW, (char *)&lock_file);
-#endif
 
               /* fermeture du fichier */
               close(fd);
-
               return SUCCES;
-#ifdef _LOCK_LOG
             }                   /* if fcntl */
           else
             {
@@ -555,9 +544,17 @@ static int DisplayLogPath_valist(char *path, char *format, va_list arguments)
               my_status = errno;
               close(fd);
             }
-#endif
+        }
+
+#else
+      if((fd = open(path, O_WRONLY | O_NONBLOCK | O_APPEND | O_CREAT, masque_log)) != -1)
+        {
+          write(fd, tampon, strlen(tampon));
+          /* fermeture du fichier */
           close(fd);
-        }                       /* if open */
+          return SUCCES;
+        }
+#endif
       else
         {
           /* Si l'ouverture du fichier s'est mal passee */

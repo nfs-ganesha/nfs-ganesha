@@ -21,6 +21,23 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+/* Dirty work-around to be used for managing NFS related link semantics */
+static int linkat2( int srcfd, int dirdestfd, char * destname )
+{
+   char procpath[MAXPATHLEN] ;
+   char pathproccontent[MAXPATHLEN] ;
+
+   memset( procpath, 0, MAXPATHLEN ) ;
+   memset( pathproccontent, 0, MAXPATHLEN ) ;
+
+   snprintf( procpath, MAXPATHLEN, "/proc/%u/fd/%u", getpid(), srcfd ) ;
+
+   if( readlink( procpath, pathproccontent, MAXPATHLEN ) == -1 )
+     return -1 ;
+
+   return linkat( 0, pathproccontent, dirdestfd, destname, 0 ) ;
+} /* linkat2 */
+ 
 /**
  * FSAL_create:
  * Create a regular file.
@@ -83,7 +100,7 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
 #endif
 
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_DIRECTORY ) ;
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_create);
@@ -120,30 +137,25 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
   newfd = openat( fd, p_filename->name, O_CREAT | O_WRONLY | O_TRUNC | O_EXCL, unix_mode);
   errsv = errno;
 
- close( fd ) ;
 
   if( newfd == -1)
     {
-      ReleaseTokenFSCall();
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
-    }
-
-  /* close the file descriptor */
-  rc = close(newfd);
-  errsv = errno;
-  if(rc)
-    {
+      close( fd ) ;
       ReleaseTokenFSCall();
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
     }
 
   /* get the new file handle */
   status = fsal_internal_fd2handle(p_context, newfd, p_object_handle);
+
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
+   {
+     close( fd ) ;
+     close( newfd ) ;
     ReturnStatus(status, INDEX_FSAL_create);
-
+   }
   /* the file has been created */
   /* chown the file to the current user */
 
@@ -243,7 +255,7 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
   unix_mode = unix_mode & ~global_fs_info.umask;
 
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_DIRECTORY ) ;
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
@@ -408,14 +420,14 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
 
   /* get the target handle access by fid */
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_target_handle , &srcfd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, p_target_handle , &srcfd, O_DIRECTORY ) ;
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_link);
 
   /* build the destination path and check permissions on the directory */
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_dir_handle , &dstfd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, p_dir_handle , &dstfd, O_DIRECTORY ) ;
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
    {
@@ -444,17 +456,23 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   status =
       fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_dir, NULL);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_link);
-
+   {
+     close( srcfd ),
+     close( dstfd ) ;
+     ReturnStatus(status, INDEX_FSAL_link);
+   }
   /* Create the link on the filesystem */
 
   TakeTokenFSCall();
-  //rc = linkat(oldfd, fsalpath_new.path);
+  rc = linkat2( srcfd, dstfd, p_link_name->name ) ;
   errsv = errno;
   ReleaseTokenFSCall();
   if(rc)
+   {
+    close( srcfd ),
+    close( dstfd ) ;
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_link);
-
+   }
   /* optionnaly get attributes */
 
   if(p_attributes)
@@ -470,6 +488,8 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
     }
 
   /* OK */
+  close( srcfd ) ;
+  close( dstfd ) ;
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_link);
 
 }
@@ -543,7 +563,7 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
 
   /* build the directory path */
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, parentdir_handle , &fd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, parentdir_handle , &fd, O_DIRECTORY ) ;
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
