@@ -133,11 +133,12 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
 
   /* save open-by-handle char device */
   memcpy(open_by_handle_path, init_info->fs_specific_info.open_by_handle_dev_file, MAXPATHLEN);
-  open_by_handle_fd = open(init_info->fs_specific_info.open_by_handle_dev_file, O_RDWR);
-  if (!open_by_handle_fd)
+  open_by_handle_fd = open(init_info->fs_specific_info.open_by_handle_dev_file, O_RDONLY);
+  if (open_by_handle_fd < 0)
     {
       DisplayLog
-	("FSAL INIT: ERROR: Could not open open-by-handle character device file: rc = %d",
+	("FSAL INIT: ERROR: Could not open open-by-handle character device file at %s: rc = %d",
+	 init_info->fs_specific_info.open_by_handle_dev_file,
 	 errno);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
