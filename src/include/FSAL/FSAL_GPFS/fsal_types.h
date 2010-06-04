@@ -130,7 +130,7 @@ struct file_handle {
 
 struct name_handle_arg {
   int dfd;
-  char *name;
+  char name[FSAL_MAX_PATH_LEN];
   int flag;
   struct file_handle *handle;
 };
@@ -145,7 +145,7 @@ struct open_arg {
 struct link_arg {
   int file_fd;
   int dir_fd;
-  char *name;
+  char name[FSAL_MAX_NAME_LEN];
 };
 
 struct readlink_arg {
