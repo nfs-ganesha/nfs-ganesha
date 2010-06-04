@@ -159,6 +159,11 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
   /* local copy of attributes */
   attrs = *p_attrib_set;
 
+  /* It does not make sense to setattr on a symlink */
+  if( p_filehandle->type == DT_LNK )
+     return fsal_internal_setattrs_symlink( p_filehandle, p_context, p_attrib_set, p_object_attributes ) ;
+
+
   /* First, check that FSAL attributes changes are allowed. */
 
   /* Is it allowed to change times ? */

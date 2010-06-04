@@ -155,3 +155,8 @@ fsal_status_t fsal_internal_inum2handle( fsal_op_context_t * p_context,  /* IN *
 		        	         fsal_handle_t * phandle ) ; /* OUT */
 
 
+fsal_status_t fsal_internal_setattrs_symlink(fsal_handle_t * p_filehandle,       /* IN */
+                                             fsal_op_context_t * p_context,      /* IN */
+                                             fsal_attrib_list_t * p_attrib_set,  /* IN */
+                                             fsal_attrib_list_t * p_object_attributes  );  /* [ IN/OUT ] */
+

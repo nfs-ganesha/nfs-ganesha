@@ -1242,6 +1242,7 @@ void nfs41_op_read_Free(READ4res * resp);
 void nfs41_op_sequence_Free(SEQUENCE4res * resp);
 void nfs41_op_set_ssv_Free(SET_SSV4res * resp);
 void nfs41_op_write_Free(WRITE4res * resp);
+void nfs41_op_reclaim_complete_Free(RECLAIM_COMPLETE4res * resp) ;
 #endif                          /* _USE_NFS4_1 */
 
 void compound_data_Free(compound_data_t * data);

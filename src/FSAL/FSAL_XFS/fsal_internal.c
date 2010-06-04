@@ -247,20 +247,6 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
 
 }
 
-/**
- * Set credential lifetime.
- * (For internal use in the FSAL).
- * Set the period for thread's credential renewal.
- *
- * \param lifetime_in (input):
- *        The period for thread's credential renewal.
- *
- * \return Nothing.
- */
-void fsal_internal_SetCredentialLifetime(fsal_uint_t lifetime_in)
-{
-  CredentialLifetime = lifetime_in;
-}
 
 /**
  *  Used to limit the number of simultaneous calls to Filesystem.
@@ -491,12 +477,24 @@ fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,
                                        int oflags )
 {
   int rc = 0 ;
+  int errsv = 0 ;
 
   if( !phandle || !pfd || !p_context)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  if( ( rc = open_by_handle( phandle->handle_val, phandle->handle_len, oflags ) ) < 0 )
-    ReturnCode(posix2fsal_error(errno), errno ) ;
+  rc = open_by_handle( phandle->handle_val, phandle->handle_len, oflags ) ;
+  if( rc == -1 )
+   { 
+      errsv = errno ;
+        
+      if( errsv == EISDIR )
+        {
+ 	   if( ( rc = open_by_handle( phandle->handle_val, phandle->handle_len, O_DIRECTORY ) < 0 ) )
+            ReturnCode(posix2fsal_error(errsv), errsv ) ;
+        }
+      else
+        ReturnCode(posix2fsal_error(errsv), errsv ) ;
+   }
 
   *pfd = rc ;
 
@@ -523,6 +521,7 @@ fsal_status_t fsal_internal_fd2handle( fsal_op_context_t * p_context,
   if(rc)
     ReturnCode(posix2fsal_error(errno), errno);
   phandle->inode = ino.st_ino;
+  phandle->type = DT_UNKNOWN ; /** Put here something smarter */
 
   if( ( rc = fd_to_handle( fd,  (void **)(&handle_val), &handle_len ) ) < 0 )
     ReturnCode(  posix2fsal_error(errno), errno  ) ;
@@ -539,7 +538,6 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
                                         fsal_path_t * p_fsalpath,       /* IN */
                                         fsal_handle_t * p_handle /* OUT */ )
 {
-  int rc;
   int objectfd ; 
   fsal_status_t st ;
 
@@ -713,6 +711,18 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
 }
 
+fsal_status_t fsal_internal_setattrs_symlink(fsal_handle_t * p_filehandle,       /* IN */
+                                             fsal_op_context_t * p_context,      /* IN */
+                                             fsal_attrib_list_t * p_attrib_set,  /* IN */
+                                             fsal_attrib_list_t * p_object_attributes  )  
+{
+  if(!p_filehandle || !p_context || !p_attrib_set)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_setattrs);
+
+ *p_object_attributes =  * p_attrib_set ;
+
+ ReturnCode(ERR_FSAL_NO_ERROR, 0 ) ;
+} /* fsal_internal_setattrs_symlink */
 
 /* The code that follows is intended to produce a xfs handle for a symlink. Roughly it is kind of "get handle by inode"
  * It may not be portable
@@ -794,7 +804,8 @@ fsal_status_t fsal_internal_inum2handle( fsal_op_context_t * p_context,
   memcpy( phandle->handle_val, &xfsfilehandle, sizeof( xfs_filehandle_t ) ) ;
   phandle->handle_len = sizeof( xfs_filehandle_t )  ;
   phandle->inode = inum ;
+  phandle->type = DT_LNK ;
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
-} /* fsal_handle2fd_xfs_specific */
+} /* fsal_internal_inum2handle */
  
