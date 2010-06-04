@@ -10,7 +10,8 @@ all: modules userspace
 
 install:
 	$(MAKE) -C /lib/modules/$(shell uname -r)/build/ M=$(shell pwd) modules_install
-
+# needed on a new install
+	depmod
 
 clean: userclean
 	$(MAKE) -C /lib/modules/$(shell uname -r)/build/ M=$(shell pwd) clean
