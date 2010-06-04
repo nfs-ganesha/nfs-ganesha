@@ -345,8 +345,8 @@
         - Project is now released under LGPLv3
 
 0.99.65 - 
+	- New FSAL_XFS designed for natively exporting XFS filesystems
 	- Integration of a patch from Aneesh Kumar that implements Async NLM and NSM support
-	- New FSAL_XFS designed for exporting XFS filesystems
 	- A patch from Frank Filz related to POSIX behavior when opening file
 	- Bug Fix : missing AM_FLAGS prevented from compiling with pNFS and
 	  POSIX based FSAL using MySQL. 
@@ -357,5 +357,6 @@
         - Add log trace when a operation is refused due to a setuid/setgid bit violation
         - Bug Fix : in NFSv4, file were created with mode = 0000 . This was a trouble with certain FSAL
         - Bug fix: Double close in log_functions.c 
+        - checksum were removed from NFS file handles (more space for storing FSAL handles)
 
 
