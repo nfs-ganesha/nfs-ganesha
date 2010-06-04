@@ -1,3 +1,5 @@
+SUBDIRS = kernel
+
 AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
 
