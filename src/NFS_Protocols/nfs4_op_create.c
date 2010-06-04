@@ -194,7 +194,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Sanuty check: never create a directory named '.' or '..' */
   if(arg_CREATE4.objtype.type == NF4DIR)
     {
-      if(!FSAL_namecmp(&name, &FSAL_DOT) || !FSAL_namecmp(&name, &FSAL_DOT_DOT))
+      if(!FSAL_namecmp(&name, (fsal_name_t *)&FSAL_DOT) || !FSAL_namecmp(&name, (fsal_name_t *)&FSAL_DOT_DOT))
         {
           res_CREATE4.status = NFS4ERR_BADNAME;
           return res_CREATE4.status;

@@ -44,9 +44,16 @@
 #include "SemN.h"
 #include "fsal_convert.h"
 #include <libgen.h>             /* used for 'dirname' */
-
 #include <pthread.h>
 #include <string.h>
+#include <sys/types.h>
+#include <xfs/xfs.h>
+#include <xfs/handle.h>
+#include <xfs/parent.h>
+
+/* Add missing prototype in xfs/*.h */
+int fd_to_handle(int fd, void **hanp, size_t *hlen);
+
 
 /* credential lifetime (1h) */
 fsal_uint_t CredentialLifetime = 3600;
@@ -240,20 +247,6 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
 
 }
 
-/**
- * Set credential lifetime.
- * (For internal use in the FSAL).
- * Set the period for thread's credential renewal.
- *
- * \param lifetime_in (input):
- *        The period for thread's credential renewal.
- *
- * \return Nothing.
- */
-void fsal_internal_SetCredentialLifetime(fsal_uint_t lifetime_in)
-{
-  CredentialLifetime = lifetime_in;
-}
 
 /**
  *  Used to limit the number of simultaneous calls to Filesystem.
@@ -484,12 +477,24 @@ fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,
                                        int oflags )
 {
   int rc = 0 ;
+  int errsv = 0 ;
 
   if( !phandle || !pfd || !p_context)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  if( ( rc = open_by_handle( phandle->handle_val, phandle->handle_len, oflags ) ) < 0 )
-    ReturnCode(posix2fsal_error(errno), errno ) ;
+  rc = open_by_handle( phandle->handle_val, phandle->handle_len, oflags ) ;
+  if( rc == -1 )
+   { 
+      errsv = errno ;
+        
+      if( errsv == EISDIR )
+        {
+ 	   if( ( rc = open_by_handle( phandle->handle_val, phandle->handle_len, O_DIRECTORY ) < 0 ) )
+            ReturnCode(posix2fsal_error(errsv), errsv ) ;
+        }
+      else
+        ReturnCode(posix2fsal_error(errsv), errsv ) ;
+   }
 
   *pfd = rc ;
 
@@ -516,13 +521,13 @@ fsal_status_t fsal_internal_fd2handle( fsal_op_context_t * p_context,
   if(rc)
     ReturnCode(posix2fsal_error(errno), errno);
   phandle->inode = ino.st_ino;
+  phandle->type = DT_UNKNOWN ; /** Put here something smarter */
 
   if( ( rc = fd_to_handle( fd,  (void **)(&handle_val), &handle_len ) ) < 0 )
     ReturnCode(  posix2fsal_error(errno), errno  ) ;
 
   memcpy( phandle->handle_val, handle_val, handle_len ) ;
   phandle->handle_len = handle_len ;
-
 
   free_handle( handle_val, handle_len ) ;
 
@@ -533,9 +538,8 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
                                         fsal_path_t * p_fsalpath,       /* IN */
                                         fsal_handle_t * p_handle /* OUT */ )
 {
-  int rc;
-  struct stat ino;
   int objectfd ; 
+  fsal_status_t st ;
 
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -549,22 +553,12 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
  if( ( objectfd = open(p_fsalpath->path, O_RDONLY, 0600 ) ) < 0 )
   ReturnCode(posix2fsal_error(errno), errno);
 
-
-  /* retrieve inode */
-  rc = fstat( objectfd, &ino);
-
-#ifdef _DEBUG_FSAL
-  if(rc)
-    DisplayLogLevel(NIV_FULL_DEBUG, "lstat(%s)=%d, errno=%d", p_fsalpath->path, rc,
-                    errno);
-#endif
-  if(rc)
-    ReturnCode(posix2fsal_error(errno), errno);
-
-  p_handle->inode = ino.st_ino;
-
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}
+ st = fsal_internal_fd2handle( p_context,  
+                               objectfd, 
+			       p_handle ) ;
+  close( objectfd ) ;
+  return st ;
+} /* fsal_internal_Path2Handle */
 
 
 /*
@@ -716,3 +710,102 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
     ReturnCode(ERR_FSAL_ACCESS, 0);
 
 }
+
+fsal_status_t fsal_internal_setattrs_symlink(fsal_handle_t * p_filehandle,       /* IN */
+                                             fsal_op_context_t * p_context,      /* IN */
+                                             fsal_attrib_list_t * p_attrib_set,  /* IN */
+                                             fsal_attrib_list_t * p_object_attributes  )  
+{
+  if(!p_filehandle || !p_context || !p_attrib_set)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_setattrs);
+
+ *p_object_attributes =  * p_attrib_set ;
+
+ ReturnCode(ERR_FSAL_NO_ERROR, 0 ) ;
+} /* fsal_internal_setattrs_symlink */
+
+/* The code that follows is intended to produce a xfs handle for a symlink. Roughly it is kind of "get handle by inode"
+ * It may not be portable
+ * I keep it for wanting of a better solution */
+
+#define XFS_FSHANDLE_SZ             8
+typedef struct xfs_fshandle {
+        char fsh_space[XFS_FSHANDLE_SZ];
+} xfs_fshandle_t;
+
+/* private file handle - for use by open_by_fshandle */
+#define XFS_FILEHANDLE_SZ           24
+#define XFS_FILEHANDLE_SZ_FOLLOWING 14
+#define XFS_FILEHANDLE_SZ_PAD       2
+typedef struct xfs_filehandle {
+        xfs_fshandle_t fh_fshandle;         /* handle of fs containing this inode */
+        int16_t fh_sz_following;        /* bytes in handle after this member */
+        char fh_pad[XFS_FILEHANDLE_SZ_PAD]; /* padding, must be zeroed */
+        __uint32_t fh_gen;              /* generation count */
+        xfs_ino_t fh_ino;               /* 64 bit ino */
+} xfs_filehandle_t;
+
+static void build_xfsfilehandle( xfs_filehandle_t * phandle,
+                                 xfs_fshandle_t * pfshandle,
+                                 xfs_bstat_t * pxfs_bstat )
+{
+	/* Fill in the FS specific part */
+        memcpy( &phandle->fh_fshandle , pfshandle, sizeof( xfs_fshandle_t ) );
+
+        /* Do the required padding */
+        phandle->fh_sz_following = XFS_FILEHANDLE_SZ_FOLLOWING;
+        memset(phandle->fh_pad, 0, XFS_FILEHANDLE_SZ_PAD);
+
+        /* Add object's specific information from xfs_bstat_t */
+        phandle->fh_gen = pxfs_bstat->bs_gen;
+        phandle->fh_ino = pxfs_bstat->bs_ino;
+} /* build_xfsfilehandle */
+
+static int get_bulkstat_by_inode( int fd, xfs_ino_t * p_ino, xfs_bstat_t * pxfs_bstat )
+{
+    xfs_fsop_bulkreq_t  bulkreq;
+
+    bulkreq.lastip = p_ino;
+    bulkreq.icount = 1;
+    bulkreq.ubuffer = pxfs_bstat;
+    bulkreq.ocount = NULL;
+    return ioctl(fd, XFS_IOC_FSBULKSTAT_SINGLE, &bulkreq);
+} /* get_bulkstat_by_inode */
+
+fsal_status_t fsal_internal_inum2handle( fsal_op_context_t * p_context,  
+                                         ino_t     inum,    
+		   	                 fsal_handle_t * phandle )
+{
+  int fd = 0 ;
+
+  xfs_ino_t xfs_ino ;
+  xfs_bstat_t bstat ;
+
+  xfs_filehandle_t xfsfilehandle ;
+  xfs_fshandle_t  xfsfshandle ;
+
+  if( ( fd = open( p_context->export_context->mount_point, O_DIRECTORY ) ) == -1 )
+    ReturnCode(  posix2fsal_error(errno), errno  ) ;
+
+  xfs_ino = inum ;
+  if( get_bulkstat_by_inode( fd, &xfs_ino, &bstat ) < 0 ) 
+   {
+    close( fd ) ;
+    ReturnCode(  posix2fsal_error(errno), errno  ) ;
+   }
+
+  close( fd ) ;
+
+  memcpy( xfsfshandle.fsh_space, p_context->export_context->mnt_fshandle_val,XFS_FSHANDLE_SZ ) ;
+  build_xfsfilehandle( &xfsfilehandle,
+                       &xfsfshandle,
+                       &bstat ) ;
+
+  memcpy( phandle->handle_val, &xfsfilehandle, sizeof( xfs_filehandle_t ) ) ;
+  phandle->handle_len = sizeof( xfs_filehandle_t )  ;
+  phandle->inode = inum ;
+  phandle->type = DT_LNK ;
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+} /* fsal_internal_inum2handle */
+ 

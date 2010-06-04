@@ -276,9 +276,8 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
           if(stat == XPRT_DIED)
             {
-              DisplayLogLevel(NIV_DEBUG,
-                              "TCP SOCKET MANAGER Sock=%d: the client disappeared... Stopping thread ",
-                              tcp_sock);
+              DisplayLog("TCP SOCKET MANAGER Sock=%d: the client disappeared... Stopping thread ",
+                          tcp_sock);
 
               if(Xports[tcp_sock] != NULL)
                 SVC_DESTROY(Xports[tcp_sock]);

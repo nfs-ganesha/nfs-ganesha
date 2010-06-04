@@ -447,8 +447,8 @@ case $FSAL in
 		;;
 	XFS)
 		AC_DEFINE([_USE_XFS], 1, [GANESHA exports XFS Filesystem])
-                AC_CHECK_HEADERS([xfs/xfs.h])
-                AC_CHECK_HEADERS([xfs/handle.h])
+ 		AC_CHECK_HEADERS([xfs/xfs.h], [], [AC_MSG_ERROR( missing xfs include files)])
+                AC_CHECK_HEADERS([xfs/handle.h], [], [AC_MSG_ERROR(missimg xfs include files)])
 		FSAL_CFLAGS=
                 FSAL_LDFLAGS="-lhandle"
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_XFS/libfsalxfs.la"

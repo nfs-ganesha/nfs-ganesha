@@ -159,6 +159,11 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
   /* local copy of attributes */
   attrs = *p_attrib_set;
 
+  /* It does not make sense to setattr on a symlink */
+  if( p_filehandle->type == DT_LNK )
+     return fsal_internal_setattrs_symlink( p_filehandle, p_context, p_attrib_set, p_object_attributes ) ;
+
+
   /* First, check that FSAL attributes changes are allowed. */
 
   /* Is it allowed to change times ? */
@@ -223,6 +228,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
                                 "Permission denied for CHMOD opeartion: current owner=%d, credential=%d",
                                 buffstat.st_uid, p_context->credential.user);
 #endif
+	      close( fd ) ;
               Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
             }
 
@@ -233,6 +239,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
 
           if(rc)
             {
+              close( fd ) ;
               Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_setattrs);
             }
 
@@ -257,6 +264,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
                             "Permission denied for CHOWN opeartion: current owner=%d, credential=%d, new owner=%d",
                             buffstat.st_uid, p_context->credential.user, attrs.owner);
 #endif
+	  close( fd ) ;
           Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
         }
     }
@@ -267,7 +275,10 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
       /* For modifying group, user must be root or current owner */
       if((p_context->credential.user != 0)
          && (p_context->credential.user != buffstat.st_uid))
+       {
+        close( fd ) ;
         Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
+       }
 
       int in_grp = 0;
       /* set in_grp */
@@ -288,7 +299,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
                             "Permission denied for CHOWN operation: current group=%d, credential=%d, new group=%d",
                             buffstat.st_gid, p_context->credential.group, attrs.group);
 #endif
-
+	  close( fd ) ;
           Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
         }
     }
@@ -311,7 +322,10 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
                                  FSAL_ATTR_GROUP) ? (int)attrs.group : -1);
       ReleaseTokenFSCall();
       if(rc)
+       {
+        close( fd ) ;
         Return(posix2fsal_error(errno), errno, INDEX_FSAL_setattrs);
+       }
     }
 
   /***********
@@ -324,15 +338,20 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
      && (p_context->credential.user != buffstat.st_uid)
      && ((status = fsal_internal_testAccess(p_context, FSAL_R_OK, &buffstat, NULL)).major
          != ERR_FSAL_NO_ERROR))
-    ReturnStatus(status, INDEX_FSAL_setattrs);
-
+   {
+     close( fd ) ;
+     ReturnStatus(status, INDEX_FSAL_setattrs);
+   }
   /* user must be the owner or have write access to modify 'mtime' */
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME)
      && (p_context->credential.user != 0)
      && (p_context->credential.user != buffstat.st_uid)
      && ((status = fsal_internal_testAccess(p_context, FSAL_W_OK, &buffstat, NULL)).major
          != ERR_FSAL_NO_ERROR))
-    ReturnStatus(status, INDEX_FSAL_setattrs);
+   {
+     close( fd ) ;
+     ReturnStatus(status, INDEX_FSAL_setattrs);
+   }
 
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME | FSAL_ATTR_MTIME))
     {
@@ -356,8 +375,10 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
       errsv = errno;
       ReleaseTokenFSCall();
       if(rc)
-        Return(posix2fsal_error(errno), errno, INDEX_FSAL_setattrs);
-
+       {
+         close( fd ) ;
+         Return(posix2fsal_error(errno), errno, INDEX_FSAL_setattrs);
+       }
     }
 
   /* Optionaly fills output attributes. */
@@ -369,12 +390,14 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
         {
+	  close( fd ) ;
           FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
           FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
         }
 
     }
 
+  close( fd ) ;
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_setattrs);
 
 }

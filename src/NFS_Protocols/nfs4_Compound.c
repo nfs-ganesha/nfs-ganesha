@@ -411,7 +411,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
       else
         opindex = optab4index[POS_ILLEGAL];     /* = NFS4_OP_ILLEGAL a value to big for argop means an illegal value */
 
-#ifndef _DEBUG_NFS_V4
+#ifdef _DEBUG_NFS_V4
       DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
                         "NFS V4 COMPOUND: Request #%d is %d = %s, entry #%d in the op array",
                         i, optabvers[parg->arg_compound4.minorversion][opindex].val,
