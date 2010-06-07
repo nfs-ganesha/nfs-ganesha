@@ -390,6 +390,14 @@ chkconfig --add nfs-ganesha.snmp
 
 
 %changelog
+* Tue Jun  8  2010 Philippe Deniel <philippe.deniel@cea.fr> 0.99.65-1
+- New FSAL_XFS designed for natively exporting XFS filesystems
+- Integration of a patch from Aneesh Kumar that implements Async NLM and NSM support
+- A patch from Frank Filz related to POSIX behavior when opening file
+- add '--enable-ds' in configure to configure nfs-ganesha as a NFSv4.1 server usable as a pNFS Data Server
+- FSAL_LUSTRE : add lockdesc support
+- Bug Fix: nfs4_op_access was not managing secondary groups properly. It now relyes on the FSAL for this.
+
 * Thu Apr 29  2010 Philippe Deniel <philippe.deniel@cea.fr> 0.99.64-1
 - RPM Packaging : add chkconfig --add in %post
 - Export Access Type "MDONLY" was not managed when using NFSv4
