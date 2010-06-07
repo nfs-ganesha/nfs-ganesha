@@ -105,7 +105,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
       close(p_export_context->mount_root_fd);
       DisplayLog
 	("FSAL BUILD EXPORT CONTEXT: ERROR: Conversion from gpfs"
-	 "filesystem root path to handle failed.");
+	 "filesystem root path to handle failed : %d", status.minor);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
 
