@@ -256,6 +256,7 @@ typedef struct nfs_core_param__
   unsigned short nfs_port;
   unsigned short mnt_port;
   unsigned short nlm_port;
+  struct sockaddr_in bind_addr; // IPv4 only for now...
   unsigned int nfs_program;
   unsigned int mnt_program;
   unsigned int nlm_program;

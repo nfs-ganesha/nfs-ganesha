@@ -312,6 +312,17 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->nlm_program = atoi(key_value);
         }
+      else if (!strcasecmp(key_name, "Bind_Addr"))
+        {
+          int rc;
+          memset(&pparam->bind_addr.sin_addr, 0, sizeof(pparam->bind_addr.sin_addr));
+          rc = inet_pton(AF_INET, key_value, &pparam->bind_addr.sin_addr);
+          if (rc <= 0)
+          {
+            /* Revert to INADDR_ANY in case of any error */
+            pparam->bind_addr.sin_addr.s_addr = INADDR_ANY;     /* All the interfaces on the machine are used */
+          }
+        }
       else if(!strcasecmp(key_name, "Core_Dump_Size"))
         {
           pparam->core_dump_size = atol(key_value);
