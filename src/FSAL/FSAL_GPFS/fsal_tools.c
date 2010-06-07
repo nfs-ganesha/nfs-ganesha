@@ -219,12 +219,15 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
       /* NFS handle digest */
     case FSAL_DIGEST_NFSV2:
 
+      /**
+       * This is never going to work, we need to be trickier to get
+       * this down to 25 bytes
+       */
       if(sizeof(fsal_handle_t) > FSAL_DIGEST_SIZE_HDLV2)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV2);
-      memcpy(out_buff, p_in_fsal_handle->handle.f_handle,
-	     p_in_fsal_handle->handle.handle_size);
+      memcpy(out_buff, p_in_fsal_handle, sizeof(fsal_handle_t));
       break;
 
     case FSAL_DIGEST_NFSV3:
@@ -233,8 +236,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV3);
-      memcpy(out_buff, p_in_fsal_handle->handle.f_handle,
-	     p_in_fsal_handle->handle.handle_size);
+      memcpy(out_buff, p_in_fsal_handle, sizeof(fsal_handle_t));
       break;
 
     case FSAL_DIGEST_NFSV4:
@@ -243,8 +245,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
-      memcpy(out_buff, p_in_fsal_handle->handle.f_handle,
-	     p_in_fsal_handle->handle.handle_size);
+      memcpy(out_buff, p_in_fsal_handle, sizeof(fsal_handle_t));
       break;
 
       /* FileId digest for NFSv2 */
