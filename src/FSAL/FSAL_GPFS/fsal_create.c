@@ -71,7 +71,7 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
    */
   if(!p_parent_directory_handle || !p_context || !p_object_handle || !p_filename)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_create);
-
+  DisplayLog("000000000000000000000000000");
   /* convert fsal mode to unix mode. */
   unix_mode = fsal2unix_mode(accessmode);
 
@@ -81,18 +81,19 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
 #ifdef _DEBUG_FSAL
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Creation mode: 0%o", accessmode);
 #endif
-
+  DisplayLog("11111111111111111111111111111111111111111");
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_RDONLY | O_DIRECTORY) ;
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_create);
-
+  DisplayLog("2222222222222222222222222");
   /* retrieve directory metadata */
   TakeTokenFSCall();
   rc = fstat( fd, &buffstat);
   errsv = errno;
   ReleaseTokenFSCall();
+  DisplayLog("33333333333333333333333333");
   if(rc)
     {
       close( fd ) ;
@@ -102,16 +103,16 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
       else
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
     }
-
+  DisplayLog("4444444444444444444444444444444");
   /* Check the user can write in the directory, and check the setgid bit on the directory */
 
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
-
+  DisplayLog("555555555555555555555");
   status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_create);
-
+  DisplayLog("66666666666666666666666666");
   /* call to filesystem */
 
   TakeTokenFSCall();
@@ -119,7 +120,7 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
    * O_EXCL=>  error if the file already exists */
   newfd = openat( fd, p_filename->name, O_CREAT | O_WRONLY | O_TRUNC | O_EXCL, unix_mode);
   errsv = errno;
-
+  DisplayLog("777777777777777777777");
   if( newfd == -1)
     {
       close(fd);
@@ -129,6 +130,7 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
 
   /* close the file descriptor */
   rc = close(newfd);
+  DisplayLog("888888888888888888888");
   errsv = errno;
   if(rc)
     {
@@ -138,11 +140,11 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
     }
 
   /* get the new file handle */
-
+  DisplayLog("99999999999999999999999999");
   /* TODO: this has a race, but for now we can't do much about it */
   status = fsal_internal_handle_at(fd, p_filename, p_object_handle);
   ReleaseTokenFSCall();
-
+  DisplayLog("101010101010101010101010101010110");
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_create);
 
@@ -245,7 +247,7 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
   unix_mode = unix_mode & ~global_fs_info.umask;
 
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_RDONLY ) ;
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
@@ -388,6 +390,10 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
     )
 {
 
+  /* THIS FUNCTION DOES NOT DO ANYTHING. LINK_AT() NEEDS TO BE REPLACED
+   * BEFORE THIS FUNCTION CAN BE USED. 
+   */
+
   int rc, errsv;
   fsal_status_t status;
   int srcfd, dstfd ;
@@ -417,7 +423,7 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
 
   /* build the destination path and check permissions on the directory */
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_dir_handle , &dstfd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, p_dir_handle , &dstfd, O_RDONLY | O_DIRECTORY ) ;
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
    {
@@ -545,7 +551,7 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
 
   /* build the directory path */
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, parentdir_handle , &fd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, parentdir_handle , &fd, O_RDONLY | O_DIRECTORY) ;
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
