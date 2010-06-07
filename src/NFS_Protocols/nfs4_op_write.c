@@ -201,25 +201,6 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           res_WRITE4.status = NFS4ERR_OPENMODE;
           return res_WRITE4.status;
         }
-#ifdef _TOTO
-      /* Check the seqid */
-      if((arg_WRITE4.stateid.seqid != pstate_found->powner->seqid) &&
-         (arg_WRITE4.stateid.seqid != pstate_found->powner->seqid + 1))
-        {
-          res_WRITE4.status = NFS4ERR_BAD_SEQID;
-          return res_WRITE4.status;
-        }
-
-      /* If NFSv4::Use_OPEN_CONFIRM is set to TRUE in the configuration file, check is state is confirmed */
-      if(nfs_param.nfsv4_param.use_open_confirm == TRUE)
-        {
-          if(pstate_found->powner->confirmed == FALSE)
-            {
-              res_WRITE4.status = NFS4ERR_BAD_STATEID;
-              return res_WRITE4.status;
-            }
-        }
-#endif
     }                           /* else if( ( rc = nfs4_Check_Stateid( &arg_WRITE4.stateid, data->current_entry ) ) == NFS4_OK ) */
   else
     {

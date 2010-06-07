@@ -90,7 +90,7 @@ interface.
 Summary: The NFS-GANESHA server compiled as a NFS gateway to SNMP. 
 Group: Applications/System
 Requires: xfsprogs
-BuildRequires: xfsprogs-devel
+BuildRequires: xfsprogs-devel xfsprogs-qa-devel
 Requires: %{name}-common = %{version}-%{release}
 
 %description xfs
