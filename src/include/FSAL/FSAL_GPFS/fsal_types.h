@@ -174,7 +174,9 @@ typedef struct fsal_cred__
 
 typedef struct fsal_export_context_t
 {
+  /* Warning: This string is not currently filled in or used. */
   char mount_point[FSAL_MAX_PATH_LEN];
+
   int open_by_handle_fd;
   int mount_root_fd;
   fsal_handle_t mount_root_handle;
