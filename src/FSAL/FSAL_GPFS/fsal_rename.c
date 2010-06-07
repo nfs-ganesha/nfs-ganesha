@@ -101,7 +101,7 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
   /* Get directory access path by fid */
 
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_old_parentdir_handle, &old_parent_fd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, p_old_parentdir_handle, &old_parent_fd, O_RDONLY | O_DIRECTORY ) ;
   ReleaseTokenFSCall();
  
   if(FSAL_IS_ERROR(status))
@@ -132,7 +132,7 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
   else
     {
       TakeTokenFSCall();
-      status = fsal_internal_handle2fd( p_context, p_new_parentdir_handle, &new_parent_fd, O_RDWR ) ;
+      status = fsal_internal_handle2fd( p_context, p_new_parentdir_handle, &new_parent_fd, O_RDONLY | O_DIRECTORY ) ;
       ReleaseTokenFSCall();
 
       if(FSAL_IS_ERROR(status))
