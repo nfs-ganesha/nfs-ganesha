@@ -358,5 +358,6 @@
         - Bug Fix : in NFSv4, file were created with mode = 0000 . This was a trouble with certain FSAL
         - Bug fix: Double close in log_functions.c 
         - checksum were removed from NFS file handles (more space for storing FSAL handles)
+        - (Patch from Frank Filz) : new and optionnal core parameter Bind_Addr
 
 
