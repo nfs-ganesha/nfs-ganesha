@@ -82,7 +82,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
 
   /* build the FID path */
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_RDONLY | O_DIRECTORY ) ;
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_unlink);
