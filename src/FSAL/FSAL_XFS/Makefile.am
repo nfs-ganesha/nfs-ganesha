@@ -39,7 +39,7 @@ libfsalxfs_la_SOURCES = fsal_access.c      \
                           ../../include/fsal.h       \
                           ../../include/fsal_types.h \
                           ../../include/err_fsal.h   \
-                          ../../include/FSAL/FSAL_LUSTRE/fsal_types.h
+                          ../../include/FSAL/FSAL_XFS/fsal_types.h
 
 
 new: clean all

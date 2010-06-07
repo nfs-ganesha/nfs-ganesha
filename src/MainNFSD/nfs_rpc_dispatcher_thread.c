@@ -499,7 +499,7 @@ int nfs_Init_svc()
   /* Bind the udp and tcp socket to port 2049/tcp and 2049/udp */
   memset((char *)&sinaddr_nfs, 0, sizeof(sinaddr_nfs));
   sinaddr_nfs.sin_family = AF_INET;
-  sinaddr_nfs.sin_addr.s_addr = INADDR_ANY;     /* All the interfaces on the machine are used */
+  sinaddr_nfs.sin_addr.s_addr = nfs_param.core_param.bind_addr.sin_addr.s_addr;
   sinaddr_nfs.sin_port = htons(nfs_param.core_param.nfs_port);
 
   /* It's now time for binding the sockets */
@@ -523,7 +523,7 @@ int nfs_Init_svc()
   /* Bind the udp and tcp socket to ephemeral port for mountd */
   memset((char *)&sinaddr_mnt, 0, sizeof(sinaddr_mnt));
   sinaddr_mnt.sin_family = AF_INET;
-  sinaddr_mnt.sin_addr.s_addr = INADDR_ANY;     /* All the interfaces on the machine are used */
+  sinaddr_mnt.sin_addr.s_addr = nfs_param.core_param.bind_addr.sin_addr.s_addr;
   sinaddr_mnt.sin_port = htons(nfs_param.core_param.mnt_port);
 
   /* It's now time for binding the sockets */
@@ -546,7 +546,7 @@ int nfs_Init_svc()
   /* Bind the nlm service */
   memset((char *)&sinaddr_nlm, 0, sizeof(sinaddr_nlm));
   sinaddr_nlm.sin_family = AF_INET;
-  sinaddr_nlm.sin_addr.s_addr = INADDR_ANY;     /* All the interfaces on the machine are used */
+  sinaddr_nlm.sin_addr.s_addr = nfs_param.core_param.bind_addr.sin_addr.s_addr;
   sinaddr_nlm.sin_port = htons(nfs_param.core_param.nlm_port);
 
   /* It's now time for binding the sockets */
