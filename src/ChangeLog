@@ -344,7 +344,7 @@
         - Early (unstable) implementation of pNFS provided. Will continue and be stabilized in later releases.
         - Project is now released under LGPLv3
 
-0.99.65 - 
+0.99.65 - Tue  8 Jun 2010
 	- New FSAL_XFS designed for natively exporting XFS filesystems
 	- Integration of a patch from Aneesh Kumar that implements Async NLM and NSM support
 	- A patch from Frank Filz related to POSIX behavior when opening file
@@ -358,5 +358,6 @@
         - Bug Fix : in NFSv4, file were created with mode = 0000 . This was a trouble with certain FSAL
         - Bug fix: Double close in log_functions.c 
         - checksum were removed from NFS file handles (more space for storing FSAL handles)
+        - (Patch from Frank Filz) : new and optionnal core parameter Bind_Addr
 
 
