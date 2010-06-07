@@ -130,8 +130,8 @@ struct file_handle {
 
 struct name_handle_arg {
   int dfd;
-  char *name;
   int flag;
+  char *name;
   struct file_handle *handle;
 };
 
