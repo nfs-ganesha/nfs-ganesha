@@ -321,13 +321,13 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
       /* NFSV3 handle digest */
     case FSAL_DIGEST_NFSV3:
       memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
+      memcpy(p_out_fsal_handle, in_buff, sizeof( fsal_handle_t ));
       break;
 
       /* NFSV4 handle digest */
     case FSAL_DIGEST_NFSV4:
       memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
+      memcpy(p_out_fsal_handle, in_buff, sizeof( fsal_handle_t ));
       break;
 
     default:
