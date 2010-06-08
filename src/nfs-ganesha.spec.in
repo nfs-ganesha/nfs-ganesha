@@ -4,12 +4,19 @@ Release: 1%{?dist}
 Summary: NFS Server running in user space with large cache 
 License: LGPL
 Group: Applications/System
+%if %{?_with_posix:1}%{!?_with_posix:0}
 %if %{?_with_postgresql:1}%{!?_with_postgresql:0}
 BuildRequires:  postgresql-devel >= 7.1
 BuildRequires:  postgresql-libs >= 7.1
 %else
 BuildRequires:  mysql-devel >= 5.0
 BuildRequires:  mysql-libs >= 5.0
+%endif
+%endif
+%if %{?_with_gpfs:1}%{!?_with_gpfs:0}
+# we have to be really specific on kernel version
+# because we are packaging a module
+BuildRequires: kernel == 2.6.18-194.el5
 %endif
 BuildRequires:  net-snmp-libs >= 5.1
 BuildRequires:  net-snmp-devel >= 5.1
@@ -77,6 +84,17 @@ It comes with various backend modules to support different file systems
 and namespaces. This package provides support for NFS-GANESHA used on top on XFS.
 %endif
 
+%if %{?_with_gpfs:1}%{!?_with_gpfs:0}
+%package gpfs
+Summary: The NFS-GANESHA server compiled for use with GPFS. 
+Group: Applications/System
+Requires: %{name}-common = %{version}-%{release}
+
+%description gpfs
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various backend modules to support different file systems
+and namespaces. This package provides support for NFS-GANESHA used on top on GPFS.
+%endif
 
 %if %{?_with_posix:1}%{!?_with_posix:0}
 %package posix
@@ -206,6 +224,10 @@ install -m 644 config_samples/proxy.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{
 install -m 755 nfs-ganesha.xfs.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.xfs
 install -m 644 config_samples/xfs.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
+%if %{?_with_gpfs:1}%{!?_with_gpfs:0}
+install -m 755 nfs-ganesha.gpfs.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.gpfs
+install -m 644 config_samples/gpfs.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+%endif
 %if %{?_with_lustre:1}%{!?_with_lustre:0}
 install -m 755 nfs-ganesha.lustre.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.lustre
 install -m 644 config_samples/lustre.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
@@ -270,6 +292,17 @@ rm -rf $RPM_BUILD_ROOT
 %{_sysconfdir}/init.d/nfs-ganesha.xfs
 %config %{_sysconfdir}/ganesha/xfs.ganesha*
 %endif
+
+%if %{?_with_gpfs:1}%{!?_with_gpfs:0}
+%files gpfs
+%defattr(-,root,root,-)
+/lib/modules/2.6.18-194.el5/extra/*.ko
+%{_bindir}/gpfs.ganesha.*
+%{_bindir}/gpfs.ganeshell
+%{_sysconfdir}/init.d/nfs-ganesha.gpfs
+%config %{_sysconfdir}/ganesha/gpfs.ganesha*
+%endif
+
 
 
 %if %{?_with_lustre:1}%{!?_with_lustre:0}
@@ -339,6 +372,12 @@ chkconfig --add nfs-ganesha.proxy
 %if %{?_with_xfs:1}%{!?_with_xfs:0}
 %post xfs
 chkconfig --add nfs-ganesha.xfs
+%endif
+
+%if %{?_with_gpfs:1}%{!?_with_gpfs:0}
+%post gpfs
+chkconfig --add nfs-ganesha.gpfs
+/sbin/depmod
 %endif
 
 %if %{?_with_lustre:1}%{!?_with_lustre:0}

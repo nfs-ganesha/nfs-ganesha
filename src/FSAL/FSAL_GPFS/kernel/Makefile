@@ -9,12 +9,12 @@ ifeq ($(shell uname -r | sed 's/-.*//'), 2.6.18)
 all: modules userspace
 
 install:
-	$(MAKE) -C /lib/modules/$(shell uname -r)/build/ M=$(shell pwd) modules_install
+	$(MAKE) -C $(DESTDIR)/lib/modules/$(shell uname -r)/build/ M=$(shell pwd) modules_install
 # needed on a new install
 	/sbin/depmod
 
 clean: userclean
-	$(MAKE) -C /lib/modules/$(shell uname -r)/build/ M=$(shell pwd) clean
+	$(MAKE) -C $(DESTDIR)/lib/modules/$(shell uname -r)/build/ M=$(shell pwd) clean
 
 else
 all: error
