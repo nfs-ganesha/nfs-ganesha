@@ -142,6 +142,8 @@ EXTRA_DIST=nfs-ganesha.spec           \
            THANKS                     \
            KNOWN_BUGS                 \
            nfs-ganesha.posix.init     \
+           nfs-ganesha.lustre.init    \
+           nfs-ganesha.xfs.init       \
            nfs-ganesha.hpss.init      \
            nfs-ganesha.proxy.init     \
            nfs-ganesha.snmp.init        
