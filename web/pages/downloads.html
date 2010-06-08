@@ -5,6 +5,23 @@
 <p>
 <ul>
        <li>
+       <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/nfs-ganesha/0.99.65">NFS-GANESHA v 0.99.65</a><br>
+       <ul>
+ 	<li>New FSAL_XFS designed for natively exporting XFS filesystems</li>
+        <li>Integration of a patch from Aneesh Kumar that implements Async NLM and NSM support</li>
+        <li>A patch from Frank Filz related to POSIX behavior when opening file</li>
+        <li>add '--enable-ds' in configure to configure nfs-ganesha as a NFSv4.1 server usable as a pNFS Data Server</li>
+        <li>FSAL_LUSTRE : add lockdesc support</li>
+        <li>Bug Fix: nfs4_op_access was not managing secondary groups properly. It now relyes on the FSAL for this.
+        <li> Default value for FSAL_MODE_SUID and FSAL_MODE_SGID have changed.</li>
+        <li> Add log trace when a operation is refused due to a setuid/setgid bit violation</li>
+        <li> Bug Fix : in NFSv4, file were created with mode = 0000 . This was a trouble with certain FSAL</li>
+        <li> Bug fix: Double close in log_functions.c</li>
+        <li> checksum were removed from NFS file handles (more space for storing FSAL handles)</li>
+        <li> (Patch from Frank Filz) : new and optionnal core parameter Bind_Addr</li>
+       </ul>  
+       </li>
+       <li>
         <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/nfs-ganesha/0.99.64">NFS-GANESHA v 0.99.64</a><br>
         <ul>
 	<li>RPM Packaging : add chkconfig --add in %post</li>
