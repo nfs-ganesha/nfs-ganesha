@@ -483,7 +483,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 /***
  *
  * fsal_internal_handle2fd - convert an internal handle to a file
- * descriptor
+ * descriptor.  The p_context is needed here for the mount_root_fd
  *
  */
 
@@ -493,12 +493,41 @@ fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,
                                        int oflags )
 {
   int rc = 0 ;
+  int dirfd = 0;
+  fsal_status_t status;
+
+  if( !phandle || !pfd || !p_context || !p_context->export_context )
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  dirfd = p_context->export_context->mount_root_fd;
+
+  status = fsal_internal_handle2fd_at( dirfd, phandle , pfd, oflags );
+
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_open);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
+/***
+ *
+ * fsal_internal_handle2fd_at - convert an internal handle to a file
+ * descriptor in a specific directory.
+ *
+ */
+
+fsal_status_t fsal_internal_handle2fd_at ( int dirfd, 
+				       fsal_handle_t * phandle,
+                                       int * pfd,
+                                       int oflags )
+{
+  int rc = 0 ;
   struct open_arg oarg;
 
-  if( !phandle || !pfd || !p_context)
+  if( !phandle || !pfd )
     ReturnCode(ERR_FSAL_FAULT, 0);
   
-  oarg.mountdirfd = p_context->export_context->mount_root_fd;
+  oarg.mountdirfd = dirfd;
  
   phandle->handle.handle_size = 20;
   oarg.handle = &phandle->handle;
@@ -511,6 +540,7 @@ fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
+
 
 /***
  *

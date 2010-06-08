@@ -265,14 +265,14 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
 
         if(FSAL_IS_ERROR(st = fsal_internal_handle_at(p_dir_descriptor->fd, &entry_name, &(p_pdirent[*p_nb_entries].handle))))
             ReturnStatus(st, INDEX_FSAL_readdir);
-        
-      	if( ( tmpfd = openat( p_dir_descriptor->fd, dp->d_name, O_RDONLY | O_NOFOLLOW, 0600 ) ) < 0 )
-          {
-              if( errno != ELOOP ) /* ( p_dir_descriptor->fd, dp->d_name) is not a symlink */
-         		Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_readdir);
-              else
-                d_type = DT_LNK ;
-          }
+
+        if(FSAL_IS_ERROR(st = fsal_internal_handle2fd_at(p_dir_descriptor->fd, &(p_pdirent[*p_nb_entries].handle), &tmpfd, O_RDONLY | O_NOFOLLOW ))) 
+	  {
+	    if( errno != ELOOP ) /* ( p_dir_descriptor->fd, dp->d_name) is not a symlink */
+	      ReturnStatus(st, INDEX_FSAL_readdir);
+	    else
+	      d_type = DT_LNK ;
+	  }
 
       /* get object handle */
       TakeTokenFSCall();
