@@ -360,4 +360,5 @@
         - checksum were removed from NFS file handles (more space for storing FSAL handles)
         - (Patch from Frank Filz) : new and optionnal core parameter Bind_Addr
 
-
+0.99.66 - 
+        - FSAL_XFS now has lock support
