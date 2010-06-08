@@ -74,7 +74,9 @@ fsal_status_t FSAL_lock(fsal_file_t * obj_handle,
                         fsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
 {
   int retval;
-  int fd = FSAL_FILENO(obj_handle);
+  int errsv = 0 ;
+
+  int fd = obj_handle->fd ;
 
   errno = 0;
   /*
@@ -122,7 +124,7 @@ fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / 
 fsal_status_t FSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {
   int retval;
-  int fd = FSAL_FILENO(obj_handle);
+  int fd = obj_handle->fd ;
 
   errno = 0;
   ldesc->flock.l_type = F_UNLCK;
@@ -136,7 +138,7 @@ fsal_status_t FSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 fsal_status_t FSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {
   int retval;
-  int fd = FSAL_FILENO(obj_handle);
+  int fd = obj_handle->fd ;
 
   errno = 0;
   retval = fcntl(fd, F_GETLK, &ldesc->flock);

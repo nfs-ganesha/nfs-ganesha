@@ -1,2 +1,2 @@
-EXTRA_DIST = hosts.ganesha  hpss.ganesha.nfsd.conf  posix.ganesha.nfsd.conf  proxy.ganesha.nfsd.conf  snmp.ganesha.nfsd.conf  uidgid_mapfile.ganesha
+EXTRA_DIST = hosts.ganesha  hpss.ganesha.nfsd.conf  posix.ganesha.nfsd.conf  proxy.ganesha.nfsd.conf  snmp.ganesha.nfsd.conf lustre.ganesha.nfsd.conf xfs.ganesha.nfsd.conf uidgid_mapfile.ganesha
 

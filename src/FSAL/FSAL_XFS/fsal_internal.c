@@ -511,7 +511,7 @@ fsal_status_t fsal_internal_fd2handle( fsal_op_context_t * p_context,
   char * handle_val ;
   size_t handle_len ;
 
-  if( !phandle ||  !p_context)
+  if( !phandle )
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   memset(phandle, 0, sizeof(fsal_handle_t));
