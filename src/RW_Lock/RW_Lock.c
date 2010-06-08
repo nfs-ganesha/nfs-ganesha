@@ -4,11 +4,6 @@
 /*
  * Copyright (C) 2009 CEA/DAM
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the CeCILL License.
- *
- * The fact that you are presently reading this means that you have had
- * knowledge of the CeCILL license (http://www.cecill.info) and that you
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -22,8 +17,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
- * accept its terms.
  */
 /*
  * RW_Lock.c
