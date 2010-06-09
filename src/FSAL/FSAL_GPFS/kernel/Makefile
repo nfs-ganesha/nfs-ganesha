@@ -41,5 +41,7 @@ userclean:
 
 distdir:
 
+distclean: clean
+
 %: %.c
 	$(CC) -o $@ $^
