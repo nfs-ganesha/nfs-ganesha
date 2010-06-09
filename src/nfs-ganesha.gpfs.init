@@ -36,7 +36,13 @@ prog="gpfs.ganesha.nfsd"
 start() {
         echo $"Starting $prog: "
 
-	[ -f "$CONFFILE" ] || return 1
+	if [ ! -f "$CONFFILE" ]; then
+	        echo "The following configuration file is required but does not exist: $CONFFILE"
+		RETVAL=1
+		failure
+	        echo
+	        return $RETVAL
+	fi
 
 	if ps x | grep -q "$PATHPROG $OPTIONS"; then
 	        echo "GPFS Ganesha is already running."
