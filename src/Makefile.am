@@ -109,6 +109,10 @@ if USE_FSAL_XFS
 RPMARGS= --with xfs
 endif
 
+if USE_FSAL_GPFS
+RPMARGS= --with gpfs
+endif
+
 if USE_FSAL_FUSE
 RPMARGS= --with fuse
 endif
