@@ -34,30 +34,63 @@ RETVAL=0
 prog="gpfs.ganesha.nfsd"
 
 start() {
-        echo -n $"Starting $prog: "
+        echo $"Starting $prog: "
+
+	[ -f "$CONFFILE" ] || return 1
+
+	if ps x | grep -q "$PATHPROG $OPTIONS"; then
+	        echo "GPFS Ganesha is already running."
+		RETVAL=1
+		failure
+	        echo
+	        return $RETVAL	    
+	fi
+
+	modprobe open-by-handle > /dev/null 2>&1
+	if ! grep -q openhandle_dev /proc/devices
+	then
+	        echo "Could not load the open-by-handle module. Make sure it is installed."
+	        RETVAL=1
+	        failure
+	        echo
+	        return $RETVAL
+	fi;
+
         if [ $UID -ne 0 ]; then
+	        echo "GPFS Ganesha must be started by the root user."
                 RETVAL=1
                 failure
+		echo
+		return $RETVAL
         else
-                daemon $PATHPROG $OPTIONS
-                RETVAL=$?
+	        daemon $PATHPROG $OPTIONS
+		RETVAL=$?
+		sleep 1
+		if ! ps x | grep -q "$PATHPROG $OPTIONS"; then
+			failure
+			echo
+			return $RETVAL
+		fi
                 [ $RETVAL -eq 0 ] && touch /var/lock/subsys/gpfs.ganesha.nfsd
         fi;
+
+
         echo 
         return $RETVAL
 }
 
 stop() {
         echo -n $"Stopping $prog: "
+
         if [ $UID -ne 0 ]; then
                 RETVAL=1
                 failure
         else
-                killproc $PATHPROG
+   	        killproc $PATHPROG
                 RETVAL=$?
                 [ $RETVAL -eq 0 ] && rm -f  /var/lock/subsys/gpfs.ganesha.nfsd
-
         fi;
+	rmmod open_by_handle > /dev/null 2>&1
         echo
         return $RETVAL
 }
@@ -80,6 +113,21 @@ condrestart(){
     return 0
 }
 
+ganesha_status() {
+    if ps x | grep -q "$PATHPROG $OPTIONS"; then
+	    echo "GPFS Ganesha is running."
+    else
+	    echo "GPFS Ganesha is not running."
+    fi
+
+    if grep -q openhandle_dev /proc/devices
+    then
+	    echo "Open-by-handle module is loaded."
+    else
+	    echo "Open-by-handle module is not loaded."	
+    fi;
+}
+
 case "$1" in
   start)
 	start
@@ -97,8 +145,7 @@ case "$1" in
 	condrestart
 	;;
   status)
-        status $prog
-	RETVAL=$?
+        ganesha_status
         ;;
   *)
 	echo $"Usage: $0 {start|stop|status|restart|condrestart|reload}"
