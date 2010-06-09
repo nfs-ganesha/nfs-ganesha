@@ -141,6 +141,9 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
       return rc;
     }
 
+  if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_readlink3.symlink) ) ) )
+    return nfs3_Remove_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
+
   /* get directory attributes before action (for V3 reply) */
   pparent_attr = &pre_parent_attr;
 

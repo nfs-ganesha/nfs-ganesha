@@ -941,6 +941,33 @@ fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,        /* IN 
                                    fsal_op_context_t * p_context, /* IN */
                                    unsigned int xattr_id ) /* IN */
 {
+  int rc;
+  fsal_status_t st;
+  int fd = 0 ;
+  char name[FSAL_MAX_NAME_LEN];
+
+
+  TakeTokenFSCall();
+  st = fsal_internal_handle2fd( p_context, p_objecthandle , &fd, O_RDWR ) ;
+  ReleaseTokenFSCall();
+  if(FSAL_IS_ERROR(st))
+    ReturnStatus(st, INDEX_FSAL_SetXAttrValue);
+
+  rc = xattr_id_to_name(fd, xattr_id, name);
+  if(rc)
+    Return(rc, errno, INDEX_FSAL_SetXAttrValue);
+
+  TakeTokenFSCall();
+  rc = fremovexattr( fd, name ) ;
+  ReleaseTokenFSCall();
+
+  close( fd ) ;
+
+  if(rc != 0)
+    ReturnCode(posix2fsal_error(errno), errno) ;
+
+ ReturnCode(ERR_FSAL_NO_ERROR, 0 ) ;
+
  ReturnCode(ERR_FSAL_NO_ERROR, 0 ) ;
 } /* FSAL_RemoveXAttrById */
   
@@ -955,6 +982,25 @@ fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,        /* I
                                    fsal_op_context_t * p_context, /* IN */
                                     const fsal_name_t * xattr_name )  /* IN */
 {
+  int rc;
+  fsal_status_t st;
+  int fd = 0 ;
+
+  TakeTokenFSCall();
+  st = fsal_internal_handle2fd( p_context, p_objecthandle , &fd, O_RDWR ) ;
+  ReleaseTokenFSCall();
+  if(FSAL_IS_ERROR(st))
+    ReturnStatus(st, INDEX_FSAL_SetXAttrValue);
+
+  TakeTokenFSCall();
+  rc = fremovexattr( fd, xattr_name->name ) ;
+  ReleaseTokenFSCall();
+
+  close( fd ) ;
+
+  if(rc != 0)
+    ReturnCode(posix2fsal_error(errno), errno) ;
+
  ReturnCode(ERR_FSAL_NO_ERROR, 0 ) ;
 } /* FSAL_RemoveXAttrById */
    
