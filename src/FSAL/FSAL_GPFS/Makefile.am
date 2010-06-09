@@ -1,7 +1,18 @@
 SUBDIRS = kernel
 
-AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
+EXTRA_DIST = kernel/append_handle_prg.c \
+	kernel/create_handle_prg.c \
+	kernel/handle.h \
+	kernel/handle_ioctl.c \
+	kernel/hardlink_handle_prg.c \
+	kernel/open_by_handle.c \
+	kernel/read_handle_prg.c \
+	kernel/readlink_handle_prg.c \
+	kernel/truncate_handle_prg.c \
+	kernel/README \
+	kernel/Makefile
 
+AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
 noinst_LTLIBRARIES          = libfsalgpfs.la
 
