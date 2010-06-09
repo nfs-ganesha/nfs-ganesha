@@ -1509,10 +1509,110 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
 #define arg_READ4 op->nfs_argop4_u.opread
 #define res_READ4 resp->nfs_resop4_u.opread
 
+#define arg_OPEN4 op->nfs_argop4_u.opopen
+#define res_OPEN4 resp->nfs_resop4_u.opopen
 int nfs4_op_open_xattr(struct nfs_argop4 *op,
                        compound_data_t * data, struct nfs_resop4 *resp)
 {
-  /* Nothing done here, we do not use the stateful logic for accessing xattrs */
+  fsal_name_t name;
+  char strname[MAXNAMLEN];
+  fsal_status_t fsal_status;
+  cache_inode_status_t cache_status;
+  fsal_handle_t *pfsal_handle = NULL;
+  unsigned int xattr_id = 0;
+  file_handle_v4_t *pfile_handle = NULL;
+  char empty_buff[16] = "";
+
+  res_OPEN4.status = NFS4_OK;
+
+  /* Get the FSAL Handle fo the current object */
+  pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
+  if(cache_status != CACHE_INODE_SUCCESS)
+   {
+     res_OPEN4.status = nfs4_Errno(cache_status);
+     return res_OPEN4.status;
+   }
+
+  /* UTF8 strings may not end with \0, but they carry their length */
+  strncpy(strname, arg_OPEN4.claim.open_claim4_u.file.utf8string_val,
+          arg_OPEN4.claim.open_claim4_u.file.utf8string_len);
+  strname[arg_OPEN4.claim.open_claim4_u.file.utf8string_len] = '\0';
+
+  /* Build the FSAL name */
+  if((cache_status = cache_inode_error_convert(FSAL_str2name(strname,
+                                               MAXNAMLEN,
+                                               &name))) !=
+         CACHE_INODE_SUCCESS)
+   {
+     res_OPEN4.status = nfs4_Errno(cache_status);
+     return res_OPEN4.status;
+   }
+
+  /* we do not use the stateful logic for accessing xattrs */
+  switch (arg_OPEN4.openhow.opentype)
+   {
+      case OPEN4_CREATE:
+          /* To be done later */
+        /* set empty attr */
+         fsal_status = FSAL_SetXAttrValue(pfsal_handle,
+                                   	  &name,
+                                          data->pcontext, empty_buff, sizeof(empty_buff), TRUE);
+
+         if(FSAL_IS_ERROR(fsal_status))
+          {
+             res_OPEN4.status = nfs4_Errno(cache_inode_error_convert(fsal_status));
+             return res_OPEN4.status ;
+           }
+
+         /* Now, getr the id */
+         fsal_status = FSAL_GetXAttrIdByName(pfsal_handle, &name, data->pcontext, &xattr_id);
+         if(FSAL_IS_ERROR(fsal_status))
+          {
+           res_OPEN4.status = NFS4ERR_NOENT ;
+           return res_OPEN4.status ;
+           }
+
+        /* Attribute was found */
+         pfile_handle = (file_handle_v4_t *) (data->currentFH.nfs_fh4_val);
+
+         /* for Xattr FH, we adopt the current convention:
+          * xattr_pos = 0 ==> the FH is the one of the actual FS object
+          * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory 
+          * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
+          pfile_handle->xattr_pos = xattr_id + 2;
+
+          res_OPEN4.status = NFS4_OK ;
+          return NFS4_OK;
+ 
+	  break ;
+
+      case OPEN4_NOCREATE:
+         
+         /* Try to get a FSAL_XAttr of that name */
+         fsal_status = FSAL_GetXAttrIdByName(pfsal_handle, &name, data->pcontext, &xattr_id);
+         if(FSAL_IS_ERROR(fsal_status))
+          {
+           res_OPEN4.status = NFS4ERR_NOENT ;
+           return res_OPEN4.status ;
+           }
+
+        /* Attribute was found */
+         pfile_handle = (file_handle_v4_t *) (data->currentFH.nfs_fh4_val);
+
+         /* for Xattr FH, we adopt the current convention:
+          * xattr_pos = 0 ==> the FH is the one of the actual FS object
+          * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory 
+          * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
+          pfile_handle->xattr_pos = xattr_id + 2;
+
+          res_OPEN4.status = NFS4_OK ;
+          return NFS4_OK;
+
+          break ;
+
+   } /* switch (arg_OPEN4.openhow.opentype) */
+
+  res_OPEN4.status = NFS4_OK ;
   return NFS4_OK;
 }                               /* nfs4_op_open_xattr
 
@@ -1607,6 +1707,8 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
 #define arg_WRITE4 op->nfs_argop4_u.opwrite
 #define res_WRITE4 resp->nfs_resop4_u.opwrite
 
+extern verifier4 NFS4_write_verifier;   /* NFS V4 write verifier from nfs_Main.c     */
+
 int nfs4_op_write_xattr(struct nfs_argop4 *op,
                         compound_data_t * data, struct nfs_resop4 *resp)
 {
@@ -1643,7 +1745,25 @@ int nfs4_op_write_xattr(struct nfs_argop4 *op,
    * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
   xattr_id = pfile_handle->xattr_pos - 2;
 
-  /** @todo to be continued */
+  fsal_status = FSAL_SetXAttrValueById(pfsal_handle,
+                                       xattr_id,
+                                       data->pcontext,
+                                       arg_WRITE4.data.data_val,
+                                       arg_WRITE4.data.data_len);
+
+  if(FSAL_IS_ERROR(fsal_status))
+    {
+      res_WRITE4.status = NFS4ERR_SERVERFAULT;
+      return res_WRITE4.status;
+    }
+
+  res_WRITE4.WRITE4res_u.resok4.committed = FILE_SYNC4;
+
+  res_WRITE4.WRITE4res_u.resok4.count = arg_WRITE4.data.data_len ;
+  memcpy(res_WRITE4.WRITE4res_u.resok4.writeverf, NFS4_write_verifier, sizeof(verifier4));
+
+  res_WRITE4.status = NFS4_OK;
+
 
   return NFS4_OK;
 }                               /* nfs4_op_write_xattr */
