@@ -1,6 +1,7 @@
 /*
  *
  *
+ *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
@@ -719,6 +720,29 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
                                  fsal_attrib_list_t * p_attrs
                                           /**< IN/OUT xattr attributes (if supported) */
     );
+
+/**
+ *  Removes a xattr by Id
+ *
+ * \param p_objecthandle Handle of the object you want to get attribute for.
+ * \param p_context pointer to the current security context.
+ * \param xattr_id xattr's id
+ */
+fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,        /* IN */
+                                   fsal_op_context_t * p_context, /* IN */
+                                   unsigned int xattr_id ) ; /* IN */
+  
+/**
+ *  Removes a xattr by Name
+ *
+ * \param p_objecthandle Handle of the object you want to get attribute for.
+ * \param p_context pointer to the current security context.
+ * \param xattr_name xattr's name
+ */
+fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,        /* IN */
+                                   fsal_op_context_t * p_context, /* IN */
+                                    const fsal_name_t * xattr_name ) ; /* IN */
+
 
 /******************************************************
  *                FSAL miscelaneous tools.
