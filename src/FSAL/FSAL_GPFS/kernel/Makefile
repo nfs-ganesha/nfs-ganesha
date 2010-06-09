@@ -9,7 +9,7 @@ ifeq ($(shell uname -r | sed 's/-.*//'), 2.6.18)
 all: modules userspace
 
 install:
-	install -d $(DESTDIR)/lib/modules/$(shell uname -r)/extras
+	install -d $(DESTDIR)/lib/modules/$(shell uname -r)/extra
 	$(MAKE) -C /lib/modules/$(shell uname -r)/build/ INSTALL_MOD_PATH=$(DESTDIR) M=$(shell pwd) modules_install
 # needed on a new install
 	/sbin/depmod -b $(DESTDIR)
