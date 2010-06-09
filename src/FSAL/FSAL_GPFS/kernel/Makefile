@@ -9,9 +9,10 @@ ifeq ($(shell uname -r | sed 's/-.*//'), 2.6.18)
 all: modules userspace
 
 install:
-	$(MAKE) -C $(DESTDIR)/lib/modules/$(shell uname -r)/build/ M=$(shell pwd) modules_install
+	install -d $(DESTDIR)/lib/modules/$(shell uname -r)/extras
+	$(MAKE) -C /lib/modules/$(shell uname -r)/build/ INSTALL_MOD_PATH=$(DESTDIR) M=$(shell pwd) modules_install
 # needed on a new install
-	/sbin/depmod
+	/sbin/depmod -b $(DESTDIR)
 
 clean: userclean
 	$(MAKE) -C $(DESTDIR)/lib/modules/$(shell uname -r)/build/ M=$(shell pwd) clean
@@ -37,6 +38,8 @@ userclean:
 	$(RM) append_handle_prg create_handle_prg hardlink_handle_prg \
 	 read_handle_prg readlink_handle_prg \
 	 truncate_handle_prg
+
+distdir:
 
 %: %.c
 	$(CC) -o $@ $^
