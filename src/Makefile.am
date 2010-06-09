@@ -109,6 +109,10 @@ if USE_FSAL_XFS
 RPMARGS= --with xfs
 endif
 
+if USE_FSAL_GPFS
+RPMARGS= --with gpfs
+endif
+
 if USE_FSAL_FUSE
 RPMARGS= --with fuse
 endif
@@ -144,6 +148,7 @@ EXTRA_DIST=nfs-ganesha.spec           \
            nfs-ganesha.posix.init     \
            nfs-ganesha.lustre.init    \
            nfs-ganesha.xfs.init       \
+           nfs-ganesha.gpfs.init      \
            nfs-ganesha.hpss.init      \
            nfs-ganesha.proxy.init     \
            nfs-ganesha.snmp.init        
