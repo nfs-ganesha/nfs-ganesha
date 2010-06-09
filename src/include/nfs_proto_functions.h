@@ -830,6 +830,10 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
 int nfs4_op_write_xattr(struct nfs_argop4 *op,
                         compound_data_t * data, struct nfs_resop4 *resp);
 
+int nfs4_op_remove_xattr(struct nfs_argop4 *op, 
+                         compound_data_t * data, struct nfs_resop4 *resp);
+
+
 int nfs_XattrD_Name(char *strname, char *objectname);
 
 int nfs4_XattrToFattr(fattr4 * Fattr,
@@ -1367,11 +1371,20 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                        cache_inode_client_t * pclient,
                        hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres);
 
+
 int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                            exportlist_t * pexport,
                            fsal_op_context_t * pcontext,
                            cache_inode_client_t * pclient,
                            hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres);
+
+int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
+               exportlist_t * pexport /* IN  */ ,
+               fsal_op_context_t * pcontext /* IN  */ ,
+               cache_inode_client_t * pclient /* IN  */ ,
+               hash_table_t * ht /* INOUT */ ,
+               struct svc_req *preq /* IN  */ ,
+               nfs_res_t * pres /* OUT */ ) ;
 
 int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
                        fattr4 * Fattr,
