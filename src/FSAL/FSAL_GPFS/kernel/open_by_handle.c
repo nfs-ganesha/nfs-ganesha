@@ -23,13 +23,15 @@
 #include <linux/fs.h>
 #include <linux/module.h>
 #include <linux/errno.h>
-#include <linux/cdev.h>
+#include <linux/device.h>
 #include <linux/uaccess.h>
 #include <linux/vmalloc.h>
 
 #include "handle.h"
 
 MODULE_LICENSE("GPL");
+
+#define openbyhandle_devname "openhandle_dev"
 
 int openhandle_open(struct inode *inode, struct file *filp);
 int openhandle_release (struct inode *inode, struct file *filp);
@@ -96,45 +98,45 @@ int openhandle_release(struct inode *inode, struct file *filp)
 	return 0;
 }
 
-static struct cdev *openhandle_cdev;
-static dev_t openhandle_dev;
+static struct class *openbyhandle_class;
+static struct device *openbyhandle_dev;
+static int major;
 
 int init_module()
 {
-	int major;
-	int result, devno;
+	void *ptr_err;
 
-	result = alloc_chrdev_region(&openhandle_dev, 0, 1, "openhandle_dev");
-	if (result) {
-		printk("Can't get major number, error %d\n", result);
-		return -EAGAIN;
+	major = register_chrdev(0, openbyhandle_devname, &openhandle_fops);
+	if (major < 0) {
+	  printk("Can't get major number, error %d\n", major);
+	  return major;
 	}
-	major = MAJOR(openhandle_dev);
-	/* Register char dev */
-	devno = MKDEV(major, 0);
-	openhandle_cdev = cdev_alloc();
-	if (!openhandle_cdev) {
-		printk("Can't alloc cdev\n");
-		goto erro;
-	}
-	openhandle_cdev->ops = &openhandle_fops;
-	openhandle_cdev->owner = THIS_MODULE;
-	result = cdev_add(openhandle_cdev, devno, 1);
-	if (result) {
-		printk("Can't add cdev, error %d\n", result);
-		goto erro;
-	}
+
+	openbyhandle_class = class_create(THIS_MODULE, openbyhandle_devname);
+	ptr_err = openbyhandle_class;
+	if (IS_ERR(ptr_err))
+	  goto erro2;
+
+	openbyhandle_dev = device_create(openbyhandle_class, NULL,
+					 MKDEV(major, 0), openbyhandle_devname);
+	ptr_err = openbyhandle_dev;
+	if (IS_ERR(ptr_err))
+	  goto erro1;
+
 	printk("device registered with major number %d\n", major);
 	return 0;
 
-erro:
-	unregister_chrdev_region(openhandle_dev, 1);
-	return -EINVAL;
+erro1:
+	class_destroy(openbyhandle_class);
+erro2:
+	unregister_chrdev(major, openbyhandle_devname);
+	return PTR_ERR(ptr_err);
 }
 
 void cleanup_module()
 {
-	cdev_del(openhandle_cdev);
-	unregister_chrdev_region(openhandle_dev, 1);
-	return;
+  device_destroy(openbyhandle_class, MKDEV(major, 0));
+  class_destroy(openbyhandle_class);
+  unregister_chrdev(major, openbyhandle_devname);
+  return;
 }
