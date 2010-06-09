@@ -933,13 +933,6 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
   /* alias to clear code */
   CREATE3resok *resok = &pres->res_create3.CREATE3res_u.resok;
 
-  if(preq->rq_vers == NFS_V3)
-    {
-      /* to avoid setting it on each error case */
-      pres->res_create3.CREATE3res_u.resfail.dir_wcc.before.attributes_follow = FALSE;
-      pres->res_create3.CREATE3res_u.resfail.dir_wcc.after.attributes_follow = FALSE;
-    }
-
   if((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
                                          NULL,
                                          &(parg->arg_create3.where.dir),
@@ -1027,13 +1020,6 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
 
   /* set current time, to force the client refreshing its xattr dir */
   fsal_set_times_current(&post_attr);
-
-  /*
-   * Build Weak Cache Coherency
-   * data 
-   */
-  nfs_SetWccData(pcontext, pexport,
-                 parent_pentry, &pre_attr, &post_attr, &(resok->dir_wcc));
 
   pres->res_create3.status = NFS3_OK;
 
@@ -1131,10 +1117,6 @@ int nfs3_Write_Xattr(nfs_arg_t * parg,
       pres->res_write3.status = nfs3_Errno(cache_inode_error_convert(fsal_status));
       return NFS_REQ_OK;
     }
-
-  /* Build Weak Cache Coherency data */
-  nfs_SetWccData(pcontext, pexport, pentry, NULL,       /* no preattrs */
-                 &attr_attrs, &(pres->res_write3.WRITE3res_u.resok.file_wcc));
 
   /* Set the written size */
   pres->res_write3.WRITE3res_u.resok.count = parg->arg_write3.data.data_len;
@@ -1800,3 +1782,17 @@ int nfs3_Getattr_Xattr(nfs_arg_t * parg,
 
   return NFS_REQ_OK;
 }                               /* nfs3_Getattr_Xattr */
+
+int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
+               exportlist_t * pexport /* IN  */ ,
+               fsal_op_context_t * pcontext /* IN  */ ,
+               cache_inode_client_t * pclient /* IN  */ ,
+               hash_table_t * ht /* INOUT */ ,
+               struct svc_req *preq /* IN  */ ,
+               nfs_res_t * pres /* OUT */ ) 
+{
+  return NFS_REQ_OK ;
+}
+
+
+
