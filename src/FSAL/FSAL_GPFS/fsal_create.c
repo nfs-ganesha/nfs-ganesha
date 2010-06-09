@@ -549,18 +549,14 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
     }
 
   /* build the directory path */
-  TakeTokenFSCall();
   status = fsal_internal_handle2fd( p_context, parentdir_handle , &fd, O_RDONLY | O_DIRECTORY) ;
-  ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_mknode);
 
   /* retrieve directory attributes */
-  TakeTokenFSCall();
   rc = fstat( fd, &buffstat);
   errsv = errno;
-  ReleaseTokenFSCall();
 
   if(rc)
     {
@@ -581,49 +577,45 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
     ReturnStatus(status, INDEX_FSAL_mknode);
 
   /* creates the node, then stats it */
-  TakeTokenFSCall();
   rc = mknodat( fd, p_node_name->name, unix_mode, unix_dev);
   errsv = errno;
 
   if(rc)
     {
       close( fd ) ;
-      ReleaseTokenFSCall();
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mknode);
     }
 
-  /* get the new object handle */ 
-  if( ( newfd = openat( fd, p_node_name->name, O_RDONLY, 0600 ) ) < 0 )
-   {
-      errsv = errno ;
-      close( fd ) ;
-      ReleaseTokenFSCall();
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
-   }
+  /* WARNING:
+   * After creating the new node, the node name could have been changed.
+   * This is a race condition. However only root creates new nodes. This
+   * is an unlikely race condition, but hopefully can be fixed someday.
+   */
 
-  status = fsal_internal_handle_at( fd, p_node_name, p_object_handle);
-  ReleaseTokenFSCall();
+  if(FSAL_IS_ERROR(status = fsal_internal_handle_at(fd, p_node_name,
+						    p_object_handle)))
+    {
+      close(fd);
+      ReturnStatus(status, INDEX_FSAL_mknode);
+    }
 
-  if(FSAL_IS_ERROR(status))
-  {
-    close( fd ) ;
-    close( newfd ) ;
-    ReturnStatus(status, INDEX_FSAL_mknode);
-  }
-
+  if(FSAL_IS_ERROR(status = fsal_internal_handle2fd_at(fd,
+						       p_object_handle, &newfd,
+						       O_RDONLY | O_NOFOLLOW )))
+    {
+      close(fd);
+      ReturnStatus(status, INDEX_FSAL_mknode);
+    }
+  
   /* the node has been created */
   /* chown the file to the current user/group */
 
   if(p_context->credential.user != geteuid())
     {
-      TakeTokenFSCall();
-
       /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
       rc = fchown( newfd, p_context->credential.user,
                   setgid_bit ? -1 : (int)p_context->credential.group);
       errsv = errno;
-
-      ReleaseTokenFSCall();
 
       if(rc)
        {
