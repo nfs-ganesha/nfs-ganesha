@@ -71,7 +71,7 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
    */
   if(!p_parent_directory_handle || !p_context || !p_object_handle || !p_filename)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_create);
-  DisplayLog("000000000000000000000000000");
+
   /* convert fsal mode to unix mode. */
   unix_mode = fsal2unix_mode(accessmode);
 
@@ -81,19 +81,19 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
 #ifdef _DEBUG_FSAL
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Creation mode: 0%o", accessmode);
 #endif
-  DisplayLog("11111111111111111111111111111111111111111");
+
   TakeTokenFSCall();
   status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_RDONLY | O_DIRECTORY) ;
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_create);
-  DisplayLog("2222222222222222222222222");
+
   /* retrieve directory metadata */
   TakeTokenFSCall();
   rc = fstat( fd, &buffstat);
   errsv = errno;
   ReleaseTokenFSCall();
-  DisplayLog("33333333333333333333333333");
+
   if(rc)
     {
       close( fd ) ;
@@ -103,16 +103,16 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
       else
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
     }
-  DisplayLog("4444444444444444444444444444444");
+
   /* Check the user can write in the directory, and check the setgid bit on the directory */
 
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
-  DisplayLog("555555555555555555555");
+
   status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_create);
-  DisplayLog("66666666666666666666666666");
+
   /* call to filesystem */
 
   TakeTokenFSCall();
@@ -120,7 +120,7 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
    * O_EXCL=>  error if the file already exists */
   newfd = openat( fd, p_filename->name, O_CREAT | O_WRONLY | O_TRUNC | O_EXCL, unix_mode);
   errsv = errno;
-  DisplayLog("777777777777777777777");
+
   if( newfd == -1)
     {
       close(fd);
@@ -130,7 +130,7 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
 
   /* close the file descriptor */
   rc = close(newfd);
-  DisplayLog("888888888888888888888");
+
   errsv = errno;
   if(rc)
     {
@@ -140,11 +140,10 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
     }
 
   /* get the new file handle */
-  DisplayLog("99999999999999999999999999");
   /* TODO: this has a race, but for now we can't do much about it */
   status = fsal_internal_handle_at(fd, p_filename, p_object_handle);
   ReleaseTokenFSCall();
-  DisplayLog("101010101010101010101010101010110");
+
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_create);
 
@@ -550,18 +549,14 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
     }
 
   /* build the directory path */
-  TakeTokenFSCall();
   status = fsal_internal_handle2fd( p_context, parentdir_handle , &fd, O_RDONLY | O_DIRECTORY) ;
-  ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_mknode);
 
   /* retrieve directory attributes */
-  TakeTokenFSCall();
   rc = fstat( fd, &buffstat);
   errsv = errno;
-  ReleaseTokenFSCall();
 
   if(rc)
     {
@@ -582,49 +577,45 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
     ReturnStatus(status, INDEX_FSAL_mknode);
 
   /* creates the node, then stats it */
-  TakeTokenFSCall();
   rc = mknodat( fd, p_node_name->name, unix_mode, unix_dev);
   errsv = errno;
 
   if(rc)
     {
       close( fd ) ;
-      ReleaseTokenFSCall();
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mknode);
     }
 
-  /* get the new object handle */ 
-  if( ( newfd = openat( fd, p_node_name->name, O_RDONLY, 0600 ) ) < 0 )
-   {
-      errsv = errno ;
-      close( fd ) ;
-      ReleaseTokenFSCall();
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
-   }
+  /* WARNING:
+   * After creating the new node, the node name could have been changed.
+   * This is a race condition. However only root creates new nodes. This
+   * is an unlikely race condition, but hopefully can be fixed someday.
+   */
 
-  status = fsal_internal_handle_at( fd, p_node_name, p_object_handle);
-  ReleaseTokenFSCall();
+  if(FSAL_IS_ERROR(status = fsal_internal_handle_at(fd, p_node_name,
+						    p_object_handle)))
+    {
+      close(fd);
+      ReturnStatus(status, INDEX_FSAL_mknode);
+    }
 
-  if(FSAL_IS_ERROR(status))
-  {
-    close( fd ) ;
-    close( newfd ) ;
-    ReturnStatus(status, INDEX_FSAL_mknode);
-  }
-
+  if(FSAL_IS_ERROR(status = fsal_internal_handle2fd_at(fd,
+						       p_object_handle, &newfd,
+						       O_RDONLY | O_NOFOLLOW )))
+    {
+      close(fd);
+      ReturnStatus(status, INDEX_FSAL_mknode);
+    }
+  
   /* the node has been created */
   /* chown the file to the current user/group */
 
   if(p_context->credential.user != geteuid())
     {
-      TakeTokenFSCall();
-
       /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
       rc = fchown( newfd, p_context->credential.user,
                   setgid_bit ? -1 : (int)p_context->credential.group);
       errsv = errno;
-
-      ReleaseTokenFSCall();
 
       if(rc)
        {
