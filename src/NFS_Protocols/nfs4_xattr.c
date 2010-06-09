@@ -1767,3 +1767,64 @@ int nfs4_op_write_xattr(struct nfs_argop4 *op,
 
   return NFS4_OK;
 }                               /* nfs4_op_write_xattr */
+
+#define arg_REMOVE4 op->nfs_argop4_u.opremove
+#define res_REMOVE4 resp->nfs_resop4_u.opremove
+int nfs4_op_remove_xattr(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
+{
+  fsal_status_t fsal_status ;
+  cache_inode_status_t cache_status;
+  fsal_handle_t *pfsal_handle = NULL;
+  fsal_name_t name ;
+  
+ /* Check for name length */
+  if(arg_REMOVE4.target.utf8string_len > FSAL_MAX_NAME_LEN)
+    {
+      res_REMOVE4.status = NFS4ERR_NAMETOOLONG;
+      return res_REMOVE4.status;
+    }
+
+  /* get the filename from the argument, it should not be empty */
+  if(arg_REMOVE4.target.utf8string_len == 0)
+    {
+      res_REMOVE4.status = NFS4ERR_INVAL;
+      return res_REMOVE4.status;
+    }
+
+  /* NFS4_OP_REMOVE can delete files as well as directory, it replaces NFS3_RMDIR and NFS3_REMOVE
+   * because of this, we have to know if object is a directory or not */
+  if((cache_status =
+      cache_inode_error_convert(FSAL_buffdesc2name
+                                ((fsal_buffdesc_t *) & arg_REMOVE4.target,
+                                 &name))) != CACHE_INODE_SUCCESS)
+    {
+      res_REMOVE4.status = nfs4_Errno(cache_status);
+      return res_REMOVE4.status;
+    }
+
+   /* Get the FSAL Handle fo the current object */
+    pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
+   if(cache_status != CACHE_INODE_SUCCESS)
+    {
+      res_REMOVE4.status = nfs4_Errno(cache_status);
+      return res_REMOVE4.status;
+    }
+
+  /* Test RM7: remiving '.' should return NFS4ERR_BADNAME */
+  if(!FSAL_namecmp(&name, (fsal_name_t *)&FSAL_DOT) || !FSAL_namecmp(&name, (fsal_name_t *)&FSAL_DOT_DOT))
+    {
+      res_REMOVE4.status = NFS4ERR_BADNAME;
+      return res_REMOVE4.status;
+    }
+ 
+  fsal_status = FSAL_RemoveXAttrByName( pfsal_handle, data->pcontext, &name ) ;
+  if(FSAL_IS_ERROR(fsal_status))
+    {
+      res_REMOVE4.status = NFS4ERR_SERVERFAULT;
+      return res_REMOVE4.status;
+    }
+
+  res_REMOVE4.status = NFS4_OK ;
+  return res_REMOVE4.status ;
+}
+

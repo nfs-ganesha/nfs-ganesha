@@ -136,6 +136,11 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_REMOVE4.status;
     }
 
+  /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
+  if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
+    return nfs4_op_remove_xattr(op, data, resp);
+
+
   /* Get the parent entry (aka the current one in the compound data) */
   parent_entry = data->current_entry;
 
