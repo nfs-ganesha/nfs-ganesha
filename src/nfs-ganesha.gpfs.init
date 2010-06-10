@@ -71,6 +71,11 @@ start() {
         else
 	        daemon $PATHPROG $OPTIONS
 		RETVAL=$?
+
+                # sleeping here gives Ganesha an adequate amount of time to 
+                # initialize the server and fail if anything goes wrong.
+                # Without this sleep and the server will be in the midst of 
+                # initializing. It may fail immediately after this script runs.
 		sleep 1
 		if ! ps x | grep -q "$PATHPROG $OPTIONS"; then
 			failure
