@@ -541,7 +541,7 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
   /* for Xattr FH, we adopt the current convention:
    * xattr_pos = 0 ==> the FH is the one of the actual FS object
    * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory 
-   G* xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
+   * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
   pfile_handle->xattr_pos = xattr_id + 2;
 
   return NFS_REQ_OK;
