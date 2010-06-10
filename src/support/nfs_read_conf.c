@@ -1173,6 +1173,10 @@ int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * p
         {
           pparam->use_open_confirm = StrToBoolean(key_value);
         }
+      else if( !strcasecmp( key_name, "Return_Bad_Stateid" ) )
+        {
+          pparam->return_bad_stateid = StrToBoolean(key_value);
+        }
       else
         {
           fprintf(stderr,
