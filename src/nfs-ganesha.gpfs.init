@@ -36,6 +36,14 @@ prog="gpfs.ganesha.nfsd"
 start() {
         echo $"Starting $prog: "
 
+        if [ $UID -ne 0 ]; then
+	        echo "GPFS Ganesha must be started by the root user."
+                RETVAL=1
+                failure
+		echo
+		return $RETVAL
+	fi
+
 	if [ ! -f "$CONFFILE" ]; then
 	        echo "The following configuration file is required but does not exist: $CONFFILE"
 		RETVAL=1
@@ -62,31 +70,21 @@ start() {
 	        return $RETVAL
 	fi;
 
-        if [ $UID -ne 0 ]; then
-	        echo "GPFS Ganesha must be started by the root user."
-                RETVAL=1
-                failure
-		echo
-		return $RETVAL
-        else
-	        daemon $PATHPROG $OPTIONS
-		RETVAL=$?
-
-                # sleeping here gives Ganesha an adequate amount of time to 
-                # initialize the server and fail if anything goes wrong.
-                # Without this sleep and the server will be in the midst of 
-                # initializing. It may fail immediately after this script runs.
-		sleep 3
-		result=`pidof "$PATHPROG"`
-		if [ ! $result ]; then
-			failure
-			echo
-			return $RETVAL
-		fi
-
-                [ $RETVAL -eq 0 ] && touch /var/lock/subsys/gpfs.ganesha.nfsd
-        fi;
-
+	daemon $PATHPROG $OPTIONS
+	RETVAL=$?
+	
+        # sleeping here gives Ganesha an adequate amount of time to 
+        # initialize the server and fail if anything goes wrong.
+        # Without this sleep and the server will be in the midst of 
+        # initializing. It may fail immediately after this script runs.
+	sleep 3
+	result=`pidof "$PATHPROG"`
+	if [ ! $result ]; then
+	    failure
+	    echo
+	    return $RETVAL
+	fi
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/gpfs.ganesha.nfsd
 
         echo 
         return $RETVAL
