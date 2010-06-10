@@ -44,7 +44,8 @@ start() {
 	        return $RETVAL
 	fi
 
-	if ps x | grep -q "$PATHPROG $OPTIONS"; then
+	if pidof "$PROG" 
+        then
 	        echo "GPFS Ganesha is already running."
 		RETVAL=1
 		failure
@@ -77,7 +78,8 @@ start() {
                 # Without this sleep and the server will be in the midst of 
                 # initializing. It may fail immediately after this script runs.
 		sleep 1
-		if ! ps x | grep -q "$PATHPROG $OPTIONS"; then
+		if pidof "$PROG" 
+		then
 			failure
 			echo
 			return $RETVAL
