@@ -44,8 +44,8 @@ start() {
 	        return $RETVAL
 	fi
 
-	if pidof "$PROG" 
-        then
+	result=`pidof "$PATHPROG"`
+	if [ $result ]; then
 	        echo "GPFS Ganesha is already running."
 		RETVAL=1
 		failure
@@ -54,8 +54,7 @@ start() {
 	fi
 
 	modprobe open-by-handle > /dev/null 2>&1
-	if ! grep -q openhandle_dev /proc/devices
-	then
+	if ! grep -q openhandle_dev /proc/devices; then
 	        echo "Could not load the open-by-handle module. Make sure it is installed."
 	        RETVAL=1
 	        failure
@@ -77,13 +76,14 @@ start() {
                 # initialize the server and fail if anything goes wrong.
                 # Without this sleep and the server will be in the midst of 
                 # initializing. It may fail immediately after this script runs.
-		sleep 1
-		if pidof "$PROG" 
-		then
+		sleep 3
+		result=`pidof "$PATHPROG"`
+		if [ ! $result ]; then
 			failure
 			echo
 			return $RETVAL
 		fi
+
                 [ $RETVAL -eq 0 ] && touch /var/lock/subsys/gpfs.ganesha.nfsd
         fi;
 
@@ -127,14 +127,14 @@ condrestart(){
 }
 
 ganesha_status() {
-    if ps x | grep -q "$PATHPROG $OPTIONS"; then
+    result=`pidof "$PATHPROG"`
+    if [ $result ]; then
 	    echo "GPFS Ganesha is running."
     else
 	    echo "GPFS Ganesha is not running."
     fi
 
-    if grep -q openhandle_dev /proc/devices
-    then
+    if grep -q openhandle_dev /proc/devices; then
 	    echo "Open-by-handle module is loaded."
     else
 	    echo "Open-by-handle module is not loaded."	
