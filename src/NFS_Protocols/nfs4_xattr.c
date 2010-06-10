@@ -490,7 +490,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 
         case FATTR4_FILEID:
 #ifdef   _DEBUG_NFS_V4_XATTR
-          printf("-----> Wanting FATTR4_FILEID\n");
+          printf("-----> Wanting FATTR4_FILEID  xattr_pos=%u\n", pfile_handle->xattr_pos + 1);
 #endif
           /* The analog to the inode number. RFC3530 says "a number uniquely identifying the file within the filesystem" 
            * In the case of a pseudofs entry, the entry's unique id is used */

@@ -1784,13 +1784,57 @@ int nfs3_Getattr_Xattr(nfs_arg_t * parg,
 }                               /* nfs3_Getattr_Xattr */
 
 int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
-               exportlist_t * pexport /* IN  */ ,
-               fsal_op_context_t * pcontext /* IN  */ ,
-               cache_inode_client_t * pclient /* IN  */ ,
-               hash_table_t * ht /* INOUT */ ,
-               struct svc_req *preq /* IN  */ ,
-               nfs_res_t * pres /* OUT */ ) 
+                      exportlist_t * pexport /* IN  */ ,
+                      fsal_op_context_t * pcontext /* IN  */ ,
+                      cache_inode_client_t * pclient /* IN  */ ,
+                      hash_table_t * ht /* INOUT */ ,
+                      struct svc_req *preq /* IN  */ ,
+                      nfs_res_t * pres /* OUT */ ) 
 {
+  cache_entry_t * pentry = NULL ;
+  cache_inode_status_t cache_status ;
+  fsal_handle_t *pfsal_handle = NULL;
+  fsal_status_t fsal_status ;
+  fsal_name_t name = FSAL_NAME_INITIALIZER;
+  fsal_attrib_list_t attr;
+  int rc ;
+
+  if((pentry = nfs_FhandleToCache(NFS_V3,
+                                  NULL,
+                                  &(parg->arg_remove3.object.dir),
+                                  NULL,
+                                  NULL,
+                                  &(pres->res_remove3.status),
+                                  NULL, &attr, pcontext, pclient, ht, &rc)) == NULL)
+    {
+      /* Stale NFS FH ? */
+      return rc;
+    }
+
+  /* Get the FSAL Handle */
+  pfsal_handle = cache_inode_get_fsal_handle(pentry, &cache_status);
+  if(cache_status != CACHE_INODE_SUCCESS)
+    {
+      pres->res_remove3.status = nfs3_Errno(cache_status);
+      return NFS_REQ_OK;
+    }
+
+ /* convert attr name to FSAL name */
+ FSAL_str2name( parg->arg_remove3.object.name, MAXNAMLEN, &name  ) ;
+
+
+ fsal_status = FSAL_RemoveXAttrByName( pfsal_handle, pcontext, &name ) ;
+  if(FSAL_IS_ERROR(fsal_status))
+    {
+      pres->res_remove3.status = NFS3ERR_SERVERFAULT;
+      return NFS_REQ_OK ;
+    }
+
+  /* Set Post Op attrs */
+  pres->res_remove3.REMOVE3res_u.resok.dir_wcc.before.attributes_follow = FALSE ;
+  pres->res_remove3.REMOVE3res_u.resok.dir_wcc.after.attributes_follow = FALSE ;
+
+  pres->res_remove3.status = NFS3_OK ;
   return NFS_REQ_OK ;
 }
 

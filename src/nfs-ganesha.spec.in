@@ -25,8 +25,6 @@ Url: http://nfs-ganesha.sourceforge.net
 Source0: http://downloads.sourceforge.net/nfs-ganesha/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-%define tmp_install_dir %{_tmppath}/%{name}-%{version}-%{release}-tmp_install_dir-%(%{__id_u} -n)
-
 %description
 NFS-GANESHA is a NFS Server running in user space with a large cache.
 It comes with various backend modules to support different file systems
@@ -185,13 +183,12 @@ and namespaces. This package provides support for NFS-GANESHA used with HPSS.
 %setup -q -n %{name}-%{version}
 
 %build
-rm -rf %tmp_install_dir
-mkdir -p %tmp_install_dir
 
 %configure @ac_configure_args@ 'CC=gcc -g' 'CFLAGS=-g' 'CXXFLAGS=-g'
 
 # try 1 recovery when there is a // make error, then use simple make at 2nd error 
 make %{?_smp_mflags}  || make %{?_smp_mflags}  || make
+
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -204,7 +201,6 @@ mkdir -p $RPM_BUILD_ROOT%{_libdir}/pkgconfig
 
 make install DESTDIR=$RPM_BUILD_ROOT
 
-# make allinst SRCDIR=%tmp_install_dir DESTDIR=$RPM_BUILD_ROOT
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
 install -m 644 config_samples/hpss.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
@@ -257,7 +253,6 @@ done
 
 
 %clean
-rm -rf %tmp_install_dir
 rm -rf $RPM_BUILD_ROOT
 
 %files common
