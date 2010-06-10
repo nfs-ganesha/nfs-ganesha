@@ -94,6 +94,14 @@ stop() {
         echo -n $"Stopping $prog: "
 
         if [ $UID -ne 0 ]; then
+	        echo "GPFS Ganesha must be stopped by the root user."
+                RETVAL=1
+                failure
+		echo
+		return $RETVAL
+	fi
+
+        if [ $UID -ne 0 ]; then
                 RETVAL=1
                 failure
         else
