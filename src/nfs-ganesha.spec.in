@@ -174,8 +174,6 @@ mkdir -p %tmp_install_dir
 
 # try 1 recovery when there is a // make error, then use simple make at 2nd error 
 make %{?_smp_mflags}  || make %{?_smp_mflags}  || make
-make install DESTDIR=%tmp_install_dir
-make clean 
 
 
 %install
@@ -187,7 +185,8 @@ mkdir -p $RPM_BUILD_ROOT%{_bindir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/pkgconfig
 
-make allinst SRCDIR=%tmp_install_dir DESTDIR=$RPM_BUILD_ROOT
+make install DESTDIR=$RPM_BUILD_ROOT
+
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
 install -m 644 config_samples/hpss.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
