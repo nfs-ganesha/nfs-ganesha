@@ -52,7 +52,8 @@ codecheck:
 	 cppcheck -v --force --enable=all -I`pwd`/include . 2>cppcheck.log
 
 cscope:
-	cscope -Iinclude -R . 
+	find . -type f -name "*.[ch]" | grep -v rpm/ > cscope.namefile
+	cscope -i cscope.namefile
 
 doc:
 	curdir=`pwd` ; for i in $(DOCDIRS) ; do cd $$i ; make doc ; cd $$curdir ; done
@@ -158,10 +159,3 @@ if USE_FSAL_FUSE
 pkgconfig_DATA = libganeshaNFS.pc
 endif
 
-allinst: 
-	mkdir -p $(DESTDIR)/$(bindir) $(DESTDIR)/$(libdir) $(DESTDIR)/$(includedir)
-	install -m 755 $(SRCDIR)/$(bindir)/* $(DESTDIR)/$(bindir)
-	cp -prl  $(SRCDIR)/$(libdir)/* $(DESTDIR)/$(libdir)
-if USE_FSAL_FUSE
-	install -m 644 $(SRCDIR)/$(includedir)/* $(DESTDIR)/$(includedir)
-endif

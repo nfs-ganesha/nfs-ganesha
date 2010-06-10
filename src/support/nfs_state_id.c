@@ -505,7 +505,10 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
   if(!nfs4_State_Get(pstate->other, &state))
     {
       /* State not found : return NFS4ERR_BAD_STATEID, RFC3530 page 129 */
-      return NFS4ERR_BAD_STATEID;
+      if(nfs_param.nfsv4_param.return_bad_stateid == TRUE) /* Dirty work-around for HPC environment */
+      	return NFS4ERR_BAD_STATEID;
+      else
+         return NFS4_OK ;
     }
 #ifdef _DEBUG_STATES
   printf("         -----  CheckStateid state found : ");
@@ -520,7 +523,12 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
   if(clientid == 0LL)
     {
       if(nfs_client_id_get(state.powner->clientid, &nfs_clientid) != CLIENT_ID_SUCCESS)
-        return NFS4ERR_BAD_STATEID;     /* Refers to a non-existing client... */
+       {
+         if(nfs_param.nfsv4_param.return_bad_stateid == TRUE) /* Dirty work-around for HPC environment */
+           return NFS4ERR_BAD_STATEID;     /* Refers to a non-existing client... */
+         else
+           return NFS4_OK ;
+       }
     }
 
   /* Check if stateid was made from this server instance */
