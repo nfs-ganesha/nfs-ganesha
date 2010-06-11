@@ -24,12 +24,9 @@
 . /etc/init.d/functions
 
 PATHPROG=/usr/bin/gpfs.ganesha.nfsd 
-
-# Default GPFS options
-#LOGFILE=/var/log/gpfs.ganesha.nfsd.log
+LOGFILE=/var/log/gpfs.ganesha.nfsd.log
 CONFFILE=/etc/ganesha/gpfs.ganesha.nfsd.conf
-
-OPTIONS="-d -f $CONFFILE -N NIV_EVENT" # -L $LOGFILE
+OPTIONS="-d -f $CONFFILE -N NIV_EVENT -L $LOGFILE"
 RETVAL=0
 prog="gpfs.ganesha.nfsd"
 
@@ -178,7 +175,7 @@ stop() {
 	        break
 	    fi
 	done
-
+	sleep 1
         echo
         return $RETVAL
 }
