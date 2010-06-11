@@ -36,6 +36,7 @@ prog="gpfs.ganesha.nfsd"
 start() {
         echo $"Starting $prog: "
 
+	# Check if the user is root
         if [ $UID -ne 0 ]; then
 	        echo "GPFS Ganesha must be started by the root user."
                 RETVAL=1
@@ -44,6 +45,7 @@ start() {
 		return $RETVAL
 	fi
 
+	# Check if a Ganesha configuration file is available
 	if [ ! -f "$CONFFILE" ]; then
 	        echo "The following configuration file is required but does not exist: $CONFFILE"
 		RETVAL=1
@@ -52,6 +54,7 @@ start() {
 	        return $RETVAL
 	fi
 
+	# Check if Ganesha is already running
 	result=`pidof "$PATHPROG"`
 	if [ $result ]; then
 	        echo "GPFS Ganesha is already running."
@@ -61,23 +64,49 @@ start() {
 	        return $RETVAL	    
 	fi
 
-	modprobe open-by-handle > /dev/null 2>&1
-	if ! grep -q openhandle_dev /proc/devices; then
+	# Load the open-by-handle module
+	result=`modprobe open-by-handle`
+	if [ $result ]; then
 	        echo "Could not load the open-by-handle module. Make sure it is installed."
+		echo "Message returned from modprobe: $result"
 	        RETVAL=1
 	        failure
 	        echo
 	        return $RETVAL
 	fi;
 
+	# Make sure open-by-handle loaded properly and give it time if needed
+	result=`grep openhandle_dev /proc/devices`
+	counter=0
+	while [ true ]; do
+	    if [[ ! $result ]]; then
+		if [ $counter -eq 10 ]; then
+    	                echo "Could not load the open-by-handle module. Make sure it is installed."
+			RETVAL=1
+			failure
+			echo
+			return $RETVAL
+		else
+			sleep .1
+			let counter+=1
+			result=`grep openhandle_dev /proc/devices`
+		fi
+	    else
+	        break
+	    fi
+	done
+
+	# Start the Ganesha daemon
 	daemon $PATHPROG $OPTIONS
 	RETVAL=$?
 	
-        # sleeping here gives Ganesha an adequate amount of time to 
+        # Sleeping here gives Ganesha an adequate amount of time to 
         # initialize the server and fail if anything goes wrong.
         # Without this sleep and the server will be in the midst of 
         # initializing. It may fail immediately after this script runs.
 	sleep 2
+
+	# Check if Ganesha is still running
 	result=`pidof "$PATHPROG"`
 	if [ ! $result ]; then
 	    failure
@@ -93,6 +122,7 @@ start() {
 stop() {
         echo -n $"Stopping $prog: "
 
+	# Check if user is root
         if [ $UID -ne 0 ]; then
 	        echo "GPFS Ganesha must be stopped by the root user."
                 RETVAL=1
@@ -101,25 +131,54 @@ stop() {
 		return $RETVAL
 	fi
 
-        if [ $UID -ne 0 ]; then
+	# Kill the Ganesha process
+	killproc $PATHPROG
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && rm -f  /var/lock/subsys/gpfs.ganesha.nfsd
+
+	# Give Ganesha time to quit
+	result=`pidof "$PATHPROG"`
+	while true; do
+	         if [ $result ]; then
+		         sleep .1
+			 result=`pidof "$PATHPROG"`
+	         else
+		         break
+		 fi
+	done
+
+	# Unload open-by-handle module
+	result=`rmmod open_by_handle`
+	if [ $result ]; then
+	        echo "GPFS Ganesha stopped but failed to unload open-by-handle module."
+	        echo "Message printed by rmmod: $result"
                 RETVAL=1
                 failure
-        else
-   	        killproc $PATHPROG
-                RETVAL=$?
-                [ $RETVAL -eq 0 ] && rm -f  /var/lock/subsys/gpfs.ganesha.nfsd
-        fi;
-	sleep .5
-	rmmod open_by_handle > /dev/null 2>&1
-	sleep 1
-        echo
-        return $RETVAL
-}
+		echo
+		return $RETVAL	    
+	fi
 
-reload(){
-        echo -n $"Reloading $prog: "
-        killproc $PATHPROG -HUP
-        RETVAL=$?
+	# Wait until the module has unloaded
+	result=`grep openhandle_dev /proc/devices`
+	counter=0
+	while [ true ]; do
+	    if [[ $result ]]; then
+		if [ $counter -eq 10 ]; then
+    	                echo "Could not unload the open-by-handle module."
+			RETVAL=1
+			failure
+			echo
+			return $RETVAL
+		else
+			sleep .1
+			let counter+=1
+			result=`grep openhandle_dev /proc/devices`
+		fi
+	    else
+	        break
+	    fi
+	done
+
         echo
         return $RETVAL
 }
@@ -158,9 +217,6 @@ case "$1" in
 	;;
   restart)
 	restart
-        ;;
-  reload)
-	reload
         ;;
   condrestart)
 	condrestart
