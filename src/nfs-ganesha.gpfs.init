@@ -182,7 +182,8 @@ stop() {
 
 restart(){
 	stop
-	start
+	RETVAL=start
+        return $RETVAL
 }
 
 condrestart(){
@@ -194,15 +195,22 @@ ganesha_status() {
     result=`pidof "$PATHPROG"`
     if [ $result ]; then
 	    echo "GPFS Ganesha is running."
+	    RETVAL=0
     else
 	    echo "GPFS Ganesha is not running."
+	    RETVAL=1
     fi
 
     if grep -q openhandle_dev /proc/devices; then
 	    echo "Open-by-handle module is loaded."
+	    if [ ! $RETVAL -eq 1 ]; then
+		RETVAL=0
+	    fi
     else
 	    echo "Open-by-handle module is not loaded."	
-    fi;
+	    RETVAL=1
+    fi
+    return $RETVAL
 }
 
 case "$1" in
