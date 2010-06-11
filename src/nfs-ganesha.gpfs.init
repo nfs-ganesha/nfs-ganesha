@@ -26,10 +26,10 @@
 PATHPROG=/usr/bin/gpfs.ganesha.nfsd 
 
 # Default GPFS options
-LOGFILE=/var/log/gpfs.ganesha.nfsd.log
+#LOGFILE=/var/log/gpfs.ganesha.nfsd.log
 CONFFILE=/etc/ganesha/gpfs.ganesha.nfsd.conf
 
-OPTIONS="-d -L $LOGFILE -f $CONFFILE -N NIV_EVENT"
+OPTIONS="-d -f $CONFFILE -N NIV_EVENT" # -L $LOGFILE
 RETVAL=0
 prog="gpfs.ganesha.nfsd"
 
@@ -77,7 +77,7 @@ start() {
         # initialize the server and fail if anything goes wrong.
         # Without this sleep and the server will be in the midst of 
         # initializing. It may fail immediately after this script runs.
-	sleep 3
+	sleep 2
 	result=`pidof "$PATHPROG"`
 	if [ ! $result ]; then
 	    failure
@@ -109,7 +109,9 @@ stop() {
                 RETVAL=$?
                 [ $RETVAL -eq 0 ] && rm -f  /var/lock/subsys/gpfs.ganesha.nfsd
         fi;
+	sleep .5
 	rmmod open_by_handle > /dev/null 2>&1
+	sleep 1
         echo
         return $RETVAL
 }
