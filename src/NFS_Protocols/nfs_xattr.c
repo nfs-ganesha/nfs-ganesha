@@ -201,7 +201,7 @@ int nfs3_FSALattr_To_XattrDir(exportlist_t * pexport,   /* In: the related expor
   /* in NFSv3, we only keeps fsid.major, casted into an nfs_uint64 */
   Fattr->fsid = (nfs3_uint64) pexport->filesystem_id.major;
 
-  Fattr->fileid = 0xFFFFFFFF & ~(FSAL_attr->fileid);
+  Fattr->fileid = 0xFFFFFFFF & ~(FSAL_attr->fileid) -1; /* xattr_pos = 1 => Parent Xattrd */
 
   /* set current time, to force the client refreshing its xattr dir */
   nfs_set_times_current(Fattr);
@@ -780,7 +780,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
               /* Fill in '.' */
               if(estimated_num_entries > 0)
                 {
-                  RES_READDIR_REPLY.entries[0].fileid = 0xFFFFFFFF & ~(dir_attr.fileid);
+                  RES_READDIR_REPLY.entries[0].fileid = 0xFFFFFFFF & ~(dir_attr.fileid) -1 ; /* xattr_pos = 1 => Parent Xattrd */
 
                   RES_READDIR_REPLY.entries[0].name = entry_name_array[0];
                   strcpy(RES_READDIR_REPLY.entries[0].name, ".");
@@ -797,7 +797,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
               if(estimated_num_entries > delta)
                 {
                   RES_READDIR_REPLY.entries[delta].fileid =
-                      0xFFFFFFFF & ~(dir_attr.fileid);
+                      0xFFFFFFFF & ~(dir_attr.fileid) - delta; /* xattr_pos > 1 => attribute */
 
                   RES_READDIR_REPLY.entries[delta].name = entry_name_array[delta];
                   strcpy(RES_READDIR_REPLY.entries[delta].name, "..");
@@ -1502,7 +1502,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
               if(estimated_num_entries > 0)
                 {
                   RES_READDIRPLUS_REPLY.entries[0].fileid =
-                      0xFFFFFFFF & ~(dir_attr.fileid);
+                      0xFFFFFFFF & ~(dir_attr.fileid) - 1 ; /* parent xattrd =>xattr_pos == 1 */
                   RES_READDIRPLUS_REPLY.entries[0].name = entry_name_array[0];
                   strcpy(RES_READDIRPLUS_REPLY.entries[0].name, ".");
                   RES_READDIRPLUS_REPLY.entries[0].cookie = 1;
@@ -1540,7 +1540,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
               if(estimated_num_entries > delta)
                 {
                   RES_READDIRPLUS_REPLY.entries[delta].fileid =
-                      0xFFFFFFFF & ~(dir_attr.fileid);
+                      0xFFFFFFFF & ~(dir_attr.fileid) -delta; /* different fileids for each xattr */
                   RES_READDIRPLUS_REPLY.entries[delta].name = entry_name_array[delta];
                   strcpy(RES_READDIRPLUS_REPLY.entries[delta].name, "..");
                   RES_READDIRPLUS_REPLY.entries[delta].cookie = 2;
@@ -1564,12 +1564,6 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
 
                   RES_READDIRPLUS_REPLY.entries[delta].name_attributes.attributes_follow =
                       FALSE;
-
-                  nfs_SetPostOpXAttrDir(pcontext,
-                                        pexport,
-                                        &dir_attr,
-                                        &(RES_READDIRPLUS_REPLY.entries[delta].
-                                          name_attributes));
 
                   RES_READDIRPLUS_REPLY.entries[0].nextentry =
                       &(RES_READDIRPLUS_REPLY.entries[delta]);
@@ -1613,8 +1607,22 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                   break;        /* Make post traitement */
                 }
 
+              
+	       /* Try to get a FSAL_XAttr of that name */
+              /* Build the FSAL name */
+              fsal_status = FSAL_GetXAttrIdByName(pfsal_handle, 
+						  &xattrs_tab[i - delta].xattr_name,
+						 pcontext,
+						 &xattr_id);
+              if(FSAL_IS_ERROR(fsal_status))
+               {
+                 pres->res_readdirplus3.status = nfs3_Errno( cache_inode_error_convert( fsal_status ) ) ;
+                 return NFS_REQ_OK;
+                }
+
+
               RES_READDIRPLUS_REPLY.entries[i].fileid =
-                  0xFFFFFFFF & xattrs_tab[i - delta].attributes.fileid;
+                  0xFFFFFFFF & xattrs_tab[i - delta].attributes.fileid - xattr_id;
               FSAL_name2str(&xattrs_tab[i - delta].xattr_name, entry_name_array[i],
                             FSAL_MAX_NAME_LEN);
               RES_READDIRPLUS_REPLY.entries[i].name = entry_name_array[i];
@@ -1639,14 +1647,9 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
               pfile_handle =
                   (file_handle_v3_t *) (RES_READDIRPLUS_REPLY.entries[i].name_handle.
                                         post_op_fh3_u.handle.data.data_val);
-              pfile_handle->xattr_pos = xattrs_tab[i - delta].xattr_id + 2;
+              pfile_handle->xattr_pos = xattr_id + 2;
 
               RES_READDIRPLUS_REPLY.entries[i].name_handle.handle_follows = TRUE;
-
-              nfs_SetPostOpXAttrFile(pcontext,
-                                     pexport,
-                                     &xattrs_tab[i - delta].attributes,
-                                     &(RES_READDIRPLUS_REPLY.entries[i].name_attributes));
 
               RES_READDIRPLUS_REPLY.entries[i].nextentry = NULL;
               if(i != 0)

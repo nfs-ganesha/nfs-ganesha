@@ -123,7 +123,6 @@ int nfs_Create(nfs_arg_t * parg,
 
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_create3.where.dir))))
     {
-      DisplayLogLevel(NIV_DEBUG, "Create new xattr \"%s\"", parg->arg_create3.where.name);
       return nfs3_Create_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
     }
 
