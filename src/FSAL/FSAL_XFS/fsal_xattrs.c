@@ -318,7 +318,7 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
  * \param end_of_list this boolean indicates that the end of xattrs list has been reached.
  */
 fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
-                              unsigned int cookie,      /* IN */
+                   	      unsigned int cookie,      /* IN */
                               fsal_op_context_t * p_context,    /* IN */
                               fsal_xattrent_t * xattrs_tab,     /* IN/OUT */
                               unsigned int xattrs_tabsize,      /* IN */

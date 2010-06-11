@@ -341,6 +341,10 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 #ifdef   _DEBUG_NFS_V4_XATTR
           printf("-----> Wanting FATTR4_FSID\n");
 #endif
+          fsid.major = nfs_htonl64((uint64_t)data->pexport->filesystem_id.major);
+          fsid.minor = nfs_htonl64((uint64_t)data->pexport->filesystem_id.minor);
+
+          memcpy((char *)(attrvalsBuffer + LastOffset), &fsid, sizeof(fattr4_fsid));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
           break;
@@ -499,13 +503,11 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 #ifndef _XATTR_D_USE_SAME_INUM  /* I wrapped off this part of the code... Not sure it would be useful */
           file_id = nfs_htonl64(~(fsalattr.fileid));
 
-          if(pfile_handle->xattr_pos == 1)
-            file_id = nfs_htonl64(~(fsalattr.fileid));
-          else
-            file_mode = nfs_htonl64(~(fsalattr.fileid)) - pfile_handle->xattr_pos + 1;
+          file_id = nfs_htonl64(~(fsalattr.fileid)) - pfile_handle->xattr_pos ;
 #else
           file_id = nfs_htonl64(fsalattr.fileid);
 #endif
+
           memcpy((char *)(attrvalsBuffer + LastOffset), &file_id, sizeof(fattr4_fileid));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
@@ -961,28 +963,19 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 #ifdef   _DEBUG_NFS_V4_XATTR
           printf("-----> Wanting FATTR4_MOUNTED_ON_FILEID\n");
 #endif
-          if(!nfs4_FhandleToFSAL
-             (&data->mounted_on_FH, &mounted_on_fsal_handle, data->pcontext))
-            {
-              if(FSAL_IS_ERROR
-                 (fsal_status =
-                  FSAL_DigestHandle(data->pcontext->export_context, FSAL_DIGEST_FILEID4,
-                                    &mounted_on_fsal_handle,
-                                    (caddr_t) & mounted_on_fileid)))
-                {
-                  op_attr_success = 0;
-                }
-              else
-                {
-                  mounted_on_fileid = nfs_htonl64(mounted_on_fileid);
-                  memcpy((char *)(attrvalsBuffer + LastOffset), &mounted_on_fileid,
-                         sizeof(fattr4_mounted_on_fileid));
-                  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-                  op_attr_success = 1;
-                }
-            }
-          else
-            op_attr_success = 0;
+  	  cache_inode_get_attributes(data->current_entry, &fsalattr);
+
+#ifndef _XATTR_D_USE_SAME_INUM  /* I wrapped off this part of the code... Not sure it would be useful */
+          file_id = nfs_htonl64(~(fsalattr.fileid));
+
+          file_id = nfs_htonl64(~(fsalattr.fileid)) - pfile_handle->xattr_pos ;
+#else
+          file_id = nfs_htonl64(fsalattr.fileid);
+#endif
+
+          memcpy((char *)(attrvalsBuffer + LastOffset), &file_id, sizeof(fattr4_fileid));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
 
           break;
 
@@ -1347,7 +1340,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
     }
 
   if(cookie != 0)
-    cookie = cookie - 2;        /* 0,1 and 2 are reserved, there is a delta of '3' because of this */
+    cookie = cookie - 3;        /* 0,1 and 2 are reserved, there is a delta of '3' because of this */
 
   /* Get only attributes that are allowed to be read */
   if(!nfs4_Fattr_Check_Access_Bitmap(&arg_READDIR4.attr_request, FATTR4_ATTR_READ))
@@ -1455,7 +1448,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
             }
 
           /* Set the cookie value */
-          entry_nfs_array[i].cookie = cookie + i + 2;   /* 0, 1 and 2 are reserved */
+          entry_nfs_array[i].cookie = cookie + i + 3;   /* 0, 1 and 2 are reserved */
 
           file_handle.xattr_pos = xattrs_tab[i].xattr_id + 2;
           if(nfs4_XattrToFattr(&(entry_nfs_array[i].attrs),
