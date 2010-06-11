@@ -20,6 +20,11 @@ BuildRequires: kernel == 2.6.18-194.el5
 %endif
 BuildRequires:  net-snmp-libs >= 5.1
 BuildRequires:  net-snmp-devel >= 5.1
+BuildRequires: flex
+BuildRequires: bison
+BuildRequires: gcc
+BuildRequires: autoconf
+BuildRequires: automake
 #BuildRequires:  lm_sensors-devel >= 2.8
 Url: http://nfs-ganesha.sourceforge.net
 Source0: http://downloads.sourceforge.net/nfs-ganesha/%{name}-%{version}.tar.gz
