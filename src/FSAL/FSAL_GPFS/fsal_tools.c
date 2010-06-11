@@ -823,11 +823,7 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
           ReturnCode(ERR_FSAL_SERVERFAULT, err);
         }
       /* does the variable exists ? */
-      if(!STRCMP(key_name, "MountPoint"))
-        {
-          strncpy( out_parameter->fs_specific_info.gpfs_mount_point, key_value, MAXPATHLEN ) ;
-        }
-      else if(!STRCMP(key_name, "OpenByHandleDeviceFile"))
+      if(!STRCMP(key_name, "OpenByHandleDeviceFile"))
         {
           strncpy( out_parameter->fs_specific_info.open_by_handle_dev_file, key_value, MAXPATHLEN ) ;
         }
