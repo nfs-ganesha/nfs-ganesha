@@ -226,8 +226,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
               /* on error, we set a special bit in the mask. */
               if(FSAL_IS_ERROR(st))
                 {
-                  FSAL_CLEAR_MASK(pdirent[current_nb_entries].attributes.
-                                  asked_attributes);
+                  FSAL_CLEAR_MASK(pdirent[current_nb_entries].
+                                  attributes.asked_attributes);
                   FSAL_SET_MASK(pdirent[current_nb_entries].attributes.asked_attributes,
                                 FSAL_ATTR_RDATTR_ERR);
                 }
@@ -243,8 +243,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
               /* on error, we set a special bit in the mask. */
               if(FSAL_IS_ERROR(st))
                 {
-                  FSAL_CLEAR_MASK(pdirent[current_nb_entries].attributes.
-                                  asked_attributes);
+                  FSAL_CLEAR_MASK(pdirent[current_nb_entries].
+                                  attributes.asked_attributes);
                   FSAL_SET_MASK(pdirent[current_nb_entries].attributes.asked_attributes,
                                 FSAL_ATTR_RDATTR_ERR);
                 }

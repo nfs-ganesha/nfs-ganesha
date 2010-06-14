@@ -1,34 +1,34 @@
-/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; -*-
- * vim:expandtab:shiftwidth=4:tabstop=4:
- */
 /*
- * Copyright (C) 2009 CEA/DAM
+ * vim:expandtab:shiftwidth=8:tabstop=8:
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the CeCILL License.
+ * Copyright CEA/DAM/DIF  (2008)
+ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
+ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
- * The fact that you are presently reading this means that you have had
- * knowledge of the CeCILL license (http://www.cecill.info) and that you
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
- * accept its terms.
- */
-/*
- * RW_Lock.c
  *
- * This file contains the functions for the RW lock management
+ * ---------------------------------------
+ */
+
+/**
+ * \file    RW_Lock.c
+ * \author  $Author: deniel $
+ * \brief   This file contains the functions for the RW lock management
+ *
+ * RW_Lock.c : this file contains the functions for the RW lock management.
  *
  */
 

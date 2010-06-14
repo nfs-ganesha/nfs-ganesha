@@ -112,7 +112,7 @@
 fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     )
 {
-  fsal_status_t status ;
+  fsal_status_t status;
 
   /* sanity check.  */
   if(!init_info)
@@ -136,7 +136,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_Init);
 
-   /* Regular exit */
+  /* Regular exit */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);
 
 }

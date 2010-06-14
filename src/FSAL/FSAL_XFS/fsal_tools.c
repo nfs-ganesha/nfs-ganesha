@@ -23,7 +23,6 @@
  * ------------- 
  */
 
-
 /**
  * \file    fsal_tools.c
  * \author  $Author: leibovic $
@@ -78,10 +77,10 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
       return -1;
     }
 
-  if( handle1->handle_len != handle2->handle_len )
-    return 1 ;
+  if(handle1->handle_len != handle2->handle_len)
+    return 1;
 
-  return memcmp( handle1->handle_val, handle2->handle_val, handle2->handle_len ) ;
+  return memcmp(handle1->handle_val, handle2->handle_val, handle2->handle_len);
 }
 
 /**
@@ -314,13 +313,13 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
       /* NFSV3 handle digest */
     case FSAL_DIGEST_NFSV3:
       memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof( fsal_handle_t ) ) ;
+      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_handle_t));
       break;
 
       /* NFSV4 handle digest */
     case FSAL_DIGEST_NFSV4:
       memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof( fsal_handle_t ) ) ;
+      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_handle_t));
       break;
 
     default:

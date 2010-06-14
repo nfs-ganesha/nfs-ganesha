@@ -47,9 +47,6 @@
  * Revision 1.50  2006/01/17 14:56:22  leibovic
  * Adaptation de HPSS 6.2.
  *
- * Revision 1.49  2005/11/28 17:03:00  deniel
- * Added CeCILL headers
- *
  * Revision 1.48  2005/11/21 09:55:17  leibovic
  * Once for all thread's credential initialization.
  *
@@ -359,7 +356,7 @@ int Init_Thread_Context(FILE * output, cmdfsal_thr_info_t * context, int flag_v)
 
   /* for the moment, create export context for root fileset */
 #ifdef _USE_XFS____toto
-  fsal_path_t local_path_fsal ;
+  fsal_path_t local_path_fsal;
   st = FSAL_str2path("/xfs", strlen("/xfs"), &local_path_fsal);
   st = FSAL_BuildExportContext(&context->exp_context, &local_path_fsal, NULL);
 #else

@@ -26,8 +26,6 @@
  * $Header: /cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/test/test_mesure_temps.c,v 1.4 2005/11/28 17:03:05 deniel Exp $
  *
  * $Log: test_mesure_temps.c,v $
- * Revision 1.4  2005/11/28 17:03:05  deniel
- * Added CeCILL headers
  *
  * Revision 1.3  2005/08/12 07:11:17  deniel
  * Corrected cache_inode_readdir semantics

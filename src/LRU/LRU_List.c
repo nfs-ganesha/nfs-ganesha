@@ -41,9 +41,6 @@
  * Revision 1.19  2006/01/24 08:57:34  leibovic
  * Fixing LRU allocation bug.
  *
- * Revision 1.18  2005/11/28 17:02:39  deniel
- * Added CeCILL headers
- *
  * Revision 1.17  2005/11/10 07:53:24  deniel
  * Corrected some memory leaks
  *

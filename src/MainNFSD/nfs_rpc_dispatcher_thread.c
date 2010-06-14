@@ -1602,13 +1602,11 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
               if(stat == XPRT_DIED)
                 {
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
-                  DisplayLog( "A client disappeared... socket=%d",
-                                  pnfsreq->xprt->xp_fd);
+                  DisplayLog("A client disappeared... socket=%d", pnfsreq->xprt->xp_fd);
                   if(Xports[pnfsreq->xprt->xp_fd] != NULL)
                     SVC_DESTROY(Xports[pnfsreq->xprt->xp_fd]);
 #else
-                  DisplayLog( "A client disappeared... socket=%d",
-                                  pnfsreq->xprt->xp_sock);
+                  DisplayLog("A client disappeared... socket=%d", pnfsreq->xprt->xp_sock);
                   if(Xports[pnfsreq->xprt->xp_sock] != NULL)
                     SVC_DESTROY(Xports[pnfsreq->xprt->xp_sock]);
 #endif
