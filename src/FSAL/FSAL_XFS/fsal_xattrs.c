@@ -60,20 +60,21 @@ typedef struct fsal_xattr_def__
  * DEFINE GET/SET FUNCTIONS
  */
 
-int print_xfshandle(fsal_handle_t * p_objecthandle,   /* object handle */
-                    fsal_op_context_t * p_context,    /* IN */
-                    caddr_t buffer_addr,      /* IN/OUT */
-                    size_t buffer_size,       /* IN */
-                    size_t * p_output_size,   /* OUT */
+int print_xfshandle(fsal_handle_t * p_objecthandle,     /* object handle */
+                    fsal_op_context_t * p_context,      /* IN */
+                    caddr_t buffer_addr,        /* IN/OUT */
+                    size_t buffer_size, /* IN */
+                    size_t * p_output_size,     /* OUT */
                     void *arg)
 {
-   *p_output_size = snprintmem( buffer_addr, buffer_size, p_objecthandle->handle_val, p_objecthandle->handle_len ) ;
-   strncat( (char *)buffer_addr, "\n", buffer_size ) ;
-   (*p_output_size) += 1 ;
+  *p_output_size =
+      snprintmem(buffer_addr, buffer_size, p_objecthandle->handle_val,
+                 p_objecthandle->handle_len);
+  strncat((char *)buffer_addr, "\n", buffer_size);
+  (*p_output_size) += 1;
 
-   return 0;
+  return 0;
 }                               /* print_fid */
-
 
 /* DEFINE HERE YOUR ATTRIBUTES LIST */
 
@@ -318,7 +319,7 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
  * \param end_of_list this boolean indicates that the end of xattrs list has been reached.
  */
 fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
-                   	      unsigned int cookie,      /* IN */
+                              unsigned int cookie,      /* IN */
                               fsal_op_context_t * p_context,    /* IN */
                               fsal_xattrent_t * xattrs_tab,     /* IN/OUT */
                               unsigned int xattrs_tabsize,      /* IN */
@@ -330,7 +331,7 @@ fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
   unsigned int out_index;
   fsal_status_t st;
   fsal_attrib_list_t file_attrs;
-  int fd ;
+  int fd;
 
   char names[MAXPATHLEN], *ptr;
   size_t namesize;
@@ -390,7 +391,7 @@ fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
 
   /* get the path of the file in Lustre */
   TakeTokenFSCall();
-  st = fsal_internal_handle2fd( p_context, p_objecthandle , &fd, O_RDWR ) ;
+  st = fsal_internal_handle2fd(p_context, p_objecthandle, &fd, O_RDWR);
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(st))
     ReturnStatus(st, INDEX_FSAL_ListXAttrs);
@@ -398,7 +399,7 @@ fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
   /* get xattrs */
 
   TakeTokenFSCall();
-  namesize = flistxattr( fd, names, sizeof(names));
+  namesize = flistxattr(fd, names, sizeof(names));
   ReleaseTokenFSCall();
 
   if(namesize >= 0)
@@ -448,7 +449,7 @@ fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
 
   *p_nb_returned = out_index;
 
-  close( fd ) ;
+  close(fd);
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_ListXAttrs);
 
 }
@@ -628,7 +629,7 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
 {
   int rc;
   fsal_attrib_list_t file_attrs;
-  int fd ;
+  int fd;
   fsal_status_t st;
 
   /* sanity checks */
@@ -654,7 +655,7 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
       char attr_name[MAXPATHLEN];
 
       TakeTokenFSCall();
-      st = fsal_internal_handle2fd( p_context, p_objecthandle , &fd, O_RDWR ) ;
+      st = fsal_internal_handle2fd(p_context, p_objecthandle, &fd, O_RDWR);
       ReleaseTokenFSCall();
       if(FSAL_IS_ERROR(st))
         ReturnStatus(st, INDEX_FSAL_GetXAttrValue);
@@ -662,17 +663,17 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
       /* get the name for this attr */
       rc = xattr_id_to_name(fd, xattr_id, attr_name);
       if(rc)
-       {
-        close( fd ) ;
-        Return(rc, errno, INDEX_FSAL_GetXAttrValue);
-       }
+        {
+          close(fd);
+          Return(rc, errno, INDEX_FSAL_GetXAttrValue);
+        }
 
-      rc = fgetxattr( fd, attr_name, buffer_addr, buffer_size);
+      rc = fgetxattr(fd, attr_name, buffer_addr, buffer_size);
       if(rc < 0)
-       {
-        close( fd ) ;
-        Return(posix2fsal_error(errno), errno, INDEX_FSAL_GetXAttrValue);
-       }
+        {
+          close(fd);
+          Return(posix2fsal_error(errno), errno, INDEX_FSAL_GetXAttrValue);
+        }
 
       /* the xattr value can be a binary, or a string.
        * trying to determine its type...
@@ -680,7 +681,7 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
       *p_output_size = rc;
       xattr_format_value(buffer_addr, p_output_size, buffer_size);
 
-      close( fd ) ;
+      close(fd);
       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrValue);
     }
   else                          /* built-in attr */
@@ -714,7 +715,7 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
   unsigned int index;
   int rc;
   int found = FALSE;
-  int fd ;
+  int fd;
 
   /* sanity checks */
   if(!p_objecthandle || !xattr_name)
@@ -734,7 +735,7 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
     {
 
       TakeTokenFSCall();
-      st = fsal_internal_handle2fd( p_context, p_objecthandle , &fd, O_RDWR ) ;
+      st = fsal_internal_handle2fd(p_context, p_objecthandle, &fd, O_RDWR);
       ReleaseTokenFSCall();
       if(FSAL_IS_ERROR(st))
         ReturnStatus(st, INDEX_FSAL_GetXAttrValue);
@@ -742,10 +743,10 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
       errno = 0;
       rc = xattr_name_to_id(fd, xattr_name->name);
       if(rc < 0)
-       {
-        close( fd ) ;
-        Return(-rc, errno, INDEX_FSAL_GetXAttrValue);
-       }
+        {
+          close(fd);
+          Return(-rc, errno, INDEX_FSAL_GetXAttrValue);
+        }
       else
         {
           index = rc;
@@ -753,7 +754,7 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
         }
     }
 
-   close( fd ) ;
+  close(fd);
 
   if(found)
     {
@@ -786,7 +787,7 @@ fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,  /* IN */
   fsal_attrib_list_t file_attrs;
   fsal_status_t st;
   int rc;
-  int fd ;
+  int fd;
 
   /* sanity checks */
   if(!p_objecthandle || !p_context || !p_output_size || !buffer_addr || !xattr_name)
@@ -814,25 +815,25 @@ fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,  /* IN */
     }
 
   TakeTokenFSCall();
-  st = fsal_internal_handle2fd( p_context, p_objecthandle , &fd, O_RDWR ) ;
+  st = fsal_internal_handle2fd(p_context, p_objecthandle, &fd, O_RDWR);
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(st))
     ReturnStatus(st, INDEX_FSAL_GetXAttrValue);
 
   /* is it an xattr? */
-  rc = fgetxattr( fd, xattr_name->name, buffer_addr, buffer_size);
+  rc = fgetxattr(fd, xattr_name->name, buffer_addr, buffer_size);
   if(rc < 0)
-   {
-    close( fd ) ;
-    Return(posix2fsal_error(errno), errno, INDEX_FSAL_GetXAttrValue);
-   }
+    {
+      close(fd);
+      Return(posix2fsal_error(errno), errno, INDEX_FSAL_GetXAttrValue);
+    }
   /* the xattr value can be a binary, or a string.
    * trying to determine its type...
    */
   *p_output_size = rc;
   xattr_format_value(buffer_addr, p_output_size, buffer_size);
 
-  close( fd ) ;
+  close(fd);
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrValue);
 }
 
@@ -861,7 +862,7 @@ fsal_status_t FSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,        /* IN */
 {
   int rc;
   fsal_status_t st;
-  int fd = 0 ;
+  int fd = 0;
   size_t len;
 
   /* remove final '\n', if any */
@@ -869,7 +870,7 @@ fsal_status_t FSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,        /* IN */
 
   /* build fid path in lustre */
   TakeTokenFSCall();
-  st = fsal_internal_handle2fd( p_context, p_objecthandle , &fd, O_RDWR ) ;
+  st = fsal_internal_handle2fd(p_context, p_objecthandle, &fd, O_RDWR);
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(st))
     ReturnStatus(st, INDEX_FSAL_SetXAttrValue);
@@ -877,15 +878,14 @@ fsal_status_t FSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,        /* IN */
   len = strnlen((char *)buffer_addr, buffer_size);
   TakeTokenFSCall();
   if(len == 0)
-    rc = fsetxattr( fd, xattr_name->name, "", 1,
-                   create ? XATTR_CREATE : XATTR_REPLACE);
+    rc = fsetxattr(fd, xattr_name->name, "", 1, create ? XATTR_CREATE : XATTR_REPLACE);
   else
-    rc = fsetxattr( fd, xattr_name->name, (char *)buffer_addr,
+    rc = fsetxattr(fd, xattr_name->name, (char *)buffer_addr,
                    len, create ? XATTR_CREATE : XATTR_REPLACE);
 
   ReleaseTokenFSCall();
 
-  close( fd ) ;
+  close(fd);
 
   if(rc != 0)
     Return(posix2fsal_error(errno), errno, INDEX_FSAL_SetXAttrValue);
@@ -902,7 +902,7 @@ fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
 {
   int rc;
   fsal_status_t st;
-  int fd = 0 ;
+  int fd = 0;
   fsal_name_t attr_name;
   char name[FSAL_MAX_NAME_LEN];
 
@@ -914,13 +914,13 @@ fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
 
   /* build fid path in lustre */
   TakeTokenFSCall();
-  st = fsal_internal_handle2fd( p_context, p_objecthandle , &fd, O_RDWR ) ;
+  st = fsal_internal_handle2fd(p_context, p_objecthandle, &fd, O_RDWR);
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(st))
     ReturnStatus(st, INDEX_FSAL_SetXAttrValue);
 
   rc = xattr_id_to_name(fd, xattr_id, name);
-  close( fd ) ;
+  close(fd);
   if(rc)
     Return(rc, errno, INDEX_FSAL_SetXAttrValue);
 
@@ -937,18 +937,17 @@ fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
  * \param p_context pointer to the current security context.
  * \param xattr_id xattr's id
  */
-fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,        /* IN */
-                                   fsal_op_context_t * p_context, /* IN */
-                                   unsigned int xattr_id ) /* IN */
+fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,      /* IN */
+                                   fsal_op_context_t * p_context,       /* IN */
+                                   unsigned int xattr_id)       /* IN */
 {
   int rc;
   fsal_status_t st;
-  int fd = 0 ;
+  int fd = 0;
   char name[FSAL_MAX_NAME_LEN];
 
-
   TakeTokenFSCall();
-  st = fsal_internal_handle2fd( p_context, p_objecthandle , &fd, O_RDWR ) ;
+  st = fsal_internal_handle2fd(p_context, p_objecthandle, &fd, O_RDWR);
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(st))
     ReturnStatus(st, INDEX_FSAL_SetXAttrValue);
@@ -958,19 +957,19 @@ fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,        /* IN 
     Return(rc, errno, INDEX_FSAL_SetXAttrValue);
 
   TakeTokenFSCall();
-  rc = fremovexattr( fd, name ) ;
+  rc = fremovexattr(fd, name);
   ReleaseTokenFSCall();
 
-  close( fd ) ;
+  close(fd);
 
   if(rc != 0)
-    ReturnCode(posix2fsal_error(errno), errno) ;
+    ReturnCode(posix2fsal_error(errno), errno);
 
- ReturnCode(ERR_FSAL_NO_ERROR, 0 ) ;
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
- ReturnCode(ERR_FSAL_NO_ERROR, 0 ) ;
-} /* FSAL_RemoveXAttrById */
-  
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}                               /* FSAL_RemoveXAttrById */
+
 /**
  *  Removes a xattr by Name
  *
@@ -978,30 +977,28 @@ fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,        /* IN 
  * \param p_context pointer to the current security context.
  * \param xattr_name xattr's name
  */
-fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,        /* IN */
-                                   fsal_op_context_t * p_context, /* IN */
-                                    const fsal_name_t * xattr_name )  /* IN */
+fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* IN */
+                                     fsal_op_context_t * p_context,     /* IN */
+                                     const fsal_name_t * xattr_name)    /* IN */
 {
   int rc;
   fsal_status_t st;
-  int fd = 0 ;
+  int fd = 0;
 
   TakeTokenFSCall();
-  st = fsal_internal_handle2fd( p_context, p_objecthandle , &fd, O_RDWR ) ;
+  st = fsal_internal_handle2fd(p_context, p_objecthandle, &fd, O_RDWR);
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(st))
     ReturnStatus(st, INDEX_FSAL_SetXAttrValue);
 
   TakeTokenFSCall();
-  rc = fremovexattr( fd, xattr_name->name ) ;
+  rc = fremovexattr(fd, xattr_name->name);
   ReleaseTokenFSCall();
 
-  close( fd ) ;
+  close(fd);
 
   if(rc != 0)
-    ReturnCode(posix2fsal_error(errno), errno) ;
+    ReturnCode(posix2fsal_error(errno), errno);
 
- ReturnCode(ERR_FSAL_NO_ERROR, 0 ) ;
-} /* FSAL_RemoveXAttrById */
-   
-
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}                               /* FSAL_RemoveXAttrById */

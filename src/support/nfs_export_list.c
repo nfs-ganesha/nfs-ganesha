@@ -44,9 +44,6 @@
  * Revision 1.11  2005/12/20 10:52:18  deniel
  * exportlist is no longer dynamic but static
  *
- * Revision 1.10  2005/11/28 17:03:03  deniel
- * Added CeCILL headers
- *
  * Revision 1.9  2005/11/21 15:04:34  leibovic
  * Displaying acquired Credential.
  *

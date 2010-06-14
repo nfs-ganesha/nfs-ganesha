@@ -74,7 +74,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
   fsal_status_t status;
   int rc, errsv;
   struct stat buffstat, buffstat_parent;
-  int fd ;
+  int fd;
 
   /* sanity checks. */
   if(!p_parent_directory_handle || !p_context || !p_object_name)
@@ -82,7 +82,8 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
 
   /* build the FID path */
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_DIRECTORY ) ;
+  status =
+      fsal_internal_handle2fd(p_context, p_parent_directory_handle, &fd, O_DIRECTORY);
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_unlink);
@@ -94,7 +95,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
   ReleaseTokenFSCall();
   if(rc)
     {
-      close( fd ) ;
+      close(fd);
 
       if(errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_unlink);
@@ -106,14 +107,14 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
 
   /* get file metadata */
   TakeTokenFSCall();
-  rc = fstatat( fd, p_object_name->name, &buffstat, AT_SYMLINK_NOFOLLOW );
+  rc = fstatat(fd, p_object_name->name, &buffstat, AT_SYMLINK_NOFOLLOW);
   errsv = errno;
   ReleaseTokenFSCall();
   if(rc)
-   {
-    close( fd ) ;
-    Return(posix2fsal_error(errno), errno, INDEX_FSAL_unlink);
-   }
+    {
+      close(fd);
+      Return(posix2fsal_error(errno), errno, INDEX_FSAL_unlink);
+    }
 
   /* check access rights */
 
@@ -122,7 +123,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
      && buffstat_parent.st_uid != p_context->credential.user
      && buffstat.st_uid != p_context->credential.user && p_context->credential.user != 0)
     {
-      close( fd ) ;
+      close(fd);
       Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_unlink);
     }
 
@@ -137,11 +138,14 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
    ******************************/
   TakeTokenFSCall();
   /* If the object to delete is a directory, use 'rmdir' to delete the object, else use 'unlink' */
-  rc = (S_ISDIR(buffstat.st_mode)) ? unlinkat(fd, p_object_name->name, AT_REMOVEDIR ) : unlinkat(fd, p_object_name->name, 0 ) ;
+  rc = (S_ISDIR(buffstat.st_mode)) ? unlinkat(fd, p_object_name->name,
+                                              AT_REMOVEDIR) : unlinkat(fd,
+                                                                       p_object_name->
+                                                                       name, 0);
   errsv = errno;
   ReleaseTokenFSCall();
- 
-  close( fd ) ;
+
+  close(fd);
 
   if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_unlink);

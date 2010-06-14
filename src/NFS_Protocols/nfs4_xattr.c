@@ -341,8 +341,8 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 #ifdef   _DEBUG_NFS_V4_XATTR
           printf("-----> Wanting FATTR4_FSID\n");
 #endif
-          fsid.major = nfs_htonl64((uint64_t)data->pexport->filesystem_id.major);
-          fsid.minor = nfs_htonl64((uint64_t)data->pexport->filesystem_id.minor);
+          fsid.major = nfs_htonl64((uint64_t) data->pexport->filesystem_id.major);
+          fsid.minor = nfs_htonl64((uint64_t) data->pexport->filesystem_id.minor);
 
           memcpy((char *)(attrvalsBuffer + LastOffset), &fsid, sizeof(fattr4_fsid));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
@@ -494,7 +494,8 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 
         case FATTR4_FILEID:
 #ifdef   _DEBUG_NFS_V4_XATTR
-          printf("-----> Wanting FATTR4_FILEID  xattr_pos=%u\n", pfile_handle->xattr_pos + 1);
+          printf("-----> Wanting FATTR4_FILEID  xattr_pos=%u\n",
+                 pfile_handle->xattr_pos + 1);
 #endif
           /* The analog to the inode number. RFC3530 says "a number uniquely identifying the file within the filesystem" 
            * In the case of a pseudofs entry, the entry's unique id is used */
@@ -503,7 +504,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 #ifndef _XATTR_D_USE_SAME_INUM  /* I wrapped off this part of the code... Not sure it would be useful */
           file_id = nfs_htonl64(~(fsalattr.fileid));
 
-          file_id = nfs_htonl64(~(fsalattr.fileid)) - pfile_handle->xattr_pos ;
+          file_id = nfs_htonl64(~(fsalattr.fileid)) - pfile_handle->xattr_pos;
 #else
           file_id = nfs_htonl64(fsalattr.fileid);
 #endif
@@ -963,12 +964,12 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 #ifdef   _DEBUG_NFS_V4_XATTR
           printf("-----> Wanting FATTR4_MOUNTED_ON_FILEID\n");
 #endif
-  	  cache_inode_get_attributes(data->current_entry, &fsalattr);
+          cache_inode_get_attributes(data->current_entry, &fsalattr);
 
 #ifndef _XATTR_D_USE_SAME_INUM  /* I wrapped off this part of the code... Not sure it would be useful */
           file_id = nfs_htonl64(~(fsalattr.fileid));
 
-          file_id = nfs_htonl64(~(fsalattr.fileid)) - pfile_handle->xattr_pos ;
+          file_id = nfs_htonl64(~(fsalattr.fileid)) - pfile_handle->xattr_pos;
 #else
           file_id = nfs_htonl64(fsalattr.fileid);
 #endif
@@ -1521,10 +1522,10 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
   /* Get the FSAL Handle fo the current object */
   pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
   if(cache_status != CACHE_INODE_SUCCESS)
-   {
-     res_OPEN4.status = nfs4_Errno(cache_status);
-     return res_OPEN4.status;
-   }
+    {
+      res_OPEN4.status = nfs4_Errno(cache_status);
+      return res_OPEN4.status;
+    }
 
   /* UTF8 strings may not end with \0, but they carry their length */
   strncpy(strname, arg_OPEN4.claim.open_claim4_u.file.utf8string_val,
@@ -1533,79 +1534,80 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
 
   /* Build the FSAL name */
   if((cache_status = cache_inode_error_convert(FSAL_str2name(strname,
-                                               MAXNAMLEN,
-                                               &name))) !=
-         CACHE_INODE_SUCCESS)
-   {
-     res_OPEN4.status = nfs4_Errno(cache_status);
-     return res_OPEN4.status;
-   }
+                                                             MAXNAMLEN,
+                                                             &name))) !=
+     CACHE_INODE_SUCCESS)
+    {
+      res_OPEN4.status = nfs4_Errno(cache_status);
+      return res_OPEN4.status;
+    }
 
   /* we do not use the stateful logic for accessing xattrs */
   switch (arg_OPEN4.openhow.opentype)
-   {
-      case OPEN4_CREATE:
-          /* To be done later */
-        /* set empty attr */
-         fsal_status = FSAL_SetXAttrValue(pfsal_handle,
-                                   	  &name,
-                                          data->pcontext, empty_buff, sizeof(empty_buff), TRUE);
+    {
+    case OPEN4_CREATE:
+      /* To be done later */
+      /* set empty attr */
+      fsal_status = FSAL_SetXAttrValue(pfsal_handle,
+                                       &name,
+                                       data->pcontext, empty_buff, sizeof(empty_buff),
+                                       TRUE);
 
-         if(FSAL_IS_ERROR(fsal_status))
-          {
-             res_OPEN4.status = nfs4_Errno(cache_inode_error_convert(fsal_status));
-             return res_OPEN4.status ;
-           }
+      if(FSAL_IS_ERROR(fsal_status))
+        {
+          res_OPEN4.status = nfs4_Errno(cache_inode_error_convert(fsal_status));
+          return res_OPEN4.status;
+        }
 
-         /* Now, getr the id */
-         fsal_status = FSAL_GetXAttrIdByName(pfsal_handle, &name, data->pcontext, &xattr_id);
-         if(FSAL_IS_ERROR(fsal_status))
-          {
-           res_OPEN4.status = NFS4ERR_NOENT ;
-           return res_OPEN4.status ;
-           }
+      /* Now, getr the id */
+      fsal_status = FSAL_GetXAttrIdByName(pfsal_handle, &name, data->pcontext, &xattr_id);
+      if(FSAL_IS_ERROR(fsal_status))
+        {
+          res_OPEN4.status = NFS4ERR_NOENT;
+          return res_OPEN4.status;
+        }
 
-        /* Attribute was found */
-         pfile_handle = (file_handle_v4_t *) (data->currentFH.nfs_fh4_val);
+      /* Attribute was found */
+      pfile_handle = (file_handle_v4_t *) (data->currentFH.nfs_fh4_val);
 
-         /* for Xattr FH, we adopt the current convention:
-          * xattr_pos = 0 ==> the FH is the one of the actual FS object
-          * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory 
-          * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
-          pfile_handle->xattr_pos = xattr_id + 2;
+      /* for Xattr FH, we adopt the current convention:
+       * xattr_pos = 0 ==> the FH is the one of the actual FS object
+       * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory 
+       * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
+      pfile_handle->xattr_pos = xattr_id + 2;
 
-          res_OPEN4.status = NFS4_OK ;
-          return NFS4_OK;
- 
-	  break ;
+      res_OPEN4.status = NFS4_OK;
+      return NFS4_OK;
 
-      case OPEN4_NOCREATE:
-         
-         /* Try to get a FSAL_XAttr of that name */
-         fsal_status = FSAL_GetXAttrIdByName(pfsal_handle, &name, data->pcontext, &xattr_id);
-         if(FSAL_IS_ERROR(fsal_status))
-          {
-           res_OPEN4.status = NFS4ERR_NOENT ;
-           return res_OPEN4.status ;
-           }
+      break;
 
-        /* Attribute was found */
-         pfile_handle = (file_handle_v4_t *) (data->currentFH.nfs_fh4_val);
+    case OPEN4_NOCREATE:
 
-         /* for Xattr FH, we adopt the current convention:
-          * xattr_pos = 0 ==> the FH is the one of the actual FS object
-          * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory 
-          * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
-          pfile_handle->xattr_pos = xattr_id + 2;
+      /* Try to get a FSAL_XAttr of that name */
+      fsal_status = FSAL_GetXAttrIdByName(pfsal_handle, &name, data->pcontext, &xattr_id);
+      if(FSAL_IS_ERROR(fsal_status))
+        {
+          res_OPEN4.status = NFS4ERR_NOENT;
+          return res_OPEN4.status;
+        }
 
-          res_OPEN4.status = NFS4_OK ;
-          return NFS4_OK;
+      /* Attribute was found */
+      pfile_handle = (file_handle_v4_t *) (data->currentFH.nfs_fh4_val);
 
-          break ;
+      /* for Xattr FH, we adopt the current convention:
+       * xattr_pos = 0 ==> the FH is the one of the actual FS object
+       * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory 
+       * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
+      pfile_handle->xattr_pos = xattr_id + 2;
 
-   } /* switch (arg_OPEN4.openhow.opentype) */
+      res_OPEN4.status = NFS4_OK;
+      return NFS4_OK;
 
-  res_OPEN4.status = NFS4_OK ;
+      break;
+
+    }                           /* switch (arg_OPEN4.openhow.opentype) */
+
+  res_OPEN4.status = NFS4_OK;
   return NFS4_OK;
 }                               /* nfs4_op_open_xattr
 
@@ -1752,25 +1754,25 @@ int nfs4_op_write_xattr(struct nfs_argop4 *op,
 
   res_WRITE4.WRITE4res_u.resok4.committed = FILE_SYNC4;
 
-  res_WRITE4.WRITE4res_u.resok4.count = arg_WRITE4.data.data_len ;
+  res_WRITE4.WRITE4res_u.resok4.count = arg_WRITE4.data.data_len;
   memcpy(res_WRITE4.WRITE4res_u.resok4.writeverf, NFS4_write_verifier, sizeof(verifier4));
 
   res_WRITE4.status = NFS4_OK;
-
 
   return NFS4_OK;
 }                               /* nfs4_op_write_xattr */
 
 #define arg_REMOVE4 op->nfs_argop4_u.opremove
 #define res_REMOVE4 resp->nfs_resop4_u.opremove
-int nfs4_op_remove_xattr(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
+int nfs4_op_remove_xattr(struct nfs_argop4 *op, compound_data_t * data,
+                         struct nfs_resop4 *resp)
 {
-  fsal_status_t fsal_status ;
+  fsal_status_t fsal_status;
   cache_inode_status_t cache_status;
   fsal_handle_t *pfsal_handle = NULL;
-  fsal_name_t name ;
-  
- /* Check for name length */
+  fsal_name_t name;
+
+  /* Check for name length */
   if(arg_REMOVE4.target.utf8string_len > FSAL_MAX_NAME_LEN)
     {
       res_REMOVE4.status = NFS4ERR_NAMETOOLONG;
@@ -1795,29 +1797,29 @@ int nfs4_op_remove_xattr(struct nfs_argop4 *op, compound_data_t * data, struct n
       return res_REMOVE4.status;
     }
 
-   /* Get the FSAL Handle fo the current object */
-    pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
-   if(cache_status != CACHE_INODE_SUCCESS)
+  /* Get the FSAL Handle fo the current object */
+  pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
       res_REMOVE4.status = nfs4_Errno(cache_status);
       return res_REMOVE4.status;
     }
 
   /* Test RM7: remiving '.' should return NFS4ERR_BADNAME */
-  if(!FSAL_namecmp(&name, (fsal_name_t *)&FSAL_DOT) || !FSAL_namecmp(&name, (fsal_name_t *)&FSAL_DOT_DOT))
+  if(!FSAL_namecmp(&name, (fsal_name_t *) & FSAL_DOT)
+     || !FSAL_namecmp(&name, (fsal_name_t *) & FSAL_DOT_DOT))
     {
       res_REMOVE4.status = NFS4ERR_BADNAME;
       return res_REMOVE4.status;
     }
- 
-  fsal_status = FSAL_RemoveXAttrByName( pfsal_handle, data->pcontext, &name ) ;
+
+  fsal_status = FSAL_RemoveXAttrByName(pfsal_handle, data->pcontext, &name);
   if(FSAL_IS_ERROR(fsal_status))
     {
       res_REMOVE4.status = NFS4ERR_SERVERFAULT;
       return res_REMOVE4.status;
     }
 
-  res_REMOVE4.status = NFS4_OK ;
-  return res_REMOVE4.status ;
+  res_REMOVE4.status = NFS4_OK;
+  return res_REMOVE4.status;
 }
-
