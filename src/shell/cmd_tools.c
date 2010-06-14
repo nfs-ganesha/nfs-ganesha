@@ -38,9 +38,6 @@
  * Revision 1.23  2006/01/17 14:56:22  leibovic
  * Adaptation de HPSS 6.2.
  *
- * Revision 1.22  2005/11/28 17:03:00  deniel
- * Added CeCILL headers
- *
  * Revision 1.21  2005/09/28 09:08:00  leibovic
  * thread-safe version of localtime.
  *

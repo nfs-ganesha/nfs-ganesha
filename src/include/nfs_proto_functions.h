@@ -765,9 +765,9 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op,        /* [IN] NFS4 OP argument
                           compound_data_t * data,       /* [IN] current data for the compound request */
                           struct nfs_resop4 *resp);     /* [OUT] NFS4 OP results */
 
-int nfs41_op_reclaim_complete(struct nfs_argop4 *op,        /* [IN] NFS4 OP arguments */
-                              compound_data_t * data,       /* [IN] current data for the compound request */
-                              struct nfs_resop4 *resp);     /* [OUT] NFS4 OP results */
+int nfs41_op_reclaim_complete(struct nfs_argop4 *op,    /* [IN] NFS4 OP arguments */
+                              compound_data_t * data,   /* [IN] current data for the compound request */
+                              struct nfs_resop4 *resp); /* [OUT] NFS4 OP results */
 
 int nfs41_op_sequence(struct nfs_argop4 *op,    /* [IN] NFS4 OP arguments */
                       compound_data_t * data,   /* [IN] current data for the compound request */
@@ -830,9 +830,8 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
 int nfs4_op_write_xattr(struct nfs_argop4 *op,
                         compound_data_t * data, struct nfs_resop4 *resp);
 
-int nfs4_op_remove_xattr(struct nfs_argop4 *op, 
+int nfs4_op_remove_xattr(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp);
-
 
 int nfs_XattrD_Name(char *strname, char *objectname);
 
@@ -1246,7 +1245,7 @@ void nfs41_op_read_Free(READ4res * resp);
 void nfs41_op_sequence_Free(SEQUENCE4res * resp);
 void nfs41_op_set_ssv_Free(SET_SSV4res * resp);
 void nfs41_op_write_Free(WRITE4res * resp);
-void nfs41_op_reclaim_complete_Free(RECLAIM_COMPLETE4res * resp) ;
+void nfs41_op_reclaim_complete_Free(RECLAIM_COMPLETE4res * resp);
 #endif                          /* _USE_NFS4_1 */
 
 void compound_data_Free(compound_data_t * data);
@@ -1371,7 +1370,6 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                        cache_inode_client_t * pclient,
                        hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres);
 
-
 int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                            exportlist_t * pexport,
                            fsal_op_context_t * pcontext,
@@ -1379,12 +1377,12 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                            hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres);
 
 int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
-               exportlist_t * pexport /* IN  */ ,
-               fsal_op_context_t * pcontext /* IN  */ ,
-               cache_inode_client_t * pclient /* IN  */ ,
-               hash_table_t * ht /* INOUT */ ,
-               struct svc_req *preq /* IN  */ ,
-               nfs_res_t * pres /* OUT */ ) ;
+                      exportlist_t * pexport /* IN  */ ,
+                      fsal_op_context_t * pcontext /* IN  */ ,
+                      cache_inode_client_t * pclient /* IN  */ ,
+                      hash_table_t * ht /* INOUT */ ,
+                      struct svc_req *preq /* IN  */ ,
+                      nfs_res_t * pres /* OUT */ );
 
 int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
                        fattr4 * Fattr,
@@ -1400,8 +1398,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                            fattr4 * Fattr,
                            compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap);
 
-                                                                                                                                                                                                                                                                                                                                                                                                                            /* time_how4          * mtime_set, *//* Out: How to set mtime */
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                    /* time_how4          * atimen_set ) ; *//* Out: How to set atime */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                 /* time_how4          * mtime_set, *//* Out: How to set mtime */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             /* time_how4          * atimen_set ) ; *//* Out: How to set atime */
 
 void nfs4_list_to_bitmap4(bitmap4 * b, uint_t * plen, uint32_t * pval);
 void nfs4_bitmap4_to_list(bitmap4 * b, uint_t * plen, uint32_t * pval);

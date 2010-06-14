@@ -203,7 +203,8 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     }
 
   /* Sanity check: never create a link named '.' or '..' */
-  if(!FSAL_namecmp(&newname, (fsal_name_t *)&FSAL_DOT) || !FSAL_namecmp(&newname, (fsal_name_t *)&FSAL_DOT_DOT))
+  if(!FSAL_namecmp(&newname, (fsal_name_t *) & FSAL_DOT)
+     || !FSAL_namecmp(&newname, (fsal_name_t *) & FSAL_DOT_DOT))
     {
       res_LINK4.status = NFS4ERR_BADNAME;
       return res_LINK4.status;

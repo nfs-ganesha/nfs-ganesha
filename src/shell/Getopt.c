@@ -37,9 +37,6 @@
  * Revision 1.4  2006/01/18 17:03:35  leibovic
  * Removing some warnings.
  *
- * Revision 1.3  2005/11/28 17:02:59  deniel
- * Added CeCILL headers
- *
  * Revision 1.2  2005/03/09 15:43:25  leibovic
  * Multi-OS compiling.
  *

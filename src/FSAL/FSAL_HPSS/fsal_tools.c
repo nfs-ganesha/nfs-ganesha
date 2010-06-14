@@ -1016,8 +1016,8 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
           out_parameter->fs_specific_info.behaviors.AuthnMech = FSAL_INIT_FORCE_VALUE;
 
           error = hpss_AuthnMechTypeFromString(key_value,
-                                               &out_parameter->fs_specific_info.
-                                               hpss_config.AuthnMech);
+                                               &out_parameter->
+                                               fs_specific_info.hpss_config.AuthnMech);
 
           if(error != HPSS_E_NOERROR)
             {

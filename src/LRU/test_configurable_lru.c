@@ -25,10 +25,6 @@
  *
  * $Header: /cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/LRU/test_configurable_lru.c,v 1.7 2005/11/28 17:02:39 deniel Exp $
  *
- * $Log: test_configurable_lru.c,v $
- * Revision 1.7  2005/11/28 17:02:39  deniel
- * Added CeCILL headers
- *
  * Revision 1.6  2005/05/10 11:44:02  deniel
  * Datacache and metadatacache are noewqw bounded
  *

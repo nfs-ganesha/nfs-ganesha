@@ -140,7 +140,6 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_remove_xattr(op, data, resp);
 
-
   /* Get the parent entry (aka the current one in the compound data) */
   parent_entry = data->current_entry;
 
@@ -183,7 +182,8 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   /* Test RM7: remiving '.' should return NFS4ERR_BADNAME */
-  if(!FSAL_namecmp(&name, (fsal_name_t *)&FSAL_DOT) || !FSAL_namecmp(&name, (fsal_name_t *)&FSAL_DOT_DOT))
+  if(!FSAL_namecmp(&name, (fsal_name_t *) & FSAL_DOT)
+     || !FSAL_namecmp(&name, (fsal_name_t *) & FSAL_DOT_DOT))
     {
       res_REMOVE4.status = NFS4ERR_BADNAME;
       return res_REMOVE4.status;
