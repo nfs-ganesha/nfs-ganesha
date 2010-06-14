@@ -147,6 +147,11 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_create);
 
+  status = fsal_internal_handle2fd_at(fd, p_object_handle, &newfd, O_RDONLY);
+
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_create);
+
   /* the file has been created */
   /* chown the file to the current user */
 
@@ -154,7 +159,7 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
     {
       TakeTokenFSCall();
       /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-      rc = fchown( fd , p_context->credential.user,
+      rc = fchown( newfd , p_context->credential.user,
                   setgid_bit ? -1 : (int)p_context->credential.group);
       errsv = errno;
       ReleaseTokenFSCall();
