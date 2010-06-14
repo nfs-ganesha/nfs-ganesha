@@ -35,8 +35,6 @@
  * $Header: /cea/S/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/support/nfs_stat_mgmt.c,v 1.4 2005/11/28 17:03:03 deniel Exp $
  *
  * $Log: nfs_stat_mgmt.c,v $
- * Revision 1.4  2005/11/28 17:03:03  deniel
- * Added CeCILL headers
  *
  * Revision 1.3  2005/09/30 15:50:19  deniel
  * Support for mount and nfs protocol different from the default

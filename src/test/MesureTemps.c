@@ -26,8 +26,6 @@
  * $Header: /cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/test/MesureTemps.c,v 1.3 2005/11/28 17:03:05 deniel Exp $
  *
  * $Log: MesureTemps.c,v $
- * Revision 1.3  2005/11/28 17:03:05  deniel
- * Added CeCILL headers
  *
  * Revision 1.2  2004/08/19 08:08:12  deniel
  * Mise au carre des tests sur les libs dynamiques et insertions des mesures

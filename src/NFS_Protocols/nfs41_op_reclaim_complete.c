@@ -96,7 +96,7 @@
 #define res_RECLAIM_COMPLETE4 resp->nfs_resop4_u.opreclaim_complete
 
 int nfs41_op_reclaim_complete(struct nfs_argop4 *op, compound_data_t * data,
-                          struct nfs_resop4 *resp)
+                              struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_reclaim_complete";
 
@@ -104,8 +104,8 @@ int nfs41_op_reclaim_complete(struct nfs_argop4 *op, compound_data_t * data,
 
   res_RECLAIM_COMPLETE4.rcr_status = NFS4_OK;
   return res_RECLAIM_COMPLETE4.rcr_status;
-}             /* nfs41_op_reclaim_complete */
-  
+}                               /* nfs41_op_reclaim_complete */
+
 /**
  * nfs41_op_reclaim_complete_Free: frees what was allocared to handle nfs41_op_layoutreturn.
  * 

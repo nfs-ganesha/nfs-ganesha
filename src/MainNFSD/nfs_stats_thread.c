@@ -212,11 +212,11 @@ void *stats_thread(void *addr)
                   global_cache_inode_stat.func_stats.nb_call[j] =
                       workers_data[i].cache_inode_client.stat.func_stats.nb_call[j];
                   global_cache_inode_stat.func_stats.nb_err_retryable[j] =
-                      workers_data[i].cache_inode_client.stat.func_stats.
-                      nb_err_retryable[j];
+                      workers_data[i].cache_inode_client.stat.
+                      func_stats.nb_err_retryable[j];
                   global_cache_inode_stat.func_stats.nb_err_unrecover[j] =
-                      workers_data[i].cache_inode_client.stat.func_stats.
-                      nb_err_unrecover[j];
+                      workers_data[i].cache_inode_client.stat.
+                      func_stats.nb_err_unrecover[j];
                 }
               else
                 {
@@ -225,11 +225,11 @@ void *stats_thread(void *addr)
                   global_cache_inode_stat.func_stats.nb_call[j] +=
                       workers_data[i].cache_inode_client.stat.func_stats.nb_call[j];
                   global_cache_inode_stat.func_stats.nb_err_retryable[j] +=
-                      workers_data[i].cache_inode_client.stat.func_stats.
-                      nb_err_retryable[j];
+                      workers_data[i].cache_inode_client.stat.
+                      func_stats.nb_err_retryable[j];
                   global_cache_inode_stat.func_stats.nb_err_unrecover[j] +=
-                      workers_data[i].cache_inode_client.stat.func_stats.
-                      nb_err_unrecover[j];
+                      workers_data[i].cache_inode_client.stat.
+                      func_stats.nb_err_unrecover[j];
                 }
 
             }

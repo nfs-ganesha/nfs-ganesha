@@ -728,10 +728,10 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
  * \param p_context pointer to the current security context.
  * \param xattr_id xattr's id
  */
-fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,        /* IN */
-                                   fsal_op_context_t * p_context, /* IN */
-                                   unsigned int xattr_id ) ; /* IN */
-  
+fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,      /* IN */
+                                   fsal_op_context_t * p_context,       /* IN */
+                                   unsigned int xattr_id);      /* IN */
+
 /**
  *  Removes a xattr by Name
  *
@@ -739,10 +739,9 @@ fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,        /* IN 
  * \param p_context pointer to the current security context.
  * \param xattr_name xattr's name
  */
-fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,        /* IN */
-                                   fsal_op_context_t * p_context, /* IN */
-                                    const fsal_name_t * xattr_name ) ; /* IN */
-
+fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* IN */
+                                     fsal_op_context_t * p_context,     /* IN */
+                                     const fsal_name_t * xattr_name);   /* IN */
 
 /******************************************************
  *                FSAL miscelaneous tools.

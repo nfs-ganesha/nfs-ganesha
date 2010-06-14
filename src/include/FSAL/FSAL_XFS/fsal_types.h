@@ -50,11 +50,11 @@
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
-#endif /* _GNU_SOURCE */
+#endif                          /* _GNU_SOURCE */
 
 #ifndef _ATFILE_SOURCE
 #define _ATFILE_SOURCE
-#endif  /* _ATFILE_SOURCE */
+#endif                          /* _ATFILE_SOURCE */
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -114,10 +114,10 @@ static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
 typedef struct
 {
-  char handle_val[FSAL_XFS_HANDLE_LEN] ;
-  unsigned int handle_len ;
-  uint32_t inode ;
-  char type ;
+  char handle_val[FSAL_XFS_HANDLE_LEN];
+  unsigned int handle_len;
+  uint32_t inode;
+  char type;
 } fsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */
@@ -133,12 +133,12 @@ typedef struct fsal_cred__
 typedef struct fsal_export_context_t
 {
   char mount_point[FSAL_MAX_PATH_LEN];
-  char mnt_handle_val[FSAL_XFS_HANDLE_LEN] ;
-  char mnt_fshandle_val[FSAL_XFS_FSHANDLE_LEN] ;
-  
-  unsigned int mnt_handle_len;         /* for optimizing concatenation */
-  unsigned int mnt_fshandle_len;         /* for optimizing concatenation */
-  unsigned int dev_id ;
+  char mnt_handle_val[FSAL_XFS_HANDLE_LEN];
+  char mnt_fshandle_val[FSAL_XFS_FSHANDLE_LEN];
+
+  unsigned int mnt_handle_len;  /* for optimizing concatenation */
+  unsigned int mnt_fshandle_len;        /* for optimizing concatenation */
+  unsigned int dev_id;
 } fsal_export_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( _pexport_context ) (uint64_t)((_pexport_context)->dev_id)
@@ -154,7 +154,7 @@ typedef struct
 
 typedef struct fs_specific_initinfo__
 {
-  char xfs_mount_point[MAXPATHLEN] ;
+  char xfs_mount_point[MAXPATHLEN];
 } fs_specific_initinfo_t;
 
 /**< directory cookie */
@@ -170,15 +170,14 @@ typedef struct fsal_lockdesc__
   struct flock flock;
 } fsal_lockdesc_t;
 
-
 /* Directory stream descriptor. */
 
 typedef struct fsal_dir__
 {
-  int fd ;
+  int fd;
   fsal_op_context_t context;    /* credential for accessing the directory */
   fsal_path_t path;
-  unsigned int dir_offset ;
+  unsigned int dir_offset;
   fsal_handle_t handle;
 } fsal_dir_t;
 

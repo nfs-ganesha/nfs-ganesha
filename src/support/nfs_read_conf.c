@@ -43,9 +43,6 @@
  * Revision 1.8  2005/11/29 13:38:18  deniel
  * bottlenecked ip_stats
  *
- * Revision 1.7  2005/11/28 17:03:03  deniel
- * Added CeCILL headers
- *
  * Revision 1.6  2005/11/08 15:22:24  deniel
  * WildCard and Netgroup entry for exportlist are now supported
  *
@@ -312,16 +309,16 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->nlm_program = atoi(key_value);
         }
-      else if (!strcasecmp(key_name, "Bind_Addr"))
+      else if(!strcasecmp(key_name, "Bind_Addr"))
         {
           int rc;
           memset(&pparam->bind_addr.sin_addr, 0, sizeof(pparam->bind_addr.sin_addr));
           rc = inet_pton(AF_INET, key_value, &pparam->bind_addr.sin_addr);
-          if (rc <= 0)
-          {
-            /* Revert to INADDR_ANY in case of any error */
-            pparam->bind_addr.sin_addr.s_addr = INADDR_ANY;     /* All the interfaces on the machine are used */
-          }
+          if(rc <= 0)
+            {
+              /* Revert to INADDR_ANY in case of any error */
+              pparam->bind_addr.sin_addr.s_addr = INADDR_ANY;   /* All the interfaces on the machine are used */
+            }
         }
       else if(!strcasecmp(key_name, "Core_Dump_Size"))
         {
@@ -814,8 +811,8 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
                         0x00FF0000) >> 16,
                        ((unsigned int)ntohl(pparam->layoutfile.ds_param[0].ipaddr) &
                         0x0000FF00) >> 8,
-                       (unsigned int)ntohl(pparam->layoutfile.ds_param[0].
-                                           ipaddr) & 0x000000FF);
+                       (unsigned int)ntohl(pparam->layoutfile.
+                                           ds_param[0].ipaddr) & 0x000000FF);
             }
         }
       else if(!strcasecmp(key_name, "DS_Ip_Port"))
@@ -1173,7 +1170,7 @@ int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * p
         {
           pparam->use_open_confirm = StrToBoolean(key_value);
         }
-      else if( !strcasecmp( key_name, "Return_Bad_Stateid" ) )
+      else if(!strcasecmp(key_name, "Return_Bad_Stateid"))
         {
           pparam->return_bad_stateid = StrToBoolean(key_value);
         }

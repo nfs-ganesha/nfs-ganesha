@@ -44,9 +44,6 @@
  * Revision 1.21  2006/01/18 07:29:11  leibovic
  * Fixing bugs about exportlists.
  *
- * Revision 1.20  2005/11/28 17:02:59  deniel
- * Added CeCILL headers
- *
  * Revision 1.19  2005/10/12 11:30:10  leibovic
  * NFSv2.
  *

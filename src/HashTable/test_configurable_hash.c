@@ -33,9 +33,6 @@
  * Revision 1.7  2006/01/20 07:39:22  leibovic
  * Back to the previous version.
  *
- * Revision 1.5  2005/11/28 17:02:37  deniel
- * Added CeCILL headers
- *
  * Revision 1.4  2005/05/10 11:43:57  deniel
  * Datacache and metadatacache are noewqw bounded
  *

@@ -47,9 +47,6 @@
  * Revision 1.38  2006/01/20 07:39:22  leibovic
  * Back to the previous version.
  *
- * Revision 1.36  2005/11/28 17:02:37  deniel
- * Added CeCILL headers
- *
  * Revision 1.35  2005/11/10 07:53:24  deniel
  * Corrected some memory leaks
  *

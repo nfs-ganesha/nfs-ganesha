@@ -87,7 +87,8 @@ fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
   /* Read the link on the filesystem */
 
   TakeTokenFSCall();
-  rc = readlink_by_handle( p_linkhandle->handle_val, p_linkhandle->handle_len, link_content_out, FSAL_MAX_PATH_LEN);
+  rc = readlink_by_handle(p_linkhandle->handle_val, p_linkhandle->handle_len,
+                          link_content_out, FSAL_MAX_PATH_LEN);
   errsv = errno;
   ReleaseTokenFSCall();
 
@@ -163,7 +164,7 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
 
   int rc, errsv;
   fsal_status_t status;
-  int fd ;
+  int fd;
   struct stat buffstat, lbuffstat;
   int setgid_bit = FALSE;
 
@@ -180,7 +181,8 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_symlink);
 
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_parent_directory_handle , &fd, O_DIRECTORY ) ;
+  status =
+      fsal_internal_handle2fd(p_context, p_parent_directory_handle, &fd, O_DIRECTORY);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
@@ -188,13 +190,13 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
 
   /* retrieve directory metadata, for checking access */
   TakeTokenFSCall();
-  rc = fstat( fd, &buffstat);
+  rc = fstat(fd, &buffstat);
   errsv = errno;
   ReleaseTokenFSCall();
 
   if(rc)
     {
-      close( fd ) ;
+      close(fd);
 
       if(errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_symlink);
@@ -209,25 +211,24 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_symlink);
 
-
   /* create the symlink on the filesystem. */
 
   TakeTokenFSCall();
-  rc = symlinkat(p_linkcontent->path, fd, p_linkname->name );
+  rc = symlinkat(p_linkcontent->path, fd, p_linkname->name);
   errsv = errno;
   ReleaseTokenFSCall();
 
   if(rc)
-   {
-    close( fd ) ;
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
-   }
+    {
+      close(fd);
+      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
+    }
 
   /* chown the symlink to the current user/group */
 
   TakeTokenFSCall();
-  rc = fchownat(fd, p_linkname->name , p_context->credential.user,
-              setgid_bit ? -1 : p_context->credential.group, AT_SYMLINK_NOFOLLOW );
+  rc = fchownat(fd, p_linkname->name, p_context->credential.user,
+                setgid_bit ? -1 : p_context->credential.group, AT_SYMLINK_NOFOLLOW);
   errsv = errno;
   ReleaseTokenFSCall();
 
@@ -235,23 +236,20 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
 
   /* Build fsal_handle_t */
-     /* build symlink path */
+  /* build symlink path */
   TakeTokenFSCall();
-  rc = fstatat( fd, p_linkname->name, &lbuffstat, AT_SYMLINK_NOFOLLOW);
+  rc = fstatat(fd, p_linkname->name, &lbuffstat, AT_SYMLINK_NOFOLLOW);
   errsv = errno;
   ReleaseTokenFSCall();
   if(rc)
-   {
-    close( fd ) ;
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
-   }
+    {
+      close(fd);
+      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
+    }
 
- 
-  close( fd ) ;
+  close(fd);
 
-  status = fsal_internal_inum2handle( p_context,  
-                                      lbuffstat.st_ino,    
-		   	              p_link_handle ) ;
+  status = fsal_internal_inum2handle(p_context, lbuffstat.st_ino, p_link_handle);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_symlink);
 
