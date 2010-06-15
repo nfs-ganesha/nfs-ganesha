@@ -115,11 +115,7 @@ cache_inode_status_t cache_inode_commit(cache_entry_t * pentry,
                           pfsal_attr,
                           pentry->object.file.unstable_data.buffer,
                           &eof,
-                          ht, 
-		          pclient, 
-			  pcontext, 
-			  TRUE, 
-			  pstatus) != CACHE_INODE_SUCCESS)
+                          ht, pclient, pcontext, TRUE, pstatus) != CACHE_INODE_SUCCESS)
         return *pstatus;
 
       P_w(&pentry->lock);

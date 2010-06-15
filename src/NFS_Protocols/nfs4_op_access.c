@@ -108,7 +108,7 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   /* initialize output */
   res_ACCESS4.ACCESS4res_u.resok4.supported = 0;
-  res_ACCESS4.ACCESS4res_u.resok4.access    = 0;
+  res_ACCESS4.ACCESS4res_u.resok4.access = 0;
 
   resp->resop = NFS4_OP_ACCESS;
   res_ACCESS4.status = NFS4_OK;
@@ -157,109 +157,108 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   nfsv4_read_mask = nfsv4_write_mask = nfsv4_exec_mask = 0;
 
   if(arg_ACCESS4.access & ACCESS4_READ)
-  {
-       /* we need to test read access in FSAL */
-       test_read = TRUE;
-       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_READ;
-       /* if read is allowed in FSAL, ACCESS4_READ will be granted */
-       nfsv4_read_mask |= ACCESS4_READ;
-  }
+    {
+      /* we need to test read access in FSAL */
+      test_read = TRUE;
+      res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_READ;
+      /* if read is allowed in FSAL, ACCESS4_READ will be granted */
+      nfsv4_read_mask |= ACCESS4_READ;
+    }
 
   if((arg_ACCESS4.access & ACCESS4_LOOKUP) && (attr.type == FSAL_TYPE_DIR))
-  {
-       /* we need to test execute access in FSAL */
-       test_exec = TRUE;
-       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_LOOKUP;
-       /* if exec is allowed in FSAL, ACCESS4_LOOKUP will be granted */
-       nfsv4_exec_mask |= ACCESS4_LOOKUP;
-  }
+    {
+      /* we need to test execute access in FSAL */
+      test_exec = TRUE;
+      res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_LOOKUP;
+      /* if exec is allowed in FSAL, ACCESS4_LOOKUP will be granted */
+      nfsv4_exec_mask |= ACCESS4_LOOKUP;
+    }
 
   if(arg_ACCESS4.access & ACCESS4_MODIFY)
-  {
-       /* we need to test write access in FSAL */
-       test_write = TRUE; 
-       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_MODIFY;
-       /* if write is allowed in FSAL, ACCESS4_MODIFY will be granted */
-       nfsv4_write_mask |= ACCESS4_MODIFY;
-  }
+    {
+      /* we need to test write access in FSAL */
+      test_write = TRUE;
+      res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_MODIFY;
+      /* if write is allowed in FSAL, ACCESS4_MODIFY will be granted */
+      nfsv4_write_mask |= ACCESS4_MODIFY;
+    }
 
   if(arg_ACCESS4.access & ACCESS4_EXTEND)
-  {
-       /* we need to test write access in FSAL */
-       test_write = TRUE; 
-       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_EXTEND;
-       /* if write is allowed in FSAL, ACCESS4_EXTEND will be granted */
-       nfsv4_write_mask |= ACCESS4_EXTEND;
-  }
+    {
+      /* we need to test write access in FSAL */
+      test_write = TRUE;
+      res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_EXTEND;
+      /* if write is allowed in FSAL, ACCESS4_EXTEND will be granted */
+      nfsv4_write_mask |= ACCESS4_EXTEND;
+    }
 
   if((arg_ACCESS4.access & ACCESS4_DELETE) && (attr.type == FSAL_TYPE_DIR))
-  {
-     /* we need to test write access in FSAL */
-       test_write = TRUE; 
-       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_DELETE;
-       /* if write is allowed in FSAL, ACCESS4_DELETE will be granted */
-       nfsv4_write_mask |= ACCESS4_DELETE;
-  }
+    {
+      /* we need to test write access in FSAL */
+      test_write = TRUE;
+      res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_DELETE;
+      /* if write is allowed in FSAL, ACCESS4_DELETE will be granted */
+      nfsv4_write_mask |= ACCESS4_DELETE;
+    }
 
   if((arg_ACCESS4.access & ACCESS4_EXECUTE) && (attr.type != FSAL_TYPE_DIR))
-  {
-     /* we need to test execute access in FSAL */
-       test_exec = TRUE;
-       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_EXECUTE;
-       /* if exec is allowed in FSAL, ACCESS4_LOOKUP will be granted */
-       nfsv4_exec_mask |= ACCESS4_EXECUTE;
-  }
-
+    {
+      /* we need to test execute access in FSAL */
+      test_exec = TRUE;
+      res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_EXECUTE;
+      /* if exec is allowed in FSAL, ACCESS4_LOOKUP will be granted */
+      nfsv4_exec_mask |= ACCESS4_EXECUTE;
+    }
 
   /* now, test R/W/X independently */
 
-  if (test_read)
-  {
-       st = FSAL_test_access(data->pcontext, FSAL_R_OK, &attr);
-       if (st.major == 0)
-       {
-           /* grant NFSv4 asked rights related to READ */
-           res_ACCESS4.ACCESS4res_u.resok4.access |= nfsv4_read_mask;
-       }
-       else if (st.major != ERR_FSAL_ACCESS)
-       {
-           /* not an access error */
-           res_ACCESS4.status = nfs4_Errno( cache_inode_error_convert(st) );
-           return res_ACCESS4.status;
-       }
-  }
-                
-  if (test_write)
-  {
-       st = FSAL_test_access(data->pcontext, FSAL_W_OK, &attr);
-       if (st.major == 0)
-       {
-           /* grant NFSv4 asked rights related to WRITE */
-           res_ACCESS4.ACCESS4res_u.resok4.access |= nfsv4_write_mask;
-       }
-       else if (st.major != ERR_FSAL_ACCESS)
-       {
-           /* not an access error */
-           res_ACCESS4.status = nfs4_Errno( cache_inode_error_convert(st) );
-           return res_ACCESS4.status;
-       }
-  }
+  if(test_read)
+    {
+      st = FSAL_test_access(data->pcontext, FSAL_R_OK, &attr);
+      if(st.major == 0)
+        {
+          /* grant NFSv4 asked rights related to READ */
+          res_ACCESS4.ACCESS4res_u.resok4.access |= nfsv4_read_mask;
+        }
+      else if(st.major != ERR_FSAL_ACCESS)
+        {
+          /* not an access error */
+          res_ACCESS4.status = nfs4_Errno(cache_inode_error_convert(st));
+          return res_ACCESS4.status;
+        }
+    }
 
-  if (test_exec)
-  {
-       st = FSAL_test_access(data->pcontext, FSAL_X_OK, &attr);
-       if (st.major == 0)
-       {
-           /* grant NFSv4 asked rights related to EXEC */
-           res_ACCESS4.ACCESS4res_u.resok4.access |= nfsv4_exec_mask;
-       }
-       else if (st.major != ERR_FSAL_ACCESS)
-       {
-           /* not an access error */
-           res_ACCESS4.status = nfs4_Errno( cache_inode_error_convert(st) );
-           return res_ACCESS4.status;
-       }
-  }
+  if(test_write)
+    {
+      st = FSAL_test_access(data->pcontext, FSAL_W_OK, &attr);
+      if(st.major == 0)
+        {
+          /* grant NFSv4 asked rights related to WRITE */
+          res_ACCESS4.ACCESS4res_u.resok4.access |= nfsv4_write_mask;
+        }
+      else if(st.major != ERR_FSAL_ACCESS)
+        {
+          /* not an access error */
+          res_ACCESS4.status = nfs4_Errno(cache_inode_error_convert(st));
+          return res_ACCESS4.status;
+        }
+    }
+
+  if(test_exec)
+    {
+      st = FSAL_test_access(data->pcontext, FSAL_X_OK, &attr);
+      if(st.major == 0)
+        {
+          /* grant NFSv4 asked rights related to EXEC */
+          res_ACCESS4.ACCESS4res_u.resok4.access |= nfsv4_exec_mask;
+        }
+      else if(st.major != ERR_FSAL_ACCESS)
+        {
+          /* not an access error */
+          res_ACCESS4.status = nfs4_Errno(cache_inode_error_convert(st));
+          return res_ACCESS4.status;
+        }
+    }
 
   res_ACCESS4.status = NFS4_OK;
 

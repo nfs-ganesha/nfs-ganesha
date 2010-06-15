@@ -86,7 +86,7 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle, /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_dynamic_fsinfo);
 
   TakeTokenFSCall();
-  rc = statvfs( p_context->export_context->mount_point, &buffstatvfs);
+  rc = statvfs(p_context->export_context->mount_point, &buffstatvfs);
   errsv = errno;
   ReleaseTokenFSCall();
   if(rc)

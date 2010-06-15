@@ -34,9 +34,6 @@
  * Revision 1.28  2006/02/23 07:42:53  leibovic
  * Adding -n option to shell.
  *
- * Revision 1.27  2005/11/28 17:03:00  deniel
- * Added CeCILL headers
- *
  * Revision 1.26  2005/08/12 11:56:59  leibovic
  * coquille.
  *

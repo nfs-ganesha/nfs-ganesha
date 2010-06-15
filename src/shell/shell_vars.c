@@ -34,9 +34,6 @@
  * Revision 1.8  2006/01/24 13:49:33  leibovic
  * Adding missing includes.
  *
- * Revision 1.7  2005/11/28 17:03:01  deniel
- * Added CeCILL headers
- *
  * Revision 1.6  2005/07/26 12:54:47  leibovic
  * Multi-thread shell with synchronisation routines.
  *

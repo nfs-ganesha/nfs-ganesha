@@ -139,7 +139,7 @@ fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
   int rc, errsv;
   fsal_status_t status;
 
-  int fd ; 
+  int fd;
   struct stat buffstat;
   int posix_flags = 0;
 
@@ -161,7 +161,7 @@ fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
     }
 
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_filehandle , &fd, posix_flags ) ;
+  status = fsal_internal_handle2fd(p_context, p_filehandle, &fd, posix_flags);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
@@ -170,13 +170,13 @@ fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
   /* retrieve file attributes for checking access rights */
 
   TakeTokenFSCall();
-  rc = fstat( fd, &buffstat);
+  rc = fstat(fd, &buffstat);
   errsv = errno;
   ReleaseTokenFSCall();
 
   if(rc)
     {
-      close( fd ) ;
+      close(fd);
 
       if(errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_open);
@@ -189,13 +189,13 @@ fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
                                openflags & FSAL_O_RDONLY ? FSAL_R_OK : FSAL_W_OK,
                                &buffstat, NULL);
   if(FSAL_IS_ERROR(status))
-   {
-     close( fd ) ;
-     ReturnStatus(status, INDEX_FSAL_open);
-   }
+    {
+      close(fd);
+      ReturnStatus(status, INDEX_FSAL_open);
+    }
 
   TakeTokenFSCall();
-  p_file_descriptor->fd = fd ;
+  p_file_descriptor->fd = fd;
   errsv = errno;
   ReleaseTokenFSCall();
 

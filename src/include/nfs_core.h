@@ -216,12 +216,16 @@ typedef struct nfs_svc_data__
   int socket_mnt_tcp;
   int socket_nlm_udp;
   int socket_nlm_tcp;
+  int socket_rquota_udp;
+  int socket_rquota_tcp;
   SVCXPRT *xprt_nfs_udp;
   SVCXPRT *xprt_nfs_tcp;
   SVCXPRT *xprt_mnt_udp;
   SVCXPRT *xprt_mnt_tcp;
   SVCXPRT *xprt_nlm_udp;
   SVCXPRT *xprt_nlm_tcp;
+  SVCXPRT *xprt_rquota_udp;
+  SVCXPRT *xprt_rquota_tcp;
 } nfs_svc_data_t;
 
 typedef struct nfs_worker_param__
@@ -256,10 +260,12 @@ typedef struct nfs_core_param__
   unsigned short nfs_port;
   unsigned short mnt_port;
   unsigned short nlm_port;
+  unsigned short rquota_port;
   struct sockaddr_in bind_addr; // IPv4 only for now...
   unsigned int nfs_program;
   unsigned int mnt_program;
   unsigned int nlm_program;
+  unsigned int rquota_program;
   unsigned int nb_worker;
   unsigned int nb_max_concurrent_gc;
   long core_dump_size;
@@ -404,6 +410,8 @@ typedef struct nfs_request_data__
   SVCXPRT *nfs_udp_xprt;
   SVCXPRT *mnt_udp_xprt;
   SVCXPRT *nlm_udp_xprt;
+  SVCXPRT *rquota_udp_xprt;
+  SVCXPRT *rquota_tcp_xprt;
   SVCXPRT *xprt;
   struct svc_req req;
   struct rpc_msg msg;
