@@ -33,9 +33,6 @@
  * Revision 1.1  2005/11/29 13:38:15  deniel
  * bottlenecked ip_stats
  *
- * Revision 1.19  2005/11/28 17:02:37  deniel
- * Added CeCILL headers
- *
  * Revision 1.18  2005/10/05 14:03:28  deniel
  * DEBUG ifdef are now much cleaner
  *

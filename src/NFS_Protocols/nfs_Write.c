@@ -382,9 +382,7 @@ int nfs_Write(nfs_arg_t * parg,
                           &eof_met,
                           ht,
                           pclient,
-                          pcontext, 
-			  stable_flag, 
-			  &cache_status) == CACHE_INODE_SUCCESS)
+                          pcontext, stable_flag, &cache_status) == CACHE_INODE_SUCCESS)
         {
 
           switch (preq->rq_vers)

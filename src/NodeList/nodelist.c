@@ -651,8 +651,7 @@ nodelist_nodelist_remove_nodelist(nodelist_nodelist_t * nodelist,
                           fstatus +=
                               nodelist_rangelist_remove_rangelist(&
                                                                   ((*pwldest)->rangelist),
-                                                                  &((*pwlsrc)->
-                                                                    rangelist));
+                                                                  &((*pwlsrc)->rangelist));
                         }
                       else
                         fstatus = 0;

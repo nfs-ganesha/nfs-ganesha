@@ -40,9 +40,6 @@
  * Revision 1.11  2006/01/11 08:12:18  deniel
  * Added bug track and warning for badly formed handles
  *
- * Revision 1.10  2005/11/28 17:03:03  deniel
- * Added CeCILL headers
- *
  * Revision 1.9  2005/09/07 08:58:30  deniel
  * NFSv2 FH was only 31 byte long instead of 32
  *
