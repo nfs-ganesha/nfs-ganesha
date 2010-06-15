@@ -309,6 +309,14 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->nlm_program = atoi(key_value);
         }
+      else if(!strcasecmp(key_name, "Rquota_Program"))
+        {
+          pparam->rquota_program = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "Rquota_Port"))
+        {
+          pparam->rquota_port = (unsigned short)atoi(key_value);
+        }
       else if(!strcasecmp(key_name, "Bind_Addr"))
         {
           int rc;

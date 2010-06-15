@@ -112,6 +112,14 @@ libnfsproto_la_SOURCES += nlm_Unlock.c	  	\
                           nlm_Granted_Res.c
 endif
 
+if USE_QUOTA
+libnfsproto_la_SOURCES += rquota_Null.c            \
+                          rquota_getquota.c        \
+                          rquota_getactivequota.c  \
+                          rquota_setquota.c        \
+                          rquota_setactivequota.c 
+
+endif
 
 
 if USE_NFS4_1

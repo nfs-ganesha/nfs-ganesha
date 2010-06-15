@@ -42,6 +42,7 @@
 #include "mount.h"
 #include "nfs4.h"
 #include "nlm4.h"
+#include "rquota.h"
 
 #include <pthread.h>
 #include <sys/types.h>
@@ -121,6 +122,18 @@ typedef union nfs_arg__
   nlm4_unlockargs arg_nlm4_unlock;
   nlm4_sm_notifyargs arg_nlm4_sm_notify;
   nlm4_res arg_nlm4_res;
+
+  /* Rquota arguments */
+  getquota_args arg_rquota_getquota;
+  getquota_args arg_rquota_getactivequota ;
+  setquota_args arg_rquota_setquota ;
+  setquota_args arg_rquota_setactivequota ;
+
+  /* Rquota arguments */
+  ext_getquota_args arg_ext_rquota_getquota;
+  ext_getquota_args arg_ext_rquota_getactivequota ;
+  ext_setquota_args arg_ext_rquota_setquota ;
+  ext_setquota_args arg_ext_rquota_setactivequota ;
 } nfs_arg_t;
 
 typedef union nfs_res__
@@ -164,6 +177,18 @@ typedef union nfs_res__
   /* nlm4 returned values */
   nlm4_testres res_nlm4test;
   nlm4_res res_nlm4;
+
+ /* Ext Rquota arguments */
+  getquota_rslt res_rquota_getquota;
+  getquota_rslt res_rquota_getactivequota ;
+  setquota_rslt res_rquota_setquota ;
+  setquota_rslt res_rquota_setactivequota ;
+  /* Rquota arguments */
+  getquota_rslt res_ext_rquota_getquota;
+  getquota_rslt res_ext_rquota_getactivequota ;
+  setquota_rslt res_ext_rquota_setquota ;
+  setquota_rslt res_ext_rquota_setactivequota ;
+
 
   char padding[1024];
 } nfs_res_t;
@@ -341,6 +366,58 @@ int nlm4_Unlock_Message(nfs_arg_t * parg /* IN     */ ,
 /* @}
  * -- End of NLM protocol functions. --
  */
+
+/**
+ * @defgroup RQUOTA ocs    RQUOTA protocol functions.
+ *
+ * @{
+ */
+
+int rquota_Null(nfs_arg_t * parg /* IN  */ ,
+             exportlist_t * pexport /* IN  */ ,
+             fsal_op_context_t * pcontext /* IN  */ ,
+             cache_inode_client_t * pclient /* IN  */ ,
+             hash_table_t * ht /* INOUT */ ,
+             struct svc_req *preq /* IN  */ ,
+             nfs_res_t * pres /* OUT */ );
+
+
+int rquota_getquota(nfs_arg_t * parg /* IN  */ ,
+             exportlist_t * pexport /* IN  */ ,
+             fsal_op_context_t * pcontext /* IN  */ ,
+             cache_inode_client_t * pclient /* IN  */ ,
+             hash_table_t * ht /* INOUT */ ,
+             struct svc_req *preq /* IN  */ ,
+             nfs_res_t * pres /* OUT */ );
+
+int rquota_getactivequota(nfs_arg_t * parg /* IN  */ ,
+             exportlist_t * pexport /* IN  */ ,
+             fsal_op_context_t * pcontext /* IN  */ ,
+             cache_inode_client_t * pclient /* IN  */ ,
+             hash_table_t * ht /* INOUT */ ,
+             struct svc_req *preq /* IN  */ ,
+             nfs_res_t * pres /* OUT */ );
+
+int rquota_setquota(nfs_arg_t * parg /* IN  */ ,
+             exportlist_t * pexport /* IN  */ ,
+             fsal_op_context_t * pcontext /* IN  */ ,
+             cache_inode_client_t * pclient /* IN  */ ,
+             hash_table_t * ht /* INOUT */ ,
+             struct svc_req *preq /* IN  */ ,
+             nfs_res_t * pres /* OUT */ );
+
+int rquota_setactivequota(nfs_arg_t * parg /* IN  */ ,
+             exportlist_t * pexport /* IN  */ ,
+             fsal_op_context_t * pcontext /* IN  */ ,
+             cache_inode_client_t * pclient /* IN  */ ,
+             hash_table_t * ht /* INOUT */ ,
+             struct svc_req *preq /* IN  */ ,
+             nfs_res_t * pres /* OUT */ );
+
+/* @}
+ *  * -- End of RQUOTA protocol functions. --
+ *   */
+
 
 /**
  * @defgroup NFSprocs    NFS protocols functions.
@@ -1160,6 +1237,12 @@ void nlm4_Test_Message_Free(nfs_res_t * pres);
 void nlm4_Cancel_Message_Free(nfs_res_t * pres);
 void nlm4_Lock_Message_Free(nfs_res_t * pres);
 void nlm4_Unlock_Message_Free(nfs_res_t * pres);
+
+void rquota_Null_Free(nfs_res_t * pres ) ;
+void rquota_getquota_Free(nfs_res_t * pres) ;
+void rquota_getactivequota_Free(nfs_res_t * pres) ;
+void rquota_setquota_Free(nfs_res_t * pres) ;
+void rquota_setactivequota_Free(nfs_res_t * pres) ;
 
 void nfs_Null_Free(nfs_res_t * resp);
 void nfs_Getattr_Free(nfs_res_t * resp);
