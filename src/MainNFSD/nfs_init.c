@@ -60,6 +60,7 @@
 #include "nfs4.h"
 #include "mount.h"
 #include "nlm4.h"
+#include "rquota.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "err_cache_inode.h"
@@ -226,6 +227,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->core_param.nfs_program = NFS_PROGRAM;
   p_nfs_param->core_param.mnt_program = MOUNTPROG;
   p_nfs_param->core_param.nlm_program = NLMPROG;
+  p_nfs_param->core_param.rquota_program = RQUOTAPROG;
   p_nfs_param->core_param.drop_io_errors = TRUE;
   p_nfs_param->core_param.drop_inval_errors = FALSE;
   p_nfs_param->core_param.core_dump_size = 0;
