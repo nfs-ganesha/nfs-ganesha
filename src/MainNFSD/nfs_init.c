@@ -221,6 +221,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->core_param.expiration_dupreq = DUPREQ_EXPIRATION;
   p_nfs_param->core_param.nfs_port = NFS_PORT;
   p_nfs_param->core_param.mnt_port = 0;
+  p_nfs_param->core_param.rquota_port = RQUOTA_PORT;
   p_nfs_param->core_param.bind_addr.sin_family = AF_INET;       /* IPv4 only right now */
   p_nfs_param->core_param.bind_addr.sin_addr.s_addr = INADDR_ANY;       /* All the interfaces on the machine are used */
   p_nfs_param->core_param.bind_addr.sin_port = 0;       /* No port specified */

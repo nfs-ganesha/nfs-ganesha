@@ -131,7 +131,7 @@ void nfs_stat_update(nfs_stat_type_t type,
         default:
           /* Bad vers ? */
           DisplayLog
-              ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
+              ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
                __FILE__, __LINE__);
           return;
           break;
@@ -154,7 +154,7 @@ void nfs_stat_update(nfs_stat_type_t type,
         default:
           /* Bad vers ? */
           DisplayLog
-              ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
+              ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
                __FILE__, __LINE__);
           return;
           break;
@@ -171,18 +171,39 @@ void nfs_stat_update(nfs_stat_type_t type,
         default:
           /* Bad vers ? */
           DisplayLog
-              ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %s",
+              ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
                __FILE__, __LINE__);
           return;
           break;
         }
     }
+  else if(preq->rq_prog == nfs_param.core_param.rquota_program)
+    {
+      switch (preq->rq_vers)
+        {
+        case RQUOTAVERS:
+          pitem = &pstat_req->stat_req_rquota1[preq->rq_proc];
+          pstat_req->nb_rquota1_req += 1;
+          break;
+        case EXT_RQUOTAVERS:
+          pitem = &pstat_req->stat_req_rquota2[preq->rq_proc];
+          pstat_req->nb_rquota2_req += 1;
+          break;
+        default:
+          /* Bad vers ? */
+          DisplayLog
+              ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
+               __FILE__, __LINE__);
+          return;
+          break;
+        }
 
+    }
   else
     {
       /* Bad program ? */
       DisplayLog
-          ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
+          ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
            __FILE__, __LINE__);
       return;
     }
