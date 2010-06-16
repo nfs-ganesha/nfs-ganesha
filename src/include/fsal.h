@@ -758,6 +758,8 @@ char *FSAL_GetFSName();
 /******************************************************
  *                FSAL quota related functions.
  ******************************************************/
+#define FSAL_QCMD(cmd, type)  (((cmd) << SUBCMDSHIFT) | ((type) & SUBCMDMASK))
+
 fsal_status_t FSAL_get_quota( fsal_path_t * pfsal_path, /* IN */
                               fsal_uid_t    fsal_uid,   /* IN */
                               fsal_quota_t * pquota );  /* OUT */

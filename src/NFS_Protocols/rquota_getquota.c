@@ -88,7 +88,7 @@ int rquota_getquota(nfs_arg_t * parg /* IN     */ ,
   fsal_quota_t  fsal_quota ;
   fsal_path_t   fsal_path ;
 
-  if(FSAL_IS_ERROR((fsal_status = FSAL_str2path( parg->arg_rquota_getquota.gqa_pathp,
+  if(FSAL_IS_ERROR((fsal_status = FSAL_str2path( /* parg->arg_rquota_getquota.gqa_pathp*/ "/dev/mapper/vg_scratchy-LogVol03",
                                                  MAXPATHLEN,
                                                  &fsal_path ))))
     {
@@ -112,6 +112,7 @@ int rquota_getquota(nfs_arg_t * parg /* IN     */ ,
   pres->res_rquota_getquota.status = Q_OK ; 
 
   pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_active = TRUE ;
+  pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_bsize = fsal_quota.bsize ;
   pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_bhardlimit = fsal_quota.bhardlimit ;
   pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_bsoftlimit = fsal_quota.bsoftlimit ;
   pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_curblocks = fsal_quota.curblocks ;
