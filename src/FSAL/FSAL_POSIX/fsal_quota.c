@@ -35,6 +35,10 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 
+/* For quotactl */
+#include <sys/quota.h>
+#include <sys/types.h>
+
 /**
  * FSAL_get_quota :
  * Gets the quota for a given path.
@@ -54,7 +58,27 @@ fsal_status_t FSAL_get_quota( fsal_path_t * pfsal_path, /* IN */
                               fsal_uid_t    fsal_uid,
                               fsal_quota_t * pquota )  /* OUT */
 {
-   ReturnCode( ERR_FSAL_NO_QUOTA, 0 ) ;
+  struct dqblk fs_quota ;
+
+  if( !pfsal_path || !pquota )
+   ReturnCode( ERR_FSAL_FAULT, 0 ) ;
+
+  memset( (char *)&fs_quota, 0, sizeof( struct dqblk ) );
+
+  if( quotactl( FSAL_QCMD(Q_GETQUOTA,USRQUOTA), pfsal_path->path, fsal_uid, (caddr_t)&fs_quota ) < 0 )
+     ReturnCode(posix2fsal_error(errno), errno);
+
+  /* Convert XFS structure to FSAL one */
+  pquota->bhardlimit = fs_quota.dqb_bhardlimit ;
+  pquota->bsoftlimit = fs_quota.dqb_bsoftlimit ;
+  pquota->curblocks = fs_quota.dqb_curspace ;
+  pquota->fhardlimit = fs_quota.dqb_ihardlimit ;
+  pquota->curfiles = fs_quota.dqb_curinodes ;
+  pquota->btimeleft = fs_quota.dqb_btime ;
+  pquota->ftimeleft = fs_quota.dqb_itime ;
+  pquota->bsize = DEV_BSIZE;
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
 } /*  FSAL_get_quota */
 
 /**
@@ -77,10 +101,60 @@ fsal_status_t FSAL_get_quota( fsal_path_t * pfsal_path, /* IN */
 
 fsal_status_t FSAL_set_quota ( fsal_path_t * pfsal_path, /* IN */
                                fsal_uid_t    fsal_uid,   /* IN */
-                               fsal_quota_t * pquot,     /* IN */
-                               fsal_quota_t * presquot ) /* OUT */
+                               fsal_quota_t * pquota,     /* IN */
+                               fsal_quota_t * presquota ) /* OUT */
 {
-   ReturnCode( ERR_FSAL_NO_QUOTA, 0 ) ;
+  struct dqblk fs_quota ;
+  fsal_status_t fsal_status ;
+
+  if( !pfsal_path || !pquota )
+   ReturnCode( ERR_FSAL_FAULT, 0 ) ;
+
+  memset( (char *)&fs_quota, 0, sizeof( struct dqblk ) ) ;
+
+  /* Convert FSAL structure to XFS one */
+  if( pquota->bhardlimit != 0 )
+   {
+     fs_quota.dqb_bhardlimit = pquota->bhardlimit ;
+     fs_quota.dqb_valid |= QIF_BLIMITS ;
+   }
+
+  if( pquota->bsoftlimit != 0 )
+   {
+     fs_quota.dqb_bsoftlimit = pquota->bsoftlimit ;
+     fs_quota.dqb_valid |= QIF_BLIMITS ;
+   }
+
+  if( pquota->fhardlimit != 0 )
+   {
+     fs_quota.dqb_ihardlimit = pquota->fhardlimit  ;
+     fs_quota.dqb_valid |= QIF_ILIMITS ;
+   }
+
+  if( pquota->btimeleft != 0 )
+   {
+     fs_quota.dqb_btime = pquota->btimeleft ;
+     fs_quota.dqb_valid |= QIF_BTIME ;
+   }
+
+  if( pquota->ftimeleft != 0 )
+   {
+     fs_quota.dqb_itime = pquota->ftimeleft ;
+     fs_quota.dqb_valid |= QIF_ITIME ;
+   }
+
+  if( quotactl( FSAL_QCMD( Q_SETQUOTA, USRQUOTA ), pfsal_path->path, fsal_uid, (caddr_t)&fs_quota ) < 0 )
+     ReturnCode(posix2fsal_error(errno), errno);
+
+  if( presquota != NULL )
+   {
+      fsal_status = FSAL_get_quota( pfsal_path, fsal_uid, presquota ) ;
+      
+      if( FSAL_IS_ERROR( fsal_status ) )
+       return fsal_status ;
+   }
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
 } /*  FSAL_set_quota */
 
 
