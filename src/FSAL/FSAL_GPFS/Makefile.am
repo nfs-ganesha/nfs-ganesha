@@ -1,6 +1,7 @@
 SUBDIRS = kernel
 
 EXTRA_DIST = kernel/append_handle_prg.c \
+	kernel/create_handle_from_fd_prg.c \
 	kernel/create_handle_prg.c \
 	kernel/handle.h \
 	kernel/handle_ioctl.c \
