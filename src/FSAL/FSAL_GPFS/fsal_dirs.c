@@ -263,7 +263,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
         strncpy(entry_name.name, dp->d_name, sizeof(entry_name.name));
         entry_name.len = strlen(entry_name.name);
 
-        if(FSAL_IS_ERROR(st = fsal_internal_handle_at(p_dir_descriptor->fd, &entry_name, &(p_pdirent[*p_nb_entries].handle))))
+        if(FSAL_IS_ERROR(st = fsal_internal_get_handle_at(p_dir_descriptor->fd, &entry_name, &(p_pdirent[*p_nb_entries].handle))))
             ReturnStatus(st, INDEX_FSAL_readdir);
 
         if(FSAL_IS_ERROR(st = fsal_internal_handle2fd_at(p_dir_descriptor->fd, &(p_pdirent[*p_nb_entries].handle), &tmpfd, O_RDONLY | O_NOFOLLOW ))) 
