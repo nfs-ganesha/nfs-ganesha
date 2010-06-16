@@ -679,7 +679,7 @@ fsal_status_t fsal_internal_link_at(
   linkarg.file_fd = srcfd;
   linkarg.name = name;
 
-  if( ( rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &linkarg) ) < 0 )
+  if( ( rc = ioctl(open_by_handle_fd, OPENHANDLE_LINK_BY_FD, &linkarg) ) < 0 )
   {
     DisplayLogLevel(NIV_EVENT, "What's going on!!!! rc = %d, srcfd = %d, dstfd = %d", rc, linkarg.file_fd, linkarg.dir_fd);
 
