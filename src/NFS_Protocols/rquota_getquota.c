@@ -88,12 +88,6 @@ int rquota_getquota(nfs_arg_t * parg /* IN     */ ,
   fsal_quota_t  fsal_quota ;
   fsal_path_t   fsal_path ;
 
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-                    "REQUEST PROCESSING: Calling getquota_Null");
-
-  printf( "---> requota_getquota : gqa_path=%s gqa_id=%d\n",
-          parg->arg_rquota_getquota.gqa_pathp, parg->arg_rquota_getquota.gqa_uid ) ;
-
   if(FSAL_IS_ERROR((fsal_status = FSAL_str2path( parg->arg_rquota_getquota.gqa_pathp,
                                                  MAXPATHLEN,
                                                  &fsal_path ))))
@@ -114,7 +108,7 @@ int rquota_getquota(nfs_arg_t * parg /* IN     */ ,
        return NFS_REQ_OK ;
     }
 
-  /* 0 is success */
+  /* success */
   pres->res_rquota_getquota.status = Q_OK ; 
 
   pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_active = TRUE ;
@@ -127,7 +121,7 @@ int rquota_getquota(nfs_arg_t * parg /* IN     */ ,
   pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_ftimeleft = fsal_quota.ftimeleft ;
 
   return NFS_REQ_OK ;
-}
+} /* rquota_getquota */
 
 /**
  * rquota_getquota_Free: Frees the result structure allocated for rquota_getquota
