@@ -211,6 +211,10 @@ static struct dentry *handle_to_dentry(int mountdirfd,
 		retval = PTR_ERR(dentry);
 		goto out_mnt;
 	}
+        if (!dentry) {
+		retval = -ESTALE;
+		goto out_mnt;
+        }
 	*mntp = mnt;
 	return dentry;
 out_mnt:
