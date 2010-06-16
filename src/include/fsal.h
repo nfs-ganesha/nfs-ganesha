@@ -756,7 +756,7 @@ void FSAL_get_stats(fsal_statistics_t * stats,  /* OUT */
 char *FSAL_GetFSName();
 
 /******************************************************
- *                FSAL cwquota related functions.
+ *                FSAL quota related functions.
  ******************************************************/
 fsal_status_t FSAL_get_quota( fsal_path_t * pfsal_path, /* IN */
                               fsal_uid_t    fsal_uid,   /* IN */

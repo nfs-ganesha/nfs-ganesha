@@ -125,6 +125,9 @@ int posix2fsal_error(int posix_errorcode)
     case EDQUOT:
       return ERR_FSAL_DQUOT;
 
+    case ESRCH: /* Returned by quotaclt */
+      return ERR_FSAL_NO_QUOTA ;
+
     case ENAMETOOLONG:
       return ERR_FSAL_NAMETOOLONG;
 

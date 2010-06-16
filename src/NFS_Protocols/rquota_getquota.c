@@ -84,13 +84,49 @@ int rquota_getquota(nfs_arg_t * parg /* IN     */ ,
                     struct svc_req *preq /* IN     */ ,
                     nfs_res_t * pres /* OUT    */ )
 {
+  fsal_status_t fsal_status ;
+  fsal_quota_t  fsal_quota ;
+  fsal_path_t   fsal_path ;
+
   DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
                     "REQUEST PROCESSING: Calling getquota_Null");
- 
+
   printf( "---> requota_getquota : gqa_path=%s gqa_id=%d\n",
           parg->arg_rquota_getquota.gqa_pathp, parg->arg_rquota_getquota.gqa_uid ) ;
+
+  if(FSAL_IS_ERROR((fsal_status = FSAL_str2path( parg->arg_rquota_getquota.gqa_pathp,
+                                                 MAXPATHLEN,
+                                                 &fsal_path ))))
+    {
+       pres->res_rquota_getquota.status = Q_EPERM ; 
+       return NFS_REQ_OK ;
+    }
+
+  fsal_status = FSAL_get_quota( &fsal_path,
+			        parg->arg_rquota_getquota.gqa_uid,
+				&fsal_quota ) ;
+  if( FSAL_IS_ERROR( fsal_status ) ) 
+    {
+       if( fsal_status.major == ERR_FSAL_NO_QUOTA )
+         pres->res_rquota_getquota.status = Q_NOQUOTA ; 
+       else
+         pres->res_rquota_getquota.status = Q_EPERM ; 
+       return NFS_REQ_OK ;
+    }
+
   /* 0 is success */
-  return 0;
+  pres->res_rquota_getquota.status = Q_OK ; 
+
+  pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_active = TRUE ;
+  pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_bhardlimit = fsal_quota.bhardlimit ;
+  pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_bsoftlimit = fsal_quota.bsoftlimit ;
+  pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_curblocks = fsal_quota.curblocks ;
+  pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_fhardlimit = fsal_quota.fhardlimit ;
+  pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_fsoftlimit = fsal_quota.fsoftlimit ;
+  pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_btimeleft = fsal_quota.btimeleft ;
+  pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_ftimeleft = fsal_quota.ftimeleft ;
+
+  return NFS_REQ_OK ;
 }
 
 /**

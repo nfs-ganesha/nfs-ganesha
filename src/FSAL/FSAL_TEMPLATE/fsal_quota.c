@@ -54,7 +54,7 @@ fsal_status_t FSAL_get_quota( fsal_path_t * pfsal_path, /* IN */
                               fsal_uid_t    fsal_uid,
                               fsal_quota_t * pquota )  /* OUT */
 {
-   ReturnCode( ERR_FSAL_NOTSUPP, 0 ) ;
+   ReturnCode( ERR_FSAL_NO_QUOTA, 0 ) ;
 } /*  FSAL_get_quota */
 
 /**
@@ -80,7 +80,7 @@ fsal_status_t FSAL_set_quota ( fsal_path_t * pfsal_path, /* IN */
                                fsal_quota_t * pquot,     /* IN */
                                fsal_quota_t * presquot ) /* OUT */
 {
-   ReturnCode( ERR_FSAL_NOTSUPP, 0 ) ;
+   ReturnCode( ERR_FSAL_NO_QUOTA, 0 ) ;
 } /*  FSAL_set_quota */
 
 

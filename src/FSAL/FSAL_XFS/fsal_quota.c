@@ -35,6 +35,16 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 
+/* For quotactl */
+#include <sys/quota.h>
+#include <sys/types.h>
+#include <xfs/xqm.h>
+
+/*
+ * Reminder on activation of XFS quota:
+ *  1) add option 'uquota' to xfs related entry in /etc/fstab
+ */
+
 /**
  * FSAL_get_quota :
  * Gets the quota for a given path.
@@ -54,7 +64,26 @@ fsal_status_t FSAL_get_quota( fsal_path_t * pfsal_path, /* IN */
                               fsal_uid_t    fsal_uid,
                               fsal_quota_t * pquota )  /* OUT */
 {
-   ReturnCode( ERR_FSAL_NOTSUPP, 0 ) ;
+  struct dqblk xfs_quota ;
+
+  if( !pfsal_path || !pquota )
+   ReturnCode( ERR_FSAL_FAULT, 0 ) ;
+
+  memset( (char *)&xfs_quota, 0, sizeof( struct dqblk ) );
+
+  if( quotactl( Q_GETQUOTA, pfsal_path->path, fsal_uid, (caddr_t)&xfs_quota ) < 0 )
+     ReturnCode(posix2fsal_error(errno), errno);
+
+  /* Convert XFS structure to FSAL one */
+  pquota->bhardlimit = xfs_quota.dqb_bhardlimit ;
+  pquota->bsoftlimit = xfs_quota.dqb_bsoftlimit ;
+  pquota->curblocks = xfs_quota.dqb_curspace ;
+  pquota->fhardlimit = xfs_quota.dqb_ihardlimit ;
+  pquota->curfiles = xfs_quota.dqb_curinodes ;
+  pquota->btimeleft = xfs_quota.dqb_btime ;
+  pquota->ftimeleft = xfs_quota.dqb_itime ;
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
 } /*  FSAL_get_quota */
 
 /**
@@ -77,10 +106,51 @@ fsal_status_t FSAL_get_quota( fsal_path_t * pfsal_path, /* IN */
 
 fsal_status_t FSAL_set_quota ( fsal_path_t * pfsal_path, /* IN */
                                fsal_uid_t    fsal_uid,   /* IN */
-                               fsal_quota_t * pquot,     /* IN */
-                               fsal_quota_t * presquot ) /* OUT */
+                               fsal_quota_t * pquota,     /* IN */
+                               fsal_quota_t * presquotia ) /* OUT */
 {
-   ReturnCode( ERR_FSAL_NOTSUPP, 0 ) ;
+  struct dqblk xfs_quota ;
+
+  if( !pfsal_path || !pquota )
+   ReturnCode( ERR_FSAL_FAULT, 0 ) ;
+
+  memset( (char *)&xfs_quota, 0, sizeof( struct dqblk ) ) ;
+
+  /* Convert FSAL structure to XFS one */
+  if( pquota->bhardlimit != 0 )
+   {
+     xfs_quota.dqb_bhardlimit = pquota->bhardlimit ;
+     xfs_quota.dqb_valid |= QIF_BLIMITS ;
+   }
+
+  if( pquota->bsoftlimit != 0 )
+   {
+     xfs_quota.dqb_bsoftlimit = pquota->bsoftlimit ;
+     xfs_quota.dqb_valid |= QIF_BLIMITS ;
+   }
+
+  if( pquota->fhardlimit != 0 )
+   {
+     xfs_quota.dqb_ihardlimit = pquota->fhardlimit  ;
+     xfs_quota.dqb_valid |= QIF_ILIMITS ;
+   }
+
+  if( pquota->btimeleft != 0 )
+   {
+     xfs_quota.dqb_btime = pquota->btimeleft ;
+     xfs_quota.dqb_valid |= QIF_BTIME ;
+   }
+
+  if( pquota->ftimeleft != 0 )
+   {
+     xfs_quota.dqb_itime = pquota->ftimeleft ;
+     xfs_quota.dqb_valid |= QIF_ITIME ;
+   }
+
+  if( quotactl( Q_SETQUOTA, pfsal_path->path, fsal_uid, (caddr_t)&xfs_quota ) < 0 )
+     ReturnCode(posix2fsal_error(errno), errno);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
 } /*  FSAL_set_quota */
 
 
