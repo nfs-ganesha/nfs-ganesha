@@ -680,11 +680,7 @@ fsal_status_t fsal_internal_link_at(
   linkarg.name = name;
 
   if( ( rc = ioctl(open_by_handle_fd, OPENHANDLE_LINK_BY_FD, &linkarg) ) < 0 )
-  {
-    DisplayLogLevel(NIV_EVENT, "What's going on!!!! rc = %d, srcfd = %d, dstfd = %d", rc, linkarg.file_fd, linkarg.dir_fd);
-
     ReturnCode(posix2fsal_error(errno), errno);
-  }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
   
