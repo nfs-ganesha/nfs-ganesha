@@ -13,6 +13,7 @@ libfsalghostfs_la_SOURCES = fsal_access.c  fsal_context.c  fsal_dirs.c       \
 			    fsal_create.c   fsal_fileop.c  fsal_internal.c   \
                             fsal_objectres.c  fsal_stats.c   fsal_tools.c    \
                             fsal_xattrs.c                                    \
+                            fsal_quota.c                                     \
                             fsal_local_op.c                                  \
 			    fsal_convertions.h fsal_internal.h               \
                             ../../include/fsal.h                             \
