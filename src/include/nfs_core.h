@@ -142,6 +142,7 @@
 
 /* NFS/RPC specific values */
 #define NFS_PORT             2049
+#define RQUOTA_PORT           875
 #define	RQCRED_SIZE	     400        /* this size is excessive */
 #define NFS_SEND_BUFFER_SIZE 32768
 #define NFS_RECV_BUFFER_SIZE 32768

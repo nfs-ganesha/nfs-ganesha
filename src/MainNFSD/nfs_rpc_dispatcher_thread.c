@@ -798,6 +798,10 @@ int nfs_Init_svc()
   rpcb_unset(nfs_param.core_param.nlm_program, NLM4_VERS, netconfig_tcpv4);
 
   rpcb_unset(nfs_param.core_param.rquota_program, RQUOTAVERS, netconfig_tcpv4);
+  rpcb_unset(nfs_param.core_param.rquota_program, EXT_RQUOTAVERS, netconfig_tcpv4);
+
+  rpcb_unset(nfs_param.core_param.rquota_program, RQUOTAVERS, netconfig_udpv4);
+  rpcb_unset(nfs_param.core_param.rquota_program, EXT_RQUOTAVERS, netconfig_udpv4);
 #ifdef _USE_TIRPC_IPV6
   /* Unset rpcbind registration for IPv6 related protocols */
   rpcb_unset(nfs_param.core_param.nfs_program, NFS_V2, netconfig_udpv6);
@@ -815,7 +819,10 @@ int nfs_Init_svc()
   rpcb_unset(nfs_param.core_param.mnt_program, MOUNT_V3, netconfig_tcpv6);
 
   rpcb_unset(nfs_param.core_param.rquota_program, RQUOTAVERS, netconfig_tcpv6);
+  rpcb_unset(nfs_param.core_param.rquota_program, EXT_RQUOTAVERS, netconfig_tcpv6);
 
+  rpcb_unset(nfs_param.core_param.rquota_program, RQUOTAVERS, netconfig_udpv6);
+  rpcb_unset(nfs_param.core_param.rquota_program, EXT_RQUOTAVERS, netconfig_udpv6);
 #endif                          /* _USE_TIRPC_IPV6 */
 #else
   /* Unset the port mapper */
@@ -829,6 +836,7 @@ int nfs_Init_svc()
   pmap_unset(nfs_param.core_param.nlm_program, NLM4_VERS);
 
   pmap_unset(nfs_param.core_param.rquota_program, RQUOTAVERS);
+  pmap_unset(nfs_param.core_param.rquota_program, EXT_RQUOTAVERS);
 #endif
 
   /* Allocation of the SVCXPRT */
@@ -1380,22 +1388,76 @@ int nfs_Init_svc()
 
 #ifdef _USE_QUOTA
 #if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
+
   DisplayLogLevel(NIV_EVENT, "Registering RQUOTA/UDP");
 #ifdef _USE_TIRPC
   if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_rquota_udp,
               nfs_param.core_param.rquota_program,
-              NLM4_VERS, nfs_rpc_dispatch_dummy, netconfig_udpv4))
+              RQUOTAVERS, nfs_rpc_dispatch_dummy, netconfig_udpv4))
 #else
   if(!Svc_register(nfs_param.worker_param.nfs_svc_data.xprt_rquota_udp,
                    nfs_param.core_param.rquota_program,
-                   NLM4_VERS, nfs_rpc_dispatch_dummy, IPPROTO_UDP))
+                   RQUOTAVERS, nfs_rpc_dispatch_dummy, IPPROTO_UDP))
 #endif /* _USE_TIRPC */
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
-      DisplayLog("NFS DISPATCHER: Cannot register NLM V4 on UDP");
+      DisplayLog("NFS DISPATCHER: Cannot register RQUOTA v1 on UDP");
     }
   else
     nb_svc_rquota_ok += 1;
+
+  DisplayLogLevel(NIV_EVENT, "Registering RQUOTA/TCP");
+#ifdef _USE_TIRPC
+  if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_rquota_tcp,
+              nfs_param.core_param.rquota_program,
+              RQUOTAVERS, nfs_rpc_dispatch_dummy, netconfig_tcpv4))
+#else
+  if(!Svc_register(nfs_param.worker_param.nfs_svc_data.xprt_rquota_tcp,
+                   nfs_param.core_param.rquota_program,
+                   RQUOTAVERS, nfs_rpc_dispatch_dummy, IPPROTO_TCP))
+#endif /* _USE_TIRPC */
+    {
+      DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
+      DisplayLog("NFS DISPATCHER: Cannot register RQUOTA v1 on TCP");
+    }
+  else
+    nb_svc_rquota_ok += 1;
+
+  DisplayLogLevel(NIV_EVENT, "Registering EXT_RQUOTA/UDP");
+#ifdef _USE_TIRPC
+  if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_rquota_udp,
+              nfs_param.core_param.rquota_program,
+              EXT_RQUOTAVERS, nfs_rpc_dispatch_dummy, netconfig_udpv4))
+#else
+  if(!Svc_register(nfs_param.worker_param.nfs_svc_data.xprt_rquota_udp,
+                   nfs_param.core_param.rquota_program,
+                   EXT_RQUOTAVERS, nfs_rpc_dispatch_dummy, IPPROTO_UDP))
+#endif /* _USE_TIRPC */
+    {
+      DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
+      DisplayLog("NFS DISPATCHER: Cannot register RQUOTA v2 on UDP");
+    }
+  else
+    nb_svc_rquota_ok += 1;
+
+  DisplayLogLevel(NIV_EVENT, "Registering EXT_RQUOTA/TCP");
+#ifdef _USE_TIRPC
+  if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_rquota_tcp,
+              nfs_param.core_param.rquota_program,
+              EXT_RQUOTAVERS, nfs_rpc_dispatch_dummy, netconfig_tcpv4))
+#else
+  if(!Svc_register(nfs_param.worker_param.nfs_svc_data.xprt_rquota_tcp,
+                   nfs_param.core_param.rquota_program,
+                   EXT_RQUOTAVERS, nfs_rpc_dispatch_dummy, IPPROTO_TCP))
+#endif /* _USE_TIRPC */
+    {
+      DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
+      DisplayLog("NFS DISPATCHER: Cannot register RQUOTA v2 on TCP");
+    }
+  else
+    nb_svc_rquota_ok += 1;
+
+
 #else
   nb_svc_rquota_ok = 1;
 #endif                     /* _USE_PROXY */
