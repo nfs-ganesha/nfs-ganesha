@@ -710,7 +710,14 @@ typedef struct fsal_buffdesc__
 /* quotas */
 typedef struct fsal_quota__
 { 
-  unsigned int nothing_for_now ;
+  u_int bhardlimit;
+  u_int bsoftlimit;
+  u_int curblocks;
+  u_int fhardlimit;
+  u_int fsoftlimit;
+  u_int curfiles;
+  u_int btimeleft;
+  u_int ftimeleft;
 } fsal_quota_t;
 
 /* output digest sizes */
