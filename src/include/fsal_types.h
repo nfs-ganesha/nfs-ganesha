@@ -707,6 +707,12 @@ typedef struct fsal_buffdesc__
   char *pointer;
 } fsal_buffdesc_t;
 
+/* quotas */
+typedef struct fsal_quota__
+{ 
+  unsigned int nothing_for_now ;
+} fsal_quota_t;
+
 /* output digest sizes */
 
 #define FSAL_DIGEST_SIZE_HDLV2 29

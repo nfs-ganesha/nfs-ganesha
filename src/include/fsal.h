@@ -756,6 +756,18 @@ void FSAL_get_stats(fsal_statistics_t * stats,  /* OUT */
 char *FSAL_GetFSName();
 
 /******************************************************
+ *                FSAL cwquota related functions.
+ ******************************************************/
+fsal_status_t FSAL_get_quota( fsal_path_t * pfsal_path, /* IN */
+                              fsal_uid_t    fsal_uid,   /* IN */
+                              fsal_quota_t * pquota );  /* OUT */
+
+fsal_status_t FSAL_set_quota ( fsal_path_t * pfsal_path,  /* IN */
+                               fsal_uid_t    fsal_uid,    /* IN */
+                               fsal_quota_t * pquot,      /* IN */
+			       fsal_quota_t * presquot ); /* OUT */
+
+/******************************************************
  *                Standard convertion routines.
  ******************************************************/
 
