@@ -84,11 +84,59 @@ int rquota_setquota(nfs_arg_t * parg /* IN     */ ,
              struct svc_req *preq /* IN     */ ,
              nfs_res_t * pres /* OUT    */ )
 {
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-                    "REQUEST PROCESSING: Calling setquota_Null");
-  /* 0 is success */
+  fsal_status_t fsal_status ;
+  fsal_quota_t  fsal_quota_in ;
+  fsal_quota_t  fsal_quota_out ;
+  fsal_path_t   fsal_path ;
+
+  if(FSAL_IS_ERROR((fsal_status = FSAL_str2path( parg->arg_rquota_setquota.sqa_pathp,
+                                                 MAXPATHLEN,
+                                                 &fsal_path ))))
+    {
+       pres->res_rquota_setquota.status = Q_EPERM ; 
+       return NFS_REQ_OK ;
+    }
+
+  memset( (char *)&fsal_quota_in, 0, sizeof( fsal_quota_t ) ) ;
+  memset( (char *)&fsal_quota_out, 0, sizeof( fsal_quota_t ) ) ;
+
+  fsal_quota_in.bhardlimit = parg->arg_rquota_setquota.sqa_dqblk.rq_bhardlimit;
+  fsal_quota_in.bsoftlimit = parg->arg_rquota_setquota.sqa_dqblk.rq_bsoftlimit  ;
+  fsal_quota_in.curblocks = parg->arg_rquota_setquota.sqa_dqblk.rq_curblocks ;
+  fsal_quota_in.fhardlimit = parg->arg_rquota_setquota.sqa_dqblk.rq_fhardlimit ;
+  fsal_quota_in.fsoftlimit= parg->arg_rquota_setquota.sqa_dqblk.rq_fsoftlimit ;
+  fsal_quota_in.btimeleft = parg->arg_rquota_setquota.sqa_dqblk.rq_btimeleft ;
+  fsal_quota_in.ftimeleft= parg->arg_rquota_setquota.sqa_dqblk.rq_ftimeleft  ;
+
+  fsal_status = FSAL_set_quota( &fsal_path,
+                                parg->arg_rquota_setquota.sqa_id, 
+				&fsal_quota_in,
+				&fsal_quota_out ) ;
+   if( FSAL_IS_ERROR( fsal_status ) ) 
+    {
+       if( fsal_status.major == ERR_FSAL_NO_QUOTA )
+         pres->res_rquota_setquota.status = Q_NOQUOTA ; 
+       else
+         pres->res_rquota_setquota.status = Q_EPERM ; 
+       return NFS_REQ_OK ;
+     }
+
+  /* is success */
+ pres->res_rquota_getquota.status = Q_OK ; 
+
+  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_active = TRUE ;
+  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_bhardlimit = fsal_quota_out.bhardlimit ;
+  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_bsoftlimit = fsal_quota_out.bsoftlimit ;
+  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_curblocks = fsal_quota_out.curblocks ;
+  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_fhardlimit = fsal_quota_out.fhardlimit ;
+  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_fsoftlimit = fsal_quota_out.fsoftlimit ;
+  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_btimeleft = fsal_quota_out.btimeleft ;
+  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_ftimeleft = fsal_quota_out.ftimeleft ;
+
+  return NFS_REQ_OK ;
+
   return 0;
-}
+} /* rquota_setquota */
 
 /**
  * rquota_setquota_Free: Frees the result structure allocated for rquota_setquota

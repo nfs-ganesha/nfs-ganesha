@@ -107,9 +107,10 @@ fsal_status_t FSAL_get_quota( fsal_path_t * pfsal_path, /* IN */
 fsal_status_t FSAL_set_quota ( fsal_path_t * pfsal_path, /* IN */
                                fsal_uid_t    fsal_uid,   /* IN */
                                fsal_quota_t * pquota,     /* IN */
-                               fsal_quota_t * presquotia ) /* OUT */
+                               fsal_quota_t * presquota ) /* OUT */
 {
   struct dqblk xfs_quota ;
+  fsal_status_t fsal_status ;
 
   if( !pfsal_path || !pquota )
    ReturnCode( ERR_FSAL_FAULT, 0 ) ;
@@ -149,6 +150,14 @@ fsal_status_t FSAL_set_quota ( fsal_path_t * pfsal_path, /* IN */
 
   if( quotactl( Q_SETQUOTA, pfsal_path->path, fsal_uid, (caddr_t)&xfs_quota ) < 0 )
      ReturnCode(posix2fsal_error(errno), errno);
+
+  if( presquota != NULL )
+   {
+      fsal_status = FSAL_get_quota( pfsal_path, fsal_uid, presquota ) ;
+      
+      if( FSAL_IS_ERROR( fsal_status ) )
+       return fsal_status ;
+   }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 } /*  FSAL_set_quota */
