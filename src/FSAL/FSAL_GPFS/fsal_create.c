@@ -443,8 +443,6 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   rc = fstat( dstfd, &buffstat_dir);
   errsv = errno;
   ReleaseTokenFSCall();
-  
-  DisplayLogLevel(NIV_EVENT, "What's going on!!!! rc = %d, srcfd = %d, dstfd = %d", rc, srcfd, dstfd);
 
   if(rc < 0)
   {
