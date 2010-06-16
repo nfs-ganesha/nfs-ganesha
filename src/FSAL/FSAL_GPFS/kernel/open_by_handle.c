@@ -88,13 +88,11 @@ long openhandle_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 int openhandle_open(struct inode *inode, struct file *filp)
 {
-	printk(KERN_INFO "-> openhandle_open(inode %p, filp %p)\n", inode, filp);
 	return 0; /* success */
 }
 
 int openhandle_release(struct inode *inode, struct file *filp)
 {
-	printk(KERN_INFO "-> openhandle_release(inode %p, file %p)\n", inode, filp);
 	return 0;
 }
 
