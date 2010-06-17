@@ -132,7 +132,7 @@ struct file_handle {
   int handle_size;
   int handle_type;
   /* file identifier */
-  unsigned char f_handle[20];
+  unsigned char f_handle[OPENHANDLE_HANDLE_LEN];
 };
 
 /**
@@ -180,7 +180,7 @@ struct readlink_arg {
 
 typedef struct
 {
-  unsigned int fsid[2];
+//  unsigned int fsid[2];
   struct file_handle handle;
 } fsal_handle_t;  /**< FS object handle */
 
