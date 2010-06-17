@@ -38,6 +38,7 @@
 /* For quotactl */
 #include <sys/quota.h>
 #include <sys/types.h>
+#include <string.h>
 
 /**
  * FSAL_get_quota :
@@ -45,6 +46,8 @@
  *
  * \param  pfsal_path
  *        path to the filesystem whose quota are requested
+ * \param quota_type
+ *         the kind of requested quota (user or group)
  * \param  fsal_uid
  * 	  uid for the user whose quota are requested
  * \param pquota (input):
@@ -55,7 +58,8 @@
  *        - Another error code if an error occured.
  */
 fsal_status_t FSAL_get_quota( fsal_path_t * pfsal_path, /* IN */
-                              fsal_uid_t    fsal_uid,
+                              int quota_type,           /* IN */
+                              fsal_uid_t    fsal_uid,   /* IN */
                               fsal_quota_t * pquota )  /* OUT */
 {
   struct dqblk fs_quota ;
@@ -69,7 +73,7 @@ fsal_status_t FSAL_get_quota( fsal_path_t * pfsal_path, /* IN */
 
   memset( (char *)&fs_quota, 0, sizeof( struct dqblk ) );
 
-  if( quotactl( FSAL_QCMD(Q_GETQUOTA,USRQUOTA), fs_spec, fsal_uid, (caddr_t)&fs_quota ) < 0 )
+  if( quotactl( FSAL_QCMD(Q_GETQUOTA,quota_type), fs_spec, fsal_uid, (caddr_t)&fs_quota ) < 0 )
      ReturnCode(posix2fsal_error(errno), errno);
 
   /* Convert XFS structure to FSAL one */
@@ -91,6 +95,8 @@ fsal_status_t FSAL_get_quota( fsal_path_t * pfsal_path, /* IN */
  *
  * \param  pfsal_path
  *        path to the filesystem whose quota are requested
+ * \param quota_type
+ *         the kind of requested quota (user or group)
  * \param  fsal_uid
  * 	  uid for the user whose quota are requested
  * \param pquota (input):
@@ -104,6 +110,7 @@ fsal_status_t FSAL_get_quota( fsal_path_t * pfsal_path, /* IN */
  */
 
 fsal_status_t FSAL_set_quota ( fsal_path_t * pfsal_path, /* IN */
+                               int quota_type,           /* IN */
                                fsal_uid_t    fsal_uid,   /* IN */
                                fsal_quota_t * pquota,     /* IN */
                                fsal_quota_t * presquota ) /* OUT */
@@ -151,12 +158,12 @@ fsal_status_t FSAL_set_quota ( fsal_path_t * pfsal_path, /* IN */
      fs_quota.dqb_valid |= QIF_ITIME ;
    }
 
-  if( quotactl( FSAL_QCMD( Q_SETQUOTA, USRQUOTA ), fs_spec, fsal_uid, (caddr_t)&fs_quota ) < 0 )
+  if( quotactl( FSAL_QCMD( Q_SETQUOTA, quota_type ), fs_spec, fsal_uid, (caddr_t)&fs_quota ) < 0 )
      ReturnCode(posix2fsal_error(errno), errno);
 
   if( presquota != NULL )
    {
-      fsal_status = FSAL_get_quota( pfsal_path, fsal_uid, presquota ) ;
+      fsal_status = FSAL_get_quota( pfsal_path, quota_type, fsal_uid, presquota ) ;
       
       if( FSAL_IS_ERROR( fsal_status ) )
        return fsal_status ;

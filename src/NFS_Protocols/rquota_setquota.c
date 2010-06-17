@@ -34,6 +34,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
+#include <sys/quota.h> /* For USRQUOTA */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -61,6 +62,9 @@
 #include "rquota.h"
 #include "nfs_proto_functions.h"
 
+
+extern nfs_parameter_t nfs_param;
+
 /**
  * rquota_setquota: The Rquota setquota function, for all versions.
  *
@@ -75,7 +79,6 @@
  *  @param pres        [OUT]   ignored
  *
  */
-
 int rquota_setquota(nfs_arg_t * parg /* IN     */ ,
              exportlist_t * pexport /* IN     */ ,
              fsal_op_context_t * pcontext /* IN     */ ,
@@ -88,8 +91,20 @@ int rquota_setquota(nfs_arg_t * parg /* IN     */ ,
   fsal_quota_t  fsal_quota_in ;
   fsal_quota_t  fsal_quota_out ;
   fsal_path_t   fsal_path ;
-
+  int quota_type = USRQUOTA ;
+  int quota_id ;
   char work[MAXPATHLEN] ;
+
+  if( preq->rq_vers == EXT_RQUOTAVERS )
+   {
+     quota_type =  parg->arg_ext_rquota_getquota.gqa_type ;
+     quota_id =  parg->arg_ext_rquota_getquota.gqa_id ;
+   }
+  else
+    {
+      quota_type = USRQUOTA ; 
+      quota_id = parg->arg_rquota_getquota.gqa_uid ; 
+    }
 
   if( parg->arg_rquota_getquota.gqa_pathp[0] == '/' )
    strncpy( work, parg->arg_rquota_getquota.gqa_pathp, MAXPATHLEN ) ;
@@ -128,7 +143,8 @@ int rquota_setquota(nfs_arg_t * parg /* IN     */ ,
   fsal_quota_in.ftimeleft= parg->arg_rquota_setquota.sqa_dqblk.rq_ftimeleft  ;
 
   fsal_status = FSAL_set_quota( &fsal_path,
-                                parg->arg_rquota_setquota.sqa_id, 
+				quota_type,
+                                quota_id,
 				&fsal_quota_in,
 				&fsal_quota_out ) ;
    if( FSAL_IS_ERROR( fsal_status ) ) 

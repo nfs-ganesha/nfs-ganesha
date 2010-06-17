@@ -761,10 +761,12 @@ char *FSAL_GetFSName();
 #define FSAL_QCMD(cmd, type)  (((cmd) << SUBCMDSHIFT) | ((type) & SUBCMDMASK))
 
 fsal_status_t FSAL_get_quota( fsal_path_t * pfsal_path, /* IN */
+                              int           quota_type, /* IN */
                               fsal_uid_t    fsal_uid,   /* IN */
                               fsal_quota_t * pquota );  /* OUT */
 
 fsal_status_t FSAL_set_quota ( fsal_path_t * pfsal_path,  /* IN */
+                               int           quota_type,  /* IN */
                                fsal_uid_t    fsal_uid,    /* IN */
                                fsal_quota_t * pquot,      /* IN */
 			       fsal_quota_t * presquot ); /* OUT */
