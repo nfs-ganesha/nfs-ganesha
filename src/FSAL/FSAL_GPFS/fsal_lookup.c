@@ -185,7 +185,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
 
   
   /* This might be a race, but it's the best we can currently do */
-  status = fsal_internal_handle_at( parentfd, p_filename->name, p_object_handle ) ;
+  status = fsal_internal_get_handle_at( parentfd, p_filename->name, p_object_handle ) ;
   close( parentfd ) ;
   close( objectfd ) ;
 
@@ -253,7 +253,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
 
   /* directly call the lookup function */
 
-  status = fsal_internal_Path2Handle(p_context, p_path, object_handle);
+  status = fsal_internal_get_handle(p_context, p_path, object_handle);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_lookupPath);
 
