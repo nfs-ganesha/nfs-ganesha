@@ -217,13 +217,22 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
   ReleaseTokenFSCall();
 
   if(rc)
-   {
+  {
     close( fd ) ;
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
-   }
+  }
+
+  /* now get the associated handle, while there is a race, there is
+     also a race lower down  */
+  status = fsal_internal_get_handle_at(fd, p_linkname, p_link_handle);
+
+  if(FSAL_IS_ERROR(status))
+  {
+    close(fd);
+    ReturnStatus(status, INDEX_FSAL_symlink);
+  }
 
   /* chown the symlink to the current user/group */
-
   TakeTokenFSCall();
   rc = fchownat(fd, p_linkname->name , p_context->credential.user,
               setgid_bit ? -1 : p_context->credential.group, AT_SYMLINK_NOFOLLOW );
