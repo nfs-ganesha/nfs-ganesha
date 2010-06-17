@@ -829,6 +829,10 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
       if(mode & FSAL_MODE_XUSR)
         missing_access &= ~FSAL_X_OK;
 
+      /* handle the creation of a new 500 file correctly */
+      if((missing_access & FSAL_OWNER_OK) != 0)
+        missing_access = 0;
+
       if(missing_access == 0)
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
       else
