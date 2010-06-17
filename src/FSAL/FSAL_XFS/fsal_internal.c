@@ -50,6 +50,7 @@
 #include <xfs/xfs.h>
 #include <xfs/handle.h>
 #include <xfs/parent.h>
+#include <mntent.h>
 
 /* Add missing prototype in xfs/*.h */
 int fd_to_handle(int fd, void **hanp, size_t * hlen);
@@ -799,3 +800,65 @@ fsal_status_t fsal_internal_inum2handle(fsal_op_context_t * p_context,
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /* fsal_internal_inum2handle */
+
+int fsal_internal_path2fsname( char * rpath, char * fs_spec )
+{
+  FILE * fp ;
+  struct mntent mnt ;
+  struct mntent * pmnt ; 
+  char work[MAXPATHLEN] ;
+  char mntdir[MAXPATHLEN];
+
+  size_t pathlen, outlen;
+  int rc = -1 ;
+  
+  pathlen = 0 ;
+  outlen = 0 ;
+
+  if( !rpath || !fs_spec )
+    return -1 ;
+
+  fp = setmntent(MOUNTED, "r");
+
+  if(fp == NULL)
+    return -1 ;
+
+  while((pmnt = getmntent_r(fp, &mnt, work, MAXPATHLEN)) != NULL)
+   {
+      /* get the longer path that matches export path */
+      if( mnt.mnt_dir != NULL)
+        {
+
+          /* Consider only xfs mount points */
+          if(strncmp(mnt.mnt_type, "xfs", 256))
+            continue;
+
+          pathlen = strlen(mnt.mnt_dir);
+
+
+          if((pathlen > outlen) && !strcmp(mnt.mnt_dir, "/"))
+            {
+              outlen = pathlen;
+              strncpy(mntdir, mnt.mnt_dir, MAXPATHLEN);
+              strncpy(fs_spec, mnt.mnt_fsname, MAXPATHLEN);
+            }
+          /* in other cases, the filesystem must be <mountpoint>/<smthg> or <mountpoint>\0 */
+          else if((pathlen > outlen) &&
+                  !strncmp(rpath, mnt.mnt_dir, pathlen) &&
+                  ((rpath[pathlen] == '/') || (rpath[pathlen] == '\0')))
+            {
+              /* printf( "%s is under mountpoint %s, type=%s, fs=%s\n", 
+                              rpath, mnt.mnt_dir, mnt.mnt_type, mnt.mnt_fsname); */
+
+              outlen = pathlen;
+              strncpy(mntdir, mnt.mnt_dir, MAXPATHLEN);
+              strncpy(fs_spec, mnt.mnt_fsname, MAXPATHLEN);
+              rc = 0 ; 
+            }
+        }
+
+   }
+ 
+  endmntent( fp ) ;
+  return rc ; 
+} /* fsal_internal_path2fsname */
