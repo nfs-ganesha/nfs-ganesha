@@ -59,13 +59,17 @@ fsal_status_t FSAL_get_quota( fsal_path_t * pfsal_path, /* IN */
                               fsal_quota_t * pquota )  /* OUT */
 {
   struct dqblk fs_quota ;
+  char fs_spec[MAXPATHLEN] ;
 
   if( !pfsal_path || !pquota )
    ReturnCode( ERR_FSAL_FAULT, 0 ) ;
 
+  if( fsal_internal_path2fsname( pfsal_path->path, fs_spec ) == -1 ) 
+   ReturnCode( ERR_FSAL_INVAL, 0 ) ;
+
   memset( (char *)&fs_quota, 0, sizeof( struct dqblk ) );
 
-  if( quotactl( FSAL_QCMD(Q_GETQUOTA,USRQUOTA), pfsal_path->path, fsal_uid, (caddr_t)&fs_quota ) < 0 )
+  if( quotactl( FSAL_QCMD(Q_GETQUOTA,USRQUOTA), fs_spec, fsal_uid, (caddr_t)&fs_quota ) < 0 )
      ReturnCode(posix2fsal_error(errno), errno);
 
   /* Convert XFS structure to FSAL one */
@@ -106,9 +110,13 @@ fsal_status_t FSAL_set_quota ( fsal_path_t * pfsal_path, /* IN */
 {
   struct dqblk fs_quota ;
   fsal_status_t fsal_status ;
+  char fs_spec[MAXPATHLEN] ;
 
   if( !pfsal_path || !pquota )
    ReturnCode( ERR_FSAL_FAULT, 0 ) ;
+
+  if( fsal_internal_path2fsname( pfsal_path->path, fs_spec ) == -1 ) 
+   ReturnCode( ERR_FSAL_INVAL, 0 ) ;
 
   memset( (char *)&fs_quota, 0, sizeof( struct dqblk ) ) ;
 
@@ -143,7 +151,7 @@ fsal_status_t FSAL_set_quota ( fsal_path_t * pfsal_path, /* IN */
      fs_quota.dqb_valid |= QIF_ITIME ;
    }
 
-  if( quotactl( FSAL_QCMD( Q_SETQUOTA, USRQUOTA ), pfsal_path->path, fsal_uid, (caddr_t)&fs_quota ) < 0 )
+  if( quotactl( FSAL_QCMD( Q_SETQUOTA, USRQUOTA ), fs_spec, fsal_uid, (caddr_t)&fs_quota ) < 0 )
      ReturnCode(posix2fsal_error(errno), errno);
 
   if( presquota != NULL )

@@ -76,6 +76,8 @@
  *
  */
 
+extern nfs_parameter_t nfs_param;
+
 int rquota_getquota(nfs_arg_t * parg /* IN     */ ,
                     exportlist_t * pexport /* IN     */ ,
                     fsal_op_context_t * pcontext /* IN     */ ,
@@ -88,7 +90,26 @@ int rquota_getquota(nfs_arg_t * parg /* IN     */ ,
   fsal_quota_t  fsal_quota ;
   fsal_path_t   fsal_path ;
 
-  if(FSAL_IS_ERROR((fsal_status = FSAL_str2path( /* parg->arg_rquota_getquota.gqa_pathp*/ "/dev/mapper/vg_scratchy-LogVol03",
+  char work[MAXPATHLEN] ;
+
+  if( parg->arg_rquota_getquota.gqa_pathp[0] == '/' )
+   strncpy( work, parg->arg_rquota_getquota.gqa_pathp, MAXPATHLEN ) ;
+  else
+   {
+     if( nfs_export_tag2path( nfs_param.pexportlist, 
+                              parg->arg_rquota_getquota.gqa_pathp, 
+			      strnlen( parg->arg_rquota_getquota.gqa_pathp, MAXPATHLEN ),
+			      work, 
+                              MAXPATHLEN ) == -1 )
+
+     {
+        pres->res_rquota_getquota.status = Q_EPERM ; 
+        return NFS_REQ_OK ;
+     }
+   }
+   
+
+  if(FSAL_IS_ERROR((fsal_status = FSAL_str2path( work,
                                                  MAXPATHLEN,
                                                  &fsal_path ))))
     {
