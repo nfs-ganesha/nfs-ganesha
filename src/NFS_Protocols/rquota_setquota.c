@@ -89,7 +89,26 @@ int rquota_setquota(nfs_arg_t * parg /* IN     */ ,
   fsal_quota_t  fsal_quota_out ;
   fsal_path_t   fsal_path ;
 
-  if(FSAL_IS_ERROR((fsal_status = FSAL_str2path( parg->arg_rquota_setquota.sqa_pathp,
+  char work[MAXPATHLEN] ;
+
+  if( parg->arg_rquota_getquota.gqa_pathp[0] == '/' )
+   strncpy( work, parg->arg_rquota_getquota.gqa_pathp, MAXPATHLEN ) ;
+  else
+   {
+     if( nfs_export_tag2path( nfs_param.pexportlist, 
+                              parg->arg_rquota_getquota.gqa_pathp, 
+			      strnlen( parg->arg_rquota_getquota.gqa_pathp, MAXPATHLEN ),
+			      work, 
+                              MAXPATHLEN ) == -1 )
+
+     {
+        pres->res_rquota_getquota.status = Q_EPERM ; 
+        return NFS_REQ_OK ;
+     }
+   }
+   
+
+  if(FSAL_IS_ERROR((fsal_status = FSAL_str2path( work,
                                                  MAXPATHLEN,
                                                  &fsal_path ))))
     {
