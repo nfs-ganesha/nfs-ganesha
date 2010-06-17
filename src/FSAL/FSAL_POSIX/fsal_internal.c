@@ -1031,7 +1031,6 @@ int fsal_internal_path2fsname( char * rpath, char * fs_spec )
       /* get the longer path that matches export path */
       if( mnt.mnt_dir != NULL)
         {
-
           pathlen = strlen(mnt.mnt_dir);
 
           if((pathlen > outlen) && !strcmp(mnt.mnt_dir, "/"))
