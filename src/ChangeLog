@@ -363,3 +363,5 @@
 0.99.66 - 
         - FSAL_XFS now has lock support
 	- Brand new FSAL_GPFS added (patch from IBM) to natively support GPFS
+	- FSAL_POSIX and FSAL_XFS now have quota support (via rquota v1/v2
+	  protocol and the use of the quotactl function)

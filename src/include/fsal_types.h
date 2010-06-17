@@ -718,6 +718,7 @@ typedef struct fsal_quota__
   u_int curfiles;
   u_int btimeleft;
   u_int ftimeleft;
+  u_int bsize;
 } fsal_quota_t;
 
 /* output digest sizes */

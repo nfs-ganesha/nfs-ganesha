@@ -112,11 +112,11 @@ with the actual database name and user name you want to use.
 <BR>      <TT>su - postgres</TT>
 </LI>
 <LI>Create a new user for using the database with GANESHA:
-<BR>      <TT>createuser -no-superuser -no-createdb -no-createrole -login -pwprompt %USERNAME%</TT> (you will be prompted for a password).
+<BR>      <TT>createuser --no-superuser --no-createdb --no-createrole --login --pwprompt %USERNAME%</TT> (you will be prompted for a password).
 <BR>      
 <BR>
 With postgreSQL 7, use the following command instead:
-<BR>      <TT>createuser -no-adduser -no-createdb -pwprompt %USERNAME%</TT>  (reply 'no' to questions that will be prompted, and enter a password)
+<BR>      <TT>createuser --no-adduser --no-createdb --pwprompt %USERNAME%</TT>  (reply 'no' to questions that will be prompted, and enter a password)
 </LI>
 <LI>Create a new database (owned by the user we have juste created):
 <BR>      <TT>createdb -O %USERNAME% %DBNAME%</TT>

@@ -517,3 +517,23 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
 
   return 1;
 }                               /* nfs_rpc_req2client_cred */
+
+int nfs_export_tag2path( exportlist_t * exportroot, char * tag, int taglen, char *path, int pathlen )
+{
+  if( !tag || !path )
+    return -1 ;
+
+  exportlist_t *piter;
+
+  for(piter = exportroot; piter != NULL; piter = piter->next)
+    {
+      if( !strncmp( tag, piter->FS_tag, taglen ) )
+        {
+          strncpy( path, piter->fullpath, pathlen ) ;
+          return 0 ;
+          break;
+        }
+    }                           /* for */
+
+    return -1;
+} /* nfs_export_tag2path */
