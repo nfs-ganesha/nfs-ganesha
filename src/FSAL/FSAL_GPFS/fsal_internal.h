@@ -157,6 +157,12 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,
                                        fsal_name_t * p_fsalname,       /* IN */
                                        fsal_handle_t * p_handle /* OUT */ );
 
+
+fsal_status_t fsal_internal_fd2handle(
+                                      int fd, /* IN */
+                                      fsal_handle_t * p_handle /* OUT */
+                                      );
+
 fsal_status_t fsal_internal_link_at(int srcfd,
                                     int dfd,
                                     char * name);
