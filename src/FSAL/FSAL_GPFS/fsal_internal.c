@@ -555,7 +555,7 @@ fsal_status_t fsal_internal_handle2fd_at ( int dirfd,
   
   oarg.mountdirfd = dirfd;
  
-  phandle->handle.handle_size = 20;
+  phandle->handle.handle_size = OPENHANDLE_HANDLE_LEN;
   oarg.handle = &phandle->handle;
   oarg.flags = oflags;
 
@@ -592,7 +592,7 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,  /* IN */
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   harg.handle = &p_handle->handle;
-  harg.handle->handle_size = 20;
+  harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.name = p_fsalpath->path;
   harg.dfd = AT_FDCWD;
   harg.flag = 0;
@@ -635,7 +635,7 @@ fsal_status_t fsal_internal_get_handle_at(int dfd, /* IN */
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   harg.handle = &p_handle->handle;
-  harg.handle->handle_size = 20;
+  harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.name = p_fsalname->name;
   harg.dfd = dfd;
   harg.flag = 0;
@@ -706,7 +706,7 @@ fsal_status_t  fsal_readlink_by_handle(fsal_op_context_t * p_context, fsal_handl
   fsal_status_t status;
   struct readlink_arg readlinkarg;
 
-  p_handle->handle.handle_size = 20;
+  p_handle->handle.handle_size = OPENHANDLE_HANDLE_LEN;
 
   status = fsal_internal_handle2fd( p_context, p_handle , &fd, O_RDONLY );
 
