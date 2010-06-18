@@ -1,5 +1,5 @@
 %define _with_@FS_NAME@ 1
-%define prefix /usr
+
 Name: @PACKAGE@ 
 Version: @VERSION@ 
 Release: 1%{?dist}
