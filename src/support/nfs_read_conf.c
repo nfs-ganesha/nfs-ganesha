@@ -844,7 +844,7 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
   config_item_t block;
   struct hostent *hp = NULL;
  
-  int ds_count = 0 ;
+  unsigned int ds_count = 0 ;
 
   /* Is the config tree initialized ? */
   if(in_config == NULL || pparam == NULL)
@@ -925,6 +925,14 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
 
     
     } /* for */
+
+  /* Sanity check : as much or less DS configured than stripe_size  */
+  if( ds_count < pparam->layoutfile.stripe_width )
+   {
+      fprintf( stderr,
+	"You must define more pNFS data server for strip_width=%u (only %u defined)\n", pparam->layoutfile.stripe_width, ds_count ) ;
+      return -1 ;
+   }
 
   return 0;
 }                               /* nfs_read_pnfs_conf */
