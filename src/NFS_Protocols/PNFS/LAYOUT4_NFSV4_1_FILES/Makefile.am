@@ -13,3 +13,5 @@ libpnfslayoutfile_la_SOURCES = pnfs_init.c                 \
                                pnfs_lookup_ds_file.c       \
                                pnfs_unlink_ds_file.c       \
                                pnfs_nfsv41_macros.h 
+
+new: clean all
