@@ -254,13 +254,6 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
   if(!p_objecthandle || !p_context || !p_attrs)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetXAttrAttrs);
 
-  /* check that this index match the type of entry */
-  if(xattr_id >= XATTR_COUNT
-     || !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->obj_type))
-    {
-      Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrAttrs);
-    }
-
   /* object attributes we want to retrieve from parent */
   file_attrs.asked_attributes = FSAL_ATTR_MODE | FSAL_ATTR_FILEID | FSAL_ATTR_OWNER
       | FSAL_ATTR_GROUP | FSAL_ATTR_ATIME | FSAL_ATTR_MTIME
