@@ -1,3 +1,5 @@
+%define _with_@FS_NAME@ 1
+
 Name: @PACKAGE@ 
 Version: @VERSION@ 
 Release: 1%{?dist}
@@ -33,7 +35,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 %description
 NFS-GANESHA is a NFS Server running in user space with a large cache.
 It comes with various backend modules to support different file systems
-and namespaces. Supported name spaces ar POSIX, PROXY, SNMP, FUSE-like and HPSS.
+and namespaces. This version is compiled to support the @FS_NAME@ backend.
 
 %package common
 Summary: Common files for all NFS-GANESHA server variants

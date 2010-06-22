@@ -34,6 +34,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
+#include <sys/quota.h> /* For USRQUOTA */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -61,6 +62,8 @@
 #include "rquota.h"
 #include "nfs_proto_functions.h"
 
+extern nfs_parameter_t nfs_param;
+
 /**
  * rquota_getquota: The Rquota getquota function, for all versions.
  *
@@ -75,7 +78,6 @@
  *  @param pres        [OUT]   ignored
  *
  */
-
 int rquota_getquota(nfs_arg_t * parg /* IN     */ ,
                     exportlist_t * pexport /* IN     */ ,
                     fsal_op_context_t * pcontext /* IN     */ ,
@@ -87,14 +89,39 @@ int rquota_getquota(nfs_arg_t * parg /* IN     */ ,
   fsal_status_t fsal_status ;
   fsal_quota_t  fsal_quota ;
   fsal_path_t   fsal_path ;
+  int quota_type = USRQUOTA ;
+  int quota_id ;
+  char work[MAXPATHLEN] ;
 
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-                    "REQUEST PROCESSING: Calling getquota_Null");
+  if( preq->rq_vers == EXT_RQUOTAVERS )
+   {
+     quota_type =  parg->arg_ext_rquota_getquota.gqa_type ;
+     quota_id =  parg->arg_ext_rquota_getquota.gqa_id ;
+   }
+  else
+    {
+      quota_type = USRQUOTA ; 
+      quota_id = parg->arg_rquota_getquota.gqa_uid ; 
+    }
 
-  printf( "---> requota_getquota : gqa_path=%s gqa_id=%d\n",
-          parg->arg_rquota_getquota.gqa_pathp, parg->arg_rquota_getquota.gqa_uid ) ;
+  if( parg->arg_rquota_getquota.gqa_pathp[0] == '/' )
+   strncpy( work, parg->arg_rquota_getquota.gqa_pathp, MAXPATHLEN ) ;
+  else
+   {
+     if( nfs_export_tag2path( nfs_param.pexportlist, 
+                              parg->arg_rquota_getquota.gqa_pathp, 
+			      strnlen( parg->arg_rquota_getquota.gqa_pathp, MAXPATHLEN ),
+			      work, 
+                              MAXPATHLEN ) == -1 )
 
-  if(FSAL_IS_ERROR((fsal_status = FSAL_str2path( parg->arg_rquota_getquota.gqa_pathp,
+     {
+        pres->res_rquota_getquota.status = Q_EPERM ; 
+        return NFS_REQ_OK ;
+     }
+   }
+   
+
+  if(FSAL_IS_ERROR((fsal_status = FSAL_str2path( work,
                                                  MAXPATHLEN,
                                                  &fsal_path ))))
     {
@@ -103,7 +130,8 @@ int rquota_getquota(nfs_arg_t * parg /* IN     */ ,
     }
 
   fsal_status = FSAL_get_quota( &fsal_path,
-			        parg->arg_rquota_getquota.gqa_uid,
+				quota_type,
+			        quota_id,
 				&fsal_quota ) ;
   if( FSAL_IS_ERROR( fsal_status ) ) 
     {
@@ -114,20 +142,22 @@ int rquota_getquota(nfs_arg_t * parg /* IN     */ ,
        return NFS_REQ_OK ;
     }
 
-  /* 0 is success */
+  /* success */
   pres->res_rquota_getquota.status = Q_OK ; 
 
   pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_active = TRUE ;
+  pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_bsize = fsal_quota.bsize ;
   pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_bhardlimit = fsal_quota.bhardlimit ;
   pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_bsoftlimit = fsal_quota.bsoftlimit ;
   pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_curblocks = fsal_quota.curblocks ;
+  pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_curfiles = fsal_quota.curfiles ;
   pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_fhardlimit = fsal_quota.fhardlimit ;
   pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_fsoftlimit = fsal_quota.fsoftlimit ;
   pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_btimeleft = fsal_quota.btimeleft ;
   pres->res_rquota_getquota.getquota_rslt_u.gqr_rquota.rq_ftimeleft = fsal_quota.ftimeleft ;
 
   return NFS_REQ_OK ;
-}
+} /* rquota_getquota */
 
 /**
  * rquota_getquota_Free: Frees the result structure allocated for rquota_getquota

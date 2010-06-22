@@ -526,7 +526,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
                                     cache_content_status);
                 }
             }
-#ifdef _USE_PNFS
+#ifdef _USE_PNFS_TOTO
           if(to_remove_entry->object.file.pnfs_file.ds_file.allocated == TRUE)
             {
               if((pnfs_status = pnfs_unlink_ds_file(&pclient->pnfsclient,

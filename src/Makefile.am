@@ -86,54 +86,22 @@ else
 RPM_DB_ARGS= --without postgresql
 endif
 
-if USE_FSAL_HPSS
-RPMARGS= --with hpss
-endif
-
-if USE_FSAL_POSIX
-RPMARGS= --with posix
-endif
-
-if USE_FSAL_SNMP
-RPMARGS= --with snmp
-endif
-
-if USE_FSAL_PROXY
-RPMARGS= --with proxy
-endif
-
-if USE_FSAL_LUSTRE
-RPMARGS= --with lustre
-endif
-
-if USE_FSAL_XFS
-RPMARGS= --with xfs
-endif
-
-if USE_FSAL_GPFS
-RPMARGS= --with gpfs
-endif
-
-if USE_FSAL_FUSE
-RPMARGS= --with fuse
-endif
-
 indent:
 	find . -name '*.[ch]' ! -path './rpm/*' -exec indent -linux -nsaf -nsai -nsaw -nut -bl -bls -i2 -l90 -lc90 -nce {} \;
 
 if USE_FSAL_HPSS
 rpm: nfs-ganesha.spec dist 
-	rpmbuild $(RPMARG) $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
+	rpmbuild $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
 
 srpm: nfs-ganesha.spec dist
-	rpmbuild $(RPMARG) $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
+	rpmbuild $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
 
 else  
 rpm: nfs-ganesha.spec remove_hpss 
-	rpmbuild $(RPM_DB_ARGS) $(RPMARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
+	rpmbuild $(RPM_DB_ARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
 
 srpm: nfs-ganesha.spec remove_hpss 
-	rpmbuild $(RPM_DB_ARGS) $(RPMARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
+	rpmbuild $(RPM_DB_ARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
 
 endif
 
