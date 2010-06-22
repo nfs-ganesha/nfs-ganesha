@@ -405,6 +405,13 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   nfs_stat_type_t stat_type;
   struct sockaddr_in hostaddr;
   struct sockaddr_in *phostaddr;
+
+  struct sockaddr_in *tmp_childaddr;
+#ifdef _USE_TIRPC_IPV6
+  struct sockaddr_in6 *tmp_hostaddr_inet6;
+  struct sockaddr_in6 *tmp_childaddr_inet6;
+#endif /* _USE_TIRPC_IPV6 */
+
 #ifdef _USE_TIRPC
   struct netbuf *pnetbuf;
 #endif
@@ -599,26 +606,27 @@ else if(ptr_req->rq_prog == nfs_param.core_param.rquota_program)
    * because this shows that the FSAL may hang in a specific call */
   for(i = 0; i < nfs_param.core_param.nb_worker; i++)
     {
-      if((workers_data[i].current_xid == rpcxid) && (workers_data[i].current_xid != 0))
-        {
-          DisplayLogLevel(NIV_MAJOR,
-                          "Dupreq #%u was asked for process since another thread manage it, reject for avoiding threads starvation...",
-                          rpcxid);
-
-          /* Free the arguments */
-          if(!SVC_FREEARGS(ptr_svc, funcdesc.xdr_decode_func, (caddr_t) & arg_nfs))
-            {
-              DisplayLogLevel(NIV_CRIT,
-                              "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
-                              funcdesc.funcname);
-            }
-          return;
-        }
+      /* First check if the xid is the same. */
+      if((workers_data[i].current_xid == rpcxid) && (workers_data[i].current_xid != 0)
+	 && cmp_sockaddr((struct sockaddr *)&hostaddr,
+			 (struct sockaddr *)&workers_data[i].hostaddr)) {
+	  DisplayLogLevel(NIV_MAJOR,
+			  "Dupreq #%u was asked for process since another thread manage it, reject for avoiding threads starvation...",
+			  rpcxid);
+	  /* Free the arguments */
+	  if(!SVC_FREEARGS(ptr_svc, funcdesc.xdr_decode_func, (caddr_t) & arg_nfs))
+	    {
+	      DisplayLogLevel(NIV_CRIT,
+			      "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
+			      funcdesc.funcname);
+	    }
+	  return;
+      }
     }
-
+  
   /* Manage this request, so keeps its xid in worker_data specific structure */
   pworker_data->current_xid = rpcxid;
-
+  
   /* Getting the xid from the RPC request (this value is used for RPC duplicate request hash */
   if((do_dupreq_cache = funcdesc.dispatch_behaviour & CAN_BE_DUP))
     {
