@@ -480,11 +480,27 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-/***
+/*********************************************************************
+ * 
+ *  GPFS FSAL char device driver interaces
  *
- * fsal_internal_handle2fd - convert an internal handle to a file
- * descriptor.  The p_context is needed here for the mount_root_fd
+ ********************************************************************/
+
+
+/**
+ * fsal_internal_handle2fd:
+ * Open a file by handle within an export.
  *
+ * \param p_context (input):
+ *        Pointer to current context.  Used to get export root fd.
+ * \param phandle (input):
+ *        Opaque filehandle
+ * \param pfd (output):
+ *        File descriptor openned by the function
+ * \param oflags (input):
+ *        Flags to open the file with
+ *
+ * \return status of operation
  */
 
 fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,  
@@ -509,11 +525,21 @@ fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-/***
+
+/**
+ * fsal_internal_handle2fd_at:
+ * Open a file by handle from in an open directory
  *
- * fsal_internal_handle2fd_at - convert an internal handle to a file
- * descriptor in a specific directory.
+ * \param dirfd (input):
+ *        Open file descriptor of parent directory
+ * \param phandle (input):
+ *        Opaque filehandle
+ * \param pfd (output):
+ *        File descriptor openned by the function
+ * \param oflags (input):
+ *        Flags to open the file with
  *
+ * \return status of operation
  */
 
 fsal_status_t fsal_internal_handle2fd_at ( int dirfd, 
@@ -529,7 +555,7 @@ fsal_status_t fsal_internal_handle2fd_at ( int dirfd,
   
   oarg.mountdirfd = dirfd;
  
-  phandle->handle.handle_size = 20;
+  phandle->handle.handle_size = OPENHANDLE_HANDLE_LEN;
   oarg.handle = &phandle->handle;
   oarg.flags = oflags;
 
@@ -541,55 +567,20 @@ fsal_status_t fsal_internal_handle2fd_at ( int dirfd,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-
-/***
+/**
+ * fsal_internal_get_handle:
+ * Create a handle from a file path 
  *
- * fsal_internal_handle_at - generate a handle for a file in a
- * particular open directory.  Needed during FSAL_create
+ * \param pcontext (input):
+ *        A context pointer for the root of the current export
+ * \param p_fsalpath (input):
+ *        Full path to the file
+ * \param p_handle (output):
+ *        The handle that is found and returned
  *
+ * \return status of operation
  */
-
-fsal_status_t fsal_internal_handle_at(int dfd, /* IN */
-                                      fsal_name_t * p_fsalname,       /* IN */
-                                      fsal_handle_t * p_handle /* OUT
-                                                                  */ )                       
-{
-  int rc;
-  struct name_handle_arg harg;
-  int objectfd ; 
-
-  if(!p_handle || !p_fsalname)
-    ReturnCode(ERR_FSAL_FAULT, 0);
-
-  /* Because p_handle is already allocated to, we need to realloc to
-     the right size here. */
-  /* TODO: the size should be something other than 20 */
-  /* p_handle->handle = realloc(p_handle->handle, sizeof(struct file_handle) + 20); */
-  /* p_handle->handle.handle_size = 20; */
-
-  harg.handle = &p_handle->handle;
-  harg.handle->handle_size = 20;
-  harg.name = p_fsalname->name;
-  harg.dfd = dfd;
-  harg.flag = 0;
-
-#ifdef _DEBUG_FSAL
-  DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle at for %s", p_fsalname->name);
-#endif
-
-  if( ( rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg) ) < 0 )
-    ReturnCode(posix2fsal_error(errno), errno);
-
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}  
-
-/****************************************************************************
- *
- * fsal_internal_Path2Handle - convert a full path to handle
- *  
- */
-
-fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
+fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,  /* IN */
                                         fsal_path_t * p_fsalpath,       /* IN */
                                         fsal_handle_t * p_handle /* OUT */ )
 {
@@ -600,12 +591,8 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  /* Because p_handle is already allocated to, we need to realloc to
-     the right size here. */
-  /* TODO: the size should be something other than 20 */
-  /* p_handle->handle = realloc(p_handle->handle, sizeof(struct file_handle) + 20); */
   harg.handle = &p_handle->handle;
-  harg.handle->handle_size = 20;
+  harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.name = p_fsalpath->path;
   harg.dfd = AT_FDCWD;
   harg.flag = 0;
@@ -620,9 +607,133 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
+
 /**
- * Access a link by a file handle.
+ * fsal_internal_get_handle_at:
+ * Create a handle from a directory pointer and filename
+ *
+ * \param dfd (input):
+ *        Open directory handle
+ * \param p_fsalname (input):
+ *        Name of the file
+ * \param p_handle (output):
+ *        The handle that is found and returned
+ *
+ * \return status of operation
  */
+
+fsal_status_t fsal_internal_get_handle_at(int dfd, /* IN */
+                                      fsal_name_t * p_fsalname,       /* IN */
+                                      fsal_handle_t * p_handle /* OUT
+                                                                  */ )                       
+{
+  int rc;
+  struct name_handle_arg harg;
+  int objectfd ; 
+
+  if(!p_handle || !p_fsalname)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  harg.handle = &p_handle->handle;
+  harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
+  harg.name = p_fsalname->name;
+  harg.dfd = dfd;
+  harg.flag = 0;
+
+#ifdef _DEBUG_FSAL
+  DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle at for %s", p_fsalname->name);
+#endif
+
+  if( ( rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg) ) < 0 )
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}  
+
+/**
+ * fsal_internal_fd2handle:
+ * convert an fd to a handle
+ *
+ * \param fd (input):
+ *        Open file descriptor for target file
+ * \param p_handle (output):
+ *        The handle that is found and returned
+ *
+ * \return status of operation
+ */
+fsal_status_t fsal_internal_fd2handle(
+                                      int fd,
+                                      fsal_handle_t * p_handle
+                                      )
+{
+  int rc;
+  struct name_handle_arg harg;
+
+  if(!p_handle || !&p_handle->handle) 
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  harg.handle = &p_handle->handle;
+  memset(&p_handle->handle, 0, sizeof(struct file_handle));
+         
+  harg.handle->handle_size = 20;
+  harg.name = NULL;
+  harg.dfd = fd;
+  harg.flag = 0;
+
+#ifdef _DEBUG_FSAL
+  DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle by fd for %d", fd);
+#endif
+
+  if( ( rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg) ) < 0 )
+    ReturnCode(posix2fsal_error(errno), errno);
+  
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
+ * fsal_internal_link_at:
+ * Create a link based on a file descriptor, dirfd, and new name
+ *
+ * \param srcfd (input):
+ *          file descriptor of source file
+ * \param dirfd (input):
+ *          file descriptor of target directory
+ * \param name (input):
+ *          name for the new file
+ *
+ * \return status of operation
+ */
+fsal_status_t fsal_internal_link_at(
+                                    int srcfd,
+                                    int dirfd,
+                                    char * name
+                                    )
+{
+  int rc;
+  struct link_arg linkarg;
+
+  if(!name)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+  
+  linkarg.dir_fd = dirfd;
+  linkarg.file_fd = srcfd;
+  linkarg.name = name;
+
+  if( ( rc = ioctl(open_by_handle_fd, OPENHANDLE_LINK_BY_FD, &linkarg) ) < 0 )
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+  
+}
+
+/**
+ * fsal_readlink_by_handle:
+ * Reads the contents of the link
+ *
+ *
+ * \return status of operation
+ */
+
 fsal_status_t  fsal_readlink_by_handle(fsal_op_context_t * p_context, fsal_handle_t * p_handle, char *__buf, int maxlen)
 {
   int fd;
@@ -631,7 +742,7 @@ fsal_status_t  fsal_readlink_by_handle(fsal_op_context_t * p_context, fsal_handl
   fsal_status_t status;
   struct readlink_arg readlinkarg;
 
-  p_handle->handle.handle_size = 20;
+  p_handle->handle.handle_size = OPENHANDLE_HANDLE_LEN;
 
   status = fsal_internal_handle2fd( p_context, p_handle , &fd, O_RDONLY );
 
@@ -717,6 +828,10 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
       if(mode & FSAL_MODE_XUSR)
         missing_access &= ~FSAL_X_OK;
+
+      /* handle the creation of a new 500 file correctly */
+      if((missing_access & FSAL_OWNER_OK) != 0)
+        missing_access = 0;
 
       if(missing_access == 0)
         ReturnCode(ERR_FSAL_NO_ERROR, 0);

@@ -39,14 +39,14 @@ extern time_t ServerBootTime;
  *
  * Establishes a NFSv4.1 session between a thread and a DS
  *
- * @param pnfsclient        [INOUT] pointer to the pnfsclient structure (client to the ds).
+ * @param pnfsdsclient        [INOUT] pointer to the pnfsdsclient structure (client to the ds).
  * @param pnfs_ds_param     [IN]    pointer to pnfs data server configuration
  *
  * @return NFS4_OK if successful
  * @return a NFSv4 error (positive value) if failed.
  *
  */
-int pnfs_do_mount(pnfs_client_t * pnfsclient, pnfs_ds_parameter_t * pds_param)
+int pnfs_do_mount(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pds_param)
 {
   COMPOUND4args argnfs4;
   COMPOUND4res resnfs4;
@@ -64,10 +64,10 @@ int pnfs_do_mount(pnfs_client_t * pnfsclient, pnfs_ds_parameter_t * pds_param)
   nfs_argop4 argoparray_createsession[PNFS_LAYOUTFILE_NB_OP_CREATESESSION];
   nfs_resop4 resoparray_createsession[PNFS_LAYOUTFILE_NB_OP_CREATESESSION];
 
-  if(!pnfsclient || !pds_param)
+  if(!pnfsdsclient || !pds_param)
     return NFS4ERR_SERVERFAULT;
 
-  if(pnfsclient->rpc_client == NULL)
+  if(pnfsdsclient->rpc_client == NULL)
     return NFS4ERR_SERVERFAULT;
 
   /* Setup 1 : EXCHANGEID */
@@ -79,14 +79,14 @@ int pnfs_do_mount(pnfs_client_t * pnfsclient, pnfs_ds_parameter_t * pds_param)
   argnfs4.tag.utf8string_len = 0;
   argnfs4.argarray.argarray_len = 0;
 
-  resoparray_exchangeid[0].nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4.
-      eir_state_protect.state_protect4_r_u.spr_mach_ops.spo_must_enforce.bitmap4_val =
-      bitmap1;
-  resoparray_exchangeid[0].nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4.
-      eir_state_protect.state_protect4_r_u.spr_mach_ops.spo_must_allow.bitmap4_val =
-      bitmap2;
-  resoparray_exchangeid[0].nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4.
-      eir_server_owner.so_major_id.so_major_id_val = server_owner_pad;
+  resoparray_exchangeid[0].nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.
+      eir_resok4.eir_state_protect.state_protect4_r_u.spr_mach_ops.spo_must_enforce.
+      bitmap4_val = bitmap1;
+  resoparray_exchangeid[0].nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.
+      eir_resok4.eir_state_protect.state_protect4_r_u.spr_mach_ops.spo_must_allow.
+      bitmap4_val = bitmap2;
+  resoparray_exchangeid[0].nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.
+      eir_resok4.eir_server_owner.so_major_id.so_major_id_val = server_owner_pad;
 
   snprintf(clientowner_name, MAXNAMLEN, "GANESHA PNFS MDS Thread=(%u,%llu)", getpid(),
            (unsigned long long)pthread_self());
@@ -95,7 +95,7 @@ int pnfs_do_mount(pnfs_client_t * pnfsclient, pnfs_ds_parameter_t * pds_param)
   snprintf(client_owner.co_verifier, NFS4_VERIFIER_SIZE, "%x", (int)ServerBootTime);
 
   COMPOUNDV41_ARG_ADD_OP_EXCHANGEID(argnfs4, client_owner);
-  if(COMPOUNDV41_EXECUTE_SIMPLE(pnfsclient, argnfs4, resnfs4) != RPC_SUCCESS)
+  if(COMPOUNDV41_EXECUTE_SIMPLE(pnfsdsclient, argnfs4, resnfs4) != RPC_SUCCESS)
     {
       return NFS4ERR_IO;        /* @todo: For wanting of something more appropriate */
     }
@@ -114,23 +114,23 @@ int pnfs_do_mount(pnfs_client_t * pnfsclient, pnfs_ds_parameter_t * pds_param)
   argnfs4.argarray.argarray_len = 0;
 
   COMPOUNDV41_ARG_ADD_OP_CREATESESSION(argnfs4,
-                                       resoparray_exchangeid[0].nfs_resop4_u.
-                                       opexchange_id.EXCHANGE_ID4res_u.eir_resok4.
-                                       eir_clientid);
-  if(COMPOUNDV41_EXECUTE_SIMPLE(pnfsclient, argnfs4, resnfs4) != RPC_SUCCESS)
+                                       resoparray_exchangeid[0].
+                                       nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.
+                                       eir_resok4.eir_clientid);
+  if(COMPOUNDV41_EXECUTE_SIMPLE(pnfsdsclient, argnfs4, resnfs4) != RPC_SUCCESS)
     {
       return NFS4ERR_IO;        /* @todo: For wanting of something more appropriate */
     }
 
   /* Keep the session for later use */
-  memcpy(&pnfsclient->session,
-         &resoparray_createsession[0].nfs_resop4_u.opcreate_session.CREATE_SESSION4res_u.
-         csr_resok4.csr_sessionid, NFS4_SESSIONID_SIZE);
+  memcpy(&pnfsdsclient->session,
+         &resoparray_createsession[0].nfs_resop4_u.opcreate_session.
+         CREATE_SESSION4res_u.csr_resok4.csr_sessionid, NFS4_SESSIONID_SIZE);
 
   /* Keep the sequence as well */
-  pnfsclient->sequence =
-      resoparray_createsession[0].nfs_resop4_u.opcreate_session.CREATE_SESSION4res_u.
-      csr_resok4.csr_sequence;
+  pnfsdsclient->sequence =
+      resoparray_createsession[0].nfs_resop4_u.opcreate_session.
+      CREATE_SESSION4res_u.csr_resok4.csr_sequence;
 
   /* Check for compound status */
   if(resnfs4.status != NFS4_OK)

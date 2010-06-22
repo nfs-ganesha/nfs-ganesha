@@ -53,28 +53,28 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
   char mntdir[MAXPATHLEN];
   char fs_spec[MAXPATHLEN];
 
-  char * first_xfs_dir = NULL ;
+  char *first_xfs_dir = NULL;
   char type[256];
 
   size_t pathlen, outlen;
   int rc;
 
-  char *  handle  ;
-  size_t  handle_len = 0 ;
+  char *handle;
+  size_t handle_len = 0;
 
   /* sanity check */
-  if( p_export_context == NULL) 
+  if(p_export_context == NULL)
     {
       DisplayLogLevel(NIV_CRIT, "NULL mandatory argument passed to %s()", __FUNCTION__);
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
-    } 
+    }
 
   outlen = 0;
 
-  if( p_export_path != NULL )
-    strncpy( rpath, p_export_path->path, MAXPATHLEN ) ;
+  if(p_export_path != NULL)
+    strncpy(rpath, p_export_path->path, MAXPATHLEN);
 
- /* open mnt file */
+  /* open mnt file */
   fp = setmntent(MOUNTED, "r");
 
   if(fp == NULL)
@@ -94,11 +94,11 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
 
           pathlen = strlen(p_mnt->mnt_dir);
 
-          if( strncmp( p_mnt->mnt_type, "xfs", 256 ) )
-            continue ;
+          if(strncmp(p_mnt->mnt_type, "xfs", 256))
+            continue;
 
-          if( first_xfs_dir == NULL )
-            first_xfs_dir = p_mnt->mnt_dir ;
+          if(first_xfs_dir == NULL)
+            first_xfs_dir = p_mnt->mnt_dir;
 
           if((pathlen > outlen) && !strcmp(p_mnt->mnt_dir, "/"))
             {
@@ -128,8 +128,8 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
 
   if(outlen <= 0)
     {
-      if( p_export_path == NULL )
-        strncpy( mntdir, first_xfs_dir, MAXPATHLEN ) ;
+      if(p_export_path == NULL)
+        strncpy(mntdir, first_xfs_dir, MAXPATHLEN);
       else
         {
           DisplayLogLevel(NIV_CRIT, "No mount entry matches '%s' in %s", rpath, MOUNTED);
@@ -138,23 +138,22 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
         }
     }
 
-
   /* Do the path_to_fshandle call to init the xfs's libhandle */
-  strncpy(  p_export_context->mount_point, mntdir, MAXPATHLEN ) ;
+  strncpy(p_export_context->mount_point, mntdir, MAXPATHLEN);
 
-  if( ( rc = path_to_fshandle( mntdir,  (void **)(&handle), &handle_len) ) < 0 )
-    Return( ERR_FSAL_FAULT, errno, INDEX_FSAL_BuildExportContext ) ;
+  if((rc = path_to_fshandle(mntdir, (void **)(&handle), &handle_len)) < 0)
+    Return(ERR_FSAL_FAULT, errno, INDEX_FSAL_BuildExportContext);
 
-  memcpy(  p_export_context->mnt_fshandle_val, handle, handle_len ) ;
-  p_export_context->mnt_fshandle_len = handle_len ;
+  memcpy(p_export_context->mnt_fshandle_val, handle, handle_len);
+  p_export_context->mnt_fshandle_len = handle_len;
 
-  if( ( rc = path_to_handle( mntdir,  (void **)(&handle), &handle_len) ) < 0 )
-    Return( ERR_FSAL_FAULT, errno, INDEX_FSAL_BuildExportContext ) ;
+  if((rc = path_to_handle(mntdir, (void **)(&handle), &handle_len)) < 0)
+    Return(ERR_FSAL_FAULT, errno, INDEX_FSAL_BuildExportContext);
 
-  memcpy(  p_export_context->mnt_handle_val, handle, handle_len ) ;
-  p_export_context->mnt_handle_len = handle_len ;
+  memcpy(p_export_context->mnt_handle_val, handle, handle_len);
+  p_export_context->mnt_handle_len = handle_len;
 
-  p_export_context->dev_id = 1 ; /** @todo BUGAZOMEU : put something smarter here, using setmntent */
+  p_export_context->dev_id = 1;  /** @todo BUGAZOMEU : put something smarter here, using setmntent */
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 }

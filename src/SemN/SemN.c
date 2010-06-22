@@ -36,8 +36,6 @@
  * CVS history :
  *
  * $Log: SemN.c,v $
- * Revision 1.3  2005/11/28 17:02:56  deniel
- * Added CeCILL headers
  *
  * Revision 1.2  2005/03/15 14:23:47  leibovic
  * Changing init param.

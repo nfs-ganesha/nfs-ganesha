@@ -23,7 +23,6 @@
  * ---------------------------------------
  */
 
-
 /**
  *
  * \file    fsal_internal.h
@@ -113,18 +112,14 @@ void ReleaseTokenFSCall();
                return (_struct_status_);                     \
               } while(0)
 
-
 /**
  * Gets a fd from a handle 
  */
-fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,  
-				       fsal_handle_t * phandle,
-                                       int * pfd,
-                                       int oflags ) ;
+fsal_status_t fsal_internal_handle2fd(fsal_op_context_t * p_context,
+                                      fsal_handle_t * phandle, int *pfd, int oflags);
 
-fsal_status_t fsal_internal_fd2handle( fsal_op_context_t * p_context,  
-                                       int fd, 
-				       fsal_handle_t * phandle ) ;
+fsal_status_t fsal_internal_fd2handle(fsal_op_context_t * p_context,
+                                      int fd, fsal_handle_t * phandle);
 
 /**
  * Build .lustre/fid path associated to a handle.
@@ -150,13 +145,14 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
                                        fsal_attrib_list_t *
                                        p_object_attributes /* IN, optional */ );
 
-fsal_status_t fsal_internal_inum2handle( fsal_op_context_t * p_context,  /* IN */
-                                         ino_t     inum,    /* IN */
-		        	         fsal_handle_t * phandle ) ; /* OUT */
+fsal_status_t fsal_internal_inum2handle(fsal_op_context_t * p_context,  /* IN */
+                                        ino_t inum,     /* IN */
+                                        fsal_handle_t * phandle);       /* OUT */
 
+fsal_status_t fsal_internal_setattrs_symlink(fsal_handle_t * p_filehandle,      /* IN */
+                                             fsal_op_context_t * p_context,     /* IN */
+                                             fsal_attrib_list_t * p_attrib_set, /* IN */
+                                             fsal_attrib_list_t * p_object_attributes); /* [ IN/OUT ] */
 
-fsal_status_t fsal_internal_setattrs_symlink(fsal_handle_t * p_filehandle,       /* IN */
-                                             fsal_op_context_t * p_context,      /* IN */
-                                             fsal_attrib_list_t * p_attrib_set,  /* IN */
-                                             fsal_attrib_list_t * p_object_attributes  );  /* [ IN/OUT ] */
+int fsal_internal_path2fsname( char * rpath, char * fs_spec ) ;
 

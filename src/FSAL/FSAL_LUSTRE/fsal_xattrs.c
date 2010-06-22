@@ -990,7 +990,6 @@ fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
                             p_context, buffer_addr, buffer_size, FALSE);
 }
 
-
 /**
  *  Removes a xattr by Id
  *
@@ -998,13 +997,33 @@ fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
  * \param p_context pointer to the current security context.
  * \param xattr_id xattr's id
  */
-fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,        /* IN */
-                                   fsal_op_context_t * p_context, /* IN */
-                                   unsigned int xattr_id ) /* IN */
+fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,      /* IN */
+                                   fsal_op_context_t * p_context,       /* IN */
+                                   unsigned int xattr_id)       /* IN */
 {
- ReturnCode(ERR_FSAL_NO_ERROR, 0 ) ;
-} /* FSAL_RemoveXAttrById */
-  
+  int rc;
+  fsal_status_t st;
+  fsal_path_t lustre_path;
+  char name[FSAL_MAX_NAME_LEN];
+
+  st = fsal_internal_Handle2FidPath(p_context, p_objecthandle, &lustre_path);
+  if(FSAL_IS_ERROR(st))
+    ReturnStatus(st, INDEX_FSAL_SetXAttrValue);
+
+  rc = xattr_id_to_name(lustre_path.path, xattr_id, name);
+  if(rc)
+    Return(rc, errno, INDEX_FSAL_SetXAttrValue);
+
+  TakeTokenFSCall();
+  rc = lremovexattr(lustre_path.path, name);
+  ReleaseTokenFSCall();
+
+  if(rc != 0)
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}                               /* FSAL_RemoveXAttrById */
+
 /**
  *  Removes a xattr by Name
  *
@@ -1012,11 +1031,24 @@ fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,        /* IN 
  * \param p_context pointer to the current security context.
  * \param xattr_name xattr's name
  */
-fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,        /* IN */
-                                   fsal_op_context_t * p_context, /* IN */
-                                    const fsal_name_t * xattr_name )  /* IN */
+fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* IN */
+                                     fsal_op_context_t * p_context,     /* IN */
+                                     const fsal_name_t * xattr_name)    /* IN */
 {
- ReturnCode(ERR_FSAL_NO_ERROR, 0 ) ;
-} /* FSAL_RemoveXAttrById */
-   
+  int rc;
+  fsal_status_t st;
+  fsal_path_t lustre_path;
 
+  st = fsal_internal_Handle2FidPath(p_context, p_objecthandle, &lustre_path);
+  if(FSAL_IS_ERROR(st))
+    ReturnStatus(st, INDEX_FSAL_SetXAttrValue);
+
+  TakeTokenFSCall();
+  rc = lremovexattr(lustre_path.path, xattr_name->name);
+  ReleaseTokenFSCall();
+
+  if(rc != 0)
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}                               /* FSAL_RemoveXAttrById */

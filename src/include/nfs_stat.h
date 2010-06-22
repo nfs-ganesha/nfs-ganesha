@@ -91,6 +91,11 @@ static char *mnt_function_names[] = {
   "MNT_null", "MNT_mount", "MNT_dump", "MNT_umount", "MNT_umountall", "MNT_export"
 };
 
+#define RQUOTA_NB_COMMAND 5
+static char *rquota_functions_names[] = {
+  "rquota_Null", "rquota_getquota", "rquota_getquotaspecific", "rquota_setquota", "rquota_setquotaspecific" 
+} ;
+
 #define NFS_V40_NB_OPERATION 39
 #define NFS_V41_NB_OPERATION 58
 
@@ -126,6 +131,8 @@ typedef struct nfs_request_stat__
   unsigned int nb_nfs40_op;
   unsigned int nb_nfs41_op;
   unsigned int nb_nlm4_req;
+  unsigned int nb_rquota1_req;
+  unsigned int nb_rquota2_req;
   nfs_request_stat_item_t stat_req_mnt1[MNT_V1_NB_COMMAND];
   nfs_request_stat_item_t stat_req_mnt3[MNT_V3_NB_COMMAND];
   nfs_request_stat_item_t stat_req_nfs2[NFS_V2_NB_COMMAND];
@@ -134,6 +141,8 @@ typedef struct nfs_request_stat__
   nfs_op_stat_item_t stat_op_nfs40[NFS_V40_NB_OPERATION];
   nfs_op_stat_item_t stat_op_nfs41[NFS_V41_NB_OPERATION];
   nfs_request_stat_item_t stat_req_nlm4[NLM_V4_NB_OPERATION];
+  nfs_request_stat_item_t stat_req_rquota1[RQUOTA_NB_COMMAND];
+  nfs_request_stat_item_t stat_req_rquota2[RQUOTA_NB_COMMAND];
 } nfs_request_stat_t;
 
 void nfs_stat_update(nfs_stat_type_t type,

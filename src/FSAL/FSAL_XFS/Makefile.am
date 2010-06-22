@@ -31,11 +31,13 @@ libfsalxfs_la_SOURCES = fsal_access.c      \
                           fsal_objectres.c   \
                           fsal_stats.c       \
                           fsal_tools.c       \
+                          fsal_quota.c       \
                           fsal_xattrs.c      \
                           fsal_local_op.c    \
 			  fsal_internal.h    \
                           fsal_convert.h     \
                           fsal_xattrs.c      \
+                          fsal_quota.c       \
                           ../../include/fsal.h       \
                           ../../include/fsal_types.h \
                           ../../include/err_fsal.h   \

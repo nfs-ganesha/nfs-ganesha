@@ -120,13 +120,35 @@ static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 #define OPENHANDLE_LINK_BY_FD     _IOWR(OPENHANDLE_DRIVER_MAGIC, 2, struct link_arg)
 #define OPENHANDLE_READLINK_BY_FD _IOWR(OPENHANDLE_DRIVER_MAGIC, 3, struct readlink_arg)
 
-/*FIXME!!  need compat arg or rework the structure */
+/**
+ *  The following structures are also defined in the kernel module,
+ *  and if any change happens it needs to happen both places.  They
+ *  are the same except for the change of file_handle.f_handle to a
+ *  static 20 character array to work better with the way that ganesha
+ *  does memory management.
+ */
+
 struct file_handle {
   int handle_size;
   int handle_type;
   /* file identifier */
-  unsigned char f_handle[20];
+  unsigned char f_handle[OPENHANDLE_HANDLE_LEN];
 };
+
+/**
+ * name_handle_arg: 
+ * 
+ * this structure is used in 3 ways.  If the dfd is AT_FWCWD and name
+ * is a full path, it returns the handle to the file.
+ * 
+ * It can also get the same handle by having dfd be the parent
+ * directory file handle and the name be the local file name.
+ *
+ * Lastly, if dfd is actually the file handle for the file, and name
+ * == NULL, it can be used to get the handle directly from the file
+ * descriptor.
+ *
+ */
 
 struct name_handle_arg {
   int dfd;
@@ -158,7 +180,7 @@ struct readlink_arg {
 
 typedef struct
 {
-  unsigned int fsid[2];
+//  unsigned int fsid[2];
   struct file_handle handle;
 } fsal_handle_t;  /**< FS object handle */
 

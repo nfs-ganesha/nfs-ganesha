@@ -60,6 +60,7 @@
 #include "nfs4.h"
 #include "mount.h"
 #include "nlm4.h"
+#include "rquota.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "err_cache_inode.h"
@@ -220,12 +221,14 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->core_param.expiration_dupreq = DUPREQ_EXPIRATION;
   p_nfs_param->core_param.nfs_port = NFS_PORT;
   p_nfs_param->core_param.mnt_port = 0;
-  p_nfs_param->core_param.bind_addr.sin_family = AF_INET;             /* IPv4 only right now */
-  p_nfs_param->core_param.bind_addr.sin_addr.s_addr = INADDR_ANY;     /* All the interfaces on the machine are used */
-  p_nfs_param->core_param.bind_addr.sin_port = 0;                     /* No port specified */
+  p_nfs_param->core_param.rquota_port = RQUOTA_PORT;
+  p_nfs_param->core_param.bind_addr.sin_family = AF_INET;       /* IPv4 only right now */
+  p_nfs_param->core_param.bind_addr.sin_addr.s_addr = INADDR_ANY;       /* All the interfaces on the machine are used */
+  p_nfs_param->core_param.bind_addr.sin_port = 0;       /* No port specified */
   p_nfs_param->core_param.nfs_program = NFS_PROGRAM;
   p_nfs_param->core_param.mnt_program = MOUNTPROG;
   p_nfs_param->core_param.nlm_program = NLMPROG;
+  p_nfs_param->core_param.rquota_program = RQUOTAPROG;
   p_nfs_param->core_param.drop_io_errors = TRUE;
   p_nfs_param->core_param.drop_inval_errors = FALSE;
   p_nfs_param->core_param.core_dump_size = 0;
@@ -277,6 +280,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->nfsv4_param.fh_expire = FALSE;
   p_nfs_param->nfsv4_param.returns_err_fh_expired = TRUE;
   p_nfs_param->nfsv4_param.use_open_confirm = TRUE;
+  p_nfs_param->nfsv4_param.return_bad_stateid = TRUE;
   strncpy(p_nfs_param->nfsv4_param.domainname, DEFAULT_DOMAIN, MAXNAMLEN);
   strncpy(p_nfs_param->nfsv4_param.idmapconf, DEFAULT_IDMAPCONF, MAXPATHLEN);
 
@@ -881,8 +885,9 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
   /* Cache inode parameters : hash table */
   if((cache_inode_status =
       cache_inode_read_conf_hash_parameter(config_struct,
-                                           &p_nfs_param->cache_layers_param.
-                                           cache_param)) != CACHE_INODE_SUCCESS)
+                                           &p_nfs_param->
+                                           cache_layers_param.cache_param)) !=
+     CACHE_INODE_SUCCESS)
     {
       if(cache_inode_status == CACHE_INODE_NOT_FOUND)
         DisplayLog
@@ -920,9 +925,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 
   /* Cache inode client parameters */
   if((cache_inode_status = cache_inode_read_conf_client_parameter(config_struct,
-                                                                  &p_nfs_param->
-                                                                  cache_layers_param.
-                                                                  cache_inode_client_param))
+                                                                  &p_nfs_param->cache_layers_param.cache_inode_client_param))
      != CACHE_INODE_SUCCESS)
     {
       if(cache_inode_status == CACHE_INODE_NOT_FOUND)
@@ -940,9 +943,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 
   /* Data cache client parameters */
   if((cache_content_status = cache_content_read_conf_client_parameter(config_struct,
-                                                                      &p_nfs_param->
-                                                                      cache_layers_param.
-                                                                      cache_content_client_param))
+                                                                      &p_nfs_param->cache_layers_param.cache_content_client_param))
      != CACHE_CONTENT_SUCCESS)
     {
       if(cache_content_status == CACHE_CONTENT_NOT_FOUND)
@@ -1759,8 +1760,9 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
 
   /* Allocate the directories for the datacache */
   if(cache_content_prepare_directories(nfs_param.pexportlist,
-                                       nfs_param.cache_layers_param.
-                                       cache_content_client_param.cache_dir,
+                                       nfs_param.
+                                       cache_layers_param.cache_content_client_param.
+                                       cache_dir,
                                        &content_status) != CACHE_CONTENT_SUCCESS)
     {
       DisplayLog

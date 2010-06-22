@@ -35,8 +35,6 @@
  * $Header: /cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/support/nfs_mnt_list.c,v 1.7 2005/11/28 17:03:03 deniel Exp $
  *
  * $Log: nfs_mnt_list.c,v $
- * Revision 1.7  2005/11/28 17:03:03  deniel
- * Added CeCILL headers
  *
  * Revision 1.6  2005/11/24 13:44:29  deniel
  * ajout du remove dans ipname

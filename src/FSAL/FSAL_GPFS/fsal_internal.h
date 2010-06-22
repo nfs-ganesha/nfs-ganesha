@@ -134,7 +134,7 @@ fsal_status_t fsal_internal_handle2fd_at( int dirfd,
                                        int oflags ) ;
 
 
-fsal_status_t fsal_internal_handle_at(int dfd,
+fsal_status_t fsal_internal_get_handle_at(int dfd,
                                        fsal_name_t * p_fsalname,       /* IN */
                                        fsal_handle_t * p_handle /* OUT */ );
 /**
@@ -149,9 +149,23 @@ fsal_status_t  fsal_readlink_by_handle(fsal_op_context_t * p_context,
 /**
  * Get the handle for a path (posix or fid path)
  */
-fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
+fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,  /* IN */
                                         fsal_path_t * p_fsalpath,       /* IN */
                                         fsal_handle_t * p_handle /* OUT */ );
+
+fsal_status_t fsal_internal_get_handle_at(int dfd,
+                                       fsal_name_t * p_fsalname,       /* IN */
+                                       fsal_handle_t * p_handle /* OUT */ );
+
+
+fsal_status_t fsal_internal_fd2handle(
+                                      int fd, /* IN */
+                                      fsal_handle_t * p_handle /* OUT */
+                                      );
+
+fsal_status_t fsal_internal_link_at(int srcfd,
+                                    int dfd,
+                                    char * name);
 
 /**
  *  test the access to a file from its POSIX attributes (struct stat) OR its FSAL attributes (fsal_attrib_list_t).

@@ -35,9 +35,6 @@
  * Revision 1.8  2006/01/17 14:56:22  leibovic
  * Adaptation de HPSS 6.2.
  *
- * Revision 1.7  2005/11/28 17:03:00  deniel
- * Added CeCILL headers
- *
  * Revision 1.6  2005/10/10 12:39:08  leibovic
  * Using mnt/nfs free functions.
  *

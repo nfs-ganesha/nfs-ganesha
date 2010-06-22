@@ -10,15 +10,15 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  * 
  *
  */
@@ -49,9 +49,9 @@ fsal_status_t FSAL_lock(fsal_file_t * obj_handle,
                         fsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
 {
   int retval;
-  int errsv = 0 ;
+  int errsv = 0;
 
-  int fd = obj_handle->fd ;
+  int fd = obj_handle->fd;
 
   errno = 0;
   /*
@@ -99,7 +99,7 @@ fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / 
 fsal_status_t FSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {
   int retval;
-  int fd = obj_handle->fd ;
+  int fd = obj_handle->fd;
 
   errno = 0;
   ldesc->flock.l_type = F_UNLCK;
@@ -113,7 +113,7 @@ fsal_status_t FSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 fsal_status_t FSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {
   int retval;
-  int fd = obj_handle->fd ;
+  int fd = obj_handle->fd;
 
   errno = 0;
   retval = fcntl(fd, F_GETLK, &ldesc->flock);
