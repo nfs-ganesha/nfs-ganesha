@@ -327,20 +327,19 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
           /* No data cache entry, we operated directly on FSAL */
           pentry->object.file.attributes.asked_attributes = pclient->attrmask;
 
-          /* Open the file if needed */
-          if(pentry->object.file.open_fd.fileno == 0)
+          /* We need to open if we don't have a cached
+           * descriptor or our open flags differs.
+           */
+          if(cache_inode_open(pentry,
+                              pclient,
+                              openflags, pcontext, pstatus) != CACHE_INODE_SUCCESS)
             {
-              if(cache_inode_open(pentry,
-                                  pclient,
-                                  openflags, pcontext, pstatus) != CACHE_INODE_SUCCESS)
-                {
-                  V_w(&pentry->lock);
+              V_w(&pentry->lock);
 
-                  /* stats */
-                  pclient->stat.func_stats.nb_err_unrecover[statindex] += 1;
+              /* stats */
+              pclient->stat.func_stats.nb_err_unrecover[statindex] += 1;
 
-                  return *pstatus;
-                }
+              return *pstatus;
             }
 
           rw_lock_downgrade(&pentry->lock);
