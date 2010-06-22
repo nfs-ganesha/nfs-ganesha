@@ -48,7 +48,7 @@
  * @return a NFSv4 error (positive value) if failed.
  *
  */
-int pnfs_lookup(pnfs_client_t * pnfsclient, nfs_fh4 * parent_directory_handle,  /* IN */
+int pnfs_lookup(pnfs_ds_client_t * pnfsdsclient, nfs_fh4 * parent_directory_handle,  /* IN */
                 char *filename, /* IN */
                 nfs_fh4 * object_handle)
 {
@@ -139,7 +139,7 @@ int pnfs_lookup(pnfs_client_t * pnfsclient, nfs_fh4 * parent_directory_handle,  
     }
 
   /* Call the NFSv4 function */
-  if(COMPOUNDV41_EXECUTE_SIMPLE(pnfsclient, argnfs4, resnfs4) != RPC_SUCCESS)
+  if(COMPOUNDV41_EXECUTE_SIMPLE(pnfsdsclient, argnfs4, resnfs4) != RPC_SUCCESS)
     {
       return NFS4ERR_IO;        /* @todo: For wanting of something more appropriate */
     }
@@ -168,7 +168,7 @@ int pnfs_lookup(pnfs_client_t * pnfsclient, nfs_fh4 * parent_directory_handle,  
  *
  * Looks up for a full path.
  *
- * @param pnfsclient        [IN]  pointer to the pnfsclient structure (client to the ds).
+ * @param pnfsdsclient        [IN]  pointer to the pnfdssclient structure (client to the ds).
  * @param path              [IN]  the path to be looked up
  * @param object_handle     [OUT] the resulting NFSv4 file handle
  *
@@ -176,7 +176,7 @@ int pnfs_lookup(pnfs_client_t * pnfsclient, nfs_fh4 * parent_directory_handle,  
  * @return a NFSv4 error (positive value) if failed.
  *
  */
-int pnfs_lookupPath(pnfs_client_t * pnfsclient, char *path, nfs_fh4 * object_handle)
+int pnfs_lookupPath(pnfs_ds_client_t * pnfsdsclient, char *path, nfs_fh4 * object_handle)
 {
   char *ptr_str;
   nfs_fh4 out_hdl;
@@ -185,7 +185,7 @@ int pnfs_lookupPath(pnfs_client_t * pnfsclient, char *path, nfs_fh4 * object_han
 
   char padfilehandle[PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN];
 
-  if(!object_handle || !pnfsclient || !path)
+  if(!object_handle || !pnfsdsclient || !path)
     return NFS4ERR_INVAL;
 
   out_hdl.nfs_fh4_len = 0;
@@ -210,7 +210,7 @@ int pnfs_lookupPath(pnfs_client_t * pnfsclient, char *path, nfs_fh4 * object_han
 
   /* retrieves root directory */
 
-  if((status = pnfs_lookup(pnfsclient, NULL,    /* looking up for root */
+  if((status = pnfs_lookup(pnfsdsclient, NULL,    /* looking up for root */
                            "",  /* empty string to get root handle */
                            &out_hdl)) != NFS4_OK)       /* output root handle */
     return status;
@@ -261,7 +261,7 @@ int pnfs_lookupPath(pnfs_client_t * pnfsclient, char *path, nfs_fh4 * object_han
         b_is_last = TRUE;
 
       /*call to FSAL_lookup */
-      if((status = pnfs_lookup(pnfsclient, &in_hdl, obj_name, &out_hdl)) != NFS4_OK)
+      if((status = pnfs_lookup(pnfsdsclient, &in_hdl, obj_name, &out_hdl)) != NFS4_OK)
         return status;
 
       /* ptr_str is ok, we are ready for next loop */

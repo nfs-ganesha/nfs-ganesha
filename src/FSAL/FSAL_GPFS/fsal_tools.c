@@ -81,9 +81,9 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
   if ( handle1->handle.handle_size != handle2->handle.handle_size )
     return -2;
 
-  if ( strncmp(handle1->handle.f_handle, handle2->handle.f_handle, handle1->handle.handle_size)
-       && (handle1->fsid[0] == handle2->fsid[0])
-       && (handle1->fsid[1] == handle2->fsid[1]) )
+  if ( strncmp(handle1->handle.f_handle, handle2->handle.f_handle, handle1->handle.handle_size) )
+       //FSF && (handle1->fsid[0] == handle2->fsid[0])
+       //FSF && (handle1->fsid[1] == handle2->fsid[1]) )
     return -3;
 
   return 0;
@@ -221,7 +221,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
       /**
        * This is never going to work, we need to be trickier to get
-       * this down to 25 bytes
+       * this down to 29 bytes
        */
       if(sizeof(fsal_handle_t) > FSAL_DIGEST_SIZE_HDLV2)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
@@ -316,7 +316,7 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
       /* NFSV2 handle digest */
     case FSAL_DIGEST_NFSV2:
       memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
+      memcpy(p_out_fsal_handle, in_buff, sizeof( fsal_handle_t ));
       break;
 
       /* NFSV3 handle digest */

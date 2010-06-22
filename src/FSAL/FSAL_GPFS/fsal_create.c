@@ -128,29 +128,34 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
   }
 
+  /* we no longer need the parent directory open any more */
+  close(fd);
+
   /* close the file descriptor */
-  rc = close(newfd);
+  /*** 
+   * Previously the file handle was closed here.  I don't think that
+   we need that, but leaving the commented out logic just in case.
+   rc = close(newfd);
+   
+   errsv = errno;
+   if(rc)
+   {
+   close(fd);
+   ReleaseTokenFSCall();
+   Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
+   }
+  */
   
-  errsv = errno;
-  if(rc)
-  {
-    close(fd);
-    ReleaseTokenFSCall();
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
-  }
-  
-  /* get the new file handle */
-  /* TODO: this has a race, but for now we can't do much about it */
-  status = fsal_internal_get_handle_at(fd, p_filename, p_object_handle);
+  /* get a handle for this new fd, doing this directly ensures no race
+     because we still have the fd open until the end of this function */
+  status = fsal_internal_fd2handle(newfd, p_object_handle);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
+  {
+    close(newfd);
     ReturnStatus(status, INDEX_FSAL_create);
-
-  status = fsal_internal_handle2fd_at(fd, p_object_handle, &newfd, O_RDONLY);
-
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_create);
+  }
 
   /* the file has been created */
   /* chown the file to the current user */
@@ -165,14 +170,16 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
       ReleaseTokenFSCall();
       if(rc)
        {
-         close( fd ) ;
          close( newfd ) ;
          Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
        }
     }
 
-  close( fd ) ;
+  /* if we got this far successfully, but the file close fails, we've
+     got a problem, possibly a disk full problem. */
   close( newfd ) ;
+  if(rc)
+    Return(posix2fsal_error(errno), errno, INDEX_FSAL_create);
 
   /* retrieve file attributes */
   if(p_object_attributes)
