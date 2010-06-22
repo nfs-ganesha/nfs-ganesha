@@ -1158,7 +1158,6 @@ fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
 #endif
 }
 
-
 /**
  *  Removes a xattr by Id
  *
@@ -1166,13 +1165,13 @@ fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
  * \param p_context pointer to the current security context.
  * \param xattr_id xattr's id
  */
-fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,        /* IN */
-                                   fsal_op_context_t * p_context, /* IN */
-                                   unsigned int xattr_id ) /* IN */
+fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,      /* IN */
+                                   fsal_op_context_t * p_context,       /* IN */
+                                   unsigned int xattr_id)       /* IN */
 {
- ReturnCode(ERR_FSAL_NO_ERROR, 0 ) ;
-} /* FSAL_RemoveXAttrById */
-  
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}                               /* FSAL_RemoveXAttrById */
+
 /**
  *  Removes a xattr by Name
  *
@@ -1180,11 +1179,9 @@ fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,        /* IN 
  * \param p_context pointer to the current security context.
  * \param xattr_name xattr's name
  */
-fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,        /* IN */
-                                   fsal_op_context_t * p_context, /* IN */
-                                    const fsal_name_t * xattr_name )  /* IN */
+fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* IN */
+                                     fsal_op_context_t * p_context,     /* IN */
+                                     const fsal_name_t * xattr_name)    /* IN */
 {
- ReturnCode(ERR_FSAL_NO_ERROR, 0 ) ;
-} /* FSAL_RemoveXAttrById */
-   
-
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}                               /* FSAL_RemoveXAttrById */

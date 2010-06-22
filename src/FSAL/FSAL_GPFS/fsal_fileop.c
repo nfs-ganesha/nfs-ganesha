@@ -186,8 +186,8 @@ fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
 
   status =
       fsal_internal_testAccess(p_context,
-                               openflags & FSAL_O_RDONLY ? FSAL_R_OK : FSAL_W_OK,
-                               &buffstat, NULL);
+                               (openflags & FSAL_O_RDONLY ? FSAL_R_OK : FSAL_W_OK) |
+                               FSAL_OWNER_OK, &buffstat, NULL);
   if(FSAL_IS_ERROR(status))
    {
      close( fd ) ;

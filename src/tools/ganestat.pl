@@ -32,6 +32,8 @@ my @cache_inode_hash_fn_names =  ( "set", "test", "get", "del" );
 
 my @mount_fn_names = ( "null", "mount", "dump", "umount", "umountall", "export" );
 
+my @rquota_fn_names = ( "null", "getquota", "getquotaspecific", "setquota", "setquotaspecific" ) ;
+
 my @nfs2_fn_names =
 ( "null", "getattr", "setattr", "root", "lookup", "readlink", "read", "writecache",
 "write", "create", "remove", "rename", "link", "symlink", "mkdir", "rmdir",
@@ -68,6 +70,11 @@ my @nfs41_op_names =
 "getdeviceinfo", "getdevicelist", "layoutcommit", "layoutget", "layoutreturn",
 "secinfo_no_name", "sequence", "set_ssv", "test_stateid", "want_delegation",
 "destroy_clientid", "reclaim_complete" ) ;
+
+
+my @nlm_fn_names = ( "null", "test", "lock", "cancel", "unlock", "granted", "test_msg", "lock_msg", 
+  "cancel_msg", "unlock_msg", "granted_msg", "test_res", "lock_res", "cancel_res", "unlock_res", "granted_res",
+  "sm_notify", "m/a", "n/a", "n/a", "share", "unshare", "nm_lock", "free_all" ) ;
 
 my @fsal_fn_names = (
   "lookup",   "access",   "create", "mkdir",   "truncate",
@@ -405,6 +412,67 @@ while (my $ligne=<STATS>)
         $fn_index ++;
       
       }
+    elsif ( $tag =~ m/RQUOTA V. REQUEST/ )
+    {
+      next if ( ! ( $reste =~ m/^([^|]+)(.*)/ ) );  # go to next line
+      
+      my $total = $1;
+      $reste = $2;
+      
+      print "Nb requests : $total\n\n";      
+            
+      my $fn_index = 0;
+      
+      while (  $reste =~ m/\|([^,]+),([^,]+),([^|]+)(.*)/ )
+      {
+        my $nb_tot = $1;
+        my $nb_ok = $2;
+        my $nb_dropp = $3;
+        $reste = $4;
+        
+        if ( $fn_index == 0 )
+        {
+          # print header the first time
+          printf( "%20s | %10s | %10s | %10s\n", "FUNCTION", "NB_CALLS", "OK", "DROPPED");
+        }
+        
+        printf( "%20s | %10d | %10d | %10d \n", $rquota_fn_names[$fn_index],
+                $nb_tot, $nb_ok, $nb_dropp );
+        
+        $fn_index ++;
+      
+      }
+   elsif ( $tag =~ m/NLM V. REQUEST/ )
+    {
+      next if ( ! ( $reste =~ m/^([^|]+)(.*)/ ) );  # go to next line
+      
+      my $total = $1;
+      $reste = $2;
+      
+      print "Nb requests : $total\n\n";      
+            
+      my $fn_index = 0;
+      
+      while (  $reste =~ m/\|([^,]+),([^,]+),([^|]+)(.*)/ )
+      {
+        my $nb_tot = $1;
+        my $nb_ok = $2;
+        my $nb_dropp = $3;
+        $reste = $4;
+        
+        if ( $fn_index == 0 )
+        {
+          # print header the first time
+          printf( "%20s | %10s | %10s | %10s\n", "FUNCTION", "NB_CALLS", "OK", "DROPPED");
+        }
+        
+        printf( "%20s | %10d | %10d | %10d \n", $nlm_fn_names[$fn_index],
+                $nb_tot, $nb_ok, $nb_dropp );
+        
+        $fn_index ++;
+      
+      }
+
     }
     elsif ( $tag =~ m/NFS V(.) REQUEST/ )
     {

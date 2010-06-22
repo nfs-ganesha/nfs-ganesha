@@ -79,9 +79,9 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
   struct stat buffstat;
   fsal_path_t pathfsal;
 
-  int parentfd ;
-  int objectfd ;
-  int errsrv ;
+  int parentfd;
+  int objectfd;
+  int errsrv;
 
   /* sanity checks
    * note : object_attributes is optionnal
@@ -99,9 +99,10 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
   if(!p_parent_directory_handle)
     {
       /* get handle for the mount point  */
-      memcpy( p_object_handle->handle_val, p_context->export_context->mnt_handle_val, p_context->export_context->mnt_handle_len ) ;
-      p_object_handle->handle_len =  p_context->export_context->mnt_handle_len ;
-      
+      memcpy(p_object_handle->handle_val, p_context->export_context->mnt_handle_val,
+             p_context->export_context->mnt_handle_len);
+      p_object_handle->handle_len = p_context->export_context->mnt_handle_len;
+
       /* get attributes, if asked */
       if(p_object_attributes)
         {
@@ -118,15 +119,16 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
 
   /* retrieve directory attributes */
   TakeTokenFSCall();
-  status =  fsal_internal_handle2fd( p_context, p_parent_directory_handle, &parentfd, O_RDONLY ) ;
+  status =
+      fsal_internal_handle2fd(p_context, p_parent_directory_handle, &parentfd, O_RDONLY);
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_lookup);
 
   /* get directory metadata */
   TakeTokenFSCall();
-  rc = fstat( parentfd, &buffstat);
-  errsrv = errno ;
+  rc = fstat(parentfd, &buffstat);
+  errsrv = errno;
   ReleaseTokenFSCall();
 
   if(rc)
@@ -171,23 +173,22 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
 
   /* get file handle, it it exists */
   TakeTokenFSCall();
-  objectfd = openat( parentfd, p_filename->name, O_RDONLY, 0600 ) ;
-  errsrv = errno ;
+  objectfd = openat(parentfd, p_filename->name, O_RDONLY, 0600);
+  errsrv = errno;
   ReleaseTokenFSCall();
 
-  if( objectfd < 0 )
+  if(objectfd < 0)
     {
-     close( parentfd ) ;
-     Return( posix2fsal_error( errsrv ), errsrv,  INDEX_FSAL_lookup);
+      close(parentfd);
+      Return(posix2fsal_error(errsrv), errsrv, INDEX_FSAL_lookup);
     }
 
-  status = fsal_internal_fd2handle(  p_context, objectfd, p_object_handle ) ;
-  close( parentfd ) ;
-  close( objectfd ) ;
+  status = fsal_internal_fd2handle(p_context, objectfd, p_object_handle);
+  close(parentfd);
+  close(objectfd);
 
-  if( FSAL_IS_ERROR( status ) )
+  if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_lookup);
-
 
   /* get object attributes */
   if(p_object_attributes)

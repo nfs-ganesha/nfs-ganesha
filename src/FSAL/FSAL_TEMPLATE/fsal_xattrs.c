@@ -254,13 +254,6 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
   if(!p_objecthandle || !p_context || !p_attrs)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetXAttrAttrs);
 
-  /* check that this index match the type of entry */
-  if(xattr_id >= XATTR_COUNT
-     || !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->obj_type))
-    {
-      Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrAttrs);
-    }
-
   /* object attributes we want to retrieve from parent */
   file_attrs.asked_attributes = FSAL_ATTR_MODE | FSAL_ATTR_FILEID | FSAL_ATTR_OWNER
       | FSAL_ATTR_GROUP | FSAL_ATTR_ATIME | FSAL_ATTR_MTIME
@@ -505,7 +498,6 @@ fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
   Return(ERR_FSAL_PERM, 0, INDEX_FSAL_SetXAttrValue);
 }
 
-
 /**
  *  Removes a xattr by Id
  *
@@ -513,13 +505,13 @@ fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
  * \param p_context pointer to the current security context.
  * \param xattr_id xattr's id
  */
-fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,        /* IN */
-                                   fsal_op_context_t * p_context, /* IN */
-                                   unsigned int xattr_id ) /* IN */
+fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,      /* IN */
+                                   fsal_op_context_t * p_context,       /* IN */
+                                   unsigned int xattr_id)       /* IN */
 {
- ReturnCode(ERR_FSAL_NO_ERROR, 0 ) ;
-} /* FSAL_RemoveXAttrById */
-  
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}                               /* FSAL_RemoveXAttrById */
+
 /**
  *  Removes a xattr by Name
  *
@@ -527,11 +519,9 @@ fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,        /* IN 
  * \param p_context pointer to the current security context.
  * \param xattr_name xattr's name
  */
-fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,        /* IN */
-                                   fsal_op_context_t * p_context, /* IN */
-                                    const fsal_name_t * xattr_name )  /* IN */
+fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* IN */
+                                     fsal_op_context_t * p_context,     /* IN */
+                                     const fsal_name_t * xattr_name)    /* IN */
 {
- ReturnCode(ERR_FSAL_NO_ERROR, 0 ) ;
-} /* FSAL_RemoveXAttrById */
-   
-
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}                               /* FSAL_RemoveXAttrById */

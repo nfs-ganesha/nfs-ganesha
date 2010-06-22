@@ -728,10 +728,10 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
  * \param p_context pointer to the current security context.
  * \param xattr_id xattr's id
  */
-fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,        /* IN */
-                                   fsal_op_context_t * p_context, /* IN */
-                                   unsigned int xattr_id ) ; /* IN */
-  
+fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,      /* IN */
+                                   fsal_op_context_t * p_context,       /* IN */
+                                   unsigned int xattr_id);      /* IN */
+
 /**
  *  Removes a xattr by Name
  *
@@ -739,10 +739,9 @@ fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,        /* IN 
  * \param p_context pointer to the current security context.
  * \param xattr_name xattr's name
  */
-fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,        /* IN */
-                                   fsal_op_context_t * p_context, /* IN */
-                                    const fsal_name_t * xattr_name ) ; /* IN */
-
+fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* IN */
+                                     fsal_op_context_t * p_context,     /* IN */
+                                     const fsal_name_t * xattr_name);   /* IN */
 
 /******************************************************
  *                FSAL miscelaneous tools.
@@ -755,6 +754,22 @@ void FSAL_get_stats(fsal_statistics_t * stats,  /* OUT */
 
 /* Return the name of the underlying file system (used for traces) */
 char *FSAL_GetFSName();
+
+/******************************************************
+ *                FSAL quota related functions.
+ ******************************************************/
+#define FSAL_QCMD(cmd, type)  (((cmd) << SUBCMDSHIFT) | ((type) & SUBCMDMASK))
+
+fsal_status_t FSAL_get_quota( fsal_path_t * pfsal_path, /* IN */
+                              int           quota_type, /* IN */
+                              fsal_uid_t    fsal_uid,   /* IN */
+                              fsal_quota_t * pquota );  /* OUT */
+
+fsal_status_t FSAL_set_quota ( fsal_path_t * pfsal_path,  /* IN */
+                               int           quota_type,  /* IN */
+                               fsal_uid_t    fsal_uid,    /* IN */
+                               fsal_quota_t * pquot,      /* IN */
+			       fsal_quota_t * presquot ); /* OUT */
 
 /******************************************************
  *                Standard convertion routines.

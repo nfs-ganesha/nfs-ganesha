@@ -121,31 +121,41 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
   newfd = openat( fd, p_filename->name, O_CREAT | O_WRONLY | O_TRUNC | O_EXCL, unix_mode);
   errsv = errno;
 
-  if( newfd == -1)
-    {
-      close(fd);
-      ReleaseTokenFSCall();
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
-    }
+  if( newfd < 0)
+  {
+    close(fd);
+    ReleaseTokenFSCall();
+    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
+  }
+
+  /* we no longer need the parent directory open any more */
+  close(fd);
 
   /* close the file descriptor */
-  rc = close(newfd);
-
-  errsv = errno;
-  if(rc)
-    {
-      close(fd);
-      ReleaseTokenFSCall();
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
-    }
-
-  /* get the new file handle */
-  /* TODO: this has a race, but for now we can't do much about it */
-  status = fsal_internal_handle_at(fd, p_filename, p_object_handle);
+  /*** 
+   * Previously the file handle was closed here.  I don't think that
+   we need that, but leaving the commented out logic just in case.
+   rc = close(newfd);
+   
+   errsv = errno;
+   if(rc)
+   {
+   close(fd);
+   ReleaseTokenFSCall();
+   Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
+   }
+  */
+  
+  /* get a handle for this new fd, doing this directly ensures no race
+     because we still have the fd open until the end of this function */
+  status = fsal_internal_fd2handle(newfd, p_object_handle);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
+  {
+    close(newfd);
     ReturnStatus(status, INDEX_FSAL_create);
+  }
 
   /* the file has been created */
   /* chown the file to the current user */
@@ -154,20 +164,22 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
     {
       TakeTokenFSCall();
       /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-      rc = fchown( fd , p_context->credential.user,
+      rc = fchown( newfd , p_context->credential.user,
                   setgid_bit ? -1 : (int)p_context->credential.group);
       errsv = errno;
       ReleaseTokenFSCall();
       if(rc)
        {
-         close( fd ) ;
          close( newfd ) ;
          Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
        }
     }
 
-  close( fd ) ;
+  /* if we got this far successfully, but the file close fails, we've
+     got a problem, possibly a disk full problem. */
   close( newfd ) ;
+  if(rc)
+    Return(posix2fsal_error(errno), errno, INDEX_FSAL_create);
 
   /* retrieve file attributes */
   if(p_object_attributes)
@@ -284,34 +296,42 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
   rc = mkdirat( fd, p_dirname->name, unix_mode);
   errsv = errno;
   if(rc)
-    {
-      close( fd ) ;
+  {
+    close( fd ) ;
+    
+    ReleaseTokenFSCall();
+    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
+  }
 
-      ReleaseTokenFSCall();
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
-    }
+  ReleaseTokenFSCall();
+
+  /****
+   *  There is a race here between mkdir creation and the open, not
+   *  sure there is any way to close it in practice.
+   */
 
   /* get the new handle */
-
-  if( ( newfd = openat( fd, p_dirname->name, O_RDONLY|O_DIRECTORY, 0600 ) ) < 0 )
-   {
-      errsv = errno ;
-      close( fd ) ;
-      ReleaseTokenFSCall();
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
-   }
-  
-  status = fsal_internal_handle_at(fd, p_dirname, p_object_handle);
+  TakeTokenFSCall();
+  status = fsal_internal_get_handle_at(fd, p_dirname, p_object_handle);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
-   {
+  {
     close( fd ) ; 
-    close( newfd ) ;
     ReturnStatus(status, INDEX_FSAL_mkdir);
-   }
+  }
 
-  /* the directory has been created */
+  TakeTokenFSCall();
+  status = fsal_internal_handle2fd_at(fd, p_object_handle, &newfd, O_RDONLY|O_DIRECTORY);
+  ReleaseTokenFSCall();
+  
+  if(FSAL_IS_ERROR(status))
+  {
+    close( fd ) ; 
+    ReturnStatus(status, INDEX_FSAL_mkdir);
+  }
+  
+   /* the directory has been created */
   /* chown the file to the current user/group */
 
   if(p_context->credential.user != geteuid())
@@ -388,11 +408,6 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
                         fsal_attrib_list_t * p_attributes       /* [ IN/OUT ] */
     )
 {
-
-  /* THIS FUNCTION DOES NOT DO ANYTHING. LINK_AT() NEEDS TO BE REPLACED
-   * BEFORE THIS FUNCTION CAN BE USED. 
-   */
-
   int rc, errsv;
   fsal_status_t status;
   int srcfd, dstfd ;
@@ -401,7 +416,7 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   /* sanity checks.
    * note : attributes is optional.
    */
-  if(!p_target_handle || !p_dir_handle || !p_context || !p_link_name)
+  if(!p_target_handle || !p_dir_handle || !p_context || !p_context->export_context || !p_link_name || !p_link_name->name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_link);
 
   /* Tests if hardlinking is allowed by configuration. */
@@ -415,7 +430,7 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
 
   /* get the target handle access by fid */
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd( p_context, p_target_handle , &srcfd, O_RDWR ) ;
+  status = fsal_internal_handle2fd( p_context, p_target_handle , &srcfd, O_RDONLY ) ;
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_link);
@@ -436,16 +451,16 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   errsv = errno;
   ReleaseTokenFSCall();
 
-  if(rc)
-    {
-      close( srcfd ) ;
-      close( dstfd ) ;
-
-      if(errsv == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_link);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_link);
-    }
+  if(rc < 0)
+  {
+    close( srcfd ) ;
+    close( dstfd ) ;
+    
+    if(errsv == ENOENT)
+      Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_link);
+    else
+      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_link);
+  }
 
   /* check permission on target directory */
   status =
@@ -456,11 +471,16 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   /* Create the link on the filesystem */
 
   TakeTokenFSCall();
-  //rc = linkat(oldfd, fsalpath_new.path);
-  errsv = errno;
+  status = fsal_internal_link_at(srcfd, dstfd, p_link_name->name);
   ReleaseTokenFSCall();
-  if(rc)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_link);
+
+
+  if(FSAL_IS_ERROR(status)) 
+  {
+    close( srcfd ) ;
+    close( dstfd ) ;
+    ReturnStatus(status, INDEX_FSAL_link);
+  }
 
   /* optionnaly get attributes */
 
@@ -475,6 +495,9 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
           FSAL_SET_MASK(p_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
         }
     }
+
+  close( srcfd ) ;
+  close( dstfd ) ;
 
   /* OK */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_link);
@@ -592,7 +615,7 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
    * is an unlikely race condition, but hopefully can be fixed someday.
    */
 
-  if(FSAL_IS_ERROR(status = fsal_internal_handle_at(fd, p_node_name,
+  if(FSAL_IS_ERROR(status = fsal_internal_get_handle_at(fd, p_node_name,
 						    p_object_handle)))
     {
       close(fd);

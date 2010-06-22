@@ -44,9 +44,6 @@
  * Revision 1.17  2006/01/17 14:56:22  leibovic
  * Adaptation de HPSS 6.2.
  *
- * Revision 1.16  2005/11/28 17:03:00  deniel
- * Added CeCILL headers
- *
  * Revision 1.15  2005/09/27 09:30:16  leibovic
  * Removing non-thread safe trace buffer.
  *

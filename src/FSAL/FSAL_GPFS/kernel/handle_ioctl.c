@@ -115,6 +115,8 @@ long name_to_handle_at(int dfd, const char __user *name,
 	int follow;
 	long ret = -EINVAL;
 	struct nameidata nd;
+	struct file *file = NULL;
+
 
 	if (!capable(CAP_DAC_OVERRIDE)) {
 		ret = -EPERM;
@@ -123,13 +125,26 @@ long name_to_handle_at(int dfd, const char __user *name,
 	if ((flag & ~AT_SYMLINK_FOLLOW) != 0)
 		goto err_out;
 
-	follow = (flag & AT_SYMLINK_FOLLOW) ? LOOKUP_FOLLOW : 0;
-	ret = __user_walk_fd(dfd, name, follow, &nd);
-	if (ret)
-		goto err_out;
+	if (name == NULL && dfd != AT_FDCWD) {
+		file = fget(dfd);
 
+		if (file)
+			nd.dentry = file->f_dentry;
+		else {
+			ret = -EBADF;
+			goto err_out;
+		}
+	} else {
+		follow = (flag & AT_SYMLINK_FOLLOW) ? LOOKUP_FOLLOW : 0;
+		ret = __user_walk_fd(dfd, name, follow, &nd);
+		if (ret)
+			goto err_out;
+	}
 	ret = do_sys_name_to_handle(&nd, handle);
-	path_release(&nd);
+	if (file)
+		fput(file);
+	else
+		path_release(&nd);
 
 err_out:
 	return ret;
@@ -196,6 +211,10 @@ static struct dentry *handle_to_dentry(int mountdirfd,
 		retval = PTR_ERR(dentry);
 		goto out_mnt;
 	}
+        if (!dentry) {
+		retval = -ESTALE;
+		goto out_mnt;
+        }
 	*mntp = mnt;
 	return dentry;
 out_mnt:

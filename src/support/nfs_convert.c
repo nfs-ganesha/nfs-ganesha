@@ -28,8 +28,6 @@
  * \brief   nfs conversion tools.
  *
  * $Log: nfs_convert.c,v $
- * Revision 1.3  2005/11/28 17:03:02  deniel
- * Added CeCILL headers
  *
  * Revision 1.2  2005/10/12 08:28:00  deniel
  * Format of the errror message.

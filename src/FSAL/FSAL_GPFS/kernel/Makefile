@@ -10,9 +10,9 @@ all: modules userspace
 
 install:
 	install -d $(DESTDIR)/lib/modules/$(shell uname -r)/extra
-	$(MAKE) -C /lib/modules/$(shell uname -r)/build/ INSTALL_MOD_PATH=$(DESTDIR) M=$(shell pwd) modules_install
+	$(MAKE) -C /lib/modules/$(shell uname -r)/build/ INSTALL_MOD_PATH=$(DESTDIR)/ M=$(shell pwd) modules_install
 # needed on a new install
-	/sbin/depmod -b $(DESTDIR)
+	/sbin/depmod -b $(DESTDIR)/
 
 clean: userclean
 	$(MAKE) -C $(DESTDIR)/lib/modules/$(shell uname -r)/build/ M=$(shell pwd) clean
@@ -29,7 +29,7 @@ endif
 
 userspace: append_handle_prg create_handle_prg hardlink_handle_prg \
 	 read_handle_prg readlink_handle_prg \
-	 truncate_handle_prg
+	 truncate_handle_prg create_handle_from_fd_prg
 
 modules:
 	$(MAKE) -C /lib/modules/$(shell uname -r)/build/ M=$(shell pwd)
@@ -37,7 +37,7 @@ modules:
 userclean:
 	$(RM) append_handle_prg create_handle_prg hardlink_handle_prg \
 	 read_handle_prg readlink_handle_prg \
-	 truncate_handle_prg
+	 truncate_handle_prg create_handle_from_fd_prg
 
 distdir:
 

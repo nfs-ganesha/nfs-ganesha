@@ -25,10 +25,6 @@
  *
  * $Header: /cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/LRU/test_lru.c,v 1.9 2005/11/28 17:02:39 deniel Exp $
  *
- * $Log: test_lru.c,v $
- * Revision 1.9  2005/11/28 17:02:39  deniel
- * Added CeCILL headers
- *
  * Revision 1.8  2005/10/05 14:03:29  deniel
  * DEBUG ifdef are now much cleaner
  *

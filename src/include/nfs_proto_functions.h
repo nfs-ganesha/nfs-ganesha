@@ -42,6 +42,7 @@
 #include "mount.h"
 #include "nfs4.h"
 #include "nlm4.h"
+#include "rquota.h"
 
 #include <pthread.h>
 #include <sys/types.h>
@@ -121,6 +122,18 @@ typedef union nfs_arg__
   nlm4_unlockargs arg_nlm4_unlock;
   nlm4_sm_notifyargs arg_nlm4_sm_notify;
   nlm4_res arg_nlm4_res;
+
+  /* Rquota arguments */
+  getquota_args arg_rquota_getquota;
+  getquota_args arg_rquota_getactivequota ;
+  setquota_args arg_rquota_setquota ;
+  setquota_args arg_rquota_setactivequota ;
+
+  /* Rquota arguments */
+  ext_getquota_args arg_ext_rquota_getquota;
+  ext_getquota_args arg_ext_rquota_getactivequota ;
+  ext_setquota_args arg_ext_rquota_setquota ;
+  ext_setquota_args arg_ext_rquota_setactivequota ;
 } nfs_arg_t;
 
 typedef union nfs_res__
@@ -164,6 +177,18 @@ typedef union nfs_res__
   /* nlm4 returned values */
   nlm4_testres res_nlm4test;
   nlm4_res res_nlm4;
+
+ /* Ext Rquota arguments */
+  getquota_rslt res_rquota_getquota;
+  getquota_rslt res_rquota_getactivequota ;
+  setquota_rslt res_rquota_setquota ;
+  setquota_rslt res_rquota_setactivequota ;
+  /* Rquota arguments */
+  getquota_rslt res_ext_rquota_getquota;
+  getquota_rslt res_ext_rquota_getactivequota ;
+  setquota_rslt res_ext_rquota_setquota ;
+  setquota_rslt res_ext_rquota_setactivequota ;
+
 
   char padding[1024];
 } nfs_res_t;
@@ -341,6 +366,58 @@ int nlm4_Unlock_Message(nfs_arg_t * parg /* IN     */ ,
 /* @}
  * -- End of NLM protocol functions. --
  */
+
+/**
+ * @defgroup RQUOTA ocs    RQUOTA protocol functions.
+ *
+ * @{
+ */
+
+int rquota_Null(nfs_arg_t * parg /* IN  */ ,
+             exportlist_t * pexport /* IN  */ ,
+             fsal_op_context_t * pcontext /* IN  */ ,
+             cache_inode_client_t * pclient /* IN  */ ,
+             hash_table_t * ht /* INOUT */ ,
+             struct svc_req *preq /* IN  */ ,
+             nfs_res_t * pres /* OUT */ );
+
+
+int rquota_getquota(nfs_arg_t * parg /* IN  */ ,
+             exportlist_t * pexport /* IN  */ ,
+             fsal_op_context_t * pcontext /* IN  */ ,
+             cache_inode_client_t * pclient /* IN  */ ,
+             hash_table_t * ht /* INOUT */ ,
+             struct svc_req *preq /* IN  */ ,
+             nfs_res_t * pres /* OUT */ );
+
+int rquota_getactivequota(nfs_arg_t * parg /* IN  */ ,
+             exportlist_t * pexport /* IN  */ ,
+             fsal_op_context_t * pcontext /* IN  */ ,
+             cache_inode_client_t * pclient /* IN  */ ,
+             hash_table_t * ht /* INOUT */ ,
+             struct svc_req *preq /* IN  */ ,
+             nfs_res_t * pres /* OUT */ );
+
+int rquota_setquota(nfs_arg_t * parg /* IN  */ ,
+             exportlist_t * pexport /* IN  */ ,
+             fsal_op_context_t * pcontext /* IN  */ ,
+             cache_inode_client_t * pclient /* IN  */ ,
+             hash_table_t * ht /* INOUT */ ,
+             struct svc_req *preq /* IN  */ ,
+             nfs_res_t * pres /* OUT */ );
+
+int rquota_setactivequota(nfs_arg_t * parg /* IN  */ ,
+             exportlist_t * pexport /* IN  */ ,
+             fsal_op_context_t * pcontext /* IN  */ ,
+             cache_inode_client_t * pclient /* IN  */ ,
+             hash_table_t * ht /* INOUT */ ,
+             struct svc_req *preq /* IN  */ ,
+             nfs_res_t * pres /* OUT */ );
+
+/* @}
+ *  * -- End of RQUOTA protocol functions. --
+ *   */
+
 
 /**
  * @defgroup NFSprocs    NFS protocols functions.
@@ -765,9 +842,9 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op,        /* [IN] NFS4 OP argument
                           compound_data_t * data,       /* [IN] current data for the compound request */
                           struct nfs_resop4 *resp);     /* [OUT] NFS4 OP results */
 
-int nfs41_op_reclaim_complete(struct nfs_argop4 *op,        /* [IN] NFS4 OP arguments */
-                              compound_data_t * data,       /* [IN] current data for the compound request */
-                              struct nfs_resop4 *resp);     /* [OUT] NFS4 OP results */
+int nfs41_op_reclaim_complete(struct nfs_argop4 *op,    /* [IN] NFS4 OP arguments */
+                              compound_data_t * data,   /* [IN] current data for the compound request */
+                              struct nfs_resop4 *resp); /* [OUT] NFS4 OP results */
 
 int nfs41_op_sequence(struct nfs_argop4 *op,    /* [IN] NFS4 OP arguments */
                       compound_data_t * data,   /* [IN] current data for the compound request */
@@ -830,9 +907,8 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
 int nfs4_op_write_xattr(struct nfs_argop4 *op,
                         compound_data_t * data, struct nfs_resop4 *resp);
 
-int nfs4_op_remove_xattr(struct nfs_argop4 *op, 
+int nfs4_op_remove_xattr(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp);
-
 
 int nfs_XattrD_Name(char *strname, char *objectname);
 
@@ -1162,6 +1238,12 @@ void nlm4_Cancel_Message_Free(nfs_res_t * pres);
 void nlm4_Lock_Message_Free(nfs_res_t * pres);
 void nlm4_Unlock_Message_Free(nfs_res_t * pres);
 
+void rquota_Null_Free(nfs_res_t * pres ) ;
+void rquota_getquota_Free(nfs_res_t * pres) ;
+void rquota_getactivequota_Free(nfs_res_t * pres) ;
+void rquota_setquota_Free(nfs_res_t * pres) ;
+void rquota_setactivequota_Free(nfs_res_t * pres) ;
+
 void nfs_Null_Free(nfs_res_t * resp);
 void nfs_Getattr_Free(nfs_res_t * resp);
 void nfs_Setattr_Free(nfs_res_t * resp);
@@ -1246,7 +1328,7 @@ void nfs41_op_read_Free(READ4res * resp);
 void nfs41_op_sequence_Free(SEQUENCE4res * resp);
 void nfs41_op_set_ssv_Free(SET_SSV4res * resp);
 void nfs41_op_write_Free(WRITE4res * resp);
-void nfs41_op_reclaim_complete_Free(RECLAIM_COMPLETE4res * resp) ;
+void nfs41_op_reclaim_complete_Free(RECLAIM_COMPLETE4res * resp);
 #endif                          /* _USE_NFS4_1 */
 
 void compound_data_Free(compound_data_t * data);
@@ -1371,7 +1453,6 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                        cache_inode_client_t * pclient,
                        hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres);
 
-
 int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                            exportlist_t * pexport,
                            fsal_op_context_t * pcontext,
@@ -1379,12 +1460,12 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                            hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres);
 
 int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
-               exportlist_t * pexport /* IN  */ ,
-               fsal_op_context_t * pcontext /* IN  */ ,
-               cache_inode_client_t * pclient /* IN  */ ,
-               hash_table_t * ht /* INOUT */ ,
-               struct svc_req *preq /* IN  */ ,
-               nfs_res_t * pres /* OUT */ ) ;
+                      exportlist_t * pexport /* IN  */ ,
+                      fsal_op_context_t * pcontext /* IN  */ ,
+                      cache_inode_client_t * pclient /* IN  */ ,
+                      hash_table_t * ht /* INOUT */ ,
+                      struct svc_req *preq /* IN  */ ,
+                      nfs_res_t * pres /* OUT */ );
 
 int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
                        fattr4 * Fattr,
@@ -1400,8 +1481,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                            fattr4 * Fattr,
                            compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap);
 
-                                                                                                                                                                                                                                                                                                                                                                                                                            /* time_how4          * mtime_set, *//* Out: How to set mtime */
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                    /* time_how4          * atimen_set ) ; *//* Out: How to set atime */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                 /* time_how4          * mtime_set, *//* Out: How to set mtime */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             /* time_how4          * atimen_set ) ; *//* Out: How to set atime */
 
 void nfs4_list_to_bitmap4(bitmap4 * b, uint_t * plen, uint32_t * pval);
 void nfs4_bitmap4_to_list(bitmap4 * b, uint_t * plen, uint32_t * pval);

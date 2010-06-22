@@ -145,8 +145,8 @@ fsal_status_t FSAL_proxy_setclientid(fsal_op_context_t * p_context)
         }
 
       resultclientid =
-          resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.
-          resok4.clientid;
+          resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.
+          SETCLIENTID4res_u.resok4.clientid;
 
       /* Step 2: Confirm the client id */
       argnfs4.minorversion = 0;
@@ -156,12 +156,13 @@ fsal_status_t FSAL_proxy_setclientid(fsal_op_context_t * p_context)
 
       argnfs4.argarray.argarray_val[0].argop = NFS4_OP_SETCLIENTID_CONFIRM;
       argnfs4.argarray.argarray_val[0].nfs_argop4_u.opsetclientid_confirm.clientid =
-          resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.
-          resok4.clientid;
-      memcpy((char *)argnfs4.argarray.argarray_val[0].nfs_argop4_u.opsetclientid_confirm.
-             setclientid_confirm,
-             (char *)resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.
-             SETCLIENTID4res_u.resok4.setclientid_confirm, NFS4_VERIFIER_SIZE);
+          resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.
+          SETCLIENTID4res_u.resok4.clientid;
+      memcpy((char *)argnfs4.argarray.argarray_val[0].nfs_argop4_u.
+             opsetclientid_confirm.setclientid_confirm,
+             (char *)resnfs4.resarray.resarray_val[0].nfs_resop4_u.
+             opsetclientid.SETCLIENTID4res_u.resok4.setclientid_confirm,
+             NFS4_VERIFIER_SIZE);
       argnfs4.argarray.argarray_len = 1;
 
       /* Call the NFSv4 function */

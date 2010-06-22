@@ -69,6 +69,7 @@
 #include "nfs4.h"
 #include "mount.h"
 #include "nlm4.h"
+#include "rquota.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "cache_content.h"
@@ -331,6 +332,51 @@ const nfs_function_desc_t nlm4_func_desc[] = {
                          (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
                          "nlm4_Free_all", NOTHING_SPECIAL},
 };
+#endif /* _USE_NLM */
+
+#ifdef _USE_QUOTA
+const nfs_function_desc_t rquota1_func_desc[] = {
+  [0] = {
+                     rquota_Null, rquota_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
+                     "rquota_Null", NOTHING_SPECIAL},
+  [RQUOTAPROC_GETQUOTA] = {
+                     rquota_getquota, rquota_getquota_Free, (xdrproc_t) xdr_getquota_args,
+                     (xdrproc_t) xdr_getquota_rslt, "rquota_Getquota", NEEDS_CRED},
+  [RQUOTAPROC_GETACTIVEQUOTA] = {
+                         rquota_getactivequota, rquota_getactivequota_Free,
+                         (xdrproc_t) xdr_getquota_args,
+                         (xdrproc_t) xdr_getquota_rslt, "rquota_Getactivequota", NEEDS_CRED},
+  [RQUOTAPROC_SETQUOTA] =  {
+                         rquota_setquota, rquota_setquota_Free,
+                         (xdrproc_t) xdr_setquota_args,
+                         (xdrproc_t) xdr_setquota_rslt, "rquota_Setactivequota", NEEDS_CRED},
+  [RQUOTAPROC_SETACTIVEQUOTA] = {
+                         rquota_setactivequota, rquota_setactivequota_Free,
+                         (xdrproc_t) xdr_setquota_args,
+                         (xdrproc_t) xdr_setquota_rslt, "rquota_Getactivequota", NEEDS_CRED}
+};
+
+const nfs_function_desc_t rquota2_func_desc[] = {
+  [0] = {
+                     rquota_Null, rquota_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
+                     "rquota_Null", NOTHING_SPECIAL},
+  [RQUOTAPROC_GETQUOTA] = {
+                     rquota_getquota, rquota_getquota_Free, (xdrproc_t) xdr_ext_getquota_args,
+                     (xdrproc_t) xdr_getquota_rslt, "rquota_Ext_Getquota", NEEDS_CRED},
+  [RQUOTAPROC_GETACTIVEQUOTA] = {
+                         rquota_getactivequota, rquota_getactivequota_Free,
+                         (xdrproc_t) xdr_ext_getquota_args,
+                         (xdrproc_t) xdr_getquota_rslt, "rquota_Ext_Getactivequota", NEEDS_CRED},
+  [RQUOTAPROC_SETQUOTA] =  {
+                         rquota_setquota, rquota_setquota_Free,
+                         (xdrproc_t) xdr_ext_setquota_args,
+                         (xdrproc_t) xdr_setquota_rslt, "rquota_Ext_Setactivequota", NEEDS_CRED},
+  [RQUOTAPROC_SETACTIVEQUOTA] = {
+                         rquota_setactivequota, rquota_setactivequota_Free,
+                         (xdrproc_t) xdr_ext_setquota_args,
+                         (xdrproc_t) xdr_setquota_rslt, "rquota_Ext_Getactivequota", NEEDS_CRED}
+};
+
 #endif
 
 /**
@@ -483,6 +529,42 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }                       /* switch( ptr_req->vers ) */
     }
 #endif                          /* _USE_NLM */
+#ifdef _USE_QUOTA
+else if(ptr_req->rq_prog == nfs_param.core_param.rquota_program)
+    {
+
+      switch (ptr_req->rq_vers)
+        {
+        case RQUOTAVERS:
+          if(ptr_req->rq_proc > RQUOTAPROC_SETACTIVEQUOTA)
+            {
+              DisplayLog("NFS DISPATCHER: RQUOTA proc number %d unknown", ptr_req->rq_proc);
+              svcerr_decode(ptr_svc);
+              return;
+            }
+          funcdesc = rquota1_func_desc[ptr_req->rq_proc];
+          break;
+        
+	case EXT_RQUOTAVERS:
+          if(ptr_req->rq_proc > RQUOTAPROC_SETACTIVEQUOTA)
+            {
+              DisplayLog("NFS DISPATCHER: EXT_RQUOTA proc number %d unknown", ptr_req->rq_proc);
+              svcerr_decode(ptr_svc);
+              return;
+            }
+          funcdesc = rquota2_func_desc[ptr_req->rq_proc];
+          break;
+
+
+        default:
+          /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
+          DisplayLog("NFS DISPATCHER: RQUOTA Protocol version %d unknown", ptr_req->rq_vers);
+          svcerr_decode(ptr_svc);
+          return;
+          break;
+        }                       /* switch( ptr_req->vers ) */
+    }
+#endif /* _USE_QUOTA */
   else
     {
       /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
@@ -681,6 +763,13 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       pexport = nfs_param.pexportlist;
     }
 #endif                          /* _USE_NLM */
+#ifdef _USE_QUOTA
+  else if(ptr_req->rq_prog == nfs_param.core_param.rquota_program)
+    {
+      /* Always use the whole export list for NLM protocol (FIXME !! Verify) */
+      pexport = nfs_param.pexportlist;
+    }
+#endif /* _USE_QUOTA */
 
   /* Do not call a MAKES_WRITE function on a read-only export entry */
   if((funcdesc.dispatch_behaviour & MAKES_WRITE)
@@ -1215,60 +1304,7 @@ void *worker_thread(void *IndexArg)
                      * SCV_STAT should be returned to the dispatcher */
                     if(no_dispatch == FALSE)
                       {
-                        if(preq->rq_prog != nfs_param.core_param.nfs_program)
-                          {
-                            if(preq->rq_prog != nfs_param.core_param.mnt_program)
-                              {
-#ifdef _USE_NLM
-                                if(preq->rq_prog != nfs_param.core_param.nlm_program)
-                                  {
-                                    DisplayLogLevel(NIV_FULL_DEBUG,
-                                                    "/!\\ | Invalid Program number #%d",
-                                                    preq->rq_prog);
-                                    svcerr_noprog(xprt);        /* This is no NFS, MOUNT, NLM program, exit... */
-                                  }
-                                else
-                                  {
-                                    /* Call is with NLMPROG */
-                                    if(preq->rq_vers != NLM4_VERS)
-                                      {
-                                        DisplayLogLevel(NIV_FULL_DEBUG,
-                                                        "/!\\ | Invalid NLM Version #%d",
-                                                        preq->rq_vers);
-                                        svcerr_progvers(xprt, NLM4_VERS, NLM4_VERS);    /* Bad NLM version */
-                                      }
-                                    else
-                                      {
-                                        /* Actual work starts here */
-                                        nfs_rpc_execute(pnfsreq, pmydata);
-                                      }
-                                  }
-#else
-                                DisplayLogLevel(NIV_FULL_DEBUG,
-                                                "/!\\ | Invalid Program number #%d",
-                                                preq->rq_prog);
-                                svcerr_noprog(xprt);    /* This is no NFS, MOUNT program, exit... */
-#endif                          /* _USE_NLM */
-                              }
-                            else
-                              {
-                                /* Call is with MOUNTPROG */
-                                if((preq->rq_vers != MOUNT_V1) &&
-                                   (preq->rq_vers != MOUNT_V3))
-                                  {
-                                    DisplayLogLevel(NIV_FULL_DEBUG,
-                                                    "/!\\ | Invalid Mount Version #%d",
-                                                    preq->rq_vers);
-                                    svcerr_progvers(xprt, MOUNT_V1, MOUNT_V3);  /* Bad MOUNT version */
-                                  }
-                                else
-                                  {
-                                    /* Actual work starts here */
-                                    nfs_rpc_execute(pnfsreq, pmydata);
-                                  }
-                              }
-                          }
-                        else
+                        if(preq->rq_prog == nfs_param.core_param.nfs_program)
                           {
                             /* If we go there, preq->rq_prog ==  nfs_param.core_param.nfs_program */
 /* FSAL_PROXY supports only NFSv4 except if handle mapping is enabled */
@@ -1293,8 +1329,71 @@ void *worker_thread(void *IndexArg)
                                 /* Actual work starts here */
                                 nfs_rpc_execute(pnfsreq, pmydata);
                               }
-                          }     /* else from if( preq->rq_prog !=  nfs_param.core_param.nfs_program ) */
-                      }         /* if( no_dispatch == FALSE ) */
+                          }     /* if( preq->rq_prog ==  nfs_param.core_param.nfs_program ) */
+                         else if( preq->rq_prog == nfs_param.core_param.mnt_program)
+			  {
+                                /* Call is with MOUNTPROG */
+                                if((preq->rq_vers != MOUNT_V1) &&
+                                   (preq->rq_vers != MOUNT_V3))
+                                  {
+                                    DisplayLogLevel(NIV_FULL_DEBUG,
+                                                    "/!\\ | Invalid Mount Version #%d",
+                                                    preq->rq_vers);
+                                    svcerr_progvers(xprt, MOUNT_V1, MOUNT_V3);  /* Bad MOUNT version */
+                                  }
+                                else
+                                  {
+                                    /* Actual work starts here */
+                                    nfs_rpc_execute(pnfsreq, pmydata);
+                                  }
+                            }
+#ifdef _USE_NLM 
+                       else if(preq->rq_prog == nfs_param.core_param.nlm_program)
+                            {
+                                    /* Call is with NLMPROG */
+                                    if(preq->rq_vers != NLM4_VERS)
+                                      {
+                                        DisplayLogLevel(NIV_FULL_DEBUG,
+                                                        "/!\\ | Invalid NLM Version #%d",
+                                                        preq->rq_vers);
+                                        svcerr_progvers(xprt, NLM4_VERS, NLM4_VERS);    /* Bad NLM version */
+                                      }
+                                    else
+                                      {
+                                        /* Actual work starts here */
+                                        nfs_rpc_execute(pnfsreq, pmydata);
+                                      }
+                            }
+		
+#endif                          /* _USE_NLM */
+
+#ifdef _USE_QUOTA
+                       else if(preq->rq_prog == nfs_param.core_param.rquota_program)
+                           {
+                                    /* Call is with NLMPROG */
+                                    if( (preq->rq_vers != RQUOTAVERS) &&
+                                        (preq->rq_vers != EXT_RQUOTAVERS ) )
+                                      {
+                                        DisplayLogLevel(NIV_FULL_DEBUG,
+                                                        "/!\\ | Invalid RQUOTA Version #%d",
+                                                        preq->rq_vers);
+                                        svcerr_progvers(xprt, RQUOTAVERS, EXT_RQUOTAVERS);    /* Bad NLM version */
+                                      }
+                                    else
+                                      {
+                                        /* Actual work starts here */
+                                        nfs_rpc_execute(pnfsreq, pmydata);
+                                      }
+                             }
+#endif
+		     else /* No such program */
+                         {
+                                DisplayLogLevel(NIV_FULL_DEBUG,
+                                                "/!\\ | Invalid Program number #%d",
+                                                preq->rq_prog);
+                                svcerr_noprog(xprt);    /* This is no NFS, MOUNT program, exit... */
+                          }
+                     }         /* if( no_dispatch == FALSE ) */
                   }             /* else from if( ( why = _authenticate( preq, pmsg) ) != AUTH_OK) */
               }                 /* if( pnfsreq->status ) */
           }                     /* while (  pnfsreq->status == XPRT_MOREREQS ); Now handle at the dispatcher's level */
