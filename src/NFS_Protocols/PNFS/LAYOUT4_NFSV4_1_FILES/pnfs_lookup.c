@@ -139,7 +139,10 @@ int pnfs_lookup(pnfs_ds_client_t * pnfsdsclient, nfs_fh4 * parent_directory_hand
     }
 
   /* Call the NFSv4 function */
-  if(COMPOUNDV41_EXECUTE_SIMPLE(pnfsdsclient, argnfs4, resnfs4) != RPC_SUCCESS)
+  if( clnt_call( pnfsdsclient->rpc_client, NFSPROC4_COMPOUND,
+                (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argnfs4,
+   	        (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&resnfs4,
+	        timeout ) != RPC_SUCCESS )
     {
       return NFS4ERR_IO;        /* @todo: For wanting of something more appropriate */
     }

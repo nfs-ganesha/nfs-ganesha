@@ -378,7 +378,7 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
         }
     }
 
-#ifdef _USE_PNFS_TOTOTOT
+#ifdef _USE_PNFS
   if(type == REGULAR_FILE)
     if(pcreate_arg != NULL)
       if(pcreate_arg->use_pnfs == TRUE)
