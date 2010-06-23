@@ -81,7 +81,7 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
   if ( handle1->handle.handle_size != handle2->handle.handle_size )
     return -2;
 
-  if ( strncmp(handle1->handle.f_handle, handle2->handle.f_handle, handle1->handle.handle_size) )
+  if ( memcmp(handle1->handle.f_handle, handle2->handle.f_handle, handle1->handle.handle_size) )
        //FSF && (handle1->fsid[0] == handle2->fsid[0])
        //FSF && (handle1->fsid[1] == handle2->fsid[1]) )
     return -3;
