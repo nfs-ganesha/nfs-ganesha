@@ -25,7 +25,7 @@
 
 char *FSAL_GetFSName()
 {
-  return "POSIX";
+  return "LUSTRE";
 }
 
 /** 
