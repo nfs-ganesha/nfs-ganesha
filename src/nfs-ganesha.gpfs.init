@@ -182,7 +182,7 @@ stop() {
 
 restart(){
 	stop
-	RETVAL=start
+	start
         return $RETVAL
 }
 
