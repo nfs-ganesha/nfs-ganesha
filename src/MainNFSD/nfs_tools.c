@@ -212,3 +212,28 @@ void socket_setoptions(int socketFd)
 
   return;
 }                               /* socket_setoptions_ctrl */
+
+int cmp_sockaddr(struct sockaddr *addr_1, struct sockaddr *addr_2)
+{
+  if (addr_1->sa_family == AF_INET
+      && (addr_2->sa_family == AF_INET)) {
+    if (((struct sockaddr_in *)addr_1)->sin_addr.s_addr
+	== ((struct sockaddr_in *)addr_2)->sin_addr.s_addr
+	&& ((struct sockaddr_in *)addr_1)->sin_port
+	== ((struct sockaddr_in *)addr_2)->sin_port) {
+      return 1;
+    }
+  }
+#ifdef _USE_TIRPC_IPV6
+  else if ( addr_1->sa_family == AF_INET6
+	      && addr_2->sa_family == AF_INET6) {
+    if (((struct sockaddr_in6 *)addr_1)->sin6_addr.s6_addr
+	== ((struct sockaddr_in6 *)addr_2)->sin6_addr.s6_addr
+	&& ((struct sockaddr_in6 *)addr_1)->sin6_port
+	== ((struct sockaddr_in6 *)addr_2)->sin6_port) {
+      return 1;
+    }
+  }
+#endif /* _USE_TIRPC_IPV6 */
+  return 0;
+}
