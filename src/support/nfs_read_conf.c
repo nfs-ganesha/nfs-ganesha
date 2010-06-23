@@ -758,7 +758,7 @@ static int nfs_read_conf_pnfs_ds_conf( config_item_t subblock, pnfs_ds_parameter
    /* Here, we are managing a configuration sub block, it has nothing but CONFIG_ITEM_VAR in it */ 
    if( config_ItemType(item) != CONFIG_ITEM_VAR )
     {
-     fprintf(stderr, "No sub-block expected in toto\n" );
+     fprintf(stderr, "No sub-block expected \n" );
      return -EINVAL;
     }
   

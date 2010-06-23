@@ -182,10 +182,4 @@ do {                                                                            
 } while ( 0 )
 
 
-#define COMPOUNDV41_EXECUTE_SIMPLE( pclient, argcompound, rescompound )    \
-   clnt_call( pclient->rpc_client, NFSPROC4_COMPOUND,                      \
-              (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argcompound,         \
-              (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&rescompound,         \
-              timeout )
-
 #endif                          /* _PNFS_NFSV41_MACROS_H */

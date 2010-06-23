@@ -49,7 +49,7 @@ int pnfs_init(pnfs_client_t * pnfsclient, pnfs_layoutfile_parameter_t * pnfs_lay
   if(!pnfsclient || !pnfs_layout_param)
     return -1;
 
-  for( i = 0 ; i < pnfs_layout_param->stripe_size ; i++ )
+  for( i = 0 ; i < pnfs_layout_param->stripe_width ; i++ )
    {
     if(pnfs_connect( &pnfsclient->ds_client[i], &pnfs_layout_param->ds_param[i]))
       {
@@ -81,6 +81,10 @@ int pnfs_init(pnfs_client_t * pnfsclient, pnfs_layoutfile_parameter_t * pnfs_lay
       }
     DisplayLogLevel(NIV_DEBUG, "PNFS INIT: pNFS engine successfully got DS's rootFH");
 
-    return 0;
    } /* for */
+
+  /* Set nb_ds field */
+  pnfsclient->nb_ds = pnfs_layout_param->stripe_width ; 
+
+  return 0;
 }                               /* pnfs_init */

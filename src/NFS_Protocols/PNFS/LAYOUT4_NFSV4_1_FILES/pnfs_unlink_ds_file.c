@@ -36,7 +36,7 @@
 
 #define PNFS_LAYOUTFILE_CREATE_VAL_BUFFER  1024
 
-int pnfs_unlink_ds_file(pnfs_ds_client_t * pnfsdsclient,
+int pnfs_unlink_ds_file(pnfs_client_t * pnfsclient,
                         fattr4_fileid fileid, pnfs_ds_file_t * pfile)
 {
   COMPOUND4args argnfs4;
@@ -47,8 +47,9 @@ int pnfs_unlink_ds_file(pnfs_ds_client_t * pnfsdsclient,
   component4 name;
   char nameval[MAXNAMLEN];
   char filename[MAXNAMLEN];
+  unsigned int i ; 
 
-  if(!pnfsdsclient || !pfile)
+  if(!pnfsclient || !pfile)
     return NFS4ERR_SERVERFAULT;
 
   /* Step 1 OP4_OPEN as OPEN4_CREATE */
@@ -67,19 +68,28 @@ int pnfs_unlink_ds_file(pnfs_ds_client_t * pnfsdsclient,
   if(str2utf8(filename, &name) == -1)
     return NFS4ERR_SERVERFAULT;
 
-  COMPOUNDV41_ARG_ADD_OP_SEQUENCE(argnfs4, pnfsdsclient->session, pnfsdsclient->sequence);
-  pnfsdsclient->sequence += 1;    /* In all cases, failure or not, increment the sequence counter */
-  COMPOUNDV41_ARG_ADD_OP_PUTFH(argnfs4, pnfsdsclient->ds_rootfh);
-  COMPOUNDV41_ARG_ADD_OP_REMOVE(argnfs4, name);
+  for( i = 0 ; i < pnfsclient->nb_ds ; i++ )
+   {
+     COMPOUNDV41_ARG_ADD_OP_SEQUENCE(argnfs4, pnfsclient->ds_client[i].session, pnfsclient->ds_client[i].sequence);
+     pnfsclient->ds_client[i].sequence += 1;    /* In all cases, failure or not, increment the sequence counter */
+     COMPOUNDV41_ARG_ADD_OP_PUTFH(argnfs4, pnfsclient->ds_client[i].ds_rootfh);
+     COMPOUNDV41_ARG_ADD_OP_REMOVE(argnfs4, name);
 
-  /* Call the NFSv4 function */
-  if(COMPOUNDV41_EXECUTE_SIMPLE(pnfsdsclient, argnfs4, resnfs4) != RPC_SUCCESS)
-    {
-      return NFS4ERR_IO;        /* @todo: For wanting of something more appropriate */
-    }
+     /* Call the NFSv4 function */
+     if( clnt_call( pnfsclient->ds_client[i].rpc_client, NFSPROC4_COMPOUND,
+                    (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argnfs4,
+   	   	    (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&resnfs4,
+   		    timeout ) != RPC_SUCCESS )
+       {
+         return NFS4ERR_IO;        /* @todo: For wanting of something more appropriate */
+       }
 
-  /* Free the ressources */
-  Mem_Free((char *)pfile->handle.nfs_fh4_val);
+     if( resnfs4.status != NFS4_OK )
+       return resnfs4.status ;
+    
+     /* Free the ressources */
+     Mem_Free((char *)pfile->filepart[i].handle.nfs_fh4_val);
+   }
 
-  return resnfs4.status;
+  return NFS4_OK ;
 }                               /* pnfs_create_ds_file */
