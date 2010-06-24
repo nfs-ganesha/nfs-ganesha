@@ -12,3 +12,5 @@ autom4te.cache/
 *.la
 libganeshaNFS.pc
 nfs-ganesha.spec
+rpm/
+deb-pkg/

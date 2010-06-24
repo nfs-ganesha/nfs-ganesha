@@ -43,8 +43,8 @@ int pnfs_lookup_ds_file(pnfs_client_t * pnfsclient,
   COMPOUND4args argnfs4;
   COMPOUND4res resnfs4;
   struct timeval timeout = { 25, 0 };
-  nfs_argop4 argoparray_open_ds_file[PNFS_LAYOUTFILE_NB_OP_LOOKUP_DS_FILE];
-  nfs_resop4 resoparray_open_ds_file[PNFS_LAYOUTFILE_NB_OP_LOOKUP_DS_FILE];
+  nfs_argop4 argoparray_open_ds_file[PNFS_LAYOUTFILE_NB_OP_LOOKUP_DS_FILE][NB_MAX_PNFS_DS];
+  nfs_resop4 resoparray_open_ds_file[PNFS_LAYOUTFILE_NB_OP_LOOKUP_DS_FILE][NB_MAX_PNFS_DS];
   component4 name;
   char nameval[MAXNAMLEN];
   char filename[MAXNAMLEN];
@@ -59,8 +59,8 @@ int pnfs_lookup_ds_file(pnfs_client_t * pnfsclient,
     return NFS4ERR_SERVERFAULT;
 
   /* Step 1 OP4_OPEN as OPEN4_CREATE */
-  argnfs4.argarray.argarray_val = argoparray_open_ds_file;
-  resnfs4.resarray.resarray_val = resoparray_open_ds_file;
+  argnfs4.argarray.argarray_val = argoparray_open_ds_file[i];
+  resnfs4.resarray.resarray_val = resoparray_open_ds_file[i];
   argnfs4.minorversion = 1;
 
   name.utf8string_val = nameval;

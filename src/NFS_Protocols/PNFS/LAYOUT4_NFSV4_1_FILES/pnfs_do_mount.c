@@ -58,11 +58,11 @@ int pnfs_do_mount(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pds_par
   uint32_t bitmap1[2];
   uint32_t bitmap2[2];
 
-  nfs_argop4 argoparray_exchangeid[PNFS_LAYOUTFILE_NB_OP_EXCHANGEID];
-  nfs_resop4 resoparray_exchangeid[PNFS_LAYOUTFILE_NB_OP_EXCHANGEID];
+  nfs_argop4 argoparray_exchangeid[PNFS_LAYOUTFILE_NB_OP_EXCHANGEID] ;
+  nfs_resop4 resoparray_exchangeid[PNFS_LAYOUTFILE_NB_OP_EXCHANGEID] ;
 
-  nfs_argop4 argoparray_createsession[PNFS_LAYOUTFILE_NB_OP_CREATESESSION];
-  nfs_resop4 resoparray_createsession[PNFS_LAYOUTFILE_NB_OP_CREATESESSION];
+  nfs_argop4 argoparray_createsession[PNFS_LAYOUTFILE_NB_OP_CREATESESSION] ;
+  nfs_resop4 resoparray_createsession[PNFS_LAYOUTFILE_NB_OP_CREATESESSION] ;
 
   if(!pnfsdsclient || !pds_param)
     return NFS4ERR_SERVERFAULT;
@@ -116,6 +116,10 @@ int pnfs_do_mount(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pds_par
   argnfs4.tag.utf8string_len = 0;
   argnfs4.argarray.argarray_len = 0;
 
+  char tmp[1024] ;
+
+  
+
   COMPOUNDV41_ARG_ADD_OP_CREATESESSION(argnfs4,
                                        resoparray_exchangeid[0].
                                        nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.
@@ -137,6 +141,9 @@ int pnfs_do_mount(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pds_par
   pnfsdsclient->sequence =
       resoparray_createsession[0].nfs_resop4_u.opcreate_session.
       CREATE_SESSION4res_u.csr_resok4.csr_sequence;
+
+    snprintmem( tmp, 1024, pnfsdsclient->session, NFS4_SESSIONID_SIZE ) ;
+    printf( "Do Mount %s :Session internal: %s\n", pds_param->ipaddr_ascii, tmp ) ;
 
   /* Check for compound status */
   if(resnfs4.status != NFS4_OK)
