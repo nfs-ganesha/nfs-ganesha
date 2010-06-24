@@ -43,10 +43,10 @@ int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
   COMPOUND4args argnfs4;
   COMPOUND4res resnfs4;
   struct timeval timeout = { 25, 0 };
-  nfs_argop4 argoparray_open_ds_file[PNFS_LAYOUTFILE_NB_OP_OPEN_DS_FILE];
-  nfs_resop4 resoparray_open_ds_file[PNFS_LAYOUTFILE_NB_OP_OPEN_DS_FILE];
-  nfs_argop4 argoparray_close_ds_file[PNFS_LAYOUTFILE_NB_OP_CLOSE_DS_FILE];
-  nfs_resop4 resoparray_close_ds_file[PNFS_LAYOUTFILE_NB_OP_CLOSE_DS_FILE];
+  nfs_argop4 argoparray_open_ds_file[PNFS_LAYOUTFILE_NB_OP_OPEN_DS_FILE][NB_MAX_PNFS_DS] ;
+  nfs_resop4 resoparray_open_ds_file[PNFS_LAYOUTFILE_NB_OP_OPEN_DS_FILE][NB_MAX_PNFS_DS];
+  nfs_argop4 argoparray_close_ds_file[PNFS_LAYOUTFILE_NB_OP_CLOSE_DS_FILE][NB_MAX_PNFS_DS];
+  nfs_resop4 resoparray_close_ds_file[PNFS_LAYOUTFILE_NB_OP_CLOSE_DS_FILE][NB_MAX_PNFS_DS];
   char owner_val[PNFS_LAYOUTFILE_OWNER_LEN];
   unsigned int owner_len = 0;
   component4 name;
@@ -68,11 +68,7 @@ int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
   if(!pnfsclient || !pfile)
     return NFS4ERR_SERVERFAULT;
 
-  /* Step 1 OP4_OPEN as OPEN4_CREATE */
-  argnfs4.argarray.argarray_val = argoparray_open_ds_file;
-  resnfs4.resarray.resarray_val = resoparray_open_ds_file;
-  argnfs4.minorversion = 1;
-
+ 
   /* Create the owner */
   snprintf(owner_val, PNFS_LAYOUTFILE_OWNER_LEN,
            "GANESHA/PNFS: pid=%u clnt=%p fileid=%llu", getpid(), pnfsclient,
@@ -97,6 +93,11 @@ int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
 
   for( i = 0 ; i < pnfsclient->nb_ds ; i++ )
    {
+     /* Step 1 OP4_OPEN as OPEN4_CREATE */
+     argnfs4.argarray.argarray_val = argoparray_open_ds_file[i];
+     resnfs4.resarray.resarray_val = resoparray_open_ds_file[i];
+     argnfs4.minorversion = 1;
+
      argnfs4.tag.utf8string_val = NULL;
      argnfs4.tag.utf8string_len = 0;
      argnfs4.argarray.argarray_len = 0;
@@ -118,9 +119,9 @@ int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
 
 
     snprintmem( tmp, 1024, pnfsclient->ds_client[i].session, NFS4_SESSIONID_SIZE ) ;
-    printf( "%u :Session internal: %s\n", i, tmp ) ;
+    printf( "Create DS File %u : Session internal: %s\n", i, tmp ) ;
     snprintmem( tmp, 1024, argnfs4.argarray.argarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_SEQUENCE].nfs_argop4_u.opsequence.sa_sessionid, NFS4_SESSIONID_SIZE ) ;
-    printf( "%u :Session argnfs4: %s\n", i, tmp ) ;
+    printf( "Create DS File %u : Session argnfs4: %s\n", i, tmp ) ;
 
     /* Call the NFSv4 function */
     if( clnt_call( pnfsclient->ds_client[i].rpc_client, NFSPROC4_COMPOUND,
@@ -155,8 +156,8 @@ int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
       }
 
     /* Close the file */
-    argnfs4.argarray.argarray_val = argoparray_close_ds_file;
-    resnfs4.resarray.resarray_val = resoparray_close_ds_file;
+    argnfs4.argarray.argarray_val = argoparray_close_ds_file[i];
+    resnfs4.resarray.resarray_val = resoparray_close_ds_file[i];
     argnfs4.argarray.argarray_len = i;
 
     COMPOUNDV41_ARG_ADD_OP_SEQUENCE(argnfs4, pnfsclient->ds_client[i].session, pnfsclient->ds_client[i].sequence);
