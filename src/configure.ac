@@ -6,7 +6,7 @@ AC_INIT( [nfs-ganesha], [1.0.1], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/SNMP/PROXY/HPSS/FUSELIKE/LUSTRE(all prod)/XFS/GPFS(alpha) .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod), MFSL_ASYNC(beta) Early pNFS (alpha) ])
+AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/SNMP/PROXY/HPSS/FUSELIKE/LUSTRE(all prod)/XFS/GPFS(alpha)/ZFS(dev) .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod), MFSL_ASYNC(beta) Early pNFS (alpha) ])
 
 # Init Automake
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
@@ -336,21 +336,22 @@ if test "${with_extra_includedir+set}" == "set"; then
 fi
 
 # FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|DLPOEN (default=PROXY)],[specify the type of filesystem to be exported] ),
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|ZFS|DLPOEN (default=PROXY)],[specify the type of filesystem to be exported] ),
 	     FSAL="$withval", FSAL="PROXY")
 
 # exporting USE_FSAL_... for conditional compilation
-AM_CONDITIONAL(USE_FSAL_HPSS,    test "$FSAL" = "HPSS")
-AM_CONDITIONAL(USE_FSAL_GHOSTFS, test "$FSAL" = "GHOSTFS")
-AM_CONDITIONAL(USE_FSAL_POSIX,   test "$FSAL" = "POSIX")
-AM_CONDITIONAL(USE_FSAL_PROXY,   test "$FSAL" = "PROXY")
-AM_CONDITIONAL(USE_FSAL_SNMP,    test "$FSAL" = "SNMP")
-AM_CONDITIONAL(USE_FSAL_FUSE,    test "$FSAL" = "FUSE")
-AM_CONDITIONAL(USE_FSAL_LUSTRE,  test "$FSAL" = "LUSTRE")
-AM_CONDITIONAL(USE_FSAL_XFS,     test "$FSAL" = "XFS")
+AM_CONDITIONAL(USE_FSAL_HPSS,     test "$FSAL" = "HPSS")
+AM_CONDITIONAL(USE_FSAL_GHOSTFS,  test "$FSAL" = "GHOSTFS")
+AM_CONDITIONAL(USE_FSAL_POSIX,    test "$FSAL" = "POSIX")
+AM_CONDITIONAL(USE_FSAL_PROXY,    test "$FSAL" = "PROXY")
+AM_CONDITIONAL(USE_FSAL_SNMP,     test "$FSAL" = "SNMP")
+AM_CONDITIONAL(USE_FSAL_FUSE,     test "$FSAL" = "FUSE")
+AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "LUSTRE")
+AM_CONDITIONAL(USE_FSAL_XFS,      test "$FSAL" = "XFS")
 AM_CONDITIONAL(USE_FSAL_GPFS,     test "$FSAL" = "GPFS")
 AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
-AM_CONDITIONAL(SHARED_FSAL, test "$FSAL" = "DLOPEN")
+AM_CONDITIONAL(SHARED_FSAL,       test "$FSAL" = "DLOPEN")
+AM_CONDITIONAL(USE_FSAL_ZFS,      test "$FSAL" = "ZFS")
 
 # NFSv4.0 NFSv4.1 switch
 AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  (default=0)], [specify if server support NFSv4 or NFSv4.1] ),
@@ -448,7 +449,7 @@ case $FSAL in
 	FUSE)
 		AC_DEFINE([_USE_FUSE], 1, [GANESHA is compiled as a FUSE-like library])
 		FSAL_CFLAGS=
-                FSAL_LDFLAGS=
+                FSAL_LDFLAGS=""
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_FUSELIKE/libfsalfuse.la"
 		FS_NAME="fuse"
 		;;
@@ -487,6 +488,13 @@ case $FSAL in
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_GPFS/libfsalgpfs.la"
 		FS_NAME="gpfs"
 		;;
+        ZFS)
+                AC_DEFINE([_USE_ZFS], 1, [GANESHA exports ZFS Filesystem])
+                FSAL_CFLAGS="-I/home/remi/projects/zfs-ganesha/src/zfs-fuse/"
+                FSAL_LDFLAGS="-L/home/remi/projects/zfs-ganesha/src/zfs-fuse/ -lzfswrap -L/home/remi/projects/zfs-ganesha/src/lib/libzpool/ -lzpool-kernel -L/home/remi/projects/zfs-ganesha/src/lib/libnvpair/ -lnvpair-kernel -L/home/remi/projects/zfs-ganesha/src/lib/libumem/ -lumem -L/home/remi/projects/zfs-ganesha/src/lib/libsolkerncompat/ -lsolkerncompat -L/home/remi/projects/zfs-ganesha/src/lib/libzfs/ -lzfs -L/home/remi/projects/zfs-ganesha/src/lib/libavl/ -lavl -L/home/remi/projects/zfs-ganesha/src/lib/libuutil/ -luutil -L/home/remi/projects/zfs-ganesha/src/lib/libsolcompat/ -lsolcompat -L/home/remi/projects/zfs-ganesha/src/lib/libzfscommon/ -lzfscommon-user -lfuse -lc -lfuse -lcrypto -lm -lz -lrt -ldl -laio"
+                FSAL_LIB="\$(top_builddir)/FSAL/FSAL_ZFS/libfsalzfs.la"
+                FS_NAME="zfs"
+                ;;
 	POSIX)
 
 		case "$DBTYPE" in
@@ -690,6 +698,7 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_LUSTRE/Makefile
 		 FSAL/FSAL_XFS/Makefile
 		 FSAL/FSAL_GPFS/Makefile
+                 FSAL/FSAL_ZFS/Makefile
 		 FSAL/FSAL_TEMPLATE/Makefile
 		 MFSL/Makefile
 		 MFSL/MFSL_NULL/Makefile                 
