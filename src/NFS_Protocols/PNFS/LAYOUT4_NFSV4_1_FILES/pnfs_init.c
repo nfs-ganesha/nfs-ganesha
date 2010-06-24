@@ -75,11 +75,11 @@ int pnfs_init(pnfs_client_t * pnfsclient, pnfs_layoutfile_parameter_t * pnfs_lay
        (&pnfsclient->ds_client[i], pnfs_layout_param->ds_param[i].rootpath, &pnfsclient->ds_client[i].ds_rootfh))
       {
         /* Failed init */
-        DisplayLog("PNFS INIT: pNFS engine could not look up %s on DS",
-                   pnfs_layout_param->ds_param[0].rootpath);
+        DisplayLog("PNFS INIT: pNFS engine could not look up %s on DS=%s",
+                   pnfs_layout_param->ds_param[i].rootpath, pnfs_layout_param->ds_param[i].ipaddr_ascii );
         exit(1);
       }
-    DisplayLogLevel(NIV_DEBUG, "PNFS INIT: pNFS engine successfully got DS's rootFH");
+    DisplayLogLevel(NIV_DEBUG, "PNFS INIT: pNFS engine successfully got DS's rootFH for %s", pnfs_layout_param->ds_param[i].ipaddr_ascii );
 
    } /* for */
 
