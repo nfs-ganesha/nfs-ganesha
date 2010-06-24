@@ -58,8 +58,10 @@ int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
   fattr4 inattr;
   unsigned int i ;
 
-#define PNFS_LAYOUTFILE_CREATE_IDX_OP_PUTFH    0
-#define PNFS_LAYOUTFILE_CREATE_IDX_OP_SEQUENCE 1
+  char tmp[1024] ;
+
+#define PNFS_LAYOUTFILE_CREATE_IDX_OP_SEQUENCE 0
+#define PNFS_LAYOUTFILE_CREATE_IDX_OP_PUTFH    1
 #define PNFS_LAYOUTFILE_CREATE_IDX_OP_OPEN     2
 #define PNFS_LAYOUTFILE_CREATE_IDX_OP_GETFH    3
 
@@ -70,11 +72,6 @@ int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
   argnfs4.argarray.argarray_val = argoparray_open_ds_file;
   resnfs4.resarray.resarray_val = resoparray_open_ds_file;
   argnfs4.minorversion = 1;
-
-  /* argnfs4.tag.utf8string_val = "GANESHA NFSv4 Proxy: Mkdir" ; */
-  argnfs4.tag.utf8string_val = NULL;
-  argnfs4.tag.utf8string_len = 0;
-  argnfs4.argarray.argarray_len = 0;
 
   /* Create the owner */
   snprintf(owner_val, PNFS_LAYOUTFILE_OWNER_LEN,
@@ -100,6 +97,10 @@ int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
 
   for( i = 0 ; i < pnfsclient->nb_ds ; i++ )
    {
+     argnfs4.tag.utf8string_val = NULL;
+     argnfs4.tag.utf8string_len = 0;
+     argnfs4.argarray.argarray_len = 0;
+
      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
         GETFH4res_u.resok4.object.nfs_fh4_val =
         (char *)Mem_Alloc(PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN);
@@ -114,6 +115,12 @@ int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
     COMPOUNDV41_ARG_ADD_OP_PUTFH(argnfs4, pnfsclient->ds_client[i].ds_rootfh);
     COMPOUNDV41_ARG_ADD_OP_OPEN_CREATE(argnfs4, name, inattr, owner_val, owner_len);
     COMPOUNDV41_ARG_ADD_OP_GETFH(argnfs4);
+
+
+    snprintmem( tmp, 1024, pnfsclient->ds_client[i].session, NFS4_SESSIONID_SIZE ) ;
+    printf( "%u :Session internal: %s\n", i, tmp ) ;
+    snprintmem( tmp, 1024, argnfs4.argarray.argarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_SEQUENCE].nfs_argop4_u.opsequence.sa_sessionid, NFS4_SESSIONID_SIZE ) ;
+    printf( "%u :Session argnfs4: %s\n", i, tmp ) ;
 
     /* Call the NFSv4 function */
     if( clnt_call( pnfsclient->ds_client[i].rpc_client, NFSPROC4_COMPOUND,
