@@ -1,7 +1,14 @@
 Makefile.in
 Makefile
+libtool
+configure
+config.*
+aclocal.m4
+autom4te.cache/
 .deps/
 .libs/
 *.o
 *.lo
 *.la
+libganeshaNFS.pc
+nfs-ganesha.spec
