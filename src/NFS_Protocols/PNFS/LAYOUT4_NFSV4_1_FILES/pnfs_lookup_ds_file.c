@@ -50,9 +50,9 @@ int pnfs_lookup_ds_file(pnfs_client_t * pnfsclient,
   char filename[MAXNAMLEN];
   unsigned int i = 0 ;
 
-#define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_PUTFH    0
-#define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_SEQUENCE 1
-#define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_LOOKUP     2
+#define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_SEQUENCE 0
+#define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_PUTFH    1
+#define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_LOOKUP   2
 #define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH    3
 
   if(!pnfsclient || !pfile)
@@ -62,11 +62,6 @@ int pnfs_lookup_ds_file(pnfs_client_t * pnfsclient,
   argnfs4.argarray.argarray_val = argoparray_open_ds_file;
   resnfs4.resarray.resarray_val = resoparray_open_ds_file;
   argnfs4.minorversion = 1;
-
-  /* argnfs4.tag.utf8string_val = "GANESHA NFSv4 Proxy: Mkdir" ; */
-  argnfs4.tag.utf8string_val = NULL;
-  argnfs4.tag.utf8string_len = 0;
-  argnfs4.argarray.argarray_len = 0;
 
   name.utf8string_val = nameval;
   name.utf8string_len = 0;
@@ -78,6 +73,11 @@ int pnfs_lookup_ds_file(pnfs_client_t * pnfsclient,
 
   for( i = 0 ; i < pnfsclient->nb_ds ; i++ ) 
    {
+     /* argnfs4.tag.utf8string_val = "GANESHA NFSv4 Proxy: Mkdir" ; */
+     argnfs4.tag.utf8string_val = NULL;
+     argnfs4.tag.utf8string_len = 0;
+     argnfs4.argarray.argarray_len = 0;
+
      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
         GETFH4res_u.resok4.object.nfs_fh4_val =
            (char *)Mem_Alloc(PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN);

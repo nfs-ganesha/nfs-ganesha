@@ -56,8 +56,8 @@ int pnfs_open_ds_file(pnfs_client_t * pnfsclient,
   fattr4_mode buffmode;
   unsigned int i = 0 ;
 
-#define PNFS_LAYOUTFILE_OPEN_IDX_OP_PUTFH    0
-#define PNFS_LAYOUTFILE_OPEN_IDX_OP_SEQUENCE 1
+#define PNFS_LAYOUTFILE_OPEN_IDX_OP_SEQUENCE 0
+#define PNFS_LAYOUTFILE_OPEN_IDX_OP_PUTFH    1
 #define PNFS_LAYOUTFILE_OPEN_IDX_OP_OPEN     2
 #define PNFS_LAYOUTFILE_OPEN_IDX_OP_GETFH    3
 
@@ -69,12 +69,7 @@ int pnfs_open_ds_file(pnfs_client_t * pnfsclient,
   resnfs4.resarray.resarray_val = resoparray_open_ds_file;
   argnfs4.minorversion = 1;
 
-  /* argnfs4.tag.utf8string_val = "GANESHA NFSv4 Proxy: Mkdir" ; */
-  argnfs4.tag.utf8string_val = NULL;
-  argnfs4.tag.utf8string_len = 0;
-  argnfs4.argarray.argarray_len = 0;
-
-  /* Create the owner */
+   /* Create the owner */
   snprintf(owner_val, PNFS_LAYOUTFILE_OWNER_LEN,
            "GANESHA/PNFS: pid=%u clnt=%p fileid=%llu", getpid(), pnfsclient,
            (unsigned long long)fileid);
@@ -99,6 +94,11 @@ int pnfs_open_ds_file(pnfs_client_t * pnfsclient,
 
   for( i = 0 ; i < pnfsclient->nb_ds ; i++ )
    {
+    /* argnfs4.tag.utf8string_val = "GANESHA NFSv4 Proxy: Mkdir" ; */
+    argnfs4.tag.utf8string_val = NULL;
+    argnfs4.tag.utf8string_len = 0;
+    argnfs4.argarray.argarray_len = 0;
+
     COMPOUNDV41_ARG_ADD_OP_SEQUENCE(argnfs4, pnfsclient->ds_client[i].session, pnfsclient->ds_client[i].sequence);
     pnfsclient->ds_client[i].sequence += 1;    /* In all cases, failure or not, increment the sequence counter */
     COMPOUNDV41_ARG_ADD_OP_PUTFH(argnfs4, pnfsclient->ds_client[i].ds_rootfh);
