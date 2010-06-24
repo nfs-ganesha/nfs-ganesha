@@ -37,7 +37,7 @@
 
 #define PNFS_LAYOUTFILE_OPEN_VAL_BUFFER  1024
 
-int pnfs_open_ds_file(pnfs_ds_client_t * pnfsdsclient,
+int pnfs_open_ds_file(pnfs_client_t * pnfsclient,
                       fattr4_fileid fileid, pnfs_ds_file_t * pfile)
 {
   COMPOUND4args argnfs4;
@@ -54,13 +54,14 @@ int pnfs_open_ds_file(pnfs_ds_client_t * pnfsdsclient,
   char filename[MAXNAMLEN];
   unsigned int bitmap_res[2];
   fattr4_mode buffmode;
+  unsigned int i = 0 ;
 
 #define PNFS_LAYOUTFILE_OPEN_IDX_OP_PUTFH    0
 #define PNFS_LAYOUTFILE_OPEN_IDX_OP_SEQUENCE 1
 #define PNFS_LAYOUTFILE_OPEN_IDX_OP_OPEN     2
 #define PNFS_LAYOUTFILE_OPEN_IDX_OP_GETFH    3
 
-  if(!pnfsdsclient || !pfile)
+  if(!pnfsclient || !pfile)
     return NFS4ERR_SERVERFAULT;
 
   /* Step 1 OP4_OPEN as OPEN4_CREATE */
@@ -75,7 +76,7 @@ int pnfs_open_ds_file(pnfs_ds_client_t * pnfsdsclient,
 
   /* Create the owner */
   snprintf(owner_val, PNFS_LAYOUTFILE_OWNER_LEN,
-           "GANESHA/PNFS: pid=%u clnt=%p fileid=%llu", getpid(), pnfsdsclient,
+           "GANESHA/PNFS: pid=%u clnt=%p fileid=%llu", getpid(), pnfsclient,
            (unsigned long long)fileid);
   owner_len = strnlen(owner_val, PNFS_LAYOUTFILE_OWNER_LEN);
 
@@ -96,54 +97,69 @@ int pnfs_open_ds_file(pnfs_ds_client_t * pnfsdsclient,
   if(str2utf8(filename, &name) == -1)
     return NFS4ERR_SERVERFAULT;
 
-  COMPOUNDV41_ARG_ADD_OP_SEQUENCE(argnfs4, pnfsdsclient->session, pnfsdsclient->sequence);
-  pnfsdsclient->sequence += 1;    /* In all cases, failure or not, increment the sequence counter */
-  COMPOUNDV41_ARG_ADD_OP_PUTFH(argnfs4, pnfsdsclient->ds_rootfh);
-  COMPOUNDV41_ARG_ADD_OP_OPEN_NOCREATE(argnfs4, name, owner_val, owner_len);
-  COMPOUNDV41_ARG_ADD_OP_GETFH(argnfs4);
+  for( i = 0 ; i < pnfsclient->nb_ds ; i++ )
+   {
+    COMPOUNDV41_ARG_ADD_OP_SEQUENCE(argnfs4, pnfsclient->ds_client[i].session, pnfsclient->ds_client[i].sequence);
+    pnfsclient->ds_client[i].sequence += 1;    /* In all cases, failure or not, increment the sequence counter */
+    COMPOUNDV41_ARG_ADD_OP_PUTFH(argnfs4, pnfsclient->ds_client[i].ds_rootfh);
+    COMPOUNDV41_ARG_ADD_OP_OPEN_NOCREATE(argnfs4, name, owner_val, owner_len);
+    COMPOUNDV41_ARG_ADD_OP_GETFH(argnfs4);
 
-  /* Call the NFSv4 function */
-  if(COMPOUNDV41_EXECUTE_SIMPLE(pnfsdsclient, argnfs4, resnfs4) != RPC_SUCCESS)
-    {
-      return NFS4ERR_IO;        /* @todo: For wanting of something more appropriate */
-    }
+    /* Call the NFSv4 function */
+    if( clnt_call( pnfsclient->ds_client[i].rpc_client, NFSPROC4_COMPOUND,
+                  (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argnfs4,
+   	          (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&resnfs4,
+	          timeout ) != RPC_SUCCESS )
+      {
+        return NFS4ERR_IO;        /* @todo: For wanting of something more appropriate */
+      }
 
-  /* Get information from reply */
-  pfile->stateid.seqid =
-      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_OPEN_IDX_OP_OPEN].nfs_resop4_u.
-      opopen.OPEN4res_u.resok4.stateid.seqid;
-  memcpy((char *)pfile->stateid.other,
-         (char *)resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_OPEN_IDX_OP_OPEN].
-         nfs_resop4_u.opopen.OPEN4res_u.resok4.stateid.other, 12);
-  pfile->handle.nfs_fh4_len =
-      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_OPEN_IDX_OP_GETFH].nfs_resop4_u.
-      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len;
-  pfile->handle.nfs_fh4_val =
-      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_OPEN_IDX_OP_GETFH].nfs_resop4_u.
-      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val;
-  pfile->allocated = TRUE;
-  pfile->deviceid = 1;
+    /* Get filepartinformation from reply */
+    pfile->filepart[i].stateid.seqid =
+        resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_OPEN_IDX_OP_OPEN].nfs_resop4_u.
+        opopen.OPEN4res_u.resok4.stateid.seqid;
+    memcpy((char *)pfile->filepart[i].stateid.other,
+           (char *)resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_OPEN_IDX_OP_OPEN].
+           nfs_resop4_u.opopen.OPEN4res_u.resok4.stateid.other, 12);
+    pfile->filepart[i].handle.nfs_fh4_len =
+        resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_OPEN_IDX_OP_GETFH].nfs_resop4_u.
+        opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len;
+    pfile->filepart[i].handle.nfs_fh4_val =
+        resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_OPEN_IDX_OP_GETFH].nfs_resop4_u.
+        opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val;
 
-  if(resnfs4.status != NFS4_OK)
-    {
+    pfile->filepart[i].deviceid = 1;
+
+    if(resnfs4.status != NFS4_OK)
+      {
+        return resnfs4.status;
+      }
+
+    /* Close the file */
+    argnfs4.argarray.argarray_val = argoparray_close_ds_file;
+    resnfs4.resarray.resarray_val = resoparray_close_ds_file;
+    argnfs4.argarray.argarray_len = 0;
+
+    COMPOUNDV41_ARG_ADD_OP_SEQUENCE(argnfs4, pnfsclient->ds_client[i].session, pnfsclient->ds_client[i].sequence);
+    pnfsclient->ds_client[i].sequence += 1;    /* In all cases, failure or not, increment the sequence counter */
+    COMPOUNDV41_ARG_ADD_OP_PUTFH(argnfs4, pfile->filepart[i].handle);
+    COMPOUNDV41_ARG_ADD_OP_CLOSE(argnfs4, pfile->filepart[i].stateid);
+
+    /* Call the NFSv4 function */
+    if( clnt_call( pnfsclient->ds_client[i].rpc_client, NFSPROC4_COMPOUND,
+                   (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argnfs4,
+	   	   (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&resnfs4,
+		   timeout ) != RPC_SUCCESS )
+      {
+        return NFS4ERR_IO;        /* @todo: For wanting of something more appropriate */
+      }
+  
+    if( resnfs4.status != NFS4_OK )
       return resnfs4.status;
-    }
+  }
 
-  /* Close the file */
-  argnfs4.argarray.argarray_val = argoparray_close_ds_file;
-  resnfs4.resarray.resarray_val = resoparray_close_ds_file;
-  argnfs4.argarray.argarray_len = 0;
+  pfile->allocated = TRUE;
+  pfile->stripe = pnfsclient->nb_ds ;
 
-  COMPOUNDV41_ARG_ADD_OP_SEQUENCE(argnfs4, pnfsdsclient->session, pnfsdsclient->sequence);
-  pnfsdsclient->sequence += 1;    /* In all cases, failure or not, increment the sequence counter */
-  COMPOUNDV41_ARG_ADD_OP_PUTFH(argnfs4, pfile->handle);
-  COMPOUNDV41_ARG_ADD_OP_CLOSE(argnfs4, pfile->stateid);
-
-  /* Call the NFSv4 function */
-  if(COMPOUNDV41_EXECUTE_SIMPLE(pnfsdsclient, argnfs4, resnfs4) != RPC_SUCCESS)
-    {
-      return NFS4ERR_IO;        /* @todo: For wanting of something more appropriate */
-    }
-
-  return resnfs4.status;
+  return NFS4_OK ;
 }                               /* pnfs_open_ds_file */

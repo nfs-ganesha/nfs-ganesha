@@ -715,6 +715,7 @@ hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param);
 int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param);
 
 void socket_setoptions(int socketFd);
+int cmp_sockaddr(struct sockaddr *addr_1, struct sockaddr *addr_2);
 
 #ifdef _USE_GSSRPC
 unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);

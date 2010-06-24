@@ -37,7 +37,7 @@
 
 #define PNFS_LAYOUTFILE_CREATE_VAL_BUFFER  1024
 
-int pnfs_lookup_ds_file(pnfs_ds_client_t * pnfsdsclient,
+int pnfs_lookup_ds_file(pnfs_client_t * pnfsclient,
                         fattr4_fileid fileid, pnfs_ds_file_t * pfile)
 {
   COMPOUND4args argnfs4;
@@ -48,13 +48,14 @@ int pnfs_lookup_ds_file(pnfs_ds_client_t * pnfsdsclient,
   component4 name;
   char nameval[MAXNAMLEN];
   char filename[MAXNAMLEN];
+  unsigned int i = 0 ;
 
 #define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_PUTFH    0
 #define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_SEQUENCE 1
 #define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_LOOKUP     2
 #define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH    3
 
-  if(!pnfsdsclient || !pfile)
+  if(!pnfsclient || !pfile)
     return NFS4ERR_SERVERFAULT;
 
   /* Step 1 OP4_OPEN as OPEN4_CREATE */
@@ -72,40 +73,48 @@ int pnfs_lookup_ds_file(pnfs_ds_client_t * pnfsdsclient,
 
   snprintf(filename, MAXNAMLEN, "fileid=%llu", (unsigned long long)fileid);
 
-  resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
-      GETFH4res_u.resok4.object.nfs_fh4_val =
-      (char *)Mem_Alloc(PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN);
-
   if(str2utf8(filename, &name) == -1)
     return NFS4ERR_SERVERFAULT;
 
-  COMPOUNDV41_ARG_ADD_OP_SEQUENCE(argnfs4, pnfsdsclient->session, pnfsdsclient->sequence);
-  pnfsdsclient->sequence += 1;    /* In all cases, failure or not, increment the sequence counter */
-  COMPOUNDV41_ARG_ADD_OP_PUTFH(argnfs4, pnfsdsclient->ds_rootfh);
-  COMPOUNDV41_ARG_ADD_OP_LOOKUP(argnfs4, name);
-  COMPOUNDV41_ARG_ADD_OP_GETFH(argnfs4);
+  for( i = 0 ; i < pnfsclient->nb_ds ; i++ ) 
+   {
+     resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
+        GETFH4res_u.resok4.object.nfs_fh4_val =
+           (char *)Mem_Alloc(PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN);
 
-  /* Call the NFSv4 function */
-  if(COMPOUNDV41_EXECUTE_SIMPLE(pnfsdsclient, argnfs4, resnfs4) != RPC_SUCCESS)
-    {
-      return NFS4ERR_IO;        /* @todo: For wanting of something more appropriate */
-    }
+     COMPOUNDV41_ARG_ADD_OP_SEQUENCE(argnfs4, pnfsclient->ds_client[i].session, pnfsclient->ds_client[i].sequence);
+     pnfsclient->ds_client[i].sequence += 1;    /* In all cases, failure or not, increment the sequence counter */
+     COMPOUNDV41_ARG_ADD_OP_PUTFH(argnfs4, pnfsclient->ds_client[i].ds_rootfh);
+     COMPOUNDV41_ARG_ADD_OP_LOOKUP(argnfs4, name);
+     COMPOUNDV41_ARG_ADD_OP_GETFH(argnfs4);
 
-  if(resnfs4.status != NFS4_OK)
-    {
-      return resnfs4.status;
+    /* Call the NFSv4 function */
+    if( clnt_call( pnfsclient->ds_client[i].rpc_client, NFSPROC4_COMPOUND,
+                   (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argnfs4,
+	   	 (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&resnfs4,
+		 timeout ) != RPC_SUCCESS )
+      {
+        return NFS4ERR_IO;        /* @todo: For wanting of something more appropriate */
+      }
+
+    if(resnfs4.status != NFS4_OK)
+      {
+        return resnfs4.status;
+      }
+
+    pfile->filepart[i].deviceid = 1;
+    pfile->filepart[i].is_ganesha = FALSE;
+
+    pfile->filepart[i].handle.nfs_fh4_len =
+        resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.
+        opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len;
+    pfile->filepart[i].handle.nfs_fh4_val =
+        resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.
+        opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val;
     }
 
   pfile->allocated = TRUE;
-  pfile->deviceid = 1;
-  pfile->is_ganesha = FALSE;
+  pfile->stripe = pnfsclient->nb_ds ;
 
-  pfile->handle.nfs_fh4_len =
-      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.
-      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len;
-  pfile->handle.nfs_fh4_val =
-      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.
-      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val;
-
-  return resnfs4.status;
+  return NFS4_OK ;
 }                               /* pnfs_lookup_ds_file */
