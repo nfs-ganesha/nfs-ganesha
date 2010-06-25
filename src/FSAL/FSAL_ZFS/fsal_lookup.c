@@ -151,8 +151,7 @@ printf("lookup => %u\n", inode);
 
       /* >> set output handle << */
       object_handle->inode = inode;
-      object_handle->type = type == 2 ? FSAL_TYPE_DIR : FSAL_TYPE_FILE;
-
+      object_handle->type = posix2fsal_type(type);
       if(object_attributes)
         {
           /* >> fill object attributes if asked << */
