@@ -335,6 +335,7 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
                             nfs_ip_stats_t * ip_stats_pool,
                             exportlist_client_entry_t * pclient_found);
 
-int nfs_export_tag2path( exportlist_t * exportroot, char * tag, int taglen, char *path, int pathlen ) ;
+int nfs_export_tag2path(exportlist_t * exportroot, char *tag, int taglen, char *path,
+                        int pathlen);
 
 #endif                          /* _NFS_EXPORTS_H */

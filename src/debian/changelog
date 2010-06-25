@@ -1,3 +1,14 @@
+nfs-ganesha (0.99.65-1) stable; urgency=low
+
+  * FSAL_XFS now has lock support
+  * Brand new FSAL_GPFS added (patch from IBM) to natively support GPFS
+  * FSAL_POSIX and FSAL_XFS now have quota support (via rquota v1/v2 protocol and the use of the quotactl function)
+  * Typos fixed in doxygen.conf files
+  * FSAL_TEMPLATE updated (had new functions for quota and lock management)
+  * pNFS/LAYOUT_FILES works with multiple Data Server
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Fri, 25 Apr 2010 13:14:00 -0600
+
 nfs-ganesha (0.99.64-1) stable; urgency=low
 
   * Export Access Type "MDONLY" was not managed when using NFSv4

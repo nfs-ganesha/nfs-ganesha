@@ -36,36 +36,37 @@
 
 main(int argc, char *argv[])
 {
-	int handle_fd;
-	char buf[100];
-	int fd, rc, file_fd;
-	struct open_arg oarg;
-	struct file_handle *handle;
+  int handle_fd;
+  char buf[100];
+  int fd, rc, file_fd;
+  struct open_arg oarg;
+  struct file_handle *handle;
 
-	if (argc != 4) {
-		fprintf(stderr, "Usage: %s,  <device> <mountdir> <handle-file>\n", argv[0]);
-		exit(1);
-	}
-	fd = open(argv[1], O_RDONLY);
-	if (fd < 0)
-		perror("open"), exit(1);
+  if(argc != 4)
+    {
+      fprintf(stderr, "Usage: %s,  <device> <mountdir> <handle-file>\n", argv[0]);
+      exit(1);
+    }
+  fd = open(argv[1], O_RDONLY);
+  if(fd < 0)
+    perror("open"), exit(1);
 
-	handle = malloc(sizeof(struct file_handle) + 20);
+  handle = malloc(sizeof(struct file_handle) + 20);
 
-	/* read the handle to a handle.data file */
-	handle_fd = open(argv[3], O_RDONLY);
-	read(handle_fd, handle, sizeof(struct file_handle) + 20);
-	printf("Handle size is %d\n", handle->handle_size);
+  /* read the handle to a handle.data file */
+  handle_fd = open(argv[3], O_RDONLY);
+  read(handle_fd, handle, sizeof(struct file_handle) + 20);
+  printf("Handle size is %d\n", handle->handle_size);
 
-	oarg.mountdirfd = open(argv[2], O_RDONLY | O_DIRECTORY);
-	if (oarg.mountdirfd < 0)
-		perror("open"), exit(2);
-	oarg.handle = handle;
-	oarg.flags = O_RDWR | O_APPEND;
-	file_fd = ioctl(fd, OPENHANDLE_OPEN_BY_HANDLE, &oarg);
-	if (file_fd < 0)
-		perror("ioctl"), exit(2);
-	write(file_fd, "This should be last line", 24);
-	close(file_fd);
-	close(fd);
+  oarg.mountdirfd = open(argv[2], O_RDONLY | O_DIRECTORY);
+  if(oarg.mountdirfd < 0)
+    perror("open"), exit(2);
+  oarg.handle = handle;
+  oarg.flags = O_RDWR | O_APPEND;
+  file_fd = ioctl(fd, OPENHANDLE_OPEN_BY_HANDLE, &oarg);
+  if(file_fd < 0)
+    perror("ioctl"), exit(2);
+  write(file_fd, "This should be last line", 24);
+  close(file_fd);
+  close(fd);
 }
