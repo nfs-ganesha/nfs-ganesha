@@ -104,12 +104,6 @@ static int pnfs_create_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
     COMPOUNDV41_ARG_ADD_OP_OPEN_CREATE(argnfs4, name, inattr, owner_val, owner_len);
     COMPOUNDV41_ARG_ADD_OP_GETFH(argnfs4);
 
-
-    snprintmem( tmp, 1024, pnfsdsclient->session, NFS4_SESSIONID_SIZE ) ;
-    printf( "Create DS File %u : Session internal: %s\n", i, tmp ) ;
-    snprintmem( tmp, 1024, argnfs4.argarray.argarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_SEQUENCE].nfs_argop4_u.opsequence.sa_sessionid, NFS4_SESSIONID_SIZE ) ;
-    printf( "Create DS File %u : Session argnfs4: %s\n", i, tmp ) ;
-
     /* Call the NFSv4 function */
     if( clnt_call( pnfsdsclient->rpc_client, NFSPROC4_COMPOUND,
                    (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argnfs4,
