@@ -23,7 +23,6 @@
  * ------------- 
  */
 
-
 /**
  * \file    fsal_tools.c
  * \author  $Author: leibovic $
@@ -78,12 +77,13 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
       return -1;
     }
 
-  if ( handle1->handle.handle_size != handle2->handle.handle_size )
+  if(handle1->handle.handle_size != handle2->handle.handle_size)
     return -2;
 
-  if ( memcmp(handle1->handle.f_handle, handle2->handle.f_handle, handle1->handle.handle_size) )
-       //FSF && (handle1->fsid[0] == handle2->fsid[0])
-       //FSF && (handle1->fsid[1] == handle2->fsid[1]) )
+  if(memcmp
+     (handle1->handle.f_handle, handle2->handle.f_handle, handle1->handle.handle_size))
+    //FSF && (handle1->fsid[0] == handle2->fsid[0])
+    //FSF && (handle1->fsid[1] == handle2->fsid[1]) )
     return -3;
 
   return 0;
@@ -127,7 +127,8 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
   if(mod)
     {
       extract = 0;
-      for(cpt = p_handle->handle.handle_size - mod; cpt < p_handle->handle.handle_size; cpt++)
+      for(cpt = p_handle->handle.handle_size - mod; cpt < p_handle->handle.handle_size;
+          cpt++)
         {
           /* shift of 1 byte */
           extract <<= 8;
@@ -175,7 +176,8 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
   if(mod)
     {
       extract = 0;
-      for(cpt = p_handle->handle.handle_size - mod; cpt < p_handle->handle.handle_size; cpt++)
+      for(cpt = p_handle->handle.handle_size - mod; cpt < p_handle->handle.handle_size;
+          cpt++)
         {
           /* shift of 1 byte */
           extract <<= 8;
@@ -253,8 +255,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
       /* sanity check about output size */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID2);
-      memcpy(out_buff, p_in_fsal_handle->handle.f_handle,
-	     sizeof(int));
+      memcpy(out_buff, p_in_fsal_handle->handle.f_handle, sizeof(int));
 
       break;
 
@@ -263,16 +264,14 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
       /* sanity check about output size */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID3);
-      memcpy(out_buff, p_in_fsal_handle->handle.f_handle,
-	     sizeof(fsal_u64_t));
+      memcpy(out_buff, p_in_fsal_handle->handle.f_handle, sizeof(fsal_u64_t));
       break;
 
       /* FileId digest for NFSv4 */
     case FSAL_DIGEST_FILEID4:
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID4);
-      memcpy(out_buff, p_in_fsal_handle->handle.f_handle,
-	     sizeof(fsal_u64_t));
+      memcpy(out_buff, p_in_fsal_handle->handle.f_handle, sizeof(fsal_u64_t));
       break;
 
     default:
@@ -316,19 +315,19 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
       /* NFSV2 handle digest */
     case FSAL_DIGEST_NFSV2:
       memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof( fsal_handle_t ));
+      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_handle_t));
       break;
 
       /* NFSV3 handle digest */
     case FSAL_DIGEST_NFSV3:
       memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof( fsal_handle_t ));
+      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_handle_t));
       break;
 
       /* NFSV4 handle digest */
     case FSAL_DIGEST_NFSV4:
       memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof( fsal_handle_t ));
+      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_handle_t));
       break;
 
     default:
@@ -825,7 +824,8 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
       /* does the variable exists ? */
       if(!STRCMP(key_name, "OpenByHandleDeviceFile"))
         {
-          strncpy( out_parameter->fs_specific_info.open_by_handle_dev_file, key_value, MAXPATHLEN ) ;
+          strncpy(out_parameter->fs_specific_info.open_by_handle_dev_file, key_value,
+                  MAXPATHLEN);
         }
       else
         {

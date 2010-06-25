@@ -50,11 +50,11 @@
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
-#endif /* _GNU_SOURCE */
+#endif                          /* _GNU_SOURCE */
 
 #ifndef _ATFILE_SOURCE
 #define _ATFILE_SOURCE
-#endif  /* _ATFILE_SOURCE */
+#endif                          /* _ATFILE_SOURCE */
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -128,7 +128,8 @@ static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
  *  does memory management.
  */
 
-struct file_handle {
+struct file_handle
+{
   int handle_size;
   int handle_type;
   /* file identifier */
@@ -150,33 +151,36 @@ struct file_handle {
  *
  */
 
-struct name_handle_arg {
+struct name_handle_arg
+{
   int dfd;
   int flag;
   char *name;
   struct file_handle *handle;
 };
 
-struct open_arg {
+struct open_arg
+{
   int mountdirfd;
   int flags;
   int openfd;
   struct file_handle *handle;
 };
 
-struct link_arg {
+struct link_arg
+{
   int file_fd;
   int dir_fd;
   char *name;
 };
 
-struct readlink_arg {
+struct readlink_arg
+{
   int fd;
   char *buffer;
   int size;
 };
 /** end of open by handle structures */
-
 
 typedef struct
 {
@@ -235,15 +239,14 @@ typedef struct fsal_lockdesc__
   struct flock flock;
 } fsal_lockdesc_t;
 
-
 /* Directory stream descriptor. */
 
 typedef struct fsal_dir__
 {
-  int fd ;
+  int fd;
   fsal_op_context_t context;    /* credential for accessing the directory */
   fsal_path_t path;
-  unsigned int dir_offset ;
+  unsigned int dir_offset;
   fsal_handle_t handle;
 } fsal_dir_t;
 

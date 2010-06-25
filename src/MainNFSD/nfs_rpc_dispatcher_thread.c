@@ -351,7 +351,7 @@ int nfs_Init_svc()
 #endif                          /* USE_NLM */
 
 #ifdef _USE_QUOTA
- if((nfs_param.worker_param.nfs_svc_data.socket_rquota_udp =
+  if((nfs_param.worker_param.nfs_svc_data.socket_rquota_udp =
       socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
     {
       DisplayErrorLog(ERR_SYS, ERR_SOCKET, errno);
@@ -366,8 +366,7 @@ int nfs_Init_svc()
       DisplayLog("NFS EXIT: Cannot allocate a tcp socket");
       return -1;
     }
-#endif /* _USE_QUOTA */
-
+#endif                          /* _USE_QUOTA */
 
 #else
   /* Allocate the UDP and TCP structure for the RPC */
@@ -437,7 +436,7 @@ int nfs_Init_svc()
       DisplayLog("NFS EXIT: Cannot allocate a tcp6 socket");
       return -1;
     }
-#endif /* _USE_QUOTA */
+#endif                          /* _USE_QUOTA */
 
 #endif
 
@@ -511,7 +510,6 @@ int nfs_Init_svc()
     }
 #endif                          /* _USE_QUOTA */
 
-
   /* We prefer using non-blocking socket in the specific case */
   if(fcntl(nfs_param.worker_param.nfs_svc_data.socket_nfs_udp, F_SETFL, FNDELAY) == -1)
     {
@@ -542,7 +540,7 @@ int nfs_Init_svc()
       DisplayLog("NFS EXIT: Cannot set udp socket as non blocking");
       return -1;
     }
-#endif /* _USE_QUOTA */
+#endif                          /* _USE_QUOTA */
 
 #ifdef _USE_NLM
   /* Some log that can be useful when debug ONC/RPC and RPCSEC_GSS matter */
@@ -659,8 +657,6 @@ int nfs_Init_svc()
       return -1;
     }
 #endif                          /* _USE_QUOTA */
-
-
 
 #else
   /* Bind the udp and tcp socket to port 2049/tcp and 2049/udp */
@@ -935,7 +931,7 @@ int nfs_Init_svc()
 #else
       Svcudp_bufcreate(nfs_param.worker_param.nfs_svc_data.socket_nlm_udp,
                        NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE)) == NULL)
-#endif /* _USE_TIRPC */
+#endif                          /* _USE_TIRPC */
   {
     DisplayErrorLog(ERR_RPC, ERR_SVCUDP_CREATE, 0);
     DisplayLog("NFS EXIT: Cannot allocate NLM/UDP SVCXPRT");
@@ -949,7 +945,7 @@ int nfs_Init_svc()
 #else
       Svctcp_create(nfs_param.worker_param.nfs_svc_data.socket_nlm_tcp,
                     NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE)) == NULL)
-#endif /* _USE_TIRPC */
+#endif                          /* _USE_TIRPC */
   {
     DisplayErrorLog(ERR_RPC, ERR_SVCTCP_CREATE, 0);
     DisplayLog("NFS EXIT: Cannot allocate NLM/TCP SVCXPRT");
@@ -965,7 +961,7 @@ int nfs_Init_svc()
 #else
       Svcudp_bufcreate(nfs_param.worker_param.nfs_svc_data.socket_rquota_udp,
                        NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE)) == NULL)
-#endif /* _USE_TIRPC */
+#endif                          /* _USE_TIRPC */
   {
     DisplayErrorLog(ERR_RPC, ERR_SVCUDP_CREATE, 0);
     DisplayLog("NFS EXIT: Cannot allocate RQUOTA/UDP SVCXPRT");
@@ -979,7 +975,7 @@ int nfs_Init_svc()
 #else
       Svctcp_create(nfs_param.worker_param.nfs_svc_data.socket_rquota_tcp,
                     NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE)) == NULL)
-#endif /* _USE_TIRPC */
+#endif                          /* _USE_TIRPC */
   {
     DisplayErrorLog(ERR_RPC, ERR_SVCTCP_CREATE, 0);
     DisplayLog("NFS EXIT: Cannot allocate RQUOTA/TCP SVCXPRT");
@@ -1033,7 +1029,7 @@ int nfs_Init_svc()
         }
     }
   /* if( nfs_param.krb5_param.active_krb5 == TRUE ) */
-#endif /* _USE_GSSRPC */
+#endif                          /* _USE_GSSRPC */
 
 #ifndef _NO_PORTMAPPER
 
@@ -1373,7 +1369,7 @@ int nfs_Init_svc()
   if(!Svc_register(nfs_param.worker_param.nfs_svc_data.xprt_nlm_udp,
                    nfs_param.core_param.nlm_program,
                    NLM4_VERS, nfs_rpc_dispatch_dummy, IPPROTO_UDP))
-#endif /* _USE_TIRPC */
+#endif                          /* _USE_TIRPC */
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register NLM V4 on UDP");
@@ -1382,9 +1378,9 @@ int nfs_Init_svc()
     nb_svc_nlm_ok += 1;
 #else
   nb_svc_nlm_ok = 1;
-#endif                     /* _USE_PROXY */
-     
-#endif                    /* USE_NLM */
+#endif                          /* _USE_PROXY */
+
+#endif                          /* USE_NLM */
 
 #ifdef _USE_QUOTA
 #if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
@@ -1398,7 +1394,7 @@ int nfs_Init_svc()
   if(!Svc_register(nfs_param.worker_param.nfs_svc_data.xprt_rquota_udp,
                    nfs_param.core_param.rquota_program,
                    RQUOTAVERS, nfs_rpc_dispatch_dummy, IPPROTO_UDP))
-#endif /* _USE_TIRPC */
+#endif                          /* _USE_TIRPC */
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register RQUOTA v1 on UDP");
@@ -1415,7 +1411,7 @@ int nfs_Init_svc()
   if(!Svc_register(nfs_param.worker_param.nfs_svc_data.xprt_rquota_tcp,
                    nfs_param.core_param.rquota_program,
                    RQUOTAVERS, nfs_rpc_dispatch_dummy, IPPROTO_TCP))
-#endif /* _USE_TIRPC */
+#endif                          /* _USE_TIRPC */
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register RQUOTA v1 on TCP");
@@ -1432,7 +1428,7 @@ int nfs_Init_svc()
   if(!Svc_register(nfs_param.worker_param.nfs_svc_data.xprt_rquota_udp,
                    nfs_param.core_param.rquota_program,
                    EXT_RQUOTAVERS, nfs_rpc_dispatch_dummy, IPPROTO_UDP))
-#endif /* _USE_TIRPC */
+#endif                          /* _USE_TIRPC */
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register RQUOTA v2 on UDP");
@@ -1449,7 +1445,7 @@ int nfs_Init_svc()
   if(!Svc_register(nfs_param.worker_param.nfs_svc_data.xprt_rquota_tcp,
                    nfs_param.core_param.rquota_program,
                    EXT_RQUOTAVERS, nfs_rpc_dispatch_dummy, IPPROTO_TCP))
-#endif /* _USE_TIRPC */
+#endif                          /* _USE_TIRPC */
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register RQUOTA v2 on TCP");
@@ -1457,13 +1453,11 @@ int nfs_Init_svc()
   else
     nb_svc_rquota_ok += 1;
 
-
 #else
   nb_svc_rquota_ok = 1;
-#endif                     /* _USE_PROXY */
-     
-#endif                    /* USE_QUOTA */
+#endif                          /* _USE_PROXY */
 
+#endif                          /* USE_QUOTA */
 
 #ifdef _USE_NLM
 #if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
@@ -1476,7 +1470,7 @@ int nfs_Init_svc()
   if(!Svc_register(nfs_param.worker_param.nfs_svc_data.xprt_nlm_tcp,
                    nfs_param.core_param.nlm_program,
                    NLM4_VERS, nfs_rpc_dispatch_dummy, IPPROTO_TCP))
-#endif /* USE_NLM */
+#endif                          /* USE_NLM */
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register NLM V4 on TCP");
@@ -1490,7 +1484,6 @@ int nfs_Init_svc()
   nb_svc_nlm_ok = 1;
 #endif                          /* _USE_NLM */
 
-
 #ifdef _USE_QUOTA
 #if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
   DisplayLogLevel(NIV_EVENT, "Registering NLM V4/TCP");
@@ -1502,7 +1495,7 @@ int nfs_Init_svc()
   if(!Svc_register(nfs_param.worker_param.nfs_svc_data.xprt_rquota_tcp,
                    nfs_param.core_param.rquota_program,
                    NLM4_VERS, nfs_rpc_dispatch_dummy, IPPROTO_TCP))
-#endif /* USE_NLM */
+#endif                          /* USE_NLM */
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register NLM V4 on TCP");
@@ -1516,12 +1509,11 @@ int nfs_Init_svc()
   nb_svc_rquota_ok = 1;
 #endif                          /* _USE_QUOTA */
 
-
-
 #endif                          /* _NO_TCP_REGISTER */
 
   /* Were at least one NFS/MNT registration ok ? */
-  if(nb_svc_nfs_ok == 0 || nb_svc_mnt_ok == 0 || nb_svc_nlm_ok == 0 || nb_svc_rquota_ok == 0)
+  if(nb_svc_nfs_ok == 0 || nb_svc_mnt_ok == 0 || nb_svc_nlm_ok == 0
+     || nb_svc_rquota_ok == 0)
     {
       /* Not enough registration for servicing clients */
       DisplayLog
@@ -1774,7 +1766,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
               pnfsreq->ipproto = IPPROTO_UDP;
               pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
             }
-#endif /* _USE_NLM */
+#endif                          /* _USE_NLM */
 #ifdef _USE_QUOTA
           else if(nfs_param.worker_param.nfs_svc_data.socket_rquota_udp == sock + bit - 1)
             {
@@ -1785,7 +1777,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
               pnfsreq->ipproto = IPPROTO_UDP;
               pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
             }
-#endif /* _USE_QUOTA */
+#endif                          /* _USE_QUOTA */
           else if(nfs_param.worker_param.nfs_svc_data.socket_nfs_tcp == sock + bit - 1)
             {
               /* 
@@ -1831,7 +1823,8 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
           else if(nfs_param.worker_param.nfs_svc_data.socket_rquota_tcp == sock + bit - 1)
             {
 #ifdef _DEBUG_DISPATCH
-              DisplayLogLevel(NIV_FULL_DEBUG, "An initial RQUOTA request from a new client");
+              DisplayLogLevel(NIV_FULL_DEBUG,
+                              "An initial RQUOTA request from a new client");
 #endif
               pnfsreq->xprt = nfs_param.worker_param.nfs_svc_data.xprt_rquota_tcp;
               pnfsreq->ipproto = IPPROTO_TCP;
@@ -2175,7 +2168,6 @@ int nfs_Init_request_data(nfs_request_data_t * pdata)
       return -1;
     }
 #endif                          /* _USE_QUOTA */
-
 
   pdata->xprt = NULL;
 

@@ -59,8 +59,8 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
   size_t pathlen, outlen;
   int rc, fd;
 
-  char *  handle;
-  size_t  handle_len = 0;
+  char *handle;
+  size_t handle_len = 0;
   struct statfs stat_buf;
 
   fsal_status_t status;
@@ -71,41 +71,43 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
     {
       DisplayLogLevel(NIV_CRIT, "NULL mandatory argument passed to %s()", __FUNCTION__);
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
-    } 
+    }
 
-  /* save file descriptor to root of GPFS share*/
+  /* save file descriptor to root of GPFS share */
   fd = open(p_export_path->path, O_RDONLY | O_DIRECTORY);
-  if (fd < 0)
+  if(fd < 0)
     {
       close(open_by_handle_fd);
       DisplayLog
-	("FSAL BUILD EXPORT CONTEXT: ERROR: Could not open GPFS mount point %s: rc = %d", p_export_path->path, errno);
+          ("FSAL BUILD EXPORT CONTEXT: ERROR: Could not open GPFS mount point %s: rc = %d",
+           p_export_path->path, errno);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
   p_export_context->mount_root_fd = fd;
 
   /* save filesystem ID */
   rc = statfs(p_export_path->path, &stat_buf);
-  if ( rc ) {
-    fprintf(stderr, "statfs call failed on file %s: %d\n", p_export_path->path, rc);
-    ReturnCode(ERR_FSAL_INVAL, 0);
-  }
+  if(rc)
+    {
+      fprintf(stderr, "statfs call failed on file %s: %d\n", p_export_path->path, rc);
+      ReturnCode(ERR_FSAL_INVAL, 0);
+    }
   p_export_context->fsid[0] = stat_buf.f_fsid.__val[0];
   p_export_context->fsid[1] = stat_buf.f_fsid.__val[1];
 
-  /* save file handle to root of GPFS share*/
+  /* save file handle to root of GPFS share */
   op_context.export_context = p_export_context;
   // op_context.credential = ???
   status = fsal_internal_get_handle(&op_context,
-				     p_export_path,
-				     &(p_export_context->mount_root_handle));
-  if (FSAL_IS_ERROR(status))
+                                    p_export_path,
+                                    &(p_export_context->mount_root_handle));
+  if(FSAL_IS_ERROR(status))
     {
       close(open_by_handle_fd);
       close(p_export_context->mount_root_fd);
       DisplayLog
-	("FSAL BUILD EXPORT CONTEXT: ERROR: Conversion from gpfs"
-	 "filesystem root path to handle failed : %d", status.minor);
+          ("FSAL BUILD EXPORT CONTEXT: ERROR: Conversion from gpfs"
+           "filesystem root path to handle failed : %d", status.minor);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
 

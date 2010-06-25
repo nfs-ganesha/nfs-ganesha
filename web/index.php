@@ -101,7 +101,7 @@
                     <td class="date">Jun  8, 2010</td>
               	  </tr>
                   <tr>
-                    <td height="50"><a href="http://sourceforge.net/projects/nfs-ganesha/files/" class="smallred">v 0.99.65 is available</a></td>
+                    <td height="50"><a href="http://sourceforge.net/projects/nfs-ganesha/files/" class="smallred">v 0.99.66 is available</a></td>
                   </tr>
 		  <tr>
                     <td class="date">January 2006</td>

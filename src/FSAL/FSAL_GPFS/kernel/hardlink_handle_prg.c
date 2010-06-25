@@ -34,46 +34,47 @@
 #define OPENHANDLE_LINK_BY_FD     _IOWR(OPENHANDLE_DRIVER_MAGIC, 2, struct link_arg)
 #define OPENHANDLE_READLINK_BY_FD _IOWR(OPENHANDLE_DRIVER_MAGIC, 3, struct readlink_arg)
 
-
 main(int argc, char *argv[])
 {
-	int handle_fd;
-	char buf[100];
-	int fd, rc, file_fd;
-	struct open_arg oarg;
-	struct link_arg linkarg;
-	struct file_handle *handle;
+  int handle_fd;
+  char buf[100];
+  int fd, rc, file_fd;
+  struct open_arg oarg;
+  struct link_arg linkarg;
+  struct file_handle *handle;
 
-	if (argc != 5) {
-		fprintf(stderr, "Usage: %s,  <device> <mountdir> <linkname> <handle-file> \n", argv[0]);
-		exit(1);
-	}
-	fd = open(argv[1], O_RDONLY);
-	if (fd < 0)
-		perror("open"), exit(1);
+  if(argc != 5)
+    {
+      fprintf(stderr, "Usage: %s,  <device> <mountdir> <linkname> <handle-file> \n",
+              argv[0]);
+      exit(1);
+    }
+  fd = open(argv[1], O_RDONLY);
+  if(fd < 0)
+    perror("open"), exit(1);
 
-	handle = malloc(sizeof(struct file_handle) + 20);
+  handle = malloc(sizeof(struct file_handle) + 20);
 
-	/* read the handle to a handle.data file */
-	handle_fd = open(argv[4], O_RDONLY);
-	read(handle_fd, handle, sizeof(struct file_handle) + 20);
-	printf("Handle size is %d\n", handle->handle_size);
+  /* read the handle to a handle.data file */
+  handle_fd = open(argv[4], O_RDONLY);
+  read(handle_fd, handle, sizeof(struct file_handle) + 20);
+  printf("Handle size is %d\n", handle->handle_size);
 
-	oarg.mountdirfd = open(argv[2], O_RDONLY | O_DIRECTORY);
-	if (oarg.mountdirfd < 0)
-		perror("open"), exit(2);
-	oarg.handle = handle;
-	oarg.flags = O_RDONLY;
-	file_fd = ioctl(fd, OPENHANDLE_OPEN_BY_HANDLE, &oarg);
-	if (file_fd < 0)
-		perror("ioctl"), exit(2);
-	linkarg.file_fd = file_fd;
-	linkarg.dir_fd = AT_FDCWD;
-	linkarg.name = argv[3];
-	rc = ioctl(fd, OPENHANDLE_LINK_BY_FD, &linkarg);
-	if (rc < 0)
-		perror("ioctl"), exit(2);
+  oarg.mountdirfd = open(argv[2], O_RDONLY | O_DIRECTORY);
+  if(oarg.mountdirfd < 0)
+    perror("open"), exit(2);
+  oarg.handle = handle;
+  oarg.flags = O_RDONLY;
+  file_fd = ioctl(fd, OPENHANDLE_OPEN_BY_HANDLE, &oarg);
+  if(file_fd < 0)
+    perror("ioctl"), exit(2);
+  linkarg.file_fd = file_fd;
+  linkarg.dir_fd = AT_FDCWD;
+  linkarg.name = argv[3];
+  rc = ioctl(fd, OPENHANDLE_LINK_BY_FD, &linkarg);
+  if(rc < 0)
+    perror("ioctl"), exit(2);
 
-	close(file_fd);
-	close(fd);
+  close(file_fd);
+  close(fd);
 }

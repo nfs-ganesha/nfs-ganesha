@@ -181,5 +181,4 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                         \
 } while ( 0 )
 
-
 #endif                          /* _PNFS_NFSV41_MACROS_H */
