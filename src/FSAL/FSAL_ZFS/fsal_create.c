@@ -144,6 +144,7 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
 {
 
   int rc;
+  mode_t unix_mode;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -151,19 +152,26 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
   if(!parent_directory_handle || !p_context || !object_handle || !p_dirname)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mkdir);
 
-  /* >> convert fsal args to your fs args.
-   * Don't forget applying FSAL umask :
-   * mode = mode & ~global_fs_info.umask << */
+  /* convert fsal args to ZFS args */
+  unix_mode = fsal2unix_mode(accessmode);
+
+
+   /* Applying FSAL umask */
+   unix_mode = unix_mode & ~global_fs_info.umask;
 
   TakeTokenFSCall();
 
-  /* >> call your FS mkdir function << */
+  /* Create the directory */
+  int inode;
+  rc = libzfswrap_mkdir(p_vfs, parent_directory_handle->inode, p_dirname->name, unix_mode, &inode);
 
   ReleaseTokenFSCall();
 
   /* >> interpret returned error << */
 
-  /* >> set output handle << */
+  /* set output handle */
+  object_handle->inode = inode;
+  object_handle->type = FSAL_TYPE_DIR;
 
   if(object_attributes)
     {
