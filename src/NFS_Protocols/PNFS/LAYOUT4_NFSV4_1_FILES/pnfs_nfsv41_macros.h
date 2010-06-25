@@ -120,7 +120,7 @@ do {                                                                            
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsequence.sa_sequenceid = __sequenceid ; \
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsequence.sa_slotid = 1 ;                \
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsequence.sa_highest_slotid = 1 ;        \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsequence.sa_cachethis = FALSE ;         \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsequence.sa_cachethis = TRUE ;         \
   argcompound.argarray.argarray_len += 1 ;                                                                                    \
 } while( 0 )
 
