@@ -138,12 +138,10 @@ int pnfs_do_mount(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pds_par
          CREATE_SESSION4res_u.csr_resok4.csr_sessionid, NFS4_SESSIONID_SIZE);
 
   /* Keep the sequence as well */
-  pnfsdsclient->sequence =
-      resoparray_createsession[0].nfs_resop4_u.opcreate_session.
-      CREATE_SESSION4res_u.csr_resok4.csr_sequence;
+  pnfsdsclient->sequence += 1 ;
 
-    snprintmem( tmp, 1024, pnfsdsclient->session, NFS4_SESSIONID_SIZE ) ;
-    printf( "Do Mount %s :Session internal: %s\n", pds_param->ipaddr_ascii, tmp ) ;
+  snprintmem( tmp, 1024, pnfsdsclient->session, NFS4_SESSIONID_SIZE ) ;
+  printf( "Do Mount %s :Session internal: %s\n", pds_param->ipaddr_ascii, tmp ) ;
 
   /* Check for compound status */
   if(resnfs4.status != NFS4_OK)
