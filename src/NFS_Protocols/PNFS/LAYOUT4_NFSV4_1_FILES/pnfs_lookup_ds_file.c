@@ -111,11 +111,6 @@ int pnfs_lookup_ds_file(pnfs_client_t * pnfsclient,
   unsigned int i = 0 ;
   int rc = 0 ;
 
-#define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_SEQUENCE 0
-#define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_PUTFH    1
-#define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_LOOKUP   2
-#define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH    3
-
   if(!pnfsclient || !pfile)
     return NFS4ERR_SERVERFAULT;
 
