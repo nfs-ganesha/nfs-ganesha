@@ -115,11 +115,11 @@
 fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     )
 {
-  char *  fshandle  ;
-  size_t  fshandlelen = 0 ;
+  char *fshandle;
+  size_t fshandlelen = 0;
 
   fsal_status_t status;
-  int rc = 0 ;
+  int rc = 0;
 
   /* sanity check.  */
   if(!init_info)
@@ -129,17 +129,17 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
   if(init_info->fsal_info.log_outputs.liste_voies == NULL)
     /* issue a warning on stderr */
     DisplayLog
-      ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
+        ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
 
   /* save open-by-handle char device */
-  memcpy(open_by_handle_path, init_info->fs_specific_info.open_by_handle_dev_file, MAXPATHLEN);
+  memcpy(open_by_handle_path, init_info->fs_specific_info.open_by_handle_dev_file,
+         MAXPATHLEN);
   open_by_handle_fd = open(init_info->fs_specific_info.open_by_handle_dev_file, O_RDONLY);
-  if (open_by_handle_fd < 0)
+  if(open_by_handle_fd < 0)
     {
       DisplayLog
-	("FSAL INIT: ERROR: Could not open open-by-handle character device file at %s: rc = %d",
-	 init_info->fs_specific_info.open_by_handle_dev_file,
-	 errno);
+          ("FSAL INIT: ERROR: Could not open open-by-handle character device file at %s: rc = %d",
+           init_info->fs_specific_info.open_by_handle_dev_file, errno);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
 
@@ -150,7 +150,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_Init);
 
-   /* Regular exit */
+  /* Regular exit */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);
 
 }

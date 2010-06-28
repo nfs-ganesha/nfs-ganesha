@@ -164,5 +164,4 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
                                        fsal_attrib_list_t *
                                        p_object_attributes /* IN */ );
 
-int fsal_internal_path2fsname( char * rpath, char * fs_spec ) ;
-
+int fsal_internal_path2fsname(char *rpath, char *fs_spec);

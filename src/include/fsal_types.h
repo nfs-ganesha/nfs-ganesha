@@ -709,7 +709,7 @@ typedef struct fsal_buffdesc__
 
 /* quotas */
 typedef struct fsal_quota__
-{ 
+{
   u_int bhardlimit;
   u_int bsoftlimit;
   u_int curblocks;

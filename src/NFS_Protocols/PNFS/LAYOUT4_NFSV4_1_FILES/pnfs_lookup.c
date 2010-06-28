@@ -48,7 +48,7 @@
  * @return a NFSv4 error (positive value) if failed.
  *
  */
-int pnfs_lookup(pnfs_ds_client_t * pnfsdsclient, nfs_fh4 * parent_directory_handle,  /* IN */
+int pnfs_lookup(pnfs_ds_client_t * pnfsdsclient, nfs_fh4 * parent_directory_handle,     /* IN */
                 char *filename, /* IN */
                 nfs_fh4 * object_handle)
 {
@@ -63,7 +63,7 @@ int pnfs_lookup(pnfs_ds_client_t * pnfsdsclient, nfs_fh4 * parent_directory_hand
   COMPOUND4res resnfs4;
   struct timeval timeout = { 25, 0 };
 
-#define  PNFS_LAYOUTFILE_NB_OP_ALLOC 3
+#define  PNFS_LAYOUTFILE_NB_OP_ALLOC 4
   nfs_argop4 argoparray[PNFS_LAYOUTFILE_NB_OP_ALLOC];
   nfs_resop4 resoparray[PNFS_LAYOUTFILE_NB_OP_ALLOC];
   uint32_t bitmap_res[2];
@@ -92,8 +92,11 @@ int pnfs_lookup(pnfs_ds_client_t * pnfsdsclient, nfs_fh4 * parent_directory_hand
       argnfs4.tag.utf8string_val = NULL;
       argnfs4.tag.utf8string_len = 0;
 
-#define PNFS_LOOKUP_IDX_OP_PUTROOTFH      0
-#define PNFS_LOOKUP_IDX_OP_GETFH_ROOT     1
+#define PNFS_LOOKUP_IDX_OP_SEQUENCE       0
+#define PNFS_LOOKUP_IDX_OP_PUTROOTFH      1
+#define PNFS_LOOKUP_IDX_OP_GETFH_ROOT     2
+      COMPOUNDV41_ARG_ADD_OP_SEQUENCE(argnfs4, pnfsdsclient->session,
+                                      pnfsdsclient->sequence);
       COMPOUNDV41_ARG_ADD_OP_PUTROOTFH(argnfs4);
       COMPOUNDV41_ARG_ADD_OP_GETFH(argnfs4);
 
@@ -121,9 +124,12 @@ int pnfs_lookup(pnfs_ds_client_t * pnfsdsclient, nfs_fh4 * parent_directory_hand
       argnfs4.tag.utf8string_val = NULL;
       argnfs4.tag.utf8string_len = 0;
 
-#define PNFS_LOOKUP_IDX_OP_PUTFH     0
-#define PNFS_LOOKUP_IDX_OP_LOOKUP    1
-#define PNFS_LOOKUP_IDX_OP_GETFH     2
+#define PNFS_LOOKUP_IDX_OP_SEQUENCE  0
+#define PNFS_LOOKUP_IDX_OP_PUTFH     1
+#define PNFS_LOOKUP_IDX_OP_LOOKUP    2
+#define PNFS_LOOKUP_IDX_OP_GETFH     3
+      COMPOUNDV41_ARG_ADD_OP_SEQUENCE(argnfs4, pnfsdsclient->session,
+                                      pnfsdsclient->sequence);
       COMPOUNDV41_ARG_ADD_OP_PUTFH(argnfs4, nfs4fh);
       COMPOUNDV41_ARG_ADD_OP_LOOKUP(argnfs4, name);
       COMPOUNDV41_ARG_ADD_OP_GETFH(argnfs4);
@@ -139,13 +145,15 @@ int pnfs_lookup(pnfs_ds_client_t * pnfsdsclient, nfs_fh4 * parent_directory_hand
     }
 
   /* Call the NFSv4 function */
-  if( clnt_call( pnfsdsclient->rpc_client, NFSPROC4_COMPOUND,
-                (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argnfs4,
-   	        (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&resnfs4,
-	        timeout ) != RPC_SUCCESS )
+  if(clnt_call(pnfsdsclient->rpc_client, NFSPROC4_COMPOUND,
+               (xdrproc_t) xdr_COMPOUND4args, (caddr_t) & argnfs4,
+               (xdrproc_t) xdr_COMPOUND4res, (caddr_t) & resnfs4, timeout) != RPC_SUCCESS)
     {
       return NFS4ERR_IO;        /* @todo: For wanting of something more appropriate */
     }
+
+  /* Increment the sequence */
+  pnfsdsclient->sequence += 1;
 
   if(resnfs4.status != NFS4_OK)
     {
@@ -213,7 +221,7 @@ int pnfs_lookupPath(pnfs_ds_client_t * pnfsdsclient, char *path, nfs_fh4 * objec
 
   /* retrieves root directory */
 
-  if((status = pnfs_lookup(pnfsdsclient, NULL,    /* looking up for root */
+  if((status = pnfs_lookup(pnfsdsclient, NULL,  /* looking up for root */
                            "",  /* empty string to get root handle */
                            &out_hdl)) != NFS4_OK)       /* output root handle */
     return status;

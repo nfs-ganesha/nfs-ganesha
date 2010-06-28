@@ -63,6 +63,9 @@
 #define BUDDY_ERR_EINVAL      EINVAL
 #define BUDDY_ERR_EFAULT      EFAULT
 
+/* trying to destroy a resource that is still in use */
+#define BUDDY_ERR_INUSE       EBUSY
+
 /* We may want to differenciate the two error codes:
  * BUDDY_ERR_MALLOC is for system malloc errors.
  * BUDDY_ERR_OUTOFMEM is for buddy malloc errors.
@@ -170,6 +173,12 @@ void BuddyFree(BUDDY_ADDR_T ptr);
 BUDDY_ADDR_T BuddyRealloc(BUDDY_ADDR_T ptr, size_t Size);
 
 BUDDY_ADDR_T BuddyCalloc(size_t NumberOfElements, size_t ElementSize);
+
+/**
+ *  Release all thread resources.
+ */
+int BuddyDestroy();
+
 
 /**
  * For pool allocation, the user should know how much entries

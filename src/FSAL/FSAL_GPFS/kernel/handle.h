@@ -26,47 +26,49 @@
 #endif
 
 /*FIXME!!  need compat arg or rework the structure */
-struct file_handle {
-	int handle_size;
-	int handle_type;
-	/* file identifier */
-	unsigned char f_handle[0];
+struct file_handle
+{
+  int handle_size;
+  int handle_type;
+  /* file identifier */
+  unsigned char f_handle[0];
 };
 
-struct open_arg {
-	int mountdirfd;
-	int flags;
-	int openfd;
-	struct file_handle *handle;
+struct open_arg
+{
+  int mountdirfd;
+  int flags;
+  int openfd;
+  struct file_handle *handle;
 };
 
-struct name_handle_arg {
-	int dfd;
-	int flag;
-	char *name;
-	struct file_handle *handle;
+struct name_handle_arg
+{
+  int dfd;
+  int flag;
+  char *name;
+  struct file_handle *handle;
 };
 
-struct link_arg {
-	int file_fd;
-	int dir_fd;
-	char *name;
+struct link_arg
+{
+  int file_fd;
+  int dir_fd;
+  char *name;
 };
 
-struct readlink_arg {
-	int fd;
-	char *buffer;
-	int size;
+struct readlink_arg
+{
+  int fd;
+  char *buffer;
+  int size;
 };
 
 #ifdef __KERNEL__
-extern long name_to_handle_at(int dfd, const char __user *name,
-			struct file_handle __user *handle, int flag);
-extern long open_by_handle(int mountdirfd,
-			struct file_handle __user *handle, int flags);
-extern long link_by_fd(int file_fd,
-		int newdfd, const char __user *newname);
-extern long readlink_by_fd(int fd,
-		char __user *buf, int buffsize);
+extern long name_to_handle_at(int dfd, const char __user * name,
+                              struct file_handle __user * handle, int flag);
+extern long open_by_handle(int mountdirfd, struct file_handle __user * handle, int flags);
+extern long link_by_fd(int file_fd, int newdfd, const char __user * newname);
+extern long readlink_by_fd(int fd, char __user * buf, int buffsize);
 #endif
 #endif
