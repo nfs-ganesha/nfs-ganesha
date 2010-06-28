@@ -79,13 +79,16 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
 
   TakeTokenFSCall();
 
-  /* >> call your FS create function << */
+  int inode;
+  rc = libzfswrap_create(p_context->export_context->p_vfs, parent_directory_handle->inode, p_filename->name, fsal2unix_mode(accessmode), &inode);
 
   ReleaseTokenFSCall();
 
   /* >> interpret returned error << */
 
   /* >> set output handle << */
+  object_handle->inode = inode;
+  object_handle->type = FSAL_TYPE_FILE;
 
   if(object_attributes)
     {
@@ -163,7 +166,7 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
 
   /* Create the directory */
   int inode;
-  rc = libzfswrap_mkdir(p_vfs, parent_directory_handle->inode, p_dirname->name, unix_mode, &inode);
+  rc = libzfswrap_mkdir(p_context->export_context->p_vfs, parent_directory_handle->inode, p_dirname->name, unix_mode, &inode);
 
   ReleaseTokenFSCall();
 
