@@ -1879,6 +1879,8 @@ exportlist_t *BuildDefaultExport()
   strcpy(p_entry->pseudopath, "/");
   strcpy(p_entry->referral, "");
 
+  p_entry->UseCookieVerifier = FALSE ;
+
   /**
    * Grant root access to all clients
    */
