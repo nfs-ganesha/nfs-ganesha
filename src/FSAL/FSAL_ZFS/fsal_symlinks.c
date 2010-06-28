@@ -67,7 +67,7 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
 
   TakeTokenFSCall();
 
-  /* >> call your filesystem readlink function << */
+  rc = libzfswrap_readlink(p_context->export_context->p_vfs, linkhandle->inode, link_content_out, sizeof(link_content_out));
 
   ReleaseTokenFSCall();
 
@@ -100,7 +100,6 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
         }
 
     }
-
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readlink);
 
 }
@@ -165,13 +164,16 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
 
   TakeTokenFSCall();
 
-  /* >> call your fs symlink call << */
+  int inode;
+  rc = libzfswrap_symlink(p_context->export_context->p_vfs, parent_directory_handle->inode, p_linkname->name, p_linkcontent->path, &inode);
 
   ReleaseTokenFSCall();
 
   /* >> convert status and return on error <<  */
 
   /* >> set output handle << */
+  link_handle->inode = inode;
+  link_handle->type = FSAL_TYPE_LNK;
 
   if(link_attributes)
     {
