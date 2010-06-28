@@ -63,7 +63,6 @@
 #include <fcntl.h>
 #include <xfs/xfs.h>
 #include <xfs/handle.h>
-#include <xfs/parent.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
