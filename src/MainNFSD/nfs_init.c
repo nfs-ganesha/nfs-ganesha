@@ -1658,7 +1658,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #endif
 
   /* Create the root entries for each exported FS */
-  if(rc = nfs_export_create_root_entry(nfs_param.pexportlist, ht) != TRUE)
+  if( (rc = nfs_export_create_root_entry(nfs_param.pexportlist, ht) ) != TRUE)
     {
       DisplayLog("NFS_INIT: Error initializing Cache Inode root entries, exiting...");
       exit(1);
