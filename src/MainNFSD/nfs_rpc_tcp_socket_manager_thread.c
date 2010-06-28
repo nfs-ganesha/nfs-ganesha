@@ -140,7 +140,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
 #ifndef _NO_BUDDY_SYSTEM
 
-  if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
+  if((rc = BuddyInit(&nfs_param.buddy_param_tcp_mgr)) != BUDDY_SUCCESS)
     {
       /* Failed init */
       DisplayLog("Memory manager could not be initialized");
@@ -293,6 +293,10 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
 #ifdef _DEBUG_MEMLEAKS 
 	      BuddyLabelsSummary();
+              printf( "---------------------------\n" ) ;
+              BuddyDumpMem( stdout ) ;
+              printf( "---------------------------\n" ) ;
+	      sleep( 1 ) ; /* For having display before thread dies, may be useless */
 #endif 
               return NULL;
             }
