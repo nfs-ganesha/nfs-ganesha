@@ -525,6 +525,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   /* Buddy parameters */
 #ifndef _NO_BUDDY_SYSTEM
   Buddy_set_default_parameter(&p_nfs_param->buddy_param_worker);
+  Buddy_set_default_parameter(&p_nfs_param->buddy_param_tcp_mgr );
 #endif
 
   p_nfs_param->pexportlist = NULL;
@@ -591,6 +592,22 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
       return -1;
     }
 
+  rc = Buddy_load_parameter_from_conf(config_struct, &p_nfs_param->buddy_param_tcp_mgr);
+  if(rc == 0)
+    DisplayLogLevel(NIV_DEBUG,
+                    "NFS STARTUP: Tcp Mgr's Buddy parameters read from config file");
+  else if(rc == BUDDY_ERR_ENOENT)
+    DisplayLog("NFS STARTUP: No Buddy parameters found in config file, using default");
+  else
+    {
+      DisplayLog("NFS STARTUP: Error while parsing Buddy parameters");
+      return -1;
+    }
+
+  /* Set TCP MGR specific field, so that it frees pages as fast as possible */
+  p_nfs_param->buddy_param_tcp_mgr.keep_minimum = 0 ;
+  p_nfs_param->buddy_param_tcp_mgr.keep_factor  = 0 ;
+  p_nfs_param->buddy_param_tcp_mgr.free_areas  = TRUE ;
 #endif
 
   /* Load FSAL configuration from parsed file */
