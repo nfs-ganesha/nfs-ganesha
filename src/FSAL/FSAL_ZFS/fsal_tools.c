@@ -60,8 +60,7 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
       return -1;
     }
 
-  /* >> compare your handles here << */
-
+  return memcmp(handle1, handle2, sizeof(*handle1));
 }
 
 /**
