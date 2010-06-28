@@ -56,6 +56,135 @@ fsal_time_t fs2fsal_time( <your fs time structure> );
 
 /* THOSE FUNCTIONS CAN BE USED FROM OUTSIDE THE MODULE : */
 
+int posix2fsal_error(int posix_errorcode)
+{
+
+  switch (posix_errorcode)
+    {
+
+    case EPERM:
+      return ERR_FSAL_PERM;
+
+    case ENOENT:
+      return ERR_FSAL_NOENT;
+
+      /* connection error */
+#ifdef _AIX_5
+    case ENOCONNECT:
+#elif defined _LINUX
+    case ECONNREFUSED:
+    case ECONNABORTED:
+    case ECONNRESET:
+#endif
+
+      /* IO error */
+    case EIO:
+
+      /* too many open files */
+    case ENFILE:
+    case EMFILE:
+
+      /* broken pipe */
+    case EPIPE:
+
+      /* all shown as IO errors */
+      return ERR_FSAL_IO;
+
+      /* no such device */
+    case ENODEV:
+    case ENXIO:
+      return ERR_FSAL_NXIO;
+
+      /* invalid file descriptor : */
+    case EBADF:
+      /* we suppose it was not opened... */
+
+      /**
+       * @todo: The EBADF error also happens when file
+       *        is opened for reading, and we try writting in it.
+       *        In this case, we return ERR_FSAL_NOT_OPENED,
+       *        but it doesn't seems to be a correct error translation.
+       */
+
+      return ERR_FSAL_NOT_OPENED;
+
+    case ENOMEM:
+      return ERR_FSAL_NOMEM;
+
+    case EACCES:
+      return ERR_FSAL_ACCESS;
+
+    case EFAULT:
+      return ERR_FSAL_FAULT;
+
+    case EEXIST:
+      return ERR_FSAL_EXIST;
+
+    case EXDEV:
+      return ERR_FSAL_XDEV;
+
+    case ENOTDIR:
+      return ERR_FSAL_NOTDIR;
+
+    case EISDIR:
+      return ERR_FSAL_ISDIR;
+
+    case EINVAL:
+      return ERR_FSAL_INVAL;
+
+    case EFBIG:
+      return ERR_FSAL_FBIG;
+
+    case ENOSPC:
+      return ERR_FSAL_NOSPC;
+
+    case EMLINK:
+      return ERR_FSAL_MLINK;
+
+    case EDQUOT:
+      return ERR_FSAL_DQUOT;
+
+    case ESRCH:                /* Returned by quotaclt */
+      return ERR_FSAL_NO_QUOTA;
+
+    case ENAMETOOLONG:
+      return ERR_FSAL_NAMETOOLONG;
+
+/**
+ * @warning
+ * AIX returns EEXIST where BSD uses ENOTEMPTY;
+ * We want ENOTEMPTY to be interpreted anyway on AIX plateforms.
+ * Thus, we explicitely write its value (87).
+ */
+#ifdef _AIX
+    case 87:
+#else
+    case ENOTEMPTY:
+    case -ENOTEMPTY:
+#endif
+      return ERR_FSAL_NOTEMPTY;
+
+    case ESTALE:
+      return ERR_FSAL_STALE;
+
+      /* Error code that needs a retry */
+    case EAGAIN:
+    case EBUSY:
+
+      return ERR_FSAL_DELAY;
+
+    case ENOTSUP:
+      return ERR_FSAL_NOTSUPP;
+
+    default:
+
+      /* other unexpected errors */
+      return ERR_FSAL_SERVERFAULT;
+
+    }
+
+}
+
 /**
  * fsal2unix_mode:
  * Convert FSAL mode to posix mode.

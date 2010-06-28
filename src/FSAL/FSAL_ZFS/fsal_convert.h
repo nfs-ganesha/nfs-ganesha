@@ -14,6 +14,8 @@
 
 #include <sys/stat.h>
 
+int posix2fsal_error(int posix_errorcode);
+
 fsal_status_t posix2fsal_attributes(struct stat *p_buffstat,
                                     fsal_attrib_list_t * p_fsalattr_out);
 
