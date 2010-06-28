@@ -2089,6 +2089,8 @@ void *rpc_dispatcher_thread(void *Arg)
   return NULL;
 }                               /* rpc_dispatcher_thread */
 
+
+
 /**
  * nfs_Init_request_data: Init the data associated with a pending request 
  *
@@ -2101,7 +2103,6 @@ void *rpc_dispatcher_thread(void *Arg)
  * @return 0 if successfull, -1 otherwise. 
  *
  */
-
 int nfs_Init_request_data(nfs_request_data_t * pdata)
 {
   pdata->ipproto = 0;
@@ -2112,11 +2113,11 @@ int nfs_Init_request_data(nfs_request_data_t * pdata)
   pdata->tcp_xprt = NULL;
 
 #ifdef _USE_TIRPC
-  if((pdata->nfs_udp_xprt =
+    if((pdata->nfs_udp_xprt =
       Svc_dg_create(nfs_param.worker_param.nfs_svc_data.socket_nfs_udp,
                     NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE)) == NULL)
 #else
-  if((pdata->nfs_udp_xprt =
+    if((pdata->nfs_udp_xprt =
       Svcudp_bufcreate(nfs_param.worker_param.nfs_svc_data.socket_nfs_udp,
                        NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE)) == NULL)
 #endif
@@ -2124,12 +2125,13 @@ int nfs_Init_request_data(nfs_request_data_t * pdata)
       DisplayErrorLog(ERR_RPC, ERR_SVCUDP_CREATE, 0);
       return -1;
     }
+
 #ifdef _USE_TIRPC
-  if((pdata->mnt_udp_xprt =
+   if((pdata->mnt_udp_xprt =
       Svc_dg_create(nfs_param.worker_param.nfs_svc_data.socket_mnt_udp,
                     NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE)) == NULL)
 #else
-  if((pdata->mnt_udp_xprt =
+   if((pdata->mnt_udp_xprt =
       Svcudp_bufcreate(nfs_param.worker_param.nfs_svc_data.socket_mnt_udp,
                        NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE)) == NULL)
 #endif
@@ -2137,6 +2139,7 @@ int nfs_Init_request_data(nfs_request_data_t * pdata)
       DisplayErrorLog(ERR_RPC, ERR_SVCUDP_CREATE, 0);
       return -1;
     }
+
 #ifdef _USE_NLM
 #ifdef _USE_TIRPC
   if((pdata->nlm_udp_xprt =
@@ -2155,11 +2158,11 @@ int nfs_Init_request_data(nfs_request_data_t * pdata)
 
 #ifdef _USE_QUOTA
 #ifdef _USE_TIRPC
-  if((pdata->rquota_udp_xprt =
+   if((pdata->rquota_udp_xprt =
       Svc_dg_create(nfs_param.worker_param.nfs_svc_data.socket_rquota_udp,
                     NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE)) == NULL)
 #else
-  if((pdata->rquota_udp_xprt =
+   if((pdata->rquota_udp_xprt =
       Svcudp_bufcreate(nfs_param.worker_param.nfs_svc_data.socket_rquota_udp,
                        NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE)) == NULL)
 #endif                          /* _USE_TIRPC */
