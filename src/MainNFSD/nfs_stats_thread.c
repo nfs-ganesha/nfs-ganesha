@@ -56,8 +56,8 @@ extern hash_table_t *ht_ip_stats[NB_MAX_WORKER_THREAD];
 
 void *stats_thread(void *addr)
 {
-  int rc;
-  FILE *stats_file;
+  int rc = 0 ;
+  FILE *stats_file = NULL ;
   struct stat statref;
   struct stat stattest;
   time_t current_time;
@@ -65,8 +65,8 @@ void *stats_thread(void *addr)
   struct tm boot_time_struct;
   char strdate[1024];
   char strbootdate[1024];
-  unsigned int i;
-  unsigned int j;
+  unsigned int i = 0 ;
+  unsigned int j = 0 ;
   int reopen_stats = FALSE;
   nfs_worker_data_t *workers_data = addr;
 
@@ -305,15 +305,14 @@ void *stats_thread(void *addr)
           global_worker_stat.stat_req.nb_nfs41_op +=
               workers_data[i].stats.stat_req.nb_nfs41_op;
 
-	  global_worker_stat.stat_req.nb_nlm4_req +=
+          global_worker_stat.stat_req.nb_nlm4_req +=
               workers_data[i].stats.stat_req.nb_nlm4_req;
 
-	  global_worker_stat.stat_req.nb_rquota1_req +=
+          global_worker_stat.stat_req.nb_rquota1_req +=
               workers_data[i].stats.stat_req.nb_nlm4_req;
 
-	  global_worker_stat.stat_req.nb_rquota2_req +=
+          global_worker_stat.stat_req.nb_rquota2_req +=
               workers_data[i].stats.stat_req.nb_nlm4_req;
-
 
           for(j = 0; j < MNT_V1_NB_COMMAND; j++)
             {
@@ -471,7 +470,7 @@ void *stats_thread(void *addr)
 
           for(j = 0; j < NLM_V4_NB_OPERATION; j++)
             {
-	      if(i == 0)
+              if(i == 0)
                 {
                   global_worker_stat.stat_req.stat_req_nlm4[j].total =
                       workers_data[i].stats.stat_req.stat_req_nlm4[j].total;
@@ -491,10 +490,9 @@ void *stats_thread(void *addr)
                 }
             }
 
-
           for(j = 0; j < RQUOTA_NB_COMMAND; j++)
             {
-	      if(i == 0)
+              if(i == 0)
                 {
                   global_worker_stat.stat_req.stat_req_rquota1[j].total =
                       workers_data[i].stats.stat_req.stat_req_rquota1[j].total;
@@ -503,7 +501,7 @@ void *stats_thread(void *addr)
                   global_worker_stat.stat_req.stat_req_rquota1[j].dropped =
                       workers_data[i].stats.stat_req.stat_req_rquota1[j].dropped;
 
-		 global_worker_stat.stat_req.stat_req_rquota2[j].total =
+                  global_worker_stat.stat_req.stat_req_rquota2[j].total =
                       workers_data[i].stats.stat_req.stat_req_rquota2[j].total;
                   global_worker_stat.stat_req.stat_req_rquota2[j].success =
                       workers_data[i].stats.stat_req.stat_req_rquota2[j].success;
@@ -528,8 +526,6 @@ void *stats_thread(void *addr)
                       workers_data[i].stats.stat_req.stat_req_rquota2[j].dropped;
                 }
             }
-
-         
 
           /* Computing the pending request stats */
           len_pending_request =

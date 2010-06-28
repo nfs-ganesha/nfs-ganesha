@@ -75,7 +75,7 @@ fsal_status_t FSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
 {
 
   int rc, errsv;
-  int fd ;
+  int fd;
   fsal_status_t st;
 
   /* sanity checks.
@@ -86,7 +86,7 @@ fsal_status_t FSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
 
   /* get the path of the file and its handle */
   TakeTokenFSCall();
-  st = fsal_internal_handle2fd( p_context, p_filehandle , &fd, O_RDWR ) ;
+  st = fsal_internal_handle2fd(p_context, p_filehandle, &fd, O_RDWR);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(st))
@@ -95,11 +95,11 @@ fsal_status_t FSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
   /* Executes the POSIX truncate operation */
 
   TakeTokenFSCall();
-  rc = ftruncate(fd , length);
+  rc = ftruncate(fd, length);
   errsv = errno;
   ReleaseTokenFSCall();
 
-  close( fd ) ;
+  close(fd);
 
   /* convert return code */
   if(rc)

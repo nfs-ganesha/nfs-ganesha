@@ -120,7 +120,7 @@ do {                                                                            
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsequence.sa_sequenceid = __sequenceid ; \
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsequence.sa_slotid = 1 ;                \
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsequence.sa_highest_slotid = 1 ;        \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsequence.sa_cachethis = FALSE ;         \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsequence.sa_cachethis = TRUE ;         \
   argcompound.argarray.argarray_len += 1 ;                                                                                    \
 } while( 0 )
 
@@ -180,6 +180,5 @@ do {                                                                            
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_RESTOREFH ; \
   argcompound.argarray.argarray_len += 1 ;                                                         \
 } while ( 0 )
-
 
 #endif                          /* _PNFS_NFSV41_MACROS_H */

@@ -32,35 +32,36 @@
 
 main(int argc, char *argv[])
 {
-	int fd, file_fd, handle_fd, rc;
-	struct name_handle_arg harg;
+  int fd, file_fd, handle_fd, rc;
+  struct name_handle_arg harg;
 
-	if (argc != 4) {
-		fprintf(stderr, "Usage: %s,  <device> <filename> <handle_file>\n", argv[0]);
-		exit(1);
-	}
-	fd = open(argv[1], O_RDONLY);
-	if (fd < 0)
-		perror("open"), exit(1);
+  if(argc != 4)
+    {
+      fprintf(stderr, "Usage: %s,  <device> <filename> <handle_file>\n", argv[0]);
+      exit(1);
+    }
+  fd = open(argv[1], O_RDONLY);
+  if(fd < 0)
+    perror("open"), exit(1);
 
-	file_fd = open(argv[2], O_RDONLY);
-	if (fd < 0)
-		perror("open"), exit(1);
-	harg.name = NULL;
-	harg.dfd = file_fd;
-	harg.flag = 0;
-	harg.handle = malloc(sizeof(struct file_handle) + 20);
-	harg.handle->handle_size = 20;
+  file_fd = open(argv[2], O_RDONLY);
+  if(fd < 0)
+    perror("open"), exit(1);
+  harg.name = NULL;
+  harg.dfd = file_fd;
+  harg.flag = 0;
+  harg.handle = malloc(sizeof(struct file_handle) + 20);
+  harg.handle->handle_size = 20;
 
-	rc = ioctl(fd, OPENHANDLE_NAME_TO_HANDLE, &harg);
-	if (rc < 0)
-		perror("ioctl"), exit(2);
+  rc = ioctl(fd, OPENHANDLE_NAME_TO_HANDLE, &harg);
+  if(rc < 0)
+    perror("ioctl"), exit(2);
 
-	/* write the handle to a handle.data file */
-	handle_fd = open(argv[3], O_RDWR | O_CREAT | O_TRUNC, 0600);
-	write(handle_fd, harg.handle, sizeof(harg) + harg.handle->handle_size);
-	printf("Handle size is %d\n", harg.handle->handle_size);
+  /* write the handle to a handle.data file */
+  handle_fd = open(argv[3], O_RDWR | O_CREAT | O_TRUNC, 0600);
+  write(handle_fd, harg.handle, sizeof(harg) + harg.handle->handle_size);
+  printf("Handle size is %d\n", harg.handle->handle_size);
 
-	close(handle_fd);
-	close(fd);
+  close(handle_fd);
+  close(fd);
 }

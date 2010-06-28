@@ -409,6 +409,14 @@ chkconfig --add nfs-ganesha.snmp
 
 
 %changelog
+* Fri Jun 25  2010 Philippe Deniel <philippe.deniel@cea.fr> 0.99.66-1
+- FSAL_XFS now has lock support
+- Brand new FSAL_GPFS added (patch from IBM) to natively support GPFS
+- FSAL_POSIX and FSAL_XFS now have quota support (via rquota v1/v2 protocol and the use of the quotactl function)
+- Typos fixed in doxygen.conf files
+- FSAL_TEMPLATE updated (had new functions for quota and lock management)
+- pNFS/LAYOUT_FILES works with multiple Data Server
+
 * Tue Jun  8  2010 Philippe Deniel <philippe.deniel@cea.fr> 0.99.65-1
 - New FSAL_XFS designed for natively exporting XFS filesystems
 - Integration of a patch from Aneesh Kumar that implements Async NLM and NSM support

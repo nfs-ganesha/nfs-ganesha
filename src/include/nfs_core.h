@@ -140,6 +140,9 @@
 #define CONF_LABEL_IP_NAME_HOSTS    "Hosts"
 #define CONF_LABEL_NFSV4_REFERRALS  "NFSv4_Referrals"
 
+/* Worker and sidpatcher stack size */
+#define THREAD_STACK_SIZE  2116488
+
 /* NFS/RPC specific values */
 #define NFS_PORT             2049
 #define RQUOTA_PORT           875
@@ -375,6 +378,7 @@ typedef struct nfs_param__
 #ifndef _NO_BUDDY_SYSTEM
   /* buddy parameter for workers and dispatcher */
   buddy_parameter_t buddy_param_worker;
+  buddy_parameter_t buddy_param_tcp_mgr;
 #endif
 
 #ifdef _USE_MFSL

@@ -37,46 +37,47 @@
 
 main(int argc, char *argv[])
 {
-	int handle_fd;
-	char buf[100];
-	int fd, rc, file_fd;
-	struct open_arg oarg;
-	struct file_handle *handle;
-	struct readlink_arg readlinkarg;
+  int handle_fd;
+  char buf[100];
+  int fd, rc, file_fd;
+  struct open_arg oarg;
+  struct file_handle *handle;
+  struct readlink_arg readlinkarg;
 
-	if (argc != 4) {
-		fprintf(stderr, "Usage: %s,  <device> <mountdir> <handle-file>\n", argv[0]);
-		exit(1);
-	}
-	fd = open(argv[1], O_RDONLY);
-	if (fd < 0)
-		perror("open"), exit(1);
+  if(argc != 4)
+    {
+      fprintf(stderr, "Usage: %s,  <device> <mountdir> <handle-file>\n", argv[0]);
+      exit(1);
+    }
+  fd = open(argv[1], O_RDONLY);
+  if(fd < 0)
+    perror("open"), exit(1);
 
-	handle = malloc(sizeof(struct file_handle) + 20);
+  handle = malloc(sizeof(struct file_handle) + 20);
 
-	/* read the handle to a handle.data file */
-	handle_fd = open(argv[3], O_RDONLY);
-	read(handle_fd, handle, sizeof(struct file_handle) + 20);
-	printf("Handle size is %d\n", handle->handle_size);
+  /* read the handle to a handle.data file */
+  handle_fd = open(argv[3], O_RDONLY);
+  read(handle_fd, handle, sizeof(struct file_handle) + 20);
+  printf("Handle size is %d\n", handle->handle_size);
 
-	oarg.mountdirfd = open(argv[2], O_RDONLY | O_DIRECTORY);
-	if (oarg.mountdirfd < 0)
-		perror("open"), exit(2);
-	oarg.handle = handle;
-	oarg.flags = O_RDONLY;
-	file_fd = ioctl(fd, OPENHANDLE_OPEN_BY_HANDLE, &oarg);
-	if (file_fd < 0)
-		perror("ioctl"), exit(2);
-	readlinkarg.fd = file_fd;
-	memset(buf, 0, 100);
-	readlinkarg.buffer = (char *)&buf;
-	readlinkarg.size = 100;
-	rc = ioctl(fd, OPENHANDLE_READLINK_BY_FD, &readlinkarg);
-	if (rc < 0)
-		perror("ioctl"), exit(2);
-	else
-		printf("Link name %s\n",buf);
+  oarg.mountdirfd = open(argv[2], O_RDONLY | O_DIRECTORY);
+  if(oarg.mountdirfd < 0)
+    perror("open"), exit(2);
+  oarg.handle = handle;
+  oarg.flags = O_RDONLY;
+  file_fd = ioctl(fd, OPENHANDLE_OPEN_BY_HANDLE, &oarg);
+  if(file_fd < 0)
+    perror("ioctl"), exit(2);
+  readlinkarg.fd = file_fd;
+  memset(buf, 0, 100);
+  readlinkarg.buffer = (char *)&buf;
+  readlinkarg.size = 100;
+  rc = ioctl(fd, OPENHANDLE_READLINK_BY_FD, &readlinkarg);
+  if(rc < 0)
+    perror("ioctl"), exit(2);
+  else
+    printf("Link name %s\n", buf);
 
-	close(file_fd);
-	close(fd);
+  close(file_fd);
+  close(fd);
 }

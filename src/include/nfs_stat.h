@@ -93,8 +93,9 @@ static char *mnt_function_names[] = {
 
 #define RQUOTA_NB_COMMAND 5
 static char *rquota_functions_names[] = {
-  "rquota_Null", "rquota_getquota", "rquota_getquotaspecific", "rquota_setquota", "rquota_setquotaspecific" 
-} ;
+  "rquota_Null", "rquota_getquota", "rquota_getquotaspecific", "rquota_setquota",
+  "rquota_setquotaspecific"
+};
 
 #define NFS_V40_NB_OPERATION 39
 #define NFS_V41_NB_OPERATION 58
