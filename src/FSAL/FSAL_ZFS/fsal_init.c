@@ -19,6 +19,8 @@
 #include "fsal_internal.h"
 #include "fsal_common.h"
 
+extern vfs_t *p_vfs;
+
 /* Macros for analysing parameters. */
 #define SET_BITMAP_PARAM( api_cfg, p_init_info, _field )      \
     switch( (p_init_info)->behaviors._field ){                \
@@ -128,6 +130,14 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
   }
 
+  p_vfs = libzfswrap_mount(init_info->fs_specific_info.psz_zpool, "/tank", "");
+  if(!p_vfs)
+  {
+    DisplayLog("FSAL INIT: *** ERROR: Unable to mount the file system.");
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
+  }
+
+
   /* Everything went OK. */
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);
@@ -137,6 +147,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
 /* To be called before exiting */
 fsal_status_t FSAL_terminate()
 {
+  libzfswrap_umount(p_vfs, 1);
   libzfswrap_exit(p_zhd);
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

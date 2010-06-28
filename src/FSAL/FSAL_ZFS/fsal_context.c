@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+extern vfs_t *p_vfs;
+
 /** usefull subopt definitions */
 
 /* define your specific NFS export options here : */
@@ -156,13 +158,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
     }
 
   /* Initialize the libzfs library here */
-  //TODO: Use the value from the configuration (fs_specific_info.psz_zpool)
-  p_export_context->p_vfs = libzfswrap_mount("tank", "/tank", "");
-  if(!p_export_context->p_vfs)
-  {
-    DisplayLog("FSAL BUILD EXPORT: *** ERROR: Unable to mount the file system.");
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
-  }
+  p_export_context->p_vfs = p_vfs;
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 
 }
