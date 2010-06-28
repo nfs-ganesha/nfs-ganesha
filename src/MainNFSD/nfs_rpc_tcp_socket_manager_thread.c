@@ -293,11 +293,14 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
 #ifdef _DEBUG_MEMLEAKS 
 	      BuddyLabelsSummary();
-              printf( "---------------------------\n" ) ;
-              BuddyDumpMem( stdout ) ;
-              printf( "---------------------------\n" ) ;
-	      sleep( 1 ) ; /* For having display before thread dies, may be useless */
-#endif 
+#endif /* _DEBUG_MEMLEAKS */
+
+#ifndef _NO_BUDDY_SYSTEM
+              /* Free stuff allocated by BuddyMalloc before thread exists */
+	      if( ( rc = BuddyDestroy() ) != BUDDY_SUCCESS )
+                DisplayLog( "TCP SOCKET MANAGER Sock=%d (on exit): got error %u from BuddyDestroy", rc ) ;
+#endif /*  _NO_BUDDY_SYSTEM */
+
               return NULL;
             }
           else if(stat == XPRT_MOREREQS)
