@@ -2097,7 +2097,9 @@ static int export_client_match(unsigned int addr,
                              (unsigned int)(addr >> 8) & 0xFF,
                              (unsigned int)(addr & 0xFF));
 #endif
-                      break;
+		      /* However, rather than fail we can use the IP address as
+		       * the hostname. */
+		      strncpy(hostname, "unresolved", 10);
                     }
                 }
             }
