@@ -89,18 +89,23 @@ endif
 indent:
 	find . -name '*.[ch]' ! -path './rpm/*' -exec indent -linux -nsaf -nsai -nsaw -nut -bl -bls -i2 -l90 -lc90 -nce {} \;
 
+rpm/SPECS rpm/SOURCES rpm/RPMS rpm/BUILD rpm/SRPMS:
+	mkdir -p $@
+
+rpmdirs: rpm/SPECS rpm/SOURCES rpm/RPMS rpm/BUILD rpm/SRPMS
+
 if USE_FSAL_HPSS
-rpm: nfs-ganesha.spec dist 
+rpm: nfs-ganesha.spec dist rpmdirs
 	rpmbuild $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
 
-srpm: nfs-ganesha.spec dist
+srpm: nfs-ganesha.spec dist rpmdirs
 	rpmbuild $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
 
 else  
-rpm: nfs-ganesha.spec remove_hpss 
+rpm: nfs-ganesha.spec remove_hpss rpmdirs
 	rpmbuild $(RPM_DB_ARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
 
-srpm: nfs-ganesha.spec remove_hpss 
+srpm: nfs-ganesha.spec remove_hpss rpmdirs
 	rpmbuild $(RPM_DB_ARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
 
 endif
