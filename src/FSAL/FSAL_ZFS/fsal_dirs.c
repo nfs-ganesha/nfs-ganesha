@@ -151,9 +151,13 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
     }
 
     p_dirent[*nb_entries].handle.inode = entries[index].inode;
-    p_dirent[*nb_entries].handle.type = FSAL_TYPE_FILE; //TODO !!
-    strcpy(p_dirent[*nb_entries].name.name, entries[index].psz_filename);
-    p_dirent[*nb_entries].name.len = strlen(entries[index].psz_filename);
+    p_dirent[*nb_entries].handle.type = posix2fsal_type(entries[index].type);
+    FSAL_str2name(entries[index].psz_filename, FSAL_MAX_NAME_LEN, &(p_dirent[*nb_entries].name));
+
+    /* Add the attributes */
+    p_dirent[*nb_entries].attributes.asked_attributes = get_attr_mask;
+    posix2fsal_attributes(&(entries[index].stats), &p_dirent[*nb_entries].attributes);
+
     p_dirent[*nb_entries].nextentry = NULL;
 
     if(*nb_entries)
