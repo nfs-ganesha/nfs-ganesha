@@ -81,7 +81,7 @@ static fsal_staticfsinfo_t default_gpfs_info = {
   FSAL_ACLSUPPORT_ALLOW,        /* ACL support */
   TRUE,                         /* can change times */
   TRUE,                         /* homogenous */
-  GPFS_SUPPORTED_ATTRIBUTES,   /* supported attributes */
+  GPFS_SUPPORTED_ATTRIBUTES,    /* supported attributes */
   0,                            /* maxread size */
   0,                            /* maxwrite size */
   0,                            /* default umask */
@@ -397,8 +397,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
                     default_gpfs_info.maxnamelen);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxpathlen  = %lu  ",
                     default_gpfs_info.maxpathlen);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  no_trunc  = %d ",
-                    default_gpfs_info.no_trunc);
+  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  no_trunc  = %d ", default_gpfs_info.no_trunc);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  chown_restricted  = %d ",
                     default_gpfs_info.chown_restricted);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  case_insensitive  = %d ",
@@ -465,8 +464,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
 #ifdef _DEBUG_FSAL
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-                    "Supported attributes constant = 0x%llX.",
-                    GPFS_SUPPORTED_ATTRIBUTES);
+                    "Supported attributes constant = 0x%llX.", GPFS_SUPPORTED_ATTRIBUTES);
 
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
                     "Supported attributes default = 0x%llX.",
@@ -486,7 +484,6 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
  *
  ********************************************************************/
 
-
 /**
  * fsal_internal_handle2fd:
  * Open a file by handle within an export.
@@ -503,28 +500,25 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
  * \return status of operation
  */
 
-fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,  
-				       fsal_handle_t * phandle,
-                                       int * pfd,
-                                       int oflags )
+fsal_status_t fsal_internal_handle2fd(fsal_op_context_t * p_context,
+                                      fsal_handle_t * phandle, int *pfd, int oflags)
 {
-  int rc = 0 ;
+  int rc = 0;
   int dirfd = 0;
   fsal_status_t status;
 
-  if( !phandle || !pfd || !p_context || !p_context->export_context )
+  if(!phandle || !pfd || !p_context || !p_context->export_context)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   dirfd = p_context->export_context->mount_root_fd;
 
-  status = fsal_internal_handle2fd_at( dirfd, phandle , pfd, oflags );
+  status = fsal_internal_handle2fd_at(dirfd, phandle, pfd, oflags);
 
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_open);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
-
 
 /**
  * fsal_internal_handle2fd_at:
@@ -542,27 +536,25 @@ fsal_status_t fsal_internal_handle2fd( fsal_op_context_t * p_context,
  * \return status of operation
  */
 
-fsal_status_t fsal_internal_handle2fd_at ( int dirfd, 
-				       fsal_handle_t * phandle,
-                                       int * pfd,
-                                       int oflags )
+fsal_status_t fsal_internal_handle2fd_at(int dirfd,
+                                         fsal_handle_t * phandle, int *pfd, int oflags)
 {
-  int rc = 0 ;
+  int rc = 0;
   struct open_arg oarg;
 
-  if( !phandle || !pfd )
+  if(!phandle || !pfd)
     ReturnCode(ERR_FSAL_FAULT, 0);
-  
+
   oarg.mountdirfd = dirfd;
- 
+
   phandle->handle.handle_size = OPENHANDLE_HANDLE_LEN;
   oarg.handle = &phandle->handle;
   oarg.flags = oflags;
 
-  if( ( rc = ioctl( open_by_handle_fd, OPENHANDLE_OPEN_BY_HANDLE, &oarg ) ) < 0 )
-    ReturnCode(posix2fsal_error(errno), errno ) ;
+  if((rc = ioctl(open_by_handle_fd, OPENHANDLE_OPEN_BY_HANDLE, &oarg)) < 0)
+    ReturnCode(posix2fsal_error(errno), errno);
 
-  *pfd = rc ;
+  *pfd = rc;
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -580,13 +572,13 @@ fsal_status_t fsal_internal_handle2fd_at ( int dirfd,
  *
  * \return status of operation
  */
-fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,  /* IN */
-                                        fsal_path_t * p_fsalpath,       /* IN */
-                                        fsal_handle_t * p_handle /* OUT */ )
+fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
+                                       fsal_path_t * p_fsalpath,        /* IN */
+                                       fsal_handle_t * p_handle /* OUT */ )
 {
   int rc;
   struct name_handle_arg harg;
-  int objectfd ; 
+  int objectfd;
 
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -601,12 +593,11 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,  /* IN */
   DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle for %s", p_fsalpath->path);
 #endif
 
-  if( ( rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg) ) < 0 )
+  if((rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg)) < 0)
     ReturnCode(posix2fsal_error(errno), errno);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
-
 
 /**
  * fsal_internal_get_handle_at:
@@ -622,14 +613,14 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,  /* IN */
  * \return status of operation
  */
 
-fsal_status_t fsal_internal_get_handle_at(int dfd, /* IN */
-                                      fsal_name_t * p_fsalname,       /* IN */
-                                      fsal_handle_t * p_handle /* OUT
-                                                                  */ )                       
+fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
+                                          fsal_name_t * p_fsalname,     /* IN */
+                                          fsal_handle_t * p_handle      /* OUT
+                                                                         */ )
 {
   int rc;
   struct name_handle_arg harg;
-  int objectfd ; 
+  int objectfd;
 
   if(!p_handle || !p_fsalname)
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -644,11 +635,11 @@ fsal_status_t fsal_internal_get_handle_at(int dfd, /* IN */
   DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle at for %s", p_fsalname->name);
 #endif
 
-  if( ( rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg) ) < 0 )
+  if((rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg)) < 0)
     ReturnCode(posix2fsal_error(errno), errno);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}  
+}
 
 /**
  * fsal_internal_fd2handle:
@@ -661,20 +652,17 @@ fsal_status_t fsal_internal_get_handle_at(int dfd, /* IN */
  *
  * \return status of operation
  */
-fsal_status_t fsal_internal_fd2handle(
-                                      int fd,
-                                      fsal_handle_t * p_handle
-                                      )
+fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * p_handle)
 {
   int rc;
   struct name_handle_arg harg;
 
-  if(!p_handle || !&p_handle->handle) 
+  if(!p_handle || !&p_handle->handle)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   harg.handle = &p_handle->handle;
   memset(&p_handle->handle, 0, sizeof(struct file_handle));
-         
+
   harg.handle->handle_size = 20;
   harg.name = NULL;
   harg.dfd = fd;
@@ -684,9 +672,9 @@ fsal_status_t fsal_internal_fd2handle(
   DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle by fd for %d", fd);
 #endif
 
-  if( ( rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg) ) < 0 )
+  if((rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg)) < 0)
     ReturnCode(posix2fsal_error(errno), errno);
-  
+
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -703,27 +691,23 @@ fsal_status_t fsal_internal_fd2handle(
  *
  * \return status of operation
  */
-fsal_status_t fsal_internal_link_at(
-                                    int srcfd,
-                                    int dirfd,
-                                    char * name
-                                    )
+fsal_status_t fsal_internal_link_at(int srcfd, int dirfd, char *name)
 {
   int rc;
   struct link_arg linkarg;
 
   if(!name)
     ReturnCode(ERR_FSAL_FAULT, 0);
-  
+
   linkarg.dir_fd = dirfd;
   linkarg.file_fd = srcfd;
   linkarg.name = name;
 
-  if( ( rc = ioctl(open_by_handle_fd, OPENHANDLE_LINK_BY_FD, &linkarg) ) < 0 )
+  if((rc = ioctl(open_by_handle_fd, OPENHANDLE_LINK_BY_FD, &linkarg)) < 0)
     ReturnCode(posix2fsal_error(errno), errno);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
-  
+
 }
 
 /**
@@ -734,7 +718,8 @@ fsal_status_t fsal_internal_link_at(
  * \return status of operation
  */
 
-fsal_status_t  fsal_readlink_by_handle(fsal_op_context_t * p_context, fsal_handle_t * p_handle, char *__buf, int maxlen)
+fsal_status_t fsal_readlink_by_handle(fsal_op_context_t * p_context,
+                                      fsal_handle_t * p_handle, char *__buf, int maxlen)
 {
   int fd;
   int rc;
@@ -744,7 +729,7 @@ fsal_status_t  fsal_readlink_by_handle(fsal_op_context_t * p_context, fsal_handl
 
   p_handle->handle.handle_size = OPENHANDLE_HANDLE_LEN;
 
-  status = fsal_internal_handle2fd( p_context, p_handle , &fd, O_RDONLY );
+  status = fsal_internal_handle2fd(p_context, p_handle, &fd, O_RDONLY);
 
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_open);
@@ -754,15 +739,14 @@ fsal_status_t  fsal_readlink_by_handle(fsal_op_context_t * p_context, fsal_handl
   readlinkarg.buffer = __buf;
   readlinkarg.size = maxlen;
 
-  if ( (rc = ioctl(open_by_handle_fd, OPENHANDLE_READLINK_BY_FD, &readlinkarg) ) < 0 )
-  {
-    Return(rc, 0, INDEX_FSAL_readlink);
+  if((rc = ioctl(open_by_handle_fd, OPENHANDLE_READLINK_BY_FD, &readlinkarg)) < 0)
+    {
+      Return(rc, 0, INDEX_FSAL_readlink);
 
-  }
+    }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
-
 
 /*
    Check the access from an existing fsal_attrib_list_t or struct stat
@@ -917,4 +901,3 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
     ReturnCode(ERR_FSAL_ACCESS, 0);
 
 }
-

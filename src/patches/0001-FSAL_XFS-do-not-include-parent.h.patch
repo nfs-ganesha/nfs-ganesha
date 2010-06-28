@@ -1,0 +1,37 @@
+From d19cd803ae09515e455c61964447f418f0c918ca Mon Sep 17 00:00:00 2001
+From: Remi Duraffort <duraffortr@ocre.cea.fr>
+Date: Mon, 28 Jun 2010 11:45:24 +0200
+Subject: [PATCH] FSAL_XFS: do not include parent.h
+
+---
+ src/FSAL/FSAL_XFS/fsal_internal.c      |    1 -
+ src/include/FSAL/FSAL_XFS/fsal_types.h |    1 -
+ 2 files changed, 0 insertions(+), 2 deletions(-)
+
+diff --git a/src/FSAL/FSAL_XFS/fsal_internal.c b/src/FSAL/FSAL_XFS/fsal_internal.c
+index c75903b..0a4ec0d 100644
+--- a/src/FSAL/FSAL_XFS/fsal_internal.c
++++ b/src/FSAL/FSAL_XFS/fsal_internal.c
+@@ -49,7 +49,6 @@
+ #include <sys/types.h>
+ #include <xfs/xfs.h>
+ #include <xfs/handle.h>
+-#include <xfs/parent.h>
+ #include <mntent.h>
+ 
+ /* Add missing prototype in xfs/*.h */
+diff --git a/src/include/FSAL/FSAL_XFS/fsal_types.h b/src/include/FSAL/FSAL_XFS/fsal_types.h
+index cc3e094..721181a 100644
+--- a/src/include/FSAL/FSAL_XFS/fsal_types.h
++++ b/src/include/FSAL/FSAL_XFS/fsal_types.h
+@@ -63,7 +63,6 @@
+ #include <fcntl.h>
+ #include <xfs/xfs.h>
+ #include <xfs/handle.h>
+-#include <xfs/parent.h>
+ #include <stdio.h>
+ #include <unistd.h>
+ #include <string.h>
+-- 
+1.7.1
+

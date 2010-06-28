@@ -140,7 +140,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
 #ifndef _NO_BUDDY_SYSTEM
 
-  if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
+  if((rc = BuddyInit(&nfs_param.buddy_param_tcp_mgr)) != BUDDY_SUCCESS)
     {
       /* Failed init */
       DisplayLog("Memory manager could not be initialized");
@@ -165,11 +165,11 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
       BuddySetDebugLabel("nfs_request_data_t");
 #endif
 
-      GET_PREALLOC_CONSTRUCT(pnfsreq,
-                             workers_data[worker_index].request_pool,
-                             nfs_param.worker_param.nb_pending_prealloc,
-                             nfs_request_data_t,
-                             next_alloc, constructor_nfs_request_data_t);
+      GET_PREALLOC(pnfsreq,
+                   workers_data[worker_index].request_pool,
+                   nfs_param.worker_param.nb_pending_prealloc,
+                   nfs_request_data_t,
+                   next_alloc );
 
 #ifdef _DEBUG_MEMLEAKS
       /* For debugging memory leaks */
@@ -290,6 +290,16 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
               RELEASE_PREALLOC(pnfsreq, workers_data[worker_index].request_pool,
                                next_alloc);
               V(workers_data[worker_index].request_pool_mutex);
+
+#ifdef _DEBUG_MEMLEAKS 
+	      BuddyLabelsSummary();
+#endif /* _DEBUG_MEMLEAKS */
+
+#ifndef _NO_BUDDY_SYSTEM
+              /* Free stuff allocated by BuddyMalloc before thread exists */
+	      if( ( rc = BuddyDestroy() ) != BUDDY_SUCCESS )
+                DisplayLog( "TCP SOCKET MANAGER Sock=%d (on exit): got error %u from BuddyDestroy", rc ) ;
+#endif /*  _NO_BUDDY_SYSTEM */
 
               return NULL;
             }

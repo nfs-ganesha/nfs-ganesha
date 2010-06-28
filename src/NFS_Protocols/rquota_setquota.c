@@ -34,7 +34,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
-#include <sys/quota.h> /* For USRQUOTA */
+#include <sys/quota.h>          /* For USRQUOTA */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -62,7 +62,6 @@
 #include "rquota.h"
 #include "nfs_proto_functions.h"
 
-
 extern nfs_parameter_t nfs_param;
 
 /**
@@ -80,98 +79,98 @@ extern nfs_parameter_t nfs_param;
  *
  */
 int rquota_setquota(nfs_arg_t * parg /* IN     */ ,
-             exportlist_t * pexport /* IN     */ ,
-             fsal_op_context_t * pcontext /* IN     */ ,
-             cache_inode_client_t * pclient /* INOUT  */ ,
-             hash_table_t * ht /* INOUT  */ ,
-             struct svc_req *preq /* IN     */ ,
-             nfs_res_t * pres /* OUT    */ )
+                    exportlist_t * pexport /* IN     */ ,
+                    fsal_op_context_t * pcontext /* IN     */ ,
+                    cache_inode_client_t * pclient /* INOUT  */ ,
+                    hash_table_t * ht /* INOUT  */ ,
+                    struct svc_req *preq /* IN     */ ,
+                    nfs_res_t * pres /* OUT    */ )
 {
-  fsal_status_t fsal_status ;
-  fsal_quota_t  fsal_quota_in ;
-  fsal_quota_t  fsal_quota_out ;
-  fsal_path_t   fsal_path ;
-  int quota_type = USRQUOTA ;
-  int quota_id ;
-  char work[MAXPATHLEN] ;
+  fsal_status_t fsal_status;
+  fsal_quota_t fsal_quota_in;
+  fsal_quota_t fsal_quota_out;
+  fsal_path_t fsal_path;
+  int quota_type = USRQUOTA;
+  int quota_id;
+  char work[MAXPATHLEN];
 
-  if( preq->rq_vers == EXT_RQUOTAVERS )
-   {
-     quota_type =  parg->arg_ext_rquota_getquota.gqa_type ;
-     quota_id =  parg->arg_ext_rquota_getquota.gqa_id ;
-   }
+  if(preq->rq_vers == EXT_RQUOTAVERS)
+    {
+      quota_type = parg->arg_ext_rquota_getquota.gqa_type;
+      quota_id = parg->arg_ext_rquota_getquota.gqa_id;
+    }
   else
     {
-      quota_type = USRQUOTA ; 
-      quota_id = parg->arg_rquota_getquota.gqa_uid ; 
+      quota_type = USRQUOTA;
+      quota_id = parg->arg_rquota_getquota.gqa_uid;
     }
 
-  if( parg->arg_rquota_getquota.gqa_pathp[0] == '/' )
-   strncpy( work, parg->arg_rquota_getquota.gqa_pathp, MAXPATHLEN ) ;
+  if(parg->arg_rquota_getquota.gqa_pathp[0] == '/')
+    strncpy(work, parg->arg_rquota_getquota.gqa_pathp, MAXPATHLEN);
   else
-   {
-     if( nfs_export_tag2path( nfs_param.pexportlist, 
-                              parg->arg_rquota_getquota.gqa_pathp, 
-			      strnlen( parg->arg_rquota_getquota.gqa_pathp, MAXPATHLEN ),
-			      work, 
-                              MAXPATHLEN ) == -1 )
-
-     {
-        pres->res_rquota_getquota.status = Q_EPERM ; 
-        return NFS_REQ_OK ;
-     }
-   }
-   
-
-  if(FSAL_IS_ERROR((fsal_status = FSAL_str2path( work,
-                                                 MAXPATHLEN,
-                                                 &fsal_path ))))
     {
-       pres->res_rquota_setquota.status = Q_EPERM ; 
-       return NFS_REQ_OK ;
+      if(nfs_export_tag2path(nfs_param.pexportlist,
+                             parg->arg_rquota_getquota.gqa_pathp,
+                             strnlen(parg->arg_rquota_getquota.gqa_pathp, MAXPATHLEN),
+                             work, MAXPATHLEN) == -1)
+
+        {
+          pres->res_rquota_getquota.status = Q_EPERM;
+          return NFS_REQ_OK;
+        }
     }
 
-  memset( (char *)&fsal_quota_in, 0, sizeof( fsal_quota_t ) ) ;
-  memset( (char *)&fsal_quota_out, 0, sizeof( fsal_quota_t ) ) ;
+  if(FSAL_IS_ERROR((fsal_status = FSAL_str2path(work, MAXPATHLEN, &fsal_path))))
+    {
+      pres->res_rquota_setquota.status = Q_EPERM;
+      return NFS_REQ_OK;
+    }
+
+  memset((char *)&fsal_quota_in, 0, sizeof(fsal_quota_t));
+  memset((char *)&fsal_quota_out, 0, sizeof(fsal_quota_t));
 
   fsal_quota_in.bhardlimit = parg->arg_rquota_setquota.sqa_dqblk.rq_bhardlimit;
-  fsal_quota_in.bsoftlimit = parg->arg_rquota_setquota.sqa_dqblk.rq_bsoftlimit  ;
-  fsal_quota_in.curblocks = parg->arg_rquota_setquota.sqa_dqblk.rq_curblocks ;
-  fsal_quota_in.fhardlimit = parg->arg_rquota_setquota.sqa_dqblk.rq_fhardlimit ;
-  fsal_quota_in.fsoftlimit= parg->arg_rquota_setquota.sqa_dqblk.rq_fsoftlimit ;
-  fsal_quota_in.btimeleft = parg->arg_rquota_setquota.sqa_dqblk.rq_btimeleft ;
-  fsal_quota_in.ftimeleft= parg->arg_rquota_setquota.sqa_dqblk.rq_ftimeleft  ;
+  fsal_quota_in.bsoftlimit = parg->arg_rquota_setquota.sqa_dqblk.rq_bsoftlimit;
+  fsal_quota_in.curblocks = parg->arg_rquota_setquota.sqa_dqblk.rq_curblocks;
+  fsal_quota_in.fhardlimit = parg->arg_rquota_setquota.sqa_dqblk.rq_fhardlimit;
+  fsal_quota_in.fsoftlimit = parg->arg_rquota_setquota.sqa_dqblk.rq_fsoftlimit;
+  fsal_quota_in.btimeleft = parg->arg_rquota_setquota.sqa_dqblk.rq_btimeleft;
+  fsal_quota_in.ftimeleft = parg->arg_rquota_setquota.sqa_dqblk.rq_ftimeleft;
 
-  fsal_status = FSAL_set_quota( &fsal_path,
-				quota_type,
-                                quota_id,
-				&fsal_quota_in,
-				&fsal_quota_out ) ;
-   if( FSAL_IS_ERROR( fsal_status ) ) 
+  fsal_status = FSAL_set_quota(&fsal_path,
+                               quota_type, quota_id, &fsal_quota_in, &fsal_quota_out);
+  if(FSAL_IS_ERROR(fsal_status))
     {
-       if( fsal_status.major == ERR_FSAL_NO_QUOTA )
-         pres->res_rquota_setquota.status = Q_NOQUOTA ; 
-       else
-         pres->res_rquota_setquota.status = Q_EPERM ; 
-       return NFS_REQ_OK ;
-     }
+      if(fsal_status.major == ERR_FSAL_NO_QUOTA)
+        pres->res_rquota_setquota.status = Q_NOQUOTA;
+      else
+        pres->res_rquota_setquota.status = Q_EPERM;
+      return NFS_REQ_OK;
+    }
 
   /* is success */
- pres->res_rquota_getquota.status = Q_OK ; 
+  pres->res_rquota_getquota.status = Q_OK;
 
-  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_active = TRUE ;
-  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_bhardlimit = fsal_quota_out.bhardlimit ;
-  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_bsoftlimit = fsal_quota_out.bsoftlimit ;
-  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_curblocks = fsal_quota_out.curblocks ;
-  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_fhardlimit = fsal_quota_out.fhardlimit ;
-  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_fsoftlimit = fsal_quota_out.fsoftlimit ;
-  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_btimeleft = fsal_quota_out.btimeleft ;
-  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_ftimeleft = fsal_quota_out.ftimeleft ;
+  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_active = TRUE;
+  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_bhardlimit =
+      fsal_quota_out.bhardlimit;
+  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_bsoftlimit =
+      fsal_quota_out.bsoftlimit;
+  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_curblocks =
+      fsal_quota_out.curblocks;
+  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_fhardlimit =
+      fsal_quota_out.fhardlimit;
+  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_fsoftlimit =
+      fsal_quota_out.fsoftlimit;
+  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_btimeleft =
+      fsal_quota_out.btimeleft;
+  pres->res_rquota_setquota.setquota_rslt_u.sqr_rquota.rq_ftimeleft =
+      fsal_quota_out.ftimeleft;
 
-  return NFS_REQ_OK ;
+  return NFS_REQ_OK;
 
   return 0;
-} /* rquota_setquota */
+}                               /* rquota_setquota */
 
 /**
  * rquota_setquota_Free: Frees the result structure allocated for rquota_setquota

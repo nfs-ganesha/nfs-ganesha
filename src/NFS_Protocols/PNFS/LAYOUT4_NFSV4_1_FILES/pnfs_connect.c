@@ -40,10 +40,9 @@
  * @return -1 if failed
  *
  */
-int pnfs_connect(pnfs_ds_client_t * pnfsdsclient,
-                 pnfs_ds_parameter_t * pnfs_ds_param)
+int pnfs_connect(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pnfs_ds_param)
 {
-  int sock ;
+  int sock;
   struct sockaddr_in addr_rpc;
 
   if(!pnfsdsclient || !pnfs_ds_param)
@@ -55,45 +54,43 @@ int pnfs_connect(pnfs_ds_client_t * pnfsdsclient,
   addr_rpc.sin_addr.s_addr = pnfs_ds_param->ipaddr;
 
   if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
-   {
-     DisplayLog("PNFS_LAYOUT INIT: cannot create a tcp socket");
-       return -1;
-   }
+    {
+      DisplayLog("PNFS_LAYOUT INIT: cannot create a tcp socket");
+      return -1;
+    }
 
   if(connect(sock, (struct sockaddr *)&addr_rpc, sizeof(addr_rpc)) < 0)
-   {
-     DisplayLog("pNFS_LAYOUT INIT : Cannot connect to server addr=%u.%u.%u.%u port=%u",
-                (ntohl(pnfs_ds_param->ipaddr) & 0xFF000000) >> 24,
-                (ntohl(pnfs_ds_param->ipaddr) & 0x00FF0000) >> 16,
-                (ntohl(pnfs_ds_param->ipaddr) & 0x0000FF00) >> 8,
-                (ntohl(pnfs_ds_param->ipaddr) & 0x000000FF),
-                ntohs(pnfs_ds_param->ipport));
-     return -1;
-   }
+    {
+      DisplayLog("pNFS_LAYOUT INIT : Cannot connect to server addr=%u.%u.%u.%u port=%u",
+                 (ntohl(pnfs_ds_param->ipaddr) & 0xFF000000) >> 24,
+                 (ntohl(pnfs_ds_param->ipaddr) & 0x00FF0000) >> 16,
+                 (ntohl(pnfs_ds_param->ipaddr) & 0x0000FF00) >> 8,
+                 (ntohl(pnfs_ds_param->ipaddr) & 0x000000FF),
+                 ntohs(pnfs_ds_param->ipport));
+      return -1;
+    }
 
   if((pnfsdsclient->rpc_client = clnttcp_create(&addr_rpc,
-                                                 pnfs_ds_param->prognum,
-                                                 PNFS_NFS4,
-                                                 &sock,
-                                                 PNFS_SENDSIZE, PNFS_RECVSIZE)) == NULL)
-   {
+                                                pnfs_ds_param->prognum,
+                                                PNFS_NFS4,
+                                                &sock,
+                                                PNFS_SENDSIZE, PNFS_RECVSIZE)) == NULL)
+    {
       DisplayLog
-       ("PNFS_LAYOUT INIT : Cannot contact server addr=%x.%x.%x.%x port=%u prognum=%u using NFSv4 protocol",
-        (ntohl(pnfs_ds_param->ipaddr) & 0xFF000000) >> 24,
-        (ntohl(pnfs_ds_param->ipaddr) & 0x00FF0000) >> 16,
-        (ntohl(pnfs_ds_param->ipaddr) & 0x0000FF00) >> 8,
-        (ntohl(pnfs_ds_param->ipaddr) & 0x000000FF),
-        ntohs(pnfs_ds_param->ipport),
-        pnfs_ds_param->prognum);
+          ("PNFS_LAYOUT INIT : Cannot contact server addr=%x.%x.%x.%x port=%u prognum=%u using NFSv4 protocol",
+           (ntohl(pnfs_ds_param->ipaddr) & 0xFF000000) >> 24,
+           (ntohl(pnfs_ds_param->ipaddr) & 0x00FF0000) >> 16,
+           (ntohl(pnfs_ds_param->ipaddr) & 0x0000FF00) >> 8,
+           (ntohl(pnfs_ds_param->ipaddr) & 0x000000FF),
+           ntohs(pnfs_ds_param->ipport), pnfs_ds_param->prognum);
 
       return -1;
-   }
+    }
 
- if((pnfsdsclient->rpc_client->cl_auth = authunix_create_default()) == NULL)
-   {
-     return -1;
-   }
-
+  if((pnfsdsclient->rpc_client->cl_auth = authunix_create_default()) == NULL)
+    {
+      return -1;
+    }
 
   return 0;
 }                               /* pnfs_connect */

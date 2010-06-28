@@ -23,8 +23,7 @@
  * Lock an entry in the filesystem.
  */
 fsal_status_t FSAL_lock(fsal_file_t * obj_handle,
-                        fsal_lockdesc_t * ldesc,
-                        fsal_boolean_t blocking)
+                        fsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock);
 }
@@ -50,7 +49,7 @@ fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / 
  * FSAL_unlock:
  * Not implemented.
  */
-fsal_status_t FSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t *ldesc)
+fsal_status_t FSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_unlock);

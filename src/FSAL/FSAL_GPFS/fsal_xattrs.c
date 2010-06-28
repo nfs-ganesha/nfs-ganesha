@@ -17,7 +17,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-
 /* Those definitions are only used for attributes emulated by FSAL.
  * For FUSE filesystems, we call FS primitives directly.
  */
@@ -543,10 +542,9 @@ fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
  * \param p_context pointer to the current security context.
  * \param xattr_name xattr's name
  */
-fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,        /* IN */
-                                   fsal_op_context_t * p_context, /* IN */
-                                    const fsal_name_t * xattr_name )  /* IN */
+fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* IN */
+                                     fsal_op_context_t * p_context,     /* IN */
+                                     const fsal_name_t * xattr_name)    /* IN */
 {
- ReturnCode(ERR_FSAL_NOTSUPP, 0 );
-} /* FSAL_RemoveXAttrById */
-
+  ReturnCode(ERR_FSAL_NOTSUPP, 0);
+}                               /* FSAL_RemoveXAttrById */

@@ -44,47 +44,51 @@
  */
 int pnfs_init(pnfs_client_t * pnfsclient, pnfs_layoutfile_parameter_t * pnfs_layout_param)
 {
-  unsigned int i ;
+  unsigned int i;
 
   if(!pnfsclient || !pnfs_layout_param)
     return -1;
 
-  for( i = 0 ; i < pnfs_layout_param->stripe_width ; i++ )
-   {
-    if(pnfs_connect( &pnfsclient->ds_client[i], &pnfs_layout_param->ds_param[i]))
-      {
-        /* Failed init */
-        DisplayLog("PNFS INIT: pNFS engine could not be initialized, exiting...");
-        exit(1);
-      }
-    DisplayLogLevel(NIV_DEBUG, "PNFS INIT: pNFS engine successfully initialized");
+  for(i = 0; i < pnfs_layout_param->stripe_width; i++)
+    {
+      if(pnfs_connect(&pnfsclient->ds_client[i], &pnfs_layout_param->ds_param[i]))
+        {
+          /* Failed init */
+          DisplayLog("PNFS INIT: pNFS engine could not be initialized, exiting...");
+          exit(1);
+        }
+      DisplayLogLevel(NIV_DEBUG, "PNFS INIT: pNFS engine successfully initialized");
 
-    if(pnfs_do_mount(&pnfsclient->ds_client[i], &pnfs_layout_param->ds_param[i]))
-      {
-        /* Failed init */
-        DisplayLog("PNFS INIT: pNFS engine could not initialized session, exiting...");
-        exit(1);
-      }
-    DisplayLogLevel(NIV_DEBUG, "PNFS INIT: pNFS session successfully initialized");
+      if(pnfs_do_mount(&pnfsclient->ds_client[i], &pnfs_layout_param->ds_param[i]))
+        {
+          /* Failed init */
+          DisplayLog("PNFS INIT: pNFS engine could not initialized session, exiting...");
+          exit(1);
+        }
+      DisplayLogLevel(NIV_DEBUG, "PNFS INIT: pNFS session successfully initialized");
 
-    /* Lookup to find the DS's root FH */
-    pnfsclient->ds_client[i].ds_rootfh.nfs_fh4_val =
-        (char *)Mem_Alloc(PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN);
+      /* Lookup to find the DS's root FH */
+      pnfsclient->ds_client[i].ds_rootfh.nfs_fh4_val =
+          (char *)Mem_Alloc(PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN);
 
-    if(pnfs_lookupPath
-       (&pnfsclient->ds_client[i], pnfs_layout_param->ds_param[i].rootpath, &pnfsclient->ds_client[i].ds_rootfh))
-      {
-        /* Failed init */
-        DisplayLog("PNFS INIT: pNFS engine could not look up %s on DS=%s",
-                   pnfs_layout_param->ds_param[i].rootpath, pnfs_layout_param->ds_param[i].ipaddr_ascii );
-        exit(1);
-      }
-    DisplayLogLevel(NIV_DEBUG, "PNFS INIT: pNFS engine successfully got DS's rootFH for %s", pnfs_layout_param->ds_param[i].ipaddr_ascii );
+      if(pnfs_lookupPath
+         (&pnfsclient->ds_client[i], pnfs_layout_param->ds_param[i].rootpath,
+          &pnfsclient->ds_client[i].ds_rootfh))
+        {
+          /* Failed init */
+          DisplayLog("PNFS INIT: pNFS engine could not look up %s on DS=%s",
+                     pnfs_layout_param->ds_param[i].rootpath,
+                     pnfs_layout_param->ds_param[i].ipaddr_ascii);
+          exit(1);
+        }
+      DisplayLogLevel(NIV_DEBUG,
+                      "PNFS INIT: pNFS engine successfully got DS's rootFH for %s",
+                      pnfs_layout_param->ds_param[i].ipaddr_ascii);
 
-   } /* for */
+    }                           /* for */
 
   /* Set nb_ds field */
-  pnfsclient->nb_ds = pnfs_layout_param->stripe_width ; 
+  pnfsclient->nb_ds = pnfs_layout_param->stripe_width;
 
   return 0;
 }                               /* pnfs_init */

@@ -95,10 +95,9 @@ int pnfs_do_mount(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pds_par
   snprintf(client_owner.co_verifier, NFS4_VERIFIER_SIZE, "%x", (int)ServerBootTime);
 
   COMPOUNDV41_ARG_ADD_OP_EXCHANGEID(argnfs4, client_owner);
-  if( clnt_call( pnfsdsclient->rpc_client, NFSPROC4_COMPOUND,
-                 (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argnfs4,
-	   	 (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&resnfs4,
-		 timeout ) != RPC_SUCCESS )
+  if(clnt_call(pnfsdsclient->rpc_client, NFSPROC4_COMPOUND,
+               (xdrproc_t) xdr_COMPOUND4args, (caddr_t) & argnfs4,
+               (xdrproc_t) xdr_COMPOUND4res, (caddr_t) & resnfs4, timeout) != RPC_SUCCESS)
     {
       return NFS4ERR_IO;        /* @todo: For wanting of something more appropriate */
     }
@@ -116,14 +115,16 @@ int pnfs_do_mount(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pds_par
   argnfs4.tag.utf8string_len = 0;
   argnfs4.argarray.argarray_len = 0;
 
+  char tmp[1024];
+
   COMPOUNDV41_ARG_ADD_OP_CREATESESSION(argnfs4,
                                        resoparray_exchangeid[0].
                                        nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.
                                        eir_resok4.eir_clientid);
-  if( clnt_call( pnfsdsclient->rpc_client, NFSPROC4_COMPOUND,
-                 (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argnfs4,
-	   	 (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&resnfs4,
-		 timeout ) != RPC_SUCCESS )
+  if(clnt_call
+     (pnfsdsclient->rpc_client, NFSPROC4_COMPOUND, (xdrproc_t) xdr_COMPOUND4args,
+      (caddr_t) & argnfs4, (xdrproc_t) xdr_COMPOUND4res, (caddr_t) & resnfs4,
+      timeout) != RPC_SUCCESS)
     {
       return NFS4ERR_IO;        /* @todo: For wanting of something more appropriate */
     }
@@ -134,9 +135,10 @@ int pnfs_do_mount(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pds_par
          CREATE_SESSION4res_u.csr_resok4.csr_sessionid, NFS4_SESSIONID_SIZE);
 
   /* Keep the sequence as well */
-  pnfsdsclient->sequence =
-      resoparray_createsession[0].nfs_resop4_u.opcreate_session.
-      CREATE_SESSION4res_u.csr_resok4.csr_sequence;
+  pnfsdsclient->sequence += 1;
+
+  snprintmem(tmp, 1024, pnfsdsclient->session, NFS4_SESSIONID_SIZE);
+  printf("Do Mount %s :Session internal: %s\n", pds_param->ipaddr_ascii, tmp);
 
   /* Check for compound status */
   if(resnfs4.status != NFS4_OK)
