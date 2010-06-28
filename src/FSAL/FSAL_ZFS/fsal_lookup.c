@@ -142,8 +142,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
       //TODO: return the right error code !
       int inode;
       int type;
-      libzfswrap_lookup(p_vfs, parent_directory_handle->inode, p_filename->name, &inode, &type);
-printf("lookup => %u\n", inode);
+      if((rc = libzfswrap_lookup(p_context->export_context->p_vfs, parent_directory_handle->inode, p_filename->name, &inode, &type)))
+        Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       ReleaseTokenFSCall();
 

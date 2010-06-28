@@ -30,7 +30,6 @@
  */
 fsal_staticfsinfo_t global_fs_info;
 libzfs_handle_t *p_zhd;
-vfs_t *p_vfs;
 
 /* you can define here your supported attributes
  * if your filesystem is "homogenous".
