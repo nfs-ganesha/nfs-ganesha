@@ -49,7 +49,6 @@
 #include <sys/types.h>
 #include <xfs/xfs.h>
 #include <xfs/handle.h>
-#include <xfs/parent.h>
 #include <mntent.h>
 
 /* Add missing prototype in xfs/*.h */
