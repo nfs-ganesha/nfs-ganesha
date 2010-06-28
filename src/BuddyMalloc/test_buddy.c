@@ -200,6 +200,12 @@ void *TEST1(void *arg)
   DisplayMemoryMap(stdout);
 #endif
 
+  /* destroy thread resources */
+  if ( rc = BuddyDestroy() )
+  {
+        printf("ERROR in BuddyDestroy: %d\n", rc );
+  }
+
   return NULL;
 
 }
@@ -274,6 +280,12 @@ void *TEST2(void *arg)
   DisplayMemoryMap(stdout);
 #endif
 
+  /* destroy thread resources */
+  if ( rc = BuddyDestroy() )
+  {
+        printf("ERROR in BuddyDestroy: %d\n", rc );
+  }
+
   return NULL;
 
 }
@@ -339,6 +351,12 @@ void *TEST3(void *arg)
 #ifdef _DEBUG_MEMLEAKS
   DisplayMemoryMap(stdout);
 #endif
+
+  /* destroy thread resources */
+  if ( rc = BuddyDestroy() )
+  {
+        printf("ERROR in BuddyDestroy: %d\n", rc );
+  }
 
   return NULL;
 
@@ -459,6 +477,12 @@ void *TEST4(void *arg)
 #ifdef _DEBUG_MEMLEAKS
   DisplayMemoryMap(stdout);
 #endif
+
+  /* destroy thread resources */
+  if ( rc = BuddyDestroy() )
+  {
+        printf("ERROR in BuddyDestroy: %d\n", rc );
+  }
 
   return NULL;
 
@@ -610,6 +634,12 @@ void *TEST5(void *arg)
   DisplayMemoryMap(stdout);
 #endif
 
+  /* destroy thread resources */
+  if ( rc = BuddyDestroy() )
+  {
+        printf("ERROR in BuddyDestroy: %d\n", rc );
+  }
+
   return NULL;
 
 }                               /* TEST5 */
@@ -680,6 +710,12 @@ void *TEST6(void *arg)
       usleep(1000);             /* for mixing threads actions */
 
     }
+
+  /* destroy thread resources */
+  if ( rc = BuddyDestroy() )
+  {
+        printf("ERROR in BuddyDestroy: %d\n", rc );
+  }
 
   return NULL;
 
@@ -811,6 +847,12 @@ void *TEST7(void *arg)
 
   print_mallinfo();
 
+  /* destroy thread resources */
+  if ( rc = BuddyDestroy() )
+  {
+        printf("ERROR in BuddyDestroy: %d\n", rc );
+  }
+
   return NULL;
 
 }
@@ -937,6 +979,12 @@ void *TEST8(void *arg)
 
     }
 
+  /* destroy thread resources */
+  if ( rc = BuddyDestroy() )
+  {
+        printf("ERROR in BuddyDestroy: %d\n", rc );
+  }
+
   return NULL;
 
 }
@@ -1009,7 +1057,14 @@ void *TEST9(void *arg)
       BuddyFree(strings[i].str);
     }
 
+  /* destroy thread resources */
+  if ( rc = BuddyDestroy() )
+  {
+        printf("ERROR in BuddyDestroy: %d\n", rc );
+  }
 #endif
+
+  return NULL;
 
 }
 
@@ -1108,6 +1163,13 @@ void *TESTA(void *arg)
 #ifdef _DEBUG_MEMLEAKS
   DisplayMemoryMap(stdout);
 #endif
+  /* destroy thread resources */
+  if ( rc = BuddyDestroy() )
+  {
+        printf("ERROR in BuddyDestroy: %d\n", rc );
+  }
+
+  return NULL;
 
 }
 
@@ -1180,6 +1242,14 @@ void *TESTB(void *arg)
   printf("--> Trying to free a NULL address %p\n", pointer);
 
   BuddyFree(pointer);
+
+  /* destroy thread resources */
+  if ( rc = BuddyDestroy() )
+  {
+        printf("ERROR in BuddyDestroy: %d\n", rc );
+  }
+
+  return NULL;
 
 }
 
