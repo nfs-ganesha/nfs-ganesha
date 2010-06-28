@@ -369,3 +369,5 @@
 	- FSAL_TEMPLATE updated (had new functions for quota and lock management)
         - pNFS/LAYOUT_FILES works with multiple Data Server
 
+1.0.1   -
+`	

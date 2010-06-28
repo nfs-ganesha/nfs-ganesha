@@ -291,6 +291,9 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                                next_alloc);
               V(workers_data[worker_index].request_pool_mutex);
 
+#ifdef _DEBUG_MEMLEAKS 
+	      BuddyLabelsSummary();
+#endif 
               return NULL;
             }
           else if(stat == XPRT_MOREREQS)
