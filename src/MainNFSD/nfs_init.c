@@ -1216,6 +1216,7 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
   pthread_attr_init(&attr_thr);
   pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
   pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE);
+  pthread_attr_setstacksize( &attr_thr, THREAD_STACK_SIZE ) ;
 
   /* Starting all of the worker thread */
   for(i = 0; i < pnfs_param->core_param.nb_worker; i++)
@@ -1693,6 +1694,7 @@ static void nfs_Start_file_content_flushers(unsigned int nb_threads)
 #ifndef _IRIX_6
   pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
   pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE);
+  pthread_attr_setstacksize( &attr_thr, THREAD_STACK_SIZE ) ;
 #endif
 
   /* Starting all of the flushers */

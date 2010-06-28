@@ -56,8 +56,8 @@ extern hash_table_t *ht_ip_stats[NB_MAX_WORKER_THREAD];
 
 void *stats_thread(void *addr)
 {
-  int rc;
-  FILE *stats_file;
+  int rc = 0 ;
+  FILE *stats_file = NULL ;
   struct stat statref;
   struct stat stattest;
   time_t current_time;
@@ -65,8 +65,8 @@ void *stats_thread(void *addr)
   struct tm boot_time_struct;
   char strdate[1024];
   char strbootdate[1024];
-  unsigned int i;
-  unsigned int j;
+  unsigned int i = 0 ;
+  unsigned int j = 0 ;
   int reopen_stats = FALSE;
   nfs_worker_data_t *workers_data = addr;
 
