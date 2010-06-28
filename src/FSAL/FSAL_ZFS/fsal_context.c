@@ -155,9 +155,14 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
 
     }
 
-  /* >> you can then deal with the global config of your export
-   * and finish initializing it << */
-
+  /* Initialize the libzfs library here */
+  //TODO: Use the value from the configuration (fs_specific_info.psz_zpool)
+  p_export_context->p_vfs = libzfswrap_mount("tank", "/tank", "");
+  if(!p_export_context->p_vfs)
+  {
+    DisplayLog("FSAL BUILD EXPORT: *** ERROR: Unable to mount the file system.");
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
+  }
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 
 }

@@ -61,7 +61,6 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
                         fsal_attrib_list_t * file_attributes    /* [ IN/OUT ] */
     )
 {
-  printf("FSAL_open()\n");
   int rc;
 
   /* sanity checks.
@@ -85,7 +84,7 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
 
   /* >> call your FS open function << */
   vnode_t *p_vnode;
-  libzfswrap_open(p_vfs, filehandle->inode, openflags, &p_vnode);
+  libzfswrap_open(p_context->export_context->p_vfs, filehandle->inode, openflags, &p_vnode);
 
   ReleaseTokenFSCall();
 

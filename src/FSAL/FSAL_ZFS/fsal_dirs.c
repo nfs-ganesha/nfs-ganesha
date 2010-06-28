@@ -62,9 +62,10 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
   /* >> You can prepare your directory for beeing read  
    * and check that the user has the right for reading its content <<*/
   vnode_t *p_vnode;
-  libzfswrap_opendir(p_vfs, dir_handle->inode, &p_vnode);
+  libzfswrap_opendir(p_context->export_context->p_vfs, dir_handle->inode, &p_vnode);
   dir_descriptor->p_vnode = p_vnode;
   dir_descriptor->inode = dir_handle->inode;
+  dir_descriptor->p_vfs = p_context->export_context->p_vfs;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_opendir);
 
@@ -126,7 +127,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
   /* >> read some entry from you filesystem << */
   max_dir_entries = buffersize / sizeof(fsal_dirent_t);
   libzfswrap_entry_t *entries = malloc( max_dir_entries * sizeof(libzfswrap_entry_t));
-  libzfswrap_readdir(p_vfs, dir_descriptor->p_vnode, entries, max_dir_entries, (off_t*)(&start_position));
+  libzfswrap_readdir(dir_descriptor->p_vfs, dir_descriptor->p_vnode, entries, max_dir_entries, (off_t*)(&start_position));
 
   ReleaseTokenFSCall();
 
@@ -139,7 +140,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
   while(index < max_dir_entries)
   {
     /* If psz_filename is NULL, that's the end of the list */
-    if(!entries[index].psz_filename)
+    if(entries[index].psz_filename[0] == '\0')
       break;
 
     /* Skip '.' and '..' */

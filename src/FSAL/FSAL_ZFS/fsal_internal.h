@@ -13,8 +13,8 @@
 
 #include "libzfswrap.h"
 
+/* libzfswrap handler, used only when the FSAL is created and destroyed */
 extern libzfs_handle_t *p_zhd;
-extern vfs_t *p_vfs;
 
 /* defined the set of attributes supported with POSIX */
 #define POSIX_SUPPORTED_ATTRIBUTES (                                       \

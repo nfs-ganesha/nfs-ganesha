@@ -122,8 +122,11 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
 
   /* Initilise the libzfswrap library */
   p_zhd = libzfswrap_init();
-  p_vfs = libzfswrap_mount(init_info->fs_specific_info.psz_zpool, "/tank", "");
-printf("%p\n", p_vfs);
+  if(!p_zhd)
+  {
+    DisplayLog("FSAL INIT: *** ERROR: Unable to initialize the libzfswrap library.");
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
+  }
 
   /* Everything went OK. */
 

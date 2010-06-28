@@ -100,10 +100,8 @@ typedef struct fsal_cred__
 
 typedef struct fsal_export_context__
 {
-  int filesystem_id;
   fsal_handle_t root_handle;
-  char server_name[256];
-  int default_cos;
+  vfs_t *p_vfs;
 
 } fsal_export_context_t;
 
@@ -122,6 +120,7 @@ typedef struct fsal_op_context__
 
 typedef struct fsal_dir__
 {
+  vfs_t* p_vfs;
   int inode;
   vnode_t *p_vnode;
 

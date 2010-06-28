@@ -61,10 +61,10 @@ printf("FSAL_getattrs(%u)\n",filehandle->inode);
 
   TakeTokenFSCall();
 
-  if(!libzfswrap_open(p_vfs, filehandle->inode, O_RDONLY, &p_vnode))
+  if(!libzfswrap_open(p_context->export_context->p_vfs, filehandle->inode, O_RDONLY, &p_vnode))
   {
-    rc = libzfswrap_stat(p_vfs, p_vnode, &fstat);
-    libzfswrap_close(p_vfs, p_vnode, O_RDONLY);
+    rc = libzfswrap_stat(p_context->export_context->p_vfs, p_vnode, &fstat);
+    libzfswrap_close(p_context->export_context->p_vfs, p_vnode, O_RDONLY);
   }
 
   ReleaseTokenFSCall();
