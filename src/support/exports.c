@@ -1879,6 +1879,8 @@ exportlist_t *BuildDefaultExport()
   strcpy(p_entry->pseudopath, "/");
   strcpy(p_entry->referral, "");
 
+  p_entry->UseCookieVerifier = FALSE ;
+
   /**
    * Grant root access to all clients
    */
@@ -2522,4 +2524,3 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 
   return TRUE;
 }                               /* nfs_export_create_root_entry */
-
