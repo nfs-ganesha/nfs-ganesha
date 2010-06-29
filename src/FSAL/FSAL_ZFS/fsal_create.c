@@ -246,11 +246,13 @@ fsal_status_t FSAL_link(fsal_handle_t * target_handle,  /* IN */
 
   TakeTokenFSCall();
 
-  /* >> call your FS link function << */
+  rc = libzfswrap_link(p_context->export_context->p_vfs, dir_handle->inode, target_handle->inode, p_link_name->name);
 
   ReleaseTokenFSCall();
 
   /* >> interpret returned error << */
+  if(rc)
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_link);
 
   if(attributes)
     {
