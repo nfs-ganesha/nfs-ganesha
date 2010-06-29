@@ -229,6 +229,8 @@ install -m 644 config_samples/xfs.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_s
 %if %{?_with_gpfs:1}%{!?_with_gpfs:0}
 install -m 755 nfs-ganesha.gpfs.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.gpfs
 install -m 644 config_samples/gpfs.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/gpfs.ganesha.main.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/gpfs.ganesha.exports.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 rm -f $RPM_BUILD_ROOT/lib/modules/*/modules*
 %endif
 %if %{?_with_lustre:1}%{!?_with_lustre:0}
