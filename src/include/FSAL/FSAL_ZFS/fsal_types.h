@@ -128,7 +128,11 @@ typedef struct fsal_dir__
 
 typedef struct fsal_file__
 {
+  vfs_t *p_vfs;
   int inode;
+  off_t current_offset;
+  int flags;
+  vnode_t *p_vnode;
 
 } fsal_file_t;
 
