@@ -84,13 +84,19 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
 
   /* >> call your FS open function << */
   vnode_t *p_vnode;
-  libzfswrap_open(p_context->export_context->p_vfs, filehandle->inode, openflags, &p_vnode);
+  rc = libzfswrap_open(p_context->export_context->p_vfs, filehandle->inode, openflags, &p_vnode);
 
   ReleaseTokenFSCall();
 
   /* >> interpret returned status << */
+  if(rc)
+    Return(posix2fsal_error(rc), rc, INDEX_FSAL_open);
 
   /* >> fill output struct << */
+  file_descriptor->p_vfs = p_context->export_context->p_vfs;
+  file_descriptor->flags = openflags;
+  file_descriptor->current_offset = 0;
+  file_descriptor->p_vnode = p_vnode;
 
   if(file_attributes)
     {
@@ -196,6 +202,9 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
                         fsal_boolean_t * end_of_file    /* OUT */
     )
 {
+  off_t offset = 0;
+  int rc;
+  int behind = 0;
 
   /* sanity checks. */
 
@@ -204,13 +213,33 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
 
   TakeTokenFSCall();
 
-  /* >> read the correct amount of data at the good offset << */
+  if(seek_descriptor)
+  {
+    switch(seek_descriptor->whence)
+    {
+    case FSAL_SEEK_CUR:
+      offset = file_descriptor->current_offset + seek_descriptor->offset;
+      break;
+    case FSAL_SEEK_SET:
+      offset = seek_descriptor->offset;
+      break;
+    case FSAL_SEEK_END:
+      behind = 1;
+      offset = seek_descriptor->offset;
+      break;
+    }
+  }
+
+  rc = libzfswrap_read(file_descriptor->p_vfs, file_descriptor->p_vnode, buffer, buffer_size, behind, offset);
 
   ReleaseTokenFSCall();
 
   /* >> interpreted returned status << */
+  if(!rc)
+    *end_of_file = 1;
 
   /* >> dont forget setting output vars : read_amount, end_of_file << */
+  *read_amount = buffer_size;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_read);
 
@@ -293,11 +322,12 @@ fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
 
   TakeTokenFSCall();
 
-  /* >> close your file << */
+  rc = libzfswrap_close(file_descriptor->p_vfs, file_descriptor->p_vnode, file_descriptor->flags);
 
   ReleaseTokenFSCall();
 
-  /* release your read/write internal resources */
+  if(rc)
+    Return(posix2fsal_error(rc), rc, INDEX_FSAL_close);
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
 
