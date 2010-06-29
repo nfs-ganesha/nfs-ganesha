@@ -56,7 +56,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
 {
 
   fsal_status_t st;
-  int rc;
+  int rc, inode, type;
   fsal_handle_t obj_handle;
 
   /* sanity checks.
@@ -69,9 +69,21 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
 
   TakeTokenFSCall();
 
-  /* >> proceed you filesystem remove call << */
+  if(!(rc = libzfswrap_lookup(p_context->export_context->p_vfs, parentdir_handle->inode,
+                              p_object_name->name, &inode, &type)))
+  {
+    if(type == S_IFDIR)
+      rc = libzfswrap_rmdir(p_context->export_context->p_vfs, parentdir_handle->inode,
+                            p_object_name->name);
+    else
+      rc = libzfswrap_unlink(p_context->export_context->p_vfs, parentdir_handle->inode,
+                             p_object_name->name);
+  }
 
   ReleaseTokenFSCall();
+
+  if(rc)
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_unlink);
 
   /* >> get post op attributes for the parent, if they are asked,
    * and your filesystem didn't return them << */
