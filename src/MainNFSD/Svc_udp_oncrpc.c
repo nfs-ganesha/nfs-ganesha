@@ -169,6 +169,16 @@ SVCXPRT *Svcudp_create(int sock)
   return (Svcudp_bufcreate(sock, UDPMSGSIZE, UDPMSGSIZE));
 }
 
+void Svcudp_soft_destroy(register SVCXPRT * xprt)
+{
+  register struct Svcudp_data *su = Su_data(xprt);
+
+  XDR_DESTROY(&(su->su_xdrs));
+  Mem_Free(rpc_buffer(xprt));
+  Mem_Free((caddr_t) su);
+  Mem_Free((caddr_t) xprt);
+}
+
 static void Svcudp_destroy(register SVCXPRT * xprt)
 {
   register struct Svcudp_data *su = Su_data(xprt);
