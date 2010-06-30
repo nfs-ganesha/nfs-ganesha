@@ -185,7 +185,16 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
 
   if(object_attributes)
     {
-      /* >> fill output attributes if asked << */
+      /**@TODO: skip this => libzfswrap_mkdir might return attributes */
+      fsal_status_t status = FSAL_getattrs(object_handle, p_context, object_attributes);
+
+      /* on error, we set a special bit in the mask. */
+      if(FSAL_IS_ERROR(status))
+        {
+          FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+          FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
+
     }
 
   /* OK */
