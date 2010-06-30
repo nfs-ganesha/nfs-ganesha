@@ -412,6 +412,7 @@ while (my $ligne=<STATS>)
         $fn_index ++;
       
       }
+    }
     elsif ( $tag =~ m/RQUOTA V. REQUEST/ )
     {
       next if ( ! ( $reste =~ m/^([^|]+)(.*)/ ) );  # go to next line
@@ -442,6 +443,7 @@ while (my $ligne=<STATS>)
         $fn_index ++;
       
       }
+    }
    elsif ( $tag =~ m/NLM V. REQUEST/ )
     {
       next if ( ! ( $reste =~ m/^([^|]+)(.*)/ ) );  # go to next line
