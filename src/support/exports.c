@@ -2274,7 +2274,7 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
   if(psockaddr_in->sin_family == AF_INET)
     {
 #endif                          /* _USE_TIRPC_IPV6 */
-      
+
       /* Convert IP address into a string for wild character access checks. */
       inet_ntop(psockaddr_in->sin_family, &psockaddr_in->sin_addr,
 		ipstring, INET_ADDRSTRLEN);
@@ -2282,7 +2282,7 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
 	DisplayLog("Error: Could not convert the IPv4 address to a character string.");
 	return FALSE;
       }
-      
+
       /* check if any root access export matches this client */
       if(export_client_match(addr, ipstring, pexport, pclient_found, EXPORT_OPTION_ROOT))
         return TRUE;

@@ -388,6 +388,60 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 
 #endif
 
+#ifdef _USE_TIRPC
+void Svc_dg_soft_destroy(xport) 
+#else
+void Svcudp_soft_destroy(register SVCXPRT * xprt) ;
+#endif
+
+/**
+ * nfs_Cleanup_request_data: clean the data associated with a request 
+ *
+ * This function is used to clean the nfs_request_data for a worker. These data are used by the
+ * worker for RPC processing.
+ * 
+ * @param param A structure of type nfs_worker_parameter_t with all the necessary information related to a worker
+ * @param pdata Pointer to the data to be initialized.
+ * 
+ * @return 0 if successfull, -1 otherwise. 
+ *
+ */
+void nfs_Cleanup_request_data(nfs_request_data_t * pdata)
+{
+  pdata->ipproto = 0;
+
+  /* Init the SVCXPRT for the tcp socket */
+  /* The choice of the fd to be used here doesn't really matter, this fd will be overwrittem later 
+   * when processing the request */
+  pdata->tcp_xprt = NULL;
+#ifdef _USE_TIRPC
+
+  if(pdata->nfs_udp_xprt != NULL ) Svc_dg_soft_destroy(pdata->nfs_udp_xprt) ;
+  if(pdata->mnt_udp_xprt != NULL ) Svc_dg_soft_destroy(pdata->mnt_udp_xprt ) ; 
+#ifdef _USE_NLM
+  if(pdata->nlm_udp_xprt != NULL ) Svc_dg_soft_destroy(pdata->nlm_udp_xprt) ;
+#endif                          /* _USE_NLM */
+
+#ifdef _USE_QUOTA
+   if(pdata->rquota_udp_xprt != NULL ) Svc_dg_soft_destroy(pdata->rquota_udp_xprt) ; 
+#endif                          /* _USE_QUOTA */
+
+#else /* _USE_TIRPC */
+
+  if(pdata->nfs_udp_xprt != NULL ) Svcudp_soft_destroy(pdata->nfs_udp_xprt) ;
+  if(pdata->mnt_udp_xprt != NULL ) Svcudp_soft_destroy(pdata->mnt_udp_xprt ) ; 
+#ifdef _USE_NLM
+  if(pdata->nlm_udp_xprt != NULL ) Svcudp_soft_destroy(pdata->nlm_udp_xprt) ;
+#endif                          /* _USE_NLM */
+
+#ifdef _USE_QUOTA
+   if(pdata->rquota_udp_xprt != NULL ) Svcudp_soft_destroy(pdata->rquota_udp_xprt) ; 
+#endif                          /* _USE_QUOTA */
+
+#endif /* _USE_TIRPC */
+  pdata->xprt = NULL;
+}  /* nfs_Cleanup_request_data */                     
+
 /**
  * nfs_rpc_execute: main rpc dispatcher routine
  *
@@ -1518,7 +1572,10 @@ void *worker_thread(void *IndexArg)
           V(mutex_cond_xprt[xprt->xp_sock]);
 #endif
         }
+      else if(pnfsreq->ipproto == IPPROTO_UDP )
+         nfs_Cleanup_request_data( pnfsreq ) ;
 
+       
       /* If needed, perform garbage collection on cache_inode layer */
       P(lock_nb_current_gc_workers);
       if(nb_current_gc_workers < nfs_param.core_param.nb_max_concurrent_gc)
