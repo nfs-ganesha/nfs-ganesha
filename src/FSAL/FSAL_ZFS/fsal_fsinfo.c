@@ -86,12 +86,26 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
 
   TakeTokenFSCall();
 
-  /* >> retrieve filesystem usage statistiques << */
+  struct statvfs statfs;
+  int rc = libzfswrap_statfs(p_context->export_context->p_vfs, &statfs);
 
   ReleaseTokenFSCall();
 
   /* >> interpret returned status << */
+  if(rc)
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_dynamic_fsinfo);
+
+  dynamicinfo->total_bytes = statfs.f_frsize * statfs.f_blocks;
+  dynamicinfo->free_bytes = statfs.f_frsize * statfs.f_bfree;
+  dynamicinfo->avail_bytes = statfs.f_frsize * statfs.f_bavail;
+
+  dynamicinfo->total_files = statfs.f_files;
+  dynamicinfo->free_files = statfs.f_ffree;
+  dynamicinfo->avail_files = statfs.f_favail;
+
+  dynamicinfo->time_delta.seconds = 1;
+  dynamicinfo->time_delta.nseconds = 0;
+
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_dynamic_fsinfo);
-
 }
