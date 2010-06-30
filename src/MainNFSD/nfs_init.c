@@ -1213,10 +1213,17 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
   unsigned long i = 0;
 
   /* Init for thread parameter (mostly for scheduling) */
-  pthread_attr_init(&attr_thr);
-  pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
-  pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE);
-  pthread_attr_setstacksize( &attr_thr, THREAD_STACK_SIZE ) ;
+  if( pthread_attr_init(&attr_thr) != 0 )
+    DisplayLog("NFS STARTUP: can't init pthread's attributes" ) ;
+    
+  if( pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) != 0 )
+    DisplayLog("NFS STARTUP: can't set pthread's scope" ) ;
+    
+  if( pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE) != 0 )
+    DisplayLog("NFS STARTUP: can't set pthread's join state" ) ;
+    
+  if( pthread_attr_setstacksize( &attr_thr, THREAD_STACK_SIZE ) != 0 )
+    DisplayLog("NFS STARTUP: can't set pthread's stack size" ) ;
 
   /* Starting all of the worker thread */
   for(i = 0; i < pnfs_param->core_param.nb_worker; i++)
