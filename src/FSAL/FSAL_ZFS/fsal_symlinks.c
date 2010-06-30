@@ -178,8 +178,14 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
   if(link_attributes)
     {
 
-      /* >> fill output attributes if they are asked << */
+      fsal_status_t status = FSAL_getattrs(link_handle, p_context, link_attributes);
 
+      /* On error, we set a flag in the returned attributes */
+      if(FSAL_IS_ERROR(status))
+        {
+          FSAL_CLEAR_MASK(link_attributes->asked_attributes);
+          FSAL_SET_MASK(link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
     }
 
   /* OK */
