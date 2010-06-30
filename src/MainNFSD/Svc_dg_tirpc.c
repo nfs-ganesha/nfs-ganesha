@@ -279,6 +279,24 @@ void *args_ptr;
   return (*xdr_args) (xdrs, args_ptr);
 }
 
+void Svc_dg_soft_destroy(xport) 
+SVCXPRT *xprt;
+{
+  struct svc_dg_data *su = su_data(xprt);
+
+  XDR_DESTROY(&(su->su_xdrs));
+  (void)Mem_Free(rpc_buffer(xprt));
+  (void)Mem_Free(su);
+  if(xprt->xp_rtaddr.buf)
+    (void)Mem_Free(xprt->xp_rtaddr.buf);
+  if(xprt->xp_ltaddr.buf)
+    (void)Mem_Free(xprt->xp_ltaddr.buf);
+  if(xprt->xp_tp)
+    (void)free(xprt->xp_tp);
+  (void)Mem_Free(xprt);
+}
+
+
 static void Svc_dg_destroy(xprt)
 SVCXPRT *xprt;
 {
