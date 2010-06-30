@@ -48,7 +48,7 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
     )
 {
 printf("FSAL_getattrs(%u)\n",filehandle->inode);
-  int rc;
+  int rc, type;
   fsal_status_t status;
   struct stat fstat;
   vnode_t *p_vnode;
@@ -61,17 +61,13 @@ printf("FSAL_getattrs(%u)\n",filehandle->inode);
 
   TakeTokenFSCall();
 
-  if(!libzfswrap_open(p_context->export_context->p_vfs, filehandle->inode, O_RDONLY, &p_vnode))
-  {
-    rc = libzfswrap_stat(p_context->export_context->p_vfs, p_vnode, &fstat);
-    libzfswrap_close(p_context->export_context->p_vfs, p_vnode, O_RDONLY);
-  }
+  rc = libzfswrap_statfd(p_context->export_context->p_vfs, filehandle->inode, &fstat, &type);
 
   ReleaseTokenFSCall();
 
   /* >> convert error code, and return on error << */
   if(rc)
-    Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_getattrs);
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_getattrs);
 
   /* >> convert your filesystem attributes to FSAL attributes << */
   fsal_status_t st = posix2fsal_attributes(&fstat, object_attributes);
