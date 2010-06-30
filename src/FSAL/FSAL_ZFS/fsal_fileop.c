@@ -277,6 +277,8 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
                          fsal_size_t * write_amount     /* OUT */
     )
 {
+  int rc, behind = 0;
+  off_t offset;
 
   /* sanity checks. */
   if(!file_descriptor || !buffer || !write_amount)
@@ -284,13 +286,34 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
 
   TakeTokenFSCall();
 
-  /* >> write the correct amount of data at the good offset << */
+  if(seek_descriptor)
+  {
+    switch(seek_descriptor->whence)
+    {
+    case FSAL_SEEK_CUR:
+      offset = file_descriptor->current_offset + seek_descriptor->offset;
+      break;
+    case FSAL_SEEK_SET:
+      offset = seek_descriptor->offset;
+      break;
+    case FSAL_SEEK_END:
+      behind = 1;
+      offset = seek_descriptor->offset;
+      break;
+    }
+  }
+
+  rc = libzfswrap_write(file_descriptor->p_vfs, file_descriptor->p_vnode, buffer, buffer_size, behind, offset);
+
 
   ReleaseTokenFSCall();
 
   /* >> interpreted returned status << */
+  if(rc)
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_write);
 
   /* >> dont forget setting output vars : write_amount << */
+  *write_amount = buffer_size;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_write);
 
