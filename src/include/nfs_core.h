@@ -198,6 +198,12 @@ typedef enum nfs_clientid_confirm_state__
 #define V( sem ) pthread_mutex_unlock( &sem )
 #endif
 
+#ifdef _USE_TIRPC
+void Svc_dg_soft_destroy(SVCXPRT * xport); 
+#else
+void Svcudp_soft_destroy( SVCXPRT * xprt) ;
+#endif /* _USE_TIRPC */
+
 #ifdef _USE_GSSRPC
 bool_t Svcauth_gss_import_name(char *service);
 bool_t Svcauth_gss_acquire_cred(void);
