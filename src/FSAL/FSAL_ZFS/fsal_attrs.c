@@ -160,14 +160,45 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
     }
 
   /* >> Then, convert the attribute set to your FS format << */
+  int flags = 0;
+  struct stat stats = { 0 };
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MODE))
+  {
+    flags |= LZFSW_ATTR_MODE;
+    stats.st_mode = fsal2unix_mode(attrs.mode);
+  }
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_OWNER))
+  {
+    flags |= LZFSW_ATTR_UID;
+    stats.st_uid = attrs.owner;
+  }
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_GROUP))
+  {
+    flags |= LZFSW_ATTR_GID;
+    stats.st_gid = attrs.group;
+  }
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME))
+  {
+    flags |= LZFSW_ATTR_ATIME;
+    stats.st_atime = attrs.atime.seconds;
+  }
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME))
+  {
+    flags |= LZFSW_ATTR_MTIME;
+    stats.st_mtime = attrs.mtime.seconds;
+  }
 
   TakeTokenFSCall();
 
-  /* >> Call your fs setattr function << */
+  struct stat new_stat = { 0 };
+  /**@TODO: use the new_stat info ! */
+  rc = libzfswrap_setattr(p_context->export_context->p_vfs, filehandle->inode, &stats, flags, &new_stat);
 
   ReleaseTokenFSCall();
 
   /* >> convert error code, and return on error << */
+  if(rc)
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_setattrs);
 
   /* >> Optionaly fill output attributes.
    * If your filesystem setattr call doesn't
