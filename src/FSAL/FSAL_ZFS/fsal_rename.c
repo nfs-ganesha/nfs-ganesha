@@ -82,11 +82,13 @@ fsal_status_t FSAL_rename(fsal_handle_t * old_parentdir_handle, /* IN */
 
   TakeTokenFSCall();
 
-  /* >> call your filesystem rename function << */
+  rc = libzfswrap_rename(p_context->export_context->p_vfs, old_parentdir_handle->inode, p_old_name->name, new_parentdir_handle->inode, p_new_name->name);
 
   ReleaseTokenFSCall();
 
   /* >> interpret the returned error << */
+  if(rc)
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_rename);
 
   /* >> get last parent post op attributes if asked
    * For example : << */
