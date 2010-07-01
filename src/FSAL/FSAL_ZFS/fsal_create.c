@@ -85,6 +85,8 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
   ReleaseTokenFSCall();
 
   /* >> interpret returned error << */
+  if(rc)
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
 
   /* >> set output handle << */
   object_handle->inode = inode;
@@ -178,6 +180,8 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
   ReleaseTokenFSCall();
 
   /* >> interpret returned error << */
+  if(rc)
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
 
   /* set output handle */
   object_handle->inode = inode;

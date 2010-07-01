@@ -99,12 +99,18 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
   file_descriptor->p_vnode = p_vnode;
 
   if(file_attributes)
-    {
-      /* >> set output attributes if asked << */
-    }
+  {
+      fsal_status_t status = FSAL_getattrs(filehandle, p_context, file_attributes);
+      /* On error, we set a flag in the returned attributes */
+      if(FSAL_IS_ERROR(status))
+      {
+          FSAL_CLEAR_MASK(file_attributes->asked_attributes);
+          FSAL_SET_MASK(file_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+      }
+
+  }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_open);
-
 }
 
 /**
