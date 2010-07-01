@@ -410,35 +410,7 @@ void nfs_Cleanup_request_data(nfs_request_data_t * pdata)
 {
   pdata->ipproto = 0;
 
-  /* Init the SVCXPRT for the tcp socket */
-  /* The choice of the fd to be used here doesn't really matter, this fd will be overwrittem later 
-   * when processing the request */
   pdata->tcp_xprt = NULL;
-#ifdef _USE_TIRPC
-
-  if(pdata->nfs_udp_xprt != NULL ) Svc_dg_soft_destroy(pdata->nfs_udp_xprt) ;
-  if(pdata->mnt_udp_xprt != NULL ) Svc_dg_soft_destroy(pdata->mnt_udp_xprt ) ; 
-#ifdef _USE_NLM
-  if(pdata->nlm_udp_xprt != NULL ) Svc_dg_soft_destroy(pdata->nlm_udp_xprt) ;
-#endif                          /* _USE_NLM */
-
-#ifdef _USE_QUOTA
-   if(pdata->rquota_udp_xprt != NULL ) Svc_dg_soft_destroy(pdata->rquota_udp_xprt) ; 
-#endif                          /* _USE_QUOTA */
-
-#else /* _USE_TIRPC */
-
-  if(pdata->nfs_udp_xprt != NULL ) Svcudp_soft_destroy(pdata->nfs_udp_xprt) ;
-  if(pdata->mnt_udp_xprt != NULL ) Svcudp_soft_destroy(pdata->mnt_udp_xprt ) ; 
-#ifdef _USE_NLM
-  if(pdata->nlm_udp_xprt != NULL ) Svcudp_soft_destroy(pdata->nlm_udp_xprt) ;
-#endif                          /* _USE_NLM */
-
-#ifdef _USE_QUOTA
-   if(pdata->rquota_udp_xprt != NULL ) Svcudp_soft_destroy(pdata->rquota_udp_xprt) ; 
-#endif                          /* _USE_QUOTA */
-
-#endif /* _USE_TIRPC */
   pdata->xprt = NULL;
 }  /* nfs_Cleanup_request_data */                     
 
