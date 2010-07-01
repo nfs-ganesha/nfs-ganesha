@@ -293,7 +293,6 @@ static bool_t Svcudp_freeargs(SVCXPRT * xprt, xdrproc_t xdr_args, void *args_ptr
 
 void Svcudp_soft_destroy( register SVCXPRT * xprt)
 {
-  XDR_DESTROY(&(su->su_xdrs));
   mem_free(rpc_buffer(xprt), su->su_iosz);
   mem_free((caddr_t) su, sizeof(struct svcudp_data));
   mem_free((caddr_t) xprt, sizeof(SVCXPRT));

@@ -87,7 +87,7 @@ extern fd_set Svc_fdset;
 extern nfs_worker_data_t *workers_data;
 extern nfs_parameter_t nfs_param;
 extern exportlist_t *pexportlist;
-extern SVCXPRT **Xports;        /* The one from RPCSEC_GSS library */
+extern SVCXPRT *Xports[FD_SETSIZE];        /* The one from RPCSEC_GSS library */
 #ifdef _RPCSEC_GS_64_INSTALLED
 struct svc_rpc_gss_data **TabGssData;
 #endif
@@ -280,6 +280,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
           if(stat == XPRT_DIED)
             {
+#ifndef _USE_TIRPC
                if( (paddr_caller = svc_getcaller( pnfsreq->xprt ) ) != NULL )
                      {
 			snprintf( str_caller, MAXNAMLEN, "0x%x=%d.%d.%d.%d",
@@ -291,6 +292,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 				 (ntohl( paddr_caller->sin_addr.s_addr )  & 0x000000FF) ) ;
                      }
                    else
+#endif /* _USE_TIRPC */
                      strncpy( str_caller, "unresolved", MAXNAMLEN ) ;
 
               DisplayLog

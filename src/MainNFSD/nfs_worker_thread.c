@@ -101,7 +101,7 @@ void nfs_debug_debug_label_info();
 
 extern nfs_worker_data_t *workers_data;
 extern nfs_parameter_t nfs_param;
-extern SVCXPRT **Xports;        /* The one from RPCSEC_GSS library */
+extern SVCXPRT *Xports[FD_SETSIZE];        /* The one from RPCSEC_GSS library */
 extern hash_table_t *ht_dupreq; /* duplicate request hash */
 
 /* These two variables keep state of the thread that gc at this time */
@@ -389,7 +389,7 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 #endif
 
 #ifdef _USE_TIRPC
-void Svc_dg_soft_destroy(xport) 
+void Svc_dg_soft_destroy( register SVCXPRT *xprt) ;
 #else
 void Svcudp_soft_destroy(register SVCXPRT * xprt) ;
 #endif
@@ -886,8 +886,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
        * of a struct sockaddr_in directly.
        */
       pnetbuf = svc_getrpccaller(ptr_svc);
-      memcpy((char *)&pworker_data->hostaddr, (char *)pnetbuf->buf,
-             sizeof(pworker_data->hostaddr));
+      memcpy((char *)&pworker_data->hostaddr, (char *)pnetbuf->buf, pnetbuf->len ) ;
 #else
       phostaddr = svc_getcaller(ptr_svc);
       memcpy((char *)&pworker_data->hostaddr, (char *)phostaddr,
