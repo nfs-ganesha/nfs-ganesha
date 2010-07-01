@@ -91,12 +91,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 
       if(object_attributes)
         {
-          fsal_status_t status;
-
-          status = FSAL_getattrs(object_handle, p_context, object_attributes);
-
+          fsal_status_t status = FSAL_getattrs(object_handle, p_context, object_attributes);
           /* On error, we set a flag in the returned attributes */
-
           if(FSAL_IS_ERROR(status))
             {
               FSAL_CLEAR_MASK(object_attributes->asked_attributes);
@@ -139,24 +135,29 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 
       /* >> Call your filesystem lookup function here << */
       /* >> Be carefull you don't traverse junction nor follow symlinks << */
-      //TODO: return the right error code !
       int inode;
       int type;
-      if((rc = libzfswrap_lookup(p_context->export_context->p_vfs, parent_directory_handle->inode, p_filename->name, &inode, &type)))
-        Return(posix2fsal_error(rc), rc, INDEX_FSAL_lookup);
+      rc = libzfswrap_lookup(p_context->export_context->p_vfs, parent_directory_handle->inode, p_filename->name, &inode, &type);
 
       ReleaseTokenFSCall();
 
       /* >> convert the error code and return on error << */
+      if(rc)
+        Return(posix2fsal_error(rc), rc, INDEX_FSAL_lookup);
 
       /* >> set output handle << */
       object_handle->inode = inode;
       object_handle->type = posix2fsal_type(type);
       if(object_attributes)
         {
-          /* >> fill object attributes if asked << */
+          fsal_status_t status = FSAL_getattrs(object_handle, p_context, object_attributes);
+          /* On error, we set a flag in the returned attributes */
+          if(FSAL_IS_ERROR(status))
+            {
+              FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+              FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+            }
         }
-
     }
 
   /* lookup complete ! */

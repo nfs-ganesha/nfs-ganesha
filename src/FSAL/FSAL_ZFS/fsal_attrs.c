@@ -47,7 +47,6 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
                             fsal_attrib_list_t * object_attributes      /* IN/OUT */
     )
 {
-printf("FSAL_getattrs(%u)\n",filehandle->inode);
   int rc, type;
   fsal_status_t status;
   struct stat fstat;
