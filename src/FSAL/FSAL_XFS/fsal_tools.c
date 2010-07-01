@@ -103,7 +103,7 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
   unsigned int cpt = 0;
   unsigned int sum = 0;
   unsigned int extract = 0;
-  unsigned int mod;
+  unsigned int mod = 0 ;
 
   /* XXX If the handle is not 32 bits-aligned, the last loop will get uninitialized
    * chars after the end of the handle. We must avoid this by skipping the last loop
@@ -150,7 +150,7 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
   unsigned int h = 0;
   unsigned int cpt = 0;
   unsigned int extract = 0;
-  unsigned int mod;
+  unsigned int mod = 0 ;
 
   h = cookie;
 
