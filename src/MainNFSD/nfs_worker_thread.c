@@ -1008,9 +1008,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       /* store in dupreq cache if needed */
       if(do_dupreq_cache)
         {
-          if(nfs_dupreq_add
-             (rpcxid, ptr_req, &res_nfs, lru_dupreq,
-              &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+          if(nfs_dupreq_add( rpcxid,
+             		     ptr_req, 
+                             &res_nfs,
+                             lru_dupreq,
+                             &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
             {
               DisplayLogLevel(NIV_EVENT,
                               "NFS DISPATCHER: FAILURE: Bad insertion in dupreq cache");

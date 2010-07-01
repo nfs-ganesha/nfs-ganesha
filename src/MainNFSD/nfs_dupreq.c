@@ -86,7 +86,13 @@ extern nfs_function_desc_t nfs3_func_desc[];
 extern nfs_function_desc_t nfs4_func_desc[];
 extern nfs_function_desc_t mnt1_func_desc[];
 extern nfs_function_desc_t mnt3_func_desc[];
-
+#ifdef _USE_NLM
+extern nfs_function_desc_t nlm4_func_desc[];
+#endif /* _USE_NLM */
+#ifdef _USE_QUOTA
+extern nfs_function_desc_t rquota1_func_desc[];
+extern nfs_function_desc_t rquota2_func_desc[];
+#endif /* _USE_QUOTA */
 /* Structure used for duplicated request cache */
 hash_table_t *ht_dupreq;
 
@@ -240,8 +246,37 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
                      pdupreq->rq_vers);
           break;
 
-        }                       /* switch( ptr_req->vers ) */
+        }                       /* switch( pdupreq->vers ) */
     }
+#ifdef _USE_NLM
+  else if(pdupreq->rq_prog == nfs_param.core_param.nlm_program)
+    {
+
+      switch (pdupreq->rq_vers)
+        {
+        case NLM4_VERS:
+          funcdesc = nlm4_func_desc[pdupreq->rq_proc];
+          break;
+        }                       /* switch( pdupreq->vers ) */
+    }
+#endif                          /* _USE_NLM */
+#ifdef _USE_QUOTA
+  else if(pdupreq->rq_prog == nfs_param.core_param.rquota_program)
+    {
+
+      switch (pdupreq->rq_vers)
+        {
+        case RQUOTAVERS:
+          funcdesc = rquota1_func_desc[pdupreq->rq_proc];
+          break;
+
+        case EXT_RQUOTAVERS:
+          funcdesc = rquota2_func_desc[pdupreq->rq_proc];
+          break;
+
+        }                       /* switch( pdupreq->vers ) */
+    }
+#endif                 
   else
     {
       /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
