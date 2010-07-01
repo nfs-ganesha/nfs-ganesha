@@ -462,9 +462,19 @@ fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
   /** @todo: manage ssize_t to fsal_size_t convertion */
   if(nb_written <= 0)
     {
-      DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                        "Write operation of size %llu at offset %lld failed. fd=%d, errno=%d.",
-                        i_size, p_seek_descriptor->offset, p_file_descriptor->fd, errsv);
+      if (p_seek_descriptor) 
+      {
+        DisplayLogJdLevel(fsal_log, NIV_DEBUG,
+                          "Write operation of size %llu at offset %lld failed. fd=%d, errno=%d.",
+                          i_size, p_seek_descriptor->offset, p_file_descriptor->fd, errsv);
+      }
+      else
+      {
+        DisplayLogJdLevel(fsal_log, NIV_DEBUG,
+                          "Write operation of size %llu at offset 0. fd=%d, errno=%d.",
+                          i_size, p_file_descriptor->fd, errsv);
+      }
+ 
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_write);
     }
 
