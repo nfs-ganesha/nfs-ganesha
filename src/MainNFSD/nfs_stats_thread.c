@@ -275,6 +275,8 @@ void *stats_thread(void *addr)
       global_worker_stat.stat_req.nb_nfs3_req = 0;
       global_worker_stat.stat_req.nb_nfs4_req = 0;
       global_worker_stat.stat_req.nb_nlm4_req = 0;
+      global_worker_stat.stat_req.nb_nfs40_op = 0 ;
+      global_worker_stat.stat_req.nb_nfs41_op = 0 ;
       global_worker_stat.stat_req.nb_rquota1_req = 0;
       global_worker_stat.stat_req.nb_rquota2_req = 0;
 
