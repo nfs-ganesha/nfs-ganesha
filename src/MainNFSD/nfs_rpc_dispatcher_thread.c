@@ -109,7 +109,7 @@ void socket_setoptions(int socketFd);
 extern fd_set Svc_fdset;
 extern nfs_worker_data_t *workers_data;
 extern nfs_parameter_t nfs_param;
-extern SVCXPRT **Xports;        /* The one from RPCSEC_GSS library */
+extern SVCXPRT *Xports[FD_SETSIZE];        /* The one from RPCSEC_GSS library */
 #ifdef _RPCSEC_GS_64_INSTALLED
 struct svc_rpc_gss_data **TabGssData;
 #endif
@@ -1636,6 +1636,8 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
   register long mask, *maskp;
   register int sock;
   char *cred_area;
+  struct sockaddr_in * pdead_caller = NULL  ;
+  char dead_caller[MAXNAMLEN] ;
 
   LRU_entry_t *pentry = NULL;
   LRU_status_t status;
@@ -1861,12 +1863,26 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
               stat = SVC_STAT(pnfsreq->xprt);
               if(stat == XPRT_DIED)
                 {
+#ifndef _USE_TIRPC
+                   if( (pdead_caller = svc_getcaller( pnfsreq->xprt ) ) != NULL )
+                     {
+			snprintf( dead_caller, MAXNAMLEN, "0x%x=%d.%d.%d.%d",
+				 ntohl( pdead_caller->sin_addr.s_addr ),
+				 (ntohl( pdead_caller->sin_addr.s_addr )  & 0xFF000000) >> 24,
+				 (ntohl( pdead_caller->sin_addr.s_addr )  & 0x00FF0000) >> 16,
+				 (ntohl( pdead_caller->sin_addr.s_addr )  & 0x0000FF00) >> 8,
+				 (ntohl( pdead_caller->sin_addr.s_addr )  & 0x000000FF) ) ;
+                     }
+                   else
+#endif /* _USE_TIRPC */
+                     strncpy( dead_caller, "unresolved", MAXNAMLEN ) ;
+
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
-                  DisplayLog("A client disappeared... socket=%d", pnfsreq->xprt->xp_fd);
+                  DisplayLog("A client disappeared... socket=%d, addr=%s", pnfsreq->xprt->xp_fd, dead_caller);
                   if(Xports[pnfsreq->xprt->xp_fd] != NULL)
                     SVC_DESTROY(Xports[pnfsreq->xprt->xp_fd]);
 #else
-                  DisplayLog("A client disappeared... socket=%d", pnfsreq->xprt->xp_sock);
+                  DisplayLog("A client disappeared... socket=%d, addr=%s", pnfsreq->xprt->xp_sock, dead_caller);
                   if(Xports[pnfsreq->xprt->xp_sock] != NULL)
                     SVC_DESTROY(Xports[pnfsreq->xprt->xp_sock]);
 #endif
