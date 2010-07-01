@@ -390,7 +390,6 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
         {
-          close(fd);
           FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
           FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
         }
