@@ -66,7 +66,7 @@
 
 /* public data : */
 fd_set Svc_fdset;
-SVCXPRT **Xports;
+SVCXPRT *Xports[FD_SETSIZE];
 
 extern rw_lock_t Svc_lock;
 extern rw_lock_t Svc_fd_lock;
@@ -103,13 +103,6 @@ SVCXPRT *xprt;
   sock = xprt->xp_fd;
 
   P_w(&Svc_fd_lock);
-  if(Xports == NULL)
-    {
-      Xports = (SVCXPRT **) Mem_Alloc(FD_SETSIZE * sizeof(SVCXPRT *));
-      if(Xports == NULL)
-        return;
-      memset(Xports, '\0', FD_SETSIZE * sizeof(SVCXPRT *));
-    }
   if(sock < FD_SETSIZE)
     {
       Xports[sock] = xprt;
