@@ -1165,9 +1165,10 @@ void *TESTA(void *arg)
 #endif
   /* destroy thread resources */
   if ( rc = BuddyDestroy() )
-  {
         printf("ERROR in BuddyDestroy: %d\n", rc );
-  }
+  else
+        printf("All resources released successfully\n");
+  
 
   return NULL;
 
