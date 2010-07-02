@@ -279,12 +279,11 @@ void *args_ptr;
   return (*xdr_args) (xdrs, args_ptr);
 }
 
-void Svc_dg_soft_destroy(xport) 
+void Svc_dg_soft_destroy(xprt) 
 SVCXPRT *xprt;
 {
   struct svc_dg_data *su = su_data(xprt);
 
-  XDR_DESTROY(&(su->su_xdrs));
   (void)Mem_Free(rpc_buffer(xprt));
   (void)Mem_Free(su);
   if(xprt->xp_rtaddr.buf)
