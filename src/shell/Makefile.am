@@ -74,13 +74,14 @@ shell_libs =      ../NFS_Protocols/libnfsproto.la                    \
                   ../HashTable/libhashtable.la                       \
                   ../LRU/liblru.la                                   \
                   ../BuddyMalloc/libBuddyMalloc.la                   \
-                   $(FSAL_LIB)                                       \
-                   ../SemN/libSemN.la                                \
-                   ../RW_Lock/librwlock.la                           \
-                   ../Log/liblog.la                                  \
-                   ../ConfigParsing/libConfigParsing.la              \
-                   ../XDR/libnfs_mnt_xdr.la                          \
-		   ../Common/libcommon_utils.la
+                  ../FSAL/libfsalcommon.la                           \
+                  $(FSAL_LIB)                                        \
+                  ../SemN/libSemN.la                                 \
+                  ../RW_Lock/librwlock.la                            \
+                  ../Log/liblog.la                                   \
+                  ../ConfigParsing/libConfigParsing.la               \
+                  ../XDR/libnfs_mnt_xdr.la                           \
+		  ../Common/libcommon_utils.la
 
 __FS_NAME__ganeshell_LDADD = $(shell_libs)                           \
                     $(FSAL_LDFLAGS) $(NFSIDMAP_LIB_FLAGS)            \

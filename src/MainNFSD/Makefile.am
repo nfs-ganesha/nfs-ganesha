@@ -113,7 +113,8 @@ libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la           
                                       ../HashTable/libhashtable.la                      \
                                       ../LRU/liblru.la                                  \
                                       ../BuddyMalloc/libBuddyMalloc.la                  \
-                                      $(MFSL_LIB)                                      \
+                                      ../FSAL/libfsalcommon.la                          \
+                                      $(MFSL_LIB)                                       \
                                       $(FSAL_LIB)                                       \
                                       ../Log/liblog.la                                  \
                                       ../ConfigParsing/libConfigParsing.la              \

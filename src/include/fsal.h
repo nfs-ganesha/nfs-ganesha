@@ -160,6 +160,43 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
 fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     );
 
+
+/******************************************************
+ *              FSAL Returns macros
+ ******************************************************/
+
+/**
+ * Return :
+ * Macro for returning from functions
+ * with trace and function call increment.
+ */
+
+#define Return( _code_, _minor_ , _f_ ) do {                          \
+               char _str_[256];                                       \
+               fsal_status_t _struct_status_ = FSAL_STATUS_NO_ERROR ; \
+               (_struct_status_).major = (_code_) ;                   \
+               (_struct_status_).minor = (_minor_) ;                  \
+               fsal_increment_nbcall( _f_,_struct_status_ );          \
+               log_snprintf( _str_, 256, "%J%r",ERR_FSAL, _code_ );   \
+               DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG,           \
+                  "%s returns ( %s, %d )",fsal_function_names[_f_],   \
+                  _str_, _minor_);                                    \
+               return (_struct_status_);                              \
+              } while(0)
+
+#define ReturnStatus( _st_, _f_ )	Return( (_st_).major, (_st_).minor, _f_ )
+
+/**
+ *  ReturnCode :
+ *  Macro for returning a fsal_status_t without trace nor stats increment.
+ */
+#define ReturnCode( _code_, _minor_ ) do {                               \
+               fsal_status_t _struct_status_ = FSAL_STATUS_NO_ERROR ;\
+               (_struct_status_).major = (_code_) ;          \
+               (_struct_status_).minor = (_minor_) ;         \
+               return (_struct_status_);                     \
+              } while(0)
+
 /******************************************************
  *              FSAL Errors handling.
  ******************************************************/
@@ -820,6 +857,167 @@ fsal_status_t FSAL_create_access(fsal_op_context_t * pcontext,  /* IN */
 
 fsal_status_t FSAL_link_access(fsal_op_context_t * pcontext,    /* IN */
                                fsal_attrib_list_t * pattr);     /* IN */
+
+/******************************************************
+ *                Structure used to define a fsal
+ ******************************************************/
+
+typedef struct fsal_functions__
+{
+  /* FSAL_access */
+  fsal_status_t (*fsal_access)( fsal_handle_t * p_object_handle,     
+                              fsal_op_context_t * p_context,       
+                              fsal_accessflags_t access_type,     
+                              fsal_attrib_list_t * p_object_attribute ) ;
+
+  /* FSAL_getattrs */
+  fsal_status_t (*fsal_getattrs)(fsal_handle_t * p_filehandle,       /* IN */
+                                 fsal_op_context_t * p_context,      /* IN */
+                                 fsal_attrib_list_t * p_object_attributes    /* IN/OUT */) ;
+
+  /* FSAL_setattrs */
+  fsal_status_t (*fsal_setattrs)(fsal_handle_t * p_filehandle,       /* IN */
+                                 fsal_op_context_t * p_context,      /* IN */
+                                 fsal_attrib_list_t * p_attrib_set,  /* IN */
+                                 fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */ ) ;
+
+  /* FSAL__BuildExportContext */
+  fsal_status_t (*fsal_buildexportcontext)(fsal_export_context_t * p_export_context, /* OUT */
+                                           fsal_path_t * p_export_path,      /* IN */
+                                           char *fs_specific_options /* IN */ ) ;
+
+  /* FSAL_InitClientContext */
+  fsal_status_t (*fsal_initclientcontext)(fsal_op_context_t * p_thr_context);
+
+  /* FSAL_GetClientContext */
+  fsal_status_t (*fsal_getclientcontext)(fsal_op_context_t * p_thr_context,  /* IN/OUT  */
+                                         fsal_export_context_t * p_export_context,   /* IN */
+                                         fsal_uid_t uid,     /* IN */
+                                         fsal_gid_t gid,     /* IN */
+                                         fsal_gid_t * alt_groups,    /* IN */
+                                         fsal_count_t nb_alt_groups  /* IN */ ) ;
+
+  /* FSAL_create */
+  fsal_status_t (*fsal_create)(fsal_handle_t * p_parent_directory_handle,    /* IN */
+                               fsal_name_t * p_filename,     /* IN */
+                               fsal_op_context_t * p_context,        /* IN */
+                               fsal_accessmode_t accessmode, /* IN */
+                               fsal_handle_t * p_object_handle,      /* OUT */
+                               fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */ ) ;
+
+
+  /* FSAL_mkdir */
+  fsal_status_t (*fsal_mkdir)(fsal_handle_t * p_parent_directory_handle,     /* IN */
+                              fsal_name_t * p_dirname,       /* IN */
+                              fsal_op_context_t * p_context, /* IN */
+                              fsal_accessmode_t accessmode,  /* IN */
+                              fsal_handle_t * p_object_handle,       /* OUT */
+                              fsal_attrib_list_t * p_object_attributes       /* [ IN/OUT ] */ ) ;
+
+  /* FSAL_link */
+  fsal_status_t (*fsal_link)(fsal_handle_t * p_target_handle,        /* IN */
+                             fsal_handle_t * p_dir_handle,   /* IN */
+                             fsal_name_t * p_link_name,      /* IN */
+                             fsal_op_context_t * p_context,  /* IN */
+                             fsal_attrib_list_t * p_attributes       /* [ IN/OUT ] */) ;
+
+  /* FSAL_mknode */
+  fsal_status_t (*fsal_mknode)(fsal_handle_t * parentdir_handle,     /* IN */
+                               fsal_name_t * p_node_name,    /* IN */
+                               fsal_op_context_t * p_context,        /* IN */
+                               fsal_accessmode_t accessmode, /* IN */
+                               fsal_nodetype_t nodetype,     /* IN */
+                               fsal_dev_t * dev,     /* IN */
+                               fsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
+                               fsal_attrib_list_t * node_attributes  /* [ IN/OUT ] */ ) ;
+
+  /* FSAL_opendir */
+  fsal_status_t (*fsal_opendir)(fsal_handle_t * p_dir_handle,        /* IN */
+                                fsal_op_context_t * p_context,       /* IN */
+                                fsal_dir_t * p_dir_descriptor,       /* OUT */
+                                fsal_attrib_list_t * p_dir_attributes        /* [ IN/OUT ] */) ;
+
+  /* FSAL_readdir */
+  fsal_status_t (*fsal_readdir)(fsal_dir_t * p_dir_descriptor,       /* IN */
+                                fsal_cookie_t start_position,        /* IN */
+                                fsal_attrib_mask_t get_attr_mask,    /* IN */
+                                fsal_mdsize_t buffersize,    /* IN */
+                                fsal_dirent_t * p_pdirent,   /* OUT */
+                                fsal_cookie_t * p_end_position,      /* OUT */
+                                fsal_count_t * p_nb_entries, /* OUT */
+                                fsal_boolean_t * p_end_of_dir        /* OUT */ ) ;
+
+  /* FSAL_closedir */
+  fsal_status_t (*fsal_closedir)(fsal_dir_t * p_dir_descriptor       /* IN */ );
+
+  /* FSAL_open_by_name */
+  fsal_status_t (*fsal_open_by_name)(fsal_handle_t * dirhandle,      /* IN */
+                                     fsal_name_t * filename, /* IN */
+                                     fsal_op_context_t * p_context,  /* IN */
+                                     fsal_openflags_t openflags,     /* IN */
+                                     fsal_file_t * file_descriptor,  /* OUT */
+                                     fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ ) ;
+
+  /* FSAL_open */
+  fsal_status_t (*fsal_open)(fsal_handle_t * p_filehandle,   /* IN */
+                             fsal_op_context_t * p_context,  /* IN */
+                             fsal_openflags_t openflags,     /* IN */
+                             fsal_file_t * p_file_descriptor,        /* OUT */
+                             fsal_attrib_list_t * p_file_attributes  /* [ IN/OUT ] */ ) ;
+
+  /* FSAL_read */
+  fsal_status_t (*fsal_read)(fsal_file_t * p_file_descriptor,        /* IN */
+                             fsal_seek_t * p_seek_descriptor,        /* [IN] */
+                             fsal_size_t buffer_size,        /* IN */
+                             caddr_t buffer, /* OUT */
+                             fsal_size_t * p_read_amount,    /* OUT */
+                             fsal_boolean_t * p_end_of_file  /* OUT */) ;
+
+  /* FSAL_write */
+  fsal_status_t (*fsal_write)(fsal_file_t * p_file_descriptor,       /* IN */
+                              fsal_seek_t * p_seek_descriptor,       /* IN */
+                              fsal_size_t buffer_size,       /* IN */
+                              caddr_t buffer,        /* IN */
+                              fsal_size_t * p_write_amount   /* OUT */ ) ;
+
+  /* FSAL_close */
+  fsal_status_t (*fsal_close)(fsal_file_t * p_file_descriptor        /* IN */ ) ;
+
+  /* FSAL_open_by_fileid */
+  fsal_status_t (*fsal_open_by_fileid)(fsal_handle_t * filehandle,   /* IN */
+                                       fsal_u64_t fileid,    /* IN */
+                                       fsal_op_context_t * p_context,        /* IN */
+                                       fsal_openflags_t openflags,   /* IN */
+                                       fsal_file_t * file_descriptor,        /* OUT */
+                                       fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ ) ;
+
+  /* FSAL_close_by_fileid */
+  fsal_status_t (*fsal_close_by_fileid)(fsal_file_t * file_descriptor /* IN */ ,
+                                        fsal_u64_t fileid) ;
+
+  /* FSAL_static_fsinfo */
+  fsal_status_t (*fsal_static_fsinfo)(fsal_handle_t * p_filehandle,  /* IN */
+                                      fsal_op_context_t * p_context, /* IN */
+                                      fsal_staticfsinfo_t * p_staticinfo     /* OUT */) ;
+  /* FSAL_dynamic_fsinfo */
+  fsal_status_t (*fsal_dynamic_fsinfo)(fsal_handle_t * p_filehandle, /* IN */
+                                       fsal_op_context_t * p_context,        /* IN */
+                                       fsal_dynamicfsinfo_t * p_dynamicinfo  /* OUT */ ) ;
+
+
+  /* FSAL_Init */
+  fsal_status_t (*fsal_init)(fsal_parameter_t * init_info    /* IN */) ;
+
+  /* FSAL_terminate */
+  fsal_status_t (*fsal_terminate)() ;
+
+
+} fsal_functions_t ;
+
+typedef struct fsal_const__
+{
+} fsal_const_t ;
+
 
 #endif                          /* ! _USE_SWIG */
 

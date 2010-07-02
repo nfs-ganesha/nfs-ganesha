@@ -15,7 +15,6 @@
 #endif
 
 #include "fsal.h"
-#include "fsal_internal.h"
 #include <string.h>
 
 /**
