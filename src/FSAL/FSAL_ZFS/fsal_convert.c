@@ -18,6 +18,7 @@
 #include "fsal_internal.h"
 #include <sys/types.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #define MAX_2( x, y )    ( (x) > (y) ? (x) : (y) )
 
@@ -55,6 +56,24 @@ fsal_time_t fs2fsal_time( <your fs time structure> );
 */
 
 /* THOSE FUNCTIONS CAN BE USED FROM OUTSIDE THE MODULE : */
+
+int fsal2posix_testperm(fsal_accessflags_t testperm)
+{
+
+  int posix_testperm = 0;
+
+  if(testperm & FSAL_R_OK)
+    posix_testperm |= R_OK;
+  if(testperm & FSAL_W_OK)
+    posix_testperm |= W_OK;
+  if(testperm & FSAL_X_OK)
+    posix_testperm |= X_OK;
+  if(testperm & FSAL_F_OK)
+    posix_testperm |= F_OK;
+
+  return posix_testperm;
+
+}
 
 int posix2fsal_error(int posix_errorcode)
 {
