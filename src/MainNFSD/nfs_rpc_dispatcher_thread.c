@@ -109,7 +109,7 @@ void socket_setoptions(int socketFd);
 extern fd_set Svc_fdset;
 extern nfs_worker_data_t *workers_data;
 extern nfs_parameter_t nfs_param;
-extern SVCXPRT **Xports;        /* The one from RPCSEC_GSS library */
+extern SVCXPRT *Xports[FD_SETSIZE];        /* The one from RPCSEC_GSS library */
 #ifdef _RPCSEC_GS_64_INSTALLED
 struct svc_rpc_gss_data **TabGssData;
 #endif
@@ -1863,6 +1863,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
               stat = SVC_STAT(pnfsreq->xprt);
               if(stat == XPRT_DIED)
                 {
+#ifndef _USE_TIRPC
                    if( (pdead_caller = svc_getcaller( pnfsreq->xprt ) ) != NULL )
                      {
 			snprintf( dead_caller, MAXNAMLEN, "0x%x=%d.%d.%d.%d",
@@ -1873,6 +1874,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
 				 (ntohl( pdead_caller->sin_addr.s_addr )  & 0x000000FF) ) ;
                      }
                    else
+#endif /* _USE_TIRPC */
                      strncpy( dead_caller, "unresolved", MAXNAMLEN ) ;
 
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )

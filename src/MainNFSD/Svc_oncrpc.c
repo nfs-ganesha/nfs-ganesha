@@ -24,7 +24,7 @@ typedef unsigned long u_long;
 #define __FDS_BITS(set) ((set)->fds_bits)
 #endif
 
-SVCXPRT **Xports;
+SVCXPRT *Xports[FD_SETSIZE];
 
 #define NULL_SVC ((struct svc_callout *)0)
 #define	RQCRED_SIZE	400     /* this size is excessive */
@@ -72,13 +72,6 @@ void Xprt_register(SVCXPRT * xprt)
 #else
   register int sock = xprt->xp_sock;
 #endif
-
-  if(Xports == NULL)
-    {
-      Xports = (SVCXPRT **) Mem_Alloc(FD_SETSIZE * sizeof(SVCXPRT *));
-      memset(Xports, '\0', FD_SETSIZE * sizeof(SVCXPRT *));
-
-    }
 
   if(sock < FD_SETSIZE)
     {
