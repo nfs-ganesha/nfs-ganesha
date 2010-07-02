@@ -70,15 +70,15 @@ printf("FSAL_access\n");
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_access);
 
   /* >> convert your fsal access type to your FS access type << */
+  int mask = fsal2posix_testperm(access_type);
 
   TakeTokenFSCall();
-
-  /* >> call to your FS access call << */
-  /**@TODO */
-
+  int rc = libzfswrap_access(p_context->export_context->p_vfs, object_handle->inode, mask);
   ReleaseTokenFSCall();
 
   /* >> convert the returned code, an return it on error << */
+  if(rc)
+    Return(posix2fsal_error(rc),0, INDEX_FSAL_access);
 
   /* get attributes if object_attributes is not null.
    * If an error occures during getattr operation,
