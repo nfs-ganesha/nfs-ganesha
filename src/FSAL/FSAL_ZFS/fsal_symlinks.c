@@ -164,7 +164,7 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
 
   TakeTokenFSCall();
 
-  int inode;
+  uint64_t inode;
   rc = libzfswrap_symlink(p_context->export_context->p_vfs, parent_directory_handle->inode, p_linkname->name, p_linkcontent->path, &inode);
 
   ReleaseTokenFSCall();
