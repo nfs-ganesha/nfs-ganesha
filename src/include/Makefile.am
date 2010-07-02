@@ -14,6 +14,7 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  SemN.h                          \
                  nodelist.h                      \
                  fsal_types.h                    \
+                 fsal_glue.h                     \
                  mfsl_types.h                    \
                  cache_content.h                 \
                  cache_content_policy.h          \

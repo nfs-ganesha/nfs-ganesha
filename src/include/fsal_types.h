@@ -187,6 +187,36 @@ typedef enum fsal_nodetype__
  *  FS dependant :
  * --------------*/
 
+/* prefered readdir size */
+#define FSAL_READDIR_SIZE 2048
+
+#define FSAL_MAX_NAME_LEN   NAME_MAX
+#define FSAL_MAX_PATH_LEN   PATH_MAX
+
+#define FSAL_NGROUPS_MAX  32
+
+/** object name.  */
+
+typedef struct fsal_name__
+{
+  char name[FSAL_MAX_NAME_LEN];
+  unsigned int len;
+} fsal_name_t;
+
+/** object path.  */
+
+typedef struct fsal_path__
+{
+  char path[FSAL_MAX_PATH_LEN];
+  unsigned int len;
+} fsal_path_t;
+
+static const fsal_name_t FSAL_DOT = { ".", 1 };
+static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
+
+#define FSAL_NAME_INITIALIZER {"",0}
+#define FSAL_PATH_INITIALIZER {"",0}
+
 #ifdef _USE_GHOSTFS
 
 #include "FSAL/FSAL_GHOST_FS/fsal_types.h"
@@ -233,6 +263,8 @@ typedef enum fsal_nodetype__
 #error "No filesystem compilation flag set for the FSAL."
 
 #endif
+
+#include "fsal_glue.h" 
 
 /*---------  end of FS dependant definitions ---------*/
 
