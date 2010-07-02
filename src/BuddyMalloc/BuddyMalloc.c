@@ -63,14 +63,14 @@
 /** Default configuration for Buddy. */
 
 buddy_parameter_t default_buddy_parameter = {
-  1048576LL,                    /* Standard pages size: 1MB = 2^20 */
-  TRUE,                         /* On demand allocation */
-  TRUE,                         /* Extra allocation */
-  TRUE,                         /* Free unused areas */
-  3,                            /* keep at least 3x the number of used pages */
-  5,                            /* Never decrease under 5 allocated pages
-                                 * if this value is overcome. */
-  "/tmp/ganesha.buddy_malloc.log"
+  .memory_area_size = 1048576LL, /* Standard pages size: 1MB = 2^20 */
+  .on_demand_alloc  = TRUE,      /* On demand allocation */
+  .extra_alloc      = TRUE,      /* Extra allocation */
+  .free_areas       = TRUE,      /* Free unused areas */
+  .keep_factor      = 3,         /* keep at least 3x the number of used pages */
+  .keep_minimum     = 5,         /* Never decrease under 5 allocated pages
+                                  * if this value is overcome. */
+  .buddy_error_file = "/tmp/ganesha.buddy_malloc.log"
 };
 
 /* ------------------------------------------*
@@ -209,6 +209,7 @@ typedef struct BuddyThreadContext_t
 #ifndef _MONOTHREAD_MEMALLOC
   pthread_mutex_t ToBeFreed_mutex;
   BuddyBlock_t *ToBeFreed_list;
+  int destroy_pending; /* protected by the same mutex */
 #endif
 
 #ifdef _DEBUG_MEMLEAKS
@@ -996,7 +997,8 @@ void FreeLargeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_block)
 
 static void __BuddyFree(BuddyThreadContext_t * context, BuddyBlock_t * p_block);
 
-static void CheckBlocksToBeFreed(BuddyThreadContext_t * context)
+/** Free owned blocks that have been freed by another thread */
+static void CheckBlocksToBeFreed(BuddyThreadContext_t * context, int do_lock)
 {
   BuddyBlock_t *p_block_to_free;
 
@@ -1005,30 +1007,119 @@ static void CheckBlocksToBeFreed(BuddyThreadContext_t * context)
   do
     {
 
-      P(context->ToBeFreed_mutex);
+      if (do_lock)
+        P(context->ToBeFreed_mutex);
 
       p_block_to_free = context->ToBeFreed_list;
       if(p_block_to_free)
         context->ToBeFreed_list = p_block_to_free->Content.NextToBeFreed;
 
-      V(context->ToBeFreed_mutex);
+      if (do_lock)
+          V(context->ToBeFreed_mutex);
 
       if(p_block_to_free == NULL)
         break;
 
 #ifdef _DEBUG_MEMALLOC
-      printf("One of my blocks (%p) has been released by another thread\n",
+      printf("blocks %p has been released by foreign thread\n",
              p_block_to_free);
 #endif
 
       __BuddyFree(context, p_block_to_free);
-
     }
   while(1);
 
 }
 
 #endif
+
+/** Try to cleanup a context in 'destroy_pending' state.
+ * /!\ must be called under the protection of ToBeFreed_mutex
+ * in the case of multithread alloc.
+ */
+static int TryContextCleanup(BuddyThreadContext_t * context)
+{
+        BuddyBlock_t *p_block;
+        unsigned int i;
+
+#ifndef _MONOTHREAD_MEMALLOC
+        /* check if there are some blocks to be freed from other threads */
+        CheckBlocksToBeFreed(context, FALSE);
+#endif
+
+        /* free pages that has the size of a memory page */
+        while ( (p_block = context->MemDesc[context->k_size]) != NULL )
+        {
+                /* sanity check on block */
+                if ( (p_block->Header.Base_ptr != (BUDDY_ADDR_T) p_block)
+                   || (p_block->Header.StdInfo.Base_kSize
+                       != p_block->Header.StdInfo.k_size) )
+                {
+                       BuddyPrintLog(context->Config.buddy_error_file,
+                               "ERROR: largest free page is not a root page?!\n" );
+                       BuddyPrintLog(context->Config.buddy_error_file,
+                               "thread page size=2^%u, block size=2^%u, "
+                               "block base area=%p (size=2^%u), block addr=%p\n",
+                               context->k_size, p_block->Header.StdInfo.k_size,
+                               p_block->Header.Base_ptr,
+                               p_block->Header.StdInfo.Base_kSize,
+                               (BUDDY_ADDR_T) p_block);
+                       return BUDDY_ERR_EFAULT;
+                }
+
+                /* We can free this page */
+#ifdef _DEBUG_MEMALLOC
+                printf("Releasing memory page at address %p, size=2^%u\n",
+                       p_block, p_block->Header.StdInfo.k_size );
+#endif
+                Remove_FreeBlock(context, p_block);
+                free(p_block);
+                UpdateStats_RemoveStdPage(context);
+        }
+
+        /* if there are smaller blocks, it means there are still allocated
+         * blocks that cannot be merged with them.
+         * We can't free those pages...
+         */
+        for(i = 0; i < BUDDY_MAX_LOG2_SIZE; i++)
+        {
+                if ( context->MemDesc[i] )
+                {
+#ifdef _MONOTHREAD_MEMALLOC
+                       BuddyPrintLog(context->Config.buddy_error_file,
+                                     "ERROR: Can't release thread resources: memory still in use\n");
+                       /* The thread itself did not free something */
+                       return BUDDY_ERR_INUSE;
+#else
+                        /* another thread holds a block:
+                         * we must atomically recheck if blocks have been freed
+                         * by another thread in the meantime,
+                         * if not, mark the context as 'destroy_pending'.
+                         * The last free() from another thread will do the cleaning.
+                         */
+#       ifdef _DEBUG_MEMALLOC
+                        BuddyPrintLog(context->Config.buddy_error_file,
+                               "Another thread still holds a block: "
+                               "deferred cleanup for context=%p\n",
+                               context);
+#       endif
+                        /* set the context in "destroy_pending" state,
+                         * if it was not already */
+                        context->destroy_pending = TRUE;
+                        return BUDDY_ERR_INUSE;
+#endif
+                }
+        }
+
+#ifndef _MONOTHREAD_MEMALLOC
+        V(context->ToBeFreed_mutex);
+        pthread_mutex_destroy(&context->ToBeFreed_mutex);
+#endif
+        /* destroy thread context */
+        free( context );
+        return BUDDY_SUCCESS;
+}
+
 
 /* ------------------------------------------*
  *           BuddyMalloc API Routines.
@@ -1123,6 +1214,7 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
   if(pthread_mutex_init(&context->ToBeFreed_mutex, NULL) != 0)
     return BUDDY_ERR_EINVAL;
   context->ToBeFreed_list = NULL;
+  context->destroy_pending = FALSE;
 #endif
 
   /* structure is initialized */
@@ -1210,9 +1302,10 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
       context->Errno = BUDDY_ERR_NOTINIT;
       return NULL;
     }
+
 #ifndef _MONOTHREAD_MEMALLOC
   /* check if there are some blocks to be freed */
-  CheckBlocksToBeFreed(context);
+  CheckBlocksToBeFreed(context, TRUE);
 #endif
 
   /* No need to alloc something if asked size is 0 !!! */
@@ -1641,6 +1734,9 @@ void BuddyFree(BUDDY_ADDR_T ptr)
 
   if(p_block->Header.OwnerThread != pthread_self())
     {
+#ifdef _DEBUG_MEMALLOC
+        pthread_t owner_id = p_block->Header.OwnerThread;
+#endif
 #ifndef _MONOTHREAD_MEMALLOC
 
       /* alias */
@@ -1656,7 +1752,23 @@ void BuddyFree(BUDDY_ADDR_T ptr)
       P(owner_context->ToBeFreed_mutex);
       p_block->Content.NextToBeFreed = owner_context->ToBeFreed_list;
       owner_context->ToBeFreed_list = p_block;
-      V(owner_context->ToBeFreed_mutex);
+
+      /* if the context state is 'destroy_pending', check if
+       * all blocks have been released (/!\ under the protection of
+       * 'ToBeFreed_mutex'). If so, complete the cleanup.
+       */
+      if (owner_context->destroy_pending &&
+          (TryContextCleanup(owner_context) == BUDDY_SUCCESS ))
+        {
+                /* don't release the mutex if it has been destroyed */
+#   ifdef _DEBUG_MEMALLOC
+                BuddyPrintLog(context->Config.buddy_error_file,
+                        "thread %#lx successfully released resources of "
+                        "thread %#lx\n", pthread_self(), owner_id );
+#   endif
+        }
+      else
+           V(owner_context->ToBeFreed_mutex);
 
 #else
       /* Dangerous situation ! */
@@ -1822,6 +1934,7 @@ int BuddyDestroy()
         BuddyThreadContext_t *context;
         BuddyBlock_t *p_block;
         unsigned int i;
+        int rc;
 
         /* Ensure thread safety. */
         context = GetThreadContext();
@@ -1835,58 +1948,27 @@ int BuddyDestroy()
                 return BUDDY_ERR_NOTINIT;
 
 #ifndef _MONOTHREAD_MEMALLOC
-        /* check if there are some blocks to be freed from other threads */
-        CheckBlocksToBeFreed(context);
+        /* Destroying thread resources must be done
+         * under the protection of a mutex,
+         * to prevent from concurrent thread that would
+         * release a block that it owns.
+         */
+        P( context->ToBeFreed_mutex );
 #endif
 
-        /* free largest pages */
-        while ( (p_block = context->MemDesc[context->k_size]) != NULL )
+        rc = TryContextCleanup(context);
+
+        if ( rc != BUDDY_SUCCESS )
         {
-                /* sanity check on block */
-                if ( (p_block->Header.Base_ptr != (BUDDY_ADDR_T) p_block)
-                   || (p_block->Header.StdInfo.Base_kSize
-                       != p_block->Header.StdInfo.k_size) )
-                {
-                       BuddyPrintLog(context->Config.buddy_error_file,
-                               "ERROR: largest free page is not a root page?!\n" );
-                       BuddyPrintLog(context->Config.buddy_error_file,
-                               "thread page size=2^%u, block size=2^%u, "
-                               "block base area=%p (size=2^%u), block addr=%p\n",
-                               context->k_size, p_block->Header.StdInfo.k_size,
-                               p_block->Header.Base_ptr,
-                               p_block->Header.StdInfo.Base_kSize,
-                               (BUDDY_ADDR_T) p_block);
-                       return BUDDY_ERR_EFAULT;
-                }
-
-                /* We can free this page */
-#ifdef _DEBUG_MEMALLOC
-                printf("Releasing memory page at address %p, size=2^%u\n",
-                       p_block, p_block->Header.StdInfo.k_size );
+#ifndef _MONOTHREAD_MEMALLOC
+                V( context->ToBeFreed_mutex );
 #endif
-                Remove_FreeBlock(context, p_block);
-                free(p_block);
-                UpdateStats_RemoveStdPage(context);
+                return rc;
         }
 
-        /* if there are smaller blocks, it means there are still allocated
-         * blocks that cannot be merged with them.
-         * We can't free those pages...
-         */
-        for(i = 0; i < BUDDY_MAX_LOG2_SIZE; i++)
-                if ( context->MemDesc[i] )
-                {
-                       BuddyPrintLog(context->Config.buddy_error_file,
-                                     "ERROR: Can't release thread resources: memory still in use\n");
-                       return BUDDY_ERR_INUSE;
-                }
-
-        /* destroy thread context */
-        free( context );
+        /* mutex is destroyed, ne need to release it */
         return BUDDY_SUCCESS;
 }
-
-
 
 
 
