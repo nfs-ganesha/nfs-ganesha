@@ -97,6 +97,7 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
   file_descriptor->flags = openflags;
   file_descriptor->current_offset = 0;
   file_descriptor->p_vnode = p_vnode;
+  file_descriptor->inode = filehandle->inode;
 
   if(file_attributes)
   {
