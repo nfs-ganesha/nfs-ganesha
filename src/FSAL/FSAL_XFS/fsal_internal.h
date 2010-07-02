@@ -250,3 +250,59 @@ fsal_status_t XFSFSAL_Init(fsal_parameter_t * init_info    /* IN */) ;
 
 fsal_status_t XFSFSAL_terminate() ;
 
+fsal_status_t XFSFSAL_test_access(fsal_op_context_t * p_context,   /* IN */
+                                  fsal_accessflags_t access_type,  /* IN */
+                                  fsal_attrib_list_t * p_object_attributes /* IN */ ) ;
+
+fsal_status_t XFSFSAL_setattr_access(fsal_op_context_t * p_context,        /* IN */
+                                     fsal_attrib_list_t * candidate_attributes,    /* IN */
+                                     fsal_attrib_list_t * object_attributes        /* IN */ ) ;
+
+fsal_status_t XFSFSAL_rename_access(fsal_op_context_t * pcontext,  /* IN */
+                                    fsal_attrib_list_t * pattrsrc, /* IN */
+                                    fsal_attrib_list_t * pattrdest)        /* IN */;
+
+fsal_status_t XFSFSAL_create_access(fsal_op_context_t * pcontext,  /* IN */
+                                    fsal_attrib_list_t * pattr)    /* IN */;
+
+fsal_status_t XFSFSAL_unlink_access(fsal_op_context_t * pcontext,  /* IN */
+                                    fsal_attrib_list_t * pattr)    /* IN */;
+
+
+fsal_status_t XFSFSAL_link_access(fsal_op_context_t * pcontext,    /* IN */
+                                  fsal_attrib_list_t * pattr)      /* IN */;
+
+fsal_status_t XFSFSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
+                                  fsal_attrib_list_t * pnew_attr,
+                                  fsal_attrib_list_t * presult_attr);
+
+fsal_status_t XFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
+                             fsal_name_t * p_filename,     /* IN */
+                             fsal_op_context_t * p_context,        /* IN */
+                             fsal_handle_t * p_object_handle,      /* OUT */
+                             fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */) ;
+
+fsal_status_t XFSFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
+                                 fsal_op_context_t * p_context,    /* IN */
+                                 fsal_handle_t * object_handle,    /* OUT */
+                                 fsal_attrib_list_t * p_object_attributes  /* [ IN/OUT ] */);
+
+fsal_status_t XFSFSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
+                                     fsal_op_context_t * p_context,        /* IN */
+                                     fsal_handle_t * p_fsoot_handle,       /* OUT */
+                                     fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */) ;
+
+fsal_status_t XFSFSAL_lock(fsal_file_t * obj_handle,
+                           fsal_lockdesc_t * ldesc, fsal_boolean_t blocking);
+
+fsal_status_t XFSFSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
+                              fsal_lockparam_t * lock_info      /* IN */);
+
+fsal_status_t XFSFSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc) ;
+
+fsal_status_t XFSFSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc) ;
+
+fsal_status_t XFSFSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle) ;
+
+
+
