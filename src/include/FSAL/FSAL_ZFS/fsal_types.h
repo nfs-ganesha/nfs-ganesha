@@ -84,7 +84,8 @@ static fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
 typedef struct fsal_handle__
 {
-  int inode;
+  uint64_t inode;
+  uint64_t generation;
   fsal_nodetype_t type;
 
 } fsal_handle_t;
@@ -121,7 +122,7 @@ typedef struct fsal_op_context__
 typedef struct fsal_dir__
 {
   vfs_t* p_vfs;
-  int inode;
+  uint64_t inode;
   vnode_t *p_vnode;
 
 } fsal_dir_t;
@@ -129,7 +130,7 @@ typedef struct fsal_dir__
 typedef struct fsal_file__
 {
   vfs_t *p_vfs;
-  int inode;
+  uint64_t inode;
   off_t current_offset;
   int flags;
   vnode_t *p_vnode;
