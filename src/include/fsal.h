@@ -1011,6 +1011,74 @@ typedef struct fsal_functions__
   /* FSAL_terminate */
   fsal_status_t (*fsal_terminate)() ;
 
+  /* FSAL_test_access */
+  fsal_status_t (*fsal_test_access)(fsal_op_context_t * p_context,   /* IN */
+                                    fsal_accessflags_t access_type,  /* IN */
+                                    fsal_attrib_list_t * p_object_attributes /* IN */ ) ;
+
+  /* FSAL_setattr_access */
+  fsal_status_t (*fsal_setattr_access)(fsal_op_context_t * p_context,        /* IN */
+                                       fsal_attrib_list_t * candidate_attributes,    /* IN */
+                                       fsal_attrib_list_t * object_attributes        /* IN */ ) ;
+
+  /* FSAL_rename_access */
+  fsal_status_t (*fsal_rename_access)(fsal_op_context_t * pcontext,  /* IN */
+                                      fsal_attrib_list_t * pattrsrc, /* IN */
+                                      fsal_attrib_list_t * pattrdest)        /* IN */;
+
+  /* FSAL_create_access */
+  fsal_status_t (*fsal_create_access)(fsal_op_context_t * pcontext,  /* IN */
+                                      fsal_attrib_list_t * pattr)    /* IN */;
+
+  /* FSAL_unlink_access */
+  fsal_status_t (*fsal_unlink_access)(fsal_op_context_t * pcontext,  /* IN */
+                                      fsal_attrib_list_t * pattr)    /* IN */;
+
+
+  /* FSAL_link_access */
+  fsal_status_t (*fsal_link_access)(fsal_op_context_t * pcontext,    /* IN */
+                                    fsal_attrib_list_t * pattr)      /* IN */;
+
+  /* FSAL_merge_attrs */
+  fsal_status_t (*fsal_merge_attrs)(fsal_attrib_list_t * pinit_attr,
+                                    fsal_attrib_list_t * pnew_attr,
+                                    fsal_attrib_list_t * presult_attr);
+
+  /* FSAL_lookup */
+  fsal_status_t (*fsal_lookup)(fsal_handle_t * p_parent_directory_handle,    /* IN */
+                               fsal_name_t * p_filename,     /* IN */
+                               fsal_op_context_t * p_context,        /* IN */
+                               fsal_handle_t * p_object_handle,      /* OUT */
+                               fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */ ) ;
+
+  /* FSAL_lookupPath */
+  fsal_status_t (*fsal_lookuppath)(fsal_path_t * p_path,     /* IN */
+                                   fsal_op_context_t * p_context,    /* IN */
+                                   fsal_handle_t * object_handle,    /* OUT */
+                                   fsal_attrib_list_t * p_object_attributes  /* [ IN/OUT ] */) ;
+
+  /* FSAL_lookupJunction */
+  fsal_status_t (*fsal_lookupjunction)(fsal_handle_t * p_junction_handle,    /* IN */
+                                       fsal_op_context_t * p_context,        /* IN */
+                                       fsal_handle_t * p_fsoot_handle,       /* OUT */
+                                       fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */) ;
+  /* FSAL_lock */
+  fsal_status_t (*fsal_lock)(fsal_file_t * obj_handle,
+                             fsal_lockdesc_t * ldesc, fsal_boolean_t blocking) ;
+
+  /* FSAL_changelock */
+  fsal_status_t (*fsal_changelock)(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
+                                   fsal_lockparam_t * lock_info      /* IN */);
+
+  /* FSAL_unlock */
+  fsal_status_t (*fsal_unlock)(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc) ;
+
+  /* FSAL_getlock */
+  fsal_status_t (*fsal_getlock)(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc) ;
+
+  /* FSAL_CleanObjectResources */
+  fsal_status_t (*fsal_cleanobjectresources)(fsal_handle_t * in_fsal_handle) ;
+
 
 } fsal_functions_t ;
 

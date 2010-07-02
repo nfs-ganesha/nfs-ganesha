@@ -219,3 +219,107 @@ fsal_status_t FSAL_terminate()
   return fsal_xfs_functions.fsal_terminate() ;
 }
 
+fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
+                               fsal_accessflags_t access_type,  /* IN */
+                               fsal_attrib_list_t * p_object_attributes /* IN */ ) 
+{
+  return fsal_xfs_functions.fsal_test_access( p_context, access_type, p_object_attributes ) ;
+}
+
+fsal_status_t FSAL_setattr_access(fsal_op_context_t * p_context,        /* IN */
+                                  fsal_attrib_list_t * candidate_attributes,    /* IN */
+                                  fsal_attrib_list_t * object_attributes        /* IN */ )
+
+{
+  return fsal_xfs_functions.fsal_setattr_access( p_context, candidate_attributes, object_attributes ) ;
+}
+
+fsal_status_t FSAL_rename_access(fsal_op_context_t * pcontext,  /* IN */
+                                 fsal_attrib_list_t * pattrsrc, /* IN */
+                                 fsal_attrib_list_t * pattrdest)        /* IN */
+
+{
+  return fsal_xfs_functions.fsal_rename_access( pcontext, pattrsrc, pattrdest ) ;
+}
+
+fsal_status_t FSAL_create_access(fsal_op_context_t * pcontext,  /* IN */
+                                 fsal_attrib_list_t * pattr)    /* IN */
+
+{
+  return fsal_xfs_functions.fsal_create_access( pcontext, pattr ) ;
+}
+
+fsal_status_t FSAL_unlink_access(fsal_op_context_t * pcontext,  /* IN */
+                                 fsal_attrib_list_t * pattr)    /* IN */
+
+{
+  return fsal_xfs_functions.fsal_unlink_access( pcontext, pattr ) ;
+}
+
+fsal_status_t FSAL_link_access(fsal_op_context_t * pcontext,    /* IN */
+                               fsal_attrib_list_t * pattr)      /* IN */
+
+{
+  return fsal_xfs_functions.fsal_link_access( pcontext, pattr ) ;
+}
+
+fsal_status_t FSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
+                               fsal_attrib_list_t * pnew_attr,
+                               fsal_attrib_list_t * presult_attr)
+{
+  return fsal_xfs_functions.fsal_merge_attrs( pinit_attr, pnew_attr, presult_attr ) ;
+}
+
+fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
+                          fsal_name_t * p_filename,     /* IN */
+                          fsal_op_context_t * p_context,        /* IN */
+                          fsal_handle_t * p_object_handle,      /* OUT */
+                          fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */)
+{
+  return fsal_xfs_functions.fsal_lookup( p_parent_directory_handle, p_filename, p_context,
+					 p_object_handle, p_object_attributes ) ;
+}
+
+fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
+                              fsal_op_context_t * p_context,    /* IN */
+                              fsal_handle_t * object_handle,    /* OUT */
+                              fsal_attrib_list_t * p_object_attributes  /* [ IN/OUT ] */)
+{
+  return fsal_xfs_functions.fsal_lookuppath( p_path, p_context, object_handle, p_object_attributes ) ;
+}
+
+fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
+                                  fsal_op_context_t * p_context,        /* IN */
+                                  fsal_handle_t * p_fsoot_handle,       /* OUT */
+                                  fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */)
+{  
+  return fsal_xfs_functions.fsal_lookupjunction( p_junction_handle, p_context, p_fsoot_handle, p_fsroot_attributes ) ;
+}
+
+fsal_status_t FSAL_lock(fsal_file_t * obj_handle,
+                        fsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
+{
+  return fsal_xfs_functions.fsal_lock( obj_handle, ldesc, blocking ) ;
+}
+
+fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
+                              fsal_lockparam_t * lock_info      /* IN */)
+{
+  return fsal_xfs_functions.fsal_changelock( lock_descriptor, lock_info ) ;
+}
+
+fsal_status_t FSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
+{
+  return fsal_xfs_functions.fsal_unlock( obj_handle, ldesc ) ;
+}
+
+fsal_status_t FSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
+{
+  return fsal_xfs_functions.fsal_getlock( obj_handle, ldesc ) ;
+}
+
+fsal_status_t FSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle)
+{
+  return fsal_xfs_functions.fsal_cleanobjectresources( in_fsal_handle ) ;
+}
+
