@@ -56,7 +56,8 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
 {
 
   fsal_status_t st;
-  int rc, inode, type;
+  int rc, type;
+  uint64_t inode;
   fsal_handle_t obj_handle;
 
   /* sanity checks.

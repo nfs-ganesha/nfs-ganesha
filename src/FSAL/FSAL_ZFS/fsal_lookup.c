@@ -135,7 +135,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 
       /* >> Call your filesystem lookup function here << */
       /* >> Be carefull you don't traverse junction nor follow symlinks << */
-      int inode;
+      uint64_t inode;
       int type;
       rc = libzfswrap_lookup(p_context->export_context->p_vfs, parent_directory_handle->inode, p_filename->name, &inode, &type);
 

@@ -79,7 +79,7 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
 
   TakeTokenFSCall();
 
-  int inode;
+  uint64_t inode;
   rc = libzfswrap_create(p_context->export_context->p_vfs, parent_directory_handle->inode, p_filename->name, fsal2unix_mode(accessmode), &inode);
 
   ReleaseTokenFSCall();
@@ -174,7 +174,7 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
   TakeTokenFSCall();
 
   /* Create the directory */
-  int inode;
+  uint64_t inode;
   rc = libzfswrap_mkdir(p_context->export_context->p_vfs, parent_directory_handle->inode, p_dirname->name, unix_mode, &inode);
 
   ReleaseTokenFSCall();
