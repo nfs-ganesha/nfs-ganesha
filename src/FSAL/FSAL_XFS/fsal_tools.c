@@ -44,7 +44,7 @@
 /* case unsensitivity */
 #define STRCMP   strcasecmp
 
-char *FSAL_GetFSName()
+char *XFSFSAL_GetFSName()
 {
   return "XFS";
 }
@@ -65,8 +65,8 @@ char *FSAL_GetFSName()
  *         - Segfault if status is a NULL pointer.
  */
 
-int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
-                   fsal_status_t * status)
+int XFSFSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
+                      fsal_status_t * status)
 {
 
   *status = FSAL_STATUS_NO_ERROR;
@@ -96,9 +96,9 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
  *
  * \return The hash value
  */
-unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
-                                      unsigned int cookie,
-                                      unsigned int alphabet_len, unsigned int index_size)
+unsigned int XFSFSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
+                                         unsigned int cookie,
+                                         unsigned int alphabet_len, unsigned int index_size)
 {
   unsigned int cpt = 0;
   unsigned int sum = 0;
@@ -145,7 +145,7 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cookie)
+unsigned int XFSFSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cookie)
 {
   unsigned int h = 0;
   unsigned int cpt = 0;
@@ -197,10 +197,10 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t output_type,  /* IN */
-                                fsal_handle_t * p_in_fsal_handle,       /* IN */
-                                caddr_t out_buff        /* OUT */
+fsal_status_t XFSFSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
+                                   fsal_digesttype_t output_type,  /* IN */
+                                   fsal_handle_t * p_in_fsal_handle,       /* IN */
+                                   caddr_t out_buff        /* OUT */
     )
 {
   unsigned int ino32;
@@ -290,10 +290,10 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t in_type,      /* IN */
-                                caddr_t in_buff,        /* IN */
-                                fsal_handle_t * p_out_fsal_handle       /* OUT */
+fsal_status_t XFSFSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
+                                   fsal_digesttype_t in_type,      /* IN */
+                                   caddr_t in_buff,        /* IN */
+                                   fsal_handle_t * p_out_fsal_handle       /* OUT */
     )
 {
 
@@ -337,7 +337,7 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
  *         ERR_FSAL_FAULT (null pointer given as parameter),
  *         ERR_FSAL_SERVERFAULT (unexpected error)
  */
-fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t XFSFSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 {
 
   log_t no_logging = LOG_INITIALIZER;
@@ -356,7 +356,7 @@ fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 
 }
 
-fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t XFSFSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
 {
   /* defensive programming... */
   if(out_parameter == NULL)
@@ -393,7 +393,7 @@ fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_paramet
 
 }
 
-fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t XFSFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
 {
   /* defensive programming... */
   if(out_parameter == NULL)
@@ -447,8 +447,8 @@ fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_param
 
 /* load FSAL init info */
 
-fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
-                                                 fsal_parameter_t * out_parameter)
+fsal_status_t XFSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
+                                                    fsal_parameter_t * out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -564,8 +564,8 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
 /* load general filesystem configuration options */
 
-fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
-                                                      fsal_parameter_t * out_parameter)
+fsal_status_t XFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
+                                                         fsal_parameter_t * out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -772,8 +772,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
 /* load specific filesystem configuration options */
 
-fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
-                                                        fsal_parameter_t * out_parameter)
+fsal_status_t XFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
+                                                           fsal_parameter_t * out_parameter)
 {
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);

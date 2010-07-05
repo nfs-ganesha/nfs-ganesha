@@ -45,7 +45,7 @@ noinst_LTLIBRARIES          = libfsalcommon.la
 libfsalcommon_la_SOURCES = fsal_strings.c             \
                            fsal_errors.c              \
                            fsal_glue.c                \
-                           ../../include/fsal.h       \
-                           ../../include/fsal_types.h \
-                           ../../include/err_fsal.h   
+                           ../include/fsal.h       \
+                           ../include/fsal_types.h \
+                           ../include/err_fsal.h   
  
