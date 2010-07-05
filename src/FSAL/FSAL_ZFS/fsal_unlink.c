@@ -57,7 +57,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
 
   fsal_status_t st;
   int rc, type;
-  uint64_t inode;
+  inogen_t object;
   fsal_handle_t obj_handle;
 
   /* sanity checks.
@@ -70,14 +70,14 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
 
   TakeTokenFSCall();
 
-  if(!(rc = libzfswrap_lookup(p_context->export_context->p_vfs, parentdir_handle->inode,
-                              p_object_name->name, &inode, &type)))
+  if(!(rc = libzfswrap_lookup(p_context->export_context->p_vfs, parentdir_handle->zfs_handle,
+                              p_object_name->name, &object, &type)))
   {
     if(type == S_IFDIR)
-      rc = libzfswrap_rmdir(p_context->export_context->p_vfs, parentdir_handle->inode,
+      rc = libzfswrap_rmdir(p_context->export_context->p_vfs, parentdir_handle->zfs_handle,
                             p_object_name->name);
     else
-      rc = libzfswrap_unlink(p_context->export_context->p_vfs, parentdir_handle->inode,
+      rc = libzfswrap_unlink(p_context->export_context->p_vfs, parentdir_handle->zfs_handle,
                              p_object_name->name);
   }
 

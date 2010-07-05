@@ -75,7 +75,6 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 
   if(!parent_directory_handle)
     {
-
       /* check that p_filename is NULL,
        * else, parent_directory_handle should not
        * be NULL.
@@ -84,7 +83,9 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       /* >> retrieve root handle filehandle here << */
-      object_handle->inode = 3;
+      if((rc = libzfswrap_getroot(p_context->export_context->p_vfs, &(object_handle->zfs_handle))))
+        Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
+
       object_handle->type = FSAL_TYPE_DIR;
 
       /* >> retrieves root attributes, if asked << */
@@ -110,7 +111,6 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
       /* >> Be careful about junction crossing, symlinks, hardlinks,...
        * You may check the parent type if it's sored into the handle <<
        */
-
       switch (parent_directory_handle->type)
         {
         case FSAL_TYPE_DIR:
@@ -135,9 +135,9 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 
       /* >> Call your filesystem lookup function here << */
       /* >> Be carefull you don't traverse junction nor follow symlinks << */
-      uint64_t inode;
+      inogen_t object;
       int type;
-      rc = libzfswrap_lookup(p_context->export_context->p_vfs, parent_directory_handle->inode, p_filename->name, &inode, &type);
+      rc = libzfswrap_lookup(p_context->export_context->p_vfs, parent_directory_handle->zfs_handle, p_filename->name, &object, &type);
 
       ReleaseTokenFSCall();
 
@@ -146,7 +146,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
         Return(posix2fsal_error(rc), rc, INDEX_FSAL_lookup);
 
       /* >> set output handle << */
-      object_handle->inode = inode;
+      object_handle->zfs_handle = object;
       object_handle->type = posix2fsal_type(type);
       if(object_attributes)
         {

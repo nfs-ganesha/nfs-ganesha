@@ -83,7 +83,7 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
 {
 
   /* >> here must be your implementation of your fsal_handle_t hashing */
-  return (3 * (unsigned int)p_handle->inode + 1999 + cookie) % index_size;
+  return (3 * (unsigned int)(p_handle->zfs_handle.inode*p_handle->zfs_handle.generation) + 1999 + cookie) % index_size;
 
 }
 
@@ -102,7 +102,7 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
 unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cookie)
 {
   /* >> here must be your implementation of your fsal_handle_t hashing << */
-  return (unsigned int)(0xABCD1234 ^ p_handle->inode ^ cookie);
+  return (unsigned int)(0xABCD1234 ^ (p_handle->zfs_handle.inode*p_handle->zfs_handle.generation) ^ cookie);
 
 }
 
@@ -140,25 +140,31 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
       /* NFSV2 handle digest */
     case FSAL_DIGEST_NFSV2:
+      if(sizeof(fsal_handle_t) > FSAL_DIGEST_SIZE_HDLV2)
+        ReturnCode(ERR_FSAL_TOOSMALL, 0);
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV2);
-      memcpy(out_buff, in_fsal_handle, sizeof(in_fsal_handle));
+      memcpy(out_buff, in_fsal_handle, sizeof(fsal_handle_t));
       break;
 
       /* NFSV3 handle digest */
     case FSAL_DIGEST_NFSV3:
+      if(sizeof(fsal_handle_t) > FSAL_DIGEST_SIZE_HDLV3)
+        ReturnCode(ERR_FSAL_TOOSMALL, 0);
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV3);
-      memcpy(out_buff, in_fsal_handle, sizeof(in_fsal_handle));
+      memcpy(out_buff, in_fsal_handle, sizeof(fsal_handle_t));
       break;
 
       /* NFSV4 handle digest */
     case FSAL_DIGEST_NFSV4:
+      if(sizeof(fsal_handle_t) > FSAL_DIGEST_SIZE_HDLV4)
+        ReturnCode(ERR_FSAL_TOOSMALL, 0);
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
       memcpy(out_buff, in_fsal_handle, sizeof(in_fsal_handle));
       break;
 
       /* FileId digest for NFSv2 */
     case FSAL_DIGEST_FILEID2:
-      ino32 = (uint32_t)(in_fsal_handle->inode);
+      ino32 = (uint32_t)(in_fsal_handle->zfs_handle.inode);
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID2);
       memcpy(out_buff, &ino32, sizeof(uint32_t));
       break;
@@ -166,14 +172,14 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
       /* FileId digest for NFSv3 */
     case FSAL_DIGEST_FILEID3:
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID3);
-      memcpy(out_buff, &(in_fsal_handle->inode), sizeof(in_fsal_handle->inode));
+      memcpy(out_buff, &(in_fsal_handle->zfs_handle.inode), sizeof(fsal_u64_t));
       break;
 
       /* FileId digest for NFSv4 */
 
     case FSAL_DIGEST_FILEID4:
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID4);
-      memcpy(out_buff, &(in_fsal_handle->inode), sizeof(in_fsal_handle->inode));
+      memcpy(out_buff, &(in_fsal_handle->zfs_handle.inode), sizeof(fsal_u64_t));
       break;
 
     default:
@@ -215,17 +221,17 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
     case FSAL_DIGEST_NFSV2:
       memset(out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
+      memcpy(out_fsal_handle, in_buff, sizeof(fsal_handle_t));
       break;
 
     case FSAL_DIGEST_NFSV3:
       memset(out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
+      memcpy(out_fsal_handle, in_buff, sizeof(fsal_handle_t));
       break;
 
     case FSAL_DIGEST_NFSV4:
       memset(out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
+      memcpy(out_fsal_handle, in_buff, sizeof(fsal_handle_t));
       break;
 
     default:
