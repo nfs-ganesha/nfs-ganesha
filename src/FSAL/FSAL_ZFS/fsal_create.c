@@ -79,8 +79,8 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
 
   TakeTokenFSCall();
 
-  uint64_t inode;
-  rc = libzfswrap_create(p_context->export_context->p_vfs, parent_directory_handle->inode, p_filename->name, fsal2unix_mode(accessmode), &inode);
+  inogen_t object;
+  rc = libzfswrap_create(p_context->export_context->p_vfs, parent_directory_handle->zfs_handle, p_filename->name, fsal2unix_mode(accessmode), &object);
 
   ReleaseTokenFSCall();
 
@@ -89,7 +89,7 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
 
   /* >> set output handle << */
-  object_handle->inode = inode;
+  object_handle->zfs_handle = object;
   object_handle->type = FSAL_TYPE_FILE;
 
   if(object_attributes)
@@ -174,8 +174,8 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
   TakeTokenFSCall();
 
   /* Create the directory */
-  uint64_t inode;
-  rc = libzfswrap_mkdir(p_context->export_context->p_vfs, parent_directory_handle->inode, p_dirname->name, unix_mode, &inode);
+  inogen_t object;
+  rc = libzfswrap_mkdir(p_context->export_context->p_vfs, parent_directory_handle->zfs_handle, p_dirname->name, unix_mode, &object);
 
   ReleaseTokenFSCall();
 
@@ -184,7 +184,7 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
 
   /* set output handle */
-  object_handle->inode = inode;
+  object_handle->zfs_handle = object;
   object_handle->type = FSAL_TYPE_DIR;
 
   if(object_attributes)
@@ -266,7 +266,7 @@ fsal_status_t FSAL_link(fsal_handle_t * target_handle,  /* IN */
 
   TakeTokenFSCall();
 
-  rc = libzfswrap_link(p_context->export_context->p_vfs, dir_handle->inode, target_handle->inode, p_link_name->name);
+  rc = libzfswrap_link(p_context->export_context->p_vfs, dir_handle->zfs_handle, target_handle->zfs_handle, p_link_name->name);
 
   ReleaseTokenFSCall();
 

@@ -44,6 +44,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <inttypes.h>
 #include "config_parsing.h"
 #include "err_fsal.h"
 
@@ -84,8 +85,7 @@ static fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
 typedef struct fsal_handle__
 {
-  uint64_t inode;
-  uint64_t generation;
+  inogen_t zfs_handle;
   fsal_nodetype_t type;
 
 } fsal_handle_t;
@@ -122,22 +122,22 @@ typedef struct fsal_op_context__
 typedef struct fsal_dir__
 {
   vfs_t* p_vfs;
-  uint64_t inode;
   vnode_t *p_vnode;
+  inogen_t zfs_handle;
 
 } fsal_dir_t;
 
 typedef struct fsal_file__
 {
   vfs_t *p_vfs;
-  uint64_t inode;
+  inogen_t zfs_handle;
   off_t current_offset;
   int flags;
   vnode_t *p_vnode;
 
 } fsal_file_t;
 
-# define FSAL_FILENO(_f) (_f)->inode
+# define FSAL_FILENO(_f) (_f)->zfs_handle.inode
 
 typedef off_t fsal_cookie_t;
 

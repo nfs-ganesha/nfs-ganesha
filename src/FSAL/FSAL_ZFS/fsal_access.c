@@ -59,7 +59,6 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
                           fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
-printf("FSAL_access\n");
 
   fsal_status_t st;
 
@@ -73,7 +72,7 @@ printf("FSAL_access\n");
   int mask = fsal2posix_testperm(access_type);
 
   TakeTokenFSCall();
-  int rc = libzfswrap_access(p_context->export_context->p_vfs, object_handle->inode, mask);
+  int rc = libzfswrap_access(p_context->export_context->p_vfs, object_handle->zfs_handle, mask);
   ReleaseTokenFSCall();
 
   /* >> convert the returned code, an return it on error << */

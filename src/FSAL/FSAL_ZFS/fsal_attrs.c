@@ -60,7 +60,7 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
 
   TakeTokenFSCall();
 
-  rc = libzfswrap_statfd(p_context->export_context->p_vfs, filehandle->inode, &fstat, &type);
+  rc = libzfswrap_getattr(p_context->export_context->p_vfs, filehandle->zfs_handle, &fstat, &type);
 
   ReleaseTokenFSCall();
 
@@ -191,7 +191,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
 
   struct stat new_stat = { 0 };
   /**@TODO: use the new_stat info ! */
-  rc = libzfswrap_setattr(p_context->export_context->p_vfs, filehandle->inode, &stats, flags, &new_stat);
+  rc = libzfswrap_setattr(p_context->export_context->p_vfs, filehandle->zfs_handle, &stats, flags, &new_stat);
 
   ReleaseTokenFSCall();
 

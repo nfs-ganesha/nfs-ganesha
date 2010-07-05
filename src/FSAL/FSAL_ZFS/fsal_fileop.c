@@ -84,7 +84,7 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
 
   /* >> call your FS open function << */
   vnode_t *p_vnode;
-  rc = libzfswrap_open(p_context->export_context->p_vfs, filehandle->inode, openflags, &p_vnode);
+  rc = libzfswrap_open(p_context->export_context->p_vfs, filehandle->zfs_handle, openflags, &p_vnode);
 
   ReleaseTokenFSCall();
 
@@ -97,7 +97,7 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
   file_descriptor->flags = openflags;
   file_descriptor->current_offset = 0;
   file_descriptor->p_vnode = p_vnode;
-  file_descriptor->inode = filehandle->inode;
+  file_descriptor->zfs_handle = filehandle->zfs_handle;
 
   if(file_attributes)
   {

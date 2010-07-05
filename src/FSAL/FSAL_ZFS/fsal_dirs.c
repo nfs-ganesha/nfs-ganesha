@@ -62,11 +62,11 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
   /* >> You can prepare your directory for beeing read  
    * and check that the user has the right for reading its content <<*/
   vnode_t *p_vnode;
-  if((rc = libzfswrap_opendir(p_context->export_context->p_vfs, dir_handle->inode, &p_vnode)))
+  if((rc = libzfswrap_opendir(p_context->export_context->p_vfs, dir_handle->zfs_handle, &p_vnode)))
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
 
   dir_descriptor->p_vnode = p_vnode;
-  dir_descriptor->inode = dir_handle->inode;
+  dir_descriptor->zfs_handle = dir_handle->zfs_handle;
   dir_descriptor->p_vfs = p_context->export_context->p_vfs;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_opendir);
@@ -125,11 +125,12 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
   if(!dir_descriptor || !p_dirent || !end_position || !nb_entries || !end_of_dir)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
+  max_dir_entries = buffersize / sizeof(fsal_dirent_t);
+  libzfswrap_entry_t *entries = malloc( max_dir_entries * sizeof(libzfswrap_entry_t));
+
   TakeTokenFSCall();
 
   /* >> read some entry from you filesystem << */
-  max_dir_entries = buffersize / sizeof(fsal_dirent_t);
-  libzfswrap_entry_t *entries = malloc( max_dir_entries * sizeof(libzfswrap_entry_t));
   rc = libzfswrap_readdir(dir_descriptor->p_vfs, dir_descriptor->p_vnode, entries, max_dir_entries, (off_t*)(&start_position));
 
   ReleaseTokenFSCall();
@@ -155,7 +156,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
       continue;
     }
 
-    p_dirent[*nb_entries].handle.inode = entries[index].inode;
+    p_dirent[*nb_entries].handle.zfs_handle = entries[index].object;
     p_dirent[*nb_entries].handle.type = posix2fsal_type(entries[index].type);
     FSAL_str2name(entries[index].psz_filename, FSAL_MAX_NAME_LEN, &(p_dirent[*nb_entries].name));
 
