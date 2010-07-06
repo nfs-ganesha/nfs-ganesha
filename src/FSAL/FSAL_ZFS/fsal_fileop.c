@@ -73,18 +73,20 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
    * is stored into the handle << */
 
   if(filehandle->type != FSAL_TYPE_FILE)
-    {
-      Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
-    }
+    Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
 
   /* >> convert fsal open flags to your FS open flags
    * Take care of conflicting flags << */
+  int posix_flags;
+  rc = fsal2posix_openflags(openflags, &posix_flags);
+  if(rc)
+    Return(rc, 0, INDEX_FSAL_open);
 
   TakeTokenFSCall();
 
   /* >> call your FS open function << */
   vnode_t *p_vnode;
-  rc = libzfswrap_open(p_context->export_context->p_vfs, filehandle->zfs_handle, openflags, &p_vnode);
+  rc = libzfswrap_open(p_context->export_context->p_vfs, filehandle->zfs_handle, posix_flags, &p_vnode);
 
   ReleaseTokenFSCall();
 
@@ -108,7 +110,6 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
           FSAL_CLEAR_MASK(file_attributes->asked_attributes);
           FSAL_SET_MASK(file_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
       }
-
   }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_open);
@@ -343,7 +344,6 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
 fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
     )
 {
-
   int rc;
 
   /* sanity checks. */
@@ -352,7 +352,8 @@ fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
 
   TakeTokenFSCall();
 
-  rc = libzfswrap_close(file_descriptor->p_vfs, file_descriptor->p_vnode, file_descriptor->flags);
+  /** @TODO: give the flags to be sure that everything goes right !! */
+  rc = libzfswrap_close(file_descriptor->p_vfs, file_descriptor->p_vnode, 0);
 
   ReleaseTokenFSCall();
 

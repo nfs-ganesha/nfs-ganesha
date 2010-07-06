@@ -53,7 +53,6 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
                             fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
 {
-
   int rc;
 
   /* sanity checks.
@@ -63,19 +62,18 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
   /* >> check object type if it's stored into the filehandle << */
-
   if(filehandle->type != FSAL_TYPE_FILE)
-    {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_truncate);
-    }
 
   TakeTokenFSCall();
 
-  /* >> call your filesystem truncate operation << */
+  rc = libzfswrap_truncate(p_context->export_context->p_vfs, filehandle->zfs_handle, length);
 
   ReleaseTokenFSCall();
 
   /* >> interpret error code << */
+  if(rc)
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_truncate);
 
   /* >> Optionnaly retrieve post op attributes
    * If your filesystem truncate call can't return them,
