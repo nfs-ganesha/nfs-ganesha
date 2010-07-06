@@ -153,11 +153,11 @@ struct linux_dirent
 #define BUF_SIZE 1024
 
 fsal_status_t XFSFSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
-                              fsal_cookie_t start_position,        /* IN */
+                              xfsfsal_cookie_t start_position,        /* IN */
                               fsal_attrib_mask_t get_attr_mask,    /* IN */
                               fsal_mdsize_t buffersize,    /* IN */
                               fsal_dirent_t * p_pdirent,   /* OUT */
-                              fsal_cookie_t * p_end_position,      /* OUT */
+                              xfsfsal_cookie_t * p_end_position,      /* OUT */
                               fsal_count_t * p_nb_entries, /* OUT */
                               fsal_boolean_t * p_end_of_dir        /* OUT */
     )
@@ -331,12 +331,15 @@ fsal_status_t XFSFSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
                                 FSAL_ATTR_RDATTR_ERR);
                 }
             }
-          p_pdirent[*p_nb_entries].cookie.cookie = dp->d_off;
+          //p_pdirent[*p_nb_entries].cookie.cookie = dp->d_off;
+          ((xfsfsal_cookie_t *)(&p_pdirent[*p_nb_entries].cookie))->cookie = dp->d_off;
           p_pdirent[*p_nb_entries].nextentry = NULL;
           if(*p_nb_entries)
             p_pdirent[*p_nb_entries - 1].nextentry = &(p_pdirent[*p_nb_entries]);
 
-          (*p_end_position) = p_pdirent[*p_nb_entries].cookie;
+          //(*p_end_position) = p_pdirent[*p_nb_entries].cookie;
+          memcpy( (char *)p_end_position, (char *)&p_pdirent[*p_nb_entries].cookie, sizeof( xfsfsal_cookie_t ) ) ;
+
           (*p_nb_entries)++;
 
         }                       /* for */
