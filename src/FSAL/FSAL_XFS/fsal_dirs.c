@@ -41,8 +41,8 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t XFSFSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
-                              fsal_op_context_t * p_context,       /* IN */
+fsal_status_t XFSFSAL_opendir(xfsfsal_handle_t * p_dir_handle,        /* IN */
+                              xfsfsal_op_context_t * p_context,       /* IN */
                               fsal_dir_t * p_dir_descriptor,       /* OUT */
                               fsal_attrib_list_t * p_dir_attributes        /* [ IN/OUT ] */
     )
@@ -89,8 +89,8 @@ fsal_status_t XFSFSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
 
   /* if everything is OK, fills the dir_desc structure : */
 
-  memcpy(&(p_dir_descriptor->context), p_context, sizeof(fsal_op_context_t));
-  memcpy(&(p_dir_descriptor->handle), p_dir_handle, sizeof(fsal_handle_t));
+  memcpy(&(p_dir_descriptor->context), p_context, sizeof(xfsfsal_op_context_t));
+  memcpy(&(p_dir_descriptor->handle), p_dir_handle, sizeof(xfsfsal_handle_t));
 
   if(p_dir_attributes)
     {
@@ -270,12 +270,16 @@ fsal_status_t XFSFSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
           TakeTokenFSCall();
           if(d_type != DT_LNK)
             {
+              xfsfsal_handle_t * tmp_handle = (xfsfsal_handle_t *)(&(p_pdirent[*p_nb_entries].handle)) ;
+
               st = fsal_internal_fd2handle(&p_dir_descriptor->context, tmpfd,
-                                           &(p_pdirent[*p_nb_entries].handle));
+                                           tmp_handle);
               close(tmpfd);
             }
           else
             {
+              xfsfsal_handle_t * tmp_handle = (xfsfsal_handle_t *)(&(p_pdirent[*p_nb_entries].handle)) ;
+
               if(fstatat(p_dir_descriptor->fd, dp->d_name, &buffstat, AT_SYMLINK_NOFOLLOW)
                  < 0)
                 {
@@ -285,7 +289,7 @@ fsal_status_t XFSFSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
 
               st = fsal_internal_inum2handle(&p_dir_descriptor->context,
                                              buffstat.st_ino,
-                                             &(p_pdirent[*p_nb_entries].handle));
+                                             tmp_handle);
 
               if(FSAL_IS_ERROR(st))
                 {
@@ -317,8 +321,8 @@ fsal_status_t XFSFSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
             {
               p_pdirent[*p_nb_entries].attributes.asked_attributes = get_attr_mask;
 
-              st = FSAL_getattrs(&(p_pdirent[*p_nb_entries].handle),
-                                 &p_dir_descriptor->context,
+              st = XFSFSAL_getattrs((xfsfsal_handle_t *)(&(p_pdirent[*p_nb_entries].handle)),
+                                 (xfsfsal_op_context_t *)&p_dir_descriptor->context,
                                  &p_pdirent[*p_nb_entries].attributes);
               if(FSAL_IS_ERROR(st))
                 {

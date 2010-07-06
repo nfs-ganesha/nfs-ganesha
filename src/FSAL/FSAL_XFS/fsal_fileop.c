@@ -78,24 +78,24 @@
  *        ERR_FSAL_IO, ...
  */
 
-fsal_status_t XFSFSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
+fsal_status_t XFSFSAL_open_by_name(xfsfsal_handle_t * dirhandle,      /* IN */
                                    fsal_name_t * filename, /* IN */
-                                   fsal_op_context_t * p_context,  /* IN */
+                                   xfsfsal_op_context_t * p_context,  /* IN */
                                    fsal_openflags_t openflags,     /* IN */
                                    fsal_file_t * file_descriptor,  /* OUT */
                                    fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
   fsal_status_t fsal_status;
-  fsal_handle_t filehandle;
+  xfsfsal_handle_t filehandle;
 
   if(!dirhandle || !filename || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
-  fsal_status = FSAL_lookup(dirhandle, filename, p_context, &filehandle, file_attributes);
+  fsal_status = XFSFSAL_lookup(dirhandle, filename, p_context, &filehandle, file_attributes);
   if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
-  return FSAL_open(&filehandle, p_context, openflags, file_descriptor, file_attributes);
+  return XFSFSAL_open(&filehandle, p_context, openflags, file_descriptor, file_attributes);
 }
 
 /**
@@ -128,8 +128,8 @@ fsal_status_t XFSFSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t XFSFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
-                           fsal_op_context_t * p_context,  /* IN */
+fsal_status_t XFSFSAL_open(xfsfsal_handle_t * p_filehandle,   /* IN */
+                           xfsfsal_op_context_t * p_context,  /* IN */
                            fsal_openflags_t openflags,     /* IN */
                            fsal_file_t * p_file_descriptor,        /* OUT */
                            fsal_attrib_list_t * p_file_attributes  /* [ IN/OUT ] */
@@ -515,9 +515,9 @@ fsal_status_t XFSFSAL_close(fsal_file_t * p_file_descriptor        /* IN */
 }
 
 /* Some unsupported calls used in FSAL_PROXY, just for permit the ganeshell to compile */
-fsal_status_t XFSFSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
+fsal_status_t XFSFSAL_open_by_fileid(xfsfsal_handle_t * filehandle,   /* IN */
                                      fsal_u64_t fileid,    /* IN */
-                                     fsal_op_context_t * p_context,        /* IN */
+                                     xfsfsal_op_context_t * p_context,        /* IN */
                                      fsal_openflags_t openflags,   /* IN */
                                      fsal_file_t * file_descriptor,        /* OUT */
                                      fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )

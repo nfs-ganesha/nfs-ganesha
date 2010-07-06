@@ -156,6 +156,7 @@ typedef struct fsal_file__
   int ro;                       /* read only file ? */
 } xfsfsal_file_t;
 
+#define FSAL_GET_EXP_CTX( popctx ) ( (xfsfsal_op_context_t *)popctx)->export_context 
 #define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->fd )
 
 #endif                          /* _FSAL_TYPES__SPECIFIC_H */

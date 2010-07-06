@@ -462,7 +462,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                           return NFS_REQ_OK;
                         }
 
-                      FSAL_DigestHandle(pcontext->export_context,
+                      FSAL_DigestHandle(FSAL_GET_EXP_CTX( pcontext),
                                         FSAL_DIGEST_FILEID2,
                                         pfsal_handle,
                                         (caddr_t) & (RES_READDIR2_OK.entries[0].fileid));
@@ -523,7 +523,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                           return NFS_REQ_OK;
                         }
 
-                      FSAL_DigestHandle(pcontext->export_context,
+                      FSAL_DigestHandle(FSAL_GET_EXP_CTX( pcontext ),
                                         FSAL_DIGEST_FILEID2,
                                         pfsal_handle,
                                         (caddr_t) & (RES_READDIR2_OK.
@@ -571,7 +571,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                         }
                       break;
                     }
-                  FSAL_DigestHandle(pcontext->export_context,
+                  FSAL_DigestHandle( FSAL_GET_EXP_CTX( pcontext ),
                                     FSAL_DIGEST_FILEID2,
                                     cache_inode_get_fsal_handle(dirent_array
                                                                 [i - delta].pentry,
@@ -651,7 +651,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                           return NFS_REQ_OK;
                         }
 
-                      FSAL_DigestHandle(pcontext->export_context,
+                      FSAL_DigestHandle(FSAL_GET_EXP_CTX( pcontext ),
                                         FSAL_DIGEST_FILEID3,
                                         pfsal_handle,
                                         (caddr_t) & (RES_READDIR3_OK.reply.
@@ -719,7 +719,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                           return NFS_REQ_OK;
                         }
 
-                      FSAL_DigestHandle(pcontext->export_context,
+                      FSAL_DigestHandle(FSAL_GET_EXP_CTX( pcontext ),
                                         FSAL_DIGEST_FILEID3,
                                         pfsal_handle,
                                         (caddr_t) & (RES_READDIR3_OK.reply.
@@ -767,7 +767,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                         }
                       break;
                     }
-                  FSAL_DigestHandle(pcontext->export_context,
+                  FSAL_DigestHandle(FSAL_GET_EXP_CTX( pcontext) ,
                                     FSAL_DIGEST_FILEID3,
                                     cache_inode_get_fsal_handle(dirent_array
                                                                 [i - delta].pentry,
