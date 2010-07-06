@@ -43,7 +43,7 @@ inline fsal_status_t WRAP_XFSFSAL_BuildExportContext(fsal_export_context_t * p_e
                                       fsal_path_t * p_export_path,      /* IN */
                                       char *fs_specific_options /* IN */ ) 
 {
-  return XFSFSAL_BuildExportContext( p_export_context, p_export_path, fs_specific_options ) ;
+  return XFSFSAL_BuildExportContext( (xfsfsal_export_context_t *)p_export_context, p_export_path, fs_specific_options ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_InitClientContext(fsal_op_context_t * p_thr_context) 
@@ -58,7 +58,7 @@ inline fsal_status_t WRAP_XFSFSAL_GetClientContext(fsal_op_context_t * p_thr_con
                                     fsal_gid_t * alt_groups,    /* IN */
                                     fsal_count_t nb_alt_groups  /* IN */ ) 
 {
-  return XFSFSAL_GetClientContext( (xfsfsal_op_context_t *)p_thr_context, p_export_context, uid, gid, alt_groups, nb_alt_groups ) ;
+  return XFSFSAL_GetClientContext( (xfsfsal_op_context_t *)p_thr_context, (xfsfsal_export_context_t *)p_export_context, uid, gid, alt_groups, nb_alt_groups ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
@@ -418,7 +418,7 @@ inline fsal_status_t WRAP_XFSFSAL_DigestHandle(fsal_export_context_t * p_exportc
                                 fsal_handle_t * p_in_fsal_handle,       /* IN */
                                 caddr_t out_buff        /* OUT */)
 {
-  return XFSFSAL_DigestHandle( p_exportcontext, output_type, (xfsfsal_handle_t *)p_in_fsal_handle, out_buff ) ;
+  return XFSFSAL_DigestHandle( (xfsfsal_export_context_t *)p_exportcontext, output_type, (xfsfsal_handle_t *)p_in_fsal_handle, out_buff ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
@@ -426,7 +426,7 @@ inline fsal_status_t WRAP_XFSFSAL_ExpandHandle(fsal_export_context_t * p_expcont
                                 caddr_t in_buff,        /* IN */
                                 fsal_handle_t * p_out_fsal_handle       /* OUT */)
 {
-  return XFSFSAL_ExpandHandle( p_expcontext, in_type, in_buff, (xfsfsal_handle_t *)p_out_fsal_handle ) ;
+  return XFSFSAL_ExpandHandle( (xfsfsal_export_context_t *)p_expcontext, in_type, in_buff, (xfsfsal_handle_t *)p_out_fsal_handle ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter) 
@@ -646,5 +646,6 @@ fsal_functions_t fsal_xfs_functions = {
 
 fsal_const_t  fsal_xfs_const = {
   .fsal_handle_t_size = sizeof( xfsfsal_handle_t ) ,
-  .fsal_op_context_t_size = sizeof( xfsfsal_op_context_t ) 
+  .fsal_op_context_t_size = sizeof( xfsfsal_op_context_t ), 
+  .fsal_export_context_t_size = sizeof( xfsfsal_export_context_t ) 
 } ;
