@@ -120,7 +120,6 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
                             fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
 {
-
   int rc;
   fsal_status_t status;
   fsal_attrib_list_t attrs;
