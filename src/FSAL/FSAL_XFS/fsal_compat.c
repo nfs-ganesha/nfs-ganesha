@@ -305,23 +305,23 @@ inline fsal_status_t WRAP_XFSFSAL_lookupJunction(fsal_handle_t * p_junction_hand
 inline fsal_status_t WRAP_XFSFSAL_lock(fsal_file_t * obj_handle,
                         fsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
 {
-  return XFSFSAL_lock( (xfsfsal_file_t *)obj_handle, ldesc, blocking ) ;
+  return XFSFSAL_lock( (xfsfsal_file_t *)obj_handle, (xfsfsal_lockdesc_t *)ldesc, blocking ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
                               fsal_lockparam_t * lock_info      /* IN */)
 {
-  return XFSFSAL_changelock( lock_descriptor, lock_info ) ;
+  return XFSFSAL_changelock( (xfsfsal_lockdesc_t *)lock_descriptor, lock_info ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {
-  return XFSFSAL_unlock( (xfsfsal_file_t *)obj_handle, ldesc ) ;
+  return XFSFSAL_unlock( (xfsfsal_file_t *)obj_handle, (xfsfsal_lockdesc_t *)ldesc ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {
-  return XFSFSAL_getlock( (xfsfsal_file_t *)obj_handle, ldesc ) ;
+  return XFSFSAL_getlock( (xfsfsal_file_t *)obj_handle, (xfsfsal_lockdesc_t *)ldesc ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle)
@@ -657,5 +657,6 @@ fsal_const_t  fsal_xfs_const = {
   .fsal_op_context_t_size = sizeof( xfsfsal_op_context_t ), 
   .fsal_export_context_t_size = sizeof( xfsfsal_export_context_t ),
   .fsal_file_t_size = sizeof( xfsfsal_file_t ), 
-  .fsal_cookie_t_size = sizeof( xfsfsal_cookie_t ) 
+  .fsal_cookie_t_size = sizeof( xfsfsal_cookie_t ) ,
+  .fsal_lockdesc_t_size = sizeof( xfsfsal_lockdesc_t ) 
 } ;

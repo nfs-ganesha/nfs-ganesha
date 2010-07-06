@@ -30,7 +30,7 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 
-static int do_blocking_lock(xfsfsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
+static int do_blocking_lock(xfsfsal_file_t * obj_handle, xfsfsal_lockdesc_t * ldesc)
 {
   /*
    * Linux client have this grant hack of pooling for
@@ -46,7 +46,7 @@ static int do_blocking_lock(xfsfsal_file_t * obj_handle, fsal_lockdesc_t * ldesc
  * FSAL_lock:
  */
 fsal_status_t XFSFSAL_lock(xfsfsal_file_t * obj_handle,
-                           fsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
+                           xfsfsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
 {
   int retval;
   int errsv = 0;
@@ -79,7 +79,7 @@ fsal_status_t XFSFSAL_lock(xfsfsal_file_t * obj_handle,
  * FSAL_changelock:
  * Not implemented.
  */
-fsal_status_t XFSFSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
+fsal_status_t XFSFSAL_changelock(xfsfsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
                               fsal_lockparam_t * lock_info      /* IN */
     )
 {
@@ -96,7 +96,7 @@ fsal_status_t XFSFSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN
  * FSAL_unlock:
  *
  */
-fsal_status_t XFSFSAL_unlock(xfsfsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
+fsal_status_t XFSFSAL_unlock(xfsfsal_file_t * obj_handle, xfsfsal_lockdesc_t * ldesc)
 {
   int retval;
   int fd = obj_handle->fd;
@@ -110,7 +110,7 @@ fsal_status_t XFSFSAL_unlock(xfsfsal_file_t * obj_handle, fsal_lockdesc_t * ldes
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_unlock);
 }
 
-fsal_status_t XFSFSAL_getlock(xfsfsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
+fsal_status_t XFSFSAL_getlock(xfsfsal_file_t * obj_handle, xfsfsal_lockdesc_t * ldesc)
 {
   int retval;
   int fd = obj_handle->fd;

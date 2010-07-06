@@ -40,7 +40,6 @@
 
 #define fsal_cred_t xfsfsal_cred_t
 #define fs_specific_initinfo_t xfsfs_specific_initinfo_t
-#define fsal_lockdesc_t xfsfsal_lockdesc_t
 #define fsal_dir_t xfsfsal_dir_t
 
 #define FSAL_HANDLE_T_SIZE 44 
@@ -68,6 +67,10 @@ typedef struct {
   char data[FSAL_COOKIE_T_SIZE] ;
 } fsal_cookie_t ;
 
+#define FSAL_LOCKDESC_T_SIZE 24
+typedef struct {
+  char data[FSAL_LOCKDESC_T_SIZE] ;
+} fsal_lockdesc_t ;
 
 #endif /* _FSAL_GLUE_H */
 
