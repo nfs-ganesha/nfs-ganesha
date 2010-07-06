@@ -1929,6 +1929,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
       printf( "------------> sizeof( xfsfsal_handle_t ) = %u\n", sizeof( xfsfsal_handle_t )) ;
       printf( "------------> sizeof( xfsfsal_op_context_t ) = %u\n", sizeof( xfsfsal_op_context_t )) ;
       printf( "------------> sizeof( xfsfsal_export_context_t ) = %u\n", sizeof( xfsfsal_export_context_t )) ;
+      printf( "------------> sizeof( xfsfsal_file_t ) = %u\n", sizeof( xfsfsal_file_t )) ;
 
       DisplayLog("-------------------------------------------------");
       DisplayLog("             NFS SERVER INITIALIZED");

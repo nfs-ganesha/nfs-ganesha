@@ -42,7 +42,6 @@
 #define fs_specific_initinfo_t xfsfs_specific_initinfo_t
 #define fsal_lockdesc_t xfsfsal_lockdesc_t
 #define fsal_dir_t xfsfsal_dir_t
-#define fsal_file_t xfsfsal_file_t
 #define fsal_cookie_t xfsfsal_cookie_t
 
 #define FSAL_HANDLE_T_SIZE 44 
@@ -59,6 +58,11 @@ typedef struct {
 typedef struct {
   char data[FSAL_EXPORT_CONTEXT_T_SIZE] ;
 } fsal_export_context_t ;
+
+#define FSAL_FILE_T_SIZE 8
+typedef struct {
+  char data[FSAL_FILE_T_SIZE] ;
+} fsal_file_t ;
 
 #endif /* _FSAL_GLUE_H */
 
