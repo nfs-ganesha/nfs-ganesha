@@ -293,14 +293,14 @@ fsal_status_t XFSFSAL_lookupJunction(xfsfsal_handle_t * p_junction_handle,    /*
                                      fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */) ;
 
 fsal_status_t XFSFSAL_lock(xfsfsal_file_t * obj_handle,
-                           fsal_lockdesc_t * ldesc, fsal_boolean_t blocking);
+                           xfsfsal_lockdesc_t * ldesc, fsal_boolean_t blocking);
 
-fsal_status_t XFSFSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
+fsal_status_t XFSFSAL_changelock(xfsfsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
                               fsal_lockparam_t * lock_info      /* IN */);
 
-fsal_status_t XFSFSAL_unlock(xfsfsal_file_t * obj_handle, fsal_lockdesc_t * ldesc) ;
+fsal_status_t XFSFSAL_unlock(xfsfsal_file_t * obj_handle, xfsfsal_lockdesc_t * ldesc) ;
 
-fsal_status_t XFSFSAL_getlock(xfsfsal_file_t * obj_handle, fsal_lockdesc_t * ldesc) ;
+fsal_status_t XFSFSAL_getlock(xfsfsal_file_t * obj_handle, xfsfsal_lockdesc_t * ldesc) ;
 
 fsal_status_t XFSFSAL_CleanObjectResources(xfsfsal_handle_t * in_fsal_handle) ;
 

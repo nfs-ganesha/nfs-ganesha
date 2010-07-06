@@ -1926,11 +1926,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
       /* Wait for the threads to complete their init step */
       sleep(2);
 
-      printf( "------------> sizeof( xfsfsal_handle_t ) = %u\n", sizeof( xfsfsal_handle_t )) ;
-      printf( "------------> sizeof( xfsfsal_op_context_t ) = %u\n", sizeof( xfsfsal_op_context_t )) ;
-      printf( "------------> sizeof( xfsfsal_export_context_t ) = %u\n", sizeof( xfsfsal_export_context_t )) ;
-      printf( "------------> sizeof( xfsfsal_file_t ) = %u\n", sizeof( xfsfsal_file_t )) ;
-      printf( "------------> sizeof( xfsfsal_cookie_t ) = %u\n", sizeof( xfsfsal_cookie_t )) ;
+      printf( "------------> sizeof( xfsfsal_lockdesc_t ) = %u\n", sizeof( xfsfsal_lockdesc_t )) ;
 
       DisplayLog("-------------------------------------------------");
       DisplayLog("             NFS SERVER INITIALIZED");
