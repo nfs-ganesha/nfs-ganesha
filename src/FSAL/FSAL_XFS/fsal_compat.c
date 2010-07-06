@@ -141,7 +141,8 @@ inline fsal_status_t WRAP_XFSFSAL_open_by_name(fsal_handle_t * dirhandle,      /
                                 fsal_file_t * file_descriptor,  /* OUT */
                                 fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
-  return XFSFSAL_open_by_name( (xfsfsal_handle_t *)dirhandle, filename, (xfsfsal_op_context_t *)p_context, openflags, file_descriptor, file_attributes ) ;
+  return XFSFSAL_open_by_name( (xfsfsal_handle_t *)dirhandle, filename, 
+			       (xfsfsal_op_context_t *)p_context, openflags, (xfsfsal_file_t *)file_descriptor, file_attributes ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
@@ -150,7 +151,8 @@ inline fsal_status_t WRAP_XFSFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
                         fsal_file_t * p_file_descriptor,        /* OUT */
                         fsal_attrib_list_t * p_file_attributes  /* [ IN/OUT ] */ )
 {
-  return XFSFSAL_open( (xfsfsal_handle_t *)p_filehandle, (xfsfsal_op_context_t *)p_context, openflags, p_file_descriptor, p_file_attributes ) ;
+  return XFSFSAL_open( (xfsfsal_handle_t *)p_filehandle, (xfsfsal_op_context_t *)p_context, 
+                       openflags, (xfsfsal_file_t *)p_file_descriptor, p_file_attributes ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
@@ -160,7 +162,7 @@ inline fsal_status_t WRAP_XFSFSAL_read(fsal_file_t * p_file_descriptor,        /
                         fsal_size_t * p_read_amount,    /* OUT */
                         fsal_boolean_t * p_end_of_file  /* OUT */)
 {
-  return XFSFSAL_read( p_file_descriptor, p_seek_descriptor, buffer_size, buffer, p_read_amount, p_end_of_file ) ;
+  return XFSFSAL_read( (xfsfsal_file_t *)p_file_descriptor, p_seek_descriptor, buffer_size, buffer, p_read_amount, p_end_of_file ) ;
 }
   
 
@@ -170,12 +172,12 @@ inline fsal_status_t WRAP_XFSFSAL_write(fsal_file_t * p_file_descriptor,       /
                          caddr_t buffer,        /* IN */
                          fsal_size_t * p_write_amount   /* OUT */ )
 {
-  return XFSFSAL_write( p_file_descriptor, p_seek_descriptor, buffer_size, buffer, p_write_amount ) ;
+  return XFSFSAL_write( (xfsfsal_file_t *)p_file_descriptor, p_seek_descriptor, buffer_size, buffer, p_write_amount ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_close(fsal_file_t * p_file_descriptor        /* IN */ )
 {
-  return XFSFSAL_close( p_file_descriptor ) ;
+  return XFSFSAL_close( (xfsfsal_file_t *)p_file_descriptor ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
@@ -185,13 +187,14 @@ inline fsal_status_t WRAP_XFSFSAL_open_by_fileid(fsal_handle_t * filehandle,   /
                                   fsal_file_t * file_descriptor,        /* OUT */
                                   fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
-   return XFSFSAL_open_by_fileid( (xfsfsal_handle_t *)filehandle, fileid, (xfsfsal_op_context_t *)p_context, openflags, file_descriptor, file_attributes ) ;
+   return XFSFSAL_open_by_fileid( (xfsfsal_handle_t *)filehandle, fileid, (xfsfsal_op_context_t *)p_context, 
+                                   openflags, (xfsfsal_file_t *)file_descriptor, file_attributes ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
                                    fsal_u64_t fileid)
 {
-   return XFSFSAL_close_by_fileid( file_descriptor, fileid ) ;
+   return XFSFSAL_close_by_fileid( (xfsfsal_file_t *)file_descriptor, fileid ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_static_fsinfo(fsal_handle_t * p_filehandle,  /* IN */
@@ -298,7 +301,7 @@ inline fsal_status_t WRAP_XFSFSAL_lookupJunction(fsal_handle_t * p_junction_hand
 inline fsal_status_t WRAP_XFSFSAL_lock(fsal_file_t * obj_handle,
                         fsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
 {
-  return XFSFSAL_lock( obj_handle, ldesc, blocking ) ;
+  return XFSFSAL_lock( (xfsfsal_file_t *)obj_handle, ldesc, blocking ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
@@ -309,12 +312,12 @@ inline fsal_status_t WRAP_XFSFSAL_changelock(fsal_lockdesc_t * lock_descriptor, 
 
 inline fsal_status_t WRAP_XFSFSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {
-  return XFSFSAL_unlock( obj_handle, ldesc ) ;
+  return XFSFSAL_unlock( (xfsfsal_file_t *)obj_handle, ldesc ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {
-  return XFSFSAL_getlock( obj_handle, ldesc ) ;
+  return XFSFSAL_getlock( (xfsfsal_file_t *)obj_handle, ldesc ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle)
@@ -468,7 +471,8 @@ inline fsal_status_t WRAP_XFSFSAL_truncate(fsal_handle_t * p_filehandle,
                             fsal_file_t * file_descriptor,      
                             fsal_attrib_list_t * p_object_attributes )
 {
-  return XFSFSAL_truncate( (xfsfsal_handle_t *)p_filehandle, (xfsfsal_op_context_t *)p_context, length, file_descriptor, p_object_attributes ) ;
+  return XFSFSAL_truncate( (xfsfsal_handle_t *)p_filehandle, (xfsfsal_op_context_t *)p_context, length, 
+                           (xfsfsal_file_t *)file_descriptor, p_object_attributes ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
@@ -647,5 +651,6 @@ fsal_functions_t fsal_xfs_functions = {
 fsal_const_t  fsal_xfs_const = {
   .fsal_handle_t_size = sizeof( xfsfsal_handle_t ) ,
   .fsal_op_context_t_size = sizeof( xfsfsal_op_context_t ), 
-  .fsal_export_context_t_size = sizeof( xfsfsal_export_context_t ) 
+  .fsal_export_context_t_size = sizeof( xfsfsal_export_context_t ),
+  .fsal_file_t_size = sizeof( xfsfsal_file_t )
 } ;

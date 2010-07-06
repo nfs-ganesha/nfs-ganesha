@@ -202,38 +202,38 @@ fsal_status_t XFSFSAL_open_by_name(xfsfsal_handle_t * dirhandle,      /* IN */
                                    fsal_name_t * filename, /* IN */
                                    xfsfsal_op_context_t * p_context,  /* IN */
                                    fsal_openflags_t openflags,     /* IN */
-                                   fsal_file_t * file_descriptor,  /* OUT */
+                                   xfsfsal_file_t * file_descriptor,  /* OUT */
                                    fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ ) ;
 
 fsal_status_t XFSFSAL_open(xfsfsal_handle_t * p_filehandle,   /* IN */
                            xfsfsal_op_context_t * p_context,  /* IN */
                            fsal_openflags_t openflags,     /* IN */
-                           fsal_file_t * p_file_descriptor,        /* OUT */
+                           xfsfsal_file_t * p_file_descriptor,        /* OUT */
                            fsal_attrib_list_t * p_file_attributes  /* [ IN/OUT ] */ ) ;
 
-fsal_status_t XFSFSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
+fsal_status_t XFSFSAL_read(xfsfsal_file_t * p_file_descriptor,        /* IN */
                            fsal_seek_t * p_seek_descriptor,        /* [IN] */
                            fsal_size_t buffer_size,        /* IN */
                            caddr_t buffer, /* OUT */
                            fsal_size_t * p_read_amount,    /* OUT */
                            fsal_boolean_t * p_end_of_file  /* OUT */ ) ;
 
-fsal_status_t XFSFSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
+fsal_status_t XFSFSAL_write(xfsfsal_file_t * p_file_descriptor,       /* IN */
                             fsal_seek_t * p_seek_descriptor,       /* IN */
                             fsal_size_t buffer_size,       /* IN */
                             caddr_t buffer,        /* IN */
                             fsal_size_t * p_write_amount   /* OUT */) ;
 
-fsal_status_t XFSFSAL_close(fsal_file_t * p_file_descriptor        /* IN */) ;
+fsal_status_t XFSFSAL_close(xfsfsal_file_t * p_file_descriptor        /* IN */) ;
 
 fsal_status_t XFSFSAL_open_by_fileid(xfsfsal_handle_t * filehandle,   /* IN */
                                      fsal_u64_t fileid,    /* IN */
                                      xfsfsal_op_context_t * p_context,        /* IN */
                                      fsal_openflags_t openflags,   /* IN */
-                                     fsal_file_t * file_descriptor,        /* OUT */
+                                     xfsfsal_file_t * file_descriptor,        /* OUT */
                                      fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ ) ;
 
-fsal_status_t XFSFSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
+fsal_status_t XFSFSAL_close_by_fileid(xfsfsal_file_t * file_descriptor /* IN */ ,
                                       fsal_u64_t fileid) ;
 
 
@@ -292,15 +292,15 @@ fsal_status_t XFSFSAL_lookupJunction(xfsfsal_handle_t * p_junction_handle,    /*
                                      xfsfsal_handle_t * p_fsoot_handle,       /* OUT */
                                      fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */) ;
 
-fsal_status_t XFSFSAL_lock(fsal_file_t * obj_handle,
+fsal_status_t XFSFSAL_lock(xfsfsal_file_t * obj_handle,
                            fsal_lockdesc_t * ldesc, fsal_boolean_t blocking);
 
 fsal_status_t XFSFSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
                               fsal_lockparam_t * lock_info      /* IN */);
 
-fsal_status_t XFSFSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc) ;
+fsal_status_t XFSFSAL_unlock(xfsfsal_file_t * obj_handle, fsal_lockdesc_t * ldesc) ;
 
-fsal_status_t XFSFSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc) ;
+fsal_status_t XFSFSAL_getlock(xfsfsal_file_t * obj_handle, fsal_lockdesc_t * ldesc) ;
 
 fsal_status_t XFSFSAL_CleanObjectResources(xfsfsal_handle_t * in_fsal_handle) ;
 
@@ -388,7 +388,7 @@ fsal_status_t XFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_conf
 fsal_status_t XFSFSAL_truncate(xfsfsal_handle_t * p_filehandle,       /* IN */
                                xfsfsal_op_context_t * p_context,      /* IN */
                                fsal_size_t length, /* IN */
-                               fsal_file_t * file_descriptor,      /* Unused in this FSAL */
+                               xfsfsal_file_t * file_descriptor,      /* Unused in this FSAL */
                                fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */ ) ;
 
 fsal_status_t XFSFSAL_unlink(xfsfsal_handle_t * p_parent_directory_handle,    /* IN */
