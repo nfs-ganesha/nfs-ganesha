@@ -188,11 +188,11 @@ fsal_status_t XFSFSAL_opendir(xfsfsal_handle_t * p_dir_handle,        /* IN */
                               fsal_attrib_list_t * p_dir_attributes        /* [ IN/OUT ] */) ;
 
 fsal_status_t XFSFSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
-                              fsal_cookie_t start_position,        /* IN */
+                              xfsfsal_cookie_t start_position,        /* IN */
                               fsal_attrib_mask_t get_attr_mask,    /* IN */
                               fsal_mdsize_t buffersize,    /* IN */
                               fsal_dirent_t * p_pdirent,   /* OUT */
-                              fsal_cookie_t * p_end_position,      /* OUT */
+                              xfsfsal_cookie_t * p_end_position,      /* OUT */
                               fsal_count_t * p_nb_entries, /* OUT */
                               fsal_boolean_t * p_end_of_dir        /* OUT */ ) ;
 

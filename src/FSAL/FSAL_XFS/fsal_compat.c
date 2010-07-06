@@ -124,8 +124,12 @@ inline fsal_status_t WRAP_XFSFSAL_readdir(fsal_dir_t * p_dir_descriptor,       /
                            fsal_count_t * p_nb_entries, /* OUT */
                            fsal_boolean_t * p_end_of_dir        /* OUT */ ) 
 {
-  return XFSFSAL_readdir( p_dir_descriptor, start_position, get_attr_mask,
-			     		  buffersize, p_pdirent, p_end_position, p_nb_entries, p_end_of_dir ) ;
+  xfsfsal_cookie_t xfscookie ;
+
+  memcpy( (char *)&xfscookie, (char *)&start_position, sizeof( xfsfsal_cookie_t ) ) ;
+
+  return XFSFSAL_readdir( p_dir_descriptor, xfscookie, get_attr_mask,
+	     		  buffersize, p_pdirent, (xfsfsal_cookie_t *)p_end_position, p_nb_entries, p_end_of_dir ) ;
 }
 
 
@@ -652,5 +656,6 @@ fsal_const_t  fsal_xfs_const = {
   .fsal_handle_t_size = sizeof( xfsfsal_handle_t ) ,
   .fsal_op_context_t_size = sizeof( xfsfsal_op_context_t ), 
   .fsal_export_context_t_size = sizeof( xfsfsal_export_context_t ),
-  .fsal_file_t_size = sizeof( xfsfsal_file_t )
+  .fsal_file_t_size = sizeof( xfsfsal_file_t ), 
+  .fsal_cookie_t_size = sizeof( xfsfsal_cookie_t ) 
 } ;

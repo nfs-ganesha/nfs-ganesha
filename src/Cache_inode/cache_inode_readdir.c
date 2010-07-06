@@ -816,8 +816,8 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
     }
 
   /* Loop for readding the directory */
-  begin_cookie = FSAL_READDIR_FROM_BEGINNING;
-  end_cookie = FSAL_READDIR_FROM_BEGINNING;
+  FSAL_SET_COOKIE_BEGINNING( begin_cookie ) ;
+  FSAL_SET_COOKIE_BEGINNING( end_cookie ) ;
   fsal_eod = FALSE;
 
   do

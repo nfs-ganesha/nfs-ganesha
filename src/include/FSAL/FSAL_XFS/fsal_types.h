@@ -133,6 +133,7 @@ typedef struct
 } xfsfsal_cookie_t;
 
 static const xfsfsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
+#define FSAL_SET_COOKIE_BEGINNING( cookie ) memset( (char *)&cookie, 0, sizeof( xfsfsal_cookie_t ) )
 
 typedef struct 
 {
