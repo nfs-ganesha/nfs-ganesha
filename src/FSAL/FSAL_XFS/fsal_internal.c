@@ -468,8 +468,8 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-fsal_status_t fsal_internal_handle2fd(fsal_op_context_t * p_context,
-                                      fsal_handle_t * phandle, int *pfd, int oflags)
+fsal_status_t fsal_internal_handle2fd(xfsfsal_op_context_t * p_context,
+                                      xfsfsal_handle_t * phandle, int *pfd, int oflags)
 {
   int rc = 0;
   int errsv = 0;
@@ -497,8 +497,8 @@ fsal_status_t fsal_internal_handle2fd(fsal_op_context_t * p_context,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /* fsal_internal_handle2fd */
 
-fsal_status_t fsal_internal_fd2handle(fsal_op_context_t * p_context,
-                                      int fd, fsal_handle_t * phandle)
+fsal_status_t fsal_internal_fd2handle(xfsfsal_op_context_t * p_context,
+                                      int fd, xfsfsal_handle_t * phandle)
 {
   int rc = 0;
   struct stat ino;
@@ -509,7 +509,7 @@ fsal_status_t fsal_internal_fd2handle(fsal_op_context_t * p_context,
   if(!phandle)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  memset(phandle, 0, sizeof(fsal_handle_t));
+  memset(phandle, 0, sizeof(xfsfsal_handle_t));
 
   /* retrieve inode */
   rc = fstat(fd, &ino);
@@ -529,9 +529,9 @@ fsal_status_t fsal_internal_fd2handle(fsal_op_context_t * p_context,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /* fsal_internal_fd2handle */
 
-fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
+fsal_status_t fsal_internal_Path2Handle(xfsfsal_op_context_t * p_context,  /* IN */
                                         fsal_path_t * p_fsalpath,       /* IN */
-                                        fsal_handle_t * p_handle /* OUT */ )
+                                        xfsfsal_handle_t * p_handle /* OUT */ )
 {
   int objectfd;
   fsal_status_t st;
@@ -539,7 +539,7 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  memset(p_handle, 0, sizeof(fsal_handle_t));
+  memset(p_handle, 0, sizeof(xfsfsal_handle_t));
 
 #ifdef _DEBUG_FSAL
   DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle for %s", p_fsalpath->path);
@@ -557,7 +557,7 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
    Check the access from an existing fsal_attrib_list_t or struct stat
 */
 /* XXX : ACL */
-fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
+fsal_status_t fsal_internal_testAccess(xfsfsal_op_context_t * p_context,   /* IN */
                                        fsal_accessflags_t access_type,  /* IN */
                                        struct stat * p_buffstat,        /* IN */
                                        fsal_attrib_list_t * p_object_attributes /* IN */ )
@@ -703,8 +703,8 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
 }
 
-fsal_status_t fsal_internal_setattrs_symlink(fsal_handle_t * p_filehandle,      /* IN */
-                                             fsal_op_context_t * p_context,     /* IN */
+fsal_status_t fsal_internal_setattrs_symlink(xfsfsal_handle_t * p_filehandle,      /* IN */
+                                             xfsfsal_op_context_t * p_context,     /* IN */
                                              fsal_attrib_list_t * p_attrib_set, /* IN */
                                              fsal_attrib_list_t * p_object_attributes)
 {
@@ -765,8 +765,8 @@ static int get_bulkstat_by_inode(int fd, xfs_ino_t * p_ino, xfs_bstat_t * pxfs_b
   return ioctl(fd, XFS_IOC_FSBULKSTAT_SINGLE, &bulkreq);
 }                               /* get_bulkstat_by_inode */
 
-fsal_status_t fsal_internal_inum2handle(fsal_op_context_t * p_context,
-                                        ino_t inum, fsal_handle_t * phandle)
+fsal_status_t fsal_internal_inum2handle(xfsfsal_op_context_t * p_context,
+                                        ino_t inum, xfsfsal_handle_t * phandle)
 {
   int fd = 0;
 

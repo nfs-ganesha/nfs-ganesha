@@ -1259,8 +1259,11 @@ typedef struct fsal_functions__
 
 } fsal_functions_t ;
 
+/* Structure allow assignement, char[<n>] do not */
 typedef struct fsal_const__
 {
+  unsigned int fsal_handle_t_size ;
+  unsigned int fsal_op_context_t_size ;
 } fsal_const_t ;
 
 

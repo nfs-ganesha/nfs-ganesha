@@ -65,7 +65,7 @@ char *XFSFSAL_GetFSName()
  *         - Segfault if status is a NULL pointer.
  */
 
-int XFSFSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
+int XFSFSAL_handlecmp(xfsfsal_handle_t * handle1, xfsfsal_handle_t * handle2,
                       fsal_status_t * status)
 {
 
@@ -96,7 +96,7 @@ int XFSFSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
  *
  * \return The hash value
  */
-unsigned int XFSFSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
+unsigned int XFSFSAL_Handle_to_HashIndex(xfsfsal_handle_t * p_handle,
                                          unsigned int cookie,
                                          unsigned int alphabet_len, unsigned int index_size)
 {
@@ -145,7 +145,7 @@ unsigned int XFSFSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int XFSFSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cookie)
+unsigned int XFSFSAL_Handle_to_RBTIndex(xfsfsal_handle_t * p_handle, unsigned int cookie)
 {
   unsigned int h = 0;
   unsigned int cpt = 0;
@@ -183,7 +183,7 @@ unsigned int XFSFSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int c
 
 /**
  * FSAL_DigestHandle :
- *  Convert an fsal_handle_t to a buffer
+ *  Convert an xfsfsal_handle_t to a buffer
  *  to be included into NFS handles,
  *  or another digest.
  *
@@ -197,14 +197,14 @@ unsigned int XFSFSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int c
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t XFSFSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
+fsal_status_t XFSFSAL_DigestHandle(xfsfsal_export_context_t * p_expcontext,   /* IN */
                                    fsal_digesttype_t output_type,  /* IN */
-                                   fsal_handle_t * p_in_fsal_handle,       /* IN */
+                                   xfsfsal_handle_t * p_in_fsal_handle,       /* IN */
                                    caddr_t out_buff        /* OUT */
     )
 {
   unsigned int ino32;
-
+ 
   /* sanity checks */
   if(!p_in_fsal_handle || !out_buff || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -215,29 +215,29 @@ fsal_status_t XFSFSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN
       /* NFS handle digest */
     case FSAL_DIGEST_NFSV2:
 
-      if(sizeof(fsal_handle_t) > FSAL_DIGEST_SIZE_HDLV2)
+      if(sizeof(xfsfsal_handle_t) > FSAL_DIGEST_SIZE_HDLV2)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV2);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(fsal_handle_t));
+      memcpy(out_buff, p_in_fsal_handle, sizeof(xfsfsal_handle_t));
       break;
 
     case FSAL_DIGEST_NFSV3:
 
-      if(sizeof(fsal_handle_t) > FSAL_DIGEST_SIZE_HDLV3)
+      if(sizeof(xfsfsal_handle_t) > FSAL_DIGEST_SIZE_HDLV3)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV3);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(fsal_handle_t));
+      memcpy(out_buff, p_in_fsal_handle, sizeof(xfsfsal_handle_t));
       break;
 
     case FSAL_DIGEST_NFSV4:
 
-      if(sizeof(fsal_handle_t) > FSAL_DIGEST_SIZE_HDLV4)
+      if(sizeof(xfsfsal_handle_t) > FSAL_DIGEST_SIZE_HDLV4)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(fsal_handle_t));
+      memcpy(out_buff, p_in_fsal_handle, sizeof(xfsfsal_handle_t));
       break;
 
       /* FileId digest for NFSv2 */
@@ -290,13 +290,12 @@ fsal_status_t XFSFSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t XFSFSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
+fsal_status_t XFSFSAL_ExpandHandle(xfsfsal_export_context_t * p_expcontext,   /* IN */
                                    fsal_digesttype_t in_type,      /* IN */
                                    caddr_t in_buff,        /* IN */
-                                   fsal_handle_t * p_out_fsal_handle       /* OUT */
+                                   xfsfsal_handle_t * p_out_fsal_handle       /* OUT */
     )
 {
-
   /* sanity checks */
   if(!p_out_fsal_handle || !in_buff || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -306,20 +305,20 @@ fsal_status_t XFSFSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN
 
       /* NFSV2 handle digest */
     case FSAL_DIGEST_NFSV2:
-      memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
+      memset(p_out_fsal_handle, 0, sizeof(xfsfsal_handle_t));
       memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
       break;
 
       /* NFSV3 handle digest */
     case FSAL_DIGEST_NFSV3:
-      memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_handle_t));
+      memset(p_out_fsal_handle, 0, sizeof(xfsfsal_handle_t));
+      memcpy(p_out_fsal_handle, in_buff, sizeof(xfsfsal_handle_t));
       break;
 
       /* NFSV4 handle digest */
     case FSAL_DIGEST_NFSV4:
-      memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_handle_t));
+      memset(p_out_fsal_handle, 0, sizeof(xfsfsal_handle_t));
+      memcpy(p_out_fsal_handle, in_buff, sizeof(xfsfsal_handle_t));
       break;
 
     default:
