@@ -39,7 +39,6 @@
 #define FSAL_PROXY_INDEX 1
 
 #define fsal_cred_t xfsfsal_cred_t
-#define fsal_export_context_t xfsfsal_export_context_t
 #define fs_specific_initinfo_t xfsfs_specific_initinfo_t
 #define fsal_lockdesc_t xfsfsal_lockdesc_t
 #define fsal_dir_t xfsfsal_dir_t
@@ -55,6 +54,11 @@ typedef struct {
 typedef struct {
   char data[FSAL_OP_CONTEXT_T_SIZE] ;
 } fsal_op_context_t ; 
+
+#define FSAL_EXPORT_CONTEXT_T_SIZE 4204
+typedef struct {
+  char data[FSAL_EXPORT_CONTEXT_T_SIZE] ;
+} fsal_export_context_t ;
 
 #endif /* _FSAL_GLUE_H */
 

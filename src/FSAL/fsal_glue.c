@@ -225,6 +225,12 @@ inline fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */)
      exit( 1 ) ;
    }
 
+  if( fsal_xfs_const.fsal_export_context_t_size != sizeof( fsal_export_context_t ) )
+   {
+     DisplayLog( "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_export_context_t do not match !!!!") ;
+     exit( 1 ) ;
+   }
+
   return fsal_xfs_functions.fsal_init( init_info ) ;
 }
 

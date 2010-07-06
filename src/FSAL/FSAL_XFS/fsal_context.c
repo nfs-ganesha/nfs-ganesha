@@ -36,7 +36,7 @@
 /**
  * build the export entry
  */
-fsal_status_t XFSFSAL_BuildExportContext(fsal_export_context_t * p_export_context, /* OUT */
+fsal_status_t XFSFSAL_BuildExportContext(xfsfsal_export_context_t * p_export_context, /* OUT */
                                          fsal_path_t * p_export_path,      /* IN */
                                          char *fs_specific_options /* IN */
     )
@@ -196,7 +196,7 @@ fsal_status_t XFSFSAL_InitClientContext(xfsfsal_op_context_t * p_thr_context)
  */
 
 fsal_status_t XFSFSAL_GetClientContext(xfsfsal_op_context_t * p_thr_context,  /* IN/OUT  */
-                                    fsal_export_context_t * p_export_context,   /* IN */
+                                    xfsfsal_export_context_t * p_export_context,   /* IN */
                                     fsal_uid_t uid,     /* IN */
                                     fsal_gid_t gid,     /* IN */
                                     fsal_gid_t * alt_groups,    /* IN */
