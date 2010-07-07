@@ -194,6 +194,8 @@ if test "$enable_sharedfsal" == "yes" ; then
 fi
 AM_CONDITIONAL( SHARED_FSAL, test "$enable_sharedfsal" = "yes" )
 
+
+
 # NLMv4 
 GA_ENABLE_AM_CONDITION([nlm],[enable NLMv4 support (Lock management for NFSv3)],[USE_NLM])
 

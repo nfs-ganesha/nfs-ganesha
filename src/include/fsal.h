@@ -1273,6 +1273,8 @@ typedef struct fsal_const__
   unsigned int fsal_dir_t_size ;
 } fsal_const_t ;
 
+int FSAL_LoadLibrary( char * path );
+
 fsal_functions_t  FSAL_GetFunctions( void ) ;
 void  FSAL_LoadFunctions( void ) ;
 
