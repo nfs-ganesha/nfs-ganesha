@@ -152,6 +152,7 @@ int main(int argc, char *argv[])
   pid_t son_pid;
   struct sigaction act_sigusr1;
   struct sigaction act_sigterm;
+  char fsal_path_lib[MAXPATHLEN] ;
 
   /* retrieve executable file's name */
   strncpy(ganesha_exec_path, argv[0], MAXPATHLEN);
@@ -311,17 +312,7 @@ int main(int argc, char *argv[])
         }
     }
 
-
-  /* Get the FSAL functions */
-  FSAL_LoadFunctions() ;
-
-  /* Get the FSAL consts */
-  FSAL_LoadConsts() ;
-
-
-  DisplayLog(">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
-             FSAL_GetFSName());
-
+ 
   /* Set the signal handler */
   memset(&act_sigusr1, 0, sizeof(act_sigusr1));
   act_sigusr1.sa_flags = 0;
@@ -348,6 +339,30 @@ int main(int argc, char *argv[])
     DisplayLogLevel(NIV_EVENT,
                     "Signals SIGTERM and SIGINT (daemon shutdown) are ready to be used");
 
+#ifdef _USE_SHARED_FSAL
+  if( nfs_get_fsalpathlib_conf( my_config_path, fsal_path_lib ) )
+   {
+      DisplayLog("NFS MAIN: Error parsing configuration file.");
+      exit(1);
+   }
+#endif /* _USE_SHARED_FSAL */
+
+  /* Load the FSAL library (if needed) */
+  if( !FSAL_LoadLibrary( fsal_path_lib ) )
+   {
+      DisplayLog("NFS MAIN: Could not load FSAL dynamic library %s", nfs_param.core_param.fsal_shared_library ) ;
+      exit( 1 ) ;
+   }
+
+  /* Get the FSAL functions */
+  FSAL_LoadFunctions() ;
+
+  /* Get the FSAL consts */
+  FSAL_LoadConsts() ;
+
+  DisplayLog(">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
+             FSAL_GetFSName());
+
   /* initialize default parameters */
 
   if(nfs_set_param_default(&nfs_param))
@@ -373,7 +388,8 @@ int main(int argc, char *argv[])
           ("MAJOR WARNING: /!\\ | Bad Parameters could have significant impact on the daemon behavior");
       exit(1);
     }
-
+ 
+ 
   /* Everything seems to be OK! We can now start service threads */
   nfs_start(&nfs_param, &my_nfs_start_info);
 

@@ -11,12 +11,22 @@
 #include "config.h"
 #endif
 
+#ifdef _USE_SHARED_FSAL
+#include <stdlib.h>
+#include <dlfcn.h> /* For dlopen */
+#endif 
+
 #include "fsal.h"
 #include "fsal_types.h"
 #include "fsal_glue.h"
 
 fsal_functions_t fsal_functions ;
 fsal_const_t fsal_consts ;
+
+#ifdef _USE_SHARED_FSAL
+fsal_functions_t (*getfunctions)(void );
+fsal_const_t (*getconsts)(void );
+#endif /* _USE_SHARED_FSAL */
 
 fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
                           fsal_op_context_t * p_context,        /* IN */
@@ -629,6 +639,61 @@ fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* IN */
   return fsal_functions.fsal_removexattrbyname( p_objecthandle, p_context, xattr_name ) ;
 }
 
+
+#ifdef _USE_SHARED_FSAL
+int FSAL_LoadLibrary( char * path )
+{
+  void * handle;
+  char *error;
+
+
+  printf( "============> FSAL_LoadLibrary:%s\n", path ) ;
+
+  if( ( handle = dlopen( path, RTLD_LAZY ) ) == NULL )
+   {
+      DisplayLog( "FSAL_LoadLibrary: could not load fsal: %s", dlerror() ) ;
+      return 0 ;
+   }
+
+  /* Clear any existing error : dlerror will be used to check if dlsym succeeded or not */
+  dlerror();    
+
+  /* Map FSAL_GetFunctions */
+  *(void **) (&getfunctions) =  dlsym( handle, "FSAL_GetFunctions" ) ;
+  if ((error = dlerror()) != NULL) 
+   {
+      DisplayLog( "FSAL_LoadLibrary: Could not map symbol FSAL_GetFunctions:%s", error ) ;
+      return 0 ;
+   }
+  /* Map FSAL_GetConsts */
+  *(void **) (&getconsts) =  dlsym( handle, "FSAL_GetConsts" ) ;
+  if ((error = dlerror()) != NULL) 
+   {
+      DisplayLog( "FSAL_LoadLibrary: Could not map symbol FSAL_GetConsts:%s", error ) ;
+      return 0 ;
+   }
+
+  dlclose(handle);
+
+  return 1 ;
+} /* FSAL_LoadLibrary */
+
+void  FSAL_LoadFunctions( void ) 
+{
+   fsal_functions =  (*getfunctions)() ;
+}
+
+void FSAL_LoadConsts( void )
+{
+   fsal_consts = (*getconsts)() ;
+}
+
+#else
+int FSAL_LoadLibrary( char * path )
+{
+   return 1 ; /* Does nothing, this is the "static" case */
+}
+
 void  FSAL_LoadFunctions( void ) 
 {
    fsal_functions = FSAL_GetFunctions() ;
@@ -639,3 +704,4 @@ void FSAL_LoadConsts( void )
    fsal_consts = FSAL_GetConsts() ;
 }
 
+#endif
