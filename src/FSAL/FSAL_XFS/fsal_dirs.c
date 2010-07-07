@@ -43,7 +43,7 @@
  */
 fsal_status_t XFSFSAL_opendir(xfsfsal_handle_t * p_dir_handle,        /* IN */
                               xfsfsal_op_context_t * p_context,       /* IN */
-                              fsal_dir_t * p_dir_descriptor,       /* OUT */
+                              xfsfsal_dir_t * p_dir_descriptor,       /* OUT */
                               fsal_attrib_list_t * p_dir_attributes        /* [ IN/OUT ] */
     )
 {
@@ -152,7 +152,7 @@ struct linux_dirent
 
 #define BUF_SIZE 1024
 
-fsal_status_t XFSFSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
+fsal_status_t XFSFSAL_readdir(xfsfsal_dir_t * p_dir_descriptor,       /* IN */
                               xfsfsal_cookie_t start_position,        /* IN */
                               fsal_attrib_mask_t get_attr_mask,    /* IN */
                               fsal_mdsize_t buffersize,    /* IN */
@@ -360,7 +360,7 @@ fsal_status_t XFSFSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t XFSFSAL_closedir(fsal_dir_t * p_dir_descriptor       /* IN */
+fsal_status_t XFSFSAL_closedir(xfsfsal_dir_t * p_dir_descriptor       /* IN */
     )
 {
 
@@ -375,7 +375,7 @@ fsal_status_t XFSFSAL_closedir(fsal_dir_t * p_dir_descriptor       /* IN */
     Return(posix2fsal_error(errno), errno, INDEX_FSAL_closedir);
 
   /* fill dir_descriptor with zeros */
-  memset(p_dir_descriptor, 0, sizeof(fsal_dir_t));
+  memset(p_dir_descriptor, 0, sizeof(xfsfsal_dir_t));
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_closedir);
 

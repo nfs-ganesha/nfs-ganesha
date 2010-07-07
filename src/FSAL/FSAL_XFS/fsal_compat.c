@@ -112,7 +112,8 @@ inline fsal_status_t WRAP_XFSFSAL_opendir(fsal_handle_t * p_dir_handle,        /
                            fsal_dir_t * p_dir_descriptor,       /* OUT */
                            fsal_attrib_list_t * p_dir_attributes        /* [ IN/OUT ] */) 
 {
-  return XFSFSAL_opendir( (xfsfsal_handle_t *)p_dir_handle, (xfsfsal_op_context_t *)p_context, p_dir_descriptor, p_dir_attributes ) ;
+  return XFSFSAL_opendir( (xfsfsal_handle_t *)p_dir_handle, (xfsfsal_op_context_t *)p_context, 
+                          (xfsfsal_dir_t *)p_dir_descriptor, p_dir_attributes ) ;
 } 
 
 inline fsal_status_t WRAP_XFSFSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
@@ -128,14 +129,14 @@ inline fsal_status_t WRAP_XFSFSAL_readdir(fsal_dir_t * p_dir_descriptor,       /
 
   memcpy( (char *)&xfscookie, (char *)&start_position, sizeof( xfsfsal_cookie_t ) ) ;
 
-  return XFSFSAL_readdir( p_dir_descriptor, xfscookie, get_attr_mask,
+  return XFSFSAL_readdir( (xfsfsal_dir_t *)p_dir_descriptor, xfscookie, get_attr_mask,
 	     		  buffersize, p_pdirent, (xfsfsal_cookie_t *)p_end_position, p_nb_entries, p_end_of_dir ) ;
 }
 
 
 inline fsal_status_t WRAP_XFSFSAL_closedir(fsal_dir_t * p_dir_descriptor       /* IN */ )
 {
-  return XFSFSAL_closedir( p_dir_descriptor ) ;
+  return XFSFSAL_closedir( (xfsfsal_dir_t *)p_dir_descriptor ) ;
 }
 
 inline fsal_status_t WRAP_XFSFSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
@@ -652,7 +653,7 @@ fsal_functions_t fsal_xfs_functions = {
   .fsal_removexattrbyname = WRAP_XFSFSAL_RemoveXAttrByName
 } ;
 
-fsal_const_t  fsal_xfs_const = {
+fsal_const_t  fsal_xfs_consts = {
   .fsal_handle_t_size = sizeof( xfsfsal_handle_t ) ,
   .fsal_op_context_t_size = sizeof( xfsfsal_op_context_t ), 
   .fsal_export_context_t_size = sizeof( xfsfsal_export_context_t ),
@@ -663,3 +664,16 @@ fsal_const_t  fsal_xfs_const = {
   .fs_specific_initinfo_t_size = sizeof( xfsfs_specific_initinfo_t ),
   .fsal_dir_t_size = sizeof( xfsfsal_dir_t )
 } ;
+
+
+fsal_functions_t  FSAL_GetFunctions( void ) 
+{
+  return fsal_xfs_functions;
+} /* FSAL_GetFunctions */
+
+fsal_const_t FSAL_GetConsts( void ) 
+{
+  return fsal_xfs_consts ;
+} /* FSAL_GetConsts */
+
+

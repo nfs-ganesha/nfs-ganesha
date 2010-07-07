@@ -1273,6 +1273,9 @@ typedef struct fsal_const__
   unsigned int fsal_dir_t_size ;
 } fsal_const_t ;
 
+fsal_functions_t  FSAL_GetFunctions( void ) ;
+
+fsal_const_t FSAL_GetConsts( void ) ;
 
 #endif                          /* ! _USE_SWIG */
 
