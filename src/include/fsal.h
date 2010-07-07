@@ -1274,8 +1274,10 @@ typedef struct fsal_const__
 } fsal_const_t ;
 
 fsal_functions_t  FSAL_GetFunctions( void ) ;
+void  FSAL_LoadFunctions( void ) ;
 
 fsal_const_t FSAL_GetConsts( void ) ;
+void FSAL_LoadConsts( void ) ;
 
 #endif                          /* ! _USE_SWIG */
 

@@ -1,10 +1,15 @@
 AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
+if SHARED_FSAL
 
+lib_LTLIBRARIES = libfsalxfs.la
+libfsalxfs_la_LDFLAGS = -version-number @LIBVERSION@
+libfsalxfs_la_LIBADD = ../../SemN/libSemN.la 
+
+else
 noinst_LTLIBRARIES          = libfsalxfs.la
 
-#lib_LTLIBRARIES = libfsalxfs.la
-
+endif
 
 libfsalxfs_la_SOURCES = fsal_access.c      \
                         fsal_context.c     \
@@ -27,14 +32,6 @@ libfsalxfs_la_SOURCES = fsal_access.c      \
                         fsal_objectres.c   \
                         fsal_stats.c       \
                         fsal_tools.c       \
-			fsal_create.c      \
-                        fsal_fileop.c      \
-                        fsal_internal.c    \
-                        fsal_objectres.c   \
-                        fsal_stats.c       \
-                        fsal_tools.c       \
-                        fsal_quota.c       \
-                        fsal_xattrs.c      \
                         fsal_local_op.c    \
 			fsal_internal.h    \
                         fsal_convert.h     \

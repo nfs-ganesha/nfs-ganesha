@@ -15,6 +15,9 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_GNU_SOURCE
 
 # Uuse libtool
+AM_ENABLE_SHARED(yes)
+AC_ENABLE_SHARED(yes)
+
 AC_PROG_LIBTOOL
 
 # Checks for programs.
@@ -45,6 +48,9 @@ AC_SYS_LARGEFILE
 
 CFLAGS="$CFLAGS -D_REENTRANT"
 
+# Version number for shared object
+LIBVERSION=`echo $VERSION | sed -e 's/\./:/g'`
+AC_SUBST(LIBVERSION)
 
 # set '_EXTENDED_TYPE_NEEDED' in config.h
 AC_DEFINE( [_EXTENDED_TYPE_NEEDED], 1, [Using XDR extended types])
@@ -179,6 +185,14 @@ if test "$enable_gssrpc" == "yes"; then
         AC_CHECK_LIB([gssapi], [gss_import_name], [AC_DEFINE( _HAVE_GSSAPI,1,[enable GSSAPI support] ) ], [AC_MSG_ERROR( [GSSAPI could not be found...] ) ] )
         AC_CHECK_LIB([gssrpc], [gssrpc_authunix_create_default], [AC_DEFINE( _HAVE_GSSRPC,1,[enable GSSRPC support] ) ], [AC_MSG_ERROR( [GSSRPC_KRB5 could not be found...] ) ] )
 fi
+
+#FSAL as a dynamic lib
+GA_ENABLE_AM_CONDITION([sharedfsal], [enable compilation of the FSAL library as a shared library], [SHARED_FSAL])
+
+if test "$enable_sharedfsal" == "yes" ; then
+	AC_DEFINE( _USE_SHARED_FSAL, 1, [enable shared FSAL] )
+fi
+AM_CONDITIONAL( SHARED_FSAL, test "$enable_sharedfsal" = "yes" )
 
 # NLMv4 
 GA_ENABLE_AM_CONDITION([nlm],[enable NLMv4 support (Lock management for NFSv3)],[USE_NLM])

@@ -66,6 +66,9 @@ int debug_level = NIV_EVENT;
 int detach_flag = FALSE;
 char ganesha_exec_path[MAXPATHLEN];
 
+extern fsal_functions_t fsal_functions ;
+extern fsal_const_t fsal_consts ;
+
 /* command line syntax */
 
 char options[] = "h@RTdS:F:S:P:f:L:N:";
@@ -307,6 +310,14 @@ int main(int argc, char *argv[])
           break;
         }
     }
+
+
+  /* Get the FSAL functions */
+  FSAL_LoadFunctions() ;
+
+  /* Get the FSAL consts */
+  FSAL_LoadConsts() ;
+
 
   DisplayLog(">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
              FSAL_GetFSName());
