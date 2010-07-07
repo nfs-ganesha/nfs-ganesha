@@ -338,7 +338,7 @@ void ReleaseTokenFSCall()
  */
 fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
                                         fs_common_initinfo_t * fs_common_info,
-                                        fs_specific_initinfo_t * fs_specific_info)
+                                        xfsfs_specific_initinfo_t * fs_specific_info)
 {
 
   /* sanity check */

@@ -1268,6 +1268,9 @@ typedef struct fsal_const__
   unsigned int fsal_file_t_size ;
   unsigned int fsal_cookie_t_size ;
   unsigned int fsal_lockdesc_t_size ;
+  unsigned int fsal_cred_t_size ;
+  unsigned int fs_specific_initinfo_t_size ;
+  unsigned int fsal_dir_t_size ;
 } fsal_const_t ;
 
 

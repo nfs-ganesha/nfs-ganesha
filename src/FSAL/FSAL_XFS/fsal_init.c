@@ -131,7 +131,7 @@ fsal_status_t XFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
 
   status = fsal_internal_init_global(&(init_info->fsal_info),
                                      &(init_info->fs_common_info),
-                                     &(init_info->fs_specific_info));
+                                     (xfsfs_specific_initinfo_t *)&(init_info->fs_specific_info));
 
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_Init);

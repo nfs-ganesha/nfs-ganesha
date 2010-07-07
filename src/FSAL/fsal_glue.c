@@ -249,6 +249,24 @@ inline fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */)
      exit( 1 ) ;
    }
 
+  if( fsal_xfs_const.fsal_cred_t_size != sizeof( fsal_cred_t ) )
+   {
+     DisplayLog( "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_cred_t do not match !!!!") ;
+     exit( 1 ) ;
+   }
+
+  if( fsal_xfs_const.fs_specific_initinfo_t_size != sizeof( fs_specific_initinfo_t ) )
+   {
+     DisplayLog( "/!\\ MAJOR ERROR : Implementation Error, local and specific fs_specific_initinfo_t do not match !!!!") ;
+     exit( 1 ) ;
+   }
+
+  if( fsal_xfs_const.fsal_dir_t_size != sizeof( fsal_dir_t ) )
+   {
+     DisplayLog( "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_dir_t do not match !!!!") ;
+     exit( 1 ) ;
+   }
+
   return fsal_xfs_functions.fsal_init( init_info ) ;
 }
 
