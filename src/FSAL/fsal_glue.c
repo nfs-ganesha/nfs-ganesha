@@ -15,22 +15,22 @@
 #include "fsal_types.h"
 #include "fsal_glue.h"
 
-extern fsal_functions_t fsal_xfs_functions ;
-extern fsal_const_t fsal_xfs_const ;
+fsal_functions_t fsal_functions ;
+fsal_const_t fsal_consts ;
 
 inline fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
                           fsal_op_context_t * p_context,        /* IN */
                           fsal_accessflags_t access_type,       /* IN */
                           fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */)
 {
-  return fsal_xfs_functions.fsal_access( object_handle, p_context, access_type, object_attributes ) ;
+  return fsal_functions.fsal_access( object_handle, p_context, access_type, object_attributes ) ;
 } 
 
 inline fsal_status_t FSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
                             fsal_op_context_t * p_context,      /* IN */
                             fsal_attrib_list_t * p_object_attributes    /* IN/OUT */) 
 {
-  return fsal_xfs_functions.fsal_getattrs( p_filehandle, p_context, p_object_attributes ) ;
+  return fsal_functions.fsal_getattrs( p_filehandle, p_context, p_object_attributes ) ;
 }
 
 inline fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
@@ -38,19 +38,19 @@ inline fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
                             fsal_attrib_list_t * p_attrib_set,  /* IN */
                             fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */)
 {
-  return fsal_xfs_functions.fsal_setattrs( p_filehandle, p_context, p_attrib_set, p_object_attributes ) ;
+  return fsal_functions.fsal_setattrs( p_filehandle, p_context, p_attrib_set, p_object_attributes ) ;
 }
 
 inline fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, /* OUT */
                                       fsal_path_t * p_export_path,      /* IN */
                                       char *fs_specific_options /* IN */ ) 
 {
-  return fsal_xfs_functions.fsal_buildexportcontext( p_export_context, p_export_path, fs_specific_options ) ;
+  return fsal_functions.fsal_buildexportcontext( p_export_context, p_export_path, fs_specific_options ) ;
 }
 
 inline fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context) 
 {
-  return fsal_xfs_functions.fsal_initclientcontext( p_thr_context ) ;
+  return fsal_functions.fsal_initclientcontext( p_thr_context ) ;
 }
 
 inline fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OUT  */
@@ -60,7 +60,7 @@ inline fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /
                                     fsal_gid_t * alt_groups,    /* IN */
                                     fsal_count_t nb_alt_groups  /* IN */ ) 
 {
-  return fsal_xfs_functions.fsal_getclientcontext( p_thr_context, p_export_context, uid, gid, alt_groups, nb_alt_groups ) ;
+  return fsal_functions.fsal_getclientcontext( p_thr_context, p_export_context, uid, gid, alt_groups, nb_alt_groups ) ;
 }
 
 inline fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
@@ -70,7 +70,7 @@ inline fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /
                           fsal_handle_t * p_object_handle,      /* OUT */
                           fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */ ) 
 {
-  return fsal_xfs_functions.fsal_create( p_parent_directory_handle, p_filename, p_context,
+  return fsal_functions.fsal_create( p_parent_directory_handle, p_filename, p_context,
 					 accessmode, p_object_handle, p_object_attributes ) ;
 }
 
@@ -81,7 +81,7 @@ inline fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /
                          fsal_handle_t * p_object_handle,       /* OUT */
                          fsal_attrib_list_t * p_object_attributes       /* [ IN/OUT ] */)
 {
-  return fsal_xfs_functions.fsal_mkdir( p_parent_directory_handle, p_dirname, p_context,
+  return fsal_functions.fsal_mkdir( p_parent_directory_handle, p_dirname, p_context,
 					accessmode, p_object_handle, p_object_attributes ) ;
 }
 
@@ -92,7 +92,7 @@ inline fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
                         fsal_op_context_t * p_context,  /* IN */
                         fsal_attrib_list_t * p_attributes       /* [ IN/OUT ] */ )
 {
-  return fsal_xfs_functions.fsal_link( p_target_handle, p_dir_handle, p_link_name, p_context, p_attributes ) ;
+  return fsal_functions.fsal_link( p_target_handle, p_dir_handle, p_link_name, p_context, p_attributes ) ;
 }
 
 inline fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
@@ -104,7 +104,7 @@ inline fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
                           fsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
                           fsal_attrib_list_t * node_attributes  /* [ IN/OUT ] */ ) 
 {
-  return fsal_xfs_functions.fsal_mknode( parentdir_handle, p_node_name, p_context, accessmode,
+  return fsal_functions.fsal_mknode( parentdir_handle, p_node_name, p_context, accessmode,
 					 nodetype, dev,   p_object_handle, node_attributes ) ;
 }
 
@@ -114,7 +114,7 @@ inline fsal_status_t FSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
                            fsal_dir_t * p_dir_descriptor,       /* OUT */
                            fsal_attrib_list_t * p_dir_attributes        /* [ IN/OUT ] */) 
 {
-  return fsal_xfs_functions.fsal_opendir( p_dir_handle, p_context, p_dir_descriptor, p_dir_attributes ) ;
+  return fsal_functions.fsal_opendir( p_dir_handle, p_context, p_dir_descriptor, p_dir_attributes ) ;
 } 
 
 inline fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
@@ -126,14 +126,14 @@ inline fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
                            fsal_count_t * p_nb_entries, /* OUT */
                            fsal_boolean_t * p_end_of_dir        /* OUT */ ) 
 {
-  return fsal_xfs_functions.fsal_readdir( p_dir_descriptor, start_position, get_attr_mask,
+  return fsal_functions.fsal_readdir( p_dir_descriptor, start_position, get_attr_mask,
 			     		  buffersize, p_pdirent, p_end_position, p_nb_entries, p_end_of_dir ) ;
 }
 
 
 inline fsal_status_t FSAL_closedir(fsal_dir_t * p_dir_descriptor       /* IN */ )
 {
-  return fsal_xfs_functions.fsal_closedir( p_dir_descriptor ) ;
+  return fsal_functions.fsal_closedir( p_dir_descriptor ) ;
 }
 
 inline fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
@@ -143,7 +143,7 @@ inline fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
                                 fsal_file_t * file_descriptor,  /* OUT */
                                 fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
-  return fsal_xfs_functions.fsal_open_by_name( dirhandle, filename, p_context, openflags, file_descriptor, file_attributes ) ;
+  return fsal_functions.fsal_open_by_name( dirhandle, filename, p_context, openflags, file_descriptor, file_attributes ) ;
 }
 
 inline fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
@@ -152,7 +152,7 @@ inline fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
                         fsal_file_t * p_file_descriptor,        /* OUT */
                         fsal_attrib_list_t * p_file_attributes  /* [ IN/OUT ] */ )
 {
-  return fsal_xfs_functions.fsal_open( p_filehandle, p_context, openflags, p_file_descriptor, p_file_attributes ) ;
+  return fsal_functions.fsal_open( p_filehandle, p_context, openflags, p_file_descriptor, p_file_attributes ) ;
 }
 
 inline fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
@@ -162,7 +162,7 @@ inline fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
                         fsal_size_t * p_read_amount,    /* OUT */
                         fsal_boolean_t * p_end_of_file  /* OUT */)
 {
-  return fsal_xfs_functions.fsal_read( p_file_descriptor, p_seek_descriptor, buffer_size, buffer, p_read_amount, p_end_of_file ) ;
+  return fsal_functions.fsal_read( p_file_descriptor, p_seek_descriptor, buffer_size, buffer, p_read_amount, p_end_of_file ) ;
 }
   
 
@@ -172,12 +172,12 @@ inline fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
                          caddr_t buffer,        /* IN */
                          fsal_size_t * p_write_amount   /* OUT */ )
 {
-  return fsal_xfs_functions.fsal_write( p_file_descriptor, p_seek_descriptor, buffer_size, buffer, p_write_amount ) ;
+  return fsal_functions.fsal_write( p_file_descriptor, p_seek_descriptor, buffer_size, buffer, p_write_amount ) ;
 }
 
 inline fsal_status_t FSAL_close(fsal_file_t * p_file_descriptor        /* IN */ )
 {
-  return fsal_xfs_functions.fsal_close( p_file_descriptor ) ;
+  return fsal_functions.fsal_close( p_file_descriptor ) ;
 }
 
 inline fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
@@ -187,99 +187,105 @@ inline fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
                                   fsal_file_t * file_descriptor,        /* OUT */
                                   fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
-   return fsal_xfs_functions.fsal_open_by_fileid( filehandle, fileid, p_context, openflags, file_descriptor, file_attributes ) ;
+   return fsal_functions.fsal_open_by_fileid( filehandle, fileid, p_context, openflags, file_descriptor, file_attributes ) ;
 }
 
 inline fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
                                    fsal_u64_t fileid)
 {
-   return fsal_xfs_functions.fsal_close_by_fileid( file_descriptor, fileid ) ;
+   return fsal_functions.fsal_close_by_fileid( file_descriptor, fileid ) ;
 }
 
 inline fsal_status_t FSAL_static_fsinfo(fsal_handle_t * p_filehandle,  /* IN */
                                  fsal_op_context_t * p_context, /* IN */
                                  fsal_staticfsinfo_t * p_staticinfo     /* OUT */)
 {
-  return fsal_xfs_functions.fsal_static_fsinfo( p_filehandle, p_context, p_staticinfo ) ;
+  return fsal_functions.fsal_static_fsinfo( p_filehandle, p_context, p_staticinfo ) ;
 }
 
 inline fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle, /* IN */
                                   fsal_op_context_t * p_context,        /* IN */
                                   fsal_dynamicfsinfo_t * p_dynamicinfo  /* OUT */ )
 {
-  return fsal_xfs_functions.fsal_dynamic_fsinfo( p_filehandle, p_context, p_dynamicinfo ) ;
+  return fsal_functions.fsal_dynamic_fsinfo( p_filehandle, p_context, p_dynamicinfo ) ;
 }
 
 inline fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */)
 {
+  /* Get the functions */
+  fsal_functions = FSAL_GetFunctions() ;
+
+  /* Get the consts */
+  fsal_consts = FSAL_GetConsts() ;
+
   /* Sanity check */
-  if( fsal_xfs_const.fsal_handle_t_size != sizeof( fsal_handle_t ) )
+  if( fsal_consts.fsal_handle_t_size != sizeof( fsal_handle_t ) )
    {
      DisplayLog( "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_handle_t do not match !!!!") ;
      exit( 1 ) ;
    }
 
-  if( fsal_xfs_const.fsal_op_context_t_size != sizeof( fsal_op_context_t ) )
+  if( fsal_consts.fsal_op_context_t_size != sizeof( fsal_op_context_t ) )
    {
      DisplayLog( "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_op_context_t do not match !!!!") ;
      exit( 1 ) ;
    }
 
-  if( fsal_xfs_const.fsal_export_context_t_size != sizeof( fsal_export_context_t ) )
+  if( fsal_consts.fsal_export_context_t_size != sizeof( fsal_export_context_t ) )
    {
      DisplayLog( "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_export_context_t do not match !!!!") ;
      exit( 1 ) ;
    }
 
-  if( fsal_xfs_const.fsal_file_t_size != sizeof( fsal_file_t ) )
+  if( fsal_consts.fsal_file_t_size != sizeof( fsal_file_t ) )
    {
      DisplayLog( "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_export_context_t do not match !!!!") ;
      exit( 1 ) ;
    }
 
-  if( fsal_xfs_const.fsal_cookie_t_size != sizeof( fsal_cookie_t ) )
+  if( fsal_consts.fsal_cookie_t_size != sizeof( fsal_cookie_t ) )
    {
      DisplayLog( "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_cookie_t do not match !!!!") ;
      exit( 1 ) ;
    }
 
-  if( fsal_xfs_const.fsal_lockdesc_t_size != sizeof( fsal_lockdesc_t ) )
+  if( fsal_consts.fsal_lockdesc_t_size != sizeof( fsal_lockdesc_t ) )
    {
      DisplayLog( "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_lockdesc_t do not match !!!!") ;
      exit( 1 ) ;
    }
 
-  if( fsal_xfs_const.fsal_cred_t_size != sizeof( fsal_cred_t ) )
+  if( fsal_consts.fsal_cred_t_size != sizeof( fsal_cred_t ) )
    {
      DisplayLog( "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_cred_t do not match !!!!") ;
      exit( 1 ) ;
    }
 
-  if( fsal_xfs_const.fs_specific_initinfo_t_size != sizeof( fs_specific_initinfo_t ) )
+  if( fsal_consts.fs_specific_initinfo_t_size != sizeof( fs_specific_initinfo_t ) )
    {
      DisplayLog( "/!\\ MAJOR ERROR : Implementation Error, local and specific fs_specific_initinfo_t do not match !!!!") ;
      exit( 1 ) ;
    }
 
-  if( fsal_xfs_const.fsal_dir_t_size != sizeof( fsal_dir_t ) )
+  if( fsal_consts.fsal_dir_t_size != sizeof( fsal_dir_t ) )
    {
      DisplayLog( "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_dir_t do not match !!!!") ;
      exit( 1 ) ;
    }
 
-  return fsal_xfs_functions.fsal_init( init_info ) ;
+  return fsal_functions.fsal_init( init_info ) ;
 }
 
 inline fsal_status_t FSAL_terminate()
 {
-  return fsal_xfs_functions.fsal_terminate() ;
+  return fsal_functions.fsal_terminate() ;
 }
 
 inline fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
                                fsal_accessflags_t access_type,  /* IN */
                                fsal_attrib_list_t * p_object_attributes /* IN */ ) 
 {
-  return fsal_xfs_functions.fsal_test_access( p_context, access_type, p_object_attributes ) ;
+  return fsal_functions.fsal_test_access( p_context, access_type, p_object_attributes ) ;
 }
 
 inline fsal_status_t FSAL_setattr_access(fsal_op_context_t * p_context,        /* IN */
@@ -287,7 +293,7 @@ inline fsal_status_t FSAL_setattr_access(fsal_op_context_t * p_context,        /
                                   fsal_attrib_list_t * object_attributes        /* IN */ )
 
 {
-  return fsal_xfs_functions.fsal_setattr_access( p_context, candidate_attributes, object_attributes ) ;
+  return fsal_functions.fsal_setattr_access( p_context, candidate_attributes, object_attributes ) ;
 }
 
 inline fsal_status_t FSAL_rename_access(fsal_op_context_t * pcontext,  /* IN */
@@ -295,35 +301,35 @@ inline fsal_status_t FSAL_rename_access(fsal_op_context_t * pcontext,  /* IN */
                                  fsal_attrib_list_t * pattrdest)        /* IN */
 
 {
-  return fsal_xfs_functions.fsal_rename_access( pcontext, pattrsrc, pattrdest ) ;
+  return fsal_functions.fsal_rename_access( pcontext, pattrsrc, pattrdest ) ;
 }
 
 inline fsal_status_t FSAL_create_access(fsal_op_context_t * pcontext,  /* IN */
                                  fsal_attrib_list_t * pattr)    /* IN */
 
 {
-  return fsal_xfs_functions.fsal_create_access( pcontext, pattr ) ;
+  return fsal_functions.fsal_create_access( pcontext, pattr ) ;
 }
 
 inline fsal_status_t FSAL_unlink_access(fsal_op_context_t * pcontext,  /* IN */
                                  fsal_attrib_list_t * pattr)    /* IN */
 
 {
-  return fsal_xfs_functions.fsal_unlink_access( pcontext, pattr ) ;
+  return fsal_functions.fsal_unlink_access( pcontext, pattr ) ;
 }
 
 inline fsal_status_t FSAL_link_access(fsal_op_context_t * pcontext,    /* IN */
                                fsal_attrib_list_t * pattr)      /* IN */
 
 {
-  return fsal_xfs_functions.fsal_link_access( pcontext, pattr ) ;
+  return fsal_functions.fsal_link_access( pcontext, pattr ) ;
 }
 
 inline fsal_status_t FSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
                                fsal_attrib_list_t * pnew_attr,
                                fsal_attrib_list_t * presult_attr)
 {
-  return fsal_xfs_functions.fsal_merge_attrs( pinit_attr, pnew_attr, presult_attr ) ;
+  return fsal_functions.fsal_merge_attrs( pinit_attr, pnew_attr, presult_attr ) ;
 }
 
 inline fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
@@ -332,7 +338,7 @@ inline fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /
                           fsal_handle_t * p_object_handle,      /* OUT */
                           fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */)
 {
-  return fsal_xfs_functions.fsal_lookup( p_parent_directory_handle, p_filename, p_context,
+  return fsal_functions.fsal_lookup( p_parent_directory_handle, p_filename, p_context,
 					 p_object_handle, p_object_attributes ) ;
 }
 
@@ -341,7 +347,7 @@ inline fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
                               fsal_handle_t * object_handle,    /* OUT */
                               fsal_attrib_list_t * p_object_attributes  /* [ IN/OUT ] */)
 {
-  return fsal_xfs_functions.fsal_lookuppath( p_path, p_context, object_handle, p_object_attributes ) ;
+  return fsal_functions.fsal_lookuppath( p_path, p_context, object_handle, p_object_attributes ) ;
 }
 
 inline fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
@@ -349,34 +355,34 @@ inline fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /
                                   fsal_handle_t * p_fsoot_handle,       /* OUT */
                                   fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */)
 {  
-  return fsal_xfs_functions.fsal_lookupjunction( p_junction_handle, p_context, p_fsoot_handle, p_fsroot_attributes ) ;
+  return fsal_functions.fsal_lookupjunction( p_junction_handle, p_context, p_fsoot_handle, p_fsroot_attributes ) ;
 }
 
 inline fsal_status_t FSAL_lock(fsal_file_t * obj_handle,
                         fsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
 {
-  return fsal_xfs_functions.fsal_lock( obj_handle, ldesc, blocking ) ;
+  return fsal_functions.fsal_lock( obj_handle, ldesc, blocking ) ;
 }
 
 inline fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
                               fsal_lockparam_t * lock_info      /* IN */)
 {
-  return fsal_xfs_functions.fsal_changelock( lock_descriptor, lock_info ) ;
+  return fsal_functions.fsal_changelock( lock_descriptor, lock_info ) ;
 }
 
 inline fsal_status_t FSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {
-  return fsal_xfs_functions.fsal_unlock( obj_handle, ldesc ) ;
+  return fsal_functions.fsal_unlock( obj_handle, ldesc ) ;
 }
 
 inline fsal_status_t FSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {
-  return fsal_xfs_functions.fsal_getlock( obj_handle, ldesc ) ;
+  return fsal_functions.fsal_getlock( obj_handle, ldesc ) ;
 }
 
 inline fsal_status_t FSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle)
 {
-  return fsal_xfs_functions.fsal_cleanobjectresources( in_fsal_handle ) ;
+  return fsal_functions.fsal_cleanobjectresources( in_fsal_handle ) ;
 }
 
 inline fsal_status_t FSAL_set_quota(fsal_path_t * pfsal_path,  /* IN */
@@ -385,7 +391,7 @@ inline fsal_status_t FSAL_set_quota(fsal_path_t * pfsal_path,  /* IN */
                              fsal_quota_t * pquota,     /* IN */
                              fsal_quota_t * presquota)  /* OUT */
 {
-  return fsal_xfs_functions.fsal_set_quota( pfsal_path, quota_type, fsal_uid, pquota, presquota ) ;
+  return fsal_functions.fsal_set_quota( pfsal_path, quota_type, fsal_uid, pquota, presquota ) ;
 }
 
 inline fsal_status_t FSAL_get_quota(fsal_path_t * pfsal_path,  /* IN */
@@ -393,7 +399,7 @@ inline fsal_status_t FSAL_get_quota(fsal_path_t * pfsal_path,  /* IN */
                              fsal_uid_t fsal_uid,       /* IN */
                              fsal_quota_t * pquota)     /* OUT */ 
 {
-  return fsal_xfs_functions.fsal_get_quota( pfsal_path, quota_type, fsal_uid, pquota ) ;
+  return fsal_functions.fsal_get_quota( pfsal_path, quota_type, fsal_uid, pquota ) ;
 }
 
 inline fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
@@ -401,7 +407,7 @@ inline fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
                        fsal_path_t * p_local_path,      /* IN */
                        fsal_rcpflag_t transfer_opt      /* IN */)
 {
-  return fsal_xfs_functions.fsal_rcp( filehandle, p_context, p_local_path, transfer_opt ) ;
+  return fsal_functions.fsal_rcp( filehandle, p_context, p_local_path, transfer_opt ) ;
 }
 
 inline fsal_status_t FSAL_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
@@ -410,7 +416,7 @@ inline fsal_status_t FSAL_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
                                  fsal_path_t * p_local_path,    /* IN */
                                  fsal_rcpflag_t transfer_opt /* IN */ ) 
 {
-  return fsal_xfs_functions.fsal_rcp_by_fileid( filehandle, fileid, p_context, p_local_path, transfer_opt ) ;
+  return fsal_functions.fsal_rcp_by_fileid( filehandle, fileid, p_context, p_local_path, transfer_opt ) ;
 }
 
 inline fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
@@ -421,14 +427,14 @@ inline fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /
                           fsal_attrib_list_t * p_src_dir_attributes,    /* [ IN/OUT ] */
                           fsal_attrib_list_t * p_tgt_dir_attributes     /* [ IN/OUT ] */)
 {
-  return fsal_xfs_functions.fsal_rename( p_old_parentdir_handle, p_old_name, p_new_parentdir_handle, p_new_name, 
+  return fsal_functions.fsal_rename( p_old_parentdir_handle, p_old_name, p_new_parentdir_handle, p_new_name, 
 					 p_context, p_src_dir_attributes, p_tgt_dir_attributes ) ;
 }
 
 inline void FSAL_get_stats(fsal_statistics_t * stats,  /* OUT */
                     fsal_boolean_t reset        /* IN */)
 {
-  return fsal_xfs_functions.fsal_get_stats( stats, reset ) ;
+  return fsal_functions.fsal_get_stats( stats, reset ) ;
 }
 
 
@@ -437,7 +443,7 @@ inline fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
                             fsal_path_t * p_link_content,       /* OUT */
                             fsal_attrib_list_t * p_link_attributes      /* [ IN/OUT ] */)
 {
-  return fsal_xfs_functions.fsal_readlink( p_linkhandle, p_context, p_link_content, p_link_attributes ) ;
+  return fsal_functions.fsal_readlink( p_linkhandle, p_context, p_link_content, p_link_attributes ) ;
 }
 
 inline fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
@@ -448,26 +454,26 @@ inline fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /
                            fsal_handle_t * p_link_handle,       /* OUT */
                            fsal_attrib_list_t * p_link_attributes       /* [ IN/OUT ] */) 
 {
-  return fsal_xfs_functions.fsal_symlink( p_parent_directory_handle, p_linkname, p_linkcontent, 
+  return fsal_functions.fsal_symlink( p_parent_directory_handle, p_linkname, p_linkcontent, 
 					  p_context, accessmode, p_link_handle, p_link_attributes ) ;
 }
 
 inline int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
                    fsal_status_t * status) 
 {
-  return fsal_xfs_functions.fsal_handlecmp( handle1, handle2, status ) ;
+  return fsal_functions.fsal_handlecmp( handle1, handle2, status ) ;
 }
 
 inline unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
                                       unsigned int cookie,
                                       unsigned int alphabet_len, unsigned int index_size)
 {
-  return fsal_xfs_functions.fsal_handle_to_hashindex( p_handle, cookie, alphabet_len, index_size ) ;
+  return fsal_functions.fsal_handle_to_hashindex( p_handle, cookie, alphabet_len, index_size ) ;
 }
 
 inline unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cookie)
 {
-  return fsal_xfs_functions.fsal_handle_to_rbtindex( p_handle, cookie ) ;
+  return fsal_functions.fsal_handle_to_rbtindex( p_handle, cookie ) ;
 }
 
 inline fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
@@ -475,7 +481,7 @@ inline fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /
                                 fsal_handle_t * p_in_fsal_handle,       /* IN */
                                 caddr_t out_buff        /* OUT */)
 {
-  return fsal_xfs_functions.fsal_digesthandle( p_expcontext, output_type, p_in_fsal_handle, out_buff ) ;
+  return fsal_functions.fsal_digesthandle( p_expcontext, output_type, p_in_fsal_handle, out_buff ) ;
 }
 
 inline fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
@@ -483,40 +489,40 @@ inline fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /
                                 caddr_t in_buff,        /* IN */
                                 fsal_handle_t * p_out_fsal_handle       /* OUT */)
 {
-  return fsal_xfs_functions.fsal_expandhandle( p_expcontext, in_type, in_buff, p_out_fsal_handle ) ;
+  return fsal_functions.fsal_expandhandle( p_expcontext, in_type, in_buff, p_out_fsal_handle ) ;
 }
 
 inline fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter) 
 {
-  return fsal_xfs_functions.fsal_setdefault_fsal_parameter( out_parameter ) ;
+  return fsal_functions.fsal_setdefault_fsal_parameter( out_parameter ) ;
 }
 
 inline fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
 {
-  return fsal_xfs_functions.fsal_setdefault_fs_common_parameter( out_parameter ) ;
+  return fsal_functions.fsal_setdefault_fs_common_parameter( out_parameter ) ;
 }
 
 inline fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
 {
-  return fsal_xfs_functions.fsal_setdefault_fs_specific_parameter( out_parameter ) ;
+  return fsal_functions.fsal_setdefault_fs_specific_parameter( out_parameter ) ;
 }
 
 inline fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
                                                  fsal_parameter_t * out_parameter)
 {
-  return fsal_xfs_functions.fsal_load_fsal_parameter_from_conf( in_config, out_parameter ) ;
+  return fsal_functions.fsal_load_fsal_parameter_from_conf( in_config, out_parameter ) ;
 }
 
 inline fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
                                                       fsal_parameter_t * out_parameter)
 {
-  return fsal_xfs_functions.fsal_load_fs_common_parameter_from_conf( in_config, out_parameter ) ;
+  return fsal_functions.fsal_load_fs_common_parameter_from_conf( in_config, out_parameter ) ;
 }
 
 inline fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
                                                         fsal_parameter_t * out_parameter)
 {
-  return fsal_xfs_functions.fsal_load_fs_specific_parameter_from_conf( in_config, out_parameter ) ;
+  return fsal_functions.fsal_load_fs_specific_parameter_from_conf( in_config, out_parameter ) ;
 }
 
 inline fsal_status_t FSAL_truncate(fsal_handle_t * p_filehandle,      
@@ -525,7 +531,7 @@ inline fsal_status_t FSAL_truncate(fsal_handle_t * p_filehandle,
                             fsal_file_t * file_descriptor,      
                             fsal_attrib_list_t * p_object_attributes )
 {
-  return fsal_xfs_functions.fsal_truncate( p_filehandle, p_context, length, file_descriptor, p_object_attributes ) ;
+  return fsal_functions.fsal_truncate( p_filehandle, p_context, length, file_descriptor, p_object_attributes ) ;
 }
 
 inline fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
@@ -533,12 +539,12 @@ inline fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /
                           fsal_op_context_t * p_context,        /* IN */
                           fsal_attrib_list_t * p_parent_directory_attributes    /* [IN/OUT ] */)
 {
-  return fsal_xfs_functions.fsal_unlink( p_parent_directory_handle, p_object_name, p_context, p_parent_directory_attributes ) ;
+  return fsal_functions.fsal_unlink( p_parent_directory_handle, p_object_name, p_context, p_parent_directory_attributes ) ;
 } 
 
 inline char *FSAL_GetFSName()
 {
-  return fsal_xfs_functions.fsal_getfsname() ;
+  return fsal_functions.fsal_getfsname() ;
 }
 
 inline fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
@@ -546,7 +552,7 @@ inline fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /
                                  unsigned int xattr_id, /* IN */
                                  fsal_attrib_list_t * p_attrs ) 
 {
-  return fsal_xfs_functions.fsal_getxattrattrs( p_objecthandle, p_context, xattr_id, p_attrs ) ;
+  return fsal_functions.fsal_getxattrattrs( p_objecthandle, p_context, xattr_id, p_attrs ) ;
 }
 
 inline fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
@@ -557,7 +563,7 @@ inline fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
                               unsigned int *p_nb_returned,      /* OUT */
                               int *end_of_list  /* OUT */ ) 
 {
-  return fsal_xfs_functions.fsal_listxattrs( p_objecthandle, cookie, p_context,
+  return fsal_functions.fsal_listxattrs( p_objecthandle, cookie, p_context,
 					     xattrs_tab, xattrs_tabsize, p_nb_returned, end_of_list );
 }
 
@@ -568,7 +574,7 @@ inline fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /
                                      size_t buffer_size,        /* IN */
                                      size_t * p_output_size     /* OUT */ ) 
 {
-  return fsal_xfs_functions.fsal_getxattrvaluebyid( p_objecthandle, xattr_id, p_context, 
+  return fsal_functions.fsal_getxattrvaluebyid( p_objecthandle, xattr_id, p_context, 
 						    buffer_addr, buffer_size, p_output_size ) ;
 }
 
@@ -577,7 +583,7 @@ inline fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /
                                     fsal_op_context_t * p_context,      /* IN */
                                     unsigned int *pxattr_id     /* OUT */ ) 
 {
-  return fsal_xfs_functions.fsal_getxattridbyname( p_objecthandle, xattr_name, p_context, pxattr_id ) ;
+  return fsal_functions.fsal_getxattridbyname( p_objecthandle, xattr_name, p_context, pxattr_id ) ;
 }
 
 inline fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,  /* IN */
@@ -588,7 +594,7 @@ inline fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,  /
                                        size_t * p_output_size   /* OUT */ ) 
 
 {
-  return fsal_xfs_functions.fsal_getxattrvaluebyname( p_objecthandle, xattr_name, p_context,
+  return fsal_functions.fsal_getxattrvaluebyname( p_objecthandle, xattr_name, p_context,
 						      buffer_addr, buffer_size, p_output_size ) ;
 }
 
@@ -599,7 +605,7 @@ inline fsal_status_t FSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,        /
                                  size_t buffer_size,    /* IN */
                                  int create     /* IN */) 
 {
-  return fsal_xfs_functions.fsal_setxattrvalue( p_objecthandle, xattr_name, p_context,
+  return fsal_functions.fsal_setxattrvalue( p_objecthandle, xattr_name, p_context,
 						buffer_addr, buffer_size, create ) ;
 }
 
@@ -609,7 +615,7 @@ inline fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /
                                      caddr_t buffer_addr,       /* IN */
                                      size_t buffer_size /* IN */ ) 
 {
-  return fsal_xfs_functions.fsal_setxattrvaluebyid( p_objecthandle, xattr_id, p_context,
+  return fsal_functions.fsal_setxattrvaluebyid( p_objecthandle, xattr_id, p_context,
 						    buffer_addr, buffer_size ) ;
 }
 
@@ -617,7 +623,7 @@ inline fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,      /
                                    fsal_op_context_t * p_context,       /* IN */
                                    unsigned int xattr_id)       /* IN */
 {
-  return fsal_xfs_functions.fsal_removexattrbyid( p_objecthandle, p_context, xattr_id ) ;
+  return fsal_functions.fsal_removexattrbyid( p_objecthandle, p_context, xattr_id ) ;
 }
 
 inline fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* IN */
@@ -625,5 +631,5 @@ inline fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /
                                      const fsal_name_t * xattr_name)    /* IN */
 
 {
-  return fsal_xfs_functions.fsal_removexattrbyname( p_objecthandle, p_context, xattr_name ) ;
+  return fsal_functions.fsal_removexattrbyname( p_objecthandle, p_context, xattr_name ) ;
 }
