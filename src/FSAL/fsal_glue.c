@@ -677,8 +677,6 @@ int FSAL_LoadLibrary( char * path )
       return 0 ;
    }
 
-  //dlclose(handle);
-
   return 1 ;
 } /* FSAL_LoadLibrary */
 
