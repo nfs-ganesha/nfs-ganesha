@@ -1,6 +1,6 @@
 AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
-if SHARED_FSAL
+if BUILD_SHARED_FSAL
 
 lib_LTLIBRARIES = libfsalxfs.la
 libfsalxfs_la_LDFLAGS = -version-number @LIBVERSION@

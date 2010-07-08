@@ -186,6 +186,15 @@ if test "$enable_gssrpc" == "yes"; then
         AC_CHECK_LIB([gssrpc], [gssrpc_authunix_create_default], [AC_DEFINE( _HAVE_GSSRPC,1,[enable GSSRPC support] ) ], [AC_MSG_ERROR( [GSSRPC_KRB5 could not be found...] ) ] )
 fi
 
+# Build FSAL's dynamic lib
+GA_ENABLE_AM_CONDITION([sharedfsal],[when enable, build the FSAL as both static and dynamic library],[BUILD_SHARED_FSAL])
+
+if test "$enable_sharedfsal" == "yes"; then
+        AC_DEFINE(_BUILD_SHARED_FSAL,1,[Build shared FSAL])
+fi
+AM_CONDITIONAL(BUILD_SHARED_FSAL, test "$enable_sharedfsal" = "yes")
+
+
 # NLMv4 
 GA_ENABLE_AM_CONDITION([nlm],[enable NLMv4 support (Lock management for NFSv3)],[USE_NLM])
 
