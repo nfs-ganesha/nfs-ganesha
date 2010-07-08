@@ -35,6 +35,12 @@
 
 #include "fsal.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+
+
 /* convert error codes */
 int posix2fsal_error(int posix_errorcode);
 

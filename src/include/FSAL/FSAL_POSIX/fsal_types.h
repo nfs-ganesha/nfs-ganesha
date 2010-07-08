@@ -151,8 +151,8 @@ typedef void *fsal_export_context_t;
 
 typedef struct
 {
+  fsal_export_context_t *export_context; /* Must be the first entry in this structure */
   fsal_cred_t credential;
-  fsal_export_context_t *export_context;
   fsal_posixdb_conn *p_conn;
 } fsal_op_context_t;
 
@@ -200,7 +200,7 @@ typedef struct fsal_file__
   int ro;                       /* read only file ? */
 } fsal_file_t;
 
-#define FSAL_FILENO( p_fsal_file )  ( fileno( (p_fsal_file)->p_file ) )
+//#define FSAL_FILENO( p_fsal_file )  ( fileno( (p_fsal_file)->p_file ) )
 
 #else
 typedef struct fsal_file__

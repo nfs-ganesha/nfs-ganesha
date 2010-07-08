@@ -101,8 +101,8 @@ typedef struct fsal_export_context__
 
 typedef struct fsal_op_context__
 {
+  fsal_export_context_t *export_context; /* Must be the first entry in this structure */
   fsal_cred_t credential;
-  fsal_export_context_t *export_context;
   struct ganefuse_context ganefuse_context;
 } fsal_op_context_t;
 
@@ -124,7 +124,7 @@ typedef struct fsal_file__
   fsal_off_t current_offset;
 } fsal_file_t;
 
-# define FSAL_FILENO(_p_f) ( (_p_f)->file_info.fh )
+//# define FSAL_FILENO(_p_f) ( (_p_f)->file_info.fh )
 
 typedef off_t fsal_cookie_t;
 

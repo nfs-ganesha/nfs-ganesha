@@ -186,16 +186,6 @@ if test "$enable_gssrpc" == "yes"; then
         AC_CHECK_LIB([gssrpc], [gssrpc_authunix_create_default], [AC_DEFINE( _HAVE_GSSRPC,1,[enable GSSRPC support] ) ], [AC_MSG_ERROR( [GSSRPC_KRB5 could not be found...] ) ] )
 fi
 
-#FSAL as a dynamic lib
-GA_ENABLE_AM_CONDITION([sharedfsal], [enable compilation of the FSAL library as a shared library], [SHARED_FSAL])
-
-if test "$enable_sharedfsal" == "yes" ; then
-	AC_DEFINE( _USE_SHARED_FSAL, 1, [enable shared FSAL] )
-fi
-AM_CONDITIONAL( SHARED_FSAL, test "$enable_sharedfsal" = "yes" )
-
-
-
 # NLMv4 
 GA_ENABLE_AM_CONDITION([nlm],[enable NLMv4 support (Lock management for NFSv3)],[USE_NLM])
 
@@ -337,7 +327,7 @@ if test "${with_extra_includedir+set}" == "set"; then
 fi
 
 # FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS (default=PROXY)],[specify the type of filesystem to be exported] ),
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|DLPOEN (default=PROXY)],[specify the type of filesystem to be exported] ),
 	     FSAL="$withval", FSAL="PROXY")
 
 # exporting USE_FSAL_... for conditional compilation
@@ -351,6 +341,7 @@ AM_CONDITIONAL(USE_FSAL_LUSTRE,  test "$FSAL" = "LUSTRE")
 AM_CONDITIONAL(USE_FSAL_XFS,     test "$FSAL" = "XFS")
 AM_CONDITIONAL(USE_FSAL_GPFS,     test "$FSAL" = "GPFS")
 AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
+AM_CONDITIONAL(SHARED_FSAL, test "$FSAL" = "DLOPEN")
 
 # NFSv4.0 NFSv4.1 switch
 AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  (default=0)], [specify if server support NFSv4 or NFSv4.1] ),
@@ -472,7 +463,14 @@ case $FSAL in
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_XFS/libfsalxfs.la"
 		FS_NAME="xfs"
 		;;
-
+        DLOPEN)
+               	AC_DEFINE( _USE_SHARED_FSAL, 1, [enable shared FSAL] )
+		AM_CONDITIONAL( SHARED_FSAL, test "$FSAL" = "DLOPEN" )
+		FSAL_CFLAGS=-rdynamic
+                FSAL_LDFLAGS="-ldl"
+		FSAL_LIB=
+		FS_NAME="dlopen"
+                ;;
 	GPFS)
 		AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
 		FSAL_CFLAGS=
@@ -480,7 +478,6 @@ case $FSAL in
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_GPFS/libfsalgpfs.la"
 		FS_NAME="gpfs"
 		;;
-
 	POSIX)
 
 		case "$DBTYPE" in

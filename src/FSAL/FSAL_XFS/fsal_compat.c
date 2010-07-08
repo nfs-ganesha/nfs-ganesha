@@ -650,7 +650,8 @@ fsal_functions_t fsal_xfs_functions = {
   .fsal_setxattrvalue = WRAP_XFSFSAL_SetXAttrValue           ,
   .fsal_setxattrvaluebyid = WRAP_XFSFSAL_SetXAttrValueById   ,
   .fsal_removexattrbyid = WRAP_XFSFSAL_RemoveXAttrById       ,
-  .fsal_removexattrbyname = WRAP_XFSFSAL_RemoveXAttrByName
+  .fsal_removexattrbyname = WRAP_XFSFSAL_RemoveXAttrByName   ,
+  .fsal_getfileno = XFSFSAL_GetFileno
 } ;
 
 fsal_const_t  fsal_xfs_consts = {

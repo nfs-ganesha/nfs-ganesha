@@ -230,7 +230,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */)
      exit( 1 ) ;
    }
 
-  if( fsal_consts.fsal_op_context_t_size != sizeof( fsal_op_context_t ) )
+  if( fsal_consts.fsal_op_context_t_size != sizeof( fsal_op_context_t ) - sizeof( void *)  )
    {
      DisplayLog( "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_op_context_t do not match !!!!") ;
      exit( 1 ) ;
@@ -637,6 +637,11 @@ fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* IN */
 
 {
   return fsal_functions.fsal_removexattrbyname( p_objecthandle, p_context, xattr_name ) ;
+}
+
+unsigned int FSAL_GetFileno( fsal_file_t * pfile )
+{
+  return fsal_functions.fsal_getfileno( pfile ) ;
 }
 
 

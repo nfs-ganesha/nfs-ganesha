@@ -112,6 +112,14 @@
                 = FSAL_INIT_FS_DEFAULT ;                             \
            } while (0)
 
+
+
+/** This macro sets the cookie to its initial value
+ */
+#define FSAL_SET_COOKIE_BEGINNING( cookie ) memset( (char *)&cookie, 0, sizeof( fsal_cookie_t ) )
+
+#define FSAL_GET_EXP_CTX( popctx ) (fsal_export_context_t *)(popctx->export_context)
+
 /**
  * Those routines set the default parameters
  * for FSAL init structure.
@@ -812,6 +820,9 @@ fsal_status_t FSAL_set_quota(fsal_path_t * pfsal_path,  /* IN */
  *                Standard convertion routines.
  ******************************************************/
 
+unsigned int FSAL_GetFileno( fsal_file_t * pfile ) ;
+#define FSAL_FILENO( pfile ) FSAL_GetFileno( pfile ) 
+
 /**
  * fsal2unix_mode:
  * Convert FSAL mode to posix mode.
@@ -822,6 +833,8 @@ fsal_status_t FSAL_set_quota(fsal_path_t * pfsal_path,  /* IN */
  * \return The posix mode associated to fsal_mode.
  */
 mode_t fsal2unix_mode(fsal_accessmode_t fsal_mode);
+
+fsal_dev_t posix2fsal_devt(dev_t posix_devid) ;
 
 /**
  * unix2fsal_mode:
@@ -1256,6 +1269,9 @@ typedef struct fsal_functions__
   fsal_status_t (*fsal_removexattrbyname)(fsal_handle_t * p_objecthandle,    /* IN */
                                           fsal_op_context_t * p_context,     /* IN */
                                           const fsal_name_t * xattr_name)    /* IN */;
+
+  /* get fileno */
+  unsigned int (*fsal_getfileno)( fsal_file_t *) ;
 
 } fsal_functions_t ;
 

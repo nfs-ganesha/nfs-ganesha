@@ -13,6 +13,7 @@ endif
 
 libfsalxfs_la_SOURCES = fsal_access.c      \
                         fsal_context.c     \
+                        fsal_convert.c     \
                         fsal_compat.c      \
                         fsal_dirs.c        \
                         fsal_fsinfo.c      \
@@ -20,7 +21,6 @@ libfsalxfs_la_SOURCES = fsal_access.c      \
                         fsal_rcp.c         \
                         fsal_truncate.c    \
 			fsal_attrs.c       \
-                        fsal_convert.c     \
                         fsal_init.c        \
                         fsal_lookup.c      \
                         fsal_rename.c      \
@@ -34,12 +34,12 @@ libfsalxfs_la_SOURCES = fsal_access.c      \
                         fsal_tools.c       \
                         fsal_local_op.c    \
 			fsal_internal.h    \
-                        fsal_convert.h     \
                         fsal_xattrs.c      \
                         fsal_quota.c       \
-                        ../../include/fsal.h       \
-                        ../../include/fsal_types.h \
-                        ../../include/err_fsal.h   \
+                        ../../include/fsal_convert.h \
+                        ../../include/fsal.h         \
+                        ../../include/fsal_types.h   \
+                        ../../include/err_fsal.h     \
                         ../../include/FSAL/FSAL_XFS/fsal_types.h
 
 
