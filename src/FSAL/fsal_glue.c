@@ -651,8 +651,7 @@ int FSAL_LoadLibrary( char * path )
   void * handle;
   char *error;
 
-
-  printf( "============> FSAL_LoadLibrary:%s\n", path ) ;
+  DisplayLog( "Load shared FSAL : %s", path ) ;
 
   if( ( handle = dlopen( path, RTLD_LAZY ) ) == NULL )
    {
@@ -678,7 +677,7 @@ int FSAL_LoadLibrary( char * path )
       return 0 ;
    }
 
-  dlclose(handle);
+  //dlclose(handle);
 
   return 1 ;
 } /* FSAL_LoadLibrary */
