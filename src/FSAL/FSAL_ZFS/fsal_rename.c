@@ -82,7 +82,9 @@ fsal_status_t FSAL_rename(fsal_handle_t * old_parentdir_handle, /* IN */
 
   TakeTokenFSCall();
 
-  rc = libzfswrap_rename(p_context->export_context->p_vfs, old_parentdir_handle->zfs_handle, p_old_name->name, new_parentdir_handle->zfs_handle, p_new_name->name);
+  rc = libzfswrap_rename(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                         old_parentdir_handle->zfs_handle, p_old_name->name,
+                         new_parentdir_handle->zfs_handle, p_new_name->name);
 
   ReleaseTokenFSCall();
 

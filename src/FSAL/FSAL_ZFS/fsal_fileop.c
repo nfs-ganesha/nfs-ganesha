@@ -86,7 +86,8 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
 
   /* >> call your FS open function << */
   vnode_t *p_vnode;
-  rc = libzfswrap_open(p_context->export_context->p_vfs, filehandle->zfs_handle, posix_flags, &p_vnode);
+  rc = libzfswrap_open(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                       filehandle->zfs_handle, posix_flags, &p_vnode);
 
   ReleaseTokenFSCall();
 
@@ -96,10 +97,11 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
 
   /* >> fill output struct << */
   file_descriptor->p_vfs = p_context->export_context->p_vfs;
-  file_descriptor->flags = openflags;
+  file_descriptor->flags = posix_flags;
   file_descriptor->current_offset = 0;
   file_descriptor->p_vnode = p_vnode;
   file_descriptor->zfs_handle = filehandle->zfs_handle;
+  file_descriptor->cred = p_context->user_credential.cred;
 
   if(file_attributes)
   {
@@ -238,7 +240,7 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
     }
   }
 
-  rc = libzfswrap_read(file_descriptor->p_vfs, file_descriptor->p_vnode, buffer, buffer_size, behind, offset);
+  rc = libzfswrap_read(file_descriptor->p_vfs, &file_descriptor->cred, file_descriptor->p_vnode, buffer, buffer_size, behind, offset);
 
   ReleaseTokenFSCall();
 
@@ -311,7 +313,7 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
     }
   }
 
-  rc = libzfswrap_write(file_descriptor->p_vfs, file_descriptor->p_vnode, buffer, buffer_size, behind, offset);
+  rc = libzfswrap_write(file_descriptor->p_vfs, &file_descriptor->cred, file_descriptor->p_vnode, buffer, buffer_size, behind, offset);
 
 
   ReleaseTokenFSCall();
@@ -352,8 +354,7 @@ fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
 
   TakeTokenFSCall();
 
-  /** @TODO: give the flags to be sure that everything goes right !! */
-  rc = libzfswrap_close(file_descriptor->p_vfs, file_descriptor->p_vnode, 0);
+  rc = libzfswrap_close(file_descriptor->p_vfs, &file_descriptor->cred, file_descriptor->p_vnode, file_descriptor->flags);
 
   ReleaseTokenFSCall();
 

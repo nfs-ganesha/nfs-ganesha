@@ -70,15 +70,15 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
 
   TakeTokenFSCall();
 
-  if(!(rc = libzfswrap_lookup(p_context->export_context->p_vfs, parentdir_handle->zfs_handle,
-                              p_object_name->name, &object, &type)))
+  if(!(rc = libzfswrap_lookup(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                              parentdir_handle->zfs_handle, p_object_name->name, &object, &type)))
   {
     if(type == S_IFDIR)
-      rc = libzfswrap_rmdir(p_context->export_context->p_vfs, parentdir_handle->zfs_handle,
-                            p_object_name->name);
+      rc = libzfswrap_rmdir(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                            parentdir_handle->zfs_handle, p_object_name->name);
     else
-      rc = libzfswrap_unlink(p_context->export_context->p_vfs, parentdir_handle->zfs_handle,
-                             p_object_name->name);
+      rc = libzfswrap_unlink(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                             parentdir_handle->zfs_handle, p_object_name->name);
   }
 
   ReleaseTokenFSCall();

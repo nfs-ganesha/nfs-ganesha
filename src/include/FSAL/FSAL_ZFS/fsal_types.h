@@ -92,8 +92,7 @@ typedef struct fsal_handle__
 
 typedef struct fsal_cred__
 {
-  int user;
-  int group;
+  creden_t cred;
   int ticket_handle;
   time_t ticket_renewal_time;
 
@@ -116,12 +115,13 @@ typedef struct fsal_op_context__
 
 } fsal_op_context_t;
 
-#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
-#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
+#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.cred.uid )
+#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.cred.gid )
 
 typedef struct fsal_dir__
 {
   vfs_t* p_vfs;
+  creden_t cred;
   vnode_t *p_vnode;
   inogen_t zfs_handle;
 
@@ -130,6 +130,7 @@ typedef struct fsal_dir__
 typedef struct fsal_file__
 {
   vfs_t *p_vfs;
+  creden_t cred;
   inogen_t zfs_handle;
   off_t current_offset;
   int flags;

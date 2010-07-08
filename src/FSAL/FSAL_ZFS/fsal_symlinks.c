@@ -67,7 +67,8 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
 
   TakeTokenFSCall();
 
-  rc = libzfswrap_readlink(p_context->export_context->p_vfs, linkhandle->zfs_handle, link_content_out, sizeof(link_content_out));
+  rc = libzfswrap_readlink(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                           linkhandle->zfs_handle, link_content_out, sizeof(link_content_out));
 
   ReleaseTokenFSCall();
 
@@ -165,7 +166,8 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
   TakeTokenFSCall();
 
   inogen_t object;
-  rc = libzfswrap_symlink(p_context->export_context->p_vfs, parent_directory_handle->zfs_handle, p_linkname->name, p_linkcontent->path, &object);
+  rc = libzfswrap_symlink(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                          parent_directory_handle->zfs_handle, p_linkname->name, p_linkcontent->path, &object);
 
   ReleaseTokenFSCall();
 
