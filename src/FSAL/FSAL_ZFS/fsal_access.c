@@ -72,7 +72,8 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
   int mask = fsal2posix_testperm(access_type);
 
   TakeTokenFSCall();
-  int rc = libzfswrap_access(p_context->export_context->p_vfs, object_handle->zfs_handle, mask);
+  int rc = libzfswrap_access(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                             object_handle->zfs_handle, mask);
   ReleaseTokenFSCall();
 
   /* >> convert the returned code, an return it on error << */

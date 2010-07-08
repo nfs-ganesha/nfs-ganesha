@@ -67,7 +67,8 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
 
   TakeTokenFSCall();
 
-  rc = libzfswrap_truncate(p_context->export_context->p_vfs, filehandle->zfs_handle, length);
+  rc = libzfswrap_truncate(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                           filehandle->zfs_handle, length);
 
   ReleaseTokenFSCall();
 

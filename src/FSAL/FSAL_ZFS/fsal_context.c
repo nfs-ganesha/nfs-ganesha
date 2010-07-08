@@ -221,6 +221,9 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
 
   /* set the specific export context */
   p_thr_context->export_context = p_export_context;
+  p_thr_context->user_credential.cred.uid = uid;
+  p_thr_context->user_credential.cred.gid = gid;
+
 
   /* >> you can manage user's authentication and adjust thread specific
    * stuff you need for the subsequent request << */

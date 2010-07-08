@@ -80,7 +80,9 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
   TakeTokenFSCall();
 
   inogen_t object;
-  rc = libzfswrap_create(p_context->export_context->p_vfs, parent_directory_handle->zfs_handle, p_filename->name, fsal2unix_mode(accessmode), &object);
+  rc = libzfswrap_create(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                         parent_directory_handle->zfs_handle, p_filename->name,
+                         fsal2unix_mode(accessmode), &object);
 
   ReleaseTokenFSCall();
 
@@ -175,7 +177,8 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
 
   /* Create the directory */
   inogen_t object;
-  rc = libzfswrap_mkdir(p_context->export_context->p_vfs, parent_directory_handle->zfs_handle, p_dirname->name, unix_mode, &object);
+  rc = libzfswrap_mkdir(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                        parent_directory_handle->zfs_handle, p_dirname->name, unix_mode, &object);
 
   ReleaseTokenFSCall();
 
@@ -266,7 +269,8 @@ fsal_status_t FSAL_link(fsal_handle_t * target_handle,  /* IN */
 
   TakeTokenFSCall();
 
-  rc = libzfswrap_link(p_context->export_context->p_vfs, dir_handle->zfs_handle, target_handle->zfs_handle, p_link_name->name);
+  rc = libzfswrap_link(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                       dir_handle->zfs_handle, target_handle->zfs_handle, p_link_name->name);
 
   ReleaseTokenFSCall();
 

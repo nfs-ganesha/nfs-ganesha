@@ -62,12 +62,14 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
   /* >> You can prepare your directory for beeing read  
    * and check that the user has the right for reading its content <<*/
   vnode_t *p_vnode;
-  if((rc = libzfswrap_opendir(p_context->export_context->p_vfs, dir_handle->zfs_handle, &p_vnode)))
+  if((rc = libzfswrap_opendir(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                              dir_handle->zfs_handle, &p_vnode)))
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
 
   dir_descriptor->p_vnode = p_vnode;
   dir_descriptor->zfs_handle = dir_handle->zfs_handle;
   dir_descriptor->p_vfs = p_context->export_context->p_vfs;
+  dir_descriptor->cred = p_context->user_credential.cred;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_opendir);
 
@@ -131,7 +133,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
   TakeTokenFSCall();
 
   /* >> read some entry from you filesystem << */
-  rc = libzfswrap_readdir(dir_descriptor->p_vfs, dir_descriptor->p_vnode, entries, max_dir_entries, (off_t*)(&start_position));
+  rc = libzfswrap_readdir(dir_descriptor->p_vfs, &dir_descriptor->cred,
+                          dir_descriptor->p_vnode, entries, max_dir_entries, (off_t*)(&start_position));
 
   ReleaseTokenFSCall();
 
@@ -212,7 +215,7 @@ fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_closedir);
 
   /* >> release the resources used for reading your directory << */
-  if((rc = libzfswrap_closedir(dir_descriptor->p_vfs, dir_descriptor->p_vnode)))
+  if((rc = libzfswrap_closedir(dir_descriptor->p_vfs, &dir_descriptor->cred, dir_descriptor->p_vnode)))
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_closedir);

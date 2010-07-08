@@ -137,7 +137,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
       /* >> Be carefull you don't traverse junction nor follow symlinks << */
       inogen_t object;
       int type;
-      rc = libzfswrap_lookup(p_context->export_context->p_vfs, parent_directory_handle->zfs_handle, p_filename->name, &object, &type);
+      rc = libzfswrap_lookup(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                             parent_directory_handle->zfs_handle, p_filename->name, &object, &type);
 
       ReleaseTokenFSCall();
 
