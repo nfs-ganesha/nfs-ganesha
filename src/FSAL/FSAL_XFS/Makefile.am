@@ -4,7 +4,7 @@ if BUILD_SHARED_FSAL
 
 lib_LTLIBRARIES = libfsalxfs.la
 libfsalxfs_la_LDFLAGS = -version-number @LIBVERSION@
-libfsalxfs_la_LIBADD = ../../SemN/libSemN.la 
+libfsalxfs_la_LIBADD = ../../SemN/libSemN.la -lhandle
 
 else
 noinst_LTLIBRARIES          = libfsalxfs.la
