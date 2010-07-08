@@ -112,10 +112,12 @@ typedef struct
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( _pexport_context ) (uint64_t)((_pexport_context)->dev_id)
 
+//#define FSAL_GET_EXP_CTX( popctx ) (fsal_export_context_t *)(( (xfsfsal_op_context_t *)popctx)->export_context)
+
 typedef struct
 {
+  xfsfsal_export_context_t *export_context; /* /* Must be the first entry in this structure */
   xfsfsal_cred_t credential;
-  xfsfsal_export_context_t *export_context;
 } xfsfsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
@@ -133,7 +135,6 @@ typedef struct
 } xfsfsal_cookie_t;
 
 static const xfsfsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
-#define FSAL_SET_COOKIE_BEGINNING( cookie ) memset( (char *)&cookie, 0, sizeof( xfsfsal_cookie_t ) )
 
 typedef struct 
 {
@@ -157,7 +158,7 @@ typedef struct fsal_file__
   int ro;                       /* read only file ? */
 } xfsfsal_file_t;
 
-#define FSAL_GET_EXP_CTX( popctx ) (fsal_export_context_t *)(( (xfsfsal_op_context_t *)popctx)->export_context)
-#define FSAL_FILENO( p_fsal_file )  ((xfsfsal_file_t *)p_fsal_file)->fd 
+//#define FSAL_GET_EXP_CTX( popctx ) (fsal_export_context_t *)(( (xfsfsal_op_context_t *)popctx)->export_context)
+//#define FSAL_FILENO( p_fsal_file )  ((xfsfsal_file_t *)p_fsal_file)->fd 
 
 #endif                          /* _FSAL_TYPES__SPECIFIC_H */

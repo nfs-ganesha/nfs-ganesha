@@ -45,6 +45,7 @@ typedef struct {
 
 #define FSAL_OP_CONTEXT_T_SIZE 144
 typedef struct {
+  void * export_context ;
   char data[FSAL_OP_CONTEXT_T_SIZE] ;
 } fsal_op_context_t ; 
 

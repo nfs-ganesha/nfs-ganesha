@@ -1201,3 +1201,8 @@ fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
 
 }                               /* FSAL_open_by_fileid */
 #endif
+
+unsigned int FSAL_GetFileno( fsal_file_t * pfile )
+{
+  return pfile ;
+}

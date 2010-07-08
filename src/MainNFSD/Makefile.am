@@ -1,4 +1,10 @@
-AM_CFLAGS                     = -Wimplicit $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS)
+if SHARED_FSAL
+DLOPEN_FLAGS =
+else
+DLOPEN_FLAGS = -rdynamic
+endif
+
+AM_CFLAGS                     = -Wimplicit $(DLOPEN_FLAGS)  $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS)
 
 
 SVC_FILES_ONCRPC = Svc_oncrpc.c Svc_tcp_oncrpc.c Svc_udp_oncrpc.c 

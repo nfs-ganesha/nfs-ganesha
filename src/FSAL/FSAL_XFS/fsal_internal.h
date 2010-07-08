@@ -451,5 +451,6 @@ fsal_status_t XFSFSAL_RemoveXAttrByName(xfsfsal_handle_t * p_objecthandle,    /*
                                         xfsfsal_op_context_t * p_context,     /* IN */
                                         const fsal_name_t * xattr_name)    /* IN */;
 
+unsigned int XFSFSAL_GetFileno( fsal_file_t * pfile ) ;
 
 

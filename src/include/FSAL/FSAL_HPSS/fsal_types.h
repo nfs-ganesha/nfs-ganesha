@@ -142,10 +142,8 @@ typedef struct
 
 typedef struct
 {
-
+  fsal_export_context_t *export_context; /* Must be the first entry in this structure */
   fsal_cred_t credential;
-  fsal_export_context_t *export_context;
-
 } fsal_op_context_t;
 
 #if (HPSS_MAJOR_VERSION == 5)
@@ -191,7 +189,7 @@ typedef struct fsal_file__
 
 #endif
 
-#define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->filedes )
+//#define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->filedes )
 
 /** HPSS specific init info */
 

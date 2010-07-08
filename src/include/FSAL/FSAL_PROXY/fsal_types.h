@@ -141,8 +141,8 @@ typedef struct fsal_export_context__
 
 typedef struct fsal_op_context__
 {
+  fsal_export_context_t *export_context; /* Must be the first entry in this structure */
   fsal_cred_t user_credential;
-  fsal_export_context_t *export_context;
 
   unsigned int retry_sleeptime;
   unsigned int srv_prognum;
@@ -179,7 +179,7 @@ typedef struct fsal_file__
   fsal_op_context_t *pcontext;
 } fsal_file_t;
 
-# define FSAL_FILENO(_pf) ((_pf))
+//# define FSAL_FILENO(_pf) ((_pf))
 
 typedef nfs_cookie4 fsal_cookie_t;
 

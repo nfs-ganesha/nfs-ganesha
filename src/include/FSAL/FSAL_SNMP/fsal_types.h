@@ -126,6 +126,9 @@ typedef struct fsal_export_context__
 
 typedef struct fsal_op_context__
 {
+  /* the export context for the next request */
+  fsal_export_context_t *export_context; /* Must be the first entry in this structure */
+
   /* user authentication info */
   fsal_cred_t user_credential;
 
@@ -135,8 +138,6 @@ typedef struct fsal_op_context__
   netsnmp_pdu *snmp_response;
   netsnmp_variable_list *current_response;
 
-  /* the export context for the next request */
-  fsal_export_context_t *export_context;
 
 } fsal_op_context_t;
 
@@ -162,7 +163,7 @@ typedef struct fsal_file__
 
 } fsal_file_t;
 
-# define FSAL_FILENO(_f) (0)
+//# define FSAL_FILENO(_f) (0)
 
 typedef struct fsal_cookie__
 {
