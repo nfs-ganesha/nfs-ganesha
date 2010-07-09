@@ -38,6 +38,9 @@
 #define FSAL_XFS_INDEX 0 
 #define FSAL_PROXY_INDEX 1
 
+/* In the "static" case, original types are used, this is safer */
+#ifdef _USE_SHARED_FSAL 
+
 #define FSAL_HANDLE_T_SIZE 44 
 typedef struct {
  char data[FSAL_HANDLE_T_SIZE] ;
@@ -83,6 +86,8 @@ typedef struct {
 typedef struct {
   char data[FSAL_FS_SPECIFIC_INITINFO_T] ;
 } fs_specific_initinfo_t ;
+
+#endif /* USE_SHARED_FSAL */
 
 #endif /* _FSAL_GLUE_H */
 

@@ -187,12 +187,12 @@ if test "$enable_gssrpc" == "yes"; then
 fi
 
 # Build FSAL's dynamic lib
-GA_ENABLE_AM_CONDITION([sharedfsal],[when enable, build the FSAL as both static and dynamic library],[BUILD_SHARED_FSAL])
+GA_ENABLE_AM_CONDITION([buildsharedfsal],[when enable, build the FSAL as both static and dynamic library],[BUILD_SHARED_FSAL])
 
 if test "$enable_sharedfsal" == "yes"; then
         AC_DEFINE(_BUILD_SHARED_FSAL,1,[Build shared FSAL])
 fi
-AM_CONDITIONAL(BUILD_SHARED_FSAL, test "$enable_sharedfsal" = "yes")
+AM_CONDITIONAL(BUILD_SHARED_FSAL, test "$enable_buildsharedfsal" = "yes")
 
 
 # NLMv4 

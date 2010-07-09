@@ -161,4 +161,18 @@ typedef struct fsal_file__
 //#define FSAL_GET_EXP_CTX( popctx ) (fsal_export_context_t *)(( (xfsfsal_op_context_t *)popctx)->export_context)
 //#define FSAL_FILENO( p_fsal_file )  ((xfsfsal_file_t *)p_fsal_file)->fd 
 
+#ifndef _USE_SHARED_FSAL
+
+#define fsal_handle_t xfsfsal_handle_t
+#define fsal_op_context_t xfsfsal_op_context_t
+#define fsal_file_t xfsfsal_file_t
+#define fsal_dir_t xfsfsal_dir_t
+#define fsal_export_context_t xfsfsal_export_context_t
+#define fsal_lockdesc_t xfsfsal_lockdesc_t
+#define fsal_cookie_t xfsfsal_cookie_t
+#define fs_specific_initinfo_t xfsfs_specific_initinfo_t
+#define fsal_cred_t xfsfsal_cred_t
+
+#endif /* _USE_SHARED_FSAL */
+
 #endif                          /* _FSAL_TYPES__SPECIFIC_H */
