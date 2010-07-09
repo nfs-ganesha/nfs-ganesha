@@ -355,7 +355,7 @@ int main(int argc, char *argv[])
   /* Load the FSAL library (if needed) */
   if( !FSAL_LoadLibrary( fsal_path_lib ) )
    {
-      DisplayLog("NFS MAIN: Could not load FSAL dynamic library %s", nfs_param.core_param.fsal_shared_library ) ;
+      DisplayLog("NFS MAIN: Could not load FSAL dynamic library %s", fsal_path_lib ) ;
       exit( 1 ) ;
    }
 

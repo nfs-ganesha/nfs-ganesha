@@ -1,4 +1,10 @@
-AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
+if SHARED_FSAL
+DLOPEN_FLAGS =
+else
+DLOPEN_FLAGS = -rdynamic
+endif
+
+AM_CFLAGS                     =   $(DLOPEN_FLAGS) $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
 if USE_NFSIDMAP
 NFSIDMAP_LIB_FLAGS = -lnfsidmap
