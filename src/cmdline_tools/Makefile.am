@@ -1,4 +1,10 @@
-AM_CFLAGS    = -Wimplicit -I../MainNFSD $(FSAL_CFLAGS) $(SEC_CFLAGS)
+if SHARED_FSAL
+DLOPEN_FLAGS =
+else
+DLOPEN_FLAGS = -rdynamic
+endif
+
+AM_CFLAGS    = $(DLOPEN_FLAGS) -Wimplicit -I../MainNFSD $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
 bin_PROGRAMS               = $(FS_NAME).ganesha.convertFH
 

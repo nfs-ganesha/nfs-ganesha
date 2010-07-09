@@ -222,8 +222,8 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle, /* IN */
 
 fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */)
 {
-  
-  /* Sanity check */
+#ifdef _USE_SHARED_FSAL  
+  /* Sanity check (only useful when dlopen is used, otherwise type are macros to FSAL specific types */
   if( fsal_consts.fsal_handle_t_size != sizeof( fsal_handle_t ) )
    {
      DisplayLog( "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_handle_t do not match !!!!") ;
@@ -277,6 +277,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */)
      DisplayLog( "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_dir_t do not match !!!!") ;
      exit( 1 ) ;
    }
+#endif /* USE_SHARED_FSAL */
 
   return fsal_functions.fsal_init( init_info ) ;
 }
