@@ -58,11 +58,6 @@ nfs_start_info_t my_nfs_start_info = {
   .lw_mark_trigger = FALSE
 };
 
-#ifdef _USE_SHARED_FSAL
-extern fsal_functions_t (*getfunctions)(void );
-extern fsal_const_t (*getconsts)(void );
-#endif /* _USE_SHARED_FSAL */
-
 char my_config_path[MAXPATHLEN] = "/etc/ganesha/ganesha.conf";
 char log_path[MAXPATHLEN] = "/tmp/nfs-ganesha.log";
 char exec_name[MAXPATHLEN] = "nfs-ganesha";
