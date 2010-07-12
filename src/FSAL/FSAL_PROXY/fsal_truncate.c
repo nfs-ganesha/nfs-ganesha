@@ -39,8 +39,8 @@
 #include "nfs_proto_functions.h"
 #include "fsal_nfsv4_macros.h"
 
-fsal_status_t FSAL_proxy_truncate_stateless(fsal_handle_t * filehandle, /* IN */
-                                            fsal_op_context_t * p_context,      /* IN */
+fsal_status_t FSAL_proxy_truncate_stateless(proxyfsal_handle_t * filehandle, /* IN */
+                                            proxyfsal_op_context_t * p_context,      /* IN */
                                             fsal_size_t length, /* IN */
                                             fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
@@ -211,8 +211,8 @@ fsal_status_t FSAL_proxy_truncate_stateless(fsal_handle_t * filehandle, /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
+fsal_status_t PROXYFSAL_truncate(proxyfsal_handle_t * filehandle, /* IN */
+                            proxyfsal_op_context_t * p_context,      /* IN */
                             fsal_size_t length, /* IN */
                             fsal_file_t * file_descriptor,      /* [IN|OUT] */
                             fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */

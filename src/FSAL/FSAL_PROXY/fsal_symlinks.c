@@ -66,8 +66,8 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  * */
 
-fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
+fsal_status_t PROXYFSAL_readlink(proxyfsal_handle_t * linkhandle, /* IN */
+                            proxyfsal_op_context_t * p_context,      /* IN */
                             fsal_path_t * p_link_content,       /* OUT */
                             fsal_attrib_list_t * link_attributes        /* [ IN/OUT ] */
     )
@@ -228,12 +228,12 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
+fsal_status_t PROXYFSAL_symlink(proxyfsal_handle_t * parent_directory_handle,     /* IN */
                            fsal_name_t * p_linkname,    /* IN */
                            fsal_path_t * p_linkcontent, /* IN */
-                           fsal_op_context_t * p_context,       /* IN */
+                           proxyfsal_op_context_t * p_context,       /* IN */
                            fsal_accessmode_t accessmode,        /* IN (ignored) */
-                           fsal_handle_t * link_handle, /* OUT */
+                           proxyfsal_handle_t * link_handle, /* OUT */
                            fsal_attrib_list_t * link_attributes /* [ IN/OUT ] */
     )
 {

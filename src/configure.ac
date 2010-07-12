@@ -703,9 +703,6 @@ AC_CONFIG_FILES([include/Makefile
                  Docs/Makefile
                  tools/Makefile
                  config_samples/Makefile
-                 connectathon/Makefile
-                 connectathon/basic/Makefile
-                 connectathon/ConnectathonConfigParsing/Makefile
                  check/Makefile
 		 check/layers/Makefile
 		 check/layers/maketest.conf

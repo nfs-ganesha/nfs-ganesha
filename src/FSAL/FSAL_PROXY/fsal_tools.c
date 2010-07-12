@@ -36,12 +36,12 @@
 #include "handle_mapping/handle_mapping.h"
 #endif
 
-extern fs_specific_initinfo_t global_fsal_proxy_specific_info;
+extern proxyfs_specific_initinfo_t global_fsal_proxy_specific_info;
 
 /* case unsensitivity */
 #define STRCMP   strcasecmp
 
-char *FSAL_GetFSName()
+char *PROXYFSAL_GetFSName()
 {
   return "NFSv4 PROXY";
 }
@@ -62,7 +62,7 @@ char *FSAL_GetFSName()
  *         - Segfault if status is a NULL pointer.
  */
 
-int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
+int PROXYFSAL_handlecmp(proxyfsal_handle_t * handle1, proxyfsal_handle_t * handle2,
                    fsal_status_t * status)
 {
   *status = FSAL_STATUS_NO_ERROR;
@@ -103,7 +103,7 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
  * \return The hash value
  */
 
-unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
+unsigned int PROXYFSAL_Handle_to_HashIndex(proxyfsal_handle_t * p_handle,
                                       unsigned int cookie,
                                       unsigned int alphabet_len, unsigned int index_size)
 {
@@ -152,7 +152,7 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cookie)
+unsigned int PROXYFSAL_Handle_to_RBTIndex(proxyfsal_handle_t * p_handle, unsigned int cookie)
 {
   unsigned int h = 0;
   unsigned int cpt = 0;
@@ -190,7 +190,7 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
 
 /**
  * FSAL_DigestHandle :
- *  Convert an fsal_handle_t to a buffer
+ *  Convert an proxyfsal_handle_t to a buffer
  *  to be included into NFS handles,
  *  or another digest.
  *
@@ -207,9 +207,9 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
 
 #define NFSV4_FH_OPAQUE_SIZE 95 /* Take care of coherency with size of file_handle_v4_t::fsopaque */
 
-fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
+fsal_status_t PROXYFSAL_DigestHandle(proxyfsal_export_context_t * p_expcontext,   /* IN */
                                 fsal_digesttype_t output_type,  /* IN */
-                                fsal_handle_t * in_fsal_handle, /* IN */
+                                proxyfsal_handle_t * in_fsal_handle, /* IN */
                                 caddr_t out_buff        /* OUT */
     )
 {
@@ -334,10 +334,10 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
+fsal_status_t PROXYFSAL_ExpandHandle(proxyfsal_export_context_t * p_expcontext,   /* IN */
                                 fsal_digesttype_t in_type,      /* IN */
                                 caddr_t in_buff,        /* IN */
-                                fsal_handle_t * out_fsal_handle /* OUT */
+                                proxyfsal_handle_t * out_fsal_handle /* OUT */
     )
 {
   fsal_nodetype_t nodetype;
@@ -345,7 +345,7 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
   nfs_fh4 nfs4fh;
 #ifdef _HANDLE_MAPPING
   nfs23_map_handle_t map_hdl;
-  fsal_handle_t tmp_hdl;
+  proxyfsal_handle_t tmp_hdl;
   int rc;
 #endif
 
@@ -439,7 +439,7 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
  *         ERR_FSAL_FAULT (null pointer given as parameter),
  *         ERR_FSAL_SERVERFAULT (unexpected error)
  */
-fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t PROXYFSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 {
 
   log_t no_logging = LOG_INITIALIZER;
@@ -458,7 +458,7 @@ fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 
 }
 
-fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t PROXYFSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
 {
   /* defensive programming... */
   if(out_parameter == NULL)
@@ -494,7 +494,7 @@ fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_paramet
 
 }
 
-fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t PROXYFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
 {
   /* defensive programming... */
   if(out_parameter == NULL)
@@ -558,7 +558,7 @@ fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_param
 
 /* load FSAL init info */
 
-fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
+fsal_status_t PROXYFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
                                                  fsal_parameter_t * out_parameter)
 {
   int err;
@@ -675,7 +675,7 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
 /* load general filesystem configuration options */
 
-fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
+fsal_status_t PROXYFSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
                                                       fsal_parameter_t * out_parameter)
 {
   int err;
@@ -882,7 +882,7 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
 /* load specific filesystem configuration options */
 
-fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
+fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
                                                         fsal_parameter_t * out_parameter)
 {
   int err;

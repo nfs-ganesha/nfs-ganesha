@@ -50,7 +50,7 @@
 extern time_t ServerBootTime;
 extern log_t fsal_log;
 extern fsal_staticfsinfo_t global_fs_info;
-extern fs_specific_initinfo_t global_fsal_proxy_specific_info;
+extern proxyfs_specific_initinfo_t global_fsal_proxy_specific_info;
 
 void fsal_interval_proxy_fsalattr2bitmap4(fsal_attrib_list_t * pfsalattr,
                                           bitmap4 * pbitmap)
@@ -394,7 +394,7 @@ fsal_status_t fsal_internal_proxy_error_convert(nfsstat4 nfsstatus, int indexfun
  */
 int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
                                   fsal_nodetype_t type,
-                                  fsal_u64_t fileid, fsal_handle_t * pfsal_handle)
+                                  fsal_u64_t fileid, proxyfsal_handle_t * pfsal_handle)
 {
 #ifdef _DEBUG_FSAL
   char outstr[1024];
@@ -449,7 +449,7 @@ int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
  * @return TRUE if OK, FALSE otherwise
  *
  */
-int fsal_internal_proxy_extract_fh(nfs_fh4 * pnfs4_handle, fsal_handle_t * pfsal_handle)
+int fsal_internal_proxy_extract_fh(nfs_fh4 * pnfs4_handle, proxyfsal_handle_t * pfsal_handle)
 {
 #ifdef _DEBUG_FSAL
   char outstr[1024];
@@ -770,7 +770,7 @@ int proxy_Fattr_To_FSAL_dynamic_fsinfo(fsal_dynamicfsinfo_t * pdynamicinfo,
  *
  */
 int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
-                             fsal_handle_t * phandle, fattr4 * Fattr)
+                             proxyfsal_handle_t * phandle, fattr4 * Fattr)
 {
   u_int LastOffset = 0;
   unsigned int i = 0;
@@ -1176,7 +1176,7 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
   return 1;
 }                               /* proxy_Fattr_To_FSAL_attr */
 
-fsal_status_t fsal_internal_set_auth_gss(fsal_op_context_t * p_thr_context)
+fsal_status_t fsal_internal_set_auth_gss(proxyfsal_op_context_t * p_thr_context)
 {
 
   fsal_status_t fsal_status;
@@ -1223,7 +1223,7 @@ fsal_status_t fsal_internal_set_auth_gss(fsal_op_context_t * p_thr_context)
  * @return 0 if successful, -1 if failed
  *
  */
-int fsal_internal_ClientReconnect(fsal_op_context_t * p_thr_context)
+int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context)
 {
   int sock;
   int rc;
@@ -1351,7 +1351,7 @@ int fsal_internal_ClientReconnect(fsal_op_context_t * p_thr_context)
  * @return 0 if successful, -1 if failed
  *
  */
-int FSAL_proxy_set_hldir(fsal_op_context_t * p_thr_context, char *hl_path)
+int FSAL_proxy_set_hldir(proxyfsal_op_context_t * p_thr_context, char *hl_path)
 {
   fsal_path_t fsal_path;
   fsal_status_t fsal_status;
@@ -1383,7 +1383,7 @@ int FSAL_proxy_set_hldir(fsal_op_context_t * p_thr_context, char *hl_path)
  *        ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_proxy_open_confirm(fsal_file_t * pfd)
+fsal_status_t FSAL_proxy_open_confirm(proxyfsal_file_t * pfd)
 {
   fsal_status_t fsal_status;
   int rc;
@@ -1482,7 +1482,7 @@ fsal_status_t FSAL_proxy_open_confirm(fsal_file_t * pfd)
   return fsal_status;
 }                               /* FSAL_proxy_open_confirm */
 
-void *FSAL_proxy_change_user(fsal_op_context_t * p_thr_context)
+void *FSAL_proxy_change_user(proxyfsal_op_context_t * p_thr_context)
 {
   static char hostname[MAXNAMLEN];
   static bool_t done = FALSE;

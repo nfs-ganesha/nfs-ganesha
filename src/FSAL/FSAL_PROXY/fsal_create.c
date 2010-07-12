@@ -79,11 +79,11 @@
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the object_attributes->asked_attributes field.
  */
-fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
+fsal_status_t PROXYFSAL_create(proxyfsal_handle_t * parent_directory_handle,      /* IN */
                           fsal_name_t * p_filename,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
+                          proxyfsal_op_context_t * p_context,        /* IN */
                           fsal_accessmode_t accessmode, /* IN */
-                          fsal_handle_t * object_handle,        /* OUT */
+                          proxyfsal_handle_t * object_handle,        /* OUT */
                           fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
@@ -107,7 +107,7 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
   char nameval[MAXNAMLEN];
   char padfilehandle[FSAL_PROXY_FILEHANDLE_MAX_LEN];
   fsal_status_t fsal_status;
-  fsal_file_t fd;
+  proxyfsal_file_t fd;
 
 #define FSAL_CREATE_NB_OP_ALLOC 4
 #define FSAL_CREATE_VAL_BUFFER  1024
@@ -341,11 +341,11 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the object_attributes->asked_attributes field.
  */
-fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
+fsal_status_t PROXYFSAL_mkdir(proxyfsal_handle_t * parent_directory_handle,       /* IN */
                          fsal_name_t * p_dirname,       /* IN */
-                         fsal_op_context_t * p_context, /* IN */
+                         proxyfsal_op_context_t * p_context, /* IN */
                          fsal_accessmode_t accessmode,  /* IN */
-                         fsal_handle_t * object_handle, /* OUT */
+                         proxyfsal_handle_t * object_handle, /* OUT */
                          fsal_attrib_list_t * object_attributes /* [ IN/OUT ] */
     )
 {
@@ -553,10 +553,10 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the attributes->asked_attributes field.
  */
-fsal_status_t FSAL_link(fsal_handle_t * target_handle,  /* IN */
-                        fsal_handle_t * dir_handle,     /* IN */
+fsal_status_t PROXYFSAL_link(proxyfsal_handle_t * target_handle,  /* IN */
+                        proxyfsal_handle_t * dir_handle,     /* IN */
                         fsal_name_t * p_link_name,      /* IN */
-                        fsal_op_context_t * p_context,  /* IN */
+                        proxyfsal_op_context_t * p_context,  /* IN */
                         fsal_attrib_list_t * attributes /* [ IN/OUT ] */
     )
 {
@@ -684,13 +684,13 @@ fsal_status_t FSAL_link(fsal_handle_t * target_handle,  /* IN */
  *
  * \return ERR_FSAL_NOTSUPP.
  */
-fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
+fsal_status_t PROXYFSAL_mknode(proxyfsal_handle_t * parentdir_handle,     /* IN */
                           fsal_name_t * p_node_name,    /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
+                          proxyfsal_op_context_t * p_context,        /* IN */
                           fsal_accessmode_t accessmode, /* IN */
                           fsal_nodetype_t nodetype,     /* IN */
                           fsal_dev_t * dev,     /* IN */
-                          fsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
+                          proxyfsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
                           fsal_attrib_list_t * node_attributes  /* [ IN/OUT ] */
     )
 {

@@ -42,7 +42,7 @@
 extern fsal_staticfsinfo_t default_proxy_info;
 
 /**
- * FSAL_getattrs:
+ * PROXYFSAL_getattrs:
  * Get attributes for the object specified by its filehandle.
  *
  * \param filehandle (input):
@@ -62,8 +62,8 @@ extern fsal_staticfsinfo_t default_proxy_info;
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument) 
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
+fsal_status_t PROXYFSAL_getattrs(proxyfsal_handle_t * filehandle, /* IN */
+                            proxyfsal_op_context_t * p_context,      /* IN */
                             fsal_attrib_list_t * object_attributes      /* IN/OUT */
     )
 {
@@ -84,13 +84,13 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
   fsal_proxy_internal_fattr_t fattr_internal;
   struct timeval timeout = { 25, 0 };
   /* sanity checks.
-   * note : object_attributes is mandatory in FSAL_getattrs.
+   * note : object_attributes is mandatory in PROXYFSAL_getattrs.
    */
   if(!filehandle || !p_context || !object_attributes)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
 
 #ifdef _DEBUG_FSAL
-  PRINT_HANDLE("FSAL_getattrs", filehandle);
+  PRINT_HANDLE("PROXYFSAL_getattrs", filehandle);
 #endif
 
   /* >> get attributes from your filesystem << */
@@ -164,7 +164,7 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
 }
 
 /**
- * FSAL_setattrs:
+ * PROXYFSAL_setattrs:
  * Set attributes for the object specified by its filehandle.
  *
  * \param filehandle (input):
@@ -196,8 +196,8 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
  *        the object_attributes->asked_attributes field.
  */
 
-fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
+fsal_status_t PROXYFSAL_setattrs(proxyfsal_handle_t * filehandle, /* IN */
+                            proxyfsal_op_context_t * p_context,      /* IN */
                             fsal_attrib_list_t * attrib_set,    /* IN */
                             fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
