@@ -169,12 +169,12 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
       BuddySetDebugLabel("nfs_request_data_t");
 #endif
 
-      GET_PREALLOC(pnfsreq,
-                   workers_data[worker_index].request_pool,
-                   nfs_param.worker_param.nb_pending_prealloc,
-                   nfs_request_data_t,
-                   next_alloc );
-
+      GET_PREALLOC_CONSTRUCT(pnfsreq,
+                             workers_data[worker_index].request_pool,
+                             nfs_param.worker_param.nb_pending_prealloc,
+                             nfs_request_data_t,
+                             next_alloc, constructor_nfs_request_data_t );
+ 
 #ifdef _DEBUG_MEMLEAKS
       /* For debugging memory leaks */
       BuddySetDebugLabel("N/A");
