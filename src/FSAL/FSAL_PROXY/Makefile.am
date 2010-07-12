@@ -1,11 +1,20 @@
 AM_CFLAGS = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
+if BUILD_SHARED_FSAL
+
+lib_LTLIBRARIES = libfsalproxy.la
+libfsalproxy_la_LDFLAGS = -version-number @LIBVERSION@
+libfsalproxy_la_LIBADD = ../../SemN/libSemN.la -lhandle
+
+else
+noinst_LTLIBRARIES          = libfsalproxy.la
+
+endif
+
 if ENABLE_HANDLE_MAPPING
 SUBDIRS = handle_mapping
 endif
 
-
-noinst_LTLIBRARIES          = libfsalproxy.la
 
 libfsalproxy_la_SOURCES = fsal_access.c  fsal_context.c  fsal_dirs.c    fsal_fsinfo.c    fsal_lock.c       fsal_rcp.c     fsal_truncate.c \
 			  fsal_attrs.c   fsal_convert.c  fsal_errors.c  fsal_init.c      fsal_lookup.c     fsal_rename.c  fsal_symlinks.c  fsal_unlink.c   \

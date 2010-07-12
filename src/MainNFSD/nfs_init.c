@@ -1742,6 +1742,19 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
   fsal_op_context_t fsal_context;
   unsigned int i;
 
+#if 0
+  /* Will remain as long as all FSAL are not yet in new format */
+  printf( "---> fsal_handle_t:%u\n", sizeof( proxyfsal_handle_t ) ) ;
+  printf( "---> fsal_op_context_t:%u\n", sizeof( proxyfsal_op_context_t ) ) ;
+  printf( "---> fsal_file_t:%u\n", sizeof( proxyfsal_file_t ) ) ;
+  printf( "---> fsal_dir_t:%u\n", sizeof( proxyfsal_dir_t ) ) ;
+  printf( "---> fsal_lockdesc_t:%u\n", sizeof( proxyfsal_lockdesc_t ) ) ;
+  printf( "---> fsal_export_context_t:%u\n", sizeof( proxyfsal_export_context_t ) ) ;
+  printf( "---> fsal_cookie_t:%u\n", sizeof( proxyfsal_cookie_t ) ) ;
+  printf( "---> fs_specific_initinfo_t:%u\n", sizeof( proxyfs_specific_initinfo_t ) ) ;
+  printf( "---> fsal_cred_t:%u\n", sizeof( proxyfsal_cred_t ) ) ;
+#endif
+
   /* store the configuration so it is available for all layers */
   nfs_param = *p_nfs_param;
   nfs_start_info = *p_start_info;
