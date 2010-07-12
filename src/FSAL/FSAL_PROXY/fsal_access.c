@@ -41,7 +41,7 @@
 #include "fsal_nfsv4_macros.h"
 
 /**
- * FSAL_access :
+ * PROXYFSAL_access :
  * Tests whether the user or entity identified by the p_context structure
  * can access the object identified by object_handle,
  * as indicated by the access_type parameter.
@@ -74,8 +74,8 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes when something anormal occurs.
  */
-fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
+fsal_status_t PROXYFSAL_access(proxyfsal_handle_t * object_handle,        /* IN */
+                          proxyfsal_op_context_t * p_context,        /* IN */
                           fsal_accessflags_t access_type,       /* IN */
                           fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
@@ -105,7 +105,7 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
   nfs_resop4 resoparray[FSAL_ACCESS_NB_OP_ACCESS];
 
   /* sanity checks.
-   * note : object_attributes is optional in FSAL_access.
+   * note : object_attributes is optional in PROXYFSAL_access.
    */
   if(!object_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_access);

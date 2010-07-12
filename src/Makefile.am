@@ -29,7 +29,6 @@ SUBDIRS = include             \
           Docs                \
           tools               \
           config_samples      \
-          connectathon        \
           check               \
 	  debian
 

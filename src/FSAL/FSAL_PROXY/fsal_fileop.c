@@ -80,11 +80,11 @@
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
+fsal_status_t PROXYFSAL_open_by_name(proxyfsal_handle_t * dirhandle,      /* IN */
                                 fsal_name_t * filename, /* IN */
-                                fsal_op_context_t * p_context,  /* IN */
+                                proxyfsal_op_context_t * p_context,  /* IN */
                                 fsal_openflags_t openflags,     /* IN */
-                                fsal_file_t * file_descriptor,  /* OUT */
+                                proxyfsal_file_t * file_descriptor,  /* OUT */
                                 fsal_attrib_list_t * file_attributes    /* [ IN/OUT ] */
     )
 {
@@ -313,10 +313,10 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
  *        ERR_FSAL_IO, ...
  */
 
-static fsal_status_t FSAL_open_stateless(fsal_handle_t * filehandle,    /* IN */
-                                         fsal_op_context_t * p_context, /* IN */
+static fsal_status_t PROXYFSAL_open_stateless(proxyfsal_handle_t * filehandle,    /* IN */
+                                         proxyfsal_op_context_t * p_context, /* IN */
                                          fsal_openflags_t openflags,    /* IN */
-                                         fsal_file_t * file_descriptor, /* OUT */
+                                         proxyfsal_file_t * file_descriptor, /* OUT */
                                          fsal_attrib_list_t * file_attributes   /* [ IN/OUT ] */
     )
 {
@@ -440,7 +440,7 @@ static fsal_status_t FSAL_open_stateless(fsal_handle_t * filehandle,    /* IN */
     }
 
   /* >> fill output struct << */
-  memcpy((char *)&file_descriptor->fhandle, filehandle, sizeof(fsal_handle_t));
+  memcpy((char *)&file_descriptor->fhandle, filehandle, sizeof(proxyfsal_handle_t));
   file_descriptor->openflags = openflags;
   file_descriptor->current_offset = 0;
   file_descriptor->pcontext = p_context;
@@ -489,10 +489,10 @@ static fsal_status_t FSAL_open_stateless(fsal_handle_t * filehandle,    /* IN */
  *        ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
-                        fsal_op_context_t * p_context,  /* IN */
+fsal_status_t PROXYFSAL_open(proxyfsal_handle_t * filehandle,     /* IN */
+                        proxyfsal_op_context_t * p_context,  /* IN */
                         fsal_openflags_t openflags,     /* IN */
-                        fsal_file_t * file_descriptor,  /* OUT */
+                        proxyfsal_file_t * file_descriptor,  /* OUT */
                         fsal_attrib_list_t * file_attributes    /* [ IN/OUT ] */
     )
 {
@@ -513,7 +513,7 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
     }
 
   fsal_status =
-      FSAL_open_stateless(filehandle, p_context, openflags, file_descriptor,
+      PROXYFSAL_open_stateless(filehandle, p_context, openflags, file_descriptor,
                           file_attributes);
   Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_open);
 }
@@ -541,12 +541,12 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
  * \return Major error codes:
  *      - ERR_FSAL_NO_ERROR     (no error)
  *      - ERR_FSAL_INVAL        (invalid parameter)
- *      - ERR_FSAL_NOT_OPENED   (tried to read in a non-opened fsal_file_t)
+ *      - ERR_FSAL_NOT_OPENED   (tried to read in a non-opened proxyfsal_file_t)
  *      - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
+fsal_status_t PROXYFSAL_read(proxyfsal_file_t * file_descriptor,  /* IN */
                         fsal_seek_t * seek_descriptor,  /* IN */
                         fsal_size_t buffer_size,        /* IN */
                         caddr_t buffer, /* OUT */
@@ -667,12 +667,12 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
  * \return Major error codes:
  *      - ERR_FSAL_NO_ERROR     (no error)
  *      - ERR_FSAL_INVAL        (invalid parameter)
- *      - ERR_FSAL_NOT_OPENED   (tried to write in a non-opened fsal_file_t)
+ *      - ERR_FSAL_NOT_OPENED   (tried to write in a non-opened proxyfsal_file_t)
  *      - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
  */
-fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
+fsal_status_t PROXYFSAL_write(proxyfsal_file_t * file_descriptor, /* IN */
                          fsal_seek_t * seek_descriptor, /* IN */
                          fsal_size_t buffer_size,       /* IN */
                          caddr_t buffer,        /* IN */
@@ -781,7 +781,7 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
  *          ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
+fsal_status_t PROXYFSAL_close(proxyfsal_file_t * file_descriptor  /* IN */
     )
 {
 #define FSAL_CLOSE_NB_OP_ALLOC 2
@@ -858,7 +858,7 @@ fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
  *          ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
+fsal_status_t PROXYFSAL_close_by_fileid(proxyfsal_file_t * file_descriptor /* IN */ ,
                                    fsal_u64_t fileid)
 #ifndef _USE_PROXY
 {
@@ -969,11 +969,11 @@ fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
+fsal_status_t PROXYFSAL_open_by_fileid(proxyfsal_handle_t * filehandle,   /* IN */
                                   fsal_u64_t fileid,    /* IN */
-                                  fsal_op_context_t * p_context,        /* IN */
+                                  proxyfsal_op_context_t * p_context,        /* IN */
                                   fsal_openflags_t openflags,   /* IN */
-                                  fsal_file_t * file_descriptor,        /* OUT */
+                                  proxyfsal_file_t * file_descriptor,        /* OUT */
                                   fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 #ifndef _USE_PROXY
 {
@@ -1202,7 +1202,10 @@ fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
 }                               /* FSAL_open_by_fileid */
 #endif
 
-unsigned int FSAL_GetFileno( fsal_file_t * pfile )
+unsigned int PROXYFSAL_GetFileno( proxyfsal_file_t * pfile )
 {
-  return pfile ;
+  unsigned int intpfile ;
+
+  memcpy( (char *)&intpfile, pfile, sizeof( unsigned int) ) ;
+  return intpfile ;
 }
