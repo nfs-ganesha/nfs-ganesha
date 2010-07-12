@@ -47,8 +47,8 @@ typedef struct {
  char data[FSAL_HANDLE_T_SIZE] ;
 } fsal_handle_t ;
 
-//#define FSAL_OP_CONTEXT_T_SIZE 144
-#define FSAL_OP_CONTEXT_T_SIZE 620
+#define FSAL_OP_CONTEXT_T_SIZE 144
+//#define FSAL_OP_CONTEXT_T_SIZE 620
 typedef struct {
   void * export_context ;
   char data[FSAL_OP_CONTEXT_T_SIZE] ;
@@ -64,8 +64,8 @@ typedef struct {
   char data[FSAL_EXPORT_CONTEXT_T_SIZE] ;
 } fsal_export_context_t ;
 
-//#define FSAL_FILE_T_SIZE 8
-#define FSAL_FILE_T_SIZE 184
+#define FSAL_FILE_T_SIZE 8
+//#define FSAL_FILE_T_SIZE 184
 typedef struct {
   char data[FSAL_FILE_T_SIZE] ;
 } fsal_file_t ;
@@ -85,8 +85,8 @@ typedef struct {
   char data[FSAL_CRED_T_SIZE] ;
 } fsal_cred_t ;
 
-//#define FSAL_FS_SPECIFIC_INITINFO_T 4096
-#define FSAL_FS_SPECIFIC_INITINFO_T 17208
+#define FSAL_FS_SPECIFIC_INITINFO_T 4096
+//#define FSAL_FS_SPECIFIC_INITINFO_T 17208
 typedef struct {
   char data[FSAL_FS_SPECIFIC_INITINFO_T] ;
 } fs_specific_initinfo_t ;
