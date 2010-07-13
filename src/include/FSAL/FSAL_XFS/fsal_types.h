@@ -82,9 +82,25 @@
 #define FSAL_XFS_FSHANDLE_LEN 64
 
 #ifdef _BUILD_SHARED_FSAL 
-#define FSANDLE_XFS_HANDLE_T_PADLEN 104 
+#define FSAL_HANDLE_XFS_HANDLE_T_PADLEN 104 
+#define FSAL_OP_CONTEXT_T_PADLEN 480 
+#define FSAL_CRED_T_PADLEN 0
+#define FSAL_EXPORT_CONTEXT_T_PADLEN 0
+#define FS_SPECIFIC_INITINFO_T_PADLEN 0
+#define FSAL_COOKIE_T_PADLEN 0
+#define FSAL_LOCKDESC_T_PADLEN 0
+#define FSAL_FILE_T_PADLEN 0
+#define FSAL_DIR_T_PADLEN 0
 #else
-#define FSANDLE_XFS_HANDLE_T_PADLEN 0
+#define FSAL_HANDLE_XFS_HANDLE_T_PADLEN 0
+#define FSAL_OP_CONTEXT_T_PADLEN 0 
+#define FSAL_CRED_T_PADLEN 0
+#define FSAL_EXPORT_CONTEXT_T_PADLEN 0
+#define FS_SPECIFIC_INITINFO_T_PADLEN 0
+#define FSAL_COOKIE_T_PADLEN 0
+#define FSAL_LOCKDESC_T_PADLEN 0
+#define FSAL_FILE_T_PADLEN 0
+#define FSAL_DIR_T_PADLEN 0
 #endif
 
 typedef struct
@@ -94,7 +110,7 @@ typedef struct
   uint32_t inode;
   char type;
 #ifdef _BUILD_SHARED_FSAL
-  char pad[FSANDLE_XFS_HANDLE_T_PADLEN] ;
+  char pad[FSAL_HANDLE_XFS_HANDLE_T_PADLEN] ;
 #endif
 } xfsfsal_handle_t;  /**< FS object handle */
 
@@ -106,6 +122,10 @@ typedef struct
   gid_t group;
   fsal_count_t nbgroups;
   gid_t alt_groups[FSAL_NGROUPS_MAX];
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_CRED_T_PADLEN] ;
+#endif
+
 } xfsfsal_cred_t;
 
 typedef struct
@@ -117,6 +137,9 @@ typedef struct
   unsigned int mnt_handle_len;  /* for optimizing concatenation */
   unsigned int mnt_fshandle_len;        /* for optimizing concatenation */
   unsigned int dev_id;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_EXPORT_CONTEXT_T_PADLEN] ;
+#endif
 } xfsfsal_export_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( _pexport_context ) (uint64_t)((_pexport_context)->dev_id)
@@ -127,6 +150,9 @@ typedef struct
 {
   xfsfsal_export_context_t *export_context; /* /* Must be the first entry in this structure */
   xfsfsal_cred_t credential;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_OP_CONTEXT_T_PADLEN] ;
+#endif
 } xfsfsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
@@ -135,12 +161,18 @@ typedef struct
 typedef struct
 {
   char xfs_mount_point[MAXPATHLEN];
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FS_SPECIFIC_INITINFO_T_PADLEN] ;
+#endif
 } xfsfs_specific_initinfo_t;
 
 /**< directory cookie */
 typedef struct 
 {
   off_t cookie;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_COOKIE_T_PADLEN] ;
+#endif
 } xfsfsal_cookie_t;
 
 static const xfsfsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
@@ -148,6 +180,9 @@ static const xfsfsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
 typedef struct 
 {
   struct flock flock;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_LOCKDESC_T_PADLEN] ;
+#endif
 } xfsfsal_lockdesc_t;
 
 /* Directory stream descriptor. */
@@ -159,12 +194,18 @@ typedef struct
   fsal_path_t path;
   unsigned int dir_offset;
   xfsfsal_handle_t handle;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_DIR_T_PADLEN] ;
+#endif
 } xfsfsal_dir_t;
 
 typedef struct fsal_file__
 {
   int fd;
   int ro;                       /* read only file ? */
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_FILE_T_PADLEN] ;
+#endif
 } xfsfsal_file_t;
 
 //#define FSAL_GET_EXP_CTX( popctx ) (fsal_export_context_t *)(( (xfsfsal_op_context_t *)popctx)->export_context)
