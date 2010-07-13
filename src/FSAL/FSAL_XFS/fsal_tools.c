@@ -215,7 +215,7 @@ fsal_status_t XFSFSAL_DigestHandle(xfsfsal_export_context_t * p_expcontext,   /*
       /* NFS handle digest */
     case FSAL_DIGEST_NFSV2:
 
-      if(sizeof(xfsfsal_handle_t) - FSANDLE_XFS_HANDLE_T_PADLEN > FSAL_DIGEST_SIZE_HDLV2)
+      if(sizeof(xfsfsal_handle_t) - FSAL_HANDLE_XFS_HANDLE_T_PADLEN > FSAL_DIGEST_SIZE_HDLV2)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV2);
@@ -224,7 +224,7 @@ fsal_status_t XFSFSAL_DigestHandle(xfsfsal_export_context_t * p_expcontext,   /*
 
     case FSAL_DIGEST_NFSV3:
 
-      if(sizeof(xfsfsal_handle_t) - FSANDLE_XFS_HANDLE_T_PADLEN > FSAL_DIGEST_SIZE_HDLV3)
+      if(sizeof(xfsfsal_handle_t) - FSAL_HANDLE_XFS_HANDLE_T_PADLEN > FSAL_DIGEST_SIZE_HDLV3)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV3);
@@ -233,7 +233,7 @@ fsal_status_t XFSFSAL_DigestHandle(xfsfsal_export_context_t * p_expcontext,   /*
 
     case FSAL_DIGEST_NFSV4:
 
-      if(sizeof(xfsfsal_handle_t) - FSANDLE_XFS_HANDLE_T_PADLEN > FSAL_DIGEST_SIZE_HDLV4)
+      if(sizeof(xfsfsal_handle_t) - FSAL_HANDLE_XFS_HANDLE_T_PADLEN > FSAL_DIGEST_SIZE_HDLV4)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
