@@ -57,7 +57,7 @@
  *        ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
+fsal_status_t LUSTREFSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
                                 fsal_name_t * filename, /* IN */
                                 fsal_op_context_t * p_context,  /* IN */
                                 fsal_openflags_t openflags,     /* IN */
@@ -70,11 +70,11 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
   if(!dirhandle || !filename || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
-  fsal_status = FSAL_lookup(dirhandle, filename, p_context, &filehandle, file_attributes);
+  fsal_status = LUSTREFSAL_lookup(dirhandle, filename, p_context, &filehandle, file_attributes);
   if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
-  return FSAL_open(&filehandle, p_context, openflags, file_descriptor, file_attributes);
+  return LUSTREFSAL_open(&filehandle, p_context, openflags, file_descriptor, file_attributes);
 }
 
 /**
@@ -107,7 +107,7 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
+fsal_status_t LUSTREFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
                         fsal_op_context_t * p_context,  /* IN */
                         fsal_openflags_t openflags,     /* IN */
                         fsal_file_t * p_file_descriptor,        /* OUT */
@@ -217,7 +217,7 @@ fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
+fsal_status_t LUSTREFSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
                         fsal_seek_t * p_seek_descriptor,        /* [IN] */
                         fsal_size_t buffer_size,        /* IN */
                         caddr_t buffer, /* OUT */
@@ -334,7 +334,7 @@ fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
+fsal_status_t LUSTREFSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
                          fsal_seek_t * p_seek_descriptor,       /* IN */
                          fsal_size_t buffer_size,       /* IN */
                          caddr_t buffer,        /* IN */
@@ -462,7 +462,7 @@ fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
  *      - Another error code if an error occured during this call.
  */
 
-fsal_status_t FSAL_close(fsal_file_t * p_file_descriptor        /* IN */
+fsal_status_t LUSTREFSAL_close(fsal_file_t * p_file_descriptor        /* IN */
     )
 {
 
@@ -489,7 +489,7 @@ fsal_status_t FSAL_close(fsal_file_t * p_file_descriptor        /* IN */
 }
 
 /* Some unsupported calls used in FSAL_PROXY, just for permit the ganeshell to compile */
-fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
+fsal_status_t LUSTREFSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
                                   fsal_u64_t fileid,    /* IN */
                                   fsal_op_context_t * p_context,        /* IN */
                                   fsal_openflags_t openflags,   /* IN */
@@ -499,13 +499,13 @@ fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
 
-fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
+fsal_status_t LUSTREFSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
                                    fsal_u64_t fileid)
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
 
-unsigned int FSAL_GetFileno( fsal_file_t * pfile )
+unsigned int LUSTREFSAL_GetFileno( fsal_file_t * pfile )
 {
   return pfile->fd ;
 }
