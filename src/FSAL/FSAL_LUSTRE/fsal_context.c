@@ -36,7 +36,7 @@
 /**
  * build the export entry
  */
-fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, /* OUT */
+fsal_status_t LUSTREFSAL_BuildExportContext(fsal_export_context_t * p_export_context, /* OUT */
                                       fsal_path_t * p_export_path,      /* IN */
                                       char *fs_specific_options /* IN */
     )
@@ -164,7 +164,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 }
 
-fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
+fsal_status_t LUSTREFSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 {
 
   /* sanity check */
@@ -201,7 +201,7 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
  *      - ERR_FSAL_SERVERFAULT : unexpected error.
  */
 
-fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OUT  */
+fsal_status_t LUSTREFSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OUT  */
                                     fsal_export_context_t * p_export_context,   /* IN */
                                     fsal_uid_t uid,     /* IN */
                                     fsal_gid_t gid,     /* IN */
