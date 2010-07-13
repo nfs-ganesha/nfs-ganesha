@@ -215,29 +215,29 @@ fsal_status_t XFSFSAL_DigestHandle(xfsfsal_export_context_t * p_expcontext,   /*
       /* NFS handle digest */
     case FSAL_DIGEST_NFSV2:
 
-      if(sizeof(xfsfsal_handle_t) > FSAL_DIGEST_SIZE_HDLV2)
+      if(sizeof(xfsfsal_handle_t) - FSANDLE_XFS_HANDLE_T_PADLEN > FSAL_DIGEST_SIZE_HDLV2)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV2);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(xfsfsal_handle_t));
+      memcpy(out_buff, p_in_fsal_handle, FSAL_DIGEST_SIZE_HDLV2 ) ;
       break;
 
     case FSAL_DIGEST_NFSV3:
 
-      if(sizeof(xfsfsal_handle_t) > FSAL_DIGEST_SIZE_HDLV3)
+      if(sizeof(xfsfsal_handle_t) - FSANDLE_XFS_HANDLE_T_PADLEN > FSAL_DIGEST_SIZE_HDLV3)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV3);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(xfsfsal_handle_t));
+      memcpy(out_buff, p_in_fsal_handle, FSAL_DIGEST_SIZE_HDLV3 ) ;
       break;
 
     case FSAL_DIGEST_NFSV4:
 
-      if(sizeof(xfsfsal_handle_t) > FSAL_DIGEST_SIZE_HDLV4)
+      if(sizeof(xfsfsal_handle_t) - FSANDLE_XFS_HANDLE_T_PADLEN > FSAL_DIGEST_SIZE_HDLV4)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(xfsfsal_handle_t));
+      memcpy(out_buff, p_in_fsal_handle, FSAL_DIGEST_SIZE_HDLV4 ) ;
       break;
 
       /* FileId digest for NFSv2 */
@@ -312,13 +312,13 @@ fsal_status_t XFSFSAL_ExpandHandle(xfsfsal_export_context_t * p_expcontext,   /*
       /* NFSV3 handle digest */
     case FSAL_DIGEST_NFSV3:
       memset(p_out_fsal_handle, 0, sizeof(xfsfsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(xfsfsal_handle_t));
+      memcpy(p_out_fsal_handle, in_buff, sizeof(xfsfsal_handle_t) );
       break;
 
       /* NFSV4 handle digest */
     case FSAL_DIGEST_NFSV4:
       memset(p_out_fsal_handle, 0, sizeof(xfsfsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(xfsfsal_handle_t));
+      memcpy(p_out_fsal_handle, in_buff, sizeof(xfsfsal_handle_t) );
       break;
 
     default:

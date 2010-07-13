@@ -189,7 +189,7 @@ fi
 # Build FSAL's dynamic lib
 GA_ENABLE_AM_CONDITION([buildsharedfsal],[when enable, build the FSAL as both static and dynamic library],[BUILD_SHARED_FSAL])
 
-if test "$enable_sharedfsal" == "yes"; then
+if test "$enable_buildsharedfsal" == "yes"; then
         AC_DEFINE(_BUILD_SHARED_FSAL,1,[Build shared FSAL])
 fi
 AM_CONDITIONAL(BUILD_SHARED_FSAL, test "$enable_buildsharedfsal" = "yes")
