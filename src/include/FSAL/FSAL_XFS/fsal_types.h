@@ -81,12 +81,21 @@
 #define FSAL_XFS_HANDLE_LEN 29
 #define FSAL_XFS_FSHANDLE_LEN 64
 
+#ifdef _BUILD_SHARED_FSAL 
+#define FSANDLE_XFS_HANDLE_T_PADLEN 104 
+#else
+#define FSANDLE_XFS_HANDLE_T_PADLEN 0
+#endif
+
 typedef struct
 {
   char handle_val[FSAL_XFS_HANDLE_LEN];
   unsigned int handle_len;
   uint32_t inode;
   char type;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSANDLE_XFS_HANDLE_T_PADLEN] ;
+#endif
 } xfsfsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */

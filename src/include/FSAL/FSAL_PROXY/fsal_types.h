@@ -89,6 +89,12 @@
 #define FSAL_PROXY_NFS_V4             4
 #define FSAL_PROXY_RETRY_SLEEPTIME    10
 
+#ifdef _BUILD_SHARED_FSAL
+#define FSANDLE_PROXY_HANDLE_T_PADLEN 0 
+#else
+#define FSANDLE_PROXY_HANDLE_T_PADLEN 0 
+#endif
+
   /* some void types for this template... */
 typedef struct fsal_handle__
 {
@@ -97,6 +103,9 @@ typedef struct fsal_handle__
   unsigned int timestamp;
   unsigned int srv_handle_len;
   char srv_handle_val[FSAL_PROXY_FILEHANDLE_MAX_LEN];
+#ifdef _BUILD_SHARED_FSAL 
+  char pad[FSANDLE_PROXY_HANDLE_T_PADLEN] ;
+#endif
 } proxyfsal_handle_t;
 
 typedef struct fsal_cred__

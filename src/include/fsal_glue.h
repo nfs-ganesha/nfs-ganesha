@@ -41,8 +41,8 @@
 /* In the "static" case, original types are used, this is safer */
 #ifdef _USE_SHARED_FSAL 
 
-#define FSAL_HANDLE_T_SIZE 44 
-//#define FSAL_HANDLE_T_SIZE 148 
+//#define FSAL_HANDLE_T_SIZE 44 
+#define FSAL_HANDLE_T_SIZE 148 
 typedef struct {
  char data[FSAL_HANDLE_T_SIZE] ;
 } fsal_handle_t ;
@@ -54,7 +54,7 @@ typedef struct {
   char data[FSAL_OP_CONTEXT_T_SIZE] ;
 } fsal_op_context_t ; 
 
-#define FSAL_DIR_T_SIZE 4296
+#define FSAL_DIR_T_SIZE 4400
 typedef struct {
   char data[FSAL_DIR_T_SIZE] ;
 } fsal_dir_t ;
