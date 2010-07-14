@@ -1973,3 +1973,93 @@ void nfs_stop()
   DisplayLog("NFS EXIT: regular exit");
   exit(0);
 }
+
+
+/* Frees current export entry and returns next export entry. */
+exportlist_t *RemoveExportEntry(exportlist_t * exportEntry)
+{
+  exportlist_t *next;
+
+  if (exportEntry == NULL)
+    return NULL;
+
+  next = exportEntry->next;
+
+  //  pmydata->stats.fsal_stats
+
+  if (exportEntry->fs_static_info != NULL)
+    Mem_Free(exportEntry->fs_static_info);
+
+  if (exportEntry->proot_handle != NULL)
+    Mem_Free(exportEntry->proot_handle);
+
+  Mem_Free(exportEntry);
+  return next;
+}
+
+/* Skips deleting first entry of export list. */
+int RemoveAllExportsExceptHead(exportlist_t * pexportlist)
+{
+  exportlist_t *pcurrent;
+
+  pcurrent = pexportlist->next;
+  while(pcurrent != NULL)
+    {
+      /* Leave the head so that the list may be replaced later without
+       * changing the reference pointer in worker threads. */
+      if (pcurrent == pexportlist)
+	break;
+      
+      pexportlist->next = RemoveExportEntry(pcurrent);
+      pcurrent = pexportlist->next;
+    }
+
+  return 1;   /* Success */
+}
+
+/* Skips deleting first entry of export list. */
+int rebuild_export_list(exportlist_t * pexportlist, char *config_file)
+{
+  int rc;  
+  exportlist_t * temp_pexportlist;
+  config_file_t config_struct;
+
+  /* Attempt to parse the new configuration file */
+  config_struct = config_ParseFile(config_file);
+  if(!config_struct)
+    {
+      DisplayLog("rebuild_export_list: Error while parsing new configuration file %s: %s", config_file,
+                 config_GetErrorMsg());
+      return -1;
+    }  
+
+  /* Create the new exports list */
+  rc = ReadExports(config_file,&temp_pexportlist);
+  if(rc < 0)
+    {
+      DisplayLog("rebuild_export_list: Error while parsing export entries");
+      return -1;
+    }
+  else if(rc == 0)
+    {
+      DisplayLog("rebuild_export_list: No export entries found in configuration file !!!");
+    }
+
+  /* Now we know that the configuration was parsed successfully.
+   * Remove all but the first export entry in the exports list. */
+  rc = RemoveAllExportsExceptHead(pexportlist);
+  if (rc <= 0)
+    {
+      DisplayLog("rebuild_export_list: Error removing some export entries.");
+    }
+
+  /* Changed the old export list head to the new export list head. 
+   * All references to the exports list should be up-to-date now. */
+  memcpy(pexportlist, temp_pexportlist, sizeof(exportlist_t));
+
+  /* We no longer need the head that was created for
+   * the new list since the export list is built as a linked list. */
+  Mem_Free(temp_pexportlist);
+
+  return 1;   /* Success */
+}
