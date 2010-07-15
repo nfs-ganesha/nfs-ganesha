@@ -68,6 +68,27 @@
  *      POSIX FS dependant definitions
  * ------------------------------------------- */
 
+#ifdef _BUILD_SHARED_FSAL 
+#define FSAL_HANDLE_LUSTRE_HANDLE_T_PADLEN 124 
+#define FSAL_OP_CONTEXT_T_PADLEN 468 
+#define FSAL_CRED_T_PADLEN 0
+#define FSAL_EXPORT_CONTEXT_T_PADLEN 92 
+#define FS_SPECIFIC_INITINFO_T_PADLEN 17208
+#define FSAL_COOKIE_T_PADLEN 0
+#define FSAL_LOCKDESC_T_PADLEN 16 
+#define FSAL_FILE_T_PADLEN 176 
+#define FSAL_DIR_T_PADLEN 588 
+#else
+#define FSAL_HANDLE_LUSTRE_HANDLE_T_PADLEN 0
+#define FSAL_OP_CONTEXT_T_PADLEN 0 
+#define FSAL_CRED_T_PADLEN 0
+#define FSAL_EXPORT_CONTEXT_T_PADLEN 0
+#define FS_SPECIFIC_INITINFO_T_PADLEN 0
+#define FSAL_COOKIE_T_PADLEN 0
+#define FSAL_LOCKDESC_T_PADLEN 0
+#define FSAL_FILE_T_PADLEN 0
+#define FSAL_DIR_T_PADLEN 0
+#endif
 
 #define FSAL_NGROUPS_MAX  32
 
@@ -76,6 +97,9 @@ typedef struct
   lustre_fid fid;
   /* used for FSAL_DIGEST_FILEID */
   unsigned long long inode;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_HANDLE_LUSTRE_HANDLE_T_PADLEN] ;
+#endif
 } lustrefsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */
@@ -86,6 +110,9 @@ typedef struct lustrefsal_cred__
   gid_t group;
   fsal_count_t nbgroups;
   gid_t alt_groups[FSAL_NGROUPS_MAX];
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_CRED_T_PADLEN] ;
+#endif
 } lustrefsal_cred_t;
 
 typedef struct lustrefsal_export_context_t
@@ -93,14 +120,20 @@ typedef struct lustrefsal_export_context_t
   char mount_point[FSAL_MAX_PATH_LEN];
   unsigned int mnt_len;         /* for optimizing concatenation */
   dev_t dev_id;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_EXPORT_CONTEXT_T_PADLEN] ;
+#endif
 } lustrefsal_export_context_t;
 
-#define FSAL_EXPORT_CONTEXT_SPECIFIC( _pexport_context ) (uint64_t)((_pexport_context)->dev_id)
+//#define FSAL_EXPORT_CONTEXT_SPECIFIC( _pexport_context ) (uint64_t)((_pexport_context)->dev_id)
 
 typedef struct
 {
   lustrefsal_export_context_t *export_context; /* Must be the first entry in this structure */
   lustrefsal_cred_t credential;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_OP_CONTEXT_T_PADLEN] ;
+#endif
 } lustrefsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
@@ -109,17 +142,26 @@ typedef struct
 typedef struct lustrefs_specific_initinfo__
 {
   int dummy;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FS_SPECIFIC_INITINFO_T_PADLEN] ;
+#endif
 } lustrefs_specific_initinfo_t;
 
 /**< directory cookie */
 typedef struct lustrefsal_cookie__
 {
   off_t cookie;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_COOKIE_T_PADLEN] ;
+#endif
 } lustrefsal_cookie_t;
 
 static const lustrefsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
 
 typedef void *lustrefsal_lockdesc_t;   /**< not implemented for now */
+//#ifdef _BUILD_SHARED_FSAL
+//  char pad[FSAL_LOCKDESC_T_PADLEN] ;
+//#endif
 
 /* Directory stream descriptor. */
 
@@ -129,12 +171,18 @@ typedef struct lustrefsal_dir__
   lustrefsal_op_context_t context;    /* credential for accessing the directory */
   fsal_path_t path;
   lustrefsal_handle_t handle;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_DIR_T_PADLEN] ;
+#endif
 } lustrefsal_dir_t;
 
 typedef struct lustrefsal_file__
 {
   int fd;
   int ro;                       /* read only file ? */
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_FILE_T_PADLEN] ;
+#endif
 } lustrefsal_file_t;
 
 //#define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->fd )
