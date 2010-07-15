@@ -2018,11 +2018,14 @@ int RemoveAllExportsExceptHead(exportlist_t * pexportlist)
 }
 
 /* Skips deleting first entry of export list. */
-int rebuild_export_list(exportlist_t * pexportlist, char *config_file)
+int rebuild_export_list(char *config_file)
 {
-  int rc;  
+  int i,status = 0;
   exportlist_t * temp_pexportlist;
   config_file_t config_struct;
+
+  if (config_file == NULL)
+    return -1;
 
   /* Attempt to parse the new configuration file */
   config_struct = config_ParseFile(config_file);
@@ -2034,32 +2037,64 @@ int rebuild_export_list(exportlist_t * pexportlist, char *config_file)
     }  
 
   /* Create the new exports list */
-  rc = ReadExports(config_file,&temp_pexportlist);
-  if(rc < 0)
+  status = ReadExports(config_struct, &temp_pexportlist);
+  if(status < 0)
     {
       DisplayLog("rebuild_export_list: Error while parsing export entries");
-      return -1;
+      return status;
     }
-  else if(rc == 0)
+  else if(status == 0)
     {
       DisplayLog("rebuild_export_list: No export entries found in configuration file !!!");
+      return status;
+    }
+
+  /* Pause worker threads */
+  for(i = 0; i < nfs_param.core_param.nb_worker; i++)
+    {
+      workers_data[i].reparse_exports_in_progress = TRUE;
+
+      /* If threads are blocked on the request queue, wake them up
+       * so they are blocked on the exports list replacement. */
+      if(pthread_cond_signal(&(workers_data[i].req_condvar)) == -1)
+	{
+	  DisplayLog("replace_exports: Cond signal failed for thr#%d , errno = %d", i, errno);
+	  status = -1;
+	  goto cleanup_and_exit;
+	}
+  }
+
+  /* Wait for all worker threads to block */
+  while(1)
+    {
+      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
+	if (workers_data[i].waiting_for_exports == FALSE)
+	  continue;
+      break;
     }
 
   /* Now we know that the configuration was parsed successfully.
+   * And that worker threads are no longer accessing the export list.
    * Remove all but the first export entry in the exports list. */
-  rc = RemoveAllExportsExceptHead(pexportlist);
-  if (rc <= 0)
+  status = RemoveAllExportsExceptHead(nfs_param.pexportlist);
+  if (status <= 0)
     {
-      DisplayLog("rebuild_export_list: Error removing some export entries.");
+      /* The old list should be kept actually. */
+      DisplayLog("rebuild_export_list: CRITICAL ERROR while removing some export entries.");
+      goto cleanup_and_exit;
     }
 
   /* Changed the old export list head to the new export list head. 
    * All references to the exports list should be up-to-date now. */
-  memcpy(pexportlist, temp_pexportlist, sizeof(exportlist_t));
+  memcpy(nfs_param.pexportlist, temp_pexportlist, sizeof(exportlist_t));
 
   /* We no longer need the head that was created for
    * the new list since the export list is built as a linked list. */
   Mem_Free(temp_pexportlist);
 
-  return 1;   /* Success */
+cleanup_and_exit:
+  for(i = 0; i < nfs_param.core_param.nb_worker; i++)
+      workers_data[i].reparse_exports_in_progress = FALSE;
+
+  return status; /* 1 if success */
 }

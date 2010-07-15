@@ -128,6 +128,25 @@ static void action_sigterm(int sig)
 
 }                               /* action_sigterm */
 
+static void action_sighup(int sig)
+{
+  char *config_file = "/etc/ganesha/gpfs.ganesha.exports.conf";
+
+  if(sig == SIGTERM)
+    DisplayLog("SIGTERM_HANDLER: Receveid SIGTERM.... initiating daemon shutdown");
+  else if(sig == SIGINT)
+    DisplayLog("SIGINT_HANDLER: Receveid SIGINT.... initiating daemon shutdown");
+  else if(sig == SIGHUP)
+    DisplayLog("SIGHUP_HANDLER: Receveid SIGHUP.... initiating export list reload");
+
+
+  if (!rebuild_export_list(config_file))
+    {
+      DisplayLog("Error, attempt to reload exports list from config file failed.");
+    }
+  
+}                               /* action_sigsigh */
+
 /**
  * main: simply the main function.
  *
@@ -149,6 +168,7 @@ int main(int argc, char *argv[])
   pid_t son_pid;
   struct sigaction act_sigusr1;
   struct sigaction act_sigterm;
+  struct sigaction act_sighup;
 
   /* retrieve executable file's name */
   strncpy(ganesha_exec_path, argv[0], MAXPATHLEN);
@@ -336,6 +356,19 @@ int main(int argc, char *argv[])
   else
     DisplayLogLevel(NIV_EVENT,
                     "Signals SIGTERM and SIGINT (daemon shutdown) are ready to be used");
+
+  /* Set the signal handler */
+  memset(&act_sigterm, 0, sizeof(act_sighup));
+  act_sighup.sa_flags = 0;
+  act_sighup.sa_handler = action_sighup;
+  if(sigaction(SIGHUP, &act_sighup, NULL) == -1)
+    {
+      DisplayErrorLog(ERR_SYS, ERR_SIGACTION, errno);
+      exit(1);
+    }
+  else
+    DisplayLogLevel(NIV_EVENT,
+                    "Signal SIGHUP (daemon export reload) is ready to be used");
 
   /* initialize default parameters */
 
