@@ -1766,6 +1766,19 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
   printf( "---> fs_specific_initinfo_t:%u\n", sizeof( xfsfs_specific_initinfo_t ) ) ;
   printf( "---> fsal_cred_t:%u\n", sizeof( xfsfsal_cred_t ) ) ;
 #endif
+#if 0
+ /* Will remain as long as all FSAL are not yet in new format */
+  printf( "---> fsal_handle_t:%lu\n", sizeof( lustrefsal_handle_t ) ) ;
+  printf( "---> fsal_op_context_t:%lu\n", sizeof( lustrefsal_op_context_t ) ) ;
+  printf( "---> fsal_file_t:%lu\n", sizeof( lustrefsal_file_t ) ) ;
+  printf( "---> fsal_dir_t:%lu\n", sizeof( lustrefsal_dir_t ) ) ;
+  printf( "---> fsal_lockdesc_t:%lu\n", sizeof( lustrefsal_lockdesc_t ) ) ;
+  printf( "---> fsal_export_context_t:%lu\n", sizeof( lustrefsal_export_context_t ) ) ;
+  printf( "---> fsal_cookie_t:%lu\n", sizeof( lustrefsal_cookie_t ) ) ;
+  printf( "---> fs_specific_initinfo_t:%lu\n", sizeof( lustrefs_specific_initinfo_t ) ) ;
+  printf( "---> fsal_cred_t:%lu\n", sizeof( lustrefsal_cred_t ) ) ;
+#endif
+
 
   /* store the configuration so it is available for all layers */
   nfs_param = *p_nfs_param;
