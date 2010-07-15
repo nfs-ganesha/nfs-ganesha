@@ -48,6 +48,12 @@
 #include "config_parsing.h"
 #include "err_fsal.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <ctype.h>
+
 #define LPX64 "%#llx"
 #include <asm/types.h>
 #include <lustre/liblustreapi.h>
