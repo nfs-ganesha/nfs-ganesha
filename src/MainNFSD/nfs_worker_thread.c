@@ -1046,22 +1046,20 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 int nfs_Init_worker_data(nfs_worker_data_t * pdata)
 {
   LRU_status_t status = LRU_LIST_SUCCESS;
-  pthread_mutexattr_t mutexattr;
-  pthread_condattr_t condattr;
 
-  if(pthread_mutexattr_init(&mutexattr) != 0)
+  if(pthread_mutex_init(&(pdata->mutex_req_condvar), NULL) != 0)
     return -1;
 
-  if(pthread_condattr_init(&condattr) != 0)
+  if(pthread_mutex_init(&(pdata->request_pool_mutex), NULL) != 0)
     return -1;
 
-  if(pthread_mutex_init(&(pdata->mutex_req_condvar), &mutexattr) != 0)
+  if(pthread_cond_init(&(pdata->req_condvar), NULL) != 0)
     return -1;
 
-  if(pthread_mutex_init(&(pdata->request_pool_mutex), &mutexattr) != 0)
+  if(pthread_mutex_init(&(pdata->mutex_export_condvar), NULL) != 0)
     return -1;
 
-  if(pthread_cond_init(&(pdata->req_condvar), &condattr) != 0)
+  if(pthread_cond_init(&(pdata->export_condvar), NULL) != 0)
     return -1;
 
   if((pdata->pending_request =
@@ -1081,6 +1079,8 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   pdata->passcounter = 0;
   pdata->is_ready = FALSE;
   pdata->gc_in_progress = FALSE;
+  pdata->reparse_exports_in_progress = FALSE;
+  pdata->waiting_for_exports = FALSE;
 
   return 0;
 }                               /* nfs_Init_worker_data */
@@ -1250,8 +1250,22 @@ void *worker_thread(void *IndexArg)
                       pmydata->pending_request->nb_invalid);
 #endif
       P(pmydata->mutex_req_condvar);
-      while(pmydata->pending_request->nb_entry == pmydata->pending_request->nb_invalid)
-        pthread_cond_wait(&(pmydata->req_condvar), &(pmydata->mutex_req_condvar));
+      while(pmydata->pending_request->nb_entry == pmydata->pending_request->nb_invalid 
+	    || pmydata->reparse_exports_in_progress == TRUE)
+	{
+	  /* block because someone is changing the exports list */
+	  if (pmydata->reparse_exports_in_progress == TRUE)
+	    {
+	      pmydata->waiting_for_exports = TRUE;
+	      P(pmydata->mutex_export_condvar);
+	      pthread_cond_wait(&(pmydata->export_condvar), &(pmydata->mutex_export_condvar));
+	      pmydata->waiting_for_exports = FALSE;
+	      V(pmydata->mutex_export_condvar);
+	    }
+	  /* block until there are requests to process in the queue */
+	  else
+	    pthread_cond_wait(&(pmydata->req_condvar), &(pmydata->mutex_req_condvar));
+	}
 #ifdef _DEBUG_DISPATCH
       DisplayLogLevel(NIV_DEBUG, "NFS WORKER #%d: Processing a new request", index);
 #endif

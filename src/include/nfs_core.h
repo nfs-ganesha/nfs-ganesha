@@ -473,8 +473,17 @@ typedef struct nfs_worker_data__
   hash_table_t *ht;
   hash_table_t *ht_ip_stats;
   pthread_mutex_t request_pool_mutex;
+
+  /* Used for blocking when request queue is empty. */
   pthread_cond_t req_condvar;
   pthread_mutex_t mutex_req_condvar;
+
+  /* Used for blocking when the export list is being replaced. */
+  bool_t waiting_for_exports;
+  bool_t reparse_exports_in_progress;
+  pthread_cond_t export_condvar;
+  pthread_mutex_t mutex_export_condvar;
+
   nfs_worker_stat_t stats;
   unsigned int passcounter;
   struct sockaddr_storage hostaddr;
