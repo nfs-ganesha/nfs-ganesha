@@ -13,9 +13,9 @@
 
 fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
                                        fsal_posixdb_fileinfo_t * p_object_info, /* IN */
-                                       fsal_handle_t * p_parent_directory_handle,       /* IN */
+                                       posixfsal_handle_t * p_parent_directory_handle,       /* IN */
                                        fsal_name_t * p_filename,        /* IN */
-                                       fsal_handle_t * p_object_handle /* OUT */ )
+                                       posixfsal_handle_t * p_object_handle /* OUT */ )
 {
   PGresult *p_res;
   char handleid_str[MAX_HANDLEIDSTR_SIZE];
@@ -36,7 +36,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
   if(!p_conn || !p_object_info || !p_object_handle
      || (p_filename && !p_parent_directory_handle) || (!p_filename
                                                        && p_parent_directory_handle))
-    ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+    ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
 
   CheckConn(p_conn);
 
@@ -68,7 +68,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
         {
           /* parent entry not found */
           RollbackTransaction(p_conn, p_res);
-          ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
         }
       PQclear(p_res);
     }
@@ -107,7 +107,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
           /* consistency check failed */
           /* p_object_handle has been filled in order to be able to fix the consistency later */
           RollbackTransaction(p_conn, p_res);
-          ReturnCode(ERR_FSAL_POSIXDB_CONSISTENCY, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_CONSISTENCY, 0);
         }
 
       /* update nlink & ctime if needed */
@@ -267,5 +267,5 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
 
   EndTransaction(p_conn, p_res);
 
-  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+  ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 }

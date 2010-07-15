@@ -16,9 +16,9 @@
 
 fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
                                        fsal_posixdb_fileinfo_t * p_object_info, /* IN */
-                                       fsal_handle_t * p_parent_directory_handle,       /* IN */
+                                       posixfsal_handle_t * p_parent_directory_handle,       /* IN */
                                        fsal_name_t * p_filename,        /* IN */
-                                       fsal_handle_t * p_object_handle /* OUT */ )
+                                       posixfsal_handle_t * p_object_handle /* OUT */ )
 {
   unsigned long long id;
   unsigned int ts;
@@ -37,7 +37,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
   if(!p_conn || !p_object_info || !p_object_handle
      || (p_filename && !p_parent_directory_handle)
      || (!p_filename && p_parent_directory_handle))
-    ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+    ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
 
 #ifdef _DEBUG_FSAL
   printf("adding entry with parentid=%llu, id=%llu, name=%s\n",
@@ -66,7 +66,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
           /* parent entry not found */
           mysql_free_result(res);
           RollbackTransaction(p_conn);
-          ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
         }
 
       mysql_free_result(res);
@@ -94,7 +94,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
           /* Error */
           mysql_free_result(res);
           RollbackTransaction(p_conn);
-          ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
         }
 
       /* a Handle (that matches devid & inode) already exists */
@@ -116,7 +116,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
           /* consistency check failed */
           /* p_object_handle has been filled in order to be able to fix the consistency later */
           RollbackTransaction(p_conn);
-          ReturnCode(ERR_FSAL_POSIXDB_CONSISTENCY, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_CONSISTENCY, 0);
         }
 
       /* update nlink & ctime if needed */
@@ -192,7 +192,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
           /* Error */
           mysql_free_result(res);
           RollbackTransaction(p_conn);
-          ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
         }
 
       id = atoll(row[0]);
@@ -234,7 +234,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
                   /* Error */
                   mysql_free_result(res);
                   RollbackTransaction(p_conn);
-                  ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+                  ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
                 }
 
               /* we have retrieved the handle information of the bad entry */
