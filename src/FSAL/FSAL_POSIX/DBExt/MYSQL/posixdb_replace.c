@@ -11,9 +11,9 @@
 
 fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
                                            fsal_posixdb_fileinfo_t * p_object_info,     /* IN */
-                                           fsal_handle_t * p_parent_directory_handle_old,       /* IN */
+                                           posixfsal_handle_t * p_parent_directory_handle_old,       /* IN */
                                            fsal_name_t * p_filename_old,        /* IN */
-                                           fsal_handle_t * p_parent_directory_handle_new,       /* IN */
+                                           posixfsal_handle_t * p_parent_directory_handle_new,       /* IN */
                                            fsal_name_t * p_filename_new /* IN */ )
 {
   result_handle_t res;
@@ -28,7 +28,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
 
   if(!p_conn || !p_object_info || !p_parent_directory_handle_old || !p_filename_old
      || !p_parent_directory_handle_new || !p_filename_new)
-    ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+    ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
 
   BeginTransaction(p_conn);
 
@@ -66,7 +66,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
           /* parent entry not found */
           mysql_free_result(res);
           RollbackTransaction(p_conn);
-          ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
         }
 
       row = mysql_fetch_row(res);
@@ -75,7 +75,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
           /* Error */
           mysql_free_result(res);
           RollbackTransaction(p_conn);
-          ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
         }
 
       /* fill 'infodb' with information about the handle in the database */
@@ -132,7 +132,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
           /* Error */
           mysql_free_result(res);
           RollbackTransaction(p_conn);
-          ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
         }
 
       st = fsal_posixdb_deleteParent(p_conn, atoll(row[0]), atoi(row[1]),
@@ -222,7 +222,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
                       /* Error */
                       mysql_free_result(res);
                       RollbackTransaction(p_conn);
-                      ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+                      ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
                     }
 
                   st = fsal_posixdb_deleteParent(p_conn, atoll(row[0]), atoi(row[1]), p_parent_directory_handle_new->id, p_parent_directory_handle_new->ts, p_filename_new->name, atoi(row[4]));        /* nlink */

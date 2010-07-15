@@ -8,9 +8,9 @@
 
 fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
                                            fsal_posixdb_fileinfo_t * p_object_info,     /* IN */
-                                           fsal_handle_t * p_parent_directory_handle_old,       /* IN */
+                                           posixfsal_handle_t * p_parent_directory_handle_old,       /* IN */
                                            fsal_name_t * p_filename_old,        /* IN */
-                                           fsal_handle_t * p_parent_directory_handle_new,       /* IN */
+                                           posixfsal_handle_t * p_parent_directory_handle_new,       /* IN */
                                            fsal_name_t * p_filename_new /* IN */ )
 {
   PGresult *p_res;
@@ -28,7 +28,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
 
   if(!p_conn || !p_object_info || !p_parent_directory_handle_old || !p_filename_old
      || !p_parent_directory_handle_new || !p_filename_new)
-    ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+    ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
 
   CheckConn(p_conn);
 
@@ -67,7 +67,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
           /* parent entry not found */
           PQclear(p_res);
           RollbackTransaction(p_conn, p_res);
-          ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
         }
 
       /* fill 'infodb' with information about the handle in the database */

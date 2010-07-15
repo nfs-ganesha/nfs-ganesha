@@ -30,7 +30,7 @@
  * \return Nothing.
  */
 
-void FSAL_get_stats(fsal_statistics_t * stats,  /* OUT */
+void POSIXFSAL_get_stats(fsal_statistics_t * stats,  /* OUT */
                     fsal_boolean_t reset        /* IN */
     )
 {

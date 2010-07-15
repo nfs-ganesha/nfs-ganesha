@@ -23,7 +23,7 @@
 /* case unsensitivity */
 #define STRCMP   strcasecmp
 
-char *FSAL_GetFSName()
+char *POSIXFSAL_GetFSName()
 {
   return "POSIX";
 }
@@ -44,7 +44,7 @@ char *FSAL_GetFSName()
  *         - Segfault if status is a NULL pointer.
  */
 
-int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
+int POSIXFSAL_handlecmp(posixfsal_handle_t * handle1, posixfsal_handle_t * handle2,
                    fsal_status_t * status)
 {
 
@@ -74,7 +74,7 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
  * \return The hash value
  */
 
-unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
+unsigned int POSIXFSAL_Handle_to_HashIndex(posixfsal_handle_t * p_handle,
                                       unsigned int cookie,
                                       unsigned int alphabet_len, unsigned int index_size)
 {
@@ -95,7 +95,7 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cookie)
+unsigned int POSIXFSAL_Handle_to_RBTIndex(posixfsal_handle_t * p_handle, unsigned int cookie)
 {
 #define MAGIC   0xABCD1234
   unsigned int h;
@@ -105,7 +105,7 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
 
 /**
  * FSAL_DigestHandle :
- *  Convert an fsal_handle_t to a buffer
+ *  Convert an posixfsal_handle_t to a buffer
  *  to be included into NFS handles,
  *  or another digest.
  *
@@ -119,9 +119,9 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
+fsal_status_t POSIXFSAL_DigestHandle(posixfsal_export_context_t * p_expcontext,   /* IN */
                                 fsal_digesttype_t output_type,  /* IN */
-                                fsal_handle_t * p_in_fsal_handle,       /* IN */
+                                posixfsal_handle_t * p_in_fsal_handle,       /* IN */
                                 caddr_t out_buff        /* OUT */
     )
 {
@@ -247,10 +247,10 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
+fsal_status_t POSIXFSAL_ExpandHandle(posixfsal_export_context_t * p_expcontext,   /* IN */
                                 fsal_digesttype_t in_type,      /* IN */
                                 caddr_t in_buff,        /* IN */
-                                fsal_handle_t * p_out_fsal_handle       /* OUT */
+                                posixfsal_handle_t * p_out_fsal_handle       /* OUT */
     )
 {
 
@@ -263,19 +263,19 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
       /* NFSV2 handle digest */
     case FSAL_DIGEST_NFSV2:
-      memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
+      memset(p_out_fsal_handle, 0, sizeof(posixfsal_handle_t));
       memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
       break;
 
       /* NFSV3 handle digest */
     case FSAL_DIGEST_NFSV3:
-      memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
+      memset(p_out_fsal_handle, 0, sizeof(posixfsal_handle_t));
       memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
       break;
 
       /* NFSV4 handle digest */
     case FSAL_DIGEST_NFSV4:
-      memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
+      memset(p_out_fsal_handle, 0, sizeof(posixfsal_handle_t));
       memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
       break;
 
@@ -294,7 +294,7 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
  *         ERR_FSAL_FAULT (null pointer given as parameter),
  *         ERR_FSAL_SERVERFAULT (unexpected error)
  */
-fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t POSIXFSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 {
 
   log_t no_logging = LOG_INITIALIZER;
@@ -313,7 +313,7 @@ fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 
 }
 
-fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t POSIXFSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
 {
   /* defensive programming... */
   if(out_parameter == NULL)
@@ -350,7 +350,7 @@ fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_paramet
 
 }
 
-fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t POSIXFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
 {
   /* defensive programming... */
   if(out_parameter == NULL)
@@ -404,7 +404,7 @@ fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_param
 
 /* load FSAL init info */
 
-fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
+fsal_status_t POSIXFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
                                                  fsal_parameter_t * out_parameter)
 {
   int err;
@@ -521,7 +521,7 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
 /* load general filesystem configuration options */
 
-fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
+fsal_status_t POSIXFSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
                                                       fsal_parameter_t * out_parameter)
 {
   int err;
@@ -729,7 +729,7 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
 /* load specific filesystem configuration options */
 
-fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
+fsal_status_t POSIXFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
                                                         fsal_parameter_t * out_parameter)
 {
   int err;

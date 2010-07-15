@@ -39,8 +39,8 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
+fsal_status_t POSIXFSAL_getattrs(posixfsal_handle_t * p_filehandle,       /* IN */
+                            posixfsal_op_context_t * p_context,      /* IN */
                             fsal_attrib_list_t * p_object_attributes    /* IN/OUT */
     )
 {
@@ -98,8 +98,8 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
+fsal_status_t POSIXFSAL_setattrs(posixfsal_handle_t * p_filehandle,       /* IN */
+                            posixfsal_op_context_t * p_context,      /* IN */
                             fsal_attrib_list_t * p_attrib_set,  /* IN */
                             fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */
     )
@@ -269,7 +269,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
 
   if(p_object_attributes)
     {
-      status = FSAL_getattrs(p_filehandle, p_context, p_object_attributes);
+      status = POSIXFSAL_getattrs(p_filehandle, p_context, p_object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))

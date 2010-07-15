@@ -6,7 +6,7 @@
 #include <string.h>
 
 fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
-                                          fsal_handle_t * p_parent_directory_handle,    /* IN */
+                                          posixfsal_handle_t * p_parent_directory_handle,    /* IN */
                                           fsal_name_t * p_filename,     /* IN */
                                           fsal_posixdb_fileinfo_t *
                                           p_object_info /* IN */ )
@@ -22,7 +22,7 @@ fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
    *******************/
 
   if(!p_conn || !p_parent_directory_handle || !p_filename)
-    ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+    ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
 
   CheckConn(p_conn);
 
@@ -45,7 +45,7 @@ fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
     {
       /* parent entry not found */
       RollbackTransaction(p_conn, p_res);
-      ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
     }
   PQclear(p_res);
 
@@ -67,7 +67,7 @@ fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
 }
 
 fsal_posixdb_status_t fsal_posixdb_deleteHandle(fsal_posixdb_conn * p_conn,     /* IN */
-                                                fsal_handle_t *
+                                                posixfsal_handle_t *
                                                 p_parent_directory_handle /* IN */ )
 {
   char handleid_str[MAX_HANDLEIDSTR_SIZE];
