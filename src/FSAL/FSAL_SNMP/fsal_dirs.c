@@ -45,9 +45,9 @@
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
-                           fsal_op_context_t * p_context,       /* IN */
-                           fsal_dir_t * dir_descriptor, /* OUT */
+fsal_status_t SNMPFSAL_opendir(snmpfsal_handle_t * dir_handle,  /* IN */
+                           snmpfsal_op_context_t * p_context,       /* IN */
+                           snmpfsal_dir_t * dir_descriptor, /* OUT */
                            fsal_attrib_list_t * dir_attributes  /* [ IN/OUT ] */
     )
 {
@@ -65,12 +65,12 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
 
   /* save request info to the dir_dircriptor */
 
-  memcpy(&dir_descriptor->node_handle, dir_handle, sizeof(fsal_handle_t));
+  memcpy(&dir_descriptor->node_handle, dir_handle, sizeof(snmpfsal_handle_t));
   dir_descriptor->p_context = p_context;
 
   if(dir_attributes && dir_attributes->asked_attributes)
     {
-      st = FSAL_getattrs(dir_handle, p_context, dir_attributes);
+      st = SNMPFSAL_getattrs(dir_handle, p_context, dir_attributes);
       if(FSAL_IS_ERROR(st))
         {
           FSAL_CLEAR_MASK(dir_attributes->asked_attributes);
@@ -117,12 +117,12 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
-                           fsal_cookie_t start_position,        /* IN */
+fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
+                           snmpfsal_cookie_t start_position,        /* IN */
                            fsal_attrib_mask_t get_attr_mask,    /* IN */
                            fsal_mdsize_t buffersize,    /* IN */
                            fsal_dirent_t * pdirent,     /* OUT */
-                           fsal_cookie_t * end_position,        /* OUT */
+                           snmpfsal_cookie_t * end_position,        /* OUT */
                            fsal_count_t * nb_entries,   /* OUT */
                            fsal_boolean_t * end_of_dir  /* OUT */
     )
@@ -130,7 +130,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
   fsal_count_t max_dir_entries;
   fsal_count_t cur_nb_entries;
   fsal_boolean_t bool_eod;
-  fsal_cookie_t last_listed;
+  snmpfsal_cookie_t last_listed;
 
   fsal_request_desc_t req_opt;
   netsnmp_variable_list *p_curr_var;
@@ -489,7 +489,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
   /* setting output vars : end_position, nb_entries, end_of_dir  */
   *end_of_dir = bool_eod;
 
-  memset(end_position, 0, sizeof(fsal_cookie_t));
+  memset(end_position, 0, sizeof(snmpfsal_cookie_t));
   FSAL_OID_DUP(end_position, last_listed.oid_tab, last_listed.oid_len);
 
   *nb_entries = cur_nb_entries;
@@ -511,7 +511,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
+fsal_status_t SNMPFSAL_closedir(snmpfsal_dir_t * dir_descriptor /* IN */
     )
 {
 
@@ -519,7 +519,7 @@ fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
   if(!dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_closedir);
 
-  memset(dir_descriptor, 0, sizeof(fsal_dir_t));
+  memset(dir_descriptor, 0, sizeof(snmpfsal_dir_t));
 
   /* nothing to do, GETBULK response is freed at the next request */
 

@@ -54,10 +54,10 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  *          
  */
-fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
+fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      /* IN */
                           fsal_name_t * p_filename,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_handle_t * object_handle,        /* OUT */
+                          snmpfsal_op_context_t * p_context,        /* IN */
+                          snmpfsal_handle_t * object_handle,        /* OUT */
                           fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
@@ -72,7 +72,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
   if(!object_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
-  memset(object_handle, 0, sizeof(fsal_handle_t));
+  memset(object_handle, 0, sizeof(snmpfsal_handle_t));
 
   /* retrieves root handle */
 
@@ -95,7 +95,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
         {
           fsal_status_t status;
 
-          status = FSAL_getattrs(object_handle, p_context, object_attributes);
+          status = SNMPFSAL_getattrs(object_handle, p_context, object_attributes);
 
           /* On error, we set a flag in the returned attributes */
 
@@ -142,8 +142,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 
       /* look up for . or .. on root */
 
-      if(!FSAL_namecmp(p_filename, &FSAL_DOT)
-         || (!FSAL_namecmp(p_filename, &FSAL_DOT_DOT)
+      if(!FSAL_namecmp(p_filename, (fsal_name_t *)&FSAL_DOT)
+         || (!FSAL_namecmp(p_filename, (fsal_name_t *)&FSAL_DOT_DOT)
              && parent_directory_handle->oid_len == 0))
         {
           FSAL_OID_DUP(object_handle, parent_directory_handle->oid_tab,
@@ -170,7 +170,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
         }
 
       /* lookup up for parent entry  */
-      if(!FSAL_namecmp(p_filename, &FSAL_DOT_DOT))
+      if(!FSAL_namecmp(p_filename, (fsal_name_t *)&FSAL_DOT_DOT))
         {
           printf("lookup for parent (oid len = %u)\n", parent_directory_handle->oid_len);
 
@@ -369,9 +369,9 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  *          
  */
-fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
-                                  fsal_op_context_t * p_context,        /* IN */
-                                  fsal_handle_t * p_fsoot_handle,       /* OUT */
+fsal_status_t SNMPFSAL_lookupJunction(snmpfsal_handle_t * p_junction_handle,    /* IN */
+                                  snmpfsal_op_context_t * p_context,        /* IN */
+                                  snmpfsal_handle_t * p_fsoot_handle,       /* OUT */
                                   fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
     )
 {
@@ -423,15 +423,15 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
-                              fsal_op_context_t * p_context,    /* IN */
-                              fsal_handle_t * object_handle,    /* OUT */
+fsal_status_t SNMPFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
+                              snmpfsal_op_context_t * p_context,    /* IN */
+                              snmpfsal_handle_t * object_handle,    /* OUT */
                               fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
   fsal_name_t obj_name = FSAL_NAME_INITIALIZER; /* empty string */
   char *ptr_str;
-  fsal_handle_t out_hdl;
+  snmpfsal_handle_t out_hdl;
   fsal_status_t status;
   int b_is_last = FALSE;        /* is it the last lookup ? */
   int rc;
@@ -501,7 +501,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
   while(ptr_str[0])
     {
 
-      fsal_handle_t in_hdl;
+      snmpfsal_handle_t in_hdl;
       char *dest_ptr;
 
       /* preparing lookup */
@@ -530,7 +530,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
         b_is_last = TRUE;
 
       /*call to FSAL_lookup */
-      status = FSAL_lookup(&in_hdl,     /* parent directory handle */
+      status = SNMPFSAL_lookup(&in_hdl,     /* parent directory handle */
                            &obj_name,   /* object name */
                            p_context,   /* user's credentials */
                            &out_hdl,    /* output root handle */
