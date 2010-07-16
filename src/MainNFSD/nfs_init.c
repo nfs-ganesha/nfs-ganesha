@@ -2017,10 +2017,21 @@ int RemoveAllExportsExceptHead(exportlist_t * pexportlist)
   return 1;   /* Success */
 }
 
+void print_export_list()
+{
+  exportlist_t *pcurrent;
+  for(pcurrent = nfs_param.pexportlist; pcurrent != NULL; pcurrent = pcurrent->next)  
+    {
+      DisplayLog
+	("export entry - Id=%u, Export Path=%s",
+	 pcurrent->id, pcurrent->fullpath);
+    }  
+}
+
 /* Skips deleting first entry of export list. */
 int rebuild_export_list(char *config_file)
 {
-  int i,status = 0;
+  int all_blocked,i,status = 0;
   exportlist_t * temp_pexportlist;
   config_file_t config_struct;
 
@@ -2049,6 +2060,14 @@ int rebuild_export_list(char *config_file)
       return status;
     }
 
+  /* At least one worker thread should exist. Each worker thread has a pointer to
+   * the same hash table. */  
+  if( nfs_export_create_root_entry(temp_pexportlist, workers_data[0].ht) != TRUE)
+    {
+      DisplayLog("replace_exports: Error initializing Cache Inode root entries");
+      return -1;
+    }
+
   /* Pause worker threads */
   for(i = 0; i < nfs_param.core_param.nb_worker; i++)
     {
@@ -2058,7 +2077,7 @@ int rebuild_export_list(char *config_file)
        * so they are blocked on the exports list replacement. */
       if(pthread_cond_signal(&(workers_data[i].req_condvar)) == -1)
 	{
-	  DisplayLog("replace_exports: Cond signal failed for thr#%d , errno = %d", i, errno);
+	  DisplayLog("replace_exports: Request cond signal failed for thr#%d , errno = %d", i, errno);
 	  status = -1;
 	  goto cleanup_and_exit;
 	}
@@ -2067,10 +2086,12 @@ int rebuild_export_list(char *config_file)
   /* Wait for all worker threads to block */
   while(1)
     {
+      all_blocked = 1;
       for(i = 0; i < nfs_param.core_param.nb_worker; i++)
 	if (workers_data[i].waiting_for_exports == FALSE)
-	  continue;
-      break;
+	  all_blocked = 0;
+      if (all_blocked)
+	break;
     }
 
   /* Now we know that the configuration was parsed successfully.
@@ -2094,7 +2115,14 @@ int rebuild_export_list(char *config_file)
 
 cleanup_and_exit:
   for(i = 0; i < nfs_param.core_param.nb_worker; i++)
+    {
       workers_data[i].reparse_exports_in_progress = FALSE;
+      if(pthread_cond_signal(&(workers_data[i].export_condvar)) == -1)
+	{
+	  DisplayLog("replace_exports: Export cond signal failed for thr#%d , errno = %d", i, errno);
+	  status = -1;
+	  }
+    }
 
   return status; /* 1 if success */
 }
