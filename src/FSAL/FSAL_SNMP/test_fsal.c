@@ -164,9 +164,9 @@ int main(int argc, char **argv)
   log_t log_desc = LOG_INITIALIZER;
   desc_log_stream_t voie;
   uid_t uid;
-  fsal_export_context_t export_ctx;
-  fsal_op_context_t op_ctx;
-  fsal_handle_t root_handle, handle;
+  snmpfsal_export_context_t export_ctx;
+  snmpfsal_op_context_t op_ctx;
+  snmpfsal_handle_t root_handle, handle;
   fsal_name_t name;
   fsal_path_t path;
   fsal_attrib_list_t attribs;
@@ -261,7 +261,7 @@ int main(int argc, char **argv)
 
   snprintHandle(tracebuff, 2048, &root_handle);
   printf("Root handle (size=%u, root_type=%d, object_type=%d) = %s\n",
-         sizeof(fsal_handle_t), (int)FSAL_NODETYPE_ROOT,
+         sizeof(snmpfsal_handle_t), (int)FSAL_NODETYPE_ROOT,
          root_handle.object_type_reminder, tracebuff);
 
   /* getting what are the supported attributes */
@@ -415,8 +415,8 @@ int main(int argc, char **argv)
     {
 
       /* readdir on root */
-      fsal_dir_t dir;
-      fsal_cookie_t from, to;
+      snmpfsal_dir_t dir;
+      snmpfsal_cookie_t from, to;
       fsal_dirent_t entries[READDIR_SIZE];
       fsal_count_t number;
       fsal_boolean_t eod = FALSE;
@@ -472,8 +472,8 @@ int main(int argc, char **argv)
     {
 
       /* readdir on root */
-      fsal_dir_t dir;
-      fsal_cookie_t from, to;
+      snmpfsal_dir_t dir;
+      snmpfsal_cookie_t from, to;
       fsal_dirent_t entries[READDIR_SIZE];
       fsal_count_t number;
       fsal_boolean_t eod = FALSE;
@@ -536,15 +536,15 @@ int main(int argc, char **argv)
     {
 
       /* readdir on root */
-      fsal_dir_t dir;
-      fsal_cookie_t from, to;
+      snmpfsal_dir_t dir;
+      snmpfsal_cookie_t from, to;
       fsal_dirent_t entries[READDIR_SIZE];
       fsal_count_t number;
       fsal_boolean_t eod = FALSE;
       int error = FALSE;
 
       attribs.asked_attributes = mask;
-      if(FSAL_IS_ERROR(st = FSAL_opendir(&root_handle, &op_ctx, &dir, &attribs)))
+      if(FSAL_IS_ERROR(st = SNMPFSAL_opendir(&root_handle, &op_ctx, &dir, &attribs)))
         {
           DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
         }
@@ -715,7 +715,7 @@ int main(int argc, char **argv)
   if(test[0] == '8')
     {
 
-      fsal_handle_t dir_hdl, subdir_hdl;
+      snmpfsal_handle_t dir_hdl, subdir_hdl;
       fsal_name_t subdir_name;
 
       /* lookup on /iso/org/dod/internet/mgmt/mib-2/system */
@@ -860,7 +860,7 @@ int main(int argc, char **argv)
   else if(test[0] == '9')
     {
 
-      fsal_handle_t dir_hdl, subdir_hdl;
+      snmpfsal_handle_t dir_hdl, subdir_hdl;
       fsal_name_t subdir_name;
       fsal_attrib_list_t attr_set;
 
@@ -1035,7 +1035,7 @@ int main(int argc, char **argv)
           printf("%s: handle_digest = %s\n", MY_SNMP_VAR, tracebuff);
         }
 
-      memset(&handle, 0, sizeof(fsal_handle_t));
+      memset(&handle, 0, sizeof(snmpfsal_handle_t));
 
       /* expend digest */
 
