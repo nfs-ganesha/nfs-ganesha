@@ -57,10 +57,10 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  *          
  */
-fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
+fsal_status_t HPSSFSAL_lookup(hpssfsal_handle_t * parent_directory_handle,      /* IN */
                           fsal_name_t * p_filename,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_handle_t * object_handle,        /* OUT */
+                          hpssfsal_op_context_t * p_context,        /* IN */
+                          hpssfsal_handle_t * object_handle,        /* OUT */
                           fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
@@ -99,7 +99,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
         {
           fsal_status_t status;
 
-          status = FSAL_getattrs(object_handle, p_context, object_attributes);
+          status = HPSSFSAL_getattrs(object_handle, p_context, object_attributes);
 
           /* On error, we set a flag in the returned attributes */
 
@@ -217,9 +217,9 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  *          
  */
-fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
-                                  fsal_op_context_t * p_context,        /* IN */
-                                  fsal_handle_t * p_fsoot_handle,       /* OUT */
+fsal_status_t HPSSFSAL_lookupJunction(hpssfsal_handle_t * p_junction_handle,    /* IN */
+                                  hpssfsal_op_context_t * p_context,        /* IN */
+                                  hpssfsal_handle_t * p_fsoot_handle,       /* OUT */
                                   fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
     )
 {
@@ -304,15 +304,15 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
-                              fsal_op_context_t * p_context,    /* IN */
-                              fsal_handle_t * object_handle,    /* OUT */
+fsal_status_t HPSSFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
+                              hpssfsal_op_context_t * p_context,    /* IN */
+                              hpssfsal_handle_t * object_handle,    /* OUT */
                               fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
   fsal_name_t obj_name = FSAL_NAME_INITIALIZER; /* empty string */
   char *ptr_str;
-  fsal_handle_t out_hdl;
+  hpssfsal_handle_t out_hdl;
   fsal_status_t status;
   int b_is_last = FALSE;        /* is it the last lookup ? */
 
@@ -343,7 +343,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
 
   /* retrieves root directory */
 
-  status = FSAL_lookup(NULL,    /* looking up for root */
+  status = HPSSFSAL_lookup(NULL,    /* looking up for root */
                        NULL,    /* empty string to get root handle */
                        p_context,       /* user's credentials */
                        &out_hdl,        /* output root handle */
@@ -366,7 +366,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
   while(ptr_str[0])
     {
 
-      fsal_handle_t in_hdl;
+      hpssfsal_handle_t in_hdl;
       char *dest_ptr;
 
       /* preparing lookup */
@@ -397,7 +397,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
         b_is_last = TRUE;
 
       /*call to FSAL_lookup */
-      status = FSAL_lookup(&in_hdl,     /* parent directory handle */
+      status = HPSSFSAL_lookup(&in_hdl,     /* parent directory handle */
                            &obj_name,   /* object name */
                            p_context,   /* user's credentials */
                            &out_hdl,    /* output root handle */
@@ -412,12 +412,12 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
        */
       if(global_fs_info.auth_exportpath_xdev && (out_hdl.obj_type == FSAL_TYPE_JUNCTION))
         {
-          fsal_handle_t tmp_hdl;
+          hpssfsal_handle_t tmp_hdl;
 
           tmp_hdl = out_hdl;
 
           /*call to FSAL_lookup */
-          status = FSAL_lookupJunction(&tmp_hdl,        /* object handle */
+          status = HPSSFSAL_lookupJunction(&tmp_hdl,        /* object handle */
                                        p_context,       /* user's credentials */
                                        &out_hdl,        /* output root handle */
                                        /* retrieves attributes if this is the last lookup : */

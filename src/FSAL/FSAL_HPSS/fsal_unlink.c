@@ -48,16 +48,16 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
+fsal_status_t HPSSFSAL_unlink(hpssfsal_handle_t * parentdir_handle,     /* IN */
                           fsal_name_t * p_object_name,  /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
+                          hpssfsal_op_context_t * p_context,        /* IN */
                           fsal_attrib_list_t * parentdir_attributes     /* [IN/OUT ] */
     )
 {
 
   fsal_status_t st;
   int rc;
-  fsal_handle_t obj_handle;
+  hpssfsal_handle_t obj_handle;
 
   /* sanity checks.
    * note : parentdir_attributes are optional.
@@ -70,7 +70,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
   /* Action depends on the object type to be deleted.
    * To know that, we get fsal object handle.
    */
-  st = FSAL_lookup(parentdir_handle,    /* IN */
+  st = HPSSFSAL_lookup(parentdir_handle,    /* IN */
                    p_object_name,       /* IN */
                    p_context,   /* IN */
                    &obj_handle, /* OUT */
@@ -153,7 +153,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
   if(parentdir_attributes)
     {
 
-      st = FSAL_getattrs(parentdir_handle, p_context, parentdir_attributes);
+      st = HPSSFSAL_getattrs(parentdir_handle, p_context, parentdir_attributes);
 
       /* On error, we set a flag in the returned attributes */
 
