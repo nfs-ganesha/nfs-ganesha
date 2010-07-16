@@ -33,14 +33,14 @@
 
 /* function for getting an attribute value */
 
-typedef int (*xattr_getfunc_t) (fsal_handle_t *,        /* object handle */
-                                fsal_op_context_t *,    /* context */
+typedef int (*xattr_getfunc_t) (hpssfsal_handle_t *,        /* object handle */
+                                hpssfsal_op_context_t *,    /* context */
                                 caddr_t,        /* output buff */
                                 size_t, /* output buff size */
                                 size_t *);      /* output size */
 
-typedef int (*xattr_setfunc_t) (fsal_handle_t *,        /* object handle */
-                                fsal_op_context_t *,    /* context */
+typedef int (*xattr_setfunc_t) (hpssfsal_handle_t *,        /* object handle */
+                                hpssfsal_op_context_t *,    /* context */
                                 caddr_t,        /* input buff */
                                 size_t, /* input size */
                                 int);   /* creation flag */
@@ -64,8 +64,8 @@ typedef struct fsal_xattr_def__
  */
 
 /* Class of service */
-int get_file_cos(fsal_handle_t * p_objecthandle,        /* IN */
-                 fsal_op_context_t * p_context, /* IN */
+int get_file_cos(hpssfsal_handle_t * p_objecthandle,        /* IN */
+                 hpssfsal_op_context_t * p_context, /* IN */
                  caddr_t buffer_addr,   /* IN/OUT */
                  size_t buffer_size,    /* IN */
                  size_t * p_output_size)        /* OUT */
@@ -119,8 +119,8 @@ int print_file_cos(caddr_t InBuff, size_t InSize, caddr_t OutBuff, size_t * pOut
 }                               /* print_file_cos */
 
 /* Storage levels */
-int get_file_slevel(fsal_handle_t * p_objecthandle,     /* IN */
-                    fsal_op_context_t * p_context,      /* IN */
+int get_file_slevel(hpssfsal_handle_t * p_objecthandle,     /* IN */
+                    hpssfsal_op_context_t * p_context,      /* IN */
                     caddr_t buffer_addr,        /* IN/OUT */
                     size_t buffer_size, /* IN */
                     size_t * p_output_size)     /* OUT */
@@ -210,8 +210,8 @@ int print_ns_handle(caddr_t InBuff, size_t InSize, caddr_t OutBuff, size_t * pOu
 }                               /* print_ns_handle */
 
 /* Namespace handle */
-int get_ns_handle(fsal_handle_t * p_objecthandle,       /* IN */
-                  fsal_op_context_t * p_context,        /* IN */
+int get_ns_handle(hpssfsal_handle_t * p_objecthandle,       /* IN */
+                  hpssfsal_op_context_t * p_context,        /* IN */
                   caddr_t buffer_addr,  /* IN/OUT */
                   size_t buffer_size,   /* IN */
                   size_t * p_output_size)       /* OUT */
@@ -233,8 +233,8 @@ int get_ns_handle(fsal_handle_t * p_objecthandle,       /* IN */
 }
 
 /* Object type */
-int get_obj_type(fsal_handle_t * p_objecthandle,        /* IN */
-                 fsal_op_context_t * p_context, /* IN */
+int get_obj_type(hpssfsal_handle_t * p_objecthandle,        /* IN */
+                 hpssfsal_op_context_t * p_context, /* IN */
                  caddr_t buffer_addr,   /* IN/OUT */
                  size_t buffer_size,    /* IN */
                  size_t * p_output_size)        /* OUT */
@@ -267,8 +267,8 @@ int get_obj_type(fsal_handle_t * p_objecthandle,        /* IN */
 }
 
 /* Bitfile ID */
-int get_bfid(fsal_handle_t * p_objecthandle,    /* IN */
-             fsal_op_context_t * p_context,     /* IN */
+int get_bfid(hpssfsal_handle_t * p_objecthandle,    /* IN */
+             hpssfsal_op_context_t * p_context,     /* IN */
              caddr_t buffer_addr,       /* IN/OUT */
              size_t buffer_size,        /* IN */
              size_t * p_output_size)    /* OUT */
@@ -488,8 +488,8 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
  * \param xattr_cookie xattr's cookie (as returned by listxattrs).
  * \param p_attrs xattr's attributes.
  */
-fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
-                                 fsal_op_context_t * p_context, /* IN */
+fsal_status_t HPSSFSAL_GetXAttrAttrs(hpssfsal_handle_t * p_objecthandle,        /* IN */
+                                 hpssfsal_op_context_t * p_context, /* IN */
                                  unsigned int xattr_id, /* IN */
                                  fsal_attrib_list_t * p_attrs
                                           /**< IN/OUT xattr attributes (if supported) */
@@ -526,7 +526,7 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
 
   file_attrs.asked_attributes &= p_attrs->asked_attributes;
 
-  st = FSAL_getattrs(p_objecthandle, p_context, &file_attrs);
+  st = HPSSFSAL_getattrs(p_objecthandle, p_context, &file_attrs);
 
   if(FSAL_IS_ERROR(st))
     Return(st.major, st.minor, INDEX_FSAL_GetXAttrAttrs);
@@ -595,9 +595,9 @@ static int fsal_xattr_name_2_uda(const char *src, char *out)
  * \param p_nb_returned the number of xattr entries actually stored in xattrs_tab.
  * \param end_of_list this boolean indicates that the end of xattrs list has been reached.
  */
-fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
+fsal_status_t HPSSFSAL_ListXAttrs(hpssfsal_handle_t * p_objecthandle,   /* IN */
                               unsigned int cookie,      /* IN */
-                              fsal_op_context_t * p_context,    /* IN */
+                              hpssfsal_op_context_t * p_context,    /* IN */
                               fsal_xattrent_t * xattrs_tab,     /* IN/OUT */
                               unsigned int xattrs_tabsize,      /* IN */
                               unsigned int *p_nb_returned,      /* OUT */
@@ -763,9 +763,9 @@ fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
  * \param buffer_size size of the buffer where the xattr value is to be stored.
  * \param p_output_size size of the data actually stored into the buffer.
  */
-fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
+fsal_status_t HPSSFSAL_GetXAttrValueById(hpssfsal_handle_t * p_objecthandle,    /* IN */
                                      unsigned int xattr_id,     /* IN */
-                                     fsal_op_context_t * p_context,     /* IN */
+                                     hpssfsal_op_context_t * p_context,     /* IN */
                                      caddr_t buffer_addr,       /* IN/OUT */
                                      size_t buffer_size,        /* IN */
                                      size_t * p_output_size     /* OUT */
@@ -856,9 +856,9 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
  *   
  *   \return ERR_FSAL_NO_ERROR if xattr_name exists, ERR_FSAL_NOENT otherwise
  */
-fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
+fsal_status_t HPSSFSAL_GetXAttrIdByName(hpssfsal_handle_t * p_objecthandle,     /* IN */
                                     const fsal_name_t * xattr_name,     /* IN */
-                                    fsal_op_context_t * p_context,      /* IN */
+                                    hpssfsal_op_context_t * p_context,      /* IN */
                                     unsigned int *pxattr_id     /* OUT */
     )
 {
@@ -947,9 +947,9 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
  * \param buffer_size size of the buffer where the xattr value is to be stored.
  * \param p_output_size size of the data actually stored into the buffer.
  */
-fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,  /* IN */
+fsal_status_t HPSSFSAL_GetXAttrValueByName(hpssfsal_handle_t * p_objecthandle,  /* IN */
                                        const fsal_name_t * xattr_name,  /* IN */
-                                       fsal_op_context_t * p_context,   /* IN */
+                                       hpssfsal_op_context_t * p_context,   /* IN */
                                        caddr_t buffer_addr,     /* IN/OUT */
                                        size_t buffer_size,      /* IN */
                                        size_t * p_output_size   /* OUT */
@@ -1052,9 +1052,9 @@ static void chomp_attr_value(char *str, size_t size)
     str[len - 1] = '\0';
 }
 
-fsal_status_t FSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,        /* IN */
+fsal_status_t HPSSFSAL_SetXAttrValue(hpssfsal_handle_t * p_objecthandle,        /* IN */
                                  const fsal_name_t * xattr_name,        /* IN */
-                                 fsal_op_context_t * p_context, /* IN */
+                                 hpssfsal_op_context_t * p_context, /* IN */
                                  caddr_t buffer_addr,   /* IN */
                                  size_t buffer_size,    /* IN */
                                  int create     /* IN */
@@ -1095,9 +1095,9 @@ fsal_status_t FSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,        /* IN */
 #endif
 }
 
-fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
+fsal_status_t HPSSFSAL_SetXAttrValueById(hpssfsal_handle_t * p_objecthandle,    /* IN */
                                      unsigned int xattr_id,     /* IN */
-                                     fsal_op_context_t * p_context,     /* IN */
+                                     hpssfsal_op_context_t * p_context,     /* IN */
                                      caddr_t buffer_addr,       /* IN */
                                      size_t buffer_size /* IN */
     )
@@ -1165,8 +1165,8 @@ fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
  * \param p_context pointer to the current security context.
  * \param xattr_id xattr's id
  */
-fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,      /* IN */
-                                   fsal_op_context_t * p_context,       /* IN */
+fsal_status_t HPSSFSAL_RemoveXAttrById(hpssfsal_handle_t * p_objecthandle,      /* IN */
+                                   hpssfsal_op_context_t * p_context,       /* IN */
                                    unsigned int xattr_id)       /* IN */
 {
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
@@ -1179,8 +1179,8 @@ fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,      /* IN */
  * \param p_context pointer to the current security context.
  * \param xattr_name xattr's name
  */
-fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* IN */
-                                     fsal_op_context_t * p_context,     /* IN */
+fsal_status_t HPSSFSAL_RemoveXAttrByName(hpssfsal_handle_t * p_objecthandle,    /* IN */
+                                     hpssfsal_op_context_t * p_context,     /* IN */
                                      const fsal_name_t * xattr_name)    /* IN */
 {
   ReturnCode(ERR_FSAL_NO_ERROR, 0);

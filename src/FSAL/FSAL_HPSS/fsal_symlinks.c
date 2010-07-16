@@ -51,8 +51,8 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  * */
 
-fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
+fsal_status_t HPSSFSAL_readlink(hpssfsal_handle_t * linkhandle, /* IN */
+                            hpssfsal_op_context_t * p_context,      /* IN */
                             fsal_path_t * p_link_content,       /* OUT */
                             fsal_attrib_list_t * link_attributes        /* [ IN/OUT ] */
     )
@@ -102,7 +102,7 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
 
       fsal_status_t status;
 
-      status = FSAL_getattrs(linkhandle, p_context, link_attributes);
+      status = HPSSFSAL_getattrs(linkhandle, p_context, link_attributes);
 
       /* On error, we set a flag in the returned attributes */
 
@@ -152,12 +152,12 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
+fsal_status_t HPSSFSAL_symlink(hpssfsal_handle_t * parent_directory_handle,     /* IN */
                            fsal_name_t * p_linkname,    /* IN */
                            fsal_path_t * p_linkcontent, /* IN */
-                           fsal_op_context_t * p_context,       /* IN */
+                           hpssfsal_op_context_t * p_context,       /* IN */
                            fsal_accessmode_t accessmode,        /* IN (ignored) */
-                           fsal_handle_t * link_handle, /* OUT */
+                           hpssfsal_handle_t * link_handle, /* OUT */
                            fsal_attrib_list_t * link_attributes /* [ IN/OUT ] */
     )
 {

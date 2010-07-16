@@ -34,7 +34,7 @@
 #define INTMACRO_TO_STR(_x) _DEREF(_x)
 #define _DEREF(_x) #_x
 
-char *FSAL_GetFSName()
+char *HPSSFSAL_GetFSName()
 {
   return "HPSS " INTMACRO_TO_STR(HPSS_MAJOR_VERSION) "."
       INTMACRO_TO_STR(HPSS_MINOR_VERSION) "." INTMACRO_TO_STR(HPSS_PATCH_LEVEL);
@@ -56,7 +56,7 @@ char *FSAL_GetFSName()
  *         - Segfault if status is a NULL pointer.
  */
 
-int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
+int HPSSFSAL_handlecmp(hpssfsal_handle_t * handle1, hpssfsal_handle_t * handle2,
                    fsal_status_t * status)
 {
 
@@ -101,7 +101,7 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
  * \return The hash value
  */
 
-unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
+unsigned int HPSSFSAL_Handle_to_HashIndex(hpssfsal_handle_t * p_handle,
                                       unsigned int cookie,
                                       unsigned int alphabet_len, unsigned int index_size)
 {
@@ -150,7 +150,7 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cookie)
+unsigned int HPSSFSAL_Handle_to_RBTIndex(hpssfsal_handle_t * p_handle, unsigned int cookie)
 {
   unsigned int h;
   unsigned int i;
@@ -176,7 +176,7 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
 
 /**
  * FSAL_DigestHandle :
- *  Convert an fsal_handle_t to a buffer
+ *  Convert an hpssfsal_handle_t to a buffer
  *  to be included into NFS handles,
  *  or another digest.
  *
@@ -191,9 +191,9 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
  *         Else, it is a non null value.
  */
 
-fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
+fsal_status_t HPSSFSAL_DigestHandle(hpssfsal_export_context_t * p_expcontext,   /* IN */
                                 fsal_digesttype_t output_type,  /* IN */
-                                fsal_handle_t * in_fsal_handle, /* IN */
+                                hpssfsal_handle_t * in_fsal_handle, /* IN */
                                 caddr_t out_buff        /* OUT */
     )
 {
@@ -434,10 +434,10 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
+fsal_status_t HPSSFSAL_ExpandHandle(hpssfsal_export_context_t * p_expcontext,   /* IN */
                                 fsal_digesttype_t in_type,      /* IN */
                                 caddr_t in_buff,        /* IN */
-                                fsal_handle_t * out_fsal_handle /* OUT */
+                                hpssfsal_handle_t * out_fsal_handle /* OUT */
     )
 {
 
@@ -453,7 +453,7 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
     case FSAL_DIGEST_NFSV2:
 
-      memset(out_fsal_handle, 0, sizeof(fsal_handle_t));
+      memset(out_fsal_handle, 0, sizeof(hpssfsal_handle_t));
       memcpy(&out_fsal_handle->ns_handle, in_buff, memlen);
 
       memcpy(&out_fsal_handle->ns_handle.CoreServerUUID,
@@ -465,7 +465,7 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
     case FSAL_DIGEST_NFSV3:
 
-      memset(out_fsal_handle, 0, sizeof(fsal_handle_t));
+      memset(out_fsal_handle, 0, sizeof(hpssfsal_handle_t));
       memcpy(&out_fsal_handle->ns_handle, in_buff, memlen);
 
       memcpy(&out_fsal_handle->ns_handle.CoreServerUUID,
@@ -477,7 +477,7 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
     case FSAL_DIGEST_NFSV4:
 
-      memset(out_fsal_handle, 0, sizeof(fsal_handle_t));
+      memset(out_fsal_handle, 0, sizeof(hpssfsal_handle_t));
       memcpy(&out_fsal_handle->ns_handle, in_buff, memlen);
       memcpy(&out_fsal_handle->ns_handle.CoreServerUUID,
              &p_expcontext->fileset_root_handle.CoreServerUUID, sizeof(TYPE_UUIDT));
@@ -502,7 +502,7 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
  *         ERR_FSAL_FAULT (null pointer given as parameter),
  *         ERR_FSAL_SERVERFAULT (unexpected error)
  */
-fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t HPSSFSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 {
 
   log_t no_logging = LOG_INITIALIZER;
@@ -521,7 +521,7 @@ fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 
 }
 
-fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t HPSSFSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
 {
   /* defensive programming... */
   if(out_parameter == NULL)
@@ -557,7 +557,7 @@ fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_paramet
 
 }
 
-fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t HPSSFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
 {
   /* defensive programming... */
   if(out_parameter == NULL)
@@ -615,7 +615,7 @@ fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_param
 
 /* load FSAL init info */
 
-fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
+fsal_status_t HPSSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
                                                  fsal_parameter_t * out_parameter)
 {
   int err;
@@ -732,7 +732,7 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
 /* load general filesystem configuration options */
 
-fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
+fsal_status_t HPSSFSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
                                                       fsal_parameter_t * out_parameter)
 {
   int err;
@@ -939,7 +939,7 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
 /* load specific filesystem configuration options */
 
-fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
+fsal_status_t HPSSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
                                                         fsal_parameter_t * out_parameter)
 {
   int err;

@@ -44,9 +44,9 @@
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
-                           fsal_op_context_t * p_context,       /* IN */
-                           fsal_dir_t * dir_descriptor, /* OUT */
+fsal_status_t HPSSFSAL_opendir(hpssfsal_handle_t * dir_handle,  /* IN */
+                           hpssfsal_op_context_t * p_context,       /* IN */
+                           hpssfsal_dir_t * dir_descriptor, /* OUT */
                            fsal_attrib_list_t * dir_attributes  /* [ IN/OUT ] */
     )
 {
@@ -62,14 +62,14 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
   /* Test access rights for this directory
    * and retrieve asked attributes */
 
-  st = FSAL_access(dir_handle, p_context, FSAL_R_OK, dir_attributes);
+  st = HPSSFSAL_access(dir_handle, p_context, FSAL_R_OK, dir_attributes);
 
   if(FSAL_IS_ERROR(st))
     Return(st.major, st.minor, INDEX_FSAL_opendir);
 
   /* if everything is OK, fills the dir_desc structure */
-  memcpy(&dir_descriptor->dir_handle, dir_handle, sizeof(fsal_handle_t));
-  memcpy(&dir_descriptor->context, p_context, sizeof(fsal_op_context_t));
+  memcpy(&dir_descriptor->dir_handle, dir_handle, sizeof(hpssfsal_handle_t));
+  memcpy(&dir_descriptor->context, p_context, sizeof(hpssfsal_op_context_t));
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_opendir);
 
@@ -110,12 +110,12 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
-                           fsal_cookie_t start_position,        /* IN */
+fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
+                           hpssfsal_cookie_t start_position,        /* IN */
                            fsal_attrib_mask_t get_attr_mask,    /* IN */
                            fsal_mdsize_t buffersize,    /* IN */
                            fsal_dirent_t * pdirent,     /* OUT */
-                           fsal_cookie_t * end_position,        /* OUT */
+                           hpssfsal_cookie_t * end_position,        /* OUT */
                            fsal_count_t * nb_entries,   /* OUT */
                            fsal_boolean_t * end_of_dir  /* OUT */
     )
@@ -296,7 +296,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
+fsal_status_t HPSSFSAL_closedir(hpssfsal_dir_t * dir_descriptor /* IN */
     )
 {
 
@@ -307,7 +307,7 @@ fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_closedir);
 
   /* fill dir_descriptor with zeros */
-  memset(dir_descriptor, 0, sizeof(fsal_dir_t));
+  memset(dir_descriptor, 0, sizeof(hpssfsal_dir_t));
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_closedir);
 
