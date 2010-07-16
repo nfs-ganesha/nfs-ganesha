@@ -2362,7 +2362,6 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
  */
 int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 {
-  static int once = 0;
   exportlist_t *pcurrent = NULL;
   cache_inode_status_t cache_status;
 #ifdef _CRASH_RECOVERY_AT_STARTUP
@@ -2377,8 +2376,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
   fsal_staticfsinfo_t *pstaticinfo = NULL;
   fsal_op_context_t context;
 
-  if(once == 0)
-    {
       /* setting the 'small_client' structure */
       small_client_param.lru_param.nb_entry_prealloc = 10;
       small_client_param.lru_param.entry_to_str = local_lru_inode_entry_to_str;
@@ -2546,10 +2543,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
             }
 #endif
         }
-
-      /* Do not call me again */
-      once = 1;
-    }
 
   return TRUE;
 }                               /* nfs_export_create_root_entry */
