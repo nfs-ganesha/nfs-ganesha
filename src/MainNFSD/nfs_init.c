@@ -1985,8 +1985,6 @@ exportlist_t *RemoveExportEntry(exportlist_t * exportEntry)
 
   next = exportEntry->next;
 
-  //  pmydata->stats.fsal_stats
-
   if (exportEntry->fs_static_info != NULL)
     Mem_Free(exportEntry->fs_static_info);
 
