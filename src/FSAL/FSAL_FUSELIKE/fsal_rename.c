@@ -62,11 +62,11 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
   */
 
-fsal_status_t FSAL_rename(fsal_handle_t * old_parentdir_handle, /* IN */
+fsal_status_t FUSEFSAL_rename(fusefsal_handle_t * old_parentdir_handle, /* IN */
                           fsal_name_t * p_old_name,     /* IN */
-                          fsal_handle_t * new_parentdir_handle, /* IN */
+                          fusefsal_handle_t * new_parentdir_handle, /* IN */
                           fsal_name_t * p_new_name,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
+                          fusefsal_op_context_t * p_context,        /* IN */
                           fsal_attrib_list_t * src_dir_attributes,      /* [ IN/OUT ] */
                           fsal_attrib_list_t * tgt_dir_attributes       /* [ IN/OUT ] */
     )
@@ -136,7 +136,7 @@ fsal_status_t FSAL_rename(fsal_handle_t * old_parentdir_handle, /* IN */
     {
       fsal_status_t st;
 
-      st = FSAL_getattrs(old_parentdir_handle, p_context, src_dir_attributes);
+      st = FUSEFSAL_getattrs(old_parentdir_handle, p_context, src_dir_attributes);
 
       if(FSAL_IS_ERROR(st))
         {
@@ -154,7 +154,7 @@ fsal_status_t FSAL_rename(fsal_handle_t * old_parentdir_handle, /* IN */
 
       /* optimization when src=tgt : */
 
-      if(!FSAL_handlecmp(old_parentdir_handle, new_parentdir_handle, &st)
+      if(!FUSEFSAL_handlecmp(old_parentdir_handle, new_parentdir_handle, &st)
          && src_dir_attributes)
         {
 
@@ -169,7 +169,7 @@ fsal_status_t FSAL_rename(fsal_handle_t * old_parentdir_handle, /* IN */
         {
 
           /* get attributes */
-          st = FSAL_getattrs(new_parentdir_handle, p_context, tgt_dir_attributes);
+          st = FUSEFSAL_getattrs(new_parentdir_handle, p_context, tgt_dir_attributes);
 
           if(FSAL_IS_ERROR(st))
             {

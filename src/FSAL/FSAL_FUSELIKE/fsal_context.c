@@ -37,7 +37,7 @@
  * Parse FS specific option string
  * to build the export entry option.
  */
-fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, /* OUT */
+fsal_status_t FUSEFSAL_BuildExportContext(fusefsal_export_context_t * p_export_context, /* OUT */
                                       fsal_path_t * p_export_path,      /* IN */
                                       char *fs_specific_options /* IN */
     )
@@ -54,13 +54,13 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
   /* store root full path */
 
   /* unused */
-  memset(p_export_context, 0, sizeof(fsal_export_context_t));
+  memset(p_export_context, 0, sizeof(fusefsal_export_context_t));
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 
 }
 
-fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
+fsal_status_t FUSEFSAL_InitClientContext(fusefsal_op_context_t * p_thr_context)
 {
 
   int rc, i;
@@ -91,7 +91,7 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
  * FSAL_GetClientContext :
  * Get a user credential from its uid.
  * 
- * \param p_cred (in out, fsal_cred_t *)
+ * \param p_cred (in out, fusefsal_cred_t *)
  *        Initialized credential to be changed
  *        for representing user.
  * \param uid (in, fsal_uid_t)
@@ -110,8 +110,8 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
  *      - ERR_FSAL_SERVERFAULT : unexpected error.
  */
 
-fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OUT  */
-                                    fsal_export_context_t * p_export_context,   /* IN */
+fsal_status_t FUSEFSAL_GetClientContext(fusefsal_op_context_t * p_thr_context,  /* IN/OUT  */
+                                    fusefsal_export_context_t * p_export_context,   /* IN */
                                     fsal_uid_t uid,     /* IN */
                                     fsal_gid_t gid,     /* IN */
                                     fsal_gid_t * alt_groups,    /* IN */

@@ -50,16 +50,16 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
+fsal_status_t FUSEFSAL_unlink(fusefsal_handle_t * parentdir_handle,     /* IN */
                           fsal_name_t * p_object_name,  /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
+                          fusefsal_op_context_t * p_context,        /* IN */
                           fsal_attrib_list_t * parentdir_attributes     /* [IN/OUT ] */
     )
 {
 
   int rc;
   fsal_status_t st;
-  fsal_handle_t obj_handle;
+  fusefsal_handle_t obj_handle;
   char parent_path[FSAL_MAX_PATH_LEN];
   char child_path[FSAL_MAX_PATH_LEN];
   struct stat stbuff;
@@ -137,7 +137,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
 
   if(parentdir_attributes)
     {
-      st = FSAL_getattrs(parentdir_handle, p_context, parentdir_attributes);
+      st = FUSEFSAL_getattrs(parentdir_handle, p_context, parentdir_attributes);
 
       /* On error, we set a flag in the returned attributes */
 
