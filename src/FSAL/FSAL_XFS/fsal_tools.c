@@ -243,7 +243,7 @@ fsal_status_t XFSFSAL_DigestHandle(xfsfsal_export_context_t * p_expcontext,   /*
       /* FileId digest for NFSv2 */
     case FSAL_DIGEST_FILEID2:
 
-      ino32 = low32m(p_in_fsal_handle->inode);
+      ino32 = my_low32m(p_in_fsal_handle->inode);
 
       /* sanity check about output size */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID2);

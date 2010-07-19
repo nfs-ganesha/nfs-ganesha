@@ -45,8 +45,8 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument) 
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
+fsal_status_t FUSEFSAL_getattrs(fusefsal_handle_t * filehandle, /* IN */
+                            fusefsal_op_context_t * p_context,      /* IN */
                             fsal_attrib_list_t * object_attributes      /* IN/OUT */
     )
 {
@@ -155,8 +155,8 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
  *        the object_attributes->asked_attributes field.
  */
 
-fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
+fsal_status_t FUSEFSAL_setattrs(fusefsal_handle_t * filehandle, /* IN */
+                            fusefsal_op_context_t * p_context,      /* IN */
                             fsal_attrib_list_t * attrib_set,    /* IN */
                             fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
@@ -224,7 +224,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
       FSAL_CLEAR_MASK(tmp_attrs.asked_attributes);
       FSAL_SET_MASK(tmp_attrs.asked_attributes, FSAL_ATTR_TYPE);
 
-      status = FSAL_getattrs(filehandle, p_context, &tmp_attrs);
+      status = FUSEFSAL_getattrs(filehandle, p_context, &tmp_attrs);
 
       if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_setattrs);
@@ -330,7 +330,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
       FSAL_SET_MASK(tmp_attrs.asked_attributes, FSAL_ATTR_ATIME);
       FSAL_SET_MASK(tmp_attrs.asked_attributes, FSAL_ATTR_MTIME);
 
-      status = FSAL_getattrs(filehandle, p_context, &tmp_attrs);
+      status = FUSEFSAL_getattrs(filehandle, p_context, &tmp_attrs);
 
       if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_setattrs);
@@ -396,7 +396,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
   if(object_attributes)
     {
 
-      status = FSAL_getattrs(filehandle, p_context, object_attributes);
+      status = FUSEFSAL_getattrs(filehandle, p_context, object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))

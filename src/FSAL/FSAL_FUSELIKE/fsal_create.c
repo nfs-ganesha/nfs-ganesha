@@ -59,11 +59,11 @@
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the object_attributes->asked_attributes field.
  */
-fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
+fsal_status_t FUSEFSAL_create(fusefsal_handle_t * parent_directory_handle,      /* IN */
                           fsal_name_t * p_filename,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
+                          fusefsal_op_context_t * p_context,        /* IN */
                           fsal_accessmode_t accessmode, /* IN */
-                          fsal_handle_t * object_handle,        /* OUT */
+                          fusefsal_handle_t * object_handle,        /* OUT */
                           fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
@@ -241,11 +241,11 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the object_attributes->asked_attributes field.
  */
-fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
+fsal_status_t FUSEFSAL_mkdir(fusefsal_handle_t * parent_directory_handle,       /* IN */
                          fsal_name_t * p_dirname,       /* IN */
-                         fsal_op_context_t * p_context, /* IN */
+                         fusefsal_op_context_t * p_context, /* IN */
                          fsal_accessmode_t accessmode,  /* IN */
-                         fsal_handle_t * object_handle, /* OUT */
+                         fusefsal_handle_t * object_handle, /* OUT */
                          fsal_attrib_list_t * object_attributes /* [ IN/OUT ] */
     )
 {
@@ -381,10 +381,10 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the attributes->asked_attributes field.
  */
-fsal_status_t FSAL_link(fsal_handle_t * target_handle,  /* IN */
-                        fsal_handle_t * dir_handle,     /* IN */
+fsal_status_t FUSEFSAL_link(fusefsal_handle_t * target_handle,  /* IN */
+                        fusefsal_handle_t * dir_handle,     /* IN */
                         fsal_name_t * p_link_name,      /* IN */
-                        fsal_op_context_t * p_context,  /* IN */
+                        fusefsal_op_context_t * p_context,  /* IN */
                         fsal_attrib_list_t * attributes /* [ IN/OUT ] */
     )
 {
@@ -457,7 +457,7 @@ fsal_status_t FSAL_link(fsal_handle_t * target_handle,  /* IN */
     {
       fsal_status_t st;
 
-      st = FSAL_getattrs(target_handle, p_context, attributes);
+      st = FUSEFSAL_getattrs(target_handle, p_context, attributes);
 
       /* On error, we set a flag in the returned attributes */
 
@@ -480,13 +480,13 @@ fsal_status_t FSAL_link(fsal_handle_t * target_handle,  /* IN */
  *
  * \return ERR_FSAL_NOTSUPP.
  */
-fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
+fsal_status_t FUSEFSAL_mknode(fusefsal_handle_t * parentdir_handle,     /* IN */
                           fsal_name_t * p_node_name,    /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
+                          fusefsal_op_context_t * p_context,        /* IN */
                           fsal_accessmode_t accessmode, /* IN */
                           fsal_nodetype_t nodetype,     /* IN */
                           fsal_dev_t * dev,     /* IN */
-                          fsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
+                          fusefsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
                           fsal_attrib_list_t * node_attributes  /* [ IN/OUT ] */
     )
 {
