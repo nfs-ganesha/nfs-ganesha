@@ -130,8 +130,6 @@ static void action_sigterm(int sig)
 
 static void action_sighup(int sig)
 {
-  char *config_file = "/etc/ganesha/gpfs.ganesha.exports.conf";
-
   if(sig == SIGTERM)
     DisplayLog("SIGTERM_HANDLER: Receveid SIGTERM.... initiating daemon shutdown");
   else if(sig == SIGINT)
@@ -140,10 +138,8 @@ static void action_sighup(int sig)
     DisplayLog("SIGHUP_HANDLER: Receveid SIGHUP.... initiating export list reload");
 
 
-  if (!rebuild_export_list(config_file))
-    {
+  if (!rebuild_export_list(NULL))
       DisplayLog("Error, attempt to reload exports list from config file failed.");
-    }
   
 }                               /* action_sigsigh */
 
