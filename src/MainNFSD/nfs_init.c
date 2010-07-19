@@ -85,6 +85,7 @@
 nfs_parameter_t nfs_param;
 time_t ServerBootTime = 0;
 nfs_worker_data_t *workers_data = NULL;
+nfs_admin_data_t *admin_data = NULL;
 verifier4 NFS4_write_verifier;  /* NFS V4 write verifier */
 writeverf3 NFS3_write_verifier; /* NFS V3 write verifier */
 
@@ -1249,7 +1250,7 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
   DisplayLog("NFS STARTUP: rpc dispatcher thread was started successfully");
 
   /* Starting the admin thread */
-  if((rc = pthread_create(&admin_thrid, &attr_thr, admin_thread, (void *)NULL)) != 0)
+  if((rc = pthread_create(&admin_thrid, &attr_thr, admin_thread, (void *)admin_data)) != 0)
     {
       DisplayErrorLog(ERR_SYS, ERR_PTHREAD_CREATE, rc);
       exit(1);
@@ -1434,6 +1435,20 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       exit(1);
     }
   DisplayLogLevel(NIV_EVENT, "NFS_INIT: RPC ressources successfully initialized");
+
+  /* Admi initialisation */
+  if((admin_data =
+      (nfs_admin_data_t *) Mem_Alloc(sizeof(nfs_admin_data_t))) == NULL)
+    {
+      DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
+      exit(1);
+    }  
+
+  if (nfs_Init_admin_data(admin_data) != 0)
+    {
+      DisplayLog("NFS_INIT: Error while initializing admin thread");
+      exit(1);
+    }
 
   /* Worker initialisation */
   if((workers_data =
@@ -2133,4 +2148,11 @@ cleanup_and_exit:
     }
 
   return status; /* 1 if success */
+}
+
+void admin_replace_exports()
+{
+  admin_data->reload_exports = TRUE;
+  if(pthread_cond_signal(&(admin_data->admin_condvar)) == -1)
+      DisplayLog("admin_replace_exports - admin cond signal failed , errno = %d", errno);
 }

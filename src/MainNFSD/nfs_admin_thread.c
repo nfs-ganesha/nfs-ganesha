@@ -48,11 +48,36 @@
 #include <pthread.h>
 #include "nfs_core.h"
 
-void *admin_thread(void *IndexArg)
+int nfs_Init_admin_data(nfs_admin_data_t *pdata)
 {
-  unsigned long __attribute__ ((__unused__)) index = (long)IndexArg;
+  if(pthread_mutex_init(&(pdata->mutex_admin_condvar), NULL) != 0)
+    return -1;
+
+  if(pthread_cond_init(&(pdata->admin_condvar), NULL) != 0)
+    return -1;
+
+  pdata->reload_exports = FALSE;
+
+  return 0;
+}                               /* nfs_Init_admin_data */
+
+void *admin_thread(void *Arg)
+{
+  nfs_admin_data_t *pmydata = (nfs_admin_data_t *)Arg;
 
   SetNameFunction("admin_thr");
+
+  while(1)
+    {
+      P(pmydata->mutex_admin_condvar);
+      while(pmydata->reload_exports == FALSE)
+	    pthread_cond_wait(&(pmydata->admin_condvar), &(pmydata->mutex_admin_condvar));
+      pmydata->reload_exports = FALSE;
+      V(pmydata->mutex_admin_condvar);
+
+      if (!rebuild_export_list(NULL))
+	DisplayLog("Error, attempt to reload exports list from config file failed.");
+    }
 
   return NULL;
 }                               /* admin_thread */
