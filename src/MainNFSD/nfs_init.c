@@ -2033,8 +2033,18 @@ int rebuild_export_list(char *config_file)
   exportlist_t * temp_pexportlist;
   config_file_t config_struct;
 
+  /* If no configuration file is given, then the caller must want to reparse the
+   * configuration file from startup. */
   if (config_file == NULL)
-    return -1;
+    {
+      if (config_path == NULL)
+	{
+	  DisplayLog("Error: No configuration file was specified for reloading exports.");
+	  return -1;
+	}
+      else
+	config_file = config_path;
+    }
 
   /* Attempt to parse the new configuration file */
   config_struct = config_ParseFile(config_file);
