@@ -137,10 +137,7 @@ static void action_sighup(int sig)
   else if(sig == SIGHUP)
     DisplayLog("SIGHUP_HANDLER: Receveid SIGHUP.... initiating export list reload");
 
-
-  if (!rebuild_export_list(NULL))
-      DisplayLog("Error, attempt to reload exports list from config file failed.");
-  
+  admin_replace_exports();
 }                               /* action_sigsigh */
 
 /**
