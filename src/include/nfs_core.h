@@ -384,6 +384,7 @@ typedef struct nfs_param__
 #ifndef _NO_BUDDY_SYSTEM
   /* buddy parameter for workers and dispatcher */
   buddy_parameter_t buddy_param_worker;
+  buddy_parameter_t buddy_param_admin;
   buddy_parameter_t buddy_param_tcp_mgr;
 #endif
 

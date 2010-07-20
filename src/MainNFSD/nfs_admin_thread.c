@@ -48,6 +48,8 @@
 #include <pthread.h>
 #include "nfs_core.h"
 
+extern nfs_parameter_t nfs_param;
+
 int nfs_Init_admin_data(nfs_admin_data_t *pdata)
 {
   if(pthread_mutex_init(&(pdata->mutex_admin_condvar), NULL) != 0)
@@ -65,7 +67,19 @@ void *admin_thread(void *Arg)
 {
   nfs_admin_data_t *pmydata = (nfs_admin_data_t *)Arg;
 
+  int rc = 0;
+
   SetNameFunction("admin_thr");
+
+#ifndef _NO_BUDDY_SYSTEM
+  if((rc = BuddyInit(&nfs_param.buddy_param_admin)) != BUDDY_SUCCESS)
+    {
+      /* Failed init */
+      DisplayLog("ADMIN THREAD: Memory manager could not be initialized, exiting...");
+      exit(1);
+    }
+  DisplayLogLevel(NIV_EVENT, "ADMIN THREAD: Memory manager successfully initialized");
+#endif
 
   while(1)
     {
