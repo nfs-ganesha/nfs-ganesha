@@ -61,7 +61,7 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
 
   /* >> You can prepare your directory for beeing read  
    * and check that the user has the right for reading its content <<*/
-  vnode_t *p_vnode;
+  libzfswrap_vnode_t *p_vnode;
   if((rc = libzfswrap_opendir(p_context->export_context->p_vfs, &p_context->user_credential.cred,
                               dir_handle->zfs_handle, &p_vnode)))
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);

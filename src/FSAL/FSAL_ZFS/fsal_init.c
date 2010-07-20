@@ -19,7 +19,7 @@
 #include "fsal_internal.h"
 #include "fsal_common.h"
 
-extern vfs_t *p_vfs;
+extern libzfswrap_vfs_t *p_vfs;
 
 /* Macros for analysing parameters. */
 #define SET_BITMAP_PARAM( api_cfg, p_init_info, _field )      \

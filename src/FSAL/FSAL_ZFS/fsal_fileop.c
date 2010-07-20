@@ -85,7 +85,7 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
   TakeTokenFSCall();
 
   /* >> call your FS open function << */
-  vnode_t *p_vnode;
+  libzfswrap_vnode_t *p_vnode;
   rc = libzfswrap_open(p_context->export_context->p_vfs, &p_context->user_credential.cred,
                        filehandle->zfs_handle, posix_flags, &p_vnode);
 
