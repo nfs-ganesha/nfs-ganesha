@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern vfs_t *p_vfs;
+extern libzfswrap_vfs_t *p_vfs;
 
 /** usefull subopt definitions */
 

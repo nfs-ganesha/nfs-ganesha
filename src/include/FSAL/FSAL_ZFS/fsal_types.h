@@ -101,7 +101,7 @@ typedef struct fsal_cred__
 typedef struct fsal_export_context__
 {
   fsal_handle_t root_handle;
-  vfs_t *p_vfs;
+  libzfswrap_vfs_t *p_vfs;
 
 } fsal_export_context_t;
 
@@ -120,21 +120,21 @@ typedef struct fsal_op_context__
 
 typedef struct fsal_dir__
 {
-  vfs_t* p_vfs;
+  libzfswrap_vfs_t* p_vfs;
   creden_t cred;
-  vnode_t *p_vnode;
+  libzfswrap_vnode_t *p_vnode;
   inogen_t zfs_handle;
 
 } fsal_dir_t;
 
 typedef struct fsal_file__
 {
-  vfs_t *p_vfs;
+  libzfswrap_vfs_t *p_vfs;
   creden_t cred;
   inogen_t zfs_handle;
   off_t current_offset;
   int flags;
-  vnode_t *p_vnode;
+  libzfswrap_vnode_t *p_vnode;
 
 } fsal_file_t;
 
