@@ -24,59 +24,28 @@
  */
 
 /**
- * \file    fsal_glue.h
+ * \file    fsal_glue_const.h
  * \date    $Date: 2010/07/01 12:45:27 $
  *
  *
  */
 
-#ifndef _FSAL_GLUE_H
-#define _FSAL_GLUE_H
+#ifndef _FSAL_GLUE_CONST_H
+#define _FSAL_GLUE_CONST_H
 
-#include "fsal_glue_const.h"
+#define FSAL_INDEX_ARRAY_SIZE 2 
+#define FSAL_XFS_INDEX 0 
+#define FSAL_PROXY_INDEX 1
 
+#define FSAL_HANDLE_T_SIZE 148 
+#define FSAL_OP_CONTEXT_T_SIZE 620
+#define FSAL_DIR_T_SIZE 4876
+#define FSAL_EXPORT_CONTEXT_T_SIZE 4204
+#define FSAL_FILE_T_SIZE 184
+#define FSAL_COOKIE_T_SIZE 8
+#define FSAL_LOCKDESC_T_SIZE 24
+#define FSAL_CRED_T_SIZE 140
+#define FSAL_FS_SPECIFIC_INITINFO_T 17208
 
-/* In the "static" case, original types are used, this is safer */
-#ifdef _USE_SHARED_FSAL 
-
-typedef struct {
- char data[FSAL_HANDLE_T_SIZE] ;
-} fsal_handle_t ;
-
-typedef struct {
-  void * export_context ;
-  char data[FSAL_OP_CONTEXT_T_SIZE] ;
-} fsal_op_context_t ; 
-
-typedef struct {
-  char data[FSAL_DIR_T_SIZE] ;
-} fsal_dir_t ;
-
-typedef struct {
-  char data[FSAL_EXPORT_CONTEXT_T_SIZE] ;
-} fsal_export_context_t ;
-
-typedef struct {
-  char data[FSAL_FILE_T_SIZE] ;
-} fsal_file_t ;
-
-typedef struct {
-  char data[FSAL_COOKIE_T_SIZE] ;
-} fsal_cookie_t ;
-
-typedef struct {
-  char data[FSAL_LOCKDESC_T_SIZE] ;
-} fsal_lockdesc_t ;
-
-typedef struct {
-  char data[FSAL_CRED_T_SIZE] ;
-} fsal_cred_t ;
-
-typedef struct {
-  char data[FSAL_FS_SPECIFIC_INITINFO_T] ;
-} fs_specific_initinfo_t ;
-
-#endif /* USE_SHARED_FSAL */
-
-#endif /* _FSAL_GLUE_H */
+#endif /* _FSAL_GLUE_CONST_H */
 
