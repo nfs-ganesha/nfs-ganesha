@@ -151,6 +151,10 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
 
       if(rc)
         {
+          /* close old and new parent fd */
+          close(old_parent_fd);
+          close(new_parent_fd);
+
           if(errsv == ENOENT)
             Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_rename);
           else
@@ -165,7 +169,12 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
       fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &old_parent_buffstat,
                                NULL);
   if(FSAL_IS_ERROR(status))
+   {
+    close(old_parent_fd);
+    if (!src_equal_tgt)
+      close(new_parent_fd);
     ReturnStatus(status, INDEX_FSAL_rename);
+   }
 
   if(!src_equal_tgt)
     {
@@ -173,7 +182,11 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
           fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &new_parent_buffstat,
                                    NULL);
       if(FSAL_IS_ERROR(status))
+       {
+        close(old_parent_fd);
+        close(new_parent_fd);
         ReturnStatus(status, INDEX_FSAL_rename);
+       }
     }
 
   /* build file paths */
@@ -205,7 +218,8 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
           if(errsv != ENOENT)
             {
               close(old_parent_fd);
-              close(new_parent_fd);
+                if (!src_equal_tgt)
+                  close(new_parent_fd);
               Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
             }
         }
@@ -217,7 +231,8 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
              && p_context->credential.user != 0)
             {
               close(old_parent_fd);
-              close(new_parent_fd);
+              if( !src_equal_tgt )
+                close(new_parent_fd);
               Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
             }
         }
@@ -231,7 +246,8 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
   errsv = errno;
   ReleaseTokenFSCall();
   close(old_parent_fd);
-  close(new_parent_fd);
+  if( !src_equal_tgt )
+                close(new_parent_fd);
 
   if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
