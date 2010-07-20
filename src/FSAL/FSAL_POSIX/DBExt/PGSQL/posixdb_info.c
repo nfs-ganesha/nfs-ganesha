@@ -6,10 +6,11 @@
 #include "string.h"
 
 fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  /* IN */
-                                                   posixfsal_handle_t * p_parent_directory_handle,   /* IN/OUT */
+                                                   posixfsal_handle_t * p_parent_directory_handle,      /* IN/OUT */
                                                    fsal_name_t * p_objectname,  /* IN */
                                                    fsal_path_t * p_path,        /* OUT */
-                                                   posixfsal_handle_t * p_handle /* OUT */ )
+                                                   posixfsal_handle_t *
+                                                   p_handle /* OUT */ )
 {
   PGresult *p_res;
   fsal_posixdb_status_t st;
@@ -98,7 +99,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  
 }
 
 fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,        /* IN */
-                                                     posixfsal_handle_t * p_object_handle,   /* IN/OUT */
+                                                     posixfsal_handle_t * p_object_handle,      /* IN/OUT */
                                                      fsal_path_t * p_paths,     /* OUT */
                                                      int paths_size,    /* IN */
                                                      int *p_count /* OUT */ )
@@ -243,8 +244,8 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
 }
 
 fsal_posixdb_status_t fsal_posixdb_getParentDirHandle(fsal_posixdb_conn * p_conn,       /* IN */
-                                                      posixfsal_handle_t * p_object_handle,  /* IN */
-                                                      posixfsal_handle_t * p_parent_directory_handle /* OUT */
+                                                      posixfsal_handle_t * p_object_handle,     /* IN */
+                                                      posixfsal_handle_t * p_parent_directory_handle    /* OUT */
     )
 {
   PGresult *p_res;

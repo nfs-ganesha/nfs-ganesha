@@ -1879,7 +1879,7 @@ exportlist_t *BuildDefaultExport()
   strcpy(p_entry->pseudopath, "/");
   strcpy(p_entry->referral, "");
 
-  p_entry->UseCookieVerifier = FALSE ;
+  p_entry->UseCookieVerifier = FALSE;
 
   /**
    * Grant root access to all clients
@@ -1990,7 +1990,7 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
  * function for matching a specific option in the client export list.
  */
 static int export_client_match(unsigned int addr,
-			       char *ipstring,
+                               char *ipstring,
                                exportlist_t * pexport,
                                exportlist_client_entry_t * pclient_found,
                                unsigned int export_option)
@@ -2031,16 +2031,16 @@ static int export_client_match(unsigned int addr,
 
 #ifdef _DEBUG_DISPATCH
           printf("Test net %d.%d.%d.%d in %d.%d.%d.%d ??\n",
-                 (unsigned int)(pexport->clients.clientarray[i].client.network.
-                                netaddr >> 24),
+                 (unsigned int)(pexport->clients.clientarray[i].client.
+                                network.netaddr >> 24),
                  (unsigned
-                  int)((pexport->clients.clientarray[i].client.network.
-                        netaddr >> 16) & 0xFF),
+                  int)((pexport->clients.clientarray[i].client.
+                        network.netaddr >> 16) & 0xFF),
                  (unsigned
-                  int)((pexport->clients.clientarray[i].client.network.
-                        netaddr >> 8) & 0xFF),
-                 (unsigned int)(pexport->clients.clientarray[i].client.network.
-                                netaddr & 0xFF), (unsigned int)(addr >> 24),
+                  int)((pexport->clients.clientarray[i].client.
+                        network.netaddr >> 8) & 0xFF),
+                 (unsigned int)(pexport->clients.clientarray[i].client.
+                                network.netaddr & 0xFF), (unsigned int)(addr >> 24),
                  (unsigned int)(addr >> 16) & 0xFF, (unsigned int)(addr >> 8) & 0xFF,
                  (unsigned int)(addr & 0xFF));
 #endif
@@ -2098,7 +2098,7 @@ static int export_client_match(unsigned int addr,
                              (unsigned int)(addr >> 8) & 0xFF,
                              (unsigned int)(addr & 0xFF));
 #endif
-		      strncpy(hostname, "unresolved", 10);
+                      strncpy(hostname, "unresolved", 10);
                     }
                 }
             }
@@ -2120,7 +2120,7 @@ static int export_client_match(unsigned int addr,
                  hostname, pexport->clients.clientarray[i].client.wildcard.wildcard);
 #endif
 
-	  /* Now checking for IP wildcards */
+          /* Now checking for IP wildcards */
           if(fnmatch
              (pexport->clients.clientarray[i].client.wildcard.wildcard, ipstring,
               FNM_PATHNAME) == 0)
@@ -2277,17 +2277,19 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
 
       /* Convert IP address into a string for wild character access checks. */
       inet_ntop(psockaddr_in->sin_family, &psockaddr_in->sin_addr,
-		ipstring, INET_ADDRSTRLEN);
-      if (ipstring == NULL) {
-	DisplayLog("Error: Could not convert the IPv4 address to a character string.");
-	return FALSE;
-      }
+                ipstring, INET_ADDRSTRLEN);
+      if(ipstring == NULL)
+        {
+          DisplayLog("Error: Could not convert the IPv4 address to a character string.");
+          return FALSE;
+        }
 
       /* check if any root access export matches this client */
       if(export_client_match(addr, ipstring, pexport, pclient_found, EXPORT_OPTION_ROOT))
         return TRUE;
       /* else, check if any access only export matches this client */
-      else if(export_client_match(addr, ipstring, pexport, pclient_found, EXPORT_OPTION_ACCESS))
+      else if(export_client_match
+              (addr, ipstring, pexport, pclient_found, EXPORT_OPTION_ACCESS))
         return TRUE;
 #ifdef _USE_TIRPC_IPV6
     }
@@ -2313,23 +2315,27 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
          !memcmp((char *)(psockaddr_in6->sin6_addr.s6_addr + 10),
                  (char *)&two_bytes_all_1, 2))
         {
-	  /* Convert IP address into a string for wild character access checks. */
-	  inet_ntop(psockaddr_in->sin6_family, &psockaddr_in->sin6_addr,
-		    ip6string, INET6_ADDRSTRLEN);
-	  if (ip6string == NULL) {
-	    DisplayLog("Error: Could not convert the IPv6 address to a character string.");
-	    return FALSE;
-	  }
+          /* Convert IP address into a string for wild character access checks. */
+          inet_ntop(psockaddr_in->sin6_family, &psockaddr_in->sin6_addr,
+                    ip6string, INET6_ADDRSTRLEN);
+          if(ip6string == NULL)
+            {
+              DisplayLog
+                  ("Error: Could not convert the IPv6 address to a character string.");
+              return FALSE;
+            }
 
           /* This is an IPv4 address mapped to an IPv6 one. Extract the IPv4 address and proceed with IPv4 autentication */
           memcpy((char *)&addr, (char *)(psockaddr_in6->sin6_addr.s6_addr + 12), 4);
 
           /* Proceed with IPv4 dedicated function */
           /* check if any root access export matches this client */
-          if(export_client_match(addr, ip6string, pexport, pclient_found, EXPORT_OPTION_ROOT))
+          if(export_client_match
+             (addr, ip6string, pexport, pclient_found, EXPORT_OPTION_ROOT))
             return TRUE;
           /* else, check if any access only export matches this client */
-          else if(export_client_match(addr, ip6string, pexport, pclient_found, EXPORT_OPTION_ACCESS))
+          else if(export_client_match
+                  (addr, ip6string, pexport, pclient_found, EXPORT_OPTION_ACCESS))
             return TRUE;
         }
 

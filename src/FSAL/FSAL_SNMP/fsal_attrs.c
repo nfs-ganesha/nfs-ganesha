@@ -42,8 +42,8 @@
  *        - Another error code if an error occured.
  */
 fsal_status_t SNMPFSAL_getattrs(snmpfsal_handle_t * filehandle, /* IN */
-                            snmpfsal_op_context_t * p_context,      /* IN */
-                            fsal_attrib_list_t * object_attributes      /* IN/OUT */
+                                snmpfsal_op_context_t * p_context,      /* IN */
+                                fsal_attrib_list_t * object_attributes  /* IN/OUT */
     )
 {
 
@@ -143,9 +143,9 @@ fsal_status_t SNMPFSAL_getattrs(snmpfsal_handle_t * filehandle, /* IN */
  */
 
 fsal_status_t SNMPFSAL_setattrs(snmpfsal_handle_t * filehandle, /* IN */
-                            snmpfsal_op_context_t * p_context,      /* IN */
-                            fsal_attrib_list_t * attrib_set,    /* IN */
-                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
+                                snmpfsal_op_context_t * p_context,      /* IN */
+                                fsal_attrib_list_t * attrib_set,        /* IN */
+                                fsal_attrib_list_t * object_attributes  /* [ IN/OUT ] */
     )
 {
 

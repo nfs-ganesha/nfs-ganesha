@@ -56,9 +56,9 @@
  *        - Other error codes when something anormal occurs.
  */
 fsal_status_t HPSSFSAL_access(hpssfsal_handle_t * object_handle,        /* IN */
-                          hpssfsal_op_context_t * p_context,        /* IN */
-                          fsal_accessflags_t access_type,       /* IN */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
+                              hpssfsal_op_context_t * p_context,        /* IN */
+                              fsal_accessflags_t access_type,   /* IN */
+                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
 

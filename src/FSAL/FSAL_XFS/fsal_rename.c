@@ -74,13 +74,13 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t XFSFSAL_rename(xfsfsal_handle_t * p_old_parentdir_handle,       /* IN */
-                             fsal_name_t * p_old_name,     /* IN */
-                             xfsfsal_handle_t * p_new_parentdir_handle,       /* IN */
-                             fsal_name_t * p_new_name,     /* IN */
-                             xfsfsal_op_context_t * p_context,        /* IN */
-                             fsal_attrib_list_t * p_src_dir_attributes,    /* [ IN/OUT ] */
-                             fsal_attrib_list_t * p_tgt_dir_attributes     /* [ IN/OUT ] */
+fsal_status_t XFSFSAL_rename(xfsfsal_handle_t * p_old_parentdir_handle, /* IN */
+                             fsal_name_t * p_old_name,  /* IN */
+                             xfsfsal_handle_t * p_new_parentdir_handle, /* IN */
+                             fsal_name_t * p_new_name,  /* IN */
+                             xfsfsal_op_context_t * p_context,  /* IN */
+                             fsal_attrib_list_t * p_src_dir_attributes, /* [ IN/OUT ] */
+                             fsal_attrib_list_t * p_tgt_dir_attributes  /* [ IN/OUT ] */
     )
 {
 
@@ -124,7 +124,7 @@ fsal_status_t XFSFSAL_rename(xfsfsal_handle_t * p_old_parentdir_handle,       /*
     }
 
   /* optimisation : don't do the job twice if source dir = dest dir  */
-  if(!XFSFSAL_handlecmp(p_old_parentdir_handle, p_new_parentdir_handle, &status))
+  if(!FSAL_handlecmp(p_old_parentdir_handle, p_new_parentdir_handle, &status))
     {
       new_parent_fd = old_parent_fd;
       src_equal_tgt = TRUE;
@@ -151,6 +151,10 @@ fsal_status_t XFSFSAL_rename(xfsfsal_handle_t * p_old_parentdir_handle,       /*
 
       if(rc)
         {
+          /* close old and new parent fd */
+          close(old_parent_fd);
+          close(new_parent_fd);
+
           if(errsv == ENOENT)
             Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_rename);
           else
@@ -165,7 +169,12 @@ fsal_status_t XFSFSAL_rename(xfsfsal_handle_t * p_old_parentdir_handle,       /*
       fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &old_parent_buffstat,
                                NULL);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_rename);
+    {
+      close(old_parent_fd);
+      if(!src_equal_tgt)
+        close(new_parent_fd);
+      ReturnStatus(status, INDEX_FSAL_rename);
+    }
 
   if(!src_equal_tgt)
     {
@@ -173,7 +182,11 @@ fsal_status_t XFSFSAL_rename(xfsfsal_handle_t * p_old_parentdir_handle,       /*
           fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &new_parent_buffstat,
                                    NULL);
       if(FSAL_IS_ERROR(status))
-        ReturnStatus(status, INDEX_FSAL_rename);
+        {
+          close(old_parent_fd);
+          close(new_parent_fd);
+          ReturnStatus(status, INDEX_FSAL_rename);
+        }
     }
 
   /* build file paths */
@@ -205,7 +218,8 @@ fsal_status_t XFSFSAL_rename(xfsfsal_handle_t * p_old_parentdir_handle,       /*
           if(errsv != ENOENT)
             {
               close(old_parent_fd);
-              close(new_parent_fd);
+              if(!src_equal_tgt)
+                close(new_parent_fd);
               Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
             }
         }
@@ -217,7 +231,8 @@ fsal_status_t XFSFSAL_rename(xfsfsal_handle_t * p_old_parentdir_handle,       /*
              && p_context->credential.user != 0)
             {
               close(old_parent_fd);
-              close(new_parent_fd);
+              if(!src_equal_tgt)
+                close(new_parent_fd);
               Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
             }
         }
@@ -231,7 +246,8 @@ fsal_status_t XFSFSAL_rename(xfsfsal_handle_t * p_old_parentdir_handle,       /*
   errsv = errno;
   ReleaseTokenFSCall();
   close(old_parent_fd);
-  close(new_parent_fd);
+  if(!src_equal_tgt)
+    close(new_parent_fd);
 
   if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
@@ -243,7 +259,7 @@ fsal_status_t XFSFSAL_rename(xfsfsal_handle_t * p_old_parentdir_handle,       /*
   if(p_src_dir_attributes)
     {
 
-      status = XFSFSAL_getattrs(p_old_parentdir_handle, p_context, p_src_dir_attributes);
+      status = FSAL_getattrs(p_old_parentdir_handle, p_context, p_src_dir_attributes);
 
       if(FSAL_IS_ERROR(status))
         {
@@ -256,7 +272,7 @@ fsal_status_t XFSFSAL_rename(xfsfsal_handle_t * p_old_parentdir_handle,       /*
   if(p_tgt_dir_attributes)
     {
 
-      status = XFSFSAL_getattrs(p_new_parentdir_handle, p_context, p_tgt_dir_attributes);
+      status = FSAL_getattrs(p_new_parentdir_handle, p_context, p_tgt_dir_attributes);
 
       if(FSAL_IS_ERROR(status))
         {

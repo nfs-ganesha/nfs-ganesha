@@ -156,7 +156,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
       if(!FSAL_IS_ERROR(status))
         bythread_stat->func_stats.nb_success[function_index]++;
-      else if(status.major == ERR_FSAL_DELAY ) /* Error is retryable */
+      else if(status.major == ERR_FSAL_DELAY)   /* Error is retryable */
         bythread_stat->func_stats.nb_err_retryable[function_index]++;
       else
         bythread_stat->func_stats.nb_err_unrecover[function_index]++;
@@ -501,7 +501,7 @@ fsal_status_t fsal_internal_appendNameToPath(fsal_path_t * p_path,
 /**
  * Build .lustre/fid path associated to a handle.
  */
-fsal_status_t fsal_internal_Handle2FidPath(lustrefsal_op_context_t * p_context,       /* IN */
+fsal_status_t fsal_internal_Handle2FidPath(lustrefsal_op_context_t * p_context, /* IN */
                                            fsal_handle_t * p_handle,    /* IN */
                                            fsal_path_t * p_fsalpath /* OUT */ )
 {
@@ -534,7 +534,7 @@ fsal_status_t fsal_internal_Handle2FidPath(lustrefsal_op_context_t * p_context, 
 /**
  * Get the handle for a path (posix or fid path)
  */
-fsal_status_t fsal_internal_Path2Handle(lustrefsal_op_context_t * p_context,  /* IN */
+fsal_status_t fsal_internal_Path2Handle(lustrefsal_op_context_t * p_context,    /* IN */
                                         fsal_path_t * p_fsalpath,       /* IN */
                                         fsal_handle_t * p_handle /* OUT */ )
 {
@@ -583,7 +583,7 @@ fsal_status_t fsal_internal_Path2Handle(lustrefsal_op_context_t * p_context,  /*
    Check the access from an existing fsal_attrib_list_t or struct stat
 */
 /* XXX : ACL */
-fsal_status_t fsal_internal_testAccess(lustrefsal_op_context_t * p_context,   /* IN */
+fsal_status_t fsal_internal_testAccess(lustrefsal_op_context_t * p_context,     /* IN */
                                        fsal_accessflags_t access_type,  /* IN */
                                        struct stat *p_buffstat, /* IN */
                                        fsal_attrib_list_t * p_object_attributes /* IN */ )

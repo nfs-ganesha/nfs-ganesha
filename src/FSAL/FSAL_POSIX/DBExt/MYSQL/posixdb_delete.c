@@ -9,7 +9,7 @@
 #include <string.h>
 
 fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
-                                          posixfsal_handle_t * p_parent_directory_handle,    /* IN */
+                                          posixfsal_handle_t * p_parent_directory_handle,       /* IN */
                                           fsal_name_t * p_filename,     /* IN */
                                           fsal_posixdb_fileinfo_t *
                                           p_object_info /* IN */ )

@@ -45,9 +45,9 @@
  *          ERR_FSAL_IO, ...
  */
 fsal_status_t HPSSFSAL_opendir(hpssfsal_handle_t * dir_handle,  /* IN */
-                           hpssfsal_op_context_t * p_context,       /* IN */
-                           hpssfsal_dir_t * dir_descriptor, /* OUT */
-                           fsal_attrib_list_t * dir_attributes  /* [ IN/OUT ] */
+                               hpssfsal_op_context_t * p_context,       /* IN */
+                               hpssfsal_dir_t * dir_descriptor, /* OUT */
+                               fsal_attrib_list_t * dir_attributes      /* [ IN/OUT ] */
     )
 {
   int rc;
@@ -111,13 +111,13 @@ fsal_status_t HPSSFSAL_opendir(hpssfsal_handle_t * dir_handle,  /* IN */
  *          ERR_FSAL_IO, ...
  */
 fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
-                           hpssfsal_cookie_t start_position,        /* IN */
-                           fsal_attrib_mask_t get_attr_mask,    /* IN */
-                           fsal_mdsize_t buffersize,    /* IN */
-                           fsal_dirent_t * pdirent,     /* OUT */
-                           hpssfsal_cookie_t * end_position,        /* OUT */
-                           fsal_count_t * nb_entries,   /* OUT */
-                           fsal_boolean_t * end_of_dir  /* OUT */
+                               hpssfsal_cookie_t start_position,        /* IN */
+                               fsal_attrib_mask_t get_attr_mask,        /* IN */
+                               fsal_mdsize_t buffersize,        /* IN */
+                               fsal_dirent_t * pdirent, /* OUT */
+                               hpssfsal_cookie_t * end_position,        /* OUT */
+                               fsal_count_t * nb_entries,       /* OUT */
+                               fsal_boolean_t * end_of_dir      /* OUT */
     )
 {
   int rc, returned, i;
@@ -226,8 +226,8 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
               /* on error, we set a special bit in the mask. */
               if(FSAL_IS_ERROR(st))
                 {
-                  FSAL_CLEAR_MASK(pdirent[current_nb_entries].
-                                  attributes.asked_attributes);
+                  FSAL_CLEAR_MASK(pdirent[current_nb_entries].attributes.
+                                  asked_attributes);
                   FSAL_SET_MASK(pdirent[current_nb_entries].attributes.asked_attributes,
                                 FSAL_ATTR_RDATTR_ERR);
                 }
@@ -243,8 +243,8 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
               /* on error, we set a special bit in the mask. */
               if(FSAL_IS_ERROR(st))
                 {
-                  FSAL_CLEAR_MASK(pdirent[current_nb_entries].
-                                  attributes.asked_attributes);
+                  FSAL_CLEAR_MASK(pdirent[current_nb_entries].attributes.
+                                  asked_attributes);
                   FSAL_SET_MASK(pdirent[current_nb_entries].attributes.asked_attributes,
                                 FSAL_ATTR_RDATTR_ERR);
                 }

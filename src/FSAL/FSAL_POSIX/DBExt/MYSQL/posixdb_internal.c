@@ -58,7 +58,7 @@ static unsigned int hash_cache_path(fsal_u64_t id, int ts)
  * ayant un hash donne peut occuper une case du tableau.
  */
 
-void fsal_posixdb_CachePath(posixfsal_handle_t * p_handle,   /* IN */
+void fsal_posixdb_CachePath(posixfsal_handle_t * p_handle,      /* IN */
                             fsal_path_t * p_path /* IN */ )
 {
 
@@ -102,7 +102,7 @@ void fsal_posixdb_CachePath(posixfsal_handle_t * p_handle,   /* IN */
 }
 
 /* set/update informations about a handle */
-int fsal_posixdb_UpdateInodeCache(posixfsal_handle_t * p_handle)     /* IN */
+int fsal_posixdb_UpdateInodeCache(posixfsal_handle_t * p_handle)        /* IN */
 {
 #ifdef _ENABLE_CACHE_PATH
 
@@ -153,7 +153,7 @@ int fsal_posixdb_UpdateInodeCache(posixfsal_handle_t * p_handle)     /* IN */
 }
 
 /* retrieve last informations about a handle */
-int fsal_posixdb_GetInodeCache(posixfsal_handle_t * p_handle)        /* IN/OUT */
+int fsal_posixdb_GetInodeCache(posixfsal_handle_t * p_handle)   /* IN/OUT */
 {
 #ifdef _ENABLE_CACHE_PATH
   unsigned int i;
@@ -208,7 +208,7 @@ void fsal_posixdb_InvalidateCache()
 #endif
 }
 
-int fsal_posixdb_GetPathCache(posixfsal_handle_t * p_handle, /* IN */
+int fsal_posixdb_GetPathCache(posixfsal_handle_t * p_handle,    /* IN */
                               fsal_path_t * p_path /* OUT */ )
 {
 #ifdef _ENABLE_CACHE_PATH
@@ -444,7 +444,7 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
         {
           /* clean prepared statement */
           mysql_stmt_free_result(stmt);
-          ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);        /* not found */
+          ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);      /* not found */
         }
       else if(rc)
         {
@@ -482,7 +482,7 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
   if(toomanypaths)
     {
       DisplayLog("Returned path: %s", p_path->path);
-      ReturnCodeDB(ERR_FSAL_POSIXDB_TOOMANYPATHS, toomanypaths);  /* too many entries */
+      ReturnCodeDB(ERR_FSAL_POSIXDB_TOOMANYPATHS, toomanypaths);        /* too many entries */
     }
   else
     {

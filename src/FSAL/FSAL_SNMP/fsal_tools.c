@@ -47,7 +47,7 @@ char *SNMPFSAL_GetFSName()
  */
 
 int SNMPFSAL_handlecmp(snmpfsal_handle_t * handle1, snmpfsal_handle_t * handle2,
-                   fsal_status_t * status)
+                       fsal_status_t * status)
 {
 
   fsal_u64_t fileid1, fileid2;
@@ -81,8 +81,9 @@ int SNMPFSAL_handlecmp(snmpfsal_handle_t * handle1, snmpfsal_handle_t * handle2,
  */
 
 unsigned int SNMPFSAL_Handle_to_HashIndex(snmpfsal_handle_t * p_handle,
-                                      unsigned int cookie,
-                                      unsigned int alphabet_len, unsigned int index_size)
+                                          unsigned int cookie,
+                                          unsigned int alphabet_len,
+                                          unsigned int index_size)
 {
   unsigned int i;
   unsigned int h = 1 + cookie;
@@ -105,7 +106,8 @@ unsigned int SNMPFSAL_Handle_to_HashIndex(snmpfsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int SNMPFSAL_Handle_to_RBTIndex(snmpfsal_handle_t * p_handle, unsigned int cookie)
+unsigned int SNMPFSAL_Handle_to_RBTIndex(snmpfsal_handle_t * p_handle,
+                                         unsigned int cookie)
 {
   unsigned int i;
   unsigned int h = 1 + cookie;
@@ -165,9 +167,9 @@ typedef struct fsal_digest__
 } fsal_digest_t;
 
 fsal_status_t SNMPFSAL_DigestHandle(snmpfsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t output_type,  /* IN */
-                                snmpfsal_handle_t * in_fsal_handle, /* IN */
-                                caddr_t out_buff        /* OUT */
+                                    fsal_digesttype_t output_type,      /* IN */
+                                    snmpfsal_handle_t * in_fsal_handle, /* IN */
+                                    caddr_t out_buff    /* OUT */
     )
 {
   unsigned int i;
@@ -368,9 +370,9 @@ fsal_status_t SNMPFSAL_DigestHandle(snmpfsal_export_context_t * p_expcontext,   
  *         Else, it is a non null value.
  */
 fsal_status_t SNMPFSAL_ExpandHandle(snmpfsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t in_type,      /* IN */
-                                caddr_t in_buff,        /* IN */
-                                snmpfsal_handle_t * out_fsal_handle /* OUT */
+                                    fsal_digesttype_t in_type,  /* IN */
+                                    caddr_t in_buff,    /* IN */
+                                    snmpfsal_handle_t * out_fsal_handle /* OUT */
     )
 {
   fsal_digest_t *p_digest;
@@ -616,7 +618,7 @@ fsal_status_t SNMPFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_p
 /* load FSAL init info */
 
 fsal_status_t SNMPFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
-                                                 fsal_parameter_t * out_parameter)
+                                                     fsal_parameter_t * out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -733,7 +735,8 @@ fsal_status_t SNMPFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 /* load general filesystem configuration options */
 
 fsal_status_t SNMPFSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
-                                                      fsal_parameter_t * out_parameter)
+                                                          fsal_parameter_t *
+                                                          out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -940,7 +943,8 @@ fsal_status_t SNMPFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 /* load specific filesystem configuration options */
 
 fsal_status_t SNMPFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
-                                                        fsal_parameter_t * out_parameter)
+                                                            fsal_parameter_t *
+                                                            out_parameter)
 {
   int err;
   int blk_index;

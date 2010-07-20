@@ -218,7 +218,7 @@ static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 #define FSAL_PATH_INITIALIZER {"",0}
 
 /* Do not include fsal_types for the FSAL is compiled with dlopen */
-#ifndef _USE_SHARED_FSAL 
+#ifndef _USE_SHARED_FSAL
 
 #ifdef _USE_GHOSTFS
 #include "FSAL/FSAL_GHOST_FS/fsal_types.h"
@@ -246,9 +246,9 @@ static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
 #endif
 
-#endif /* _USE_SHARED_FSAL */
+#endif                          /* _USE_SHARED_FSAL */
 
-#include "fsal_glue.h" 
+#include "fsal_glue.h"
 
 /*---------  end of FS dependant definitions ---------*/
 

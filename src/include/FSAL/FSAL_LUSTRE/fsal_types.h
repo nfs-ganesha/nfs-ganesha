@@ -68,19 +68,19 @@
  *      POSIX FS dependant definitions
  * ------------------------------------------- */
 
-#ifdef _BUILD_SHARED_FSAL 
-#define FSAL_HANDLE_LUSTRE_HANDLE_T_PADLEN 124 
-#define FSAL_OP_CONTEXT_T_PADLEN 468 
+#ifdef _BUILD_SHARED_FSAL
+#define FSAL_HANDLE_LUSTRE_HANDLE_T_PADLEN 124
+#define FSAL_OP_CONTEXT_T_PADLEN 468
 #define FSAL_CRED_T_PADLEN 0
-#define FSAL_EXPORT_CONTEXT_T_PADLEN 92 
+#define FSAL_EXPORT_CONTEXT_T_PADLEN 92
 #define FS_SPECIFIC_INITINFO_T_PADLEN 17208
 #define FSAL_COOKIE_T_PADLEN 0
-#define FSAL_LOCKDESC_T_PADLEN 16 
-#define FSAL_FILE_T_PADLEN 176 
-#define FSAL_DIR_T_PADLEN 588 
+#define FSAL_LOCKDESC_T_PADLEN 16
+#define FSAL_FILE_T_PADLEN 176
+#define FSAL_DIR_T_PADLEN 588
 #else
 #define FSAL_HANDLE_LUSTRE_HANDLE_T_PADLEN 0
-#define FSAL_OP_CONTEXT_T_PADLEN 0 
+#define FSAL_OP_CONTEXT_T_PADLEN 0
 #define FSAL_CRED_T_PADLEN 0
 #define FSAL_EXPORT_CONTEXT_T_PADLEN 0
 #define FS_SPECIFIC_INITINFO_T_PADLEN 0
@@ -98,7 +98,7 @@ typedef struct
   /* used for FSAL_DIGEST_FILEID */
   unsigned long long inode;
 #ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_HANDLE_LUSTRE_HANDLE_T_PADLEN] ;
+  char pad[FSAL_HANDLE_LUSTRE_HANDLE_T_PADLEN];
 #endif
 } lustrefsal_handle_t;  /**< FS object handle */
 
@@ -111,7 +111,7 @@ typedef struct lustrefsal_cred__
   fsal_count_t nbgroups;
   gid_t alt_groups[FSAL_NGROUPS_MAX];
 #ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_CRED_T_PADLEN] ;
+  char pad[FSAL_CRED_T_PADLEN];
 #endif
 } lustrefsal_cred_t;
 
@@ -121,7 +121,7 @@ typedef struct lustrefsal_export_context_t
   unsigned int mnt_len;         /* for optimizing concatenation */
   dev_t dev_id;
 #ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_EXPORT_CONTEXT_T_PADLEN] ;
+  char pad[FSAL_EXPORT_CONTEXT_T_PADLEN];
 #endif
 } lustrefsal_export_context_t;
 
@@ -129,10 +129,10 @@ typedef struct lustrefsal_export_context_t
 
 typedef struct
 {
-  lustrefsal_export_context_t *export_context; /* Must be the first entry in this structure */
+  lustrefsal_export_context_t *export_context;  /* Must be the first entry in this structure */
   lustrefsal_cred_t credential;
 #ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_OP_CONTEXT_T_PADLEN] ;
+  char pad[FSAL_OP_CONTEXT_T_PADLEN];
 #endif
 } lustrefsal_op_context_t;
 
@@ -143,7 +143,7 @@ typedef struct lustrefs_specific_initinfo__
 {
   int dummy;
 #ifdef _BUILD_SHARED_FSAL
-  char pad[FS_SPECIFIC_INITINFO_T_PADLEN] ;
+  char pad[FS_SPECIFIC_INITINFO_T_PADLEN];
 #endif
 } lustrefs_specific_initinfo_t;
 
@@ -152,7 +152,7 @@ typedef struct lustrefsal_cookie__
 {
   off_t cookie;
 #ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_COOKIE_T_PADLEN] ;
+  char pad[FSAL_COOKIE_T_PADLEN];
 #endif
 } lustrefsal_cookie_t;
 
@@ -168,11 +168,11 @@ typedef void *lustrefsal_lockdesc_t;   /**< not implemented for now */
 typedef struct lustrefsal_dir__
 {
   DIR *p_dir;
-  lustrefsal_op_context_t context;    /* credential for accessing the directory */
+  lustrefsal_op_context_t context;      /* credential for accessing the directory */
   fsal_path_t path;
   lustrefsal_handle_t handle;
 #ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_DIR_T_PADLEN] ;
+  char pad[FSAL_DIR_T_PADLEN];
 #endif
 } lustrefsal_dir_t;
 
@@ -181,7 +181,7 @@ typedef struct lustrefsal_file__
   int fd;
   int ro;                       /* read only file ? */
 #ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_FILE_T_PADLEN] ;
+  char pad[FSAL_FILE_T_PADLEN];
 #endif
 } lustrefsal_file_t;
 
@@ -199,6 +199,6 @@ typedef struct lustrefsal_file__
 #define fs_specific_initinfo_t lustrefs_specific_initinfo_t
 #define fsal_cred_t lustrefsal_cred_t
 
-#endif /* _USE_SHARED_FSAL */
+#endif                          /* _USE_SHARED_FSAL */
 
 #endif                          /* _FSAL_TYPES__SPECIFIC_H */

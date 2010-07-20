@@ -32,7 +32,7 @@
  *        The returned lock descriptor
  */
 fsal_status_t HPSSFSAL_lock(hpssfsal_file_t * obj_handle,       /* IN */
-                        hpssfsal_lockdesc_t * ldesc, fsal_boolean_t callback)       /*IN/OUT */
+                            hpssfsal_lockdesc_t * ldesc, fsal_boolean_t callback)       /*IN/OUT */
 {
 
   /* sanity checks. */
@@ -47,7 +47,7 @@ fsal_status_t HPSSFSAL_lock(hpssfsal_file_t * obj_handle,       /* IN */
  * Not implemented.
  */
 fsal_status_t HPSSFSAL_changelock(hpssfsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
-                              fsal_lockparam_t * lock_info      /* IN */
+                                  fsal_lockparam_t * lock_info  /* IN */
     )
 {
 
@@ -64,7 +64,7 @@ fsal_status_t HPSSFSAL_changelock(hpssfsal_lockdesc_t * lock_descriptor,        
  * Not implemented.
  */
 fsal_status_t HPSSFSAL_unlock(hpssfsal_file_t * obj_handle,     /* IN */
-                          hpssfsal_lockdesc_t * ldesc       /*IN/OUT */
+                              hpssfsal_lockdesc_t * ldesc       /*IN/OUT */
     )
 {
 
@@ -89,4 +89,3 @@ fsal_status_t HPSSFSAL_getlock(hpssfsal_file_t * obj_handle, hpssfsal_lockdesc_t
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_unlock);
 }
-

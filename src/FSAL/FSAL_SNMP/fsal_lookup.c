@@ -55,10 +55,10 @@
  *          
  */
 fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      /* IN */
-                          fsal_name_t * p_filename,     /* IN */
-                          snmpfsal_op_context_t * p_context,        /* IN */
-                          snmpfsal_handle_t * object_handle,        /* OUT */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
+                              fsal_name_t * p_filename, /* IN */
+                              snmpfsal_op_context_t * p_context,        /* IN */
+                              snmpfsal_handle_t * object_handle,        /* OUT */
+                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
 
@@ -142,8 +142,8 @@ fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      
 
       /* look up for . or .. on root */
 
-      if(!FSAL_namecmp(p_filename, (fsal_name_t *)&FSAL_DOT)
-         || (!FSAL_namecmp(p_filename, (fsal_name_t *)&FSAL_DOT_DOT)
+      if(!FSAL_namecmp(p_filename, (fsal_name_t *) & FSAL_DOT)
+         || (!FSAL_namecmp(p_filename, (fsal_name_t *) & FSAL_DOT_DOT)
              && parent_directory_handle->oid_len == 0))
         {
           FSAL_OID_DUP(object_handle, parent_directory_handle->oid_tab,
@@ -170,7 +170,7 @@ fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      
         }
 
       /* lookup up for parent entry  */
-      if(!FSAL_namecmp(p_filename, (fsal_name_t *)&FSAL_DOT_DOT))
+      if(!FSAL_namecmp(p_filename, (fsal_name_t *) & FSAL_DOT_DOT))
         {
           printf("lookup for parent (oid len = %u)\n", parent_directory_handle->oid_len);
 
@@ -323,9 +323,8 @@ fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      
         {
           rc = snmp2fsal_attributes(object_handle,
                                     (object_handle->object_type_reminder ==
-                                     FSAL_NODETYPE_LEAF ? p_context->
-                                     snmp_response->variables : NULL), curr_child,
-                                    object_attributes);
+                                     FSAL_NODETYPE_LEAF ? p_context->snmp_response->
+                                     variables : NULL), curr_child, object_attributes);
 
           if(rc != 0)
             {
@@ -370,9 +369,9 @@ fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      
  *          
  */
 fsal_status_t SNMPFSAL_lookupJunction(snmpfsal_handle_t * p_junction_handle,    /* IN */
-                                  snmpfsal_op_context_t * p_context,        /* IN */
-                                  snmpfsal_handle_t * p_fsoot_handle,       /* OUT */
-                                  fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
+                                      snmpfsal_op_context_t * p_context,        /* IN */
+                                      snmpfsal_handle_t * p_fsoot_handle,       /* OUT */
+                                      fsal_attrib_list_t * p_fsroot_attributes  /* [ IN/OUT ] */
     )
 {
   int rc;
@@ -423,10 +422,10 @@ fsal_status_t SNMPFSAL_lookupJunction(snmpfsal_handle_t * p_junction_handle,    
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t SNMPFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
-                              snmpfsal_op_context_t * p_context,    /* IN */
-                              snmpfsal_handle_t * object_handle,    /* OUT */
-                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
+fsal_status_t SNMPFSAL_lookupPath(fsal_path_t * p_path, /* IN */
+                                  snmpfsal_op_context_t * p_context,    /* IN */
+                                  snmpfsal_handle_t * object_handle,    /* OUT */
+                                  fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
   fsal_name_t obj_name = FSAL_NAME_INITIALIZER; /* empty string */
@@ -530,12 +529,12 @@ fsal_status_t SNMPFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
         b_is_last = TRUE;
 
       /*call to FSAL_lookup */
-      status = SNMPFSAL_lookup(&in_hdl,     /* parent directory handle */
-                           &obj_name,   /* object name */
-                           p_context,   /* user's credentials */
-                           &out_hdl,    /* output root handle */
-                           /* retrieves attributes if this is the last lookup : */
-                           (b_is_last ? object_attributes : NULL));
+      status = SNMPFSAL_lookup(&in_hdl, /* parent directory handle */
+                               &obj_name,       /* object name */
+                               p_context,       /* user's credentials */
+                               &out_hdl,        /* output root handle */
+                               /* retrieves attributes if this is the last lookup : */
+                               (b_is_last ? object_attributes : NULL));
 
       if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_lookupPath);

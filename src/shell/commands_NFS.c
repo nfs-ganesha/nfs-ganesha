@@ -442,9 +442,9 @@ int nfs_init(char *filename, int flag_v, FILE * output)
 
   if((rc =
       cache_content_read_conf_client_parameter(config_file,
-                                               &nfs_param.
-                                               cache_layers_param.cache_content_client_param))
-     != CACHE_CONTENT_SUCCESS)
+                                               &nfs_param.cache_layers_param.
+                                               cache_content_client_param)) !=
+     CACHE_CONTENT_SUCCESS)
     {
       fprintf(output, "nfs_init: Error %d reading cache content parameters.\n", -rc);
       return -1;

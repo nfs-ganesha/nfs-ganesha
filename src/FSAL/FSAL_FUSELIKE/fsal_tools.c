@@ -47,7 +47,7 @@ char *FUSEFSAL_GetFSName()
  */
 
 int FUSEFSAL_handlecmp(fusefsal_handle_t * handle1, fusefsal_handle_t * handle2,
-                   fsal_status_t * status)
+                       fsal_status_t * status)
 {
 
   *status = FSAL_STATUS_NO_ERROR;
@@ -82,8 +82,9 @@ int FUSEFSAL_handlecmp(fusefsal_handle_t * handle1, fusefsal_handle_t * handle2,
  */
 
 unsigned int FUSEFSAL_Handle_to_HashIndex(fusefsal_handle_t * p_handle,
-                                      unsigned int cookie,
-                                      unsigned int alphabet_len, unsigned int index_size)
+                                          unsigned int cookie,
+                                          unsigned int alphabet_len,
+                                          unsigned int index_size)
 {
 
   /* >> here must be your implementation of your fusefsal_handle_t hashing */
@@ -104,7 +105,8 @@ unsigned int FUSEFSAL_Handle_to_HashIndex(fusefsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int FUSEFSAL_Handle_to_RBTIndex(fusefsal_handle_t * p_handle, unsigned int cookie)
+unsigned int FUSEFSAL_Handle_to_RBTIndex(fusefsal_handle_t * p_handle,
+                                         unsigned int cookie)
 {
   /* >> here must be your implementation of your fusefsal_handle_t hashing << */
   return (unsigned int)(0xABCD1234 ^ p_handle->inode ^ cookie ^ p_handle->device);
@@ -129,9 +131,9 @@ unsigned int FUSEFSAL_Handle_to_RBTIndex(fusefsal_handle_t * p_handle, unsigned 
  */
 
 fsal_status_t FUSEFSAL_DigestHandle(fusefsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t output_type,  /* IN */
-                                fusefsal_handle_t * in_fsal_handle, /* IN */
-                                caddr_t out_buff        /* OUT */
+                                    fsal_digesttype_t output_type,      /* IN */
+                                    fusefsal_handle_t * in_fsal_handle, /* IN */
+                                    caddr_t out_buff    /* OUT */
     )
 {
 
@@ -275,9 +277,9 @@ fsal_status_t FUSEFSAL_DigestHandle(fusefsal_export_context_t * p_expcontext,   
  *         Else, it is a non null value.
  */
 fsal_status_t FUSEFSAL_ExpandHandle(fusefsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t in_type,      /* IN */
-                                caddr_t in_buff,        /* IN */
-                                fusefsal_handle_t * out_fsal_handle /* OUT */
+                                    fsal_digesttype_t in_type,  /* IN */
+                                    caddr_t in_buff,    /* IN */
+                                    fusefsal_handle_t * out_fsal_handle /* OUT */
     )
 {
 
@@ -404,7 +406,7 @@ fsal_status_t FUSEFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_p
 /* load FSAL init info */
 
 fsal_status_t FUSEFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
-                                                 fsal_parameter_t * out_parameter)
+                                                     fsal_parameter_t * out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -521,7 +523,8 @@ fsal_status_t FUSEFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 /* load general filesystem configuration options */
 
 fsal_status_t FUSEFSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
-                                                      fsal_parameter_t * out_parameter)
+                                                          fsal_parameter_t *
+                                                          out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -728,7 +731,8 @@ fsal_status_t FUSEFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 /* load specific filesystem configuration options */
 
 fsal_status_t FUSEFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
-                                                        fsal_parameter_t * out_parameter)
+                                                            fsal_parameter_t *
+                                                            out_parameter)
 {
   int err;
   int blk_index;

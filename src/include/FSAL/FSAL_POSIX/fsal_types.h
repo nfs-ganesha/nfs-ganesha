@@ -84,7 +84,6 @@
 
 #define FSAL_NGROUPS_MAX  32
 
-
 /** object POSIX infos */
 typedef struct
 {
@@ -94,7 +93,6 @@ typedef struct
   time_t ctime;
   fsal_nodetype_t ftype;
 } fsal_posixdb_fileinfo_t;
-
 
 typedef struct
 {
@@ -117,17 +115,16 @@ typedef struct fsal_cred__
 #include "posixdb.h"
 
 //typedef void *fsal_export_context_t;
-typedef struct 
+typedef struct
 {
-  void * data ;
+  void *data;
 } posixfsal_export_context_t;
-
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(*pexport_context)
 
 typedef struct
 {
-  posixfsal_export_context_t *export_context; /* Must be the first entry in this structure */
+  posixfsal_export_context_t *export_context;   /* Must be the first entry in this structure */
   posixfsal_cred_t credential;
   fsal_posixdb_conn *p_conn;
 } posixfsal_op_context_t;
@@ -156,7 +153,7 @@ typedef struct fsal_lockdesc__
 typedef struct fsal_dir__
 {
   DIR *p_dir;
-  posixfsal_op_context_t context;    /* credential for accessing the directory */
+  posixfsal_op_context_t context;       /* credential for accessing the directory */
   fsal_path_t path;
   posixfsal_handle_t handle;
 #ifdef _USE_POSIXDB_READDIR_BLOCK
@@ -197,6 +194,6 @@ typedef struct fsal_file__
 #define fs_specific_initinfo_t posixfs_specific_initinfo_t
 #define fsal_cred_t posixfsal_cred_t
 
-#endif /* _USE_SHARED_FSAL */
+#endif                          /* _USE_SHARED_FSAL */
 
 #endif                          /* _FSAL_TYPES__SPECIFIC_H */

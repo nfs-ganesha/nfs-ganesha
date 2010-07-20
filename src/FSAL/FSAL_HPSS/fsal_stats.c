@@ -30,8 +30,8 @@
  * \return Nothing.
  */
 
-void HPSSFSAL_get_stats(fsal_statistics_t * stats,  /* OUT */
-                    fsal_boolean_t reset        /* IN */
+void HPSSFSAL_get_stats(fsal_statistics_t * stats,      /* OUT */
+                        fsal_boolean_t reset    /* IN */
     )
 {
 

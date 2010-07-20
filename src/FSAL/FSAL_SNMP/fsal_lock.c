@@ -24,8 +24,8 @@
  *
  */
 fsal_status_t SNMPFSAL_lock(snmpfsal_file_t * obj_handle,       /* IN */
-                        snmpfsal_lockdesc_t * ldesc,        /*IN/OUT */
-                        fsal_boolean_t callback /* IN */
+                            snmpfsal_lockdesc_t * ldesc,        /*IN/OUT */
+                            fsal_boolean_t callback     /* IN */
     )
 {
 
@@ -41,7 +41,7 @@ fsal_status_t SNMPFSAL_lock(snmpfsal_file_t * obj_handle,       /* IN */
  * Not implemented.
  */
 fsal_status_t SNMPFSAL_changelock(snmpfsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
-                              fsal_lockparam_t * lock_info      /* IN */
+                                  fsal_lockparam_t * lock_info  /* IN */
     )
 {
 
@@ -58,7 +58,7 @@ fsal_status_t SNMPFSAL_changelock(snmpfsal_lockdesc_t * lock_descriptor,        
  * Not implemented.
  */
 fsal_status_t SNMPFSAL_unlock(snmpfsal_file_t * obj_handle,     /* IN */
-                          snmpfsal_lockdesc_t * ldesc       /*IN/OUT */
+                              snmpfsal_lockdesc_t * ldesc       /*IN/OUT */
     )
 {
 
@@ -83,4 +83,3 @@ fsal_status_t SNMPFSAL_getlock(snmpfsal_file_t * obj_handle, snmpfsal_lockdesc_t
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_unlock);
 }
-

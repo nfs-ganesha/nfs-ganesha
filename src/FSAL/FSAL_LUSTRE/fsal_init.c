@@ -88,7 +88,7 @@
  *                                for this error.)
  *         ERR_FSAL_SEC_INIT     (Security context init error).
  */
-fsal_status_t LUSTREFSAL_Init(fsal_parameter_t * init_info    /* IN */
+fsal_status_t LUSTREFSAL_Init(fsal_parameter_t * init_info      /* IN */
     )
 {
 

@@ -71,10 +71,10 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t XFSFSAL_access( xfsfsal_handle_t * p_object_handle,      /* IN */
-                              xfsfsal_op_context_t * p_context,        /* IN */
-                              fsal_accessflags_t access_type,       /* IN */
-                              fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
+fsal_status_t XFSFSAL_access(xfsfsal_handle_t * p_object_handle,        /* IN */
+                             xfsfsal_op_context_t * p_context,  /* IN */
+                             fsal_accessflags_t access_type,    /* IN */
+                             fsal_attrib_list_t * p_object_attributes   /* [ IN/OUT ] */
     )
 {
 

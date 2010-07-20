@@ -8,9 +8,9 @@
 
 fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
                                            fsal_posixdb_fileinfo_t * p_object_info,     /* IN */
-                                           posixfsal_handle_t * p_parent_directory_handle_old,       /* IN */
+                                           posixfsal_handle_t * p_parent_directory_handle_old,  /* IN */
                                            fsal_name_t * p_filename_old,        /* IN */
-                                           posixfsal_handle_t * p_parent_directory_handle_new,       /* IN */
+                                           posixfsal_handle_t * p_parent_directory_handle_new,  /* IN */
                                            fsal_name_t * p_filename_new /* IN */ )
 {
   PGresult *p_res;

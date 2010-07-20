@@ -52,9 +52,9 @@
  * \param lock_descriptor (output):
  *        The returned lock descriptor
  */
-fsal_status_t PROXYFSAL_lock(proxyfsal_file_t * obj_handle,       /* IN */
-                        proxyfsal_lockdesc_t * ldesc,        /*IN/OUT */
-                        fsal_boolean_t callback /* IN */
+fsal_status_t PROXYFSAL_lock(proxyfsal_file_t * obj_handle,     /* IN */
+                             proxyfsal_lockdesc_t * ldesc,      /*IN/OUT */
+                             fsal_boolean_t callback    /* IN */
     )
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock);
@@ -64,8 +64,8 @@ fsal_status_t PROXYFSAL_lock(proxyfsal_file_t * obj_handle,       /* IN */
  * FSAL_changelock:
  * Not implemented.
  */
-fsal_status_t PROXYFSAL_changelock(proxyfsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
-                              fsal_lockparam_t * lock_info      /* IN */
+fsal_status_t PROXYFSAL_changelock(proxyfsal_lockdesc_t * lock_descriptor,      /* IN / OUT */
+                                   fsal_lockparam_t * lock_info /* IN */
     )
 {
 
@@ -81,8 +81,8 @@ fsal_status_t PROXYFSAL_changelock(proxyfsal_lockdesc_t * lock_descriptor,      
  * FSAL_unlock:
  * Not implemented.
  */
-fsal_status_t PROXYFSAL_unlock(proxyfsal_file_t * obj_handle,     /* IN */
-                          proxyfsal_lockdesc_t * ldesc       /*IN/OUT */
+fsal_status_t PROXYFSAL_unlock(proxyfsal_file_t * obj_handle,   /* IN */
+                               proxyfsal_lockdesc_t * ldesc     /*IN/OUT */
     )
 {
 
@@ -98,7 +98,8 @@ fsal_status_t PROXYFSAL_unlock(proxyfsal_file_t * obj_handle,     /* IN */
  * FSAL_unlock:
  * Not implemented.
  */
-fsal_status_t PROXYFSAL_getlock(proxyfsal_file_t * obj_handle, proxyfsal_lockdesc_t * ldesc)
+fsal_status_t PROXYFSAL_getlock(proxyfsal_file_t * obj_handle,
+                                proxyfsal_lockdesc_t * ldesc)
 {
 
   /* sanity checks. */
@@ -107,4 +108,3 @@ fsal_status_t PROXYFSAL_getlock(proxyfsal_file_t * obj_handle, proxyfsal_lockdes
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_unlock);
 }
-

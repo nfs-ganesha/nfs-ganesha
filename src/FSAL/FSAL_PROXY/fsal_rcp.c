@@ -47,10 +47,10 @@
  *
  * \return always ERR_FSAL_NOTSUPP for FSAL_PROXY 
  */
-fsal_status_t PROXYFSAL_rcp(proxyfsal_handle_t * filehandle,      /* IN */
-                       proxyfsal_op_context_t * p_context,   /* IN */
-                       fsal_path_t * p_local_path,      /* IN */
-                       fsal_rcpflag_t transfer_opt      /* IN */
+fsal_status_t PROXYFSAL_rcp(proxyfsal_handle_t * filehandle,    /* IN */
+                            proxyfsal_op_context_t * p_context, /* IN */
+                            fsal_path_t * p_local_path, /* IN */
+                            fsal_rcpflag_t transfer_opt /* IN */
     )
 {
 
@@ -343,11 +343,11 @@ fsal_status_t PROXYFSAL_rcp(proxyfsal_handle_t * filehandle,      /* IN */
  *        ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
  */
 
-fsal_status_t PROXYFSAL_rcp_by_name(proxyfsal_handle_t * filehandle,      /* IN */
-                               fsal_name_t * pfilename, /* IN */
-                               proxyfsal_op_context_t * p_context,   /* IN */
-                               fsal_path_t * p_local_path,      /* IN */
-                               fsal_rcpflag_t transfer_opt      /* IN */
+fsal_status_t PROXYFSAL_rcp_by_name(proxyfsal_handle_t * filehandle,    /* IN */
+                                    fsal_name_t * pfilename,    /* IN */
+                                    proxyfsal_op_context_t * p_context, /* IN */
+                                    fsal_path_t * p_local_path, /* IN */
+                                    fsal_rcpflag_t transfer_opt /* IN */
     )
 {
 
@@ -650,11 +650,11 @@ fsal_status_t PROXYFSAL_rcp_by_name(proxyfsal_handle_t * filehandle,      /* IN 
  *        ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
  */
 
-fsal_status_t PROXYFSAL_rcp_by_fileid(proxyfsal_handle_t * filehandle,    /* IN */
-                                 fsal_u64_t fileid,     /* IN */
-                                 proxyfsal_op_context_t * p_context, /* IN */
-                                 fsal_path_t * p_local_path,    /* IN */
-                                 fsal_rcpflag_t transfer_opt    /* IN */
+fsal_status_t PROXYFSAL_rcp_by_fileid(proxyfsal_handle_t * filehandle,  /* IN */
+                                      fsal_u64_t fileid,        /* IN */
+                                      proxyfsal_op_context_t * p_context,       /* IN */
+                                      fsal_path_t * p_local_path,       /* IN */
+                                      fsal_rcpflag_t transfer_opt       /* IN */
     )
 {
 

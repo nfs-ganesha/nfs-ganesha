@@ -74,7 +74,7 @@ typedef struct fsal_export_context__
 
 typedef struct fsal_op_context__
 {
-  fusefsal_export_context_t *export_context; /* Must be the first entry in this structure */
+  fusefsal_export_context_t *export_context;    /* Must be the first entry in this structure */
   fusefsal_cred_t credential;
   struct ganefuse_context ganefuse_context;
 } fusefsal_op_context_t;

@@ -72,13 +72,11 @@
 
 #define CONF_LABEL_FS_SPECIFIC   "NFSv4_Proxy"
 
-
 #define FSAL_NGROUPS_MAX  32
 
 /* prefered readdir size */
 /* #define FSAL_READDIR_SIZE 2048  */
 /* #define FSAL_READDIR_SIZE 3072 */
-
 
 # define FSAL_NAME_INITIALIZER {"",0}
 # define FSAL_PATH_INITIALIZER {"",0}
@@ -90,24 +88,24 @@
 #define FSAL_PROXY_RETRY_SLEEPTIME    10
 
 #ifdef _BUILD_SHARED_FSAL
-#define FSANDLE_PROXY_HANDLE_T_PADLEN 0 
-#define FSAL_OP_CONTEXT_T_PADLEN 476 
+#define FSANDLE_PROXY_HANDLE_T_PADLEN 0
+#define FSAL_OP_CONTEXT_T_PADLEN 476
 #define FSAL_CRED_T_PADLEN 0
 #define FSAL_EXPORT_CONTEXT_T_PADLEN 0
 #define FS_SPECIFIC_INITINFO_T_PADLEN 13112
 #define FSAL_COOKIE_T_PADLEN 0
 #define FSAL_LOCKDESC_T_PADLEN 0
-#define FSAL_FILE_T_PADLEN 176 
+#define FSAL_FILE_T_PADLEN 176
 #define FSAL_DIR_T_PADLEN 0
 #else
-#define FSANDLE_PROXY_HANDLE_T_PADLEN 0 
-#define FSAL_OP_CONTEXT_T_PADLEN 476 
+#define FSANDLE_PROXY_HANDLE_T_PADLEN 0
+#define FSAL_OP_CONTEXT_T_PADLEN 476
 #define FSAL_CRED_T_PADLEN 0
 #define FSAL_EXPORT_CONTEXT_T_PADLEN 0
 #define FS_SPECIFIC_INITINFO_T_PADLEN 13112
 #define FSAL_COOKIE_T_PADLEN 0
 #define FSAL_LOCKDESC_T_PADLEN 0
-#define FSAL_FILE_T_PADLEN 176 
+#define FSAL_FILE_T_PADLEN 176
 #define FSAL_DIR_T_PADLEN 0
 #endif
 
@@ -119,8 +117,8 @@ typedef struct fsal_handle__
   unsigned int timestamp;
   unsigned int srv_handle_len;
   char srv_handle_val[FSAL_PROXY_FILEHANDLE_MAX_LEN];
-#ifdef _BUILD_SHARED_FSAL 
-  char pad[FSANDLE_PROXY_HANDLE_T_PADLEN] ;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSANDLE_PROXY_HANDLE_T_PADLEN];
 #endif
 } proxyfsal_handle_t;
 
@@ -131,7 +129,7 @@ typedef struct fsal_cred__
   fsal_count_t nbgroups;
   fsal_gid_t alt_groups[FSAL_NGROUPS_MAX];
 #ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_CRED_T_PADLEN] ;
+  char pad[FSAL_CRED_T_PADLEN];
 #endif
 } proxyfsal_cred_t;
 
@@ -139,7 +137,7 @@ typedef struct fsal_export_context__
 {
   proxyfsal_handle_t root_handle;
 #ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_EXPORT_CONTEXT_T_PADLEN] ;
+  char pad[FSAL_EXPORT_CONTEXT_T_PADLEN];
 #endif
 } proxyfsal_export_context_t;
 
@@ -147,7 +145,7 @@ typedef struct fsal_export_context__
 
 typedef struct fsal_op_context__
 {
-  proxyfsal_export_context_t *export_context; /* Must be the first entry in this structure */
+  proxyfsal_export_context_t *export_context;   /* Must be the first entry in this structure */
   proxyfsal_cred_t user_credential;
 
   unsigned int retry_sleeptime;
@@ -164,7 +162,7 @@ typedef struct fsal_op_context__
   time_t last_lease_renewal;
   uint64_t file_counter;
 #ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_OP_CONTEXT_T_PADLEN] ;
+  char pad[FSAL_OP_CONTEXT_T_PADLEN];
 #endif
 } proxyfsal_op_context_t;
 
@@ -177,7 +175,7 @@ typedef struct fsal_dir__
   verifier4 verifier;
   proxyfsal_op_context_t *pcontext;
 #ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_DIR_T_PADLEN] ;
+  char pad[FSAL_DIR_T_PADLEN];
 #endif
 } proxyfsal_dir_t;
 
@@ -190,7 +188,7 @@ typedef struct fsal_file__
   fsal_off_t current_offset;
   proxyfsal_op_context_t *pcontext;
 #ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_FILE_T_PADLEN] ;
+  char pad[FSAL_FILE_T_PADLEN];
 #endif
 } proxyfsal_file_t;
 
@@ -232,7 +230,7 @@ typedef struct fs_specific_initinfo__
   unsigned int hdlmap_nb_entry_prealloc;
   unsigned int hdlmap_nb_db_op_prealloc;
 #ifdef _BUILD_SHARED_FSAL
-  char pad[FS_SPECIFIC_INITINFO_T_PADLEN] ;
+  char pad[FS_SPECIFIC_INITINFO_T_PADLEN];
 #endif
 } proxyfs_specific_initinfo_t;
 
@@ -253,7 +251,6 @@ typedef unsigned int proxyfsal_lockdesc_t;
 #define fs_specific_initinfo_t proxyfs_specific_initinfo_t
 #define fsal_cred_t proxyfsal_cred_t
 
-#endif /* _USE_SHARED_FSAL */
-
+#endif                          /* _USE_SHARED_FSAL */
 
 #endif

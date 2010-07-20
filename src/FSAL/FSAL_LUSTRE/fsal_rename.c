@@ -53,13 +53,13 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t LUSTREFSAL_rename(lustrefsal_handle_t * p_old_parentdir_handle,       /* IN */
-                          fsal_name_t * p_old_name,     /* IN */
-                          lustrefsal_handle_t * p_new_parentdir_handle,       /* IN */
-                          fsal_name_t * p_new_name,     /* IN */
-                          lustrefsal_op_context_t * p_context,        /* IN */
-                          fsal_attrib_list_t * p_src_dir_attributes,    /* [ IN/OUT ] */
-                          fsal_attrib_list_t * p_tgt_dir_attributes     /* [ IN/OUT ] */
+fsal_status_t LUSTREFSAL_rename(lustrefsal_handle_t * p_old_parentdir_handle,   /* IN */
+                                fsal_name_t * p_old_name,       /* IN */
+                                lustrefsal_handle_t * p_new_parentdir_handle,   /* IN */
+                                fsal_name_t * p_new_name,       /* IN */
+                                lustrefsal_op_context_t * p_context,    /* IN */
+                                fsal_attrib_list_t * p_src_dir_attributes,      /* [ IN/OUT ] */
+                                fsal_attrib_list_t * p_tgt_dir_attributes       /* [ IN/OUT ] */
     )
 {
 
@@ -204,7 +204,8 @@ fsal_status_t LUSTREFSAL_rename(lustrefsal_handle_t * p_old_parentdir_handle,   
   if(p_src_dir_attributes)
     {
 
-      status = LUSTREFSAL_getattrs(p_old_parentdir_handle, p_context, p_src_dir_attributes);
+      status =
+          LUSTREFSAL_getattrs(p_old_parentdir_handle, p_context, p_src_dir_attributes);
 
       if(FSAL_IS_ERROR(status))
         {
@@ -217,7 +218,8 @@ fsal_status_t LUSTREFSAL_rename(lustrefsal_handle_t * p_old_parentdir_handle,   
   if(p_tgt_dir_attributes)
     {
 
-      status = LUSTREFSAL_getattrs(p_new_parentdir_handle, p_context, p_tgt_dir_attributes);
+      status =
+          LUSTREFSAL_getattrs(p_new_parentdir_handle, p_context, p_tgt_dir_attributes);
 
       if(FSAL_IS_ERROR(status))
         {

@@ -72,9 +72,9 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t LUSTREFSAL_test_access(lustrefsal_op_context_t * p_context,   /* IN */
-                               fsal_accessflags_t access_type,  /* IN */
-                               fsal_attrib_list_t * p_object_attributes /* IN */
+fsal_status_t LUSTREFSAL_test_access(lustrefsal_op_context_t * p_context,       /* IN */
+                                     fsal_accessflags_t access_type,    /* IN */
+                                     fsal_attrib_list_t * p_object_attributes   /* IN */
     )
 {
   fsal_status_t status;
@@ -106,9 +106,9 @@ fsal_status_t LUSTREFSAL_test_access(lustrefsal_op_context_t * p_context,   /* I
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t LUSTREFSAL_setattr_access(lustrefsal_op_context_t * p_context,        /* IN */
-                                  fsal_attrib_list_t * candidate_attributes,    /* IN */
-                                  fsal_attrib_list_t * object_attributes        /* IN */
+fsal_status_t LUSTREFSAL_setattr_access(lustrefsal_op_context_t * p_context,    /* IN */
+                                        fsal_attrib_list_t * candidate_attributes,      /* IN */
+                                        fsal_attrib_list_t * object_attributes  /* IN */
     )
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_setattr_access);
@@ -131,9 +131,9 @@ fsal_status_t LUSTREFSAL_setattr_access(lustrefsal_op_context_t * p_context,    
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 
-fsal_status_t LUSTREFSAL_rename_access(lustrefsal_op_context_t * pcontext,  /* IN */
-                                 fsal_attrib_list_t * pattrsrc, /* IN */
-                                 fsal_attrib_list_t * pattrdest)        /* IN */
+fsal_status_t LUSTREFSAL_rename_access(lustrefsal_op_context_t * pcontext,      /* IN */
+                                       fsal_attrib_list_t * pattrsrc,   /* IN */
+                                       fsal_attrib_list_t * pattrdest)  /* IN */
 {
   fsal_status_t fsal_status;
 
@@ -163,8 +163,8 @@ fsal_status_t LUSTREFSAL_rename_access(lustrefsal_op_context_t * pcontext,  /* I
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t LUSTREFSAL_create_access(lustrefsal_op_context_t * pcontext,  /* IN */
-                                 fsal_attrib_list_t * pattr)    /* IN */
+fsal_status_t LUSTREFSAL_create_access(lustrefsal_op_context_t * pcontext,      /* IN */
+                                       fsal_attrib_list_t * pattr)      /* IN */
 {
   fsal_status_t fsal_status;
 
@@ -190,8 +190,8 @@ fsal_status_t LUSTREFSAL_create_access(lustrefsal_op_context_t * pcontext,  /* I
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t LUSTREFSAL_unlink_access(lustrefsal_op_context_t * pcontext,  /* IN */
-                                 fsal_attrib_list_t * pattr)    /* IN */
+fsal_status_t LUSTREFSAL_unlink_access(lustrefsal_op_context_t * pcontext,      /* IN */
+                                       fsal_attrib_list_t * pattr)      /* IN */
 {
   fsal_status_t fsal_status;
 
@@ -219,8 +219,8 @@ fsal_status_t LUSTREFSAL_unlink_access(lustrefsal_op_context_t * pcontext,  /* I
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 
-fsal_status_t LUSTREFSAL_link_access(lustrefsal_op_context_t * pcontext,    /* IN */
-                               fsal_attrib_list_t * pattr)      /* IN */
+fsal_status_t LUSTREFSAL_link_access(lustrefsal_op_context_t * pcontext,        /* IN */
+                                     fsal_attrib_list_t * pattr)        /* IN */
 {
   fsal_status_t fsal_status;
 
@@ -248,8 +248,8 @@ fsal_status_t LUSTREFSAL_link_access(lustrefsal_op_context_t * pcontext,    /* I
  */
 
 fsal_status_t LUSTREFSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
-                               fsal_attrib_list_t * pnew_attr,
-                               fsal_attrib_list_t * presult_attr)
+                                     fsal_attrib_list_t * pnew_attr,
+                                     fsal_attrib_list_t * presult_attr)
 {
   if(pinit_attr == NULL || pnew_attr == NULL || presult_attr == NULL)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_merge_attrs);

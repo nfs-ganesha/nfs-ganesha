@@ -57,7 +57,7 @@ char *HPSSFSAL_GetFSName()
  */
 
 int HPSSFSAL_handlecmp(hpssfsal_handle_t * handle1, hpssfsal_handle_t * handle2,
-                   fsal_status_t * status)
+                       fsal_status_t * status)
 {
 
   fsal_u64_t fileid1, fileid2;
@@ -102,8 +102,9 @@ int HPSSFSAL_handlecmp(hpssfsal_handle_t * handle1, hpssfsal_handle_t * handle2,
  */
 
 unsigned int HPSSFSAL_Handle_to_HashIndex(hpssfsal_handle_t * p_handle,
-                                      unsigned int cookie,
-                                      unsigned int alphabet_len, unsigned int index_size)
+                                          unsigned int cookie,
+                                          unsigned int alphabet_len,
+                                          unsigned int index_size)
 {
 #define SMALL_PRIME_MULT        3
 #define SMALL_PRIME_ADD         1999
@@ -150,7 +151,8 @@ unsigned int HPSSFSAL_Handle_to_HashIndex(hpssfsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int HPSSFSAL_Handle_to_RBTIndex(hpssfsal_handle_t * p_handle, unsigned int cookie)
+unsigned int HPSSFSAL_Handle_to_RBTIndex(hpssfsal_handle_t * p_handle,
+                                         unsigned int cookie)
 {
   unsigned int h;
   unsigned int i;
@@ -192,9 +194,9 @@ unsigned int HPSSFSAL_Handle_to_RBTIndex(hpssfsal_handle_t * p_handle, unsigned 
  */
 
 fsal_status_t HPSSFSAL_DigestHandle(hpssfsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t output_type,  /* IN */
-                                hpssfsal_handle_t * in_fsal_handle, /* IN */
-                                caddr_t out_buff        /* OUT */
+                                    fsal_digesttype_t output_type,      /* IN */
+                                    hpssfsal_handle_t * in_fsal_handle, /* IN */
+                                    caddr_t out_buff    /* OUT */
     )
 {
 
@@ -435,9 +437,9 @@ fsal_status_t HPSSFSAL_DigestHandle(hpssfsal_export_context_t * p_expcontext,   
  *         Else, it is a non null value.
  */
 fsal_status_t HPSSFSAL_ExpandHandle(hpssfsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t in_type,      /* IN */
-                                caddr_t in_buff,        /* IN */
-                                hpssfsal_handle_t * out_fsal_handle /* OUT */
+                                    fsal_digesttype_t in_type,  /* IN */
+                                    caddr_t in_buff,    /* IN */
+                                    hpssfsal_handle_t * out_fsal_handle /* OUT */
     )
 {
 
@@ -616,7 +618,7 @@ fsal_status_t HPSSFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_p
 /* load FSAL init info */
 
 fsal_status_t HPSSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
-                                                 fsal_parameter_t * out_parameter)
+                                                     fsal_parameter_t * out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -733,7 +735,8 @@ fsal_status_t HPSSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 /* load general filesystem configuration options */
 
 fsal_status_t HPSSFSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
-                                                      fsal_parameter_t * out_parameter)
+                                                          fsal_parameter_t *
+                                                          out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -940,7 +943,8 @@ fsal_status_t HPSSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 /* load specific filesystem configuration options */
 
 fsal_status_t HPSSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
-                                                        fsal_parameter_t * out_parameter)
+                                                            fsal_parameter_t *
+                                                            out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -1016,8 +1020,8 @@ fsal_status_t HPSSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
           out_parameter->fs_specific_info.behaviors.AuthnMech = FSAL_INIT_FORCE_VALUE;
 
           error = hpss_AuthnMechTypeFromString(key_value,
-                                               &out_parameter->
-                                               fs_specific_info.hpss_config.AuthnMech);
+                                               &out_parameter->fs_specific_info.
+                                               hpss_config.AuthnMech);
 
           if(error != HPSS_E_NOERROR)
             {

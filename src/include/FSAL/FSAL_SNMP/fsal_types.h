@@ -105,7 +105,7 @@ typedef struct fsal_export_context__
 typedef struct fsal_op_context__
 {
   /* the export context for the next request */
-  snmpfsal_export_context_t *export_context; /* Must be the first entry in this structure */
+  snmpfsal_export_context_t *export_context;    /* Must be the first entry in this structure */
 
   /* user authentication info */
   snmpfsal_cred_t user_credential;
@@ -115,7 +115,6 @@ typedef struct fsal_op_context__
   netsnmp_pdu *snmp_request;
   netsnmp_pdu *snmp_response;
   netsnmp_variable_list *current_response;
-
 
 } snmpfsal_op_context_t;
 
@@ -183,6 +182,6 @@ typedef void *snmpfsal_lockdesc_t;
 #define fs_specific_initinfo_t snmpfs_specific_initinfo_t
 #define fsal_cred_t snmpfsal_cred_t
 
-#endif /* _USE_SHARED_FSAL */
+#endif                          /* _USE_SHARED_FSAL */
 
 #endif                          /* _FSAL_TYPES_SPECIFIC_H */

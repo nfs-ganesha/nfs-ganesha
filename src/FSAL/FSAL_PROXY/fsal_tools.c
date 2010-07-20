@@ -63,7 +63,7 @@ char *PROXYFSAL_GetFSName()
  */
 
 int PROXYFSAL_handlecmp(proxyfsal_handle_t * handle1, proxyfsal_handle_t * handle2,
-                   fsal_status_t * status)
+                        fsal_status_t * status)
 {
   *status = FSAL_STATUS_NO_ERROR;
 
@@ -104,8 +104,9 @@ int PROXYFSAL_handlecmp(proxyfsal_handle_t * handle1, proxyfsal_handle_t * handl
  */
 
 unsigned int PROXYFSAL_Handle_to_HashIndex(proxyfsal_handle_t * p_handle,
-                                      unsigned int cookie,
-                                      unsigned int alphabet_len, unsigned int index_size)
+                                           unsigned int cookie,
+                                           unsigned int alphabet_len,
+                                           unsigned int index_size)
 {
   unsigned int cpt = 0;
   unsigned int sum = 0;
@@ -152,7 +153,8 @@ unsigned int PROXYFSAL_Handle_to_HashIndex(proxyfsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int PROXYFSAL_Handle_to_RBTIndex(proxyfsal_handle_t * p_handle, unsigned int cookie)
+unsigned int PROXYFSAL_Handle_to_RBTIndex(proxyfsal_handle_t * p_handle,
+                                          unsigned int cookie)
 {
   unsigned int h = 0;
   unsigned int cpt = 0;
@@ -207,10 +209,10 @@ unsigned int PROXYFSAL_Handle_to_RBTIndex(proxyfsal_handle_t * p_handle, unsigne
 
 #define NFSV4_FH_OPAQUE_SIZE 95 /* Take care of coherency with size of file_handle_v4_t::fsopaque */
 
-fsal_status_t PROXYFSAL_DigestHandle(proxyfsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t output_type,  /* IN */
-                                proxyfsal_handle_t * in_fsal_handle, /* IN */
-                                caddr_t out_buff        /* OUT */
+fsal_status_t PROXYFSAL_DigestHandle(proxyfsal_export_context_t * p_expcontext, /* IN */
+                                     fsal_digesttype_t output_type,     /* IN */
+                                     proxyfsal_handle_t * in_fsal_handle,       /* IN */
+                                     caddr_t out_buff   /* OUT */
     )
 {
 #ifdef _HANDLE_MAPPING
@@ -334,10 +336,10 @@ fsal_status_t PROXYFSAL_DigestHandle(proxyfsal_export_context_t * p_expcontext, 
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t PROXYFSAL_ExpandHandle(proxyfsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t in_type,      /* IN */
-                                caddr_t in_buff,        /* IN */
-                                proxyfsal_handle_t * out_fsal_handle /* OUT */
+fsal_status_t PROXYFSAL_ExpandHandle(proxyfsal_export_context_t * p_expcontext, /* IN */
+                                     fsal_digesttype_t in_type, /* IN */
+                                     caddr_t in_buff,   /* IN */
+                                     proxyfsal_handle_t * out_fsal_handle       /* OUT */
     )
 {
   fsal_nodetype_t nodetype;
@@ -559,7 +561,7 @@ fsal_status_t PROXYFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_
 /* load FSAL init info */
 
 fsal_status_t PROXYFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
-                                                 fsal_parameter_t * out_parameter)
+                                                      fsal_parameter_t * out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -676,7 +678,8 @@ fsal_status_t PROXYFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 /* load general filesystem configuration options */
 
 fsal_status_t PROXYFSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
-                                                      fsal_parameter_t * out_parameter)
+                                                           fsal_parameter_t *
+                                                           out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -883,7 +886,8 @@ fsal_status_t PROXYFSAL_load_FS_common_parameter_from_conf(config_file_t in_conf
 /* load specific filesystem configuration options */
 
 fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
-                                                        fsal_parameter_t * out_parameter)
+                                                             fsal_parameter_t *
+                                                             out_parameter)
 {
   int err;
   int var_max, var_index;

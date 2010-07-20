@@ -62,12 +62,12 @@
   */
 
 fsal_status_t SNMPFSAL_rename(snmpfsal_handle_t * old_parentdir_handle, /* IN */
-                          fsal_name_t * p_old_name,     /* IN */
-                          snmpfsal_handle_t * new_parentdir_handle, /* IN */
-                          fsal_name_t * p_new_name,     /* IN */
-                          snmpfsal_op_context_t * p_context,        /* IN */
-                          fsal_attrib_list_t * src_dir_attributes,      /* [ IN/OUT ] */
-                          fsal_attrib_list_t * tgt_dir_attributes       /* [ IN/OUT ] */
+                              fsal_name_t * p_old_name, /* IN */
+                              snmpfsal_handle_t * new_parentdir_handle, /* IN */
+                              fsal_name_t * p_new_name, /* IN */
+                              snmpfsal_op_context_t * p_context,        /* IN */
+                              fsal_attrib_list_t * src_dir_attributes,  /* [ IN/OUT ] */
+                              fsal_attrib_list_t * tgt_dir_attributes   /* [ IN/OUT ] */
     )
 {
 

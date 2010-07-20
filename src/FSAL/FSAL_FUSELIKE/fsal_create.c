@@ -60,11 +60,11 @@
  *        the object_attributes->asked_attributes field.
  */
 fsal_status_t FUSEFSAL_create(fusefsal_handle_t * parent_directory_handle,      /* IN */
-                          fsal_name_t * p_filename,     /* IN */
-                          fusefsal_op_context_t * p_context,        /* IN */
-                          fsal_accessmode_t accessmode, /* IN */
-                          fusefsal_handle_t * object_handle,        /* OUT */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
+                              fsal_name_t * p_filename, /* IN */
+                              fusefsal_op_context_t * p_context,        /* IN */
+                              fsal_accessmode_t accessmode,     /* IN */
+                              fusefsal_handle_t * object_handle,        /* OUT */
+                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
 
@@ -242,11 +242,11 @@ fsal_status_t FUSEFSAL_create(fusefsal_handle_t * parent_directory_handle,      
  *        the object_attributes->asked_attributes field.
  */
 fsal_status_t FUSEFSAL_mkdir(fusefsal_handle_t * parent_directory_handle,       /* IN */
-                         fsal_name_t * p_dirname,       /* IN */
-                         fusefsal_op_context_t * p_context, /* IN */
-                         fsal_accessmode_t accessmode,  /* IN */
-                         fusefsal_handle_t * object_handle, /* OUT */
-                         fsal_attrib_list_t * object_attributes /* [ IN/OUT ] */
+                             fsal_name_t * p_dirname,   /* IN */
+                             fusefsal_op_context_t * p_context, /* IN */
+                             fsal_accessmode_t accessmode,      /* IN */
+                             fusefsal_handle_t * object_handle, /* OUT */
+                             fsal_attrib_list_t * object_attributes     /* [ IN/OUT ] */
     )
 {
 
@@ -382,10 +382,10 @@ fsal_status_t FUSEFSAL_mkdir(fusefsal_handle_t * parent_directory_handle,       
  *        the attributes->asked_attributes field.
  */
 fsal_status_t FUSEFSAL_link(fusefsal_handle_t * target_handle,  /* IN */
-                        fusefsal_handle_t * dir_handle,     /* IN */
-                        fsal_name_t * p_link_name,      /* IN */
-                        fusefsal_op_context_t * p_context,  /* IN */
-                        fsal_attrib_list_t * attributes /* [ IN/OUT ] */
+                            fusefsal_handle_t * dir_handle,     /* IN */
+                            fsal_name_t * p_link_name,  /* IN */
+                            fusefsal_op_context_t * p_context,  /* IN */
+                            fsal_attrib_list_t * attributes     /* [ IN/OUT ] */
     )
 {
 
@@ -481,13 +481,13 @@ fsal_status_t FUSEFSAL_link(fusefsal_handle_t * target_handle,  /* IN */
  * \return ERR_FSAL_NOTSUPP.
  */
 fsal_status_t FUSEFSAL_mknode(fusefsal_handle_t * parentdir_handle,     /* IN */
-                          fsal_name_t * p_node_name,    /* IN */
-                          fusefsal_op_context_t * p_context,        /* IN */
-                          fsal_accessmode_t accessmode, /* IN */
-                          fsal_nodetype_t nodetype,     /* IN */
-                          fsal_dev_t * dev,     /* IN */
-                          fusefsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
-                          fsal_attrib_list_t * node_attributes  /* [ IN/OUT ] */
+                              fsal_name_t * p_node_name,        /* IN */
+                              fusefsal_op_context_t * p_context,        /* IN */
+                              fsal_accessmode_t accessmode,     /* IN */
+                              fsal_nodetype_t nodetype, /* IN */
+                              fsal_dev_t * dev, /* IN */
+                              fusefsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
+                              fsal_attrib_list_t * node_attributes      /* [ IN/OUT ] */
     )
 {
 

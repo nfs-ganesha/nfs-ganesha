@@ -605,8 +605,8 @@ fsal_status_t fsal_internal_appendFSALNameToFSALPath(fsal_path_t * p_path,
  * Get a valid path associated to an handle.
  * The function selects many paths from the DB and return the first valid one. If is_dir is set, then only 1 path will be constructed from the database.
  */
-fsal_status_t fsal_internal_getPathFromHandle(posixfsal_op_context_t * p_context,    /* IN */
-                                              posixfsal_handle_t * p_handle, /* IN */
+fsal_status_t fsal_internal_getPathFromHandle(posixfsal_op_context_t * p_context,       /* IN */
+                                              posixfsal_handle_t * p_handle,    /* IN */
                                               int is_dir,       /* IN */
                                               fsal_path_t * p_fsalpath, /* OUT */
                                               struct stat *p_buffstat /* OUT */ )
@@ -725,11 +725,11 @@ fsal_status_t fsal_internal_getPathFromHandle(posixfsal_op_context_t * p_context
  *    ERR_FSAL_NOERR, if no error
  *    Anothere error code else.
  */
-fsal_status_t fsal_internal_getInfoFromName(posixfsal_op_context_t * p_context,      /* IN */
-                                            posixfsal_handle_t * p_parent_dir_handle,        /* IN */
+fsal_status_t fsal_internal_getInfoFromName(posixfsal_op_context_t * p_context, /* IN */
+                                            posixfsal_handle_t * p_parent_dir_handle,   /* IN */
                                             fsal_name_t * p_fsalname,   /* IN */
                                             fsal_posixdb_fileinfo_t * p_infofs, /* IN */
-                                            posixfsal_handle_t * p_object_handle)    /* OUT */
+                                            posixfsal_handle_t * p_object_handle)       /* OUT */
 {
   fsal_posixdb_status_t stdb;
   fsal_status_t st;
@@ -792,13 +792,13 @@ fsal_status_t fsal_internal_getInfoFromName(posixfsal_op_context_t * p_context, 
  *    ERR_FSAL_NOERR, if no error
  *    Anothere error code else.
  */
-fsal_status_t fsal_internal_getInfoFromChildrenList(posixfsal_op_context_t * p_context,      /* IN */
-                                                    posixfsal_handle_t * p_parent_dir_handle,        /* IN */
+fsal_status_t fsal_internal_getInfoFromChildrenList(posixfsal_op_context_t * p_context, /* IN */
+                                                    posixfsal_handle_t * p_parent_dir_handle,   /* IN */
                                                     fsal_name_t * p_fsalname,   /* IN */
                                                     fsal_posixdb_fileinfo_t * p_infofs, /* IN */
                                                     fsal_posixdb_child * p_children,    /* IN */
                                                     unsigned int children_count,        /* IN */
-                                                    posixfsal_handle_t * p_object_handle)    /* OUT */
+                                                    posixfsal_handle_t * p_object_handle)       /* OUT */
 {
   fsal_posixdb_status_t stdb;
   fsal_status_t st;
@@ -839,7 +839,8 @@ fsal_status_t fsal_internal_getInfoFromChildrenList(posixfsal_op_context_t * p_c
         }
       else
         {
-          memcpy(p_object_handle, &(p_children[count].handle), sizeof(posixfsal_handle_t));
+          memcpy(p_object_handle, &(p_children[count].handle),
+                 sizeof(posixfsal_handle_t));
           break;
         }
 
@@ -860,7 +861,7 @@ fsal_status_t fsal_internal_getInfoFromChildrenList(posixfsal_op_context_t * p_c
    Check the access from an existing fsal_attrib_list_t or struct stat
 */
 /* XXX : ACL */
-fsal_status_t fsal_internal_testAccess(posixfsal_op_context_t * p_context,   /* IN */
+fsal_status_t fsal_internal_testAccess(posixfsal_op_context_t * p_context,      /* IN */
                                        fsal_accessflags_t access_type,  /* IN */
                                        struct stat * p_buffstat,        /* IN */
                                        fsal_attrib_list_t * p_object_attributes /* IN */ )

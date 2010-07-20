@@ -81,137 +81,11 @@
 #define FSAL_XFS_HANDLE_LEN 29
 #define FSAL_XFS_FSHANDLE_LEN 64
 
-#ifdef _BUILD_SHARED_FSAL 
-#define FSAL_HANDLE_XFS_HANDLE_T_PADLEN 104 
-#define FSAL_OP_CONTEXT_T_PADLEN 476 
-#define FSAL_CRED_T_PADLEN 0
-#define FSAL_EXPORT_CONTEXT_T_PADLEN 0
-#define FS_SPECIFIC_INITINFO_T_PADLEN 13112
-#define FSAL_COOKIE_T_PADLEN 0
-#define FSAL_LOCKDESC_T_PADLEN 0
-#define FSAL_FILE_T_PADLEN 176 
-#define FSAL_DIR_T_PADLEN 0
-#else
-#define FSAL_HANDLE_XFS_HANDLE_T_PADLEN 0
-#define FSAL_OP_CONTEXT_T_PADLEN 0 
-#define FSAL_CRED_T_PADLEN 0
-#define FSAL_EXPORT_CONTEXT_T_PADLEN 0
-#define FS_SPECIFIC_INITINFO_T_PADLEN 0
-#define FSAL_COOKIE_T_PADLEN 0
-#define FSAL_LOCKDESC_T_PADLEN 0
-#define FSAL_FILE_T_PADLEN 0
-#define FSAL_DIR_T_PADLEN 0
-#endif
+#ifdef _USE_SHARED_FSAL
 
-typedef struct
-{
-  char handle_val[FSAL_XFS_HANDLE_LEN];
-  unsigned int handle_len;
-  uint32_t inode;
-  char type;
-#ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_HANDLE_XFS_HANDLE_T_PADLEN] ;
-#endif
-} xfsfsal_handle_t;  /**< FS object handle */
+#include "fsal_glue_const.h"
 
-/** Authentification context.    */
-
-typedef struct 
-{
-  uid_t user;
-  gid_t group;
-  fsal_count_t nbgroups;
-  gid_t alt_groups[FSAL_NGROUPS_MAX];
-#ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_CRED_T_PADLEN] ;
-#endif
-
-} xfsfsal_cred_t;
-
-typedef struct
-{
-  char mount_point[FSAL_MAX_PATH_LEN];
-  char mnt_handle_val[FSAL_XFS_HANDLE_LEN];
-  char mnt_fshandle_val[FSAL_XFS_FSHANDLE_LEN];
-
-  unsigned int mnt_handle_len;  /* for optimizing concatenation */
-  unsigned int mnt_fshandle_len;        /* for optimizing concatenation */
-  unsigned int dev_id;
-#ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_EXPORT_CONTEXT_T_PADLEN] ;
-#endif
-} xfsfsal_export_context_t;
-
-#define FSAL_EXPORT_CONTEXT_SPECIFIC( _pexport_context ) (uint64_t)((_pexport_context)->dev_id)
-
-//#define FSAL_GET_EXP_CTX( popctx ) (fsal_export_context_t *)(( (xfsfsal_op_context_t *)popctx)->export_context)
-
-typedef struct
-{
-  xfsfsal_export_context_t *export_context; /* /* Must be the first entry in this structure */
-  xfsfsal_cred_t credential;
-#ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_OP_CONTEXT_T_PADLEN] ;
-#endif
-} xfsfsal_op_context_t;
-
-#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
-#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
-
-typedef struct
-{
-  char xfs_mount_point[MAXPATHLEN];
-#ifdef _BUILD_SHARED_FSAL
-  char pad[FS_SPECIFIC_INITINFO_T_PADLEN] ;
-#endif
-} xfsfs_specific_initinfo_t;
-
-/**< directory cookie */
-typedef struct 
-{
-  off_t cookie;
-#ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_COOKIE_T_PADLEN] ;
-#endif
-} xfsfsal_cookie_t;
-
-static const xfsfsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
-
-typedef struct 
-{
-  struct flock flock;
-#ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_LOCKDESC_T_PADLEN] ;
-#endif
-} xfsfsal_lockdesc_t;
-
-/* Directory stream descriptor. */
-
-typedef struct 
-{
-  int fd;
-  xfsfsal_op_context_t context;    /* credential for accessing the directory */
-  fsal_path_t path;
-  unsigned int dir_offset;
-  xfsfsal_handle_t handle;
-#ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_DIR_T_PADLEN] ;
-#endif
-} xfsfsal_dir_t;
-
-typedef struct fsal_file__
-{
-  int fd;
-  int ro;                       /* read only file ? */
-#ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_FILE_T_PADLEN] ;
-#endif
-} xfsfsal_file_t;
-
-//#define FSAL_GET_EXP_CTX( popctx ) (fsal_export_context_t *)(( (xfsfsal_op_context_t *)popctx)->export_context)
-//#define FSAL_FILENO( p_fsal_file )  ((xfsfsal_file_t *)p_fsal_file)->fd 
-
-#ifndef _USE_SHARED_FSAL
+#else                           /* _USE_SHARED_FSAL */
 
 #define fsal_handle_t xfsfsal_handle_t
 #define fsal_op_context_t xfsfsal_op_context_t
@@ -223,6 +97,94 @@ typedef struct fsal_file__
 #define fs_specific_initinfo_t xfsfs_specific_initinfo_t
 #define fsal_cred_t xfsfsal_cred_t
 
-#endif /* _USE_SHARED_FSAL */
+#endif                          /* _USE_SHARED_FSAL */
+
+typedef struct
+{
+  char handle_val[FSAL_XFS_HANDLE_LEN];
+  unsigned int handle_len;
+  uint32_t inode;
+  char type;
+} xfsfsal_handle_t;  /**< FS object handle */
+
+typedef union fsal_handle_storage__
+{
+  xfsfsal_handle_t handle;
+#ifdef _USE_SHARED_FSAL
+  char pad[FSAL_HANDLE_T_SIZE];
+#endif                          /* _USE_SHARED_FSAL */
+} xfsfsal_handle_storage_t;
+
+/** Authentification context.    */
+
+typedef struct
+{
+  uid_t user;
+  gid_t group;
+  fsal_count_t nbgroups;
+  gid_t alt_groups[FSAL_NGROUPS_MAX];
+} xfsfsal_cred_t;
+
+typedef struct
+{
+  char mount_point[FSAL_MAX_PATH_LEN];
+  char mnt_handle_val[FSAL_XFS_HANDLE_LEN];
+  char mnt_fshandle_val[FSAL_XFS_FSHANDLE_LEN];
+
+  unsigned int mnt_handle_len;  /* for optimizing concatenation */
+  unsigned int mnt_fshandle_len;        /* for optimizing concatenation */
+  unsigned int dev_id;
+} xfsfsal_export_context_t;
+
+#define FSAL_EXPORT_CONTEXT_SPECIFIC( _pexport_context ) (uint64_t)((_pexport_context)->dev_id)
+
+//#define FSAL_GET_EXP_CTX( popctx ) (fsal_export_context_t *)(( (xfsfsal_op_context_t *)popctx)->export_context)
+
+typedef struct
+{
+  xfsfsal_export_context_t *export_context;     /* /* Must be the first entry in this structure */
+  xfsfsal_cred_t credential;
+} xfsfsal_op_context_t;
+
+#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
+#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
+
+typedef struct
+{
+  char xfs_mount_point[MAXPATHLEN];
+} xfsfs_specific_initinfo_t;
+
+/**< directory cookie */
+typedef struct
+{
+  off_t cookie;
+} xfsfsal_cookie_t;
+
+static const xfsfsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
+
+typedef struct
+{
+  struct flock flock;
+} xfsfsal_lockdesc_t;
+
+/* Directory stream descriptor. */
+
+typedef struct
+{
+  int fd;
+  xfsfsal_op_context_t context; /* credential for accessing the directory */
+  fsal_path_t path;
+  unsigned int dir_offset;
+  xfsfsal_handle_storage_t handle;
+} xfsfsal_dir_t;
+
+typedef struct fsal_file__
+{
+  int fd;
+  int ro;                       /* read only file ? */
+} xfsfsal_file_t;
+
+//#define FSAL_GET_EXP_CTX( popctx ) (fsal_export_context_t *)(( (xfsfsal_op_context_t *)popctx)->export_context)
+//#define FSAL_FILENO( p_fsal_file )  ((xfsfsal_file_t *)p_fsal_file)->fd 
 
 #endif                          /* _FSAL_TYPES__SPECIFIC_H */

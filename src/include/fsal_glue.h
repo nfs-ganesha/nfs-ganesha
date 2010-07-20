@@ -35,48 +35,60 @@
 
 #include "fsal_glue_const.h"
 
-
 /* In the "static" case, original types are used, this is safer */
-#ifdef _USE_SHARED_FSAL 
+#ifdef _USE_SHARED_FSAL
 
-typedef struct {
- char data[FSAL_HANDLE_T_SIZE] ;
-} fsal_handle_t ;
+typedef struct
+{
+  char data[FSAL_HANDLE_T_SIZE];
+} fsal_handle_t;
 
-typedef struct {
-  void * export_context ;
-  char data[FSAL_OP_CONTEXT_T_SIZE] ;
-} fsal_op_context_t ; 
+typedef union
+{
+  fsal_handle_t handle;
+} fsal_handle_storage_t;
 
-typedef struct {
-  char data[FSAL_DIR_T_SIZE] ;
-} fsal_dir_t ;
+typedef struct
+{
+  void *export_context;
+  char data[FSAL_OP_CONTEXT_T_SIZE];
+} fsal_op_context_t;
 
-typedef struct {
-  char data[FSAL_EXPORT_CONTEXT_T_SIZE] ;
-} fsal_export_context_t ;
+typedef struct
+{
+  char data[FSAL_DIR_T_SIZE];
+} fsal_dir_t;
 
-typedef struct {
-  char data[FSAL_FILE_T_SIZE] ;
-} fsal_file_t ;
+typedef struct
+{
+  char data[FSAL_EXPORT_CONTEXT_T_SIZE];
+} fsal_export_context_t;
 
-typedef struct {
-  char data[FSAL_COOKIE_T_SIZE] ;
-} fsal_cookie_t ;
+typedef struct
+{
+  char data[FSAL_FILE_T_SIZE];
+} fsal_file_t;
 
-typedef struct {
-  char data[FSAL_LOCKDESC_T_SIZE] ;
-} fsal_lockdesc_t ;
+typedef struct
+{
+  char data[FSAL_COOKIE_T_SIZE];
+} fsal_cookie_t;
 
-typedef struct {
-  char data[FSAL_CRED_T_SIZE] ;
-} fsal_cred_t ;
+typedef struct
+{
+  char data[FSAL_LOCKDESC_T_SIZE];
+} fsal_lockdesc_t;
 
-typedef struct {
-  char data[FSAL_FS_SPECIFIC_INITINFO_T] ;
-} fs_specific_initinfo_t ;
+typedef struct
+{
+  char data[FSAL_CRED_T_SIZE];
+} fsal_cred_t;
 
-#endif /* USE_SHARED_FSAL */
+typedef struct
+{
+  char data[FSAL_FS_SPECIFIC_INITINFO_T];
+} fs_specific_initinfo_t;
 
-#endif /* _FSAL_GLUE_H */
+#endif                          /* USE_SHARED_FSAL */
 
+#endif                          /* _FSAL_GLUE_H */

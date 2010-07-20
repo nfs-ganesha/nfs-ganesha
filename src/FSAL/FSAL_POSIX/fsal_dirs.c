@@ -41,10 +41,10 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t POSIXFSAL_opendir(posixfsal_handle_t * p_dir_handle,        /* IN */
-                           posixfsal_op_context_t * p_context,       /* IN */
-                           posixfsal_dir_t * p_dir_descriptor,       /* OUT */
-                           fsal_attrib_list_t * p_dir_attributes        /* [ IN/OUT ] */
+fsal_status_t POSIXFSAL_opendir(posixfsal_handle_t * p_dir_handle,      /* IN */
+                                posixfsal_op_context_t * p_context,     /* IN */
+                                posixfsal_dir_t * p_dir_descriptor,     /* OUT */
+                                fsal_attrib_list_t * p_dir_attributes   /* [ IN/OUT ] */
     )
 {
   int rc, errsv;
@@ -152,14 +152,14 @@ fsal_status_t POSIXFSAL_opendir(posixfsal_handle_t * p_dir_handle,        /* IN 
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t POSIXFSAL_readdir(posixfsal_dir_t * p_dir_descriptor,       /* IN */
-                           posixfsal_cookie_t start_position,        /* IN */
-                           fsal_attrib_mask_t get_attr_mask,    /* IN */
-                           fsal_mdsize_t buffersize,    /* IN */
-                           fsal_dirent_t * p_pdirent,   /* OUT */
-                           posixfsal_cookie_t * p_end_position,      /* OUT */
-                           fsal_count_t * p_nb_entries, /* OUT */
-                           fsal_boolean_t * p_end_of_dir        /* OUT */
+fsal_status_t POSIXFSAL_readdir(posixfsal_dir_t * p_dir_descriptor,     /* IN */
+                                posixfsal_cookie_t start_position,      /* IN */
+                                fsal_attrib_mask_t get_attr_mask,       /* IN */
+                                fsal_mdsize_t buffersize,       /* IN */
+                                fsal_dirent_t * p_pdirent,      /* OUT */
+                                posixfsal_cookie_t * p_end_position,    /* OUT */
+                                fsal_count_t * p_nb_entries,    /* OUT */
+                                fsal_boolean_t * p_end_of_dir   /* OUT */
     )
 {
   fsal_status_t st;
@@ -284,9 +284,10 @@ fsal_status_t POSIXFSAL_readdir(posixfsal_dir_t * p_dir_descriptor,       /* IN 
                                                          &(p_pdirent[*p_nb_entries].name),
                                                          &infofs,
                                                          p_dir_descriptor->p_dbentries,
-                                                         p_dir_descriptor->dbentries_count,
-                                                         &(p_pdirent
-                                                           [*p_nb_entries].handle));
+                                                         p_dir_descriptor->
+                                                         dbentries_count,
+                                                         &(p_pdirent[*p_nb_entries].
+                                                           handle));
             }
           else
 #endif
@@ -339,7 +340,7 @@ fsal_status_t POSIXFSAL_readdir(posixfsal_dir_t * p_dir_descriptor,       /* IN 
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t POSIXFSAL_closedir(posixfsal_dir_t * p_dir_descriptor       /* IN */
+fsal_status_t POSIXFSAL_closedir(posixfsal_dir_t * p_dir_descriptor     /* IN */
     )
 {
 

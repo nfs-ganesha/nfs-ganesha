@@ -1076,7 +1076,7 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
   if(context->Config.memory_area_size <= (size_header64 + MIN_ALLOC_SIZE))
     {
       fprintf(stderr, "Invalid size %llu (too small).\n",
-             (unsigned long long)context->Config.memory_area_size);
+              (unsigned long long)context->Config.memory_area_size);
       return BUDDY_ERR_EINVAL;
     }
 
@@ -1085,7 +1085,7 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
   if(!(m = Log2Ceil(context->Config.memory_area_size)))
     {
       fprintf(stderr, "Invalid size %llu (too large).\n",
-             (unsigned long long)context->Config.memory_area_size);
+              (unsigned long long)context->Config.memory_area_size);
       return BUDDY_ERR_EINVAL;
     }
 
@@ -1812,83 +1812,77 @@ BUDDY_ADDR_T BuddyCalloc(size_t NumberOfElements, size_t ElementSize)
 
   return ptr;
 
-} /* BuddyCalloc */
+}                               /* BuddyCalloc */
 
 /**
  *  Release all thread resources.
  */
 int BuddyDestroy()
 {
-        BuddyThreadContext_t *context;
-        BuddyBlock_t *p_block;
-        unsigned int i;
+  BuddyThreadContext_t *context;
+  BuddyBlock_t *p_block;
+  unsigned int i;
 
-        /* Ensure thread safety. */
-        context = GetThreadContext();
+  /* Ensure thread safety. */
+  context = GetThreadContext();
 
-        /* sanity checks */
-        if(!context)
-                return BUDDY_ERR_EINVAL;
+  /* sanity checks */
+  if(!context)
+    return BUDDY_ERR_EINVAL;
 
-        /* Not initialized */
-        if(!context->initialized)
-                return BUDDY_ERR_NOTINIT;
+  /* Not initialized */
+  if(!context->initialized)
+    return BUDDY_ERR_NOTINIT;
 
 #ifndef _MONOTHREAD_MEMALLOC
-        /* check if there are some blocks to be freed from other threads */
-        CheckBlocksToBeFreed(context);
+  /* check if there are some blocks to be freed from other threads */
+  CheckBlocksToBeFreed(context);
 #endif
 
-        /* free largest pages */
-        while ( (p_block = context->MemDesc[context->k_size]) != NULL )
+  /* free largest pages */
+  while((p_block = context->MemDesc[context->k_size]) != NULL)
+    {
+      /* sanity check on block */
+      if((p_block->Header.Base_ptr != (BUDDY_ADDR_T) p_block)
+         || (p_block->Header.StdInfo.Base_kSize != p_block->Header.StdInfo.k_size))
         {
-                /* sanity check on block */
-                if ( (p_block->Header.Base_ptr != (BUDDY_ADDR_T) p_block)
-                   || (p_block->Header.StdInfo.Base_kSize
-                       != p_block->Header.StdInfo.k_size) )
-                {
-                       BuddyPrintLog(context->Config.buddy_error_file,
-                               "ERROR: largest free page is not a root page?!\n" );
-                       BuddyPrintLog(context->Config.buddy_error_file,
-                               "thread page size=2^%u, block size=2^%u, "
-                               "block base area=%p (size=2^%u), block addr=%p\n",
-                               context->k_size, p_block->Header.StdInfo.k_size,
-                               p_block->Header.Base_ptr,
-                               p_block->Header.StdInfo.Base_kSize,
-                               (BUDDY_ADDR_T) p_block);
-                       return BUDDY_ERR_EFAULT;
-                }
-
-                /* We can free this page */
-#ifdef _DEBUG_MEMALLOC
-                printf("Releasing memory page at address %p, size=2^%u\n",
-                       p_block, p_block->Header.StdInfo.k_size );
-#endif
-                Remove_FreeBlock(context, p_block);
-                free(p_block);
-                UpdateStats_RemoveStdPage(context);
+          BuddyPrintLog(context->Config.buddy_error_file,
+                        "ERROR: largest free page is not a root page?!\n");
+          BuddyPrintLog(context->Config.buddy_error_file,
+                        "thread page size=2^%u, block size=2^%u, "
+                        "block base area=%p (size=2^%u), block addr=%p\n",
+                        context->k_size, p_block->Header.StdInfo.k_size,
+                        p_block->Header.Base_ptr,
+                        p_block->Header.StdInfo.Base_kSize, (BUDDY_ADDR_T) p_block);
+          return BUDDY_ERR_EFAULT;
         }
 
-        /* if there are smaller blocks, it means there are still allocated
-         * blocks that cannot be merged with them.
-         * We can't free those pages...
-         */
-        for(i = 0; i < BUDDY_MAX_LOG2_SIZE; i++)
-                if ( context->MemDesc[i] )
-                {
-                       BuddyPrintLog(context->Config.buddy_error_file,
-                                     "ERROR: Can't release thread resources: memory still in use\n");
-                       return BUDDY_ERR_INUSE;
-                }
+      /* We can free this page */
+#ifdef _DEBUG_MEMALLOC
+      printf("Releasing memory page at address %p, size=2^%u\n",
+             p_block, p_block->Header.StdInfo.k_size);
+#endif
+      Remove_FreeBlock(context, p_block);
+      free(p_block);
+      UpdateStats_RemoveStdPage(context);
+    }
 
-        /* destroy thread context */
-        free( context );
-        return BUDDY_SUCCESS;
+  /* if there are smaller blocks, it means there are still allocated
+   * blocks that cannot be merged with them.
+   * We can't free those pages...
+   */
+  for(i = 0; i < BUDDY_MAX_LOG2_SIZE; i++)
+    if(context->MemDesc[i])
+      {
+        BuddyPrintLog(context->Config.buddy_error_file,
+                      "ERROR: Can't release thread resources: memory still in use\n");
+        return BUDDY_ERR_INUSE;
+      }
+
+  /* destroy thread context */
+  free(context);
+  return BUDDY_SUCCESS;
 }
-
-
-
-
 
 /**
  *  For debugging.

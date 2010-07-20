@@ -55,9 +55,9 @@
  *        - Other error codes when something anormal occurs.
  */
 fsal_status_t FUSEFSAL_access(fusefsal_handle_t * object_handle,        /* IN */
-                          fusefsal_op_context_t * p_context,        /* IN */
-                          fsal_accessflags_t access_type,       /* IN */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
+                              fusefsal_op_context_t * p_context,        /* IN */
+                              fsal_accessflags_t access_type,   /* IN */
+                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
 
@@ -179,8 +179,8 @@ fsal_status_t FUSEFSAL_access(fusefsal_handle_t * object_handle,        /* IN */
  *        - Another error code if an error occured.
  */
 fsal_status_t FUSEFSAL_test_access(fusefsal_op_context_t * p_context,   /* IN */
-                               fsal_accessflags_t access_type,  /* IN */
-                               fsal_attrib_list_t * object_attributes   /* IN */
+                                   fsal_accessflags_t access_type,      /* IN */
+                                   fsal_attrib_list_t * object_attributes       /* IN */
     )
 {
   fsal_accessflags_t missing_access;

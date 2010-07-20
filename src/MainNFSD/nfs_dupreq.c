@@ -88,11 +88,11 @@ extern nfs_function_desc_t mnt1_func_desc[];
 extern nfs_function_desc_t mnt3_func_desc[];
 #ifdef _USE_NLM
 extern nfs_function_desc_t nlm4_func_desc[];
-#endif /* _USE_NLM */
+#endif                          /* _USE_NLM */
 #ifdef _USE_QUOTA
 extern nfs_function_desc_t rquota1_func_desc[];
 extern nfs_function_desc_t rquota2_func_desc[];
-#endif /* _USE_QUOTA */
+#endif                          /* _USE_QUOTA */
 /* Structure used for duplicated request cache */
 hash_table_t *ht_dupreq;
 
@@ -276,7 +276,7 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
 
         }                       /* switch( pdupreq->vers ) */
     }
-#endif                 
+#endif
   else
     {
       /* We should never go there (this situation is filtered in nfs_rpc_getreq) */

@@ -49,8 +49,8 @@
  *        ERR_FSAL_IO, ...
  */
 fsal_status_t FUSEFSAL_static_fsinfo(fusefsal_handle_t * filehandle,    /* IN */
-                                 fusefsal_op_context_t * p_context, /* IN */
-                                 fsal_staticfsinfo_t * staticinfo       /* OUT */
+                                     fusefsal_op_context_t * p_context, /* IN */
+                                     fsal_staticfsinfo_t * staticinfo   /* OUT */
     )
 {
   /* sanity checks. */
@@ -85,8 +85,8 @@ fsal_status_t FUSEFSAL_static_fsinfo(fusefsal_handle_t * filehandle,    /* IN */
  *        ERR_FSAL_IO, ...
  */
 fsal_status_t FUSEFSAL_dynamic_fsinfo(fusefsal_handle_t * filehandle,   /* IN */
-                                  fusefsal_op_context_t * p_context,        /* IN */
-                                  fsal_dynamicfsinfo_t * dynamicinfo    /* OUT */
+                                      fusefsal_op_context_t * p_context,        /* IN */
+                                      fsal_dynamicfsinfo_t * dynamicinfo        /* OUT */
     )
 {
 

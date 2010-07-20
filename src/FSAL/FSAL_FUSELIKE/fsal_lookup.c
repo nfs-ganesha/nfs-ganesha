@@ -57,10 +57,10 @@
  *          
  */
 fsal_status_t FUSEFSAL_lookup(fusefsal_handle_t * parent_directory_handle,      /* IN */
-                          fsal_name_t * p_filename,     /* IN */
-                          fusefsal_op_context_t * p_context,        /* IN */
-                          fusefsal_handle_t * object_handle,        /* OUT */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
+                              fsal_name_t * p_filename, /* IN */
+                              fusefsal_op_context_t * p_context,        /* IN */
+                              fusefsal_handle_t * object_handle,        /* OUT */
+                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
 
@@ -310,9 +310,9 @@ fsal_status_t FUSEFSAL_lookup(fusefsal_handle_t * parent_directory_handle,      
  *          
  */
 fsal_status_t FUSEFSAL_lookupJunction(fusefsal_handle_t * p_junction_handle,    /* IN */
-                                  fusefsal_op_context_t * p_context,        /* IN */
-                                  fusefsal_handle_t * p_fsoot_handle,       /* OUT */
-                                  fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
+                                      fusefsal_op_context_t * p_context,        /* IN */
+                                      fusefsal_handle_t * p_fsoot_handle,       /* OUT */
+                                      fsal_attrib_list_t * p_fsroot_attributes  /* [ IN/OUT ] */
     )
 {
 
@@ -355,10 +355,10 @@ fsal_status_t FUSEFSAL_lookupJunction(fusefsal_handle_t * p_junction_handle,    
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FUSEFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
-                              fusefsal_op_context_t * p_context,    /* IN */
-                              fusefsal_handle_t * object_handle,    /* OUT */
-                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
+fsal_status_t FUSEFSAL_lookupPath(fsal_path_t * p_path, /* IN */
+                                  fusefsal_op_context_t * p_context,    /* IN */
+                                  fusefsal_handle_t * object_handle,    /* OUT */
+                                  fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
 
@@ -395,12 +395,12 @@ fsal_status_t FUSEFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
 
   /* retrieves root directory */
 
-  status = FUSEFSAL_lookup(NULL,    /* looking up for root */
-                       NULL,    /* empty string to get root handle */
-                       p_context,       /* user's credentials */
-                       &out_hdl,        /* output root handle */
-                       /* retrieves attributes if this is the last lookup : */
-                       (b_is_last ? object_attributes : NULL));
+  status = FUSEFSAL_lookup(NULL,        /* looking up for root */
+                           NULL,        /* empty string to get root handle */
+                           p_context,   /* user's credentials */
+                           &out_hdl,    /* output root handle */
+                           /* retrieves attributes if this is the last lookup : */
+                           (b_is_last ? object_attributes : NULL));
 
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_lookupPath);
@@ -447,12 +447,12 @@ fsal_status_t FUSEFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
         b_is_last = TRUE;
 
       /*call to FSAL_lookup */
-      status = FUSEFSAL_lookup(&in_hdl,     /* parent directory handle */
-                           &obj_name,   /* object name */
-                           p_context,   /* user's credentials */
-                           &out_hdl,    /* output root handle */
-                           /* retrieves attributes if this is the last lookup : */
-                           (b_is_last ? object_attributes : NULL));
+      status = FUSEFSAL_lookup(&in_hdl, /* parent directory handle */
+                               &obj_name,       /* object name */
+                               p_context,       /* user's credentials */
+                               &out_hdl,        /* output root handle */
+                               /* retrieves attributes if this is the last lookup : */
+                               (b_is_last ? object_attributes : NULL));
 
       if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_lookupPath);

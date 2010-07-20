@@ -159,7 +159,6 @@ int posix2fsal_error(int posix_errorcode)
 
 }
 
-
 /**
  * fsal2posix_openflags:
  * Convert FSAL open flags to Posix open flags.
