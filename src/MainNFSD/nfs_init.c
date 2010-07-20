@@ -2123,11 +2123,7 @@ int rebuild_export_list(char *config_file)
    * Remove all but the first export entry in the exports list. */
   status = RemoveAllExportsExceptHead(nfs_param.pexportlist);
   if (status <= 0)
-    {
-      /* The old list should be kept actually. */
-      DisplayLog("rebuild_export_list: CRITICAL ERROR while removing some export entries.");
-      goto cleanup_and_exit;
-    }
+    DisplayLog("rebuild_export_list: CRITICAL ERROR while removing some export entries.");
 
   /* Changed the old export list head to the new export list head. 
    * All references to the exports list should be up-to-date now. */
