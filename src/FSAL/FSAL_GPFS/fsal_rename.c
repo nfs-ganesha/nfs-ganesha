@@ -100,9 +100,9 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
   /* Get directory access path by fid */
 
   TakeTokenFSCall();
-  status =
-      fsal_internal_handle2fd(p_context, p_old_parentdir_handle, &old_parent_fd,
-                              O_RDONLY | O_DIRECTORY);
+  status = fsal_internal_handle2fd(p_context, p_old_parentdir_handle,
+                                   &old_parent_fd,
+                                   O_RDONLY | O_DIRECTORY);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
@@ -117,6 +117,7 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
 
   if(rc)
     {
+      close(old_parent_fd);
       if(errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_rename);
       else
@@ -133,9 +134,9 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
   else
     {
       TakeTokenFSCall();
-      status =
-          fsal_internal_handle2fd(p_context, p_new_parentdir_handle, &new_parent_fd,
-                                  O_RDONLY | O_DIRECTORY);
+      status = fsal_internal_handle2fd(p_context, p_new_parentdir_handle,
+                                       &new_parent_fd,
+                                       O_RDONLY | O_DIRECTORY);
       ReleaseTokenFSCall();
 
       if(FSAL_IS_ERROR(status))
@@ -151,6 +152,9 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
 
       if(rc)
         {
+          /* close old and new parent fd */
+          close(old_parent_fd);
+          close(new_parent_fd);
           if(errsv == ENOENT)
             Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_rename);
           else
@@ -161,19 +165,25 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
 
   /* check access rights */
 
-  status =
-      fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &old_parent_buffstat,
-                               NULL);
-  if(FSAL_IS_ERROR(status))
+  status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK,
+                                    &old_parent_buffstat,
+                                    NULL);
+  if(FSAL_IS_ERROR(status)) {
+    close(old_parent_fd);
+    if (!src_equal_tgt)
+      close(new_parent_fd);
     ReturnStatus(status, INDEX_FSAL_rename);
-
+  }
   if(!src_equal_tgt)
     {
-      status =
-          fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &new_parent_buffstat,
-                                   NULL);
-      if(FSAL_IS_ERROR(status))
+      status =  fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK,
+                                         &new_parent_buffstat,
+                                         NULL);
+      if(FSAL_IS_ERROR(status)) {
+        close(old_parent_fd);
+        close(new_parent_fd);
         ReturnStatus(status, INDEX_FSAL_rename);
+      }
     }
 
   /* build file paths */
@@ -181,16 +191,24 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
   rc = fstatat(old_parent_fd, p_old_name->name, &buffstat, AT_SYMLINK_NOFOLLOW);
   errsv = errno;
   ReleaseTokenFSCall();
-  if(rc)
+  if(rc) {
+    close(old_parent_fd);
+    if (!src_equal_tgt)
+      close(new_parent_fd);
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
+  }
 
   /* Check sticky bits */
 
   /* Sticky bit on the source directory => the user who wants to delete the file must own it or its parent dir */
-  if((old_parent_buffstat.st_mode & S_ISVTX)
-     && old_parent_buffstat.st_uid != p_context->credential.user
-     && buffstat.st_uid != p_context->credential.user && p_context->credential.user != 0)
+  if((old_parent_buffstat.st_mode & S_ISVTX) &&
+     old_parent_buffstat.st_uid != p_context->credential.user &&
+     buffstat.st_uid != p_context->credential.user && p_context->credential.user != 0) {
+    close(old_parent_fd);
+    if (!src_equal_tgt)
+      close(new_parent_fd);
     Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
+  }
 
   /* Sticky bit on the target directory => the user who wants to create the file must own it or its parent dir */
   if(new_parent_buffstat.st_mode & S_ISVTX)
@@ -205,7 +223,8 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
           if(errsv != ENOENT)
             {
               close(old_parent_fd);
-              close(new_parent_fd);
+              if (!src_equal_tgt)
+                close(new_parent_fd);
               Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
             }
         }
@@ -217,7 +236,8 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
              && p_context->credential.user != 0)
             {
               close(old_parent_fd);
-              close(new_parent_fd);
+              if (!src_equal_tgt)
+                close(new_parent_fd);
               Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
             }
         }
@@ -231,7 +251,8 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
   errsv = errno;
   ReleaseTokenFSCall();
   close(old_parent_fd);
-  close(new_parent_fd);
+  if (!src_equal_tgt)
+    close(new_parent_fd);
 
   if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
