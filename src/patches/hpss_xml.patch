@@ -1,0 +1,15 @@
+diff --git a/src/FSAL/FSAL_HPSS/fsal_xattrs.c b/src/FSAL/FSAL_HPSS/fsal_xattrs.c
+index 8f4cfd8..0f24992 100644
+--- a/src/FSAL/FSAL_HPSS/fsal_xattrs.c
++++ b/src/FSAL/FSAL_HPSS/fsal_xattrs.c
+@@ -17,7 +17,10 @@
+ 
+ #include <hpss_uuid.h>
+ #include <hpss_errno.h>
++
++#if HPSS_LEVEL >= 730
+ #include <hpss_xml.h>
++#endif
+ 
+ /* generic definitions for extended attributes */
+ 

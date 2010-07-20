@@ -1,0 +1,82 @@
+index 618bb34..3fa6b38 100644
+--- a/src/FSAL/FSAL_POSIX/DBExt/MYSQL/posixdb_internal.c
++++ b/src/FSAL/FSAL_POSIX/DBExt/MYSQL/posixdb_internal.c
+@@ -311,7 +311,8 @@ fsal_posixdb_status_t db_exec_sql(fsal_posixdb_conn * conn, const char *query,
+       DisplayLogLevel(NIV_MAJOR, "DB request failed: %s (query: %s)",
+                       mysql_error(&conn->db_conn), query);
+       return mysql_error_convert(mysql_errno(&conn->db_conn));
+-    } else
++    }
++  else
+     {
+       if (p_result)
+         *p_result = mysql_store_result(&conn->db_conn);
+@@ -329,10 +330,12 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
+   int toomanypaths = 0;
+ 
+   MYSQL_BIND input[2];          /* input = id, timestamp */
+-  MYSQL_BIND output[3];         /* output = path, id, timestamp */
+-  my_bool is_null[3];
+-  unsigned long length[3];
+-  my_bool error[3];
++
++  const int output_num = 3;
++  MYSQL_BIND output[output_num];         /* output = path, id, timestamp */
++  my_bool is_null[output_num];
++  unsigned long length[output_num];
++  my_bool error[output_num];
+ 
+   unsigned long long last_id;
+   unsigned int last_ts;
+@@ -344,6 +347,11 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
+   MYSQL_STMT *stmt;
+   int rc;
+ 
++  memset(output, 0, sizeof(MYSQL_BIND) * output_num);
++  memset(is_null, 0, sizeof(my_bool) * output_num);
++  memset(length, 0, sizeof(unsigned long) * output_num);
++  memset(error, 0, sizeof(my_bool) * output_num);
++
+   if (!p_conn || !p_handle || !p_path)
+     {
+       ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+@@ -436,7 +444,8 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
+           /* clean prepared statement */
+           mysql_stmt_free_result(stmt);
+           ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);        /* not found */
+-      } else if (rc)
++        }
++      else if (rc)
+         {
+           /* clean prepared statement */
+           mysql_stmt_free_result(stmt);
+@@ -473,7 +482,8 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
+     {
+       DisplayLog("Returned path: %s", p_path->path);
+       ReturnCode(ERR_FSAL_POSIXDB_TOOMANYPATHS, toomanypaths);  /* too many entries */
+-    } else
++    }
++  else
+     {
+       /* set result in cache and return */
+       fsal_posixdb_CachePath(p_handle, p_path);
+@@ -520,7 +530,8 @@ fsal_posixdb_status_t fsal_posixdb_recursiveDelete(fsal_posixdb_conn * p_conn,
+             {
+               st = fsal_posixdb_recursiveDelete(p_conn, atoll(row[0]), atoi(row[1]),
+                                                 ftype_tmp);
+-            } else
++            }
++          else
+             {
+               st = fsal_posixdb_deleteParent(p_conn, atoll(row[0]),     /* handleidparent */
+                                              atoi(row[1]),      /* handletsparent */
+@@ -609,7 +620,8 @@ fsal_posixdb_status_t fsal_posixdb_deleteParent(fsal_posixdb_conn * p_conn,
+         return st;
+ #endif
+ 
+-    } else
++    }
++  else
+     {
+       /* invalidate cache */
+       fsal_posixdb_InvalidateCache();
