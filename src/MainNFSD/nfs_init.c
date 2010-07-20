@@ -525,6 +525,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
 
   /* Buddy parameters */
 #ifndef _NO_BUDDY_SYSTEM
+  Buddy_set_default_parameter(&p_nfs_param->buddy_param_admin);
   Buddy_set_default_parameter(&p_nfs_param->buddy_param_worker);
   Buddy_set_default_parameter(&p_nfs_param->buddy_param_tcp_mgr );
 #endif
