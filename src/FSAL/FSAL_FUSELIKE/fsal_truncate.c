@@ -48,10 +48,10 @@
  */
 
 fsal_status_t FUSEFSAL_truncate(fusefsal_handle_t * filehandle, /* IN */
-                            fusefsal_op_context_t * p_context,      /* IN */
-                            fsal_size_t length, /* IN */
-                            fusefsal_file_t * file_descriptor,      /* Unused in this FSAL */
-                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
+                                fusefsal_op_context_t * p_context,      /* IN */
+                                fsal_size_t length,     /* IN */
+                                fusefsal_file_t * file_descriptor,      /* Unused in this FSAL */
+                                fsal_attrib_list_t * object_attributes  /* [ IN/OUT ] */
     )
 {
 

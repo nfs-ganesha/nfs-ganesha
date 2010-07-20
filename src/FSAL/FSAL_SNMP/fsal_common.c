@@ -216,7 +216,8 @@ struct tree *GetMIBNode(snmpfsal_op_context_t * p_context, snmpfsal_handle_t * p
                       p_context->export_context->root_mib_tree, return_nearest_parent);
 }
 
-struct tree *GetMIBChildList(snmpfsal_op_context_t * p_context, snmpfsal_handle_t * p_handle)
+struct tree *GetMIBChildList(snmpfsal_op_context_t * p_context,
+                             snmpfsal_handle_t * p_handle)
 {
   struct tree *obj_tree;
 

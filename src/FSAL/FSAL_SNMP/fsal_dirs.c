@@ -46,9 +46,9 @@
  *          ERR_FSAL_IO, ...
  */
 fsal_status_t SNMPFSAL_opendir(snmpfsal_handle_t * dir_handle,  /* IN */
-                           snmpfsal_op_context_t * p_context,       /* IN */
-                           snmpfsal_dir_t * dir_descriptor, /* OUT */
-                           fsal_attrib_list_t * dir_attributes  /* [ IN/OUT ] */
+                               snmpfsal_op_context_t * p_context,       /* IN */
+                               snmpfsal_dir_t * dir_descriptor, /* OUT */
+                               fsal_attrib_list_t * dir_attributes      /* [ IN/OUT ] */
     )
 {
   fsal_status_t st;
@@ -118,13 +118,13 @@ fsal_status_t SNMPFSAL_opendir(snmpfsal_handle_t * dir_handle,  /* IN */
  *          ERR_FSAL_IO, ...
  */
 fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
-                           snmpfsal_cookie_t start_position,        /* IN */
-                           fsal_attrib_mask_t get_attr_mask,    /* IN */
-                           fsal_mdsize_t buffersize,    /* IN */
-                           fsal_dirent_t * pdirent,     /* OUT */
-                           snmpfsal_cookie_t * end_position,        /* OUT */
-                           fsal_count_t * nb_entries,   /* OUT */
-                           fsal_boolean_t * end_of_dir  /* OUT */
+                               snmpfsal_cookie_t start_position,        /* IN */
+                               fsal_attrib_mask_t get_attr_mask,        /* IN */
+                               fsal_mdsize_t buffersize,        /* IN */
+                               fsal_dirent_t * pdirent, /* OUT */
+                               snmpfsal_cookie_t * end_position,        /* OUT */
+                               fsal_count_t * nb_entries,       /* OUT */
+                               fsal_boolean_t * end_of_dir      /* OUT */
     )
 {
   fsal_count_t max_dir_entries;
@@ -256,8 +256,8 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
 
                   if(rc != ERR_FSAL_NO_ERROR)
                     {
-                      FSAL_CLEAR_MASK(pdirent[cur_nb_entries].
-                                      attributes.asked_attributes);
+                      FSAL_CLEAR_MASK(pdirent[cur_nb_entries].attributes.
+                                      asked_attributes);
                       FSAL_SET_MASK(pdirent[cur_nb_entries].attributes.asked_attributes,
                                     FSAL_ATTR_RDATTR_ERR);
                     }
@@ -369,8 +369,8 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
 
                   if(rc != ERR_FSAL_NO_ERROR)
                     {
-                      FSAL_CLEAR_MASK(pdirent[cur_nb_entries].
-                                      attributes.asked_attributes);
+                      FSAL_CLEAR_MASK(pdirent[cur_nb_entries].attributes.
+                                      asked_attributes);
                       FSAL_SET_MASK(pdirent[cur_nb_entries].attributes.asked_attributes,
                                     FSAL_ATTR_RDATTR_ERR);
                     }
@@ -437,10 +437,10 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
 #ifdef _DEBUG_FSAL
               printf("FOUND A NEW SUBDIR = %s (%ld) (cookie->%ld)\n",
                      pdirent[cur_nb_entries].name.name,
-                     pdirent[cur_nb_entries].handle.oid_tab[dir_descriptor->
-                                                            node_handle.oid_len],
-                     pdirent[cur_nb_entries].cookie.
-                     oid_tab[pdirent[cur_nb_entries].cookie.oid_len - 1]);
+                     pdirent[cur_nb_entries].handle.oid_tab[dir_descriptor->node_handle.
+                                                            oid_len],
+                     pdirent[cur_nb_entries].cookie.oid_tab[pdirent[cur_nb_entries].
+                                                            cookie.oid_len - 1]);
 #endif
 
               /* set entry attributes  */
@@ -453,8 +453,8 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
 
                   if(rc != ERR_FSAL_NO_ERROR)
                     {
-                      FSAL_CLEAR_MASK(pdirent[cur_nb_entries].
-                                      attributes.asked_attributes);
+                      FSAL_CLEAR_MASK(pdirent[cur_nb_entries].attributes.
+                                      asked_attributes);
                       FSAL_SET_MASK(pdirent[cur_nb_entries].attributes.asked_attributes,
                                     FSAL_ATTR_RDATTR_ERR);
                     }

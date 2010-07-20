@@ -151,7 +151,8 @@ static int FS_Specific_Init(proxyfs_specific_initinfo_t * fs_init_info)
   pthread_attr_t attr_thr;
   int rc;
 
-  memcpy(&global_fsal_proxy_specific_info, fs_init_info, sizeof(proxyfs_specific_initinfo_t));
+  memcpy(&global_fsal_proxy_specific_info, fs_init_info,
+         sizeof(proxyfs_specific_initinfo_t));
 
   /* No SIG_PIPE. This is mandatory for reconnection logic. If sigpipe is not blocked, 
    * then when a server crashes the next clnt_call will cause un unhandled sigpipe that
@@ -224,7 +225,7 @@ static int FS_Specific_Init(proxyfs_specific_initinfo_t * fs_init_info)
  *                                for this error.)
  *         ERR_FSAL_SEC_INIT     (Security context init error).
  */
-fsal_status_t PROXYFSAL_Init(fsal_parameter_t * init_info    /* IN */
+fsal_status_t PROXYFSAL_Init(fsal_parameter_t * init_info       /* IN */
     )
 {
 

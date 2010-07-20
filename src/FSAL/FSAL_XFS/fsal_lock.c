@@ -79,8 +79,8 @@ fsal_status_t XFSFSAL_lock(xfsfsal_file_t * obj_handle,
  * FSAL_changelock:
  * Not implemented.
  */
-fsal_status_t XFSFSAL_changelock(xfsfsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
-                              fsal_lockparam_t * lock_info      /* IN */
+fsal_status_t XFSFSAL_changelock(xfsfsal_lockdesc_t * lock_descriptor,  /* IN / OUT */
+                                 fsal_lockparam_t * lock_info   /* IN */
     )
 {
 

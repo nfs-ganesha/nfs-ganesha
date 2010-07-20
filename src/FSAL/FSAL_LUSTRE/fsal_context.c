@@ -36,9 +36,9 @@
 /**
  * build the export entry
  */
-fsal_status_t LUSTREFSAL_BuildExportContext(lustrefsal_export_context_t * p_export_context, /* OUT */
-                                      fsal_path_t * p_export_path,      /* IN */
-                                      char *fs_specific_options /* IN */
+fsal_status_t LUSTREFSAL_BuildExportContext(lustrefsal_export_context_t * p_export_context,     /* OUT */
+                                            fsal_path_t * p_export_path,        /* IN */
+                                            char *fs_specific_options   /* IN */
     )
 {
   /* Get the mount point for this lustre FS,
@@ -201,12 +201,12 @@ fsal_status_t LUSTREFSAL_InitClientContext(lustrefsal_op_context_t * p_thr_conte
  *      - ERR_FSAL_SERVERFAULT : unexpected error.
  */
 
-fsal_status_t LUSTREFSAL_GetClientContext(lustrefsal_op_context_t * p_thr_context,  /* IN/OUT  */
-                                    lustrefsal_export_context_t * p_export_context,   /* IN */
-                                    fsal_uid_t uid,     /* IN */
-                                    fsal_gid_t gid,     /* IN */
-                                    fsal_gid_t * alt_groups,    /* IN */
-                                    fsal_count_t nb_alt_groups  /* IN */
+fsal_status_t LUSTREFSAL_GetClientContext(lustrefsal_op_context_t * p_thr_context,      /* IN/OUT  */
+                                          lustrefsal_export_context_t * p_export_context,       /* IN */
+                                          fsal_uid_t uid,       /* IN */
+                                          fsal_gid_t gid,       /* IN */
+                                          fsal_gid_t * alt_groups,      /* IN */
+                                          fsal_count_t nb_alt_groups    /* IN */
     )
 {
 

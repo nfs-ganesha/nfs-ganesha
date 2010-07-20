@@ -352,9 +352,9 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           strncpy(pparam->stats_per_client_directory, key_value, MAXPATHLEN);
         }
-      else if(!strcasecmp( key_name, "FSAL_Shared_Libraray" ) )
-	{
-          strncpy(pparam->fsal_shared_library, key_value, MAXPATHLEN) ;
+      else if(!strcasecmp(key_name, "FSAL_Shared_Libraray"))
+        {
+          strncpy(pparam->fsal_shared_library, key_value, MAXPATHLEN);
         }
       else
         {
@@ -1319,9 +1319,7 @@ void Print_param_in_log(nfs_parameter_t * pparam)
   Print_param_worker_in_log(&(pparam->worker_param));
 }                               /* Print_param_in_log */
 
-
-
-int nfs_get_fsalpathlib_conf( char * configPath, char * PathLib )
+int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib)
 {
   int var_max;
   int var_index;
@@ -1329,7 +1327,7 @@ int nfs_get_fsalpathlib_conf( char * configPath, char * PathLib )
   char *key_name;
   char *key_value;
   config_item_t block;
-  unsigned int found = FALSE ;
+  unsigned int found = FALSE;
   config_file_t config_struct;
 
   /* Is the config tree initialized ? */
@@ -1374,17 +1372,16 @@ int nfs_get_fsalpathlib_conf( char * configPath, char * PathLib )
           return CACHE_INODE_INVALID_ARGUMENT;
         }
 
-      if(!strcasecmp( key_name, "FSAL_Shared_Libraray" ) )
-	{
-          strncpy( PathLib, key_value, MAXPATHLEN) ;
-          found = TRUE ;
+      if(!strcasecmp(key_name, "FSAL_Shared_Libraray"))
+        {
+          strncpy(PathLib, key_value, MAXPATHLEN);
+          found = TRUE;
         }
 
     }
- 
-  if( !found )
-    return 1 ;
+
+  if(!found)
+    return 1;
 
   return 0;
-}   /* nfs_get_fsalpathlib_conf */             
-
+}                               /* nfs_get_fsalpathlib_conf */

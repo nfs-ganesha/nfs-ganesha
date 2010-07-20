@@ -267,8 +267,8 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                                           NULL, NULL,
                                           parent_pentry,
                                           ppre_attr,
-                                          &(pres->res_symlink3.SYMLINK3res_u.
-                                            resok.dir_wcc), NULL, NULL, NULL);
+                                          &(pres->res_symlink3.SYMLINK3res_u.resok.
+                                            dir_wcc), NULL, NULL, NULL);
 
                       if(nfs_RetryableError(cache_status))
                         return NFS_REQ_DROP;
@@ -277,8 +277,8 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                     }
                 }
 
-              if((pres->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle.
-                  data.data_val = Mem_Alloc(NFS3_FHSIZE)) == NULL)
+              if((pres->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle.data.
+                  data_val = Mem_Alloc(NFS3_FHSIZE)) == NULL)
                 {
                   pres->res_symlink3.status = NFS3ERR_IO;
                   return NFS_REQ_OK;
@@ -288,8 +288,8 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                  (&pres->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle,
                   pfsal_handle, pexport) == 0)
                 {
-                  Mem_Free((char *)pres->res_symlink3.SYMLINK3res_u.resok.
-                           obj.post_op_fh3_u.handle.data.data_val);
+                  Mem_Free((char *)pres->res_symlink3.SYMLINK3res_u.resok.obj.
+                           post_op_fh3_u.handle.data.data_val);
 
                   pres->res_symlink3.status = NFS3ERR_BADHANDLE;
                   return NFS_REQ_OK;
@@ -303,8 +303,8 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                                      pcontext,
                                      &cache_status_parent) != CACHE_INODE_SUCCESS)
                 {
-                  Mem_Free((char *)pres->res_symlink3.SYMLINK3res_u.resok.
-                           obj.post_op_fh3_u.handle.data.data_val);
+                  Mem_Free((char *)pres->res_symlink3.SYMLINK3res_u.resok.obj.
+                           post_op_fh3_u.handle.data.data_val);
 
                   pres->res_symlink3.status = NFS3ERR_BADHANDLE;
                   return NFS_REQ_OK;
@@ -312,8 +312,8 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
 
               /* Set Post Op Fh3 structure */
               pres->res_symlink3.SYMLINK3res_u.resok.obj.handle_follows = TRUE;
-              pres->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle.
-                  data.data_len = sizeof(file_handle_v3_t);
+              pres->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle.data.
+                  data_len = sizeof(file_handle_v3_t);
 
               /* Build entry attributes */
               nfs_SetPostOpAttr(pcontext, pexport,
@@ -368,6 +368,6 @@ void nfs_Symlink_Free(nfs_res_t * resp)
 {
   if((resp->res_symlink3.status == NFS3_OK) &&
      (resp->res_symlink3.SYMLINK3res_u.resok.obj.handle_follows == TRUE))
-    Mem_Free(resp->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle.
-             data.data_val);
+    Mem_Free(resp->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle.data.
+             data_val);
 }                               /* nfs_Symlink_Free */

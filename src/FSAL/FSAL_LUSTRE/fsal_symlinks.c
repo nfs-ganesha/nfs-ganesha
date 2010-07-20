@@ -43,10 +43,10 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t LUSTREFSAL_readlink(lustrefsal_handle_t * p_linkhandle,       /* IN */
-                            lustrefsal_op_context_t * p_context,      /* IN */
-                            fsal_path_t * p_link_content,       /* OUT */
-                            fsal_attrib_list_t * p_link_attributes      /* [ IN/OUT ] */
+fsal_status_t LUSTREFSAL_readlink(lustrefsal_handle_t * p_linkhandle,   /* IN */
+                                  lustrefsal_op_context_t * p_context,  /* IN */
+                                  fsal_path_t * p_link_content, /* OUT */
+                                  fsal_attrib_list_t * p_link_attributes        /* [ IN/OUT ] */
     )
 {
 
@@ -134,13 +134,13 @@ fsal_status_t LUSTREFSAL_readlink(lustrefsal_handle_t * p_linkhandle,       /* I
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t LUSTREFSAL_symlink(lustrefsal_handle_t * p_parent_directory_handle,   /* IN */
-                           fsal_name_t * p_linkname,    /* IN */
-                           fsal_path_t * p_linkcontent, /* IN */
-                           lustrefsal_op_context_t * p_context,       /* IN */
-                           fsal_accessmode_t accessmode,        /* IN (ignored) */
-                           lustrefsal_handle_t * p_link_handle,       /* OUT */
-                           fsal_attrib_list_t * p_link_attributes       /* [ IN/OUT ] */
+fsal_status_t LUSTREFSAL_symlink(lustrefsal_handle_t * p_parent_directory_handle,       /* IN */
+                                 fsal_name_t * p_linkname,      /* IN */
+                                 fsal_path_t * p_linkcontent,   /* IN */
+                                 lustrefsal_op_context_t * p_context,   /* IN */
+                                 fsal_accessmode_t accessmode,  /* IN (ignored) */
+                                 lustrefsal_handle_t * p_link_handle,   /* OUT */
+                                 fsal_attrib_list_t * p_link_attributes /* [ IN/OUT ] */
     )
 {
 

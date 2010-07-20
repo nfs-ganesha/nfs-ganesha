@@ -24,7 +24,6 @@
 #define MAX_2( x, y )    ( (x) > (y) ? (x) : (y) )
 #define MAX_3( x, y, z ) ( (x) > (y) ? MAX_2((x),(z)) : MAX_2((y),(z)) )
 
-
 /**
  * posix2fsal_error :
  * Convert POSIX error codes to FSAL error codes.
@@ -270,6 +269,3 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
-
-
-

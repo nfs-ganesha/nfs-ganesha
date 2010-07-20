@@ -58,9 +58,9 @@
  *        - Other error codes when something anormal occurs.
  */
 fsal_status_t SNMPFSAL_access(snmpfsal_handle_t * object_handle,        /* IN */
-                          snmpfsal_op_context_t * p_context,        /* IN */
-                          fsal_accessflags_t access_type,       /* IN */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
+                              snmpfsal_op_context_t * p_context,        /* IN */
+                              fsal_accessflags_t access_type,   /* IN */
+                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
   fsal_attrib_list_t attrs;

@@ -60,11 +60,11 @@
  *        the object_attributes->asked_attributes field.
  */
 fsal_status_t HPSSFSAL_create(hpssfsal_handle_t * parent_directory_handle,      /* IN */
-                          fsal_name_t * p_filename,     /* IN */
-                          hpssfsal_op_context_t * p_context,        /* IN */
-                          fsal_accessmode_t accessmode, /* IN */
-                          hpssfsal_handle_t * object_handle,        /* OUT */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
+                              fsal_name_t * p_filename, /* IN */
+                              hpssfsal_op_context_t * p_context,        /* IN */
+                              fsal_accessmode_t accessmode,     /* IN */
+                              hpssfsal_handle_t * object_handle,        /* OUT */
+                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
 
@@ -216,11 +216,11 @@ fsal_status_t HPSSFSAL_create(hpssfsal_handle_t * parent_directory_handle,      
  *        the object_attributes->asked_attributes field.
  */
 fsal_status_t HPSSFSAL_mkdir(hpssfsal_handle_t * parent_directory_handle,       /* IN */
-                         fsal_name_t * p_dirname,       /* IN */
-                         hpssfsal_op_context_t * p_context, /* IN */
-                         fsal_accessmode_t accessmode,  /* IN */
-                         hpssfsal_handle_t * object_handle, /* OUT */
-                         fsal_attrib_list_t * object_attributes /* [ IN/OUT ] */
+                             fsal_name_t * p_dirname,   /* IN */
+                             hpssfsal_op_context_t * p_context, /* IN */
+                             fsal_accessmode_t accessmode,      /* IN */
+                             hpssfsal_handle_t * object_handle, /* OUT */
+                             fsal_attrib_list_t * object_attributes     /* [ IN/OUT ] */
     )
 {
 
@@ -333,10 +333,10 @@ fsal_status_t HPSSFSAL_mkdir(hpssfsal_handle_t * parent_directory_handle,       
  *        the attributes->asked_attributes field.
  */
 fsal_status_t HPSSFSAL_link(hpssfsal_handle_t * target_handle,  /* IN */
-                        hpssfsal_handle_t * dir_handle,     /* IN */
-                        fsal_name_t * p_link_name,      /* IN */
-                        hpssfsal_op_context_t * p_context,  /* IN */
-                        fsal_attrib_list_t * attributes /* [ IN/OUT ] */
+                            hpssfsal_handle_t * dir_handle,     /* IN */
+                            fsal_name_t * p_link_name,  /* IN */
+                            hpssfsal_op_context_t * p_context,  /* IN */
+                            fsal_attrib_list_t * attributes     /* [ IN/OUT ] */
     )
 {
 
@@ -416,13 +416,13 @@ fsal_status_t HPSSFSAL_link(hpssfsal_handle_t * target_handle,  /* IN */
  * \return ERR_FSAL_NOTSUPP.
  */
 fsal_status_t HPSSFSAL_mknode(hpssfsal_handle_t * parentdir_handle,     /* IN */
-                          fsal_name_t * p_node_name,    /* IN */
-                          hpssfsal_op_context_t * p_context,        /* IN */
-                          fsal_accessmode_t accessmode, /* IN */
-                          fsal_nodetype_t nodetype,     /* IN */
-                          fsal_dev_t * dev,     /* IN */
-                          hpssfsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
-                          fsal_attrib_list_t * node_attributes  /* [ IN/OUT ] */
+                              fsal_name_t * p_node_name,        /* IN */
+                              hpssfsal_op_context_t * p_context,        /* IN */
+                              fsal_accessmode_t accessmode,     /* IN */
+                              fsal_nodetype_t nodetype, /* IN */
+                              fsal_dev_t * dev, /* IN */
+                              hpssfsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
+                              fsal_attrib_list_t * node_attributes      /* [ IN/OUT ] */
     )
 {
 

@@ -45,7 +45,7 @@ char *POSIXFSAL_GetFSName()
  */
 
 int POSIXFSAL_handlecmp(posixfsal_handle_t * handle1, posixfsal_handle_t * handle2,
-                   fsal_status_t * status)
+                        fsal_status_t * status)
 {
 
   *status = FSAL_STATUS_NO_ERROR;
@@ -75,8 +75,9 @@ int POSIXFSAL_handlecmp(posixfsal_handle_t * handle1, posixfsal_handle_t * handl
  */
 
 unsigned int POSIXFSAL_Handle_to_HashIndex(posixfsal_handle_t * p_handle,
-                                      unsigned int cookie,
-                                      unsigned int alphabet_len, unsigned int index_size)
+                                           unsigned int cookie,
+                                           unsigned int alphabet_len,
+                                           unsigned int index_size)
 {
   unsigned int h;
   h = (cookie * alphabet_len + ((unsigned int)p_handle->id ^ (unsigned int)p_handle->ts));
@@ -95,7 +96,8 @@ unsigned int POSIXFSAL_Handle_to_HashIndex(posixfsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int POSIXFSAL_Handle_to_RBTIndex(posixfsal_handle_t * p_handle, unsigned int cookie)
+unsigned int POSIXFSAL_Handle_to_RBTIndex(posixfsal_handle_t * p_handle,
+                                          unsigned int cookie)
 {
 #define MAGIC   0xABCD1234
   unsigned int h;
@@ -119,10 +121,10 @@ unsigned int POSIXFSAL_Handle_to_RBTIndex(posixfsal_handle_t * p_handle, unsigne
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t POSIXFSAL_DigestHandle(posixfsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t output_type,  /* IN */
-                                posixfsal_handle_t * p_in_fsal_handle,       /* IN */
-                                caddr_t out_buff        /* OUT */
+fsal_status_t POSIXFSAL_DigestHandle(posixfsal_export_context_t * p_expcontext, /* IN */
+                                     fsal_digesttype_t output_type,     /* IN */
+                                     posixfsal_handle_t * p_in_fsal_handle,     /* IN */
+                                     caddr_t out_buff   /* OUT */
     )
 {
   /* sanity checks */
@@ -247,10 +249,10 @@ fsal_status_t POSIXFSAL_DigestHandle(posixfsal_export_context_t * p_expcontext, 
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t POSIXFSAL_ExpandHandle(posixfsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t in_type,      /* IN */
-                                caddr_t in_buff,        /* IN */
-                                posixfsal_handle_t * p_out_fsal_handle       /* OUT */
+fsal_status_t POSIXFSAL_ExpandHandle(posixfsal_export_context_t * p_expcontext, /* IN */
+                                     fsal_digesttype_t in_type, /* IN */
+                                     caddr_t in_buff,   /* IN */
+                                     posixfsal_handle_t * p_out_fsal_handle     /* OUT */
     )
 {
 
@@ -405,7 +407,7 @@ fsal_status_t POSIXFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_
 /* load FSAL init info */
 
 fsal_status_t POSIXFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
-                                                 fsal_parameter_t * out_parameter)
+                                                      fsal_parameter_t * out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -522,7 +524,8 @@ fsal_status_t POSIXFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 /* load general filesystem configuration options */
 
 fsal_status_t POSIXFSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
-                                                      fsal_parameter_t * out_parameter)
+                                                           fsal_parameter_t *
+                                                           out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -730,7 +733,8 @@ fsal_status_t POSIXFSAL_load_FS_common_parameter_from_conf(config_file_t in_conf
 /* load specific filesystem configuration options */
 
 fsal_status_t POSIXFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
-                                                        fsal_parameter_t * out_parameter)
+                                                             fsal_parameter_t *
+                                                             out_parameter)
 {
   int err;
   int var_max, var_index;

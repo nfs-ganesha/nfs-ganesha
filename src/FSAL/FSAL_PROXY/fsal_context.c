@@ -118,9 +118,9 @@ static int Getsubopt(char **optionp, const char *const *tokens, char **valuep)
  * Parse FS specific option string
  * to build the export entry option.
  */
-fsal_status_t PROXYFSAL_BuildExportContext(proxyfsal_export_context_t * p_export_context, /* OUT */
-                                      fsal_path_t * p_export_path,      /* IN */
-                                      char *fs_specific_options /* IN */
+fsal_status_t PROXYFSAL_BuildExportContext(proxyfsal_export_context_t * p_export_context,       /* OUT */
+                                           fsal_path_t * p_export_path, /* IN */
+                                           char *fs_specific_options    /* IN */
     )
 {
   char subopts[256];
@@ -345,12 +345,12 @@ fsal_status_t PROXYFSAL_InitClientContext(proxyfsal_op_context_t * p_thr_context
  *      - ERR_FSAL_SERVERFAULT : unexpected error.
  */
 
-fsal_status_t PROXYFSAL_GetClientContext(proxyfsal_op_context_t * p_thr_context,  /* IN/OUT  */
-                                    proxyfsal_export_context_t * p_export_context,   /* IN */
-                                    fsal_uid_t uid,     /* IN */
-                                    fsal_gid_t gid,     /* IN */
-                                    fsal_gid_t * alt_groups,    /* IN */
-                                    fsal_count_t nb_alt_groups  /* IN */
+fsal_status_t PROXYFSAL_GetClientContext(proxyfsal_op_context_t * p_thr_context,        /* IN/OUT  */
+                                         proxyfsal_export_context_t * p_export_context, /* IN */
+                                         fsal_uid_t uid,        /* IN */
+                                         fsal_gid_t gid,        /* IN */
+                                         fsal_gid_t * alt_groups,       /* IN */
+                                         fsal_count_t nb_alt_groups     /* IN */
     )
 {
 

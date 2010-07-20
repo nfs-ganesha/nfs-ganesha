@@ -49,9 +49,9 @@
  * */
 
 fsal_status_t SNMPFSAL_readlink(snmpfsal_handle_t * linkhandle, /* IN */
-                            snmpfsal_op_context_t * p_context,      /* IN */
-                            fsal_path_t * p_link_content,       /* OUT */
-                            fsal_attrib_list_t * link_attributes        /* [ IN/OUT ] */
+                                snmpfsal_op_context_t * p_context,      /* IN */
+                                fsal_path_t * p_link_content,   /* OUT */
+                                fsal_attrib_list_t * link_attributes    /* [ IN/OUT ] */
     )
 {
 
@@ -140,12 +140,12 @@ fsal_status_t SNMPFSAL_readlink(snmpfsal_handle_t * linkhandle, /* IN */
  */
 
 fsal_status_t SNMPFSAL_symlink(snmpfsal_handle_t * parent_directory_handle,     /* IN */
-                           fsal_name_t * p_linkname,    /* IN */
-                           fsal_path_t * p_linkcontent, /* IN */
-                           snmpfsal_op_context_t * p_context,       /* IN */
-                           fsal_accessmode_t accessmode,        /* IN (ignored) */
-                           snmpfsal_handle_t * link_handle, /* OUT */
-                           fsal_attrib_list_t * link_attributes /* [ IN/OUT ] */
+                               fsal_name_t * p_linkname,        /* IN */
+                               fsal_path_t * p_linkcontent,     /* IN */
+                               snmpfsal_op_context_t * p_context,       /* IN */
+                               fsal_accessmode_t accessmode,    /* IN (ignored) */
+                               snmpfsal_handle_t * link_handle, /* OUT */
+                               fsal_attrib_list_t * link_attributes     /* [ IN/OUT ] */
     )
 {
 

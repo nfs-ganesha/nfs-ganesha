@@ -76,8 +76,8 @@
  *        - Another error code if an error occured.
  */
 fsal_status_t HPSSFSAL_test_access(hpssfsal_op_context_t * p_context,   /* IN */
-                               fsal_accessflags_t access_type,  /* IN */
-                               fsal_attrib_list_t * object_attributes   /* IN */
+                                   fsal_accessflags_t access_type,      /* IN */
+                                   fsal_attrib_list_t * object_attributes       /* IN */
     )
 {
   fsal_accessflags_t missing_access;
@@ -254,8 +254,8 @@ fsal_status_t HPSSFSAL_test_access(hpssfsal_op_context_t * p_context,   /* IN */
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 fsal_status_t HPSSFSAL_setattr_access(hpssfsal_op_context_t * p_context,        /* IN */
-                                  fsal_attrib_list_t * pcandidate_attributes,   /* IN */
-                                  fsal_attrib_list_t * pobject_attributes       /* IN */
+                                      fsal_attrib_list_t * pcandidate_attributes,       /* IN */
+                                      fsal_attrib_list_t * pobject_attributes   /* IN */
     )
 {
   fsal_status_t fsal_status;
@@ -310,8 +310,8 @@ fsal_status_t HPSSFSAL_setattr_access(hpssfsal_op_context_t * p_context,        
  */
 
 fsal_status_t HPSSFSAL_rename_access(hpssfsal_op_context_t * pcontext,  /* IN */
-                                 fsal_attrib_list_t * pattrsrc, /* IN */
-                                 fsal_attrib_list_t * pattrdest)        /* IN */
+                                     fsal_attrib_list_t * pattrsrc,     /* IN */
+                                     fsal_attrib_list_t * pattrdest)    /* IN */
 {
   fsal_status_t fsal_status;
 
@@ -342,7 +342,7 @@ fsal_status_t HPSSFSAL_rename_access(hpssfsal_op_context_t * pcontext,  /* IN */
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 fsal_status_t HPSSFSAL_create_access(hpssfsal_op_context_t * pcontext,  /* IN */
-                                 fsal_attrib_list_t * pattr)    /* IN */
+                                     fsal_attrib_list_t * pattr)        /* IN */
 {
   fsal_status_t fsal_status;
 
@@ -370,7 +370,7 @@ fsal_status_t HPSSFSAL_create_access(hpssfsal_op_context_t * pcontext,  /* IN */
  */
 
 fsal_status_t HPSSFSAL_unlink_access(hpssfsal_op_context_t * pcontext,  /* IN */
-                                 fsal_attrib_list_t * pattr)    /* IN */
+                                     fsal_attrib_list_t * pattr)        /* IN */
 {
   fsal_status_t fsal_status;
 
@@ -398,7 +398,7 @@ fsal_status_t HPSSFSAL_unlink_access(hpssfsal_op_context_t * pcontext,  /* IN */
  */
 
 fsal_status_t HPSSFSAL_link_access(hpssfsal_op_context_t * pcontext,    /* IN */
-                               fsal_attrib_list_t * pattr)      /* IN */
+                                   fsal_attrib_list_t * pattr)  /* IN */
 {
   fsal_status_t fsal_status;
 
@@ -426,8 +426,8 @@ fsal_status_t HPSSFSAL_link_access(hpssfsal_op_context_t * pcontext,    /* IN */
  */
 
 fsal_status_t HPSSFSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
-                               fsal_attrib_list_t * pnew_attr,
-                               fsal_attrib_list_t * presult_attr)
+                                   fsal_attrib_list_t * pnew_attr,
+                                   fsal_attrib_list_t * presult_attr)
 {
   if(pinit_attr == NULL || pnew_attr == NULL || presult_attr == NULL)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_merge_attrs);

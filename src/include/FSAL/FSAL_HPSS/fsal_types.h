@@ -114,7 +114,7 @@ typedef struct
 
 typedef struct
 {
-  hpssfsal_export_context_t *export_context; /* Must be the first entry in this structure */
+  hpssfsal_export_context_t *export_context;    /* Must be the first entry in this structure */
   hpssfsal_cred_t credential;
 } hpssfsal_op_context_t;
 
@@ -129,8 +129,8 @@ typedef struct
 /** directory stream descriptor */
 typedef struct fsal_dir__
 {
-  hpssfsal_handle_t dir_handle;     /* directory handle */
-  hpssfsal_op_context_t context;    /* credential for readdir operations */
+  hpssfsal_handle_t dir_handle; /* directory handle */
+  hpssfsal_op_context_t context;        /* credential for readdir operations */
   int reserved;                 /* not used */
 } hpssfsal_dir_t;
 
@@ -243,7 +243,6 @@ typedef void *hpssfsal_lockdesc_t;   /**< not implemented in hpss */
 #define fs_specific_initinfo_t hpssfs_specific_initinfo_t
 #define fsal_cred_t hpssfsal_cred_t
 
-#endif /* _USE_SHARED_FSAL */
-
+#endif                          /* _USE_SHARED_FSAL */
 
 #endif                          /* _FSAL_TYPES_SPECIFIC_H */

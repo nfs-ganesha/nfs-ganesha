@@ -50,9 +50,9 @@
  * */
 
 fsal_status_t FUSEFSAL_readlink(fusefsal_handle_t * linkhandle, /* IN */
-                            fusefsal_op_context_t * p_context,      /* IN */
-                            fsal_path_t * p_link_content,       /* OUT */
-                            fsal_attrib_list_t * link_attributes        /* [ IN/OUT ] */
+                                fusefsal_op_context_t * p_context,      /* IN */
+                                fsal_path_t * p_link_content,   /* OUT */
+                                fsal_attrib_list_t * link_attributes    /* [ IN/OUT ] */
     )
 {
 
@@ -157,12 +157,12 @@ fsal_status_t FUSEFSAL_readlink(fusefsal_handle_t * linkhandle, /* IN */
  */
 
 fsal_status_t FUSEFSAL_symlink(fusefsal_handle_t * parent_directory_handle,     /* IN */
-                           fsal_name_t * p_linkname,    /* IN */
-                           fsal_path_t * p_linkcontent, /* IN */
-                           fusefsal_op_context_t * p_context,       /* IN */
-                           fsal_accessmode_t accessmode,        /* IN (ignored) */
-                           fusefsal_handle_t * link_handle, /* OUT */
-                           fsal_attrib_list_t * link_attributes /* [ IN/OUT ] */
+                               fsal_name_t * p_linkname,        /* IN */
+                               fsal_path_t * p_linkcontent,     /* IN */
+                               fusefsal_op_context_t * p_context,       /* IN */
+                               fsal_accessmode_t accessmode,    /* IN (ignored) */
+                               fusefsal_handle_t * link_handle, /* OUT */
+                               fsal_attrib_list_t * link_attributes     /* [ IN/OUT ] */
     )
 {
 

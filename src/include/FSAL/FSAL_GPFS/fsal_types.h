@@ -213,7 +213,7 @@ typedef struct fsal_export_context_t
 
 typedef struct
 {
-  fsal_export_context_t *export_context; /* Must be the first entry in this structure */
+  fsal_export_context_t *export_context;        /* Must be the first entry in this structure */
   fsal_cred_t credential;
 } fsal_op_context_t;
 

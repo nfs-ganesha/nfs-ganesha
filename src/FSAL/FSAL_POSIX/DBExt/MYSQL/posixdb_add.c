@@ -16,7 +16,7 @@
 
 fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
                                        fsal_posixdb_fileinfo_t * p_object_info, /* IN */
-                                       posixfsal_handle_t * p_parent_directory_handle,       /* IN */
+                                       posixfsal_handle_t * p_parent_directory_handle,  /* IN */
                                        fsal_name_t * p_filename,        /* IN */
                                        posixfsal_handle_t * p_object_handle /* OUT */ )
 {
@@ -172,10 +172,10 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
    ************************************************/
   snprintf(query, 4096, "SELECT handleid, handlets "
            "FROM Parent WHERE handleidparent=%llu AND handletsparent=%u AND name='%s'",
-           p_parent_directory_handle ? p_parent_directory_handle->
-           id : p_object_handle->id,
-           p_parent_directory_handle ? p_parent_directory_handle->
-           ts : p_object_handle->ts, p_filename ? p_filename->name : "");
+           p_parent_directory_handle ? p_parent_directory_handle->id : p_object_handle->
+           id,
+           p_parent_directory_handle ? p_parent_directory_handle->ts : p_object_handle->
+           ts, p_filename ? p_filename->name : "");
 
   st = db_exec_sql(p_conn, query, &res);
   if(FSAL_POSIXDB_IS_ERROR(st))

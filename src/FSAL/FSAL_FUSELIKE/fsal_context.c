@@ -38,8 +38,8 @@
  * to build the export entry option.
  */
 fsal_status_t FUSEFSAL_BuildExportContext(fusefsal_export_context_t * p_export_context, /* OUT */
-                                      fsal_path_t * p_export_path,      /* IN */
-                                      char *fs_specific_options /* IN */
+                                          fsal_path_t * p_export_path,  /* IN */
+                                          char *fs_specific_options     /* IN */
     )
 {
   int rc;
@@ -111,11 +111,11 @@ fsal_status_t FUSEFSAL_InitClientContext(fusefsal_op_context_t * p_thr_context)
  */
 
 fsal_status_t FUSEFSAL_GetClientContext(fusefsal_op_context_t * p_thr_context,  /* IN/OUT  */
-                                    fusefsal_export_context_t * p_export_context,   /* IN */
-                                    fsal_uid_t uid,     /* IN */
-                                    fsal_gid_t gid,     /* IN */
-                                    fsal_gid_t * alt_groups,    /* IN */
-                                    fsal_count_t nb_alt_groups  /* IN */
+                                        fusefsal_export_context_t * p_export_context,   /* IN */
+                                        fsal_uid_t uid, /* IN */
+                                        fsal_gid_t gid, /* IN */
+                                        fsal_gid_t * alt_groups,        /* IN */
+                                        fsal_count_t nb_alt_groups      /* IN */
     )
 {
 

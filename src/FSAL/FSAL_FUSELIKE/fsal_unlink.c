@@ -51,9 +51,9 @@
  */
 
 fsal_status_t FUSEFSAL_unlink(fusefsal_handle_t * parentdir_handle,     /* IN */
-                          fsal_name_t * p_object_name,  /* IN */
-                          fusefsal_op_context_t * p_context,        /* IN */
-                          fsal_attrib_list_t * parentdir_attributes     /* [IN/OUT ] */
+                              fsal_name_t * p_object_name,      /* IN */
+                              fusefsal_op_context_t * p_context,        /* IN */
+                              fsal_attrib_list_t * parentdir_attributes /* [IN/OUT ] */
     )
 {
 

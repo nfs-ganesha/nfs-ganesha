@@ -47,10 +47,10 @@
  */
 
 fsal_status_t SNMPFSAL_truncate(snmpfsal_handle_t * filehandle, /* IN */
-                            snmpfsal_op_context_t * p_context,      /* IN */
-                            fsal_size_t length, /* IN */
-                            snmpfsal_file_t * file_descriptor,      /* Unused in this FSAL */
-                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
+                                snmpfsal_op_context_t * p_context,      /* IN */
+                                fsal_size_t length,     /* IN */
+                                snmpfsal_file_t * file_descriptor,      /* Unused in this FSAL */
+                                fsal_attrib_list_t * object_attributes  /* [ IN/OUT ] */
     )
 {
 

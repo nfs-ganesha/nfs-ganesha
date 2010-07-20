@@ -27,14 +27,14 @@
 
 /* function for getting an attribute value */
 
-typedef int (*xattr_getfunc_t) (snmpfsal_handle_t *,        /* object handle */
-                                snmpfsal_op_context_t *,    /* context */
+typedef int (*xattr_getfunc_t) (snmpfsal_handle_t *,    /* object handle */
+                                snmpfsal_op_context_t *,        /* context */
                                 caddr_t,        /* output buff */
                                 size_t, /* output buff size */
                                 size_t *);      /* output size */
 
-typedef int (*xattr_setfunc_t) (snmpfsal_handle_t *,        /* object handle */
-                                snmpfsal_op_context_t *,    /* context */
+typedef int (*xattr_setfunc_t) (snmpfsal_handle_t *,    /* object handle */
+                                snmpfsal_op_context_t *,        /* context */
                                 caddr_t,        /* input buff */
                                 size_t, /* input size */
                                 int);   /* creation flag */
@@ -57,8 +57,8 @@ typedef struct fsal_xattr_def__
  * GET FUNCTIONS
  */
 
-int get_oid_text(snmpfsal_handle_t * p_objecthandle,        /* IN */
-                 snmpfsal_op_context_t * p_context, /* IN */
+int get_oid_text(snmpfsal_handle_t * p_objecthandle,    /* IN */
+                 snmpfsal_op_context_t * p_context,     /* IN */
                  caddr_t buffer_addr,   /* IN/OUT */
                  size_t buffer_size,    /* IN */
                  size_t * p_output_size)        /* OUT */
@@ -75,8 +75,8 @@ int get_oid_text(snmpfsal_handle_t * p_objecthandle,        /* IN */
 
 }
 
-int get_oid_numeric(snmpfsal_handle_t * p_objecthandle,     /* IN */
-                    snmpfsal_op_context_t * p_context,      /* IN */
+int get_oid_numeric(snmpfsal_handle_t * p_objecthandle, /* IN */
+                    snmpfsal_op_context_t * p_context,  /* IN */
                     caddr_t buffer_addr,        /* IN/OUT */
                     size_t buffer_size, /* IN */
                     size_t * p_output_size)     /* OUT */
@@ -291,9 +291,9 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
  * \param p_attrs xattr's attributes.
  */
 fsal_status_t SNMPFSAL_GetXAttrAttrs(snmpfsal_handle_t * p_objecthandle,        /* IN */
-                                 snmpfsal_op_context_t * p_context, /* IN */
-                                 unsigned int xattr_id, /* IN */
-                                 fsal_attrib_list_t * p_attrs
+                                     snmpfsal_op_context_t * p_context, /* IN */
+                                     unsigned int xattr_id,     /* IN */
+                                     fsal_attrib_list_t * p_attrs
                                           /**< IN/OUT xattr attributes (if supported) */
     )
 {
@@ -349,12 +349,12 @@ fsal_status_t SNMPFSAL_GetXAttrAttrs(snmpfsal_handle_t * p_objecthandle,        
  * \param end_of_list this boolean indicates that the end of xattrs list has been reached.
  */
 fsal_status_t SNMPFSAL_ListXAttrs(snmpfsal_handle_t * p_objecthandle,   /* IN */
-                              unsigned int cookie,      /* IN */
-                              snmpfsal_op_context_t * p_context,    /* IN */
-                              fsal_xattrent_t * xattrs_tab,     /* IN/OUT */
-                              unsigned int xattrs_tabsize,      /* IN */
-                              unsigned int *p_nb_returned,      /* OUT */
-                              int *end_of_list  /* OUT */
+                                  unsigned int cookie,  /* IN */
+                                  snmpfsal_op_context_t * p_context,    /* IN */
+                                  fsal_xattrent_t * xattrs_tab, /* IN/OUT */
+                                  unsigned int xattrs_tabsize,  /* IN */
+                                  unsigned int *p_nb_returned,  /* OUT */
+                                  int *end_of_list      /* OUT */
     )
 {
   unsigned int index;
@@ -426,11 +426,11 @@ fsal_status_t SNMPFSAL_ListXAttrs(snmpfsal_handle_t * p_objecthandle,   /* IN */
  * \param p_output_size size of the data actually stored into the buffer.
  */
 fsal_status_t SNMPFSAL_GetXAttrValueById(snmpfsal_handle_t * p_objecthandle,    /* IN */
-                                     unsigned int xattr_id,     /* IN */
-                                     snmpfsal_op_context_t * p_context,     /* IN */
-                                     caddr_t buffer_addr,       /* IN/OUT */
-                                     size_t buffer_size,        /* IN */
-                                     size_t * p_output_size     /* OUT */
+                                         unsigned int xattr_id, /* IN */
+                                         snmpfsal_op_context_t * p_context,     /* IN */
+                                         caddr_t buffer_addr,   /* IN/OUT */
+                                         size_t buffer_size,    /* IN */
+                                         size_t * p_output_size /* OUT */
     )
 {
   int rc;
@@ -465,9 +465,9 @@ fsal_status_t SNMPFSAL_GetXAttrValueById(snmpfsal_handle_t * p_objecthandle,    
  *   \return ERR_FSAL_NO_ERROR if xattr_name exists, ERR_FSAL_NOENT otherwise
  */
 fsal_status_t SNMPFSAL_GetXAttrIdByName(snmpfsal_handle_t * p_objecthandle,     /* IN */
-                                    const fsal_name_t * xattr_name,     /* IN */
-                                    snmpfsal_op_context_t * p_context,      /* IN */
-                                    unsigned int *pxattr_id     /* OUT */
+                                        const fsal_name_t * xattr_name, /* IN */
+                                        snmpfsal_op_context_t * p_context,      /* IN */
+                                        unsigned int *pxattr_id /* OUT */
     )
 {
   unsigned int index;
@@ -509,11 +509,11 @@ fsal_status_t SNMPFSAL_GetXAttrIdByName(snmpfsal_handle_t * p_objecthandle,     
  * \param p_output_size size of the data actually stored into the buffer.
  */
 fsal_status_t SNMPFSAL_GetXAttrValueByName(snmpfsal_handle_t * p_objecthandle,  /* IN */
-                                       const fsal_name_t * xattr_name,  /* IN */
-                                       snmpfsal_op_context_t * p_context,   /* IN */
-                                       caddr_t buffer_addr,     /* IN/OUT */
-                                       size_t buffer_size,      /* IN */
-                                       size_t * p_output_size   /* OUT */
+                                           const fsal_name_t * xattr_name,      /* IN */
+                                           snmpfsal_op_context_t * p_context,   /* IN */
+                                           caddr_t buffer_addr, /* IN/OUT */
+                                           size_t buffer_size,  /* IN */
+                                           size_t * p_output_size       /* OUT */
     )
 {
   unsigned int index;
@@ -533,7 +533,7 @@ fsal_status_t SNMPFSAL_GetXAttrValueByName(snmpfsal_handle_t * p_objecthandle,  
         {
 
           return SNMPFSAL_GetXAttrValueById(p_objecthandle, index, p_context, buffer_addr,
-                                        buffer_size, p_output_size);
+                                            buffer_size, p_output_size);
 
         }
     }
@@ -544,21 +544,21 @@ fsal_status_t SNMPFSAL_GetXAttrValueByName(snmpfsal_handle_t * p_objecthandle,  
 }
 
 fsal_status_t SNMPFSAL_SetXAttrValue(snmpfsal_handle_t * p_objecthandle,        /* IN */
-                                 const fsal_name_t * xattr_name,        /* IN */
-                                 snmpfsal_op_context_t * p_context, /* IN */
-                                 caddr_t buffer_addr,   /* IN */
-                                 size_t buffer_size,    /* IN */
-                                 int create     /* IN */
+                                     const fsal_name_t * xattr_name,    /* IN */
+                                     snmpfsal_op_context_t * p_context, /* IN */
+                                     caddr_t buffer_addr,       /* IN */
+                                     size_t buffer_size,        /* IN */
+                                     int create /* IN */
     )
 {
   Return(ERR_FSAL_PERM, 0, INDEX_FSAL_SetXAttrValue);
 }
 
 fsal_status_t SNMPFSAL_SetXAttrValueById(snmpfsal_handle_t * p_objecthandle,    /* IN */
-                                     unsigned int xattr_id,     /* IN */
-                                     snmpfsal_op_context_t * p_context,     /* IN */
-                                     caddr_t buffer_addr,       /* IN */
-                                     size_t buffer_size /* IN */
+                                         unsigned int xattr_id, /* IN */
+                                         snmpfsal_op_context_t * p_context,     /* IN */
+                                         caddr_t buffer_addr,   /* IN */
+                                         size_t buffer_size     /* IN */
     )
 {
   Return(ERR_FSAL_PERM, 0, INDEX_FSAL_SetXAttrValue);
@@ -572,8 +572,8 @@ fsal_status_t SNMPFSAL_SetXAttrValueById(snmpfsal_handle_t * p_objecthandle,    
  * \param xattr_id xattr's id
  */
 fsal_status_t SNMPFSAL_RemoveXAttrById(snmpfsal_handle_t * p_objecthandle,      /* IN */
-                                   snmpfsal_op_context_t * p_context,       /* IN */
-                                   unsigned int xattr_id)       /* IN */
+                                       snmpfsal_op_context_t * p_context,       /* IN */
+                                       unsigned int xattr_id)   /* IN */
 {
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /* FSAL_RemoveXAttrById */
@@ -586,8 +586,8 @@ fsal_status_t SNMPFSAL_RemoveXAttrById(snmpfsal_handle_t * p_objecthandle,      
  * \param xattr_name xattr's name
  */
 fsal_status_t SNMPFSAL_RemoveXAttrByName(snmpfsal_handle_t * p_objecthandle,    /* IN */
-                                     snmpfsal_op_context_t * p_context,     /* IN */
-                                     const fsal_name_t * xattr_name)    /* IN */
+                                         snmpfsal_op_context_t * p_context,     /* IN */
+                                         const fsal_name_t * xattr_name)        /* IN */
 {
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /* FSAL_RemoveXAttrById */

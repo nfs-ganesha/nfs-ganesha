@@ -95,9 +95,9 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Another error code if an error occured.
  */
-fsal_status_t PROXYFSAL_test_access(proxyfsal_op_context_t * p_context,   /* IN */
-                               fsal_accessflags_t access_type,  /* IN */
-                               fsal_attrib_list_t * object_attributes   /* IN */
+fsal_status_t PROXYFSAL_test_access(proxyfsal_op_context_t * p_context, /* IN */
+                                    fsal_accessflags_t access_type,     /* IN */
+                                    fsal_attrib_list_t * object_attributes      /* IN */
     )
 {
   fsal_accessflags_t missing_access;
@@ -218,9 +218,9 @@ fsal_status_t PROXYFSAL_test_access(proxyfsal_op_context_t * p_context,   /* IN 
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t PROXYFSAL_setattr_access(proxyfsal_op_context_t * p_context,        /* IN */
-                                  fsal_attrib_list_t * pcandidate_attributes,   /* IN */
-                                  fsal_attrib_list_t * pobject_attributes       /* IN */
+fsal_status_t PROXYFSAL_setattr_access(proxyfsal_op_context_t * p_context,      /* IN */
+                                       fsal_attrib_list_t * pcandidate_attributes,      /* IN */
+                                       fsal_attrib_list_t * pobject_attributes  /* IN */
     )
 {
   fsal_status_t fsal_status;
@@ -266,9 +266,9 @@ fsal_status_t PROXYFSAL_setattr_access(proxyfsal_op_context_t * p_context,      
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 
-fsal_status_t PROXYFSAL_rename_access(proxyfsal_op_context_t * pcontext,  /* IN */
-                                 fsal_attrib_list_t * pattrsrc, /* IN */
-                                 fsal_attrib_list_t * pattrdest)        /* IN */
+fsal_status_t PROXYFSAL_rename_access(proxyfsal_op_context_t * pcontext,        /* IN */
+                                      fsal_attrib_list_t * pattrsrc,    /* IN */
+                                      fsal_attrib_list_t * pattrdest)   /* IN */
 {
   fsal_status_t fsal_status;
 
@@ -298,8 +298,8 @@ fsal_status_t PROXYFSAL_rename_access(proxyfsal_op_context_t * pcontext,  /* IN 
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t PROXYFSAL_create_access(proxyfsal_op_context_t * pcontext,  /* IN */
-                                 fsal_attrib_list_t * pattr)    /* IN */
+fsal_status_t PROXYFSAL_create_access(proxyfsal_op_context_t * pcontext,        /* IN */
+                                      fsal_attrib_list_t * pattr)       /* IN */
 {
   fsal_status_t fsal_status;
 
@@ -325,8 +325,8 @@ fsal_status_t PROXYFSAL_create_access(proxyfsal_op_context_t * pcontext,  /* IN 
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t PROXYFSAL_unlink_access(proxyfsal_op_context_t * pcontext,  /* IN */
-                                 fsal_attrib_list_t * pattr)    /* IN */
+fsal_status_t PROXYFSAL_unlink_access(proxyfsal_op_context_t * pcontext,        /* IN */
+                                      fsal_attrib_list_t * pattr)       /* IN */
 {
   fsal_status_t fsal_status;
 
@@ -354,8 +354,8 @@ fsal_status_t PROXYFSAL_unlink_access(proxyfsal_op_context_t * pcontext,  /* IN 
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 
-fsal_status_t PROXYFSAL_link_access(proxyfsal_op_context_t * pcontext,    /* IN */
-                               fsal_attrib_list_t * pattr)      /* IN */
+fsal_status_t PROXYFSAL_link_access(proxyfsal_op_context_t * pcontext,  /* IN */
+                                    fsal_attrib_list_t * pattr) /* IN */
 {
   fsal_status_t fsal_status;
 
@@ -383,8 +383,8 @@ fsal_status_t PROXYFSAL_link_access(proxyfsal_op_context_t * pcontext,    /* IN 
  */
 
 fsal_status_t PROXYFSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
-                               fsal_attrib_list_t * pnew_attr,
-                               fsal_attrib_list_t * presult_attr)
+                                    fsal_attrib_list_t * pnew_attr,
+                                    fsal_attrib_list_t * presult_attr)
 {
   if(pinit_attr == NULL || pnew_attr == NULL || presult_attr == NULL)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_merge_attrs);

@@ -24,7 +24,7 @@
  *         - another error code else.
  */
 fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      /* IN */
-                                               posixfsal_handle_t * p_parent_directory_handle,       /* IN */
+                                               posixfsal_handle_t * p_parent_directory_handle,  /* IN */
                                                unsigned int max_count, fsal_posixdb_child ** p_children,        /* OUT */
                                                unsigned int *p_count /* OUT */ )
 {

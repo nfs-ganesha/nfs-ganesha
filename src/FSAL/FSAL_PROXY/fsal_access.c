@@ -74,10 +74,10 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes when something anormal occurs.
  */
-fsal_status_t PROXYFSAL_access(proxyfsal_handle_t * object_handle,        /* IN */
-                          proxyfsal_op_context_t * p_context,        /* IN */
-                          fsal_accessflags_t access_type,       /* IN */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
+fsal_status_t PROXYFSAL_access(proxyfsal_handle_t * object_handle,      /* IN */
+                               proxyfsal_op_context_t * p_context,      /* IN */
+                               fsal_accessflags_t access_type,  /* IN */
+                               fsal_attrib_list_t * object_attributes   /* [ IN/OUT ] */
     )
 {
 
@@ -151,16 +151,16 @@ fsal_status_t PROXYFSAL_access(proxyfsal_handle_t * object_handle,        /* IN 
   COMPOUNDV4_ARG_ADD_OP_ACCESS(argnfs4, accessflag);
   COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, bitmap);
 
-  resnfs4.resarray.resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
-  resnfs4.resarray.resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
+  resnfs4.resarray.resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+  resnfs4.resarray.resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
       (char *)&fattr_internal;
-  resnfs4.resarray.resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+  resnfs4.resarray.resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
       sizeof(fattr_internal);
 
   TakeTokenFSCall();
@@ -188,10 +188,9 @@ fsal_status_t PROXYFSAL_access(proxyfsal_handle_t * object_handle,        /* IN 
     {
       /* Use NFSv4 service function to build the FSAL_attr */
       if(nfs4_Fattr_To_FSAL_attr(object_attributes,
-                                 &resnfs4.
-                                 resarray.resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].
-                                 nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
-                                 obj_attributes) != 1)
+                                 &resnfs4.resarray.
+                                 resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.
+                                 opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
         {
           FSAL_CLEAR_MASK(object_attributes->asked_attributes);
           FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

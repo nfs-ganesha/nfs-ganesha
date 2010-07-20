@@ -231,7 +231,6 @@ int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
 
 }
 
-
 fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
                                     fsal_attrib_list_t * p_fsalattr_out)
 {

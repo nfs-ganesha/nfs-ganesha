@@ -57,10 +57,10 @@
  *        ERR_FSAL_IO, ...
  */
 fsal_status_t FUSEFSAL_open(fusefsal_handle_t * filehandle,     /* IN */
-                        fusefsal_op_context_t * p_context,  /* IN */
-                        fsal_openflags_t openflags,     /* IN */
-                        fusefsal_file_t * file_descriptor,  /* OUT */
-                        fsal_attrib_list_t * file_attributes    /* [ IN/OUT ] */
+                            fusefsal_op_context_t * p_context,  /* IN */
+                            fsal_openflags_t openflags, /* IN */
+                            fusefsal_file_t * file_descriptor,  /* OUT */
+                            fsal_attrib_list_t * file_attributes        /* [ IN/OUT ] */
     )
 {
 
@@ -253,11 +253,12 @@ fsal_status_t FUSEFSAL_open(fusefsal_handle_t * filehandle,     /* IN */
  */
 
 fsal_status_t FUSEFSAL_open_by_name(fusefsal_handle_t * dirhandle,      /* IN */
-                                fsal_name_t * filename, /* IN */
-                                fusefsal_op_context_t * p_context,  /* IN */
-                                fsal_openflags_t openflags,     /* IN */
-                                fusefsal_file_t * file_descriptor,  /* OUT */
-                                fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
+                                    fsal_name_t * filename,     /* IN */
+                                    fusefsal_op_context_t * p_context,  /* IN */
+                                    fsal_openflags_t openflags, /* IN */
+                                    fusefsal_file_t * file_descriptor,  /* OUT */
+                                    fsal_attrib_list_t *
+                                    file_attributes /* [ IN/OUT ] */ )
 {
   fsal_status_t fsal_status;
   fusefsal_handle_t filehandle;
@@ -265,11 +266,13 @@ fsal_status_t FUSEFSAL_open_by_name(fusefsal_handle_t * dirhandle,      /* IN */
   if(!dirhandle || !filename || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
-  fsal_status = FUSEFSAL_lookup(dirhandle, filename, p_context, &filehandle, file_attributes);
+  fsal_status =
+      FUSEFSAL_lookup(dirhandle, filename, p_context, &filehandle, file_attributes);
   if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
-  return FUSEFSAL_open(&filehandle, p_context, openflags, file_descriptor, file_attributes);
+  return FUSEFSAL_open(&filehandle, p_context, openflags, file_descriptor,
+                       file_attributes);
 }
 
 /**
@@ -301,11 +304,11 @@ fsal_status_t FUSEFSAL_open_by_name(fusefsal_handle_t * dirhandle,      /* IN */
  *        ERR_FSAL_IO, ...
  */
 fsal_status_t FUSEFSAL_read(fusefsal_file_t * file_descriptor,  /* IN */
-                        fsal_seek_t * seek_descriptor,  /* [IN] */
-                        fsal_size_t buffer_size,        /* IN */
-                        caddr_t buffer, /* OUT */
-                        fsal_size_t * read_amount,      /* OUT */
-                        fsal_boolean_t * end_of_file    /* OUT */
+                            fsal_seek_t * seek_descriptor,      /* [IN] */
+                            fsal_size_t buffer_size,    /* IN */
+                            caddr_t buffer,     /* OUT */
+                            fsal_size_t * read_amount,  /* OUT */
+                            fsal_boolean_t * end_of_file        /* OUT */
     )
 {
   size_t req_size;
@@ -439,10 +442,10 @@ fsal_status_t FUSEFSAL_read(fusefsal_file_t * file_descriptor,  /* IN */
  *        ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
  */
 fsal_status_t FUSEFSAL_write(fusefsal_file_t * file_descriptor, /* IN */
-                         fsal_seek_t * seek_descriptor, /* IN */
-                         fsal_size_t buffer_size,       /* IN */
-                         caddr_t buffer,        /* IN */
-                         fsal_size_t * write_amount     /* OUT */
+                             fsal_seek_t * seek_descriptor,     /* IN */
+                             fsal_size_t buffer_size,   /* IN */
+                             caddr_t buffer,    /* IN */
+                             fsal_size_t * write_amount /* OUT */
     )
 {
   size_t req_size;
@@ -598,22 +601,23 @@ fsal_status_t FUSEFSAL_close(fusefsal_file_t * file_descriptor  /* IN */
 
 /* Some unsupported calls used in FSAL_PROXY, just for permit the ganeshell to compile */
 fsal_status_t FUSEFSAL_open_by_fileid(fusefsal_handle_t * filehandle,   /* IN */
-                                  fsal_u64_t fileid,    /* IN */
-                                  fusefsal_op_context_t * p_context,        /* IN */
-                                  fsal_openflags_t openflags,   /* IN */
-                                  fusefsal_file_t * file_descriptor,        /* OUT */
-                                  fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
+                                      fsal_u64_t fileid,        /* IN */
+                                      fusefsal_op_context_t * p_context,        /* IN */
+                                      fsal_openflags_t openflags,       /* IN */
+                                      fusefsal_file_t * file_descriptor,        /* OUT */
+                                      fsal_attrib_list_t *
+                                      file_attributes /* [ IN/OUT ] */ )
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
 
 fsal_status_t FUSEFSAL_close_by_fileid(fusefsal_file_t * file_descriptor /* IN */ ,
-                                   fsal_u64_t fileid)
+                                       fsal_u64_t fileid)
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
 
-unsigned int FUSEFSAL_GetFileno( fusefsal_file_t * pfile )
+unsigned int FUSEFSAL_GetFileno(fusefsal_file_t * pfile)
 {
-  return pfile->file_info.fh ;
+  return pfile->file_info.fh;
 }

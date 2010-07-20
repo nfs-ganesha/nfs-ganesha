@@ -182,7 +182,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
       if(!FSAL_IS_ERROR(status))
         bythread_stat->func_stats.nb_success[function_index]++;
-      else if(status.major == ERR_FSAL_DELAY) /* Error is retryable */
+      else if(status.major == ERR_FSAL_DELAY)   /* Error is retryable */
         bythread_stat->func_stats.nb_err_retryable[function_index]++;
       else
         bythread_stat->func_stats.nb_err_unrecover[function_index]++;
@@ -529,7 +529,7 @@ fsal_status_t fsal_internal_fd2handle(xfsfsal_op_context_t * p_context,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /* fsal_internal_fd2handle */
 
-fsal_status_t fsal_internal_Path2Handle(xfsfsal_op_context_t * p_context,  /* IN */
+fsal_status_t fsal_internal_Path2Handle(xfsfsal_op_context_t * p_context,       /* IN */
                                         fsal_path_t * p_fsalpath,       /* IN */
                                         xfsfsal_handle_t * p_handle /* OUT */ )
 {
@@ -557,7 +557,7 @@ fsal_status_t fsal_internal_Path2Handle(xfsfsal_op_context_t * p_context,  /* IN
    Check the access from an existing fsal_attrib_list_t or struct stat
 */
 /* XXX : ACL */
-fsal_status_t fsal_internal_testAccess(xfsfsal_op_context_t * p_context,   /* IN */
+fsal_status_t fsal_internal_testAccess(xfsfsal_op_context_t * p_context,        /* IN */
                                        fsal_accessflags_t access_type,  /* IN */
                                        struct stat * p_buffstat,        /* IN */
                                        fsal_attrib_list_t * p_object_attributes /* IN */ )
@@ -703,8 +703,8 @@ fsal_status_t fsal_internal_testAccess(xfsfsal_op_context_t * p_context,   /* IN
 
 }
 
-fsal_status_t fsal_internal_setattrs_symlink(xfsfsal_handle_t * p_filehandle,      /* IN */
-                                             xfsfsal_op_context_t * p_context,     /* IN */
+fsal_status_t fsal_internal_setattrs_symlink(xfsfsal_handle_t * p_filehandle,   /* IN */
+                                             xfsfsal_op_context_t * p_context,  /* IN */
                                              fsal_attrib_list_t * p_attrib_set, /* IN */
                                              fsal_attrib_list_t * p_object_attributes)
 {

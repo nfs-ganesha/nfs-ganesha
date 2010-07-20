@@ -49,9 +49,9 @@
  */
 
 fsal_status_t SNMPFSAL_unlink(snmpfsal_handle_t * parentdir_handle,     /* IN */
-                          fsal_name_t * p_object_name,  /* IN */
-                          snmpfsal_op_context_t * p_context,        /* IN */
-                          fsal_attrib_list_t * parentdir_attributes     /* [IN/OUT ] */
+                              fsal_name_t * p_object_name,      /* IN */
+                              snmpfsal_op_context_t * p_context,        /* IN */
+                              fsal_attrib_list_t * parentdir_attributes /* [IN/OUT ] */
     )
 {
 

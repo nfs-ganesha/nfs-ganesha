@@ -181,8 +181,8 @@ int nfs_Readlink(nfs_arg_t * parg,
           nfs_SetPostOpAttr(pcontext, pexport,
                             pentry,
                             &attr,
-                            &(pres->res_readlink3.READLINK3res_u.
-                              resok.symlink_attributes));
+                            &(pres->res_readlink3.READLINK3res_u.resok.
+                              symlink_attributes));
           pres->res_readlink3.status = NFS3_OK;
           break;
         }

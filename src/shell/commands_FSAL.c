@@ -237,7 +237,7 @@
 #include "Getopt.h"
 #include "stuff_alloc.h"
 
-int nfs_get_fsalpathlib_conf( char * configPath, char * PathLib ) ;
+int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib);
 
 /* global FS configuration variables */
 
@@ -479,28 +479,29 @@ int fsal_init(char *filename, int flag_v, FILE * output)
   cmdfsal_thr_info_t *context;
 
   /* Initializes the FSAL */
-  char fsal_path_lib[MAXPATHLEN] ;
+  char fsal_path_lib[MAXPATHLEN];
 
 #ifdef _USE_SHARED_FSAL
-  if( nfs_get_fsalpathlib_conf( filename, fsal_path_lib ) )
-   {
-      fprintf( stderr, "NFS MAIN: Error parsing configuration file.\n");
+  if(nfs_get_fsalpathlib_conf(filename, fsal_path_lib))
+    {
+      fprintf(stderr, "NFS MAIN: Error parsing configuration file.\n");
       exit(1);
-   }
-#endif /* _USE_SHARED_FSAL */
+    }
+#endif                          /* _USE_SHARED_FSAL */
 
   /* Load the FSAL library (if needed) */
-  if( !FSAL_LoadLibrary( fsal_path_lib ) )
-   {
-      fprintf( stderr, "NFS MAIN: Could not load FSAL dynamic library %s\n", fsal_path_lib ) ;
-      exit( 1 ) ;
-   }
+  if(!FSAL_LoadLibrary(fsal_path_lib))
+    {
+      fprintf(stderr, "NFS MAIN: Could not load FSAL dynamic library %s\n",
+              fsal_path_lib);
+      exit(1);
+    }
 
   /* Get the FSAL functions */
-  FSAL_LoadFunctions() ;
+  FSAL_LoadFunctions();
 
   /* Get the FSAL consts */
-  FSAL_LoadConsts() ;
+  FSAL_LoadConsts();
 
   /* use FSAL error family. */
 
@@ -1764,7 +1765,7 @@ int fn_fsal_ls(int argc,        /* IN : number of args in argv */
       return st.major;
     }
 
-  FSAL_SET_COOKIE_BEGINNING( from ) ;
+  FSAL_SET_COOKIE_BEGINNING(from);
 
   while(!error && !eod)
     {

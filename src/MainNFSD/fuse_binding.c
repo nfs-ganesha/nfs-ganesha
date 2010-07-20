@@ -304,10 +304,10 @@ int ganefuse_main(int argc, char *argv[],
     }
 
   /* Get the FSAL functions */
-  FSAL_LoadFunctions() ;
+  FSAL_LoadFunctions();
 
   /* Get the FSAL consts */
-  FSAL_LoadConsts() ;
+  FSAL_LoadConsts();
 
   DisplayLog(">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
              FSAL_GetFSName());

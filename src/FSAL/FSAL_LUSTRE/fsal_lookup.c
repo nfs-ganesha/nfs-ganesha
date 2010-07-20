@@ -46,11 +46,11 @@
  *         - Another error code else.
  *          
  */
-fsal_status_t LUSTREFSAL_lookup(lustrefsal_handle_t * p_parent_directory_handle,    /* IN */
-                          fsal_name_t * p_filename,     /* IN */
-                          lustrefsal_op_context_t * p_context,        /* IN */
-                          lustrefsal_handle_t * p_object_handle,      /* OUT */
-                          fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
+fsal_status_t LUSTREFSAL_lookup(lustrefsal_handle_t * p_parent_directory_handle,        /* IN */
+                                fsal_name_t * p_filename,       /* IN */
+                                lustrefsal_op_context_t * p_context,    /* IN */
+                                lustrefsal_handle_t * p_object_handle,  /* OUT */
+                                fsal_attrib_list_t * p_object_attributes        /* [ IN/OUT ] */
     )
 {
   int rc, errsv;
@@ -198,10 +198,10 @@ fsal_status_t LUSTREFSAL_lookup(lustrefsal_handle_t * p_parent_directory_handle,
  *        It can be NULL (increases performances).
  */
 
-fsal_status_t LUSTREFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
-                              lustrefsal_op_context_t * p_context,    /* IN */
-                              lustrefsal_handle_t * object_handle,    /* OUT */
-                              fsal_attrib_list_t * p_object_attributes  /* [ IN/OUT ] */
+fsal_status_t LUSTREFSAL_lookupPath(fsal_path_t * p_path,       /* IN */
+                                    lustrefsal_op_context_t * p_context,        /* IN */
+                                    lustrefsal_handle_t * object_handle,        /* OUT */
+                                    fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */
     )
 {
   fsal_status_t status;
@@ -262,10 +262,10 @@ fsal_status_t LUSTREFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
  *         - Another error code else.
  *          
  */
-fsal_status_t LUSTREFSAL_lookupJunction(lustrefsal_handle_t * p_junction_handle,    /* IN */
-                                  lustrefsal_op_context_t * p_context,        /* IN */
-                                  lustrefsal_handle_t * p_fsoot_handle,       /* OUT */
-                                  fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
+fsal_status_t LUSTREFSAL_lookupJunction(lustrefsal_handle_t * p_junction_handle,        /* IN */
+                                        lustrefsal_op_context_t * p_context,    /* IN */
+                                        lustrefsal_handle_t * p_fsoot_handle,   /* OUT */
+                                        fsal_attrib_list_t * p_fsroot_attributes        /* [ IN/OUT ] */
     )
 {
   //hpss_Attrs_t    root_attr;

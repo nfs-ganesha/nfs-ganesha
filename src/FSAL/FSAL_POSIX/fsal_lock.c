@@ -43,7 +43,7 @@ static int do_blocking_lock(posixfsal_file_t * obj_handle, posixfsal_lockdesc_t 
  * FSAL_lock:
  */
 fsal_status_t POSIXFSAL_lock(posixfsal_file_t * obj_handle,
-                        posixfsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
+                             posixfsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
 {
   int cmd;
   int retval;
@@ -75,8 +75,8 @@ fsal_status_t POSIXFSAL_lock(posixfsal_file_t * obj_handle,
  * FSAL_changelock:
  * Not implemented.
  */
-fsal_status_t POSIXFSAL_changelock(posixfsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
-                              fsal_lockparam_t * lock_info      /* IN */
+fsal_status_t POSIXFSAL_changelock(posixfsal_lockdesc_t * lock_descriptor,      /* IN / OUT */
+                                   fsal_lockparam_t * lock_info /* IN */
     )
 {
 
@@ -92,10 +92,11 @@ fsal_status_t POSIXFSAL_changelock(posixfsal_lockdesc_t * lock_descriptor,      
  * FSAL_unlock:
  *
  */
-fsal_status_t POSIXFSAL_unlock(posixfsal_file_t * obj_handle, posixfsal_lockdesc_t * ldesc)
+fsal_status_t POSIXFSAL_unlock(posixfsal_file_t * obj_handle,
+                               posixfsal_lockdesc_t * ldesc)
 {
   int retval;
-  int fd = obj_handle->filefd ;
+  int fd = obj_handle->filefd;
 
   errno = 0;
   ldesc->flock.l_type = F_UNLCK;
@@ -106,10 +107,11 @@ fsal_status_t POSIXFSAL_unlock(posixfsal_file_t * obj_handle, posixfsal_lockdesc
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_unlock);
 }
 
-fsal_status_t POSIXFSAL_getlock(posixfsal_file_t * obj_handle, posixfsal_lockdesc_t * ldesc)
+fsal_status_t POSIXFSAL_getlock(posixfsal_file_t * obj_handle,
+                                posixfsal_lockdesc_t * ldesc)
 {
   int retval;
-  int fd = obj_handle->filefd ;
+  int fd = obj_handle->filefd;
 
   errno = 0;
   retval = fcntl(fd, F_GETLK, &ldesc->flock);

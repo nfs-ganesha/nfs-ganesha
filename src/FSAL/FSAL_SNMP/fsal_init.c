@@ -110,7 +110,7 @@ static int FS_Specific_Init(snmpfs_specific_initinfo_t * fs_init_info)
  *                                for this error.)
  *         ERR_FSAL_SEC_INIT     (Security context init error).
  */
-fsal_status_t SNMPFSAL_Init(fsal_parameter_t * init_info    /* IN */
+fsal_status_t SNMPFSAL_Init(fsal_parameter_t * init_info        /* IN */
     )
 {
 

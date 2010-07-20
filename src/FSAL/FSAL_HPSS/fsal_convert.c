@@ -306,7 +306,6 @@ int fsal2hpss_openflags(fsal_openflags_t fsal_flags, int *p_hpss_flags)
 
 }
 
-
 /**
  * hpss2fsal_type:
  * Convert HPSS NS object type to FSAL node type.

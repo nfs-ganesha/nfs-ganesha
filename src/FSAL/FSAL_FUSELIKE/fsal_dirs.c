@@ -46,9 +46,9 @@
  *          ERR_FSAL_IO, ...
  */
 fsal_status_t FUSEFSAL_opendir(fusefsal_handle_t * dir_handle,  /* IN */
-                           fusefsal_op_context_t * p_context,       /* IN */
-                           fsal_dir_t * dir_descriptor, /* OUT */
-                           fsal_attrib_list_t * dir_attributes  /* [ IN/OUT ] */
+                               fusefsal_op_context_t * p_context,       /* IN */
+                               fsal_dir_t * dir_descriptor,     /* OUT */
+                               fsal_attrib_list_t * dir_attributes      /* [ IN/OUT ] */
     )
 {
   int rc;
@@ -304,14 +304,14 @@ static int ganefuse_dirfil_old(ganefuse_dirh_t h, const char *name, int type, in
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
-                           fusefsal_cookie_t start_position,        /* IN */
-                           fsal_attrib_mask_t get_attr_mask,    /* IN */
-                           fsal_mdsize_t buffersize,    /* IN */
-                           fsal_dirent_t * pdirent,     /* OUT */
-                           fusefsal_cookie_t * end_position,        /* OUT */
-                           fsal_count_t * nb_entries,   /* OUT */
-                           fsal_boolean_t * end_of_dir  /* OUT */
+fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_descriptor,     /* IN */
+                               fusefsal_cookie_t start_position,        /* IN */
+                               fsal_attrib_mask_t get_attr_mask,        /* IN */
+                               fsal_mdsize_t buffersize,        /* IN */
+                               fsal_dirent_t * pdirent, /* OUT */
+                               fusefsal_cookie_t * end_position,        /* OUT */
+                               fsal_count_t * nb_entries,       /* OUT */
+                               fsal_boolean_t * end_of_dir      /* OUT */
     )
 {
   int rc;
@@ -411,9 +411,9 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
           printf("Inode to be completed\n");
 #endif
           st = FUSEFSAL_lookup(&dir_descriptor->dir_handle,
-                           &pdirent[i].name,
-                           &dir_descriptor->context,
-                           &pdirent[i].handle, &pdirent[i].attributes);
+                               &pdirent[i].name,
+                               &dir_descriptor->context,
+                               &pdirent[i].handle, &pdirent[i].attributes);
 
           if(FSAL_IS_ERROR(st))
             Return(st.major, st.minor, INDEX_FSAL_readdir);
@@ -469,7 +469,7 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FUSEFSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
+fsal_status_t FUSEFSAL_closedir(fsal_dir_t * dir_descriptor     /* IN */
     )
 {
 

@@ -218,4 +218,3 @@ fsal_dev_t posix2fsal_devt(dev_t posix_devid)
 
   return dev;
 }
-

@@ -49,10 +49,10 @@
  */
 
 fsal_status_t HPSSFSAL_truncate(hpssfsal_handle_t * filehandle, /* IN */
-                            hpssfsal_op_context_t * p_context,      /* IN */
-                            fsal_size_t length, /* IN */
-                            hpssfsal_file_t * file_descriptor,      /* Unused in this FSAL */
-                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
+                                hpssfsal_op_context_t * p_context,      /* IN */
+                                fsal_size_t length,     /* IN */
+                                hpssfsal_file_t * file_descriptor,      /* Unused in this FSAL */
+                                fsal_attrib_list_t * object_attributes  /* [ IN/OUT ] */
     )
 {
 
