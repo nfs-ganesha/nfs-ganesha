@@ -1437,20 +1437,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
     }
   DisplayLogLevel(NIV_EVENT, "NFS_INIT: RPC ressources successfully initialized");
 
-  /* Admi initialisation */
-  if((admin_data =
-      (nfs_admin_data_t *) Mem_Alloc(sizeof(nfs_admin_data_t))) == NULL)
-    {
-      DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
-      exit(1);
-    }  
-
-  if (nfs_Init_admin_data(admin_data) != 0)
-    {
-      DisplayLog("NFS_INIT: Error while initializing admin thread");
-      exit(1);
-    }
-
   /* Worker initialisation */
   if((workers_data =
       (nfs_worker_data_t *) Mem_Alloc(sizeof(nfs_worker_data_t) *
@@ -1564,6 +1550,24 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
       DisplayLogLevel(NIV_DEBUG, "NFS_INIT: worker data #%d successfully initialized", i);
     }                           /* for i */
+
+  /* Admin initialisation */
+  if((admin_data =
+      (nfs_admin_data_t *) Mem_Alloc(sizeof(nfs_admin_data_t))) == NULL)
+    {
+      DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
+      exit(1);
+    }  
+
+  if (nfs_Init_admin_data(admin_data) != 0)
+    {
+      DisplayLog("NFS_INIT: Error while initializing admin thread");
+      exit(1);
+    }
+
+  admin_data->ht = ht;
+  admin_data->config_path = config_path;
+  admin_data->workers_data = workers_data;
 
   /* Set the stats to zero */
   nfs_reset_stats();
@@ -1988,168 +1992,4 @@ void nfs_stop()
 
   DisplayLog("NFS EXIT: regular exit");
   exit(0);
-}
-
-
-/* Frees current export entry and returns next export entry. */
-exportlist_t *RemoveExportEntry(exportlist_t * exportEntry)
-{
-  exportlist_t *next;
-
-  if (exportEntry == NULL)
-    return NULL;
-
-  next = exportEntry->next;
-
-  if (exportEntry->fs_static_info != NULL)
-    Mem_Free(exportEntry->fs_static_info);
-
-  if (exportEntry->proot_handle != NULL)
-    Mem_Free(exportEntry->proot_handle);
-
-  Mem_Free(exportEntry);
-  return next;
-}
-
-/* Skips deleting first entry of export list. */
-int RemoveAllExportsExceptHead(exportlist_t * pexportlist)
-{
-  exportlist_t *pcurrent;
-
-  pcurrent = pexportlist->next;
-  while(pcurrent != NULL)
-    {
-      /* Leave the head so that the list may be replaced later without
-       * changing the reference pointer in worker threads. */
-      if (pcurrent == pexportlist)
-	break;
-      
-      pexportlist->next = RemoveExportEntry(pcurrent);
-      pcurrent = pexportlist->next;
-    }
-
-  return 1;   /* Success */
-}
-
-void print_export_list()
-{
-  exportlist_t *pcurrent;
-  for(pcurrent = nfs_param.pexportlist; pcurrent != NULL; pcurrent = pcurrent->next)  
-    {
-      DisplayLog
-	("export entry - Id=%u, Export Path=%s",
-	 pcurrent->id, pcurrent->fullpath);
-    }  
-}
-
-/* Skips deleting first entry of export list. */
-int rebuild_export_list(char *config_file)
-{
-  int all_blocked,i,status = 0;
-  exportlist_t * temp_pexportlist;
-  config_file_t config_struct;
-
-  /* If no configuration file is given, then the caller must want to reparse the
-   * configuration file from startup. */
-  if (config_file == NULL)
-    {
-      if (config_path == NULL)
-	{
-	  DisplayLog("Error: No configuration file was specified for reloading exports.");
-	  return -1;
-	}
-      else
-	config_file = config_path;
-    }
-
-  /* Attempt to parse the new configuration file */
-  config_struct = config_ParseFile(config_file);
-  if(!config_struct)
-    {
-      DisplayLog("rebuild_export_list: Error while parsing new configuration file %s: %s", config_file,
-                 config_GetErrorMsg());
-      return -1;
-    }  
-
-  /* Create the new exports list */
-  status = ReadExports(config_struct, &temp_pexportlist);
-  if(status < 0)
-    {
-      DisplayLog("rebuild_export_list: Error while parsing export entries");
-      return status;
-    }
-  else if(status == 0)
-    {
-      DisplayLog("rebuild_export_list: No export entries found in configuration file !!!");
-      return status;
-    }
-
-  /* At least one worker thread should exist. Each worker thread has a pointer to
-   * the same hash table. */  
-  if( nfs_export_create_root_entry(temp_pexportlist, workers_data[0].ht) != TRUE)
-    {
-      DisplayLog("replace_exports: Error initializing Cache Inode root entries");
-      return -1;
-    }
-
-  /* Pause worker threads */
-  for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-    {
-      workers_data[i].reparse_exports_in_progress = TRUE;
-
-      /* If threads are blocked on the request queue, wake them up
-       * so they are blocked on the exports list replacement. */
-      if(pthread_cond_signal(&(workers_data[i].req_condvar)) == -1)
-	{
-	  DisplayLog("replace_exports: Request cond signal failed for thr#%d , errno = %d", i, errno);
-	  status = -1;
-	  goto cleanup_and_exit;
-	}
-  }
-
-  /* Wait for all worker threads to block */
-  while(1)
-    {
-      all_blocked = 1;
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-	if (workers_data[i].waiting_for_exports == FALSE)
-	  all_blocked = 0;
-      if (all_blocked)
-	break;
-    }
-
-  /* Now we know that the configuration was parsed successfully.
-   * And that worker threads are no longer accessing the export list.
-   * Remove all but the first export entry in the exports list. */
-  status = RemoveAllExportsExceptHead(nfs_param.pexportlist);
-  if (status <= 0)
-    DisplayLog("rebuild_export_list: CRITICAL ERROR while removing some export entries.");
-
-  /* Changed the old export list head to the new export list head. 
-   * All references to the exports list should be up-to-date now. */
-  memcpy(nfs_param.pexportlist, temp_pexportlist, sizeof(exportlist_t));
-
-  /* We no longer need the head that was created for
-   * the new list since the export list is built as a linked list. */
-  Mem_Free(temp_pexportlist);
-
-cleanup_and_exit:
-  for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-    {
-      workers_data[i].reparse_exports_in_progress = FALSE;
-      if(pthread_cond_signal(&(workers_data[i].export_condvar)) == -1)
-	{
-	  DisplayLog("replace_exports: Export cond signal failed for thr#%d , errno = %d", i, errno);
-	  status = -1;
-	  }
-    }
-
-  return status; /* 1 if success */
-}
-
-void admin_replace_exports()
-{
-  admin_data->reload_exports = TRUE;
-  if(pthread_cond_signal(&(admin_data->admin_condvar)) == -1)
-      DisplayLog("admin_replace_exports - admin cond signal failed , errno = %d", errno);
 }

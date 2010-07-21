@@ -460,13 +460,6 @@ typedef enum idmap_type__
   GIDMAP_TYPE = 2
 } idmap_type_t;
 
-typedef struct nfs_admin_data_
-{
-  pthread_cond_t admin_condvar;
-  pthread_mutex_t mutex_admin_condvar;
-  bool_t reload_exports;
-} nfs_admin_data_t;
-
 typedef struct nfs_worker_data__
 {
   int index;
@@ -500,6 +493,16 @@ typedef struct nfs_worker_data__
   unsigned int current_xid;
   fsal_op_context_t thread_fsal_context;
 } nfs_worker_data_t;
+
+typedef struct nfs_admin_data_
+{
+  pthread_cond_t admin_condvar;
+  pthread_mutex_t mutex_admin_condvar;
+  bool_t reload_exports;
+  char *config_path;
+  hash_table_t *ht;
+  nfs_worker_data_t *workers_data;
+} nfs_admin_data_t;
 
 /* flush thread data */
 typedef struct nfs_flush_thread_data__
@@ -555,8 +558,8 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam);
 int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht);
 
 /* Config reparsing routines */
-int rebuild_export_list(char *config_file);
 void admin_replace_exports();
+exportlist_t *RemoveExportEntry(exportlist_t * exportEntry);
 
 /* Tools */
 unsigned int get_rpc_xid(struct svc_req *reqp);
