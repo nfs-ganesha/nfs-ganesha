@@ -364,15 +364,15 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
   memset(p_path, 0, sizeof(fsal_path_t));
 
   /* Nothing to do, it's the root path */
-  if(p_handle->id == 0 && p_handle->ts == 0)
+  if(p_handle->data.id == 0 && p_handle->data.ts == 0)
     ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 
   /* check if the entry is in the cache */
   if(fsal_posixdb_GetPathCache(p_handle, p_path))
     ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 
-  last_id = p_handle->id;
-  last_ts = p_handle->ts;
+  last_id = p_handle->data.id;
+  last_ts = p_handle->data.ts;
 
   /* Bind input parameters */
 

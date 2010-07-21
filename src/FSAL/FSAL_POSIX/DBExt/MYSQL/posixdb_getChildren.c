@@ -45,7 +45,7 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      
            "FROM Parent INNER JOIN Handle ON Handle.handleid=Parent.handleid AND Handle.handlets=Parent.handlets "
            "WHERE Parent.handleidparent=%llu AND Parent.handletsparent=%u "
            "AND NOT (Parent.handleidparent = Parent.handleid AND Parent.handletsparent = Parent.handlets)",
-           p_parent_directory_handle->id, p_parent_directory_handle->ts);
+           p_parent_directory_handle->data.id, p_parent_directory_handle->data.ts);
 
   st = db_exec_sql(p_conn, query, &res);
   if(FSAL_POSIXDB_IS_ERROR(st))
@@ -90,9 +90,9 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      
 
       FSAL_str2name(row[2], FSAL_MAX_NAME_LEN, &((*p_children)[i].name));
 
-      (*p_children)[i].handle.id = atoll(row[0]);
-      (*p_children)[i].handle.ts = atoi(row[1]);
-      posixdb_internal_fillFileinfoFromStrValues(&((*p_children)[i].handle.info),
+      (*p_children)[i].handle.data.id = atoll(row[0]);
+      (*p_children)[i].handle.data.ts = atoi(row[1]);
+      posixdb_internal_fillFileinfoFromStrValues(&((*p_children)[i].handle.data.info),
                                                  row[4], row[3], row[5], row[6], row[7]);
     }
 
