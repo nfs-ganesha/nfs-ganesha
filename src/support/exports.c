@@ -2416,6 +2416,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       /* Get the context for FSAL super user */
       fsal_status = FSAL_InitClientContext(&context);
 
+
       if(FSAL_IS_ERROR(fsal_status))
         {
           DisplayLog("NFS STARTUP: Couldn't get the context for FSAL super user");
@@ -2546,3 +2547,27 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 
   return TRUE;
 }                               /* nfs_export_create_root_entry */
+
+/* Frees current export entry and returns next export entry. */
+exportlist_t *RemoveExportEntry(exportlist_t * exportEntry)
+{
+
+  int rc;
+  exportlist_t *next;
+
+  if (exportEntry == NULL)
+    return NULL;
+
+  next = exportEntry->next;
+
+  close(exportEntry->FS_export_context.mount_root_fd);
+
+  if (exportEntry->fs_static_info != NULL)
+    Mem_Free(exportEntry->fs_static_info);
+
+  if (exportEntry->proot_handle != NULL)
+    Mem_Free(exportEntry->proot_handle);
+
+  Mem_Free(exportEntry);
+  return next;
+}
