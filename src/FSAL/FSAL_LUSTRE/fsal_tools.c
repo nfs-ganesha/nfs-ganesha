@@ -56,9 +56,9 @@ int LUSTREFSAL_handlecmp(lustrefsal_handle_t * handle1, lustrefsal_handle_t * ha
       return -1;
     }
 
-  return (handle1->fid.f_seq != handle2->fid.f_seq)
-      || (handle1->fid.f_oid != handle2->fid.f_oid)
-      || (handle1->fid.f_ver != handle2->fid.f_ver);
+  return (handle1->data.fid.f_seq != handle2->data.fid.f_seq)
+      || (handle1->data.fid.f_oid != handle2->data.fid.f_oid)
+      || (handle1->data.fid.f_ver != handle2->data.fid.f_ver);
 
 }
 
@@ -84,8 +84,8 @@ unsigned int LUSTREFSAL_Handle_to_HashIndex(lustrefsal_handle_t * p_handle,
   unsigned long long lval;
 
   /* polynom of prime numbers */
-  lval = 3 * cookie * alphabet_len + 1873 * p_handle->fid.f_seq
-      + 3511 * p_handle->fid.f_oid + 2999 * p_handle->fid.f_ver + 10267;
+  lval = 3 * cookie * alphabet_len + 1873 * p_handle->data.fid.f_seq
+      + 3511 * p_handle->data.fid.f_oid + 2999 * p_handle->data.fid.f_ver + 10267;
 
   return lval % index_size;
 }
@@ -108,8 +108,8 @@ unsigned int LUSTREFSAL_Handle_to_RBTIndex(lustrefsal_handle_t * p_handle,
   unsigned long long lval;
 
   /* polynom of prime numbers */
-  lval = 2239 * cookie + 3559 * p_handle->fid.f_seq + 5 * p_handle->fid.f_oid
-      + 1409 * p_handle->fid.f_ver + 20011;
+  lval = 2239 * cookie + 3559 * p_handle->data.fid.f_seq + 5 * p_handle->data.fid.f_oid
+      + 1409 * p_handle->data.fid.f_ver + 20011;
 
   return high32m(lval) ^ low32m(lval);
 }
@@ -148,7 +148,7 @@ fsal_status_t LUSTREFSAL_DigestHandle(lustrefsal_export_context_t * p_expcontext
       /* NFS handle digest */
     case FSAL_DIGEST_NFSV2:
 
-      if(sizeof(lustrefsal_handle_t) > FSAL_DIGEST_SIZE_HDLV2)
+      if(sizeof(p_in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV2)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV2);
@@ -157,26 +157,26 @@ fsal_status_t LUSTREFSAL_DigestHandle(lustrefsal_export_context_t * p_expcontext
 
     case FSAL_DIGEST_NFSV3:
 
-      if(sizeof(lustrefsal_handle_t) > FSAL_DIGEST_SIZE_HDLV3)
+      if(sizeof(p_in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV3)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV3);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(lustrefsal_handle_t));
+      memcpy(out_buff, p_in_fsal_handle, sizeof(p_in_fsal_handle->data));
       break;
 
     case FSAL_DIGEST_NFSV4:
 
-      if(sizeof(lustrefsal_handle_t) > FSAL_DIGEST_SIZE_HDLV4)
+      if(sizeof(p_in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV4)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(lustrefsal_handle_t));
+      memcpy(out_buff, p_in_fsal_handle, sizeof(p_in_fsal_handle->data));
       break;
 
       /* FileId digest for NFSv2 */
     case FSAL_DIGEST_FILEID2:
 
-      ino32 = low32m(p_in_fsal_handle->inode);
+      ino32 = low32m(p_in_fsal_handle->data.inode);
 
       /* sanity check about output size */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID2);
@@ -189,14 +189,14 @@ fsal_status_t LUSTREFSAL_DigestHandle(lustrefsal_export_context_t * p_expcontext
 
       /* sanity check about output size */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID3);
-      memcpy(out_buff, &(p_in_fsal_handle->inode), sizeof(fsal_u64_t));
+      memcpy(out_buff, &(p_in_fsal_handle->data.inode), sizeof(fsal_u64_t));
       break;
 
       /* FileId digest for NFSv4 */
     case FSAL_DIGEST_FILEID4:
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID4);
-      memcpy(out_buff, &(p_in_fsal_handle->inode), sizeof(fsal_u64_t));
+      memcpy(out_buff, &(p_in_fsal_handle->data.inode), sizeof(fsal_u64_t));
       break;
 
     default:

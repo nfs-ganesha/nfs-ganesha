@@ -519,7 +519,7 @@ fsal_status_t fsal_internal_Handle2FidPath(lustrefsal_op_context_t * p_context, 
   curr += FIDDIRLEN + 2;
 
   /* add fid string */
-  curr += sprintf(curr, DFID_NOBRACE, PFID(&p_handle->fid));
+  curr += sprintf(curr, DFID_NOBRACE, PFID(&p_handle->data.fid));
 
   p_fsalpath->len = (curr - p_fsalpath->path);
 
@@ -561,7 +561,7 @@ fsal_status_t fsal_internal_Path2Handle(lustrefsal_op_context_t * p_context,    
   if(rc)
     ReturnCode(posix2fsal_error(-rc), -rc);
 
-  p_handle->fid = fid;
+  p_handle->data.fid = fid;
 
   /* retrieve inode */
   rc = lstat(p_fsalpath->path, &ino);
@@ -574,7 +574,7 @@ fsal_status_t fsal_internal_Path2Handle(lustrefsal_op_context_t * p_context,    
   if(rc)
     ReturnCode(posix2fsal_error(errno), errno);
 
-  p_handle->inode = ino.st_ino;
+  p_handle->data.inode = ino.st_ino;
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

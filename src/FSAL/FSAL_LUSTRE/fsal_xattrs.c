@@ -68,7 +68,7 @@ int print_fid(lustrefsal_handle_t * p_objecthandle,     /* object handle */
               void *arg)
 {
   *p_output_size = snprintf(buffer_addr, buffer_size, DFID_NOBRACE "\n",
-                            PFID(&p_objecthandle->fid));
+                            PFID(&p_objecthandle->data.fid));
   return 0;
 }                               /* print_fid */
 
