@@ -490,8 +490,13 @@ case $FSAL in
 		;;
         ZFS)
                 AC_DEFINE([_USE_ZFS], 1, [GANESHA exports ZFS Filesystem])
-                FSAL_CFLAGS="-I/home/remi/projects/zfs-ganesha/src/zfs-fuse/"
-                FSAL_LDFLAGS="-L/home/remi/projects/zfs-ganesha/src/zfs-fuse/ -lzfswrap -L/home/remi/projects/zfs-ganesha/src/lib/libzpool/ -lzpool-kernel -L/home/remi/projects/zfs-ganesha/src/lib/libnvpair/ -lnvpair-kernel -L/home/remi/projects/zfs-ganesha/src/lib/libumem/ -lumem -L/home/remi/projects/zfs-ganesha/src/lib/libsolkerncompat/ -lsolkerncompat -L/home/remi/projects/zfs-ganesha/src/lib/libzfs/ -lzfs -L/home/remi/projects/zfs-ganesha/src/lib/libavl/ -lavl -L/home/remi/projects/zfs-ganesha/src/lib/libuutil/ -luutil -L/home/remi/projects/zfs-ganesha/src/lib/libsolcompat/ -lsolcompat -L/home/remi/projects/zfs-ganesha/src/lib/libzfscommon/ -lzfscommon-user -lc -lcrypto -lm -lz -lrt -ldl -laio"
+                PKG_CHECK_MODULES(ZFSWRAP, libzfswrap,
+                [
+                  FSAL_CFLAGS="$ZFSWRAP_CFLAGS"
+                  FSAL_LDFLAGS="$ZFSWRAP_LIBS"
+                ],[
+                  AC_MSG_ERROR(Impossible to find the libzfswrap library)
+                ])
                 FSAL_LIB="\$(top_builddir)/FSAL/FSAL_ZFS/libfsalzfs.la"
                 FS_NAME="zfs"
                 ;;
