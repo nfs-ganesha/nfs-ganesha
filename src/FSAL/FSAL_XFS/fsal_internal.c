@@ -477,7 +477,7 @@ fsal_status_t fsal_internal_handle2fd(xfsfsal_op_context_t * p_context,
   if(!phandle || !pfd || !p_context)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  rc = open_by_handle(phandle->handle_val, phandle->handle_len, oflags);
+  rc = open_by_handle(phandle->data.handle_val, phandle->data.handle_len, oflags);
   if(rc == -1)
     {
       errsv = errno;
@@ -485,7 +485,7 @@ fsal_status_t fsal_internal_handle2fd(xfsfsal_op_context_t * p_context,
       if(errsv == EISDIR)
         {
           if((rc =
-              open_by_handle(phandle->handle_val, phandle->handle_len, O_DIRECTORY) < 0))
+              open_by_handle(phandle->data.handle_val, phandle->data.handle_len, O_DIRECTORY) < 0))
             ReturnCode(posix2fsal_error(errsv), errsv);
         }
       else
@@ -515,14 +515,14 @@ fsal_status_t fsal_internal_fd2handle(xfsfsal_op_context_t * p_context,
   rc = fstat(fd, &ino);
   if(rc)
     ReturnCode(posix2fsal_error(errno), errno);
-  phandle->inode = ino.st_ino;
-  phandle->type = DT_UNKNOWN;  /** Put here something smarter */
+  phandle->data.inode = ino.st_ino;
+  phandle->data.type = DT_UNKNOWN;  /** Put here something smarter */
 
   if((rc = fd_to_handle(fd, (void **)(&handle_val), &handle_len)) < 0)
     ReturnCode(posix2fsal_error(errno), errno);
 
-  memcpy(phandle->handle_val, handle_val, handle_len);
-  phandle->handle_len = handle_len;
+  memcpy(phandle->data.handle_val, handle_val, handle_len);
+  phandle->data.handle_len = handle_len;
 
   free_handle(handle_val, handle_len);
 
@@ -792,10 +792,10 @@ fsal_status_t fsal_internal_inum2handle(xfsfsal_op_context_t * p_context,
          XFS_FSHANDLE_SZ);
   build_xfsfilehandle(&xfsfilehandle, &xfsfshandle, &bstat);
 
-  memcpy(phandle->handle_val, &xfsfilehandle, sizeof(xfs_filehandle_t));
-  phandle->handle_len = sizeof(xfs_filehandle_t);
-  phandle->inode = inum;
-  phandle->type = DT_LNK;
+  memcpy(phandle->data.handle_val, &xfsfilehandle, sizeof(xfs_filehandle_t));
+  phandle->data.handle_len = sizeof(xfs_filehandle_t);
+  phandle->data.inode = inum;
+  phandle->data.type = DT_LNK;
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /* fsal_internal_inum2handle */

@@ -239,7 +239,15 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info /* IN */ )
            fsal_consts.fsal_handle_t_size, sizeof(fsal_handle_t));
       exit(1);
     }
+  if(fsal_consts.fsal_cookie_t_size != sizeof(fsal_cookie_t))
+    {
+      DisplayLog
+          ("/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_cookie_t do not match: %u |%u !!!!",
+           fsal_consts.fsal_cookie_t_size, sizeof(fsal_cookie_t));
+      exit(1);
+    }
 
+#if 0
   if(fsal_consts.fsal_op_context_t_size != sizeof(fsal_op_context_t) - sizeof(void *))
     {
       DisplayLog
@@ -262,14 +270,6 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info /* IN */ )
       DisplayLog
           ("/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_file_context_t do not match: %u |%u !!!!",
            fsal_consts.fsal_file_t_size, sizeof(fsal_file_t));
-      exit(1);
-    }
-
-  if(fsal_consts.fsal_cookie_t_size != sizeof(fsal_cookie_t))
-    {
-      DisplayLog
-          ("/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_cookie_t do not match: %u |%u !!!!",
-           fsal_consts.fsal_cookie_t_size, sizeof(fsal_cookie_t));
       exit(1);
     }
 
@@ -304,6 +304,8 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info /* IN */ )
            fsal_consts.fsal_dir_t_size, sizeof(fsal_dir_t));
       exit(1);
     }
+#endif /* 0 */
+
 #endif                          /* USE_SHARED_FSAL */
 
   return fsal_functions.fsal_init(init_info);

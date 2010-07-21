@@ -99,9 +99,9 @@ fsal_status_t XFSFSAL_lookup(xfsfsal_handle_t * p_parent_directory_handle,      
   if(!p_parent_directory_handle)
     {
       /* get handle for the mount point  */
-      memcpy(p_object_handle->handle_val, p_context->export_context->mnt_handle_val,
+      memcpy(p_object_handle->data.handle_val, p_context->export_context->mnt_handle_val,
              p_context->export_context->mnt_handle_len);
-      p_object_handle->handle_len = p_context->export_context->mnt_handle_len;
+      p_object_handle->data.handle_len = p_context->export_context->mnt_handle_len;
 
       /* get attributes, if asked */
       if(p_object_attributes)

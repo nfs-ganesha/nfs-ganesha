@@ -81,11 +81,7 @@
 #define FSAL_XFS_HANDLE_LEN 29
 #define FSAL_XFS_FSHANDLE_LEN 64
 
-#ifdef _USE_SHARED_FSAL
-
 #include "fsal_glue_const.h"
-
-#else                           /* _USE_SHARED_FSAL */
 
 #define fsal_handle_t xfsfsal_handle_t
 #define fsal_op_context_t xfsfsal_op_context_t
@@ -97,23 +93,18 @@
 #define fs_specific_initinfo_t xfsfs_specific_initinfo_t
 #define fsal_cred_t xfsfsal_cred_t
 
-#endif                          /* _USE_SHARED_FSAL */
-
-typedef struct
-{
-  char handle_val[FSAL_XFS_HANDLE_LEN];
-  unsigned int handle_len;
-  uint32_t inode;
-  char type;
-} xfsfsal_handle_t;  /**< FS object handle */
-
-typedef union fsal_handle_storage__
-{
-  xfsfsal_handle_t handle;
-#ifdef _USE_SHARED_FSAL
+typedef union {
+ struct
+  {
+    char handle_val[FSAL_XFS_HANDLE_LEN];
+    unsigned int handle_len;
+    uint32_t inode;
+    char type;
+  } data ;
+#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_HANDLE_T_SIZE];
-#endif                          /* _USE_SHARED_FSAL */
-} xfsfsal_handle_storage_t;
+#endif
+} xfsfsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */
 
@@ -155,12 +146,17 @@ typedef struct
 } xfsfs_specific_initinfo_t;
 
 /**< directory cookie */
-typedef struct
-{
+typedef union {
+ struct
+ {
   off_t cookie;
+ } data ;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_COOKIE_T_SIZE];
+#endif
 } xfsfsal_cookie_t;
 
-static const xfsfsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
+//static const xfsfsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
 
 typedef struct
 {
@@ -175,7 +171,7 @@ typedef struct
   xfsfsal_op_context_t context; /* credential for accessing the directory */
   fsal_path_t path;
   unsigned int dir_offset;
-  xfsfsal_handle_storage_t handle;
+  xfsfsal_handle_t handle;
 } xfsfsal_dir_t;
 
 typedef struct fsal_file__

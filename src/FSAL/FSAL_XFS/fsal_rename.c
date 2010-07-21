@@ -124,7 +124,7 @@ fsal_status_t XFSFSAL_rename(xfsfsal_handle_t * p_old_parentdir_handle, /* IN */
     }
 
   /* optimisation : don't do the job twice if source dir = dest dir  */
-  if(!FSAL_handlecmp(p_old_parentdir_handle, p_new_parentdir_handle, &status))
+  if(!XFSFSAL_handlecmp(p_old_parentdir_handle, p_new_parentdir_handle, &status))
     {
       new_parent_fd = old_parent_fd;
       src_equal_tgt = TRUE;
@@ -259,7 +259,7 @@ fsal_status_t XFSFSAL_rename(xfsfsal_handle_t * p_old_parentdir_handle, /* IN */
   if(p_src_dir_attributes)
     {
 
-      status = FSAL_getattrs(p_old_parentdir_handle, p_context, p_src_dir_attributes);
+      status = XFSFSAL_getattrs(p_old_parentdir_handle, p_context, p_src_dir_attributes);
 
       if(FSAL_IS_ERROR(status))
         {
@@ -272,7 +272,7 @@ fsal_status_t XFSFSAL_rename(xfsfsal_handle_t * p_old_parentdir_handle, /* IN */
   if(p_tgt_dir_attributes)
     {
 
-      status = FSAL_getattrs(p_new_parentdir_handle, p_context, p_tgt_dir_attributes);
+      status = XFSFSAL_getattrs(p_new_parentdir_handle, p_context, p_tgt_dir_attributes);
 
       if(FSAL_IS_ERROR(status))
         {

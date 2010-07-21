@@ -189,7 +189,7 @@ fsal_status_t XFSFSAL_readdir(xfsfsal_dir_t * p_dir_descriptor, /* IN */
   /* seek into the directory */
   /***************************/
   errno = 0;
-  if(start_position.cookie == 0)
+  if(start_position.data.cookie == 0)
     {
       //rewinddir(p_dir_descriptor->p_dir);
       rc = errno;
@@ -333,7 +333,7 @@ fsal_status_t XFSFSAL_readdir(xfsfsal_dir_t * p_dir_descriptor, /* IN */
                 }
             }
           //p_pdirent[*p_nb_entries].cookie.cookie = dp->d_off;
-          ((xfsfsal_cookie_t *) (&p_pdirent[*p_nb_entries].cookie))->cookie = dp->d_off;
+          ((xfsfsal_cookie_t *) (&p_pdirent[*p_nb_entries].cookie))->data.cookie = dp->d_off;
           p_pdirent[*p_nb_entries].nextentry = NULL;
           if(*p_nb_entries)
             p_pdirent[*p_nb_entries - 1].nextentry = &(p_pdirent[*p_nb_entries]);
