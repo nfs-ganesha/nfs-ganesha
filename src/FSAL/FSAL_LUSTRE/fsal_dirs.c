@@ -172,14 +172,14 @@ fsal_status_t LUSTREFSAL_readdir(lustrefsal_dir_t * p_dir_descriptor,   /* IN */
   /* seek into the directory */
   /***************************/
   errno = 0;
-  if(start_position.cookie == 0)
+  if(start_position.data.cookie == 0)
     {
       rewinddir(p_dir_descriptor->p_dir);
       rc = errno;
     }
   else
     {
-      seekdir(p_dir_descriptor->p_dir, start_position.cookie);
+      seekdir(p_dir_descriptor->p_dir, start_position.data.cookie);
       rc = errno;
     }
 
@@ -254,7 +254,7 @@ fsal_status_t LUSTREFSAL_readdir(lustrefsal_dir_t * p_dir_descriptor,   /* IN */
                         FSAL_ATTR_RDATTR_ERR);
         }
 
-      p_pdirent[*p_nb_entries].cookie.cookie = telldir(p_dir_descriptor->p_dir);
+      p_pdirent[*p_nb_entries].cookie.data.cookie = telldir(p_dir_descriptor->p_dir);
       p_pdirent[*p_nb_entries].nextentry = NULL;
       if(*p_nb_entries)
         p_pdirent[*p_nb_entries - 1].nextentry = &(p_pdirent[*p_nb_entries]);
