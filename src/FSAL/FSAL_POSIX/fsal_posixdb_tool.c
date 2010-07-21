@@ -190,9 +190,9 @@ void display_directory(fsal_posixdb_conn * p_conn, posixfsal_handle_t * p_handle
     }
   for(i = 0; i < count; i++)
     {
-      printf("%llu %s/%s\n", (unsigned long long int)p_children[i].handle.info.inode,
+      printf("%llu %s/%s\n", (unsigned long long int)p_children[i].handle.data.info.inode,
              basedir, p_children[i].name.name);
-      if(p_children[i].handle.info.ftype == FSAL_TYPE_DIR)
+      if(p_children[i].handle.data.info.ftype == FSAL_TYPE_DIR)
         {
           char basedir_new[FSAL_MAX_PATH_LEN];
           strncpy(basedir_new, basedir, FSAL_MAX_PATH_LEN);

@@ -686,7 +686,7 @@ fsal_status_t fsal_internal_getPathFromHandle(posixfsal_op_context_t * p_context
       if(FSAL_IS_ERROR(status))
         return status;
 
-      if(fsal_posixdb_consistency_check(&(p_handle->info), &infofs))
+      if(fsal_posixdb_consistency_check(&(p_handle->data.info), &infofs))
         {
           /* not consistent !! */
           /* delete the stale handle */
@@ -742,7 +742,7 @@ fsal_status_t fsal_internal_getInfoFromName(posixfsal_op_context_t * p_context, 
     case ERR_FSAL_POSIXDB_NOERR:
       /* No error, the object is in the database */
       /* check consistency */
-      if(fsal_posixdb_consistency_check(&(p_object_handle->info), p_infofs))
+      if(fsal_posixdb_consistency_check(&(p_object_handle->data.info), p_infofs))
         {
           /* Entry not consistent */
           /* Delete the Handle entry, then add a new one (with a Parent entry) */
@@ -824,7 +824,7 @@ fsal_status_t fsal_internal_getInfoFromChildrenList(posixfsal_op_context_t * p_c
     case 0:
       /* Entry found : check consistency */
 
-      if(fsal_posixdb_consistency_check(&(p_children[count].handle.info), p_infofs))
+      if(fsal_posixdb_consistency_check(&(p_children[count].handle.data.info), p_infofs))
         {
           /* Entry not consistent */
           /* Delete the Handle entry, then add a new one (with a Parent entry) */

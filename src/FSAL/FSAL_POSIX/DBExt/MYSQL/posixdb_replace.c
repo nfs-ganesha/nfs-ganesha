@@ -45,7 +45,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
 
   /* check if info is in cache or if this info is inconsistent */
   if(!fsal_posixdb_GetInodeCache(p_parent_directory_handle_old)
-     || fsal_posixdb_consistency_check(&(p_parent_directory_handle_old->info),
+     || fsal_posixdb_consistency_check(&(p_parent_directory_handle_old->data.info),
                                        p_object_info))
     {
       snprintf(query, 4096,
@@ -54,7 +54,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
                "FROM Parent INNER JOIN Handle ON Parent.handleid = Handle.handleid "
                "AND Parent.handlets=Handle.handlets "
                "WHERE handleidparent=%llu AND handletsparent=%u AND name='%s'",
-               p_parent_directory_handle_old->id, p_parent_directory_handle_old->ts,
+               p_parent_directory_handle_old->data.id, p_parent_directory_handle_old->data.ts,
                p_filename_old->name);
 
       st = db_exec_sql(p_conn, query, &res);
@@ -79,13 +79,13 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
         }
 
       /* fill 'infodb' with information about the handle in the database */
-      posixdb_internal_fillFileinfoFromStrValues(&(p_parent_directory_handle_old->info),
+      posixdb_internal_fillFileinfoFromStrValues(&(p_parent_directory_handle_old->data.info),
                                                  row[2], row[3], row[4], row[5], row[6]);
 
       /* check consistency */
 
       if(fsal_posixdb_consistency_check
-         (&(p_parent_directory_handle_old->info), p_object_info))
+         (&(p_parent_directory_handle_old->data.info), p_object_info))
         {
           DisplayLog("Consistency check failed while renaming a file : Handle deleted");
           st = fsal_posixdb_recursiveDelete(p_conn, atoll(row[0]), atoi(row[1]),
@@ -117,7 +117,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
            "Handle.nlink, Handle.ctime, Handle.ftype "
            "FROM Parent INNER JOIN Handle ON Parent.handleid = Handle.handleid AND Parent.handlets=Handle.handlets "
            "WHERE handleidparent=%llu AND handletsparent=%u AND name='%s' FOR UPDATE",
-           p_parent_directory_handle_new->id, p_parent_directory_handle_new->ts,
+           p_parent_directory_handle_new->data.id, p_parent_directory_handle_new->data.ts,
            p_filename_new->name);
 
   st = db_exec_sql(p_conn, query, &res);
@@ -136,8 +136,8 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
         }
 
       st = fsal_posixdb_deleteParent(p_conn, atoll(row[0]), atoi(row[1]),
-                                     p_parent_directory_handle_new->id,
-                                     p_parent_directory_handle_new->ts,
+                                     p_parent_directory_handle_new->data.id,
+                                     p_parent_directory_handle_new->data.ts,
                                      p_filename_new->name, atoi(row[4]) /* nlink */ );
 
       if(FSAL_POSIXDB_IS_ERROR(st) && !FSAL_POSIXDB_IS_NOENT(st))
@@ -161,11 +161,11 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
       snprintf(query, 4096, "UPDATE Parent "
                "SET handleidparent=%llu, handletsparent=%u, name='%s' "
                "WHERE handleidparent=%llu AND handletsparent=%u AND name='%s' ",
-               p_parent_directory_handle_new->id,
-               p_parent_directory_handle_new->ts,
+               p_parent_directory_handle_new->data.id,
+               p_parent_directory_handle_new->data.ts,
                p_filename_new->name,
-               p_parent_directory_handle_old->id,
-               p_parent_directory_handle_old->ts, p_filename_old->name);
+               p_parent_directory_handle_old->data.id,
+               p_parent_directory_handle_old->data.ts, p_filename_old->name);
 
       st = db_exec_sql(p_conn, query, NULL);
 
@@ -207,8 +207,8 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
                        "Handle.nlink, Handle.ctime, Handle.ftype "
                        "FROM Parent INNER JOIN Handle ON Parent.handleid = Handle.handleid AND Parent.handlets=Handle.handlets "
                        "WHERE handleidparent=%llu AND handletsparent=%u AND name='%s' FOR UPDATE",
-                       p_parent_directory_handle_new->id,
-                       p_parent_directory_handle_new->ts, p_filename_new->name);
+                       p_parent_directory_handle_new->data.id,
+                       p_parent_directory_handle_new->data.ts, p_filename_new->name);
 
               st = db_exec_sql(p_conn, query, &res);
               if(FSAL_POSIXDB_IS_ERROR(st))
@@ -225,7 +225,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
                       ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
                     }
 
-                  st = fsal_posixdb_deleteParent(p_conn, atoll(row[0]), atoi(row[1]), p_parent_directory_handle_new->id, p_parent_directory_handle_new->ts, p_filename_new->name, atoi(row[4]));        /* nlink */
+                  st = fsal_posixdb_deleteParent(p_conn, atoll(row[0]), atoi(row[1]), p_parent_directory_handle_new->data.id, p_parent_directory_handle_new->data.ts, p_filename_new->name, atoi(row[4]));        /* nlink */
 
                   if(FSAL_POSIXDB_IS_ERROR(st) && !FSAL_POSIXDB_IS_NOENT(st))
                     {

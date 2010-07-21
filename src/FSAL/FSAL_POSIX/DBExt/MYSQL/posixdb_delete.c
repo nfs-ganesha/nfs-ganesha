@@ -36,8 +36,8 @@ fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
            "FROM Parent INNER JOIN Handle ON Parent.handleid = Handle.handleid "
            "AND Parent.handlets=Handle.handlets "
            "WHERE handleidparent=%llu AND handletsparent=%u AND name='%s' "
-           "FOR UPDATE", p_parent_directory_handle->id,
-           p_parent_directory_handle->ts, p_filename->name);
+           "FOR UPDATE", p_parent_directory_handle->data.id,
+           p_parent_directory_handle->data.ts, p_filename->name);
 
   st = db_exec_sql(p_conn, query, &res);
   if(FSAL_POSIXDB_IS_ERROR(st))
@@ -56,8 +56,8 @@ fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
      * 3/ Get information about the file to delete *
      ***********************************************/
 
-  st = fsal_posixdb_internal_delete(p_conn, p_parent_directory_handle->id,
-                                    p_parent_directory_handle->ts,
+  st = fsal_posixdb_internal_delete(p_conn, p_parent_directory_handle->data.id,
+                                    p_parent_directory_handle->data.ts,
                                     p_filename->name, p_object_info);
   if(FSAL_POSIXDB_IS_ERROR(st))
     goto rollback;
@@ -84,14 +84,14 @@ fsal_posixdb_status_t fsal_posixdb_deleteHandle(fsal_posixdb_conn * p_conn,     
   BeginTransaction(p_conn);
 
 #ifdef _DEBUG_FSAL
-  printf("Deleting %llu.%u\n", p_parent_directory_handle->id,
-         p_parent_directory_handle->ts);
+  printf("Deleting %llu.%u\n", p_parent_directory_handle->data.id,
+         p_parent_directory_handle->data.ts);
 #endif
 
   snprintf(query, 2048,
            "SELECT Handle.deviceid, Handle.inode, Handle.nlink, Handle.ctime, Handle.ftype "
            "FROM Handle WHERE handleid=%llu AND handlets=%u FOR UPDATE",
-           p_parent_directory_handle->id, p_parent_directory_handle->ts);
+           p_parent_directory_handle->data.id, p_parent_directory_handle->data.ts);
 
   st = db_exec_sql(p_conn, query, &res);
   if(FSAL_POSIXDB_IS_ERROR(st))
@@ -103,8 +103,8 @@ fsal_posixdb_status_t fsal_posixdb_deleteHandle(fsal_posixdb_conn * p_conn,     
   if(found)
     {
       /* entry found */
-      st = fsal_posixdb_recursiveDelete(p_conn, p_parent_directory_handle->id,
-                                        p_parent_directory_handle->ts, FSAL_TYPE_DIR);
+      st = fsal_posixdb_recursiveDelete(p_conn, p_parent_directory_handle->data.id,
+                                        p_parent_directory_handle->data.ts, FSAL_TYPE_DIR);
       if(FSAL_POSIXDB_IS_ERROR(st))
         goto rollback;
     }

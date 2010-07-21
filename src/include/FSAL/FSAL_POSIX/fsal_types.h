@@ -84,6 +84,19 @@
 
 #define FSAL_NGROUPS_MAX  32
 
+#include "fsal_glue_const.h"
+
+#define fsal_handle_t posixfsal_handle_t
+#define fsal_op_context_t posixfsal_op_context_t
+#define fsal_file_t posixfsal_file_t
+#define fsal_dir_t posixfsal_dir_t
+#define fsal_export_context_t posixfsal_export_context_t
+#define fsal_lockdesc_t posixfsal_lockdesc_t
+#define fsal_cookie_t posixfsal_cookie_t
+#define fs_specific_initinfo_t posixfs_specific_initinfo_t
+#define fsal_cred_t posixfsal_cred_t
+
+
 /** object POSIX infos */
 typedef struct
 {
@@ -94,11 +107,16 @@ typedef struct
   fsal_nodetype_t ftype;
 } fsal_posixdb_fileinfo_t;
 
-typedef struct
-{
-  fsal_u64_t id;
-  int ts;                       /* timestamp */
-  fsal_posixdb_fileinfo_t info; /* info from the database, related to the object on the FS */
+typedef union {
+ struct
+  {
+    fsal_u64_t id;
+    int ts;                       /* timestamp */
+    fsal_posixdb_fileinfo_t info; /* info from the database, related to the object on the FS */
+  } data ;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_HANDLE_T_SIZE];
+#endif
 } posixfsal_handle_t;  /**< FS object handle.            */
 
 /** Authentification context.    */
@@ -138,9 +156,14 @@ typedef struct fs_specific_initinfo__
 } posixfs_specific_initinfo_t;
 
 /**< directory cookie */
-typedef struct fsal_cookie__
-{
-  off_t cookie;
+typedef union {
+ struct 
+  {
+    off_t cookie;
+  } data ;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_COOKIE_T_SIZE];
+#endif
 } posixfsal_cookie_t;
 
 typedef struct fsal_lockdesc__
@@ -182,18 +205,5 @@ typedef struct fsal_file__
 
 #endif                          /* _FSAL_POSIX_USE_STREAM */
 
-#ifndef _USE_SHARED_FSAL
-
-#define fsal_handle_t posixfsal_handle_t
-#define fsal_op_context_t posixfsal_op_context_t
-#define fsal_file_t posixfsal_file_t
-#define fsal_dir_t posixfsal_dir_t
-#define fsal_export_context_t posixfsal_export_context_t
-#define fsal_lockdesc_t posixfsal_lockdesc_t
-#define fsal_cookie_t posixfsal_cookie_t
-#define fs_specific_initinfo_t posixfs_specific_initinfo_t
-#define fsal_cred_t posixfsal_cred_t
-
-#endif                          /* _USE_SHARED_FSAL */
 
 #endif                          /* _FSAL_TYPES__SPECIFIC_H */

@@ -56,7 +56,7 @@ int POSIXFSAL_handlecmp(posixfsal_handle_t * handle1, posixfsal_handle_t * handl
       return -1;
     }
 
-  return (handle1->id != handle2->id) || (handle1->ts != handle2->ts);
+  return (handle1->data.id != handle2->data.id) || (handle1->data.ts != handle2->data.ts);
 
 }
 
@@ -80,7 +80,7 @@ unsigned int POSIXFSAL_Handle_to_HashIndex(posixfsal_handle_t * p_handle,
                                            unsigned int index_size)
 {
   unsigned int h;
-  h = (cookie * alphabet_len + ((unsigned int)p_handle->id ^ (unsigned int)p_handle->ts));
+  h = (cookie * alphabet_len + ((unsigned int)p_handle->data.id ^ (unsigned int)p_handle->data.ts));
   return (3 * h + 1999) % index_size;
 }
 
@@ -101,7 +101,7 @@ unsigned int POSIXFSAL_Handle_to_RBTIndex(posixfsal_handle_t * p_handle,
 {
 #define MAGIC   0xABCD1234
   unsigned int h;
-  h = (cookie ^ (unsigned int)p_handle->id ^ (unsigned int)p_handle->ts ^ MAGIC);
+  h = (cookie ^ (unsigned int)p_handle->data.id ^ (unsigned int)p_handle->data.ts ^ MAGIC);
   return h;
 }
 
@@ -183,7 +183,7 @@ fsal_status_t POSIXFSAL_DigestHandle(posixfsal_export_context_t * p_expcontext, 
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 #endif
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID2);
-      memcpy(out_buff, &(p_in_fsal_handle->info.inode), sizeof(ino_t));
+      memcpy(out_buff, &(p_in_fsal_handle->data.info.inode), sizeof(ino_t));
 
       break;
 
@@ -197,7 +197,7 @@ fsal_status_t POSIXFSAL_DigestHandle(posixfsal_export_context_t * p_expcontext, 
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 #endif
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID3);
-      memcpy(out_buff, &(p_in_fsal_handle->info.inode), sizeof(ino_t));
+      memcpy(out_buff, &(p_in_fsal_handle->data.info.inode), sizeof(ino_t));
       break;
 
       /* FileId digest for NFSv4 */
@@ -211,7 +211,7 @@ fsal_status_t POSIXFSAL_DigestHandle(posixfsal_export_context_t * p_expcontext, 
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 #endif
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID4);
-      memcpy(out_buff, &(p_in_fsal_handle->info.inode), sizeof(ino_t));
+      memcpy(out_buff, &(p_in_fsal_handle->data.info.inode), sizeof(ino_t));
       break;
 
       /* Nodetype digest. */
@@ -223,7 +223,7 @@ fsal_status_t POSIXFSAL_DigestHandle(posixfsal_export_context_t * p_expcontext, 
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 #endif
       memset(out_buff, 0, FSAL_DIGEST_SIZE_NODETYPE);
-      memcpy(out_buff, &(p_in_fsal_handle->info.ftype), sizeof(fsal_nodetype_t));
+      memcpy(out_buff, &(p_in_fsal_handle->data.info.ftype), sizeof(fsal_nodetype_t));
       break;
     default:
       ReturnCode(ERR_FSAL_SERVERFAULT, 0);
