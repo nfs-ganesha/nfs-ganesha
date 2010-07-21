@@ -37,8 +37,8 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      
   if(!p_conn || !p_parent_directory_handle || !(p_children) || !p_count)
     ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
 
-  snprintf(handleid_str, MAX_HANDLEIDSTR_SIZE, "%lli", p_parent_directory_handle->id);
-  snprintf(handlets_str, MAX_HANDLETSSTR_SIZE, "%i", p_parent_directory_handle->ts);
+  snprintf(handleid_str, MAX_HANDLEIDSTR_SIZE, "%lli", p_parent_directory_handle->data.id);
+  snprintf(handlets_str, MAX_HANDLETSSTR_SIZE, "%i", p_parent_directory_handle->data.ts);
   paramValues[0] = handleid_str;
   paramValues[1] = handlets_str;
   p_res = PQexecPrepared(p_conn, "countChildren", 2, paramValues, NULL, NULL, 0);
@@ -80,9 +80,9 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      
 
       FSAL_str2name(PQgetvalue(p_res, i, 2), FSAL_MAX_NAME_LEN, &((*p_children)[i].name));
 
-      (*p_children)[i].handle.id = atoll(pq_id);
-      (*p_children)[i].handle.ts = atoi(pq_ts);
-      posixdb_internal_fillFileinfoFromStrValues(&((*p_children)[i].handle.info),
+      (*p_children)[i].handle.data.id = atoll(pq_id);
+      (*p_children)[i].handle.data.ts = atoi(pq_ts);
+      posixdb_internal_fillFileinfoFromStrValues(&((*p_children)[i].handle.data.info),
                                                  PQgetvalue(p_res, i, 4),
                                                  PQgetvalue(p_res, i, 3),
                                                  PQgetvalue(p_res, i, 5),

@@ -46,16 +46,16 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
    */
   /* uses paramValues[0] & paramValues[1] from the last request */
   snprintf(handleidparentold_str, MAX_HANDLEIDSTR_SIZE, "%lli",
-           p_parent_directory_handle_old->id);
+           p_parent_directory_handle_old->data.id);
   snprintf(handletsparentold_str, MAX_HANDLETSSTR_SIZE, "%i",
-           p_parent_directory_handle_old->ts);
+           p_parent_directory_handle_old->data.ts);
   paramValues[0] = handleidparentold_str;
   paramValues[1] = handletsparentold_str;
   paramValues[2] = p_filename_old->name;
 
   /* check if info is in cache or if this info is inconsistent */
   if(!fsal_posixdb_GetInodeCache(p_parent_directory_handle_old)
-     || fsal_posixdb_consistency_check(&(p_parent_directory_handle_old->info),
+     || fsal_posixdb_consistency_check(&(p_parent_directory_handle_old->data.info),
                                        p_object_info))
     {
 
@@ -71,7 +71,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
         }
 
       /* fill 'infodb' with information about the handle in the database */
-      posixdb_internal_fillFileinfoFromStrValues(&(p_parent_directory_handle_old->info), PQgetvalue(p_res, 0, 2),       /* devid */
+      posixdb_internal_fillFileinfoFromStrValues(&(p_parent_directory_handle_old->data.info), PQgetvalue(p_res, 0, 2),       /* devid */
                                                  PQgetvalue(p_res, 0, 3),       /* inode */
                                                  PQgetvalue(p_res, 0, 4),       /* nlink */
                                                  PQgetvalue(p_res, 0, 5),       /* ctime */
@@ -80,7 +80,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
       /* check consistency */
 
       if(fsal_posixdb_consistency_check
-         (&(p_parent_directory_handle_old->info), p_object_info))
+         (&(p_parent_directory_handle_old->data.info), p_object_info))
         {
           DisplayLog("Consistency check failed while renaming a file : Handle deleted");
           st = fsal_posixdb_recursiveDelete(p_conn, PQgetvalue(p_res, 0, 0),
@@ -108,9 +108,9 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
    */
   /* uses paramValues[0..2] from the last call */
   snprintf(handleidparentnew_str, MAX_HANDLEIDSTR_SIZE, "%lli",
-           p_parent_directory_handle_new->id);
+           p_parent_directory_handle_new->data.id);
   snprintf(handletsparentnew_str, MAX_HANDLETSSTR_SIZE, "%i",
-           p_parent_directory_handle_new->ts);
+           p_parent_directory_handle_new->data.ts);
   paramValues[3] = handleidparentnew_str;
   paramValues[4] = handletsparentnew_str;
   paramValues[5] = p_filename_new->name;

@@ -89,14 +89,14 @@ fsal_status_t FUSEFSAL_rename(fusefsal_handle_t * old_parentdir_handle, /* IN */
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_rename);
 
   /* get full path for parent source handle */
-  rc = NamespacePath(old_parentdir_handle->inode, old_parentdir_handle->device,
-                     old_parentdir_handle->validator, src_dir_path);
+  rc = NamespacePath(old_parentdir_handle->data.inode, old_parentdir_handle->data.device,
+                     old_parentdir_handle->data.validator, src_dir_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_rename);
 
   /* get full path for parent target handle */
-  rc = NamespacePath(new_parentdir_handle->inode, new_parentdir_handle->device,
-                     new_parentdir_handle->validator, tgt_dir_path);
+  rc = NamespacePath(new_parentdir_handle->data.inode, new_parentdir_handle->data.device,
+                     new_parentdir_handle->data.validator, tgt_dir_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_rename);
 
@@ -125,10 +125,10 @@ fsal_status_t FUSEFSAL_rename(fusefsal_handle_t * old_parentdir_handle, /* IN */
     Return(fuse2fsal_error(rc, FALSE), rc, INDEX_FSAL_rename);
 
   /* If operation succeeded, impact the namespace */
-  NamespaceRename(old_parentdir_handle->inode, old_parentdir_handle->device,
-                  old_parentdir_handle->validator, p_old_name->name,
-                  new_parentdir_handle->inode, new_parentdir_handle->device,
-                  new_parentdir_handle->validator, p_new_name->name);
+  NamespaceRename(old_parentdir_handle->data.inode, old_parentdir_handle->data.device,
+                  old_parentdir_handle->data.validator, p_old_name->name,
+                  new_parentdir_handle->data.inode, new_parentdir_handle->data.device,
+                  new_parentdir_handle->data.validator, p_new_name->name);
 
   /* Last parent post op attributes if asked */
 

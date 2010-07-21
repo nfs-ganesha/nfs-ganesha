@@ -44,17 +44,34 @@
 #include "config_parsing.h"
 #include "err_fsal.h"
 
+#include "fsal_glue_const.h"
+
+#define fsal_handle_t fusefsal_handle_t
+#define fsal_op_context_t fusefsal_op_context_t
+#define fsal_file_t fusefsal_file_t
+#define fsal_dir_t fusefsal_dir_t
+#define fsal_export_context_t fusefsal_export_context_t
+#define fsal_lockdesc_t fusefsal_lockdesc_t
+#define fsal_cookie_t fusefsal_cookie_t
+#define fs_specific_initinfo_t fusefs_specific_initinfo_t
+#define fsal_cred_t fusefsal_cred_t
+
   /* In this section, you must define your own FSAL internal types.
    * Here are some template types :
    */
 
-typedef struct fsal_handle__
-{
-  ino_t inode;
-  dev_t device;
-  unsigned int validator;       /* because fuse filesystem
+typedef union {
+  struct 
+  {
+    ino_t inode;
+    dev_t device;
+    unsigned int validator;       /* because fuse filesystem
                                    can reuse their old inode numbers,
                                    which is not NFS compliant. */
+  } data ;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_HANDLE_T_SIZE];
+#endif
 } fusefsal_handle_t;
 
 typedef struct fsal_cred__
@@ -99,9 +116,14 @@ typedef struct fsal_file__
 
 //# define FSAL_FILENO(_p_f) ( (_p_f)->file_info.fh )
 
-typedef off_t fusefsal_cookie_t;
+typedef union {
+  off_t data;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_COOKIE_T_SIZE];
+#endif
+} fusefsal_cookie_t;
 
-#define FSAL_READDIR_FROM_BEGINNING ((fusefsal_cookie_t)0)
+//#define FSAL_READDIR_FROM_BEGINNING ((fusefsal_cookie_t)0)
 
 typedef struct fs_specific_initinfo__
 {
@@ -116,14 +138,5 @@ typedef struct fsal_lockdesc__
   struct flock file_lock;
 } fusefsal_lockdesc_t;
 
-#define fsal_handle_t fusefsal_handle_t
-#define fsal_op_context_t fusefsal_op_context_t
-#define fsal_file_t fusefsal_file_t
-#define fsal_dir_t fusefsal_dir_t
-#define fsal_export_context_t fusefsal_export_context_t
-#define fsal_lockdesc_t fusefsal_lockdesc_t
-#define fsal_cookie_t fusefsal_cookie_t
-#define fs_specific_initinfo_t fusefs_specific_initinfo_t
-#define fsal_cred_t fusefsal_cred_t
 
 #endif                          /* _FSAL_TYPES_SPECIFIC_H */

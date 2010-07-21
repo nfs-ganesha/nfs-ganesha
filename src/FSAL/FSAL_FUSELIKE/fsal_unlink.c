@@ -77,8 +77,8 @@ fsal_status_t FUSEFSAL_unlink(fusefsal_handle_t * parentdir_handle,     /* IN */
 
   /* get parent directory path */
 
-  rc = NamespacePath(parentdir_handle->inode,
-                     parentdir_handle->device, parentdir_handle->validator, parent_path);
+  rc = NamespacePath(parentdir_handle->data.inode,
+                     parentdir_handle->data.device, parentdir_handle->data.validator, parent_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_unlink);
 
@@ -128,8 +128,8 @@ fsal_status_t FUSEFSAL_unlink(fusefsal_handle_t * parentdir_handle,     /* IN */
   if(rc == 0 || rc == -ENOENT)
     {
       /* remove the entry from namespace */
-      NamespaceRemove(parentdir_handle->inode, parentdir_handle->device,
-                      parentdir_handle->validator, p_object_name->name);
+      NamespaceRemove(parentdir_handle->data.inode, parentdir_handle->data.device,
+                      parentdir_handle->data.validator, p_object_name->name);
     }
 
   if(rc)

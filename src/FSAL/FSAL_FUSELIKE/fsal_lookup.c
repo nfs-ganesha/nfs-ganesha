@@ -116,10 +116,10 @@ fsal_status_t FUSEFSAL_lookup(fusefsal_handle_t * parent_directory_handle,      
         }
 
       /* fill root handle */
-      object_handle->inode = stbuff.st_ino;
-      object_handle->device = stbuff.st_dev;
+      object_handle->data.inode = stbuff.st_ino;
+      object_handle->data.device = stbuff.st_dev;
 
-      rc = NamespaceGetGen(stbuff.st_ino, stbuff.st_dev, &object_handle->validator);
+      rc = NamespaceGetGen(stbuff.st_ino, stbuff.st_dev, &object_handle->data.validator);
 
       /* root not in namespace ?! => EIO */
       if(rc)
@@ -149,9 +149,9 @@ fsal_status_t FUSEFSAL_lookup(fusefsal_handle_t * parent_directory_handle,      
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       /* get directory path */
-      rc = NamespacePath(parent_directory_handle->inode,
-                         parent_directory_handle->device,
-                         parent_directory_handle->validator, parent_path);
+      rc = NamespacePath(parent_directory_handle->data.inode,
+                         parent_directory_handle->data.device,
+                         parent_directory_handle->data.validator, parent_path);
       if(rc)
         Return(ERR_FSAL_STALE, rc, INDEX_FSAL_lookup);
 
@@ -233,36 +233,36 @@ fsal_status_t FUSEFSAL_lookup(fusefsal_handle_t * parent_directory_handle,      
                 {
                   /* create a fake handle for child = hash of its parent and its name */
                   stbuff.st_ino =
-                      hash_peer(parent_directory_handle->inode, p_filename->name);
+                      hash_peer(parent_directory_handle->data.inode, p_filename->name);
                   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "handle for %u, %s = %u\n",
-                                    (int)parent_directory_handle->inode, p_filename->name,
+                                    (int)parent_directory_handle->data.inode, p_filename->name,
                                     (int)stbuff.st_ino);
                 }
             }
 
-          object_handle->validator = stbuff.st_ctime;
+          object_handle->data.validator = stbuff.st_ctime;
 
           /* add handle to namespace */
-          NamespaceAdd(parent_directory_handle->inode,
-                       parent_directory_handle->device,
-                       parent_directory_handle->validator,
+          NamespaceAdd(parent_directory_handle->data.inode,
+                       parent_directory_handle->data.device,
+                       parent_directory_handle->data.validator,
                        p_filename->name,
-                       stbuff.st_ino, stbuff.st_dev, &object_handle->validator);
+                       stbuff.st_ino, stbuff.st_dev, &object_handle->data.validator);
         }
       else
         {
-          rc = NamespaceGetGen(stbuff.st_ino, stbuff.st_dev, &object_handle->validator);
+          rc = NamespaceGetGen(stbuff.st_ino, stbuff.st_dev, &object_handle->data.validator);
           DisplayLogJdLevel(fsal_log, NIV_EVENT,
                             ". or .. is stale ??? ino=%d, dev=%d\n, validator=%d\n",
                             (int)stbuff.st_ino, (int)stbuff.st_dev,
-                            (int)object_handle->validator);
+                            (int)object_handle->data.validator);
           if(rc)
             Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_lookup);
         }
 
       /* output handle */
-      object_handle->inode = stbuff.st_ino;
-      object_handle->device = stbuff.st_dev;
+      object_handle->data.inode = stbuff.st_ino;
+      object_handle->data.device = stbuff.st_dev;
 
       if(object_attributes)
         {

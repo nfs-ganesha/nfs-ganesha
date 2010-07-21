@@ -75,7 +75,7 @@ fsal_status_t FUSEFSAL_open(fusefsal_handle_t * filehandle,     /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
 
   /* get the full path for this file */
-  rc = NamespacePath(filehandle->inode, filehandle->device, filehandle->validator,
+  rc = NamespacePath(filehandle->data.inode, filehandle->data.device, filehandle->data.validator,
                      object_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_open);
@@ -334,9 +334,9 @@ fsal_status_t FUSEFSAL_read(fusefsal_file_t * file_descriptor,  /* IN */
   req_size = (size_t) buffer_size;
 
   /* get file's full path */
-  rc = NamespacePath(file_descriptor->file_handle.inode,
-                     file_descriptor->file_handle.device,
-                     file_descriptor->file_handle.validator, object_path);
+  rc = NamespacePath(file_descriptor->file_handle.data.inode,
+                     file_descriptor->file_handle.data.device,
+                     file_descriptor->file_handle.data.validator, object_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_read);
 
@@ -475,9 +475,9 @@ fsal_status_t FUSEFSAL_write(fusefsal_file_t * file_descriptor, /* IN */
 #endif
 
   /* get file's full path */
-  rc = NamespacePath(file_descriptor->file_handle.inode,
-                     file_descriptor->file_handle.device,
-                     file_descriptor->file_handle.validator, object_path);
+  rc = NamespacePath(file_descriptor->file_handle.data.inode,
+                     file_descriptor->file_handle.data.device,
+                     file_descriptor->file_handle.data.validator, object_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_write);
 
@@ -569,9 +569,9 @@ fsal_status_t FUSEFSAL_close(fusefsal_file_t * file_descriptor  /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
 
   /* get the full path for file inode */
-  rc = NamespacePath(file_descriptor->file_handle.inode,
-                     file_descriptor->file_handle.device,
-                     file_descriptor->file_handle.validator, file_path);
+  rc = NamespacePath(file_descriptor->file_handle.data.inode,
+                     file_descriptor->file_handle.data.device,
+                     file_descriptor->file_handle.data.validator, file_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_close);
 

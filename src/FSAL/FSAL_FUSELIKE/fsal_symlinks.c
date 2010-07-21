@@ -68,7 +68,7 @@ fsal_status_t FUSEFSAL_readlink(fusefsal_handle_t * linkhandle, /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readlink);
 
   /* get the full path for this inode */
-  rc = NamespacePath(linkhandle->inode, linkhandle->device, linkhandle->validator,
+  rc = NamespacePath(linkhandle->data.inode, linkhandle->data.device, linkhandle->data.validator,
                      object_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_readlink);
@@ -184,9 +184,9 @@ fsal_status_t FUSEFSAL_symlink(fusefsal_handle_t * parent_directory_handle,     
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_symlink);
 
   /* get the full path for parent inode */
-  rc = NamespacePath(parent_directory_handle->inode,
-                     parent_directory_handle->device,
-                     parent_directory_handle->validator, parent_path);
+  rc = NamespacePath(parent_directory_handle->data.inode,
+                     parent_directory_handle->data.device,
+                     parent_directory_handle->data.validator, parent_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_symlink);
 
@@ -230,18 +230,18 @@ fsal_status_t FUSEFSAL_symlink(fusefsal_handle_t * parent_directory_handle,     
   if(rc)
     Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_symlink);
 
-  link_handle->validator = buffstat.st_ctime;
+  link_handle->data.validator = buffstat.st_ctime;
 
   /* add handle to namespace */
-  NamespaceAdd(parent_directory_handle->inode,
-               parent_directory_handle->device,
-               parent_directory_handle->validator,
+  NamespaceAdd(parent_directory_handle->data.inode,
+               parent_directory_handle->data.device,
+               parent_directory_handle->data.validator,
                p_linkname->name,
-               buffstat.st_ino, buffstat.st_dev, &link_handle->validator);
+               buffstat.st_ino, buffstat.st_dev, &link_handle->data.validator);
 
   /* set output handle */
-  link_handle->inode = buffstat.st_ino;
-  link_handle->device = buffstat.st_dev;
+  link_handle->data.inode = buffstat.st_ino;
+  link_handle->data.device = buffstat.st_dev;
 
   if(link_attributes)
     {

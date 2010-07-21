@@ -76,8 +76,8 @@ fsal_status_t FUSEFSAL_access(fusefsal_handle_t * object_handle,        /* IN */
   mask = fsal2posix_testperm(access_type);
 
   /* get the full path for the object */
-  rc = NamespacePath(object_handle->inode, object_handle->device,
-                     object_handle->validator, object_path);
+  rc = NamespacePath(object_handle->data.inode, object_handle->data.device,
+                     object_handle->data.validator, object_path);
 
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_access);
