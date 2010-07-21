@@ -67,9 +67,11 @@ int nfs_Init_admin_data(nfs_admin_data_t *pdata)
 
 void admin_replace_exports()
 {
+  P(pmydata->mutex_admin_condvar);
   pmydata->reload_exports = TRUE;
   if(pthread_cond_signal(&(pmydata->admin_condvar)) == -1)
       DisplayLog("admin_replace_exports - admin cond signal failed , errno = %d", errno);
+  V(pmydata->mutex_admin_condvar);
 }
 
 static int wake_workers_for_export_reload()
@@ -137,7 +139,9 @@ int RemoveAllExportsExceptHead(exportlist_t * pexportlist)
       pcurrent = pexportlist->next;
     }
 
+#if defined ( _USE_GPFS )
   close(pexportlist->FS_export_context.mount_root_fd);
+#endif
 
   return 1;   /* Success */
 }
