@@ -68,8 +68,8 @@ int print_xfshandle(xfsfsal_handle_t * p_objecthandle,  /* object handle */
                     void *arg)
 {
   *p_output_size =
-      snprintmem(buffer_addr, buffer_size, p_objecthandle->handle_val,
-                 p_objecthandle->handle_len);
+      snprintmem(buffer_addr, buffer_size, p_objecthandle->data.handle_val,
+                 p_objecthandle->data.handle_len);
   strncat((char *)buffer_addr, "\n", buffer_size);
   (*p_output_size) += 1;
 

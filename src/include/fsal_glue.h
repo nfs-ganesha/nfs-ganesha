@@ -43,10 +43,7 @@ typedef struct
   char data[FSAL_HANDLE_T_SIZE];
 } fsal_handle_t;
 
-typedef union
-{
-  fsal_handle_t handle;
-} fsal_handle_storage_t;
+typedef fsal_handle_t fsal_handle_storage_t ;
 
 typedef struct
 {

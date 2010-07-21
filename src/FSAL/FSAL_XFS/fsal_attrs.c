@@ -160,7 +160,7 @@ fsal_status_t XFSFSAL_setattrs(xfsfsal_handle_t * p_filehandle, /* IN */
   attrs = *p_attrib_set;
 
   /* It does not make sense to setattr on a symlink */
-  if(p_filehandle->type == DT_LNK)
+  if(p_filehandle->data.type == DT_LNK)
     return fsal_internal_setattrs_symlink(p_filehandle, p_context, p_attrib_set,
                                           p_object_attributes);
 
