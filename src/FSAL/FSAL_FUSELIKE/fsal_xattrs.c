@@ -334,8 +334,8 @@ fsal_status_t FUSEFSAL_ListXAttrs(fusefsal_handle_t * p_objecthandle,   /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_ListXAttrs);
 
   /* get the full path for the object */
-  rc = NamespacePath(p_objecthandle->inode, p_objecthandle->device,
-                     p_objecthandle->validator, object_path);
+  rc = NamespacePath(p_objecthandle->data.inode, p_objecthandle->data.device,
+                     p_objecthandle->data.validator, object_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_ListXAttrs);
 

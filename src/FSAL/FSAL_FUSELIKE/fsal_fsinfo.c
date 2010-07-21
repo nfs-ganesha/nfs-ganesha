@@ -99,8 +99,8 @@ fsal_status_t FUSEFSAL_dynamic_fsinfo(fusefsal_handle_t * filehandle,   /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_dynamic_fsinfo);
 
   /* get the full path for the object */
-  rc = NamespacePath(filehandle->inode,
-                     filehandle->device, filehandle->validator, object_path);
+  rc = NamespacePath(filehandle->data.inode,
+                     filehandle->data.device, filehandle->data.validator, object_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_dynamic_fsinfo);
 

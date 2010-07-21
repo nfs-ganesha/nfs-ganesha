@@ -88,9 +88,9 @@ fsal_status_t FUSEFSAL_create(fusefsal_handle_t * parent_directory_handle,      
   mode = mode & ~global_fs_info.umask;
 
   /* get the full path for parent inode */
-  rc = NamespacePath(parent_directory_handle->inode,
-                     parent_directory_handle->device,
-                     parent_directory_handle->validator, parent_path);
+  rc = NamespacePath(parent_directory_handle->data.inode,
+                     parent_directory_handle->data.device,
+                     parent_directory_handle->data.validator, parent_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_create);
 
@@ -175,18 +175,18 @@ fsal_status_t FUSEFSAL_create(fusefsal_handle_t * parent_directory_handle,      
   if(rc)
     Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_create);
 
-  object_handle->validator = buffstat.st_ctime;
+  object_handle->data.validator = buffstat.st_ctime;
 
   /* add handle to namespace */
-  NamespaceAdd(parent_directory_handle->inode,
-               parent_directory_handle->device,
-               parent_directory_handle->validator,
+  NamespaceAdd(parent_directory_handle->data.inode,
+               parent_directory_handle->data.device,
+               parent_directory_handle->data.validator,
                p_filename->name,
-               buffstat.st_ino, buffstat.st_dev, &object_handle->validator);
+               buffstat.st_ino, buffstat.st_dev, &object_handle->data.validator);
 
   /* set output handle */
-  object_handle->inode = buffstat.st_ino;
-  object_handle->device = buffstat.st_dev;
+  object_handle->data.inode = buffstat.st_ino;
+  object_handle->data.device = buffstat.st_dev;
 
   if(object_attributes)
     {
@@ -273,9 +273,9 @@ fsal_status_t FUSEFSAL_mkdir(fusefsal_handle_t * parent_directory_handle,       
   mode = mode & ~global_fs_info.umask;
 
   /* get the full path for parent inode */
-  rc = NamespacePath(parent_directory_handle->inode,
-                     parent_directory_handle->device,
-                     parent_directory_handle->validator, parent_path);
+  rc = NamespacePath(parent_directory_handle->data.inode,
+                     parent_directory_handle->data.device,
+                     parent_directory_handle->data.validator, parent_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_mkdir);
 
@@ -315,18 +315,18 @@ fsal_status_t FUSEFSAL_mkdir(fusefsal_handle_t * parent_directory_handle,       
   if(rc)
     Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_mkdir);
 
-  object_handle->validator = buffstat.st_ctime;
+  object_handle->data.validator = buffstat.st_ctime;
 
   /* add handle to namespace */
-  NamespaceAdd(parent_directory_handle->inode,
-               parent_directory_handle->device,
-               parent_directory_handle->validator,
+  NamespaceAdd(parent_directory_handle->data.inode,
+               parent_directory_handle->data.device,
+               parent_directory_handle->data.validator,
                p_dirname->name,
-               buffstat.st_ino, buffstat.st_dev, &object_handle->validator);
+               buffstat.st_ino, buffstat.st_dev, &object_handle->data.validator);
 
   /* set output handle */
-  object_handle->inode = buffstat.st_ino;
-  object_handle->device = buffstat.st_dev;
+  object_handle->data.inode = buffstat.st_ino;
+  object_handle->data.device = buffstat.st_dev;
 
   if(object_attributes)
     {
@@ -409,19 +409,19 @@ fsal_status_t FUSEFSAL_link(fusefsal_handle_t * target_handle,  /* IN */
 
 #ifdef _DEBUG_FSAL
   fprintf(stderr, "linking %lX.%lu/%s to %lX.%lu\n",
-          dir_handle->device, dir_handle->inode, p_link_name->name,
-          target_handle->device, target_handle->inode);
+          dir_handle->data.device, dir_handle->data.inode, p_link_name->name,
+          target_handle->data.device, target_handle->data.inode);
 #endif
 
   /* get target inode path */
-  rc = NamespacePath(target_handle->inode,
-                     target_handle->device, target_handle->validator, target_path);
+  rc = NamespacePath(target_handle->data.inode,
+                     target_handle->data.device, target_handle->data.validator, target_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_link);
 
   /* get new directory path */
-  rc = NamespacePath(dir_handle->inode,
-                     dir_handle->device, dir_handle->validator, parent_path);
+  rc = NamespacePath(dir_handle->data.inode,
+                     dir_handle->data.device, dir_handle->data.validator, parent_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_link);
 
@@ -438,16 +438,16 @@ fsal_status_t FUSEFSAL_link(fusefsal_handle_t * target_handle,  /* IN */
   if(rc)
     Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_link);
 
-  new_validator = target_handle->validator;
+  new_validator = target_handle->data.validator;
 
   /* add this hardlink to namespace */
-  NamespaceAdd(dir_handle->inode,
-               dir_handle->device,
-               dir_handle->validator,
+  NamespaceAdd(dir_handle->data.inode,
+               dir_handle->data.device,
+               dir_handle->data.validator,
                p_link_name->name,
-               target_handle->inode, target_handle->device, &new_validator);
+               target_handle->data.inode, target_handle->data.device, &new_validator);
 
-  if(new_validator != target_handle->validator)
+  if(new_validator != target_handle->data.validator)
     {
       DisplayLogJdLevel(fsal_log, NIV_MAJ,
                         "A wrong behaviour has been detected is FSAL_link: An object and its hardlink don't have the same generation id");

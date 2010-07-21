@@ -58,9 +58,9 @@ int FUSEFSAL_handlecmp(fusefsal_handle_t * handle1, fusefsal_handle_t * handle2,
       return -1;
     }
 
-  if((handle1->inode > handle2->inode) || (handle1->device > handle2->device))
+  if((handle1->data.inode > handle2->data.inode) || (handle1->data.device > handle2->data.device))
     return 1;
-  else if((handle1->inode < handle2->inode) || (handle1->device < handle2->device))
+  else if((handle1->data.inode < handle2->data.inode) || (handle1->data.device < handle2->data.device))
     return -1;
   else
     return 0;
@@ -88,7 +88,7 @@ unsigned int FUSEFSAL_Handle_to_HashIndex(fusefsal_handle_t * p_handle,
 {
 
   /* >> here must be your implementation of your fusefsal_handle_t hashing */
-  return (3 * (unsigned int)p_handle->inode + 5 * (unsigned int)p_handle->device + 1999 +
+  return (3 * (unsigned int)p_handle->data.inode + 5 * (unsigned int)p_handle->data.device + 1999 +
           cookie) % index_size;
 
 }
@@ -109,7 +109,7 @@ unsigned int FUSEFSAL_Handle_to_RBTIndex(fusefsal_handle_t * p_handle,
                                          unsigned int cookie)
 {
   /* >> here must be your implementation of your fusefsal_handle_t hashing << */
-  return (unsigned int)(0xABCD1234 ^ p_handle->inode ^ cookie ^ p_handle->device);
+  return (unsigned int)(0xABCD1234 ^ p_handle->data.inode ^ cookie ^ p_handle->data.device);
 
 }
 
@@ -151,7 +151,7 @@ fsal_status_t FUSEFSAL_DigestHandle(fusefsal_export_context_t * p_expcontext,   
 
       /* sanity check about output size */
 
-      if(sizeof(fusefsal_handle_t) > FSAL_DIGEST_SIZE_HDLV2)
+      if(sizeof(in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV2)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
 #endif
@@ -168,7 +168,7 @@ fsal_status_t FUSEFSAL_DigestHandle(fusefsal_export_context_t * p_expcontext,   
 
       /* sanity check about output size */
 
-      if(sizeof(fusefsal_handle_t) > FSAL_DIGEST_SIZE_HDLV3)
+      if(sizeof(in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV3)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
 #endif
@@ -185,7 +185,7 @@ fsal_status_t FUSEFSAL_DigestHandle(fusefsal_export_context_t * p_expcontext,   
 
       /* sanity check about output size */
 
-      if(sizeof(fusefsal_handle_t) > FSAL_DIGEST_SIZE_HDLV4)
+      if(sizeof(in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV4)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
 #endif
@@ -198,7 +198,7 @@ fsal_status_t FUSEFSAL_DigestHandle(fusefsal_export_context_t * p_expcontext,   
       /* FileId digest for NFSv2 */
     case FSAL_DIGEST_FILEID2:
       {
-        int cast2 = (int)in_fsal_handle->inode;
+        int cast2 = (int)in_fsal_handle->data.inode;
 
 #ifndef _NO_CHECKS
 
@@ -217,7 +217,7 @@ fsal_status_t FUSEFSAL_DigestHandle(fusefsal_export_context_t * p_expcontext,   
       /* FileId digest for NFSv3 */
     case FSAL_DIGEST_FILEID3:
       {
-        fsal_u64_t cast3 = (fsal_u64_t) in_fsal_handle->inode;
+        fsal_u64_t cast3 = (fsal_u64_t) in_fsal_handle->data.inode;
 
 #ifndef _NO_CHECKS
 
@@ -237,7 +237,7 @@ fsal_status_t FUSEFSAL_DigestHandle(fusefsal_export_context_t * p_expcontext,   
 
     case FSAL_DIGEST_FILEID4:
       {
-        fsal_u64_t cast4 = (fsal_u64_t) in_fsal_handle->inode;
+        fsal_u64_t cast4 = (fsal_u64_t) in_fsal_handle->data.inode;
 
 #ifndef _NO_CHECKS
 
