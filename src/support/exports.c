@@ -2560,7 +2560,9 @@ exportlist_t *RemoveExportEntry(exportlist_t * exportEntry)
 
   next = exportEntry->next;
 
+#if defined ( _USE_GPFS )
   close(exportEntry->FS_export_context.mount_root_fd);
+#endif
 
   if (exportEntry->fs_static_info != NULL)
     Mem_Free(exportEntry->fs_static_info);
