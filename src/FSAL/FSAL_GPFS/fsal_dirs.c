@@ -41,9 +41,9 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
-                           fsal_op_context_t * p_context,       /* IN */
-                           fsal_dir_t * p_dir_descriptor,       /* OUT */
+fsal_status_t GPFSFSAL_opendir(gpfsfsal_handle_t * p_dir_handle,        /* IN */
+                           gpfsfsal_op_context_t * p_context,       /* IN */
+                           gpfsfsal_dir_t * p_dir_descriptor,       /* OUT */
                            fsal_attrib_list_t * p_dir_attributes        /* [ IN/OUT ] */
     )
 {
@@ -152,12 +152,12 @@ struct linux_dirent
 
 #define BUF_SIZE 1024
 
-fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
-                           fsal_cookie_t start_position,        /* IN */
+fsal_status_t GPFSFSAL_readdir(gpfsfsal_dir_t * p_dir_descriptor,       /* IN */
+                           gpfsfsal_cookie_t start_position,        /* IN */
                            fsal_attrib_mask_t get_attr_mask,    /* IN */
                            fsal_mdsize_t buffersize,    /* IN */
                            fsal_dirent_t * p_pdirent,   /* OUT */
-                           fsal_cookie_t * p_end_position,      /* OUT */
+                           gpfsfsal_cookie_t * p_end_position,      /* OUT */
                            fsal_count_t * p_nb_entries, /* OUT */
                            fsal_boolean_t * p_end_of_dir        /* OUT */
     )
@@ -361,7 +361,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_closedir(fsal_dir_t * p_dir_descriptor       /* IN */
+fsal_status_t GPFSFSAL_closedir(gpfsfsal_dir_t * p_dir_descriptor       /* IN */
     )
 {
 

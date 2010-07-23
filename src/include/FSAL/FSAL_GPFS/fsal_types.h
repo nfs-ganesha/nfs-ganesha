@@ -81,33 +81,11 @@
 
 #define FSAL_NGROUPS_MAX  32
 
-/* prefered readdir size */
-#define FSAL_READDIR_SIZE 2048
-
-/** object name.  */
-
-typedef struct fsal_name__
-{
-  char name[FSAL_MAX_NAME_LEN];
-  unsigned int len;
-} fsal_name_t;
-
-/** object path.  */
-
-typedef struct fsal_path__
-{
-  char path[FSAL_MAX_PATH_LEN];
-  unsigned int len;
-} fsal_path_t;
-
 #define FSAL_NAME_INITIALIZER {"",0}
 #define FSAL_PATH_INITIALIZER {"",0}
 
 #define FSAL_GPFS_HANDLE_LEN 64
 #define FSAL_GPFS_FSHANDLE_LEN 64
-
-static const fsal_name_t FSAL_DOT = { ".", 1 };
-static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
 /** the following come from using the character driver */
 
@@ -182,23 +160,37 @@ struct readlink_arg
 };
 /** end of open by handle structures */
 
+#ifndef _USE_SHARED_FSAL
+
+#define fsal_handle_t gpfsfsal_handle_t
+#define fsal_op_context_t gpfsfsal_op_context_t
+#define fsal_file_t gpfsfsal_file_t
+#define fsal_dir_t gpfsfsal_dir_t
+#define fsal_export_context_t gpfsfsal_export_context_t
+#define fsal_lockdesc_t gpfsfsal_lockdesc_t
+#define fsal_cookie_t gpfsfsal_cookie_t
+#define fs_specific_initinfo_t gpfsfs_specific_initinfo_t
+#define fsal_cred_t gpfsfsal_cred_t
+
+#endif
+
 typedef struct
 {
 //  unsigned int fsid[2];
   struct file_handle handle;
-} fsal_handle_t;  /**< FS object handle */
+} gpfsfsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */
 
-typedef struct fsal_cred__
+typedef struct 
 {
   uid_t user;
   gid_t group;
   fsal_count_t nbgroups;
   gid_t alt_groups[FSAL_NGROUPS_MAX];
-} fsal_cred_t;
+} gpfsfsal_cred_t;
 
-typedef struct fsal_export_context_t
+typedef struct
 {
   /* Warning: This string is not currently filled in or used. */
   char mount_point[FSAL_MAX_PATH_LEN];
@@ -207,7 +199,7 @@ typedef struct fsal_export_context_t
   int mount_root_fd;
   fsal_handle_t mount_root_handle;
   unsigned int fsid[2];
-} fsal_export_context_t;
+} gpfsfsal_export_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( _pexport_context ) (uint64_t)((_pexport_context)->dev_id)
 
@@ -215,46 +207,46 @@ typedef struct
 {
   fsal_export_context_t *export_context;        /* Must be the first entry in this structure */
   fsal_cred_t credential;
-} fsal_op_context_t;
+} gpfsfsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 
-typedef struct fs_specific_initinfo__
+typedef struct 
 {
   char gpfs_mount_point[MAXPATHLEN];
   char open_by_handle_dev_file[MAXPATHLEN];
-} fs_specific_initinfo_t;
+} gpfsfs_specific_initinfo_t;
 
 /**< directory cookie */
-typedef struct fsal_cookie__
+typedef struct
 {
   off_t cookie;
-} fsal_cookie_t;
+} gpfsfsal_cookie_t;
 
 static const fsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
 
-typedef struct fsal_lockdesc__
+typedef struct
 {
   struct flock flock;
-} fsal_lockdesc_t;
+} gpfsfsal_lockdesc_t;
 
 /* Directory stream descriptor. */
 
-typedef struct fsal_dir__
+typedef struct
 {
   int fd;
   fsal_op_context_t context;    /* credential for accessing the directory */
   fsal_path_t path;
   unsigned int dir_offset;
   fsal_handle_t handle;
-} fsal_dir_t;
+} gpfsfsal_dir_t;
 
 typedef struct fsal_file__
 {
   int fd;
   int ro;                       /* read only file ? */
-} fsal_file_t;
+} gpfsfsal_file_t;
 
 //#define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->fd )
 
