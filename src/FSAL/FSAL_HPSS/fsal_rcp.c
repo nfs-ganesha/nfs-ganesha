@@ -15,6 +15,7 @@
 #include "config.h"
 #endif
 
+#include <unistd.h>
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"

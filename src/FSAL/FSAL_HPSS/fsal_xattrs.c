@@ -84,7 +84,7 @@ int get_file_cos(hpssfsal_handle_t * p_objecthandle,    /* IN */
 
   TakeTokenFSCall();
 
-  rc = HPSSFSAL_GetRawAttrHandle(&(p_objecthandle->ns_handle), NULL, &p_context->credential.hpss_usercred, FALSE,       /* don't solve junctions */
+  rc = HPSSFSAL_GetRawAttrHandle(&(p_objecthandle->data.ns_handle), NULL, &p_context->credential.hpss_usercred, FALSE,       /* don't solve junctions */
                                  &hpss_hdl, NULL, &hpss_attr);
 
   ReleaseTokenFSCall();
@@ -139,15 +139,15 @@ int get_file_slevel(hpssfsal_handle_t * p_objecthandle, /* IN */
   TakeTokenFSCall();
 
 #if HPSS_LEVEL < 622
-  rc = HPSSFSAL_FileGetXAttributesHandle(&(p_objecthandle->ns_handle),
+  rc = HPSSFSAL_FileGetXAttributesHandle(&(p_objecthandle->data.ns_handle),
                                          API_GET_STATS_FOR_ALL_LEVELS, 0, &hpss_xattr);
 #elif HPSS_LEVEL == 622
-  rc = hpss_FileGetXAttributesHandle(&(p_objecthandle->ns_handle),
+  rc = hpss_FileGetXAttributesHandle(&(p_objecthandle->data.ns_handle),
                                      NULL,
                                      &(p_context->credential.hpss_usercred),
                                      API_GET_STATS_FOR_ALL_LEVELS, 0, NULL, &hpss_xattr);
 #elif HPSS_MAJOR_VERSION >= 7
-  rc = hpss_FileGetXAttributesHandle(&(p_objecthandle->ns_handle),
+  rc = hpss_FileGetXAttributesHandle(&(p_objecthandle->data.ns_handle),
                                      NULL,
                                      &(p_context->credential.hpss_usercred),
                                      API_GET_STATS_FOR_ALL_LEVELS, 0, &hpss_xattr);
@@ -219,12 +219,12 @@ int get_ns_handle(hpssfsal_handle_t * p_objecthandle,   /* IN */
 
   if(buffer_size > sizeof(ns_ObjHandle_t))
     {
-      memcpy(buffer_addr, (caddr_t) & p_objecthandle->ns_handle, sizeof(ns_ObjHandle_t));
+      memcpy(buffer_addr, (caddr_t) & p_objecthandle->data.ns_handle, sizeof(ns_ObjHandle_t));
       *p_output_size = sizeof(ns_ObjHandle_t);
     }
   else
     {
-      memcpy(buffer_addr, (caddr_t) & p_objecthandle->ns_handle, buffer_size);
+      memcpy(buffer_addr, (caddr_t) & p_objecthandle->data.ns_handle, buffer_size);
       *p_output_size = buffer_size;
     }
 
@@ -239,7 +239,7 @@ int get_obj_type(hpssfsal_handle_t * p_objecthandle,    /* IN */
                  size_t buffer_size,    /* IN */
                  size_t * p_output_size)        /* OUT */
 {
-  switch (p_objecthandle->obj_type)
+  switch (p_objecthandle->data.obj_type)
     {
     case FSAL_TYPE_DIR:
       strncpy((char *)buffer_addr, "directory", buffer_size);
@@ -278,7 +278,7 @@ int get_bfid(hpssfsal_handle_t * p_objecthandle,        /* IN */
   hpss_Attrs_t hpss_attr;
   char *tmp_str_uuid;
 
-  if((rc = HPSSFSAL_GetRawAttrHandle(&(p_objecthandle->ns_handle),
+  if((rc = HPSSFSAL_GetRawAttrHandle(&(p_objecthandle->data.ns_handle),
                                      NULL,
                                      &(p_context->credential.hpss_usercred),
                                      FALSE, &hpss_hdl, NULL, &hpss_attr)) != 0)
@@ -506,7 +506,7 @@ fsal_status_t HPSSFSAL_GetXAttrAttrs(hpssfsal_handle_t * p_objecthandle,        
 
   /* check that this index match the type of entry */
   if(xattr_id < XATTR_COUNT
-     && !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->obj_type))
+     && !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->data.obj_type))
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrAttrs);
     }
@@ -630,7 +630,7 @@ fsal_status_t HPSSFSAL_ListXAttrs(hpssfsal_handle_t * p_objecthandle,   /* IN */
   for(index = cookie, out_index = 0;
       index < XATTR_COUNT && out_index < xattrs_tabsize; index++)
     {
-      if(do_match_type(xattr_list[index].flags, p_objecthandle->obj_type))
+      if(do_match_type(xattr_list[index].flags, p_objecthandle->data.obj_type))
         {
 
           /* fills an xattr entry */
@@ -678,7 +678,7 @@ fsal_status_t HPSSFSAL_ListXAttrs(hpssfsal_handle_t * p_objecthandle,   /* IN */
     memset(&attr_list, 0, sizeof(hpss_userattr_list_t));
 
     TakeTokenFSCall();
-    rc = hpss_UserAttrListAttrHandle(&(p_objecthandle->ns_handle),
+    rc = hpss_UserAttrListAttrHandle(&(p_objecthandle->data.ns_handle),
                                      NULL,
                                      &(p_context->credential.hpss_usercred),
                                      &attr_list, XML_ATTR);
@@ -780,7 +780,7 @@ fsal_status_t HPSSFSAL_GetXAttrValueById(hpssfsal_handle_t * p_objecthandle,    
 
   /* check that this index match the type of entry */
   if(xattr_id < XATTR_COUNT
-     && !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->obj_type))
+     && !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->data.obj_type))
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrValue);
     }
@@ -798,7 +798,7 @@ fsal_status_t HPSSFSAL_GetXAttrValueById(hpssfsal_handle_t * p_objecthandle,    
       /* get list of UDAs for this entry, and return the good value */
 
       TakeTokenFSCall();
-      rc = hpss_UserAttrListAttrHandle(&(p_objecthandle->ns_handle),
+      rc = hpss_UserAttrListAttrHandle(&(p_objecthandle->data.ns_handle),
                                        NULL,
                                        &(p_context->credential.hpss_usercred),
                                        &attr_list, XML_ATTR);
@@ -871,7 +871,7 @@ fsal_status_t HPSSFSAL_GetXAttrIdByName(hpssfsal_handle_t * p_objecthandle,     
 
   for(index = 0; index < XATTR_COUNT; index++)
     {
-      if(do_match_type(xattr_list[index].flags, p_objecthandle->obj_type)
+      if(do_match_type(xattr_list[index].flags, p_objecthandle->data.obj_type)
          && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
         {
           found = TRUE;
@@ -902,7 +902,7 @@ fsal_status_t HPSSFSAL_GetXAttrIdByName(hpssfsal_handle_t * p_objecthandle,     
           /* get list of UDAs for this entry, and return the good index */
 
           TakeTokenFSCall();
-          rc = hpss_UserAttrListAttrHandle(&(p_objecthandle->ns_handle),
+          rc = hpss_UserAttrListAttrHandle(&(p_objecthandle->data.ns_handle),
                                            NULL,
                                            &(p_context->credential.hpss_usercred),
                                            &attr_list, XML_ATTR);
@@ -971,7 +971,7 @@ fsal_status_t HPSSFSAL_GetXAttrValueByName(hpssfsal_handle_t * p_objecthandle,  
 
   for(index = 0; index < XATTR_COUNT; index++)
     {
-      if(do_match_type(xattr_list[index].flags, p_objecthandle->obj_type)
+      if(do_match_type(xattr_list[index].flags, p_objecthandle->data.obj_type)
          && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
         {
 
@@ -996,7 +996,7 @@ fsal_status_t HPSSFSAL_GetXAttrValueByName(hpssfsal_handle_t * p_objecthandle,  
       attr.Pair[0].Key = attrpath;
       attr.Pair[0].Value = attrval;
 
-      rc = hpss_UserAttrGetAttrHandle(&(p_objecthandle->ns_handle),
+      rc = hpss_UserAttrGetAttrHandle(&(p_objecthandle->data.ns_handle),
                                       NULL, &(p_context->credential.hpss_usercred),
                                       &attr, UDA_API_VALUE);
       if(rc)
@@ -1081,7 +1081,7 @@ fsal_status_t HPSSFSAL_SetXAttrValue(hpssfsal_handle_t * p_objecthandle,        
   inAttr.Pair[0].Value = (char *)buffer_addr;
 
   TakeTokenFSCall();
-  rc = hpss_UserAttrSetAttrHandle(&(p_objecthandle->ns_handle),
+  rc = hpss_UserAttrSetAttrHandle(&(p_objecthandle->data.ns_handle),
                                   NULL,
                                   &(p_context->credential.hpss_usercred), &inAttr, NULL);
   ReleaseTokenFSCall();
@@ -1123,7 +1123,7 @@ fsal_status_t HPSSFSAL_SetXAttrValueById(hpssfsal_handle_t * p_objecthandle,    
                     xattr_id - XATTR_COUNT);
 
   TakeTokenFSCall();
-  rc = hpss_UserAttrListAttrHandle(&(p_objecthandle->ns_handle),
+  rc = hpss_UserAttrListAttrHandle(&(p_objecthandle->data.ns_handle),
                                    NULL,
                                    &(p_context->credential.hpss_usercred),
                                    &attr_list, XML_ATTR);
@@ -1144,7 +1144,7 @@ fsal_status_t HPSSFSAL_SetXAttrValueById(hpssfsal_handle_t * p_objecthandle,    
   inAttr.Pair[0].Value = (char *)buffer_addr;
 
   TakeTokenFSCall();
-  rc = hpss_UserAttrSetAttrHandle(&(p_objecthandle->ns_handle),
+  rc = hpss_UserAttrSetAttrHandle(&(p_objecthandle->data.ns_handle),
                                   NULL,
                                   &(p_context->credential.hpss_usercred), &inAttr, NULL);
   ReleaseTokenFSCall();

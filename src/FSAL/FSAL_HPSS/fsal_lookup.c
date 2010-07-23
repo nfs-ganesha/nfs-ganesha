@@ -90,9 +90,9 @@ fsal_status_t HPSSFSAL_lookup(hpssfsal_handle_t * parent_directory_handle,      
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       /* root handle = fileset root handle */
-      object_handle->obj_type =
+      object_handle->data.obj_type =
           hpss2fsal_type(p_context->export_context->fileset_root_handle.Type);
-      object_handle->ns_handle = p_context->export_context->fileset_root_handle;
+      object_handle->data.ns_handle = p_context->export_context->fileset_root_handle;
 
       /* retrieves root attributes, if asked. */
       if(object_attributes)
@@ -120,7 +120,7 @@ fsal_status_t HPSSFSAL_lookup(hpssfsal_handle_t * parent_directory_handle,      
 
       /* Be careful about junction crossing, symlinks, hardlinks,... */
 
-      switch (parent_directory_handle->obj_type)
+      switch (parent_directory_handle->data.obj_type)
         {
         case FSAL_TYPE_DIR:
           /* OK */
@@ -145,7 +145,7 @@ fsal_status_t HPSSFSAL_lookup(hpssfsal_handle_t * parent_directory_handle,      
 
       TakeTokenFSCall();
 
-      rc = HPSSFSAL_GetRawAttrHandle(&(parent_directory_handle->ns_handle), p_filename->name, &p_context->credential.hpss_usercred, FALSE,      /* don't traverse junctions */
+      rc = HPSSFSAL_GetRawAttrHandle(&(parent_directory_handle->data.ns_handle), p_filename->name, &p_context->credential.hpss_usercred, FALSE,      /* don't traverse junctions */
                                      &obj_hdl, NULL, &obj_attr);
 
       ReleaseTokenFSCall();
@@ -157,7 +157,7 @@ fsal_status_t HPSSFSAL_lookup(hpssfsal_handle_t * parent_directory_handle,      
      */
       if(rc == HPSS_ENOTDIR)
         {
-          if(HPSSFSAL_IsStaleHandle(&parent_directory_handle->ns_handle,
+          if(HPSSFSAL_IsStaleHandle(&parent_directory_handle->data.ns_handle,
                                     &p_context->credential.hpss_usercred))
             {
               Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_lookup);
@@ -168,8 +168,8 @@ fsal_status_t HPSSFSAL_lookup(hpssfsal_handle_t * parent_directory_handle,      
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_lookup);
 
       /* set output handle */
-      object_handle->obj_type = hpss2fsal_type(obj_hdl.Type);
-      object_handle->ns_handle = obj_hdl;
+      object_handle->data.obj_type = hpss2fsal_type(obj_hdl.Type);
+      object_handle->data.ns_handle = obj_hdl;
 
       if(object_attributes)
         {
@@ -233,7 +233,7 @@ fsal_status_t HPSSFSAL_lookupJunction(hpssfsal_handle_t * p_junction_handle,    
   if(!p_junction_handle || !p_fsoot_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookupJunction);
 
-  if(p_junction_handle->obj_type != FSAL_TYPE_JUNCTION)
+  if(p_junction_handle->data.obj_type != FSAL_TYPE_JUNCTION)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_lookupJunction);
 
   /* call to HPSS client api */
@@ -241,7 +241,7 @@ fsal_status_t HPSSFSAL_lookupJunction(hpssfsal_handle_t * p_junction_handle,    
 
   TakeTokenFSCall();
 
-  rc = HPSSFSAL_GetRawAttrHandle(&(p_junction_handle->ns_handle), NULL, &p_context->credential.hpss_usercred, TRUE,     /* do traverse junctions !!! */
+  rc = HPSSFSAL_GetRawAttrHandle(&(p_junction_handle->data.ns_handle), NULL, &p_context->credential.hpss_usercred, TRUE,     /* do traverse junctions !!! */
                                  NULL, NULL, &root_attr);
 
   ReleaseTokenFSCall();
@@ -250,8 +250,8 @@ fsal_status_t HPSSFSAL_lookupJunction(hpssfsal_handle_t * p_junction_handle,    
     Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_lookupJunction);
 
   /* set output handle */
-  p_fsoot_handle->obj_type = hpss2fsal_type(root_attr.FilesetHandle.Type);
-  p_fsoot_handle->ns_handle = root_attr.FilesetHandle;
+  p_fsoot_handle->data.obj_type = hpss2fsal_type(root_attr.FilesetHandle.Type);
+  p_fsoot_handle->data.ns_handle = root_attr.FilesetHandle;
 
   if(p_fsroot_attributes)
     {
@@ -410,7 +410,7 @@ fsal_status_t HPSSFSAL_lookupPath(fsal_path_t * p_path, /* IN */
       /* if the target object is a junction, an we allow cross junction lookups,
        * we cross it.
        */
-      if(global_fs_info.auth_exportpath_xdev && (out_hdl.obj_type == FSAL_TYPE_JUNCTION))
+      if(global_fs_info.auth_exportpath_xdev && (out_hdl.data.obj_type == FSAL_TYPE_JUNCTION))
         {
           hpssfsal_handle_t tmp_hdl;
 

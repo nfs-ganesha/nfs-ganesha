@@ -139,7 +139,7 @@ fsal_status_t HPSSFSAL_open(hpssfsal_handle_t * filehandle,     /* IN */
 
   /* check if it is a file */
 
-  if(filehandle->obj_type != FSAL_TYPE_FILE)
+  if(filehandle->data.obj_type != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
     }
@@ -159,7 +159,7 @@ fsal_status_t HPSSFSAL_open(hpssfsal_handle_t * filehandle,     /* IN */
 
   TakeTokenFSCall();
 
-  rc = HPSSFSAL_OpenHandle(&filehandle->ns_handle,      /* IN - object handle */
+  rc = HPSSFSAL_OpenHandle(&filehandle->data.ns_handle,      /* IN - object handle */
                            NULL, hpss_flags,    /* IN - Type of file access */
                            (mode_t) 0644,       /* IN - Desired file perms if create */
                            &p_context->credential.hpss_usercred,        /* IN - User credentials */
@@ -195,7 +195,7 @@ fsal_status_t HPSSFSAL_open(hpssfsal_handle_t * filehandle,     /* IN */
 
       fsal_status_t status;
 
-      status = hpss2fsal_attributes(&(filehandle->ns_handle),
+      status = hpss2fsal_attributes(&(filehandle->data.ns_handle),
                                     &hpss_attributes, file_attributes);
 
       if(FSAL_IS_ERROR(status))
