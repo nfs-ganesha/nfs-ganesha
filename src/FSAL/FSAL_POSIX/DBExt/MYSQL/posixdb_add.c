@@ -16,9 +16,9 @@
 
 fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
                                        fsal_posixdb_fileinfo_t * p_object_info, /* IN */
-                                       fsal_handle_t * p_parent_directory_handle,       /* IN */
+                                       posixfsal_handle_t * p_parent_directory_handle,  /* IN */
                                        fsal_name_t * p_filename,        /* IN */
-                                       fsal_handle_t * p_object_handle /* OUT */ )
+                                       posixfsal_handle_t * p_object_handle /* OUT */ )
 {
   unsigned long long id;
   unsigned int ts;
@@ -37,7 +37,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
   if(!p_conn || !p_object_info || !p_object_handle
      || (p_filename && !p_parent_directory_handle)
      || (!p_filename && p_parent_directory_handle))
-    ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+    ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
 
 #ifdef _DEBUG_FSAL
   printf("adding entry with parentid=%llu, id=%llu, name=%s\n",
@@ -55,7 +55,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
       snprintf(query, 4096,
                "SELECT Handle.deviceid, Handle.inode, Handle.nlink, Handle.ctime, Handle.ftype "
                "FROM Handle WHERE handleid=%llu AND handlets=%u",
-               p_parent_directory_handle->id, p_parent_directory_handle->ts);
+               p_parent_directory_handle->data.id, p_parent_directory_handle->data.ts);
 
       st = db_exec_sql(p_conn, query, &res);
       if(FSAL_POSIXDB_IS_ERROR(st))
@@ -66,7 +66,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
           /* parent entry not found */
           mysql_free_result(res);
           RollbackTransaction(p_conn);
-          ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
         }
 
       mysql_free_result(res);
@@ -94,43 +94,43 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
           /* Error */
           mysql_free_result(res);
           RollbackTransaction(p_conn);
-          ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
         }
 
       /* a Handle (that matches devid & inode) already exists */
       /* fill 'info' with information about the handle in the database */
-      posixdb_internal_fillFileinfoFromStrValues(&(p_object_handle->info), NULL, NULL, row[2],  /* nlink */
+      posixdb_internal_fillFileinfoFromStrValues(&(p_object_handle->data.info), NULL, NULL, row[2],  /* nlink */
                                                  row[3],        /* ctime */
                                                  row[4]);       /* ftype */
 
-      p_object_handle->info.inode = p_object_info->inode;
-      p_object_handle->info.devid = p_object_info->devid;
+      p_object_handle->data.info.inode = p_object_info->inode;
+      p_object_handle->data.info.devid = p_object_info->devid;
 
-      p_object_handle->id = atoll(row[0]);
-      p_object_handle->ts = atoi(row[1]);
+      p_object_handle->data.id = atoll(row[0]);
+      p_object_handle->data.ts = atoi(row[1]);
       mysql_free_result(res);
 
       /* check the consistency of the handle */
-      if(fsal_posixdb_consistency_check(&(p_object_handle->info), p_object_info))
+      if(fsal_posixdb_consistency_check(&(p_object_handle->data.info), p_object_info))
         {
           /* consistency check failed */
           /* p_object_handle has been filled in order to be able to fix the consistency later */
           RollbackTransaction(p_conn);
-          ReturnCode(ERR_FSAL_POSIXDB_CONSISTENCY, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_CONSISTENCY, 0);
         }
 
       /* update nlink & ctime if needed */
-      if(p_object_info->nlink != p_object_handle->info.nlink
-         || p_object_info->ctime != p_object_handle->info.ctime)
+      if(p_object_info->nlink != p_object_handle->data.info.nlink
+         || p_object_info->ctime != p_object_handle->data.info.ctime)
         {
 
           snprintf(query, 4096, "UPDATE Handle "
                    "SET ctime=%u, nlink=%u "
                    "WHERE handleid=%llu AND handlets=%u",
                    (unsigned int)p_object_info->ctime,
-                   p_object_info->nlink, p_object_handle->id, p_object_handle->ts);
+                   p_object_info->nlink, p_object_handle->data.id, p_object_handle->data.ts);
 
-          p_object_handle->info = *p_object_info;
+          p_object_handle->data.info = *p_object_info;
 
           st = db_exec_sql(p_conn, query, NULL);
           if(FSAL_POSIXDB_IS_ERROR(st))
@@ -146,21 +146,21 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
 
       /* Handle does not exist, add a new Handle entry */
 
-      p_object_handle->ts = (int)time(NULL);
-      p_object_handle->info = *p_object_info;
+      p_object_handle->data.ts = (int)time(NULL);
+      p_object_handle->data.info = *p_object_info;
 
       snprintf(query, 4096,
                "INSERT INTO Handle(deviceid, inode, handlets, nlink, ctime, ftype) "
                "VALUES ( %u, %llu, %u, %u, %u, %u)", (unsigned int)p_object_info->devid,
                (unsigned long long)p_object_info->inode,
-               (unsigned int)p_object_handle->ts, (unsigned int)p_object_info->nlink,
+               (unsigned int)p_object_handle->data.ts, (unsigned int)p_object_info->nlink,
                (unsigned int)p_object_info->ctime, (unsigned int)p_object_info->ftype);
 
       st = db_exec_sql(p_conn, query, NULL);
       if(FSAL_POSIXDB_IS_ERROR(st))
         goto rollback;
 
-      p_object_handle->id = mysql_insert_id(&p_conn->db_conn);
+      p_object_handle->data.id = mysql_insert_id(&p_conn->db_conn);
 
       /* now, we have the handle id */
       fsal_posixdb_UpdateInodeCache(p_object_handle);
@@ -172,10 +172,10 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
    ************************************************/
   snprintf(query, 4096, "SELECT handleid, handlets "
            "FROM Parent WHERE handleidparent=%llu AND handletsparent=%u AND name='%s'",
-           p_parent_directory_handle ? p_parent_directory_handle->
-           id : p_object_handle->id,
-           p_parent_directory_handle ? p_parent_directory_handle->
-           ts : p_object_handle->ts, p_filename ? p_filename->name : "");
+           p_parent_directory_handle ? p_parent_directory_handle->data.id : p_object_handle->
+           data.id,
+           p_parent_directory_handle ? p_parent_directory_handle->data.ts : p_object_handle->
+           data.ts, p_filename ? p_filename->name : "");
 
   st = db_exec_sql(p_conn, query, &res);
   if(FSAL_POSIXDB_IS_ERROR(st))
@@ -192,7 +192,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
           /* Error */
           mysql_free_result(res);
           RollbackTransaction(p_conn);
-          ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
         }
 
       id = atoll(row[0]);
@@ -200,7 +200,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
       mysql_free_result(res);
 
       /* update the Parent entry if necessary (there entry exists with another handle) */
-      if((id != p_object_handle->id) || (ts != p_object_handle->ts))
+      if((id != p_object_handle->data.id) || (ts != p_object_handle->data.ts))
         {
           /* steps :
              - check the nlink value of the Parent entry to be overwritten
@@ -213,10 +213,10 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
           snprintf(query, 4096,
                    "SELECT Handle.deviceid, Handle.inode, Handle.nlink, Handle.ctime, Handle.ftype "
                    "FROM Handle WHERE handleid=%llu AND handlets=%u FOR UPDATE",
-                   p_parent_directory_handle ? p_parent_directory_handle->id :
-                   p_object_handle->id,
-                   p_parent_directory_handle ? p_parent_directory_handle->ts :
-                   p_object_handle->ts);
+                   p_parent_directory_handle ? p_parent_directory_handle->data.id :
+                   p_object_handle->data.id,
+                   p_parent_directory_handle ? p_parent_directory_handle->data.ts :
+                   p_object_handle->data.ts);
 
           /* check the nlink value of the entry to be updated */
           st = db_exec_sql(p_conn, query, &res);
@@ -234,7 +234,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
                   /* Error */
                   mysql_free_result(res);
                   RollbackTransaction(p_conn);
-                  ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+                  ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
                 }
 
               /* we have retrieved the handle information of the bad entry */
@@ -245,11 +245,11 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
 
               st = fsal_posixdb_deleteParent(p_conn, id, ts,
                                              p_parent_directory_handle ?
-                                             p_parent_directory_handle->id
-                                             : p_object_handle->id,
+                                             p_parent_directory_handle->data.id
+                                             : p_object_handle->data.id,
                                              p_parent_directory_handle ?
-                                             p_parent_directory_handle->ts
-                                             : p_object_handle->ts,
+                                             p_parent_directory_handle->data.ts
+                                             : p_object_handle->data.ts,
                                              p_filename ? p_filename->name : "", nlink);
               if(FSAL_POSIXDB_IS_ERROR(st))
                 goto rollback;
@@ -283,11 +283,11 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
       snprintf(query, 4096,
                "INSERT INTO Parent(handleidparent, handletsparent, name, handleid, handlets) "
                "VALUES(%llu, %u, '%s', %llu, %u)",
-               p_parent_directory_handle ? p_parent_directory_handle->id :
-               p_object_handle->id,
-               p_parent_directory_handle ? p_parent_directory_handle->ts :
-               p_object_handle->ts, p_filename ? p_filename->name : "",
-               p_object_handle->id, p_object_handle->ts);
+               p_parent_directory_handle ? p_parent_directory_handle->data.id :
+               p_object_handle->data.id,
+               p_parent_directory_handle ? p_parent_directory_handle->data.ts :
+               p_object_handle->data.ts, p_filename ? p_filename->name : "",
+               p_object_handle->data.id, p_object_handle->data.ts);
 
       st = db_exec_sql(p_conn, query, NULL);
       if(FSAL_POSIXDB_IS_ERROR(st))

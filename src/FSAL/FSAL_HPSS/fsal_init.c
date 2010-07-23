@@ -31,7 +31,7 @@ static char FSAL_PrincipalName[HPSS_MAX_PRINCIPAL_NAME];
 static char FSAL_KeytabPath[HPSS_MAX_PATH_NAME];
 
 /** Initializes security context */
-static int HPSSFSAL_SecInit(fs_specific_initinfo_t * hpss_init_info)
+static int HPSSFSAL_SecInit(hpssfs_specific_initinfo_t * hpss_init_info)
 {
 
   int rc;
@@ -126,7 +126,7 @@ static int HPSSFSAL_SecInit(fs_specific_initinfo_t * hpss_init_info)
     }                                                             \
 
 /** Initialize HPSS client API */
-static int HPSSFSAL_Init(fs_specific_initinfo_t * hpss_init_info)
+static int HPSSFSAL_Init_internal(hpssfs_specific_initinfo_t * hpss_init_info)
 {
 
   int rc = 0;
@@ -251,7 +251,7 @@ static int HPSSFSAL_Init(fs_specific_initinfo_t * hpss_init_info)
  *                                for this error.)
  *         ERR_FSAL_SEC_INIT     (Security context init error).
  */
-fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
+fsal_status_t HPSSFSAL_Init(fsal_parameter_t * init_info        /* IN */
     )
 {
 
@@ -337,7 +337,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
   /* configure HPSS cl api  
      (and retrieve current PrincipalName and KeytabName) */
 
-  if(rc = HPSSFSAL_Init(&init_info->fs_specific_info))
+  if(rc = HPSSFSAL_Init_internal(&init_info->fs_specific_info))
     Return(ERR_FSAL_BAD_INIT, -rc, INDEX_FSAL_Init);
 
   /* Init security context */
@@ -362,8 +362,8 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     {
     case FSAL_INIT_FORCE_VALUE:
       /* force the value in any case */
-      fsal_internal_SetReturnInconsistentDirent(init_info->
-                                                fs_specific_info.ReturnInconsistentDirent);
+      fsal_internal_SetReturnInconsistentDirent(init_info->fs_specific_info.
+                                                ReturnInconsistentDirent);
       break;
       /* In the other cases, we keep the default value. */
     }
@@ -375,7 +375,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
 }
 
 /* To be called before exiting */
-fsal_status_t FSAL_terminate()
+fsal_status_t HPSSFSAL_terminate()
 {
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

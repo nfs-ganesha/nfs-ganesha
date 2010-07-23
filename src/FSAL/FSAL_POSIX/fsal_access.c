@@ -50,10 +50,10 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_access(fsal_handle_t * p_object_handle,      /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_accessflags_t access_type,       /* IN */
-                          fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
+fsal_status_t POSIXFSAL_access(posixfsal_handle_t * p_object_handle,    /* IN */
+                               posixfsal_op_context_t * p_context,      /* IN */
+                               fsal_accessflags_t access_type,  /* IN */
+                               fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */
     )
 {
 
@@ -75,7 +75,7 @@ fsal_status_t FSAL_access(fsal_handle_t * p_object_handle,      /* IN */
 
       FSAL_SET_MASK(p_object_attributes->asked_attributes,
                     FSAL_ATTR_OWNER | FSAL_ATTR_GROUP | FSAL_ATTR_ACL | FSAL_ATTR_MODE);
-      status = FSAL_getattrs(p_object_handle, p_context, p_object_attributes);
+      status = POSIXFSAL_getattrs(p_object_handle, p_context, p_object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -97,7 +97,7 @@ fsal_status_t FSAL_access(fsal_handle_t * p_object_handle,      /* IN */
       FSAL_SET_MASK(attrs.asked_attributes,
                     FSAL_ATTR_OWNER | FSAL_ATTR_GROUP | FSAL_ATTR_ACL | FSAL_ATTR_MODE);
 
-      status = FSAL_getattrs(p_object_handle, p_context, &attrs);
+      status = POSIXFSAL_getattrs(p_object_handle, p_context, &attrs);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))

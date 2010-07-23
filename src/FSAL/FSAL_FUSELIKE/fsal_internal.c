@@ -492,7 +492,7 @@ static void init_ctx_key(void)
  * The structure pointed by p_ctx must stay allocated and kept unchanged
  * during the FS call.
  */
-int fsal_set_thread_context(fsal_op_context_t * p_ctx)
+int fsal_set_thread_context(fusefsal_op_context_t * p_ctx)
 {
   /* first, we init the key if this is the first time */
   if(pthread_once(&once_ctx, init_ctx_key) != 0)
@@ -508,7 +508,7 @@ int fsal_set_thread_context(fsal_op_context_t * p_ctx)
 /**
  * This function retrieves the last context associated to a thread.
  */
-fsal_op_context_t *fsal_get_thread_context()
+fusefsal_op_context_t *fsal_get_thread_context()
 {
   return pthread_getspecific(key_ctx);
 }

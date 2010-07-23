@@ -372,15 +372,15 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                                                  parent_pentry,
                                                  ppre_attr,
                                                  &attr,
-                                                 &(pres->res_rename3.RENAME3res_u.
-                                                   resok.fromdir_wcc));
+                                                 &(pres->res_rename3.RENAME3res_u.resok.
+                                                   fromdir_wcc));
 
                                   nfs_SetWccData(pcontext, pexport,
                                                  parent_pentry,
                                                  ppre_attr,
                                                  &attr,
-                                                 &(pres->res_rename3.RENAME3res_u.
-                                                   resok.todir_wcc));
+                                                 &(pres->res_rename3.RENAME3res_u.resok.
+                                                   todir_wcc));
 
                                   pres->res_rename3.status = NFS3_OK;
                                   break;

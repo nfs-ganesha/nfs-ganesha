@@ -147,7 +147,7 @@ int snmp2fsal_error(int snmp_error)
 
 /* extract the object handle from the variable info.
  */
-int snmp_object2handle(netsnmp_variable_list * p_in_var, fsal_handle_t * p_out_handle)
+int snmp_object2handle(netsnmp_variable_list * p_in_var, snmpfsal_handle_t * p_out_handle)
 {
   /* sanity check */
   if(!p_out_handle || !p_in_var)
@@ -166,7 +166,7 @@ int snmp_object2handle(netsnmp_variable_list * p_in_var, fsal_handle_t * p_out_h
  * else, it returns the string representation of the object subid.
  */
 int snmp_object2name(netsnmp_variable_list * p_in_var, struct tree *p_in_node,
-                     fsal_handle_t * p_handle, fsal_name_t * p_out_name)
+                     snmpfsal_handle_t * p_handle, fsal_name_t * p_out_name)
 {
   fsal_status_t st;
 
@@ -295,9 +295,8 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
       if(p_in_var->val.counter64)
         {
           int64 =
-              (((unsigned long long)p_in_var->val.
-                counter64->high) << 32) | (unsigned long long)p_in_var->val.counter64->
-              low;
+              (((unsigned long long)p_in_var->val.counter64->
+                high) << 32) | (unsigned long long)p_in_var->val.counter64->low;
           written = snprintf(p_out_string, *in_out_len, "%llu\n", int64);
         }
       else
@@ -416,7 +415,7 @@ fsal_nodetype_t intern2extern_type(nodetype_t internal_type)
 #define PRIME_32BITS  479001599
 
 /* compute the object id from the handle */
-fsal_u64_t build_object_id(fsal_handle_t * p_in_handle)
+fsal_u64_t build_object_id(snmpfsal_handle_t * p_in_handle)
 {
   unsigned int i;
   fsal_u64_t hash = 1;
@@ -435,7 +434,7 @@ fsal_u64_t build_object_id(fsal_handle_t * p_in_handle)
 /* fill the p_fsalattr_out structure depending on the given information
  * /!\ the p_in_node is the PARENT NODE (access right are stored in the parent node)
  */
-int snmp2fsal_attributes(fsal_handle_t * p_handle, netsnmp_variable_list * p_var,
+int snmp2fsal_attributes(snmpfsal_handle_t * p_handle, netsnmp_variable_list * p_var,
                          struct tree *p_in_node, fsal_attrib_list_t * p_fsalattr_out)
 {
   fsal_attrib_mask_t supp_attr, unsupp_attr;
@@ -589,93 +588,5 @@ char ASN2add_var(u_char asn_type)
       /* give a chance to net-snmp for finding the type  */
       return '=';
     }
-
-}
-
-/* THOSE FUNCTIONS CAN BE USED FROM OUTSIDE THE MODULE : */
-
-/**
- * fsal2unix_mode:
- * Convert FSAL mode to posix mode.
- *
- * \param fsal_mode (input):
- *        The FSAL mode to be translated.
- *
- * \return The posix mode associated to fsal_mode.
- */
-mode_t fsal2unix_mode(fsal_accessmode_t fsal_mode)
-{
-
-  mode_t out_mode = 0;
-
-  if((fsal_mode & FSAL_MODE_SUID))
-    out_mode |= S_ISUID;
-  if((fsal_mode & FSAL_MODE_SGID))
-    out_mode |= S_ISGID;
-
-  if((fsal_mode & FSAL_MODE_RUSR))
-    out_mode |= S_IRUSR;
-  if((fsal_mode & FSAL_MODE_WUSR))
-    out_mode |= S_IWUSR;
-  if((fsal_mode & FSAL_MODE_XUSR))
-    out_mode |= S_IXUSR;
-  if((fsal_mode & FSAL_MODE_RGRP))
-    out_mode |= S_IRGRP;
-  if((fsal_mode & FSAL_MODE_WGRP))
-    out_mode |= S_IWGRP;
-  if((fsal_mode & FSAL_MODE_XGRP))
-    out_mode |= S_IXGRP;
-  if((fsal_mode & FSAL_MODE_ROTH))
-    out_mode |= S_IROTH;
-  if((fsal_mode & FSAL_MODE_WOTH))
-    out_mode |= S_IWOTH;
-  if((fsal_mode & FSAL_MODE_XOTH))
-    out_mode |= S_IXOTH;
-
-  return out_mode;
-
-}
-
-/**
- * unix2fsal_mode:
- * Convert posix mode to FSAL mode.
- *
- * \param unix_mode (input):
- *        The posix mode to be translated.
- *
- * \return The FSAL mode associated to unix_mode.
- */
-fsal_accessmode_t unix2fsal_mode(mode_t unix_mode)
-{
-
-  fsal_accessmode_t fsalmode = 0;
-
-  if(unix_mode & S_ISUID)
-    fsalmode |= FSAL_MODE_SUID;
-  if(unix_mode & S_ISGID)
-    fsalmode |= FSAL_MODE_SGID;
-
-  if(unix_mode & S_IRUSR)
-    fsalmode |= FSAL_MODE_RUSR;
-  if(unix_mode & S_IWUSR)
-    fsalmode |= FSAL_MODE_WUSR;
-  if(unix_mode & S_IXUSR)
-    fsalmode |= FSAL_MODE_XUSR;
-
-  if(unix_mode & S_IRGRP)
-    fsalmode |= FSAL_MODE_RGRP;
-  if(unix_mode & S_IWGRP)
-    fsalmode |= FSAL_MODE_WGRP;
-  if(unix_mode & S_IXGRP)
-    fsalmode |= FSAL_MODE_XGRP;
-
-  if(unix_mode & S_IROTH)
-    fsalmode |= FSAL_MODE_ROTH;
-  if(unix_mode & S_IWOTH)
-    fsalmode |= FSAL_MODE_WOTH;
-  if(unix_mode & S_IXOTH)
-    fsalmode |= FSAL_MODE_XOTH;
-
-  return fsalmode;
 
 }

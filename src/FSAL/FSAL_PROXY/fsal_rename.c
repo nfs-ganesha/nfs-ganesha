@@ -80,13 +80,13 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
   */
 
-fsal_status_t FSAL_rename(fsal_handle_t * old_parentdir_handle, /* IN */
-                          fsal_name_t * p_old_name,     /* IN */
-                          fsal_handle_t * new_parentdir_handle, /* IN */
-                          fsal_name_t * p_new_name,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_attrib_list_t * src_dir_attributes,      /* [ IN/OUT ] */
-                          fsal_attrib_list_t * tgt_dir_attributes       /* [ IN/OUT ] */
+fsal_status_t PROXYFSAL_rename(proxyfsal_handle_t * old_parentdir_handle,       /* IN */
+                               fsal_name_t * p_old_name,        /* IN */
+                               proxyfsal_handle_t * new_parentdir_handle,       /* IN */
+                               fsal_name_t * p_new_name,        /* IN */
+                               proxyfsal_op_context_t * p_context,      /* IN */
+                               fsal_attrib_list_t * src_dir_attributes, /* [ IN/OUT ] */
+                               fsal_attrib_list_t * tgt_dir_attributes  /* [ IN/OUT ] */
     )
 {
 
@@ -175,28 +175,28 @@ fsal_status_t FSAL_rename(fsal_handle_t * old_parentdir_handle, /* IN */
   COMPOUNDV4_ARG_ADD_OP_RESTOREFH(argnfs4);
   COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, bitmap_old);
 
-  resnfs4.resarray.resarray_val[FSAL_RENAME_IDX_OP_GETATTR_NEW].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res_new;
-  resnfs4.resarray.resarray_val[FSAL_RENAME_IDX_OP_GETATTR_NEW].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_RENAME_IDX_OP_GETATTR_NEW].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res_new;
+  resnfs4.resarray.resarray_val[FSAL_RENAME_IDX_OP_GETATTR_NEW].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_RENAME_IDX_OP_GETATTR_NEW].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+  resnfs4.resarray.resarray_val[FSAL_RENAME_IDX_OP_GETATTR_NEW].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
       (char *)&fattr_internal_new;
-  resnfs4.resarray.resarray_val[FSAL_RENAME_IDX_OP_GETATTR_NEW].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+  resnfs4.resarray.resarray_val[FSAL_RENAME_IDX_OP_GETATTR_NEW].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
       sizeof(fattr_internal_new);
 
-  resnfs4.resarray.resarray_val[FSAL_RENAME_IDX_OP_GETATTR_OLD].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res_old;
-  resnfs4.resarray.resarray_val[FSAL_RENAME_IDX_OP_GETATTR_OLD].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_RENAME_IDX_OP_GETATTR_OLD].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res_old;
+  resnfs4.resarray.resarray_val[FSAL_RENAME_IDX_OP_GETATTR_OLD].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_RENAME_IDX_OP_GETATTR_OLD].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+  resnfs4.resarray.resarray_val[FSAL_RENAME_IDX_OP_GETATTR_OLD].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
       (char *)&fattr_internal_old;
-  resnfs4.resarray.resarray_val[FSAL_RENAME_IDX_OP_GETATTR_OLD].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+  resnfs4.resarray.resarray_val[FSAL_RENAME_IDX_OP_GETATTR_OLD].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
       sizeof(fattr_internal_old);
 
   TakeTokenFSCall();
@@ -222,8 +222,8 @@ fsal_status_t FSAL_rename(fsal_handle_t * old_parentdir_handle, /* IN */
     {
       if(nfs4_Fattr_To_FSAL_attr(src_dir_attributes,
                                  &resnfs4.resarray.resarray_val
-                                 [FSAL_RENAME_IDX_OP_GETATTR_OLD].nfs_resop4_u.opgetattr.
-                                 GETATTR4res_u.resok4.obj_attributes) != 1)
+                                 [FSAL_RENAME_IDX_OP_GETATTR_OLD].nfs_resop4_u.
+                                 opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
         {
           FSAL_CLEAR_MASK(src_dir_attributes->asked_attributes);
           FSAL_SET_MASK(src_dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -240,8 +240,8 @@ fsal_status_t FSAL_rename(fsal_handle_t * old_parentdir_handle, /* IN */
     {
       if(nfs4_Fattr_To_FSAL_attr(tgt_dir_attributes,
                                  &resnfs4.resarray.resarray_val
-                                 [FSAL_RENAME_IDX_OP_GETATTR_NEW].nfs_resop4_u.opgetattr.
-                                 GETATTR4res_u.resok4.obj_attributes) != 1)
+                                 [FSAL_RENAME_IDX_OP_GETATTR_NEW].nfs_resop4_u.
+                                 opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
         {
           FSAL_CLEAR_MASK(tgt_dir_attributes->asked_attributes);
           FSAL_SET_MASK(tgt_dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

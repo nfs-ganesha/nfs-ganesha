@@ -47,11 +47,11 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
-                            fsal_size_t length, /* IN */
-                            fsal_file_t * file_descriptor,      /* Unused in this FSAL */
-                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
+fsal_status_t FUSEFSAL_truncate(fusefsal_handle_t * filehandle, /* IN */
+                                fusefsal_op_context_t * p_context,      /* IN */
+                                fsal_size_t length,     /* IN */
+                                fusefsal_file_t * file_descriptor,      /* Unused in this FSAL */
+                                fsal_attrib_list_t * object_attributes  /* [ IN/OUT ] */
     )
 {
 
@@ -68,7 +68,7 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_truncate);
 
   /* get the full path for the object */
-  rc = NamespacePath(filehandle->inode, filehandle->device, filehandle->validator,
+  rc = NamespacePath(filehandle->data.inode, filehandle->data.device, filehandle->data.validator,
                      object_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_truncate);
@@ -88,7 +88,7 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
 
       fsal_status_t st;
 
-      st = FSAL_getattrs(filehandle, p_context, object_attributes);
+      st = FUSEFSAL_getattrs(filehandle, p_context, object_attributes);
 
       if(FSAL_IS_ERROR(st))
         {

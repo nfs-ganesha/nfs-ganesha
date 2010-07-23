@@ -1,3 +1,16 @@
+AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
+
+noinst_LTLIBRARIES          = libfsalcommon.la
+
+libfsalcommon_la_SOURCES = fsal_strings.c          \
+                           fsal_errors.c           \
+                           fsal_convert.c          \
+                           fsal_glue.c             \
+                           ../include/fsal.h       \
+                           ../include/fsal_types.h \
+                           ../include/err_fsal.h   \
+                           ../include/fsal_convert.h 
+
 if USE_FSAL_GHOSTFS
 SUBDIRS = FSAL_GHOST_FS
 endif
@@ -38,3 +51,4 @@ if USE_FSAL_TEMPLATE
 SUBDIRS = FSAL_TEMPLATE 
 endif
 
+ 

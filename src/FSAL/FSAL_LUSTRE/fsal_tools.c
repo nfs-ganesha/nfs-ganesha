@@ -23,7 +23,7 @@
 /* case unsensitivity */
 #define STRCMP   strcasecmp
 
-char *FSAL_GetFSName()
+char *LUSTREFSAL_GetFSName()
 {
   return "LUSTRE";
 }
@@ -44,8 +44,8 @@ char *FSAL_GetFSName()
  *         - Segfault if status is a NULL pointer.
  */
 
-int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
-                   fsal_status_t * status)
+int LUSTREFSAL_handlecmp(lustrefsal_handle_t * handle1, lustrefsal_handle_t * handle2,
+                         fsal_status_t * status)
 {
 
   *status = FSAL_STATUS_NO_ERROR;
@@ -56,9 +56,9 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
       return -1;
     }
 
-  return (handle1->fid.f_seq != handle2->fid.f_seq)
-      || (handle1->fid.f_oid != handle2->fid.f_oid)
-      || (handle1->fid.f_ver != handle2->fid.f_ver);
+  return (handle1->data.fid.f_seq != handle2->data.fid.f_seq)
+      || (handle1->data.fid.f_oid != handle2->data.fid.f_oid)
+      || (handle1->data.fid.f_ver != handle2->data.fid.f_ver);
 
 }
 
@@ -76,15 +76,16 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
  * \return The hash value
  */
 
-unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
-                                      unsigned int cookie,
-                                      unsigned int alphabet_len, unsigned int index_size)
+unsigned int LUSTREFSAL_Handle_to_HashIndex(lustrefsal_handle_t * p_handle,
+                                            unsigned int cookie,
+                                            unsigned int alphabet_len,
+                                            unsigned int index_size)
 {
   unsigned long long lval;
 
   /* polynom of prime numbers */
-  lval = 3 * cookie * alphabet_len + 1873 * p_handle->fid.f_seq
-      + 3511 * p_handle->fid.f_oid + 2999 * p_handle->fid.f_ver + 10267;
+  lval = 3 * cookie * alphabet_len + 1873 * p_handle->data.fid.f_seq
+      + 3511 * p_handle->data.fid.f_oid + 2999 * p_handle->data.fid.f_ver + 10267;
 
   return lval % index_size;
 }
@@ -101,20 +102,21 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cookie)
+unsigned int LUSTREFSAL_Handle_to_RBTIndex(lustrefsal_handle_t * p_handle,
+                                           unsigned int cookie)
 {
   unsigned long long lval;
 
   /* polynom of prime numbers */
-  lval = 2239 * cookie + 3559 * p_handle->fid.f_seq + 5 * p_handle->fid.f_oid
-      + 1409 * p_handle->fid.f_ver + 20011;
+  lval = 2239 * cookie + 3559 * p_handle->data.fid.f_seq + 5 * p_handle->data.fid.f_oid
+      + 1409 * p_handle->data.fid.f_ver + 20011;
 
   return high32m(lval) ^ low32m(lval);
 }
 
 /**
  * FSAL_DigestHandle :
- *  Convert an fsal_handle_t to a buffer
+ *  Convert an lustrefsal_handle_t to a buffer
  *  to be included into NFS handles,
  *  or another digest.
  *
@@ -128,10 +130,10 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t output_type,  /* IN */
-                                fsal_handle_t * p_in_fsal_handle,       /* IN */
-                                caddr_t out_buff        /* OUT */
+fsal_status_t LUSTREFSAL_DigestHandle(lustrefsal_export_context_t * p_expcontext,       /* IN */
+                                      fsal_digesttype_t output_type,    /* IN */
+                                      lustrefsal_handle_t * p_in_fsal_handle,   /* IN */
+                                      caddr_t out_buff  /* OUT */
     )
 {
   unsigned int ino32;
@@ -146,35 +148,35 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
       /* NFS handle digest */
     case FSAL_DIGEST_NFSV2:
 
-      if(sizeof(fsal_handle_t) > FSAL_DIGEST_SIZE_HDLV2)
+      if(sizeof(p_in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV2)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV2);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(fsal_handle_t));
+      memcpy(out_buff, p_in_fsal_handle, sizeof(lustrefsal_handle_t));
       break;
 
     case FSAL_DIGEST_NFSV3:
 
-      if(sizeof(fsal_handle_t) > FSAL_DIGEST_SIZE_HDLV3)
+      if(sizeof(p_in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV3)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV3);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(fsal_handle_t));
+      memcpy(out_buff, p_in_fsal_handle, sizeof(p_in_fsal_handle->data));
       break;
 
     case FSAL_DIGEST_NFSV4:
 
-      if(sizeof(fsal_handle_t) > FSAL_DIGEST_SIZE_HDLV4)
+      if(sizeof(p_in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV4)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(fsal_handle_t));
+      memcpy(out_buff, p_in_fsal_handle, sizeof(p_in_fsal_handle->data));
       break;
 
       /* FileId digest for NFSv2 */
     case FSAL_DIGEST_FILEID2:
 
-      ino32 = low32m(p_in_fsal_handle->inode);
+      ino32 = low32m(p_in_fsal_handle->data.inode);
 
       /* sanity check about output size */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID2);
@@ -187,14 +189,14 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
       /* sanity check about output size */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID3);
-      memcpy(out_buff, &(p_in_fsal_handle->inode), sizeof(fsal_u64_t));
+      memcpy(out_buff, &(p_in_fsal_handle->data.inode), sizeof(fsal_u64_t));
       break;
 
       /* FileId digest for NFSv4 */
     case FSAL_DIGEST_FILEID4:
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID4);
-      memcpy(out_buff, &(p_in_fsal_handle->inode), sizeof(fsal_u64_t));
+      memcpy(out_buff, &(p_in_fsal_handle->data.inode), sizeof(fsal_u64_t));
       break;
 
     default:
@@ -221,10 +223,10 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t in_type,      /* IN */
-                                caddr_t in_buff,        /* IN */
-                                fsal_handle_t * p_out_fsal_handle       /* OUT */
+fsal_status_t LUSTREFSAL_ExpandHandle(lustrefsal_export_context_t * p_expcontext,       /* IN */
+                                      fsal_digesttype_t in_type,        /* IN */
+                                      caddr_t in_buff,  /* IN */
+                                      lustrefsal_handle_t * p_out_fsal_handle   /* OUT */
     )
 {
 
@@ -237,19 +239,19 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
       /* NFSV2 handle digest */
     case FSAL_DIGEST_NFSV2:
-      memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
+      memset(p_out_fsal_handle, 0, sizeof(lustrefsal_handle_t));
       memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
       break;
 
       /* NFSV3 handle digest */
     case FSAL_DIGEST_NFSV3:
-      memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
+      memset(p_out_fsal_handle, 0, sizeof(lustrefsal_handle_t));
       memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
       break;
 
       /* NFSV4 handle digest */
     case FSAL_DIGEST_NFSV4:
-      memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
+      memset(p_out_fsal_handle, 0, sizeof(lustrefsal_handle_t));
       memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
       break;
 
@@ -268,7 +270,7 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
  *         ERR_FSAL_FAULT (null pointer given as parameter),
  *         ERR_FSAL_SERVERFAULT (unexpected error)
  */
-fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t LUSTREFSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 {
 
   log_t no_logging = LOG_INITIALIZER;
@@ -287,7 +289,7 @@ fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 
 }
 
-fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t LUSTREFSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
 {
   /* defensive programming... */
   if(out_parameter == NULL)
@@ -324,7 +326,8 @@ fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_paramet
 
 }
 
-fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t LUSTREFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t *
+                                                          out_parameter)
 {
   /* defensive programming... */
   if(out_parameter == NULL)
@@ -378,8 +381,8 @@ fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_param
 
 /* load FSAL init info */
 
-fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
-                                                 fsal_parameter_t * out_parameter)
+fsal_status_t LUSTREFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
+                                                       fsal_parameter_t * out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -495,8 +498,9 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
 /* load general filesystem configuration options */
 
-fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
-                                                      fsal_parameter_t * out_parameter)
+fsal_status_t LUSTREFSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
+                                                            fsal_parameter_t *
+                                                            out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -703,8 +707,9 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
 /* load specific filesystem configuration options */
 
-fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
-                                                        fsal_parameter_t * out_parameter)
+fsal_status_t LUSTREFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
+                                                              fsal_parameter_t *
+                                                              out_parameter)
 {
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);

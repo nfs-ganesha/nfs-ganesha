@@ -16,14 +16,14 @@
 
 #include <strings.h>
 
-void BuildRootHandle(fsal_handle_t * p_hdl)
+void BuildRootHandle(snmpfsal_handle_t * p_hdl)
 {
-  memset(p_hdl, 0, sizeof(fsal_handle_t));
+  memset(p_hdl, 0, sizeof(snmpfsal_handle_t));
   p_hdl->oid_len = 0;
   p_hdl->object_type_reminder = FSAL_NODETYPE_ROOT;
 }
 
-int ParseSNMPPath(char *in_path, fsal_handle_t * out_handle)
+int ParseSNMPPath(char *in_path, snmpfsal_handle_t * out_handle)
 {
   if(!in_path || !out_handle)
     return ERR_FSAL_FAULT;
@@ -36,7 +36,7 @@ int ParseSNMPPath(char *in_path, fsal_handle_t * out_handle)
   return ERR_FSAL_NO_ERROR;
 }
 
-int IssueSNMPQuery(fsal_op_context_t * p_context, oid * oid_tab, int oid_len,
+int IssueSNMPQuery(snmpfsal_op_context_t * p_context, oid * oid_tab, int oid_len,
                    fsal_request_desc_t * p_req_desc)
 {
   int rc;
@@ -201,7 +201,7 @@ struct tree *FSAL_GetTree(oid * objid, int objidlen, struct tree *subtree,
 
 }
 
-struct tree *GetMIBNode(fsal_op_context_t * p_context, fsal_handle_t * p_handle,
+struct tree *GetMIBNode(snmpfsal_op_context_t * p_context, snmpfsal_handle_t * p_handle,
                         int return_nearest_parent)
 {
   if(!p_context || !p_handle)
@@ -216,7 +216,8 @@ struct tree *GetMIBNode(fsal_op_context_t * p_context, fsal_handle_t * p_handle,
                       p_context->export_context->root_mib_tree, return_nearest_parent);
 }
 
-struct tree *GetMIBChildList(fsal_op_context_t * p_context, fsal_handle_t * p_handle)
+struct tree *GetMIBChildList(snmpfsal_op_context_t * p_context,
+                             snmpfsal_handle_t * p_handle)
 {
   struct tree *obj_tree;
 
@@ -250,7 +251,7 @@ int IsSNMPChild(oid * parent_oid, int parent_oid_len, oid * child_oid, int child
  * NB: the object_type_reminder handle's field is not used in this call.
  * @return 0 if it is not a parent node, 1 if it is, -1 on SNMP error. 
  */
-int HasSNMPChilds(fsal_op_context_t * p_context, fsal_handle_t * p_handle)
+int HasSNMPChilds(snmpfsal_op_context_t * p_context, snmpfsal_handle_t * p_handle)
 {
   fsal_request_desc_t req_desc;
   int rc;
@@ -278,7 +279,7 @@ int HasSNMPChilds(fsal_op_context_t * p_context, fsal_handle_t * p_handle)
  * get the next response for a GETBULK response sequence. 
  * @param p_context the current request context. 
  */
-netsnmp_variable_list *GetNextResponse(fsal_op_context_t * p_context)
+netsnmp_variable_list *GetNextResponse(snmpfsal_op_context_t * p_context)
 {
   if(!p_context)
     return NULL;

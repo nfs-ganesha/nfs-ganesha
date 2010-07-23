@@ -59,24 +59,27 @@
  *        ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
-                                fsal_name_t * filename, /* IN */
-                                fsal_op_context_t * p_context,  /* IN */
-                                fsal_openflags_t openflags,     /* IN */
-                                fsal_file_t * file_descriptor,  /* OUT */
-                                fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
+fsal_status_t HPSSFSAL_open_by_name(hpssfsal_handle_t * dirhandle,      /* IN */
+                                    fsal_name_t * filename,     /* IN */
+                                    hpssfsal_op_context_t * p_context,  /* IN */
+                                    fsal_openflags_t openflags, /* IN */
+                                    hpssfsal_file_t * file_descriptor,  /* OUT */
+                                    fsal_attrib_list_t *
+                                    file_attributes /* [ IN/OUT ] */ )
 {
   fsal_status_t fsal_status;
-  fsal_handle_t filehandle;
+  hpssfsal_handle_t filehandle;
 
   if(!dirhandle || !filename || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
-  fsal_status = FSAL_lookup(dirhandle, filename, p_context, &filehandle, file_attributes);
+  fsal_status =
+      HPSSFSAL_lookup(dirhandle, filename, p_context, &filehandle, file_attributes);
   if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
-  return FSAL_open(&filehandle, p_context, openflags, file_descriptor, file_attributes);
+  return HPSSFSAL_open(&filehandle, p_context, openflags, file_descriptor,
+                       file_attributes);
 }
 
 /**
@@ -115,11 +118,11 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
-                        fsal_op_context_t * p_context,  /* IN */
-                        fsal_openflags_t openflags,     /* IN */
-                        fsal_file_t * file_descriptor,  /* OUT */
-                        fsal_attrib_list_t * file_attributes    /* [ IN/OUT ] */
+fsal_status_t HPSSFSAL_open(hpssfsal_handle_t * filehandle,     /* IN */
+                            hpssfsal_op_context_t * p_context,  /* IN */
+                            fsal_openflags_t openflags, /* IN */
+                            hpssfsal_file_t * file_descriptor,  /* OUT */
+                            fsal_attrib_list_t * file_attributes        /* [ IN/OUT ] */
     )
 {
 
@@ -136,7 +139,7 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
 
   /* check if it is a file */
 
-  if(filehandle->obj_type != FSAL_TYPE_FILE)
+  if(filehandle->data.obj_type != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
     }
@@ -156,7 +159,7 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
 
   TakeTokenFSCall();
 
-  rc = HPSSFSAL_OpenHandle(&filehandle->ns_handle,      /* IN - object handle */
+  rc = HPSSFSAL_OpenHandle(&filehandle->data.ns_handle,      /* IN - object handle */
                            NULL, hpss_flags,    /* IN - Type of file access */
                            (mode_t) 0644,       /* IN - Desired file perms if create */
                            &p_context->credential.hpss_usercred,        /* IN - User credentials */
@@ -192,7 +195,7 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
 
       fsal_status_t status;
 
-      status = hpss2fsal_attributes(&(filehandle->ns_handle),
+      status = hpss2fsal_attributes(&(filehandle->data.ns_handle),
                                     &hpss_attributes, file_attributes);
 
       if(FSAL_IS_ERROR(status))
@@ -229,17 +232,17 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
  * \return Major error codes:
  *      - ERR_FSAL_NO_ERROR     (no error)
  *      - ERR_FSAL_INVAL        (invalid parameter)
- *      - ERR_FSAL_NOT_OPENED   (tried to read in a non-opened fsal_file_t)
+ *      - ERR_FSAL_NOT_OPENED   (tried to read in a non-opened hpssfsal_file_t)
  *      - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
-                        fsal_seek_t * seek_descriptor,  /* [IN] */
-                        fsal_size_t buffer_size,        /* IN */
-                        caddr_t buffer, /* OUT */
-                        fsal_size_t * read_amount,      /* OUT */
-                        fsal_boolean_t * end_of_file    /* OUT */
+fsal_status_t HPSSFSAL_read(hpssfsal_file_t * file_descriptor,  /* IN */
+                            fsal_seek_t * seek_descriptor,      /* [IN] */
+                            fsal_size_t buffer_size,    /* IN */
+                            caddr_t buffer,     /* OUT */
+                            fsal_size_t * read_amount,  /* OUT */
+                            fsal_boolean_t * end_of_file        /* OUT */
     )
 {
 
@@ -363,16 +366,16 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
  * \return Major error codes:
  *      - ERR_FSAL_NO_ERROR     (no error)
  *      - ERR_FSAL_INVAL        (invalid parameter)
- *      - ERR_FSAL_NOT_OPENED   (tried to write in a non-opened fsal_file_t)
+ *      - ERR_FSAL_NOT_OPENED   (tried to write in a non-opened hpssfsal_file_t)
  *      - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
  */
-fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
-                         fsal_seek_t * seek_descriptor, /* IN */
-                         fsal_size_t buffer_size,       /* IN */
-                         caddr_t buffer,        /* IN */
-                         fsal_size_t * write_amount     /* OUT */
+fsal_status_t HPSSFSAL_write(hpssfsal_file_t * file_descriptor, /* IN */
+                             fsal_seek_t * seek_descriptor,     /* IN */
+                             fsal_size_t buffer_size,   /* IN */
+                             caddr_t buffer,    /* IN */
+                             fsal_size_t * write_amount /* OUT */
     )
 {
 
@@ -489,7 +492,7 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
  *          ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
+fsal_status_t HPSSFSAL_close(hpssfsal_file_t * file_descriptor  /* IN */
     )
 {
 
@@ -515,18 +518,24 @@ fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
 }
 
 /* Some unsupported calls used in FSAL_PROXY, just for permit the ganeshell to compile */
-fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
-                                  fsal_u64_t fileid,    /* IN */
-                                  fsal_op_context_t * p_context,        /* IN */
-                                  fsal_openflags_t openflags,   /* IN */
-                                  fsal_file_t * file_descriptor,        /* OUT */
-                                  fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
+fsal_status_t HPSSFSAL_open_by_fileid(hpssfsal_handle_t * filehandle,   /* IN */
+                                      fsal_u64_t fileid,        /* IN */
+                                      hpssfsal_op_context_t * p_context,        /* IN */
+                                      fsal_openflags_t openflags,       /* IN */
+                                      hpssfsal_file_t * file_descriptor,        /* OUT */
+                                      fsal_attrib_list_t *
+                                      file_attributes /* [ IN/OUT ] */ )
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
 
-fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
-                                   fsal_u64_t fileid)
+fsal_status_t HPSSFSAL_close_by_fileid(hpssfsal_file_t * file_descriptor /* IN */ ,
+                                       fsal_u64_t fileid)
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
+}
+
+unsigned int HPSSFSAL_GetFileno(hpssfsal_file_t * pfile)
+{
+  return pfile->filedes;
 }

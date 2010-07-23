@@ -259,9 +259,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       /* Check if filename is correct */
       if((cache_status =
           cache_inode_error_convert(FSAL_buffdesc2name
-                                    ((fsal_buffdesc_t *) & arg_OPEN4.claim.
-                                     open_claim4_u.file,
-                                     &filename))) != CACHE_INODE_SUCCESS)
+                                    ((fsal_buffdesc_t *) & arg_OPEN4.claim.open_claim4_u.
+                                     file, &filename))) != CACHE_INODE_SUCCESS)
         {
           res_OPEN4.status = nfs4_Errno(cache_status);
           return res_OPEN4.status;
@@ -363,14 +362,14 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       if(arg_OPEN4.openhow.openflag4_u.how.mode == GUARDED4 ||
          arg_OPEN4.openhow.openflag4_u.how.mode == UNCHECKED4)
         {
-          if(arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs.
-             attrmask.bitmap4_len != 0)
+          if(arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs.attrmask.
+             bitmap4_len != 0)
             {
               /* Convert fattr4 so nfs4_sattr */
               convrc =
                   nfs4_Fattr_To_FSAL_attr(&sattr,
-                                          &(arg_OPEN4.openhow.openflag4_u.
-                                            how.createhow4_u.createattrs));
+                                          &(arg_OPEN4.openhow.openflag4_u.how.
+                                            createhow4_u.createattrs));
 
               if(convrc == 0)
                 {
@@ -457,8 +456,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                         }
 
                       res_OPEN4.OPEN4res_u.resok4.attrset =
-                          arg_OPEN4.openhow.openflag4_u.how.createhow4_u.
-                          createattrs.attrmask;
+                          arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs.
+                          attrmask;
                     }
                   else
                     res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0;
@@ -525,9 +524,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
                   res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 2;
                   if((res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val =
-                      (uint32_t *) Mem_Alloc(res_OPEN4.OPEN4res_u.resok4.
-                                             attrset.bitmap4_len * sizeof(uint32_t))) ==
-                     NULL)
+                      (uint32_t *) Mem_Alloc(res_OPEN4.OPEN4res_u.resok4.attrset.
+                                             bitmap4_len * sizeof(uint32_t))) == NULL)
                     {
                       res_OPEN4.status = NFS4ERR_SERVERFAULT;
                       return res_OPEN4.status;
@@ -624,11 +622,10 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                  && !memcmp(arg_OPEN4.owner.owner.owner_val,
                                             pstate_found_iterate->powner->owner_val,
                                             pstate_found_iterate->powner->owner_len)
-                                 && !memcmp(pstate_found_iterate->state_data.
-                                            share.oexcl_verifier,
-                                            arg_OPEN4.openhow.openflag4_u.
-                                            how.createhow4_u.createverf,
-                                            NFS4_VERIFIER_SIZE))
+                                 && !memcmp(pstate_found_iterate->state_data.share.
+                                            oexcl_verifier,
+                                            arg_OPEN4.openhow.openflag4_u.how.
+                                            createhow4_u.createverf, NFS4_VERIFIER_SIZE))
                                 {
 
                                   /* A former open EXCLUSIVE with same owner and verifier was found, resend it */
@@ -947,8 +944,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                           switch (pstate_found_iterate->state_type)
                             {
                             case CACHE_INODE_STATE_SHARE:
-                              if((pstate_found_iterate->state_data.
-                                  share.share_access & OPEN4_SHARE_ACCESS_WRITE)
+                              if((pstate_found_iterate->state_data.share.
+                                  share_access & OPEN4_SHARE_ACCESS_WRITE)
                                  && (arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE))
                                 {
                                   res_OPEN4.status = NFS4ERR_SHARE_DENIED;
@@ -966,8 +963,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                   if(pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE)
                     {
                       /* deny read access on read denied file */
-                      if((pstate_found_iterate->state_data.
-                          share.share_deny & OPEN4_SHARE_DENY_READ)
+                      if((pstate_found_iterate->state_data.share.
+                          share_deny & OPEN4_SHARE_DENY_READ)
                          && (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ))
                         {
                           /* Seqid has to be incremented even in this case */
@@ -981,8 +978,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                         }
 
                       /* deny write access on write denied file */
-                      if((pstate_found_iterate->state_data.
-                          share.share_deny & OPEN4_SHARE_DENY_WRITE)
+                      if((pstate_found_iterate->state_data.share.
+                          share_deny & OPEN4_SHARE_DENY_WRITE)
                          && (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE))
                         {
                           /* Seqid has to be incremented even in this case */

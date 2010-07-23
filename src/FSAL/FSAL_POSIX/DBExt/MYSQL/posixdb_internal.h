@@ -17,7 +17,7 @@
 
 #ifndef _DEBUG_POSIXDB
 
-#define ReturnCode( _code_, _minor_ ) do {                   \
+#define ReturnCodeDB( _code_, _minor_ ) do {                   \
                fsal_posixdb_status_t _struct_status_;                \
                (_struct_status_).major = (_code_) ;          \
                (_struct_status_).minor = (_minor_) ;         \
@@ -26,7 +26,7 @@
 
 #else
 
-#define ReturnCode( _code_, _minor_ ) do {                   \
+#define ReturnCodeDB( _code_, _minor_ ) do {                   \
                fsal_posixdb_status_t _struct_status_;                \
                fprintf(stderr, "Exiting %s ( %s:%i ) with status code = %i/%i\n", __FUNCTION__, __FILE__, __LINE__ - 2, _code_, _minor_ ); \
                (_struct_status_).major = (_code_) ;          \
@@ -43,7 +43,7 @@
                                     DisplayLog(PQresultErrorMessage(_res_)); \
                                     PQclear(_res_);                                                     \
                                     RollbackTransaction( p_conn, _res_ );  \
-                                    ReturnCode(ERR_FSAL_POSIXDB_CMDFAILED, PQresultStatus( _res_ ));        \
+                                    ReturnCodeDB(ERR_FSAL_POSIXDB_CMDFAILED, PQresultStatus( _res_ ));        \
                                 } \
                               } while (0)
 
@@ -54,7 +54,7 @@
                                     DisplayLog(PQresultErrorMessage(_res_)); \
                                     PQclear(_res_);                     \
                                     RollbackTransaction( p_conn, _res_ );  \
-                                    ReturnCode(ERR_FSAL_POSIXDB_CMDFAILED, PQresultStatus( _res_ ));        \
+                                    ReturnCodeDB(ERR_FSAL_POSIXDB_CMDFAILED, PQresultStatus( _res_ ));        \
                                 } \
                               } while (0)
 
@@ -84,7 +84,7 @@ fsal_posixdb_status_t db_exec_sql(fsal_posixdb_conn * conn, const char *query,
  *           Another error code else.
  */
 fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,     /* IN */
-                                                fsal_handle_t * p_handle,       /* IN */
+                                                posixfsal_handle_t * p_handle,  /* IN */
                                                 fsal_path_t * p_path /* OUT */ );
 
 /**
@@ -187,7 +187,7 @@ fsal_posixdb_status_t posixdb_internal_fillFileinfoFromStrValues(fsal_posixdb_fi
 
 /* enter an entry in cache path */
 
-void fsal_posixdb_CachePath(fsal_handle_t * p_handle,   /* IN */
+void fsal_posixdb_CachePath(posixfsal_handle_t * p_handle,      /* IN */
                             fsal_path_t * p_path /* IN */ );
 
 /* invalidate cache in case of a modification */
@@ -199,13 +199,13 @@ void fsal_posixdb_InvalidateCache();
  * false else.
  */
 
-int fsal_posixdb_GetPathCache(fsal_handle_t * p_handle, /* IN */
+int fsal_posixdb_GetPathCache(posixfsal_handle_t * p_handle,    /* IN */
                               fsal_path_t * p_path /* OUT */ );
 
 /* update informations about a handle */
-int fsal_posixdb_UpdateInodeCache(fsal_handle_t * p_handle);    /* IN */
+int fsal_posixdb_UpdateInodeCache(posixfsal_handle_t * p_handle);       /* IN */
 
 /* retrieve last informations about a handle */
-int fsal_posixdb_GetInodeCache(fsal_handle_t * p_handle);       /* IN/OUT */
+int fsal_posixdb_GetInodeCache(posixfsal_handle_t * p_handle);  /* IN/OUT */
 
 #endif

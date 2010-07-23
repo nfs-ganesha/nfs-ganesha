@@ -417,10 +417,10 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
   else
     {
       /* DIR_CONTINUE */
-      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
-          mtime.seconds = time(NULL);
-      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
-          mtime.seconds = 0;
+      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime.
+          seconds = time(NULL);
+      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime.
+          seconds = 0;
       pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.ctime =
           pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime;
 
@@ -429,8 +429,8 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
        */
       if(type == DIR_BEGINNING)
         {
-          pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.
-              attributes.numlinks++;
+          pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
+              numlinks++;
         }
 
     }

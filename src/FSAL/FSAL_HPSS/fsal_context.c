@@ -96,9 +96,9 @@ static int Getsubopt(char **optionp, const char *const *tokens, char **valuep)
  * Parse FS specific option string
  * to build the export entry option.
  */
-fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, /* OUT */
-                                      fsal_path_t * p_export_path,      /* IN */
-                                      char *fs_specific_options /* IN */
+fsal_status_t HPSSFSAL_BuildExportContext(hpssfsal_export_context_t * p_export_context, /* OUT */
+                                          fsal_path_t * p_export_path,  /* IN */
+                                          char *fs_specific_options     /* IN */
     )
 {
   char subopts[256];
@@ -118,7 +118,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
     {
 
       /* cleans the export context */
-      memset(p_export_context, 0, sizeof(fsal_export_context_t));
+      memset(p_export_context, 0, sizeof(hpssfsal_export_context_t));
 
       /* copy the option string (because it is modified by getsubopt call) */
       strncpy(subopts, fs_specific_options, 256);
@@ -172,7 +172,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
 
 }
 
-fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
+fsal_status_t HPSSFSAL_InitClientContext(hpssfsal_op_context_t * p_thr_context)
 {
 
   int rc, i;
@@ -258,7 +258,7 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
  * FSAL_GetClientContext :
  * Get a user credential from its uid.
  * 
- * \param p_cred (in out, fsal_cred_t *)
+ * \param p_cred (in out, hpssfsal_cred_t *)
  *        Initialized credential to be changed
  *        for representing user.
  * \param uid (in, fsal_uid_t)
@@ -277,12 +277,12 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
  *      - ERR_FSAL_SERVERFAULT : unexpected error.
  */
 
-fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OUT  */
-                                    fsal_export_context_t * p_export_context,   /* IN */
-                                    fsal_uid_t uid,     /* IN */
-                                    fsal_gid_t gid,     /* IN */
-                                    fsal_gid_t * alt_groups,    /* IN */
-                                    fsal_count_t nb_alt_groups  /* IN */
+fsal_status_t HPSSFSAL_GetClientContext(hpssfsal_op_context_t * p_thr_context,  /* IN/OUT  */
+                                        hpssfsal_export_context_t * p_export_context,   /* IN */
+                                        fsal_uid_t uid, /* IN */
+                                        fsal_gid_t gid, /* IN */
+                                        fsal_gid_t * alt_groups,        /* IN */
+                                        fsal_count_t nb_alt_groups      /* IN */
     )
 {
 
@@ -297,7 +297,7 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
   /* if the credential is too old, renew it */
   if(time(NULL) - p_thr_context->credential.last_update > (int)CredentialLifetime)
     {
-      st = FSAL_InitClientContext(p_thr_context);
+      st = HPSSFSAL_InitClientContext(p_thr_context);
       if(FSAL_IS_ERROR(st))
         return st;
     }

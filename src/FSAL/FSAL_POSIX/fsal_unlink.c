@@ -42,10 +42,10 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
-                          fsal_name_t * p_object_name,  /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_attrib_list_t * p_parent_directory_attributes    /* [IN/OUT ] */
+fsal_status_t POSIXFSAL_unlink(posixfsal_handle_t * p_parent_directory_handle,  /* IN */
+                               fsal_name_t * p_object_name,     /* IN */
+                               posixfsal_op_context_t * p_context,      /* IN */
+                               fsal_attrib_list_t * p_parent_directory_attributes       /* [IN/OUT ] */
     )
 {
 

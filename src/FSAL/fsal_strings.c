@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:expandtab:shiftwidth=4:tabstop=4:
  */
 
 /**
@@ -15,7 +15,6 @@
 #endif
 
 #include "fsal.h"
-#include "fsal_internal.h"
 #include <string.h>
 
 /**

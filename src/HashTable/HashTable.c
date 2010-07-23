@@ -482,7 +482,7 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
     return NULL;
 
   /* Init the stats */
-  memset( (char *)ht->stat_dynamic, 0, sizeof(hash_stat_dynamic_t) * hparam.index_size ) ;
+  memset((char *)ht->stat_dynamic, 0, sizeof(hash_stat_dynamic_t) * hparam.index_size);
 
   /* Initialization of the semaphores array */
   if((ht->array_lock =

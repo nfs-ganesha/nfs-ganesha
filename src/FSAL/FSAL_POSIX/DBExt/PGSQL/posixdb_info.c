@@ -6,10 +6,11 @@
 #include "string.h"
 
 fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  /* IN */
-                                                   fsal_handle_t * p_parent_directory_handle,   /* IN/OUT */
+                                                   posixfsal_handle_t * p_parent_directory_handle,      /* IN/OUT */
                                                    fsal_name_t * p_objectname,  /* IN */
                                                    fsal_path_t * p_path,        /* OUT */
-                                                   fsal_handle_t * p_handle /* OUT */ )
+                                                   posixfsal_handle_t *
+                                                   p_handle /* OUT */ )
 {
   PGresult *p_res;
   fsal_posixdb_status_t st;
@@ -20,7 +21,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  
   /* sanity check */
   if(!p_conn || !p_handle)
     {
-      ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
     }
 
   CheckConn(p_conn);
@@ -31,10 +32,10 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  
 
   BeginTransaction(p_conn, p_res);
   /* lookup for the handle of the file */
-  if(p_parent_directory_handle && p_parent_directory_handle->id)
+  if(p_parent_directory_handle && p_parent_directory_handle->data.id)
     {
-      snprintf(handleid_str, MAX_HANDLEIDSTR_SIZE, "%lli", p_parent_directory_handle->id);
-      snprintf(handlets_str, MAX_HANDLETSSTR_SIZE, "%i", p_parent_directory_handle->ts);
+      snprintf(handleid_str, MAX_HANDLEIDSTR_SIZE, "%lli", p_parent_directory_handle->data.id);
+      snprintf(handlets_str, MAX_HANDLETSSTR_SIZE, "%i", p_parent_directory_handle->data.ts);
       p_res = PQexecPrepared(p_conn, "lookupHandleByName", 3, paramValues, NULL, NULL, 0);
       CheckResult(p_res);
     }
@@ -51,12 +52,12 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  
     {
       PQclear(p_res);
       RollbackTransaction(p_conn, p_res);
-      ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
     }
 
-  p_handle->id = atoll(PQgetvalue(p_res, 0, 0));
-  p_handle->ts = atoi(PQgetvalue(p_res, 0, 1));
-  posixdb_internal_fillFileinfoFromStrValues(&(p_handle->info), PQgetvalue(p_res, 0, 2), PQgetvalue(p_res, 0, 3), PQgetvalue(p_res, 0, 4),      /* nlink */
+  p_handle->data.id = atoll(PQgetvalue(p_res, 0, 0));
+  p_handle->data.ts = atoi(PQgetvalue(p_res, 0, 1));
+  posixdb_internal_fillFileinfoFromStrValues(&(p_handle->data.info), PQgetvalue(p_res, 0, 2), PQgetvalue(p_res, 0, 3), PQgetvalue(p_res, 0, 4),      /* nlink */
                                              PQgetvalue(p_res, 0, 5),   /* ctime */
                                              PQgetvalue(p_res, 0, 6)    /* ftype */
       );
@@ -77,7 +78,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  
       if(!(p_path->len + 1 + p_objectname->len < FSAL_MAX_PATH_LEN))
         {
           RollbackTransaction(p_conn, p_res);
-          ReturnCode(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
         }
       p_path->path[p_path->len] = '/';
       strcpy(&p_path->path[p_path->len + 1], p_objectname->name);
@@ -94,11 +95,11 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  
 
   EndTransaction(p_conn, p_res);
 
-  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+  ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 }
 
 fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,        /* IN */
-                                                     fsal_handle_t * p_object_handle,   /* IN/OUT */
+                                                     posixfsal_handle_t * p_object_handle,      /* IN/OUT */
                                                      fsal_path_t * p_paths,     /* OUT */
                                                      int paths_size,    /* IN */
                                                      int *p_count /* OUT */ )
@@ -107,7 +108,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
   fsal_posixdb_status_t st;
   char handleid_str[MAX_HANDLEIDSTR_SIZE];
   char handlets_str[MAX_HANDLETSSTR_SIZE];
-  fsal_handle_t parent_directory_handle;
+  posixfsal_handle_t parent_directory_handle;
   int i_path;
   int toomanypaths = 0;
   const char *paramValues[2] = { handleid_str, handlets_str };
@@ -115,20 +116,20 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
   /* sanity check */
   if(!p_conn || !p_object_handle || ((!p_paths || !p_count) && paths_size > 0))
     {
-      ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
     }
 
   CheckConn(p_conn);
 
 #ifdef _DEBUG_FSAL
-  printf("OBJECT_ID=%lli\n", p_object_handle->id);
+  printf("OBJECT_ID=%lli\n", p_object_handle->data.id);
 #endif
 
   BeginTransaction(p_conn, p_res);
 
   /* lookup for the handle of the file */
-  snprintf(handleid_str, MAX_HANDLEIDSTR_SIZE, "%lli", p_object_handle->id);
-  snprintf(handlets_str, MAX_HANDLETSSTR_SIZE, "%i", p_object_handle->ts);
+  snprintf(handleid_str, MAX_HANDLEIDSTR_SIZE, "%lli", p_object_handle->data.id);
+  snprintf(handlets_str, MAX_HANDLETSSTR_SIZE, "%i", p_object_handle->data.ts);
 
   if(!fsal_posixdb_GetInodeCache(p_object_handle))
     {
@@ -138,8 +139,8 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
       /* p_res contains : Handle.deviceId, Handle.inode, Handle.nlink, Handle.ctime, Handle.ftype  */
 
 #ifdef _DEBUG_FSAL
-      DisplayLog("lookupHandle(%u,%u)", (unsigned int)p_object_handle->id,
-                 (unsigned int)p_object_handle->ts);
+      DisplayLog("lookupHandle(%u,%u)", (unsigned int)p_object_handle->data.id,
+                 (unsigned int)p_object_handle->data.ts);
 #endif
 
       /* entry not found */
@@ -149,10 +150,10 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
           DisplayLog("lookupHandle=%d entries", PQntuples(p_res));
 #endif
           RollbackTransaction(p_conn, p_res);
-          ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
         }
 
-      posixdb_internal_fillFileinfoFromStrValues(&(p_object_handle->info), PQgetvalue(p_res, 0, 0), PQgetvalue(p_res, 0, 1), PQgetvalue(p_res, 0, 2),   /* nlink */
+      posixdb_internal_fillFileinfoFromStrValues(&(p_object_handle->data.info), PQgetvalue(p_res, 0, 0), PQgetvalue(p_res, 0, 1), PQgetvalue(p_res, 0, 2),   /* nlink */
                                                  PQgetvalue(p_res, 0, 3),       /* ctime */
                                                  PQgetvalue(p_res, 0, 4)        /* ftype */
           );
@@ -173,7 +174,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
       if(*p_count == 0)
         {
           RollbackTransaction(p_conn, p_res);
-          ReturnCode(ERR_FSAL_POSIXDB_NOPATH, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_NOPATH, 0);
         }
       if(*p_count > paths_size)
         {
@@ -190,8 +191,8 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
           unsigned int tmp_len;
 
           /* build the path of the parent directory */
-          parent_directory_handle.id = atoll(PQgetvalue(p_res, i_path, 1));
-          parent_directory_handle.ts = atoi(PQgetvalue(p_res, i_path, 2));
+          parent_directory_handle.data.id = atoll(PQgetvalue(p_res, i_path, 1));
+          parent_directory_handle.data.ts = atoi(PQgetvalue(p_res, i_path, 2));
 
           st = fsal_posixdb_buildOnePath(p_conn, &parent_directory_handle,
                                          &p_paths[i_path]);
@@ -210,7 +211,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
               if((tmp_len + strlen(PQgetvalue(p_res, i_path, 0)) >= FSAL_MAX_PATH_LEN))
                 {
                   RollbackTransaction(p_conn, p_res);
-                  ReturnCode(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
+                  ReturnCodeDB(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
                 }
               strcpy(&p_paths[i_path].path[tmp_len], PQgetvalue(p_res, i_path, 0));
               p_paths[i_path].len += strlen(PQgetvalue(p_res, i_path, 0));
@@ -223,7 +224,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
                   FSAL_MAX_PATH_LEN))
                 {
                   RollbackTransaction(p_conn, p_res);
-                  ReturnCode(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
+                  ReturnCodeDB(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
                 }
               p_paths[i_path].path[tmp_len] = '/';
               strcpy(&p_paths[i_path].path[tmp_len + 1], PQgetvalue(p_res, i_path, 0));
@@ -239,12 +240,12 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
 
   EndTransaction(p_conn, p_res);
 
-  ReturnCode(toomanypaths ? ERR_FSAL_POSIXDB_TOOMANYPATHS : ERR_FSAL_POSIXDB_NOERR, 0);
+  ReturnCodeDB(toomanypaths ? ERR_FSAL_POSIXDB_TOOMANYPATHS : ERR_FSAL_POSIXDB_NOERR, 0);
 }
 
 fsal_posixdb_status_t fsal_posixdb_getParentDirHandle(fsal_posixdb_conn * p_conn,       /* IN */
-                                                      fsal_handle_t * p_object_handle,  /* IN */
-                                                      fsal_handle_t * p_parent_directory_handle /* OUT */
+                                                      posixfsal_handle_t * p_object_handle,     /* IN */
+                                                      posixfsal_handle_t * p_parent_directory_handle    /* OUT */
     )
 {
   PGresult *p_res;
@@ -258,8 +259,8 @@ fsal_posixdb_status_t fsal_posixdb_getParentDirHandle(fsal_posixdb_conn * p_conn
     CheckConn(p_conn);
 
   /* no need to start a transaction, there is anly one query */
-  snprintf(handleid_str, MAX_HANDLEIDSTR_SIZE, "%lli", p_object_handle->id);
-  snprintf(handlets_str, MAX_HANDLETSSTR_SIZE, "%i", p_object_handle->ts);
+  snprintf(handleid_str, MAX_HANDLEIDSTR_SIZE, "%lli", p_object_handle->data.id);
+  snprintf(handlets_str, MAX_HANDLETSSTR_SIZE, "%i", p_object_handle->data.ts);
   p_res = PQexecPrepared(p_conn, "lookupPathsExt", 2, paramValues, NULL, NULL, 0);
   CheckResult(p_res);
 
@@ -267,20 +268,20 @@ fsal_posixdb_status_t fsal_posixdb_getParentDirHandle(fsal_posixdb_conn * p_conn
   if(!PQntuples(p_res))
     {
       PQclear(p_res);
-      ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
     }
 #ifdef _DEBUG_FSAL
   DisplayLog("lookupPathsExt");
 #endif
 
-  p_parent_directory_handle->id = atoll(PQgetvalue(p_res, 0, 1));
-  p_parent_directory_handle->ts = atoi(PQgetvalue(p_res, 0, 2));
-  posixdb_internal_fillFileinfoFromStrValues(&(p_parent_directory_handle->info), PQgetvalue(p_res, 0, 3), PQgetvalue(p_res, 0, 4), PQgetvalue(p_res, 0, 5),     /* nlink */
+  p_parent_directory_handle->data.id = atoll(PQgetvalue(p_res, 0, 1));
+  p_parent_directory_handle->data.ts = atoi(PQgetvalue(p_res, 0, 2));
+  posixdb_internal_fillFileinfoFromStrValues(&(p_parent_directory_handle->data.info), PQgetvalue(p_res, 0, 3), PQgetvalue(p_res, 0, 4), PQgetvalue(p_res, 0, 5),     /* nlink */
                                              PQgetvalue(p_res, 0, 6),   /* ctime */
                                              PQgetvalue(p_res, 0, 7)    /* ftype */
       );
 
   PQclear(p_res);
 
-  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+  ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 }

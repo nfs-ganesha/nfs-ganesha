@@ -65,8 +65,8 @@ static int pnfs_lookup_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
   argnfs4.tag.utf8string_len = 0;
   argnfs4.argarray.argarray_len = 0;
 
-  resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
-      GETFH4res_u.resok4.object.nfs_fh4_val =
+  resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.
+      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val =
       (char *)Mem_Alloc(PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN);
 
   COMPOUNDV41_ARG_ADD_OP_SEQUENCE(argnfs4, pnfsdsclient->session, pnfsdsclient->sequence);
@@ -93,11 +93,11 @@ static int pnfs_lookup_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
   ppartfile->is_ganesha = FALSE;
 
   ppartfile->handle.nfs_fh4_len =
-      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.
-      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len;
+      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].
+      nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len;
   ppartfile->handle.nfs_fh4_val =
-      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.
-      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val;
+      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].
+      nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val;
 
   return NFS4_OK;
 }                               /* pnfs_lookup_ds_partfile */

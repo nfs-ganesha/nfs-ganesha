@@ -70,7 +70,7 @@
 
 
 /** Initializes filesystem, security management... */
-static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
+static int FS_Specific_Init(fusefs_specific_initinfo_t * fs_init_info)
 {
 
   int rc = 0;
@@ -95,7 +95,7 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
 
   fs_private_data = NULL;
 
-  FSAL_InitClientContext(&ctx);
+  FUSEFSAL_InitClientContext(&ctx);
   fsal_set_thread_context(&ctx);
 
   /* call filesystem's init */
@@ -107,7 +107,7 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
 
   /* reset context now fs_private_data is known */
 
-  FSAL_InitClientContext(&ctx);
+  FUSEFSAL_InitClientContext(&ctx);
   fsal_set_thread_context(&ctx);
 
   /* initialize namespace by getting root inode number
@@ -166,7 +166,7 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
  *                                for this error.)
  *         ERR_FSAL_SEC_INIT     (Security context init error).
  */
-fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
+fsal_status_t FUSEFSAL_Init(fsal_parameter_t * init_info        /* IN */
     )
 {
 
@@ -207,7 +207,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
 }
 
 /* To be called before exiting */
-fsal_status_t FSAL_terminate()
+fsal_status_t FUSEFSAL_terminate()
 {
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

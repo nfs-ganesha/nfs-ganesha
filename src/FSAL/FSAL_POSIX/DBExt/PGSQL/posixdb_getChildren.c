@@ -24,7 +24,7 @@
  *         - another error code else.
  */
 fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      /* IN */
-                                               fsal_handle_t * p_parent_directory_handle,       /* IN */
+                                               posixfsal_handle_t * p_parent_directory_handle,  /* IN */
                                                unsigned int max_count, fsal_posixdb_child ** p_children,        /* OUT */
                                                unsigned int *p_count /* OUT */ )
 {
@@ -35,10 +35,10 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      
 
   /* sanity check */
   if(!p_conn || !p_parent_directory_handle || !(p_children) || !p_count)
-    ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+    ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
 
-  snprintf(handleid_str, MAX_HANDLEIDSTR_SIZE, "%lli", p_parent_directory_handle->id);
-  snprintf(handlets_str, MAX_HANDLETSSTR_SIZE, "%i", p_parent_directory_handle->ts);
+  snprintf(handleid_str, MAX_HANDLEIDSTR_SIZE, "%lli", p_parent_directory_handle->data.id);
+  snprintf(handlets_str, MAX_HANDLETSSTR_SIZE, "%i", p_parent_directory_handle->data.ts);
   paramValues[0] = handleid_str;
   paramValues[1] = handlets_str;
   p_res = PQexecPrepared(p_conn, "countChildren", 2, paramValues, NULL, NULL, 0);
@@ -50,7 +50,7 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      
   if(*p_count == 0)
     {
       *p_children = NULL;
-      ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
     }
 
   if(max_count && (*p_count > max_count))
@@ -58,7 +58,7 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      
       *p_children = NULL;
       DisplayLog("Children count %u exceed max_count %u in fsal_posixdb_getChildren",
                  *p_count, max_count);
-      ReturnCode(ERR_FSAL_POSIXDB_TOOMANYPATHS, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_TOOMANYPATHS, 0);
     }
 
   p_res = PQexecPrepared(p_conn, "lookupChildren", 2, paramValues, NULL, NULL, 0);
@@ -69,7 +69,7 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      
   if(*p_children == NULL)
     {
       PQclear(p_res);
-      ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
     }
 
   for(i = 0; i < *p_count; i++)
@@ -80,9 +80,9 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      
 
       FSAL_str2name(PQgetvalue(p_res, i, 2), FSAL_MAX_NAME_LEN, &((*p_children)[i].name));
 
-      (*p_children)[i].handle.id = atoll(pq_id);
-      (*p_children)[i].handle.ts = atoi(pq_ts);
-      posixdb_internal_fillFileinfoFromStrValues(&((*p_children)[i].handle.info),
+      (*p_children)[i].handle.data.id = atoll(pq_id);
+      (*p_children)[i].handle.data.ts = atoi(pq_ts);
+      posixdb_internal_fillFileinfoFromStrValues(&((*p_children)[i].handle.data.info),
                                                  PQgetvalue(p_res, i, 4),
                                                  PQgetvalue(p_res, i, 3),
                                                  PQgetvalue(p_res, i, 5),
@@ -91,5 +91,5 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      
     }
   PQclear(p_res);
 
-  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+  ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 }

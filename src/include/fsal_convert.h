@@ -35,6 +35,10 @@
 
 #include "fsal.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 /* convert error codes */
 int posix2fsal_error(int posix_errorcode);
 
@@ -76,7 +80,7 @@ fsal_time_t posix2fsal_time(time_t tsec);
  */
 #define fsal2posix_time(_time_) ((time_t)(_time_).seconds)
 
-#define high32m( a ) ( (unsigned int)( a >> 32 ) )
-#define low32m( a ) ( (unsigned int)a )
+#define my_high32m( a ) ( (unsigned int)( a >> 32 ) )
+#define my_low32m( a ) ( (unsigned int)a )
 
 #endif

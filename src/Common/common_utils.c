@@ -187,13 +187,13 @@ int StrToBoolean(char *str)
 int snprintmem(char *target, int tgt_size, caddr_t source, int mem_size)
 {
 
-  unsigned char *c = '\0';             /* the current char to be printed */
+  unsigned char *c = '\0';      /* the current char to be printed */
   char *str = target;           /* the current position in target buffer */
   int wrote = 0;
 
   for(c = (unsigned char *)source; c < ((unsigned char *)source + mem_size); c++)
     {
-      int tmp_wrote = 0 ;
+      int tmp_wrote = 0;
 
       if(wrote >= tgt_size)
         {

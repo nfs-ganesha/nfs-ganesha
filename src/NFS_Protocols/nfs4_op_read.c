@@ -334,8 +334,8 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       if((cache_status != CACHE_INODE_SUCCESS) &&
          (cache_content_cache_behaviour(entry,
                                         &datapol,
-                                        (cache_content_client_t *) (data->
-                                                                    pclient->pcontent_client),
+                                        (cache_content_client_t *) (data->pclient->
+                                                                    pcontent_client),
                                         &content_status) == CACHE_CONTENT_FULLY_CACHED)
          && (cache_status != CACHE_INODE_CACHE_CONTENT_EXISTS))
         {

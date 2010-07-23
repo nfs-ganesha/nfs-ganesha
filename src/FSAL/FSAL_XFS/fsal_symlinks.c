@@ -64,10 +64,10 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
-                            fsal_path_t * p_link_content,       /* OUT */
-                            fsal_attrib_list_t * p_link_attributes      /* [ IN/OUT ] */
+fsal_status_t XFSFSAL_readlink(xfsfsal_handle_t * p_linkhandle, /* IN */
+                               xfsfsal_op_context_t * p_context,        /* IN */
+                               fsal_path_t * p_link_content,    /* OUT */
+                               fsal_attrib_list_t * p_link_attributes   /* [ IN/OUT ] */
     )
 {
 
@@ -87,7 +87,7 @@ fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
   /* Read the link on the filesystem */
 
   TakeTokenFSCall();
-  rc = readlink_by_handle(p_linkhandle->handle_val, p_linkhandle->handle_len,
+  rc = readlink_by_handle(p_linkhandle->data.handle_val, p_linkhandle->data.handle_len,
                           link_content_out, FSAL_MAX_PATH_LEN);
   errsv = errno;
   ReleaseTokenFSCall();
@@ -107,7 +107,7 @@ fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
   if(p_link_attributes)
     {
 
-      status = FSAL_getattrs(p_linkhandle, p_context, p_link_attributes);
+      status = XFSFSAL_getattrs(p_linkhandle, p_context, p_link_attributes);
 
       /* On error, we set a flag in the returned attributes */
 
@@ -152,13 +152,13 @@ fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
-                           fsal_name_t * p_linkname,    /* IN */
-                           fsal_path_t * p_linkcontent, /* IN */
-                           fsal_op_context_t * p_context,       /* IN */
-                           fsal_accessmode_t accessmode,        /* IN (ignored) */
-                           fsal_handle_t * p_link_handle,       /* OUT */
-                           fsal_attrib_list_t * p_link_attributes       /* [ IN/OUT ] */
+fsal_status_t XFSFSAL_symlink(xfsfsal_handle_t * p_parent_directory_handle,     /* IN */
+                              fsal_name_t * p_linkname, /* IN */
+                              fsal_path_t * p_linkcontent,      /* IN */
+                              xfsfsal_op_context_t * p_context, /* IN */
+                              fsal_accessmode_t accessmode,     /* IN (ignored) */
+                              xfsfsal_handle_t * p_link_handle, /* OUT */
+                              fsal_attrib_list_t * p_link_attributes    /* [ IN/OUT ] */
     )
 {
 
@@ -235,7 +235,7 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
   if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
 
-  /* Build fsal_handle_t */
+  /* Build xfsfsal_handle_t */
   /* build symlink path */
   TakeTokenFSCall();
   rc = fstatat(fd, p_linkname->name, &lbuffstat, AT_SYMLINK_NOFOLLOW);

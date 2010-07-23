@@ -15,8 +15,8 @@ int main(void)
   int i;
   int field_handle;
   char path[FSAL_MAX_PATH_LEN];
-  fsal_handle_t handle;
-  fsal_handle_t handle2;
+  posixfsal_handle_t handle;
+  posixfsal_handle_t handle2;
   fsal_posixdb_fileinfo_t info;
   fsal_path_t fsalpath;
   fsal_name_t fsalname;
@@ -48,7 +48,7 @@ int main(void)
      info.inode = 2;
      info.nlink = 23;
 
-     memset(&handle2, 0, sizeof(fsal_handle_t));
+     memset(&handle2, 0, sizeof(posixfsal_handle_t));
      memset(&fsalname, 0, sizeof(fsal_name_t));
 
      st = fsal_posixdb_add( p_conn, &info, &handle2, &fsalname, &handle);
@@ -64,7 +64,7 @@ int main(void)
      info.inode = 2;
      info.nlink = 21;
 
-     memcpy(&handle2, &handle, sizeof(fsal_handle_t));
+     memcpy(&handle2, &handle, sizeof(posixfsal_handle_t));
      memset(&fsalname, 0, sizeof(fsal_name_t));
      strcpy(fsalname.name, "tmp");
      fsalname.len=3;

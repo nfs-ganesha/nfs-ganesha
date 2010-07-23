@@ -329,10 +329,10 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
       if(pnfs_status == NFS4ERR_NOENT)
         {
           if((pnfs_status = pnfs_create_ds_file(&pclient->pnfsclient,
-                                                pentry_file->object.file.
-                                                attributes.fileid,
-                                                &pentry_file->object.file.
-                                                pnfs_file.ds_file)) != NFS4_OK)
+                                                pentry_file->object.file.attributes.
+                                                fileid,
+                                                &pentry_file->object.file.pnfs_file.
+                                                ds_file)) != NFS4_OK)
             {
 
               DisplayLogLevel(NIV_DEBUG, "OPEN PNFS CREATE DS FILE : Error %u",

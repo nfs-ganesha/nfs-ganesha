@@ -48,7 +48,7 @@ fsal_u64_t fs2fsal_64( <your fs 64bits type> );
 
 fsal_fsid_t fs2fsal_fsid( <you fs fsid type> );
 
-fsal_status_t fsal2fs_attribset( fsal_handle_t  * p_fsal_handle,
+fsal_status_t fsal2fs_attribset( proxyfsal_handle_t  * p_fsal_handle,
                                  fsal_attrib_list_t  * p_attrib_set ,
                                 <depends on your fs way of setting attributes> );
 
