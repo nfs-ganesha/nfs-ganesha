@@ -352,6 +352,10 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           strncpy(pparam->stats_per_client_directory, key_value, MAXPATHLEN);
         }
+      else if(!strcasecmp(key_name, "FSAL_Shared_Libraray"))
+        {
+          strncpy(pparam->fsal_shared_library, key_value, MAXPATHLEN);
+        }
       else
         {
           fprintf(stderr,
@@ -1314,3 +1318,70 @@ void Print_param_in_log(nfs_parameter_t * pparam)
   DisplayLog("NFS PARAM : core_param.nb_worker = %d", pparam->core_param.nb_worker);
   Print_param_worker_in_log(&(pparam->worker_param));
 }                               /* Print_param_in_log */
+
+int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib)
+{
+  int var_max;
+  int var_index;
+  int err;
+  char *key_name;
+  char *key_value;
+  config_item_t block;
+  unsigned int found = FALSE;
+  config_file_t config_struct;
+
+  /* Is the config tree initialized ? */
+  if(configPath == NULL || PathLib == NULL)
+    return 1;
+
+  config_struct = config_ParseFile(configPath);
+
+  if(!config_struct)
+    {
+      DisplayLog("NFS STARTUP: Error while parsing %s: %s", configPath,
+                 config_GetErrorMsg());
+      exit(1);
+    }
+
+  /* Get the config BLOCK */
+  if((block = config_FindItemByName(config_struct, CONF_LABEL_NFS_CORE)) == NULL)
+    {
+      /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_CORE  ) ; */
+      return 1;
+    }
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    {
+      /* Expected to be a block */
+      return 1;
+    }
+
+  var_max = config_GetNbItems(block);
+
+  for(var_index = 0; var_index < var_max; var_index++)
+    {
+      config_item_t item;
+
+      item = config_GetItemByIndex(block, var_index);
+
+      /* Get key's name */
+      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
+        {
+          fprintf(stderr,
+                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  var_index, CONF_LABEL_NFS_CORE);
+          return CACHE_INODE_INVALID_ARGUMENT;
+        }
+
+      if(!strcasecmp(key_name, "FSAL_Shared_Libraray"))
+        {
+          strncpy(PathLib, key_value, MAXPATHLEN);
+          found = TRUE;
+        }
+
+    }
+
+  if(!found)
+    return 1;
+
+  return 0;
+}                               /* nfs_get_fsalpathlib_conf */

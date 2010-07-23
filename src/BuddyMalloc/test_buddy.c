@@ -201,10 +201,10 @@ void *TEST1(void *arg)
 #endif
 
   /* destroy thread resources */
-  if ( rc = BuddyDestroy() )
-  {
-        printf("ERROR in BuddyDestroy: %d\n", rc );
-  }
+  if(rc = BuddyDestroy())
+    {
+      printf("ERROR in BuddyDestroy: %d\n", rc);
+    }
 
   return NULL;
 
@@ -281,10 +281,10 @@ void *TEST2(void *arg)
 #endif
 
   /* destroy thread resources */
-  if ( rc = BuddyDestroy() )
-  {
-        printf("ERROR in BuddyDestroy: %d\n", rc );
-  }
+  if(rc = BuddyDestroy())
+    {
+      printf("ERROR in BuddyDestroy: %d\n", rc);
+    }
 
   return NULL;
 
@@ -353,10 +353,10 @@ void *TEST3(void *arg)
 #endif
 
   /* destroy thread resources */
-  if ( rc = BuddyDestroy() )
-  {
-        printf("ERROR in BuddyDestroy: %d\n", rc );
-  }
+  if(rc = BuddyDestroy())
+    {
+      printf("ERROR in BuddyDestroy: %d\n", rc);
+    }
 
   return NULL;
 
@@ -479,10 +479,10 @@ void *TEST4(void *arg)
 #endif
 
   /* destroy thread resources */
-  if ( rc = BuddyDestroy() )
-  {
-        printf("ERROR in BuddyDestroy: %d\n", rc );
-  }
+  if(rc = BuddyDestroy())
+    {
+      printf("ERROR in BuddyDestroy: %d\n", rc);
+    }
 
   return NULL;
 
@@ -635,10 +635,10 @@ void *TEST5(void *arg)
 #endif
 
   /* destroy thread resources */
-  if ( rc = BuddyDestroy() )
-  {
-        printf("ERROR in BuddyDestroy: %d\n", rc );
-  }
+  if(rc = BuddyDestroy())
+    {
+      printf("ERROR in BuddyDestroy: %d\n", rc);
+    }
 
   return NULL;
 
@@ -712,10 +712,10 @@ void *TEST6(void *arg)
     }
 
   /* destroy thread resources */
-  if ( rc = BuddyDestroy() )
-  {
-        printf("ERROR in BuddyDestroy: %d\n", rc );
-  }
+  if(rc = BuddyDestroy())
+    {
+      printf("ERROR in BuddyDestroy: %d\n", rc);
+    }
 
   return NULL;
 
@@ -848,10 +848,10 @@ void *TEST7(void *arg)
   print_mallinfo();
 
   /* destroy thread resources */
-  if ( rc = BuddyDestroy() )
-  {
-        printf("ERROR in BuddyDestroy: %d\n", rc );
-  }
+  if(rc = BuddyDestroy())
+    {
+      printf("ERROR in BuddyDestroy: %d\n", rc);
+    }
 
   return NULL;
 
@@ -980,10 +980,10 @@ void *TEST8(void *arg)
     }
 
   /* destroy thread resources */
-  if ( rc = BuddyDestroy() )
-  {
-        printf("ERROR in BuddyDestroy: %d\n", rc );
-  }
+  if(rc = BuddyDestroy())
+    {
+      printf("ERROR in BuddyDestroy: %d\n", rc);
+    }
 
   return NULL;
 
@@ -1058,10 +1058,10 @@ void *TEST9(void *arg)
     }
 
   /* destroy thread resources */
-  if ( rc = BuddyDestroy() )
-  {
-        printf("ERROR in BuddyDestroy: %d\n", rc );
-  }
+  if(rc = BuddyDestroy())
+    {
+      printf("ERROR in BuddyDestroy: %d\n", rc);
+    }
 #endif
 
   return NULL;
@@ -1169,7 +1169,6 @@ void *TESTA(void *arg)
   else
         printf("All resources released successfully\n");
   
-
   return NULL;
 
 }
@@ -1245,10 +1244,10 @@ void *TESTB(void *arg)
   BuddyFree(pointer);
 
   /* destroy thread resources */
-  if ( rc = BuddyDestroy() )
-  {
-        printf("ERROR in BuddyDestroy: %d\n", rc );
-  }
+  if(rc = BuddyDestroy())
+    {
+      printf("ERROR in BuddyDestroy: %d\n", rc);
+    }
 
   return NULL;
 

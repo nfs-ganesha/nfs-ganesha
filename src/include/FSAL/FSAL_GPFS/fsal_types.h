@@ -213,8 +213,8 @@ typedef struct fsal_export_context_t
 
 typedef struct
 {
+  fsal_export_context_t *export_context;        /* Must be the first entry in this structure */
   fsal_cred_t credential;
-  fsal_export_context_t *export_context;
 } fsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
@@ -256,6 +256,6 @@ typedef struct fsal_file__
   int ro;                       /* read only file ? */
 } fsal_file_t;
 
-#define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->fd )
+//#define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->fd )
 
 #endif                          /* _FSAL_TYPES__SPECIFIC_H */

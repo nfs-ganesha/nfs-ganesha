@@ -158,8 +158,8 @@ int nfs_Getattr(nfs_arg_t * parg,
 
         case NFS_V3:
           if(nfs3_FSALattr_To_Fattr(pexport, &attr,
-                                    &(pres->res_getattr3.GETATTR3res_u.
-                                      resok.obj_attributes)) == 0)
+                                    &(pres->res_getattr3.GETATTR3res_u.resok.
+                                      obj_attributes)) == 0)
             {
               nfs_SetFailedStatus(pcontext, pexport,
                                   preq->rq_vers,

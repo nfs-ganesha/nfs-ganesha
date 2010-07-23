@@ -75,9 +75,9 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
-                               fsal_accessflags_t access_type,  /* IN */
-                               fsal_attrib_list_t * object_attributes   /* IN */
+fsal_status_t HPSSFSAL_test_access(hpssfsal_op_context_t * p_context,   /* IN */
+                                   fsal_accessflags_t access_type,      /* IN */
+                                   fsal_attrib_list_t * object_attributes       /* IN */
     )
 {
   fsal_accessflags_t missing_access;
@@ -241,7 +241,7 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
  * this must be ensured by the cache_inode layer, using FSAL_getattrs,
  * for example.
  *
- * \param cred (in fsal_cred_t *) user's identifier.
+ * \param cred (in hpssfsal_cred_t *) user's identifier.
  * \param candidate_attrbutes the attributes we want to set on the object
  * \param parent_attributes (in fsal_attrib_list_t *) the cached attributes
  *        for the object.
@@ -253,9 +253,9 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t FSAL_setattr_access(fsal_op_context_t * p_context,        /* IN */
-                                  fsal_attrib_list_t * pcandidate_attributes,   /* IN */
-                                  fsal_attrib_list_t * pobject_attributes       /* IN */
+fsal_status_t HPSSFSAL_setattr_access(hpssfsal_op_context_t * p_context,        /* IN */
+                                      fsal_attrib_list_t * pcandidate_attributes,       /* IN */
+                                      fsal_attrib_list_t * pobject_attributes   /* IN */
     )
 {
   fsal_status_t fsal_status;
@@ -297,7 +297,7 @@ fsal_status_t FSAL_setattr_access(fsal_op_context_t * p_context,        /* IN */
  * test if a client identified by cred can be renamed on the object
  * knowing the parents attributes
  *
- * \param pcontext (in fsal_cred_t *) user's context.
+ * \param pcontext (in hpssfsal_cred_t *) user's context.
  * \param pattrsrc      source directory attributes
  * \param pattrdest     destination directory attributes
  *
@@ -309,17 +309,17 @@ fsal_status_t FSAL_setattr_access(fsal_op_context_t * p_context,        /* IN */
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 
-fsal_status_t FSAL_rename_access(fsal_op_context_t * pcontext,  /* IN */
-                                 fsal_attrib_list_t * pattrsrc, /* IN */
-                                 fsal_attrib_list_t * pattrdest)        /* IN */
+fsal_status_t HPSSFSAL_rename_access(hpssfsal_op_context_t * pcontext,  /* IN */
+                                     fsal_attrib_list_t * pattrsrc,     /* IN */
+                                     fsal_attrib_list_t * pattrdest)    /* IN */
 {
   fsal_status_t fsal_status;
 
-  fsal_status = FSAL_test_access(pcontext, FSAL_W_OK, pattrsrc);
+  fsal_status = HPSSFSAL_test_access(pcontext, FSAL_W_OK, pattrsrc);
   if(FSAL_IS_ERROR(fsal_status))
     Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_rename_access);
 
-  fsal_status = FSAL_test_access(pcontext, FSAL_W_OK, pattrdest);
+  fsal_status = HPSSFSAL_test_access(pcontext, FSAL_W_OK, pattrdest);
   if(FSAL_IS_ERROR(fsal_status))
     Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_rename_access);
 
@@ -331,7 +331,7 @@ fsal_status_t FSAL_rename_access(fsal_op_context_t * pcontext,  /* IN */
  * FSAL_create_access :
  * test if a client identified by cred can create an object within a directory knowing its attributes
  *
- * \param pcontext (in fsal_cred_t *) user's context.
+ * \param pcontext (in hpssfsal_cred_t *) user's context.
  * \param pattr      source directory attributes
  *
  * \return Major error codes :
@@ -341,12 +341,12 @@ fsal_status_t FSAL_rename_access(fsal_op_context_t * pcontext,  /* IN */
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t FSAL_create_access(fsal_op_context_t * pcontext,  /* IN */
-                                 fsal_attrib_list_t * pattr)    /* IN */
+fsal_status_t HPSSFSAL_create_access(hpssfsal_op_context_t * pcontext,  /* IN */
+                                     fsal_attrib_list_t * pattr)        /* IN */
 {
   fsal_status_t fsal_status;
 
-  fsal_status = FSAL_test_access(pcontext, FSAL_W_OK, pattr);
+  fsal_status = HPSSFSAL_test_access(pcontext, FSAL_W_OK, pattr);
   if(FSAL_IS_ERROR(fsal_status))
     Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_create_access);
 
@@ -358,7 +358,7 @@ fsal_status_t FSAL_create_access(fsal_op_context_t * pcontext,  /* IN */
  * FSAL_unlink_access :
  * test if a client identified by cred can unlink on a directory knowing its attributes
  *
- * \param pcontext (in fsal_cred_t *) user's context.
+ * \param pcontext (in hpssfsal_cred_t *) user's context.
  * \param pattr      source directory attributes
  *
  * \return Major error codes :
@@ -369,12 +369,12 @@ fsal_status_t FSAL_create_access(fsal_op_context_t * pcontext,  /* IN */
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 
-fsal_status_t FSAL_unlink_access(fsal_op_context_t * pcontext,  /* IN */
-                                 fsal_attrib_list_t * pattr)    /* IN */
+fsal_status_t HPSSFSAL_unlink_access(hpssfsal_op_context_t * pcontext,  /* IN */
+                                     fsal_attrib_list_t * pattr)        /* IN */
 {
   fsal_status_t fsal_status;
 
-  fsal_status = FSAL_test_access(pcontext, FSAL_W_OK, pattr);
+  fsal_status = HPSSFSAL_test_access(pcontext, FSAL_W_OK, pattr);
   if(FSAL_IS_ERROR(fsal_status))
     Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_unlink_access);
 
@@ -386,7 +386,7 @@ fsal_status_t FSAL_unlink_access(fsal_op_context_t * pcontext,  /* IN */
  * FSAL_link_access :
  * test if a client identified by cred can link to a directory knowing its attributes
  *
- * \param pcontext (in fsal_cred_t *) user's context.
+ * \param pcontext (in hpssfsal_cred_t *) user's context.
  * \param pattr      destination directory attributes
  *
  * \return Major error codes :
@@ -397,12 +397,12 @@ fsal_status_t FSAL_unlink_access(fsal_op_context_t * pcontext,  /* IN */
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 
-fsal_status_t FSAL_link_access(fsal_op_context_t * pcontext,    /* IN */
-                               fsal_attrib_list_t * pattr)      /* IN */
+fsal_status_t HPSSFSAL_link_access(hpssfsal_op_context_t * pcontext,    /* IN */
+                                   fsal_attrib_list_t * pattr)  /* IN */
 {
   fsal_status_t fsal_status;
 
-  fsal_status = FSAL_test_access(pcontext, FSAL_W_OK, pattr);
+  fsal_status = HPSSFSAL_test_access(pcontext, FSAL_W_OK, pattr);
   if(FSAL_IS_ERROR(fsal_status))
     Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_link_access);
 
@@ -425,9 +425,9 @@ fsal_status_t FSAL_link_access(fsal_op_context_t * pcontext,    /* IN */
  *        - ERR_FSAL_INVAL        Invalid argument(s)
  */
 
-fsal_status_t FSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
-                               fsal_attrib_list_t * pnew_attr,
-                               fsal_attrib_list_t * presult_attr)
+fsal_status_t HPSSFSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
+                                   fsal_attrib_list_t * pnew_attr,
+                                   fsal_attrib_list_t * presult_attr)
 {
   if(pinit_attr == NULL || pnew_attr == NULL || presult_attr == NULL)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_merge_attrs);

@@ -48,6 +48,12 @@
 #include "config_parsing.h"
 #include "err_fsal.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <ctype.h>
+
 #define LPX64 "%#llx"
 #include <asm/types.h>
 #include <lustre/liblustreapi.h>
@@ -61,103 +67,99 @@
 /* -------------------------------------------
  *      POSIX FS dependant definitions
  * ------------------------------------------- */
-
-#define FSAL_MAX_NAME_LEN   NAME_MAX
-#define FSAL_MAX_PATH_LEN   PATH_MAX
+#include "fsal_glue_const.h"
 
 #define FSAL_NGROUPS_MAX  32
 
-/* prefered readdir size */
-#define FSAL_READDIR_SIZE 2048
+#define fsal_handle_t lustrefsal_handle_t
+#define fsal_op_context_t lustrefsal_op_context_t
+#define fsal_file_t lustrefsal_file_t
+#define fsal_dir_t lustrefsal_dir_t
+#define fsal_export_context_t lustrefsal_export_context_t
+#define fsal_lockdesc_t lustrefsal_lockdesc_t
+#define fsal_cookie_t lustrefsal_cookie_t
+#define fs_specific_initinfo_t lustrefs_specific_initinfo_t
+#define fsal_cred_t lustrefsal_cred_t
 
-/** object name.  */
 
-typedef struct fsal_name__
-{
-  char name[FSAL_MAX_NAME_LEN];
-  unsigned int len;
-} fsal_name_t;
-
-/** object path.  */
-
-typedef struct fsal_path__
-{
-  char path[FSAL_MAX_PATH_LEN];
-  unsigned int len;
-} fsal_path_t;
-
-#define FSAL_NAME_INITIALIZER {"",0}
-#define FSAL_PATH_INITIALIZER {"",0}
-
-static const fsal_name_t FSAL_DOT = { ".", 1 };
-static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
-
-typedef struct
-{
-  lustre_fid fid;
-  /* used for FSAL_DIGEST_FILEID */
-  unsigned long long inode;
-} fsal_handle_t;  /**< FS object handle */
+typedef union {
+ struct
+  {
+    lustre_fid fid;
+    /* used for FSAL_DIGEST_FILEID */
+    unsigned long long inode;
+  } data ;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_HANDLE_T_SIZE];
+#endif
+} lustrefsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */
 
-typedef struct fsal_cred__
+typedef struct lustrefsal_cred__
 {
   uid_t user;
   gid_t group;
   fsal_count_t nbgroups;
   gid_t alt_groups[FSAL_NGROUPS_MAX];
-} fsal_cred_t;
+} lustrefsal_cred_t;
 
-typedef struct fsal_export_context_t
+typedef struct lustrefsal_export_context_t
 {
   char mount_point[FSAL_MAX_PATH_LEN];
   unsigned int mnt_len;         /* for optimizing concatenation */
   dev_t dev_id;
-} fsal_export_context_t;
+} lustrefsal_export_context_t;
 
-#define FSAL_EXPORT_CONTEXT_SPECIFIC( _pexport_context ) (uint64_t)((_pexport_context)->dev_id)
+//#define FSAL_EXPORT_CONTEXT_SPECIFIC( _pexport_context ) (uint64_t)((_pexport_context)->dev_id)
 
 typedef struct
 {
-  fsal_cred_t credential;
-  fsal_export_context_t *export_context;
-} fsal_op_context_t;
+  lustrefsal_export_context_t *export_context;  /* Must be the first entry in this structure */
+  lustrefsal_cred_t credential;
+} lustrefsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 
-typedef struct fs_specific_initinfo__
+typedef struct lustrefs_specific_initinfo__
 {
   int dummy;
-} fs_specific_initinfo_t;
+} lustrefs_specific_initinfo_t;
 
 /**< directory cookie */
-typedef struct fsal_cookie__
+typedef union
 {
-  off_t cookie;
-} fsal_cookie_t;
+ struct 
+  {
+    off_t cookie;
+  } data ;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_COOKIE_T_SIZE];
+#endif
+} lustrefsal_cookie_t;
 
-static const fsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
+//static const lustrefsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
 
-typedef void *fsal_lockdesc_t;   /**< not implemented for now */
+typedef void *lustrefsal_lockdesc_t;   /**< not implemented for now */
 
 /* Directory stream descriptor. */
 
-typedef struct fsal_dir__
+typedef struct lustrefsal_dir__
 {
   DIR *p_dir;
-  fsal_op_context_t context;    /* credential for accessing the directory */
+  lustrefsal_op_context_t context;      /* credential for accessing the directory */
   fsal_path_t path;
-  fsal_handle_t handle;
-} fsal_dir_t;
+  lustrefsal_handle_t handle;
+} lustrefsal_dir_t;
 
-typedef struct fsal_file__
+typedef struct lustrefsal_file__
 {
   int fd;
   int ro;                       /* read only file ? */
-} fsal_file_t;
+} lustrefsal_file_t;
 
-#define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->fd )
+//#define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->fd )
+
 
 #endif                          /* _FSAL_TYPES__SPECIFIC_H */

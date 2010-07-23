@@ -1167,7 +1167,7 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
   if(context->Config.memory_area_size <= (size_header64 + MIN_ALLOC_SIZE))
     {
       fprintf(stderr, "Invalid size %llu (too small).\n",
-             (unsigned long long)context->Config.memory_area_size);
+              (unsigned long long)context->Config.memory_area_size);
       return BUDDY_ERR_EINVAL;
     }
 
@@ -1176,7 +1176,7 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
   if(!(m = Log2Ceil(context->Config.memory_area_size)))
     {
       fprintf(stderr, "Invalid size %llu (too large).\n",
-             (unsigned long long)context->Config.memory_area_size);
+              (unsigned long long)context->Config.memory_area_size);
       return BUDDY_ERR_EINVAL;
     }
 
@@ -1924,28 +1924,28 @@ BUDDY_ADDR_T BuddyCalloc(size_t NumberOfElements, size_t ElementSize)
 
   return ptr;
 
-} /* BuddyCalloc */
+}                               /* BuddyCalloc */
 
 /**
  *  Release all thread resources.
  */
 int BuddyDestroy()
 {
-        BuddyThreadContext_t *context;
-        BuddyBlock_t *p_block;
-        unsigned int i;
-        int rc;
+  BuddyThreadContext_t *context;
+  BuddyBlock_t *p_block;
+  unsigned int i;
+  int rc;
 
-        /* Ensure thread safety. */
-        context = GetThreadContext();
+  /* Ensure thread safety. */
+  context = GetThreadContext();
 
-        /* sanity checks */
-        if(!context)
-                return BUDDY_ERR_EINVAL;
+  /* sanity checks */
+  if(!context)
+    return BUDDY_ERR_EINVAL;
 
-        /* Not initialized */
-        if(!context->initialized)
-                return BUDDY_ERR_NOTINIT;
+  /* Not initialized */
+  if(!context->initialized)
+    return BUDDY_ERR_NOTINIT;
 
 #ifndef _MONOTHREAD_MEMALLOC
         /* Destroying thread resources must be done
@@ -1969,7 +1969,6 @@ int BuddyDestroy()
         /* mutex is destroyed, ne need to release it */
         return BUDDY_SUCCESS;
 }
-
 
 
 /**

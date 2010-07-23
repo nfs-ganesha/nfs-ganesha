@@ -57,10 +57,10 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_get_quota(fsal_path_t * pfsal_path,  /* IN */
-                             int quota_type,    /* IN */
-                             fsal_uid_t fsal_uid,       /* IN */
-                             fsal_quota_t * pquota)     /* OUT */
+fsal_status_t POSIXFSAL_get_quota(fsal_path_t * pfsal_path,     /* IN */
+                                  int quota_type,       /* IN */
+                                  fsal_uid_t fsal_uid,  /* IN */
+                                  fsal_quota_t * pquota)        /* OUT */
 {
   struct dqblk fs_quota;
   char fs_spec[MAXPATHLEN];
@@ -110,11 +110,11 @@ fsal_status_t FSAL_get_quota(fsal_path_t * pfsal_path,  /* IN */
  *        - Another error code if an error occured.
  */
 
-fsal_status_t FSAL_set_quota(fsal_path_t * pfsal_path,  /* IN */
-                             int quota_type,    /* IN */
-                             fsal_uid_t fsal_uid,       /* IN */
-                             fsal_quota_t * pquota,     /* IN */
-                             fsal_quota_t * presquota)  /* OUT */
+fsal_status_t POSIXFSAL_set_quota(fsal_path_t * pfsal_path,     /* IN */
+                                  int quota_type,       /* IN */
+                                  fsal_uid_t fsal_uid,  /* IN */
+                                  fsal_quota_t * pquota,        /* IN */
+                                  fsal_quota_t * presquota)     /* OUT */
 {
   struct dqblk fs_quota;
   fsal_status_t fsal_status;
@@ -165,7 +165,7 @@ fsal_status_t FSAL_set_quota(fsal_path_t * pfsal_path,  /* IN */
 
   if(presquota != NULL)
     {
-      fsal_status = FSAL_get_quota(pfsal_path, quota_type, fsal_uid, presquota);
+      fsal_status = POSIXFSAL_get_quota(pfsal_path, quota_type, fsal_uid, presquota);
 
       if(FSAL_IS_ERROR(fsal_status))
         return fsal_status;

@@ -36,12 +36,12 @@
 #include "handle_mapping/handle_mapping.h"
 #endif
 
-extern fs_specific_initinfo_t global_fsal_proxy_specific_info;
+extern proxyfs_specific_initinfo_t global_fsal_proxy_specific_info;
 
 /* case unsensitivity */
 #define STRCMP   strcasecmp
 
-char *FSAL_GetFSName()
+char *PROXYFSAL_GetFSName()
 {
   return "NFSv4 PROXY";
 }
@@ -62,8 +62,8 @@ char *FSAL_GetFSName()
  *         - Segfault if status is a NULL pointer.
  */
 
-int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
-                   fsal_status_t * status)
+int PROXYFSAL_handlecmp(proxyfsal_handle_t * handle1, proxyfsal_handle_t * handle2,
+                        fsal_status_t * status)
 {
   *status = FSAL_STATUS_NO_ERROR;
 
@@ -74,15 +74,15 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
     }
 
   /* Check if size are the same for underlying's server FH */
-  if(handle1->srv_handle_len != handle2->srv_handle_len)
+  if(handle1->data.srv_handle_len != handle2->data.srv_handle_len)
     return -1;
 
   /* Check timestamp for server's instance (take care when volatile FH will be used) */
-  if(handle1->timestamp != handle2->timestamp)
+  if(handle1->data.timestamp != handle2->data.timestamp)
     return -1;
 
   /* At last, check underlying FH value. We use the fact that srv_handle_len is the same */
-  if(memcmp(handle1->srv_handle_val, handle2->srv_handle_val, handle1->srv_handle_len))
+  if(memcmp(handle1->data.srv_handle_val, handle2->data.srv_handle_val, handle1->data.srv_handle_len))
     return -1;
 
   /* If this point is reached, then the FH are the same */
@@ -103,9 +103,10 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
  * \return The hash value
  */
 
-unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
-                                      unsigned int cookie,
-                                      unsigned int alphabet_len, unsigned int index_size)
+unsigned int PROXYFSAL_Handle_to_HashIndex(proxyfsal_handle_t * p_handle,
+                                           unsigned int cookie,
+                                           unsigned int alphabet_len,
+                                           unsigned int index_size)
 {
   unsigned int cpt = 0;
   unsigned int sum = 0;
@@ -116,23 +117,23 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
    * chars after the end of the handle. We must avoid this by skipping the last loop
    * and doing a special processing for the last bytes */
 
-  mod = p_handle->srv_handle_len % sizeof(unsigned int);
+  mod = p_handle->data.srv_handle_len % sizeof(unsigned int);
 
   sum = cookie;
-  for(cpt = 0; cpt < p_handle->srv_handle_len - mod; cpt += sizeof(unsigned int))
+  for(cpt = 0; cpt < p_handle->data.srv_handle_len - mod; cpt += sizeof(unsigned int))
     {
-      memcpy(&extract, &(p_handle->srv_handle_val[cpt]), sizeof(unsigned int));
+      memcpy(&extract, &(p_handle->data.srv_handle_val[cpt]), sizeof(unsigned int));
       sum = (3 * sum + 5 * extract + 1999) % index_size;
     }
 
   if(mod)
     {
       extract = 0;
-      for(cpt = p_handle->srv_handle_len - mod; cpt < p_handle->srv_handle_len; cpt++)
+      for(cpt = p_handle->data.srv_handle_len - mod; cpt < p_handle->data.srv_handle_len; cpt++)
         {
           /* shift of 1 byte */
           extract <<= 8;
-          extract |= (unsigned int)p_handle->srv_handle_val[cpt];
+          extract |= (unsigned int)p_handle->data.srv_handle_val[cpt];
         }
       sum = (3 * sum + 5 * extract + 1999) % index_size;
     }
@@ -152,7 +153,8 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cookie)
+unsigned int PROXYFSAL_Handle_to_RBTIndex(proxyfsal_handle_t * p_handle,
+                                          unsigned int cookie)
 {
   unsigned int h = 0;
   unsigned int cpt = 0;
@@ -165,22 +167,22 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
    * chars after the end of the handle. We must avoid this by skipping the last loop
    * and doing a special processing for the last bytes */
 
-  mod = p_handle->srv_handle_len % sizeof(unsigned int);
+  mod = p_handle->data.srv_handle_len % sizeof(unsigned int);
 
-  for(cpt = 0; cpt < p_handle->srv_handle_len - mod; cpt += sizeof(unsigned int))
+  for(cpt = 0; cpt < p_handle->data.srv_handle_len - mod; cpt += sizeof(unsigned int))
     {
-      memcpy(&extract, &(p_handle->srv_handle_val[cpt]), sizeof(unsigned int));
+      memcpy(&extract, &(p_handle->data.srv_handle_val[cpt]), sizeof(unsigned int));
       h = (857 * h ^ extract) % 715827883;
     }
 
   if(mod)
     {
       extract = 0;
-      for(cpt = p_handle->srv_handle_len - mod; cpt < p_handle->srv_handle_len; cpt++)
+      for(cpt = p_handle->data.srv_handle_len - mod; cpt < p_handle->data.srv_handle_len; cpt++)
         {
           /* shift of 1 byte */
           extract <<= 8;
-          extract |= (unsigned int)p_handle->srv_handle_val[cpt];
+          extract |= (unsigned int)p_handle->data.srv_handle_val[cpt];
         }
       h = (857 * h ^ extract) % 715827883;
     }
@@ -190,7 +192,7 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
 
 /**
  * FSAL_DigestHandle :
- *  Convert an fsal_handle_t to a buffer
+ *  Convert an proxyfsal_handle_t to a buffer
  *  to be included into NFS handles,
  *  or another digest.
  *
@@ -207,10 +209,10 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
 
 #define NFSV4_FH_OPAQUE_SIZE 95 /* Take care of coherency with size of file_handle_v4_t::fsopaque */
 
-fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t output_type,  /* IN */
-                                fsal_handle_t * in_fsal_handle, /* IN */
-                                caddr_t out_buff        /* OUT */
+fsal_status_t PROXYFSAL_DigestHandle(proxyfsal_export_context_t * p_expcontext, /* IN */
+                                     fsal_digesttype_t output_type,     /* IN */
+                                     proxyfsal_handle_t * in_fsal_handle,       /* IN */
+                                     caddr_t out_buff   /* OUT */
     )
 {
 #ifdef _HANDLE_MAPPING
@@ -221,7 +223,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
   if(!in_fsal_handle || !out_buff || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  if(in_fsal_handle->srv_handle_len + sizeof(fsal_u64_t) + 2 * sizeof(unsigned int) >
+  if(in_fsal_handle->data.srv_handle_len + sizeof(fsal_u64_t) + 2 * sizeof(unsigned int) >
      NFSV4_FH_OPAQUE_SIZE)
     ReturnCode(ERR_FSAL_INVAL, ENOSPC);
 
@@ -238,7 +240,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
       /* returns a digest and register it to handle map
        * (use the same checksum as cache inode's RBT index)
        */
-      map_hdl.object_id = in_fsal_handle->fileid4;
+      map_hdl.object_id = in_fsal_handle->data.fileid4;
       map_hdl.handle_hash = FSAL_Handle_to_RBTIndex(in_fsal_handle, 0);
 
       HandleMap_SetFH(&map_hdl, in_fsal_handle);
@@ -260,7 +262,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
       /* returns a digest and register it to handle map
        * (use the same checksum as cache inode's RBT index)
        */
-      map_hdl.object_id = in_fsal_handle->fileid4;
+      map_hdl.object_id = in_fsal_handle->data.fileid4;
       map_hdl.handle_hash = FSAL_Handle_to_RBTIndex(in_fsal_handle, 0);
 
       HandleMap_SetFH(&map_hdl, in_fsal_handle);
@@ -280,35 +282,35 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
 
       /* Keep the file id */
-      memcpy(out_buff, (char *)&(in_fsal_handle->fileid4), sizeof(fsal_u64_t));
+      memcpy(out_buff, (char *)&(in_fsal_handle->data.fileid4), sizeof(fsal_u64_t));
 
       /* Keep  the type of then object at the beginning */
       memcpy((char *)(out_buff + sizeof(fsal_u64_t)),
-             (char *)&(in_fsal_handle->object_type_reminder), sizeof(unsigned int));
+             (char *)&(in_fsal_handle->data.object_type_reminder), sizeof(unsigned int));
 
       /* Then the len of the file handle */
       memcpy((char *)(out_buff + sizeof(fsal_u64_t) + sizeof(unsigned int)),
-             &(in_fsal_handle->srv_handle_len), sizeof(unsigned int));
+             &(in_fsal_handle->data.srv_handle_len), sizeof(unsigned int));
 
       /* Then keep the value of the buff */
       memcpy((char *)(out_buff + sizeof(fsal_u64_t) + 2 * sizeof(unsigned int)),
-             in_fsal_handle->srv_handle_val, in_fsal_handle->srv_handle_len);
+             in_fsal_handle->data.srv_handle_val, in_fsal_handle->data.srv_handle_len);
       break;
 
       /* FileId digest for NFSv2 */
     case FSAL_DIGEST_FILEID2:
       /* Just keep the most significant part */
-      memcpy(out_buff, (char *)(&(in_fsal_handle->fileid4) + sizeof(u_int32_t)),
+      memcpy(out_buff, (char *)(&(in_fsal_handle->data.fileid4) + sizeof(u_int32_t)),
              sizeof(u_int32_t));
       break;
 
       /* FileId digest for NFSv3 */
     case FSAL_DIGEST_FILEID3:
-      memcpy(out_buff, (char *)&(in_fsal_handle->fileid4), sizeof(fsal_u64_t));
+      memcpy(out_buff, (char *)&(in_fsal_handle->data.fileid4), sizeof(fsal_u64_t));
       break;
 
     case FSAL_DIGEST_FILEID4:
-      memcpy(out_buff, (char *)&(in_fsal_handle->fileid4), sizeof(fsal_u64_t));
+      memcpy(out_buff, (char *)&(in_fsal_handle->data.fileid4), sizeof(fsal_u64_t));
       break;
 
     default:
@@ -334,10 +336,10 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t in_type,      /* IN */
-                                caddr_t in_buff,        /* IN */
-                                fsal_handle_t * out_fsal_handle /* OUT */
+fsal_status_t PROXYFSAL_ExpandHandle(proxyfsal_export_context_t * p_expcontext, /* IN */
+                                     fsal_digesttype_t in_type, /* IN */
+                                     caddr_t in_buff,   /* IN */
+                                     proxyfsal_handle_t * out_fsal_handle       /* OUT */
     )
 {
   fsal_nodetype_t nodetype;
@@ -345,7 +347,7 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
   nfs_fh4 nfs4fh;
 #ifdef _HANDLE_MAPPING
   nfs23_map_handle_t map_hdl;
-  fsal_handle_t tmp_hdl;
+  proxyfsal_handle_t tmp_hdl;
   int rc;
 #endif
 
@@ -391,7 +393,7 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
       fsal_internal_proxy_extract_fh(&nfs4fh, &tmp_hdl);
 
       if(fsal_internal_proxy_create_fh
-         (&nfs4fh, tmp_hdl.object_type_reminder, tmp_hdl.fileid4,
+         (&nfs4fh, tmp_hdl.data.object_type_reminder, tmp_hdl.data.fileid4,
           out_fsal_handle) != TRUE)
         ReturnCode(ERR_FSAL_FAULT, 0);
 
@@ -439,7 +441,7 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
  *         ERR_FSAL_FAULT (null pointer given as parameter),
  *         ERR_FSAL_SERVERFAULT (unexpected error)
  */
-fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t PROXYFSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 {
 
   log_t no_logging = LOG_INITIALIZER;
@@ -458,7 +460,7 @@ fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 
 }
 
-fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t PROXYFSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
 {
   /* defensive programming... */
   if(out_parameter == NULL)
@@ -494,7 +496,7 @@ fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_paramet
 
 }
 
-fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t PROXYFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
 {
   /* defensive programming... */
   if(out_parameter == NULL)
@@ -558,8 +560,8 @@ fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_param
 
 /* load FSAL init info */
 
-fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
-                                                 fsal_parameter_t * out_parameter)
+fsal_status_t PROXYFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
+                                                      fsal_parameter_t * out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -675,8 +677,9 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
 /* load general filesystem configuration options */
 
-fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
-                                                      fsal_parameter_t * out_parameter)
+fsal_status_t PROXYFSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
+                                                           fsal_parameter_t *
+                                                           out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -882,8 +885,9 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
 /* load specific filesystem configuration options */
 
-fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
-                                                        fsal_parameter_t * out_parameter)
+fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
+                                                             fsal_parameter_t *
+                                                             out_parameter)
 {
   int err;
   int var_max, var_index;

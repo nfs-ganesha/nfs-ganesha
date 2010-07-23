@@ -140,8 +140,8 @@ static unsigned long hash_digest_idx(hash_parameter_t * p_conf, hash_buffer_t * 
 
   hash =
       (p_conf->alphabet_length +
-       ((unsigned long)p_digest->nfs23_digest.
-        object_id ^ (unsigned int)p_digest->nfs23_digest.handle_hash));
+       ((unsigned long)p_digest->nfs23_digest.object_id ^ (unsigned int)p_digest->
+        nfs23_digest.handle_hash));
   hash = (743 * hash + 1999) % p_conf->index_size;
 
   return hash;

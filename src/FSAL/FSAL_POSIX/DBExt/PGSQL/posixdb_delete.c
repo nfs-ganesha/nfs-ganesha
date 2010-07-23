@@ -6,7 +6,7 @@
 #include <string.h>
 
 fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
-                                          fsal_handle_t * p_parent_directory_handle,    /* IN */
+                                          posixfsal_handle_t * p_parent_directory_handle,       /* IN */
                                           fsal_name_t * p_filename,     /* IN */
                                           fsal_posixdb_fileinfo_t *
                                           p_object_info /* IN */ )
@@ -22,7 +22,7 @@ fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
    *******************/
 
   if(!p_conn || !p_parent_directory_handle || !p_filename)
-    ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+    ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
 
   CheckConn(p_conn);
 
@@ -33,8 +33,8 @@ fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
    *******************************/
 
   snprintf(handleidparent_str, MAX_HANDLEIDSTR_SIZE, "%lli",
-           p_parent_directory_handle->id);
-  snprintf(handletsparent_str, MAX_HANDLETSSTR_SIZE, "%i", p_parent_directory_handle->ts);
+           p_parent_directory_handle->data.id);
+  snprintf(handletsparent_str, MAX_HANDLETSSTR_SIZE, "%i", p_parent_directory_handle->data.ts);
   paramValues[0] = handleidparent_str;
   paramValues[1] = handletsparent_str;
   paramValues[2] = p_filename->name;
@@ -45,7 +45,7 @@ fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
     {
       /* parent entry not found */
       RollbackTransaction(p_conn, p_res);
-      ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
     }
   PQclear(p_res);
 
@@ -67,7 +67,7 @@ fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
 }
 
 fsal_posixdb_status_t fsal_posixdb_deleteHandle(fsal_posixdb_conn * p_conn,     /* IN */
-                                                fsal_handle_t *
+                                                posixfsal_handle_t *
                                                 p_parent_directory_handle /* IN */ )
 {
   char handleid_str[MAX_HANDLEIDSTR_SIZE];
@@ -82,12 +82,12 @@ fsal_posixdb_status_t fsal_posixdb_deleteHandle(fsal_posixdb_conn * p_conn,     
   BeginTransaction(p_conn, p_res);
 
 #ifdef _DEBUG_FSAL
-  printf("Deleting %lli.%i\n", p_parent_directory_handle->id,
-         p_parent_directory_handle->ts);
+  printf("Deleting %lli.%i\n", p_parent_directory_handle->data.id,
+         p_parent_directory_handle->data.ts);
 #endif
 
-  snprintf(handleid_str, MAX_HANDLEIDSTR_SIZE, "%lli", p_parent_directory_handle->id);
-  snprintf(handlets_str, MAX_HANDLETSSTR_SIZE, "%i", p_parent_directory_handle->ts);
+  snprintf(handleid_str, MAX_HANDLEIDSTR_SIZE, "%lli", p_parent_directory_handle->data.id);
+  snprintf(handlets_str, MAX_HANDLETSSTR_SIZE, "%i", p_parent_directory_handle->data.ts);
 
   paramValues[0] = handleid_str;
   paramValues[1] = handlets_str;

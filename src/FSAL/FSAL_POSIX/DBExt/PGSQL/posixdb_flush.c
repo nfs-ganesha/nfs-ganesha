@@ -16,5 +16,5 @@ fsal_posixdb_status_t fsal_posixdb_flush(fsal_posixdb_conn * p_conn)
   CheckCommand(p_res);
   PQclear(p_res);
 
-  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+  ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 }

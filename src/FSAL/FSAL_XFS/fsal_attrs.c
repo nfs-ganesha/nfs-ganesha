@@ -59,9 +59,9 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
-                            fsal_attrib_list_t * p_object_attributes    /* IN/OUT */
+fsal_status_t XFSFSAL_getattrs(xfsfsal_handle_t * p_filehandle, /* IN */
+                               xfsfsal_op_context_t * p_context,        /* IN */
+                               fsal_attrib_list_t * p_object_attributes /* IN/OUT */
     )
 {
   int rc, errsv;
@@ -135,10 +135,10 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
-                            fsal_attrib_list_t * p_attrib_set,  /* IN */
-                            fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */
+fsal_status_t XFSFSAL_setattrs(xfsfsal_handle_t * p_filehandle, /* IN */
+                               xfsfsal_op_context_t * p_context,        /* IN */
+                               fsal_attrib_list_t * p_attrib_set,       /* IN */
+                               fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */
     )
 {
 
@@ -160,7 +160,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
   attrs = *p_attrib_set;
 
   /* It does not make sense to setattr on a symlink */
-  if(p_filehandle->type == DT_LNK)
+  if(p_filehandle->data.type == DT_LNK)
     return fsal_internal_setattrs_symlink(p_filehandle, p_context, p_attrib_set,
                                           p_object_attributes);
 
@@ -360,14 +360,14 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
 
       /* Atime */
       timebuf[0].tv_sec =
-          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME) ? (time_t) attrs.atime.
-           seconds : buffstat.st_atime);
+          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME) ? (time_t) attrs.
+           atime.seconds : buffstat.st_atime);
       timebuf[0].tv_usec = 0;
 
       /* Mtime */
       timebuf[1].tv_sec =
-          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t) attrs.mtime.
-           seconds : buffstat.st_mtime);
+          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t) attrs.
+           mtime.seconds : buffstat.st_mtime);
       timebuf[1].tv_usec = 0;
 
       TakeTokenFSCall();
@@ -385,7 +385,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
 
   if(p_object_attributes)
     {
-      status = FSAL_getattrs(p_filehandle, p_context, p_object_attributes);
+      status = XFSFSAL_getattrs(p_filehandle, p_context, p_object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))

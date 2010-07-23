@@ -141,8 +141,8 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
   /* If the object to delete is a directory, use 'rmdir' to delete the object, else use 'unlink' */
   rc = (S_ISDIR(buffstat.st_mode)) ? unlinkat(fd, p_object_name->name,
                                               AT_REMOVEDIR) : unlinkat(fd,
-                                                                       p_object_name->name,
-                                                                       0);
+                                                                       p_object_name->
+                                                                       name, 0);
   errsv = errno;
   ReleaseTokenFSCall();
 

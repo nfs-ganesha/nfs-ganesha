@@ -3057,7 +3057,8 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
                      (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
                      sizeof(nfstime4));
 
-              LastOffset += sizeof(nfstime4);
+              //LastOffset += sizeof(nfstime4);
+              LastOffset += sizeof(int64_t) + sizeof(uint32_t);
 
               /* Take care of XDR when dealing with fattr4 */
               attr_time = attr_time_set.settime4_u.time;
@@ -3095,7 +3096,8 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
               attr_time.seconds = nfs_ntohl64(attr_time.seconds);
               attr_time.nseconds = ntohl(attr_time.nseconds);
 
-              LastOffset += sizeof(nfstime4);
+              //LastOffset += sizeof(nfstime4);
+              LastOffset += sizeof(int64_t) + sizeof(uint32_t);
 
               pFSAL_attr->mtime.seconds = attr_time.seconds;
               pFSAL_attr->mtime.nseconds = attr_time.nseconds;

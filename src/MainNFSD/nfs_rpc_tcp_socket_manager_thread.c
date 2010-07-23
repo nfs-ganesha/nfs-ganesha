@@ -87,7 +87,7 @@ extern fd_set Svc_fdset;
 extern nfs_worker_data_t *workers_data;
 extern nfs_parameter_t nfs_param;
 extern exportlist_t *pexportlist;
-extern SVCXPRT *Xports[FD_SETSIZE];        /* The one from RPCSEC_GSS library */
+extern SVCXPRT *Xports[FD_SETSIZE];     /* The one from RPCSEC_GSS library */
 #ifdef _RPCSEC_GS_64_INSTALLED
 struct svc_rpc_gss_data **TabGssData;
 #endif
@@ -130,14 +130,13 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
   int worker_index;
   static char my_name[MAXNAMLEN];
 
-  struct sockaddr_in * paddr_caller = NULL  ;
-  char str_caller[MAXNAMLEN] ;
+  struct sockaddr_in *paddr_caller = NULL;
+  char str_caller[MAXNAMLEN];
 
   snprintf(my_name, MAXNAMLEN, "tcp_sock_mgr#fd=%ld", tcp_sock);
   SetNameFunction(my_name);
 
-
- #ifndef _NO_BUDDY_SYSTEM
+#ifndef _NO_BUDDY_SYSTEM
   if((rc = BuddyInit(&nfs_param.buddy_param_tcp_mgr)) != BUDDY_SUCCESS)
     {
       /* Failed init */
@@ -150,7 +149,6 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
   DisplayLogLevel(NIV_DEBUG,
                   "TCP SOCKET MANAGER Sock=%ld(%p): Starting with pthread id #%p",
                   tcp_sock, Arg, (caddr_t) pthread_self());
-
 
   for(;;)
     {
@@ -281,19 +279,18 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
           if(stat == XPRT_DIED)
             {
 #ifndef _USE_TIRPC
-               if( (paddr_caller = svc_getcaller( pnfsreq->xprt ) ) != NULL )
-                     {
-			snprintf( str_caller, MAXNAMLEN, "0x%x=%d.%d.%d.%d",
-
-				 ntohl( paddr_caller->sin_addr.s_addr ),
-				 (ntohl( paddr_caller->sin_addr.s_addr )  & 0xFF000000) >> 24,
-				 (ntohl( paddr_caller->sin_addr.s_addr )  & 0x00FF0000) >> 16,
-				 (ntohl( paddr_caller->sin_addr.s_addr )  & 0x0000FF00) >> 8,
-				 (ntohl( paddr_caller->sin_addr.s_addr )  & 0x000000FF) ) ;
-                     }
-                   else
-#endif /* _USE_TIRPC */
-                     strncpy( str_caller, "unresolved", MAXNAMLEN ) ;
+              if((paddr_caller = svc_getcaller(pnfsreq->xprt)) != NULL)
+                {
+                  snprintf(str_caller, MAXNAMLEN, "0x%x=%d.%d.%d.%d",
+                           ntohl(paddr_caller->sin_addr.s_addr),
+                           (ntohl(paddr_caller->sin_addr.s_addr) & 0xFF000000) >> 24,
+                           (ntohl(paddr_caller->sin_addr.s_addr) & 0x00FF0000) >> 16,
+                           (ntohl(paddr_caller->sin_addr.s_addr) & 0x0000FF00) >> 8,
+                           (ntohl(paddr_caller->sin_addr.s_addr) & 0x000000FF));
+                }
+              else
+#endif                          /* _USE_TIRPC */
+                strncpy(str_caller, "unresolved", MAXNAMLEN);
 
               DisplayLog
                   ("TCP SOCKET MANAGER Sock=%d: the client (%s) disappeared... Stopping thread ",
@@ -310,16 +307,18 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                                next_alloc);
               V(workers_data[worker_index].request_pool_mutex);
 
-#ifdef _DEBUG_MEMLEAKS 
-	      BuddyLabelsSummary();
-#endif /* _DEBUG_MEMLEAKS */
+#ifdef _DEBUG_MEMLEAKS
+              BuddyLabelsSummary();
+#endif                          /* _DEBUG_MEMLEAKS */
 
 #ifndef _NO_BUDDY_SYSTEM
               /* Free stuff allocated by BuddyMalloc before thread exists */
-              sleep( nfs_param.core_param.expiration_dupreq *2)  ; /** @todo : remove this for a cleaner fix */
-	      if( ( rc = BuddyDestroy() ) != BUDDY_SUCCESS )
-                 DisplayLog( "TCP SOCKET MANAGER Sock=%d (on exit): got error %u from BuddyDestroy", rc ) ;
-#endif /*  _NO_BUDDY_SYSTEM */
+              sleep(nfs_param.core_param.expiration_dupreq * 2);   /** @todo : remove this for a cleaner fix */
+              if((rc = BuddyDestroy()) != BUDDY_SUCCESS)
+                DisplayLog
+                    ("TCP SOCKET MANAGER Sock=%d (on exit): got error %u from BuddyDestroy",
+                     rc);
+#endif                          /*  _NO_BUDDY_SYSTEM */
 
               return NULL;
             }

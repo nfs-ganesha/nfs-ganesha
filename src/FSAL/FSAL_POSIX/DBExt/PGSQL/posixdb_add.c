@@ -13,9 +13,9 @@
 
 fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
                                        fsal_posixdb_fileinfo_t * p_object_info, /* IN */
-                                       fsal_handle_t * p_parent_directory_handle,       /* IN */
+                                       posixfsal_handle_t * p_parent_directory_handle,  /* IN */
                                        fsal_name_t * p_filename,        /* IN */
-                                       fsal_handle_t * p_object_handle /* OUT */ )
+                                       posixfsal_handle_t * p_object_handle /* OUT */ )
 {
   PGresult *p_res;
   char handleid_str[MAX_HANDLEIDSTR_SIZE];
@@ -36,13 +36,13 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
   if(!p_conn || !p_object_info || !p_object_handle
      || (p_filename && !p_parent_directory_handle) || (!p_filename
                                                        && p_parent_directory_handle))
-    ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+    ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
 
   CheckConn(p_conn);
 
 #ifdef _DEBUG_FSAL
   printf("adding entry with parentid=%llu, id=%llu, name=%s\n",
-         p_parent_directory_handle ? p_parent_directory_handle->id : 0,
+         p_parent_directory_handle ? p_parent_directory_handle->data.id : 0,
          p_object_info ? p_object_info->inode : 0,
          p_filename ? p_filename->name : "NULL");
 #endif
@@ -56,9 +56,9 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
   if(p_parent_directory_handle)
     {                           /* the root has no parent */
       snprintf(handleidparent_str, MAX_HANDLEIDSTR_SIZE, "%llu",
-               p_parent_directory_handle->id);
+               p_parent_directory_handle->data.id);
       snprintf(handletsparent_str, MAX_HANDLETSSTR_SIZE, "%i",
-               p_parent_directory_handle->ts);
+               p_parent_directory_handle->data.ts);
       paramValues[0] = handleidparent_str;
       paramValues[1] = handletsparent_str;
       p_res = PQexecPrepared(p_conn, "lookupHandle", 2, paramValues, NULL, NULL, 0);
@@ -68,7 +68,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
         {
           /* parent entry not found */
           RollbackTransaction(p_conn, p_res);
-          ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
         }
       PQclear(p_res);
     }
@@ -88,31 +88,31 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
   if(found)
     {                           /* a Handle (that matches devid & inode) already exists */
       /* fill 'info' with information about the handle in the database */
-      posixdb_internal_fillFileinfoFromStrValues(&(p_object_handle->info), NULL, NULL, PQgetvalue(p_res, 0, 2), /* nlink */
+      posixdb_internal_fillFileinfoFromStrValues(&(p_object_handle->data.info), NULL, NULL, PQgetvalue(p_res, 0, 2), /* nlink */
                                                  PQgetvalue(p_res, 0, 3),       /* ctime */
                                                  PQgetvalue(p_res, 0, 4)        /* ftype */
           );
-      p_object_handle->info.inode = p_object_info->inode;
-      p_object_handle->info.devid = p_object_info->devid;
+      p_object_handle->data.info.inode = p_object_info->inode;
+      p_object_handle->data.info.devid = p_object_info->devid;
       strncpy(handleid_str, PQgetvalue(p_res, 0, 0), MAX_HANDLEIDSTR_SIZE);
       strncpy(handlets_str, PQgetvalue(p_res, 0, 1), MAX_HANDLETSSTR_SIZE);
       PQclear(p_res);
 
-      p_object_handle->id = atoll(handleid_str);
-      p_object_handle->ts = atoi(handlets_str);
+      p_object_handle->data.id = atoll(handleid_str);
+      p_object_handle->data.ts = atoi(handlets_str);
 
       /* check the consistency of the handle */
-      if(fsal_posixdb_consistency_check(&(p_object_handle->info), p_object_info))
+      if(fsal_posixdb_consistency_check(&(p_object_handle->data.info), p_object_info))
         {
           /* consistency check failed */
           /* p_object_handle has been filled in order to be able to fix the consistency later */
           RollbackTransaction(p_conn, p_res);
-          ReturnCode(ERR_FSAL_POSIXDB_CONSISTENCY, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_CONSISTENCY, 0);
         }
 
       /* update nlink & ctime if needed */
-      if(p_object_info->nlink != p_object_handle->info.nlink
-         || p_object_info->ctime != p_object_handle->info.ctime)
+      if(p_object_info->nlink != p_object_handle->data.info.nlink
+         || p_object_info->ctime != p_object_handle->data.info.ctime)
         {
           char nlink_str[MAX_NLINKSTR_SIZE];
           char ctime_str[MAX_CTIMESTR_SIZE];
@@ -124,7 +124,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
           paramValues[2] = nlink_str;
           paramValues[3] = ctime_str;
 
-          p_object_handle->info = *p_object_info;
+          p_object_handle->data.info = *p_object_info;
 
           p_res = PQexecPrepared(p_conn, "updateHandle", 4, paramValues, NULL, NULL, 0);
           CheckCommand(p_res);
@@ -141,9 +141,9 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
       char ftype_str[MAX_FTYPESTR_SIZE];
       PQclear(p_res);
 
-      p_object_handle->ts = (int)time(NULL);
-      p_object_handle->info = *p_object_info;
-      snprintf(handlets_str, MAX_HANDLETSSTR_SIZE, "%i", p_object_handle->ts);
+      p_object_handle->data.ts = (int)time(NULL);
+      p_object_handle->data.info = *p_object_info;
+      snprintf(handlets_str, MAX_HANDLETSSTR_SIZE, "%i", p_object_handle->data.ts);
       snprintf(nlink_str, MAX_NLINKSTR_SIZE, "%i", p_object_info->nlink);
       snprintf(ctime_str, MAX_CTIMESTR_SIZE, "%i", (int)p_object_info->ctime);
       snprintf(ftype_str, MAX_CTIMESTR_SIZE, "%i", (int)p_object_info->ftype);
@@ -166,7 +166,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
 
       strncpy(handleid_str, PQgetvalue(p_res, 0, 0), MAX_HANDLEIDSTR_SIZE);
       strncpy(handlets_str, PQgetvalue(p_res, 0, 1), MAX_HANDLETSSTR_SIZE);
-      p_object_handle->id = atoll(PQgetvalue(p_res, 0, 0));
+      p_object_handle->data.id = atoll(PQgetvalue(p_res, 0, 0));
       PQclear(p_res);
 
       /* now, we have the handle id */
@@ -189,8 +189,8 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
   if(found)
     {
       /* update the Parent entry if necessary (there entry exists with another handle) */
-      if((fsal_u64_t) atoll(PQgetvalue(p_res, 0, 0)) != p_object_handle->id
-         || atoi(PQgetvalue(p_res, 0, 1)) != p_object_handle->ts)
+      if((fsal_u64_t) atoll(PQgetvalue(p_res, 0, 0)) != p_object_handle->data.id
+         || atoi(PQgetvalue(p_res, 0, 1)) != p_object_handle->data.ts)
         {
           /* steps :
              - check the nlink value of the Parent entry to be overwritten
@@ -267,5 +267,5 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
 
   EndTransaction(p_conn, p_res);
 
-  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+  ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 }

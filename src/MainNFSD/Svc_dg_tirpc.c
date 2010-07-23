@@ -279,7 +279,7 @@ void *args_ptr;
   return (*xdr_args) (xdrs, args_ptr);
 }
 
-void Svc_dg_soft_destroy(xprt) 
+void Svc_dg_soft_destroy(xprt)
 SVCXPRT *xprt;
 {
   struct svc_dg_data *su = su_data(xprt);
@@ -294,7 +294,6 @@ SVCXPRT *xprt;
     (void)free(xprt->xp_tp);
   (void)Mem_Free(xprt);
 }
-
 
 static void Svc_dg_destroy(xprt)
 SVCXPRT *xprt;

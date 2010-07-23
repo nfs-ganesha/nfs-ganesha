@@ -132,7 +132,7 @@ cache_content_status_t cache_content_create_name(char *path,
     }
 
   /* Get the digest for the handle, for computing an entry name */
-  fsal_status = FSAL_DigestHandle(pcontext->export_context,
+  fsal_status = FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                   FSAL_DIGEST_FILEID4, pfsal_handle, (caddr_t) & fileid4);
 
   if(FSAL_IS_ERROR(fsal_status))

@@ -39,8 +39,8 @@
 #include "nfs_proto_functions.h"
 #include "fsal_nfsv4_macros.h"
 
-fsal_status_t FSAL_proxy_truncate_stateless(fsal_handle_t * filehandle, /* IN */
-                                            fsal_op_context_t * p_context,      /* IN */
+fsal_status_t FSAL_proxy_truncate_stateless(proxyfsal_handle_t * filehandle,    /* IN */
+                                            proxyfsal_op_context_t * p_context, /* IN */
                                             fsal_size_t length, /* IN */
                                             fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
@@ -74,7 +74,7 @@ fsal_status_t FSAL_proxy_truncate_stateless(fsal_handle_t * filehandle, /* IN */
   if(!filehandle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
-  if(filehandle->object_type_reminder != FSAL_TYPE_FILE)
+  if(filehandle->data.object_type_reminder != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_truncate);
     }
@@ -120,29 +120,27 @@ fsal_status_t FSAL_proxy_truncate_stateless(fsal_handle_t * filehandle, /* IN */
   COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, inbitmap);
 
   /* For ATTR_SIZE, stateid is needed, we use the stateless "all-0's" stateid here */
-  argnfs4.argarray.argarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_SETATTR].
-      nfs_argop4_u.opsetattr.stateid.seqid = 0;
-  memset(argnfs4.argarray.
-         argarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_SETATTR].nfs_argop4_u.opsetattr.
-         stateid.other, 0, 12);
+  argnfs4.argarray.argarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_SETATTR].nfs_argop4_u.
+      opsetattr.stateid.seqid = 0;
+  memset(argnfs4.argarray.argarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_SETATTR].
+         nfs_argop4_u.opsetattr.stateid.other, 0, 12);
 
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].
-      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val =
-      bitmap_res;
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].
-      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].
-      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
       (char *)&fattr_internal;
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].
-      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
       sizeof(fattr_internal);
 
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_SETATTR].
-      nfs_resop4_u.opsetattr.attrsset.bitmap4_val = bitmap_set;
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_SETATTR].
-      nfs_resop4_u.opsetattr.attrsset.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_SETATTR].nfs_resop4_u.
+      opsetattr.attrsset.bitmap4_val = bitmap_set;
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_SETATTR].nfs_resop4_u.
+      opsetattr.attrsset.bitmap4_len = 2;
 
   TakeTokenFSCall();
 
@@ -169,8 +167,9 @@ fsal_status_t FSAL_proxy_truncate_stateless(fsal_handle_t * filehandle, /* IN */
     {
       if(nfs4_Fattr_To_FSAL_attr(object_attributes,
                                  &resnfs4.resarray.resarray_val
-                                 [FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].nfs_resop4_u.
-                                 opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
+                                 [FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].
+                                 nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
+                                 obj_attributes) != 1)
         {
           FSAL_CLEAR_MASK(object_attributes->asked_attributes);
           FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -211,11 +210,11 @@ fsal_status_t FSAL_proxy_truncate_stateless(fsal_handle_t * filehandle, /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
-                            fsal_size_t length, /* IN */
-                            fsal_file_t * file_descriptor,      /* [IN|OUT] */
-                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
+fsal_status_t PROXYFSAL_truncate(proxyfsal_handle_t * filehandle,       /* IN */
+                                 proxyfsal_op_context_t * p_context,    /* IN */
+                                 fsal_size_t length,    /* IN */
+                                 fsal_file_t * file_descriptor, /* [IN|OUT] */
+                                 fsal_attrib_list_t * object_attributes /* [ IN/OUT ] */
     )
 {
 
@@ -249,7 +248,7 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
   if(!filehandle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
-  if(filehandle->object_type_reminder != FSAL_TYPE_FILE)
+  if(filehandle->data.object_type_reminder != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_truncate);
     }
@@ -321,27 +320,27 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
   COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, inbitmap);
 
   /* For ATTR_SIZE, stateid is needed */
-  argnfs4.argarray.argarray_val[FSAL_TRUNCATE_IDX_OP_SETATTR].nfs_argop4_u.
-      opsetattr.stateid.seqid = file_descriptor->stateid.seqid;
-  memcpy(argnfs4.argarray.argarray_val[FSAL_TRUNCATE_IDX_OP_SETATTR].
-         nfs_argop4_u.opsetattr.stateid.other, file_descriptor->stateid.other, 12);
+  argnfs4.argarray.argarray_val[FSAL_TRUNCATE_IDX_OP_SETATTR].nfs_argop4_u.opsetattr.
+      stateid.seqid = file_descriptor->stateid.seqid;
+  memcpy(argnfs4.argarray.argarray_val[FSAL_TRUNCATE_IDX_OP_SETATTR].nfs_argop4_u.
+         opsetattr.stateid.other, file_descriptor->stateid.other, 12);
 
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
       (char *)&fattr_internal;
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
       sizeof(fattr_internal);
 
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_SETATTR].nfs_resop4_u.
-      opsetattr.attrsset.bitmap4_val = bitmap_set;
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_SETATTR].nfs_resop4_u.
-      opsetattr.attrsset.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_SETATTR].nfs_resop4_u.opsetattr.
+      attrsset.bitmap4_val = bitmap_set;
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_SETATTR].nfs_resop4_u.opsetattr.
+      attrsset.bitmap4_len = 2;
 
   TakeTokenFSCall();
 
@@ -367,10 +366,9 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
   if(object_attributes)
     {
       if(nfs4_Fattr_To_FSAL_attr(object_attributes,
-                                 &resnfs4.
-                                 resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].
-                                 nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
-                                 obj_attributes) != 1)
+                                 &resnfs4.resarray.
+                                 resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.
+                                 opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
         {
           FSAL_CLEAR_MASK(object_attributes->asked_attributes);
           FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

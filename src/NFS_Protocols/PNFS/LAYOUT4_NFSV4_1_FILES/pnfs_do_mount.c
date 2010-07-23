@@ -79,14 +79,14 @@ int pnfs_do_mount(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pds_par
   argnfs4.tag.utf8string_len = 0;
   argnfs4.argarray.argarray_len = 0;
 
-  resoparray_exchangeid[0].nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.
-      eir_resok4.eir_state_protect.state_protect4_r_u.spr_mach_ops.spo_must_enforce.
-      bitmap4_val = bitmap1;
-  resoparray_exchangeid[0].nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.
-      eir_resok4.eir_state_protect.state_protect4_r_u.spr_mach_ops.spo_must_allow.
-      bitmap4_val = bitmap2;
-  resoparray_exchangeid[0].nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.
-      eir_resok4.eir_server_owner.so_major_id.so_major_id_val = server_owner_pad;
+  resoparray_exchangeid[0].nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4.
+      eir_state_protect.state_protect4_r_u.spr_mach_ops.spo_must_enforce.bitmap4_val =
+      bitmap1;
+  resoparray_exchangeid[0].nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4.
+      eir_state_protect.state_protect4_r_u.spr_mach_ops.spo_must_allow.bitmap4_val =
+      bitmap2;
+  resoparray_exchangeid[0].nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4.
+      eir_server_owner.so_major_id.so_major_id_val = server_owner_pad;
 
   snprintf(clientowner_name, MAXNAMLEN, "GANESHA PNFS MDS Thread=(%u,%llu)", getpid(),
            (unsigned long long)pthread_self());
@@ -118,9 +118,9 @@ int pnfs_do_mount(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pds_par
   char tmp[1024];
 
   COMPOUNDV41_ARG_ADD_OP_CREATESESSION(argnfs4,
-                                       resoparray_exchangeid[0].
-                                       nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.
-                                       eir_resok4.eir_clientid);
+                                       resoparray_exchangeid[0].nfs_resop4_u.
+                                       opexchange_id.EXCHANGE_ID4res_u.eir_resok4.
+                                       eir_clientid);
   if(clnt_call
      (pnfsdsclient->rpc_client, NFSPROC4_COMPOUND, (xdrproc_t) xdr_COMPOUND4args,
       (caddr_t) & argnfs4, (xdrproc_t) xdr_COMPOUND4res, (caddr_t) & resnfs4,
@@ -131,8 +131,8 @@ int pnfs_do_mount(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pds_par
 
   /* Keep the session for later use */
   memcpy(&pnfsdsclient->session,
-         &resoparray_createsession[0].nfs_resop4_u.opcreate_session.
-         CREATE_SESSION4res_u.csr_resok4.csr_sessionid, NFS4_SESSIONID_SIZE);
+         &resoparray_createsession[0].nfs_resop4_u.opcreate_session.CREATE_SESSION4res_u.
+         csr_resok4.csr_sessionid, NFS4_SESSIONID_SIZE);
 
   /* Keep the sequence as well */
   pnfsdsclient->sequence += 1;

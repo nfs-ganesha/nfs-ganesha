@@ -187,52 +187,69 @@ typedef enum fsal_nodetype__
  *  FS dependant :
  * --------------*/
 
+/* prefered readdir size */
+//#define FSAL_READDIR_SIZE 2048
+#define FSAL_READDIR_SIZE 128
+
+#define FSAL_MAX_NAME_LEN   NAME_MAX
+#define FSAL_MAX_PATH_LEN   PATH_MAX
+
+#define FSAL_NGROUPS_MAX  32
+
+/** object name.  */
+
+typedef struct fsal_name__
+{
+  char name[FSAL_MAX_NAME_LEN];
+  unsigned int len;
+} fsal_name_t;
+
+/** object path.  */
+
+typedef struct fsal_path__
+{
+  char path[FSAL_MAX_PATH_LEN];
+  unsigned int len;
+} fsal_path_t;
+
+static const fsal_name_t FSAL_DOT = { ".", 1 };
+static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
+
+#define FSAL_NAME_INITIALIZER {"",0}
+#define FSAL_PATH_INITIALIZER {"",0}
+
+/* Do not include fsal_types for the FSAL is compiled with dlopen */
+#ifndef _USE_SHARED_FSAL
+
 #ifdef _USE_GHOSTFS
-
 #include "FSAL/FSAL_GHOST_FS/fsal_types.h"
-
 #elif defined(_USE_HPSS)
-
 #include "FSAL/FSAL_HPSS/fsal_types.h"
-
 #elif defined ( _USE_PROXY )
-
 #include "FSAL/FSAL_PROXY/fsal_types.h"
-
 #elif defined ( _USE_POSIX )
-
 #include "FSAL/FSAL_POSIX/fsal_types.h"
 #include "FSAL/FSAL_POSIX/posixdb.h"
-
 #elif defined ( _USE_SNMP )
-
 #include "FSAL/FSAL_SNMP/fsal_types.h"
-
 #elif defined ( _USE_FUSE )
-
 #include "FSAL/FSAL_FUSELIKE/fsal_types.h"
-
 #elif defined ( _USE_LUSTRE )
-
 #include "FSAL/FSAL_LUSTRE/fsal_types.h"
-
 #elif defined ( _USE_XFS )
-
 #include "FSAL/FSAL_XFS/fsal_types.h"
-
 #elif defined ( _USE_GPFS )
-
 #include "FSAL/FSAL_GPFS/fsal_types.h"
-
 #elif defined ( _USE_TEMPLATE ) /* <- place here your own define */
-
 #include "FSAL/FSAL_TEMPLATE/fsal_types.h"
-
 #else                           /* no _USE_<filesystem> flag ! */
-
 #error "No filesystem compilation flag set for the FSAL."
 
 #endif
+
+#endif                          /* _USE_SHARED_FSAL */
+
+#include "fsal_glue.h"
 
 /*---------  end of FS dependant definitions ---------*/
 

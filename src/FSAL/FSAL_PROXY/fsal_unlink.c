@@ -70,10 +70,10 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
-                          fsal_name_t * p_object_name,  /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_attrib_list_t * parentdir_attributes     /* [IN/OUT ] */
+fsal_status_t PROXYFSAL_unlink(proxyfsal_handle_t * parentdir_handle,   /* IN */
+                               fsal_name_t * p_object_name,     /* IN */
+                               proxyfsal_op_context_t * p_context,      /* IN */
+                               fsal_attrib_list_t * parentdir_attributes        /* [IN/OUT ] */
     )
 {
   int rc;
@@ -133,16 +133,16 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
   COMPOUNDV4_ARG_ADD_OP_REMOVE(argnfs4, name);
   COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, bitmap);
 
-  resnfs4.resarray.resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
-  resnfs4.resarray.resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
+  resnfs4.resarray.resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+  resnfs4.resarray.resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
       (char *)&fattr_internal;
-  resnfs4.resarray.resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+  resnfs4.resarray.resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
       sizeof(fattr_internal);
 
   TakeTokenFSCall();
@@ -168,10 +168,9 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
     {
 
       if(nfs4_Fattr_To_FSAL_attr(parentdir_attributes,
-                                 &resnfs4.
-                                 resarray.resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].
-                                 nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
-                                 obj_attributes) != 1)
+                                 &resnfs4.resarray.
+                                 resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.
+                                 opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
         {
           FSAL_CLEAR_MASK(parentdir_attributes->asked_attributes);
           FSAL_SET_MASK(parentdir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

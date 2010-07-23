@@ -72,30 +72,11 @@
 
 #define CONF_LABEL_FS_SPECIFIC   "NFSv4_Proxy"
 
-# define FSAL_MAX_NAME_LEN  256
-# define FSAL_MAX_PATH_LEN  1024
-
 #define FSAL_NGROUPS_MAX  32
 
 /* prefered readdir size */
 /* #define FSAL_READDIR_SIZE 2048  */
-#define FSAL_READDIR_SIZE 3072
-
-/** object name.  */
-
-typedef struct fsal_name__
-{
-  char name[FSAL_MAX_NAME_LEN];
-  unsigned int len;
-} fsal_name_t;
-
-/** object path.  */
-
-typedef struct fsal_path__
-{
-  char path[FSAL_MAX_PATH_LEN];
-  unsigned int len;
-} fsal_path_t;
+/* #define FSAL_READDIR_SIZE 3072 */
 
 # define FSAL_NAME_INITIALIZER {"",0}
 # define FSAL_PATH_INITIALIZER {"",0}
@@ -106,23 +87,32 @@ typedef struct fsal_path__
 #define FSAL_PROXY_NFS_V4             4
 #define FSAL_PROXY_RETRY_SLEEPTIME    10
 
-static fsal_name_t __attribute__ ((__unused__)) FSAL_DOT =
-{
-".", 1};
+#include "fsal_glue_const.h"
 
-static fsal_name_t __attribute__ ((__unused__)) FSAL_DOT_DOT =
-{
-"..", 2};
+#define fsal_handle_t proxyfsal_handle_t
+#define fsal_op_context_t proxyfsal_op_context_t
+#define fsal_file_t proxyfsal_file_t
+#define fsal_dir_t proxyfsal_dir_t
+#define fsal_export_context_t proxyfsal_export_context_t
+#define fsal_lockdesc_t proxyfsal_lockdesc_t
+#define fsal_cookie_t proxyfsal_cookie_t
+#define fs_specific_initinfo_t proxyfs_specific_initinfo_t
+#define fsal_cred_t proxyfsal_cred_t
 
   /* some void types for this template... */
-typedef struct fsal_handle__
-{
-  fsal_nodetype_t object_type_reminder;
-  uint64_t fileid4;
-  unsigned int timestamp;
-  unsigned int srv_handle_len;
-  char srv_handle_val[FSAL_PROXY_FILEHANDLE_MAX_LEN];
-} fsal_handle_t;
+typedef union {
+ struct 
+  {
+    fsal_nodetype_t object_type_reminder;
+    uint64_t fileid4;
+    unsigned int timestamp;
+    unsigned int srv_handle_len;
+    char srv_handle_val[FSAL_PROXY_FILEHANDLE_MAX_LEN] ; 
+  } data ;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_HANDLE_T_SIZE];
+#endif
+} proxyfsal_handle_t;
 
 typedef struct fsal_cred__
 {
@@ -130,19 +120,19 @@ typedef struct fsal_cred__
   fsal_gid_t group;
   fsal_count_t nbgroups;
   fsal_gid_t alt_groups[FSAL_NGROUPS_MAX];
-} fsal_cred_t;
+} proxyfsal_cred_t;
 
 typedef struct fsal_export_context__
 {
-  fsal_handle_t root_handle;
-} fsal_export_context_t;
+  proxyfsal_handle_t root_handle;
+} proxyfsal_export_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(pexport_context->root_handle.fileid4)
 
 typedef struct fsal_op_context__
 {
-  fsal_cred_t user_credential;
-  fsal_export_context_t *export_context;
+  proxyfsal_export_context_t *export_context;   /* Must be the first entry in this structure */
+  proxyfsal_cred_t user_credential;
 
   unsigned int retry_sleeptime;
   unsigned int srv_prognum;
@@ -154,34 +144,39 @@ typedef struct fsal_op_context__
   clientid4 clientid;
   CLIENT *rpc_client;
   pthread_mutex_t lock;
-  fsal_handle_t openfh_wd_handle;
+  proxyfsal_handle_t openfh_wd_handle;
   time_t last_lease_renewal;
   uint64_t file_counter;
-} fsal_op_context_t;
+} proxyfsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->user_credential.user )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->user_credential.group )
 
 typedef struct fsal_dir__
 {
-  fsal_handle_t fhandle;
+  proxyfsal_handle_t fhandle;
   verifier4 verifier;
-  fsal_op_context_t *pcontext;
-} fsal_dir_t;
+  proxyfsal_op_context_t *pcontext;
+} proxyfsal_dir_t;
 
 typedef struct fsal_file__
 {
-  fsal_handle_t fhandle;
+  proxyfsal_handle_t fhandle;
   unsigned int openflags;
   u_int32_t ownerid;
   stateid4 stateid;
   fsal_off_t current_offset;
-  fsal_op_context_t *pcontext;
-} fsal_file_t;
+  proxyfsal_op_context_t *pcontext;
+} proxyfsal_file_t;
 
-# define FSAL_FILENO(_pf) ((_pf))
+//# define FSAL_FILENO(_pf) ((_pf))
 
-typedef nfs_cookie4 fsal_cookie_t;
+typedef union {
+  nfs_cookie4 data ;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_COOKIE_T_SIZE];
+#endif
+} proxyfsal_cookie_t;
 
 #define FSAL_READDIR_FROM_BEGINNING 0
 
@@ -213,9 +208,8 @@ typedef struct fs_specific_initinfo__
   unsigned int hdlmap_hashsize;
   unsigned int hdlmap_nb_entry_prealloc;
   unsigned int hdlmap_nb_db_op_prealloc;
+} proxyfs_specific_initinfo_t;
 
-} fs_specific_initinfo_t;
-
-typedef unsigned int fsal_lockdesc_t;
+typedef unsigned int proxyfsal_lockdesc_t;
 
 #endif
