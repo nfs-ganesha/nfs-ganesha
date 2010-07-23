@@ -67,10 +67,10 @@
  *         - Another error code else.
  *          
  */
-fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
+fsal_status_t GPFSFSAL_lookup(gpfsfsal_handle_t * p_parent_directory_handle,    /* IN */
                           fsal_name_t * p_filename,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_handle_t * p_object_handle,      /* OUT */
+                          gpfsfsal_op_context_t * p_context,        /* IN */
+                          gpfsfsal_handle_t * p_object_handle,      /* OUT */
                           fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
     )
 {
@@ -231,9 +231,9 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
  *        It can be NULL (increases performances).
  */
 
-fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
-                              fsal_op_context_t * p_context,    /* IN */
-                              fsal_handle_t * object_handle,    /* OUT */
+fsal_status_t GPFSFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
+                              gpfsfsal_op_context_t * p_context,    /* IN */
+                              gpfsfsal_handle_t * object_handle,    /* OUT */
                               fsal_attrib_list_t * p_object_attributes  /* [ IN/OUT ] */
     )
 {
@@ -295,9 +295,9 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
  *         - Another error code else.
  *          
  */
-fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
-                                  fsal_op_context_t * p_context,        /* IN */
-                                  fsal_handle_t * p_fsoot_handle,       /* OUT */
+fsal_status_t GPFSFSAL_lookupJunction(gpfsfsal_handle_t * p_junction_handle,    /* IN */
+                                  gpfsfsal_op_context_t * p_context,        /* IN */
+                                  gpfsfsal_handle_t * p_fsoot_handle,       /* OUT */
                                   fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
     )
 {

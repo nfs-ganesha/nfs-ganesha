@@ -49,8 +49,8 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
-                       fsal_op_context_t * p_context,   /* IN */
+fsal_status_t GPFSFSAL_rcp(gpfsfsal_handle_t * filehandle,      /* IN */
+                       gpfsfsal_op_context_t * p_context,   /* IN */
                        fsal_path_t * p_local_path,      /* IN */
                        fsal_rcpflag_t transfer_opt      /* IN */
     )
@@ -321,9 +321,9 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
 
 }
 
-fsal_status_t FSAL_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
+fsal_status_t GPFSFSAL_rcp_by_fileid(gpfsfsal_handle_t * filehandle,    /* IN */
                                  fsal_u64_t fileid,     /* IN */
-                                 fsal_op_context_t * p_context, /* IN */
+                                 gpfsfsal_op_context_t * p_context, /* IN */
                                  fsal_path_t * p_local_path,    /* IN */
                                  fsal_rcpflag_t transfer_opt /* IN */ )
 {

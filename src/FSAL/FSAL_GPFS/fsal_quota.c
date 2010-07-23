@@ -50,7 +50,7 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_get_quota(fsal_path_t * pfsal_path,  /* IN */
+fsal_status_t GPFSFSAL_get_quota(fsal_path_t * pfsal_path,  /* IN */
                              int quota_type, fsal_uid_t fsal_uid, fsal_quota_t * pquota)        /* OUT */
 {
   ReturnCode(ERR_FSAL_NO_QUOTA, 0);
@@ -74,7 +74,7 @@ fsal_status_t FSAL_get_quota(fsal_path_t * pfsal_path,  /* IN */
  *        - Another error code if an error occured.
  */
 
-fsal_status_t FSAL_set_quota(fsal_path_t * pfsal_path,  /* IN */
+fsal_status_t GPFSFSAL_set_quota(fsal_path_t * pfsal_path,  /* IN */
                              int quota_type, fsal_uid_t fsal_uid,       /* IN */
                              fsal_quota_t * pquot,      /* IN */
                              fsal_quota_t * presquot)   /* OUT */
