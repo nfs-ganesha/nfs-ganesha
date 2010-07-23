@@ -172,6 +172,21 @@ and namespaces. This package provides support for NFS-GANESHA used with HPSS.
 %endif
 
 
+%if %{?_with_zfs:1}%{!?_with_zfs:0}
+%package zfs
+Summary: The NFS-GANESHA server compiled as a NFS gateway to ZFS.
+Group: Applications/System
+Requires: libzfswrap
+BuildRequires: libzfswrap-devel
+Requires: %{name}-common = %{version}-%{release}
+
+%description zfs
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various backend modules to support different file systems
+and namespaces. This package provides support for NFS-GANESHA used on top of ZFS.
+%endif
+
+
 %prep
 %setup -q -n %{name}-%{version}
 
@@ -229,6 +244,9 @@ install -m 644 config_samples/snmp.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{
 %endif
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
 install -m 755 nfs-ganesha.hpss.init                           $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.hpss
+%endif
+%if %{?_with_zfs:1}%{!?_with_zfs:0}
+install -m 755 nfs-ganesha.zfs.init                            $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.zfs
 %endif
 install -m 644 config_samples/hosts.ganesha                    $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 config_samples/uidgid_mapfile.ganesha           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
@@ -354,6 +372,15 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/ganesha/hpss.ganesha*
 %endif
 
+%if %{?_with_zfs:1}%{!?_with_zfs:0}
+%files zfs
+%defattr(-,root,root,-)
+%{_bindir}/zfs.ganesha.*
+%{_bindir}/zfs.ganeshell
+%{_sysconfdir}/init.d/nfs-ganesha.zfs
+%endif
+
+
 %if %{?_with_proxy:1}%{!?_with_proxy:0}
 %post proxy
 chkconfig --add nfs-ganesha.proxy
@@ -387,6 +414,11 @@ chkconfig --add nfs-ganesha.snmp
 
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
 %post
+%endif
+
+%if %{?_with_zfs:1}%{!?_with_zfs:0}
+%post zfs
+chkconfig --add nfs-ganesha.zfs
 %endif
 
 %if %{?_with_fuse:1}%{!?_with_fuse:0}
