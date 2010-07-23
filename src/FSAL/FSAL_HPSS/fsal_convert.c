@@ -1027,10 +1027,10 @@ fsal_status_t fsal2hpss_attribset(hpssfsal_handle_t * p_fsal_handle,
 
 #ifdef _DEBUG_FSAL
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Setting MTIME:");
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tType = %d", p_fsal_handle->obj_type);
+      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tType = %d", p_fsal_handle->data.obj_type);
 #endif
 
-      switch (p_fsal_handle->obj_type)
+      switch (p_fsal_handle->data.obj_type)
         {
         case FSAL_TYPE_FILE:
         case FSAL_TYPE_LNK:

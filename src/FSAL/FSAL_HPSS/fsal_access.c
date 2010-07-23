@@ -80,7 +80,7 @@ fsal_status_t HPSSFSAL_access(hpssfsal_handle_t * object_handle,        /* IN */
 
   TakeTokenFSCall();
 
-  rc = hpss_AccessHandle(&(object_handle->ns_handle),   /* IN - parent object handle */
+  rc = hpss_AccessHandle(&(object_handle->data.ns_handle),   /* IN - parent object handle */
                          NULL,  /* IN - path of file to check access rights */
                          hpss_test_mode,        /* IN - Type of access to be checked */
                          &p_context->credential.hpss_usercred   /* IN - user credentials */

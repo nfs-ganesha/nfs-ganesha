@@ -110,6 +110,7 @@ fsal_status_t HPSSFSAL_opendir(hpssfsal_handle_t * dir_handle,  /* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
+
 fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
                                hpssfsal_cookie_t start_position,        /* IN */
                                fsal_attrib_mask_t get_attr_mask,        /* IN */
@@ -117,8 +118,7 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
                                fsal_dirent_t * pdirent, /* OUT */
                                hpssfsal_cookie_t * end_position,        /* OUT */
                                fsal_count_t * nb_entries,       /* OUT */
-                               fsal_boolean_t * end_of_dir      /* OUT */
-    )
+                               fsal_boolean_t * end_of_dir      /* OUT */ )
 {
   int rc, returned, i;
   fsal_status_t st;
@@ -155,7 +155,7 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
 
   /* init values */
 
-  curr_start_position = start_position;
+  curr_start_position = start_position.data;
   bool_eod_out = 0;
   current_nb_entries = 0;
   max_dir_entries = (buffersize / sizeof(fsal_dirent_t));
@@ -180,7 +180,7 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
 
       TakeTokenFSCall();
 
-      rc = HPSSFSAL_ReadRawAttrsHandle(&(dir_descriptor->dir_handle.ns_handle),
+      rc = HPSSFSAL_ReadRawAttrsHandle(&(dir_descriptor->dir_handle.data.ns_handle),
                                        curr_start_position,
                                        &dir_descriptor->context.credential.hpss_usercred,
                                        buff_size_in,
@@ -200,9 +200,9 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
       for(i = 0; i < returned; i++)
         {
 
-          pdirent[current_nb_entries].handle.ns_handle = outbuff[i].ObjHandle;
+          pdirent[current_nb_entries].handle.data.ns_handle = outbuff[i].ObjHandle;
 
-          pdirent[current_nb_entries].handle.obj_type =
+          pdirent[current_nb_entries].handle.data.obj_type =
               hpss2fsal_type(outbuff[i].ObjHandle.Type);
 
           st = FSAL_str2name((char *)outbuff[i].Name, HPSS_MAX_FILE_NAME,
@@ -210,7 +210,7 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
 
       /** @todo : test returned status */
 
-          pdirent[current_nb_entries].cookie = outbuff[i].ObjOffset;
+          pdirent[current_nb_entries].cookie.data = outbuff[i].ObjOffset;
 
           /* set asked attributes */
           pdirent[current_nb_entries].attributes.asked_attributes = get_attr_mask;
@@ -274,13 +274,12 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
   /* setting output vars. */
 
   /* if no item was read, the offset keeps the same. */
-  *end_position = (current_nb_entries == 0 ? start_position : last_offset_out);
+  end_position->data = (current_nb_entries == 0 ? start_position.data : last_offset_out);
 
   *nb_entries = current_nb_entries;
   *end_of_dir = (bool_eod_out ? TRUE : FALSE);
 
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
-
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir); /* @todo badly set fsal_log ? */
 }
 
 /**

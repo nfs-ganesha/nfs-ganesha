@@ -71,7 +71,7 @@ fsal_status_t HPSSFSAL_truncate(hpssfsal_handle_t * filehandle, /* IN */
 
   /* check if it is a file */
 
-  if(filehandle->obj_type != FSAL_TYPE_FILE)
+  if(filehandle->data.obj_type != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_truncate);
     }
@@ -80,7 +80,7 @@ fsal_status_t HPSSFSAL_truncate(hpssfsal_handle_t * filehandle, /* IN */
 
   TakeTokenFSCall();
 
-  rc = hpss_TruncateHandle(&(filehandle->ns_handle),    /* IN - handle of file or parent */
+  rc = hpss_TruncateHandle(&(filehandle->data.ns_handle),    /* IN - handle of file or parent */
                            NULL,        /* IN (handle addressing) */
                            trunc_size,  /* IN - new file length */
                            &(p_context->credential.hpss_usercred)       /* IN - pointer to user's credentials */

@@ -84,9 +84,9 @@ fsal_status_t HPSSFSAL_rename(hpssfsal_handle_t * old_parentdir_handle, /* IN */
 
   TakeTokenFSCall();
 
-  rc = hpss_RenameHandle(&(old_parentdir_handle->ns_handle),
+  rc = hpss_RenameHandle(&(old_parentdir_handle->data.ns_handle),
                          p_old_name->name,
-                         &(new_parentdir_handle->ns_handle),
+                         &(new_parentdir_handle->data.ns_handle),
                          p_new_name->name, &(p_context->credential.hpss_usercred));
 
   ReleaseTokenFSCall();
@@ -98,9 +98,9 @@ fsal_status_t HPSSFSAL_rename(hpssfsal_handle_t * old_parentdir_handle, /* IN */
   /* the source or the target directory handles may be stale */
   if(rc == HPSS_ENOTDIR || rc == HPSS_ENOENT)
     {
-      if(HPSSFSAL_IsStaleHandle(&old_parentdir_handle->ns_handle,
+      if(HPSSFSAL_IsStaleHandle(&old_parentdir_handle->data.ns_handle,
                                 &p_context->credential.hpss_usercred) ||
-         HPSSFSAL_IsStaleHandle(&new_parentdir_handle->ns_handle,
+         HPSSFSAL_IsStaleHandle(&new_parentdir_handle->data.ns_handle,
                                 &p_context->credential.hpss_usercred))
         {
           Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_rename);

@@ -79,7 +79,7 @@ fsal_status_t HPSSFSAL_unlink(hpssfsal_handle_t * parentdir_handle,     /* IN */
   if(FSAL_IS_ERROR(st))
     Return(st.major, st.minor, INDEX_FSAL_unlink);
 
-  switch (obj_handle.obj_type)
+  switch (obj_handle.data.obj_type)
     {
 
     case FSAL_TYPE_DIR:
@@ -88,7 +88,7 @@ fsal_status_t HPSSFSAL_unlink(hpssfsal_handle_t * parentdir_handle,     /* IN */
 
       TakeTokenFSCall();
 
-      rc = hpss_RmdirHandle(&(parentdir_handle->ns_handle),
+      rc = hpss_RmdirHandle(&(parentdir_handle->data.ns_handle),
                             p_object_name->name, &(p_context->credential.hpss_usercred));
 
       ReleaseTokenFSCall();
@@ -109,7 +109,7 @@ fsal_status_t HPSSFSAL_unlink(hpssfsal_handle_t * parentdir_handle,     /* IN */
 
       TakeTokenFSCall();
 
-      rc = hpss_UnlinkHandle(&(parentdir_handle->ns_handle),
+      rc = hpss_UnlinkHandle(&(parentdir_handle->data.ns_handle),
                              p_object_name->name, &(p_context->credential.hpss_usercred));
 
       ReleaseTokenFSCall();
@@ -124,7 +124,7 @@ fsal_status_t HPSSFSAL_unlink(hpssfsal_handle_t * parentdir_handle,     /* IN */
 
       TakeTokenFSCall();
 
-      rc = hpss_JunctionDeleteHandle(&(parentdir_handle->ns_handle),
+      rc = hpss_JunctionDeleteHandle(&(parentdir_handle->data.ns_handle),
                                      p_object_name->name,
                                      &(p_context->credential.hpss_usercred));
 
@@ -141,7 +141,7 @@ fsal_status_t HPSSFSAL_unlink(hpssfsal_handle_t * parentdir_handle,     /* IN */
     case FSAL_TYPE_SOCK:
     default:
       DisplayLogJdLevel(fsal_log, NIV_CRIT, "Unexpected object type : %d\n",
-                        obj_handle.obj_type);
+                        obj_handle.data.obj_type);
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_unlink);
 
     }

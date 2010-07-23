@@ -297,7 +297,7 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
        *  Now load in the results from the call.
        */
 
-      (void)memset(DirentPtr, 0, BufferSize);
+      (void)memset(DirentPtr, 0, BufferSize); /* Todo Why does this crash the daemon ??*/
       cnt = 0;
 
 #if HPSS_LEVEL >= 622
