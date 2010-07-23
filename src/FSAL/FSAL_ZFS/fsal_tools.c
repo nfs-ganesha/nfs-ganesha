@@ -159,7 +159,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
       if(sizeof(fsal_handle_t) > FSAL_DIGEST_SIZE_HDLV4)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
-      memcpy(out_buff, in_fsal_handle, sizeof(in_fsal_handle));
+      memcpy(out_buff, in_fsal_handle, sizeof(fsal_handle_t));
       break;
 
       /* FileId digest for NFSv2 */
