@@ -124,7 +124,8 @@ EXTRA_DIST=nfs-ganesha.spec           \
            nfs-ganesha.gpfs.init      \
            nfs-ganesha.hpss.init      \
            nfs-ganesha.proxy.init     \
-           nfs-ganesha.snmp.init        
+           nfs-ganesha.snmp.init      \
+           nfs-ganesha.zfs.init
 
 pkgconfigdir=$(libdir)/pkgconfig
 if USE_FSAL_FUSE
