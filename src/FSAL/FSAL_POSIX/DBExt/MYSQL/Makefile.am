@@ -7,7 +7,6 @@ libfsaldbext_la_SOURCES = posixdb_flush.c 	\
 			  posixdb_internal.h    \
 			  posixdb_add.c      	\
 			  posixdb_consistency.c \
-			  posixdb_flush.c       \
 			  posixdb_info.c 	\
 		          posixdb_lock.c	\
 		          posixdb_delete.c      \

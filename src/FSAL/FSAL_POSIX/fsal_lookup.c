@@ -46,11 +46,11 @@
  *         - Another error code else.
  *          
  */
-fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
-                          fsal_name_t * p_filename,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_handle_t * p_object_handle,      /* OUT */
-                          fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
+fsal_status_t POSIXFSAL_lookup(posixfsal_handle_t * p_parent_directory_handle,  /* IN */
+                               fsal_name_t * p_filename,        /* IN */
+                               posixfsal_op_context_t * p_context,      /* IN */
+                               posixfsal_handle_t * p_object_handle,    /* OUT */
+                               fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */
     )
 {
   int rc, errsv;
@@ -152,13 +152,13 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_lookup);
 
       /* getHandleFromName */
-      if(!FSAL_namecmp(p_filename, &FSAL_DOT))
+      if(!FSAL_namecmp(p_filename, (fsal_name_t *) & FSAL_DOT))
         {
           /* lookup "." */
-          memcpy(p_object_handle, p_parent_directory_handle, sizeof(fsal_handle_t));
+          memcpy(p_object_handle, p_parent_directory_handle, sizeof(posixfsal_handle_t));
 
         }
-      else if(!FSAL_namecmp(p_filename, &FSAL_DOT_DOT))
+      else if(!FSAL_namecmp(p_filename, (fsal_name_t *) & FSAL_DOT_DOT))
         {
           /* lookup ".." */
           statusdb = fsal_posixdb_getParentDirHandle(p_context->p_conn,
@@ -223,15 +223,15 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
  *        It can be NULL (increases performances).
  */
 
-fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
-                              fsal_op_context_t * p_context,    /* IN */
-                              fsal_handle_t * object_handle,    /* OUT */
-                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
+fsal_status_t POSIXFSAL_lookupPath(fsal_path_t * p_path,        /* IN */
+                                   posixfsal_op_context_t * p_context,  /* IN */
+                                   posixfsal_handle_t * object_handle,  /* OUT */
+                                   fsal_attrib_list_t * object_attributes       /* [ IN/OUT ] */
     )
 {
   fsal_name_t obj_name = FSAL_NAME_INITIALIZER; /* empty string */
   char *ptr_str;
-  fsal_handle_t out_hdl;
+  posixfsal_handle_t out_hdl;
   fsal_status_t status;
   int b_is_last = FALSE;        /* is it the last lookup ? */
 
@@ -262,12 +262,12 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
 
   /* retrieves root directory */
 
-  status = FSAL_lookup(NULL,    /* looking up for root */
-                       NULL,    /* empty string to get root handle */
-                       p_context,       /* user's p_contextentials */
-                       &out_hdl,        /* output root handle */
-                       /* retrieves attributes if this is the last lookup : */
-                       (b_is_last ? object_attributes : NULL));
+  status = POSIXFSAL_lookup(NULL,       /* looking up for root */
+                            NULL,       /* empty string to get root handle */
+                            p_context,  /* user's p_contextentials */
+                            &out_hdl,   /* output root handle */
+                            /* retrieves attributes if this is the last lookup : */
+                            (b_is_last ? object_attributes : NULL));
 
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_lookupPath);
@@ -285,7 +285,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
   while(ptr_str[0])
     {
 
-      fsal_handle_t in_hdl;
+      posixfsal_handle_t in_hdl;
       char *dest_ptr;
 
       /* preparing lookup */
@@ -316,12 +316,12 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
         b_is_last = TRUE;
 
       /*call to FSAL_lookup */
-      status = FSAL_lookup(&in_hdl,     /* parent directory handle */
-                           &obj_name,   /* object name */
-                           p_context,   /* user's p_contextentials */
-                           &out_hdl,    /* output root handle */
-                           /* retrieves attributes if this is the last lookup : */
-                           (b_is_last ? object_attributes : NULL));
+      status = POSIXFSAL_lookup(&in_hdl,        /* parent directory handle */
+                                &obj_name,      /* object name */
+                                p_context,      /* user's p_contextentials */
+                                &out_hdl,       /* output root handle */
+                                /* retrieves attributes if this is the last lookup : */
+                                (b_is_last ? object_attributes : NULL));
 
       if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_lookupPath);
@@ -357,10 +357,10 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
  *         - Another error code else.
  *          
  */
-fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
-                                  fsal_op_context_t * p_context,        /* IN */
-                                  fsal_handle_t * p_fsoot_handle,       /* OUT */
-                                  fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
+fsal_status_t POSIXFSAL_lookupJunction(posixfsal_handle_t * p_junction_handle,  /* IN */
+                                       posixfsal_op_context_t * p_context,      /* IN */
+                                       posixfsal_handle_t * p_fsoot_handle,     /* OUT */
+                                       fsal_attrib_list_t * p_fsroot_attributes /* [ IN/OUT ] */
     )
 {
   //hpss_Attrs_t    root_attr;

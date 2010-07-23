@@ -22,7 +22,7 @@
 
 /* functions related to OP_FIND */
 void find(fsal_posixdb_conn * p_conn);
-void display_directory(fsal_posixdb_conn * p_conn, fsal_handle_t * p_handle_parent,
+void display_directory(fsal_posixdb_conn * p_conn, posixfsal_handle_t * p_handle_parent,
                        char *basedir);
 
 /* functions related to OP_EMPTYDB */
@@ -30,7 +30,7 @@ void emptydb(fsal_posixdb_conn * p_conn);
 
 /* functions related to OP_POPULATE */
 void populatedb(fsal_posixdb_conn * p_conn, char *path);
-void add_dir(fsal_posixdb_conn * p_conn, char *path, fsal_handle_t * dir_handle);
+void add_dir(fsal_posixdb_conn * p_conn, char *path, posixfsal_handle_t * dir_handle);
 
 /* ---------------------------------------------- */
 
@@ -39,7 +39,7 @@ void populatedb(fsal_posixdb_conn * p_conn, char *path)
   int rc;
   fsal_posixdb_fileinfo_t info;
   fsal_name_t fsalname;
-  fsal_handle_t handle, handle_parent;
+  posixfsal_handle_t handle, handle_parent;
   struct stat buffstat;
   char *begin, *end, backup;
 
@@ -74,7 +74,7 @@ void populatedb(fsal_posixdb_conn * p_conn, char *path)
       fsal_internal_posix2posixdb_fileinfo(&buffstat, &info);
       FSAL_str2name(begin, FSAL_MAX_NAME_LEN, &fsalname);
       fsal_internal_posixdb_add_entry(p_conn, &fsalname, &info, &handle_parent, &handle);
-      memcpy(&handle_parent, &handle, sizeof(fsal_handle_t));
+      memcpy(&handle_parent, &handle, sizeof(posixfsal_handle_t));
 
       *end = backup;
       begin = end;
@@ -87,12 +87,12 @@ void populatedb(fsal_posixdb_conn * p_conn, char *path)
   puts("done");
 }
 
-void add_dir(fsal_posixdb_conn * p_conn, char *path, fsal_handle_t * p_dir_handle)
+void add_dir(fsal_posixdb_conn * p_conn, char *path, posixfsal_handle_t * p_dir_handle)
 {
   DIR *dirp;
   struct dirent *dp;
   struct dirent dpe;
-  fsal_handle_t new_handle;
+  posixfsal_handle_t new_handle;
   struct stat buffstat;
   char path_temp[FSAL_MAX_PATH_LEN];
   fsal_status_t st;
@@ -152,7 +152,7 @@ void emptydb(fsal_posixdb_conn * p_conn)
 
 void find(fsal_posixdb_conn * p_conn)
 {
-  fsal_handle_t handle_root;
+  posixfsal_handle_t handle_root;
   fsal_posixdb_status_t st;
 
   st = fsal_posixdb_getInfoFromName(p_conn, NULL,       /* parent handle */
@@ -174,7 +174,7 @@ void find(fsal_posixdb_conn * p_conn)
   return;
 }
 
-void display_directory(fsal_posixdb_conn * p_conn, fsal_handle_t * p_handle_parent,
+void display_directory(fsal_posixdb_conn * p_conn, posixfsal_handle_t * p_handle_parent,
                        char *basedir)
 {
   fsal_posixdb_child *p_children;
@@ -190,9 +190,9 @@ void display_directory(fsal_posixdb_conn * p_conn, fsal_handle_t * p_handle_pare
     }
   for(i = 0; i < count; i++)
     {
-      printf("%llu %s/%s\n", (unsigned long long int)p_children[i].handle.info.inode,
+      printf("%llu %s/%s\n", (unsigned long long int)p_children[i].handle.data.info.inode,
              basedir, p_children[i].name.name);
-      if(p_children[i].handle.info.ftype == FSAL_TYPE_DIR)
+      if(p_children[i].handle.data.info.ftype == FSAL_TYPE_DIR)
         {
           char basedir_new[FSAL_MAX_PATH_LEN];
           strncpy(basedir_new, basedir, FSAL_MAX_PATH_LEN);

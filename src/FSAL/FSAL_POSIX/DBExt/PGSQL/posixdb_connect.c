@@ -31,7 +31,7 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
       DisplayLogLevel(NIV_EVENT, "ERROR: could not connect to database : %s",
                       PQerrorMessage(*p_conn));
       PQfinish(*p_conn);
-      ReturnCode(ERR_FSAL_POSIXDB_BADCONN, (int)st);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_BADCONN, (int)st);
       /* error message available with PQerrorMessage(dbconn) */
     }
 }
@@ -39,7 +39,7 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
 fsal_posixdb_status_t fsal_posixdb_disconnect(fsal_posixdb_conn * p_conn)
 {
   PQfinish(p_conn);
-  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+  ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 }
 
 fsal_posixdb_status_t fsal_posixdb_initPreparedQueries(fsal_posixdb_conn * p_conn)
@@ -379,5 +379,5 @@ fsal_posixdb_status_t fsal_posixdb_initPreparedQueries(fsal_posixdb_conn * p_con
 
 #endif
 
-  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+  ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 }

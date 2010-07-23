@@ -179,7 +179,6 @@ BUDDY_ADDR_T BuddyCalloc(size_t NumberOfElements, size_t ElementSize);
  */
 int BuddyDestroy();
 
-
 /**
  * For pool allocation, the user should know how much entries
  * it can place in a pool, for not wasting memory.

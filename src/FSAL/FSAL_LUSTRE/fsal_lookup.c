@@ -46,11 +46,11 @@
  *         - Another error code else.
  *          
  */
-fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
-                          fsal_name_t * p_filename,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_handle_t * p_object_handle,      /* OUT */
-                          fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
+fsal_status_t LUSTREFSAL_lookup(lustrefsal_handle_t * p_parent_directory_handle,        /* IN */
+                                fsal_name_t * p_filename,       /* IN */
+                                lustrefsal_op_context_t * p_context,    /* IN */
+                                lustrefsal_handle_t * p_object_handle,  /* OUT */
+                                fsal_attrib_list_t * p_object_attributes        /* [ IN/OUT ] */
     )
 {
   int rc, errsv;
@@ -86,7 +86,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
       /* get attributes, if asked */
       if(p_object_attributes)
         {
-          status = FSAL_getattrs(p_object_handle, p_context, p_object_attributes);
+          status = LUSTREFSAL_getattrs(p_object_handle, p_context, p_object_attributes);
           if(FSAL_IS_ERROR(status))
             {
               FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
@@ -163,7 +163,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
   /* get object attributes */
   if(p_object_attributes)
     {
-      status = FSAL_getattrs(p_object_handle, p_context, p_object_attributes);
+      status = LUSTREFSAL_getattrs(p_object_handle, p_context, p_object_attributes);
       if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
@@ -198,10 +198,10 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
  *        It can be NULL (increases performances).
  */
 
-fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
-                              fsal_op_context_t * p_context,    /* IN */
-                              fsal_handle_t * object_handle,    /* OUT */
-                              fsal_attrib_list_t * p_object_attributes  /* [ IN/OUT ] */
+fsal_status_t LUSTREFSAL_lookupPath(fsal_path_t * p_path,       /* IN */
+                                    lustrefsal_op_context_t * p_context,        /* IN */
+                                    lustrefsal_handle_t * object_handle,        /* OUT */
+                                    fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */
     )
 {
   fsal_status_t status;
@@ -227,7 +227,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
   /* get object attributes */
   if(p_object_attributes)
     {
-      status = FSAL_getattrs(object_handle, p_context, p_object_attributes);
+      status = LUSTREFSAL_getattrs(object_handle, p_context, p_object_attributes);
       if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
@@ -262,10 +262,10 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
  *         - Another error code else.
  *          
  */
-fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
-                                  fsal_op_context_t * p_context,        /* IN */
-                                  fsal_handle_t * p_fsoot_handle,       /* OUT */
-                                  fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
+fsal_status_t LUSTREFSAL_lookupJunction(lustrefsal_handle_t * p_junction_handle,        /* IN */
+                                        lustrefsal_op_context_t * p_context,    /* IN */
+                                        lustrefsal_handle_t * p_fsoot_handle,   /* OUT */
+                                        fsal_attrib_list_t * p_fsroot_attributes        /* [ IN/OUT ] */
     )
 {
   //hpss_Attrs_t    root_attr;

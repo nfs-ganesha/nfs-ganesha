@@ -45,11 +45,11 @@
  *        - Another error code if an error occurred.
  */
 
-fsal_status_t FSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
-                            fsal_size_t length, /* IN */
-                            fsal_file_t * file_descriptor,      /* Unused in this FSAL */
-                            fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */
+fsal_status_t LUSTREFSAL_truncate(lustrefsal_handle_t * p_filehandle,   /* IN */
+                                  lustrefsal_op_context_t * p_context,  /* IN */
+                                  fsal_size_t length,   /* IN */
+                                  fsal_file_t * file_descriptor,        /* Unused in this FSAL */
+                                  fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
     )
 {
 
@@ -90,7 +90,7 @@ fsal_status_t FSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
 
       fsal_status_t st;
 
-      st = FSAL_getattrs(p_filehandle, p_context, p_object_attributes);
+      st = LUSTREFSAL_getattrs(p_filehandle, p_context, p_object_attributes);
 
       if(FSAL_IS_ERROR(st))
         {

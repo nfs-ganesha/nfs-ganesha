@@ -88,4 +88,6 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info);
  */
 void nfs_stop();
 
+int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib);
+
 #endif

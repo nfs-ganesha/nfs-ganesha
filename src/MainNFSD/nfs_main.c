@@ -66,6 +66,9 @@ int debug_level = NIV_EVENT;
 int detach_flag = FALSE;
 char ganesha_exec_path[MAXPATHLEN];
 
+extern fsal_functions_t fsal_functions;
+extern fsal_const_t fsal_consts;
+
 /* command line syntax */
 
 char options[] = "h@RTdS:F:S:P:f:L:N:";
@@ -149,6 +152,7 @@ int main(int argc, char *argv[])
   pid_t son_pid;
   struct sigaction act_sigusr1;
   struct sigaction act_sigterm;
+  char fsal_path_lib[MAXPATHLEN];
 
   /* retrieve executable file's name */
   strncpy(ganesha_exec_path, argv[0], MAXPATHLEN);
@@ -308,9 +312,6 @@ int main(int argc, char *argv[])
         }
     }
 
-  DisplayLog(">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
-             FSAL_GetFSName());
-
   /* Set the signal handler */
   memset(&act_sigusr1, 0, sizeof(act_sigusr1));
   act_sigusr1.sa_flags = 0;
@@ -336,6 +337,30 @@ int main(int argc, char *argv[])
   else
     DisplayLogLevel(NIV_EVENT,
                     "Signals SIGTERM and SIGINT (daemon shutdown) are ready to be used");
+
+#ifdef _USE_SHARED_FSAL
+  if(nfs_get_fsalpathlib_conf(my_config_path, fsal_path_lib))
+    {
+      DisplayLog("NFS MAIN: Error parsing configuration file.");
+      exit(1);
+    }
+#endif                          /* _USE_SHARED_FSAL */
+
+  /* Load the FSAL library (if needed) */
+  if(!FSAL_LoadLibrary(fsal_path_lib))
+    {
+      DisplayLog("NFS MAIN: Could not load FSAL dynamic library %s", fsal_path_lib);
+      exit(1);
+    }
+
+  /* Get the FSAL functions */
+  FSAL_LoadFunctions();
+
+  /* Get the FSAL consts */
+  FSAL_LoadConsts();
+
+  DisplayLog(">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
+             FSAL_GetFSName());
 
   /* initialize default parameters */
 

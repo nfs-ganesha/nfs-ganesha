@@ -17,7 +17,7 @@ typedef struct cache_path_entry__
   int is_set;
   int path_is_set;
   int info_is_set;
-  fsal_handle_t handle;
+  posixfsal_handle_t handle;
   fsal_path_t path;
   rw_lock_t entry_lock;
 
@@ -58,7 +58,7 @@ static unsigned int hash_cache_path(fsal_u64_t id, int ts)
  * ayant un hash donne peut occuper une case du tableau.
  */
 
-void fsal_posixdb_CachePath(fsal_handle_t * p_handle,   /* IN */
+void fsal_posixdb_CachePath(posixfsal_handle_t * p_handle,      /* IN */
                             fsal_path_t * p_path /* IN */ )
 {
 
@@ -102,7 +102,7 @@ void fsal_posixdb_CachePath(fsal_handle_t * p_handle,   /* IN */
 }
 
 /* set/update informations about a handle */
-int fsal_posixdb_UpdateInodeCache(fsal_handle_t * p_handle)     /* IN */
+int fsal_posixdb_UpdateInodeCache(posixfsal_handle_t * p_handle)        /* IN */
 {
 #ifdef _ENABLE_CACHE_PATH
 
@@ -153,7 +153,7 @@ int fsal_posixdb_UpdateInodeCache(fsal_handle_t * p_handle)     /* IN */
 }
 
 /* retrieve last informations about a handle */
-int fsal_posixdb_GetInodeCache(fsal_handle_t * p_handle)        /* IN/OUT */
+int fsal_posixdb_GetInodeCache(posixfsal_handle_t * p_handle)   /* IN/OUT */
 {
 #ifdef _ENABLE_CACHE_PATH
   unsigned int i;
@@ -208,7 +208,7 @@ void fsal_posixdb_InvalidateCache()
 #endif
 }
 
-int fsal_posixdb_GetPathCache(fsal_handle_t * p_handle, /* IN */
+int fsal_posixdb_GetPathCache(posixfsal_handle_t * p_handle,    /* IN */
                               fsal_path_t * p_path /* OUT */ )
 {
 #ifdef _ENABLE_CACHE_PATH
@@ -247,20 +247,20 @@ fsal_posixdb_status_t mysql_error_convert(int err)
   switch (err)
     {
     case 0:
-      ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
     case ER_NO_SUCH_TABLE:
-      ReturnCode(ERR_FSAL_POSIXDB_NOENT, err);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, err);
     case ER_DUP_ENTRY:
-      ReturnCode(ERR_FSAL_POSIXDB_CONSISTENCY, err);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_CONSISTENCY, err);
     case ER_BAD_FIELD_ERROR:
     case ER_PARSE_ERROR:
       DisplayLogLevel(NIV_CRIT, "SQL request parse error or invalid field");
-      ReturnCode(ERR_FSAL_POSIXDB_CMDFAILED, err);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_CMDFAILED, err);
     default:
       DisplayLogLevel(NIV_MAJOR,
                       "Unhandled error %d: default conversion to ERR_FSAL_POSIXDB_CMDFAILED",
                       err);
-      ReturnCode(ERR_FSAL_POSIXDB_CMDFAILED, err);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_CMDFAILED, err);
     }
 }
 
@@ -318,12 +318,12 @@ fsal_posixdb_status_t db_exec_sql(fsal_posixdb_conn * conn, const char *query,
       if(p_result)
         *p_result = mysql_store_result(&conn->db_conn);
 
-      ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
     }
 }
 
 fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
-                                                fsal_handle_t * p_handle,
+                                                posixfsal_handle_t * p_handle,
                                                 fsal_path_t * p_path)
 {
   unsigned int shift;
@@ -355,7 +355,7 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
 
   if(!p_conn || !p_handle || !p_path)
     {
-      ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
     }
 
   stmt = p_conn->stmt_tab[BUILDONEPATH];
@@ -364,15 +364,15 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
   memset(p_path, 0, sizeof(fsal_path_t));
 
   /* Nothing to do, it's the root path */
-  if(p_handle->id == 0 && p_handle->ts == 0)
-    ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+  if(p_handle->data.id == 0 && p_handle->data.ts == 0)
+    ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 
   /* check if the entry is in the cache */
   if(fsal_posixdb_GetPathCache(p_handle, p_path))
-    ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+    ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 
-  last_id = p_handle->id;
-  last_ts = p_handle->ts;
+  last_id = p_handle->data.id;
+  last_ts = p_handle->data.ts;
 
   /* Bind input parameters */
 
@@ -444,7 +444,7 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
         {
           /* clean prepared statement */
           mysql_stmt_free_result(stmt);
-          ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);        /* not found */
+          ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);      /* not found */
         }
       else if(rc)
         {
@@ -469,7 +469,7 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
       /* insert the name at the beginning of the path */
       shift = strlen(name);
       if(p_path->len + shift >= FSAL_MAX_PATH_LEN)
-        ReturnCode(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
+        ReturnCodeDB(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
       new_pos = p_path->path + shift;
       memmove(new_pos, p_path->path, p_path->len);
       memcpy(p_path->path, name, shift);
@@ -482,14 +482,14 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
   if(toomanypaths)
     {
       DisplayLog("Returned path: %s", p_path->path);
-      ReturnCode(ERR_FSAL_POSIXDB_TOOMANYPATHS, toomanypaths);  /* too many entries */
+      ReturnCodeDB(ERR_FSAL_POSIXDB_TOOMANYPATHS, toomanypaths);        /* too many entries */
     }
   else
     {
       /* set result in cache and return */
       fsal_posixdb_CachePath(p_handle, p_path);
 
-      ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
     }
 }
 
@@ -506,7 +506,7 @@ fsal_posixdb_status_t fsal_posixdb_recursiveDelete(fsal_posixdb_conn * p_conn,
   /* Sanity check */
   if(!p_conn)
     {
-      ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
     }
 
   if(ftype == FSAL_TYPE_DIR)
@@ -569,7 +569,7 @@ fsal_posixdb_status_t fsal_posixdb_recursiveDelete(fsal_posixdb_conn * p_conn,
     return st;
 #endif
 
-  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+  ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 }
 
 fsal_posixdb_status_t fsal_posixdb_deleteParent(fsal_posixdb_conn * p_conn,     /* IN */
@@ -586,7 +586,7 @@ fsal_posixdb_status_t fsal_posixdb_deleteParent(fsal_posixdb_conn * p_conn,     
   /* Sanity check */
   if(!p_conn || !filename || nlink < 1)
     {
-      ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
     }
 
   snprintf(query, 1024,
@@ -636,7 +636,7 @@ fsal_posixdb_status_t fsal_posixdb_deleteParent(fsal_posixdb_conn * p_conn,     
         return st;
     }
 
-  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+  ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 }
 
 fsal_posixdb_status_t fsal_posixdb_internal_delete(fsal_posixdb_conn * p_conn,  /* IN */
@@ -656,7 +656,7 @@ fsal_posixdb_status_t fsal_posixdb_internal_delete(fsal_posixdb_conn * p_conn,  
   MYSQL_ROW row;
 
   if(!p_conn || !filename)
-    ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+    ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
 
   snprintf(query, 2048,
            "SELECT Parent.handleid, Parent.handlets, Handle.deviceid, Handle.inode, Handle.nlink, Handle.ctime, Handle.ftype "
@@ -674,7 +674,7 @@ fsal_posixdb_status_t fsal_posixdb_internal_delete(fsal_posixdb_conn * p_conn,  
   if((mysql_num_rows(res) < 1) || ((row = mysql_fetch_row(res)) == NULL))
     {
       mysql_free_result(res);
-      ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
     }
 
   id = atoll(row[0]);
@@ -716,7 +716,7 @@ fsal_posixdb_status_t posixdb_internal_fillFileinfoFromStrValues(fsal_posixdb_fi
 {
 
   if(!p_info)
-    ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+    ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
 
   p_info->devid = devid_str ? (dev_t) atoll(devid_str) : 0;
   p_info->inode = inode_str ? (ino_t) atoll(inode_str) : 0;
@@ -724,5 +724,5 @@ fsal_posixdb_status_t posixdb_internal_fillFileinfoFromStrValues(fsal_posixdb_fi
   p_info->ctime = ctime_str ? (time_t) atoi(ctime_str) : 0;
   p_info->ftype = ftype_str ? (fsal_nodetype_t) atoi(ftype_str) : 0;
 
-  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+  ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 }

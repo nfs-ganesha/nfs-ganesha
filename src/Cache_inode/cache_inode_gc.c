@@ -285,8 +285,9 @@ static int cache_inode_gc_invalidate_related_dirent(cache_entry_t * pentry,
             }
           else
             {
-              parent_iter->parent->object.dir_begin.pdir_data->
-                  dir_entries[parent_iter->subdirpos].active = INVALID;
+              parent_iter->parent->object.dir_begin.pdir_data->dir_entries[parent_iter->
+                                                                           subdirpos].
+                  active = INVALID;
               /* Garbage invalidates the effet of the readdir previously made */
               parent_iter->parent->object.dir_begin.has_been_readdir = CACHE_INODE_NO;
               parent_iter->parent->object.dir_begin.nbactive -= 1;
@@ -305,8 +306,9 @@ static int cache_inode_gc_invalidate_related_dirent(cache_entry_t * pentry,
             }
           else
             {
-              parent_iter->parent->object.dir_cont.pdir_data->
-                  dir_entries[parent_iter->subdirpos].active = INVALID;
+              parent_iter->parent->object.dir_cont.pdir_data->dir_entries[parent_iter->
+                                                                          subdirpos].
+                  active = INVALID;
               parent_iter->parent->object.dir_cont.nbactive -= 1;
             }
         }

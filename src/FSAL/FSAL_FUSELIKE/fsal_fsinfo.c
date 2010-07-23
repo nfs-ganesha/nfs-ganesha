@@ -48,9 +48,9 @@
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,    /* IN */
-                                 fsal_op_context_t * p_context, /* IN */
-                                 fsal_staticfsinfo_t * staticinfo       /* OUT */
+fsal_status_t FUSEFSAL_static_fsinfo(fusefsal_handle_t * filehandle,    /* IN */
+                                     fusefsal_op_context_t * p_context, /* IN */
+                                     fsal_staticfsinfo_t * staticinfo   /* OUT */
     )
 {
   /* sanity checks. */
@@ -84,9 +84,9 @@ fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,    /* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
-                                  fsal_op_context_t * p_context,        /* IN */
-                                  fsal_dynamicfsinfo_t * dynamicinfo    /* OUT */
+fsal_status_t FUSEFSAL_dynamic_fsinfo(fusefsal_handle_t * filehandle,   /* IN */
+                                      fusefsal_op_context_t * p_context,        /* IN */
+                                      fsal_dynamicfsinfo_t * dynamicinfo        /* OUT */
     )
 {
 
@@ -99,8 +99,8 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_dynamic_fsinfo);
 
   /* get the full path for the object */
-  rc = NamespacePath(filehandle->inode,
-                     filehandle->device, filehandle->validator, object_path);
+  rc = NamespacePath(filehandle->data.inode,
+                     filehandle->data.device, filehandle->data.validator, object_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_dynamic_fsinfo);
 

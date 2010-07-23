@@ -63,10 +63,10 @@
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
-                           fsal_op_context_t * p_context,       /* IN */
-                           fsal_dir_t * dir_descriptor, /* OUT */
-                           fsal_attrib_list_t * dir_attributes  /* [ IN/OUT ] */
+fsal_status_t PROXYFSAL_opendir(proxyfsal_handle_t * dir_handle,        /* IN */
+                                proxyfsal_op_context_t * p_context,     /* IN */
+                                proxyfsal_dir_t * dir_descriptor,       /* OUT */
+                                fsal_attrib_list_t * dir_attributes     /* [ IN/OUT ] */
     )
 {
   /* sanity checks
@@ -124,14 +124,14 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
  *          ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
-                           fsal_cookie_t start_position,        /* IN */
-                           fsal_attrib_mask_t get_attr_mask,    /* IN */
-                           fsal_mdsize_t buffersize,    /* IN */
-                           fsal_dirent_t * pdirent,     /* OUT */
-                           fsal_cookie_t * end_position,        /* OUT */
-                           fsal_count_t * nb_entries,   /* OUT */
-                           fsal_boolean_t * end_of_dir  /* OUT */
+fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
+                                proxyfsal_cookie_t start_position,      /* IN */
+                                fsal_attrib_mask_t get_attr_mask,       /* IN */
+                                fsal_mdsize_t buffersize,       /* IN */
+                                fsal_dirent_t * pdirent,        /* OUT */
+                                proxyfsal_cookie_t * end_position,      /* OUT */
+                                fsal_count_t * nb_entries,      /* OUT */
+                                fsal_boolean_t * end_of_dir     /* OUT */
     )
 {
   nfs_fh4 nfs4fh;
@@ -206,8 +206,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
       tabentry4[i].attrs.attrmask.bitmap4_val = tabentry4bitmap[i];
       tabentry4[i].attrs.attrmask.bitmap4_len = 2;
     }
-  resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.
-      opreaddir.READDIR4res_u.resok4.reply.entries = (entry4 *) tabentry4;
+  resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.opreaddir.
+      READDIR4res_u.resok4.reply.entries = (entry4 *) tabentry4;
 
   /* >> Call your filesystem lookup function here << */
   if(fsal_internal_proxy_extract_fh(&nfs4fh, &dir_descriptor->fhandle) == FALSE)
@@ -233,8 +233,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
     return fsal_internal_proxy_error_convert(resnfs4.status, INDEX_FSAL_readdir);
 
   /* Set the reply structure */
-  if(resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.
-     opreaddir.READDIR4res_u.resok4.reply.eof == TRUE)
+  if(resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.opreaddir.
+     READDIR4res_u.resok4.reply.eof == TRUE)
     {
       *end_of_dir = TRUE;
     }
@@ -249,8 +249,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
   /* Don't forget setting output vars : end_position, nb_entries, end_of_dir  */
   for(piter_entry =
-      resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.
-      opreaddir.READDIR4res_u.resok4.reply.entries; piter_entry != NULL;
+      resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.opreaddir.
+      READDIR4res_u.resok4.reply.entries; piter_entry != NULL;
       piter_entry = piter_entry->nextentry)
     {
       if(proxy_Fattr_To_FSAL_attr(&pdirent[cpt].attributes,
@@ -301,7 +301,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
+fsal_status_t PROXYFSAL_closedir(proxyfsal_dir_t * dir_descriptor       /* IN */
     )
 {
 

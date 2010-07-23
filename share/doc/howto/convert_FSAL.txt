@@ -1,0 +1,72 @@
+- copy FSAL_XFS/fsal_compat,c into FSAL_PROXY dir and update Makefile.am
+- remove fsal_strings.c from the directory (it is factorized above) and update Makefile.am
+- in fsal_compat.c replace XFSFSAL => PROXYFSAL and xfsfsal => proxyfsal
+- copy XFSFSAL* prototypes from FSAL_XFS/fsal_internal.h to FSAL_PROXY/fsal_internal.h then replace XFSFSAL by PROXYFSAL and xfsfsal by proxyfsal, do the same with all other "xfs" related entries
+- in include/FSAL/FSAL/FSAL_PROXY/fsal_types.h, add prefix "proxy" to the following types :
+	fsal_handle_t fsal_op_context_t fsal_file_t fsal_export_context_t fsal_lockdesc_t fsal_cookie_t
+	fs_specific_initinfo_t  fsal_cred_t
+- add the following lines to include/FSAL/FSAL/FSAL_PROXY/fsal_types.h
+	#ifndef _USE_SHARED_FSAL
+
+	#define fsal_handle_t proxyfsal_handle_t
+	#define fsal_op_context_t proxyfsal_op_context_t
+	#define fsal_file_t proxyfsal_file_t
+	#define fsal_dir_t proxyfsal_dir_t
+	#define fsal_export_context_t proxyfsal_export_context_t
+	#define fsal_lockdesc_t proxyfsal_lockdesc_t
+	#define fsal_cookie_t proxyfsal_cookie_t
+	#define fs_specific_initinfo_t proxyfs_specific_initinfo_t
+	#define fsal_cred_t proxyfsal_cred_t
+
+	#endif /* _USE_SHARED_FSAL */
+- remove definitions of FSAL_MAX_NAME_LEN FSAL_MAX_PATH_LEN FSAL_READDIR_SIZE macros
+- remove defintions of types fsal_name_t fsal_path_t
+- remove constants FSAL_DOT FSAL_DOTDOT
+- go to src/ , run autoreconf
+- run ./configure -with-fsal=PROXY
+- go back to src/FSAL/FSAL_PROXY
+- in every *.c files in the FSAL_PROXY directory, rename functions so that prototypes followed those
+  added at the end of fsal_internal.h (for example FSAL_lookup becomes PROXYFSAL_lookup). Replace old 
+  types by newer one as well (fsal_handle_t replaced by proxyfsal_handle_t)
+- fix local bug (for example, Return / ReturnCode redefined)
+- run 'make' and fix stuff until it compile
+- cd .. (go to src/FSAL) and run 'make'
+- cd '..' and run 'make'
+- make sure that all file were added to git 
+- make sure all the binaries are compiled (in a static way)
+- run "make distclean" + "autoreconf" + "./configure_env.sh --with-fsal=PROXY" + "make"
+- perform non-regression test
+- modifiy src/FSAL/FSAL_PROXY to support shared objects:
+	if BUILD_SHARED_FSAL
+
+	lib_LTLIBRARIES = libfsalproxy.la
+	libfsalproxy_la_LDFLAGS = -version-number @LIBVERSION@
+	libfsalproxy_la_LIBADD = ../../SemN/libSemN.la 
+
+	else
+	noinst_LTLIBRARIES          = libfsalproxy.la
+
+	endif
+
+- run "./configure_env.sh --with-fsal=PROXY  --enable-buildsharedfsal" to build fsal dynamic library and run the same non-regression test
+- it's now time to setup the use of dlopen : in file nfs_init.c at line 1928 (right before sleep(2) )
+ add the following lines
+      printf( "---> fsal_handle_t:%u\n", sizeof( proxyfsal_handle_t ) ) ;
+      printf( "---> fsal_op_context_t:%u\n", sizeof( proxyfsal_op_context_t ) ) ;
+      printf( "---> fsal_file_t:%u\n", sizeof( proxyfsal_file_t ) ) ; 
+      printf( "---> fsal_dir_t:%u\n", sizeof( proxyfsal_dir_t ) ) ;
+      printf( "---> fsal_lockdesc_t:%u\n", sizeof( proxyfsal_lockdesc_t ) ) ;
+      printf( "---> fsal_export_context_t:%u\n", sizeof( proxyfsal_export_context_t ) ) ;
+      printf( "---> fsal_cookie_t:%u\n", sizeof( proxyfsal_cookie_t ) ) ;
+      printf( "---> fs_specific_initinfo_t:%u\n", sizeof( proxyfs_specific_initinfo_t ) ) ;
+      printf( "---> fsal_cred_t:%u\n", sizeof( proxyfsal_cred_t ) ) ;
+- compile and run proxy.ganesha.nfsd and take note of the displayed size
+- go to include/fsal_glue.h and chek that FSAL_<TYPE>_T_SIZE macros defines bigger values than those 
+  you'd just get. If not, takes the displayed value as the new one.
+- run "./configure --with-fsal=DLOPEN" + make
+- add  FSAL_Shared_Libraray tag to "NFS_Core_Param block to set the path to shared fsal path and run non-regression tests on it
+
+
+
+
+	

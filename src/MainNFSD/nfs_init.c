@@ -525,7 +525,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   /* Buddy parameters */
 #ifndef _NO_BUDDY_SYSTEM
   Buddy_set_default_parameter(&p_nfs_param->buddy_param_worker);
-  Buddy_set_default_parameter(&p_nfs_param->buddy_param_tcp_mgr );
+  Buddy_set_default_parameter(&p_nfs_param->buddy_param_tcp_mgr);
 #endif
 
   p_nfs_param->pexportlist = NULL;
@@ -605,9 +605,9 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
     }
 
   /* Set TCP MGR specific field, so that it frees pages as fast as possible */
-  p_nfs_param->buddy_param_tcp_mgr.keep_minimum = 0 ;
-  p_nfs_param->buddy_param_tcp_mgr.keep_factor  = 0 ;
-  p_nfs_param->buddy_param_tcp_mgr.free_areas  = TRUE ;
+  p_nfs_param->buddy_param_tcp_mgr.keep_minimum = 0;
+  p_nfs_param->buddy_param_tcp_mgr.keep_factor = 0;
+  p_nfs_param->buddy_param_tcp_mgr.free_areas = TRUE;
 #endif
 
   /* Load FSAL configuration from parsed file */
@@ -902,9 +902,8 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
   /* Cache inode parameters : hash table */
   if((cache_inode_status =
       cache_inode_read_conf_hash_parameter(config_struct,
-                                           &p_nfs_param->
-                                           cache_layers_param.cache_param)) !=
-     CACHE_INODE_SUCCESS)
+                                           &p_nfs_param->cache_layers_param.
+                                           cache_param)) != CACHE_INODE_SUCCESS)
     {
       if(cache_inode_status == CACHE_INODE_NOT_FOUND)
         DisplayLog
@@ -942,7 +941,9 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 
   /* Cache inode client parameters */
   if((cache_inode_status = cache_inode_read_conf_client_parameter(config_struct,
-                                                                  &p_nfs_param->cache_layers_param.cache_inode_client_param))
+                                                                  &p_nfs_param->
+                                                                  cache_layers_param.
+                                                                  cache_inode_client_param))
      != CACHE_INODE_SUCCESS)
     {
       if(cache_inode_status == CACHE_INODE_NOT_FOUND)
@@ -960,7 +961,9 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 
   /* Data cache client parameters */
   if((cache_content_status = cache_content_read_conf_client_parameter(config_struct,
-                                                                      &p_nfs_param->cache_layers_param.cache_content_client_param))
+                                                                      &p_nfs_param->
+                                                                      cache_layers_param.
+                                                                      cache_content_client_param))
      != CACHE_CONTENT_SUCCESS)
     {
       if(cache_content_status == CACHE_CONTENT_NOT_FOUND)
@@ -1213,17 +1216,17 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
   unsigned long i = 0;
 
   /* Init for thread parameter (mostly for scheduling) */
-  if( pthread_attr_init(&attr_thr) != 0 )
-    DisplayLog("NFS STARTUP: can't init pthread's attributes" ) ;
-    
-  if( pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) != 0 )
-    DisplayLog("NFS STARTUP: can't set pthread's scope" ) ;
-    
-  if( pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE) != 0 )
-    DisplayLog("NFS STARTUP: can't set pthread's join state" ) ;
-    
-  if( pthread_attr_setstacksize( &attr_thr, THREAD_STACK_SIZE ) != 0 )
-    DisplayLog("NFS STARTUP: can't set pthread's stack size" ) ;
+  if(pthread_attr_init(&attr_thr) != 0)
+    DisplayLog("NFS STARTUP: can't init pthread's attributes");
+
+  if(pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) != 0)
+    DisplayLog("NFS STARTUP: can't set pthread's scope");
+
+  if(pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE) != 0)
+    DisplayLog("NFS STARTUP: can't set pthread's join state");
+
+  if(pthread_attr_setstacksize(&attr_thr, THREAD_STACK_SIZE) != 0)
+    DisplayLog("NFS STARTUP: can't set pthread's stack size");
 
   /* Starting all of the worker thread */
   for(i = 0; i < pnfs_param->core_param.nb_worker; i++)
@@ -1666,7 +1669,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #endif
 
   /* Create the root entries for each exported FS */
-  if( (rc = nfs_export_create_root_entry(nfs_param.pexportlist, ht) ) != TRUE)
+  if((rc = nfs_export_create_root_entry(nfs_param.pexportlist, ht)) != TRUE)
     {
       DisplayLog("NFS_INIT: Error initializing Cache Inode root entries, exiting...");
       exit(1);
@@ -1701,7 +1704,7 @@ static void nfs_Start_file_content_flushers(unsigned int nb_threads)
 #ifndef _IRIX_6
   pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
   pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE);
-  pthread_attr_setstacksize( &attr_thr, THREAD_STACK_SIZE ) ;
+  pthread_attr_setstacksize(&attr_thr, THREAD_STACK_SIZE);
 #endif
 
   /* Starting all of the flushers */
@@ -1741,6 +1744,67 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
   fsal_status_t fsal_status;
   fsal_op_context_t fsal_context;
   unsigned int i;
+
+#if 0
+  /* Will remain as long as all FSAL are not yet in new format */
+  printf("---> fsal_handle_t:%u\n", sizeof(proxyfsal_handle_t));
+  printf("---> fsal_op_context_t:%u\n", sizeof(proxyfsal_op_context_t));
+  printf("---> fsal_file_t:%u\n", sizeof(proxyfsal_file_t));
+  printf("---> fsal_dir_t:%u\n", sizeof(proxyfsal_dir_t));
+  printf("---> fsal_lockdesc_t:%u\n", sizeof(proxyfsal_lockdesc_t));
+  printf("---> fsal_export_context_t:%u\n", sizeof(proxyfsal_export_context_t));
+  printf("---> fsal_cookie_t:%u\n", sizeof(proxyfsal_cookie_t));
+  printf("---> fs_specific_initinfo_t:%u\n", sizeof(proxyfs_specific_initinfo_t));
+  printf("---> fsal_cred_t:%u\n", sizeof(proxyfsal_cred_t));
+#endif
+#if 0
+  /* Will remain as long as all FSAL are not yet in new format */
+  printf("---> fsal_handle_t:%u\n", sizeof(xfsfsal_handle_t));
+  printf("---> fsal_op_context_t:%u\n", sizeof(xfsfsal_op_context_t));
+  printf("---> fsal_file_t:%u\n", sizeof(xfsfsal_file_t));
+  printf("---> fsal_dir_t:%u\n", sizeof(xfsfsal_dir_t));
+  printf("---> fsal_lockdesc_t:%u\n", sizeof(xfsfsal_lockdesc_t));
+  printf("---> fsal_export_context_t:%u\n", sizeof(xfsfsal_export_context_t));
+  printf("---> fsal_cookie_t:%u\n", sizeof(xfsfsal_cookie_t));
+  printf("---> fs_specific_initinfo_t:%u\n", sizeof(xfsfs_specific_initinfo_t));
+  printf("---> fsal_cred_t:%u\n", sizeof(xfsfsal_cred_t));
+#endif
+#if 0
+  /* Will remain as long as all FSAL are not yet in new format */
+  printf("---> fsal_handle_t:%lu\n", sizeof(lustrefsal_handle_t));
+  printf("---> fsal_op_context_t:%lu\n", sizeof(lustrefsal_op_context_t));
+  printf("---> fsal_file_t:%lu\n", sizeof(lustrefsal_file_t));
+  printf("---> fsal_dir_t:%lu\n", sizeof(lustrefsal_dir_t));
+  printf("---> fsal_lockdesc_t:%lu\n", sizeof(lustrefsal_lockdesc_t));
+  printf("---> fsal_export_context_t:%lu\n", sizeof(lustrefsal_export_context_t));
+  printf("---> fsal_cookie_t:%lu\n", sizeof(lustrefsal_cookie_t));
+  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(lustrefs_specific_initinfo_t));
+  printf("---> fsal_cred_t:%lu\n", sizeof(lustrefsal_cred_t));
+#endif
+#if 0
+  /* Will remain as long as all FSAL are not yet in new format */
+  printf("---> fsal_handle_t:%lu\n", sizeof(hpssfsal_handle_t));
+  printf("---> fsal_op_context_t:%lu\n", sizeof(hpssfsal_op_context_t));
+  printf("---> fsal_file_t:%lu\n", sizeof(hpssfsal_file_t));
+  printf("---> fsal_dir_t:%lu\n", sizeof(hpssfsal_dir_t));
+  printf("---> fsal_lockdesc_t:%lu\n", sizeof(hpssfsal_lockdesc_t));
+  printf("---> fsal_export_context_t:%lu\n", sizeof(hpssfsal_export_context_t));
+  printf("---> fsal_cookie_t:%lu\n", sizeof(hpssfsal_cookie_t));
+  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(hpssfs_specific_initinfo_t));
+  printf("---> fsal_cred_t:%lu\n", sizeof(hpssfsal_cred_t));
+#endif
+#if 0
+  /* Will remain as long as all FSAL are not yet in new format */
+  printf("---> fsal_handle_t:%lu\n", sizeof(snmpfsal_handle_t));
+  printf("---> fsal_op_context_t:%lu\n", sizeof(snmpfsal_op_context_t));
+  printf("---> fsal_file_t:%lu\n", sizeof(snmpfsal_file_t));
+  printf("---> fsal_dir_t:%lu\n", sizeof(snmpfsal_dir_t));
+  printf("---> fsal_lockdesc_t:%lu\n", sizeof(snmpfsal_lockdesc_t));
+  printf("---> fsal_export_context_t:%lu\n", sizeof(snmpfsal_export_context_t));
+  printf("---> fsal_cookie_t:%lu\n", sizeof(snmpfsal_cookie_t));
+  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(snmpfs_specific_initinfo_t));
+  printf("---> fsal_cred_t:%lu\n", sizeof(snmpfsal_cred_t));
+#endif
 
   /* store the configuration so it is available for all layers */
   nfs_param = *p_nfs_param;
@@ -1786,9 +1850,8 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
 
   /* Allocate the directories for the datacache */
   if(cache_content_prepare_directories(nfs_param.pexportlist,
-                                       nfs_param.
-                                       cache_layers_param.cache_content_client_param.
-                                       cache_dir,
+                                       nfs_param.cache_layers_param.
+                                       cache_content_client_param.cache_dir,
                                        &content_status) != CACHE_CONTENT_SUCCESS)
     {
       DisplayLog

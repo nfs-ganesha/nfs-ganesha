@@ -163,7 +163,7 @@ int nfs4_FhandleToFSAL(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
 
   /* Fill in the fs opaque part */
   fsal_status =
-      FSAL_ExpandHandle(pcontext->export_context, FSAL_DIGEST_NFSV4,
+      FSAL_ExpandHandle(FSAL_GET_EXP_CTX(pcontext), FSAL_DIGEST_NFSV4,
                         (caddr_t) & (pfile_handle->fsopaque), pfsalhandle);
   if(FSAL_IS_ERROR(fsal_status))
     return 0;                   /* Corrupted (or stale) FH */
@@ -202,7 +202,7 @@ int nfs3_FhandleToFSAL(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
 
   /* Fill in the fs opaque part */
   fsal_status =
-      FSAL_ExpandHandle(pcontext->export_context, FSAL_DIGEST_NFSV3,
+      FSAL_ExpandHandle(FSAL_GET_EXP_CTX(pcontext), FSAL_DIGEST_NFSV3,
                         (caddr_t) & (pfile_handle->fsopaque), pfsalhandle);
   if(FSAL_IS_ERROR(fsal_status))
     return 0;                   /* Corrupted FH */
@@ -238,7 +238,7 @@ int nfs2_FhandleToFSAL(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
 #endif
   /* Fill in the fs opaque part */
   fsal_status =
-      FSAL_ExpandHandle(pcontext->export_context, FSAL_DIGEST_NFSV2,
+      FSAL_ExpandHandle(FSAL_GET_EXP_CTX(pcontext), FSAL_DIGEST_NFSV2,
                         (caddr_t) & (pfile_handle->fsopaque), pfsalhandle);
   if(FSAL_IS_ERROR(fsal_status))
     return 0;                   /* Corrupted FH */

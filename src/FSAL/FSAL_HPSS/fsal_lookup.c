@@ -57,11 +57,11 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  *          
  */
-fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
-                          fsal_name_t * p_filename,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_handle_t * object_handle,        /* OUT */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
+fsal_status_t HPSSFSAL_lookup(hpssfsal_handle_t * parent_directory_handle,      /* IN */
+                              fsal_name_t * p_filename, /* IN */
+                              hpssfsal_op_context_t * p_context,        /* IN */
+                              hpssfsal_handle_t * object_handle,        /* OUT */
+                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
 
@@ -90,16 +90,16 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       /* root handle = fileset root handle */
-      object_handle->obj_type =
+      object_handle->data.obj_type =
           hpss2fsal_type(p_context->export_context->fileset_root_handle.Type);
-      object_handle->ns_handle = p_context->export_context->fileset_root_handle;
+      object_handle->data.ns_handle = p_context->export_context->fileset_root_handle;
 
       /* retrieves root attributes, if asked. */
       if(object_attributes)
         {
           fsal_status_t status;
 
-          status = FSAL_getattrs(object_handle, p_context, object_attributes);
+          status = HPSSFSAL_getattrs(object_handle, p_context, object_attributes);
 
           /* On error, we set a flag in the returned attributes */
 
@@ -120,7 +120,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 
       /* Be careful about junction crossing, symlinks, hardlinks,... */
 
-      switch (parent_directory_handle->obj_type)
+      switch (parent_directory_handle->data.obj_type)
         {
         case FSAL_TYPE_DIR:
           /* OK */
@@ -145,7 +145,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 
       TakeTokenFSCall();
 
-      rc = HPSSFSAL_GetRawAttrHandle(&(parent_directory_handle->ns_handle), p_filename->name, &p_context->credential.hpss_usercred, FALSE,      /* don't traverse junctions */
+      rc = HPSSFSAL_GetRawAttrHandle(&(parent_directory_handle->data.ns_handle), p_filename->name, &p_context->credential.hpss_usercred, FALSE,      /* don't traverse junctions */
                                      &obj_hdl, NULL, &obj_attr);
 
       ReleaseTokenFSCall();
@@ -157,7 +157,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
      */
       if(rc == HPSS_ENOTDIR)
         {
-          if(HPSSFSAL_IsStaleHandle(&parent_directory_handle->ns_handle,
+          if(HPSSFSAL_IsStaleHandle(&parent_directory_handle->data.ns_handle,
                                     &p_context->credential.hpss_usercred))
             {
               Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_lookup);
@@ -168,8 +168,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_lookup);
 
       /* set output handle */
-      object_handle->obj_type = hpss2fsal_type(obj_hdl.Type);
-      object_handle->ns_handle = obj_hdl;
+      object_handle->data.obj_type = hpss2fsal_type(obj_hdl.Type);
+      object_handle->data.ns_handle = obj_hdl;
 
       if(object_attributes)
         {
@@ -217,10 +217,10 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  *          
  */
-fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
-                                  fsal_op_context_t * p_context,        /* IN */
-                                  fsal_handle_t * p_fsoot_handle,       /* OUT */
-                                  fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
+fsal_status_t HPSSFSAL_lookupJunction(hpssfsal_handle_t * p_junction_handle,    /* IN */
+                                      hpssfsal_op_context_t * p_context,        /* IN */
+                                      hpssfsal_handle_t * p_fsoot_handle,       /* OUT */
+                                      fsal_attrib_list_t * p_fsroot_attributes  /* [ IN/OUT ] */
     )
 {
   int rc;
@@ -233,7 +233,7 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
   if(!p_junction_handle || !p_fsoot_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookupJunction);
 
-  if(p_junction_handle->obj_type != FSAL_TYPE_JUNCTION)
+  if(p_junction_handle->data.obj_type != FSAL_TYPE_JUNCTION)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_lookupJunction);
 
   /* call to HPSS client api */
@@ -241,7 +241,7 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
 
   TakeTokenFSCall();
 
-  rc = HPSSFSAL_GetRawAttrHandle(&(p_junction_handle->ns_handle), NULL, &p_context->credential.hpss_usercred, TRUE,     /* do traverse junctions !!! */
+  rc = HPSSFSAL_GetRawAttrHandle(&(p_junction_handle->data.ns_handle), NULL, &p_context->credential.hpss_usercred, TRUE,     /* do traverse junctions !!! */
                                  NULL, NULL, &root_attr);
 
   ReleaseTokenFSCall();
@@ -250,8 +250,8 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
     Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_lookupJunction);
 
   /* set output handle */
-  p_fsoot_handle->obj_type = hpss2fsal_type(root_attr.FilesetHandle.Type);
-  p_fsoot_handle->ns_handle = root_attr.FilesetHandle;
+  p_fsoot_handle->data.obj_type = hpss2fsal_type(root_attr.FilesetHandle.Type);
+  p_fsoot_handle->data.ns_handle = root_attr.FilesetHandle;
 
   if(p_fsroot_attributes)
     {
@@ -304,15 +304,15 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
-                              fsal_op_context_t * p_context,    /* IN */
-                              fsal_handle_t * object_handle,    /* OUT */
-                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
+fsal_status_t HPSSFSAL_lookupPath(fsal_path_t * p_path, /* IN */
+                                  hpssfsal_op_context_t * p_context,    /* IN */
+                                  hpssfsal_handle_t * object_handle,    /* OUT */
+                                  fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
   fsal_name_t obj_name = FSAL_NAME_INITIALIZER; /* empty string */
   char *ptr_str;
-  fsal_handle_t out_hdl;
+  hpssfsal_handle_t out_hdl;
   fsal_status_t status;
   int b_is_last = FALSE;        /* is it the last lookup ? */
 
@@ -343,12 +343,12 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
 
   /* retrieves root directory */
 
-  status = FSAL_lookup(NULL,    /* looking up for root */
-                       NULL,    /* empty string to get root handle */
-                       p_context,       /* user's credentials */
-                       &out_hdl,        /* output root handle */
-                       /* retrieves attributes if this is the last lookup : */
-                       (b_is_last ? object_attributes : NULL));
+  status = HPSSFSAL_lookup(NULL,        /* looking up for root */
+                           NULL,        /* empty string to get root handle */
+                           p_context,   /* user's credentials */
+                           &out_hdl,    /* output root handle */
+                           /* retrieves attributes if this is the last lookup : */
+                           (b_is_last ? object_attributes : NULL));
 
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_lookupPath);
@@ -366,7 +366,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
   while(ptr_str[0])
     {
 
-      fsal_handle_t in_hdl;
+      hpssfsal_handle_t in_hdl;
       char *dest_ptr;
 
       /* preparing lookup */
@@ -397,12 +397,12 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
         b_is_last = TRUE;
 
       /*call to FSAL_lookup */
-      status = FSAL_lookup(&in_hdl,     /* parent directory handle */
-                           &obj_name,   /* object name */
-                           p_context,   /* user's credentials */
-                           &out_hdl,    /* output root handle */
-                           /* retrieves attributes if this is the last lookup : */
-                           (b_is_last ? object_attributes : NULL));
+      status = HPSSFSAL_lookup(&in_hdl, /* parent directory handle */
+                               &obj_name,       /* object name */
+                               p_context,       /* user's credentials */
+                               &out_hdl,        /* output root handle */
+                               /* retrieves attributes if this is the last lookup : */
+                               (b_is_last ? object_attributes : NULL));
 
       if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_lookupPath);
@@ -410,18 +410,18 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
       /* if the target object is a junction, an we allow cross junction lookups,
        * we cross it.
        */
-      if(global_fs_info.auth_exportpath_xdev && (out_hdl.obj_type == FSAL_TYPE_JUNCTION))
+      if(global_fs_info.auth_exportpath_xdev && (out_hdl.data.obj_type == FSAL_TYPE_JUNCTION))
         {
-          fsal_handle_t tmp_hdl;
+          hpssfsal_handle_t tmp_hdl;
 
           tmp_hdl = out_hdl;
 
           /*call to FSAL_lookup */
-          status = FSAL_lookupJunction(&tmp_hdl,        /* object handle */
-                                       p_context,       /* user's credentials */
-                                       &out_hdl,        /* output root handle */
-                                       /* retrieves attributes if this is the last lookup : */
-                                       (b_is_last ? object_attributes : NULL));
+          status = HPSSFSAL_lookupJunction(&tmp_hdl,    /* object handle */
+                                           p_context,   /* user's credentials */
+                                           &out_hdl,    /* output root handle */
+                                           /* retrieves attributes if this is the last lookup : */
+                                           (b_is_last ? object_attributes : NULL));
 
         }
 

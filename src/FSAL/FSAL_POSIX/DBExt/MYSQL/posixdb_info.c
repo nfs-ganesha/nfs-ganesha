@@ -9,10 +9,11 @@
 #include "string.h"
 
 fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  /* IN */
-                                                   fsal_handle_t * p_parent_directory_handle,   /* IN/OUT */
+                                                   posixfsal_handle_t * p_parent_directory_handle,      /* IN/OUT */
                                                    fsal_name_t * p_objectname,  /* IN */
                                                    fsal_path_t * p_path,        /* OUT */
-                                                   fsal_handle_t * p_handle /* OUT */ )
+                                                   posixfsal_handle_t *
+                                                   p_handle /* OUT */ )
 {
   fsal_posixdb_status_t st;
   char query[2048];
@@ -22,7 +23,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  
   /* sanity check */
   if(!p_conn || !p_handle)
     {
-      ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
     }
 #ifdef _DEBUG_FSAL
   printf("object_name='%s'\n", p_objectname->name ? p_objectname->name : "/");
@@ -30,15 +31,15 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  
 
   BeginTransaction(p_conn);
   /* lookup for the handle of the file */
-  if(p_parent_directory_handle && p_parent_directory_handle->id)
+  if(p_parent_directory_handle && p_parent_directory_handle->data.id)
     {
       snprintf(query, 2048,
                "SELECT Parent.handleid, Parent.handlets, Handle.deviceid, "
                "Handle.inode, Handle.nlink, Handle.ctime, Handle.ftype "
                "FROM Parent INNER JOIN Handle ON Parent.handleid = Handle.handleid AND Parent.handlets=Handle.handlets "
                "WHERE handleidparent=%llu AND handletsparent=%u AND name='%s'",
-               p_parent_directory_handle->id,
-               p_parent_directory_handle->ts, p_objectname->name);
+               p_parent_directory_handle->data.id,
+               p_parent_directory_handle->data.ts, p_objectname->name);
 
       st = db_exec_sql(p_conn, query, &res);
       if(FSAL_POSIXDB_IS_ERROR(st))
@@ -63,12 +64,12 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  
     {
       mysql_free_result(res);
       RollbackTransaction(p_conn);
-      ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
     }
 
-  p_handle->id = atoll(row[0]);
-  p_handle->ts = atoi(row[1]);
-  posixdb_internal_fillFileinfoFromStrValues(&(p_handle->info), row[2], row[3], /* devid, inode */
+  p_handle->data.id = atoll(row[0]);
+  p_handle->data.ts = atoi(row[1]);
+  posixdb_internal_fillFileinfoFromStrValues(&(p_handle->data.info), row[2], row[3], /* devid, inode */
                                              row[4],    /* nlink */
                                              row[5],    /* ctime */
                                              row[6]);   /* ftype */
@@ -86,7 +87,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  
       if(!(p_path->len + 1 + p_objectname->len < FSAL_MAX_PATH_LEN))
         {
           RollbackTransaction(p_conn);
-          ReturnCode(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
         }
       p_path->path[p_path->len] = '/';
       strcpy(&p_path->path[p_path->len + 1], p_objectname->name);
@@ -109,7 +110,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  
 }
 
 fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,        /* IN */
-                                                     fsal_handle_t * p_object_handle,   /* IN/OUT */
+                                                     posixfsal_handle_t * p_object_handle,      /* IN/OUT */
                                                      fsal_path_t * p_paths,     /* OUT */
                                                      int paths_size,    /* IN */
                                                      int *p_count /* OUT */ )
@@ -117,7 +118,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
   fsal_posixdb_status_t st;
   result_handle_t res;
   MYSQL_ROW row;
-  fsal_handle_t parent_directory_handle;
+  posixfsal_handle_t parent_directory_handle;
   int i_path;
   int toomanypaths = 0;
   char query[2048];
@@ -125,10 +126,10 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
   /* sanity check */
   if(!p_conn || !p_object_handle || ((!p_paths || !p_count) && paths_size > 0))
     {
-      ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
     }
 #ifdef _DEBUG_FSAL
-  printf("OBJECT_ID=%lli\n", p_object_handle->id);
+  printf("OBJECT_ID=%lli\n", p_object_handle->data.id);
 #endif
 
   BeginTransaction(p_conn);
@@ -140,8 +141,8 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
 
       snprintf(query, 2048,
                "SELECT Handle.deviceid, Handle.inode, Handle.nlink, Handle.ctime, Handle.ftype "
-               "FROM Handle WHERE handleid=%llu AND handlets=%u", p_object_handle->id,
-               p_object_handle->ts);
+               "FROM Handle WHERE handleid=%llu AND handlets=%u", p_object_handle->data.id,
+               p_object_handle->data.ts);
 
       st = db_exec_sql(p_conn, query, &res);
       if(FSAL_POSIXDB_IS_ERROR(st))
@@ -150,8 +151,8 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
       /* p_res contains : Handle.deviceId, Handle.inode, Handle.nlink, Handle.ctime, Handle.ftype  */
 
 #ifdef _DEBUG_FSAL
-      DisplayLog("lookupHandle(%llu,%u)", p_object_handle->id,
-                 (unsigned int)p_object_handle->ts);
+      DisplayLog("lookupHandle(%llu,%u)", p_object_handle->data.id,
+                 (unsigned int)p_object_handle->data.ts);
 #endif
       if((mysql_num_rows(res) != 1) || ((row = mysql_fetch_row(res)) == NULL))
         {
@@ -160,10 +161,10 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
 #endif
           mysql_free_result(res);
           RollbackTransaction(p_conn);
-          ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
         }
 
-      posixdb_internal_fillFileinfoFromStrValues(&(p_object_handle->info),
+      posixdb_internal_fillFileinfoFromStrValues(&(p_object_handle->data.info),
                                                  row[0], row[1], row[2], row[3], row[4]);
       mysql_free_result(res);
 
@@ -178,7 +179,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
 
       snprintf(query, 2048, "SELECT name, handleidparent, handletsparent "
                "FROM Parent WHERE handleid=%llu AND handlets=%u",
-               p_object_handle->id, p_object_handle->ts);
+               p_object_handle->data.id, p_object_handle->data.ts);
 
       st = db_exec_sql(p_conn, query, &res);
       if(FSAL_POSIXDB_IS_ERROR(st))
@@ -190,14 +191,14 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
         {
           mysql_free_result(res);
           RollbackTransaction(p_conn);
-          ReturnCode(ERR_FSAL_POSIXDB_NOPATH, 0);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_NOPATH, 0);
         }
       else if(*p_count > paths_size)
         {
           toomanypaths = 1;
 
           DisplayLog("Too many paths found for object %llu.%u: found=%u, max=%d",
-                     p_object_handle->id, p_object_handle->ts, *p_count, paths_size);
+                     p_object_handle->data.id, p_object_handle->data.ts, *p_count, paths_size);
 
           *p_count = paths_size;
         }
@@ -211,12 +212,12 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
             {
               mysql_free_result(res);
               RollbackTransaction(p_conn);
-              ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+              ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
             }
 
           /* build the path of the parent directory */
-          parent_directory_handle.id = atoll(row[1]);
-          parent_directory_handle.ts = atoi(row[2]);
+          parent_directory_handle.data.id = atoll(row[1]);
+          parent_directory_handle.data.ts = atoi(row[2]);
 
           st = fsal_posixdb_buildOnePath(p_conn, &parent_directory_handle,
                                          &p_paths[i_path]);
@@ -233,7 +234,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
                 {
                   mysql_free_result(res);
                   RollbackTransaction(p_conn);
-                  ReturnCode(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
+                  ReturnCodeDB(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
                 }
               strcpy(&p_paths[i_path].path[tmp_len], row[0]);
               p_paths[i_path].len += strlen(row[0]);
@@ -246,7 +247,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
                 {
                   mysql_free_result(res);
                   RollbackTransaction(p_conn);
-                  ReturnCode(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
+                  ReturnCodeDB(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
                 }
               p_paths[i_path].path[tmp_len] = '/';
               strcpy(&p_paths[i_path].path[tmp_len + 1], row[0]);
@@ -264,7 +265,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
   st = EndTransaction(p_conn);
 
   if(toomanypaths)
-    ReturnCode(ERR_FSAL_POSIXDB_TOOMANYPATHS, 0);
+    ReturnCodeDB(ERR_FSAL_POSIXDB_TOOMANYPATHS, 0);
   else
     return st;
 
@@ -276,8 +277,8 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
 }
 
 fsal_posixdb_status_t fsal_posixdb_getParentDirHandle(fsal_posixdb_conn * p_conn,       /* IN */
-                                                      fsal_handle_t * p_object_handle,  /* IN */
-                                                      fsal_handle_t * p_parent_directory_handle /* OUT */
+                                                      posixfsal_handle_t * p_object_handle,     /* IN */
+                                                      posixfsal_handle_t * p_parent_directory_handle    /* OUT */
     )
 {
   fsal_posixdb_status_t st;
@@ -287,7 +288,7 @@ fsal_posixdb_status_t fsal_posixdb_getParentDirHandle(fsal_posixdb_conn * p_conn
 
   /* sanity check */
   if(!p_conn || !p_parent_directory_handle || !p_object_handle)
-    ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+    ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
 
   /* no need to start a transaction, there is only one query */
 
@@ -295,8 +296,8 @@ fsal_posixdb_status_t fsal_posixdb_getParentDirHandle(fsal_posixdb_conn * p_conn
            "SELECT Parent.name, Parent.handleidparent, Parent.handletsparent, "
            "Handle.deviceid, Handle.inode, Handle.nlink, Handle.ctime, Handle.ftype "
            "FROM Parent LEFT JOIN Handle ON Parent.handleidparent = Handle.handleid AND Parent.handletsparent=Handle.handlets "
-           "WHERE Parent.handleid=%llu AND Parent.handlets=%u", p_object_handle->id,
-           p_object_handle->ts);
+           "WHERE Parent.handleid=%llu AND Parent.handlets=%u", p_object_handle->data.id,
+           p_object_handle->data.ts);
 
   st = db_exec_sql(p_conn, query, &res);
   if(FSAL_POSIXDB_IS_ERROR(st))
@@ -306,25 +307,25 @@ fsal_posixdb_status_t fsal_posixdb_getParentDirHandle(fsal_posixdb_conn * p_conn
   if(mysql_num_rows(res) == 0)
     {
       mysql_free_result(res);
-      ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
     }
 
   row = mysql_fetch_row(res);
   if(row == NULL)
     {
       mysql_free_result(res);
-      ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
     }
 #ifdef _DEBUG_FSAL
   DisplayLog("lookupPathsExt");
 #endif
 
-  p_parent_directory_handle->id = atoll(row[1]);
-  p_parent_directory_handle->ts = atoi(row[2]);
-  posixdb_internal_fillFileinfoFromStrValues(&(p_parent_directory_handle->info), row[3],
+  p_parent_directory_handle->data.id = atoll(row[1]);
+  p_parent_directory_handle->data.ts = atoi(row[2]);
+  posixdb_internal_fillFileinfoFromStrValues(&(p_parent_directory_handle->data.info), row[3],
                                              row[4], row[5], row[6], row[7]);
 
   mysql_free_result(res);
 
-  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+  ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 }

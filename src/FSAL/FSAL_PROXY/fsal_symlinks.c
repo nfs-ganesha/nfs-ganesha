@@ -66,10 +66,10 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  * */
 
-fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
-                            fsal_path_t * p_link_content,       /* OUT */
-                            fsal_attrib_list_t * link_attributes        /* [ IN/OUT ] */
+fsal_status_t PROXYFSAL_readlink(proxyfsal_handle_t * linkhandle,       /* IN */
+                                 proxyfsal_op_context_t * p_context,    /* IN */
+                                 fsal_path_t * p_link_content,  /* OUT */
+                                 fsal_attrib_list_t * link_attributes   /* [ IN/OUT ] */
     )
 {
 
@@ -124,22 +124,22 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
   COMPOUNDV4_ARG_ADD_OP_READLINK(argnfs4);
   COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, bitmap);
 
-  resnfs4.resarray.resarray_val[FSAL_READLINK_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
-  resnfs4.resarray.resarray_val[FSAL_READLINK_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_READLINK_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
+  resnfs4.resarray.resarray_val[FSAL_READLINK_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_READLINK_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+  resnfs4.resarray.resarray_val[FSAL_READLINK_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
       (char *)&fattr_internal;
-  resnfs4.resarray.resarray_val[FSAL_READLINK_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+  resnfs4.resarray.resarray_val[FSAL_READLINK_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
       sizeof(fattr_internal);
 
-  resnfs4.resarray.resarray_val[FSAL_READLINK_IDX_OP_READLINK].nfs_resop4_u.
-      opreadlink.READLINK4res_u.resok4.link.utf8string_val = (char *)padpath;
-  resnfs4.resarray.resarray_val[FSAL_READLINK_IDX_OP_READLINK].nfs_resop4_u.
-      opreadlink.READLINK4res_u.resok4.link.utf8string_len = FSAL_MAX_PATH_LEN;
+  resnfs4.resarray.resarray_val[FSAL_READLINK_IDX_OP_READLINK].nfs_resop4_u.opreadlink.
+      READLINK4res_u.resok4.link.utf8string_val = (char *)padpath;
+  resnfs4.resarray.resarray_val[FSAL_READLINK_IDX_OP_READLINK].nfs_resop4_u.opreadlink.
+      READLINK4res_u.resok4.link.utf8string_len = FSAL_MAX_PATH_LEN;
 
   TakeTokenFSCall();
 
@@ -164,9 +164,9 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
 
   if(fsal_internal_proxy_fsal_utf8_2_path(p_link_content,
                                           &(resnfs4.resarray.resarray_val
-                                            [FSAL_READLINK_IDX_OP_READLINK].nfs_resop4_u.
-                                            opreadlink.READLINK4res_u.resok4.link)) ==
-     FALSE)
+                                            [FSAL_READLINK_IDX_OP_READLINK].
+                                            nfs_resop4_u.opreadlink.READLINK4res_u.resok4.
+                                            link)) == FALSE)
 
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readlink);
 
@@ -175,10 +175,9 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
     {
       /* Use NFSv4 service function to build the FSAL_attr */
       if(nfs4_Fattr_To_FSAL_attr(&attributes,
-                                 &resnfs4.
-                                 resarray.resarray_val[FSAL_READLINK_IDX_OP_GETATTR].
-                                 nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
-                                 obj_attributes) != 1)
+                                 &resnfs4.resarray.
+                                 resarray_val[FSAL_READLINK_IDX_OP_GETATTR].nfs_resop4_u.
+                                 opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
         {
           FSAL_CLEAR_MASK(link_attributes->asked_attributes);
           FSAL_SET_MASK(link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -228,13 +227,13 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
-                           fsal_name_t * p_linkname,    /* IN */
-                           fsal_path_t * p_linkcontent, /* IN */
-                           fsal_op_context_t * p_context,       /* IN */
-                           fsal_accessmode_t accessmode,        /* IN (ignored) */
-                           fsal_handle_t * link_handle, /* OUT */
-                           fsal_attrib_list_t * link_attributes /* [ IN/OUT ] */
+fsal_status_t PROXYFSAL_symlink(proxyfsal_handle_t * parent_directory_handle,   /* IN */
+                                fsal_name_t * p_linkname,       /* IN */
+                                fsal_path_t * p_linkcontent,    /* IN */
+                                proxyfsal_op_context_t * p_context,     /* IN */
+                                fsal_accessmode_t accessmode,   /* IN (ignored) */
+                                proxyfsal_handle_t * link_handle,       /* OUT */
+                                fsal_attrib_list_t * link_attributes    /* [ IN/OUT ] */
     )
 {
 
@@ -339,27 +338,26 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
   COMPOUNDV4_ARG_ADD_OP_GETFH(argnfs4);
   COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, bitmap);
 
-  resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_SYMLINK].nfs_resop4_u.
-      opcreate.CREATE4res_u.resok4.attrset.bitmap4_val = bitmap_res;
-  resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_SYMLINK].nfs_resop4_u.
-      opcreate.CREATE4res_u.resok4.attrset.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_SYMLINK].nfs_resop4_u.opcreate.
+      CREATE4res_u.resok4.attrset.bitmap4_val = bitmap_res;
+  resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_SYMLINK].nfs_resop4_u.opcreate.
+      CREATE4res_u.resok4.attrset.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_GETFH].nfs_resop4_u.
-      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val = (char *)padfilehandle;
-  resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_GETFH].nfs_resop4_u.
-      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len = FSAL_PROXY_FILEHANDLE_MAX_LEN;
+  resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
+      GETFH4res_u.resok4.object.nfs_fh4_val = (char *)padfilehandle;
+  resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
+      GETFH4res_u.resok4.object.nfs_fh4_len = FSAL_PROXY_FILEHANDLE_MAX_LEN;
 
-  resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val =
-      bitmap_getattr_res;
-  resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_getattr_res;
+  resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+  resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
       (char *)&fattr_internal;
-  resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+  resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
       sizeof(fattr_internal);
 
   TakeTokenFSCall();
@@ -381,9 +379,9 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
 
   /* Use NFSv4 service function to build the FSAL_attr */
   if(nfs4_Fattr_To_FSAL_attr(&attributes,
-                             &resnfs4.resarray.
-                             resarray_val[FSAL_SYMLINK_IDX_OP_GETATTR].nfs_resop4_u.
-                             opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
+                             &resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_GETATTR].
+                             nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
+                             obj_attributes) != 1)
     {
       FSAL_CLEAR_MASK(attributes.asked_attributes);
       FSAL_SET_MASK(attributes.asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -398,8 +396,8 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
 
   if(fsal_internal_proxy_create_fh
      (&
-      (resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_GETFH].nfs_resop4_u.
-       opgetfh.GETFH4res_u.resok4.object), FSAL_TYPE_LNK, attributes.fileid,
+      (resnfs4.resarray.resarray_val[FSAL_SYMLINK_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
+       GETFH4res_u.resok4.object), FSAL_TYPE_LNK, attributes.fileid,
       link_handle) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_symlink);
 

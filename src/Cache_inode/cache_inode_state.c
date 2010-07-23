@@ -649,7 +649,7 @@ cache_inode_status_t cache_inode_state_iterate(cache_entry_t * pentry,
     }
 
   /* Here, we need to know the file id */
-  if(FSAL_IS_ERROR(FSAL_DigestHandle(pcontext->export_context,
+  if(FSAL_IS_ERROR(FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                      FSAL_DIGEST_FILEID3,
                                      &(pentry->object.file.handle),
                                      (caddr_t) & fileid_digest)))

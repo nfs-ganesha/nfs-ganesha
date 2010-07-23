@@ -56,8 +56,8 @@ extern hash_table_t *ht_ip_stats[NB_MAX_WORKER_THREAD];
 
 void *stats_thread(void *addr)
 {
-  int rc = 0 ;
-  FILE *stats_file = NULL ;
+  int rc = 0;
+  FILE *stats_file = NULL;
   struct stat statref;
   struct stat stattest;
   time_t current_time;
@@ -65,8 +65,8 @@ void *stats_thread(void *addr)
   struct tm boot_time_struct;
   char strdate[1024];
   char strbootdate[1024];
-  unsigned int i = 0 ;
-  unsigned int j = 0 ;
+  unsigned int i = 0;
+  unsigned int j = 0;
   int reopen_stats = FALSE;
   nfs_worker_data_t *workers_data = addr;
 
@@ -212,11 +212,11 @@ void *stats_thread(void *addr)
                   global_cache_inode_stat.func_stats.nb_call[j] =
                       workers_data[i].cache_inode_client.stat.func_stats.nb_call[j];
                   global_cache_inode_stat.func_stats.nb_err_retryable[j] =
-                      workers_data[i].cache_inode_client.stat.
-                      func_stats.nb_err_retryable[j];
+                      workers_data[i].cache_inode_client.stat.func_stats.
+                      nb_err_retryable[j];
                   global_cache_inode_stat.func_stats.nb_err_unrecover[j] =
-                      workers_data[i].cache_inode_client.stat.
-                      func_stats.nb_err_unrecover[j];
+                      workers_data[i].cache_inode_client.stat.func_stats.
+                      nb_err_unrecover[j];
                 }
               else
                 {
@@ -225,11 +225,11 @@ void *stats_thread(void *addr)
                   global_cache_inode_stat.func_stats.nb_call[j] +=
                       workers_data[i].cache_inode_client.stat.func_stats.nb_call[j];
                   global_cache_inode_stat.func_stats.nb_err_retryable[j] +=
-                      workers_data[i].cache_inode_client.stat.
-                      func_stats.nb_err_retryable[j];
+                      workers_data[i].cache_inode_client.stat.func_stats.
+                      nb_err_retryable[j];
                   global_cache_inode_stat.func_stats.nb_err_unrecover[j] +=
-                      workers_data[i].cache_inode_client.stat.
-                      func_stats.nb_err_unrecover[j];
+                      workers_data[i].cache_inode_client.stat.func_stats.
+                      nb_err_unrecover[j];
                 }
 
             }
@@ -275,8 +275,8 @@ void *stats_thread(void *addr)
       global_worker_stat.stat_req.nb_nfs3_req = 0;
       global_worker_stat.stat_req.nb_nfs4_req = 0;
       global_worker_stat.stat_req.nb_nlm4_req = 0;
-      global_worker_stat.stat_req.nb_nfs40_op = 0 ;
-      global_worker_stat.stat_req.nb_nfs41_op = 0 ;
+      global_worker_stat.stat_req.nb_nfs40_op = 0;
+      global_worker_stat.stat_req.nb_nfs41_op = 0;
       global_worker_stat.stat_req.nb_rquota1_req = 0;
       global_worker_stat.stat_req.nb_rquota2_req = 0;
 
