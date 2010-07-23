@@ -38,6 +38,8 @@ libfsalzfs_la_SOURCES = fsal_access.c   \
                         fsal_convert.h  \
                         fsal_xattrs.c   \
                         fsal_quota.c    \
+                        fsal_common.h   \
+                        fsal_common.c   \
                         ../../include/fsal.h            \
                         ../../include/fsal_types.h      \
                         ../../include/err_fsal.h        \
