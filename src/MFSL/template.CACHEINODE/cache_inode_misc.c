@@ -626,7 +626,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
                                                                            NULL,
                                                                            (cache_content_client_t
                                                                             *)
-                                                                           pclient->pcontent_client,
+                                                                           pclient->
+                                                                           pcontent_client,
                                                                            RECOVER_ENTRY,
                                                                            pcontext,
                                                                            &cache_content_status))
@@ -641,8 +642,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
 
           /* Recover the size from the data cache too... */
           if((size_in_cache =
-              cache_content_get_cached_size((cache_content_entry_t *) pentry->object.file.
-                                            pentry_content)) == -1)
+              cache_content_get_cached_size((cache_content_entry_t *) pentry->object.
+                                            file.pentry_content)) == -1)
             {
               DisplayLogJd(pclient->log_outputs,
                            "Error when recovering size in cache for pentry %p", pentry);
@@ -1156,8 +1157,8 @@ int cache_inode_type_are_rename_compatible(cache_entry_t * pentry_src,
 
   if(pentry_dest->internal_md.type == DIR_CONTINUE)
     return cache_inode_type_are_rename_compatible(pentry_src,
-                                                  pentry_dest->object.
-                                                  dir_cont.pdir_begin);
+                                                  pentry_dest->object.dir_cont.
+                                                  pdir_begin);
 
   /* TRUE is both entries are non directories or to directories and the second is empty */
   if(pentry_src->internal_md.type == DIR_BEGINNING)
@@ -1459,8 +1460,9 @@ static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry,
             }
           else
             {
-              parent_iter->parent->object.dir_begin.pdir_data->
-                  dir_entries[parent_iter->subdirpos].active = INVALID;
+              parent_iter->parent->object.dir_begin.pdir_data->dir_entries[parent_iter->
+                                                                           subdirpos].
+                  active = INVALID;
               /* Garbagge invalidates the effet of the readdir previously made */
               parent_iter->parent->object.dir_begin.has_been_readdir = CACHE_INODE_NO;
               parent_iter->parent->object.dir_begin.nbactive -= 1;
@@ -1479,8 +1481,9 @@ static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry,
             }
           else
             {
-              parent_iter->parent->object.dir_cont.pdir_data->
-                  dir_entries[parent_iter->subdirpos].active = INVALID;
+              parent_iter->parent->object.dir_cont.pdir_data->dir_entries[parent_iter->
+                                                                          subdirpos].
+                  active = INVALID;
               parent_iter->parent->object.dir_cont.nbactive -= 1;
             }
         }

@@ -9,7 +9,7 @@
 
 struct ganefuse_context *ganefuse_get_context(void)
 {
-  fsal_op_context_t *p_ctx;
+  fusefsal_op_context_t *p_ctx;
 
   p_ctx = fsal_get_thread_context();
 

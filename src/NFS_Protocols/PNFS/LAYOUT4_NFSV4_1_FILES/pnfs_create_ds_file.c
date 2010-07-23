@@ -89,14 +89,14 @@ static int pnfs_create_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
   argnfs4.tag.utf8string_len = 0;
   argnfs4.argarray.argarray_len = 0;
 
-  resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
-      GETFH4res_u.resok4.object.nfs_fh4_val =
+  resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_GETFH].nfs_resop4_u.
+      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val =
       (char *)Mem_Alloc(PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN);
 
-  resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_OPEN].nfs_resop4_u.
-      opopen.OPEN4res_u.resok4.attrset.bitmap4_val = bitmap_res;
-  resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_OPEN].nfs_resop4_u.
-      opopen.OPEN4res_u.resok4.attrset.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_OPEN].nfs_resop4_u.opopen.
+      OPEN4res_u.resok4.attrset.bitmap4_val = bitmap_res;
+  resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_OPEN].nfs_resop4_u.opopen.
+      OPEN4res_u.resok4.attrset.bitmap4_len = 2;
 
   COMPOUNDV41_ARG_ADD_OP_SEQUENCE(argnfs4, pnfsdsclient->session, pnfsdsclient->sequence);
   pnfsdsclient->sequence += 1;  /* In all cases, failure or not, increment the sequence counter */
@@ -114,17 +114,18 @@ static int pnfs_create_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
 
   /* Get information from reply */
   ppartfile->stateid.seqid =
-      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_OPEN].nfs_resop4_u.
-      opopen.OPEN4res_u.resok4.stateid.seqid;
+      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_OPEN].
+      nfs_resop4_u.opopen.OPEN4res_u.resok4.stateid.seqid;
   memcpy((char *)ppartfile->stateid.other,
-         (char *)resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_OPEN].
-         nfs_resop4_u.opopen.OPEN4res_u.resok4.stateid.other, 12);
+         (char *)resnfs4.resarray.
+         resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_OPEN].nfs_resop4_u.opopen.OPEN4res_u.
+         resok4.stateid.other, 12);
   ppartfile->handle.nfs_fh4_len =
-      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_GETFH].nfs_resop4_u.
-      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len;
+      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_GETFH].
+      nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len;
   ppartfile->handle.nfs_fh4_val =
-      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_GETFH].nfs_resop4_u.
-      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val;
+      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_CREATE_IDX_OP_GETFH].
+      nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val;
 
   ppartfile->deviceid = 1;
   ppartfile->is_ganesha = FALSE;

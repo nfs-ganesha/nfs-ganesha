@@ -164,6 +164,7 @@ int main(int argc, char *argv[])
   fsal_status_t fsal_status;
   char path_cfg[MAXPATHLEN];
   unsigned int nfs_version = 3;
+  char fsal_path_lib[MAXPATHLEN];
 
   short cache_content_hash;
   char entry_path[MAXPATHLEN];
@@ -250,6 +251,27 @@ int main(int argc, char *argv[])
       fprintf(stderr, "Error initializing logging and memory\n");
       exit(1);
     }
+
+#ifdef _USE_SHARED_FSAL
+  if(nfs_get_fsalpathlib_conf(path_cfg, fsal_path_lib))
+    {
+      DisplayLog("NFS MAIN: Error parsing configuration file.");
+      exit(1);
+    }
+#endif                          /* _USE_SHARED_FSAL */
+
+  /* Load the FSAL library (if needed) */
+  if(!FSAL_LoadLibrary(fsal_path_lib))
+    {
+      DisplayLog("NFS MAIN: Could not load FSAL dynamic library %s", fsal_path_lib);
+      exit(1);
+    }
+
+  /* Get the FSAL functions */
+  FSAL_LoadFunctions();
+
+  /* Get the FSAL consts */
+  FSAL_LoadConsts();
 
   /* initialize default parameters */
 

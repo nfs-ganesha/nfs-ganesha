@@ -164,9 +164,9 @@ int main(int argc, char **argv)
   log_t log_desc = LOG_INITIALIZER;
   desc_log_stream_t voie;
   uid_t uid;
-  fsal_export_context_t export_ctx;
-  fsal_op_context_t op_ctx;
-  fsal_handle_t root_handle, handle;
+  hpssfsal_export_context_t export_ctx;
+  hpssfsal_op_context_t op_ctx;
+  hpssfsal_handle_t root_handle, handle;
   fsal_name_t name;
   fsal_path_t path;
   fsal_attrib_list_t attribs;
@@ -445,8 +445,8 @@ int main(int argc, char **argv)
     {
 
       /* readdir on root */
-      fsal_dir_t dir;
-      fsal_cookie_t from, to;
+      hpssfsal_dir_t dir;
+      hpssfsal_cookie_t from, to;
       fsal_dirent_t entries[READDIR_SIZE];
       fsal_count_t number;
       fsal_boolean_t eod = FALSE;
@@ -502,8 +502,8 @@ int main(int argc, char **argv)
     {
 
       /* readdir on root */
-      fsal_dir_t dir;
-      fsal_cookie_t from, to;
+      hpssfsal_dir_t dir;
+      hpssfsal_cookie_t from, to;
       fsal_dirent_t entries[READDIR_SIZE];
       fsal_count_t number;
       fsal_boolean_t eod = FALSE;
@@ -566,8 +566,8 @@ int main(int argc, char **argv)
     {
 
       /* readdir on root */
-      fsal_dir_t dir;
-      fsal_cookie_t from, to;
+      hpssfsal_dir_t dir;
+      hpssfsal_cookie_t from, to;
       fsal_dirent_t entries[READDIR_SIZE];
       fsal_count_t number;
       fsal_boolean_t eod = FALSE;
@@ -745,7 +745,7 @@ int main(int argc, char **argv)
   if(test[0] == '8')
     {
 
-      fsal_handle_t dir_hdl, subdir_hdl;
+      hpssfsal_handle_t dir_hdl, subdir_hdl;
       fsal_name_t subdir_name;
 
       /* lookup on /cea/prot/S/lama/s8/leibovic */
@@ -888,7 +888,7 @@ int main(int argc, char **argv)
   else if(test[0] == '9')
     {
 
-      fsal_handle_t dir_hdl, subdir_hdl;
+      hpssfsal_handle_t dir_hdl, subdir_hdl;
       fsal_name_t subdir_name;
       fsal_attrib_list_t attr_set;
 
@@ -1063,7 +1063,7 @@ int main(int argc, char **argv)
           printf("/cea/prot/S/lama/s8/leibovic: handle_digest = %s\n", tracebuff);
         }
 
-      memset(&handle, 0, sizeof(fsal_handle_t));
+      memset(&handle, 0, sizeof(hpssfsal_handle_t));
 
       /* expend digest */
 

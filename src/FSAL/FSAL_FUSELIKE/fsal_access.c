@@ -54,10 +54,10 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes when something anormal occurs.
  */
-fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_accessflags_t access_type,       /* IN */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
+fsal_status_t FUSEFSAL_access(fusefsal_handle_t * object_handle,        /* IN */
+                              fusefsal_op_context_t * p_context,        /* IN */
+                              fsal_accessflags_t access_type,   /* IN */
+                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
 
@@ -76,8 +76,8 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
   mask = fsal2posix_testperm(access_type);
 
   /* get the full path for the object */
-  rc = NamespacePath(object_handle->inode, object_handle->device,
-                     object_handle->validator, object_path);
+  rc = NamespacePath(object_handle->data.inode, object_handle->data.device,
+                     object_handle->data.validator, object_path);
 
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_access);
@@ -111,12 +111,12 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
       FSAL_SET_MASK(tmp_attrs.asked_attributes, FSAL_ATTR_OWNER);
       FSAL_SET_MASK(tmp_attrs.asked_attributes, FSAL_ATTR_GROUP);
 
-      status = FSAL_getattrs(object_handle, p_context, &tmp_attrs);
+      status = FUSEFSAL_getattrs(object_handle, p_context, &tmp_attrs);
 
       if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_access);
 
-      status = FSAL_test_access(p_context, access_type, &tmp_attrs);
+      status = FUSEFSAL_test_access(p_context, access_type, &tmp_attrs);
 
       if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_access);
@@ -132,7 +132,7 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
     {
       fsal_status_t status;
 
-      status = FSAL_getattrs(object_handle, p_context, object_attributes);
+      status = FUSEFSAL_getattrs(object_handle, p_context, object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -178,9 +178,9 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
-                               fsal_accessflags_t access_type,  /* IN */
-                               fsal_attrib_list_t * object_attributes   /* IN */
+fsal_status_t FUSEFSAL_test_access(fusefsal_op_context_t * p_context,   /* IN */
+                                   fsal_accessflags_t access_type,      /* IN */
+                                   fsal_attrib_list_t * object_attributes       /* IN */
     )
 {
   fsal_accessflags_t missing_access;

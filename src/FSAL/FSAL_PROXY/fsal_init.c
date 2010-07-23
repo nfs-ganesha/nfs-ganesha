@@ -41,7 +41,7 @@ void *FSAL_proxy_clientid_renewer_thread(void *);
 pthread_t thrid_clientid_renewer;
 
 /* A variable to be seen (for read) in other files */
-fs_specific_initinfo_t global_fsal_proxy_specific_info;
+proxyfs_specific_initinfo_t global_fsal_proxy_specific_info;
 
 /* Macros for analysing parameters. */
 #define SET_BITMAP_PARAM( api_cfg, p_init_info, _field )      \
@@ -93,7 +93,7 @@ fs_specific_initinfo_t global_fsal_proxy_specific_info;
 
 
 /* A variable to be seen (for read) in other files */
-fs_specific_initinfo_t global_fsal_proxy_specific_info;
+proxyfs_specific_initinfo_t global_fsal_proxy_specific_info;
 
 /* Macros for analysing parameters. */
 #define SET_BITMAP_PARAM( api_cfg, p_init_info, _field )      \
@@ -144,14 +144,15 @@ fs_specific_initinfo_t global_fsal_proxy_specific_info;
     }                                                             \
 
 /** Initializes filesystem, security management... */
-static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
+static int FS_Specific_Init(proxyfs_specific_initinfo_t * fs_init_info)
 {
   sigset_t sigset_in;
   sigset_t sigset_out;
   pthread_attr_t attr_thr;
   int rc;
 
-  memcpy(&global_fsal_proxy_specific_info, fs_init_info, sizeof(fs_specific_initinfo_t));
+  memcpy(&global_fsal_proxy_specific_info, fs_init_info,
+         sizeof(proxyfs_specific_initinfo_t));
 
   /* No SIG_PIPE. This is mandatory for reconnection logic. If sigpipe is not blocked, 
    * then when a server crashes the next clnt_call will cause un unhandled sigpipe that
@@ -224,7 +225,7 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
  *                                for this error.)
  *         ERR_FSAL_SEC_INIT     (Security context init error).
  */
-fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
+fsal_status_t PROXYFSAL_Init(fsal_parameter_t * init_info       /* IN */
     )
 {
 
@@ -265,7 +266,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
 }
 
 /* To be called before exiting */
-fsal_status_t FSAL_terminate()
+fsal_status_t PROXYFSAL_terminate()
 {
 #ifdef _HANDLE_MAPPING
   int rc;

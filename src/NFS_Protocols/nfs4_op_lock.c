@@ -342,10 +342,10 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           if(pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE)
             {
               /* In a correct POSIX behavior, a write lock should not be allowed on a read-mode file */
-              if((pstate_found_iterate->state_data.
-                  share.share_deny & OPEN4_SHARE_DENY_WRITE)
-                 && !(pstate_found_iterate->state_data.
-                      share.share_access & OPEN4_SHARE_ACCESS_WRITE)
+              if((pstate_found_iterate->state_data.share.
+                  share_deny & OPEN4_SHARE_DENY_WRITE)
+                 && !(pstate_found_iterate->state_data.share.
+                      share_access & OPEN4_SHARE_ACCESS_WRITE)
                  && (arg_LOCK4.locktype == WRITE_LT))
                 {
                   if(pstate_exists != NULL)

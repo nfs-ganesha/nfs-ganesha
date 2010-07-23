@@ -175,3 +175,8 @@ fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
+
+unsigned int FSAL_GetFileno(fsal_file_t * pfile)
+{
+  return 1;
+}

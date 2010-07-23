@@ -165,8 +165,8 @@ int main(int argc, char **argv)
   desc_log_stream_t voie;
   uid_t uid;
   fsal_export_context_t export_ctx;
-  fsal_op_context_t op_ctx;
-  fsal_handle_t root_handle, handle;
+  xfsfsal_op_context_t op_ctx;
+  xfsfsal_handle_t root_handle, handle;
   fsal_name_t name;
   fsal_path_t path;
   fsal_attrib_list_t attribs;
@@ -745,7 +745,7 @@ int main(int argc, char **argv)
   if(test[0] == '8')
     {
 
-      fsal_handle_t dir_hdl, subdir_hdl;
+      xfsfsal_handle_t dir_hdl, subdir_hdl;
       fsal_name_t subdir_name;
 
       /* lookup on /cea/prot/S/lama/s8/leibovic */
@@ -888,7 +888,7 @@ int main(int argc, char **argv)
   else if(test[0] == '9')
     {
 
-      fsal_handle_t dir_hdl, subdir_hdl;
+      xfsfsal_handle_t dir_hdl, subdir_hdl;
       fsal_name_t subdir_name;
       fsal_attrib_list_t attr_set;
 
@@ -1063,7 +1063,7 @@ int main(int argc, char **argv)
           printf("/cea/prot/S/lama/s8/leibovic: handle_digest = %s\n", tracebuff);
         }
 
-      memset(&handle, 0, sizeof(fsal_handle_t));
+      memset(&handle, 0, sizeof(xfsfsal_handle_t));
 
       /* expend digest */
 

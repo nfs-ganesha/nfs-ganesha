@@ -64,7 +64,7 @@ unsigned int done = 0;
  *        - Other error codes can be returned :
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_proxy_setclientid(fsal_op_context_t * p_context)
+fsal_status_t FSAL_proxy_setclientid(proxyfsal_op_context_t * p_context)
 {
   int rc;
   fsal_status_t fsal_status;
@@ -145,8 +145,8 @@ fsal_status_t FSAL_proxy_setclientid(fsal_op_context_t * p_context)
         }
 
       resultclientid =
-          resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.
-          SETCLIENTID4res_u.resok4.clientid;
+          resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.
+          resok4.clientid;
 
       /* Step 2: Confirm the client id */
       argnfs4.minorversion = 0;
@@ -156,13 +156,12 @@ fsal_status_t FSAL_proxy_setclientid(fsal_op_context_t * p_context)
 
       argnfs4.argarray.argarray_val[0].argop = NFS4_OP_SETCLIENTID_CONFIRM;
       argnfs4.argarray.argarray_val[0].nfs_argop4_u.opsetclientid_confirm.clientid =
-          resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.
-          SETCLIENTID4res_u.resok4.clientid;
-      memcpy((char *)argnfs4.argarray.argarray_val[0].nfs_argop4_u.
-             opsetclientid_confirm.setclientid_confirm,
-             (char *)resnfs4.resarray.resarray_val[0].nfs_resop4_u.
-             opsetclientid.SETCLIENTID4res_u.resok4.setclientid_confirm,
-             NFS4_VERIFIER_SIZE);
+          resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.
+          resok4.clientid;
+      memcpy((char *)argnfs4.argarray.argarray_val[0].nfs_argop4_u.opsetclientid_confirm.
+             setclientid_confirm,
+             (char *)resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.
+             SETCLIENTID4res_u.resok4.setclientid_confirm, NFS4_VERIFIER_SIZE);
       argnfs4.argarray.argarray_len = 1;
 
       /* Call the NFSv4 function */
@@ -215,8 +214,8 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
   COMPOUND4res resnfs4;
   struct timeval timeout = { 25, 0 };
   fsal_status_t fsal_status;
-  fsal_op_context_t fsal_context;
-  fsal_op_context_t *p_context = &fsal_context;
+  proxyfsal_op_context_t fsal_context;
+  proxyfsal_op_context_t *p_context = &fsal_context;
 #define FSAL_RENEW_LEASE_NB_OP_ALLOC 1
   nfs_argop4 argoparray[FSAL_RENEW_LEASE_NB_OP_ALLOC];
   nfs_resop4 resoparray[FSAL_RENEW_LEASE_NB_OP_ALLOC];
@@ -238,7 +237,7 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
     }
 #endif
 
-  memset((char *)&fsal_context, 0, sizeof(fsal_op_context_t));
+  memset((char *)&fsal_context, 0, sizeof(proxyfsal_op_context_t));
   fsal_status = FSAL_InitClientContext(p_context);
 
   if(FSAL_IS_ERROR(fsal_status))

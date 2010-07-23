@@ -41,9 +41,9 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument) 
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
-                            fsal_attrib_list_t * object_attributes      /* IN/OUT */
+fsal_status_t SNMPFSAL_getattrs(snmpfsal_handle_t * filehandle, /* IN */
+                                snmpfsal_op_context_t * p_context,      /* IN */
+                                fsal_attrib_list_t * object_attributes  /* IN/OUT */
     )
 {
 
@@ -142,10 +142,10 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
  *        the object_attributes->asked_attributes field.
  */
 
-fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
-                            fsal_attrib_list_t * attrib_set,    /* IN */
-                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
+fsal_status_t SNMPFSAL_setattrs(snmpfsal_handle_t * filehandle, /* IN */
+                                snmpfsal_op_context_t * p_context,      /* IN */
+                                fsal_attrib_list_t * attrib_set,        /* IN */
+                                fsal_attrib_list_t * object_attributes  /* [ IN/OUT ] */
     )
 {
 
@@ -168,7 +168,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
   if(object_attributes)
     {
 
-      status = FSAL_getattrs(filehandle, p_context, object_attributes);
+      status = SNMPFSAL_getattrs(filehandle, p_context, object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))

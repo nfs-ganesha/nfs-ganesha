@@ -17,7 +17,8 @@
 #include "config.h"
 #endif
 
-#include  "fsal.h"
+#include "fsal.h"
+#include "fsal_types.h"
 #include "fsal_internal.h"
 #include "stuff_alloc.h"
 #include "SemN.h"
@@ -155,7 +156,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
       if(!FSAL_IS_ERROR(status))
         bythread_stat->func_stats.nb_success[function_index]++;
-      else if(fsal_is_retryable(status))
+      else if(status.major == ERR_FSAL_DELAY)   /* Error is retryable */
         bythread_stat->func_stats.nb_err_retryable[function_index]++;
       else
         bythread_stat->func_stats.nb_err_unrecover[function_index]++;
@@ -326,7 +327,7 @@ void ReleaseTokenFSCall()
  */
 fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
                                         fs_common_initinfo_t * fs_common_info,
-                                        fs_specific_initinfo_t * fs_specific_info)
+                                        lustrefs_specific_initinfo_t * fs_specific_info)
 {
 
   /* sanity check */
@@ -500,7 +501,7 @@ fsal_status_t fsal_internal_appendNameToPath(fsal_path_t * p_path,
 /**
  * Build .lustre/fid path associated to a handle.
  */
-fsal_status_t fsal_internal_Handle2FidPath(fsal_op_context_t * p_context,       /* IN */
+fsal_status_t fsal_internal_Handle2FidPath(lustrefsal_op_context_t * p_context, /* IN */
                                            fsal_handle_t * p_handle,    /* IN */
                                            fsal_path_t * p_fsalpath /* OUT */ )
 {
@@ -518,7 +519,7 @@ fsal_status_t fsal_internal_Handle2FidPath(fsal_op_context_t * p_context,       
   curr += FIDDIRLEN + 2;
 
   /* add fid string */
-  curr += sprintf(curr, DFID_NOBRACE, PFID(&p_handle->fid));
+  curr += sprintf(curr, DFID_NOBRACE, PFID(&p_handle->data.fid));
 
   p_fsalpath->len = (curr - p_fsalpath->path);
 
@@ -533,7 +534,7 @@ fsal_status_t fsal_internal_Handle2FidPath(fsal_op_context_t * p_context,       
 /**
  * Get the handle for a path (posix or fid path)
  */
-fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
+fsal_status_t fsal_internal_Path2Handle(lustrefsal_op_context_t * p_context,    /* IN */
                                         fsal_path_t * p_fsalpath,       /* IN */
                                         fsal_handle_t * p_handle /* OUT */ )
 {
@@ -560,7 +561,7 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
   if(rc)
     ReturnCode(posix2fsal_error(-rc), -rc);
 
-  p_handle->fid = fid;
+  p_handle->data.fid = fid;
 
   /* retrieve inode */
   rc = lstat(p_fsalpath->path, &ino);
@@ -573,7 +574,7 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
   if(rc)
     ReturnCode(posix2fsal_error(errno), errno);
 
-  p_handle->inode = ino.st_ino;
+  p_handle->data.inode = ino.st_ino;
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -582,7 +583,7 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
    Check the access from an existing fsal_attrib_list_t or struct stat
 */
 /* XXX : ACL */
-fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
+fsal_status_t fsal_internal_testAccess(lustrefsal_op_context_t * p_context,     /* IN */
                                        fsal_accessflags_t access_type,  /* IN */
                                        struct stat *p_buffstat, /* IN */
                                        fsal_attrib_list_t * p_object_attributes /* IN */ )

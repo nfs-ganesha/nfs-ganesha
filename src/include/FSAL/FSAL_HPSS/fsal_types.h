@@ -65,46 +65,35 @@
  *      HPSS dependant definitions
  * ------------------------------------------- */
 
-#define FSAL_MAX_NAME_LEN   HPSS_MAX_FILE_NAME
-#define FSAL_MAX_PATH_LEN   HPSS_MAX_PATH_NAME
+#include "fsal_glue_const.h"
 
-/* prefered readdir size */
-#define FSAL_READDIR_SIZE 2048
+#define fsal_handle_t hpssfsal_handle_t
+#define fsal_op_context_t hpssfsal_op_context_t
+#define fsal_file_t hpssfsal_file_t
+#define fsal_dir_t hpssfsal_dir_t
+#define fsal_export_context_t hpssfsal_export_context_t
+#define fsal_lockdesc_t hpssfsal_lockdesc_t
+#define fsal_cookie_t hpssfsal_cookie_t
+#define fs_specific_initinfo_t hpssfs_specific_initinfo_t
+#define fsal_cred_t hpssfsal_cred_t
 
-/** object name.  */
-
-typedef struct fsal_name__
-{
-  char name[FSAL_MAX_NAME_LEN];
-  unsigned int len;
-} fsal_name_t;
-
-/** object path.  */
-
-typedef struct fsal_path__
-{
-  char path[FSAL_MAX_PATH_LEN];
-  unsigned int len;
-} fsal_path_t;
-
-#define FSAL_NAME_INITIALIZER {"",0}
-#define FSAL_PATH_INITIALIZER {"",0}
-
-static fsal_name_t FSAL_DOT = { ".", 1 };
-static fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
 /* Filesystem handle */
 
-typedef struct fsal_handle__
-{
+typedef union {
+ struct 
+  {
 
-  /* The object type */
-  fsal_nodetype_t obj_type;
+    /* The object type */
+    fsal_nodetype_t obj_type;
 
-  /* The hpss handle */
-  ns_ObjHandle_t ns_handle;
-
-} fsal_handle_t;
+    /* The hpss handle */
+    ns_ObjHandle_t ns_handle;
+  } data ;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_HANDLE_T_SIZE];
+#endif
+} hpssfsal_handle_t;
 
 /** FSAL security context */
 
@@ -116,7 +105,7 @@ typedef struct
   time_t last_update;
   hsec_UserCred_t hpss_usercred;
 
-} fsal_cred_t;
+} hpssfsal_cred_t;
 
 #elif (HPSS_MAJOR_VERSION == 6) || (HPSS_MAJOR_VERSION == 7)
 
@@ -126,7 +115,7 @@ typedef struct
   time_t last_update;
   sec_cred_t hpss_usercred;
 
-} fsal_cred_t;
+} hpssfsal_cred_t;
 
 #endif
 
@@ -136,17 +125,15 @@ typedef struct
   ns_ObjHandle_t fileset_root_handle;
   unsigned int default_cos;
 
-} fsal_export_context_t;
+} hpssfsal_export_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(pexport_context->default_cos)
 
 typedef struct
 {
-
-  fsal_cred_t credential;
-  fsal_export_context_t *export_context;
-
-} fsal_op_context_t;
+  hpssfsal_export_context_t *export_context;    /* Must be the first entry in this structure */
+  hpssfsal_cred_t credential;
+} hpssfsal_op_context_t;
 
 #if (HPSS_MAJOR_VERSION == 5)
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.hpss_usercred.SecPwent.Uid )
@@ -159,10 +146,10 @@ typedef struct
 /** directory stream descriptor */
 typedef struct fsal_dir__
 {
-  fsal_handle_t dir_handle;     /* directory handle */
-  fsal_op_context_t context;    /* credential for readdir operations */
+  hpssfsal_op_context_t context;        /* credential for readdir operations */
+  hpssfsal_handle_t dir_handle; /* directory handle */
   int reserved;                 /* not used */
-} fsal_dir_t;
+} hpssfsal_dir_t;
 
 /** FSAL file descriptor */
 
@@ -172,7 +159,7 @@ typedef struct fsal_file__
 {
   int filedes;                  /* file descriptor. */
   gss_token_t fileauthz;        /* data access credential. */
-} fsal_file_t;
+} hpssfsal_file_t;
 
 #elif (HPSS_MAJOR_VERSION == 6)
 
@@ -180,18 +167,18 @@ typedef struct fsal_file__
 {
   int filedes;                  /* file descriptor. */
   hpss_authz_token_t fileauthz; /* data access credential. */
-} fsal_file_t;
+} hpssfsal_file_t;
 
 #elif (HPSS_MAJOR_VERSION == 7)
 
 typedef struct fsal_file__
 {
   int filedes;                  /* file descriptor. */
-} fsal_file_t;
+} hpssfsal_file_t;
 
 #endif
 
-#define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->filedes )
+//#define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->filedes )
 
 /** HPSS specific init info */
 
@@ -218,7 +205,7 @@ typedef struct fs_specific_initinfo__
   fsal_uint_t CredentialLifetime;
   fsal_uint_t ReturnInconsistentDirent;
 
-} fs_specific_initinfo_t;
+} hpssfs_specific_initinfo_t;
 
 #elif (HPSS_MAJOR_VERSION == 6) || (HPSS_MAJOR_VERSION == 7)
 
@@ -246,19 +233,25 @@ typedef struct fs_specific_initinfo__
   fsal_uint_t CredentialLifetime;
   fsal_uint_t ReturnInconsistentDirent;
 
-} fs_specific_initinfo_t;
+} hpssfs_specific_initinfo_t;
 
 #endif
 
 /** directory cookie : OffsetOut parameter of hpss_ReadRawAttrsHandle. */
-typedef u_signed64 fsal_cookie_t;
+typedef union {
+  u_signed64 data ;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_COOKIE_T_SIZE];
+#endif
+} hpssfsal_cookie_t;
 
-#define FSAL_READDIR_FROM_BEGINNING  (cast64(0))
+//#define FSAL_READDIR_FROM_BEGINNING  (cast64(0))
 
-typedef void *fsal_lockdesc_t;   /**< not implemented in hpss */
+typedef void *hpssfsal_lockdesc_t;   /**< not implemented in hpss */
 
 #if HPSS_LEVEL >= 730
 #define HAVE_XATTR_CREATE 1
 #endif
+
 
 #endif                          /* _FSAL_TYPES_SPECIFIC_H */

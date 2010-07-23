@@ -204,8 +204,8 @@ void nfs4_op_getattr_Free(GETATTR4res * resp)
         Mem_Free((char *)resp->GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val);
 
       if(resp->GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val != NULL)
-        Mem_Free((char *)resp->GETATTR4res_u.resok4.obj_attributes.
-                 attr_vals.attrlist4_val);
+        Mem_Free((char *)resp->GETATTR4res_u.resok4.obj_attributes.attr_vals.
+                 attrlist4_val);
     }
   return;
 }                               /* nfs4_op_getattr_Free */

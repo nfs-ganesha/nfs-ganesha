@@ -314,8 +314,8 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   if((data->pexport->options & EXPORT_OPTION_USE_DATACACHE) &&
      (cache_content_cache_behaviour(entry,
                                     &datapol,
-                                    (cache_content_client_t *) (data->
-                                                                pclient->pcontent_client),
+                                    (cache_content_client_t *) (data->pclient->
+                                                                pcontent_client),
                                     &content_status) == CACHE_CONTENT_FULLY_CACHED)
      && (entry->object.file.pentry_content == NULL))
     {

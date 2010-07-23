@@ -3254,9 +3254,8 @@ int fn_Cache_inode_recover_cache(int argc,      /* IN : number of args in argv *
   if(cache_content_crash_recover(EXPORT_ID,
                                  0,
                                  1,
-                                 (cache_content_client_t *) context->
-                                 client.pcontent_client, &context->client, ht,
-                                 &context->context,
+                                 (cache_content_client_t *) context->client.
+                                 pcontent_client, &context->client, ht, &context->context,
                                  &cache_content_status) != CACHE_CONTENT_SUCCESS)
     {
       fprintf(output, "Error executing cache_content_crash_recover: %d\n",

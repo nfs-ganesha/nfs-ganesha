@@ -102,11 +102,10 @@ int pnfs_lookup(pnfs_ds_client_t * pnfsdsclient, nfs_fh4 * parent_directory_hand
 
       index_getfh = PNFS_LOOKUP_IDX_OP_GETFH_ROOT;
 
-      resnfs4.resarray.resarray_val[PNFS_LOOKUP_IDX_OP_GETFH_ROOT].nfs_resop4_u.
-          opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val = (char *)padfilehandle;
-      resnfs4.resarray.resarray_val[PNFS_LOOKUP_IDX_OP_GETFH_ROOT].nfs_resop4_u.
-          opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len =
-          PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN;
+      resnfs4.resarray.resarray_val[PNFS_LOOKUP_IDX_OP_GETFH_ROOT].nfs_resop4_u.opgetfh.
+          GETFH4res_u.resok4.object.nfs_fh4_val = (char *)padfilehandle;
+      resnfs4.resarray.resarray_val[PNFS_LOOKUP_IDX_OP_GETFH_ROOT].nfs_resop4_u.opgetfh.
+          GETFH4res_u.resok4.object.nfs_fh4_len = PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN;
     }
   else                          /* this is a real lookup(parent, name)  */
     {
@@ -136,11 +135,10 @@ int pnfs_lookup(pnfs_ds_client_t * pnfsdsclient, nfs_fh4 * parent_directory_hand
 
       index_getfh = PNFS_LOOKUP_IDX_OP_GETFH;
 
-      resnfs4.resarray.resarray_val[PNFS_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.
-          opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val = (char *)padfilehandle;
-      resnfs4.resarray.resarray_val[PNFS_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.
-          opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len =
-          PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN;
+      resnfs4.resarray.resarray_val[PNFS_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
+          GETFH4res_u.resok4.object.nfs_fh4_val = (char *)padfilehandle;
+      resnfs4.resarray.resarray_val[PNFS_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
+          GETFH4res_u.resok4.object.nfs_fh4_len = PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN;
 
     }
 
@@ -161,13 +159,13 @@ int pnfs_lookup(pnfs_ds_client_t * pnfsdsclient, nfs_fh4 * parent_directory_hand
     }
 
   object_handle->nfs_fh4_len =
-      resnfs4.resarray.resarray_val[index_getfh].nfs_resop4_u.opgetfh.GETFH4res_u.
-      resok4.object.nfs_fh4_len;
+      resnfs4.resarray.resarray_val[index_getfh].nfs_resop4_u.opgetfh.GETFH4res_u.resok4.
+      object.nfs_fh4_len;
   memcpy((char *)object_handle->nfs_fh4_val,
-         (char *)resnfs4.resarray.resarray_val[index_getfh].nfs_resop4_u.
-         opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val,
-         resnfs4.resarray.resarray_val[index_getfh].nfs_resop4_u.opgetfh.
-         GETFH4res_u.resok4.object.nfs_fh4_len);
+         (char *)resnfs4.resarray.resarray_val[index_getfh].nfs_resop4_u.opgetfh.
+         GETFH4res_u.resok4.object.nfs_fh4_val,
+         resnfs4.resarray.resarray_val[index_getfh].nfs_resop4_u.opgetfh.GETFH4res_u.
+         resok4.object.nfs_fh4_len);
 
   /* lookup complete ! */
   return NFS4_OK;

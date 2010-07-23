@@ -25,7 +25,7 @@
 /* case unsensitivity */
 #define STRCMP   strcasecmp
 
-char *FSAL_GetFSName()
+char *FUSEFSAL_GetFSName()
 {
   return "FUSE";
 }
@@ -46,8 +46,8 @@ char *FSAL_GetFSName()
  *         - Segfault if status is a NULL pointer.
  */
 
-int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
-                   fsal_status_t * status)
+int FUSEFSAL_handlecmp(fusefsal_handle_t * handle1, fusefsal_handle_t * handle2,
+                       fsal_status_t * status)
 {
 
   *status = FSAL_STATUS_NO_ERROR;
@@ -58,9 +58,9 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
       return -1;
     }
 
-  if((handle1->inode > handle2->inode) || (handle1->device > handle2->device))
+  if((handle1->data.inode > handle2->data.inode) || (handle1->data.device > handle2->data.device))
     return 1;
-  else if((handle1->inode < handle2->inode) || (handle1->device < handle2->device))
+  else if((handle1->data.inode < handle2->data.inode) || (handle1->data.device < handle2->data.device))
     return -1;
   else
     return 0;
@@ -81,13 +81,14 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
  * \return The hash value
  */
 
-unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
-                                      unsigned int cookie,
-                                      unsigned int alphabet_len, unsigned int index_size)
+unsigned int FUSEFSAL_Handle_to_HashIndex(fusefsal_handle_t * p_handle,
+                                          unsigned int cookie,
+                                          unsigned int alphabet_len,
+                                          unsigned int index_size)
 {
 
-  /* >> here must be your implementation of your fsal_handle_t hashing */
-  return (3 * (unsigned int)p_handle->inode + 5 * (unsigned int)p_handle->device + 1999 +
+  /* >> here must be your implementation of your fusefsal_handle_t hashing */
+  return (3 * (unsigned int)p_handle->data.inode + 5 * (unsigned int)p_handle->data.device + 1999 +
           cookie) % index_size;
 
 }
@@ -104,16 +105,17 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cookie)
+unsigned int FUSEFSAL_Handle_to_RBTIndex(fusefsal_handle_t * p_handle,
+                                         unsigned int cookie)
 {
-  /* >> here must be your implementation of your fsal_handle_t hashing << */
-  return (unsigned int)(0xABCD1234 ^ p_handle->inode ^ cookie ^ p_handle->device);
+  /* >> here must be your implementation of your fusefsal_handle_t hashing << */
+  return (unsigned int)(0xABCD1234 ^ p_handle->data.inode ^ cookie ^ p_handle->data.device);
 
 }
 
 /**
  * FSAL_DigestHandle :
- *  Convert an fsal_handle_t to a buffer
+ *  Convert an fusefsal_handle_t to a buffer
  *  to be included into NFS handles,
  *  or another digest.
  *
@@ -128,10 +130,10 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
  *         Else, it is a non null value.
  */
 
-fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t output_type,  /* IN */
-                                fsal_handle_t * in_fsal_handle, /* IN */
-                                caddr_t out_buff        /* OUT */
+fsal_status_t FUSEFSAL_DigestHandle(fusefsal_export_context_t * p_expcontext,   /* IN */
+                                    fsal_digesttype_t output_type,      /* IN */
+                                    fusefsal_handle_t * in_fsal_handle, /* IN */
+                                    caddr_t out_buff    /* OUT */
     )
 {
 
@@ -149,13 +151,13 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
       /* sanity check about output size */
 
-      if(sizeof(fsal_handle_t) > FSAL_DIGEST_SIZE_HDLV2)
+      if(sizeof(in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV2)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
 #endif
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV2);
-      memcpy(out_buff, in_fsal_handle, sizeof(fsal_handle_t));
+      memcpy(out_buff, in_fsal_handle, sizeof(fusefsal_handle_t));
 
       break;
 
@@ -166,13 +168,13 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
       /* sanity check about output size */
 
-      if(sizeof(fsal_handle_t) > FSAL_DIGEST_SIZE_HDLV3)
+      if(sizeof(in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV3)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
 #endif
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV3);
-      memcpy(out_buff, in_fsal_handle, sizeof(fsal_handle_t));
+      memcpy(out_buff, in_fsal_handle, sizeof(fusefsal_handle_t));
 
       break;
 
@@ -183,20 +185,20 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
       /* sanity check about output size */
 
-      if(sizeof(fsal_handle_t) > FSAL_DIGEST_SIZE_HDLV4)
+      if(sizeof(in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV4)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
 #endif
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
-      memcpy(out_buff, in_fsal_handle, sizeof(fsal_handle_t));
+      memcpy(out_buff, in_fsal_handle, sizeof(fusefsal_handle_t));
 
       break;
 
       /* FileId digest for NFSv2 */
     case FSAL_DIGEST_FILEID2:
       {
-        int cast2 = (int)in_fsal_handle->inode;
+        int cast2 = (int)in_fsal_handle->data.inode;
 
 #ifndef _NO_CHECKS
 
@@ -215,7 +217,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
       /* FileId digest for NFSv3 */
     case FSAL_DIGEST_FILEID3:
       {
-        fsal_u64_t cast3 = (fsal_u64_t) in_fsal_handle->inode;
+        fsal_u64_t cast3 = (fsal_u64_t) in_fsal_handle->data.inode;
 
 #ifndef _NO_CHECKS
 
@@ -235,7 +237,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
     case FSAL_DIGEST_FILEID4:
       {
-        fsal_u64_t cast4 = (fsal_u64_t) in_fsal_handle->inode;
+        fsal_u64_t cast4 = (fsal_u64_t) in_fsal_handle->data.inode;
 
 #ifndef _NO_CHECKS
 
@@ -274,10 +276,10 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t in_type,      /* IN */
-                                caddr_t in_buff,        /* IN */
-                                fsal_handle_t * out_fsal_handle /* OUT */
+fsal_status_t FUSEFSAL_ExpandHandle(fusefsal_export_context_t * p_expcontext,   /* IN */
+                                    fsal_digesttype_t in_type,  /* IN */
+                                    caddr_t in_buff,    /* IN */
+                                    fusefsal_handle_t * out_fsal_handle /* OUT */
     )
 {
 
@@ -292,7 +294,7 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
     case FSAL_DIGEST_NFSV3:
     case FSAL_DIGEST_NFSV4:
 
-      memcpy(out_fsal_handle, in_buff, sizeof(fsal_handle_t));
+      memcpy(out_fsal_handle, in_buff, sizeof(fusefsal_handle_t));
 
       break;
 
@@ -312,7 +314,7 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
  *         ERR_FSAL_FAULT (null pointer given as parameter),
  *         ERR_FSAL_SERVERFAULT (unexpected error)
  */
-fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t FUSEFSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 {
 
   log_t no_logging = LOG_INITIALIZER;
@@ -331,7 +333,7 @@ fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 
 }
 
-fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t FUSEFSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
 {
   /* defensive programming... */
   if(out_parameter == NULL)
@@ -367,7 +369,7 @@ fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_paramet
 
 }
 
-fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t FUSEFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
 {
   /* defensive programming... */
   if(out_parameter == NULL)
@@ -403,8 +405,8 @@ fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_param
 
 /* load FSAL init info */
 
-fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
-                                                 fsal_parameter_t * out_parameter)
+fsal_status_t FUSEFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
+                                                     fsal_parameter_t * out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -520,8 +522,9 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
 /* load general filesystem configuration options */
 
-fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
-                                                      fsal_parameter_t * out_parameter)
+fsal_status_t FUSEFSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
+                                                          fsal_parameter_t *
+                                                          out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -727,8 +730,9 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
 /* load specific filesystem configuration options */
 
-fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
-                                                        fsal_parameter_t * out_parameter)
+fsal_status_t FUSEFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
+                                                            fsal_parameter_t *
+                                                            out_parameter)
 {
   int err;
   int blk_index;

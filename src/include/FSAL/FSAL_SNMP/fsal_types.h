@@ -57,35 +57,13 @@
    */
 
 /* prefered readdir size */
-#define FSAL_READDIR_SIZE 64
 
-# define FSAL_MAX_NAME_LEN  MAXLABEL
-# define FSAL_MAX_PATH_LEN  SNMP_MAXPATH
+//# define FSAL_MAX_NAME_LEN  MAXLABEL
+//# define FSAL_MAX_PATH_LEN  SNMP_MAXPATH
 
 #define FSAL_MAX_PROTO_LEN  16
 #define FSAL_MAX_USERNAME_LEN   256
 #define FSAL_MAX_PHRASE_LEN   USM_AUTH_KU_LEN
-  /* object name */
-
-typedef struct fsal_name__
-{
-  char name[FSAL_MAX_NAME_LEN];
-  unsigned int len;
-} fsal_name_t;
-
-  /* object path */
-
-typedef struct fsal_path__
-{
-  char path[FSAL_MAX_PATH_LEN];
-  unsigned int len;
-} fsal_path_t;
-
-# define FSAL_NAME_INITIALIZER {"",0}
-# define FSAL_PATH_INITIALIZER {"",0}
-
-static fsal_name_t FSAL_DOT = { ".", 1 };
-static fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
 typedef enum
 {
@@ -102,7 +80,7 @@ typedef struct fsal_handle__
   size_t oid_len;
   nodetype_t object_type_reminder;
 
-} fsal_handle_t;
+} snmpfsal_handle_t;
 
 typedef struct fsal_cred__
 {
@@ -112,22 +90,25 @@ typedef struct fsal_cred__
      int    ticket_handle;
      time_t ticket_renewal_time;
    */
-} fsal_cred_t;
+} snmpfsal_cred_t;
 
 typedef struct fsal_export_context__
 {
-  fsal_handle_t root_handle;
+  snmpfsal_handle_t root_handle;
   struct tree *root_mib_tree;
   fsal_path_t root_path;
 
-} fsal_export_context_t;
+} snmpfsal_export_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(FSAL_Handle_to_RBTIndex( &(pexport_context->root_handle), 0 ) )
 
 typedef struct fsal_op_context__
 {
+  /* the export context for the next request */
+  snmpfsal_export_context_t *export_context;    /* Must be the first entry in this structure */
+
   /* user authentication info */
-  fsal_cred_t user_credential;
+  snmpfsal_cred_t user_credential;
 
   /* SNMP session and the associated info  */
   netsnmp_session *snmp_session;
@@ -135,24 +116,21 @@ typedef struct fsal_op_context__
   netsnmp_pdu *snmp_response;
   netsnmp_variable_list *current_response;
 
-  /* the export context for the next request */
-  fsal_export_context_t *export_context;
-
-} fsal_op_context_t;
+} snmpfsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 
 typedef struct fsal_dir__
 {
-  fsal_handle_t node_handle;
-  fsal_op_context_t *p_context;
-} fsal_dir_t;
+  snmpfsal_handle_t node_handle;
+  snmpfsal_op_context_t *p_context;
+} snmpfsal_dir_t;
 
 typedef struct fsal_file__
 {
-  fsal_handle_t file_handle;
-  fsal_op_context_t *p_context;
+  snmpfsal_handle_t file_handle;
+  snmpfsal_op_context_t *p_context;
 
   enum
   {
@@ -160,18 +138,18 @@ typedef struct fsal_file__
     FSAL_MODE_WRITE = 2
   } rw_mode;
 
-} fsal_file_t;
+} snmpfsal_file_t;
 
-# define FSAL_FILENO(_f) (0)
+//# define FSAL_FILENO(_f) (0)
 
 typedef struct fsal_cookie__
 {
   /* in SNMP the cookie is the last listed entry */
   oid oid_tab[MAX_OID_LEN];
   unsigned int oid_len;
-} fsal_cookie_t;
+} snmpfsal_cookie_t;
 
-static fsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { {0,}, 0 };
+static snmpfsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { {0,}, 0 };
 
 typedef struct fs_specific_initinfo__
 {
@@ -188,8 +166,22 @@ typedef struct fs_specific_initinfo__
   char username[FSAL_MAX_NAME_LEN];
   char auth_phrase[FSAL_MAX_PHRASE_LEN];
   char enc_phrase[FSAL_MAX_PHRASE_LEN];
-} fs_specific_initinfo_t;
+} snmpfs_specific_initinfo_t;
 
-typedef void *fsal_lockdesc_t;
+typedef void *snmpfsal_lockdesc_t;
+
+#ifndef _USE_SHARED_FSAL
+
+#define fsal_handle_t snmpfsal_handle_t
+#define fsal_op_context_t snmpfsal_op_context_t
+#define fsal_file_t snmpfsal_file_t
+#define fsal_dir_t snmpfsal_dir_t
+#define fsal_export_context_t snmpfsal_export_context_t
+#define fsal_lockdesc_t snmpfsal_lockdesc_t
+#define fsal_cookie_t snmpfsal_cookie_t
+#define fs_specific_initinfo_t snmpfs_specific_initinfo_t
+#define fsal_cred_t snmpfsal_cred_t
+
+#endif                          /* _USE_SHARED_FSAL */
 
 #endif                          /* _FSAL_TYPES_SPECIFIC_H */

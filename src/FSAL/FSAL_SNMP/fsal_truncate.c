@@ -46,11 +46,11 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
-                            fsal_size_t length, /* IN */
-                            fsal_file_t * file_descriptor,      /* Unused in this FSAL */
-                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
+fsal_status_t SNMPFSAL_truncate(snmpfsal_handle_t * filehandle, /* IN */
+                                snmpfsal_op_context_t * p_context,      /* IN */
+                                fsal_size_t length,     /* IN */
+                                snmpfsal_file_t * file_descriptor,      /* Unused in this FSAL */
+                                fsal_attrib_list_t * object_attributes  /* [ IN/OUT ] */
     )
 {
 
@@ -78,7 +78,7 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
 
       fsal_status_t st;
 
-      st = FSAL_getattrs(filehandle, p_context, object_attributes);
+      st = SNMPFSAL_getattrs(filehandle, p_context, object_attributes);
 
       if(FSAL_IS_ERROR(st))
         {

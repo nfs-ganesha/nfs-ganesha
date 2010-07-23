@@ -324,7 +324,7 @@ void ReleaseTokenFSCall()
  */
 fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
                                         fs_common_initinfo_t * fs_common_info,
-                                        fs_specific_initinfo_t * fs_specific_info)
+                                        posixfs_specific_initinfo_t * fs_specific_info)
 {
 
   /* sanity check */
@@ -537,8 +537,8 @@ fsal_status_t fsal_internal_posix2posixdb_fileinfo(struct stat *buffstat,
 fsal_status_t fsal_internal_posixdb_add_entry(fsal_posixdb_conn * p_conn,
                                               fsal_name_t * p_filename,
                                               fsal_posixdb_fileinfo_t * p_info,
-                                              fsal_handle_t * p_dir_handle,
-                                              fsal_handle_t * p_new_handle)
+                                              posixfsal_handle_t * p_dir_handle,
+                                              posixfsal_handle_t * p_new_handle)
 {
   fsal_posixdb_status_t stdb;
 
@@ -605,8 +605,8 @@ fsal_status_t fsal_internal_appendFSALNameToFSALPath(fsal_path_t * p_path,
  * Get a valid path associated to an handle.
  * The function selects many paths from the DB and return the first valid one. If is_dir is set, then only 1 path will be constructed from the database.
  */
-fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,    /* IN */
-                                              fsal_handle_t * p_handle, /* IN */
+fsal_status_t fsal_internal_getPathFromHandle(posixfsal_op_context_t * p_context,       /* IN */
+                                              posixfsal_handle_t * p_handle,    /* IN */
                                               int is_dir,       /* IN */
                                               fsal_path_t * p_fsalpath, /* OUT */
                                               struct stat *p_buffstat /* OUT */ )
@@ -620,7 +620,7 @@ fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,    
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  /* if there is a path in the fsal_handle_t variable, then try to use it instead of querying the database for it */
+  /* if there is a path in the posixfsal_handle_t variable, then try to use it instead of querying the database for it */
   /* Read the path from the Handle. If it's valid & coherent, then no need to query the database ! */
   /* if !p_buffstat, we don't need to check the path */
   statusdb = fsal_posixdb_getInfoFromHandle(p_context->p_conn,
@@ -649,7 +649,7 @@ fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,    
               char basec[FSAL_MAX_PATH_LEN];
               fsal_path_t parentdir;
               fsal_name_t filename;
-              fsal_handle_t parenthdl;
+              posixfsal_handle_t parenthdl;
               char *dname, *bname;
 
               /* split /path/to/filename in /path/to & filename */
@@ -662,7 +662,7 @@ fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,    
               status = FSAL_str2name(bname, FSAL_MAX_NAME_LEN, &filename);
 
               /* get the handle of /path/to */
-              status = FSAL_lookupPath(&parentdir, p_context, &parenthdl, NULL);
+              status = POSIXFSAL_lookupPath(&parentdir, p_context, &parenthdl, NULL);
 
               if(!FSAL_IS_ERROR(status))
                 {
@@ -686,7 +686,7 @@ fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,    
       if(FSAL_IS_ERROR(status))
         return status;
 
-      if(fsal_posixdb_consistency_check(&(p_handle->info), &infofs))
+      if(fsal_posixdb_consistency_check(&(p_handle->data.info), &infofs))
         {
           /* not consistent !! */
           /* delete the stale handle */
@@ -725,11 +725,11 @@ fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,    
  *    ERR_FSAL_NOERR, if no error
  *    Anothere error code else.
  */
-fsal_status_t fsal_internal_getInfoFromName(fsal_op_context_t * p_context,      /* IN */
-                                            fsal_handle_t * p_parent_dir_handle,        /* IN */
+fsal_status_t fsal_internal_getInfoFromName(posixfsal_op_context_t * p_context, /* IN */
+                                            posixfsal_handle_t * p_parent_dir_handle,   /* IN */
                                             fsal_name_t * p_fsalname,   /* IN */
                                             fsal_posixdb_fileinfo_t * p_infofs, /* IN */
-                                            fsal_handle_t * p_object_handle)    /* OUT */
+                                            posixfsal_handle_t * p_object_handle)       /* OUT */
 {
   fsal_posixdb_status_t stdb;
   fsal_status_t st;
@@ -742,7 +742,7 @@ fsal_status_t fsal_internal_getInfoFromName(fsal_op_context_t * p_context,      
     case ERR_FSAL_POSIXDB_NOERR:
       /* No error, the object is in the database */
       /* check consistency */
-      if(fsal_posixdb_consistency_check(&(p_object_handle->info), p_infofs))
+      if(fsal_posixdb_consistency_check(&(p_object_handle->data.info), p_infofs))
         {
           /* Entry not consistent */
           /* Delete the Handle entry, then add a new one (with a Parent entry) */
@@ -792,13 +792,13 @@ fsal_status_t fsal_internal_getInfoFromName(fsal_op_context_t * p_context,      
  *    ERR_FSAL_NOERR, if no error
  *    Anothere error code else.
  */
-fsal_status_t fsal_internal_getInfoFromChildrenList(fsal_op_context_t * p_context,      /* IN */
-                                                    fsal_handle_t * p_parent_dir_handle,        /* IN */
+fsal_status_t fsal_internal_getInfoFromChildrenList(posixfsal_op_context_t * p_context, /* IN */
+                                                    posixfsal_handle_t * p_parent_dir_handle,   /* IN */
                                                     fsal_name_t * p_fsalname,   /* IN */
                                                     fsal_posixdb_fileinfo_t * p_infofs, /* IN */
                                                     fsal_posixdb_child * p_children,    /* IN */
                                                     unsigned int children_count,        /* IN */
-                                                    fsal_handle_t * p_object_handle)    /* OUT */
+                                                    posixfsal_handle_t * p_object_handle)       /* OUT */
 {
   fsal_posixdb_status_t stdb;
   fsal_status_t st;
@@ -824,7 +824,7 @@ fsal_status_t fsal_internal_getInfoFromChildrenList(fsal_op_context_t * p_contex
     case 0:
       /* Entry found : check consistency */
 
-      if(fsal_posixdb_consistency_check(&(p_children[count].handle.info), p_infofs))
+      if(fsal_posixdb_consistency_check(&(p_children[count].handle.data.info), p_infofs))
         {
           /* Entry not consistent */
           /* Delete the Handle entry, then add a new one (with a Parent entry) */
@@ -839,7 +839,8 @@ fsal_status_t fsal_internal_getInfoFromChildrenList(fsal_op_context_t * p_contex
         }
       else
         {
-          memcpy(p_object_handle, &(p_children[count].handle), sizeof(fsal_handle_t));
+          memcpy(p_object_handle, &(p_children[count].handle),
+                 sizeof(posixfsal_handle_t));
           break;
         }
 
@@ -860,7 +861,7 @@ fsal_status_t fsal_internal_getInfoFromChildrenList(fsal_op_context_t * p_contex
    Check the access from an existing fsal_attrib_list_t or struct stat
 */
 /* XXX : ACL */
-fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
+fsal_status_t fsal_internal_testAccess(posixfsal_op_context_t * p_context,      /* IN */
                                        fsal_accessflags_t access_type,  /* IN */
                                        struct stat * p_buffstat,        /* IN */
                                        fsal_attrib_list_t * p_object_attributes /* IN */ )

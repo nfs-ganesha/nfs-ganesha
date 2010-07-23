@@ -36,9 +36,9 @@
  * Parse FS specific option string
  * to build the export entry option.
  */
-fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, /* OUT */
-                                      fsal_path_t * p_export_path,      /* IN */
-                                      char *fs_specific_options /* IN */
+fsal_status_t SNMPFSAL_BuildExportContext(snmpfsal_export_context_t * p_export_context, /* OUT */
+                                          fsal_path_t * p_export_path,  /* IN */
+                                          char *fs_specific_options     /* IN */
     )
 {
   struct tree *tree_head, *sub_tree;
@@ -131,7 +131,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
 
 }
 
-fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
+fsal_status_t SNMPFSAL_InitClientContext(snmpfsal_op_context_t * p_thr_context)
 {
 
   int rc, i;
@@ -232,7 +232,7 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
  * FSAL_GetClientContext :
  * Get a user credential from its uid.
  * 
- * \param p_cred (in out, fsal_cred_t *)
+ * \param p_cred (in out, snmpfsal_cred_t *)
  *        Initialized credential to be changed
  *        for representing user.
  * \param uid (in, fsal_uid_t)
@@ -251,12 +251,12 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
  *      - ERR_FSAL_SERVERFAULT : unexpected error.
  */
 
-fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OUT  */
-                                    fsal_export_context_t * p_export_context,   /* IN */
-                                    fsal_uid_t uid,     /* IN */
-                                    fsal_gid_t gid,     /* IN */
-                                    fsal_gid_t * alt_groups,    /* IN */
-                                    fsal_count_t nb_alt_groups  /* IN */
+fsal_status_t SNMPFSAL_GetClientContext(snmpfsal_op_context_t * p_thr_context,  /* IN/OUT  */
+                                        snmpfsal_export_context_t * p_export_context,   /* IN */
+                                        fsal_uid_t uid, /* IN */
+                                        fsal_gid_t gid, /* IN */
+                                        fsal_gid_t * alt_groups,        /* IN */
+                                        fsal_count_t nb_alt_groups      /* IN */
     )
 {
 

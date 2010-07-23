@@ -1,4 +1,10 @@
-AM_CFLAGS                     = -Wimplicit $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS)
+if SHARED_FSAL
+DLOPEN_FLAGS =
+else
+DLOPEN_FLAGS = -rdynamic
+endif
+
+AM_CFLAGS                     = -Wimplicit $(DLOPEN_FLAGS)  $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS)
 
 
 SVC_FILES_ONCRPC = Svc_oncrpc.c Svc_tcp_oncrpc.c Svc_udp_oncrpc.c 
@@ -113,7 +119,8 @@ libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la           
                                       ../HashTable/libhashtable.la                      \
                                       ../LRU/liblru.la                                  \
                                       ../BuddyMalloc/libBuddyMalloc.la                  \
-                                      $(MFSL_LIB)                                      \
+                                      ../FSAL/libfsalcommon.la                          \
+                                      $(MFSL_LIB)                                       \
                                       $(FSAL_LIB)                                       \
                                       ../Log/liblog.la                                  \
                                       ../ConfigParsing/libConfigParsing.la              \
@@ -125,18 +132,26 @@ libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la           
 
 libMainServices_la_DEPENDENCIES = $(libMainServices_la_SOURCES) $(libMainServices_la_LIBADD)
 
+
 if USE_FSAL_FUSE
 
 libganeshaNFS_la_SOURCES = fuse_binding.c $(libMainServices_la_SOURCES)
-libganeshaNFS_la_LIBADD = $(libMainServices_la_LIBADD) $(FSAL_LDFLAGS) $(EXT_LDADD) $(SEC_LIB_FLAGS)
+
+libganeshaNFS_la_LIBADD = $(libMainServices_la_LIBADD) \
+                          $(FSAL_LDFLAGS)              \
+                           $(EXT_LDADD) $(SEC_LIB_FLAGS)
+
 libganeshaNFS_la_DEPENDENCIES = fuse_binding.c $(libMainServices_la_SOURCES) $(libMainServices_la_LIBADD)
+
 else
 
 bin_PROGRAMS               = $(FS_NAME).ganesha.nfsd
 
 __FS_NAME__ganesha_nfsd_SOURCES    = nfs_main.c  \
                                      nfs_init.h
-__FS_NAME__ganesha_nfsd_LDADD      =  ./libMainServices.la $(FSAL_LDFLAGS) $(EXT_LDADD) $(SEC_LIB_FLAGS) @EFENCE@ @EXTRA_LIB@
+__FS_NAME__ganesha_nfsd_LDADD      =  ./libMainServices.la \
+                                      $(FSAL_LDFLAGS) $(EXT_LDADD) 
+                                      $(SEC_LIB_FLAGS) @EFENCE@ @EXTRA_LIB@
 
 endif
 

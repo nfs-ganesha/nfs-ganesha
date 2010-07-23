@@ -287,8 +287,8 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
           nfs_SetPostOpAttr(pcontext, pexport,
                             dir_pentry,
                             NULL,
-                            &(pres->res_readdirplus3.READDIRPLUS3res_u.
-                              resok.dir_attributes));
+                            &(pres->res_readdirplus3.READDIRPLUS3res_u.resok.
+                              dir_attributes));
 
           memcpy(pres->res_readdirplus3.READDIRPLUS3res_u.resok.cookieverf,
                  cookie_verifier, sizeof(cookieverf3));
@@ -368,25 +368,24 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                       return NFS_REQ_OK;
                     }
 
-                  FSAL_DigestHandle(pcontext->export_context,
+                  FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                     FSAL_DIGEST_FILEID3,
                                     pfsal_handle,
-                                    (caddr_t) & (RES_READDIRPLUS_REPLY.
-                                                 entries[0].fileid));
+                                    (caddr_t) & (RES_READDIRPLUS_REPLY.entries[0].
+                                                 fileid));
 
                   RES_READDIRPLUS_REPLY.entries[0].name = entry_name_array[0];
                   strcpy(RES_READDIRPLUS_REPLY.entries[0].name, ".");
 
                   RES_READDIRPLUS_REPLY.entries[0].cookie = 1;
 
-                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
-                      entries[0].name_handle.post_op_fh3_u.handle.data.data_val =
+                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[0].
+                      name_handle.post_op_fh3_u.handle.data.data_val =
                       (char *)fh3_array[0];
 
                   if(nfs3_FSALToFhandle
-                     (&pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
-                      entries[0].name_handle.post_op_fh3_u.handle, pfsal_handle,
-                      pexport) == 0)
+                     (&pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[0].
+                      name_handle.post_op_fh3_u.handle, pfsal_handle, pexport) == 0)
                     {
                       Mem_Free((char *)dirent_array);
                       Mem_Free((char *)cookie_array);
@@ -404,17 +403,17 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                   cache_inode_get_attributes(dir_pentry, &entry_attr);
 
                   /* Set PostPoFh3 structure */
-                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
-                      entries[0].name_handle.handle_follows = TRUE;
-                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
-                      entries[0].name_handle.post_op_fh3_u.handle.data.data_len =
+                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[0].
+                      name_handle.handle_follows = TRUE;
+                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[0].
+                      name_handle.post_op_fh3_u.handle.data.data_len =
                       sizeof(file_handle_v3_t);
 
                   nfs_SetPostOpAttr(pcontext, pexport,
                                     dir_pentry,
                                     &entry_attr,
-                                    &(pres->res_readdirplus3.READDIRPLUS3res_u.
-                                      resok.reply.entries[0].name_attributes));
+                                    &(pres->res_readdirplus3.READDIRPLUS3res_u.resok.
+                                      reply.entries[0].name_attributes));
 
                   delta += 1;
                 }
@@ -455,24 +454,23 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                       return NFS_REQ_OK;
                     }
 
-                  FSAL_DigestHandle(pcontext->export_context,
+                  FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                     FSAL_DIGEST_FILEID3,
                                     pfsal_handle,
-                                    (caddr_t) & (RES_READDIRPLUS_REPLY.
-                                                 entries[delta].fileid));
+                                    (caddr_t) & (RES_READDIRPLUS_REPLY.entries[delta].
+                                                 fileid));
 
                   RES_READDIRPLUS_REPLY.entries[delta].name = entry_name_array[delta];
                   strcpy(RES_READDIRPLUS_REPLY.entries[delta].name, "..");
 
                   /* Getting a file handle */
-                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
-                      entries[delta].name_handle.post_op_fh3_u.handle.data.data_val =
+                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[delta].
+                      name_handle.post_op_fh3_u.handle.data.data_val =
                       (char *)fh3_array[delta];
 
                   if(nfs3_FSALToFhandle
-                     (&pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
-                      entries[0].name_handle.post_op_fh3_u.handle, pfsal_handle,
-                      pexport) == 0)
+                     (&pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[0].
+                      name_handle.post_op_fh3_u.handle, pfsal_handle, pexport) == 0)
                     {
                       Mem_Free((char *)dirent_array);
                       Mem_Free((char *)cookie_array);
@@ -492,17 +490,17 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                   cache_inode_get_attributes(pentry_dot_dot, &entry_attr);
 
                   /* Set PostPoFh3 structure */
-                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
-                      entries[delta].name_handle.handle_follows = TRUE;
-                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
-                      entries[delta].name_handle.post_op_fh3_u.handle.data.data_len =
+                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[delta].
+                      name_handle.handle_follows = TRUE;
+                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[delta].
+                      name_handle.post_op_fh3_u.handle.data.data_len =
                       sizeof(file_handle_v3_t);
 
                   nfs_SetPostOpAttr(pcontext, pexport,
                                     pentry_dot_dot,
                                     &entry_attr,
-                                    &(pres->res_readdirplus3.READDIRPLUS3res_u.
-                                      resok.reply.entries[delta].name_attributes));
+                                    &(pres->res_readdirplus3.READDIRPLUS3res_u.resok.
+                                      reply.entries[delta].name_attributes));
 
                 }
               RES_READDIRPLUS_REPLY.entries[0].nextentry =
@@ -565,7 +563,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                 }
 
               /* Now fill in the replyed entryplus3 list */
-              FSAL_DigestHandle(pcontext->export_context,
+              FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                 FSAL_DIGEST_FILEID3,
                                 pfsal_handle,
                                 (caddr_t) & (RES_READDIRPLUS_REPLY.entries[i].fileid));
@@ -584,14 +582,13 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 
               cache_inode_get_attributes(dirent_array[i - delta].pentry, &entry_attr);
 
-              pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].
-                  name_handle.post_op_fh3_u.handle.data.data_val = (char *)fh3_array[i];
+              pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].name_handle.
+                  post_op_fh3_u.handle.data.data_val = (char *)fh3_array[i];
 
               /* Compute the NFSv3 file handle */
               if(nfs3_FSALToFhandle
-                 (&pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
-                  entries[i].name_handle.post_op_fh3_u.handle, pfsal_handle,
-                  pexport) == 0)
+                 (&pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].
+                  name_handle.post_op_fh3_u.handle, pfsal_handle, pexport) == 0)
                 {
                   Mem_Free((char *)dirent_array);
                   Mem_Free((char *)cookie_array);
@@ -611,17 +608,16 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 #endif
 
               /* Set PostPoFh3 structure */
-              pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].
-                  name_handle.handle_follows = TRUE;
-              pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].
-                  name_handle.post_op_fh3_u.handle.data.data_len =
-                  sizeof(file_handle_v3_t);
+              pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].name_handle.
+                  handle_follows = TRUE;
+              pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].name_handle.
+                  post_op_fh3_u.handle.data.data_len = sizeof(file_handle_v3_t);
 
               nfs_SetPostOpAttr(pcontext, pexport,
                                 dirent_array[i - delta].pentry,
                                 &entry_attr,
-                                &(pres->res_readdirplus3.READDIRPLUS3res_u.resok.
-                                  reply.entries[i].name_attributes));
+                                &(pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
+                                  entries[i].name_attributes));
 
               RES_READDIRPLUS_REPLY.entries[i].nextentry = NULL;
               if(i != 0)
@@ -713,8 +709,8 @@ void nfs3_Readdirplus_Free(nfs_res_t * resp)
     {
       /* All is allocated as a single array */
       Mem_Free(PRESREADDIRPLUSREPLY.entries[0].name);
-      Mem_Free(PRESREADDIRPLUSREPLY.entries[0].name_handle.post_op_fh3_u.handle.
-               data.data_val);
+      Mem_Free(PRESREADDIRPLUSREPLY.entries[0].name_handle.post_op_fh3_u.handle.data.
+               data_val);
       Mem_Free(PRESREADDIRPLUSREPLY.entries);
     }
 }                               /*  nfs3_Readdirplus_Free */

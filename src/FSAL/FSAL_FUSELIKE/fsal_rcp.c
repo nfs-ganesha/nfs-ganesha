@@ -57,17 +57,17 @@
  *        ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
  */
 
-fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
-                       fsal_op_context_t * p_context,   /* IN */
-                       fsal_path_t * p_local_path,      /* IN */
-                       fsal_rcpflag_t transfer_opt      /* IN */
+fsal_status_t FUSEFSAL_rcp(fusefsal_handle_t * filehandle,      /* IN */
+                           fusefsal_op_context_t * p_context,   /* IN */
+                           fsal_path_t * p_local_path,  /* IN */
+                           fsal_rcpflag_t transfer_opt  /* IN */
     )
 {
 
   int local_fd;
   int local_flags;
 
-  fsal_file_t fs_fd;
+  fusefsal_file_t fs_fd;
   fsal_openflags_t fs_flags;
 
   fsal_status_t st = FSAL_STATUS_NO_ERROR;
@@ -213,7 +213,7 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
   }
 #endif
 
-  st = FSAL_open(filehandle, p_context, fs_flags, &fs_fd, NULL);
+  st = FUSEFSAL_open(filehandle, p_context, fs_flags, &fs_fd, NULL);
 
   if(FSAL_IS_ERROR(st))
     {
@@ -235,7 +235,7 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
     {
       /* clean & return */
       close(local_fd);
-      FSAL_close(&fs_fd);
+      FUSEFSAL_close(&fs_fd);
       Return(ERR_FSAL_NOMEM, Mem_Errno, INDEX_FSAL_rcp);
     }
 
@@ -268,7 +268,7 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
         }
       else                      /* from FSAL filesystem */
         {
-          st = FSAL_read(&fs_fd, NULL, RCP_BUFFER_SIZE, IObuffer, &fs_size, &eof);
+          st = FUSEFSAL_read(&fs_fd, NULL, RCP_BUFFER_SIZE, IObuffer, &fs_size, &eof);
 
           if(FSAL_IS_ERROR(st))
             break;              /* exit loop */
@@ -287,7 +287,7 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
           if(to_fs)             /* to FSAL filesystem */
             {
 
-              st = FSAL_write(&fs_fd, NULL, local_size, IObuffer, &fs_size);
+              st = FUSEFSAL_write(&fs_fd, NULL, local_size, IObuffer, &fs_size);
 
               if(FSAL_IS_ERROR(st))
                 break;          /* exit loop */
@@ -319,7 +319,7 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
 
   Mem_Free(IObuffer);
   close(local_fd);
-  FSAL_close(&fs_fd);
+  FUSEFSAL_close(&fs_fd);
 
   /* return status. */
 
@@ -327,11 +327,11 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
 
 }
 
-fsal_status_t FSAL_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
-                                 fsal_u64_t fileid,     /* IN */
-                                 fsal_op_context_t * p_context, /* IN */
-                                 fsal_path_t * p_local_path,    /* IN */
-                                 fsal_rcpflag_t transfer_opt /* IN */ )
+fsal_status_t FUSEFSAL_rcp_by_fileid(fusefsal_handle_t * filehandle,    /* IN */
+                                     fsal_u64_t fileid, /* IN */
+                                     fusefsal_op_context_t * p_context, /* IN */
+                                     fsal_path_t * p_local_path,        /* IN */
+                                     fsal_rcpflag_t transfer_opt /* IN */ )
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
