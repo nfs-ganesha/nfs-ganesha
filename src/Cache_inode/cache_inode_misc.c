@@ -1675,8 +1675,8 @@ void cache_inode_print_srvhandle(char *comment, cache_entry_t * pentry)
       break;
     }
 
-  nfsfh.nfs_fh4_len = pfsal_handle->srv_handle_len;
-  nfsfh.nfs_fh4_val = pfsal_handle->srv_handle_val;
+  nfsfh.nfs_fh4_len = pfsal_handle->data.srv_handle_len;
+  nfsfh.nfs_fh4_val = pfsal_handle->data.srv_handle_val;
 
   nfs4_sprint_fhandle(&nfsfh, outstr);
 

@@ -74,7 +74,7 @@ fsal_status_t FSAL_proxy_truncate_stateless(proxyfsal_handle_t * filehandle,    
   if(!filehandle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
-  if(filehandle->object_type_reminder != FSAL_TYPE_FILE)
+  if(filehandle->data.object_type_reminder != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_truncate);
     }
@@ -248,7 +248,7 @@ fsal_status_t PROXYFSAL_truncate(proxyfsal_handle_t * filehandle,       /* IN */
   if(!filehandle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
-  if(filehandle->object_type_reminder != FSAL_TYPE_FILE)
+  if(filehandle->data.object_type_reminder != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_truncate);
     }

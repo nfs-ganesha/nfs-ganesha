@@ -128,7 +128,7 @@ fsal_status_t PROXYFSAL_open_by_name(proxyfsal_handle_t * dirhandle,    /* IN */
   PRINT_HANDLE("FSAL_open", dirhandle);
 #endif
 
-  if(dirhandle->object_type_reminder != FSAL_TYPE_DIR)
+  if(dirhandle->data.object_type_reminder != FSAL_TYPE_DIR)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open_by_name);
     }
@@ -350,7 +350,7 @@ static fsal_status_t PROXYFSAL_open_stateless(proxyfsal_handle_t * filehandle,  
   PRINT_HANDLE("FSAL_open_stateless", filehandle);
 #endif
 
-  if(filehandle->object_type_reminder != FSAL_TYPE_FILE)
+  if(filehandle->data.object_type_reminder != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
     }
@@ -507,7 +507,7 @@ fsal_status_t PROXYFSAL_open(proxyfsal_handle_t * filehandle,   /* IN */
   /* >> you can check if this is a file if the information
    * is stored into the handle << */
 
-  if(filehandle->object_type_reminder != FSAL_TYPE_FILE)
+  if(filehandle->data.object_type_reminder != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
     }
@@ -1024,7 +1024,7 @@ fsal_status_t PROXYFSAL_open_by_fileid(proxyfsal_handle_t * filehandle, /* IN */
   PRINT_HANDLE("FSAL_open", dirhandle);
 #endif
 
-  if(filehandle->object_type_reminder != FSAL_TYPE_FILE)
+  if(filehandle->data.object_type_reminder != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open_by_fileid);
     }

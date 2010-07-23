@@ -87,38 +87,30 @@
 #define FSAL_PROXY_NFS_V4             4
 #define FSAL_PROXY_RETRY_SLEEPTIME    10
 
-#ifdef _BUILD_SHARED_FSAL
-#define FSANDLE_PROXY_HANDLE_T_PADLEN 0
-#define FSAL_OP_CONTEXT_T_PADLEN 476
-#define FSAL_CRED_T_PADLEN 0
-#define FSAL_EXPORT_CONTEXT_T_PADLEN 0
-#define FS_SPECIFIC_INITINFO_T_PADLEN 13112
-#define FSAL_COOKIE_T_PADLEN 0
-#define FSAL_LOCKDESC_T_PADLEN 0
-#define FSAL_FILE_T_PADLEN 176
-#define FSAL_DIR_T_PADLEN 0
-#else
-#define FSANDLE_PROXY_HANDLE_T_PADLEN 0
-#define FSAL_OP_CONTEXT_T_PADLEN 476
-#define FSAL_CRED_T_PADLEN 0
-#define FSAL_EXPORT_CONTEXT_T_PADLEN 0
-#define FS_SPECIFIC_INITINFO_T_PADLEN 13112
-#define FSAL_COOKIE_T_PADLEN 0
-#define FSAL_LOCKDESC_T_PADLEN 0
-#define FSAL_FILE_T_PADLEN 176
-#define FSAL_DIR_T_PADLEN 0
-#endif
+#include "fsal_glue_const.h"
+
+#define fsal_handle_t proxyfsal_handle_t
+#define fsal_op_context_t proxyfsal_op_context_t
+#define fsal_file_t proxyfsal_file_t
+#define fsal_dir_t proxyfsal_dir_t
+#define fsal_export_context_t proxyfsal_export_context_t
+#define fsal_lockdesc_t proxyfsal_lockdesc_t
+#define fsal_cookie_t proxyfsal_cookie_t
+#define fs_specific_initinfo_t proxyfs_specific_initinfo_t
+#define fsal_cred_t proxyfsal_cred_t
 
   /* some void types for this template... */
-typedef struct fsal_handle__
-{
-  fsal_nodetype_t object_type_reminder;
-  uint64_t fileid4;
-  unsigned int timestamp;
-  unsigned int srv_handle_len;
-  char srv_handle_val[FSAL_PROXY_FILEHANDLE_MAX_LEN];
+typedef union {
+ struct 
+  {
+    fsal_nodetype_t object_type_reminder;
+    uint64_t fileid4;
+    unsigned int timestamp;
+    unsigned int srv_handle_len;
+    char srv_handle_val[FSAL_PROXY_FILEHANDLE_MAX_LEN] ; 
+  } data ;
 #ifdef _BUILD_SHARED_FSAL
-  char pad[FSANDLE_PROXY_HANDLE_T_PADLEN];
+  char pad[FSAL_HANDLE_T_SIZE];
 #endif
 } proxyfsal_handle_t;
 
@@ -128,17 +120,11 @@ typedef struct fsal_cred__
   fsal_gid_t group;
   fsal_count_t nbgroups;
   fsal_gid_t alt_groups[FSAL_NGROUPS_MAX];
-#ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_CRED_T_PADLEN];
-#endif
 } proxyfsal_cred_t;
 
 typedef struct fsal_export_context__
 {
   proxyfsal_handle_t root_handle;
-#ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_EXPORT_CONTEXT_T_PADLEN];
-#endif
 } proxyfsal_export_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(pexport_context->root_handle.fileid4)
@@ -161,9 +147,6 @@ typedef struct fsal_op_context__
   proxyfsal_handle_t openfh_wd_handle;
   time_t last_lease_renewal;
   uint64_t file_counter;
-#ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_OP_CONTEXT_T_PADLEN];
-#endif
 } proxyfsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->user_credential.user )
@@ -174,9 +157,6 @@ typedef struct fsal_dir__
   proxyfsal_handle_t fhandle;
   verifier4 verifier;
   proxyfsal_op_context_t *pcontext;
-#ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_DIR_T_PADLEN];
-#endif
 } proxyfsal_dir_t;
 
 typedef struct fsal_file__
@@ -187,17 +167,16 @@ typedef struct fsal_file__
   stateid4 stateid;
   fsal_off_t current_offset;
   proxyfsal_op_context_t *pcontext;
-#ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_FILE_T_PADLEN];
-#endif
 } proxyfsal_file_t;
 
 //# define FSAL_FILENO(_pf) ((_pf))
 
-typedef nfs_cookie4 proxyfsal_cookie_t;
-//#ifdef _BUILD_SHARED_FSAL
-//  char pad[FSAL_COOKIE_T_PADLEN] ;
-//#endif
+typedef union {
+  nfs_cookie4 data ;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_COOKIE_T_SIZE];
+#endif
+} proxyfsal_cookie_t;
 
 #define FSAL_READDIR_FROM_BEGINNING 0
 
@@ -229,28 +208,8 @@ typedef struct fs_specific_initinfo__
   unsigned int hdlmap_hashsize;
   unsigned int hdlmap_nb_entry_prealloc;
   unsigned int hdlmap_nb_db_op_prealloc;
-#ifdef _BUILD_SHARED_FSAL
-  char pad[FS_SPECIFIC_INITINFO_T_PADLEN];
-#endif
 } proxyfs_specific_initinfo_t;
 
 typedef unsigned int proxyfsal_lockdesc_t;
-//#ifdef _BUILD_SHARED_FSAL
-//  char pad[FSAL_LOCKDESC_T_PADLEN] ;
-//#endif
-
-#ifndef _USE_SHARED_FSAL
-
-#define fsal_handle_t proxyfsal_handle_t
-#define fsal_op_context_t proxyfsal_op_context_t
-#define fsal_file_t proxyfsal_file_t
-#define fsal_dir_t proxyfsal_dir_t
-#define fsal_export_context_t proxyfsal_export_context_t
-#define fsal_lockdesc_t proxyfsal_lockdesc_t
-#define fsal_cookie_t proxyfsal_cookie_t
-#define fs_specific_initinfo_t proxyfs_specific_initinfo_t
-#define fsal_cred_t proxyfsal_cred_t
-
-#endif                          /* _USE_SHARED_FSAL */
 
 #endif

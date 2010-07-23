@@ -215,7 +215,7 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
 
   /** @todo : use NFS4_OP_VERIFY to implement a cache validator, BUGAZOMEU */
   COMPOUNDV4_ARG_ADD_OP_PUTFH(argnfs4, nfs4fh);
-  COMPOUNDV4_ARG_ADD_OP_READDIR(argnfs4, start_position, nbreaddir,
+  COMPOUNDV4_ARG_ADD_OP_READDIR(argnfs4, start_position.data, nbreaddir,
                                 dir_descriptor->verifier, bitmap);
 
   TakeTokenFSCall();
@@ -272,7 +272,7 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
         pdirent[cpt - 1].nextentry = &pdirent[cpt];
 
       /* Set end position */
-      *end_position = piter_entry->cookie;
+      end_position->data = piter_entry->cookie;
 
       /* Get ready for next pdirent */
       cpt += 1;

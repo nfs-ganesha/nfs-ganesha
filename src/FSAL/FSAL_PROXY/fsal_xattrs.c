@@ -166,7 +166,7 @@ int get_type(proxyfsal_handle_t * p_objecthandle,       /* IN */
   if(!p_objecthandle || !p_context || !p_output_size)
     return ERR_FSAL_FAULT;
 
-  switch (p_objecthandle->object_type_reminder)
+  switch (p_objecthandle->data.object_type_reminder)
     {
     case FSAL_TYPE_DIR:
       strncpy((char *)buffer_addr, "directory", buffer_size);
@@ -206,8 +206,8 @@ int get_ts(proxyfsal_handle_t * p_objecthandle, /* IN */
 
   /* assuming buffer size is large enough for an int ! */
 
-  memcpy(buffer_addr, &p_objecthandle->timestamp, sizeof(p_objecthandle->timestamp));
-  *p_output_size = sizeof(p_objecthandle->timestamp);
+  memcpy(buffer_addr, &p_objecthandle->data.timestamp, sizeof(p_objecthandle->data.timestamp));
+  *p_output_size = sizeof(p_objecthandle->data.timestamp);
 
   return 0;
 
@@ -238,15 +238,15 @@ int get_svr_handle(proxyfsal_handle_t * p_objecthandle, /* IN */
     return ERR_FSAL_FAULT;
 
   /* truncate it if buffer is too small */
-  if(p_objecthandle->srv_handle_len > buffer_size)
+  if(p_objecthandle->data.srv_handle_len > buffer_size)
     {
-      memcpy(buffer_addr, p_objecthandle->srv_handle_val, buffer_size);
+      memcpy(buffer_addr, p_objecthandle->data.srv_handle_val, buffer_size);
       *p_output_size = buffer_size;
     }
   else
     {
-      memcpy(buffer_addr, p_objecthandle->srv_handle_val, p_objecthandle->srv_handle_len);
-      *p_output_size = p_objecthandle->srv_handle_len;
+      memcpy(buffer_addr, p_objecthandle->data.srv_handle_val, p_objecthandle->data.srv_handle_len);
+      *p_output_size = p_objecthandle->data.srv_handle_len;
     }
 
   return 0;
@@ -460,7 +460,7 @@ fsal_status_t PROXYFSAL_GetXAttrAttrs(proxyfsal_handle_t * p_objecthandle,      
 
   /* check that this index match the type of entry */
   if(xattr_id >= XATTR_COUNT
-     || !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->object_type_reminder))
+     || !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->data.object_type_reminder))
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrAttrs);
     }
@@ -534,7 +534,7 @@ fsal_status_t PROXYFSAL_ListXAttrs(proxyfsal_handle_t * p_objecthandle, /* IN */
   for(index = cookie, out_index = 0;
       index < XATTR_COUNT && out_index < xattrs_tabsize; index++)
     {
-      if(do_match_type(xattr_list[index].flags, p_objecthandle->object_type_reminder))
+      if(do_match_type(xattr_list[index].flags, p_objecthandle->data.object_type_reminder))
         {
           /* fills an xattr entry */
           xattrs_tab[out_index].xattr_id = index;
@@ -592,7 +592,7 @@ fsal_status_t PROXYFSAL_GetXAttrValueById(proxyfsal_handle_t * p_objecthandle,  
 
   /* check that this index match the type of entry */
   if(xattr_id >= XATTR_COUNT
-     || !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->object_type_reminder))
+     || !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->data.object_type_reminder))
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrValue);
     }
@@ -640,7 +640,7 @@ fsal_status_t PROXYFSAL_GetXAttrIdByName(proxyfsal_handle_t * p_objecthandle,   
 
   for(index = 0; index < XATTR_COUNT; index++)
     {
-      if(do_match_type(xattr_list[index].flags, p_objecthandle->object_type_reminder)
+      if(do_match_type(xattr_list[index].flags, p_objecthandle->data.object_type_reminder)
          && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
         {
           found = TRUE;
@@ -685,7 +685,7 @@ fsal_status_t PROXYFSAL_GetXAttrValueByName(proxyfsal_handle_t * p_objecthandle,
 
   for(index = 0; index < XATTR_COUNT; index++)
     {
-      if(do_match_type(xattr_list[index].flags, p_objecthandle->object_type_reminder)
+      if(do_match_type(xattr_list[index].flags, p_objecthandle->data.object_type_reminder)
          && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
         {
 
