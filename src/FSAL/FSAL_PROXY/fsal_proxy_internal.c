@@ -407,12 +407,12 @@ int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
   nfs4_sprint_fhandle(pnfs4_handle, outstr);
   DisplayLog("fsal_internal_proxy_create_fh: input nfsv4 server handle=%s", outstr);
 #endif
-  pfsal_handle->object_type_reminder = type;
-  pfsal_handle->fileid4 = fileid;
-  pfsal_handle->timestamp = /** @todo fh should be volatile ? ServerBootTime ; */ 0;
-  pfsal_handle->srv_handle_len = pnfs4_handle->nfs_fh4_len;
-  memset(pfsal_handle->srv_handle_val, 0, FSAL_PROXY_FILEHANDLE_MAX_LEN);
-  memcpy(pfsal_handle->srv_handle_val, pnfs4_handle->nfs_fh4_val,
+  pfsal_handle->data.object_type_reminder = type;
+  pfsal_handle->data.fileid4 = fileid;
+  pfsal_handle->data.timestamp = /** @todo fh should be volatile ? ServerBootTime ; */ 0;
+  pfsal_handle->data.srv_handle_len = pnfs4_handle->nfs_fh4_len;
+  memset(pfsal_handle->data.srv_handle_val, 0, FSAL_PROXY_FILEHANDLE_MAX_LEN);
+  memcpy(pfsal_handle->data.srv_handle_val, pnfs4_handle->nfs_fh4_val,
          pnfs4_handle->nfs_fh4_len);
 
 #ifdef _DEBUG_FSAL
@@ -420,8 +420,8 @@ int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
     {
       nfs_fh4 tmpfh;
 
-      tmpfh.nfs_fh4_len = pfsal_handle->srv_handle_len;
-      tmpfh.nfs_fh4_val = pfsal_handle->srv_handle_val;
+      tmpfh.nfs_fh4_len = pfsal_handle->data.srv_handle_len;
+      tmpfh.nfs_fh4_val = pfsal_handle->data.srv_handle_val;
       nfs4_sprint_fhandle(&tmpfh, outstr);
       DisplayLog
           ("fsal_internal_proxy_create_fh: output nfsv4 server handle= %s fileid=%llu",
@@ -429,7 +429,7 @@ int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
     }
 
   if(memcmp
-     (pfsal_handle->srv_handle_val, pnfs4_handle->nfs_fh4_val, pnfs4_handle->nfs_fh4_len))
+     (pfsal_handle->data.srv_handle_val, pnfs4_handle->nfs_fh4_val, pnfs4_handle->nfs_fh4_len))
     DisplayLog
         ("CRITICAL ERROR: ==========> Filehandle mismatch n ifsal_internal_proxy_create");
 
@@ -459,8 +459,8 @@ int fsal_internal_proxy_extract_fh(nfs_fh4 * pnfs4_handle,
   if(pnfs4_handle == NULL || pfsal_handle == NULL)
     return FALSE;
 
-  pnfs4_handle->nfs_fh4_len = pfsal_handle->srv_handle_len;
-  pnfs4_handle->nfs_fh4_val = pfsal_handle->srv_handle_val;
+  pnfs4_handle->nfs_fh4_len = pfsal_handle->data.srv_handle_len;
+  pnfs4_handle->nfs_fh4_val = pfsal_handle->data.srv_handle_val;
 
 #ifdef _DEBUG_FSAL
   nfs4_sprint_fhandle(pnfs4_handle, outstr);
@@ -1172,7 +1172,7 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
 
   if(compute_fh)
     {
-      phandle->fileid4 = pFSAL_attr->fileid;
+      phandle->data.fileid4 = pFSAL_attr->fileid;
     }
   return 1;
 }                               /* proxy_Fattr_To_FSAL_attr */

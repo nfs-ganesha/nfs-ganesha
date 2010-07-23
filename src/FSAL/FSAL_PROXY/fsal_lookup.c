@@ -178,7 +178,7 @@ fsal_status_t PROXYFSAL_lookup(proxyfsal_handle_t * parent_directory_handle,    
        * You may check the parent type if it's sored into the handle <<
        */
 
-      switch (parent_directory_handle->object_type_reminder)
+      switch (parent_directory_handle->data.object_type_reminder)
         {
         case FSAL_TYPE_DIR:
           /* OK */
@@ -410,7 +410,7 @@ fsal_status_t PROXYFSAL_lookupJunction(proxyfsal_handle_t * p_junction_handle,  
 
   /* >> you can also check object type if it is in stored in the handle << */
 
-  if(p_junction_handle->object_type_reminder != FSAL_TYPE_JUNCTION)
+  if(p_junction_handle->data.object_type_reminder != FSAL_TYPE_JUNCTION)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_lookupJunction);
 
   TakeTokenFSCall();
@@ -577,7 +577,7 @@ fsal_status_t PROXYFSAL_lookupPath(fsal_path_t * p_path,        /* IN */
        * we cross it.
        */
       if(global_fs_info.auth_exportpath_xdev
-         && (out_hdl.object_type_reminder == FSAL_TYPE_JUNCTION))
+         && (out_hdl.data.object_type_reminder == FSAL_TYPE_JUNCTION))
         {
           proxyfsal_handle_t tmp_hdl;
 
