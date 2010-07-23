@@ -325,7 +325,7 @@ fsal_status_t GPFSFSAL_readdir(gpfsfsal_dir_t * p_dir_descriptor,       /* IN */
             {
               p_pdirent[*p_nb_entries].attributes.asked_attributes = get_attr_mask;
 
-              st = FSAL_getattrs(&(p_pdirent[*p_nb_entries].handle),
+              st = GPFSFSAL_getattrs(&(p_pdirent[*p_nb_entries].handle),
                                  &p_dir_descriptor->context,
                                  &p_pdirent[*p_nb_entries].attributes);
               if(FSAL_IS_ERROR(st))

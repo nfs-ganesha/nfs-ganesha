@@ -41,7 +41,7 @@
 #include <utime.h>
 
 /**
- * FSAL_getattrs:
+ * GPFSFSAL_getattrs:
  * Get attributes for the object specified by its filehandle.
  *
  * \param filehandle (input):
@@ -70,7 +70,7 @@ fsal_status_t GPFSFSAL_getattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
   struct stat buffstat;
 
   /* sanity checks.
-   * note : object_attributes is mandatory in FSAL_getattrs.
+   * note : object_attributes is mandatory in GPFSFSAL_getattrs.
    */
   if(!p_filehandle || !p_context || !p_object_attributes)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
@@ -112,7 +112,7 @@ fsal_status_t GPFSFSAL_getattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
 }
 
 /**
- * FSAL_setattrs:
+ * GPFSFSAL_setattrs:
  * Set attributes for the object specified by its filehandle.
  *
  * \param filehandle (input):
@@ -385,7 +385,7 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
 
   if(p_object_attributes)
     {
-      status = FSAL_getattrs(p_filehandle, p_context, p_object_attributes);
+      status = GPFSFSAL_getattrs(p_filehandle, p_context, p_object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))

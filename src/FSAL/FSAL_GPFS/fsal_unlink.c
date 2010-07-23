@@ -158,7 +158,7 @@ fsal_status_t GPFSFSAL_unlink(gpfsfsal_handle_t * p_parent_directory_handle,    
   if(p_parent_directory_attributes)
     {
       status =
-          FSAL_getattrs(p_parent_directory_handle, p_context,
+          GPFSFSAL_getattrs(p_parent_directory_handle, p_context,
                         p_parent_directory_attributes);
       if(FSAL_IS_ERROR(status))
         {

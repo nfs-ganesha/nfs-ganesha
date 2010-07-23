@@ -108,7 +108,7 @@ fsal_status_t GPFSFSAL_lookup(gpfsfsal_handle_t * p_parent_directory_handle,    
       /* get attributes, if asked */
       if(p_object_attributes)
         {
-          status = FSAL_getattrs(p_object_handle, p_context, p_object_attributes);
+          status = GPFSFSAL_getattrs(p_object_handle, p_context, p_object_attributes);
           if(FSAL_IS_ERROR(status))
             {
               FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
@@ -196,7 +196,7 @@ fsal_status_t GPFSFSAL_lookup(gpfsfsal_handle_t * p_parent_directory_handle,    
   /* get object attributes */
   if(p_object_attributes)
     {
-      status = FSAL_getattrs(p_object_handle, p_context, p_object_attributes);
+      status = GPFSFSAL_getattrs(p_object_handle, p_context, p_object_attributes);
       if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
@@ -260,7 +260,7 @@ fsal_status_t GPFSFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
   /* get object attributes */
   if(p_object_attributes)
     {
-      status = FSAL_getattrs(object_handle, p_context, p_object_attributes);
+      status = GPFSFSAL_getattrs(object_handle, p_context, p_object_attributes);
       if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);

@@ -91,7 +91,7 @@ fsal_status_t GPFSFSAL_test_access(gpfsfsal_op_context_t * p_context,   /* IN */
  * This doesn't make any call to the filesystem,
  * as a result, this doesn't ensure that the file exists, nor that
  * the permissions given as parameters are the actual file permissions :
- * this must be ensured by the cache_inode layer, using FSAL_getattrs,
+ * this must be ensured by the cache_inode layer, using GPFSFSAL_getattrs,
  * for example.
  *
  * \param cred (in fsal_cred_t *) user's identifier.
