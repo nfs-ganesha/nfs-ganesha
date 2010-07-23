@@ -106,7 +106,7 @@ fsal_status_t GPFSFSAL_readlink(gpfsfsal_handle_t * p_linkhandle,       /* IN */
   if(p_link_attributes)
     {
 
-      status = FSAL_getattrs(p_linkhandle, p_context, p_link_attributes);
+      status = GPFSFSAL_getattrs(p_linkhandle, p_context, p_link_attributes);
 
       /* On error, we set a flag in the returned attributes */
 
@@ -253,7 +253,7 @@ fsal_status_t GPFSFSAL_symlink(gpfsfsal_handle_t * p_parent_directory_handle,   
   if(p_link_attributes)
     {
 
-      status = FSAL_getattrs(p_link_handle, p_context, p_link_attributes);
+      status = GPFSFSAL_getattrs(p_link_handle, p_context, p_link_attributes);
 
       /* On error, we set a flag in the returned attributes */
 

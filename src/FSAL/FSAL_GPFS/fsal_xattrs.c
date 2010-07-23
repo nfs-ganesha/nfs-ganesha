@@ -286,7 +286,7 @@ fsal_status_t GPFSFSAL_GetXAttrAttrs(gpfsfsal_handle_t * p_objecthandle,        
 
   file_attrs.asked_attributes &= p_attrs->asked_attributes;
 
-  st = FSAL_getattrs(p_objecthandle, p_context, &file_attrs);
+  st = GPFSFSAL_getattrs(p_objecthandle, p_context, &file_attrs);
 
   if(FSAL_IS_ERROR(st))
     Return(st.major, st.minor, INDEX_FSAL_GetXAttrAttrs);
@@ -347,7 +347,7 @@ fsal_status_t GPFSFSAL_ListXAttrs(gpfsfsal_handle_t * p_objecthandle,   /* IN */
   /* don't retrieve unsuipported attributes */
   file_attrs.asked_attributes &= global_fs_info.supported_attrs;
 
-  st = FSAL_getattrs(p_objecthandle, p_context, &file_attrs);
+  st = GPFSFSAL_getattrs(p_objecthandle, p_context, &file_attrs);
 
   if(FSAL_IS_ERROR(st))
     Return(st.major, st.minor, INDEX_FSAL_ListXAttrs);

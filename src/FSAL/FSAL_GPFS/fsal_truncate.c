@@ -116,7 +116,7 @@ fsal_status_t GPFSFSAL_truncate(gpfsfsal_handle_t * p_filehandle,       /* IN */
 
       fsal_status_t st;
 
-      st = FSAL_getattrs(p_filehandle, p_context, p_object_attributes);
+      st = GPFSFSAL_getattrs(p_filehandle, p_context, p_object_attributes);
 
       if(FSAL_IS_ERROR(st))
         {

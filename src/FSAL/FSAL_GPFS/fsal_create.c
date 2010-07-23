@@ -186,7 +186,7 @@ fsal_status_t GPFSFSAL_create(gpfsfsal_handle_t * p_parent_directory_handle,    
   /* retrieve file attributes */
   if(p_object_attributes)
     {
-      status = FSAL_getattrs(p_object_handle, p_context, p_object_attributes);
+      status = GPFSFSAL_getattrs(p_object_handle, p_context, p_object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -359,7 +359,7 @@ fsal_status_t GPFSFSAL_mkdir(gpfsfsal_handle_t * p_parent_directory_handle,     
   /* retrieve file attributes */
   if(p_object_attributes)
     {
-      status = FSAL_getattrs(p_object_handle, p_context, p_object_attributes);
+      status = GPFSFSAL_getattrs(p_object_handle, p_context, p_object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -490,7 +490,7 @@ fsal_status_t GPFSFSAL_link(gpfsfsal_handle_t * p_target_handle,        /* IN */
 
   if(p_attributes)
     {
-      status = FSAL_getattrs(p_target_handle, p_context, p_attributes);
+      status = GPFSFSAL_getattrs(p_target_handle, p_context, p_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -660,7 +660,7 @@ fsal_status_t GPFSFSAL_mknode(gpfsfsal_handle_t * parentdir_handle,     /* IN */
   if(node_attributes)
     {
 
-      status = FSAL_getattrs(p_object_handle, p_context, node_attributes);
+      status = GPFSFSAL_getattrs(p_object_handle, p_context, node_attributes);
 
       /* on error, we set a special bit in the mask. */
 

@@ -302,7 +302,7 @@ int main(int argc, char **argv)
   printf("asked attributes :\n");
   printmask(attribs.asked_attributes);
 
-  if(FSAL_IS_ERROR(st = FSAL_getattrs(&root_handle, &op_ctx, &attribs)))
+  if(FSAL_IS_ERROR(st = GPFSFSAL_getattrs(&root_handle, &op_ctx, &attribs)))
     {
       DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
     }
@@ -322,7 +322,7 @@ int main(int argc, char **argv)
       printf("asked attributes :\n");
       printmask(attribs.asked_attributes);
 
-      if(FSAL_IS_ERROR(st = FSAL_getattrs(&root_handle, &op_ctx, &attribs)))
+      if(FSAL_IS_ERROR(st = GPFSFSAL_getattrs(&root_handle, &op_ctx, &attribs)))
         {
           DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
         }
@@ -331,7 +331,7 @@ int main(int argc, char **argv)
 
       /* getting all spported attributes of root */
       attribs.asked_attributes = mask;
-      if(FSAL_IS_ERROR(st = FSAL_getattrs(&root_handle, &op_ctx, &attribs)))
+      if(FSAL_IS_ERROR(st = GPFSFSAL_getattrs(&root_handle, &op_ctx, &attribs)))
         {
           DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
         }
@@ -616,7 +616,7 @@ int main(int argc, char **argv)
               printf("\t%s : %s (cookie %s)\n", tracebuff, entries[i].name.name,
                      cookiebuff);
 
-              if(FSAL_IS_ERROR(st = FSAL_getattrs(&entries[i].handle, &op_ctx, &attribs)))
+              if(FSAL_IS_ERROR(st = GPFSFSAL_getattrs(&entries[i].handle, &op_ctx, &attribs)))
                 {
                   DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
                 }
@@ -957,7 +957,7 @@ int main(int argc, char **argv)
   attr_set.nom = new_val;                               \
   attribs.asked_attributes = attr_set.asked_attributes; \
 /*  attribs.asked_attributes = mask;                      */\
-  st = FSAL_setattrs( &dir_hdl, &op_ctx, &attr_set, &attribs );\
+  st = GPFSFSAL_setattrs( &dir_hdl, &op_ctx, &attr_set, &attribs );\
   if ( FSAL_IS_ERROR(st) )                              \
     DisplayErrorJd(log_desc,ERR_FSAL,st.major,st.minor);\
   else                                                  \
