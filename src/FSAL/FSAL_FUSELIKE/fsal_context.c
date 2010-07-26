@@ -60,6 +60,22 @@ fsal_status_t FUSEFSAL_BuildExportContext(fusefsal_export_context_t * p_export_c
 
 }
 
+
+/**
+ * FSAL_CleanUpExportContext :
+ * this will clean up and state in an export that was created during
+ * the BuildExportContext phase.  For many FSALs this may be a noop.
+ *
+ * \param p_export_context (in, gpfsfsal_export_context_t)
+ */
+
+fsal_status_t FUSEFSAL_CleanUpExportContext(fusefsal_export_context_t * p_export_context) 
+{
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
+}
+
+
+
 fsal_status_t FUSEFSAL_InitClientContext(fusefsal_op_context_t * p_thr_context)
 {
 
