@@ -132,7 +132,7 @@ int RemoveAllExportsExceptHead(exportlist_t * pexportlist)
     {
       /* Leave the head so that the list may be replaced later without
        * changing the reference pointer in worker threads. */
-      CleanUpExportContext(pcurrent->FS_export_context);              
+      CleanUpExportContext(&pcurrent->FS_export_context);              
       
       if (pcurrent == pexportlist)
 	break;
