@@ -55,6 +55,12 @@ fsal_status_t WRAP_PROXYFSAL_BuildExportContext(fsal_export_context_t * p_export
                                       p_export_path, fs_specific_options);
 }
 
+fsal_status_t WRAP_PROXYFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context)
+{
+  return PROXYFSAL_CleanUpExportContext((proxyfsal_export_context_t *) p_export_context);
+}
+
+
 fsal_status_t WRAP_PROXYFSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 {
   return PROXYFSAL_InitClientContext((proxyfsal_op_context_t *) p_thr_context);
@@ -660,6 +666,7 @@ fsal_functions_t fsal_proxy_functions = {
   .fsal_getattrs = WRAP_PROXYFSAL_getattrs,
   .fsal_setattrs = WRAP_PROXYFSAL_setattrs,
   .fsal_buildexportcontext = WRAP_PROXYFSAL_BuildExportContext,
+  .fsal_cleanupexportcontext = WRAP_PROXYFSAL_CleanUpExportContext,
   .fsal_initclientcontext = WRAP_PROXYFSAL_InitClientContext,
   .fsal_getclientcontext = WRAP_PROXYFSAL_GetClientContext,
   .fsal_create = WRAP_PROXYFSAL_create,
