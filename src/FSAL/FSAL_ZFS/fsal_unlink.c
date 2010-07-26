@@ -48,9 +48,9 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
+fsal_status_t ZFSFSAL_unlink(zfsfsal_handle_t * parentdir_handle,     /* IN */
                           fsal_name_t * p_object_name,  /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
+                          zfsfsal_op_context_t * p_context,        /* IN */
                           fsal_attrib_list_t * parentdir_attributes     /* [IN/OUT ] */
     )
 {
@@ -58,7 +58,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
   fsal_status_t st;
   int rc, type;
   inogen_t object;
-  fsal_handle_t obj_handle;
+  zfsfsal_handle_t obj_handle;
 
   /* sanity checks.
    * note : parentdir_attributes are optional.
@@ -71,14 +71,14 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
   TakeTokenFSCall();
 
   if(!(rc = libzfswrap_lookup(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                              parentdir_handle->zfs_handle, p_object_name->name, &object, &type)))
+                              parentdir_handle->data.zfs_handle, p_object_name->name, &object, &type)))
   {
     if(type == S_IFDIR)
       rc = libzfswrap_rmdir(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                            parentdir_handle->zfs_handle, p_object_name->name);
+                            parentdir_handle->data.zfs_handle, p_object_name->name);
     else
       rc = libzfswrap_unlink(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                             parentdir_handle->zfs_handle, p_object_name->name);
+                             parentdir_handle->data.zfs_handle, p_object_name->name);
   }
 
   ReleaseTokenFSCall();
@@ -92,7 +92,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
   if(parentdir_attributes)
     {
 
-      st = FSAL_getattrs(parentdir_handle, p_context, parentdir_attributes);
+      st = ZFSFSAL_getattrs(parentdir_handle, p_context, parentdir_attributes);
 
       /* On error, we set a flag in the returned attributes */
 

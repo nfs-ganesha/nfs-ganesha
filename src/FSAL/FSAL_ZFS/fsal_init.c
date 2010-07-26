@@ -93,7 +93,7 @@ size_t stack_size = 0;
  *                                for this error.)
  *         ERR_FSAL_SEC_INIT     (Security context init error).
  */
-fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
+fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
     )
 {
 
@@ -145,7 +145,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
 }
 
 /* To be called before exiting */
-fsal_status_t FSAL_terminate()
+fsal_status_t ZFSFSAL_terminate()
 {
   libzfswrap_umount(p_vfs, 1);
   libzfswrap_exit(p_zhd);

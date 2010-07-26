@@ -309,7 +309,7 @@ void ReleaseTokenFSCall()
  */
 fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
                                         fs_common_initinfo_t * fs_common_info,
-                                        fs_specific_initinfo_t * fs_specific_info)
+                                        zfsfs_specific_initinfo_t * fs_specific_info)
 {
 
   /* sanity check */
@@ -423,47 +423,4 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
                     global_fs_info.xattr_access_rights);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}
-
-/**
- * fsal_do_log:
- * Indicates if an FSAL error has to be traced
- * into its log file in the NIV_EVENT level.
- * (in the other cases, return codes are only logged
- * in the NIV_FULL_DEBUG logging lovel).
- *
- * \param status(input): The fsal status that is to be tested.
- *
- * \return - TRUE if the error is to be traced.
- *         - FALSE if the error must not be traced except
- *          in NIV_FULL_DEBUG level.
- */
-fsal_boolean_t fsal_do_log(fsal_status_t status)
-{
-
-  switch (status.major)
-    {
-
-      /* here are the code, we want to trace */
-    case ERR_FSAL_DELAY:
-    case ERR_FSAL_PERM:
-    case ERR_FSAL_IO:
-    case ERR_FSAL_NXIO:
-    case ERR_FSAL_NOT_OPENED:
-    case ERR_FSAL_NOMEM:
-    case ERR_FSAL_FAULT:
-    case ERR_FSAL_XDEV:
-    case ERR_FSAL_INVAL:
-    case ERR_FSAL_FBIG:
-    case ERR_FSAL_NOSPC:
-    case ERR_FSAL_MLINK:
-    case ERR_FSAL_NAMETOOLONG:
-    case ERR_FSAL_SEC:
-    case ERR_FSAL_SERVERFAULT:
-      return TRUE;
-
-    default:
-      return FALSE;
-    }
-
 }
