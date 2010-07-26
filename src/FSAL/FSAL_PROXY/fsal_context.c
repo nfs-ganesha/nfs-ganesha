@@ -172,6 +172,20 @@ fsal_status_t PROXYFSAL_BuildExportContext(proxyfsal_export_context_t * p_export
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 }
 
+/**
+ * FSAL_CleanUpExportContext :
+ * this will clean up and state in an export that was created during
+ * the BuildExportContext phase.  For many FSALs this may be a noop.
+ *
+ * \param p_export_context (in, gpfsfsal_export_context_t)
+ */
+
+fsal_status_t PROXYFSAL_CleanUpExportContext(proxyfsal_export_context_t * p_export_context) 
+{
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
+}
+
+
 fsal_status_t PROXYFSAL_InitClientContext(proxyfsal_op_context_t * p_thr_context)
 {
 
