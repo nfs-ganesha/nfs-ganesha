@@ -2554,6 +2554,16 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
   return TRUE;
 }                               /* nfs_export_create_root_entry */
 
+/* cleans up the export content */
+int CleanUpExportContext(fsal_export_context_t * p_export_context)
+{
+
+  FSAL_CleanUpExportContext(p_export_context);
+
+  return TRUE;
+}
+
+
 /* Frees current export entry and returns next export entry. */
 exportlist_t *RemoveExportEntry(exportlist_t * exportEntry)
 {
@@ -2566,9 +2576,6 @@ exportlist_t *RemoveExportEntry(exportlist_t * exportEntry)
 
   next = exportEntry->next;
 
-#if defined ( _USE_GPFS )
-  close(exportEntry->FS_export_context.mount_root_fd);
-#endif
 
   if (exportEntry->fs_static_info != NULL)
     Mem_Free(exportEntry->fs_static_info);

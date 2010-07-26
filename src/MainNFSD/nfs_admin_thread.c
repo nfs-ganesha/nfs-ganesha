@@ -132,16 +132,15 @@ int RemoveAllExportsExceptHead(exportlist_t * pexportlist)
     {
       /* Leave the head so that the list may be replaced later without
        * changing the reference pointer in worker threads. */
+      CleanUpExportContext(pcurrent->FS_export_context);              
+      
       if (pcurrent == pexportlist)
 	break;
       
+
       pexportlist->next = RemoveExportEntry(pcurrent);
       pcurrent = pexportlist->next;
     }
-
-#if defined ( _USE_GPFS )
-  close(pexportlist->FS_export_context.mount_root_fd);
-#endif
 
   return 1;   /* Success */
 }
