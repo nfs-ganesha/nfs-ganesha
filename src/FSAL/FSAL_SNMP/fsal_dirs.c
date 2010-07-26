@@ -60,7 +60,7 @@ fsal_status_t SNMPFSAL_opendir(snmpfsal_handle_t * dir_handle,  /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_opendir);
 
   /* check it is a node... */
-  if(dir_handle->object_type_reminder == FSAL_NODETYPE_LEAF)
+  if(dir_handle->data.object_type_reminder == FSAL_NODETYPE_LEAF)
     Return(ERR_FSAL_NOTDIR, 0, INDEX_FSAL_opendir);
 
   /* save request info to the dir_dircriptor */
@@ -153,17 +153,17 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
 
   /* initial cookie  */
 
-  if(start_position.oid_len == 0)       /* readdir from begginning  */
+  if(start_position.data.oid_len == 0)       /* readdir from begginning  */
     {
-      FSAL_OID_DUP(&last_listed, dir_descriptor->node_handle.oid_tab,
-                   dir_descriptor->node_handle.oid_len);
+      FSAL_OID_DUP(&last_listed, dir_descriptor->node_handle.data.oid_tab,
+                   dir_descriptor->node_handle.data.oid_len);
       /* first try to get .0 child */
-      last_listed.oid_tab[last_listed.oid_len] = 0;
-      last_listed.oid_len++;
+      last_listed.data.oid_tab[last_listed.data.oid_len] = 0;
+      last_listed.data.oid_len++;
     }
   else                          /* readdir from another entry */
     {
-      FSAL_OID_DUP(&last_listed, start_position.oid_tab, start_position.oid_len);
+      FSAL_OID_DUP(&last_listed, start_position.data.oid_tab, start_position.data.oid_len);
     }
 
   /* calculate the requested dircount */
@@ -185,8 +185,8 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
 
       TakeTokenFSCall();
 
-      rc = IssueSNMPQuery(dir_descriptor->p_context, last_listed.oid_tab,
-                          last_listed.oid_len, &req_opt);
+      rc = IssueSNMPQuery(dir_descriptor->p_context, last_listed.data.oid_tab,
+                          last_listed.data.oid_len, &req_opt);
 
       ReleaseTokenFSCall();
 
@@ -210,7 +210,7 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
             {
               FSAL_OID_DUP(&pdirent[cur_nb_entries].handle, p_curr_var->name,
                            p_curr_var->name_length);
-              pdirent[cur_nb_entries].handle.object_type_reminder = FSAL_NODETYPE_LEAF;
+              pdirent[cur_nb_entries].handle.data.object_type_reminder = FSAL_NODETYPE_LEAF;
 
               /* object cookie is the hypothetic next object at the same level */
               FSAL_OID_DUP(&pdirent[cur_nb_entries].cookie, p_curr_var->name,
@@ -269,8 +269,8 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
                 pdirent[cur_nb_entries - 1].nextentry = &pdirent[cur_nb_entries];
 
               /* copy hypothetic next entry to cookie and increment nb_entries  */
-              FSAL_OID_DUP(&last_listed, pdirent[cur_nb_entries].cookie.oid_tab,
-                           pdirent[cur_nb_entries].cookie.oid_len);
+              FSAL_OID_DUP(&last_listed, pdirent[cur_nb_entries].cookie.data.oid_tab,
+                           pdirent[cur_nb_entries].cookie.data.oid_len);
               cur_nb_entries++;
 
               /* restart a sequence from GET request  */
@@ -284,8 +284,8 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
 
       TakeTokenFSCall();
 
-      rc = IssueSNMPQuery(dir_descriptor->p_context, last_listed.oid_tab,
-                          last_listed.oid_len, &req_opt);
+      rc = IssueSNMPQuery(dir_descriptor->p_context, last_listed.data.oid_tab,
+                          last_listed.data.oid_len, &req_opt);
 
       ReleaseTokenFSCall();
 
@@ -315,15 +315,15 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
 
       /* check if the response is under the root (else, end of dir is reached)  */
       if(IsSNMPChild
-         (dir_descriptor->node_handle.oid_tab, dir_descriptor->node_handle.oid_len,
+         (dir_descriptor->node_handle.data.oid_tab, dir_descriptor->node_handle.data.oid_len,
           p_curr_var->name, p_curr_var->name_length))
         {
           /* if the object is exactly 1 level under the dir, we insert it in the list */
-          if(p_curr_var->name_length == dir_descriptor->node_handle.oid_len + 1)
+          if(p_curr_var->name_length == dir_descriptor->node_handle.data.oid_len + 1)
             {
               FSAL_OID_DUP(&pdirent[cur_nb_entries].handle, p_curr_var->name,
                            p_curr_var->name_length);
-              pdirent[cur_nb_entries].handle.object_type_reminder = FSAL_NODETYPE_LEAF;
+              pdirent[cur_nb_entries].handle.data.object_type_reminder = FSAL_NODETYPE_LEAF;
 
               /* object cookie is the hypothetic next object */
               FSAL_OID_DUP(&pdirent[cur_nb_entries].cookie, p_curr_var->name,
@@ -382,8 +382,8 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
                 pdirent[cur_nb_entries - 1].nextentry = &pdirent[cur_nb_entries];
 
               /* copy hypothetic next entry to cookie and increment nb_entries  */
-              FSAL_OID_DUP(&last_listed, pdirent[cur_nb_entries].cookie.oid_tab,
-                           pdirent[cur_nb_entries].cookie.oid_len);
+              FSAL_OID_DUP(&last_listed, pdirent[cur_nb_entries].cookie.data.oid_tab,
+                           pdirent[cur_nb_entries].cookie.data.oid_len);
               cur_nb_entries++;
 
               /* restart a sequence from GET request  */
@@ -395,7 +395,7 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
               /* it the returned subdirectory is "smaller" than the cookie, we skip it
                * and incrment the cookie.
                */
-              if(fsal_oid_cmp(p_curr_var->name, last_listed.oid_tab, last_listed.oid_len)
+              if(fsal_oid_cmp(p_curr_var->name, last_listed.data.oid_tab, last_listed.data.oid_len)
                  < 0)
                 {
                   FSAL_OID_INC(&last_listed);
@@ -405,13 +405,13 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
               /* we found a new subsirectory */
 
               FSAL_OID_DUP(&pdirent[cur_nb_entries].handle, p_curr_var->name,
-                           dir_descriptor->node_handle.oid_len + 1);
-              pdirent[cur_nb_entries].handle.object_type_reminder = FSAL_NODETYPE_NODE;
+                           dir_descriptor->node_handle.data.oid_len + 1);
+              pdirent[cur_nb_entries].handle.data.object_type_reminder = FSAL_NODETYPE_NODE;
 
               /* object cookie is the next potentiel object at this level */
               FSAL_OID_DUP(&pdirent[cur_nb_entries].cookie,
-                           pdirent[cur_nb_entries].handle.oid_tab,
-                           pdirent[cur_nb_entries].handle.oid_len);
+                           pdirent[cur_nb_entries].handle.data.oid_tab,
+                           pdirent[cur_nb_entries].handle.data.oid_len);
               FSAL_OID_INC(&pdirent[cur_nb_entries].cookie);
 
               /* try to get the associated MIB node  */
@@ -437,9 +437,9 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
 #ifdef _DEBUG_FSAL
               printf("FOUND A NEW SUBDIR = %s (%ld) (cookie->%ld)\n",
                      pdirent[cur_nb_entries].name.name,
-                     pdirent[cur_nb_entries].handle.oid_tab[dir_descriptor->node_handle.
+                     pdirent[cur_nb_entries].handle.data.oid_tab[dir_descriptor->node_handle.
                                                             oid_len],
-                     pdirent[cur_nb_entries].cookie.oid_tab[pdirent[cur_nb_entries].
+                     pdirent[cur_nb_entries].cookie.data.oid_tab[pdirent[cur_nb_entries].
                                                             cookie.oid_len - 1]);
 #endif
 
@@ -466,8 +466,8 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
                 pdirent[cur_nb_entries - 1].nextentry = &pdirent[cur_nb_entries];
 
               /* copy last listed item to cookie and increment nb_entries  */
-              FSAL_OID_DUP(&last_listed, pdirent[cur_nb_entries].cookie.oid_tab,
-                           pdirent[cur_nb_entries].cookie.oid_len);
+              FSAL_OID_DUP(&last_listed, pdirent[cur_nb_entries].cookie.data.oid_tab,
+                           pdirent[cur_nb_entries].cookie.data.oid_len);
               cur_nb_entries++;
 
               /* end of subdir processing */
@@ -490,7 +490,7 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
   *end_of_dir = bool_eod;
 
   memset(end_position, 0, sizeof(snmpfsal_cookie_t));
-  FSAL_OID_DUP(end_position, last_listed.oid_tab, last_listed.oid_len);
+  FSAL_OID_DUP(end_position, last_listed.data.oid_tab, last_listed.data.oid_len);
 
   *nb_entries = cur_nb_entries;
 

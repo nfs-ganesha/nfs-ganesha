@@ -66,8 +66,8 @@ int get_oid_text(snmpfsal_handle_t * p_objecthandle,    /* IN */
   if(!p_objecthandle || !p_context || !p_output_size)
     return ERR_FSAL_FAULT;
 
-  snprint_objid((char *)buffer_addr, buffer_size, p_objecthandle->oid_tab,
-                p_objecthandle->oid_len);
+  snprint_objid((char *)buffer_addr, buffer_size, p_objecthandle->data.oid_tab,
+                p_objecthandle->data.oid_len);
 
   *p_output_size = strlen((char *)buffer_addr) + 1;
 
@@ -90,19 +90,19 @@ int get_oid_numeric(snmpfsal_handle_t * p_objecthandle, /* IN */
 
   outstr[0] = '\0';
 
-  if(p_objecthandle->oid_len == 0)
+  if(p_objecthandle->data.oid_len == 0)
     {
       strncpy(outstr, ".", buffer_size);
       *p_output_size = strlen(outstr) + 1;
       return 0;
     }
 
-  for(i = 0; i < p_objecthandle->oid_len; i++)
+  for(i = 0; i < p_objecthandle->data.oid_len; i++)
     {
       if(i == 0)
-        snprintf(tmpstr, 256, "%lu", p_objecthandle->oid_tab[i]);
+        snprintf(tmpstr, 256, "%lu", p_objecthandle->data.oid_tab[i]);
       else
-        snprintf(tmpstr, 256, ".%lu", p_objecthandle->oid_tab[i]);
+        snprintf(tmpstr, 256, ".%lu", p_objecthandle->data.oid_tab[i]);
 
       if(strlen(tmpstr) + strlen(outstr) < buffer_size)
         {
@@ -308,7 +308,7 @@ fsal_status_t SNMPFSAL_GetXAttrAttrs(snmpfsal_handle_t * p_objecthandle,        
 
   /* check that this index match the type of entry */
   if(xattr_id >= XATTR_COUNT
-     || !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->object_type_reminder))
+     || !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->data.object_type_reminder))
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrAttrs);
     }
@@ -384,7 +384,7 @@ fsal_status_t SNMPFSAL_ListXAttrs(snmpfsal_handle_t * p_objecthandle,   /* IN */
     {
       if(do_match_type
          (xattr_list[index].flags,
-          intern2extern_type(p_objecthandle->object_type_reminder)))
+          intern2extern_type(p_objecthandle->data.object_type_reminder)))
         {
           /* fills an xattr entry */
           xattrs_tab[out_index].xattr_id = index;
@@ -442,7 +442,7 @@ fsal_status_t SNMPFSAL_GetXAttrValueById(snmpfsal_handle_t * p_objecthandle,    
   /* check that this index match the type of entry */
   if(xattr_id >= XATTR_COUNT
      || !do_match_type(xattr_list[xattr_id].flags,
-                       intern2extern_type(p_objecthandle->object_type_reminder)))
+                       intern2extern_type(p_objecthandle->data.object_type_reminder)))
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrValue);
     }
@@ -481,7 +481,7 @@ fsal_status_t SNMPFSAL_GetXAttrIdByName(snmpfsal_handle_t * p_objecthandle,     
     {
       if(do_match_type
          (xattr_list[index].flags,
-          intern2extern_type(p_objecthandle->object_type_reminder))
+          intern2extern_type(p_objecthandle->data.object_type_reminder))
          && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
         {
           found = TRUE;
@@ -528,7 +528,7 @@ fsal_status_t SNMPFSAL_GetXAttrValueByName(snmpfsal_handle_t * p_objecthandle,  
     {
       if(do_match_type
          (xattr_list[index].flags,
-          intern2extern_type(p_objecthandle->object_type_reminder))
+          intern2extern_type(p_objecthandle->data.object_type_reminder))
          && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
         {
 

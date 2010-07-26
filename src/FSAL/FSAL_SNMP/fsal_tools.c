@@ -60,9 +60,9 @@ int SNMPFSAL_handlecmp(snmpfsal_handle_t * handle1, snmpfsal_handle_t * handle2,
       return -1;
     }
 
-  if(handle1->oid_len != handle2->oid_len)
-    return (handle1->oid_len - handle2->oid_len);
-  return memcmp(handle1->oid_tab, handle2->oid_tab, handle1->oid_len * sizeof(oid));
+  if(handle1->data.oid_len != handle2->data.oid_len)
+    return (handle1->data.oid_len - handle2->data.oid_len);
+  return memcmp(handle1->data.oid_tab, handle2->data.oid_tab, handle1->data.oid_len * sizeof(oid));
 
 }
 
@@ -88,8 +88,8 @@ unsigned int SNMPFSAL_Handle_to_HashIndex(snmpfsal_handle_t * p_handle,
   unsigned int i;
   unsigned int h = 1 + cookie;
 
-  for(i = 0; i < p_handle->oid_len; i++)
-    h = (691 * h ^ (unsigned int)p_handle->oid_tab[i]) % 479001599;
+  for(i = 0; i < p_handle->data.oid_len; i++)
+    h = (691 * h ^ (unsigned int)p_handle->data.oid_tab[i]) % 479001599;
 
   return h % index_size;
 }
@@ -112,8 +112,8 @@ unsigned int SNMPFSAL_Handle_to_RBTIndex(snmpfsal_handle_t * p_handle,
   unsigned int i;
   unsigned int h = 1 + cookie;
 
-  for(i = 0; i < p_handle->oid_len; i++)
-    h = (857 * h ^ (unsigned int)p_handle->oid_tab[i]) % 715827883;
+  for(i = 0; i < p_handle->data.oid_len; i++)
+    h = (857 * h ^ (unsigned int)p_handle->data.oid_tab[i]) % 715827883;
 
   return h;
 
@@ -206,7 +206,7 @@ fsal_status_t SNMPFSAL_DigestHandle(snmpfsal_export_context_t * p_expcontext,   
       p_digest = (fsal_digest_t *) out_buff;
 
       /* first, set the type flag */
-      switch (in_fsal_handle->object_type_reminder)
+      switch (in_fsal_handle->data.object_type_reminder)
         {
         case FSAL_NODETYPE_ROOT:
           p_digest->type_flag = DGST_FLAG_ROOT;
@@ -225,10 +225,10 @@ fsal_status_t SNMPFSAL_DigestHandle(snmpfsal_export_context_t * p_expcontext,   
         }
 
       /* for lighter code  */
-      root_len = p_expcontext->root_handle.oid_len;
+      root_len = p_expcontext->root_handle.data.oid_len;
 
       /* then set the relative oid tab len */
-      nb_oids = in_fsal_handle->oid_len - root_len;
+      nb_oids = in_fsal_handle->data.oid_len - root_len;
 
       /* if buffer is too small, no need to continue */
       if(nb_oids > 23)
@@ -240,14 +240,14 @@ fsal_status_t SNMPFSAL_DigestHandle(snmpfsal_export_context_t * p_expcontext,   
       nb_short = 0;
       nb_int = 0;
 
-      for(i = root_len; i < in_fsal_handle->oid_len; i++)
+      for(i = root_len; i < in_fsal_handle->data.oid_len; i++)
         {
-          if(in_fsal_handle->oid_tab[i] > MAX_SHORT_VAL)
+          if(in_fsal_handle->data.oid_tab[i] > MAX_SHORT_VAL)
             {
               int_tab_indexes[nb_int] = i - root_len;
               nb_int++;
             }
-          else if(in_fsal_handle->oid_tab[i] > MAX_CHAR_VAL)
+          else if(in_fsal_handle->data.oid_tab[i] > MAX_CHAR_VAL)
             {
               short_tab_indexes[nb_short] = i - root_len;
               nb_short++;
@@ -283,32 +283,32 @@ fsal_status_t SNMPFSAL_DigestHandle(snmpfsal_export_context_t * p_expcontext,   
       for(i = 0; i < nb_oids; i++)
         {
           /* if the oid is bigger that short, write 4 bytes */
-          if(in_fsal_handle->oid_tab[i + root_len] > MAX_SHORT_VAL)
+          if(in_fsal_handle->data.oid_tab[i + root_len] > MAX_SHORT_VAL)
             {
               if(curr_addr + 4 > (unsigned char *)out_buff + FSAL_DIGEST_SIZE_HDLV2)
                 ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
               curr_addr[3] =
-                  (unsigned char)(in_fsal_handle->oid_tab[i + root_len] & 0xFF);
+                  (unsigned char)(in_fsal_handle->data.oid_tab[i + root_len] & 0xFF);
               curr_addr[2] =
-                  (unsigned char)((in_fsal_handle->oid_tab[i + root_len] >> 8) & 0xFF);
+                  (unsigned char)((in_fsal_handle->data.oid_tab[i + root_len] >> 8) & 0xFF);
               curr_addr[1] =
-                  (unsigned char)((in_fsal_handle->oid_tab[i + root_len] >> 16) & 0xFF);
+                  (unsigned char)((in_fsal_handle->data.oid_tab[i + root_len] >> 16) & 0xFF);
               curr_addr[0] =
-                  (unsigned char)((in_fsal_handle->oid_tab[i + root_len] >> 24) & 0xFF);
+                  (unsigned char)((in_fsal_handle->data.oid_tab[i + root_len] >> 24) & 0xFF);
 
               curr_addr += 4;
             }
           /* if the oid is bigger that byte, write 2 bytes */
-          else if(in_fsal_handle->oid_tab[i + root_len] > MAX_CHAR_VAL)
+          else if(in_fsal_handle->data.oid_tab[i + root_len] > MAX_CHAR_VAL)
             {
               if(curr_addr + 2 > (unsigned char *)out_buff + FSAL_DIGEST_SIZE_HDLV2)
                 ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
               curr_addr[1] =
-                  (unsigned char)(in_fsal_handle->oid_tab[i + root_len] & 0xFF);
+                  (unsigned char)(in_fsal_handle->data.oid_tab[i + root_len] & 0xFF);
               curr_addr[0] =
-                  (unsigned char)((in_fsal_handle->oid_tab[i + root_len] >> 8) & 0xFF);
+                  (unsigned char)((in_fsal_handle->data.oid_tab[i + root_len] >> 8) & 0xFF);
 
               curr_addr += 2;
             }
@@ -318,7 +318,7 @@ fsal_status_t SNMPFSAL_DigestHandle(snmpfsal_export_context_t * p_expcontext,   
                 ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
               curr_addr[0] =
-                  (unsigned char)(in_fsal_handle->oid_tab[i + root_len] & 0xFF);
+                  (unsigned char)(in_fsal_handle->data.oid_tab[i + root_len] & 0xFF);
               curr_addr++;
             }
 
@@ -412,21 +412,21 @@ fsal_status_t SNMPFSAL_ExpandHandle(snmpfsal_export_context_t * p_expcontext,   
       switch (p_digest->type_flag)
         {
         case DGST_FLAG_ROOT:
-          out_fsal_handle->object_type_reminder = FSAL_NODETYPE_ROOT;
+          out_fsal_handle->data.object_type_reminder = FSAL_NODETYPE_ROOT;
           break;
         case DGST_FLAG_NODE:
-          out_fsal_handle->object_type_reminder = FSAL_NODETYPE_NODE;
+          out_fsal_handle->data.object_type_reminder = FSAL_NODETYPE_NODE;
           break;
         case DGST_FLAG_LEAF:
-          out_fsal_handle->object_type_reminder = FSAL_NODETYPE_LEAF;
+          out_fsal_handle->data.object_type_reminder = FSAL_NODETYPE_LEAF;
           break;
         default:
           ReturnCode(ERR_FSAL_INVAL, 0);
         }
 
       /* restore the root handle  */
-      root_len = p_expcontext->root_handle.oid_len;
-      memcpy(out_fsal_handle->oid_tab, p_expcontext->root_handle.oid_tab,
+      root_len = p_expcontext->root_handle.data.oid_len;
+      memcpy(out_fsal_handle->data.oid_tab, p_expcontext->root_handle.data.oid_tab,
              root_len * sizeof(oid));
 
       /* for lighter code  */
@@ -435,7 +435,7 @@ fsal_status_t SNMPFSAL_ExpandHandle(snmpfsal_export_context_t * p_expcontext,   
       nb_int = p_digest->nb_int_oids;
 
       /* set the final handle size */
-      out_fsal_handle->oid_len = nb_oids;
+      out_fsal_handle->data.oid_len = nb_oids;
 
       curr_addr = p_digest->char_tab;
       curr_short_idx = short_tab_indexes;
@@ -467,7 +467,7 @@ fsal_status_t SNMPFSAL_ExpandHandle(snmpfsal_export_context_t * p_expcontext,   
           if((curr_int_idx < int_tab_indexes + nb_int) && (i == *curr_int_idx))
             {
               /* read 4 bytes */
-              out_fsal_handle->oid_tab[i + root_len] =
+              out_fsal_handle->data.oid_tab[i + root_len] =
                   ((unsigned long)curr_addr[3] + ((unsigned long)curr_addr[2] << 8) +
                    ((unsigned long)curr_addr[1] << 16) +
                    ((unsigned long)curr_addr[0] << 24));
@@ -478,7 +478,7 @@ fsal_status_t SNMPFSAL_ExpandHandle(snmpfsal_export_context_t * p_expcontext,   
                   && (i == *curr_short_idx))
             {
               /* read 2 bytes */
-              out_fsal_handle->oid_tab[i + root_len] =
+              out_fsal_handle->data.oid_tab[i + root_len] =
                   ((unsigned long)curr_addr[1] + ((unsigned long)curr_addr[0] << 8));
               curr_addr += 2;
               curr_short_idx++;
@@ -486,7 +486,7 @@ fsal_status_t SNMPFSAL_ExpandHandle(snmpfsal_export_context_t * p_expcontext,   
           else
             {
               /* read 1 byte */
-              out_fsal_handle->oid_tab[i + root_len] = (unsigned long)curr_addr[0];
+              out_fsal_handle->data.oid_tab[i + root_len] = (unsigned long)curr_addr[0];
               curr_addr++;
             }
 
