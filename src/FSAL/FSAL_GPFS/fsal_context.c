@@ -138,6 +138,14 @@ fsal_status_t GPFSFSAL_InitClientContext(gpfsfsal_op_context_t * p_thr_context)
 
 fsal_status_t GPFSFSAL_CleanUpExportContext(gpfsfsal_export_context_t * p_export_context) 
 {
+  if(p_export_context == NULL) 
+  {
+    DisplayLogLevel(NIV_CRIT, "NULL mandatory argument passed to %s()", __FUNCTION__);
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_CleanUpExportContext);
+  }
+  
+  close(p_export_context->mount_root_fd);
+
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
 }
 
