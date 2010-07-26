@@ -22,7 +22,7 @@
 #include <fcntl.h>
 
 /**
- * FSAL_getattrs:
+ * ZFSFSAL_getattrs:
  * Get attributes for the object specified by its filehandle.
  *
  * \param filehandle (input):
@@ -42,9 +42,9 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument) 
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
-                            fsal_attrib_list_t * object_attributes      /* IN/OUT */
+fsal_status_t ZFSFSAL_getattrs(zfsfsal_handle_t * filehandle, /* IN */
+                               zfsfsal_op_context_t * p_context,      /* IN */
+                               fsal_attrib_list_t * object_attributes      /* IN/OUT */
     )
 {
   int rc, type;
@@ -53,7 +53,7 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
   libzfswrap_vnode_t *p_vnode;
 
   /* sanity checks.
-   * note : object_attributes is mandatory in FSAL_getattrs.
+   * note : object_attributes is mandatory in ZFSFSAL_getattrs.
    */
   if(!filehandle || !p_context || !object_attributes)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
@@ -61,7 +61,7 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
   TakeTokenFSCall();
 
   rc = libzfswrap_getattr(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                          filehandle->zfs_handle, &fstat, &type);
+                          filehandle->data.zfs_handle, &fstat, &type);
 
   ReleaseTokenFSCall();
 
@@ -115,10 +115,10 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
  *        the object_attributes->asked_attributes field.
  */
 
-fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
-                            fsal_attrib_list_t * attrib_set,    /* IN */
-                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
+fsal_status_t ZFSFSAL_setattrs(zfsfsal_handle_t * filehandle, /* IN */
+                               zfsfsal_op_context_t * p_context,      /* IN */
+                               fsal_attrib_list_t * attrib_set,    /* IN */
+                               fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
 {
   int rc;
@@ -192,7 +192,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
   struct stat new_stat = { 0 };
   /**@TODO: use the new_stat info ! */
   rc = libzfswrap_setattr(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                          filehandle->zfs_handle, &stats, flags, &new_stat);
+                          filehandle->data.zfs_handle, &stats, flags, &new_stat);
 
   ReleaseTokenFSCall();
 
@@ -208,7 +208,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
   if(object_attributes)
     {
 
-      status = FSAL_getattrs(filehandle, p_context, object_attributes);
+      status = ZFSFSAL_getattrs(filehandle, p_context, object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))

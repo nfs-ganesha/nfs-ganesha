@@ -54,10 +54,10 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  *          
  */
-fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
+fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /* IN */
                           fsal_name_t * p_filename,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_handle_t * object_handle,        /* OUT */
+                          zfsfsal_op_context_t * p_context,        /* IN */
+                          zfsfsal_handle_t * object_handle,        /* OUT */
                           fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
@@ -83,16 +83,16 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       /* >> retrieve root handle filehandle here << */
-      if((rc = libzfswrap_getroot(p_context->export_context->p_vfs, &(object_handle->zfs_handle))))
+      if((rc = libzfswrap_getroot(p_context->export_context->p_vfs, &(object_handle->data.zfs_handle))))
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
-      object_handle->type = FSAL_TYPE_DIR;
+      object_handle->data.type = FSAL_TYPE_DIR;
 
       /* >> retrieves root attributes, if asked << */
 
       if(object_attributes)
         {
-          fsal_status_t status = FSAL_getattrs(object_handle, p_context, object_attributes);
+          fsal_status_t status = ZFSFSAL_getattrs(object_handle, p_context, object_attributes);
           /* On error, we set a flag in the returned attributes */
           if(FSAL_IS_ERROR(status))
             {
@@ -111,7 +111,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
       /* >> Be careful about junction crossing, symlinks, hardlinks,...
        * You may check the parent type if it's sored into the handle <<
        */
-      switch (parent_directory_handle->type)
+      switch (parent_directory_handle->data.type)
         {
         case FSAL_TYPE_DIR:
           /* OK */
@@ -138,7 +138,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
       inogen_t object;
       int type;
       rc = libzfswrap_lookup(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                             parent_directory_handle->zfs_handle, p_filename->name, &object, &type);
+                             parent_directory_handle->data.zfs_handle, p_filename->name, &object,
+                             &type);
 
       ReleaseTokenFSCall();
 
@@ -147,11 +148,11 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
         Return(posix2fsal_error(rc), rc, INDEX_FSAL_lookup);
 
       /* >> set output handle << */
-      object_handle->zfs_handle = object;
-      object_handle->type = posix2fsal_type(type);
+      object_handle->data.zfs_handle = object;
+      object_handle->data.type = posix2fsal_type(type);
       if(object_attributes)
         {
-          fsal_status_t status = FSAL_getattrs(object_handle, p_context, object_attributes);
+          fsal_status_t status = ZFSFSAL_getattrs(object_handle, p_context, object_attributes);
           /* On error, we set a flag in the returned attributes */
           if(FSAL_IS_ERROR(status))
             {
@@ -193,9 +194,9 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  *          
  */
-fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
-                                  fsal_op_context_t * p_context,        /* IN */
-                                  fsal_handle_t * p_fsoot_handle,       /* OUT */
+fsal_status_t ZFSFSAL_lookupJunction(zfsfsal_handle_t * p_junction_handle,    /* IN */
+                                  zfsfsal_op_context_t * p_context,        /* IN */
+                                  zfsfsal_handle_t * p_fsoot_handle,       /* OUT */
                                   fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
     )
 {
@@ -210,7 +211,7 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
 
   /* >> you can also check object type if it is in stored in the handle << */
 
-  if(p_junction_handle->type != FSAL_TYPE_JUNCTION)
+  if(p_junction_handle->data.type != FSAL_TYPE_JUNCTION)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_lookupJunction);
 
   TakeTokenFSCall();
@@ -268,15 +269,15 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
-                              fsal_op_context_t * p_context,    /* IN */
-                              fsal_handle_t * object_handle,    /* OUT */
+fsal_status_t ZFSFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
+                              zfsfsal_op_context_t * p_context,    /* IN */
+                              zfsfsal_handle_t * object_handle,    /* OUT */
                               fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
   fsal_name_t obj_name = FSAL_NAME_INITIALIZER; /* empty string */
   char *ptr_str;
-  fsal_handle_t out_hdl;
+  zfsfsal_handle_t out_hdl;
   fsal_status_t status;
   int b_is_last = FALSE;        /* is it the last lookup ? */
 
@@ -334,7 +335,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
   while(ptr_str[0])
     {
 
-      fsal_handle_t in_hdl;
+      zfsfsal_handle_t in_hdl;
       char *dest_ptr;
 
       /* preparing lookup */
@@ -377,9 +378,9 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
        * we cross it.
        */
       if(global_fs_info.auth_exportpath_xdev
-         && (out_hdl.type == FSAL_TYPE_JUNCTION))
+         && (out_hdl.data.type == FSAL_TYPE_JUNCTION))
         {
-          fsal_handle_t tmp_hdl;
+          zfsfsal_handle_t tmp_hdl;
 
           tmp_hdl = out_hdl;
 

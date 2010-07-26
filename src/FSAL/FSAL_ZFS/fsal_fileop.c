@@ -54,10 +54,10 @@
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
-                        fsal_op_context_t * p_context,  /* IN */
+fsal_status_t ZFSFSAL_open(zfsfsal_handle_t * filehandle,     /* IN */
+                        zfsfsal_op_context_t * p_context,  /* IN */
                         fsal_openflags_t openflags,     /* IN */
-                        fsal_file_t * file_descriptor,  /* OUT */
+                        zfsfsal_file_t * file_descriptor,  /* OUT */
                         fsal_attrib_list_t * file_attributes    /* [ IN/OUT ] */
     )
 {
@@ -72,7 +72,7 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
   /* >> you can check if this is a file if the information
    * is stored into the handle << */
 
-  if(filehandle->type != FSAL_TYPE_FILE)
+  if(filehandle->data.type != FSAL_TYPE_FILE)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
 
   /* >> convert fsal open flags to your FS open flags
@@ -87,7 +87,7 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
   /* >> call your FS open function << */
   libzfswrap_vnode_t *p_vnode;
   rc = libzfswrap_open(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                       filehandle->zfs_handle, posix_flags, &p_vnode);
+                       filehandle->data.zfs_handle, posix_flags, &p_vnode);
 
   ReleaseTokenFSCall();
 
@@ -100,12 +100,12 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
   file_descriptor->flags = posix_flags;
   file_descriptor->current_offset = 0;
   file_descriptor->p_vnode = p_vnode;
-  file_descriptor->zfs_handle = filehandle->zfs_handle;
+  file_descriptor->zfs_handle = filehandle->data.zfs_handle;
   file_descriptor->cred = p_context->user_credential.cred;
 
   if(file_attributes)
   {
-      fsal_status_t status = FSAL_getattrs(filehandle, p_context, file_attributes);
+      fsal_status_t status = ZFSFSAL_getattrs(filehandle, p_context, file_attributes);
       /* On error, we set a flag in the returned attributes */
       if(FSAL_IS_ERROR(status))
       {
@@ -156,15 +156,15 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
  *        ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
+fsal_status_t ZFSFSAL_open_by_name(zfsfsal_handle_t * dirhandle,      /* IN */
                                 fsal_name_t * filename, /* IN */
-                                fsal_op_context_t * p_context,  /* IN */
+                                zfsfsal_op_context_t * p_context,  /* IN */
                                 fsal_openflags_t openflags,     /* IN */
-                                fsal_file_t * file_descriptor,  /* OUT */
+                                zfsfsal_file_t * file_descriptor,  /* OUT */
                                 fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
   fsal_status_t fsal_status;
-  fsal_handle_t filehandle;
+  zfsfsal_handle_t filehandle;
 
   if(!dirhandle || !filename || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
@@ -199,12 +199,12 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
  * \return Major error codes:
  *      - ERR_FSAL_NO_ERROR     (no error)
  *      - ERR_FSAL_INVAL        (invalid parameter)
- *      - ERR_FSAL_NOT_OPENED   (tried to read in a non-opened fsal_file_t)
+ *      - ERR_FSAL_NOT_OPENED   (tried to read in a non-opened zfsfsal_file_t)
  *      - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
+fsal_status_t ZFSFSAL_read(zfsfsal_file_t * file_descriptor,  /* IN */
                         fsal_seek_t * seek_descriptor,  /* [IN] */
                         fsal_size_t buffer_size,        /* IN */
                         caddr_t buffer, /* OUT */
@@ -275,12 +275,12 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
  * \return Major error codes:
  *      - ERR_FSAL_NO_ERROR     (no error)
  *      - ERR_FSAL_INVAL        (invalid parameter)
- *      - ERR_FSAL_NOT_OPENED   (tried to write in a non-opened fsal_file_t)
+ *      - ERR_FSAL_NOT_OPENED   (tried to write in a non-opened zfsfsal_file_t)
  *      - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
  */
-fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
+fsal_status_t ZFSFSAL_write(zfsfsal_file_t * file_descriptor, /* IN */
                          fsal_seek_t * seek_descriptor, /* IN */
                          fsal_size_t buffer_size,       /* IN */
                          caddr_t buffer,        /* IN */
@@ -343,7 +343,7 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
  *          ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
+fsal_status_t ZFSFSAL_close(zfsfsal_file_t * file_descriptor  /* IN */
     )
 {
   int rc;
@@ -366,18 +366,23 @@ fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
 }
 
 /* Some unsupported calls used in FSAL_PROXY, just for permit the ganeshell to compile */
-fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
+fsal_status_t ZFSFSAL_open_by_fileid(zfsfsal_handle_t * filehandle,   /* IN */
                                   fsal_u64_t fileid,    /* IN */
-                                  fsal_op_context_t * p_context,        /* IN */
+                                  zfsfsal_op_context_t * p_context,        /* IN */
                                   fsal_openflags_t openflags,   /* IN */
-                                  fsal_file_t * file_descriptor,        /* OUT */
+                                  zfsfsal_file_t * file_descriptor,        /* OUT */
                                   fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
 
-fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
+fsal_status_t ZFSFSAL_close_by_fileid(zfsfsal_file_t * file_descriptor /* IN */ ,
                                    fsal_u64_t fileid)
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
+}
+
+unsigned int ZFSFSAL_GetFileno(fsal_file_t * pfile)
+{
+  return ((zfsfsal_file_t *) pfile)->zfs_handle.inode;
 }

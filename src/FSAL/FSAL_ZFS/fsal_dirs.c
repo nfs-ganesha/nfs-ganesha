@@ -44,9 +44,9 @@
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
-                           fsal_op_context_t * p_context,       /* IN */
-                           fsal_dir_t * dir_descriptor, /* OUT */
+fsal_status_t ZFSFSAL_opendir(zfsfsal_handle_t * dir_handle,  /* IN */
+                           zfsfsal_op_context_t * p_context,       /* IN */
+                           zfsfsal_dir_t * dir_descriptor, /* OUT */
                            fsal_attrib_list_t * dir_attributes  /* [ IN/OUT ] */
     )
 {
@@ -63,11 +63,11 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
    * and check that the user has the right for reading its content <<*/
   libzfswrap_vnode_t *p_vnode;
   if((rc = libzfswrap_opendir(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                              dir_handle->zfs_handle, &p_vnode)))
+                              dir_handle->data.zfs_handle, &p_vnode)))
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
 
   dir_descriptor->p_vnode = p_vnode;
-  dir_descriptor->zfs_handle = dir_handle->zfs_handle;
+  dir_descriptor->zfs_handle = dir_handle->data.zfs_handle;
   dir_descriptor->p_vfs = p_context->export_context->p_vfs;
   dir_descriptor->cred = p_context->user_credential.cred;
 
@@ -110,12 +110,12 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
-                           fsal_cookie_t start_position,        /* IN */
+fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
+                           zfsfsal_cookie_t start_position,        /* IN */
                            fsal_attrib_mask_t get_attr_mask,    /* IN */
                            fsal_mdsize_t buffersize,    /* IN */
                            fsal_dirent_t * p_dirent,     /* OUT */
-                           fsal_cookie_t * end_position,        /* OUT */
+                           zfsfsal_cookie_t * end_position,        /* OUT */
                            fsal_count_t * nb_entries,   /* OUT */
                            fsal_boolean_t * end_of_dir  /* OUT */
     )
@@ -159,8 +159,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
       continue;
     }
 
-    p_dirent[*nb_entries].handle.zfs_handle = entries[index].object;
-    p_dirent[*nb_entries].handle.type = posix2fsal_type(entries[index].type);
+    p_dirent[*nb_entries].handle.data.zfs_handle = entries[index].object;
+    p_dirent[*nb_entries].handle.data.type = posix2fsal_type(entries[index].type);
     FSAL_str2name(entries[index].psz_filename, FSAL_MAX_NAME_LEN, &(p_dirent[*nb_entries].name));
 
     /* Add the attributes */
@@ -182,7 +182,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
    */
 
   /* Don't forget setting output vars : end_position, nb_entries, end_of_dir  */
-  if(start_position == 0)
+  if(start_position.data.cookie == 0)
     *end_of_dir = 1;
   else
     *end_position = start_position;
@@ -204,7 +204,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
+fsal_status_t ZFSFSAL_closedir(zfsfsal_dir_t * dir_descriptor /* IN */
     )
 {
 

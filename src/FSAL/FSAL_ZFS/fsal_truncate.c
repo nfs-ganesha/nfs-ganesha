@@ -46,10 +46,10 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
+fsal_status_t ZFSFSAL_truncate(zfsfsal_handle_t * filehandle, /* IN */
+                            zfsfsal_op_context_t * p_context,      /* IN */
                             fsal_size_t length, /* IN */
-                            fsal_file_t * file_descriptor,      /* Unused in this FSAL */
+                            zfsfsal_file_t * file_descriptor,      /* Unused in this FSAL */
                             fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
 {
@@ -62,13 +62,13 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
   /* >> check object type if it's stored into the filehandle << */
-  if(filehandle->type != FSAL_TYPE_FILE)
+  if(filehandle->data.type != FSAL_TYPE_FILE)
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_truncate);
 
   TakeTokenFSCall();
 
   rc = libzfswrap_truncate(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                           filehandle->zfs_handle, length);
+                           filehandle->data.zfs_handle, length);
 
   ReleaseTokenFSCall();
 
@@ -85,7 +85,7 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
 
       fsal_status_t st;
 
-      st = FSAL_getattrs(filehandle, p_context, object_attributes);
+      st = ZFSFSAL_getattrs(filehandle, p_context, object_attributes);
 
       if(FSAL_IS_ERROR(st))
         {

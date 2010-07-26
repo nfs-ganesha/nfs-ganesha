@@ -56,12 +56,12 @@
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the object_attributes->asked_attributes field.
  */
-fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
-                          fsal_name_t * p_filename,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_accessmode_t accessmode, /* IN */
-                          fsal_handle_t * object_handle,        /* OUT */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
+fsal_status_t ZFSFSAL_create(zfsfsal_handle_t * parent_directory_handle,      /* IN */
+                             fsal_name_t * p_filename,     /* IN */
+                             zfsfsal_op_context_t * p_context,        /* IN */
+                             fsal_accessmode_t accessmode, /* IN */
+                             zfsfsal_handle_t * object_handle,        /* OUT */
+                             fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
 
@@ -81,7 +81,7 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
 
   inogen_t object;
   rc = libzfswrap_create(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                         parent_directory_handle->zfs_handle, p_filename->name,
+                         parent_directory_handle->data.zfs_handle, p_filename->name,
                          fsal2unix_mode(accessmode), &object);
 
   ReleaseTokenFSCall();
@@ -91,12 +91,12 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
 
   /* >> set output handle << */
-  object_handle->zfs_handle = object;
-  object_handle->type = FSAL_TYPE_FILE;
+  object_handle->data.zfs_handle = object;
+  object_handle->data.type = FSAL_TYPE_FILE;
 
   if(object_attributes)
     {
-      fsal_status_t status = FSAL_getattrs(object_handle, p_context, object_attributes);
+      fsal_status_t status = ZFSFSAL_getattrs(object_handle, p_context, object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -148,12 +148,12 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the object_attributes->asked_attributes field.
  */
-fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
-                         fsal_name_t * p_dirname,       /* IN */
-                         fsal_op_context_t * p_context, /* IN */
-                         fsal_accessmode_t accessmode,  /* IN */
-                         fsal_handle_t * object_handle, /* OUT */
-                         fsal_attrib_list_t * object_attributes /* [ IN/OUT ] */
+fsal_status_t ZFSFSAL_mkdir(zfsfsal_handle_t * parent_directory_handle,       /* IN */
+                            fsal_name_t * p_dirname,       /* IN */
+                            zfsfsal_op_context_t * p_context, /* IN */
+                            fsal_accessmode_t accessmode,  /* IN */
+                            zfsfsal_handle_t * object_handle, /* OUT */
+                            fsal_attrib_list_t * object_attributes /* [ IN/OUT ] */
     )
 {
 
@@ -178,7 +178,7 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
   /* Create the directory */
   inogen_t object;
   rc = libzfswrap_mkdir(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                        parent_directory_handle->zfs_handle, p_dirname->name, unix_mode, &object);
+                        parent_directory_handle->data.zfs_handle, p_dirname->name, unix_mode, &object);
 
   ReleaseTokenFSCall();
 
@@ -187,13 +187,13 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
 
   /* set output handle */
-  object_handle->zfs_handle = object;
-  object_handle->type = FSAL_TYPE_DIR;
+  object_handle->data.zfs_handle = object;
+  object_handle->data.type = FSAL_TYPE_DIR;
 
   if(object_attributes)
     {
       /**@TODO: skip this => libzfswrap_mkdir might return attributes */
-      fsal_status_t status = FSAL_getattrs(object_handle, p_context, object_attributes);
+      fsal_status_t status = ZFSFSAL_getattrs(object_handle, p_context, object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -246,11 +246,11 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,       /* IN */
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the attributes->asked_attributes field.
  */
-fsal_status_t FSAL_link(fsal_handle_t * target_handle,  /* IN */
-                        fsal_handle_t * dir_handle,     /* IN */
-                        fsal_name_t * p_link_name,      /* IN */
-                        fsal_op_context_t * p_context,  /* IN */
-                        fsal_attrib_list_t * attributes /* [ IN/OUT ] */
+fsal_status_t ZFSFSAL_link(zfsfsal_handle_t * target_handle,  /* IN */
+                           zfsfsal_handle_t * dir_handle,     /* IN */
+                           fsal_name_t * p_link_name,      /* IN */
+                           zfsfsal_op_context_t * p_context,  /* IN */
+                           fsal_attrib_list_t * attributes /* [ IN/OUT ] */
     )
 {
 
@@ -270,7 +270,7 @@ fsal_status_t FSAL_link(fsal_handle_t * target_handle,  /* IN */
   TakeTokenFSCall();
 
   rc = libzfswrap_link(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                       dir_handle->zfs_handle, target_handle->zfs_handle, p_link_name->name);
+                       dir_handle->data.zfs_handle, target_handle->data.zfs_handle, p_link_name->name);
 
   ReleaseTokenFSCall();
 
@@ -280,7 +280,7 @@ fsal_status_t FSAL_link(fsal_handle_t * target_handle,  /* IN */
 
   if(attributes)
     {
-      fsal_status_t status = FSAL_getattrs(target_handle, p_context, attributes);
+      fsal_status_t status = ZFSFSAL_getattrs(target_handle, p_context, attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -303,13 +303,13 @@ fsal_status_t FSAL_link(fsal_handle_t * target_handle,  /* IN */
  *
  * \return ERR_FSAL_NOTSUPP.
  */
-fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
+fsal_status_t ZFSFSAL_mknode(zfsfsal_handle_t * parentdir_handle,     /* IN */
                           fsal_name_t * p_node_name,    /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
+                          zfsfsal_op_context_t * p_context,        /* IN */
                           fsal_accessmode_t accessmode, /* IN */
                           fsal_nodetype_t nodetype,     /* IN */
                           fsal_dev_t * dev,     /* IN */
-                          fsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
+                          zfsfsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
                           fsal_attrib_list_t * node_attributes  /* [ IN/OUT ] */
     )
 {

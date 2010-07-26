@@ -48,8 +48,8 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  * */
 
-fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
+fsal_status_t ZFSFSAL_readlink(zfsfsal_handle_t * linkhandle, /* IN */
+                            zfsfsal_op_context_t * p_context,      /* IN */
                             fsal_path_t * p_link_content,       /* OUT */
                             fsal_attrib_list_t * link_attributes        /* [ IN/OUT ] */
     )
@@ -68,7 +68,7 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
   TakeTokenFSCall();
 
   rc = libzfswrap_readlink(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                           linkhandle->zfs_handle, link_content_out, sizeof(link_content_out));
+                           linkhandle->data.zfs_handle, link_content_out, sizeof(link_content_out));
 
   ReleaseTokenFSCall();
 
@@ -90,7 +90,7 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
 
       fsal_status_t status;
 
-      status = FSAL_getattrs(linkhandle, p_context, link_attributes);
+      status = ZFSFSAL_getattrs(linkhandle, p_context, link_attributes);
 
       /* On error, we set a flag in the returned attributes */
 
@@ -139,12 +139,12 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
+fsal_status_t ZFSFSAL_symlink(zfsfsal_handle_t * parent_directory_handle,     /* IN */
                            fsal_name_t * p_linkname,    /* IN */
                            fsal_path_t * p_linkcontent, /* IN */
-                           fsal_op_context_t * p_context,       /* IN */
+                           zfsfsal_op_context_t * p_context,       /* IN */
                            fsal_accessmode_t accessmode,        /* IN (ignored) */
-                           fsal_handle_t * link_handle, /* OUT */
+                           zfsfsal_handle_t * link_handle, /* OUT */
                            fsal_attrib_list_t * link_attributes /* [ IN/OUT ] */
     )
 {
@@ -167,20 +167,21 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
 
   inogen_t object;
   rc = libzfswrap_symlink(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                          parent_directory_handle->zfs_handle, p_linkname->name, p_linkcontent->path, &object);
+                          parent_directory_handle->data.zfs_handle, p_linkname->name,
+                          p_linkcontent->path, &object);
 
   ReleaseTokenFSCall();
 
   /* >> convert status and return on error <<  */
 
   /* >> set output handle << */
-  link_handle->zfs_handle = object;
-  link_handle->type = FSAL_TYPE_LNK;
+  link_handle->data.zfs_handle = object;
+  link_handle->data.type = FSAL_TYPE_LNK;
 
   if(link_attributes)
     {
 
-      fsal_status_t status = FSAL_getattrs(link_handle, p_context, link_attributes);
+      fsal_status_t status = ZFSFSAL_getattrs(link_handle, p_context, link_attributes);
 
       /* On error, we set a flag in the returned attributes */
       if(FSAL_IS_ERROR(status))

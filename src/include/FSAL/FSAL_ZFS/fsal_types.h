@@ -50,45 +50,36 @@
 
 #include <libzfswrap.h>
 
+
+
   /* In this section, you must define your own FSAL internal types.
    * Here are some template types :
    */
-# define FSAL_MAX_NAME_LEN  256
-# define FSAL_MAX_PATH_LEN  1024
 
-/* prefered readdir size */
-#define FSAL_READDIR_SIZE 2048
+#include "fsal_glue_const.h"
 
-/** object name.  */
+#define fsal_handle_t zfsfsal_handle_t
+#define fsal_op_context_t zfsfsal_op_context_t
+#define fsal_file_t zfsfsal_file_t
+#define fsal_dir_t zfsfsal_dir_t
+#define fsal_export_context_t zfsfsal_export_context_t
+#define fsal_lockdesc_t zfsfsal_lockdesc_t
+#define fsal_cookie_t zfsfsal_cookie_t
+#define fs_specific_initinfo_t zfsfs_specific_initinfo_t
+#define fsal_cred_t zfsfsal_cred_t
 
-typedef struct fsal_name__
+
+typedef union
 {
-  char name[FSAL_MAX_NAME_LEN];
-  unsigned int len;
-} fsal_name_t;
-
-/** object path.  */
-
-typedef struct fsal_path__
-{
-  char path[FSAL_MAX_PATH_LEN];
-  unsigned int len;
-} fsal_path_t;
-
-# define FSAL_NAME_INITIALIZER {"",0}
-# define FSAL_PATH_INITIALIZER {"",0}
-
-static fsal_name_t FSAL_DOT = { ".", 1 };
-static fsal_name_t FSAL_DOT_DOT = { "..", 2 };
-
-  /* some void types for this template... */
-
-typedef struct fsal_handle__
-{
-  inogen_t zfs_handle;
-  fsal_nodetype_t type;
-
-} fsal_handle_t;
+  struct
+  {
+    inogen_t zfs_handle;
+    fsal_nodetype_t type;
+  }data;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_HANDLE_T_SIZE];
+#endif
+} zfsfsal_handle_t;
 
 typedef struct fsal_cred__
 {
@@ -96,14 +87,14 @@ typedef struct fsal_cred__
   int ticket_handle;
   time_t ticket_renewal_time;
 
-} fsal_cred_t;
+} zfsfsal_cred_t;
 
 typedef struct fsal_export_context__
 {
   fsal_handle_t root_handle;
   libzfswrap_vfs_t *p_vfs;
 
-} fsal_export_context_t;
+} zfsfsal_export_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(FSAL_Handle_to_RBTIndex( &(pexport_context->root_handle), 0 ) )
 
@@ -113,7 +104,7 @@ typedef struct fsal_op_context__
   int thread_connect_array[32];
   fsal_export_context_t *export_context;
 
-} fsal_op_context_t;
+} zfsfsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.cred.uid )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.cred.gid )
@@ -125,7 +116,7 @@ typedef struct fsal_dir__
   libzfswrap_vnode_t *p_vnode;
   inogen_t zfs_handle;
 
-} fsal_dir_t;
+} zfsfsal_dir_t;
 
 typedef struct fsal_file__
 {
@@ -136,11 +127,18 @@ typedef struct fsal_file__
   int flags;
   libzfswrap_vnode_t *p_vnode;
 
-} fsal_file_t;
+} zfsfsal_file_t;
 
-# define FSAL_FILENO(_f) (_f)->zfs_handle.inode
-
-typedef off_t fsal_cookie_t;
+typedef union
+{
+  struct
+  {
+    off_t cookie;
+  } data;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_COOKIE_T_SIZE];
+#endif
+} zfsfsal_cookie_t;
 
 #define FSAL_READDIR_FROM_BEGINNING 0
 
@@ -148,7 +146,7 @@ typedef struct fs_specific_initinfo__
 {
   char psz_zpool[FSAL_MAX_NAME_LEN];
 
-} fs_specific_initinfo_t;
+} zfsfs_specific_initinfo_t;
 
 typedef void *fsal_lockdesc_t;
 
