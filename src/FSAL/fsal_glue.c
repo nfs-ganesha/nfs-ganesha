@@ -61,6 +61,12 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
                                                 fs_specific_options);
 }
 
+fsal_status_t FSAL_CleanUpExportContext(fsal_export_context_t * p_export_context) /* IN */
+{
+  return fsal_functions.fsal_cleanupexportcontext(p_export_context);
+}
+
+
 fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 {
   return fsal_functions.fsal_initclientcontext(p_thr_context);
