@@ -43,6 +43,19 @@
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
+#include "fsal_glue_const.h"
+
+#define fsal_handle_t snmpfsal_handle_t
+#define fsal_op_context_t snmpfsal_op_context_t
+#define fsal_file_t snmpfsal_file_t
+#define fsal_dir_t snmpfsal_dir_t
+#define fsal_export_context_t snmpfsal_export_context_t
+#define fsal_lockdesc_t snmpfsal_lockdesc_t
+#define fsal_cookie_t snmpfsal_cookie_t
+#define fs_specific_initinfo_t snmpfs_specific_initinfo_t
+#define fsal_cred_t snmpfsal_cred_t
+
+
 #ifdef _APPLE
 #define HOST_NAME_MAX          64
 #endif
@@ -74,12 +87,16 @@ typedef enum
 
   /* The handle consists in an oid table.  */
 
-typedef struct fsal_handle__
-{
-  oid oid_tab[MAX_OID_LEN];
-  size_t oid_len;
-  nodetype_t object_type_reminder;
-
+typedef union {
+ struct 
+  {
+    oid oid_tab[MAX_OID_LEN];
+    size_t oid_len;
+    nodetype_t object_type_reminder;
+  } data ;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_HANDLE_T_SIZE];
+#endif
 } snmpfsal_handle_t;
 
 typedef struct fsal_cred__
@@ -142,14 +159,19 @@ typedef struct fsal_file__
 
 //# define FSAL_FILENO(_f) (0)
 
-typedef struct fsal_cookie__
-{
-  /* in SNMP the cookie is the last listed entry */
-  oid oid_tab[MAX_OID_LEN];
-  unsigned int oid_len;
+typedef union {
+  struct fsal_cookie__
+  {
+    /* in SNMP the cookie is the last listed entry */
+    oid oid_tab[MAX_OID_LEN];
+    unsigned int oid_len;
+  } data ;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_COOKIE_T_SIZE];
+#endif
 } snmpfsal_cookie_t;
 
-static snmpfsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { {0,}, 0 };
+//static snmpfsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { {0,}, 0 };
 
 typedef struct fs_specific_initinfo__
 {
@@ -170,18 +192,5 @@ typedef struct fs_specific_initinfo__
 
 typedef void *snmpfsal_lockdesc_t;
 
-#ifndef _USE_SHARED_FSAL
-
-#define fsal_handle_t snmpfsal_handle_t
-#define fsal_op_context_t snmpfsal_op_context_t
-#define fsal_file_t snmpfsal_file_t
-#define fsal_dir_t snmpfsal_dir_t
-#define fsal_export_context_t snmpfsal_export_context_t
-#define fsal_lockdesc_t snmpfsal_lockdesc_t
-#define fsal_cookie_t snmpfsal_cookie_t
-#define fs_specific_initinfo_t snmpfs_specific_initinfo_t
-#define fsal_cred_t snmpfsal_cred_t
-
-#endif                          /* _USE_SHARED_FSAL */
 
 #endif                          /* _FSAL_TYPES_SPECIFIC_H */
