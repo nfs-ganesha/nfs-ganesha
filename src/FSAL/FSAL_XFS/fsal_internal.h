@@ -146,6 +146,8 @@ fsal_status_t XFSFSAL_BuildExportContext(xfsfsal_export_context_t * p_export_con
 
 fsal_status_t XFSFSAL_InitClientContext(xfsfsal_op_context_t * p_thr_context);
 
+fsal_status_t XFSFSAL_CleanUpExportContext(xfsfsal_export_context_t * p_export_context) ;
+
 fsal_status_t XFSFSAL_GetClientContext(xfsfsal_op_context_t * p_thr_context,    /* IN/OUT  */
                                        xfsfsal_export_context_t * p_export_context,     /* IN */
                                        fsal_uid_t uid,  /* IN */
