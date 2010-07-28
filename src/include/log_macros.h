@@ -51,7 +51,8 @@ enum log_components
   COMPONENT_LRU,
   COMPONENT_DUPREQ,
   COMPONENT_LOG,
-  COMPONENT_RPCSEC_GSS
+  COMPONENT_RPCSEC_GSS,
+  COMPONENT_INIT
 };
 
 typedef struct log_component_info
@@ -187,6 +188,13 @@ static log_component_info __attribute__ ((__unused__)) LogComponents[] =
   },
   { COMPONENT_RPCSEC_GSS,      "RPCSEC_GSS,",     
 #ifdef _DEBUG_RPCSEC_GSS    
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_INIT,            "INIT,",     
+#ifdef _DEBUG_INIT    
     NIV_DEBUG
 #else
     NIV_EVENT
