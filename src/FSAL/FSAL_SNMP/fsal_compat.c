@@ -55,6 +55,11 @@ fsal_status_t WRAP_SNMPFSAL_BuildExportContext(fsal_export_context_t * p_export_
                                      p_export_path, fs_specific_options);
 }
 
+fsal_status_t WRAP_SNMPFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context)
+{
+  return SNMPFSAL_CleanUpExportContext((snmpfsal_export_context_t *) p_export_context);
+}
+
 fsal_status_t WRAP_SNMPFSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 {
   return SNMPFSAL_InitClientContext((snmpfsal_op_context_t *) p_thr_context);
@@ -652,6 +657,7 @@ fsal_functions_t fsal_snmp_functions = {
   .fsal_getattrs = WRAP_SNMPFSAL_getattrs,
   .fsal_setattrs = WRAP_SNMPFSAL_setattrs,
   .fsal_buildexportcontext = WRAP_SNMPFSAL_BuildExportContext,
+  .fsal_cleanupexportcontext = WRAP_SNMPFSAL_CleanUpExportContext,
   .fsal_initclientcontext = WRAP_SNMPFSAL_InitClientContext,
   .fsal_getclientcontext = WRAP_SNMPFSAL_GetClientContext,
   .fsal_create = WRAP_SNMPFSAL_create,
