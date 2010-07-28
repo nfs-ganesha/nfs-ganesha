@@ -64,7 +64,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -1569,14 +1569,11 @@ static unsigned int select_worker_queue()
                   min_number_pending = workers_data[i].pending_request->nb_entry;
                 }
             }
-#ifdef _DEBUG_DISPATCH
           else if(!workers_data[i].is_ready)
-            DisplayLogLevel(NIV_FULL_DEBUG, "worker thread #%u is not ready", i);
+            LogFullDebug(COMPONENT_DISPATCH, "worker thread #%u is not ready", i);
           else if(workers_data[i].gc_in_progress)
-            DisplayLogLevel(NIV_FULL_DEBUG,
-                            "worker thread #%u is doing garbage collection", i);
-#endif
-
+            LogFullDebug(COMPONENT_DISPATCH,
+                         "worker thread #%u is doing garbage collection", i);
         }
 
     }
@@ -1675,14 +1672,12 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
               DisplayLog("CRITICAL ERROR: Couldn't choose a worker ! Exiting...");
               exit(1);
             }
-#ifdef _DEBUG_DISPATCH
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
-          DisplayLogLevel(NIV_FULL_DEBUG, "Use request from spool #%d, xprt->xp_sock=%d",
-                          worker_index, xprt->xp_fd);
+          LogFullDebug(COMPONENT_DISPATCH, "Use request from spool #%d, xprt->xp_sock=%d",
+                       worker_index, xprt->xp_fd);
 #else
-          DisplayLogLevel(NIV_FULL_DEBUG, "Use request from spool #%d, xprt->xp_sock=%d",
-                          worker_index, xprt->xp_sock);
-#endif
+          LogFullDebug(COMPONENT_DISPATCH, "Use request from spool #%d, xprt->xp_sock=%d",
+                       worker_index, xprt->xp_sock);
 #endif
 
           /* Get a pnfsreq from the worker's pool */
@@ -1740,9 +1735,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
           if(nfs_param.worker_param.nfs_svc_data.socket_nfs_udp == sock + bit - 1)
             {
               /* This is a regular UDP connection */
-#ifdef _DEBUG_DISPATCH
-              DisplayLogLevel(NIV_FULL_DEBUG, "A NFS UDP request");
-#endif
+              LogFullDebug(COMPONENT_DISPATCH, "A NFS UDP request");
               pnfsreq->xprt = pnfsreq->nfs_udp_xprt;
               pnfsreq->ipproto = IPPROTO_UDP;
 
@@ -1750,9 +1743,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
             }
           else if(nfs_param.worker_param.nfs_svc_data.socket_mnt_udp == sock + bit - 1)
             {
-#ifdef _DEBUG_DISPATCH
-              DisplayLogLevel(NIV_FULL_DEBUG, "A MOUNT UDP request");
-#endif
+              LogFullDebug(COMPONENT_DISPATCH, "A MOUNT UDP request");
               pnfsreq->xprt = pnfsreq->mnt_udp_xprt;
               pnfsreq->ipproto = IPPROTO_UDP;
 
@@ -1761,9 +1752,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
 #ifdef _USE_NLM
           else if(nfs_param.worker_param.nfs_svc_data.socket_nlm_udp == sock + bit - 1)
             {
-#ifdef _DEBUG_DISPATCH
-              DisplayLogLevel(NIV_FULL_DEBUG, "A NLM UDP request");
-#endif
+              LogFullDebug(COMPONENT_DISPATCH, "A NLM UDP request");
               pnfsreq->xprt = pnfsreq->nlm_udp_xprt;
               pnfsreq->ipproto = IPPROTO_UDP;
               pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
@@ -1772,9 +1761,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
 #ifdef _USE_QUOTA
           else if(nfs_param.worker_param.nfs_svc_data.socket_rquota_udp == sock + bit - 1)
             {
-#ifdef _DEBUG_DISPATCH
-              DisplayLogLevel(NIV_FULL_DEBUG, "A RQUOTA UDP request");
-#endif
+              LogFullDebug(COMPONENT_DISPATCH, "A RQUOTA UDP request");
               pnfsreq->xprt = pnfsreq->rquota_udp_xprt;
               pnfsreq->ipproto = IPPROTO_UDP;
               pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
@@ -1789,10 +1776,8 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                * just a call to accept and FD_SET)
                * there is no need of worker thread processing to be done
                */
-#ifdef _DEBUG_DISPATCH
-              DisplayLogLevel(NIV_FULL_DEBUG,
-                              "An initial NFS TCP request from a new client");
-#endif
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "An initial NFS TCP request from a new client");
               pnfsreq->xprt = nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp;
               pnfsreq->ipproto = IPPROTO_TCP;
 
@@ -1800,10 +1785,8 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
             }
           else if(nfs_param.worker_param.nfs_svc_data.socket_mnt_tcp == sock + bit - 1)
             {
-#ifdef _DEBUG_DISPATCH
-              DisplayLogLevel(NIV_FULL_DEBUG,
-                              "An initial MOUNT TCP request from a new client");
-#endif
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "An initial MOUNT TCP request from a new client");
               pnfsreq->xprt = nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp;
               pnfsreq->ipproto = IPPROTO_TCP;
 
@@ -1812,9 +1795,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
 #ifdef _USE_NLM
           else if(nfs_param.worker_param.nfs_svc_data.socket_nlm_tcp == sock + bit - 1)
             {
-#ifdef _DEBUG_DISPATCH
-              DisplayLogLevel(NIV_FULL_DEBUG, "An initial NLM request from a new client");
-#endif
+              LogFullDebug(COMPONENT_DISPATCH, "An initial NLM request from a new client");
               pnfsreq->xprt = nfs_param.worker_param.nfs_svc_data.xprt_nlm_tcp;
               pnfsreq->ipproto = IPPROTO_TCP;
 
@@ -1824,10 +1805,8 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
 #ifdef _USE_QUOTA
           else if(nfs_param.worker_param.nfs_svc_data.socket_rquota_tcp == sock + bit - 1)
             {
-#ifdef _DEBUG_DISPATCH
-              DisplayLogLevel(NIV_FULL_DEBUG,
-                              "An initial RQUOTA request from a new client");
-#endif
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "An initial RQUOTA request from a new client");
               pnfsreq->xprt = nfs_param.worker_param.nfs_svc_data.xprt_rquota_tcp;
               pnfsreq->ipproto = IPPROTO_TCP;
 
@@ -1837,20 +1816,16 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
           else
             {
               /* This is a regular tcp request on an established connection, should be handle by a dedicated thread */
-#ifdef _DEBUG_DISPATCH
-              DisplayLogLevel(NIV_FULL_DEBUG,
-                              "A NFS TCP request from an already connected client");
-#endif
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "A NFS TCP request from an already connected client");
               pnfsreq->tcp_xprt = xprt;
               pnfsreq->xprt = pnfsreq->tcp_xprt;
               pnfsreq->ipproto = IPPROTO_TCP;
 
               pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
             }
-#ifdef _DEBUG_DISPATCH
-          DisplayLogLevel(NIV_FULL_DEBUG, "Status for SVC_RECV on socket %d is %d",
-                          sock + bit - 1, pnfsreq->status);
-#endif
+          LogFullDebug(COMPONENT_DISPATCH, "Status for SVC_RECV on socket %d is %d",
+                       sock + bit - 1, pnfsreq->status);
 
           /* If status is ok, the request will be processed by the related
            * worker, otherwise, it should be released by being tagged as invalid*/
@@ -1897,8 +1872,8 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                 }
               else if(stat == XPRT_MOREREQS)
                 {
-                  DisplayLogLevel(NIV_DEBUG,
-                                  "Client on socket %d has status XPRT_MOREREQS",
+                  LogDebug(COMPONENT_DISPATCH,
+                           "Client on socket %d has status XPRT_MOREREQS",
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
                                   pnfsreq->xprt->xp_fd);
 #else
@@ -1907,18 +1882,14 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                 }
 
               /* Release the entry */
-#ifdef _DEBUG_DISPATCH
-              DisplayLogLevel(NIV_FULL_DEBUG,
-                              "NFS DISPATCH: Invalidating entry with xprt_stat=%d", stat);
-#endif
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "NFS DISPATCH: Invalidating entry with xprt_stat=%d", stat);
               workers_data[worker_index].passcounter += 1;
             }
           else
             {
               /* This should be used for UDP requests only, TCP request have dedicted management threads */
-#ifdef _DEBUG_DISPATCH
-              DisplayLogLevel(NIV_FULL_DEBUG, "Awaking thread #%d", worker_index);
-#endif
+              LogFullDebug(COMPONENT_DISPATCH, "Awaking thread #%d", worker_index);
 
               P(workers_data[worker_index].mutex_req_condvar);
               P(workers_data[worker_index].request_pool_mutex);
@@ -2021,17 +1992,13 @@ void rpc_dispatcher_svc_run(nfs_parameter_t * pnfs_param)
       readfdset = Svc_fdset;
 
       /* Select on a fdset build with all socket used in NFS/RPC */
-#ifdef _DEBUG_DISPATCH
-      DisplayLogLevel(NIV_DEBUG, "Waiting for incoming RPC requests");
-#endif
+      LogDebug(COMPONENT_DISPATCH, "Waiting for incoming RPC requests");
 
       /* Do the select on the RPC fdset */
       rc = select(tablesize, &readfdset, NULL, NULL, NULL);
 
-#ifdef _DEBUG_DISPATCH
-      DisplayLogLevel(NIV_DEBUG, "Waiting for incoming RPC requests, after select rc=%d",
-                      rc);
-#endif
+      LogDebug(COMPONENT_DISPATCH, "Waiting for incoming RPC requests, after select rc=%d",
+               rc);
       switch (rc)
         {
         case -1:
@@ -2046,9 +2013,7 @@ void rpc_dispatcher_svc_run(nfs_parameter_t * pnfs_param)
           continue;
 
         default:
-#ifdef _DEBUG_DISPATCH
-          DisplayLogLevel(NIV_FULL_DEBUG, "NFS SVC RUN: request(s) received");
-#endif
+          LogFullDebug(COMPONENT_DISPATCH, "NFS SVC RUN: request(s) received");
           nfs_rpc_getreq(&readfdset, pnfs_param);
           break;
 
