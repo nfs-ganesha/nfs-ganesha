@@ -126,6 +126,7 @@ typedef struct fsal_file__
   off_t current_offset;
   int flags;
   libzfswrap_vnode_t *p_vnode;
+  int is_closed;
 
 } zfsfsal_file_t;
 

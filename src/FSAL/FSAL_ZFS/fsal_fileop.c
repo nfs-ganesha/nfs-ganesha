@@ -102,6 +102,7 @@ fsal_status_t ZFSFSAL_open(zfsfsal_handle_t * filehandle,     /* IN */
   file_descriptor->p_vnode = p_vnode;
   file_descriptor->zfs_handle = filehandle->data.zfs_handle;
   file_descriptor->cred = p_context->user_credential.cred;
+  file_descriptor->is_closed = 0;
 
   if(file_attributes)
   {
@@ -346,7 +347,7 @@ fsal_status_t ZFSFSAL_write(zfsfsal_file_t * file_descriptor, /* IN */
 fsal_status_t ZFSFSAL_close(zfsfsal_file_t * file_descriptor  /* IN */
     )
 {
-  int rc;
+  int rc = 0;
 
   /* sanity checks. */
   if(!file_descriptor)
@@ -354,7 +355,12 @@ fsal_status_t ZFSFSAL_close(zfsfsal_file_t * file_descriptor  /* IN */
 
   TakeTokenFSCall();
 
-  rc = libzfswrap_close(file_descriptor->p_vfs, &file_descriptor->cred, file_descriptor->p_vnode, file_descriptor->flags);
+  if(!file_descriptor->is_closed)
+  {
+    rc = libzfswrap_close(file_descriptor->p_vfs, &file_descriptor->cred,
+                          file_descriptor->p_vnode, file_descriptor->flags);
+    file_descriptor->is_closed = 1;
+  }
 
   ReleaseTokenFSCall();
 
