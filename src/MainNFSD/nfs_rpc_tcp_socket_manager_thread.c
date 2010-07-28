@@ -140,7 +140,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
   if((rc = BuddyInit(&nfs_param.buddy_param_tcp_mgr)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      DisplayLog("Memory manager could not be initialized");
+      LogMessage(COMPONENT_DISPATCH, "Memory manager could not be initialized");
       exit(1);
     }
 #endif
@@ -155,7 +155,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
       /* Get a worker to do the job */
       if((worker_index = nfs_rpc_get_worker_index(FALSE)) < 0)
         {
-          DisplayLog("CRITICAL ERROR: Couldn't choose a worker !!");
+          LogMessage(COMPONENT_DISPATCH, "CRITICAL ERROR: Couldn't choose a worker !!");
           return NULL;
         }
 
@@ -182,8 +182,8 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
       if(pnfsreq == NULL)
         {
-          DisplayLogLevel(NIV_CRIT,
-                          "CRITICAL ERROR: empty request pool for the chosen worker ! Exiting...");
+          LogCrit(COMPONENT_DISPATCH,
+                  "CRITICAL ERROR: empty request pool for the chosen worker ! Exiting...");
           exit(0);
         }
 
@@ -191,9 +191,9 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
       if(xprt == NULL)
         {
           /* But do we control sock? */
-          DisplayLogLevel(NIV_CRIT,
-                          "CRITICAL ERROR: Incoherency found in Xports array, sock=%d",
-                          tcp_sock);
+          LogCrit(COMPONENT_DISPATCH,
+                  "CRITICAL ERROR: Incoherency found in Xports array, sock=%d",
+                  tcp_sock);
           return NULL;
         }
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
@@ -243,8 +243,8 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 #else
       if(pnfsreq->xprt->xp_sock != tcp_sock)
 #endif
-        DisplayLog
-            ("TCP SOCKET MANAGER : /!\\ Trying to access a bad socket ! Check the source file=%s, line=%s",
+        LogMessage(COMPONENT_DISPATCH,
+             "TCP SOCKET MANAGER : /!\\ Trying to access a bad socket ! Check the source file=%s, line=%s",
              __FILE__, __LINE__);
 
       //TODO FSF: I think this is a redundant message
@@ -283,15 +283,15 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 #endif                          /* _USE_TIRPC */
                 strncpy(str_caller, "unresolved", MAXNAMLEN);
 
-              DisplayLog
-                  ("TCP SOCKET MANAGER Sock=%d: the client (%s) disappeared... Stopping thread ",
+              LogMessage(COMPONENT_DISPATCH,
+                   "TCP SOCKET MANAGER Sock=%d: the client (%s) disappeared... Stopping thread ",
                    tcp_sock, str_caller);
 
               if(Xports[tcp_sock] != NULL)
                 SVC_DESTROY(Xports[tcp_sock]);
               else
-                DisplayLog
-                    ("TCP SOCKET MANAGER : /!\\ **** ERROR **** Mismatch between tcp_sock and xprt array");
+                LogMessage(COMPONENT_DISPATCH,
+                     "TCP SOCKET MANAGER : /!\\ **** ERROR **** Mismatch between tcp_sock and xprt array");
 
               P(workers_data[worker_index].request_pool_mutex);
               RELEASE_PREALLOC(pnfsreq, workers_data[worker_index].request_pool,
@@ -306,8 +306,8 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
               /* Free stuff allocated by BuddyMalloc before thread exists */
               sleep(nfs_param.core_param.expiration_dupreq * 2);   /** @todo : remove this for a cleaner fix */
               if((rc = BuddyDestroy()) != BUDDY_SUCCESS)
-                DisplayLog
-                    ("TCP SOCKET MANAGER Sock=%d (on exit): got error %u from BuddyDestroy",
+                LogMessage(COMPONENT_DISPATCH,
+                     "TCP SOCKET MANAGER Sock=%d (on exit): got error %u from BuddyDestroy",
                      rc);
 #endif                          /*  _NO_BUDDY_SYSTEM */
 
@@ -339,9 +339,9 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
             {
               V(workers_data[worker_index].mutex_req_condvar);
               V(workers_data[worker_index].request_pool_mutex);
-              DisplayLogLevel(NIV_MAJOR,
-                              "Error while inserting pending request to Thread #%d",
-                              worker_index);
+              LogMajor(COMPONENT_DISPATCH,
+                       "Error while inserting pending request to Thread #%d",
+                       worker_index);
               return NULL;
             }
           pentry->buffdata.pdata = (caddr_t) pnfsreq;
@@ -351,8 +351,8 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
             {
               V(workers_data[worker_index].mutex_req_condvar);
               V(workers_data[worker_index].request_pool_mutex);
-              DisplayLog
-                  ("TCP SOCKET MANAGER Sock=%d: Cond signal failed for thr#%d , errno = %d",
+              LogMessage(COMPONENT_DISPATCH,
+                   "TCP SOCKET MANAGER Sock=%d: Cond signal failed for thr#%d , errno = %d",
                    tcp_sock, worker_index, errno);
             }
           V(workers_data[worker_index].mutex_req_condvar);
