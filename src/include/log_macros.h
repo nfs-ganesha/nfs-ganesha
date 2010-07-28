@@ -246,5 +246,14 @@ static log_component_info __attribute__ ((__unused__)) LogComponents[] =
       DisplayLogLevel(NIV_FULL_DEBUG, format, ## args ); \
   } while (0)
 
+/*
+ * Temporary define of LogMessage for use in replacing
+ * DisplayLog calls.
+ */
+#define LogMessage(component, format, args...) \
+  do { \
+    if (LogComponents[component].log_level >= NIV_MAJOR) \
+      DisplayLogLevel(NIV_FULL_DEBUG, format, ## args ); \
+  } while (0)
 
 #endif
