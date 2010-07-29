@@ -189,8 +189,7 @@ typedef enum fsal_nodetype__
  * --------------*/
 
 /* prefered readdir size */
-//#define FSAL_READDIR_SIZE 2048
-#define FSAL_READDIR_SIZE 128
+#define FSAL_READDIR_SIZE 2048
 
 #define FSAL_MAX_NAME_LEN   NAME_MAX
 #define FSAL_MAX_PATH_LEN   PATH_MAX
