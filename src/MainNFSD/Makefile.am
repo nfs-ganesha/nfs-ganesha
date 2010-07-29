@@ -38,8 +38,10 @@ endif
 
 if USE_SNMP_ADM
 STAT_SNMP_FILES = nfs_stats_snmp.c
+STAT_SNMP_LIB_FLAGS = ../snmp_adm/libsnmp_adm.la
 else
 STAT_SNMP_FILES =
+STAT_SNMP_LIB_FLAGS = 
 endif
 
 if USE_FSAL_FUSE
@@ -110,6 +112,7 @@ libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la           
                                       $(SEC_LIB_FLAGS)                                  \
                                       $(SVC_LIB_FLAGS)                                  \
                                       $(NFSIDMAP_LIB_FLAGS)                             \
+                                      $(STAT_SNMP_LIB_FLAGS)                            \
                                       ../IdMapper/libidmap.la                           \
                                       ../support/libsupport.la                          \
 					../NodeList/libNodeList.la			\
