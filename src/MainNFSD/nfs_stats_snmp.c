@@ -52,27 +52,36 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
   int var_max, var_index;
   char *key_name;
   char *key_value;
+  config_item_t block;
+  config_item_t item;
 
-  /* this gets the bloc of your FS specific configuration */
 
-  blk_index = config_GetBlockIndexByName(in_config, CONF_SNMP_ADM_LABEL);
 
-  /* cannot read item */
-  if(blk_index < 0)
+   /* Get the config BLOCK */
+ if((block = config_FindItemByName(in_config, CONF_SNMP_ADM_LABEL)) == NULL)
     {
+      /* cannot read item */
       DisplayLog("SNMP_ADM: Cannot read item \"%s\" from configuration file",
                  CONF_SNMP_ADM_LABEL);
       return ENOENT;
     }
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
+     {
+       DisplayLog("SNMP_ADM: Cannot read item \"%s\" from configuration file",
+                  CONF_SNMP_ADM_LABEL);
+      /* Expected to be a block */
+       return ENOENT;
+     }
 
   /* makes an iteration on the (key, value) couplets */
-
-  var_max = config_GetNbKeys(in_config, blk_index);
+  var_max = config_GetNbItems(block);
 
   for(var_index = 0; var_index < var_max; var_index++)
     {
-      /* retrieve key's name */
-      err = config_GetKeyValue(in_config, blk_index, var_index, &key_name, &key_value);
+       /* retrieve key's name */
+      item = config_GetItemByIndex(block, var_index);
+      err = config_GetKeyValue(item, &key_name, &key_value);
+
       if(err)
         {
           DisplayLog
