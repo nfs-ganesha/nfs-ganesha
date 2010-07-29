@@ -163,6 +163,19 @@ fsal_status_t ZFSFSAL_BuildExportContext(zfsfsal_export_context_t * p_export_con
 
 }
 
+/**
+ * FSAL_CleanUpExportContext :
+ * this will clean up and state in an export that was created during
+ * the BuildExportContext phase.  For many FSALs this may be a noop.
+ *
+ * \param p_export_context
+ */
+
+fsal_status_t ZFSFSAL_CleanUpExportContext(zfsfsal_export_context_t * p_export_context)
+{
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
+}
+
 fsal_status_t ZFSFSAL_InitClientContext(zfsfsal_op_context_t * p_thr_context)
 {
 

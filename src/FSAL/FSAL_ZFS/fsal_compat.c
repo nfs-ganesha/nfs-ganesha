@@ -56,6 +56,11 @@ fsal_status_t WRAP_ZFSFSAL_BuildExportContext(fsal_export_context_t * p_export_c
                                     p_export_path, fs_specific_options);
 }
 
+fsal_status_t WRAP_ZFSFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context)
+{
+  return ZFSFSAL_CleanUpExportContext((zfsfsal_export_context_t *) p_export_context);
+}
+
 fsal_status_t WRAP_ZFSFSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 {
   return ZFSFSAL_InitClientContext((zfsfsal_op_context_t *) p_thr_context);
@@ -649,6 +654,7 @@ fsal_functions_t fsal_zfs_functions = {
   .fsal_getattrs = WRAP_ZFSFSAL_getattrs,
   .fsal_setattrs = WRAP_ZFSFSAL_setattrs,
   .fsal_buildexportcontext = WRAP_ZFSFSAL_BuildExportContext,
+  .fsal_cleanupexportcontext = WRAP_ZFSFSAL_CleanUpExportContext,
   .fsal_initclientcontext = WRAP_ZFSFSAL_InitClientContext,
   .fsal_getclientcontext = WRAP_ZFSFSAL_GetClientContext,
   .fsal_create = WRAP_ZFSFSAL_create,
