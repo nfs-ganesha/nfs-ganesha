@@ -1238,6 +1238,7 @@ int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context)
   addr_rpc.sin_port = p_thr_context->srv_port;
   addr_rpc.sin_family = AF_INET;
   addr_rpc.sin_addr.s_addr = p_thr_context->srv_addr;
+  int priv_port = 0 ;
 
   if(!strcmp(p_thr_context->srv_proto, "udp"))
     {
@@ -1269,12 +1270,22 @@ int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context)
     }
   else if(!strcmp(p_thr_context->srv_proto, "tcp"))
     {
-      if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
-        {
-          DisplayLog("FSAL RECONNECT: cannot create a tcp socket");
-
-          return -1;
-        }
+      if( p_thr_context->use_privileged_client_port  == TRUE )
+       {
+	  if( (sock = rresvport( &priv_port ) ) < 0 )
+           {
+            DisplayLog("FSAL RECONNECT: cannot get a privilegeed tcp socket");
+            return -1;
+           }
+       }
+      else
+       {
+        if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+          {
+            DisplayLog("FSAL RECONNECT: cannot create a tcp socket");
+            return -1;
+          }
+       }
 
       if(connect(sock, (struct sockaddr *)&addr_rpc, sizeof(addr_rpc)) < 0)
         {

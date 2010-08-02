@@ -140,6 +140,7 @@ typedef struct fsal_op_context__
   unsigned int srv_sendsize;
   unsigned int srv_recvsize;
   unsigned short srv_port;
+  unsigned int use_privileged_client_port ;
   char srv_proto[MAXNAMLEN];
   clientid4 clientid;
   CLIENT *rpc_client;
@@ -189,6 +190,7 @@ typedef struct fs_specific_initinfo__
   unsigned int srv_recvsize;
   unsigned int srv_timeout;
   unsigned short srv_port;
+  unsigned int use_privileged_client_port ;
   char srv_proto[MAXNAMLEN];
   char local_principal[MAXNAMLEN];
   char remote_principal[MAXNAMLEN];
