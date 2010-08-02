@@ -36,6 +36,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <netdb.h> /* For rresvport */
 
 extern proxyfs_specific_initinfo_t global_fsal_proxy_specific_info;
 
@@ -193,6 +194,7 @@ fsal_status_t PROXYFSAL_InitClientContext(proxyfsal_op_context_t * p_thr_context
   struct sockaddr_in addr_rpc;
   struct timeval timeout = { 25, 0 };
   int rc;
+  int priv_port = 0 ; 
   fsal_status_t fsal_status;
 
 #ifdef _USE_GSSRPC
@@ -217,6 +219,7 @@ fsal_status_t PROXYFSAL_InitClientContext(proxyfsal_op_context_t * p_thr_context
   p_thr_context->srv_port = global_fsal_proxy_specific_info.srv_port;
   p_thr_context->srv_sendsize = global_fsal_proxy_specific_info.srv_sendsize;
   p_thr_context->srv_recvsize = global_fsal_proxy_specific_info.srv_recvsize;
+  p_thr_context->use_privileged_client_port = global_fsal_proxy_specific_info.use_privileged_client_port;
   p_thr_context->retry_sleeptime = global_fsal_proxy_specific_info.retry_sleeptime;
   p_thr_context->file_counter = 0LL;
   strncpy(p_thr_context->srv_proto, global_fsal_proxy_specific_info.srv_proto, MAXNAMLEN);
@@ -257,14 +260,25 @@ fsal_status_t PROXYFSAL_InitClientContext(proxyfsal_op_context_t * p_thr_context
     }
   else if(!strcmp(p_thr_context->srv_proto, "tcp"))
     {
-      if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+      if( p_thr_context->use_privileged_client_port  == TRUE )
         {
-          DisplayLogJd(fsal_log, "FSAL_INIT: cannot create a tcp socket");
-
-          Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
+	  if( (sock = rresvport( &priv_port ) )< 0 )
+           {
+             DisplayLogJd(fsal_log, "FSAL_INIT: cannot create a tcp socket on a privileged port");
+             Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
+           }
         }
+     else
+       {
+        if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+          {
+            DisplayLogJd(fsal_log, "FSAL_INIT: cannot create a tcp socket");
+            Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
+          }
+       }
 
-      if(connect(sock, (struct sockaddr *)&addr_rpc, sizeof(addr_rpc)) < 0)
+
+    if(connect(sock, (struct sockaddr *)&addr_rpc, sizeof(addr_rpc)) < 0)
         {
           DisplayLogJd(fsal_log,
                        "FSAL INIT : Cannot connect to server addr=%u.%u.%u.%u port=%u",
