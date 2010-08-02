@@ -105,6 +105,8 @@ fsal_status_t HPSSFSAL_BuildExportContext(hpssfsal_export_context_t * p_export_c
 
 fsal_status_t HPSSFSAL_InitClientContext(hpssfsal_op_context_t * p_thr_context);
 
+fsal_status_t HPSSFSAL_CleanUpExportContext(hpssfsal_export_context_t * p_export_context) ;
+
 fsal_status_t HPSSFSAL_GetClientContext(hpssfsal_op_context_t * p_thr_context,  /* IN/OUT  */
                                         hpssfsal_export_context_t * p_export_context,   /* IN */
                                         fsal_uid_t uid, /* IN */
