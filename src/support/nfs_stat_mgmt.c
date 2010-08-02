@@ -104,7 +104,8 @@ extern nfs_parameter_t nfs_param;
  *
  */
 void nfs_stat_update(nfs_stat_type_t type,
-                     nfs_request_stat_t * pstat_req, struct svc_req *preq)
+                     nfs_request_stat_t * pstat_req, struct svc_req *preq,
+                     nfs_request_latency_stat_t * lstat_req)
 {
   nfs_request_stat_item_t *pitem = NULL;
 
@@ -209,6 +210,24 @@ void nfs_stat_update(nfs_stat_type_t type,
     }
 
   pitem->total += 1;
+
+  /* Set the initial value of latencies */
+  if(pitem->tot_latency == 0)
+    {
+      pitem->max_latency = lstat_req->latency;
+      pitem->min_latency = lstat_req->latency;
+    }
+
+  /* Update total, min and max latency */
+  pitem->tot_latency += lstat_req->latency;
+  if(lstat_req->latency > pitem->max_latency)
+    {
+      pitem->max_latency = lstat_req->latency;
+    }
+  else if(lstat_req->latency < pitem->min_latency)
+    {
+      pitem->min_latency = lstat_req->latency;
+    }
 
   switch (type)
     {

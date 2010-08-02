@@ -414,6 +414,25 @@ void nfs_Cleanup_request_data(nfs_request_data_t * pdata)
   pdata->xprt = NULL;
 }                               /* nfs_Cleanup_request_data */
 
+struct timeval time_diff(struct timeval time_from, struct timeval time_to)
+{
+
+  struct timeval result;
+
+  if(time_to.tv_usec < time_from.tv_usec)
+    {
+      result.tv_sec = time_to.tv_sec - time_from.tv_sec - 1;
+      result.tv_usec = 1000000 + time_to.tv_usec - time_from.tv_usec;
+    }
+  else
+    {
+      result.tv_sec = time_to.tv_sec - time_from.tv_sec;
+      result.tv_usec = time_to.tv_usec - time_from.tv_usec;
+    }
+
+  return result;
+}
+
 /**
  * nfs_rpc_execute: main rpc dispatcher routine
  *
@@ -459,6 +478,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 #ifdef _DEBUG_MEMLEAKS
   static int nb_iter_memleaks = 0;
 #endif
+
+  struct timeval timer_start;
+  struct timeval timer_end;
+  struct timeval timer_diff;
+  nfs_request_latency_stat_t latency_stat;
 
   /* daemon is terminating, do not process any new request */
   if(nfs_do_terminate)
@@ -915,21 +939,34 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }
 
       /* processing */
+      memset(&timer_start, 0, sizeof(struct timeval));
+      memset(&timer_end, 0, sizeof(struct timeval));
+      memset(&timer_diff, 0, sizeof(struct timeval));
+
+      gettimeofday(&timer_start, NULL);
+
 #ifdef _DEBUG_NFSPROTO
-      DisplayLogLevel(NIV_FULL_DEBUG, "NFS DISPATCHER: Calling service function %s",
-                      funcdesc.funcname);
+      DisplayLogLevel(NIV_FULL_DEBUG, "NFS DISPATCHER: Calling service function %s start_time %llu.%.6llu",
+                      funcdesc.funcname, timer_start.tv_sec, timer_start.tv_usec);
 #endif
+
       rc = funcdesc.service_function(&arg_nfs, pexport, &pworker_data->thread_fsal_context, &(pworker_data->cache_inode_client), pworker_data->ht, ptr_req, &res_nfs);  /* BUGAZOMEU Un appel crade pour debugger */
+
+      gettimeofday(&timer_end, NULL);
+      timer_diff = time_diff(timer_start, timer_end);
+
 #ifdef _DEBUG_DISPATCH
-      DisplayLogLevel(NIV_FULL_DEBUG, "NFS DISPATCHER: Function %s exited with status %d",
-                      funcdesc.funcname, rc);
+      DisplayLogLevel(NIV_FULL_DEBUG, "NFS DISPATCHER: Function %s exited with status %d end_time %llu.%.6llu latency %llu.%.6llu",
+                      funcdesc.funcname, rc, timer_end.tv_sec, timer_end.tv_usec, timer_diff.tv_sec, timer_diff.tv_usec);
 #endif
     }
 
   /* Perform statistics here */
   stat_type = (rc == NFS_REQ_OK) ? GANESHA_STAT_SUCCESS : GANESHA_STAT_DROP;
 
-  nfs_stat_update(stat_type, &(pworker_data->stats.stat_req), ptr_req);
+  latency_stat.latency = timer_diff.tv_sec * 1000000 + timer_diff.tv_usec; /* microseconds */
+
+  nfs_stat_update(stat_type, &(pworker_data->stats.stat_req), ptr_req, &latency_stat);
   pworker_data->stats.nb_total_req += 1;
 
   /* Perform NFSv4 operations statistics if required */
