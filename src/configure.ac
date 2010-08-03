@@ -191,6 +191,11 @@ GA_ENABLE_AM_CONDITION([buildsharedfsal],[when enable, build the FSAL as both st
 
 if test "$enable_buildsharedfsal" == "yes"; then
         AC_DEFINE(_BUILD_SHARED_FSAL,1,[Build shared FSAL])
+	SHARED_FSAL=1 
+	SHARED_FSAL_PKG=yes 
+else
+	SHARED_FSAL=0 
+	SHARED_FSAL_PKG=no 
 fi
 AM_CONDITIONAL(BUILD_SHARED_FSAL, test "$enable_buildsharedfsal" = "yes")
 
@@ -640,6 +645,8 @@ AC_SUBST(FSAL_LIB)
 AC_SUBST(MFSL_LIB)
 AC_SUBST(PNFS_LIB)
 AC_SUBST(FS_NAME)
+AC_SUBST(SHARED_FSAL)
+AC_SUBST(SHARED_FSAL_PKG)
 AC_SUBST(SEC_CFLAGS)
 AC_SUBST(SEC_LFLAGS)
 AC_SUBST(DEBIAN_DB_DEP)
