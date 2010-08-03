@@ -50,7 +50,6 @@ fsal_status_t ZFSFSAL_getattrs(zfsfsal_handle_t * filehandle, /* IN */
   int rc, type;
   fsal_status_t status;
   struct stat fstat;
-  libzfswrap_vnode_t *p_vnode;
 
   /* sanity checks.
    * note : object_attributes is mandatory in ZFSFSAL_getattrs.
