@@ -1,4 +1,29 @@
+# define standard rpm macros
+%define nil                    %{!?nil}
+%define defined()      %{expand:%%{?%{1}:1}%%{!?%{1}:0}}
+%define undefined()    %{expand:%%{?%{1}:0}%%{!?%{1}:1}}
+%define with()         %{expand:%%{?with_%{1}:1}%%{!?with_%{1}:0}}
+%define without()      %{expand:%%{?with_%{1}:0}%%{!?with_%{1}:1}}
+%define bcond_with()           %{expand:%%{?_with_%{1}:%%global with_%{1} 1}}
+%define bcond_without()        %{expand:%%{!?_without_%{1}:%%global with_%{1} 1}}
+####################################
+# define 'with' conditions to be used
+### %bcond_with lustre
+### %bcond_with hsm
+### %bcond_with mysql
+### %bcond_with sherpa
+####################################
+
+# @todo : macro's example
+### %if %{with lustre}
+### %if %{defined lversion}
+### %define toto lustre-%{lversion}
+### %endif
+### %endif 
+
+
 %define _with_@FS_NAME@ 1
+%define _with_sharedfsal@SHARED_FSAL_PKG@ 1
 
 Name: @PACKAGE@ 
 Version: @VERSION@ 
@@ -71,6 +96,7 @@ Requires: %{name}-common = %{version}-%{release}
 NFS-GANESHA is a NFS Server running in user space with a large cache.
 It comes with various backend modules to support different file systems
 and namespaces. This package provides support for NFS-GANESHA used on top of XFS.
+
 %endif
 
 %if %{?_with_gpfs:1}%{!?_with_gpfs:0}
@@ -186,6 +212,15 @@ It comes with various backend modules to support different file systems
 and namespaces. This package provides support for NFS-GANESHA used on top of ZFS.
 %endif
 
+%if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
+%package fsal-@FS_NAME@
+Summary: The NFS-GANESHA's FSAL dedicated to @FS_NAME@, provided as a shared object 
+Group: Applications/System
+Requires: %{name}-common = %{version}-%{release}
+
+%description fsal-@FS_NAME@
+This package contains a FSAL library compiled as a shared object. It can be loaded dynamically in a FSAL-less NFS-GANESHA daemon
+%endif
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -251,6 +286,11 @@ install -m 755 nfs-ganesha.zfs.init                            $RPM_BUILD_ROOT%{
 install -m 644 config_samples/hosts.ganesha                    $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 config_samples/uidgid_mapfile.ganesha           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 755 tools/ganestat.pl                               $RPM_BUILD_ROOT%{_bindir}
+
+%if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
+rm -f $RPM_BUILD_ROOT%{_libdir}/libfsal@FS_NAME@.la
+rm -f $RPM_BUILD_ROOT%{_libdir}/libfsal@FS_NAME@.a
+%endif
 
 mkdir -p  $RPM_BUILD_ROOT%{_datadir}/%{name}
 install -m 644 ganesha.vim     $RPM_BUILD_ROOT%{_datadir}/%{name}
@@ -378,6 +418,12 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/zfs.ganesha.*
 %{_bindir}/zfs.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha.zfs
+%endif
+
+%if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
+%files fsal-@FS_NAME@
+%defattr(-,root,root,-)
+%{_libdir}/libfsal@FS_NAME@.so*
 %endif
 
 
