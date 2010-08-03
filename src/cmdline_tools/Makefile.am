@@ -13,6 +13,10 @@ __FS_NAME__ganesha_convertFH_SOURCES    = ConvertFh.c \
 
 __FS_NAME__ganesha_convertFH_LDADD  =  ../MainNFSD/libMainServices.la $(FSAL_LDFLAGS)  $(SEC_LIB_FLAGS) @EFENCE@ @EXTRA_LIB@
 
+if USE_SNMP_ADM
+__FS_NAME__ganesha_convertFH_LDADD += ../snmp_adm/libsnmp_adm.la $(EXT_LDADD)
+endif
+
 if USE_NFSIDMAP
 __FS_NAME__ganesha_convertFH_LDADD += -lnfsidmap
 endif
