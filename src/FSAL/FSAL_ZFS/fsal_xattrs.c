@@ -275,7 +275,7 @@ fsal_status_t ZFSFSAL_GetXAttrAttrs(zfsfsal_handle_t * p_objecthandle,        /*
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrAttrs);
 
-}                               /* FSAL_GetXAttrAttrs */
+}
 
 /**
  * Retrieves the list of extended attributes for an object in the filesystem.
@@ -432,7 +432,7 @@ fsal_status_t ZFSFSAL_GetXAttrIdByName(zfsfsal_handle_t * p_objecthandle,     /*
     }
   else
     Return(ERR_FSAL_NOENT, ENOENT, INDEX_FSAL_GetXAttrValue);
-}                               /* FSAL_GetXAttrIdByName */
+}
 
 /**
  * Get the value of an extended attribute from its name.
@@ -466,8 +466,8 @@ fsal_status_t ZFSFSAL_GetXAttrValueByName(zfsfsal_handle_t * p_objecthandle,  /*
          && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
         {
 
-          return FSAL_GetXAttrValueById(p_objecthandle, index, p_context, buffer_addr,
-                                        buffer_size, p_output_size);
+          return ZFSFSAL_GetXAttrValueById(p_objecthandle, index, p_context, buffer_addr,
+                                           buffer_size, p_output_size);
 
         }
     }
@@ -510,7 +510,7 @@ fsal_status_t ZFSFSAL_RemoveXAttrById(zfsfsal_handle_t * p_objecthandle,      /*
                                    unsigned int xattr_id)       /* IN */
 {
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}                               /* FSAL_RemoveXAttrById */
+}
 
 /**
  *  Removes a xattr by Name
@@ -524,4 +524,4 @@ fsal_status_t ZFSFSAL_RemoveXAttrByName(zfsfsal_handle_t * p_objecthandle,    /*
                                      const fsal_name_t * xattr_name)    /* IN */
 {
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}                               /* FSAL_RemoveXAttrById */
+}

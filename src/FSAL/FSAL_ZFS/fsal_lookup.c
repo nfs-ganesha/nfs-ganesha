@@ -195,9 +195,9 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
  *          
  */
 fsal_status_t ZFSFSAL_lookupJunction(zfsfsal_handle_t * p_junction_handle,    /* IN */
-                                  zfsfsal_op_context_t * p_context,        /* IN */
-                                  zfsfsal_handle_t * p_fsoot_handle,       /* OUT */
-                                  fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
+                                     zfsfsal_op_context_t * p_context,        /* IN */
+                                     zfsfsal_handle_t * p_fsoot_handle,       /* OUT */
+                                     fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
     )
 {
   int rc;
@@ -312,12 +312,12 @@ fsal_status_t ZFSFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
 
   /* retrieves root directory */
 
-  status = FSAL_lookup(NULL,    /* looking up for root */
-                       NULL,    /* empty string to get root handle */
-                       p_context,       /* user's credentials */
-                       &out_hdl,        /* output root handle */
-                       /* retrieves attributes if this is the last lookup : */
-                       (b_is_last ? object_attributes : NULL));
+  status = ZFSFSAL_lookup(NULL,    /* looking up for root */
+                          NULL,    /* empty string to get root handle */
+                          p_context,       /* user's credentials */
+                          &out_hdl,        /* output root handle */
+                          /* retrieves attributes if this is the last lookup : */
+                          (b_is_last ? object_attributes : NULL));
 
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_lookupPath);
@@ -364,12 +364,12 @@ fsal_status_t ZFSFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
         b_is_last = TRUE;
 
       /*call to FSAL_lookup */
-      status = FSAL_lookup(&in_hdl,     /* parent directory handle */
-                           &obj_name,   /* object name */
-                           p_context,   /* user's credentials */
-                           &out_hdl,    /* output root handle */
-                           /* retrieves attributes if this is the last lookup : */
-                           (b_is_last ? object_attributes : NULL));
+      status = ZFSFSAL_lookup(&in_hdl,     /* parent directory handle */
+                              &obj_name,   /* object name */
+                              p_context,   /* user's credentials */
+                              &out_hdl,    /* output root handle */
+                              /* retrieves attributes if this is the last lookup : */
+                              (b_is_last ? object_attributes : NULL));
 
       if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_lookupPath);
@@ -385,11 +385,11 @@ fsal_status_t ZFSFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
           tmp_hdl = out_hdl;
 
           /*call to FSAL_lookup */
-          status = FSAL_lookupJunction(&tmp_hdl,        /* object handle */
-                                       p_context,       /* user's credentials */
-                                       &out_hdl,        /* output root handle */
-                                       /* retrieves attributes if this is the last lookup : */
-                                       (b_is_last ? object_attributes : NULL));
+          status = ZFSFSAL_lookupJunction(&tmp_hdl,        /* object handle */
+                                          p_context,       /* user's credentials */
+                                          &out_hdl,        /* output root handle */
+                                          /* retrieves attributes if this is the last lookup : */
+                                          (b_is_last ? object_attributes : NULL));
 
         }
 
