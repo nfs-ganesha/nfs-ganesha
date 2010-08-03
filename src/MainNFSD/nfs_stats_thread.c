@@ -136,6 +136,7 @@ void *stats_thread(void *addr)
       fclose(stats_file);
       return NULL;
     }
+
 #ifdef _SNMP_ADM_ACTIVE
   /* start snmp library */
   if(stats_snmp(workers_data) == 0)
