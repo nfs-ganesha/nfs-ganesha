@@ -53,33 +53,36 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
   char *key_name;
   char *key_value;
   config_item_t block;
+  config_item_t item;
 
-  /* Get the config BLOCK */
-  if((block = config_FindItemByName(in_config, CONF_SNMP_ADM_LABEL)) == NULL)
+
+
+   /* Get the config BLOCK */
+ if((block = config_FindItemByName(in_config, CONF_SNMP_ADM_LABEL)) == NULL)
     {
-      DisplayLog("SNMP_ADM: Can't get label %s in file", CONF_SNMP_ADM_LABEL);
-      return ENOENT;
-    }
-  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
-    {
+      /* cannot read item */
       DisplayLog("SNMP_ADM: Cannot read item \"%s\" from configuration file",
                  CONF_SNMP_ADM_LABEL);
       /* Expected to be a block */
       return ENOENT;
     }
-
-  var_max = config_GetNbItems(block);
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
+     {
+       DisplayLog("SNMP_ADM: Cannot read item \"%s\" from configuration file",
+                  CONF_SNMP_ADM_LABEL);
+      /* Expected to be a block */
+       return ENOENT;
+     }
 
   /* makes an iteration on the (key, value) couplets */
+  var_max = config_GetNbItems(block);
 
   for(var_index = 0; var_index < var_max; var_index++)
     {
-      config_item_t item;
-
+       /* retrieve key's name */
       item = config_GetItemByIndex(block, var_index);
-
-      /* retrieve key's name */
       err = config_GetKeyValue(item, &key_name, &key_value);
+
       if(err)
         {
           DisplayLog

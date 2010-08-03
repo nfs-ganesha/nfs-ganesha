@@ -2368,7 +2368,6 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
  */
 int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 {
-  static int once = 0;
   exportlist_t *pcurrent = NULL;
   cache_inode_status_t cache_status;
 #ifdef _CRASH_RECOVERY_AT_STARTUP
@@ -2383,8 +2382,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
   fsal_staticfsinfo_t *pstaticinfo = NULL;
   fsal_op_context_t context;
 
-  if(once == 0)
-    {
       /* setting the 'small_client' structure */
       small_client_param.lru_param.nb_entry_prealloc = 10;
       small_client_param.lru_param.entry_to_str = local_lru_inode_entry_to_str;
@@ -2424,6 +2421,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 
       /* Get the context for FSAL super user */
       fsal_status = FSAL_InitClientContext(&context);
+
 
       if(FSAL_IS_ERROR(fsal_status))
         {
@@ -2553,9 +2551,38 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 #endif
         }
 
-      /* Do not call me again */
-      once = 1;
-    }
-
   return TRUE;
 }                               /* nfs_export_create_root_entry */
+
+/* cleans up the export content */
+int CleanUpExportContext(fsal_export_context_t * p_export_context)
+{
+
+  FSAL_CleanUpExportContext(p_export_context);
+
+  return TRUE;
+}
+
+
+/* Frees current export entry and returns next export entry. */
+exportlist_t *RemoveExportEntry(exportlist_t * exportEntry)
+{
+
+  int rc;
+  exportlist_t *next;
+
+  if (exportEntry == NULL)
+    return NULL;
+
+  next = exportEntry->next;
+
+
+  if (exportEntry->fs_static_info != NULL)
+    Mem_Free(exportEntry->fs_static_info);
+
+  if (exportEntry->proot_handle != NULL)
+    Mem_Free(exportEntry->proot_handle);
+
+  Mem_Free(exportEntry);
+  return next;
+}

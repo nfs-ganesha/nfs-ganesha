@@ -182,9 +182,9 @@ int snmp_object2name(netsnmp_variable_list * p_in_var, struct tree *p_in_node,
   else if(p_in_var && p_in_var->name && p_in_var->name_length > 0)
     snprintf(tmp_name, FSAL_MAX_NAME_LEN, "%lu",
              p_in_var->name[p_in_var->name_length - 1]);
-  else if(p_handle && p_handle->oid_len > 0)
+  else if(p_handle && p_handle->data.oid_len > 0)
     snprintf(tmp_name, FSAL_MAX_NAME_LEN, "%lu",
-             p_handle->oid_tab[p_handle->oid_len - 1]);
+             p_handle->data.oid_tab[p_handle->data.oid_len - 1]);
   else
     return ERR_FSAL_SERVERFAULT;
 
@@ -422,9 +422,9 @@ fsal_u64_t build_object_id(snmpfsal_handle_t * p_in_handle)
 
   /* for the moment, we make a very silly hash of the object  */
 
-  for(i = 0; i < p_in_handle->oid_len; i++)
+  for(i = 0; i < p_in_handle->data.oid_len; i++)
     {
-      hash = ((hash << 8) ^ p_in_handle->oid_tab[i]) % PRIME_32BITS;
+      hash = ((hash << 8) ^ p_in_handle->data.oid_tab[i]) % PRIME_32BITS;
     }
 
   return hash;
@@ -471,12 +471,12 @@ int snmp2fsal_attributes(snmpfsal_handle_t * p_handle, netsnmp_variable_list * p
     p_fsalattr_out->supported_attributes = supp_attr;
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_TYPE))
-    p_fsalattr_out->type = intern2extern_type(p_handle->object_type_reminder);
+    p_fsalattr_out->type = intern2extern_type(p_handle->data.object_type_reminder);
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SIZE) ||
      FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
     {
-      if(p_handle->object_type_reminder == FSAL_NODETYPE_LEAF)
+      if(p_handle->data.object_type_reminder == FSAL_NODETYPE_LEAF)
         {
           char object_val_buf[FSALSNMP_MAX_FILESIZE];
           size_t buf_sz = FSALSNMP_MAX_FILESIZE;
@@ -518,7 +518,7 @@ int snmp2fsal_attributes(snmpfsal_handle_t * p_handle, netsnmp_variable_list * p
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MODE))
     p_fsalattr_out->mode =
-        snmp_object2access_mode(p_handle->object_type_reminder, p_in_node);
+        snmp_object2access_mode(p_handle->data.object_type_reminder, p_in_node);
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_NUMLINKS))
     p_fsalattr_out->numlinks = 1;       /* @todo */

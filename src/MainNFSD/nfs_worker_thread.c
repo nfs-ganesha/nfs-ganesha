@@ -414,6 +414,25 @@ void nfs_Cleanup_request_data(nfs_request_data_t * pdata)
   pdata->xprt = NULL;
 }                               /* nfs_Cleanup_request_data */
 
+struct timeval time_diff(struct timeval time_from, struct timeval time_to)
+{
+
+  struct timeval result;
+
+  if(time_to.tv_usec < time_from.tv_usec)
+    {
+      result.tv_sec = time_to.tv_sec - time_from.tv_sec - 1;
+      result.tv_usec = 1000000 + time_to.tv_usec - time_from.tv_usec;
+    }
+  else
+    {
+      result.tv_sec = time_to.tv_sec - time_from.tv_sec;
+      result.tv_usec = time_to.tv_usec - time_from.tv_usec;
+    }
+
+  return result;
+}
+
 /**
  * nfs_rpc_execute: main rpc dispatcher routine
  *
@@ -459,6 +478,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 #ifdef _DEBUG_MEMLEAKS
   static int nb_iter_memleaks = 0;
 #endif
+
+  struct timeval timer_start;
+  struct timeval timer_end;
+  struct timeval timer_diff;
+  nfs_request_latency_stat_t latency_stat;
 
   /* daemon is terminating, do not process any new request */
   if(nfs_do_terminate)
@@ -899,17 +923,29 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }
 
       /* processing */
-      LogFullDebug(COMPONENT_NFSPROTO, "NFS DISPATCHER: Calling service function %s",
-                   funcdesc.funcname);
+      memset(&timer_start, 0, sizeof(struct timeval));
+      memset(&timer_end, 0, sizeof(struct timeval));
+      memset(&timer_diff, 0, sizeof(struct timeval));
+
+      gettimeofday(&timer_start, NULL);
+
+      LogFullDebug(COMPONENT_NFSPROTO, "NFS DISPATCHER: Calling service function %s start_time %llu.%.6llu",
+                   funcdesc.funcname, timer_start.tv_sec, timer_start.tv_usec);
       rc = funcdesc.service_function(&arg_nfs, pexport, &pworker_data->thread_fsal_context, &(pworker_data->cache_inode_client), pworker_data->ht, ptr_req, &res_nfs);  /* BUGAZOMEU Un appel crade pour debugger */
-      LogFullDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: Function %s exited with status %d",
-                   funcdesc.funcname, rc);
+
+      gettimeofday(&timer_end, NULL);
+      timer_diff = time_diff(timer_start, timer_end);
+
+      LogFullDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: Function %s exited with status %d end_time %llu.%.6llu latency %llu.%.6llu",
+                   funcdesc.funcname, rc, timer_end.tv_sec, timer_end.tv_usec, timer_diff.tv_sec, timer_diff.tv_usec);
     }
 
   /* Perform statistics here */
   stat_type = (rc == NFS_REQ_OK) ? GANESHA_STAT_SUCCESS : GANESHA_STAT_DROP;
 
-  nfs_stat_update(stat_type, &(pworker_data->stats.stat_req), ptr_req);
+  latency_stat.latency = timer_diff.tv_sec * 1000000 + timer_diff.tv_usec; /* microseconds */
+
+  nfs_stat_update(stat_type, &(pworker_data->stats.stat_req), ptr_req, &latency_stat);
   pworker_data->stats.nb_total_req += 1;
 
   /* Perform NFSv4 operations statistics if required */
@@ -1022,22 +1058,20 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 int nfs_Init_worker_data(nfs_worker_data_t * pdata)
 {
   LRU_status_t status = LRU_LIST_SUCCESS;
-  pthread_mutexattr_t mutexattr;
-  pthread_condattr_t condattr;
 
-  if(pthread_mutexattr_init(&mutexattr) != 0)
+  if(pthread_mutex_init(&(pdata->mutex_req_condvar), NULL) != 0)
     return -1;
 
-  if(pthread_condattr_init(&condattr) != 0)
+  if(pthread_mutex_init(&(pdata->request_pool_mutex), NULL) != 0)
     return -1;
 
-  if(pthread_mutex_init(&(pdata->mutex_req_condvar), &mutexattr) != 0)
+  if(pthread_cond_init(&(pdata->req_condvar), NULL) != 0)
     return -1;
 
-  if(pthread_mutex_init(&(pdata->request_pool_mutex), &mutexattr) != 0)
+  if(pthread_mutex_init(&(pdata->mutex_export_condvar), NULL) != 0)
     return -1;
 
-  if(pthread_cond_init(&(pdata->req_condvar), &condattr) != 0)
+  if(pthread_cond_init(&(pdata->export_condvar), NULL) != 0)
     return -1;
 
   if((pdata->pending_request =
@@ -1057,6 +1091,8 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   pdata->passcounter = 0;
   pdata->is_ready = FALSE;
   pdata->gc_in_progress = FALSE;
+  pdata->reparse_exports_in_progress = FALSE;
+  pdata->waiting_for_exports = FALSE;
 
   return 0;
 }                               /* nfs_Init_worker_data */
@@ -1220,10 +1256,23 @@ void *worker_thread(void *IndexArg)
                index, pmydata->pending_request->nb_entry,
                pmydata->pending_request->nb_invalid);
       P(pmydata->mutex_req_condvar);
-      while(pmydata->pending_request->nb_entry == pmydata->pending_request->nb_invalid)
-        pthread_cond_wait(&(pmydata->req_condvar), &(pmydata->mutex_req_condvar));
+      while(pmydata->pending_request->nb_entry == pmydata->pending_request->nb_invalid 
+	    || pmydata->reparse_exports_in_progress == TRUE)
+	{
+	  /* block because someone is changing the exports list */
+	  if (pmydata->reparse_exports_in_progress == TRUE)
+	    {
+	      pmydata->waiting_for_exports = TRUE;
+	      P(pmydata->mutex_export_condvar);
+	      pthread_cond_wait(&(pmydata->export_condvar), &(pmydata->mutex_export_condvar));
+	      pmydata->waiting_for_exports = FALSE;
+	      V(pmydata->mutex_export_condvar);
+	    }
+	  /* block until there are requests to process in the queue */
+	  else
+	    pthread_cond_wait(&(pmydata->req_condvar), &(pmydata->mutex_req_condvar));
+	}
       LogDebug(COMPONENT_DISPATCH, "NFS WORKER #%d: Processing a new request", index);
-      
       V(pmydata->mutex_req_condvar);
 
       found = FALSE;

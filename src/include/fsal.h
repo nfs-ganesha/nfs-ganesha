@@ -368,6 +368,9 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
                                       char *fs_specific_options /* IN */
     );
 
+
+fsal_status_t FSAL_CleanUpExportContext(fsal_export_context_t * p_export_context);
+
 fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context  /* OUT  */
     );
 
@@ -896,6 +899,10 @@ typedef struct fsal_functions__
   fsal_status_t(*fsal_buildexportcontext) (fsal_export_context_t * p_export_context,    /* OUT */
                                            fsal_path_t * p_export_path, /* IN */
                                            char *fs_specific_options /* IN */ );
+
+  /* FSAL_CleanUpExportContent */
+  fsal_status_t(*fsal_cleanupexportcontext) (fsal_export_context_t * p_export_context);
+
 
   /* FSAL_InitClientContext */
   fsal_status_t(*fsal_initclientcontext) (fsal_op_context_t * p_thr_context);

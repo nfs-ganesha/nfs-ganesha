@@ -489,17 +489,42 @@ while (my $ligne=<STATS>)
             
       my $fn_index = 0;
       
-      while (  $reste =~ m/\|([^,]+),([^,]+),([^|]+)(.*)/ )
+      while (  $reste =~ m/\|([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^|]+)(.*)/ )
       {
         my $nb_tot = $1;
         my $nb_ok = $2;
         my $nb_dropp = $3;
-        $reste = $4;
+
+        my $tot_latency;
+        my $avg_latency;
+        my $min_latency;
+        my $max_latency;
+
+        if ( $vers == 3 )
+        {
+          $tot_latency = $4;
+          $avg_latency = $5;
+          $min_latency = $6;
+          $max_latency = $7;
+          $reste = $8;
+        }
+        else
+        {
+          $reste = $4;
+        }
         
         if ( $fn_index == 0 )
         {
           # print header the first time
-          printf( "%20s | %10s | %10s | %10s\n", "FUNCTION", "NB_CALLS", "OK", "DROPPED");
+          if ( $vers == 3 )
+          {
+            printf( "%20s | %10s | %10s | %10s | %10s | %10s | %10s | %10s\n", "FUNCTION", "NB_CALLS", "OK", "DROPPED",
+                    "TOT_LAT", "AVG", "MIN", "MAX" );
+          }
+          else
+          {
+            printf( "%20s | %10s | %10s | %10s\n", "FUNCTION", "NB_CALLS", "OK", "DROPPED" );
+          }
         }
         
         if ( $vers == 2 )
@@ -509,8 +534,8 @@ while (my $ligne=<STATS>)
         }
         elsif ( $vers == 3 )
         {
-          printf( "%20s | %10d | %10d | %10d \n", $nfs3_fn_names[$fn_index],
-                   $nb_tot, $nb_ok, $nb_dropp );
+          printf( "%20s | %10d | %10d | %10d | %10d | %10d | %10d | %10d \n", $nfs3_fn_names[$fn_index],
+                   $nb_tot, $nb_ok, $nb_dropp, $tot_latency, $avg_latency, $min_latency, $max_latency );
         }
         elsif ( $vers == 4 )
         {

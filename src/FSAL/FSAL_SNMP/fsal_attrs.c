@@ -60,14 +60,14 @@ fsal_status_t SNMPFSAL_getattrs(snmpfsal_handle_t * filehandle, /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
 
   /* don't call GET request on directory */
-  if(filehandle->object_type_reminder == FSAL_NODETYPE_LEAF && filehandle->oid_len != 0)
+  if(filehandle->data.object_type_reminder == FSAL_NODETYPE_LEAF && filehandle->data.oid_len != 0)
     {
       query_desc.request_type = SNMP_MSG_GET;
 
       TakeTokenFSCall();
 
       /* call to snmpget */
-      rc = IssueSNMPQuery(p_context, filehandle->oid_tab, filehandle->oid_len,
+      rc = IssueSNMPQuery(p_context, filehandle->data.oid_tab, filehandle->data.oid_len,
                           &query_desc);
 
       ReleaseTokenFSCall();
@@ -91,8 +91,8 @@ fsal_status_t SNMPFSAL_getattrs(snmpfsal_handle_t * filehandle, /* IN */
       mib_node = GetMIBNode(p_context, filehandle, TRUE);
 
     }                           /* endif not root  */
-  else if(filehandle->object_type_reminder != FSAL_NODETYPE_ROOT
-          && filehandle->oid_len != 0)
+  else if(filehandle->data.object_type_reminder != FSAL_NODETYPE_ROOT
+          && filehandle->data.oid_len != 0)
     {
       /* retrieve the associated MIB node (can be null) */
       mib_node = GetMIBNode(p_context, filehandle, TRUE);

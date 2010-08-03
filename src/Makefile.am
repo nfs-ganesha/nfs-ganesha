@@ -37,7 +37,7 @@ SUBDIRS += example-fuse
 endif
 
 DOCDIRS = Cache_inode ConfigParsing File_Content File_Content_Policy HashTable IdMapper LRU Log MainNFSD NFS_Protocols SemN StuffAlloc shell support \
-          FSAL/FSAL_HPSS FSAL/FSAL_POSIX FSAL/FSAL_PROXY FSAL/FSAL_SNMP FSAL/FSAL_FUSE \
+          FSAL/FSAL_HPSS FSAL/FSAL_POSIX FSAL/FSAL_PROXY FSAL/FSAL_SNMP FSAL/FSAL_FUSE FSAL/FSAL_ZFS \
           MFSL/MFSL_NULL MFSL/MFSL_ASYNC MFSL/MFSL_PROXY_RPCSECGSS
 
 new: clean all
@@ -102,7 +102,7 @@ srpm: nfs-ganesha.spec dist rpmdirs
 
 else  
 rpm: nfs-ganesha.spec remove_hpss rpmdirs
-	rpmbuild $(RPM_DB_ARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
+	rpmbuild  $(RPM_DB_ARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
 
 srpm: nfs-ganesha.spec remove_hpss rpmdirs
 	rpmbuild $(RPM_DB_ARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
@@ -124,7 +124,8 @@ EXTRA_DIST=nfs-ganesha.spec           \
            nfs-ganesha.gpfs.init      \
            nfs-ganesha.hpss.init      \
            nfs-ganesha.proxy.init     \
-           nfs-ganesha.snmp.init        
+           nfs-ganesha.snmp.init      \
+           nfs-ganesha.zfs.init
 
 pkgconfigdir=$(libdir)/pkgconfig
 if USE_FSAL_FUSE

@@ -88,8 +88,8 @@ fsal_status_t SNMPFSAL_BuildExportContext(snmpfsal_export_context_t * p_export_c
 
       /* get the subtree */
       sub_tree =
-          FSAL_GetTree(p_export_context->root_handle.oid_tab,
-                       p_export_context->root_handle.oid_len, tree_head, FALSE);
+          FSAL_GetTree(p_export_context->root_handle.data.oid_tab,
+                       p_export_context->root_handle.data.oid_len, tree_head, FALSE);
 
       if(sub_tree == NULL)
         Return(ERR_FSAL_NOENT, snmp_errno, INDEX_FSAL_BuildExportContext);
@@ -97,7 +97,7 @@ fsal_status_t SNMPFSAL_BuildExportContext(snmpfsal_export_context_t * p_export_c
       /* if it has some childs or the object is unknown, consider it has a node */
       if((sub_tree->child_list != NULL) || (sub_tree->type == TYPE_OTHER))
         {
-          p_export_context->root_handle.object_type_reminder = FSAL_NODETYPE_NODE;
+          p_export_context->root_handle.data.object_type_reminder = FSAL_NODETYPE_NODE;
         }
       else
         {
@@ -129,6 +129,20 @@ fsal_status_t SNMPFSAL_BuildExportContext(snmpfsal_export_context_t * p_export_c
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 
+}
+
+
+/**
+ * FSAL_CleanUpExportContext :
+ * this will clean up and state in an export that was created during
+ * the BuildExportContext phase.  For many FSALs this may be a noop.
+ *
+ * \param p_export_context (in, gpfsfsal_export_context_t)
+ */
+
+fsal_status_t SNMPFSAL_CleanUpExportContext(snmpfsal_export_context_t * p_export_context) 
+{
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
 }
 
 fsal_status_t SNMPFSAL_InitClientContext(snmpfsal_op_context_t * p_thr_context)

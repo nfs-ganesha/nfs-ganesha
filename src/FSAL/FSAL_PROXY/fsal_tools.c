@@ -512,6 +512,7 @@ fsal_status_t PROXYFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_
   out_parameter->fs_specific_info.srv_timeout = 25;     /* RPC Client timeout          */
   out_parameter->fs_specific_info.srv_sendsize = FSAL_PROXY_SEND_BUFFER_SIZE;   /* Default Buffer Send Size    */
   out_parameter->fs_specific_info.srv_recvsize = FSAL_PROXY_RECV_BUFFER_SIZE;   /* Default Buffer Send Size    */
+  out_parameter->fs_specific_info.use_privileged_client_port = FALSE;   /* No privileged port by default */
 
   out_parameter->fs_specific_info.active_krb5 = FALSE;  /* No RPCSEC_GSS by default */
   strncpy(out_parameter->fs_specific_info.local_principal, "(no principal set)", MAXNAMLEN);    /* Principal is nfs@<host>  */
@@ -968,6 +969,10 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
       else if(!STRCMP(key_name, "NFS_RecvSize"))
         {
           out_parameter->fs_specific_info.srv_recvsize = (unsigned int)atoi(key_value);
+        }
+      else if(!STRCMP(key_name, "Use_Privileged_Client_Port"))
+        {
+           out_parameter->fs_specific_info.use_privileged_client_port = StrToBoolean( key_value ) ;
         }
       else if(!STRCMP(key_name, "Retry_SleepTime"))
         {

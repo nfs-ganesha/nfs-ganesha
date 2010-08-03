@@ -102,10 +102,15 @@ semaphore_t sem_fs_calls;
 static pthread_key_t key_stats;
 static pthread_once_t once_key = PTHREAD_ONCE_INIT;
 
+static void free_pthread_specific_stats(void *buff)
+{
+  Mem_Free(buff);
+}
+
 /* init keys */
 static void init_keys(void)
 {
-  if(pthread_key_create(&key_stats, NULL) == -1)
+  if(pthread_key_create(&key_stats, free_pthread_specific_stats) == -1)
     DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_KEY_CREATE, errno);
 
   return;

@@ -19,8 +19,8 @@
 void BuildRootHandle(snmpfsal_handle_t * p_hdl)
 {
   memset(p_hdl, 0, sizeof(snmpfsal_handle_t));
-  p_hdl->oid_len = 0;
-  p_hdl->object_type_reminder = FSAL_NODETYPE_ROOT;
+  p_hdl->data.oid_len = 0;
+  p_hdl->data.object_type_reminder = FSAL_NODETYPE_ROOT;
 }
 
 int ParseSNMPPath(char *in_path, snmpfsal_handle_t * out_handle)
@@ -28,9 +28,9 @@ int ParseSNMPPath(char *in_path, snmpfsal_handle_t * out_handle)
   if(!in_path || !out_handle)
     return ERR_FSAL_FAULT;
 
-  out_handle->oid_len = MAX_OID_LEN;
+  out_handle->data.oid_len = MAX_OID_LEN;
 
-  if(!snmp_parse_oid(in_path, out_handle->oid_tab, &out_handle->oid_len))
+  if(!snmp_parse_oid(in_path, out_handle->data.oid_tab, &out_handle->data.oid_len))
     return ERR_FSAL_NOENT;
 
   return ERR_FSAL_NO_ERROR;
@@ -208,11 +208,11 @@ struct tree *GetMIBNode(snmpfsal_op_context_t * p_context, snmpfsal_handle_t * p
     return NULL;
 
   /* SNMP root "." has no proper tree node */
-  if(p_handle->object_type_reminder == FSAL_NODETYPE_ROOT || p_handle->oid_len == 0)
+  if(p_handle->data.object_type_reminder == FSAL_NODETYPE_ROOT || p_handle->data.oid_len == 0)
     return NULL;
 
   /* in the other cases, get the node from the export context  */
-  return FSAL_GetTree(p_handle->oid_tab, p_handle->oid_len,
+  return FSAL_GetTree(p_handle->data.oid_tab, p_handle->data.oid_len,
                       p_context->export_context->root_mib_tree, return_nearest_parent);
 }
 
@@ -225,12 +225,12 @@ struct tree *GetMIBChildList(snmpfsal_op_context_t * p_context,
     return NULL;
 
   /* root's child pointer is the whole MIB tree */
-  if(p_handle->object_type_reminder == FSAL_NODETYPE_ROOT || p_handle->oid_len == 0)
+  if(p_handle->data.object_type_reminder == FSAL_NODETYPE_ROOT || p_handle->data.oid_len == 0)
     return p_context->export_context->root_mib_tree;    /* it should be the tree retruned by read_all_mibs */
 
   /* retrieve object associated subtree, and return its childs  */
   obj_tree =
-      FSAL_GetTree(p_handle->oid_tab, p_handle->oid_len,
+      FSAL_GetTree(p_handle->data.oid_tab, p_handle->data.oid_len,
                    p_context->export_context->root_mib_tree, FALSE);
 
   if(obj_tree == NULL)
@@ -257,7 +257,7 @@ int HasSNMPChilds(snmpfsal_op_context_t * p_context, snmpfsal_handle_t * p_handl
   int rc;
 
   req_desc.request_type = SNMP_MSG_GETNEXT;
-  rc = IssueSNMPQuery(p_context, p_handle->oid_tab, p_handle->oid_len, &req_desc);
+  rc = IssueSNMPQuery(p_context, p_handle->data.oid_tab, p_handle->data.oid_len, &req_desc);
 
   if(rc != SNMPERR_SUCCESS && snmp2fsal_error(rc) != ERR_FSAL_NOENT)
     return -1;
@@ -269,7 +269,7 @@ int HasSNMPChilds(snmpfsal_op_context_t * p_context, snmpfsal_handle_t * p_handl
     return 0;                   /* no childs, return 0 */
 
   /* it is a root node if getnext returned a child of it */
-  return IsSNMPChild(p_handle->oid_tab, p_handle->oid_len,
+  return IsSNMPChild(p_handle->data.oid_tab, p_handle->data.oid_len,
                      p_context->snmp_response->variables->name,
                      p_context->snmp_response->variables->name_length);
 

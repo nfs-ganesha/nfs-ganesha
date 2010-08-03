@@ -1,4 +1,29 @@
+# define standard rpm macros
+%define nil                    %{!?nil}
+%define defined()      %{expand:%%{?%{1}:1}%%{!?%{1}:0}}
+%define undefined()    %{expand:%%{?%{1}:0}%%{!?%{1}:1}}
+%define with()         %{expand:%%{?with_%{1}:1}%%{!?with_%{1}:0}}
+%define without()      %{expand:%%{?with_%{1}:0}%%{!?with_%{1}:1}}
+%define bcond_with()           %{expand:%%{?_with_%{1}:%%global with_%{1} 1}}
+%define bcond_without()        %{expand:%%{!?_without_%{1}:%%global with_%{1} 1}}
+####################################
+# define 'with' conditions to be used
+### %bcond_with lustre
+### %bcond_with hsm
+### %bcond_with mysql
+### %bcond_with sherpa
+####################################
+
+# @todo : macro's example
+### %if %{with lustre}
+### %if %{defined lversion}
+### %define toto lustre-%{lversion}
+### %endif
+### %endif 
+
+
 %define _with_@FS_NAME@ 1
+%define _with_sharedfsal@SHARED_FSAL_PKG@ 1
 
 Name: @PACKAGE@ 
 Version: @VERSION@ 
@@ -20,8 +45,6 @@ BuildRequires:  mysql-libs >= 5.0
 # because we are packaging a module
 BuildRequires: kernel == 2.6.18-194.el5
 %endif
-BuildRequires:  net-snmp-libs >= 5.1
-BuildRequires:  net-snmp-devel >= 5.1
 BuildRequires: flex
 BuildRequires: bison
 BuildRequires: gcc
@@ -61,23 +84,9 @@ It comes with various backend modules to support different file systems
 and namespaces. This package provides support for NFS-GANESHA as a PROXY.
 %endif
 
-%if %{?_with_lustre:1}%{!?_lustre:0}
-%package lustre
-Summary: The NFS-GANESHA server compiled for using the LUSTRE interface 
-Group: Applications/System
-Requires: %{name}-common = %{version}-%{release}
-
-%description lustre
-NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various backend modules to support different file systems
-and namespaces. This package provides support for GANESHA using the LUSTRE
-interface.
-%endif
-
-
 %if %{?_with_xfs:1}%{!?_with_xfs:0}
 %package xfs
-Summary: The NFS-GANESHA server compiled as a NFS gateway to SNMP. 
+Summary: The NFS-GANESHA server compiled as a NFS gateway to XFS.
 Group: Applications/System
 Requires: xfsprogs
 BuildRequires: xfsprogs-devel xfsprogs-qa-devel
@@ -86,7 +95,8 @@ Requires: %{name}-common = %{version}-%{release}
 %description xfs
 NFS-GANESHA is a NFS Server running in user space with a large cache.
 It comes with various backend modules to support different file systems
-and namespaces. This package provides support for NFS-GANESHA used on top on XFS.
+and namespaces. This package provides support for NFS-GANESHA used on top of XFS.
+
 %endif
 
 %if %{?_with_gpfs:1}%{!?_with_gpfs:0}
@@ -98,7 +108,7 @@ Requires: %{name}-common = %{version}-%{release}
 %description gpfs
 NFS-GANESHA is a NFS Server running in user space with a large cache.
 It comes with various backend modules to support different file systems
-and namespaces. This package provides support for NFS-GANESHA used on top on GPFS.
+and namespaces. This package provides support for NFS-GANESHA used on top of GPFS.
 %endif
 
 %if %{?_with_posix:1}%{!?_with_posix:0}
@@ -137,8 +147,10 @@ interface.
 %package snmp
 Summary: The NFS-GANESHA server compiled as a NFS gateway to SNMP. 
 Group: Applications/System
-Requires: net-snmp >= 5.1 
-Requires: lm_sensors-devel >= 2.10 
+Requires: net-snmp >= 5.1
+Requires: lm_sensors-devel >= 2.10
+BuildRequires: net-snmp-libs >= 5.1
+BuildRequires: net-snmp-devel >= 5.1
 Requires: %{name}-common = %{version}-%{release}
 
 %description snmp
@@ -185,6 +197,30 @@ It comes with various backend modules to support different file systems
 and namespaces. This package provides support for NFS-GANESHA used with HPSS.
 %endif
 
+
+%if %{?_with_zfs:1}%{!?_with_zfs:0}
+%package zfs
+Summary: The NFS-GANESHA server compiled as a NFS gateway to ZFS.
+Group: Applications/System
+Requires: libzfswrap
+BuildRequires: libzfswrap-devel
+Requires: %{name}-common = %{version}-%{release}
+
+%description zfs
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various backend modules to support different file systems
+and namespaces. This package provides support for NFS-GANESHA used on top of ZFS.
+%endif
+
+%if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
+%package fsal-@FS_NAME@
+Summary: The NFS-GANESHA's FSAL dedicated to @FS_NAME@, provided as a shared object 
+Group: Applications/System
+Requires: %{name}-common = %{version}-%{release}
+
+%description fsal-@FS_NAME@
+This package contains a FSAL library compiled as a shared object. It can be loaded dynamically in a FSAL-less NFS-GANESHA daemon
+%endif
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -244,9 +280,17 @@ install -m 644 config_samples/snmp.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
 install -m 755 nfs-ganesha.hpss.init                           $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.hpss
 %endif
+%if %{?_with_zfs:1}%{!?_with_zfs:0}
+install -m 755 nfs-ganesha.zfs.init                            $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.zfs
+%endif
 install -m 644 config_samples/hosts.ganesha                    $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 config_samples/uidgid_mapfile.ganesha           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 755 tools/ganestat.pl                               $RPM_BUILD_ROOT%{_bindir}
+
+%if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
+rm -f $RPM_BUILD_ROOT%{_libdir}/libfsal@FS_NAME@.la
+rm -f $RPM_BUILD_ROOT%{_libdir}/libfsal@FS_NAME@.a
+%endif
 
 mkdir -p  $RPM_BUILD_ROOT%{_datadir}/%{name}
 install -m 644 ganesha.vim     $RPM_BUILD_ROOT%{_datadir}/%{name}
@@ -368,6 +412,21 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/ganesha/hpss.ganesha*
 %endif
 
+%if %{?_with_zfs:1}%{!?_with_zfs:0}
+%files zfs
+%defattr(-,root,root,-)
+%{_bindir}/zfs.ganesha.*
+%{_bindir}/zfs.ganeshell
+%{_sysconfdir}/init.d/nfs-ganesha.zfs
+%endif
+
+%if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
+%files fsal-@FS_NAME@
+%defattr(-,root,root,-)
+%{_libdir}/libfsal@FS_NAME@.so*
+%endif
+
+
 %if %{?_with_proxy:1}%{!?_with_proxy:0}
 %post proxy
 chkconfig --add nfs-ganesha.proxy
@@ -401,6 +460,11 @@ chkconfig --add nfs-ganesha.snmp
 
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
 %post
+%endif
+
+%if %{?_with_zfs:1}%{!?_with_zfs:0}
+%post zfs
+chkconfig --add nfs-ganesha.zfs
 %endif
 
 %if %{?_with_fuse:1}%{!?_with_fuse:0}
