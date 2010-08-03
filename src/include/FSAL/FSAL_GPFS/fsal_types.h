@@ -219,12 +219,17 @@ typedef struct
 } gpfsfs_specific_initinfo_t;
 
 /**< directory cookie */
-typedef struct
-{
+typedef union {
+ struct
+ {
   off_t cookie;
+ } data ;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_COOKIE_T_SIZE];
+#endif
 } gpfsfsal_cookie_t;
 
-static const fsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
+// static const fsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
 
 typedef struct
 {
@@ -236,10 +241,10 @@ typedef struct
 typedef struct
 {
   int fd;
-  fsal_op_context_t context;    /* credential for accessing the directory */
+  gpfsfsal_op_context_t context;    /* credential for accessing the directory */
   fsal_path_t path;
   unsigned int dir_offset;
-  fsal_handle_t handle;
+  gpfsfsal_handle_t handle;
 } gpfsfsal_dir_t;
 
 typedef struct fsal_file__

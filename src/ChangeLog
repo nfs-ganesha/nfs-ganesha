@@ -370,4 +370,11 @@
         - pNFS/LAYOUT_FILES works with multiple Data Server
 
 1.0.1   -
+        - New FSAL model: FSAL modules can now be compile as shared object and
+	  can be loaded at runtime
+	- Add the capability to build a "FSAL-less" daemon that loads FSAL
+  	  shared object by using the dlopen function.
+	- Add a brand new FSAL to support ZFS (the FSAL_ZFS)
+	- FSAL_PROXY: the embedded client now can allocate a tcp socket on a
+	  privileged port to contact the "proxyfied" server
 `	

@@ -140,6 +140,8 @@ fsal_status_t LUSTREFSAL_BuildExportContext(lustrefsal_export_context_t * p_expo
                                             fsal_path_t * p_export_path,        /* IN */
                                             char *fs_specific_options /* IN */ );
 
+fsal_status_t LUSTREFSAL_CleanUpExportContext(lustrefsal_export_context_t * p_export_context);
+
 fsal_status_t LUSTREFSAL_InitClientContext(lustrefsal_op_context_t * p_thr_context);
 
 fsal_status_t LUSTREFSAL_GetClientContext(lustrefsal_op_context_t * p_thr_context,      /* IN/OUT  */

@@ -143,10 +143,12 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
   int cpt = 0;
   entry4 *piter_entry = NULL;
   entry4 tabentry4[FSAL_READDIR_SIZE];
-  char tabentry4name[FSAL_READDIR_SIZE][MAXNAMLEN];
+  //char tabentry4name[FSAL_READDIR_SIZE][MAXNAMLEN];
+  char * tabentry4name = NULL ;
   uint32_t tabentry4bitmap[FSAL_READDIR_SIZE][2];
   struct timeval timeout = { 25, 0 };
-  fsal_proxy_internal_fattr_readdir_t tabentry4attr[FSAL_READDIR_SIZE];
+  //fsal_proxy_internal_fattr_readdir_t tabentry4attr[FSAL_READDIR_SIZE];
+  fsal_proxy_internal_fattr_readdir_t * tabentry4attr = NULL ;
 #define FSAL_READDIR_NB_OP_ALLOC 2
   nfs_argop4 argoparray[FSAL_READDIR_NB_OP_ALLOC];
   nfs_resop4 resoparray[FSAL_READDIR_NB_OP_ALLOC];
@@ -158,6 +160,15 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
   if(!dir_descriptor || !pdirent || !end_position || !nb_entries || !end_of_dir)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
+  if( ( tabentry4name = Mem_Alloc( FSAL_READDIR_SIZE * MAXNAMLEN ) ) == NULL )
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
+
+  if( ( tabentry4attr =
+	 (fsal_proxy_internal_fattr_readdir_t *)Mem_Alloc( sizeof( fsal_proxy_internal_fattr_readdir_t ) * FSAL_READDIR_SIZE ) ) == NULL )
+   {
+     Mem_Free( tabentry4name ) ;
+     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
+   }
 #ifdef _DEBUG_FSAL
   printf("---> Readdir Offset=%llu sizeof(entry4)=%u sizeof(fsal_dirent_t)=%u \n",
          start_position, sizeof(entry4), sizeof(fsal_dirent_t));
@@ -196,7 +207,7 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
     {
       fsal_internal_proxy_setup_readdir_fattr(&tabentry4attr[i]);
 
-      tabentry4[i].name.utf8string_val = tabentry4name[i];
+      tabentry4[i].name.utf8string_val = (char *)(tabentry4name+i*MAXNAMLEN*sizeof(char) ) ;
       tabentry4[i].name.utf8string_len = MAXNAMLEN;
 
       tabentry4[i].attrs.attr_vals.attrlist4_val = (char *)&(tabentry4attr[i]);
@@ -211,8 +222,11 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
 
   /* >> Call your filesystem lookup function here << */
   if(fsal_internal_proxy_extract_fh(&nfs4fh, &dir_descriptor->fhandle) == FALSE)
+   {
+    Mem_Free( tabentry4attr ) ;
+    Mem_Free( tabentry4name ) ;
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
-
+   }
   /** @todo : use NFS4_OP_VERIFY to implement a cache validator, BUGAZOMEU */
   COMPOUNDV4_ARG_ADD_OP_PUTFH(argnfs4, nfs4fh);
   COMPOUNDV4_ARG_ADD_OP_READDIR(argnfs4, start_position.data, nbreaddir,
@@ -225,6 +239,8 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
     {
       ReleaseTokenFSCall();
 
+      Mem_Free( tabentry4attr ) ;
+      Mem_Free( tabentry4name ) ;
       Return(ERR_FSAL_IO, rc, INDEX_FSAL_readdir);
     }
   ReleaseTokenFSCall();
@@ -259,12 +275,18 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
           FSAL_CLEAR_MASK(pdirent[cpt].attributes.asked_attributes);
           FSAL_SET_MASK(pdirent[cpt].attributes.asked_attributes, FSAL_ATTR_RDATTR_ERR);
 
+          Mem_Free( tabentry4attr ) ;
+          Mem_Free( tabentry4name ) ;
           Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
         }
 
       if(fsal_internal_proxy_fsal_utf8_2_name(&(pdirent[cpt].name),
                                               &(piter_entry->name)) == FALSE)
-        Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
+        {
+          Mem_Free( tabentry4attr ) ;
+          Mem_Free( tabentry4name ) ;
+          Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
+        }
 
       /* Link the entries together */
       pdirent[cpt].nextentry = NULL;    /* Will be overwritten if there is an entry behind, stay NULL if not */
@@ -284,6 +306,8 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
   /* The number of entries to be returned */
   *nb_entries = cpt;
 
+  Mem_Free( tabentry4attr ) ;
+  Mem_Free( tabentry4name ) ;
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
 
 }

@@ -159,6 +159,8 @@ fsal_status_t PROXYFSAL_BuildExportContext(proxyfsal_export_context_t * p_export
                                            fsal_path_t * p_export_path, /* IN */
                                            char *fs_specific_options /* IN */ );
 
+fsal_status_t PROXYFSAL_CleanUpExportContext(proxyfsal_export_context_t * p_export_context);
+
 fsal_status_t PROXYFSAL_InitClientContext(proxyfsal_op_context_t * p_thr_context);
 
 fsal_status_t PROXYFSAL_GetClientContext(proxyfsal_op_context_t * p_thr_context,        /* IN/OUT  */

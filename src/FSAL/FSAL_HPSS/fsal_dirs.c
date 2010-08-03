@@ -14,6 +14,7 @@
 #include "config.h"
 #endif
 
+#include "stuff_alloc.h"
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
@@ -133,11 +134,15 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
   unsigned32 bool_getattr_in;
   unsigned32 bool_eod_out;
   u_signed64 last_offset_out;
-  ns_DirEntry_t outbuff[FSAL_READDIR_SIZE];
+  //ns_DirEntry_t outbuff[FSAL_READDIR_SIZE];
+  ns_DirEntry_t * outbuff = NULL ;
 
   /* sanity checks */
 
   if(!dir_descriptor || !pdirent || !end_position || !nb_entries || !end_of_dir)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
+
+  if( ( outbuff = ( ns_DirEntry_t * )Mem_Alloc( sizeof(  ns_DirEntry_t ) * FSAL_READDIR_SIZE ) ) == NULL )
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
   /* handle provides : suppattr, type, fileid */
@@ -191,7 +196,10 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
       ReleaseTokenFSCall();
 
       if(rc < 0)
-        Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_readdir);
+       {
+         Mem_Free( outbuff ) ;
+         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_readdir);
+       }
       else
         returned = rc;
 
@@ -279,6 +287,7 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
   *nb_entries = current_nb_entries;
   *end_of_dir = (bool_eod_out ? TRUE : FALSE);
 
+  Mem_Free( outbuff ) ;
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir); /* @todo badly set fsal_log ? */
 }
 

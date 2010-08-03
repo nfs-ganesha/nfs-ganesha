@@ -121,6 +121,7 @@ typedef unsigned long long int u_int64_t;
 #define INDEX_FSAL_link_access          47
 #define INDEX_FSAL_create_access        48
 #define INDEX_FSAL_getlock	        49
+#define INDEX_FSAL_CleanUpExportContext   50
 
 /* number of FSAL functions */
 #define FSAL_NB_FUNC  50
@@ -137,7 +138,7 @@ static const char *fsal_function_names[] = {
   "FSAL_rmdir", "FSAL_CleanObjectResources", "FSAL_open_by_name", "FSAL_open_by_fileid",
   "FSAL_ListXAttrs", "FSAL_GetXAttrValue", "FSAL_SetXAttrValue", "FSAL_GetXAttrAttrs",
   "FSAL_close_by_fileid", "FSAL_setattr_access", "FSAL_merge_attrs", "FSAL_rename_access",
-  "FSAL_unlink_access", "FSAL_link_access", "FSAL_create_access", "FSAL_getlock"
+  "FSAL_unlink_access", "FSAL_link_access", "FSAL_create_access", "FSAL_getlock", "FSAL_CleanUpExportContext"
 };
 
 typedef unsigned long long fsal_u64_t;    /**< 64 bit unsigned integer.     */
@@ -188,8 +189,7 @@ typedef enum fsal_nodetype__
  * --------------*/
 
 /* prefered readdir size */
-//#define FSAL_READDIR_SIZE 2048
-#define FSAL_READDIR_SIZE 128
+#define FSAL_READDIR_SIZE 2048
 
 #define FSAL_MAX_NAME_LEN   NAME_MAX
 #define FSAL_MAX_PATH_LEN   PATH_MAX
@@ -240,6 +240,8 @@ static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 #include "FSAL/FSAL_XFS/fsal_types.h"
 #elif defined ( _USE_GPFS )
 #include "FSAL/FSAL_GPFS/fsal_types.h"
+#elif defined ( _USE_ZFS )
+#include "FSAL/FSAL_ZFS/fsal_types.h"
 #elif defined ( _USE_TEMPLATE ) /* <- place here your own define */
 #include "FSAL/FSAL_TEMPLATE/fsal_types.h"
 #else                           /* no _USE_<filesystem> flag ! */

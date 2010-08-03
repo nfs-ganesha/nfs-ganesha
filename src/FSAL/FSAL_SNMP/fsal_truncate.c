@@ -64,7 +64,7 @@ fsal_status_t SNMPFSAL_truncate(snmpfsal_handle_t * filehandle, /* IN */
 
   /* >> check object type if it's stored into the filehandle << */
 
-  if(filehandle->object_type_reminder != FSAL_NODETYPE_LEAF)
+  if(filehandle->data.object_type_reminder != FSAL_NODETYPE_LEAF)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_truncate);
     }

@@ -55,6 +55,11 @@ fsal_status_t WRAP_LUSTREFSAL_BuildExportContext(fsal_export_context_t * p_expor
                                        p_export_path, fs_specific_options);
 }
 
+fsal_status_t WRAP_LUSTREFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context)
+{
+  return LUSTREFSAL_CleanUpExportContext((lustrefsal_export_context_t *) p_export_context);
+}
+
 fsal_status_t WRAP_LUSTREFSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 {
   return LUSTREFSAL_InitClientContext((lustrefsal_op_context_t *) p_thr_context);
@@ -665,6 +670,7 @@ fsal_functions_t fsal_lustre_functions = {
   .fsal_getattrs = WRAP_LUSTREFSAL_getattrs,
   .fsal_setattrs = WRAP_LUSTREFSAL_setattrs,
   .fsal_buildexportcontext = WRAP_LUSTREFSAL_BuildExportContext,
+  .fsal_cleanupexportcontext = WRAP_LUSTREFSAL_CleanUpExportContext,
   .fsal_initclientcontext = WRAP_LUSTREFSAL_InitClientContext,
   .fsal_getclientcontext = WRAP_LUSTREFSAL_GetClientContext,
   .fsal_create = WRAP_LUSTREFSAL_create,

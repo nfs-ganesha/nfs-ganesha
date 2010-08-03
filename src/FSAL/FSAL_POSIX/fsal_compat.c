@@ -56,6 +56,11 @@ fsal_status_t WRAP_POSIXFSAL_BuildExportContext(fsal_export_context_t * p_export
                                       p_export_path, fs_specific_options);
 }
 
+fsal_status_t WRAP_POSIXFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context)
+{
+  return POSIXFSAL_CleanUpExportContext((posixfsal_export_context_t *) p_export_context);
+}
+
 fsal_status_t WRAP_POSIXFSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 {
   return POSIXFSAL_InitClientContext((posixfsal_op_context_t *) p_thr_context);
@@ -660,6 +665,7 @@ fsal_functions_t fsal_xfs_functions = {
   .fsal_getattrs = WRAP_POSIXFSAL_getattrs,
   .fsal_setattrs = WRAP_POSIXFSAL_setattrs,
   .fsal_buildexportcontext = WRAP_POSIXFSAL_BuildExportContext,
+  .fsal_cleanupexportcontext = WRAP_POSIXFSAL_CleanUpExportContext,
   .fsal_initclientcontext = WRAP_POSIXFSAL_InitClientContext,
   .fsal_getclientcontext = WRAP_POSIXFSAL_GetClientContext,
   .fsal_create = WRAP_POSIXFSAL_create,

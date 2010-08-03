@@ -385,6 +385,7 @@ typedef struct nfs_param__
 #ifndef _NO_BUDDY_SYSTEM
   /* buddy parameter for workers and dispatcher */
   buddy_parameter_t buddy_param_worker;
+  buddy_parameter_t buddy_param_admin;
   buddy_parameter_t buddy_param_tcp_mgr;
 #endif
 
@@ -474,8 +475,17 @@ typedef struct nfs_worker_data__
   hash_table_t *ht;
   hash_table_t *ht_ip_stats;
   pthread_mutex_t request_pool_mutex;
+
+  /* Used for blocking when request queue is empty. */
   pthread_cond_t req_condvar;
   pthread_mutex_t mutex_req_condvar;
+
+  /* Used for blocking when the export list is being replaced. */
+  bool_t waiting_for_exports;
+  bool_t reparse_exports_in_progress;
+  pthread_cond_t export_condvar;
+  pthread_mutex_t mutex_export_condvar;
+
   nfs_worker_stat_t stats;
   unsigned int passcounter;
   struct sockaddr_storage hostaddr;
@@ -484,6 +494,16 @@ typedef struct nfs_worker_data__
   unsigned int current_xid;
   fsal_op_context_t thread_fsal_context;
 } nfs_worker_data_t;
+
+typedef struct nfs_admin_data_
+{
+  pthread_cond_t admin_condvar;
+  pthread_mutex_t mutex_admin_condvar;
+  bool_t reload_exports;
+  char *config_path;
+  hash_table_t *ht;
+  nfs_worker_data_t *workers_data;
+} nfs_admin_data_t;
 
 /* flush thread data */
 typedef struct nfs_flush_thread_data__
@@ -510,6 +530,7 @@ void *file_content_gc_thread(void *IndexArg);
 void *nfs_file_content_flush_thread(void *flush_data_arg);
 
 int nfs_Init_svc(void);
+int nfs_Init_admin_data(nfs_admin_data_t * pdata);
 int nfs_Init_worker_data(nfs_worker_data_t * pdata);
 int nfs_Init_request_data(nfs_request_data_t * pdata);
 int nfs_Init_gc_counter(void);
@@ -536,6 +557,11 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam);
 #endif                          /* _USE_NFS4_1 */
 
 int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht);
+
+/* Config reparsing routines */
+void admin_replace_exports();
+int CleanUpExportContext(fsal_export_context_t * p_export_context);
+exportlist_t *RemoveExportEntry(exportlist_t * exportEntry);
 
 /* Tools */
 unsigned int get_rpc_xid(struct svc_req *reqp);

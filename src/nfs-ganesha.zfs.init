@@ -1,0 +1,108 @@
+#!/bin/bash
+# init file for ganesha
+#
+# chkconfig: - 50 50
+# description: GANESHA NFS Daemon
+#
+# processname: /usr/bin/zfs.ganesha.nfsd
+# config: /etc/ganesha/zfs.ganesha.nfsd.conf
+# pidfile: /var/run/snmpd
+### BEGIN INIT INFO
+# Provides: nfs-ganesha.zfs
+# Required-Start: $local_fs $network
+# Required-Stop: $local_fs $network
+# Should-Start:
+# Should-Stop:
+# Default-Start:
+# Default-Stop:
+# Short-Description: start and stop nfs-ganesha/PROXY daemon
+# Description: NFS-GANESHA
+### END INIT INFO
+
+
+# source function library
+. /etc/init.d/functions
+
+PATHPROG=/usr/bin/zfs.ganesha.nfsd 
+
+# Default HPSS options
+LOGFILE=/var/log/zfs.ganesha.nfsd.log
+CONFFILE=/etc/ganesha/zfs.ganesha.nfsd.conf
+
+OPTIONS="-d -L $LOGFILE -f $CONFFILE -N NIV_EVENT"
+RETVAL=0
+prog="zfs.ganesha.nfsd"
+
+start() {
+        echo -n $"Starting $prog: "
+        if [ $UID -ne 0 ]; then
+                RETVAL=1
+                failure
+        else
+                daemon $PATHPROG $OPTIONS
+                RETVAL=$?
+                [ $RETVAL -eq 0 ] && touch /var/lock/subsys/zfs.ganesha.nfsd
+        fi;
+        echo 
+        return $RETVAL
+}
+
+stop() {
+        echo -n $"Stopping $prog: "
+        if [ $UID -ne 0 ]; then
+                RETVAL=1
+                failure
+        else
+                killproc $PATHPROG
+                RETVAL=$?
+                [ $RETVAL -eq 0 ] && rm -f  /var/lock/subsys/zfs.ganesha.nfsd
+
+        fi;
+        echo
+        return $RETVAL
+}
+
+reload(){
+        echo -n $"Reloading $prog: "
+        killproc $PATHPROG -HUP
+        RETVAL=$?
+        echo
+        return $RETVAL
+}
+
+restart(){
+	stop
+	start
+}
+
+condrestart(){
+    [ -e /var/lock/subsys/zfs.ganesha.nfsd ] && restart
+    return 0
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+        ;;
+  reload)
+	reload
+        ;;
+  condrestart)
+	condrestart
+	;;
+  status)
+        status $prog
+	RETVAL=$?
+        ;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart|condrestart|reload}"
+	RETVAL=1
+esac
+
+exit $RETVAL

@@ -105,15 +105,15 @@ netsnmp_variable_list *GetNextResponse(fsal_op_context_t * p_context);
  * this macro copy a full or partial oid (for a FSAL handle or cookie)
  */
 #define FSAL_OID_DUP( _p_hdl_or_cookie_ , _src_oid_tab_, _oid_len_ ) do {	\
-		memcpy( (_p_hdl_or_cookie_)->oid_tab, (_src_oid_tab_) , (_oid_len_) * sizeof(oid) ); \
-		(_p_hdl_or_cookie_)->oid_len = _oid_len_ ;			\
+		memcpy( (_p_hdl_or_cookie_)->data.oid_tab, (_src_oid_tab_) , (_oid_len_) * sizeof(oid) ); \
+		(_p_hdl_or_cookie_)->data.oid_len = _oid_len_ ;			\
 	} while ( 0 )
 
 /**
  * this macro increments the last oid of an snmp path
  */
 #define FSAL_OID_INC( _p_hdl_or_cookie_ ) \
-		((_p_hdl_or_cookie_)->oid_tab[ (_p_hdl_or_cookie_)->oid_len - 1 ] ++)
+		((_p_hdl_or_cookie_)->data.oid_tab[ (_p_hdl_or_cookie_)->data.oid_len - 1 ] ++)
 
 /**
  * this function compares the <count> first oids of the 2 SNMP paths

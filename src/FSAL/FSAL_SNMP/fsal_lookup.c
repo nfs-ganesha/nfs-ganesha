@@ -125,7 +125,7 @@ fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      
 
       /* we check the parent type stored into the handle. */
 
-      switch (parent_directory_handle->object_type_reminder)
+      switch (parent_directory_handle->data.object_type_reminder)
         {
         case FSAL_NODETYPE_NODE:
         case FSAL_NODETYPE_ROOT:
@@ -144,12 +144,12 @@ fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      
 
       if(!FSAL_namecmp(p_filename, (fsal_name_t *) & FSAL_DOT)
          || (!FSAL_namecmp(p_filename, (fsal_name_t *) & FSAL_DOT_DOT)
-             && parent_directory_handle->oid_len == 0))
+             && parent_directory_handle->data.oid_len == 0))
         {
-          FSAL_OID_DUP(object_handle, parent_directory_handle->oid_tab,
-                       parent_directory_handle->oid_len);
-          object_handle->object_type_reminder =
-              parent_directory_handle->object_type_reminder;
+          FSAL_OID_DUP(object_handle, parent_directory_handle->data.oid_tab,
+                       parent_directory_handle->data.oid_len);
+          object_handle->data.object_type_reminder =
+              parent_directory_handle->data.object_type_reminder;
 
           if(object_attributes)
             {
@@ -172,17 +172,17 @@ fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      
       /* lookup up for parent entry  */
       if(!FSAL_namecmp(p_filename, (fsal_name_t *) & FSAL_DOT_DOT))
         {
-          printf("lookup for parent (oid len = %u)\n", parent_directory_handle->oid_len);
+          printf("lookup for parent (oid len = %u)\n", parent_directory_handle->data.oid_len);
 
-          FSAL_OID_DUP(object_handle, parent_directory_handle->oid_tab,
-                       parent_directory_handle->oid_len - 1);
+          FSAL_OID_DUP(object_handle, parent_directory_handle->data.oid_tab,
+                       parent_directory_handle->data.oid_len - 1);
 
-          if(object_handle->oid_len == 0)
-            object_handle->object_type_reminder = FSAL_NODETYPE_ROOT;
+          if(object_handle->data.oid_len == 0)
+            object_handle->data.object_type_reminder = FSAL_NODETYPE_ROOT;
           else
-            object_handle->object_type_reminder = FSAL_NODETYPE_NODE;
+            object_handle->data.object_type_reminder = FSAL_NODETYPE_NODE;
 
-          printf("parent handle has (oid len = %u)\n", object_handle->oid_len);
+          printf("parent handle has (oid len = %u)\n", object_handle->data.oid_len);
 
           if(object_attributes)
             {
@@ -219,16 +219,16 @@ fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      
 #endif
 
               /* we found it ! we fill the handle using the parent handle and adding the subid value */
-              FSAL_OID_DUP(object_handle, parent_directory_handle->oid_tab,
-                           parent_directory_handle->oid_len);
-              object_handle->oid_len++;
-              object_handle->oid_tab[object_handle->oid_len - 1] = curr_child->subid;
+              FSAL_OID_DUP(object_handle, parent_directory_handle->data.oid_tab,
+                           parent_directory_handle->data.oid_len);
+              object_handle->data.oid_len++;
+              object_handle->data.oid_tab[object_handle->data.oid_len - 1] = curr_child->subid;
 
               /* if it has some childs, we are sure its a node */
               if(curr_child->child_list)
                 {
                   type_ok = TRUE;
-                  object_handle->object_type_reminder = FSAL_NODETYPE_NODE;
+                  object_handle->data.object_type_reminder = FSAL_NODETYPE_NODE;
                 }
               /* else, indetermined type */
 
@@ -258,10 +258,10 @@ fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      
             Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_lookup);
 
           /* build the handle from parsed value */
-          FSAL_OID_DUP(object_handle, parent_directory_handle->oid_tab,
-                       parent_directory_handle->oid_len);
-          object_handle->oid_len++;
-          object_handle->oid_tab[object_handle->oid_len - 1] = subid;
+          FSAL_OID_DUP(object_handle, parent_directory_handle->data.oid_tab,
+                       parent_directory_handle->data.oid_len);
+          object_handle->data.oid_len++;
+          object_handle->data.oid_tab[object_handle->data.oid_len - 1] = subid;
         }
 
       /* type has not been set using the MIB */
@@ -275,7 +275,7 @@ fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      
           TakeTokenFSCall();
 
           /* call to snmpget */
-          rc = IssueSNMPQuery(p_context, object_handle->oid_tab, object_handle->oid_len,
+          rc = IssueSNMPQuery(p_context, object_handle->data.oid_tab, object_handle->data.oid_len,
                               &query_desc);
 
           ReleaseTokenFSCall();
@@ -298,7 +298,7 @@ fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      
                 case 0:
                   Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_lookup);
                 case 1:
-                  object_handle->object_type_reminder = FSAL_NODETYPE_NODE;
+                  object_handle->data.object_type_reminder = FSAL_NODETYPE_NODE;
                   break;
                 default:
                   DisplayLogJdLevel(fsal_log, NIV_CRIT,
@@ -309,7 +309,7 @@ fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      
           else
             {
               /* this is a typed object, so its a leaf */
-              object_handle->object_type_reminder = FSAL_NODETYPE_LEAF;
+              object_handle->data.object_type_reminder = FSAL_NODETYPE_LEAF;
             }
         }
 
@@ -322,7 +322,7 @@ fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      
       if(object_attributes)
         {
           rc = snmp2fsal_attributes(object_handle,
-                                    (object_handle->object_type_reminder ==
+                                    (object_handle->data.object_type_reminder ==
                                      FSAL_NODETYPE_LEAF ? p_context->snmp_response->
                                      variables : NULL), curr_child, object_attributes);
 

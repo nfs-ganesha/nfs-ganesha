@@ -307,11 +307,11 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
     {
 #ifdef _DEBUG_FSAL
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Performing chown(%s, %d,%d)",
+      /*      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Performing chown(%s, %d,%d)",
                         fsalpath.path, FSAL_TEST_MASK(attrs.asked_attributes,
                                                       FSAL_ATTR_OWNER) ? (int)attrs.owner
                         : -1, FSAL_TEST_MASK(attrs.asked_attributes,
-                                             FSAL_ATTR_GROUP) ? (int)attrs.group : -1);
+			FSAL_ATTR_GROUP) ? (int)attrs.group : -1);*/
 #endif
 
       TakeTokenFSCall();

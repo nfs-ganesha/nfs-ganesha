@@ -183,6 +183,8 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
                                          fsal_path_t * p_export_path,   /* IN */
                                          char *fs_specific_options /* IN */ );
 
+fsal_status_t GPFSFSAL_CleanUpExportContext(gpfsfsal_export_context_t * p_export_context);
+
 fsal_status_t GPFSFSAL_InitClientContext(gpfsfsal_op_context_t * p_thr_context);
 
 fsal_status_t GPFSFSAL_GetClientContext(gpfsfsal_op_context_t * p_thr_context,    /* IN/OUT  */

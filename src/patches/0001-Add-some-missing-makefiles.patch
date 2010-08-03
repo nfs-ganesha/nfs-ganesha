@@ -1,0 +1,54 @@
+From 63c828f96e352682f6aa4c9596e951f12fff763c Mon Sep 17 00:00:00 2001
+From: Remi Duraffort <duraffortr@ocre.cea.fr>
+Date: Thu, 15 Jul 2010 13:45:26 +0200
+Subject: [PATCH 1/2] Add some missing makefiles.
+
+---
+ src/configure.ac                           |    2 ++
+ src/include/FSAL/FSAL_GHOST_FS/Makefile.am |    2 ++
+ src/include/FSAL/FSAL_TEMPLATE/Makefile.am |    2 ++
+ src/include/FSAL/Makefile.am               |    3 +--
+ 4 files changed, 7 insertions(+), 2 deletions(-)
+ create mode 100644 src/include/FSAL/FSAL_GHOST_FS/Makefile.am
+ create mode 100644 src/include/FSAL/FSAL_TEMPLATE/Makefile.am
+
+diff --git a/src/configure.ac b/src/configure.ac
+index 037a584..5c45ca3 100644
+--- a/src/configure.ac
++++ b/src/configure.ac
+@@ -648,6 +648,8 @@ AC_CONFIG_FILES([include/Makefile
+                  include/FSAL/FSAL_LUSTRE/Makefile
+                  include/FSAL/FSAL_XFS/Makefile
+                  include/FSAL/FSAL_GPFS/Makefile
++                 include/FSAL/FSAL_TEMPLATE/Makefile
++                 include/FSAL/FSAL_GHOST_FS/Makefile
+                  include/MFSL/Makefile
+                  include/MFSL/MFSL_NULL/Makefile
+                  include/MFSL/MFSL_ASYNC/Makefile
+diff --git a/src/include/FSAL/FSAL_GHOST_FS/Makefile.am b/src/include/FSAL/FSAL_GHOST_FS/Makefile.am
+new file mode 100644
+index 0000000..d447a56
+--- /dev/null
++++ b/src/include/FSAL/FSAL_GHOST_FS/Makefile.am
+@@ -0,0 +1,2 @@
++noinst_HEADERS = fsal_types.h ghost_fs.h
++
+diff --git a/src/include/FSAL/FSAL_TEMPLATE/Makefile.am b/src/include/FSAL/FSAL_TEMPLATE/Makefile.am
+new file mode 100644
+index 0000000..e3520fd
+--- /dev/null
++++ b/src/include/FSAL/FSAL_TEMPLATE/Makefile.am
+@@ -0,0 +1,2 @@
++noinst_HEADERS = fsal_types.h
++
+diff --git a/src/include/FSAL/Makefile.am b/src/include/FSAL/Makefile.am
+index 3aa08cb..f51242f 100644
+--- a/src/include/FSAL/Makefile.am
++++ b/src/include/FSAL/Makefile.am
+@@ -1,2 +1 @@
+-SUBDIRS = FSAL_HPSS  FSAL_POSIX  FSAL_PROXY  FSAL_SNMP FSAL_FUSELIKE FSAL_LUSTRE FSAL_XFS FSAL_GPFS
+-
++SUBDIRS = FSAL_FUSELIKE FSAL_GHOST_FS FSAL_GPFS FSAL_HPSS FSAL_LUSTRE FSAL_POSIX FSAL_PROXY FSAL_SNMP FSAL_TEMPLATE FSAL_XFS
+-- 
+1.6.1.3
+

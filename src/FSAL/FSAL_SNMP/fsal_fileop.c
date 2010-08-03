@@ -136,7 +136,7 @@ fsal_status_t SNMPFSAL_open(snmpfsal_handle_t * filehandle,     /* IN */
   /* check if this is a file if the information
    * is stored into the handle */
 
-  if(filehandle->object_type_reminder != FSAL_NODETYPE_LEAF)
+  if(filehandle->data.object_type_reminder != FSAL_NODETYPE_LEAF)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
     }
@@ -260,8 +260,8 @@ fsal_status_t SNMPFSAL_read(snmpfsal_file_t * file_descriptor,  /* IN */
 
   TakeTokenFSCall();
 
-  rc = IssueSNMPQuery(file_descriptor->p_context, file_descriptor->file_handle.oid_tab,
-                      file_descriptor->file_handle.oid_len, &query_desc);
+  rc = IssueSNMPQuery(file_descriptor->p_context, file_descriptor->file_handle.data.oid_tab,
+                      file_descriptor->file_handle.data.oid_len, &query_desc);
 
   ReleaseTokenFSCall();
 
@@ -357,8 +357,8 @@ fsal_status_t SNMPFSAL_write(snmpfsal_file_t * file_descriptor, /* IN */
   query_desc.request_type = SNMP_MSG_GET;
 
   TakeTokenFSCall();
-  rc = IssueSNMPQuery(file_descriptor->p_context, file_descriptor->file_handle.oid_tab,
-                      file_descriptor->file_handle.oid_len, &query_desc);
+  rc = IssueSNMPQuery(file_descriptor->p_context, file_descriptor->file_handle.data.oid_tab,
+                      file_descriptor->file_handle.data.oid_len, &query_desc);
   ReleaseTokenFSCall();
 
   /* convert error code in case of error */
@@ -401,8 +401,8 @@ fsal_status_t SNMPFSAL_write(snmpfsal_file_t * file_descriptor, /* IN */
 
   TakeTokenFSCall();
 
-  rc = IssueSNMPQuery(file_descriptor->p_context, file_descriptor->file_handle.oid_tab,
-                      file_descriptor->file_handle.oid_len, &query_desc);
+  rc = IssueSNMPQuery(file_descriptor->p_context, file_descriptor->file_handle.data.oid_tab,
+                      file_descriptor->file_handle.data.oid_len, &query_desc);
 
   ReleaseTokenFSCall();
 

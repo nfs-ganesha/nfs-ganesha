@@ -85,6 +85,8 @@ fsal_status_t SNMPFSAL_BuildExportContext(snmpfsal_export_context_t * p_export_c
                                           fsal_path_t * p_export_path,  /* IN */
                                           char *fs_specific_options /* IN */ );
 
+fsal_status_t SNMPFSAL_CleanUpExportContext(snmpfsal_export_context_t * p_export_context);
+
 fsal_status_t SNMPFSAL_InitClientContext(snmpfsal_op_context_t * p_thr_context);
 
 fsal_status_t SNMPFSAL_GetClientContext(snmpfsal_op_context_t * p_thr_context,  /* IN/OUT  */
