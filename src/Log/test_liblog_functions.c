@@ -57,13 +57,15 @@ int Test1(void *arg)
 
   /* Init d'un journal */
   strcpy(voie.path, "/dev/tty");
-  AddLogStreamJd(&jd, V_FILE, voie, LOG_MAJOR, INF);
+  AddLogStreamJd(&jd, V_FILE, voie, GANESHA_LOG_MAJOR, INF);
 
   voie.fd = fileno(stderr);
-  AddLogStreamJd(&jd, V_FD, voie, LOG_CRITICAL, INF);
+  AddLogStreamJd(&jd, V_FD, voie, GANESHA_LOG_CRITICAL, INF);
 
   voie.flux = stderr;
-  AddLogStreamJd(&jd, V_STREAM, voie, LOG_EVENT, INF);
+  AddLogStreamJd(&jd, V_STREAM, voie, GANESHA_LOG_EVENT, INF);
+
+  AddLogStreamJd(&jd, V_SYSLOG, voie, GANESHA_LOG_MAJOR, INF);
 
   DisplayLogFlux(stdout, "%s", "Essai numero 1");
   DisplayLogFlux(stdout, "%s", "Essai numero 2");
@@ -77,8 +79,8 @@ int Test1(void *arg)
   DisplayLogString(tampon, "%s --> %d", "essai", 10);
   printf("%s", tampon);
 
-  DisplayLogJdLevel(jd, LOG_MAJOR, "Essai sur un jd: MAJOR");
-  DisplayLogJdLevel(jd, LOG_CRITICAL, "Essai sur un jd: CRIT");
+  DisplayLogJdLevel(jd, GANESHA_LOG_MAJOR, "Essai sur un jd: MAJOR");
+  DisplayLogJdLevel(jd, GANESHA_LOG_CRITICAL, "Essai sur un jd: CRIT");
 
   printf("------------------------------------------------------\n");
 
@@ -122,7 +124,7 @@ void *run_Test1(void *arg)
 
   rc_long = (unsigned long long)Test1(arg);
 
-  return (void *)rc_long;
+  return NULL ;
 }
 
 static char usage[] = "usage:\n\ttest_liblog STD|MT";
