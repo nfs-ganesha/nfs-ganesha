@@ -1,27 +1,3 @@
-# define standard rpm macros
-%define nil                    %{!?nil}
-%define defined()      %{expand:%%{?%{1}:1}%%{!?%{1}:0}}
-%define undefined()    %{expand:%%{?%{1}:0}%%{!?%{1}:1}}
-%define with()         %{expand:%%{?with_%{1}:1}%%{!?with_%{1}:0}}
-%define without()      %{expand:%%{?with_%{1}:0}%%{!?with_%{1}:1}}
-%define bcond_with()           %{expand:%%{?_with_%{1}:%%global with_%{1} 1}}
-%define bcond_without()        %{expand:%%{!?_without_%{1}:%%global with_%{1} 1}}
-####################################
-# define 'with' conditions to be used
-### %bcond_with lustre
-### %bcond_with hsm
-### %bcond_with mysql
-### %bcond_with sherpa
-####################################
-
-# @todo : macro's example
-### %if %{with lustre}
-### %if %{defined lversion}
-### %define toto lustre-%{lversion}
-### %endif
-### %endif 
-
-
 %define _with_@FS_NAME@ 1
 %define _with_sharedfsal@SHARED_FSAL_PKG@ 1
 
@@ -129,7 +105,7 @@ and namespaces. This package provides support for GANESHA using the POSIX
 interface.
 %endif
 
-%if %{?_with_lustre:1}%{!?_lustre:0}
+%if %{?_with_lustre:1}%{!?_with_lustre:0}
 %package lustre
 Summary: The NFS-GANESHA server compiled for using the LUSTRE interface 
 Group: Applications/System
@@ -142,6 +118,16 @@ and namespaces. This package provides support for GANESHA using the LUSTRE
 interface.
 %endif
 
+%if %{?_with_dynfsal:1}%{!?_with_dynfsal:0}
+%package dynfsal
+Summary: The NFS-GANESHA server compiled in a FSAL-les way. 
+Group: Applications/System
+Requires: %{name}-common = %{version}-%{release}
+
+%description dynfsal
+The NFS-GANESHA server compiled in a FSAL-les way. 
+This requires the use of FSAL compiled as shared objects. FSALs are loaded dynamically at runtime using the dlopen() function.
+%endif 
 
 %if %{?_with_snmp:1}%{!?_with_snmp:0}
 %package snmp
@@ -273,6 +259,10 @@ rm -f $RPM_BUILD_ROOT/lib/modules/*/modules*
 install -m 755 nfs-ganesha.lustre.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.lustre
 install -m 644 config_samples/lustre.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
+%if %{?_with_dynfsal:1}%{!?_with_dynfsal:0}
+install -m 755 nfs-ganesha.dynfsal.init                         $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.dynfsal
+install -m 644 config_samples/dynfsal.ganesha.nfsd.conf         $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+%endif
 %if %{?_with_snmp:1}%{!?_with_snmp:0}
 install -m 755 nfs-ganesha.snmp.init                           $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.snmp
 install -m 644 config_samples/snmp.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
@@ -352,7 +342,6 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 
-
 %if %{?_with_lustre:1}%{!?_with_lustre:0}
 %files lustre
 %defattr(-,root,root,-)
@@ -362,6 +351,14 @@ rm -rf $RPM_BUILD_ROOT
 %config %{_sysconfdir}/ganesha/lustre.ganesha*
 %endif
 
+%if %{?_with_dynfsal:1}%{!?_with_dynfsal:0}
+%files dynfsal
+%defattr(-,root,root,-)
+%{_bindir}/dynfsal.ganesha.*
+%{_bindir}/dynfsal.ganeshell
+%{_sysconfdir}/init.d/nfs-ganesha.dynfsal
+%config %{_sysconfdir}/ganesha/dynfsal.ganesha*
+%endif
 
 %if %{?_with_posix:1}%{!?_with_posix:0}
 %files posix 
