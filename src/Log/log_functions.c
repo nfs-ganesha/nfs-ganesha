@@ -70,6 +70,7 @@ static char nom_programme[1024];
 static char nom_host[256];
 static char nom_fichier_log[PATH_LEN] = "/tmp/logfile";
 static int niveau_debug = 2;
+static int syslog_opened = 0 ;
 
 /*
  * Variables specifiques aux threads.
@@ -459,6 +460,32 @@ int DisplayLogString(char *chaine, char *format, ...)
   return rc;
 
 }                               /* DisplayLogString */
+
+
+
+static int DisplayLogSyslog_valist( char * format, va_list arguments )
+{
+  if( !syslog_opened )
+   {
+     openlog( "nfs-ganesha", LOG_PID, LOG_USER ) ;
+     syslog_opened = 1 ;
+   }
+
+  vsyslog( LOG_ERR, format, arguments );
+  return 1 ;
+} /* DisplayLogSyslog_valist */
+
+static int DisplayLogSyslog( char * format, ... )
+{
+  va_list arguments ;
+  int rc ;
+
+  va_start( arguments, format );
+  rc = DisplayLogSyslog_valist( format, arguments ) ;
+  va_end( arguments ) ;
+
+  return rc ;
+} /* DisplayLogSyslog_valist */
 
 static int DisplayLogFd_valist(int fd, char *format, va_list arguments)
 {
@@ -958,6 +985,10 @@ int DisplayLogJdLevel(log_t jd, int level, char *format, ...)
               DisplayLogFd_valist(pvoie->desc.fd, format, arguments);
               break;
 
+            case V_SYSLOG:
+	      DisplayLogSyslog_valist( format, arguments ) ;
+              break ;
+
             default:
               break;
             }                   /* switch */
@@ -1001,6 +1032,10 @@ int DisplayLogJd(log_t jd, char *format, ...)
         case V_FD:
           DisplayLogFd_valist(pvoie->desc.fd, format, arguments);
           break;
+
+        case V_SYSLOG:
+	  DisplayLogSyslog_valist( format, arguments ) ;
+          break ;
 
         default:
           break;

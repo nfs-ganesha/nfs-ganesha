@@ -377,4 +377,6 @@
 	- Add a brand new FSAL to support ZFS (the FSAL_ZFS)
 	- FSAL_PROXY: the embedded client now can allocate a tcp socket on a
 	  privileged port to contact the "proxyfied" server
+        - FSAL shared objects are provided as precompiled rpms
+	- Log layer now uses syslog as a possible log stream 
 `	

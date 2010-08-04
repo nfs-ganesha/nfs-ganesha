@@ -355,7 +355,7 @@ AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "LUSTRE")
 AM_CONDITIONAL(USE_FSAL_XFS,      test "$FSAL" = "XFS")
 AM_CONDITIONAL(USE_FSAL_GPFS,     test "$FSAL" = "GPFS")
 AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
-AM_CONDITIONAL(SHARED_FSAL,       test "$FSAL" = "DLOPEN")
+AM_CONDITIONAL(SHARED_FSAL,       test "$FSAL" = "DYNFSAL")
 AM_CONDITIONAL(USE_FSAL_ZFS,      test "$FSAL" = "ZFS")
 
 # NFSv4.0 NFSv4.1 switch
@@ -478,13 +478,13 @@ case $FSAL in
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_XFS/libfsalxfs.la"
 		FS_NAME="xfs"
 		;;
-        DLOPEN)
+        DYNFSAL)
                	AC_DEFINE( _USE_SHARED_FSAL, 1, [enable shared FSAL] )
-		AM_CONDITIONAL( SHARED_FSAL, test "$FSAL" = "DLOPEN" )
+		AM_CONDITIONAL( SHARED_FSAL, test "$FSAL" = "DYNFSAL" )
 		FSAL_CFLAGS=-rdynamic
                 FSAL_LDFLAGS="-ldl"
 		FSAL_LIB=
-		FS_NAME="dlopen"
+		FS_NAME="dynfsal"
                 ;;
 	GPFS)
 		AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
