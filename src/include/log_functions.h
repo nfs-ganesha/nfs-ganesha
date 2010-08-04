@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <sys/param.h>
+#include <syslog.h>
 
 #ifndef LIBLOG_NO_THREAD
 #include <errno.h>
@@ -504,10 +505,10 @@ char *ReturnLevelInt(int level);
 
 /* A present les types et les fonctions pour les descripteurs de journaux */
 typedef enum type_voie
-{ V_STREAM = 1, V_BUFFER, V_FILE, V_FD } type_log_stream_t;
+{ V_STREAM = 1, V_BUFFER, V_FILE, V_FD, V_SYSLOG } type_log_stream_t;
 
 typedef enum niveau
-{ LOG_RIEN = 0, LOG_MAJOR = 1, LOG_CRITICAL = 2, LOG_EVENT = 3, LOG_DEBUG = 4
+{ GANESHA_LOG_RIEN = 0, GANESHA_LOG_MAJOR = 1, GANESHA_LOG_CRITICAL = 2, GANESHA_LOG_EVENT = 3, GANESHA_LOG_DEBUG = 4
 } niveau_t;
 
 typedef enum aiguillage
