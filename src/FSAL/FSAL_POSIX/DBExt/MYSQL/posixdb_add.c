@@ -78,7 +78,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
   snprintf(query, 4096, "SELECT handleid, handlets, nlink, ctime, ftype "
            "FROM Handle "
            "WHERE deviceid=%llu AND inode=%llu "
-           "FOR UPDATE", p_object_info->devid, p_object_info->inode);
+           "FOR UPDATE", (unsigned long long)p_object_info->devid, (unsigned long long)p_object_info->inode);
 
   st = db_exec_sql(p_conn, query, &res);
   if(FSAL_POSIXDB_IS_ERROR(st))
