@@ -120,6 +120,9 @@ typedef struct nfs_request_stat_item__
   unsigned int total;
   unsigned int success;
   unsigned int dropped;
+  unsigned int tot_latency;
+  unsigned int min_latency;
+  unsigned int max_latency;
 } nfs_request_stat_item_t;
 
 typedef struct nfs_request_stat__
@@ -146,7 +149,13 @@ typedef struct nfs_request_stat__
   nfs_request_stat_item_t stat_req_rquota2[RQUOTA_NB_COMMAND];
 } nfs_request_stat_t;
 
+typedef struct nfs_request_latency_stat__
+{
+  unsigned int latency;
+} nfs_request_latency_stat_t;
+
 void nfs_stat_update(nfs_stat_type_t type,
-                     nfs_request_stat_t * pstat_req, struct svc_req *preq);
+                     nfs_request_stat_t * pstat_req, struct svc_req *preq,
+                     nfs_request_latency_stat_t * lstat_req);
 
 #endif                          /* _NFS_STAT_H */

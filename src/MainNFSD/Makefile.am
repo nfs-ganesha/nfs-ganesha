@@ -41,7 +41,7 @@ STAT_SNMP_FILES = nfs_stats_snmp.c
 STAT_SNMP_LIB_FLAGS = ../snmp_adm/libsnmp_adm.la
 else
 STAT_SNMP_FILES =
-STAT_SNMP_LIB_FLAGS = 
+STAT_SNMP_LIB_FLAGS =
 endif
 
 if USE_FSAL_FUSE

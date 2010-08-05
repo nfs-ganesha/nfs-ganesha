@@ -327,6 +327,7 @@ int main(int argc, char *argv[])
     }
 
   /* Set the signal handler */
+  /*
   memset(&act_sigusr1, 0, sizeof(act_sigusr1));
   act_sigusr1.sa_flags = 0;
   act_sigusr1.sa_handler = action_sigusr1;
@@ -337,6 +338,7 @@ int main(int argc, char *argv[])
     }
   else
     DisplayLogLevel(NIV_EVENT, "Signal SIGUSR1 (force flush) is ready to be used");
+  */
 
   /* Set the signal handler */
   memset(&act_sigterm, 0, sizeof(act_sigterm));
