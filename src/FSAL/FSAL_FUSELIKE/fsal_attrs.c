@@ -410,3 +410,30 @@ fsal_status_t FUSEFSAL_setattrs(fusefsal_handle_t * filehandle, /* IN */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_setattrs);
 
 }                               /* FSAL_setattrs */
+
+/**
+ * FSAL_getetxattrs:
+ * Get attributes for the object specified by its filehandle.
+ *
+ * \param filehandle (input):
+ *        The handle of the object to get parameters.
+ * \param cred (input):
+ *        Authentication context for the operation (user,...).
+ * \param object_attributes (mandatory input/output):
+ *        The retrieved attributes for the object.
+ *        As input, it defines the attributes that the caller
+ *        wants to retrieve (by positioning flags into this structure)
+ *        and the output is built considering this input
+ *        (it fills the structure according to the flags it contains).
+ *
+ * \return Major error codes :
+ *        - ERR_FSAL_NO_ERROR     (no error)
+ *        - Another error code if an error occured.
+ */
+fsal_status_t FUSEFSAL_getextattrs(fusefsal_handle_t * p_filehandle, /* IN */
+                                   fusefsal_op_context_t * p_context,        /* IN */
+                                   fsal_extattrib_list_t * p_object_attributes /* OUT */
+    )
+{
+   return ERR_FSAL_NOTSUPP ;
+} /* FUSEFSAL_getextattrs */

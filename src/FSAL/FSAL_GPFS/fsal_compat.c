@@ -649,6 +649,15 @@ fsal_status_t WRAP_GPFSFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,   
                                    (gpfsfsal_op_context_t *) p_context, xattr_name);
 }
 
+fsal_status_t WRAP_GPFSFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
+                                       fsal_op_context_t * p_context,        /* IN */
+                                       fsal_extattrib_list_t * p_object_attributes /* OUT */)
+{
+  return GPFSFSAL_getextattrs( (gpfsfsal_handle_t *)p_filehandle,
+                               (gpfsfsal_op_context_t *) p_context, p_object_attributes ) ;
+}
+
+
 fsal_functions_t fsal_gpfs_functions = {
   .fsal_access = WRAP_GPFSFSAL_access,
   .fsal_getattrs = WRAP_GPFSFSAL_getattrs,
@@ -723,6 +732,7 @@ fsal_functions_t fsal_gpfs_functions = {
   .fsal_setxattrvaluebyid = WRAP_GPFSFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = WRAP_GPFSFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = WRAP_GPFSFSAL_RemoveXAttrByName,
+  .fsal_getextattrs = WRAP_GPFSFSAL_getextattrs,
   .fsal_getfileno = GPFSFSAL_GetFileno
 };
 

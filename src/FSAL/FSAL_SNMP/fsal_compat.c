@@ -652,6 +652,14 @@ fsal_status_t WRAP_SNMPFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,   
                                     (snmpfsal_op_context_t *) p_context, xattr_name);
 }
 
+fsal_status_t WRAP_SNMPFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
+                                       fsal_op_context_t * p_context,        /* IN */
+                                       fsal_extattrib_list_t * p_object_attributes /* OUT */)
+{
+  return SNMPFSAL_getextattrs( (snmpfsal_handle_t *)p_filehandle,
+                               (snmpfsal_op_context_t *) p_context, p_object_attributes ) ;
+}
+
 fsal_functions_t fsal_snmp_functions = {
   .fsal_access = WRAP_SNMPFSAL_access,
   .fsal_getattrs = WRAP_SNMPFSAL_getattrs,
@@ -726,6 +734,7 @@ fsal_functions_t fsal_snmp_functions = {
   .fsal_setxattrvaluebyid = WRAP_SNMPFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = WRAP_SNMPFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = WRAP_SNMPFSAL_RemoveXAttrByName,
+  .fsal_getextattrs = WRAP_SNMPFSAL_getextattrs,
   .fsal_getfileno = SNMPFSAL_GetFileno
 };
 
