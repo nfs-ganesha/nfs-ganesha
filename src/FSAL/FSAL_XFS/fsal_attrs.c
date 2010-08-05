@@ -426,5 +426,40 @@ fsal_status_t XFSFSAL_getextattrs(xfsfsal_handle_t * p_filehandle, /* IN */
                                   fsal_extattrib_list_t * p_object_attributes /* OUT */
     )
 {
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_getextattrs);
+  fsal_status_t st ;
+  xfs_bstat_t bstat;
+  xfs_ino_t xfs_ino;
+  struct stat buffstat;
+  int fd = 0 ;
+
+  /* sanity checks.
+   * note : object_attributes is mandatory in FSAL_getattrs.
+   */
+  if(!p_filehandle || !p_context || !p_object_attributes)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
+
+  TakeTokenFSCall();
+  st = fsal_internal_handle2fd(p_context, p_filehandle, &fd, O_RDONLY);
+  ReleaseTokenFSCall();
+
+  if(FSAL_IS_ERROR(st))
+    ReturnStatus(st, INDEX_FSAL_getextattrs);
+
+  if( p_object_attributes->asked_attributes & FSAL_ATTR_GENERATION )
+   {
+     /* get file metadata */
+     xfs_ino = p_filehandle->data.inode ;
+     TakeTokenFSCall();
+     if(fsal_internal_get_bulkstat_by_inode(fd, &xfs_ino, &bstat) < 0)
+      {
+        close(fd);
+        ReleaseTokenFSCall();
+        ReturnCode(posix2fsal_error(errno), errno);
+      }
+     ReleaseTokenFSCall();
+
+     p_object_attributes->generation = bstat.bs_gen ;
+    }
+ 
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_getextattrs);
 } /* XFSFSAL_getextattrs */

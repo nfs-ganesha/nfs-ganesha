@@ -754,7 +754,7 @@ static void build_xfsfilehandle(xfs_filehandle_t * phandle,
   phandle->fh_ino = pxfs_bstat->bs_ino;
 }                               /* build_xfsfilehandle */
 
-static int get_bulkstat_by_inode(int fd, xfs_ino_t * p_ino, xfs_bstat_t * pxfs_bstat)
+int fsal_internal_get_bulkstat_by_inode(int fd, xfs_ino_t * p_ino, xfs_bstat_t * pxfs_bstat)
 {
   xfs_fsop_bulkreq_t bulkreq;
 
@@ -780,7 +780,7 @@ fsal_status_t fsal_internal_inum2handle(xfsfsal_op_context_t * p_context,
     ReturnCode(posix2fsal_error(errno), errno);
 
   xfs_ino = inum;
-  if(get_bulkstat_by_inode(fd, &xfs_ino, &bstat) < 0)
+  if(fsal_internal_get_bulkstat_by_inode(fd, &xfs_ino, &bstat) < 0)
     {
       close(fd);
       ReturnCode(posix2fsal_error(errno), errno);
