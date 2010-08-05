@@ -63,6 +63,7 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
       /* cannot read item */
       DisplayLog("SNMP_ADM: Cannot read item \"%s\" from configuration file",
                  CONF_SNMP_ADM_LABEL);
+      /* Expected to be a block */
       return ENOENT;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)

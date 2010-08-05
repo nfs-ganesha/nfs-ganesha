@@ -54,6 +54,25 @@ extern nfs_parameter_t nfs_param;
 extern time_t ServerBootTime;
 extern hash_table_t *ht_ip_stats[NB_MAX_WORKER_THREAD];
 
+void set_min_latency(nfs_request_stat_item_t *cur_stat, unsigned int val)
+{
+  if(val > 0)
+    {
+      if(val < cur_stat->min_latency)
+        {
+          cur_stat->min_latency = val;
+        }
+    }
+}
+
+void set_max_latency(nfs_request_stat_item_t *cur_stat, unsigned int val)
+{
+  if(val > cur_stat->max_latency)
+    {
+      cur_stat->max_latency = val;
+    }
+}
+
 void *stats_thread(void *addr)
 {
   int rc = 0;
@@ -83,6 +102,8 @@ void *stats_thread(void *addr)
   unsigned int total_pending_request;
   unsigned int average_pending_request;
   unsigned int len_pending_request = 0;
+
+  unsigned int avg_latency;
 
 #ifndef _NO_BUDDY_SYSTEM
   buddy_stats_t global_buddy_stat;
@@ -393,6 +414,12 @@ void *stats_thread(void *addr)
                       workers_data[i].stats.stat_req.stat_req_nfs3[j].success;
                   global_worker_stat.stat_req.stat_req_nfs3[j].dropped =
                       workers_data[i].stats.stat_req.stat_req_nfs3[j].dropped;
+                  global_worker_stat.stat_req.stat_req_nfs3[j].tot_latency =
+                      workers_data[i].stats.stat_req.stat_req_nfs3[j].tot_latency;
+                  global_worker_stat.stat_req.stat_req_nfs3[j].min_latency =
+                      workers_data[i].stats.stat_req.stat_req_nfs3[j].min_latency;
+                  global_worker_stat.stat_req.stat_req_nfs3[j].max_latency =
+                      workers_data[i].stats.stat_req.stat_req_nfs3[j].max_latency;
                 }
               else
                 {
@@ -402,6 +429,12 @@ void *stats_thread(void *addr)
                       workers_data[i].stats.stat_req.stat_req_nfs3[j].success;
                   global_worker_stat.stat_req.stat_req_nfs3[j].dropped +=
                       workers_data[i].stats.stat_req.stat_req_nfs3[j].dropped;
+                  global_worker_stat.stat_req.stat_req_nfs3[j].tot_latency +=
+                      workers_data[i].stats.stat_req.stat_req_nfs3[j].tot_latency;
+                  set_min_latency(&(global_worker_stat.stat_req.stat_req_nfs3[j]),
+                      workers_data[i].stats.stat_req.stat_req_nfs3[j].min_latency);
+                  set_max_latency(&(global_worker_stat.stat_req.stat_req_nfs3[j]),
+                      workers_data[i].stats.stat_req.stat_req_nfs3[j].max_latency);
                 }
             }
 
@@ -590,10 +623,25 @@ void *stats_thread(void *addr)
       fprintf(stats_file, "NFS V3 REQUEST,%s;%u", strdate,
               global_worker_stat.stat_req.nb_nfs3_req);
       for(j = 0; j < NFS_V3_NB_COMMAND; j++)
-        fprintf(stats_file, "|%u,%u,%u",
-                global_worker_stat.stat_req.stat_req_nfs3[j].total,
-                global_worker_stat.stat_req.stat_req_nfs3[j].success,
-                global_worker_stat.stat_req.stat_req_nfs3[j].dropped);
+	{
+          if(global_worker_stat.stat_req.stat_req_nfs3[j].total > 0)
+            {
+              avg_latency = (global_worker_stat.stat_req.stat_req_nfs3[j].tot_latency /
+              global_worker_stat.stat_req.stat_req_nfs3[j].total);
+            }
+          else
+            {
+              avg_latency = 0;
+            }
+          fprintf(stats_file, "|%u,%u,%u,%u,%u,%u,%u",
+                  global_worker_stat.stat_req.stat_req_nfs3[j].total,
+                  global_worker_stat.stat_req.stat_req_nfs3[j].success,
+                  global_worker_stat.stat_req.stat_req_nfs3[j].dropped,
+                  global_worker_stat.stat_req.stat_req_nfs3[j].tot_latency,
+                  avg_latency,
+                  global_worker_stat.stat_req.stat_req_nfs3[j].min_latency,
+                  global_worker_stat.stat_req.stat_req_nfs3[j].max_latency);
+        }
       fprintf(stats_file, "\n");
 
       fprintf(stats_file, "NFS V4 REQUEST,%s;%u", strdate,

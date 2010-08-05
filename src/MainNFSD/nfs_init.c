@@ -54,7 +54,7 @@
 
 #include "nfs_init.h"
 #include "stuff_alloc.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "fsal.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -151,7 +151,7 @@ int nfs_prereq_init(char *program_name, char *host_name, int debug_level, char *
       DisplayLog("NFS STARTUP: Memory manager could not be initialized");
       exit(1);
     }
-  DisplayLogLevel(NIV_DEBUG, "NFS STARTUP: Memory manager successfully initialized");
+  LogDebug(COMPONENT_INIT, "NFS STARTUP: Memory manager successfully initialized");
 
 #endif
 
@@ -584,7 +584,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
   rc = Buddy_load_parameter_from_conf(config_struct, &p_nfs_param->buddy_param_worker);
 
   if(rc == 0)
-    DisplayLogLevel(NIV_DEBUG,
+    LogDebug(COMPONENT_INIT,
                     "NFS STARTUP: Worker's Buddy parameters read from config file");
   else if(rc == BUDDY_ERR_ENOENT)
     DisplayLog("NFS STARTUP: No Buddy parameters found in config file, using default");
@@ -596,7 +596,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 
   rc = Buddy_load_parameter_from_conf(config_struct, &p_nfs_param->buddy_param_tcp_mgr);
   if(rc == 0)
-    DisplayLogLevel(NIV_DEBUG,
+    LogDebug(COMPONENT_INIT,
                     "NFS STARTUP: Tcp Mgr's Buddy parameters read from config file");
   else if(rc == BUDDY_ERR_ENOENT)
     DisplayLog("NFS STARTUP: No Buddy parameters found in config file, using default");
@@ -627,7 +627,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         }
     }
   else
-    DisplayLogLevel(NIV_DEBUG, "NFS STARTUP: FSAL parameters read from config file");
+    LogDebug(COMPONENT_INIT, "NFS STARTUP: FSAL parameters read from config file");
 
   /* Load FSAL configuration from parsed file */
   fsal_status =
@@ -645,7 +645,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         }
     }
   else
-    DisplayLogLevel(NIV_DEBUG,
+    LogDebug(COMPONENT_INIT,
                     "NFS STARTUP: FS comon configuration read from config file");
 
   /* Load FSAL configuration from parsed file */
@@ -664,7 +664,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         }
     }
   else
-    DisplayLogLevel(NIV_DEBUG,
+    LogDebug(COMPONENT_INIT,
                     "NFS STARTUP: FS specific configuration read from config file");
 
   /* Core parameters */
@@ -680,7 +680,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         DisplayLog
             ("NFS STARTUP: No core configuration found in config file, using default");
       else
-        DisplayLogLevel(NIV_DEBUG,
+        LogDebug(COMPONENT_INIT,
                         "NFS STARTUP: core configuration read from config file");
     }
 
@@ -699,7 +699,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         }
     }
   else
-    DisplayLogLevel(NIV_DEBUG, "NFS STARTUP: MFSL parameters read from config file");
+    LogDebug(COMPONENT_INIT, "NFS STARTUP: MFSL parameters read from config file");
 #endif                          /* _USE_MFSL */
 
   /* Workers parameters */
@@ -715,7 +715,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         DisplayLog
             ("NFS STARTUP: No workers configuration found in config file, using default");
       else
-        DisplayLogLevel(NIV_DEBUG,
+        LogDebug(COMPONENT_INIT,
                         "NFS STARTUP: workers configuration read from config file");
     }
 
@@ -733,7 +733,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         DisplayLog
             ("NFS STARTUP: No duplicate request hash table configuration found in config file, using default");
       else
-        DisplayLogLevel(NIV_DEBUG,
+        LogDebug(COMPONENT_INIT,
                         "NFS STARTUP: duplicate request hash table configuration read from config file");
     }
 
@@ -750,7 +750,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         DisplayLog
             ("NFS STARTUP: No IP/name configuration found in config file, using default");
       else
-        DisplayLogLevel(NIV_DEBUG,
+        LogDebug(COMPONENT_INIT,
                         "NFS STARTUP: IP/name configuration read from config file");
     }
 
@@ -769,7 +769,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         DisplayLog
             ("NFS STARTUP: No UID_MAPPER configuration found in config file, using default");
       else
-        DisplayLogLevel(NIV_DEBUG,
+        LogDebug(COMPONENT_INIT,
                         "NFS STARTUP: UID_MAPPER configuration read from config file");
     }
 
@@ -788,7 +788,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         DisplayLog
             ("NFS STARTUP: No GID_MAPPER configuration found in config file, using default");
       else
-        DisplayLogLevel(NIV_DEBUG,
+        LogDebug(COMPONENT_INIT,
                         "NFS STARTUP: GID_MAPPER configuration read from config file");
     }
 
@@ -805,7 +805,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         DisplayLog
             ("NFS STARTUP: No Client id configuration found in config file, using default");
       else
-        DisplayLogLevel(NIV_DEBUG,
+        LogDebug(COMPONENT_INIT,
                         "NFS STARTUP: Client id configuration read from config file");
     }
 
@@ -822,7 +822,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         DisplayLog
             ("NFS STARTUP: No state id configuration found in config file, using default");
       else
-        DisplayLogLevel(NIV_DEBUG,
+        LogDebug(COMPONENT_INIT,
                         "NFS STARTUP: state id configuration read from config file");
     }
 
@@ -840,7 +840,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         DisplayLog
             ("NFS STARTUP: No session id configuration found in config file, using default");
       else
-        DisplayLogLevel(NIV_DEBUG,
+        LogDebug(COMPONENT_INIT,
                         "NFS STARTUP: session id configuration read from config file");
     }
 
@@ -859,7 +859,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         DisplayLog
             ("NFS STARTUP: No pNFS configuration found in config file, using default");
       else
-        DisplayLogLevel(NIV_DEBUG,
+        LogDebug(COMPONENT_INIT,
                         "NFS STARTUP: pNFS configuration read from config file");
     }
 #endif                          /* _USE_PNFS */
@@ -880,7 +880,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         DisplayLog
             ("NFS STARTUP: No NFS/KRB5 configuration found in config file, using default");
       else
-        DisplayLogLevel(NIV_DEBUG,
+        LogDebug(COMPONENT_INIT,
                         "NFS STARTUP: NFS/KRB5 configuration read from config file");
     }
 
@@ -897,7 +897,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         DisplayLog
             ("NFS STARTUP: No NFSv4 specific configuration found in config file, using default");
       else
-        DisplayLogLevel(NIV_DEBUG,
+        LogDebug(COMPONENT_INIT,
                         "NFS STARTUP: NFSv4 specific configuration read from config file");
     }
 
@@ -918,7 +918,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         }
     }
   else
-    DisplayLogLevel(NIV_DEBUG,
+    LogDebug(COMPONENT_INIT,
                     "NFS STARTUP: Cache Inode Hash Table configuration read from config file");
 
   /* Cache inode parameters : Garbage collection policy */
@@ -938,7 +938,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         }
     }
   else
-    DisplayLogLevel(NIV_DEBUG,
+    LogDebug(COMPONENT_INIT,
                     "NFS STARTUP: Cache Inode Garbage Collection Policy configuration read from config file");
 
   /* Cache inode client parameters */
@@ -958,7 +958,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         }
     }
   else
-    DisplayLogLevel(NIV_DEBUG,
+    LogDebug(COMPONENT_INIT,
                     "NFS STARTUP: Cache Inode Client configuration read from config file");
 
   /* Data cache client parameters */
@@ -979,7 +979,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         }
     }
   else
-    DisplayLogLevel(NIV_DEBUG,
+    LogDebug(COMPONENT_INIT,
                     "NFS STARTUP: Cache Content Client configuration read from config file");
 
   if((cache_content_status =
@@ -998,7 +998,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         }
     }
   else
-    DisplayLogLevel(NIV_DEBUG,
+    LogDebug(COMPONENT_INIT,
                     "NFS STARTUP: File Content Garbage Collection Policy configuration read from config file");
 
 #ifdef _SNMP_ADM_ACTIVE
@@ -1009,7 +1009,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
     }
   else
     {
-      DisplayLogLevel(NIV_DEBUG,
+      LogDebug(COMPONENT_INIT,
                       "NFS STARTUP: snmp_adm configuration read from config file");
     }
 #endif                          /* _SNMP_ADM_ACTIVE */
@@ -1456,9 +1456,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       DisplayLog("NFS_INIT: Error while initializing worker gc counter");
       exit(1);
     }
-  DisplayLogLevel(NIV_DEBUG, "NFS_INIT: worker gc counter successfully initialized");
+  LogDebug(COMPONENT_INIT, "NFS_INIT: worker gc counter successfully initialized");
 
-  DisplayLogLevel(NIV_DEBUG, "Initializing workers data structure");
+  LogDebug(COMPONENT_INIT, "Initializing workers data structure");
 
   for(i = 0; i < nfs_param.core_param.nb_worker; i++)
     {
@@ -1551,7 +1551,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
       workers_data[i].ip_stats_pool = ip_stats_pool;
 
-      DisplayLogLevel(NIV_DEBUG, "NFS_INIT: worker data #%d successfully initialized", i);
+      LogDebug(COMPONENT_INIT, "NFS_INIT: worker data #%d successfully initialized", i);
     }                           /* for i */
 
   /* Admin initialisation */
@@ -1581,7 +1581,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #endif
 
   /* Creates the pseudo fs */
-  DisplayLogLevel(NIV_DEBUG, "NFS_INIT: Now building pseudo fs");
+  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building pseudo fs");
   if((rc = nfs4_ExportToPseudoFS(nfs_param.pexportlist)) != 0)
     {
       DisplayLog("NFS_INIT: Error %d while initializing NFSv4 pseudo file system", rc);
@@ -1591,7 +1591,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                   "NFS_INIT: NFSv4 pseudo file system successfully initialized");
 
   /* Init duplicate request cache */
-  DisplayLogLevel(NIV_DEBUG, "NFS_INIT: Now building duplicate request hash table cache");
+  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building duplicate request hash table cache");
   if((rc = nfs_Init_dupreq(nfs_param.dupreq_param)) != DUPREQ_SUCCESS)
     {
       DisplayLog
@@ -1603,7 +1603,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                   "NFS_INIT: duplicate request hash table cache successfully initialized");
 
   /* Init the IP/name cache */
-  DisplayLogLevel(NIV_DEBUG, "NFS_INIT: Now building IP/name cache");
+  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building IP/name cache");
   if(nfs_Init_ip_name(nfs_param.ip_name_param) != IP_NAME_SUCCESS)
     {
       DisplayLog("NFS_INIT: Error while initializing IP/name cache");
@@ -1612,7 +1612,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   DisplayLogLevel(NIV_EVENT, "NFS_INIT: IP/name cache successfully initialized");
 
   /* Init the UID_MAPPER cache */
-  DisplayLogLevel(NIV_DEBUG, "NFS_INIT: Now building UID_MAPPER cache");
+  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building UID_MAPPER cache");
   if((idmap_uid_init(nfs_param.uidmap_cache_param) != ID_MAPPER_SUCCESS) ||
      (idmap_uname_init(nfs_param.unamemap_cache_param) != ID_MAPPER_SUCCESS))
     {
@@ -1622,7 +1622,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   DisplayLogLevel(NIV_EVENT, "NFS_INIT: UID_MAPPER cache successfully initialized");
 
   /* Init the UIDGID MAPPER Cache */
-  DisplayLogLevel(NIV_DEBUG,
+  LogDebug(COMPONENT_INIT,
                   "NFS_INIT: Now building UIDGID MAPPER Cache (for RPCSEC_GSS)");
   if(uidgidmap_init(nfs_param.uidgidmap_cache_param) != ID_MAPPER_SUCCESS)
     {
@@ -1632,7 +1632,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   DisplayLogLevel(NIV_EVENT, "NFS_INIT: UIDGID_MAPPER cache successfully initialized");
 
   /* Init the GID_MAPPER cache */
-  DisplayLogLevel(NIV_DEBUG, "NFS_INIT: Now building GID_MAPPER cache");
+  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building GID_MAPPER cache");
   if((idmap_gid_init(nfs_param.gidmap_cache_param) != ID_MAPPER_SUCCESS) ||
      (idmap_gname_init(nfs_param.gnamemap_cache_param) != ID_MAPPER_SUCCESS))
     {
@@ -1642,7 +1642,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   DisplayLogLevel(NIV_EVENT, "NFS_INIT: GID_MAPPER cache successfully initialized");
 
   /* Init the NFSv4 Clientid cache */
-  DisplayLogLevel(NIV_DEBUG, "NFS_INIT: Now building NFSv4 clientid cache");
+  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 clientid cache");
   if(nfs_Init_client_id(nfs_param.client_id_param) != CLIENT_ID_SUCCESS)
     {
       DisplayLog("NFS_INIT: Error %d while initializing NFSv4 clientid cache");
@@ -1651,7 +1651,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   DisplayLogLevel(NIV_EVENT, "NFS_INIT: NFSv4 clientid cache successfully initialized");
 
   /* Init the NFSv4 Clientid cache */
-  DisplayLogLevel(NIV_DEBUG, "NFS_INIT: Now building NFSv4 clientid cache reverse");
+  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 clientid cache reverse");
   if(nfs_Init_client_id_reverse(nfs_param.client_id_param) != CLIENT_ID_SUCCESS)
     {
       DisplayLog("NFS_INIT: Error %d while initializing NFSv4 clientid cache reverse");
@@ -1661,7 +1661,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                   "NFS_INIT: NFSv4 clientid cache reverse successfully initialized");
 
   /* Init The NFSv4 State id cache */
-  DisplayLogLevel(NIV_DEBUG, "NFS_INIT: Now building NFSv4 State Id cache");
+  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 State Id cache");
   if(nfs4_Init_state_id(nfs_param.state_id_param) != 0)
     {
       DisplayLog("NFS_INIT: Error %d while initializing NFSv4 State Id cache");
@@ -1670,7 +1670,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   DisplayLogLevel(NIV_EVENT, "NFS_INIT: NFSv4 State Id cache successfully initialized");
 
   /* Init The NFSv4 Open Owner cache */
-  DisplayLogLevel(NIV_DEBUG, "NFS_INIT: Now building NFSv4 Open Owner cache");
+  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 Open Owner cache");
   if(nfs4_Init_open_owner(nfs_param.open_owner_param) != 0)
     {
       DisplayLog("NFS_INIT: Error %d while initializing NFSv4 Open Owner cache");
@@ -1679,7 +1679,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   DisplayLogLevel(NIV_EVENT, "NFS_INIT: NFSv4 Open Owner cache successfully initialized");
 
 #ifdef _USE_NFS4_1
-  DisplayLogLevel(NIV_DEBUG, "NFS_INIT: Now building NFSv4 Session Id cache");
+  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 Session Id cache");
   if(nfs41_Init_session_id(nfs_param.session_id_param) != 0)
     {
       DisplayLog("NFS_INIT: Error %d while initializing NFSv4 Session Id cache");
