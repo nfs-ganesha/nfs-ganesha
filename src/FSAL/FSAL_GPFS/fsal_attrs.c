@@ -424,5 +424,5 @@ fsal_status_t GPFSFSAL_getextattrs(gpfsfsal_handle_t * p_filehandle, /* IN */
                                    fsal_extattrib_list_t * p_object_attributes /* OUT */
     )
 {
-   return ERR_FSAL_NOTSUPP ;
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_getextattrs);
 } /* GPFSFSAL_getextattrs */

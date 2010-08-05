@@ -483,4 +483,8 @@ fsal_status_t PROXYFSAL_RemoveXAttrByName(proxyfsal_handle_t * p_objecthandle,  
 
 unsigned int PROXYFSAL_GetFileno(fsal_file_t * pfile);
 
+fsal_status_t PROXYFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
+                                    fsal_op_context_t * p_context,        /* IN */
+                                    fsal_extattrib_list_t * p_object_attributes /* OUT */) ;
+
 #endif
