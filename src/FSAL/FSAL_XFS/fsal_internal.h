@@ -124,6 +124,9 @@ fsal_status_t fsal_internal_setattrs_symlink(xfsfsal_handle_t * p_filehandle,   
 
 int fsal_internal_path2fsname(char *rpath, char *fs_spec);
 
+int fsal_internel_get_bulkstat_by_inode(int fd, xfs_ino_t * p_ino, xfs_bstat_t * pxfs_bstat) ;
+
+
 /* All the call to FSAL to be wrapped */
 fsal_status_t XFSFSAL_access(xfsfsal_handle_t * p_object_handle,        /* IN */
                              xfsfsal_op_context_t * p_context,  /* IN */
