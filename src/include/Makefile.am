@@ -33,6 +33,7 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  extended_types.h                \
                  external_tools.h                \
                  log_functions.h                 \
+                 log_macros.h                    \
                  mount.h                         \
                  nfs23.h                         \
                  nfs4.h                          \
