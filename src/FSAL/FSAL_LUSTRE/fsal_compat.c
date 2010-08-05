@@ -665,6 +665,14 @@ fsal_status_t WRAP_LUSTREFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle, 
                                       (lustrefsal_op_context_t *) p_context, xattr_name);
 }
 
+fsal_status_t WRAP_LUSTREFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
+                                       fsal_op_context_t * p_context,        /* IN */
+                                       fsal_extattrib_list_t * p_object_attributes /* OUT */)
+{
+  return LUSTREFSAL_getextattrs( (lustrefsal_handle_t *)p_filehandle,
+                                 (lustrefsal_op_context_t *) p_context, p_object_attributes ) ;
+}
+
 fsal_functions_t fsal_lustre_functions = {
   .fsal_access = WRAP_LUSTREFSAL_access,
   .fsal_getattrs = WRAP_LUSTREFSAL_getattrs,
@@ -740,6 +748,7 @@ fsal_functions_t fsal_lustre_functions = {
   .fsal_setxattrvaluebyid = WRAP_LUSTREFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = WRAP_LUSTREFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = WRAP_LUSTREFSAL_RemoveXAttrByName,
+  .fsal_getextattrs = WRAP_LUSTREFSAL_getextattrs,
   .fsal_getfileno = LUSTREFSAL_GetFileno
 };
 

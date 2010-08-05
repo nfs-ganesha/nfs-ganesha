@@ -661,6 +661,14 @@ fsal_status_t WRAP_PROXYFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,  
                                      (proxyfsal_op_context_t *) p_context, xattr_name);
 }
 
+fsal_status_t WRAP_PROXYFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
+                                       fsal_op_context_t * p_context,        /* IN */
+                                       fsal_extattrib_list_t * p_object_attributes /* OUT */)
+{
+  return PROXYFSAL_getextattrs( (proxyfsal_handle_t *)p_filehandle,
+                                (proxyfsal_op_context_t *) p_context, p_object_attributes ) ;
+}
+
 fsal_functions_t fsal_proxy_functions = {
   .fsal_access = WRAP_PROXYFSAL_access,
   .fsal_getattrs = WRAP_PROXYFSAL_getattrs,
@@ -736,6 +744,7 @@ fsal_functions_t fsal_proxy_functions = {
   .fsal_setxattrvaluebyid = WRAP_PROXYFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = WRAP_PROXYFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = WRAP_PROXYFSAL_RemoveXAttrByName,
+  .fsal_getextattrs = WRAP_PROXYFSAL_getextattrs,
   .fsal_getfileno = PROXYFSAL_GetFileno
 };
 

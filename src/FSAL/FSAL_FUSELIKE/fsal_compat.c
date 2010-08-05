@@ -655,6 +655,14 @@ fsal_status_t WRAP_FUSEFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,   
                                     (fusefsal_op_context_t *) p_context, xattr_name);
 }
 
+fsal_status_t WRAP_FUSEFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
+                                       fsal_op_context_t * p_context,        /* IN */
+                                       fsal_extattrib_list_t * p_object_attributes /* OUT */)
+{
+  return FUSEFSAL_getextattrs( (fusefsal_handle_t *)p_filehandle,
+                               (fusefsal_op_context_t *) p_context, p_object_attributes ) ;
+}
+
 fsal_functions_t fsal_fuse_functions = {
   .fsal_access = WRAP_FUSEFSAL_access,
   .fsal_getattrs = WRAP_FUSEFSAL_getattrs,
@@ -729,6 +737,7 @@ fsal_functions_t fsal_fuse_functions = {
   .fsal_setxattrvaluebyid = WRAP_FUSEFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = WRAP_FUSEFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = WRAP_FUSEFSAL_RemoveXAttrByName,
+  .fsal_getextattrs = WRAP_FUSEFSAL_getextattrs,
   .fsal_getfileno = FUSEFSAL_GetFileno
 };
 

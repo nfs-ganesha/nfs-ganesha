@@ -464,6 +464,11 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
                             fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     );
 
+fsal_status_t FSAL_getetxattrs(fsal_handle_t * filehandle, /* IN */
+                               fsal_op_context_t * p_context,      /* IN */
+                               fsal_extattrib_list_t * object_attributes      /* IN/OUT */
+    );
+
 fsal_status_t FSAL_link(fsal_handle_t * target_handle,  /* IN */
                         fsal_handle_t * dir_handle,     /* IN */
                         fsal_name_t * p_link_name,      /* IN */
@@ -1285,6 +1290,11 @@ typedef struct fsal_functions__
    fsal_status_t(*fsal_removexattrbyname) (fsal_handle_t * p_objecthandle,      /* IN */
                                            fsal_op_context_t * p_context,       /* IN */
                                            const fsal_name_t * xattr_name) /* IN */ ;
+
+  /* FSAL_getextattrs */
+  fsal_status_t (*fsal_getextattrs)( fsal_handle_t * p_filehandle, /* IN */
+                                     fsal_op_context_t * p_context,        /* IN */
+                                     fsal_extattrib_list_t * p_object_attributes /* OUT */ ) ;
 
   /* get fileno */
   unsigned int (*fsal_getfileno) (fsal_file_t *);

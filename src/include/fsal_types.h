@@ -413,6 +413,9 @@ typedef fsal_u64_t fsal_attrib_mask_t;
 /* This bit indicates that an error occured during getting object attributes */
 #define FSAL_ATTR_RDATTR_ERR    ((fsal_attrib_mask_t) 0x8000000000000000LL )
 
+/* Generation number */
+#define FSAL_ATTR_GENERATION    ((fsal_attrib_mask_t) 0x0000000000080000LL )
+
 /* "classic" attributes sets : */
 
 /* NFSv4 Mandatory attributes */
@@ -460,6 +463,18 @@ typedef struct fsal_attrib_list__
   fsal_u64_t mounted_on_fileid;
 
 } fsal_attrib_list_t;
+
+/** A list of FS object's extended attributes (like generation numbers or creation time). */
+
+typedef struct fsal_extattrib_list__
+{
+ fsal_attrib_mask_t asked_attributes;      /**< Indicates the attributes
+                                            * to be got or set,
+                                            * i.e. significative fields
+                                            *  in this structure.
+                                            */
+ fsal_uint_t   generation ;
+} fsal_extattrib_list_t ;
 
 /** mask for permission testing */
 

@@ -690,6 +690,13 @@ unsigned int FSAL_GetFileno(fsal_file_t * pfile)
   return fsal_functions.fsal_getfileno(pfile);
 }
 
+fsal_status_t FSAL_getextattrs( fsal_handle_t * p_filehandle, /* IN */
+                                fsal_op_context_t * p_context,        /* IN */
+                                fsal_extattrib_list_t * p_object_attributes /* OUT */)
+{
+   return fsal_functions.fsal_getextattrs( p_filehandle, p_context, p_object_attributes ) ;
+}
+
 #ifdef _USE_SHARED_FSAL
 int FSAL_LoadLibrary(char *path)
 {
