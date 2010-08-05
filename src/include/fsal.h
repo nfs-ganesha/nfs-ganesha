@@ -464,7 +464,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
                             fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     );
 
-fsal_status_t FSAL_getetxattrs(fsal_handle_t * filehandle, /* IN */
+fsal_status_t FSAL_getextattrs(fsal_handle_t * filehandle, /* IN */
                                fsal_op_context_t * p_context,      /* IN */
                                fsal_extattrib_list_t * object_attributes      /* IN/OUT */
     );

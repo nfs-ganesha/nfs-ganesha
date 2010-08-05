@@ -434,3 +434,7 @@ fsal_status_t FUSEFSAL_RemoveXAttrByName(fusefsal_handle_t * p_objecthandle,    
                                          const fsal_name_t * xattr_name) /* IN */ ;
 
 unsigned int FUSEFSAL_GetFileno(fsal_file_t * pfile);
+
+fsal_status_t FUSEFSAL_getextattrs(fusefsal_handle_t * p_filehandle, /* IN */
+                                   fusefsal_op_context_t * p_context,        /* IN */
+                                   fsal_extattrib_list_t * p_object_attributes /* OUT */) ;

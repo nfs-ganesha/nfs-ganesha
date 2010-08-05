@@ -664,8 +664,8 @@ fsal_status_t WRAP_POSIXFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
                                        fsal_op_context_t * p_context,        /* IN */
                                        fsal_extattrib_list_t * p_object_attributes /* OUT */)
 {
-  return XFSFSAL_getextattrs( (posixfsal_handle_t *)p_filehandle,
-                              (posixfsal_op_context_t *) p_context, p_object_attributes ) ;
+  return POSIXFSAL_getextattrs( (posixfsal_handle_t *)p_filehandle,
+                                (posixfsal_op_context_t *) p_context, p_object_attributes ) ;
 }
 
 fsal_functions_t fsal_xfs_functions = {
