@@ -1980,14 +1980,11 @@ int print_pending_request(LRU_data_t data, char *str)
 void rpc_dispatcher_svc_run(nfs_parameter_t * pnfs_param)
 {
   fd_set readfdset;
-  static int tablesize;
   int rc = 0;
 
 #ifdef _DEBUG_MEMLEAKS
   static int nb_iter_memleaks = 0;
 #endif
-
-  tablesize = getdtablesize();
 
   while(TRUE)
     {
@@ -1998,7 +1995,7 @@ void rpc_dispatcher_svc_run(nfs_parameter_t * pnfs_param)
       LogDebug(COMPONENT_DISPATCH, "Waiting for incoming RPC requests");
 
       /* Do the select on the RPC fdset */
-      rc = select(tablesize, &readfdset, NULL, NULL, NULL);
+      rc = select(FD_SETSIZE, &readfdset, NULL, NULL, NULL);
 
       LogDebug(COMPONENT_DISPATCH, "Waiting for incoming RPC requests, after select rc=%d",
                rc);
