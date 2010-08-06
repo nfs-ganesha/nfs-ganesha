@@ -246,5 +246,8 @@ fsal_status_t ZFSFSAL_getextattrs(zfsfsal_handle_t * p_filehandle, /* IN */
                                   fsal_extattrib_list_t * p_object_attributes /* OUT */
     )
 {
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_getextattrs);
+  if( p_object_attributes->asked_attributes & FSAL_ATTR_GENERATION )
+    p_object_attributes->generation = p_filehandle->data.zfs_handle.generation;
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_getextattrs);
 } /* ZFSFSAL_getextattrs */
