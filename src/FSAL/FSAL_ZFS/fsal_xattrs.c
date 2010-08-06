@@ -57,33 +57,6 @@ typedef struct fsal_xattr_def__
  * DEFINE HERE YOUR GET/SET FUNCTIONS
  */
 
-int get_inode(zfsfsal_handle_t * p_objecthandle,       /* IN */
-              zfsfsal_op_context_t * p_context,        /* IN */
-              caddr_t buffer_addr,  /* IN/OUT */
-              size_t buffer_size,   /* IN */
-              size_t * p_output_size)       /* OUT */
-{
-  if(!p_objecthandle || !p_context || !p_output_size)
-    return ERR_FSAL_FAULT;
-
-  memcpy(buffer_addr, &p_objecthandle->data.zfs_handle.inode,
-         sizeof(p_objecthandle->data.zfs_handle.inode));
-  *p_output_size = sizeof(p_objecthandle->data.zfs_handle.inode);
-
-  return 0;
-
-}
-
-int print_inode(caddr_t InBuff, size_t InSize, caddr_t OutBuff, size_t * pOutSize)
-{
-  uint64_t inode;
-
-  memcpy((char *)&inode, InBuff, sizeof(inode));
-
-  *pOutSize = snprintf(OutBuff, *pOutSize, "%"PRIu64, inode);
-  return 0;
-}
-
 int get_generation(zfsfsal_handle_t * p_objecthandle,       /* IN */
                    zfsfsal_op_context_t * p_context,        /* IN */
                    caddr_t buffer_addr,  /* IN/OUT */
@@ -114,11 +87,10 @@ int print_generation(caddr_t InBuff, size_t InSize, caddr_t OutBuff, size_t * pO
 /* DEFINE HERE YOUR ATTRIBUTES LIST */
 
 static fsal_xattr_def_t xattr_list[] = {
-  {"inode"     , get_inode     , NULL, print_inode     , XATTR_FOR_ALL},// | XATTR_RO},
   {"generation", get_generation, NULL, print_generation, XATTR_FOR_ALL}// | XATTR_RO}
 };
 
-#define XATTR_COUNT 2
+#define XATTR_COUNT 1
 
 /* we assume that this number is < 254 */
 #if ( XATTR_COUNT > 254 )
@@ -807,7 +779,20 @@ fsal_status_t ZFSFSAL_RemoveXAttrById(zfsfsal_handle_t * p_objecthandle,      /*
                                    zfsfsal_op_context_t * p_context,       /* IN */
                                    unsigned int xattr_id)       /* IN */
 {
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+  int rc;
+  char psz_name[FSAL_MAX_NAME_LEN];
+
+  if((rc = xattr_id_to_name(p_context, p_objecthandle, xattr_id, psz_name)))
+    Return(rc, 0, INDEX_FSAL_SetXAttrValue);
+
+  TakeTokenFSCall();
+  rc = libzfswrap_removexattr(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                              p_objecthandle->data.zfs_handle, psz_name);
+  ReleaseTokenFSCall();
+
+  if(rc)
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_SetXAttrValue);
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_SetXAttrValue);
 }
 
 /**
@@ -821,5 +806,13 @@ fsal_status_t ZFSFSAL_RemoveXAttrByName(zfsfsal_handle_t * p_objecthandle,    /*
                                      zfsfsal_op_context_t * p_context,     /* IN */
                                      const fsal_name_t * xattr_name)    /* IN */
 {
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+  int rc;
+  TakeTokenFSCall();
+  rc = libzfswrap_removexattr(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                              p_objecthandle->data.zfs_handle, xattr_name->name);
+  ReleaseTokenFSCall();
+
+  if(rc)
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_SetXAttrValue);
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_SetXAttrValue);
 }
