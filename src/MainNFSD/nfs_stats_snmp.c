@@ -1496,6 +1496,19 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
       free_dyn(dyn_gs, dyn_gs_count);
     }
 
+  /*
+   * Set up logging snmp adm control
+   */
+
+  /* always register general logging variables */
+  if((rc =
+      snmp_adm_register_get_set_function(LOG_OID, snmp_export_log_general,
+                                         SNMPADM_LOG_GENERAL_COUNT)))
+    {
+      DisplayLog("Error registering logging variables to SNMP");
+      return 2;
+    }
+
   /* finally, start the admin thread */
   if((rc = snmp_adm_start()))
     {

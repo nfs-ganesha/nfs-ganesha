@@ -349,6 +349,9 @@ int SetLevelDebug(int level_to_set)
   if(level_to_set < 0)
     level_to_set = 0;
 
+  if(level_to_set >= NB_LOG_LEVEL)
+    level_to_set = NB_LOG_LEVEL - 1;
+
   niveau_debug = level_to_set;
 
   return niveau_debug;
@@ -1736,3 +1739,29 @@ int log_printf(char *format, ...)
    * Pour info : Les tags de printf dont on peut se servir:
    * w DMNOPQTUWX 
    */
+
+#ifdef _SNMP_ADM_ACTIVE
+
+static int getLogLevel(snmp_adm_type_union * param, void *opt)
+{
+  param->integer = ReturnLevelDebug();
+  return 0;
+}
+
+static int setLogLevel(const snmp_adm_type_union * param, void *opt)
+{
+  SetLevelDebug(param->integer);
+  return 0;
+}
+
+register_get_set snmp_export_log_general[] = {
+  {"LogLevel", 
+  "Server Log Level value", 
+  SNMP_ADM_INTEGER, 
+  SNMP_ADM_ACCESS_RW, 
+  getLogLevel, 
+  setLogLevel, 
+  NULL}
+};
+
+#endif /* _SNMP_ADM_ACTIVE */
