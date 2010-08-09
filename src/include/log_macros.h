@@ -52,7 +52,8 @@ enum log_components
   COMPONENT_DUPREQ,
   COMPONENT_LOG,
   COMPONENT_RPCSEC_GSS,
-  COMPONENT_INIT
+  COMPONENT_INIT,
+  COMPONENT_COUNT
 };
 
 typedef struct log_component_info
@@ -64,87 +65,87 @@ typedef struct log_component_info
   
 static log_component_info __attribute__ ((__unused__)) LogComponents[] =
 {
-  { COMPONENT_NONE,            "NONE,",           
+  { COMPONENT_NONE,            "NONE",           
     NIV_NULL
   },
-  { COMPONENT_MEMALLOC,        "MEMALLOC,",       
+  { COMPONENT_MEMALLOC,        "MEMALLOC",       
 #ifdef _DEBUG_MEMALLOC      
     NIV_DEBUG
 #else
     NIV_EVENT
 #endif
   },
-  { COMPONENT_STATES,          "STATES,",         
+  { COMPONENT_STATES,          "STATES",         
 #ifdef _DEBUG_STATES        
     NIV_DEBUG
 #else
     NIV_EVENT
 #endif
   },
-  { COMPONENT_MEMLEAKS,        "MEMLEAKS,",       
+  { COMPONENT_MEMLEAKS,        "MEMLEAKS",       
 #ifdef _DEBUG_MEMLEAKS      
     NIV_DEBUG
 #else
     NIV_EVENT
 #endif
   },
-  { COMPONENT_FSAL,            "FSAL,",           
+  { COMPONENT_FSAL,            "FSAL",           
 #ifdef _DEBUG_FSAL          
     NIV_DEBUG
 #else
     NIV_EVENT
 #endif
   },
-  { COMPONENT_NFSPROTO,        "NFSPROTO,",       
+  { COMPONENT_NFSPROTO,        "NFSPROTO",       
 #ifdef _DEBUG_NFSPROTO      
     NIV_DEBUG
 #else
     NIV_EVENT
 #endif
   },
-  { COMPONENT_NFS_V4,          "NFS_V4,",         
+  { COMPONENT_NFS_V4,          "NFS_V4",         
 #ifdef _DEBUG_NFS_V4        
     NIV_DEBUG
 #else
     NIV_EVENT
 #endif
   },
-  { COMPONENT_NFS_V4_PSEUDO,   "NFS_V4_PSEUDO,",  
+  { COMPONENT_NFS_V4_PSEUDO,   "NFS_V4_PSEUDO",  
 #ifdef _DEBUG_NFS_V4_PSEUDO 
     NIV_DEBUG
 #else
     NIV_EVENT
 #endif
   },
-  { COMPONENT_FILEHANDLE,      "FILEHANDLE,",     
+  { COMPONENT_FILEHANDLE,      "FILEHANDLE",     
 #ifdef _DEBUG_FILEHANDLE    
     NIV_DEBUG
 #else
     NIV_EVENT
 #endif
   },
-  { COMPONENT_NFS_SHELL,       "NFS_SHELL,",      
+  { COMPONENT_NFS_SHELL,       "NFS_SHELL",      
 #ifdef _DEBUG_NFS_SHELL     
     NIV_DEBUG
 #else
     NIV_EVENT
 #endif
   },
-  { COMPONENT_DISPATCH,        "DISPATCH,",       
+  { COMPONENT_DISPATCH,        "DISPATCH",       
 #ifdef _DEBUG_DISPATCH      
     NIV_DEBUG
 #else
     NIV_EVENT
 #endif
   },
-  { COMPONENT_CACHE_CONTENT,   "CACHE_CONTENT,",  
+  { COMPONENT_CACHE_CONTENT,   "CACHE_CONTENT",  
 #ifdef _DEBUG_CACHE_CONTENT 
     NIV_DEBUG
 #else
     NIV_EVENT
 #endif
   },
-  { COMPONENT_CACHE_INODE,     "CACHE_INODE,",    
+  { COMPONENT_CACHE_INODE,     "CACHE_INODE",    
 #ifdef _DEBUG_CACHE_INODE   
     NIV_DEBUG
 #else
@@ -158,42 +159,42 @@ static log_component_info __attribute__ ((__unused__)) LogComponents[] =
     NIV_EVENT
 #endif
   },
-  { COMPONENT_HASHTABLE,       "HASHTABLE,",      
+  { COMPONENT_HASHTABLE,       "HASHTABLE",      
 #ifdef _DEBUG_HASHTABLE     
     NIV_DEBUG
 #else
     NIV_EVENT
 #endif
   },
-  { COMPONENT_LRU,             "LRU,",            
+  { COMPONENT_LRU,             "LRU",            
 #ifdef _DEBUG_LRU           
     NIV_DEBUG
 #else
     NIV_EVENT
 #endif
   },
-  { COMPONENT_DUPREQ,          "DUPREQ,",         
+  { COMPONENT_DUPREQ,          "DUPREQ",         
 #ifdef _DEBUG_DUPREQ        
     NIV_DEBUG
 #else
     NIV_EVENT
 #endif
   },
-  { COMPONENT_LOG,             "LOG,",            
+  { COMPONENT_LOG,             "LOG",            
 #ifdef _DEBUG_LOG           
     NIV_DEBUG
 #else
     NIV_EVENT
 #endif
   },
-  { COMPONENT_RPCSEC_GSS,      "RPCSEC_GSS,",     
+  { COMPONENT_RPCSEC_GSS,      "RPCSEC_GSS",     
 #ifdef _DEBUG_RPCSEC_GSS    
     NIV_DEBUG
 #else
     NIV_EVENT
 #endif
   },
-  { COMPONENT_INIT,            "INIT,",     
+  { COMPONENT_INIT,            "INIT",     
 #ifdef _DEBUG_INIT    
     NIV_DEBUG
 #else

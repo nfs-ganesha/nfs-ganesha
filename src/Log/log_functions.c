@@ -44,7 +44,7 @@
 #include <string.h>
 #include <signal.h>
 
-#include "log_functions.h"
+#include "log_macros.h"
 
 /* La longueur d'une chaine */
 #define STR_LEN_TXT      2048
@@ -1751,6 +1751,20 @@ static int getLogLevel(snmp_adm_type_union * param, void *opt)
 static int setLogLevel(const snmp_adm_type_union * param, void *opt)
 {
   SetLevelDebug(param->integer);
+  return 0;
+}
+
+int getComponentLogLevel(snmp_adm_type_union * param, void *opt)
+{
+  long component = (long)opt;
+  param->integer = LogComponents[component].log_level;
+  return 0;
+}
+
+int setComponentLogLevel(const snmp_adm_type_union * param, void *opt)
+{
+  long component = (long)opt;
+  LogComponents[component].log_level = param->integer;
   return 0;
 }
 
