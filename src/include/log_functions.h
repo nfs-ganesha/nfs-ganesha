@@ -567,6 +567,8 @@ int log_printf(char *format, ...);
 #ifdef _SNMP_ADM_ACTIVE
 register_get_set snmp_export_log_general[];
 #define SNMPADM_LOG_GENERAL_COUNT 1
+int getComponentLogLevel(snmp_adm_type_union * param, void *opt);
+int setComponentLogLevel(const snmp_adm_type_union * param, void *opt);
 #endif
 
 #endif
