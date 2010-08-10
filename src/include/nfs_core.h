@@ -289,6 +289,7 @@ typedef struct nfs_core_param__
   char stats_file_path[MAXPATHLEN];
   char stats_per_client_directory[MAXPATHLEN];
   char fsal_shared_library[MAXPATHLEN];
+  char default_log_destination[MAXPATHLEN];
 } nfs_core_parameter_t;
 
 typedef struct nfs_ip_name_param__
