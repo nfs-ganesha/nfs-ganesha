@@ -12,6 +12,10 @@
 #include <pthread.h>
 #endif
 
+#ifdef _SNMP_ADM_ACTIVE
+#include "snmp_adm.h"
+#endif
+
 /*
  * definition des codes d'error
  *
@@ -559,4 +563,12 @@ int log_vfprintf(FILE *, char *format, va_list arguments);
 #define log_vprintf( format, arguments ) log_vfprintf( stdout, format, arguments )
 int log_fprintf(FILE * file, char *format, ...);
 int log_printf(char *format, ...);
+
+#ifdef _SNMP_ADM_ACTIVE
+register_get_set snmp_export_log_general[];
+#define SNMPADM_LOG_GENERAL_COUNT 1
+int getComponentLogLevel(snmp_adm_type_union * param, void *opt);
+int setComponentLogLevel(const snmp_adm_type_union * param, void *opt);
+#endif
+
 #endif
