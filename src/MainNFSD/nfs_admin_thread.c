@@ -48,6 +48,7 @@
 #include <pthread.h>
 #include "nfs_core.h"
 #include "stuff_alloc.h"
+#include "log_macros.h"
 
 extern nfs_parameter_t nfs_param;
 nfs_admin_data_t *pmydata;
@@ -70,7 +71,7 @@ void admin_replace_exports()
   P(pmydata->mutex_admin_condvar);
   pmydata->reload_exports = TRUE;
   if(pthread_cond_signal(&(pmydata->admin_condvar)) == -1)
-      DisplayLog("admin_replace_exports - admin cond signal failed , errno = %d", errno);
+      LogCrit(COMPONENT_MAIN, "admin_replace_exports - admin cond signal failed , errno = %d", errno);
   V(pmydata->mutex_admin_condvar);
 }
 
@@ -82,7 +83,7 @@ static int wake_workers_for_export_reload()
       pmydata->workers_data[i].reparse_exports_in_progress = FALSE;
       if(pthread_cond_signal(&(pmydata->workers_data[i].export_condvar)) == -1)
 	{
-	  DisplayLog("replace_exports: Export cond signal failed for thr#%d , errno = %d", i, errno);
+	  LogCrit(COMPONENT_MAIN, "replace_exports: Export cond signal failed for thr#%d , errno = %d", i, errno);
 	  return -1;
 	}
     }
@@ -101,7 +102,7 @@ static int pause_workers_for_export_reload()
        * so they are blocked on the exports list replacement. */
       if(pthread_cond_signal(&(pmydata->workers_data[i].req_condvar)) == -1)
 	{
-	  DisplayLog("replace_exports: Request cond signal failed for thr#%d , errno = %d", i, errno);
+	  LogCrit(COMPONENT_MAIN, "replace_exports: Request cond signal failed for thr#%d , errno = %d", i, errno);
 	  wake_workers_for_export_reload();
 	  return -1;
 	}
@@ -156,7 +157,7 @@ int rebuild_export_list(char *config_file)
    * configuration file from startup. */
   if (config_file == NULL)
     {
-      DisplayLog("Error: No configuration file was specified for reloading exports.");
+      LogCrit(COMPONENT_MAIN, "Error: No configuration file was specified for reloading exports.");
       return -1;
     }
 
@@ -164,8 +165,8 @@ int rebuild_export_list(char *config_file)
   config_struct = config_ParseFile(config_file);
   if(!config_struct)
     {
-      DisplayLog("rebuild_export_list: Error while parsing new configuration file %s: %s", config_file,
-                 config_GetErrorMsg());
+      LogCrit(COMPONENT_MAIN, "rebuild_export_list: Error while parsing new configuration file %s: %s",
+              config_file, config_GetErrorMsg());
       return -1;
     }  
 
@@ -173,12 +174,12 @@ int rebuild_export_list(char *config_file)
   status = ReadExports(config_struct, &temp_pexportlist);
   if(status < 0)
     {
-      DisplayLog("rebuild_export_list: Error while parsing export entries");
+      LogCrit(COMPONENT_MAIN, "rebuild_export_list: Error while parsing export entries");
       return status;
     }
   else if(status == 0)
     {
-      DisplayLog("rebuild_export_list: No export entries found in configuration file !!!");
+      LogCrit(COMPONENT_MAIN, "rebuild_export_list: No export entries found in configuration file !!!");
       return status;
     }
 
@@ -186,13 +187,13 @@ int rebuild_export_list(char *config_file)
    * the same hash table. */  
   if( nfs_export_create_root_entry(temp_pexportlist, pmydata->ht) != TRUE)
     {
-      DisplayLog("replace_exports: Error initializing Cache Inode root entries");
+      LogCrit(COMPONENT_MAIN, "replace_exports: Error initializing Cache Inode root entries");
       return -1;
     }
 
   if (!pause_workers_for_export_reload())
     {
-      DisplayLog("replace_exports: Error, could not pause all worker threads.");
+      LogCrit(COMPONENT_MAIN, "replace_exports: Error, could not pause all worker threads.");
       return -1;
     }
 
@@ -201,7 +202,7 @@ int rebuild_export_list(char *config_file)
    * Remove all but the first export entry in the exports list. */
   status = RemoveAllExportsExceptHead(nfs_param.pexportlist);
   if (status <= 0)
-    DisplayLog("rebuild_export_list: CRITICAL ERROR while removing some export entries.");
+    LogCrit(COMPONENT_MAIN, "rebuild_export_list: CRITICAL ERROR while removing some export entries.");
 
   /* Changed the old export list head to the new export list head. 
    * All references to the exports list should be up-to-date now. */
@@ -226,10 +227,10 @@ void *admin_thread(void *Arg)
   if((rc = BuddyInit(&nfs_param.buddy_param_admin)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      DisplayLog("ADMIN THREAD: Memory manager could not be initialized, exiting...");
+      LogCrit(COMPONENT_MAIN, "ADMIN THREAD: Memory manager could not be initialized, exiting...");
       exit(1);
     }
-  DisplayLogLevel(NIV_EVENT, "ADMIN THREAD: Memory manager successfully initialized");
+  LogEvent(COMPONENT_MAIN, "ADMIN THREAD: Memory manager successfully initialized");
 #endif
 
   while(1)
@@ -241,7 +242,7 @@ void *admin_thread(void *Arg)
       V(pmydata->mutex_admin_condvar);
 
       if (!rebuild_export_list(pmydata->config_path))
-	DisplayLog("Error, attempt to reload exports list from config file failed.");
+	LogCrit(COMPONENT_MAIN, "Error, attempt to reload exports list from config file failed.");
     }
 
   return NULL;
