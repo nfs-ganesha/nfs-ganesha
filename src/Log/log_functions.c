@@ -1791,7 +1791,16 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_FILEHANDLE,      "FILEHANDLE",     
+  { COMPONENT_IDMAPPER,      "IDMAPPER",
+#ifdef _DEBUG_IDMAPPER
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_FILEHANDLE,      "FILEHANDLE",
 #ifdef _DEBUG_FILEHANDLE    
     NIV_DEBUG,
 #else
@@ -1800,7 +1809,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_SHELL,       "NFS_SHELL",      
+  { COMPONENT_NFS_SHELL,       "NFS_SHELL",
 #ifdef _DEBUG_NFS_SHELL     
     NIV_DEBUG,
 #else

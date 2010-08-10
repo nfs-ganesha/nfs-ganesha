@@ -306,6 +306,7 @@ GA_ENABLE_FLAG(  [debug-fsal],		 [enable debug traces in FileSystem Abstraction 
 GA_ENABLE_FLAG(  [debug-nfsproto],       [enable extended debug traces for NFS/MOUNT protocols],         [-D_DEBUG_NFSPROTO] )
 GA_ENABLE_FLAG(  [debug-nfsv4],		 [enable debug traces related to NFSv4 protocol],                [-D_DEBUG_NFS_V4] )
 GA_ENABLE_FLAG(  [debug-nfsv4-pseudo],   [enable debug traces for NFSv4 pseudofs],                       [-D_DEBUG_NFS_V4_PSEUDO] )
+GA_ENABLE_FLAG(  [debug-idmapper],     	 [enable debug traces retated to ID Mappper],               	 [-D_DEBUG_IDMAPPER] )
 GA_ENABLE_FLAG(  [debug-filehandle],     [enable debug traces retated to NFS File handle],               [-D_DEBUG_FILEHANDLE] )
 GA_ENABLE_FLAG(  [debug-nfsshell],       [enable extended debug traces for ganeshell utility],           [-D_DEBUG_NFS_SHELL] )  
 GA_ENABLE_FLAG(  [debug-dispatch],       [enable extended debug traces about RPC dispatch],              [-D_DEBUG_DISPATCH] ) 
