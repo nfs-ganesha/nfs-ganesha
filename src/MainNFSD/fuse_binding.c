@@ -40,6 +40,7 @@
 #include "solaris_port.h"
 #endif
 
+#include "log_macros.h"
 #include "ganesha_fuse_wrap.h"
 #include "nfs_init.h"
 #include "fsal.h"
@@ -96,17 +97,17 @@ char usage[] =
 
 static void action_sigusr1(int sig)
 {
-  DisplayLog("NFS_MAIN_SIGUSR1_HANDLER: Receveid SIGUSR1.... signal will be managed");
+  LogEvent(COMPONENT_MAIN, "NFS_MAIN_SIGUSR1_HANDLER: Receveid SIGUSR1.... signal will be managed");
 
   /* Set variable force_flush_by_signal that is used in file content cache gc thread */
   if(force_flush_by_signal)
     {
-      DisplayLog("NFS_MAIN_SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
+      LogEvent(COMPONENT_MAIN, "NFS_MAIN_SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
       force_flush_by_signal = FALSE;
     }
   else
     {
-      DisplayLog("NFS_MAIN_SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
+      LogEvent(COMPONENT_MAIN, "NFS_MAIN_SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
       force_flush_by_signal = TRUE;
     }
 }                               /* action_sigusr1 */
@@ -280,8 +281,8 @@ int ganefuse_main(int argc, char *argv[],
         {
         case -1:
           /* Fork failed */
-          DisplayErrorLog(ERR_SYS, ERR_FORK, errno);
-          DisplayLog("Could nout start nfs daemon, exiting...");
+          LogError(COMPONENT_MAIN, ERR_SYS, ERR_FORK, errno);
+          LogCrit(COMPONENT_MAIN, "Could nout start nfs daemon, exiting...");
           exit(1);
 
         case 0:
@@ -289,15 +290,15 @@ int ganefuse_main(int argc, char *argv[],
            * Let's make it the leader of its group of process */
           if(setsid() == -1)
             {
-              DisplayErrorLog(ERR_SYS, ERR_SETSID, errno);
-              DisplayLog("Could nout start nfs daemon, exiting...");
+              LogError(COMPONENT_MAIN, ERR_SYS, ERR_SETSID, errno);
+              LogCrit(COMPONENT_MAIN, "Could nout start nfs daemon, exiting...");
               exit(1);
             }
           break;
 
         default:
           /* This code is within the father, it is useless, it must die */
-          DisplayLog("Starting a son of pid %d\n", son_pid);
+          LogEvent(COMPONENT_MAIN, "Starting a son of pid %d\n", son_pid);
           exit(0);
           break;
         }
@@ -309,8 +310,8 @@ int ganefuse_main(int argc, char *argv[],
   /* Get the FSAL consts */
   FSAL_LoadConsts();
 
-  DisplayLog(">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
-             FSAL_GetFSName());
+  LogEvent(COMPONENT_MAIN, ">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
+           FSAL_GetFSName());
 
   /* Set the signal handler */
   memset(&act_sigusr1, 0, sizeof(act_sigusr1));
@@ -318,11 +319,11 @@ int ganefuse_main(int argc, char *argv[],
   act_sigusr1.sa_handler = action_sigusr1;
   if(sigaction(SIGUSR1, &act_sigusr1, NULL) == -1)
     {
-      DisplayErrorLog(ERR_SYS, ERR_SIGACTION, errno);
+      LogError(COMPONENT_MAIN, ERR_SYS, ERR_SIGACTION, errno);
       exit(1);
     }
   else
-    DisplayLogLevel(NIV_EVENT, "Signal SIGUSR1 (force flush) is ready to be used");
+    LogEvent(COMPONENT_MAIN, "Signal SIGUSR1 (force flush) is ready to be used");
 
   memset(&nfs_param, 0, sizeof(nfs_param));
 
@@ -330,7 +331,7 @@ int ganefuse_main(int argc, char *argv[],
 
   if(nfs_set_param_default(&nfs_param))
     {
-      DisplayLog("NFS MAIN: Error setting default parameters.");
+      LogCrit(COMPONENT_MAIN, "NFS MAIN: Error setting default parameters.");
       exit(1);
     }
   /* return all errors */
@@ -343,7 +344,7 @@ int ganefuse_main(int argc, char *argv[],
     {
       if(nfs_set_param_from_conf(&nfs_param, &nfs_start_info, config_path))
         {
-          DisplayLog("NFS MAIN: Error parsing configuration file.");
+          LogCrit(COMPONENT_MAIN, "NFS MAIN: Error parsing configuration file.");
           exit(1);
         }
     }
@@ -379,7 +380,7 @@ int ganefuse_main(int argc, char *argv[],
       nfs_param.pexportlist = BuildDefaultExport();
       if(nfs_param.pexportlist == NULL)
         {
-          DisplayLog("NFS MAIN: Could not create export entry for '/'");
+          LogCrit(COMPONENT_MAIN, "NFS MAIN: Could not create export entry for '/'");
           exit(1);
         }
     }
@@ -392,9 +393,9 @@ int ganefuse_main(int argc, char *argv[],
 
   if(nfs_check_param_consistency(&nfs_param))
     {
-      DisplayLog("NFS MAIN: Inconsistent parameters found");
-      DisplayLog
-          ("MAJOR WARNING: /!\\ | Bad Parameters could have significant impact on the daemon behavior");
+      LogMajor(COMPONENT_MAIN, "NFS MAIN: Inconsistent parameters found");
+      LogMajor(COMPONENT_MAIN, 
+               "MAJOR WARNING: /!\\ | Bad Parameters could have significant impact on the daemon behavior");
       exit(1);
     }
 
