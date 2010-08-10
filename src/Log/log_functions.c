@@ -1898,6 +1898,15 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
 #endif
     SYSLOG,
     ""
+  },
+  { COMPONENT_MAIN,            "MAIN",
+#ifdef _DEBUG_MAIN
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
   }
 };
 
