@@ -1849,7 +1849,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
       if(setrlimit(RLIMIT_CORE, &ulimit_data) != 0)
         {
           DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_SETRLIMIT, errno);
-          DisplayCrit(COMPONENT_INIT, "/!\\ | Impossible to set RLIMIT_CORE to %d",
+          LogCrit(COMPONENT_INIT, "/!\\ | Impossible to set RLIMIT_CORE to %d",
                      nfs_param.core_param.core_dump_size);
         }
     }

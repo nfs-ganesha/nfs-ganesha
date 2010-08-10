@@ -257,18 +257,6 @@ int SetNameFunction(char *nom)
   return 1;
 }                               /* SetNameFunction */
 
-/* 
- * Sets the default logging method (whether to a specific filepath or syslog.
- * During initialization this is used and separate layer logging defaults to
- * this destination.
- */
-int SetDefaultLogging(char *name)
-{
-  strcpy(nom_fichier_log, name);
-
-  return 1;
-}                               /* SetNameFileLog */
-
 /*
  * Return le nom du programme en cours 
  */
@@ -1924,17 +1912,16 @@ int DisplayLogComponentLevel(int component, int level, char *format, ...)
    va_start(arguments, format);
    switch(LogComponents[component].log_type)
      {
-     SYSLOG: 
+     case SYSLOG: 
        rc = DisplayLogSyslog_valist(format, arguments);
        break;
-     FILELOG:
+     case FILELOG:
        rc = DisplayLogPath_valist(LogComponents[component].log_file, format, arguments);
        break;
      default:
        rc = ERR_FAILURE;
      }
   va_end(arguments);
-
   return rc;
 }
 
@@ -1945,8 +1932,41 @@ int DisplayErrorComponentLogLine(int component, int num_family, int num_error, i
   if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
 
-  return DisplayLogComponentLevel(component, "%s", buffer);
+  return DisplayLogComponentLevel(component, NIV_CRIT, "%s", buffer);
 }                               /* DisplayErrorLogLine */
+
+/* 
+ * Set le fichier dans lequel vont etre loggues les messages
+*/
+int SetNameFileLog(char *nom)
+{
+  /* Cette fonction n'est pas thread-safe car le fichier de log
+   * est commun a tous les threads du programme */
+  strcpy(nom_fichier_log, nom);
+
+  return 1;
+}                               /* SetNameFileLog */
+
+/* 
+ * Sets the default logging method (whether to a specific filepath or syslog.
+ * During initialization this is used and separate layer logging defaults to
+ * this destination.
+ */
+int SetDefaultLogging(char *name)
+{
+  strcpy(nom_fichier_log, name);
+
+  /* As good a place as any to also set the COMPONENT_INIT logging */
+  if (strcmp(nom_fichier_log, "syslog") == 0)
+      LogComponents[COMPONENT_INIT].log_type = SYSLOG;
+  else
+    {
+      LogComponents[COMPONENT_INIT].log_type = FILELOG;
+      strncpy(LogComponents[COMPONENT_INIT].log_file, name, MAXPATHLEN);
+    }
+
+  return 1;
+}                               /* SetNameFileLog */
 
 /* 
  * Pour info : Les tags de printf dont on peut se servir:
