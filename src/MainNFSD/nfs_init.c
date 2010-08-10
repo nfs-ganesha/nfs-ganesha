@@ -624,7 +624,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
       else
         {
           LogCrit(COMPONENT_INIT, "NFS STARTUP: Error while parsing FSAL parameters");
-          DisplayErrorComponentLog(COMPONENT_INIT, ERR_FSAL, fsal_status.major, fsal_status.minor);
+          LogError(COMPONENT_INIT, ERR_FSAL, fsal_status.major, fsal_status.minor);
           return -1;
         }
     }
@@ -642,7 +642,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
       else
         {
           LogCrit(COMPONENT_INIT, "NFS STARTUP: Error while parsing FS common configuration");
-          DisplayErrorComponentLog(COMPONENT_INIT, ERR_FSAL, fsal_status.major, fsal_status.minor);
+          LogError(COMPONENT_INIT, ERR_FSAL, fsal_status.major, fsal_status.minor);
           return -1;
         }
     }
@@ -661,7 +661,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
       else
         {
           LogCrit(COMPONENT_INIT, "NFS STARTUP: Error while parsing FS specific configuration");
-          DisplayErrorComponentLog(COMPONENT_INIT, ERR_FSAL, fsal_status.major, fsal_status.minor);
+          LogError(COMPONENT_INIT, ERR_FSAL, fsal_status.major, fsal_status.minor);
           return -1;
         }
     }
@@ -697,7 +697,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
       else
         {
           LogCrit(COMPONENT_INIT, "NFS STARTUP: Error while parsing MFSL parameters");
-          DisplayErrorComponentLog(COMPONENT_INIT, ERR_FSAL, fsal_status.major, fsal_status.minor);
+          LogError(COMPONENT_INIT, ERR_FSAL, fsal_status.major, fsal_status.minor);
           return -1;
         }
     }
@@ -1238,7 +1238,7 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
       if((rc =
           pthread_create(&(worker_thrid[i]), &attr_thr, worker_thread, (void *)i)) != 0)
         {
-          DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
+          LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
           exit(1);
         }
     }
@@ -1250,7 +1250,7 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
       pthread_create(&rpc_dispatcher_thrid, &attr_thr, rpc_dispatcher_thread,
                      (void *)pnfs_param)) != 0)
     {
-      DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
       exit(1);
     }
   LogEvent(COMPONENT_INIT, "NFS STARTUP: rpc dispatcher thread was started successfully");
@@ -1258,7 +1258,7 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
   /* Starting the admin thread */
   if((rc = pthread_create(&admin_thrid, &attr_thr, admin_thread, (void *)admin_data)) != 0)
     {
-      DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
       exit(1);
     }
   LogEvent(COMPONENT_INIT, "NFS STARTUP: admin thread was started successfully");
@@ -1267,7 +1267,7 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
   if((rc =
       pthread_create(&stat_thrid, &attr_thr, stats_thread, (void *)workers_data)) != 0)
     {
-      DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
       exit(1);
     }
   LogEvent(COMPONENT_INIT, "NFS STARTUP: statistics thread was started successfully");
@@ -1277,7 +1277,7 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
       pthread_create(&fcc_gc_thrid, &attr_thr, file_content_gc_thread,
                      (void *)NULL)) != 0)
     {
-      DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
       exit(1);
     }
   LogEvent(COMPONENT_INIT, "NFS STARTUP: file content gc thread was started successfully");
@@ -1447,7 +1447,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       (nfs_worker_data_t *) Mem_Alloc(sizeof(nfs_worker_data_t) *
                                       nfs_param.core_param.nb_worker)) == NULL)
     {
-      DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
       exit(1);
     }
   memset((char *)workers_data, 0,
@@ -1500,7 +1500,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       if(reqpool == NULL)
         {
           LogCrit(COMPONENT_INIT, "NFS_INIT: Error while allocating request data pool #%d", i);
-          DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
+          LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
 #endif
@@ -1521,7 +1521,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       if(dupreq_pool == NULL)
         {
           LogCrit(COMPONENT_INIT, "NFS_INIT: Error while allocating duplicate request pool #%d", i);
-          DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
+          LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
 #endif
@@ -1546,7 +1546,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       if(ip_stats_pool == NULL)
         {
           LogCrit(COMPONENT_INIT, "NFS_INIT: Error while allocating IP stats cache pool #%d", i);
-          DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
+          LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
 #endif
@@ -1560,7 +1560,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   if((admin_data =
       (nfs_admin_data_t *) Mem_Alloc(sizeof(nfs_admin_data_t))) == NULL)
     {
-      DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
       exit(1);
     }  
 
@@ -1743,7 +1743,7 @@ static void nfs_Start_file_content_flushers(unsigned int nb_threads)
           pthread_create(&(flusher_thrid[i]), &attr_thr, nfs_file_content_flush_thread,
                          (void *)&flush_info[i])) != 0)
         {
-          DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
+          LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
           exit(1);
         }
       else
@@ -1848,7 +1848,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
 
       if(setrlimit(RLIMIT_CORE, &ulimit_data) != 0)
         {
-          DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_SETRLIMIT, errno);
+          LogError(COMPONENT_INIT, ERR_SYS, ERR_SETRLIMIT, errno);
           LogCrit(COMPONENT_INIT, "/!\\ | Impossible to set RLIMIT_CORE to %d",
                      nfs_param.core_param.core_dump_size);
         }
@@ -1864,7 +1864,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
 
       if(setrlimit(RLIMIT_NOFILE, &ulimit_data) != 0)
         {
-          DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_SETRLIMIT, errno);
+          LogError(COMPONENT_INIT, ERR_SYS, ERR_SETRLIMIT, errno);
           LogCrit(COMPONENT_INIT, "/!\\ | Impossible to set RLIMIT_NOFILE to %d",
                      nfs_param.core_param.nb_max_fd);
         }
@@ -1913,7 +1913,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
 
       if(FSAL_IS_ERROR(fsal_status))
         {
-          DisplayErrorComponentLog(COMPONENT_INIT, ERR_FSAL, fsal_status.major, fsal_status.minor);
+          LogError(COMPONENT_INIT, ERR_FSAL, fsal_status.major, fsal_status.minor);
           exit(0);
         }
 
