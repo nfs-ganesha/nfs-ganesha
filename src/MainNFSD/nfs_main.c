@@ -304,7 +304,7 @@ int main(int argc, char *argv[])
         {
         case -1:
           /* Fork failed */
-          DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_FORK, errno);
+          LogError(COMPONENT_INIT, ERR_SYS, ERR_FORK, errno);
           LogMajor(COMPONENT_INIT, "Could not start nfs daemon, exiting...");
           exit(1);
 
@@ -313,7 +313,7 @@ int main(int argc, char *argv[])
            * Let's make it the leader of its group of process */
           if(setsid() == -1)
             {
-              DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_SETSID, errno);
+              LogError(COMPONENT_INIT, ERR_SYS, ERR_SETSID, errno);
 	      LogMajor(COMPONENT_INIT, "Could not start nfs daemon, exiting...");
               exit(1);
             }
@@ -348,7 +348,7 @@ int main(int argc, char *argv[])
   if(sigaction(SIGTERM, &act_sigterm, NULL) == -1
      || sigaction(SIGINT, &act_sigterm, NULL) == -1)
     {
-      DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_SIGACTION, errno);
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_SIGACTION, errno);
       exit(1);
     }
   else
@@ -361,7 +361,7 @@ int main(int argc, char *argv[])
   act_sighup.sa_handler = action_sighup;
   if(sigaction(SIGHUP, &act_sighup, NULL) == -1)
     {
-      DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_SIGACTION, errno);
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_SIGACTION, errno);
       exit(1);
     }
   else
