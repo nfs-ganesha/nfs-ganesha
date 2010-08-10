@@ -44,7 +44,7 @@
 #include <string.h>
 #include <signal.h>
 
-#include "log_functions.h"
+#include "log_macros.h"
 
 /* La longueur d'une chaine */
 #define STR_LEN_TXT      2048
@@ -348,6 +348,9 @@ int SetLevelDebug(int level_to_set)
 {
   if(level_to_set < 0)
     level_to_set = 0;
+
+  if(level_to_set >= NB_LOG_LEVEL)
+    level_to_set = NB_LOG_LEVEL - 1;
 
   niveau_debug = level_to_set;
 
@@ -1732,7 +1735,186 @@ int log_printf(char *format, ...)
   return rc;
 }
 
+log_component_info __attribute__ ((__unused__)) LogComponents[] =
+{
+  { COMPONENT_NONE,            "NONE",           
+    NIV_NULL
+  },
+  { COMPONENT_MEMALLOC,        "MEMALLOC",       
+#ifdef _DEBUG_MEMALLOC      
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_STATES,          "STATES",         
+#ifdef _DEBUG_STATES        
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_MEMLEAKS,        "MEMLEAKS",       
+#ifdef _DEBUG_MEMLEAKS      
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_FSAL,            "FSAL",           
+#ifdef _DEBUG_FSAL          
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_NFSPROTO,        "NFSPROTO",       
+#ifdef _DEBUG_NFSPROTO      
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_NFS_V4,          "NFS_V4",         
+#ifdef _DEBUG_NFS_V4        
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_NFS_V4_PSEUDO,   "NFS_V4_PSEUDO",  
+#ifdef _DEBUG_NFS_V4_PSEUDO 
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_FILEHANDLE,      "FILEHANDLE",     
+#ifdef _DEBUG_FILEHANDLE    
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_NFS_SHELL,       "NFS_SHELL",      
+#ifdef _DEBUG_NFS_SHELL     
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_DISPATCH,        "DISPATCH",       
+#ifdef _DEBUG_DISPATCH      
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_CACHE_CONTENT,   "CACHE_CONTENT",  
+#ifdef _DEBUG_CACHE_CONTENT 
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_CACHE_INODE,     "CACHE_INODE",    
+#ifdef _DEBUG_CACHE_INODE   
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_CACHE_INODE_GC,  "CACHE_INODE_GC",  
+#ifdef _DEBUG_CACHE_INODE_GC
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_HASHTABLE,       "HASHTABLE",      
+#ifdef _DEBUG_HASHTABLE     
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_LRU,             "LRU",            
+#ifdef _DEBUG_LRU           
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_DUPREQ,          "DUPREQ",         
+#ifdef _DEBUG_DUPREQ        
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_LOG,             "LOG",            
+#ifdef _DEBUG_LOG           
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_RPCSEC_GSS,      "RPCSEC_GSS",     
+#ifdef _DEBUG_RPCSEC_GSS    
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  },
+  { COMPONENT_INIT,            "INIT",     
+#ifdef _DEBUG_INIT    
+    NIV_DEBUG
+#else
+    NIV_EVENT
+#endif
+  }
+};
   /* 
    * Pour info : Les tags de printf dont on peut se servir:
    * w DMNOPQTUWX 
    */
+
+#ifdef _SNMP_ADM_ACTIVE
+
+static int getLogLevel(snmp_adm_type_union * param, void *opt)
+{
+  param->integer = ReturnLevelDebug();
+  return 0;
+}
+
+static int setLogLevel(const snmp_adm_type_union * param, void *opt)
+{
+  SetLevelDebug(param->integer);
+  return 0;
+}
+
+int getComponentLogLevel(snmp_adm_type_union * param, void *opt)
+{
+  long component = (long)opt;
+  param->integer = LogComponents[component].log_level;
+  return 0;
+}
+
+int setComponentLogLevel(const snmp_adm_type_union * param, void *opt)
+{
+  long component = (long)opt;
+  LogComponents[component].log_level = param->integer;
+  return 0;
+}
+
+register_get_set snmp_export_log_general[] = {
+  {"LogLevel", 
+  "Server Log Level value", 
+  SNMP_ADM_INTEGER, 
+  SNMP_ADM_ACCESS_RW, 
+  getLogLevel, 
+  setLogLevel, 
+  NULL}
+};
+
+#endif /* _SNMP_ADM_ACTIVE */

@@ -29,6 +29,7 @@
 
 #include "stuff_alloc.h"
 #include "common_utils.h"
+#include "log_macros.h"
 
 #define  CONF_SNMP_ADM_LABEL  "SNMP_ADM"
 /* case unsensitivity */
@@ -1326,6 +1327,27 @@ static int create_dyn_fsal_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_coun
     }
 }
 
+static int create_dyn_log_control(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
+{
+  unsigned int i;
+  long j;
+
+  *p_dyn_gs_count = COMPONENT_COUNT - 1;
+  *p_dyn_gs = (register_get_set *) Mem_Alloc((COMPONENT_COUNT - 1) * sizeof(register_get_set));
+
+  for(j = 0; j < (COMPONENT_COUNT - 1); j ++)
+    {
+      (*p_dyn_gs)[j + 0].label = Mem_Alloc(256 * sizeof(char));
+      snprintf((*p_dyn_gs)[j].label, 256, "COMPONENT_%s", LogComponents[j + 1].str);
+      (*p_dyn_gs)[j].desc = "Log level for this component";
+      (*p_dyn_gs)[j].type = SNMP_ADM_INTEGER;
+      (*p_dyn_gs)[j].access = SNMP_ADM_ACCESS_RW;
+      (*p_dyn_gs)[j].getter = getComponentLogLevel;
+      (*p_dyn_gs)[j].setter = setComponentLogLevel;
+      (*p_dyn_gs)[j].opt_arg = (void *)(j + 1);
+    }
+}
+
 static void free_dyn(register_get_set * dyn, int count)
 {
   int i;
@@ -1495,6 +1517,29 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
 
       free_dyn(dyn_gs, dyn_gs_count);
     }
+
+  /*
+   * Set up logging snmp adm control
+   */
+
+  /* always register general logging variables */
+  if((rc =
+      snmp_adm_register_get_set_function(LOG_OID, snmp_export_log_general,
+                                         SNMPADM_LOG_GENERAL_COUNT)))
+    {
+      DisplayLog("Error registering logging variables to SNMP");
+      return 2;
+    }
+
+  create_dyn_log_control(&dyn_gs, &dyn_gs_count);
+
+  if((rc = snmp_adm_register_get_set_function(LOG_OID, dyn_gs, dyn_gs_count)))
+    {
+      DisplayLog("Error registering logging component variables to SNMP");
+      return 2;
+    }
+
+  free_dyn(dyn_gs, dyn_gs_count);
 
   /* finally, start the admin thread */
   if((rc = snmp_adm_start()))

@@ -34,6 +34,7 @@ enum
 enum
 {
   STAT_OID,
+  LOG_OID,
   CONF_OID,
   PROC_OID
 };
