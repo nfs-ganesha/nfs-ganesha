@@ -478,19 +478,19 @@ int DisplayErrorLogLine(int num_family, int num_error, int status, int ma_ligne)
 #define DisplayErrorFd(a, b, c, d ) DisplayErrorFdLine( a, b, c, d, __LINE__ )
 
 int DisplayLogString(char *tampon, char *format, ...);
-int DisplayLogStringLevel(char *tampon, int level, char *format, ...);
+static int DisplayLogStringLevel(char *tampon, int level, char *format, ...);
 
 int DisplayLog(char *format, ...);
 int DisplayLogLevel(int level, char *format, ...);
 
 int DisplayLogFlux(FILE * flux, char *format, ...);
-int DisplayLogFluxLevel(FILE * flux, int level, char *format, ...);
+static int DisplayLogFluxLevel(FILE * flux, int level, char *format, ...);
 
 int DisplayLogPath(char *path, char *format, ...);
-int DisplayLogPathLevel(char *path, int level, char *format, ...);
+static int DisplayLogPathLevel(char *path, int level, char *format, ...);
 
 int DisplayLogFd(int fd, char *format, ...);
-int DisplayLogFdLevel(int fd, int level, char *format, ...);
+static int DisplayLogFdLevel(int fd, int level, char *format, ...);
 
 /* AddFamilyError : not thread safe */
 int AddFamilyError(int num_family, char *nom_family, family_error_t * tab_err);
