@@ -1952,14 +1952,20 @@ int SetNameFileLog(char *nom)
 int SetDefaultLogging(char *name)
 {
   strcpy(nom_fichier_log, name);
+  int newtype, comp;
+  char *newfilename;
 
-  /* As good a place as any to also set the COMPONENT_INIT logging */
   if (strcmp(nom_fichier_log, "syslog") == 0)
-      LogComponents[COMPONENT_INIT].log_type = SYSLOG;
+    newtype = SYSLOG;
   else
+      newtype = FILELOG;
+
+  /* Change each layer's way of logging */
+  for(comp=0; comp < COMPONENT_COUNT; comp++)
     {
-      LogComponents[COMPONENT_INIT].log_type = FILELOG;
-      strncpy(LogComponents[COMPONENT_INIT].log_file, name, MAXPATHLEN);
+      LogComponents[comp].log_type = newtype;
+      if (newtype == FILELOG)
+	strncpy(LogComponents[comp].log_file, name, MAXPATHLEN);
     }
 
   return 1;
