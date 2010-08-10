@@ -1723,7 +1723,7 @@ int log_printf(char *format, ...)
   return rc;
 }
 
-log_component_info __attribute__ ((__unused__)) LogComponents[] =
+log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
 {
   { COMPONENT_NONE,            "NONE",           
     NIV_NULL
@@ -1906,9 +1906,6 @@ int DisplayLogComponentLevel(int component, int level, char *format, ...)
    va_list arguments;
    int rc;
 
-   if(level > niveau_debug)
-     return SUCCES;
-
    va_start(arguments, format);
    switch(LogComponents[component].log_type)
      {
@@ -2001,7 +1998,7 @@ int setComponentLogLevel(const snmp_adm_type_union * param, void *opt)
   return 0;
 }
 
-register_get_set snmp_export_log_general[] = {
+register_get_set snmp_export_log_general[SNMPADM_LOG_GENERAL_COUNT] = {
   {"LogLevel", 
   "Server Log Level value", 
   SNMP_ADM_INTEGER, 
