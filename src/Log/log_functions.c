@@ -637,7 +637,7 @@ int DisplayLog(char *format, ...)
  *
  */
 
-int DisplayLogStringLevel(char *tampon, int level, char *format, ...)
+static int DisplayLogStringLevel(char *tampon, int level, char *format, ...)
 {
   va_list arguments;
   int rc;
@@ -657,7 +657,7 @@ int DisplayLogStringLevel(char *tampon, int level, char *format, ...)
 
 }                               /* DisplayLogStringLevel */
 
-int DisplayLogFluxLevel(FILE * flux, int level, char *format, ...)
+static int DisplayLogFluxLevel(FILE * flux, int level, char *format, ...)
 {
   va_list arguments;
   int rc;
@@ -675,7 +675,7 @@ int DisplayLogFluxLevel(FILE * flux, int level, char *format, ...)
 
 }                               /* DisplayLogFluxLevel */
 
-int DisplayLogFdLevel(int fd, int level, char *format, ...)
+static int DisplayLogFdLevel(int fd, int level, char *format, ...)
 {
   va_list arguments;
   int rc;
@@ -711,7 +711,7 @@ int DisplayLogLevel(int level, char *format, ...)
 
 }                               /* DisplayLogLevel */
 
-int DisplayLogPathLevel(char *path, int level, char *format, ...)
+static int DisplayLogPathLevel(char *path, int level, char *format, ...)
 {
   va_list arguments;
   int rc;
@@ -728,6 +728,31 @@ int DisplayLogPathLevel(char *path, int level, char *format, ...)
   return rc;
 
 }                               /* DisplayLogPathLevel */
+
+int DisplayLogComponentLevel(log_component_info *component, int level, char *format, ...)
+ {
+   va_list arguments;
+   int rc;
+
+   if(level > niveau_debug)
+     return SUCCES;
+
+   va_start(arguments, format);
+   switch(component->log_type)
+     {
+     SYSLOG: 
+       rc = DisplayLogSyslog_valist(format, arguments);
+       break;
+     FILE:
+       rc = DisplayLogPath_valist(component->log_file, format, arguments);
+       break;
+     default:
+       rc = ERR_FAILURE;
+     }
+  va_end(arguments);
+
+  return rc;
+}
 
 /*
  *
