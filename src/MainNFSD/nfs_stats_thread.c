@@ -49,6 +49,7 @@
 #include "nfs_core.h"
 #include "nfs_stat.h"
 #include "nfs_exports.h"
+#include "log_macros.h"
 
 extern nfs_parameter_t nfs_param;
 extern time_t ServerBootTime;
@@ -115,24 +116,24 @@ void *stats_thread(void *addr)
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      DisplayLog("NFS STATS : Memory manager could not be initialized, exiting...");
+      LogCrit(COMPONENT_MAIN, "NFS STATS : Memory manager could not be initialized, exiting...");
       exit(1);
     }
-  DisplayLog("NFS STATS : Memory manager successfully initialized");
+  LogEvent(COMPONENT_MAIN, "NFS STATS : Memory manager successfully initialized");
 #endif
 
   /* Open the stats file, in append mode */
   if((stats_file = fopen(nfs_param.core_param.stats_file_path, "a")) == NULL)
     {
-      DisplayLog("NFS STATS : Could not open stats file %s, no stats will be made...",
-                 nfs_param.core_param.stats_file_path);
+      LogCrit(COMPONENT_MAIN, "NFS STATS : Could not open stats file %s, no stats will be made...",
+              nfs_param.core_param.stats_file_path);
       return NULL;
     }
 
   if(stat(nfs_param.core_param.stats_file_path, &statref) != 0)
     {
-      DisplayLog("NFS STATS : Could not get inode for %s, no stats will be made...",
-                 nfs_param.core_param.stats_file_path);
+      LogCrit(COMPONENT_MAIN, "NFS STATS : Could not get inode for %s, no stats will be made...",
+              nfs_param.core_param.stats_file_path);
       fclose(stats_file);
       return NULL;
     }
@@ -140,9 +141,9 @@ void *stats_thread(void *addr)
 #ifdef _SNMP_ADM_ACTIVE
   /* start snmp library */
   if(stats_snmp(workers_data) == 0)
-    DisplayLog("NFS STATS: SNMP stats service was started successfully");
+    LogEvent(COMPONENT_MAIN, "NFS STATS: SNMP stats service was started successfully");
   else
-    DisplayLog("NFS STATS: ERROR starting SNMP stats export thread");
+    LogCrit(COMPONENT_MAIN, "NFS STATS: ERROR starting SNMP stats export thread");
 #endif /*_SNMP_ADM_ACTIVE*/
 
   while(1)
@@ -151,7 +152,7 @@ void *stats_thread(void *addr)
       sleep(nfs_param.core_param.stats_update_delay);
 
       /* Debug trace */
-      DisplayLogLevel(NIV_EVENT, "NFS STATS : now dumping stats");
+      LogEvent(COMPONENT_MAIN, "NFS STATS : now dumping stats");
 
       /* Stats main loop */
       if(stat(nfs_param.core_param.stats_file_path, &stattest) == 0)
@@ -169,15 +170,15 @@ void *stats_thread(void *addr)
       if(reopen_stats == TRUE)
         {
           /* Stats file has changed */
-          DisplayLog
-              ("NFS STATS : stats file has changed or was removed, I close and reopen it");
+          LogEvent(COMPONENT_MAIN, 
+                   "NFS STATS : stats file has changed or was removed, I close and reopen it");
           fflush(stats_file);
           fclose(stats_file);
           if((stats_file = fopen(nfs_param.core_param.stats_file_path, "a")) == NULL)
             {
-              DisplayLog
-                  ("NFS STATS : Could not open stats file %s, no further stats will be made...",
-                   nfs_param.core_param.stats_file_path);
+              LogCrit(COMPONENT_MAIN, 
+                      "NFS STATS : Could not open stats file %s, no further stats will be made...",
+                      nfs_param.core_param.stats_file_path);
               return NULL;
             }
           statref = stattest;
