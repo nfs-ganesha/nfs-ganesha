@@ -459,6 +459,7 @@ static status_t __attribute__ ((__unused__)) tab_systeme_status[] =
 int SetNamePgm(char *nom);
 int SetNameHost(char *nom);
 int SetNameFileLog(char *nom);
+int SetDefaultLogging(char *name);
 int SetNameFunction(char *nom); /* thread safe */
 char *ReturnNamePgm();
 char *ReturnNameHost();
@@ -564,9 +565,12 @@ int log_vfprintf(FILE *, char *format, va_list arguments);
 int log_fprintf(FILE * file, char *format, ...);
 int log_printf(char *format, ...);
 
+int DisplayLogComponentLevel(int component, int level, char *format, ...);
+int DisplayErrorComponentLogLine(int component, int num_family, int num_error, int status, int ma_ligne);
+
 #ifdef _SNMP_ADM_ACTIVE
-register_get_set snmp_export_log_general[];
 #define SNMPADM_LOG_GENERAL_COUNT 1
+register_get_set snmp_export_log_general[SNMPADM_LOG_GENERAL_COUNT];
 int getComponentLogLevel(snmp_adm_type_union * param, void *opt);
 int setComponentLogLevel(const snmp_adm_type_union * param, void *opt);
 #endif

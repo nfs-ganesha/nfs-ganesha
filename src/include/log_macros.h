@@ -72,7 +72,7 @@ typedef struct log_component_info
   char  log_file[MAXPATHLEN];
 } log_component_info;
   
-log_component_info __attribute__ ((__unused__)) LogComponents[];
+log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogMajor(component, format, args...) \
   do { \
@@ -88,23 +88,27 @@ log_component_info __attribute__ ((__unused__)) LogComponents[];
 
 #define LogEvent(component, format, args...) \
   do { \
-    if (&LogComponents[component].log_level >= NIV_EVENT) \
+    if (LogComponents[component].log_level >= NIV_EVENT) \
       DisplayLogComponentLevel(component, NIV_EVENT, format, ## args ); \
   } while (0)
 
 #define LogDebug(component, format, args...) \
   do { \
-    if (&LogComponents[component].log_level >= NIV_DEBUG) \
+    if (LogComponents[component].log_level >= NIV_DEBUG) \
       DisplayLogComponentLevel(component, NIV_DEBUG, format, ## args ); \
   } while (0)
 
 #define LogFullDebug(component, format, args...) \
   do { \
-    if (&LogComponents[component].log_level >= NIV_FULL_DEBUG) \
+    if (LogComponents[component].log_level >= NIV_FULL_DEBUG) \
       DisplayLogComponentLevel(component, NIV_FULL_DEBUG, format, ## args ); \
   } while (0)
 
-#define DisplayErrorComponentLog( component, a, b, c ) DisplayErrorComponentLogLine( component, a, b, c, __LINE__ )
+#define DisplayErrorComponentLog( component, a, b, c ) \
+  do { \
+    if (LogComponents[component].log_level >= NIV_CRIT) \
+      DisplayErrorComponentLogLine( component, a, b, c, __LINE__ ); \
+  } while (0)
 
 /* 
  * Temporary define of LogPrintf to handle messages that were
@@ -113,7 +117,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[];
  */
 #define LogPrintf(component, format, args...) \
   do { \
-    if (&LogComponents[component].log_level >= NIV_FULL_DEBUG) \
+    if (LogComponents[component].log_level >= NIV_FULL_DEBUG) \
       DisplayLogComponentLevel(component, NIV_FULL_DEBUG, format, ## args ); \
   } while (0)
 
@@ -123,7 +127,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[];
  */
 #define LogMessage(component, format, args...) \
   do { \
-    if (&LogComponents[component].log_level >= NIV_MAJOR) \
+    if (LogComponents[component].log_level >= NIV_MAJOR) \
       DisplayLogComponentLevel(component, NIV_FULL_DEBUG, format, ## args ); \
   } while (0)
 
