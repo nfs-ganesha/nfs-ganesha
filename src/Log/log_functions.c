@@ -258,13 +258,13 @@ int SetNameFunction(char *nom)
 }                               /* SetNameFunction */
 
 /* 
- * Set le fichier dans lequel vont etre loggues les messages
+ * Sets the default logging method (whether to a specific filepath or syslog.
+ * During initialization this is used and separate layer logging defaults to
+ * this destination.
  */
-int SetNameFileLog(char *nom)
+int SetDefaultLogging(char *name)
 {
-  /* Cette fonction n'est pas thread-safe car le fichier de log
-   * est commun a tous les threads du programme */
-  strcpy(nom_fichier_log, nom);
+  strcpy(nom_fichier_log, name);
 
   return 1;
 }                               /* SetNameFileLog */
@@ -728,31 +728,6 @@ static int DisplayLogPathLevel(char *path, int level, char *format, ...)
   return rc;
 
 }                               /* DisplayLogPathLevel */
-
-int DisplayLogComponentLevel(log_component_info *component, int level, char *format, ...)
- {
-   va_list arguments;
-   int rc;
-
-   if(level > niveau_debug)
-     return SUCCES;
-
-   va_start(arguments, format);
-   switch(component->log_type)
-     {
-     SYSLOG: 
-       rc = DisplayLogSyslog_valist(format, arguments);
-       break;
-     FILE:
-       rc = DisplayLogPath_valist(component->log_file, format, arguments);
-       break;
-     default:
-       rc = ERR_FAILURE;
-     }
-  va_end(arguments);
-
-  return rc;
-}
 
 /*
  *
@@ -1767,142 +1742,216 @@ log_component_info __attribute__ ((__unused__)) LogComponents[] =
   },
   { COMPONENT_MEMALLOC,        "MEMALLOC",       
 #ifdef _DEBUG_MEMALLOC      
-    NIV_DEBUG
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   },
   { COMPONENT_STATES,          "STATES",         
 #ifdef _DEBUG_STATES        
-    NIV_DEBUG
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   },
   { COMPONENT_MEMLEAKS,        "MEMLEAKS",       
 #ifdef _DEBUG_MEMLEAKS      
-    NIV_DEBUG
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   },
   { COMPONENT_FSAL,            "FSAL",           
 #ifdef _DEBUG_FSAL          
-    NIV_DEBUG
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   },
   { COMPONENT_NFSPROTO,        "NFSPROTO",       
 #ifdef _DEBUG_NFSPROTO      
-    NIV_DEBUG
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   },
   { COMPONENT_NFS_V4,          "NFS_V4",         
 #ifdef _DEBUG_NFS_V4        
-    NIV_DEBUG
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   },
   { COMPONENT_NFS_V4_PSEUDO,   "NFS_V4_PSEUDO",  
 #ifdef _DEBUG_NFS_V4_PSEUDO 
-    NIV_DEBUG
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   },
   { COMPONENT_FILEHANDLE,      "FILEHANDLE",     
 #ifdef _DEBUG_FILEHANDLE    
-    NIV_DEBUG
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   },
   { COMPONENT_NFS_SHELL,       "NFS_SHELL",      
 #ifdef _DEBUG_NFS_SHELL     
-    NIV_DEBUG
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   },
   { COMPONENT_DISPATCH,        "DISPATCH",       
 #ifdef _DEBUG_DISPATCH      
-    NIV_DEBUG
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   },
   { COMPONENT_CACHE_CONTENT,   "CACHE_CONTENT",  
 #ifdef _DEBUG_CACHE_CONTENT 
-    NIV_DEBUG
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   },
   { COMPONENT_CACHE_INODE,     "CACHE_INODE",    
 #ifdef _DEBUG_CACHE_INODE   
-    NIV_DEBUG
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   },
   { COMPONENT_CACHE_INODE_GC,  "CACHE_INODE_GC",  
 #ifdef _DEBUG_CACHE_INODE_GC
-    NIV_DEBUG
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   },
   { COMPONENT_HASHTABLE,       "HASHTABLE",      
 #ifdef _DEBUG_HASHTABLE     
-    NIV_DEBUG
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   },
   { COMPONENT_LRU,             "LRU",            
 #ifdef _DEBUG_LRU           
-    NIV_DEBUG
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   },
   { COMPONENT_DUPREQ,          "DUPREQ",         
 #ifdef _DEBUG_DUPREQ        
-    NIV_DEBUG
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   },
   { COMPONENT_LOG,             "LOG",            
 #ifdef _DEBUG_LOG           
-    NIV_DEBUG
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   },
   { COMPONENT_RPCSEC_GSS,      "RPCSEC_GSS",     
 #ifdef _DEBUG_RPCSEC_GSS    
-    NIV_DEBUG
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   },
-  { COMPONENT_INIT,            "INIT",     
-#ifdef _DEBUG_INIT    
-    NIV_DEBUG
+  { COMPONENT_INIT,            "INIT",
+#ifdef _DEBUG_INIT
+    NIV_DEBUG,
 #else
-    NIV_EVENT
+    NIV_EVENT,
 #endif
+    SYSLOG,
+    ""
   }
 };
-  /* 
-   * Pour info : Les tags de printf dont on peut se servir:
-   * w DMNOPQTUWX 
-   */
+
+int DisplayLogComponentLevel(int component, int level, char *format, ...)
+ {
+   va_list arguments;
+   int rc;
+
+   if(level > niveau_debug)
+     return SUCCES;
+
+   va_start(arguments, format);
+   switch(LogComponents[component].log_type)
+     {
+     SYSLOG: 
+       rc = DisplayLogSyslog_valist(format, arguments);
+       break;
+     FILELOG:
+       rc = DisplayLogPath_valist(LogComponents[component].log_file, format, arguments);
+       break;
+     default:
+       rc = ERR_FAILURE;
+     }
+  va_end(arguments);
+
+  return rc;
+}
+
+int DisplayErrorComponentLogLine(int component, int num_family, int num_error, int status, int ma_ligne)
+{
+  char buffer[STR_LEN_TXT];
+
+  if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
+    return -1;
+
+  return DisplayLogComponentLevel(component, "%s", buffer);
+}                               /* DisplayErrorLogLine */
+
+/* 
+ * Pour info : Les tags de printf dont on peut se servir:
+ * w DMNOPQTUWX 
+ */
 
 #ifdef _SNMP_ADM_ACTIVE
 
