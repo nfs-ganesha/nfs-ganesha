@@ -42,6 +42,7 @@
 
 #include "nfs_init.h"
 #include "fsal.h"
+#include "log_macros.h"
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
