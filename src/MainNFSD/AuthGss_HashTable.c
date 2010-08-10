@@ -13,7 +13,7 @@
 #include "stuff_alloc.h"
 #include "HashData.h"
 #include "HashTable.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "config_parsing.h"
 #include "nfs_core.h"
 
@@ -483,7 +483,7 @@ int Gss_ctx_Hash_Init(nfs_krb5_parameter_t param)
 {
   if((ht_gss_ctx = HashTable_Init(param.hash_param)) == NULL)
     {
-      DisplayLog("GSS_CTX_HASH: Cannot init GSS CTX  cache");
+      LogCrit(COMPONENT_RPCSEC_GSS, "GSS_CTX_HASH: Cannot init GSS CTX  cache");
       return -1;
     }
 
