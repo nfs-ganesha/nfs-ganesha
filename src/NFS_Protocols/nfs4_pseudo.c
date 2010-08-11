@@ -60,7 +60,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
@@ -171,19 +171,19 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
 
       if(entry->options & EXPORT_OPTION_PSEUDO)
         {
-          DisplayLogLevel(NIV_FULL_DEBUG, "BUILDING PSEUDOFS: Id          = %d",
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "BUILDING PSEUDOFS: Id          = %d",
                           entry->id);
-          DisplayLogLevel(NIV_FULL_DEBUG, "BUILDING PSEUDOFS: ANON        = %d",
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "BUILDING PSEUDOFS: ANON        = %d",
                           entry->anonymous_uid);
-          DisplayLogLevel(NIV_FULL_DEBUG, "BUILDING PSEUDOFS: Path        = %s",
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "BUILDING PSEUDOFS: Path        = %s",
                           entry->fullpath);
-          DisplayLogLevel(NIV_FULL_DEBUG, "BUILDING PSEUDOFS: Options     = 0x%x",
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "BUILDING PSEUDOFS: Options     = 0x%x",
                           entry->options);
-          DisplayLogLevel(NIV_FULL_DEBUG, "BUILDING PSEUDOFS: Num Clients = %d",
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "BUILDING PSEUDOFS: Num Clients = %d",
                           entry->clients.num_clients);
 
           /* A pseudo path is to ne managed */
-          DisplayLogLevel(NIV_FULL_DEBUG, "BUILDING PSEUDOFS: Now managing %s seen as %s",
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "BUILDING PSEUDOFS: Now managing %s seen as %s",
                           entry->fullpath, entry->pseudopath);
 
           /* Parsing the path */
@@ -193,7 +193,7 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
                                 find_endLine)) < 0)
             {
               /* Path is badly formed */
-              DisplayLog("BUILDING PSEUDOFS: Invalid 'pseudo' option: %s",
+              LogCrit(COMPONENT_NFS_V4_PSEUDO, "BUILDING PSEUDOFS: Invalid 'pseudo' option: %s",
                          entry->pseudopath);
               continue;
             }
@@ -202,7 +202,7 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
           if(entry->pseudopath[0] != '/')
             {
               /* Path is badly formed */
-              DisplayLog("Pseudo Path '%s' is badly formed", entry->pseudopath);
+              LogCrit(COMPONENT_NFS_V4_PSEUDO, "Pseudo Path '%s' is badly formed", entry->pseudopath);
               continue;
             }
 
@@ -403,12 +403,10 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
   LastOffset = 0;
   j = 0;
 
-#ifdef _DEBUG_NFS_V4_PSEUDO
-  DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                     "Asked Attributes (Pseudo): Bitmap = (len=%d, val[0]=%d, val[1]=%d), %d item in list",
                     Bitmap->bitmap4_len, Bitmap->bitmap4_val[0], Bitmap->bitmap4_val[1],
                     attrmasklen);
-#endif
 
   if(attrmasklen == 0)
     {
@@ -421,8 +419,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
     {
       attribute_to_set = attrmasklist[i];
 
-      DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                        NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                         "Flag for Operation (Pseudo) = %d|%d is ON,  name  = %s  reply_size = %d",
                         attrmasklist[i], fattr4tab[attribute_to_set].val,
                         fattr4tab[attribute_to_set].name,
@@ -475,13 +472,10 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 
           nfs4_list_to_bitmap4(&supported_attrs, &c, attrvalslist_supported);
 
-#ifdef _DEBUG_NFS_V4_PSEUDO
-          DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                            NIV_FULL_DEBUG,
+	  LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                             "Fattr (pseudo) supported_attrs(len)=%u -> %u|%u",
                             supported_attrs.bitmap4_len, supported_attrs.bitmap4_val[0],
                             supported_attrs.bitmap4_val[1]);
-#endif
 
           /* This kind of operation is always a success */
           op_attr_success = 1;
@@ -1230,8 +1224,8 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 #endif
 
         default:
-          DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                            NIV_EVENT, "Bad file attributes %d queried",
+	  LogEvent(COMPONENT_NFS_V4_PSEUDO,
+                            "Bad file attributes %d queried",
                             attribute_to_set);
           /* BUGAZOMEU : un traitement special ici */
           break;
@@ -1256,7 +1250,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 #endif
 
   /* LastOffset contains the length of the attrvalsBuffer usefull data */
-  DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                     "Fattr (pseudo) At the end LastOffset = %u, i=%d, j=%d", LastOffset,
                     i, j);
 
@@ -1278,10 +1272,10 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 
   memcpy(Fattr->attr_vals.attrlist4_val, attrvalsBuffer, Fattr->attr_vals.attrlist4_len);
 
-  DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                     "nfs4_PseudoToFattr (end): Fattr->attr_vals.attrlist4_len = %d",
                     Fattr->attr_vals.attrlist4_len);
-  DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                     "nfs4_PseudoToFattr (end):Fattr->attrmask.bitmap4_len = %d  [0]=%u, [1]=%u",
                     Fattr->attrmask.bitmap4_len, Fattr->attrmask.bitmap4_val[0],
                     Fattr->attrmask.bitmap4_val[1]);
@@ -1340,7 +1334,7 @@ int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry)
   fhandle4.pseudofs_flag = TRUE;
   fhandle4.pseudofs_id = psfsentry->pseudo_id;
 
-  DisplayLogLevel(NIV_FULL_DEBUG, "PSEUDO_TO_FH: Pseudo id = %d -> %d",
+  LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "PSEUDO_TO_FH: Pseudo id = %d -> %d",
                   psfsentry->pseudo_id, fhandle4.pseudofs_id);
 
   memcpy(fh4p->nfs_fh4_val, &fhandle4, sizeof(fhandle4));
@@ -1368,7 +1362,7 @@ int nfs4_CreateROOTFH4(nfs_fh4 * fh4p, compound_data_t * data)
 
   psfsentry = *(data->pseudofs->reverse_tab[0]);
 
-  DisplayLogLevel(NIV_FULL_DEBUG, "CREATE ROOTFH (pseudo): root to pseudofs = #%s#",
+  LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "CREATE ROOTFH (pseudo): root to pseudofs = #%s#",
                   psfsentry.name);
 
   if((status = nfs4_AllocateFH(&(data->rootFH))) != NFS4_OK)
@@ -1376,7 +1370,7 @@ int nfs4_CreateROOTFH4(nfs_fh4 * fh4p, compound_data_t * data)
 
   if(!nfs4_PseudoToFhandle(&(data->rootFH), &psfsentry))
     {
-      DisplayLogLevel(NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                       "CREATE ROOTFH (pseudo): Creation of root fh is impossible");
       return NFS4ERR_BADHANDLE;
     }
@@ -1555,8 +1549,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   else
     {
       /* The entry is a junction */
-      DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                        NIV_DEBUG,
+      LogFullDebug(COMPONENT_NFS_V4_PSEUDO,      
                         "A junction in pseudo fs is traversed: name = %s, id = %d",
                         iter->name, iter->junction_export->id);
       data->pexport = iter->junction_export;
@@ -1565,8 +1558,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       /* Build credentials */
       if(nfs4_MakeCred(data) != 0)
         {
-          DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                            NIV_MAJOR,
+          LogMajor(COMPONENT_NFS_V4_PSEUDO,
                             "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get FSAL credentials for %s, id=%d",
                             data->pexport->fullpath, data->pexport->id);
           res_LOOKUP4.status = NFS4ERR_WRONGSEC;
@@ -1593,12 +1585,10 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                                                      data->pcontext, &fsal_handle, NULL)))
 #endif
         {
-          DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                            NIV_MAJOR,
+	  LogMajor(COMPONENT_NFS_V4_PSEUDO,
                             "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to lookup for %s, id=%d",
                             data->pexport->fullpath, data->pexport->id);
-          DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                            NIV_MAJOR,
+          LogMajor(COMPONENT_NFS_V4_PSEUDO,
                             "PSEUDO FS JUNCTION TRAVERSAL: fsal_status = ( %d, %d )",
                             fsal_status.major, fsal_status.minor);
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
@@ -1612,8 +1602,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         {
           if((error = nfs4_AllocateFH(&(data->mounted_on_FH))) != NFS4_OK)
             {
-              DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                                NIV_MAJOR,
+              LogMajor(COMPONENT_NFS_V4_PSEUDO,
                                 "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to allocate the 'mounted on' file handle");
               res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
               return res_LOOKUP4.status;
@@ -1624,8 +1613,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         {
           if((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
             {
-              DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                                NIV_MAJOR,
+              LogMajor(COMPONENT_NFS_V4_PSEUDO,
                                 "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to allocate the first file handle");
               res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
               return res_LOOKUP4.status;
@@ -1635,8 +1623,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       /* Build the nfs4 handle */
       if(!nfs4_FSALToFhandle(&data->currentFH, &fsal_handle, data))
         {
-          DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                            NIV_MAJOR,
+          LogMajor(COMPONENT_NFS_V4_PSEUDO,
                             "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to build the first file handle");
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
           return res_LOOKUP4.status;
@@ -1655,8 +1642,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                                          ((cache_inode_client_t *) data->pclient),
                                          data->pcontext, &cache_status)) == NULL)
         {
-          DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                            NIV_MAJOR,
+          LogMajor(COMPONENT_NFS_V4_PSEUDO,
                             "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Allocate root entry in cache inode failed, for %s, id=%d",
                             data->pexport->fullpath, data->pexport->id);
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
@@ -1670,8 +1656,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                              ((cache_inode_client_t *) data->pclient),
                              data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
         {
-          DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                            NIV_MAJOR,
+          LogMajor(COMPONENT_NFS_V4_PSEUDO,
                             "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get attributes for root pentry");
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
           return res_LOOKUP4.status;
@@ -1801,7 +1786,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
   entryFH.nfs_fh4_len = 0;
 
-  DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                     "Entering NFS4_OP_READDIR_PSEUDO");
 
   /* get the caracteristic value for readdir operation */
@@ -1813,8 +1798,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   /* dircount is considered meaningless by many nfsv4 client (like the CITI one). we use maxcount instead */
   estimated_num_entries = maxcount / sizeof(entry4);
 
-  DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                    NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                     "PSEUDOFS READDIR: dircount=%d, maxcount=%d, cookie=%d, sizeof(entry4)=%d num_entries=%d",
                     dircount, maxcount, cookie, space_used, estimated_num_entries);
 
@@ -1831,15 +1815,14 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       res_READDIR4.status = NFS4ERR_BADHANDLE;
       return res_READDIR4.status;
     }
-  DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                     "PSEUDOFS READDIR in #%s#", psfsentry.name);
 
   /* If this a junction filehandle ? */
   if(psfsentry.junction_export != NULL)
     {
       /* This is a junction */
-      DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                        NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                         "PSEUDOFS READDIR : DIR #%s# id=%u is a junction\n",
                         psfsentry.name, psfsentry.junction_export->id);
 
@@ -1850,8 +1833,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       /* Build the credentials */
       if(nfs4_MakeCred(data) != 0)
         {
-          DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                            NIV_MAJOR,
+          LogMajor(COMPONENT_NFS_V4_PSEUDO,
                             "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get FSAL credentials for %s, id=%d",
                             data->pexport->fullpath, data->pexport->id);
           res_READDIR4.status = NFS4ERR_WRONGSEC;
@@ -1877,12 +1859,10 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                                                      data->pcontext, &fsal_handle, NULL)))
 #endif
         {
-          DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                            NIV_MAJOR,
+          LogMajor(COMPONENT_NFS_V4_PSEUDO,
                             "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to lookup for %s, id=%d",
                             data->pexport->fullpath, data->pexport->id);
-          DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                            NIV_MAJOR,
+          LogMajor(COMPONENT_NFS_V4_PSEUDO,
                             "PSEUDO FS JUNCTION TRAVERSAL: fsal_status = ( %d, %d )",
                             fsal_status.major, fsal_status.minor);
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
@@ -1896,8 +1876,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
         {
           if((error = nfs4_AllocateFH(&(data->mounted_on_FH))) != NFS4_OK)
             {
-              DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                                NIV_MAJOR,
+              LogMajor(COMPONENT_NFS_V4_PSEUDO,
                                 "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to allocate the 'mounted on' file handle");
               res_READDIR4.status = NFS4ERR_SERVERFAULT;
               return res_READDIR4.status;
@@ -1908,8 +1887,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
         {
           if((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
             {
-              DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                                NIV_MAJOR,
+              LogMajor(COMPONENT_NFS_V4_PSEUDO,
                                 "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to allocate the first file handle");
               res_READDIR4.status = NFS4ERR_SERVERFAULT;
               return res_READDIR4.status;
@@ -1919,8 +1897,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       /* Build the nfs4 handle */
       if(!nfs4_FSALToFhandle(&data->currentFH, &fsal_handle, data))
         {
-          DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                            NIV_MAJOR,
+          LogMajor(COMPONENT_NFS_V4_PSEUDO,
                             "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to build the first file handle");
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
           return res_READDIR4.status;
@@ -1939,8 +1916,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                                          ((cache_inode_client_t *) data->pclient),
                                          data->pcontext, &cache_status)) == NULL)
         {
-          DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                            NIV_MAJOR,
+          LogMajor(COMPONENT_NFS_V4_PSEUDO,
                             "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Allocate root entry in cache inode failed, for %s, id=%d",
                             data->pexport->fullpath, data->pexport->id);
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
@@ -1954,8 +1930,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                              ((cache_inode_client_t *) data->pclient),
                              data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
         {
-          DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                            NIV_MAJOR,
+          LogMajor(COMPONENT_NFS_V4_PSEUDO,
                             "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get attributes for root pentry");
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
           return res_READDIR4.status;
@@ -1974,7 +1949,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       (entry_name_array_item_t *) Mem_Alloc(estimated_num_entries *
                                             (FSAL_MAX_NAME_LEN + 1))) == NULL)
     {
-      DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
+      DisplayErrorComponentLog(COMPONENT_NFS_V4_PSEUDO, ERR_SYS, ERR_MALLOC, errno);
       res_READDIR4.status = NFS4ERR_SERVERFAULT;
       return res_READDIR4.status;
     }
@@ -1983,7 +1958,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   if((entry_nfs_array =
       (entry4 *) Mem_Alloc(estimated_num_entries * sizeof(entry4))) == NULL)
     {
-      DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
+      DisplayErrorComponentLog(COMPONENT_NFS_V4_PSEUDO, ERR_SYS, ERR_MALLOC, errno);
       res_READDIR4.status = NFS4ERR_SERVERFAULT;
       return res_READDIR4.status;
     }
@@ -2027,8 +2002,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   i = 0;
   for(; iter != NULL; iter = iter->next)
     {
-      DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                        NIV_FULL_DEBUG, "PSEUDO FS: Found entry %s", iter->name);
+      LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "PSEUDO FS: Found entry %s", iter->name);
 
       entry_nfs_array[i].name.utf8string_len = strlen(iter->name);
       strncpy(entry_name_array[i], iter->name, FSAL_MAX_NAME_LEN);
@@ -2083,7 +2057,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   if(i < estimated_num_entries)
     if((entry_nfs_array = Mem_Realloc(entry_nfs_array, i * sizeof(entry4))) == NULL)
       {
-        DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
+        DisplayErrorComponentLog(COMPONENT_NFS_V4_PSEUDO, ERR_SYS, ERR_MALLOC, errno);
         res_READDIR4.status = NFS4ERR_SERVERFAULT;
         Mem_Free(entry_nfs_array);
         return res_READDIR4.status;

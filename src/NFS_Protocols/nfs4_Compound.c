@@ -60,7 +60,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -250,7 +250,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   /* A "local" #define to avoid typo with nfs (too) long structure names */
 #define COMPOUND4_ARRAY parg->arg_compound4.argarray
 
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFSV4,
                     "NFS v4 COMPOUND REQUEST: %d operation(s)",
                     COMPOUND4_ARRAY.argarray_len);
 
@@ -260,7 +260,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   if(parg->arg_compound4.minorversion != 0)
 #endif
     {
-      DisplayLog("NFS V4 COMPOUND: Bad Minor Version %d",
+      LogCrit(COMPONENT_NFSV4, "NFS V4 COMPOUND: Bad Minor Version %d",
                  parg->arg_compound4.minorversion);
 
       pres->res_compound4.status = NFS4ERR_MINOR_VERS_MISMATCH;
@@ -271,7 +271,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   /* Check for empty COMPOUND request */
   if(COMPOUND4_ARRAY.argarray_len == 0)
     {
-      DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+      LogMajor(COMPONENT_NFSV4,
                         "NFS V4 COMPOUND: an empty COMPOUND (no operation in it) was received !!");
 
       pres->res_compound4.status = NFS4_OK;
@@ -282,7 +282,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   /* Check for too long request */
   if(COMPOUND4_ARRAY.argarray_len > 30)
     {
-      DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+      LogMajor(COMPONENT_NFSV4,
                         "NFS V4 COMPOUND: an empty COMPOUND (no operation in it) was received !!");
 
       pres->res_compound4.status = NFS4ERR_RESOURCE;
@@ -341,20 +341,15 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
     }
 
   /* Managing the operation list */
-#ifdef _DEBUG_NFS_V4
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFSV4,
                     "NFS V4 COMPOUND: There are %d operations",
                     COMPOUND4_ARRAY.argarray_len);
-#endif
 
-#ifdef _DEBUG_NFS_V4
   for(i = 0; i < COMPOUND4_ARRAY.argarray_len; i++)
-    printf("%s ",
+    LogFullDebug(COMPONENT_NFSV4, "%s ",
            optabvers[parg->arg_compound4.
                      minorversion][optab4index[COMPOUND4_ARRAY.argarray_val[i].argop]].
            name);
-  printf("\n");
-#endif
 
 #ifdef _USE_NFS4_1
   /* Manage error NFS4ERR_NOT_ONLY_OP */
@@ -411,13 +406,11 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
       else
         opindex = optab4index[POS_ILLEGAL];     /* = NFS4_OP_ILLEGAL a value to big for argop means an illegal value */
 
-#ifdef _DEBUG_NFS_V4
-      DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+      LogDebug(COMPONENT_NFSV4,
                         "NFS V4 COMPOUND: Request #%d is %d = %s, entry #%d in the op array",
                         i, optabvers[parg->arg_compound4.minorversion][opindex].val,
                         optabvers[parg->arg_compound4.minorversion][opindex].name,
                         opindex);
-#endif
 
       memset(&res, 0, sizeof(res));
       status =
@@ -428,17 +421,15 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
 
       memcpy(&(pres->res_compound4.resarray.resarray_val[i]), &res, sizeof(res));
 
-#ifdef _DEBUG_NFS_V4
       utf82str(tmpstr, &(pres->res_compound4.tag));
       printf("--> COMPOUND REQUEST TAG is #%s#\n", tmpstr);
 
       print_compound_fh(&data);
 
-      DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+      LogDebug(COMPONENT_NFSV4,
                         "NFS V4 COMPOUND:Status of %s in position %d = %d",
                         optabvers[parg->arg_compound4.minorversion][opindex].name, i,
                         status);
-#endif
 
       /* All the operation, like NFS4_OP_ACESS, have a first replyied field called .status */
       pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opaccess.status = status;
@@ -446,11 +437,9 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
       if(status != NFS4_OK)
         {
           /* An error occured, we do not manage the other requests in the COMPOUND, this may be a regular behaviour */
-#ifdef _DEBUG_NFS_V4
-          DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+	  LogDebug(COMPONENT_NFSV4,
                             "NFS V4 COMPOUND: Error met, stop request with status =%d",
                             status);
-#endif
 
           pres->res_compound4.resarray.resarray_len = i + 1;
 
@@ -499,16 +488,14 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
     }
 #endif
 
-#ifdef _DEBUG_NFS_V4
-  DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+  LogDebug(COMPONENT_NFSV4,
                     "NFS V4 COMPOUND: end status = %d|%d  lastindex = %d  last status = %d",
                     status, pres->res_compound4.status, i,
                     pres->res_compound4.resarray.resarray_val[i -
                                                               1].nfs_resop4_u.opaccess.
                     status);
-  DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+  LogDebug(COMPONENT_NFSV4,
                     "===============================================================");
-#endif
 
   compound_data_Free(&data);
 
@@ -531,19 +518,16 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
 void nfs4_Compound_Free(nfs_res_t * pres)
 {
   unsigned int i = 0;
-#ifdef _DEBUG_NFS_V4
-  fprintf(stderr, "nfs4_Compound_Free de %p (resarraylen : %i)\n", pres,
+
+  LogFullDebug(COMPONENT_NFSV4, "nfs4_Compound_Free de %p (resarraylen : %i)\n", pres,
           pres->res_compound4.resarray.resarray_len);
-#endif
 
   for(i = 0; i < pres->res_compound4.resarray.resarray_len; i++)
     {
-#ifdef _DEBUG_NFS_V4
-      fprintf(stderr, "nfs4_Compound_Free sur op=%s\n",
+      LogFullDebug(COMPONENT_NFSV4, "nfs4_Compound_Free sur op=%s\n",
               optabvers[parg->arg_compound4.
                         minorversion][optab4index[pres->res_compound4.resarray.
                                                   resarray_val[i].resop]].name);
-#endif
 
       switch (pres->res_compound4.resarray.resarray_val[i].resop)
         {

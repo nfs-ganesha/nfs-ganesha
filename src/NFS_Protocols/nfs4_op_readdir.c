@@ -46,7 +46,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -275,7 +275,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
           (entry_name_array_item_t *) Mem_Alloc(num_entries *
                                                 (FSAL_MAX_NAME_LEN + 1))) == NULL)
         {
-          DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
+          DisplayErrorComponentLog(COMPONENT_NFS_V4, ERR_SYS, ERR_MALLOC, errno);
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
           return res_READDIR4.status;
         }
@@ -283,7 +283,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
 
       if((entry_nfs_array = (entry4 *) Mem_Alloc(num_entries * sizeof(entry4))) == NULL)
         {
-          DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
+          DisplayErrorComponentLog(COMPONENT_NFS_V4, ERR_SYS, ERR_MALLOC, errno);
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
           return res_READDIR4.status;
         }
