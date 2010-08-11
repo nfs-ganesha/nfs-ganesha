@@ -69,7 +69,6 @@ static family_t tab_family[MAX_NUM_FAMILY];
 static char nom_programme[1024];
 static char nom_host[256];
 static char nom_fichier_log[PATH_LEN] = "/tmp/logfile";
-static int niveau_debug = 2;
 static int syslog_opened = 0 ;
 
 /*
@@ -327,34 +326,33 @@ static void ArmeSignal(int signal, void (*action) ())
  * 
  */
 
-int ReturnLevelDebug()
+inline int ReturnLevelDebug()
 {
-  return niveau_debug;
+  return LogComponents[COMPONENT_ALL].log_level;
 }                               /* ReturnLevelDebug */
 
-int SetLevelDebug(int level_to_set)
+void SetLevelDebug(int level_to_set)
 {
-  if(level_to_set < 0)
-    level_to_set = 0;
+  int i;
+
+  if(level_to_set < NIV_NULL)
+    level_to_set = NIV_NULL;
 
   if(level_to_set >= NB_LOG_LEVEL)
     level_to_set = NB_LOG_LEVEL - 1;
 
-  niveau_debug = level_to_set;
-
-  return niveau_debug;
+  for (i = 0; i < COMPONENT_COUNT; i++)
+    LogComponents[i].log_level = level_to_set;
 }                               /* SetLevelDebug */
 
 static void IncrementeLevelDebug()
 {
   char buffer[1024];
 
-  niveau_debug += 1;
-  if(niveau_debug >= NB_LOG_LEVEL)
-    niveau_debug = NB_LOG_LEVEL - 1;
+  SetLevelDebug(ReturnLevelDebug() + 1);
 
   snprintf(buffer, 1024, "SIGUSR1 recu -> Level de debug: %s = %d ",
-           ReturnLevelInt(niveau_debug), niveau_debug);
+           ReturnLevelInt(ReturnLevelDebug()), ReturnLevelDebug());
 
   DisplayLogFlux(stdout, "%s", buffer);
 }                               /* IncrementeLevelDebug */
@@ -363,12 +361,10 @@ static void DecrementeLevelDebug()
 {
   char buffer[1024];
 
-  niveau_debug -= 1;
-  if(niveau_debug < 0)
-    niveau_debug = 0;
+  SetLevelDebug(ReturnLevelDebug() - 1);
 
   snprintf(buffer, 1024, "SIGUSR2 recu -> Level de debug: %s = %d ",
-           ReturnLevelInt(niveau_debug), niveau_debug);
+           ReturnLevelInt(ReturnLevelDebug()), ReturnLevelDebug());
 
   DisplayLogFlux(stdout, "%s", buffer);
 }                               /* DecrementeLevelDebug */
@@ -385,8 +381,10 @@ int InitDebug(int level_to_set)
   for(i = 1; i < MAX_NUM_FAMILY; i++)
     tab_family[i].num_family = UNUSED_SLOT;
 
-  /* On impose le niveau de debug */
-  SetLevelDebug(level_to_set);
+  /* Set debug level for each component as long as it wasn't initialized to a debug level */
+  for (i = 0; i < COMPONENT_COUNT; i++)
+    if (LogComponents[i].log_level < NIV_DEBUG)
+      LogComponents[i].log_level = level_to_set;
 
   ArmeSignal(SIGUSR1, IncrementeLevelDebug);
   ArmeSignal(SIGUSR2, DecrementeLevelDebug);
@@ -632,7 +630,7 @@ static int DisplayLogStringLevel(char *tampon, int level, char *format, ...)
 
   va_start(arguments, format);
 
-  if(level <= niveau_debug)
+  if(level <= ReturnLevelDebug())
     {
       rc = DisplayLogString_valist(tampon, format, arguments);
     }
@@ -652,7 +650,7 @@ static int DisplayLogFluxLevel(FILE * flux, int level, char *format, ...)
 
   va_start(arguments, format);
 
-  if(level <= niveau_debug)
+  if(level <= ReturnLevelDebug())
     rc = DisplayLogFlux_valist(flux, format, arguments);
   else
     rc = SUCCES;
@@ -670,7 +668,7 @@ static int DisplayLogFdLevel(int fd, int level, char *format, ...)
 
   va_start(arguments, format);
 
-  if(level <= niveau_debug)
+  if(level <= ReturnLevelDebug())
     rc = DisplayLogFd_valist(fd, format, arguments);
   else
     rc = SUCCES;
@@ -688,7 +686,7 @@ int DisplayLogLevel(int level, char *format, ...)
 
   va_start(arguments, format);
 
-  if(level <= niveau_debug)
+  if(level <= ReturnLevelDebug())
     rc = DisplayLog_valist(format, arguments);
   else
     rc = SUCCES;
@@ -706,7 +704,7 @@ static int DisplayLogPathLevel(char *path, int level, char *format, ...)
 
   va_start(arguments, format);
 
-  if(level <= niveau_debug)
+  if(level <= ReturnLevelDebug())
     rc = DisplayLogPath_valist(path, format, arguments);
   else
     rc = SUCCES;
@@ -1725,185 +1723,185 @@ int log_printf(char *format, ...)
 
 log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
 {
-  { COMPONENT_NONE,            "NONE",           
-    NIV_NULL
+  { COMPONENT_ALL,             "COMPONENT_ALL",           
+    NIV_CRIT
   },
-  { COMPONENT_MEMALLOC,        "MEMALLOC",       
+  { COMPONENT_MEMALLOC,        "COMPONENT_MEMALLOC",       
 #ifdef _DEBUG_MEMALLOC      
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_STATES,          "STATES",         
+  { COMPONENT_STATES,          "COMPONENT_STATES",         
 #ifdef _DEBUG_STATES        
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_MEMLEAKS,        "MEMLEAKS",       
+  { COMPONENT_MEMLEAKS,        "COMPONENT_MEMLEAKS",       
 #ifdef _DEBUG_MEMLEAKS      
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_FSAL,            "FSAL",           
+  { COMPONENT_FSAL,            "COMPONENT_FSAL",           
 #ifdef _DEBUG_FSAL          
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_NFSPROTO,        "NFSPROTO",       
+  { COMPONENT_NFSPROTO,        "COMPONENT_NFSPROTO",       
 #ifdef _DEBUG_NFSPROTO      
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_V4,          "NFS_V4",         
+  { COMPONENT_NFS_V4,          "COMPONENT_NFS_V4",         
 #ifdef _DEBUG_NFS_V4        
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_V4_PSEUDO,   "NFS_V4_PSEUDO",  
+  { COMPONENT_NFS_V4_PSEUDO,   "COMPONENT_NFS_V4_PSEUDO",  
 #ifdef _DEBUG_NFS_V4_PSEUDO 
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_FILEHANDLE,      "FILEHANDLE",     
+  { COMPONENT_FILEHANDLE,      "COMPONENT_FILEHANDLE",     
 #ifdef _DEBUG_FILEHANDLE    
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_SHELL,       "NFS_SHELL",      
+  { COMPONENT_NFS_SHELL,       "COMPONENT_NFS_SHELL",      
 #ifdef _DEBUG_NFS_SHELL     
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_DISPATCH,        "DISPATCH",       
+  { COMPONENT_DISPATCH,        "COMPONENT_DISPATCH",       
 #ifdef _DEBUG_DISPATCH      
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_CACHE_CONTENT,   "CACHE_CONTENT",  
+  { COMPONENT_CACHE_CONTENT,   "COMPONENT_CACHE_CONTENT",  
 #ifdef _DEBUG_CACHE_CONTENT 
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_CACHE_INODE,     "CACHE_INODE",    
+  { COMPONENT_CACHE_INODE,     "COMPONENT_CACHE_INODE",    
 #ifdef _DEBUG_CACHE_INODE   
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_CACHE_INODE_GC,  "CACHE_INODE_GC",  
+  { COMPONENT_CACHE_INODE_GC,  "COMPONENT_CACHE_INODE_GC",  
 #ifdef _DEBUG_CACHE_INODE_GC
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_HASHTABLE,       "HASHTABLE",      
+  { COMPONENT_HASHTABLE,       "COMPONENT_HASHTABLE",      
 #ifdef _DEBUG_HASHTABLE     
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_LRU,             "LRU",            
+  { COMPONENT_LRU,             "COMPONENT_LRU",            
 #ifdef _DEBUG_LRU           
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_DUPREQ,          "DUPREQ",         
+  { COMPONENT_DUPREQ,          "COMPONENT_DUPREQ",         
 #ifdef _DEBUG_DUPREQ        
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_LOG,             "LOG",            
+  { COMPONENT_LOG,             "COMPONENT_LOG",            
 #ifdef _DEBUG_LOG           
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_RPCSEC_GSS,      "RPCSEC_GSS",     
+  { COMPONENT_RPCSEC_GSS,      "COMPONENT_RPCSEC_GSS",     
 #ifdef _DEBUG_RPCSEC_GSS    
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_INIT,            "INIT",
+  { COMPONENT_INIT,            "COMPONENT_INIT",
 #ifdef _DEBUG_INIT
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
   },
-  { COMPONENT_MAIN,            "MAIN",
+  { COMPONENT_MAIN,            "COMPONENT_MAIN",
 #ifdef _DEBUG_MAIN
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
-    NIV_EVENT,
+    NIV_CRIT,
 #endif
     SYSLOG,
     ""
@@ -1981,40 +1979,27 @@ int SetDefaultLogging(char *name)
 
 #ifdef _SNMP_ADM_ACTIVE
 
-static int getLogLevel(snmp_adm_type_union * param, void *opt)
-{
-  param->integer = ReturnLevelDebug();
-  return 0;
-}
-
-static int setLogLevel(const snmp_adm_type_union * param, void *opt)
-{
-  SetLevelDebug(param->integer);
-  return 0;
-}
-
 int getComponentLogLevel(snmp_adm_type_union * param, void *opt)
 {
   long component = (long)opt;
-  param->integer = LogComponents[component].log_level;
+
+  strcpy(param->string, ReturnLevelInt(LogComponents[component].log_level));
   return 0;
 }
 
 int setComponentLogLevel(const snmp_adm_type_union * param, void *opt)
 {
   long component = (long)opt;
-  LogComponents[component].log_level = param->integer;
+  int level_to_set = ReturnLevelAscii(param->string);
+
+  if (level_to_set == -1)
+    return -1;
+
+  if (component == 0)
+    SetLevelDebug(level_to_set);
+  else
+    LogComponents[component].log_level = level_to_set;
   return 0;
 }
-
-register_get_set snmp_export_log_general[SNMPADM_LOG_GENERAL_COUNT] = {
-  {"LogLevel", 
-  "Server Log Level value", 
-  SNMP_ADM_INTEGER, 
-  SNMP_ADM_ACCESS_RW, 
-  getLogLevel, 
-  setLogLevel, 
-  NULL}
-};
 
 #endif /* _SNMP_ADM_ACTIVE */
