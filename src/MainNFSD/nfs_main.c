@@ -296,6 +296,8 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
+  LogMajor(COMPONENT_INIT, "This should be in a file!!!");
+
   /* Start in background, if wanted */
   if(detach_flag)
     {

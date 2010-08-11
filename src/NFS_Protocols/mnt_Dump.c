@@ -55,7 +55,7 @@
 #include <rpc/auth.h>
 #include <rpc/pmap_clnt.h>
 #endif
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -89,8 +89,7 @@ int mnt_Dump(nfs_arg_t * parg /* IN     */ ,
              struct svc_req *preq /* IN     */ ,
              nfs_res_t * pres /* OUT    */ )
 {
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-                    "REQUEST PROCESSING: Calling mnt_Dump");
+  LogFullDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Dump");
 
   /* Get the root of the mount list */
   pres->res_dump = nfs_Get_MountList();
