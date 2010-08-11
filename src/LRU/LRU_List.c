@@ -206,10 +206,8 @@ LRU_entry_t *LRU_new_entry(LRU_list_t * plru, LRU_status_t * pstatus)
 {
   LRU_entry_t *new_entry = NULL;
 
-#ifdef _DEBUG_LRU
   LogDebug(COMPONENT_LRU, "==> LRU_new_entry: nb_entry = %d nb_entry_prealloc = %d\n", plru->nb_entry,
          plru->parameter.nb_entry_prealloc);
-#endif
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
@@ -294,9 +292,7 @@ int LRU_gc_invalid(LRU_list_t * plru, void *cleanparam)
         {
           if(plru->parameter.clean_entry(pentry, cleanparam) != 0)
             {
-#ifdef _DEBUG_LRU
               LogDebug(COMPONENT_LRU, "Error cleaning pentry %p\n", pentry);
-#endif
               rc = LRU_LIST_BAD_RELEASE_ENTRY;
             }
 
@@ -307,10 +303,8 @@ int LRU_gc_invalid(LRU_list_t * plru, void *cleanparam)
 
           if(pentry->next != NULL)
             pentry->next->prev = pentry->prev;
-#ifdef _DEBUG_LRU
           else
             LogDebug(COMPONENT_LRU, "SHOULD Never appear  !!!! line %d file %s\n", __LINE__, __FILE__);
-#endif
           plru->nb_entry -= 1;
           plru->nb_invalid -= 1;
 
