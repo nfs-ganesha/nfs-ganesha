@@ -59,7 +59,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -93,14 +93,14 @@ int mnt_UmntAll(nfs_arg_t * parg /* IN     */ ,
                 struct svc_req *preq /* IN     */ ,
                 nfs_res_t * pres /* OUT    */ )
 {
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFSPROTO,
                     "REQUEST PROCESSING: Calling mnt_UmntAll");
 
   /* Just empty the Mount list, take void as argument and returns void */
   if(!nfs_Purge_MountList())
     {
       /* Purge mount list failed */
-      DisplayLogJd(pclient->log_outputs,
+      LogCrit(COMPONENT_NFSPROTO,
                    "UMOUNT ALL: Error when emptying the mount list");
     }
 
