@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -288,9 +288,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 #endif
 
       /* It this a known client id ? */
-#ifdef _DEBUG_NFS_V4
-      DisplayLogLevel(NIV_DEBUG, "OPEN Client id = %llx", arg_OPEN4.owner.clientid);
-#endif
+      LogDebug(COMPONENT_NFS_V4, "OPEN Client id = %llx", arg_OPEN4.owner.clientid);
       if(nfs_client_id_get(arg_OPEN4.owner.clientid, &nfs_clientid) != CLIENT_ID_SUCCESS)
         {
           res_OPEN4.status = NFS4ERR_STALE_CLIENTID;
@@ -354,18 +352,16 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
       else
         {
-#ifdef _FULL_DEBUG
-          DisplayLogLevel(NIV_FULL_DEBUG,
+          LogFullDebug(COMPONENT_NFS_V4,
                           "A previously known open_owner is used :#%s# seqid=%u arg_OPEN4.seqid=%u",
                           powner->owner_val, powner->seqid, arg_OPEN4.seqid);
-#endif
 
           //printf( "A previously known open_owner is used :#%s# seqid=%u arg_OPEN4.seqid=%u\n", 
           //               powner->owner_val, powner->seqid, arg_OPEN4.seqid ) ;
 
           if(arg_OPEN4.seqid == 0)
             {
-              DisplayLogLevel(NIV_DEBUG,
+              LogDebug(COMPONENT_NFS_V4,
                               "Previously known open_owner is used with seqid=0, ask the client to confirm it again");
               powner->seqid = 0;
               powner->confirmed = FALSE;

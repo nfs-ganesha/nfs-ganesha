@@ -46,7 +46,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -82,17 +82,13 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 {
   int error;
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getfh";
-#ifdef _DEBUG_NFS_V4
   int i;
   char fhstr[LEN_FH_STR];
-#endif
 
   resp->resop = NFS4_OP_GETFH;
 
-#ifdef _DEBUG_NFS_V4
   nfs4_sprint_fhandle(&data->currentFH, fhstr);
-  DisplayLog("NFS4 GETFH BEFORE: %s", fhstr);
-#endif
+  LogDebug(COMPONENT_NFS_V4, "NFS4 GETFH BEFORE: %s", fhstr);
 
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))
@@ -139,10 +135,8 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
          data->currentFH.nfs_fh4_val, data->currentFH.nfs_fh4_len);
 
   /* Test */
-#ifdef _DEBUG_NFS_V4
   nfs4_sprint_fhandle(&resp->nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object, fhstr);
-  DisplayLog("NFS4 GETFH AFTER: %s", fhstr);
-#endif
+  LogDebug(COMPONENT_NFS_V4, "NFS4 GETFH AFTER: %s", fhstr);
 
   return NFS4_OK;
 }                               /* nfs4_op_getfh */

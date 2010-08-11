@@ -60,7 +60,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -158,10 +158,9 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   memcpy(data->mounted_on_FH.nfs_fh4_val, arg_PUTFH4.object.nfs_fh4_val,
          arg_PUTFH4.object.nfs_fh4_len);
 
-#ifdef _DEBUG_NFS_V4
   nfs4_sprint_fhandle(&arg_PUTFH4.object, outstr);
-  DisplayLog("NFS4_OP_PUTFH CURRENTFH BEFORE: File handle = %s", outstr);
-#endif
+  LogDebug(COMPONENT_NFS_V4, "NFS4_OP_PUTFH CURRENTFH BEFORE: File handle = %s", outstr);
+
   /* If the filehandle is not pseudo hs file handle, get the entry related to it, otherwise use fake values */
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     {

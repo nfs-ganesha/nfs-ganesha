@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -283,17 +283,16 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
 
       /* What kind of open is it ? */
-#ifdef _DEBUG_NFS_V4
-      printf
+
+      LogFullDebug(COMPONENT_NFSV4,
           ("     OPEN: Claim type = %d   Open Type = %d  Share Deny = %d   Share Access = %d \n",
            arg_OPEN4.claim.claim, arg_OPEN4.openhow.opentype, arg_OPEN4.share_deny,
            arg_OPEN4.share_access);
-#endif
+
 
       /* It this a known client id ? */
-#ifdef _DEBUG_NFS_V4
-      DisplayLogLevel(NIV_DEBUG, "OPEN Client id = %llx", arg_OPEN4.owner.clientid);
-#endif
+      LogDebug(COMPONENT_NFSV4, "OPEN Client id = %llx", arg_OPEN4.owner.clientid);
+
       /* Is this open_owner known ? */
       if(!nfs_convert_open_owner(&arg_OPEN4.owner, &owner_name))
         {

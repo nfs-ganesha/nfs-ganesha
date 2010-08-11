@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -577,7 +577,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           V(pstate_found->powner->related_owner->lock);
         }
       else
-        DisplayLog
+        LogDebug(COMPONENT_NFS_V4,
             ("/!\\ : IMPLEMENTATION ERROR File=%s Line=%s pstate_found->powner->related_owner should not be NULL",
              __FILE__, __LINE__);
 
