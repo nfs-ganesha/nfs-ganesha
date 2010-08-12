@@ -33,7 +33,7 @@
 
 enum log_components
 {
-  COMPONENT_NONE = 0,
+  COMPONENT_ALL = 0,
   COMPONENT_MEMALLOC,
   COMPONENT_STATES,
   COMPONENT_MEMLEAKS, 
@@ -53,13 +53,13 @@ enum log_components
   COMPONENT_LOG,
   COMPONENT_RPCSEC_GSS,
   COMPONENT_INIT,
-
+  COMPONENT_MAIN,
+  COMPONENT_IDMAPPER,
   COMPONENT_NFS_READDIR,
   COMPONENT_NFS_V4_LOCK,
   COMPONENT_NFS_V4_XATTR,
   COMPONENT_NFS_V4_REFERRAL,
   COMPONENT_MEMCORRUPT,
-  COMPONENT_IDMAPPER,
 
   COMPONENT_COUNT
 };
@@ -112,7 +112,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
       DisplayLogComponentLevel(component, NIV_FULL_DEBUG, format, ## args ); \
   } while (0)
 
-#define DisplayErrorComponentLog( component, a, b, c ) \
+#define LogError( component, a, b, c ) \
   do { \
     if (LogComponents[component].log_level >= NIV_CRIT) \
       DisplayErrorComponentLogLine( component, a, b, c, __LINE__ ); \

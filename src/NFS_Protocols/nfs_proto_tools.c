@@ -3461,7 +3461,7 @@ int nfs4_AllocateFH(nfs_fh4 * fh)
   fh->nfs_fh4_len = sizeof(file_handle_v4_t);
   if((fh->nfs_fh4_val = (char *)Mem_Alloc(fh->nfs_fh4_len)) == NULL)
     {
-      DisplayErrorComponentLog(COMPONENT_NFS_V4, ERR_SYS, ERR_MALLOC, errno);
+      LogError(COMPONENT_NFS_V4, ERR_SYS, ERR_MALLOC, errno);
       return NFS4ERR_RESOURCE;
     }
 #ifdef _DEBUG_MEMLEAKS

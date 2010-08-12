@@ -100,17 +100,17 @@ char usage[] =
 
 static void action_sigusr1(int sig)
 {
-  DisplayLog("SIGUSR1_HANDLER: Receveid SIGUSR1.... signal will be managed");
+  LogEvent(COMPONENT_MAIN, "SIGUSR1_HANDLER: Received SIGUSR1.... signal will be managed");
 
   /* Set variable force_flush_by_signal that is used in file content cache gc thread */
   if(force_flush_by_signal)
     {
-      DisplayLog("SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
+      LogEvent(COMPONENT_MAIN, "SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
       force_flush_by_signal = FALSE;
     }
   else
     {
-      DisplayLog("SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
+      LogEvent(COMPONENT_MAIN, "SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
       force_flush_by_signal = TRUE;
     }
 }                               /* action_sigusr1 */
@@ -124,9 +124,9 @@ static void action_sigusr1(int sig)
 static void action_sigterm(int sig)
 {
   if(sig == SIGTERM)
-    DisplayLog("SIGTERM_HANDLER: Receveid SIGTERM.... initiating daemon shutdown");
+    LogEvent(COMPONENT_MAIN, "SIGTERM_HANDLER: Received SIGTERM.... initiating daemon shutdown");
   else if(sig == SIGINT)
-    DisplayLog("SIGINT_HANDLER: Receveid SIGINT.... initiating daemon shutdown");
+    LogEvent(COMPONENT_MAIN, "SIGINT_HANDLER: Received SIGINT.... initiating daemon shutdown");
 
   nfs_stop();
 
@@ -135,11 +135,11 @@ static void action_sigterm(int sig)
 static void action_sighup(int sig)
 {
   if(sig == SIGTERM)
-    DisplayLog("SIGTERM_HANDLER: Receveid SIGTERM.... initiating daemon shutdown");
+    LogEvent(COMPONENT_MAIN, "SIGTERM_HANDLER: Received SIGTERM.... initiating daemon shutdown");
   else if(sig == SIGINT)
-    DisplayLog("SIGINT_HANDLER: Receveid SIGINT.... initiating daemon shutdown");
+    LogEvent(COMPONENT_MAIN, "SIGINT_HANDLER: Received SIGINT.... initiating daemon shutdown");
   else if(sig == SIGHUP)
-    DisplayLog("SIGHUP_HANDLER: Receveid SIGHUP.... initiating export list reload");
+    LogEvent(COMPONENT_MAIN, "SIGHUP_HANDLER: Received SIGHUP.... initiating export list reload");
 
   admin_replace_exports();
 }                               /* action_sigsigh */
@@ -306,7 +306,7 @@ int main(int argc, char *argv[])
         {
         case -1:
           /* Fork failed */
-          DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_FORK, errno);
+          LogError(COMPONENT_INIT, ERR_SYS, ERR_FORK, errno);
           LogMajor(COMPONENT_INIT, "Could not start nfs daemon, exiting...");
           exit(1);
 
@@ -315,7 +315,7 @@ int main(int argc, char *argv[])
            * Let's make it the leader of its group of process */
           if(setsid() == -1)
             {
-              DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_SETSID, errno);
+              LogError(COMPONENT_INIT, ERR_SYS, ERR_SETSID, errno);
 	      LogMajor(COMPONENT_INIT, "Could not start nfs daemon, exiting...");
               exit(1);
             }
@@ -336,11 +336,11 @@ int main(int argc, char *argv[])
   act_sigusr1.sa_handler = action_sigusr1;
   if(sigaction(SIGUSR1, &act_sigusr1, NULL) == -1)
     {
-      DisplayErrorLog(ERR_SYS, ERR_SIGACTION, errno);
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_SIGACTION, errno);
       exit(1);
     }
   else
-    DisplayLogLevel(NIV_EVENT, "Signal SIGUSR1 (force flush) is ready to be used");
+    LogEvent(COMPONENT_INIT, NIV_EVENT, "Signal SIGUSR1 (force flush) is ready to be used");
   */
 
   /* Set the signal handler */
@@ -350,7 +350,7 @@ int main(int argc, char *argv[])
   if(sigaction(SIGTERM, &act_sigterm, NULL) == -1
      || sigaction(SIGINT, &act_sigterm, NULL) == -1)
     {
-      DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_SIGACTION, errno);
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_SIGACTION, errno);
       exit(1);
     }
   else
@@ -363,7 +363,7 @@ int main(int argc, char *argv[])
   act_sighup.sa_handler = action_sighup;
   if(sigaction(SIGHUP, &act_sighup, NULL) == -1)
     {
-      DisplayErrorComponentLog(COMPONENT_INIT, ERR_SYS, ERR_SIGACTION, errno);
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_SIGACTION, errno);
       exit(1);
     }
   else

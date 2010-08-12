@@ -500,11 +500,10 @@ int RemoveFamilyError(int num_family);
 
 char *ReturnNameFamilyError(int num_family);
 
-int InitDebug(int niveau_debug);        /* not thread safe */
+int InitDebug(int level_to_set);        /* not thread safe */
 
-int SetLevelDebug(int level_to_set);    /* not thread safe */
+void SetLevelDebug(int level_to_set);    /* not thread safe */
 
-int ReturnLevelDebug();
 int ReturnLevelAscii(char *LevelEnAscii);
 char *ReturnLevelInt(int level);
 
@@ -569,8 +568,6 @@ int DisplayLogComponentLevel(int component, int level, char *format, ...);
 int DisplayErrorComponentLogLine(int component, int num_family, int num_error, int status, int ma_ligne);
 
 #ifdef _SNMP_ADM_ACTIVE
-#define SNMPADM_LOG_GENERAL_COUNT 1
-register_get_set snmp_export_log_general[SNMPADM_LOG_GENERAL_COUNT];
 int getComponentLogLevel(snmp_adm_type_union * param, void *opt);
 int setComponentLogLevel(const snmp_adm_type_union * param, void *opt);
 #endif
