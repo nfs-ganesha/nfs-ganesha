@@ -1881,7 +1881,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       (entry_name_array_item_t *) Mem_Alloc(estimated_num_entries *
                                             (FSAL_MAX_NAME_LEN + 1))) == NULL)
     {
-      DisplayErrorComponentLog(COMPONENT_NFS_V4_PSEUDO, ERR_SYS, ERR_MALLOC, errno);
+      LogError(COMPONENT_NFS_V4_PSEUDO, ERR_SYS, ERR_MALLOC, errno);
       res_READDIR4.status = NFS4ERR_SERVERFAULT;
       return res_READDIR4.status;
     }
@@ -1890,7 +1890,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   if((entry_nfs_array =
       (entry4 *) Mem_Alloc(estimated_num_entries * sizeof(entry4))) == NULL)
     {
-      DisplayErrorComponentLog(COMPONENT_NFS_V4_PSEUDO, ERR_SYS, ERR_MALLOC, errno);
+      LogError(COMPONENT_NFS_V4_PSEUDO, ERR_SYS, ERR_MALLOC, errno);
       res_READDIR4.status = NFS4ERR_SERVERFAULT;
       return res_READDIR4.status;
     }
@@ -1989,7 +1989,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   if(i < estimated_num_entries)
     if((entry_nfs_array = Mem_Realloc(entry_nfs_array, i * sizeof(entry4))) == NULL)
       {
-        DisplayErrorComponentLog(COMPONENT_NFS_V4_PSEUDO, ERR_SYS, ERR_MALLOC, errno);
+        LogError(COMPONENT_NFS_V4_PSEUDO, ERR_SYS, ERR_MALLOC, errno);
         res_READDIR4.status = NFS4ERR_SERVERFAULT;
         Mem_Free(entry_nfs_array);
         return res_READDIR4.status;

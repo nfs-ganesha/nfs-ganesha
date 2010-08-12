@@ -69,7 +69,7 @@
 #include "LRU_List.h"
 #include "HashData.h"
 #include "HashTable.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "nfs_core.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -191,9 +191,7 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
   buffkey.pdata = (caddr_t) pdupreq->xid;
   buffkey.len = 0;
 
-#ifdef _DEBUG_DUPREQ
-  DisplayLog("NFS DUPREQ: Garbage collection on xid=%u", pdupreq->xid);
-#endif
+  LogDebug(COMPONENT_DUPREQ, "NFS DUPREQ: Garbage collection on xid=%u", pdupreq->xid);
 
   rc = HashTable_Del(ht_dupreq, &buffkey, NULL, NULL);
 
@@ -222,8 +220,8 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
 
         default:
           /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
-          DisplayLog("NFS DUPREQ: NFS Protocol version %d unknown in dupreq_gc",
-                     pdupreq->rq_vers);
+          LogMajor(COMPONENT_DUPREQ, "NFS DUPREQ: NFS Protocol version %d unknown in dupreq_gc",
+                   pdupreq->rq_vers);
           funcdesc = nfs2_func_desc[0]; /* free function for PROC_NULL does nothing */
           break;
         }
@@ -242,8 +240,8 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
 
         default:
           /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
-          DisplayLog("NFS DUPREQ: MOUNT Protocol version %d unknown in dupreq_gc",
-                     pdupreq->rq_vers);
+          LogMajor(COMPONENT_DUPREQ, "NFS DUPREQ: MOUNT Protocol version %d unknown in dupreq_gc",
+                   pdupreq->rq_vers);
           break;
 
         }                       /* switch( pdupreq->vers ) */
@@ -280,7 +278,7 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
   else
     {
       /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
-      DisplayLog("NFS DUPREQ: protocol %d is not managed", pdupreq->rq_prog);
+      LogMajor(COMPONENT_DUPREQ, "NFS DUPREQ: protocol %d is not managed", pdupreq->rq_prog);
     }
 
   /* Call the free function */
@@ -390,7 +388,7 @@ int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param)
 {
   if((ht_dupreq = HashTable_Init(param.hash_param)) == NULL)
     {
-      DisplayLog("NFS DUPREQ: Cannot init the duplicate request hash table");
+      LogCrit(COMPONENT_DUPREQ, "NFS DUPREQ: Cannot init the duplicate request hash table");
       return -1;
     }
 
@@ -498,9 +496,7 @@ nfs_res_t nfs_dupreq_get(long xid, int *pstatus)
 
       pstatus = DUPREQ_SUCCESS;
       res_nfs = ((dupreq_entry_t *) buffval.pdata)->res_nfs;
-#ifdef _DEBUG_DUPREQ
-      DisplayLog("NFS DUPREQ: Hit in the dupreq cache for xid=%u", xid);
-#endif
+      LogDebug(COMPONENT_DUPREQ, "NFS DUPREQ: Hit in the dupreq cache for xid=%u", xid);
     }
   else
     {

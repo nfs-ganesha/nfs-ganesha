@@ -1077,14 +1077,14 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   if((pdata->pending_request =
       LRU_Init(nfs_param.worker_param.lru_param, &status)) == NULL)
     {
-      DisplayErrorLog(ERR_LRU, ERR_LRU_LIST_INIT, status);
+      LogError(COMPONENT_DISPATCH, ERR_LRU, ERR_LRU_LIST_INIT, status);
       return -1;
     }
 
   if((pdata->duplicate_request =
       LRU_Init(nfs_param.worker_param.lru_dupreq, &status)) == NULL)
     {
-      DisplayErrorLog(ERR_LRU, ERR_LRU_LIST_INIT, status);
+      LogError(COMPONENT_DISPATCH, ERR_LRU, ERR_LRU_LIST_INIT, status);
       return -1;
     }
 
