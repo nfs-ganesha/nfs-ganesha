@@ -124,12 +124,10 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
   /* Paranoid command to clean the result struct. */
   memset(pres, 0, sizeof(nfs_res_t));
 
-#ifdef _DETECT_MEMCORRUPT
   if(!BuddyCheck(parg->arg_mnt))
     {
-      fprintf(stderr, "Memory corruption in mnt_Mnt. arg_mnt = %p\n", parg->arg_mnt);
+      LogFullDebug(COMPONENT_MEMCORRUPT, "Memory corruption in mnt_Mnt. arg_mnt = %p\n", parg->arg_mnt);
     }
-#endif
 
   if(parg->arg_mnt == NULL)
     {

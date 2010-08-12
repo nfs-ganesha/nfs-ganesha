@@ -94,9 +94,7 @@ int CreateROOTFH4(nfs_fh4 * fh, compound_data_t * data)
 {
   pseudofs_entry_t psfsentry;
   int status = 0;
-#ifdef _DEBUG_NFS_V4
   char fhstr[LEN_FH_STR];
-#endif
 
   psfsentry = *(data->pseudofs->reverse_tab[0]);
 
@@ -140,9 +138,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
   int error;
 
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_putrootfh";
-#ifdef _DEBUG_NFS_V4
   char fhstr[LEN_FH_STR];
-#endif
 
   /* This NFS4 Operation has no argument, it just get then ROOTFH (replace MOUNTPROC3_MNT) */
 

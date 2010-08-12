@@ -698,9 +698,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
             }
 
           /*  if( cache_status != CACHE_INODE_NOT_FOUND ), if file already exists basically */
-#ifdef _DEBUG_NFS_V4
-          printf("    OPEN open.how = %d\n", arg_OPEN4.openhow.openflag4_u.how.mode);
-#endif
+          LogFullDebug(COMPONENT_NFS_V4, "    OPEN open.how = %d\n", arg_OPEN4.openhow.openflag4_u.how.mode);
 
           create_arg.use_pnfs = FALSE;
 #ifdef _USE_PNFS

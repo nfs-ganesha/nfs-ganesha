@@ -93,9 +93,8 @@ int CreatePUBFH4(nfs_fh4 * fh, compound_data_t * data)
 {
   pseudofs_entry_t psfsentry;
   int status = 0;
-#ifdef _DEBUG_NFS_V4
   char fhstr[LEN_FH_STR];
-#endif
+
 
   psfsentry = *(data->pseudofs->reverse_tab[0]);
 
