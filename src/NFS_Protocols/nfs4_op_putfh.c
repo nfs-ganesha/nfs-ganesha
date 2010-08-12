@@ -99,9 +99,8 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   int rc;
   int error;
   fsal_attrib_list_t attr;
-#ifdef _DEBUG_NFS_V4
   char outstr[1024];
-#endif
+
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_putfh";
 
   resp->resop = NFS4_OP_PUTFH;
