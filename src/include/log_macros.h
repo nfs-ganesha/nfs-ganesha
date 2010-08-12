@@ -1,5 +1,5 @@
-#ifndef _LOG_MACROSS_H
-#define _LOG_MACROSS_H
+#ifndef _LOG_MACROS_H
+#define _LOG_MACROS_H
 
 #include "log_functions.h"
 
@@ -132,5 +132,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
     if (LogComponents[component].log_level >= NIV_MAJOR) \
       DisplayLogComponentLevel(component, NIV_FULL_DEBUG, format, ## args ); \
   } while (0)
+
+#define isFullDebug(component) \
+  (LogComponents[component].log_level >= NIV_FULL_DEBUG)
 
 #endif

@@ -459,7 +459,8 @@ static status_t __attribute__ ((__unused__)) tab_systeme_status[] =
 int SetNamePgm(char *nom);
 int SetNameHost(char *nom);
 int SetNameFileLog(char *nom);
-int SetDefaultLogging(char *name);
+void SetDefaultLogging(char *name);
+void SetComponentLogFile(int comp, char *name);
 int SetNameFunction(char *nom); /* thread safe */
 char *ReturnNamePgm();
 char *ReturnNameHost();
