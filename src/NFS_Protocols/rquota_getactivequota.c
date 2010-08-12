@@ -84,7 +84,7 @@ int rquota_getactivequota(nfs_arg_t * parg /* IN     */ ,
                           struct svc_req *preq /* IN     */ ,
                           nfs_res_t * pres /* OUT    */ )
 {
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFSPROTO,
                     "REQUEST PROCESSING: Calling getactivequota_Null");
   /* 0 is success */
   return 0;

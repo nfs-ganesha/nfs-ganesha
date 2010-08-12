@@ -95,7 +95,7 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
   cache_inode_status_t cache_status;
   cache_inode_fsal_data_t fsal_data;
 
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFSPROTO,
                     "REQUEST PROCESSING: Calling nlm4_Lock");
 
   if(in_nlm_grace_period())

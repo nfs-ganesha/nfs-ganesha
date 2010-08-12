@@ -227,7 +227,7 @@ int nfs_Read(nfs_arg_t * parg,
         if((fsal_off_t) (offset + size) > pexport->MaxOffsetRead)
           {
 
-            DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+            LogEvent(COMPONENT_NFSPROTO,
                               "NFS READ: A client tryed to violate max file size %lld for exportid #%hu",
                               pexport->MaxOffsetRead, pexport->id);
 
