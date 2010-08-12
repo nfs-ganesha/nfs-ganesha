@@ -266,7 +266,7 @@ int nfs_Write(nfs_arg_t * parg,
         if((fsal_off_t) (size + offset) > pexport->MaxOffsetWrite)
           {
 
-            DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+            LogEvent(COMPONENT_NFSPROTO,
                               "NFS WRITE: A client tryed to violate max file size %lld for exportid #%hu",
                               pexport->MaxOffsetWrite, pexport->id);
 
