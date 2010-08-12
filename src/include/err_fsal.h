@@ -35,7 +35,7 @@
 #ifndef _ERR_FSAL_H
 #define _ERR_FSAL_H
 
-#include <log_functions.h>
+#include "log_macros.h"
 
 static family_error_t __attribute__ ((__unused__)) tab_errstatus_FSAL[] =
 {

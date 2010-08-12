@@ -1,7 +1,7 @@
 #ifndef _ERR_HASHTABLE_H
 #define _ERR_HASHTABLE_H
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashTable.h"
 
 /**
