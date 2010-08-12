@@ -198,9 +198,8 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       res_LOCKU4.status = nfs4_Errno(cache_status);
       return res_LOCKU4.status;
     }
-#ifdef _DEBUG_STATES
+
   nfs_State_PrintAll();
-#endif
 
   /* Successful exit */
   res_LOCKU4.status = NFS4_OK;

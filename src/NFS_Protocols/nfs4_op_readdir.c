@@ -162,11 +162,10 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
   /* dircount is considered meaningless by many nfsv4 client (like the CITI one). we use maxcount instead */
   estimated_num_entries = maxcount / sizeof(entry4);    /* Estimated_num_entries is probably far too big */
 
-#ifdef _DEBUG_NFS_V4
-  printf
-      ("--- nfs4_op_readdir ---> dircount=%u maxcount=%u arg_cookie=%llu cookie=%d estimated_num_entries=%u\n",
+  LogFullDebug(COMPONENT_NFS_V4,
+      "--- nfs4_op_readdir ---> dircount=%u maxcount=%u arg_cookie=%llu cookie=%d estimated_num_entries=%u\n",
        dircount, maxcount, arg_READDIR4.cookie, cookie, estimated_num_entries);
-#endif
+
   /* Do not use a cookie of 1 or 2 (reserved values) */
   if(cookie == 1 || cookie == 2)
     {
@@ -304,10 +303,8 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
           else
             entry_nfs_array[i].cookie = end_cookie + 2;
 
-#ifdef _DEBUG_NFS_V4
-          printf(" === nfs4_op_readdir ===>   i=%d name=%s cookie=%llu\n",
+          LogFullDebug(COMPONENT_NFS_V4, " === nfs4_op_readdir ===>   i=%d name=%s cookie=%llu\n",
                  i, dirent_array[i].name.name, entry_nfs_array[i].cookie);
-#endif
 
           /* Get the pentry for the object's attributes and filehandle */
           if((pentry = cache_inode_lookup(dir_pentry,

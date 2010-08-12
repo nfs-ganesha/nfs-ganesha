@@ -215,10 +215,8 @@ int nfs_Read(nfs_arg_t * parg,
       offset = parg->arg_read3.offset;
       size = parg->arg_read3.count;
 
-#ifdef _DEBUG_NFSPROTO
-      printf("-----> Read offset=%lld count=%u MaxOffSet=%lld\n", parg->arg_read3.offset,
+      LogFullDebug(COMPONENT_NFSPROTO, "-----> Read offset=%lld count=%u MaxOffSet=%lld\n", parg->arg_read3.offset,
              parg->arg_read3.count, pexport->MaxOffsetRead);
-#endif
 
       /* 
        * do not exceed maxium READ/WRITE offset if set 

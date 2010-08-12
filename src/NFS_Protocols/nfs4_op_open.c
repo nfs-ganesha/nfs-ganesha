@@ -280,12 +280,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
 
       /* What kind of open is it ? */
-#ifdef _DEBUG_NFS_V4
-      printf
-          ("     OPEN: Claim type = %d   Open Type = %d  Share Deny = %d   Share Access = %d \n",
+      LogFullDebug(COMPONENT_NFS_V4,
+          "     OPEN: Claim type = %d   Open Type = %d  Share Deny = %d   Share Access = %d \n",
            arg_OPEN4.claim.claim, arg_OPEN4.openhow.opentype, arg_OPEN4.share_deny,
            arg_OPEN4.share_access);
-#endif
 
       /* It this a known client id ? */
       LogDebug(COMPONENT_NFS_V4, "OPEN Client id = %llx", arg_OPEN4.owner.clientid);
@@ -583,9 +581,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                     }
                   V(powner->lock);
 
-#ifdef _DEBUG_STATES
                   nfs_State_PrintAll();
-#endif
 
                   /* Now produce the filehandle to this file */
                   if((pnewfsal_handle =
@@ -756,9 +752,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
             }
 
           /*  if( cache_status != CACHE_INODE_NOT_FOUND ), if file already exists basically */
-#ifdef _DEBUG_NFS_V4
-          printf("    OPEN open.how = %d\n", arg_OPEN4.openhow.openflag4_u.how.mode);
-#endif
+          LogFullDebug(COMPONENT_NFS_V4, "    OPEN open.how = %d\n", arg_OPEN4.openhow.openflag4_u.how.mode);
 
           /* Create the file, if we reach this point, it does not exist, we can create it */
           if((pentry_newfile = cache_inode_create(pentry_parent,
@@ -1225,9 +1219,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       else
         res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
     }
-#ifdef _DEBUG_STATES
   nfs_State_PrintAll();
-#endif
 
   /* regular exit */
   res_OPEN4.status = NFS4_OK;

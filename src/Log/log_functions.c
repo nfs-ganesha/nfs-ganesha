@@ -1782,26 +1782,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_V4_XATTR,          "NFS_V4_XATTR",
-#ifdef _DEBUG_NFS_V4_XATTR
-    NIV_DEBUG,
-#else
-    NIV_EVENT,
-#endif
-    SYSLOG,
-    ""
-  },
   { COMPONENT_NFS_V4_PSEUDO,   "NFS_V4_PSEUDO",  
 #ifdef _DEBUG_NFS_V4_PSEUDO 
-    NIV_DEBUG,
-#else
-    NIV_EVENT,
-#endif
-    SYSLOG,
-    ""
-  },
-  { COMPONENT_IDMAPPER,      "IDMAPPER",
-#ifdef _DEBUG_IDMAPPER
     NIV_DEBUG,
 #else
     NIV_EVENT,
@@ -1910,6 +1892,61 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
   },
   { COMPONENT_INIT,            "INIT",
 #ifdef _DEBUG_INIT
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_NFS_READDIR,        "NFS_READDIR",
+#ifdef _DEBUG_NFS_READDIR
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
+  },
+
+  { COMPONENT_NFS_V4_LOCK,          "NFS_V4_LOCK",
+#ifdef _DEBUG_NFS_V4_LOCK
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_NFS_V4_XATTR,          "NFS_V4_XATTR",
+#ifdef _DEBUG_NFS_V4_XATTR
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_NFS_V4_REFERRAL,          "NFS_V4_REFERRAL",
+#ifdef _DEBUG_NFS_V4_REFERRAL
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_MEMCORRUPT,        "MEMCORRUPT",       
+#ifdef _DEBUG_MEMCORRUPT      
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_IDMAPPER,      "IDMAPPER",
+#ifdef _DEBUG_IDMAPPER
     NIV_DEBUG,
 #else
     NIV_EVENT,

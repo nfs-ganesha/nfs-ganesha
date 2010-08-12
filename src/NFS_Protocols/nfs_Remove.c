@@ -222,9 +222,9 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
                     }
                   return NFS_REQ_OK;
                 }
-#ifdef _DEBUG_NFSPROTO
-              printf("==== NFS REMOVE ====> Trying to remove file %s\n", name.name);
-#endif
+
+              LogFullDebug(COMPONENT_NFSPROTO, "==== NFS REMOVE ====> Trying to remove file %s\n", name.name);
+
               /*
                * Remove the entry. 
                */

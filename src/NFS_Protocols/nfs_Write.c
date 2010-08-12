@@ -253,10 +253,9 @@ int nfs_Write(nfs_arg_t * parg,
         {
           stable_flag = TRUE;
         }
-#ifdef _DEBUG_NFSPROTO
-      printf("----> Write offset=%lld count=%u\n", parg->arg_write3.offset,
+
+      LogFullDebug(COMPONENT_NFSPROTO, "----> Write offset=%lld count=%u\n", parg->arg_write3.offset,
              parg->arg_write3.count);
-#endif
 
       /*
        * do not exceed maxium READ/WRITE offset if set
@@ -428,9 +427,7 @@ int nfs_Write(nfs_arg_t * parg,
         }
     }
 
-#ifdef _DEBUG_NFSPROTO
-  printf("---> failed write: cache_status=%d\n", cache_status);
-#endif
+  LogFullDebug(COMPONENT_NFSPROTO, "---> failed write: cache_status=%d\n", cache_status);
 
   /* If we are here, there was an error */
   if(nfs_RetryableError(cache_status))
