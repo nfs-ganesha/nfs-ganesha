@@ -545,9 +545,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                       OPEN_DELEGATE_NONE;
                   res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
 
-#ifdef _DEBUG_STATES
                   nfs_State_PrintAll();
-#endif
 
                   /* Now produce the filehandle to this file */
                   if((pnewfsal_handle =
@@ -1161,9 +1159,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
 
-#ifdef _DEBUG_STATES
   nfs_State_PrintAll();
-#endif
 
   /* regular exit */
   res_OPEN4.status = NFS4_OK;
