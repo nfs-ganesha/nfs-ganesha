@@ -36,7 +36,7 @@
 #ifndef _ERR_GHOSTFS_H
 #define _ERR_GHOSTFS_H
 
-#include <log_functions.h>
+#include "log_macros.h"
 
 static family_error_t __attribute((__unused__)) tab_errstatus_GHOSTFS[] =
 {
