@@ -1782,6 +1782,15 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
+  { COMPONENT_NFS_V4_XATTR,          "NFS_V4_XATTR",
+#ifdef _DEBUG_NFS_V4_XATTR
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
+  },
   { COMPONENT_NFS_V4_PSEUDO,   "NFS_V4_PSEUDO",  
 #ifdef _DEBUG_NFS_V4_PSEUDO 
     NIV_DEBUG,
@@ -1967,8 +1976,8 @@ int SetDefaultLogging(char *name)
   if (strcmp(nom_fichier_log, "syslog") == 0)
     newtype = SYSLOG;
   else
-      newtype = FILELOG;
-
+    newtype = FILELOG;
+  
   /* Change each layer's way of logging */
   for(comp=0; comp < COMPONENT_COUNT; comp++)
     {

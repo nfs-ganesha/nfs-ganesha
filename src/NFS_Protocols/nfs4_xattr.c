@@ -168,19 +168,16 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
   LastOffset = 0;
   j = 0;
 
-#ifdef _DEBUG_NFS_V4_XATTR
-  DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFS_V4_XATTR,
                     "Asked Attributes (Pseudo): Bitmap = (len=%d, val[0]=%d, val[1]=%d), %d item in list",
                     Bitmap->bitmap4_len, Bitmap->bitmap4_val[0], Bitmap->bitmap4_val[1],
                     attrmasklen);
-#endif
 
   for(i = 0; i < attrmasklen; i++)
     {
       attribute_to_set = attrmasklist[i];
 
-      DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                        NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_NFS_V4_XATTR,
                         "Flag for Operation (Pseudo) = %d|%d is ON,  name  = %s  reply_size = %d",
                         attrmasklist[i], fattr4tab[attribute_to_set].val,
                         fattr4tab[attribute_to_set].name,
@@ -222,13 +219,10 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
           memset(supported_attrs.bitmap4_val, 0, 2 * sizeof(uint32_t));
           nfs4_list_to_bitmap4(&supported_attrs, &c, attrvalslist_supported);
 
-#ifdef _DEBUG_NFS_V4_XATTR
-          DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                            NIV_FULL_DEBUG,
+	  LogFullDebug(COMPONENT_NFS_V4_XATTR,
                             "Fattr (pseudo) supported_attrs(len)=%u -> %u|%u",
                             supported_attrs.bitmap4_len, supported_attrs.bitmap4_val[0],
                             supported_attrs.bitmap4_val[1]);
-#endif
 
           /* This kind of operation is always a success */
           op_attr_success = 1;
@@ -981,8 +975,8 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
           break;
 
         default:
-          DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                            NIV_EVENT, "Bad file attributes %d queried",
+	  LogEvent(COMPONENT_NFS_V4_XATTR,
+                            "Bad file attributes %d queried",
                             attribute_to_set);
           /* BUGAZOMEU : un traitement special ici */
           break;
@@ -1002,12 +996,11 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 
     }                           /* for i */
 
-#ifdef   _DEBUG_NFS_V4_XATTR
-  printf("----------------------------------------\n");
-#endif
+  LogFullDebug(COMPONENT_NFS_V4_XATTR,
+	       "----------------------------------------\n");
 
   /* LastOffset contains the length of the attrvalsBuffer usefull data */
-  DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFS_V4_XATTR,
                     "Fattr (pseudo) At the end LastOffset = %u, i=%d, j=%d", LastOffset,
                     i, j);
 
@@ -1029,10 +1022,10 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 
   memcpy(Fattr->attr_vals.attrlist4_val, attrvalsBuffer, Fattr->attr_vals.attrlist4_len);
 
-  DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFS_V4_XATTR,
                     "nfs4_PseudoToFattr (end): Fattr->attr_vals.attrlist4_len = %d",
                     Fattr->attr_vals.attrlist4_len);
-  DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFS_V4_XATTR,
                     "nfs4_PseudoToFattr (end):Fattr->attrmask.bitmap4_len = %d  [0]=%u, [1]=%u",
                     Fattr->attrmask.bitmap4_len, Fattr->attrmask.bitmap4_val[0],
                     Fattr->attrmask.bitmap4_val[1]);
@@ -1301,8 +1294,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
 
   entryFH.nfs_fh4_len = 0;
 
-  DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs, NIV_FULL_DEBUG,
-                    "Entering NFS4_OP_READDIR_PSEUDO");
+  LogFullDebug(COMPONENT_NFS_V4_XATTR, "Entering NFS4_OP_READDIR_PSEUDO");
 
   /* get the caracteristic value for readdir operation */
   dircount = arg_READDIR4.dircount;
@@ -1313,8 +1305,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   /* dircount is considered meaningless by many nfsv4 client (like the CITI one). we use maxcount instead */
   estimated_num_entries = maxcount / sizeof(entry4);
 
-  DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-                    NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFS_V4_XATTR,
                     "PSEUDOFS READDIR: dircount=%d, maxcount=%d, cookie=%d, sizeof(entry4)=%d num_entries=%d",
                     dircount, maxcount, cookie, space_used, estimated_num_entries);
 
@@ -1423,7 +1414,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
           (entry_name_array_item_t *) Mem_Alloc(estimated_num_entries *
                                                 (FSAL_MAX_NAME_LEN + 1))) == NULL)
         {
-          DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
+          DisplayErrorComponentLog(COMPONENT_NFS_V4_XATTR, ERR_SYS, ERR_MALLOC, errno);
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
           return res_READDIR4.status;
         }
@@ -1433,7 +1424,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
       if((entry_nfs_array =
           (entry4 *) Mem_Alloc(estimated_num_entries * sizeof(entry4))) == NULL)
         {
-          DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
+          DisplayErrorComponentLog(COMPONENT_NFS_V4_XATTR, ERR_SYS, ERR_MALLOC, errno);
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
           return res_READDIR4.status;
         }
