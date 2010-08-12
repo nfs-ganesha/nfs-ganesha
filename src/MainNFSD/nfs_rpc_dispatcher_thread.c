@@ -146,12 +146,12 @@ void nfs_debug_debug_label_info()
   BuddyLabelsSummary();
 
   BuddyGetStats(&bstats);
-  printf("------- TOTAL SPACE USED FOR WORKER THREAD: %12lu (on %2u pages)\n",
+  LogPrintf(COMPONENT_MEMLEAKS,"------- TOTAL SPACE USED FOR WORKER THREAD: %12lu (on %2u pages)\n",
          (unsigned long)bstats.StdUsedSpace, bstats.NbStdUsed);
 
   /* DisplayMemoryMap(); */
 
-  printf("--------------------------------------------------\n");
+  LogPrintf(COMPONENT_MEMLEAKS,"--------------------------------------------------\n");
 
 }                               /* nfs_debug_debug_label_info */
 
@@ -162,10 +162,10 @@ void nfs_debug_buddy_info()
   BuddyLabelsSummary();
 
   BuddyGetStats(&bstats);
-  printf("------- TOTAL SPACE USED FOR DISPATCHER THREAD: %12lu (on %2u pages)\n",
+  LogPrintf(COMPONENT_MEMLEAKS,"------- TOTAL SPACE USED FOR DISPATCHER THREAD: %12lu (on %2u pages)\n",
          (unsigned long)bstats.StdUsedSpace, bstats.NbStdUsed);
 
-  printf("--------------------------------------------------\n");
+  LogPrintf(COMPONENT_MEMLEAKS,"--------------------------------------------------\n");
 }
 
 #endif

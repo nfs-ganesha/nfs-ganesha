@@ -1965,7 +1965,7 @@ int SetNameFileLog(char *nom)
  * During initialization this is used and separate layer logging defaults to
  * this destination.
  */
-int SetDefaultLogging(char *name)
+void SetDefaultLogging(char *name)
 {
   strcpy(nom_fichier_log, name);
   int newtype, comp;
@@ -1974,18 +1974,33 @@ int SetDefaultLogging(char *name)
   if (strcmp(nom_fichier_log, "syslog") == 0)
     newtype = SYSLOG;
   else
-      newtype = FILELOG;
+    newtype = FILELOG;
 
   /* Change each layer's way of logging */
   for(comp=0; comp < COMPONENT_COUNT; comp++)
     {
       LogComponents[comp].log_type = newtype;
       if (newtype == FILELOG)
-	strncpy(LogComponents[comp].log_file, name, MAXPATHLEN);
+        strncpy(LogComponents[comp].log_file, name, MAXPATHLEN);
     }
+}                               /* SetDefaultLogging */
 
-  return 1;
-}                               /* SetNameFileLog */
+void SetComponentLogFile(int comp, char *name)
+{
+  strcpy(nom_fichier_log, name);
+  int newtype;
+  char *newfilename;
+
+  if (strcmp(nom_fichier_log, "syslog") == 0)
+    newtype = SYSLOG;
+  else
+    newtype = FILELOG;
+
+  /* Change each component's way of logging */
+  LogComponents[comp].log_type = newtype;
+  if (newtype == FILELOG)
+    strncpy(LogComponents[comp].log_file, name, MAXPATHLEN);
+}                               /* SetComponentLogFile */
 
 /* 
  * Pour info : Les tags de printf dont on peut se servir:
