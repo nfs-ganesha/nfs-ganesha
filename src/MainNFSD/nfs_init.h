@@ -34,7 +34,7 @@
 #define _NFS_INIT_H
 
 #include "cache_content.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "nfs_core.h"
 
 /* setting this variable to TRUE causes datacache
