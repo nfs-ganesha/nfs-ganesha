@@ -184,7 +184,7 @@ fsal_status_t GPFSFSAL_lookup(gpfsfsal_handle_t * p_parent_directory_handle,    
     }
 
   /* This might be a race, but it's the best we can currently do */
-  status = fsal_internal_get_handle_at(parentfd, p_filename->name, p_object_handle);
+  status = fsal_internal_get_handle_at(parentfd, p_filename, p_object_handle);
   close(parentfd);
   close(objectfd);
 
