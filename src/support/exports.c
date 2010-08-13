@@ -488,11 +488,9 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
           p_clients[i].options |= EXPORT_OPTION_NETGRP;
           p_clients[i].type = NETGROUP_CLIENT;
 
-#ifdef _DEBUG_DISPATCH
-          printf("----------------- %s to netgroup %s\n",
+          LogFullDebug(COMPONENT_CONFIG, "----------------- %s to netgroup %s\n",
                  (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                  p_clients[i].client.netgroup.netgroupname);
-#endif
         }
       else if((hostEntry = nfs_LookupHostAddr(client_hostname)) != NULL)
         {
@@ -504,15 +502,13 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
                      hostEntry->h_length);
               p_clients[i].type = HOSTIF_CLIENT;
 
-#ifdef _DEBUG_DISPATCH
-              printf("----------------- %s to client %s = %d.%d.%d.%d\n",
+              LogFullDebug(COMPONENT_CONFIG, "----------------- %s to client %s = %d.%d.%d.%d\n",
                      (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                      client_hostname,
                      (unsigned int)(p_clients[i].client.hostif.clientaddr >> 24),
                      (unsigned int)((p_clients[i].client.hostif.clientaddr >> 16) & 0xFF),
                      (unsigned int)((p_clients[i].client.hostif.clientaddr >> 8) & 0xFF),
                      (unsigned int)(p_clients[i].client.hostif.clientaddr & 0xFF));
-#endif
             }
           else
             {
@@ -532,15 +528,13 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
           p_clients[i].client.network.netmask = netMask;
           p_clients[i].type = NETWORK_CLIENT;
 
-#ifdef _DEBUG_DISPATCH
-          printf("----------------- %s to network %s = %d.%d.%d.%d\n",
+          LogFullDebug(COMPONENT_CONFIG, "----------------- %s to network %s = %d.%d.%d.%d\n",
                  (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                  client_hostname,
                  (unsigned int)(p_clients[i].client.network.netaddr >> 24),
                  (unsigned int)((p_clients[i].client.network.netaddr >> 16) & 0xFF),
                  (unsigned int)((p_clients[i].client.network.netaddr >> 8) & 0xFF),
                  (unsigned int)(p_clients[i].client.network.netaddr & 0xFF));
-#endif
         }
       else
         {
@@ -562,17 +556,14 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
               strncpy(p_clients[i].client.wildcard.wildcard, client_hostname,
                       MAXHOSTNAMELEN);
 
-#ifdef _DEBUG_DISPATCH
-              printf("----------------- %s to wildcard %s\n",
+              LogFullDebug(COMPONENT_CONFIG, "----------------- %s to wildcard %s\n",
                      (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                      client_hostname);
-#endif
             }
           else
             {
               /* Last case: type for client could not be identified. This should not occur */
-              DisplayLog("Unsupported type for client %s", client_hostname);
-              //printf( "Unsupported type for client %s\n", client_hostname ) ;
+              LogCrit(COMPONENT_CONFIG, "Unsupported type for client %s", client_hostname);
             }
         }
     }                           /* for i */
@@ -586,7 +577,7 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
 }                               /* nfs_AddClientsToExportList */
 
 #define DEFINED_TWICE_WARNING( _str_ ) \
-  DisplayLog( "NFS READ_EXPORT: WARNING: %s defined twice !!! (ignored)", _str_ )
+  LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: WARNING: %s defined twice !!! (ignored)", _str_ )
 
 /** 
  * BuildExportEntry : builds an export entry from configutation file.
@@ -667,7 +658,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
       if((rc != 0) || (var_value == NULL))
         {
           Mem_Free(p_entry);
-          DisplayLog("NFS READ_EXPORT: ERROR: internal error %d", rc);
+          LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: internal error %d", rc);
           /* free the entry before exiting */
           return -1;
         }
@@ -691,14 +682,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: Invalid export_id: \"%s\"", var_value);
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid export_id: \"%s\"", var_value);
               err_flag = TRUE;
               continue;
             }
 
           if(export_id <= 0 || export_id > USHRT_MAX)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: Export_id out of range: \"%ld\"",
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Export_id out of range: \"%ld\"",
                          export_id);
               err_flag = TRUE;
               continue;
@@ -722,7 +713,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if(*var_value == '\0')
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: Empty export path");
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Empty export path");
               err_flag = TRUE;
               continue;
             }
@@ -754,8 +745,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           if(count <= 0)
             {
               err_flag = TRUE;
-              DisplayLog
-                  ("NFS READ_EXPORT: ERROR: Invalid format for client list in EXPORT::%s definition",
+              LogCrit(COMPONENT_CONFIG,
+                   "NFS READ_EXPORT: ERROR: Invalid format for client list in EXPORT::%s definition",
                    var_name);
 
               continue;
@@ -763,7 +754,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           else if(count > EXPORT_MAX_CLIENTS)
             {
               err_flag = TRUE;
-              DisplayLog("NFS READ_EXPORT: ERROR: Client list too long (%d>%d)",
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Client list too long (%d>%d)",
                          count, EXPORT_MAX_CLIENTS);
               continue;
             }
@@ -787,7 +778,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           if(rc < 0)
             {
               err_flag = TRUE;
-              DisplayLog("NFS READ_EXPORT: ERROR: Client list too long (>%d)", count);
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Client list too long (>%d)", count);
 
               /* free client strings */
               for(idx = 0; idx < count; idx++)
@@ -802,7 +793,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           if(rc != 0)
             {
               err_flag = TRUE;
-              DisplayLog("NFS READ_EXPORT: ERROR: Invalid client found in \"%s\"",
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid client found in \"%s\"",
                          var_value);
 
               /* free client strings */
@@ -840,8 +831,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           if(count <= 0)
             {
               err_flag = TRUE;
-              DisplayLog
-                  ("NFS READ_EXPORT: ERROR: Invalid format for client list in EXPORT::%s definition",
+              LogCrit(COMPONENT_CONFIG,
+                   "NFS READ_EXPORT: ERROR: Invalid format for client list in EXPORT::%s definition",
                    var_name);
 
               continue;
@@ -849,7 +840,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           else if(count > EXPORT_MAX_CLIENTS)
             {
               err_flag = TRUE;
-              DisplayLog("NFS READ_EXPORT: ERROR: Client list too long (%d>%d)",
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Client list too long (%d>%d)",
                          count, EXPORT_MAX_CLIENTS);
               continue;
             }
@@ -873,7 +864,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           if(rc < 0)
             {
               err_flag = TRUE;
-              DisplayLog("NFS READ_EXPORT: ERROR: Client list too long (>%d)", count);
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Client list too long (>%d)", count);
 
               /* free client strings */
               for(idx = 0; idx < count; idx++)
@@ -888,7 +879,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           if(rc != 0)
             {
               err_flag = TRUE;
-              DisplayLog("NFS READ_EXPORT: ERROR: Invalid client found in \"%s\"",
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid client found in \"%s\"",
                          var_value);
 
               /* free client strings */
@@ -922,8 +913,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if(*var_value != '/')
             {
-              DisplayLog
-                  ("NFS READ_EXPORT: ERROR: Pseudo path must begin with a slash (invalid pseudo path: %s).",
+              LogCrit(COMPONENT_CONFIG,
+                   "NFS READ_EXPORT: ERROR: Pseudo path must begin with a slash (invalid pseudo path: %s).",
                    var_value);
               err_flag = TRUE;
               continue;
@@ -967,8 +958,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
             }
           else
             {
-              DisplayLog
-                  ("NFS READ_EXPORT: ERROR: Invalid access type \"%s\". Values can be: RW, RO, MDONLY, MDONLY_RO.",
+              LogCrit(COMPONENT_CONFIG,
+                   "NFS READ_EXPORT: ERROR: Invalid access type \"%s\". Values can be: RW, RO, MDONLY, MDONLY_RO.",
                    var_value);
               err_flag = TRUE;
               continue;
@@ -1010,7 +1001,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           if(count < 0)
             {
               err_flag = TRUE;
-              DisplayLog("NFS READ_EXPORT: ERROR: NFS protocols list too long (>%d)",
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: NFS protocols list too long (>%d)",
                          MAX_NFSPROTO);
 
               /* free sec strings */
@@ -1038,8 +1029,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                 }
               else
                 {
-                  DisplayLog
-                      ("NFS READ_EXPORT: ERROR: Invalid NFS version \"%s\". Values can be: 2, 3, 4.",
+                  LogCrit(COMPONENT_CONFIG,
+                       "NFS READ_EXPORT: ERROR: Invalid NFS version \"%s\". Values can be: 2, 3, 4.",
                        nfsvers_list[idx]);
                   err_flag = TRUE;
                 }
@@ -1052,7 +1043,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           /* check that at least one nfs protocol has been specified */
           if((p_entry->options & (EXPORT_OPTION_NFSV2
                                   | EXPORT_OPTION_NFSV3 | EXPORT_OPTION_NFSV4)) == 0)
-            DisplayLog("NFS READ_EXPORT: WARNING: /!\\ Empty NFS_protocols list");
+            LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: WARNING: /!\\ Empty NFS_protocols list");
 
           set_options |= FLAG_EXPORT_NFS_PROTO;
 
@@ -1089,7 +1080,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           if(count < 0)
             {
               err_flag = TRUE;
-              DisplayLog("NFS READ_EXPORT: ERROR: Protocol list too long (>%d)",
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Protocol list too long (>%d)",
                          MAX_TRANSPROTO);
 
               /* free sec strings */
@@ -1113,8 +1104,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                 }
               else
                 {
-                  DisplayLog
-                      ("NFS READ_EXPORT: ERROR: Invalid protocol \"%s\". Values can be: UDP, TCP.",
+                  LogCrit(COMPONENT_CONFIG,
+                       "NFS READ_EXPORT: ERROR: Invalid protocol \"%s\". Values can be: UDP, TCP.",
                        transproto_list[idx]);
                   err_flag = TRUE;
                 }
@@ -1126,7 +1117,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* check that at least one TRANS protocol has been specified */
           if((p_entry->options & (EXPORT_OPTION_UDP | EXPORT_OPTION_TCP)) == 0)
-            DisplayLog("TRANS READ_EXPORT: WARNING: /!\\ Empty protocol list");
+            LogCrit(COMPONENT_CONFIG, "TRANS READ_EXPORT: WARNING: /!\\ Empty protocol list");
 
           set_options |= FLAG_EXPORT_TRANS_PROTO;
 
@@ -1151,7 +1142,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: Invalid Anonymous_root_uid: \"%s\"",
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid Anonymous_root_uid: \"%s\"",
                          var_value);
               err_flag = TRUE;
               continue;
@@ -1199,7 +1190,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           if(count < 0)
             {
               err_flag = TRUE;
-              DisplayLog("NFS READ_EXPORT: ERROR: SecType list too long (>%d)",
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: SecType list too long (>%d)",
                          MAX_SECTYPE);
 
               /* free sec strings */
@@ -1235,8 +1226,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                 }
               else
                 {
-                  DisplayLog
-                      ("NFS READ_EXPORT: ERROR: Invalid SecType \"%s\". Values can be: none, sys, krb5, krb5i, krb5p.",
+                  LogCrit(COMPONENT_CONFIG,
+                       "NFS READ_EXPORT: ERROR: Invalid SecType \"%s\". Values can be: none, sys, krb5, krb5i, krb5p.",
                        sec_list[idx]);
                   err_flag = TRUE;
                 }
@@ -1252,7 +1243,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                                   | EXPORT_OPTION_RPCSEC_GSS_NONE
                                   | EXPORT_OPTION_RPCSEC_GSS_INTG
                                   | EXPORT_OPTION_RPCSEC_GSS_PRIV)) == 0)
-            DisplayLog("NFS READ_EXPORT: WARNING: /!\\ Empty SecType");
+            LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: WARNING: /!\\ Empty SecType");
 
           set_options |= FLAG_EXPORT_SECTYPE;
 
@@ -1274,14 +1265,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: Invalid MaxRead: \"%s\"", var_value);
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid MaxRead: \"%s\"", var_value);
               err_flag = TRUE;
               continue;
             }
 
           if(size < 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: MaxRead out of range: %lld", size);
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: MaxRead out of range: %lld", size);
               err_flag = TRUE;
               continue;
             }
@@ -1310,14 +1301,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: Invalid MaxWrite: \"%s\"", var_value);
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid MaxWrite: \"%s\"", var_value);
               err_flag = TRUE;
               continue;
             }
 
           if(size < 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: MaxWrite out of range: %lld", size);
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: MaxWrite out of range: %lld", size);
               err_flag = TRUE;
               continue;
             }
@@ -1346,14 +1337,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: Invalid PrefRead: \"%s\"", var_value);
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid PrefRead: \"%s\"", var_value);
               err_flag = TRUE;
               continue;
             }
 
           if(size < 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: PrefRead out of range: %lld", size);
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: PrefRead out of range: %lld", size);
               err_flag = TRUE;
               continue;
             }
@@ -1382,14 +1373,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: Invalid PrefWrite: \"%s\"", var_value);
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid PrefWrite: \"%s\"", var_value);
               err_flag = TRUE;
               continue;
             }
 
           if(size < 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: PrefWrite out of range: %lld", size);
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: PrefWrite out of range: %lld", size);
               err_flag = TRUE;
               continue;
             }
@@ -1418,7 +1409,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: Invalid PrefReaddir: \"%s\"",
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid PrefReaddir: \"%s\"",
                          var_value);
               err_flag = TRUE;
               continue;
@@ -1426,7 +1417,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if(size < 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: PrefReaddir out of range: %lld", size);
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: PrefReaddir out of range: %lld", size);
               err_flag = TRUE;
               continue;
             }
@@ -1455,14 +1446,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: Invalid PrefWrite: \"%s\"", var_value);
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid PrefWrite: \"%s\"", var_value);
               err_flag = TRUE;
               continue;
             }
 
           if(size < 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: PrefWrite out of range: %lld", size);
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: PrefWrite out of range: %lld", size);
               err_flag = TRUE;
               continue;
             }
@@ -1493,7 +1484,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if(end_ptr == NULL || *end_ptr != '.' || errno != 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: Invalid filesystem_id: \"%s\"",
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid filesystem_id: \"%s\"",
                          var_value);
               err_flag = TRUE;
               continue;
@@ -1506,7 +1497,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: Invalid filesystem_id: \"%s\"",
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid filesystem_id: \"%s\"",
                          var_value);
               err_flag = TRUE;
               continue;
@@ -1514,7 +1505,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if(major < 0 || minor < 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: filesystem_id out of range: %lld.%lld",
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: filesystem_id out of range: %lld.%lld",
                          major, minor);
               err_flag = TRUE;
               continue;
@@ -1549,8 +1540,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
             default:           /* error */
               {
-                DisplayLog
-                    ("NFS READ_EXPORT: ERROR: Invalid value for %s (%s): TRUE or FALSE expected.",
+                LogCrit(COMPONENT_CONFIG,
+                     "NFS READ_EXPORT: ERROR: Invalid value for %s (%s): TRUE or FALSE expected.",
                      var_name, var_value);
                 err_flag = TRUE;
                 continue;
@@ -1580,8 +1571,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               break;
 
             default:           /* error */
-              DisplayLog
-                  ("NFS READ_EXPORT: ERROR: Invalid value for %s (%s): TRUE or FALSE expected.",
+              LogCrit(COMPONENT_CONFIG,
+                   "NFS READ_EXPORT: ERROR: Invalid value for %s (%s): TRUE or FALSE expected.",
                    var_name, var_value);
               err_flag = TRUE;
               continue;
@@ -1609,8 +1600,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               break;
 
             default:           /* error */
-              DisplayLog
-                  ("NFS READ_EXPORT: ERROR: Invalid value for '%s' (%s): TRUE or FALSE expected.",
+              LogCrit(COMPONENT_CONFIG,
+                   "NFS READ_EXPORT: ERROR: Invalid value for '%s' (%s): TRUE or FALSE expected.",
                    var_name, var_value);
               err_flag = TRUE;
               continue;
@@ -1637,8 +1628,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               break;
 
             default:           /* error */
-              DisplayLog
-                  ("NFS READ_EXPORT: ERROR: Invalid value for '%s' (%s): TRUE or FALSE expected.",
+              LogCrit(COMPONENT_CONFIG,
+                   "NFS READ_EXPORT: ERROR: Invalid value for '%s' (%s): TRUE or FALSE expected.",
                    var_name, var_value);
               err_flag = TRUE;
               continue;
@@ -1665,8 +1656,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               break;
 
             default:           /* error */
-              DisplayLog
-                  ("NFS READ_EXPORT: ERROR: Invalid value for '%s' (%s): TRUE or FALSE expected.",
+              LogCrit(COMPONENT_CONFIG,
+                   "NFS READ_EXPORT: ERROR: Invalid value for '%s' (%s): TRUE or FALSE expected.",
                    var_name, var_value);
               err_flag = TRUE;
               continue;
@@ -1711,7 +1702,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: Invalid MaxOffsetWrite: \"%s\"",
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid MaxOffsetWrite: \"%s\"",
                          var_value);
               err_flag = TRUE;
               continue;
@@ -1735,7 +1726,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: Invalid MaxCacheSize: \"%s\"",
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid MaxCacheSize: \"%s\"",
                          var_value);
               err_flag = TRUE;
               continue;
@@ -1759,7 +1750,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
-              DisplayLog("NFS READ_EXPORT: ERROR: Invalid MaxOffsetRead: \"%s\"",
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid MaxOffsetRead: \"%s\"",
                          var_value);
               err_flag = TRUE;
               continue;
@@ -1775,7 +1766,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else
         {
-          DisplayLog("NFS READ_EXPORT: WARNING: Unknown option: %s", var_name);
+          LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: WARNING: Unknown option: %s", var_name);
         }
 
     }
@@ -1785,19 +1776,19 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   if((set_options & mandatory_options) != mandatory_options)
     {
       if((set_options & FLAG_EXPORT_ID) != FLAG_EXPORT_ID)
-        DisplayLog("NFS READ_EXPORT: ERROR: Missing mandatory parameter %s",
+        LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Missing mandatory parameter %s",
                    CONF_EXPORT_ID);
 
       if((set_options & FLAG_EXPORT_PATH) != FLAG_EXPORT_PATH)
-        DisplayLog("NFS READ_EXPORT: ERROR: Missing mandatory parameter %s",
+        LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Missing mandatory parameter %s",
                    CONF_EXPORT_PATH);
 
       if((set_options & FLAG_EXPORT_ROOT_OR_ACCESS) != FLAG_EXPORT_ROOT_OR_ACCESS)
-        DisplayLog("NFS READ_EXPORT: ERROR: Missing mandatory parameter %s or %s",
+        LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Missing mandatory parameter %s or %s",
                    CONF_EXPORT_ROOT, CONF_EXPORT_ACCESS);
 
       if((set_options & FLAG_EXPORT_PSEUDO) != FLAG_EXPORT_PSEUDO)
-        DisplayLog("NFS READ_EXPORT: ERROR: Missing mandatory parameter %s",
+        LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Missing mandatory parameter %s",
                    CONF_EXPORT_PSEUDO);
 
       err_flag = TRUE;
@@ -1814,7 +1805,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
   *pp_export = p_entry;
 
-  DisplayLogLevel(NIV_EVENT,
+  LogEvent(COMPONENT_CONFIG,
                   "NFS READ_EXPORT: Export %d (%s) successfully parsed",
                   p_entry->id, p_entry->fullpath);
 
@@ -1888,11 +1879,11 @@ exportlist_t *BuildDefaultExport()
 
   if(rc != 0)
     {
-      DisplayLog("NFS READ_EXPORT: ERROR: Invalid client \"%s\"", client_root_access);
+      LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid client \"%s\"", client_root_access);
       return NULL;
     }
 
-  DisplayLogLevel(NIV_EVENT,
+  LogEvent(COMPONENT_CONFIG,
                   "NFS READ_EXPORT: Export %d (%s) successfully parsed",
                   p_entry->id, p_entry->fullpath);
 
@@ -1999,12 +1990,10 @@ static int export_client_match(unsigned int addr,
   int rc;
   char hostname[MAXHOSTNAMELEN];
 
-#ifdef _DEBUG_DISPATCH
   if(export_option & EXPORT_OPTION_ROOT)
-    printf("Looking for root access entries\n");
+    LogFullDebug(COMPONENT_DISPATCH, "Looking for root access entries\n");
   if(export_option & EXPORT_OPTION_ACCESS)
-    printf("Looking for access only entries\n");
-#endif
+    LogFullDebug(COMPONENT_DISPATCH, "Looking for access only entries\n");
 
   for(i = 0; i < pexport->clients.num_clients; i++)
     {
@@ -2019,9 +2008,7 @@ static int export_client_match(unsigned int addr,
 
           if(pexport->clients.clientarray[i].client.hostif.clientaddr == addr)
             {
-#ifdef _DEBUG_DISPATCH
-              printf("This matches host adress\n");
-#endif
+              LogFullDebug(COMPONENT_DISPATCH, "This matches host adress\n");
               *pclient_found = pexport->clients.clientarray[i];
               return TRUE;
             }
@@ -2029,8 +2016,7 @@ static int export_client_match(unsigned int addr,
 
         case NETWORK_CLIENT:
 
-#ifdef _DEBUG_DISPATCH
-          printf("Test net %d.%d.%d.%d in %d.%d.%d.%d ??\n",
+          LogFullDebug(COMPONENT_DISPATCH, "Test net %d.%d.%d.%d in %d.%d.%d.%d ??\n",
                  (unsigned int)(pexport->clients.clientarray[i].client.
                                 network.netaddr >> 24),
                  (unsigned
@@ -2043,14 +2029,11 @@ static int export_client_match(unsigned int addr,
                                 network.netaddr & 0xFF), (unsigned int)(addr >> 24),
                  (unsigned int)(addr >> 16) & 0xFF, (unsigned int)(addr >> 8) & 0xFF,
                  (unsigned int)(addr & 0xFF));
-#endif
 
           if((pexport->clients.clientarray[i].client.network.netmask & addr) ==
              pexport->clients.clientarray[i].client.network.netaddr)
             {
-#ifdef _DEBUG_DISPATCH
-              printf("This matches network adress\n");
-#endif
+              LogFullDebug(COMPONENT_DISPATCH, "This matches network adress\n");
               *pclient_found = pexport->clients.clientarray[i];
               return TRUE;
             }
@@ -2091,21 +2074,17 @@ static int export_client_match(unsigned int addr,
                   if(nfs_ip_name_add(addr, hostname) != IP_NAME_SUCCESS)
                     {
                       /* Major failure, name could not be resolved */
-#ifdef _DEBUG_DISPATCH
-                      printf("Could not resolve addr %u.%u.%u.%u\n",
+                      LogFullDebug(COMPONENT_DISPATCH, "Could not resolve addr %u.%u.%u.%u\n",
                              (unsigned int)(addr >> 24),
                              (unsigned int)(addr >> 16) & 0xFF,
                              (unsigned int)(addr >> 8) & 0xFF,
                              (unsigned int)(addr & 0xFF));
-#endif
                       strncpy(hostname, "unresolved", 10);
                     }
                 }
             }
-#ifdef _DEBUG_DISPATCH
-          printf("Wildcarded hostname: testing if '%s' matches '%s'\n",
+          LogFullDebug(COMPONENT_DISPATCH, "Wildcarded hostname: testing if '%s' matches '%s'\n",
                  hostname, pexport->clients.clientarray[i].client.wildcard.wildcard);
-#endif
 
           /* At this point 'hostname' should contain the name that was found */
           if(fnmatch
@@ -2115,10 +2094,8 @@ static int export_client_match(unsigned int addr,
               *pclient_found = pexport->clients.clientarray[i];
               return TRUE;
             }
-#ifdef _DEBUG_DISPATCH
-          printf("'%s' not matching '%s'\n",
+          LogFullDebug(COMPONENT_DISPATCH, "'%s' not matching '%s'\n",
                  hostname, pexport->clients.clientarray[i].client.wildcard.wildcard);
-#endif
 
           /* Now checking for IP wildcards */
           if(fnmatch
@@ -2133,7 +2110,7 @@ static int export_client_match(unsigned int addr,
 
         case GSSPRINCIPAL_CLIENT:
           /** @toto BUGAZOMEU a completer lors de l'integration de RPCSEC_GSS */
-          printf("----------> Unsupported type GSS_PRINCIPAL_CLIENT\n");
+          LogFullDebug(COMPONENT_DISPATCH, "----------> Unsupported type GSS_PRINCIPAL_CLIENT\n");
           return FALSE;
           break;
 
@@ -2157,12 +2134,10 @@ static int export_client_matchv6(struct in6_addr *paddrv6,
   int rc;
   char hostname[MAXHOSTNAMELEN];
 
-#ifdef _DEBUG_DISPATCH
   if(export_option & EXPORT_OPTION_ROOT)
-    printf("Looking for root access entries\n");
+    LogFullDebug(COMPONENT_DISPATCH, "Looking for root access entries\n");
   if(export_option & EXPORT_OPTION_ACCESS)
-    printf("Looking for access only entries\n");
-#endif
+    LogFullDebug(COMPONENT_DISPATCH, "Looking for access only entries\n");
 
   for(i = 0; i < pexport->clients.num_clients; i++)
     {
@@ -2183,9 +2158,7 @@ static int export_client_matchv6(struct in6_addr *paddrv6,
         case HOSTIF_CLIENT_V6:
           if(!memcmp(pexport->clients.clientarray[i].client.hostif.clientaddr6.s6_addr, paddrv6->s6_addr, 16))  /* Remember that IPv6 address are 128 bits = 16 bytes long */
             {
-#ifdef _DEBUG_DISPATCH
-              printf("This matches host adress in IPv6\n");
-#endif
+              LogFullDebug(COMPONENT_DISPATCH, "This matches host adress in IPv6\n");
               *pclient_found = pexport->clients.clientarray[i];
               return TRUE;
             }
@@ -2280,7 +2253,7 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
                 ipstring, INET_ADDRSTRLEN);
       if(ipstring == NULL)
         {
-          DisplayLog("Error: Could not convert the IPv4 address to a character string.");
+          LogCrit(COMPONENT_DISPATCH, "Error: Could not convert the IPv4 address to a character string.");
           return FALSE;
         }
 
@@ -2296,13 +2269,14 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
   else
     {
       psockaddr_in6 = (struct sockaddr_in6 *)pssaddr;
-#ifdef _DEBUG_DISPATCH
-      char txtaddrv6[100];
+      if(isFulldebug(COMPONENT_DISPATCH))
+        {
+          char txtaddrv6[100];
 
-      inet_ntop(psockaddr_in6->sin6_family,
-                psockaddr_in6->sin6_addr.s6_addr, txtaddrv6, 100);
-      printf("Client has IPv6 adress = %s\n", txtaddrv6);
-#endif
+          inet_ntop(psockaddr_in6->sin6_family,
+                    psockaddr_in6->sin6_addr.s6_addr, txtaddrv6, 100);
+          LogFullDebug(COMPONENT_DISPATCH, "Client has IPv6 adress = %s\n", txtaddrv6);
+        }
 
       /* If the client socket is IPv4, then it is wrapped into a   ::ffff:a.b.c.d IPv6 address. We check this here 
        * This kind of adress is shaped like this:
@@ -2320,8 +2294,8 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
                     ip6string, INET6_ADDRSTRLEN);
           if(ip6string == NULL)
             {
-              DisplayLog
-                  ("Error: Could not convert the IPv6 address to a character string.");
+              LogCrit(COMPONENT_DISPATCH,
+                   "Error: Could not convert the IPv6 address to a character string.");
               return FALSE;
             }
 
@@ -2399,20 +2373,20 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       /* creating the 'small_client' */
       if(cache_inode_client_init(&small_client, small_client_param, 255, NULL))
         {
-          DisplayLog
-              ("NFS_STARTUP: CRITICAL: small cache inode client could not be allocated, exiting...");
+          LogCrit(COMPONENT_INIT,
+               "NFS_STARTUP: CRITICAL: small cache inode client could not be allocated, exiting...");
           exit(1);
         }
       else
-        DisplayLog("NFS STARTUP: small cache inode client successfully initialized");
+        LogCrit(COMPONENT_INIT, "NFS STARTUP: small cache inode client successfully initialized");
 
       /* creating the datacache client for recovering data cache */
       if(cache_content_client_init
          (&recover_datacache_client,
           nfs_param.cache_layers_param.cache_content_client_param))
         {
-          DisplayLog
-              ("NFS_STARTUP: CRITICAL: cache content client (for datacache recovery) could not be allocated, exiting...");
+          LogCrit(COMPONENT_INIT,
+               "NFS_STARTUP: CRITICAL: cache content client (for datacache recovery) could not be allocated, exiting...");
           exit(1);
         }
 
@@ -2425,7 +2399,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 
       if(FSAL_IS_ERROR(fsal_status))
         {
-          DisplayLog("NFS STARTUP: Couldn't get the context for FSAL super user");
+          LogCrit(COMPONENT_INIT, "NFS STARTUP: Couldn't get the context for FSAL super user");
           return FALSE;
         }
 
@@ -2436,8 +2410,8 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 #ifdef _USE_MFSL_ASYNC
           if(!(pcurrent->options & EXPORT_OPTION_USE_DATACACHE))
             {
-              DisplayLog
-                  ("NFS STARTUP: ERROR : the export entry iId=%u, Export Path=%s must have datacache enabled... exiting",
+              LogCrit(COMPONENT_INIT,
+                   "NFS STARTUP: ERROR : the export entry iId=%u, Export Path=%s must have datacache enabled... exiting",
                    pcurrent->id, pcurrent->fullpath);
               exit(1);
             }
@@ -2455,7 +2429,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 
           if(FSAL_IS_ERROR(fsal_status))
             {
-              DisplayLog("NFS STARTUP: Couldn't build export context for %s",
+              LogCrit(COMPONENT_INIT, "NFS STARTUP: Couldn't build export context for %s",
                          pcurrent->fullpath);
               return FALSE;
             }
@@ -2467,7 +2441,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 
           if(FSAL_IS_ERROR(fsal_status))
             {
-              DisplayLog("NFS STARTUP: Couldn't get the credentials for FSAL super user");
+              LogCrit(COMPONENT_INIT, "NFS STARTUP: Couldn't get the credentials for FSAL super user");
               return FALSE;
             }
 
@@ -2475,8 +2449,8 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
           if(FSAL_IS_ERROR((fsal_status = FSAL_lookupPath(&exportpath_fsal,
                                                           &context, &fsal_handle, NULL))))
             {
-              DisplayLog
-                  ("NFS STARTUP: Couldn't access the root of the exported namespace, ExportId=%u Path=%s FSAL_ERROR=(%u,%u)",
+              LogCrit(COMPONENT_INIT,
+                   "NFS STARTUP: Couldn't access the root of the exported namespace, ExportId=%u Path=%s FSAL_ERROR=(%u,%u)",
                    pcurrent->id, pcurrent->fullpath, fsal_status.major,
                    fsal_status.minor);
               return FALSE;
@@ -2488,7 +2462,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 
           if(FSAL_IS_ERROR(fsal_status))
             {
-              DisplayLog("NFS STARTUP: Couldn't allocate memory");
+              LogCrit(COMPONENT_INIT, "NFS STARTUP: Couldn't allocate memory");
               return FALSE;
             }
 
@@ -2503,13 +2477,13 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
                                              &small_client,
                                              &context, &cache_status)) == NULL)
             {
-              DisplayLog
-                  ("NFS STARTUP: /!\\ | Error when creating root cached entry for %s, export_id=%d, cache_status=%d",
+              LogCrit(COMPONENT_INIT,
+                   "NFS STARTUP: /!\\ | Error when creating root cached entry for %s, export_id=%d, cache_status=%d",
                    pcurrent->fullpath, pcurrent->id, cache_status);
               return FALSE;
             }
           else
-            DisplayLogLevel(NIV_EVENT,
+            LogEvent(COMPONENT_INIT,
                             "NFS STARTUP: Added root entry for path %s on export_id=%d",
                             pcurrent->fullpath, pcurrent->id);
 
@@ -2530,20 +2504,20 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
             {
               /* Set the cache_entry object as a referral by setting the 'referral' field */
               pentry->object.dir_begin.referral = pcurrent->referral;
-              DisplayLog("A referral is set : %s", pentry->object.dir_begin.referral =
+              LogCrit(COMPONENT_INIT, "A referral is set : %s", pentry->object.dir_begin.referral =
                          pcurrent->referral);
             }
 #ifdef _CRASH_RECOVERY_AT_STARTUP
           /* Recover the datacache from a previous crah */
           if(pcurrent->options & EXPORT_OPTION_USE_DATACACHE)
             {
-              DisplayLogLevel(NIV_EVENT, "Recovering Data Cache for export id %u",
+              LogEvent(COMPONENT_INIT, "Recovering Data Cache for export id %u",
                               pcurrent->id);
               if(cache_content_crash_recover
                  (pcurrent->id, &recover_datacache_client, &small_client, ht, &context,
                   &cache_content_status) != CACHE_CONTENT_SUCCESS)
                 {
-                  DisplayLogLevel(NIV_EVENT,
+                  LogEvent(COMPONENT_INIT,
                                   "Datacache for export id %u is not recoverable: error = %d",
                                   pcurrent->id, cache_content_status);
                 }
