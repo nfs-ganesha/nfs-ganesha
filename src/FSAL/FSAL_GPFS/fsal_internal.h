@@ -52,9 +52,6 @@
  */
 extern fsal_staticfsinfo_t global_fs_info;
 
-/* log descriptor */
-extern log_t fsal_log;
-
 /* export_context_t is not given to every function, but
  * most functions need to use the open-by-handle funcionality.
  */
@@ -99,7 +96,7 @@ void ReleaseTokenFSCall();
                (_struct_status_).minor = (_minor_) ;                  \
                fsal_increment_nbcall( _f_,_struct_status_ );          \
                log_snprintf( _str_, 256, "%J%r",ERR_FSAL, _code_ );   \
-               DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG,           \
+               LogFullDebug(COMPONENT_FSAL,                           \
                   "%s returns ( %s, %d )",fsal_function_names[_f_],   \
                   _str_, _minor_);                                    \
                return (_struct_status_);                              \
