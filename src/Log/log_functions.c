@@ -1956,7 +1956,7 @@ int DisplayErrorComponentLogLine(log_components_t component, int num_family, int
   if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
 
-  return DisplayLogComponentLevel(component, NIV_CRIT, "%s", buffer);
+  return DisplayLogComponentLevel(component, NIV_CRIT, "%s: %s", LogComponents[component].str, buffer);
 }                               /* DisplayErrorLogLine */
 
 /* 
