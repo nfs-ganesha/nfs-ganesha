@@ -1926,7 +1926,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_READDIR,        "NFS_READDIR",
+  { COMPONENT_NFS_READDIR,        "COMPONENT_NFS_READDIR",
 #ifdef _DEBUG_NFS_READDIR
     NIV_DEBUG,
 #else
@@ -1936,7 +1936,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     ""
   },
 
-  { COMPONENT_NFS_V4_LOCK,          "NFS_V4_LOCK",
+  { COMPONENT_NFS_V4_LOCK,          "COMPONENT_NFS_V4_LOCK",
 #ifdef _DEBUG_NFS_V4_LOCK
     NIV_DEBUG,
 #else
@@ -1945,7 +1945,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_V4_XATTR,          "NFS_V4_XATTR",
+  { COMPONENT_NFS_V4_XATTR,          "COMPONENT_NFS_V4_XATTR",
 #ifdef _DEBUG_NFS_V4_XATTR
     NIV_DEBUG,
 #else
@@ -1954,7 +1954,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_V4_REFERRAL,          "NFS_V4_REFERRAL",
+  { COMPONENT_NFS_V4_REFERRAL,          "COMPONENT_NFS_V4_REFERRAL",
 #ifdef _DEBUG_NFS_V4_REFERRAL
     NIV_DEBUG,
 #else
@@ -1963,7 +1963,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_MEMCORRUPT,        "MEMCORRUPT",       
+  { COMPONENT_MEMCORRUPT,        "COMPONENT_MEMCORRUPT",
 #ifdef _DEBUG_MEMCORRUPT      
     NIV_DEBUG,
 #else
