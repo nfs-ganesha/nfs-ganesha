@@ -379,4 +379,6 @@
 	  privileged port to contact the "proxyfied" server
         - FSAL shared objects are provided as precompiled rpms
 	- Log layer now uses syslog as a possible log stream 
+	- Add new call FSAL_getextattrs to get info such a generation number
+	  or creation time
 `	
