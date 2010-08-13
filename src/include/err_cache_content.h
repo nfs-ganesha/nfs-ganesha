@@ -1,7 +1,7 @@
 #ifndef _ERR_CACHE_CONTENT_H
 #define _ERR_CACHE_CONTENT_H
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "cache_content.h"
 
 /**

@@ -195,7 +195,7 @@ static int DisplayError(int num_error, int status)
  *
  */
 
-int ReturnLevelAscii(char *LevelEnAscii)
+int ReturnLevelAscii(const char *LevelEnAscii)
 {
   int i = 0;
 
@@ -325,6 +325,17 @@ static void ArmeSignal(int signal, void (*action) ())
  * ReturnLevelDebug
  * 
  */
+
+void SetComponentLogLevel(log_components_t component, int level_to_set)
+{
+  if(level_to_set < NIV_NULL)
+    level_to_set = NIV_NULL;
+
+  if(level_to_set >= NB_LOG_LEVEL)
+    level_to_set = NB_LOG_LEVEL - 1;
+
+  LogComponents[component].log_level = level_to_set;
+}
 
 inline int ReturnLevelDebug()
 {
@@ -1963,7 +1974,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
   }
 };
 
-int DisplayLogComponentLevel(int component, int level, char *format, ...)
+int DisplayLogComponentLevel(log_components_t component, int level, char *format, ...)
  {
    va_list arguments;
    int rc;
@@ -1984,14 +1995,14 @@ int DisplayLogComponentLevel(int component, int level, char *format, ...)
   return rc;
 }
 
-int DisplayErrorComponentLogLine(int component, int num_family, int num_error, int status, int ma_ligne)
+int DisplayErrorComponentLogLine(log_components_t component, int num_family, int num_error, int status, int ma_ligne)
 {
   char buffer[STR_LEN_TXT];
 
   if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
 
-  return DisplayLogComponentLevel(component, NIV_CRIT, "%s", buffer);
+  return DisplayLogComponentLevel(component, NIV_CRIT, "%s: %s", LogComponents[component].str, buffer);
 }                               /* DisplayErrorLogLine */
 
 /* 
@@ -2011,7 +2022,7 @@ int SetNameFileLog(char *nom)
  * During initialization this is used and separate layer logging defaults to
  * this destination.
  */
-int SetDefaultLogging(char *name)
+void SetDefaultLogging(char *name)
 {
   strcpy(nom_fichier_log, name);
   int newtype, comp;
@@ -2021,17 +2032,32 @@ int SetDefaultLogging(char *name)
     newtype = SYSLOG;
   else
     newtype = FILELOG;
-  
+
   /* Change each layer's way of logging */
   for(comp=0; comp < COMPONENT_COUNT; comp++)
     {
       LogComponents[comp].log_type = newtype;
       if (newtype == FILELOG)
-	strncpy(LogComponents[comp].log_file, name, MAXPATHLEN);
+        strncpy(LogComponents[comp].log_file, name, MAXPATHLEN);
     }
+}                               /* SetDefaultLogging */
 
-  return 1;
-}                               /* SetNameFileLog */
+void SetComponentLogFile(log_components_t comp, char *name)
+{
+  strcpy(nom_fichier_log, name);
+  int newtype;
+  char *newfilename;
+
+  if (strcmp(nom_fichier_log, "syslog") == 0)
+    newtype = SYSLOG;
+  else
+    newtype = FILELOG;
+
+  /* Change each component's way of logging */
+  LogComponents[comp].log_type = newtype;
+  if (newtype == FILELOG)
+    strncpy(LogComponents[comp].log_file, name, MAXPATHLEN);
+}                               /* SetComponentLogFile */
 
 /* 
  * Pour info : Les tags de printf dont on peut se servir:

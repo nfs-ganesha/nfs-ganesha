@@ -58,7 +58,7 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "fsal_types.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "config_parsing.h"
 #include "nfs23.h"
 
