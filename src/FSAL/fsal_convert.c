@@ -180,7 +180,7 @@ fsal_nodetype_t posix2fsal_type(mode_t posix_type_in)
       return FSAL_TYPE_SOCK;
 
     default:
-      DisplayLogLevel(NIV_EVENT, "Unknown object type: %d", posix_type_in);
+      LogEvent(COMPONENT_FSAL, "Unknown object type: %d", posix_type_in);
       return -1;
     }
 

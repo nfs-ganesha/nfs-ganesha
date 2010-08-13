@@ -460,7 +460,6 @@ int SetNamePgm(char *nom);
 int SetNameHost(char *nom);
 int SetNameFileLog(char *nom);
 void SetDefaultLogging(char *name);
-void SetComponentLogFile(int comp, char *name);
 int SetNameFunction(char *nom); /* thread safe */
 char *ReturnNamePgm();
 char *ReturnNameHost();
@@ -505,7 +504,7 @@ int InitDebug(int level_to_set);        /* not thread safe */
 
 void SetLevelDebug(int level_to_set);    /* not thread safe */
 
-int ReturnLevelAscii(char *LevelEnAscii);
+int ReturnLevelAscii(const char *LevelEnAscii);
 char *ReturnLevelInt(int level);
 
 /* A present les types et les fonctions pour les descripteurs de journaux */
@@ -564,9 +563,6 @@ int log_vfprintf(FILE *, char *format, va_list arguments);
 #define log_vprintf( format, arguments ) log_vfprintf( stdout, format, arguments )
 int log_fprintf(FILE * file, char *format, ...);
 int log_printf(char *format, ...);
-
-int DisplayLogComponentLevel(int component, int level, char *format, ...);
-int DisplayErrorComponentLogLine(int component, int num_family, int num_error, int status, int ma_ligne);
 
 #ifdef _SNMP_ADM_ACTIVE
 int getComponentLogLevel(snmp_adm_type_union * param, void *opt);
