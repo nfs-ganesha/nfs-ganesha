@@ -31,7 +31,7 @@
  *
  */
 
-enum log_components
+typedef enum log_components
 {
   COMPONENT_ALL = 0,
   COMPONENT_MEMALLOC,
@@ -56,7 +56,12 @@ enum log_components
   COMPONENT_MAIN,
   COMPONENT_IDMAPPER,
   COMPONENT_COUNT
-};
+} log_components_t;
+
+void SetComponentLogFile(log_components_t comp, char *name);
+void SetComponentLogLevel(log_components_t component, int level_to_set);
+int DisplayLogComponentLevel(log_components_t component, int level, char *format, ...);
+int DisplayErrorComponentLogLine(log_components_t component, int num_family, int num_error, int status, int ma_ligne);
 
 enum log_type
 {

@@ -155,8 +155,7 @@ fsal_status_t GPFSFSAL_open(gpfsfsal_handle_t * p_filehandle,   /* IN */
   /* flags conflicts. */
   if(rc)
     {
-      DisplayLogJdLevel(fsal_log, NIV_EVENT, "Invalid/conflicting flags : %#X",
-                        openflags);
+      LogEvent(COMPONENT_FSAL, "Invalid/conflicting flags : %#X", openflags);
       Return(rc, 0, INDEX_FSAL_open);
     }
 
@@ -302,13 +301,13 @@ fsal_status_t GPFSFSAL_read(gpfsfsal_file_t * p_file_descriptor,        /* IN */
       if(rc)
         {
 
-          DisplayLogJdLevel(fsal_log, NIV_EVENT,
-                            "Error in posix fseek operation (whence=%s, offset=%lld)",
-                            (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
-                             (p_seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
-                              (p_seek_descriptor->whence ==
-                               FSAL_SEEK_END ? "SEEK_END" : "ERROR"))),
-                            p_seek_descriptor->offset);
+          LogEvent(COMPONENT_FSAL,
+                   "Error in posix fseek operation (whence=%s, offset=%lld)",
+                   (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
+                    (p_seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
+                     (p_seek_descriptor->whence ==
+                      FSAL_SEEK_END ? "SEEK_END" : "ERROR"))),
+                   p_seek_descriptor->offset);
 
           Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_read);
         }
@@ -423,27 +422,27 @@ fsal_status_t GPFSFSAL_write(gpfsfsal_file_t * p_file_descriptor,       /* IN */
       if(rc)
         {
 
-          DisplayLogJdLevel(fsal_log, NIV_EVENT,
-                            "Error in posix fseek operation (whence=%s, offset=%lld)",
-                            (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
-                             (p_seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
-                              (p_seek_descriptor->whence ==
-                               FSAL_SEEK_END ? "SEEK_END" : "ERROR"))),
-                            p_seek_descriptor->offset);
+          LogEvent(COMPONENT_FSAL,
+                   "Error in posix fseek operation (whence=%s, offset=%lld)",
+                   (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
+                    (p_seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
+                     (p_seek_descriptor->whence ==
+                      FSAL_SEEK_END ? "SEEK_END" : "ERROR"))),
+                   p_seek_descriptor->offset);
 
           Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_write);
 
         }
 
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-                        "Write operation (whence=%s, offset=%lld, size=%lld)",
-                        (p_seek_descriptor->whence ==
-                         FSAL_SEEK_CUR ? "SEEK_CUR" : (p_seek_descriptor->whence ==
-                                                       FSAL_SEEK_SET ? "SEEK_SET"
-                                                       : (p_seek_descriptor->whence ==
-                                                          FSAL_SEEK_END ? "SEEK_END" :
-                                                          "ERROR"))),
-                        p_seek_descriptor->offset, buffer_size);
+      LogFullDebug(COMPONENT_FSAL,
+                   "Write operation (whence=%s, offset=%lld, size=%lld)",
+                   (p_seek_descriptor->whence ==
+                    FSAL_SEEK_CUR ? "SEEK_CUR" : (p_seek_descriptor->whence ==
+                                                  FSAL_SEEK_SET ? "SEEK_SET"
+                                                  : (p_seek_descriptor->whence ==
+                                                     FSAL_SEEK_END ? "SEEK_END" :
+                                                     "ERROR"))),
+                   p_seek_descriptor->offset, buffer_size);
 
     }
 
@@ -464,15 +463,15 @@ fsal_status_t GPFSFSAL_write(gpfsfsal_file_t * p_file_descriptor,       /* IN */
     {
       if (p_seek_descriptor) 
       {
-        DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                          "Write operation of size %llu at offset %lld failed. fd=%d, errno=%d.",
-                          i_size, p_seek_descriptor->offset, p_file_descriptor->fd, errsv);
+        LogDebug(COMPONENT_FSAL,
+                 "Write operation of size %llu at offset %lld failed. fd=%d, errno=%d.",
+                 i_size, p_seek_descriptor->offset, p_file_descriptor->fd, errsv);
       }
       else
       {
-        DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                          "Write operation of size %llu at offset 0. fd=%d, errno=%d.",
-                          i_size, p_file_descriptor->fd, errsv);
+        LogDebug(COMPONENT_FSAL,
+                 "Write operation of size %llu at offset 0. fd=%d, errno=%d.",
+                 i_size, p_file_descriptor->fd, errsv);
       }
  
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_write);
