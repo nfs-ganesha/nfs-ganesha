@@ -84,11 +84,14 @@ void TakeTokenFSCall();
 void ReleaseTokenFSCall();
 
 /**
+ * Override generic Return macro
+ *
  * Return :
  * Macro for returning from functions
  * with trace and function call increment.
  */
 
+#undef Return
 #define Return( _code_, _minor_ , _f_ ) do {                          \
                char _str_[256];                                       \
                fsal_status_t _struct_status_ = FSAL_STATUS_NO_ERROR ; \
