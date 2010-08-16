@@ -147,8 +147,8 @@ cache_content_status_t cache_content_read_conf_client_parameter(config_file_t in
 
           if(DebugLevel == -1)
             {
-              DisplayLog
-                  ("cache_content_read_conf: ERROR: Invalid debug level name: \"%s\".",
+              LogCrit(COMPONENT_CACHE_CONTENT,
+                  "cache_content_read_conf: ERROR: Invalid debug level name: \"%s\".",
                    key_value);
               return CACHE_CONTENT_INVALID_ARGUMENT;
             }
