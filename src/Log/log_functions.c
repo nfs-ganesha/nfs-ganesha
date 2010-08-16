@@ -1965,6 +1965,17 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
   { COMPONENT_MEMCORRUPT,        "COMPONENT_MEMCORRUPT",
 #ifdef _DEBUG_MEMCORRUPT      
     NIV_DEBUG,
+#elifdef _DETECT_MEMCORRUPT
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_CONFIG,          "COMPONENT_CONFIG",
+#ifdef _DEBUG_CONFIG
+    NIV_DEBUG,
 #else
     NIV_EVENT,
 #endif
