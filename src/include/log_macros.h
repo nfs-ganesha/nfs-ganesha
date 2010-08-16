@@ -60,6 +60,7 @@ typedef enum log_components
   COMPONENT_NFS_V4_XATTR,
   COMPONENT_NFS_V4_REFERRAL,
   COMPONENT_MEMCORRUPT,
+  COMPONENT_CONFIG,
 
   COMPONENT_COUNT
 } log_components_t;
