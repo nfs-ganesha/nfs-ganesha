@@ -140,7 +140,10 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
 
   /* >> convert error code and return on error << */
   if(rc)
+  {
+    free(entries);
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
+  }
 
   /* >> fill the output dirent array << */
 

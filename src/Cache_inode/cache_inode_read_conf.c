@@ -281,7 +281,6 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
     }
 
   /* init logging */
-
   if(LogFile)
     {
       desc_log_stream_t log_stream;
