@@ -197,25 +197,25 @@ int nfs_Add_MountList_Entry(char *hostname, char *dirpath)
       MNT_List_tail = pnew_mnt_list_entry;
     }
 
-#ifdef _DEBUG_NFSPROTO
-  nfs_Print_MountList();
-#endif
+  if(isFullDebug(COMPONENT_NFSPROTO))
+    nfs_Print_MountList();
 
-#ifdef _DETECT_MEMCORRUPT
-  if(!BuddyCheck(MNT_List_head) || !BuddyCheck(MNT_List_tail))
+  if(isFullDebug(COMPONENT_MEMCORRUPT))
     {
-      fprintf(stderr,
-              "Memory corruption in nfs_Add_MountList_Entry. Head = %p, Tail = %p.\n",
-              MNT_List_head, MNT_List_tail);
+      if(!BuddyCheck(MNT_List_head) || !BuddyCheck(MNT_List_tail))
+        {
+          LogFullDebug(COMPONENT_MEMCORRUPT,
+                  "Memory corruption in nfs_Add_MountList_Entry. Head = %p, Tail = %p.\n",
+                  MNT_List_head, MNT_List_tail);
+        }
+      if(!BuddyCheck(pnew_mnt_list_entry->ml_hostname)
+         || !BuddyCheck(pnew_mnt_list_entry->ml_directory))
+        {
+          LogFullDebug(COMPONENT_MEMCORRUPT,
+                  "Memory corruption in nfs_Add_MountList_Entry. Hostname = %p, Directory = %p.\n",
+                  pnew_mnt_list_entry->ml_hostname, pnew_mnt_list_entry->ml_directory);
+        }
     }
-  if(!BuddyCheck(pnew_mnt_list_entry->ml_hostname)
-     || !BuddyCheck(pnew_mnt_list_entry->ml_directory))
-    {
-      fprintf(stderr,
-              "Memory corruption in nfs_Add_MountList_Entry. Hostname = %p, Directory = %p.\n",
-              pnew_mnt_list_entry->ml_hostname, pnew_mnt_list_entry->ml_directory);
-    }
-#endif
 
 #endif
 
@@ -253,16 +253,17 @@ int nfs_Remove_MountList_Entry(char *hostname, char *dirpath)
       piter_mnt_list_entry != NULL; piter_mnt_list_entry = piter_mnt_list_entry->ml_next)
     {
 
-#    ifdef _DETECT_MEMCORRUPT
-      if(!BuddyCheck(piter_mnt_list_entry)
-         || !BuddyCheck(piter_mnt_list_entry->ml_hostname)
-         || !BuddyCheck(piter_mnt_list_entry->ml_directory))
+      if(isFullDebug(COMPONENT_MEMCORRUPT))
         {
-          fprintf(stderr,
-                  "Memory corruption in nfs_Remove_MountList_Entry. Current = %p, Head = %p, Tail = %p.\n",
-                  piter_mnt_list_entry, MNT_List_head, MNT_List_tail);
+          if(!BuddyCheck(piter_mnt_list_entry)
+             || !BuddyCheck(piter_mnt_list_entry->ml_hostname)
+             || !BuddyCheck(piter_mnt_list_entry->ml_directory))
+            {
+              LogFullDebug(COMPONENT_MEMCORRUPT,
+                      "Memory corruption in nfs_Remove_MountList_Entry. Current = %p, Head = %p, Tail = %p.\n",
+                      piter_mnt_list_entry, MNT_List_head, MNT_List_tail);
+            }
         }
-#    endif
 
       /* BUGAZOMEU: pas de verif sur le path */
       if(!strncmp(piter_mnt_list_entry->ml_hostname, hostname, MAXHOSTNAMELEN)
@@ -293,9 +294,9 @@ int nfs_Remove_MountList_Entry(char *hostname, char *dirpath)
       Mem_Free(piter_mnt_list_entry);
 
     }
-#ifdef _DEBUG_NFSPROTO
-  nfs_Print_MountList();
-#endif
+
+  if(isFullDebug(COMPONENT_NFSPROTO))
+    nfs_Print_MountList();
 
 #endif
 
@@ -334,9 +335,8 @@ int nfs_Purge_MountList(void)
   MNT_List_head = NULL;
   MNT_List_tail = NULL;
 
-#ifdef _DEBUG_NFSPROTO
-  nfs_Print_MountList();
-#endif
+  if(isFullDebug(COMPONENT_NFSPROTO))
+    nfs_Print_MountList();
 
 #endif
 
@@ -359,9 +359,8 @@ int nfs_Init_MountList(void)
   MNT_List_head = NULL;
   MNT_List_tail = NULL;
 
-#ifdef _DEBUG_NFSPROTO
-  nfs_Print_MountList();
-#endif
+  if(isFullDebug(COMPONENT_NFSPROTO))
+    nfs_Print_MountList();
 
   return 1;
 }                               /* nfs_Init_MountList */
@@ -379,9 +378,8 @@ int nfs_Init_MountList(void)
  */
 mountlist nfs_Get_MountList(void)
 {
-#ifdef _DEBUG_NFSPROTO
-  nfs_Print_MountList();
-#endif
+  if(isFullDebug(COMPONENT_NFSPROTO))
+    nfs_Print_MountList();
 
   return MNT_List_head;
 }                               /* nfs_Get_MountList */
@@ -402,11 +400,11 @@ void nfs_Print_MountList(void)
   mountlist piter_mnt_list_entry = NULL;
 
   if(MNT_List_head == NULL)
-    DisplayLog("Mount List Entry is empty");
+    LogFullDebug(COMPONENT_NFSPROTO, "Mount List Entry is empty");
 
   for(piter_mnt_list_entry = MNT_List_head;
       piter_mnt_list_entry != NULL; piter_mnt_list_entry = piter_mnt_list_entry->ml_next)
-    DisplayLog("Mount List Entry : ml_hostname=%s   ml_directory=%s",
+    LogFullDebug(COMPONENT_NFSPROTO, "Mount List Entry : ml_hostname=%s   ml_directory=%s",
                piter_mnt_list_entry->ml_hostname, piter_mnt_list_entry->ml_directory);
 
   return;
