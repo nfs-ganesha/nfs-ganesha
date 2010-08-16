@@ -262,10 +262,9 @@ int cache_content_get_datapath(char *basepath, u_int64_t inum, char *datapath)
   snprintf(datapath, MAXPATHLEN, "%s/%02hhX/%02hhX/node=%llx.data", basepath,
            (char)((hash_val) & 0xFF),
            (char)((hash_val >> 8) & 0xFF), (unsigned long long)inum);
-#ifdef _DEBUG_CACHE_CONTENT
-  DisplayLogLevel(NIV_FULL_DEBUG, "cache_content_get_datapath : datapath ----> %s",
+
+  LogFullDebug(COMPONENT_CACHE_CONTENT, "cache_content_get_datapath : datapath ----> %s",
                   datapath);
-#endif
 
   /* it is ok, we now return 0 */
   return 0;
@@ -293,15 +292,14 @@ off_t cache_content_recover_size(char *basepath, u_int64_t inum)
 
   if(stat(path, &buffstat) != 0)
     {
-      DisplayLog
-          ("Failure in cache_content_recover_size while stat on local cache: path=%s errno = %u",
+      LogCrit(COMPONENT_CACHE_CONTENT,
+          "Failure in cache_content_recover_size while stat on local cache: path=%s errno = %u",
            path, errno);
 
       return -1;
     }
-#ifdef _DEBUG_CACHE_CONTENT
-  DisplayLogLevel(NIV_FULL_DEBUG, "path ----> %s %llu\n", path, buffstat.st_size);
-#endif
+
+  LogFullDebug(COMPONENT_CACHE_CONTENT, "path ----> %s %llu\n", path, buffstat.st_size);
 
   /* Stat is ok, we now return the size */
   return buffstat.st_size;
@@ -324,8 +322,8 @@ off_t cache_content_get_cached_size(cache_content_entry_t * pentry)
 
   if(stat(pentry->local_fs_entry.cache_path_data, &buffstat) != 0)
     {
-      DisplayLog
-          ("Failure in cache_content_get_cached_size while stat on local cache: path=%s errno = %u",
+      LogCrit(COMPONENT_CACHE_CONTENT,
+          "Failure in cache_content_get_cached_size while stat on local cache: path=%s errno = %u",
            pentry->local_fs_entry.cache_path_index, errno);
 
       return -1;
@@ -592,7 +590,7 @@ cache_content_status_t cache_content_check_threshold(char *datacache_path,
 
   if(statfs(fspath, &info_fs) != 0)
     {
-      DisplayLog("Error getting local filesystem info: path=%s errno=%u\n", fspath,
+      LogCrit(COMPONENT_CACHE_CONTENT, "Error getting local filesystem info: path=%s errno=%u\n", fspath,
                  errno);
       return CACHE_CONTENT_LOCAL_CACHE_ERROR;
     }
@@ -614,7 +612,7 @@ cache_content_status_t cache_content_check_threshold(char *datacache_path,
   tx_used = 100.0 * ((double)info_fs.f_blocks - (double)info_fs.f_bfree) /
       ((double)info_fs.f_blocks + (double)info_fs.f_bavail - (double)info_fs.f_bfree);
 
-  DisplayLogLevel(NIV_EVENT,
+  LogEvent(COMPONENT_CACHE_CONTENT,
                   "Datacache: %s: %.2f%% used, low_wm = %.2f%%, high_wm = %.2f%%",
                   datacache_path, tx_used, lw, hw);
 
@@ -626,13 +624,13 @@ cache_content_status_t cache_content_check_threshold(char *datacache_path,
     {
       *p_bool_overflow = FALSE;
       *p_blocks_to_lwm = 0;
-      DisplayLogLevel(NIV_EVENT, "Datacache: no purge needed");
+      LogEvent(COMPONENT_CACHE_CONTENT, "Datacache: no purge needed");
     }
   else
     {
       *p_bool_overflow = TRUE;
       *p_blocks_to_lwm = dispo_lw - info_fs.f_bavail;
-      DisplayLogLevel(NIV_EVENT,
+      LogEvent(COMPONENT_CACHE_CONTENT,
                       "Datacache: need to purge %lu blocks for reaching low WM",
                       *p_blocks_to_lwm);
     }
@@ -780,10 +778,8 @@ int cache_content_local_cache_dir_iter(cache_content_dirinfo_t * directory,
               if(!strcmp(".", pdir_entry->d_name) || !strcmp("..", pdir_entry->d_name))
                 continue;
 
-#ifdef _DEBUG_CACHE_CONTENT
-              printf("iterator --> %s/%s/%s/%s\n", directory->level0_path,
+              LogFullDebug(COMPONENT_CACHE_CONTENT,"iterator --> %s/%s/%s/%s\n", directory->level0_path,
                      directory->level1_name, directory->level2_name, pdir_entry->d_name);
-#endif
 
               /* the d_name must actually be the relative path from
                * the cache directory path, so that a file can be
@@ -830,12 +826,10 @@ int cache_content_local_cache_dir_iter(cache_content_dirinfo_t * directory,
                   readdir_r(directory->level1_dir, pdir_entry, &(directory->cookie1));
               directory->level1_cnt++;
 
-#ifdef _DEBUG_CACHE_CONTENT
-              printf
-                  ("---> directory->level1_cnt=%u mod=%u index=%u modulocalcule=%u name=%s\n",
+              LogFullDebug(COMPONENT_CACHE_CONTENT,
+                  "---> directory->level1_cnt=%u mod=%u index=%u modulocalcule=%u name=%s\n",
                    directory->level1_cnt, mod, index, directory->level1_cnt % mod,
                    pdir_entry->d_name);
-#endif
 
               /* skip entry if  cnt % mod == index */
               if((directory->level1_cnt % mod != index))
