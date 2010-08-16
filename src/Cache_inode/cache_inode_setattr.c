@@ -43,7 +43,7 @@
 #endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -156,13 +156,13 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
         {
           cache_inode_status_t kill_status;
 
-          DisplayLog
-              ("cache_inode_setattr: Stale FSAL File Handle detected for pentry = %p",
+          LogEvent(COMPONENT_CACHE_INODE,
+              "cache_inode_setattr: Stale FSAL File Handle detected for pentry = %p",
                pentry);
 
           if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
              CACHE_INODE_SUCCESS)
-            DisplayLog("cache_inode_setattr: Could not kill entry %p, status = %u",
+            LogCrit(COMPONENT_CACHE_INODE,"cache_inode_setattr: Could not kill entry %p, status = %u",
                        pentry, kill_status);
 
           *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -189,13 +189,13 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
             {
               cache_inode_status_t kill_status;
 
-              DisplayLog
-                  ("cache_inode_setattr: Stale FSAL File Handle detected for pentry = %p",
+              LogEvent(COMPONENT_CACHE_INODE,
+                  "cache_inode_setattr: Stale FSAL File Handle detected for pentry = %p",
                    pentry);
 
               if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
-                DisplayLog("cache_inode_setattr: Could not kill entry %p, status = %u",
+                LogCrit(COMPONENT_CACHE_INODE,"cache_inode_setattr: Could not kill entry %p, status = %u",
                            pentry, kill_status);
 
               *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -258,15 +258,14 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
               /* Do not set the p_object_attributes->filesize and p_object_attributes->spaceused  in this case 
                * This will lead to a situation where (for example) untar-ing a file will produced invalid files 
                * with a size of 0 despite the fact that they are not empty */
-#ifdef  _DEBUG_CACHE_INODE
-              DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+
+              LogFullDebug(COMPONENT_CACHE_INODE,
                                 "cache_inode_setattr with FSAL_ATTR_SIZE on data cached entry");
-#endif
             }
         }
       else if(pattr->asked_attributes & FSAL_ATTR_SIZE)
-        DisplayLog
-            ("WARNING !!! cache_inode_setattr tryed to operate size on a non REGULAR_FILE type=%d",
+        LogCrit(COMPONENT_CACHE_INODE,
+            "WARNING !!! cache_inode_setattr tryed to operate size on a non REGULAR_FILE type=%d",
              pentry->internal_md.type);
     }
 

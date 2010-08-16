@@ -43,7 +43,7 @@
 #endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -318,13 +318,13 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
         {
           cache_inode_status_t kill_status;
 
-          DisplayLog
-              ("cache_inode_create: Stale FSAL File Handle detected for pentry = %p",
+          LogEvent(COMPONENT_CACHE_INODE,
+              "cache_inode_create: Stale FSAL File Handle detected for pentry = %p",
                pentry_parent);
 
           if(cache_inode_kill_entry(pentry_parent, ht, pclient, &kill_status) !=
              CACHE_INODE_SUCCESS)
-            DisplayLog("cache_inode_create: Could not kill entry %p, status = %u",
+            LogCrit(COMPONENT_CACHE_INODE, "cache_inode_create: Could not kill entry %p, status = %u",
                        pentry_parent, kill_status);
 
           *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -389,7 +389,7 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
           {
             V_w(&pentry_parent->lock);
 
-            DisplayLogLevel(NIV_DEBUG, "OPEN PNFS CREATE DS FILE : Error %u",
+            LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS CREATE DS FILE : Error %u",
                             pnfs_status);
 
             *pstatus = CACHE_INODE_IO_ERROR;
