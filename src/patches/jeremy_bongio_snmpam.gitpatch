@@ -1,0 +1,247 @@
+diff --git a/src/Cache_inode/cache_inode_read_conf.c b/src/Cache_inode/cache_inode_read_conf.c
+index 19cf575..7c6a867 100644
+--- a/src/Cache_inode/cache_inode_read_conf.c
++++ b/src/Cache_inode/cache_inode_read_conf.c
+@@ -281,21 +281,7 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
+     }
+ 
+   /* init logging */
+-
+-  if(LogFile)
+-    {
+-      desc_log_stream_t log_stream;
+-
+-      strcpy(log_stream.path, LogFile);
+-
+-      /* Default : NIV_EVENT */
+-
+-      if(DebugLevel == -1)
+-        AddLogStreamJd(&(pparam->log_outputs), V_FILE, log_stream, NIV_CRIT, SUP);
+-      else
+-        AddLogStreamJd(&(pparam->log_outputs), V_FILE, log_stream, DebugLevel, SUP);
+-
+-    }
++  AddDefaultLogStreamJd(&(pparam->log_outputs), LogFile, DebugLevel, SUP);
+ 
+   return CACHE_INODE_SUCCESS;
+ }                               /* cache_inode_read_conf_client_parameter */
+diff --git a/src/FSAL/FSAL_GPFS/fsal_tools.c b/src/FSAL/FSAL_GPFS/fsal_tools.c
+index 5354ebf..2da0170 100644
+--- a/src/FSAL/FSAL_GPFS/fsal_tools.c
++++ b/src/FSAL/FSAL_GPFS/fsal_tools.c
+@@ -548,23 +548,8 @@ fsal_status_t GPFSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
+     }
+ 
+   /* init logging */
+-
+-  if(LogFile)
+-    {
+-      desc_log_stream_t log_stream;
+-
+-      strcpy(log_stream.path, LogFile);
+-
+-      /* Default : NIV_CRIT */
+-
+-      if(DebugLevel == -1)
+-        AddLogStreamJd(&(out_parameter->fsal_info.log_outputs),
+-                       V_FILE, log_stream, NIV_CRIT, SUP);
+-      else
+-        AddLogStreamJd(&(out_parameter->fsal_info.log_outputs),
+-                       V_FILE, log_stream, DebugLevel, SUP);
+-
+-    }
++  AddDefaultLogStreamJd(&(out_parameter->fsal_info.log_outputs),
++			LogFile, DebugLevel, SUP);
+ 
+   ReturnCode(ERR_FSAL_NO_ERROR, 0);
+ 
+diff --git a/src/File_Content/cache_content_read_conf.c b/src/File_Content/cache_content_read_conf.c
+index 48a989e..a6227a1 100644
+--- a/src/File_Content/cache_content_read_conf.c
++++ b/src/File_Content/cache_content_read_conf.c
+@@ -185,20 +185,7 @@ cache_content_status_t cache_content_read_conf_client_parameter(config_file_t in
+     strncpy(fcc_log_path, "/dev/null", MAXPATHLEN);
+ 
+   /* init logging */
+-  if(LogFile)
+-    {
+-      desc_log_stream_t log_stream;
+-
+-      strcpy(log_stream.path, LogFile);
+-
+-      /* Default : NIV_CRIT */
+-
+-      if(DebugLevel == -1)
+-        AddLogStreamJd(&(pparam->log_outputs), V_FILE, log_stream, NIV_CRIT, SUP);
+-      else
+-        AddLogStreamJd(&(pparam->log_outputs), V_FILE, log_stream, DebugLevel, SUP);
+-
+-    }
++  AddDefaultLogStreamJd(&(pparam->log_outputs), LogFile, DebugLevel, SUP);
+ 
+   return CACHE_CONTENT_SUCCESS;
+ }                               /* cache_content_read_conf_client_parameter */
+diff --git a/src/Log/log_functions.c b/src/Log/log_functions.c
+index c35553e..2f515e9 100644
+--- a/src/Log/log_functions.c
++++ b/src/Log/log_functions.c
+@@ -45,6 +45,7 @@
+ #include <signal.h>
+ 
+ #include "log_functions.h"
++#include "nfs_core.h"
+ 
+ /* La longueur d'une chaine */
+ #define STR_LEN_TXT      2048
+@@ -53,10 +54,6 @@
+ #define MAX_NUM_FAMILY  50
+ #define UNUSED_SLOT -1
+ 
+-/* P et V pour etre Djikstra-compliant */
+-#define P( _mutex_ ) pthread_mutex_lock( &_mutex_)
+-#define V( _mutex_ ) pthread_mutex_unlock( &_mutex_ )
+-
+ /* constants */
+ static int masque_log = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+ 
+@@ -72,6 +69,8 @@ static char nom_fichier_log[PATH_LEN] = "/tmp/logfile";
+ static int niveau_debug = 2;
+ static int syslog_opened = 0 ;
+ 
++extern nfs_parameter_t nfs_param;
++
+ /*
+  * Variables specifiques aux threads.
+  */
+@@ -897,6 +896,31 @@ int DisplayErrorLogLine(int num_family, int num_error, int status, int ma_ligne)
+ }                               /* DisplayErrorLogLine */
+ 
+ /* Les routines de gestion du descripteur de journal */
++int AddDefaultLogStreamJd(log_t * pjd, char log_dest[MAXPATHLEN], niveau_t niveau,
++                   aiguillage_t aiguillage)
++{
++  log_stream_t *nouvelle_voie;
++  type_log_stream_t type;
++  desc_log_stream_t desc_voie;
++
++  /* Default : NIV_CRIT */
++  if(niveau == -1)
++    niveau = NIV_CRIT;
++
++  /* Default logging location */
++  if (!log_dest)
++    log_dest = nfs_param.core_param.log_destination;
++  strcpy(desc_voie.path, log_dest);
++
++  if (strcmp(log_dest, "syslog") == 0)
++    type = V_SYSLOG;
++  else
++    type = V_FILE;
++
++  return AddLogStreamJd(pjd, type, desc_voie, niveau, aiguillage);
++
++}
++/* Les routines de gestion du descripteur de journal */
+ int AddLogStreamJd(log_t * pjd, type_log_stream_t type, desc_log_stream_t desc_voie,
+                    niveau_t niveau, aiguillage_t aiguillage)
+ {
+diff --git a/src/MainNFSD/nfs_init.c b/src/MainNFSD/nfs_init.c
+index 15d43b7..afe6b72 100644
+--- a/src/MainNFSD/nfs_init.c
++++ b/src/MainNFSD/nfs_init.c
+@@ -612,6 +612,30 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
+   p_nfs_param->buddy_param_tcp_mgr.free_areas = TRUE;
+ #endif
+ 
++  /* Core parameters */
++  if((rc = nfs_read_core_conf(config_struct, &p_nfs_param->core_param)) < 0)
++    {
++      DisplayLog("NFS STARTUP: Error while parsing core configuration");
++      return -1;
++    }
++  else
++    {
++      /* No such stanza in configuration file */
++      if(rc == 1)
++        DisplayLog
++            ("NFS STARTUP: No core configuration found in config file, using default");
++      else
++        LogDebug(COMPONENT_INIT,
++                        "NFS STARTUP: core configuration read from config file");
++    }
++
++  if (!nfs_param.core_param.log_destination)
++    {
++      DisplayLog
++	("NFS STARTUP: No default log destination found in core configuration.");
++      return -1;
++    }
++
+   /* Load FSAL configuration from parsed file */
+   fsal_status =
+       FSAL_load_FSAL_parameter_from_conf(config_struct, &p_nfs_param->fsal_param);
+@@ -667,23 +691,6 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
+     LogDebug(COMPONENT_INIT,
+                     "NFS STARTUP: FS specific configuration read from config file");
+ 
+-  /* Core parameters */
+-  if((rc = nfs_read_core_conf(config_struct, &p_nfs_param->core_param)) < 0)
+-    {
+-      DisplayLog("NFS STARTUP: Error while parsing core configuration");
+-      return -1;
+-    }
+-  else
+-    {
+-      /* No such stanza in configuration file */
+-      if(rc == 1)
+-        DisplayLog
+-            ("NFS STARTUP: No core configuration found in config file, using default");
+-      else
+-        LogDebug(COMPONENT_INIT,
+-                        "NFS STARTUP: core configuration read from config file");
+-    }
+-
+ #ifdef _USE_MFSL
+   /* Load FSAL configuration from parsed file */
+   fsal_status = MFSL_load_parameter_from_conf(config_struct, &p_nfs_param->mfsl_param);
+diff --git a/src/include/log_functions.h b/src/include/log_functions.h
+index c85380e..f29f62b 100644
+--- a/src/include/log_functions.h
++++ b/src/include/log_functions.h
+@@ -550,6 +550,8 @@ int DisplayErrorJdLine(log_t jd, int num_family, int num_error, int status, int
+ int AddLogStreamJd(log_t * pjd,
+                    type_log_stream_t type,
+                    desc_log_stream_t desc_voie, niveau_t niveau, aiguillage_t aiguillage);
++int AddDefaultLogStreamJd(log_t * pjd, char log_dest[MAXPATHLEN], niveau_t niveau,
++			  aiguillage_t aiguillage);
+ 
+ int log_vsnprintf(char *out, size_t n, char *format, va_list arguments);
+ #define log_vsprintf( out, format, arguments ) log_vsnprintf( out, (size_t)LOG_MAX_STRLEN, format, arguments )
+diff --git a/src/include/nfs_core.h b/src/include/nfs_core.h
+index 928a4d1..132fa04 100644
+--- a/src/include/nfs_core.h
++++ b/src/include/nfs_core.h
+@@ -289,6 +289,7 @@ typedef struct nfs_core_param__
+   char stats_file_path[MAXPATHLEN];
+   char stats_per_client_directory[MAXPATHLEN];
+   char fsal_shared_library[MAXPATHLEN];
++  char log_destination[MAXPATHLEN];
+ } nfs_core_parameter_t;
+ 
+ typedef struct nfs_ip_name_param__
+diff --git a/src/support/nfs_read_conf.c b/src/support/nfs_read_conf.c
+index d8f9a8a..4ccb76a 100644
+--- a/src/support/nfs_read_conf.c
++++ b/src/support/nfs_read_conf.c
+@@ -356,6 +356,10 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
+         {
+           strncpy(pparam->fsal_shared_library, key_value, MAXPATHLEN);
+         }
++      else if(!strcasecmp(key_name, "LogDestination"))
++        {
++          strncpy(pparam->log_destination, key_value, MAXPATHLEN);
++        }
+       else
+         {
+           fprintf(stderr,
+
