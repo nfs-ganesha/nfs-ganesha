@@ -39,7 +39,7 @@
 
 #include "HashData.h"
 #include "HashTable.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"
@@ -590,7 +590,7 @@ int nfs_Init_client_id(nfs_client_id_parameter_t param)
 {
   if((ht_client_id = HashTable_Init(param.hash_param)) == NULL)
     {
-      DisplayLog("NFS CLIENT_ID: Cannot init Client Id cache");
+      LogCrit(COMPONENT_INIT, "NFS CLIENT_ID: Cannot init Client Id cache");
       return -1;
     }
 
@@ -612,7 +612,7 @@ int nfs_Init_client_id_reverse(nfs_client_id_parameter_t param)
 {
   if((ht_client_id_reverse = HashTable_Init(param.hash_param_reverse)) == NULL)
     {
-      DisplayLog("NFS CLIENT_ID: Cannot init Client Id cache");
+      LogCrit(COMPONENT_INIT, "NFS CLIENT_ID: Cannot init Client Id cache");
       return -1;
     }
 
