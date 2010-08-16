@@ -548,23 +548,8 @@ fsal_status_t GPFSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
     }
 
   /* init logging */
-
-  if(LogFile)
-    {
-      desc_log_stream_t log_stream;
-
-      strcpy(log_stream.path, LogFile);
-
-      /* Default : NIV_CRIT */
-
-      if(DebugLevel == -1)
-        AddLogStreamJd(&(out_parameter->fsal_info.log_outputs),
-                       V_FILE, log_stream, NIV_CRIT, SUP);
-      else
-        AddLogStreamJd(&(out_parameter->fsal_info.log_outputs),
-                       V_FILE, log_stream, DebugLevel, SUP);
-
-    }
+  AddDefaultLogStreamJd(&(out_parameter->fsal_info.log_outputs),
+			LogFile, DebugLevel, SUP);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
