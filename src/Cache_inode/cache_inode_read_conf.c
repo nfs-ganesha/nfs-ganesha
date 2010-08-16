@@ -281,21 +281,7 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
     }
 
   /* init logging */
-
-  if(LogFile)
-    {
-      desc_log_stream_t log_stream;
-
-      strcpy(log_stream.path, LogFile);
-
-      /* Default : NIV_EVENT */
-
-      if(DebugLevel == -1)
-        AddLogStreamJd(&(pparam->log_outputs), V_FILE, log_stream, NIV_CRIT, SUP);
-      else
-        AddLogStreamJd(&(pparam->log_outputs), V_FILE, log_stream, DebugLevel, SUP);
-
-    }
+  AddDefaultLogStreamJd(&(pparam->log_outputs), LogFile, DebugLevel, SUP);
 
   return CACHE_INODE_SUCCESS;
 }                               /* cache_inode_read_conf_client_parameter */

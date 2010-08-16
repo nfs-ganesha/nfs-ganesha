@@ -45,6 +45,7 @@
 #include <signal.h>
 
 #include "log_functions.h"
+#include "nfs_core.h"
 
 /* La longueur d'une chaine */
 #define STR_LEN_TXT      2048
@@ -52,10 +53,6 @@
 #define MAX_STR_LEN      1024
 #define MAX_NUM_FAMILY  50
 #define UNUSED_SLOT -1
-
-/* P et V pour etre Djikstra-compliant */
-#define P( _mutex_ ) pthread_mutex_lock( &_mutex_)
-#define V( _mutex_ ) pthread_mutex_unlock( &_mutex_ )
 
 /* constants */
 static int masque_log = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
@@ -71,6 +68,8 @@ static char nom_host[256];
 static char nom_fichier_log[PATH_LEN] = "/tmp/logfile";
 static int niveau_debug = 2;
 static int syslog_opened = 0 ;
+
+extern nfs_parameter_t nfs_param;
 
 /*
  * Variables specifiques aux threads.
@@ -896,6 +895,31 @@ int DisplayErrorLogLine(int num_family, int num_error, int status, int ma_ligne)
   return DisplayLog("%s", buffer);
 }                               /* DisplayErrorLogLine */
 
+/* Les routines de gestion du descripteur de journal */
+int AddDefaultLogStreamJd(log_t * pjd, char log_dest[MAXPATHLEN], niveau_t niveau,
+                   aiguillage_t aiguillage)
+{
+  log_stream_t *nouvelle_voie;
+  type_log_stream_t type;
+  desc_log_stream_t desc_voie;
+
+  /* Default : NIV_CRIT */
+  if(niveau == -1)
+    niveau = NIV_CRIT;
+
+  /* Default logging location */
+  if (!log_dest)
+    log_dest = nfs_param.core_param.log_destination;
+  strcpy(desc_voie.path, log_dest);
+
+  if (strcmp(log_dest, "syslog") == 0)
+    type = V_SYSLOG;
+  else
+    type = V_FILE;
+
+  return AddLogStreamJd(pjd, type, desc_voie, niveau, aiguillage);
+
+}
 /* Les routines de gestion du descripteur de journal */
 int AddLogStreamJd(log_t * pjd, type_log_stream_t type, desc_log_stream_t desc_voie,
                    niveau_t niveau, aiguillage_t aiguillage)

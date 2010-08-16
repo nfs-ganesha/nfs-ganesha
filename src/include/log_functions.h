@@ -550,6 +550,8 @@ int DisplayErrorJdLine(log_t jd, int num_family, int num_error, int status, int 
 int AddLogStreamJd(log_t * pjd,
                    type_log_stream_t type,
                    desc_log_stream_t desc_voie, niveau_t niveau, aiguillage_t aiguillage);
+int AddDefaultLogStreamJd(log_t * pjd, char log_dest[MAXPATHLEN], niveau_t niveau,
+			  aiguillage_t aiguillage);
 
 int log_vsnprintf(char *out, size_t n, char *format, va_list arguments);
 #define log_vsprintf( out, format, arguments ) log_vsnprintf( out, (size_t)LOG_MAX_STRLEN, format, arguments )
