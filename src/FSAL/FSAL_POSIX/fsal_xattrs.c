@@ -591,10 +591,6 @@ fsal_status_t POSIXFSAL_GetXAttrValueById(posixfsal_handle_t * p_objecthandle,  
     }
 
   /* get the value */
-  rc = xattr_list[xattr_id].get_func(p_objecthandle,
-                                     p_context, buffer_addr, buffer_size, p_output_size);
-
-  /* get the value */
   if(xattr_list[xattr_id].print_func == NULL)
     {
       rc = xattr_list[xattr_id].get_func(p_objecthandle,

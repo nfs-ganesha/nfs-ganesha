@@ -29,12 +29,13 @@ static int ReadPasswordFromFile(char *filename, char *password)
       DisplayLog("Error openning password file '%s' : %s", filename, errstr);
       return rc;
     }
-  fscanf(passfile, "%1024s", password);
+  fscanf(passfile, "%1023s", password);
   if(ferror(passfile))
     {
       rc = errno;
       strerror_r(rc, errstr, 1024);
       DisplayLog("Error reading password file '%s' : %s", filename, errstr);
+      fclose(passfile);
       return rc;
     }
   fclose(passfile);
