@@ -255,7 +255,7 @@ int nfs_Init_svc()
   if((netconfig_udpv4 = (struct netconfig *)getnetconfigent("udp")) == NULL)
     {
       LogMessage(COMPONENT_DISPATCH,
-          ("/!\\ Cannot get a entry for udp in netconfig file. Check file /etc/netconfig...");
+          "/!\\ Cannot get a entry for udp in netconfig file. Check file /etc/netconfig...");
       LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot get udp netconfig");
       return -1;
     }
@@ -264,7 +264,7 @@ int nfs_Init_svc()
   if((netconfig_tcpv4 = (struct netconfig *)getnetconfigent("tcp")) == NULL)
     {
       LogMessage(COMPONENT_DISPATCH,
-          ("/!\\ Cannot get a entry for tcp in netconfig file. Check file /etc/netconfig...");
+          "/!\\ Cannot get a entry for tcp in netconfig file. Check file /etc/netconfig...");
       LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot get tcp netconfig");
       return -1;
     }
@@ -273,7 +273,7 @@ int nfs_Init_svc()
   if((netconfig_udpv6 = (struct netconfig *)getnetconfigent("udp6")) == NULL)
     {
       LogMessage(COMPONENT_DISPATCH,
-          ("/!\\ Cannot get a entry for udp6 in netconfig file. Check file /etc/netconfig...");
+          "/!\\ Cannot get a entry for udp6 in netconfig file. Check file /etc/netconfig...");
       LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot get udp6 netconfig");
       return -1;
     }
@@ -282,7 +282,7 @@ int nfs_Init_svc()
   if((netconfig_tcpv6 = (struct netconfig *)getnetconfigent("tcp6")) == NULL)
     {
       LogMessage(COMPONENT_DISPATCH,
-          ("/!\\ Cannot get a entry for tcp in netconfig file. Check file /etc/netconfig...");
+          "/!\\ Cannot get a entry for tcp in netconfig file. Check file /etc/netconfig...");
       LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot get tcp6 netconfig");
       return -1;
     }
