@@ -32,17 +32,6 @@ fsal_staticfsinfo_t global_fs_info;
 libzfswrap_handle_t *p_zhd;
 libzfswrap_vfs_t *p_vfs;
 
-/* you can define here your supported attributes
- * if your filesystem is "homogenous".
- */
-#define YOUR_SUPPORTED_ATTRIBUTES (                                       \
-          FSAL_ATTR_SUPPATTR | FSAL_ATTR_TYPE     | FSAL_ATTR_SIZE      | \
-          FSAL_ATTR_FSID     | FSAL_ATTR_ACL      | FSAL_ATTR_FILEID    | \
-          FSAL_ATTR_MODE     | FSAL_ATTR_NUMLINKS | FSAL_ATTR_OWNER     | \
-          FSAL_ATTR_GROUP    | FSAL_ATTR_ATIME    | FSAL_ATTR_CREATION  | \
-          FSAL_ATTR_CTIME    | FSAL_ATTR_MTIME    | FSAL_ATTR_SPACEUSED | \
-          FSAL_ATTR_MOUNTFILEID | FSAL_ATTR_CHGTIME  )
-
 /* filesystem info for your filesystem */
 static fsal_staticfsinfo_t default_zfs_info = {
   0xFFFFFFFFFFFFFFFFLL,         /* max file size (64bits) */
@@ -64,8 +53,8 @@ static fsal_staticfsinfo_t default_zfs_info = {
   TRUE,                         /* can change times */
   TRUE,                         /* homogenous */
   POSIX_SUPPORTED_ATTRIBUTES,   /* supported attributes */
-  (1024 * 1024),                /* maxread size */
-  (1024 * 1024),                /* maxwrite size */
+  0,                            /* maxread size */
+  0,                            /* maxwrite size */
   0,                            /* default umask */
   0,                            /* don't allow cross fileset export path */
   0400                          /* default access rights for xattrs: root=RW, owner=R */

@@ -66,6 +66,7 @@ fsal_status_t ZFSFSAL_rcp(zfsfsal_handle_t * filehandle,      /* IN */
 
   int local_fd;
   int local_flags;
+  int errsv;
 
   zfsfsal_file_t fs_fd;
   fsal_openflags_t fs_flags;
@@ -160,15 +161,12 @@ fsal_status_t ZFSFSAL_rcp(zfsfsal_handle_t * filehandle,      /* IN */
   }
 #endif
 
-  local_fd = open(p_local_path->path, local_flags, 0644);
+  local_fd = open(p_local_path->path, local_flags);
+  errsv = errno;
 
   if(local_fd == -1)
     {
-      /* todo : put a function in fsal_convert.c that convert your local
-       * filesystem errors to an FSAL error code.
-       * So you will have a call like :
-       * Return( unix2fsal_error(errno) , errno , INDEX_FSAL_rcp );
-       */
+      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rcp);
     }
 
   /* call FSAL_open with the correct flags */
@@ -213,7 +211,7 @@ fsal_status_t ZFSFSAL_rcp(zfsfsal_handle_t * filehandle,      /* IN */
   }
 #endif
 
-  st = FSAL_open(filehandle, p_context, fs_flags, &fs_fd, NULL);
+  st = ZFSFSAL_open(filehandle, p_context, fs_flags, &fs_fd, NULL);
 
   if(FSAL_IS_ERROR(st))
     {
@@ -235,7 +233,7 @@ fsal_status_t ZFSFSAL_rcp(zfsfsal_handle_t * filehandle,      /* IN */
     {
       /* clean & return */
       close(local_fd);
-      FSAL_close(&fs_fd);
+      ZFSFSAL_close(&fs_fd);
       Return(ERR_FSAL_NOMEM, Mem_Errno, INDEX_FSAL_rcp);
     }
 
@@ -268,7 +266,8 @@ fsal_status_t ZFSFSAL_rcp(zfsfsal_handle_t * filehandle,      /* IN */
         }
       else                      /* from FSAL filesystem */
         {
-          st = FSAL_read(&fs_fd, NULL, RCP_BUFFER_SIZE, IObuffer, &fs_size, &eof);
+          fs_size = 0;
+          st = ZFSFSAL_read(&fs_fd, NULL, RCP_BUFFER_SIZE, IObuffer, &fs_size, &eof);
 
           if(FSAL_IS_ERROR(st))
             break;              /* exit loop */
@@ -277,7 +276,7 @@ fsal_status_t ZFSFSAL_rcp(zfsfsal_handle_t * filehandle,      /* IN */
 
       /* write (if not eof) */
 
-      if(!eof)
+      if(!eof || ((!to_fs) && (fs_size > 0)))
         {
 
 #ifdef  _DEBUG_FSAL
@@ -287,7 +286,7 @@ fsal_status_t ZFSFSAL_rcp(zfsfsal_handle_t * filehandle,      /* IN */
           if(to_fs)             /* to FSAL filesystem */
             {
 
-              st = FSAL_write(&fs_fd, NULL, local_size, IObuffer, &fs_size);
+              st = ZFSFSAL_write(&fs_fd, NULL, local_size, IObuffer, &fs_size);
 
               if(FSAL_IS_ERROR(st))
                 break;          /* exit loop */
@@ -319,7 +318,7 @@ fsal_status_t ZFSFSAL_rcp(zfsfsal_handle_t * filehandle,      /* IN */
 
   Mem_Free(IObuffer);
   close(local_fd);
-  FSAL_close(&fs_fd);
+  ZFSFSAL_close(&fs_fd);
 
   /* return status. */
 

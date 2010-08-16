@@ -613,6 +613,23 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
   p_nfs_param->buddy_param_tcp_mgr.free_areas = TRUE;
 #endif
 
+  /* Core parameters */
+  if((rc = nfs_read_core_conf(config_struct, &p_nfs_param->core_param)) < 0)
+    {
+      DisplayLog("NFS STARTUP: Error while parsing core configuration");
+      return -1;
+    }
+  else
+    {
+      /* No such stanza in configuration file */
+      if(rc == 1)
+        DisplayLog
+            ("NFS STARTUP: No core configuration found in config file, using default");
+      else
+        LogDebug(COMPONENT_INIT,
+                        "NFS STARTUP: core configuration read from config file");
+    }
+
   /* Load FSAL configuration from parsed file */
   fsal_status =
       FSAL_load_FSAL_parameter_from_conf(config_struct, &p_nfs_param->fsal_param);
@@ -668,23 +685,6 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
   else
     LogDebug(COMPONENT_INIT,
                     "NFS STARTUP: FS specific configuration read from config file");
-
-  /* Core parameters */
-  if((rc = nfs_read_core_conf(config_struct, &p_nfs_param->core_param)) < 0)
-    {
-      LogCrit(COMPONENT_INIT, "NFS STARTUP: Error while parsing core configuration");
-      return -1;
-    }
-  else
-    {
-      /* No such stanza in configuration file */
-      if(rc == 1)
-        LogDebug(COMPONENT_INIT,
-		 "NFS STARTUP: No core configuration found in config file, using default");
-      else
-        LogDebug(COMPONENT_INIT,
-		 "NFS STARTUP: core configuration read from config file");
-    }
 
 #ifdef _USE_MFSL
   /* Load FSAL configuration from parsed file */

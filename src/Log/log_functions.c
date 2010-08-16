@@ -45,6 +45,7 @@
 #include <signal.h>
 
 #include "log_macros.h"
+#include "nfs_core.h"
 
 /* La longueur d'une chaine */
 #define STR_LEN_TXT      2048
@@ -52,10 +53,6 @@
 #define MAX_STR_LEN      1024
 #define MAX_NUM_FAMILY  50
 #define UNUSED_SLOT -1
-
-/* P et V pour etre Djikstra-compliant */
-#define P( _mutex_ ) pthread_mutex_lock( &_mutex_)
-#define V( _mutex_ ) pthread_mutex_unlock( &_mutex_ )
 
 /* constants */
 static int masque_log = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
@@ -70,6 +67,8 @@ static char nom_programme[1024];
 static char nom_host[256];
 static char nom_fichier_log[PATH_LEN] = "/tmp/logfile";
 static int syslog_opened = 0 ;
+
+extern nfs_parameter_t nfs_param;
 
 /*
  * Variables specifiques aux threads.

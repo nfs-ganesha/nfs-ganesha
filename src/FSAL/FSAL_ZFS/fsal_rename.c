@@ -118,7 +118,7 @@ fsal_status_t ZFSFSAL_rename(zfsfsal_handle_t * old_parentdir_handle, /* IN */
 
       /* optimization when src=tgt : */
 
-      if(!FSAL_handlecmp(old_parentdir_handle, new_parentdir_handle, &st)
+      if(!ZFSFSAL_handlecmp(old_parentdir_handle, new_parentdir_handle, &st)
          && src_dir_attributes)
         {
 

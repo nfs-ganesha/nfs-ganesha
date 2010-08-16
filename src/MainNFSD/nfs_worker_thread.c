@@ -1354,7 +1354,7 @@ void *worker_thread(void *IndexArg)
                       {
                         gc = (struct rpc_gss_cred *)preq->rq_clntcred;
                         LogPrintf(COMPONENT_DISPATCH,
-                            ("========> no_dispatch=%u gc->gc_proc=%u RPCSEC_GSS_INIT=%u RPCSEC_GSS_CONTINUE_INIT=%u RPCSEC_GSS_DATA=%u RPCSEC_GSS_DESTROY=%u\n",
+                            "========> no_dispatch=%u gc->gc_proc=%u RPCSEC_GSS_INIT=%u RPCSEC_GSS_CONTINUE_INIT=%u RPCSEC_GSS_DATA=%u RPCSEC_GSS_DESTROY=%u\n",
                              no_dispatch, gc->gc_proc, RPCSEC_GSS_INIT,
                              RPCSEC_GSS_CONTINUE_INIT, RPCSEC_GSS_DATA,
                              RPCSEC_GSS_DESTROY);
