@@ -42,7 +42,7 @@
 #endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -101,7 +101,7 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
     {
       *pstatus = CACHE_CONTENT_BAD_CACHE_INODE_ENTRY;
 
-      DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+      LogMajor(COMPONENT_CACHE_CONTENT,
                         "cache_content_new_entry: cannot get handle");
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_FLUSH] += 1;

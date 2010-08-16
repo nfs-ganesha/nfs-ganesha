@@ -444,9 +444,9 @@ void LRU_Print(LRU_list_t * plru)
   for(pentry = plru->LRU; pentry != NULL; pentry = pentry->next)
     {
       plru->parameter.entry_to_str(pentry->buffdata, dispdata);
-      printf("Entry value = %s, valid_state = %d\n", dispdata, pentry->valid_state);
+      LogFullDebug(COMPONENT_LRU, "Entry value = %s, valid_state = %d\n", dispdata, pentry->valid_state);
     }
-  printf("-----------------------------------------\n");
+  LogFullDebug(COMPONENT_LRU, "-----------------------------------------\n");
 }                               /* LRU_Print */
 
 /* @} */

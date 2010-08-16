@@ -87,7 +87,7 @@ void nfsidmap_logger(const char *str, ...)
 {
   va_list arg;
   va_start(arg, str);
-  printf("nfsidmap_logger: ");
+  LogDebug(COMPONENT_IDMAPPER, "nfsidmap_logger: ");
   vprintf(str, arg);
   va_end(arg);
 }

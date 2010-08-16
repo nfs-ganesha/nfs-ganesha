@@ -43,7 +43,7 @@
 #include "fsal.h"
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "cache_inode.h"
@@ -144,10 +144,8 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
       pentry->object.file.open_fd.fileno = FSAL_FILENO(&(pentry->object.file.open_fd.fd));
       pentry->object.file.open_fd.openflags = openflags;
 
-#ifdef _DEBUG_CACHE_INODE
-      printf("cache_inode_open: pentry %p: lastop=0, fileno = %d\n", pentry,
+      LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_open: pentry %p: lastop=0, fileno = %d\n", pentry,
              pentry->object.file.open_fd.fileno);
-#endif
     }
 
   /* regular exit */
@@ -159,7 +157,7 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
     {
       if(cache_inode_gc_fd(pclient, pstatus) != CACHE_INODE_SUCCESS)
         {
-          DisplayLogJd(pclient->log_outputs, "FAILURE performing FD garbage collection");
+          LogCrit(COMPONENT_CACHE_INODE_GC, "FAILURE performing FD garbage collection");
           return *pstatus;
         }
     }
@@ -243,9 +241,7 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
   if(pentry_file->object.file.open_fd.last_op == 0
      || pentry_file->object.file.open_fd.fileno == 0)
     {
-#ifdef _DEBUG_FSAL
-      printf("cache_inode_open_by_name: pentry %p: lastop=0\n", pentry_file);
-#endif
+      LogFullDebug(COMPONENT_FSAL, "cache_inode_open_by_name: pentry %p: lastop=0\n", pentry_file);
 
       /* Keep coherency with the cache_content */
       if(pentry_file->object.file.pentry_content != NULL)
@@ -311,10 +307,8 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
       pentry_file->object.file.open_fd.last_op = time(NULL);
       pentry_file->object.file.open_fd.openflags = openflags;
 
-#ifdef _DEBUG_FSAL
-      printf("cache_inode_open_by_name: pentry %p: fd=%u\n", pentry_file,
+      LogFullDebug(COMPONENT_FSAL, "cache_inode_open_by_name: pentry %p: fd=%u\n", pentry_file,
              pentry_file->object.file.open_fd.fileno);
-#endif
 
     }
 
@@ -324,7 +318,7 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
                                         &pentry_file->object.file.pnfs_file.ds_file)) !=
      NFS4_OK)
     {
-      DisplayLogLevel(NIV_DEBUG, "OPEN PNFS LOOKUP DS FILE : Error %u", pnfs_status);
+      LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS LOOKUP DS FILE : Error %u", pnfs_status);
 
       if(pnfs_status == NFS4ERR_NOENT)
         {
@@ -335,7 +329,7 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
                                                 ds_file)) != NFS4_OK)
             {
 
-              DisplayLogLevel(NIV_DEBUG, "OPEN PNFS CREATE DS FILE : Error %u",
+              LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS CREATE DS FILE : Error %u",
                               pnfs_status);
 
               *pstatus = CACHE_INODE_IO_ERROR;
@@ -359,7 +353,7 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
     {
       if(cache_inode_gc_fd(pclient, pstatus) != CACHE_INODE_SUCCESS)
         {
-          DisplayLogJd(pclient->log_outputs, "FAILURE performing FD garbage collection");
+          LogCrit(COMPONENT_CACHE_INODE_GC, "FAILURE performing FD garbage collection");
           return *pstatus;
         }
     }
@@ -411,11 +405,10 @@ cache_inode_status_t cache_inode_close(cache_entry_t * pentry,
      (time(NULL) - pentry->object.file.open_fd.last_op > pclient->retention) ||
      (pentry->object.file.open_fd.fileno > (int)(pclient->max_fd_per_thread)))
     {
-#ifdef _DEBUG_CACHE_INODE
-      printf("cache_inode_close: pentry %p, fileno = %d, lastop=%d ago\n",
+
+      LogCrit(COMPONENT_CACHE_INODE, "cache_inode_close: pentry %p, fileno = %d, lastop=%d ago\n",
              pentry, pentry->object.file.open_fd.fileno,
              (int)(time(NULL) - pentry->object.file.open_fd.last_op));
-#endif
 
 #ifdef _USE_MFSL
       fsal_status = MFSL_close(&(pentry->object.file.open_fd.fd), &pclient->mfsl_context);
