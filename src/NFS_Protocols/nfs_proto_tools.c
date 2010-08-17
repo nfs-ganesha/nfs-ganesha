@@ -156,9 +156,8 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
       break;
     }
   fsal_data.cookie = DIR_START;
-#ifdef _DEBUG_FILEHANDLE
-  print_buff((char *)&fsal_data.handle, sizeof(fsal_data.handle));
-#endif
+
+  print_buff(COMPONENT_FILEHANDLE, (char *)&fsal_data.handle, sizeof(fsal_data.handle));
 
   if((pentry = cache_inode_get(&fsal_data,
                                &attr, ht, pclient, pcontext, &cache_status)) == NULL)
