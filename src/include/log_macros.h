@@ -62,6 +62,7 @@ typedef enum log_components
   COMPONENT_MEMCORRUPT,
   COMPONENT_CONFIG,
   COMPONENT_CLIENT_ID_COMPUTE,
+  COMPONENT_STDOUT,
 
   COMPONENT_COUNT
 } log_components_t;
@@ -75,7 +76,8 @@ enum log_type
 {
   SYSLOG = 0,
   FILELOG,
-  STDERRLOG
+  STDERRLOG,
+  STDOUTLOG
 };
 
 typedef struct log_component_info
