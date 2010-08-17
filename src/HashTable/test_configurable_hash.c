@@ -81,6 +81,7 @@
 #include <errno.h>
 #include "HashTable.h"
 #include "MesureTemps.h"
+#include "log_macros.h"
 
 #define LENBUF 256
 #define STRSIZE 10
@@ -249,6 +250,8 @@ int main(int argc, char *argv[])
       printf("Test ECHOUE : Pb de Mem_Alloc : values, BuddyErrno = %d\n", BuddyErrno);
     }
 
+  SetDefaultLogging("stderr");
+
   hparam.index_size = PRIME;
   hparam.alphabet_length = STRSIZE;
   hparam.nb_node_prealloc = NB_PREALLOC;
@@ -296,10 +299,8 @@ int main(int argc, char *argv[])
   printf("Ajout de %d entrees en %s secondes\n", MAXTEST, ConvertiTempsChaine(fin, NULL));
   printf("====================================================\n");
 
-#ifdef _FULL_DEBUG
-  HashTable_Print(ht);
+  HashTable_Print(COMPONENT_HASHTABLE, ht);
   printf("====================================================\n");
-#endif
 
   /*
    *
@@ -435,7 +436,7 @@ int main(int argc, char *argv[])
 
         case 'p':
           /* Print */
-          HashTable_Print(ht);
+          HashTable_Print(COMPONENT_HASHTABLE, ht);
           break;
 
         default:
