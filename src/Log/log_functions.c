@@ -45,7 +45,7 @@
 #include <signal.h>
 
 #include "log_macros.h"
-#include "nfs_core.h"
+//#include "nfs_core.h"
 
 /* La longueur d'une chaine */
 #define STR_LEN_TXT      2048
@@ -68,7 +68,7 @@ static char nom_host[256];
 static char nom_fichier_log[PATH_LEN] = "/tmp/logfile";
 static int syslog_opened = 0 ;
 
-extern nfs_parameter_t nfs_param;
+//extern nfs_parameter_t nfs_param;
 
 /*
  * Variables specifiques aux threads.
