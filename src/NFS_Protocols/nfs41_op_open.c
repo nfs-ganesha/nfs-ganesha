@@ -284,14 +284,14 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
       /* What kind of open is it ? */
 
-      LogFullDebug(COMPONENT_NFSV4,
-          ("     OPEN: Claim type = %d   Open Type = %d  Share Deny = %d   Share Access = %d \n",
+      LogFullDebug(COMPONENT_NFS_V4,
+           "     OPEN: Claim type = %d   Open Type = %d  Share Deny = %d   Share Access = %d \n",
            arg_OPEN4.claim.claim, arg_OPEN4.openhow.opentype, arg_OPEN4.share_deny,
            arg_OPEN4.share_access);
 
 
       /* It this a known client id ? */
-      LogDebug(COMPONENT_NFSV4, "OPEN Client id = %llx", arg_OPEN4.owner.clientid);
+      LogDebug(COMPONENT_NFS_V4, "OPEN Client id = %llx", arg_OPEN4.owner.clientid);
 
       /* Is this open_owner known ? */
       if(!nfs_convert_open_owner(&arg_OPEN4.owner, &owner_name))

@@ -2008,7 +2008,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
 #endif
     SYSLOG,
     ""
-  }
+  },
   { COMPONENT_SESSIONS,          "COMPONENT_SESSIONS",
 #ifdef _DEBUG_SESSIONS
     NIV_DEBUG,
