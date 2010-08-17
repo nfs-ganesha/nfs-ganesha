@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -203,7 +203,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
                  && ((data->pexport->options & EXPORT_OPTION_NOSGID) ==
                      EXPORT_OPTION_NOSGID)))
             {
-              DisplayLogJdLevel(data->pclient->log_outputs, NIV_EVENT,
+              LogEvent(COMPONENT_NFS_V4,
                                 "Setattr denied because setuid or setgid bit is disabled in configuration file."
                                 " setuid=%d, setgid=%d",
                                 sattr.mode & FSAL_MODE_SUID ? 1 : 0,

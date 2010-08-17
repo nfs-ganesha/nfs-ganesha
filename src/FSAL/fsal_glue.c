@@ -240,15 +240,15 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info /* IN */ )
   /* Sanity check (only useful when dlopen is used, otherwise type are macros to FSAL specific types */
   if(fsal_consts.fsal_handle_t_size != sizeof(fsal_handle_t))
     {
-      DisplayLog
-          ("/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_handle_t do not match: %u |%u !!!!",
+      LogMajor(COMPONENT_FSAL,
+           "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_handle_t do not match: %u |%u !!!!",
            fsal_consts.fsal_handle_t_size, sizeof(fsal_handle_t));
       exit(1);
     }
   if(fsal_consts.fsal_cookie_t_size != sizeof(fsal_cookie_t))
     {
-      DisplayLog
-          ("/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_cookie_t do not match: %u |%u !!!!",
+      LogMajor(COMPONENT_FSAL,
+           "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_cookie_t do not match: %u |%u !!!!",
            fsal_consts.fsal_cookie_t_size, sizeof(fsal_cookie_t));
       exit(1);
     }
@@ -256,8 +256,8 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info /* IN */ )
 #if 0
   if(fsal_consts.fsal_op_context_t_size != sizeof(fsal_op_context_t) - sizeof(void *))
     {
-      DisplayLog
-          ("/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_op_context_t do not match: %u |%u !!!!",
+      LogMajor(COMPONENT_FSAL,
+           "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_op_context_t do not match: %u |%u !!!!",
            fsal_consts.fsal_op_context_t_size,
            sizeof(fsal_op_context_t) - sizeof(void *));
       exit(1);
@@ -265,48 +265,48 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info /* IN */ )
 
   if(fsal_consts.fsal_export_context_t_size != sizeof(fsal_export_context_t))
     {
-      DisplayLog
-          ("/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_export_context_t do not match: %u |%u !!!!",
+      LogMajor(COMPONENT_FSAL,
+           "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_export_context_t do not match: %u |%u !!!!",
            fsal_consts.fsal_export_context_t_size, sizeof(fsal_export_context_t));
       exit(1);
     }
 
   if(fsal_consts.fsal_file_t_size != sizeof(fsal_file_t))
     {
-      DisplayLog
-          ("/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_file_context_t do not match: %u |%u !!!!",
+      LogMajor(COMPONENT_FSAL,
+           "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_file_context_t do not match: %u |%u !!!!",
            fsal_consts.fsal_file_t_size, sizeof(fsal_file_t));
       exit(1);
     }
 
   if(fsal_consts.fsal_lockdesc_t_size != sizeof(fsal_lockdesc_t))
     {
-      DisplayLog
-          ("/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_lockdesc_t do not match: %u |%u !!!!",
+      LogMajor(COMPONENT_FSAL,
+           "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_lockdesc_t do not match: %u |%u !!!!",
            fsal_consts.fsal_lockdesc_t_size, sizeof(fsal_lockdesc_t));
       exit(1);
     }
 
   if(fsal_consts.fsal_cred_t_size != sizeof(fsal_cred_t))
     {
-      DisplayLog
-          ("/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_cred_t do not match: %u |%u !!!!",
+      LogMajor(COMPONENT_FSAL,
+           "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_cred_t do not match: %u |%u !!!!",
            fsal_consts.fsal_cred_t_size, sizeof(fsal_cred_t));
       exit(1);
     }
 
   if(fsal_consts.fs_specific_initinfo_t_size != sizeof(fs_specific_initinfo_t))
     {
-      DisplayLog
-          ("/!\\ MAJOR ERROR : Implementation Error, local and specific fs_specific_initinfo_t do not match: %u |%u !!!!",
+      LogMajor(COMPONENT_FSAL,
+           "/!\\ MAJOR ERROR : Implementation Error, local and specific fs_specific_initinfo_t do not match: %u |%u !!!!",
            fsal_consts.fs_specific_initinfo_t_size, sizeof(fs_specific_initinfo_t));
       exit(1);
     }
 
   if(fsal_consts.fsal_dir_t_size != sizeof(fsal_dir_t))
     {
-      DisplayLog
-          ("/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_dir_t do not match: %u |%u !!!!",
+      LogMajor(COMPONENT_FSAL,
+           "/!\\ MAJOR ERROR : Implementation Error, local and specific fsal_dir_t do not match: %u |%u !!!!",
            fsal_consts.fsal_dir_t_size, sizeof(fsal_dir_t));
       exit(1);
     }
@@ -703,11 +703,11 @@ int FSAL_LoadLibrary(char *path)
   void *handle;
   char *error;
 
-  DisplayLog("Load shared FSAL : %s", path);
+  LogEvent(COMPONENT_FSAL, "Load shared FSAL : %s", path);
 
   if((handle = dlopen(path, RTLD_LAZY)) == NULL)
     {
-      DisplayLog("FSAL_LoadLibrary: could not load fsal: %s", dlerror());
+      LogMajor(COMPONENT_FSAL, "FSAL_LoadLibrary: could not load fsal: %s", dlerror());
       return 0;
     }
 
@@ -718,14 +718,14 @@ int FSAL_LoadLibrary(char *path)
   *(void **)(&getfunctions) = dlsym(handle, "FSAL_GetFunctions");
   if((error = dlerror()) != NULL)
     {
-      DisplayLog("FSAL_LoadLibrary: Could not map symbol FSAL_GetFunctions:%s", error);
+      LogMajor(COMPONENT_FSAL, "FSAL_LoadLibrary: Could not map symbol FSAL_GetFunctions:%s", error);
       return 0;
     }
   /* Map FSAL_GetConsts */
   *(void **)(&getconsts) = dlsym(handle, "FSAL_GetConsts");
   if((error = dlerror()) != NULL)
     {
-      DisplayLog("FSAL_LoadLibrary: Could not map symbol FSAL_GetConsts:%s", error);
+      LogMajor(COMPONENT_FSAL, "FSAL_LoadLibrary: Could not map symbol FSAL_GetConsts:%s", error);
       return 0;
     }
 

@@ -42,6 +42,7 @@
 
 #include "nfs_init.h"
 #include "fsal.h"
+#include "log_macros.h"
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -99,17 +100,17 @@ char usage[] =
 
 static void action_sigusr1(int sig)
 {
-  DisplayLog("SIGUSR1_HANDLER: Receveid SIGUSR1.... signal will be managed");
+  LogEvent(COMPONENT_MAIN, "SIGUSR1_HANDLER: Received SIGUSR1.... signal will be managed");
 
   /* Set variable force_flush_by_signal that is used in file content cache gc thread */
   if(force_flush_by_signal)
     {
-      DisplayLog("SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
+      LogEvent(COMPONENT_MAIN, "SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
       force_flush_by_signal = FALSE;
     }
   else
     {
-      DisplayLog("SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
+      LogEvent(COMPONENT_MAIN, "SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
       force_flush_by_signal = TRUE;
     }
 }                               /* action_sigusr1 */
@@ -123,9 +124,9 @@ static void action_sigusr1(int sig)
 static void action_sigterm(int sig)
 {
   if(sig == SIGTERM)
-    DisplayLog("SIGTERM_HANDLER: Receveid SIGTERM.... initiating daemon shutdown");
+    LogEvent(COMPONENT_MAIN, "SIGTERM_HANDLER: Received SIGTERM.... initiating daemon shutdown");
   else if(sig == SIGINT)
-    DisplayLog("SIGINT_HANDLER: Receveid SIGINT.... initiating daemon shutdown");
+    LogEvent(COMPONENT_MAIN, "SIGINT_HANDLER: Received SIGINT.... initiating daemon shutdown");
 
   nfs_stop();
 
@@ -134,11 +135,11 @@ static void action_sigterm(int sig)
 static void action_sighup(int sig)
 {
   if(sig == SIGTERM)
-    DisplayLog("SIGTERM_HANDLER: Receveid SIGTERM.... initiating daemon shutdown");
+    LogEvent(COMPONENT_MAIN, "SIGTERM_HANDLER: Received SIGTERM.... initiating daemon shutdown");
   else if(sig == SIGINT)
-    DisplayLog("SIGINT_HANDLER: Receveid SIGINT.... initiating daemon shutdown");
+    LogEvent(COMPONENT_MAIN, "SIGINT_HANDLER: Received SIGINT.... initiating daemon shutdown");
   else if(sig == SIGHUP)
-    DisplayLog("SIGHUP_HANDLER: Receveid SIGHUP.... initiating export list reload");
+    LogEvent(COMPONENT_MAIN, "SIGHUP_HANDLER: Received SIGHUP.... initiating export list reload");
 
   admin_replace_exports();
 }                               /* action_sigsigh */
@@ -303,8 +304,8 @@ int main(int argc, char *argv[])
         {
         case -1:
           /* Fork failed */
-          DisplayErrorLog(ERR_SYS, ERR_FORK, errno);
-          DisplayLog("Could nout start nfs daemon, exiting...");
+          LogError(COMPONENT_INIT, ERR_SYS, ERR_FORK, errno);
+          LogMajor(COMPONENT_INIT, "Could not start nfs daemon, exiting...");
           exit(1);
 
         case 0:
@@ -312,15 +313,15 @@ int main(int argc, char *argv[])
            * Let's make it the leader of its group of process */
           if(setsid() == -1)
             {
-              DisplayErrorLog(ERR_SYS, ERR_SETSID, errno);
-              DisplayLog("Could nout start nfs daemon, exiting...");
+              LogError(COMPONENT_INIT, ERR_SYS, ERR_SETSID, errno);
+	      LogMajor(COMPONENT_INIT, "Could not start nfs daemon, exiting...");
               exit(1);
             }
           break;
 
         default:
           /* This code is within the father, it is useless, it must die */
-          DisplayLog("Starting a son of pid %d\n", son_pid);
+          LogCrit(COMPONENT_INIT, "Starting a son of pid %d\n", son_pid);
           exit(0);
           break;
         }
@@ -333,11 +334,11 @@ int main(int argc, char *argv[])
   act_sigusr1.sa_handler = action_sigusr1;
   if(sigaction(SIGUSR1, &act_sigusr1, NULL) == -1)
     {
-      DisplayErrorLog(ERR_SYS, ERR_SIGACTION, errno);
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_SIGACTION, errno);
       exit(1);
     }
   else
-    DisplayLogLevel(NIV_EVENT, "Signal SIGUSR1 (force flush) is ready to be used");
+    LogEvent(COMPONENT_INIT, NIV_EVENT, "Signal SIGUSR1 (force flush) is ready to be used");
   */
 
   /* Set the signal handler */
@@ -347,12 +348,12 @@ int main(int argc, char *argv[])
   if(sigaction(SIGTERM, &act_sigterm, NULL) == -1
      || sigaction(SIGINT, &act_sigterm, NULL) == -1)
     {
-      DisplayErrorLog(ERR_SYS, ERR_SIGACTION, errno);
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_SIGACTION, errno);
       exit(1);
     }
   else
-    DisplayLogLevel(NIV_EVENT,
-                    "Signals SIGTERM and SIGINT (daemon shutdown) are ready to be used");
+    LogEvent(COMPONENT_INIT,
+	     "Signals SIGTERM and SIGINT (daemon shutdown) are ready to be used");
 
   /* Set the signal handler */
   memset(&act_sigterm, 0, sizeof(act_sighup));
@@ -360,18 +361,18 @@ int main(int argc, char *argv[])
   act_sighup.sa_handler = action_sighup;
   if(sigaction(SIGHUP, &act_sighup, NULL) == -1)
     {
-      DisplayErrorLog(ERR_SYS, ERR_SIGACTION, errno);
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_SIGACTION, errno);
       exit(1);
     }
   else
-    DisplayLogLevel(NIV_EVENT,
+    LogEvent(COMPONENT_INIT,
                     "Signal SIGHUP (daemon export reload) is ready to be used");
 
 
 #ifdef _USE_SHARED_FSAL
   if(nfs_get_fsalpathlib_conf(my_config_path, fsal_path_lib))
     {
-      DisplayLog("NFS MAIN: Error parsing configuration file.");
+      LogMajor(COMPONENT_INIT, "NFS MAIN: Error parsing configuration file.");
       exit(1);
     }
 #endif                          /* _USE_SHARED_FSAL */
@@ -379,7 +380,8 @@ int main(int argc, char *argv[])
   /* Load the FSAL library (if needed) */
   if(!FSAL_LoadLibrary(fsal_path_lib))
     {
-      DisplayLog("NFS MAIN: Could not load FSAL dynamic library %s", fsal_path_lib);
+      LogMajor(COMPONENT_INIT,
+	      "NFS MAIN: Could not load FSAL dynamic library %s", fsal_path_lib);
       exit(1);
     }
 
@@ -389,14 +391,15 @@ int main(int argc, char *argv[])
   /* Get the FSAL consts */
   FSAL_LoadConsts();
 
-  DisplayLog(">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
-             FSAL_GetFSName());
+  LogEvent(COMPONENT_INIT,
+	   ">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
+	   FSAL_GetFSName());
 
   /* initialize default parameters */
 
   if(nfs_set_param_default(&nfs_param))
     {
-      DisplayLog("NFS MAIN: Error setting default parameters.");
+      LogMajor(COMPONENT_INIT, "NFS MAIN: Error setting default parameters.");
       exit(1);
     }
 
@@ -404,7 +407,7 @@ int main(int argc, char *argv[])
 
   if(nfs_set_param_from_conf(&nfs_param, &my_nfs_start_info, my_config_path))
     {
-      DisplayLog("NFS MAIN: Error parsing configuration file.");
+      LogMajor(COMPONENT_INIT, "NFS MAIN: Error parsing configuration file.");
       exit(1);
     }
 
@@ -412,9 +415,9 @@ int main(int argc, char *argv[])
 
   if(nfs_check_param_consistency(&nfs_param))
     {
-      DisplayLog("NFS MAIN: Inconsistent parameters found");
-      DisplayLog
-          ("MAJOR WARNING: /!\\ | Bad Parameters could have significant impact on the daemon behavior");
+      LogMajor(COMPONENT_INIT, "NFS MAIN: Inconsistent parameters found");
+      LogMajor(COMPONENT_INIT,
+	       "MAJOR WARNING: /!\\ | Bad Parameters could have significant impact on the daemon behavior");
       exit(1);
     }
 

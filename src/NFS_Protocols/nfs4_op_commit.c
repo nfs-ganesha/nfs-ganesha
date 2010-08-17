@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -105,10 +105,8 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   resp->resop = NFS4_OP_COMMIT;
   res_COMMIT4.status = NFS4_OK;
 
-#ifdef _DEBUG_NFS_V4
-  printf("      COMMIT4: Demande de commit sur offset = %llu, size = %llu\n",
+  LogFullDebug(COMPONENT_NFS_V4, "      COMMIT4: Demande de commit sur offset = %llu, size = %llu\n",
          arg_COMMIT4.offset, arg_COMMIT4.count);
-#endif
 
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))

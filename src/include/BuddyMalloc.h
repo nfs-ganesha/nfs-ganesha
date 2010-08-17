@@ -287,16 +287,12 @@ void DisplayMemoryMap();
 
 #endif
 
-#ifdef _DETECT_MEMCORRUPT
-
 /**
  *  test memory corruption for a block.
  *  true if the block is OK,
  *  false else.
  */
 int BuddyCheck(BUDDY_ADDR_T ptr);
-
-#endif
 
 /**
  * sets default values for buddy configuration structure.

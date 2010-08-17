@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -260,8 +260,8 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                 {
                   if((pstate_exists == pstate_found_iterate) &&
                      (pstate_exists->state_data.lock.lock_type != arg_LOCK4.locktype))
-                    printf
-                        ("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& CAS FOIREUX !!!!!!!!!!!!!!!!!!\n");
+                    LogCrit(COMPONENT_NFS_V4,
+                        "&&&&&&&& CAS FOIREUX !!!!!!!!!!!!!!!!!!\n");
                 }
 
               a = pstate_found_iterate->state_data.lock.offset;

@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -142,14 +142,14 @@ int nfs_Fsstat(nfs_arg_t * parg,
                                              pclient, pcontext,
                                              &cache_status)) == CACHE_INODE_SUCCESS)
         {
-#ifdef  _DEBUG_NFSPROTO
-          printf
-              ("-- nfs_Fsstat --> dynamicinfo.total_bytes = %llu dynamicinfo.free_bytes = %llu dynamicinfo.avail_bytes = %llu\n",
+
+          LogFullDebug(COMPONENT_NFSPROTO, 
+              "-- nfs_Fsstat --> dynamicinfo.total_bytes = %llu dynamicinfo.free_bytes = %llu dynamicinfo.avail_bytes = %llu\n",
                dynamicinfo.total_bytes, dynamicinfo.free_bytes, dynamicinfo.avail_bytes);
-          printf
-              ("-- nfs_Fsstat --> dynamicinfo.total_files = %llu dynamicinfo.free_files = %llu dynamicinfo.avail_files = %llu\n",
+          LogFullDebug(COMPONENT_NFSPROTO, 
+              "-- nfs_Fsstat --> dynamicinfo.total_files = %llu dynamicinfo.free_files = %llu dynamicinfo.avail_files = %llu\n",
                dynamicinfo.total_files, dynamicinfo.free_files, dynamicinfo.avail_files);
-#endif
+
           switch (preq->rq_vers)
             {
             case NFS_V2:
@@ -179,17 +179,15 @@ int nfs_Fsstat(nfs_arg_t * parg,
               pres->res_fsstat3.FSSTAT3res_u.resok.invarsec = 0;        /* volatile FS */
               pres->res_fsstat3.status = NFS3_OK;
 
-#ifdef  _DEBUG_NFSPROTO
-              printf("-- nfs_Fsstat --> tbytes=%llu fbytes=%llu abytes=%llu\n",
+              LogFullDebug(COMPONENT_NFSPROTO, "-- nfs_Fsstat --> tbytes=%llu fbytes=%llu abytes=%llu\n",
                      pres->res_fsstat3.FSSTAT3res_u.resok.tbytes,
                      pres->res_fsstat3.FSSTAT3res_u.resok.fbytes,
                      pres->res_fsstat3.FSSTAT3res_u.resok.abytes);
 
-              printf("-- nfs_Fsstat --> tfiles=%llu fffiles=%llu afiles=%llu\n",
+	      LogFullDebug(COMPONENT_NFSPROTO, "-- nfs_Fsstat --> tfiles=%llu fffiles=%llu afiles=%llu\n",
                      pres->res_fsstat3.FSSTAT3res_u.resok.tfiles,
                      pres->res_fsstat3.FSSTAT3res_u.resok.ffiles,
                      pres->res_fsstat3.FSSTAT3res_u.resok.afiles);
-#endif
 
               break;
 

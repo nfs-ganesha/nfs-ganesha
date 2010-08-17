@@ -1,5 +1,5 @@
-#ifndef _LOG_MACROSS_H
-#define _LOG_MACROSS_H
+#ifndef _LOG_MACROS_H
+#define _LOG_MACROS_H
 
 #include "log_functions.h"
 
@@ -31,12 +31,12 @@
  *
  */
 
-enum log_components
+typedef enum log_components
 {
-  COMPONENT_NONE = 0,
+  COMPONENT_ALL = 0,
   COMPONENT_MEMALLOC,
   COMPONENT_STATES,
-  COMPONENT_MEMLEAKS,
+  COMPONENT_MEMLEAKS, 
   COMPONENT_FSAL,
   COMPONENT_NFSPROTO,
   COMPONENT_NFS_V4,
@@ -52,7 +52,28 @@ enum log_components
   COMPONENT_DUPREQ,
   COMPONENT_LOG,
   COMPONENT_RPCSEC_GSS,
-  COMPONENT_INIT
+  COMPONENT_INIT,
+  COMPONENT_MAIN,
+  COMPONENT_IDMAPPER,
+  COMPONENT_NFS_READDIR,
+  COMPONENT_NFS_V4_LOCK,
+  COMPONENT_NFS_V4_XATTR,
+  COMPONENT_NFS_V4_REFERRAL,
+  COMPONENT_MEMCORRUPT,
+  COMPONENT_CONFIG,
+
+  COMPONENT_COUNT
+} log_components_t;
+
+void SetComponentLogFile(log_components_t comp, char *name);
+void SetComponentLogLevel(log_components_t component, int level_to_set);
+int DisplayLogComponentLevel(log_components_t component, int level, char *format, ...);
+int DisplayErrorComponentLogLine(log_components_t component, int num_family, int num_error, int status, int ma_ligne);
+
+enum log_type
+{
+  SYSLOG = 0,
+  FILELOG
 };
 
 typedef struct log_component_info
@@ -60,179 +81,47 @@ typedef struct log_component_info
   int   value;
   char *str;
   int   log_level;
+
+  int   log_type;
+  char  log_file[MAXPATHLEN];
 } log_component_info;
   
-static log_component_info __attribute__ ((__unused__)) LogComponents[] =
-{
-  { COMPONENT_NONE,            "NONE,",           
-    NIV_NULL
-  },
-  { COMPONENT_MEMALLOC,        "MEMALLOC,",       
-#ifdef _DEBUG_MEMALLOC      
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  },
-  { COMPONENT_STATES,          "STATES,",         
-#ifdef _DEBUG_STATES        
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  },
-  { COMPONENT_MEMLEAKS,        "MEMLEAKS,",       
-#ifdef _DEBUG_MEMLEAKS      
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  },
-  { COMPONENT_FSAL,            "FSAL,",           
-#ifdef _DEBUG_FSAL          
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  },
-  { COMPONENT_NFSPROTO,        "NFSPROTO,",       
-#ifdef _DEBUG_NFSPROTO      
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  },
-  { COMPONENT_NFS_V4,          "NFS_V4,",         
-#ifdef _DEBUG_NFS_V4        
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  },
-  { COMPONENT_NFS_V4_PSEUDO,   "NFS_V4_PSEUDO,",  
-#ifdef _DEBUG_NFS_V4_PSEUDO 
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  },
-  { COMPONENT_FILEHANDLE,      "FILEHANDLE,",     
-#ifdef _DEBUG_FILEHANDLE    
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  },
-  { COMPONENT_NFS_SHELL,       "NFS_SHELL,",      
-#ifdef _DEBUG_NFS_SHELL     
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  },
-  { COMPONENT_DISPATCH,        "DISPATCH,",       
-#ifdef _DEBUG_DISPATCH      
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  },
-  { COMPONENT_CACHE_CONTENT,   "CACHE_CONTENT,",  
-#ifdef _DEBUG_CACHE_CONTENT 
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  },
-  { COMPONENT_CACHE_INODE,     "CACHE_INODE,",    
-#ifdef _DEBUG_CACHE_INODE   
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  },
-  { COMPONENT_CACHE_INODE_GC,  "CACHE_INODE_GC",  
-#ifdef _DEBUG_CACHE_INODE_GC
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  },
-  { COMPONENT_HASHTABLE,       "HASHTABLE,",      
-#ifdef _DEBUG_HASHTABLE     
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  },
-  { COMPONENT_LRU,             "LRU,",            
-#ifdef _DEBUG_LRU           
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  },
-  { COMPONENT_DUPREQ,          "DUPREQ,",         
-#ifdef _DEBUG_DUPREQ        
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  },
-  { COMPONENT_LOG,             "LOG,",            
-#ifdef _DEBUG_LOG           
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  },
-  { COMPONENT_RPCSEC_GSS,      "RPCSEC_GSS,",     
-#ifdef _DEBUG_RPCSEC_GSS    
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  },
-  { COMPONENT_INIT,            "INIT,",     
-#ifdef _DEBUG_INIT    
-    NIV_DEBUG
-#else
-    NIV_EVENT
-#endif
-  }
-};
-
-
-
+log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogMajor(component, format, args...) \
   do { \
     if (LogComponents[component].log_level >= NIV_MAJOR) \
-      DisplayLogLevel(NIV_MAJ, format, ## args ); \
+      DisplayLogComponentLevel(component, NIV_MAJ, "%s: " format, LogComponents[component].str, ## args ); \
   } while (0)
 
 #define LogCrit(component, format, args...) \
   do { \
     if (LogComponents[component].log_level >= NIV_CRIT) \
-       DisplayLogLevel(NIV_CRIT, format, ## args ); \
+      DisplayLogComponentLevel(component, NIV_CRIT, "%s: " format, LogComponents[component].str, ## args ); \
    } while (0)
 
 #define LogEvent(component, format, args...) \
   do { \
     if (LogComponents[component].log_level >= NIV_EVENT) \
-      DisplayLogLevel(NIV_EVENT, format, ## args ); \
+      DisplayLogComponentLevel(component, NIV_EVENT, "%s: " format, LogComponents[component].str, ## args ); \
   } while (0)
 
 #define LogDebug(component, format, args...) \
   do { \
     if (LogComponents[component].log_level >= NIV_DEBUG) \
-      DisplayLogLevel(NIV_DEBUG, format, ## args ); \
+      DisplayLogComponentLevel(component, NIV_DEBUG, "%s: " format, LogComponents[component].str, ## args ); \
   } while (0)
 
 #define LogFullDebug(component, format, args...) \
   do { \
     if (LogComponents[component].log_level >= NIV_FULL_DEBUG) \
-      DisplayLogLevel(NIV_FULL_DEBUG, format, ## args ); \
+      DisplayLogComponentLevel(component, NIV_FULL_DEBUG, "%s: " format, LogComponents[component].str, ## args ); \
+  } while (0)
+
+#define LogError( component, a, b, c ) \
+  do { \
+    if (LogComponents[component].log_level >= NIV_CRIT) \
+      DisplayErrorComponentLogLine( component, a, b, c, __LINE__ ); \
   } while (0)
 
 /* 
@@ -243,7 +132,7 @@ static log_component_info __attribute__ ((__unused__)) LogComponents[] =
 #define LogPrintf(component, format, args...) \
   do { \
     if (LogComponents[component].log_level >= NIV_FULL_DEBUG) \
-      DisplayLogLevel(NIV_FULL_DEBUG, format, ## args ); \
+      DisplayLogComponentLevel(component, NIV_FULL_DEBUG, "%s: " format, LogComponents[component].str, ## args ); \
   } while (0)
 
 /*
@@ -253,7 +142,10 @@ static log_component_info __attribute__ ((__unused__)) LogComponents[] =
 #define LogMessage(component, format, args...) \
   do { \
     if (LogComponents[component].log_level >= NIV_MAJOR) \
-      DisplayLogLevel(NIV_FULL_DEBUG, format, ## args ); \
+      DisplayLogComponentLevel(component, NIV_FULL_DEBUG, "%s: " format, LogComponents[component].str, ## args ); \
   } while (0)
+
+#define isFullDebug(component) \
+  (LogComponents[component].log_level >= NIV_FULL_DEBUG)
 
 #endif

@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -95,9 +95,7 @@
 int nfs4_op_restorefh(struct nfs_argop4 *op,
                       compound_data_t * data, struct nfs_resop4 *resp)
 {
-#ifdef _DEBUG_NFS_V4
   int i;
-#endif
   int error;
 
   /* First of all, set the reply to zero to make sure it contains no parasite information */
@@ -133,7 +131,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
     {
       if((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
         {
-          printf("Erreur %d dans nfs4_SetCompoundExport\n", error);
+          LogCrit(COMPONENT_NFS_V4, "Erreur %d dans nfs4_SetCompoundExport\n", error);
           resp->nfs_resop4_u.opgetfh.status = error;
           return resp->nfs_resop4_u.opgetfh.status;
         }
@@ -146,12 +144,11 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
   data->current_entry = data->saved_entry;
   data->current_filetype = data->saved_filetype;
 
-#ifdef _DEBUG_NFS_V4
-  printf("CURRENTFH: File handle = { Length = %d  Val = ", data->currentFH.nfs_fh4_len);
+  LogFullDebug(COMPONENT_NFS_V4, "CURRENTFH: File handle = { Length = %d  Val = ", data->currentFH.nfs_fh4_len);
   for(i = 0; i < data->currentFH.nfs_fh4_len; i++)
-    printf("%02X", data->currentFH.nfs_fh4_val[i]);
-  printf(" }\n");
-#endif
+    LogFullDebug(COMPONENT_NFS_V4, "%02X", data->currentFH.nfs_fh4_val[i]);
+  LogFullDebug(COMPONENT_NFS_V4, " }\n");
+
   return NFS4_OK;
 }                               /* nfs4_op_restorefh */
 

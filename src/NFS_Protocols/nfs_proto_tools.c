@@ -63,7 +63,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -375,15 +375,15 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
 
     default:
       /* Management of this value was forgotten */
-      DisplayLog
-          ("cache_inode_status=%u not managed properly in nfs_RetryableError, not retryable",
+      LogDebug(COMPONENT_NFSPROTO,
+          "cache_inode_status=%u not managed properly in nfs_RetryableError, not retryable",
            cache_status);
       return FALSE;
     }
 
   /* Should never reach this */
-  DisplayLog
-      ("cache_inode_status=%u not managed properly in nfs_RetryableError, line %u should never be reached",
+  LogDebug(COMPONENT_NFSPROTO,
+      "cache_inode_status=%u not managed properly in nfs_RetryableError, line %u should never be reached",
        cache_status, __LINE__);
   return FALSE;
 }
@@ -577,14 +577,12 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           /* Erroneous value... skip */
           continue;
         }
-#ifdef _DEBUG_NFS_V4
-      DisplayLogLevel(NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_NFS_V4,
                       "Flag for Operation (Regular) = %d|%d is ON,  name  = %s  reply_size = %d",
                       attrmasklist[i],
                       fattr4tab[attribute_to_set].val,
                       fattr4tab[attribute_to_set].name,
                       fattr4tab[attribute_to_set].size_fattr4);
-#endif
 
       op_attr_success = 0;
 
@@ -639,12 +637,10 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           BuddySetDebugLabel("N/A");
 #endif
 
-#ifdef _DEBUG_NFS_V4
-          DisplayLogLevel(NIV_FULL_DEBUG,
+          LogFullDebug(COMPONENT_NFS_V4,
                           "Fattr (regular) supported_attrs(len)=%u -> %u|%u",
                           supported_attrs.bitmap4_len, supported_attrs.bitmap4_val[0],
                           supported_attrs.bitmap4_val[1]);
-#endif
 
           /* This kind of operation is always a success */
           op_attr_success = 1;
@@ -1543,9 +1539,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 #endif
 
         default:
-#ifdef _DEBUG_NFS_V4
-          printf(" unsupported value for attributes bitmap = %u\n", attribute_to_set);
-#endif
+          LogFullDebug(COMPONENT_NFS_V4, " unsupported value for attributes bitmap = %u\n", attribute_to_set);
+
           op_attr_success = 0;
           break;
         }                       /* switch( attribute_to_set ) */
@@ -1631,36 +1626,28 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
 
   if(psattr->mode.set_it == TRUE)
     {
-#ifdef _DEBUG_NFSPROTO
-      printf("nfs3_Sattr_To_FSALattr: mode = %o\n", psattr->mode.set_mode3_u.mode);
-#endif
+      LogFullDebug(COMPONENT_NFSPROTO, "nfs3_Sattr_To_FSALattr: mode = %o\n", psattr->mode.set_mode3_u.mode);
       pFSAL_attr->mode = unix2fsal_mode(psattr->mode.set_mode3_u.mode);
       pFSAL_attr->asked_attributes |= FSAL_ATTR_MODE;
     }
 
   if(psattr->uid.set_it == TRUE)
     {
-#ifdef _DEBUG_NFSPROTO
-      printf("nfs3_Sattr_To_FSALattr: uid = %d\n", psattr->uid.set_uid3_u.uid);
-#endif
+      LogFullDebug(COMPONENT_NFSPROTO, "nfs3_Sattr_To_FSALattr: uid = %d\n", psattr->uid.set_uid3_u.uid);
       pFSAL_attr->owner = psattr->uid.set_uid3_u.uid;
       pFSAL_attr->asked_attributes |= FSAL_ATTR_OWNER;
     }
 
   if(psattr->gid.set_it == TRUE)
     {
-#ifdef _DEBUG_NFSPROTO
-      printf("nfs3_Sattr_To_FSALattr: gid = %d\n", psattr->gid.set_gid3_u.gid);
-#endif
+      LogFullDebug(COMPONENT_NFSPROTO, "nfs3_Sattr_To_FSALattr: gid = %d\n", psattr->gid.set_gid3_u.gid);
       pFSAL_attr->group = psattr->gid.set_gid3_u.gid;
       pFSAL_attr->asked_attributes |= FSAL_ATTR_GROUP;
     }
 
   if(psattr->size.set_it == TRUE)
     {
-#ifdef  _DEBUG_NFSPROTO
-      printf("nfs3_Sattr_To_FSALattr: size = %lld\n", psattr->size.set_size3_u.size);
-#endif
+      LogFullDebug(COMPONENT_NFSPROTO, "nfs3_Sattr_To_FSALattr: size = %lld\n", psattr->size.set_size3_u.size);
       pFSAL_attr->filesize = (fsal_size_t) psattr->size.set_size3_u.size;
       pFSAL_attr->spaceused = (fsal_size_t) psattr->size.set_size3_u.size;
       /* Both FSAL_ATTR_SIZE and FSAL_ATTR_SPACEUSED are to be managed */
@@ -1670,11 +1657,9 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
 
   if(psattr->atime.set_it != DONT_CHANGE)
     {
-#ifdef _DEBUG_NFSPROTO
-      printf("nfs3_Sattr_To_FSALattr: set=%d atime = %d,%d\n",
+      LogFullDebug(COMPONENT_NFSPROTO, "nfs3_Sattr_To_FSALattr: set=%d atime = %d,%d\n",
              psattr->atime.set_it, psattr->atime.set_atime_u.atime.seconds,
              psattr->atime.set_atime_u.atime.nseconds);
-#endif
       if(psattr->atime.set_it == SET_TO_CLIENT_TIME)
         {
           pFSAL_attr->atime.seconds = psattr->atime.set_atime_u.atime.seconds;
@@ -1693,11 +1678,9 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
 
   if(psattr->mtime.set_it != DONT_CHANGE)
     {
-#ifdef _DEBUG_NFSPROTO
-      printf("nfs3_Sattr_To_FSALattr: set=%d mtime = %d,%d\n",
+      LogFullDebug(COMPONENT_NFSPROTO, "nfs3_Sattr_To_FSALattr: set=%d mtime = %d,%d\n",
              psattr->atime.set_it, psattr->mtime.set_mtime_u.mtime.seconds,
              psattr->mtime.set_mtime_u.mtime.nseconds);
-#endif
       if(psattr->mtime.set_it == SET_TO_CLIENT_TIME)
         {
           pFSAL_attr->mtime.seconds = psattr->mtime.set_mtime_u.mtime.seconds;
@@ -1790,13 +1773,11 @@ int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
   /* in NFSv2, it only keeps fsid.major, casted into an into an int32 */
   pFattr->fsid = (u_int) (pexport->filesystem_id.major & 0xFFFFFFFFLL);
 
-#ifdef  _DEBUG_NFSPROTO
-  printf
-      ("nfs2_FSALattr_To_Fattr: fsid.major = %#llX (%llu), fsid.minor = %#llX (%llu), nfs2_fsid = %#X (%u)\n",
+  LogFullDebug(COMPONENT_NFSPROTO,
+      "nfs2_FSALattr_To_Fattr: fsid.major = %#llX (%llu), fsid.minor = %#llX (%llu), nfs2_fsid = %#X (%u)\n",
        pexport->filesystem_id.major, pexport->filesystem_id.major,
        pexport->filesystem_id.minor, pexport->filesystem_id.minor, pFattr->fsid,
        pFattr->fsid);
-#endif
 
   if(pFSAL_attr->filesize > NFS2_MAX_FILESIZE)
     pFattr->size = NFS2_MAX_FILESIZE;
@@ -1913,9 +1894,7 @@ void nfs4_stringid_split(char *buff, char *uidname, char *domainname)
   uidname[i] = '\0';
   strcpy(domainname, c);
 
-#ifdef _NFSV4_DEBUG
-  printf("buff = #%s#    uid = #%s#   domain = #%s#\n", buff, uidname, domainname);
-#endif
+  LogFullDebug(COMPONENT_NFS_V4, "buff = #%s#    uid = #%s#   domain = #%s#\n", buff, uidname, domainname);
 }                               /* nfs4_stringid_split */
 
 /**
@@ -2064,13 +2043,11 @@ void nfs4_bitmap4_to_list(bitmap4 * b, uint_t * plen, uint32_t * pval)
   uint_t val = 0;
   uint_t index = 0;
   uint_t offset = 0;
-#ifdef _DEBUG_NFS_V4
   if(b->bitmap4_len > 0)
-    printf("Bitmap: Len = %u Val = %u|%u\n", b->bitmap4_len, b->bitmap4_val[0],
+    LogFullDebug(COMPONENT_NFS_V4, "Bitmap: Len = %u Val = %u|%u\n", b->bitmap4_len, b->bitmap4_val[0],
            b->bitmap4_val[1]);
   else
-    printf("Bitmap: Len = %u ... \n", b->bitmap4_len);
-#endif
+    LogFullDebug(COMPONENT_NFS_V4, "Bitmap: Len = %u ... \n", b->bitmap4_len);
 
   for(offset = 0; offset < b->bitmap4_len; offset++)
     {
@@ -2159,11 +2136,9 @@ void nfs4_list_to_bitmap4(bitmap4 * b, uint_t * plen, uint32_t * pval)
       if(intpos != 0)
         b->bitmap4_len = 2;
     }
-#ifdef _DEBUG_NFS_V4
-  printf("Bitmap: Len = %u   Val = %u|%u\n", b->bitmap4_len,
+  LogFullDebug(COMPONENT_NFS_V4, "Bitmap: Len = %u   Val = %u|%u\n", b->bitmap4_len,
          b->bitmap4_len >= 1 ? b->bitmap4_val[0] : 0,
          b->bitmap4_len >= 2 ? b->bitmap4_val[1] : 0);
-#endif
 }                               /* nfs4_list_to_bitmap4 */
 
 /* 
@@ -2247,13 +2222,11 @@ int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
   /* in NFSv3, we only keeps fsid.major, casted into an nfs_uint64 */
   Fattr->fsid = (nfs3_uint64) pexport->filesystem_id.major;
 
-#ifdef  _DEBUG_NFSPROTO
-  printf
-      ("nfs3_FSALattr_To_Fattr: fsid.major = %#llX (%llu), fsid.minor = %#llX (%llu), nfs3_fsid = %#llX (%llu)\n",
+  LogFullDebug(COMPONENT_NFSPROTO,
+      "nfs3_FSALattr_To_Fattr: fsid.major = %#llX (%llu), fsid.minor = %#llX (%llu), nfs3_fsid = %#llX (%llu)\n",
        pexport->filesystem_id.major, pexport->filesystem_id.major,
        pexport->filesystem_id.minor, pexport->filesystem_id.minor, Fattr->fsid,
        Fattr->fsid);
-#endif
 
   Fattr->fileid = FSAL_attr->fileid;
   Fattr->atime.seconds = FSAL_attr->atime.seconds;
@@ -2490,10 +2463,9 @@ int nfs4_Fattr_Supported(fattr4 * Fattr)
         }
 #endif
 
-#ifdef _DEBUG_NFS_V4
-      printf("nfs4_Fattr_Supported  ==============> %s supported flag=%u\n",
+      LogFullDebug(COMPONENT_NFS_V4, "nfs4_Fattr_Supported  ==============> %s supported flag=%u\n",
              fattr4tab[attrmasklist[i]].name, fattr4tab[attrmasklist[i]].supported);
-#endif
+
       if(!fattr4tab[attrmasklist[i]].supported)
         return 0;
     }
@@ -2538,10 +2510,8 @@ int nfs4_Fattr_Supported_Bitmap(bitmap4 * pbitmap)
         }
 #endif
 
-#ifdef _DEBUG_NFS_V4
-      printf("nfs4_Fattr_Supported  ==============> %s supported flag=%u\n",
+      LogFullDebug(COMPONENT_NFS_V4, "nfs4_Fattr_Supported  ==============> %s supported flag=%u\n",
              fattr4tab[attrmasklist[i]].name, fattr4tab[attrmasklist[i]].supported);
-#endif
       if(!fattr4tab[attrmasklist[i]].supported)
         return 0;
     }
@@ -2611,9 +2581,7 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
     {
       attribute_to_set = attrmasklist1[i];
 
-#ifdef _DEBUG_NFS_V4
-      printf("nfs4_Fattr_cmp ==============> %s\n", fattr4tab[attribute_to_set].name);
-#endif
+      LogFullDebug(COMPONENT_NFS_V4, "nfs4_Fattr_cmp ==============> %s\n", fattr4tab[attribute_to_set].name);
 
       switch (attribute_to_set)
         {
@@ -2770,9 +2738,7 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
   /* Convert the attribute bitmap to an attribute list */
   nfs4_bitmap4_to_list(&(Fattr->attrmask), &attrmasklen, attrmasklist);
 
-#ifdef _DEBUG_NFS_V4
-  printf("   nfs4_bitmap4_to_list ====> attrmasklen = %d\n", attrmasklen);
-#endif
+  LogFullDebug(COMPONENT_NFS_V4, "   nfs4_bitmap4_to_list ====> attrmasklen = %d\n", attrmasklen);
 
   /* Init */
   pFSAL_attr->asked_attributes = 0;
@@ -2790,13 +2756,11 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
           /* Erroneous value... skip */
           continue;
         }
-#ifdef _DEBUG_NFS_V4
-      printf("=================> nfs4_Fattr_To_FSAL_attr: i=%u attr=%u\n", i,
+      LogFullDebug(COMPONENT_NFS_V4, "=================> nfs4_Fattr_To_FSAL_attr: i=%u attr=%u\n", i,
              attrmasklist[i]);
-      printf("Flag for Operation = %d|%d is ON,  name  = %s  reply_size = %d\n",
+      LogFullDebug(COMPONENT_NFS_V4, "Flag for Operation = %d|%d is ON,  name  = %s  reply_size = %d\n",
              attrmasklist[i], fattr4tab[attribute_to_set].val,
              fattr4tab[attribute_to_set].name, fattr4tab[attribute_to_set].size_fattr4);
-#endif
 
       switch (attribute_to_set)
         {
@@ -2842,9 +2806,7 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_TYPE;
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-#ifdef _DEBUG_NFS_V4
-          printf("      SATTR: On voit le type %d\n", pFSAL_attr->filesize);
-#endif
+          LogFullDebug(COMPONENT_NFS_V4, "      SATTR: On voit le type %d\n", pFSAL_attr->filesize);
           break;
 
         case FATTR4_FILEID:    /* Used only by FSAL_PROXY to reverse convert */
@@ -2893,9 +2855,7 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_SIZE;
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-#ifdef _DEBUG_NFS_V4
-          printf("      SATTR: On voit la taille %d\n", pFSAL_attr->filesize);
-#endif
+	  LogFullDebug(COMPONENT_NFS_V4, "      SATTR: On voit la taille %d\n", pFSAL_attr->filesize);
           break;
 
         case FATTR4_MODE:
@@ -2908,9 +2868,7 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_MODE;
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-#ifdef _DEBUG_NFS_V4
-          printf("      SATTR: On voit le mode 0%o\n", pFSAL_attr->mode);
-#endif
+          LogFullDebug(COMPONENT_NFS_V4, "      SATTR: On voit le mode 0%o\n", pFSAL_attr->mode);
           break;
 
         case FATTR4_OWNER:
@@ -2934,10 +2892,8 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
           utf82uid(&utf8buffer, &(pFSAL_attr->owner));
           pFSAL_attr->asked_attributes |= FSAL_ATTR_OWNER;
 
-#ifdef _DEBUG_NFS_V4
-          printf("      SATTR: On voit le owner %s len = %d\n", buffer, len);
-          printf("      SATTR: On voit le owner %d\n", pFSAL_attr->owner);
-#endif
+          LogFullDebug(COMPONENT_NFS_V4, "      SATTR: On voit le owner %s len = %d\n", buffer, len);
+          LogFullDebug(COMPONENT_NFS_V4, "      SATTR: On voit le owner %d\n", pFSAL_attr->owner);
           break;
 
         case FATTR4_OWNER_GROUP:
@@ -2961,10 +2917,8 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
           utf82gid(&utf8buffer, &(pFSAL_attr->group));
           pFSAL_attr->asked_attributes |= FSAL_ATTR_GROUP;
 
-#ifdef _DEBUG_NFS_V4
-          printf("      SATTR: On voit le owner_group %s len = %d\n", buffer, len);
-          printf("      SATTR: On voit le owner_group %d\n", pFSAL_attr->group);
-#endif
+          LogFullDebug(COMPONENT_NFS_V4, "      SATTR: On voit le owner_group %s len = %d\n", buffer, len);
+          LogFullDebug(COMPONENT_NFS_V4, "      SATTR: On voit le owner_group %d\n", pFSAL_attr->group);
           break;
 
         case FATTR4_CHANGE:
@@ -3113,9 +3067,7 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
           len = ntohl(len);
           LastOffset += sizeof(u_int);
           LastOffset += len;
-#ifdef _DEBUG_NFS_V4
-          printf("     SATTR: On a demande le filehandle len =%u\n", len);
-#endif
+          LogFullDebug(COMPONENT_NFS_V4, "     SATTR: On a demande le filehandle len =%u\n", len);
           break;
 
         case FATTR4_RDATTR_ERROR:
@@ -3128,10 +3080,8 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
           break;
 
         default:
-#ifdef _DEBUG_NFS_V4
-          printf("      SATTR: Attribut no supporte %d name=%s\n", attribute_to_set,
+          LogFullDebug(COMPONENT_NFS_V4, "      SATTR: Attribut no supporte %d name=%s\n", attribute_to_set,
                  fattr4tab[attribute_to_set].name);
-#endif
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           /* return 0 ; *//* Should not stop processing */
           break;
@@ -3291,7 +3241,7 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
     case CACHE_INODE_INSERT_ERROR:
     case CACHE_INODE_LRU_ERROR:
     case CACHE_INODE_HASH_SET_ERROR:
-      DisplayLog("Error %u converted to NFS3ERR_IO but was set non-retryable", error);
+      LogCrit(COMPONENT_NFSPROTO, "Error %u converted to NFS3ERR_IO but was set non-retryable", error);
       nfserror = NFS3ERR_IO;
       break;
 
@@ -3302,8 +3252,8 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
     case CACHE_INODE_FSAL_ERROR:
     case CACHE_INODE_CACHE_CONTENT_ERROR:
                                          /** @todo: Check if this works by making stress tests */
-      DisplayLog
-          ("Error CACHE_INODE_FSAL_ERROR converted to NFS3ERR_IO but was set non-retryable");
+      LogCrit(COMPONENT_NFSPROTO,
+          "Error CACHE_INODE_FSAL_ERROR converted to NFS3ERR_IO but was set non-retryable");
       nfserror = NFS3ERR_IO;
       break;
 
@@ -3366,13 +3316,13 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
       break;
 
     case CACHE_INODE_IO_ERROR:
-      DisplayLog
-          ("Error CACHE_INODE_IO_ERROR converted to NFS3ERR_IO but was set non-retryable");
+	LogCrit(COMPONENT_NFSPROTO,
+          "Error CACHE_INODE_IO_ERROR converted to NFS3ERR_IO but was set non-retryable");
       nfserror = NFS3ERR_IO;
       break;
 
     default:                   /* Should not occur */
-      DisplayLog("Line %u should never be reached in nfs3_Errno for cache_status=%u",
+	LogDebug(COMPONENT_NFSPROTO, "Line %u should never be reached in nfs3_Errno for cache_status=%u",
                  __LINE__, error);
       nfserror = NFS3ERR_INVAL;
       break;
@@ -3414,7 +3364,7 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
     case CACHE_INODE_LRU_ERROR:
     case CACHE_INODE_HASH_SET_ERROR:
     case CACHE_INODE_INVALID_ARGUMENT:
-      DisplayLog("Error %u converted to NFSERR_IO but was set non-retryable", error);
+      LogCrit(COMPONENT_NFSPROTO,"Error %u converted to NFSERR_IO but was set non-retryable", error);
       nfserror = NFSERR_IO;
       break;
 
@@ -3427,8 +3377,8 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
       break;
 
     case CACHE_INODE_FSAL_ERROR:
-      DisplayLog
-          ("Error CACHE_INODE_FSAL_ERROR converted to NFSERR_IO but was set non-retryable");
+      LogCrit(COMPONENT_NFSPROTO, 
+          "Error CACHE_INODE_FSAL_ERROR converted to NFSERR_IO but was set non-retryable");
       nfserror = NFSERR_IO;
       break;
 
@@ -3470,13 +3420,13 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
       break;
 
     case CACHE_INODE_IO_ERROR:
-      DisplayLog
-          ("Error CACHE_INODE_IO_ERROR converted to NFSERR_IO but was set non-retryable");
+      LogCrit(COMPONENT_NFSPROTO,
+          "Error CACHE_INODE_IO_ERROR converted to NFSERR_IO but was set non-retryable");
       nfserror = NFSERR_IO;
       break;
 
     default:                   /* Should not occur */
-      DisplayLog("Line %u should never be reached in nfs2_Errno", __LINE__);
+      LogDebug(COMPONENT_NFSPROTO, "Line %u should never be reached in nfs2_Errno", __LINE__);
       nfserror = NFSERR_IO;
       break;
     }
@@ -3511,7 +3461,7 @@ int nfs4_AllocateFH(nfs_fh4 * fh)
   fh->nfs_fh4_len = sizeof(file_handle_v4_t);
   if((fh->nfs_fh4_val = (char *)Mem_Alloc(fh->nfs_fh4_len)) == NULL)
     {
-      DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
+      LogError(COMPONENT_NFS_V4, ERR_SYS, ERR_MALLOC, errno);
       return NFS4ERR_RESOURCE;
     }
 #ifdef _DEBUG_MEMLEAKS

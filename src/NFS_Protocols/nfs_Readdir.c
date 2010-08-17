@@ -59,7 +59,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -155,10 +155,10 @@ int nfs_Readdir(nfs_arg_t * parg,
       memcpy((char *)&cookie, (char *)parg->arg_readdir2.cookie, NFS2_COOKIESIZE);
       space_used = sizeof(READDIR2resok);
       estimated_num_entries = count / sizeof(entry2);
-#ifdef _DEBUG_NFS_READDIR
-      printf("-- Readdir2 -> count=%d  cookie = %d  estimated_num_entries=%d\n", count,
+
+      LogFullDebug(COMPONENT_NFS_READDIR, "-- Readdir2 -> count=%d  cookie = %d  estimated_num_entries=%d\n", count,
              cookie, estimated_num_entries);
-#endif
+
       if(estimated_num_entries == 0)
         {
           pres->res_readdir2.status = NFSERR_IO;
@@ -174,11 +174,9 @@ int nfs_Readdir(nfs_arg_t * parg,
         space_used = sizeof(READDIR3resok);
         estimated_num_entries = count / sizeof(entry3);
 
-#ifdef _DEBUG_NFS_READDIR
-        printf
-            ("---> nfs3_Readdir: count=%d  cookie=%d  space_used=%d  estimated_num_entries=%d\n",
+        LogFullDebug(COMPONENT_NFS_READDIR,
+            "---> nfs3_Readdir: count=%d  cookie=%d  space_used=%d  estimated_num_entries=%d\n",
              count, cookie, space_used, estimated_num_entries);
-#endif
 
         if(estimated_num_entries == 0)
           {
@@ -360,16 +358,14 @@ int nfs_Readdir(nfs_arg_t * parg,
                          ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
 
-#ifdef _DEBUG_NFS_READDIR
-      printf
-          ("-- Readdir -> Call to cache_inode_readdir( cookie=%d, asked=%d ) -> num_entries = %d\n",
+      LogFullDebug(COMPONENT_NFS_READDIR,
+          "-- Readdir -> Call to cache_inode_readdir( cookie=%d, asked=%d ) -> num_entries = %d\n",
            cache_inode_cookie, asked_num_entries, num_entries);
 
       if(eod_met == END_OF_DIR)
         {
-          printf("+++++++++++++++++++++++++++++++++++++++++> EOD MET \n");
+          LogFullDebug(COMPONENT_NFS_READDIR, "+++++++++++++++++++++++++++++++++++++++++> EOD MET \n");
         }
-#endif
 
       /* If nothing was found, return nothing, but if cookie <= 1, we should return . and .. */
       if((num_entries == 0) && (asked_num_entries != 0) && (cookie > 1))

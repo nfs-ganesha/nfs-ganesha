@@ -47,7 +47,7 @@
 #include <rpc/auth.h>
 #include <rpc/pmap_clnt.h>
 #endif
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -89,7 +89,7 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
   cache_inode_status_t cache_status;
   cache_inode_fsal_data_t fsal_data;
 
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFSPROTO,
                     "REQUEST PROCESSING: Calling nlm4_Lock");
 
   /* Convert file handle into a cache entry */
@@ -132,7 +132,7 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
       /*
        * ok failed to register monitor for the host
        */
-      DisplayLog("Failed to register a monitor for the host %s\n",
+      LogDebug(COMPONENT_NFSPROTO, "Failed to register a monitor for the host %s\n",
                  arg->alock.caller_name);
       pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
       return NFS_REQ_OK;

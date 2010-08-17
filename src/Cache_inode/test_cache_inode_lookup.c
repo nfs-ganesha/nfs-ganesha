@@ -40,7 +40,7 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "err_fsal.h"
 #include "err_cache_inode.h"
 #include "stuff_alloc.h"

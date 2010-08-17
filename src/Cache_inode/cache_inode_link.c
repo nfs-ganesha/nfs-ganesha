@@ -43,7 +43,7 @@
 #endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -196,7 +196,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
       break;
 
     default:
-      DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+      LogCrit(COMPONENT_CACHE_INODE,
                         "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
                         pentry_src->internal_md.type, __LINE__, __FILE__);
       *pstatus = CACHE_INODE_BAD_TYPE;
@@ -251,34 +251,34 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
           cache_inode_status_t kill_status;
           fsal_status_t getattr_status;
 
-          DisplayLog
-              ("cache_inode_link: Stale FSAL File Handle detected for at least one in  pentry = %p and pentry = %p",
+          LogEvent(COMPONENT_CACHE_INODE,
+              "cache_inode_link: Stale FSAL File Handle detected for at least one in  pentry = %p and pentry = %p",
                pentry_src, pentry_dir_dest);
 
           /* Use FSAL_getattrs to find which entry is staled */
           getattr_status = FSAL_getattrs(&handle_src, pcontext, &link_attributes);
           if(getattr_status.major == ERR_FSAL_ACCESS)
             {
-              DisplayLog
-                  ("cache_inode_link: Stale FSAL File Handle detected for pentry = %p",
+              LogEvent(COMPONENT_CACHE_INODE,
+                  "cache_inode_link: Stale FSAL File Handle detected for pentry = %p",
                    pentry_src);
 
               if(cache_inode_kill_entry(pentry_src, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
-                DisplayLog("cache_inode_link: Could not kill entry %p, status = %u",
+                LogCrit(COMPONENT_CACHE_INODE,"cache_inode_link: Could not kill entry %p, status = %u",
                            pentry_src, kill_status);
             }
 
           getattr_status = FSAL_getattrs(&handle_dest, pcontext, &link_attributes);
           if(getattr_status.major == ERR_FSAL_ACCESS)
             {
-              DisplayLog
-                  ("cache_inode_link: Stale FSAL File Handle detected for pentry = %p",
+              LogEvent(COMPONENT_CACHE_INODE,
+                  "cache_inode_link: Stale FSAL File Handle detected for pentry = %p",
                    pentry_dir_dest);
 
               if(cache_inode_kill_entry(pentry_dir_dest, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
-                DisplayLog("cache_inode_link: Could not kill entry %p, status = %u",
+                LogCrit(COMPONENT_CACHE_INODE, "cache_inode_link: Could not kill entry %p, status = %u",
                            pentry_dir_dest, kill_status);
             }
 
@@ -316,7 +316,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
       break;
 
     default:
-      DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+      LogCrit(COMPONENT_CACHE_INODE,
                         "WARNING: Major type incoherency line %d in file %s", __LINE__,
                         __FILE__);
       break;

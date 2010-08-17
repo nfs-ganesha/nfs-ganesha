@@ -59,7 +59,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -146,14 +146,12 @@ int nfs3_Fsinfo(nfs_arg_t * parg,
   FSINFO_FIELD.time_delta.seconds = 1;
   FSINFO_FIELD.time_delta.nseconds = 0;
 
-#ifdef _DEBUG_NFSPROTO
-  printf("rtmax = %d | rtpref = %d | trmult = %d\n",
+  LogFullDebug(COMPONENT_NFSPROTO, "rtmax = %d | rtpref = %d | trmult = %d\n",
          FSINFO_FIELD.rtmax, FSINFO_FIELD.rtpref, FSINFO_FIELD.rtmult = DEV_BSIZE);
-  printf("wtmax = %d | wtpref = %d | wrmult = %d\n",
+  LogFullDebug(COMPONENT_NFSPROTO, "wtmax = %d | wtpref = %d | wrmult = %d\n",
          FSINFO_FIELD.wtmax, FSINFO_FIELD.wtpref, FSINFO_FIELD.wtmult = DEV_BSIZE);
-  printf("dtpref = %d | maxfilesize = %llu \n", FSINFO_FIELD.dtpref,
+  LogFullDebug(COMPONENT_NFSPROTO, "dtpref = %d | maxfilesize = %llu \n", FSINFO_FIELD.dtpref,
          FSINFO_FIELD.maxfilesize);
-#endif
 
   /*
    * Allow all kinds of operations to be performed on the server

@@ -52,9 +52,6 @@
  */
 extern fsal_staticfsinfo_t global_fs_info;
 
-/* log descriptor */
-extern log_t fsal_log;
-
 /* export_context_t is not given to every function, but
  * most functions need to use the open-by-handle funcionality.
  */
@@ -87,11 +84,14 @@ void TakeTokenFSCall();
 void ReleaseTokenFSCall();
 
 /**
+ * Override generic Return macro
+ *
  * Return :
  * Macro for returning from functions
  * with trace and function call increment.
  */
 
+#undef Return
 #define Return( _code_, _minor_ , _f_ ) do {                          \
                char _str_[256];                                       \
                fsal_status_t _struct_status_ = FSAL_STATUS_NO_ERROR ; \
@@ -99,7 +99,7 @@ void ReleaseTokenFSCall();
                (_struct_status_).minor = (_minor_) ;                  \
                fsal_increment_nbcall( _f_,_struct_status_ );          \
                log_snprintf( _str_, 256, "%J%r",ERR_FSAL, _code_ );   \
-               DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG,           \
+               LogFullDebug(COMPONENT_FSAL,                           \
                   "%s returns ( %s, %d )",fsal_function_names[_f_],   \
                   _str_, _minor_);                                    \
                return (_struct_status_);                              \

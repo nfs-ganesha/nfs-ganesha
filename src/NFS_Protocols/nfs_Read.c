@@ -60,7 +60,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -215,10 +215,8 @@ int nfs_Read(nfs_arg_t * parg,
       offset = parg->arg_read3.offset;
       size = parg->arg_read3.count;
 
-#ifdef _DEBUG_NFSPROTO
-      printf("-----> Read offset=%lld count=%u MaxOffSet=%lld\n", parg->arg_read3.offset,
+      LogFullDebug(COMPONENT_NFSPROTO, "-----> Read offset=%lld count=%u MaxOffSet=%lld\n", parg->arg_read3.offset,
              parg->arg_read3.count, pexport->MaxOffsetRead);
-#endif
 
       /* 
        * do not exceed maxium READ/WRITE offset if set 
@@ -227,7 +225,7 @@ int nfs_Read(nfs_arg_t * parg,
         if((fsal_off_t) (offset + size) > pexport->MaxOffsetRead)
           {
 
-            DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+            LogEvent(COMPONENT_NFSPROTO,
                               "NFS READ: A client tryed to violate max file size %lld for exportid #%hu",
                               pexport->MaxOffsetRead, pexport->id);
 

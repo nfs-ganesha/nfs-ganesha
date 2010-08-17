@@ -89,11 +89,6 @@ static fsal_staticfsinfo_t default_gpfs_info = {
   0400                          /* default access rights for xattrs: root=RW, owner=R */
 };
 
-/*
- *  Log Descriptor
- */
-log_t fsal_log;
-
 /* variables for limiting the calls to the filesystem */
 static int limit_calls = FALSE;
 semaphore_t sem_fs_calls;
@@ -111,7 +106,7 @@ static void free_pthread_specific_stats(void *buff)
 static void init_keys(void)
 {
   if(pthread_key_create(&key_stats, free_pthread_specific_stats) == -1)
-    DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_KEY_CREATE, errno);
+    LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_KEY_CREATE, errno);
 
   return;
 }                               /* init_keys */
@@ -141,7 +136,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
   if(pthread_once(&once_key, init_keys) != 0)
     {
-      DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_ONCE, errno);
+      LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_ONCE, errno);
       return;
     }
 
@@ -159,7 +154,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
       if(bythread_stat == NULL)
         {
-          DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
+          LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, Mem_Errno);
           /* we don't have real memory, bail */
           return;
         }
@@ -214,7 +209,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
   /* first, we init the keys if this is the first time */
   if(pthread_once(&once_key, init_keys) != 0)
     {
-      DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_ONCE, errno);
+      LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_ONCE, errno);
       return;
     }
 
@@ -230,7 +225,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
           (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t))) == NULL)
       {
         /* we don't have working memory, bail */
-        DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
+        LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, Mem_Errno);
         return;
       }
 
@@ -369,9 +364,6 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   if(!fsal_info || !fs_common_info || !fs_specific_info)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  /* Setting log info */
-  fsal_log = fsal_info->log_outputs;
-
   /* inits FS call semaphore */
   if(fsal_info->max_fs_calls > 0)
     {
@@ -384,65 +376,64 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
       if(rc != 0)
         ReturnCode(ERR_FSAL_SERVERFAULT, rc);
 
-      DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                        "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
-                        fsal_info->max_fs_calls);
+      LogDebug(COMPONENT_FSAL,
+               "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
+               fsal_info->max_fs_calls);
     }
   else
     {
-      DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                        "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
+      LogDebug(COMPONENT_FSAL,
+               "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
     }
 
   /* setting default values. */
   global_fs_info = default_gpfs_info;
 
-#ifdef _DEBUG_FSAL
-
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "{");
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxfilesize  = %llX    ",
-                    default_gpfs_info.maxfilesize);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxlink  = %lu   ",
-                    default_gpfs_info.maxlink);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxnamelen  = %lu  ",
-                    default_gpfs_info.maxnamelen);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxpathlen  = %lu  ",
-                    default_gpfs_info.maxpathlen);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  no_trunc  = %d ", default_gpfs_info.no_trunc);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  chown_restricted  = %d ",
-                    default_gpfs_info.chown_restricted);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  case_insensitive  = %d ",
-                    default_gpfs_info.case_insensitive);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  case_preserving  = %d ",
-                    default_gpfs_info.case_preserving);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  fh_expire_type  = %hu ",
-                    default_gpfs_info.fh_expire_type);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  link_support  = %d  ",
-                    default_gpfs_info.link_support);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  symlink_support  = %d  ",
-                    default_gpfs_info.symlink_support);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  lock_support  = %d  ",
-                    default_gpfs_info.lock_support);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  named_attr  = %d  ",
-                    default_gpfs_info.named_attr);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  unique_handles  = %d  ",
-                    default_gpfs_info.unique_handles);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  acl_support  = %hu  ",
-                    default_gpfs_info.acl_support);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  cansettime  = %d  ",
-                    default_gpfs_info.cansettime);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  homogenous  = %d  ",
-                    default_gpfs_info.homogenous);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  supported_attrs  = %llX  ",
-                    default_gpfs_info.supported_attrs);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxread  = %llX     ",
-                    default_gpfs_info.maxread);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxwrite  = %llX     ",
-                    default_gpfs_info.maxwrite);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  umask  = %X ", default_gpfs_info.umask);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "}");
-
-#endif
+  if(isFullDebug(COMPONENT_FSAL))
+    {
+      LogFullDebug(COMPONENT_FSAL, "{");
+      LogFullDebug(COMPONENT_FSAL, "  maxfilesize  = %llX    ",
+                        default_gpfs_info.maxfilesize);
+      LogFullDebug(COMPONENT_FSAL, "  maxlink  = %lu   ",
+                        default_gpfs_info.maxlink);
+      LogFullDebug(COMPONENT_FSAL, "  maxnamelen  = %lu  ",
+                        default_gpfs_info.maxnamelen);
+      LogFullDebug(COMPONENT_FSAL, "  maxpathlen  = %lu  ",
+                        default_gpfs_info.maxpathlen);
+      LogFullDebug(COMPONENT_FSAL, "  no_trunc  = %d ", default_gpfs_info.no_trunc);
+      LogFullDebug(COMPONENT_FSAL, "  chown_restricted  = %d ",
+                        default_gpfs_info.chown_restricted);
+      LogFullDebug(COMPONENT_FSAL, "  case_insensitive  = %d ",
+                        default_gpfs_info.case_insensitive);
+      LogFullDebug(COMPONENT_FSAL, "  case_preserving  = %d ",
+                        default_gpfs_info.case_preserving);
+      LogFullDebug(COMPONENT_FSAL, "  fh_expire_type  = %hu ",
+                        default_gpfs_info.fh_expire_type);
+      LogFullDebug(COMPONENT_FSAL, "  link_support  = %d  ",
+                        default_gpfs_info.link_support);
+      LogFullDebug(COMPONENT_FSAL, "  symlink_support  = %d  ",
+                        default_gpfs_info.symlink_support);
+      LogFullDebug(COMPONENT_FSAL, "  lock_support  = %d  ",
+                        default_gpfs_info.lock_support);
+      LogFullDebug(COMPONENT_FSAL, "  named_attr  = %d  ",
+                        default_gpfs_info.named_attr);
+      LogFullDebug(COMPONENT_FSAL, "  unique_handles  = %d  ",
+                        default_gpfs_info.unique_handles);
+      LogFullDebug(COMPONENT_FSAL, "  acl_support  = %hu  ",
+                        default_gpfs_info.acl_support);
+      LogFullDebug(COMPONENT_FSAL, "  cansettime  = %d  ",
+                        default_gpfs_info.cansettime);
+      LogFullDebug(COMPONENT_FSAL, "  homogenous  = %d  ",
+                        default_gpfs_info.homogenous);
+      LogFullDebug(COMPONENT_FSAL, "  supported_attrs  = %llX  ",
+                        default_gpfs_info.supported_attrs);
+      LogFullDebug(COMPONENT_FSAL, "  maxread  = %llX     ",
+                        default_gpfs_info.maxread);
+      LogFullDebug(COMPONENT_FSAL, "  maxwrite  = %llX     ",
+                        default_gpfs_info.maxwrite);
+      LogFullDebug(COMPONENT_FSAL, "  umask  = %X ", default_gpfs_info.umask);
+      LogFullDebug(COMPONENT_FSAL, "}");
+    }
 
   /* Analyzing fs_common_info struct */
 
@@ -473,16 +464,14 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
   SET_BITMAP_PARAM(global_fs_info, fs_common_info, xattr_access_rights);
 
-#ifdef _DEBUG_FSAL
-  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-                    "Supported attributes constant = 0x%llX.", GPFS_SUPPORTED_ATTRIBUTES);
+  LogFullDebug(COMPONENT_FSAL,
+               "Supported attributes constant = 0x%llX.", GPFS_SUPPORTED_ATTRIBUTES);
 
-  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-                    "Supported attributes default = 0x%llX.",
-                    default_gpfs_info.supported_attrs);
-#endif
+  LogFullDebug(COMPONENT_FSAL,
+               "Supported attributes default = 0x%llX.",
+               default_gpfs_info.supported_attrs);
 
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG,
+  LogDebug(COMPONENT_FSAL,
                     "FSAL INIT: Supported attributes mask = 0x%llX.",
                     global_fs_info.supported_attrs);
 
@@ -600,9 +589,7 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
   harg.dfd = AT_FDCWD;
   harg.flag = 0;
 
-#ifdef _DEBUG_FSAL
-  DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle for %s", p_fsalpath->path);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "Lookup handle for %s", p_fsalpath->path);
 
   if((rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg)) < 0)
     ReturnCode(posix2fsal_error(errno), errno);
@@ -642,9 +629,7 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
   harg.dfd = dfd;
   harg.flag = 0;
 
-#ifdef _DEBUG_FSAL
-  DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle at for %s", p_fsalname->name);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "Lookup handle at for %s", p_fsalname->name);
 
   if((rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg)) < 0)
     ReturnCode(posix2fsal_error(errno), errno);
@@ -679,9 +664,7 @@ fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * p_handle)
   harg.dfd = fd;
   harg.flag = 0;
 
-#ifdef _DEBUG_FSAL
-  DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle by fd for %d", fd);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "Lookup handle by fd for %d", fd);
 
   if((rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg)) < 0)
     ReturnCode(posix2fsal_error(errno), errno);
@@ -811,9 +794,7 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
   if(p_context->credential.user == uid)
     {
 
-#if defined( _DEBUG_FSAL )
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "File belongs to user %d", uid);
-#endif
+      LogFullDebug(COMPONENT_FSAL, "File belongs to user %d", uid);
 
       if(mode & FSAL_MODE_RUSR)
         missing_access &= ~FSAL_R_OK;
@@ -832,11 +813,9 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
       else
         {
-#if defined( _DEBUG_FSAL )
-          DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-                            "Mode=%#o, Access=%#o, Rights missing: %#o", mode,
-                            access_type, missing_access);
-#endif
+          LogFullDebug(COMPONENT_FSAL,
+                       "Mode=%#o, Access=%#o, Rights missing: %#o", mode,
+                       access_type, missing_access);
           ReturnCode(ERR_FSAL_ACCESS, 0);
         }
 
@@ -846,11 +825,9 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
   is_grp = (p_context->credential.group == gid);
 
-# ifdef _DEBUG_FSAL
   if(is_grp)
-    DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "File belongs to user's group %d",
-                      p_context->credential.group);
-# endif
+    LogFullDebug(COMPONENT_FSAL, "File belongs to user's group %d",
+                 p_context->credential.group);
 
   /* Test if file belongs to alt user's groups */
 
@@ -860,12 +837,9 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
         {
           is_grp = (p_context->credential.alt_groups[i] == gid);
 
-#ifdef _DEBUG_FSAL
           if(is_grp)
-            DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-                              "File belongs to user's alt group %d",
-                              p_context->credential.alt_groups[i]);
-#endif
+            LogFullDebug(COMPONENT_FSAL, "File belongs to user's alt group %d",
+                         p_context->credential.alt_groups[i]);
 
           // exits loop if found
           if(is_grp)

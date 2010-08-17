@@ -60,7 +60,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -239,10 +239,8 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   offset = arg_WRITE4.offset;
   size = arg_WRITE4.data.data_len;
   stable_how = arg_WRITE4.stable;
-#ifdef _DEBUG_NFS_V4
-  printf("   NFS4_OP_WRITE: offset = %llu  length = %llu   stable = %d\n", offset, size,
+  LogFullDebug(COMPONENT_NFS_V4,"   NFS4_OP_WRITE: offset = %llu  length = %llu   stable = %d\n", offset, size,
          stable_how);
-#endif
 
   if((data->pexport->options & EXPORT_OPTION_MAXOFFSETWRITE) ==
      EXPORT_OPTION_MAXOFFSETWRITE)
@@ -267,9 +265,7 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Where are the data ? */
   bufferdata = arg_WRITE4.data.data_val;
 
-#ifdef _DEBUG_NFS_V4
-  printf("             NFS4_OP_WRITE: offset = %llu  length = %llu\n", offset, size);
-#endif
+  LogFullDebug(COMPONENT_NFS_V4, "             NFS4_OP_WRITE: offset = %llu  length = %llu\n", offset, size);
 
   /* if size == 0 , no I/O) are actually made and everything is alright */
   if(size == 0)
