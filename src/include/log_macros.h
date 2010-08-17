@@ -61,6 +61,7 @@ typedef enum log_components
   COMPONENT_NFS_V4_REFERRAL,
   COMPONENT_MEMCORRUPT,
   COMPONENT_CONFIG,
+  COMPONENT_CLIENT_ID_COMPUTE,
 
   COMPONENT_COUNT
 } log_components_t;
@@ -73,7 +74,8 @@ int DisplayErrorComponentLogLine(log_components_t component, int num_family, int
 enum log_type
 {
   SYSLOG = 0,
-  FILELOG
+  FILELOG,
+  STDERRLOG
 };
 
 typedef struct log_component_info

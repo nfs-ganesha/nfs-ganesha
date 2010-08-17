@@ -1981,6 +1981,15 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
 #endif
     SYSLOG,
     ""
+  },
+  { COMPONENT_CLIENT_ID_COMPUTE,          "COMPONENT_CLIENT_ID_COMPUTE",
+#ifdef _DEBUG_CLIENT_ID_COMPUTE
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
   }
 };
 
@@ -1997,6 +2006,9 @@ int DisplayLogComponentLevel(log_components_t component, int level, char *format
        break;
      case FILELOG:
        rc = DisplayLogPath_valist(LogComponents[component].log_file, format, arguments);
+       break;
+     case STDERRLOG:
+       rc = DisplayLogFd_valist(stderr, format, arguments);
        break;
      default:
        rc = ERR_FAILURE;
@@ -2040,8 +2052,11 @@ void SetDefaultLogging(char *name)
 
   if (strcmp(nom_fichier_log, "syslog") == 0)
     newtype = SYSLOG;
+  else if (strcmp(nom_fichier_log, "stderr") == 0)
+    newtype = STDERRLOG;
   else
     newtype = FILELOG;
+
 
   /* Change each layer's way of logging */
   for(comp=0; comp < COMPONENT_COUNT; comp++)
@@ -2060,6 +2075,8 @@ void SetComponentLogFile(log_components_t comp, char *name)
 
   if (strcmp(nom_fichier_log, "syslog") == 0)
     newtype = SYSLOG;
+  else if (strcmp(nom_fichier_log, "stderr") == 0)
+    newtype = STDERRLOG;
   else
     newtype = FILELOG;
 
