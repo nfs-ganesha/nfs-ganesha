@@ -41,7 +41,7 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "err_fsal.h"
 #include "err_cache_inode.h"
 #include "stuff_alloc.h"

@@ -1,7 +1,7 @@
 #ifndef _ERR_LRU_H
 #define _ERR_LRU_H
 
-#include "log_functions.h"
+#include "log_macros.h"
 
 /**
  *

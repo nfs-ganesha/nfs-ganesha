@@ -59,7 +59,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -95,7 +95,7 @@ int mnt_Umnt(nfs_arg_t * parg /* IN     */ ,
 {
   char *hostname;
 
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFSPROTO,
                     "REQUEST PROCESSING: Calling mnt_Umnt");
 
   /* @todo: BUGAZOMEU; seul AUTHUNIX est supporte */
@@ -103,7 +103,7 @@ int mnt_Umnt(nfs_arg_t * parg /* IN     */ ,
 
   if(hostname == NULL)
     {
-      DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+      LogCrit(COMPONENT_NFSPROTO,
                         "/!\\ | UMOUNT: NULL passed as Umount argument !!!");
       return NFS_REQ_DROP;
     }
@@ -111,10 +111,10 @@ int mnt_Umnt(nfs_arg_t * parg /* IN     */ ,
   /* BUGAZOMEU: pas de verif sur le path */
   if(!nfs_Remove_MountList_Entry(hostname, NULL))
     {
-      DisplayLogJd(pclient->log_outputs,
+      LogCrit(COMPONENT_NFSPROTO,
                    "UMOUNT: /!\\ | Cannot remove mount entry for client %s", hostname);
     }
-  DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+  LogEvent(COMPONENT_NFSPROTO,
                     "UMOUNT: Client %s was removed from mount list", hostname);
 
   return NFS_REQ_OK;

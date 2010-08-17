@@ -48,7 +48,7 @@
 #include <rpc/auth.h>
 #include <rpc/pmap_clnt.h>
 #endif
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -103,7 +103,7 @@ int nlm4_Lock_Message(nfs_arg_t * parg /* IN     */ ,
                       nfs_res_t * pres /* OUT    */ )
 {
   nlm_async_res_t *arg;
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFSPROTO,
                     "REQUEST PROCESSING: Calling nlm_Lock_Message");
 
   nlm4_Lock(parg, pexport, pcontext, pclient, ht, preq, pres);

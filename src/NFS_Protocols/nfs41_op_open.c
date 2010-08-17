@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -283,17 +283,16 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
 
       /* What kind of open is it ? */
-#ifdef _DEBUG_NFS_V4
-      printf
+
+      LogFullDebug(COMPONENT_NFSV4,
           ("     OPEN: Claim type = %d   Open Type = %d  Share Deny = %d   Share Access = %d \n",
            arg_OPEN4.claim.claim, arg_OPEN4.openhow.opentype, arg_OPEN4.share_deny,
            arg_OPEN4.share_access);
-#endif
+
 
       /* It this a known client id ? */
-#ifdef _DEBUG_NFS_V4
-      DisplayLogLevel(NIV_DEBUG, "OPEN Client id = %llx", arg_OPEN4.owner.clientid);
-#endif
+      LogDebug(COMPONENT_NFSV4, "OPEN Client id = %llx", arg_OPEN4.owner.clientid);
+
       /* Is this open_owner known ? */
       if(!nfs_convert_open_owner(&arg_OPEN4.owner, &owner_name))
         {
@@ -546,9 +545,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                       OPEN_DELEGATE_NONE;
                   res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
 
-#ifdef _DEBUG_STATES
                   nfs_State_PrintAll();
-#endif
 
                   /* Now produce the filehandle to this file */
                   if((pnewfsal_handle =
@@ -699,9 +696,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
             }
 
           /*  if( cache_status != CACHE_INODE_NOT_FOUND ), if file already exists basically */
-#ifdef _DEBUG_NFS_V4
-          printf("    OPEN open.how = %d\n", arg_OPEN4.openhow.openflag4_u.how.mode);
-#endif
+          LogFullDebug(COMPONENT_NFS_V4, "    OPEN open.how = %d\n", arg_OPEN4.openhow.openflag4_u.how.mode);
 
           create_arg.use_pnfs = FALSE;
 #ifdef _USE_PNFS
@@ -1164,9 +1159,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
 
-#ifdef _DEBUG_STATES
   nfs_State_PrintAll();
-#endif
 
   /* regular exit */
   res_OPEN4.status = NFS4_OK;

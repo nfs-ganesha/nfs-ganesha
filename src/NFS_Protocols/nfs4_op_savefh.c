@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -96,9 +96,7 @@
 int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
   int error;
-#ifdef _DEBUG_NFS_V4
   int i;
-#endif
 
   /* First of all, set the reply to zero to make sure it contains no parasite information */
   memset(resp, 0, sizeof(struct nfs_resop4));
@@ -146,12 +144,10 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   data->saved_entry = data->current_entry;
   data->saved_filetype = data->current_filetype;
 
-#ifdef _DEBUG_NFS_V4
-  printf("SAVEDFH: File handle = { Length = %d  Val = ", data->savedFH.nfs_fh4_len);
+  LogFullDebug(COMPONENT_NFS_V4, "SAVEDFH: File handle = { Length = %d  Val = ", data->savedFH.nfs_fh4_len);
   for(i = 0; i < data->savedFH.nfs_fh4_len; i++)
-    printf("%02X", data->savedFH.nfs_fh4_val[i]);
-  printf(" }\n");
-#endif
+    LogFullDebug(COMPONENT_NFS_V4, "%02X", data->savedFH.nfs_fh4_val[i]);
+  LogFullDebug(COMPONENT_NFS_V4, " }\n");
 
   return NFS4_OK;
 }                               /* nfs4_op_savefh */

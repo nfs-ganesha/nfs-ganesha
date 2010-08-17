@@ -19,7 +19,7 @@
 #endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -169,7 +169,7 @@ cache_inode_status_t cache_inode_clean_internal(cache_entry_t * to_remove_entry,
   rc = HashTable_Del(ht, &key, &old_key, &old_value);
 
   if(rc)
-    DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+    LogCrit(COMPONENT_CACHE_INODE,
                       "HashTable_Del error %d in cache_inode_clean_internal", rc);
 
   if((rc != HASHTABLE_SUCCESS) && (rc != HASHTABLE_ERROR_NO_SUCH_KEY))
@@ -187,7 +187,7 @@ cache_inode_status_t cache_inode_clean_internal(cache_entry_t * to_remove_entry,
        * and is released later in this function */
       if((cache_entry_t *) old_value.pdata != to_remove_entry)
         {
-          DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+          LogCrit(COMPONENT_CACHE_INODE,
                             "cache_inode_remove: unexpected pdata %p from hash table (pentry=%p)",
                             old_value.pdata, to_remove_entry);
         }
@@ -321,10 +321,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       *pstatus = CACHE_INODE_BAD_TYPE;
       return *pstatus;
     }
-#ifdef _DEBUG_CACHE_INODE
-  printf("---> Cache_inode_remove : %s\n", pnode_name->name);
-  fflush(stdout);
-#endif
+
+  LogFullDebug(COMPONENT_CACHE_INODE, "---> Cache_inode_remove : %s\n", pnode_name->name);
 
   /* Non-empty directories should not be removed. If entry is of type DIR_CONTINUE, then the directory is not empty */
   if(to_remove_entry->internal_md.type == DIR_CONTINUE)
@@ -400,13 +398,13 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
             {
               cache_inode_status_t kill_status;
 
-              DisplayLog
-                  ("cache_inode_remove: Stale FSAL FH detected for pentry %p", pentry);
+              LogEvent(COMPONENT_CACHE_INODE,
+                  "cache_inode_remove: Stale FSAL FH detected for pentry %p", pentry);
 
               if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
-                DisplayLog
-                    ("cache_inode_remove: Could not kill entry %p, status = %u",
+                LogCrit(COMPONENT_CACHE_INODE,
+                    "cache_inode_remove: Could not kill entry %p, status = %u",
                      pentry, kill_status);
 
               *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -435,7 +433,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
   /* Remove the entry from parent dir_entries array */
   cache_inode_remove_cached_dirent(pentry, pnode_name, ht, pclient, &status);
 
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_CACHE_INODE,
                     "cache_inode_remove_cached_dirent: status=%d", status);
 
   /* Update the cached attributes */
@@ -520,7 +518,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
                   (cache_content_client_t *) pclient->pcontent_client,
                   &cache_content_status) != CACHE_CONTENT_SUCCESS)
                 {
-                  DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+                  LogEvent(COMPONENT_CACHE_INODE,
                                     "pentry %p, named %s could not be released from data cache, status=%d",
                                     to_remove_entry, pnode_name->name,
                                     cache_content_status);
@@ -535,7 +533,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
                                                     &to_remove_entry->object.file.
                                                     pnfs_file.ds_file)) != NFS4_OK)
                 {
-                  DisplayLogLevel(NIV_DEBUG, "OPEN PNFS CREATE DS FILE : Error %u",
+                  LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS CREATE DS FILE : Error %u",
                                   pnfs_status);
 
                   if(use_mutex)
@@ -569,7 +567,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
                   V_w(&to_remove_entry->lock);
                 }
 
-              DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+              LogCrit(COMPONENT_CACHE_INODE,
                                 "cache_inode_clean_internal ERROR %d", *pstatus);
               return *pstatus;
             }

@@ -60,7 +60,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -97,7 +97,7 @@ int nfs2_Writecache(nfs_arg_t * parg,
                     hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
 {
   /* This is an unsupported function, it is never used */
-  DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+  LogCrit(COMPONENT_NFSPROTO,
                     "NFS2_WRITECACHE:  /!\\ | Received unexpected call to deprecated function NFS2PROC_WRITECACHE");
   return NFS_REQ_OK;
 }

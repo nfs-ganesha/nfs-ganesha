@@ -60,7 +60,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -93,9 +93,8 @@ int CreatePUBFH4(nfs_fh4 * fh, compound_data_t * data)
 {
   pseudofs_entry_t psfsentry;
   int status = 0;
-#ifdef _DEBUG_NFS_V4
   char fhstr[LEN_FH_STR];
-#endif
+
 
   psfsentry = *(data->pseudofs->reverse_tab[0]);
 
@@ -108,10 +107,8 @@ int CreatePUBFH4(nfs_fh4 * fh, compound_data_t * data)
     }
 
   /* Test */
-#ifdef _DEBUG_NFS_V4
   nfs4_sprint_fhandle(&data->publicFH, fhstr);
-  DisplayLog("CREATE PUBFH: %s", fhstr);
-#endif
+  LogDebug(COMPONENT_NFS_V4, "CREATE PUBFH: %s", fhstr);
 
   return NFS4_OK;
 }                               /* CreatePUBFH4 */

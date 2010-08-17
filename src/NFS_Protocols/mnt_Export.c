@@ -67,7 +67,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -116,8 +116,7 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
 
   unsigned int i;
 
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-                    "REQUEST PROCESSING: Calling mnt_Export");
+  LogFullDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Export");
 
   /* paranoid command, to avoid parasites in the result structure. */
   memset(pres, 0, sizeof(nfs_res_t));
@@ -138,7 +137,7 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
 
       /* we set the export path */
 
-      DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_NFSPROTO,
                         "MNT_EXPORT: Export entry: %s | Numclients: %d | PtrClients: %p",
                         p_current_item->fullpath, p_current_item->clients.num_clients,
                         p_current_item->clients.clientarray);
@@ -264,7 +263,7 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
 
                   /* @todo : Mem_Free allocated resources */
 
-                  DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+                  LogCrit(COMPONENT_NFSPROTO,
                                     "MNT_EXPORT: Unknown export entry type: %d",
                                     p_clients->clientarray[i].type);
 

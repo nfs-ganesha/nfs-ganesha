@@ -60,7 +60,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -197,13 +197,12 @@ int nfs_Setattr(nfs_arg_t * parg,
               pres->res_setattr3.status = NFS3ERR_NOT_SYNC;
               return NFS_REQ_OK;
             }
-#ifdef _DEBUG_NFSPROTO
-          printf("css=%d acs=%d    csn=%d acn=%d\n",
+          LogFullDebug(COMPONENT_NFSPROTO, "css=%d acs=%d    csn=%d acn=%d\n",
                  parg->arg_setattr3.guard.sattrguard3_u.obj_ctime.seconds,
                  attributes.ctime.seconds,
                  parg->arg_setattr3.guard.sattrguard3_u.obj_ctime.nseconds,
                  attributes.ctime.nseconds);
-#endif
+
           if((parg->arg_setattr3.guard.sattrguard3_u.obj_ctime.seconds !=
               attributes.ctime.seconds)
              || (parg->arg_setattr3.guard.sattrguard3_u.obj_ctime.nseconds !=
@@ -304,9 +303,8 @@ int nfs_Setattr(nfs_arg_t * parg,
 
       return NFS_REQ_OK;
     }
-#ifdef _DEBUG_NFSPROTO
-  printf("nfs_Setattr: failed\n");
-#endif
+
+  LogFullDebug(COMPONENT_NFSPROTO, "nfs_Setattr: failed\n");
 
   /* If we are here, there was an error */
   if(nfs_RetryableError(cache_status))

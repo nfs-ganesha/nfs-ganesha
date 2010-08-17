@@ -12,6 +12,10 @@
 #include <pthread.h>
 #endif
 
+#ifdef _SNMP_ADM_ACTIVE
+#include "snmp_adm.h"
+#endif
+
 /*
  * definition des codes d'error
  *
@@ -455,6 +459,7 @@ static status_t __attribute__ ((__unused__)) tab_systeme_status[] =
 int SetNamePgm(char *nom);
 int SetNameHost(char *nom);
 int SetNameFileLog(char *nom);
+void SetDefaultLogging(char *name);
 int SetNameFunction(char *nom); /* thread safe */
 char *ReturnNamePgm();
 char *ReturnNameHost();
@@ -474,19 +479,19 @@ int DisplayErrorLogLine(int num_family, int num_error, int status, int ma_ligne)
 #define DisplayErrorFd(a, b, c, d ) DisplayErrorFdLine( a, b, c, d, __LINE__ )
 
 int DisplayLogString(char *tampon, char *format, ...);
-int DisplayLogStringLevel(char *tampon, int level, char *format, ...);
+static int DisplayLogStringLevel(char *tampon, int level, char *format, ...);
 
 int DisplayLog(char *format, ...);
 int DisplayLogLevel(int level, char *format, ...);
 
 int DisplayLogFlux(FILE * flux, char *format, ...);
-int DisplayLogFluxLevel(FILE * flux, int level, char *format, ...);
+static int DisplayLogFluxLevel(FILE * flux, int level, char *format, ...);
 
 int DisplayLogPath(char *path, char *format, ...);
-int DisplayLogPathLevel(char *path, int level, char *format, ...);
+static int DisplayLogPathLevel(char *path, int level, char *format, ...);
 
 int DisplayLogFd(int fd, char *format, ...);
-int DisplayLogFdLevel(int fd, int level, char *format, ...);
+static int DisplayLogFdLevel(int fd, int level, char *format, ...);
 
 /* AddFamilyError : not thread safe */
 int AddFamilyError(int num_family, char *nom_family, family_error_t * tab_err);
@@ -495,12 +500,11 @@ int RemoveFamilyError(int num_family);
 
 char *ReturnNameFamilyError(int num_family);
 
-int InitDebug(int niveau_debug);        /* not thread safe */
+int InitDebug(int level_to_set);        /* not thread safe */
 
-int SetLevelDebug(int level_to_set);    /* not thread safe */
+void SetLevelDebug(int level_to_set);    /* not thread safe */
 
-int ReturnLevelDebug();
-int ReturnLevelAscii(char *LevelEnAscii);
+int ReturnLevelAscii(const char *LevelEnAscii);
 char *ReturnLevelInt(int level);
 
 /* A present les types et les fonctions pour les descripteurs de journaux */
@@ -550,8 +554,6 @@ int DisplayErrorJdLine(log_t jd, int num_family, int num_error, int status, int 
 int AddLogStreamJd(log_t * pjd,
                    type_log_stream_t type,
                    desc_log_stream_t desc_voie, niveau_t niveau, aiguillage_t aiguillage);
-int AddDefaultLogStreamJd(log_t * pjd, char log_dest[MAXPATHLEN], niveau_t niveau,
-			  aiguillage_t aiguillage);
 
 int log_vsnprintf(char *out, size_t n, char *format, va_list arguments);
 #define log_vsprintf( out, format, arguments ) log_vsnprintf( out, (size_t)LOG_MAX_STRLEN, format, arguments )
@@ -561,4 +563,10 @@ int log_vfprintf(FILE *, char *format, va_list arguments);
 #define log_vprintf( format, arguments ) log_vfprintf( stdout, format, arguments )
 int log_fprintf(FILE * file, char *format, ...);
 int log_printf(char *format, ...);
+
+#ifdef _SNMP_ADM_ACTIVE
+int getComponentLogLevel(snmp_adm_type_union * param, void *opt);
+int setComponentLogLevel(const snmp_adm_type_union * param, void *opt);
+#endif
+
 #endif

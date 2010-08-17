@@ -1,7 +1,7 @@
 #ifndef _ERR_CACHE_INODE_H
 #define _ERR_CACHE_INODE_H
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "cache_inode.h"
 
 /**

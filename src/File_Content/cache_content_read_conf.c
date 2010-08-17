@@ -44,7 +44,7 @@
 #endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -185,7 +185,20 @@ cache_content_status_t cache_content_read_conf_client_parameter(config_file_t in
     strncpy(fcc_log_path, "/dev/null", MAXPATHLEN);
 
   /* init logging */
-  AddDefaultLogStreamJd(&(pparam->log_outputs), LogFile, DebugLevel, SUP);
+  if(LogFile)
+    {
+      desc_log_stream_t log_stream;
+
+      strcpy(log_stream.path, LogFile);
+
+      /* Default : NIV_CRIT */
+
+      if(DebugLevel == -1)
+        AddLogStreamJd(&(pparam->log_outputs), V_FILE, log_stream, NIV_CRIT, SUP);
+      else
+        AddLogStreamJd(&(pparam->log_outputs), V_FILE, log_stream, DebugLevel, SUP);
+
+    }
 
   return CACHE_CONTENT_SUCCESS;
 }                               /* cache_content_read_conf_client_parameter */

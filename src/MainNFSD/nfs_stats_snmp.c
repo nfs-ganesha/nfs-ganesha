@@ -29,6 +29,7 @@
 
 #include "stuff_alloc.h"
 #include "common_utils.h"
+#include "log_macros.h"
 
 #define  CONF_SNMP_ADM_LABEL  "SNMP_ADM"
 /* case unsensitivity */
@@ -61,15 +62,15 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
  if((block = config_FindItemByName(in_config, CONF_SNMP_ADM_LABEL)) == NULL)
     {
       /* cannot read item */
-      DisplayLog("SNMP_ADM: Cannot read item \"%s\" from configuration file",
-                 CONF_SNMP_ADM_LABEL);
+      LogCrit(COMPONENT_INIT, "SNMP_ADM: Cannot read item \"%s\" from configuration file",
+              CONF_SNMP_ADM_LABEL);
       /* Expected to be a block */
       return ENOENT;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
      {
-       DisplayLog("SNMP_ADM: Cannot read item \"%s\" from configuration file",
-                  CONF_SNMP_ADM_LABEL);
+       LogCrit(COMPONENT_INIT, "SNMP_ADM: Cannot read item \"%s\" from configuration file",
+               CONF_SNMP_ADM_LABEL);
       /* Expected to be a block */
        return ENOENT;
      }
@@ -85,9 +86,9 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
 
       if(err)
         {
-          DisplayLog
-              ("SNMP_ADM: ERROR reading key[%d] from section \"%s\" of configuration file.",
-               var_index, CONF_LABEL_FS_SPECIFIC);
+          LogCrit(COMPONENT_INIT,
+                  "SNMP_ADM: ERROR reading key[%d] from section \"%s\" of configuration file.",
+                  var_index, CONF_LABEL_FS_SPECIFIC);
           return err;
         }
 
@@ -110,8 +111,8 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
           int bool = StrToBoolean(key_value);
           if(bool == -1)
             {
-              DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
-                         key_name);
+              LogCrit(COMPONENT_INIT, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+                      key_name);
               return EINVAL;
             }
           out_parameter->snmp_adm.export_cache_stats = bool;
@@ -121,8 +122,8 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
           int bool = StrToBoolean(key_value);
           if(bool == -1)
             {
-              DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
-                         key_name);
+              LogCrit(COMPONENT_INIT, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+                      key_name);
               return EINVAL;
             }
           out_parameter->snmp_adm.export_requests_stats = bool;
@@ -132,8 +133,8 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
           int bool = StrToBoolean(key_value);
           if(bool == -1)
             {
-              DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
-                         key_name);
+              LogCrit(COMPONENT_INIT, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+                      key_name);
               return EINVAL;
             }
           out_parameter->snmp_adm.export_maps_stats = bool;
@@ -143,8 +144,8 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
           int bool = StrToBoolean(key_value);
           if(bool == -1)
             {
-              DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
-                         key_name);
+              LogCrit(COMPONENT_INIT, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+                      key_name);
               return EINVAL;
             }
           out_parameter->snmp_adm.export_buddy_stats = bool;
@@ -154,8 +155,8 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
           int bool = StrToBoolean(key_value);
           if(bool == -1)
             {
-              DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
-                         key_name);
+              LogCrit(COMPONENT_INIT, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+                      key_name);
               return EINVAL;
             }
           out_parameter->snmp_adm.export_nfs_calls_detail = bool;
@@ -165,8 +166,8 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
           int bool = StrToBoolean(key_value);
           if(bool == -1)
             {
-              DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
-                         key_name);
+              LogCrit(COMPONENT_INIT, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+                      key_name);
               return EINVAL;
             }
           out_parameter->snmp_adm.export_cache_inode_calls_detail = bool;
@@ -176,17 +177,17 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
           int bool = StrToBoolean(key_value);
           if(bool == -1)
             {
-              DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
-                         key_name);
+              LogCrit(COMPONENT_INIT, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+                      key_name);
               return EINVAL;
             }
           out_parameter->snmp_adm.export_fsal_calls_detail = bool;
         }
       else
         {
-          DisplayLog
-              ("SNMP_ADM LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
-               key_name, CONF_LABEL_FS_SPECIFIC);
+          LogCrit(COMPONENT_INIT,
+                  "SNMP_ADM LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
+                  key_name, CONF_LABEL_FS_SPECIFIC);
           return EINVAL;
         }
     }
@@ -1326,6 +1327,27 @@ static int create_dyn_fsal_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_coun
     }
 }
 
+static int create_dyn_log_control(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
+{
+  unsigned int i;
+  long j;
+
+  *p_dyn_gs_count = COMPONENT_COUNT;
+  *p_dyn_gs = (register_get_set *) Mem_Alloc((COMPONENT_COUNT - 1) * sizeof(register_get_set));
+
+  for(j = 0; j < COMPONENT_COUNT; j ++)
+    {
+      (*p_dyn_gs)[j + 0].label = Mem_Alloc(256 * sizeof(char));
+      snprintf((*p_dyn_gs)[j].label, 256, "%s", LogComponents[j].str);
+      (*p_dyn_gs)[j].desc = "Log level for this component";
+      (*p_dyn_gs)[j].type = SNMP_ADM_STRING;
+      (*p_dyn_gs)[j].access = SNMP_ADM_ACCESS_RW;
+      (*p_dyn_gs)[j].getter = getComponentLogLevel;
+      (*p_dyn_gs)[j].setter = setComponentLogLevel;
+      (*p_dyn_gs)[j].opt_arg = (void *)j;
+    }
+}
+
 static void free_dyn(register_get_set * dyn, int count)
 {
   int i;
@@ -1351,7 +1373,7 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
 
   if(!config_ok)
     {
-      DisplayLog("Loading configuration has failed, SNMP_ADM is not activated");
+      LogCrit(COMPONENT_INIT, "Loading configuration has failed, SNMP_ADM is not activated");
       return 1;
     }
 
@@ -1360,7 +1382,7 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
                                   nfs_param.extern_param.snmp_adm.snmp_log_file,
                                   nfs_param.extern_param.snmp_adm.product_id)))
     {
-      DisplayLog("Error setting SNMP admin interface configuration");
+      LogCrit(COMPONENT_INIT, "Error setting SNMP admin interface configuration");
       return 1;
     }
 
@@ -1369,7 +1391,7 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
       snmp_adm_register_get_set_function(STAT_OID, snmp_export_stat_general,
                                          SNMPADM_STAT_GENERAL_COUNT)))
     {
-      DisplayLog("Error registering statistic variables to SNMP");
+      LogCrit(COMPONENT_INIT, "Error registering statistic variables to SNMP");
       return 2;
     }
 
@@ -1379,7 +1401,7 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
           snmp_adm_register_get_set_function(STAT_OID, snmp_export_stat_cache,
                                              SNMPADM_STAT_CACHE_COUNT)))
         {
-          DisplayLog("Error registering statistic variables to SNMP");
+          LogCrit(COMPONENT_INIT, "Error registering statistic variables to SNMP");
           return 2;
         }
     }
@@ -1390,7 +1412,7 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
           snmp_adm_register_get_set_function(STAT_OID, snmp_export_stat_req,
                                              SNMPADM_STAT_REQ_COUNT)))
         {
-          DisplayLog("Error registering statistic variables to SNMP");
+          LogCrit(COMPONENT_INIT, "Error registering statistic variables to SNMP");
           return 2;
         }
     }
@@ -1401,7 +1423,7 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
           snmp_adm_register_get_set_function(STAT_OID, snmp_export_stat_maps,
                                              SNMPADM_STAT_MAPS_COUNT)))
         {
-          DisplayLog("Error registering statistic variables to SNMP");
+          LogCrit(COMPONENT_INIT, "Error registering statistic variables to SNMP");
           return 2;
         }
     }
@@ -1412,7 +1434,7 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
           snmp_adm_register_get_set_function(STAT_OID, snmp_export_stat_buddy,
                                              SNMPADM_STAT_BUDDY_COUNT)))
         {
-          DisplayLog("Error registering statistic variables to SNMP");
+          LogCrit(COMPONENT_INIT, "Error registering statistic variables to SNMP");
           return 2;
         }
     }
@@ -1424,7 +1446,7 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
 
       if((rc = snmp_adm_register_get_set_function(STAT_OID, dyn_gs, dyn_gs_count)))
         {
-          DisplayLog("Error registering dynamic cache statistic variables to SNMP");
+          LogCrit(COMPONENT_INIT, "Error registering dynamic cache statistic variables to SNMP");
           return 2;
         }
       free_dyn(dyn_gs, dyn_gs_count);
@@ -1436,7 +1458,7 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
 
       if((rc = snmp_adm_register_get_set_function(STAT_OID, dyn_gs, dyn_gs_count)))
         {
-          DisplayLog("Error registering mntv1 statistic variables to SNMP");
+          LogCrit(COMPONENT_INIT, "Error registering mntv1 statistic variables to SNMP");
           return 2;
         }
 
@@ -1446,7 +1468,7 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
 
       if((rc = snmp_adm_register_get_set_function(STAT_OID, dyn_gs, dyn_gs_count)))
         {
-          DisplayLog("Error registering mntv3 statistic variables to SNMP");
+          LogCrit(COMPONENT_INIT, "Error registering mntv3 statistic variables to SNMP");
           return 2;
         }
 
@@ -1456,7 +1478,7 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
 
       if((rc = snmp_adm_register_get_set_function(STAT_OID, dyn_gs, dyn_gs_count)))
         {
-          DisplayLog("Error registering nfsv2 statistic variables to SNMP");
+          LogCrit(COMPONENT_INIT, "Error registering nfsv2 statistic variables to SNMP");
           return 2;
         }
 
@@ -1466,7 +1488,7 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
 
       if((rc = snmp_adm_register_get_set_function(STAT_OID, dyn_gs, dyn_gs_count)))
         {
-          DisplayLog("Error registering nfsv3 statistic variables to SNMP");
+          LogCrit(COMPONENT_INIT, "Error registering nfsv3 statistic variables to SNMP");
           return 2;
         }
 
@@ -1476,7 +1498,7 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
 
       if((rc = snmp_adm_register_get_set_function(STAT_OID, dyn_gs, dyn_gs_count)))
         {
-          DisplayLog("Error registering nfsv4 statistic variables to SNMP");
+          LogCrit(COMPONENT_INIT, "Error registering nfsv4 statistic variables to SNMP");
           return 2;
         }
 
@@ -1489,17 +1511,32 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
 
       if((rc = snmp_adm_register_get_set_function(STAT_OID, dyn_gs, dyn_gs_count)))
         {
-          DisplayLog("Error registering nfsv4 statistic variables to SNMP");
+          LogCrit(COMPONENT_INIT, "Error registering nfsv4 statistic variables to SNMP");
           return 2;
         }
 
       free_dyn(dyn_gs, dyn_gs_count);
     }
 
+  /*
+   * Set up logging snmp adm control
+   */
+
+  /* always register general logging variables */
+  create_dyn_log_control(&dyn_gs, &dyn_gs_count);
+
+  if((rc = snmp_adm_register_get_set_function(LOG_OID, dyn_gs, dyn_gs_count)))
+    {
+      LogCrit(COMPONENT_INIT, "Error registering logging component variables to SNMP");
+      return 2;
+    }
+
+  free_dyn(dyn_gs, dyn_gs_count);
+
   /* finally, start the admin thread */
   if((rc = snmp_adm_start()))
     {
-      DisplayLog("Error starting SNMP administration service");
+      LogCrit(COMPONENT_INIT, "Error starting SNMP administration service");
       return 3;
     }
 

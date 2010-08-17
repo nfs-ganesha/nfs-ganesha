@@ -180,6 +180,7 @@ static void get_oid(oid * myoid, int branch, size_t * plen)
   /* id of the object,
      increamented after each record */
   static int stat_num = 0;
+  static int log_num  = 0;
   static int conf_num = 0;
   static int proc_num = 0;
 
@@ -190,6 +191,8 @@ static void get_oid(oid * myoid, int branch, size_t * plen)
   myoid[(*plen)++] = branch;
   if(branch == STAT_OID)
     myoid[(*plen)++] = stat_num++;
+  else if(branch == LOG_OID)
+    myoid[(*plen)++] = log_num++;
   else if(branch == CONF_OID)
     myoid[(*plen)++] = conf_num++;
   else if(branch == PROC_OID)

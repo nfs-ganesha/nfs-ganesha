@@ -44,8 +44,8 @@
 #include <string.h>
 #include <signal.h>
 
-#include "log_functions.h"
-#include "nfs_core.h"
+#include "log_macros.h"
+//#include "nfs_core.h"
 
 /* La longueur d'une chaine */
 #define STR_LEN_TXT      2048
@@ -66,10 +66,9 @@ static family_t tab_family[MAX_NUM_FAMILY];
 static char nom_programme[1024];
 static char nom_host[256];
 static char nom_fichier_log[PATH_LEN] = "/tmp/logfile";
-static int niveau_debug = 2;
 static int syslog_opened = 0 ;
 
-extern nfs_parameter_t nfs_param;
+//extern nfs_parameter_t nfs_param;
 
 /*
  * Variables specifiques aux threads.
@@ -195,7 +194,7 @@ static int DisplayError(int num_error, int status)
  *
  */
 
-int ReturnLevelAscii(char *LevelEnAscii)
+int ReturnLevelAscii(const char *LevelEnAscii)
 {
   int i = 0;
 
@@ -255,18 +254,6 @@ int SetNameFunction(char *nom)
 
   return 1;
 }                               /* SetNameFunction */
-
-/* 
- * Set le fichier dans lequel vont etre loggues les messages
- */
-int SetNameFileLog(char *nom)
-{
-  /* Cette fonction n'est pas thread-safe car le fichier de log
-   * est commun a tous les threads du programme */
-  strcpy(nom_fichier_log, nom);
-
-  return 1;
-}                               /* SetNameFileLog */
 
 /*
  * Return le nom du programme en cours 
@@ -338,31 +325,44 @@ static void ArmeSignal(int signal, void (*action) ())
  * 
  */
 
-int ReturnLevelDebug()
+void SetComponentLogLevel(log_components_t component, int level_to_set)
 {
-  return niveau_debug;
+  if(level_to_set < NIV_NULL)
+    level_to_set = NIV_NULL;
+
+  if(level_to_set >= NB_LOG_LEVEL)
+    level_to_set = NB_LOG_LEVEL - 1;
+
+  LogComponents[component].log_level = level_to_set;
+}
+
+inline int ReturnLevelDebug()
+{
+  return LogComponents[COMPONENT_ALL].log_level;
 }                               /* ReturnLevelDebug */
 
-int SetLevelDebug(int level_to_set)
+void SetLevelDebug(int level_to_set)
 {
-  if(level_to_set < 0)
-    level_to_set = 0;
+  int i;
 
-  niveau_debug = level_to_set;
+  if(level_to_set < NIV_NULL)
+    level_to_set = NIV_NULL;
 
-  return niveau_debug;
+  if(level_to_set >= NB_LOG_LEVEL)
+    level_to_set = NB_LOG_LEVEL - 1;
+
+  for (i = 0; i < COMPONENT_COUNT; i++)
+    LogComponents[i].log_level = level_to_set;
 }                               /* SetLevelDebug */
 
 static void IncrementeLevelDebug()
 {
   char buffer[1024];
 
-  niveau_debug += 1;
-  if(niveau_debug >= NB_LOG_LEVEL)
-    niveau_debug = NB_LOG_LEVEL - 1;
+  SetLevelDebug(ReturnLevelDebug() + 1);
 
   snprintf(buffer, 1024, "SIGUSR1 recu -> Level de debug: %s = %d ",
-           ReturnLevelInt(niveau_debug), niveau_debug);
+           ReturnLevelInt(ReturnLevelDebug()), ReturnLevelDebug());
 
   DisplayLogFlux(stdout, "%s", buffer);
 }                               /* IncrementeLevelDebug */
@@ -371,12 +371,10 @@ static void DecrementeLevelDebug()
 {
   char buffer[1024];
 
-  niveau_debug -= 1;
-  if(niveau_debug < 0)
-    niveau_debug = 0;
+  SetLevelDebug(ReturnLevelDebug() - 1);
 
   snprintf(buffer, 1024, "SIGUSR2 recu -> Level de debug: %s = %d ",
-           ReturnLevelInt(niveau_debug), niveau_debug);
+           ReturnLevelInt(ReturnLevelDebug()), ReturnLevelDebug());
 
   DisplayLogFlux(stdout, "%s", buffer);
 }                               /* DecrementeLevelDebug */
@@ -393,8 +391,10 @@ int InitDebug(int level_to_set)
   for(i = 1; i < MAX_NUM_FAMILY; i++)
     tab_family[i].num_family = UNUSED_SLOT;
 
-  /* On impose le niveau de debug */
-  SetLevelDebug(level_to_set);
+  /* Set debug level for each component as long as it wasn't initialized to a debug level */
+  for (i = 0; i < COMPONENT_COUNT; i++)
+    if (LogComponents[i].log_level < NIV_DEBUG)
+      LogComponents[i].log_level = level_to_set;
 
   ArmeSignal(SIGUSR1, IncrementeLevelDebug);
   ArmeSignal(SIGUSR2, DecrementeLevelDebug);
@@ -633,14 +633,14 @@ int DisplayLog(char *format, ...)
  *
  */
 
-int DisplayLogStringLevel(char *tampon, int level, char *format, ...)
+static int DisplayLogStringLevel(char *tampon, int level, char *format, ...)
 {
   va_list arguments;
   int rc;
 
   va_start(arguments, format);
 
-  if(level <= niveau_debug)
+  if(level <= ReturnLevelDebug())
     {
       rc = DisplayLogString_valist(tampon, format, arguments);
     }
@@ -653,14 +653,14 @@ int DisplayLogStringLevel(char *tampon, int level, char *format, ...)
 
 }                               /* DisplayLogStringLevel */
 
-int DisplayLogFluxLevel(FILE * flux, int level, char *format, ...)
+static int DisplayLogFluxLevel(FILE * flux, int level, char *format, ...)
 {
   va_list arguments;
   int rc;
 
   va_start(arguments, format);
 
-  if(level <= niveau_debug)
+  if(level <= ReturnLevelDebug())
     rc = DisplayLogFlux_valist(flux, format, arguments);
   else
     rc = SUCCES;
@@ -671,14 +671,14 @@ int DisplayLogFluxLevel(FILE * flux, int level, char *format, ...)
 
 }                               /* DisplayLogFluxLevel */
 
-int DisplayLogFdLevel(int fd, int level, char *format, ...)
+static int DisplayLogFdLevel(int fd, int level, char *format, ...)
 {
   va_list arguments;
   int rc;
 
   va_start(arguments, format);
 
-  if(level <= niveau_debug)
+  if(level <= ReturnLevelDebug())
     rc = DisplayLogFd_valist(fd, format, arguments);
   else
     rc = SUCCES;
@@ -696,7 +696,7 @@ int DisplayLogLevel(int level, char *format, ...)
 
   va_start(arguments, format);
 
-  if(level <= niveau_debug)
+  if(level <= ReturnLevelDebug())
     rc = DisplayLog_valist(format, arguments);
   else
     rc = SUCCES;
@@ -707,14 +707,14 @@ int DisplayLogLevel(int level, char *format, ...)
 
 }                               /* DisplayLogLevel */
 
-int DisplayLogPathLevel(char *path, int level, char *format, ...)
+static int DisplayLogPathLevel(char *path, int level, char *format, ...)
 {
   va_list arguments;
   int rc;
 
   va_start(arguments, format);
 
-  if(level <= niveau_debug)
+  if(level <= ReturnLevelDebug())
     rc = DisplayLogPath_valist(path, format, arguments);
   else
     rc = SUCCES;
@@ -895,31 +895,6 @@ int DisplayErrorLogLine(int num_family, int num_error, int status, int ma_ligne)
   return DisplayLog("%s", buffer);
 }                               /* DisplayErrorLogLine */
 
-/* Les routines de gestion du descripteur de journal */
-int AddDefaultLogStreamJd(log_t * pjd, char log_dest[MAXPATHLEN], niveau_t niveau,
-                   aiguillage_t aiguillage)
-{
-  log_stream_t *nouvelle_voie;
-  type_log_stream_t type;
-  desc_log_stream_t desc_voie;
-
-  /* Default : NIV_CRIT */
-  if(niveau == -1)
-    niveau = NIV_CRIT;
-
-  /* Default logging location */
-  if (!log_dest)
-    log_dest = nfs_param.core_param.log_destination;
-  strcpy(desc_voie.path, log_dest);
-
-  if (strcmp(log_dest, "syslog") == 0)
-    type = V_SYSLOG;
-  else
-    type = V_FILE;
-
-  return AddLogStreamJd(pjd, type, desc_voie, niveau, aiguillage);
-
-}
 /* Les routines de gestion du descripteur de journal */
 int AddLogStreamJd(log_t * pjd, type_log_stream_t type, desc_log_stream_t desc_voie,
                    niveau_t niveau, aiguillage_t aiguillage)
@@ -1756,7 +1731,372 @@ int log_printf(char *format, ...)
   return rc;
 }
 
-  /* 
-   * Pour info : Les tags de printf dont on peut se servir:
-   * w DMNOPQTUWX 
-   */
+log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
+{
+  { COMPONENT_ALL,             "COMPONENT_ALL",           
+    NIV_CRIT
+  },
+  { COMPONENT_MEMALLOC,        "COMPONENT_MEMALLOC",       
+#ifdef _DEBUG_MEMALLOC      
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_STATES,          "COMPONENT_STATES",         
+#ifdef _DEBUG_STATES        
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_MEMLEAKS,        "COMPONENT_MEMLEAKS",       
+#ifdef _DEBUG_MEMLEAKS      
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_FSAL,            "COMPONENT_FSAL",           
+#ifdef _DEBUG_FSAL          
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_NFSPROTO,        "COMPONENT_NFSPROTO",       
+#ifdef _DEBUG_NFSPROTO      
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_NFS_V4,          "COMPONENT_NFS_V4",         
+#ifdef _DEBUG_NFS_V4        
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_NFS_V4_PSEUDO,   "COMPONENT_NFS_V4_PSEUDO",  
+#ifdef _DEBUG_NFS_V4_PSEUDO 
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_FILEHANDLE,      "COMPONENT_FILEHANDLE",     
+#ifdef _DEBUG_FILEHANDLE    
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_NFS_SHELL,       "COMPONENT_NFS_SHELL",      
+#ifdef _DEBUG_NFS_SHELL     
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_DISPATCH,        "COMPONENT_DISPATCH",       
+#ifdef _DEBUG_DISPATCH      
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_CACHE_CONTENT,   "COMPONENT_CACHE_CONTENT",  
+#ifdef _DEBUG_CACHE_CONTENT 
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_CACHE_INODE,     "COMPONENT_CACHE_INODE",    
+#ifdef _DEBUG_CACHE_INODE   
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_CACHE_INODE_GC,  "COMPONENT_CACHE_INODE_GC",  
+#ifdef _DEBUG_CACHE_INODE_GC
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_HASHTABLE,       "COMPONENT_HASHTABLE",      
+#ifdef _DEBUG_HASHTABLE     
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_LRU,             "COMPONENT_LRU",            
+#ifdef _DEBUG_LRU           
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_DUPREQ,          "COMPONENT_DUPREQ",         
+#ifdef _DEBUG_DUPREQ        
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_LOG,             "COMPONENT_LOG",            
+#ifdef _DEBUG_LOG           
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_RPCSEC_GSS,      "COMPONENT_RPCSEC_GSS",     
+#ifdef _DEBUG_RPCSEC_GSS    
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_INIT,            "COMPONENT_INIT",
+#ifdef _DEBUG_INIT
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_MAIN,            "COMPONENT_MAIN",
+#ifdef _DEBUG_MAIN
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_IDMAPPER,        "COMPONENT_IDMAPPER",
+#ifdef _DEBUG_IDMAPPER
+    NIV_FULL_DEBUG,
+#else
+    NIV_CRIT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_NFS_READDIR,        "COMPONENT_NFS_READDIR",
+#ifdef _DEBUG_NFS_READDIR
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
+  },
+
+  { COMPONENT_NFS_V4_LOCK,          "COMPONENT_NFS_V4_LOCK",
+#ifdef _DEBUG_NFS_V4_LOCK
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_NFS_V4_XATTR,          "COMPONENT_NFS_V4_XATTR",
+#ifdef _DEBUG_NFS_V4_XATTR
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_NFS_V4_REFERRAL,          "COMPONENT_NFS_V4_REFERRAL",
+#ifdef _DEBUG_NFS_V4_REFERRAL
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_MEMCORRUPT,        "COMPONENT_MEMCORRUPT",
+#ifdef _DEBUG_MEMCORRUPT      
+    NIV_DEBUG,
+#elifdef _DETECT_MEMCORRUPT
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_CONFIG,          "COMPONENT_CONFIG",
+#ifdef _DEBUG_CONFIG
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
+  }
+};
+
+int DisplayLogComponentLevel(log_components_t component, int level, char *format, ...)
+ {
+   va_list arguments;
+   int rc;
+
+   va_start(arguments, format);
+   switch(LogComponents[component].log_type)
+     {
+     case SYSLOG: 
+       rc = DisplayLogSyslog_valist(format, arguments);
+       break;
+     case FILELOG:
+       rc = DisplayLogPath_valist(LogComponents[component].log_file, format, arguments);
+       break;
+     default:
+       rc = ERR_FAILURE;
+     }
+  va_end(arguments);
+  return rc;
+}
+
+int DisplayErrorComponentLogLine(log_components_t component, int num_family, int num_error, int status, int ma_ligne)
+{
+  char buffer[STR_LEN_TXT];
+
+  if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
+    return -1;
+
+  return DisplayLogComponentLevel(component, NIV_CRIT, "%s: %s", LogComponents[component].str, buffer);
+}                               /* DisplayErrorLogLine */
+
+/* 
+ * Set le fichier dans lequel vont etre loggues les messages
+*/
+int SetNameFileLog(char *nom)
+{
+  /* Cette fonction n'est pas thread-safe car le fichier de log
+   * est commun a tous les threads du programme */
+  strcpy(nom_fichier_log, nom);
+
+  return 1;
+}                               /* SetNameFileLog */
+
+/* 
+ * Sets the default logging method (whether to a specific filepath or syslog.
+ * During initialization this is used and separate layer logging defaults to
+ * this destination.
+ */
+void SetDefaultLogging(char *name)
+{
+  strcpy(nom_fichier_log, name);
+  int newtype, comp;
+  char *newfilename;
+
+  if (strcmp(nom_fichier_log, "syslog") == 0)
+    newtype = SYSLOG;
+  else
+    newtype = FILELOG;
+
+  /* Change each layer's way of logging */
+  for(comp=0; comp < COMPONENT_COUNT; comp++)
+    {
+      LogComponents[comp].log_type = newtype;
+      if (newtype == FILELOG)
+        strncpy(LogComponents[comp].log_file, name, MAXPATHLEN);
+    }
+}                               /* SetDefaultLogging */
+
+void SetComponentLogFile(log_components_t comp, char *name)
+{
+  strcpy(nom_fichier_log, name);
+  int newtype;
+  char *newfilename;
+
+  if (strcmp(nom_fichier_log, "syslog") == 0)
+    newtype = SYSLOG;
+  else
+    newtype = FILELOG;
+
+  /* Change each component's way of logging */
+  LogComponents[comp].log_type = newtype;
+  if (newtype == FILELOG)
+    strncpy(LogComponents[comp].log_file, name, MAXPATHLEN);
+}                               /* SetComponentLogFile */
+
+/* 
+ * Pour info : Les tags de printf dont on peut se servir:
+ * w DMNOPQTUWX 
+ */
+
+#ifdef _SNMP_ADM_ACTIVE
+
+int getComponentLogLevel(snmp_adm_type_union * param, void *opt)
+{
+  long component = (long)opt;
+
+  strcpy(param->string, ReturnLevelInt(LogComponents[component].log_level));
+  return 0;
+}
+
+int setComponentLogLevel(const snmp_adm_type_union * param, void *opt)
+{
+  long component = (long)opt;
+  int level_to_set = ReturnLevelAscii(param->string);
+
+  if (level_to_set == -1)
+    return -1;
+
+  if (component == 0)
+    SetLevelDebug(level_to_set);
+  else
+    LogComponents[component].log_level = level_to_set;
+  return 0;
+}
+
+#endif /* _SNMP_ADM_ACTIVE */

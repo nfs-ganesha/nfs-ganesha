@@ -43,7 +43,7 @@
 #endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -259,8 +259,8 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
 
           if(DebugLevel == -1)
             {
-              DisplayLog
-                  ("cache_inode_read_conf: ERROR: Invalid debug level name: \"%s\".",
+              LogDebug(COMPONENT_CACHE_INODE,
+                  "cache_inode_read_conf: ERROR: Invalid debug level name: \"%s\".",
                    key_value);
               return CACHE_INODE_INVALID_ARGUMENT;
             }
@@ -281,7 +281,20 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
     }
 
   /* init logging */
-  AddDefaultLogStreamJd(&(pparam->log_outputs), LogFile, DebugLevel, SUP);
+  if(LogFile)
+    {
+      desc_log_stream_t log_stream;
+
+      strcpy(log_stream.path, LogFile);
+
+      /* Default : NIV_EVENT */
+
+      if(DebugLevel == -1)
+        AddLogStreamJd(&(pparam->log_outputs), V_FILE, log_stream, NIV_CRIT, SUP);
+      else
+        AddLogStreamJd(&(pparam->log_outputs), V_FILE, log_stream, DebugLevel, SUP);
+
+    }
 
   return CACHE_INODE_SUCCESS;
 }                               /* cache_inode_read_conf_client_parameter */

@@ -356,10 +356,6 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           strncpy(pparam->fsal_shared_library, key_value, MAXPATHLEN);
         }
-      else if(!strcasecmp(key_name, "LogDestination"))
-        {
-          strncpy(pparam->log_destination, key_value, MAXPATHLEN);
-        }
       else
         {
           fprintf(stderr,

@@ -59,7 +59,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -96,7 +96,7 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
 {
   fsal_attrib_list_t attr;
   cache_inode_status_t cache_status;
-
+  int cpt;
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getattr";
 
   /* This is a NFS4_OP_GETTAR */
@@ -131,13 +131,11 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_getattr_xattr(op, data, resp);
 
-#ifdef _DEBUG_NFS_V4
-  printf("CURRENT FH: NFS4_OP_GETATTR = { Length = %d  Val = ",
+  LogFullDebug(COMPONENT_NFS_V4, "CURRENT FH: NFS4_OP_GETATTR = { Length = %d  Val = ",
          data->currentFH.nfs_fh4_len);
   for(cpt = 0; cpt < data->currentFH.nfs_fh4_len; cpt++)
-    printf("%02X", data->currentFH.nfs_fh4_val[cpt]);
-  printf(" } \n");
-#endif
+    LogFullDebug(COMPONENT_NFS_V4, "%02X", data->currentFH.nfs_fh4_val[cpt]);
+  LogFullDebug(COMPONENT_NFS_V4, " } \n");
 
   /* Sanity check: if no attributes are wanted, nothing is to be done.
    * In this case NFS4_OK is to be returned */

@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -118,22 +118,20 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
   fsal_path_t fsal_path;
   unsigned int bytag = FALSE;
 
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFSPROTO,
                     "REQUEST PROCESSING: Calling mnt_Mnt, version %u", preq->rq_vers);
 
   /* Paranoid command to clean the result struct. */
   memset(pres, 0, sizeof(nfs_res_t));
 
-#ifdef _DETECT_MEMCORRUPT
   if(!BuddyCheck(parg->arg_mnt))
     {
-      fprintf(stderr, "Memory corruption in mnt_Mnt. arg_mnt = %p\n", parg->arg_mnt);
+      LogFullDebug(COMPONENT_MEMCORRUPT, "Memory corruption in mnt_Mnt. arg_mnt = %p\n", parg->arg_mnt);
     }
-#endif
 
   if(parg->arg_mnt == NULL)
     {
-      DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+      LogCrit(COMPONENT_NFSPROTO,
                         "/!\\ | MOUNT: NULL path passed as Mount argument !!!");
       return NFS_REQ_DROP;
     }
@@ -141,8 +139,8 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
   /* Retrieving arguments */
   strncpy(exportPath, parg->arg_mnt, MNTPATHLEN + 1);
 
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG, "MOUNT: Asked path=%s",
-                    exportPath);
+  LogFullDebug(COMPONENT_NFSPROTO,
+		    "MOUNT: Asked path=%s", exportPath);
 
   /*
    * Find the export for the dirname (using as well Path or Tag ) 
@@ -189,7 +187,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
 
   if(!p_current_item)
     {
-      DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+      LogCrit(COMPONENT_NFSPROTO,
                         "MOUNT: Export entry %s not found", exportPath);
 
       /* entry not found. */
@@ -206,7 +204,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
         }
       return NFS_REQ_OK;
     }
-  DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+  LogEvent(COMPONENT_NFSPROTO,
                     "MOUNT: Export entry Path=%s Tag=%s matches %s, export_id=%u",
                     exported_path, p_current_item->FS_tag, exportPath,
                     p_current_item->id);
@@ -307,7 +305,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
         }
 #endif
 
-      DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+      LogEvent(COMPONENT_NFSPROTO,
                         "MOUNT: Entry support %d different flavours", index_auth);
 
 #define RES_MOUNTINFO pres->res_mnt3.mountres3_u.mountinfo
@@ -326,14 +324,14 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
 
   if(!nfs_Add_MountList_Entry(hostname, exportPath))
     {
-      DisplayLogJd(pclient->log_outputs,
+      LogCrit(COMPONENT_NFSPROTO,
                    "MOUNT: /!\\ | Error when adding entry (%s,%s) to the mount list",
                    hostname, exportPath);
-      DisplayLogJd(pclient->log_outputs,
+      LogCrit(COMPONENT_NFSPROTO,
                    "MOUNT: /!\\ | Mount command will be successfull anyway");
     }
   else
-    DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+    LogFullDebug(COMPONENT_NFSPROTO,
                       "MOUNT: mount list entry (%s,%s) added", hostname, exportPath);
 
   return NFS_REQ_OK;

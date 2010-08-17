@@ -47,7 +47,7 @@
 #include <rpc/auth.h>
 #include <rpc/pmap_clnt.h>
 #endif
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -83,7 +83,7 @@ int nlm4_Sm_Notify(nfs_arg_t * parg /* IN     */ ,
                    nfs_res_t * pres /* OUT    */ )
 {
   nlm4_sm_notifyargs *arg;
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_NFSPROTO,
                     "REQUEST PROCESSING: Calling nlm4_sm_notify");
 
   arg = &parg->arg_nlm4_sm_notify;

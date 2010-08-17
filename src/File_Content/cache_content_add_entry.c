@@ -43,7 +43,7 @@
 #endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -126,7 +126,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
         {
           *pstatus = CACHE_CONTENT_MALLOC_ERROR;
 
-          DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+          LogDebug(COMPONENT_CACHE_CONTENT, 
                             "cache_content_new_entry: can't allocate a new fc_entry from cache pool");
 
           /* stat */
@@ -154,7 +154,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
       /* stat */
       pclient->stat.func_stats.nb_err_retryable[CACHE_CONTENT_NEW_ENTRY] += 1;
 
-      DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+      LogEvent(COMPONENT_CACHE_CONTENT,
                         "cache_content_new_entry: entry's index pathname could not be created");
 
       return NULL;
@@ -172,13 +172,13 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
       /* stat */
       pclient->stat.func_stats.nb_err_retryable[CACHE_CONTENT_NEW_ENTRY] += 1;
 
-      DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+      LogEvent(COMPONENT_CACHE_CONTENT,
                         "cache_content_new_entry: entry's data  pathname could not be created");
 
       return NULL;
     }
 
-  DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+  LogDebug(COMPONENT_CACHE_CONTENT,
                     "added file content cache entry: Data=%s Index=%s",
                     pfc_pentry->local_fs_entry.cache_path_data,
                     pfc_pentry->local_fs_entry.cache_path_index);
@@ -208,7 +208,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
 
       *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
 
-      DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+      LogEvent(COMPONENT_CACHE_CONTENT,
                         "cache_content_new_entry: entry could not be dumped in file");
 
       /* stat */
@@ -226,7 +226,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
 
           *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
 
-          DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+          LogEvent(COMPONENT_CACHE_CONTENT,
                             "cache_content_new_entry: data cache file could not be created, errno=%d (%s)",
                             errno, strerror(errno));
 
@@ -262,7 +262,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
 
           *pstatus = status;
 
-          DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+          LogEvent(COMPONENT_CACHE_CONTENT,
                             "cache_content_new_entry: data cache file could not read from FSAL, status=%u",
                             status);
 
