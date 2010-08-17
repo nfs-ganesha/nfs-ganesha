@@ -124,18 +124,12 @@ static int get_conf_from_env()
  */
 static register_info *new_register(char *label, char *desc, int type, int reg_len)
 {
-  int str_len;
   register_info *save;
   register_info *new = malloc(sizeof(register_info));
 
   /*fill the struct */
-  str_len = strlen(label) + 1;
-  new->label = malloc(str_len * sizeof(char));
-  strncpy(new->label, label, str_len);
-
-  str_len = strlen(desc) + 1;
-  new->desc = malloc(str_len * sizeof(char));
-  strncpy(new->desc, desc, str_len);
+  new->label = strdup(label);
+  new->desc = strdup(desc);
 
   /* set function to NULL (avoid undetermined value if scalar) */
   memset(&(new->function_info), 0, sizeof(new->function_info));
@@ -146,9 +140,8 @@ static register_info *new_register(char *label, char *desc, int type, int reg_le
   new->reg_len = reg_len;
 
   /* link the cell (insert in first) */
-  save = register_info_list;
+  new->next = register_info_list;
   register_info_list = new;
-  new->next = save;
 
   return new;
 }
