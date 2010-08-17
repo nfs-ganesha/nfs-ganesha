@@ -417,7 +417,7 @@ int nfs_open_owner_Del(cache_inode_open_owner_name_t * pname)
 
 void nfs_open_owner_PrintAll(void)
 {
-  HashTable_Print(COMPONENT_NFSPROTO, ht_open_owner);
+  HashTable_Log(COMPONENT_NFSPROTO, ht_open_owner);
 }                               /* nfs_open_owner_PrintAll */
 
 int nfs_convert_open_owner(open_owner4 * pnfsowner,

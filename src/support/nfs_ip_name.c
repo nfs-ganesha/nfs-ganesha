@@ -401,7 +401,7 @@ int nfs_ip_name_populate(char *path)
 
     }
 
-  /* HashTable_Print( ht_ip_name ) ; */
+  /* HashTable_Log( ht_ip_name ) ; */
   return IP_NAME_SUCCESS;
 }                               /* nfs_ip_name_populate */
 

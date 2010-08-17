@@ -436,5 +436,5 @@ int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
 
 void nfs41_Session_PrintAll(void)
 {
-  HashTable_Print(COMPONENT_NFS_V4, ht_session_id);
+  HashTable_Log(COMPONENT_NFS_V4, ht_session_id);
 }                               /* nfs41_Session_PrintAll */
