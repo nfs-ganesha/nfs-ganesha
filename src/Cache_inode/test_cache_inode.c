@@ -485,7 +485,7 @@ main(int argc, char *argv[])
       exit(1);
     }
   /* Print the Hash Table */
-  HashTable_Print(COMPONENT_HASHTABLE, ht);
+  HashTable_Log(COMPONENT_HASHTABLE, ht);
 
 #ifdef _ADDITIONAL_TEST
   /* Trying to lookup from a DIR_CONTINUE */
@@ -542,7 +542,7 @@ main(int argc, char *argv[])
   DisplayLogJd(log_desc_cache, "GC performed successfully");
 
   /* Print the Hash Table */
-  HashTable_Print(COMPONENT_HASHTABLE, ht);
+  HashTable_Log(COMPONENT_HASHTABLE, ht);
 
   /* Another readdir, after gc is made */
   eod_met = TO_BE_CONTINUED;
@@ -577,7 +577,7 @@ main(int argc, char *argv[])
   DisplayLogJd(log_desc_cache, "---------------------------------");
 
   /* Print the Hash Table */
-  HashTable_Print(COMPONENT_HASHTABLE, ht);
+  HashTable_Log(COMPONENT_HASHTABLE, ht);
 
   DisplayLogJd(log_desc_cache, "---------------------------------");
 

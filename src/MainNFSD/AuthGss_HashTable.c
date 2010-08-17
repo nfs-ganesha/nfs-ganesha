@@ -502,5 +502,5 @@ int Gss_ctx_Hash_Init(nfs_krb5_parameter_t param)
  */
 void Gss_ctx_Hash_Print(void)
 {
-  HashTable_Print(COMPONENT_RPCSEC_GSS, ht_gss_ctx);
+  HashTable_Log(COMPONENT_RPCSEC_GSS, ht_gss_ctx);
 }                               /* Gss_ctx_Hash_Print */
