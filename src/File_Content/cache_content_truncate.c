@@ -70,7 +70,7 @@ cache_content_status_t cache_content_truncate(cache_content_entry_t * pentry,
       /* Operation failed */
 
       /* LOG */
-      DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+      LogMajor(COMPONENT_CACHE_CONTENT,
                         "cache_content_truncate: impossible to truncate %s on local fs, error = ( %d, '%s' )",
                         pentry->local_fs_entry.cache_path_data, errno, strerror(errno));
 

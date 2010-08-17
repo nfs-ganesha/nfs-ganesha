@@ -49,6 +49,7 @@
 #include "err_fsal.h"
 #include "err_cache_inode.h"
 #include "stuff_alloc.h"
+#include "log_macros.h"
 
 #define HPSS_SSM "hpss_ssm"
 #define HPSS_KEYTAB "/krb5/hpssserver.keytab"
@@ -140,10 +141,11 @@ main(int argc, char *argv[])
       exit(1);
     }
 
+
   /* init debug */
   SetNamePgm("test_cache_inode");
   SetNameFunction("main");
-  SetNameFileLog("/dev/tty");
+  SetDefaultLogging("stderr");
 
 #if defined( _USE_GHOSTFS )
   if(argc != 2)
@@ -482,10 +484,8 @@ main(int argc, char *argv[])
       DisplayLogJd(log_desc_cache, "Error: can't lookup");
       exit(1);
     }
-#ifdef _WITH_HASHTABLE_PRINT
   /* Print the Hash Table */
-  HashTable_Print(ht);
-#endif
+  HashTable_Print(COMPONENT_HASHTABLE, ht);
 
 #ifdef _ADDITIONAL_TEST
   /* Trying to lookup from a DIR_CONTINUE */
@@ -541,10 +541,8 @@ main(int argc, char *argv[])
     }
   DisplayLogJd(log_desc_cache, "GC performed successfully");
 
-#ifdef _WITH_HASHTABLE_PRINT
   /* Print the Hash Table */
-  HashTable_Print(ht);
-#endif
+  HashTable_Print(COMPONENT_HASHTABLE, ht);
 
   /* Another readdir, after gc is made */
   eod_met = TO_BE_CONTINUED;
@@ -578,10 +576,8 @@ main(int argc, char *argv[])
 
   DisplayLogJd(log_desc_cache, "---------------------------------");
 
-#ifdef _WITH_HASHTABLE_PRINT
   /* Print the Hash Table */
-  HashTable_Print(ht);
-#endif
+  HashTable_Print(COMPONENT_HASHTABLE, ht);
 
   DisplayLogJd(log_desc_cache, "---------------------------------");
 

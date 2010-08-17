@@ -154,7 +154,7 @@ int cache_content_client_init(cache_content_client_t * pclient,
 
   if(pclient->pool_entry == NULL)
     {
-      DisplayLogJd(pclient->log_outputs,
+      LogCrit(COMPONENT_CACHE_CONTENT, 
                    "Error : can't init data_cache client entry pool");
       return 1;
     }

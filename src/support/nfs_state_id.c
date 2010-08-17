@@ -63,7 +63,7 @@
 #include <rpc/auth.h>
 #include <rpc/pmap_clnt.h>
 #endif
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -551,5 +551,5 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
 
 void nfs_State_PrintAll(void)
 {
-  HashTable_Print(ht_state_id);
+  HashTable_Print(COMPONENT_STATES, ht_state_id);
 }                               /* nfs_State_PrintAll */

@@ -60,8 +60,8 @@
 static void cache_inode_lock_print(cache_entry_t * pentry)
 {
 
-  printf
-      ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_print !!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  LogFullDebug(COMPONENT_CACHE_INODE,
+      "!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_print !!!!!!!!!!!!!!!\n");
   return;
 #ifdef BUGAZOMEU
   if(pentry->internal_md.type == REGULAR_FILE)
@@ -119,8 +119,8 @@ cache_inode_status_t cache_inode_lock_check_conflicting_range(cache_entry_t * pe
       return *pstatus;
     }
 
-  printf
-      ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_print !!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  LogFullDebug(COMPONENT_CACHE_INODE,
+      "!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_print !!!!!!!!!!!!\n");
   *pstatus = CACHE_INODE_INVALID_ARGUMENT;
   return *pstatus;
 
@@ -210,8 +210,8 @@ cache_inode_status_t cache_inode_lock_test(cache_entry_t * pentry,
 void cache_inode_lock_insert(cache_entry_t * pentry, cache_inode_state_t * pfilelock)
 {
 
-  printf
-      ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_insert !!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  LogFullDebug(COMPONENT_CACHE_INODE,
+      "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_insert !!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
   if(pentry == NULL)
     return;
@@ -258,8 +258,8 @@ void cache_inode_lock_insert(cache_entry_t * pentry, cache_inode_state_t * pfile
 void cache_inode_lock_remove(cache_entry_t * pentry, cache_inode_client_t * pclient)
 {
 
-  printf
-      ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_remove !!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  LogFullDebug(COMPONENT_CACHE_INODE,
+      "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_remove !!!!!!!!!!!!!!!!!!!!!!!!!\n");
   return;
 }                               /* cache_inode_lock_remove */
 
@@ -296,8 +296,8 @@ cache_inode_status_t cache_inode_lock_create(cache_entry_t * pentry,
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
 
-  printf
-      ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_remove !!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  LogFullDebug(COMPONENT_CACHE_INODE,
+      "!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_remove !!!!!!!!!!!!!\n");
   return CACHE_INODE_INVALID_ARGUMENT;
 
 #ifdef BUGAZOMEU

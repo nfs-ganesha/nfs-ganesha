@@ -157,9 +157,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
                         "cache_inode_gc_clean_entry: Could'nt free FSAL ressources fsal_status.major=%u",
                         fsal_status.major);
     }
-#ifdef _DEBUG_CACHE_INODE_GC
-  printf("++++> pentry %p deleted from HashTable\n", pentry);
-#endif
+  LogFullDebug(COMPONENT_CACHE_INODE_GC, "++++> pentry %p deleted from HashTable\n", pentry);
 
   /* Release the hash key data */
   cache_inode_release_fsaldata_key(&old_key, pgcparam->pclient);
@@ -186,9 +184,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
       parent_iter = parent_iter_next;
     }
 
-#ifdef _DEBUG_CACHE_INODE_GC
-  printf("++++> parent directory sent back to pool\n");
-#endif
+  LogFullDebug(COMPONENT_CACHE_INODE_GC, "++++> parent directory sent back to pool\n");
 
   /* If entry is a DIR_CONTINUE or a DIR_BEGINNING, release pdir_data */
   if(pentry->internal_md.type == DIR_BEGINNING)
@@ -204,9 +200,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
       RELEASE_PREALLOC(pentry->object.dir_cont.pdir_data,
                        pgcparam->pclient->pool_dir_data, next_alloc);
     }
-#ifdef _DEBUG_CACHE_INODE_GC
-  printf("++++> pdir_data (if needed) sent back to pool\n");
-#endif
+  LogFullDebug(COMPONENT_CACHE_INODE_GC,"++++> pdir_data (if needed) sent back to pool\n");
 
   /* Free and Destroy the mutex associated with the pentry */
   V_w(&pentry->lock);
@@ -219,9 +213,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
   /* Regular exit */
   pgcparam->nb_to_be_purged = pgcparam->nb_to_be_purged - 1;
 
-#ifdef _DEBUG_CACHE_INODE_GC
-  printf("++++> pentry %p: clean entry is ok\n", pentry);
-#endif
+  LogFullDebug(COMPONENT_CACHE_INODE_GC, "++++> pentry %p: clean entry is ok\n", pentry);
 
   return LRU_LIST_SET_INVALID;  /* Cleaning ok */
 }
@@ -342,9 +334,7 @@ int cache_inode_gc_suppress_file(cache_entry_t * pentry,
   /* Set the entry as invalid */
   pentry->internal_md.valid_state = INVALID;
 
-#ifdef _DEBUG_CACHE_INODE_GC
-  printf("****> cache_inode_gc_suppress_file on %p\n", pentry);
-#endif
+  LogFullDebug(COMPONENT_CACHE_INODE_GC,"****> cache_inode_gc_suppress_file on %p\n", pentry);
 
   /* Remove refences in the parent entries */
   if(cache_inode_gc_invalidate_related_dirent(pentry, pgcparam) != LRU_LIST_SET_INVALID)
@@ -401,9 +391,7 @@ int cache_inode_gc_suppress_directory(cache_entry_t * pentry,
                     "Entry %p (DIR_BEGINNING) and its associated dir_chain will be garbaged",
                     pentry);
 
-#ifdef _DEBUG_CACHE_INODE_GC
-  printf("****> cache_inode_gc_suppress_directory on %p\n", pentry);
-#endif
+  LogFullDebug(COMPONENT_CACHE_INODE_GC,"****> cache_inode_gc_suppress_directory on %p\n", pentry);
 
   /* Remove refences in the parent entries */
   if(cache_inode_gc_invalidate_related_dirent(pentry, pgcparam) != LRU_LIST_SET_INVALID)
