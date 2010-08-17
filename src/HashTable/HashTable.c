@@ -937,8 +937,8 @@ unsigned int HashTable_GetSize(hash_table_t * ht)
  *
  * Print information about the hashtable (mostly for debugging purpose).
  *
+ * @param component the component debugging config to use.
  * @param ht the hashtable to be used.
- *
  * @return none (returns void).
  *
  * @see HashTable_Set
@@ -991,6 +991,21 @@ void HashTable_Print(log_components_t component, hash_table_t * ht)
       }
     }
   printf("\n");
+}                               /* HashTable_Print */
+
+/**
+ * 
+ * HashTable_Print: Print information about the hashtable (mostly for debugging purpose).
+ *
+ * Print information about the hashtable (mostly for debugging purpose).
+ *
+ * @param ht the hashtable to be used.
+ * @return none (returns void).
+ *
+ */
+void HashTable_Print(hash_table_t * ht)
+{
+  HashTable_Print(COMPONENT_LOG, ht);
 }                               /* HashTable_Print */
 
 /* @} */
