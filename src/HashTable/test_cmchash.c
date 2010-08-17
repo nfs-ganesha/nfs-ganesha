@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
          ConvertiTempsChaine(fin, NULL));
 
   LogFullDebug(COMPONENT_HASHTABLE, "-----------------------------------------\n");
-  HashTable_Print(COMPONENT_HASHTABLE,ht);
+  HashTable_Log(COMPONENT_HASHTABLE,ht);
 
   printf("=========================================\n");
 
@@ -366,7 +366,7 @@ int main(int argc, char *argv[])
     }
   printf("-----------------------------------------\n");
 
-  HashTable_Print(COMPONENT_HASHTABLE,ht);
+  HashTable_Log(COMPONENT_HASHTABLE,ht);
   LogFullDebug(COMPONENT_HASHTABLE,"-----------------------------------------\n");
 
   printf("Affichage des statistiques de la table \n");

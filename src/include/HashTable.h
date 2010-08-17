@@ -43,6 +43,7 @@
 #include <pthread.h>
 #include "RW_Lock.h"
 #include "HashData.h"
+#include "log_macros.h"
 
 /**
  * @defgroup HashTableStructs
@@ -136,6 +137,7 @@ int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
                   hash_buffer_t * p_usedbuffkey, hash_buffer_t * p_usedbuffdata);
 #define HashTable_Set( ht, buffkey, buffval ) HashTable_Test_And_Set( ht, buffkey, buffval, HASHTABLE_SET_HOW_SET_OVERWRITE )
 void HashTable_GetStats(hash_table_t * ht, hash_stat_t * hstat);
+void HashTable_Log(log_components_t component, hash_table_t * ht);
 void HashTable_Print(hash_table_t * ht);
 unsigned int HashTable_GetSize(hash_table_t * ht);
 

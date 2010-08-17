@@ -945,7 +945,7 @@ unsigned int HashTable_GetSize(hash_table_t * ht)
  * @see HashTable_Init
  * @see HashTable_Get
  */
-void HashTable_Print(log_components_t component, hash_table_t * ht)
+void HashTable_Log(log_components_t component, hash_table_t * ht)
 {
   struct rbt_node *it;
   struct rbt_head *tete_rbt;
@@ -1005,7 +1005,7 @@ void HashTable_Print(log_components_t component, hash_table_t * ht)
  */
 void HashTable_Print(hash_table_t * ht)
 {
-  HashTable_Print(COMPONENT_LOG, ht);
+  HashTable_Log(COMPONENT_STDOUT, ht);
 }                               /* HashTable_Print */
 
 /* @} */

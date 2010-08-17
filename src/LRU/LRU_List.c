@@ -427,7 +427,7 @@ int LRU_apply_function(LRU_list_t * plru, int (*myfunc) (LRU_entry_t *, void *ad
 
 /**
  * 
- * HashTable_Print: Print information about the LRU (mostly for debugging purpose).
+ * HashTable_Log: Print information about the LRU (mostly for debugging purpose).
  *
  * Print information about the LRU (mostly for debugging purpose).
  *
