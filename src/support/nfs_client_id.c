@@ -304,12 +304,10 @@ int nfs_client_id_add(clientid4 clientid,
       HASHTABLE_SET_HOW_SET_OVERWRITE) != HASHTABLE_SUCCESS)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-  printf("-=-=-=-=-=-=-=-=-=-> ht_client_id \n");
-  HashTable_Print(ht_client_id);
-  printf("-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse \n");
-  HashTable_Print(ht_client_id_reverse);
-#endif
+  LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE, "-=-=-=-=-=-=-=-=-=-> ht_client_id \n");
+  HashTable_Print(COMPONENT_CLIENT_ID_COMPUTE, ht_client_id);
+  LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE, "-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse \n");
+  HashTable_Print(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id_reverse);
 
   return CLIENT_ID_SUCCESS;
 }                               /* nfs_client_id_add */
@@ -431,12 +429,10 @@ int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res)
       *client_id_res = *pnfs_client_id;
       status = CLIENT_ID_SUCCESS;
 
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-      printf("-=-=-=-=-=-=-=-=-=-> ht_client_id \n");
-      HashTable_Print(ht_client_id);
-      printf("-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse \n");
-      HashTable_Print(ht_client_id_reverse);
-#endif
+      LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,"-=-=-=-=-=-=-=-=-=-> ht_client_id \n");
+      HashTable_Print(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id);
+      LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,"-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse \n");
+      HashTable_Print(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id_reverse);
     }
   else
     {
@@ -472,12 +468,10 @@ int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id
 
       status = CLIENT_ID_SUCCESS;
 
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-      printf("-=-=-=-=-=-=-=-=-=-> ht_client_id \n");
-      HashTable_Print(ht_client_id);
-      printf("-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse \n");
-      HashTable_Print(ht_client_id_reverse);
-#endif
+      LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,"-=-=-=-=-=-=-=-=-=-> ht_client_id \n");
+      HashTable_Print(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id);
+      LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,"-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse \n");
+      HashTable_Print(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id_reverse);
     }
   else
     {

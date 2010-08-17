@@ -63,7 +63,7 @@
 #include <rpc/auth.h>
 #include <rpc/pmap_clnt.h>
 #endif
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -417,7 +417,7 @@ int nfs_open_owner_Del(cache_inode_open_owner_name_t * pname)
 
 void nfs_open_owner_PrintAll(void)
 {
-  HashTable_Print(ht_open_owner);
+  HashTable_Print(COMPONENT_NFSPROTO, ht_open_owner);
 }                               /* nfs_open_owner_PrintAll */
 
 int nfs_convert_open_owner(open_owner4 * pnfsowner,

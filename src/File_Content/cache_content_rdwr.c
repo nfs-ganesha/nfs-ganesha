@@ -227,16 +227,14 @@ cache_content_status_t cache_content_rdwr(cache_content_entry_t * pentry,
 
   *pstatus = CACHE_CONTENT_SUCCESS;
 
-#ifdef _DEBUG_CACHE_CONTENT
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_CACHE_CONTENT,
                     "---> DATA : IO Size IN = %llu fdsize=%d seeksize=%d",
                     *pio_size_in, sizeof(fsal_file_t), sizeof(fsal_seek_t));
-#endif
 
   /* For now, only FSAL_SEEK_SET is supported */
   if(seek_descriptor->whence != FSAL_SEEK_SET)
     {
-      DisplayLogJd(pclient->log_outputs,
+      LogDebug(COMPONENT_CACHE_CONTENT,
                    "Implementation trouble: seek_descriptor was not a 'FSAL_SEEK_SET' cursor");
       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
       return *pstatus;
@@ -268,7 +266,7 @@ cache_content_status_t cache_content_rdwr(cache_content_entry_t * pentry,
     {
       *pstatus = CACHE_CONTENT_BAD_CACHE_INODE_ENTRY;
 
-      DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+      LogMajor(COMPONENT_CACHE_CONTENT,
                         "cache_content_new_entry: cannot get handle");
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[statindex] += 1;

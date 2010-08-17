@@ -66,19 +66,15 @@ unsigned long cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,
                                          hash_buffer_t * buffclef)
 {
   unsigned long h = 0;
-#ifdef _DEBUG_HASHTABLE
   char printbuf[512];
-#endif
   cache_inode_fsal_data_t *pfsdata = (cache_inode_fsal_data_t *) (buffclef->pdata);
 
   h = FSAL_Handle_to_HashIndex(&pfsdata->handle, pfsdata->cookie,
                                p_hparam->alphabet_length, p_hparam->index_size);
 
-#ifdef _DEBUG_HASHTABLE
   snprintHandle(printbuf, 512, &pfsdata->handle);
-  printf("hash_func key: buff =(Handle=%s, Cookie=%u), hash value=%lu\n", printbuf,
+  LogFullDebug(COMPONENT_HASHTABLE, "hash_func key: buff =(Handle=%s, Cookie=%u), hash value=%lu\n", printbuf,
          pfsdata->cookie, h);
-#endif
 
   return h;
 }                               /* cache_inode_fsal_hash_func */
@@ -100,19 +96,15 @@ unsigned long cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
 {
   /* A polynomial function too, but reversed, to avoid producing same value as decimal_simple_hash_func */
   unsigned long h = 0;
-#ifdef _DEBUG_HASHTABLE
   char printbuf[512];
-#endif
 
   cache_inode_fsal_data_t *pfsdata = (cache_inode_fsal_data_t *) (buffclef->pdata);
 
   h = FSAL_Handle_to_RBTIndex(&pfsdata->handle, pfsdata->cookie);
 
-#ifdef _DEBUG_HASHTABLE
   snprintHandle(printbuf, 512, &pfsdata->handle);
-  printf("hash_func rbt: buff =(Handle=%s, Cookie=%u), value=%lu\n", printbuf,
+  LogFullDebug(COMPONENT_HASHTABLE, "hash_func rbt: buff =(Handle=%s, Cookie=%u), value=%lu\n", printbuf,
          pfsdata->cookie, h);
-#endif
   return h;
 }                               /* cache_inode_fsal_rbt_func */
 

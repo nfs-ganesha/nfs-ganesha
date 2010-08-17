@@ -83,6 +83,7 @@
 #include "BuddyMalloc.h"
 #include "HashTable.h"
 #include "MesureTemps.h"
+#include "log_macros.h"
 
 #define MAXTEST 10000           /* Plus grand que MAXDESTROY !! */
 #define MAXDESTROY 50
@@ -190,6 +191,8 @@ int main(int argc, char *argv[])
   int critere_recherche = 0;
   int random_val = 0;
 
+  SetDefaultLogging("stderr");
+
   hparam.index_size = PRIME;
   hparam.alphabet_length = 10;
   hparam.nb_node_prealloc = NB_PREALLOC;
@@ -230,11 +233,10 @@ int main(int argc, char *argv[])
   MesureTemps(&fin, &debut);
   printf("Duree de l'insertion de %d entrees: %s\n", MAXTEST,
          ConvertiTempsChaine(fin, NULL));
-#ifdef _DEBUG_HASHTABLE
-  printf("-----------------------------------------\n");
-  HashTable_Print(ht);
-#endif
-  printf("=========================================\n");
+
+  LogFullDebug(COMPONENT_HASHTABLE, "-----------------------------------------\n");
+  HashTable_Print(COMPONENT_HASHTABLE, ht);
+  LogFullDebug(COMPONENT_HASHTABLE,"=========================================\n");
 
   /* Premier test simple: verif de la coherence des valeurs lues */
   critere_recherche = CRITERE;
@@ -345,10 +347,8 @@ int main(int argc, char *argv[])
     }
   printf("-----------------------------------------\n");
 
-#ifdef _DEBUG_HASHTABLE
-  HashTable_Print(ht);
-  printf("-----------------------------------------\n");
-#endif
+  HashTable_Print(COMPONENT_HASHTABLE,ht);
+  LogFullDebug(COMPONENT_HASHTABLE,"-----------------------------------------\n");
 
   printf("Affichage des statistiques de la table \n");
   HashTable_GetStats(ht, &statistiques);

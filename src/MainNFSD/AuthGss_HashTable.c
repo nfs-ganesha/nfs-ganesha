@@ -16,6 +16,7 @@
 #include "log_macros.h"
 #include "config_parsing.h"
 #include "nfs_core.h"
+#include "log_macros.h"
 
 #include <gssrpc/rpc.h>
 #include <gssrpc/svc.h>
@@ -501,5 +502,5 @@ int Gss_ctx_Hash_Init(nfs_krb5_parameter_t param)
  */
 void Gss_ctx_Hash_Print(void)
 {
-  HashTable_Print(ht_gss_ctx);
+  HashTable_Print(COMPONENT_RPCSEC_GSS, ht_gss_ctx);
 }                               /* Gss_ctx_Hash_Print */
