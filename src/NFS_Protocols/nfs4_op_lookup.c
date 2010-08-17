@@ -233,13 +233,16 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
              (char *)(data->currentFH.nfs_fh4_val), data->currentFH.nfs_fh4_len);
       data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
-      LogFullDebug(COMPONENT_NFS_V4, "----> nfs4_op_lookup: name=%s  dir_pentry=%p  looked up pentry=%p\n",
-             strname, dir_pentry, file_pentry);
-      LogFullDebug(COMPONENT_NFS_V4, "----> FSAL handle parent puis fils dans nfs4_op_lookup\n");
-      print_buff((char *)cache_inode_get_fsal_handle(file_pentry, &cache_status),
-                 sizeof(fsal_handle_t));
-      print_buff((char *)cache_inode_get_fsal_handle(dir_pentry, &cache_status),
-                 sizeof(fsal_handle_t));
+      if(isFullDebug(COMPONENT_NFS_V4))
+        {
+          LogFullDebug(COMPONENT_NFS_V4, "----> nfs4_op_lookup: name=%s  dir_pentry=%p  looked up pentry=%p\n",
+                 strname, dir_pentry, file_pentry);
+          LogFullDebug(COMPONENT_NFS_V4, "----> FSAL handle parent puis fils dans nfs4_op_lookup\n");
+          print_buff(COMPONENT_NFS_V4, (char *)cache_inode_get_fsal_handle(file_pentry, &cache_status),
+                     sizeof(fsal_handle_t));
+          print_buff(COMPONENT_NFS_V4, (char *)cache_inode_get_fsal_handle(dir_pentry, &cache_status),
+                     sizeof(fsal_handle_t));
+        }
 
       /* Keep the pointer within the compound data */
       data->current_entry = file_pentry;

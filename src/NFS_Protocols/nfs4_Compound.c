@@ -425,7 +425,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
       utf82str(tmpstr, &(pres->res_compound4.tag));
       LogEvent(COMPONENT_NFS_V4, "--> COMPOUND REQUEST TAG is #%s#\n", tmpstr);
 
-      print_compound_fh(&data);
+      print_compound_fh(COMPONENT_NFS_V4, &data);
 
       LogDebug(COMPONENT_NFS_V4,
                         "NFS V4 COMPOUND:Status of %s in position %d = %d",

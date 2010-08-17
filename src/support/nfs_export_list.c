@@ -113,7 +113,7 @@
 #include <rpc/auth.h>
 #include <rpc/pmap_clnt.h>
 #endif
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs23.h"
@@ -278,19 +278,15 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
     {
     case AUTH_NONE:
       /* Nothing to be done here... */
-#ifdef _DEBUG_DISPATCH
-      DisplayLogLevel(NIV_FULL_DEBUG,
-                      "NFS DISPATCH: Request xid=%u has authentication AUTH_NONE",
-                      rpcxid);
-#endif
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "NFS DISPATCH: Request xid=%u has authentication AUTH_NONE",
+                   rpcxid);
       break;
 
     case AUTH_UNIX:
-#ifdef _DEBUG_DISPATCH
-      DisplayLogLevel(NIV_FULL_DEBUG,
-                      "NFS DISPATCH: Request xid=%u has authentication AUTH_UNIX",
-                      rpcxid);
-#endif
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "NFS DISPATCH: Request xid=%u has authentication AUTH_UNIX",
+                   rpcxid);
       /* We map the rq_cred to Authunix_parms */
       punix_creds = (struct authunix_parms *)ptr_req->rq_clntcred;
 
@@ -304,43 +300,42 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
 
 #ifdef _USE_GSSRPC
     case RPCSEC_GSS:
-#ifndef _DEBUG_DISPATCH
-      DisplayLogLevel(NIV_FULL_DEBUG,
-                      "NFS DISPATCH: Request xid=%u has authentication RPCSEC_GSS",
-                      rpcxid);
-#endif
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "NFS DISPATCH: Request xid=%u has authentication RPCSEC_GSS",
+                   rpcxid);
       /* Get the gss data to process them */
       gd = SVCAUTH_PRIVATE(ptr_req->rq_xprt->xp_auth);
 
-#ifdef _DEBUG_RPCSEC_GSS
-      printf
-          ("----> RPCSEC_GSS svc=%u RPCSEC_GSS_SVC_NONE=%u RPCSEC_GSS_SVC_INTEGRITY=%u RPCSEC_GSS_SVC_PRIVACY=%u\n",
-           gd->sec.svc, RPCSEC_GSS_SVC_NONE, RPCSEC_GSS_SVC_INTEGRITY,
-           RPCSEC_GSS_SVC_PRIVACY);
+      if(isFullDebug(COMPONENT_RPCSEC_GSS))
+        {
+          LogFullDebug(COMPONENT_RPCSEC_GSS,
+               "----> RPCSEC_GSS svc=%u RPCSEC_GSS_SVC_NONE=%u RPCSEC_GSS_SVC_INTEGRITY=%u RPCSEC_GSS_SVC_PRIVACY=%u\n",
+               gd->sec.svc, RPCSEC_GSS_SVC_NONE, RPCSEC_GSS_SVC_INTEGRITY,
+               RPCSEC_GSS_SVC_PRIVACY);
 
-      memcpy(&ptr, (void *)gd->ctx + 4, 4);
-      printf("----> Client=%s length=%u  Qop=%u established=%u gss_ctx_id=%p|%p\n",
-             (char *)gd->cname.value, gd->cname.length, gd->established, gd->sec.qop,
-             gd->ctx, ptr);
-#endif
+          memcpy(&ptr, (void *)gd->ctx + 4, 4);
+          LogFullDebug(COMPONENT_RPCSEC_GSS,
+                 "----> Client=%s length=%u  Qop=%u established=%u gss_ctx_id=%p|%p\n",
+                 (char *)gd->cname.value, gd->cname.length, gd->established, gd->sec.qop,
+                 gd->ctx, ptr);
+       }
 
       if((maj_stat = gss_oid_to_str(&min_stat, gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
         {
-          fprintf(stderr, "Erreur de gss_oid_to_str: %u|%u\n", maj_stat, min_stat);
+          LogCrit(COMPONENT_DISPATCH, "Error in gss_oid_to_str: %u|%u\n",
+                  maj_stat, min_stat);
           exit(1);
         }
-#ifdef _DEBUG_RPCSEC_GSS
-      printf("----> Client mech=%s len=%u\n", (char *)oidbuff.value, oidbuff.length);
-#endif
+      LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Client mech=%s len=%u\n",
+                   (char *)oidbuff.value, oidbuff.length);
 
       /* Je fais le menage derriere moi */
       (void)gss_release_buffer(&min_stat, &oidbuff);
 
       split_credname(gd->cname, username, domainname);
 
-#ifdef _DEBUG_RPCSEC_GSS
-      printf("----> User=%s Domain=%s\n", username, domainname);
-#endif
+      LogFullDebug(COMPONENT_RPCSEC_GSS, "----> User=%s Domain=%s\n",
+                   username, domainname);
 
       /* Convert to uid */
       if(!name2uid(username, &caller_uid))
@@ -348,14 +343,13 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
 
       if(uidgidmap_get(caller_uid, &caller_gid) != ID_MAPPER_SUCCESS)
         {
-          DisplayLogLevel(NIV_MAJOR,
-                          "NFS_DISPATCH: FAILURE: Could not resolve uidgid map for %u",
-                          caller_uid);
+          LogMajor(COMPONENT_DISPATCH,
+                   "NFS_DISPATCH: FAILURE: Could not resolve uidgid map for %u",
+                   caller_uid);
           caller_gid = -1;
         }
-#ifdef _DEBUG_RPCSEC_GSS
-      printf("----> Uid=%u Gid=%u\n", (unsigned int)caller_uid, (unsigned int)caller_gid);
-#endif
+      LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Uid=%u Gid=%u\n",
+                   (unsigned int)caller_uid, (unsigned int)caller_gid);
       caller_glen = 0;
       caller_garray = 0;
 
@@ -363,11 +357,9 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
 #endif                          /* _USE_GSSRPC */
 
     default:
-#ifdef _DEBUG_DISPATCH
-      DisplayLogLevel(NIV_FULL_DEBUG,
-                      "NFS DISPATCH: FAILURE : Request xid=%u, has unsupported authentication %d",
-                      rpcxid, ptr_req->rq_cred.oa_flavor);
-#endif
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "NFS DISPATCH: FAILURE : Request xid=%u, has unsupported authentication %d",
+                   rpcxid, ptr_req->rq_cred.oa_flavor);
       /* Reject the request for weak authentication and return to worker */
       return FALSE;
 
@@ -389,16 +381,14 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
 
   if(FSAL_IS_ERROR(fsal_status))
     {
-      DisplayLogLevel(NIV_EVENT,
-                      "NFS DISPATCHER: FAILURE: Could not get credentials for (uid=%d,gid=%d), fsal error=(%d,%d)",
-                      caller_uid, caller_gid, fsal_status.major, fsal_status.minor);
+      LogEvent(COMPONENT_DISPATCH,
+               "NFS DISPATCHER: FAILURE: Could not get credentials for (uid=%d,gid=%d), fsal error=(%d,%d)",
+               caller_uid, caller_gid, fsal_status.major, fsal_status.minor);
       return FALSE;
     }
-#ifdef _DEBUG_DISPATCH
   else
-    DisplayLogLevel(NIV_DEBUG, "NFS DISPATCHER: FSAL Cred acquired for (uid=%d,gid=%d)",
-                    caller_uid, caller_gid);
-#endif
+    LogDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: FSAL Cred acquired for (uid=%d,gid=%d)",
+             caller_uid, caller_gid);
 
   return TRUE;
 }                               /* nfs_build_fsal_context */
@@ -499,7 +489,8 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
       if((maj_stat = gss_oid_to_str(&min_stat, gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
         {
           convert_gss_status2str(errbuff, maj_stat, min_stat);
-          DisplayLog("GSSAPI ERROR: %u|%u = %s", maj_stat, min_stat, errbuff);
+          LogCrit(COMPONENT_DISPATCH, "GSSAPI ERROR: %u|%u = %s",
+                  maj_stat, min_stat, errbuff);
           return -1;
         }
       strncpy(pcred->auth_union.auth_gss.stroid, oidbuff.value, NFS_CLIENT_NAME_LEN);
