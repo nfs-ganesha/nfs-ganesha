@@ -1951,13 +1951,13 @@ void BuddyDumpMem(FILE * output)
                   c < ((unsigned char *)p_block + sizeof(BuddyBlock_t)); c++)
                 fprintf(output, "%.2X", (unsigned char)*c);
 
-              fprintf(output, "\n", (unsigned char)*c);
+              fprintf(output, "\n");
 
               for(c = (unsigned char *)p_block;
                   c < ((unsigned char *)p_block + sizeof(BuddyBlock_t)); c++)
                 fprintf(output, "%c.", (unsigned char)*c);
 
-              fprintf(output, "\n", (unsigned char)*c);
+              fprintf(output, "\n");
 
             }
 
