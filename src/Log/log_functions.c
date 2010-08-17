@@ -2009,6 +2009,15 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   }
+  { COMPONENT_SESSIONS,          "COMPONENT_SESSIONS",
+#ifdef _DEBUG_SESSIONS
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
+  }
 };
 
 int DisplayLogComponentLevel(log_components_t component, int level, char *format, ...)
