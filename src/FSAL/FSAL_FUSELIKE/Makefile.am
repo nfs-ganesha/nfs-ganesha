@@ -9,8 +9,15 @@ used_libs  = $(FSAL_LIB) $(FSAL_LDFLAGS) \
                                 ../../ConfigParsing/libConfigParsing.la \
                                 ../../Common/libcommon_utils.la \
                                 -lpthread
+if BUILD_SHARED_FSAL
+lib_LTLIBRARIES = libfsalfuse.la
+libfsalfuse_la_LDFLAGS = -version-number @LIBVERSION@
+libfsalfuse_la_LIBADD = ../../SemN/libSemN.la -lhandle
 
+else
 noinst_LTLIBRARIES          = libfsalfuse.la
+
+endif
 
 libfsalfuse_la_SOURCES = fsal_access.c  fsal_context.c  fsal_dirs.c    fsal_fsinfo.c    fsal_lock.c \
 			 fsal_rcp.c     fsal_compat.c   fsal_truncate.c \
