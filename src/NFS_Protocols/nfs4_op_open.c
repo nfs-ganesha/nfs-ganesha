@@ -581,8 +581,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                     }
                   V(powner->lock);
 
-                  nfs_State_PrintAll();
-
                   /* Now produce the filehandle to this file */
                   if((pnewfsal_handle =
                       cache_inode_get_fsal_handle(pentry_lookup, &cache_status)) == NULL)
@@ -1219,7 +1217,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       else
         res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
     }
-  nfs_State_PrintAll();
 
   /* regular exit */
   res_OPEN4.status = NFS4_OK;
