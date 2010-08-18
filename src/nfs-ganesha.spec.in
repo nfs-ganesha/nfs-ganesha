@@ -199,6 +199,7 @@ and namespaces. This package provides support for NFS-GANESHA used on top of ZFS
 %endif
 
 %if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
+%if %{?_with_fuse:0}%{!?_with_fuse:1}
 %package fsal-@FS_NAME@
 Summary: The NFS-GANESHA's FSAL dedicated to @FS_NAME@, provided as a shared object 
 Group: Applications/System
@@ -206,6 +207,7 @@ Requires: %{name}-common = %{version}-%{release}
 
 %description fsal-@FS_NAME@
 This package contains a FSAL library compiled as a shared object. It can be loaded dynamically in a FSAL-less NFS-GANESHA daemon
+%endif
 %endif
 
 %prep
@@ -278,8 +280,10 @@ install -m 644 config_samples/uidgid_mapfile.ganesha           $RPM_BUILD_ROOT%{
 install -m 755 tools/ganestat.pl                               $RPM_BUILD_ROOT%{_bindir}
 
 %if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
+%if %{?_with_fuse:0}%{!?_with_fuse:1}
 rm -f $RPM_BUILD_ROOT%{_libdir}/libfsal@FS_NAME@.la
 rm -f $RPM_BUILD_ROOT%{_libdir}/libfsal@FS_NAME@.a
+%endif
 %endif
 
 mkdir -p  $RPM_BUILD_ROOT%{_datadir}/%{name}
@@ -418,9 +422,11 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
+%if %{?_with_fuse:0}%{!?_with_fuse:1}
 %files fsal-@FS_NAME@
 %defattr(-,root,root,-)
 %{_libdir}/libfsal@FS_NAME@.so*
+%endif
 %endif
 
 
