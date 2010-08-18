@@ -1,0 +1,64 @@
+Name: @PACKAGE_NAME@
+Version: @PACKAGE_VERSION@
+Release: 1.0
+Summary: Library to access to a ZFS file system without fuse
+License: CDDL
+Group: Development/Libraries/C
+Url: http://nfs-ganesha.sourceforge.net
+Source0: %{name}-%{version}.tar.bz2
+BuildRoot: %{_tmppath}/%{name}-%{version}-root-%(%{__id_u} -n)
+BuildRequires: libaio-devel openssl-devel zlib-devel
+BuildRequires: autoconf automake gcc
+Requires: libaio openssl zlib
+
+%description
+libzfswrap is a library that allows access an manipulation of a file ZFS
+filesystem with no need of fuse.
+
+%package devel
+Summary: Development file for the library that access to a ZFS file system without fuse
+Group: Development/Libraries/C
+Requires: pkgconfig
+
+%description devel
+libzfswrap is a library that allows access an manipulation of a file ZFS
+filesystem with no need of fuse. This package contains the development headers
+for the libzfswrap library.
+
+
+%prep
+%setup -q -n %{name}-%{version}
+
+%build
+%configure @ac_configure_args@
+make %{?_smp_mflags} || make
+
+%install
+rm -rf $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT%{_libdir}
+mkdir -p $RPM_BUILD_ROOT%{_libdir}/pkgconfig
+
+make install DESTDIR=$RPM_BUILD_ROOT
+
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%files
+%defattr(-,root,root)
+%doc README
+%{_libdir}/libzfswrap.a
+%{_libdir}/libzfswrap.la
+%{_libdir}/libzfswrap.so.*
+
+%files devel
+%defattr(-,root,root)
+%{_libdir}/pkgconfig/libzfswrap.pc
+%{_includedir}/libzfswrap.h
+%{_libdir}/libzfswrap.so
+
+
+%changelog
+* Wed Jul 21 2010 Duraffort Remi <duraffortr@ocre.cea.fr> 1.0.0
+- add spec file
