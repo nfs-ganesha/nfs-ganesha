@@ -1,0 +1,7 @@
+doc/
+Doxyfile
+libzfswrap.pc
+libzfswrap.spec
+!*.pc.in
+!*.spec.in
+!Doxyfile.in
