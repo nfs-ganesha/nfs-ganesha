@@ -304,13 +304,6 @@ int nfs_client_id_add(clientid4 clientid,
       HASHTABLE_SET_HOW_SET_OVERWRITE) != HASHTABLE_SUCCESS)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-  printf("-=-=-=-=-=-=-=-=-=-> ht_client_id \n");
-  HashTable_Print(ht_client_id);
-  printf("-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse \n");
-  HashTable_Print(ht_client_id_reverse);
-#endif
-
   return CLIENT_ID_SUCCESS;
 }                               /* nfs_client_id_add */
 
@@ -430,13 +423,6 @@ int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res)
 
       *client_id_res = *pnfs_client_id;
       status = CLIENT_ID_SUCCESS;
-
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-      printf("-=-=-=-=-=-=-=-=-=-> ht_client_id \n");
-      HashTable_Print(ht_client_id);
-      printf("-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse \n");
-      HashTable_Print(ht_client_id_reverse);
-#endif
     }
   else
     {
@@ -471,13 +457,6 @@ int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id
       *ppclient_id_res = (nfs_client_id_t *) buffval.pdata;
 
       status = CLIENT_ID_SUCCESS;
-
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-      printf("-=-=-=-=-=-=-=-=-=-> ht_client_id \n");
-      HashTable_Print(ht_client_id);
-      printf("-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse \n");
-      HashTable_Print(ht_client_id_reverse);
-#endif
     }
   else
     {
@@ -674,10 +653,6 @@ int nfs_client_id_compute(char *name, clientid4 * pclientid)
   /* Copy the string to the padded one */
   for(i = 0; i < strnlen(name, CLIENT_ID_MAX_LEN); padded_name[i] = name[i], i++) ;
 
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-  printf("%s :", padded_name);
-#endif
-
   /* For each 9 character pack:
    *   - keep the 7 first bit (the 8th is often 0: ascii string) 
    *   - pack 7x9 bit to 63 bits using xor
@@ -707,11 +682,6 @@ int nfs_client_id_compute(char *name, clientid4 * pclientid)
           (uint64_t) padded_name[offset + 6] +
           (uint64_t) padded_name[offset + 7] + (uint64_t) padded_name[offset + 8];
 
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-      printf("|%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx | = ",
-             i1, i2, i3, i4, i5, i6, i7, i8, i9);
-#endif
-
       /* Get xor combibation of all the 8h bit */
       l = (padded_name[offset + 0] & 0x80) ^
           (padded_name[offset + 1] & 0x80) ^
@@ -725,17 +695,9 @@ int nfs_client_id_compute(char *name, clientid4 * pclientid)
 
       extract = i1 ^ i2 ^ i3 ^ i4 ^ i5 ^ i6 ^ i7 ^ i8 ^ i9 | l;
 
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-      printf("%llx ", extract);
-#endif
-
       computed_value ^= extract;
       computed_value ^= sum;
     }
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-  printf("\n");
-#endif
-
   computed_value = (computed_value >> 32) ^ (computed_value & 0x00000000FFFFFFFFLL);
 
   *pclientid = computed_value;
