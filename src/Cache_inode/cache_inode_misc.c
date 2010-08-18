@@ -899,8 +899,8 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
 
 #ifndef _NO_BUDDY_SYSTEM
   BuddyGetStats(&bstats);
-  printf
-      ("(pthread_self=%u) NbStandard=%lu  NbStandardUsed=%lu  InsideStandard(nb=%lu, size=%lu)\n",
+  LogFullDebug(COMPONENT_CACHE_INODE,
+      "(pthread_self=%u) NbStandard=%lu  NbStandardUsed=%lu  InsideStandard(nb=%lu, size=%lu)\n",
        pthread_self(), bstats.NbStdPages, bstats.NbStdUsed, bstats.StdUsedSpace,
        bstats.NbStdUsed);
 #endif
