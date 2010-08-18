@@ -30,7 +30,8 @@ SUBDIRS = include             \
           tools               \
           config_samples      \
           check               \
-	  debian
+	  debian              \
+          rpm
 
 if USE_FSAL_FUSE
 SUBDIRS += example-fuse
