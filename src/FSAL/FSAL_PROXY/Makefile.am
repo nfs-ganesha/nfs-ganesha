@@ -1,19 +1,23 @@
 AM_CFLAGS = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
+if ENABLE_HANDLE_MAPPING
+SUBDIRS = handle_mapping
+endif
+
 if BUILD_SHARED_FSAL
 
 lib_LTLIBRARIES = libfsalproxy.la
 libfsalproxy_la_LDFLAGS = -version-number @LIBVERSION@
 libfsalproxy_la_LIBADD = ../../SemN/libSemN.la -lhandle
+if ENABLE_HANDLE_MAPPING
+libfsalproxy_la_LIBADD += handle_mapping/libhandlemapping.la -lsqlite3
+endif
 
 else
 noinst_LTLIBRARIES          = libfsalproxy.la
 
 endif
 
-if ENABLE_HANDLE_MAPPING
-SUBDIRS = handle_mapping
-endif
 
 
 libfsalproxy_la_SOURCES = fsal_access.c  fsal_context.c  fsal_dirs.c    fsal_fsinfo.c    fsal_lock.c       fsal_rcp.c     fsal_truncate.c \
