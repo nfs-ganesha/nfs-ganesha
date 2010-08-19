@@ -1143,7 +1143,7 @@ int fn_mfsl_ls(int argc,        /* IN : number of args in argv */
       return st.major;
     }
 
-  from = FSAL_READDIR_FROM_BEGINNING;
+  FSAL_SET_COOKIE_BEGINNING(from);
 
   while(!error && !eod)
     {

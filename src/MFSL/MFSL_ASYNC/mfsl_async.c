@@ -136,6 +136,7 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
   fsal_boolean_t subeod = FALSE;
   fsal_status.major = ERR_FSAL_NO_ERROR;
   fsal_status.minor = 0;
+  fsal_cookie_t fsal_cookie_beginning ;
 
   fsal_status = FSAL_str2path(mfsl_param.pre_create_obj_dir, MAXPATHLEN, &fsal_path);
   if(FSAL_IS_ERROR(fsal_status))
@@ -164,8 +165,9 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
           exit(1);
         }
 
+      FSAL_SET_COOKIE_BEGINNING(fsal_cookie_beginning);
       fsal_status = FSAL_readdir(&dir_descriptor,
-                                 FSAL_READDIR_FROM_BEGINNING,
+                                 fsal_cookie_beginning,
                                  FSAL_ATTRS_MANDATORY,
                                  NB_DIRENT_CLEAN * sizeof(fsal_dirent_t),
                                  dirent, &end_cookie, &nb_entries, &eod);
@@ -222,7 +224,7 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
                         }
 
                       fsal_status = FSAL_readdir(&subdir_descriptor,
-                                                 FSAL_READDIR_FROM_BEGINNING,
+                                                 fsal_cookie_beginning,
                                                  FSAL_ATTRS_MANDATORY,
                                                  NB_DIRENT_CLEAN * sizeof(fsal_dirent_t),
                                                  subdirent,
@@ -978,7 +980,15 @@ fsal_status_t MFSL_lock(mfsl_object_t * objecthandle,   /* IN */
                         fsal_lockdesc_t * lock_descriptor       /* OUT */
     )
 {
-  return FSAL_lock(&objecthandle->handle, p_context, lock_info, lock_descriptor);
+  fsal_status_t status;
+
+  status.major = ERR_FSAL_NO_ERROR;
+  status.minor = 0;
+
+  // return FSAL_lock(&objecthandle->handle, p_context, lock_info, lock_descriptor);
+  /** @todo */
+
+  return status ;
 }                               /* MFSL_lock */
 
 fsal_status_t MFSL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
@@ -986,14 +996,27 @@ fsal_status_t MFSL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / 
                               mfsl_context_t * p_mfsl_context   /* IN */
     )
 {
-  return FSAL_changelock(lock_descriptor, lock_info);
+  fsal_status_t status;
+
+  //return FSAL_changelock(lock_descriptor, lock_info);
+  /** @todo */
+  status.major = ERR_FSAL_NO_ERROR;
+  status.minor = 0;
+
+  return status ;
 }                               /* MFSL_changelock */
 
 fsal_status_t MFSL_unlock(fsal_lockdesc_t * lock_descriptor,    /* IN/OUT */
                           mfsl_context_t * p_mfsl_context       /* IN */
     )
 {
-  return FSAL_unlock(lock_descriptor);
+  fsal_status_t status;
+
+  status.major = ERR_FSAL_NO_ERROR;
+  status.minor = 0;
+  /** @todo */
+  //return FSAL_unlock(lock_descriptor);
+  return status ;
 }                               /* MFSL_unlock */
 
 #endif                          /* ! _USE_SWIG */
