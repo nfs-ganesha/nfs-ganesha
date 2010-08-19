@@ -494,7 +494,7 @@ nfs_res_t nfs_dupreq_get(long xid, int *pstatus)
       /* reset timestamp */
       ((dupreq_entry_t *) buffval.pdata)->timestamp = time(NULL);
 
-      pstatus = DUPREQ_SUCCESS;
+      *pstatus = DUPREQ_SUCCESS;
       res_nfs = ((dupreq_entry_t *) buffval.pdata)->res_nfs;
       LogDebug(COMPONENT_DUPREQ, "NFS DUPREQ: Hit in the dupreq cache for xid=%u", xid);
     }
