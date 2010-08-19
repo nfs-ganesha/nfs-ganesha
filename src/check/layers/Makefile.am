@@ -11,7 +11,7 @@ user3.sav:
 testdir.sav:
 	./config_tests.ksh
 
-CLEANFILES =  *.sav
+CLEANFILES =  *.sav maketest.conf
 
 EXTRA_DIST=test_cache_access2.gansh     test_cache_stat.gansh      test_fsal_rename.gansh      test_nfs_mkdir.gansh \
 	test_cache_chown.gansh       test_cache_symlinks.gansh  test_fsal_rights.gansh      test_nfs_rename.gansh \
