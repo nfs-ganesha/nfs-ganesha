@@ -63,7 +63,7 @@ char my_config_path[MAXPATHLEN] = "/etc/ganesha/ganesha.conf";
 char log_path[MAXPATHLEN] = "/tmp/nfs-ganesha.log";
 char exec_name[MAXPATHLEN] = "nfs-ganesha";
 char host_name[MAXHOSTNAMELEN] = "localhost";
-int debug_level = NIV_EVENT;
+int debug_level = -1;
 int detach_flag = FALSE;
 char ganesha_exec_path[MAXPATHLEN];
 
