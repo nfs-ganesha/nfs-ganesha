@@ -153,8 +153,7 @@ fsal_status_t POSIXFSAL_open(posixfsal_handle_t * p_filehandle, /* IN */
   /* flags conflicts. */
   if(rc)
     {
-      DisplayLogJdLevel(fsal_log, NIV_EVENT,
-                        "Invalid/conflicting flags : %#X", openflags);
+      LogEvent(COMPONENT_FSAL, "Invalid/conflicting flags : %#X", openflags);
       Return(rc, 0, INDEX_FSAL_open);
     }
 
@@ -278,13 +277,13 @@ fsal_status_t POSIXFSAL_read(posixfsal_file_t * p_file_descriptor,      /* IN */
       if(rc)
         {
 
-          DisplayLogJdLevel(fsal_log, NIV_EVENT,
-                            "Error in posix fseek operation (whence=%s, offset=%lld)",
-                            (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
-                             (p_seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
-                              (p_seek_descriptor->whence ==
-                               FSAL_SEEK_END ? "SEEK_END" : "ERROR"))),
-                            p_seek_descriptor->offset);
+          LogEvent(COMPONENT_FSAL,
+                   "Error in posix fseek operation (whence=%s, offset=%lld)",
+                   (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
+                    (p_seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
+                     (p_seek_descriptor->whence ==
+                      FSAL_SEEK_END ? "SEEK_END" : "ERROR"))),
+                   p_seek_descriptor->offset);
 
           Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_read);
         }
@@ -354,15 +353,15 @@ fsal_status_t POSIXFSAL_read(posixfsal_file_t * p_file_descriptor,      /* IN */
 
           if(rc)
             {
-              DisplayLogJdLevel(fsal_log, NIV_EVENT,
-                                "Error in posix fseek operation (whence=%s, offset=%lld)",
-                                (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
-                                 (p_seek_descriptor->whence ==
-                                  FSAL_SEEK_SET ? "SEEK_SET" : (p_seek_descriptor->whence
-                                                                ==
-                                                                FSAL_SEEK_END ? "SEEK_END"
-                                                                : "ERROR"))),
-                                p_seek_descriptor->offset);
+              LogEvent(COMPONENT_FSAL,
+                       "Error in posix fseek operation (whence=%s, offset=%lld)",
+                       (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
+                        (p_seek_descriptor->whence ==
+                         FSAL_SEEK_SET ? "SEEK_SET" : (p_seek_descriptor->whence
+                                                       ==
+                                                       FSAL_SEEK_END ? "SEEK_END"
+                                                       : "ERROR"))),
+                       p_seek_descriptor->offset);
 
               ReleaseTokenFSCall();
 
@@ -499,27 +498,27 @@ fsal_status_t POSIXFSAL_write(posixfsal_file_t * p_file_descriptor,     /* IN */
       if(rc)
         {
 
-          DisplayLogJdLevel(fsal_log, NIV_EVENT,
-                            "Error in posix fseek operation (whence=%s, offset=%lld)",
-                            (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
-                             (p_seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
-                              (p_seek_descriptor->whence ==
-                               FSAL_SEEK_END ? "SEEK_END" : "ERROR"))),
-                            p_seek_descriptor->offset);
+          LogEvent(COMPONENT_FSAL,
+                   "Error in posix fseek operation (whence=%s, offset=%lld)",
+                   (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
+                    (p_seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
+                     (p_seek_descriptor->whence ==
+                      FSAL_SEEK_END ? "SEEK_END" : "ERROR"))),
+                   p_seek_descriptor->offset);
 
           Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_write);
 
         }
 
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-                        "Write operation (whence=%s, offset=%lld, size=%lld)",
-                        (p_seek_descriptor->whence ==
-                         FSAL_SEEK_CUR ? "SEEK_CUR" : (p_seek_descriptor->whence ==
-                                                       FSAL_SEEK_SET ? "SEEK_SET"
-                                                       : (p_seek_descriptor->whence ==
-                                                          FSAL_SEEK_END ? "SEEK_END" :
-                                                          "ERROR"))),
-                        p_seek_descriptor->offset, buffer_size);
+      LogFullDebug(COMPONENT_FSAL,
+                   "Write operation (whence=%s, offset=%lld, size=%lld)",
+                   (p_seek_descriptor->whence ==
+                    FSAL_SEEK_CUR ? "SEEK_CUR" : (p_seek_descriptor->whence ==
+                                                  FSAL_SEEK_SET ? "SEEK_SET"
+                                                  : (p_seek_descriptor->whence ==
+                                                     FSAL_SEEK_END ? "SEEK_END" :
+                                                     "ERROR"))),
+                   p_seek_descriptor->offset, buffer_size);
 
     }
 
@@ -586,15 +585,15 @@ fsal_status_t POSIXFSAL_write(posixfsal_file_t * p_file_descriptor,     /* IN */
 
           if(rc)
             {
-              DisplayLogJdLevel(fsal_log, NIV_EVENT,
-                                "Error in posix fseek operation (whence=%s, offset=%lld)",
-                                (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
-                                 (p_seek_descriptor->whence ==
-                                  FSAL_SEEK_SET ? "SEEK_SET" : (p_seek_descriptor->whence
-                                                                ==
-                                                                FSAL_SEEK_END ? "SEEK_END"
-                                                                : "ERROR"))),
-                                p_seek_descriptor->offset);
+              LogEvent(COMPONENT_FSAL,
+                       "Error in posix fseek operation (whence=%s, offset=%lld)",
+                       (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
+                        (p_seek_descriptor->whence ==
+                         FSAL_SEEK_SET ? "SEEK_SET" : (p_seek_descriptor->whence
+                                                       ==
+                                                       FSAL_SEEK_END ? "SEEK_END"
+                                                       : "ERROR"))),
+                       p_seek_descriptor->offset);
 
               ReleaseTokenFSCall();
 
