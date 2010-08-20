@@ -73,7 +73,7 @@
 #include <rpc/auth.h>
 #include <rpc/pmap_clnt.h>
 #endif
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -131,8 +131,8 @@ void nfs_stat_update(nfs_stat_type_t type,
 
         default:
           /* Bad vers ? */
-          DisplayLog
-              ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
+          LogCrit(COMPONENT_DISPATCH,
+               "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
                __FILE__, __LINE__);
           return;
           break;
@@ -154,8 +154,8 @@ void nfs_stat_update(nfs_stat_type_t type,
 
         default:
           /* Bad vers ? */
-          DisplayLog
-              ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
+          LogCrit(COMPONENT_DISPATCH,
+               "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
                __FILE__, __LINE__);
           return;
           break;
@@ -171,8 +171,8 @@ void nfs_stat_update(nfs_stat_type_t type,
           break;
         default:
           /* Bad vers ? */
-          DisplayLog
-              ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
+          LogCrit(COMPONENT_DISPATCH,
+               "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
                __FILE__, __LINE__);
           return;
           break;
@@ -192,8 +192,8 @@ void nfs_stat_update(nfs_stat_type_t type,
           break;
         default:
           /* Bad vers ? */
-          DisplayLog
-              ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
+          LogCrit(COMPONENT_DISPATCH,
+               "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
                __FILE__, __LINE__);
           return;
           break;
@@ -203,8 +203,8 @@ void nfs_stat_update(nfs_stat_type_t type,
   else
     {
       /* Bad program ? */
-      DisplayLog
-          ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
+      LogCrit(COMPONENT_DISPATCH,
+           "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
            __FILE__, __LINE__);
       return;
     }
@@ -241,8 +241,8 @@ void nfs_stat_update(nfs_stat_type_t type,
 
     default:
       /* Bad type ? */
-      DisplayLog
-          ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
+      LogCrit(COMPONENT_DISPATCH,
+           "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
            __FILE__, __LINE__);
       break;
     }
