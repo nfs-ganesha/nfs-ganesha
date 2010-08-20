@@ -144,7 +144,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
   cache_inode_state_t *piter_state = NULL;
   cache_inode_state_t *piter_saved = NULL;
   cache_inode_open_owner_t *powner = powner_input;
-  char other_head[12];
+  char debug_str[24];
   bool_t conflict_found = FALSE;
   unsigned int i = 0;
 
@@ -305,9 +305,8 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
   *pstatus = CACHE_INODE_SUCCESS;
 
   if (isFullDebug(COMPONENT_STATES)) {
-    LogFullDebug(COMPONENT_STATES,"         -----  cache_inode_add_state : ");
-    for(i = 0; i < 12; i++)
-      LogFullDebug(COMPONENT_STATES,"%02x", (unsigned char)pnew_state->stateid_other[i]);
+    sprint_buff(debug_str, (unsigned char)pnew_state->stateid_other[i], 12);
+    LogFullDebug(COMPONENT_STATES,"cache_inode_add_state : %s", debug_str);
   }
   V_w(&pentry->lock);
 
@@ -520,7 +519,7 @@ cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
 {
   cache_inode_state_t *ptest_state = NULL;
   cache_entry_t *pentry = NULL;
-
+  char str[24];
   if(pstatus == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
@@ -533,9 +532,8 @@ cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
   unsigned int i = 0;
 
   if (isFullDebug(COMPONENT_STATES)) {
-    LogFullDebug(COMPONENT_STATES,"         -----  cache_inode_del_state : ");
-    for(i = 0; i < 12; i++)
-      LogFullDebug(COMPONENT_STATES,"%02x", (unsigned char)pstate->stateid_other[i]);
+    sprint_buff(str, (unsigned char)pstate->stateid_other[i], 12);
+    LogFullDebug(COMPONENT_STATES,"cache_inode_del_state : %s", str);
   }
 
   /* Does this state exists ? */
@@ -632,7 +630,6 @@ cache_inode_status_t cache_inode_state_iterate(cache_entry_t * pentry,
   cache_inode_state_t *piter_state = NULL;
   cache_inode_state_t *phead_state = NULL;
   uint64_t fileid_digest = 0;
-  char other_head[12];
 
   if(pstatus == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
