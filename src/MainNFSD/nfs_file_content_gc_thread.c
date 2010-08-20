@@ -162,6 +162,9 @@ void *file_content_gc_thread(void *IndexArg)
   cache_content_status_t cache_content_status;
   FILE *command_stream = NULL;
 
+  char logfile_arg[MAXPATHLEN];
+  int loglevel_arg;
+
   SetNameFunction("file_content_fc_thread");
 
   LogEvent(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : Starting GC thread");
@@ -218,13 +221,20 @@ void *file_content_gc_thread(void *IndexArg)
             }
         }                       /* for */
 
-      if(debuglevelstr)
-        snprintf(command, 2 * MAXPATHLEN, "%s -f %s -N %s -L %s",
-                 ganesha_exec_path, config_path, debuglevelstr, fcc_log_path);
-      else
-        snprintf(command, 2 * MAXPATHLEN, "%s -f %s -N NIV_MAJ -L %s",
-                 ganesha_exec_path, config_path, fcc_log_path);
 
+      if (strncmp(fcc_log_path, "/dev/null", 9) == 0)
+	strncpy(logfile_arg, LogComponents[COMPONENT_CACHE_INODE_GC].log_file, MAXPATHLEN);
+      else
+	strncpy(logfile_arg, fcc_log_path, MAXPATHLEN); /* config variable */
+
+      if(fcc_debug_level) /* config variable */
+	loglevel_arg = debuglevelstr;
+      else
+	loglevel_arg = tabLogLevel[LogComponents[COMPONENT_CACHE_INODE_GC].log_level].str;
+
+      snprintf(command, 2 * MAXPATHLEN, "%s -f %s -N %s -L %s",
+	       ganesha_exec_path, config_path, loglevel_arg, logfile_arg);
+	       
       if(some_flush_to_do)
         strncat(command, " -P 3", 2 * MAXPATHLEN);      /* Sync and erase */
       else
