@@ -901,8 +901,8 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
   BuddyGetStats(&bstats);
   LogFullDebug(COMPONENT_CACHE_INODE,
       "(pthread_self=%u) NbStandard=%lu  NbStandardUsed=%lu  InsideStandard(nb=%lu, size=%lu)\n",
-       pthread_self(), bstats.NbStdPages, bstats.NbStdUsed, bstats.StdUsedSpace,
-       bstats.NbStdUsed);
+       (unsigned int)pthread_self(), (long unsigned int)bstats.NbStdPages, (long unsigned int)bstats.NbStdUsed, (long unsigned int)bstats.StdUsedSpace,
+       (long unsigned int)bstats.NbStdUsed);
 #endif
   LogFullDebug(COMPONENT_CACHE_INODE,
       "(pthread_self=%u) LRU GC state: nb_entries=%d nb_invalid=%d nb_call_gc=%d param.nb_call_gc_invalid=%d\n",

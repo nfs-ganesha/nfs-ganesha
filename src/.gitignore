@@ -15,3 +15,8 @@ libganeshaNFS.pc
 nfs-ganesha.spec
 rpm/
 deb-pkg/
+cppcheck.*
+cscope.*
+nfs-ganesha*.tar.gz
+nfs-ganesha*.tar.bz2
+patch-for-HPSS-nfs-ganesha-*
