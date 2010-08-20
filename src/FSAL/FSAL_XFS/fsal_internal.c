@@ -108,7 +108,7 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT;
 static void init_keys(void)
 {
   if(pthread_key_create(&key_stats, NULL) == -1)
-    DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_KEY_CREATE, errno);
+    LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_KEY_CREATE, errno);
 
   return;
 }                               /* init_keys */
@@ -138,7 +138,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
   if(pthread_once(&once_key, init_keys) != 0)
     {
-      DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_ONCE, errno);
+      LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_ONCE, errno);
       return;
     }
 
@@ -156,7 +156,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
       if(bythread_stat == NULL)
         {
-          DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
+          LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, Mem_Errno);
         }
 
       /* inits the struct */
@@ -209,7 +209,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
   /* first, we init the keys if this is the first time */
   if(pthread_once(&once_key, init_keys) != 0)
     {
-      DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_ONCE, errno);
+      LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_ONCE, errno);
       return;
     }
 
@@ -223,7 +223,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
 
       if((bythread_stat =
           (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t))) == NULL)
-        DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
+        LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, Mem_Errno);
 
       /* inits the struct */
       for(i = 0; i < FSAL_NB_FUNC; i++)
@@ -360,14 +360,14 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
       if(rc != 0)
         ReturnCode(ERR_FSAL_SERVERFAULT, rc);
 
-      DisplayLogJdLevel(fsal_log, NIV_DEBUG,
+      LogDebug(COMPONENT_FSAL,
                         "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
                         fsal_info->max_fs_calls);
 
     }
   else
     {
-      DisplayLogJdLevel(fsal_log, NIV_DEBUG,
+      LogDebug(COMPONENT_FSAL,
                         "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
     }
 
@@ -376,49 +376,49 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
 #ifdef _DEBUG_FSAL
 
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "{");
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxfilesize  = %llX    ",
+  LogDebug(COMPONENT_FSAL, "{");
+  LogDebug(COMPONENT_FSAL, "  maxfilesize  = %llX    ",
                     default_posix_info.maxfilesize);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxlink  = %lu   ",
+  LogDebug(COMPONENT_FSAL, "  maxlink  = %lu   ",
                     default_posix_info.maxlink);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxnamelen  = %lu  ",
+  LogDebug(COMPONENT_FSAL, "  maxnamelen  = %lu  ",
                     default_posix_info.maxnamelen);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxpathlen  = %lu  ",
+  LogDebug(COMPONENT_FSAL, "  maxpathlen  = %lu  ",
                     default_posix_info.maxpathlen);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  no_trunc  = %d ",
+  LogDebug(COMPONENT_FSAL, "  no_trunc  = %d ",
                     default_posix_info.no_trunc);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  chown_restricted  = %d ",
+  LogDebug(COMPONENT_FSAL, "  chown_restricted  = %d ",
                     default_posix_info.chown_restricted);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  case_insensitive  = %d ",
+  LogDebug(COMPONENT_FSAL, "  case_insensitive  = %d ",
                     default_posix_info.case_insensitive);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  case_preserving  = %d ",
+  LogDebug(COMPONENT_FSAL, "  case_preserving  = %d ",
                     default_posix_info.case_preserving);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  fh_expire_type  = %hu ",
+  LogDebug(COMPONENT_FSAL, "  fh_expire_type  = %hu ",
                     default_posix_info.fh_expire_type);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  link_support  = %d  ",
+  LogDebug(COMPONENT_FSAL, "  link_support  = %d  ",
                     default_posix_info.link_support);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  symlink_support  = %d  ",
+  LogDebug(COMPONENT_FSAL, "  symlink_support  = %d  ",
                     default_posix_info.symlink_support);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  lock_support  = %d  ",
+  LogDebug(COMPONENT_FSAL, "  lock_support  = %d  ",
                     default_posix_info.lock_support);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  named_attr  = %d  ",
+  LogDebug(COMPONENT_FSAL, "  named_attr  = %d  ",
                     default_posix_info.named_attr);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  unique_handles  = %d  ",
+  LogDebug(COMPONENT_FSAL, "  unique_handles  = %d  ",
                     default_posix_info.unique_handles);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  acl_support  = %hu  ",
+  LogDebug(COMPONENT_FSAL, "  acl_support  = %hu  ",
                     default_posix_info.acl_support);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  cansettime  = %d  ",
+  LogDebug(COMPONENT_FSAL, "  cansettime  = %d  ",
                     default_posix_info.cansettime);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  homogenous  = %d  ",
+  LogDebug(COMPONENT_FSAL, "  homogenous  = %d  ",
                     default_posix_info.homogenous);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  supported_attrs  = %llX  ",
+  LogDebug(COMPONENT_FSAL, "  supported_attrs  = %llX  ",
                     default_posix_info.supported_attrs);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxread  = %llX     ",
+  LogDebug(COMPONENT_FSAL, "  maxread  = %llX     ",
                     default_posix_info.maxread);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxwrite  = %llX     ",
+  LogDebug(COMPONENT_FSAL, "  maxwrite  = %llX     ",
                     default_posix_info.maxwrite);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  umask  = %X ", default_posix_info.umask);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "}");
+  LogDebug(COMPONENT_FSAL, "  umask  = %X ", default_posix_info.umask);
+  LogDebug(COMPONENT_FSAL, "}");
 
 #endif
 
@@ -451,17 +451,15 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
   SET_BITMAP_PARAM(global_fs_info, fs_common_info, xattr_access_rights);
 
-#ifdef _DEBUG_FSAL
-  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_FSAL,
                     "Supported attributes constant = 0x%llX.",
                     POSIX_SUPPORTED_ATTRIBUTES);
 
-  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_FSAL,
                     "Supported attributes default = 0x%llX.",
                     default_posix_info.supported_attrs);
-#endif
 
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG,
+  LogDebug(COMPONENT_FSAL,
                     "FSAL INIT: Supported attributes mask = 0x%llX.",
                     global_fs_info.supported_attrs);
 
@@ -541,9 +539,7 @@ fsal_status_t fsal_internal_Path2Handle(xfsfsal_op_context_t * p_context,       
 
   memset(p_handle, 0, sizeof(xfsfsal_handle_t));
 
-#ifdef _DEBUG_FSAL
-  DisplayLogLevel(NIV_FULL_DEBUG, "Lookup handle for %s", p_fsalpath->path);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "Lookup handle for %s", p_fsalpath->path);
 
   if((objectfd = open(p_fsalpath->path, O_RDONLY, 0600)) < 0)
     ReturnCode(posix2fsal_error(errno), errno);
@@ -605,9 +601,7 @@ fsal_status_t fsal_internal_testAccess(xfsfsal_op_context_t * p_context,        
   if(p_context->credential.user == uid)
     {
 
-#if defined( _DEBUG_FSAL )
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "File belongs to user %d", uid);
-#endif
+      LogFullDebug(COMPONENT_FSAL, "File belongs to user %d", uid);
 
       if(mode & FSAL_MODE_RUSR)
         missing_access &= ~FSAL_R_OK;
@@ -622,11 +616,9 @@ fsal_status_t fsal_internal_testAccess(xfsfsal_op_context_t * p_context,        
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
       else
         {
-#if defined( _DEBUG_FSAL )
-          DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+          LogFullDebug(COMPONENT_FSAL,
                             "Mode=%#o, Access=%#o, Rights missing: %#o", mode,
                             access_type, missing_access);
-#endif
           ReturnCode(ERR_FSAL_ACCESS, 0);
         }
 
@@ -636,11 +628,10 @@ fsal_status_t fsal_internal_testAccess(xfsfsal_op_context_t * p_context,        
 
   is_grp = (p_context->credential.group == gid);
 
-# ifdef _DEBUG_FSAL
   if(is_grp)
-    DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "File belongs to user's group %d",
+    LogFullDebug(COMPONENT_FSAL, "File belongs to user's group %d",
                       p_context->credential.group);
-# endif
+
 
   /* Test if file belongs to alt user's groups */
 
@@ -650,12 +641,10 @@ fsal_status_t fsal_internal_testAccess(xfsfsal_op_context_t * p_context,        
         {
           is_grp = (p_context->credential.alt_groups[i] == gid);
 
-#ifdef _DEBUG_FSAL
           if(is_grp)
-            DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+            LogFullDebug(COMPONENT_FSAL,
                               "File belongs to user's alt group %d",
                               p_context->credential.alt_groups[i]);
-#endif
 
           // exits loop if found
           if(is_grp)
