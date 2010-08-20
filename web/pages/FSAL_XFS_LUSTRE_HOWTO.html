@@ -31,6 +31,6 @@ This is very simple too: this time you should do this<br>
 This will produce the binaries <span style="font-style: italic;">lustre.ganesha.nfsd</span>
 and <span style="font-style: italic;">lustre.ganeshell</span> or  <span style="font-style: italic;">xfs.ganesha.nfsd</span> and  <span style="font-style: italic;">xfs.ganeshell</span>
 
-<br><br><br><h2>Configuring the specific stuff fot FSAL_XFS and FSAL_LUSTRE</h2>And... Well... That's all !!! 
+<br><br><br><h2>Configuring the specific stuff for FSAL_XFS and FSAL_LUSTRE</h2>And... Well... That's all !!! 
 There is no specific Stuff to be set in the configuration for XFS or LUSTRE. Just export the path in a 'EXPORT' block. Nothing else is to be set. The program will check in /etc/mtab to verify if the exported path is actually within a XFS or a LUSTRE filesystem one and will get the information on it from there.<br><br>You may want, through the export NFS mount point, to get access to the XattrD feature (basically accessing object extended attributes via NFS). In LUSTRE and XFS, user defined attributes can be created, set, modified and used. To enable this, make sure the local file system that you want to export via nfs-ganesha is user attributes ready and is mounted this way (it should have the <span style="font-style: italic;">user_attr</span> option enabled). If not, you'll get EPERM errors.<br>
 
