@@ -1,0 +1,59 @@
+diff --git a/src/include/log_macros.h b/src/include/log_macros.h
+index f10d40a..a4c47e9 100644
+--- a/src/include/log_macros.h
++++ b/src/include/log_macros.h
+@@ -198,20 +198,45 @@ static log_component_info __attribute__ ((__unused__)) LogComponents[] =
+ 
+ 
+ #define LogMajor(component, format, args...) \
+-   if (LogComponents[component].log_level >= NIV_MAJOR) \
+-     DisplayLogLevel(NIV_MAJ, format, ## args );
++  do { \
++    if (LogComponents[component].log_level >= NIV_MAJOR) \
++      DisplayLogLevel(NIV_MAJ, format, ## args ); \
++  } while (0)
+ 
+ #define LogCrit(component, format, args...) \
+-   if (LogComponents[component].log_level >= NIV_MAJOR) \
+-     DisplayLogLevel(NIV_CRIT, format, ## args );
++  do { \
++    if (LogComponents[component].log_level >= NIV_CRIT) \
++       DisplayLogLevel(NIV_CRIT, format, ## args ); \
++   } while (0)
+ 
+ #define LogEvent(component, format, args...) \
+-   if (LogComponents[component].log_level >= NIV_MAJOR) \
+-     DisplayLogLevel(NIV_EVENT, format, ## args );
++  do { \
++    if (LogComponents[component].log_level >= NIV_EVENT) \
++      DisplayLogLevel(NIV_EVENT, format, ## args ); \
++  } while (0)
+ 
+ #define LogDebug(component, format, args...) \
+-   if (LogComponents[component].log_level >= NIV_MAJOR) \
+-     DisplayLogLevel(NIV_DEBUG, format, ## args );
++  do { \
++    if (LogComponents[component].log_level >= NIV_DEBUG) \
++      DisplayLogLevel(NIV_DEBUG, format, ## args ); \
++  } while (0)
++
++#define LogFullDebug(component, format, args...) \
++  do { \
++    if (LogComponents[component].log_level >= NIV_FULL_DEBUG) \
++      DisplayLogLevel(NIV_FULL_DEBUG, format, ## args ); \
++  } while (0)
++
++/* 
++ * Temporary define of LogPrintf to handle messages that were
++ * displayed to console via printf. This should get renamed
++ * something more sensible.
++ */
++#define LogPrintf(component, format, args...) \
++  do { \
++    if (LogComponents[component].log_level >= NIV_FULL_DEBUG) \
++      DisplayLogLevel(NIV_FULL_DEBUG, format, ## args ); \
++  } while (0)
+ 
+ 
+ #endif
+
