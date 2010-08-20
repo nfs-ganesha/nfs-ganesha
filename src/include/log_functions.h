@@ -459,8 +459,10 @@ static status_t __attribute__ ((__unused__)) tab_systeme_status[] =
 int SetNamePgm(char *nom);
 int SetNameHost(char *nom);
 int SetNameFileLog(char *nom);
-void SetDefaultLogging(char *name);
+int SetDefaultLogging(char *name);
 int SetNameFunction(char *nom); /* thread safe */
+void SetLogLevelFromEnv();
+
 char *ReturnNamePgm();
 char *ReturnNameHost();
 char *ReturnNameFileLog();
@@ -548,6 +550,8 @@ typedef struct journal
 int DisplayLogJd(log_t jd, char *format, ...);
 int DisplayLogJdLevel(log_t jd, int level, char *format, ...);
 int DisplayErrorJdLine(log_t jd, int num_family, int num_error, int status, int ma_ligne);
+
+
 
 #define DisplayErrorJd(a, b, c, d ) DisplayErrorJdLine( a, b, c, d, __LINE__ )
 
