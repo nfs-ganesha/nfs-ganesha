@@ -43,6 +43,7 @@
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
+#include <libgen.h>
 
 #include "log_macros.h"
 #include "nfs_core.h"
@@ -333,6 +334,10 @@ void SetComponentLogLevel(log_components_t component, int level_to_set)
   if(level_to_set >= NB_LOG_LEVEL)
     level_to_set = NB_LOG_LEVEL - 1;
 
+  LogMajor(COMPONENT_LOG, "Changing log level of %s from %s to %s",
+	     LogComponents[component].str,
+	     ReturnLevelInt(LogComponents[component].log_level),
+	     ReturnLevelInt(level_to_set));
   LogComponents[component].log_level = level_to_set;
 }
 
@@ -351,8 +356,10 @@ void SetLevelDebug(int level_to_set)
   if(level_to_set >= NB_LOG_LEVEL)
     level_to_set = NB_LOG_LEVEL - 1;
 
+  LogMajor(COMPONENT_LOG, "Changing log level for all components to %s",
+	     ReturnLevelInt(level_to_set));
   for (i = 0; i < COMPONENT_COUNT; i++)
-    LogComponents[i].log_level = level_to_set;
+      LogComponents[i].log_level = level_to_set;
 }                               /* SetLevelDebug */
 
 static void IncrementeLevelDebug()
@@ -392,6 +399,8 @@ int InitDebug(int level_to_set)
     tab_family[i].num_family = UNUSED_SLOT;
 
   /* Set debug level for each component as long as it wasn't initialized to a debug level */
+  LogMajor(COMPONENT_LOG, "Changing log level for all components to at least %s",
+	     ReturnLevelInt(level_to_set));
   for (i = 0; i < COMPONENT_COUNT; i++)
     if (LogComponents[i].log_level < NIV_DEBUG)
       LogComponents[i].log_level = level_to_set;
@@ -558,6 +567,7 @@ static int DisplayLogPath_valist(char *path, char *format, va_list arguments)
 
               /* Relache du verrou sur fichier */
               lock_file.l_type = F_UNLCK;
+
               fcntl(fd, F_SETLKW, (char *)&lock_file);
 
               /* fermeture du fichier */
@@ -977,6 +987,7 @@ int DisplayLogJdLevel(log_t jd, int level, char *format, ...)
               break;
 
             case V_FILE:
+
               DisplayLogPath_valist(pvoie->desc.path, format, arguments);
               break;
 
@@ -2023,7 +2034,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
 int DisplayLogComponentLevel(log_components_t component, int level, char *format, ...)
  {
    va_list arguments;
-   int rc;
+   int rc;  
 
    va_start(arguments, format);
    switch(LogComponents[component].log_type)
@@ -2053,7 +2064,6 @@ int DisplayErrorComponentLogLine(log_components_t component, int num_family, int
 
   if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
-
   return DisplayLogComponentLevel(component, NIV_CRIT, "%s: %s", LogComponents[component].str, buffer);
 }                               /* DisplayErrorLogLine */
 
@@ -2069,52 +2079,111 @@ int SetNameFileLog(char *nom)
   return 1;
 }                               /* SetNameFileLog */
 
+void SetLogLevelFromEnv()
+{
+  char *env_value;
+  int newval = -1, comp, loglevel;
+
+  for(comp=0; comp < COMPONENT_COUNT; comp++)
+    {
+      env_value = getenv(LogComponents[comp].str);
+      if (env_value == NULL)
+	continue;
+      newval = ReturnLevelAscii(env_value);
+      if (newval == -1) {
+	LogMajor(COMPONENT_LOG, "Environment variable %s exists, but the value %s is not a valid log level.",
+		 LogComponents[comp].str, env_value);
+	continue;
+      }
+      LogMajor(COMPONENT_LOG, "Using environment variable to switch log level for %s from %s to %s",
+	       LogComponents[comp].str, tabLogLevel[LogComponents[comp].log_level].str,
+	       ReturnLevelInt(newval));
+      LogComponents[comp].log_level = newval;
+    }
+}
+
+static int isValidLogPath(char * pathname)
+{
+  char *directory_name;
+  struct stat *buf;
+  int rc;
+
+  directory_name = dirname(pathname);
+  if (directory_name == NULL)
+      return 0;
+
+  rc = access(directory_name, W_OK);
+  switch(rc)
+    {
+    case 0:
+      break; /* success !! */
+    case EACCES:
+      LogCrit(COMPONENT_LOG, "Either access is denied to the file or denied to one of the directories in %s",
+	      directory_name);
+      break;
+    case ELOOP:
+      LogCrit(COMPONENT_LOG, "Too many symbolic links were encountered in resolving %s", directory_name);
+      break;
+    case ENAMETOOLONG:
+      LogCrit(COMPONENT_LOG, "%s is too long of a pathname.", directory_name);
+      break;
+    case ENOENT:
+      LogCrit(COMPONENT_LOG, "A component of %s does not exist.", directory_name);
+      break;
+    case ENOTDIR:
+      LogCrit(COMPONENT_LOG, "%s is not a directory.", directory_name);
+      break;
+    case EROFS:
+      LogCrit(COMPONENT_LOG, "Write permission was requested for a file on a read-only file system.");
+      break;
+    case EFAULT:
+      LogCrit(COMPONENT_LOG, "%s points outside your accessible address space.", directory_name);
+      break;
+    }
+
+  return 1;
+}
+
 /* 
  * Sets the default logging method (whether to a specific filepath or syslog.
  * During initialization this is used and separate layer logging defaults to
  * this destination.
  */
-void SetDefaultLogging(char *name)
+int SetDefaultLogging(char *name)
 {
-  strcpy(nom_fichier_log, name);
-  int newtype, comp;
-  char *newfilename;
-
-  if (strcmp(nom_fichier_log, "syslog") == 0)
-    newtype = SYSLOG;
-  else if (strcmp(nom_fichier_log, "stderr") == 0)
-    newtype = STDERRLOG;
-  else if (strcmp(nom_fichier_log, "stdout") == 0)
-    newtype = STDOUTLOG;
-  else
-    newtype = FILELOG;
-
-
-  /* Change each layer's way of logging */
+  int comp;
   for(comp=0; comp < COMPONENT_COUNT; comp++)
     {
       if (LogComponents[comp].value == COMPONENT_STDOUT)
 	continue;
-      LogComponents[comp].log_type = newtype;
-      if (newtype == FILELOG)
-        strncpy(LogComponents[comp].log_file, name, MAXPATHLEN);
+      SetComponentLogFile(comp, name);
     }
+  return 1;
 }                               /* SetDefaultLogging */
 
-void SetComponentLogFile(log_components_t comp, char *name)
+int SetComponentLogFile(log_components_t comp, char *name)
 {
   strcpy(nom_fichier_log, name);
   int newtype;
   char *newfilename;
 
-  if (strcmp(nom_fichier_log, "syslog") == 0)
+  if (strcmp(nom_fichier_log, "SYSLOG") == 0)
     newtype = SYSLOG;
-  else if (strcmp(nom_fichier_log, "stderr") == 0)
+  else if (strcmp(nom_fichier_log, "STDERR") == 0)
     newtype = STDERRLOG;
+  else if (strcmp(nom_fichier_log, "STDOUT") == 0)
+    newtype = STDOUTLOG;
   else
     newtype = FILELOG;
 
-  /* Change each component's way of logging */
+  if (newtype == FILELOG)
+    if (!isValidLogPath(name))
+      {
+	LogMajor(COMPONENT_LOG, "Could not set default logging to %s",
+		 nom_fichier_log);
+	return 0;
+      }
+
   LogComponents[comp].log_type = newtype;
   if (newtype == FILELOG)
     strncpy(LogComponents[comp].log_file, name, MAXPATHLEN);
@@ -2145,8 +2214,13 @@ int setComponentLogLevel(const snmp_adm_type_union * param, void *opt)
 
   if (component == 0)
     SetLevelDebug(level_to_set);
-  else
+  else {
+    LogMajor(COMPONENT_LOG, "SNMP request changing log level of %s from %s to %s.",
+	     LogComponents[component].str,
+	     ReturnLevelInt(LogComponents[component].log_level),
+	     ReturnLevelInt(level_to_set));
     LogComponents[component].log_level = level_to_set;
+  }
   return 0;
 }
 

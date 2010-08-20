@@ -535,5 +535,6 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
 
 void nfs_State_PrintAll(void)
 {
-  HashTable_Log(COMPONENT_STATES, ht_state_id);
+  if(isFullDebug(COMPONENT_STATES))
+    HashTable_Log(COMPONENT_STATES, ht_state_id);
 }                               /* nfs_State_PrintAll */

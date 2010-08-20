@@ -304,10 +304,11 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
   /* Regular exit */
   *pstatus = CACHE_INODE_SUCCESS;
 
-  LogFullDebug(COMPONENT_STATES,"         -----  cache_inode_add_state : ");
-  for(i = 0; i < 12; i++)
-    LogFullDebug(COMPONENT_STATES,"%02x", (unsigned char)pnew_state->stateid_other[i]);
-
+  if (isFullDebug(COMPONENT_STATES)) {
+    LogFullDebug(COMPONENT_STATES,"         -----  cache_inode_add_state : ");
+    for(i = 0; i < 12; i++)
+      LogFullDebug(COMPONENT_STATES,"%02x", (unsigned char)pnew_state->stateid_other[i]);
+  }
   V_w(&pentry->lock);
 
   return *pstatus;
@@ -529,11 +530,13 @@ cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
       return *pstatus;
     }
 
-    unsigned int i = 0;
+  unsigned int i = 0;
 
+  if (isFullDebug(COMPONENT_STATES)) {
     LogFullDebug(COMPONENT_STATES,"         -----  cache_inode_del_state : ");
     for(i = 0; i < 12; i++)
       LogFullDebug(COMPONENT_STATES,"%02x", (unsigned char)pstate->stateid_other[i]);
+  }
 
   /* Does this state exists ? */
   if(!nfs4_State_Get_Pointer(pstate->stateid_other, &ptest_state))
