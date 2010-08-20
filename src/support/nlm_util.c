@@ -48,7 +48,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 #include <sys/time.h>
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -299,7 +299,7 @@ nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs * arg)
      */
     nlm_lock_entry_inc_ref(nlm_entry);
     pthread_mutex_unlock(&nlm_lock_list_mutex);
-    DisplayLogLevel(NIV_FULL_DEBUG, "lock request (but found blocked locks)");
+    LogFullDebug(COMPONENT_NFSPROTO, "lock request (but found blocked locks)");
     return nlm_entry;
   }
 
@@ -638,7 +638,7 @@ void nlm_node_recovery(char *name,
   nlm_lock_entry_t *nlm_entry;
   struct glist_head *glist, *glistn;
 
-  DisplayLogLevel(NIV_FULL_DEBUG, "Recovery for host %s\n", name);
+  LogFullDebug(COMPONENT_NFSPROTO, "Recovery for host %s\n", name);
 
   pthread_mutex_lock(&nlm_lock_list_mutex);
   glist_for_each_safe(glist, glistn, &nlm_lock_list)
@@ -695,7 +695,7 @@ int nlm_monitor_host(char *name)
   }
   pthread_mutex_unlock(&nlm_lock_list_mutex);
   /* There is nobody monitoring the host */
-  DisplayLogLevel(NIV_FULL_DEBUG, "Monitoring host %s\n", name);
+  LogFullDebug(COMPONENT_NFSPROTO, "Monitoring host %s\n", name);
   return nsm_monitor(name);
 }
 
@@ -720,7 +720,7 @@ int nlm_unmonitor_host(char *name)
   }
   pthread_mutex_unlock(&nlm_lock_list_mutex);
   /* There is nobody holding a lock with host */
-  DisplayLogLevel(NIV_FULL_DEBUG, "Unmonitoring host %s\n", name);
+  LogFullDebug(COMPONENT_NFSPROTO, "Unmonitoring host %s\n", name);
   return nsm_unmonitor(name);
 }
 
@@ -774,7 +774,7 @@ static void nlm4_send_grant_msg(void *arg)
        * We are not able call granted callback. Some client may retry
        * the lock again. So remove the existing blocked nlm entry
        */
-      DisplayLogLevel(NIV_MAJ,
+      LogMajor(COMPONENT_NFSPROTO,
                       "%s: GRANTED_MSG RPC call failed. Removing the blocking lock\n",
                       __func__);
       goto free_nlm_lock_entry;
@@ -784,7 +784,7 @@ static void nlm4_send_grant_msg(void *arg)
       /*
        * We already have marked the locks granted
        */
-      DisplayLogLevel(NIV_MAJ, "%s: Granted the blocking lock successfully\n", __func__);
+      LogMajor(COMPONENT_NFSPROTO, "%s: Granted the blocking lock successfully\n", __func__);
     }
  free_nlm_lock_entry:
   nlm_remove_from_locklist(nlm_entry);
