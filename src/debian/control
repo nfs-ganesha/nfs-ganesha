@@ -29,7 +29,7 @@ Description: NFS-GANESHA usable as a proxy
 
 Package: nfs-ganesha-posix
 Architecture: any
-Depends:  (>=  )
+Depends: mysql (>= 5.0 )
 Description: NFS-GANESHA usable as a generic POSIX-based server
  NFS-GANESHA is a NFS Server running in user space with a large cache.
  It comes with various backend modules to support different file systems
