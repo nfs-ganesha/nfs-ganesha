@@ -179,7 +179,6 @@ int main(int argc, char *argv[])
     strcpy((char *)exec_name, argv[0]);
 
   /* get host name */
-
   if(gethostname(localmachine, sizeof(localmachine)) != 0)
     {
       fprintf(stderr, "Could not get local host name, exiting...");
@@ -289,7 +288,7 @@ int main(int argc, char *argv[])
     }
 
   /* initialize memory and logging */
-
+  SetLogLevelFromEnv();
   if(nfs_prereq_init(exec_name, host_name, debug_level, log_path))
     {
       fprintf(stderr, "NFS MAIN: Error initializing NFSd prerequisites\n");

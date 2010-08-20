@@ -72,9 +72,11 @@ unsigned long cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,
   h = FSAL_Handle_to_HashIndex(&pfsdata->handle, pfsdata->cookie,
                                p_hparam->alphabet_length, p_hparam->index_size);
 
-  snprintHandle(printbuf, 512, &pfsdata->handle);
-  LogFullDebug(COMPONENT_HASHTABLE, "hash_func key: buff =(Handle=%s, Cookie=%u), hash value=%lu\n", printbuf,
-         pfsdata->cookie, h);
+  if(isFullDebug(COMPONENT_HASHTABLE)) {
+    snprintHandle(printbuf, 512, &pfsdata->handle);
+    LogFullDebug(COMPONENT_HASHTABLE, "hash_func key: buff =(Handle=%s, Cookie=%u), hash value=%lu\n", printbuf,
+		 pfsdata->cookie, h);
+  }
 
   return h;
 }                               /* cache_inode_fsal_hash_func */
@@ -102,9 +104,11 @@ unsigned long cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
 
   h = FSAL_Handle_to_RBTIndex(&pfsdata->handle, pfsdata->cookie);
 
-  snprintHandle(printbuf, 512, &pfsdata->handle);
-  LogFullDebug(COMPONENT_HASHTABLE, "hash_func rbt: buff =(Handle=%s, Cookie=%u), value=%lu\n", printbuf,
-         pfsdata->cookie, h);
+  if(isFullDebug(COMPONENT_HASHTABLE)) {
+    snprintHandle(printbuf, 512, &pfsdata->handle);
+    LogFullDebug(COMPONENT_HASHTABLE, "hash_func rbt: buff =(Handle=%s, Cookie=%u), value=%lu\n", printbuf,
+		 pfsdata->cookie, h);
+  }
   return h;
 }                               /* cache_inode_fsal_rbt_func */
 
