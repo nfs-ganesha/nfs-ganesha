@@ -671,10 +671,6 @@ int nfs_client_id_compute(char *name, clientid4 * pclientid)
   /* Copy the string to the padded one */
   for(i = 0; i < strnlen(name, CLIENT_ID_MAX_LEN); padded_name[i] = name[i], i++) ;
 
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-  printf("%s :", padded_name);
-#endif
-
   /* For each 9 character pack:
    *   - keep the 7 first bit (the 8th is often 0: ascii string) 
    *   - pack 7x9 bit to 63 bits using xor
@@ -704,11 +700,6 @@ int nfs_client_id_compute(char *name, clientid4 * pclientid)
           (uint64_t) padded_name[offset + 6] +
           (uint64_t) padded_name[offset + 7] + (uint64_t) padded_name[offset + 8];
 
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-      printf("|%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx | = ",
-             i1, i2, i3, i4, i5, i6, i7, i8, i9);
-#endif
-
       /* Get xor combibation of all the 8h bit */
       l = (padded_name[offset + 0] & 0x80) ^
           (padded_name[offset + 1] & 0x80) ^
@@ -722,16 +713,9 @@ int nfs_client_id_compute(char *name, clientid4 * pclientid)
 
       extract = i1 ^ i2 ^ i3 ^ i4 ^ i5 ^ i6 ^ i7 ^ i8 ^ i9 | l;
 
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-      printf("%llx ", extract);
-#endif
-
       computed_value ^= extract;
       computed_value ^= sum;
     }
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-  printf("\n");
-#endif
 
   computed_value = (computed_value >> 32) ^ (computed_value & 0x00000000FFFFFFFFLL);
 
