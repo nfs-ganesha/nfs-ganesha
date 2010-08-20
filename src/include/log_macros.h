@@ -16,16 +16,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  *
  *
@@ -36,7 +36,7 @@ typedef enum log_components
   COMPONENT_ALL = 0,
   COMPONENT_MEMALLOC,
   COMPONENT_STATES,
-  COMPONENT_MEMLEAKS, 
+  COMPONENT_MEMLEAKS,
   COMPONENT_FSAL,
   COMPONENT_NFSPROTO,
   COMPONENT_NFS_V4,
@@ -91,12 +91,12 @@ typedef struct log_component_info
   int   log_type;
   char  log_file[MAXPATHLEN];
 } log_component_info;
-  
+
 log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogMajor(component, format, args...) \
   do { \
-    if (LogComponents[component].log_level >= NIV_MAJOR) \      
+    if (LogComponents[component].log_level >= NIV_MAJOR) \
       DisplayLogComponentLevel(component, NIV_MAJ, "%s: %s: " format, LogComponents[component].str, tabLogLevel[NIV_MAJOR].str, ## args ); \
   } while (0)
 
@@ -130,7 +130,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
       DisplayErrorComponentLogLine( component, a, b, c, __LINE__ ); \
   } while (0)
 
-/* 
+/*
  * Temporary define of LogPrintf to handle messages that were
  * displayed to console via printf. This should get renamed
  * something more sensible.
