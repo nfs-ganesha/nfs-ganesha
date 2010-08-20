@@ -1,0 +1,61 @@
+Source: nfs-ganesha
+Section: unknown
+Priority: extra
+Maintainer: Philippe Deniel <philippe.deniel@cea.fr>
+Build-Depends: debhelper (>= 5), autotools-dev
+Standards-Version: 3.7.2
+
+Package: nfs-ganesha-common
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: nfs-ganesha is a NFS server in User Space
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. Supported name spaces ar POSIX, PROXY, SNMP, FUSE-like and HPSS.
+
+Package: nfs-ganesha-doc
+Architecture: all
+Description: Documentation for nfs-ganesha
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. Supported name spaces ar POSIX, PROXY, SNMP, FUSE-like and HPSS.
+
+Package: nfs-ganesha-proxy
+Architecture: any
+Description: NFS-GANESHA usable as a proxy
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. This package provides support for NFS-GANESHA as a PROXY.
+
+Package: nfs-ganesha-posix
+Architecture: any
+Depends: mysql (>= 5.0 )
+Description: NFS-GANESHA usable as a generic POSIX-based server
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. This package provides support for GANESHA using the POSIX
+ interface.
+
+Package: nfs-ganesha-snmp
+Architecture: any
+Description: NFS-GANESHA usable to export SNMP data via NFS
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. This package provides a NFS gateway to SNMP, making it
+ possible to browse SNMP exported information in a procfs-like way.
+
+Package: nfs-ganesha-fuselike
+Architecture: any
+Description: The ganeshaNFS library for FUSE-like bindings
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. This package contains the components for FUSE-like
+ bindings.
+
+Package: nfs-ganesha-fuselike-devel
+Architecture: any
+Description:  The NFS-GANESHA development files for FUSE-like bindings 
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. This package contains the development headers for FUSE-like
+

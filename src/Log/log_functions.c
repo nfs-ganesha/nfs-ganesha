@@ -46,7 +46,7 @@
 #include <libgen.h>
 
 #include "log_macros.h"
-#include "nfs_core.h"
+//#include "nfs_core.h"
 
 /* La longueur d'une chaine */
 #define STR_LEN_TXT      2048
@@ -69,7 +69,7 @@ static char nom_host[256];
 static char nom_fichier_log[PATH_LEN] = "/tmp/logfile";
 static int syslog_opened = 0 ;
 
-extern nfs_parameter_t nfs_param;
+//extern nfs_parameter_t nfs_param;
 
 /*
  * Variables specifiques aux threads.
@@ -1744,10 +1744,10 @@ int log_printf(char *format, ...)
 
 log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
 {
-  { COMPONENT_ALL,             "COMPONENT_ALL",           
+  { COMPONENT_ALL,               "COMPONENT_ALL",           
     NIV_CRIT
   },
-  { COMPONENT_MEMALLOC,        "COMPONENT_MEMALLOC",       
+  { COMPONENT_MEMALLOC,          "COMPONENT_MEMALLOC",       
 #ifdef _DEBUG_MEMALLOC      
     NIV_FULL_DEBUG,
 #else
@@ -1756,7 +1756,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_STATES,          "COMPONENT_STATES",         
+  { COMPONENT_STATES,            "COMPONENT_STATES",         
 #ifdef _DEBUG_STATES        
     NIV_FULL_DEBUG,
 #else
@@ -1765,7 +1765,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_MEMLEAKS,        "COMPONENT_MEMLEAKS",       
+  { COMPONENT_MEMLEAKS,          "COMPONENT_MEMLEAKS",       
 #ifdef _DEBUG_MEMLEAKS      
     NIV_FULL_DEBUG,
 #else
@@ -1774,7 +1774,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_FSAL,            "COMPONENT_FSAL",           
+  { COMPONENT_FSAL,              "COMPONENT_FSAL",           
 #ifdef _DEBUG_FSAL          
     NIV_FULL_DEBUG,
 #else
@@ -1783,7 +1783,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFSPROTO,        "COMPONENT_NFSPROTO",       
+  { COMPONENT_NFSPROTO,          "COMPONENT_NFSPROTO",       
 #ifdef _DEBUG_NFSPROTO      
     NIV_FULL_DEBUG,
 #else
@@ -1792,7 +1792,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_V4,          "COMPONENT_NFS_V4",         
+  { COMPONENT_NFS_V4,            "COMPONENT_NFS_V4",         
 #ifdef _DEBUG_NFS_V4        
     NIV_FULL_DEBUG,
 #else
@@ -1801,7 +1801,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_V4_PSEUDO,   "COMPONENT_NFS_V4_PSEUDO",  
+  { COMPONENT_NFS_V4_PSEUDO,     "COMPONENT_NFS_V4_PSEUDO",  
 #ifdef _DEBUG_NFS_V4_PSEUDO 
     NIV_FULL_DEBUG,
 #else
@@ -1810,7 +1810,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_FILEHANDLE,      "COMPONENT_FILEHANDLE",     
+  { COMPONENT_FILEHANDLE,        "COMPONENT_FILEHANDLE",     
 #ifdef _DEBUG_FILEHANDLE    
     NIV_FULL_DEBUG,
 #else
@@ -1819,7 +1819,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_SHELL,       "COMPONENT_NFS_SHELL",      
+  { COMPONENT_NFS_SHELL,         "COMPONENT_NFS_SHELL",      
 #ifdef _DEBUG_NFS_SHELL     
     NIV_FULL_DEBUG,
 #else
@@ -1828,7 +1828,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_DISPATCH,        "COMPONENT_DISPATCH",       
+  { COMPONENT_DISPATCH,          "COMPONENT_DISPATCH",       
 #ifdef _DEBUG_DISPATCH      
     NIV_FULL_DEBUG,
 #else
@@ -1837,7 +1837,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_CACHE_CONTENT,   "COMPONENT_CACHE_CONTENT",  
+  { COMPONENT_CACHE_CONTENT,     "COMPONENT_CACHE_CONTENT",  
 #ifdef _DEBUG_CACHE_CONTENT 
     NIV_FULL_DEBUG,
 #else
@@ -1846,7 +1846,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_CACHE_INODE,     "COMPONENT_CACHE_INODE",    
+  { COMPONENT_CACHE_INODE,       "COMPONENT_CACHE_INODE",    
 #ifdef _DEBUG_CACHE_INODE   
     NIV_FULL_DEBUG,
 #else
@@ -1855,7 +1855,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_CACHE_INODE_GC,  "COMPONENT_CACHE_INODE_GC",  
+  { COMPONENT_CACHE_INODE_GC,    "COMPONENT_CACHE_INODE_GC",  
 #ifdef _DEBUG_CACHE_INODE_GC
     NIV_FULL_DEBUG,
 #else
@@ -1864,7 +1864,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_HASHTABLE,       "COMPONENT_HASHTABLE",      
+  { COMPONENT_HASHTABLE,         "COMPONENT_HASHTABLE",      
 #ifdef _DEBUG_HASHTABLE     
     NIV_FULL_DEBUG,
 #else
@@ -1873,7 +1873,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_LRU,             "COMPONENT_LRU",            
+  { COMPONENT_LRU,               "COMPONENT_LRU",            
 #ifdef _DEBUG_LRU           
     NIV_FULL_DEBUG,
 #else
@@ -1882,7 +1882,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_DUPREQ,          "COMPONENT_DUPREQ",         
+  { COMPONENT_DUPREQ,            "COMPONENT_DUPREQ",         
 #ifdef _DEBUG_DUPREQ        
     NIV_FULL_DEBUG,
 #else
@@ -1891,7 +1891,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_LOG,             "COMPONENT_LOG",            
+  { COMPONENT_LOG,               "COMPONENT_LOG",            
 #ifdef _DEBUG_LOG           
     NIV_FULL_DEBUG,
 #else
@@ -1900,7 +1900,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_RPCSEC_GSS,      "COMPONENT_RPCSEC_GSS",     
+  { COMPONENT_RPCSEC_GSS,        "COMPONENT_RPCSEC_GSS",     
 #ifdef _DEBUG_RPCSEC_GSS    
     NIV_FULL_DEBUG,
 #else
@@ -1909,7 +1909,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_INIT,            "COMPONENT_INIT",
+  { COMPONENT_INIT,              "COMPONENT_INIT",
 #ifdef _DEBUG_INIT
     NIV_FULL_DEBUG,
 #else
@@ -1918,7 +1918,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_MAIN,            "COMPONENT_MAIN",
+  { COMPONENT_MAIN,              "COMPONENT_MAIN",
 #ifdef _DEBUG_MAIN
     NIV_FULL_DEBUG,
 #else
@@ -1927,7 +1927,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_IDMAPPER,        "COMPONENT_IDMAPPER",
+  { COMPONENT_IDMAPPER,          "COMPONENT_IDMAPPER",
 #ifdef _DEBUG_IDMAPPER
     NIV_FULL_DEBUG,
 #else
@@ -1936,7 +1936,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_READDIR,     "COMPONENT_NFS_READDIR",
+  { COMPONENT_NFS_READDIR,       "COMPONENT_NFS_READDIR",
 #ifdef _DEBUG_NFS_READDIR
     NIV_DEBUG,
 #else
@@ -1946,7 +1946,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     ""
   },
 
-  { COMPONENT_NFS_V4_LOCK,     "COMPONENT_NFS_V4_LOCK",
+  { COMPONENT_NFS_V4_LOCK,       "COMPONENT_NFS_V4_LOCK",
 #ifdef _DEBUG_NFS_V4_LOCK
     NIV_DEBUG,
 #else
@@ -1955,7 +1955,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_V4_XATTR,    "COMPONENT_NFS_V4_XATTR",
+  { COMPONENT_NFS_V4_XATTR,      "COMPONENT_NFS_V4_XATTR",
 #ifdef _DEBUG_NFS_V4_XATTR
     NIV_DEBUG,
 #else
@@ -1964,7 +1964,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_V4_REFERRAL, "COMPONENT_NFS_V4_REFERRAL",
+  { COMPONENT_NFS_V4_REFERRAL,   "COMPONENT_NFS_V4_REFERRAL",
 #ifdef _DEBUG_NFS_V4_REFERRAL
     NIV_DEBUG,
 #else
@@ -1973,7 +1973,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_MEMCORRUPT,      "COMPONENT_MEMCORRUPT",
+  { COMPONENT_MEMCORRUPT,        "COMPONENT_MEMCORRUPT",
 #ifdef _DEBUG_MEMCORRUPT      
     NIV_DEBUG,
 #elifdef _DETECT_MEMCORRUPT
@@ -1984,7 +1984,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_CONFIG,          "COMPONENT_CONFIG",
+  { COMPONENT_CONFIG,            "COMPONENT_CONFIG",
 #ifdef _DEBUG_CONFIG
     NIV_DEBUG,
 #else
@@ -1993,7 +1993,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_CLIENT_ID_COMPUTE,          "COMPONENT_CLIENT_ID_COMPUTE",
+  { COMPONENT_CLIENT_ID_COMPUTE, "COMPONENT_CLIENT_ID_COMPUTE",
 #ifdef _DEBUG_CLIENT_ID_COMPUTE
     NIV_DEBUG,
 #else
@@ -2002,8 +2002,26 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_STDOUT,          "COMPONENT_STDOUT",
+  { COMPONENT_STDOUT,            "COMPONENT_STDOUT",
 #ifdef _DEBUG_STDOUT
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_OPEN_OWNER_HASH,   "COMPONENT_OPEN_OWNER_HASH",
+#ifdef _DEBUG_OPEN_OWNER_HASH
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    ""
+  },
+  { COMPONENT_SESSIONS,          "COMPONENT_SESSIONS",
+#ifdef _DEBUG_SESSIONS
     NIV_DEBUG,
 #else
     NIV_EVENT,
