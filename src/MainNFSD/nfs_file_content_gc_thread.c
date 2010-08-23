@@ -163,7 +163,7 @@ void *file_content_gc_thread(void *IndexArg)
   FILE *command_stream = NULL;
 
   char logfile_arg[MAXPATHLEN];
-  int loglevel_arg;
+  char *loglevel_arg;
 
   SetNameFunction("file_content_fc_thread");
 
