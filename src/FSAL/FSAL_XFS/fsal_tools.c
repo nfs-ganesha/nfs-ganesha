@@ -547,8 +547,6 @@ fsal_status_t XFSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
   /* Default : NIV_CRIT */
   if(DebugLevel == -1)
     SetComponentLogLevel(COMPONENT_FSAL, NIV_CRIT);
-  else
-    SetComponentLogLevel(COMPONENT_FSAL, DebugLevel);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /* FSAL_load_FSAL_parameter_from_conf */
