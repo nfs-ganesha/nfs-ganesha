@@ -16,7 +16,7 @@
 #endif
 
 #include "fsal.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include <unistd.h>             /* for using gethostname */
 #include <stdlib.h>             /* for using exit */
 #include <string.h>
@@ -29,41 +29,41 @@ void printmask(fsal_attrib_mask_t mask)
 {
 
   if(FSAL_TEST_MASK(mask, FSAL_ATTR_SUPPATTR))
-    printf("FSAL_ATTR_SUPPATTR\n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_SUPPATTR\n");
   if(FSAL_TEST_MASK(mask, FSAL_ATTR_TYPE))
-    printf("FSAL_ATTR_TYPE\n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_TYPE\n");
   if(FSAL_TEST_MASK(mask, FSAL_ATTR_SIZE))
-    printf("FSAL_ATTR_SIZE\n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_SIZE\n");
   if(FSAL_TEST_MASK(mask, FSAL_ATTR_FSID))
-    printf("FSAL_ATTR_FSID\n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_FSID\n");
   if(FSAL_TEST_MASK(mask, FSAL_ATTR_ACL))
-    printf("FSAL_ATTR_ACL \n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_ACL \n");
   if(FSAL_TEST_MASK(mask, FSAL_ATTR_FILEID))
-    printf("FSAL_ATTR_FILEID\n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_FILEID\n");
   if(FSAL_TEST_MASK(mask, FSAL_ATTR_MODE))
-    printf("FSAL_ATTR_MODE\n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_MODE\n");
   if(FSAL_TEST_MASK(mask, FSAL_ATTR_NUMLINKS))
-    printf("FSAL_ATTR_NUMLINKS\n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_NUMLINKS\n");
   if(FSAL_TEST_MASK(mask, FSAL_ATTR_OWNER))
-    printf("FSAL_ATTR_OWNER\n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_OWNER\n");
   if(FSAL_TEST_MASK(mask, FSAL_ATTR_GROUP))
-    printf("FSAL_ATTR_GROUP\n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_GROUP\n");
   if(FSAL_TEST_MASK(mask, FSAL_ATTR_RAWDEV))
-    printf("FSAL_ATTR_RAWDEV\n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_RAWDEV\n");
   if(FSAL_TEST_MASK(mask, FSAL_ATTR_ATIME))
-    printf("FSAL_ATTR_ATIME\n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_ATIME\n");
   if(FSAL_TEST_MASK(mask, FSAL_ATTR_CREATION))
-    printf("FSAL_ATTR_CREATION\n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_CREATION\n");
   if(FSAL_TEST_MASK(mask, FSAL_ATTR_CTIME))
-    printf("FSAL_ATTR_CTIME\n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_CTIME\n");
   if(FSAL_TEST_MASK(mask, FSAL_ATTR_CHGTIME))
-    printf("FSAL_ATTR_CHGTIME\n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_CHGTIME\n");
   if(FSAL_TEST_MASK(mask, FSAL_ATTR_MTIME))
-    printf("FSAL_ATTR_MTIME\n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_MTIME\n");
   if(FSAL_TEST_MASK(mask, FSAL_ATTR_SPACEUSED))
-    printf("FSAL_ATTR_SPACEUSED\n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_SPACEUSED\n");
   if(FSAL_TEST_MASK(mask, FSAL_ATTR_MOUNTFILEID))
-    printf("FSAL_ATTR_MOUNTFILEID\n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_MOUNTFILEID\n");
 
 }
 
@@ -97,42 +97,42 @@ void printattributes(fsal_attrib_list_t attrs)
 {
 
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_RDATTR_ERR))
-    printf("FSAL_ATTR_RDATTR_ERR\n");
+    LogPrintf(COMPONENT_FSAL, "FSAL_ATTR_RDATTR_ERR\n");
 
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_TYPE))
-    printf("Type : %s\n", strtype(attrs.type));
+    LogPrintf(COMPONENT_FSAL, "Type : %s\n", strtype(attrs.type));
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_SIZE))
-    printf("Size : %llu\n", attrs.filesize);
+    LogPrintf(COMPONENT_FSAL, "Size : %llu\n", attrs.filesize);
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_FSID))
-    printf("fsId : %llu.%llu\n", attrs.fsid.major, attrs.fsid.minor);
+    LogPrintf(COMPONENT_FSAL, "fsId : %llu.%llu\n", attrs.fsid.major, attrs.fsid.minor);
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ACL))
-    printf("ACL List ...\n");
+    LogPrintf(COMPONENT_FSAL, "ACL List ...\n");
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_FILEID))
-    printf("FileId : %llu\n", attrs.fileid);
+    LogPrintf(COMPONENT_FSAL, "FileId : %llu\n", attrs.fileid);
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MODE))
-    printf("Mode : %#o\n", attrs.mode);
+    LogPrintf(COMPONENT_FSAL, "Mode : %#o\n", attrs.mode);
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_NUMLINKS))
-    printf("Numlinks : %u\n", (unsigned int)attrs.numlinks);
+    LogPrintf(COMPONENT_FSAL, "Numlinks : %u\n", (unsigned int)attrs.numlinks);
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_OWNER))
-    printf("uid : %d\n", attrs.owner);
+    LogPrintf(COMPONENT_FSAL, "uid : %d\n", attrs.owner);
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_GROUP))
-    printf("gid : %d\n", attrs.group);
+    LogPrintf(COMPONENT_FSAL, "gid : %d\n", attrs.group);
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_RAWDEV))
-    printf("Rawdev ...\n");
+    LogPrintf(COMPONENT_FSAL, "Rawdev ...\n");
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME))
-    printf("atime : %s", ctime((time_t *) & attrs.atime.seconds));
+    LogPrintf(COMPONENT_FSAL, "atime : %s", ctime((time_t *) & attrs.atime.seconds));
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_CREATION))
-    printf("creation time : %s", ctime((time_t *) & attrs.creation.seconds));
+    LogPrintf(COMPONENT_FSAL, "creation time : %s", ctime((time_t *) & attrs.creation.seconds));
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_CTIME))
-    printf("ctime : %s", ctime((time_t *) & attrs.ctime.seconds));
+    LogPrintf(COMPONENT_FSAL, "ctime : %s", ctime((time_t *) & attrs.ctime.seconds));
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME))
-    printf("mtime : %s", ctime((time_t *) & attrs.mtime.seconds));
+    LogPrintf(COMPONENT_FSAL, "mtime : %s", ctime((time_t *) & attrs.mtime.seconds));
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_CHGTIME))
-    printf("chgtime : %s", ctime((time_t *) & attrs.chgtime.seconds));
+    LogPrintf(COMPONENT_FSAL, "chgtime : %s", ctime((time_t *) & attrs.chgtime.seconds));
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_SPACEUSED))
-    printf("spaceused : %llu\n", attrs.spaceused);
+    LogPrintf(COMPONENT_FSAL, "spaceused : %llu\n", attrs.spaceused);
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MOUNTFILEID))
-    printf("mounted_on_fileid : %llu\n", attrs.mounted_on_fileid);
+    LogPrintf(COMPONENT_FSAL, "mounted_on_fileid : %llu\n", attrs.mounted_on_fileid);
 
 }
 
@@ -195,7 +195,7 @@ int main(int argc, char **argv)
   /* Obtention du nom de la machine */
   if(gethostname(localmachine, sizeof(localmachine)) != 0)
     {
-      DisplayErrorLog(ERR_SYS, ERR_GETHOSTNAME, errno);
+      LogError(COMPONENT_FSAL, ERR_SYS, ERR_GETHOSTNAME, errno);
       exit(1);
     }
   else
@@ -264,50 +264,50 @@ int main(int argc, char **argv)
   /* Init */
   if(FSAL_IS_ERROR(st = FSAL_Init(&init_param)))
     {
-      DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+      LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
     }
 
   /* getting creds */
   uid = getuid();
-  printf("uid = %d\n", uid);
+  LogPrintf(COMPONENT_FSAL, "uid = %d\n", uid);
 
   st = FSAL_BuildExportContext(&export_ctx, NULL, NULL);
   if(FSAL_IS_ERROR(st))
-    DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+    LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
 
   st = FSAL_InitClientContext(&op_ctx);
 
   if(FSAL_IS_ERROR(st))
-    DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+    LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
 
   st = FSAL_GetClientContext(&op_ctx, &export_ctx, uid, -1, NULL, 0);
 
   if(FSAL_IS_ERROR(st))
-    DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+    LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
 
   /* getting root handle */
 
   if(FSAL_IS_ERROR(st = FSAL_lookup(NULL, NULL, &op_ctx, &root_handle, NULL)))
     {
-      DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+      LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
     }
 
   snprintHandle(tracebuff, 256, &root_handle);
-  printf("Root handle = %s\n", tracebuff);
+  LogPrintf(COMPONENT_FSAL, "Root handle = %s\n", tracebuff);
 
   /* getting what are the supported attributes */
 
   attribs.asked_attributes = 0;
   FSAL_SET_MASK(attribs.asked_attributes, FSAL_ATTR_SUPPATTR);
-  printf("asked attributes :\n");
+  LogPrintf(COMPONENT_FSAL, "asked attributes :\n");
   printmask(attribs.asked_attributes);
 
   if(FSAL_IS_ERROR(st = FSAL_getattrs(&root_handle, &op_ctx, &attribs)))
     {
-      DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+      LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
     }
 
-  printf("supported attributes :\n");
+  LogPrintf(COMPONENT_FSAL, "supported attributes :\n");
   printmask(attribs.supported_attributes);
 
   mask = attribs.supported_attributes;
@@ -319,21 +319,21 @@ int main(int argc, char **argv)
 
       attribs.asked_attributes = 0;
       FSAL_SET_MASK(attribs.asked_attributes, FSAL_ATTR_SUPPATTR);
-      printf("asked attributes :\n");
+      LogPrintf(COMPONENT_FSAL, "asked attributes :\n");
       printmask(attribs.asked_attributes);
 
       if(FSAL_IS_ERROR(st = FSAL_getattrs(&root_handle, &op_ctx, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
 
-      printf("supported attributes :\n");
+      LogPrintf(COMPONENT_FSAL, "supported attributes :\n");
 
       /* getting all spported attributes of root */
       attribs.asked_attributes = mask;
       if(FSAL_IS_ERROR(st = FSAL_getattrs(&root_handle, &op_ctx, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
 
       printattributes(attribs);
@@ -347,17 +347,17 @@ int main(int argc, char **argv)
       /* getting handle and attributes for subdirectory "OSF1_V5" */
       if(FSAL_IS_ERROR(st = FSAL_str2name("cea", 4, &name)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
 
       attribs.asked_attributes = mask;
       if(FSAL_IS_ERROR(st = FSAL_lookup(&root_handle, &name, &op_ctx, &handle, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
 
       snprintHandle(tracebuff, 256, &handle);
-      printf("/cea handle = %s\n", tracebuff);
+      LogPrintf(COMPONENT_FSAL, "/cea handle = %s\n", tracebuff);
 
       /* displaying attributes */
       printattributes(attribs);
@@ -365,17 +365,17 @@ int main(int argc, char **argv)
       /* getting handle and attributes for subdirectory "bin" */
       if(FSAL_IS_ERROR(st = FSAL_str2name("prot", 5, &name)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
       root_handle = handle;
       attribs.asked_attributes = mask;
       if(FSAL_IS_ERROR(st = FSAL_lookup(&root_handle, &name, &op_ctx, &handle, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
 
       snprintHandle(tracebuff, 256, &handle);
-      printf("/cea/prot handle = %s\n", tracebuff);
+      LogPrintf(COMPONENT_FSAL, "/cea/prot handle = %s\n", tracebuff);
 
       /* displaying attributes */
       printattributes(attribs);
@@ -383,17 +383,17 @@ int main(int argc, char **argv)
       /* getting handle and attributes for symlink "AglaePwrSW" */
       if(FSAL_IS_ERROR(st = FSAL_str2name("lama", 5, &name)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
       root_handle = handle;
       attribs.asked_attributes = mask;
       if(FSAL_IS_ERROR(st = FSAL_lookup(&root_handle, &name, &op_ctx, &handle, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
 
       snprintHandle(tracebuff, 256, &handle);
-      printf("/cea/prot/lama handle = %s\n", tracebuff);
+      LogPrintf(COMPONENT_FSAL, "/cea/prot/lama handle = %s\n", tracebuff);
 
       /* displaying attributes */
       printattributes(attribs);
@@ -407,16 +407,16 @@ int main(int argc, char **argv)
       /* lookup root */
       if(FSAL_IS_ERROR(st = FSAL_str2path("/", 30, &path)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
       attribs.asked_attributes = mask;
       if(FSAL_IS_ERROR(st = FSAL_lookupPath(&path, &op_ctx, &handle, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
 
       snprintHandle(tracebuff, 256, &handle);
-      printf("/ handle = %s\n", tracebuff);
+      LogPrintf(COMPONENT_FSAL, "/ handle = %s\n", tracebuff);
 
       /* displaying attributes */
       printattributes(attribs);
@@ -424,16 +424,16 @@ int main(int argc, char **argv)
       /* lookup path */
       if(FSAL_IS_ERROR(st = FSAL_str2path("/cea/prot/lama", 15, &path)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
       attribs.asked_attributes = mask;
       if(FSAL_IS_ERROR(st = FSAL_lookupPath(&path, &op_ctx, &handle, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
 
       snprintHandle(tracebuff, 256, &handle);
-      printf("/cea/prot/lama handle = %s\n", tracebuff);
+      LogPrintf(COMPONENT_FSAL, "/cea/prot/lama handle = %s\n", tracebuff);
 
       /* displaying attributes */
       printattributes(attribs);
@@ -455,9 +455,9 @@ int main(int argc, char **argv)
       attribs.asked_attributes = mask;
       if(FSAL_IS_ERROR(st = FSAL_opendir(&root_handle, &op_ctx, &dir, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
-      printf("'/' attributes :\n");
+      LogPrintf(COMPONENT_FSAL, "'/' attributes :\n");
 
       /* displaying attributes */
       printattributes(attribs);
@@ -470,12 +470,12 @@ int main(int argc, char **argv)
           char cookiebuff[256];
 
           snprintCookie(cookiebuff, 256, &from);
-          printf("\nReaddir cookie = %s\n", cookiebuff);
+          LogPrintf(COMPONENT_FSAL, "\nReaddir cookie = %s\n", cookiebuff);
           if(FSAL_IS_ERROR(st = FSAL_readdir(&dir, from,
                                              mask, READDIR_SIZE * sizeof(fsal_dirent_t),
                                              entries, &to, &number, &eod)))
             {
-              DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+              LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
               error = TRUE;
             }
 
@@ -486,14 +486,14 @@ int main(int argc, char **argv)
 
               snprintCookie(cookiebuff, 256, &entries[i].cookie);
 
-              printf("\t%s : %s (cookie %s)\n", tracebuff, entries[i].name.name,
+              LogPrintf(COMPONENT_FSAL, "\t%s : %s (cookie %s)\n", tracebuff, entries[i].name.name,
                      cookiebuff);
             }
           /* preparing next call */
           from = to;
 
         }
-      printf("Fin de boucle : error=%d ; eod=%d\n", error, eod);
+      LogPrintf(COMPONENT_FSAL, "Fin de boucle : error=%d ; eod=%d\n", error, eod);
 
     }
   else
@@ -512,9 +512,9 @@ int main(int argc, char **argv)
       attribs.asked_attributes = mask;
       if(FSAL_IS_ERROR(st = FSAL_opendir(&root_handle, &op_ctx, &dir, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
-      printf("'/' attributes :\n");
+      LogPrintf(COMPONENT_FSAL, "'/' attributes :\n");
 
       /* displaying attributes */
       printattributes(attribs);
@@ -529,13 +529,13 @@ int main(int argc, char **argv)
 
           snprintCookie(cookiebuff, 256, &from);
 
-          printf("\nReaddir cookie = %s\n", cookiebuff);
+          LogPrintf(COMPONENT_FSAL, "\nReaddir cookie = %s\n", cookiebuff);
 
           if(FSAL_IS_ERROR(st = FSAL_readdir(&dir, from,
                                              mask, READDIR_SIZE * sizeof(fsal_dirent_t),
                                              entries, &to, &number, &eod)))
             {
-              DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+              LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
               error = TRUE;
             }
 
@@ -548,7 +548,7 @@ int main(int argc, char **argv)
                   snprintHandle(tracebuff, 256, &curr->handle);
                   snprintCookie(cookiebuff, 256, &curr->cookie);
 
-                  printf("\t%s : %s (cookie %s)\n", tracebuff, curr->name.name,
+                  LogPrintf(COMPONENT_FSAL, "\t%s : %s (cookie %s)\n", tracebuff, curr->name.name,
                          cookiebuff);
                 }
               while(curr = curr->nextentry);
@@ -557,7 +557,7 @@ int main(int argc, char **argv)
           from = to;
 
         }
-      printf("Fin de boucle : error=%d ; eod=%d\n", error, eod);
+      LogPrintf(COMPONENT_FSAL, "Fin de boucle : error=%d ; eod=%d\n", error, eod);
 
     }
   else
@@ -576,9 +576,9 @@ int main(int argc, char **argv)
       attribs.asked_attributes = mask;
       if(FSAL_IS_ERROR(st = FSAL_opendir(&root_handle, &op_ctx, &dir, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
-      printf("'/' attributes :\n");
+      LogPrintf(COMPONENT_FSAL, "'/' attributes :\n");
 
       /* displaying attributes */
       printattributes(attribs);
@@ -590,7 +590,7 @@ int main(int argc, char **argv)
           unsigned int i;
 
           snprintCookie(tracebuff, 256, &from);
-          printf("\nReaddir cookie = %s\n", tracebuff);
+          LogPrintf(COMPONENT_FSAL, "\nReaddir cookie = %s\n", tracebuff);
 
           st = FSAL_readdir(&dir, from, mask,
                             READDIR_SIZE * sizeof(fsal_dirent_t),
@@ -598,7 +598,7 @@ int main(int argc, char **argv)
 
           if(FSAL_IS_ERROR(st))
             {
-              DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+              LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
               error = TRUE;
             }
 
@@ -613,12 +613,12 @@ int main(int argc, char **argv)
               snprintHandle(tracebuff, 256, &entries[i].handle);
               snprintCookie(cookiebuff, 256, &entries[i].cookie);
 
-              printf("\t%s : %s (cookie %s)\n", tracebuff, entries[i].name.name,
+              LogPrintf(COMPONENT_FSAL, "\t%s : %s (cookie %s)\n", tracebuff, entries[i].name.name,
                      cookiebuff);
 
               if(FSAL_IS_ERROR(st = FSAL_getattrs(&entries[i].handle, &op_ctx, &attribs)))
                 {
-                  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+                  LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
                 }
 
               /* 1 - test R access */
@@ -627,13 +627,13 @@ int main(int argc, char **argv)
 
               st2 = FSAL_test_access(&op_ctx, FSAL_R_OK, &attribs);
 
-              DisplayErrorJd(log_desc, ERR_FSAL, st1.major, st1.minor);
-              DisplayErrorJd(log_desc, ERR_FSAL, st2.major, st2.minor);
+              LogError(COMPONENT_FSAL, ERR_FSAL, st1.major, st1.minor);
+              LogError(COMPONENT_FSAL, ERR_FSAL, st2.major, st2.minor);
 
               if(st1.major != st2.major)
                 {
-                  printf
-                      ("Error : different access permissions given by FSAL_access and FSAL_test_access : %d <>%d\n",
+                  LogPrintf(COMPONENT_FSAL, 
+                      "Error : different access permissions given by FSAL_access and FSAL_test_access : %d <>%d\n",
                        st1.major, st2.major);
                 }
 
@@ -643,13 +643,13 @@ int main(int argc, char **argv)
 
               st2 = FSAL_test_access(&op_ctx, FSAL_W_OK, &attribs);
 
-              DisplayErrorJd(log_desc, ERR_FSAL, st1.major, st1.minor);
-              DisplayErrorJd(log_desc, ERR_FSAL, st2.major, st2.minor);
+              LogError(COMPONENT_FSAL, ERR_FSAL, st1.major, st1.minor);
+              LogError(COMPONENT_FSAL, ERR_FSAL, st2.major, st2.minor);
 
               if(st1.major != st2.major)
                 {
-                  printf
-                      ("Error : different access permissions given by FSAL_access and FSAL_test_access : %d <>%d\n",
+                  LogPrintf(COMPONENT_FSAL, 
+                      "Error : different access permissions given by FSAL_access and FSAL_test_access : %d <>%d\n",
                        st1.major, st2.major);
                 }
 
@@ -659,13 +659,13 @@ int main(int argc, char **argv)
 
               st2 = FSAL_test_access(&op_ctx, FSAL_X_OK, &attribs);
 
-              DisplayErrorJd(log_desc, ERR_FSAL, st1.major, st1.minor);
-              DisplayErrorJd(log_desc, ERR_FSAL, st2.major, st2.minor);
+              LogError(COMPONENT_FSAL, ERR_FSAL, st1.major, st1.minor);
+              LogError(COMPONENT_FSAL, ERR_FSAL, st2.major, st2.minor);
 
               if(st1.major != st2.major)
                 {
-                  printf
-                      ("Error : different access permissions given by FSAL_access and FSAL_test_access : %d <>%d\n",
+                  LogPrintf(COMPONENT_FSAL, 
+                      "Error : different access permissions given by FSAL_access and FSAL_test_access : %d <>%d\n",
                        st1.major, st2.major);
                 }
 
@@ -675,7 +675,7 @@ int main(int argc, char **argv)
           from = to;
 
         }
-      printf("Fin de boucle : error=%d ; eod=%d\n", error, eod);
+      LogPrintf(COMPONENT_FSAL, "Fin de boucle : error=%d ; eod=%d\n", error, eod);
 
     }
   else
@@ -696,48 +696,48 @@ int main(int argc, char **argv)
       for(i = 0; i < 200; i++)
         string[i] = (char)i;
 
-      printf("Initial data (%d Bytes) = <<%s>>\n", strlen(test_string), test_string);
+      LogPrintf(COMPONENT_FSAL, "Initial data (%d Bytes) = <<%s>>\n", strlen(test_string), test_string);
 
       /* Write test_string to a buffer. */
       /* We don't give the final '\0'.  */
       snprintmem(buffer, 256, test_string, strlen(test_string));
 
-      printf("Dest_Buffer (%d Bytes) = <<%s>>\n", strlen(buffer), buffer);
+      LogPrintf(COMPONENT_FSAL, "Dest_Buffer (%d Bytes) = <<%s>>\n", strlen(buffer), buffer);
 
       /* read the value from the buffer */
       sscanmem(string, strlen(test_string), buffer);
 
       /* sets the final 0 to print the content of the buffer */
-      printf("Retrieved string : following byte = %d\n",
+      LogPrintf(COMPONENT_FSAL, "Retrieved string : following byte = %d\n",
              (int)string[strlen(test_string)]);
       string[strlen(test_string)] = '\0';
 
-      printf("Retrieved string (%d Bytes) = <<%s>>\n", strlen(string), string);
+      LogPrintf(COMPONENT_FSAL, "Retrieved string (%d Bytes) = <<%s>>\n", strlen(string), string);
 
       /* Automatic tests : */
       size1 = strlen(test_string);
       size2 = strlen(buffer);
       size3 = strlen(string);
 
-      printf("-------------------------------------\n");
+      LogPrintf(COMPONENT_FSAL, "-------------------------------------\n");
 
       if(size1 <= 0)
-        printf("***** ERROR: source size=0 !!!\n");
+        LogPrintf(COMPONENT_FSAL, "***** ERROR: source size=0 !!!\n");
 
       if(size1 != size3)
-        printf("***** ERROR: source size <> target size\n");
+        LogPrintf(COMPONENT_FSAL, "***** ERROR: source size <> target size\n");
       else
-        printf("OK: source size = target size\n");
+        LogPrintf(COMPONENT_FSAL, "OK: source size = target size\n");
 
       if((size1 * 2) != size2)
-        printf("***** ERROR: hexa size <> 2 * source size\n");
+        LogPrintf(COMPONENT_FSAL, "***** ERROR: hexa size <> 2 * source size\n");
       else
-        printf("OK: hexa size = 2 * source size\n");
+        LogPrintf(COMPONENT_FSAL, "OK: hexa size = 2 * source size\n");
 
       if(strcmp(test_string, string))
-        printf("***** ERROR: source string <> target string\n");
+        LogPrintf(COMPONENT_FSAL, "***** ERROR: source string <> target string\n");
       else
-        printf("OK: source string = target string\n");
+        LogPrintf(COMPONENT_FSAL, "OK: source string = target string\n");
 
     }
   else
@@ -752,25 +752,25 @@ int main(int argc, char **argv)
 
       if(FSAL_IS_ERROR(st = FSAL_str2path("/cea/prot/S/lama/s8/leibovic", 40, &path)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
       attribs.asked_attributes = mask;
       if(FSAL_IS_ERROR(st = FSAL_lookupPath(&path, &op_ctx, &handle, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
 
       snprintHandle(tracebuff, 256, &handle);
-      printf("/cea/prot/S/lama/s8/leibovic: handle = %s\n", tracebuff);
+      LogPrintf(COMPONENT_FSAL, "/cea/prot/S/lama/s8/leibovic: handle = %s\n", tracebuff);
 
       sleep(1);
 
       /* creates a directory */
-      printf("------- Create a directory -------\n");
+      LogPrintf(COMPONENT_FSAL, "------- Create a directory -------\n");
 
       if(FSAL_IS_ERROR(st = FSAL_str2name("tests_GANESHA", 30, &name)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
 
       attribs.asked_attributes = mask;
@@ -780,13 +780,13 @@ int main(int argc, char **argv)
                                        | FSAL_MODE_XUSR | FSAL_MODE_RGRP
                                        | FSAL_MODE_WGRP, &dir_hdl, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
       else
         {
 
           snprintHandle(tracebuff, 256, &dir_hdl);
-          printf("newly created dir handle = %s\n", tracebuff);
+          LogPrintf(COMPONENT_FSAL, "newly created dir handle = %s\n", tracebuff);
 
           printattributes(attribs);
 
@@ -795,30 +795,30 @@ int main(int argc, char **argv)
       sleep(1);
 
       /* Try to create it again */
-      printf("------- Try to create it again -------\n");
+      LogPrintf(COMPONENT_FSAL, "------- Try to create it again -------\n");
 
       if(FSAL_IS_ERROR(st = FSAL_mkdir(&handle, &name, &op_ctx,
                                        FSAL_MODE_RUSR | FSAL_MODE_WUSR
                                        | FSAL_MODE_XUSR | FSAL_MODE_RGRP
                                        | FSAL_MODE_WGRP, &dir_hdl, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
       else
         {
 
-          printf("**** Error: FSAL should have returned ERR_FSAL_EXIST\n");
+          LogPrintf(COMPONENT_FSAL, "**** Error: FSAL should have returned ERR_FSAL_EXIST\n");
 
         }
 
       sleep(1);
 
       /* creates a subdirectory */
-      printf("------- Create a subdirectory -------\n");
+      LogPrintf(COMPONENT_FSAL, "------- Create a subdirectory -------\n");
 
       if(FSAL_IS_ERROR(st = FSAL_str2name("subdir_GANESHA", 30, &subdir_name)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
 
       if(FSAL_IS_ERROR(st = FSAL_mkdir(&dir_hdl, &subdir_name, &op_ctx,
@@ -826,60 +826,60 @@ int main(int argc, char **argv)
                                        | FSAL_MODE_XUSR | FSAL_MODE_RGRP
                                        | FSAL_MODE_WGRP, &subdir_hdl, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
       else
         {
 
           snprintHandle(tracebuff, 256, &subdir_hdl);
-          printf("newly created subdir handle = %s\n", tracebuff);
+          LogPrintf(COMPONENT_FSAL, "newly created subdir handle = %s\n", tracebuff);
 
           printattributes(attribs);
 
         }
 
       /* try to removes the parent directory */
-      printf("------- Try to removes the parent directory -------\n");
+      LogPrintf(COMPONENT_FSAL, "------- Try to removes the parent directory -------\n");
 
       if(FSAL_IS_ERROR(st = FSAL_unlink(&handle, &name, &op_ctx, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
       else
         {
 
-          printf("FSAL should not have unlinked %s because it is not empty\n", name.name);
+          LogPrintf(COMPONENT_FSAL, "FSAL should not have unlinked %s because it is not empty\n", name.name);
 
         }
 
       sleep(1);
 
       /* removes the subdirectory */
-      printf("------- Removes the subdirectory -------\n");
+      LogPrintf(COMPONENT_FSAL, "------- Removes the subdirectory -------\n");
 
       if(FSAL_IS_ERROR(st = FSAL_unlink(&dir_hdl, &subdir_name, &op_ctx, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
       else
         {
 
-          printf("New attributes for parent directory:\n");
+          LogPrintf(COMPONENT_FSAL, "New attributes for parent directory:\n");
           printattributes(attribs);
 
         }
 
       /* removes the parent directory */
-      printf("------- Removes the parent directory -------\n");
+      LogPrintf(COMPONENT_FSAL, "------- Removes the parent directory -------\n");
 
       if(FSAL_IS_ERROR(st = FSAL_unlink(&handle, &name, &op_ctx, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
       else
         {
 
-          printf("Unlink %s OK\n", name.name);
+          LogPrintf(COMPONENT_FSAL, "Unlink %s OK\n", name.name);
 
         }
 
@@ -904,25 +904,25 @@ int main(int argc, char **argv)
 
       if(FSAL_IS_ERROR(st = FSAL_str2path("/cea/prot/S/lama/s8/leibovic", 40, &path)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
       attribs.asked_attributes = mask;
       if(FSAL_IS_ERROR(st = FSAL_lookupPath(&path, &op_ctx, &handle, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
 
       snprintHandle(tracebuff, 256, &handle);
-      printf("/cea/prot/S/lama/s8/leibovic: handle = %s\n", tracebuff);
+      LogPrintf(COMPONENT_FSAL, "/cea/prot/S/lama/s8/leibovic: handle = %s\n", tracebuff);
 
       sleep(1);
 
       /* creates a file */
-      printf("------- Create a file -------\n");
+      LogPrintf(COMPONENT_FSAL, "------- Create a file -------\n");
 
       if(FSAL_IS_ERROR(st = FSAL_str2name("tests_GANESHA_setattrs", 30, &name)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
 
       attribs.asked_attributes = mask;
@@ -932,13 +932,13 @@ int main(int argc, char **argv)
                                         | FSAL_MODE_XUSR | FSAL_MODE_RGRP
                                         | FSAL_MODE_WGRP, &dir_hdl, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
       else
         {
 
           snprintHandle(tracebuff, 256, &dir_hdl);
-          printf("newly created file handle = %s\n", tracebuff);
+          LogPrintf(COMPONENT_FSAL, "newly created file handle = %s\n", tracebuff);
 
           printattributes(attribs);
 
@@ -946,20 +946,20 @@ int main(int argc, char **argv)
 
       sleep(1);
 
-      printf("------- Try to change its attributes -------\n");
+      LogPrintf(COMPONENT_FSAL, "------- Try to change its attributes -------\n");
 
       /* Macro that try to change the value for an attribute */
 
 #define CHANGE_ATTRS( str_nom, nom, flag, new_val ) do {\
   memset(&attr_set, 0, sizeof(fsal_attrib_list_t) );    \
-  printf("\nTry to change '%s' :\n",str_nom);           \
+  LogPrintf(COMPONENT_FSAL, "\nTry to change '%s' :\n",str_nom);           \
   FSAL_SET_MASK( attr_set.asked_attributes , flag );    \
   attr_set.nom = new_val;                               \
   attribs.asked_attributes = attr_set.asked_attributes; \
 /*  attribs.asked_attributes = mask;                      */\
   st = FSAL_setattrs( &dir_hdl, &op_ctx, &attr_set, &attribs );\
   if ( FSAL_IS_ERROR(st) )                              \
-    DisplayErrorJd(log_desc,ERR_FSAL,st.major,st.minor);\
+    LogError(COMPONENT_FSAL,ERR_FSAL,st.major,st.minor);\
   else                                                  \
     printattributes( attribs );                         \
   } while(0)
@@ -1014,16 +1014,16 @@ int main(int argc, char **argv)
       sleep(1);
 
       /* removes the parent directory */
-      printf("------- Removes the directory -------\n");
+      LogPrintf(COMPONENT_FSAL, "------- Removes the directory -------\n");
 
       if(FSAL_IS_ERROR(st = FSAL_unlink(&handle, &name, &op_ctx, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
       else
         {
 
-          printf("Unlink %s OK\n", name.name);
+          LogPrintf(COMPONENT_FSAL, "Unlink %s OK\n", name.name);
 
         }
 
@@ -1037,16 +1037,16 @@ int main(int argc, char **argv)
 
       if(FSAL_IS_ERROR(st = FSAL_str2path("/cea/prot/S/lama/s8/leibovic", 40, &path)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
       attribs.asked_attributes = mask;
       if(FSAL_IS_ERROR(st = FSAL_lookupPath(&path, &op_ctx, &handle, &attribs)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
 
       snprintHandle(tracebuff, 256, &handle);
-      printf("/cea/prot/S/lama/s8/leibovic: handle = %s\n", tracebuff);
+      LogPrintf(COMPONENT_FSAL, "/cea/prot/S/lama/s8/leibovic: handle = %s\n", tracebuff);
 
       /* building digest */
 
@@ -1054,13 +1054,13 @@ int main(int argc, char **argv)
 
       if(FSAL_IS_ERROR(st))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
       else
         {
           /* print digest */
           snprintmem(tracebuff, 256, digest_buff, FSAL_DIGEST_SIZE_HDLV3);
-          printf("/cea/prot/S/lama/s8/leibovic: handle_digest = %s\n", tracebuff);
+          LogPrintf(COMPONENT_FSAL, "/cea/prot/S/lama/s8/leibovic: handle_digest = %s\n", tracebuff);
         }
 
       memset(&handle, 0, sizeof(xfsfsal_handle_t));
@@ -1071,13 +1071,13 @@ int main(int argc, char **argv)
 
       if(FSAL_IS_ERROR(st))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
       else
         {
           /* print expended handle */
           snprintHandle(tracebuff, 256, &handle);
-          printf("/cea/prot/S/lama/s8/leibovic: handle expended = %s\n", tracebuff);
+          LogPrintf(COMPONENT_FSAL, "/cea/prot/S/lama/s8/leibovic: handle expended = %s\n", tracebuff);
         }
 
     }
@@ -1088,22 +1088,22 @@ int main(int argc, char **argv)
 
       if(FSAL_IS_ERROR(st = FSAL_dynamic_fsinfo(&root_handle, &op_ctx, &dyninfo)))
         {
-          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
           exit(st.major);
         }
 
-      printf("total_bytes = %llu\n", dyninfo.total_bytes);
-      printf("free_bytes = %llu\n", dyninfo.free_bytes);
-      printf("avail_bytes = %llu\n", dyninfo.avail_bytes);
-      printf("total_files = %llu\n", dyninfo.total_files);
-      printf("free_files = %llu\n", dyninfo.free_files);
-      printf("avail_files = %llu\n", dyninfo.avail_files);
-      printf("time_delta = %u.%u\n", dyninfo.time_delta.seconds,
+      LogPrintf(COMPONENT_FSAL, "total_bytes = %llu\n", dyninfo.total_bytes);
+      LogPrintf(COMPONENT_FSAL, "free_bytes = %llu\n", dyninfo.free_bytes);
+      LogPrintf(COMPONENT_FSAL, "avail_bytes = %llu\n", dyninfo.avail_bytes);
+      LogPrintf(COMPONENT_FSAL, "total_files = %llu\n", dyninfo.total_files);
+      LogPrintf(COMPONENT_FSAL, "free_files = %llu\n", dyninfo.free_files);
+      LogPrintf(COMPONENT_FSAL, "avail_files = %llu\n", dyninfo.avail_files);
+      LogPrintf(COMPONENT_FSAL, "time_delta = %u.%u\n", dyninfo.time_delta.seconds,
              dyninfo.time_delta.nseconds);
 
     }
   else
-    printf("%s : test inconnu\n", test);
+    LogPrintf(COMPONENT_FSAL, "%s : test inconnu\n", test);
 
   return 0;
 
