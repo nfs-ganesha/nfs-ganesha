@@ -28,7 +28,7 @@
 
 #include "BuddyMalloc.h"
 #include <pthread.h>
-#include "log_functions.h"
+#include "log_macros.h"
 #include "errno.h"
 #include <stdlib.h>
 #include <sys/time.h>
@@ -1173,7 +1173,7 @@ void *TESTA(void *arg)
 
 }
 
-/* TEST9:
+/* TESTB:
  * integrity tests.
  */
 void *TESTB(void *arg)
@@ -1190,7 +1190,7 @@ void *TESTB(void *arg)
 
   pointer = BuddyMalloc(1024);
 
-#ifdef _DETECT_MEMCORRUPT
+#ifdef _DEBUG_MEMCORRUPT
   printf("--> Checking an good address %p\n", pointer);
   BuddyCheck(pointer);
 #endif
@@ -1203,7 +1203,7 @@ void *TESTB(void *arg)
 
   pointer = (caddr_t) & arg;
 
-#ifdef _DETECT_MEMCORRUPT
+#ifdef _DEBUG_MEMCORRUPT
   printf("--> Checking an invalid address %p\n", pointer);
 
   BuddyCheck(pointer);
@@ -1217,7 +1217,7 @@ void *TESTB(void *arg)
 
   pointer = malloc(1024);
 
-#ifdef _DETECT_MEMCORRUPT
+#ifdef _DEBUG_MEMCORRUPT
   printf("--> Checking a libc malloc address %p\n", pointer);
 
   BuddyCheck(pointer);
@@ -1233,7 +1233,7 @@ void *TESTB(void *arg)
 
   pointer = NULL;
 
-#ifdef _DETECT_MEMCORRUPT
+#ifdef _DEBUG_MEMCORRUPT
   printf("--> Checking a NULL address %p\n", pointer);
 
   BuddyCheck(pointer);
@@ -1290,6 +1290,7 @@ int main(int argc, char **argv)
   int th_index;
 
   SetNameFileLog("/dev/tty");
+  SetDefaultLogging("STDOUT");
   SetNamePgm("test_buddy");
 
   for(th_index = 0; th_index < NB_THREADS; th_index++)
