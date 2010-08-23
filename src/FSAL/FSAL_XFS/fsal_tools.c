@@ -542,24 +542,15 @@ fsal_status_t XFSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
   /* init logging */
 
   if(LogFile)
-    {
-      desc_log_stream_t log_stream;
+    SetComponentLogFile(COMPONENT_FSAL, LogFile);
 
-      strcpy(log_stream.path, LogFile);
-
-      /* Default : NIV_CRIT */
-
-      if(DebugLevel == -1)
-        AddLogStreamJd(&(out_parameter->fsal_info.log_outputs),
-                       V_FILE, log_stream, NIV_CRIT, SUP);
-      else
-        AddLogStreamJd(&(out_parameter->fsal_info.log_outputs),
-                       V_FILE, log_stream, DebugLevel, SUP);
-
-    }
+  /* Default : NIV_CRIT */
+  if(DebugLevel == -1)
+    SetComponentLogLevel(COMPONENT_FSAL, NIV_CRIT);
+  else
+    SetComponentLogLevel(COMPONENT_FSAL, DebugLevel);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
-
 }                               /* FSAL_load_FSAL_parameter_from_conf */
 
 /* load general filesystem configuration options */
