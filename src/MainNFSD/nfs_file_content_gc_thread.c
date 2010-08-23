@@ -179,7 +179,6 @@ void *file_content_gc_thread(void *IndexArg)
       sleep(nfs_param.cache_layers_param.dcgcpol.run_interval);
 
       LogEvent(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : awakening...");
-
       for(pexport = nfs_param.pexportlist; pexport != NULL; pexport = pexport->next)
         {
           if(pexport->options & EXPORT_OPTION_USE_DATACACHE)
@@ -207,9 +206,10 @@ void *file_content_gc_thread(void *IndexArg)
                       some_flush_to_do = TRUE;
                       break;
                     }
-                  else
+                  else {
                     LogEvent(COMPONENT_MAIN,
                              "NFS FILE CONTENT GARBAGE COLLECTION : High Water Mark is not reached");
+		  }
 
                   /* Use signal management */
                   if(force_flush_by_signal == TRUE)
@@ -221,9 +221,24 @@ void *file_content_gc_thread(void *IndexArg)
             }
         }                       /* for */
 
-
       if (strncmp(fcc_log_path, "/dev/null", 9) == 0)
-	strncpy(logfile_arg, LogComponents[COMPONENT_CACHE_INODE_GC].log_file, MAXPATHLEN);
+	switch(LogComponents[COMPONENT_CACHE_INODE_GC].log_type)
+	  {
+	  case FILELOG:
+	    strncpy(logfile_arg, LogComponents[COMPONENT_CACHE_INODE_GC].log_file, MAXPATHLEN);
+	    break;
+	  case SYSLOG:
+	    strncpy(logfile_arg, "SYSLOG", MAXPATHLEN);
+	    break;
+	  case STDERRLOG:
+	    strncpy(logfile_arg, "STDERRLOG", MAXPATHLEN);
+	    break;
+	  case STDOUTLOG:
+	    strncpy(logfile_arg, "STDOUTLOG", MAXPATHLEN);
+	    break;
+	  default:
+	    LogCrit(COMPONENT_MAIN, "Could not figure out the proper -L option for emergency cache flush thread.");
+	  }
       else
 	strncpy(logfile_arg, fcc_log_path, MAXPATHLEN); /* config variable */
 
