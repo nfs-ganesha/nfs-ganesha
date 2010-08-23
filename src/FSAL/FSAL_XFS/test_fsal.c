@@ -207,7 +207,7 @@ int main(int argc, char **argv)
 
   /* creating log */
   voie.fd = fileno(stderr);
-  AddLogStreamJd(&log_desc, V_FD, voie, NIV_FULL_DEBUG, SUP);
+  SetComponentLogLevel(COMPONENT_FSAL, NIV_FULL_DEBUG);
 
   /* prepare fsal_init */
 
