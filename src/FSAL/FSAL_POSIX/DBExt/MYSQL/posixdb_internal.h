@@ -15,48 +15,16 @@
 
 #include "fsal_types.h"
 
-#ifndef _DEBUG_POSIXDB
-
 #define ReturnCodeDB( _code_, _minor_ ) do {                   \
-               fsal_posixdb_status_t _struct_status_;                \
+               fsal_posixdb_status_t _struct_status_;          \
+               if(isFullDebug(COMPONENT_FSAL))                 \
+                 {                                             \
+                   LogCrit(COMPONENT_FSAL, "Exiting %s ( %s:%i ) with status code = %i/%i\n", __FUNCTION__, __FILE__, __LINE__ - 2, _code_, _minor_ ); \
+                 }                                           \
                (_struct_status_).major = (_code_) ;          \
                (_struct_status_).minor = (_minor_) ;         \
                return (_struct_status_);                     \
               } while(0)
-
-#else
-
-#define ReturnCodeDB( _code_, _minor_ ) do {                   \
-               fsal_posixdb_status_t _struct_status_;                \
-               fprintf(stderr, "Exiting %s ( %s:%i ) with status code = %i/%i\n", __FUNCTION__, __FILE__, __LINE__ - 2, _code_, _minor_ ); \
-               (_struct_status_).major = (_code_) ;          \
-               (_struct_status_).minor = (_minor_) ;         \
-               return (_struct_status_);                     \
-              } while(0)
-
-#endif
-
-#define CheckCommand( _res_ ) do { \
-                              if (PQresultStatus( _res_ ) != PGRES_COMMAND_OK)                        \
-                                {                                                                       \
-                                    DisplayLog("PGSQL Command Failed in %s line %i", __FUNCTION__, __LINE__); \
-                                    DisplayLog(PQresultErrorMessage(_res_)); \
-                                    PQclear(_res_);                                                     \
-                                    RollbackTransaction( p_conn, _res_ );  \
-                                    ReturnCodeDB(ERR_FSAL_POSIXDB_CMDFAILED, PQresultStatus( _res_ ));        \
-                                } \
-                              } while (0)
-
-#define CheckResult( _res_ ) do { \
-                              if (PQresultStatus( _res_ ) != PGRES_TUPLES_OK)                        \
-                                {                                                                       \
-                                    DisplayLog("PGSQL Select Failed in %s line %i", __FUNCTION__, __LINE__); \
-                                    DisplayLog(PQresultErrorMessage(_res_)); \
-                                    PQclear(_res_);                     \
-                                    RollbackTransaction( p_conn, _res_ );  \
-                                    ReturnCodeDB(ERR_FSAL_POSIXDB_CMDFAILED, PQresultStatus( _res_ ));        \
-                                } \
-                              } while (0)
 
 #define BeginTransaction( _conn_ )   db_exec_sql( _conn_, "BEGIN", NULL )
 #define EndTransaction( _conn_ )     db_exec_sql( _conn_, "COMMIT", NULL )

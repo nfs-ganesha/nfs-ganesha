@@ -74,7 +74,7 @@ static int Getsubopt(char **optionp, const char *const *tokens, char **valuep)
  * @defgroup FSALCredFunctions Credential handling functions.
  *
  * Those functions handle security contexts (credentials).
- * 
+ *
  * @{
  */
 
@@ -100,7 +100,7 @@ fsal_status_t POSIXFSAL_BuildExportContext(posixfsal_export_context_t * p_export
  * \param p_export_context (in, gpfsfsal_export_context_t)
  */
 
-fsal_status_t POSIXFSAL_CleanUpExportContext(posixfsal_export_context_t * p_export_context) 
+fsal_status_t POSIXFSAL_CleanUpExportContext(posixfsal_export_context_t * p_export_context)
 {
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
 }
@@ -120,13 +120,13 @@ fsal_status_t POSIXFSAL_InitClientContext(posixfsal_op_context_t * p_thr_context
   st = fsal_posixdb_connect(&global_posixdb_params, &(p_thr_context->p_conn));
   if(FSAL_POSIXDB_IS_ERROR(st))
     {
-      DisplayLogLevel(NIV_CRIT,
-                      "CRITICAL ERROR: Worker could not connect to database !!!");
+      LogCrit(COMPONENT_FSAL,
+              "CRITICAL ERROR: Worker could not connect to database !!!");
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_InitClientContext);
     }
   else
     {
-      DisplayLog("Worker successfuly connected to database");
+      LogEvent(COMPONENT_FSAL, "Worker successfuly connected to database");
     }
 
   /* sets the credential time */
@@ -135,14 +135,14 @@ fsal_status_t POSIXFSAL_InitClientContext(posixfsal_op_context_t * p_thr_context
   /* traces: prints p_credential structure */
 
   /*
-     DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "credential created:");
-     DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tuid = %d, gid = %d",
+     LogDebug(COMPONENT_FSAL, "credential created:");
+     LogDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
      p_thr_context->credential.hpss_usercred.SecPWent.Uid, p_thr_context->credential.hpss_usercred.SecPWent.Gid);
-     DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tName = %s",
+     LogDebug(COMPONENT_FSAL, "\tName = %s",
      p_thr_context->credential.hpss_usercred.SecPWent.Name);
 
      for ( i=0; i< p_thr_context->credential.hpss_usercred.NumGroups; i++ )
-     DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
+     LogDebug(COMPONENT_FSAL, "\tAlt grp: %d",
      p_thr_context->credential.hpss_usercred.AltGroups[i] );
    */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
@@ -152,7 +152,7 @@ fsal_status_t POSIXFSAL_InitClientContext(posixfsal_op_context_t * p_thr_context
  /**
  * FSAL_GetUserCred :
  * Get a user credential from its uid.
- * 
+ *
  * \param p_cred (in out, posixfsal_cred_t *)
  *        Initialized credential to be changed
  *        for representing user.
@@ -204,19 +204,19 @@ fsal_status_t POSIXFSAL_GetClientContext(posixfsal_op_context_t * p_thr_context,
 
   for(i = 0; i < ng; i++)
     p_thr_context->credential.alt_groups[i] = alt_groups[i];
-#if defined( _DEBUG_FSAL )
 
-  /* traces: prints p_credential structure */
+  if(isFullDebug(COMPONENT_FSAL))
+    {
+      /* traces: prints p_credential structure */
 
-  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "credential modified:");
-  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tuid = %d, gid = %d",
-                    p_thr_context->credential.user, p_thr_context->credential.group);
+      LogFullDebug(COMPONENT_FSAL, "credential modified:");
+      LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
+                   p_thr_context->credential.user, p_thr_context->credential.group);
 
-  for(i = 0; i < p_thr_context->credential.nbgroups; i++)
-    DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
-                      p_thr_context->credential.alt_groups[i]);
-
-#endif
+      for(i = 0; i < p_thr_context->credential.nbgroups; i++)
+        LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
+                     p_thr_context->credential.alt_groups[i]);
+    }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);
 
