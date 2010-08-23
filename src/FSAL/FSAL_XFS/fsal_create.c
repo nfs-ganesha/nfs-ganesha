@@ -95,9 +95,7 @@ fsal_status_t XFSFSAL_create(xfsfsal_handle_t * p_parent_directory_handle,      
   /* Apply umask */
   unix_mode = unix_mode & ~global_fs_info.umask;
 
-#ifdef _DEBUG_FSAL
-  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Creation mode: 0%o", accessmode);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
 
   TakeTokenFSCall();
   status =
@@ -555,7 +553,7 @@ fsal_status_t XFSFSAL_mknode(xfsfsal_handle_t * parentdir_handle,       /* IN */
       break;
 
     default:
-      DisplayLogJdLevel(fsal_log, NIV_MAJOR, "Invalid node type in FSAL_mknode: %d",
+      LogMajor(COMPONENT_FSAL, "Invalid node type in FSAL_mknode: %d",
                         nodetype);
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_mknode);
     }

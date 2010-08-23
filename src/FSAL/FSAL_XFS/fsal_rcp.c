@@ -85,15 +85,13 @@ fsal_status_t XFSFSAL_rcp(xfsfsal_handle_t * filehandle,        /* IN */
   to_local = ((transfer_opt & FSAL_RCP_FS_TO_LOCAL) == FSAL_RCP_FS_TO_LOCAL);
   to_fs = ((transfer_opt & FSAL_RCP_LOCAL_TO_FS) == FSAL_RCP_LOCAL_TO_FS);
 
-#ifdef  _DEBUG_FSAL
   if(to_local)
-    DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+    LogFullDebug(COMPONENT_FSAL,
                       "FSAL_rcp: FSAL -> local file (%s)", p_local_path->path);
 
   if(to_fs)
-    DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+    LogFullDebug(COMPONENT_FSAL,
                       "FSAL_rcp: local file -> FSAL (%s)", p_local_path->path);
-#endif
 
   /* must give the sens of transfert (exactly one) */
 
@@ -140,7 +138,7 @@ fsal_status_t XFSFSAL_rcp(xfsfsal_handle_t * filehandle,        /* IN */
     if((local_flags & O_EXCL) == O_EXCL)
       strcat(msg, "O_EXCL ");
 
-    DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Openning local file %s with flags: %s",
+    LogFullDebug(COMPONENT_FSAL, "Openning local file %s with flags: %s",
                       p_local_path->path, msg);
 
   }
@@ -191,7 +189,7 @@ fsal_status_t XFSFSAL_rcp(xfsfsal_handle_t * filehandle,        /* IN */
     if((fs_flags & FSAL_O_TRUNC) == FSAL_O_TRUNC)
       strcat(msg, "FSAL_O_TRUNC ");
 
-    DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Openning FSAL file with flags: %s", msg);
+    LogFullDebug(COMPONENT_FSAL, "Openning FSAL file with flags: %s", msg);
 
   }
 #endif
@@ -204,11 +202,9 @@ fsal_status_t XFSFSAL_rcp(xfsfsal_handle_t * filehandle,        /* IN */
       close(local_fd);
       Return(st.major, st.minor, INDEX_FSAL_rcp);
     }
-#ifdef  _DEBUG_FSAL
-  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_FSAL,
                     "Allocating IO buffer of size %llu",
                     (unsigned long long)RCP_BUFFER_SIZE);
-#endif
 
   /* Allocates buffer */
 
@@ -229,9 +225,7 @@ fsal_status_t XFSFSAL_rcp(xfsfsal_handle_t * filehandle,        /* IN */
       /* initialize error code */
       st = FSAL_STATUS_NO_ERROR;
 
-#ifdef  _DEBUG_FSAL
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Read a block from source");
-#endif
+      LogFullDebug(COMPONENT_FSAL, "Read a block from source");
 
       /* read */
 
@@ -257,10 +251,8 @@ fsal_status_t XFSFSAL_rcp(xfsfsal_handle_t * filehandle,        /* IN */
           if(FSAL_IS_ERROR(st))
             break;              /* exit loop */
 
-#ifdef  _DEBUG_FSAL
-          DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Size read from source: %llu",
+          LogFullDebug(COMPONENT_FSAL, "Size read from source: %llu",
                             (unsigned long long)fs_size);
-#endif
 
         }
 
@@ -268,10 +260,7 @@ fsal_status_t XFSFSAL_rcp(xfsfsal_handle_t * filehandle,        /* IN */
 
       if(!eof || ((!to_fs) && (fs_size > 0)))
         {
-
-#ifdef  _DEBUG_FSAL
-          DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Write a block to destination");
-#endif
+          LogFullDebug(COMPONENT_FSAL, "Write a block to destination");
 
           if(to_fs)             /* to FSAL filesystem */
             {
@@ -287,10 +276,8 @@ fsal_status_t XFSFSAL_rcp(xfsfsal_handle_t * filehandle,        /* IN */
 
               local_size = write(local_fd, IObuffer, fs_size);
 
-#ifdef  _DEBUG_FSAL
-              DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Size written to target: %llu",
+              LogFullDebug(COMPONENT_FSAL, "Size written to target: %llu",
                                 (unsigned long long)local_size);
-#endif
 
               if(local_size == -1)
                 {
@@ -302,10 +289,8 @@ fsal_status_t XFSFSAL_rcp(xfsfsal_handle_t * filehandle,        /* IN */
             }                   /* if to_fs */
 
         }                       /* if eof */
-#ifdef  _DEBUG_FSAL
       else
-        DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "End of source file reached");
-#endif
+        LogFullDebug(COMPONENT_FSAL, "End of source file reached");
 
     }                           /* while !eof */
 

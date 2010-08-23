@@ -126,7 +126,8 @@ int nfs_prereq_init(char *program_name, char *host_name, int debug_level, char *
   SetNameFunction("main");
   SetNameHost(host_name);
 
-  InitDebug(debug_level);
+  if (debug_level >= 0)
+    InitDebug(debug_level);
 
   /* Register error families */
   AddFamilyError(ERR_POSIX, "POSIX Errors", tab_systeme_status);
