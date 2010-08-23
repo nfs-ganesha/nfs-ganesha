@@ -56,7 +56,7 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      
   if(max_count && (*p_count > max_count))
     {
       *p_children = NULL;
-      DisplayLog("Children count %u exceed max_count %u in fsal_posixdb_getChildren",
+      LogCrit(COMPONENT_FSAL, "Children count %u exceed max_count %u in fsal_posixdb_getChildren",
                  *p_count, max_count);
       ReturnCodeDB(ERR_FSAL_POSIXDB_TOOMANYPATHS, 0);
     }

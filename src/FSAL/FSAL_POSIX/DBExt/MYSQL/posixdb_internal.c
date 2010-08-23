@@ -66,10 +66,8 @@ void fsal_posixdb_CachePath(posixfsal_handle_t * p_handle,      /* IN */
 
   unsigned int i;
 
-#ifdef _DEBUG_FSAL
-  DisplayLog("fsal_posixdb_CachePath: %u, %u = %s", (unsigned int)(p_handle->id),
-             (unsigned int)(p_handle->ts), p_path->path);
-#endif
+  LogDebug(COMPONENT_FSAL, "fsal_posixdb_CachePath: %u, %u = %s", (unsigned int)(p_handle->id),
+           (unsigned int)(p_handle->ts), p_path->path);
 
   i = hash_cache_path(p_handle->id, p_handle->ts);
 
@@ -108,9 +106,7 @@ int fsal_posixdb_UpdateInodeCache(posixfsal_handle_t * p_handle)        /* IN */
 
   unsigned int i;
 
-#ifdef _DEBUG_FSAL
-  DisplayLog("UpdateInodeCache: inode_id=%llu", p_handle->info.inode);
-#endif
+  LogDebug(COMPONENT_FSAL, "UpdateInodeCache: inode_id=%llu", p_handle->info.inode);
 
   i = hash_cache_path(p_handle->id, p_handle->ts);
 
@@ -125,19 +121,15 @@ int fsal_posixdb_UpdateInodeCache(posixfsal_handle_t * p_handle)        /* IN */
       cache_array[i].handle.info = p_handle->info;
       cache_array[i].info_is_set = TRUE;
 
-#ifdef _DEBUG_FSAL
-      DisplayLog("fsal_posixdb_UpdateInodeCache: %u, %u (existing entry)",
-                 (unsigned int)(p_handle->id), (unsigned int)(p_handle->ts));
-#endif
+      LogDebug(COMPONENT_FSAL, "fsal_posixdb_UpdateInodeCache: %u, %u (existing entry)",
+               (unsigned int)(p_handle->id), (unsigned int)(p_handle->ts));
 
       V_w(&cache_array[i].entry_lock);
 
       return TRUE;
     }
-#ifdef _DEBUG_FSAL
-  DisplayLog("fsal_posixdb_UpdateInodeCache: %u, %u (new entry)",
-             (unsigned int)(p_handle->id), (unsigned int)(p_handle->ts));
-#endif
+  LogDebug(COMPONENT_FSAL, "fsal_posixdb_UpdateInodeCache: %u, %u (new entry)",
+           (unsigned int)(p_handle->id), (unsigned int)(p_handle->ts));
 
   /* add it (replace previous handle) */
   cache_array[i].is_set = TRUE;
@@ -170,10 +162,8 @@ int fsal_posixdb_GetInodeCache(posixfsal_handle_t * p_handle)   /* IN/OUT */
         {
           p_handle->info = cache_array[i].handle.info;
 
-#ifdef _DEBUG_FSAL
-          DisplayLog("fsal_posixdb_GetInodeCache(%u, %u)", (unsigned int)(p_handle->id),
-                     (unsigned int)(p_handle->ts));
-#endif
+          LogDebug(COMPONENT_FSAL, "fsal_posixdb_GetInodeCache(%u, %u)", (unsigned int)(p_handle->id),
+                   (unsigned int)(p_handle->ts));
           V_r(&cache_array[i].entry_lock);
 
           return TRUE;
@@ -190,9 +180,7 @@ void fsal_posixdb_InvalidateCache()
 #ifdef _ENABLE_CACHE_PATH
   unsigned int i;
 
-#ifdef _DEBUG_FSAL
-  DisplayLog("fsal_posixdb_InvalidateCache");
-#endif
+  LogDebug(COMPONENT_FSAL, "fsal_posixdb_InvalidateCache");
 
   for(i = 0; i < CACHE_PATH_SIZE; i++)
     {
@@ -229,11 +217,9 @@ int fsal_posixdb_GetPathCache(posixfsal_handle_t * p_handle,    /* IN */
           memcpy(p_path, &cache_array[i].path, sizeof(fsal_path_t));
           V_r(&cache_array[i].entry_lock);
 
-#ifdef _DEBUG_FSAL
-          DisplayLog("fsal_posixdb_GetPathCache(%u, %u)=%s",
-                     (unsigned int)p_handle->id, (unsigned int)p_handle->ts,
-                     p_path->path);
-#endif
+          LogDebug(COMPONENT_FSAL, "fsal_posixdb_GetPathCache(%u, %u)=%s",
+                   (unsigned int)p_handle->id, (unsigned int)p_handle->ts,
+                   p_path->path);
           return TRUE;
         }
     }
@@ -254,10 +240,10 @@ fsal_posixdb_status_t mysql_error_convert(int err)
       ReturnCodeDB(ERR_FSAL_POSIXDB_CONSISTENCY, err);
     case ER_BAD_FIELD_ERROR:
     case ER_PARSE_ERROR:
-      DisplayLogLevel(NIV_CRIT, "SQL request parse error or invalid field");
+      LogCrit(COMPONENT_FSAL, "SQL request parse error or invalid field");
       ReturnCodeDB(ERR_FSAL_POSIXDB_CMDFAILED, err);
     default:
-      DisplayLogLevel(NIV_MAJOR,
+      LogMajor(COMPONENT_FSAL,
                       "Unhandled error %d: default conversion to ERR_FSAL_POSIXDB_CMDFAILED",
                       err);
       ReturnCodeDB(ERR_FSAL_POSIXDB_CMDFAILED, err);
@@ -286,9 +272,7 @@ fsal_posixdb_status_t db_exec_sql(fsal_posixdb_conn * conn, const char *query,
 /*    unsigned int   retry = lmgr_config.connect_retry_min; */
   unsigned int retry = 1;
 
-#ifdef _DEBUG_FSAL
-  DisplayLogLevel(NIV_FULL_DEBUG, "SQL query: %s", query);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "SQL query: %s", query);
 
   do
     {
@@ -296,8 +280,8 @@ fsal_posixdb_status_t db_exec_sql(fsal_posixdb_conn * conn, const char *query,
 
       if(rc && db_is_retryable(mysql_errno(&conn->db_conn)))
         {
-          DisplayLogLevel(NIV_MAJOR, "Connection to database lost... Retrying in %u sec.",
-                          retry);
+          LogMajor(COMPONENT_FSAL, "Connection to database lost... Retrying in %u sec.",
+                   retry);
           sleep(retry);
           retry *= 2;
           /*if ( retry > lmgr_config.connect_retry_max )
@@ -309,8 +293,8 @@ fsal_posixdb_status_t db_exec_sql(fsal_posixdb_conn * conn, const char *query,
 
   if(rc)
     {
-      DisplayLogLevel(NIV_MAJOR, "DB request failed: %s (query: %s)",
-                      mysql_error(&conn->db_conn), query);
+      LogMajor(COMPONENT_FSAL, "DB request failed: %s (query: %s)",
+               mysql_error(&conn->db_conn), query);
       return mysql_error_convert(mysql_errno(&conn->db_conn));
     }
   else
@@ -390,7 +374,7 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
 
   if(mysql_stmt_bind_param(stmt, input))
     {
-      DisplayLog("mysql_stmt_bind_param() failed: %s", mysql_stmt_error(stmt));
+      LogCrit(COMPONENT_FSAL, "mysql_stmt_bind_param() failed: %s", mysql_stmt_error(stmt));
       return mysql_error_convert(mysql_stmt_errno(stmt));
     }
 
@@ -419,7 +403,7 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
 
   if(mysql_stmt_bind_result(stmt, output))
     {
-      DisplayLog("mysql_stmt_bind_result() failed: %s", mysql_stmt_error(stmt));
+      LogCrit(COMPONENT_FSAL, "mysql_stmt_bind_result() failed: %s", mysql_stmt_error(stmt));
       return mysql_error_convert(mysql_stmt_errno(stmt));
     }
 
@@ -434,7 +418,7 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
 
       if(mysql_stmt_store_result(stmt))
         {
-          DisplayLog("mysql_stmt_store_result() failed: %s", mysql_stmt_error(stmt));
+          LogCrit(COMPONENT_FSAL, "mysql_stmt_store_result() failed: %s", mysql_stmt_error(stmt));
           return mysql_error_convert(mysql_stmt_errno(stmt));
         }
 
@@ -450,7 +434,7 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
         {
           /* clean prepared statement */
           mysql_stmt_free_result(stmt);
-          DisplayLog("mysql_stmt_fetch() failed: %s", mysql_stmt_error(stmt));
+          LogCrit(COMPONENT_FSAL, "mysql_stmt_fetch() failed: %s", mysql_stmt_error(stmt));
           return mysql_error_convert(mysql_stmt_errno(stmt));
         }
 
@@ -481,7 +465,7 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
 
   if(toomanypaths)
     {
-      DisplayLog("Returned path: %s", p_path->path);
+      LogCrit(COMPONENT_FSAL, "Returned path: %s", p_path->path);
       ReturnCodeDB(ERR_FSAL_POSIXDB_TOOMANYPATHS, toomanypaths);        /* too many entries */
     }
   else
@@ -690,7 +674,7 @@ fsal_posixdb_status_t fsal_posixdb_internal_delete(fsal_posixdb_conn * p_conn,  
   if(p_object_info && fsal_posixdb_consistency_check(&infodb, p_object_info))
     {
       /* not consistent, the bad handle have to be deleted */
-      DisplayLog("Consistency check failed while deleting a Path : Handle deleted");
+      LogCrit(COMPONENT_FSAL, "Consistency check failed while deleting a Path : Handle deleted");
       infodb.ftype = FSAL_TYPE_DIR;     /* considers that the entry is a directory in order to delete all its Parent entries and its Handle */
     }
 

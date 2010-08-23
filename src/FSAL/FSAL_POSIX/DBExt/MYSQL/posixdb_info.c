@@ -25,9 +25,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  
     {
       ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
     }
-#ifdef _DEBUG_FSAL
-  printf("object_name='%s'\n", p_objectname->name ? p_objectname->name : "/");
-#endif
+  LogFullDebug(COMPONENT_FSAL, "object_name='%s'\n", p_objectname->name ? p_objectname->name : "/");
 
   BeginTransaction(p_conn);
   /* lookup for the handle of the file */
@@ -128,9 +126,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
     {
       ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
     }
-#ifdef _DEBUG_FSAL
-  printf("OBJECT_ID=%lli\n", p_object_handle->data.id);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "OBJECT_ID=%lli\n", p_object_handle->data.id);
 
   BeginTransaction(p_conn);
 
@@ -150,15 +146,11 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
 
       /* p_res contains : Handle.deviceId, Handle.inode, Handle.nlink, Handle.ctime, Handle.ftype  */
 
-#ifdef _DEBUG_FSAL
-      DisplayLog("lookupHandle(%llu,%u)", p_object_handle->data.id,
+      LogDebug(COMPONENT_FSAL, "lookupHandle(%llu,%u)", p_object_handle->data.id,
                  (unsigned int)p_object_handle->data.ts);
-#endif
       if((mysql_num_rows(res) != 1) || ((row = mysql_fetch_row(res)) == NULL))
         {
-#ifdef _DEBUG_FSAL
-          DisplayLog("lookupHandle=%d entries", mysql_num_rows(res));
-#endif
+          LogDebug(COMPONENT_FSAL, "lookupHandle=%d entries", mysql_num_rows(res));
           mysql_free_result(res);
           RollbackTransaction(p_conn);
           ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
@@ -197,7 +189,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
         {
           toomanypaths = 1;
 
-          DisplayLog("Too many paths found for object %llu.%u: found=%u, max=%d",
+          LogCrit(COMPONENT_FSAL, "Too many paths found for object %llu.%u: found=%u, max=%d",
                      p_object_handle->data.id, p_object_handle->data.ts, *p_count, paths_size);
 
           *p_count = paths_size;
@@ -316,9 +308,7 @@ fsal_posixdb_status_t fsal_posixdb_getParentDirHandle(fsal_posixdb_conn * p_conn
       mysql_free_result(res);
       ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
     }
-#ifdef _DEBUG_FSAL
-  DisplayLog("lookupPathsExt");
-#endif
+  LogDebug(COMPONENT_FSAL, "lookupPathsExt");
 
   p_parent_directory_handle->data.id = atoll(row[1]);
   p_parent_directory_handle->data.ts = atoi(row[2]);
