@@ -87,7 +87,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
       if(fsal_posixdb_consistency_check
          (&(p_parent_directory_handle_old->data.info), p_object_info))
         {
-          DisplayLog("Consistency check failed while renaming a file : Handle deleted");
+          LogCrit(COMPONENT_FSAL, "Consistency check failed while renaming a file : Handle deleted");
           st = fsal_posixdb_recursiveDelete(p_conn, atoll(row[0]), atoi(row[1]),
                                             FSAL_TYPE_DIR);
           mysql_free_result(res);
