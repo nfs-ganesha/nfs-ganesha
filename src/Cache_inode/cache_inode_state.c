@@ -144,7 +144,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
   cache_inode_state_t *piter_state = NULL;
   cache_inode_state_t *piter_saved = NULL;
   cache_inode_open_owner_t *powner = powner_input;
-  char debug_str[24];
+  char debug_str[25];
   bool_t conflict_found = FALSE;
   unsigned int i = 0;
 
