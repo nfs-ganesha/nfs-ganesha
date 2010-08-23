@@ -28,8 +28,8 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
     }
   else
     {
-      DisplayLogLevel(NIV_EVENT, "ERROR: could not connect to database : %s",
-                      PQerrorMessage(*p_conn));
+      LogEvent(COMPONENT_FSAL, "ERROR: could not connect to database : %s",
+               PQerrorMessage(*p_conn));
       PQfinish(*p_conn);
       ReturnCodeDB(ERR_FSAL_POSIXDB_BADCONN, (int)st);
       /* error message available with PQerrorMessage(dbconn) */
