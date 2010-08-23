@@ -305,7 +305,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
   *pstatus = CACHE_INODE_SUCCESS;
 
   if (isFullDebug(COMPONENT_STATES)) {
-    sprint_mem(debug_str, (unsigned char)pnew_state->stateid_other[i], 12);
+    sprint_mem(debug_str, (char *)pnew_state->stateid_other, 12);
     LogFullDebug(COMPONENT_STATES,"cache_inode_add_state : %s", debug_str);
   }
   V_w(&pentry->lock);
@@ -532,7 +532,7 @@ cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
   unsigned int i = 0;
 
   if (isFullDebug(COMPONENT_STATES)) {
-    sprint_mem(str, (unsigned char)pstate->stateid_other[i], 12);
+    sprint_mem(str, (char *)pstate->stateid_other, 12);
     LogFullDebug(COMPONENT_STATES,"cache_inode_del_state : %s", str);
   }
 

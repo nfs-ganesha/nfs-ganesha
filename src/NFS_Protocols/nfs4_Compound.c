@@ -407,7 +407,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
       else
         opindex = optab4index[POS_ILLEGAL];     /* = NFS4_OP_ILLEGAL a value to big for argop means an illegal value */
 
-      LogEvent(COMPONENT_NFS_V4,
+      LogDebug(COMPONENT_NFS_V4,
                         "NFS V4 COMPOUND: Request #%d is %d = %s, entry #%d in the op array",
                         i, optabvers[parg->arg_compound4.minorversion][opindex].val,
                         optabvers[parg->arg_compound4.minorversion][opindex].name,
@@ -423,7 +423,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
       memcpy(&(pres->res_compound4.resarray.resarray_val[i]), &res, sizeof(res));
 
       utf82str(tmpstr, &(pres->res_compound4.tag));
-      LogEvent(COMPONENT_NFS_V4, "--> COMPOUND REQUEST TAG is #%s#\n", tmpstr);
+      LogDebug(COMPONENT_NFS_V4, "--> COMPOUND REQUEST TAG is #%s#\n", tmpstr);
 
       print_compound_fh(COMPONENT_NFS_V4, &data);
 
