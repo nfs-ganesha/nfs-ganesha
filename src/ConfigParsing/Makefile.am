@@ -15,10 +15,10 @@ libConfigParsing_la_SOURCES = conf_yacc.y conf_yacc.h conf_lex.l analyse.c confi
 check_PROGRAMS		    = verif_syntax test_parsing
 
 verif_syntax_SOURCES	    = verif_syntax.c 
-verif_syntax_LDADD         = libConfigParsing.la
+verif_syntax_LDADD         = libConfigParsing.la ../Log/liblog.la
 
 test_parsing_SOURCES	    = test_parse.c
-test_parsing_LDADD         =  libConfigParsing.la
+test_parsing_LDADD         =  libConfigParsing.la ../Log/liblog.la
 
 new: clean all
 
