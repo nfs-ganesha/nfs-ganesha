@@ -299,15 +299,15 @@ void SetComponentLogLevel(log_components_t component, int level_to_set)
     level_to_set = NB_LOG_LEVEL - 1;
 
   LogMajor(COMPONENT_LOG, "Changing log level of %s from %s to %s",
-	     LogComponents[component].str,
-	     ReturnLevelInt(LogComponents[component].log_level),
+	     LogComponents[component].comp_name,
+	     ReturnLevelInt(LogComponents[component].comp_log_level),
 	     ReturnLevelInt(level_to_set));
-  LogComponents[component].log_level = level_to_set;
+  LogComponents[component].comp_log_level = level_to_set;
 }
 
 inline int ReturnLevelDebug()
 {
-  return LogComponents[COMPONENT_ALL].log_level;
+  return LogComponents[COMPONENT_ALL].comp_log_level;
 }                               /* ReturnLevelDebug */
 
 void SetLevelDebug(int level_to_set)
@@ -323,7 +323,7 @@ void SetLevelDebug(int level_to_set)
   LogMajor(COMPONENT_LOG, "Changing log level for all components to %s",
 	     ReturnLevelInt(level_to_set));
   for (i = 0; i < COMPONENT_COUNT; i++)
-      LogComponents[i].log_level = level_to_set;
+      LogComponents[i].comp_log_level = level_to_set;
 }                               /* SetLevelDebug */
 
 static void IncrementeLevelDebug()
@@ -366,8 +366,8 @@ int InitDebug(int level_to_set)
   LogMajor(COMPONENT_LOG, "Changing log level for all components to at least %s",
 	     ReturnLevelInt(level_to_set));
   for (i = 0; i < COMPONENT_COUNT; i++)
-    if (LogComponents[i].log_level < NIV_DEBUG)
-      LogComponents[i].log_level = level_to_set;
+    if (LogComponents[i].comp_log_level < NIV_DEBUG)
+      LogComponents[i].comp_log_level = level_to_set;
 
   ArmeSignal(SIGUSR1, IncrementeLevelDebug);
   ArmeSignal(SIGUSR2, DecrementeLevelDebug);
@@ -427,18 +427,6 @@ static int DisplayLogSyslog_valist( char * format, va_list arguments )
   return 1 ;
 } /* DisplayLogSyslog_valist */
 
-static int DisplayLogSyslog( char * format, ... )
-{
-  va_list arguments ;
-  int rc ;
-
-  va_start( arguments, format );
-  rc = DisplayLogSyslog_valist( format, arguments ) ;
-  va_end( arguments ) ;
-
-  return rc ;
-} /* DisplayLogSyslog_valist */
-
 static int DisplayLogFd_valist(int fd, char *format, va_list arguments)
 {
   char tampon[STR_LEN_TXT];
@@ -446,19 +434,6 @@ static int DisplayLogFd_valist(int fd, char *format, va_list arguments)
   DisplayLogString_valist(tampon, format, arguments);
   return write(fd, tampon, strlen(tampon));
 }                               /* DisplayLogFd_valist */
-
-int DisplayLogFd(int fd, char *format, ...)
-{
-  va_list arguments;
-  int rc;
-
-  va_start(arguments, format);
-  rc = DisplayLogFd_valist(fd, format, arguments);
-  va_end(arguments);
-
-  return rc;
-
-}                               /* DisplayLogFd */
 
 static int DisplayLogFlux_valist(FILE * flux, char *format, va_list arguments)
 {
@@ -564,13 +539,13 @@ int DisplayLog_valist(log_components_t component, char *format, va_list argument
 {
   int rc;
 
-  switch(LogComponents[component].log_type)
+  switch(LogComponents[component].comp_log_type)
     {
     case SYSLOG:
       rc = DisplayLogSyslog_valist(format, arguments);
       break;
     case FILELOG:
-      rc = DisplayLogPath_valist(LogComponents[COMPONENT_ALL].log_file, format, arguments);
+      rc = DisplayLogPath_valist(LogComponents[COMPONENT_ALL].comp_log_file, format, arguments);
       break;
     case STDERRLOG:
       rc = DisplayLogFlux_valist(stderr, format, arguments);
@@ -656,21 +631,6 @@ int AddFamilyError(int num_family, char *name_family, family_error_t * tab_err)
 
   return tab_family[i].num_family;
 }                               /* AddFamilyError */
-
-int RemoveFamilyError(int num_family)
-{
-  int i = 0;
-
-  for(i = 0; i < MAX_NUM_FAMILY; i++)
-    if(tab_family[i].num_family == num_family)
-      {
-        tab_family[i].num_family = UNUSED_SLOT;
-        return i;
-      }
-
-  /* Sinon on retourne -1 */
-  return -1;
-}                               /* RemoveFamilyError */
 
 char *ReturnNameFamilyError(int num_family)
 {
@@ -761,16 +721,6 @@ int DisplayErrorFluxLine(FILE * flux, int num_family, int num_error, int status,
 
   return DisplayLogFlux(flux, "%s", buffer);
 }                               /* DisplayErrorFluxLine */
-
-int DisplayErrorFdLine(int fd, int num_family, int num_error, int status, int ma_ligne)
-{
-  char buffer[STR_LEN_TXT];
-
-  if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
-    return -1;
-
-  return DisplayLogFd(fd, "%s", buffer);
-}                               /* DisplayErrorFdLine */
 
 int DisplayErrorLogLine(int num_family, int num_error, int status, int ma_ligne)
 {
@@ -1558,18 +1508,6 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
   return retval;
 }                               /* mon_vsprintf */
 
-int log_sprintf(char *out, char *format, ...)
-{
-  va_list arguments;
-  int rc;
-
-  va_start(arguments, format);
-  rc = log_vsprintf(out, format, arguments);
-  va_end(arguments);
-
-  return rc;
-}
-
 int log_snprintf(char *out, size_t n, char *format, ...)
 {
   va_list arguments;
@@ -1593,29 +1531,6 @@ int log_fprintf(FILE * file, char *format, ...)
   rc = log_vsnprintf(tmpstr, LOG_MAX_STRLEN, format, arguments);
   va_end(arguments);
   fputs(tmpstr, file);
-  return rc;
-}
-
-int log_vfprintf(FILE * file, char *format, va_list arguments)
-{
-  char tmpstr[LOG_MAX_STRLEN];
-  int rc;
-
-  memset(tmpstr, 0, LOG_MAX_STRLEN);
-  rc = log_vsnprintf(tmpstr, LOG_MAX_STRLEN, format, arguments);
-  fputs(tmpstr, file);
-  return rc;
-}
-
-int log_printf(char *format, ...)
-{
-  va_list arguments;
-  int rc;
-
-  va_start(arguments, format);
-  rc = log_vfprintf(stdout, format, arguments);
-  va_end(arguments);
-
   return rc;
 }
 
@@ -1925,7 +1840,7 @@ int DisplayErrorComponentLogLine(log_components_t component, int num_family, int
 
   if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
-  return DisplayLogComponentLevel(component, NIV_CRIT, "%s: %s", LogComponents[component].str, buffer);
+  return DisplayLogComponentLevel(component, NIV_CRIT, "%s: %s", LogComponents[component].comp_str, buffer);
 }                               /* DisplayErrorLogLine */
 
 void SetLogLevelFromEnv()
@@ -1935,19 +1850,19 @@ void SetLogLevelFromEnv()
 
   for(comp=0; comp < COMPONENT_COUNT; comp++)
     {
-      env_value = getenv(LogComponents[comp].str);
+      env_value = getenv(LogComponents[comp].comp_name);
       if (env_value == NULL)
 	continue;
       newval = ReturnLevelAscii(env_value);
       if (newval == -1) {
 	LogMajor(COMPONENT_LOG, "Environment variable %s exists, but the value %s is not a valid log level.",
-		 LogComponents[comp].str, env_value);
+		 LogComponents[comp].comp_name, env_value);
 	continue;
       }
       LogMajor(COMPONENT_LOG, "Using environment variable to switch log level for %s from %s to %s",
-	       LogComponents[comp].str, tabLogLevel[LogComponents[comp].log_level].str,
+	       LogComponents[comp].comp_name, tabLogLevel[LogComponents[comp].comp_log_level].str,
 	       ReturnLevelInt(newval));
-      LogComponents[comp].log_level = newval;
+      LogComponents[comp].comp_log_level = newval;
     }
 }
 
@@ -2003,7 +1918,7 @@ int SetDefaultLogging(char *name)
   int comp;
   for(comp=0; comp < COMPONENT_COUNT; comp++)
     {
-      if (LogComponents[comp].value == COMPONENT_STDOUT)
+      if (LogComponents[comp].comp_value == COMPONENT_STDOUT)
 	continue;
       SetComponentLogFile(comp, name);
     }
@@ -2032,9 +1947,9 @@ int SetComponentLogFile(log_components_t comp, char *name)
 	return 0;
       }
 
-  LogComponents[comp].log_type = newtype;
+  LogComponents[comp].comp_log_type = newtype;
   if (newtype == FILELOG)
-    strncpy(LogComponents[comp].log_file, name, MAXPATHLEN);
+    strncpy(LogComponents[comp].comp_log_file, name, MAXPATHLEN);
 }                               /* SetComponentLogFile */
 
 /*
@@ -2048,7 +1963,7 @@ int getComponentLogLevel(snmp_adm_type_union * param, void *opt)
 {
   long component = (long)opt;
 
-  strcpy(param->string, ReturnLevelInt(LogComponents[component].log_level));
+  strcpy(param->string, ReturnLevelInt(LogComponents[component].comp_log_level));
   return 0;
 }
 
@@ -2064,10 +1979,10 @@ int setComponentLogLevel(const snmp_adm_type_union * param, void *opt)
     SetLevelDebug(level_to_set);
   else {
     LogMajor(COMPONENT_LOG, "SNMP request changing log level of %s from %s to %s.",
-	     LogComponents[component].str,
-	     ReturnLevelInt(LogComponents[component].log_level),
+	     LogComponents[component].comp_name,
+	     ReturnLevelInt(LogComponents[component].comp_log_level),
 	     ReturnLevelInt(level_to_set));
-    LogComponents[component].log_level = level_to_set;
+    LogComponents[component].comp_log_level = level_to_set;
   }
   return 0;
 }

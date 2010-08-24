@@ -222,10 +222,10 @@ void *file_content_gc_thread(void *IndexArg)
         }                       /* for */
 
       if (strncmp(fcc_log_path, "/dev/null", 9) == 0)
-	switch(LogComponents[COMPONENT_CACHE_INODE_GC].log_type)
+	switch(LogComponents[COMPONENT_CACHE_INODE_GC].comp_log_type)
 	  {
 	  case FILELOG:
-	    strncpy(logfile_arg, LogComponents[COMPONENT_CACHE_INODE_GC].log_file, MAXPATHLEN);
+	    strncpy(logfile_arg, LogComponents[COMPONENT_CACHE_INODE_GC].comp_log_file, MAXPATHLEN);
 	    break;
 	  case SYSLOG:
 	    strncpy(logfile_arg, "SYSLOG", MAXPATHLEN);
@@ -245,7 +245,7 @@ void *file_content_gc_thread(void *IndexArg)
       if(fcc_debug_level) /* config variable */
 	loglevel_arg = debuglevelstr;
       else
-	loglevel_arg = tabLogLevel[LogComponents[COMPONENT_CACHE_INODE_GC].log_level].str;
+	loglevel_arg = tabLogLevel[LogComponents[COMPONENT_CACHE_INODE_GC].comp_log_level].str;
 
       snprintf(command, 2 * MAXPATHLEN, "%s -f %s -N %s -L %s",
 	       ganesha_exec_path, config_path, loglevel_arg, logfile_arg);
