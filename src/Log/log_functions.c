@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  *
  * ensemble des fonctions d'affichage et de gestion des erreurs
@@ -66,7 +66,6 @@ static family_t tab_family[MAX_NUM_FAMILY];
 
 static char nom_programme[1024];
 static char nom_host[256];
-static char nom_fichier_log[PATH_LEN] = "/tmp/logfile";
 static int syslog_opened = 0 ;
 
 //extern nfs_parameter_t nfs_param;
@@ -233,7 +232,7 @@ int SetNamePgm(char *nom)
 }                               /* SetNamePgm */
 
 /*
- * Set le nom d'host en cours 
+ * Set le nom d'host en cours
  */
 int SetNameHost(char *nom)
 {
@@ -257,42 +256,7 @@ int SetNameFunction(char *nom)
 }                               /* SetNameFunction */
 
 /*
- * Return le nom du programme en cours 
- */
-char *ReturnNamePgm()
-{
-  return nom_programme;
-}                               /* ReturnNamePgm */
-
-/*
- * Return le nom du host en cours 
- */
-char *ReturnNameHost()
-{
-  return nom_host;
-}                               /* ReturnNameHost */
-
-/*
- * Return le nom de la fonction en cours 
- */
-
-char *ReturnNameFunction()
-{
-  ThreadLogContext_t *context = Log_GetThreadContext();
-
-  return context->nom_fonction;
-}                               /* ReturnNameFunction */
-
-/*
- * Return le chemin du fichier de log
- */
-char *ReturnNameFileLog()       /* Cette fonction n'est PAS MT-Safe */
-{
-  return nom_fichier_log;
-}                               /* ReturnNameFileLog */
-
-/*
- * Cette fonction permet d'installer un handler de signal 
+ * Cette fonction permet d'installer un handler de signal
  */
 
 static void ArmeSignal(int signal, void (*action) ())
@@ -323,7 +287,7 @@ static void ArmeSignal(int signal, void (*action) ())
  * DecrementeLevelDebug
  * SetLevelDebug
  * ReturnLevelDebug
- * 
+ *
  */
 
 void SetComponentLogLevel(log_components_t component, int level_to_set)
@@ -411,7 +375,7 @@ int InitDebug(int level_to_set)
   return 0;
 }                               /* InitLevelDebug */
 
-/* 
+/*
  *
  * La fonction qui fait l'entete pour tout le monde
  *
@@ -421,6 +385,7 @@ static int FaireEntete(char *output)
 {
   struct tm the_date;
   time_t heure;
+  ThreadLogContext_t *context = Log_GetThreadContext();
 
   heure = time(NULL);
   Localtime_r(&heure, &the_date);
@@ -429,12 +394,12 @@ static int FaireEntete(char *output)
                   "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :",
                   the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
                   the_date.tm_hour, the_date.tm_min, the_date.tm_sec, heure, nom_host,
-                  nom_programme, getpid(), ReturnNameFunction());
+                  nom_programme, getpid(), context->nom_fonction);
 
 }                               /* Faire_entete */
 
 /*
- * Une fonction d'affichage tout a fait generique 
+ * Une fonction d'affichage tout a fait generique
  */
 
 static int DisplayLogString_valist(char *buff_dest, char *format, va_list arguments)
@@ -449,27 +414,6 @@ static int DisplayLogString_valist(char *buff_dest, char *format, va_list argume
   log_vsnprintf(texte, STR_LEN_TXT, format, arguments);
   return snprintf(buff_dest, STR_LEN_TXT, "%s%s\n", entete, texte);
 }                               /* DisplayLogString_valist */
-
-/* 
- *
- * Display un message avec entete et avec le format (printf-like) indique 
- *
- */
-
-int DisplayLogString(char *chaine, char *format, ...)
-{
-  int rc;
-  va_list arguments;
-
-  va_start(arguments, format);
-  rc = DisplayLogString_valist(chaine, format, arguments);
-  va_end(arguments);
-
-  return rc;
-
-}                               /* DisplayLogString */
-
-
 
 static int DisplayLogSyslog_valist( char * format, va_list arguments )
 {
@@ -525,6 +469,16 @@ static int DisplayLogFlux_valist(FILE * flux, char *format, va_list arguments)
   fprintf(flux, "%s", tampon);
   return fflush(flux);
 }                               /* DisplayLogFlux_valist */
+
+static int DisplayTest_valist(char *format, va_list arguments)
+{
+  char text[STR_LEN_TXT];
+
+  log_vsnprintf(text, STR_LEN_TXT, format, arguments);
+
+  fprintf(stdout, "%s\n", text);
+  return fflush(stdout);
+}
 
 int DisplayLogFlux(FILE * flux, char *format, ...)
 {
@@ -596,9 +550,9 @@ static int DisplayLogPath_valist(char *path, char *format, va_list arguments)
           /* Si l'ouverture du fichier s'est mal passee */
           my_status = errno;
         }
-      fprintf(stderr, "Error %s : %s : status %d on file %s\n",
+      fprintf(stderr, "Error %s : %s : status %d on file %s message was:\n%s\n",
               tab_systeme_err[ERR_FICHIER_LOG].label,
-              tab_systeme_err[ERR_FICHIER_LOG].msg, my_status, path);
+              tab_systeme_err[ERR_FICHIER_LOG].msg, my_status, path, tampon);
 
       return ERR_FICHIER_LOG;
     }
@@ -606,23 +560,33 @@ static int DisplayLogPath_valist(char *path, char *format, va_list arguments)
   return SUCCES;
 }                               /* DisplayLogPath_valist */
 
-int DisplayLogPath(char *path, char *format, ...)
+int DisplayLog_valist(log_components_t component, char *format, va_list arguments)
 {
   int rc;
-  va_list arguments;
 
-  va_start(arguments, format);
-  rc = DisplayLogPath_valist(path, format, arguments);
-  va_end(arguments);
+  switch(LogComponents[component].log_type)
+    {
+    case SYSLOG:
+      rc = DisplayLogSyslog_valist(format, arguments);
+      break;
+    case FILELOG:
+      rc = DisplayLogPath_valist(LogComponents[COMPONENT_ALL].log_file, format, arguments);
+      break;
+    case STDERRLOG:
+      rc = DisplayLogFlux_valist(stderr, format, arguments);
+      break;
+    case STDOUTLOG:
+      rc = DisplayLogFlux_valist(stdout, format, arguments);
+      break;
+    case TESTLOG:
+      rc = DisplayTest_valist(format, arguments);
+      break;
+    default:
+      rc = ERR_FAILURE;
+    }
 
   return rc;
-
-}                               /* DisplayLogPath */
-
-static int DisplayLog_valist(char *format, va_list arguments)
-{
-  return DisplayLogPath_valist(nom_fichier_log, format, arguments);
-}                               /* DisplayLog_valist */
+}
 
 int DisplayLog(char *format, ...)
 {
@@ -630,11 +594,9 @@ int DisplayLog(char *format, ...)
   int rc;
 
   va_start(arguments, format);
-  rc = DisplayLog_valist(format, arguments);
+  rc = DisplayLog_valist(COMPONENT_ALL, format, arguments);
   va_end(arguments);
-
   return rc;
-
 }                               /* DisplayLog */
 
 /*
@@ -642,62 +604,6 @@ int DisplayLog(char *format, ...)
  * Les memes fonctions mais avec des considerations de niveau
  *
  */
-
-static int DisplayLogStringLevel(char *tampon, int level, char *format, ...)
-{
-  va_list arguments;
-  int rc;
-
-  va_start(arguments, format);
-
-  if(level <= ReturnLevelDebug())
-    {
-      rc = DisplayLogString_valist(tampon, format, arguments);
-    }
-  else
-    rc = SUCCES;
-
-  va_end(arguments);
-
-  return rc;
-
-}                               /* DisplayLogStringLevel */
-
-static int DisplayLogFluxLevel(FILE * flux, int level, char *format, ...)
-{
-  va_list arguments;
-  int rc;
-
-  va_start(arguments, format);
-
-  if(level <= ReturnLevelDebug())
-    rc = DisplayLogFlux_valist(flux, format, arguments);
-  else
-    rc = SUCCES;
-
-  va_end(arguments);
-
-  return rc;
-
-}                               /* DisplayLogFluxLevel */
-
-static int DisplayLogFdLevel(int fd, int level, char *format, ...)
-{
-  va_list arguments;
-  int rc;
-
-  va_start(arguments, format);
-
-  if(level <= ReturnLevelDebug())
-    rc = DisplayLogFd_valist(fd, format, arguments);
-  else
-    rc = SUCCES;
-
-  va_end(arguments);
-
-  return rc;
-
-}                               /* DisplayLogFdLevel */
 
 int DisplayLogLevel(int level, char *format, ...)
 {
@@ -707,7 +613,7 @@ int DisplayLogLevel(int level, char *format, ...)
   va_start(arguments, format);
 
   if(level <= ReturnLevelDebug())
-    rc = DisplayLog_valist(format, arguments);
+      rc = DisplayLog_valist(COMPONENT_ALL, format, arguments);
   else
     rc = SUCCES;
 
@@ -717,27 +623,9 @@ int DisplayLogLevel(int level, char *format, ...)
 
 }                               /* DisplayLogLevel */
 
-static int DisplayLogPathLevel(char *path, int level, char *format, ...)
-{
-  va_list arguments;
-  int rc;
-
-  va_start(arguments, format);
-
-  if(level <= ReturnLevelDebug())
-    rc = DisplayLogPath_valist(path, format, arguments);
-  else
-    rc = SUCCES;
-
-  va_end(arguments);
-
-  return rc;
-
-}                               /* DisplayLogPathLevel */
-
 /*
  *
- * Les routines de gestions des messages d'erreur 
+ * Les routines de gestions des messages d'erreur
  *
  */
 
@@ -862,17 +750,6 @@ static int FaireLogError(char *buffer, int num_family, int num_error, int status
                      the_error.label, the_error.msg, status, strerror(status), ma_ligne);
     }
 }                               /* FaireLogError */
-
-int DisplayErrorStringLine(char *tampon, int num_family, int num_error, int status,
-                           int ma_ligne)
-{
-  char buffer[STR_LEN_TXT];
-
-  if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
-    return -1;
-
-  return DisplayLogString(tampon, "%s", buffer);
-}                               /* DisplayErrorStringLine */
 
 int DisplayErrorFluxLine(FILE * flux, int num_family, int num_error, int status,
                          int ma_ligne)
@@ -1173,8 +1050,8 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
           ONE_STEP;
         }
 
-      /* 
-       * une boucle qui traite des caracterers de formatage, infini sauf quand un caractere qui n'est pas de 
+      /*
+       * une boucle qui traite des caracterers de formatage, infini sauf quand un caractere qui n'est pas de
        * formattage est rencontree qui produit un break ;
        */
       do
@@ -1182,8 +1059,8 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
 
           switch (*iterformat)
             {
-              /* ATTENTION 
-               *  /!\ Une serie de case sans break !!!! 
+              /* ATTENTION
+               *  /!\ Une serie de case sans break !!!!
                */
             case ' ':
               /* Un espace est utilise a la place d'un signe. */
@@ -1744,11 +1621,11 @@ int log_printf(char *format, ...)
 
 log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
 {
-  { COMPONENT_ALL,               "COMPONENT_ALL",           
+  { COMPONENT_ALL,               "COMPONENT_ALL", "",
     NIV_CRIT
   },
-  { COMPONENT_MEMALLOC,          "COMPONENT_MEMALLOC",       
-#ifdef _DEBUG_MEMALLOC      
+  { COMPONENT_MEMALLOC,          "COMPONENT_MEMALLOC", "MEM ALLOC",
+#ifdef _DEBUG_MEMALLOC
     NIV_FULL_DEBUG,
 #else
     NIV_CRIT,
@@ -1756,8 +1633,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_STATES,            "COMPONENT_STATES",         
-#ifdef _DEBUG_STATES        
+  { COMPONENT_STATES,            "COMPONENT_STATES", "STATES",
+#ifdef _DEBUG_STATES
     NIV_FULL_DEBUG,
 #else
     NIV_CRIT,
@@ -1765,8 +1642,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_MEMLEAKS,          "COMPONENT_MEMLEAKS",       
-#ifdef _DEBUG_MEMLEAKS      
+  { COMPONENT_MEMLEAKS,          "COMPONENT_MEMLEAKS", "MEM LEAKS",
+#ifdef _DEBUG_MEMLEAKS
     NIV_FULL_DEBUG,
 #else
     NIV_CRIT,
@@ -1774,8 +1651,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_FSAL,              "COMPONENT_FSAL",           
-#ifdef _DEBUG_FSAL          
+  { COMPONENT_FSAL,              "COMPONENT_FSAL", "FSAL",
+#ifdef _DEBUG_FSAL
     NIV_FULL_DEBUG,
 #else
     NIV_CRIT,
@@ -1783,8 +1660,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFSPROTO,          "COMPONENT_NFSPROTO",       
-#ifdef _DEBUG_NFSPROTO      
+  { COMPONENT_NFSPROTO,          "COMPONENT_NFSPROTO", "NFS PROTO",
+#ifdef _DEBUG_NFSPROTO
     NIV_FULL_DEBUG,
 #else
     NIV_CRIT,
@@ -1792,8 +1669,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_V4,            "COMPONENT_NFS_V4",         
-#ifdef _DEBUG_NFS_V4        
+  { COMPONENT_NFS_V4,            "COMPONENT_NFS_V4", "NFS V4",
+#ifdef _DEBUG_NFS_V4
     NIV_FULL_DEBUG,
 #else
     NIV_CRIT,
@@ -1801,8 +1678,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_V4_PSEUDO,     "COMPONENT_NFS_V4_PSEUDO",  
-#ifdef _DEBUG_NFS_V4_PSEUDO 
+  { COMPONENT_NFS_V4_PSEUDO,     "COMPONENT_NFS_V4_PSEUDO", "NFS V4 PSEUDO",
+#ifdef _DEBUG_NFS_V4_PSEUDO
     NIV_FULL_DEBUG,
 #else
     NIV_CRIT,
@@ -1810,8 +1687,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_FILEHANDLE,        "COMPONENT_FILEHANDLE",     
-#ifdef _DEBUG_FILEHANDLE    
+  { COMPONENT_FILEHANDLE,        "COMPONENT_FILEHANDLE", "FILE HANDLE",
+#ifdef _DEBUG_FILEHANDLE
     NIV_FULL_DEBUG,
 #else
     NIV_CRIT,
@@ -1819,8 +1696,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_SHELL,         "COMPONENT_NFS_SHELL",      
-#ifdef _DEBUG_NFS_SHELL     
+  { COMPONENT_NFS_SHELL,         "COMPONENT_NFS_SHELL", "NFS SHELL",
+#ifdef _DEBUG_NFS_SHELL
     NIV_FULL_DEBUG,
 #else
     NIV_CRIT,
@@ -1828,8 +1705,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_DISPATCH,          "COMPONENT_DISPATCH",       
-#ifdef _DEBUG_DISPATCH      
+  { COMPONENT_DISPATCH,          "COMPONENT_DISPATCH", "DISPATCH",
+#ifdef _DEBUG_DISPATCH
     NIV_FULL_DEBUG,
 #else
     NIV_CRIT,
@@ -1837,8 +1714,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_CACHE_CONTENT,     "COMPONENT_CACHE_CONTENT",  
-#ifdef _DEBUG_CACHE_CONTENT 
+  { COMPONENT_CACHE_CONTENT,     "COMPONENT_CACHE_CONTENT", "CACHE CONTENT",
+#ifdef _DEBUG_CACHE_CONTENT
     NIV_FULL_DEBUG,
 #else
     NIV_CRIT,
@@ -1846,8 +1723,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_CACHE_INODE,       "COMPONENT_CACHE_INODE",    
-#ifdef _DEBUG_CACHE_INODE   
+  { COMPONENT_CACHE_INODE,       "COMPONENT_CACHE_INODE", "CACHE INODE",
+#ifdef _DEBUG_CACHE_INODE
     NIV_FULL_DEBUG,
 #else
     NIV_CRIT,
@@ -1855,7 +1732,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_CACHE_INODE_GC,    "COMPONENT_CACHE_INODE_GC",  
+  { COMPONENT_CACHE_INODE_GC,    "COMPONENT_CACHE_INODE_GC", "CACHE INODE GC",
 #ifdef _DEBUG_CACHE_INODE_GC
     NIV_FULL_DEBUG,
 #else
@@ -1864,8 +1741,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_HASHTABLE,         "COMPONENT_HASHTABLE",      
-#ifdef _DEBUG_HASHTABLE     
+  { COMPONENT_HASHTABLE,         "COMPONENT_HASHTABLE", "HASH TABLE",
+#ifdef _DEBUG_HASHTABLE
     NIV_FULL_DEBUG,
 #else
     NIV_CRIT,
@@ -1873,8 +1750,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_LRU,               "COMPONENT_LRU",            
-#ifdef _DEBUG_LRU           
+  { COMPONENT_LRU,               "COMPONENT_LRU", "LRU",
+#ifdef _DEBUG_LRU
     NIV_FULL_DEBUG,
 #else
     NIV_CRIT,
@@ -1882,8 +1759,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_DUPREQ,            "COMPONENT_DUPREQ",         
-#ifdef _DEBUG_DUPREQ        
+  { COMPONENT_DUPREQ,            "COMPONENT_DUPREQ", "DUPREQ",
+#ifdef _DEBUG_DUPREQ
     NIV_FULL_DEBUG,
 #else
     NIV_CRIT,
@@ -1891,8 +1768,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_LOG,               "COMPONENT_LOG",            
-#ifdef _DEBUG_LOG           
+  { COMPONENT_LOG,               "COMPONENT_LOG", "LOG",
+#ifdef _DEBUG_LOG
     NIV_FULL_DEBUG,
 #else
     NIV_CRIT,
@@ -1900,8 +1777,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_RPCSEC_GSS,        "COMPONENT_RPCSEC_GSS",     
-#ifdef _DEBUG_RPCSEC_GSS    
+  { COMPONENT_RPCSEC_GSS,        "COMPONENT_RPCSEC_GSS", "RPCSEC GSS",
+#ifdef _DEBUG_RPCSEC_GSS
     NIV_FULL_DEBUG,
 #else
     NIV_CRIT,
@@ -1909,7 +1786,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_INIT,              "COMPONENT_INIT",
+  { COMPONENT_INIT,              "COMPONENT_INIT", "NFS STARTUP",
 #ifdef _DEBUG_INIT
     NIV_FULL_DEBUG,
 #else
@@ -1918,7 +1795,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_MAIN,              "COMPONENT_MAIN",
+  { COMPONENT_MAIN,              "COMPONENT_MAIN", "MAIN",
 #ifdef _DEBUG_MAIN
     NIV_FULL_DEBUG,
 #else
@@ -1927,7 +1804,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_IDMAPPER,          "COMPONENT_IDMAPPER",
+  { COMPONENT_IDMAPPER,          "COMPONENT_IDMAPPER", "ID MAPPER",
 #ifdef _DEBUG_IDMAPPER
     NIV_FULL_DEBUG,
 #else
@@ -1936,7 +1813,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_READDIR,       "COMPONENT_NFS_READDIR",
+  { COMPONENT_NFS_READDIR,       "COMPONENT_NFS_READDIR", "NFS READDIR",
 #ifdef _DEBUG_NFS_READDIR
     NIV_DEBUG,
 #else
@@ -1946,7 +1823,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     ""
   },
 
-  { COMPONENT_NFS_V4_LOCK,       "COMPONENT_NFS_V4_LOCK",
+  { COMPONENT_NFS_V4_LOCK,       "COMPONENT_NFS_V4_LOCK", "NFS V4 LOCK",
 #ifdef _DEBUG_NFS_V4_LOCK
     NIV_DEBUG,
 #else
@@ -1955,7 +1832,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_V4_XATTR,      "COMPONENT_NFS_V4_XATTR",
+  { COMPONENT_NFS_V4_XATTR,      "COMPONENT_NFS_V4_XATTR", "NFS V4 XATTR",
 #ifdef _DEBUG_NFS_V4_XATTR
     NIV_DEBUG,
 #else
@@ -1964,7 +1841,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_NFS_V4_REFERRAL,   "COMPONENT_NFS_V4_REFERRAL",
+  { COMPONENT_NFS_V4_REFERRAL,   "COMPONENT_NFS_V4_REFERRAL", "NFS V4 REFERRAL",
 #ifdef _DEBUG_NFS_V4_REFERRAL
     NIV_DEBUG,
 #else
@@ -1973,8 +1850,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_MEMCORRUPT,        "COMPONENT_MEMCORRUPT",
-#ifdef _DEBUG_MEMCORRUPT      
+  { COMPONENT_MEMCORRUPT,        "COMPONENT_MEMCORRUPT", "MEM CORRUPT",
+#ifdef _DEBUG_MEMCORRUPT
     NIV_DEBUG,
 #elifdef _DETECT_MEMCORRUPT
     NIV_DEBUG,
@@ -1984,7 +1861,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_CONFIG,            "COMPONENT_CONFIG",
+  { COMPONENT_CONFIG,            "COMPONENT_CONFIG", "CONFIG",
 #ifdef _DEBUG_CONFIG
     NIV_DEBUG,
 #else
@@ -1993,7 +1870,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_CLIENT_ID_COMPUTE, "COMPONENT_CLIENT_ID_COMPUTE",
+  { COMPONENT_CLIENT_ID_COMPUTE, "COMPONENT_CLIENT_ID_COMPUTE", "CLIENT ID COMPUTE",
 #ifdef _DEBUG_CLIENT_ID_COMPUTE
     NIV_DEBUG,
 #else
@@ -2002,7 +1879,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_STDOUT,            "COMPONENT_STDOUT",
+  { COMPONENT_STDOUT,            "COMPONENT_STDOUT", "STDOUT",
 #ifdef _DEBUG_STDOUT
     NIV_DEBUG,
 #else
@@ -2011,7 +1888,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_OPEN_OWNER_HASH,   "COMPONENT_OPEN_OWNER_HASH",
+  { COMPONENT_OPEN_OWNER_HASH,   "COMPONENT_OPEN_OWNER_HASH", "OPEN OWNER HASH",
 #ifdef _DEBUG_OPEN_OWNER_HASH
     NIV_DEBUG,
 #else
@@ -2020,7 +1897,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     ""
   },
-  { COMPONENT_SESSIONS,          "COMPONENT_SESSIONS",
+  { COMPONENT_SESSIONS,          "COMPONENT_SESSIONS", "SESSIONS",
 #ifdef _DEBUG_SESSIONS
     NIV_DEBUG,
 #else
@@ -2032,28 +1909,12 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
 };
 
 int DisplayLogComponentLevel(log_components_t component, int level, char *format, ...)
- {
+{
    va_list arguments;
-   int rc;  
+   int rc;
 
    va_start(arguments, format);
-   switch(LogComponents[component].log_type)
-     {
-     case SYSLOG: 
-       rc = DisplayLogSyslog_valist(format, arguments);
-       break;
-     case FILELOG:
-       rc = DisplayLogPath_valist(LogComponents[component].log_file, format, arguments);
-       break;
-     case STDERRLOG:
-       rc = DisplayLogFd_valist(2, format, arguments);
-       break;
-     case STDOUTLOG:
-       rc = DisplayLogFd_valist(1, format, arguments);
-       break;
-     default:
-       rc = ERR_FAILURE;
-     }
+   rc = DisplayLog_valist(component, format, arguments);
   va_end(arguments);
   return rc;
 }
@@ -2066,18 +1927,6 @@ int DisplayErrorComponentLogLine(log_components_t component, int num_family, int
     return -1;
   return DisplayLogComponentLevel(component, NIV_CRIT, "%s: %s", LogComponents[component].str, buffer);
 }                               /* DisplayErrorLogLine */
-
-/* 
- * Set le fichier dans lequel vont etre loggues les messages
-*/
-int SetNameFileLog(char *nom)
-{
-  /* Cette fonction n'est pas thread-safe car le fichier de log
-   * est commun a tous les threads du programme */
-  strcpy(nom_fichier_log, nom);
-
-  return 1;
-}                               /* SetNameFileLog */
 
 void SetLogLevelFromEnv()
 {
@@ -2144,7 +1993,7 @@ static int isValidLogPath(char * pathname)
   return 1;
 }
 
-/* 
+/*
  * Sets the default logging method (whether to a specific filepath or syslog.
  * During initialization this is used and separate layer logging defaults to
  * this destination.
@@ -2163,24 +2012,23 @@ int SetDefaultLogging(char *name)
 
 int SetComponentLogFile(log_components_t comp, char *name)
 {
-  strcpy(nom_fichier_log, name);
   int newtype;
-  char *newfilename;
 
-  if (strcmp(nom_fichier_log, "SYSLOG") == 0)
+  if (strcmp(name, "SYSLOG") == 0)
     newtype = SYSLOG;
-  else if (strcmp(nom_fichier_log, "STDERR") == 0)
+  else if (strcmp(name, "STDERR") == 0)
     newtype = STDERRLOG;
-  else if (strcmp(nom_fichier_log, "STDOUT") == 0)
+  else if (strcmp(name, "STDOUT") == 0)
     newtype = STDOUTLOG;
+  else if (strcmp(name, "TEST") == 0)
+    newtype = TESTLOG;
   else
     newtype = FILELOG;
 
   if (newtype == FILELOG)
     if (!isValidLogPath(name))
       {
-	LogMajor(COMPONENT_LOG, "Could not set default logging to %s",
-		 nom_fichier_log);
+	LogMajor(COMPONENT_LOG, "Could not set default logging to %s", name);
 	return 0;
       }
 
@@ -2189,9 +2037,9 @@ int SetComponentLogFile(log_components_t comp, char *name)
     strncpy(LogComponents[comp].log_file, name, MAXPATHLEN);
 }                               /* SetComponentLogFile */
 
-/* 
+/*
  * Pour info : Les tags de printf dont on peut se servir:
- * w DMNOPQTUWX 
+ * w DMNOPQTUWX
  */
 
 #ifdef _SNMP_ADM_ACTIVE

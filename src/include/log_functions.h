@@ -458,18 +458,11 @@ static status_t __attribute__ ((__unused__)) tab_systeme_status[] =
 
 int SetNamePgm(char *nom);
 int SetNameHost(char *nom);
-int SetNameFileLog(char *nom);
+#define SetNameFileLog(nom) SetDefaultLogging("STDOUT")
 int SetDefaultLogging(char *name);
 int SetNameFunction(char *nom); /* thread safe */
 void SetLogLevelFromEnv();
 
-char *ReturnNamePgm();
-char *ReturnNameHost();
-char *ReturnNameFileLog();
-char *ReturnNameFunction();     /* thread safe */
-
-int DisplayErrorStringLine(char *tampon, int num_family, int num_error, int status,
-                           int ma_ligne);
 int DisplayErrorFluxLine(FILE * flux, int num_family, int num_error, int status,
                          int ma_ligne);
 int DisplayErrorFdLine(int fd, int num_family, int num_error, int status, int ma_ligne);
@@ -477,23 +470,14 @@ int DisplayErrorLogLine(int num_family, int num_error, int status, int ma_ligne)
 
 #define DisplayErrorLog( a, b, c ) DisplayErrorLogLine( a, b, c, __LINE__ )
 #define DisplayErrorFlux( a, b, c, d ) DisplayErrorFluxLine( a, b, c, d, __LINE__ )
-#define DisplayErrorString( a, b, c, d ) DisplayErrorStringLine( a, b, c, d, __LINE__ )
 #define DisplayErrorFd(a, b, c, d ) DisplayErrorFdLine( a, b, c, d, __LINE__ )
-
-int DisplayLogString(char *tampon, char *format, ...);
-static int DisplayLogStringLevel(char *tampon, int level, char *format, ...);
 
 int DisplayLog(char *format, ...);
 int DisplayLogLevel(int level, char *format, ...);
 
 int DisplayLogFlux(FILE * flux, char *format, ...);
-static int DisplayLogFluxLevel(FILE * flux, int level, char *format, ...);
-
-int DisplayLogPath(char *path, char *format, ...);
-static int DisplayLogPathLevel(char *path, int level, char *format, ...);
 
 int DisplayLogFd(int fd, char *format, ...);
-static int DisplayLogFdLevel(int fd, int level, char *format, ...);
 
 /* AddFamilyError : not thread safe */
 int AddFamilyError(int num_family, char *nom_family, family_error_t * tab_err);
