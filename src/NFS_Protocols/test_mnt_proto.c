@@ -185,8 +185,8 @@ int test_mnt_Export()
       exportlist_client_entry_t p_cli[5];
 
       /* setting paths */
-      snprintf(export_entries[i].dirname, MAXPATHLEN, "/dirname-%d", i);
-      snprintf(export_entries[i].fsname, MAXPATHLEN, "/fsname-%d", i);
+      snprintf(export_entries[i].dirname, sizeof(export_entries[i].dirname), "/dirname-%d", i);
+      snprintf(export_entries[i].fsname, sizeof(export_entries[i].fsname), "/fsname-%d", i);
       snprintf(export_entries[i].pseudopath, MAXPATHLEN, "/pseudopath-%d", i);
       snprintf(export_entries[i].fullpath, MAXPATHLEN, "/fullpath-%d", i);
 
@@ -289,11 +289,8 @@ int test_mnt_Export()
 int main(int argc, char **argv)
 {
 
-  SetNameFileLog("/dev/tty");
+  SetDefaultLogging("STDOUT");
   SetNamePgm("test_mnt_proto");
-
-/*    InitDebug( NIV_FULL_DEBUG ) ;*/
-  InitDebug(NIV_DEBUG);
 
   Maketest(test_mnt_Null, "test_mnt_Null");
   Maketest(test_mnt_Export, "test_mnt_Export");
