@@ -463,12 +463,6 @@ int SetDefaultLogging(char *name);
 int SetNameFunction(char *nom); /* thread safe */
 void SetLogLevelFromEnv();
 
-char *ReturnNamePgm();
-char *ReturnNameHost();
-char *ReturnNameFunction();     /* thread safe */
-
-int DisplayErrorStringLine(char *tampon, int num_family, int num_error, int status,
-                           int ma_ligne);
 int DisplayErrorFluxLine(FILE * flux, int num_family, int num_error, int status,
                          int ma_ligne);
 int DisplayErrorFdLine(int fd, int num_family, int num_error, int status, int ma_ligne);
@@ -476,10 +470,7 @@ int DisplayErrorLogLine(int num_family, int num_error, int status, int ma_ligne)
 
 #define DisplayErrorLog( a, b, c ) DisplayErrorLogLine( a, b, c, __LINE__ )
 #define DisplayErrorFlux( a, b, c, d ) DisplayErrorFluxLine( a, b, c, d, __LINE__ )
-#define DisplayErrorString( a, b, c, d ) DisplayErrorStringLine( a, b, c, d, __LINE__ )
 #define DisplayErrorFd(a, b, c, d ) DisplayErrorFdLine( a, b, c, d, __LINE__ )
-
-int DisplayLogString(char *tampon, char *format, ...);
 
 int DisplayLog(char *format, ...);
 int DisplayLogLevel(int level, char *format, ...);

@@ -256,33 +256,6 @@ int SetNameFunction(char *nom)
 }                               /* SetNameFunction */
 
 /*
- * Return le nom du programme en cours
- */
-char *ReturnNamePgm()
-{
-  return nom_programme;
-}                               /* ReturnNamePgm */
-
-/*
- * Return le nom du host en cours
- */
-char *ReturnNameHost()
-{
-  return nom_host;
-}                               /* ReturnNameHost */
-
-/*
- * Return le nom de la fonction en cours
- */
-
-char *ReturnNameFunction()
-{
-  ThreadLogContext_t *context = Log_GetThreadContext();
-
-  return context->nom_fonction;
-}                               /* ReturnNameFunction */
-
-/*
  * Cette fonction permet d'installer un handler de signal
  */
 
@@ -412,6 +385,7 @@ static int FaireEntete(char *output)
 {
   struct tm the_date;
   time_t heure;
+  ThreadLogContext_t *context = Log_GetThreadContext();
 
   heure = time(NULL);
   Localtime_r(&heure, &the_date);
@@ -420,7 +394,7 @@ static int FaireEntete(char *output)
                   "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :",
                   the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
                   the_date.tm_hour, the_date.tm_min, the_date.tm_sec, heure, nom_host,
-                  nom_programme, getpid(), ReturnNameFunction());
+                  nom_programme, getpid(), context->nom_fonction);
 
 }                               /* Faire_entete */
 
@@ -440,27 +414,6 @@ static int DisplayLogString_valist(char *buff_dest, char *format, va_list argume
   log_vsnprintf(texte, STR_LEN_TXT, format, arguments);
   return snprintf(buff_dest, STR_LEN_TXT, "%s%s\n", entete, texte);
 }                               /* DisplayLogString_valist */
-
-/*
- *
- * Display un message avec entete et avec le format (printf-like) indique
- *
- */
-
-int DisplayLogString(char *chaine, char *format, ...)
-{
-  int rc;
-  va_list arguments;
-
-  va_start(arguments, format);
-  rc = DisplayLogString_valist(chaine, format, arguments);
-  va_end(arguments);
-
-  return rc;
-
-}                               /* DisplayLogString */
-
-
 
 static int DisplayLogSyslog_valist( char * format, va_list arguments )
 {
@@ -516,6 +469,16 @@ static int DisplayLogFlux_valist(FILE * flux, char *format, va_list arguments)
   fprintf(flux, "%s", tampon);
   return fflush(flux);
 }                               /* DisplayLogFlux_valist */
+
+static int DisplayTest_valist(char *format, va_list arguments)
+{
+  char text[STR_LEN_TXT];
+
+  log_vsnprintf(text, STR_LEN_TXT, format, arguments);
+
+  fprintf(stdout, "%s\n", text);
+  return fflush(stdout);
+}
 
 int DisplayLogFlux(FILE * flux, char *format, ...)
 {
@@ -597,13 +560,11 @@ static int DisplayLogPath_valist(char *path, char *format, va_list arguments)
   return SUCCES;
 }                               /* DisplayLogPath_valist */
 
-int DisplayLog(char *format, ...)
+int DisplayLog_valist(log_components_t component, char *format, va_list arguments)
 {
-  va_list arguments;
   int rc;
 
-  va_start(arguments, format);
-  switch(LogComponents[COMPONENT_ALL].log_type)
+  switch(LogComponents[component].log_type)
     {
     case SYSLOG:
       rc = DisplayLogSyslog_valist(format, arguments);
@@ -617,9 +578,23 @@ int DisplayLog(char *format, ...)
     case STDOUTLOG:
       rc = DisplayLogFlux_valist(stdout, format, arguments);
       break;
+    case TESTLOG:
+      rc = DisplayTest_valist(format, arguments);
+      break;
     default:
       rc = ERR_FAILURE;
     }
+
+  return rc;
+}
+
+int DisplayLog(char *format, ...)
+{
+  va_list arguments;
+  int rc;
+
+  va_start(arguments, format);
+  rc = DisplayLog_valist(COMPONENT_ALL, format, arguments);
   va_end(arguments);
   return rc;
 }                               /* DisplayLog */
@@ -638,25 +613,7 @@ int DisplayLogLevel(int level, char *format, ...)
   va_start(arguments, format);
 
   if(level <= ReturnLevelDebug())
-    {
-      switch(LogComponents[COMPONENT_ALL].log_type)
-        {
-        case SYSLOG:
-          rc = DisplayLogSyslog_valist(format, arguments);
-          break;
-        case FILELOG:
-          rc = DisplayLogPath_valist(LogComponents[COMPONENT_ALL].log_file, format, arguments);
-          break;
-        case STDERRLOG:
-          rc = DisplayLogFlux_valist(stderr, format, arguments);
-          break;
-        case STDOUTLOG:
-          rc = DisplayLogFlux_valist(stdout, format, arguments);
-          break;
-        default:
-          rc = ERR_FAILURE;
-        }
-    }
+      rc = DisplayLog_valist(COMPONENT_ALL, format, arguments);
   else
     rc = SUCCES;
 
@@ -793,17 +750,6 @@ static int FaireLogError(char *buffer, int num_family, int num_error, int status
                      the_error.label, the_error.msg, status, strerror(status), ma_ligne);
     }
 }                               /* FaireLogError */
-
-int DisplayErrorStringLine(char *tampon, int num_family, int num_error, int status,
-                           int ma_ligne)
-{
-  char buffer[STR_LEN_TXT];
-
-  if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
-    return -1;
-
-  return DisplayLogString(tampon, "%s", buffer);
-}                               /* DisplayErrorStringLine */
 
 int DisplayErrorFluxLine(FILE * flux, int num_family, int num_error, int status,
                          int ma_ligne)
@@ -1968,23 +1914,7 @@ int DisplayLogComponentLevel(log_components_t component, int level, char *format
    int rc;
 
    va_start(arguments, format);
-   switch(LogComponents[component].log_type)
-     {
-     case SYSLOG:
-       rc = DisplayLogSyslog_valist(format, arguments);
-       break;
-     case FILELOG:
-       rc = DisplayLogPath_valist(LogComponents[component].log_file, format, arguments);
-       break;
-     case STDERRLOG:
-       rc = DisplayLogFlux_valist(stderr, format, arguments);
-       break;
-     case STDOUTLOG:
-       rc = DisplayLogFlux_valist(stdout, format, arguments);
-       break;
-     default:
-       rc = ERR_FAILURE;
-     }
+   rc = DisplayLog_valist(component, format, arguments);
   va_end(arguments);
   return rc;
 }
@@ -2090,6 +2020,8 @@ int SetComponentLogFile(log_components_t comp, char *name)
     newtype = STDERRLOG;
   else if (strcmp(name, "STDOUT") == 0)
     newtype = STDOUTLOG;
+  else if (strcmp(name, "TEST") == 0)
+    newtype = TESTLOG;
   else
     newtype = FILELOG;
 
