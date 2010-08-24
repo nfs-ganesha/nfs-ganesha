@@ -194,8 +194,8 @@ cache_content_status_t cache_content_read_conf_client_parameter(config_file_t in
   if(LogFile)
     SetComponentLogFile(COMPONENT_CACHE_CONTENT, LogFile);
 
-  if(DebugLevel == -1)
-    SetComponentLogLevel(COMPONENT_CACHE_CONTENT, NIV_CRIT);
+  if(DebugLevel > -1)
+    SetComponentLogLevel(COMPONENT_CACHE_CONTENT, DebugLevel);
 
   return CACHE_CONTENT_SUCCESS;
 }                               /* cache_content_read_conf_client_parameter */
