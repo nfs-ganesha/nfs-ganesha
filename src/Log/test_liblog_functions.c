@@ -57,20 +57,17 @@ int Test1(void *arg)
   DisplayLogFlux(stdout, "Troncature impossible sur %s | %s", "un", "deux");
   DisplayLog("%s", "Essai journal numero 1");
   DisplayLog("%s", "Essai Log numero 2");
-  DisplayLogFd(fileno(stderr), "%s", "Essai fd numero 1");
-  DisplayLogFd(fileno(stderr), "%s", "Essai fd numero 2");
 
   LogTest("------------------------------------------------------");
 
   DisplayErrorFlux(stdout, 0, ERR_FORK, 2);
-  DisplayErrorFd(fileno(stdout), 0, ERR_MALLOC, 3);
   DisplayErrorLog(0, ERR_SOCKET, 4);
 
   LogTest("------------------------------------------------------");
 
   DisplayErrorFlux(stdout, 3, ERR_PIPO_2, 2);
   puts("Une erreur numerique : erreur %d = %R");
-  log_sprintf(tampon, "Une erreur numerique : erreur %d = %J%R, dans err_pipo_1 %J%r", 5,
+  log_snprintf(tampon, sizeof(tampon), "Une erreur numerique : erreur %d = %J%R, dans err_pipo_1 %J%r", 5,
               0, 5, 3, ERR_PIPO_2);
   puts(tampon);
   DisplayLogFlux(stdout, "Une erreur numerique : erreur %d = %J%R, dans err_pipo_1 %J%r",

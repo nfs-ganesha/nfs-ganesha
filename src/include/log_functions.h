@@ -48,8 +48,6 @@
 #define MAXPATHLEN 1024
 #endif
 
-#define LOCALMAXPATHLEN 1024
-
 #define STR_LEN 256
 
 /*
@@ -465,24 +463,18 @@ void SetLogLevelFromEnv();
 
 int DisplayErrorFluxLine(FILE * flux, int num_family, int num_error, int status,
                          int ma_ligne);
-int DisplayErrorFdLine(int fd, int num_family, int num_error, int status, int ma_ligne);
 int DisplayErrorLogLine(int num_family, int num_error, int status, int ma_ligne);
 
 #define DisplayErrorLog( a, b, c ) DisplayErrorLogLine( a, b, c, __LINE__ )
 #define DisplayErrorFlux( a, b, c, d ) DisplayErrorFluxLine( a, b, c, d, __LINE__ )
-#define DisplayErrorFd(a, b, c, d ) DisplayErrorFdLine( a, b, c, d, __LINE__ )
 
 int DisplayLog(char *format, ...);
 int DisplayLogLevel(int level, char *format, ...);
 
 int DisplayLogFlux(FILE * flux, char *format, ...);
 
-int DisplayLogFd(int fd, char *format, ...);
-
 /* AddFamilyError : not thread safe */
 int AddFamilyError(int num_family, char *nom_family, family_error_t * tab_err);
-
-int RemoveFamilyError(int num_family);
 
 char *ReturnNameFamilyError(int num_family);
 
@@ -508,7 +500,7 @@ typedef union desc_voie
 {
   FILE *flux;
   char *buffer;
-  char path[LOCALMAXPATHLEN];
+  char path[1024];
   int fd;
 } desc_log_stream_t;
 
@@ -544,13 +536,8 @@ int AddLogStreamJd(log_t * pjd,
                    desc_log_stream_t desc_voie, niveau_t niveau, aiguillage_t aiguillage);
 
 int log_vsnprintf(char *out, size_t n, char *format, va_list arguments);
-#define log_vsprintf( out, format, arguments ) log_vsnprintf( out, (size_t)LOG_MAX_STRLEN, format, arguments )
-int log_sprintf(char *out, char *format, ...);
 int log_snprintf(char *out, size_t n, char *format, ...);
-int log_vfprintf(FILE *, char *format, va_list arguments);
-#define log_vprintf( format, arguments ) log_vfprintf( stdout, format, arguments )
 int log_fprintf(FILE * file, char *format, ...);
-int log_printf(char *format, ...);
 
 #ifdef _SNMP_ADM_ACTIVE
 int getComponentLogLevel(snmp_adm_type_union * param, void *opt);
