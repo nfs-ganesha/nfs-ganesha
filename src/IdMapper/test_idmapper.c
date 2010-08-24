@@ -74,9 +74,7 @@ int idmap_computer_hash_value(char *name, uint32_t * phashval)
   /* Copy the string to the padded one */
   for(i = 0; i < strnlen(name, PWENT_MAX_LEN); padded_name[i] = name[i], i++) ;
 
-#ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
-  printf("%s \n", padded_name);
-#endif
+  LogTest("%s \n", padded_name);
 
   /* For each 9 character pack:
    *   - keep the 7 first bit (the 8th is often 0: ascii string)
@@ -105,10 +103,9 @@ int idmap_computer_hash_value(char *name, uint32_t * phashval)
           (uint64_t) padded_name[offset + 5] +
           (uint64_t) padded_name[offset + 6] + (uint64_t) padded_name[offset + 7];
 
-#ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
-      printf("|%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx | = ",
+
+      LogTest("|%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx | = ",
              i1, i2, i3, i4, i5, i6, i7, i8);
-#endif
 
       /* Get xor combibation of all the 8h bit */
       l = (padded_name[offset + 0]) ^
@@ -121,23 +118,18 @@ int idmap_computer_hash_value(char *name, uint32_t * phashval)
 
       extract = i1 ^ i2 ^ i3 ^ i4 ^ i5 ^ i6 ^ i7 ^ i8 | l;
 
-#ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
-      printf("%llx ", extract);
-#endif
+      LogTest("%llx ", extract);
 
       computed_value ^= extract;
       computed_value ^= sum;
-#ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
-      printf(",%x\n  ", computed_value);
-#endif
+
+      LogTest(",%x\n  ", computed_value);
     }
 
   if(computed_value > 0x00000000FFFFFFFFLL)
     computed_value = (computed_value >> 32) ^ (computed_value & 0x00000000FFFFFFFFLL);
 
-#ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
-  printf("===>%x\n", computed_value);
-#endif
+  LogTest("===>%x\n", computed_value);
 
   *phashval = computed_value;
 
@@ -146,6 +138,9 @@ int idmap_computer_hash_value(char *name, uint32_t * phashval)
 
 main(int argc, char *argv[])
 {
+  SetDefaultLogging("TEST");
+  SetNamePgm("test_buddy");
+
   char name[30];
   uint32_t valeur;
   int i;
@@ -158,6 +153,6 @@ main(int argc, char *argv[])
       strncpy(name, argv[i], 30);
 
       idmap_computer_hash_value(name, &valeur);
-      printf("%s %x\n", name, valeur);
+      LogTest("%s %x\n", name, valeur);
     }
 }
