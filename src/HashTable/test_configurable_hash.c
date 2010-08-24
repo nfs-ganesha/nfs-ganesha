@@ -299,7 +299,7 @@ int main(int argc, char *argv[])
   printf("Ajout de %d entrees en %s secondes\n", MAXTEST, ConvertiTempsChaine(fin, NULL));
   printf("====================================================\n");
 
-  HashTable_Print(COMPONENT_HASHTABLE, ht);
+  HashTable_Log(COMPONENT_HASHTABLE, ht);
   printf("====================================================\n");
 
   /*
@@ -436,7 +436,7 @@ int main(int argc, char *argv[])
 
         case 'p':
           /* Print */
-          HashTable_Print(COMPONENT_HASHTABLE, ht);
+          HashTable_Log(COMPONENT_HASHTABLE, ht);
           break;
 
         default:

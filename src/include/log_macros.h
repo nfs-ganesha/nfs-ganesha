@@ -79,7 +79,8 @@ enum log_type
   SYSLOG = 0,
   FILELOG,
   STDERRLOG,
-  STDOUTLOG
+  STDOUTLOG,
+  TESTLOG
 };
 
 typedef struct log_component_info
