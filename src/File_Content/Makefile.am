@@ -26,11 +26,6 @@ libcache_content_la_SOURCES = cache_content_init.c            \
                               ../include/cache_inode.h        \
                               ../include/err_cache_content.h
 
-
-
-#test_threshold_SOURCES       = test_threshold.c
-#test_threshold_LDADD         = ../$(CACHE_INODE_DIR)/libcache_inode.la libcache_content.la $(FSAL_LIB) ../Log/liblog.la $(FSAL_LDFLAGS) ../RW_Lock/librwlock.la ../BuddyMalloc/libBuddyMalloc.la ../HashTable/libhashtable.la ../ConfigParsing/libConfigParsing.la ../Common/libcommon_utils.la ../LRU/liblru.la ../SemN/libSemN.la
-
 new: clean all 
 
 doc:
