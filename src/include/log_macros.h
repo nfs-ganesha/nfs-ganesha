@@ -85,6 +85,7 @@ enum log_type
 typedef struct log_component_info
 {
   int   value;
+  char *name;
   char *str;
   int   log_level;
 
@@ -93,6 +94,16 @@ typedef struct log_component_info
 } log_component_info;
 
 log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
+
+#define LogAlways(component, format, args...) \
+  do { \
+    DisplayLogComponentLevel(component, NIV_NULL, "%s: " format, LogComponents[component].str, ## args ); \
+  } while (0)
+
+#define LogTest(format, args...) \
+  do { \
+    DisplayLogComponentLevel(COMPONENT_ALL, NIV_NULL, format, ## args ); \
+  } while (0)
 
 #define LogMajor(component, format, args...) \
   do { \
