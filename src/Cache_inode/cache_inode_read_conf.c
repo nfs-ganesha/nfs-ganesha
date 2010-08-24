@@ -284,8 +284,8 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
   if(LogFile)
     SetComponentLogFile(COMPONENT_CACHE_INODE, LogFile);
 
-  if(DebugLevel == -1)
-    SetComponentLogLevel(COMPONENT_CACHE_INODE, NIV_CRIT);
+  if(DebugLevel > -1)
+    SetComponentLogLevel(COMPONENT_CACHE_INODE, DebugLevel);
 
   return CACHE_INODE_SUCCESS;
 }                               /* cache_inode_read_conf_client_parameter */
