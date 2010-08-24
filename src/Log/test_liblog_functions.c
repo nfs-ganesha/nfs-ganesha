@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "log_functions.h"
+#include "log_macros.h"
 
 static family_error_t tab_test_err[] = {
 #define ERR_PIPO_1  0
@@ -48,24 +48,9 @@ static family_error_t tab_test_err[] = {
  */
 int Test1(void *arg)
 {
-
   char tampon[255];
-  log_t jd = LOG_INITIALIZER;
-  desc_log_stream_t voie;
 
   SetNameFunction((char *)arg);
-
-  /* Init d'un journal */
-  strcpy(voie.path, "/dev/tty");
-  AddLogStreamJd(&jd, V_FILE, voie, GANESHA_LOG_MAJOR, INF);
-
-  voie.fd = fileno(stderr);
-  AddLogStreamJd(&jd, V_FD, voie, GANESHA_LOG_CRITICAL, INF);
-
-  voie.flux = stderr;
-  AddLogStreamJd(&jd, V_STREAM, voie, GANESHA_LOG_EVENT, INF);
-
-  AddLogStreamJd(&jd, V_SYSLOG, voie, GANESHA_LOG_MAJOR, INF);
 
   DisplayLogFlux(stdout, "%s", "Essai numero 1");
   DisplayLogFlux(stdout, "%s", "Essai numero 2");
@@ -74,24 +59,14 @@ int Test1(void *arg)
   DisplayLog("%s", "Essai Log numero 2");
   DisplayLogFd(fileno(stderr), "%s", "Essai fd numero 1");
   DisplayLogFd(fileno(stderr), "%s", "Essai fd numero 2");
-  DisplayLogPath("/dev/tty", "Essai sur un path numero 1");
-  DisplayLogPath("/dev/tty", "Essai sur un path numero 2");
-  DisplayLogString(tampon, "%s --> %d", "essai", 10);
-  printf("%s", tampon);
 
-  DisplayLogJdLevel(jd, GANESHA_LOG_MAJOR, "Essai sur un jd: MAJOR");
-  DisplayLogJdLevel(jd, GANESHA_LOG_CRITICAL, "Essai sur un jd: CRIT");
-
-  printf("------------------------------------------------------\n");
+  LogTest("------------------------------------------------------");
 
   DisplayErrorFlux(stdout, 0, ERR_FORK, 2);
   DisplayErrorFd(fileno(stdout), 0, ERR_MALLOC, 3);
   DisplayErrorLog(0, ERR_SOCKET, 4);
-  DisplayErrorJd(jd, ERR_SYS, ERR_POPEN, 3);
-  DisplayErrorStringLine(tampon, 0, ERR_SIGACTION, 1, 12345);
-  printf("-->%s\n", tampon);
 
-  printf("------------------------------------------------------\n");
+  LogTest("------------------------------------------------------");
 
   DisplayErrorFlux(stdout, 3, ERR_PIPO_2, 2);
   puts("Une erreur numerique : erreur %d = %R");
@@ -102,17 +77,7 @@ int Test1(void *arg)
                  5, 0, 5, 3, ERR_PIPO_2);
   DisplayErrorFlux(stderr, 3, ERR_PIPO_1, 1);
 
-  /* teste si le nom du thread est reste le meme depuis le debut : */
-  if(strcmp(ReturnNameFunction(), (char *)arg))
-    {
-
-      printf("***** ERROR: initial function name \"%s\" differs from \"%s\" *****\n",
-             (char *)arg, ReturnNameHost());
-      return 1;
-
-    }
-
-  printf("Test reussi: Les tests sont passes avec succes\n");
+  LogTest("Test reussi: Les tests sont passes avec succes");
 
   return 0;
 
@@ -146,10 +111,10 @@ int main(int argc, char *argv[])
 
           SetNamePgm("test_liblog");
           SetNameHost("localhost");
-          SetNameFileLog("/dev/tty");
+          SetDefaultLogging("TEST");
           InitDebug(NIV_EVENT);
-          printf("AddFamilyError = %d\n", AddFamilyError(3, "Family Pipo", tab_test_err));
-          printf("La famille qui a ete ajoutee est %s\n", ReturnNameFamilyError(3));
+          LogTest("AddFamilyError = %d", AddFamilyError(3, "Family Pipo", tab_test_err));
+          LogTest("La famille qui a ete ajoutee est %s", ReturnNameFamilyError(3));
 
           rc = Test1((void *)"monothread");
           return rc;
@@ -169,10 +134,10 @@ int main(int argc, char *argv[])
 
           SetNamePgm("test_liblog");
           SetNameHost("localhost");
-          SetNameFileLog("/dev/tty");
+          SetDefaultLogging("STDOUT");
           InitDebug(NIV_EVENT);
-          printf("AddFamilyError = %d\n", AddFamilyError(3, "Family Pipo", tab_test_err));
-          printf("La famille qui a ete ajoutee est %s\n", ReturnNameFamilyError(3));
+          LogTest("AddFamilyError = %d", AddFamilyError(3, "Family Pipo", tab_test_err));
+          LogTest("La famille qui a ete ajoutee est %s", ReturnNameFamilyError(3));
 
           /* creation of attributes */
           for(th_index = 0; th_index < NB_THREADS; th_index++)
@@ -206,14 +171,14 @@ int main(int argc, char *argv[])
       /* unknown test */
       else
         {
-          printf("%s\n", usage);
+          LogTest("%s", usage);
           exit(1);
         }
 
     }
   else
     {
-      printf("%s\n", usage);
+      LogTest("%s", usage);
       exit(1);
     }
 
