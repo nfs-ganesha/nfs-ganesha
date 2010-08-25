@@ -292,17 +292,26 @@ static void ArmeSignal(int signal, void (*action) ())
 
 void SetComponentLogLevel(log_components_t component, int level_to_set)
 {
+  if (component == COMPONENT_ALL)
+    {
+      SetLevelDebug(level_to_set);
+      return;
+    }
+
   if(level_to_set < NIV_NULL)
     level_to_set = NIV_NULL;
 
   if(level_to_set >= NB_LOG_LEVEL)
     level_to_set = NB_LOG_LEVEL - 1;
 
-  LogMajor(COMPONENT_LOG, "Changing log level of %s from %s to %s",
-	     LogComponents[component].comp_name,
-	     ReturnLevelInt(LogComponents[component].comp_log_level),
-	     ReturnLevelInt(level_to_set));
-  LogComponents[component].comp_log_level = level_to_set;
+  if (LogComponents[component].comp_log_level != level_to_set)
+    {
+      LogMajor(COMPONENT_LOG, "Changing log level of %s from %s to %s",
+               LogComponents[component].comp_name,
+               ReturnLevelInt(LogComponents[component].comp_log_level),
+               ReturnLevelInt(level_to_set));
+      LogComponents[component].comp_log_level = level_to_set;
+    }
 }
 
 inline int ReturnLevelDebug()
@@ -2018,14 +2027,23 @@ int setComponentLogLevel(const snmp_adm_type_union * param, void *opt)
     return -1;
 
   if (component == 0)
-    SetLevelDebug(level_to_set);
-  else {
-    LogMajor(COMPONENT_LOG, "SNMP request changing log level of %s from %s to %s.",
-	     LogComponents[component].comp_name,
-	     ReturnLevelInt(LogComponents[component].comp_log_level),
-	     ReturnLevelInt(level_to_set));
-    LogComponents[component].comp_log_level = level_to_set;
-  }
+    {
+      int i;
+
+      LogMajor(COMPONENT_LOG, "SNMP request changing log level for all components to %s",
+               ReturnLevelInt(level_to_set));
+      for (i = 0; i < COMPONENT_COUNT; i++)
+          LogComponents[i].comp_log_level = level_to_set;
+    }
+  else
+    {
+      LogMajor(COMPONENT_LOG, "SNMP request changing log level of %s from %s to %s.",
+               LogComponents[component].comp_name,
+               ReturnLevelInt(LogComponents[component].comp_log_level),
+               ReturnLevelInt(level_to_set));
+      LogComponents[component].comp_log_level = level_to_set;
+    }
+
   return 0;
 }
 
