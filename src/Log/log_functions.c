@@ -411,7 +411,7 @@ static int FaireEntete(char *output)
  * Une fonction d'affichage tout a fait generique
  */
 
-static int DisplayLogString_valist(char *buff_dest, char *format, va_list arguments)
+int DisplayLogString_valist(char *buff_dest, char *format, va_list arguments)
 {
   char entete[STR_LEN];
   char texte[STR_LEN_TXT];
@@ -462,6 +462,11 @@ static int DisplayTest_valist(char *format, va_list arguments)
 
   fprintf(stdout, "%s\n", text);
   return fflush(stdout);
+}
+
+static int DisplayBuffer_valist(char *buffer, char *format, va_list arguments)
+{
+  log_vsnprintf(buffer, STR_LEN_TXT, format, arguments);
 }
 
 int DisplayLogFlux(FILE * flux, char *format, ...)
@@ -554,7 +559,7 @@ int DisplayLog_valist(log_components_t component, char *format, va_list argument
       rc = DisplayLogSyslog_valist(format, arguments);
       break;
     case FILELOG:
-      rc = DisplayLogPath_valist(LogComponents[COMPONENT_ALL].comp_log_file, format, arguments);
+      rc = DisplayLogPath_valist(LogComponents[component].comp_log_file, format, arguments);
       break;
     case STDERRLOG:
       rc = DisplayLogFlux_valist(stderr, format, arguments);
@@ -565,6 +570,8 @@ int DisplayLog_valist(log_components_t component, char *format, va_list argument
     case TESTLOG:
       rc = DisplayTest_valist(format, arguments);
       break;
+    case BUFFLOG:
+      rc = DisplayBuffer_valist(LogComponents[component].comp_buffer, format, arguments);
     default:
       rc = ERR_FAILURE;
     }
@@ -1995,13 +2002,22 @@ int SetComponentLogFile(log_components_t comp, char *name)
     if (!isValidLogPath(name))
       {
 	LogMajor(COMPONENT_LOG, "Could not set default logging to %s", name);
-	return 0;
+	errno = EINVAL;
+	return -1;
       }
 
   LogComponents[comp].comp_log_type = newtype;
   if (newtype == FILELOG)
     strncpy(LogComponents[comp].comp_log_file, name, MAXPATHLEN);
+
+  return 0;
 }                               /* SetComponentLogFile */
+
+void SetComponentLogBuffer(log_components_t comp, char *buffer)
+{
+  LogComponents[comp].comp_log_type = BUFFLOG;
+  LogComponents[comp].comp_buffer   = buffer;
+}
 
 /*
  * Pour info : Les tags de printf dont on peut se servir:

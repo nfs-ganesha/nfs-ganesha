@@ -70,6 +70,7 @@ typedef enum log_components
 } log_components_t;
 
 int SetComponentLogFile(log_components_t comp, char *name);
+void SetComponentLogBuffer(log_components_t comp, char *buffer);
 void SetComponentLogLevel(log_components_t component, int level_to_set);
 int DisplayLogComponentLevel(log_components_t component, int level, char *format, ...);
 int DisplayErrorComponentLogLine(log_components_t component, int num_family, int num_error, int status, int ma_ligne);
@@ -80,7 +81,8 @@ enum log_type
   FILELOG,
   STDERRLOG,
   STDOUTLOG,
-  TESTLOG
+  TESTLOG,
+  BUFFLOG
 };
 
 typedef struct log_component_info
@@ -92,6 +94,7 @@ typedef struct log_component_info
 
   int   comp_log_type;
   char  comp_log_file[MAXPATHLEN];
+  char *comp_buffer;
 } log_component_info;
 
 log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];

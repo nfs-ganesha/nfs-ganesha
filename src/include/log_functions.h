@@ -461,6 +461,7 @@ int SetDefaultLogging(char *name);
 int SetNameFunction(char *nom); /* thread safe */
 void SetLogLevelFromEnv();
 
+int DisplayLogString_valist(char *buff_dest, char *format, va_list arguments);
 int DisplayErrorFluxLine(FILE * flux, int num_family, int num_error, int status,
                          int ma_ligne);
 int DisplayErrorLogLine(int num_family, int num_error, int status, int ma_ligne);
