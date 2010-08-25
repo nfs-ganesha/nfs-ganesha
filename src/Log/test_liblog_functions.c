@@ -34,11 +34,12 @@
 #include <string.h>
 #include "log_macros.h"
 
+#define ERR_DUMMY 3
 static family_error_t tab_test_err[] = {
-#define ERR_PIPO_1  0
-  {ERR_PIPO_1, "ERR_PIPO_1", "Premiere Error Pipo"},
-#define ERR_PIPO_2  1
-  {ERR_PIPO_2, "ERR_PIPO_2", "Deuxieme Error Pipo"},
+#define ERR_DUMMY_1  0
+  {ERR_DUMMY_1, "ERR_DUMMY_1", "First Dummy Error"},
+#define ERR_DUMMY_2  1
+  {ERR_DUMMY_2, "ERR_DUMMY_2", "Second Dummy Error"},
 
   {ERR_NULL, "ERR_NULL", ""}
 };
@@ -48,33 +49,76 @@ static family_error_t tab_test_err[] = {
  */
 int Test1(void *arg)
 {
-  char tampon[255];
+  char tempstr[255];
 
   SetNameFunction((char *)arg);
 
-  DisplayLogFlux(stdout, "%s", "Essai numero 1");
-  DisplayLogFlux(stdout, "%s", "Essai numero 2");
-  DisplayLogFlux(stdout, "Troncature impossible sur %s | %s", "un", "deux");
-  DisplayLog("%s", "Essai journal numero 1");
-  DisplayLog("%s", "Essai Log numero 2");
+  DisplayLogFlux(stdout, "%s", "Test number 1");
+  DisplayLogFlux(stdout, "%s", "Test number 2");
 
   LogTest("------------------------------------------------------");
 
-  DisplayErrorFlux(stdout, 0, ERR_FORK, 2);
-  DisplayErrorLog(0, ERR_SOCKET, 4);
+  DisplayErrorFlux(stdout, ERR_SYS, ERR_FORK, ENOENT);
+  DisplayErrorLog(ERR_SYS, ERR_SOCKET, EINTR);
 
   LogTest("------------------------------------------------------");
 
-  DisplayErrorFlux(stdout, 3, ERR_PIPO_2, 2);
-  puts("Une erreur numerique : erreur %d = %R");
-  log_snprintf(tampon, sizeof(tampon), "Une erreur numerique : erreur %d = %J%R, dans err_pipo_1 %J%r", 5,
-              0, 5, 3, ERR_PIPO_2);
-  puts(tampon);
-  DisplayLogFlux(stdout, "Une erreur numerique : erreur %d = %J%R, dans err_pipo_1 %J%r",
-                 5, 0, 5, 3, ERR_PIPO_2);
-  DisplayErrorFlux(stderr, 3, ERR_PIPO_1, 1);
+  DisplayErrorFlux(stdout, ERR_DUMMY, ERR_DUMMY_2, ENOENT);
 
-  LogTest("Test reussi: Les tests sont passes avec succes");
+  LogTest("------------------------------------------------------");
+
+  LogTest("A numerical error : error %%d = %%J%%R, in ERR_DUMMY_2 %%J%%r");
+  log_snprintf(tempstr, sizeof(tempstr), "A numerical error : error %d = %J%R, in ERR_DUMMY_2 %J%r", ERR_SIGACTION,
+              ERR_SYS, ERR_SIGACTION, ERR_DUMMY, ERR_DUMMY_2);
+  LogTest("%s", tempstr);
+  DisplayLogFlux(stdout, "A numerical error : error %d = %J%R, in ERR_DUMMY_2 %J%r",
+                 ERR_SIGACTION, ERR_SYS, ERR_SIGACTION, ERR_DUMMY, ERR_DUMMY_2);
+
+  LogTest("------------------------------------------------------");
+
+  LogTest("A numerical error : error %%d = %%J%%R, in ERR_DUMMY_2 %%J%%R");
+  log_snprintf(tempstr, sizeof(tempstr), "A numerical error : error %d = %J%R, in ERR_DUMMY_2 %J%R", ERR_SIGACTION,
+              ERR_SYS, ERR_SIGACTION, ERR_DUMMY, ERR_DUMMY_2);
+  LogTest("%s", tempstr);
+  LogTest("A numerical error : error %d = %J%R, in ERR_DUMMY_2 %J%R", ERR_SIGACTION,
+              ERR_SYS, ERR_SIGACTION, ERR_DUMMY, ERR_DUMMY_2);
+  DisplayLogFlux(stdout, "A numerical error : error %d = %J%R, in ERR_DUMMY_2 %J%R",
+                 ERR_SIGACTION, ERR_SYS, ERR_SIGACTION, ERR_DUMMY, ERR_DUMMY_2);
+
+  LogTest("------------------------------------------------------");
+
+  DisplayErrorFlux(stderr, ERR_DUMMY, ERR_DUMMY_1, EPERM);
+
+  LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, EINVAL);
+  LogCrit(COMPONENT_INIT, "Initializing %K%V %R", ERR_SYS, ERR_MALLOC, EINVAL, EINVAL);
+  errno = EINVAL;
+  LogTest("\nTest %%m (undocumented for printf, but works, documented for syslog)");
+  LogTest("an extra string parameter is printed to demonstrate no parameters are consumed");
+  LogTest("error %m number %s", "(not part of %%m)");
+  LogTest("\nTest %%b, %%B, %%h (doesn't work - overloaded), %%H, %%y, and %%Y. These are odd tags:");
+  LogTest("   %%b, %%B, %%h, and %%H each consume int1, str2, str3 even if not all are printed");
+  LogTest("   %%y and %%Y each consume int1, str2, str3, int4, str5, str6 even if not all are printed");
+  LogTest("   An extra string parameter is printed to demonstrate how the parameters are consumed");
+  LogTest("test %%b %b %s", 1, "str2", "str3", "(not part of %%b)");
+  LogTest("test %%B %B %s", 1, "str2", "str3", "(not part of %%B)");
+  LogTest("test %%h %h %s", 1, "str2", "(not part of %%h)");
+  LogTest("test %%H %H %s", 1, "str2", "str3", "(not part of %%H)");
+  LogTest("test %%y %y %s", 1, "str2", "str3", 4, "str5", "str6", "(not part of %%y)");
+  LogTest("test %%Y %Y %s", 1, "str2", "str3", 4, "str5", "str6", "(not part of %%Y)");
+  LogTest("\nTest new tags for reporting errno values");
+  LogTest("test %%w %w", EINVAL);
+  LogTest("test %%W %W", EINVAL);
+  LogTest("\nTest context sensitive tags");
+  LogTest("%%K, %%V, and %%v go together, defaulting to ERR_SYS");
+  LogTest("%%J, %%R, and %%r go together, defaulting to ERR_POSIX");
+  LogTest("test %%K%%V %%K%%V %K%V %K%V", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
+  LogTest("test %%K%%v %%K%%v %K%v %K%v", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
+  LogTest("test %%J%%R %%J%%R %J%R %J%R", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
+  LogTest("test %%J%%r %%J%%r %J%r %J%r", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
+  LogTest("test %%V %%R %V %R", ERR_SIGACTION, EINVAL);
+  LogTest("test %%v %%r %v %r", ERR_SIGACTION, EINVAL);
+
+  LogTest("Tests passed successfully");
 
   return 0;
 
@@ -110,8 +154,9 @@ int main(int argc, char *argv[])
           SetNameHost("localhost");
           SetDefaultLogging("TEST");
           InitDebug(NIV_EVENT);
-          LogTest("AddFamilyError = %d", AddFamilyError(3, "Family Pipo", tab_test_err));
-          LogTest("La famille qui a ete ajoutee est %s", ReturnNameFamilyError(3));
+          AddFamilyError(ERR_POSIX, "POSIX Errors", tab_systeme_status);
+          LogTest("AddFamilyError = %d", AddFamilyError(ERR_DUMMY, "Family Dummy", tab_test_err));
+          LogTest("The family which was added is %s", ReturnNameFamilyError(ERR_DUMMY));
 
           rc = Test1((void *)"monothread");
           return rc;
@@ -133,8 +178,8 @@ int main(int argc, char *argv[])
           SetNameHost("localhost");
           SetDefaultLogging("STDOUT");
           InitDebug(NIV_EVENT);
-          LogTest("AddFamilyError = %d", AddFamilyError(3, "Family Pipo", tab_test_err));
-          LogTest("La famille qui a ete ajoutee est %s", ReturnNameFamilyError(3));
+          LogTest("AddFamilyError = %d", AddFamilyError(ERR_DUMMY, "Family Dummy", tab_test_err));
+          LogTest("The family which was added is %s", ReturnNameFamilyError(ERR_DUMMY));
 
           /* creation of attributes */
           for(th_index = 0; th_index < NB_THREADS; th_index++)
