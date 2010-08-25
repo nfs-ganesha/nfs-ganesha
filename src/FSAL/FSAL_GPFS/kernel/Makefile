@@ -17,10 +17,15 @@ install:
 clean: userclean
 	$(MAKE) -C $(DESTDIR)/lib/modules/$(shell uname -r)/build/ M=$(shell pwd) clean
 
+# This should be a real test 
+check: userspace
+
+
 else
 all: error
 install: error
 clean: error
+check: error
 
 error:
 	@echo kernel module only works on 2.6.18 kernels

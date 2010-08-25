@@ -147,6 +147,7 @@ endif
 test_mnt_proto_SOURCES       = test_mnt_proto.c
 
 test_mnt_proto_LDADD = libnfsproto.la ../BuddyMalloc/libBuddyMalloc.la ../Log/liblog.la
+
 new: clean all
 
 doc:
