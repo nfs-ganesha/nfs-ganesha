@@ -1,6 +1,7 @@
 #!/bin/sh
 ##
 ## test_buddy_1.sh
+## init/malloc/free/integrity tests
 ## 
 ## Made by Sean Dague
 ## Login   <sdague@orac>

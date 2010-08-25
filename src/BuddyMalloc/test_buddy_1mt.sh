@@ -1,12 +1,9 @@
 #!/bin/sh
 ##
-## test_buddy_1.sh
+## test_buddy_1mt.sh
+## init/malloc/free/integrity tests (multithreaded test)
 ## 
-## Made by Sean Dague
-## Login   <sdague@orac>
-## 
-## Started on  Wed Aug 25 14:19:49 2010 Sean Dague
-## Last update Wed Aug 25 14:19:49 2010 Sean Dague
+## Made by Frank Filz
 ##
 
-./test_buddy 1
+./test_buddy 1mt
