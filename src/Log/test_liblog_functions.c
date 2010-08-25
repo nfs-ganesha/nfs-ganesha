@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  * Test de libaglae
  *
@@ -119,6 +119,78 @@ int Test1(void *arg)
   LogTest("test %%v %%r %v %r", ERR_SIGACTION, EINVAL);
 
   LogTest("Tests passed successfully");
+
+  LogTest("------------------------------------------------------");
+
+  LogTest("Test debug level macros");
+  SetLevelDebug(NIV_EVENT);
+  LogAlways     (COMPONENT_LOG, "LogAlways (should print)");
+  LogMajor      (COMPONENT_LOG, "LogMajor (should print)");
+  LogCrit       (COMPONENT_LOG, "LogCrit (should print)");
+  LogEvent      (COMPONENT_LOG, "LogEvent (should print)");
+  LogDebug      (COMPONENT_LOG, "LogDebug (shouldn't print)");
+  LogFullDebug  (COMPONENT_LOG, "LogFullDebug (shouldn't print)");
+  LogTest("\nChange log level to FULL_DEBUG");
+  SetComponentLogLevel(COMPONENT_LOG, NIV_FULL_DEBUG);
+  LogAlways     (COMPONENT_LOG, "LogAlways (should print)");
+  LogMajor      (COMPONENT_LOG, "LogMajor (should print)");
+  LogCrit       (COMPONENT_LOG, "LogCrit (should print)");
+  LogEvent      (COMPONENT_LOG, "LogEvent (should print)");
+  LogDebug      (COMPONENT_LOG, "LogDebug (should print)");
+  LogFullDebug  (COMPONENT_LOG, "LogFullDebug (should print)");
+  LogDebug      (COMPONENT_INIT, "LogDebug (shouldn't print)");
+  LogFullDebug  (COMPONENT_INIT, "LogFullDebug (shouldn't print)");
+  LogTest("\nReset log level for all components");
+  SetComponentLogLevel(COMPONENT_ALL, NIV_EVENT);
+  LogAlways     (COMPONENT_LOG, "LogAlways (should print)");
+  LogMajor      (COMPONENT_LOG, "LogMajor (should print)");
+  LogCrit       (COMPONENT_LOG, "LogCrit (should print)");
+  LogEvent      (COMPONENT_LOG, "LogEvent (should print)");
+  LogDebug      (COMPONENT_LOG, "LogDebug (shouldn't print)");
+  LogFullDebug  (COMPONENT_LOG, "LogFullDebug (shouldn't print)");
+  LogDebug      (COMPONENT_INIT, "LogDebug (shouldn't print)");
+  LogFullDebug  (COMPONENT_INIT, "LogFullDebug (shouldn't print)");
+  LogTest("\nReset log level for all components");
+  SetLevelDebug(NIV_DEBUG);
+  LogAlways     (COMPONENT_LOG, "LogAlways (should print)");
+  LogMajor      (COMPONENT_LOG, "LogMajor (should print)");
+  LogCrit       (COMPONENT_LOG, "LogCrit (should print)");
+  LogEvent      (COMPONENT_LOG, "LogEvent (should print)");
+  LogDebug      (COMPONENT_LOG, "LogDebug (should print)");
+  LogFullDebug  (COMPONENT_LOG, "LogFullDebug (shouldn't print)");
+  LogDebug      (COMPONENT_INIT, "LogDebug (should print)");
+  LogFullDebug  (COMPONENT_INIT, "LogFullDebug (shouldn't print)");
+
+#ifdef _SNMP_ADM_ACTIVE
+  {
+    snmp_adm_type_union param;
+    int rc;
+    strcpy(param.string, "FAILED");
+
+    LogTest("------------------------------------------------------");
+    LogTest("Test SNMP functions");
+    SetLevelDebug(NIV_DEBUG);
+
+    rc = getComponentLogLevel(&param, (void *)COMPONENT_ALL);
+    LogTest("getComponentLogLevel(&param, (void *)COMPONENT_ALL) rc=%d result=%s",
+            rc, param.string);
+    if (rc != 0)
+      exit(1);
+    strcpy(param.string, "NIV_EVENT");
+    rc = setComponentLogLevel(&param, (void *)COMPONENT_LOG);
+    LogTest("setComponentLogLevel(&param, (void *)COMPONENT_LOG) rc=%d", rc);
+    if (rc != 0)
+      exit(1);
+    LogAlways     (COMPONENT_LOG, "LogAlways (should print)");
+    LogMajor      (COMPONENT_LOG, "LogMajor (should print)");
+    LogCrit       (COMPONENT_LOG, "LogCrit (should print)");
+    LogEvent      (COMPONENT_LOG, "LogEvent (should print)");
+    LogDebug      (COMPONENT_LOG, "LogDebug (shouldn't print)");
+    LogFullDebug  (COMPONENT_LOG, "LogFullDebug (shouldn't print)");
+    LogDebug      (COMPONENT_INIT, "LogDebug (should print)");
+    LogFullDebug  (COMPONENT_INIT, "LogFullDebug (shouldn't print)");
+  }
+#endif /* _SNMP_ADM_ACTIVE */
 
   return 0;
 
