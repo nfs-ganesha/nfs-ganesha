@@ -1,8 +1,11 @@
 #include "config_parsing.h"
+#include "log_macros.h"
 #include <errno.h>
 
 int main(int argc, char **argv)
 {
+  SetDefaultLogging("TEST");
+  SetNamePgm("test_parse");
 
   config_file_t config;
   char *fichier;
@@ -14,19 +17,19 @@ int main(int argc, char **argv)
     }
   else
     {
-      fprintf(stderr, "Usage %s <config_file>\n", argv[0]);
+      LogTest("Usage %s <config_file>", argv[0]);
       exit(EINVAL);
     }
 
   /* Exemple de parsing */
   config = config_ParseFile(fichier);
 
-  printf("config_pointer = %p\n", config);
+  LogTest("config_pointer = %p", config);
 
   if(config == NULL)
     {
       errtxt = config_GetErrorMsg();
-      fprintf(stderr, "Erreur de parsing de %s : %s\n", argv[1], errtxt);
+      LogTest("Error in parsing %s : %s", argv[1], errtxt);
       exit(EINVAL);
     }
 
@@ -47,15 +50,15 @@ int main(int argc, char **argv)
         /* affichage du nom de l'item : */
         block = config_GetBlockByIndex(config, i);
 
-        printf("bloc %s\n", config_GetBlockName(block));
+        LogTest("bloc %s", config_GetBlockName(block));
 
         if((val_a = config_GetKeyValueByName(block, "b")))
           {
-            printf("%s.b est defini et vaut %s\n", config_GetBlockName(block), val_a);
+            LogTest("%s.b is defined as %s", config_GetBlockName(block), val_a);
           }
         else
           {
-            printf("%s.b n'est pas defini\n", config_GetBlockName(block));
+            LogTest("%s.b not defined", config_GetBlockName(block));
           }
 
         /* parcours des variables du block */
@@ -67,12 +70,12 @@ int main(int argc, char **argv)
             if(config_ItemType(item) == CONFIG_ITEM_VAR)
               {
                 config_GetKeyValue(item, &nom, &val);
-                printf("\t%s = %s\n", nom, val);
+                LogTest("\t%s = %s", nom, val);
               }
             else
-              printf("\tsub-block = %s\n", config_GetBlockName(item));
+              LogTest("\tsub-block = %s", config_GetBlockName(item));
           }
-        printf("\n");
+        LogTest("");
 
       }
 
@@ -83,12 +86,12 @@ int main(int argc, char **argv)
 
   config = config_ParseFile(fichier);
 
-  printf("config_pointer = %p\n", config);
+  LogTest("config_pointer = %p", config);
 
   if(config == NULL)
     {
       errtxt = config_GetErrorMsg();
-      fprintf(stderr, "Erreur de 2e parsing de %s : %s\n", argv[1], errtxt);
+      LogTest("Parsing error for %s : %s", argv[1], errtxt);
       exit(EINVAL);
     }
 
