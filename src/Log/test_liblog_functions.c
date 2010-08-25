@@ -133,7 +133,7 @@ void *run_Test1(void *arg)
   return NULL ;
 }
 
-static char usage[] = "usage:\n\ttest_liblog STD|MT";
+static char usage[] = "usage:\n\ttest_liblog STD|MT\n";
 
 #define NB_THREADS 20
 
@@ -213,14 +213,14 @@ int main(int argc, char *argv[])
       /* unknown test */
       else
         {
-          LogTest("%s", usage);
+          fprintf(stderr, "%s", usage);
           exit(1);
         }
 
     }
   else
     {
-      LogTest("%s", usage);
+      fprintf(stderr, "%s", usage);
       exit(1);
     }
 
