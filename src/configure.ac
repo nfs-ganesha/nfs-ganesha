@@ -9,7 +9,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/SNMP/PROXY/HPSS/FUSELIKE/LUSTRE(all prod)/XFS/GPFS(alpha)/ZFS(dev) .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod), MFSL_ASYNC(beta) Early pNFS (alpha) ])
 
 # Init Automake
-AM_INIT_AUTOMAKE([-Wall -Werror foreign color-tests])
+AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
 # check for _GNU_SOURCE and set it in config.h
 AC_GNU_SOURCE
