@@ -924,6 +924,8 @@ int DisplayErrorJdLine(log_t jd, int num_family, int num_error, int status, int 
 #define ERRCTX_LONG        10
 #define CHANGE_ERR_FAMILY  11
 #define CHANGE_CTX_FAMILY  12
+#define ERRNO_SHORT        13
+#define ERRNO_LONG         14
 
 #define NO_LONG 0
 #define SHORT_LG 1
@@ -1257,7 +1259,22 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
           type_ext = CHANGE_CTX_FAMILY;
           ONE_STEP;
           break;
+        case 'w':
+          /* An errno, short */
+          type = EXTENDED_TYPE;
+          type_ext = ERRNO_SHORT;
+          ONE_STEP;
+          break;
+        case 'W':
+          /* An errno, long */
+          type = EXTENDED_TYPE;
+          type_ext = ERRNO_LONG;
+          ONE_STEP;
+          break;
         case 'm':
+          type = NO_TYPE;
+          ONE_STEP;
+          break;
         default:
           break;
         }
@@ -1455,6 +1472,31 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
               the_error = TrouveErr(tab_err, numero);
               snprintf(tmpout, MAX_STR_TOK, "%s(%d) : '%s'", the_error.label,
                        the_error.numero, the_error.msg);
+              break;
+
+            case ERRNO_SHORT:
+              /* Un numero d'erreur dans la family courante (ERR_POSIX par defaut) */
+              if((tab_err = TrouveTabErr(ERR_POSIX)) == NULL)
+                {
+                  snprintf(tmpout, MAX_STR_TOK, "?");
+                  break;
+                }
+              numero = va_arg(arguments, int);
+              the_error = TrouveErr(tab_err, numero);
+              snprintf(tmpout, MAX_STR_TOK, "%s(%d)", the_error.label, the_error.numero);
+              break;
+
+            case ERRNO_LONG:
+              /* Un numero d'erreur dans la family courante (ERR_POSIX par defaut) */
+              if((tab_err = TrouveTabErr(ERR_POSIX)) == NULL)
+                {
+                  snprintf(tmpout, MAX_STR_TOK, "?");
+                  break;
+                }
+              numero = va_arg(arguments, int);
+              the_error = TrouveErr(tab_err, numero);
+              snprintf(tmpout, MAX_STR_TOK, "%s(%d) : '%s'", the_error.label,
+                       the_error.numero, strerror(numero));
               break;
 
             case ERRCTX_SHORT:
