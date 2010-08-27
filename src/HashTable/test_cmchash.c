@@ -119,7 +119,7 @@ unsigned long rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffcle
 
 int main(int argc, char *argv[])
 {
-  SetDefaultLogging("STDOUT");
+  SetDefaultLogging("TEST");
   SetNamePgm("test_cmchash");
 
   hash_table_t *ht = NULL;

@@ -172,8 +172,8 @@ unsigned long rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffcle
 
 int main(int argc, char *argv[])
 {
-  SetDefaultLogging("STDOUT");
-  SetNamePgm("test_cmchash_bugdelete");
+  SetDefaultLogging("TEST");
+  SetNamePgm("test_libcmc_bugdelete");
   LogTest("Initialized test program");
   
   hash_table_t *ht = NULL;
@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
   rc = HashTable_Get(ht, &buffkey, &buffval);
   MesureTemps(&fin, &debut);
 
-  LogTest("Maintenant, j'essaye de recuperer %d entrees (prises au hasard, ou presque)",
+  LogTest("Now, I try to retrieve %d entries (taken at random, almost)",
          MAXGET);
   MesureTemps(&debut, NULL);
   for(i = 0; i < MAXGET; i++)
@@ -260,16 +260,16 @@ int main(int argc, char *argv[])
       buffkey2.pdata = tmpstr;
 
       rc = HashTable_Get(ht, &buffkey2, &buffval2);
-      LogTest("\tLecture  de key = %s  --> %s", buffkey2.pdata, buffval2.pdata);
+      LogTest("\tPlaying key = %s  --> %s", buffkey2.pdata, buffval2.pdata);
       if(rc != HASHTABLE_SUCCESS)
         {
-          LogTest("Erreur lors de la lecture de %d = %d", i, rc);
-          LogTest("Test ECHOUE : la valeur lue est incorrecte");
+          LogTest("Error reading %d = %d", i, rc);
+          LogTest("Test FAILED: the reading is incorrect");
           exit(1);
         }
     }
   MesureTemps(&fin, &debut);
-  LogTest("Duree de lecture de %d elements = %s", MAXGET,
+  LogTest("Time to read elements %d = %s", MAXGET,
          ConvertiTempsChaine(fin, NULL));
 
   LogTest("-----------------------------------------");
@@ -304,17 +304,17 @@ int main(int argc, char *argv[])
       if(rc != HASHTABLE_SUCCESS)
         {
           LogTest("Erreur lors de la destruction de %d = %d", random_val, rc);
-          LogTest("Test ECHOUE : effacement incorrect");
+          LogTest("Test FAILED: delete incorrect");
           exit(1);
         }
     }
   MesureTemps(&fin, &debut);
-  LogTest("Duree de la destruction de %d elements = %s", MAXDESTROY,
+  LogTest("Time to delete %d elements = %s", MAXDESTROY,
          ConvertiTempsChaine(fin, NULL));
 
   LogTest("-----------------------------------------");
 
-  LogTest("Maintenant, j'essaye de recuperer %d entrees (eventuellement detruites) ",
+  LogTest("Now, I try to retrieve %d entries (possibly destroyed)",
          MAXGET);
   MesureTemps(&debut, NULL);
   for(i = 0; i < MAXGET; i++)
@@ -327,16 +327,16 @@ int main(int argc, char *argv[])
       rc = HashTable_Get(ht, &buffkey, &buffval);
     }
   MesureTemps(&fin, &debut);
-  LogTest("Duree de lecture de %d elements = %s", MAXGET,
+  LogTest("Time to read %d elements = %s", MAXGET,
          ConvertiTempsChaine(fin, NULL));
 
   LogTest("-----------------------------------------");
-  LogTest("Ecriture d'une clef en double ");
+  LogTest("Writing a duplicated key");
   sprintf(tmpstr, "%d", CRITERE_2);
   buffkey.len = strlen(tmpstr);
   buffkey.pdata = tmpstr;
   rc = HashTable_Test_And_Set(ht, &buffkey, &buffval, HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
-  LogTest("La valeur doit etre HASHTABLE_ERROR_KEY_ALREADY_EXISTS  = %d --> %d",
+  LogTest("The value must be HASHTABLE_ERROR_KEY_ALREADY_EXISTS  = %d --> %d",
          HASHTABLE_ERROR_KEY_ALREADY_EXISTS, rc);
   if(rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
     {
@@ -407,7 +407,7 @@ int main(int argc, char *argv[])
 
   if(statistiques.dynamic.err.nb_test != 1)
     {
-      LogTest("Test ECHOUE : statistiques incorrectes: err.nb_test ");
+      LogTest("Test FAILED: Incorrect statistics: err.nb_test ");
       exit(1);
     }
 
