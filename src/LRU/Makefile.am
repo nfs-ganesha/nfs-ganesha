@@ -10,6 +10,9 @@ test_lru_LDADD                = liblru.la ../BuddyMalloc/libBuddyMalloc.la ../Lo
 test_configurable_lru_SOURCES = test_configurable_lru.c
 test_configurable_lru_LDADD   = liblru.la ../BuddyMalloc/libBuddyMalloc.la ../Log/liblog.la -lpthread
 
+# these are tests we should be running on 'make check'
+TESTS = test_lru
+
 new: clean all
 
 doc:
