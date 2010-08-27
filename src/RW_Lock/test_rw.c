@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "RW_Lock.h"
+#include "log_macros.h"
 
 #define MAX_WRITTERS 3
 #define MAX_READERS 5
@@ -83,6 +84,8 @@ void *thread_reader(void *arg)
 
 int main(int argc, char *argv[])
 {
+  SetDefaultLogging("TEST");
+  SetNamePgm("test_rw");
   pthread_attr_t attr_thr;
   pthread_t ThrReaders[MAX_READERS];
   pthread_t ThrWritters[MAX_WRITTERS];
@@ -93,9 +96,9 @@ int main(int argc, char *argv[])
   pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
   pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE);
 
-  printf("Init lock: %d\n", rw_lock_init(&lock));
+  LogTest("Init lock: %d", rw_lock_init(&lock));
 
-  printf("DUREE ESTIMEE DU TEST: %d s\n",
+  LogTest("ESTIMATED TIME OF TEST: %d s",
          (MAX_WRITTERS + MAX_READERS) * NB_ITER + MARGE_SECURITE);
   fflush(stdout);
 
@@ -104,8 +107,8 @@ int main(int argc, char *argv[])
       if((rc =
           pthread_create(&ThrWritters[i], &attr_thr, thread_writter, (void *)NULL)) != 0)
         {
-          fprintf(stderr, "pthread_create: Erreur %d %d \n", rc, errno);
-          printf("Test RW_Lock ECHOUE: Mauvaise allocation des thread\n");
+          LogTest("pthread_create: Error %d %d ", rc, errno);
+          LogTest("RW_Lock Test FAILED: Bad allocation thread");
           exit(1);
         }
     }
@@ -115,28 +118,30 @@ int main(int argc, char *argv[])
       if((rc =
           pthread_create(&ThrReaders[i], &attr_thr, thread_reader, (void *)NULL)) != 0)
         {
-          fprintf(stderr, "pthread_create: Erreur %d %d \n", rc, errno);
-          printf("Test RW_Lock ECHOUE: Mauvaise allocation des thread\n");
+          LogTest("pthread_create: Error %d %d ", rc, errno);
+          LogTest("RW_Lock Test FAILED: Bad allocation thread");
           exit(1);
         }
     }
 
+  LogTest("Main thread sleeping while threads run locking tests");
+
   sleep((MAX_WRITTERS + MAX_READERS) * NB_ITER + MARGE_SECURITE);
 
-  printf("Fin du sleep( %d ) \n",
+  LogTest("End of sleep( %d ) ",
          (MAX_WRITTERS + MAX_READERS) * NB_ITER + MARGE_SECURITE);
   if(OkWrite == 1 & OkRead == 1)
     {
-      printf("Test RW_Lock reussi: pas de deadlock detecte\n");
+      LogTest("Test RW_Lock succeeded: no deadlock detected");
       exit(0);
       return 0;                 /* for compiler */
     }
   else
     {
       if(OkWrite == 0)
-        printf("Test RW_Lock ECHOUE: deadlock dans les redacteurs\n");
+        LogTest("RW_Lock test FAIL: deadlock in the editors");
       if(OkRead == 0)
-        printf("Test RW_Lock ECHOUE: deadlock dans les lecteur\n");
+        LogTest("RW_Lock Test FAILED: deadlock in the drive");
       exit(1);
       return 1;                 /* for compiler */
 

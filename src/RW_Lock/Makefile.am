@@ -7,7 +7,7 @@ librwlock_la_SOURCES  = RW_Lock.c            \
 check_PROGRAMS        = test_rw
 
 test_rw_SOURCES       = test_rw.c
-test_rw_LDADD         = librwlock.la
+test_rw_LDADD         = librwlock.la ../Log/liblog.la
 
 new: clean all
 
