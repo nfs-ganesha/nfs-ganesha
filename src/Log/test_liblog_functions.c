@@ -52,10 +52,10 @@ void TestAlways(int expect, char *buff, log_components_t component, char *string
   LogAlways(component, "%s", string);
   if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
     {
-      LogTest("FAILURE: %s produced %s expected %s", string, buff, compare);
+      LogTest("FAILURE: %s produced \"%s\" expected \"%s\"", string, buff, compare);
       exit(1);
     }
-  LogTest("SUCCESS: %s produced %s", string, buff);
+  LogTest("SUCCESS: %s produced \"%s\"", string, buff);
 }
 
 void TestMajor(int expect, char *buff, log_components_t component, char *string)
@@ -66,11 +66,11 @@ void TestMajor(int expect, char *buff, log_components_t component, char *string)
   LogMajor(component, "%s", string);
   if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
     {
-      LogTest("FAILURE: %s produced %s expected %s", string, buff, compare);
+      LogTest("FAILURE: %s produced \"%s\" expected \"%s\"", string, buff, compare);
       exit(1);
     }
   if (expect)
-    LogTest("SUCCESS: %s produced %s", string, buff);
+    LogTest("SUCCESS: %s produced \"%s\"", string, buff);
   else
     LogTest("SUCCESS: %s didn't produce anything", string);
 }
@@ -83,11 +83,11 @@ void TestCrit(int expect, char *buff, log_components_t component, char *string)
   LogCrit(component, "%s", string);
   if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
     {
-      LogTest("FAILURE: %s produced %s expected %s", string, buff, compare);
+      LogTest("FAILURE: %s produced \"%s\" expected \"%s\"", string, buff, compare);
       exit(1);
     }
   if (expect)
-    LogTest("SUCCESS: %s produced %s", string, buff);
+    LogTest("SUCCESS: %s produced \"%s\"", string, buff);
   else
     LogTest("SUCCESS: %s didn't produce anything", string);
 }
@@ -100,11 +100,11 @@ void TestEvent(int expect, char *buff, log_components_t component, char *string)
   LogEvent(component, "%s", string);
   if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
     {
-      LogTest("FAILURE: %s produced %s expected %s", string, buff, compare);
+      LogTest("FAILURE: %s produced \"%s\" expected \"%s\"", string, buff, compare);
       exit(1);
     }
   if (expect)
-    LogTest("SUCCESS: %s produced %s", string, buff);
+    LogTest("SUCCESS: %s produced \"%s\"", string, buff);
   else
     LogTest("SUCCESS: %s didn't produce anything", string);
 }
@@ -117,11 +117,11 @@ void TestDebug(int expect, char *buff, log_components_t component, char *string)
   LogDebug(component, "%s", string);
   if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
     {
-      LogTest("FAILURE: %s produced %s expected %s", string, buff, compare);
+      LogTest("FAILURE: %s produced \"%s\" expected \"%s\"", string, buff, compare);
       exit(1);
     }
   if (expect)
-    LogTest("SUCCESS: %s produced %s", string, buff);
+    LogTest("SUCCESS: %s produced \"%s\"", string, buff);
   else
     LogTest("SUCCESS: %s didn't produce anything", string);
 }
@@ -134,11 +134,11 @@ void TestFullDebug(int expect, char *buff, log_components_t component, char *str
   LogFullDebug(component, "%s", string);
   if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
     {
-      LogTest("FAILURE: %s produced %s expected %s", string, buff, compare);
+      LogTest("FAILURE: %s produced \"%s\" expected \"%s\"", string, buff, compare);
       exit(1);
     }
   if (expect)
-    LogTest("SUCCESS: %s produced %s", string, buff);
+    LogTest("SUCCESS: %s produced \"%s\"", string, buff);
   else
     LogTest("SUCCESS: %s didn't produce anything", string);
 }
@@ -150,12 +150,12 @@ void TestFullDebug(int expect, char *buff, log_components_t component, char *str
     log_snprintf(buff, 2048, format, ## args);          \
     if (strcmp(compare, buff) != 0)                     \
       {                                                 \
-        LogTest("FAILURE: %s produced %s expected %s",  \
+        LogTest("FAILURE: %s produced \"%s\" expected \"%s\"",  \
                 format, buff, compare);                 \
         exit(1);                                        \
       }                                                 \
     else                                                \
-      LogTest("SUCCESS: %s produced %s", format, buff); \
+      LogTest("SUCCESS: %s produced \"%s\"", format, buff); \
   } while (0)
 
 #define TestGaneshaFormat(expect, compare, format, args...) \
@@ -164,14 +164,14 @@ void TestFullDebug(int expect, char *buff, log_components_t component, char *str
     log_snprintf(buff, 2048, format, ## args);          \
     if (strcmp(compare, buff) != 0 && expect)           \
       {                                                 \
-        LogTest("FAILURE: %s produced %s expected %s",  \
+        LogTest("FAILURE: %s produced \"%s\" expected \"%s\"",  \
                 format, buff, compare);                 \
         exit(1);                                        \
       }                                                 \
     else if (expect)                                    \
-      LogTest("SUCCESS: %s produced %s", format, buff); \
+      LogTest("SUCCESS: %s produced \"%s\"", format, buff); \
     else                                                \
-      LogTest("FAILURE (EXPECTED):  %s produced %s", format, buff); \
+      LogTest("FAILURE (EXPECTED):  %s produced \"%s\"", format, buff); \
   } while (0)
 
 /**
@@ -180,6 +180,7 @@ void TestFullDebug(int expect, char *buff, log_components_t component, char *str
 int Test1(void *arg)
 {
   char tempstr[2048];
+  int  n1, n2;
 
   SetNameFunction((char *)arg);
 
@@ -373,32 +374,93 @@ int Test1(void *arg)
   SetComponentLogLevel(COMPONENT_LOG, NIV_EVENT);
   TestFormat("none");
   TestFormat("String: %s", "str");
+  TestFormat("String: %12s", "str");
+  TestFormat("String: %-12s", "str");
+  TestFormat("String: %12s", "too long string");
+  TestFormat("String: %-12s", "too long string");
+  TestFormat("%c", (char) 65);
+  // Not tested lc, ls, C, S
   errno = EINVAL;
   TestFormat("strerro: %m");
-  TestFormat("integers: %d %x", 1, 20);
+  TestFormat("integers: %d %x %08x %08X %d %u %5d", 1, 20, 30, 40, -5, 6, 31);
+  TestFormat("integers: %-5d", 33);
+  TestFormat("Long integers: %ld", (long) 123456789);
+  TestFormat("%- %5 %P %\\");
+  TestFormat("'%-5d' '%#5x' '%#05x' % d % d %+5d %-+5d %+-5d %-05d %0-5d %0+3d %+03d", 1, 2, 22, 3, -3, 4, 555, 666, 77, 88, 9, 1);
+  TestFormat("Use of # tag: %#x %#3x %#05x %#-5x %-#5x %0#5x", 1, 2, 3, 4, 5, 6);
+  TestFormat("%#-0 +#-0 +#-0 +5d", 4);
+  TestFormat("%*d", 3, 8);
+  TestFormat("%5-d", 6);
+  TestFormat("%*.*f %d", 6, 2, 1.1, 7);
+  TestFormat("%'d %Id", 12345, 67);
+  TestFormat("%d %i", 1, 2);
+  TestFormat("0%o %u 0x%x 0x%X", 0123, 5, 0xabcdef, 0xABCDEF);
+  TestFormat("%e %E %e %E", 1.1, 1.1, 1.1E10, 1.1E10);
+  TestFormat("%f %F %f %F", 1.1, 1.1, 1.1E10, 1.1E10);
+  TestFormat("%g %G %g %G", 1.1, 1.1, 1.1E10, 1.1E10);
+  TestFormat("%a %A %a %A", 1.1, 1.1, 1.1E10, 1.1E10);
+  TestFormat("%Le %LE %Le %LE", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10);
+  TestFormat("%Lf %LF %Lf %LF", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10);
+  TestFormat("%Lg %LG %Lg %LG", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10);
+  TestFormat("%La %LA %La %LA", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10);
+  TestFormat("%lle %llE %lle %llE", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10);
+  TestFormat("%llf %llF %llf %llF", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10);
+  TestFormat("%llg %llG %llg %llG", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10);
+  TestFormat("%lla %llA %lla %llA", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10);
+  TestFormat("%p", &n1);
+  snprintf(tempstr, 2048, "12345678%n", &n1);
+  log_snprintf(tempstr, 2048, "12345678%n", &n2);
+  if (n1 != n2)
+    {
+      LogTest("FAILURE: 12345678%%n produced %d expected %d", n2, n1);
+      exit(1);
+    }
+  LogTest("SUCCESS: 12345678%%n produced %d", n2);
+  errno = EIO;
+  TestFormat("%m %64m");
+  TestFormat("%%");
+  TestFormat("%hhd %s", (char) 1, "extra");
+  TestFormat("%hd %s", (short) 500, "extra");
+  TestFormat("%lld %s", (long long) 12345678, "extra");
+  TestFormat("%Ld %s", (long long) 12345678, "extra");
+  TestFormat("%ld %s", (long) 12345, "extra");
+  TestFormat("%qd %s", (long long) 12345678, "extra");
+  TestFormat("%jd %s", (long long) 1, "extra");
+  TestFormat("%td %s", (char *) &n1 - (char *) &n2, "extra");
+  TestFormat("%zd %s", sizeof(int), "extra");
+  /* 
+   * Ganesha can't properly support the $ parameter index tag, so don't bother testing, even if it does work
+   * when the indices are in ascending order.
+  TestFormat("%1$08x", 6);
+  TestFormat("%3$llx %2$d %1d", 1, 2, (long long)0x12345678);
+   */
+  /*
   LogTest("\nTest %%b, %%B, %%h (doesn't work - overloaded), %%H, %%y, and %%Y. These are odd tags:");
   LogTest("   %%b, %%B, %%h, and %%H each consume int1, str2, str3 even if not all are printed");
   LogTest("   %%y and %%Y each consume int1, str2, str3, int4, str5, str6 even if not all are printed");
   LogTest("   An extra string parameter is printed to demonstrate how the parameters are consumed");
   TestGaneshaFormat(1, "str2(1) (not part of %b)", "%b %s", 1, "str2", "str3", "(not part of %b)");
   TestGaneshaFormat(1, "str2(1) : 'str3' (not part of %B)", "%B %s", 1, "str2", "str3", "(not part of %B)");
-  TestGaneshaFormat(0, "str2(1) (not part of %h)", "%h %s", 1, "str2", "(not part of %h)");
-  TestGaneshaFormat(1, "str2(1) : 'str3' (not part of %H)", "%H %s", 1, "str2", "str3", "(not part of %H)");
+  */
+  TestGaneshaFormat(1, "str2(1) (not part of %h)", "%h %s", 1, "str2", "str3", "(not part of %h)");
   /*
-  LogTest("test %%y %y %s", 1, "str2", "str3", 4, "str5", "str6", "(not part of %y)");
-  LogTest("test %%Y %Y %s", 1, "str2", "str3", 4, "str5", "str6", "(not part of %Y)");
+  TestGaneshaFormat(1, "str2(1) : 'str3' (not part of %H)", "%H %s", 1, "str2", "str3", "(not part of %H)");
+  TestGaneshaFormat(1, "str2 str5(4) (not part of %y)", "%y %s", 1, "str2", "str3", 4, "str5", "str6", "(not part of %y)");
+  TestGaneshaFormat(1, "str2(1) : 'str3' -> str5(4) : 'str6' (not part of %Y)", "%Y %s", 1, "str2", "str3", 4, "str5", "str6", "(not part of %Y)");
   LogTest("\nTest new tags for reporting errno values");
-  LogTest("test %%w %w", EINVAL);
-  LogTest("test %%W %W", EINVAL);
+  TestGaneshaFormat(1, "EINVAL(22)", "%w", EINVAL);
+  TestGaneshaFormat(1, "EINVAL(22) : 'Invalid argument'", "%W", EINVAL);
   LogTest("\nTest context sensitive tags");
   LogTest("%%K, %%V, and %%v go together, defaulting to ERR_SYS");
   LogTest("%%J, %%R, and %%r go together, defaulting to ERR_POSIX");
-  LogTest("test %%K%%V %%K%%V %K%V %K%V", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
-  LogTest("test %%K%%v %%K%%v %K%v %K%v", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
-  LogTest("test %%J%%R %%J%%R %J%R %J%R", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
-  LogTest("test %%J%%r %%J%%r %J%r %J%r", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
-  LogTest("test %%V %%R %V %R", ERR_SIGACTION, EINVAL);
-  LogTest("test %%v %%r %v %r", ERR_SIGACTION, EINVAL);
+  TestGaneshaFormat(1, "ERR_SIGACTION(5) : 'sigaction impossible' EINVAL(22) : 'Invalid argument'", "%K%V %K%V", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
+  TestGaneshaFormat(1, "ERR_SIGACTION(5) EINVAL(22)", "%K%v %K%v", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
+  TestGaneshaFormat(1, "ERR_SIGACTION(5) : 'sigaction impossible' EINVAL(22) : 'Invalid argument'", "%J%R %J%R", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
+  TestGaneshaFormat(1, "ERR_SIGACTION(5) EINVAL(22)", "%J%r %J%r", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
+  TestGaneshaFormat(1, "ERR_SIGACTION(5) : 'sigaction impossible' EINVAL(22) : 'Invalid argument'", "%V %R", ERR_SIGACTION, EINVAL);
+  TestGaneshaFormat(1, "ERR_SIGACTION(5) EINVAL(22)", "%v %r", ERR_SIGACTION, EINVAL);
+  LogTest("Ganesha expects it's tags to just be two characters, for example %%b");
+  TestGaneshaFormat(0, "str2(1) (not part of %b)", "%5b %s", 1, "str2", "str3", "(not part of %b)");
   */
 
   return 0;
