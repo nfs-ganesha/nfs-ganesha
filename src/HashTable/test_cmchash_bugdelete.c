@@ -415,7 +415,7 @@ int main(int argc, char *argv[])
   BuddyDumpMem(stdout);
 
   LogTest("\n-----------------------------------------");
-  LogTest("Test reussi : tous les tests sont passes avec succes");
+  LogTest("Test succeeded: all tests pass successfully");
 
   exit(0);
 }
