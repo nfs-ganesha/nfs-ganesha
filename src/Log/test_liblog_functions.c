@@ -34,6 +34,13 @@
 #include <string.h>
 #include "log_macros.h"
 
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
+
 #define ERR_DUMMY 3
 static family_error_t tab_test_err[] = {
 #define ERR_DUMMY_1  0
@@ -254,65 +261,65 @@ int Test1()
       LogTest("FAILURE");
       exit(1);
     }
-    TestAlways    (1, tempstr, COMPONENT_MAIN, "LogAlways (should print)");
-    TestMajor     (1, tempstr, COMPONENT_MAIN, "LogMajor (should print)");
-    TestCrit      (1, tempstr, COMPONENT_MAIN, "LogCrit (should print)");
-    TestEvent     (1, tempstr, COMPONENT_MAIN, "LogEvent (should print)");
-    TestDebug     (0, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
-    TestFullDebug (0, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
-    TestAlways    (1, tempstr, COMPONENT_INIT, "LogAlways (should print)");
-    TestMajor     (1, tempstr, COMPONENT_INIT, "LogMajor (should print)");
-    TestCrit      (1, tempstr, COMPONENT_INIT, "LogCrit (should print)");
-    TestEvent     (1, tempstr, COMPONENT_INIT, "LogEvent (should print)");
-    TestDebug     (1, tempstr, COMPONENT_INIT, "LogDebug (should print)");
-    TestFullDebug (0, tempstr, COMPONENT_INIT, "LogFullDebug (shouldn't print)");
+    TestAlways    (TRUE,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
+    TestMajor     (TRUE,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
+    TestCrit      (TRUE,  tempstr, COMPONENT_MAIN, "LogCrit (should print)");
+    TestEvent     (TRUE,  tempstr, COMPONENT_MAIN, "LogEvent (should print)");
+    TestDebug     (FALSE, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
+    TestFullDebug (FALSE, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
+    TestAlways    (TRUE,  tempstr, COMPONENT_INIT, "LogAlways (should print)");
+    TestMajor     (TRUE,  tempstr, COMPONENT_INIT, "LogMajor (should print)");
+    TestCrit      (TRUE,  tempstr, COMPONENT_INIT, "LogCrit (should print)");
+    TestEvent     (TRUE,  tempstr, COMPONENT_INIT, "LogEvent (should print)");
+    TestDebug     (TRUE,  tempstr, COMPONENT_INIT, "LogDebug (should print)");
+    TestFullDebug (FALSE, tempstr, COMPONENT_INIT, "LogFullDebug (shouldn't print)");
   }
 #endif /* _SNMP_ADM_ACTIVE */
 
   LogTest("------------------------------------------------------");
   LogTest("Test all levels of log filtering");
   SetComponentLogLevel(COMPONENT_MAIN, NIV_NULL);
-  TestAlways    (1, tempstr, COMPONENT_MAIN, "LogAlways (should print)");
-  TestMajor     (0, tempstr, COMPONENT_MAIN, "LogMajor (shouldn't print)");
-  TestCrit      (0, tempstr, COMPONENT_MAIN, "LogCrit (shouldn't print)");
-  TestEvent     (0, tempstr, COMPONENT_MAIN, "LogEvent (shouldn't print)");
-  TestDebug     (0, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
-  TestFullDebug (0, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
+  TestAlways    (TRUE,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
+  TestMajor     (FALSE, tempstr, COMPONENT_MAIN, "LogMajor (shouldn't print)");
+  TestCrit      (FALSE, tempstr, COMPONENT_MAIN, "LogCrit (shouldn't print)");
+  TestEvent     (FALSE, tempstr, COMPONENT_MAIN, "LogEvent (shouldn't print)");
+  TestDebug     (FALSE, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
+  TestFullDebug (FALSE, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
   SetComponentLogLevel(COMPONENT_MAIN, NIV_MAJOR);
-  TestAlways    (1, tempstr, COMPONENT_MAIN, "LogAlways (should print)");
-  TestMajor     (1, tempstr, COMPONENT_MAIN, "LogMajor (should print)");
-  TestCrit      (0, tempstr, COMPONENT_MAIN, "LogCrit (shouldn't print)");
-  TestEvent     (0, tempstr, COMPONENT_MAIN, "LogEvent (shouldn't print)");
-  TestDebug     (0, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
-  TestFullDebug (0, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
+  TestAlways    (TRUE,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
+  TestMajor     (TRUE,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
+  TestCrit      (FALSE, tempstr, COMPONENT_MAIN, "LogCrit (shouldn't print)");
+  TestEvent     (FALSE, tempstr, COMPONENT_MAIN, "LogEvent (shouldn't print)");
+  TestDebug     (FALSE, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
+  TestFullDebug (FALSE, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
   SetComponentLogLevel(COMPONENT_MAIN, NIV_CRIT);
-  TestAlways    (1, tempstr, COMPONENT_MAIN, "LogAlways (should print)");
-  TestMajor     (1, tempstr, COMPONENT_MAIN, "LogMajor (should print)");
-  TestCrit      (1, tempstr, COMPONENT_MAIN, "LogCrit (should print)");
-  TestEvent     (0, tempstr, COMPONENT_MAIN, "LogEvent (shouldn't print)");
-  TestDebug     (0, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
-  TestFullDebug (0, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
+  TestAlways    (TRUE,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
+  TestMajor     (TRUE,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
+  TestCrit      (TRUE,  tempstr, COMPONENT_MAIN, "LogCrit (should print)");
+  TestEvent     (FALSE, tempstr, COMPONENT_MAIN, "LogEvent (shouldn't print)");
+  TestDebug     (FALSE, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
+  TestFullDebug (FALSE, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
   SetComponentLogLevel(COMPONENT_MAIN, NIV_EVENT);
-  TestAlways    (1, tempstr, COMPONENT_MAIN, "LogAlways (should print)");
-  TestMajor     (1, tempstr, COMPONENT_MAIN, "LogMajor (should print)");
-  TestCrit      (1, tempstr, COMPONENT_MAIN, "LogCrit (should print)");
-  TestEvent     (1, tempstr, COMPONENT_MAIN, "LogEvent (should print)");
-  TestDebug     (0, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
-  TestFullDebug (0, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
+  TestAlways    (TRUE,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
+  TestMajor     (TRUE,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
+  TestCrit      (TRUE,  tempstr, COMPONENT_MAIN, "LogCrit (should print)");
+  TestEvent     (TRUE,  tempstr, COMPONENT_MAIN, "LogEvent (should print)");
+  TestDebug     (FALSE, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
+  TestFullDebug (FALSE, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
   SetComponentLogLevel(COMPONENT_MAIN, NIV_DEBUG);
-  TestAlways    (1, tempstr, COMPONENT_MAIN, "LogAlways (should print)");
-  TestMajor     (1, tempstr, COMPONENT_MAIN, "LogMajor (should print)");
-  TestCrit      (1, tempstr, COMPONENT_MAIN, "LogCrit (should print)");
-  TestEvent     (1, tempstr, COMPONENT_MAIN, "LogEvent (should print)");
-  TestDebug     (1, tempstr, COMPONENT_MAIN, "LogDebug (should print)");
-  TestFullDebug (0, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
+  TestAlways    (TRUE,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
+  TestMajor     (TRUE,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
+  TestCrit      (TRUE,  tempstr, COMPONENT_MAIN, "LogCrit (should print)");
+  TestEvent     (TRUE,  tempstr, COMPONENT_MAIN, "LogEvent (should print)");
+  TestDebug     (TRUE,  tempstr, COMPONENT_MAIN, "LogDebug (should print)");
+  TestFullDebug (FALSE, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
   SetComponentLogLevel(COMPONENT_MAIN, NIV_FULL_DEBUG);
-  TestAlways    (1, tempstr, COMPONENT_MAIN, "LogAlways (should print)");
-  TestMajor     (1, tempstr, COMPONENT_MAIN, "LogMajor (should print)");
-  TestCrit      (1, tempstr, COMPONENT_MAIN, "LogCrit (should print)");
-  TestEvent     (1, tempstr, COMPONENT_MAIN, "LogEvent (should print)");
-  TestDebug     (1, tempstr, COMPONENT_MAIN, "LogDebug (should print)");
-  TestFullDebug (1, tempstr, COMPONENT_MAIN, "LogFullDebug (should print)");
+  TestAlways    (TRUE,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
+  TestMajor     (TRUE,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
+  TestCrit      (TRUE,  tempstr, COMPONENT_MAIN, "LogCrit (should print)");
+  TestEvent     (TRUE,  tempstr, COMPONENT_MAIN, "LogEvent (should print)");
+  TestDebug     (TRUE,  tempstr, COMPONENT_MAIN, "LogDebug (should print)");
+  TestFullDebug (TRUE,  tempstr, COMPONENT_MAIN, "LogFullDebug (should print)");
 
 
 }
@@ -420,26 +427,26 @@ void Test2()
   LogTest("   %%b, %%B, %%h, and %%H each consume int1, str2, str3 even if not all are printed");
   LogTest("   %%y and %%Y each consume int1, str2, str3, int4, str5, str6 even if not all are printed");
   LogTest("   An extra string parameter is printed to demonstrate how the parameters are consumed");
-  TestGaneshaFormat(1, "str2(1) (not part of %b)", "%b %s", 1, "str2", "str3", "(not part of %b)");
-  TestGaneshaFormat(1, "str2(1) : 'str3' (not part of %B)", "%B %s", 1, "str2", "str3", "(not part of %B)");
-  TestGaneshaFormat(1, "str2(1) (not part of %h)", "%h %s", 1, "str2", "str3", "(not part of %h)");
-  TestGaneshaFormat(1, "str2(1) : 'str3' (not part of %H)", "%H %s", 1, "str2", "str3", "(not part of %H)");
-  TestGaneshaFormat(1, "str2 str5(4) (not part of %y)", "%y %s", 1, "str2", "str3", 4, "str5", "str6", "(not part of %y)");
-  TestGaneshaFormat(1, "str2(1) : 'str3' -> str5(4) : 'str6' (not part of %Y)", "%Y %s", 1, "str2", "str3", 4, "str5", "str6", "(not part of %Y)");
+  TestGaneshaFormat(TRUE,  "str2(1) (not part of %b)", "%b %s", 1, "str2", "str3", "(not part of %b)");
+  TestGaneshaFormat(TRUE,  "str2(1) : 'str3' (not part of %B)", "%B %s", 1, "str2", "str3", "(not part of %B)");
+  TestGaneshaFormat(TRUE,  "str2(1) (not part of %h)", "%h %s", 1, "str2", "str3", "(not part of %h)");
+  TestGaneshaFormat(TRUE,  "str2(1) : 'str3' (not part of %H)", "%H %s", 1, "str2", "str3", "(not part of %H)");
+  TestGaneshaFormat(TRUE,  "str2 str5(4) (not part of %y)", "%y %s", 1, "str2", "str3", 4, "str5", "str6", "(not part of %y)");
+  TestGaneshaFormat(TRUE,  "str2(1) : 'str3' -> str5(4) : 'str6' (not part of %Y)", "%Y %s", 1, "str2", "str3", 4, "str5", "str6", "(not part of %Y)");
   LogTest("\nTest new tags for reporting errno values");
-  TestGaneshaFormat(1, "EINVAL(22)", "%w", EINVAL);
-  TestGaneshaFormat(1, "EINVAL(22) : 'Invalid argument'", "%W", EINVAL);
+  TestGaneshaFormat(TRUE,  "EINVAL(22)", "%w", EINVAL);
+  TestGaneshaFormat(TRUE,  "EINVAL(22) : 'Invalid argument'", "%W", EINVAL);
   LogTest("\nTest context sensitive tags");
   LogTest("%%K, %%V, and %%v go together, defaulting to ERR_SYS");
   LogTest("%%J, %%R, and %%r go together, defaulting to ERR_POSIX");
-  TestGaneshaFormat(1, "ERR_SIGACTION(5) : 'sigaction impossible' EINVAL(22) : 'Invalid argument'", "%K%V %K%V", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
-  TestGaneshaFormat(1, "ERR_SIGACTION(5) EINVAL(22)", "%K%v %K%v", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
-  TestGaneshaFormat(1, "ERR_SIGACTION(5) : 'sigaction impossible' EINVAL(22) : 'Invalid argument'", "%J%R %J%R", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
-  TestGaneshaFormat(1, "ERR_SIGACTION(5) EINVAL(22)", "%J%r %J%r", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
-  TestGaneshaFormat(1, "ERR_SIGACTION(5) : 'sigaction impossible' EINVAL(22) : 'Invalid argument'", "%V %R", ERR_SIGACTION, EINVAL);
-  TestGaneshaFormat(1, "ERR_SIGACTION(5) EINVAL(22)", "%v %r", ERR_SIGACTION, EINVAL);
+  TestGaneshaFormat(TRUE,  "ERR_SIGACTION(5) : 'sigaction impossible' EINVAL(22) : 'Invalid argument'", "%K%V %K%V", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
+  TestGaneshaFormat(TRUE,  "ERR_SIGACTION(5) EINVAL(22)", "%K%v %K%v", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
+  TestGaneshaFormat(TRUE,  "ERR_SIGACTION(5) : 'sigaction impossible' EINVAL(22) : 'Invalid argument'", "%J%R %J%R", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
+  TestGaneshaFormat(TRUE,  "ERR_SIGACTION(5) EINVAL(22)", "%J%r %J%r", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
+  TestGaneshaFormat(TRUE,  "ERR_SIGACTION(5) : 'sigaction impossible' EINVAL(22) : 'Invalid argument'", "%V %R", ERR_SIGACTION, EINVAL);
+  TestGaneshaFormat(TRUE,  "ERR_SIGACTION(5) EINVAL(22)", "%v %r", ERR_SIGACTION, EINVAL);
   LogTest("Ganesha expects it's tags to just be two characters, for example %%b");
-  TestGaneshaFormat(0, "str2(1) (not part of %b)", "%5b %s", 1, "str2", "str3", "(not part of %b)");
+  TestGaneshaFormat(FALSE, "str2(1) (not part of %b)", "%5b %s", 1, "str2", "str3", "(not part of %b)");
 }
 
 run_Tests(int all, char *arg)
@@ -488,7 +495,7 @@ int main(int argc, char *argv[])
           LogTest("AddFamilyError = %d", AddFamilyError(ERR_DUMMY, "Family Dummy", tab_test_err));
           LogTest("The family which was added is %s", ReturnNameFamilyError(ERR_DUMMY));
 
-          run_Tests(TRUE, "monothread");
+          run_Tests(TRUE,  "monothread");
         }
 
       /* TEST 1 multithread */
