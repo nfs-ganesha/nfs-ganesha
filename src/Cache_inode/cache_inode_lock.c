@@ -189,7 +189,7 @@ cache_inode_status_t cache_inode_lock_test(cache_entry_t * pentry,
   if(*pstatus == CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOCKT] += 1;
   else
-    pclient->stat.func_stats.nb_success[CACHE_INODE_LOCK_CREATE] += 1;
+    pclient->stat.func_stats.nb_success[CACHE_INODE_LOCKT] += 1;
 
   return *pstatus;
 }                               /* cache_inode_lock_test */
