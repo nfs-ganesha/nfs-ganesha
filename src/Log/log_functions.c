@@ -182,9 +182,12 @@ static ThreadLogContext_t *Log_GetThreadContext()
 /* Affichage d'erreurs */
 static int DisplayError(int num_error, int status)
 {
+  char tempstr[1024];
+  char *errstr;
+  errstr = strerror_r(status, tempstr, 1024);
 
   return fprintf(stderr, "Error %s status %d ==> %s\n", tab_systeme_err[num_error].label,
-                 status, strerror(status));
+                 status, errstr);
 
 }                               /* DisplayError */
 
@@ -722,8 +725,12 @@ static int FaireLogError(char *buffer, int num_family, int num_error, int status
     }
   else
     {
+      char tempstr[1024];
+      char *errstr;
+      errstr = strerror_r(status, tempstr, 1024);
+
       return sprintf(buffer, "Error %s : %s : status %d : %s : Line %d",
-                     the_error.label, the_error.msg, status, strerror(status), ma_ligne);
+                     the_error.label, the_error.msg, status, errstr, ma_ligne);
     }
 }                               /* FaireLogError */
 
@@ -1184,11 +1191,14 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
           type = POINTEUR_TYPE;
           ONE_STEP;
           break;
+#if 0
+// we can't support %n due to security considerations
         case 'n':
           /* Le monstrueux passage de pointeur, trou beant pour les shellcodes, je ne le gere pas volontairement */
           type = POINTEUR_TYPE;
           ONE_STEP;
           break;
+#endif
         case '%':
           /* le caractere %, tout simplement */
           type = NO_TYPE;
@@ -1503,10 +1513,16 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
                   snprintf(tmpout, MAX_STR_TOK, "?");
                   break;
                 }
-              numero = va_arg(arguments, int);
-              the_error = TrouveErr(tab_err, numero);
-              snprintf(tmpout, MAX_STR_TOK, "%s(%d) : '%s'", the_error.label,
-                       the_error.numero, strerror(numero));
+              {
+                char tempstr[1024];
+                char *errstr;
+
+                numero = va_arg(arguments, int);
+                errstr = strerror_r(numero, tempstr, 1024);
+                the_error = TrouveErr(tab_err, numero);
+                snprintf(tmpout, MAX_STR_TOK, "%s(%d) : '%s'", the_error.label,
+                         the_error.numero, errstr);
+              }
               break;
 
             case ERRCTX_SHORT:

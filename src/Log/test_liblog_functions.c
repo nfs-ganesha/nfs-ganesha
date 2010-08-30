@@ -177,12 +177,10 @@ void TestFullDebug(int expect, char *buff, log_components_t component, char *str
 /**
  *  Tests about Log streams and special printf functions.
  */
-int Test1(void *arg)
+int Test1()
 {
   char tempstr[2048];
   int  n1, n2;
-
-  SetNameFunction((char *)arg);
 
   DisplayLogFlux(stdout, "%s", "Test number 1");
   DisplayLogFlux(stdout, "%s", "Test number 2");
@@ -316,6 +314,14 @@ int Test1(void *arg)
   TestDebug     (1, tempstr, COMPONENT_MAIN, "LogDebug (should print)");
   TestFullDebug (1, tempstr, COMPONENT_MAIN, "LogFullDebug (should print)");
 
+
+}
+
+void Test2()
+{
+  char tempstr[2048];
+  int  n1, n2;
+
   SetComponentLogLevel(COMPONENT_MAIN, NIV_EVENT);
 
   LogTest("------------------------------------------------------");
@@ -373,6 +379,8 @@ int Test1(void *arg)
   LogTest("------------------------------------------------------");
   LogTest("Test some special formats");
   TestFormat("pointer: %p %s", &n1, "extra");
+#if 0
+// we can't support %n due to security considerations
   TestFormat("count: 12345678%n %s", &n1, "extra");
   snprintf(tempstr, 2048, "count: 12345678%n %s", &n1, "extra");
   log_snprintf(tempstr, 2048, "count: 12345678%n %s", &n2, "extra");
@@ -382,6 +390,7 @@ int Test1(void *arg)
       exit(1);
     }
   LogTest("SUCCESS: 12345678%%n produced %d", n2);
+#endif
   errno = EIO;
   TestFormat("strerror: %m %64m %s", "extra");
   TestFormat("percent char: %% %s", "extra");
@@ -431,19 +440,25 @@ int Test1(void *arg)
   TestGaneshaFormat(1, "ERR_SIGACTION(5) EINVAL(22)", "%v %r", ERR_SIGACTION, EINVAL);
   LogTest("Ganesha expects it's tags to just be two characters, for example %%b");
   TestGaneshaFormat(0, "str2(1) (not part of %b)", "%5b %s", 1, "str2", "str3", "(not part of %b)");
+}
+
+run_Tests(int all, char *arg)
+{
+  SetNameFunction(arg);
+
+  if (all)
+    {
+    Test1();
+    }
+  Test2();
 
   LogTest("------------------------------------------------------");
   LogTest("SUCCESS!");
-
-  return 0;
-
 }
 
-void *run_Test1(void *arg)
+void *run_MT_Tests(void *arg)
 {
-  unsigned long long rc_long;
-
-  rc_long = (unsigned long long)Test1(arg);
+  run_Tests(FALSE, (char *)arg);
 
   return NULL ;
 }
@@ -473,9 +488,7 @@ int main(int argc, char *argv[])
           LogTest("AddFamilyError = %d", AddFamilyError(ERR_DUMMY, "Family Dummy", tab_test_err));
           LogTest("The family which was added is %s", ReturnNameFamilyError(ERR_DUMMY));
 
-          rc = Test1((void *)"monothread");
-          return rc;
-
+          run_Tests(TRUE, "monothread");
         }
 
       /* TEST 1 multithread */
@@ -493,6 +506,7 @@ int main(int argc, char *argv[])
           SetNameHost("localhost");
           SetDefaultLogging("STDOUT");
           InitDebug(NIV_EVENT);
+          AddFamilyError(ERR_POSIX, "POSIX Errors", tab_systeme_status);
           LogTest("AddFamilyError = %d", AddFamilyError(ERR_DUMMY, "Family Dummy", tab_test_err));
           LogTest("The family which was added is %s", ReturnNameFamilyError(ERR_DUMMY));
 
@@ -508,8 +522,8 @@ int main(int argc, char *argv[])
             {
               int rc;
               char *thread_name = malloc(256);
-              snprintf(thread_name, 256, "thread %d", i);
-              rc = pthread_create(&(threads[i]), &th_attr[i], run_Test1,
+              snprintf(thread_name, 256, "thread %3d", i);
+              rc = pthread_create(&(threads[i]), &th_attr[i], run_MT_Tests,
                                   (void *)thread_name);
             }
 
