@@ -598,6 +598,15 @@ typedef union cache_inode_create_arg__
 
 #define CACHE_INODE_LOCK_OFFSET_EOF 0xFFFFFFFFFFFFFFFFLL
 
+#define inc_func_call(pclient, x)                       \
+    pclient->stat.func_stats.nb_call[x] += 1
+#define inc_func_success(pclient, x)                    \
+    pclient->stat.func_stats.nb_success[x] += 1
+#define inc_func_err_retryable(pclient, x)              \
+    pclient->stat.func_stats.nb_err_retryable[x] += 1
+#define inc_func_err_unrecover(pclient, x)              \
+    pclient->stat.func_stats.nb_err_unrecover[x] += 1
+
 cache_inode_status_t cache_inode_clean_entry(cache_entry_t * pentry);
 
 int cache_inode_compare_key_fsal(hash_buffer_t * buff1, hash_buffer_t * buff2);
