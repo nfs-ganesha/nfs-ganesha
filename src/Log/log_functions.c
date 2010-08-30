@@ -1012,46 +1012,23 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
       /* Je vire le premier caractere (qui est forcement un '%') */
       ONE_STEP;
 
+      /*
+       * Accept "#-0 +'I" qualifiers, there can be any number in any order
+       * but they must immediately follow the %
+       */
+      /* TODO: Ganesha special formats do not work with any of these */
+      while (*iterformat == '#' || *iterformat == '-' || *iterformat == '0' ||
+             *iterformat == ' ' || *iterformat == '+' || *iterformat == 'I' ||
+             *iterformat == '\'')
+        {
+          ONE_STEP;
+        }
+
       /* On traite les arguments positionnels */
       while(isdigit(*iterformat) || *iterformat == '$')
         {
           ONE_STEP;
         }
-
-      /*
-       * une boucle qui traite des caracterers de formatage, infini sauf quand un caractere qui n'est pas de
-       * formattage est rencontree qui produit un break ;
-       */
-      do
-        {
-
-          switch (*iterformat)
-            {
-              /* ATTENTION
-               *  /!\ Une serie de case sans break !!!!
-               */
-            case ' ':
-              /* Un espace est utilise a la place d'un signe. */
-            case '+':
-              /* Un signe + explicite */
-            case '-':
-              /* un signe - */
-            case '#':
-              /* utilisation d'une forme alternative */
-            case '0':
-              /* Pour forcer l'emploi de padding par des 0 sur des champs de taille fixe */
-            case 'I':
-              /* Pour les formats internationaux */
-              ONE_STEP;
-              continue;         /* On repasse dans la boucle */
-
-            default:
-              /* Fin de ce type de caracteres */
-              break;
-            }
-          break;
-        }
-      while(1);                 /* Pas vraiment une boucle infinie en fait */
 
       /* La taille du champ */
       if(*iterformat == '*')
@@ -1069,7 +1046,6 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
             }
         }
 
-      /* if( *iterformat == '*' ) */
       /* La precision */
       if(*iterformat == '.')
         {
@@ -1081,12 +1057,15 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
               /* On garde le '*' */
               ONE_STEP;
 
+              /* on lit la precision dans les arguments */
+              precision_in_valist += 1;
+
               /* On garde la taille du champs */
               while(isdigit(*iterformat) || *iterformat == '$')
                 {
                   ONE_STEP;
                 }
-            }                   /* if( *iterformat == '*' ) */
+            }
           else
             {
               if(isdigit(*iterformat))
@@ -1111,28 +1090,40 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
         {
         case 'h':
           /* ce sont des short ints ou bien des char */
-          typelg = SHORT_LG;
-          ONE_STEP;
+          if (iterformat[1] == 'h' || iterformat[1] == 'd' ||
+              iterformat[1] == 'i' || iterformat[1] == 'u' ||
+              iterformat[1] == 'x' || iterformat[1] == 'X' ||
+              iterformat[1] == 'o')
+            {
+              typelg = SHORT_LG;
+              ONE_STEP;
+              if(*iterformat == 'h')
+                {
+                  ONE_STEP;
+                  type = CHAR_TYPE;
+                  typelg = NO_LONG;
+                }
+            }
           break;
         case 'L':
           /* long doubles et long ints */
-          typelg = LONG_LG;
+          typelg = LONG_LONG_LG;
           ONE_STEP;
           break;
         case 'q':
           /* long long */
-          typelg = LONG_LG;
+          typelg = LONG_LONG_LG;
           ONE_STEP;
           break;
         case 'z':
         case 'Z':
-          /* Les entiers sont des size */
-          typelg = LONG_LG;
-          ONE_STEP;
-          break;
         case 't':
         case 'j':
+#          if __WORDSIZE == 64
           typelg = LONG_LG;
+#          else
+          typelg = LONG_LONG_LG;
+#          endif
           ONE_STEP;
           break;
         case 'l':
@@ -1292,6 +1283,8 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
           ONE_STEP;
           break;
         default:
+          type = NO_TYPE;
+          ONE_STEP;
           break;
         }
 
@@ -1386,6 +1379,7 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
                   va_arg(arguments, long double);
                   break;
                 }
+              break;
 
             case LONG_LONG_LG:
               switch (type)
