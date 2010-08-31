@@ -189,16 +189,12 @@ int Test1()
   char tempstr[2048];
   int  n1, n2;
 
-  DisplayLogFlux(stdout, "%s", "Test number 1");
-  DisplayLogFlux(stdout, "%s", "Test number 2");
+  DisplayLogFlux(stdout, "%s", "Starting Log Tests");
 
   LogTest("------------------------------------------------------");
 
   DisplayErrorFlux(stdout, ERR_SYS, ERR_FORK, ENOENT);
   DisplayErrorLog(ERR_SYS, ERR_SOCKET, EINTR);
-
-  LogTest("------------------------------------------------------");
-
   DisplayErrorFlux(stdout, ERR_DUMMY, ERR_DUMMY_2, ENOENT);
 
   LogTest("------------------------------------------------------");
@@ -223,11 +219,16 @@ int Test1()
 
   LogTest("------------------------------------------------------");
 
-  DisplayErrorFlux(stderr, ERR_DUMMY, ERR_DUMMY_1, EPERM);
 
   LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, EINVAL);
   LogCrit(COMPONENT_INIT, "Initializing %K%V %R", ERR_SYS, ERR_MALLOC, EINVAL, EINVAL);
 
+  LogTest("------------------------------------------------------");
+  LogTest("Send some messages to stderr");
+  DisplayErrorFlux(stderr, ERR_DUMMY, ERR_DUMMY_1, EPERM);
+  DisplayLogFlux(stderr, "This should go to stderr");
+  SetComponentLogFile(COMPONENT_DISPATCH, "STDERR");
+  LogEvent(COMPONENT_DISPATCH, "This should also go to stderr");
   /*
    * Set up for tests that will verify what was actually produced by log messages.
    * This is used to test log levels and to test the log_vnsprintf function.
@@ -329,6 +330,12 @@ void Test2()
   char tempstr[2048];
   int  n1, n2;
 
+  /*
+   * Set up for tests that will verify what was actually produced by log messages.
+   * This is used to test log levels and to test the log_vnsprintf function.
+   */
+  SetComponentLogBuffer(COMPONENT_MAIN, tempstr);
+  SetComponentLogBuffer(COMPONENT_INIT, tempstr);
   SetComponentLogLevel(COMPONENT_MAIN, NIV_EVENT);
 
   LogTest("------------------------------------------------------");
