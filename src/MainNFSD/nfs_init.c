@@ -617,15 +617,15 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
   /* Core parameters */
   if((rc = nfs_read_core_conf(config_struct, &p_nfs_param->core_param)) < 0)
     {
-      DisplayLog("Error while parsing core configuration");
+      LogCrit(COMPONENT_INIT, "Error while parsing core configuration");
       return -1;
     }
   else
     {
       /* No such stanza in configuration file */
       if(rc == 1)
-        DisplayLog
-            ("No core configuration found in config file, using default");
+        LogCrit(COMPONENT_INIT,
+             "No core configuration found in config file, using default");
       else
         LogDebug(COMPONENT_INIT,
                         "core configuration read from config file");

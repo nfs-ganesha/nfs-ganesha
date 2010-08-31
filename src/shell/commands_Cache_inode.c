@@ -68,8 +68,10 @@ static pthread_mutex_t mutex_log = PTHREAD_MUTEX_INITIALIZER;
 /** global variables for logging */
 static int log_level = -1;
 static char localmachine[256];
+#ifdef OLD_LOGGING
 static desc_log_stream_t voie_cache;
 static log_t log_desc_cache = LOG_INITIALIZER;
+#endif
 
 /** Global variable: root pentry */
 static cache_entry_t *pentry_root;
@@ -284,7 +286,7 @@ cmdCacheInode_thr_info_t *RetrieveInitializedContext()
 
 void Cache_inode_layer_SetLogLevel(int log_lvl)
 {
-
+#ifdef OLD_LOGGING
   log_stream_t *curr;
 
   /* mutex pour proteger le descriptor de log */
@@ -311,7 +313,7 @@ void Cache_inode_layer_SetLogLevel(int log_lvl)
 
   /* mutex pour proteger le descriptor de log */
   pthread_mutex_unlock(&mutex_log);
-
+#endif
 }
 
 int lru_entry_to_str(LRU_data_t data, char *str)
@@ -624,7 +626,9 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
       return status.major;
     }
 
+#ifdef OLD_LOGGING
   cache_client_param.log_outputs = log_desc_cache;
+#endif
   cache_client_param.attrmask = attrs.supported_attributes;
 
   cache_client_param.lru_param.entry_to_str = lru_entry_to_str;
@@ -649,7 +653,9 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
                   ERR_CACHE_INODE, rc);
       return 1;
     }
+#ifdef OLD_LOGGING
   datacache_client_param.log_outputs = log_desc_cache;
+#endif
 /*
   DEPRECATED :
   datacache_client_param.lru_param.entry_to_str = lru_entry_to_str ;

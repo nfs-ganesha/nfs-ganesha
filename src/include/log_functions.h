@@ -17,6 +17,15 @@
 #endif
 
 /*
+ * Not quite ready for this
+#ifdef _USE_GPFS
+#define NO_OLD_LOGGING
+#else
+#define OLD_LOGGING
+#endif
+*/
+
+/*
  * definition des codes d'error
  *
  *
@@ -96,6 +105,7 @@ static log_level_t __attribute__ ((__unused__)) tabLogLevel[] =
 #define LOG_MAX_STRLEN 2048
 #define LOG_LABEL_LEN 50
 #define LOG_MSG_LEN   255
+
 typedef struct
 {
   int numero;
@@ -122,6 +132,7 @@ typedef struct
   status_t status;
 } log_error_t;
 
+#ifdef OLD_LOGGING
 /* les macros pour mettre dans les printf */
 #define __E(variable) variable.numero, variable.label, variable.msg
 #define __S(variable) variable.numero, variable.label, variable.msg
@@ -129,6 +140,7 @@ typedef struct
 #define __f(variable) variable.numero, variable.label, variable.msg
 #define __AE(variable) variable.contexte.numero, variable.contexte.label, variable.contexte.msg, \
                        variable.status.numero,   variable.status.label,   variable.status.msg
+#endif
 
 #define ERR_NULL -1
 
@@ -461,6 +473,32 @@ int SetDefaultLogging(char *name);
 int SetNameFunction(char *nom); /* thread safe */
 void SetLogLevelFromEnv();
 
+/* AddFamilyError : not thread safe */
+int AddFamilyError(int num_family, char *nom_family, family_error_t * tab_err);
+
+char *ReturnNameFamilyError(int num_family);
+
+int InitDebug(int level_to_set);        /* not thread safe */
+
+void SetLevelDebug(int level_to_set);    /* not thread safe */
+
+int ReturnLevelAscii(const char *LevelEnAscii);
+char *ReturnLevelInt(int level);
+
+int log_vsnprintf(char *out, size_t n, char *format, va_list arguments);
+int log_snprintf(char *out, size_t n, char *format, ...);
+int log_fprintf(FILE * file, char *format, ...);
+
+#ifdef _SNMP_ADM_ACTIVE
+int getComponentLogLevel(snmp_adm_type_union * param, void *opt);
+int setComponentLogLevel(const snmp_adm_type_union * param, void *opt);
+#endif
+
+#ifdef OLD_LOGGING
+//-----------------------------------------------------------------------------
+// Rest of file is old logging code
+//-----------------------------------------------------------------------------
+
 int DisplayLogString_valist(char *buff_dest, char *format, va_list arguments);
 int DisplayErrorFluxLine(FILE * flux, int num_family, int num_error, int status,
                          int ma_ligne);
@@ -473,18 +511,6 @@ int DisplayLog(char *format, ...);
 int DisplayLogLevel(int level, char *format, ...);
 
 int DisplayLogFlux(FILE * flux, char *format, ...);
-
-/* AddFamilyError : not thread safe */
-int AddFamilyError(int num_family, char *nom_family, family_error_t * tab_err);
-
-char *ReturnNameFamilyError(int num_family);
-
-int InitDebug(int level_to_set);        /* not thread safe */
-
-void SetLevelDebug(int level_to_set);    /* not thread safe */
-
-int ReturnLevelAscii(const char *LevelEnAscii);
-char *ReturnLevelInt(int level);
 
 /* A present les types et les fonctions pour les descripteurs de journaux */
 typedef enum type_voie
@@ -535,14 +561,6 @@ int DisplayErrorJdLine(log_t jd, int num_family, int num_error, int status, int 
 int AddLogStreamJd(log_t * pjd,
                    type_log_stream_t type,
                    desc_log_stream_t desc_voie, niveau_t niveau, aiguillage_t aiguillage);
-
-int log_vsnprintf(char *out, size_t n, char *format, va_list arguments);
-int log_snprintf(char *out, size_t n, char *format, ...);
-int log_fprintf(FILE * file, char *format, ...);
-
-#ifdef _SNMP_ADM_ACTIVE
-int getComponentLogLevel(snmp_adm_type_union * param, void *opt);
-int setComponentLogLevel(const snmp_adm_type_union * param, void *opt);
-#endif
+#endif //OLD_LOGGING
 
 #endif
