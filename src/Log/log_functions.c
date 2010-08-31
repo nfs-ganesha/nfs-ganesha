@@ -1984,6 +1984,8 @@ static int isValidLogPath(char * pathname)
 int SetDefaultLogging(char *name)
 {
   int comp;
+
+  LogMajor(COMPONENT_LOG, "Setting log destination for ALL components to %s", name);
   for(comp=0; comp < COMPONENT_COUNT; comp++)
     {
       if (LogComponents[comp].comp_value == COMPONENT_STDOUT)
