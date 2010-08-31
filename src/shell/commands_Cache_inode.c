@@ -520,7 +520,7 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   /* geting the hostname */
   if(gethostname(localmachine, sizeof(localmachine)) != 0)
     {
-      DisplayErrorLog(ERR_SYS, ERR_GETHOSTNAME, errno);
+      fprintf(stderr, "Error in gethostname is %s", strerror(errno));
       exit(1);
     }
   else
@@ -595,21 +595,30 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   /*if( FSAL_IS_ERROR( status = FSAL_str2path( "/users/thomas/./", FSAL_MAX_PATH_LEN, &pathroot ) ) ) */
   if(FSAL_IS_ERROR(status = FSAL_str2path("/", FSAL_MAX_PATH_LEN, &pathroot)))
     {
-      DisplayErrorFlux(output, ERR_FSAL, status.major, status.minor);
+      char buffer[LOG_MAX_STRLEN];
+
+      MakeLogError(buffer, ERR_FSAL, status.major, status.minor, __LINE__);
+      fprintf(output, "%s\n", buffer);
       return 1;
     }
 
   if(FSAL_IS_ERROR
      (status = FSAL_lookupPath(&pathroot, &context->context, &root_handle, NULL)))
     {
-      DisplayErrorFlux(output, ERR_FSAL, status.major, status.minor);
+      char buffer[LOG_MAX_STRLEN];
+
+      MakeLogError(buffer, ERR_FSAL, status.major, status.minor, __LINE__);
+      fprintf(output, "%s\n", buffer);
       return 1;
     }
 #else
   if(FSAL_IS_ERROR
      (status = FSAL_lookup(NULL, NULL, &context->context, &root_handle, NULL)))
     {
-      DisplayErrorFlux(output, ERR_FSAL, status.major, status.minor);
+      char buffer[LOG_MAX_STRLEN];
+
+      MakeLogError(buffer, ERR_FSAL, status.major, status.minor, __LINE__);
+      fprintf(output, "%s\n", buffer);
       return 1;
     }
 #endif
@@ -688,14 +697,14 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   if(cache_inode_async_precreate_object
      (&context->client, DIR_BEGINNING, &context->exp_context) == -1)
     {
-      DisplayLog("NFS INIT: /!\\ Impossible to pre-create asynchronous direcory pool");
+      fprintf(stderr, "NFS INIT: /!\\ Impossible to pre-create asynchronous direcory pool");
       exit(1);
     }
 
   if(cache_inode_async_precreate_object
      (&context->client, REGULAR_FILE, &context->exp_context) == -1)
     {
-      DisplayLog("NFS INIT: /!\\ Impossible to pre-create asynchronous file pool");
+      fprintf(stderr, "NFS INIT: /!\\ Impossible to pre-create asynchronous file pool");
       exit(1);
     }
 #endif
@@ -713,13 +722,13 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
                                               &context->context,
                                               &context->cache_status)) == NULL)
     {
-      DisplayLogFlux(output, "Error: can't init fs's root");
+      fprintf(output, "Error: can't init fs's root");
       return 1;
     }
 
   if(cache_content_init_dir(datacache_client_param, EXPORT_ID) != 0)
     {
-      DisplayLogFlux(output, "Error: can't init datacache directory");
+      fprintf(output, "Error: can't init datacache directory");
       return 1;
     }
 
@@ -3871,12 +3880,14 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
 
           return context->cache_status;
         }
-#ifdef _DEBUG_CACHE_INODE
-      DisplayLogFlux(output,
-                     "shell: block_size=%llu, once_nb_read=%llu, total_bytes=%llu, total_nb_read=%llu, eof=%d, seek=%d.%llu",
-                     block_size, once_nb_read, total_bytes, total_nb_read, is_eof,
-                     seek_desc.whence, seek_desc.offset);
-#endif
+
+      if(isFullDebug(COMPONENT_CACHE_INODE))
+        {
+          fprintf(output,
+                  "shell: block_size=%llu, once_nb_read=%llu, total_bytes=%llu, total_nb_read=%llu, eof=%d, seek=%d.%llu",
+                  block_size, once_nb_read, total_bytes, total_nb_read, is_eof,
+                  seek_desc.whence, seek_desc.offset);
+        }
 
       /* print what was read. */
       if(flag_A)

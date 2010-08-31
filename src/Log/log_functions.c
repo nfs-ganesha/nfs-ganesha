@@ -707,8 +707,8 @@ static family_error_t TrouveErr(family_error_t * tab_err, int num)
   return returned_err;
 }                               /* TrouveErr */
 
-static int FaireLogError(char *buffer, int num_family, int num_error, int status,
-                         int ma_ligne)
+int MakeLogError(char *buffer, int num_family, int num_error, int status,
+                  int ma_ligne)
 {
   family_error_t *tab_err = NULL;
   family_error_t the_error;
@@ -734,7 +734,7 @@ static int FaireLogError(char *buffer, int num_family, int num_error, int status
       return sprintf(buffer, "Error %s : %s : status %d : %s : Line %d",
                      the_error.label, the_error.msg, status, errstr, ma_ligne);
     }
-}                               /* FaireLogError */
+}                               /* MakeLogError */
 
 #ifdef OLD_LOGGING
 
@@ -743,7 +743,7 @@ int DisplayErrorFluxLine(FILE * flux, int num_family, int num_error, int status,
 {
   char buffer[STR_LEN_TXT];
 
-  if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
+  if(MakeLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
 
   return DisplayLogFlux(flux, "%s", buffer);
@@ -753,7 +753,7 @@ int DisplayErrorLogLine(int num_family, int num_error, int status, int ma_ligne)
 {
   char buffer[STR_LEN_TXT];
 
-  if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
+  if(MakeLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
 
   return DisplayLog("%s", buffer);
@@ -917,7 +917,7 @@ int DisplayErrorJdLine(log_t jd, int num_family, int num_error, int status, int 
 {
   char buffer[STR_LEN_TXT];
 
-  if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
+  if(MakeLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
 
   return DisplayLogJd(jd, "%s", buffer);
@@ -1912,7 +1912,7 @@ int DisplayErrorComponentLogLine(log_components_t component, int num_family, int
 {
   char buffer[STR_LEN_TXT];
 
-  if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
+  if(MakeLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
   return DisplayLogComponentLevel(component, NIV_CRIT, "%s: %s", LogComponents[component].comp_str, buffer);
 }                               /* DisplayErrorLogLine */
