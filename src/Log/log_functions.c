@@ -1994,7 +1994,9 @@ static int isValidLogPath(char *pathname)
 int SetDefaultLogging(char *name)
 {
   int component;
+
   SetComponentLogFile(COMPONENT_LOG, name);
+
   for(component = COMPONENT_ALL; component < COMPONENT_COUNT; component++)
     {
       if (component == COMPONENT_STDOUT)
