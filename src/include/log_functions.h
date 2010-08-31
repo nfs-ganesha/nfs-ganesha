@@ -21,7 +21,9 @@
 #ifdef _USE_GPFS
 #define NO_OLD_LOGGING
 #else
+*/
 #define OLD_LOGGING
+/*
 #endif
 */
 
