@@ -184,12 +184,13 @@ void TestFullDebug(int expect, char *buff, log_components_t component, char *str
 /**
  *  Tests about Log streams and special printf functions.
  */
-int Test1()
+int Test1(char *str)
 {
   char tempstr[2048];
-  int  n1, n2;
+  int  i;
 
   DisplayLogFlux(stdout, "%s", "Starting Log Tests");
+  LogTest("My PID = %d", getpid());
 
   LogTest("------------------------------------------------------");
 
@@ -218,17 +219,42 @@ int Test1()
                  ERR_SIGACTION, ERR_SYS, ERR_SIGACTION, ERR_DUMMY, ERR_DUMMY_2);
 
   LogTest("------------------------------------------------------");
+  for (i = NIV_NULL; i < NB_LOG_LEVEL; i++)
+    {
+      int j;
+      if (strcmp(tabLogLevel[i].str, ReturnLevelInt(i)) != 0)
+        {
+          LogTest("FAILURE: Log level %d did not convert to %s, it converted to %s", i, tabLogLevel[i].str, ReturnLevelInt(i));
+          exit(1);
+        }
+      j = ReturnLevelAscii(tabLogLevel[i].str);
+      if (j != i)
+        {
+          LogTest("FAILURE: Log level %s did not convert to %d, it converted to %d", tabLogLevel[i].str, i, j);
+          exit(1);
+        }
+    }
+
+  LogTest("------------------------------------------------------");
 
 
   LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, EINVAL);
   LogCrit(COMPONENT_INIT, "Initializing %K%V %R", ERR_SYS, ERR_MALLOC, EINVAL, EINVAL);
+  LogTest("COMPONENT_MEMCORRUPT debug level is %s", ReturnLevelInt(LogComponents[COMPONENT_MEMCORRUPT].comp_log_level));
+  LogFullDebug(COMPONENT_MEMCORRUPT, "Testing possible environment variable");
 
   LogTest("------------------------------------------------------");
-  LogTest("Send some messages to stderr");
-  DisplayErrorFlux(stderr, ERR_DUMMY, ERR_DUMMY_1, EPERM);
-  DisplayLogFlux(stderr, "This should go to stderr");
+  LogTest("Send some messages to various files");
   SetComponentLogFile(COMPONENT_DISPATCH, "STDERR");
-  LogEvent(COMPONENT_DISPATCH, "This should also go to stderr");
+  LogEvent(COMPONENT_DISPATCH, "This should go to stderr");
+  SetComponentLogFile(COMPONENT_DISPATCH, "STDOUT");
+  LogEvent(COMPONENT_DISPATCH, "This should go to stdout");
+  SetComponentLogFile(COMPONENT_DISPATCH, "SYSLOG");
+  LogEvent(COMPONENT_DISPATCH, "This should go to syslog (verf = %s)", str);
+  LogTest("About to set /tmp/test_liblog.file");
+  SetComponentLogFile(COMPONENT_DISPATCH, "/tmp/test_liblog.file");
+  LogTest("Got it set");
+  LogEvent(COMPONENT_DISPATCH, "This should go to /tmp/test_liblog.file");
   /*
    * Set up for tests that will verify what was actually produced by log messages.
    * This is used to test log levels and to test the log_vnsprintf function.
@@ -321,8 +347,6 @@ int Test1()
   TestEvent     (TRUE,  tempstr, COMPONENT_MAIN, "LogEvent (should print)");
   TestDebug     (TRUE,  tempstr, COMPONENT_MAIN, "LogDebug (should print)");
   TestFullDebug (TRUE,  tempstr, COMPONENT_MAIN, "LogFullDebug (should print)");
-
-
 }
 
 void Test2()
@@ -456,13 +480,13 @@ void Test2()
   TestGaneshaFormat(FALSE, "str2(1) (not part of %b)", "%5b %s", 1, "str2", "str3", "(not part of %b)");
 }
 
-run_Tests(int all, char *arg)
+run_Tests(int all, char *arg, char *str)
 {
   SetNameFunction(arg);
 
   if (all)
     {
-    Test1();
+    Test1(str);
     }
   Test2();
 
@@ -472,7 +496,7 @@ run_Tests(int all, char *arg)
 
 void *run_MT_Tests(void *arg)
 {
-  run_Tests(FALSE, (char *)arg);
+  run_Tests(FALSE, (char *)arg, "none");
 
   return NULL ;
 }
@@ -484,25 +508,29 @@ static char usage[] = "usage:\n\ttest_liblog STD|MT\n";
 int main(int argc, char *argv[])
 {
 
-  if(argc == 2)
+  if(argc >= 2)
     {
 
       /* TEST 1 Standard */
 
       if(!strcmp(argv[1], "STD"))
         {
-
           int rc;
+          char *str = "No extra string provided";
+
+          if (argc >= 3)
+            str = argv[2];
 
           SetNamePgm("test_liblog");
           SetNameHost("localhost");
           SetDefaultLogging("TEST");
           InitDebug(NIV_EVENT);
+          SetLogLevelFromEnv();
           AddFamilyError(ERR_POSIX, "POSIX Errors", tab_systeme_status);
           LogTest("AddFamilyError = %d", AddFamilyError(ERR_DUMMY, "Family Dummy", tab_test_err));
           LogTest("The family which was added is %s", ReturnNameFamilyError(ERR_DUMMY));
 
-          run_Tests(TRUE,  "monothread");
+          run_Tests(TRUE,  "monothread", str);
         }
 
       /* TEST 1 multithread */
