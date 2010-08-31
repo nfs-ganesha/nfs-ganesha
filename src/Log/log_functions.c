@@ -265,7 +265,6 @@ int SetNameFunction(char *nom)
 static void ArmeSignal(int signal, void (*action) ())
 {
   struct sigaction act;         /* Soyons POSIX et puis signal() c'est pas joli */
-  char buffer[1024];
 
   /* Mise en place des champs du struct sigaction */
   act.sa_flags = 0;
@@ -274,9 +273,8 @@ static void ArmeSignal(int signal, void (*action) ())
 
   if(sigaction(signal, &act, NULL) == -1)
     {
-      DisplayError(ERR_SIGACTION, errno);
-      snprintf(buffer, 1024, "Impossible de controler %d", signal);
-      DisplayLogFlux(stdout, "%s", buffer);
+      LogError(COMPONENT_LOG, ERR_SYS, ERR_SIGACTION, errno);
+      LogCrit(COMPONENT_LOG, "Impossible to arm signal %d", signal);
     }
 }                               /* ArmeSignal */
 
@@ -322,7 +320,7 @@ inline int ReturnLevelDebug()
   return LogComponents[COMPONENT_ALL].comp_log_level;
 }                               /* ReturnLevelDebug */
 
-void SetLevelDebug(int level_to_set)
+void _SetLevelDebug(int level_to_set)
 {
   int i;
 
@@ -332,34 +330,32 @@ void SetLevelDebug(int level_to_set)
   if(level_to_set >= NB_LOG_LEVEL)
     level_to_set = NB_LOG_LEVEL - 1;
 
-  LogMajor(COMPONENT_LOG, "Changing log level for all components to %s",
-	     ReturnLevelInt(level_to_set));
-  for (i = 0; i < COMPONENT_COUNT; i++)
+  for (i = COMPONENT_ALL; i < COMPONENT_COUNT; i++)
       LogComponents[i].comp_log_level = level_to_set;
 }                               /* SetLevelDebug */
 
+void SetLevelDebug(int level_to_set)
+{
+  _SetLevelDebug(level_to_set);
+
+  LogMajor(COMPONENT_LOG, "Changing log level for all components to %s",
+	     ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
+}
+
 static void IncrementeLevelDebug()
 {
-  char buffer[1024];
+  _SetLevelDebug(ReturnLevelDebug() + 1);
 
-  SetLevelDebug(ReturnLevelDebug() + 1);
-
-  snprintf(buffer, 1024, "SIGUSR1 recu -> Level de debug: %s = %d ",
-           ReturnLevelInt(ReturnLevelDebug()), ReturnLevelDebug());
-
-  DisplayLogFlux(stdout, "%s", buffer);
+  LogMajor(COMPONENT_LOG, "SIGUSR1 Increasing log level for all components to %s",
+	     ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
 }                               /* IncrementeLevelDebug */
 
 static void DecrementeLevelDebug()
 {
-  char buffer[1024];
+  _SetLevelDebug(ReturnLevelDebug() - 1);
 
-  SetLevelDebug(ReturnLevelDebug() - 1);
-
-  snprintf(buffer, 1024, "SIGUSR2 recu -> Level de debug: %s = %d ",
-           ReturnLevelInt(ReturnLevelDebug()), ReturnLevelDebug());
-
-  DisplayLogFlux(stdout, "%s", buffer);
+  LogMajor(COMPONENT_LOG, "SIGUSR2 Decreasing log level for all components to %s",
+	     ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
 }                               /* DecrementeLevelDebug */
 
 int InitDebug(int level_to_set)
@@ -377,7 +373,7 @@ int InitDebug(int level_to_set)
   /* Set debug level for each component as long as it wasn't initialized to a debug level */
   LogMajor(COMPONENT_LOG, "Changing log level for all components to at least %s",
 	     ReturnLevelInt(level_to_set));
-  for (i = 0; i < COMPONENT_COUNT; i++)
+  for (i = COMPONENT_ALL; i < COMPONENT_COUNT; i++)
     if (LogComponents[i].comp_log_level < NIV_DEBUG)
       LogComponents[i].comp_log_level = level_to_set;
 
@@ -409,6 +405,7 @@ static int FaireEntete(char *output)
                   nom_programme, getpid(), context->nom_fonction);
 
 }                               /* Faire_entete */
+
 
 /*
  * Une fonction d'affichage tout a fait generique
@@ -472,6 +469,7 @@ static int DisplayBuffer_valist(char *buffer, char *format, va_list arguments)
   log_vsnprintf(buffer, STR_LEN_TXT, format, arguments);
 }
 
+#ifdef OLD_LOGGING
 int DisplayLogFlux(FILE * flux, char *format, ...)
 {
   va_list arguments;
@@ -484,6 +482,7 @@ int DisplayLogFlux(FILE * flux, char *format, ...)
   return rc;
 
 }                               /* DisplayLogFlux */
+#endif //OLD_LOGGING
 
 static int DisplayLogPath_valist(char *path, char *format, va_list arguments)
 {
@@ -582,6 +581,7 @@ int DisplayLog_valist(log_components_t component, char *format, va_list argument
   return rc;
 }
 
+#ifdef OLD_LOGGING
 int DisplayLog(char *format, ...)
 {
   va_list arguments;
@@ -616,6 +616,8 @@ int DisplayLogLevel(int level, char *format, ...)
   return rc;
 
 }                               /* DisplayLogLevel */
+
+#endif //OLD_LOGGING
 
 /*
  *
@@ -733,6 +735,8 @@ static int FaireLogError(char *buffer, int num_family, int num_error, int status
                      the_error.label, the_error.msg, status, errstr, ma_ligne);
     }
 }                               /* FaireLogError */
+
+#ifdef OLD_LOGGING
 
 int DisplayErrorFluxLine(FILE * flux, int num_family, int num_error, int status,
                          int ma_ligne)
@@ -918,6 +922,8 @@ int DisplayErrorJdLine(log_t jd, int num_family, int num_error, int status, int 
 
   return DisplayLogJd(jd, "%s", buffer);
 }                               /* DisplayErrorFluxLine */
+
+#endif //OLD_LOGGING
 
 /* Un sprintf personnalisé */
 /* Cette macro est utilisee a chaque fois que l'on avance d'un pas dans le parsing */
@@ -1916,7 +1922,7 @@ void SetLogLevelFromEnv()
   char *env_value;
   int newval = -1, comp, loglevel;
 
-  for(comp=0; comp < COMPONENT_COUNT; comp++)
+  for(comp = COMPONENT_ALL; comp < COMPONENT_COUNT; comp++)
     {
       env_value = getenv(LogComponents[comp].comp_name);
       if (env_value == NULL)
@@ -1984,7 +1990,7 @@ static int isValidLogPath(char * pathname)
 int SetDefaultLogging(char *name)
 {
   int comp;
-  for(comp=0; comp < COMPONENT_COUNT; comp++)
+  for(comp = COMPONENT_ALL; comp < COMPONENT_COUNT; comp++)
     {
       if (LogComponents[comp].comp_value == COMPONENT_STDOUT)
 	continue;
@@ -2052,14 +2058,12 @@ int setComponentLogLevel(const snmp_adm_type_union * param, void *opt)
   if (level_to_set == -1)
     return -1;
 
-  if (component == 0)
+  if (component == COMPONENT_ALL)
     {
-      int i;
+      _SetLevelDebug(level_to_set);
 
       LogMajor(COMPONENT_LOG, "SNMP request changing log level for all components to %s",
                ReturnLevelInt(level_to_set));
-      for (i = 0; i < COMPONENT_COUNT; i++)
-          LogComponents[i].comp_log_level = level_to_set;
     }
   else
     {
