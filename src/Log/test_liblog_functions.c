@@ -189,36 +189,22 @@ int Test1(char *str)
   char tempstr[2048];
   int  i;
 
-  DisplayLogFlux(stdout, "%s", "Starting Log Tests");
+  SetComponentLogFile(COMPONENT_INIT, "STDOUT");
+  LogAlways(COMPONENT_INIT, "%s", "Starting Log Tests");
   LogTest("My PID = %d", getpid());
 
   LogTest("------------------------------------------------------");
 
-  DisplayErrorFlux(stdout, ERR_SYS, ERR_FORK, ENOENT);
-  DisplayErrorLog(ERR_SYS, ERR_SOCKET, EINTR);
-  DisplayErrorFlux(stdout, ERR_DUMMY, ERR_DUMMY_2, ENOENT);
-
-  LogTest("------------------------------------------------------");
-
-  LogTest("A numerical error : error %%d = %%J%%R, in ERR_DUMMY_2 %%J%%r");
-  log_snprintf(tempstr, sizeof(tempstr), "A numerical error : error %d = %J%R, in ERR_DUMMY_2 %J%r", ERR_SIGACTION,
-              ERR_SYS, ERR_SIGACTION, ERR_DUMMY, ERR_DUMMY_2);
-  LogTest("%s", tempstr);
-  DisplayLogFlux(stdout, "A numerical error : error %d = %J%R, in ERR_DUMMY_2 %J%r",
-                 ERR_SIGACTION, ERR_SYS, ERR_SIGACTION, ERR_DUMMY, ERR_DUMMY_2);
-
-  LogTest("------------------------------------------------------");
-
+  LogTest("Test ERR_DUMMY");
   LogTest("A numerical error : error %%d = %%J%%R, in ERR_DUMMY_2 %%J%%R");
-  log_snprintf(tempstr, sizeof(tempstr), "A numerical error : error %d = %J%R, in ERR_DUMMY_2 %J%R", ERR_SIGACTION,
-              ERR_SYS, ERR_SIGACTION, ERR_DUMMY, ERR_DUMMY_2);
+  log_snprintf(tempstr, sizeof(tempstr), "A numerical error : error %d = %J%R, in ERR_DUMMY_2 %J%R",
+               ERR_SIGACTION, ERR_SYS, ERR_SIGACTION, ERR_DUMMY, ERR_DUMMY_2);
   LogTest("%s", tempstr);
-  LogTest("A numerical error : error %d = %J%R, in ERR_DUMMY_2 %J%R", ERR_SIGACTION,
-              ERR_SYS, ERR_SIGACTION, ERR_DUMMY, ERR_DUMMY_2);
-  DisplayLogFlux(stdout, "A numerical error : error %d = %J%R, in ERR_DUMMY_2 %J%R",
-                 ERR_SIGACTION, ERR_SYS, ERR_SIGACTION, ERR_DUMMY, ERR_DUMMY_2);
+  LogTest("A numerical error : error %d = %J%R, in ERR_DUMMY_1 %J%R",
+          ERR_OPEN, ERR_SYS, ERR_OPEN, ERR_DUMMY, ERR_DUMMY_1);
 
   LogTest("------------------------------------------------------");
+  LogTest("Test conversion of log levels between string and integer");
   for (i = NIV_NULL; i < NB_LOG_LEVEL; i++)
     {
       int j;
@@ -237,11 +223,13 @@ int Test1(char *str)
 
   LogTest("------------------------------------------------------");
 
-
-  LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, EINVAL);
-  LogCrit(COMPONENT_INIT, "Initializing %K%V %R", ERR_SYS, ERR_MALLOC, EINVAL, EINVAL);
+  log_snprintf(tempstr, sizeof(tempstr), "Test log_snprintf");
+  LogTest("%s", tempstr);
+  LogTest("\nTesting LogError function");
+  LogError(COMPONENT_CONFIG, ERR_SYS, ERR_MALLOC, EINVAL);
+  LogTest("\nTesting possible environment variable");
   LogTest("COMPONENT_MEMCORRUPT debug level is %s", ReturnLevelInt(LogComponents[COMPONENT_MEMCORRUPT].comp_log_level));
-  LogFullDebug(COMPONENT_MEMCORRUPT, "Testing possible environment variable");
+  LogFullDebug(COMPONENT_MEMCORRUPT, "This should appear if environment is set properly");
 
   LogTest("------------------------------------------------------");
   LogTest("Send some messages to various files");
@@ -255,6 +243,7 @@ int Test1(char *str)
   SetComponentLogFile(COMPONENT_DISPATCH, "/tmp/test_liblog.file");
   LogTest("Got it set");
   LogEvent(COMPONENT_DISPATCH, "This should go to /tmp/test_liblog.file");
+
   /*
    * Set up for tests that will verify what was actually produced by log messages.
    * This is used to test log levels and to test the log_vnsprintf function.
