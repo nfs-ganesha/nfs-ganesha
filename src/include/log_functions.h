@@ -468,14 +468,18 @@ int SetNameHost(char *nom);
 #define SetNameFileLog(nom) SetDefaultLogging("STDOUT")
 int SetDefaultLogging(char *name);
 int SetNameFunction(char *nom); /* thread safe */
-void SetLogLevelFromEnv();
+#define InitDebug(level_to_set) \
+  do { \
+    InitLogging(); \
+    SetComponentLogLevel(COMPONENT_ALL, level_to_set); \
+  } while (0)
 
 /* AddFamilyError : not thread safe */
 int AddFamilyError(int num_family, char *nom_family, family_error_t * tab_err);
 
 char *ReturnNameFamilyError(int num_family);
 
-int InitDebug(int level_to_set);        /* not thread safe */
+void InitLogging();        /* not thread safe */
 
 void SetLevelDebug(int level_to_set);    /* not thread safe */
 

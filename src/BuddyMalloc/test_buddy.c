@@ -134,10 +134,6 @@ void *TEST1(void *arg)
   int i, rc;
   string_info strings[NB_STR];
 
-#ifdef _DEBUG_MEMALLOC
-  InitDebug(NIV_FULL_DEBUG);
-#endif
-
   LogTest("%d:BuddyInit(%llu)=%d", th, MEM_SIZE, rc = BuddyInit(&parameter));
 
   if(rc)
@@ -222,10 +218,6 @@ void *TEST2(void *arg)
   struct timeval tv1, tv2, tv3;
   size_t total;
 
-#ifdef _DEBUG_MEMALLOC
-  InitDebug(NIV_FULL_DEBUG);
-#endif
-
   LogTest("%d:BuddyInit(%llu)=%d", th, MEM_SIZE, rc = BuddyInit(&parameter));
 
   if(rc)
@@ -301,10 +293,6 @@ void *TEST3(void *arg)
   int i, rc;
   size_t total = MEM_SIZE / 10;
 
-#ifdef _DEBUG_MEMALLOC
-  InitDebug(NIV_DEBUG);
-#endif
-
   LogTest("%d:BuddyInit(%llu)=%d", th, MEM_SIZE, rc = BuddyInit(&parameter));
 
   if(rc)
@@ -377,10 +365,6 @@ void *TEST4(void *arg)
   size_t old;
   char *pointer[NB_SIMULTANEOUS];
   char *new_pointer[NB_SIMULTANEOUS];
-
-#ifdef _DEBUG_MEMALLOC
-  InitDebug(NIV_DEBUG);
-#endif
 
   LogTest("%d:BuddyInit(%llu)=%d", th, MEM_SIZE, rc =
          BuddyInit(&parameter_realloc_small));
@@ -495,10 +479,6 @@ void *TEST5(void *arg)
   int th = (long)arg;
   int i, rc;
   string_info strings[NB_STR];
-
-#ifdef _DEBUG_MEMALLOC
-  InitDebug(NIV_FULL_DEBUG);
-#endif
 
   LogTest("%d:BuddyInit(%llu)=%d", th, MEM_SIZE, rc = BuddyInit(&parameter));
 
@@ -663,10 +643,6 @@ void *TEST6(void *arg)
 
   size_t total = 0;
 
-#ifdef _DEBUG_MEMALLOC
-  InitDebug(NIV_DEBUG);
-#endif
-
   LogTest("%d:BuddyInit(%llu)=%d", th, MEM_SIZE, rc = BuddyInit(&parameter_realloc));
 
   if(rc)
@@ -740,10 +716,6 @@ void *TEST7(void *arg)
   size_t max_alloc = 2 * MEM_SIZE;      /* 3*MEM_SIZE/4; */
 
   caddr_t table_alloc[NB_ITEM7];
-
-#ifdef _DEBUG_MEMALLOC
-  InitDebug(NIV_DEBUG);
-#endif
 
   for(i = 0; i < NB_ITEM7; i++)
     table_alloc[i] = NULL;
@@ -881,10 +853,6 @@ void *TEST8(void *arg)
   size_t max_alloc = 3 * MEM_SIZE_SMALL / 4;
 
   caddr_t table_alloc[NB_ITEM8];
-
-#ifdef _DEBUG_MEMALLOC
-  InitDebug(NIV_DEBUG);
-#endif
 
   for(i = 0; i < NB_ITEM8; i++)
     table_alloc[i] = NULL;
@@ -1182,7 +1150,7 @@ void *TESTB(void *arg)
   int th = (long)arg;
   int rc;
 
-  caddr_t pointer;
+  caddr_t pointer, p1, p2;
 
   LogTest("%d:BuddyInit(%llu)=%d", th, MEM_SIZE, rc = BuddyInit(&parameter));
 
@@ -1215,7 +1183,12 @@ void *TESTB(void *arg)
 
   /* tests on a malloc adress */
 
-  pointer = malloc(1024);
+  p1 = malloc(1024);
+  p2 = malloc(1024);
+  if (p1 > p2)
+    pointer = p1;
+  else
+    pointer = p2;
 
 #ifdef _DEBUG_MEMCORRUPT
   LogTest("--> Checking a libc malloc address %p", pointer);
@@ -1227,7 +1200,8 @@ void *TESTB(void *arg)
 
   BuddyFree(pointer);
 
-  free(pointer);
+  free(p1);
+  free(p2);
 
   /* tests on a null adress */
 
@@ -1291,6 +1265,7 @@ int main(int argc, char **argv)
 
   SetDefaultLogging("TEST");
   SetNamePgm("test_buddy");
+  InitLogging();
 
   for(th_index = 0; th_index < NB_THREADS; th_index++)
     {
