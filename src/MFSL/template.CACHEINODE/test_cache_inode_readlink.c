@@ -135,8 +135,6 @@ main(int argc, char *argv[])
   int i = 0;
   int rc = 0;
 
-  SetDefaultLogging("TEST");
-
   /* Init the Buddy System allocation */
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
@@ -145,6 +143,7 @@ main(int argc, char *argv[])
     }
 
   /* init debug */
+  SetDefaultLogging("TEST");
   SetNamePgm("test_cache_inode");
   SetNameFunction("main");
   SetNameFileLog("/dev/tty");

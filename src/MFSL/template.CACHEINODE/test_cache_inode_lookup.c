@@ -142,6 +142,7 @@ main(int argc, char *argv[])
     }
 
   /* init debug */
+  SetDefaultLogging("TEST");  
   SetNamePgm("test_cache_inode");
   SetNameFunction("main");
   SetNameFileLog("/dev/tty");
@@ -166,13 +167,6 @@ main(int argc, char *argv[])
   InitDebug(NIV_FULL_DEBUG);
   AddFamilyError(ERR_FSAL, "FSAL related Errors", tab_errstatus_FSAL);
   AddFamilyError(ERR_CACHE_INODE, "FSAL related Errors", tab_errstatus_cache_inode);
-
-  /* creating log */
-  voie_fsal.fd = fileno(stdout);
-  AddLogStreamJd(&log_desc_fsal, V_FD, voie_fsal, NIV_FULL_DEBUG, SUP);
-
-  voie_cache.fd = fileno(stdout);
-  AddLogStreamJd(&log_desc_cache, V_FD, voie_cache, NIV_FULL_DEBUG, SUP);
 
   LogTest( "Starting the test");
   LogTest( "-----------------");
