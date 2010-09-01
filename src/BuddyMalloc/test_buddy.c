@@ -1150,7 +1150,7 @@ void *TESTB(void *arg)
   int th = (long)arg;
   int rc;
 
-  caddr_t pointer;
+  caddr_t pointer, p1, p2;
 
   LogTest("%d:BuddyInit(%llu)=%d", th, MEM_SIZE, rc = BuddyInit(&parameter));
 
@@ -1183,7 +1183,12 @@ void *TESTB(void *arg)
 
   /* tests on a malloc adress */
 
-  pointer = malloc(1024);
+  p1 = malloc(1024);
+  p2 = malloc(1024);
+  if (p1 > p2)
+    pointer = p1;
+  else
+    pointer = p2;
 
 #ifdef _DEBUG_MEMCORRUPT
   LogTest("--> Checking a libc malloc address %p", pointer);
@@ -1195,7 +1200,8 @@ void *TESTB(void *arg)
 
   BuddyFree(pointer);
 
-  free(pointer);
+  free(p1);
+  free(p2);
 
   /* tests on a null adress */
 
