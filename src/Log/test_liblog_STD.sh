@@ -80,6 +80,7 @@ MSGFILE=/tmp/test_liblog.msg.$$
 FILE=/tmp/test_liblog.file.$$
 DATE=`date`
 export COMPONENT_MEMCORRUPT=NIV_FULL_DEBUG
+export COMPONENT_LOG=NIV_FULL_DEBUG
 echo $FILE > $FILE
 echo $DATE >> $FILE
 echo /var/log/messages > $MSGFILE
@@ -113,8 +114,7 @@ else
 	SYSLOG=0
 fi
 
-test_stdout "LOG: NIV_MAJ: Changing log level for all components to at least NIV_EVENT"
-test_stdout "LOG: NIV_MAJ: Using environment variable to switch log level for COMPONENT_MEMCORRUPT from NIV_EVENT to NIV_FULL_DEBUG"
+test_stdout "LOG: Using environment variable to switch log level for COMPONENT_MEMCORRUPT from NIV_EVENT to NIV_FULL_DEBUG"
 test_stdout "AddFamilyError = 3"
 test_stdout "The family which was added is Family Dummy"
 
@@ -125,7 +125,6 @@ test_stdout "Test log_snprintf$"
 test_stdout "CONFIG: Error ERR_MALLOC : malloc impossible : status 22 : Invalid argument : Line"
 test_stdout "This should appear if environment is set properly"
 test_stdout "localhost : test_liblog-[1-9][0-9]*\[monothread\] :NFS STARTUP: Starting Log Tests$"
-test_stdout "LOG: NIV_MAJ: Changing log level for all components to at least NIV_EVENT"
 
 test_stdout "DISPATCH: NIV_EVENT: This should go to stdout"
 test_stderr "DISPATCH: NIV_EVENT: This should go to stderr"
