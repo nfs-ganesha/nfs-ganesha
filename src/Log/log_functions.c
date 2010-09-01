@@ -339,7 +339,7 @@ void SetLevelDebug(int level_to_set)
   _SetLevelDebug(level_to_set);
 
   LogMajor(COMPONENT_LOG, "Changing log level for all components to %s",
-	     ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
+             ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
 }
 
 static void IncrementeLevelDebug()
@@ -347,7 +347,7 @@ static void IncrementeLevelDebug()
   _SetLevelDebug(ReturnLevelDebug() + 1);
 
   LogMajor(COMPONENT_LOG, "SIGUSR1 Increasing log level for all components to %s",
-	     ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
+             ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
 }                               /* IncrementeLevelDebug */
 
 static void DecrementeLevelDebug()
@@ -355,7 +355,7 @@ static void DecrementeLevelDebug()
   _SetLevelDebug(ReturnLevelDebug() - 1);
 
   LogMajor(COMPONENT_LOG, "SIGUSR2 Decreasing log level for all components to %s",
-	     ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
+             ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
 }                               /* DecrementeLevelDebug */
 
 int InitDebug(int level_to_set)
@@ -372,7 +372,7 @@ int InitDebug(int level_to_set)
 
   /* Set debug level for each component as long as it wasn't initialized to a debug level */
   LogMajor(COMPONENT_LOG, "Changing log level for all components to at least %s",
-	     ReturnLevelInt(level_to_set));
+             ReturnLevelInt(level_to_set));
   for (i = COMPONENT_ALL; i < COMPONENT_COUNT; i++)
     if (LogComponents[i].comp_log_level < NIV_DEBUG)
       LogComponents[i].comp_log_level = level_to_set;
@@ -707,8 +707,8 @@ static family_error_t TrouveErr(family_error_t * tab_err, int num)
   return returned_err;
 }                               /* TrouveErr */
 
-static int FaireLogError(char *buffer, int num_family, int num_error, int status,
-                         int ma_ligne)
+int MakeLogError(char *buffer, int num_family, int num_error, int status,
+                  int ma_ligne)
 {
   family_error_t *tab_err = NULL;
   family_error_t the_error;
@@ -734,7 +734,7 @@ static int FaireLogError(char *buffer, int num_family, int num_error, int status
       return sprintf(buffer, "Error %s : %s : status %d : %s : Line %d",
                      the_error.label, the_error.msg, status, errstr, ma_ligne);
     }
-}                               /* FaireLogError */
+}                               /* MakeLogError */
 
 #ifdef OLD_LOGGING
 
@@ -743,7 +743,7 @@ int DisplayErrorFluxLine(FILE * flux, int num_family, int num_error, int status,
 {
   char buffer[STR_LEN_TXT];
 
-  if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
+  if(MakeLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
 
   return DisplayLogFlux(flux, "%s", buffer);
@@ -753,7 +753,7 @@ int DisplayErrorLogLine(int num_family, int num_error, int status, int ma_ligne)
 {
   char buffer[STR_LEN_TXT];
 
-  if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
+  if(MakeLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
 
   return DisplayLog("%s", buffer);
@@ -850,7 +850,7 @@ int DisplayLogJdLevel(log_t jd, int level, char *format, ...)
               break;
 
             case V_SYSLOG:
-	      DisplayLogSyslog_valist( format, arguments ) ;
+              DisplayLogSyslog_valist( format, arguments ) ;
               break ;
 
             default:
@@ -898,7 +898,7 @@ int DisplayLogJd(log_t jd, char *format, ...)
           break;
 
         case V_SYSLOG:
-	  DisplayLogSyslog_valist( format, arguments ) ;
+          DisplayLogSyslog_valist( format, arguments ) ;
           break ;
 
         default:
@@ -917,7 +917,7 @@ int DisplayErrorJdLine(log_t jd, int num_family, int num_error, int status, int 
 {
   char buffer[STR_LEN_TXT];
 
-  if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
+  if(MakeLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
 
   return DisplayLogJd(jd, "%s", buffer);
@@ -1620,7 +1620,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_STATES,            "COMPONENT_STATES", "STATES",
 #ifdef _DEBUG_STATES
@@ -1629,7 +1629,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_MEMLEAKS,          "COMPONENT_MEMLEAKS", "MEM LEAKS",
 #ifdef _DEBUG_MEMLEAKS
@@ -1638,7 +1638,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_FSAL,              "COMPONENT_FSAL", "FSAL",
 #ifdef _DEBUG_FSAL
@@ -1647,7 +1647,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_NFSPROTO,          "COMPONENT_NFSPROTO", "NFS PROTO",
 #ifdef _DEBUG_NFSPROTO
@@ -1656,7 +1656,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_NFS_V4,            "COMPONENT_NFS_V4", "NFS V4",
 #ifdef _DEBUG_NFS_V4
@@ -1665,7 +1665,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_NFS_V4_PSEUDO,     "COMPONENT_NFS_V4_PSEUDO", "NFS V4 PSEUDO",
 #ifdef _DEBUG_NFS_V4_PSEUDO
@@ -1674,7 +1674,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_FILEHANDLE,        "COMPONENT_FILEHANDLE", "FILE HANDLE",
 #ifdef _DEBUG_FILEHANDLE
@@ -1683,7 +1683,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_NFS_SHELL,         "COMPONENT_NFS_SHELL", "NFS SHELL",
 #ifdef _DEBUG_NFS_SHELL
@@ -1692,7 +1692,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_DISPATCH,          "COMPONENT_DISPATCH", "DISPATCH",
 #ifdef _DEBUG_DISPATCH
@@ -1701,7 +1701,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_CACHE_CONTENT,     "COMPONENT_CACHE_CONTENT", "CACHE CONTENT",
 #ifdef _DEBUG_CACHE_CONTENT
@@ -1710,7 +1710,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_CACHE_INODE,       "COMPONENT_CACHE_INODE", "CACHE INODE",
 #ifdef _DEBUG_CACHE_INODE
@@ -1719,7 +1719,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_CACHE_INODE_GC,    "COMPONENT_CACHE_INODE_GC", "CACHE INODE GC",
 #ifdef _DEBUG_CACHE_INODE_GC
@@ -1728,7 +1728,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_HASHTABLE,         "COMPONENT_HASHTABLE", "HASH TABLE",
 #ifdef _DEBUG_HASHTABLE
@@ -1737,7 +1737,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_LRU,               "COMPONENT_LRU", "LRU",
 #ifdef _DEBUG_LRU
@@ -1746,7 +1746,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_DUPREQ,            "COMPONENT_DUPREQ", "DUPREQ",
 #ifdef _DEBUG_DUPREQ
@@ -1755,7 +1755,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_LOG,               "COMPONENT_LOG", "LOG",
 #ifdef _DEBUG_LOG
@@ -1764,7 +1764,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_RPCSEC_GSS,        "COMPONENT_RPCSEC_GSS", "RPCSEC GSS",
 #ifdef _DEBUG_RPCSEC_GSS
@@ -1773,7 +1773,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_INIT,              "COMPONENT_INIT", "NFS STARTUP",
 #ifdef _DEBUG_INIT
@@ -1782,7 +1782,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_MAIN,              "COMPONENT_MAIN", "MAIN",
 #ifdef _DEBUG_MAIN
@@ -1791,7 +1791,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_IDMAPPER,          "COMPONENT_IDMAPPER", "ID MAPPER",
 #ifdef _DEBUG_IDMAPPER
@@ -1800,7 +1800,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_CRIT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_NFS_READDIR,       "COMPONENT_NFS_READDIR", "NFS READDIR",
 #ifdef _DEBUG_NFS_READDIR
@@ -1809,7 +1809,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_EVENT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
 
   { COMPONENT_NFS_V4_LOCK,       "COMPONENT_NFS_V4_LOCK", "NFS V4 LOCK",
@@ -1819,7 +1819,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_EVENT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_NFS_V4_XATTR,      "COMPONENT_NFS_V4_XATTR", "NFS V4 XATTR",
 #ifdef _DEBUG_NFS_V4_XATTR
@@ -1828,7 +1828,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_EVENT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_NFS_V4_REFERRAL,   "COMPONENT_NFS_V4_REFERRAL", "NFS V4 REFERRAL",
 #ifdef _DEBUG_NFS_V4_REFERRAL
@@ -1837,7 +1837,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_EVENT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_MEMCORRUPT,        "COMPONENT_MEMCORRUPT", "MEM CORRUPT",
 #ifdef _DEBUG_MEMCORRUPT
@@ -1848,7 +1848,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_EVENT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_CONFIG,            "COMPONENT_CONFIG", "CONFIG",
 #ifdef _DEBUG_CONFIG
@@ -1857,7 +1857,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_EVENT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_CLIENT_ID_COMPUTE, "COMPONENT_CLIENT_ID_COMPUTE", "CLIENT ID COMPUTE",
 #ifdef _DEBUG_CLIENT_ID_COMPUTE
@@ -1866,7 +1866,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_EVENT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_STDOUT,            "COMPONENT_STDOUT", "STDOUT",
 #ifdef _DEBUG_STDOUT
@@ -1875,7 +1875,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_EVENT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_OPEN_OWNER_HASH,   "COMPONENT_OPEN_OWNER_HASH", "OPEN OWNER HASH",
 #ifdef _DEBUG_OPEN_OWNER_HASH
@@ -1884,7 +1884,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_EVENT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   },
   { COMPONENT_SESSIONS,          "COMPONENT_SESSIONS", "SESSIONS",
 #ifdef _DEBUG_SESSIONS
@@ -1893,7 +1893,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_EVENT,
 #endif
     SYSLOG,
-    ""
+    "syslog"
   }
 };
 
@@ -1912,7 +1912,7 @@ int DisplayErrorComponentLogLine(log_components_t component, int num_family, int
 {
   char buffer[STR_LEN_TXT];
 
-  if(FaireLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
+  if(MakeLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
   return DisplayLogComponentLevel(component, NIV_CRIT, "%s: %s", LogComponents[component].comp_str, buffer);
 }                               /* DisplayErrorLogLine */
@@ -1920,33 +1920,37 @@ int DisplayErrorComponentLogLine(log_components_t component, int num_family, int
 void SetLogLevelFromEnv()
 {
   char *env_value;
-  int newval = -1, comp, loglevel;
+  int newval = -1, component, loglevel;
 
-  for(comp = COMPONENT_ALL; comp < COMPONENT_COUNT; comp++)
+  for(component = COMPONENT_ALL; component < COMPONENT_COUNT; component++)
     {
-      env_value = getenv(LogComponents[comp].comp_name);
+      env_value = getenv(LogComponents[component].comp_name);
       if (env_value == NULL)
-	continue;
+        continue;
       newval = ReturnLevelAscii(env_value);
       if (newval == -1) {
-	LogMajor(COMPONENT_LOG, "Environment variable %s exists, but the value %s is not a valid log level.",
-		 LogComponents[comp].comp_name, env_value);
-	continue;
+        LogMajor(COMPONENT_LOG, "Environment variable %s exists, but the value %s is not a valid log level.",
+                 LogComponents[component].comp_name, env_value);
+        continue;
       }
       LogMajor(COMPONENT_LOG, "Using environment variable to switch log level for %s from %s to %s",
-	       LogComponents[comp].comp_name, tabLogLevel[LogComponents[comp].comp_log_level].str,
-	       ReturnLevelInt(newval));
-      LogComponents[comp].comp_log_level = newval;
+               LogComponents[component].comp_name, tabLogLevel[LogComponents[component].comp_log_level].str,
+               ReturnLevelInt(newval));
+      LogComponents[component].comp_log_level = newval;
     }
 }
 
-static int isValidLogPath(char * pathname)
+static int isValidLogPath(char *pathname)
 {
+  char tempname[MAXPATHLEN];
+
   char *directory_name;
   struct stat *buf;
   int rc;
 
-  directory_name = dirname(pathname);
+  strncpy(tempname, pathname, MAXPATHLEN);
+
+  directory_name = dirname(tempname);
   if (directory_name == NULL)
       return 0;
 
@@ -1957,7 +1961,7 @@ static int isValidLogPath(char * pathname)
       break; /* success !! */
     case EACCES:
       LogCrit(COMPONENT_LOG, "Either access is denied to the file or denied to one of the directories in %s",
-	      directory_name);
+              directory_name);
       break;
     case ELOOP:
       LogCrit(COMPONENT_LOG, "Too many symbolic links were encountered in resolving %s", directory_name);
@@ -1989,19 +1993,21 @@ static int isValidLogPath(char * pathname)
  */
 int SetDefaultLogging(char *name)
 {
-  int comp;
+  int component;
+
+  SetComponentLogFile(COMPONENT_LOG, name);
 
   LogMajor(COMPONENT_LOG, "Setting log destination for ALL components to %s", name);
-  for(comp = COMPONENT_ALL; comp < COMPONENT_COUNT; comp++)
+  for(component = COMPONENT_ALL; component < COMPONENT_COUNT; component++)
     {
-      if (LogComponents[comp].comp_value == COMPONENT_STDOUT)
-	continue;
-      SetComponentLogFile(comp, name);
+      if (component == COMPONENT_STDOUT)
+        continue;
+      SetComponentLogFile(component, name);
     }
   return 1;
 }                               /* SetDefaultLogging */
 
-int SetComponentLogFile(log_components_t comp, char *name)
+int SetComponentLogFile(log_components_t component, char *name)
 {
   int newtype;
 
@@ -2017,24 +2023,37 @@ int SetComponentLogFile(log_components_t comp, char *name)
     newtype = FILELOG;
 
   if (newtype == FILELOG)
-    if (!isValidLogPath(name))
-      {
-	LogMajor(COMPONENT_LOG, "Could not set default logging to %s", name);
-	errno = EINVAL;
-	return -1;
+    {
+      if (!isValidLogPath(name))
+        {
+          LogMajor(COMPONENT_LOG, "Could not set default logging to %s", name);
+          errno = EINVAL;
+          return -1;
+        }
       }
 
-  LogComponents[comp].comp_log_type = newtype;
-  if (newtype == FILELOG)
-    strncpy(LogComponents[comp].comp_log_file, name, MAXPATHLEN);
+  if (component != COMPONENT_LOG)
+    LogMajor(COMPONENT_LOG, "Changing log destination for %s from %s to %s",
+             LogComponents[component].comp_name,
+             LogComponents[component].comp_log_file,
+             name);
+
+  LogComponents[component].comp_log_type = newtype;
+  strncpy(LogComponents[component].comp_log_file, name, MAXPATHLEN);
+
+  if (component == COMPONENT_LOG)
+    LogMajor(COMPONENT_LOG, "Changing log destination for %s from %s to %s",
+             LogComponents[component].comp_name,
+             LogComponents[component].comp_log_file,
+             name);
 
   return 0;
 }                               /* SetComponentLogFile */
 
-void SetComponentLogBuffer(log_components_t comp, char *buffer)
+void SetComponentLogBuffer(log_components_t component, char *buffer)
 {
-  LogComponents[comp].comp_log_type = BUFFLOG;
-  LogComponents[comp].comp_buffer   = buffer;
+  LogComponents[component].comp_log_type = BUFFLOG;
+  LogComponents[component].comp_buffer   = buffer;
 }
 
 /*

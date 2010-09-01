@@ -16,16 +16,11 @@
 #include "snmp_adm.h"
 #endif
 
-/*
- * Not quite ready for this
 #ifdef _USE_GPFS
 #define NO_OLD_LOGGING
 #else
-*/
 #define OLD_LOGGING
-/*
 #endif
-*/
 
 /*
  * definition des codes d'error
@@ -486,6 +481,9 @@ void SetLevelDebug(int level_to_set);    /* not thread safe */
 
 int ReturnLevelAscii(const char *LevelEnAscii);
 char *ReturnLevelInt(int level);
+
+int MakeLogError(char *buffer, int num_family, int num_error, int status,
+                  int ma_ligne);
 
 int log_vsnprintf(char *out, size_t n, char *format, va_list arguments);
 int log_snprintf(char *out, size_t n, char *format, ...);
