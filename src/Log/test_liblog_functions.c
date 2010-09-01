@@ -184,7 +184,7 @@ void TestFullDebug(int expect, char *buff, log_components_t component, char *str
 /**
  *  Tests about Log streams and special printf functions.
  */
-int Test1(char *str)
+int Test1(char *str, char *file)
 {
   char tempstr[2048];
   int  i;
@@ -239,10 +239,10 @@ int Test1(char *str)
   LogEvent(COMPONENT_DISPATCH, "This should go to stdout");
   SetComponentLogFile(COMPONENT_DISPATCH, "SYSLOG");
   LogEvent(COMPONENT_DISPATCH, "This should go to syslog (verf = %s)", str);
-  LogTest("About to set /tmp/test_liblog.file");
-  SetComponentLogFile(COMPONENT_DISPATCH, "/tmp/test_liblog.file");
+  LogTest("About to set %s", file);
+  SetComponentLogFile(COMPONENT_DISPATCH, file);
   LogTest("Got it set");
-  LogEvent(COMPONENT_DISPATCH, "This should go to /tmp/test_liblog.file");
+  LogEvent(COMPONENT_DISPATCH, "This should go to %s", file);
 
   /*
    * Set up for tests that will verify what was actually produced by log messages.
@@ -469,13 +469,13 @@ void Test2()
   TestGaneshaFormat(FALSE, "str2(1) (not part of %b)", "%5b %s", 1, "str2", "str3", "(not part of %b)");
 }
 
-run_Tests(int all, char *arg, char *str)
+run_Tests(int all, char *arg, char *str, char *file)
 {
   SetNameFunction(arg);
 
   if (all)
     {
-    Test1(str);
+    Test1(str, file);
     }
   Test2();
 
@@ -485,7 +485,7 @@ run_Tests(int all, char *arg, char *str)
 
 void *run_MT_Tests(void *arg)
 {
-  run_Tests(FALSE, (char *)arg, "none");
+  run_Tests(FALSE, (char *)arg, "none", NULL);
 
   return NULL ;
 }
@@ -506,9 +506,13 @@ int main(int argc, char *argv[])
         {
           int rc;
           char *str = "No extra string provided";
+          char *file = NULL;
 
           if (argc >= 3)
             str = argv[2];
+
+          if (argc >= 4)
+            file = argv[3];
 
           SetNamePgm("test_liblog");
           SetNameHost("localhost");
@@ -519,7 +523,7 @@ int main(int argc, char *argv[])
           LogTest("AddFamilyError = %d", AddFamilyError(ERR_DUMMY, "Family Dummy", tab_test_err));
           LogTest("The family which was added is %s", ReturnNameFamilyError(ERR_DUMMY));
 
-          run_Tests(TRUE,  "monothread", str);
+          run_Tests(TRUE,  "monothread", str, file);
         }
 
       /* TEST 1 multithread */

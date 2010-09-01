@@ -6,6 +6,19 @@
 ## Made by Frank Filz
 ##
 
+cleanup()
+{
+	if [ $CLEANUP -eq 1 ]
+	then
+		rm -f $MSGFILE
+		rm -f $OUTFILE
+		rm -f $ERRFILE
+		rm -f $FILE
+	else
+		ls -l $MSGFILE $OUTFILE $ERRFILE $FILE
+	fi
+}
+
 test_file ()
 {
 	grep "$1" $2 >/dev/null
@@ -19,6 +32,7 @@ test_file ()
 		echo "---------------------------------------------------"
 		cat $2 | grep -v "Changing"
 		echo "***************************************************"
+		cleanup
 		exit 1
 	fi
 }
@@ -35,7 +49,12 @@ test_stdout ()
 
 test_syslog ()
 {
-	test_file "$1" $MSGFILE
+	if [ $SYSLOG -eq 1 ]
+	then
+		test_file "$1" $MSGFILE
+	else
+		echo "Skipping test of syslog for $1"
+	fi
 }
 
 run()
@@ -44,17 +63,25 @@ run()
 	echo $DATE
 	echo STDERR 1>&2
 	echo $DATE 1>&2
-	./test_liblog STD "$DATE"
+	./test_liblog STD "$DATE" $FILE
 }
 
-OUTFILE=/tmp/test_liblog.out
-ERRFILE=/tmp/test_liblog.err
+if [ -z "$1" ]
+then
+	CLEANUP=1
+else
+	CLEANUP=0
+fi
+
+OUTFILE=/tmp/test_liblog.out.$$
+ERRFILE=/tmp/test_liblog.err.$$
 MESSAGES=/var/log/messages
-MSGFILE=/tmp/test_liblog.msg
+MSGFILE=/tmp/test_liblog.msg.$$
+FILE=/tmp/test_liblog.file.$$
 DATE=`date`
 export COMPONENT_MEMCORRUPT=NIV_FULL_DEBUG
-echo /tmp/test_liblog.file > /tmp/test_liblog.file
-echo $DATE >> /tmp/test_liblog.file
+echo $FILE > $FILE
+echo $DATE >> $FILE
 echo /var/log/messages > $MSGFILE
 echo $DATE >> $MSGFILE
 run >$OUTFILE 2>$ERRFILE
@@ -63,7 +90,13 @@ RC=$?
 if [ $RC -ne 0 ]
 then
 	echo "Test failed rc =" $RC
-	cat $OUTFILE | grep -v "Changing" | grep -v "SUCCES:"
+	echo ***********************************
+	echo $OUTFILE
+	cat $OUTFILE
+	echo ***********************************
+	echo $ERRFILE
+	cat $ERRFILE
+	cleanup
 	exit 1
 fi
 
@@ -71,8 +104,14 @@ fi
 sleep 1
 
 test_stdout "My PID = "
-PID=`grep "My PID = " $OUTFILE | sed -e 's@\(.*My PID = \)\([1-9][0-9*]\)@\2@'`
-grep $PID $MESSAGES >> $MSGFILE
+if [ -r $MESSAGES ]
+then
+	PID=`grep "My PID = " $OUTFILE | sed -e 's@\(.*My PID = \)\([1-9][0-9*]\)@\2@'`
+	grep $PID $MESSAGES >> $MSGFILE
+	SYSLOG=1
+else
+	SYSLOG=0
+fi
 
 test_stdout "LOG: NIV_MAJ: Changing log level for all components to at least NIV_EVENT"
 test_stdout "LOG: NIV_MAJ: Using environment variable to switch log level for COMPONENT_MEMCORRUPT from NIV_EVENT to NIV_FULL_DEBUG"
@@ -91,6 +130,8 @@ test_stdout "LOG: NIV_MAJ: Changing log level for all components to at least NIV
 test_stdout "DISPATCH: NIV_EVENT: This should go to stdout"
 test_stderr "DISPATCH: NIV_EVENT: This should go to stderr"
 test_syslog "DISPATCH: NIV_EVENT: This should go to syslog (verf = $DATE)"
-test_file   "DISPATCH: NIV_EVENT: This should go to /tmp/test_liblog.file" /tmp/test_liblog.file
+test_file   "DISPATCH: NIV_EVENT: This should go to $FILE" $FILE
 
 echo "PASSED!"
+
+cleanup
