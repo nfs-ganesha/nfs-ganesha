@@ -1997,6 +1997,8 @@ int SetDefaultLogging(char *name)
 
   SetComponentLogFile(COMPONENT_LOG, name);
 
+  LogMajor(COMPONENT_LOG, "Setting log destination for ALL components to %s", name);
+
   for(component = COMPONENT_ALL; component < COMPONENT_COUNT; component++)
     {
       if (component == COMPONENT_STDOUT)
