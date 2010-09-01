@@ -82,7 +82,7 @@ unsigned long mfsl_async_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * 
 
 #ifdef _DEBUG_HASHTABLE
   snprintHandle(printbuf, 128, &mobject->handle);
-  printf("hash_func key: buff =(Handle=%s), hash value=%lu\n", printbuf, h);
+  LogFullDebug(COMPONENT_HASHTABLE, "hash_func key: buff =(Handle=%s), hash value=%lu\n", printbuf, h);
 #endif
 
   return h;
@@ -114,7 +114,7 @@ unsigned long mfsl_async_rbt_func(hash_parameter_t * p_hparam, hash_buffer_t * b
 
 #ifdef _DEBUG_HASHTABLE
   snprintHandle(printbuf, 128, &mobject->handle);
-  printf("hash_func rbt: buff =(Handle=%s), value=%lu\n", printbuf, h);
+  LogFullDebug(COMPONENT_HASHTABLE, "hash_func rbt: buff =(Handle=%s), value=%lu\n", printbuf, h);
 #endif
   return h;
 }                               /* mfsl_async_rbt_func */

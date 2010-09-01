@@ -40,7 +40,7 @@
 
 #include "LRU_List.h"
 #include "err_LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -571,13 +571,11 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
   /* If we do nothing (no expiration) then everything is all right */
   *pstatus = CACHE_INODE_SUCCESS;
 
-#ifdef _DEBUG_CACHE_INODE
   LogFullDebug(COMPONENT_CACHE_INODE,
                   "Entry=%p, type=%d, current=%d, read=%d, refresh=%d, alloc=%d",
                   pentry, pentry->internal_md.type, current_time,
                   pentry->internal_md.read_time, pentry->internal_md.refresh_time,
                   pentry->internal_md.alloc_time);
-#endif
 
   /* An entry that is a regular file with an associated File Content Entry won't
    * expire until data exists in File Content Cache, to avoid attributes incoherency */
@@ -1168,7 +1166,7 @@ void *cache_inode_synclet_thread(void *Arg)
       LogDebug(COMPONENT_CACHE_INODE, "I will proceed entry %p", pentry);
 
       /* Here: Proceed with the asyncop list */
-      printf("=========> pending_ops = %p\n", pentry->pending_ops);
+      LogFullDebug(COMPONENT_CACHE_INODE, "=========> pending_ops = %p\n", pentry->pending_ops);
       P(pentry->lock);
 
       /* Possible to pending ops reduction */
@@ -1187,7 +1185,7 @@ void *cache_inode_synclet_thread(void *Arg)
 
           cache_status = cache_inode_process_async_op(piter_opdesc,
                                                       pentry, &cache_status);
-          printf("===============> cache_inode_process_async_op status=%d\n",
+          LogFullDebug(COMPONENT_CACHE_INODE, "===============> cache_inode_process_async_op status=%d\n",
                  cache_status);
 
           /* Release this entry to the pool it came from */
