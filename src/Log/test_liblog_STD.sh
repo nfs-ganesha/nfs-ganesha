@@ -6,4 +6,91 @@
 ## Made by Frank Filz
 ##
 
-./test_liblog STD
+test_file ()
+{
+	grep "$1" $2 >/dev/null
+	RC=$?
+	if [ $RC -ne 0 ]
+	then
+		echo "***************************************************"
+		echo "Test failed rc = " $RC
+		echo "Expected to find '"$1"' in $2"
+		echo "Contents of $2:"
+		echo "---------------------------------------------------"
+		cat $2 | grep -v "Changing"
+		echo "***************************************************"
+		exit 1
+	fi
+}
+
+test_stderr ()
+{
+	test_file "$1" $ERRFILE
+}
+
+test_stdout ()
+{
+	test_file "$1" $OUTFILE
+}
+
+test_syslog ()
+{
+	test_file "$1" $MSGFILE
+}
+
+run()
+{
+	echo STDOUT
+	echo $DATE
+	echo STDERR 1>&2
+	echo $DATE 1>&2
+	./test_liblog STD "$DATE"
+}
+
+OUTFILE=/tmp/test_liblog.out
+ERRFILE=/tmp/test_liblog.err
+MESSAGES=/var/log/messages
+MSGFILE=/tmp/test_liblog.msg
+DATE=`date`
+export COMPONENT_MEMCORRUPT=NIV_FULL_DEBUG
+echo /tmp/test_liblog.file > /tmp/test_liblog.file
+echo $DATE >> /tmp/test_liblog.file
+echo /var/log/messages > $MSGFILE
+echo $DATE >> $MSGFILE
+run >$OUTFILE 2>$ERRFILE
+
+RC=$?
+if [ $RC -ne 0 ]
+then
+	echo "Test failed rc =" $RC
+	cat $OUTFILE | grep -v "Changing" | grep -v "SUCCES:"
+	exit 1
+fi
+
+# make sure syslog has a chance to get all the messages out
+sleep 1
+
+test_stdout "My PID = "
+PID=`grep "My PID = " $OUTFILE | sed -e 's@\(.*My PID = \)\([1-9][0-9*]\)@\2@'`
+grep $PID $MESSAGES >> $MSGFILE
+
+test_stdout "LOG: NIV_MAJ: Changing log level for all components to at least NIV_EVENT"
+test_stdout "LOG: NIV_MAJ: Using environment variable to switch log level for COMPONENT_MEMCORRUPT from NIV_EVENT to NIV_FULL_DEBUG"
+test_stdout "AddFamilyError = 3"
+test_stdout "The family which was added is Family Dummy"
+
+test_stdout "A numerical error : error 5 = ERR_SIGACTION(5) : 'sigaction impossible', in ERR_DUMMY_2 ERR_DUMMY_2(1) : 'Second Dummy Error'"
+test_stdout "A numerical error : error 40 = ERR_OPEN(40) : 'open impossible', in ERR_DUMMY_1 ERR_DUMMY_1(0) : 'First Dummy Error'"
+
+test_stdout "Test log_snprintf$"
+test_stdout "CONFIG: Error ERR_MALLOC : malloc impossible : status 22 : Invalid argument : Line"
+test_stdout "This should appear if environment is set properly"
+test_stdout "localhost : test_liblog-[1-9][0-9]*\[monothread\] :NFS STARTUP: Starting Log Tests$"
+test_stdout "LOG: NIV_MAJ: Changing log level for all components to at least NIV_EVENT"
+
+test_stdout "DISPATCH: NIV_EVENT: This should go to stdout"
+test_stderr "DISPATCH: NIV_EVENT: This should go to stderr"
+test_syslog "DISPATCH: NIV_EVENT: This should go to syslog (verf = $DATE)"
+test_file   "DISPATCH: NIV_EVENT: This should go to /tmp/test_liblog.file" /tmp/test_liblog.file
+
+echo "PASSED!"

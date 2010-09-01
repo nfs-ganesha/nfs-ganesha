@@ -85,8 +85,8 @@ else
 RPM_DB_ARGS= --without postgresql
 endif
 
-indent:
-	find . -name '*.[ch]' ! -path './rpm/*' -exec indent -linux -nsaf -nsai -nsaw -nut -bl -bls -i2 -l90 -lc90 -nce -hnl {} \;
+#indent:
+#	find . -name '*.[ch]' ! -path './rpm/*' -exec indent -linux -nsaf -nsai -nsaw -nut -bl -bls -i4 -l90 -lc90 -nce -hnl {} \;
 
 rpm/SPECS rpm/SOURCES rpm/RPMS rpm/BUILD rpm/SRPMS:
 	mkdir -p $@
