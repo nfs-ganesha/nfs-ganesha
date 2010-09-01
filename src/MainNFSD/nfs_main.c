@@ -60,7 +60,7 @@ nfs_start_info_t my_nfs_start_info = {
 };
 
 char my_config_path[MAXPATHLEN] = "/etc/ganesha/ganesha.conf";
-char log_path[MAXPATHLEN] = "/tmp/nfs-ganesha.log";
+char log_path[MAXPATHLEN] = "";
 char exec_name[MAXPATHLEN] = "nfs-ganesha";
 char host_name[MAXHOSTNAMELEN] = "localhost";
 int debug_level = -1;
@@ -288,8 +288,6 @@ int main(int argc, char *argv[])
     }
 
   /* initialize memory and logging */
-  if (!my_nfs_start_info.flush_datacache_mode)
-    SetLogLevelFromEnv();
   if(nfs_prereq_init(exec_name, host_name, debug_level, log_path))
     {
       fprintf(stderr, "NFS MAIN: Error initializing NFSd prerequisites\n");

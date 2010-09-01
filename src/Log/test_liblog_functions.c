@@ -478,9 +478,6 @@ run_Tests(int all, char *arg, char *str, char *file)
     Test1(str, file);
     }
   Test2();
-
-  LogTest("------------------------------------------------------");
-  LogTest("SUCCESS!");
 }
 
 void *run_MT_Tests(void *arg)
@@ -517,8 +514,7 @@ int main(int argc, char *argv[])
           SetNamePgm("test_liblog");
           SetNameHost("localhost");
           SetDefaultLogging("TEST");
-          InitDebug(NIV_EVENT);
-          SetLogLevelFromEnv();
+          InitLogging();
           AddFamilyError(ERR_POSIX, "POSIX Errors", tab_systeme_status);
           LogTest("AddFamilyError = %d", AddFamilyError(ERR_DUMMY, "Family Dummy", tab_test_err));
           LogTest("The family which was added is %s", ReturnNameFamilyError(ERR_DUMMY));
@@ -540,7 +536,7 @@ int main(int argc, char *argv[])
           SetNamePgm("test_liblog");
           SetNameHost("localhost");
           SetDefaultLogging("STDOUT");
-          InitDebug(NIV_EVENT);
+          InitLogging();
           AddFamilyError(ERR_POSIX, "POSIX Errors", tab_systeme_status);
           LogTest("AddFamilyError = %d", AddFamilyError(ERR_DUMMY, "Family Dummy", tab_test_err));
           LogTest("The family which was added is %s", ReturnNameFamilyError(ERR_DUMMY));
