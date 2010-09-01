@@ -141,8 +141,6 @@ int main(int argc, char *argv[])
   int critere_recherche = 0;
   int random_val = 0;
 
-  SetDefaultLogging("stderr");
-
   hparam.index_size = PRIME;
   hparam.alphabet_length = 10;
   hparam.nb_node_prealloc = NB_PREALLOC;
