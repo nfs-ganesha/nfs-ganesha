@@ -187,6 +187,8 @@ int main(int argc, char *argv[])
 
   ServerBootTime = time(NULL);
 
+  SetDefaultLogging("STDERR");
+
   /* What is the executable file's name */
   if((tempo_exec_name = strrchr(argv[0], '/')) != NULL)
     strcpy((char *)exec_name, tempo_exec_name + 1);
@@ -255,7 +257,7 @@ int main(int argc, char *argv[])
 #ifdef _USE_SHARED_FSAL
   if(nfs_get_fsalpathlib_conf(path_cfg, fsal_path_lib))
     {
-      DisplayLog("NFS MAIN: Error parsing configuration file.");
+      fprintf(stderr, "NFS MAIN: Error parsing configuration file.");
       exit(1);
     }
 #endif                          /* _USE_SHARED_FSAL */
@@ -263,7 +265,7 @@ int main(int argc, char *argv[])
   /* Load the FSAL library (if needed) */
   if(!FSAL_LoadLibrary(fsal_path_lib))
     {
-      DisplayLog("NFS MAIN: Could not load FSAL dynamic library %s", fsal_path_lib);
+      fprintf(stderr, "NFS MAIN: Could not load FSAL dynamic library %s", fsal_path_lib);
       exit(1);
     }
 
@@ -277,7 +279,7 @@ int main(int argc, char *argv[])
 
   if(nfs_set_param_default(&nfs_param))
     {
-      DisplayLog("Error setting default parameters.");
+      fprintf(stderr, "Error setting default parameters.");
       exit(1);
     }
 
@@ -285,7 +287,7 @@ int main(int argc, char *argv[])
 
   if(nfs_set_param_from_conf(&nfs_param, &nfs_start_info, path_cfg))
     {
-      DisplayLog("Error parsing configuration file '%s'", path_cfg);
+      fprintf(stderr, "Error parsing configuration file '%s'", path_cfg);
       exit(1);
     }
 
@@ -293,7 +295,7 @@ int main(int argc, char *argv[])
 
   if(nfs_check_param_consistency(&nfs_param))
     {
-      DisplayLog("Inconsistent parameters found");
+      fprintf(stderr, "Inconsistent parameters found");
       exit(1);
     }
 

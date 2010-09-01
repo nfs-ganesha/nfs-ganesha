@@ -114,7 +114,9 @@ typedef enum cache_content_flush_behaviour__
 typedef struct cache_content_client_parameter__
 {
   unsigned int nb_prealloc_entry;             /**< number of preallocated pentries */
+#ifdef OLD_LOGGING
   log_t log_outputs;                          /**< Log descriptor                     */
+#endif
   char cache_dir[MAXPATHLEN];                 /**< Path to the directory where data are cached */
   unsigned int flush_force_fsal;              /**< Should the flush force the write to FSAL    */
   unsigned int max_fd_per_thread;             /**< Max fd open per client */
@@ -176,7 +178,9 @@ typedef struct cache_content_client__
   cache_content_entry_t *pool_entry;                /**< Worker's preallocad cache entries pool                   */
   unsigned int nb_prealloc;                         /**< Size of the preallocated pool                            */
   cache_content_stat_t stat;                        /**< File content statistics for this client                  */
+#ifdef OLD_LOGGING
   log_t log_outputs;                                /**< Log descriptor for cache layers                          */
+#endif
   char cache_dir[MAXPATHLEN];                       /**< Path to the directory where data are cached              */
   unsigned int flush_force_fsal;                    /**< Should the flush force the write to FSAL                 */
   unsigned int max_fd_per_thread;                   /**< Max fd open per client                                   */

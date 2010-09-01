@@ -19,7 +19,7 @@
 
 (defconst ganesha-c-style
   '((c-tab-always-indent . t)
-    (c-basic-offset  . 2)
+    (c-basic-offset  . 4)
     (c-comment-only-line-offset . 0)
     (c-hanging-braces-alist . ((brace-entry-open before after)
                                (substatement-open before after)

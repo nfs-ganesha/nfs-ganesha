@@ -104,7 +104,9 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
 {
   LRU_status_t lru_status;
 
+#ifdef OLD_LOGGING
   pclient->log_outputs = param.log_outputs;
+#endif
   pclient->attrmask = param.attrmask;
   pclient->nb_prealloc = param.nb_prealloc_entry;
   pclient->nb_pre_dir_data = param.nb_pre_dir_data;
