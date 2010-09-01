@@ -86,7 +86,7 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT;
 static void init_keys(void)
 {
   if(pthread_key_create(&key_stats, NULL) == -1)
-    DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_KEY_CREATE, errno);
+    LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_KEY_CREATE, errno);
 
   return;
 }                               /* init_keys */
@@ -116,7 +116,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
   if(pthread_once(&once_key, init_keys) != 0)
     {
-      DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_ONCE, errno);
+      LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_ONCE, errno);
       return;
     }
 
@@ -134,7 +134,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
       if(bythread_stat == NULL)
         {
-          DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
+          LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, Mem_Errno);
         }
 
       /* inits the struct */
@@ -187,7 +187,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
   /* first, we init the keys if this is the first time */
   if(pthread_once(&once_key, init_keys) != 0)
     {
-      DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_ONCE, errno);
+      LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_ONCE, errno);
       return;
     }
 
@@ -201,7 +201,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
 
       if((bythread_stat =
           (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t))) == NULL)
-        DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
+        LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, Mem_Errno);
 
       /* inits the struct */
       for(i = 0; i < FSAL_NB_FUNC; i++)
