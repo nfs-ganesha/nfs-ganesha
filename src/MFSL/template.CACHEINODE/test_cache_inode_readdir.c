@@ -158,7 +158,7 @@ main(int argc, char *argv[])
   /* Obtention du nom de la machine */
   if(gethostname(localmachine, sizeof(localmachine)) != 0)
     {
-      DisplayErrorLog(ERR_SYS, ERR_GETHOSTNAME, errno);
+      LogError(COMPONENT_CACHE_INODE, ERR_SYS, ERR_GETHOSTNAME, errno);
       exit(1);
     }
   else
@@ -185,7 +185,7 @@ main(int argc, char *argv[])
                                           &(init_param.fs_specific_info.
                                             definition_file))))
     {
-      DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
+      LogError(COMPONENT_CACHE_INODE,  ERR_FSAL, status.major, status.minor);
     }
 #elif defined( _USE_HPSS )
 
@@ -246,7 +246,7 @@ main(int argc, char *argv[])
   /* Init */
   if(FSAL_IS_ERROR(status = FSAL_Init(&init_param)))
     {
-      DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
+      LogError(COMPONENT_CACHE_INODE,  ERR_FSAL, status.major, status.minor);
     }
 
   /* getting creds */
@@ -254,7 +254,7 @@ main(int argc, char *argv[])
 
   if(FSAL_IS_ERROR(status = FSAL_GetUserCred(uid, NULL, &cred)))
     {
-      DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
+      LogError(COMPONENT_CACHE_INODE,  ERR_FSAL, status.major, status.minor);
     }
 
   /* Init of the cache inode module */
@@ -298,14 +298,14 @@ main(int argc, char *argv[])
   /* Getting the root of the FS */
   if((FSAL_IS_ERROR(status = FSAL_str2path("/", 2, &pathroot))))
     {
-      DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
+      LogError(COMPONENT_CACHE_INODE,  ERR_FSAL, status.major, status.minor);
       exit(1);
     }
 
   attribs.asked_attributes = cache_client_param.attrmask;
   if((FSAL_IS_ERROR(status = FSAL_lookupPath(pathroot, &cred, &root_handle, &attribs))))
     {
-      DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
+      LogError(COMPONENT_CACHE_INODE,  ERR_FSAL, status.major, status.minor);
       exit(1);
     }
   fsdata.cookie = 0;
@@ -378,7 +378,7 @@ main(int argc, char *argv[])
   /* A lookup in the root fsal */
   if((FSAL_IS_ERROR(status = FSAL_str2name("cea", 10, &name))))
     {
-      DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
+      LogError(COMPONENT_CACHE_INODE,  ERR_FSAL, status.major, status.minor);
       exit(1);
     }
 
@@ -411,7 +411,7 @@ main(int argc, char *argv[])
   /* A lookup in the root fsal */
   if((FSAL_IS_ERROR(status = FSAL_str2name("log", 10, &name))))
     {
-      DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
+      LogError(COMPONENT_CACHE_INODE,  ERR_FSAL, status.major, status.minor);
       exit(1);
     }
 
@@ -447,7 +447,7 @@ main(int argc, char *argv[])
   /* A lookup in the root fsal */
   if((FSAL_IS_ERROR(status = FSAL_str2name("cea", 10, &name))))
     {
-      DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
+      LogError(COMPONENT_CACHE_INODE,  ERR_FSAL, status.major, status.minor);
       exit(1);
     }
 
@@ -463,7 +463,7 @@ main(int argc, char *argv[])
   /* A lookup in the root fsal */
   if((FSAL_IS_ERROR(status = FSAL_str2name("log", 10, &name))))
     {
-      DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
+      LogError(COMPONENT_CACHE_INODE,  ERR_FSAL, status.major, status.minor);
       exit(1);
     }
 

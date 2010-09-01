@@ -95,7 +95,7 @@ cache_inode_status_t cache_inode_read_conf_hash_parameter(config_file_t in_confi
       if((err = config_GetKeyValue(in_config,
                                    blk_index, var_index, &key_name, &key_value)) != 0)
         {
-          fprintf(stderr,
+          LogCrit(COMPONENT_CONFIG,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
                   var_index, CONF_LABEL_CACHE_INODE_HASH);
           return CACHE_INODE_INVALID_ARGUMENT;
@@ -115,7 +115,7 @@ cache_inode_status_t cache_inode_read_conf_hash_parameter(config_file_t in_confi
         }
       else
         {
-          fprintf(stderr,
+          LogCrit(COMPONENT_CONFIG,
                   "Unknown or unsettable key: %s (item %s)\n",
                   key_name, CONF_LABEL_CACHE_INODE_HASH);
           return CACHE_INODE_INVALID_ARGUMENT;
@@ -171,7 +171,7 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
       if((err = config_GetKeyValue(in_config,
                                    blk_index, var_index, &key_name, &key_value)) != 0)
         {
-          fprintf(stderr,
+          LogCrit(COMPONENT_CONFIG,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
                   var_index, CONF_LABEL_CACHE_INODE_CLIENT);
           return CACHE_INODE_INVALID_ARGUMENT;
@@ -267,8 +267,8 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
 
           if(DebugLevel == -1)
             {
-              DisplayLog
-                  ("cache_inode_read_conf: ERROR: Invalid debug level name: \"%s\".",
+              LogCrit(COMPONENT_CONFIG,
+                  "cache_inode_read_conf: ERROR: Invalid debug level name: \"%s\".",
                    key_value);
               return CACHE_INODE_INVALID_ARGUMENT;
             }
@@ -281,7 +281,7 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
         }
       else
         {
-          fprintf(stderr,
+          LogCrit(COMPONENT_CONFIG,
                   "Unknown or unsettable key: %s (item %s)\n",
                   key_name, CONF_LABEL_CACHE_INODE_CLIENT);
           return CACHE_INODE_INVALID_ARGUMENT;

@@ -398,7 +398,7 @@ cache_inode_status_t cache_inode_lock_create(cache_entry_t * pentry,
 
   if(pfilelock == NULL)
     {
-      DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+      LogDebug(COMPONENT_CACHE_INODE, 
                         "Can't allocate a new file lock from cache pool");
       *pstatus = CACHE_INODE_MALLOC_ERROR;
 
