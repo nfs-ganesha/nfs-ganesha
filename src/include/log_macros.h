@@ -34,6 +34,7 @@
 typedef enum log_components
 {
   COMPONENT_ALL = 0,
+  COMPONENT_LOG,
   COMPONENT_MEMALLOC,
   COMPONENT_STATES,
   COMPONENT_MEMLEAKS,
@@ -50,7 +51,6 @@ typedef enum log_components
   COMPONENT_HASHTABLE,
   COMPONENT_LRU,
   COMPONENT_DUPREQ,
-  COMPONENT_LOG,
   COMPONENT_RPCSEC_GSS,
   COMPONENT_INIT,
   COMPONENT_MAIN,
@@ -72,6 +72,7 @@ typedef enum log_components
 int SetComponentLogFile(log_components_t component, char *name);
 void SetComponentLogBuffer(log_components_t component, char *buffer);
 void SetComponentLogLevel(log_components_t component, int level_to_set);
+#define SetLogLevel(level_to_set) SetComponentLogLevel(COMPONENT_ALL, level_to_set)
 int DisplayLogComponentLevel(log_components_t component, int level, char *format, ...);
 int DisplayErrorComponentLogLine(log_components_t component, int num_family, int num_error, int status, int ma_ligne);
 
@@ -101,7 +102,9 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogAlways(component, format, args...) \
   do { \
-    DisplayLogComponentLevel(component, NIV_NULL, "%s: " format, LogComponents[component].comp_str, ## args ); \
+    if (LogComponents[component].comp_log_type != TESTLOG || \
+        LogComponents[component].comp_log_level <= NIV_FULL_DEBUG) \
+      DisplayLogComponentLevel(component, NIV_NULL, "%s: " format, LogComponents[component].comp_str, ## args ); \
   } while (0)
 
 #define LogTest(format, args...) \
