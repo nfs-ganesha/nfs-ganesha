@@ -16,17 +16,11 @@
 #include "snmp_adm.h"
 #endif
 
-/*
- * Not quite ready for this
- * when this is done after shell directory is complete check if log_fprintf is necessary any more
 #ifdef _USE_GPFS
 #define NO_OLD_LOGGING
 #else
-*/
 #define OLD_LOGGING
-/*
 #endif
-*/
 
 /*
  * definition des codes d'error
