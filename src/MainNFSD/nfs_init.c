@@ -125,9 +125,12 @@ int nfs_prereq_init(char *program_name, char *host_name, int debug_level, char *
   SetNamePgm(program_name);
   SetNameFunction("main");
   SetNameHost(host_name);
+  if (log_path[0] != '\0')
+    SetDefaultLogging(log_path);
+  InitLogging();
 
   if (debug_level >= 0)
-    InitDebug(debug_level);
+    SetLogLevel(debug_level);
 
   /* Register error families */
   AddFamilyError(ERR_POSIX, "POSIX Errors", tab_systeme_status);
@@ -139,8 +142,6 @@ int nfs_prereq_init(char *program_name, char *host_name, int debug_level, char *
                  tab_errstatus_cache_inode);
   AddFamilyError(ERR_CACHE_CONTENT, "Cache Content related Errors",
                  tab_errstatus_cache_content);
-
-  SetDefaultLogging(log_path);
 
   /* Initilize memory management for this thread */
 
