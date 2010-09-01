@@ -161,7 +161,7 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_MFSL_ASYNC)) == NULL)
     {
-      DisplayLog("/!\\ Cannot read item \"%s\" from configuration file\n",
+      LogMajor(COMPONENT_MFSL, "/!\\ Cannot read item \"%s\" from configuration file\n",
                  CONF_LABEL_MFSL_ASYNC);
       MFSL_return(ERR_FSAL_NOENT, 0);
     }
@@ -175,18 +175,18 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
 
       if((err = config_GetKeyValue(item, &key_name, &key_value)) > 0)
         {
-          DisplayLog
-              ("MFSL ASYNC LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
+          LogMajor(COMPONENT_MFSL, 
+              "MFSL ASYNC LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
                var_index, CONF_LABEL_MFSL_ASYNC);
           MFSL_return(ERR_FSAL_SERVERFAULT, err);
         }
 
       if(!strcasecmp(key_name, "Nb_Synclet"))
         {
-          DisplayLog
-              ("MFSL ASYNC LOAD PARAMETER: the asyncop scheduler is not yet implemented. Only one synclet managed");
-          DisplayLog
-              ("MFSL ASYNC LOAD PARAMETER: Parameter Nb_Synclet = %s will be ignored",
+          LogCrit(COMPONENT_MFSL, 
+              "MFSL ASYNC LOAD PARAMETER: the asyncop scheduler is not yet implemented. Only one synclet managed");
+          LogCrit(COMPONENT_MFSL, 
+              "MFSL ASYNC LOAD PARAMETER: Parameter Nb_Synclet = %s will be ignored",
                key_value);
           //pparam->nb_synclet = atoi( key_value ) ;
           pparam->nb_synclet = 1;
@@ -233,8 +233,8 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
 
           if(DebugLevel == -1)
             {
-              DisplayLog
-                  ("cache_content_read_conf: ERROR: Invalid debug level name: \"%s\".",
+              LogMajor(COMPONENT_MFSL, 
+                  "cache_content_read_conf: ERROR: Invalid debug level name: \"%s\".",
                    key_value);
               MFSL_return(ERR_FSAL_INVAL, 0);
             }
@@ -246,8 +246,8 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
 
       else
         {
-          DisplayLog
-              ("MFSL ASYNC LOAD PARAMETER: Unknown or unsettable key %s from section \"%s\" of configuration file.",
+          LogMajor(COMPONENT_MFSL, 
+              "MFSL ASYNC LOAD PARAMETER: Unknown or unsettable key %s from section \"%s\" of configuration file.",
                key_name, CONF_LABEL_MFSL_ASYNC);
           MFSL_return(ERR_FSAL_INVAL, 0);
         }
