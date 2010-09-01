@@ -69,8 +69,8 @@ typedef enum log_components
   COMPONENT_COUNT
 } log_components_t;
 
-int SetComponentLogFile(log_components_t comp, char *name);
-void SetComponentLogBuffer(log_components_t comp, char *buffer);
+int SetComponentLogFile(log_components_t component, char *name);
+void SetComponentLogBuffer(log_components_t component, char *buffer);
 void SetComponentLogLevel(log_components_t component, int level_to_set);
 int DisplayLogComponentLevel(log_components_t component, int level, char *format, ...);
 int DisplayErrorComponentLogLine(log_components_t component, int num_family, int num_error, int status, int ma_ligne);
