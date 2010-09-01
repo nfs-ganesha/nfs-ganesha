@@ -308,17 +308,27 @@ int main(int argc, char *argv[])
       ("Destruction of %d items, taken at random (well if you want ... I use srandom)",
        MAXDESTROY);
   srandom(getpid());
+  random_val = random() % MAXTEST;
 
   MesureTemps(&debut, NULL);
   for(i = 0; i < MAXDESTROY; i++)
     {
-      random_val = random() % MAXTEST;
+      /* 
+      it used to be that the random values were chosen with
+      repeated calls to random(), but if the same key comes up twice,
+      that causes a fail.  This way we start with a random value and
+      just linearly delete from it
+      */
+
+      random_val = (random_val + 1) % MAXTEST;
       sprintf(tmpstr, "%d", random_val);
       LogTest("\t Delete %d", random_val);
       buffkey.len = strlen(tmpstr);
       buffkey.pdata = tmpstr;
 
       rc = HashTable_Del(ht, &buffkey, NULL, NULL);
+      
+
       if(rc != HASHTABLE_SUCCESS)
         {
           LogTest("Error on delete %d = %d", i, rc);
