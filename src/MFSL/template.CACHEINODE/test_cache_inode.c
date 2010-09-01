@@ -44,7 +44,7 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "err_fsal.h"
 #include "err_cache_inode.h"
 #include "stuff_alloc.h"
@@ -58,7 +58,7 @@ int lru_entry_to_str(LRU_data_t data, char *str)
 
   pentry = (cache_entry_t *) data.pdata;
 
-  return sprintf(str, "Pentry: Addr %p, state=%d", pentry,
+  return sLogTest(str, "Pentry: Addr %p, state=%d", pentry,
                  pentry->internal_md.valid_state);
 }                               /* lru_entry_to_str */
 
@@ -132,10 +132,12 @@ main(int argc, char *argv[])
   int i = 0;
   int rc = 0;
 
+  SetDefaultLogging("TEST");
+
   /* Init the Buddy System allocation */
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
-      fprintf(stderr, "Error while Initing the Buddy system allocator");
+      fLogTest(stderr, "Error while Initing the Buddy system allocator");
       exit(1);
     }
 
@@ -147,7 +149,7 @@ main(int argc, char *argv[])
 #if defined( _USE_GHOSTFS )
   if(argc != 2)
     {
-      fprintf(stderr, "Please set the configuration file as parameter\n");
+      fLogTest(stderr, "Please set the configuration file as parameter\n");
       exit(1);
     }
 #endif
@@ -165,15 +167,8 @@ main(int argc, char *argv[])
   AddFamilyError(ERR_FSAL, "FSAL related Errors", tab_errstatus_FSAL);
   AddFamilyError(ERR_CACHE_INODE, "FSAL related Errors", tab_errstatus_cache_inode);
 
-  /* creating log */
-  voie_fsal.fd = fileno(stdout);
-  AddLogStreamJd(&log_desc_fsal, V_FD, voie_fsal, NIV_FULL_DEBUG, SUP);
-
-  voie_cache.fd = fileno(stdout);
-  AddLogStreamJd(&log_desc_cache, V_FD, voie_cache, NIV_FULL_DEBUG, SUP);
-
-  DisplayLogJd(log_desc_cache, "Starting the test");
-  DisplayLogJd(log_desc_cache, "-----------------");
+  LogTest( "Starting the test");
+  LogTest( "-----------------");
 
 #if defined( _USE_GHOSTFS )
   if(FSAL_IS_ERROR(status = FSAL_str2path(configfile,
@@ -266,10 +261,10 @@ main(int argc, char *argv[])
 
   if((ht = cache_inode_init(cache_param, &cache_status)) == NULL)
     {
-      DisplayLogJd(log_desc_cache, "Error %d while init hash ", cache_status);
+      LogTest( "Error %d while init hash ", cache_status);
     }
   else
-    DisplayLogJd(log_desc_cache, "Hash Table address = %p", ht);
+    LogTest( "Hash Table address = %p", ht);
 
   /* We need a cache_client to acces the cache */
   cache_client_param.log_outputs = log_desc_cache;
@@ -320,7 +315,7 @@ main(int argc, char *argv[])
   if((cache_entry_root =
       cache_inode_make_root(&fsdata, 1, ht, &client, &cred, &cache_status)) == NULL)
     {
-      DisplayLogJd(log_desc_cache, "Error: can't init fs's root");
+      LogTest( "Error: can't init fs's root");
       exit(1);
     }
 
@@ -336,7 +331,7 @@ main(int argc, char *argv[])
                                               &attrlookup,
                                               ht, &client, &cred, &cache_status)) == NULL)
     {
-      DisplayLogJd(log_desc_cache, "Error: can't lookup");
+      LogTest( "Error: can't lookup");
       exit(1);
     }
 
@@ -347,13 +342,13 @@ main(int argc, char *argv[])
                                                ht,
                                                &client, &cred, &cache_status)) == NULL)
     {
-      DisplayLogJd(log_desc_fsal, "Error: can't lookup");
+      LogTest( "Error: can't lookup");
       exit(1);
     }
 
   if(cache_entry_lookup2 != cache_entry_lookup)
     {
-      printf("Error: lookup results should be the same\n");
+      LogTest("Error: lookup results should be the same\n");
       exit(1);
     }
 
@@ -370,7 +365,7 @@ main(int argc, char *argv[])
                                                ht,
                                                &client, &cred, &cache_status)) == NULL)
     {
-      DisplayLogJd(log_desc_cache, "Error: can't lookup");
+      LogTest( "Error: can't lookup");
       exit(1);
     }
 
@@ -380,13 +375,13 @@ main(int argc, char *argv[])
                                                ht,
                                                &client, &cred, &cache_status)) == NULL)
     {
-      DisplayLogJd(log_desc_cache, "Error: can't lookup");
+      LogTest( "Error: can't lookup");
       exit(1);
     }
 
   if(cache_entry_lookup3 != cache_entry_lookup4)
     {
-      printf("Error: lookup results should be the same\n");
+      LogTest("Error: lookup results should be the same\n");
       exit(1);
     }
 
@@ -408,19 +403,19 @@ main(int argc, char *argv[])
                          dirent_array,
                          ht, &client, &cred, &cache_status) != CACHE_INODE_SUCCESS)
     {
-      DisplayLogJd(log_desc_cache, "Error: cache_inode_readdir failed\n");
+      LogTest( "Error: cache_inode_readdir failed\n");
       exit(1);
     }
 
-  DisplayLogJd(log_desc_cache, "Readdir nbfound=%d, eod_met=%d", nbfound, eod_met);
+  LogTest( "Readdir nbfound=%d, eod_met=%d", nbfound, eod_met);
   for(i = 0; i < nbfound; i++)
-    DisplayLogJd(log_desc_cache, "dirent_array[%d] ==> %s | %p", i,
+    LogTest( "dirent_array[%d] ==> %s | %p", i,
                  dirent_array[i].name.name, dirent_array[i].pentry);
 
   cache_inode_print_dir(cache_entry_root);
 
   /* looping on readir */
-  DisplayLogJd(log_desc_cache, "Loop directory in several pass");
+  LogTest( "Loop directory in several pass");
 
   eod_met = TO_BE_CONTINUED;
   begin_cookie = 0;
@@ -436,12 +431,12 @@ main(int argc, char *argv[])
                              dirent_array_loop,
                              ht, &client, &cred, &cache_status) != CACHE_INODE_SUCCESS)
         {
-          printf("Error: cache_inode_readdir failed: %d\n", cache_status);
+          LogTest("Error: cache_inode_readdir failed: %d\n", cache_status);
           exit(1);
         }
 
       for(i = 0; i < nbfound; i++)
-        DisplayLogJd(log_desc_cache, " ==> %s | %p", dirent_array_loop[i].name.name,
+        LogTest( " ==> %s | %p", dirent_array_loop[i].name.name,
                      dirent_array_loop[i].pentry);
 
       begin_cookie += nbfound;
@@ -449,7 +444,7 @@ main(int argc, char *argv[])
     }
   while(eod_met == TO_BE_CONTINUED);
 
-  DisplayLogJd(log_desc_cache, "---------------------------------");
+  LogTest( "---------------------------------");
 
   /* A lookup in the root fsal */
   if((FSAL_IS_ERROR(status = FSAL_str2name("cea", 10, &name))))
@@ -463,7 +458,7 @@ main(int argc, char *argv[])
                                               &attrlookup,
                                               ht, &client, &cred, &cache_status)) == NULL)
     {
-      DisplayLogJd(log_desc_cache, "Error: can't lookup");
+      LogTest( "Error: can't lookup");
       exit(1);
     }
 
@@ -479,31 +474,29 @@ main(int argc, char *argv[])
                                               &attrlookup,
                                               ht, &client, &cred, &cache_status)) == NULL)
     {
-      DisplayLogJd(log_desc_cache, "Error: can't lookup");
+      LogTest( "Error: can't lookup");
       exit(1);
     }
-#ifdef _WITH_HASHTABLE_PRINT
   /* Print the Hash Table */
-  HashTable_Print(ht);
-#endif
+  HashTable_Log(COMPONENT_STDOUT, ht);
 
 #ifdef _ADDITIONAL_TEST
   /* Trying to lookup from a DIR_CONTINUE */
   fsdata.handle = cache_entry_root->object.dir_begin.handle;
   fsdata.cookie = 3 * CHILDREN_ARRAY_SIZE;
 
-  printf("Input key: (Handle=%p, Cookie=%d)\n", fsdata.handle, fsdata.cookie);
+  LogTest("Input key: (Handle=%p, Cookie=%d)\n", fsdata.handle, fsdata.cookie);
 
   /* Turn the input to a hash key */
   if(cache_inode_fsaldata_2_key(&key, &fsdata, NULL))
     {
-      DisplayLogJd(log_desc_cache, "Impossible to allocate a key to that value");
+      LogTest( "Impossible to allocate a key to that value");
       exit(1);
     }
 
   if(HashTable_Get(ht, &key, &value) != HASHTABLE_SUCCESS)
     {
-      DisplayLogJd(log_desc_cache, "Key could not be found");
+      LogTest( "Key could not be found");
       exit(1);
     }
 
@@ -519,38 +512,36 @@ main(int argc, char *argv[])
                          dirent_array,
                          ht, &client, &cred, &cache_status) != CACHE_INODE_SUCCESS)
     {
-      DisplayLogJd(log_desc_cache, "Error: cache_inode_readdir failed");
+      LogTest( "Error: cache_inode_readdir failed");
       exit(1);
     }
 #endif
 
-  DisplayLogJd(log_desc_cache, "Readdir nbfound=%d, eod_met=%d", nbfound, eod_met);
+  LogTest( "Readdir nbfound=%d, eod_met=%d", nbfound, eod_met);
   for(i = 0; i < nbfound; i++)
-    DisplayLogJd(log_desc_cache, "dirent_array[%d] ==> %s | %p ", i,
+    LogTest( "dirent_array[%d] ==> %s | %p ", i,
                  dirent_array[i].name.name, dirent_array[i].pentry);
 
   /* Call the GC */
-  DisplayLogJd(log_desc_cache, "Sleeping %d second before gc (for gc invalidation)",
+  LogTest( "Sleeping %d second before gc (for gc invalidation)",
                gcpol.file_expiration_delay + 2);
   sleep(gcpol.file_expiration_delay + 2);
 
   if(cache_inode_gc(ht, &client, &cache_status) != CACHE_INODE_SUCCESS)
     {
-      DisplayLogJd(log_desc_cache, "Error: cache_inode_gc failed");
+      LogTest( "Error: cache_inode_gc failed");
       exit(1);
     }
-  DisplayLogJd(log_desc_cache, "GC performed successfully");
+  LogTest( "GC performed successfully");
 
-#ifdef _WITH_HASHTABLE_PRINT
   /* Print the Hash Table */
-  HashTable_Print(ht);
-#endif
+  HashTable_Log(COMPONENT_STDOUT, ht);
 
   /* Another readdir, after gc is made */
   eod_met = TO_BE_CONTINUED;
   begin_cookie = 0;
 
-  DisplayLogJd(log_desc_cache, "ANOTHER READDIR AFTER GC");
+  LogTest( "ANOTHER READDIR AFTER GC");
 
   do
     {
@@ -563,12 +554,12 @@ main(int argc, char *argv[])
                              dirent_array_loop,
                              ht, &client, &cred, &cache_status) != CACHE_INODE_SUCCESS)
         {
-          printf("Error: cache_inode_readdir failed: %d\n", cache_status);
+          LogTest("Error: cache_inode_readdir failed: %d\n", cache_status);
           exit(1);
         }
 
       for(i = 0; i < nbfound; i++)
-        DisplayLogJd(log_desc_cache, " ==> %s | %p", dirent_array_loop[i].name.name,
+        LogTest( " ==> %s | %p", dirent_array_loop[i].name.name,
                      dirent_array_loop[i].pentry);
 
       begin_cookie += nbfound;
@@ -576,17 +567,15 @@ main(int argc, char *argv[])
     }
   while(eod_met == TO_BE_CONTINUED);
 
-  DisplayLogJd(log_desc_cache, "---------------------------------");
+  LogTest( "---------------------------------");
 
-#ifdef _WITH_HASHTABLE_PRINT
   /* Print the Hash Table */
-  HashTable_Print(ht);
-#endif
+  HashTable_Log(COMPONENT_STDOUT, ht);
 
-  DisplayLogJd(log_desc_cache, "---------------------------------");
+  LogTest( "---------------------------------");
 
   /* The end of all the tests */
-  DisplayLogJd(log_desc_cache, "All tests exited successfully");
+  LogTest( "All tests exited successfully");
 
   exit(0);
 }                               /* main */
