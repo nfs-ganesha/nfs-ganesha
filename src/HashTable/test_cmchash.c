@@ -141,8 +141,6 @@ int main(int argc, char *argv[])
   int critere_recherche = 0;
   int random_val = 0;
 
-  SetDefaultLogging("stderr");
-
   hparam.index_size = PRIME;
   hparam.alphabet_length = 10;
   hparam.nb_node_prealloc = NB_PREALLOC;
@@ -157,12 +155,12 @@ int main(int argc, char *argv[])
   /* Init de la table */
   if((ht = HashTable_Init(hparam)) == NULL)
     {
-      LogTest("Test ECHOUE : Mauvaise init");
+      LogTest("Test FAILED: Bad init");
       exit(1);
     }
 
   MesureTemps(&debut, NULL);
-  LogTest("Creation de la table");
+  LogTest("Created the table");
 
   for(i = 0; i < MAXTEST; i++)
     {
@@ -175,11 +173,11 @@ int main(int argc, char *argv[])
       buffval.pdata = strtab[i];
 
       rc = HashTable_Set(ht, &buffkey, &buffval);
-      LogFullDebug(COMPONENT_HASHTABLE,"Ajout de %s , %d , sortie = %d", strtab[i], i, rc);
+      LogFullDebug(COMPONENT_HASHTABLE,"Added %s , %d , return = %d", strtab[i], i, rc);
     }
 
   MesureTemps(&fin, &debut);
-  LogTest("Duree de l'insertion de %d entrees: %s", MAXTEST,
+  LogTest("Time to insert %d entries: %s", MAXTEST,
          ConvertiTempsChaine(fin, NULL));
 
   LogFullDebug(COMPONENT_HASHTABLE, "-----------------------------------------");
@@ -198,13 +196,13 @@ int main(int argc, char *argv[])
   rc = HashTable_Get(ht, &buffkey, &buffval);
   MesureTemps(&fin, &debut);
 
-  LogTest("Recuperation de la %d eme clef --> %d", critere_recherche, rc);
+  LogTest("Recovery of %d th key ->%d", critere_recherche, rc);
 
-  LogTest("Duree de la recuperation = %s", ConvertiTempsChaine(fin, NULL));
+  LogTest("Time to recover = %s", ConvertiTempsChaine(fin, NULL));
 
   if(rc != HASHTABLE_SUCCESS)
     {
-      LogTest("Test ECHOUE : La clef n'est pas trouvee");
+      LogTest("Test FAILED: The key is not found");
       exit(1);
     }
 
@@ -216,26 +214,26 @@ int main(int argc, char *argv[])
   rc = HashTable_Get(ht, &buffkey, &buffval);
   MesureTemps(&fin, &debut);
 
-  LogTest("Recuperation de la %d eme clef (essai 2) --> %d", critere_recherche, rc);
+  LogTest("Recovery of %d th key (test 2) -> %s", critere_recherche, rc);
 
-  LogTest("Duree de la recuperation = %s", ConvertiTempsChaine(fin, NULL));
+  LogTest("Time to recover = %s", ConvertiTempsChaine(fin, NULL));
 
   if(rc != HASHTABLE_SUCCESS)
     {
-      LogTest("Test ECHOUE : La clef n'est pas trouvee (essai 2)");
+      LogTest("Test FAILED: The key is not found (test 2)");
       exit(1);
     }
 
-  LogTest("----> valeur recuperee = len %d ; val = %s", buffval.len, buffval.pdata);
+  LogTest("----> retrieved value = len %d ; val = %s", buffval.len, buffval.pdata);
   val = atoi(buffval.pdata);
 
   if(val != critere_recherche)
     {
-      LogTest("Test ECHOUE : la valeur lue est incorrecte");
+      LogTest("Test FAILED: the reading is incorrect");
       exit(1);
     }
 
-  LogTest("Maintenant, j'essaye de recuperer %d entrees (prises au hasard, ou presque) ",
+  LogTest("Now, I try to retrieve %d entries (taken at random, almost)",
          MAXGET);
   MesureTemps(&debut, NULL);
   for(i = 0; i < MAXGET; i++)
@@ -246,16 +244,16 @@ int main(int argc, char *argv[])
       buffkey2.pdata = tmpstr;
 
       rc = HashTable_Get(ht, &buffkey2, &buffval2);
-      LogFullDebug(COMPONENT_HASHTABLE,"\tLecture  de key = %s  --> %s", buffkey2.pdata, buffval2.pdata);
+      LogFullDebug(COMPONENT_HASHTABLE,"\tPlaying key = %s  --> %s", buffkey2.pdata, buffval2.pdata);
       if(rc != HASHTABLE_SUCCESS)
         {
-          LogTest("Erreur lors de la lecture de %d = %d", i, rc);
-          LogTest("Test ECHOUE : la valeur lue est incorrecte");
+          LogTest("Error reading %d = %d", i, rc);
+          LogTest("Test FAILED: the reading is incorrect");
           exit(1);
         }
     }
   MesureTemps(&fin, &debut);
-  LogTest("Duree de lecture de %d elements = %s", MAXGET,
+  LogTest("Time to read %d elements = %s", MAXGET,
          ConvertiTempsChaine(fin, NULL));
 
   LogTest("-----------------------------------------");
@@ -265,11 +263,11 @@ int main(int argc, char *argv[])
   buffkey.pdata = tmpstr;
 
   rc = HashTable_Del(ht, &buffkey, NULL, NULL);
-  LogTest("Effacement de la %d e clef --> %d", critere_recherche, rc);
+  LogTest("Deleting the key %d --> %d", critere_recherche, rc);
 
   if(rc != HASHTABLE_SUCCESS)
     {
-      LogTest("Test ECHOUE : effacement incorrect");
+      LogTest("Test FAILED: delete incorrect");
       exit(1);
     }
 
@@ -280,11 +278,11 @@ int main(int argc, char *argv[])
   buffkey.pdata = tmpstr;
 
   rc = HashTable_Del(ht, &buffkey, NULL, NULL);
-  LogTest("Effacement de la %d e clef (2eme test) --> %d", critere_recherche, rc);
+  LogTest("Deleting the key %d (2nd try) --> %d", critere_recherche, rc);
 
   if(rc != HASHTABLE_ERROR_NO_SUCH_KEY)
     {
-      printf("Test ECHOUE : effacement incorrect");
+      printf("Test FAILED: delete incorrect");
       exit(1);
     }
 
@@ -296,45 +294,55 @@ int main(int argc, char *argv[])
 
   rc = HashTable_Get(ht, &buffkey, &buffval);
   LogTest
-      ("Recuperation de la %d e clef (effacee) (doit retourne HASH_ERROR_NO_SUCH_KEY) = %d --> %d",
+      ("Recovery of the %d key (erased) (must return HASH_ERROR_NO_SUCH_KEY) = %d --> %d",
        critere_recherche, HASHTABLE_ERROR_NO_SUCH_KEY, rc);
 
   if(rc != HASHTABLE_ERROR_NO_SUCH_KEY)
     {
-      LogTest("Test ECHOUE : la valeur lue est incorrecte");
+      LogTest("Test FAILED: the reading is incorrect");
       exit(1);
     }
   LogTest("-----------------------------------------");
 
   LogTest
-      ("Destruction de %d items, pris au hasard (enfin si on veux... j'utilise srandom) ",
+      ("Destruction of %d items, taken at random (well if you want ... I use srandom)",
        MAXDESTROY);
   srandom(getpid());
+  random_val = random() % MAXTEST;
 
   MesureTemps(&debut, NULL);
   for(i = 0; i < MAXDESTROY; i++)
     {
-      random_val = random() % MAXTEST;
+      /* 
+      it used to be that the random values were chosen with
+      repeated calls to random(), but if the same key comes up twice,
+      that causes a fail.  This way we start with a random value and
+      just linearly delete from it
+      */
+
+      random_val = (random_val + 1) % MAXTEST;
       sprintf(tmpstr, "%d", random_val);
-      LogTest("\t J'efface %d", random_val);
+      LogTest("\t Delete %d", random_val);
       buffkey.len = strlen(tmpstr);
       buffkey.pdata = tmpstr;
 
       rc = HashTable_Del(ht, &buffkey, NULL, NULL);
+      
+
       if(rc != HASHTABLE_SUCCESS)
         {
-          LogTest("Erreur lors de la destruction de %d = %d", i, rc);
-          LogTest("Test ECHOUE : effacement incorrect");
+          LogTest("Error on delete %d = %d", i, rc);
+          LogTest("Test FAILED: delete incorrect");
           exit(1);
         }
     }
   MesureTemps(&fin, &debut);
-  LogTest("Duree de la destruction de %d elements = %s", MAXDESTROY,
+  LogTest("Time to delete %d elements = %s", MAXDESTROY,
          ConvertiTempsChaine(fin, NULL));
 
   LogTest("-----------------------------------------");
 
-  LogTest("Maintenant, j'essaye de recuperer %d entrees (eventuellement detruites) ",
+  LogTest("Now, I try to retrieve %d entries (if necessary destroyed)",
          MAXGET);
   MesureTemps(&debut, NULL);
   for(i = 0; i < MAXGET; i++)
@@ -347,20 +355,20 @@ int main(int argc, char *argv[])
       rc = HashTable_Get(ht, &buffkey, &buffval);
     }
   MesureTemps(&fin, &debut);
-  LogTest("Duree de lecture de %d elements = %s", MAXGET,
+  LogTest("Tie to read %d elements = %s", MAXGET,
          ConvertiTempsChaine(fin, NULL));
 
   LogTest("-----------------------------------------");
-  LogTest("Ecriture d'une clef en double ");
+  LogTest("Writing a duplicate key ");
   sprintf(tmpstr, "%d", CRITERE_2);
   buffkey.len = strlen(tmpstr);
   buffkey.pdata = tmpstr;
   rc = HashTable_Test_And_Set(ht, &buffkey, &buffval, HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
-  LogTest("La valeur doit etre HASHTABLE_ERROR_KEY_ALREADY_EXISTS  = %d --> %d",
+  LogTest("The value should be HASHTABLE_ERROR_KEY_ALREADY_EXISTS  = %d --> %d",
          HASHTABLE_ERROR_KEY_ALREADY_EXISTS, rc);
   if(rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
     {
-      LogTest("Test ECHOUE : Clef redondante");
+      LogTest("Test FAILED: duplicate key");
       exit(1);
     }
   LogTest("-----------------------------------------");
@@ -368,15 +376,15 @@ int main(int argc, char *argv[])
   HashTable_Log(COMPONENT_HASHTABLE,ht);
   LogFullDebug(COMPONENT_HASHTABLE,"-----------------------------------------");
 
-  LogTest("Affichage des statistiques de la table ");
+  LogTest("Displaying table statistics ");
   HashTable_GetStats(ht, &statistiques);
-  LogTest(" Nombre d'entrees = %d", statistiques.dynamic.nb_entries);
+  LogTest(" Number of entries = %d", statistiques.dynamic.nb_entries);
 
-  LogTest("   Operations reussies  : Set = %d,  Get = %d,  Del = %d,  Test = %d",
+  LogTest("   Successful operations  : Set = %d,  Get = %d,  Del = %d,  Test = %d",
          statistiques.dynamic.ok.nb_set, statistiques.dynamic.ok.nb_get,
          statistiques.dynamic.ok.nb_del, statistiques.dynamic.ok.nb_test);
 
-  LogTest("   Operations en erreur : Set = %d,  Get = %d,  Del = %d,  Test = %d",
+  LogTest("   Failed operations : Set = %d,  Get = %d,  Del = %d,  Test = %d",
          statistiques.dynamic.err.nb_set, statistiques.dynamic.err.nb_get,
          statistiques.dynamic.err.nb_del, statistiques.dynamic.err.nb_test);
 
@@ -385,21 +393,21 @@ int main(int argc, char *argv[])
          statistiques.dynamic.notfound.nb_del, statistiques.dynamic.notfound.nb_test);
 
   LogTest
-      ("  Statistiques calculees: min_rbt_node = %d,  max_rbt_node = %d,  average_rbt_node = %d",
+      ("  Calculated statistics: min_rbt_node = %d,  max_rbt_node = %d,  average_rbt_node = %d",
        statistiques.computed.min_rbt_num_node, statistiques.computed.max_rbt_num_node,
        statistiques.computed.average_rbt_num_node);
 
   /* Test sur la pertinence des valeurs de statistiques */
   if(statistiques.dynamic.ok.nb_set != MAXTEST)
     {
-      LogTest("Test ECHOUE : statistiques incorrectes: ok.nb_set ");
+      LogTest("Test FAILED: Incorrect statistics: ok.nb_set ");
       exit(1);
     }
 
   if(statistiques.dynamic.ok.nb_get + statistiques.dynamic.notfound.nb_get !=
      2 * MAXGET + 3)
     {
-      LogTest("Test ECHOUE : statistiques incorrectes: *.nb_get ");
+      LogTest("Test FAILED: Incorrect statistics: *.nb_get ");
       exit(1);
     }
 
@@ -420,7 +428,7 @@ int main(int argc, char *argv[])
   BuddyDumpMem(stdout);
 
   LogTest("\n-----------------------------------------");
-  LogTest("Test reussi : tous les tests sont passes avec succes");
+  LogTest("Test succeeded: all tests pass successfully");
 
   exit(0);
 }
