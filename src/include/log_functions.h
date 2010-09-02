@@ -16,7 +16,7 @@
 #include "snmp_adm.h"
 #endif
 
-#ifdef _USE_GPFS
+#if defined(_USE_GPFS) || defined(_USE_SNMP)
 #define NO_OLD_LOGGING
 #else
 #define OLD_LOGGING

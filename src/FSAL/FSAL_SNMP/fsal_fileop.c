@@ -282,7 +282,7 @@ fsal_status_t SNMPFSAL_read(snmpfsal_file_t * file_descriptor,  /* IN */
   *read_amount = sz;
   *end_of_file = TRUE;
 
-  printf("buffer_size=%llu, read_amount=%llu\n", buffer_size, *read_amount);
+  LogFullDebug(COMPONENT_FSAL, "buffer_size=%llu, read_amount=%llu\n", buffer_size, *read_amount);
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_read);
 
@@ -335,9 +335,7 @@ fsal_status_t SNMPFSAL_write(snmpfsal_file_t * file_descriptor, /* IN */
   if(file_descriptor->rw_mode != FSAL_MODE_WRITE)
     Return(ERR_FSAL_NOT_OPENED, 0, INDEX_FSAL_write);
 
-#ifdef _DEBUG_FSAL
-  printf("buffer_size=%llu, content='%.*s'\n", buffer_size, (int)buffer_size, buffer);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "buffer_size=%llu, content='%.*s'\n", buffer_size, (int)buffer_size, buffer);
 
   /* seek operations are not allowed */
 

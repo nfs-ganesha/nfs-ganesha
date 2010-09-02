@@ -77,38 +77,35 @@ int IssueSNMPQuery(snmpfsal_op_context_t * p_context, oid * oid_tab, int oid_len
   switch (p_req_desc->request_type)
     {
     case SNMP_MSG_GET:
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Issuing SNMP GET request on %s",
-                        oid_str);
+      LogFullDebug(COMPONENT_FSAL, "Issuing SNMP GET request on %s", oid_str);
       /* for a get request, the value field is empty */
       snmp_add_null_var(p_context->snmp_request, oid_tab, oid_len);
       break;
 
     case SNMP_MSG_GETNEXT:
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Issuing SNMP GETNEXT request on %s",
-                        oid_str);
+      LogFullDebug(COMPONENT_FSAL, "Issuing SNMP GETNEXT request on %s", oid_str);
       /* for a get request, the value field is empty */
       snmp_add_null_var(p_context->snmp_request, oid_tab, oid_len);
       break;
 
     case SNMP_MSG_SET:
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-                        "Issuing SNMP SET request on %s (type '%c', value='%s')", oid_str,
-                        p_req_desc->SET_REQUEST_INFO.type,
-                        p_req_desc->SET_REQUEST_INFO.value);
+      LogFullDebug(COMPONENT_FSAL,
+                   "Issuing SNMP SET request on %s (type '%c', value='%s')", oid_str,
+                   p_req_desc->SET_REQUEST_INFO.type,
+                   p_req_desc->SET_REQUEST_INFO.value);
       /* for a set request, we set the value and type */
       snmp_add_var(p_context->snmp_request, oid_tab, oid_len,
                    p_req_desc->SET_REQUEST_INFO.type, p_req_desc->SET_REQUEST_INFO.value);
       break;
 
     case SNMP_MSG_TRAP:
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Issuing a SNMP TRAP (v1) on %s",
-                        oid_str);
+      LogFullDebug(COMPONENT_FSAL, "Issuing a SNMP TRAP (v1) on %s", oid_str);
       break;
 
     case SNMP_MSG_GETBULK:
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-                        "Issuing SNMP GETBULK request on %s (max-repetitions=%ld)",
-                        oid_str, p_req_desc->GETBULK_REQUEST_INFO.max_repetitions);
+      LogFullDebug(COMPONENT_FSAL,
+                   "Issuing SNMP GETBULK request on %s (max-repetitions=%ld)",
+                   oid_str, p_req_desc->GETBULK_REQUEST_INFO.max_repetitions);
       /* in case of a GETBULK request, we set the request options */
       p_context->snmp_request->non_repeaters =
           p_req_desc->GETBULK_REQUEST_INFO.non_repeaters;
@@ -120,23 +117,20 @@ int IssueSNMPQuery(snmpfsal_op_context_t * p_context, oid * oid_tab, int oid_len
       break;
 
     case SNMP_MSG_INFORM:
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Issuing a SNMP INFORM message on %s",
-                        oid_str);
+      LogFullDebug(COMPONENT_FSAL, "Issuing a SNMP INFORM message on %s", oid_str);
       break;
 
     case SNMP_MSG_TRAP2:
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Issuing a SNMP TRAP (v2,3) on %s",
-                        oid_str);
+      LogFullDebug(COMPONENT_FSAL, "Issuing a SNMP TRAP (v2,3) on %s", oid_str);
       break;
 
     case SNMP_MSG_REPORT:
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Issuing a SNMP REPORT message on %s",
-                        oid_str);
+      LogFullDebug(COMPONENT_FSAL, "Issuing a SNMP REPORT message on %s", oid_str);
       break;
 
     default:
-      DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: Unknown request %#X on %s",
-                        p_req_desc->request_type, oid_str);
+      LogCrit(COMPONENT_FSAL, "ERROR: Unknown request %#X on %s",
+              p_req_desc->request_type, oid_str);
       return SNMPERR_MAX - 1;
 
     }
