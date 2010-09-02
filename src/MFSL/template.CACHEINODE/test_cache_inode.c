@@ -58,7 +58,7 @@ int lru_entry_to_str(LRU_data_t data, char *str)
 
   pentry = (cache_entry_t *) data.pdata;
 
-  return sLogTest(str, "Pentry: Addr %p, state=%d", pentry,
+  return sprintf(str, "Pentry: Addr %p, state=%d", pentry,
                  pentry->internal_md.valid_state);
 }                               /* lru_entry_to_str */
 
@@ -135,7 +135,7 @@ main(int argc, char *argv[])
   /* Init the Buddy System allocation */
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
-      fLogTest(stderr, "Error while Initing the Buddy system allocator");
+      LogTest(stderr, "Error while Initing the Buddy system allocator");
       exit(1);
     }
 
@@ -148,7 +148,7 @@ main(int argc, char *argv[])
 #if defined( _USE_GHOSTFS )
   if(argc != 2)
     {
-      fLogTest(stderr, "Please set the configuration file as parameter\n");
+      LogTest(stderr, "Please set the configuration file as parameter");
       exit(1);
     }
 #endif
@@ -347,7 +347,7 @@ main(int argc, char *argv[])
 
   if(cache_entry_lookup2 != cache_entry_lookup)
     {
-      LogTest("Error: lookup results should be the same\n");
+      LogTest("Error: lookup results should be the same");
       exit(1);
     }
 
@@ -380,7 +380,7 @@ main(int argc, char *argv[])
 
   if(cache_entry_lookup3 != cache_entry_lookup4)
     {
-      LogTest("Error: lookup results should be the same\n");
+      LogTest("Error: lookup results should be the same");
       exit(1);
     }
 
@@ -402,7 +402,7 @@ main(int argc, char *argv[])
                          dirent_array,
                          ht, &client, &cred, &cache_status) != CACHE_INODE_SUCCESS)
     {
-      LogTest( "Error: cache_inode_readdir failed\n");
+      LogTest( "Error: cache_inode_readdir failed");
       exit(1);
     }
 
@@ -430,7 +430,7 @@ main(int argc, char *argv[])
                              dirent_array_loop,
                              ht, &client, &cred, &cache_status) != CACHE_INODE_SUCCESS)
         {
-          LogTest("Error: cache_inode_readdir failed: %d\n", cache_status);
+          LogTest("Error: cache_inode_readdir failed: %d", cache_status);
           exit(1);
         }
 
@@ -484,7 +484,7 @@ main(int argc, char *argv[])
   fsdata.handle = cache_entry_root->object.dir_begin.handle;
   fsdata.cookie = 3 * CHILDREN_ARRAY_SIZE;
 
-  LogTest("Input key: (Handle=%p, Cookie=%d)\n", fsdata.handle, fsdata.cookie);
+  LogTest("Input key: (Handle=%p, Cookie=%d)", fsdata.handle, fsdata.cookie);
 
   /* Turn the input to a hash key */
   if(cache_inode_fsaldata_2_key(&key, &fsdata, NULL))
@@ -553,7 +553,7 @@ main(int argc, char *argv[])
                              dirent_array_loop,
                              ht, &client, &cred, &cache_status) != CACHE_INODE_SUCCESS)
         {
-          LogTest("Error: cache_inode_readdir failed: %d\n", cache_status);
+          LogTest("Error: cache_inode_readdir failed: %d", cache_status);
           exit(1);
         }
 
