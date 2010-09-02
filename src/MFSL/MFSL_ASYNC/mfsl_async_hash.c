@@ -72,18 +72,18 @@ hash_parameter_t mfsl_hparam;
 unsigned long mfsl_async_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef)
 {
   unsigned long h = 0;
-#ifdef _DEBUG_HASHTABLE
-  char printbuf[128];
-#endif
+
   mfsl_object_t *mobject = (mfsl_object_t *) (buffclef->pdata);
 
   h = FSAL_Handle_to_HashIndex(&mobject->handle, 0, mfsl_hparam.alphabet_length,
                                mfsl_hparam.index_size);
 
-#ifdef _DEBUG_HASHTABLE
-  snprintHandle(printbuf, 128, &mobject->handle);
-  printf("hash_func key: buff =(Handle=%s), hash value=%lu\n", printbuf, h);
-#endif
+  if (isFullDebug(COMPONENT_HASHTABLE)
+    {
+      char printbuf[128];
+      snprintHandle(printbuf, 128, &mobject->handle);
+      LogFullDebug(COMPONENT_HASHTABLE, "hash_func key: buff =(Handle=%s), hash value=%lu\n", printbuf, h);
+    }
 
   return h;
 }                               /* mfsl_async_hash_func */
@@ -104,18 +104,19 @@ unsigned long mfsl_async_rbt_func(hash_parameter_t * p_hparam, hash_buffer_t * b
 {
   /* A polynomial function too, but reversed, to avoid producing same value as decimal_simple_hash_func */
   unsigned long h = 0;
-#ifdef _DEBUG_HASHTABLE
-  char printbuf[128];
-#endif
 
   mfsl_object_t *mobject = (mfsl_object_t *) (buffclef->pdata);
 
   h = FSAL_Handle_to_RBTIndex(&mobject->handle, 0);
 
-#ifdef _DEBUG_HASHTABLE
-  snprintHandle(printbuf, 128, &mobject->handle);
-  printf("hash_func rbt: buff =(Handle=%s), value=%lu\n", printbuf, h);
-#endif
+
+  if (isFullDebug(COMPONENT_HASHTABLE)
+    {
+      char printbuf[128];
+      snprintHandle(printbuf, 128, &mobject->handle);
+      LogFullDebug(COMPONENT_HASHTABLE, "hash_func rbt: buff =(Handle=%s), value=%lu\n", printbuf, h);
+    }
+
   return h;
 }                               /* mfsl_async_rbt_func */
 
@@ -215,9 +216,8 @@ int mfsl_async_set_specdata(mfsl_object_t * key, mfsl_object_specific_data_t * v
   if(rc != HASHTABLE_SUCCESS && rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
     return 0;
 
-#ifdef _DEBUG_HASHTABLE
-  HashTable_Print(mfsl_ht);
-#endif
+  if (isFulDebug(COMPONENT_HASHTABLE)
+      HashTable_Log(COMPONENT_MFSL, mfsl_ht);
 
   return 1;
 }                               /* mfsl_async_set_specdata */
@@ -232,9 +232,8 @@ int mfsl_async_get_specdata(mfsl_object_t * key, mfsl_object_specific_data_t ** 
   if(key == NULL || ppvalue == NULL)
     return 0;
 
-#ifdef _DEBUG_HASHTABLE
-  HashTable_Print(mfsl_ht);
-#endif
+  if (isFulDebug(COMPONENT_HASHTABLE)
+      HashTable_Log(COMPONENT_MFSL, mfsl_ht);
 
   buffkey.pdata = (caddr_t) key;
   buffkey.len = sizeof(mfsl_object_t);
@@ -288,9 +287,8 @@ int mfsl_async_is_object_asynchronous(mfsl_object_t * object)
   if(object == NULL)
     return 0;
 
-#ifdef _DEBUG_HASHTABLE
-  HashTable_Print(mfsl_ht);
-#endif
+  if (isFulDebug(COMPONENT_HASHTABLE)
+  HashTable_Log(COMPONENT_MFSL, mfsl_ht);
 
   buffkey.pdata = (caddr_t) object;
   buffkey.len = sizeof(mfsl_object_t);

@@ -39,7 +39,7 @@
 #endif
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -129,8 +129,8 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
       if(pfsdata->cookie != DIR_START)
         {
           /* added for sanity check */
-          DisplayLog
-              ("=======> Pb cache_inode_get: line %u pfsdata->cookie != DIR_START (=%u) on object whose type is %u",
+          LogFullDebug(COMPONENT_CACHE_INODE,
+              "=======> Pb cache_inode_get: line %u pfsdata->cookie != DIR_START (=%u) on object whose type is %u",
                __LINE__, pfsdata->cookie,
                cache_inode_fsal_type_convert(fsal_attributes.type));
 
@@ -150,20 +150,20 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
         {
           *pstatus = cache_inode_error_convert(fsal_status);
 
-          DisplayLog("cache_inode_get: line %u cache_inode_status=%u fsal_status=%u,%u ",
+          LogFullDebug(COMPONENT_CACHE_INODE,"cache_inode_get: line %u cache_inode_status=%u fsal_status=%u,%u ",
                      __LINE__, *pstatus, fsal_status.major, fsal_status.minor);
 
           if(fsal_status.major == ERR_FSAL_STALE)
             {
               cache_inode_status_t kill_status;
 
-              DisplayLog
-                  ("cache_inode_get: Stale FSAL File Handle detected for pentry = %p",
+              LogEvent(COMPONENT_CACHE_INODE,
+                  "cache_inode_get: Stale FSAL File Handle detected for pentry = %p",
                    pentry);
 
               if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
-                DisplayLog("cache_inode_get: Could not kill entry %p, status = %u",
+		LogCrit(COMPONENT_CACHE_INODE,"cache_inode_get: Could not kill entry %p, status = %u",
                            pentry, kill_status);
 
               *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -216,13 +216,13 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
                 {
                   cache_inode_status_t kill_status;
 
-                  DisplayLog
-                      ("cache_inode_get: Stale FSAL File Handle detected for pentry = %p",
+                  LogEvent(COMPONENT_CACHE_INODE,
+                      "cache_inode_get: Stale FSAL File Handle detected for pentry = %p",
                        pentry);
 
                   if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                      CACHE_INODE_SUCCESS)
-                    DisplayLog("cache_inode_get: Could not kill entry %p, status = %u",
+                    LogCrit(COMPONENT_CACHE_INODE,"cache_inode_get: Could not kill entry %p, status = %u",
                                pentry, kill_status);
 
                   *pstatus = CACHE_INODE_FSAL_ESTALE;
