@@ -75,7 +75,7 @@ fsal_status_t MFSL_async_post(mfsl_async_op_desc_t * popdesc)
 
   if((plru_entry = LRU_new_entry(async_op_lru, &lru_status)) == NULL)
     {
-      DisplayLog("Impossible to post async operation in LRU dispatch list");
+      LogMajor(COMPONENT_MFSL,"Impossible to post async operation in LRU dispatch list");
       MFSL_return(ERR_FSAL_SERVERFAULT, (int)lru_status);
     }
 
@@ -109,13 +109,13 @@ fsal_status_t mfsl_async_process_async_op(mfsl_async_op_desc_t * pasyncopdesc)
     }
 
   /* Calling the function from async op */
-  DisplayLogLevel(NIV_DEBUG, "op_type=%u %s", pasyncopdesc->op_type,
+  LogDebug(COMPONENT_MFSL, "op_type=%u %s", pasyncopdesc->op_type,
                   mfsl_async_op_name[pasyncopdesc->op_type]);
 
   fsal_status = (pasyncopdesc->op_func) (pasyncopdesc);
 
   if(FSAL_IS_ERROR(fsal_status))
-    DisplayLogLevel(NIV_MAJOR, "op_type=%u %s : error (%u,%u)",
+    LogMajor(COMPONENT_MFSL, "op_type=%u %s : error (%u,%u)",
                     pasyncopdesc->op_type, mfsl_async_op_name[pasyncopdesc->op_type],
                     fsal_status.major, fsal_status.minor);
 
@@ -199,24 +199,24 @@ void *mfsl_async_synclet_refresher_thread(void *Arg)
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      DisplayLog("Memory manager could not be initialized, exiting...");
+      LogMajor(COMPONENT_MFSL,"Memory manager could not be initialized, exiting...");
       exit(1);
     }
-  DisplayLog("Memory manager successfully initialized");
+  LogEvent(COMPONENT_MFSL, "Memory manager successfully initialized");
 #endif
 
   /* Init FSAL root fsal_op_context */
   if(FSAL_IS_ERROR(FSAL_BuildExportContext(&fsal_export_context, NULL, NULL)))
     {
       /* Failed init */
-      DisplayLog("MFSL Synclet context could not build export context, exiting...");
+      LogMajor(COMPONENT_MFSL,"MFSL Synclet context could not build export context, exiting...");
       exit(1);
     }
 
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&fsal_context)))
     {
       /* Failed init */
-      DisplayLog("MFSL Synclet context could not build thread context, exiting...");
+      LogMajor(COMPONENT_MFSL,"MFSL Synclet context could not build thread context, exiting...");
       exit(1);
     }
 
@@ -224,12 +224,12 @@ void *mfsl_async_synclet_refresher_thread(void *Arg)
                                          &fsal_export_context, 0, 0, NULL, 0)))
     {
       /* Failed init */
-      DisplayLog("could not build client context, exiting...");
+      LogMajor(COMPONENT_MFSL,"could not build client context, exiting...");
       exit(1);
     }
 
   /* Showtime... */
-  DisplayLog("Started...");
+  LogEvent(COMPONENT_MFSL, "Started...");
 }                               /* mfsl_async_synclet_refresher_thread */
 
 /**
@@ -261,24 +261,24 @@ void *mfsl_async_synclet_thread(void *Arg)
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      DisplayLog("Memory manager could not be initialized, exiting...");
+      LogMajor(COMPONENT_MFSL,"Memory manager could not be initialized, exiting...");
       exit(1);
     }
-  DisplayLog("Memory manager successfully initialized");
+  LogEvent(COMPONENT_MFSL, "Memory manager successfully initialized");
 #endif
 
   /* Init FSAL root fsal_op_context */
   if(FSAL_IS_ERROR(FSAL_BuildExportContext(&fsal_export_context, NULL, NULL)))
     {
       /* Failed init */
-      DisplayLog("MFSL Synclet context could not build export context, exiting...");
+      LogMajor(COMPONENT_MFSL,"MFSL Synclet context could not build export context, exiting...");
       exit(1);
     }
 
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&synclet_data[index].root_fsal_context)))
     {
       /* Failed init */
-      DisplayLog("MFSL Synclet context could not build thread context, exiting...");
+      LogMajor(COMPONENT_MFSL,"MFSL Synclet context could not build thread context, exiting...");
       exit(1);
     }
 
@@ -286,7 +286,7 @@ void *mfsl_async_synclet_thread(void *Arg)
                                          &fsal_export_context, 0, 0, NULL, 0)))
     {
       /* Failed init */
-      DisplayLog("MFSL Synclet context could not build client context, exiting...");
+      LogMajor(COMPONENT_MFSL,"MFSL Synclet context could not build client context, exiting...");
       exit(1);
     }
 
@@ -295,26 +295,26 @@ void *mfsl_async_synclet_thread(void *Arg)
                                                 &synclet_data[index].root_fsal_context)))
     {
       /* Failed init */
-      DisplayLog("MFSL Synclet context could not be initialized, exiting...");
+      LogMajor(COMPONENT_MFSL,"MFSL Synclet context could not be initialized, exiting...");
       exit(1);
     }
 
   if(FSAL_IS_ERROR(MFSL_PrepareContext(&synclet_data[index].root_fsal_context)))
     {
       /* Failed init */
-      DisplayLog("MFSL Synclet context could not be cleaned up before using, exiting...");
+      LogMajor(COMPONENT_MFSL,"MFSL Synclet context could not be cleaned up before using, exiting...");
       exit(1);
     }
 
   if(FSAL_IS_ERROR(mfsl_async_init_symlinkdir(&synclet_data[index].root_fsal_context)))
     {
       /* Failed init */
-      DisplayLog("MFSL Synclet context could init symlink's nursery, exiting...");
+      LogMajor(COMPONENT_MFSL,"MFSL Synclet context could init symlink's nursery, exiting...");
       exit(1);
     }
 
   /* Showtime... */
-  DisplayLog("Started...");
+  LogEvent(COMPONENT_MFSL, "Started...");
 
   while(!end_of_mfsl)
     {
@@ -339,10 +339,10 @@ void *mfsl_async_synclet_thread(void *Arg)
 
       if(!found)
         {
-          DisplayLogLevel(NIV_MAJOR,
+          LogMajor(COMPONENT_MFSL,
                           "Error : I have been awaken when no pending async operation is available");
-          printf
-              ("synclet_data[index].op_lru->nb_entry=%u  synclet_data[index].op_lru->nb_invalid=%u\n",
+          LogFullDebug(COMPONENT_MFSL,
+              "synclet_data[index].op_lru->nb_entry=%u  synclet_data[index].op_lru->nb_invalid=%u\n",
                synclet_data[index].op_lru->nb_entry,
                synclet_data[index].op_lru->nb_invalid);
 
@@ -352,7 +352,7 @@ void *mfsl_async_synclet_thread(void *Arg)
       /* Get the async op to be proceeded */
       pasyncopdesc = (mfsl_async_op_desc_t *) (pentry->buffdata.pdata);
 
-      DisplayLogLevel(NIV_DEBUG, "I will proceed with asyncop %p", pasyncopdesc);
+      LogDebug(COMPONENT_MFSL, "I will proceed with asyncop %p", pasyncopdesc);
 
       /* Execute the async op */
       fsal_status = mfsl_async_process_async_op(pasyncopdesc);
@@ -364,8 +364,8 @@ void *mfsl_async_synclet_thread(void *Arg)
       P(synclet_data[index].mutex_op_lru);
       if(LRU_invalidate(synclet_data[index].op_lru, pentry) != LRU_LIST_SUCCESS)
         {
-          DisplayLog
-              ("Incoherency: released entry for asyncopdesc could not be tagged invalid");
+	  LogCrit(COMPONENT_MFSL, 
+              "Incoherency: released entry for asyncopdesc could not be tagged invalid");
         }
       V(synclet_data[index].mutex_op_lru);
 
@@ -375,7 +375,7 @@ void *mfsl_async_synclet_thread(void *Arg)
           (&synclet_data[index].synclet_context, &synclet_data[index].root_fsal_context)))
         {
           /* Failed init */
-          DisplayLog("MFSL Synclet context could not be initialized, exiting...");
+          LogMajor(COMPONENT_MFSL,"MFSL Synclet context could not be initialized, exiting...");
           exit(1);
         }
 
@@ -384,15 +384,15 @@ void *mfsl_async_synclet_thread(void *Arg)
         {
 
           if(LRU_gc_invalid(synclet_data[index].op_lru, NULL) != LRU_LIST_SUCCESS)
-            DisplayLog
-                ("/!\\ : Could not gc on LRU list for pending asynchronous operations");
+	  LogCrit(COMPONENT_MFSL, 
+                "/!\\ : Could not gc on LRU list for pending asynchronous operations");
 
           synclet_data[index].passcounter = 0;
         }
 
     }                           /* while( 1 ) */
 
-  DisplayLog("Terminated...");
+  LogMajor(COMPONENT_MFSL, "Terminated...");
 
   return NULL;
 }                               /* mfsl_async_synclet_thread */
@@ -423,23 +423,23 @@ void *mfsl_async_asynchronous_dispatcher_thread(void *Arg)
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      DisplayLog("Memory manager could not be initialized, exiting...");
+      LogMajor(COMPONENT_MFSL,"Memory manager could not be initialized, exiting...");
       exit(1);
     }
-  DisplayLog("Memory manager successfully initialized");
+  LogEvent(COMPONENT_MFSL, "Memory manager successfully initialized");
 #endif
 
   /* Structure initialisation */
   if((async_op_lru = LRU_Init(mfsl_param.lru_param, &lru_status)) == NULL)
     {
-      DisplayLog("Could not init LRU List");
+      LogMajor(COMPONENT_MFSL,"Could not init LRU List");
       exit(1);
     }
 
   if((rc = pthread_mutex_init(&mutex_async_list, NULL)) != 0)
     return NULL;
 
-  DisplayLog("Started...");
+  LogEvent(COMPONENT_MFSL, "Started...");
   while(!end_of_mfsl)
     {
       /* Sleep for a while */
@@ -449,7 +449,7 @@ void *mfsl_async_asynchronous_dispatcher_thread(void *Arg)
       if(gettimeofday(&current, NULL) != 0)
         {
           /* Could'not get time of day... Stopping, this may need a major failure */
-          DisplayLog(" cannot get time of day...");
+          LogCrit(COMPONENT_MFSL, " cannot get time of day...");
           continue;
         }
 
@@ -482,13 +482,13 @@ void *mfsl_async_asynchronous_dispatcher_thread(void *Arg)
                   LRU_new_entry(synclet_data[chosen_synclet].op_lru,
                                 &lru_status)) == NULL)
                 {
-                  DisplayLogLevel(NIV_CRIT,
+                  LogCrit(COMPONENT_MFSL,
                                   "Impossible to post async operation in LRU synclet list");
                   V(synclet_data[chosen_synclet].mutex_op_lru);
                   continue;
                 }
 
-              DisplayLogLevel(NIV_DEBUG, "Asyncop %p is to be managed by synclet %u",
+              LogDebug(COMPONENT_MFSL, "Asyncop %p is to be managed by synclet %u",
                               pentry_dispatch->buffdata.pdata, chosen_synclet);
 
               pentry_synclet->buffdata.pdata = pentry_dispatch->buffdata.pdata;
@@ -498,7 +498,7 @@ void *mfsl_async_asynchronous_dispatcher_thread(void *Arg)
 
               P(synclet_data[chosen_synclet].mutex_op_condvar);
               if(pthread_cond_signal(&(synclet_data[chosen_synclet].op_condvar)) == -1)
-                DisplayLogLevel(NIV_EVENT,
+                LogEvent(COMPONENT_MFSL,
                                 "Error : pthread_cond_signal failed on condvar for synclect %u",
                                 chosen_synclet);
               V(synclet_data[chosen_synclet].mutex_op_condvar);
@@ -515,8 +515,8 @@ void *mfsl_async_asynchronous_dispatcher_thread(void *Arg)
       if(passcounter > mfsl_param.nb_before_gc)
         {
           if(LRU_gc_invalid(async_op_lru, NULL) != LRU_LIST_SUCCESS)
-            DisplayLog
-                ("/!\\ : Could not gc on LRU list for not dispatched asynchronous operations");
+            LogMajor(COMPONENT_MFSL,
+                "/!\\ : Could not gc on LRU list for not dispatched asynchronous operations");
 
           passcounter = 0;
         }
@@ -524,7 +524,7 @@ void *mfsl_async_asynchronous_dispatcher_thread(void *Arg)
       V(mutex_async_list);
     }
 
-  DisplayLog("Terminated...");
+  LogMajor(COMPONENT_MFSL, "Terminated...");
 
   /* Should never occur (neverending loop) */
   return NULL;

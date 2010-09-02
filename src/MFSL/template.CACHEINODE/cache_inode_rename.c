@@ -39,7 +39,7 @@
 #endif
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -254,11 +254,11 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
         }
 
       if(*pstatus != CACHE_INODE_FSAL_ESTALE)
-        DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+        LogFullDebug(COMPONENT_CACHE_INODE, 
                           "Rename (%p,%s)->(%p,%s) : source doesn't exist", pentry_dirsrc,
                           poldname->name, pentry_dirdest, pnewname->name);
       else
-        DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG, "Rename : stale source");
+        LogFullDebug(COMPONENT_CACHE_INODE,  "Rename : stale source");
 
       return *pstatus;
     }
@@ -305,7 +305,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
                                                        pcontext, pstatus)) != NULL)
     {
 
-      DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_CACHE_INODE, 
                         "Rename (%p,%s)->(%p,%s) : destination already exists",
                         pentry_dirsrc, poldname->name, pentry_dirdest, pnewname->name);
 
@@ -357,7 +357,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
               V(pentry_dirdest->lock);
             }
 
-          DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+          LogFullDebug(COMPONENT_CACHE_INODE, 
                             "Rename (%p,%s)->(%p,%s) : rename the object on itself",
                             pentry_dirsrc, poldname->name, pentry_dirdest,
                             pnewname->name);
@@ -379,7 +379,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
               V(pentry_dirdest->lock);
             }
 
-          DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+          LogFullDebug(COMPONENT_CACHE_INODE, 
                             "Rename (%p,%s)->(%p,%s) : destination is a non-empty directory",
                             pentry_dirsrc, poldname->name, pentry_dirdest,
                             pnewname->name);
@@ -410,7 +410,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
     {
       if(*pstatus == CACHE_INODE_FSAL_ESTALE)
         {
-          DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+          LogFullDebug(COMPONENT_CACHE_INODE, 
                             "Rename : stale destnation");
 
           V(pentry_dirsrc->lock);
@@ -536,7 +536,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
       if(gettimeofday(&pasyncopdesc_src->op_time, NULL) != 0)
         {
           /* Could'not get time of day... Stopping, this may need a major failure */
-          DisplayLog("cache_inode_rename: cannot get time of day... exiting");
+          LogMajor(COMPONENT_CACHE_INODE,"cache_inode_rename: cannot get time of day... exiting");
           exit(1);
         }
 
@@ -547,7 +547,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
           /* stat */
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
 
-          DisplayLog("WARNING !!! cache_inode_rename could not post async op....");
+          LogCrit(COMPONENT_CACHE_INODE,"WARNING !!! cache_inode_rename could not post async op....");
 
           *pstatus = CACHE_INODE_ASYNC_POST_ERROR;
 
@@ -588,7 +588,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
           if(gettimeofday(&pasyncopdesc_dst->op_time, NULL) != 0)
             {
               /* Could'not get time of day... Stopping, this may need a major failure */
-              DisplayLog("cache_inode_rename: cannot get time of day... exiting");
+              LogMajor(COMPONENT_CACHE_INODE,"cache_inode_rename: cannot get time of day... exiting");
               exit(1);
             }
 
@@ -599,7 +599,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
               /* stat */
               pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
 
-              DisplayLog("WARNING !!! cache_inode_rename could not post async op....");
+              LogCrit(COMPONENT_CACHE_INODE,"WARNING !!! cache_inode_rename could not post async op....");
 
               *pstatus = CACHE_INODE_ASYNC_POST_ERROR;
 
@@ -631,34 +631,34 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
           cache_inode_status_t kill_status;
           fsal_status_t getattr_status;
 
-          DisplayLog
-              ("cache_inode_rename: Stale FSAL File Handle detected for at least one in  pentry = %p and pentry = %p",
+          LogEvent(COMPONENT_CACHE_INODE,
+              "cache_inode_rename: Stale FSAL File Handle detected for at least one in  pentry = %p and pentry = %p",
                pentry_dirsrc, pentry_dirdest);
 
           /* Use FSAL_getattrs to find which entry is staled */
           getattr_status = FSAL_getattrs(phandle_dirsrc, pcontext, &attrlookup);
           if(getattr_status.major == ERR_FSAL_ACCESS)
             {
-              DisplayLog
-                  ("cache_inode_rename: Stale FSAL File Handle detected for pentry = %p",
+              LogEvent(COMPONENT_CACHE_INODE,
+                  "cache_inode_rename: Stale FSAL File Handle detected for pentry = %p",
                    pentry_dirsrc);
 
               if(cache_inode_kill_entry(pentry_dirsrc, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
-                DisplayLog("cache_inode_rename: Could not kill entry %p, status = %u",
+                LogCrit(COMPONENT_CACHE_INODE,"cache_inode_rename: Could not kill entry %p, status = %u",
                            pentry_dirsrc, kill_status);
             }
 
           getattr_status = FSAL_getattrs(phandle_dirdest, pcontext, &attrlookup);
           if(getattr_status.major == ERR_FSAL_ACCESS)
             {
-              DisplayLog
-                  ("cache_inode_rename: Stale FSAL File Handle detected for pentry = %p",
+              LogEvent(COMPONENT_CACHE_INODE,
+                  "cache_inode_rename: Stale FSAL File Handle detected for pentry = %p",
                    pentry_dirdest);
 
               if(cache_inode_kill_entry(pentry_dirdest, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
-                DisplayLog("cache_inode_rename: Could not kill entry %p, status = %u",
+                LogCrit(COMPONENT_CACHE_INODE,"cache_inode_rename: Could not kill entry %p, status = %u",
                            pentry_dirdest, kill_status);
             }
 
@@ -701,7 +701,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
        * cache_inode_rename_dirent is used instead of adding/removing dirent. This limits
        * the use of resource in this case */
 
-      DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_CACHE_INODE, 
                         "Rename (%p,%s)->(%p,%s) : source and target directory are the same",
                         pentry_dirsrc, poldname->name, pentry_dirdest, pnewname->name);
 
@@ -721,7 +721,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
     }
   else
     {
-      DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_CACHE_INODE, 
                         "Rename (%p,%s)->(%p,%s) : moving entry", pentry_dirsrc,
                         poldname->name, pentry_dirdest, pnewname->name);
 

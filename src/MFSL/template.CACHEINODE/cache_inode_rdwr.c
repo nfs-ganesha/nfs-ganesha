@@ -41,7 +41,7 @@
 #include "fsal.h"
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "cache_inode.h"
@@ -108,7 +108,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
   /* For now, only FSAL_SEEK_SET is supported */
   if(seek_descriptor->whence != FSAL_SEEK_SET)
     {
-      DisplayLogJd(pclient->log_outputs,
+      LogDebug(COMPONENT_CACHE_INODE,
                    "Implementation trouble: seek_descriptor was not a 'FSAL_SEEK_SET' cursor");
       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
       return *pstatus;
@@ -116,11 +116,9 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 
   io_size = buffer_size;
 
-#ifdef _DEBUG_CACHE_INODE
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_CACHE_INODE, 
                     "---> INODE : IO Size = %llu fdsize =%d seeksize=%d",
                     buffer_size, sizeof(fsal_file_t), sizeof(fsal_seek_t));
-#endif
 
   /* stat */
   pclient->stat.nb_call_total += 1;
@@ -191,7 +189,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                                      pcontext, &cache_content_status) == NULL)
             {
               /* Entry could not be recoverd, cache_content_status contains an error, let it be managed by the next block */
-              DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+              LogCrit(COMPONENT_CACHE_INODE, 
                                 "Read/Write Operation through cache failed with status %d (renew process failed)",
                                 cache_content_status);
 
@@ -199,7 +197,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
           else
             {
               /* Entry was successfully renewed */
-              DisplayLog("----> File Content Entry %p was successfully renewed", pentry);
+              LogDebug(COMPONENT_CACHE_INODE,"----> File Content Entry %p was successfully renewed", pentry);
 
               /* Try to access the content of the file again */
               cache_content_rdwr(pentry->object.file.pentry_content,
@@ -225,7 +223,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 
           V(pentry->lock);
 
-          DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+          LogCrit(COMPONENT_CACHE_INODE, 
                             "Read/Write Operation through cache failed with status %d",
                             cache_content_status);
 
@@ -234,15 +232,13 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 
           return *pstatus;
         }
-#ifdef _DEBUG_CACHE_INODE
-      DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_CACHE_INODE, 
                         "inode/dc: io_size=%llu, pio_size=%llu,  eof=%d, seek=%d.%llu",
                         io_size, *pio_size, *p_fsal_eof, seek_descriptor->whence,
                         seek_descriptor->offset);
 
-      DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_CACHE_INODE, 
                         "---> INODE  AFTER : IO Size = %llu %llu", io_size, *pio_size);
-#endif
 
       /* Use information from the buffstat to update the file metadata */
       pentry->object.file.attributes.filesize = buffstat.st_size;
@@ -291,9 +287,9 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
           *pstatus = cache_inode_error_convert(fsal_status);
 
           if(fsal_status.major == ERR_FSAL_DELAY)
-            printf("--------------------------> EBUSY \n");
+            LogFullDebug(COMPONENT_CACHE_INODE,"-------------> EBUSY \n");
           else
-            printf("----> rdwr: fsal_status.major =%d\n", fsal_status.major);
+            LogFullDebug(COMPONENT_CACHE_INODE,"----> rdwr: fsal_status.major =%d\n", fsal_status.major);
 
           FSAL_close(&(pentry->object.file.open_fd.fd));
           pentry->object.file.open_fd.last_op = 0;
@@ -332,7 +328,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
             }
         }
 #ifndef _DEBUG_CACHE_INODE
-      DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_CACHE_INODE, 
                         "inode/direct: io_size=%llu, pio_size=%llu, eof=%d, seek=%d.%llu",
                         io_size, *pio_size, *p_fsal_eof, seek_descriptor->whence,
                         seek_descriptor->offset);

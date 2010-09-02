@@ -39,7 +39,7 @@
 #endif
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -218,7 +218,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
   if(gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
     {
       /* Could'not get time of day... Stopping, this may need a major failure */
-      DisplayLog("cache_inode_setattr: cannot get time of day... exiting");
+      LogMajor(COMPONENT_CACHE_INODE,"cache_inode_setattr: cannot get time of day... exiting");
       exit(1);
     }
 
@@ -228,7 +228,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_SETATTR] += 1;
 
-      DisplayLog("WARNING !!! cache_inode_setattr could not post async op....");
+      LogCrit(COMPONENT_CACHE_INODE,"WARNING !!! cache_inode_setattr could not post async op....");
 
       *pstatus = CACHE_INODE_ASYNC_POST_ERROR;
       V(pentry->lock);
@@ -255,15 +255,13 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
               /* Do not set the p_object_attributes->filesize and p_object_attributes->spaceused  in this case 
                * This will lead to a situation where (for example) untar-ing a file will produced invalid files 
                * with a size of 0 despite the fact that they are not empty */
-#ifdef  _DEBUG_CACHE_INODE
-              DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+              LogFullDebug(COMPONENT_CACHE_INODE, 
                                 "cache_inode_setattr with FSAL_ATTR_SIZE on data cached entry");
-#endif
             }
         }
       else if(pattr->asked_attributes & FSAL_ATTR_SIZE)
-        DisplayLog
-            ("WARNING !!! cache_inode_setattr tryed to operate size on a non REGULAR_FILE type=%d",
+        LogCrit(COMPONENT_CACHE_INODE,
+            "WARNING !!! cache_inode_setattr tryed to operate size on a non REGULAR_FILE type=%d",
              pentry->internal_md.type);
     }
 
