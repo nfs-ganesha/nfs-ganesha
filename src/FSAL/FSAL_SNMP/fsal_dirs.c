@@ -192,9 +192,9 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
 
       if(rc != SNMP_ERR_NOERROR && snmp2fsal_error(rc) != ERR_FSAL_NOENT)
         {
-          DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                            "SNMP GET request failed: error=%d, snmp_errno=%d, errno=%d, msg=%s",
-                            rc, snmp_errno, errno, snmp_api_errstring(rc));
+          LogDebug(COMPONENT_FSAL,
+                   "SNMP GET request failed: error=%d, snmp_errno=%d, errno=%d, msg=%s",
+                   rc, snmp_errno, errno, snmp_api_errstring(rc));
           Return(snmp2fsal_error(rc), rc, INDEX_FSAL_readdir);
         }
       else if(snmp2fsal_error(rc) != ERR_FSAL_NOENT)
@@ -236,15 +236,17 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
               else
                 nearest_node = cur_node;
 
-#ifdef _DEBUG_FSAL
-              printf
-                  ("FOUND A DIRECT CHILD (LEAF) = %s, parent_oid_len=%d, oid_len=%d, index=%d\n",
-                   pdirent[cur_nb_entries].name.name, dir_descriptor->node_handle.oid_len,
-                   p_curr_var->name_length, p_curr_var->index);
-              if(nearest_node)
-                printf("type = %#X, last oid=%ld\n", nearest_node->type,
-                       p_curr_var->name[p_curr_var->name_length - 1]);
-#endif
+              if(isFullDebug(COMPONENT_FSAL))
+                {
+                  LogFullDebug(COMPONENT_FSAL,
+                               "FOUND A DIRECT CHILD (LEAF) = %s, parent_oid_len=%d, oid_len=%d, index=%d",
+                               pdirent[cur_nb_entries].name.name, dir_descriptor->node_handle.data.oid_len,
+                               p_curr_var->name_length, p_curr_var->index);
+                  if(nearest_node)
+                    LogFullDebug(COMPONENT_FSAL, "type = %#X, last oid=%ld",
+                                 nearest_node->type,
+                                 p_curr_var->name[p_curr_var->name_length - 1]);
+                }
 
               /* set entry attributes  */
               if(get_attr_mask)
@@ -291,9 +293,9 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
 
       if(rc != SNMP_ERR_NOERROR && snmp2fsal_error(rc) != ERR_FSAL_NOENT)
         {
-          DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                            "SNMP GETNEXT request failed: error=%d, snmp_errno=%d, errno=%d, msg=%s",
-                            rc, snmp_errno, errno, snmp_api_errstring(rc));
+          LogDebug(COMPONENT_FSAL,
+                   "SNMP GETNEXT request failed: error=%d, snmp_errno=%d, errno=%d, msg=%s",
+                   rc, snmp_errno, errno, snmp_api_errstring(rc));
           Return(snmp2fsal_error(rc), rc, INDEX_FSAL_readdir);
         }
       else if(snmp2fsal_error(rc) == ERR_FSAL_NOENT)
@@ -349,15 +351,17 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
               else
                 nearest_node = cur_node;
 
-#ifdef _DEBUG_FSAL
-              printf
-                  ("FOUND A DIRECT CHILD (LEAF) = %s, parent_oid_len=%d, oid_len=%d, index=%d\n",
-                   pdirent[cur_nb_entries].name.name, dir_descriptor->node_handle.oid_len,
-                   p_curr_var->name_length, p_curr_var->index);
-              if(nearest_node)
-                printf("type = %#X, last oid=%ld\n", nearest_node->type,
-                       p_curr_var->name[p_curr_var->name_length - 1]);
-#endif
+              if(isFullDebug(COMPONENT_FSAL))
+                {
+                  LogFullDebug(COMPONENT_FSAL,
+                               "FOUND A DIRECT CHILD (LEAF) = %s, parent_oid_len=%d, oid_len=%d, index=%d",
+                               pdirent[cur_nb_entries].name.name, dir_descriptor->node_handle.data.oid_len,
+                               p_curr_var->name_length, p_curr_var->index);
+                  if(nearest_node)
+                    LogFullDebug(COMPONENT_FSAL, "type = %#X, last oid=%ld",
+                                 nearest_node->type,
+                                 p_curr_var->name[p_curr_var->name_length - 1]);
+                }
 
               /* set entry attributes  */
               if(get_attr_mask)
@@ -434,14 +438,10 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
               else
                 nearest_node = cur_node;
 
-#ifdef _DEBUG_FSAL
-              printf("FOUND A NEW SUBDIR = %s (%ld) (cookie->%ld)\n",
-                     pdirent[cur_nb_entries].name.name,
-                     pdirent[cur_nb_entries].handle.data.oid_tab[dir_descriptor->node_handle.
-                                                            oid_len],
-                     pdirent[cur_nb_entries].cookie.data.oid_tab[pdirent[cur_nb_entries].
-                                                            cookie.oid_len - 1]);
-#endif
+              LogFullDebug(COMPONENT_FSAL, "FOUND A NEW SUBDIR = %s (%ld) (cookie->%ld)",
+                           pdirent[cur_nb_entries].name.name,
+                           pdirent[cur_nb_entries].handle.data.oid_tab[dir_descriptor->node_handle.data.oid_len],
+                           pdirent[cur_nb_entries].cookie.data.oid_tab[pdirent[cur_nb_entries].cookie.data.oid_len - 1]);
 
               /* set entry attributes  */
               if(get_attr_mask)
