@@ -1,0 +1,55 @@
+#!/usr/bin/perl
+
+use strict;
+
+our $OIDBASE = ".1.3.6.1.4.1.12384.999.1.1";
+
+
+
+sub help {
+    print <<USAGE;
+ganesha_log_level - get and set the log levels for ganesh
+
+USAGE
+}
+
+sub my_exec($) {
+    my $cmd = shift;
+    my $output = "";
+    open(OUT, "$cmd 2>&1 |") or return undef;
+    while(<OUT>) {
+        $output .= $_;
+    }
+    close(OUT) or return undef;
+    # get rid of final newline
+    chomp($output);
+    return $output;
+}
+
+sub error($) {
+    my $msg = shift;
+    print "ERROR: ", $msg, "\n";
+    exit 1;
+}
+
+sub test_for_snmp_tools() {
+    foreach my $tool (qw/snmpget snmpset snmpwalk/) {
+        my $version = my_exec("$tool --version");
+        if ($version) {
+            # print "$version\n";
+        } else {
+            error("$tool not found on system, please install net-smmp-utils");
+        }
+    }
+}
+
+sub list() {
+    open("");
+}
+
+sub main() {
+    # exits if tools don't exist
+    test_for_snmp_tools();
+}
+
+main();
