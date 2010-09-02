@@ -51,8 +51,8 @@ fsal_status_t SNMPFSAL_BuildExportContext(snmpfsal_export_context_t * p_export_c
 
   if((fs_specific_options != NULL) && (fs_specific_options[0] != '\0'))
     {
-      DisplayLog
-          ("FSAL BUILD CONTEXT: ERROR: found an EXPORT::FS_Specific item whereas it is not supported for this filesystem.");
+      LogCrit(COMPONENT_FSAL,
+              "FSAL BUILD CONTEXT: ERROR: found an EXPORT::FS_Specific item whereas it is not supported for this filesystem.");
     }
 
   /* retrieves the MIB tree associated to this export */
@@ -82,7 +82,7 @@ fsal_status_t SNMPFSAL_BuildExportContext(snmpfsal_export_context_t * p_export_c
 
       if(rc)
         {
-          DisplayLog("FSAL BUILD CONTEXT: ERROR parsing SNMP path '%s'", snmp_path);
+          LogCrit(COMPONENT_FSAL, "FSAL BUILD CONTEXT: ERROR parsing SNMP path '%s'", snmp_path);
           Return(rc, 0, INDEX_FSAL_BuildExportContext);
         }
 
@@ -101,8 +101,8 @@ fsal_status_t SNMPFSAL_BuildExportContext(snmpfsal_export_context_t * p_export_c
         }
       else
         {
-          DisplayLog("FSAL BUILD CONTEXT: WARNING: '%s' seems to be a leaf !!!",
-                     snmp_path);
+          LogEvent(COMPONENT_FSAL, "FSAL BUILD CONTEXT: WARNING: '%s' seems to be a leaf !!!",
+                   snmp_path);
         }
 
       p_export_context->root_mib_tree = tree_head;
@@ -115,17 +115,18 @@ fsal_status_t SNMPFSAL_BuildExportContext(snmpfsal_export_context_t * p_export_c
   else
     FSAL_str2path("/", 2, &p_export_context->root_path);
 
-  printf("CREATING EXPORT CONTEXT PATH=%s\n", snmp_path);
+  LogEvent(COMPONENT_FSAL, "CREATING EXPORT CONTEXT PATH=%s\n", snmp_path);
 
-#ifdef _DEBUG_FSAL
-  {
-    int i;
-    printf("oid ");
-    for(i = 0; i < p_export_context->root_handle.oid_len; i++)
-      printf(".%ld", p_export_context->root_handle.oid_tab[i]);
-    printf("\n");
-  }
-#endif
+  if(isFullDebug(COMPONENT_FSAL))
+    {
+      int i;
+      char oidstr[2048], *p = oidstr;
+
+      oidstr[0] = '\0';
+      for(i = 0; i < p_export_context->root_handle.data.oid_len; i++)
+        p += sprintf(p, ".%ld", p_export_context->root_handle.data.oid_tab[i]);
+      LogFullDebug(COMPONENT_FSAL, "oid %s", oidstr);
+    }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 
@@ -202,8 +203,8 @@ fsal_status_t SNMPFSAL_InitClientContext(snmpfsal_op_context_t * p_thr_context)
                      strlen(snmp_glob_config.auth_phrase), session.securityAuthKey,
                      &session.securityAuthKeyLen) != SNMPERR_SUCCESS)
         {
-          DisplayLog
-              ("FSAL INIT CONTEXT: ERROR creating SNMP passphrase for authentification");
+          LogCrit(COMPONENT_FSAL,
+                  "FSAL INIT CONTEXT: ERROR creating SNMP passphrase for authentification");
           Return(ERR_FSAL_BAD_INIT, snmp_errno, INDEX_FSAL_InitClientContext);
         }
 
@@ -214,7 +215,7 @@ fsal_status_t SNMPFSAL_InitClientContext(snmpfsal_op_context_t * p_thr_context)
                      strlen(snmp_glob_config.enc_phrase), session.securityPrivKey,
                      &session.securityPrivKeyLen) != SNMPERR_SUCCESS)
         {
-          DisplayLog("FSAL INIT CONTEXT: ERROR creating SNMP passphrase for encryption");
+          LogCrit(COMPONENT_FSAL, "FSAL INIT CONTEXT: ERROR creating SNMP passphrase for encryption");
           Return(ERR_FSAL_BAD_INIT, snmp_errno, INDEX_FSAL_InitClientContext);
         }
     }
@@ -230,7 +231,7 @@ fsal_status_t SNMPFSAL_InitClientContext(snmpfsal_op_context_t * p_thr_context)
       char *err_msg;
       snmp_error(&session, &errno, &snmp_errno, &err_msg);
 
-      DisplayLog("FSAL INIT CONTEXT: ERROR creating SNMP session: %s", err_msg);
+      LogCrit(COMPONENT_FSAL, "FSAL INIT CONTEXT: ERROR creating SNMP session: %s", err_msg);
       Return(ERR_FSAL_BAD_INIT, snmp_errno, INDEX_FSAL_InitClientContext);
     }
 

@@ -87,10 +87,6 @@ fsal_status_t PROXYFSAL_create(proxyfsal_handle_t * parent_directory_handle,    
                                fsal_attrib_list_t * object_attributes   /* [ IN/OUT ] */
     )
 {
-#ifdef _DEBUG_FSAL
-  char outstr[1024];
-#endif
-
   int rc;
   COMPOUND4args argnfs4;
   COMPOUND4res resnfs4;
@@ -128,9 +124,7 @@ fsal_status_t PROXYFSAL_create(proxyfsal_handle_t * parent_directory_handle,    
   if(!parent_directory_handle || !p_context || !object_handle || !p_filename)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_create);
 
-#ifdef _DEBUG_FSAL
   PRINT_HANDLE("FSAL_create", parent_directory_handle);
-#endif
 
   /* Create the owner */
   snprintf(owner_val, FSAL_PROXY_OWNER_LEN, "GANESHA/PROXY: pid=%u ctx=%p file=%llu",
@@ -167,12 +161,14 @@ fsal_status_t PROXYFSAL_create(proxyfsal_handle_t * parent_directory_handle,    
   if(fsal_internal_proxy_extract_fh(&nfs4fh, parent_directory_handle) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_create);
 
-#ifdef _DEBUG_FSAL
-  nfs4_sprint_fhandle(&nfs4fh, outstr);
-  printf
-      (">> >> >> >> >> >> >> >> >> FSAL_CREATE: extracted server (as client) parent handle=%s\n",
-       outstr);
-#endif
+  if(isFullDebug(COMPONENT_FSAL))
+    {
+      char outstr[1024];
+
+      nfs4_sprint_fhandle(&nfs4fh, outstr);
+      LogFullDebug(COMPONENT_FSAL, "FSAL_CREATE: extracted server (as client) parent handle=%s\n",
+                   outstr);
+    }
 
   bitmap.bitmap4_val = bitmap_create;
   bitmap.bitmap4_len = 2;
@@ -255,12 +251,15 @@ fsal_status_t PROXYFSAL_create(proxyfsal_handle_t * parent_directory_handle,    
     {
       memcpy(object_attributes, &attributes, sizeof(attributes));
     }
-#ifdef _DEBUG_FSAL
-  nfs4_sprint_fhandle(&nfs4fh, outstr);
-  printf
-      (">> >> >> >> >> >> >> >> >> FSAL_CREATE: extracted server (as client) created file handle=%s\n",
-       outstr);
-#endif
+
+  if(isFullDebug(COMPONENT_FSAL))
+    {
+      char outstr[1024];
+
+      nfs4_sprint_fhandle(&nfs4fh, outstr);
+      LogFullDebug(COMPONENT_FSAL, "FSAL_CREATE: extracted server (as client) created file handle=%s\n",
+           outstr);
+    }
 
   if(fsal_internal_proxy_create_fh
      (&
@@ -385,9 +384,7 @@ fsal_status_t PROXYFSAL_mkdir(proxyfsal_handle_t * parent_directory_handle,     
   if(!parent_directory_handle || !p_context || !object_handle || !p_dirname)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mkdir);
 
-#ifdef _DEBUG_FSAL
   PRINT_HANDLE("FSAL_mkdir", parent_directory_handle);
-#endif
 
   /* Setup results structures */
   argnfs4.argarray.argarray_val = argoparray;
@@ -505,9 +502,7 @@ fsal_status_t PROXYFSAL_mkdir(proxyfsal_handle_t * parent_directory_handle,     
       object_handle) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mkdir);
 
-#ifdef _DEBUG_FSAL
   PRINT_HANDLE("FSAL_mkdir new obj", object_handle);
-#endif
 
   /* OK */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_mkdir);

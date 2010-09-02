@@ -63,7 +63,7 @@ fsal_status_t MFSL_setattr_async_op(mfsl_async_op_desc_t * popasyncdesc)
 {
   fsal_status_t fsal_status;
 
-  DisplayLogLevel(NIV_DEBUG, "Making asynchronous FSAL_setattrs for async op %p",
+  LogDebug(COMPONENT_MFSL, "Making asynchronous FSAL_setattrs for async op %p",
                   popasyncdesc);
 
   P(popasyncdesc->op_args.setattr.pmobject->lock);
@@ -153,7 +153,7 @@ fsal_status_t MFSL_setattrs(mfsl_object_t * filehandle, /* IN */
   if(gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
     {
       /* Could'not get time of day... Stopping, this may need a major failure */
-      DisplayLog("MFSL_setattrs: cannot get time of day... exiting");
+      LogMajor(COMPONENT_MFSL, "MFSL_setattrs: cannot get time of day... exiting");
       exit(1);
     }
 
@@ -181,7 +181,7 @@ fsal_status_t MFSL_setattrs(mfsl_object_t * filehandle, /* IN */
   if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
-  DisplayLogJdLevel(p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p",
+  LogDebug(COMPONENT_MFSL,  "Creating asyncop %p",
                     pasyncopdesc);
 
   pasyncopdesc->op_type = MFSL_ASYNC_OP_SETATTR;

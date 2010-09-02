@@ -39,7 +39,7 @@
 #endif
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "stuff_alloc.h"
@@ -103,13 +103,13 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
         {
           for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
             {
-#ifdef _DEBUG_CACHE_INODE
-              printf("DIR_BEGINNING %d | %d | %s | %s\n",
+
+              LogFullDebug(COMPONENT_CACHE_INODE,"DIR_BEGINNING %d | %d | %s | %s\n",
                      pdir_chain->object.dir_begin.pdir_data->dir_entries[i].active,
                      pdir_chain->object.dir_begin.pdir_data->dir_entries[i].pentry->
                      internal_md.valid_state, pname->name,
                      pdir_chain->object.dir_begin.pdir_data->dir_entries[i].name.name);
-#endif
+
               if(pdir_chain->object.dir_begin.pdir_data->dir_entries[i].active == VALID
                  && pdir_chain->object.dir_begin.pdir_data->dir_entries[i].pentry->
                  internal_md.valid_state == VALID
@@ -145,7 +145,7 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
           for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
             {
               /*
-                 printf( "DIR_CONTINUE %d | %d | %s | %s\n", 
+                 LogFullDebug(COMPONENT_CACHE_INODE, "DIR_CONTINUE %d | %d | %s | %s\n", 
                  pdir_chain->object.dir_cont.pdir_data->dir_entries[i].active, 
                  pdir_chain->object.dir_cont.pdir_data->dir_entries[i].pentry->internal_md.valid_state, 
                  name.name, 
@@ -770,13 +770,13 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
         {
           cache_inode_status_t kill_status;
 
-          DisplayLog
-              ("cache_inode_readdir: Stale FSAL File Handle detected for pentry = %p",
+          LogEvent(COMPONENT_CACHE_INODE, 
+              "cache_inode_readdir: Stale FSAL File Handle detected for pentry = %p",
                pentry_dir);
 
           if(cache_inode_kill_entry(pentry_dir, ht, pclient, &kill_status) !=
              CACHE_INODE_SUCCESS)
-            DisplayLog("cache_inode_readdir: Could not kill entry %p, status = %u",
+            LogCrit(COMPONENT_CACHE_INODE, "cache_inode_readdir: Could not kill entry %p, status = %u",
                        pentry_dir, kill_status);
 
           *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -805,8 +805,7 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
 
       for(iter = 0; iter < nbfound; iter++)
         {
-          DisplayLogJdLevel(pclient->log_outputs,
-                            NIV_FULL_DEBUG,
+          LogFullDebug(COMPONENT_CACHE_INODE,
                             "cache readdir populate found entry %s",
                             array_fsal_dirent[iter].name.name);
 
@@ -814,8 +813,7 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
           if(!FSAL_namecmp(&(array_fsal_dirent[iter].name), &FSAL_DOT) ||
              !FSAL_namecmp(&(array_fsal_dirent[iter].name), &FSAL_DOT_DOT))
             {
-              DisplayLogJdLevel(pclient->log_outputs,
-                                NIV_FULL_DEBUG,
+              LogFullDebug(COMPONENT_CACHE_INODE,
                                 "cache readdir populate : do not cache . and ..");
               continue;
             }
@@ -838,14 +836,14 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
                     {
                       cache_inode_status_t kill_status;
 
-                      DisplayLog
-                          ("cache_inode_readdir: Stale FSAL File Handle detected for pentry = %p",
+                      LogEvent(COMPONENT_CACHE_INODE,
+                          "cache_inode_readdir: Stale FSAL File Handle detected for pentry = %p",
                            pentry_dir);
 
                       if(cache_inode_kill_entry(pentry_dir, ht, pclient, &kill_status) !=
                          CACHE_INODE_SUCCESS)
-                        DisplayLog
-                            ("cache_inode_readdir: Could not kill entry %p, status = %u",
+                        LogCrit(COMPONENT_CACHE_INODE,
+                            "cache_inode_readdir: Could not kill entry %p, status = %u",
                              pentry_dir, kill_status);
 
                       *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -972,10 +970,8 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
   pclient->stat.nb_call_total += 1;
   pclient->stat.func_stats.nb_call[CACHE_INODE_READDIR] += 1;
 
-#ifdef _DEBUG_NFSPROTO
-  printf("--> Cache_inode_readdir: parameters are cookie=%u nbwanted=%u\n", cookie,
+  LogFullDebug(COMPONENT_NFSPROTO,"--> Cache_inode_readdir: parameters are cookie=%u nbwanted=%u\n", cookie,
          nbwanted);
-#endif
 
   /* Sanity check */
   if(nbwanted == 0)
@@ -1125,11 +1121,10 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
                 *pstatus = cache_inode_valid(pentry_to_read, CACHE_INODE_OP_GET, pclient);
               else
                 *pstatus = CACHE_INODE_SUCCESS;
-#ifdef _DEBUG_NFS_READDIR
-              printf
-                  ("Big input cookie found in cache_inode_readdir (DIR_BEGIN) : pentry=%p cookie=%d first_pentry_cookie=%d nbdirchain=%d\n",
+
+              LogFullDebug(COMPONENT_NFS_READDIR,
+                  "Big input cookie found in cache_inode_readdir (DIR_BEGIN) : pentry=%p cookie=%d first_pentry_cookie=%d nbdirchain=%d\n",
                    pentry_to_read, cookie, first_pentry_cookie, nbdirchain);
-#endif
 
               /* Set the returned values */
               *pnbfound = 0;
@@ -1151,11 +1146,11 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
 
               /* OPeration is a success */
               *pstatus = CACHE_INODE_SUCCESS;
-#ifdef _DEBUG_NFS_READDIR
-              printf
-                  ("Trouble found in cache_inode_readdir (DIR_CONTINUE) : pentry=%p cookie=%d first_pentry_cookie=%d nbdirchain=%d\n",
+
+              LogFullDebug(COMPONENT_NFS_READDIR,
+                  "Trouble found in cache_inode_readdir (DIR_CONTINUE) : pentry=%p cookie=%d first_pentry_cookie=%d nbdirchain=%d\n",
                    pentry_to_read, cookie, first_pentry_cookie, nbdirchain);
-#endif
+
               /* Set the returned values */
               *pnbfound = 0;
               *pend_cookie = cookie;
@@ -1174,11 +1169,11 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
           pentry_to_read->object.dir_cont.dir_cont_pos * CHILDREN_ARRAY_SIZE;
 
     }                           /* while */
-#ifdef _DEBUG_NFS_READDIR
-  printf
-      ("About to readdir in  cache_inode_readdir: pentry=%p cookie=%d first_pentry_cookie=%d nbdirchain=%d\n",
+
+  LogFullDebug(COMPONENT_NFS_READDIR,
+      "About to readdir in  cache_inode_readdir: pentry=%p cookie=%d first_pentry_cookie=%d nbdirchain=%d\n",
        pentry_to_read, cookie, first_pentry_cookie, nbdirchain);
-#endif
+
   /* Get prepaired for readdir */
 
   cookie_iter = cookie;
@@ -1195,12 +1190,12 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
                   pentry_to_read->object.dir_begin.pdir_data->dir_entries[cookie_iter %
                                                                           CHILDREN_ARRAY_SIZE];
               cookie_array[i] = cookie_iter;
-#ifdef _DEBUG_CACHE_INODE
-              printf("--> Cache_inode_readdir: Found slot with file named %s\n",
+
+              LogFullDebug(COMPONENT_CACHE_INODE,"--> Cache_inode_readdir: Found slot with file named %s\n",
                      pentry_to_read->object.dir_begin.pdir_data->dir_entries[cookie_iter %
                                                                              CHILDREN_ARRAY_SIZE].
                      name.name);
-#endif
+
               /* Step to next iter */
               *pnbfound += 1;
               i += 1;
@@ -1217,12 +1212,12 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
                   pentry_to_read->object.dir_cont.pdir_data->dir_entries[cookie_iter %
                                                                          CHILDREN_ARRAY_SIZE];
               cookie_array[i] = cookie_iter;
-#ifdef _DEBUG_CACHE_INODE
-              printf("--> Cache_inode_readdir: Found slot with file named %s\n",
+
+              LogFullDebug(COMPONENT_CACHE_INODE,"--> Cache_inode_readdir: Found slot with file named %s\n",
                      pentry_to_read->object.dir_cont.pdir_data->dir_entries[cookie_iter %
                                                                             CHILDREN_ARRAY_SIZE].
                      name.name);
-#endif
+
               /* Step to next iter */
               *pnbfound += 1;
               i += 1;

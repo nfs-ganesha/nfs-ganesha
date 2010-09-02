@@ -75,9 +75,7 @@ fsal_status_t PROXYFSAL_opendir(proxyfsal_handle_t * dir_handle,        /* IN */
   if(!dir_handle || !p_context || !dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_opendir);
 
-#ifdef _DEBUG_FSAL
   PRINT_HANDLE("FSAL_opendir", dir_handle);
-#endif
 
   /* Set the context */
   memcpy(&dir_descriptor->fhandle, dir_handle, sizeof(dir_descriptor->fhandle));
@@ -169,10 +167,9 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
      Mem_Free( tabentry4name ) ;
      Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
    }
-#ifdef _DEBUG_FSAL
-  printf("---> Readdir Offset=%llu sizeof(entry4)=%u sizeof(fsal_dirent_t)=%u \n",
-         start_position, sizeof(entry4), sizeof(fsal_dirent_t));
-#endif
+
+  LogFullDebug(COMPONENT_FSAL, "---> Readdir Offset=%llu sizeof(entry4)=%u sizeof(fsal_dirent_t)=%u \n",
+               start_position, sizeof(entry4), sizeof(fsal_dirent_t));
 
   /* >> retrieve root handle filehandle here << */
   bitmap.bitmap4_len = 2;

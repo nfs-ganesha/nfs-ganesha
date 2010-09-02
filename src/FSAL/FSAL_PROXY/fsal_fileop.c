@@ -124,9 +124,7 @@ fsal_status_t PROXYFSAL_open_by_name(proxyfsal_handle_t * dirhandle,    /* IN */
   if(!dirhandle || !filename || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
-#ifdef _DEBUG_FSAL
   PRINT_HANDLE("FSAL_open", dirhandle);
-#endif
 
   if(dirhandle->data.object_type_reminder != FSAL_TYPE_DIR)
     {
@@ -346,9 +344,7 @@ static fsal_status_t PROXYFSAL_open_stateless(proxyfsal_handle_t * filehandle,  
   if(!filehandle || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
 
-#ifdef _DEBUG_FSAL
   PRINT_HANDLE("FSAL_open_stateless", filehandle);
-#endif
 
   if(filehandle->data.object_type_reminder != FSAL_TYPE_FILE)
     {
@@ -1020,9 +1016,7 @@ fsal_status_t PROXYFSAL_open_by_fileid(proxyfsal_handle_t * filehandle, /* IN */
   if(!filehandle || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_fileid);
 
-#ifdef _DEBUG_FSAL
-  PRINT_HANDLE("FSAL_open", dirhandle);
-#endif
+  PRINT_HANDLE("FSAL_open_by_fileid", filehandle);
 
   if(filehandle->data.object_type_reminder != FSAL_TYPE_FILE)
     {

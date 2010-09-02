@@ -19,9 +19,6 @@
  */
 extern fsal_staticfsinfo_t global_fs_info;
 
-/* log descriptor */
-extern log_t fsal_log;
-
 /* information for SNMP sessions establishment */
 extern fs_specific_initinfo_t snmp_glob_config;
 

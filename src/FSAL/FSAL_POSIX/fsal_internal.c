@@ -67,11 +67,6 @@ static fsal_staticfsinfo_t default_posix_info = {
   0400                          /* default access rights for xattrs: root=RW, owner=R */
 };
 
-/*
- *  Log Descriptor
- */
-log_t fsal_log;
-
 /* variables for limiting the calls to the filesystem */
 static int limit_calls = FALSE;
 semaphore_t sem_fs_calls;
@@ -326,13 +321,9 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
                                         fs_common_initinfo_t * fs_common_info,
                                         posixfs_specific_initinfo_t * fs_specific_info)
 {
-
   /* sanity check */
   if(!fsal_info || !fs_common_info || !fs_specific_info)
     ReturnCode(ERR_FSAL_FAULT, 0);
-
-  /* Setting log info */
-  fsal_log = fsal_info->log_outputs;
 
   /* inits FS call semaphore */
   if(fsal_info->max_fs_calls > 0)

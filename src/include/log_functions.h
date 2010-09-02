@@ -18,7 +18,21 @@
 
 #ifdef _USE_GPFS
 #define NO_OLD_LOGGING
-#else
+#endif
+
+#ifdef _USE_SNMP
+#define NO_OLD_LOGGING
+#endif
+
+#ifdef _USE_PROXY
+#define NO_OLD_LOGGING
+#endif
+
+#ifdef _USE_POSIX
+#define NO_OLD_LOGGING
+#endif
+
+#ifndef NO_OLD_LOGGING
 #define OLD_LOGGING
 #endif
 
