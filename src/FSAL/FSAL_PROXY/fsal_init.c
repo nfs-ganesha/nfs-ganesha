@@ -197,7 +197,7 @@ static int FS_Specific_Init(proxyfs_specific_initinfo_t * fs_init_info)
                           &attr_thr,
                           FSAL_proxy_clientid_renewer_thread, (void *)NULL) != 0))
     {
-      DisplayErrorLog(ERR_SYS, ERR_PTHREAD_CREATE, rc);
+      LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_CREATE, rc);
       exit(1);
     }
 
@@ -238,13 +238,6 @@ fsal_status_t PROXYFSAL_Init(fsal_parameter_t * init_info       /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
 
   /* >> You can check args bellow << */
-
-  if(init_info->fsal_info.log_outputs.liste_voies == NULL)
-    {
-      /* issue a warning on stderr */
-      DisplayLog
-          ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
-    }
 
   /* proceeds FSAL internal status initialization */
 

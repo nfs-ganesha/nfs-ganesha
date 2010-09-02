@@ -166,9 +166,7 @@ fsal_status_t PROXYFSAL_lookup(proxyfsal_handle_t * parent_directory_handle,    
     }
   else                          /* this is a real lookup(parent, name)  */
     {
-#ifdef _DEBUG_FSAL
       PRINT_HANDLE("PROXYFSAL_lookup parent", parent_directory_handle);
-#endif
 
       /* the filename should not be null */
       if(p_filename == NULL)
@@ -354,9 +352,7 @@ fsal_status_t PROXYFSAL_lookup(proxyfsal_handle_t * parent_directory_handle,    
       resok4.object, attributes.type, attributes.fileid, object_handle) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
-#ifdef _DEBUG_FSAL
   PRINT_HANDLE("PROXYFSAL_lookup object found", object_handle);
-#endif
 
   /* Return attributes if asked */
   if(object_attributes)
