@@ -28,6 +28,10 @@
 #define NO_OLD_LOGGING
 #endif
 
+#ifdef _USE_POSIX
+#define NO_OLD_LOGGING
+#endif
+
 #ifndef NO_OLD_LOGGING
 #define OLD_LOGGING
 #endif

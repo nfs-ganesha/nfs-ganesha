@@ -30,9 +30,6 @@
 extern fsal_staticfsinfo_t global_fs_info;
 extern fsal_posixdb_conn_params_t global_posixdb_params;
 
-/* log descriptor */
-extern log_t fsal_log;
-
 #endif
 
 /**
