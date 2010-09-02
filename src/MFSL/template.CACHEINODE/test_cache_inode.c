@@ -58,7 +58,7 @@ int lru_entry_to_str(LRU_data_t data, char *str)
 
   pentry = (cache_entry_t *) data.pdata;
 
-  return sLogTest(str, "Pentry: Addr %p, state=%d", pentry,
+  return sprintf(str, "Pentry: Addr %p, state=%d", pentry,
                  pentry->internal_md.valid_state);
 }                               /* lru_entry_to_str */
 
@@ -135,7 +135,7 @@ main(int argc, char *argv[])
   /* Init the Buddy System allocation */
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
-      fLogTest(stderr, "Error while Initing the Buddy system allocator");
+      LogTest(stderr, "Error while Initing the Buddy system allocator");
       exit(1);
     }
 
@@ -148,7 +148,7 @@ main(int argc, char *argv[])
 #if defined( _USE_GHOSTFS )
   if(argc != 2)
     {
-      fLogTest(stderr, "Please set the configuration file as parameter");
+      LogTest(stderr, "Please set the configuration file as parameter");
       exit(1);
     }
 #endif
