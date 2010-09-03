@@ -128,8 +128,8 @@ fsal_status_t FUSEFSAL_dynamic_fsinfo(fusefsal_handle_t * filehandle,   /* IN */
     {
       /* return dummy values for beeing compliant with any client behavior */
 
-      DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                        "FSAL_dynamic_fsinfo: statfs is not implemented on this filesystem. Returning dummy values.");
+      LogDebug(COMPONENT_FSAL,
+               "FSAL_dynamic_fsinfo: statfs is not implemented on this filesystem. Returning dummy values.");
 
       dynamicinfo->total_bytes = INT_MAX;
       dynamicinfo->free_bytes = INT_MAX;
