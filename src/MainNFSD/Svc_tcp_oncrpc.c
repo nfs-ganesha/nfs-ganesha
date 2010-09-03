@@ -35,6 +35,8 @@ typedef unsigned int u_int32_t;
 #include   <errno.h>
 #include   <pthread.h>
 
+#include   "log_macros.h"
+
 #ifndef MAX
 #define MAX(a, b)     ((a > b) ? a : b)
 #endif
