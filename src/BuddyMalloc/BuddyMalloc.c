@@ -2296,16 +2296,19 @@ static void hash_label_display(label_info_list_t * label_hash[], unsigned int ha
         }
     }
 
-  LogPrintf(COMPONENT_MEMLEAKS,"%-*s | %-*s | %5s | %-*s | %s\n", max_file, "file", max_func, "function",
-            "line", max_descr, "description", "count");
-
-  for(i = 0; i < hash_sz; i++)
+  if(isFullDebug(COMPONENT_FSAL))
     {
-      for(p_curr = label_hash[i]; p_curr != NULL; p_curr = p_curr->next)
+      LogFullDebug(COMPONENT_MEMLEAKS,"%-*s | %-*s | %5s | %-*s | %s", max_file, "file", max_func, "function",
+                "line", max_descr, "description", "count");
+      
+      for(i = 0; i < hash_sz; i++)
         {
-          LogPrintf(COMPONENT_MEMLEAKS,"%-*s | %-*s | %5u | %-*s | %u\n", max_file, p_curr->file, max_func,
-                    p_curr->func, p_curr->line, max_descr, p_curr->user_label,
-                    p_curr->count);
+          for(p_curr = label_hash[i]; p_curr != NULL; p_curr = p_curr->next)
+            {
+              LogFullDebug(COMPONENT_MEMLEAKS,"%-*s | %-*s | %5u | %-*s | %u", max_file, p_curr->file, max_func,
+                        p_curr->func, p_curr->line, max_descr, p_curr->user_label,
+                        p_curr->count);
+            }
         }
     }
 }
@@ -2352,7 +2355,7 @@ void BuddyLabelsSummary()
 /* nbr of bytes for 1 char */
 #define DISPLAY_SPACE_UNIT (8*1024)
 
-void DisplayMemoryMap()
+void DisplayMemoryMap(FILE *output)
 {
   BuddyBlockPtr_t p_curr_block, p_next_block, p_curr, p_last;
   BuddyBlockPtr_t p_ordered_list = NULL;
@@ -2413,7 +2416,7 @@ void DisplayMemoryMap()
       /* do not display extra blocks */
       if(IS_EXTRA_BLOCK(p_curr_block))
         {
-          LogPrintf(COMPONENT_MEMLEAKS,"Extra block: [ size=%lu ]\n",
+          fprintf(output, "Extra block: [ size=%lu ]\n",
                     (unsigned long)p_curr_block->Header.ExtraInfo);
           is_first = TRUE;
           continue;
@@ -2432,7 +2435,7 @@ void DisplayMemoryMap()
             nb_space++;
 
           for(i = 0; i < nb_space; i++)
-            LogPrintf(COMPONENT_MEMLEAKS," ");
+            fprintf(output, " ");
 
           is_first = FALSE;
         }
@@ -2440,7 +2443,7 @@ void DisplayMemoryMap()
       /* display block according to its size */
 
       if((1 << p_curr_block->Header.StdInfo.k_size) < DISPLAY_SPACE_UNIT)
-        LogPrintf(COMPONENT_MEMLEAKS,"|");
+        fprintf(output, "|");
       else
         {
           nb_space =
@@ -2449,13 +2452,13 @@ void DisplayMemoryMap()
               ((1 << p_curr_block->Header.StdInfo.k_size) -
                p_curr_block->Header.StdInfo.user_size) / DISPLAY_SPACE_UNIT;
 
-          LogPrintf(COMPONENT_MEMLEAKS,"[");
+          fprintf(output, "[");
           for(i = 0; i < nb_space - nb_dash; i++)
-            LogPrintf(COMPONENT_MEMLEAKS,"#");
+            fprintf(output, "#");
           for(i = 0; i < nb_dash; i++)
-            LogPrintf(COMPONENT_MEMLEAKS,".");
+            fprintf(output, ".");
 
-          LogPrintf(COMPONENT_MEMLEAKS,"]");
+          fprintf(output, "]");
         }
 
       /* check next block address */
@@ -2463,7 +2466,7 @@ void DisplayMemoryMap()
       if(!p_curr_block->Header.p_next_allocated)
         {
           is_first = TRUE;
-          LogPrintf(COMPONENT_MEMLEAKS,"\n");
+          fprintf(output, "\n");
           return;
         }
       else if(p_curr_block->Header.Base_ptr !=
@@ -2471,7 +2474,7 @@ void DisplayMemoryMap()
         {
           /* another page or extra block */
           is_first = TRUE;
-          LogPrintf(COMPONENT_MEMLEAKS,"\n");
+          fprintf(output, "\n");
         }
       else
         {
@@ -2485,7 +2488,7 @@ void DisplayMemoryMap()
             nb_space++;
 
           for(i = 0; i < nb_space; i++)
-            LogPrintf(COMPONENT_MEMLEAKS," ");
+            fprintf(output, " ");
         }
     }
 }                               /* DisplayMemoryMap */
