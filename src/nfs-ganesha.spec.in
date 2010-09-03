@@ -307,6 +307,7 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/ganesha/hosts.ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/uidgid_mapfile.ganesha
 %{_bindir}/ganestat.pl
+%{_bindir}/ganesha_log_level
 %{_datadir}/%{name}/ganesha.vim
 %{_datadir}/%{name}/ganesha_au.vim
 %{_datadir}/vim/*/syntax/*
