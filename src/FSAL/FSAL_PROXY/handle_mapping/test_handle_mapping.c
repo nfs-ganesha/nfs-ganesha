@@ -3,9 +3,6 @@
 #include "stuff_alloc.h"
 #include <sys/time.h>
 
-log_t fsal_log = LOG_INITIALIZER;
-desc_log_stream_t log_stream;
-
 int main(int argc, char **argv)
 {
   unsigned int i;
@@ -15,33 +12,30 @@ int main(int argc, char **argv)
   handle_map_param_t param;
   time_t now;
 
+  /* Init logging */
+  SetNamePgm("test_handle_mapping");
+  SetDefaultLogging("TEST");
+  SetNameFunction("main");
+  SetNameHost("localhost");
+  InitLogging();
+
   if(argc != 3 || (count = atoi(argv[2])) == 0)
     {
-      printf("usage: test_handle_mapping <db_dir> <db_count>\n");
+      LogTest("usage: test_handle_mapping <db_dir> <db_count>");
       exit(1);
     }
+
 #ifndef _NO_BUDDY_SYSTEM
 
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: Could not initialize memory manager");
+      LogCrit(COMPONENT_FSAL, "ERROR: Could not initialize memory manager");
       exit(rc);
     }
 #endif
 
   dir = argv[1];
-
-  log_stream.flux = stdout;
-  AddLogStreamJd(&fsal_log, V_STREAM, log_stream, NIV_DEBUG, SUP);
-
-  /* Init logging */
-  SetNamePgm("test_handle_mapping");
-  SetNameFileLog("/dev/tty");
-  SetNameFunction("main");
-  SetNameHost("localhost");
-
-  InitDebug(NIV_FULL_DEBUG);
 
   strcpy(param.databases_directory, dir);
   strcpy(param.temp_directory, "/tmp");
@@ -53,7 +47,7 @@ int main(int argc, char **argv)
 
   rc = HandleMap_Init(&param);
 
-  printf("HandleMap_Init() = %d\n", rc);
+  LogTest("HandleMap_Init() = %d", rc);
   if(rc)
     exit(rc);
 
@@ -81,8 +75,8 @@ int main(int argc, char **argv)
 
   timersub(&tv2, &tv1, &tvdiff);
 
-  printf("%u threads inserted 10000 handles in %d.%06ds\n", count, (int)tvdiff.tv_sec,
-         (int)tvdiff.tv_usec);
+  LogTest("%u threads inserted 10000 handles in %d.%06ds",
+          count, (int)tvdiff.tv_sec, (int)tvdiff.tv_usec);
 
   /* Now get them ! */
 
@@ -97,14 +91,14 @@ int main(int argc, char **argv)
       rc = HandleMap_GetFH(&nfs23_digest, &handle);
       if(rc)
         {
-          printf("Error %d retrieving handle !\n", rc);
+          LogTest("Error %d retrieving handle !", rc);
           exit(rc);
         }
 
       rc = HandleMap_DelFH(&nfs23_digest);
       if(rc)
         {
-          printf("Error %d deleting handle !\n", rc);
+          LogTest("Error %d deleting handle !", rc);
           exit(rc);
         }
 
@@ -114,16 +108,16 @@ int main(int argc, char **argv)
 
   timersub(&tv3, &tv2, &tvdiff);
 
-  printf("Retrieved and deleted 10000 handles in %d.%06ds\n", (int)tvdiff.tv_sec,
-         (int)tvdiff.tv_usec);
+  LogTest("Retrieved and deleted 10000 handles in %d.%06ds", (int)tvdiff.tv_sec,
+          (int)tvdiff.tv_usec);
 
   rc = HandleMap_Flush();
 
   gettimeofday(&tv3, NULL);
 
   timersub(&tv3, &tv1, &tvdiff);
-  printf("Total time with %u threads (including flush): %d.%06ds\n", count,
-         (int)tvdiff.tv_sec, (int)tvdiff.tv_usec);
+  LogTest("Total time with %u threads (including flush): %d.%06ds", count,
+          (int)tvdiff.tv_sec, (int)tvdiff.tv_usec);
 
   exit(0);
 
