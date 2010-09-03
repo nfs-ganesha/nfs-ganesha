@@ -117,7 +117,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
   LogDebug(COMPONENT_NFS_V4, "SETCLIENTID Client id len = %u",
                   arg_SETCLIENTID4.client.id.id_len);
   LogDebug(COMPONENT_NFS_V4, "SETCLIENTID Client name = #%s#", str_client);
-  /*DisplayLogLevel( NIV_DEBUG, "SETCLIENTID Verifier = #%s#", str_verifier ) ; */
+  /*LogDebug(COMPONENT_NFS_V4, "SETCLIENTID Verifier = #%s#", str_verifier ) ; */
   LogDebug(COMPONENT_NFS_V4,
                   "SETCLIENTID Callback: cb_program = %u|0x%x, cb_location = { r_addr = %s   r_netid = %s }",
                   arg_SETCLIENTID4.callback.cb_program,
@@ -322,7 +322,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
   snprintf(res_SETCLIENTID4.SETCLIENTID4res_u.resok4.setclientid_confirm,
            NFS4_VERIFIER_SIZE, "%u", (unsigned int)ServerBootTime);
 
-  /* DisplayLogLevel( NIV_DEBUG, "SETCLIENTID reply :ClientId=%llx Verifier=%s",  
+  /* LogDebug(COMPONENT_NFS_V4, "SETCLIENTID reply :ClientId=%llx Verifier=%s",  
      res_SETCLIENTID4.SETCLIENTID4res_u.resok4.clientid , res_SETCLIENTID4.SETCLIENTID4res_u.resok4.setclientid_confirm ) ; */
 
   res_SETCLIENTID4.status = NFS4_OK;

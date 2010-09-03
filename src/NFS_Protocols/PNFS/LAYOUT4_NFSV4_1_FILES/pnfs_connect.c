@@ -25,6 +25,8 @@
 #include <rpc/rpc.h>
 #endif
 
+#include "log_macros.h"
+
 #include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
 
 /**
@@ -55,13 +57,13 @@ int pnfs_connect(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pnfs_ds_
 
   if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
-      DisplayLog("PNFS_LAYOUT INIT: cannot create a tcp socket");
+      LogCrit(COMPONENT_PNFS,"PNFS_LAYOUT INIT: cannot create a tcp socket");
       return -1;
     }
 
   if(connect(sock, (struct sockaddr *)&addr_rpc, sizeof(addr_rpc)) < 0)
     {
-      DisplayLog("pNFS_LAYOUT INIT : Cannot connect to server addr=%u.%u.%u.%u port=%u",
+      LogCrit(COMPONENT_PNFS,"pNFS_LAYOUT INIT : Cannot connect to server addr=%u.%u.%u.%u port=%u",
                  (ntohl(pnfs_ds_param->ipaddr) & 0xFF000000) >> 24,
                  (ntohl(pnfs_ds_param->ipaddr) & 0x00FF0000) >> 16,
                  (ntohl(pnfs_ds_param->ipaddr) & 0x0000FF00) >> 8,
@@ -76,8 +78,8 @@ int pnfs_connect(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pnfs_ds_
                                                 &sock,
                                                 PNFS_SENDSIZE, PNFS_RECVSIZE)) == NULL)
     {
-      DisplayLog
-          ("PNFS_LAYOUT INIT : Cannot contact server addr=%x.%x.%x.%x port=%u prognum=%u using NFSv4 protocol",
+      LogCrit(COMPONENT_PNFS,
+          "PNFS_LAYOUT INIT : Cannot contact server addr=%x.%x.%x.%x port=%u prognum=%u using NFSv4 protocol",
            (ntohl(pnfs_ds_param->ipaddr) & 0xFF000000) >> 24,
            (ntohl(pnfs_ds_param->ipaddr) & 0x00FF0000) >> 16,
            (ntohl(pnfs_ds_param->ipaddr) & 0x0000FF00) >> 8,
