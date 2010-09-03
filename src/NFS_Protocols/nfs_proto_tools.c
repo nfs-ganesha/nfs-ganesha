@@ -331,7 +331,7 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
       break;
 
     case CACHE_INODE_SUCCESS:
-      /* DisplayLog( "Possible implementation error: CACHE_INODE_SUCCESS managed as an error" ) ; */
+      /* LogCrit(COMPONENT_NFSPROTO, "Possible implementation error: CACHE_INODE_SUCCESS managed as an error" ) ; */
       return FALSE;
       break;
 

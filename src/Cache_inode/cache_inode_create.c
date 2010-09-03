@@ -387,7 +387,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
 #ifdef _USE_PNFS
     if((type == REGULAR_FILE) &&
        (pcreate_arg != NULL) &&
-       (pcreate_arg->use_pnfs == TRUE)
+       (pcreate_arg->use_pnfs == TRUE))
         {
             pnfs_status = pnfs_create_ds_file(&pclient->pnfsclient,
                                               pentry->object.file.attributes.fileid,
