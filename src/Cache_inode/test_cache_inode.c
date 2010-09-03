@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -84,11 +84,7 @@ int lru_clean_entry(LRU_entry_t * entry, void *adddata)
 
 main(int argc, char *argv[])
 {
-  //  log_t log_desc_fsal = LOG_INITIALIZER;
-  //  log_t log_desc_cache = LOG_INITIALIZER;
   char localmachine[256];
-  //  desc_log_stream_t voie_fsal;
-  //  desc_log_stream_t voie_cache;
 
   cache_inode_client_t client;
   LRU_parameter_t lru_param;
@@ -146,6 +142,7 @@ main(int argc, char *argv[])
   SetDefaultLogging("TEST");
   SetNamePgm("test_cache_inode");
   SetNameFunction("main");
+  InitLogging();
 
 #if defined( _USE_GHOSTFS )
   if(argc != 2)
@@ -164,7 +161,6 @@ main(int argc, char *argv[])
   else
     SetNameHost(localmachine);
 
-  InitDebug(NIV_FULL_DEBUG);
   AddFamilyError(ERR_FSAL, "FSAL related Errors", tab_errstatus_FSAL);
   AddFamilyError(ERR_CACHE_INODE, "FSAL related Errors", tab_errstatus_cache_inode);
 

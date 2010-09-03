@@ -16,30 +16,6 @@
 #include "snmp_adm.h"
 #endif
 
-#ifdef _USE_GPFS
-#define NO_OLD_LOGGING
-#endif
-
-#ifdef _USE_SNMP
-#define NO_OLD_LOGGING
-#endif
-
-#ifdef _USE_PROXY
-#define NO_OLD_LOGGING
-#endif
-
-#ifdef _USE_POSIX
-#define NO_OLD_LOGGING
-#endif
-
-#ifdef _USE_XFS
-#define NO_OLD_LOGGING
-#endif
-
-#ifndef NO_OLD_LOGGING
-#define OLD_LOGGING
-#endif
-
 /*
  * definition des codes d'error
  *
@@ -146,16 +122,6 @@ typedef struct
   errctx_t contexte;
   status_t status;
 } log_error_t;
-
-#ifdef OLD_LOGGING
-/* les macros pour mettre dans les printf */
-#define __E(variable) variable.numero, variable.label, variable.msg
-#define __S(variable) variable.numero, variable.label, variable.msg
-#define __format(variable) variable.numero, variable.label, variable.msg
-#define __f(variable) variable.numero, variable.label, variable.msg
-#define __AE(variable) variable.contexte.numero, variable.contexte.label, variable.contexte.msg, \
-                       variable.status.numero,   variable.status.label,   variable.status.msg
-#endif
 
 #define ERR_NULL -1
 
@@ -515,74 +481,5 @@ int log_fprintf(FILE * file, char *format, ...);
 int getComponentLogLevel(snmp_adm_type_union * param, void *opt);
 int setComponentLogLevel(const snmp_adm_type_union * param, void *opt);
 #endif
-
-#ifdef OLD_LOGGING
-//-----------------------------------------------------------------------------
-// Rest of file is old logging code
-//-----------------------------------------------------------------------------
-
-int DisplayLogString_valist(char *buff_dest, char *format, va_list arguments);
-int DisplayErrorFluxLine(FILE * flux, int num_family, int num_error, int status,
-                         int ma_ligne);
-int DisplayErrorLogLine(int num_family, int num_error, int status, int ma_ligne);
-
-#define DisplayErrorLog( a, b, c ) DisplayErrorLogLine( a, b, c, __LINE__ )
-#define DisplayErrorFlux( a, b, c, d ) DisplayErrorFluxLine( a, b, c, d, __LINE__ )
-
-int DisplayLog(char *format, ...);
-int DisplayLogLevel(int level, char *format, ...);
-
-int DisplayLogFlux(FILE * flux, char *format, ...);
-
-/* A present les types et les fonctions pour les descripteurs de journaux */
-typedef enum type_voie
-{ V_STREAM = 1, V_BUFFER, V_FILE, V_FD, V_SYSLOG } type_log_stream_t;
-
-typedef enum niveau
-{ GANESHA_LOG_RIEN = 0, GANESHA_LOG_MAJOR = 1, GANESHA_LOG_CRITICAL = 2, GANESHA_LOG_EVENT = 3, GANESHA_LOG_DEBUG = 4
-} niveau_t;
-
-typedef enum aiguillage
-{ SUP = 1, EXACT = 0, INF = -1 } aiguillage_t;
-
-typedef union desc_voie
-{
-  FILE *flux;
-  char *buffer;
-  char path[1024];
-  int fd;
-} desc_log_stream_t;
-
-typedef struct voie
-{
-  desc_log_stream_t desc;
-  type_log_stream_t type;
-  niveau_t niveau;
-  aiguillage_t aiguillage;
-  struct voie *suivante;
-} log_stream_t;
-
-typedef struct journal
-{
-  int nb_voies;
-  log_stream_t *liste_voies;
-  log_stream_t *fin_liste_voies;
-
-} log_t;
-
-#define LOG_INITIALIZER { 0, NULL, NULL }
-
-int DisplayLogJd(log_t jd, char *format, ...);
-int DisplayLogJdLevel(log_t jd, int level, char *format, ...);
-int DisplayErrorJdLine(log_t jd, int num_family, int num_error, int status, int ma_ligne);
-
-
-
-#define DisplayErrorJd(a, b, c, d ) DisplayErrorJdLine( a, b, c, d, __LINE__ )
-
-int AddLogStreamJd(log_t * pjd,
-                   type_log_stream_t type,
-                   desc_log_stream_t desc_voie, niveau_t niveau, aiguillage_t aiguillage);
-#endif //OLD_LOGGING
 
 #endif
