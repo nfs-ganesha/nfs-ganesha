@@ -28,16 +28,16 @@ int main(void)
   /* connexion */
 
   st = fsal_posixdb_connect(&dbparams, &p_conn);
-  printf("%i (%i) : %p\n", st.major, PQstatus(p_conn), p_conn);
+  Logtest("%i (%i) : %p", st.major, PQstatus(p_conn), p_conn);
 
   /* simple query */
   //PQtrace(p_conn, stderr);
   /*
      p_res = PQexec(p_conn, "DELETE FROM Parent");
-     printf("status : %s\n", PQresStatus(PQresultStatus(p_res)));
+     Logtest("status : %s", PQresStatus(PQresultStatus(p_res)));
      PQclear(p_res);
      p_res = PQexec(p_conn, "DELETE FROM Handle");
-     printf("status : %s\n", PQresStatus(PQresultStatus(p_res)));
+     Logtest("status : %s", PQresStatus(PQresultStatus(p_res)));
      PQclear(p_res);
    */
   // ajout de la racine :
@@ -52,9 +52,9 @@ int main(void)
      memset(&fsalname, 0, sizeof(fsal_name_t));
 
      st = fsal_posixdb_add( p_conn, &info, &handle2, &fsalname, &handle);
-     printf("status : %i %i\n", st.major, st.minor);
+     Logtest("status : %i %i", st.major, st.minor);
      if (st.major == ERR_FSAL_POSIXDB_NOERR) {
-     printf("handle %lli/%i\n", handle.id, handle.ts);
+     Logtest("handle %lli/%i", handle.id, handle.ts);
      }
 
      // ajout de la /tmp :
@@ -70,18 +70,18 @@ int main(void)
      fsalname.len=3;
 
      st = fsal_posixdb_add( p_conn, &info, &handle2, &fsalname, &handle);
-     printf("status : %i %i\n", st.major, st.minor);
+     Logtest("status : %i %i", st.major, st.minor);
      if (st.major == ERR_FSAL_POSIXDB_NOERR) {
-     printf("handle %lli/%i\n", handle.id, handle.ts);
+     Logtest("handle %lli/%i", handle.id, handle.ts);
      }
 
      // ajout de /tmp une 2 eme fois
      puts("ajout de /tmp avec un autre inode");
      info.inode++;
      st = fsal_posixdb_add( p_conn, &info, &handle2, &fsalname, &handle);
-     printf("status : %i %i\n", st.major, st.minor);
+     Logtest("status : %i %i", st.major, st.minor);
      if (st.major == ERR_FSAL_POSIXDB_NOERR) {
-     printf("handle %lli/%i\n", handle.id, handle.ts);
+     Logtest("handle %lli/%i", handle.id, handle.ts);
      }
 
      puts("ajout de /tmp/toto");
@@ -91,9 +91,9 @@ int main(void)
      fsalname.len=4;
 
      st = fsal_posixdb_add( p_conn, &info, &handle, &fsalname, &handle2);
-     printf("status : %i %i\n", st.major, st.minor);
+     Logtest("status : %i %i", st.major, st.minor);
      if (st.major == ERR_FSAL_POSIXDB_NOERR) {
-     printf("handle %lli/%i\n", handle2.id, handle2.ts);
+     Logtest("handle %lli/%i", handle2.id, handle2.ts);
      }
 
      puts("ajout de /tmp/toto/titi");
@@ -103,34 +103,34 @@ int main(void)
      fsalname.len=4;
 
      st = fsal_posixdb_add( p_conn, &info, &handle2, &fsalname, &handle);
-     printf("status : %i %i\n", st.major, st.minor);
+     Logtest("status : %i %i", st.major, st.minor);
      if (st.major == ERR_FSAL_POSIXDB_NOERR) {
-     printf("handle %lli/%i\n", handle.id, handle.ts);
+     Logtest("handle %lli/%i", handle.id, handle.ts);
      }
 
      puts("getInfoFromHandle de /tmp/toto");
      st = fsal_posixdb_getInfoFromHandle( p_conn, &handle2, &fsalpath, 1, &i, &info );
-     printf("status : %i %i\n", st.major, st.minor);
+     Logtest("status : %i %i", st.major, st.minor);
      if (st.major == ERR_FSAL_POSIXDB_NOERR) {
-     printf("path: %s, handle %lli/%i\n", fsalpath.path, handle2.id, handle2.ts);
+     Logtest("path: %s, handle %lli/%i", fsalpath.path, handle2.id, handle2.ts);
      }
 
      memset(&fsalpath, 0,sizeof(fsalpath));
      puts("getInfoFromHandle de /tmp/toto/titi");
      st = fsal_posixdb_getInfoFromHandle( p_conn, &handle, &fsalpath, 1, &i, &info );
-     printf("status : %i %i\n", st.major, st.minor);
+     Logtest("status : %i %i", st.major, st.minor);
      if (st.major == ERR_FSAL_POSIXDB_NOERR) {
-     printf("path: %s, handle %lli/%i\n", fsalpath.path, handle.id, handle.ts);
+     Logtest("path: %s, handle %lli/%i", fsalpath.path, handle.id, handle.ts);
      }
 
      st = fsal_posixdb_delete( p_conn, &handle2, &fsalname, &info);
-     printf("status : %i %i\n", st.major, st.minor);
+     Logtest("status : %i %i", st.major, st.minor);
    */
 
   handle.id = 3226283;
   handle.ts = 1143621188;
   st = fsal_posixdb_buildOnePath(p_conn, &handle, &fsalpath);
-  puts(fsalpath.path);
+  Logtest("%s", fsalpath.path);
 
   return 0;
 }
