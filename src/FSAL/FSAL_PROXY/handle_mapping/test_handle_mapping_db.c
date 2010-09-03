@@ -34,8 +34,6 @@ int main(int argc, char **argv)
   SetNameFunction("main");
   SetNameHost("localhost");
 
-  InitDebug(NIV_FULL_DEBUG);
-
   /* count databases */
 
   rc = handlemap_db_count(dir);
