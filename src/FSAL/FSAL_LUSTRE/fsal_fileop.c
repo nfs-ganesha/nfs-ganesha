@@ -163,7 +163,7 @@ fsal_status_t LUSTREFSAL_open(lustrefsal_handle_t * p_filehandle,       /* IN */
   /* flags conflicts. */
   if(rc)
     {
-      DisplayLogJdLevel(fsal_log, NIV_EVENT, "Invalid/conflicting flags : %#X",
+      LogEvent(COMPONENT_FSAL, "Invalid/conflicting flags : %#X",
                         openflags);
       Return(rc, 0, INDEX_FSAL_open);
     }
@@ -279,7 +279,7 @@ fsal_status_t LUSTREFSAL_read(lustrefsal_file_t * p_file_descriptor,    /* IN */
       if(rc)
         {
 
-          DisplayLogJdLevel(fsal_log, NIV_EVENT,
+          LogEvent(COMPONENT_FSAL,
                             "Error in posix fseek operation (whence=%s, offset=%lld)",
                             (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
                              (p_seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
@@ -400,7 +400,7 @@ fsal_status_t LUSTREFSAL_write(lustrefsal_file_t * p_file_descriptor,   /* IN */
       if(rc)
         {
 
-          DisplayLogJdLevel(fsal_log, NIV_EVENT,
+          LogEvent(COMPONENT_FSAL,
                             "Error in posix fseek operation (whence=%s, offset=%lld)",
                             (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
                              (p_seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
@@ -412,7 +412,7 @@ fsal_status_t LUSTREFSAL_write(lustrefsal_file_t * p_file_descriptor,   /* IN */
 
         }
 
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_FSAL,
                         "Write operation (whence=%s, offset=%lld, size=%lld)",
                         (p_seek_descriptor->whence ==
                          FSAL_SEEK_CUR ? "SEEK_CUR" : (p_seek_descriptor->whence ==
@@ -439,7 +439,7 @@ fsal_status_t LUSTREFSAL_write(lustrefsal_file_t * p_file_descriptor,   /* IN */
   /** @todo: manage ssize_t to fsal_size_t convertion */
   if(nb_written <= 0)
     {
-      DisplayLogJdLevel(fsal_log, NIV_DEBUG,
+      LogDebug(COMPONENT_FSAL,
                         "Write operation of size %llu at offset %lld failed. fd=%d, errno=%d.",
                         i_size, p_seek_descriptor->offset, p_file_descriptor->fd, errsv);
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_write);
