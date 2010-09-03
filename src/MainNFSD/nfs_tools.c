@@ -95,13 +95,13 @@ struct tcp_conn
 unsigned long decimal_simple_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t * buffclef)
 {
-  printf("ATTENTION: APPEL D'UNE DUMMY FUNCTION\n");
+  LogMajor(COMPONENT_MAIN, "ATTENTION: CALLING A DUMMY FUNCTION");
   return 0;
 }
 
 unsigned long decimal_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef)
 {
-  printf("ATTENTION: APPEL D'UNE DUMMY FUNCTION\n");
+  LogMajor(COMPONENT_MAIN, "ATTENTION: CALLING A DUMMY FUNCTION");
   return 0;
 }
 
