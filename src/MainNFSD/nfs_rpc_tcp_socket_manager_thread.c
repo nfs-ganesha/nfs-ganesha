@@ -140,7 +140,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
   if((rc = BuddyInit(&nfs_param.buddy_param_tcp_mgr)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogMessage(COMPONENT_DISPATCH, "Memory manager could not be initialized");
+      LogCrit(COMPONENT_DISPATCH, "Memory manager could not be initialized");
       exit(1);
     }
 #endif
@@ -155,7 +155,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
       /* Get a worker to do the job */
       if((worker_index = nfs_rpc_get_worker_index(FALSE)) < 0)
         {
-          LogMessage(COMPONENT_DISPATCH, "CRITICAL ERROR: Couldn't choose a worker !!");
+          LogCrit(COMPONENT_DISPATCH, "CRITICAL ERROR: Couldn't choose a worker !!");
           return NULL;
         }
 
@@ -243,7 +243,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 #else
       if(pnfsreq->xprt->xp_sock != tcp_sock)
 #endif
-        LogMessage(COMPONENT_DISPATCH,
+        LogCrit(COMPONENT_DISPATCH,
              "TCP SOCKET MANAGER : /!\\ Trying to access a bad socket ! Check the source file=%s, line=%s",
              __FILE__, __LINE__);
 
@@ -283,14 +283,14 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 #endif                          /* _USE_TIRPC */
                 strncpy(str_caller, "unresolved", MAXNAMLEN);
 
-              LogMessage(COMPONENT_DISPATCH,
+              LogCrit(COMPONENT_DISPATCH,
                    "TCP SOCKET MANAGER Sock=%d: the client (%s) disappeared... Stopping thread ",
                    tcp_sock, str_caller);
 
               if(Xports[tcp_sock] != NULL)
                 SVC_DESTROY(Xports[tcp_sock]);
               else
-                LogMessage(COMPONENT_DISPATCH,
+                LogCrit(COMPONENT_DISPATCH,
                      "TCP SOCKET MANAGER : /!\\ **** ERROR **** Mismatch between tcp_sock and xprt array");
 
               P(workers_data[worker_index].request_pool_mutex);
@@ -306,7 +306,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
               /* Free stuff allocated by BuddyMalloc before thread exists */
               sleep(nfs_param.core_param.expiration_dupreq * 2);   /** @todo : remove this for a cleaner fix */
               if((rc = BuddyDestroy()) != BUDDY_SUCCESS)
-                LogMessage(COMPONENT_DISPATCH,
+                LogCrit(COMPONENT_DISPATCH,
                      "TCP SOCKET MANAGER Sock=%d (on exit): got error %u from BuddyDestroy",
                      rc);
 #endif                          /*  _NO_BUDDY_SYSTEM */
@@ -351,7 +351,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
             {
               V(workers_data[worker_index].mutex_req_condvar);
               V(workers_data[worker_index].request_pool_mutex);
-              LogMessage(COMPONENT_DISPATCH,
+              LogCrit(COMPONENT_DISPATCH,
                    "TCP SOCKET MANAGER Sock=%d: Cond signal failed for thr#%d , errno = %d",
                    tcp_sock, worker_index, errno);
             }
