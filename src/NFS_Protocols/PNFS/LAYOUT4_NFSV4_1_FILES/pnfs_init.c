@@ -27,6 +27,8 @@
 #include <rpc/rpc.h>
 #endif
 
+#include "log_macros.h"
+
 #include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
 
 /**
@@ -54,18 +56,18 @@ int pnfs_init(pnfs_client_t * pnfsclient, pnfs_layoutfile_parameter_t * pnfs_lay
       if(pnfs_connect(&pnfsclient->ds_client[i], &pnfs_layout_param->ds_param[i]))
         {
           /* Failed init */
-          DisplayLog("PNFS INIT: pNFS engine could not be initialized, exiting...");
+          LogMajor(COMPONENT_PNFS,"PNFS INIT: pNFS engine could not be initialized, exiting...");
           exit(1);
         }
-      DisplayLogLevel(NIV_DEBUG, "PNFS INIT: pNFS engine successfully initialized");
+      LogDebug(COMPONENT_PNFS, "PNFS INIT: pNFS engine successfully initialized");
 
       if(pnfs_do_mount(&pnfsclient->ds_client[i], &pnfs_layout_param->ds_param[i]))
         {
           /* Failed init */
-          DisplayLog("PNFS INIT: pNFS engine could not initialized session, exiting...");
+          LogMajor(COMPONENT_PNFS,"PNFS INIT: pNFS engine could not initialized session, exiting...");
           exit(1);
         }
-      DisplayLogLevel(NIV_DEBUG, "PNFS INIT: pNFS session successfully initialized");
+      LogDebug(COMPONENT_PNFS, "PNFS INIT: pNFS session successfully initialized");
 
       /* Lookup to find the DS's root FH */
       pnfsclient->ds_client[i].ds_rootfh.nfs_fh4_val =
@@ -76,12 +78,12 @@ int pnfs_init(pnfs_client_t * pnfsclient, pnfs_layoutfile_parameter_t * pnfs_lay
           &pnfsclient->ds_client[i].ds_rootfh))
         {
           /* Failed init */
-          DisplayLog("PNFS INIT: pNFS engine could not look up %s on DS=%s",
+          LogMajor(COMPONENT_PNFS,"PNFS INIT: pNFS engine could not look up %s on DS=%s",
                      pnfs_layout_param->ds_param[i].rootpath,
                      pnfs_layout_param->ds_param[i].ipaddr_ascii);
           exit(1);
         }
-      DisplayLogLevel(NIV_DEBUG,
+      LogDebug(COMPONENT_PNFS,
                       "PNFS INIT: pNFS engine successfully got DS's rootFH for %s",
                       pnfs_layout_param->ds_param[i].ipaddr_ascii);
 

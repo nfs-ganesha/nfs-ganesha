@@ -1912,6 +1912,15 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
 #endif
     SYSLOG,
     "syslog"
+  },
+  { COMPONENT_PNFS,          "COMPONENT_PNFS", "PNFS",
+#ifdef _DEBUG_PNFS
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    "syslog"
   }
 };
 
