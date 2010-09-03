@@ -382,7 +382,7 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
     {
       p_xattr_attrs->asked_attributes = supported;
 
-      DisplayLogJdLevel(fsal_log, NIV_CRIT,
+      LogCrit(COMPONENT_FSAL,
                         "Error: p_xattr_attrs->asked_attributes was 0 in %s() line %d, file %s",
                         __FUNCTION__, __LINE__, __FILE__);
     }
@@ -391,7 +391,7 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
 
   if(unsupp)
     {
-      DisplayLogJdLevel(fsal_log, NIV_DEBUG,
+      LogDebug(COMPONENT_FSAL,
                         "Asking for unsupported attributes in %s(): %#llX removing it from asked attributes",
                         __FUNCTION__, unsupp);
 
@@ -513,7 +513,7 @@ fsal_status_t HPSSFSAL_GetXAttrAttrs(hpssfsal_handle_t * p_objecthandle,        
   else if(xattr_id >= XATTR_COUNT)
     {
       /* This is UDA */
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Getting attributes for UDA #%u",
+      LogFullDebug(COMPONENT_FSAL, "Getting attributes for UDA #%u",
                         xattr_id - XATTR_COUNT);
     }
 
@@ -649,7 +649,7 @@ fsal_status_t HPSSFSAL_ListXAttrs(hpssfsal_handle_t * p_objecthandle,   /* IN */
           if(rc != 0)
             {
               /* set error flag */
-              DisplayLogJdLevel(fsal_log, NIV_DEBUG,
+              LogDebug(COMPONENT_FSAL,
                                 "Error %d getting attributes for xattr '%s'", rc,
                                 xattrs_tab[out_index].xattr_name);
               xattrs_tab[out_index].attributes.asked_attributes = FSAL_ATTR_RDATTR_ERR;
@@ -724,7 +724,7 @@ fsal_status_t HPSSFSAL_ListXAttrs(hpssfsal_handle_t * p_objecthandle,   /* IN */
             if(rc != 0)
               {
                 /* set error flag */
-                DisplayLogJdLevel(fsal_log, NIV_DEBUG,
+                LogDebug(COMPONENT_FSAL,
                                   "Error %d getting attributes for xattr \'%s\'", rc,
                                   xattrs_tab[out_index].xattr_name);
                 xattrs_tab[out_index].attributes.asked_attributes = FSAL_ATTR_RDATTR_ERR;
@@ -792,7 +792,7 @@ fsal_status_t HPSSFSAL_GetXAttrValueById(hpssfsal_handle_t * p_objecthandle,    
       unsigned int i;
       memset(&attr_list, 0, sizeof(hpss_userattr_list_t));
 
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Getting value for UDA #%u",
+      LogFullDebug(COMPONENT_FSAL, "Getting value for UDA #%u",
                         xattr_id - XATTR_COUNT);
 
       /* get list of UDAs for this entry, and return the good value */
@@ -896,7 +896,7 @@ fsal_status_t HPSSFSAL_GetXAttrIdByName(hpssfsal_handle_t * p_objecthandle,     
 
           memset(&attr_list, 0, sizeof(hpss_userattr_list_t));
 
-          DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "looking for xattr '%s' in UDAs",
+          LogFullDebug(COMPONENT_FSAL, "looking for xattr '%s' in UDAs",
                             xattr_name->name);
 
           /* get list of UDAs for this entry, and return the good index */
@@ -1119,7 +1119,7 @@ fsal_status_t HPSSFSAL_SetXAttrValueById(hpssfsal_handle_t * p_objecthandle,    
 
   memset(&attr_list, 0, sizeof(hpss_userattr_list_t));
 
-  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Getting name of UDA #%u",
+  LogFullDebug(COMPONENT_FSAL, "Getting name of UDA #%u",
                     xattr_id - XATTR_COUNT);
 
   TakeTokenFSCall();

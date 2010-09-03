@@ -273,14 +273,9 @@ fsal_status_t LUSTREFSAL_ExpandHandle(lustrefsal_export_context_t * p_expcontext
 fsal_status_t LUSTREFSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 {
 
-  log_t no_logging = LOG_INITIALIZER;
-
   /* defensive programming... */
   if(out_parameter == NULL)
     ReturnCode(ERR_FSAL_FAULT, 0);
-
-  /* init logging to no logging */
-  out_parameter->fsal_info.log_outputs = no_logging;
 
   /* init max FS calls = unlimited */
   out_parameter->fsal_info.max_fs_calls = 0;
@@ -474,23 +469,11 @@ fsal_status_t LUSTREFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
     }
 
   /* init logging */
-
   if(LogFile)
-    {
-      desc_log_stream_t log_stream;
+    SetComponentLogFile(COMPONENT_FSAL, LogFile);
 
-      strcpy(log_stream.path, LogFile);
-
-      /* Default : NIV_CRIT */
-
-      if(DebugLevel == -1)
-        AddLogStreamJd(&(out_parameter->fsal_info.log_outputs),
-                       V_FILE, log_stream, NIV_CRIT, SUP);
-      else
-        AddLogStreamJd(&(out_parameter->fsal_info.log_outputs),
-                       V_FILE, log_stream, DebugLevel, SUP);
-
-    }
+  if(DebugLevel != -1)
+    SetComponentLogLevel(COMPONENT_FSAL, DebugLevel);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
