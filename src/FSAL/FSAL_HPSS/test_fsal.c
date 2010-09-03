@@ -185,10 +185,10 @@ int main(int argc, char **argv)
 #endif
 
   /* init debug */
-  InitLogging();
   SetDefaultLogging("TEST");
   SetNamePgm("test_fsal");
   SetNameFunction("main");
+  InitLogging();
 
   /* Obtention du nom de la machine */
   if(gethostname(localmachine, sizeof(localmachine)) != 0)
