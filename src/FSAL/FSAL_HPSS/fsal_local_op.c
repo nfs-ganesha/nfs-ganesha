@@ -120,10 +120,10 @@ fsal_status_t HPSSFSAL_test_access(hpssfsal_op_context_t * p_context,   /* IN */
 #endif
     {
 
-#if defined( _DEBUG_FSAL ) && ( HPSS_MAJOR_VERSION == 5 )
+#if ( HPSS_MAJOR_VERSION == 5 )
       LogFullDebug(COMPONENT_FSAL, "File belongs to user %d",
                         p_context->credential.hpss_usercred.SecPWent.Uid);
-#elif defined( _DEBUG_FSAL ) && ( HPSS_MAJOR_VERSION >= 6 )
+#elif ( HPSS_MAJOR_VERSION >= 6 )
       LogFullDebug(COMPONENT_FSAL, "File belongs to user %d",
                         p_context->credential.hpss_usercred.Uid);
 #endif
