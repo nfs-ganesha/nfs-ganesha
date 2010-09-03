@@ -89,9 +89,7 @@ fsal_status_t PROXYFSAL_getattrs(proxyfsal_handle_t * filehandle,       /* IN */
   if(!filehandle || !p_context || !object_attributes)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
 
-#ifdef _DEBUG_FSAL
   PRINT_HANDLE("PROXYFSAL_getattrs", filehandle);
-#endif
 
   /* >> get attributes from your filesystem << */
   /* Setup results structures */
@@ -234,9 +232,7 @@ fsal_status_t PROXYFSAL_setattrs(proxyfsal_handle_t * filehandle,       /* IN */
   if(!filehandle || !p_context || !attrib_set)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_setattrs);
 
-#ifdef _DEBUG_FSAL
   PRINT_HANDLE("FSAL_setattr", filehandle);
-#endif
 
   memset((char *)&argnfs4, 0, sizeof(COMPOUND4args));
   memset((char *)&resnfs4, 0, sizeof(COMPOUND4res));

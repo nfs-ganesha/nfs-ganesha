@@ -223,7 +223,7 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
   buddy_parameter_t buddy_param = default_buddy_parameter;
 #endif
 
-  DisplayLog("FSAL_proxy_clientid_refresher_thread: starting...");
+  LogEvent(COMPONENT_FSAL, "FSAL_proxy_clientid_refresher_thread: starting...");
 
   sleep(6);    /** @todo: use getattr to have an actual value of server's lease duration */
 
@@ -231,8 +231,8 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
   if((rc = BuddyInit(&buddy_param)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      DisplayLog
-          ("FSAL_proxy_clientid_renewer_thread: Memory manager could not be initialized, exiting...");
+      LogCrit(COMPONENT_FSAL,
+          "FSAL_proxy_clientid_renewer_thread: Memory manager could not be initialized, exiting...");
       exit(1);
     }
 #endif
@@ -242,8 +242,8 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
 
   if(FSAL_IS_ERROR(fsal_status))
     {
-      DisplayLog
-          ("FSAL_proxy_clientid_refresher_thread: FSAL error(%u,%u) during init... exiting",
+      LogCrit(COMPONENT_FSAL,
+           "FSAL_proxy_clientid_refresher_thread: FSAL error(%u,%u) during init... exiting",
            fsal_status.major, fsal_status.minor);
       exit(1);
     }
@@ -271,16 +271,16 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
         {
           ReleaseTokenFSCall();
 
-          DisplayLog("FSAL_PROXY: /!\\ RPC error when connecting to the server");
+          LogCrit(COMPONENT_FSAL, "FSAL_PROXY: /!\\ RPC error when connecting to the server");
 
         }
 
       ReleaseTokenFSCall();
 
       if(resnfs4.status != NFS4_OK)
-        DisplayLog
-            ("FSAL_PROXY: /!\\ NFSv4 error %u occured when trying to new clienitf %llu",
-             resnfs4.status, fsal_clientid);
+        LogCrit(COMPONENT_FSAL,
+                "FSAL_PROXY: /!\\ NFSv4 error %u occured when trying to new clienitf %llu",
+                resnfs4.status, fsal_clientid);
 
       sleep(6);  /** @todo: use getattr to have an actual value of server's lease duration */
     }                           /* while( 1 ) */

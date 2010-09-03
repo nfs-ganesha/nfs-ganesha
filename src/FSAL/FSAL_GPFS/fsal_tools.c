@@ -555,8 +555,6 @@ fsal_status_t GPFSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
   if(LogFile)
     SetComponentLogFile(COMPONENT_FSAL, LogFile);
 
-  /* Default : NIV_CRIT */
-
   if(DebugLevel != -1)
     SetComponentLogLevel(COMPONENT_FSAL, DebugLevel);
 
