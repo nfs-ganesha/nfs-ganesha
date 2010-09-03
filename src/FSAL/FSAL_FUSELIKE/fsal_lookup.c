@@ -54,7 +54,7 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes can be returned :
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
- *          
+ *
  */
 fsal_status_t FUSEFSAL_lookup(fusefsal_handle_t * parent_directory_handle,      /* IN */
                               fsal_name_t * p_filename, /* IN */
@@ -86,9 +86,7 @@ fsal_status_t FUSEFSAL_lookup(fusefsal_handle_t * parent_directory_handle,      
 
   if(!parent_directory_handle)
     {
-#ifdef _DEBUG_FSAL
-      printf("lookup: root handle\n");
-#endif
+      LogFullDebug(COMPONENT_FSAL, "lookup: root handle");
 
       /* check that p_filename is NULL,
        * else, parent_directory_handle should not
@@ -109,8 +107,8 @@ fsal_status_t FUSEFSAL_lookup(fusefsal_handle_t * parent_directory_handle,      
       if(stbuff.st_ino == 0)
         {
           /* filesystem does not provide inodes ! */
-          DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                            "WARNING in lookup: filesystem does not provide inode numbers");
+          LogDebug(COMPONENT_FSAL,
+                   "WARNING in lookup: filesystem does not provide inode numbers");
           /* root will have inode nbr 1 */
           stbuff.st_ino = 1;
         }
@@ -155,9 +153,7 @@ fsal_status_t FUSEFSAL_lookup(fusefsal_handle_t * parent_directory_handle,      
       if(rc)
         Return(ERR_FSAL_STALE, rc, INDEX_FSAL_lookup);
 
-#ifdef _DEBUG_FSAL
-      printf("lookup: parent path='%s'\n", parent_path);
-#endif
+      LogFullDebug(COMPONENT_FSAL, "lookup: parent path='%s'", parent_path);
 
       /* TODO: check the parent type */
 
@@ -165,16 +161,13 @@ fsal_status_t FUSEFSAL_lookup(fusefsal_handle_t * parent_directory_handle,      
 
       if(!strcmp(p_filename->name, "."))
         {
-#ifdef _DEBUG_FSAL
-          printf("lookup on '.'\n");
-#endif
+          LogFullDebug(COMPONENT_FSAL, "lookup on '.'");
           strcpy(child_path, parent_path);
         }
       else if(!strcmp(p_filename->name, ".."))
         {
-#ifdef _DEBUG_FSAL
-          printf("lookup on '..'\n");
-#endif
+          LogFullDebug(COMPONENT_FSAL, "lookup on '..'");
+
           /* removing last '/<name>' if path != '/' */
           if(!strcmp(parent_path, "/"))
             {
@@ -196,9 +189,7 @@ fsal_status_t FUSEFSAL_lookup(fusefsal_handle_t * parent_directory_handle,      
         }
       else
         {
-#ifdef _DEBUG_FSAL
-          printf("lookup on '%s/%s'\n", parent_path, p_filename->name);
-#endif
+          LogFullDebug(COMPONENT_FSAL, "lookup on '%s/%s'", parent_path, p_filename->name);
           FSAL_internal_append_path(child_path, parent_path, p_filename->name);
         }
 
@@ -206,9 +197,7 @@ fsal_status_t FUSEFSAL_lookup(fusefsal_handle_t * parent_directory_handle,      
       rc = p_fs_ops->getattr(child_path, &stbuff);
       ReleaseTokenFSCall();
 
-#ifdef _DEBUG_FSAL
-      printf("%s: gettattr status=%d\n", child_path, rc);
-#endif
+      LogFullDebug(COMPONENT_FSAL, "%s: gettattr status=%d", child_path, rc);
 
       if(rc)
         Return(fuse2fsal_error(rc, FALSE), rc, INDEX_FSAL_lookup);
@@ -219,24 +208,24 @@ fsal_status_t FUSEFSAL_lookup(fusefsal_handle_t * parent_directory_handle,      
           if(stbuff.st_ino == 0)
             {
               /* filesystem does not provide inodes ! */
-              DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                                "WARNING in lookup: filesystem does not provide inode numbers !!!");
+              LogDebug(COMPONENT_FSAL,
+                       "WARNING in lookup: filesystem does not provide inode numbers !!!");
 
               if(!parent_directory_handle || !p_filename || !p_filename->name)
                 {
-                  DisplayLogJdLevel(fsal_log, NIV_CRIT,
-                                    "CRITICAL: Segfault avoided !!!!! %p %p %p",
-                                    parent_directory_handle, p_filename,
-                                    p_filename ? p_filename->name : NULL);
+                  LogCrit(COMPONENT_FSAL,
+                          "CRITICAL: Segfault avoided !!!!! %p %p %p",
+                          parent_directory_handle, p_filename,
+                          p_filename ? p_filename->name : NULL);
                 }
               else
                 {
                   /* create a fake handle for child = hash of its parent and its name */
                   stbuff.st_ino =
                       hash_peer(parent_directory_handle->data.inode, p_filename->name);
-                  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "handle for %u, %s = %u\n",
-                                    (int)parent_directory_handle->data.inode, p_filename->name,
-                                    (int)stbuff.st_ino);
+                  LogFullDebug(COMPONENT_FSAL, "handle for %u, %s = %u",
+                               (int)parent_directory_handle->data.inode, p_filename->name,
+                               (int)stbuff.st_ino);
                 }
             }
 
@@ -252,10 +241,10 @@ fsal_status_t FUSEFSAL_lookup(fusefsal_handle_t * parent_directory_handle,      
       else
         {
           rc = NamespaceGetGen(stbuff.st_ino, stbuff.st_dev, &object_handle->data.validator);
-          DisplayLogJdLevel(fsal_log, NIV_EVENT,
-                            ". or .. is stale ??? ino=%d, dev=%d\n, validator=%d\n",
-                            (int)stbuff.st_ino, (int)stbuff.st_dev,
-                            (int)object_handle->data.validator);
+          LogEvent(COMPONENT_FSAL,
+                   ". or .. is stale ??? ino=%d, dev=%d\n, validator=%d",
+                   (int)stbuff.st_ino, (int)stbuff.st_dev,
+                   (int)object_handle->data.validator);
           if(rc)
             Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_lookup);
         }
@@ -307,7 +296,7 @@ fsal_status_t FUSEFSAL_lookup(fusefsal_handle_t * parent_directory_handle,      
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes can be returned :
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
- *          
+ *
  */
 fsal_status_t FUSEFSAL_lookupJunction(fusefsal_handle_t * p_junction_handle,    /* IN */
                                       fusefsal_op_context_t * p_context,        /* IN */

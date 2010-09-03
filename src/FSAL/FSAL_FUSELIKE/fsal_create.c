@@ -39,7 +39,7 @@
  *        will be applied on it).
  * \param object_handle (output):
  *        Pointer to the handle of the created file.
- * \param object_attributes (optionnal input/output): 
+ * \param object_attributes (optionnal input/output):
  *        The postop attributes of the created file.
  *        As input, it defines the attributes that the caller
  *        wants to retrieve (by positioning flags into this structure)
@@ -53,7 +53,7 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes can be returned :
  *          ERR_FSAL_ACCESS, ERR_FSAL_EXIST, ERR_FSAL_IO, ...
- *            
+ *
  *        NB: if getting postop attributes failed,
  *        the function does not return an error
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
@@ -110,9 +110,7 @@ fsal_status_t FUSEFSAL_create(fusefsal_handle_t * parent_directory_handle,      
 
       dummy.flags = O_CREAT | O_EXCL;
 
-#ifdef _DEBUG_FSAL
-      printf("Call to create( %s, %#o, %#X )\n", child_path, mode, dummy.flags);
-#endif
+      LogFullDebug(COMPONENT_FSAL, "Call to create( %s, %#o, %#X )", child_path, mode, dummy.flags);
 
       TakeTokenFSCall();
       rc = p_fs_ops->create(child_path, mode, &dummy);
@@ -159,9 +157,8 @@ fsal_status_t FUSEFSAL_create(fusefsal_handle_t * parent_directory_handle,      
                            p_context->credential.group);
       ReleaseTokenFSCall();
 
-#ifdef _DEBUG_FSAL
-      printf("chown: status = %d\n", rc);
-#endif
+      LogFullDebug(COMPONENT_FSAL, "chown: status = %d", rc);
+
       if(rc)
         Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_create);
     }
@@ -221,7 +218,7 @@ fsal_status_t FUSEFSAL_create(fusefsal_handle_t * parent_directory_handle,      
  *        will be applied on it).
  * \param object_handle (output):
  *        Pointer to the handle of the created directory.
- * \param object_attributes (optionnal input/output): 
+ * \param object_attributes (optionnal input/output):
  *        The attributes of the created directory.
  *        As input, it defines the attributes that the caller
  *        wants to retrieve (by positioning flags into this structure)
@@ -235,7 +232,7 @@ fsal_status_t FUSEFSAL_create(fusefsal_handle_t * parent_directory_handle,      
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes can be returned :
  *          ERR_FSAL_ACCESS, ERR_FSAL_EXIST, ERR_FSAL_IO, ...
- *            
+ *
  *        NB: if getting postop attributes failed,
  *        the function does not return an error
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
@@ -301,9 +298,8 @@ fsal_status_t FUSEFSAL_mkdir(fusefsal_handle_t * parent_directory_handle,       
                            p_context->credential.group);
       ReleaseTokenFSCall();
 
-#ifdef _DEBUG_FSAL
-      printf("chown: status = %d\n", rc);
-#endif
+      LogFullDebug(COMPONENT_FSAL, "chown: status = %d", rc);
+
       if(rc)
         Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_mkdir);
     }
@@ -361,7 +357,7 @@ fsal_status_t FUSEFSAL_mkdir(fusefsal_handle_t * parent_directory_handle,       
  *        Mode for the directory to be created.
  *        (the umask defined into the FSAL configuration file
  *        will be applied on it).
- * \param attributes (optionnal input/output): 
+ * \param attributes (optionnal input/output):
  *        The post_operation attributes of the linked object.
  *        As input, it defines the attributes that the caller
  *        wants to retrieve (by positioning flags into this structure)
@@ -375,7 +371,7 @@ fsal_status_t FUSEFSAL_mkdir(fusefsal_handle_t * parent_directory_handle,       
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes can be returned :
  *          ERR_FSAL_ACCESS, ERR_FSAL_EXIST, ERR_FSAL_IO, ...
- *            
+ *
  *        NB: if getting postop attributes failed,
  *        the function does not return an error
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
@@ -407,11 +403,9 @@ fsal_status_t FUSEFSAL_link(fusefsal_handle_t * target_handle,  /* IN */
   if(!global_fs_info.link_support || !p_fs_ops->link)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
 
-#ifdef _DEBUG_FSAL
-  fprintf(stderr, "linking %lX.%lu/%s to %lX.%lu\n",
+  LogFullDebug(COMPONENT_FSAL, "linking %lX.%lu/%s to %lX.%lu",
           dir_handle->data.device, dir_handle->data.inode, p_link_name->name,
           target_handle->data.device, target_handle->data.inode);
-#endif
 
   /* get target inode path */
   rc = NamespacePath(target_handle->data.inode,
@@ -449,8 +443,8 @@ fsal_status_t FUSEFSAL_link(fusefsal_handle_t * target_handle,  /* IN */
 
   if(new_validator != target_handle->data.validator)
     {
-      DisplayLogJdLevel(fsal_log, NIV_MAJ,
-                        "A wrong behaviour has been detected is FSAL_link: An object and its hardlink don't have the same generation id");
+      LogMajor(COMPONENT_FSAL,
+               "A wrong behaviour has been detected is FSAL_link: An object and its hardlink don't have the same generation id");
     }
 
   if(attributes)

@@ -32,7 +32,7 @@
  * \param p_link_content (output):
  *        Pointer to an fsal path structure where
  *        the link content is to be stored..
- * \param link_attributes (optionnal input/output): 
+ * \param link_attributes (optionnal input/output):
  *        The post operation attributes of the symlink link.
  *        As input, it defines the attributes that the caller
  *        wants to retrieve (by positioning flags into this structure)
@@ -139,7 +139,7 @@ fsal_status_t FUSEFSAL_readlink(fusefsal_handle_t * linkhandle, /* IN */
  *        It has no sense in HPSS nor UNIX filesystems.
  * \param link_handle (output):
  *        Pointer to the handle of the created symlink.
- * \param link_attributes (optionnal input/output): 
+ * \param link_attributes (optionnal input/output):
  *        Attributes of the newly created symlink.
  *        As input, it defines the attributes that the caller
  *        wants to retrieve (by positioning flags into this structure)
@@ -214,9 +214,8 @@ fsal_status_t FUSEFSAL_symlink(fusefsal_handle_t * parent_directory_handle,     
                            p_context->credential.group);
       ReleaseTokenFSCall();
 
-#ifdef _DEBUG_FSAL
-      printf("chown: status = %d\n", rc);
-#endif
+      LogFullDebug(COMPONENT_FSAL, "chown: status = %d", rc);
+
       if(rc)
         Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_symlink);
     }
