@@ -57,11 +57,6 @@ static fsal_staticfsinfo_t default_ghostfs_info = {
   0400                          /* default access rights for xattrs: root=RW, owner=R */
 };
 
-/*
- *  Log Descriptor
- */
-log_t fsal_log;
-
 /* threads keys for stats */
 static pthread_key_t key_stats;
 static pthread_once_t once_key = PTHREAD_ONCE_INIT;
@@ -245,9 +240,6 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   /* sanity check */
   if(!fsal_info || !fs_common_info)
     ReturnCode(ERR_FSAL_FAULT, 0);
-
-  /* Setting log info */
-  fsal_log = fsal_info->log_outputs;
 
   /* setting default values. */
   global_fs_info = default_ghostfs_info;
