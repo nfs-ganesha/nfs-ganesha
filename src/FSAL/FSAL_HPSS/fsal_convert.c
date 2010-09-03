@@ -336,7 +336,7 @@ fsal_nodetype_t hpss2fsal_type(unsigned32 hpss_type_in)
       return FSAL_TYPE_JUNCTION;
 
     default:
-      DisplayLogJdLevel(fsal_log, NIV_EVENT, "Unknown object type: %d", hpss_type_in);
+      LogEvent(COMPONENT_FSAL, "Unknown object type: %d", hpss_type_in);
       return -1;
     }
 
@@ -614,8 +614,8 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
     {
       p_fsalattr_out->asked_attributes = global_fs_info.supported_attrs;
 
-      DisplayLog
-          ("Error: p_fsalattr_out->asked_attributes  valait 0 dans hpss2fsal_attributes line %d, fichier %s",
+      LogCrit(COMPONENT_FSAL,
+          "Error: p_fsalattr_out->asked_attributes  valait 0 dans hpss2fsal_attributes line %d, fichier %s",
            __LINE__, __FILE__);
     }
 
@@ -626,7 +626,7 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
 
   if(unsupp_attr)
     {
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_FSAL,
                         "Unsupported attributes: %#llX    removing it from asked attributes ",
                         unsupp_attr);
 
@@ -708,13 +708,11 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ATIME))
     {
 
-#ifdef _DEBUG_FSAL
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Getting ATIME:");
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeLastRead = %d",
+      LogFullDebug(COMPONENT_FSAL, "Getting ATIME:");
+      LogFullDebug(COMPONENT_FSAL, "\tTimeLastRead = %d",
                         p_hpss_attr_in->TimeLastRead);
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeCreated = %d",
+      LogFullDebug(COMPONENT_FSAL, "\tTimeCreated = %d",
                         p_hpss_attr_in->TimeCreated);
-#endif
 
       if(p_hpss_attr_in->TimeLastRead != 0)
         p_fsalattr_out->atime = hpss2fsal_time(p_hpss_attr_in->TimeLastRead);
@@ -734,17 +732,15 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME))
     {
 
-#ifdef _DEBUG_FSAL
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Getting MTIME:");
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tType = %d",
+      LogFullDebug(COMPONENT_FSAL, "Getting MTIME:");
+      LogFullDebug(COMPONENT_FSAL, "\tType = %d",
                         hpss2fsal_type(p_hpss_handle_in->Type));
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeLastWritten = %d",
+      LogFullDebug(COMPONENT_FSAL, "\tTimeLastWritten = %d",
                         p_hpss_attr_in->TimeLastWritten);
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeModified = %d",
+      LogFullDebug(COMPONENT_FSAL, "\tTimeModified = %d",
                         p_hpss_attr_in->TimeModified);
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeCreated = %d",
+      LogFullDebug(COMPONENT_FSAL, "\tTimeCreated = %d",
                         p_hpss_attr_in->TimeCreated);
-#endif
 
       switch (hpss2fsal_type(p_hpss_handle_in->Type))
         {
@@ -833,7 +829,7 @@ fsal_status_t hpssHandle2fsalAttributes(ns_ObjHandle_t * p_hpsshandle_in,
   unavail_attr = (p_fsalattr_out->asked_attributes) & (~avail_attr);
   if(unavail_attr)
     {
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_FSAL,
                         "Attributes not available: %#llX", unavail_attr);
       ReturnCode(ERR_FSAL_ATTRNOTSUPP, 0);
     }
@@ -920,7 +916,7 @@ fsal_status_t fsal2hpss_attribset(hpssfsal_handle_t * p_fsal_handle,
 
   if(unavail_attrs)
     {
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_FSAL,
                         "Attributes not supported: %#llX", unavail_attrs);
 
       /* Error : unsupported attribute. */
@@ -934,7 +930,7 @@ fsal_status_t fsal2hpss_attribset(hpssfsal_handle_t * p_fsal_handle,
 
   if(unsettable_attrs)
     {
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_FSAL,
                         "Read-Only Attributes: %#llX", unsettable_attrs);
 
       /* Error : unsettable attribute. */
@@ -991,10 +987,8 @@ fsal_status_t fsal2hpss_attribset(hpssfsal_handle_t * p_fsal_handle,
 
       p_hpss_attrs->UID = p_attrib_set->owner;
 
-#ifdef _DEBUG_FSAL
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Setting Owner = : %d ",
+      LogFullDebug(COMPONENT_FSAL, "Setting Owner = : %d ",
                         p_attrib_set->owner);
-#endif
     }
 
   if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_GROUP))
@@ -1014,21 +1008,16 @@ fsal_status_t fsal2hpss_attribset(hpssfsal_handle_t * p_fsal_handle,
 
       p_hpss_attrs->TimeLastRead = fsal2hpss_time(p_attrib_set->atime);
 
-#ifdef _DEBUG_FSAL
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Setting ATIME:");
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeLastRead = %d",
+      LogFullDebug(COMPONENT_FSAL, "Setting ATIME:");
+      LogFullDebug(COMPONENT_FSAL, "\tTimeLastRead = %d",
                         p_hpss_attrs->TimeLastRead);
-#endif
 
     }
 
   if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_MTIME))
     {
-
-#ifdef _DEBUG_FSAL
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Setting MTIME:");
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tType = %d", p_fsal_handle->data.obj_type);
-#endif
+      LogFullDebug(COMPONENT_FSAL, "Setting MTIME:");
+      LogFullDebug(COMPONENT_FSAL, "\tType = %d", p_fsal_handle->data.obj_type);
 
       switch (p_fsal_handle->data.obj_type)
         {
@@ -1039,10 +1028,8 @@ fsal_status_t fsal2hpss_attribset(hpssfsal_handle_t * p_fsal_handle,
               API_AddRegisterValues(*p_hpss_attrmask, CORE_ATTR_TIME_LAST_WRITTEN, -1);
           p_hpss_attrs->TimeLastWritten = fsal2hpss_time(p_attrib_set->mtime);
 
-#ifdef _DEBUG_FSAL
-          DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeLastWritten = %d",
+          LogFullDebug(COMPONENT_FSAL, "\tTimeLastWritten = %d",
                             p_hpss_attrs->TimeLastWritten);
-#endif
 
           break;
 
@@ -1053,10 +1040,8 @@ fsal_status_t fsal2hpss_attribset(hpssfsal_handle_t * p_fsal_handle,
               API_AddRegisterValues(*p_hpss_attrmask, CORE_ATTR_TIME_MODIFIED, -1);
           p_hpss_attrs->TimeModified = fsal2hpss_time(p_attrib_set->mtime);
 
-#ifdef _DEBUG_FSAL
-          DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeModified = %d",
+          LogFullDebug(COMPONENT_FSAL, "\tTimeModified = %d",
                             p_hpss_attrs->TimeModified);
-#endif
 
           break;
 

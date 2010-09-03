@@ -247,19 +247,19 @@ fsal_status_t LUSTREFSAL_GetClientContext(lustrefsal_op_context_t * p_thr_contex
 
   for(i = 0; i < ng; i++)
     p_thr_context->credential.alt_groups[i] = alt_groups[i];
-#if defined( _DEBUG_FSAL )
 
   /* traces: prints p_credential structure */
 
-  LogFullDebug(COMPONENT_FSAL, "credential modified:");
-  LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
+  if (isFullDebug(COMPONENT_FSAL))
+    {
+      LogFullDebug(COMPONENT_FSAL, "credential modified:");
+      LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
                     p_thr_context->credential.user, p_thr_context->credential.group);
 
-  for(i = 0; i < p_thr_context->credential.nbgroups; i++)
-    LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
+      for(i = 0; i < p_thr_context->credential.nbgroups; i++)
+	LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
                       p_thr_context->credential.alt_groups[i]);
-
-#endif
+    }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);
 
