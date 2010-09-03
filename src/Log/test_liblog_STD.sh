@@ -126,10 +126,10 @@ test_stdout "CONFIG: Error ERR_MALLOC : malloc impossible : status 22 : Invalid 
 test_stdout "This should appear if environment is set properly"
 test_stdout "localhost : test_liblog-[1-9][0-9]*\[monothread\] :NFS STARTUP: Starting Log Tests$"
 
-test_stdout "DISPATCH: NIV_EVENT: This should go to stdout"
-test_stderr "DISPATCH: NIV_EVENT: This should go to stderr"
-test_syslog "DISPATCH: NIV_EVENT: This should go to syslog (verf = $DATE)"
-test_file   "DISPATCH: NIV_EVENT: This should go to $FILE" $FILE
+test_stdout "DISPATCH: EVENT: This should go to stdout"
+test_stderr "DISPATCH: EVENT: This should go to stderr"
+test_syslog "DISPATCH: EVENT: This should go to syslog (verf = $DATE)"
+test_file   "DISPATCH: EVENT: This should go to $FILE" $FILE
 
 echo "PASSED!"
 

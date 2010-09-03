@@ -68,7 +68,7 @@ void TestAlways(int expect, char *buff, log_components_t component, char *string
 void TestMajor(int expect, char *buff, log_components_t component, char *string)
 {
   char compare[2048];
-  sprintf(compare, "%s: %s: %s", LogComponents[component].comp_str, tabLogLevel[NIV_MAJOR].str, string);
+  sprintf(compare, "%s: MAJOR ERROR: %s", LogComponents[component].comp_str, string);
   buff[0] = '\0';
   LogMajor(component, "%s", string);
   if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
@@ -85,7 +85,7 @@ void TestMajor(int expect, char *buff, log_components_t component, char *string)
 void TestCrit(int expect, char *buff, log_components_t component, char *string)
 {
   char compare[2048];
-  sprintf(compare, "%s: %s: %s", LogComponents[component].comp_str, tabLogLevel[NIV_CRIT].str, string);
+  sprintf(compare, "%s: CRITICAL ERROR: %s", LogComponents[component].comp_str, string);
   buff[0] = '\0';
   LogCrit(component, "%s", string);
   if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
@@ -102,7 +102,7 @@ void TestCrit(int expect, char *buff, log_components_t component, char *string)
 void TestEvent(int expect, char *buff, log_components_t component, char *string)
 {
   char compare[2048];
-  sprintf(compare, "%s: %s: %s", LogComponents[component].comp_str, tabLogLevel[NIV_EVENT].str, string);
+  sprintf(compare, "%s: EVENT: %s", LogComponents[component].comp_str, string);
   buff[0] = '\0';
   LogEvent(component, "%s", string);
   if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
@@ -119,7 +119,7 @@ void TestEvent(int expect, char *buff, log_components_t component, char *string)
 void TestDebug(int expect, char *buff, log_components_t component, char *string)
 {
   char compare[2048];
-  sprintf(compare, "%s: %s: %s", LogComponents[component].comp_str, tabLogLevel[NIV_DEBUG].str, string);
+  sprintf(compare, "%s: DEBUG: %s", LogComponents[component].comp_str, string);
   buff[0] = '\0';
   LogDebug(component, "%s", string);
   if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
@@ -136,7 +136,7 @@ void TestDebug(int expect, char *buff, log_components_t component, char *string)
 void TestFullDebug(int expect, char *buff, log_components_t component, char *string)
 {
   char compare[2048];
-  sprintf(compare, "%s: %s: %s", LogComponents[component].comp_str, tabLogLevel[NIV_FULL_DEBUG].str, string);
+  sprintf(compare, "%s: DEBUG: %s", LogComponents[component].comp_str, string);
   buff[0] = '\0';
   LogFullDebug(component, "%s", string);
   if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
