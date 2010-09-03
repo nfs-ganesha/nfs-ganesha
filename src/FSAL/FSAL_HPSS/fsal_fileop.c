@@ -152,7 +152,7 @@ fsal_status_t HPSSFSAL_open(hpssfsal_handle_t * filehandle,     /* IN */
 
   if(rc)
     {
-      DisplayLogJdLevel(fsal_log, NIV_EVENT,
+      LogEvent(COMPONENT_FSAL,
                         "Invalid/conflicting flags : %#X", openflags);
       Return(rc, 0, INDEX_FSAL_open);
     }
@@ -306,7 +306,7 @@ fsal_status_t HPSSFSAL_read(hpssfsal_file_t * file_descriptor,  /* IN */
         {
           error = (int)seekoffset;
 
-          DisplayLogJdLevel(fsal_log, NIV_EVENT,
+          LogEvent(COMPONENT_FSAL,
                             "Error in hpss_Lseek operation (whence=%s, offset=%lld)",
                             (seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
                              (seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
@@ -439,7 +439,7 @@ fsal_status_t HPSSFSAL_write(hpssfsal_file_t * file_descriptor, /* IN */
         {
           error = (int)seekoffset;
 
-          DisplayLogJdLevel(fsal_log, NIV_EVENT,
+          LogEvent(COMPONENT_FSAL,
                             "FSAL_write: Error in hpss_Lseek operation (whence=%s, offset=%lld)",
                             (seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
                              (seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :

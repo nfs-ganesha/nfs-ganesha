@@ -37,8 +37,6 @@ extern fsal_uint_t CredentialLifetime;
 
 extern fsal_uint_t ReturnInconsistentDirent;
 
-/* log descriptor */
-extern log_t fsal_log;
 
 #endif
 
