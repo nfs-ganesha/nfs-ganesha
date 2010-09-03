@@ -78,9 +78,7 @@ fsal_status_t LUSTREFSAL_create(lustrefsal_handle_t * p_parent_directory_handle,
   /* Apply umask */
   unix_mode = unix_mode & ~global_fs_info.umask;
 
-#ifdef _DEBUG_FSAL
-  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Creation mode: 0%o", accessmode);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
 
   /* build the destination path */
   status = fsal_internal_Handle2FidPath(p_context, p_parent_directory_handle, &fsalpath);
@@ -373,9 +371,7 @@ fsal_status_t LUSTREFSAL_link(lustrefsal_handle_t * p_target_handle,    /* IN */
   if(!global_fs_info.link_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
 
-#ifdef _DEBUG_FSAL
-/*  fprintf(stderr, "linking %#llx:%#x:%#x to %#llx:%#x:%#x/%s \n", */
-#endif
+/*  LogFullDebug(COMPONENT_FSAL, "linking %#llx:%#x:%#x to %#llx:%#x:%#x/%s \n", */
 
   /* get the target handle access by fid */
   status = fsal_internal_Handle2FidPath(p_context, p_target_handle, &fsalpath_old);
@@ -503,7 +499,7 @@ fsal_status_t LUSTREFSAL_mknode(lustrefsal_handle_t * parentdir_handle, /* IN */
       break;
 
     default:
-      DisplayLogJdLevel(fsal_log, NIV_MAJOR, "Invalid node type in FSAL_mknode: %d",
+      LogMajor(COMPONENT_FSAL, "Invalid node type in FSAL_mknode: %d",
                         nodetype);
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_mknode);
     }
