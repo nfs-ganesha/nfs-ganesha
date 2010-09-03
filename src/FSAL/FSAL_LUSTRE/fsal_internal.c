@@ -65,10 +65,7 @@ static fsal_staticfsinfo_t default_posix_info = {
   0400                          /* default access rights for xattrs: root=RW, owner=R */
 };
 
-/*
- *  Log Descriptor
- */
-log_t fsal_log;
+
 
 /* variables for limiting the calls to the filesystem */
 static int limit_calls = FALSE;
@@ -334,8 +331,6 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   if(!fsal_info || !fs_common_info || !fs_specific_info)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  /* Setting log info */
-  fsal_log = fsal_info->log_outputs;
 
   /* inits FS call semaphore */
   if(fsal_info->max_fs_calls > 0)
@@ -619,10 +614,7 @@ fsal_status_t fsal_internal_testAccess(lustrefsal_op_context_t * p_context,     
 
   if(p_context->credential.user == uid)
     {
-
-#if defined( _DEBUG_FSAL )
       LogFullDebug(COMPONENT_FSAL, "File belongs to user %d", uid);
-#endif
 
       if(mode & FSAL_MODE_RUSR)
         missing_access &= ~FSAL_R_OK;
@@ -637,11 +629,9 @@ fsal_status_t fsal_internal_testAccess(lustrefsal_op_context_t * p_context,     
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
       else
         {
-#if defined( _DEBUG_FSAL )
           LogFullDebug(COMPONENT_FSAL,
                             "Mode=%#o, Access=%#o, Rights missing: %#o", mode,
                             access_type, missing_access);
-#endif
           ReturnCode(ERR_FSAL_ACCESS, 0);
         }
 
