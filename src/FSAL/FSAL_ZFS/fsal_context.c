@@ -148,8 +148,8 @@ fsal_status_t ZFSFSAL_BuildExportContext(zfsfsal_export_context_t * p_export_con
 
         default:
           {
-            DisplayLog
-                ("FSAL LOAD PARAMETER: ERROR: Invalid suboption found in EXPORT::FS_Specific : %s : xxxxxx expected.",
+            LogCrit(COMPONENT_FSAL,
+                "FSAL LOAD PARAMETER: ERROR: Invalid suboption found in EXPORT::FS_Specific : %s : xxxxxx expected.",
                  value);
             Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_BuildExportContext);
           }

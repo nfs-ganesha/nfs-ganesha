@@ -158,7 +158,7 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
     {
       p_xattr_attrs->asked_attributes = supported;
 
-      DisplayLogJdLevel(fsal_log, NIV_CRIT,
+      LogCrit(COMPONENT_FSAL,
                         "Error: p_xattr_attrs->asked_attributes was 0 in %s() line %d, file %s",
                         __FUNCTION__, __LINE__, __FILE__);
     }
@@ -167,7 +167,7 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
 
   if(unsupp)
     {
-      DisplayLogJdLevel(fsal_log, NIV_DEBUG,
+      LogDebug(COMPONENT_FSAL,
                         "Asking for unsupported attributes in %s(): %#llX removing it from asked attributes",
                         __FUNCTION__, unsupp);
 
@@ -301,7 +301,7 @@ fsal_status_t ZFSFSAL_GetXAttrAttrs(zfsfsal_handle_t * p_objecthandle,        /*
   else if(xattr_id >= XATTR_COUNT)
     {
       /* This is user defined xattr */
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_FSAL,
                         "Getting attributes for xattr #%u", xattr_id - XATTR_COUNT);
     }
 
