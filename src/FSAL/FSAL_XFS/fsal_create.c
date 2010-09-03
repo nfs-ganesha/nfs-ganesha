@@ -413,9 +413,7 @@ fsal_status_t XFSFSAL_link(xfsfsal_handle_t * p_target_handle,  /* IN */
   if(!global_fs_info.link_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
 
-#ifdef _DEBUG_FSAL
-/*  fprintf(stderr, "linking %#llx:%#x:%#x to %#llx:%#x:%#x/%s \n", */
-#endif
+/*  LogFullDebug(COMPONENT_FSAL, "linking %#llx:%#x:%#x to %#llx:%#x:%#x/%s", */
 
   /* get the target handle access by fid */
   TakeTokenFSCall();

@@ -116,33 +116,30 @@ fsal_status_t XFSFSAL_rcp(xfsfsal_handle_t * filehandle,        /* IN */
 
     }
 
-#ifdef  _DEBUG_FSAL
-  {
+  if(isFullDebug(COMPONENT_FSAL))
+    {
+      char msg[1024];
 
-    char msg[1024];
+      msg[0] = '\0';
 
-    msg[0] = '\0';
+      if((local_flags & O_RDONLY) == O_RDONLY)
+        strcat(msg, "O_RDONLY ");
 
-    if((local_flags & O_RDONLY) == O_RDONLY)
-      strcat(msg, "O_RDONLY ");
+      if((local_flags & O_WRONLY) == O_WRONLY)
+        strcat(msg, "O_WRONLY ");
 
-    if((local_flags & O_WRONLY) == O_WRONLY)
-      strcat(msg, "O_WRONLY ");
+      if((local_flags & O_TRUNC) == O_TRUNC)
+        strcat(msg, "O_TRUNC ");
 
-    if((local_flags & O_TRUNC) == O_TRUNC)
-      strcat(msg, "O_TRUNC ");
+      if((local_flags & O_CREAT) == O_CREAT)
+        strcat(msg, "O_CREAT ");
 
-    if((local_flags & O_CREAT) == O_CREAT)
-      strcat(msg, "O_CREAT ");
+      if((local_flags & O_EXCL) == O_EXCL)
+        strcat(msg, "O_EXCL ");
 
-    if((local_flags & O_EXCL) == O_EXCL)
-      strcat(msg, "O_EXCL ");
-
-    LogFullDebug(COMPONENT_FSAL, "Openning local file %s with flags: %s",
-                      p_local_path->path, msg);
-
-  }
-#endif
+      LogFullDebug(COMPONENT_FSAL, "Openning local file %s with flags: %s",
+                   p_local_path->path, msg);
+    }
 
   local_fd = open(p_local_path->path, local_flags);
   errsv = errno;
@@ -173,26 +170,23 @@ fsal_status_t XFSFSAL_rcp(xfsfsal_handle_t * filehandle,        /* IN */
       fs_flags = FSAL_O_RDONLY;
     }
 
-#ifdef  _DEBUG_FSAL
-  {
+  if(isFullDebug(COMPONENT_FSAL))
+    {
+      char msg[1024];
 
-    char msg[1024];
+      msg[0] = '\0';
 
-    msg[0] = '\0';
+      if((fs_flags & FSAL_O_RDONLY) == FSAL_O_RDONLY)
+        strcat(msg, "FSAL_O_RDONLY ");
 
-    if((fs_flags & FSAL_O_RDONLY) == FSAL_O_RDONLY)
-      strcat(msg, "FSAL_O_RDONLY ");
+      if((fs_flags & FSAL_O_WRONLY) == FSAL_O_WRONLY)
+        strcat(msg, "FSAL_O_WRONLY ");
 
-    if((fs_flags & FSAL_O_WRONLY) == FSAL_O_WRONLY)
-      strcat(msg, "FSAL_O_WRONLY ");
+      if((fs_flags & FSAL_O_TRUNC) == FSAL_O_TRUNC)
+        strcat(msg, "FSAL_O_TRUNC ");
 
-    if((fs_flags & FSAL_O_TRUNC) == FSAL_O_TRUNC)
-      strcat(msg, "FSAL_O_TRUNC ");
-
-    LogFullDebug(COMPONENT_FSAL, "Openning FSAL file with flags: %s", msg);
-
-  }
-#endif
+      LogFullDebug(COMPONENT_FSAL, "Openning FSAL file with flags: %s", msg);
+    }
 
   st = XFSFSAL_open(filehandle, p_context, fs_flags, &fs_fd, NULL);
 
