@@ -264,14 +264,6 @@ fsal_status_t HPSSFSAL_Init(fsal_parameter_t * init_info        /* IN */
   if(!init_info)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
 
-  /* Check for very important args */
-
-  if(init_info->fsal_info.log_outputs.liste_voies == NULL)
-    {
-      /* issue a warning on stderr */
-      LogCrit(COMPONENT_FSAL,
-          "FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
-    }
 #if HPSS_MAJOR_VERSION == 5
 
   if(init_info->fs_specific_info.behaviors.KeytabPath == FSAL_INIT_FS_DEFAULT)
