@@ -216,51 +216,54 @@ fsal_status_t HPSSFSAL_InitClientContext(hpssfsal_op_context_t * p_thr_context)
   /* sets the credential time */
   p_thr_context->credential.last_update = time(NULL);
 
-#if defined( _DEBUG_FSAL ) && (HPSS_MAJOR_VERSION == 5)
+#if (HPSS_MAJOR_VERSION == 5)
 
   /* traces: prints p_credential structure */
-
-  LogFullDebug(COMPONENT_FSAL, "credential created:");
-  LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
+  if (isFullDebug(COMPONENT_FSAL))
+    {
+      LogFullDebug(COMPONENT_FSAL, "credential created:");
+      LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
                     p_thr_context->credential.hpss_usercred.SecPWent.Uid,
                     p_thr_context->credential.hpss_usercred.SecPWent.Gid);
-  LogFullDebug(COMPONENT_FSAL, "\tName = %s",
+      LogFullDebug(COMPONENT_FSAL, "\tName = %s",
                     p_thr_context->credential.hpss_usercred.SecPWent.Name);
 
-  for(i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
-    LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
+      for(i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
+	LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
                       p_thr_context->credential.hpss_usercred.AltGroups[i]);
-
-#elif defined( _DEBUG_FSAL ) && ( HPSS_MAJOR_VERSION == 6 )
+    }
+#elif ( HPSS_MAJOR_VERSION == 6 )
 
   /* traces: prints p_credential structure */
-
-  LogFullDebug(COMPONENT_FSAL, "credential created:");
-  LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
+  if (isFullDebug(COMPONENT_FSAL))
+    {
+      LogFullDebug(COMPONENT_FSAL, "credential created:");
+      LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
                     p_thr_context->credential.hpss_usercred.Uid,
                     p_thr_context->credential.hpss_usercred.Gid);
-  LogFullDebug(COMPONENT_FSAL, "\tName = %s",
+      LogFullDebug(COMPONENT_FSAL, "\tName = %s",
                     p_thr_context->credential.hpss_usercred.Name);
 
-  for(i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
-    LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
+      for(i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
+	LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
                       p_thr_context->credential.hpss_usercred.AltGroups[i]);
-
-#elif defined( _DEBUG_FSAL ) && ( HPSS_MAJOR_VERSION == 7 )
+    }
+#elif ( HPSS_MAJOR_VERSION == 7 )
 
   /* traces: prints p_credential structure */
-
-  LogFullDebug(COMPONENT_FSAL, "credential created:");
-  LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
+  if (isFullDebug(COMPONENT_FSAL))
+    {
+      LogFullDebug(COMPONENT_FSAL, "credential created:");
+      LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
                     p_thr_context->credential.hpss_usercred.Uid,
                     p_thr_context->credential.hpss_usercred.Gid);
-  LogFullDebug(COMPONENT_FSAL, "\tName = %s",
+      LogFullDebug(COMPONENT_FSAL, "\tName = %s",
                     p_thr_context->credential.hpss_usercred.Name);
 
-  for(i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
-    LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
+      for(i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
+	LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
                       p_thr_context->credential.hpss_usercred.AltGroups[i]);
-
+    }
 #endif
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
@@ -346,51 +349,54 @@ fsal_status_t HPSSFSAL_GetClientContext(hpssfsal_op_context_t * p_thr_context,  
   for(i = 0; i < ng; i++)
     p_thr_context->credential.hpss_usercred.AltGroups[i] = alt_groups[i];
 
-#if defined( _DEBUG_FSAL ) && (HPSS_MAJOR_VERSION == 5)
+#if (HPSS_MAJOR_VERSION == 5)
 
   /* traces: prints p_credential structure */
-
-  LogFullDebug(COMPONENT_FSAL, "credential modified:");
-  LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
+  if (isFullDebug(COMPONENT_FSAL))
+    {
+      LogFullDebug(COMPONENT_FSAL, "credential modified:");
+      LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
                     p_thr_context->credential.hpss_usercred.SecPWent.Uid,
                     p_thr_context->credential.hpss_usercred.SecPWent.Gid);
-  LogFullDebug(COMPONENT_FSAL, "\tName = %s",
+      LogFullDebug(COMPONENT_FSAL, "\tName = %s",
                     p_thr_context->credential.hpss_usercred.SecPWent.Name);
 
-  for(i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
-    LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
+      for(i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
+	LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
                       p_thr_context->credential.hpss_usercred.AltGroups[i]);
-
-#elif defined( _DEBUG_FSAL ) && ( HPSS_MAJOR_VERSION == 6 )
+    }
+#elif ( HPSS_MAJOR_VERSION == 6 )
 
   /* traces: prints p_credential structure */
-
-  LogFullDebug(COMPONENT_FSAL, "credential modified:");
-  LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
+  if (isFullDebug(COMPONENT_FSAL))
+    {
+      LogFullDebug(COMPONENT_FSAL, "credential modified:");
+      LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
                     p_thr_context->credential.hpss_usercred.Uid,
                     p_thr_context->credential.hpss_usercred.Gid);
-  LogFullDebug(COMPONENT_FSAL, "\tName = %s",
+      LogFullDebug(COMPONENT_FSAL, "\tName = %s",
                     p_thr_context->credential.hpss_usercred.Name);
 
-  for(i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
-    LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
+      for(i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
+	LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
                       p_thr_context->credential.hpss_usercred.AltGroups[i]);
-
-#elif defined( _DEBUG_FSAL ) && ( HPSS_MAJOR_VERSION == 7 )
+    }
+#elif ( HPSS_MAJOR_VERSION == 7 )
 
   /* traces: prints p_credential structure */
-
-  LogFullDebug(COMPONENT_FSAL, "credential modified:");
-  LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
+  if (isFullDebug(COMPONENT_FSAL))
+    {
+      LogFullDebug(COMPONENT_FSAL, "credential modified:");
+      LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
                     p_thr_context->credential.hpss_usercred.Uid,
                     p_thr_context->credential.hpss_usercred.Gid);
-  LogFullDebug(COMPONENT_FSAL, "\tName = %s",
+      LogFullDebug(COMPONENT_FSAL, "\tName = %s",
                     p_thr_context->credential.hpss_usercred.Name);
 
-  for(i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
-    LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
+      for(i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
+	LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
                       p_thr_context->credential.hpss_usercred.AltGroups[i]);
-
+    }
 #endif
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);
