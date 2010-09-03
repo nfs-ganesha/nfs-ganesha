@@ -65,6 +65,7 @@ typedef enum log_components
   COMPONENT_STDOUT,
   COMPONENT_OPEN_OWNER_HASH,
   COMPONENT_SESSIONS,
+  COMPONENT_RPC_CACHE,
 
   COMPONENT_COUNT
 } log_components_t;

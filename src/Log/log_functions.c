@@ -1912,6 +1912,15 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
 #endif
     SYSLOG,
     "syslog"
+  },
+  { COMPONENT_RPC_CACHE,         "COMPONENT_RPC_CACHE", "RPC CACHE",
+#ifdef RPC_CACHE_DEBUG
+    NIV_DEBUG,
+#else
+    NIV_EVENT,
+#endif
+    SYSLOG,
+    "syslog"
   }
 };
 

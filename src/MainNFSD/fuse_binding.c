@@ -59,10 +59,10 @@ static nfs_start_info_t nfs_start_info = {
 };
 
 static char config_path[MAXPATHLEN] = "";       /* None by default */
-char log_path[MAXPATHLEN] = "/tmp/ganesha_nfsd.log";
+char log_path[MAXPATHLEN] = "";
 char exec_name[MAXPATHLEN] = "ganesha-nfsd";
 char host_name[MAXHOSTNAMELEN] = "localhost";
-int debug_level = NIV_EVENT;
+int debug_level = -1;
 int detach_flag = FALSE;
 int single_threaded = FALSE;
 struct ganefuse_operations ops;
@@ -111,18 +111,6 @@ static void action_sigusr1(int sig)
       force_flush_by_signal = TRUE;
     }
 }                               /* action_sigusr1 */
-
-static void init_log(log_t * p_log_outputs, char *alt_file)
-{
-  desc_log_stream_t log_stream;
-
-  if((p_log_outputs->nb_voies == 0) && (strlen(alt_file) > 0))
-    {
-      strcpy(log_stream.path, alt_file);
-
-      AddLogStreamJd(p_log_outputs, V_FILE, log_stream, debug_level, SUP);
-    }
-}
 
 /**
  * main: simply the main function.
@@ -269,7 +257,7 @@ int ganefuse_main(int argc, char *argv[],
 
   if(nfs_prereq_init(exec_name, host_name, debug_level, log_path))
     {
-      fprintf(stderr, "NFS MAIN: Error initializing NFSd prerequisites\n");
+      LogCrit(COMPONENT_MAIN, "NFS MAIN: Error initializing NFSd prerequisites");
       exit(1);
     }
 
@@ -353,13 +341,6 @@ int ganefuse_main(int argc, char *argv[],
 
   nfs_param.fsal_param.fs_specific_info.fs_ops = &ops;
   nfs_param.fsal_param.fs_specific_info.user_data = user_data;
-
-  /* if no logfile was specified for layers, set the default logfile
-   * as log descriptor */
-  init_log(&nfs_param.fsal_param.fsal_info.log_outputs, log_path);
-  init_log(&nfs_param.cache_layers_param.cache_inode_client_param.log_outputs, log_path);
-  init_log(&nfs_param.cache_layers_param.cache_content_client_param.log_outputs,
-           log_path);
 
 #ifndef _NO_BUDDY_SYSTEM
   if(!nfs_param.buddy_param_worker.buddy_error_file[0])
