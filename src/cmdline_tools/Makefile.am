@@ -4,11 +4,12 @@ else
 DLOPEN_FLAGS = -rdynamic
 endif
 
-EXTRADIST = ganesha_log_level
+EXTRA_DIST = ganesha_log_level
 
 AM_CFLAGS    = $(DLOPEN_FLAGS) -Wimplicit -I../MainNFSD $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
-bin_PROGRAMS               = $(FS_NAME).ganesha.convertFH ganesha_log_level
+bin_PROGRAMS = $(FS_NAME).ganesha.convertFH
+bin_SCRIPTS = ganesha_log_level
 
 __FS_NAME__ganesha_convertFH_SOURCES = ConvertFh.c	\
 ../MainNFSD/nfs_init.h
