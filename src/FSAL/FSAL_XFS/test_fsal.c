@@ -161,8 +161,6 @@ int main(int argc, char **argv)
   char *test;
   fsal_parameter_t init_param;
   fsal_status_t st;
-  log_t log_desc = LOG_INITIALIZER;
-  desc_log_stream_t voie;
   uid_t uid;
   fsal_export_context_t export_ctx;
   xfsfsal_op_context_t op_ctx;
@@ -206,7 +204,6 @@ int main(int argc, char **argv)
   AddFamilyError(ERR_FSAL, "FSAL related Errors", tab_errstatus_FSAL);
 
   /* creating log */
-  voie.fd = fileno(stderr);
   SetComponentLogLevel(COMPONENT_FSAL, NIV_FULL_DEBUG);
 
   /* prepare fsal_init */
@@ -258,7 +255,6 @@ int main(int argc, char **argv)
   FSAL_SET_INIT_DEFAULT(init_param.fs_common_info, auth_exportpath_xdev);
 
   /* 3- fsal info */
-  init_param.fsal_info.log_outputs = log_desc;
   init_param.fsal_info.max_fs_calls = 0;
 
   /* Init */
