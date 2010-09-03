@@ -187,10 +187,11 @@ int main(int argc, char **argv)
 #endif
 
   /* init debug */
-  SetDefaultLogging("TEST");
+
   SetNamePgm("test_fsal");
-  SetNameFileLog("/dev/tty");
+  SetDefaultLogging("TEST");
   SetNameFunction("main");
+  InitLogging();
 
   /* Obtention du nom de la machine */
   if(gethostname(localmachine, sizeof(localmachine)) != 0)
@@ -200,8 +201,6 @@ int main(int argc, char **argv)
     }
   else
     SetNameHost(localmachine);
-
-  InitDebug(NIV_FULL_DEBUG);
 
   AddFamilyError(ERR_FSAL, "FSAL related Errors", tab_errstatus_FSAL);
 
