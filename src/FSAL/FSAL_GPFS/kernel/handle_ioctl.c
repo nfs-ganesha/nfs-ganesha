@@ -283,6 +283,58 @@ int handle_truncate(struct dentry *dentry, loff_t length, unsigned int time_attr
     return err;
 }
 
+int handle_permission(struct inode *inode, int mask)
+{
+	int submask;
+	umode_t mode = inode->i_mode;
+
+	if (mask & MAY_WRITE) {
+
+		/*
+		 * Nobody gets write access to a read-only fs.
+		 */
+		if (IS_RDONLY(inode) &&
+		    (S_ISREG(mode) || S_ISDIR(mode) || S_ISLNK(mode)))
+			return -EROFS;
+
+		/*
+		 * Nobody gets write access to an immutable file.
+		 */
+		if (IS_IMMUTABLE(inode))
+			return -EACCES;
+	}
+
+	/*
+	 * MAY_EXEC on regular files requires special handling: We override
+	 * filesystem execute permissions if the mode bits aren't set.
+	 */
+	if ((mask & MAY_EXEC) && S_ISREG(mode) && !(mode & S_IXUGO))
+		return -EACCES;
+
+	/* Ordinary permission routines do not understand MAY_APPEND. */
+	submask = mask & ~MAY_APPEND;
+#ifdef IN_KERNEL_CHANGE_NOT_SUPP
+
+	/* FIXME! we don't have nameidata for handle lookup. So not sure how
+         * we can check for inode->permissions. We already limit the call
+         * to CAP_DAC_OVERRIDE. So we should be able to skip the ACL check.
+         * But we also skip security_inode_permission below.
+         */
+
+	if (inode->i_op && inode->i_op->permission)
+		retval = inode->i_op->permission(inode, submask, nd);
+	else
+		retval = generic_permission(inode, submask, NULL);
+	if (retval)
+		return retval;
+
+	return security_inode_permission(inode, mask, nd);
+#else
+        return generic_permission(inode, submask, NULL);
+#endif
+
+}
+
 static int may_handle_open(struct dentry *dentry, int open_flag)
 {
     int acc_mode;
@@ -305,6 +357,11 @@ static int may_handle_open(struct dentry *dentry, int open_flag)
 
     if(S_ISDIR(inode->i_mode) && (acc_mode & MAY_WRITE))
         return -EISDIR;
+
+    error = handle_permission(inode, acc_mode);
+    if (error)
+        return error;
+
     if(S_ISFIFO(inode->i_mode) || S_ISSOCK(inode->i_mode))
         {
             open_flag &= ~O_TRUNC;
@@ -312,7 +369,7 @@ static int may_handle_open(struct dentry *dentry, int open_flag)
         }
     else if(S_ISBLK(inode->i_mode) || S_ISCHR(inode->i_mode))
         {
-#if 0                           /* Do we need this check */
+#ifdef IN_KERNEL_CHANGE_NOT_SUPP
             if(nd->mnt->mnt_flags & MNT_NODEV)
                 return -EACCES;
 #endif
@@ -349,7 +406,7 @@ static int may_handle_open(struct dentry *dentry, int open_flag)
             if(error)
                 return error;
 
-#if 0                           /* FIXME!! we need handle this */
+#ifdef IN_KERNEL_CHANGE_NOT_SUPP
             /*
              * Refuse to truncate files with mandatory locks held on them.
              */
