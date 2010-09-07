@@ -55,7 +55,6 @@ extern mfsl_parameter_t mfsl_param;
 
 fsal_handle_t dir_handle_precreate;
 unsigned int dir_handle_set = 0;
-log_t log_outputs = LOG_INITIALIZER;                 /**< Log descriptor   */
 unsigned int end_of_mfsl = FALSE;
 
 void constructor_preacreated_entries(void *ptr)
@@ -515,8 +514,6 @@ fsal_status_t MFSL_GetContext(mfsl_context_t * pcontext,
   STUFF_PREALLOC(pcontext->pool_spec_data,
                  mfsl_param.nb_pre_async_op_desc,
                  mfsl_object_specific_data_t, next_alloc);
-
-  pcontext->log_outputs = log_outputs;
 
   /* Preallocate files and dirs for this thread */
   P(pcontext->lock);

@@ -2050,7 +2050,7 @@ void *rpc_dispatcher_thread(void *Arg)
 
 #ifndef _NO_BUDDY_SYSTEM
   /* Initialisation of the Buddy Malloc */
-  LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Initialization of memory manager");
+  LogEvent(COMPONENT_DISPATCH, "NFS DISPATCHER: Initialization of memory manager");
   if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
     {
       /* Failed init */

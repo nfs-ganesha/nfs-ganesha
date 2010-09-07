@@ -59,10 +59,6 @@
 #include "nfs_core.h"
 #include "log_macros.h"
 
-#ifdef DEBUG_GSSAPI
-int svc_debug_gss = DEBUG_GSSAPI;
-#endif
-
 #ifdef SPKM
 
 #ifndef OID_EQ
@@ -303,18 +299,17 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
       if(maj_stat != GSS_S_COMPLETE)
         {
         }
-#ifdef DEBUG
 #ifdef HAVE_HEIMDAL
 #else
-      {
-        gss_buffer_desc mechname;
+      if(isFulleDebug(COMPONENT_RPCSEC_GSS))
+        {
+          gss_buffer_desc mechname;
 
-        gss_oid_to_str(&min_stat, mech, &mechname);
+          gss_oid_to_str(&min_stat, mech, &mechname);
 
-        gss_release_buffer(&min_stat, &mechname);
-      }
+          gss_release_buffer(&min_stat, &mechname);
+        }
 #endif
-#endif                          /* DEBUG */
       seq = htonl(gr->gr_win);
       seqbuf.value = &seq;
       seqbuf.length = sizeof(seq);
@@ -479,9 +474,8 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
     }
   XDR_DESTROY(&xdrs);
 
-#ifdef _DEBUG_RPCSEC_GSS
-  Gss_ctx_Hash_Print();
-#endif
+  if(IsFulldebug(COMPONENT_RPCSEC_GSS))
+    Gss_ctx_Hash_Print();
 
         /** @todo Think about restoring the correct lines */
   //if( gd->established == 0 && gc->gc_proc == RPCSEC_GSS_DATA   )  

@@ -2378,7 +2378,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
           exit(1);
         }
       else
-        LogCrit(COMPONENT_INIT, "small cache inode client successfully initialized");
+        LogEvent(COMPONENT_INIT, "small cache inode client successfully initialized");
 
       /* creating the datacache client for recovering data cache */
       if(cache_content_client_init

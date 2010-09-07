@@ -60,7 +60,7 @@
 #include <string.h>
 
 char fcc_log_path[MAXPATHLEN];
-int fcc_debug_level;
+int fcc_debug_level = -1;
 
 /*
  *

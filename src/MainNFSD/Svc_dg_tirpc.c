@@ -56,10 +56,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef RPC_CACHE_DEBUG
 #include <netconfig.h>
 #include <netdir.h>
-#endif
 #include <err.h>
 
 #include <rpc/rpc.h>
@@ -588,8 +586,6 @@ size_t *replylenp;
   cache_ptr ent;
   struct svc_dg_data *su = su_data(xprt);
   struct cl_cache *uc = (struct cl_cache *)su->su_cache;
-#ifdef RPC_CACHE_DEBUG
-#endif
 
   P(dupreq_lock);
   loc = CACHE_LOC(xprt, su->su_xid);

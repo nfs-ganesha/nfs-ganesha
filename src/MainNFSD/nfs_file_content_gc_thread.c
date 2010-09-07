@@ -152,7 +152,6 @@ void *file_content_gc_thread(void *IndexArg)
 {
   long index = (long)IndexArg;
   char command[2 * MAXPATHLEN];
-  char *debuglevelstr;
   unsigned int i;
   exportlist_t *pexport = NULL;
   int is_hw_reached = FALSE;
@@ -170,8 +169,6 @@ void *file_content_gc_thread(void *IndexArg)
   LogEvent(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : Starting GC thread");
   LogDebug(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : my pthread id is %p",
            (caddr_t) pthread_self());
-
-  debuglevelstr = ReturnLevelInt(fcc_debug_level);
 
   while(1)
     {
@@ -242,10 +239,10 @@ void *file_content_gc_thread(void *IndexArg)
       else
 	strncpy(logfile_arg, fcc_log_path, MAXPATHLEN); /* config variable */
 
-      if(fcc_debug_level) /* config variable */
-	loglevel_arg = debuglevelstr;
+      if(fcc_debug_level != -1) /* config variable */
+	loglevel_arg = ReturnLevelInt(fcc_debug_level);
       else
-	loglevel_arg = tabLogLevel[LogComponents[COMPONENT_CACHE_INODE_GC].comp_log_level].str;
+	loglevel_arg = ReturnLevelInt(ReturnLevelComponent(COMPONENT_CACHE_INODE_GC));
 
       snprintf(command, 2 * MAXPATHLEN, "%s -f %s -N %s -L %s",
 	       ganesha_exec_path, config_path, loglevel_arg, logfile_arg);
