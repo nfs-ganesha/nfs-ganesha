@@ -101,7 +101,6 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   LRU_status_t lru_status;
   pthread_mutexattr_t mutexattr;
 
-  pclient->log_outputs = param.log_outputs;
   pclient->attrmask = param.attrmask;
   pclient->nb_prealloc = param.nb_prealloc_entry;
   pclient->nb_pre_dir_data = param.nb_pre_dir_data;
@@ -146,8 +145,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   STUFF_PREALLOC(pclient->pool_entry, pclient->nb_prealloc, cache_entry_t, next_alloc);
   if(pclient->pool_entry == NULL)
     {
-      LogCrit(COMPONENT_CACHE_INODE,pclient->log_outputs,
-                   "Error : can't init cache_inode client entry pool");
+      LogCrit(COMPONENT_CACHE_INODE, "Error : can't init cache_inode client entry pool");
       return 1;
     }
 #endif

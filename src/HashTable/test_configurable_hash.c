@@ -290,10 +290,9 @@ int main(int argc, char *argv[])
                  hrc);
           exit(1);
         }
-#ifdef _FULL_DEBUG
-      LogTest("Adding (%s,%s) , return = %d", astrkey + STRSIZE * i,
-             astrval + STRSIZE * i, rc);
-#endif
+      if(isFullDebug(COMPONENT_HASHTABLE))
+        LogTest("Adding (%s,%s) , return = %d", astrkey + STRSIZE * i,
+                astrval + STRSIZE * i, rc);
     }
   MesureTemps(&fin, &debut);
   LogTest("Added %d entries in %s seconds", MAXTEST, ConvertiTempsChaine(fin, NULL));

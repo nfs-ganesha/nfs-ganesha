@@ -46,14 +46,11 @@
  */
 static void print_lock(char *s, rw_lock_t * plock)
 {
-#ifdef _DEBUG
-  printf
-      ("%s: id = %u:  Lock State: nbr_active = %d, nbr_waiting = %d, nbw_active = %d, nbw_waiting = %d\n",
-       s, (unsigned int)pthread_self(), plock->nbr_active, plock->nbr_waiting,
-       plock->nbw_active, plock->nbw_waiting);
-#else
-  return;
-#endif
+  
+  LogFullDebug(COMPONENT_RW_LOCK,
+               "%s: id = %u:  Lock State: nbr_active = %d, nbr_waiting = %d, nbw_active = %d, nbw_waiting = %d",
+               s, (unsigned int)pthread_self(), plock->nbr_active, plock->nbr_waiting,
+               plock->nbw_active, plock->nbw_waiting);
 }                               /* print_lock */
 
 /* 

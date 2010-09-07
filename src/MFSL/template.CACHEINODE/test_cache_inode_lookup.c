@@ -82,11 +82,7 @@ int lru_clean_entry(LRU_entry_t * entry, void *adddata)
 
 main(int argc, char *argv[])
 {
-  log_t log_desc_fsal = LOG_INITIALIZER;
-  log_t log_desc_cache = LOG_INITIALIZER;
   char localmachine[256];
-  desc_log_stream_t voie_fsal;
-  desc_log_stream_t voie_cache;
 
   cache_inode_client_t client;
   LRU_parameter_t lru_param;
@@ -142,10 +138,10 @@ main(int argc, char *argv[])
     }
 
   /* init debug */
-  SetDefaultLogging("TEST");  
   SetNamePgm("test_cache_inode");
+  SetDefaultLogging("TEST");
   SetNameFunction("main");
-  SetNameFileLog("/dev/tty");
+  InitLogging();
 
 #if defined( _USE_GHOSTFS )
   if(argc != 2)
@@ -164,7 +160,6 @@ main(int argc, char *argv[])
   else
     SetNameHost(localmachine);
 
-  InitDebug(NIV_FULL_DEBUG);
   AddFamilyError(ERR_FSAL, "FSAL related Errors", tab_errstatus_FSAL);
   AddFamilyError(ERR_CACHE_INODE, "FSAL related Errors", tab_errstatus_cache_inode);
 
@@ -232,9 +227,6 @@ main(int argc, char *argv[])
   FSAL_SET_INIT_DEFAULT(init_param.fs_common_info, maxread);
   FSAL_SET_INIT_DEFAULT(init_param.fs_common_info, maxwrite);
 
-  /* 3- fsal info */
-  init_param.fsal_info.log_outputs = log_desc_fsal;
-
   /* Init */
   if(FSAL_IS_ERROR(status = FSAL_Init(&init_param)))
     {
@@ -267,7 +259,6 @@ main(int argc, char *argv[])
     LogTest( "Hash Table address = %p", ht);
 
   /* We need a cache_client to acces the cache */
-  cache_client_param.log_outputs = log_desc_cache;
   cache_client_param.attrmask =
       FSAL_ATTRS_MANDATORY | FSAL_ATTR_MTIME | FSAL_ATTR_CTIME | FSAL_ATTR_ATIME;
   cache_client_param.nb_prealloc_entry = 1000;

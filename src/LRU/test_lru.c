@@ -126,9 +126,8 @@ int main(int argc, char *argv[])
 
   LRU_invalidate(plru, kept_entry);
 
-#ifdef _DEBUG_LRU
-  LRU_Print(plru);
-#endif
+  if(isFullDebug(COMPONENT_LRU))
+    LRU_Print(plru);
 
   if(LRU_gc_invalid(plru, NULL) != LRU_LIST_SUCCESS)
     {

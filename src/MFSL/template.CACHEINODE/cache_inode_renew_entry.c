@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -54,16 +54,16 @@
 /**
  *
  * cache_inode_renew_entry: Renews the attributes for an entry.
- * 
- * Sets the attributes for an entry located in the cache by its address. Attributes are provided 
+ *
+ * Sets the attributes for an entry located in the cache by its address. Attributes are provided
  * with compliance to the underlying FSAL semantics. Attributes that are set are returned in "*pattr".
  *
  * @param pentry_parent [IN] entry for the parent directory to be managed.
- * @param pattr [OUT] renewed attributes for the entry that we have found. 
+ * @param pattr [OUT] renewed attributes for the entry that we have found.
  * @param pclient [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext [IN] FSAL credentials 
+ * @param pcontext [IN] FSAL credentials
  * @param pstatus [OUT] returned status.
- * 
+ *
  * @return CACHE_INODE_SUCCESS if operation is a success \n
    @return Other errors shows a FSAL error.
  *
@@ -100,7 +100,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
     {
       /* Successfull exit without having nothing to do ... */
 
-      LogDebug(COMPONENT_CACHE_INODE, 
+      LogDebug(COMPONENT_CACHE_INODE,
                         "Entry %p is a REGULAR_FILE with associated data cached %p, no expiration",
                         pentry, pentry->object.file.pentry_content);
 
@@ -148,7 +148,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
           return *pstatus;
         }
 
-      LogFullDebug(COMPONENT_CACHE_INODE, 
+      LogFullDebug(COMPONENT_CACHE_INODE,
                         "Entry=%p, type=%d, Cached Time=%d, FSAL Time=%d",
                         pentry, pentry->internal_md.type,
                         pentry->object.dir_begin.attributes.mtime.seconds,
@@ -172,7 +172,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
           /* Set the refresh time for the cache entry */
           pentry->internal_md.refresh_time = time(NULL);
 
-          LogDebug(COMPONENT_CACHE_INODE, 
+          LogDebug(COMPONENT_CACHE_INODE,
                             "cached directory content for entry %p must be renewed, due to getattr mismatch",
                             pentry);
 
@@ -190,12 +190,12 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
       pclient->stat.func_stats.nb_call[CACHE_INODE_RENEW_ENTRY] += 1;
 
       /* Log */
-      LogFullDebug(COMPONENT_CACHE_INODE, 
+      LogFullDebug(COMPONENT_CACHE_INODE,
                         "Entry=%p, type=%d, Time=%d, current=%d, grace_period_dirent=%d",
                         pentry, pentry->internal_md.type,
                         entry_time, current_time, pclient->grace_period_dirent);
 
-      LogFullDebug(COMPONENT_CACHE_INODE, 
+      LogFullDebug(COMPONENT_CACHE_INODE,
                         "cached directory entries for entry %p must be renewed", pentry);
 
       /* Do the getattr if it had not being done before */
@@ -262,12 +262,12 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
       pclient->stat.func_stats.nb_call[CACHE_INODE_RENEW_ENTRY] += 1;
 
       /* Log */
-      LogFullDebug(COMPONENT_CACHE_INODE, 
+      LogFullDebug(COMPONENT_CACHE_INODE,
                         "Entry=%p, type=%d, Time=%d, current=%d, grace_period_dirent=%d",
                         pentry, pentry->internal_md.type,
                         entry_time, current_time, pclient->grace_period_dirent);
 
-      LogFullDebug(COMPONENT_CACHE_INODE, 
+      LogFullDebug(COMPONENT_CACHE_INODE,
                         "cached directory entries for entry %p must be renewed", pentry);
 
       pfsal_handle = &pentry->object.dir_begin.handle;
@@ -326,12 +326,12 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
       pclient->stat.func_stats.nb_call[CACHE_INODE_RENEW_ENTRY] += 1;
 
       /* Log */
-      LogDebug(COMPONENT_CACHE_INODE, 
+      LogDebug(COMPONENT_CACHE_INODE,
                         "Entry=%p, type=%d, Time=%d, current=%d, grace_period_attr=%d",
                         pentry, pentry->internal_md.type,
                         entry_time, current_time, pclient->grace_period_attr);
 
-      LogDebug(COMPONENT_CACHE_INODE, 
+      LogDebug(COMPONENT_CACHE_INODE,
                         "Attributes for entry %p must be renewed", pentry);
 
       switch (pentry->internal_md.type)
@@ -418,18 +418,18 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
     {
       pfsal_handle = &pentry->object.symlink.handle;
 
-      /* TMP DEBUG */
+      /* TMP Debug */
       LogDebug(COMPONENT_CACHE_INODE,
                    "Entry=%p, type=%d, Time=%d, current=%d, grace_period_link=%d", pentry,
                    pentry->internal_md.type, entry_time, current_time,
                    pclient->grace_period_link);
 
       /* Log */
-      LogDebug(COMPONENT_CACHE_INODE, 
+      LogDebug(COMPONENT_CACHE_INODE,
                         "Entry=%p, type=%d, Time=%d, current=%d, grace_period_link=%d",
                         pentry, pentry->internal_md.type,
                         entry_time, current_time, pclient->grace_period_link);
-      LogDebug(COMPONENT_CACHE_INODE, 
+      LogDebug(COMPONENT_CACHE_INODE,
                         "cached link content for entry %p must be renewed", pentry);
 
       FSAL_CLEAR_MASK(object_attributes.asked_attributes);

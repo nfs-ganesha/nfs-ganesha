@@ -1512,12 +1512,10 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
         }
 
       /* Ready for next iteration */
-#ifdef _DEBUG_CACHE_INODE
-      printf
-          ("--------------> begin_cookie = %d, nbfound=%d, last cookie=%d, end_cookie=%d, begin_cookie + nbfound =%d\n",
-           begin_cookie, nbfound, cookie_array[nbfound - 1], end_cookie,
-           begin_cookie + nbfound);
-#endif
+      LogFullDebug(COMPONENT_CACHE_INODE,
+                   "--------------> begin_cookie = %d, nbfound=%d, last cookie=%d, end_cookie=%d, begin_cookie + nbfound =%d\n",
+                   begin_cookie, nbfound, cookie_array[nbfound - 1], end_cookie,
+                   begin_cookie + nbfound);
       begin_cookie = end_cookie;
     }
 

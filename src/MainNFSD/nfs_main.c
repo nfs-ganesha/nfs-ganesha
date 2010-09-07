@@ -319,7 +319,7 @@ int main(int argc, char *argv[])
 
         default:
           /* This code is within the father, it is useless, it must die */
-          LogCrit(COMPONENT_INIT, "Starting a son of pid %d\n", son_pid);
+          LogFullDebug(COMPONENT_INIT, "Starting a son of pid %d\n", son_pid);
           exit(0);
           break;
         }

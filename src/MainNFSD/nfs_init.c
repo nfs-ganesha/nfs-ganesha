@@ -125,9 +125,9 @@ int nfs_prereq_init(char *program_name, char *host_name, int debug_level, char *
   SetNamePgm(program_name);
   SetNameFunction("main");
   SetNameHost(host_name);
+  InitLogging();
   if (log_path[0] != '\0')
     SetDefaultLogging(log_path);
-  InitLogging();
 
   if (debug_level >= 0)
     SetLogLevel(debug_level);
