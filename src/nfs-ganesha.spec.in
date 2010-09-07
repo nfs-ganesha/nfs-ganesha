@@ -230,6 +230,8 @@ mkdir -p $RPM_BUILD_ROOT%{_libdir}/pkgconfig
 
 make install DESTDIR=$RPM_BUILD_ROOT
 
+install -m 644 config_samples/snmp.conf $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
 install -m 644 config_samples/hpss.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
@@ -305,6 +307,7 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{_sysconfdir}/ganesha/
 %dir %{_datadir}/%{name}
 %config(noreplace) %{_sysconfdir}/ganesha/hosts.ganesha
+%config(noreplace) %{_sysconfdir}/ganesha/snmp.conf
 %config(noreplace) %{_sysconfdir}/ganesha/uidgid_mapfile.ganesha
 %{_bindir}/ganestat.pl
 %{_bindir}/ganesha_log_level
@@ -339,7 +342,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/gpfs.ganesha.*
 %{_bindir}/gpfs.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha.gpfs
-%config %{_sysconfdir}/ganesha/gpfs.ganesha*
+%config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha*
 %endif
 
 
