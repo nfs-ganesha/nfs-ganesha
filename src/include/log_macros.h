@@ -117,58 +117,37 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 #define LogMajor(component, format, args...) \
   do { \
     if (LogComponents[component].comp_log_level >= NIV_MAJOR) \
-      DisplayLogComponentLevel(component, NIV_MAJ, "%s: %s: " format, LogComponents[component].comp_str, tabLogLevel[NIV_MAJOR].str, ## args ); \
+      DisplayLogComponentLevel(component, NIV_MAJ, "%s: MAJOR ERROR: " format, LogComponents[component].comp_str, ## args ); \
   } while (0)
 
 #define LogCrit(component, format, args...) \
   do { \
     if (LogComponents[component].comp_log_level >= NIV_CRIT) \
-      DisplayLogComponentLevel(component, NIV_CRIT, "%s: %s: " format, LogComponents[component].comp_str, tabLogLevel[NIV_CRIT].str, ## args ); \
+      DisplayLogComponentLevel(component, NIV_CRIT, "%s: CRITICAL ERROR: " format, LogComponents[component].comp_str, ## args ); \
    } while (0)
 
 #define LogEvent(component, format, args...) \
   do { \
     if (LogComponents[component].comp_log_level >= NIV_EVENT) \
-      DisplayLogComponentLevel(component, NIV_EVENT, "%s: %s: " format, LogComponents[component].comp_str, tabLogLevel[NIV_EVENT].str, ## args ); \
+      DisplayLogComponentLevel(component, NIV_EVENT, "%s: EVENT: " format, LogComponents[component].comp_str, ## args ); \
   } while (0)
 
 #define LogDebug(component, format, args...) \
   do { \
     if (LogComponents[component].comp_log_level >= NIV_DEBUG) \
-      DisplayLogComponentLevel(component, NIV_DEBUG, "%s: %s: " format, LogComponents[component].comp_str, tabLogLevel[NIV_DEBUG].str, ## args ); \
+      DisplayLogComponentLevel(component, NIV_DEBUG, "%s: DEBUG: " format, LogComponents[component].comp_str, ## args ); \
   } while (0)
 
 #define LogFullDebug(component, format, args...) \
   do { \
     if (LogComponents[component].comp_log_level >= NIV_FULL_DEBUG) \
-      DisplayLogComponentLevel(component, NIV_FULL_DEBUG, "%s: %s: " format, LogComponents[component].comp_str, tabLogLevel[NIV_FULL_DEBUG].str, ## args ); \
+      DisplayLogComponentLevel(component, NIV_FULL_DEBUG, "%s: DEBUG: " format, LogComponents[component].comp_str, ## args ); \
   } while (0)
 
 #define LogError( component, a, b, c ) \
   do { \
     if (LogComponents[component].comp_log_level >= NIV_CRIT) \
       DisplayErrorComponentLogLine( component, a, b, c, __LINE__ ); \
-  } while (0)
-
-/*
- * Temporary define of LogPrintf to handle messages that were
- * displayed to console via printf. This should get renamed
- * something more sensible.
- */
-#define LogPrintf(component, format, args...) \
-  do { \
-    if (LogComponents[component].comp_log_level >= NIV_FULL_DEBUG) \
-      DisplayLogComponentLevel(component, NIV_FULL_DEBUG, "%s: %s: " format, LogComponents[component].comp_str, tabLogLevel[NIV_FULL_DEBUG].str, ## args ); \
-  } while (0)
-
-/*
- * Temporary define of LogMessage for use in replacing
- * DisplayLog calls.
- */
-#define LogMessage(component, format, args...) \
-  do { \
-    if (LogComponents[component].comp_log_level >= NIV_MAJOR) \
-      DisplayLogComponentLevel(component, NIV_FULL_DEBUG, "%s: %s: " format, LogComponents[component].comp_str, tabLogLevel[NIV_FULL_DEBUG].str, ## args ); \
   } while (0)
 
 #define isFullDebug(component) \

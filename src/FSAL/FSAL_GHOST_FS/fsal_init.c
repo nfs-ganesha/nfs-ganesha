@@ -48,8 +48,8 @@ static int CreateInitDir(ghostfs_dir_def_t * p_dir)
 
       if(rc == ERR_GHOSTFS_NOENT)
         {
-          DisplayLogJdLevel(fsal_log, NIV_EVENT,
-                            "FSAL: Creating predefined directory '%s'", cur_str);
+          LogEvent(COMPONENT_FSAL,"FSAL: Creating predefined directory '%s'",
+                   cur_str);
 
           /* create the entry */
 
@@ -116,11 +116,9 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
   param.dot_dot_root_eq_root = init_info->fs_specific_info.dot_dot_root_eq_root;
   param.root_access = init_info->fs_specific_info.root_access;
 
-#ifdef _DEBUG_GHOST_FS
-  printf("init_info->fs_specific_info.root_owner = %d\n",
+  LogFullDebug(COMPONENT_FSAL, "init_info->fs_specific_info.root_owner = %d\n",
          init_info->fs_specific_info.root_owner);
-  printf("param.root_owner = %d\n", param.root_owner);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "param.root_owner = %d\n", param.root_owner);
 
   rc = GHOSTFS_Init(param);
 
@@ -152,9 +150,9 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     {
       rc = CreateInitDir(p_cur);
       if(rc)
-        DisplayLogJdLevel(fsal_log, NIV_CRIT,
-                          "FSAL: /!\\ WARNING /!\\ Could not create init dir '%s'",
-                          p_cur->path);
+        LogCrit(COMPONENT_FSAL,
+                "FSAL: /!\\ WARNING /!\\ Could not create init dir '%s'",
+                p_cur->path);
     }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);

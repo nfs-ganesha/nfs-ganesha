@@ -161,8 +161,6 @@ int main(int argc, char **argv)
   char *test;
   fsal_parameter_t init_param;
   fsal_status_t st;
-  log_t log_desc = LOG_INITIALIZER;
-  desc_log_stream_t voie;
   uid_t uid;
   snmpfsal_export_context_t export_ctx;
   snmpfsal_op_context_t op_ctx;
@@ -217,7 +215,6 @@ int main(int argc, char **argv)
   /* 3- fsal info */
   FSAL_SetDefault_FSAL_parameter(&init_param);
 
-  init_param.fsal_info.log_outputs = log_desc;
   init_param.fsal_info.max_fs_calls = 0;
 
   /* Init */

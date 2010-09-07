@@ -120,11 +120,11 @@ fsal_status_t HPSSFSAL_test_access(hpssfsal_op_context_t * p_context,   /* IN */
 #endif
     {
 
-#if defined( _DEBUG_FSAL ) && ( HPSS_MAJOR_VERSION == 5 )
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "File belongs to user %d",
+#if ( HPSS_MAJOR_VERSION == 5 )
+      LogFullDebug(COMPONENT_FSAL, "File belongs to user %d",
                         p_context->credential.hpss_usercred.SecPWent.Uid);
-#elif defined( _DEBUG_FSAL ) && ( HPSS_MAJOR_VERSION >= 6 )
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "File belongs to user %d",
+#elif ( HPSS_MAJOR_VERSION >= 6 )
+      LogFullDebug(COMPONENT_FSAL, "File belongs to user %d",
                         p_context->credential.hpss_usercred.Uid);
 #endif
 
@@ -149,20 +149,16 @@ fsal_status_t HPSSFSAL_test_access(hpssfsal_op_context_t * p_context,   /* IN */
 #if HPSS_MAJOR_VERSION == 5
   is_grp = (p_context->credential.hpss_usercred.SecPWent.Gid == object_attributes->group);
 
-# ifdef _DEBUG_FSAL
   if(is_grp)
-    DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "File belongs to user's group %d",
+    LogFullDebug(COMPONENT_FSAL, "File belongs to user's group %d",
                       p_context->credential.hpss_usercred.SecPWent.Gid);
-# endif
 
 #elif HPSS_MAJOR_VERSION >= 6
   is_grp = (p_context->credential.hpss_usercred.Gid == object_attributes->group);
 
-# ifdef _DEBUG_FSAL
   if(is_grp)
-    DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "File belongs to user's group %d",
+    LogFullDebug(COMPONENT_FSAL, "File belongs to user's group %d",
                       p_context->credential.hpss_usercred.Gid);
-# endif
 
 #endif
 
@@ -176,12 +172,10 @@ fsal_status_t HPSSFSAL_test_access(hpssfsal_op_context_t * p_context,   /* IN */
               (p_context->credential.hpss_usercred.AltGroups[i] ==
                object_attributes->group);
 
-#ifdef _DEBUG_FSAL
           if(is_grp)
-            DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+            LogFullDebug(COMPONENT_FSAL,
                               "File belongs to user's alt group %d",
                               p_context->credential.hpss_usercred.AltGroups[i]);
-#endif
 
           /* exits loop if found */
           if(is_grp)

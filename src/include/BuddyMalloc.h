@@ -283,7 +283,7 @@ void BuddyLabelsSummary();
 /**
  * Display allocation map, and fragmentation info.
  */
-void DisplayMemoryMap();
+void DisplayMemoryMap(FILE *output);
 
 #endif
 

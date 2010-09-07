@@ -347,24 +347,14 @@ fsal_status_t GPFSFSAL_ExpandHandle(gpfsfsal_export_context_t * p_expcontext,   
  */
 fsal_status_t GPFSFSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 {
-#ifdef OLD_LOGGING
-  log_t no_logging = LOG_INITIALIZER;
-#endif
-
   /* defensive programming... */
   if(out_parameter == NULL)
     ReturnCode(ERR_FSAL_FAULT, 0);
-
-#ifdef OLD_LOGGING
-  /* init logging to no logging */
-  out_parameter->fsal_info.log_outputs = no_logging;
-#endif
 
   /* init max FS calls = unlimited */
   out_parameter->fsal_info.max_fs_calls = 0;
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
-
 }
 
 fsal_status_t GPFSFSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
