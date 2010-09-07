@@ -89,7 +89,7 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT;
   do { \
     if (LogComponents[COMPONENT_LOG].comp_log_type != TESTLOG || \
         LogComponents[COMPONENT_LOG].comp_log_level == NIV_FULL_DEBUG) \
-      DisplayLogComponentLevel(COMPONENT_LOG, NIV_NULL, "%s: " format, LogComponents[COMPONENT_LOG].comp_str, ## args ); \
+      DisplayLogComponentLevel(COMPONENT_LOG, NIV_NULL, "LOG: " format, ## args ); \
   } while (0)
 
 #ifdef _DONT_HAVE_LOCALTIME_R
@@ -127,31 +127,29 @@ static struct tm *Localtime_r(const time_t * p_time, struct tm *p_tm)
 # define Localtime_r localtime_r
 #endif
 
-/* forward declaration for diplaying errors. */
-static int DisplayError(int num_error, int status);
-
 /* Init of pthread_keys */
 static void init_keys(void)
 {
   if(pthread_key_create(&thread_key, NULL) == -1)
-    DisplayError(ERR_PTHREAD_KEY_CREATE, errno);
-
-  return;
+    LogCrit(COMPONENT_LOG, "init_keys - pthread_key_create returned %d", errno);
 }                               /* init_keys */
+
+
+const char *emergency = "* log emergency *";
 
 /**
  * GetThreadContext :
  * manages pthread_keys.
  */
-static ThreadLogContext_t *Log_GetThreadContext()
+static ThreadLogContext_t *Log_GetThreadContext(int ok_errors)
 {
-
   ThreadLogContext_t *p_current_thread_vars;
 
   /* first, we init the keys if this is the first time */
   if(pthread_once(&once_key, init_keys) != 0)
     {
-      DisplayError(ERR_PTHREAD_ONCE, errno);
+      if (ok_errors)
+        LogCrit(COMPONENT_LOG_EMERG, "Log_GetThreadFunction - pthread_once returned %d", errno);
       return NULL;
     }
 
@@ -160,17 +158,13 @@ static ThreadLogContext_t *Log_GetThreadContext()
   /* we allocate the thread key if this is the first time */
   if(p_current_thread_vars == NULL)
     {
-
       /* allocates thread structure */
       p_current_thread_vars = (ThreadLogContext_t *) malloc(sizeof(ThreadLogContext_t));
 
-#ifdef _DEBUG_LOG
-      printf("malloc => %p\n", p_current_thread_vars);
-#endif
-
       if(p_current_thread_vars == NULL)
         {
-          DisplayError(ERR_MALLOC, errno);
+          if (ok_errors)
+            LogCrit(COMPONENT_LOG_EMERG, "Log_GetThreadFunction - malloc returned %d", errno);
           return NULL;
         }
 
@@ -180,23 +174,23 @@ static ThreadLogContext_t *Log_GetThreadContext()
       /* set the specific value */
       pthread_setspecific(thread_key, (void *)p_current_thread_vars);
 
+      if (ok_errors)
+        LogFullDebug(COMPONENT_LOG_EMERG, "malloc => %p\n", p_current_thread_vars);
     }
 
   return p_current_thread_vars;
 
-}                               /* GetThreadContext */
+}                               /* Log_GetThreadFunction */
 
-/* Affichage d'erreurs */
-static int DisplayError(int num_error, int status)
+static const char *Log_GetThreadFunction(int ok_errors)
 {
-  char tempstr[1024];
-  char *errstr;
-  errstr = strerror_r(status, tempstr, 1024);
+  ThreadLogContext_t *context = Log_GetThreadContext(ok_errors);
 
-  return fprintf(stderr, "Error %s status %d ==> %s\n", tab_systeme_err[num_error].label,
-                 status, errstr);
-
-}                               /* DisplayError */
+  if (context == NULL)
+    return emergency;
+  else
+    return context->nom_fonction;
+}
 
 /*
  * Fait la conversion nom du niveau de log
@@ -231,23 +225,20 @@ char *ReturnLevelInt(int level)
 /*
  * Set le nom du programme en cours.
  */
-int SetNamePgm(char *nom)
+void SetNamePgm(char *nom)
 {
 
   /* Cette fonction n'est pas thread-safe car le nom du programme
    * est commun a tous les threads */
   strcpy(nom_programme, nom);
-
-  return 1;
 }                               /* SetNamePgm */
 
 /*
  * Set le nom d'host en cours
  */
-int SetNameHost(char *nom)
+void SetNameHost(char *nom)
 {
   strcpy(nom_host, nom);
-  return 1;
 }                               /* SetNameHost */
 
 /*
@@ -255,14 +246,12 @@ int SetNameHost(char *nom)
  * Set le nom de la fonction en cours
  *
  */
-int SetNameFunction(char *nom)
+void SetNameFunction(char *nom)
 {
+  ThreadLogContext_t *context = Log_GetThreadContext(0);
 
-  ThreadLogContext_t *context = Log_GetThreadContext();
-
-  strcpy(context->nom_fonction, nom);
-
-  return 1;
+  if (context != NULL)
+    strcpy(context->nom_fonction, nom);
 }                               /* SetNameFunction */
 
 /*
@@ -345,7 +334,7 @@ void SetLevelDebug(int level_to_set)
 {
   _SetLevelDebug(level_to_set);
 
-  LogChanges("Changing log level for all components to %s",
+  LogChanges("Setting log level for all components to %s",
              ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
 }
 
@@ -402,77 +391,66 @@ void InitLogging()
 }                               /* InitLevelDebug */
 
 /*
- *
- * La fonction qui fait l'entete pour tout le monde
- *
- */
-
-static int FaireEntete(char *output)
-{
-  struct tm the_date;
-  time_t heure;
-  ThreadLogContext_t *context = Log_GetThreadContext();
-
-  heure = time(NULL);
-  Localtime_r(&heure, &the_date);
-
-  return snprintf(output, STR_LEN,
-                  "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :",
-                  the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
-                  the_date.tm_hour, the_date.tm_min, the_date.tm_sec, heure, nom_host,
-                  nom_programme, getpid(), context->nom_fonction);
-
-}                               /* Faire_entete */
-
-
-/*
  * Une fonction d'affichage tout a fait generique
  */
 
-int DisplayLogString_valist(char *buff_dest, char *format, va_list arguments)
+static void DisplayLogString_valist(char *buff_dest, log_components_t component, char *format, va_list arguments)
 {
-  char entete[STR_LEN];
   char texte[STR_LEN_TXT];
+  struct tm the_date;
+  time_t tm;
+  const char *function = Log_GetThreadFunction(component != COMPONENT_LOG_EMERG);
 
-  /* Je mets en place l'entete */
-  FaireEntete(entete);
+  tm = time(NULL);
+  Localtime_r(&tm, &the_date);
 
   /* Ecriture sur le fichier choisi */
   log_vsnprintf(texte, STR_LEN_TXT, format, arguments);
-  return snprintf(buff_dest, STR_LEN_TXT, "%s%s\n", entete, texte);
+
+  snprintf(buff_dest, STR_LEN_TXT, "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :%s\n",
+           the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
+           the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, nom_host,
+           nom_programme, getpid(), function,
+           texte);
 }                               /* DisplayLogString_valist */
 
-static int DisplayLogSyslog_valist( char * format, va_list arguments )
+static int DisplayLogSyslog_valist(log_components_t component, int level, char * format, va_list arguments)
 {
+  char texte[STR_LEN_TXT];
+  const char *function = Log_GetThreadFunction(component != COMPONENT_LOG_EMERG);
+
   if( !syslog_opened )
    {
-     openlog( "nfs-ganesha", LOG_PID, LOG_USER ) ;
-     syslog_opened = 1 ;
+     openlog("nfs-ganesha", LOG_PID, LOG_USER);
+     syslog_opened = 1;
    }
 
-  vsyslog( LOG_ERR, format, arguments );
+  /* Ecriture sur le fichier choisi */
+  log_vsnprintf(texte, STR_LEN_TXT, format, arguments);
+
+  syslog(tabLogLevel[level].syslog_level, "[%s] :%s", function, texte);
   return 1 ;
 } /* DisplayLogSyslog_valist */
 
-static int DisplayLogFd_valist(int fd, char *format, va_list arguments)
+static int DisplayLogFd_valist(int fd, log_components_t component, char *format, va_list arguments)
 {
   char tampon[STR_LEN_TXT];
 
-  DisplayLogString_valist(tampon, format, arguments);
+  DisplayLogString_valist(tampon, component, format, arguments);
   return write(fd, tampon, strlen(tampon));
 }                               /* DisplayLogFd_valist */
 
-static int DisplayLogFlux_valist(FILE * flux, char *format, va_list arguments)
+static int DisplayLogFlux_valist(FILE * flux, log_components_t component, char *format, va_list arguments)
 {
   char tampon[STR_LEN_TXT];
 
-  DisplayLogString_valist(tampon, format, arguments);
+  DisplayLogString_valist(tampon, component, format, arguments);
 
   fprintf(flux, "%s", tampon);
   return fflush(flux);
 }                               /* DisplayLogFlux_valist */
 
-static int DisplayTest_valist(char *format, va_list arguments)
+static int DisplayTest_valist(log_components_t component, char *format, va_list arguments)
 {
   char text[STR_LEN_TXT];
 
@@ -482,17 +460,17 @@ static int DisplayTest_valist(char *format, va_list arguments)
   return fflush(stdout);
 }
 
-static int DisplayBuffer_valist(char *buffer, char *format, va_list arguments)
+static int DisplayBuffer_valist(char *buffer, log_components_t component, char *format, va_list arguments)
 {
   log_vsnprintf(buffer, STR_LEN_TXT, format, arguments);
 }
 
-static int DisplayLogPath_valist(char *path, char *format, va_list arguments)
+static int DisplayLogPath_valist(char *path, log_components_t component, char *format, va_list arguments)
 {
   char tampon[STR_LEN_TXT];
   int fd, my_status;
 
-  DisplayLogString_valist(tampon, format, arguments);
+  DisplayLogString_valist(tampon, component, format, arguments);
 
   if(path[0] != '\0')
     {
@@ -553,36 +531,6 @@ static int DisplayLogPath_valist(char *path, char *format, va_list arguments)
   /* if path */
   return SUCCES;
 }                               /* DisplayLogPath_valist */
-
-int DisplayLog_valist(log_components_t component, char *format, va_list arguments)
-{
-  int rc;
-
-  switch(LogComponents[component].comp_log_type)
-    {
-    case SYSLOG:
-      rc = DisplayLogSyslog_valist(format, arguments);
-      break;
-    case FILELOG:
-      rc = DisplayLogPath_valist(LogComponents[component].comp_log_file, format, arguments);
-      break;
-    case STDERRLOG:
-      rc = DisplayLogFlux_valist(stderr, format, arguments);
-      break;
-    case STDOUTLOG:
-      rc = DisplayLogFlux_valist(stdout, format, arguments);
-      break;
-    case TESTLOG:
-      rc = DisplayTest_valist(format, arguments);
-      break;
-    case BUFFLOG:
-      rc = DisplayBuffer_valist(LogComponents[component].comp_buffer, format, arguments);
-    default:
-      rc = ERR_FAILURE;
-    }
-
-  return rc;
-}
 
 /*
  *
@@ -765,10 +713,6 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
   family_error_t *tab_err;
   family_error_t the_error;
 
-#ifdef _DEBUG_LOG
-  printf("##### Le format est #%s#\n", format);
-#endif
-
   /* Phase d'init */
   out[0] = '\0';
   iterformat = format;
@@ -787,9 +731,6 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
       /* On affiche d'abord tout ce qui est avant un % */
       while(*iterformat != '\0' && *iterformat != '%')
         {
-#ifdef _DEBUG_LOG
-          printf("##### iterformat = #%s#\n", iterformat);
-#endif
           ONE_STEP;
         }
 
@@ -1082,10 +1023,6 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
 
       strncpy(subformat, ptrsub, len);
       subformat[len] = '\0';
-#ifdef _DEBUG_LOG
-      printf("##### iterformat +1  = #%s# \n", iterformat);
-      printf("subformat = #%s# len =%d\n", subformat, len);
-#endif
 
       if(type != EXTENDED_TYPE)
         {
@@ -1194,12 +1131,6 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
         {
           /* Cette macro (un peu crade), extrait une family_error_t des arguments variables */
 #define VA_ARG_ERREUR_T numero = va_arg( arguments, long ) ; label  = va_arg( arguments, char * ) ; msg    = va_arg( arguments, char *)
-
-#ifdef _DEBUG_LOG
-          printf("====> Un type etendu \n");
-          printf("====> subformat = #%s#\n", subformat);
-          printf("====> out = #%s#\n", out);
-#endif
 
           /* si le subformat est de type "toto titi tutu %X",
            * on ajoute le "toto titi tutu " dans la chaine de sortie */
@@ -1335,22 +1266,12 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
             }                   /* switch */
 
         }                       /* else */
-#ifdef _DEBUG_LOG
-      printf("====> tmpout = #%s#\n", tmpout);
-#endif
-      strncat(out, tmpout, taille);
 
-#ifdef _DEBUG_LOG
-      printf("====> out = #%s#\n", out);
-      printf("=================\n");
-#endif
+      strncat(out, tmpout, taille);
     }
   while(*iterformat != '\0');
 
   /* Le pas oublie la fin du format, qui est tout a la queue */
-#ifdef _DEBUG_LOG
-  printf("DEBUG : ptrsub = #%s#   endofstr = #%s#\n", ptrsub, endofstr);
-#endif
   if(*endofstr == '%')
     ptrsub = iterformat;        /* Pour clore l'iteration */
   strncat(out, ptrsub, taille);
@@ -1390,13 +1311,14 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_EVENT,
   },
   { COMPONENT_LOG,               "COMPONENT_LOG", "LOG",
-#ifdef _DEBUG_LOG
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
+  },
+  { COMPONENT_LOG_EMERG,         "COMPONENT_LOG_EMERG", "LOG",
+    NIV_EVENT,
+    SYSLOG,
+    "SYSLOG"
   },
   { COMPONENT_MEMALLOC,          "COMPONENT_MEMALLOC", "MEM ALLOC",
 #ifdef _DEBUG_MEMALLOC
@@ -1405,16 +1327,12 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_EVENT,
 #endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_STATES,            "COMPONENT_STATES", "STATES",
-#ifdef _DEBUG_STATES
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_MEMLEAKS,          "COMPONENT_MEMLEAKS", "MEM LEAKS",
 #ifdef _DEBUG_MEMLEAKS
@@ -1423,52 +1341,32 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_EVENT,
 #endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_FSAL,              "COMPONENT_FSAL", "FSAL",
-#ifdef _DEBUG_FSAL
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_NFSPROTO,          "COMPONENT_NFSPROTO", "NFS PROTO",
-#ifdef _DEBUG_NFSPROTO
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_NFS_V4,            "COMPONENT_NFS_V4", "NFS V4",
-#ifdef _DEBUG_NFS_V4
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_NFS_V4_PSEUDO,     "COMPONENT_NFS_V4_PSEUDO", "NFS V4 PSEUDO",
-#ifdef _DEBUG_NFS_V4_PSEUDO
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_FILEHANDLE,        "COMPONENT_FILEHANDLE", "FILE HANDLE",
-#ifdef _DEBUG_FILEHANDLE
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_NFS_SHELL,         "COMPONENT_NFS_SHELL", "NFS SHELL",
 #ifdef _DEBUG_NFS_SHELL
@@ -1477,217 +1375,132 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_EVENT,
 #endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_DISPATCH,          "COMPONENT_DISPATCH", "DISPATCH",
-#ifdef _DEBUG_DISPATCH
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_CACHE_CONTENT,     "COMPONENT_CACHE_CONTENT", "CACHE CONTENT",
-#ifdef _DEBUG_CACHE_CONTENT
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_CACHE_INODE,       "COMPONENT_CACHE_INODE", "CACHE INODE",
-#ifdef _DEBUG_CACHE_INODE
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_CACHE_INODE_GC,    "COMPONENT_CACHE_INODE_GC", "CACHE INODE GC",
-#ifdef _DEBUG_CACHE_INODE_GC
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_HASHTABLE,         "COMPONENT_HASHTABLE", "HASH TABLE",
-#ifdef _DEBUG_HASHTABLE
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_LRU,               "COMPONENT_LRU", "LRU",
-#ifdef _DEBUG_LRU
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_DUPREQ,            "COMPONENT_DUPREQ", "DUPREQ",
-#ifdef _DEBUG_DUPREQ
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_RPCSEC_GSS,        "COMPONENT_RPCSEC_GSS", "RPCSEC GSS",
-#ifdef _DEBUG_RPCSEC_GSS
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_INIT,              "COMPONENT_INIT", "NFS STARTUP",
-#ifdef _DEBUG_INIT
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_MAIN,              "COMPONENT_MAIN", "MAIN",
-#ifdef _DEBUG_MAIN
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_IDMAPPER,          "COMPONENT_IDMAPPER", "ID MAPPER",
-#ifdef _DEBUG_IDMAPPER
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_NFS_READDIR,       "COMPONENT_NFS_READDIR", "NFS READDIR",
-#ifdef _DEBUG_NFS_READDIR
-    NIV_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
 
   { COMPONENT_NFS_V4_LOCK,       "COMPONENT_NFS_V4_LOCK", "NFS V4 LOCK",
-#ifdef _DEBUG_NFS_V4_LOCK
-    NIV_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_NFS_V4_XATTR,      "COMPONENT_NFS_V4_XATTR", "NFS V4 XATTR",
-#ifdef _DEBUG_NFS_V4_XATTR
-    NIV_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_NFS_V4_REFERRAL,   "COMPONENT_NFS_V4_REFERRAL", "NFS V4 REFERRAL",
-#ifdef _DEBUG_NFS_V4_REFERRAL
-    NIV_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_MEMCORRUPT,        "COMPONENT_MEMCORRUPT", "MEM CORRUPT",
 #ifdef _DEBUG_MEMCORRUPT
-    NIV_DEBUG,
-#elifdef _DETECT_MEMCORRUPT
-    NIV_DEBUG,
+    NIV_FULL_DEBUG,
 #else
     NIV_EVENT,
 #endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_CONFIG,            "COMPONENT_CONFIG", "CONFIG",
-#ifdef _DEBUG_CONFIG
-    NIV_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_CLIENT_ID_COMPUTE, "COMPONENT_CLIENT_ID_COMPUTE", "CLIENT ID COMPUTE",
-#ifdef _DEBUG_CLIENT_ID_COMPUTE
-    NIV_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_STDOUT,            "COMPONENT_STDOUT", "STDOUT",
-#ifdef _DEBUG_STDOUT
-    NIV_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_OPEN_OWNER_HASH,   "COMPONENT_OPEN_OWNER_HASH", "OPEN OWNER HASH",
-#ifdef _DEBUG_OPEN_OWNER_HASH
-    NIV_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_SESSIONS,          "COMPONENT_SESSIONS", "SESSIONS",
-#ifdef _DEBUG_SESSIONS
-    NIV_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_PNFS,              "COMPONENT_PNFS", "PNFS",
-#ifdef _DEBUG_PNFS
-    NIV_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
   },
   { COMPONENT_RPC_CACHE,         "COMPONENT_RPC_CACHE", "RPC CACHE",
-#ifdef RPC_CACHE_DEBUG
-    NIV_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
-    "syslog"
+    "SYSLOG"
+  },
+  { COMPONENT_RW_LOCK,           "COMPONENT_RW_LOCK", "RW LOCK",
+    NIV_EVENT,
+    SYSLOG,
+    "SYSLOG"
   }
 };
 
@@ -1697,7 +1510,30 @@ int DisplayLogComponentLevel(log_components_t component, int level, char *format
   int rc;
 
   va_start(arguments, format);
-  rc = DisplayLog_valist(component, format, arguments);
+
+  switch(LogComponents[component].comp_log_type)
+    {
+    case SYSLOG:
+      rc = DisplayLogSyslog_valist(component, level, format, arguments);
+      break;
+    case FILELOG:
+      rc = DisplayLogPath_valist(LogComponents[component].comp_log_file, component, format, arguments);
+      break;
+    case STDERRLOG:
+      rc = DisplayLogFlux_valist(stderr, component, format, arguments);
+      break;
+    case STDOUTLOG:
+      rc = DisplayLogFlux_valist(stdout, component, format, arguments);
+      break;
+    case TESTLOG:
+      rc = DisplayTest_valist(component, format, arguments);
+      break;
+    case BUFFLOG:
+      rc = DisplayBuffer_valist(LogComponents[component].comp_buffer, component, format, arguments);
+    default:
+      rc = ERR_FAILURE;
+    }
+
   va_end(arguments);
   return rc;
 }
@@ -1762,7 +1598,7 @@ static int isValidLogPath(char *pathname)
  * During initialization this is used and separate layer logging defaults to
  * this destination.
  */
-int SetDefaultLogging(char *name)
+void SetDefaultLogging(char *name)
 {
   int component;
 
@@ -1775,12 +1611,11 @@ int SetDefaultLogging(char *name)
         continue;
       SetComponentLogFile(component, name);
     }
-  return 1;
 }                               /* SetDefaultLogging */
 
 int SetComponentLogFile(log_components_t component, char *name)
 {
-  int newtype;
+  int newtype, changed;
 
   if (strcmp(name, "SYSLOG") == 0)
     newtype = SYSLOG;
@@ -1803,7 +1638,10 @@ int SetComponentLogFile(log_components_t component, char *name)
         }
       }
 
-  if (component != COMPONENT_LOG)
+  changed = newtype != LogComponents[component].comp_log_type ||
+            newtype == FILELOG && strcmp(name, LogComponents[component].comp_log_file) != 0;
+
+  if (component != COMPONENT_LOG && changed)
     LogChanges("Changing log destination for %s from %s to %s",
                LogComponents[component].comp_name,
                LogComponents[component].comp_log_file,
@@ -1812,7 +1650,7 @@ int SetComponentLogFile(log_components_t component, char *name)
   LogComponents[component].comp_log_type = newtype;
   strncpy(LogComponents[component].comp_log_file, name, MAXPATHLEN);
 
-  if (component == COMPONENT_LOG)
+  if (component == COMPONENT_LOG && changed)
     LogChanges("Changing log destination for %s from %s to %s",
                LogComponents[component].comp_name,
                LogComponents[component].comp_log_file,
