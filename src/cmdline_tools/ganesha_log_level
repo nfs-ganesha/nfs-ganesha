@@ -63,14 +63,16 @@ Options:
 USAGE
 }
 
-sub my_exec($) {
+sub my_exec($$) {
     my $cmd = shift;
+    my $err = shift;
     my $output = "";
     open(OUT, "$cmd 2>&1 |") or return undef;
     while(<OUT>) {
         $output .= $_;
     }
-    close(OUT) or return undef;
+    # on a bad exit code exit with the message we got sent
+    close(OUT) or error($err);
     # get rid of final newline
     chomp($output);
     return $output;
@@ -109,7 +111,10 @@ sub test_for_snmp_tools() {
 sub get_component_list() {
     my $comps = {};
 
-    my $output = my_exec("snmpwalk -On -c $pass -v 1 localhost $OIDBASE");
+    my $output = my_exec("snmpwalk -On -c $pass -v 1 localhost $OIDBASE", 
+                        "Can't access snmp agent, ensure agent is running",
+                        );
+
     if ($output =~ /getaddrinfo:.*Name or service not known/) {
         error("Can't access snmp agent, ensure agent is running");
     }
@@ -172,7 +177,9 @@ sub list_levels() {
 sub log_set($$) {
     my $comp = shift;
     my $level = shift;
-    my $output = my_exec("snmpset -v1 -c $pass localhost $COMPLIST->{$comp}->{SETOID} s $level");
+    my $output = my_exec("snmpset -v1 -c $pass localhost $COMPLIST->{$comp}->{SETOID} s $level",
+                         "Could not set log level, check permissions on your snmp agent"
+                        );
     if ($output =~ /Error in packet/) {
         error("Could not set log level, check permissions on your snmp agent");
     }
