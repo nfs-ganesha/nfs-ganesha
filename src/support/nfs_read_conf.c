@@ -697,8 +697,8 @@ int nfs_read_session_id_conf(config_file_t in_config, nfs_session_id_parameter_t
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_SESSION_ID)) == NULL)
     {
-      LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file\n",
-              CONF_LABEL_STATE_ID);
+      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file\n",
+              CONF_LABEL_STATE_ID); */
       return 1;
     }
 
