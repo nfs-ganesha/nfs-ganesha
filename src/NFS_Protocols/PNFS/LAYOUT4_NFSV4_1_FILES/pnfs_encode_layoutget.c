@@ -29,16 +29,6 @@
 
 #include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
 
-void local_print_buff(char *buff, int len)
-{
-  int i = 0;
-
-  printf("  Len=%u|%x Buff=%p Val: ", len, len, buff);
-  for(i = 0; i < len; i++)
-    printf("%02X ", buff[i]);
-  printf("\n");
-}
-
 /**
  *
  * pnfs_encode_layoutget: encodes the loc_body_val structure in LAYOUTGET.
