@@ -80,6 +80,18 @@ sub error($) {
     exit 1;
 }
 
+sub get_community_string() {
+    open(CONF, "/etc/ganesha/snmp.conf") or error("Can't find snmp config file '/etc/ganesha/snmp.conf'");
+    while(<CONF>) {
+        if (/^community_string\s*=\s*(\w+)/) {
+            close(CONF) or error("Failure to close conf file... something is very wrong");
+            return $1;
+        }
+    }
+
+    error("Couldn't find value for community_string = STRING in '/etc/ganesha/snmp.conf'");
+}
+
 sub test_for_snmp_tools() {
     foreach my $tool (qw/snmpget snmpset snmpwalk/) {
         my $version = my_exec("$tool --version");
@@ -174,6 +186,9 @@ sub main() {
 
     # exits if tools don't exist
     test_for_snmp_tools();
+
+    # exits if the community string can't be set
+    $pass = get_community_string();
 
     $COMPLIST = get_component_list();
 
