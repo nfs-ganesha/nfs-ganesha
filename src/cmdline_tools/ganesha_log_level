@@ -19,6 +19,8 @@
 
 use strict;
 use Getopt::Std;
+# otherwise error catching doesn't work
+$ENV{LC_ALL} = "en_US";
 
 our %opts;
 our $VERSION = "0.1";
@@ -108,6 +110,10 @@ sub get_component_list() {
     my $comps = {};
 
     my $output = my_exec("snmpwalk -On -c $pass -v 1 localhost $OIDBASE");
+    if ($output =~ /getaddrinfo:.*Name or service not known/) {
+        error("Can't access snmp agent, ensure agent is running");
+    }
+    
     if ($output =~ /Error in packet/) {
         error("Can't access log levels from snmp agent, ensure agent is running and community string is correct");
     }
