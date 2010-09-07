@@ -98,7 +98,7 @@ sub get_community_string() {
 
 sub test_for_snmp_tools() {
     foreach my $tool (qw/snmpget snmpset snmpwalk/) {
-        my $version = my_exec("$tool --version");
+        my $version = my_exec("$tool --version", "$tool not found on system, please install net-smmp-utils");
         if ($version) {
             # print "$version\n";
         } else {
