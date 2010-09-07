@@ -60,28 +60,29 @@ typedef struct loglev
 {
   int value;
   char *str;
+  int syslog_level;
 } log_level_t;
 
 static log_level_t __attribute__ ((__unused__)) tabLogLevel[] =
 {
 #define NIV_NULL       0
   {
-  NIV_NULL, "NIV_NULL"},
+  NIV_NULL, "NIV_NULL", LOG_NOTICE},
 #define NIV_MAJ        1
   {
-  NIV_MAJ, "NIV_MAJ"},
+  NIV_MAJ, "NIV_MAJ", LOG_CRIT},
 #define NIV_CRIT       2
   {
-  NIV_CRIT, "NIV_CRIT"},
+  NIV_CRIT, "NIV_CRIT", LOG_ERR},
 #define NIV_EVENT      3
   {
-  NIV_EVENT, "NIV_EVENT"},
+  NIV_EVENT, "NIV_EVENT", LOG_NOTICE},
 #define NIV_DEBUG      4
   {
-  NIV_DEBUG, "NIV_DEBUG"},
+  NIV_DEBUG, "NIV_DEBUG", LOG_DEBUG},
 #define NIV_FULL_DEBUG 5
   {
-  NIV_FULL_DEBUG, "NIV_FULL_DEBUG"}
+  NIV_FULL_DEBUG, "NIV_FULL_DEBUG", LOG_DEBUG}
 };
 
 #define NB_LOG_LEVEL 6
@@ -447,16 +448,10 @@ static status_t __attribute__ ((__unused__)) tab_systeme_status[] =
 
 /* les prototypes des fonctions de la lib */
 
-int SetNamePgm(char *nom);
-int SetNameHost(char *nom);
-#define SetNameFileLog(nom) SetDefaultLogging("STDOUT")
-int SetDefaultLogging(char *name);
-int SetNameFunction(char *nom); /* thread safe */
-#define InitDebug(level_to_set) \
-  do { \
-    InitLogging(); \
-    SetComponentLogLevel(COMPONENT_ALL, level_to_set); \
-  } while (0)
+void SetNamePgm(char *nom);
+void SetNameHost(char *nom);
+void SetDefaultLogging(char *name);
+void SetNameFunction(char *nom); /* thread safe */
 
 /* AddFamilyError : not thread safe */
 int AddFamilyError(int num_family, char *nom_family, family_error_t * tab_err);

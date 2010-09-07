@@ -31,10 +31,16 @@
  *
  */
 
+/*
+ * Log components used throughout the code.
+ *
+ * Note: changing the order of these may confuse SNMP users since SNMP OIDs are numeric.
+ */
 typedef enum log_components
 {
-  COMPONENT_ALL = 0,
-  COMPONENT_LOG,
+  COMPONENT_ALL = 0,               /* Used for changing logging for all components */
+  COMPONENT_LOG,                   /* Keep this first, some code depends on it being the first component */
+  COMPONENT_LOG_EMERG,             /* Component for logging emergency log messages - avoid infinite recursion */
   COMPONENT_MEMALLOC,
   COMPONENT_STATES,
   COMPONENT_MEMLEAKS,
@@ -67,7 +73,8 @@ typedef enum log_components
   COMPONENT_SESSIONS,
   COMPONENT_PNFS,
   COMPONENT_RPC_CACHE,
-
+  COMPONENT_RW_LOCK,
+  
   COMPONENT_COUNT
 } log_components_t;
 
@@ -99,6 +106,8 @@ typedef struct log_component_info
   char  comp_log_file[MAXPATHLEN];
   char *comp_buffer;
 } log_component_info;
+
+#define ReturnLevelComponent(component) LogComponents[component].comp_log_level 
 
 log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
