@@ -34,9 +34,6 @@ extern libzfswrap_handle_t *p_zhd;
  */
 extern fsal_staticfsinfo_t global_fs_info;
 
-/* log descriptor */
-extern log_t fsal_log;
-
 #endif
 
 /**

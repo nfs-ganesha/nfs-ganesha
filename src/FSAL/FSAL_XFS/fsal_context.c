@@ -29,7 +29,7 @@
  * @defgroup FSALCredFunctions Credential handling functions.
  *
  * Those functions handle security contexts (credentials).
- * 
+ *
  * @{
  */
 
@@ -166,7 +166,7 @@ fsal_status_t XFSFSAL_BuildExportContext(xfsfsal_export_context_t * p_export_con
  * \param p_export_context (in, gpfsfsal_export_context_t)
  */
 
-fsal_status_t XFSFSAL_CleanUpExportContext(xfsfsal_export_context_t * p_export_context) 
+fsal_status_t XFSFSAL_CleanUpExportContext(xfsfsal_export_context_t * p_export_context)
 {
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
 }
@@ -188,7 +188,7 @@ fsal_status_t XFSFSAL_InitClientContext(xfsfsal_op_context_t * p_thr_context)
  /**
  * FSAL_GetUserCred :
  * Get a user credential from its uid.
- * 
+ *
  * \param p_cred (in out, fsal_cred_t *)
  *        Initialized credential to be changed
  *        for representing user.
@@ -240,25 +240,24 @@ fsal_status_t XFSFSAL_GetClientContext(xfsfsal_op_context_t * p_thr_context,    
 
   for(i = 0; i < ng; i++)
     p_thr_context->credential.alt_groups[i] = alt_groups[i];
-#if defined( _DEBUG_FSAL )
 
-  /* traces: prints p_credential structure */
-
-  LogFullDebug(COMPONENT_FSAL, "credential modified:");
-  LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
-                    p_thr_context->credential.user, p_thr_context->credential.group);
-
-  if (isFullDebug(COMPONENT_FSAL))
+  if(isFullDebug(COMPONENT_FSAL))
     {
-      for(i = 0; i < p_thr_context->credential.nbgroups; i++)
-	LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
-		     p_thr_context->credential.alt_groups[i]);
-    }
+      /* traces: prints p_credential structure */
 
-#endif
+      LogFullDebug(COMPONENT_FSAL, "credential modified:");
+      LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
+                        p_thr_context->credential.user, p_thr_context->credential.group);
+
+      if (isFullDebug(COMPONENT_FSAL))
+        {
+          for(i = 0; i < p_thr_context->credential.nbgroups; i++)
+            LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
+                         p_thr_context->credential.alt_groups[i]);
+        }
+   }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);
-
 }
 
 /* @} */

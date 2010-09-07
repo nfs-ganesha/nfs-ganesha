@@ -193,11 +193,9 @@ fsal_status_t LUSTREFSAL_setattrs(lustrefsal_handle_t * p_filehandle,   /* IN */
           if((p_context->credential.user != 0)
              && (p_context->credential.user != buffstat.st_uid))
             {
-#ifdef _DEBUG_FSAL
-              DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+              LogFullDebug(COMPONENT_FSAL,
                                 "Permission denied for CHMOD opeartion: current owner=%d, credential=%d",
                                 buffstat.st_uid, p_context->credential.user);
-#endif
               Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
             }
 
@@ -227,11 +225,9 @@ fsal_status_t LUSTREFSAL_setattrs(lustrefsal_handle_t * p_filehandle,   /* IN */
          ((p_context->credential.user != buffstat.st_uid) ||
           (p_context->credential.user != attrs.owner)))
         {
-#ifdef _DEBUG_FSAL
-          DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+          LogFullDebug(COMPONENT_FSAL,
                             "Permission denied for CHOWN opeartion: current owner=%d, credential=%d, new owner=%d",
                             buffstat.st_uid, p_context->credential.user, attrs.owner);
-#endif
           Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
         }
     }
@@ -258,11 +254,9 @@ fsal_status_t LUSTREFSAL_setattrs(lustrefsal_handle_t * p_filehandle,   /* IN */
       /* it must also be in target group */
       if(p_context->credential.user != 0 && !in_grp)
         {
-#ifdef _DEBUG_FSAL
-          DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+          LogFullDebug(COMPONENT_FSAL,
                             "Permission denied for CHOWN operation: current group=%d, credential=%d, new group=%d",
                             buffstat.st_gid, p_context->credential.group, attrs.group);
-#endif
 
           Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
         }
@@ -270,13 +264,11 @@ fsal_status_t LUSTREFSAL_setattrs(lustrefsal_handle_t * p_filehandle,   /* IN */
 
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
     {
-#ifdef _DEBUG_FSAL
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Performing chown(%s, %d,%d)",
+      LogFullDebug(COMPONENT_FSAL, "Performing chown(%s, %d,%d)",
                         fsalpath.path, FSAL_TEST_MASK(attrs.asked_attributes,
                                                       FSAL_ATTR_OWNER) ? (int)attrs.owner
                         : -1, FSAL_TEST_MASK(attrs.asked_attributes,
                                              FSAL_ATTR_GROUP) ? (int)attrs.group : -1);
-#endif
 
       TakeTokenFSCall();
       rc = lchown(fsalpath.path,
