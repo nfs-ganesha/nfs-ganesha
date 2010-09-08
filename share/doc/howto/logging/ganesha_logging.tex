@@ -52,7 +52,7 @@ Listed below are all of the components that a log message can belong to
 
 \begin{itemize}
 \item COMPONENT\_ALL - 
-\item COMPONENT\_LOG - 
+\item COMPONENT\_LOG - Reports changes to log destination or log level.
 \item COMPONENT\_MEMALLOC - Used for tracking memory allocation through the
   buddy malloc system.
 \item COMPONENT\_STATES - Mainly used with severity level NIV\_FULL\_DEBUG to
@@ -70,41 +70,53 @@ Listed below are all of the components that a log message can belong to
 \item COMPONENT\_NFS\_SHELL - Messages relating to the GANESHA shell.
 \item COMPONENT\_DISPATCH - Messages relating to the dispatch thread which is
   responsible for sending replies to clients.
-\item COMPONENT\_CACHE\_CONTENT - 
+\item COMPONENT\_CACHE\_CONTENT - Messages related to cached file data that
+  makes client requests faster.
 \item COMPONENT\_CACHE\_INODE - 
 \item COMPONENT\_CACHE\_INODE\_GC - 
 \item COMPONENT\_HASHTABLE - 
 \item COMPONENT\_LRU - 
-\item COMPONENT\_DUPREQ - 
+\item COMPONENT\_DUPREQ - GANESHA (and other NFS servers) keep a cache of recent
+  requests and their replies. If a duplicate request is received GANESHA will
+  send the same reply rather than process the request again. The messages
+  relating to this duplicate request cache fall under this component.
 \item COMPONENT\_RPCSEC\_GSS - 
-\item COMPONENT\_INIT - 
+\item COMPONENT\_INIT - Most messages logged when GANESHA is starting will be
+  logged under this component.
 \item COMPONENT\_MAIN - 
 \item COMPONENT\_IDMAPPER - 
 \item COMPONENT\_NFS\_READDIR - 
-\item COMPONENT\_NFSV4\_LOCK - 
-\item COMPONENT\_NFSV4\_XATTR - 
-\item COMPONENT\_NFSV4\_REFERRAL - 
+\item COMPONENT\_NFSV4\_LOCK - Debugs file locking for NFSV4.
+\item COMPONENT\_NFSV4\_XATTR - Debugs extended attributes for NFSV4.
+\item COMPONENT\_NFSV4\_REFERRAL - Debugs NFSV4's ability to refer clients to
+  another NFSV4 server.
 \item COMPONENT\_MEMCORRUPT - 
 \item COMPONENT\_CONFIG - 
 \item COMPONENT\_CLIENT\_ID\_COMPUTE - 
 \item COMPONENT\_STDOUT - 
 \item COMPONENT\_OPEN\_OWNER\_HASH - 
 \item COMPONENT\_SESSIONS - 
-\item COMPONENT\_PNFS - 
+\item COMPONENT\_PNFS - Message related to the ability for NFS to work in
+  parallel to other NFS servers. Parallel NFS is a compile time option and won't
+  be seen unless it was compiled.
 \item COMPONENT\_RPC\_CACHE - 
 \end{itemize}$\\$
 
 \subsection{Log Severity Levels}
 
-The debug levels and their order of severity are as follows:
+The log levels (debug levels, severity levels) and their order of severity are
+as follows:
 \begin{itemize}
 \item NIV\_NULL - no messages are printed.
 \item NIV\_MAJ - only major messages are printed.
 \item NIV\_CRIT - critical messages or higher are printed.
-\item NIV\_EVENT - event messages or higher printed.
-\item NIV\_DEBUG - debug messages or higher are printed.
+\item NIV\_EVENT - event messages or higher printed. 
+\item NIV\_DEBUG - debug messages or higher are printed. This should only be
+  used if a user suspects they have found a bug or are developing GANESHA.
 \item NIV\_FULL\_DEBUG - extremely verbose debug messages or higher are printed.
 \end{itemize}
+
+The default log level is NIV\_EVENT. 
 
 \subsection{Log Location}
 
@@ -145,7 +157,10 @@ logging of certain components will be useful.
 
 \subsection{Commandline Arguments}
 
-
+\begin{verbatim}
+/usr/bin/gpfs.ganesha.nfsd -d -f /etc/ganesha/gpfs.ganesha.nfsd.conf -N \
+NIV_EVENT -L SYSLOG
+\end{verbatim}
 
 \subsection{Configuration File Variables}
 
@@ -209,6 +224,11 @@ This option is not recommended for use in a GANESHA deployment, but meant for
 fine granularity tuning of debug messages for development purposes.
 
 \subsection{Commandline Arguments}
+
+\begin{verbatim}
+/usr/bin/gpfs.ganesha.nfsd -d -f /etc/ganesha/gpfs.ganesha.nfsd.conf -N \
+NIV_EVENT -L SYSLOG
+\end{verbatim}
 
 \subsection{Configuration File Variables}
 
