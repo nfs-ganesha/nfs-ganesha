@@ -477,6 +477,39 @@ cache_nbget                    INTEGER    6243
 cache_nbdel                    INTEGER    132
 \end{verbatim}
 
+\section{Troubleshooting}
+
+Make sure the agentX addresses are the same in both snmpd.conf and the ganesha
+configuration file:
+\begin{verbatim}
+$ grep Snmp_Agentx_Socket /etc/ganesha/gpfs.ganesha.main.conf
+Snmp_Agentx_Socket = "tcp:localhost:705" ;
+$ grep agentXSocket /etc/snmp/snmpd.conf
+agentXSocket   tcp:localhost:705
+\end{verbatim}
+Iptables could potenetially block snmp. The default iptables setup for RHEL 5
+should be fine for local use of SNMP.
+If GANESHA was compiled with SNMP support the following message will be logged
+soon after startup with NIV\_EVENT:
+\begin{verbatim}
+$ grep "SNMP stats service was started successfully" /var/log/messages
+Sep  8 15:14:46 localhost nfs-ganesha[25074]: [stat_snmp] :MAIN: EVENT: NFS \
+STATS: SNMP stats service was started successfully
+\end{verbatim}
+Make sure SNMP and GANESHA are running. In the following example we are using
+the GPFS FSAL. An alternative FSAL will have a different name for the init
+script.
+\begin{verbatim}
+$ /etc/init.d/snmpd status
+snmpd (pid  24991) is running...
+$ /etc/init.d/nfs-ganesha.gpfs status
+GPFS Ganesha is running.
+Open-by-handle module is loaded.
+\end{verbatim}
+%To check if SNMP encountered errors:
+%\begin{verbatim}
+%
+%\end{verbatim}
 
 
 \end{document}
