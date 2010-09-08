@@ -34,45 +34,64 @@ as by the severity level of messages. Log messages can be sent to either the
 console, syslog, or an alternative file. The default logging destination is
 syslog and the default log level for all components is NIV\_EVENT.
 
+A typical log message in syslog will look like the following:
+\begin{verbatim}
+Sep  8 02:31:05 localhost nfs-ganesha[11555]: [main] :NFS STARTUP: EVENT: \
+Configuration file successfully parsed
+\end{verbatim}
+
+The first bit with the date, hostname, process name, and process id are all
+prepended to the log message by syslog. \emph{[main]} is the thread that printed
+the log message. \emph{NFS STARTUP} is the component. \emph{EVENT} is the
+severity of the message. Finally \emph{Configuration file successfully parsed}
+is the message itself. Each log message in GANESHA follows this format.
+
 \subsection{Logging Components}
 \label{listofcomponents}
 Listed below are all of the components that a log message can belong to
 
 \begin{itemize}
-\item COMPONENT\_ALL,
-\item COMPONENT\_LOG,
-\item COMPONENT\_MEMALLOC,
-\item COMPONENT\_STATES,
-\item COMPONENT\_MEMLEAKS,
-\item COMPONENT\_FSAL,
-\item COMPONENT\_NFSPROTO,
-\item COMPONENT\_NFS\_V4,
-\item COMPONENT\_NFS\_V4\_PSEUDO,
-\item COMPONENT\_FILEHANDLE,
-\item COMPONENT\_NFS\_SHELL,
-\item COMPONENT\_DISPATCH,
-\item COMPONENT\_CACHE\_CONTENT,
-\item COMPONENT\_CACHE\_INODE,
-\item COMPONENT\_CACHE\_INODE\_GC,
-\item COMPONENT\_HASHTABLE,
-\item COMPONENT\_LRU,
-\item COMPONENT\_DUPREQ,
-\item COMPONENT\_RPCSEC\_GSS,
-\item COMPONENT\_INIT,
-\item COMPONENT\_MAIN,
-\item COMPONENT\_IDMAPPER,
-\item COMPONENT\_NFS\_READDIR,
-\item COMPONENT\_NFS\_V4\_LOCK,
-\item COMPONENT\_NFS\_V4\_XATTR,
-\item COMPONENT\_NFS\_V4\_REFERRAL,
-\item COMPONENT\_MEMCORRUPT,
-\item COMPONENT\_CONFIG,
-\item COMPONENT\_CLIENT\_ID\_COMPUTE,
-\item COMPONENT\_STDOUT,
-\item COMPONENT\_OPEN\_OWNER\_HASH,
-\item COMPONENT\_SESSIONS,
-\item COMPONENT\_PNFS,
-\item COMPONENT\_RPC\_CACHE,
+\item COMPONENT\_ALL - 
+\item COMPONENT\_LOG - 
+\item COMPONENT\_MEMALLOC - Used for tracking memory allocation through the
+  buddy malloc system.
+\item COMPONENT\_STATES - Mainly used with severity level NIV\_FULL\_DEBUG to
+  debug NFSV4 states.
+\item COMPONENT\_MEMLEAKS - Mainly used with severity level
+  NIV\_DEBUG and NIV\_FULL\_DEBUG. It is used to detect and debug memory leaks.
+\item COMPONENT\_FSAL - Messages that relate to FSAL specific functions.
+\item COMPONENT\_NFSPROTO - Messages that relate to the NFSV2 and NFSV3
+  protocol.
+\item COMPONENT\_NFSV4 - Messages relating to the NFSV4 protocol.
+\item COMPONENT\_NFSV4\_PSEUDO - Message relating to the NFSV4 pseudo file
+  system.
+\item COMPONENT\_FILEHANDLE - Messages relating to the conversion from a file
+  handle (used by clients) to an FSAL specific handle (used by the server).
+\item COMPONENT\_NFS\_SHELL - Messages relating to the GANESHA shell.
+\item COMPONENT\_DISPATCH - Messages relating to the dispatch thread which is
+  responsible for sending replies to clients.
+\item COMPONENT\_CACHE\_CONTENT - 
+\item COMPONENT\_CACHE\_INODE - 
+\item COMPONENT\_CACHE\_INODE\_GC - 
+\item COMPONENT\_HASHTABLE - 
+\item COMPONENT\_LRU - 
+\item COMPONENT\_DUPREQ - 
+\item COMPONENT\_RPCSEC\_GSS - 
+\item COMPONENT\_INIT - 
+\item COMPONENT\_MAIN - 
+\item COMPONENT\_IDMAPPER - 
+\item COMPONENT\_NFS\_READDIR - 
+\item COMPONENT\_NFSV4\_LOCK - 
+\item COMPONENT\_NFSV4\_XATTR - 
+\item COMPONENT\_NFSV4\_REFERRAL - 
+\item COMPONENT\_MEMCORRUPT - 
+\item COMPONENT\_CONFIG - 
+\item COMPONENT\_CLIENT\_ID\_COMPUTE - 
+\item COMPONENT\_STDOUT - 
+\item COMPONENT\_OPEN\_OWNER\_HASH - 
+\item COMPONENT\_SESSIONS - 
+\item COMPONENT\_PNFS - 
+\item COMPONENT\_RPC\_CACHE - 
 \end{itemize}$\\$
 
 \subsection{Log Severity Levels}
@@ -218,9 +237,77 @@ FSAL
 
 \subsection{Signal Handlers}
 
+Incrememnt log level of all components:
+\begin{verbatim}
+$ killall -s SIGUSR1 /usr/bin/gpfs.ganesha.nfsd
+$ tail -1 /var/log/messages
+Sep  8 02:28:47 localhost nfs-ganesha[11287]: [main] :LOG: SIGUSR1 Increasing \
+log level for all components to NIV_DEBUG
+\end{verbatim}
+
+Decrement log level of all components:
+\begin{verbatim}
+$ killall -s SIGUSR2 /usr/bin/gpfs.ganesha.nfsd
+$ tail -1 /var/log/messages
+Sep  8 02:29:00 localhost nfs-ganesha[11287]: [main] :LOG: SIGUSR2 Decreasing \
+log level for all components to NIV_EVENT
+\end{verbatim}
+
 \subsection{SNMP}
 
+It is necessary to setup an SNMP server in order to use the SNMP support in
+GANESHA. For instructions on how to install and configure this server as well as
+how to access GANESHA through SNMP, refer to the GANESHA SNMP ADMINISTRATION
+guide. Once SNMP is properly installed, the tool presented in Section
+\ref{snmptool} can be used for easy local and remote administration.
+
 \section{GANESHA Tool for Reading/Modifying Log Levels with SNMP}
+\label{snmptool}
+
+GANESHA contains a program written in Perl that provides easy access to log
+level information. From the root directory of the GANESHA code base, the path to
+the program is \emph{src/cmdline\_tools/ganesha\_log\_level} and, if installed
+through the rpm, the program is installed to
+\emph{/usr/bin/ganesha\_log\_level}.
+
+\emph{ganesha\_log\_level} requires a configuration file to locate and access
+the SNMP server. A sample configuration file is installed to
+\emph{/etc/ganesha/snmp.conf}. The file is very simple:
+\begin{verbatim}
+# This is a sample snmp.conf to be used with ganesha to allow
+# the ganesha_log_level tool to work. Put it in /etc/ganesha
+
+community_string = public
+\end{verbatim}
+
+\subsection{Examining Log Levels with \emph{ganesha\_log\_level}}
+
+list possible log levels:
+\begin{verbatim}
+$ cmdline_tools/ganesha_log_level -L
+\end{verbatim}
+
+list current log levels on components:
+\begin{verbatim}
+$ cmdline_tools/ganesha_log_level -l
+\end{verbatim}
+
+list possible components:
+\begin{verbatim}
+$ cmdline_tools/ganesha_log_level -C
+\end{verbatim}
+
+get the log level for one or more components
+\begin{verbatim}
+$ cmdline_tools/ganesha_log_level -g COMPONENT_ALL
+\end{verbatim}
+
+\subsection{Changing Log Levels with \emph{ganesha\_log\_level}}
+
+set the log level for one or more components:
+\begin{verbatim}
+$ cmdline_tools/ganesha_log_level -s NIV_DEBUG
+\end{verbatim}
 
 \end{document}
 
