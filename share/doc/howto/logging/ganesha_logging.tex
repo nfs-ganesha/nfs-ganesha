@@ -255,7 +255,7 @@ FSAL
 
 \subsection{Signal Handlers}
 
-To incrememnt log level of all components:
+To increment log level of all components:
 \begin{verbatim}
 $ killall -s SIGUSR1 /usr/bin/gpfs.ganesha.nfsd
 $ tail -1 /var/log/messages
@@ -296,31 +296,66 @@ the SNMP server. A sample configuration file is installed to
 
 community_string = public
 \end{verbatim}
+It is essential that the community\_string parameter matches the community
+column in \emph{/etc/snmp/snmpd.conf} that looks like the following:
+\begin{verbatim}
+##       sec.name  source          community
+com2sec  local     localhost       ganesha
+com2sec  mynetwork 9.47.69.0/24    ganesha
+\end{verbatim}
 
 \subsection{Examining Log Levels with \emph{ganesha\_log\_level}}
 
-list possible log levels:
+List possible log levels:
 \begin{verbatim}
-$ cmdline_tools/ganesha_log_level -L
+$ ganesha_log_level -L
+Valid Log Levels (less to more messages):
+  NIV_NULL
+  NIV_MAJOR
+  NIV_CRIT
+  NIV_EVENT
+  NIV_DEBUG
+  NIV_FULL_DEBUG
 \end{verbatim}
-list current log levels on components:
+List current log levels on components:
 \begin{verbatim}
-$ cmdline_tools/ganesha_log_level -l
+$ ganesha_log_level -l
+Current Log Levels:
+  COMPONENT_ALL                   NIV_EVENT
+  COMPONENT_CACHE_CONTENT         NIV_EVENT
+  COMPONENT_CACHE_INODE           NIV_EVENT
+  COMPONENT_CACHE_INODE_GC        NIV_EVENT
+  COMPONENT_CLIENT_ID_COMPUTE     NIV_EVENT
+  COMPONENT_CONFIG                NIV_EVENT
+  COMPONENT_DISPATCH              NIV_EVENT
+<output continues ...>
 \end{verbatim}
-list possible components:
+List possible components:
 \begin{verbatim}
-$ cmdline_tools/ganesha_log_level -C
+$ ganesha_log_level -C
+Valid Components:
+  COMPONENT_ALL                 
+  COMPONENT_CACHE_CONTENT       
+  COMPONENT_CACHE_INODE         
+  COMPONENT_CACHE_INODE_GC      
+  COMPONENT_CLIENT_ID_COMPUTE   
+  COMPONENT_CONFIG              
+  COMPONENT_DISPATCH  
+<output continues ...>
 \end{verbatim}
-get the log level for one or more components
+Get the log level for one or more components
 \begin{verbatim}
-$ cmdline_tools/ganesha_log_level -g COMPONENT_ALL
+$ ganesha_log_level -g COMPONENT_LRU
+NIV_EVENT
 \end{verbatim}
 
 \subsection{Changing Log Levels with \emph{ganesha\_log\_level}}
 
-set the log level for one or more components:
+Set the log level for one or more components:
 \begin{verbatim}
-$ cmdline_tools/ganesha_log_level -s NIV_DEBUG
+$ ganesha_log_level -s NIV_DEBUG COMPONENT_LRU
+$ ganesha_log_level -g COMPONENT_LRU
+NIV_DEBUG
 \end{verbatim}
 
 \end{document}
