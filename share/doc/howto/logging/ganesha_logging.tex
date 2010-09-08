@@ -167,7 +167,6 @@ destination for a specific logging component, displayed in the third column.
   \caption{Configuration File Variables for Changing Log Destination}
   \label{confifile}
 \end{figure}
-
 Each stanza uses the variable name of ``LogFile''. So an
 example of setting the FSAL stanza to using stdout output is:
 \begin{verbatim}
@@ -225,7 +224,6 @@ fine granularity tuning of debug messages for development purposes.
   \caption{Configuration File Variables for Changing Log Levels}
   \label{confifilelevel}
 \end{figure}
-
 Each stanza uses the variable name of ``DebugLevel''. An
 example of setting the FSAL stanza to using NIV\_DEBUG is:
 \begin{verbatim}
@@ -237,15 +235,14 @@ FSAL
 
 \subsection{Signal Handlers}
 
-Incrememnt log level of all components:
+To incrememnt log level of all components:
 \begin{verbatim}
 $ killall -s SIGUSR1 /usr/bin/gpfs.ganesha.nfsd
 $ tail -1 /var/log/messages
 Sep  8 02:28:47 localhost nfs-ganesha[11287]: [main] :LOG: SIGUSR1 Increasing \
 log level for all components to NIV_DEBUG
 \end{verbatim}
-
-Decrement log level of all components:
+To decrement log level of all components:
 \begin{verbatim}
 $ killall -s SIGUSR2 /usr/bin/gpfs.ganesha.nfsd
 $ tail -1 /var/log/messages
@@ -286,17 +283,14 @@ list possible log levels:
 \begin{verbatim}
 $ cmdline_tools/ganesha_log_level -L
 \end{verbatim}
-
 list current log levels on components:
 \begin{verbatim}
 $ cmdline_tools/ganesha_log_level -l
 \end{verbatim}
-
 list possible components:
 \begin{verbatim}
 $ cmdline_tools/ganesha_log_level -C
 \end{verbatim}
-
 get the log level for one or more components
 \begin{verbatim}
 $ cmdline_tools/ganesha_log_level -g COMPONENT_ALL
