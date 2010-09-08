@@ -115,6 +115,16 @@ sub get_component_list() {
                         "Can't access snmp agent, ensure agent is running",
                         );
 
+    if ($output =~ /^\s*$/) {
+        my $msg = <<COMPFAIL;
+Can't retreive component list!
+
+If your snmp agent was started less than 10 seconds ago, this is normal,
+otherwise check that ganesha's snmp configuration matches that for snmp-agent.
+COMPFAIL
+        error($msg);
+    }
+
     if ($output =~ /getaddrinfo:.*Name or service not known/) {
         error("Can't access snmp agent, ensure agent is running");
     }
