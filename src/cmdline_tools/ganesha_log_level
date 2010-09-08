@@ -54,7 +54,7 @@ Usage: ganesha_log_level [options] [component] [component] [component] ..
 Options:
    -h        : display help
    -v        : display version
-   -g        : get the log level for one or more componets
+   -g        : get the log level for one or more components
    -s LEVEL  : set the log level for one or more components
    -l        : list current log levels on components
    -L        : list possible log levels
