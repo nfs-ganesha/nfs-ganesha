@@ -1,0 +1,227 @@
+%% LyX 1.3 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[english]{article}
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+\usepackage{graphicx}
+
+\makeatletter
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+
+\usepackage{babel}
+\makeatother
+\begin{document}
+
+\author{jbongio@us.ibm.com}
+\title{\center{ \Large \textbf{Overview of GANESHA's Logging Mechanisms} }}
+\maketitle
+
+GANESHA is capable of fine granularity filtering of log messages, support for
+multiple log destinations (files, console, syslog, etc.), support for sending
+different log messages to different log destinations, and many ways of setting
+log parameters.
+
+These options allow GANESHA the flexibility to be used in multiple
+professional environments while the default settings as well as the 
+
+\section{Overview of Logging}
+
+Each log message in GANESHA relates to a specific component and severity
+level. A component is a label created with the intent of capturing a sectin of
+code or a specific function in GANESHA. Severity level determines the importance
+of a log message. The verbosity of logging can be changed per component as well
+as by the severity level of messages. Log messages can be sent to either the
+console, syslog, or an alternative file. The default logging destination is
+syslog and the default log level for all components is NIV\_EVENT.
+
+\subsection{Logging Components}
+\label{listofcomponents}
+Listed below are all of the components that a log message can belong to
+
+\begin{itemize}
+\item COMPONENT\_ALL,
+\item COMPONENT\_LOG,
+\item COMPONENT\_MEMALLOC,
+\item COMPONENT\_STATES,
+\item COMPONENT\_MEMLEAKS,
+\item COMPONENT\_FSAL,
+\item COMPONENT\_NFSPROTO,
+\item COMPONENT\_NFS\_V4,
+\item COMPONENT\_NFS\_V4\_PSEUDO,
+\item COMPONENT\_FILEHANDLE,
+\item COMPONENT\_NFS\_SHELL,
+\item COMPONENT\_DISPATCH,
+\item COMPONENT\_CACHE\_CONTENT,
+\item COMPONENT\_CACHE\_INODE,
+\item COMPONENT\_CACHE\_INODE\_GC,
+\item COMPONENT\_HASHTABLE,
+\item COMPONENT\_LRU,
+\item COMPONENT\_DUPREQ,
+\item COMPONENT\_RPCSEC\_GSS,
+\item COMPONENT\_INIT,
+\item COMPONENT\_MAIN,
+\item COMPONENT\_IDMAPPER,
+\item COMPONENT\_NFS\_READDIR,
+\item COMPONENT\_NFS\_V4\_LOCK,
+\item COMPONENT\_NFS\_V4\_XATTR,
+\item COMPONENT\_NFS\_V4\_REFERRAL,
+\item COMPONENT\_MEMCORRUPT,
+\item COMPONENT\_CONFIG,
+\item COMPONENT\_CLIENT\_ID\_COMPUTE,
+\item COMPONENT\_STDOUT,
+\item COMPONENT\_OPEN\_OWNER\_HASH,
+\item COMPONENT\_SESSIONS,
+\item COMPONENT\_PNFS,
+\item COMPONENT\_RPC\_CACHE,
+\end{itemize}$\\$
+
+\subsection{Log Severity Levels}
+
+The debug levels and their order of severity are as follows:
+\begin{itemize}
+\item NIV\_NULL - no messages are printed.
+\item NIV\_MAJ - only major messages are printed.
+\item NIV\_CRIT - critical messages or higher are printed.
+\item NIV\_EVENT - event messages or higher printed.
+\item NIV\_DEBUG - debug messages or higher are printed.
+\item NIV\_FULL\_DEBUG - extremely verbose debug messages or higher are printed.
+\end{itemize}
+
+\subsection{Log Location}
+
+The location where log messages will be printed is configurable when GANESHA
+first starts. Once GANESHA is running, the log destination cannot be changed.
+
+Section \ref{loggingmethods} covers the different mechanisms for configuring the
+log destination upon startup. Each method accepts a string as the log
+destination. The valid strings are as follows:
+\begin{itemize}
+\item ``SYSLOG'' - Log messages will go to syslog. Where the log messages go
+  after being sent to the syslog daemon depends on how syslog was configured,
+  but the messages will probably go to ``/var/log/messages''. Syslog is the
+  default log location.
+\item ``STDOUT'' - Log messages will be sent to the console that started GANESHA
+  as stdout output. This can sometimes be useful for debugging purposes but is
+  not generally used.
+\item ``STDERR'' - Log messages will be sent to the console that started GANESHA
+  as stderr output. This can sometimes be useful for debugging purposes but is
+  not generally used.
+\item ``/some/path/to/file'' - If none of the above strings are given, GANESHA
+  will assume the string refers to a file path. Log messages will be appended to
+  the filepath. All of the directories in this path must already
+  exist. Otherwise an error will be thrown and GANESHA will quit.
+\end{itemize}
+
+%% To clear the current messages in syslog execute the following command:
+%% \begin{verbatim}
+%% $ > /var/log/messages
+%% \end{verbatim}
+
+\subsection{Changing the Log Destination}
+
+There are two ways to change where log messages will go, through the commandline
+or through configuration file variables. It is recommended people use the
+default of syslog, but there are may be some scenarios where separating the
+logging of certain components will be useful.
+
+\subsection{Commandline Arguments}
+
+
+
+\subsection{Configuration File Variables}
+
+Table \ref{confifile} lists the configuration file stanzas that contain a
+variable for the location of its log files. Setting the variable for that
+stanza, displayed in the second column of the table, will set the log
+destination for a specific logging component, displayed in the third column.
+
+\begin{figure}[h]
+\center
+  \begin{tabular}{ | l | l | l |}
+    \hline Configuration file stanza & configuration variable & logging component\\
+    \hline FSAL & LogFile & COMPONENT\_FSAL \\
+    \hline CacheInode\_Client & LogFile & COMPONENT\_CACHE\_INODE\\
+    \hline FileContent\_Client & LogFile & COMPONENT\_CACHE\_CONTENT\\
+    \hline BUDDY\_MALLOC & LogFile & COMPONENT\_MEMALLOC \\ && COMPONENT\_MEMLEAKS\\
+    \hline
+  \end{tabular}
+  \caption{Configuration File Variables for Changing Log Destination}
+  \label{confifile}
+\end{figure}
+
+Each stanza uses the variable name of ``LogFile''. So an
+example of setting the FSAL stanza to using stdout output is:
+\begin{verbatim}
+FSAL
+{
+    LogFile="STDOUT";
+}
+\end{verbatim}
+
+\section{Methods for Controlling the Log Level of Components}
+\label{loggingmethods}
+
+There are a total of six different ways that the log level of components is
+set. The order of priority for the six is shown in Figure
+\ref{priorities}. First there is a default log level for all components. Second,
+environment variables can be defined 
+
+\begin{figure}[h]
+  \center
+  $\textnormal{compiled defaults} \rightarrow \textnormal{environment variables}
+  \rightarrow \textnormal{command-line arguments} \rightarrow
+  \textnormal{configuration file parameters} \rightarrow
+  \textnormal{signal handlers} \leftrightarrow \textnormal{snmp}$
+  \caption{Order of Priority of Mechanisms for Changing Log Levels}
+  \label{priorities}
+\end{figure}
+
+
+\subsection{Default Log Levels}
+
+The default log level of each component is NIV\_EVENT. If no other mechanism
+is used, the log level will remain at NIV\_EVENT.
+
+\subsection{Environment Variables}
+The name of each component, listed in Subsection \ref{listofcomponents}, can be
+used as the name of an environment variable to set the debug level of that
+component. 
+
+This option is not recommended for use in a GANESHA deployment, but meant for
+fine granularity tuning of debug messages for development purposes.
+
+\subsection{Commandline Arguments}
+
+\subsection{Configuration File Variables}
+
+\begin{figure}[h]
+\center
+  \begin{tabular}{ | l | l | l |}
+    \hline Configuration file stanza & configuration variable & logging component\\
+    \hline FSAL & DebugLevel & COMPONENT\_FSAL \\
+    \hline CacheInode\_Client & DebugLevel & COMPONENT\_CACHE\_INODE\\
+    \hline FileContent\_Client & DebugLevel & COMPONENT\_CACHE\_CONTENT\\
+    \hline
+  \end{tabular}
+  \caption{Configuration File Variables for Changing Log Levels}
+  \label{confifilelevel}
+\end{figure}
+
+Each stanza uses the variable name of ``DebugLevel''. An
+example of setting the FSAL stanza to using NIV\_DEBUG is:
+\begin{verbatim}
+FSAL
+{
+    DebugLevel="NIV_DEBUG";
+}
+\end{verbatim}
+
+\subsection{Signal Handlers}
+
+\subsection{SNMP}
+
+\section{GANESHA Tool for Reading/Modifying Log Levels with SNMP}
+
+\end{document}
+
+
