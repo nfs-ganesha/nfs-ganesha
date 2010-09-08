@@ -123,6 +123,42 @@ Note: if you want to restrict the access of GANESHA's SNMP subtree, refer to the
 snmpd documentation about \emph{views}, \emph{groups},
 \emph{SNMPv2 communities}, and \emph{SNMPv3 authentication}.
 
+Figure \ref{examplesnmpdconf} shows an example SNMP configuration file that
+should work for localhost access to SNMP.
+\begin{figure}[h]
+\begin{verbatim}
+##       sec.name  source          community
+com2sec  local     localhost       ganesha
+com2sec  mynetwork 192.168.122.0/24    ganesha
+
+##     group.name sec.model  sec.name
+group  MyRWGroup  any        local
+group  MyROGroup  any        mynetwork
+
+##           incl/excl subtree                          mask
+view all     included  .1                               80
+
+##                context sec.model sec.level prefix read   write  notif
+access MyROGroup  ""      any       noauth    0      all    none   none
+access MyRWGroup  ""      any       noauth    0      all    all    all
+
+
+# System contact information
+syslocation Unknown (edit /etc/snmp/snmpd.conf)
+syscontact Root <root@localhost> (configure /etc/snmp/snmp.local.conf)
+
+# Added for support of bcm5820 cards.
+pass .1.3.6.1.4.1.4413.4.1 /usr/bin/ucd5820stat
+
+# AgentX support
+master agentx
+agentXSocket   tcp:localhost:705
+agentXTimeout  5
+agentXRetries  2
+\end{verbatim}
+\caption{Example snmpd.conf}
+\label{examplesnmpdconf}
+\end{figure}
 
 \section{Enabling SNMP support in GANESHA}
 
