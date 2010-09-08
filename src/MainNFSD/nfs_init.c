@@ -2025,7 +2025,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
     }
 
   /* Regular exit */
-  LogEvent(COMPONENT_INIT, "NFS EXIT: regular exit, nfs daemon will stop immediatly");
+  LogEvent(COMPONENT_INIT, "NFS EXIT: regular exit, nfs daemon will stop immediately");
   exit(0);
 
   return 0;
