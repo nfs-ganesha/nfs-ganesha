@@ -388,6 +388,7 @@ void InitLogging()
                  LogComponents[component].comp_name, ReturnLevelInt(oldlevel),
                  ReturnLevelInt(newlevel));
     }
+
 }                               /* InitLevelDebug */
 
 /*
@@ -1321,11 +1322,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     "SYSLOG"
   },
   { COMPONENT_MEMALLOC,          "COMPONENT_MEMALLOC", "MEM ALLOC",
-#ifdef _DEBUG_MEMALLOC
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
     "SYSLOG"
   },
@@ -1454,11 +1451,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     "SYSLOG"
   },
   { COMPONENT_MEMCORRUPT,        "COMPONENT_MEMCORRUPT", "MEM CORRUPT",
-#ifdef _DEBUG_MEMCORRUPT
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
     "SYSLOG"
   },
