@@ -447,7 +447,7 @@ static void Insert_FreeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_bu
   /* check current magic number */
   if(p_buddyblock->Header.MagicNumber != MAGIC_NUMBER_FREE)
     LogMajor(COMPONENT_MEMALLOC,
-             "Insert_FreeBlock: block %p has been overwritten or is not a buddy block (Magic number %8X<>%8X)",
+             "Insert_FreeBlock: block %p has been overwritten or is not a buddy block (Magic number %08X<>%08X)",
              p_buddyblock, p_buddyblock->Header.MagicNumber, MAGIC_NUMBER_FREE);
 
   /* Is there already a free block in the list ? */
@@ -457,7 +457,7 @@ static void Insert_FreeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_bu
       /* check current magic number */
       if(next->Header.MagicNumber != MAGIC_NUMBER_FREE)
         LogMajor(COMPONENT_MEMALLOC,
-                 "Insert_FreeBlock: next block %p has been overwritten or is not a buddy block (Magic number %8X<>%8X)",
+                 "Insert_FreeBlock: next block %p has been overwritten or is not a buddy block (Magic number %08X<>%08X)",
                  next, next->Header.MagicNumber, MAGIC_NUMBER_FREE);
 
       context->MemDesc[p_buddyblock->Header.StdInfo.k_size] = p_buddyblock;
@@ -494,7 +494,7 @@ static void Remove_FreeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_bu
   /* check current magic number */
   if(p_buddyblock->Header.MagicNumber != MAGIC_NUMBER_FREE)
     LogMajor(COMPONENT_MEMALLOC,
-             "Remove_FreeBlock: block %p has been overwritten or is not a buddy block (Magic number %8X<>%8X)",
+             "Remove_FreeBlock: block %p has been overwritten or is not a buddy block (Magic number %08X<>%08X)",
              p_buddyblock, p_buddyblock->Header.MagicNumber, MAGIC_NUMBER_FREE);
 
   prev = p_buddyblock->Content.FreeBlockInfo.PrevBlock;
@@ -505,7 +505,7 @@ static void Remove_FreeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_bu
       /* check current magic number */
       if(prev->Header.MagicNumber != MAGIC_NUMBER_FREE)
         LogMajor(COMPONENT_MEMALLOC,
-                 "Remove_FreeBlock: prev block %p has been overwritten or is not a buddy block (Magic number %8X<>%8X)",
+                 "Remove_FreeBlock: prev block %p has been overwritten or is not a buddy block (Magic number %08X<>%08X)",
                  prev, prev->Header.MagicNumber, MAGIC_NUMBER_FREE);
       prev->Content.FreeBlockInfo.NextBlock = next;
     }
@@ -519,7 +519,7 @@ static void Remove_FreeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_bu
       /* check current magic number */
       if(next->Header.MagicNumber != MAGIC_NUMBER_FREE)
         LogMajor(COMPONENT_MEMALLOC,
-                 "Remove_FreeBlock: next block %p has been overwritten or is not a buddy block (Magic number %8X<>%8X)",
+                 "Remove_FreeBlock: next block %p has been overwritten or is not a buddy block (Magic number %08X<>%08X)",
                  next, next->Header.MagicNumber, MAGIC_NUMBER_FREE);
       next->Content.FreeBlockInfo.PrevBlock = prev;
     }
@@ -554,7 +554,7 @@ static BuddyBlock_t *Get_BuddyBlock(BuddyThreadContext_t * context,
 
   Offset_buddy = Offset_block ^ (1 << k);
 
-  LogFullDebug(COMPONENT_MEMALLOC, "buddy(%p,%u,%X)=%p", Offset_block, k, 1 << k, Offset_buddy);
+  LogFullDebug(COMPONENT_MEMALLOC, "buddy(%08X,%u,%08X)=%p", Offset_block, k, 1 << k, Offset_buddy);
 
   return (BuddyBlock_t *) (Offset_buddy + BaseAddr);
 
@@ -1570,7 +1570,7 @@ void BuddyFree(BUDDY_ADDR_T ptr)
 #endif
 
           LogMajor(COMPONENT_MEMALLOC,
-                   "BuddyFree: block %p has been overwritten or is not a buddy block (Magic number %8X<>%8X)",
+                   "BuddyFree: block %p has been overwritten or is not a buddy block (Magic number %08X<>%08X)",
                    p_block, p_block->Header.MagicNumber, MAGIC_NUMBER_FREE);
 
 #ifdef _DEBUG_MEMLEAKS
@@ -1606,7 +1606,7 @@ void BuddyFree(BUDDY_ADDR_T ptr)
 #endif
 
           LogMajor(COMPONENT_MEMALLOC,
-                   "BuddyFree: block %p has been overwritten or is not a buddy block (Magic number %8X<>%8X)",
+                   "BuddyFree: block %p has been overwritten or is not a buddy block (Magic number %08X<>%08X)",
                    p_block, p_block->Header.MagicNumber, MAGIC_NUMBER_USED);
 
 #ifdef _DEBUG_MEMLEAKS
@@ -2537,7 +2537,7 @@ int BuddyCheck(BUDDY_ADDR_T ptr)
 #endif
 
           LogMajor(COMPONENT_MEMALLOC,
-                   "BuddyCheck: block %p has been overwritten or is not a buddy block (Magic number %8X<>%8X)",
+                   "BuddyCheck: block %p has been overwritten or is not a buddy block (Magic number %08X<>%08X)",
                    p_block, p_block->Header.MagicNumber, MAGIC_NUMBER_FREE);
 
 #ifdef _DEBUG_MEMLEAKS
@@ -2574,7 +2574,7 @@ int BuddyCheck(BUDDY_ADDR_T ptr)
 #endif
 
           LogMajor(COMPONENT_MEMALLOC,
-                   "BuddyCheck: block %p has been overwritten or is not a buddy block (Magic number %8X<>%8X)",
+                   "BuddyCheck: block %p has been overwritten or is not a buddy block (Magic number %08X<>%08X)",
                    p_block, p_block->Header.MagicNumber, MAGIC_NUMBER_USED);
 
 #ifdef _DEBUG_MEMLEAKS
