@@ -69,7 +69,8 @@ Listed below are all of the components that a log message can belong to
   handle (used by clients) to an FSAL specific handle (used by the server).
 \item COMPONENT\_NFS\_SHELL - Messages relating to the GANESHA shell.
 \item COMPONENT\_DISPATCH - Messages relating to the dispatch thread which is
-  responsible for sending replies to clients.
+  responsible for receiving requests from clients and assigning to a worker
+  thread for processing.
 \item COMPONENT\_CACHE\_CONTENT - Messages related to cached file data that
   makes client requests faster.
 \item COMPONENT\_CACHE\_INODE - 
