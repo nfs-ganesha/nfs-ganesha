@@ -82,6 +82,7 @@
 #include "HashTable.h"
 #include "MesureTemps.h"
 #include "log_macros.h"
+#include "stuff_alloc.h"
 
 #define LENBUF 256
 #define STRSIZE 10
@@ -92,16 +93,6 @@
 #define PRIME 3
 #define CRITERE 12
 #define CRITERE_2 14
-
-#ifdef _NO_BUDDY_SYSTEM
-#define Mem_Alloc( a )  malloc( a )
-#define Mem_Free( a )   free( a )
-#define BuddyErrno errno
-#else
-#include "BuddyMalloc.h"
-#define Mem_Alloc( a ) BuddyMalloc( a )
-#define Mem_Free( a ) BuddyFree( a )
-#endif
 
 int compare_string_buffer(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
