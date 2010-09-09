@@ -298,8 +298,6 @@ GA_DISABLE_FLAG( [tcp-register], 	 [disable registration of tcp services on port
 GA_DISABLE_FLAG( [portmapper], 	         [disable registration on portmapper], 				 [-D_NO_PORTMAPPER] )
 GA_DISABLE_FLAG( [xattr-directory],      [disable ghost xattr directory and files support],              [-D_NO_XATTRD])
 
-GA_ENABLE_FLAG(  [debug-memcorrupt],     [enable debugging for memory corruption],                       [-D_DEBUG_MEMCORRUPT] )
-GA_ENABLE_FLAG(  [debug-memalloc],       [enable debug traces in memory allocator],                      [-D_DEBUG_MEMALLOC] )
 GA_ENABLE_FLAG(  [debug-memleaks],       [enable allocator features for tracking memory usage],          [-D_DEBUG_MEMLEAKS] )
 GA_ENABLE_FLAG(  [debug-nfsshell],       [enable extended debug traces for ganeshell utility],           [-D_DEBUG_NFS_SHELL] )
 
