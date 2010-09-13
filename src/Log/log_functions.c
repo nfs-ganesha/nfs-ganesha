@@ -192,6 +192,16 @@ static const char *Log_GetThreadFunction(int ok_errors)
     return context->nom_fonction;
 }
 
+void GetNameFunction(char *name, int len)
+{
+  const char *s = Log_GetThreadFunction(0);
+
+  if (s != emergency && s != NULL)
+    strncpy(name, s, len);
+  else
+    snprintf(name, len, "Thread %p", pthread_self());
+}
+
 /*
  * Fait la conversion nom du niveau de log
  * en ascii vers valeur numerique du niveau
