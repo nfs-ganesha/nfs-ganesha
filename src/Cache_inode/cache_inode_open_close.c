@@ -406,11 +406,7 @@ cache_inode_status_t cache_inode_close(cache_entry_t * pentry,
      (pentry->object.file.open_fd.fileno > (int)(pclient->max_fd_per_thread)))
     {
 
-<<<<<<< HEAD
       LogDebug(COMPONENT_CACHE_INODE, "cache_inode_close: pentry %p, fileno = %d, lastop=%d ago\n",
-=======
-      LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_close: pentry %p, fileno = %d, lastop=%d ago\n",
->>>>>>> 030e887cffd2a4e091761fa0ac664ff52141e4ea
              pentry, pentry->object.file.open_fd.fileno,
              (int)(time(NULL) - pentry->object.file.open_fd.last_op));
 

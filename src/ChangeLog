@@ -372,6 +372,7 @@
 1.0.1   -
         - New FSAL model: FSAL modules can now be compile as shared object and
 	  can be loaded at runtime
+        - New FSAL to support ZFS filesystem
 	- Add the capability to build a "FSAL-less" daemon that loads FSAL
   	  shared object by using the dlopen function.
 	- Add a brand new FSAL to support ZFS (the FSAL_ZFS)
@@ -381,4 +382,5 @@
 	- Log layer now uses syslog as a possible log stream 
 	- Add new call FSAL_getextattrs to get info such a generation number
 	  or creation time
+       
 `	

@@ -249,7 +249,6 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
           print_buff(COMPONENT_NFS_V4, (char *)cache_inode_get_fsal_handle(dir_pentry, &cache_status),
                      sizeof(fsal_handle_t));
         }
->>>>>>> 030e887cffd2a4e091761fa0ac664ff52141e4ea
 
       /* Keep the pointer within the compound data */
       data->current_entry = file_pentry;
