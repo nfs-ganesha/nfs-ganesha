@@ -429,15 +429,12 @@ int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res)
 
       *client_id_res = *pnfs_client_id;
       status = CLIENT_ID_SUCCESS;
-<<<<<<< HEAD
-=======
       if(isFullDebug(COMPONENT_CLIENT_ID_COMPUTE)) {
 	LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,"-=-=-=-=-=-=-=-=-=-> ht_client_id \n");
 	HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id);
 	LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,"-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse \n");
 	HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id_reverse);
       }
->>>>>>> 030e887cffd2a4e091761fa0ac664ff52141e4ea
     }
   else
     {
@@ -472,15 +469,12 @@ int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id
       *ppclient_id_res = (nfs_client_id_t *) buffval.pdata;
 
       status = CLIENT_ID_SUCCESS;
-<<<<<<< HEAD
-=======
       if(isFullDebug(COMPONENT_CLIENT_ID_COMPUTE)) {
 	LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,"-=-=-=-=-=-=-=-=-=-> ht_client_id \n");
 	HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id);
 	LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,"-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse \n");
 	HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id_reverse);
       }
->>>>>>> 030e887cffd2a4e091761fa0ac664ff52141e4ea
     }
   else
     {
@@ -722,10 +716,7 @@ int nfs_client_id_compute(char *name, clientid4 * pclientid)
       computed_value ^= extract;
       computed_value ^= sum;
     }
-<<<<<<< HEAD
-=======
 
->>>>>>> 030e887cffd2a4e091761fa0ac664ff52141e4ea
   computed_value = (computed_value >> 32) ^ (computed_value & 0x00000000FFFFFFFFLL);
 
   *pclientid = computed_value;
