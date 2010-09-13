@@ -137,19 +137,9 @@ int cache_content_client_init(cache_content_client_t * pclient,
   pclient->use_cache = param.use_cache;
   strncpy(pclient->cache_dir, param.cache_dir, MAXPATHLEN);
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_content_entry_t");
-#endif
-
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_entry,
                  pclient->nb_prealloc, cache_content_entry_t, next_alloc);
-
-# ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-# endif
 
   if(pclient->pool_entry == NULL)
     {
