@@ -83,6 +83,7 @@
 #include "BuddyMalloc.h"
 #include "HashTable.h"
 #include "MesureTemps.h"
+#include "log_macros.h"
 
 #define MAXTEST 10000           /* Plus grand que MAXDESTROY !! */
 #define MAXDESTROY 50
@@ -171,6 +172,10 @@ unsigned long rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffcle
 
 int main(int argc, char *argv[])
 {
+  SetDefaultLogging("TEST");
+  SetNamePgm("test_libcmc_bugdelete");
+  LogTest("Initialized test program");
+  
   hash_table_t *ht = NULL;
   hash_parameter_t hparam;
   hash_buffer_t buffval;
@@ -204,12 +209,12 @@ int main(int argc, char *argv[])
   /* Init de la table */
   if((ht = HashTable_Init(hparam)) == NULL)
     {
-      printf("Test ECHOUE : Mauvaise init\n");
+      LogTest("Test FAILED: Bad init");
       exit(1);
     }
 
   MesureTemps(&debut, NULL);
-  printf("Creation de la table\n");
+  LogTest("Created hash table");
 
   for(i = 0; i < MAXTEST; i++)
     {
@@ -222,19 +227,16 @@ int main(int argc, char *argv[])
       buffval.pdata = strtab[i];
 
       rc = HashTable_Set(ht, &buffkey, &buffval);
-#ifdef _DEBUG_HASHTABLE
-      printf("Ajout de %s , %d , sortie = %d\n", strtab[i], i, rc);
-#endif
+      LogFullDebug(COMPONENT_HASHTABLE,"Added %s , %d , return code = %d", strtab[i], i, rc);
     }
 
   MesureTemps(&fin, &debut);
-  printf("Duree de l'insertion de %d entrees: %s\n", MAXTEST,
+  LogTest("Time to insert %d entries: %s", MAXTEST,
          ConvertiTempsChaine(fin, NULL));
-#ifdef _DEBUG_HASHTABLE
-  printf("-----------------------------------------\n");
-  HashTable_Print(ht);
-#endif
-  printf("=========================================\n");
+
+  LogFullDebug(COMPONENT_HASHTABLE, "-----------------------------------------");
+  HashTable_Log(COMPONENT_HASHTABLE, ht);
+  LogFullDebug(COMPONENT_HASHTABLE,"=========================================");
 
   /* Premier test simple: verif de la coherence des valeurs lues */
   critere_recherche = CRITERE;
@@ -247,7 +249,7 @@ int main(int argc, char *argv[])
   rc = HashTable_Get(ht, &buffkey, &buffval);
   MesureTemps(&fin, &debut);
 
-  printf("Maintenant, j'essaye de recuperer %d entrees (prises au hasard, ou presque) \n",
+  LogTest("Now, I try to retrieve %d entries (taken at random, almost)",
          MAXGET);
   MesureTemps(&debut, NULL);
   for(i = 0; i < MAXGET; i++)
@@ -258,21 +260,19 @@ int main(int argc, char *argv[])
       buffkey2.pdata = tmpstr;
 
       rc = HashTable_Get(ht, &buffkey2, &buffval2);
-#ifdef _DEBUG_HASHTABLE
-      printf("\tLecture  de key = %s  --> %s\n", buffkey2.pdata, buffval2.pdata);
-#endif
+      LogTest("\tPlaying key = %s  --> %s", buffkey2.pdata, buffval2.pdata);
       if(rc != HASHTABLE_SUCCESS)
         {
-          printf("Erreur lors de la lecture de %d = %d\n", i, rc);
-          printf("Test ECHOUE : la valeur lue est incorrecte\n");
+          LogTest("Error reading %d = %d", i, rc);
+          LogTest("Test FAILED: the reading is incorrect");
           exit(1);
         }
     }
   MesureTemps(&fin, &debut);
-  printf("Duree de lecture de %d elements = %s\n", MAXGET,
+  LogTest("Time to read elements %d = %s", MAXGET,
          ConvertiTempsChaine(fin, NULL));
 
-  printf("-----------------------------------------\n");
+  LogTest("-----------------------------------------");
 
   sprintf(tmpstr, "%d", critere_recherche);
   buffkey.len = strlen(tmpstr);
@@ -296,25 +296,25 @@ int main(int argc, char *argv[])
 
       buffkey.len = strlen(tmpstr);
       buffkey.pdata = tmpstr;
-      printf("\t J'efface %d -> %d | %d\n",
+      LogFullDebug(COMPONENT_HASHTABLE, "\t Erase %d -> %d | %d",
              random_val,
              simple_hash_func(&hparam, &buffkey), rbt_hash_func(&hparam, &buffkey));
 
       rc = HashTable_Del(ht, &buffkey, NULL, NULL);
       if(rc != HASHTABLE_SUCCESS)
         {
-          printf("Erreur lors de la destruction de %d = %d\n", random_val, rc);
-          printf("Test ECHOUE : effacement incorrect\n");
+          LogTest("Erreur lors de la destruction de %d = %d", random_val, rc);
+          LogTest("Test FAILED: delete incorrect");
           exit(1);
         }
     }
   MesureTemps(&fin, &debut);
-  printf("Duree de la destruction de %d elements = %s\n", MAXDESTROY,
+  LogTest("Time to delete %d elements = %s", MAXDESTROY,
          ConvertiTempsChaine(fin, NULL));
 
-  printf("-----------------------------------------\n");
+  LogTest("-----------------------------------------");
 
-  printf("Maintenant, j'essaye de recuperer %d entrees (eventuellement detruites) \n",
+  LogTest("Now, I try to retrieve %d entries (possibly destroyed)",
          MAXGET);
   MesureTemps(&debut, NULL);
   for(i = 0; i < MAXGET; i++)
@@ -327,82 +327,95 @@ int main(int argc, char *argv[])
       rc = HashTable_Get(ht, &buffkey, &buffval);
     }
   MesureTemps(&fin, &debut);
-  printf("Duree de lecture de %d elements = %s\n", MAXGET,
+  LogTest("Time to read %d elements = %s", MAXGET,
          ConvertiTempsChaine(fin, NULL));
 
-  printf("-----------------------------------------\n");
-  printf("Ecriture d'une clef en double \n");
+  LogTest("-----------------------------------------");
+  LogTest("Writing a duplicated key");
   sprintf(tmpstr, "%d", CRITERE_2);
   buffkey.len = strlen(tmpstr);
   buffkey.pdata = tmpstr;
   rc = HashTable_Test_And_Set(ht, &buffkey, &buffval, HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
-  printf("La valeur doit etre HASHTABLE_ERROR_KEY_ALREADY_EXISTS  = %d --> %d\n",
+  LogTest("The value must be HASHTABLE_ERROR_KEY_ALREADY_EXISTS  = %d --> %d",
          HASHTABLE_ERROR_KEY_ALREADY_EXISTS, rc);
   if(rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
     {
-      printf("Test ECHOUE : Clef redondante\n");
+      LogTest("Test ECHOUE : Clef redondante");
       exit(1);
     }
-  printf("-----------------------------------------\n");
+  LogTest("-----------------------------------------");
 
-#ifdef _DEBUG_HASHTABLE
-  HashTable_Print(ht);
-  printf("-----------------------------------------\n");
-#endif
+  HashTable_Log(COMPONENT_HASHTABLE,ht);
+  LogFullDebug(COMPONENT_HASHTABLE,"-----------------------------------------");
 
-  printf("Affichage des statistiques de la table \n");
+  LogTest("Displaying table statistics");
   HashTable_GetStats(ht, &statistiques);
-  printf(" Nombre d'entrees = %d\n", statistiques.dynamic.nb_entries);
+  LogTest(" Number of Entrees = %d", statistiques.dynamic.nb_entries);
 
-  printf("   Operations reussies  : Set = %d,  Get = %d,  Del = %d,  Test = %d\n",
+  LogTest(" Successful operations : Set = %d,  Get = %d,  Del = %d,  Test = %d",
          statistiques.dynamic.ok.nb_set, statistiques.dynamic.ok.nb_get,
          statistiques.dynamic.ok.nb_del, statistiques.dynamic.ok.nb_test);
 
-  printf("   Operations en erreur : Set = %d,  Get = %d,  Del = %d,  Test = %d\n",
+  LogTest("   Failed operations : Set = %d,  Get = %d,  Del = %d,  Test = %d",
          statistiques.dynamic.err.nb_set, statistiques.dynamic.err.nb_get,
          statistiques.dynamic.err.nb_del, statistiques.dynamic.err.nb_test);
 
-  printf("   Operations 'NotFound': Set = %d,  Get = %d,  Del = %d,  Test = %d\n",
+  LogTest("   Operations 'NotFound': Set = %d,  Get = %d,  Del = %d,  Test = %d",
          statistiques.dynamic.notfound.nb_set, statistiques.dynamic.notfound.nb_get,
          statistiques.dynamic.notfound.nb_del, statistiques.dynamic.notfound.nb_test);
 
-  printf
-      ("  Statistiques calculees: min_rbt_node = %d,  max_rbt_node = %d,  average_rbt_node = %d\n",
+  LogTest
+      ("  Statistics computed: min_rbt_node = %d,  max_rbt_node = %d,  average_rbt_node = %d",
        statistiques.computed.min_rbt_num_node, statistiques.computed.max_rbt_num_node,
        statistiques.computed.average_rbt_num_node);
 
   /* Test sur la pertinence des valeurs de statistiques */
   if(statistiques.dynamic.ok.nb_set != MAXTEST)
     {
-      printf("Test ECHOUE : statistiques incorrectes: ok.nb_set \n");
+      LogTest("Test FAILED: Incorrect statistics: ok.nb_set ");
       exit(1);
     }
 
   if(statistiques.dynamic.ok.nb_get + statistiques.dynamic.notfound.nb_get !=
-     2 * MAXGET + 3)
+     2 * MAXGET + 1)
     {
-      printf("Test ECHOUE : statistiques incorrectes: *.nb_get \n");
+      LogTest("Test FAILED: Incorrect statistics: *.nb_get.  Expected %d, got %d",
+              2 * MAXGET + 1,
+              statistiques.dynamic.ok.nb_get + statistiques.dynamic.notfound.nb_get);
       exit(1);
     }
 
-  if(statistiques.dynamic.ok.nb_del != MAXDESTROY + 1
-     || statistiques.dynamic.notfound.nb_del != 1)
+  if(statistiques.dynamic.ok.nb_del != MAXDESTROY)
     {
-      printf("Test ECHOUE : statistiques incorrectes: *.nb_del \n");
+      LogTest("Test FAILED: Incorrect statistics: *.nb_del. Expected %d, got %d",
+              MAXDESTROY,
+              statistiques.dynamic.ok.nb_del
+              );
       exit(1);
     }
+
+  if(statistiques.dynamic.notfound.nb_del != 0)
+    {
+      LogTest("Test FAILED: Incorrect statistics: *.nb_del. Expected %d, got %d",
+              0,
+              statistiques.dynamic.notfound.nb_del
+              );
+      exit(1);
+    }
+
+
 
   if(statistiques.dynamic.err.nb_test != 1)
     {
-      printf("Test ECHOUE : statistiques incorrectes: err.nb_test \n");
+      LogTest("Test FAILED: Incorrect statistics: err.nb_test ");
       exit(1);
     }
 
   /* Tous les tests sont ok */
   BuddyDumpMem(stdout);
 
-  printf("\n-----------------------------------------\n");
-  printf("Test reussi : tous les tests sont passes avec succes\n");
+  LogTest("\n-----------------------------------------");
+  LogTest("Test succeeded: all tests pass successfully");
 
   exit(0);
 }

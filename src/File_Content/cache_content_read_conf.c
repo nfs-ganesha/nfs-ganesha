@@ -60,7 +60,7 @@
 #include <string.h>
 
 char fcc_log_path[MAXPATHLEN];
-int fcc_debug_level;
+int fcc_debug_level = -1;
 
 /*
  *
@@ -147,8 +147,8 @@ cache_content_status_t cache_content_read_conf_client_parameter(config_file_t in
 
           if(DebugLevel == -1)
             {
-              DisplayLog
-                  ("cache_content_read_conf: ERROR: Invalid debug level name: \"%s\".",
+              LogCrit(COMPONENT_CACHE_CONTENT,
+                  "cache_content_read_conf: ERROR: Invalid debug level name: \"%s\".",
                    key_value);
               return CACHE_CONTENT_INVALID_ARGUMENT;
             }
@@ -179,26 +179,23 @@ cache_content_status_t cache_content_read_conf_client_parameter(config_file_t in
     }
 
   fcc_debug_level = DebugLevel;
-  if(LogFile)
+  if(LogFile) {
+    LogEvent(COMPONENT_INIT, "Setting log file of emergency cache flush thread to %s",
+	     LogFile);
     strncpy(fcc_log_path, LogFile, MAXPATHLEN);
-  else
+  }
+  else {
+    LogDebug(COMPONENT_INIT, "No log file set for emergency cache flush thread in configuration. Setting to default.",
+	     LogFile);    
     strncpy(fcc_log_path, "/dev/null", MAXPATHLEN);
+  }
 
   /* init logging */
   if(LogFile)
-    {
-      desc_log_stream_t log_stream;
+    SetComponentLogFile(COMPONENT_CACHE_CONTENT, LogFile);
 
-      strcpy(log_stream.path, LogFile);
-
-      /* Default : NIV_CRIT */
-
-      if(DebugLevel == -1)
-        AddLogStreamJd(&(pparam->log_outputs), V_FILE, log_stream, NIV_CRIT, SUP);
-      else
-        AddLogStreamJd(&(pparam->log_outputs), V_FILE, log_stream, DebugLevel, SUP);
-
-    }
+  if(DebugLevel > -1)
+    SetComponentLogLevel(COMPONENT_CACHE_CONTENT, DebugLevel);
 
   return CACHE_CONTENT_SUCCESS;
 }                               /* cache_content_read_conf_client_parameter */

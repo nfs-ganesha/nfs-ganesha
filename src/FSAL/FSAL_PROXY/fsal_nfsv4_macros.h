@@ -30,12 +30,15 @@
 #include "fsal_convert.h"
 #include "fsal_common.h"
 
-#define PRINT_HANDLE( tag, handle )                         \
-do {                                                        \
- char outstr[1024] ;                                        \
- snprintHandle(outstr, 1024, handle) ;                      \
- printf( "============> %s : handle=%s\n", tag, outstr ) ;  \
-} while( 0 )
+#define PRINT_HANDLE( tag, handle )                                                     \
+  do {                                                                                  \
+    if(isFullDebug(COMPONENT_FSAL))                                                     \
+      {                                                                                 \
+        char outstr[1024] ;                                                             \
+        snprintHandle(outstr, 1024, handle) ;                                           \
+        LogFullDebug(COMPONENT_FSAL, "============> %s : handle=%s\n", tag, outstr ) ;  \
+      }                                                                                 \
+  } while( 0 )
 
 /* Free a compound */
 #define COMPOUNDV4_ARG_FREE \

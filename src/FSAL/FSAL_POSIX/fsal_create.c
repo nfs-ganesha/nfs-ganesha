@@ -77,9 +77,7 @@ fsal_status_t POSIXFSAL_create(posixfsal_handle_t * p_parent_directory_handle,  
   /* Apply umask */
   unix_mode = unix_mode & ~global_fs_info.umask;
 
-#ifdef _DEBUG_FSAL
-  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Creation mode: 0%o", accessmode);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
 
   /* build the destination path */
   status =
@@ -364,10 +362,8 @@ fsal_status_t POSIXFSAL_link(posixfsal_handle_t * p_target_handle,      /* IN */
   if(!global_fs_info.link_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
 
-#ifdef _DEBUG_FSAL
-  fprintf(stderr, "linking %llu/%i to %llu.%i/%s \n", p_target_handle->id,
-          p_target_handle->ts, p_dir_handle->id, p_dir_handle->ts, p_link_name->name);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "linking %llu/%i to %llu.%i/%s \n", p_target_handle->data.id,
+               p_target_handle->data.ts, p_dir_handle->data.id, p_dir_handle->data.ts, p_link_name->name);
 
   /* get the old path */
   status =
@@ -510,8 +506,7 @@ fsal_status_t POSIXFSAL_mknode(posixfsal_handle_t * parentdir_handle,   /* IN */
       break;
 
     default:
-      DisplayLogJdLevel(fsal_log, NIV_MAJOR, "Invalid node type in FSAL_mknode: %d",
-                        nodetype);
+      LogMajor(COMPONENT_FSAL, "Invalid node type in FSAL_mknode: %d", nodetype);
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_mknode);
     }
 

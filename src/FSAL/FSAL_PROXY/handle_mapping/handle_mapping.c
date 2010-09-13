@@ -225,8 +225,8 @@ int handle_mapping_hash_add(hash_table_t * p_hash,
 
       if(rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
         {
-          DisplayLogJdLevel(fsal_log, NIV_CRIT,
-                            "ERROR %d inserting entry to handle mapping hash table", rc);
+          LogCrit(COMPONENT_FSAL,
+                  "ERROR %d inserting entry to handle mapping hash table", rc);
           return HANDLEMAP_HASHTABLE_ERROR;
         }
       else
@@ -256,9 +256,9 @@ int HandleMap_Init(const handle_map_param_t * p_param)
 
   if((rc > 0) && (rc != p_param->database_count))
     {
-      DisplayLogJdLevel(fsal_log, NIV_CRIT,
-                        "ERROR: The number of existing databases (%u) does not match the requested DB thread count (%u)",
-                        rc, p_param->database_count);
+      LogCrit(COMPONENT_FSAL,
+              "ERROR: The number of existing databases (%u) does not match the requested DB thread count (%u)",
+              rc, p_param->database_count);
 
       return HANDLEMAP_INVALID_PARAM;
     }
@@ -274,7 +274,7 @@ int HandleMap_Init(const handle_map_param_t * p_param)
 
   if(rc)
     {
-      DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR %d initializing database access", rc);
+      LogCrit(COMPONENT_FSAL, "ERROR %d initializing database access", rc);
       return rc;
     }
 
@@ -293,8 +293,7 @@ int HandleMap_Init(const handle_map_param_t * p_param)
 
   if(!handle_map_hash)
     {
-      DisplayLogJdLevel(fsal_log, NIV_CRIT,
-                        "ERROR creating hash table for handle mapping");
+      LogCrit(COMPONENT_FSAL, "ERROR creating hash table for handle mapping");
       return HANDLEMAP_INTERNAL_ERROR;
     }
 
@@ -304,8 +303,7 @@ int HandleMap_Init(const handle_map_param_t * p_param)
 
   if(rc)
     {
-      DisplayLogJdLevel(fsal_log, NIV_CRIT,
-                        "ERROR %d reloading handle mapping from database", rc);
+      LogCrit(COMPONENT_FSAL, "ERROR %d reloading handle mapping from database", rc);
       return rc;
     }
 

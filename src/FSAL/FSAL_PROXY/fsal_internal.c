@@ -86,11 +86,6 @@ fsal_staticfsinfo_t default_proxy_info = {
   0400                          /* default access rights for xattrs: root=RW, owner=R */
 };
 
-/*
- *  Log Descriptor
- */
-log_t fsal_log;
-
 /* variables for limiting the calls to the filesystem */
 static int limit_calls = FALSE;
 semaphore_t sem_fs_calls;
@@ -103,7 +98,7 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT;
 static void init_keys(void)
 {
   if(pthread_key_create(&key_stats, NULL) == -1)
-    DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_KEY_CREATE, errno);
+    LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_KEY_CREATE, errno);
 
   return;
 }                               /* init_keys */
@@ -133,7 +128,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
   if(pthread_once(&once_key, init_keys) != 0)
     {
-      DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_ONCE, errno);
+      LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_ONCE, errno);
       return;
     }
 
@@ -151,7 +146,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
       if(bythread_stat == NULL)
         {
-          DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
+          LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, Mem_Errno);
         }
 
       /* inits the struct */
@@ -204,7 +199,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
   /* first, we init the keys if this is the first time */
   if(pthread_once(&once_key, init_keys) != 0)
     {
-      DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_ONCE, errno);
+      LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_ONCE, errno);
       return;
     }
 
@@ -218,7 +213,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
 
       if((bythread_stat =
           (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t))) == NULL)
-        DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
+        LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, Mem_Errno);
 
       /* inits the struct */
       for(i = 0; i < FSAL_NB_FUNC; i++)
@@ -330,9 +325,6 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   if(!fsal_info || !fs_common_info)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  /* Setting log info */
-  fsal_log = fsal_info->log_outputs;
-
   /* inits FS call semaphore */
   if(fsal_info->max_fs_calls > 0)
     {
@@ -345,15 +337,15 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
       if(rc != 0)
         ReturnCode(ERR_FSAL_SERVERFAULT, rc);
 
-      DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                        "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
-                        fsal_info->max_fs_calls);
+      LogDebug(COMPONENT_FSAL,
+               "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
+               fsal_info->max_fs_calls);
 
     }
   else
     {
-      DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                        "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
+      LogDebug(COMPONENT_FSAL,
+               "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
     }
 
   /* setting default values. */
@@ -388,53 +380,53 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
   SET_BITMAP_PARAM(global_fs_info, fs_common_info, xattr_access_rights);
 
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "FileSystem info :");
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxfilesize  = %llX    ",
-                    global_fs_info.maxfilesize);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxlink  = %lu   ", global_fs_info.maxlink);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxnamelen  = %lu  ",
-                    global_fs_info.maxnamelen);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxpathlen  = %lu  ",
-                    global_fs_info.maxpathlen);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  no_trunc  = %d ", global_fs_info.no_trunc);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  chown_restricted  = %d ",
-                    global_fs_info.chown_restricted);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  case_insensitive  = %d ",
-                    global_fs_info.case_insensitive);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  case_preserving  = %d ",
-                    global_fs_info.case_preserving);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  fh_expire_type  = %hu ",
-                    global_fs_info.fh_expire_type);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  link_support  = %d  ",
-                    global_fs_info.link_support);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  symlink_support  = %d  ",
-                    global_fs_info.symlink_support);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  lock_support  = %d  ",
-                    global_fs_info.lock_support);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  named_attr  = %d  ",
-                    global_fs_info.named_attr);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  unique_handles  = %d  ",
-                    global_fs_info.unique_handles);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  lease_time  = %u.%u     ",
-                    global_fs_info.lease_time.seconds,
-                    global_fs_info.lease_time.nseconds);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  acl_support  = %hu  ",
-                    global_fs_info.acl_support);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  cansettime  = %d  ",
-                    global_fs_info.cansettime);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  homogenous  = %d  ",
-                    global_fs_info.homogenous);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  supported_attrs  = %llX  ",
-                    global_fs_info.supported_attrs);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxread  = %llX     ",
-                    global_fs_info.maxread);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxwrite  = %llX     ",
-                    global_fs_info.maxwrite);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  umask  = %#o ", global_fs_info.umask);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  auth_exportpath_xdev  = %d  ",
-                    global_fs_info.auth_exportpath_xdev);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  xattr_access_rights = %#o ",
-                    global_fs_info.xattr_access_rights);
+  LogDebug(COMPONENT_FSAL, "FileSystem info :");
+  LogDebug(COMPONENT_FSAL, "  maxfilesize  = %llX    ",
+           global_fs_info.maxfilesize);
+  LogDebug(COMPONENT_FSAL, "  maxlink  = %lu   ", global_fs_info.maxlink);
+  LogDebug(COMPONENT_FSAL, "  maxnamelen  = %lu  ",
+           global_fs_info.maxnamelen);
+  LogDebug(COMPONENT_FSAL, "  maxpathlen  = %lu  ",
+           global_fs_info.maxpathlen);
+  LogDebug(COMPONENT_FSAL, "  no_trunc  = %d ", global_fs_info.no_trunc);
+  LogDebug(COMPONENT_FSAL, "  chown_restricted  = %d ",
+           global_fs_info.chown_restricted);
+  LogDebug(COMPONENT_FSAL, "  case_insensitive  = %d ",
+           global_fs_info.case_insensitive);
+  LogDebug(COMPONENT_FSAL, "  case_preserving  = %d ",
+           global_fs_info.case_preserving);
+  LogDebug(COMPONENT_FSAL, "  fh_expire_type  = %hu ",
+           global_fs_info.fh_expire_type);
+  LogDebug(COMPONENT_FSAL, "  link_support  = %d  ",
+           global_fs_info.link_support);
+  LogDebug(COMPONENT_FSAL, "  symlink_support  = %d  ",
+           global_fs_info.symlink_support);
+  LogDebug(COMPONENT_FSAL, "  lock_support  = %d  ",
+           global_fs_info.lock_support);
+  LogDebug(COMPONENT_FSAL, "  named_attr  = %d  ",
+           global_fs_info.named_attr);
+  LogDebug(COMPONENT_FSAL, "  unique_handles  = %d  ",
+           global_fs_info.unique_handles);
+  LogDebug(COMPONENT_FSAL, "  lease_time  = %u.%u     ",
+           global_fs_info.lease_time.seconds,
+           global_fs_info.lease_time.nseconds);
+  LogDebug(COMPONENT_FSAL, "  acl_support  = %hu  ",
+           global_fs_info.acl_support);
+  LogDebug(COMPONENT_FSAL, "  cansettime  = %d  ",
+           global_fs_info.cansettime);
+  LogDebug(COMPONENT_FSAL, "  homogenous  = %d  ",
+           global_fs_info.homogenous);
+  LogDebug(COMPONENT_FSAL, "  supported_attrs  = %llX  ",
+           global_fs_info.supported_attrs);
+  LogDebug(COMPONENT_FSAL, "  maxread  = %llX     ",
+           global_fs_info.maxread);
+  LogDebug(COMPONENT_FSAL, "  maxwrite  = %llX     ",
+           global_fs_info.maxwrite);
+  LogDebug(COMPONENT_FSAL, "  umask  = %#o ", global_fs_info.umask);
+  LogDebug(COMPONENT_FSAL, "  auth_exportpath_xdev  = %d  ",
+           global_fs_info.auth_exportpath_xdev);
+  LogDebug(COMPONENT_FSAL, "  xattr_access_rights = %#o ",
+           global_fs_info.xattr_access_rights);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

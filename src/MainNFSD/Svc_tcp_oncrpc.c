@@ -35,6 +35,8 @@ typedef unsigned int u_int32_t;
 #include   <errno.h>
 #include   <pthread.h>
 
+#include   "log_macros.h"
+
 #ifndef MAX
 #define MAX(a, b)     ((a > b) ? a : b)
 #endif
@@ -71,8 +73,6 @@ static struct xp_ops Svctcp_op = {
   Svctcp_freeargs,
   Svctcp_destroy
 };
-
-void print_xdrrec_fbtbc(char *tag, SVCXPRT * xprt);
 
 /*
  * Ops vector for TCP/IP rendezvous handler
@@ -266,7 +266,7 @@ void print_xdrrec_fbtbc(char *tag, SVCXPRT * xprt)
 
   cd = (struct tcp_conn *)xprt->xp_p1;
   rstrm = (RECSTREAM_local *) & (cd->xdrs.x_private);
-  printf("=====> tag=%s xprt=%p  fbtbc=%ld \n", tag, xprt, rstrm->fbtbc);
+  LogFullDebug(COMPONENT_DISPATCH, "=====> tag=%s xprt=%p  fbtbc=%ld", tag, xprt, rstrm->fbtbc);
 }
 
 void *rpc_tcp_socket_manager_thread(void *Arg);
@@ -384,7 +384,7 @@ static void Svctcp_destroy(register SVCXPRT * xprt)
  */
 int Readtcp(register SVCXPRT * xprt, caddr_t buf, register int len)
 {
-  /* printf( "Readtcp: xprt=%p len=%d\n", xprt, len ) ; */
+  /* LogFullDebug(COMPONENT_DISPATCH, "Readtcp: xprt=%p len=%d", xprt, len ) ; */
   /* print_xdrrec_fbtbc( "Readtcp",  xprt ) ;           */
 
 #ifdef _FREEBSD
@@ -421,7 +421,7 @@ int Readtcp(register SVCXPRT * xprt, caddr_t buf, register int len)
 
   if(len > 0)
     {
-      /* printf( "Readtcp (end): xprt=%p len=%d\n", xprt, len ) ; */
+      /* LogFullDebug(COMPONENT_DISPATCH, "Readtcp (end): xprt=%p len=%d", xprt, len ) ; */
       /* print_xdrrec_fbtbc( "Readtcp (end)",  xprt ) ;           */
 
       return (len);
@@ -449,7 +449,7 @@ int Writetcp(register SVCXPRT * xprt, caddr_t buf, int len)
 {
   register int i, cnt;
 
-  /* printf( "Writetcp: xprt=%p len=%d\n", xprt, len ) ; */
+  /* LogFullDebug(COMPONENT_DISPATCH, "Writetcp: xprt=%p len=%d", xprt, len ) ; */
   /* print_xdrrec_fbtbc( "WriteTcp", xprt ) ; */
 
   for(cnt = len; cnt > 0; cnt -= i, buf += i)

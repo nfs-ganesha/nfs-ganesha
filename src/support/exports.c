@@ -2374,11 +2374,11 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       if(cache_inode_client_init(&small_client, small_client_param, 255, NULL))
         {
           LogCrit(COMPONENT_INIT,
-               "NFS_STARTUP: CRITICAL: small cache inode client could not be allocated, exiting...");
+               "small cache inode client could not be allocated, exiting...");
           exit(1);
         }
       else
-        LogCrit(COMPONENT_INIT, "NFS STARTUP: small cache inode client successfully initialized");
+        LogEvent(COMPONENT_INIT, "small cache inode client successfully initialized");
 
       /* creating the datacache client for recovering data cache */
       if(cache_content_client_init
@@ -2386,7 +2386,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
           nfs_param.cache_layers_param.cache_content_client_param))
         {
           LogCrit(COMPONENT_INIT,
-               "NFS_STARTUP: CRITICAL: cache content client (for datacache recovery) could not be allocated, exiting...");
+               "cache content client (for datacache recovery) could not be allocated, exiting...");
           exit(1);
         }
 
@@ -2399,7 +2399,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 
       if(FSAL_IS_ERROR(fsal_status))
         {
-          LogCrit(COMPONENT_INIT, "NFS STARTUP: Couldn't get the context for FSAL super user");
+          LogCrit(COMPONENT_INIT, "Couldn't get the context for FSAL super user");
           return FALSE;
         }
 
@@ -2411,7 +2411,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
           if(!(pcurrent->options & EXPORT_OPTION_USE_DATACACHE))
             {
               LogCrit(COMPONENT_INIT,
-                   "NFS STARTUP: ERROR : the export entry iId=%u, Export Path=%s must have datacache enabled... exiting",
+                   "ERROR : the export entry iId=%u, Export Path=%s must have datacache enabled... exiting",
                    pcurrent->id, pcurrent->fullpath);
               exit(1);
             }
@@ -2429,7 +2429,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 
           if(FSAL_IS_ERROR(fsal_status))
             {
-              LogCrit(COMPONENT_INIT, "NFS STARTUP: Couldn't build export context for %s",
+              LogCrit(COMPONENT_INIT, "Couldn't build export context for %s",
                          pcurrent->fullpath);
               return FALSE;
             }
@@ -2441,7 +2441,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 
           if(FSAL_IS_ERROR(fsal_status))
             {
-              LogCrit(COMPONENT_INIT, "NFS STARTUP: Couldn't get the credentials for FSAL super user");
+              LogCrit(COMPONENT_INIT, "Couldn't get the credentials for FSAL super user");
               return FALSE;
             }
 
@@ -2450,7 +2450,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
                                                           &context, &fsal_handle, NULL))))
             {
               LogCrit(COMPONENT_INIT,
-                   "NFS STARTUP: Couldn't access the root of the exported namespace, ExportId=%u Path=%s FSAL_ERROR=(%u,%u)",
+                   "Couldn't access the root of the exported namespace, ExportId=%u Path=%s FSAL_ERROR=(%u,%u)",
                    pcurrent->id, pcurrent->fullpath, fsal_status.major,
                    fsal_status.minor);
               return FALSE;
@@ -2462,7 +2462,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 
           if(FSAL_IS_ERROR(fsal_status))
             {
-              LogCrit(COMPONENT_INIT, "NFS STARTUP: Couldn't allocate memory");
+              LogCrit(COMPONENT_INIT, "Couldn't allocate memory");
               return FALSE;
             }
 
@@ -2478,13 +2478,13 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
                                              &context, &cache_status)) == NULL)
             {
               LogCrit(COMPONENT_INIT,
-                   "NFS STARTUP: /!\\ | Error when creating root cached entry for %s, export_id=%d, cache_status=%d",
+                   "/!\\ | Error when creating root cached entry for %s, export_id=%d, cache_status=%d",
                    pcurrent->fullpath, pcurrent->id, cache_status);
               return FALSE;
             }
           else
             LogEvent(COMPONENT_INIT,
-                            "NFS STARTUP: Added root entry for path %s on export_id=%d",
+                            "Added root entry for path %s on export_id=%d",
                             pcurrent->fullpath, pcurrent->id);
 
           /* Get FSAL specific info for this entry */

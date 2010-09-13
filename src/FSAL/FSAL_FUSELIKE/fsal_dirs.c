@@ -24,7 +24,7 @@
 /**
  * FSAL_opendir :
  *     Opens a directory for reading its content.
- *     
+ *
  * \param dir_handle (input)
  *         the handle of the directory to be opened.
  * \param p_context (input)
@@ -36,7 +36,7 @@
  *         On successfull completion,the structure pointed
  *         by dir_attributes receives the new directory attributes.
  *         Can be NULL.
- * 
+ *
  * \return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - ERR_FSAL_ACCESS       (user does not have read permission on directory)
@@ -141,8 +141,8 @@ static void fill_dirent(fsal_dirent_t * to_be_filled,
     {
       if(stbuf->st_ino == 0)
         {
-          DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                            "WARNING in fill_dirent: Filesystem doesn't provide inode numbers !!!");
+          LogDebug(COMPONENT_FSAL,
+                   "WARNING in fill_dirent: Filesystem doesn't provide inode numbers !!!");
         }
 
       to_be_filled->handle.data.inode = stbuf->st_ino;
@@ -157,14 +157,13 @@ static void fill_dirent(fsal_dirent_t * to_be_filled,
       to_be_filled->attributes.asked_attributes = getattr_mask;
       status = posix2fsal_attributes(&tmp_statbuff, &to_be_filled->attributes);
 
-#ifdef _DEBUG_FSAL
-      printf
-          ("getattr_mask = %X, recupere = %X, status=%d, inode=%llX.%llu, type=%d, posixmode=%#o, mode=%#o\n",
+      LogFullDebug(COMPONENT_FSAL,
+           "getattr_mask = %X, recupere = %X, status=%d, inode=%llX.%llu, type=%d, posixmode=%#o, mode=%#o",
            getattr_mask, to_be_filled->attributes.asked_attributes, status.major,
            to_be_filled->attributes.fsid.major, to_be_filled->attributes.fileid,
            to_be_filled->attributes.type, tmp_statbuff.st_mode,
            to_be_filled->attributes.mode);
-#endif
+
       if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(to_be_filled->attributes.asked_attributes);
@@ -262,7 +261,7 @@ static int ganefuse_fill_dir(void *buf, const char *name,
 }
 
 /* this function is used by filesystems binded to old version of FUSE
- * that use getdir() instead of readdir(). 
+ * that use getdir() instead of readdir().
  */
 static int ganefuse_dirfil_old(ganefuse_dirh_t h, const char *name, int type, ino_t ino)
 {
@@ -272,7 +271,7 @@ static int ganefuse_dirfil_old(ganefuse_dirh_t h, const char *name, int type, in
 /**
  * FSAL_readdir :
  *     Read the entries of an opened directory.
- *     
+ *
  * \param dir_descriptor (input):
  *        Pointer to the directory descriptor filled by FSAL_opendir.
  * \param start_position (input):
@@ -297,10 +296,10 @@ static int ganefuse_dirfil_old(ganefuse_dirh_t h, const char *name, int type, in
  * \param end_of_dir (output)
  *        Pointer to a boolean that indicates if the end of dir
  *        has been reached during the call.
- * 
+ *
  * \return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
- *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument) 
+ *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
@@ -371,9 +370,9 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_descriptor,     /* IN */
       *end_position = start_position;
       *end_of_dir = TRUE;
       *nb_entries = 0;
-#ifdef _DEBUG_FSAL
-      printf("No entries found\n");
-#endif
+
+      LogFullDebug(COMPONENT_FSAL, "No entries found");
+
       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
     }
 
@@ -407,9 +406,8 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_descriptor,     /* IN */
 
           pdirent[i].attributes.asked_attributes = get_attr_mask;
 
-#ifdef _DEBUG_FSAL
-          printf("Inode to be completed\n");
-#endif
+          LogFullDebug(COMPONENT_FSAL, "Inode to be completed");
+
           st = FUSEFSAL_lookup(&dir_descriptor->dir_handle,
                                &pdirent[i].name,
                                &dir_descriptor->context,
@@ -426,11 +424,10 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_descriptor,     /* IN */
 
           if(strcmp(pdirent[i].name.name, ".") && strcmp(pdirent[i].name.name, ".."))
             {
-#ifdef _DEBUG_FSAL
-              printf("adding entry to namespace: %lX.%ld %s\n",
+              LogFullDebug(COMPONENT_FSAL, "adding entry to namespace: %lX.%ld %s",
                      pdirent[i].handle.data.device,
                      pdirent[i].handle.data.inode, pdirent[i].name.name);
-#endif
+
               pdirent[i].handle.data.validator = pdirent[i].attributes.ctime.seconds;
 
               NamespaceAdd(dir_descriptor->dir_handle.data.inode,
@@ -448,9 +445,7 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_descriptor,     /* IN */
   *end_of_dir = (reqbuff.nb_entries < reqbuff.max_entries);
   *nb_entries = reqbuff.nb_entries;
 
-#ifdef _DEBUG_FSAL
-  printf("EOD = %d\n", *end_of_dir);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "EOD = %d", *end_of_dir);
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
 
@@ -459,10 +454,10 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_descriptor,     /* IN */
 /**
  * FSAL_closedir :
  * Free the resources allocated for reading directory entries.
- *     
+ *
  * \param dir_descriptor (input):
  *        Pointer to a directory descriptor filled by FSAL_opendir.
- * 
+ *
  * \return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)

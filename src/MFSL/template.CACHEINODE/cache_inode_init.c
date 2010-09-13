@@ -39,7 +39,7 @@
 #endif
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -76,7 +76,7 @@ hash_table_t *cache_inode_init(cache_inode_parameter_t param,
   else
     *pstatus = CACHE_INODE_INVALID_ARGUMENT;
 
-  DisplayLog("Using write-back (asynchronous) metadata cache");
+  LogEvent(COMPONENT_CACHE_INODE, "Using write-back (asynchronous) metadata cache");
   /* Return the hashtable */
   return ht;
 }                               /* cache_inode_init */
@@ -101,7 +101,6 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   LRU_status_t lru_status;
   pthread_mutexattr_t mutexattr;
 
-  pclient->log_outputs = param.log_outputs;
   pclient->attrmask = param.attrmask;
   pclient->nb_prealloc = param.nb_prealloc_entry;
   pclient->nb_pre_dir_data = param.nb_pre_dir_data;
@@ -146,8 +145,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   STUFF_PREALLOC(pclient->pool_entry, pclient->nb_prealloc, cache_entry_t, next_alloc);
   if(pclient->pool_entry == NULL)
     {
-      DisplayLogJd(pclient->log_outputs,
-                   "Error : can't init cache_inode client entry pool");
+      LogCrit(COMPONENT_CACHE_INODE, "Error : can't init cache_inode client entry pool");
       return 1;
     }
 #endif
@@ -162,7 +160,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
                  pclient->nb_pre_dir_data, cache_inode_dir_data_t, next_alloc);
   if(pclient->pool_dir_data == NULL)
     {
-      DisplayLogJd(pclient->log_outputs,
+      LogCrit(COMPONENT_CACHE_INODE,
                    "Error : can't init cache_inode client dir data pool");
       return 1;
     }
@@ -178,7 +176,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
                  pclient->nb_pre_parent, cache_inode_parent_entry_t, next_alloc);
   if(pclient->pool_parent == NULL)
     {
-      DisplayLogJd(pclient->log_outputs,
+      LogCrit(COMPONENT_CACHE_INODE,
                    "Error : can't init cache_inode client parent link pool");
       return 1;
     }
@@ -194,7 +192,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
                  pclient->nb_pre_state_v4, cache_inode_state_v4_t, next);
   if(pclient->pool_state_v4 == NULL)
     {
-      DisplayLogJd(pclient->log_outputs,
+      LogCrit(COMPONENT_CACHE_INODE,
                    "Error : can't init cache_inode client state v4 pool");
       return 1;
     }
@@ -205,7 +203,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
                  pclient->nb_pre_async_op_desc, cache_inode_async_op_desc_t, next_alloc);
   if(pclient->pool_async_op == NULL)
     {
-      DisplayLogJd(pclient->log_outputs, "Error : can't init cache_inode async op pool");
+      LogCrit(COMPONENT_CACHE_INODE, "Error : can't init cache_inode async op pool");
       return 1;
     }
 #endif
@@ -226,7 +224,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
 
   if(pclient->pool_key == NULL)
     {
-      DisplayLogJd(pclient->log_outputs,
+      LogCrit(COMPONENT_CACHE_INODE,
                    "Error : can't init cache_inode client key pool");
       return 1;
     }
@@ -234,7 +232,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
 
   if((pclient->lru_gc = LRU_Init(param.lru_param, &lru_status)) == NULL)
     {
-      DisplayLogJd(pclient->log_outputs, "Error : can't init cache_inode client lru gc");
+      LogCrit(COMPONENT_CACHE_INODE, "Error : can't init cache_inode client lru gc");
       return 1;
     }
 

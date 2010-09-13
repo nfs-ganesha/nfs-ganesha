@@ -1,6 +1,6 @@
 
-check: user1.sav user2.sav user3.sav testdir.sav
-	../../tools/maketest -qce -f maketest.conf
+#check: user1.sav user2.sav user3.sav testdir.sav
+#	../../tools/maketest -qce -f maketest.conf
 	
 user1.sav:
 	./config_tests.ksh

@@ -359,7 +359,7 @@ struct rpc_msg *msg;
   len = sizeof(struct sockaddr_storage);
   if((sock = accept(xprt->xp_fd, (struct sockaddr *)(void *)&addr, &len)) < 0)
     {
-      printf("Error in accept xp_fd=%u line=%u file=%s, errno=%u\n", xprt->xp_fd,
+      LogCrit(COMPONENT_DISPATCH, "Error in accept xp_fd=%u line=%u file=%s, errno=%u", xprt->xp_fd,
              __LINE__, __FILE__, errno);
       if(errno == EINTR)
         goto again;

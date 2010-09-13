@@ -18,6 +18,8 @@ libidmap_la_SOURCES = idmapper.c                   \
 
 test_idmapper_SOURCES       = test_idmapper.c
 
+test_idmapper_LDADD = ../Log/liblog.la
+
 new: clean all 
 
 doc:

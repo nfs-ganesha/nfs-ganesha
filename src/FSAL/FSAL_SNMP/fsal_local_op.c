@@ -118,7 +118,7 @@ fsal_status_t SNMPFSAL_test_access(snmpfsal_op_context_t * p_context,   /* IN */
       if(object_attributes->mode & FSAL_MODE_XUSR)
         missing_access &= ~FSAL_X_OK;
 
-      /*printf("MISSING ACCESS=%#o\n", missing_access ); */
+      /*LogFullDebug(COMPONENT_FSAL, "MISSING ACCESS=%#o", missing_access ); */
 
       if(missing_access == 0)
         Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);

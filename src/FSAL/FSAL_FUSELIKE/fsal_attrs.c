@@ -42,7 +42,7 @@
  * \return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - ERR_FSAL_STALE        (object_handle does not address an existing object)
- *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument) 
+ *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Another error code if an error occured.
  */
 fsal_status_t FUSEFSAL_getattrs(fusefsal_handle_t * filehandle, /* IN */
@@ -89,8 +89,8 @@ fsal_status_t FUSEFSAL_getattrs(fusefsal_handle_t * filehandle, /* IN */
        * is needed for building entry's handle.
        */
 
-      DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                        "FSAL_getattr WARNING: getattr is not implemented on this filesystem! Returning dummy values.");
+      LogDebug(COMPONENT_FSAL,
+               "FSAL_getattr WARNING: getattr is not implemented on this filesystem! Returning dummy values.");
 
       obj_stat.st_dev = filehandle->data.device;
       obj_stat.st_ino = filehandle->data.inode;
@@ -235,9 +235,8 @@ fsal_status_t FUSEFSAL_setattrs(fusefsal_handle_t * filehandle, /* IN */
           rc = p_fs_ops->chmod(object_path, fsal2unix_mode(attrs.mode));
           ReleaseTokenFSCall();
 
-#ifdef _DEBUG_FSAL
-          printf("chmod: status = %d\n", rc);
-#endif
+          LogFullDebug(COMPONENT_FSAL, "chmod: status = %d", rc);
+
           if(rc)
             Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
         }
@@ -257,9 +256,8 @@ fsal_status_t FUSEFSAL_setattrs(fusefsal_handle_t * filehandle, /* IN */
           rc = p_fs_ops->truncate(object_path, (off_t) attrs.filesize);
           ReleaseTokenFSCall();
 
-#ifdef _DEBUG_FSAL
-          printf("truncate: status = %d\n", rc);
-#endif
+          LogFullDebug(COMPONENT_FSAL, "truncate: status = %d", rc);
+
           if(rc)
             Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
         }
@@ -274,9 +272,9 @@ fsal_status_t FUSEFSAL_setattrs(fusefsal_handle_t * filehandle, /* IN */
     {
       if((p_context->credential.user != 0) && (p_context->credential.user != attrs.owner))
         {
-          DisplayLogJdLevel(fsal_log, NIV_EVENT,
-                            "FSAL_setattr: Denied user %d to change object's owner to %d",
-                            p_context->credential.user, attrs.owner);
+          LogEvent(COMPONENT_FSAL,
+                   "FSAL_setattr: Denied user %d to change object's owner to %d",
+                   p_context->credential.user, attrs.owner);
           Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
         }
     }
@@ -286,10 +284,10 @@ fsal_status_t FUSEFSAL_setattrs(fusefsal_handle_t * filehandle, /* IN */
       if((p_context->credential.user != 0)
          && (p_context->credential.group != attrs.group))
         {
-          DisplayLogJdLevel(fsal_log, NIV_EVENT,
-                            "FSAL_setattr: Denied user %d (group %d) to change object's group to %d",
-                            p_context->credential.user, p_context->credential.group,
-                            attrs.group);
+          LogEvent(COMPONENT_FSAL,
+                   "FSAL_setattr: Denied user %d (group %d) to change object's group to %d",
+                   p_context->credential.user, p_context->credential.group,
+                   attrs.group);
           Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
         }
     }
@@ -307,9 +305,8 @@ fsal_status_t FUSEFSAL_setattrs(fusefsal_handle_t * filehandle, /* IN */
                                -1);
           ReleaseTokenFSCall();
 
-#ifdef _DEBUG_FSAL
-          printf("chown: status = %d\n", rc);
-#endif
+          LogFullDebug(COMPONENT_FSAL, "chown: status = %d", rc);
+
           if(rc)
             Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
         }
@@ -359,9 +356,8 @@ fsal_status_t FUSEFSAL_setattrs(fusefsal_handle_t * filehandle, /* IN */
           rc = p_fs_ops->utimens(object_path, tv);
           ReleaseTokenFSCall();
 
-#ifdef _DEBUG_FSAL
-          printf("utimens: status = %d\n", rc);
-#endif
+          LogFullDebug(COMPONENT_FSAL, "utimens: status = %d", rc);
+
           if(rc)
             Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
         }
@@ -381,9 +377,8 @@ fsal_status_t FUSEFSAL_setattrs(fusefsal_handle_t * filehandle, /* IN */
           rc = p_fs_ops->utime(object_path, &utb);
           ReleaseTokenFSCall();
 
-#ifdef _DEBUG_FSAL
-          printf("utime: status = %d\n", rc);
-#endif
+          LogFullDebug(COMPONENT_FSAL, "utime: status = %d", rc);
+
           if(rc)
             Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
         }

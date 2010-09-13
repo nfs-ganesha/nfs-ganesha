@@ -854,8 +854,8 @@ int idmap_populate(char *path, idmap_type_t maptype)
 
     }
 
-  /* HashTable_Print( ht ) ; */
-  /* HashTable_Print( ht_reverse ) ; */
+  /* HashTable_Log( ht ) ; */
+  /* HashTable_Log( ht_reverse ) ; */
 
   return ID_MAPPER_SUCCESS;
 }                               /* idmap_populate_by_conf */

@@ -347,21 +347,14 @@ fsal_status_t GPFSFSAL_ExpandHandle(gpfsfsal_export_context_t * p_expcontext,   
  */
 fsal_status_t GPFSFSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 {
-
-  log_t no_logging = LOG_INITIALIZER;
-
   /* defensive programming... */
   if(out_parameter == NULL)
     ReturnCode(ERR_FSAL_FAULT, 0);
-
-  /* init logging to no logging */
-  out_parameter->fsal_info.log_outputs = no_logging;
 
   /* init max FS calls = unlimited */
   out_parameter->fsal_info.max_fs_calls = 0;
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
-
 }
 
 fsal_status_t GPFSFSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
@@ -473,13 +466,13 @@ fsal_status_t GPFSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
   if(block == NULL)
     {
-      LogCrit(COMPONENT_FSAL, "FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
+      LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
               CONF_LABEL_FSAL);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
-      LogCrit(COMPONENT_FSAL,"FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
+      LogCrit(COMPONENT_CONFIG,"FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
               CONF_LABEL_FSAL);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
@@ -497,7 +490,7 @@ fsal_status_t GPFSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
       err = config_GetKeyValue(item, &key_name, &key_value);
       if(err)
         {
-          LogCrit(COMPONENT_FSAL,
+          LogCrit(COMPONENT_CONFIG,
                   "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_FSAL);
           ReturnCode(ERR_FSAL_SERVERFAULT, err);
@@ -509,7 +502,7 @@ fsal_status_t GPFSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
           if(DebugLevel == -1)
             {
-              LogCrit(COMPONENT_FSAL, "FSAL LOAD PARAMETER: ERROR: Invalid debug level name: \"%s\".",
+              LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR: Invalid debug level name: \"%s\".",
                       key_value);
               ReturnCode(ERR_FSAL_INVAL, -1);
             }
@@ -528,7 +521,7 @@ fsal_status_t GPFSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
           if(maxcalls < 0)
             {
-              LogCrit(COMPONENT_FSAL,
+              LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: null or positive integer expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
@@ -539,7 +532,7 @@ fsal_status_t GPFSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
         }
       else
         {
-          LogCrit(COMPONENT_FSAL,
+          LogCrit(COMPONENT_CONFIG,
                   "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_FSAL);
           ReturnCode(ERR_FSAL_INVAL, 0);
@@ -552,11 +545,7 @@ fsal_status_t GPFSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
   if(LogFile)
     SetComponentLogFile(COMPONENT_FSAL, LogFile);
 
-  /* Default : NIV_CRIT */
-
-  if(DebugLevel == -1)
-    SetComponentLogLevel(COMPONENT_FSAL, NIV_CRIT);
-  else
+  if(DebugLevel != -1)
     SetComponentLogLevel(COMPONENT_FSAL, DebugLevel);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
@@ -579,13 +568,13 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
   /* cannot read item */
   if(block == NULL)
     {
-      LogCrit(COMPONENT_FSAL,"FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
+      LogCrit(COMPONENT_CONFIG,"FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
               CONF_LABEL_FS_COMMON);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
-      LogCrit(COMPONENT_FSAL,"FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
+      LogCrit(COMPONENT_CONFIG,"FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
               CONF_LABEL_FS_COMMON);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
@@ -614,7 +603,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
       err = config_GetKeyValue(item, &key_name, &key_value);
       if(err)
         {
-          LogCrit(COMPONENT_FSAL,
+          LogCrit(COMPONENT_CONFIG,
                   "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_FS_COMMON);
           ReturnCode(ERR_FSAL_SERVERFAULT, err);
@@ -628,7 +617,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 
           if(bool == -1)
             {
-              LogCrit(COMPONENT_FSAL,
+              LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 0 or 1 expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
@@ -647,7 +636,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 
           if(bool == -1)
             {
-              LogCrit(COMPONENT_FSAL,
+              LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 0 or 1 expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
@@ -665,7 +654,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 
           if(bool == -1)
             {
-              LogCrit(COMPONENT_FSAL,
+              LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 0 or 1 expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
@@ -684,7 +673,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 
           if(s_read_int64(key_value, &size))
             {
-              LogCrit(COMPONENT_FSAL,
+              LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
@@ -700,7 +689,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 
           if(s_read_int64(key_value, &size))
             {
-              LogCrit(COMPONENT_FSAL,
+              LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
@@ -716,7 +705,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 
           if(mode < 0)
             {
-              LogCrit(COMPONENT_FSAL,
+              LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: octal expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
@@ -732,7 +721,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 
           if(bool == -1)
             {
-              LogCrit(COMPONENT_FSAL,
+              LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
@@ -747,7 +736,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 
           if(mode < 0)
             {
-              LogCrit(COMPONENT_FSAL,
+              LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: octal expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
@@ -759,7 +748,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
         }
       else
         {
-          LogCrit(COMPONENT_FSAL,
+          LogCrit(COMPONENT_CONFIG,
                   "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
                    key_name, CONF_LABEL_FS_COMMON);
           ReturnCode(ERR_FSAL_INVAL, 0);
@@ -787,13 +776,13 @@ fsal_status_t GPFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
   /* cannot read item */
   if(block == NULL)
     {
-      LogCrit(COMPONENT_FSAL,"FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
+      LogCrit(COMPONENT_CONFIG,"FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
               CONF_LABEL_FS_SPECIFIC);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
-      LogCrit(COMPONENT_FSAL,"FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
+      LogCrit(COMPONENT_CONFIG,"FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
               CONF_LABEL_FS_SPECIFIC);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
@@ -809,7 +798,7 @@ fsal_status_t GPFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
       err = config_GetKeyValue(item, &key_name, &key_value);
       if(err)
         {
-          LogCrit(COMPONENT_FSAL,
+          LogCrit(COMPONENT_CONFIG,
                   "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_FS_SPECIFIC);
           ReturnCode(ERR_FSAL_SERVERFAULT, err);
@@ -822,7 +811,7 @@ fsal_status_t GPFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
         }
       else
         {
-          LogCrit(COMPONENT_FSAL,
+          LogCrit(COMPONENT_CONFIG,
                   "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_FS_SPECIFIC);
           ReturnCode(ERR_FSAL_INVAL, 0);
@@ -831,7 +820,7 @@ fsal_status_t GPFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
 
   if(out_parameter->fs_specific_info.open_by_handle_dev_file[0] == '\0')
     {
-      LogCrit(COMPONENT_FSAL,
+      LogCrit(COMPONENT_CONFIG,
               "FSAL LOAD PARAMETER: OpenByHandleDeviceFile MUST be specified in the configuration file",
               CONF_LABEL_FS_SPECIFIC);
       ReturnCode(ERR_FSAL_NOENT, 0);

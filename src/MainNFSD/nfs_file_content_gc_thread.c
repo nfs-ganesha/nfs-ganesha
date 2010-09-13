@@ -152,7 +152,6 @@ void *file_content_gc_thread(void *IndexArg)
 {
   long index = (long)IndexArg;
   char command[2 * MAXPATHLEN];
-  char *debuglevelstr;
   unsigned int i;
   exportlist_t *pexport = NULL;
   int is_hw_reached = FALSE;
@@ -162,13 +161,14 @@ void *file_content_gc_thread(void *IndexArg)
   cache_content_status_t cache_content_status;
   FILE *command_stream = NULL;
 
+  char logfile_arg[MAXPATHLEN];
+  char *loglevel_arg;
+
   SetNameFunction("file_content_fc_thread");
 
   LogEvent(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : Starting GC thread");
   LogDebug(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : my pthread id is %p",
            (caddr_t) pthread_self());
-
-  debuglevelstr = ReturnLevelInt(fcc_debug_level);
 
   while(1)
     {
@@ -176,7 +176,6 @@ void *file_content_gc_thread(void *IndexArg)
       sleep(nfs_param.cache_layers_param.dcgcpol.run_interval);
 
       LogEvent(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : awakening...");
-
       for(pexport = nfs_param.pexportlist; pexport != NULL; pexport = pexport->next)
         {
           if(pexport->options & EXPORT_OPTION_USE_DATACACHE)
@@ -204,9 +203,10 @@ void *file_content_gc_thread(void *IndexArg)
                       some_flush_to_do = TRUE;
                       break;
                     }
-                  else
+                  else {
                     LogEvent(COMPONENT_MAIN,
                              "NFS FILE CONTENT GARBAGE COLLECTION : High Water Mark is not reached");
+		  }
 
                   /* Use signal management */
                   if(force_flush_by_signal == TRUE)
@@ -218,13 +218,35 @@ void *file_content_gc_thread(void *IndexArg)
             }
         }                       /* for */
 
-      if(debuglevelstr)
-        snprintf(command, 2 * MAXPATHLEN, "%s -f %s -N %s -L %s",
-                 ganesha_exec_path, config_path, debuglevelstr, fcc_log_path);
+      if (strncmp(fcc_log_path, "/dev/null", 9) == 0)
+	switch(LogComponents[COMPONENT_CACHE_INODE_GC].comp_log_type)
+	  {
+	  case FILELOG:
+	    strncpy(logfile_arg, LogComponents[COMPONENT_CACHE_INODE_GC].comp_log_file, MAXPATHLEN);
+	    break;
+	  case SYSLOG:
+	    strncpy(logfile_arg, "SYSLOG", MAXPATHLEN);
+	    break;
+	  case STDERRLOG:
+	    strncpy(logfile_arg, "STDERRLOG", MAXPATHLEN);
+	    break;
+	  case STDOUTLOG:
+	    strncpy(logfile_arg, "STDOUTLOG", MAXPATHLEN);
+	    break;
+	  default:
+	    LogCrit(COMPONENT_MAIN, "Could not figure out the proper -L option for emergency cache flush thread.");
+	  }
       else
-        snprintf(command, 2 * MAXPATHLEN, "%s -f %s -N NIV_MAJ -L %s",
-                 ganesha_exec_path, config_path, fcc_log_path);
+	strncpy(logfile_arg, fcc_log_path, MAXPATHLEN); /* config variable */
 
+      if(fcc_debug_level != -1) /* config variable */
+	loglevel_arg = ReturnLevelInt(fcc_debug_level);
+      else
+	loglevel_arg = ReturnLevelInt(ReturnLevelComponent(COMPONENT_CACHE_INODE_GC));
+
+      snprintf(command, 2 * MAXPATHLEN, "%s -f %s -N %s -L %s",
+	       ganesha_exec_path, config_path, loglevel_arg, logfile_arg);
+	       
       if(some_flush_to_do)
         strncat(command, " -P 3", 2 * MAXPATHLEN);      /* Sync and erase */
       else

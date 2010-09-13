@@ -64,9 +64,7 @@ static unsigned int mk_magic(GHOSTFS_inode_t inode)
   validator = (unsigned int)tv.tv_sec
       ^ (unsigned int)tv.tv_usec ^ (unsigned int)(inode64 >> 32) ^ (unsigned int)inode64;
 
-#ifdef _DEBUG_GHOST_FS
-  printf("validator(%llu)=%u\n", inode, validator);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "validator(%llu)=%u", inode, validator);
 
   return validator;
 
@@ -370,9 +368,7 @@ int GHOSTFS_Init(GHOSTFS_parameter_t init_cfg)
     return ERR_GHOSTFS_MALLOC;
 
   /* fill directory attributes */
-#ifdef _DEBUG_GHOST_FS
-  printf("init_cfg.root_owner = %d, config.\n", config.root_owner);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "init_cfg.root_owner = %d, config.", config.root_owner);
 
   p_root->attributes.uid = config.root_owner;
   p_root->attributes.gid = config.root_group;
@@ -567,10 +563,8 @@ int GHOSTFS_Access(GHOSTFS_handle_t handle,
   else
     result_mask |= (mask & test_set);
 
-#ifdef _DEBUG_GHOST_FS
-  printf("GHOSTFS_Access : mask=%#o : perms=%#o owner=%s group=%s => result_mask=%#o\n",
+  LogFullDebug(COMPONENT_FSAL, "GHOSTFS_Access : mask=%#o : perms=%#o owner=%s group=%s => result_mask=%#o",
          mask, test_set, (is_owner ? "yes" : "no"), (is_grp ? "yes" : "no"), result_mask);
-#endif
 
   if(result_mask)
     return ERR_GHOSTFS_NO_ERROR;
@@ -1551,9 +1545,7 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
         fill_attributes(p_parent1, p_src_dir_attrs);
       if(p_tgt_dir_attrs)
         fill_attributes(p_parent2, p_tgt_dir_attrs);
-#ifdef _DEBUG_GHOST_FS
-      printf("src=tgt\n");
-#endif
+      LogFullDebug(COMPONENT_FSAL, "src=tgt");
       V_w(&p_parent1->entry_lock);
       return ERR_GHOSTFS_NO_ERROR;
     }
@@ -1578,12 +1570,10 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
       P_w(&p_object2->entry_lock);
 
       /* check compatibility */
-#ifdef _DEBUG_GHOST_FS
-      printf("type1=%d, type2=%d, dir=%d\n", p_object1->type, p_object2->type,
+      LogFullDebug(COMPONENT_FSAL, "type1=%d, type2=%d, dir=%d", p_object1->type, p_object2->type,
              GHOSTFS_DIR);
       if(p_object2->type == GHOSTFS_DIR)
-        printf("2 empty : %d\n", is_empty_dir(p_object2));
-#endif
+        LogFullDebug(COMPONENT_FSAL, "2 empty : %d", is_empty_dir(p_object2));
 
       if((p_object1->type == GHOSTFS_DIR) && (p_object2->type == GHOSTFS_DIR))
         {

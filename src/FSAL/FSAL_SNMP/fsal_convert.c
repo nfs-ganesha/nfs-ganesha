@@ -324,9 +324,9 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
   /* snprintf() function return the number of bytes that would be written to s had n been sufficiently large */
   if(written > *in_out_len)
     {
-      DisplayLogJdLevel(fsal_log, NIV_MAJOR,
-                        "Warning: actual datasize is over client buffer limit (%llu > %llu)",
-                        written, *in_out_len);
+      LogMajor(COMPONENT_FSAL,
+               "Warning: actual datasize is over client buffer limit (%llu > %llu)",
+               written, *in_out_len);
       written = *in_out_len;
     }
 
@@ -377,8 +377,8 @@ fsal_accessmode_t snmp_object2access_mode(nodetype_t obj_type, struct tree * p_i
 
         default:
           mode = 0;
-          DisplayLogJdLevel(fsal_log, NIV_MAJOR, "Warning: unsupported access mode %#X",
-                            p_in_node->access);
+          LogMajor(COMPONENT_FSAL, "Warning: unsupported access mode %#X",
+                   p_in_node->access);
         }
     }
   else
@@ -405,8 +405,8 @@ fsal_nodetype_t intern2extern_type(nodetype_t internal_type)
       return FSAL_TYPE_DIR;
 
     default:
-      DisplayLogJdLevel(fsal_log, NIV_CRIT, "Error: unexpected internal type %d",
-                        internal_type);
+      LogCrit(COMPONENT_FSAL, "Error: unexpected internal type %d",
+              internal_type);
       return 0;
 
     }
@@ -448,9 +448,9 @@ int snmp2fsal_attributes(snmpfsal_handle_t * p_handle, netsnmp_variable_list * p
     {
       p_fsalattr_out->asked_attributes = global_fs_info.supported_attrs;
 
-      DisplayLogJdLevel(fsal_log, NIV_MAJOR,
-                        "Error: p_fsalattr_out->asked_attributes was set to 0 in snmp2fsal_attributes line %d, file %s: retrieving all supported attributes",
-                        __LINE__, __FILE__);
+      LogMajor(COMPONENT_FSAL,
+               "Error: p_fsalattr_out->asked_attributes was set to 0 in snmp2fsal_attributes line %d, file %s: retrieving all supported attributes",
+               __LINE__, __FILE__);
     }
 
   /* check that asked attributes are supported */
@@ -459,9 +459,9 @@ int snmp2fsal_attributes(snmpfsal_handle_t * p_handle, netsnmp_variable_list * p
 
   if(unsupp_attr)
     {
-      DisplayLogJdLevel(fsal_log, NIV_MAJOR,
-                        "Unsupported attributes: %#llX removing it from asked attributes ",
-                        unsupp_attr);
+      LogMajor(COMPONENT_FSAL,
+               "Unsupported attributes: %#llX removing it from asked attributes ",
+               unsupp_attr);
       p_fsalattr_out->asked_attributes =
           p_fsalattr_out->asked_attributes & (~unsupp_attr);
     }
@@ -486,8 +486,8 @@ int snmp2fsal_attributes(snmpfsal_handle_t * p_handle, netsnmp_variable_list * p
 
           if(rc != 0)
             {
-              DisplayLogJdLevel(fsal_log, NIV_CRIT,
-                                "Error %d converting object data to string", rc);
+              LogCrit(COMPONENT_FSAL,
+                      "Error %d converting object data to string", rc);
               return rc;
             }
 

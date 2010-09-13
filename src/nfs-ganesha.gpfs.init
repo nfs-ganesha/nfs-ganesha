@@ -24,9 +24,21 @@
 . /etc/init.d/functions
 
 PATHPROG=/usr/bin/gpfs.ganesha.nfsd 
-LOGFILE=/var/log/gpfs.ganesha.nfsd.log
+#LOGFILE=/var/log/gpfs.ganesha.nfsd.log
+LOGFILE=SYSLOG
+#LOGFILE=STDERR
+#LOGFILE=STDOUT
+
 CONFFILE=/etc/ganesha/gpfs.ganesha.nfsd.conf
-OPTIONS="-d -f $CONFFILE -N NIV_EVENT -L $LOGFILE"
+
+#DEBUGLEVEL=NIV_NULL
+#DEBUGLEVEL=NIV_MAJOR
+#DEBUGLEVEL=NIV_CRIT
+DEBUGLEVEL=NIV_EVENT
+#DEBUGLEVEL=NIV_DEBUG
+#DEBUGLEVEL=NIV_FULL_DEBUG
+
+OPTIONS="-d -f $CONFFILE -N $DEBUGLEVEL -L $LOGFILE"
 RETVAL=0
 prog="gpfs.ganesha.nfsd"
 

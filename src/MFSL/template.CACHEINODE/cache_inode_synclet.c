@@ -40,7 +40,7 @@
 
 #include "LRU_List.h"
 #include "err_LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -146,24 +146,24 @@ void cache_inode_async_init(cache_inode_client_parameter_t param)
   client_parameter = param;
 
   /* Starting asynchronous service threads */
-  DisplayLog("Starting writeback threads");
+  LogEvent(COMPONENT_CACHE_INODE,"Starting writeback threads");
 
   /* Init the LRU and its associated mutex */
   if((rc = pthread_mutexattr_init(&mutexattr)) != 0)
     {
-      DisplayErrorLog(ERR_SYS, ERR_PTHREAD_MUTEX_INIT, rc);
+      LogError(COMPONENT_CACHE_INODE, ERR_SYS, ERR_PTHREAD_MUTEX_INIT, rc);
       exit(1);
     }
 
   if((rc = pthread_condattr_init(&condattr)) != 0)
     {
-      DisplayErrorLog(ERR_SYS, ERR_PTHREAD_COND_INIT, rc);
+      LogError(COMPONENT_CACHE_INODE, ERR_SYS, ERR_PTHREAD_COND_INIT, rc);
       exit(1);
     }
 
   if((rc = pthread_mutex_init(&mutex_async_pentries_list, &mutexattr)) != 0)
     {
-      DisplayErrorLog(ERR_SYS, ERR_PTHREAD_MUTEX_INIT, rc);
+      LogError(COMPONENT_CACHE_INODE, ERR_SYS, ERR_PTHREAD_MUTEX_INIT, rc);
       exit(1);
     }
 
@@ -179,14 +179,14 @@ void cache_inode_async_init(cache_inode_client_parameter_t param)
                           &attr_thr,
                           cache_inode_asynchronous_dispatcher_thread, (void *)NULL)) != 0)
     {
-      DisplayErrorLog(ERR_SYS, ERR_PTHREAD_CREATE, rc);
+      LogError(COMPONENT_CACHE_INODE, ERR_SYS, ERR_PTHREAD_CREATE, rc);
       exit(1);
     }
 
   if((cache_inode_synclet_thrid =
       (pthread_t *) Mem_Alloc(param.nb_synclet * sizeof(pthread_t))) == NULL)
     {
-      DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
+      LogError(COMPONENT_CACHE_INODE, ERR_SYS, ERR_MALLOC, errno);
       exit(1);
     }
 
@@ -195,11 +195,11 @@ void cache_inode_async_init(cache_inode_client_parameter_t param)
                                                sizeof(cache_inode_synclet_data_t))) ==
      NULL)
     {
-      DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
+      LogError(COMPONENT_CACHE_INODE, ERR_SYS, ERR_MALLOC, errno);
       exit(1);
     }
 
-  DisplayLog("MD WRITEBACK STARTUP: writeback dispatcher started successfully");
+  LogEvent(COMPONENT_CACHE_INODE,"MD WRITEBACK STARTUP: writeback dispatcher started successfully");
 
   /* Prepare and launch the synclets */
   for(i = 0; i < param.nb_synclet; i++)
@@ -207,19 +207,19 @@ void cache_inode_async_init(cache_inode_client_parameter_t param)
       /* Init the synclet data */
       if((rc = pthread_mutex_init(&(synclet_data[i].mutex_op_condvar), &mutexattr)) != 0)
         {
-          DisplayErrorLog(ERR_SYS, ERR_PTHREAD_MUTEX_INIT, rc);
+          LogError(COMPONENT_CACHE_INODE, ERR_SYS, ERR_PTHREAD_MUTEX_INIT, rc);
           exit(1);
         }
 
       if((rc = pthread_cond_init(&(synclet_data[i].op_condvar), &condattr)) != 0)
         {
-          DisplayErrorLog(ERR_SYS, ERR_PTHREAD_MUTEX_INIT, rc);
+          LogError(COMPONENT_CACHE_INODE, ERR_SYS, ERR_PTHREAD_MUTEX_INIT, rc);
           exit(1);
         }
 
       if((synclet_data[i].op_lru = LRU_Init(param.lru_async_param, &lru_status)) == NULL)
         {
-          DisplayErrorLog(ERR_LRU, ERR_LRU_LIST_INIT, lru_status);
+          LogError(COMPONENT_CACHE_INODE, ERR_LRU, ERR_LRU_LIST_INIT, lru_status);
           exit(1);
         }
 
@@ -227,25 +227,25 @@ void cache_inode_async_init(cache_inode_client_parameter_t param)
       if((rc = pthread_create(&(cache_inode_synclet_thrid[i]),
                               &attr_thr, cache_inode_synclet_thread, (void *)i)) != 0)
         {
-          DisplayErrorLog(ERR_SYS, ERR_PTHREAD_CREATE, rc);
+          LogError(COMPONENT_CACHE_INODE, ERR_SYS, ERR_PTHREAD_CREATE, rc);
           exit(1);
         }
       else
-        DisplayLog("MD WRITEBACK STARTUP: writeback synclet #%u started", i);
+        LogEvent(COMPONENT_CACHE_INODE,"MD WRITEBACK STARTUP: writeback synclet #%u started", i);
 
       /* Init the root fsal_op_context that is used for internal ops in the asyncops */
       fsal_status = FSAL_InitClientContext(&synclet_data[i].root_fsal_context);
       if(FSAL_IS_ERROR(fsal_status))
         {
-          DisplayLog
-              ("MD WRITEBACK STARTUP: Can't init FSAL context for synclet %u fsal_status=(%u,%u)... exiting",
+          LogMajor(COMPONENT_CACHE_INODE,
+              "MD WRITEBACK STARTUP: Can't init FSAL context for synclet %u fsal_status=(%u,%u)... exiting",
                i, fsal_status.major, fsal_status.minor);
           exit(1);
         }
       /* Set my own index */
       synclet_data[i].my_index = i;
     }
-  DisplayLog("MD WRITEBACK STARTUP: %u synclet threads were started successfully",
+  LogEvent(COMPONENT_CACHE_INODE,"MD WRITEBACK STARTUP: %u synclet threads were started successfully",
              param.nb_synclet);
 
   /* End of function */
@@ -275,7 +275,7 @@ static void cache_inode_async_alloc_precreated(cache_inode_client_t * pclient,
           (fsal_handle_t *) Mem_Alloc(sizeof(fsal_handle_t) *
                                       pclient->nb_pre_create_dirs)) == NULL)
         {
-          DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
+          LogError(COMPONENT_CACHE_INODE, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
 
@@ -283,7 +283,7 @@ static void cache_inode_async_alloc_precreated(cache_inode_client_t * pclient,
           (fsal_u64_t *) Mem_Alloc(sizeof(fsal_u64_t) * pclient->nb_pre_create_dirs)) ==
          NULL)
         {
-          DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
+          LogError(COMPONENT_CACHE_INODE, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
 
@@ -294,7 +294,7 @@ static void cache_inode_async_alloc_precreated(cache_inode_client_t * pclient,
           (fsal_handle_t *) Mem_Alloc(sizeof(fsal_handle_t) *
                                       pclient->nb_pre_create_files)) == NULL)
         {
-          DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
+          LogError(COMPONENT_CACHE_INODE, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
 
@@ -302,7 +302,7 @@ static void cache_inode_async_alloc_precreated(cache_inode_client_t * pclient,
           (fsal_u64_t *) Mem_Alloc(sizeof(fsal_u64_t) * pclient->nb_pre_create_files)) ==
          NULL)
         {
-          DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
+          LogError(COMPONENT_CACHE_INODE, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
 
@@ -452,7 +452,7 @@ cache_inode_status_t cache_inode_process_async_op(cache_inode_async_op_desc_t *
     }
 
   /* Calling the function from async op */
-  DisplayLogLevel(NIV_DEBUG, "op_type = %u %s", pasyncopdesc->op_type,
+  LogDebug(COMPONENT_CACHE_INODE, "op_type = %u %s", pasyncopdesc->op_type,
                   asyncop_name[pasyncopdesc->op_type]);
 
   fsal_status = (pasyncopdesc->op_func) (pasyncopdesc);
@@ -571,13 +571,11 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
   /* If we do nothing (no expiration) then everything is all right */
   *pstatus = CACHE_INODE_SUCCESS;
 
-#ifdef _DEBUG_CACHE_INODE
-  DisplayLogLevel(NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_CACHE_INODE,
                   "Entry=%p, type=%d, current=%d, read=%d, refresh=%d, alloc=%d",
                   pentry, pentry->internal_md.type, current_time,
                   pentry->internal_md.read_time, pentry->internal_md.refresh_time,
                   pentry->internal_md.alloc_time);
-#endif
 
   /* An entry that is a regular file with an associated File Content Entry won't
    * expire until data exists in File Content Cache, to avoid attributes incoherency */
@@ -611,8 +609,8 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
             {
               cache_inode_status_t kill_status;
 
-              DisplayLog
-                  ("cache_inode_renew_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
+              LogEvent(COMPONENT_CACHE_INODE,
+                  "cache_inode_renew_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
                    pentry, __LINE__);
 
               *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -660,8 +658,8 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
                 {
                   cache_inode_status_t kill_status;
 
-                  DisplayLog
-                      ("cache_inode_resync_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
+                  LogEvent(COMPONENT_CACHE_INODE,
+                      "cache_inode_resync_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
                        pentry, __LINE__);
 
                   *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -702,8 +700,8 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
             {
               cache_inode_status_t kill_status;
 
-              DisplayLog
-                  ("cache_inode_renew_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
+              LogEvent(COMPONENT_CACHE_INODE,
+                  "cache_inode_renew_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
                    pentry, __LINE__);
 
               *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -753,8 +751,8 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
             {
               cache_inode_status_t kill_status;
 
-              DisplayLog
-                  ("cache_inode_resync_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
+              LogEvent(COMPONENT_CACHE_INODE,
+                  "cache_inode_resync_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
                    pentry, __LINE__);
 
               *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -807,8 +805,8 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
             {
               cache_inode_status_t kill_status;
 
-              DisplayLog
-                  ("cache_inode_resync_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
+              LogEvent(COMPONENT_CACHE_INODE,
+                  "cache_inode_resync_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
                    pentry, __LINE__);
 
               *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -877,8 +875,8 @@ int cache_inode_async_precreated_name(fsal_name_t * pname,
 
   if(FSAL_IS_ERROR(fsal_status))
     {
-      DisplayLog("cache_inode_async_precreate_object failed: error in FSAL_lookupPath");
-      DisplayErrorLog(ERR_FSAL, fsal_status.major, fsal_status.minor);
+      LogCrit(COMPONENT_CACHE_INODE,"cache_inode_async_precreate_object failed: error in FSAL_lookupPath");
+      LogError(COMPONENT_CACHE_INODE, ERR_FSAL, fsal_status.major, fsal_status.minor);
       return -1;
     }
 
@@ -924,9 +922,9 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
 
   if(FSAL_IS_ERROR(fsal_status))
     {
-      DisplayLog
-          ("cache_inode_async_precreate_object failed: error in FSAL_GetClientContext");
-      DisplayErrorLog(ERR_FSAL, fsal_status.major, fsal_status.minor);
+      LogCrit(COMPONENT_CACHE_INODE,
+          "cache_inode_async_precreate_object failed: error in FSAL_GetClientContext");
+      LogError(COMPONENT_CACHE_INODE, ERR_FSAL, fsal_status.major, fsal_status.minor);
       return -1;
     }
 
@@ -934,8 +932,8 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
   fsal_status = FSAL_str2path(client_parameter.pre_create_obj_dir, MAXPATHLEN, &path);
   if(FSAL_IS_ERROR(fsal_status))
     {
-      DisplayLog("cache_inode_async_precreate_object failed: error in FSAL_str2path");
-      DisplayErrorLog(ERR_FSAL, fsal_status.major, fsal_status.minor);
+      LogCrit(COMPONENT_CACHE_INODE,"cache_inode_async_precreate_object failed: error in FSAL_str2path");
+      LogError(COMPONENT_CACHE_INODE, ERR_FSAL, fsal_status.major, fsal_status.minor);
       return -1;
     }
 
@@ -946,9 +944,9 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
                                     &root_fsal_context, &pre_created_dir_handle, &attr);
       if(FSAL_IS_ERROR(fsal_status))
         {
-          DisplayLog
-              ("cache_inode_async_precreate_object failed: error in FSAL_lookupPath");
-          DisplayErrorLog(ERR_FSAL, fsal_status.major, fsal_status.minor);
+          LogCrit(COMPONENT_CACHE_INODE,
+              "cache_inode_async_precreate_object failed: error in FSAL_lookupPath");
+          LogError(COMPONENT_CACHE_INODE, ERR_FSAL, fsal_status.major, fsal_status.minor);
           return -1;
         }
       once = 1;
@@ -964,9 +962,9 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
                                                pclient,
                                                object_type, pexport_context) != 0)
             {
-              DisplayLog
-                  ("cache_inode_async_precreate_object failed: error in creating name");
-              DisplayErrorLog(ERR_FSAL, fsal_status.major, fsal_status.minor);
+              LogCrit(COMPONENT_CACHE_INODE,
+                  "cache_inode_async_precreate_object failed: error in creating name");
+              LogError(COMPONENT_CACHE_INODE, ERR_FSAL, fsal_status.major, fsal_status.minor);
               return -1;
             }
 
@@ -979,9 +977,9 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
 
           if(FSAL_IS_ERROR(fsal_status))
             {
-              DisplayLog
-                  ("cache_inode_async_precreate_object failed: error in FSAL_mkdir");
-              DisplayErrorLog(ERR_FSAL, fsal_status.major, fsal_status.minor);
+              LogCrit(COMPONENT_CACHE_INODE,
+                  "cache_inode_async_precreate_object failed: error in FSAL_mkdir");
+              LogError(COMPONENT_CACHE_INODE, ERR_FSAL, fsal_status.major, fsal_status.minor);
               return -1;
             }
 
@@ -992,9 +990,9 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
 
           if(FSAL_IS_ERROR(fsal_status))
             {
-              DisplayLog
-                  ("cache_inode_async_precreate_object failed: error in FSAL_str2name");
-              DisplayErrorLog(ERR_FSAL, fsal_status.major, fsal_status.minor);
+              LogCrit(COMPONENT_CACHE_INODE,
+                  "cache_inode_async_precreate_object failed: error in FSAL_str2name");
+              LogError(COMPONENT_CACHE_INODE, ERR_FSAL, fsal_status.major, fsal_status.minor);
               return -1;
             }
 
@@ -1008,9 +1006,9 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
 
           if(FSAL_IS_ERROR(fsal_status))
             {
-              DisplayLog
-                  ("cache_inode_async_precreate_object failed: error in FSAL_rename");
-              DisplayErrorLog(ERR_FSAL, fsal_status.major, fsal_status.minor);
+              LogCrit(COMPONENT_CACHE_INODE,
+                  "cache_inode_async_precreate_object failed: error in FSAL_rename");
+              LogError(COMPONENT_CACHE_INODE, ERR_FSAL, fsal_status.major, fsal_status.minor);
               return -1;
             }
 
@@ -1029,9 +1027,9 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
                                                pclient,
                                                object_type, pexport_context) != 0)
             {
-              DisplayLog
-                  ("cache_inode_async_precreate_object failed: error in creating name");
-              DisplayErrorLog(ERR_FSAL, fsal_status.major, fsal_status.minor);
+              LogCrit(COMPONENT_CACHE_INODE,
+                  "cache_inode_async_precreate_object failed: error in creating name");
+              LogError(COMPONENT_CACHE_INODE, ERR_FSAL, fsal_status.major, fsal_status.minor);
               return -1;
             }
 
@@ -1045,9 +1043,9 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
 
           if(FSAL_IS_ERROR(fsal_status))
             {
-              DisplayLog
-                  ("cache_inode_async_precreate_object failed: error in FSAL_create");
-              DisplayErrorLog(ERR_FSAL, fsal_status.major, fsal_status.minor);
+              LogCrit(COMPONENT_CACHE_INODE,
+                  "cache_inode_async_precreate_object failed: error in FSAL_create");
+              LogError(COMPONENT_CACHE_INODE, ERR_FSAL, fsal_status.major, fsal_status.minor);
               return -1;
             }
 
@@ -1060,9 +1058,9 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
 
           if(FSAL_IS_ERROR(fsal_status))
             {
-              DisplayLog
-                  ("cache_inode_async_precreate_object failed: error in FSAL_str2name");
-              DisplayErrorLog(ERR_FSAL, fsal_status.major, fsal_status.minor);
+              LogCrit(COMPONENT_CACHE_INODE,
+                  "cache_inode_async_precreate_object failed: error in FSAL_str2name");
+              LogError(COMPONENT_CACHE_INODE, ERR_FSAL, fsal_status.major, fsal_status.minor);
               return -1;
             }
 
@@ -1074,9 +1072,9 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
 
           if(FSAL_IS_ERROR(fsal_status))
             {
-              DisplayLog
-                  ("cache_inode_async_precreate_object failed: error in FSAL_rename");
-              DisplayErrorLog(ERR_FSAL, fsal_status.major, fsal_status.minor);
+              LogCrit(COMPONENT_CACHE_INODE,
+                  "cache_inode_async_precreate_object failed: error in FSAL_rename");
+              LogError(COMPONENT_CACHE_INODE, ERR_FSAL, fsal_status.major, fsal_status.minor);
               return -1;
             }
 
@@ -1088,8 +1086,8 @@ int cache_inode_async_precreate_object(cache_inode_client_t * pclient,
 
     default:
       /* Something that is not a directory of a file... unsupported */
-      DisplayLog
-          ("/!\\ cache_inode_async_precreate_object: I can't pre-create an object of type %x",
+      LogCrit(COMPONENT_CACHE_INODE,
+          "/!\\ cache_inode_async_precreate_object: I can't pre-create an object of type %x",
            object_type);
       return -1;
       break;                    /* useless... but if this statement is not there, the compiler may be weeping... */
@@ -1123,15 +1121,15 @@ void *cache_inode_synclet_thread(void *Arg)
   index = (long)Arg;
   sprintf(namestr, "Synclet #%d", index);
   SetNameFunction(namestr);
-  DisplayLog("Started", index);
+  LogDebug(COMPONENT_CACHE_INODE,"Started", index);
 
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      DisplayLog("Memory manager could not be initialized, exiting...");
+      LogMajor(COMPONENT_CACHE_INODE,"Memory manager could not be initialized, exiting...");
       exit(1);
     }
-  DisplayLog("Memory manager successfully initialized");
+  LogEvent(COMPONENT_CACHE_INODE,"Memory manager successfully initialized");
 
   while(1)
     {
@@ -1142,7 +1140,7 @@ void *cache_inode_synclet_thread(void *Arg)
         pthread_cond_wait(&(synclet_data[index].op_condvar),
                           &(synclet_data[index].mutex_op_condvar));
 
-      DisplayLogLevel(NIV_DEBUG, "I have an entry to deal with");
+      LogDebug(COMPONENT_CACHE_INODE, "I have an entry to deal with");
 
       for(pentry_lru = synclet_data[index].op_lru->LRU; pentry_lru != NULL;
           pentry_lru = pentry_lru->next)
@@ -1157,7 +1155,7 @@ void *cache_inode_synclet_thread(void *Arg)
       if(!found)
         {
           V(synclet_data[index].mutex_op_condvar);
-          DisplayLogLevel(NIV_MAJOR, "/!\\ Received a signal but no entry to manage... ");
+          LogMajor(COMPONENT_CACHE_INODE, "/!\\ Received a signal but no entry to manage... ");
           continue;             /* return to main loop */
         }
 
@@ -1165,29 +1163,29 @@ void *cache_inode_synclet_thread(void *Arg)
       pentry = (cache_entry_t *) (pentry_lru->buffdata.pdata);
       V(synclet_data[index].mutex_op_condvar);
 
-      DisplayLogLevel(NIV_DEBUG, "I will proceed entry %p", pentry);
+      LogDebug(COMPONENT_CACHE_INODE, "I will proceed entry %p", pentry);
 
       /* Here: Proceed with the asyncop list */
-      printf("=========> pending_ops = %p\n", pentry->pending_ops);
+      LogFullDebug(COMPONENT_CACHE_INODE, "=========> pending_ops = %p\n", pentry->pending_ops);
       P(pentry->lock);
 
       /* Possible to pending ops reduction */
       if(cache_inode_async_op_reduce(pentry->pending_ops, &pasyncoplist, &cache_status)
          != CACHE_INODE_SUCCESS)
         {
-          DisplayLogLevel(NIV_MAJOR,
+          LogMajor(COMPONENT_CACHE_INODE,
                           "Couldn't reduce pending async op list for pentry %p", pentry);
         }
 
       for(piter_opdesc = pasyncoplist; piter_opdesc != NULL;
           piter_opdesc = piter_opdesc->next)
         {
-          DisplayLogLevel(NIV_DEBUG, "I will proceed Asyncop=%p on entry=%p",
+          LogDebug(COMPONENT_CACHE_INODE, "I will proceed Asyncop=%p on entry=%p",
                           piter_opdesc, pentry);
 
           cache_status = cache_inode_process_async_op(piter_opdesc,
                                                       pentry, &cache_status);
-          printf("===============> cache_inode_process_async_op status=%d\n",
+          LogFullDebug(COMPONENT_CACHE_INODE, "===============> cache_inode_process_async_op status=%d\n",
                  cache_status);
 
           /* Release this entry to the pool it came from */
@@ -1201,10 +1199,10 @@ void *cache_inode_synclet_thread(void *Arg)
                                                   &pentry->pending_ops->fsal_op_context,
                                                   &cache_status)) != CACHE_INODE_SUCCESS)
         {
-          DisplayLog("/!\\ Could not resync pentry %p\n");
+          LogCrit(COMPONENT_CACHE_INODE,"/!\\ Could not resync pentry %p\n");
         }
 
-      printf("===============> cache_inode_resync_entry status=%d\n", cache_status);
+      LogDebug(COMPONENT_CACHE_INODE,"===============> cache_inode_resync_entry status=%d\n", cache_status);
 
       /* Reset the pentry's pending_ops list to show async op were proceeded */
       pentry->pending_ops = NULL;
@@ -1215,8 +1213,8 @@ void *cache_inode_synclet_thread(void *Arg)
       P(synclet_data[index].mutex_op_condvar);
       if(LRU_invalidate(synclet_data[index].op_lru, pentry_lru) != LRU_LIST_SUCCESS)
         {
-          DisplayLog
-              ("Incoherency: released entry for dispatch could not be tagged invalid");
+          LogCrit(COMPONENT_CACHE_INODE,
+              "Incoherency: released entry for dispatch could not be tagged invalid");
         }
       V(synclet_data[index].mutex_op_condvar);
 
@@ -1231,10 +1229,10 @@ void *cache_inode_synclet_thread(void *Arg)
 
           if(LRU_gc_invalid(synclet_data[index].op_lru, (void *)NULL) != LRU_LIST_SUCCESS)
             {
-              DisplayLog("/!\\  Could not recover invalid entries from LRU...");
+              LogCrit(COMPONENT_CACHE_INODE,"/!\\  Could not recover invalid entries from LRU...");
             }
           else
-            DisplayLogLevel(NIV_DEBUG, "LRU_gc_invalid OK");
+            LogDebug(COMPONENT_CACHE_INODE, "LRU_gc_invalid OK");
         }
 
     }                           /* while ( 1 ) */
@@ -1264,14 +1262,14 @@ void *cache_inode_asynchronous_dispatcher_thread(void *Arg)
     {
      /** @todo: BUGAZOMEU a call to usleep may provide a finer control */
       sleep(client_parameter.atd_sleeptime);
-      DisplayLogLevel(NIV_DEBUG, "Awakening...");
+      LogDebug(COMPONENT_CACHE_INODE, "Awakening...");
 
       P(mutex_async_pentries_list);
 
       for(pentry_iter = async_pentries_list; pentry_iter != NULL;
           pentry_iter = pentry_iter->next_asyncop)
         {
-          DisplayLogLevel(NIV_DEBUG, "Pentry %p needs md-writeback operations to be made",
+          LogDebug(COMPONENT_CACHE_INODE, "Pentry %p needs md-writeback operations to be made",
                           pentry_iter);
 
           /* Choose a synclet for this pentry */
@@ -1281,7 +1279,7 @@ void *cache_inode_asynchronous_dispatcher_thread(void *Arg)
           if((pentry_lru =
               LRU_new_entry(synclet_data[synclet_index].op_lru, &lru_status)) == NULL)
             {
-              DisplayLogLevel(NIV_MAJOR,
+              LogMajor(COMPONENT_CACHE_INODE,
                               "Error while inserting entry to synclet #%u... exiting",
                               synclet_index);
               exit(1);
@@ -1293,7 +1291,7 @@ void *cache_inode_asynchronous_dispatcher_thread(void *Arg)
           if(pthread_cond_signal(&(synclet_data[synclet_index].op_condvar)) == -1)
             {
               V(synclet_data[synclet_index].mutex_op_condvar);
-              DisplayLog("Cond signal failed for Synclet#%u , errno = %d", synclet_index,
+              LogCrit(COMPONENT_CACHE_INODE,"Cond signal failed for Synclet#%u , errno = %d", synclet_index,
                          errno);
               exit(1);
             }

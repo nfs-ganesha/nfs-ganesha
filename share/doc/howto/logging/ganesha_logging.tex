@@ -1,0 +1,364 @@
+%% LyX 1.3 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[english]{article}
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+\usepackage{graphicx}
+
+\makeatletter
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+
+\usepackage{babel}
+\makeatother
+\begin{document}
+
+\author{jbongio@us.ibm.com}
+\title{\center{ \Large \textbf{Overview of GANESHA's Logging Mechanisms} }}
+\maketitle
+
+GANESHA is capable of fine granularity filtering of log messages, support for
+multiple log destinations (files, console, syslog, etc.), support for sending
+different log messages to different log destinations, and many ways of setting
+log parameters.
+
+These options allow GANESHA the flexibility to be used in multiple
+professional environments while the default settings as well as the 
+
+\section{Overview of Logging}
+
+Each log message in GANESHA relates to a specific component and severity
+level. A component is a label created with the intent of capturing a sectin of
+code or a specific function in GANESHA. Severity level determines the importance
+of a log message. The verbosity of logging can be changed per component as well
+as by the severity level of messages. Log messages can be sent to either the
+console, syslog, or an alternative file. The default logging destination is
+syslog and the default log level for all components is NIV\_EVENT.
+
+A typical log message in syslog will look like the following:
+\begin{verbatim}
+Sep  8 02:31:05 localhost nfs-ganesha[11555]: [main] :NFS STARTUP: EVENT: \
+Configuration file successfully parsed
+\end{verbatim}
+
+The first bit with the date, hostname, process name, and process id are all
+prepended to the log message by syslog. \emph{[main]} is the thread that printed
+the log message. \emph{NFS STARTUP} is the component. \emph{EVENT} is the
+severity of the message. Finally \emph{Configuration file successfully parsed}
+is the message itself. Each log message in GANESHA follows this format.
+
+\subsection{Logging Components}
+\label{listofcomponents}
+Listed below are all of the components that a log message can belong to
+
+\begin{itemize}
+\item COMPONENT\_ALL - 
+\item COMPONENT\_LOG - Reports changes to log destination or log level.
+\item COMPONENT\_MEMALLOC - Used for tracking memory allocation through the
+  buddy malloc system.
+\item COMPONENT\_STATES - Mainly used with severity level NIV\_FULL\_DEBUG to
+  debug NFSV4 states.
+\item COMPONENT\_MEMLEAKS - Mainly used with severity level
+  NIV\_DEBUG and NIV\_FULL\_DEBUG. It is used to detect and debug memory leaks.
+\item COMPONENT\_FSAL - Messages that relate to FSAL specific functions.
+\item COMPONENT\_NFSPROTO - Messages that relate to the NFSV2 and NFSV3
+  protocol.
+\item COMPONENT\_NFSV4 - Messages relating to the NFSV4 protocol.
+\item COMPONENT\_NFSV4\_PSEUDO - Message relating to the NFSV4 pseudo file
+  system.
+\item COMPONENT\_FILEHANDLE - Messages relating to the conversion from a file
+  handle (used by clients) to an FSAL specific handle (used by the server).
+\item COMPONENT\_NFS\_SHELL - Messages relating to the GANESHA shell.
+\item COMPONENT\_DISPATCH - Messages relating to the dispatch thread which is
+  responsible for receiving requests from clients and assigning to a worker
+  thread for processing.
+\item COMPONENT\_CACHE\_CONTENT - Messages related to cached file data that
+  makes client requests faster.
+\item COMPONENT\_CACHE\_INODE - 
+\item COMPONENT\_CACHE\_INODE\_GC - 
+\item COMPONENT\_HASHTABLE - 
+\item COMPONENT\_LRU - 
+\item COMPONENT\_DUPREQ - GANESHA (and other NFS servers) keep a cache of recent
+  requests and their replies. If a duplicate request is received GANESHA will
+  send the same reply rather than process the request again. The messages
+  relating to this duplicate request cache fall under this component.
+\item COMPONENT\_RPCSEC\_GSS - 
+\item COMPONENT\_INIT - Most messages logged when GANESHA is starting will be
+  logged under this component.
+\item COMPONENT\_MAIN - 
+\item COMPONENT\_IDMAPPER - 
+\item COMPONENT\_NFS\_READDIR - 
+\item COMPONENT\_NFSV4\_LOCK - Debugs file locking for NFSV4.
+\item COMPONENT\_NFSV4\_XATTR - Debugs extended attributes for NFSV4.
+\item COMPONENT\_NFSV4\_REFERRAL - Debugs NFSV4's ability to refer clients to
+  another NFSV4 server.
+\item COMPONENT\_MEMCORRUPT - 
+\item COMPONENT\_CONFIG - 
+\item COMPONENT\_CLIENT\_ID\_COMPUTE - 
+\item COMPONENT\_STDOUT - 
+\item COMPONENT\_OPEN\_OWNER\_HASH - 
+\item COMPONENT\_SESSIONS - 
+\item COMPONENT\_PNFS - Message related to the ability for NFS to work in
+  parallel to other NFS servers. Parallel NFS is a compile time option and won't
+  be seen unless it was compiled.
+\item COMPONENT\_RPC\_CACHE - 
+\end{itemize}$\\$
+
+\subsection{Log Severity Levels}
+
+The log levels (debug levels, severity levels) and their order of severity are
+as follows:
+\begin{itemize}
+\item NIV\_NULL - no messages are printed.
+\item NIV\_MAJ - only major messages are printed.
+\item NIV\_CRIT - critical messages or higher are printed.
+\item NIV\_EVENT - event messages or higher printed. 
+\item NIV\_DEBUG - debug messages or higher are printed. This should only be
+  used if a user suspects they have found a bug or are developing GANESHA.
+\item NIV\_FULL\_DEBUG - extremely verbose debug messages or higher are printed.
+\end{itemize}
+
+The default log level is NIV\_EVENT. 
+
+\subsection{Log Location}
+
+The location where log messages will be printed is configurable when GANESHA
+first starts. Once GANESHA is running, the log destination cannot be changed.
+
+Section \ref{loggingmethods} covers the different mechanisms for configuring the
+log destination upon startup. Each method accepts a string as the log
+destination. The valid strings are as follows:
+\begin{itemize}
+\item ``SYSLOG'' - Log messages will go to syslog. Where the log messages go
+  after being sent to the syslog daemon depends on how syslog was configured,
+  but the messages will probably go to ``/var/log/messages''. Syslog is the
+  default log location.
+\item ``STDOUT'' - Log messages will be sent to the console that started GANESHA
+  as stdout output. This can sometimes be useful for debugging purposes but is
+  not generally used.
+\item ``STDERR'' - Log messages will be sent to the console that started GANESHA
+  as stderr output. This can sometimes be useful for debugging purposes but is
+  not generally used.
+\item ``/some/path/to/file'' - If none of the above strings are given, GANESHA
+  will assume the string refers to a file path. Log messages will be appended to
+  the filepath. All of the directories in this path must already
+  exist. Otherwise an error will be thrown and GANESHA will quit.
+\end{itemize}
+
+%% To clear the current messages in syslog execute the following command:
+%% \begin{verbatim}
+%% $ > /var/log/messages
+%% \end{verbatim}
+
+\subsection{Changing the Log Destination}
+
+There are two ways to change where log messages will go, through the commandline
+or through configuration file variables. It is recommended people use the
+default of syslog, but there are may be some scenarios where separating the
+logging of certain components will be useful.
+
+\subsection{Commandline Arguments}
+
+\begin{verbatim}
+/usr/bin/gpfs.ganesha.nfsd -d -f /etc/ganesha/gpfs.ganesha.nfsd.conf -N \
+NIV_EVENT -L SYSLOG
+\end{verbatim}
+
+\subsection{Configuration File Variables}
+
+Table \ref{confifile} lists the configuration file stanzas that contain a
+variable for the location of its log files. Setting the variable for that
+stanza, displayed in the second column of the table, will set the log
+destination for a specific logging component, displayed in the third column.
+
+\begin{figure}[h]
+\center
+  \begin{tabular}{ | l | l | l |}
+    \hline Configuration file stanza & configuration variable & logging component\\
+    \hline FSAL & LogFile & COMPONENT\_FSAL \\
+    \hline CacheInode\_Client & LogFile & COMPONENT\_CACHE\_INODE\\
+    \hline FileContent\_Client & LogFile & COMPONENT\_CACHE\_CONTENT\\
+    \hline BUDDY\_MALLOC & LogFile & COMPONENT\_MEMALLOC \\ && COMPONENT\_MEMLEAKS\\
+    \hline
+  \end{tabular}
+  \caption{Configuration File Variables for Changing Log Destination}
+  \label{confifile}
+\end{figure}
+Each stanza uses the variable name of ``LogFile''. So an
+example of setting the FSAL stanza to using stdout output is:
+\begin{verbatim}
+FSAL
+{
+    LogFile="STDOUT";
+}
+\end{verbatim}
+
+\section{Methods for Controlling the Log Level of Components}
+\label{loggingmethods}
+
+There are a total of six different ways that the log level of components is
+set. The order of priority for the six is shown in Figure
+\ref{priorities}. First there is a default log level for all components. Second,
+environment variables can be defined 
+
+\begin{figure}[h]
+  \center
+  $\textnormal{compiled defaults} \rightarrow \textnormal{environment variables}
+  \rightarrow \textnormal{command-line arguments} \rightarrow
+  \textnormal{configuration file parameters} \rightarrow
+  \textnormal{signal handlers} \leftrightarrow \textnormal{snmp}$
+  \caption{Order of Priority of Mechanisms for Changing Log Levels}
+  \label{priorities}
+\end{figure}
+
+
+\subsection{Default Log Levels}
+
+The default log level of each component is NIV\_EVENT. If no other mechanism
+is used, the log level will remain at NIV\_EVENT.
+
+\subsection{Environment Variables}
+The name of each component, listed in Subsection \ref{listofcomponents}, can be
+used as the name of an environment variable to set the debug level of that
+component. 
+
+This option is not recommended for use in a GANESHA deployment, but meant for
+fine granularity tuning of debug messages for development purposes.
+
+\subsection{Commandline Arguments}
+
+\begin{verbatim}
+/usr/bin/gpfs.ganesha.nfsd -d -f /etc/ganesha/gpfs.ganesha.nfsd.conf -N \
+NIV_EVENT -L SYSLOG
+\end{verbatim}
+
+\subsection{Configuration File Variables}
+
+\begin{figure}[h]
+\center
+  \begin{tabular}{ | l | l | l |}
+    \hline Configuration file stanza & configuration variable & logging component\\
+    \hline FSAL & DebugLevel & COMPONENT\_FSAL \\
+    \hline CacheInode\_Client & DebugLevel & COMPONENT\_CACHE\_INODE\\
+    \hline FileContent\_Client & DebugLevel & COMPONENT\_CACHE\_CONTENT\\
+    \hline
+  \end{tabular}
+  \caption{Configuration File Variables for Changing Log Levels}
+  \label{confifilelevel}
+\end{figure}
+Each stanza uses the variable name of ``DebugLevel''. An
+example of setting the FSAL stanza to using NIV\_DEBUG is:
+\begin{verbatim}
+FSAL
+{
+    DebugLevel="NIV_DEBUG";
+}
+\end{verbatim}
+
+\subsection{Signal Handlers}
+
+To increment log level of all components:
+\begin{verbatim}
+$ killall -s SIGUSR1 /usr/bin/gpfs.ganesha.nfsd
+$ tail -1 /var/log/messages
+Sep  8 02:28:47 localhost nfs-ganesha[11287]: [main] :LOG: SIGUSR1 Increasing \
+log level for all components to NIV_DEBUG
+\end{verbatim}
+To decrement log level of all components:
+\begin{verbatim}
+$ killall -s SIGUSR2 /usr/bin/gpfs.ganesha.nfsd
+$ tail -1 /var/log/messages
+Sep  8 02:29:00 localhost nfs-ganesha[11287]: [main] :LOG: SIGUSR2 Decreasing \
+log level for all components to NIV_EVENT
+\end{verbatim}
+
+\subsection{SNMP}
+
+It is necessary to setup an SNMP server in order to use the SNMP support in
+GANESHA. For instructions on how to install and configure this server as well as
+how to access GANESHA through SNMP, refer to the GANESHA SNMP ADMINISTRATION
+guide. Once SNMP is properly installed, the tool presented in Section
+\ref{snmptool} can be used for easy local and remote administration.
+
+\section{GANESHA Tool for Reading/Modifying Log Levels with SNMP}
+\label{snmptool}
+
+GANESHA contains a program written in Perl that provides easy access to log
+level information. From the root directory of the GANESHA code base, the path to
+the program is \emph{src/cmdline\_tools/ganesha\_log\_level} and, if installed
+through the rpm, the program is installed to
+\emph{/usr/bin/ganesha\_log\_level}.
+
+\emph{ganesha\_log\_level} requires a configuration file to locate and access
+the SNMP server. A sample configuration file is installed to
+\emph{/etc/ganesha/snmp.conf}. The file is very simple:
+\begin{verbatim}
+# This is a sample snmp.conf to be used with ganesha to allow
+# the ganesha_log_level tool to work. Put it in /etc/ganesha
+
+community_string = public
+\end{verbatim}
+It is essential that the community\_string parameter matches the community
+column in \emph{/etc/snmp/snmpd.conf} that looks like the following:
+\begin{verbatim}
+##       sec.name  source          community
+com2sec  local     localhost       ganesha
+com2sec  mynetwork 9.47.69.0/24    ganesha
+\end{verbatim}
+
+\subsection{Examining Log Levels with \emph{ganesha\_log\_level}}
+
+List possible log levels:
+\begin{verbatim}
+$ ganesha_log_level -L
+Valid Log Levels (less to more messages):
+  NIV_NULL
+  NIV_MAJOR
+  NIV_CRIT
+  NIV_EVENT
+  NIV_DEBUG
+  NIV_FULL_DEBUG
+\end{verbatim}
+List current log levels on components:
+\begin{verbatim}
+$ ganesha_log_level -l
+Current Log Levels:
+  COMPONENT_ALL                   NIV_EVENT
+  COMPONENT_CACHE_CONTENT         NIV_EVENT
+  COMPONENT_CACHE_INODE           NIV_EVENT
+  COMPONENT_CACHE_INODE_GC        NIV_EVENT
+  COMPONENT_CLIENT_ID_COMPUTE     NIV_EVENT
+  COMPONENT_CONFIG                NIV_EVENT
+  COMPONENT_DISPATCH              NIV_EVENT
+<output continues ...>
+\end{verbatim}
+List possible components:
+\begin{verbatim}
+$ ganesha_log_level -C
+Valid Components:
+  COMPONENT_ALL                 
+  COMPONENT_CACHE_CONTENT       
+  COMPONENT_CACHE_INODE         
+  COMPONENT_CACHE_INODE_GC      
+  COMPONENT_CLIENT_ID_COMPUTE   
+  COMPONENT_CONFIG              
+  COMPONENT_DISPATCH  
+<output continues ...>
+\end{verbatim}
+Get the log level for one or more components
+\begin{verbatim}
+$ ganesha_log_level -g COMPONENT_LRU
+NIV_EVENT
+\end{verbatim}
+
+\subsection{Changing Log Levels with \emph{ganesha\_log\_level}}
+
+Set the log level for one or more components:
+\begin{verbatim}
+$ ganesha_log_level -s NIV_DEBUG COMPONENT_LRU
+$ ganesha_log_level -g COMPONENT_LRU
+NIV_DEBUG
+\end{verbatim}
+
+\end{document}
+
+

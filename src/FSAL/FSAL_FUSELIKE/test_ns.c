@@ -43,6 +43,13 @@ int main(int argc, char **argv)
   unsigned int gen = 0;
   unsigned int dev = DEV;
 
+  /* Init logging */
+
+  SetNamePgm("test_ns");
+  SetDefaultLogging("TEST");
+  SetNameFunction("main");
+  InitLogging();
+
 #ifndef _NO_BUDDY_SYSTEM
   BuddyInit(NULL);
 #endif
@@ -51,7 +58,7 @@ int main(int argc, char **argv)
   rc = NamespaceInit(ROOT_INODE, DEV, &gen);
   if(rc)
     {
-      printf("NamespaceInit rc=%d\n", rc);
+      LogTest("NamespaceInit rc=%d\n", rc);
       exit(1);
     }
 
@@ -63,7 +70,7 @@ int main(int argc, char **argv)
         {
           rc = NamespaceAdd(p_test->parent_inode, DEV, gen, p_test->name,
                             p_test->entry_inode, DEV, &gen);
-          printf("NamespaceAdd(%lu,%s->%lu) = %d\n", p_test->parent_inode, p_test->name,
+          LogTest("NamespaceAdd(%lu,%s->%lu) = %d\n", p_test->parent_inode, p_test->name,
                  p_test->entry_inode, rc);
           if(rc)
             exit(1);            /* This is an error */
@@ -74,7 +81,7 @@ int main(int argc, char **argv)
         {
           rc = NamespaceAdd(p_test->parent_inode, DEV, gen, p_test->name,
                             p_test->entry_inode, DEV, &gen);
-          printf("Redundant NamespaceAdd(%lu,%s->%lu) = %d\n", p_test->parent_inode,
+          LogTest("Redundant NamespaceAdd(%lu,%s->%lu) = %d\n", p_test->parent_inode,
                  p_test->name, p_test->entry_inode, rc);
           if(rc)
             exit(1);            /* This is an error */
@@ -85,11 +92,11 @@ int main(int argc, char **argv)
       rc = NamespacePath(ROOT_INODE, DEV, gen, path);
       if(rc)
         {
-          printf("NamespacePath(%lu) rc=%d\n", ROOT_INODE, rc);
+          LogTest("NamespacePath(%lu) rc=%d\n", ROOT_INODE, rc);
           exit(1);
         }
       else
-        printf("NamespacePath(%lu) => \"%s\"\n", ROOT_INODE, path);
+        LogTest("NamespacePath(%lu) => \"%s\"\n", ROOT_INODE, path);
 
       /* recolte du chemin complet des entrees */
 
@@ -98,18 +105,18 @@ int main(int argc, char **argv)
           rc = NamespacePath(p_test->entry_inode, DEV, gen, path);
           if(rc)
             {
-              printf("NamespacePath(%lu) rc=%d\n", p_test->entry_inode, rc);
+              LogTest("NamespacePath(%lu) rc=%d\n", p_test->entry_inode, rc);
               exit(1);
             }
           else
-            printf("NamespacePath(%lu) => \"%s\"\n", p_test->entry_inode, path);
+            LogTest("NamespacePath(%lu) => \"%s\"\n", p_test->entry_inode, path);
         }
 
       /* on efface les entrees en ordre inverse */
       for(p_test--; p_test >= testset; p_test--)
         {
           rc = NamespaceRemove(p_test->parent_inode, DEV, gen, p_test->name);
-          printf("NamespaceRemove(%lu,%s) = %d\n", p_test->parent_inode,
+          LogTest("NamespaceRemove(%lu,%s) = %d\n", p_test->parent_inode,
                  p_test->name, rc);
         }
 
@@ -119,16 +126,16 @@ int main(int argc, char **argv)
           rc = NamespacePath(p_test->entry_inode, DEV, gen, path);
           if(rc == 0)
             {
-              printf("NamespacePath(%lu) => \"%s\"\n", p_test->entry_inode, path);
+              LogTest("NamespacePath(%lu) => \"%s\"\n", p_test->entry_inode, path);
               exit(1);
             }
           else if(rc != ENOENT)
             {
-              printf("NamespacePath(%lu) rc=%d\n", p_test->entry_inode, rc);
+              LogTest("NamespacePath(%lu) rc=%d\n", p_test->entry_inode, rc);
               exit(1);
             }
           else
-            printf("NamespacePath(%lu) rc=%d (ENOENT)\n", p_test->entry_inode, rc);
+            LogTest("NamespacePath(%lu) rc=%d (ENOENT)\n", p_test->entry_inode, rc);
         }
     }
 
@@ -137,21 +144,21 @@ int main(int argc, char **argv)
   rc = NamespaceAdd(ROOT_INODE, DEV, gen, "dir", ROOT_INODE + 1, DEV, &gen);
   if(rc)
     {
-      printf("NamespaceAdd error %d line %d\n", rc, __LINE__ - 1);
+      LogTest("NamespaceAdd error %d line %d\n", rc, __LINE__ - 1);
       exit(1);
     }
 
   rc = NamespaceAdd(ROOT_INODE + 1, DEV, gen, "subdir", ROOT_INODE + 2, DEV, &gen);
   if(rc)
     {
-      printf("NamespaceAdd error %d line %d\n", rc, __LINE__ - 1);
+      LogTest("NamespaceAdd error %d line %d\n", rc, __LINE__ - 1);
       exit(1);
     }
 
   rc = NamespaceAdd(ROOT_INODE + 2, DEV, gen, "entry", ROOT_INODE + 3, DEV, &gen);
   if(rc)
     {
-      printf("NamespaceAdd error %d line %d\n", rc, __LINE__ - 1);
+      LogTest("NamespaceAdd error %d line %d\n", rc, __LINE__ - 1);
       exit(1);
     }
 
@@ -163,7 +170,7 @@ int main(int argc, char **argv)
       sprintf(name, "entry.hl%d", i);
 
       rc = NamespaceAdd(ROOT_INODE + 2, DEV, gen, name, ROOT_INODE + 3, DEV, &gen);
-      printf("NamespaceAdd(%lu,%s->%lu) = %d\n", ROOT_INODE + 2, name, ROOT_INODE + 3,
+      LogTest("NamespaceAdd(%lu,%s->%lu) = %d\n", ROOT_INODE + 2, name, ROOT_INODE + 3,
              rc);
       if(rc)
         exit(1);
@@ -171,11 +178,11 @@ int main(int argc, char **argv)
       rc = NamespacePath(ROOT_INODE + 3, DEV, gen, path);
       if(rc)
         {
-          printf("NamespacePath(%lu) rc=%d\n", ROOT_INODE + 3, rc);
+          LogTest("NamespacePath(%lu) rc=%d\n", ROOT_INODE + 3, rc);
           exit(1);
         }
       else
-        printf("NamespacePath(%lu) => \"%s\"\n", ROOT_INODE + 3, path);
+        LogTest("NamespacePath(%lu) => \"%s\"\n", ROOT_INODE + 3, path);
 
     }
 
@@ -187,18 +194,18 @@ int main(int argc, char **argv)
       sprintf(name, "entry.hl%d", i);
 
       rc = NamespaceRemove(ROOT_INODE + 2, DEV, gen, name);
-      printf("NamespaceRemove(%lu,%s) = %d\n", ROOT_INODE + 2, name, rc);
+      LogTest("NamespaceRemove(%lu,%s) = %d\n", ROOT_INODE + 2, name, rc);
       if(rc)
         exit(1);
 
       rc = NamespacePath(ROOT_INODE + 3, DEV, gen, path);
       if(rc)
         {
-          printf("NamespacePath(%lu) rc=%d\n", ROOT_INODE + 3, rc);
+          LogTest("NamespacePath(%lu) rc=%d\n", ROOT_INODE + 3, rc);
           exit(1);
         }
       else
-        printf("NamespacePath(%lu) => \"%s\"\n", ROOT_INODE + 3, path);
+        LogTest("NamespacePath(%lu) => \"%s\"\n", ROOT_INODE + 3, path);
 
     }
 

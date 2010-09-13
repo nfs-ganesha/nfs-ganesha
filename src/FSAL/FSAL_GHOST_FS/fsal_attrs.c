@@ -68,9 +68,9 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
   unsupp_attr = (object_attributes->asked_attributes) & (~supp_attr);
   if(unsupp_attr)
     {
-      DisplayLogJdLevel(fsal_log, NIV_MAJOR,
-                        "Unsupported attributes: %#llX removing it from asked attributes ",
-                        unsupp_attr);
+      LogMajor(COMPONENT_FSAL,
+               "Unsupported attributes: %#llX removing it from asked attributes ",
+               unsupp_attr);
       object_attributes->asked_attributes =
           object_attributes->asked_attributes & (~unsupp_attr);
     }
@@ -159,7 +159,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
 
   if(attrib_set->asked_attributes & ~SETTABLE_ATTRIBUTES)
     {
-      printf("FSAL: To be set %llX, Settable %llX\n",
+      LogFullDebug(COMPONENT_FSAL, "FSAL: To be set %llX, Settable %llX",
              (unsigned long long)object_attributes->asked_attributes,
              (unsigned long long)SETTABLE_ATTRIBUTES);
 

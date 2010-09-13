@@ -1,5 +1,9 @@
 noinst_LTLIBRARIES            = liblog.la
 
+TESTS = $(check_SCRIPTS)
+
+check_SCRIPTS = test_liblog_MT.sh  test_liblog_STD.sh
+
 check_PROGRAMS                = test_liblog
 
 liblog_la_SOURCES = log_functions.c \

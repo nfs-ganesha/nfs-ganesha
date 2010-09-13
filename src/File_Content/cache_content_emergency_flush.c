@@ -269,8 +269,11 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
               continue;
             }
 
-          LogFullDebug(COMPONENT_CACHE_CONTENT, "=====> local=%s FSAL HANDLE=", datapath);
-          print_buff((char *)&fsal_handle, sizeof(fsal_handle));
+          if(isFullDebug(COMPONENT_CACHE_CONTENT))
+            {
+              LogFullDebug(COMPONENT_CACHE_CONTENT, "=====> local=%s FSAL HANDLE=", datapath);
+              print_buff(COMPONENT_CACHE_CONTENT, (char *)&fsal_handle, sizeof(fsal_handle));
+            }
 
           fsal_status = FSAL_str2path(datapath, strsize, &fsal_path);
 #if defined(  _USE_PROXY ) && defined( _BY_FILEID )

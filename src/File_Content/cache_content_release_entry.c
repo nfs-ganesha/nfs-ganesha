@@ -103,7 +103,7 @@ cache_content_status_t cache_content_release_entry(cache_content_entry_t * pentr
   if(unlink(pentry->local_fs_entry.cache_path_index) != 0)
     {
       if(errno != ENOENT)
-        DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+        LogEvent(COMPONENT_CACHE_CONTENT,
                           "cache_content_release_entry: error when unlinking index file %s, errno = ( %d, '%s' )",
                           pentry->local_fs_entry.cache_path_index,
                           errno, strerror(errno));
@@ -113,7 +113,7 @@ cache_content_status_t cache_content_release_entry(cache_content_entry_t * pentr
   if(unlink(pentry->local_fs_entry.cache_path_data) != 0)
     {
       if(errno != ENOENT)
-        DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+        LogEvent(COMPONENT_CACHE_CONTENT,
                           "cache_content_release_entry: error when unlinking index file %s, errno = ( %d, '%s' )",
                           pentry->local_fs_entry.cache_path_data, errno, strerror(errno));
     }

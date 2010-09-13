@@ -198,10 +198,9 @@ fsal_status_t FUSEFSAL_test_access(fusefsal_op_context_t * p_context,   /* IN */
   if(access_type & FSAL_F_OK)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_test_access);
 
-#ifdef _DEBUG_FSAL
-  printf("test_access: mode=%#o, user=%d, owner=%u\n", object_attributes->mode,
-         p_context->credential.user, object_attributes->owner);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "test_access: mode=%#o, user=%d, owner=%u",
+               object_attributes->mode, p_context->credential.user,
+               object_attributes->owner);
 
   /* test root access */
 

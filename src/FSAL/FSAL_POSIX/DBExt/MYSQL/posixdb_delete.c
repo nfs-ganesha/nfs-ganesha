@@ -83,10 +83,8 @@ fsal_posixdb_status_t fsal_posixdb_deleteHandle(fsal_posixdb_conn * p_conn,     
 
   BeginTransaction(p_conn);
 
-#ifdef _DEBUG_FSAL
-  printf("Deleting %llu.%u\n", p_parent_directory_handle->data.id,
+  LogFullDebug(COMPONENT_FSAL, "Deleting %llu.%u\n", p_parent_directory_handle->data.id,
          p_parent_directory_handle->data.ts);
-#endif
 
   snprintf(query, 2048,
            "SELECT Handle.deviceid, Handle.inode, Handle.nlink, Handle.ctime, Handle.ftype "

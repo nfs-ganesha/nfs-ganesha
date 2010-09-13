@@ -104,15 +104,6 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
   if(!init_info)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
 
-  /* >> You can check args bellow << */
-
-  if(init_info->fsal_info.log_outputs.liste_voies == NULL)
-    {
-      /* issue a warning on stderr */
-      DisplayLog
-          ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
-    }
-
   /* proceeds FSAL internal status initialization */
 
   status = fsal_internal_init_global(&(init_info->fsal_info),
@@ -126,14 +117,14 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
   p_zhd = libzfswrap_init();
   if(!p_zhd)
   {
-    DisplayLog("FSAL INIT: *** ERROR: Unable to initialize the libzfswrap library.");
+    LogCrit(COMPONENT_FSAL,"FSAL INIT: *** ERROR: Unable to initialize the libzfswrap library.");
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
   }
 
   p_vfs = libzfswrap_mount(init_info->fs_specific_info.psz_zpool, "/tank", "");
   if(!p_vfs)
   {
-    DisplayLog("FSAL INIT: *** ERROR: Unable to mount the file system.");
+    LogMajor(COMPONENT_FSAL,"FSAL INIT: *** ERROR: Unable to mount the file system.");
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
   }
 

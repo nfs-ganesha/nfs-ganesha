@@ -54,7 +54,7 @@
 #include <rpc/auth.h>
 #include <rpc/pmap_clnt.h>
 #endif
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -116,14 +116,12 @@ cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
       *pstatus = cache_inode_error_convert(fsal_status);
       return *pstatus;
     }
-#ifdef  _DEBUG_CACHE_INODE
-  printf
-      ("-- cache_inode_statfs --> pdynamicinfo->total_bytes = %llu pdynamicinfo->free_bytes = %llu pdynamicinfo->avail_bytes = %llu\n",
+
+  LogFullDebug(COMPONENT_CACHE_INODE, "-- cache_inode_statfs --> pdynamicinfo->total_bytes = %llu pdynamicinfo->free_bytes = %llu pdynamicinfo->avail_bytes = %llu\n",
        pdynamicinfo->total_bytes, pdynamicinfo->free_bytes, pdynamicinfo->avail_bytes);
 
-  printf
-      ("-- cache_inode_statfs --> dynamicinfo.total_files = %llu dynamicinfo.free_files = %llu dynamicinfo.avail_files = %llu\n",
+  LogFullDebug(COMPONENT_CACHE_INODE, "-- cache_inode_statfs --> dynamicinfo.total_files = %llu dynamicinfo.free_files = %llu dynamicinfo.avail_files = %llu\n",
        pdynamicinfo->total_files, pdynamicinfo->free_files, pdynamicinfo->avail_files);
-#endif
+
   return CACHE_INODE_SUCCESS;
 }                               /* cache_inode_get */

@@ -26,7 +26,7 @@ static int ReadPasswordFromFile(char *filename, char *password)
     {
       rc = errno;
       strerror_r(rc, errstr, 1024);
-      DisplayLog("Error openning password file '%s' : %s", filename, errstr);
+      LogCrit(COMPONENT_FSAL, "Error openning password file '%s' : %s", filename, errstr);
       return rc;
     }
   fscanf(passfile, "%1023s", password);
@@ -34,7 +34,7 @@ static int ReadPasswordFromFile(char *filename, char *password)
     {
       rc = errno;
       strerror_r(rc, errstr, 1024);
-      DisplayLog("Error reading password file '%s' : %s", filename, errstr);
+      LogCrit(COMPONENT_FSAL, "Error reading password file '%s' : %s", filename, errstr);
       fclose(passfile);
       return rc;
     }
@@ -61,8 +61,8 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
     {
       if(!isdigit(dbparams->port[0]))
         {
-          DisplayLog
-              ("Numerical value expected for database port number (invalid value: %s)",
+          LogCrit(COMPONENT_FSAL,
+               "Numerical value expected for database port number (invalid value: %s)",
                dbparams->port);
           ReturnCodeDB(ERR_FSAL_POSIXDB_CMDFAILED, 0);
         }
@@ -75,7 +75,7 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
   *p_conn = (fsal_posixdb_conn *) Mem_Alloc(sizeof(fsal_posixdb_conn));
   if(*p_conn == NULL)
     {
-      DisplayLog("ERROR: failed to allocate memory");
+      LogCrit(COMPONENT_FSAL, "ERROR: failed to allocate memory");
       ReturnCodeDB(ERR_FSAL_POSIXDB_NO_MEM, errno);
     }
 
@@ -83,7 +83,7 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
   if(mysql_init(&(*p_conn)->db_conn) == NULL)
     {
       Mem_Free(*p_conn);
-      DisplayLog("ERROR: failed to create MySQL client struct");
+      LogCrit(COMPONENT_FSAL, "ERROR: failed to create MySQL client struct");
       ReturnCodeDB(ERR_FSAL_POSIXDB_BADCONN, errno);
     }
 #if ( MYSQL_VERSION_ID >= 50013 )
@@ -99,7 +99,7 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
                          password, dbparams->dbname, port, NULL, 0))
     {
       int rc;
-      DisplayLog("Failed to connect to MySQL server: Error: %s",
+      LogCrit(COMPONENT_FSAL, "Failed to connect to MySQL server: Error: %s",
                  mysql_error(&(*p_conn)->db_conn));
       rc = mysql_errno(&(*p_conn)->db_conn);
       Mem_Free(*p_conn);
@@ -117,7 +117,7 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
   mysql_options(&(*p_conn)->db_conn, MYSQL_OPT_RECONNECT, &reconnect);
 #endif
 
-  DisplayLogLevel(NIV_EVENT, "Logged on to database sucessfully");
+  LogEvent(COMPONENT_FSAL, "Logged on to database sucessfully");
 
   /* Create prepared statements */
   return fsal_posixdb_initPreparedQueries(*p_conn);
@@ -152,7 +152,7 @@ fsal_posixdb_status_t fsal_posixdb_initPreparedQueries(fsal_posixdb_conn * p_con
       if((p_conn->stmt_tab[BUILDONEPATH] == NULL)
          && db_is_retryable(mysql_errno(&p_conn->db_conn)))
         {
-          DisplayLog("Connection to database lost in %s()... Retrying in %u sec.",
+          LogCrit(COMPONENT_FSAL, "Connection to database lost in %s()... Retrying in %u sec.",
                      __FUNCTION__, retry);
           sleep(retry);
           retry *= 2;
@@ -180,7 +180,7 @@ fsal_posixdb_status_t fsal_posixdb_initPreparedQueries(fsal_posixdb_conn * p_con
 
       if(rc && db_is_retryable(mysql_stmt_errno(p_conn->stmt_tab[BUILDONEPATH])))
         {
-          DisplayLog("Connection to database lost in %s()... Retrying in %u sec.",
+          LogCrit(COMPONENT_FSAL, "Connection to database lost in %s()... Retrying in %u sec.",
                      __FUNCTION__, retry);
           sleep(retry);
           retry *= 2;
@@ -196,7 +196,7 @@ fsal_posixdb_status_t fsal_posixdb_initPreparedQueries(fsal_posixdb_conn * p_con
 
   if(rc)
     {
-      DisplayLog("Failed to create prepared statement: Error: %s (query='%s')",
+      LogCrit(COMPONENT_FSAL, "Failed to create prepared statement: Error: %s (query='%s')",
                  mysql_stmt_error(p_conn->stmt_tab[BUILDONEPATH]), buildonepath_query);
       mysql_stmt_close(p_conn->stmt_tab[BUILDONEPATH]);
       ReturnCodeDB(ERR_FSAL_POSIXDB_CMDFAILED, rc);
