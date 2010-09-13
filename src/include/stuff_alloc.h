@@ -108,7 +108,7 @@
  * @return  nothing (this is a macro), but pool will be NULL if an error occures. 
  *
  */
-#define STUFF_PREALLOC( _pool, _nb, _type, _name_next )                       \
+#define STUFF_PREALLOC( _pool, _nb, _type, _name_next)                        \
 do                                                                            \
 {                                                                             \
   unsigned int _i = 0 ;                                                       \
@@ -117,7 +117,7 @@ do                                                                            \
   _prefered = GetPreferedPool( _nb, sizeof(_type) );                          \
   _pool= NULL ;                                                               \
                                                                               \
-  if( ( _pool = ( _type *)Mem_Alloc( sizeof( _type ) * _prefered ) ) != NULL ) \
+  if( ( _pool = ( _type *)Mem_Alloc_Label( sizeof( _type ) * _prefered, # _type ) ) != NULL ) \
     {                                                                         \
       for( _i = 0 ; _i < ( unsigned int)_prefered ; _i++ )                    \
         {                                                                     \
@@ -128,6 +128,7 @@ do                                                                            \
         }                                                                     \
     }                                                                         \
 } while( 0 )
+
 
 /**
  *
@@ -212,9 +213,9 @@ do                                                                        \
   unsigned int _i = 0 ;                                                   \
   unsigned int _prefered = 0 ;                                            \
                                                                           \
-  _prefered = GetPreferedPool( _nb, sizeof(_type) );                       \
+  _prefered = GetPreferedPool( _nb, sizeof(_type) );                      \
                                                                           \
-  _pool = ( _type *)Mem_Calloc( _prefered, sizeof( _type ) ) ;            \
+  _pool = ( _type *)Mem_Calloc_Label( _prefered, sizeof( _type ), # _type ) ; \
                                                                           \
   if( _pool != NULL )                                                     \
     {                                                                     \
@@ -301,13 +302,13 @@ do                                                                        \
 #define GET_PREALLOC( entry, pool, nb, type, name_next )                  \
 do                                                                        \
 {                                                                         \
-  entry = (type *)Mem_Alloc( sizeof( type ));                             \
+  entry = (type *)Mem_Alloc_Label( sizeof( type ), # _type );             \
   entry->name_next = NULL;                                                \
 } while( 0 )
 
-#define RELEASE_PREALLOC( entry, pool, name_next )     Mem_Free( entry )
+#define RELEASE_PREALLOC( entry, pool, name_next ) Mem_Free( entry, # _type )
 
-#define STUFF_PREALLOC_CONSTRUCT( pool, nb, type, name_next, construct )   \
+#define STUFF_PREALLOC_CONSTRUCT( pool, nb, type, name_next, construct )  \
               do {                                                        \
                 /* No pool management in this mode */                     \
                 pool = NULL;                                              \
@@ -316,7 +317,7 @@ do                                                                        \
 #define GET_PREALLOC_CONSTRUCT( entry, pool, nb, type, name_next, construct ) \
 do                                                                        \
 {                                                                         \
-  entry = (type *)Mem_Alloc( sizeof( type ));                             \
+  entry = (type *)Mem_Alloc_Label( sizeof( type ), # _type );             \
   construct( (void *)(entry) );                                           \
   entry->name_next = NULL;                                                \
 } while( 0 )
@@ -325,7 +326,7 @@ do                                                                        \
 do                                                                        \
 {                                                                         \
   destruct( (void *)(entry) ) ;                                           \
-  Mem_Free( entry );                                                      \
+  Mem_Free_Label( entry, # _type );                                       \
 } while( 0 )
 
 #endif                          /* no block preallocation */
