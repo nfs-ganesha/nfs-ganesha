@@ -56,10 +56,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef RPC_CACHE_DEBUG
 #include <netconfig.h>
 #include <netdir.h>
-#endif
 #include <err.h>
 
 #include <rpc/rpc.h>
@@ -496,10 +494,6 @@ size_t replylen;
   struct cl_cache *uc = (struct cl_cache *)su->su_cache;
   u_int loc;
   char *newbuf;
-#ifdef RPC_CACHE_DEBUG
-  struct netconfig *nconf;
-  char *uaddr;
-#endif
 
   P(dupreq_lock);
   /*
@@ -544,16 +538,21 @@ size_t replylen;
   /*
    * Store it away
    */
-#ifdef RPC_CACHE_DEBUG
-  if(nconf = getnetconfigent(xprt->xp_netid))
+  if(isFullDebug(COMPONENT_FSAL))
     {
-      uaddr = taddr2uaddr(nconf, &xprt->xp_rtaddr);
-      freenetconfigent(nconf);
-      printf("cache set for xid= %x prog=%d vers=%d proc=%d for rmtaddr=%s\n",
-             su->su_xid, uc->uc_prog, uc->uc_vers, uc->uc_proc, uaddr);
-      free(uaddr);
+      struct netconfig *nconf;
+      char *uaddr;
+
+      if(nconf = getnetconfigent(xprt->xp_netid))
+        {
+          uaddr = taddr2uaddr(nconf, &xprt->xp_rtaddr);
+          freenetconfigent(nconf);
+          LogFullDebug(COMPONENT_RPC_CACHE, "cache set for xid= %x prog=%d vers=%d proc=%d for rmtaddr=%s",
+                 su->su_xid, uc->uc_prog, uc->uc_vers, uc->uc_proc, uaddr);
+          free(uaddr);
+        }
     }
-#endif
+
   victim->cache_replylen = replylen;
   victim->cache_reply = rpc_buffer(xprt);
   rpc_buffer(xprt) = newbuf;
@@ -587,10 +586,6 @@ size_t *replylenp;
   cache_ptr ent;
   struct svc_dg_data *su = su_data(xprt);
   struct cl_cache *uc = (struct cl_cache *)su->su_cache;
-#ifdef RPC_CACHE_DEBUG
-  struct netconfig *nconf;
-  char *uaddr;
-#endif
 
   P(dupreq_lock);
   loc = CACHE_LOC(xprt, su->su_xid);
@@ -603,18 +598,23 @@ size_t *replylenp;
          ent->cache_addr.len == xprt->xp_rtaddr.len &&
          (memcmp(ent->cache_addr.buf, xprt->xp_rtaddr.buf, xprt->xp_rtaddr.len) == 0))
         {
-#ifdef RPC_CACHE_DEBUG
-          if(nconf = getnetconfigent(xprt->xp_netid))
+          if(isFullDebug(COMPONENT_FSAL))
             {
-              uaddr = taddr2uaddr(nconf, &xprt->xp_rtaddr);
-              freenetconfigent(nconf);
-              printf
-                  ("cache entry found for xid=%x prog=%d vers=%d proc=%d for rmtaddr=%s\n",
-                   su->su_xid, msg->rm_call.cb_prog, msg->rm_call.cb_vers,
-                   msg->rm_call.cb_proc, uaddr);
-              free(uaddr);
+              struct netconfig *nconf;
+              char *uaddr;
+
+              if(nconf = getnetconfigent(xprt->xp_netid))
+                {
+                  uaddr = taddr2uaddr(nconf, &xprt->xp_rtaddr);
+                  freenetconfigent(nconf);
+                  LogFullDebug(COMPONENT_RPC_CACHE,
+                       "cache entry found for xid=%x prog=%d vers=%d proc=%d for rmtaddr=%s",
+                       su->su_xid, msg->rm_call.cb_prog, msg->rm_call.cb_vers,
+                       msg->rm_call.cb_proc, uaddr);
+                  free(uaddr);
+                }
             }
-#endif
+
           *replyp = ent->cache_reply;
           *replylenp = ent->cache_replylen;
           V(dupreq_lock);

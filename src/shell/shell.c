@@ -375,9 +375,9 @@ int shell_Init(int verbose, char *input_file, char *prompt, int shell_index)
 
   SetNamePgm("ganeshell");
   /*if (verbose) */
-  SetNameFileLog("/dev/tty");
+  SetDefaultLogging("STDERR");
   /*else
-     SetNameFileLog( "/dev/null" ) ; */
+     SetDefaultLogging( "/dev/null" ) ; */
 
   SetNameFunction("shell");
 
@@ -390,7 +390,7 @@ int shell_Init(int verbose, char *input_file, char *prompt, int shell_index)
   else
     SetNameHost(localmachine);
 
-  InitDebug(NIV_EVENT);
+  InitLogging();
 
   /* retrieve/initialize shell context */
 

@@ -58,6 +58,7 @@
 #include <string.h>
 #include "BuddyMalloc.h"
 #include "LRU_List.h"
+#include "log_macros.h"
 
 #define LENBUF 256
 #define STRSIZE 10
@@ -119,6 +120,9 @@ int do_gc(LRU_list_t * plru)
 
 int main(int argc, char *argv[])
 {
+  SetDefaultLogging("TEST");
+  SetNamePgm("test_configurable_lru");
+
   char buf[LENBUF];
   int ok = 1;
   int hrc = 0;
@@ -140,7 +144,7 @@ int main(int argc, char *argv[])
 
   if((plru = LRU_Init(param, &status)) == NULL)
     {
-      printf("Test ECHOUE : Mauvaise init\n");
+      LogTest("Test ECHOUE : Mauvaise init");
       exit(1);
     }
 
@@ -159,7 +163,7 @@ int main(int argc, char *argv[])
    *
    */
 
-  printf("============ Debut de l'interactif =================\n");
+  LogTest("============ Debut de l'interactif =================");
 
   while(ok)
     {
@@ -167,7 +171,7 @@ int main(int argc, char *argv[])
       fputs("> ", stdout);
       if((p = fgets(buf, LENBUF, stdin)) == NULL)
         {
-          printf("fin des commandes\n");
+          LogTest("fin des commandes");
           ok = 0;
           continue;
         }
@@ -184,7 +188,7 @@ int main(int argc, char *argv[])
         {
           /* Cas d'une ligne vide */
           if(rc > 1)
-            printf("Erreur de syntaxe : mettre un diese au debut d'un commentaire\n");
+            LogTest("Erreur de syntaxe : mettre un diese au debut d'un commentaire");
 
           continue;
         }
@@ -192,49 +196,49 @@ int main(int argc, char *argv[])
         {
           if(rc != 3)
             {
-              printf("Erreur de syntaxe : sscanf retourne %d au lieu de 3\n", rc);
+              LogTest("Erreur de syntaxe : sscanf retourne %d au lieu de 3", rc);
               continue;
             }
-          printf("---> %c %d %d\n", c, key, expected_rc);
+          LogTest("---> %c %d %d", c, key, expected_rc);
         }
 
       switch (c)
         {
         case 'i':
           /* set overwrite */
-          printf("invalidate  %d  --> %d ?\n", key, expected_rc);
+          LogTest("invalidate  %d  --> %d ?", key, expected_rc);
 
           hrc = do_invalidate(plru, key);
 
           if(hrc != expected_rc)
-            printf(">>>> ERREUR: invalidate  %d : %d != %d (expected)\n", key, hrc,
+            LogTest(">>>> ERREUR: invalidate  %d : %d != %d (expected)", key, hrc,
                    expected_rc);
           else
-            printf(">>>> OK invalidate %d\n", key);
+            LogTest(">>>> OK invalidate %d", key);
           break;
 
         case 'n':
           /* test */
-          printf("new %d --> %d ?\n", key, expected_rc);
+          LogTest("new %d --> %d ?", key, expected_rc);
 
           hrc = do_new(plru, key);
 
           if(hrc != expected_rc)
-            printf(">>>> ERREUR: new %d : %d != %d (expected)\n", key, hrc, expected_rc);
+            LogTest(">>>> ERREUR: new %d : %d != %d (expected)", key, hrc, expected_rc);
           else
-            printf(">>>> OK new %d\n", key);
+            LogTest(">>>> OK new %d", key);
           break;
 
         case 'g':
           /* set no overwrite */
-          printf("gc  %d --> %d ?\n", key, expected_rc);
+          LogTest("gc  %d --> %d ?", key, expected_rc);
 
           hrc = do_gc(plru);
 
           if(hrc != expected_rc)
-            printf(">>>> ERREUR: gc %d: %d != %d (expected)\n", key, hrc, expected_rc);
+            LogTest(">>>> ERREUR: gc %d: %d != %d (expected)", key, hrc, expected_rc);
           else
-            printf(">>>> OK new  %d\n", key);
+            LogTest(">>>> OK new  %d", key);
           break;
 
         case 'p':
@@ -244,15 +248,15 @@ int main(int argc, char *argv[])
 
         default:
           /* syntaxe error */
-          printf("ordre '%c' non-reconnu\n", c);
+          LogTest("ordre '%c' non-reconnu", c);
           break;
         }
 
       fflush(stdin);
     }
 
-  printf("====================================================\n");
-  printf("Test reussi : tous les tests sont passes avec succes\n");
+  LogTest("====================================================");
+  LogTest("Test reussi : tous les tests sont passes avec succes");
   exit(0);
   return;
 }                               /* main */

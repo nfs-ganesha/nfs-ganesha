@@ -81,6 +81,7 @@
 #include <errno.h>
 #include "HashTable.h"
 #include "MesureTemps.h"
+#include "log_macros.h"
 
 #define LENBUF 256
 #define STRSIZE 10
@@ -217,6 +218,8 @@ int do_test(hash_table_t * ht, int key)
 
 int main(int argc, char *argv[])
 {
+  SetDefaultLogging("TEST");
+  SetNamePgm("test_libcmc_config");
   hash_table_t *ht = NULL;
   hash_parameter_t hparam;
   hash_buffer_t buffkey;
@@ -241,12 +244,12 @@ int main(int argc, char *argv[])
 
   if((astrkey = (char *)Mem_Alloc(MAXTEST * STRSIZE)) == NULL)
     {
-      printf("Test ECHOUE : Pb de Mem_Alloc : keys, BuddyErrno = %d\n", BuddyErrno);
+      printf("Test FAILED: problem with Mem_Alloc : keys, BuddyErrno = %d", BuddyErrno);
     }
 
   if((astrval = (char *)Mem_Alloc(MAXTEST * STRSIZE)) == NULL)
     {
-      printf("Test ECHOUE : Pb de Mem_Alloc : values, BuddyErrno = %d\n", BuddyErrno);
+      printf("Test FAILED: problem with Mem_Alloc : values, BuddyErrno = %d", BuddyErrno);
     }
 
   hparam.index_size = PRIME;
@@ -261,7 +264,7 @@ int main(int argc, char *argv[])
   /* Init de la table */
   if((ht = HashTable_Init(hparam)) == NULL)
     {
-      printf("Test ECHOUE : Mauvaise init\n");
+      LogTest("Test ECHOUE : Mauvaise init");
       exit(1);
     }
 
@@ -283,50 +286,47 @@ int main(int argc, char *argv[])
       hrc = HashTable_Set(ht, &buffkey, &buffval);
       if(hrc != HASHTABLE_SUCCESS)
         {
-          printf("Test ECHOUE : Insertion d'une nouvelle entree impossible : %d, %d\n", i,
+          LogTest("Test FAILED: Inserting a new entry impossible : %d, %d", i,
                  hrc);
           exit(1);
         }
-#ifdef _FULL_DEBUG
-      printf("Ajout de (%s,%s) , sortie = %d\n", astrkey + STRSIZE * i,
-             astrval + STRSIZE * i, rc);
-#endif
+      if(isFullDebug(COMPONENT_HASHTABLE))
+        LogTest("Adding (%s,%s) , return = %d", astrkey + STRSIZE * i,
+                astrval + STRSIZE * i, rc);
     }
   MesureTemps(&fin, &debut);
-  printf("Ajout de %d entrees en %s secondes\n", MAXTEST, ConvertiTempsChaine(fin, NULL));
-  printf("====================================================\n");
+  LogTest("Added %d entries in %s seconds", MAXTEST, ConvertiTempsChaine(fin, NULL));
+  LogTest("====================================================");
 
-#ifdef _FULL_DEBUG
-  HashTable_Print(ht);
-  printf("====================================================\n");
-#endif
+  HashTable_Log(COMPONENT_HASHTABLE, ht);
+  LogTest("====================================================");
 
   /*
+   * The syntax of a test is
+   * 'G key val rc': look for the value associated with a key, val expected to read with the status rc
+   * 'S key val rc': positions Hash (key) = val, expects to have the status rc
+   * 'No key val rc': idem 's' but creates a new entry without an already existing crush
+   * 'T key val rc: simply test if the key' key 'exists in the HASH, with the status rc (val is useless)
+   * 'S key val rc: destroyed HASH (key), expects to have the status rc (val is useless)
+   * 'P key val rc: prints HASH (key, val and rc are useless).
    *
-   * La syntaxe d'un test est 
-   * 'g key val rc' : cherche la valeur associee a key, s'attend a lire val avec le status rc
-   * 's key val rc' : positionne Hash(key) = val, s'attend a avoir le status rc
-   * 'n key val rc' : idem a 's' mais cree une nouvelle entree sans en ecraser une deja existante
-   * 't key val rc' : se contente de tester si la clef 'key' existe dans le HASH, avec le status rc (val ne sert a rien)
-   * 'd key val rc' : detruit HASH(key), s'attend a avoir le status rc (val ne sert a rien)
-   * 'p key val rc' : imprime le HASH (key, val et rc ne servent a rien).
-   * 
-   * Une ligne qui debute par '#' est un commentaire
-   * Une ligne qui debute par un espace ou un tab est une ligne vide [meme si il y a des trucs derriere.. :-( ]
-   * Une ligne vide (juste un CR) est une ligne vide (cette citation a recu le Premier Prix lors du Festival International 
-   * de la Tautologie de Langue Francaise (PFITLF), a Poully le Marais, en Aout 2004)
+   * A line that starts by '#' is a comment
+   * A line that starts by a space or a tab is a blank line [although there are things behind .. :-(]
+   * An empty line (just CR) is a blank line (this quote has received the First Prize at the International Festival
+   * Tautology of the French Language (PFITLF) has Poully the Marais,
+   * in August 2004)
    *
    */
 
-  printf("============ Debut de l'interactif =================\n");
+  LogTest("============ Start interactive =================");
 
   while(ok)
     {
-      /* Code interactif, pompe sur le test rbt de Jacques */
+      /* Code Interactive, pump testing rabbit by Jacques */
       fputs("> ", stdout);
       if((p = fgets(buf, LENBUF, stdin)) == NULL)
         {
-          printf("fin des commandes\n");
+          LogTest("end of commands");
           ok = 0;
           continue;
         }
@@ -343,7 +343,7 @@ int main(int argc, char *argv[])
         {
           /* Cas d'une ligne vide */
           if(rc > 1)
-            printf("Erreur de syntaxe : mettre un diese au debut d'un commentaire\n");
+            LogTest("Syntax error: put at the beginning of diese comment");
 
           continue;
         }
@@ -351,96 +351,96 @@ int main(int argc, char *argv[])
         {
           if(rc != 4)
             {
-              printf("Erreur de syntaxe : sscanf retourne %d au lieu de 4\n", rc);
+              LogTest("Syntax error: sscanf returned %d instead of 4", rc);
               continue;
             }
-          printf("---> %c %d %d %d\n", c, key, val, expected_rc);
+          LogTest("---> %c %d %d %d", c, key, val, expected_rc);
         }
 
       switch (c)
         {
         case 's':
           /* set overwrite */
-          printf("set  %d %d --> %d ?\n", key, val, expected_rc);
+          LogTest("set  %d %d --> %d ?", key, val, expected_rc);
 
           hrc = do_set(ht, key, val);
 
           if(hrc != expected_rc)
-            printf(">>>> ERREUR: set  %d %d: %d != %d (expected)\n", key, val, hrc,
+            LogTest(">>>> ERROR: set  %d %d: %d != %d (expected)", key, val, hrc,
                    expected_rc);
           else
-            printf(">>>> OK set  %d %d\n", key, val);
+            LogTest(">>>> OK set  %d %d", key, val);
           break;
 
         case 't':
           /* test */
-          printf("test %d %d --> %d ?\n", key, val, expected_rc);
+          LogTest("test %d %d --> %d ?", key, val, expected_rc);
 
           hrc = do_test(ht, key);
 
           if(hrc != expected_rc)
-            printf(">>>> ERREUR: test %d : %d != %d (expected)\n", key, hrc, expected_rc);
+            LogTest(">>>> ERROR: test %d : %d != %d (expected)", key, hrc, expected_rc);
           else
-            printf(">>>> OK test %d \n", key);
+            LogTest(">>>> OK test %d ", key);
           break;
 
         case 'n':
           /* set no overwrite */
-          printf("new  %d %d --> %d ?\n", key, val, expected_rc);
+          LogTest("new  %d %d --> %d ?", key, val, expected_rc);
 
           hrc = do_new(ht, key, val);
 
           if(hrc != expected_rc)
-            printf(">>>> ERREUR: new  %d %d: %d != %d (expected)\n", key, val, hrc,
+            LogTest(">>>> ERROR: new  %d %d: %d != %d (expected)", key, val, hrc,
                    expected_rc);
           else
-            printf(">>>> OK new  %d %d\n", key, val);
+            LogTest(">>>> OK new  %d %d", key, val);
           break;
 
         case 'g':
           /* get */
-          printf("get  %d %d --> %d ?\n", key, val, expected_rc);
+          LogTest("get  %d %d --> %d ?", key, val, expected_rc);
 
           hrc = do_get(ht, key, &readval);
 
           if(hrc != expected_rc)
-            printf(">>>> ERREUR: get  %d %d: %d != %d (expected)\n", key, val, hrc,
+            LogTest(">>>> ERROR: get  %d %d: %d != %d (expected)", key, val, hrc,
                    expected_rc);
           else
             {
               if(hrc == HASHTABLE_SUCCESS)
                 {
                   if(val != readval)
-                    printf
-                        (">>>> ERREUR: get %d Mauvaise valeur lue : %d != %d (expected)\n",
+                    LogTest
+                        (">>>> ERROR: get %d Bad read value : %d != %d (expected)",
                          key, readval, val);
                   else
-                    printf(">>>> OK get  %d %d\n", key, val);
+                    LogTest(">>>> OK get  %d %d", key, val);
                 }
             }
           break;
 
         case 'd':
           /* del */
-          printf("del  %d %d --> %d ?\n", key, val, expected_rc);
+          LogTest("del  %d %d --> %d ?", key, val, expected_rc);
 
           hrc = do_del(ht, key);
 
           if(hrc != expected_rc)
-            printf(">>>> ERREUR: del  %d  %d != %d (expected)\n", key, hrc, expected_rc);
+            LogTest(">>>> ERROR: del  %d  %d != %d (expected)", key, hrc, expected_rc);
           else
-            printf(">>>> OK del  %d %d\n", key, val);
+            LogTest(">>>> OK del  %d %d", key, val);
 
           break;
 
         case 'p':
           /* Print */
-          HashTable_Print(ht);
+          HashTable_Log(COMPONENT_HASHTABLE, ht);
           break;
 
         default:
           /* syntaxe error */
-          printf("ordre '%c' non-reconnu\n", c);
+          LogTest("command '%c' not recognized", c);
           break;
         }
 
@@ -449,8 +449,8 @@ int main(int argc, char *argv[])
 
   BuddyDumpMem(stderr);
 
-  printf("====================================================\n");
-  printf("Test reussi : tous les tests sont passes avec succes\n");
+  LogTest("====================================================");
+  LogTest("Test succeeded: all tests pass successfully");
 
   exit(0);
 }

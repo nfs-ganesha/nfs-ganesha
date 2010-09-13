@@ -73,7 +73,7 @@ fsal_status_t MFSL_symlink_async_op(mfsl_async_op_desc_t * popasyncdesc)
 
   attrsrc = attrdest = popasyncdesc->op_res.mkdir.attr;
 
-  DisplayLogLevel(NIV_DEBUG,
+  LogDebug(COMPONENT_MFSL,
                   "Renaming file to complete asynchronous FSAL_symlink for async op %p",
                   popasyncdesc);
 
@@ -200,11 +200,11 @@ fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,     /* IN */
   if(gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
     {
       /* Could'not get time of day... Stopping, this may need a major failure */
-      DisplayLog("MFSL_synlink: cannot get time of day... exiting");
+      LogMajor(COMPONENT_MFSL, "MFSL_synlink: cannot get time of day... exiting");
       exit(1);
     }
 
-  DisplayLogJdLevel(p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p",
+  LogDebug(COMPONENT_MFSL,  "Creating asyncop %p",
                     pasyncopdesc);
 
   pasyncopdesc->op_type = MFSL_ASYNC_OP_SYMLINK;

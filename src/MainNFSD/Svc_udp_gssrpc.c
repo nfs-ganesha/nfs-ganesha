@@ -152,19 +152,19 @@ SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz)
   xprt = (SVCXPRT *) mem_alloc(sizeof(SVCXPRT));
   if(xprt == NULL)
     {
-      (void)fprintf(stderr, "svcudp_create: out of memory\n");
+      LogCrit(COMPONENT_DISPATCH, "svcudp_create: out of memory");
       return (NULL);
     }
   su = (struct svcudp_data *)mem_alloc(sizeof(*su));
   if(su == NULL)
     {
-      (void)fprintf(stderr, "svcudp_create: out of memory\n");
+      LogCrit(COMPONENT_DISPATCH, "svcudp_create: out of memory");
       return (NULL);
     }
   su->su_iosz = ((MAX(sendsz, recvsz) + 3) / 4) * 4;
   if((rpc_buffer(xprt) = mem_alloc(su->su_iosz)) == NULL)
     {
-      (void)fprintf(stderr, "svcudp_create: out of memory\n");
+      LogCrit(COMPONENT_DISPATCH, "svcudp_create: out of memory");
       return (NULL);
     }
   xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt), su->su_iosz, XDR_DECODE);

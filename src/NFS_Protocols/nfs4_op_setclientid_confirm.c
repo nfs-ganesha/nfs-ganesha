@@ -110,7 +110,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
   clientid = arg_SETCLIENTID_CONFIRM4.clientid;
 
   LogDebug(COMPONENT_NFS_V4, "SETCLIENTID_CONFIRM clientid = %llx", clientid);
-  /* DisplayLogLevel( NIV_DEBUG, "SETCLIENTID_CONFIRM Verifier = #%s#", arg_SETCLIENTID_CONFIRM4.setclientid_confirm ) ; */
+  /* LogDebug(COMPONENT_NFS_V4, "SETCLIENTID_CONFIRM Verifier = #%s#", arg_SETCLIENTID_CONFIRM4.setclientid_confirm ) ; */
 
   /* Does this id already exists ? */
   if(nfs_client_id_get(clientid, &nfs_clientid) == CLIENT_ID_SUCCESS)

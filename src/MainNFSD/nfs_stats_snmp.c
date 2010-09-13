@@ -1338,7 +1338,7 @@ static int create_dyn_log_control(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
   for(j = 0; j < COMPONENT_COUNT; j ++)
     {
       (*p_dyn_gs)[j + 0].label = Mem_Alloc(256 * sizeof(char));
-      snprintf((*p_dyn_gs)[j].label, 256, "%s", LogComponents[j].str);
+      snprintf((*p_dyn_gs)[j].label, 256, "%s", LogComponents[j].comp_name);
       (*p_dyn_gs)[j].desc = "Log level for this component";
       (*p_dyn_gs)[j].type = SNMP_ADM_STRING;
       (*p_dyn_gs)[j].access = SNMP_ADM_ACCESS_RW;

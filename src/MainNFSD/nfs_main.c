@@ -60,10 +60,10 @@ nfs_start_info_t my_nfs_start_info = {
 };
 
 char my_config_path[MAXPATHLEN] = "/etc/ganesha/ganesha.conf";
-char log_path[MAXPATHLEN] = "/tmp/nfs-ganesha.log";
+char log_path[MAXPATHLEN] = "";
 char exec_name[MAXPATHLEN] = "nfs-ganesha";
 char host_name[MAXHOSTNAMELEN] = "localhost";
-int debug_level = NIV_EVENT;
+int debug_level = -1;
 int detach_flag = FALSE;
 char ganesha_exec_path[MAXPATHLEN];
 
@@ -179,7 +179,6 @@ int main(int argc, char *argv[])
     strcpy((char *)exec_name, argv[0]);
 
   /* get host name */
-
   if(gethostname(localmachine, sizeof(localmachine)) != 0)
     {
       fprintf(stderr, "Could not get local host name, exiting...");
@@ -289,7 +288,6 @@ int main(int argc, char *argv[])
     }
 
   /* initialize memory and logging */
-
   if(nfs_prereq_init(exec_name, host_name, debug_level, log_path))
     {
       fprintf(stderr, "NFS MAIN: Error initializing NFSd prerequisites\n");
@@ -321,7 +319,7 @@ int main(int argc, char *argv[])
 
         default:
           /* This code is within the father, it is useless, it must die */
-          LogCrit(COMPONENT_INIT, "Starting a son of pid %d\n", son_pid);
+          LogFullDebug(COMPONENT_INIT, "Starting a son of pid %d\n", son_pid);
           exit(0);
           break;
         }

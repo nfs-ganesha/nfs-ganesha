@@ -200,7 +200,6 @@ typedef struct cache_inode_parameter__
 typedef struct cache_inode_client_parameter__
 {
   LRU_parameter_t lru_param;                           /**< LRU list handle (used for gc)                    */
-  log_t log_outputs;                                   /**< Log descriptor                                   */
   fsal_attrib_mask_t attrmask;                         /**< FSAL attributes to be used in FSAL               */
   unsigned int nb_prealloc_entry;                      /**< number of preallocated pentries                  */
   unsigned int nb_pre_dir_data;                        /**< number of preallocated pdir data                 */
@@ -504,7 +503,6 @@ typedef struct cache_inode_client__
   unsigned int nb_pre_state_v4;                                    /**< Number of preallocated NFSv4 File States                 */
   fsal_attrib_mask_t attrmask;                                     /**< Mask of the supported attributes for the underlying FSAL */
   cache_inode_stat_t stat;                                         /**< Cache inode statistics for this client                   */
-  log_t log_outputs;                                               /**< Log descriptor for cache layers                          */
   time_t grace_period_attr;                                        /**< Cached attributes grace period                           */
   time_t grace_period_link;                                        /**< Cached link grace period                                 */
   time_t grace_period_dirent;                                      /**< Cached directory entries grace period                    */
@@ -597,6 +595,15 @@ typedef union cache_inode_create_arg__
 #define CACHE_INODE_FSAL_DELAY            35
 
 #define CACHE_INODE_LOCK_OFFSET_EOF 0xFFFFFFFFFFFFFFFFLL
+
+#define inc_func_call(pclient, x)                       \
+    pclient->stat.func_stats.nb_call[x] += 1
+#define inc_func_success(pclient, x)                    \
+    pclient->stat.func_stats.nb_success[x] += 1
+#define inc_func_err_retryable(pclient, x)              \
+    pclient->stat.func_stats.nb_err_retryable[x] += 1
+#define inc_func_err_unrecover(pclient, x)              \
+    pclient->stat.func_stats.nb_err_unrecover[x] += 1
 
 cache_inode_status_t cache_inode_clean_entry(cache_entry_t * pentry);
 

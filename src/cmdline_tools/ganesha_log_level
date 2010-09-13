@@ -1,0 +1,256 @@
+#!/usr/bin/perl
+# 
+# Copyright IBM (2010)
+# author: Sean Dague <sdague@linux.vnet.ibm.com>
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+# 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+use strict;
+use Getopt::Std;
+# otherwise error catching doesn't work
+$ENV{LC_ALL} = "en_US";
+
+our %opts;
+our $VERSION = "0.1";
+our $pass = "public";
+
+our $LEVELS = {
+               "NIV_NULL" => 0,
+               "NIV_MAJOR" => 1,
+               "NIV_CRIT" => 2,
+               "NIV_EVENT" => 3,
+               "NIV_DEBUG" => 4,
+               "NIV_FULL_DEBUG" => 5
+               };
+
+our $OIDBASE = ".1.3.6.1.4.1.12384.999.1.1";
+our $COMPLIST = {};
+
+sub version() {
+    print <<VERSION;
+ganesha_log_level -- $VERSION
+VERSION
+    exit(0);
+}
+
+sub usage() {
+    print <<USAGE;
+get and set the log levels for ganesha
+
+Usage: ganesha_log_level [options] [component] [component] [component] ..
+
+Options:
+   -h        : display help
+   -v        : display version
+   -g        : get the log level for one or more components
+   -s LEVEL  : set the log level for one or more components
+   -l        : list current log levels on components
+   -L        : list possible log levels
+   -C        : list possible components
+
+USAGE
+}
+
+sub my_exec($$) {
+    my $cmd = shift;
+    my $err = shift;
+    my $output = "";
+    open(OUT, "$cmd 2>&1 |") or return undef;
+    while(<OUT>) {
+        $output .= $_;
+    }
+    # on a bad exit code exit with the message we got sent
+    close(OUT) or error($err);
+    # get rid of final newline
+    chomp($output);
+    return $output;
+}
+
+sub error($) {
+    my $msg = shift;
+    print "ERROR: ", $msg, "\n";
+    exit 1;
+}
+
+sub get_community_string() {
+    open(CONF, "/etc/ganesha/snmp.conf") or error("Can't find snmp config file '/etc/ganesha/snmp.conf'");
+    while(<CONF>) {
+        if (/^community_string\s*=\s*(\w+)/) {
+            close(CONF) or error("Failure to close conf file... something is very wrong");
+            return $1;
+        }
+    }
+
+    error("Couldn't find value for community_string = STRING in '/etc/ganesha/snmp.conf'");
+}
+
+sub test_for_snmp_tools() {
+    foreach my $tool (qw/snmpget snmpset snmpwalk/) {
+        my $version = my_exec("$tool --version", "$tool not found on system, please install net-smmp-utils");
+        if ($version) {
+            # print "$version\n";
+        } else {
+            error("$tool not found on system, please install net-smmp-utils");
+        }
+    }
+}
+
+
+sub get_component_list() {
+    my $comps = {};
+
+    my $output = my_exec("snmpwalk -On -c $pass -v 1 localhost $OIDBASE", 
+                        "Can't access snmp agent, ensure agent is running",
+                        );
+
+    if ($output =~ /^\s*$/) {
+        my $msg = <<COMPFAIL;
+Can't retreive component list!
+
+If your snmp agent was started less than 10 seconds ago, this is normal,
+otherwise check that ganesha's snmp configuration matches that for snmp-agent.
+COMPFAIL
+        error($msg);
+    }
+
+    if ($output =~ /getaddrinfo:.*Name or service not known/) {
+        error("Can't access snmp agent, ensure agent is running");
+    }
+    
+    if ($output =~ /Error in packet/) {
+        error("Can't access log levels from snmp agent, ensure agent is running and community string is correct");
+    }
+
+    my @lines = split /\n/, $output;
+    my $oid = "";
+    my $comp = "";
+    for my $line (@lines) {
+        if($line =~ /($OIDBASE\.\d+)\.0 = STRING: \"(\w+)\"/) {
+            $oid = $1;
+            $comp = $2;
+        }
+        if($oid and $line =~ /$oid\.2\.1 = STRING: \"(\w+)\"/) {
+            $comps->{$comp}->{LEVEL} = $1;
+            $comps->{$comp}->{SETOID} = $oid . ".2.1";
+        }
+    }
+    
+    return $comps;
+}
+
+sub list() {
+    my $comps = $COMPLIST;
+    print "Current Log Levels:\n";
+    for my $comp (sort keys %$comps) {
+        printf("  %-30s  %s\n", $comp, $comps->{$comp}->{LEVEL});
+    }
+}
+
+sub is_valid_comp($) {
+    my $comp = shift;
+    return exists $$COMPLIST{$comp};
+}
+
+sub is_valid_level($) {
+    my $level = shift;
+    return exists $$LEVELS{$level};
+}
+
+sub list_components() {
+    my $comps = $COMPLIST;
+
+    print "Valid Components:\n";
+    for my $comp (sort keys %$comps) {
+        printf("  %-30s\n", $comp);
+    }
+}
+
+sub list_levels() {
+    print "Valid Log Levels (less to more messages):\n";
+    for my $level (sort {$$LEVELS{$a} <=> $$LEVELS{$b}} keys %$LEVELS) {
+        printf("  %s\n", $level);
+    }
+}
+
+sub log_set($$) {
+    my $comp = shift;
+    my $level = shift;
+    my $output = my_exec("snmpset -v1 -c $pass localhost $COMPLIST->{$comp}->{SETOID} s $level",
+                         "Could not set log level, check permissions on your snmp agent"
+                        );
+    if ($output =~ /Error in packet/) {
+        error("Could not set log level, check permissions on your snmp agent");
+    }
+}
+
+sub main() {
+    getopts("vhgs:lLC",\%opts);
+
+    if($opts{v}) {
+        version();
+    }
+    
+    if($opts{h} or !($opts{g} or $opts{s} or $opts{l} or $opts{L} or $opts{C})) {
+        usage();
+        exit(1);
+    }
+
+    # exits if tools don't exist
+    test_for_snmp_tools();
+
+    # exits if the community string can't be set
+    $pass = get_community_string();
+
+    $COMPLIST = get_component_list();
+
+    if($opts{l}) {
+        list();
+    }
+
+    if($opts{C}) {
+        list_components();
+    }
+
+    if($opts{L}) {
+        list_levels();
+    }
+
+    if($opts{g}) {
+        for my $comp (@ARGV) {
+            if (is_valid_comp($comp)) {
+                print "$comp $COMPLIST->{$comp}->{LEVEL}\n";
+            } else {
+                error("$comp is not a valid component");
+            }
+        }
+    }
+
+    if ($opts{s}) {
+        my $level = $opts{s};
+        if (is_valid_level($level)) {
+            for my $comp (@ARGV) {
+                if (is_valid_comp($comp)) {
+                    log_set($comp, $level);
+                } else {
+                    error("$comp is not a valid component");
+                }
+            }
+        } else {
+            error("$level is not a valid log level");
+        }
+    }
+}
+
+main();

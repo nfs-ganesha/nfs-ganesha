@@ -29,7 +29,7 @@
  * @defgroup FSALCredFunctions Credential handling functions.
  *
  * Those functions handle security contexts (credentials).
- * 
+ *
  * @{
  */
 
@@ -65,7 +65,7 @@ fsal_status_t XFSFSAL_BuildExportContext(xfsfsal_export_context_t * p_export_con
   /* sanity check */
   if(p_export_context == NULL)
     {
-      DisplayLogLevel(NIV_CRIT, "NULL mandatory argument passed to %s()", __FUNCTION__);
+      LogCrit(COMPONENT_FSAL, "NULL mandatory argument passed to %s()", __FUNCTION__);
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
     }
 
@@ -80,7 +80,7 @@ fsal_status_t XFSFSAL_BuildExportContext(xfsfsal_export_context_t * p_export_con
   if(fp == NULL)
     {
       rc = errno;
-      DisplayLogLevel(NIV_CRIT, "Error %d in setmntent(%s): %s", rc, MOUNTED,
+      LogCrit(COMPONENT_FSAL, "Error %d in setmntent(%s): %s", rc, MOUNTED,
                       strerror(rc));
       Return(posix2fsal_error(rc), rc, INDEX_FSAL_BuildExportContext);
     }
@@ -102,7 +102,7 @@ fsal_status_t XFSFSAL_BuildExportContext(xfsfsal_export_context_t * p_export_con
 
           if((pathlen > outlen) && !strcmp(p_mnt->mnt_dir, "/"))
             {
-              DisplayLogLevel(NIV_DEBUG,
+              LogDebug(COMPONENT_FSAL,
                               "Root mountpoint is allowed for matching %s, type=%s, fs=%s",
                               rpath, p_mnt->mnt_type, p_mnt->mnt_fsname);
               outlen = pathlen;
@@ -115,7 +115,7 @@ fsal_status_t XFSFSAL_BuildExportContext(xfsfsal_export_context_t * p_export_con
                   !strncmp(rpath, p_mnt->mnt_dir, pathlen) &&
                   ((rpath[pathlen] == '/') || (rpath[pathlen] == '\0')))
             {
-              DisplayLogLevel(NIV_FULL_DEBUG, "%s is under mountpoint %s, type=%s, fs=%s",
+              LogFullDebug(COMPONENT_FSAL, "%s is under mountpoint %s, type=%s, fs=%s",
                               rpath, p_mnt->mnt_dir, p_mnt->mnt_type, p_mnt->mnt_fsname);
 
               outlen = pathlen;
@@ -132,7 +132,7 @@ fsal_status_t XFSFSAL_BuildExportContext(xfsfsal_export_context_t * p_export_con
         strncpy(mntdir, first_xfs_dir, MAXPATHLEN);
       else
         {
-          DisplayLogLevel(NIV_CRIT, "No mount entry matches '%s' in %s", rpath, MOUNTED);
+          LogCrit(COMPONENT_FSAL, "No mount entry matches '%s' in %s", rpath, MOUNTED);
           endmntent(fp);
           Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_BuildExportContext);
         }
@@ -166,7 +166,7 @@ fsal_status_t XFSFSAL_BuildExportContext(xfsfsal_export_context_t * p_export_con
  * \param p_export_context (in, gpfsfsal_export_context_t)
  */
 
-fsal_status_t XFSFSAL_CleanUpExportContext(xfsfsal_export_context_t * p_export_context) 
+fsal_status_t XFSFSAL_CleanUpExportContext(xfsfsal_export_context_t * p_export_context)
 {
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
 }
@@ -188,7 +188,7 @@ fsal_status_t XFSFSAL_InitClientContext(xfsfsal_op_context_t * p_thr_context)
  /**
  * FSAL_GetUserCred :
  * Get a user credential from its uid.
- * 
+ *
  * \param p_cred (in out, fsal_cred_t *)
  *        Initialized credential to be changed
  *        for representing user.
@@ -240,22 +240,24 @@ fsal_status_t XFSFSAL_GetClientContext(xfsfsal_op_context_t * p_thr_context,    
 
   for(i = 0; i < ng; i++)
     p_thr_context->credential.alt_groups[i] = alt_groups[i];
-#if defined( _DEBUG_FSAL )
 
-  /* traces: prints p_credential structure */
+  if(isFullDebug(COMPONENT_FSAL))
+    {
+      /* traces: prints p_credential structure */
 
-  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "credential modified:");
-  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tuid = %d, gid = %d",
-                    p_thr_context->credential.user, p_thr_context->credential.group);
+      LogFullDebug(COMPONENT_FSAL, "credential modified:");
+      LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
+                        p_thr_context->credential.user, p_thr_context->credential.group);
 
-  for(i = 0; i < p_thr_context->credential.nbgroups; i++)
-    DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
-                      p_thr_context->credential.alt_groups[i]);
-
-#endif
+      if (isFullDebug(COMPONENT_FSAL))
+        {
+          for(i = 0; i < p_thr_context->credential.nbgroups; i++)
+            LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
+                         p_thr_context->credential.alt_groups[i]);
+        }
+   }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);
-
 }
 
 /* @} */

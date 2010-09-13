@@ -62,6 +62,7 @@
 #include <string.h>
 #include "BuddyMalloc.h"
 #include "LRU_List.h"
+#include "log_macros.h"
 
 #define PREALLOC 10000
 #define MAXTEST 10
@@ -79,6 +80,9 @@ int clean_entry(LRU_entry_t * pentry, void *addparam)
 
 int main(int argc, char *argv[])
 {
+  SetDefaultLogging("TEST");
+  SetNamePgm("test_lru");
+
   LRU_list_t *plru;
   LRU_parameter_t param;
   LRU_entry_t *entry = NULL;
@@ -95,20 +99,18 @@ int main(int argc, char *argv[])
 
   if((plru = LRU_Init(param, &status)) == NULL)
     {
-      printf("Test ECHOUE : Mauvaise init\n");
+      LogTest("Test FAILED: Bad Init");
       exit(1);
     }
 
   for(i = 0; i < MAXTEST; i++)
     {
-#ifdef _DEBUG_LRU
-      printf("Ajout de l'entree %d\n", i);
-#endif
+      LogTest("Added entry %d", i);
       sprintf(strtab[i], "%d", i);
       if((entry = LRU_new_entry(plru, &status)) == NULL)
         {
 
-          printf("Test ECHOUE : Mauvais ajout d'entree, status = %d\n", status);
+          LogTest("Test FAILED: bad entry add, status = %d", status);
           exit(1);
         }
 
@@ -120,28 +122,23 @@ int main(int argc, char *argv[])
     }
 
   /* printing the table */
-#ifdef _DEBUG_LRU
   LRU_Print(plru);
-#endif
 
   LRU_invalidate(plru, kept_entry);
 
-#ifdef _DEBUG_LRU
-  LRU_Print(plru);
-#endif
+  if(isFullDebug(COMPONENT_LRU))
+    LRU_Print(plru);
 
   if(LRU_gc_invalid(plru, NULL) != LRU_LIST_SUCCESS)
     {
-      printf("Test ECHOUE : Mauvais gc\n");
+      LogTest("Test FAILED: bad gc");
       exit(1);
     }
-#ifdef _DEBUG_LRU
   LRU_Print(plru);
-#endif
 
   /* Tous les tests sont ok */
-  printf("\n-----------------------------------------\n");
-  printf("Test reussi : tous les tests sont passes avec succes\n");
+  LogTest("\n-----------------------------------------");
+  LogTest("Test succeeded: all tests pass successfully");
 
   exit(0);
 }                               /* main */

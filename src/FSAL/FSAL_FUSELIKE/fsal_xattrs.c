@@ -144,18 +144,18 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
     {
       p_xattr_attrs->asked_attributes = supported;
 
-      DisplayLogJdLevel(fsal_log, NIV_CRIT,
-                        "Error: p_xattr_attrs->asked_attributes was 0 in %s() line %d, file %s",
-                        __FUNCTION__, __LINE__, __FILE__);
+      LogCrit(COMPONENT_FSAL,
+              "Error: p_xattr_attrs->asked_attributes was 0 in %s() line %d, file %s",
+              __FUNCTION__, __LINE__, __FILE__);
     }
 
   unsupp = p_xattr_attrs->asked_attributes & (~supported);
 
   if(unsupp)
     {
-      DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                        "Asking for unsupported attributes in %s(): %#llX removing it from asked attributes",
-                        __FUNCTION__, unsupp);
+      LogDebug(COMPONENT_FSAL,
+               "Asking for unsupported attributes in %s(): %#llX removing it from asked attributes",
+               __FUNCTION__, unsupp);
 
       p_xattr_attrs->asked_attributes &= (~unsupp);
     }
@@ -303,7 +303,7 @@ fsal_status_t FUSEFSAL_GetXAttrAttrs(fusefsal_handle_t * p_objecthandle,        
 
 /**
  * Retrieves the list of extended attributes for an object in the filesystem.
- * 
+ *
  * \param p_objecthandle Handle of the object we want to get extended attributes.
  * \param cookie index of the next entry to be returned.
  * \param p_context pointer to the current security context.
@@ -437,11 +437,11 @@ fsal_status_t FUSEFSAL_GetXAttrValueById(fusefsal_handle_t * p_objecthandle,    
 
 /**
  * Get the index of an xattr based on its name
- * 
+ *
  * \param p_objecthandle Handle of the object you want to get attribute for.
  * \param xattr_name the name of the attribute to be read.
  * \param pxattr_id found xattr_id
- *    
+ *
  * \return ERR_FSAL_NO_ERROR if xattr_name exists, ERR_FSAL_NOENT otherwise
  */
 fsal_status_t FUSEFSAL_GetXAttrIdByName(fusefsal_handle_t * p_objecthandle,     /* IN */

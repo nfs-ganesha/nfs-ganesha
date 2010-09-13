@@ -140,7 +140,7 @@ fsal_status_t HPSSFSAL_unlink(hpssfsal_handle_t * parentdir_handle,     /* IN */
     case FSAL_TYPE_BLK:
     case FSAL_TYPE_SOCK:
     default:
-      DisplayLogJdLevel(fsal_log, NIV_CRIT, "Unexpected object type : %d\n",
+      LogCrit(COMPONENT_FSAL, "Unexpected object type : %d\n",
                         obj_handle.data.obj_type);
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_unlink);
 

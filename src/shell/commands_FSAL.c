@@ -243,9 +243,11 @@ int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib);
 
 static pthread_mutex_t mutex_log = PTHREAD_MUTEX_INITIALIZER;
 
-static desc_log_stream_t voie;
 static int log_level = -1;
+#ifdef OLD_LOGGING
+static desc_log_stream_t voie;
 static log_t log_desc = LOG_INITIALIZER;
+#endif
 
 static int is_loaded = FALSE;   /* filsystem initialization status */
 
@@ -431,7 +433,7 @@ int Init_Thread_Context(FILE * output, cmdfsal_thr_info_t * context, int flag_v)
 
 void fsal_layer_SetLogLevel(int log_lvl)
 {
-
+#ifdef OLD_LOGGING
   log_stream_t *curr;
 
   /* mutex pour proteger le descriptor de log */
@@ -457,7 +459,7 @@ void fsal_layer_SetLogLevel(int log_lvl)
     }
 
   pthread_mutex_unlock(&mutex_log);
-
+#endif
 }
 
 static void getopt_init()
@@ -580,9 +582,10 @@ int fsal_init(char *filename, int flag_v, FILE * output)
   /* Free config struct */
   config_Free(config_file);
 
+#ifdef OLD_LOGGING
   /* overide log descriptor for FSAL */
-
   init_param.fsal_info.log_outputs = log_desc;
+#endif
 
   /* Initialization */
 

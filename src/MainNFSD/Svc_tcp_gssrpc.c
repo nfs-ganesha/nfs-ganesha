@@ -196,7 +196,7 @@ SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize)
   r = (struct tcp_rendezvous *)mem_alloc(sizeof(*r));
   if(r == NULL)
     {
-      (void)fprintf(stderr, "svctcp_create: out of memory\n");
+      LogCrit(COMPONENT_DISPATCH, "svctcp_create: out of memory");
       return (NULL);
     }
   r->sendsize = sendsize;
@@ -204,7 +204,7 @@ SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize)
   xprt = (SVCXPRT *) mem_alloc(sizeof(SVCXPRT));
   if(xprt == NULL)
     {
-      (void)fprintf(stderr, "svctcp_create: out of memory\n");
+      LogCrit(COMPONENT_DISPATCH, "svctcp_create: out of memory");
       return (NULL);
     }
   xprt->xp_p2 = NULL;
@@ -237,13 +237,13 @@ static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
   xprt = (SVCXPRT *) mem_alloc(sizeof(SVCXPRT));
   if(xprt == (SVCXPRT *) NULL)
     {
-      (void)fprintf(stderr, "svc_tcp: makefd_xprt: out of memory\n");
+      LogCrit(COMPONENT_DISPATCH, "svc_tcp: makefd_xprt: out of memory");
       goto done;
     }
   cd = (struct tcp_conn *)mem_alloc(sizeof(struct tcp_conn));
   if(cd == (struct tcp_conn *)NULL)
     {
-      (void)fprintf(stderr, "svc_tcp: makefd_xprt: out of memory\n");
+      LogCrit(COMPONENT_DISPATCH, "svc_tcp: makefd_xprt: out of memory");
       mem_free((char *)xprt, sizeof(SVCXPRT));
       xprt = (SVCXPRT *) NULL;
       goto done;

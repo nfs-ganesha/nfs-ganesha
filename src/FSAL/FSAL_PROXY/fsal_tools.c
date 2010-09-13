@@ -370,17 +370,18 @@ fsal_status_t PROXYFSAL_ExpandHandle(proxyfsal_export_context_t * p_expcontext, 
 
       rc = HandleMap_GetFH(&map_hdl, &tmp_hdl);
 
-#ifdef _DEBUG_FSAL
-      if(rc == HANDLEMAP_STALE)
-        printf("File id=%llu : HandleMap_GetFH returns HANDLEMAP_STALE\n",
-               map_hdl.object_id);
-      else if(rc == 0)
-        printf("File id=%llu : HandleMap_GetFH returns HANDLEMAP_SUCCESS\n",
-               map_hdl.object_id);
-      else
-        printf("File id=%llu : HandleMap_GetFH returns error %d\n", map_hdl.object_id,
-               rc);
-#endif
+      if(isFullDebug(COMPONENT_FSAL))
+        {
+          if(rc == HANDLEMAP_STALE)
+            LogFullDebug(COMPONENT_FSAL, "File id=%llu : HandleMap_GetFH returns HANDLEMAP_STALE\n",
+                         map_hdl.object_id);
+          else if(rc == 0)
+            LogFullDebug(COMPONENT_FSAL, "File id=%llu : HandleMap_GetFH returns HANDLEMAP_SUCCESS\n",
+                         map_hdl.object_id);
+          else
+            LogFullDebug(COMPONENT_FSAL, "File id=%llu : HandleMap_GetFH returns error %d\n",
+                         map_hdl.object_id, rc);
+        }
 
       if(rc == HANDLEMAP_STALE)
         ReturnCode(ERR_FSAL_STALE, rc);
@@ -443,15 +444,9 @@ fsal_status_t PROXYFSAL_ExpandHandle(proxyfsal_export_context_t * p_expcontext, 
  */
 fsal_status_t PROXYFSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 {
-
-  log_t no_logging = LOG_INITIALIZER;
-
   /* defensive programming... */
   if(out_parameter == NULL)
     ReturnCode(ERR_FSAL_FAULT, 0);
-
-  /* init logging to no logging */
-  out_parameter->fsal_info.log_outputs = no_logging;
 
   /* init max FS calls = unlimited */
   out_parameter->fsal_info.max_fs_calls = 0;
@@ -579,14 +574,14 @@ fsal_status_t PROXYFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
   if(block == NULL)
     {
-      DisplayLog("FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
-                 CONF_LABEL_FSAL);
+      LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
+              CONF_LABEL_FSAL);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
-      DisplayLog("FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
-                 CONF_LABEL_FSAL);
+      LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
+              CONF_LABEL_FSAL);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
 
@@ -603,9 +598,9 @@ fsal_status_t PROXYFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
       err = config_GetKeyValue(item, &key_name, &key_value);
       if(err)
         {
-          DisplayLog
-              ("FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
-               var_index, CONF_LABEL_FSAL);
+          LogCrit(COMPONENT_CONFIG,
+                  "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
+                  var_index, CONF_LABEL_FSAL);
           ReturnCode(ERR_FSAL_SERVERFAULT, err);
         }
 
@@ -615,8 +610,8 @@ fsal_status_t PROXYFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
           if(DebugLevel == -1)
             {
-              DisplayLog("FSAL LOAD PARAMETER: ERROR: Invalid debug level name: \"%s\".",
-                         key_value);
+              LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR: Invalid debug level name: \"%s\".",
+                      key_value);
               ReturnCode(ERR_FSAL_INVAL, -1);
             }
 
@@ -634,9 +629,9 @@ fsal_status_t PROXYFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
           if(maxcalls < 0)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: null or positive integer expected.",
-                   key_name);
+              LogCrit(COMPONENT_CONFIG,
+                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: null or positive integer expected.",
+                      key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
 
@@ -645,9 +640,9 @@ fsal_status_t PROXYFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
         }
       else
         {
-          DisplayLog
-              ("FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
-               key_name, CONF_LABEL_FSAL);
+          LogCrit(COMPONENT_CONFIG,
+                  "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
+                  key_name, CONF_LABEL_FSAL);
           ReturnCode(ERR_FSAL_INVAL, 0);
         }
 
@@ -656,21 +651,10 @@ fsal_status_t PROXYFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
   /* init logging */
 
   if(LogFile)
-    {
-      desc_log_stream_t log_stream;
+    SetComponentLogFile(COMPONENT_FSAL, LogFile);
 
-      strcpy(log_stream.path, LogFile);
-
-      /* Default : NIV_CRIT */
-
-      if(DebugLevel == -1)
-        AddLogStreamJd(&(out_parameter->fsal_info.log_outputs),
-                       V_FILE, log_stream, NIV_CRIT, SUP);
-      else
-        AddLogStreamJd(&(out_parameter->fsal_info.log_outputs),
-                       V_FILE, log_stream, DebugLevel, SUP);
-
-    }
+  if(DebugLevel != -1)
+    SetComponentLogLevel(COMPONENT_FSAL, DebugLevel);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
@@ -693,14 +677,14 @@ fsal_status_t PROXYFSAL_load_FS_common_parameter_from_conf(config_file_t in_conf
   /* cannot read item */
   if(block == NULL)
     {
-      DisplayLog("FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
-                 CONF_LABEL_FS_COMMON);
+      LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
+              CONF_LABEL_FS_COMMON);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
-      DisplayLog("FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
-                 CONF_LABEL_FS_COMMON);
+      LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
+              CONF_LABEL_FS_COMMON);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
 
@@ -727,9 +711,9 @@ fsal_status_t PROXYFSAL_load_FS_common_parameter_from_conf(config_file_t in_conf
       err = config_GetKeyValue(item, &key_name, &key_value);
       if(err)
         {
-          DisplayLog
-              ("FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
-               var_index, CONF_LABEL_FS_COMMON);
+          LogCrit(COMPONENT_CONFIG,
+                  "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
+                  var_index, CONF_LABEL_FS_COMMON);
           ReturnCode(ERR_FSAL_SERVERFAULT, err);
         }
 
@@ -741,9 +725,9 @@ fsal_status_t PROXYFSAL_load_FS_common_parameter_from_conf(config_file_t in_conf
 
           if(bool == -1)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
-                   key_name);
+              LogCrit(COMPONENT_CONFIG,
+                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
+                      key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
 
@@ -760,9 +744,9 @@ fsal_status_t PROXYFSAL_load_FS_common_parameter_from_conf(config_file_t in_conf
 
           if(bool == -1)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
-                   key_name);
+              LogCrit(COMPONENT_CONFIG,
+                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
+                      key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
 
@@ -778,9 +762,9 @@ fsal_status_t PROXYFSAL_load_FS_common_parameter_from_conf(config_file_t in_conf
 
           if(bool == -1)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
-                   key_name);
+              LogCrit(COMPONENT_CONFIG,
+                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
+                      key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
 
@@ -797,9 +781,9 @@ fsal_status_t PROXYFSAL_load_FS_common_parameter_from_conf(config_file_t in_conf
 
           if(s_read_int64(key_value, &size))
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
-                   key_name);
+              LogCrit(COMPONENT_CONFIG,
+                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
+                      key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
 
@@ -813,9 +797,9 @@ fsal_status_t PROXYFSAL_load_FS_common_parameter_from_conf(config_file_t in_conf
 
           if(s_read_int64(key_value, &size))
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
-                   key_name);
+              LogCrit(COMPONENT_CONFIG,
+                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
+                      key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
 
@@ -829,9 +813,9 @@ fsal_status_t PROXYFSAL_load_FS_common_parameter_from_conf(config_file_t in_conf
 
           if(mode < 0)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: octal expected.",
-                   key_name);
+              LogCrit(COMPONENT_CONFIG,
+                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: octal expected.",
+                      key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
 
@@ -845,9 +829,9 @@ fsal_status_t PROXYFSAL_load_FS_common_parameter_from_conf(config_file_t in_conf
 
           if(bool == -1)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
-                   key_name);
+              LogCrit(COMPONENT_CONFIG,
+                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
+                      key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
 
@@ -860,9 +844,9 @@ fsal_status_t PROXYFSAL_load_FS_common_parameter_from_conf(config_file_t in_conf
 
           if(mode < 0)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: octal expected.",
-                   key_name);
+              LogCrit(COMPONENT_CONFIG,
+                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: octal expected.",
+                      key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
 
@@ -872,9 +856,9 @@ fsal_status_t PROXYFSAL_load_FS_common_parameter_from_conf(config_file_t in_conf
         }
       else
         {
-          DisplayLog
-              ("FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
-               key_name, CONF_LABEL_FS_COMMON);
+          LogCrit(COMPONENT_CONFIG,
+                  "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
+                  key_name, CONF_LABEL_FS_COMMON);
           ReturnCode(ERR_FSAL_INVAL, 0);
         }
 
@@ -902,14 +886,14 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
   /* cannot read item */
   if(block == NULL)
     {
-      DisplayLog("FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
-                 CONF_LABEL_FS_SPECIFIC);
+      LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
+              CONF_LABEL_FS_SPECIFIC);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
-      DisplayLog("FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
-                 CONF_LABEL_FS_SPECIFIC);
+      LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
+              CONF_LABEL_FS_SPECIFIC);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
 
@@ -926,9 +910,9 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
       err = config_GetKeyValue(item, &key_name, &key_value);
       if(err)
         {
-          DisplayLog
-              ("FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
-               var_index, CONF_LABEL_FS_SPECIFIC);
+          LogCrit(COMPONENT_CONFIG,
+                  "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
+                  var_index, CONF_LABEL_FS_SPECIFIC);
           ReturnCode(ERR_FSAL_SERVERFAULT, err);
         }
 
@@ -946,8 +930,8 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
               /* This is a serveur name that is to be resolved. Use gethostbyname */
               if((hp = gethostbyname(key_value)) == NULL)
                 {
-                  DisplayLog("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s",
-                             key_name);
+                  LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s",
+                          key_name);
                   ReturnCode(ERR_FSAL_INVAL, 0);
                 }
               memcpy(&out_parameter->fs_specific_info.srv_addr, hp->h_addr, hp->h_length);
@@ -985,8 +969,8 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
           if(strncasecmp(key_value, "udp", MAXNAMLEN)
              && strncasecmp(key_value, "tcp", MAXNAMLEN))
             {
-              DisplayLog("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s --> %s",
-                         key_name, key_value);
+              LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s --> %s",
+                      key_name, key_value);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
           strncpy(out_parameter->fs_specific_info.srv_proto, key_value, MAXNAMLEN);
@@ -1023,8 +1007,8 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
             out_parameter->fs_specific_info.sec_type = RPCSEC_GSS_SVC_PRIVACY;
           else
             {
-              DisplayLog("FSAL LOAD PARAMETER: bad value %s for parameter %s", key_value,
-                         key_name);
+              LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: bad value %s for parameter %s", key_value,
+                      key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
 #endif
@@ -1040,9 +1024,9 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
 
           if(out_parameter->fs_specific_info.enable_handle_mapping == -1)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s --> %s (boolean expected)",
-                   key_name, key_value);
+              LogCrit(COMPONENT_CONFIG,
+                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s --> %s (boolean expected)",
+                      key_name, key_value);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
         }
@@ -1082,9 +1066,9 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
 
           if(out_parameter->fs_specific_info.enable_handle_mapping == -1)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s --> %s (boolean expected)",
-                   key_name, key_value);
+              LogCrit(COMPONENT_CONFIG,
+                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s --> %s (boolean expected)",
+                      key_name, key_value);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
         }
@@ -1117,9 +1101,9 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
 
       else
         {
-          DisplayLog
-              ("FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
-               key_name, CONF_LABEL_FS_SPECIFIC);
+          LogCrit(COMPONENT_CONFIG,
+                  "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
+                  key_name, CONF_LABEL_FS_SPECIFIC);
           ReturnCode(ERR_FSAL_INVAL, 0);
         }
 

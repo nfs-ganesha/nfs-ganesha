@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -28,7 +28,7 @@
  * \author  $Author: deniel $
  * \date    $Date: 2005/11/28 17:02:28 $
  * \version $Revision: 1.9 $
- * \brief   Program for testing cache_inode / lookup functions. 
+ * \brief   Program for testing cache_inode / lookup functions.
  *
  *
  */
@@ -83,11 +83,7 @@ int lru_clean_entry(LRU_entry_t * entry, void *adddata)
 
 main(int argc, char *argv[])
 {
-  log_t log_desc_fsal = LOG_INITIALIZER;
-  log_t log_desc_cache = LOG_INITIALIZER;
   char localmachine[256];
-  desc_log_stream_t voie_fsal;
-  desc_log_stream_t voie_cache;
 
   cache_inode_client_t client;
   LRU_parameter_t lru_param;
@@ -138,19 +134,21 @@ main(int argc, char *argv[])
   /* Init the Buddy System allocation */
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
-      fprintf(stderr, "Error while initializing the Buddy system allocator");
+      LogTest("Error while initializing the Buddy system allocator");
       exit(1);
     }
 
   /* init debug */
+
   SetNamePgm("test_cache_inode");
+  SetDefaultLogging("TEST");
   SetNameFunction("main");
-  SetNameFileLog("/dev/tty");
+  InitLogging();
 
 #if defined( _USE_GHOSTFS )
   if(argc != 2)
     {
-      fprintf(stderr, "Please set the configuration file as parameter\n");
+      LogTest("Please set the configuration file as parameter\n");
       exit(1);
     }
 #endif
@@ -158,25 +156,17 @@ main(int argc, char *argv[])
   /* Obtention du nom de la machine */
   if(gethostname(localmachine, sizeof(localmachine)) != 0)
     {
-      DisplayErrorLog(ERR_SYS, ERR_GETHOSTNAME, errno);
+      LogError(COMPONENT_STDOUT, ERR_SYS, ERR_GETHOSTNAME, errno);
       exit(1);
     }
   else
     SetNameHost(localmachine);
 
-  InitDebug(NIV_FULL_DEBUG);
   AddFamilyError(ERR_FSAL, "FSAL related Errors", tab_errstatus_FSAL);
   AddFamilyError(ERR_CACHE_INODE, "FSAL related Errors", tab_errstatus_cache_inode);
 
-  /* creating log */
-  voie_fsal.fd = fileno(stdout);
-  AddLogStreamJd(&log_desc_fsal, V_FD, voie_fsal, NIV_FULL_DEBUG, SUP);
-
-  voie_cache.fd = fileno(stdout);
-  AddLogStreamJd(&log_desc_cache, V_FD, voie_cache, NIV_FULL_DEBUG, SUP);
-
-  DisplayLogJd(log_desc_cache, "Starting the test");
-  DisplayLogJd(log_desc_cache, "-----------------");
+  LogTest("Starting the test");
+  LogTest("-----------------");
 
 #if defined( _USE_GHOSTFS )
 
@@ -185,7 +175,7 @@ main(int argc, char *argv[])
                                           &(init_param.fs_specific_info.
                                             definition_file))))
     {
-      DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
+      LogError(COMPONENT_STDOUT,ERR_FSAL, status.major, status.minor);
     }
 #elif defined( _USE_HPSS )
 
@@ -240,13 +230,10 @@ main(int argc, char *argv[])
   FSAL_SET_INIT_DEFAULT(init_param.fs_common_info, maxread);
   FSAL_SET_INIT_DEFAULT(init_param.fs_common_info, maxwrite);
 
-  /* 3- fsal info */
-  init_param.fsal_info.log_outputs = log_desc_fsal;
-
   /* Init */
   if(FSAL_IS_ERROR(status = FSAL_Init(&init_param)))
     {
-      DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
+      LogError(COMPONENT_STDOUT,ERR_FSAL, status.major, status.minor);
     }
 
   /* getting creds */
@@ -254,7 +241,7 @@ main(int argc, char *argv[])
 
   if(FSAL_IS_ERROR(status = FSAL_GetUserCred(uid, NULL, &cred)))
     {
-      DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
+      LogError(COMPONENT_STDOUT,ERR_FSAL, status.major, status.minor);
     }
 
   /* Init of the cache inode module */
@@ -269,13 +256,12 @@ main(int argc, char *argv[])
 
   if((ht = cache_inode_init(cache_param, &cache_status)) == NULL)
     {
-      DisplayLogJd(log_desc_cache, "Error %d while init hash ", cache_status);
+      LogTest("Error %d while init hash ", cache_status);
     }
   else
-    DisplayLogJd(log_desc_cache, "Hash Table address = %p", ht);
+    LogTest("Hash Table address = %p", ht);
 
   /* We need a cache_client to acces the cache */
-  cache_client_param.log_outputs = log_desc_cache;
   cache_client_param.attrmask =
       FSAL_ATTRS_MANDATORY | FSAL_ATTR_MTIME | FSAL_ATTR_CTIME | FSAL_ATTR_ATIME;
   cache_client_param.nb_prealloc_entry = 1000;
@@ -297,14 +283,14 @@ main(int argc, char *argv[])
   /* Getting the root of the FS */
   if((FSAL_IS_ERROR(status = FSAL_str2path("/", 2, &pathroot))))
     {
-      DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
+      LogError(COMPONENT_STDOUT,ERR_FSAL, status.major, status.minor);
       exit(1);
     }
 
   attribs.asked_attributes = cache_client_param.attrmask;
   if((FSAL_IS_ERROR(status = FSAL_lookupPath(pathroot, &cred, &root_handle, &attribs))))
     {
-      DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
+      LogError(COMPONENT_STDOUT,ERR_FSAL, status.major, status.minor);
       exit(1);
     }
   fsdata.cookie = 0;
@@ -314,7 +300,7 @@ main(int argc, char *argv[])
   if((cache_entry_root =
       cache_inode_make_root(&fsdata, 1, ht, &client, &cred, &cache_status)) == NULL)
     {
-      DisplayLogJd(log_desc_cache, "Error: can't init fs's root");
+      LogTest("Error: can't init fs's root");
       exit(1);
     }
 
@@ -329,19 +315,19 @@ main(int argc, char *argv[])
                          dirent_array,
                          ht, &client, &cred, &cache_status) != CACHE_INODE_SUCCESS)
     {
-      DisplayLogJd(log_desc_cache, "Error: cache_inode_readdir failed\n");
+      LogTest("Error: cache_inode_readdir failed\n");
       exit(1);
     }
 
-  DisplayLogJd(log_desc_cache, "Readdir nbfound=%d, eod_met=%d", nbfound, eod_met);
+  LogTest("Readdir nbfound=%d, eod_met=%d", nbfound, eod_met);
   for(i = 0; i < nbfound; i++)
-    DisplayLogJd(log_desc_cache, "dirent_array[%d] ==> %s | %p", i,
+    LogTest("dirent_array[%d] ==> %s | %p", i,
                  dirent_array[i].name.name, dirent_array[i].pentry);
 
   cache_inode_print_dir(cache_entry_root);
 
   /* looping on readir */
-  DisplayLogJd(log_desc_cache, "Loop directory in several pass");
+  LogTest("Loop directory in several pass");
 
   eod_met = TO_BE_CONTINUED;
   begin_cookie = 0;
@@ -357,12 +343,12 @@ main(int argc, char *argv[])
                              dirent_array_loop,
                              ht, &client, &cred, &cache_status) != CACHE_INODE_SUCCESS)
         {
-          printf("Error: cache_inode_readdir failed: %d\n", cache_status);
+          LogTest("Error: cache_inode_readdir failed: %d\n", cache_status);
           exit(1);
         }
 
       for(i = 0; i < nbfound; i++)
-        DisplayLogJd(log_desc_cache, " ==> %s | %p", dirent_array_loop[i].name.name,
+        LogTest(" ==> %s | %p", dirent_array_loop[i].name.name,
                      dirent_array_loop[i].pentry);
 
       begin_cookie += nbfound;
@@ -370,14 +356,14 @@ main(int argc, char *argv[])
     }
   while(eod_met == TO_BE_CONTINUED);
 
-  DisplayLogJd(log_desc_cache, "---------------------------------");
+  LogTest("---------------------------------");
 
   cache_inode_print_dir(cache_entry_root);
 
   /* A lookup in the root fsal */
   if((FSAL_IS_ERROR(status = FSAL_str2name("cea", 10, &name))))
     {
-      DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
+      LogError(COMPONENT_STDOUT,ERR_FSAL, status.major, status.minor);
       exit(1);
     }
 
@@ -386,7 +372,7 @@ main(int argc, char *argv[])
                                               &attrlookup,
                                               ht, &client, &cred, &cache_status)) == NULL)
     {
-      DisplayLogJd(log_desc_cache, "Error: can't lookup");
+      LogTest("Error: can't lookup");
       exit(1);
     }
 
@@ -397,20 +383,20 @@ main(int argc, char *argv[])
                                                ht,
                                                &client, &cred, &cache_status)) == NULL)
     {
-      DisplayLogJd(log_desc_fsal, "Error: can't lookup");
+      LogTest( "Error: can't lookup");
       exit(1);
     }
 
   if(cache_entry_lookup2 != cache_entry_lookup)
     {
-      printf("Error: lookup results should be the same\n");
+      LogTest("Error: lookup results should be the same\n");
       exit(1);
     }
 
   /* A lookup in the root fsal */
   if((FSAL_IS_ERROR(status = FSAL_str2name("log", 10, &name))))
     {
-      DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
+      LogError(COMPONENT_STDOUT,ERR_FSAL, status.major, status.minor);
       exit(1);
     }
 
@@ -420,7 +406,7 @@ main(int argc, char *argv[])
                                                ht,
                                                &client, &cred, &cache_status)) == NULL)
     {
-      DisplayLogJd(log_desc_cache, "Error: can't lookup");
+      LogTest("Error: can't lookup");
       exit(1);
     }
 
@@ -430,13 +416,13 @@ main(int argc, char *argv[])
                                                ht,
                                                &client, &cred, &cache_status)) == NULL)
     {
-      DisplayLogJd(log_desc_cache, "Error: can't lookup");
+      LogTest("Error: can't lookup");
       exit(1);
     }
 
   if(cache_entry_lookup3 != cache_entry_lookup4)
     {
-      printf("Error: lookup results should be the same\n");
+      LogTest("Error: lookup results should be the same\n");
       exit(1);
     }
 
@@ -446,7 +432,7 @@ main(int argc, char *argv[])
   /* A lookup in the root fsal */
   if((FSAL_IS_ERROR(status = FSAL_str2name("cea", 10, &name))))
     {
-      DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
+      LogError(COMPONENT_STDOUT,ERR_FSAL, status.major, status.minor);
       exit(1);
     }
 
@@ -455,14 +441,14 @@ main(int argc, char *argv[])
                                               &attrlookup,
                                               ht, &client, &cred, &cache_status)) == NULL)
     {
-      DisplayLogJd(log_desc_cache, "Error: can't lookup");
+      LogTest("Error: can't lookup");
       exit(1);
     }
 
   /* A lookup in the root fsal */
   if((FSAL_IS_ERROR(status = FSAL_str2name("log", 10, &name))))
     {
-      DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
+      LogError(COMPONENT_STDOUT,ERR_FSAL, status.major, status.minor);
       exit(1);
     }
 
@@ -471,14 +457,14 @@ main(int argc, char *argv[])
                                               &attrlookup,
                                               ht, &client, &cred, &cache_status)) == NULL)
     {
-      DisplayLogJd(log_desc_cache, "Error: can't lookup");
+      LogTest("Error: can't lookup");
       exit(1);
     }
 
-  DisplayLogJd(log_desc_cache, "---------------------------------");
+  LogTest("---------------------------------");
 
   /* The end of all the tests */
-  DisplayLogJd(log_desc_cache, "All tests exited successfully");
+  LogTest("All tests exited successfully");
 
   exit(0);
 }                               /* main */

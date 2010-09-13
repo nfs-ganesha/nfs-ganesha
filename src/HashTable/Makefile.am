@@ -5,18 +5,18 @@ libhashtable_la_SOURCES       = HashTable.c                \
                                 ../include/HashData.h      \
                                 ../include/err_HashTable.h
    
-			        
+TESTS = test_libcmc test_libcmc_bugdelete 
 
 check_PROGRAMS                  = test_libcmc test_libcmc_bugdelete test_libcmc_config
 
 test_libcmc_SOURCES             = test_cmchash.c
-test_libcmc_LDADD               = libhashtable.la ../BuddyMalloc/libBuddyMalloc.la ../RW_Lock/librwlock.la ../test/liboutils_profiling.la -lpthread
+test_libcmc_LDADD               = libhashtable.la ../BuddyMalloc/libBuddyMalloc.la ../RW_Lock/librwlock.la ../Log/liblog.la ../test/liboutils_profiling.la -lpthread
 
 test_libcmc_bugdelete_SOURCES   = test_cmchash_bugdelete.c
-test_libcmc_bugdelete_LDADD     = libhashtable.la ../BuddyMalloc/libBuddyMalloc.la ../RW_Lock/librwlock.la ../test/liboutils_profiling.la -lpthread
+test_libcmc_bugdelete_LDADD     = libhashtable.la ../BuddyMalloc/libBuddyMalloc.la ../RW_Lock/librwlock.la ../Log/liblog.la ../test/liboutils_profiling.la -lpthread
 
 test_libcmc_config_SOURCES      = test_configurable_hash.c
-test_libcmc_config_LDADD        = libhashtable.la ../BuddyMalloc/libBuddyMalloc.la ../RW_Lock/librwlock.la ../test/liboutils_profiling.la -lpthread
+test_libcmc_config_LDADD        = libhashtable.la ../BuddyMalloc/libBuddyMalloc.la ../RW_Lock/librwlock.la ../Log/liblog.la ../test/liboutils_profiling.la -lpthread
 
 new: clean all
 

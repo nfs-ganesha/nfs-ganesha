@@ -693,7 +693,6 @@ typedef struct fs_common_initinfo__
 
 typedef struct fsal_init_info__
 {
-  log_t log_outputs;          /**< outputs for logging. */
   unsigned int max_fs_calls;  /**< max number of FS calls. 0 = infinite */
 } fsal_init_info_t;
 

@@ -306,7 +306,6 @@ typedef struct mfsl_context__
   mfsl_async_op_desc_t *pool_async_op;
   pthread_mutex_t lock;
   unsigned int synclet_index;
-  log_t log_outputs;
   mfsl_precreated_object_t *pool_dirs;
   mfsl_precreated_object_t *pool_files;
   unsigned int avail_pool_dirs;

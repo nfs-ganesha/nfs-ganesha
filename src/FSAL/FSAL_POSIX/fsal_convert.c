@@ -309,8 +309,7 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
   unsupp_attr = (p_fsalattr_out->asked_attributes) & (~supp_attr);
   if(unsupp_attr)
     {
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-                        "Unsupported attributes: %#llX", unsupp_attr);
+      LogFullDebug(COMPONENT_FSAL, "Unsupported attributes: %#llX", unsupp_attr);
       ReturnCode(ERR_FSAL_ATTRNOTSUPP, 0);
     }
 
@@ -414,8 +413,7 @@ fsal_status_t posixdb2fsal_error(fsal_posixdb_status_t statusdb)
   switch (statusdb.major)
     {
     case ERR_FSAL_POSIXDB_TOOMANYPATHS:
-      DisplayLogJdLevel(fsal_log, NIV_EVENT,
-                        "Fsal posixdb : too many paths !", statusdb.minor);
+      LogEvent(COMPONENT_FSAL, "Fsal posixdb : too many paths !", statusdb.minor);
     case ERR_FSAL_POSIXDB_NOERR:
       ReturnCode(ERR_FSAL_NO_ERROR, statusdb.major);
 
@@ -437,8 +435,7 @@ fsal_status_t posixdb2fsal_error(fsal_posixdb_status_t statusdb)
       ReturnCode(ERR_FSAL_NAMETOOLONG, statusdb.major);
 
     default:
-      DisplayLogJdLevel(fsal_log, NIV_EVENT,
-                        "Unknown posixdb error type: %d", statusdb.major);
+      LogEvent(COMPONENT_FSAL, "Unknown posixdb error type: %d", statusdb.major);
       ReturnCode(ERR_FSAL_FAULT, statusdb.major);
     }
 }

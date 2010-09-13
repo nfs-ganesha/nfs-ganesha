@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -43,15 +43,13 @@
 #include "mfsl_types.h"
 #include "mfsl.h"
 #include "stuff_alloc.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "config_parsing.h"
 
 #include "strings.h"
 #include "string.h"
 
 #ifndef _USE_SWIG
-
-log_t log_outputs;                            /**< Log descriptor                                   */
 
 /******************************************************
  *            Attribute mask management.
@@ -63,7 +61,7 @@ log_t log_outputs;                            /**< Log descriptor               
  *
  * cleans an entry in a nfs request LRU.
  *
- * @param pentry [INOUT] entry to be cleaned. 
+ * @param pentry [INOUT] entry to be cleaned.
  * @param addparam [IN] additional parameter used for cleaning.
  *
  * @return 0 if ok, other values mean an error.
@@ -83,11 +81,11 @@ int mfsl_async_clean_pending_request(LRU_entry_t * pentry, void *addparam)
 /**
  *
  * mfsl_async_print_pending_request: prints an entry related to a pending request in the LRU list.
- * 
+ *
  * prints an entry related to a pending request in the LRU list.
  *
  * @param data [IN] data stored in a LRU entry to be printed.
- * @param str [OUT] string used to store the result. 
+ * @param str [OUT] string used to store the result.
  *
  * @return 0 if ok, other values mean an error.
  *
@@ -161,7 +159,7 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_MFSL_ASYNC)) == NULL)
     {
-      DisplayLog("/!\\ Cannot read item \"%s\" from configuration file\n",
+      LogMajor(COMPONENT_MFSL, "/!\\ Cannot read item \"%s\" from configuration file\n",
                  CONF_LABEL_MFSL_ASYNC);
       MFSL_return(ERR_FSAL_NOENT, 0);
     }
@@ -175,18 +173,18 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
 
       if((err = config_GetKeyValue(item, &key_name, &key_value)) > 0)
         {
-          DisplayLog
-              ("MFSL ASYNC LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
+          LogMajor(COMPONENT_MFSL,
+              "MFSL ASYNC LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
                var_index, CONF_LABEL_MFSL_ASYNC);
           MFSL_return(ERR_FSAL_SERVERFAULT, err);
         }
 
       if(!strcasecmp(key_name, "Nb_Synclet"))
         {
-          DisplayLog
-              ("MFSL ASYNC LOAD PARAMETER: the asyncop scheduler is not yet implemented. Only one synclet managed");
-          DisplayLog
-              ("MFSL ASYNC LOAD PARAMETER: Parameter Nb_Synclet = %s will be ignored",
+          LogCrit(COMPONENT_MFSL,
+              "MFSL ASYNC LOAD PARAMETER: the asyncop scheduler is not yet implemented. Only one synclet managed");
+          LogCrit(COMPONENT_MFSL,
+              "MFSL ASYNC LOAD PARAMETER: Parameter Nb_Synclet = %s will be ignored",
                key_value);
           //pparam->nb_synclet = atoi( key_value ) ;
           pparam->nb_synclet = 1;
@@ -233,8 +231,8 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
 
           if(DebugLevel == -1)
             {
-              DisplayLog
-                  ("cache_content_read_conf: ERROR: Invalid debug level name: \"%s\".",
+              LogMajor(COMPONENT_MFSL,
+                  "cache_content_read_conf: ERROR: Invalid debug level name: \"%s\".",
                    key_value);
               MFSL_return(ERR_FSAL_INVAL, 0);
             }
@@ -246,8 +244,8 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
 
       else
         {
-          DisplayLog
-              ("MFSL ASYNC LOAD PARAMETER: Unknown or unsettable key %s from section \"%s\" of configuration file.",
+          LogMajor(COMPONENT_MFSL,
+              "MFSL ASYNC LOAD PARAMETER: Unknown or unsettable key %s from section \"%s\" of configuration file.",
                key_name, CONF_LABEL_MFSL_ASYNC);
           MFSL_return(ERR_FSAL_INVAL, 0);
         }
@@ -255,19 +253,10 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
     }                           /* for */
 
   if(LogFile)
-    {
-      desc_log_stream_t log_stream;
+    SetComponentLogFile(COMPONENT_FSAL, LogFile);
 
-      strcpy(log_stream.path, LogFile);
-
-      /* Default : NIV_CRIT */
-
-      if(DebugLevel == -1)
-        AddLogStreamJd(&log_outputs, V_FILE, log_stream, NIV_CRIT, SUP);
-      else
-        AddLogStreamJd(&log_outputs, V_FILE, log_stream, DebugLevel, SUP);
-
-    }
+  if(DebugLevel != -1)
+    SetComponentLogLevel(COMPONENT_FSAL, DebugLevel);
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
 }                               /* MFSL_load_parameter_from_conf */

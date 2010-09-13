@@ -146,12 +146,12 @@ void nfs_debug_debug_label_info()
   BuddyLabelsSummary();
 
   BuddyGetStats(&bstats);
-  LogPrintf(COMPONENT_MEMLEAKS,"------- TOTAL SPACE USED FOR WORKER THREAD: %12lu (on %2u pages)\n",
+  LogFullDebug(COMPONENT_MEMLEAKS,"------- TOTAL SPACE USED FOR WORKER THREAD: %12lu (on %2u pages)",
          (unsigned long)bstats.StdUsedSpace, bstats.NbStdUsed);
 
   /* DisplayMemoryMap(); */
 
-  LogPrintf(COMPONENT_MEMLEAKS,"--------------------------------------------------\n");
+  LogFullDebug(COMPONENT_MEMLEAKS,"--------------------------------------------------");
 
 }                               /* nfs_debug_debug_label_info */
 
@@ -162,10 +162,10 @@ void nfs_debug_buddy_info()
   BuddyLabelsSummary();
 
   BuddyGetStats(&bstats);
-  LogPrintf(COMPONENT_MEMLEAKS,"------- TOTAL SPACE USED FOR DISPATCHER THREAD: %12lu (on %2u pages)\n",
+  LogFullDebug(COMPONENT_MEMLEAKS,"------- TOTAL SPACE USED FOR DISPATCHER THREAD: %12lu (on %2u pages)",
          (unsigned long)bstats.StdUsedSpace, bstats.NbStdUsed);
 
-  LogPrintf(COMPONENT_MEMLEAKS,"--------------------------------------------------\n");
+  LogFullDebug(COMPONENT_MEMLEAKS,"--------------------------------------------------");
 }
 
 #endif
@@ -182,7 +182,7 @@ void nfs_debug_buddy_info()
  */
 void nfs_rpc_dispatch_dummy(struct svc_req *ptr_req, SVCXPRT * ptr_svc)
 {
-  LogMessage(COMPONENT_DISPATCH,
+  LogMajor(COMPONENT_DISPATCH,
       "NFS DISPATCH DUMMY: Possible error, function nfs_rpc_dispatch_dummy should never be called");
   return;
 }                               /* nfs_rpc_dispatch_dummy */
@@ -243,55 +243,51 @@ int nfs_Init_svc()
   FD_ZERO(&Svc_fdset);
 
 #ifdef _USE_TIRPC
-  LogMessage(COMPONENT_DISPATCH, "NFS INIT: Using TIRPC");
-#endif
+  LogEvent(COMPONENT_DISPATCH, "NFS INIT: Using TIRPC");
 
-#ifdef _USE_TIRPC_IPV6
-  LogMessage(COMPONENT_DISPATCH, "NFS INIT: Using IPv6");
-#endif
-
-#ifdef _USE_TIRPC
   /* Get the netconfig entries from /etc/netconfig */
   if((netconfig_udpv4 = (struct netconfig *)getnetconfigent("udp")) == NULL)
     {
-      LogMessage(COMPONENT_DISPATCH,
+      LogCrit(COMPONENT_DISPATCH,
           "/!\\ Cannot get a entry for udp in netconfig file. Check file /etc/netconfig...");
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot get udp netconfig");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot get udp netconfig");
       return -1;
     }
 
   /* Get the netconfig entries from /etc/netconfig */
   if((netconfig_tcpv4 = (struct netconfig *)getnetconfigent("tcp")) == NULL)
     {
-      LogMessage(COMPONENT_DISPATCH,
+      LogCrit(COMPONENT_DISPATCH,
           "/!\\ Cannot get a entry for tcp in netconfig file. Check file /etc/netconfig...");
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot get tcp netconfig");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot get tcp netconfig");
       return -1;
     }
 #ifdef _USE_TIRPC_IPV6
+  LogEvent(COMPONENT_DISPATCH, "NFS INIT: Using IPv6");
+
   /* Get the netconfig entries from /etc/netconfig */
   if((netconfig_udpv6 = (struct netconfig *)getnetconfigent("udp6")) == NULL)
     {
-      LogMessage(COMPONENT_DISPATCH,
+      LogCrit(COMPONENT_DISPATCH,
           "/!\\ Cannot get a entry for udp6 in netconfig file. Check file /etc/netconfig...");
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot get udp6 netconfig");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot get udp6 netconfig");
       return -1;
     }
 
   /* Get the netconfig entries from /etc/netconfig */
   if((netconfig_tcpv6 = (struct netconfig *)getnetconfigent("tcp6")) == NULL)
     {
-      LogMessage(COMPONENT_DISPATCH,
+      LogCrit(COMPONENT_DISPATCH,
           "/!\\ Cannot get a entry for tcp in netconfig file. Check file /etc/netconfig...");
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot get tcp6 netconfig");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot get tcp6 netconfig");
       return -1;
     }
 #endif
 
   /* A short message to show that /etc/netconfig parsing was a success */
-  LogMessage(COMPONENT_DISPATCH, "netconfig found for UDPv4 and TCPv4");
+  LogEvent(COMPONENT_DISPATCH, "netconfig found for UDPv4 and TCPv4");
 #ifdef _USE_TIRPC_IPV6
-  LogMessage(COMPONENT_DISPATCH, "netconfig found for UDPv6 and TCPv6");
+  LogEvent(COMPONENT_DISPATCH, "netconfig found for UDPv6 and TCPv6");
 #endif
 
   /* RW_lock need to be initialized */
@@ -305,7 +301,7 @@ int nfs_Init_svc()
       socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SOCKET, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a udp socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a udp socket");
       return -1;
     }
 
@@ -313,7 +309,7 @@ int nfs_Init_svc()
       socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SOCKET, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a tcp socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a tcp socket");
       return -1;
     }
 
@@ -321,7 +317,7 @@ int nfs_Init_svc()
       socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SOCKET, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a udp socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a udp socket");
       return -1;
     }
 
@@ -329,7 +325,7 @@ int nfs_Init_svc()
       socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SOCKET, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a tcp socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a tcp socket");
       return -1;
     }
 #ifdef _USE_NLM
@@ -337,7 +333,7 @@ int nfs_Init_svc()
       socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SOCKET, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a udp socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a udp socket");
       return -1;
     }
 
@@ -345,7 +341,7 @@ int nfs_Init_svc()
       socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SOCKET, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a tcp socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a tcp socket");
       return -1;
     }
 #endif                          /* USE_NLM */
@@ -355,7 +351,7 @@ int nfs_Init_svc()
       socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SOCKET, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a udp socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a udp socket");
       return -1;
     }
 
@@ -363,7 +359,7 @@ int nfs_Init_svc()
       socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SOCKET, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a tcp socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a tcp socket");
       return -1;
     }
 #endif                          /* _USE_QUOTA */
@@ -374,7 +370,7 @@ int nfs_Init_svc()
       socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP)) < 0)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SOCKET, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a udp6 socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a udp6 socket");
       return -1;
     }
 
@@ -382,7 +378,7 @@ int nfs_Init_svc()
       socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SOCKET, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a tcp6 socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a tcp6 socket");
       return -1;
 
     }
@@ -391,7 +387,7 @@ int nfs_Init_svc()
       socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP)) < 0)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SOCKET, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a udp6 socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a udp6 socket");
       return -1;
     }
 
@@ -399,7 +395,7 @@ int nfs_Init_svc()
       socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SOCKET, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a tcp6 socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a tcp6 socket");
       return -1;
     }
 #ifdef _USE_NLM
@@ -407,7 +403,7 @@ int nfs_Init_svc()
       socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP)) < 0)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SOCKET, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a udp6 socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a udp6 socket");
       return -1;
     }
 
@@ -415,7 +411,7 @@ int nfs_Init_svc()
       socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SOCKET, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a tcp6 socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a tcp6 socket");
       return -1;
     }
 #endif                          /* _USE_NLM */
@@ -425,7 +421,7 @@ int nfs_Init_svc()
       socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP)) < 0)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SOCKET, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a udp6 socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a udp6 socket");
       return -1;
     }
 
@@ -433,7 +429,7 @@ int nfs_Init_svc()
       socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SOCKET, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a tcp6 socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate a tcp6 socket");
       return -1;
     }
 #endif                          /* _USE_QUOTA */
@@ -445,7 +441,7 @@ int nfs_Init_svc()
                 SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SETSOCKOPT, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Bad udp socket options");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Bad udp socket options");
       return -1;
     }
 
@@ -453,7 +449,7 @@ int nfs_Init_svc()
                 SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SETSOCKOPT, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Bad tcp socket options");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Bad tcp socket options");
       return -1;
     }
 
@@ -463,7 +459,7 @@ int nfs_Init_svc()
                 SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SETSOCKOPT, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Bad udp socket options");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Bad udp socket options");
       return -1;
     }
 
@@ -471,7 +467,7 @@ int nfs_Init_svc()
                 SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SETSOCKOPT, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Bad tcp socket options");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Bad tcp socket options");
       return -1;
     }
 #ifdef _USE_NLM
@@ -479,7 +475,7 @@ int nfs_Init_svc()
                 SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SETSOCKOPT, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Bad udp socket options");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Bad udp socket options");
       return -1;
     }
 
@@ -487,7 +483,7 @@ int nfs_Init_svc()
                 SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SETSOCKOPT, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Bad tcp socket options");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Bad tcp socket options");
       return -1;
     }
 #endif                          /* _USE_NLM */
@@ -497,7 +493,7 @@ int nfs_Init_svc()
                 SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SETSOCKOPT, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Bad udp socket options");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Bad udp socket options");
       return -1;
     }
 
@@ -505,7 +501,7 @@ int nfs_Init_svc()
                 SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_SETSOCKOPT, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Bad tcp socket options");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Bad tcp socket options");
       return -1;
     }
 #endif                          /* _USE_QUOTA */
@@ -514,21 +510,21 @@ int nfs_Init_svc()
   if(fcntl(nfs_param.worker_param.nfs_svc_data.socket_nfs_udp, F_SETFL, FNDELAY) == -1)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_FCNTL, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot set udp socket as non blocking");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot set udp socket as non blocking");
       return -1;
     }
 
   if(fcntl(nfs_param.worker_param.nfs_svc_data.socket_mnt_udp, F_SETFL, FNDELAY) == -1)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_FCNTL, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot set udp socket as non blocking");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot set udp socket as non blocking");
       return -1;
     }
 #ifdef _USE_NLM
   if(fcntl(nfs_param.worker_param.nfs_svc_data.socket_nlm_udp, F_SETFL, FNDELAY) == -1)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_FCNTL, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot set udp socket as non blocking");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot set udp socket as non blocking");
       return -1;
     }
 #endif                          /* _USE_NLM */
@@ -537,7 +533,7 @@ int nfs_Init_svc()
   if(fcntl(nfs_param.worker_param.nfs_svc_data.socket_rquota_udp, F_SETFL, FNDELAY) == -1)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_FCNTL, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot set udp socket as non blocking");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot set udp socket as non blocking");
       return -1;
     }
 #endif                          /* _USE_QUOTA */
@@ -576,7 +572,7 @@ int nfs_Init_svc()
           (struct sockaddr *)&sinaddr_nfs, sizeof(sinaddr_nfs)) == -1)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_BIND, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind udp socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind udp socket");
       return -1;
     }
 
@@ -584,7 +580,7 @@ int nfs_Init_svc()
                 (struct sockaddr *)&sinaddr_nfs, sizeof(sinaddr_nfs))) == -1)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_BIND, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind tcp socket rc=%d errno=%d", rc, errno);
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind tcp socket rc=%d errno=%d", rc, errno);
       return -1;
     }
 
@@ -599,7 +595,7 @@ int nfs_Init_svc()
           (struct sockaddr *)&sinaddr_mnt, sizeof(sinaddr_mnt)) == -1)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_BIND, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind udp socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind udp socket");
       return -1;
     }
 
@@ -607,7 +603,7 @@ int nfs_Init_svc()
                 (struct sockaddr *)&sinaddr_mnt, sizeof(sinaddr_mnt))) == -1)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_BIND, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind tcp socket rc=%d errno=%d", rc, errno);
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind tcp socket rc=%d errno=%d", rc, errno);
       return -1;
     }
 #ifdef _USE_NLM
@@ -622,7 +618,7 @@ int nfs_Init_svc()
           (struct sockaddr *)&sinaddr_nlm, sizeof(sinaddr_nlm)) == -1)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_BIND, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind udp socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind udp socket");
       return -1;
     }
 
@@ -630,7 +626,7 @@ int nfs_Init_svc()
                 (struct sockaddr *)&sinaddr_nlm, sizeof(sinaddr_nlm))) == -1)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_BIND, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind tcp socket rc=%d errno=%d", rc, errno);
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind tcp socket rc=%d errno=%d", rc, errno);
       return -1;
     }
 #endif                          /* _USE_NLM */
@@ -647,7 +643,7 @@ int nfs_Init_svc()
           (struct sockaddr *)&sinaddr_rquota, sizeof(sinaddr_rquota)) == -1)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_BIND, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind udp socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind udp socket");
       return -1;
     }
 
@@ -655,7 +651,7 @@ int nfs_Init_svc()
                 (struct sockaddr *)&sinaddr_rquota, sizeof(sinaddr_rquota))) == -1)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_BIND, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind tcp socket rc=%d errno=%d", rc, errno);
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind tcp socket rc=%d errno=%d", rc, errno);
       return -1;
     }
 #endif                          /* _USE_QUOTA */
@@ -676,7 +672,7 @@ int nfs_Init_svc()
 
   if(!__rpc_fd2sockinfo(nfs_param.worker_param.nfs_svc_data.socket_nfs_udp, &si_nfs_udp6))
     {
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot get socket info for udp6 socket rc=%d errno=%d", rc,
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot get socket info for udp6 socket rc=%d errno=%d", rc,
                  errno);
       return -1;
     }
@@ -695,7 +691,7 @@ int nfs_Init_svc()
 
   if(!__rpc_fd2sockinfo(nfs_param.worker_param.nfs_svc_data.socket_nfs_tcp, &si_nfs_tcp6))
     {
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot get socket info for tcp6 socket rc=%d errno=%d", rc,
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot get socket info for tcp6 socket rc=%d errno=%d", rc,
                  errno);
       return -1;
     }
@@ -705,7 +701,7 @@ int nfs_Init_svc()
           (socklen_t) si_nfs_tcp6.si_alen) == -1)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_BIND, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind tcp6 socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind tcp6 socket");
       return -1;
     }
 
@@ -714,7 +710,7 @@ int nfs_Init_svc()
           (socklen_t) si_nfs_udp6.si_alen) == -1)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_BIND, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind udp6 socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind udp6 socket");
       return -1;
     }
 
@@ -732,7 +728,7 @@ int nfs_Init_svc()
 
   if(!__rpc_fd2sockinfo(nfs_param.worker_param.nfs_svc_data.socket_mnt_udp, &si_mnt_udp6))
     {
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot get socket info for udp6 socket rc=%d errno=%d", rc,
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot get socket info for udp6 socket rc=%d errno=%d", rc,
                  errno);
       return -1;
     }
@@ -751,7 +747,7 @@ int nfs_Init_svc()
 
   if(!__rpc_fd2sockinfo(nfs_param.worker_param.nfs_svc_data.socket_mnt_tcp, &si_mnt_tcp6))
     {
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot get socket info for udp6 socket rc=%d errno=%d", rc,
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot get socket info for udp6 socket rc=%d errno=%d", rc,
                  errno);
       return -1;
     }
@@ -761,7 +757,7 @@ int nfs_Init_svc()
           (socklen_t) si_mnt_tcp6.si_alen) == -1)
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_BIND, errno);
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind tcp6 socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind tcp6 socket");
       return -1;
     }
 
@@ -771,7 +767,7 @@ int nfs_Init_svc()
     {
       LogError(COMPONENT_DISPATCH, ERR_SYS, ERR_BIND, errno);
 
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind udp6 socket");
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot bind udp6 socket");
       return -1;
     }
   /* FIXME do the nlm part here */
@@ -850,7 +846,7 @@ int nfs_Init_svc()
 #endif
   {
     LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVCUDP_CREATE, 0);
-    LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate NFS/UDP SVCXPRT");
+    LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate NFS/UDP SVCXPRT");
     return -1;
   }
 
@@ -871,7 +867,7 @@ int nfs_Init_svc()
 #endif
   {
     LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVCTCP_CREATE, 0);
-    LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate NFS/TCP SVCXPRT");
+    LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate NFS/TCP SVCXPRT");
     return -1;
   }
 
@@ -880,7 +876,7 @@ int nfs_Init_svc()
      (nfs_param.worker_param.nfs_svc_data.socket_nfs_tcp,
       (int)bindaddr_nfs_tcp6.qlen) != 0)
     {
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot listen on  NFS/TCPv6 SVCXPRT, errno=%u", errno);
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot listen on  NFS/TCPv6 SVCXPRT, errno=%u", errno);
       return -1;
     }
 
@@ -900,7 +896,7 @@ int nfs_Init_svc()
 #endif
   {
     LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVCUDP_CREATE, 0);
-    LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate MNT/UDP SVCXPRT");
+    LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate MNT/UDP SVCXPRT");
     return -1;
   }
 
@@ -921,7 +917,7 @@ int nfs_Init_svc()
 #endif
   {
     LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVCTCP_CREATE, 0);
-    LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate MNT/TCP SVCXPRT");
+    LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate MNT/TCP SVCXPRT");
     return -1;
   }
 
@@ -936,7 +932,7 @@ int nfs_Init_svc()
 #endif                          /* _USE_TIRPC */
   {
     LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVCUDP_CREATE, 0);
-    LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate NLM/UDP SVCXPRT");
+    LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate NLM/UDP SVCXPRT");
     return -1;
   }
 
@@ -950,7 +946,7 @@ int nfs_Init_svc()
 #endif                          /* _USE_TIRPC */
   {
     LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVCTCP_CREATE, 0);
-    LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate NLM/TCP SVCXPRT");
+    LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate NLM/TCP SVCXPRT");
     return -1;
   }
 #endif                          /* _USE_NLM */
@@ -966,7 +962,7 @@ int nfs_Init_svc()
 #endif                          /* _USE_TIRPC */
   {
     LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVCUDP_CREATE, 0);
-    LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate RQUOTA/UDP SVCXPRT");
+    LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate RQUOTA/UDP SVCXPRT");
     return -1;
   }
 
@@ -980,7 +976,7 @@ int nfs_Init_svc()
 #endif                          /* _USE_TIRPC */
   {
     LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVCTCP_CREATE, 0);
-    LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate RQUOTA/TCP SVCXPRT");
+    LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot allocate RQUOTA/TCP SVCXPRT");
     return -1;
   }
 #endif                          /* _USE_QUOTA */
@@ -990,7 +986,7 @@ int nfs_Init_svc()
      (nfs_param.worker_param.nfs_svc_data.socket_mnt_tcp,
       (int)bindaddr_mnt_tcp6.qlen) != 0)
     {
-      LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot listen on  MNT/TCPv6 SVCXPRT, errno=%u", errno);
+      LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot listen on  MNT/TCPv6 SVCXPRT, errno=%u", errno);
       return -1;
     }
 
@@ -1006,7 +1002,7 @@ int nfs_Init_svc()
     {
       if(Svcauth_gss_import_name(nfs_param.krb5_param.principal) != TRUE)
         {
-          LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Could not import principal name %s into GSSAPI",
+          LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Could not import principal name %s into GSSAPI",
                      nfs_param.krb5_param.principal);
           exit(1);
         }
@@ -1019,7 +1015,7 @@ int nfs_Init_svc()
           /* Trying to acquire a credentials for checking name's validity */
           if(!Svcauth_gss_acquire_cred())
             {
-              LogMessage(COMPONENT_DISPATCH, "NFS EXIT: Cannot acquire credentials for principal %s",
+              LogCrit(COMPONENT_DISPATCH, "NFS EXIT: Cannot acquire credentials for principal %s",
                          nfs_param.krb5_param.principal);
               exit(1);
             }
@@ -1054,7 +1050,7 @@ int nfs_Init_svc()
 #endif
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V2 on UDP");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V2 on UDP");
     }
   else
     nb_svc_nfs_ok += 1;
@@ -1071,7 +1067,7 @@ int nfs_Init_svc()
 #endif
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V3 on UDP");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V3 on UDP");
     }
   else
     nb_svc_nfs_ok += 1;
@@ -1089,7 +1085,7 @@ int nfs_Init_svc()
 #endif
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V4 on UDP");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V4 on UDP");
     }
   else
     {
@@ -1106,7 +1102,7 @@ int nfs_Init_svc()
               NFS_V2, nfs_rpc_dispatch_dummy, netconfig_udpv6))
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V2 on UDPv6");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V2 on UDPv6");
     }
   else
     nb_svc_nfs_ok += 1;
@@ -1117,7 +1113,7 @@ int nfs_Init_svc()
               NFS_V3, nfs_rpc_dispatch_dummy, netconfig_udpv6))
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V3 on UDPv6");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V3 on UDPv6");
     }
   else
     nb_svc_nfs_ok += 1;
@@ -1128,7 +1124,7 @@ int nfs_Init_svc()
               NFS_V4, nfs_rpc_dispatch_dummy, netconfig_udpv6))
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V4 on UDPv6");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V4 on UDPv6");
     }
   else
     nb_svc_nfs_ok += 1;
@@ -1152,7 +1148,7 @@ int nfs_Init_svc()
 #endif
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V2 on TCP");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V2 on TCP");
     }
   else
     nb_svc_nfs_ok += 1;
@@ -1169,7 +1165,7 @@ int nfs_Init_svc()
 #endif
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V3 on TCP");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V3 on TCP");
     }
   else
     nb_svc_nfs_ok += 1;
@@ -1187,7 +1183,7 @@ int nfs_Init_svc()
 #endif
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V4 on TCP");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V4 on TCP");
     }
   else
     {
@@ -1204,7 +1200,7 @@ int nfs_Init_svc()
               NFS_V2, nfs_rpc_dispatch_dummy, netconfig_tcpv6))
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V2 on TCPv6");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V2 on TCPv6");
     }
   else
     nb_svc_nfs_ok += 1;
@@ -1215,7 +1211,7 @@ int nfs_Init_svc()
               NFS_V3, nfs_rpc_dispatch_dummy, netconfig_tcpv6))
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V3 on TCPv6");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V3 on TCPv6");
     }
   else
     nb_svc_nfs_ok += 1;
@@ -1226,7 +1222,7 @@ int nfs_Init_svc()
               NFS_V4, nfs_rpc_dispatch_dummy, netconfig_tcpv6))
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V4 on TCPv6");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NFS V4 on TCPv6");
     }
   else
     nb_svc_nfs_ok += 1;
@@ -1248,7 +1244,7 @@ int nfs_Init_svc()
 #endif
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register MOUNT V1 on UDP");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register MOUNT V1 on UDP");
     }
   else
     nb_svc_mnt_ok += 1;
@@ -1265,7 +1261,7 @@ int nfs_Init_svc()
 #endif
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register MOUNT V3 on UDP");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register MOUNT V3 on UDP");
     }
   else
     nb_svc_mnt_ok += 1;
@@ -1278,7 +1274,7 @@ int nfs_Init_svc()
               MOUNT_V1, nfs_rpc_dispatch_dummy, netconfig_udpv6))
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register MOUNT V1 on UDPv6");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register MOUNT V1 on UDPv6");
     }
   else
     nb_svc_mnt_ok += 1;
@@ -1289,7 +1285,7 @@ int nfs_Init_svc()
               MOUNT_V3, nfs_rpc_dispatch_dummy, netconfig_udpv6))
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register MOUNT V3 on UDPv6");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register MOUNT V3 on UDPv6");
     }
   else
     nb_svc_mnt_ok += 1;
@@ -1311,7 +1307,7 @@ int nfs_Init_svc()
 #endif
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register MOUNT V1 on TCP");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register MOUNT V1 on TCP");
     }
   else
     nb_svc_mnt_ok += 1;
@@ -1328,7 +1324,7 @@ int nfs_Init_svc()
 #endif
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register MOUNT V3 on TCP");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register MOUNT V3 on TCP");
     }
   else
     nb_svc_mnt_ok += 1;
@@ -1343,7 +1339,7 @@ int nfs_Init_svc()
               MOUNT_V1, nfs_rpc_dispatch_dummy, netconfig_tcpv6))
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register MOUNT V1 on TCPv6");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register MOUNT V1 on TCPv6");
     }
   else
     nb_svc_mnt_ok += 1;
@@ -1354,7 +1350,7 @@ int nfs_Init_svc()
               MOUNT_V3, nfs_rpc_dispatch_dummy, netconfig_tcpv6))
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register MOUNT V3 on TCPv6");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register MOUNT V3 on TCPv6");
     }
   else
     nb_svc_mnt_ok += 1;
@@ -1375,7 +1371,7 @@ int nfs_Init_svc()
 #endif                          /* _USE_TIRPC */
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NLM V4 on UDP");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NLM V4 on UDP");
     }
   else
     nb_svc_nlm_ok += 1;
@@ -1400,7 +1396,7 @@ int nfs_Init_svc()
 #endif                          /* _USE_TIRPC */
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register RQUOTA v1 on UDP");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register RQUOTA v1 on UDP");
     }
   else
     nb_svc_rquota_ok += 1;
@@ -1417,7 +1413,7 @@ int nfs_Init_svc()
 #endif                          /* _USE_TIRPC */
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register RQUOTA v1 on TCP");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register RQUOTA v1 on TCP");
     }
   else
     nb_svc_rquota_ok += 1;
@@ -1434,7 +1430,7 @@ int nfs_Init_svc()
 #endif                          /* _USE_TIRPC */
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register RQUOTA v2 on UDP");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register RQUOTA v2 on UDP");
     }
   else
     nb_svc_rquota_ok += 1;
@@ -1451,7 +1447,7 @@ int nfs_Init_svc()
 #endif                          /* _USE_TIRPC */
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register RQUOTA v2 on TCP");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register RQUOTA v2 on TCP");
     }
   else
     nb_svc_rquota_ok += 1;
@@ -1476,7 +1472,7 @@ int nfs_Init_svc()
 #endif                          /* USE_NLM */
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NLM V4 on TCP");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NLM V4 on TCP");
     }
   else
     nb_svc_nlm_ok += 1;
@@ -1501,7 +1497,7 @@ int nfs_Init_svc()
 #endif                          /* USE_NLM */
     {
       LogError(COMPONENT_DISPATCH, ERR_RPC, ERR_SVC_REGISTER, 0);
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NLM V4 on TCP");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Cannot register NLM V4 on TCP");
     }
   else
     nb_svc_rquota_ok += 1;
@@ -1519,7 +1515,7 @@ int nfs_Init_svc()
      || nb_svc_rquota_ok == 0)
     {
       /* Not enough registration for servicing clients */
-      LogMessage(COMPONENT_DISPATCH,
+      LogCrit(COMPONENT_DISPATCH,
           "NFS_DISPATCHER: /!\\ | No registration to NFS and/or MOUNT programs were done...");
 
 #if _USE_TIRPC
@@ -1672,7 +1668,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
           /* Get a worker to do the job */
           if((worker_index = nfs_rpc_get_worker_index(mount_flag)) < 0)
             {
-              LogMessage(COMPONENT_DISPATCH, "CRITICAL ERROR: Couldn't choose a worker ! Exiting...");
+              LogCrit(COMPONENT_DISPATCH, "CRITICAL ERROR: Couldn't choose a worker ! Exiting...");
               exit(1);
             }
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
@@ -1856,12 +1852,12 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                     strncpy(dead_caller, "unresolved", MAXNAMLEN);
 
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
-                  LogMessage(COMPONENT_DISPATCH, "A client disappeared... socket=%d, addr=%s",
+                  LogEvent(COMPONENT_DISPATCH, "A client disappeared... socket=%d, addr=%s",
                              pnfsreq->xprt->xp_fd, dead_caller);
                   if(Xports[pnfsreq->xprt->xp_fd] != NULL)
                     SVC_DESTROY(Xports[pnfsreq->xprt->xp_fd]);
 #else
-                  LogMessage(COMPONENT_DISPATCH, "A client disappeared... socket=%d, addr=%s",
+                  LogEvent(COMPONENT_DISPATCH, "A client disappeared... socket=%d, addr=%s",
                              pnfsreq->xprt->xp_sock, dead_caller);
                   if(Xports[pnfsreq->xprt->xp_sock] != NULL)
                     SVC_DESTROY(Xports[pnfsreq->xprt->xp_sock]);
@@ -1915,7 +1911,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                 {
                   V(workers_data[worker_index].mutex_req_condvar);
                   V(workers_data[worker_index].request_pool_mutex);
-                  LogMessage(COMPONENT_DISPATCH, "NFS DISPATCH: Cond signal failed for thr#%d , errno = %d",
+                  LogCrit(COMPONENT_DISPATCH, "NFS DISPATCH: Cond signal failed for thr#%d , errno = %d",
                              worker_index, errno);
                   exit(1);
                 }
@@ -2054,18 +2050,18 @@ void *rpc_dispatcher_thread(void *Arg)
 
 #ifndef _NO_BUDDY_SYSTEM
   /* Initialisation of the Buddy Malloc */
-  LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Initialization of memory manager");
+  LogEvent(COMPONENT_DISPATCH, "NFS DISPATCHER: Initialization of memory manager");
   if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Memory manager could not be initialized, exiting...");
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: Memory manager could not be initialized, exiting...");
       exit(1);
     }
 #endif
   /* Calling dispatcher main loop */
-  LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: Entering nfs/rpc dispatcher");
+  LogEvent(COMPONENT_DISPATCH, "NFS DISPATCHER: Entering nfs/rpc dispatcher");
 
-  LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: my pthread id is %p", (caddr_t) pthread_self());
+  LogDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: my pthread id is %p", (caddr_t) pthread_self());
 
   rpc_dispatcher_svc_run(pnfs_param);
 
@@ -2174,7 +2170,7 @@ void constructor_nfs_request_data_t(void *ptr)
 {
   if(nfs_Init_request_data(ptr) != 0)
     {
-      LogMessage(COMPONENT_DISPATCH, "NFS INIT: Error initializing request data ");
+      LogCrit(COMPONENT_DISPATCH, "NFS INIT: Error initializing request data ");
       exit(1);
     }
 }

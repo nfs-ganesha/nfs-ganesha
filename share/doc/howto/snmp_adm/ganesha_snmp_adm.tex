@@ -19,34 +19,42 @@
 %% \tableofcontents
 %% \newpage
 
-GANESHA is able to export its internal statistics so that an administrator can browse them using the SNMP protocol.
-It also provides a client for easily broswing its SNMP tree in a convivial and human understandable way.
+GANESHA is able to export its internal statistics so that an administrator can
+browse them using the SNMP protocol. It also provides a client for easily
+broswing its SNMP tree in a convivial and human understandable way.
 
 This document describes the requirements for this feature (libraries needed,
 SNMPd configuration...) and how to enable and configure it in GANESHA NFSD.
 
 \section{Requirements}
 
-SNMP support in GANESHA is based on the Net-SNMP library. This is a free implementation
-of SNMP that comes with most Linux distributions. It can also be retrieved from \texttt{http://net-snmp.sourceforge.net}.
+SNMP support in GANESHA is based on the Net-SNMP library. This is a free
+implementation of SNMP that comes with most Linux distributions. It can also be
+retrieved from \texttt{http://net-snmp.sourceforge.net}.
 
-GANESHA's SNMP support has been validated with Net-SNMP v5.1.4. However, Net-SNMP v5.4 or higher is recommended.
+GANESHA's SNMP support has been validated with Net-SNMP v5.1.4. However,
+Net-SNMP v5.4 or higher is recommended.
 
-Install the following packages on the machine where you are compiling and running GANESHA NFSD:
+Install the following packages on the machine where you are compiling and
+running GANESHA NFSD:
 
 \begin{itemize}
 \item \emph{net-snmp} contains the snmpd and snmptrapd daemons ;
 \item \emph{net-snmp-utils} contains various utilities for snmp ;
 \item \emph{net-snmp-perl} contains the perl API ;
+\item \emph{net-snmp-libs} XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX ;
 \item \emph{net-snmp-devel} contains the development libraries and
 header files.
 \end{itemize}
 
-Note that the net-snmp library needs symbols defined in \emph{lm-sensors} and \emph{openssl} libraries,
-so you will also need to install \emph{lm-sensors-devel} and \emph{openssl-devel} packages on your system.
+Note that the net-snmp library needs symbols defined in \emph{lm-sensors},
+\emph{zlib}, and \emph{openssl} libraries, so you will also need to install
+\emph{lm-sensors-devel}, \emph{zlib-devel}, and \emph{openssl-devel} packages on
+your system.
 
 \medskip
-For using the SNMP client tool \texttt{snmp\_adm} provided with GANESHA, you will also need the following perl modules:
+For using the SNMP client tool \texttt{snmp\_adm} provided with GANESHA, you
+will also need the following perl modules:
 
 \begin{itemize}
 \item
@@ -86,7 +94,7 @@ You must then specify a way to communicate with GANESHA:
 In this case, add the following line to SNMPd configuration file \texttt{/etc/snmp/snmpd.conf}:
 \begin{verbatim}
 AgentXSocket <path to the socket file>
-
+ 
 E.g:
 AgentXSocket /var/tmp/agentx/sock_file
 \end{verbatim}
@@ -107,14 +115,50 @@ Note that the AgentX default port number is 705.
 \end{itemize}
 
 \medskip
-Your SNMPd is now ready for exporting GANESHA statistics.
-Restart it after you changed its configuration file.
+Your SNMPd is now ready for exporting GANESHA statistics. Restart it after you
+changed its configuration file.
 
 \medskip
-Note: if you want to restrict the access of GANESHA's SNMP subtree,
-refer to the snmpd documentation about \emph{views}, \emph{groups},
+Note: if you want to restrict the access of GANESHA's SNMP subtree, refer to the
+snmpd documentation about \emph{views}, \emph{groups},
 \emph{SNMPv2 communities}, and \emph{SNMPv3 authentication}.
 
+Figure \ref{examplesnmpdconf} shows an example SNMP configuration file that
+should work for localhost access to SNMP.
+\begin{figure}[h]
+\begin{verbatim}
+##       sec.name  source          community
+com2sec  local     localhost       ganesha
+com2sec  mynetwork 192.168.122.0/24    ganesha
+
+##     group.name sec.model  sec.name
+group  MyRWGroup  any        local
+group  MyROGroup  any        mynetwork
+
+##           incl/excl subtree                          mask
+view all     included  .1                               80
+
+##                context sec.model sec.level prefix read   write  notif
+access MyROGroup  ""      any       noauth    0      all    none   none
+access MyRWGroup  ""      any       noauth    0      all    all    all
+
+
+# System contact information
+syslocation Unknown (edit /etc/snmp/snmpd.conf)
+syscontact Root <root@localhost> (configure /etc/snmp/snmp.local.conf)
+
+# Added for support of bcm5820 cards.
+pass .1.3.6.1.4.1.4413.4.1 /usr/bin/ucd5820stat
+
+# AgentX support
+master agentx
+agentXSocket   tcp:localhost:705
+agentXTimeout  5
+agentXRetries  2
+\end{verbatim}
+\caption{Example snmpd.conf}
+\label{examplesnmpdconf}
+\end{figure}
 
 \section{Enabling SNMP support in GANESHA}
 
@@ -122,7 +166,8 @@ refer to the snmpd documentation about \emph{views}, \emph{groups},
 
 By default, GANESHA is compiled without SNMP support.
 To enable this feature, add \texttt{--enable-snmp-adm} argument
-to the \texttt{configure} command line.
+to the \texttt{configure} command line. To be safe, \texttt{make clean} should
+be run before rebuilding GANESHA.
 
 \begin{verbatim}
 E.g:
@@ -175,8 +220,7 @@ SNMP_ADM
 }
 \end{verbatim}
 
-
-\section{Browsing GANESHA's SNMP tree}
+\section{Browsing/Accessing GANESHA's SNMP tree}
 
 \subsection{Tree description}
 
@@ -231,13 +275,129 @@ This tree is represented in the figure \ref{figtree}.
 Example of \texttt{snmp\_walk} on a GANESHA variable:
 
 \begin{verbatim}
-> snmpwalk -v 2c -c public localhost  .1.3.6.1.4.1.12384.999.2.0.4
+$ snmpwalk -v 2c -c public localhost  .1.3.6.1.4.1.12384.999.2.0.4
 SNMPv2-SMI::enterprises.12384.999.2.0.4.0 = STRING: "cache_nb_entries"
 SNMPv2-SMI::enterprises.12384.999.2.0.4.1 = STRING: "number of entries in cache"
 SNMPv2-SMI::enterprises.12384.999.2.0.4.2.0 = STRING: "INTEGER"
 SNMPv2-SMI::enterprises.12384.999.2.0.4.2.1 = INTEGER: 51
 \end{verbatim}
 
+\subsection{Examining GANESHA's Logging Levels Through SNMP}
+
+Every log message from GANESHA is labelled first by the component it belongs to
+and second by the severity of the message. An explanation of each component and
+severity level can be found in the GANESHA Logging document.
+
+All components and their ids are shown in Figure \ref{componentoid}.
+\begin{figure}
+  \center
+  \begin{tabular}{ | l | l |}
+    \hline Log Component  & ID Number \\
+    \hline ALL & 0 \\
+    \hline LOG & 1 \\
+    \hline MEMALLOC & 2 \\
+    \hline STATES & 3 \\
+    \hline MEMLEAKS & 4 \\
+    \hline FSAL & 5 \\
+    \hline NFSPROTO & 6 \\
+    \hline NFSV4 & 7 \\
+    \hline NFSV4\_PSEUDO & 8 \\
+    \hline FILEHANDLE & 9 \\
+    \hline NFS\_SHELL & 10 \\
+    \hline DISPATCH & 11 \\
+    \hline CACHE\_CONTENT & 12 \\
+    \hline CACHE\_INODE & 13 \\
+    \hline CACHE\_INODE\_GC & 14 \\
+    \hline HASHTABLE & 15 \\
+    \hline LRU & 16 \\
+    \hline DUPREQ & 17 \\
+    \hline RPCSEC\_GSS & 18 \\
+    \hline INIT & 19 \\
+    \hline MAIN & 20 \\
+    \hline IDMAPPER & 21 \\
+    \hline NFS\_READDIR & 22 \\
+    \hline NFSV4\_LOCK & 23 \\
+    \hline NFSV4\_XATTR & 24 \\
+    \hline NFSV4\_REFERRAL & 25 \\
+    \hline MEMCORRUPT & 26 \\
+    \hline CONFIG & 27 \\
+    \hline CLIENT\_ID\_COMPUTE & 28 \\
+    \hline STDOUT & 29 \\
+    \hline OPEN\_OWNER\_HASH & 30 \\
+    \hline SESSIONS & 31 \\
+    \hline PNFS & 32 \\
+    \hline RPC\_CACHE & 33 \\
+    \hline
+  \end{tabular}
+  \caption{GANESHA's Logging Component Categories and OID values}
+  \label{componentoid}
+\end{figure}
+
+The debug levels and their order of severity are as follows:
+\begin{itemize}
+\item NIV\_NULL - no messages are printed.
+\item NIV\_MAJ - only major messages are printed.
+\item NIV\_CRIT - critical messages or higher are printed.
+\item NIV\_EVENT - event messages or higher printed.
+\item NIV\_DEBUG - debug messages or higher are printed.
+\item NIV\_FULL\_DEBUG - extremely verbose debug messages or higher are printed.
+\end{itemize}$\\$
+
+Figure \ref{logleveloid} OID as it pertains to GANESHA's logging system , using
+$.1.3.6.1.4.1.12384.999.1.1.10.2.1$ as an example.
+
+\begin{figure}[h]
+\center
+  \begin{tabular}{ | l | l |}
+    \hline $.1.3.6.1.4.1$ & .iso.org.dod.internet.private.enterprise or more simply
+    enterprises, \\&e.g. enterprises$.12384.999.1.1.10.2.1$ \\
+    \hline  $.12384$ & CEA - the organization that originated Ganesha \\
+    \hline  $.999$ & snmp\_adm - the program \\
+    \hline  $.1$ & Product\_Id from the config file \\
+    \hline  $.1$ & LOG\_OID - the portion of GANESHA's snmp tree devoted to logging \\
+    \hline  $.0$ & component ID (all)\\
+    \hline  $.2$ & logging level of the component \\
+    \hline  $.1$ & specifies the \emph{value} of the logging level \\
+    \hline
+  \end{tabular}
+  \caption{Deconstruction of an OID string that identifies the logging level of a
+    component}
+  \label{logleveloid}
+\end{figure}
+
+The following commands are example uses of the \emph{snmpwalk} command to query
+for the log level of different components.$\\$$\\$
+To see all information pertaining to the logging snmp variables:
+\begin{verbatim}
+$ snmpwalk -Os -c ganesha -v 1 localhost .1.3.6.1.4.1.12384.999.1.1
+\end{verbatim}
+To see just what is actually useful and fits in a reasonable window:
+\begin{verbatim}
+$ snmpwalk -Os -c ganesha -v 1 localhost .1.3.6.1.4.1.12384.999.1.1 | grep -v
+'\"STRING\"' | grep -v ``Log level''
+\end{verbatim}
+To see logging information on a particular component:
+\begin{verbatim}
+$ snmpwalk -Os -c ganesha -v 1 localhost .1.3.6.1.4.1.12384.999.1.1.3 | grep -v
+'\"STRING\"' | grep -v ``Log level''
+\end{verbatim}
+
+\subsection{Changing GANESHA's Logging Levels Through SNMP}
+
+The following commands are example uses of the \emph{snmpset} command to change
+the severity level of messages that should be logged for one or all
+components.$\\$$\\$
+To change the level for \emph{COMPONENT\_DISPATCH} (note that you specify the
+level by name, just like in the config file or on the command line):
+\begin{verbatim}
+$ snmpset -Os -c ganesha -v 1 localhost .1.3.6.1.4.1.12384.999.1.1.10.2.1 s
+NIV_FULL_DEBUG
+\end{verbatim}
+To change the level for all components:
+\begin{verbatim}
+$ snmpset -Os -c ganesha -v 1 localhost .1.3.6.1.4.1.12384.999.1.1.0.2.1 s
+NIV_FULL_DEBUG
+\end{verbatim}
 
 \subsection{Using the SNMP client provided with GANESHA}
 
@@ -299,7 +459,7 @@ whose name contains this expression will be displayed.
 \begin{verbatim}
 E.g:
 
-> ./snmp_adm -v liststat cache
+$ ./snmp_adm -v liststat cache
 
 Statistics for product_id=2:
 name                          type       value
@@ -317,6 +477,39 @@ cache_nbget                    INTEGER    6243
 cache_nbdel                    INTEGER    132
 \end{verbatim}
 
+\section{Troubleshooting}
+
+Make sure the agentX addresses are the same in both snmpd.conf and the ganesha
+configuration file:
+\begin{verbatim}
+$ grep Snmp_Agentx_Socket /etc/ganesha/gpfs.ganesha.main.conf
+Snmp_Agentx_Socket = "tcp:localhost:705" ;
+$ grep agentXSocket /etc/snmp/snmpd.conf
+agentXSocket   tcp:localhost:705
+\end{verbatim}
+Iptables could potenetially block snmp. The default iptables setup for RHEL 5
+should be fine for local use of SNMP.
+If GANESHA was compiled with SNMP support the following message will be logged
+soon after startup with NIV\_EVENT:
+\begin{verbatim}
+$ grep "SNMP stats service was started successfully" /var/log/messages
+Sep  8 15:14:46 localhost nfs-ganesha[25074]: [stat_snmp] :MAIN: EVENT: NFS \
+STATS: SNMP stats service was started successfully
+\end{verbatim}
+Make sure SNMP and GANESHA are running. In the following example we are using
+the GPFS FSAL. An alternative FSAL will have a different name for the init
+script.
+\begin{verbatim}
+$ /etc/init.d/snmpd status
+snmpd (pid  24991) is running...
+$ /etc/init.d/nfs-ganesha.gpfs status
+GPFS Ganesha is running.
+Open-by-handle module is loaded.
+\end{verbatim}
+%To check if SNMP encountered errors:
+%\begin{verbatim}
+%
+%\end{verbatim}
 
 
 \end{document}

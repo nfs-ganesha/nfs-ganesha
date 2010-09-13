@@ -6,7 +6,7 @@
  * \version $Revision: 1.12 $
  * \brief   Extern definitions for variables that are
  *          defined in fsal_internal.c.
- * 
+ *
  */
 
 #include  "fsal.h"
@@ -18,9 +18,6 @@
  * read access only.
  */
 extern fsal_staticfsinfo_t global_fs_info;
-
-/* log descriptor */
-extern log_t fsal_log;
 
 /* filesystem operations */
 extern struct ganefuse_operations *p_fs_ops;
@@ -72,7 +69,7 @@ fsal_boolean_t fsal_do_log(fsal_status_t status);
  * This function sets the current context for a filesystem operation,
  * so it can be retrieved with fuse_get_context().
  * The structure pointed by p_ctx must stay allocated and kept unchanged
- * during the FS call. 
+ * during the FS call.
  */
 int fsal_set_thread_context(fsal_op_context_t * p_ctx);
 

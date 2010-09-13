@@ -39,7 +39,7 @@
 #endif
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -323,7 +323,7 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
   if(gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
     {
       /* Could'not get time of day... Stopping, this may need a major failure */
-      DisplayLog("cache_inode_create: cannot get time of day... exiting");
+      LogMajor(COMPONENT_CACHE_INODE,"cache_inode_create: cannot get time of day... exiting");
       exit(1);
     }
 
@@ -334,7 +334,7 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1;
 
-      DisplayLog("WARNING !!! cache_inode_create could not post async op....");
+      LogCrit(COMPONENT_CACHE_INODE,"WARNING !!! cache_inode_create could not post async op....");
 
       *pstatus = CACHE_INODE_ASYNC_POST_ERROR;
 

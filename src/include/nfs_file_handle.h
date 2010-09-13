@@ -50,6 +50,7 @@
 
 #include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>              /* for having MAXHOSTNAMELEN */
+#include "log_macros.h"
 /*
  * Structure of the filehandle 
  */
@@ -84,7 +85,6 @@ typedef struct file_handle_v4__
 } file_handle_v4_t;
 
 #define LEN_FH_STR 1024
-void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr);
 
 /* File handle translation utility */
 int nfs4_FhandleToFSAL(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
@@ -119,15 +119,16 @@ int nfs4_Is_Fh_DSHandle(nfs_fh4 * pfh);
 int nfs3_Is_Fh_Xattr(nfs_fh3 * pfh);
 
 /* File handle print function (;ostly use for debugging) */
-void print_fhandle2(fhandle2 fh);
-void print_fhandle3(nfs_fh3 fh);
-void print_fhandle4(nfs_fh4 fh);
-void print_buff(char *buff, int len);
-void print_compound_fh(compound_data_t * data);
+void print_fhandle2(log_components_t component, fhandle2 fh);
+void print_fhandle3(log_components_t component, nfs_fh3 fh);
+void print_fhandle4(log_components_t component, nfs_fh4 fh);
+void print_buff(log_components_t component, char *buff, int len);
+void print_compound_fh(log_components_t component, compound_data_t * data);
 
 void sprint_fhandle2(char *str, fhandle2 fh);
 void sprint_fhandle3(char *str, nfs_fh3 fh);
 void sprint_fhandle4(char *str, nfs_fh4 fh);
 void sprint_buff(char *str, char *buff, int len);
+void sprint_mem(char *str, char *buff, int len);
 
 #endif                          /* _NFS_FILE_HANDLE_H */

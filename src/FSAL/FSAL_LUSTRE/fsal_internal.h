@@ -29,8 +29,6 @@
  */
 extern fsal_staticfsinfo_t global_fs_info;
 
-/* log descriptor */
-extern log_t fsal_log;
 
 #endif
 
@@ -56,38 +54,6 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats);
  */
 void TakeTokenFSCall();
 void ReleaseTokenFSCall();
-
-/**
- * Return :
- * Macro for returning from functions
- * with trace and function call increment.
- */
-
-#define Return( _code_, _minor_ , _f_ ) do {                          \
-               char _str_[256];                                       \
-               fsal_status_t _struct_status_ = FSAL_STATUS_NO_ERROR ; \
-               (_struct_status_).major = (_code_) ;                   \
-               (_struct_status_).minor = (_minor_) ;                  \
-               fsal_increment_nbcall( _f_,_struct_status_ );          \
-               log_snprintf( _str_, 256, "%J%r",ERR_FSAL, _code_ );   \
-               DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG,           \
-                  "%s returns ( %s, %d )",fsal_function_names[_f_],   \
-                  _str_, _minor_);                                    \
-               return (_struct_status_);                              \
-              } while(0)
-
-#define ReturnStatus( _st_, _f_ )	Return( (_st_).major, (_st_).minor, _f_ )
-
-/**
- *  ReturnCode :
- *  Macro for returning a fsal_status_t without trace nor stats increment.
- */
-#define ReturnCode( _code_, _minor_ ) do {                               \
-               fsal_status_t _struct_status_ = FSAL_STATUS_NO_ERROR ;\
-               (_struct_status_).major = (_code_) ;          \
-               (_struct_status_).minor = (_minor_) ;         \
-               return (_struct_status_);                     \
-              } while(0)
 
 /**
  * Append a fsal_name to an fsal_path to have the full path of a file from its name and its parent path

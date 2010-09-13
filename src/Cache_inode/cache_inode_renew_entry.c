@@ -423,7 +423,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
     {
       pfsal_handle = &pentry->object.symlink.handle;
 
-      /* TMP DEBUG */
+      /* TMP Debug */
       LogFullDebug(COMPONENT_CACHE_INODE,
                    "Entry=%p, type=%d, Time=%d, current=%d, grace_period_link=%d", pentry,
                    pentry->internal_md.type, entry_time, current_time,

@@ -107,14 +107,12 @@ fsal_status_t HPSSFSAL_create(hpssfsal_handle_t * parent_directory_handle,      
     }
 
   if(p_context->export_context->default_cos != 0)
-    DisplayLogJdLevel(fsal_log, NIV_DEBUG, "Creating file with COS = %d",
+    LogDebug(COMPONENT_FSAL, "Creating file with COS = %d",
                       p_context->export_context->default_cos);
   else
-    DisplayLogJdLevel(fsal_log, NIV_DEBUG, "Creating file with default fileset COS.");
+    LogDebug(COMPONENT_FSAL, "Creating file with default fileset COS.");
 
-#ifdef _DEBUG_FSAL
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "Creation mode: 0%o", accessmode);
-#endif
+  LogDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
 
   /* call to API */
 
@@ -345,7 +343,7 @@ fsal_status_t HPSSFSAL_link(hpssfsal_handle_t * target_handle,  /* IN */
   /* sanity checks.
    * note : attributes is optional.
    */
-  printf("%p %p %p %p \n", target_handle, dir_handle, p_context, p_link_name);
+  LogFullDebug(COMPONENT_FSAL,"%p %p %p %p \n", target_handle, dir_handle, p_context, p_link_name);
 
   if(!target_handle || !dir_handle || !p_context || !p_link_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_link);

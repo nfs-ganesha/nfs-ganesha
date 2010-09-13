@@ -535,7 +535,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 
         default:
           /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
-          LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: NFS Protocol version %d unknown", ptr_req->rq_vers);
+          LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: NFS Protocol version %d unknown", ptr_req->rq_vers);
           svcerr_decode(ptr_svc);
           return;
           break;
@@ -561,7 +561,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 
         default:
           /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
-          LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: MOUNT Protocol version %d unknown",
+          LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: MOUNT Protocol version %d unknown",
                      ptr_req->rq_vers);
           svcerr_decode(ptr_svc);
           return;
@@ -578,7 +578,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         case NLM4_VERS:
           if(ptr_req->rq_proc > NLMPROC4_FREE_ALL)
             {
-              LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: NLM proc number %d unknown", ptr_req->rq_proc);
+              LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: NLM proc number %d unknown", ptr_req->rq_proc);
               svcerr_decode(ptr_svc);
               return;
             }
@@ -587,7 +587,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 
         default:
           /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
-          LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: NLM Protocol version %d unknown", ptr_req->rq_vers);
+          LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: NLM Protocol version %d unknown", ptr_req->rq_vers);
           svcerr_decode(ptr_svc);
           return;
           break;
@@ -603,7 +603,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         case RQUOTAVERS:
           if(ptr_req->rq_proc > RQUOTAPROC_SETACTIVEQUOTA)
             {
-              LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: RQUOTA proc number %d unknown",
+              LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: RQUOTA proc number %d unknown",
                          ptr_req->rq_proc);
               svcerr_decode(ptr_svc);
               return;
@@ -614,7 +614,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         case EXT_RQUOTAVERS:
           if(ptr_req->rq_proc > RQUOTAPROC_SETACTIVEQUOTA)
             {
-              LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: EXT_RQUOTA proc number %d unknown",
+              LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: EXT_RQUOTA proc number %d unknown",
                          ptr_req->rq_proc);
               svcerr_decode(ptr_svc);
               return;
@@ -624,7 +624,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 
         default:
           /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
-          LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: RQUOTA Protocol version %d unknown",
+          LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: RQUOTA Protocol version %d unknown",
                      ptr_req->rq_vers);
           svcerr_decode(ptr_svc);
           return;
@@ -635,7 +635,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   else
     {
       /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
-      LogMessage(COMPONENT_DISPATCH, "NFS DISPATCHER: protocol %d is not managed", ptr_req->rq_prog);
+      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: protocol %d is not managed", ptr_req->rq_prog);
       svcerr_decode(ptr_svc);
       return;
     }                           /* switch( ptr_req->rq_prog ) */
@@ -1026,8 +1026,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       /* BuddyDumpMem( stdout ) ; */
       nfs_debug_debug_label_info();
 
-      LogPrintf(COMPONENT_MEMLEAKS,
-                "Stats de ce thread: total mnt1=%u mnt3=%u nfsv2=%u nfsv3=%u nfsv4=%u\n",
+      LogFullDebug(COMPONENT_MEMLEAKS,
+                "Stats de ce thread: total mnt1=%u mnt3=%u nfsv2=%u nfsv3=%u nfsv4=%u",
                 pworker_data->stats.stat_req.nb_mnt1_req,
                 pworker_data->stats.stat_req.nb_mnt3_req,
                 pworker_data->stats.stat_req.nb_nfs2_req,
@@ -1147,7 +1147,7 @@ void *worker_thread(void *IndexArg)
   if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogMessage(COMPONENT_DISPATCH, "NFS WORKER #%d: Memory manager could not be initialized, exiting...",
+      LogCrit(COMPONENT_DISPATCH, "NFS WORKER #%d: Memory manager could not be initialized, exiting...",
                  index);
       exit(1);
     }
@@ -1164,7 +1164,7 @@ void *worker_thread(void *IndexArg)
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&pmydata->thread_fsal_context)))
     {
       /* Failed init */
-      LogMessage(COMPONENT_DISPATCH, "NFS  WORKER #%d: Error initializing thread's credential", index);
+      LogCrit(COMPONENT_DISPATCH, "NFS  WORKER #%d: Error initializing thread's credential", index);
       exit(1);
     }
 
@@ -1174,7 +1174,7 @@ void *worker_thread(void *IndexArg)
                              index, pmydata))
     {
       /* Failed init */
-      LogMessage(COMPONENT_DISPATCH,
+      LogCrit(COMPONENT_DISPATCH,
            "NFS WORKER #%d: Cache Inode client could not be initialized, exiting...",
            index);
       exit(1);
@@ -1187,7 +1187,7 @@ void *worker_thread(void *IndexArg)
                                    &pmydata->thread_fsal_context)))
     {
       /* Failed init */
-      LogMessage(COMPONENT_DISPATCH, "NFS  WORKER #%d: Error initing MFSL", index);
+      LogCrit(COMPONENT_DISPATCH, "NFS  WORKER #%d: Error initing MFSL", index);
       exit(1);
     }
 #endif
@@ -1197,7 +1197,7 @@ void *worker_thread(void *IndexArg)
                                nfs_param.cache_layers_param.cache_content_client_param))
     {
       /* Failed init */
-      LogMessage(COMPONENT_DISPATCH,
+      LogCrit(COMPONENT_DISPATCH,
            "NFS WORKER #%d: Cache Content client could not be initialized, exiting...",
            index);
       exit(1);
@@ -1218,7 +1218,7 @@ void *worker_thread(void *IndexArg)
   if(pnfs_init(&pmydata->cache_inode_client.pnfsclient, &nfs_param.pnfs_param.layoutfile))
     {
       /* Failed init */
-      LogMessage(COMPONENT_DISPATCH,
+      LogCrit(COMPONENT_DISPATCH,
           "NFS WORKER #%d: pNFS engine could not be initialized, exiting...", index);
       exit(1);
     }
@@ -1353,8 +1353,8 @@ void *worker_thread(void *IndexArg)
                     if(preq->rq_xprt->xp_verf.oa_flavor == RPCSEC_GSS)
                       {
                         gc = (struct rpc_gss_cred *)preq->rq_clntcred;
-                        LogPrintf(COMPONENT_DISPATCH,
-                            "========> no_dispatch=%u gc->gc_proc=%u RPCSEC_GSS_INIT=%u RPCSEC_GSS_CONTINUE_INIT=%u RPCSEC_GSS_DATA=%u RPCSEC_GSS_DESTROY=%u\n",
+                        LogFullDebug(COMPONENT_DISPATCH,
+                            "========> no_dispatch=%u gc->gc_proc=%u RPCSEC_GSS_INIT=%u RPCSEC_GSS_CONTINUE_INIT=%u RPCSEC_GSS_DATA=%u RPCSEC_GSS_DESTROY=%u",
                              no_dispatch, gc->gc_proc, RPCSEC_GSS_INIT,
                              RPCSEC_GSS_CONTINUE_INIT, RPCSEC_GSS_DATA,
                              RPCSEC_GSS_DESTROY);
@@ -1469,7 +1469,7 @@ void *worker_thread(void *IndexArg)
       P(pmydata->request_pool_mutex);
       if(LRU_invalidate(pmydata->pending_request, pentry) != LRU_LIST_SUCCESS)
         {
-          LogMessage(COMPONENT_DISPATCH,
+          LogCrit(COMPONENT_DISPATCH,
               "NFS DISPATCH: Incoherency: released entry for dispatch could not be tagged invalid");
         }
       V(pmydata->request_pool_mutex);
@@ -1486,7 +1486,7 @@ void *worker_thread(void *IndexArg)
                                          nfs_dupreq_gc_function,
                                          NULL)) != LRU_LIST_SUCCESS)
             {
-              LogMessage(COMPONENT_DISPATCH,
+              LogCrit(COMPONENT_DISPATCH,
                    "NFS WORKER #%d: FAILURE: Impossible to invalidate entries for duplicate request cache (error %d)",
                    index, rc);
             }
@@ -1544,7 +1544,7 @@ void *worker_thread(void *IndexArg)
           pthread_cond_signal(&(condvar_xprt[xprt->xp_fd]));
           V(mutex_cond_xprt[xprt->xp_fd]);
 #else
-          //printf( "worker : P pour sur %u\n", pnfsreq->xprt->xp_sock ) ; 
+          //LogFullDebug(COMPONENT_DISPATCH, "worker : P pour sur %u\n", pnfsreq->xprt->xp_sock ) ; 
           P(mutex_cond_xprt[xprt->xp_sock]);
           etat_xprt[xprt->xp_sock] = 1;
           pthread_cond_signal(&(condvar_xprt[xprt->xp_sock]));
@@ -1598,7 +1598,7 @@ void *worker_thread(void *IndexArg)
       if(FSAL_IS_ERROR(fsal_status))
         {
           /* Failed init */
-          LogMessage(COMPONENT_DISPATCH, "NFS  WORKER #%d: Error regreshing MFSL context", index);
+          LogCrit(COMPONENT_DISPATCH, "NFS  WORKER #%d: Error regreshing MFSL context", index);
           exit(1);
         }
 

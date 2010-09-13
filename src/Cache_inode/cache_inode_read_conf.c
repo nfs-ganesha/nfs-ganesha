@@ -88,7 +88,7 @@ cache_inode_status_t cache_inode_read_conf_hash_parameter(config_file_t in_confi
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_CACHE_INODE_HASH)) == NULL)
     {
-      /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_CACHE_INODE_HASH ) ; */
+      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_CACHE_INODE_HASH ) ; */
       return CACHE_INODE_NOT_FOUND;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
@@ -108,8 +108,8 @@ cache_inode_status_t cache_inode_read_conf_hash_parameter(config_file_t in_confi
       /* Get key's name */
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
-          fprintf(stderr,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+          LogCrit(COMPONENT_CONFIG,
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_CACHE_INODE_HASH);
           return CACHE_INODE_INVALID_ARGUMENT;
         }
@@ -128,8 +128,8 @@ cache_inode_status_t cache_inode_read_conf_hash_parameter(config_file_t in_confi
         }
       else
         {
-          fprintf(stderr,
-                  "Unknown or unsettable key: %s (item %s)\n",
+          LogCrit(COMPONENT_CONFIG,
+                  "Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_CACHE_INODE_HASH);
           return CACHE_INODE_INVALID_ARGUMENT;
         }
@@ -171,7 +171,7 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_CACHE_INODE_CLIENT)) == NULL)
     {
-      /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_CACHE_INODE_CLIENT ) ; */
+      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_CACHE_INODE_CLIENT ) ; */
       return CACHE_INODE_NOT_FOUND;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
@@ -191,8 +191,8 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
       /* Get key's name */
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
-          fprintf(stderr,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+          LogCrit(COMPONENT_CONFIG,
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_CACHE_INODE_CLIENT);
           return CACHE_INODE_INVALID_ARGUMENT;
         }
@@ -273,8 +273,8 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
         }
       else
         {
-          fprintf(stderr,
-                  "Unknown or unsettable key: %s (item %s)\n",
+          LogCrit(COMPONENT_CONFIG,
+                  "Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_CACHE_INODE_CLIENT);
           return CACHE_INODE_INVALID_ARGUMENT;
         }
@@ -282,19 +282,10 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
 
   /* init logging */
   if(LogFile)
-    {
-      desc_log_stream_t log_stream;
+    SetComponentLogFile(COMPONENT_CACHE_INODE, LogFile);
 
-      strcpy(log_stream.path, LogFile);
-
-      /* Default : NIV_EVENT */
-
-      if(DebugLevel == -1)
-        AddLogStreamJd(&(pparam->log_outputs), V_FILE, log_stream, NIV_CRIT, SUP);
-      else
-        AddLogStreamJd(&(pparam->log_outputs), V_FILE, log_stream, DebugLevel, SUP);
-
-    }
+  if(DebugLevel > -1)
+    SetComponentLogLevel(COMPONENT_CACHE_INODE, DebugLevel);
 
   return CACHE_INODE_SUCCESS;
 }                               /* cache_inode_read_conf_client_parameter */
@@ -328,7 +319,7 @@ cache_inode_status_t cache_inode_read_conf_gc_policy(config_file_t in_config,
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_CACHE_INODE_GCPOL)) == NULL)
     {
-      /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_CACHE_INODE_GCPOL ) ; */
+      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_CACHE_INODE_GCPOL ) ; */
       return CACHE_INODE_NOT_FOUND;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
@@ -348,8 +339,8 @@ cache_inode_status_t cache_inode_read_conf_gc_policy(config_file_t in_config,
       /* Get key's name */
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
-          fprintf(stderr,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+          LogCrit(COMPONENT_CONFIG,
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_CACHE_INODE_GCPOL);
           return CACHE_INODE_INVALID_ARGUMENT;
         }
@@ -380,8 +371,8 @@ cache_inode_status_t cache_inode_read_conf_gc_policy(config_file_t in_config,
         }
       else
         {
-          fprintf(stderr,
-                  "Unknown or unsettable key: %s (item %s)\n",
+          LogCrit(COMPONENT_CONFIG,
+                  "Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_CACHE_INODE_GCPOL);
           return CACHE_INODE_INVALID_ARGUMENT;
         }

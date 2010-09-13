@@ -311,7 +311,7 @@ int nfs_Init_ip_name(nfs_ip_name_parameter_t param)
 {
   if((ht_ip_name = HashTable_Init(param.hash_param)) == NULL)
     {
-      DisplayLog("NFS IP_NAME: Cannot init IP/name cache");
+      LogCrit(COMPONENT_INIT, "NFS IP_NAME: Cannot init IP/name cache");
       return -1;
     }
 
@@ -341,7 +341,7 @@ int nfs_ip_name_populate(char *path)
 
   if(!config_file)
     {
-      DisplayLog("Can't open file %s", path);
+      LogCrit(COMPONENT_CONFIG, "Can't open file %s", path);
 
       return IP_NAME_NOT_FOUND;
     }
@@ -349,7 +349,7 @@ int nfs_ip_name_populate(char *path)
   /* Get the config BLOCK */
   if((block = config_FindItemByName(config_file, CONF_LABEL_IP_NAME_HOSTS)) == NULL)
     {
-      DisplayLog("Can't get label %s in file %s", CONF_LABEL_IP_NAME_HOSTS, path);
+      LogCrit(COMPONENT_CONFIG, "Can't get label %s in file %s", CONF_LABEL_IP_NAME_HOSTS, path);
       return IP_NAME_NOT_FOUND;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
@@ -369,7 +369,7 @@ int nfs_ip_name_populate(char *path)
       /* Get key's name */
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
-          fprintf(stderr,
+          LogCrit(COMPONENT_CONFIG,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
                   var_index, label);
           return ID_MAPPER_NOT_FOUND;
@@ -401,7 +401,7 @@ int nfs_ip_name_populate(char *path)
 
     }
 
-  /* HashTable_Print( ht_ip_name ) ; */
+  /* HashTable_Log( ht_ip_name ) ; */
   return IP_NAME_SUCCESS;
 }                               /* nfs_ip_name_populate */
 
