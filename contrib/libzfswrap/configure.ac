@@ -1,4 +1,4 @@
-AC_PREREQ([2.65])
+AC_PREREQ([2.59])
 AC_INIT(libzfswrap, 1.0.0, remi.duraffort.ocre@cea.fr)
 
 AC_CONFIG_AUX_DIR([build-aux])
