@@ -971,9 +971,7 @@ void *TEST9(void *arg)
 
       snprintf(labels[i], 64, "%d-%d-%d", th, i, len);
 
-      BuddySetDebugLabel(labels[i]);
-
-      strings[i].str = BuddyMalloc(len);
+      strings[i].str = BuddyMalloc_Autolabel(len, __FILE__, __FUNCTION__, __LINE__, labels[i]);
 
       if(!strings[i].str)
         {
