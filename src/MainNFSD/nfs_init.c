@@ -1446,8 +1446,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
   /* Worker initialisation */
   if((workers_data =
-      (nfs_worker_data_t *) Mem_Alloc(sizeof(nfs_worker_data_t) *
-                                      nfs_param.core_param.nb_worker)) == NULL)
+      (nfs_worker_data_t *) Mem_Alloc_Label(sizeof(nfs_worker_data_t) *
+                                            nfs_param.core_param.nb_worker,
+                                            "nfs_worker_data_t")) == NULL)
     {
       LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
       exit(1);
@@ -1487,10 +1488,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
         }
       workers_data[i].ht_ip_stats = ht_ip_stats[i];
 
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("nfs_request_data_t");
-#endif
       /* Allocation of the nfs request pool */
       reqpool = NULL;           /* empty pool */
       STUFF_PREALLOC_CONSTRUCT(reqpool,
@@ -1508,10 +1505,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #endif
       workers_data[i].request_pool = reqpool;
 
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("dupreq_entry_t");
-#endif
       /* Allocation of the nfs dupreq pool */
       dupreq_pool = NULL;       /* empty pool */
 
@@ -1529,15 +1522,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #endif
       workers_data[i].dupreq_pool = dupreq_pool;
 
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("nfs_ip_name_t");
-#endif
-
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("nfs_ip_stats_t");
-#endif
       /* ALlocation of the IP/name pool */
       ip_stats_pool = NULL;     /* empty pool */
       STUFF_PREALLOC(ip_stats_pool,
@@ -1560,7 +1544,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
   /* Admin initialisation */
   if((admin_data =
-      (nfs_admin_data_t *) Mem_Alloc(sizeof(nfs_admin_data_t))) == NULL)
+      (nfs_admin_data_t *) Mem_Alloc_Label(sizeof(nfs_admin_data_t),
+                                           "nfs_admin_data_t")) == NULL)
     {
       LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
       exit(1);
@@ -1578,11 +1563,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
   /* Set the stats to zero */
   nfs_reset_stats();
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   /* Creates the pseudo fs */
   LogDebug(COMPONENT_INIT, "NFS_INIT: Now building pseudo fs");
