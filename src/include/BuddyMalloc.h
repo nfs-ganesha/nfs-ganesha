@@ -59,7 +59,7 @@
 /** Returned values for buddy init or for BuddyErrno. */
 
 #define BUDDY_SUCCESS         0
-#define BUDDY_ERR_ENOENT       ENOENT
+#define BUDDY_ERR_ENOENT      ENOENT
 #define BUDDY_ERR_EINVAL      EINVAL
 #define BUDDY_ERR_EFAULT      EFAULT
 
@@ -245,15 +245,27 @@ void BuddyGetStats(buddy_stats_t * budd_stats);
  */
 BUDDY_ADDR_T BuddyMalloc_Autolabel(size_t sz,
                                    const char *file,
-                                   const char *function, const unsigned int line);
+                                   const char *function,
+                                   const unsigned int line,
+                                   const char *str);
 
 BUDDY_ADDR_T BuddyCalloc_Autolabel(size_t NumberOfElements, size_t ElementSize,
                                    const char *file,
-                                   const char *function, const unsigned int line);
+                                   const char *function,
+                                   const unsigned int line,
+                                   const char *str);
 
 BUDDY_ADDR_T BuddyRealloc_Autolabel(BUDDY_ADDR_T ptr, size_t Size,
                                     const char *file,
-                                    const char *function, const unsigned int line);
+                                    const char *function,
+                                    const unsigned int line,
+                                    const char *str);
+
+void BuddyFree_Autolabel(BUDDY_ADDR_T ptr,
+                         const char *file,
+                         const char *function,
+                         const unsigned int line,
+                         const char *str);
 
 /**
  *  Set a label for allocated areas, for debugging.
@@ -285,6 +297,23 @@ void BuddyLabelsSummary();
  */
 void DisplayMemoryMap(FILE *output);
 
+int _BuddyCheck_Autolabel(BUDDY_ADDR_T ptr,
+                          const char *file,
+                          const char *function,
+                          const unsigned int line,
+                          const char *str);
+
+#define BuddyCheck(ptr)           _BuddyCheck_Autolabel(ptr, __FILE__, __FUNCTION__, __LINE__, "BuddyCheck")
+#define BuddyCheckLabel(ptr, lbl) _BuddyCheck_Autolabel(ptr, __FILE__, __FUNCTION__, __LINE__, lbl)
+#else
+/**
+ *  test memory corruption for a block.
+ *  true if the block is OK,
+ *  false else.
+ */
+
+#define BuddyCheck(ptr)           _BuddyCheck(ptr)
+#define BuddyCheckLabel(ptr, lbl) _BuddyCheck(ptr)
 #endif
 
 /**
@@ -292,7 +321,7 @@ void DisplayMemoryMap(FILE *output);
  *  true if the block is OK,
  *  false else.
  */
-int BuddyCheck(BUDDY_ADDR_T ptr);
+int _BuddyCheck(BUDDY_ADDR_T ptr);
 
 /**
  * sets default values for buddy configuration structure.
