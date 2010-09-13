@@ -491,22 +491,14 @@ int fsal_internal_proxy_fsal_name_2_utf8(fsal_name_t * pname, utf8string * utf8s
   if(fsal_status.major != ERR_FSAL_NO_ERROR)
     return FALSE;
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("fsal_internal_proxy_fsal_name_2_utf8");
-#endif
-
   if(utf8str->utf8string_len == 0)
     {
-      if((utf8str->utf8string_val = (char *)Mem_Alloc(pname->len)) == NULL)
+      if((utf8str->utf8string_val = (char *)Mem_Alloc_Label(pname->len,
+                                                            "fsal_internal_proxy_fsal_name_2_utf8")) == NULL)
         return FALSE;
       else
         utf8str->utf8string_len = pname->len;
     }
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   if(str2utf8(tmpstr, utf8str) == -1)
     return FALSE;
@@ -537,22 +529,14 @@ int fsal_internal_proxy_fsal_path_2_utf8(fsal_path_t * ppath, utf8string * utf8s
   if(fsal_status.major != ERR_FSAL_NO_ERROR)
     return FALSE;
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("fsal_internal_proxy_fsal_path_2_utf8");
-#endif
-
   if(utf8str->utf8string_len == 0)
     {
-      if((utf8str->utf8string_val = (char *)Mem_Alloc(ppath->len)) == NULL)
+      if((utf8str->utf8string_val = (char *)Mem_Alloc_Label(ppath->len,
+                                                            "fsal_internal_proxy_fsal_path_2_utf8")) == NULL)
         return FALSE;
       else
         utf8str->utf8string_len = ppath->len;
     }
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   if(str2utf8(tmpstr, utf8str) == -1)
     return FALSE;
