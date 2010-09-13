@@ -126,11 +126,6 @@ int cache_inode_fsaldata_2_key(hash_buffer_t * pkey, cache_inode_fsal_data_t * p
   /* Allocate a new key for storing data, if this a set, not a get
    * in the case of a 'get' key, pclient == NULL and * pfsdata is used */
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_inode_fsal_data_t:conversion");
-#endif
-
   if(pclient != NULL)
     {
       GET_PREALLOC(ppoolfsdata,
@@ -149,11 +144,6 @@ int cache_inode_fsaldata_2_key(hash_buffer_t * pkey, cache_inode_fsal_data_t * p
     }
   else
     pkey->pdata = (caddr_t) pfsdata;
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   pkey->len = sizeof(cache_inode_fsal_data_t);
 
@@ -259,10 +249,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
 
       return pentry;
     }
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_entry_t");
-#endif
 
   GET_PREALLOC(pentry,
                pclient->pool_entry, pclient->nb_prealloc, cache_entry_t, next_alloc);
@@ -277,10 +263,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
 
       return NULL;
     }
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_inode_dir_data_t");
-#endif
 
   /* if entry is of tyep DIR_CONTINUE or DIR_BEGINNING, it should have a pdir_data */
   if(type == DIR_BEGINNING || type == DIR_CONTINUE)
@@ -307,10 +289,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
     }
 
   /*  if( type == DIR_BEGINNING || type == DIR_CONTINUE ) */
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   if(rw_lock_init(&(pentry->lock)) != 0)
     {
