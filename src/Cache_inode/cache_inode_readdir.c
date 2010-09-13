@@ -487,19 +487,9 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pentry_parent
 
   /* pentry is not NULL, if it was NULL a new DIR_CONTINUE has just been allocated */
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_inode_parent_entry_t");
-#endif
-
   GET_PREALLOC(next_parent_entry,
                pclient->pool_parent,
                pclient->nb_pre_parent, cache_inode_parent_entry_t, next_alloc);
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   if(next_parent_entry == NULL)
     {
