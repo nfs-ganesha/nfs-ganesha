@@ -71,8 +71,6 @@ buddy_parameter_t default_buddy_parameter = {
                                   * if this value is overcome. */
 };
 
-char *buddy_error_file = "/tmp/ganesha.buddy_malloc.log";
-
 /* ------------------------------------------*
  * Internal datatypes for memory management.
  * ------------------------------------------*/

@@ -137,9 +137,6 @@ typedef struct buddy_paremeter__
    */
   unsigned int keep_minimum;
 
-  /* memory error file */
-  char buddy_error_file[256];
-
 } buddy_parameter_t;
 
 /**
