@@ -44,11 +44,15 @@
 
 #include <errno.h>
 
-#define Mem_Alloc( a )       malloc( a )
-#define Mem_Calloc( s1, s2 ) calloc( s1, s2 )
-#define Mem_Realloc( p, s )  realloc( p, s )
-#define Mem_Free( a )        free( a )
-#define Mem_Errno            errno
+#define Mem_Alloc( a )                  malloc( a )
+#define Mem_Calloc( s1, s2 )            calloc( s1, s2 )
+#define Mem_Realloc( p, s )             realloc( p, s )
+#define Mem_Alloc_Label( a, lbl )       malloc( a )
+#define Mem_Calloc_Label( s1, s2, lbl ) calloc( s1, s2 )
+#define Mem_Realloc_Label( p, s, lbl)   realloc( p, s )
+#define Mem_Free( a )                   free( a )
+#define Mem_Free_Label( a, lbl )        free( a )
+#define Mem_Errno                       errno
 
 #define GetPreferedPool( _n, _s )  (_n)
 
@@ -57,16 +61,25 @@
 #include "BuddyMalloc.h"
 
 #ifdef _DEBUG_MEMLEAKS
-#  define Mem_Alloc( a )       BuddyMalloc_Autolabel( a , __FILE__, __FUNCTION__, __LINE__ )
-#  define Mem_Calloc( s1, s2 ) BuddyCalloc_Autolabel( s1, s2, __FILE__, __FUNCTION__, __LINE__ )
-#  define Mem_Realloc( p, s)   BuddyRealloc_Autolabel( (caddr_t)(p), s, __FILE__, __FUNCTION__, __LINE__ )
+#  define Mem_Alloc( a )                  BuddyMalloc_Autolabel( a , __FILE__, __FUNCTION__, __LINE__, "BuddyMalloc" )
+#  define Mem_Calloc( s1, s2 )            BuddyCalloc_Autolabel( s1, s2, __FILE__, __FUNCTION__, __LINE__, "BuddyCalloc" )
+#  define Mem_Realloc( p, s)              BuddyRealloc_Autolabel( (caddr_t)(p), s, __FILE__, __FUNCTION__, __LINE__, "BuddyRealloc" )
+#  define Mem_Alloc_Label( a, lbl )       BuddyMalloc_Autolabel( a , __FILE__, __FUNCTION__, __LINE__, lbl )
+#  define Mem_Calloc_Label( s1, s2, lbl ) BuddyCalloc_Autolabel( s1, s2, __FILE__, __FUNCTION__, __LINE__, lbl )
+#  define Mem_Realloc_Label( p, s, lbl)   BuddyRealloc_Autolabel( (caddr_t)(p), s, __FILE__, __FUNCTION__, __LINE__, lbl )
+#  define Mem_Free( a )                   BuddyFree_Autolabel( (caddr_t) (a), __FILE__, __FUNCTION__, __LINE__, "BuddyFree" )
+#  define Mem_Free_Label( a, lbl )        BuddyFree_Autolabel( (caddr_t) (a), __FILE__, __FUNCTION__, __LINE__, lbl )
 #else
-#  define Mem_Alloc( a )       BuddyMallocExit( a )
-#  define Mem_Calloc( s1, s2 ) BuddyCalloc( s1, s2 )
-#  define Mem_Realloc( p, s)   BuddyRealloc( (caddr_t)(p), s )
+#  define Mem_Alloc( a )                  BuddyMallocExit( a )
+#  define Mem_Calloc( s1, s2 )            BuddyCalloc( s1, s2 )
+#  define Mem_Realloc( p, s)              BuddyRealloc( (caddr_t)(p), s )
+#  define Mem_Alloc_Label( a, lbl )       BuddyMallocExit( a )
+#  define Mem_Calloc_Label( s1, s2, lbl ) BuddyCalloc( s1, s2 )
+#  define Mem_Realloc_Label( p, s, lbl)   BuddyRealloc( (caddr_t)(p), s )
+#  define Mem_Free( a )                   BuddyFree( (caddr_t) (a) )
+#  define Mem_Free_Label( a, lbl )        BuddyFree( (caddr_t) (a) )
 #endif
 
-#define Mem_Free( a )        BuddyFree((caddr_t) (a))
 #define Mem_Errno            BuddyErrno
 
 #define GetPreferedPool( _n, _s )  BuddyPreferedPoolCount( _n, _s)
