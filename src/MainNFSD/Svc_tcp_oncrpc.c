@@ -37,6 +37,8 @@ typedef unsigned int u_int32_t;
 
 #include   "log_macros.h"
 
+#include   "nfs_core.h"
+
 #ifndef MAX
 #define MAX(a, b)     ((a > b) ? a : b)
 #endif
@@ -48,9 +50,9 @@ void socket_setoptions(int socketFd);
 
 bool_t svcauth_wrap_dummy(XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr);
 
-pthread_mutex_t mutex_cond_xprt[FD_SETSIZE];
-pthread_cond_t condvar_xprt[FD_SETSIZE];
-int etat_xprt[FD_SETSIZE];
+pthread_mutex_t *mutex_cond_xprt;
+pthread_cond_t *condvar_xprt;
+int *etat_xprt;
 
 #define SVCAUTH_WRAP(auth, xdrs, xfunc, xwhere) svcauth_wrap_dummy( xdrs, xfunc, xwhere)
 #define SVCAUTH_UNWRAP(auth, xdrs, xfunc, xwhere) svcauth_wrap_dummy( xdrs, xfunc, xwhere)
@@ -90,7 +92,6 @@ static struct xp_ops Svctcp_rendezvous_op = {
 };
 
 int Readtcp(), Writetcp();
-static SVCXPRT *Makefd_xprt();
 
 struct tcp_rendezvous
 {                               /* kept in xprt->xp_p1 */
@@ -187,15 +188,9 @@ SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize)
 
 /*
  * Like svtcp_create(), except the routine takes any *open* UNIX file
- * descriptor as its first input.
+ * descriptor as its first input. It is only called by Rendezvous_request
+ * which will use poll() not select() so it doesn't need to call Xprt_register.
  */
-/*  */
-SVCXPRT *Svcfd_create(int fd, u_int sendsize, u_int recvsize)
-{
-
-  return (Makefd_xprt(fd, sendsize, recvsize));
-}
-
 static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
 {
   register SVCXPRT *xprt;
@@ -226,7 +221,7 @@ static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
 #else
   xprt->xp_sock = fd;
 #endif
-  Xprt_register(xprt);
+  Xports[fd] = xprt;
  done:
   return (xprt);
 }
@@ -313,7 +308,6 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt)
   pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED);      /* If not, the conn mgr will be "defunct" threads */
 
 #ifdef _FREEBSD
-  FD_CLR(xprt->xp_fd, &Svc_fdset);
   if(pthread_cond_init(&condvar_xprt[xprt->xp_fd], NULL) != 0)
     return FALSE;
 
@@ -326,7 +320,6 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt)
                      (void *)((unsigned long)xprt->xp_fd))) != 0)
     return FALSE;
 #else
-  FD_CLR(xprt->xp_sock, &Svc_fdset);
   if(pthread_cond_init(&condvar_xprt[xprt->xp_sock], NULL) != 0)
     return FALSE;
 
@@ -395,6 +388,7 @@ int Readtcp(register SVCXPRT * xprt, caddr_t buf, register int len)
   int milliseconds = 35 * 1000;
   struct pollfd pollfd;
 
+  LogFullDebug(COMPONENT_DISPATCH, "Readtcp socket %d", sock);
   do
     {
       pollfd.fd = sock;
