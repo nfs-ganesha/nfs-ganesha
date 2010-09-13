@@ -95,11 +95,6 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
   /* stat */
   pclient->stat.func_stats.nb_call[CACHE_CONTENT_NEW_ENTRY] += 1;
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_content_entry_t");
-#endif
-
   if(pentry_inode == NULL)
     {
       *pstatus = CACHE_CONTENT_INVALID_ARGUMENT;
@@ -116,11 +111,6 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
       GET_PREALLOC(pfc_pentry,
                    pclient->pool_entry,
                    pclient->nb_prealloc, cache_content_entry_t, next_alloc);
-
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("N/A");
-#endif
 
       if(pfc_pentry == NULL)
         {
