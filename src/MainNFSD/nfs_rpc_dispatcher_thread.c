@@ -95,7 +95,6 @@ void freenetconfigent(struct netconfig *);
 SVCXPRT *Svc_vc_create(int, u_int, u_int);
 SVCXPRT *Svc_dg_create(int, u_int, u_int);
 #else
-SVCXPRT *Svcfd_create(int fd, u_int sendsize, u_int recvsize);
 SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize);
 SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz);
 bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*dispatch) (),
@@ -109,15 +108,10 @@ void socket_setoptions(int socketFd);
 extern fd_set Svc_fdset;
 extern nfs_worker_data_t *workers_data;
 extern nfs_parameter_t nfs_param;
-extern SVCXPRT *Xports[FD_SETSIZE];     /* The one from RPCSEC_GSS library */
 #ifdef _RPCSEC_GS_64_INSTALLED
 struct svc_rpc_gss_data **TabGssData;
 #endif
 extern hash_table_t *ht_dupreq; /* duplicate request hash */
-
-extern pthread_mutex_t mutex_cond_xprt[FD_SETSIZE];
-extern pthread_cond_t condvar_xprt[FD_SETSIZE];
-extern int etat_xprt[FD_SETSIZE];
 
 #if _USE_TIRPC
 /* public data : */
@@ -239,7 +233,13 @@ int nfs_Init_svc()
   gss_cred_id_t test_gss_cred = NULL;
   gss_name_t imported_name = NULL;
 #endif
+  int num_sock = nfs_param.core_param.nb_max_fd;
 
+  /* Allocate resources that are based on the maximum number of open file descriptors */
+  Xports = (SVCXPRT **) Mem_Alloc_Label(num_sock * sizeof(SVCXPRT *), "Xports array");
+  mutex_cond_xprt = (pthread_mutex_t *) Mem_Alloc_Label(num_sock * sizeof(pthread_mutex_t ), "mutex_cond_xprt array");
+  condvar_xprt = (pthread_cond_t *) Mem_Alloc_Label(num_sock * sizeof(pthread_cond_t ), "condvar_xprt array");
+  etat_xprt = (int *) Mem_Alloc_Label(num_sock * sizeof(int), "etat_xprt array");
   FD_ZERO(&Svc_fdset);
 
 #ifdef _USE_TIRPC
