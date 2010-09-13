@@ -192,6 +192,16 @@ static const char *Log_GetThreadFunction(int ok_errors)
     return context->nom_fonction;
 }
 
+void GetNameFunction(char *name, int len)
+{
+  const char *s = Log_GetThreadFunction(0);
+
+  if (s != emergency && s != NULL)
+    strncpy(name, s, len);
+  else
+    snprintf(name, len, "Thread %p", pthread_self());
+}
+
 /*
  * Fait la conversion nom du niveau de log
  * en ascii vers valeur numerique du niveau
@@ -388,6 +398,7 @@ void InitLogging()
                  LogComponents[component].comp_name, ReturnLevelInt(oldlevel),
                  ReturnLevelInt(newlevel));
     }
+
 }                               /* InitLevelDebug */
 
 /*
@@ -1321,11 +1332,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     "SYSLOG"
   },
   { COMPONENT_MEMALLOC,          "COMPONENT_MEMALLOC", "MEM ALLOC",
-#ifdef _DEBUG_MEMALLOC
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
     "SYSLOG"
   },
@@ -1454,11 +1461,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     "SYSLOG"
   },
   { COMPONENT_MEMCORRUPT,        "COMPONENT_MEMCORRUPT", "MEM CORRUPT",
-#ifdef _DEBUG_MEMCORRUPT
-    NIV_FULL_DEBUG,
-#else
     NIV_EVENT,
-#endif
     SYSLOG,
     "SYSLOG"
   },

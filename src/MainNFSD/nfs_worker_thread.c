@@ -101,16 +101,11 @@ void nfs_debug_debug_label_info();
 
 extern nfs_worker_data_t *workers_data;
 extern nfs_parameter_t nfs_param;
-extern SVCXPRT *Xports[FD_SETSIZE];     /* The one from RPCSEC_GSS library */
 extern hash_table_t *ht_dupreq; /* duplicate request hash */
 
 /* These two variables keep state of the thread that gc at this time */
 extern unsigned int nb_current_gc_workers;
 extern pthread_mutex_t lock_nb_current_gc_workers;
-
-extern pthread_mutex_t mutex_cond_xprt[FD_SETSIZE];
-extern pthread_cond_t condvar_xprt[FD_SETSIZE];
-extern int etat_xprt[FD_SETSIZE];
 
 /* is daemon terminating ? If so, it drops all requests */
 int nfs_do_terminate = FALSE;

@@ -211,6 +211,13 @@ bool_t Svcauth_gss_acquire_cred(void);
 void Xprt_register(SVCXPRT * xprt);
 void Xprt_unregister(SVCXPRT * xprt);
 
+
+/* Declare the various RPC transport dynamic arrays */
+extern SVCXPRT         **Xports;
+extern pthread_mutex_t  *mutex_cond_xprt;
+extern pthread_cond_t   *condvar_xprt;
+extern int              *etat_xprt;
+
 /* The default attribute mask for NFSv2/NFSv3 */
 #define FSAL_ATTR_MASK_V2_V3   ( FSAL_ATTRS_MANDATORY | FSAL_ATTR_MODE     | FSAL_ATTR_FILEID | \
                                  FSAL_ATTR_FSID       | FSAL_ATTR_NUMLINKS | FSAL_ATTR_OWNER  | \

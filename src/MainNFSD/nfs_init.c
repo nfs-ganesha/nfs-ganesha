@@ -1868,8 +1868,22 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
         {
           LogError(COMPONENT_INIT, ERR_SYS, ERR_SETRLIMIT, errno);
           LogCrit(COMPONENT_INIT, "/!\\ | Impossible to set RLIMIT_NOFILE to %d",
-                     nfs_param.core_param.nb_max_fd);
+                  nfs_param.core_param.nb_max_fd);
         }
+      else
+        LogEvent(COMPONENT_INIT, "Setting RLIMIT_NOFILE to %d",
+                 nfs_param.core_param.nb_max_fd);
+    }
+  else
+    {
+      if(getrlimit(RLIMIT_NOFILE, &ulimit_data) != 0)
+        {
+          LogError(COMPONENT_INIT, ERR_SYS, ERR_SETRLIMIT, errno);
+          LogMajor(COMPONENT_INIT, "/!\\ | Impossible to get RLIMIT_NOFILE");
+          exit(1);
+        }
+      nfs_param.core_param.nb_max_fd = ulimit_data.rlim_cur;
+      LogEvent(COMPONENT_INIT, "RLIMIT_NOFILE was cur %d max %d", ulimit_data.rlim_cur, ulimit_data.rlim_max);
     }
 
   /* Allocate the directories for the datacache */

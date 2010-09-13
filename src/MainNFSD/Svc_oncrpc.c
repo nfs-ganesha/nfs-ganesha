@@ -14,6 +14,7 @@ typedef unsigned long u_long;
 
 #include   <sys/errno.h>
 #include   "stuff_alloc.h"
+#include   "nfs_core.h"
 
 #include   <rpc/rpc.h>
 #include   <rpc/auth.h>
@@ -24,7 +25,7 @@ typedef unsigned long u_long;
 #define __FDS_BITS(set) ((set)->fds_bits)
 #endif
 
-SVCXPRT *Xports[FD_SETSIZE];
+SVCXPRT **Xports;
 
 #define NULL_SVC ((struct svc_callout *)0)
 #define	RQCRED_SIZE	400     /* this size is excessive */
@@ -73,12 +74,12 @@ void Xprt_register(SVCXPRT * xprt)
   register int sock = xprt->xp_sock;
 #endif
 
+  Xports[sock] = xprt;
+
   if(sock < FD_SETSIZE)
     {
-      Xports[sock] = xprt;
       FD_SET(sock, &Svc_fdset);
       mysvc_maxfd = max(mysvc_maxfd, sock);
-
     }
 }
 
@@ -94,10 +95,13 @@ void Xprt_unregister(SVCXPRT * xprt)
   register int sock = xprt->xp_sock;
 #endif
 
-  if((sock < FD_SETSIZE) && (Xports[sock] == xprt))
+  if(Xports[sock] == xprt)
     {
       Xports[sock] = (SVCXPRT *) 0;
+    }
 
+  if(sock < FD_SETSIZE)
+    {
       FD_CLR(sock, &Svc_fdset);
       if(sock == mysvc_maxfd)
         {
