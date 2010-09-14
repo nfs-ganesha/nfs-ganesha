@@ -130,11 +130,6 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   pclient->file_pool_fileid = NULL;
   pclient->file_pool_handle = NULL;
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_entry_t");
-#endif
-
   if(pthread_mutexattr_init(&mutexattr) != 0)
     return 1;
 
@@ -150,11 +145,6 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
     }
 #endif
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_inode_dir_data_t");
-#endif
-
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_dir_data,
                  pclient->nb_pre_dir_data, cache_inode_dir_data_t, next_alloc);
@@ -166,11 +156,6 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
     }
 #endif
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_inode_parent_entry_t");
-#endif
-
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_parent,
                  pclient->nb_pre_parent, cache_inode_parent_entry_t, next_alloc);
@@ -180,11 +165,6 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
                    "Error : can't init cache_inode client parent link pool");
       return 1;
     }
-#endif
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_inode_state_v4_t");
 #endif
 
 #ifndef _NO_BLOCK_PREALLOC
@@ -208,19 +188,9 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
     }
 #endif
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_inode_fsal_data_t:init");
-#endif
-
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_key,
                  pclient->nb_prealloc, cache_inode_fsal_data_t, next_alloc);
-
-# ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-# endif
 
   if(pclient->pool_key == NULL)
     {
