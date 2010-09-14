@@ -140,11 +140,6 @@ LRU_list_t *LRU_Init(LRU_parameter_t lru_param, LRU_status_t * pstatus)
   plru->MRU = plru->LRU = NULL;
   plru->parameter = lru_param;
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("LRU_entry_t");
-#endif
-
 #ifndef _NO_BLOCK_PREALLOC
   /* Pre allocate entries */
   STUFF_PREALLOC(plru->entry_prealloc, lru_param.nb_entry_prealloc, LRU_entry_t, next);
@@ -153,11 +148,6 @@ LRU_list_t *LRU_Init(LRU_parameter_t lru_param, LRU_status_t * pstatus)
       *pstatus = LRU_LIST_MALLOC_ERROR;
       return NULL;
     }
-#endif
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
 #endif
 
   *pstatus = LRU_LIST_SUCCESS;
@@ -209,11 +199,6 @@ LRU_entry_t *LRU_new_entry(LRU_list_t * plru, LRU_status_t * pstatus)
   LogDebug(COMPONENT_LRU, "==> LRU_new_entry: nb_entry = %d nb_entry_prealloc = %d\n", plru->nb_entry,
          plru->parameter.nb_entry_prealloc);
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("LRU_entry_t");
-#endif
-
   GET_PREALLOC(new_entry, plru->entry_prealloc, plru->parameter.nb_entry_prealloc,
                LRU_entry_t, next);
   if(new_entry == NULL)
@@ -221,10 +206,6 @@ LRU_entry_t *LRU_new_entry(LRU_list_t * plru, LRU_status_t * pstatus)
       *pstatus = LRU_LIST_MALLOC_ERROR;
       return NULL;
     }
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   new_entry->valid_state = LRU_ENTRY_VALID;
   new_entry->next = NULL;       /* Entry is added as the MRU entry */
