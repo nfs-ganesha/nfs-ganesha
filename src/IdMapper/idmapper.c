@@ -473,20 +473,10 @@ int uid2utf8(uid_t uid, utf8string * utf8str)
   len = strlen(buff);
 
   /* A matching uid was found, now do the conversion to utf8 */
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("uid2utf8");
-#endif
-
-  if((utf8str->utf8string_val = (char *)Mem_Alloc(len)) == NULL)
+  if((utf8str->utf8string_val = (char *)Mem_Alloc_Label(len, "uid2utf8")) == NULL)
     return -1;
   else
     utf8str->utf8string_len = len;
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   return str2utf8(buff, utf8str);
 
@@ -516,20 +506,10 @@ int gid2utf8(gid_t gid, utf8string * utf8str)
 
   /* A matching gid was found */
   /* Do the conversion to uft8 format */
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("gid2utf8");
-#endif
-
-  if((utf8str->utf8string_val = (char *)Mem_Alloc(len)) == NULL)
+  if((utf8str->utf8string_val = (char *)Mem_Alloc_Label(len, "gid2utf8")) == NULL)
     return -1;
   else
     utf8str->utf8string_len = len;
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   return str2utf8(buff, utf8str);
 }                               /* gid2utf8 */
