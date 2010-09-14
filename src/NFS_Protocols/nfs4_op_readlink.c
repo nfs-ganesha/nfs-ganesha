@@ -143,21 +143,13 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
                           data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
       /* Alloc read link */
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("nfs4_op_readlink");
-#endif
 
       if((res_READLINK4.READLINK4res_u.resok4.link.utf8string_val =
-          (char *)Mem_Alloc(symlink_path.len)) == NULL)
+          (char *)Mem_Alloc_Label(symlink_path.len, "nfs4_op_readlink")) == NULL)
         {
           res_READLINK4.status = NFS4ERR_INVAL;
           return res_READLINK4.status;
         }
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("N/A");
-#endif
 
       /* convert the fsal path to a utf8 string */
       if(str2utf8((char *)symlink_path.path, &res_READLINK4.READLINK4res_u.resok4.link)

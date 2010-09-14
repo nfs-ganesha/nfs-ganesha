@@ -611,15 +611,11 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                 }
             }
 
-#ifdef _DEBUG_MEMLEAKS
-          /* For debugging memory leaks */
-          BuddySetDebugLabel("FSALattr_To_Fattr:supported_bitmap");
-#endif
-
           /* Let set the reply bitmap */
 #ifdef _USE_NFS4_1
           if((supported_attrs.bitmap4_val =
-              (uint32_t *) Mem_Alloc(3 * sizeof(uint32_t))) == NULL)
+              (uint32_t *) Mem_Alloc_Label(3 * sizeof(uint32_t),
+                                           "FSALattr_To_Fattr:supported_bitmap")) == NULL)
             return -1;
           memset(supported_attrs.bitmap4_val, 0, 3 * sizeof(uint32_t));
 #else
@@ -630,11 +626,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 #endif
 
           nfs4_list_to_bitmap4(&supported_attrs, &c, attrvalslist_supported);
-
-#ifdef _DEBUG_MEMLEAKS
-          /* For debugging memory leaks */
-          BuddySetDebugLabel("N/A");
-#endif
 
           LogFullDebug(COMPONENT_NFS_V4,
                           "Fattr (regular) supported_attrs(len)=%u -> %u|%u",
@@ -1558,20 +1549,11 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
     }                           /* for i */
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("FSALattr_To_Fattr:bitmap");
-#endif
-
   /* Set the bitmap for result */
-  if((Fattr->attrmask.bitmap4_val = (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
+  if((Fattr->attrmask.bitmap4_val = (uint32_t *) Mem_Alloc_Label(2 * sizeof(uint32_t),
+                                                                 "FSALattr_To_Fattr:bitmap")) == NULL)
     return -1;
   memset((char *)Fattr->attrmask.bitmap4_val, 0, 2 * sizeof(uint32_t));
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   nfs4_list_to_bitmap4(&(Fattr->attrmask), &j, attrvalslist);
 
@@ -1579,22 +1561,13 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   Fattr->attr_vals.attrlist4_len = LastOffset;
   if(LastOffset != 0)           /* No need to allocate an empty buffer */
     {
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("FSALattr_To_Fattr:attrvals");
-#endif
-
       if((Fattr->attr_vals.attrlist4_val =
-          Mem_Alloc(Fattr->attr_vals.attrlist4_len)) == NULL)
+          Mem_Alloc_Label(Fattr->attr_vals.attrlist4_len,
+                          "FSALattr_To_Fattr:attrvals")) == NULL)
         return -1;
       memset((char *)Fattr->attr_vals.attrlist4_val, 0, Fattr->attr_vals.attrlist4_len);
       memcpy(Fattr->attr_vals.attrlist4_val, attrvalsBuffer,
              Fattr->attr_vals.attrlist4_len);
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("N/A");
-#endif
-
     }
   /* LastOffset contains the length of the attrvalsBuffer usefull data */
 
@@ -1916,19 +1889,9 @@ int utf82str(char *str, utf8string * utf8str)
   /* BUGAZOMEU: TO BE DONE: use STUFF ALLOCATOR here */
   if(str == NULL)
     {
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("utf82str");
-#endif
-
-      if((str = (char *)Mem_Alloc(utf8str->utf8string_len + 1)) == NULL)
+      if((str = (char *)Mem_Alloc_Label(utf8str->utf8string_len + 1,
+                                        "utf82str")) == NULL)
         return NFS4ERR_SERVERFAULT;
-
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("N/A");
-#endif
-
     }
 
   strncpy(str, utf8str->utf8string_val, utf8str->utf8string_len);
@@ -3451,22 +3414,14 @@ int nfs4_AllocateFH(nfs_fh4 * fh)
   if(fh == NULL)
     return NFS4ERR_SERVERFAULT;
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("nfs4_AllocateFH");
-#endif
-
   /* Allocating the filehandle in memory */
   fh->nfs_fh4_len = sizeof(file_handle_v4_t);
-  if((fh->nfs_fh4_val = (char *)Mem_Alloc(fh->nfs_fh4_len)) == NULL)
+  if((fh->nfs_fh4_val = (char *)Mem_Alloc_Label(fh->nfs_fh4_len,
+                                                "nfs4_AllocateFH")) == NULL)
     {
       LogError(COMPONENT_NFS_V4, ERR_SYS, ERR_MALLOC, errno);
       return NFS4ERR_RESOURCE;
     }
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   memset((char *)fh->nfs_fh4_val, 0, fh->nfs_fh4_len);
 
