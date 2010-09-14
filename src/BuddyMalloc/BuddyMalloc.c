@@ -2145,61 +2145,8 @@ void BuddyGetStats(buddy_stats_t * budd_stats)
 
 #ifdef _DEBUG_MEMLEAKS
 
-/**
- * Those functions allocate memory with a file/function/line label
- */
-BUDDY_ADDR_T BuddyMalloc_Autolabel(size_t sz,
-                                   const char *file,
-                                   const char *function,
-                                   const unsigned int line,
-                                   const char *str)
-{
-  _BuddySetDebugLabel(file, function, line, str);
-  return BuddyMallocExit(sz);
-}
-
-BUDDY_ADDR_T BuddyCalloc_Autolabel(size_t NumberOfElements, size_t ElementSize,
-                                   const char *file,
-                                   const char *function,
-                                   const unsigned int line,
-                                   const char *str)
-{
-  _BuddySetDebugLabel(file, function, line, str);
-  return BuddyCalloc(NumberOfElements, ElementSize);
-}
-
-BUDDY_ADDR_T BuddyRealloc_Autolabel(BUDDY_ADDR_T ptr, size_t Size,
-                                    const char *file,
-                                    const char *function,
-                                    const unsigned int line,
-                                    const char *str)
-{
-  _BuddySetDebugLabel(file, function, line, str);
-  return BuddyRealloc(ptr, Size);
-}
-
-void BuddyFree_Autolabel(BUDDY_ADDR_T ptr,
-                         const char *file,
-                         const char *function,
-                         const unsigned int line,
-                         const char *str)
-{
-  _BuddySetDebugLabel(file, function, line, str);
-  BuddyFree(ptr);
-}
-
-int _BuddyCheck_Autolabel(BUDDY_ADDR_T ptr,
-                          const char *file,
-                          const char *function,
-                          const unsigned int line,
-                          const char *str)
-{
-  _BuddySetDebugLabel(file, function, line, str);
-  return _BuddyCheck(ptr);
-}
-
 /** Set a label for allocated areas, for debugging. */
-int _BuddySetDebugLabel(const char *file, const char *func, const unsigned int line,
+int BuddySetDebugLabel(const char *file, const char *func, const unsigned int line,
                         const char *label)
 {
 
@@ -2224,6 +2171,59 @@ int _BuddySetDebugLabel(const char *file, const char *func, const unsigned int l
 
   return BUDDY_SUCCESS;
 
+}
+
+/**
+ * Those functions allocate memory with a file/function/line label
+ */
+BUDDY_ADDR_T BuddyMalloc_Autolabel(size_t sz,
+                                   const char *file,
+                                   const char *function,
+                                   const unsigned int line,
+                                   const char *str)
+{
+  BuddySetDebugLabel(file, function, line, str);
+  return BuddyMallocExit(sz);
+}
+
+BUDDY_ADDR_T BuddyCalloc_Autolabel(size_t NumberOfElements, size_t ElementSize,
+                                   const char *file,
+                                   const char *function,
+                                   const unsigned int line,
+                                   const char *str)
+{
+  BuddySetDebugLabel(file, function, line, str);
+  return BuddyCalloc(NumberOfElements, ElementSize);
+}
+
+BUDDY_ADDR_T BuddyRealloc_Autolabel(BUDDY_ADDR_T ptr, size_t Size,
+                                    const char *file,
+                                    const char *function,
+                                    const unsigned int line,
+                                    const char *str)
+{
+  BuddySetDebugLabel(file, function, line, str);
+  return BuddyRealloc(ptr, Size);
+}
+
+void BuddyFree_Autolabel(BUDDY_ADDR_T ptr,
+                         const char *file,
+                         const char *function,
+                         const unsigned int line,
+                         const char *str)
+{
+  BuddySetDebugLabel(file, function, line, str);
+  BuddyFree(ptr);
+}
+
+int _BuddyCheck_Autolabel(BUDDY_ADDR_T ptr,
+                          const char *file,
+                          const char *function,
+                          const unsigned int line,
+                          const char *str)
+{
+  BuddySetDebugLabel(file, function, line, str);
+  return _BuddyCheck(ptr);
 }
 
 /** Retrieves the label for a given block.  */
