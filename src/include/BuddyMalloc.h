@@ -285,6 +285,7 @@ void BuddyLabelsSummary();
  * Display allocation map, and fragmentation info.
  */
 void DisplayMemoryMap(FILE *output);
+void BuddyDumpAll(FILE *output);
 
 int _BuddyCheck_Autolabel(BUDDY_ADDR_T ptr,
                           const char *file,

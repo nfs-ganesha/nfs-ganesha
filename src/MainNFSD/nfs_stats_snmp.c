@@ -700,11 +700,41 @@ static int get_buddy(snmp_adm_type_union * param, void *opt_arg)
         if(workers_data[i].stats.buddy_stats.NbStdUsed > param->bigint)
           param->bigint = workers_data[i].stats.buddy_stats.NbStdUsed;
       break;
+    case 10:
+      strcpy(param->string, "filename to dump to");
+      break;
     default:
       return 1;
     }
   return 0;
 }
+
+#ifdef _DEBUG_MEMLEAKS
+
+static int set_buddy(snmp_adm_type_union * param, void *opt_arg)
+{
+  long cs = (long)opt_arg;
+  unsigned int i;
+
+  switch (cs)
+    {
+    case 10:
+      {
+        FILE *output = fopen(param->string, "w");
+        if (output == NULL)
+          return 1;
+        BuddyDumpAll(output);
+        LogDebug(COMPONENT_MEMLEAKS, "Dumped buddy memory to %s", param->string);
+      }
+      break;
+    default:
+      return 1;
+    }
+  return 0;
+}
+
+#endif
+
 #endif
 
 static register_get_set snmp_export_stat_general[] = {
@@ -995,30 +1025,38 @@ static register_get_set snmp_export_stat_maps[] = {
 #define SNMPADM_STAT_MAPS_COUNT 80
 
 #ifndef _NO_BUDDY_SYSTEM
-static register_get_set snmp_export_stat_buddy[] =
-    { {"buddy_total_mem_space", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO,
-       get_buddy, NULL, (void *)0},
-{"buddy_std_mem_space", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO, get_buddy,
- NULL, (void *)1},
-{"buddy_extra_mem_space", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO, get_buddy,
- NULL, (void *)2},
-{"buddy_std_used_space", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO, get_buddy,
- NULL, (void *)3},
-{"buddy_std_used_space_thr_avg", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO,
- get_buddy, NULL, (void *)4},
-{"buddy_std_used_space_thr_max", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO,
- get_buddy, NULL, (void *)5},
-{"buddy_std_pages", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO, get_buddy, NULL,
- (void *)6},
-{"buddy_std_used_pages", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO, get_buddy,
- NULL, (void *)7},
-{"buddy_std_used_pages_thr_avg", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO,
- get_buddy, NULL, (void *)8},
-{"buddy_std_used_pages_thr_max", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO,
- get_buddy, NULL, (void *)9}
+static register_get_set snmp_export_stat_buddy[] = {
+  {"buddy_total_mem_space", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO,
+   get_buddy, NULL, (void *)0},
+  {"buddy_std_mem_space", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO, get_buddy,
+   NULL, (void *)1},
+  {"buddy_extra_mem_space", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO, get_buddy,
+   NULL, (void *)2},
+  {"buddy_std_used_space", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO, get_buddy,
+   NULL, (void *)3},
+  {"buddy_std_used_space_thr_avg", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO,
+   get_buddy, NULL, (void *)4},
+  {"buddy_std_used_space_thr_max", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO,
+   get_buddy, NULL, (void *)5},
+  {"buddy_std_pages", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO, get_buddy, NULL,
+   (void *)6},
+  {"buddy_std_used_pages", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO, get_buddy,
+   NULL, (void *)7},
+  {"buddy_std_used_pages_thr_avg", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO,
+   get_buddy, NULL, (void *)8},
+  {"buddy_std_used_pages_thr_max", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO,
+   get_buddy, NULL, (void *)9},
+#ifdef _DEBUG_MEMLEAKS
+  {"buddy_dump_to_file", "BUDDY_MEMORY", SNMP_ADM_STRING, SNMP_ADM_ACCESS_RW,
+   get_buddy, set_buddy, (void *)10},
+#endif
 };
 
+#ifdef _DEBUG_MEMLEAKS
+#define SNMPADM_STAT_BUDDY_COUNT 11
+#else
 #define SNMPADM_STAT_BUDDY_COUNT 10
+#endif
 
 #endif                          /* _NO_BUDDY_SYSTEM */
 

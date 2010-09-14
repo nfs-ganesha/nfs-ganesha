@@ -295,12 +295,12 @@ void ShowAllContext()
       LogDebug(COMPONENT_MEMALLOC, "Context for thread %s (%p) Total Mem Space: %lld MB Used: %lld MB",
                context->label_thread,
                context->OwnerThread,
-               (unsigned long long)context->Stats.TotalMemSpace / 1024 / 1024,
-               (unsigned long long)(context->Stats.StdUsedSpace + context->Stats.ExtraMemSpace) / 1024 / 1024);
+               (unsigned long long) context->Stats.TotalMemSpace / 1024 / 1024,
+               (unsigned long long) (context->Stats.StdUsedSpace + context->Stats.ExtraMemSpace) / 1024 / 1024);
     }
 
   LogDebug(COMPONENT_MEMALLOC, "%d threads, Total Mem Space: %lld MB, Total Used: %lld MB",
-           count, (unsigned long long)total / 1024 / 1024, used / 1024 / 1024);
+           count, (unsigned long long) total / 1024 / 1024, (unsigned long long) used / 1024 / 1024);
   V(ContextListMutex);
 #endif
   return;
@@ -2467,6 +2467,69 @@ void BuddyLabelsSummary()
   hash_label_display(label_hash, LBL_HASH_SZ);
   hash_label_free(label_hash, LBL_HASH_SZ);
 
+}
+
+void BuddyDumpAll(FILE *output)
+{
+#ifndef _MONOTHREAD_MEMALLOC
+  BuddyThreadContext_t *context;
+  BuddyBlockPtr_t p_curr_block;
+  size_t total = 0, total_used = 0;
+  int count = 0;
+
+  P(ContextListMutex);
+
+  fprintf(output, "All Buddy Memory\n");
+
+  for (context = first_context; context != NULL; context = context->next)
+    {
+      total += context->Stats.TotalMemSpace;
+      total_used += context->Stats.StdUsedSpace + context->Stats.ExtraMemSpace;
+      count++;
+
+      fprintf(output, "\nMemory Context for thread %s (%p) Total Mem Space: %lld MB Used: %lld MB\n",
+               context->label_thread,
+               context->OwnerThread,
+               (unsigned long long) context->Stats.TotalMemSpace / 1024 / 1024,
+               (unsigned long long) (context->Stats.StdUsedSpace + context->Stats.ExtraMemSpace) / 1024 / 1024);
+
+      fprintf(output, "\n-SIZE-  ---USED--- -------------------LABEL-------------------\n");
+
+      for(p_curr_block = context->p_allocated;
+          p_curr_block != NULL; p_curr_block = p_curr_block->Header.p_next_allocated)
+        {
+          size_t size, used;
+
+          if(IS_EXTRA_BLOCK(p_curr_block))
+            {
+              size = p_curr_block->Header.ExtraInfo;
+              used = size - size_header64;
+            }
+          else
+            {
+              size = 1 << p_curr_block->Header.StdInfo.k_size;
+              used = p_curr_block->Header.StdInfo.user_size - size_header64;
+            }
+
+          if (size < 1024)
+            fprintf(output, "%6llu", (unsigned long long) size);
+          else
+            fprintf(output, "%5lluk", (unsigned long long) size / 1024);
+
+          fprintf(output, "%10llu %s:%u:%s:%s\n",
+                  (unsigned long long) used,
+                  p_curr_block->Header.label_file,
+                  p_curr_block->Header.label_line,
+                  p_curr_block->Header.label_func,
+                  p_curr_block->Header.label_user_defined);;
+        }
+    }
+
+  fprintf(output, "\n%d threads, Total Mem Space: %lld MB, Total Used: %lld MB\n",
+          count, (unsigned long long) total / 1024 / 1024, (unsigned long long) total_used / 1024 / 1024);
+
+  V(ContextListMutex);
+#endif
 }
 
 /* nbr of bytes for 1 char */
