@@ -720,11 +720,13 @@ static int set_buddy(snmp_adm_type_union * param, void *opt_arg)
     {
     case 10:
       {
+        int rc;
         FILE *output = fopen(param->string, "w");
         if (output == NULL)
           return 1;
         BuddyDumpAll(output);
-        LogDebug(COMPONENT_MEMLEAKS, "Dumped buddy memory to %s", param->string);
+        rc = fclose(output);
+        LogDebug(COMPONENT_MEMLEAKS, "Dumped buddy memory to %s, rc=%d", param->string, rc);
       }
       break;
     default:
