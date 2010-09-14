@@ -388,21 +388,15 @@ int nfs_Create(nfs_arg_t * parg,
                           break;
 
                         case NFS_V3:
-#ifdef _DEBUG_MEMLEAKS
-                          /* For debugging memory leaks */
-                          BuddySetDebugLabel("Filehandle V3 in nfs3_Create");
-#endif
                           /* Build file handle */
                           if((pres->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.
-                              handle.data.data_val = Mem_Alloc(NFS3_FHSIZE)) == NULL)
+                              handle.data.data_val = Mem_Alloc_Label(NFS3_FHSIZE,
+                                                                     "Filehandle V3 in nfs3_Create")) == NULL)
                             {
                               pres->res_create3.status = NFS3ERR_IO;
                               return NFS_REQ_OK;
                             }
-#ifdef _DEBUG_MEMLEAKS
-                          /* For debugging memory leaks */
-                          BuddySetDebugLabel("N/A");
-#endif
+
                           /* Set Post Op Fh3 structure */
                           if(nfs3_FSALToFhandle
                              (&pres->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.

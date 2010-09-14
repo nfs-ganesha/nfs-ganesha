@@ -258,22 +258,14 @@ int nfs_Mkdir(nfs_arg_t * parg,
                           break;
 
                         case NFS_V3:
-#ifdef _DEBUG_MEMLEAKS
-                          /* For debugging memory leaks */
-                          BuddySetDebugLabel("Filehandle V3 in nfs3_mkdir");
-#endif
-
                           /* Build file handle */
                           if((pres->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
-                              handle.data.data_val = Mem_Alloc(NFS3_FHSIZE)) == NULL)
+                              handle.data.data_val = Mem_Alloc_Label(NFS3_FHSIZE,
+                                                                     "Filehandle V3 in nfs3_mkdir")) == NULL)
                             {
                               pres->res_mkdir3.status = NFS3ERR_IO;
                               return NFS_REQ_OK;
                             }
-#ifdef _DEBUG_MEMLEAKS
-                          /* For debugging memory leaks */
-                          BuddySetDebugLabel("N/A");
-#endif
 
                           if(nfs3_FSALToFhandle
                              (&pres->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
