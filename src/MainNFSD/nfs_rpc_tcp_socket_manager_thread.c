@@ -283,7 +283,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 #endif                          /* _USE_TIRPC */
                 strncpy(str_caller, "unresolved", MAXNAMLEN);
 
-              LogCrit(COMPONENT_DISPATCH,
+              LogEvent(COMPONENT_DISPATCH,
                    "TCP SOCKET MANAGER Sock=%d: the client (%s) disappeared... Stopping thread ",
                    tcp_sock, str_caller);
 

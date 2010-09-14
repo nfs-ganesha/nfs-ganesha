@@ -307,8 +307,8 @@ fsal_status_t XFSFSAL_setattrs(xfsfsal_handle_t * p_filehandle, /* IN */
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
     {
 
-      LogFullDebug(COMPONENT_FSAL, "Performing chown(%s, %d,%d)",
-                        fsalpath.path, FSAL_TEST_MASK(attrs.asked_attributes,
+      LogFullDebug(COMPONENT_FSAL, "Performing chown(inode=%u, %d,%d)",
+                        buffstat.st_ino, FSAL_TEST_MASK(attrs.asked_attributes,
                                                       FSAL_ATTR_OWNER) ? (int)attrs.owner
                         : -1, FSAL_TEST_MASK(attrs.asked_attributes,
                                              FSAL_ATTR_GROUP) ? (int)attrs.group : -1);

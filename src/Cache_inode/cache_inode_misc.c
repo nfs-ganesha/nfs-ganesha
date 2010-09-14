@@ -1319,7 +1319,7 @@ cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pent
 {
   FILE *stream = NULL;
 
-  char buff[CACHE_INODE_DUMP_LEN];
+  char buff[CACHE_INODE_DUMP_LEN+1];
 
   /* Open the index file */
   if((stream = fopen(path, "r")) == NULL)
@@ -1330,15 +1330,20 @@ cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pent
   pentry->internal_md.valid_state = VALID;
 
   /* Read the information */
-  fscanf(stream, "internal:read_time=%s\n", buff);
+  #define XSTR(s) STR(s)
+  #define STR(s) #s
+  fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
   pentry->internal_md.read_time = atoi(buff);
 
-  fscanf(stream, "internal:mod_time=%s\n", buff);
+  fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
   pentry->internal_md.mod_time = atoi(buff);
 
-  fscanf(stream, "internal:export_id=%s\n", buff);
+  fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
 
-  fscanf(stream, "file: FSAL handle=%s", buff);
+  fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
+  #undef STR
+  #undef XSTR
+
   if(sscanHandle(&(pentry->object.file.handle), buff) < 0)
     {
       /* expected = 2*sizeof(fsal_handle_t) in hexa representation */

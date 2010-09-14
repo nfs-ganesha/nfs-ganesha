@@ -488,7 +488,7 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
           p_clients[i].options |= EXPORT_OPTION_NETGRP;
           p_clients[i].type = NETGROUP_CLIENT;
 
-          LogFullDebug(COMPONENT_CONFIG, "----------------- %s to netgroup %s\n",
+          LogDebug(COMPONENT_CONFIG, "----------------- %s to netgroup %s\n",
                  (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                  p_clients[i].client.netgroup.netgroupname);
         }
@@ -502,7 +502,7 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
                      hostEntry->h_length);
               p_clients[i].type = HOSTIF_CLIENT;
 
-              LogFullDebug(COMPONENT_CONFIG, "----------------- %s to client %s = %d.%d.%d.%d\n",
+              LogDebug(COMPONENT_CONFIG, "----------------- %s to client %s = %d.%d.%d.%d\n",
                      (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                      client_hostname,
                      (unsigned int)(p_clients[i].client.hostif.clientaddr >> 24),
@@ -528,7 +528,7 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
           p_clients[i].client.network.netmask = netMask;
           p_clients[i].type = NETWORK_CLIENT;
 
-          LogFullDebug(COMPONENT_CONFIG, "----------------- %s to network %s = %d.%d.%d.%d\n",
+          LogDebug(COMPONENT_CONFIG, "----------------- %s to network %s = %d.%d.%d.%d\n",
                  (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                  client_hostname,
                  (unsigned int)(p_clients[i].client.network.netaddr >> 24),
