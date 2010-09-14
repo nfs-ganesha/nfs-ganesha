@@ -991,7 +991,7 @@ int NamespacePath(ino_t entry, dev_t dev, unsigned int gen, char *path)
           if((curr_inode.inum == p_node->parent_list->parent.inum)
              && (curr_inode.dev == p_node->parent_list->parent.dev))
             {
-              LogCrit(COMPONENT_FSAL,Log
+              LogCrit(COMPONENT_FSAL,
                       "NAMESPACE MANAGER: loop detected in namespace: %lX.%ld/%s = %lX.%ld",
                       p_node->parent_list->parent.dev, p_node->parent_list->parent.inum,
                       p_node->parent_list->name, curr_inode.dev, curr_inode.inum);
