@@ -136,6 +136,13 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
     {
       /* Failed init */
       LogCrit(COMPONENT_DISPATCH, "Memory manager could not be initialized");
+      #ifdef _DEBUG_MEMLEAKS
+      {
+        FILE *output = fopen("/tmp/buddymem", "w");
+        if (output != NULL)
+          BuddyDumpAll(output);
+      }
+      #endif
       exit(1);
     }
 #endif
