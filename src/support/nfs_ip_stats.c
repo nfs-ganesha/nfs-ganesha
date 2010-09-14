@@ -185,20 +185,10 @@ int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
   if(nfs_param.core_param.dump_stats_per_client == 0)
     return IP_STATS_SUCCESS;
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("nfs_ip_stats_t");
-#endif
-
   /* Entry to be cached */
   GET_PREALLOC(pnfs_ip_stats,
                nfs_ip_stats_pool,
                nfs_param.worker_param.nb_ip_stats_prealloc, nfs_ip_stats_t, next_alloc);
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   if(pnfs_ip_stats == NULL)
     return IP_STATS_INSERT_MALLOC_ERROR;

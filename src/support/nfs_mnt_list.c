@@ -132,48 +132,27 @@ int nfs_Add_MountList_Entry(char *hostname, char *dirpath)
 
 #ifndef _NO_MOUNT_LIST
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("struct mountbody");
-#endif
   /* Allocate the new entry */
-  if((pnew_mnt_list_entry = (mountlist) Mem_Alloc(sizeof(struct mountbody))) == NULL)
+  if((pnew_mnt_list_entry = (mountlist) Mem_Alloc_Label(sizeof(struct mountbody),
+                                                        "struct mountbody")) == NULL)
     return 0;
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   memset(pnew_mnt_list_entry, 0, sizeof(struct mountbody));
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("ml_hostname");
-#endif
-  if((pnew_mnt_list_entry->ml_hostname = (char *)Mem_Alloc(MAXHOSTNAMELEN)) == NULL)
+  if((pnew_mnt_list_entry->ml_hostname = (char *)Mem_Alloc_Label(MAXHOSTNAMELEN, "ml_hostname")) == NULL)
     {
       Mem_Free(pnew_mnt_list_entry);
       return 0;
     }
   memset(pnew_mnt_list_entry->ml_hostname, 0, MAXHOSTNAMELEN);
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("ml_directory");
-#endif
-  if((pnew_mnt_list_entry->ml_directory = (char *)Mem_Alloc(MAXPATHLEN)) == NULL)
+  if((pnew_mnt_list_entry->ml_directory = (char *)Mem_Alloc_Label(MAXPATHLEN, "ml_directory")) == NULL)
     {
       Mem_Free(pnew_mnt_list_entry->ml_hostname);
       Mem_Free(pnew_mnt_list_entry);
       return 0;
     }
   memset(pnew_mnt_list_entry->ml_directory, 0, MAXPATHLEN);
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   /* Copy the data */
   strncpy(pnew_mnt_list_entry->ml_hostname, hostname, MAXHOSTNAMELEN);
