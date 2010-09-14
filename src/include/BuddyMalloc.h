@@ -265,14 +265,6 @@ void BuddyFree_Autolabel(BUDDY_ADDR_T ptr,
                          const char *str);
 
 /**
- *  Set a label for allocated areas, for debugging.
- */
-int _BuddySetDebugLabel(const char *file, const char *func, const unsigned int line,
-                        const char *label);
-
-#define BuddySetDebugLabel( _user_lbl_ )  _BuddySetDebugLabel(  __FILE__, __FUNCTION__, __LINE__, _user_lbl_ )
-
-/**
  *  Retrieves the debugging label for a given block.
  */
 const char *BuddyGetDebugLabel(BUDDY_ADDR_T ptr);
