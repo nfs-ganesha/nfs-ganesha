@@ -181,17 +181,7 @@ int nfs_ip_name_add(unsigned int ipaddr, char *hostname)
   unsigned long int local_ipaddr = ipaddr;
   int length = sizeof(local_ipaddr);
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("nfs_ip_name_t");
-#endif
-
-  pnfs_ip_name = (nfs_ip_name_t *) Mem_Alloc(sizeof(nfs_ip_name_t));
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
+  pnfs_ip_name = (nfs_ip_name_t *) Mem_Alloc_Label(sizeof(nfs_ip_name_t), "nfs_ip_name_t");
 
   if(pnfs_ip_name == NULL)
     return IP_NAME_INSERT_MALLOC_ERROR;

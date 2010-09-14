@@ -253,20 +253,10 @@ int nfs_client_id_add(clientid4 clientid,
   nfs_client_id_t *pnfs_client_id = NULL;
   clientid4 *pclientid = NULL;
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("nfs_client_id_t");
-#endif
-
   /* Entry to be cached */
   GET_PREALLOC(pnfs_client_id,
                nfs_client_id_pool,
                nfs_param.worker_param.nb_client_id_prealloc, nfs_client_id_t, next_alloc);
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   if(pnfs_client_id == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
@@ -339,20 +329,10 @@ int nfs_client_id_set(clientid4 clientid,
   nfs_client_id_t *pnfs_client_id = NULL;
   clientid4 *pclientid = NULL;
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("nfs_client_id_t");
-#endif
-
   /* Entry to be cached */
   GET_PREALLOC(pnfs_client_id,
                nfs_client_id_pool,
                nfs_param.worker_param.nb_client_id_prealloc, nfs_client_id_t, next_alloc);
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   if(pnfs_client_id == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
