@@ -150,7 +150,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
     {
       int i;
 
-      bythread_stat = (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t));
+      bythread_stat = (fsal_statistics_t *) Mem_Alloc_Label(sizeof(fsal_statistics_t), "fsal_statistics_t");
 
       if(bythread_stat == NULL)
         {
@@ -222,7 +222,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
       int i;
 
       if((bythread_stat =
-          (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t))) == NULL)
+          (fsal_statistics_t *) Mem_Alloc_Label(sizeof(fsal_statistics_t), "fsal_statistics_t")) == NULL)
       {
         /* we don't have working memory, bail */
         LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, Mem_Errno);
