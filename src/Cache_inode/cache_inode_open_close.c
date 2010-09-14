@@ -280,7 +280,7 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
 
       /* If proxy if used, we should keep the name of the file to do FSAL_rcp if needed */
       if((pentry_file->object.file.pname =
-          (fsal_name_t *) Mem_Alloc(sizeof(fsal_name_t))) == NULL)
+          (fsal_name_t *) Mem_Alloc_Label(sizeof(fsal_name_t), "fsal_name_t")) == NULL)
         {
           *pstatus = CACHE_INODE_MALLOC_ERROR;
 
