@@ -420,11 +420,6 @@ int nfs_dupreq_add(long xid,
   LRU_entry_t *pentry = NULL;
   LRU_status_t lru_status;
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("dupreq_entry_t");
-#endif
-
   /* Entry to be cached */
   GET_PREALLOC(pdupreq,
                (*p_dupreq_pool),
@@ -432,11 +427,6 @@ int nfs_dupreq_add(long xid,
 
   if(pdupreq == NULL)
     return DUPREQ_INSERT_MALLOC_ERROR;
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this, 
    * this also means that buffkey->len will be 0 */
