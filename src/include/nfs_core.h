@@ -431,11 +431,13 @@ typedef struct nfs_request_data__
   SVCXPRT *rquota_udp_xprt;
   SVCXPRT *rquota_tcp_xprt;
   SVCXPRT *xprt;
+  SVCXPRT *xprt_copy;
   struct svc_req req;
   struct rpc_msg msg;
   char cred_area[2 * MAX_AUTH_BYTES + RQCRED_SIZE];
   int status;
   nfs_res_t res_nfs;
+  nfs_arg_t arg_nfs;
 } nfs_request_data_t;
 
 typedef struct nfs_client_id__
@@ -766,5 +768,12 @@ int display_gss_ctx(hash_buffer_t * pbuff, char *str);
 int display_gss_svc_data(hash_buffer_t * pbuff, char *str);
 
 #endif                          /* _USE_GSSRPC */
+
+void Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig);
+void Svcxprt_copydestroy(register SVCXPRT * xprt);
+SVCXPRT *Svcxprt_copycreate();
+
+int nfs_rpc_get_funcdesc(nfs_request_data_t * preqnfs, nfs_function_desc_t *pfuncdesc);
+int nfs_rpc_get_args(nfs_request_data_t * preqnfs, nfs_function_desc_t *pfuncdesc);
 
 #endif                          /* _NFS_CORE_H */

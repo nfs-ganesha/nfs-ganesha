@@ -2138,6 +2138,8 @@ int nfs_Init_request_data(nfs_request_data_t * pdata)
 
   pdata->xprt = NULL;
 
+  pdata->xprt_copy = Svcxprt_copycreate();
+
   return 0;
 }                               /* nfs_Init_request_data */
 
