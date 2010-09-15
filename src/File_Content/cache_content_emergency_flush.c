@@ -119,7 +119,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
   cache_content_dirinfo_t directory;
   struct dirent dir_entry;
   FILE *stream = NULL;
-  char buff[CACHE_INODE_DUMP_LEN];
+  char buff[CACHE_INODE_DUMP_LEN + 1];
   int inum;
   char indexpath[MAXPATHLEN];
   char datapath[MAXPATHLEN];
@@ -216,10 +216,14 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
           if((stream = fopen(indexpath, "r")) == NULL)
             return CACHE_CONTENT_LOCAL_CACHE_ERROR;
 
-          fscanf(stream, "internal:read_time=%s\n", buff);
-          fscanf(stream, "internal:mod_time=%s\n", buff);
-          fscanf(stream, "internal:export_id=%s\n", buff);
-          fscanf(stream, "file: FSAL handle=%s", buff);
+          #define XSTR(s) STR(s)
+          #define STR(s) #s
+          fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
+          #undef STR
+          #undef XSTR
 
           if(sscanHandle(&fsal_handle, buff) < 0)
             {
