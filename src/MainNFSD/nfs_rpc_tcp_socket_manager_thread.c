@@ -107,8 +107,6 @@ extern buddy_parameter_t buddy_param_worker;
  * @return Pointer to the result (but this function will mostly loop forever).
  *
  */
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-
 void *rpc_tcp_socket_manager_thread(void *Arg)
 {
   int rc = 0;
@@ -118,6 +116,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
   struct rpc_msg *pmsg;
   struct svc_req *preq;
   register SVCXPRT *xprt;
+  register SVCXPRT *xprt_copy;
   char *cred_area;
   LRU_entry_t *pentry = NULL;
   LRU_status_t status;
@@ -127,6 +126,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
   struct sockaddr_in *paddr_caller = NULL;
   char str_caller[MAXNAMLEN];
+  nfs_function_desc_t funcdesc;
 
   snprintf(my_name, MAXNAMLEN, "tcp_sock_mgr#fd=%ld", tcp_sock);
   SetNameFunction(my_name);
@@ -332,6 +332,19 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                        worker_index);
               return NULL;
             }
+
+          /* Call svc_getargs before making copy to prevent race conditions. */
+          pnfsreq->req.rq_prog = pmsg->rm_call.cb_prog;
+          pnfsreq->req.rq_vers = pmsg->rm_call.cb_vers;
+          pnfsreq->req.rq_proc = pmsg->rm_call.cb_proc;
+          nfs_rpc_get_funcdesc(pnfsreq, &funcdesc);
+          nfs_rpc_get_args(pnfsreq, &funcdesc);
+
+          /* Update a copy of SVCXPRT and pass it to the worker thread to use it. */
+          xprt_copy = pnfsreq->xprt_copy;
+          Svcxprt_copy(xprt_copy, xprt);
+          pnfsreq->xprt = xprt_copy;
+
           pentry->buffdata.pdata = (caddr_t) pnfsreq;
           pentry->buffdata.len = sizeof(*pnfsreq);
 
@@ -347,14 +360,6 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
           V(workers_data[worker_index].request_pool_mutex);
           LogFullDebug(COMPONENT_DISPATCH, "Waiting for commit from thread #%d",
                        worker_index);
-
-          P(mutex_cond_xprt[tcp_sock]);
-          while(etat_xprt[tcp_sock] != 1)
-            {
-              pthread_cond_wait(&(condvar_xprt[tcp_sock]), &(mutex_cond_xprt[tcp_sock]));
-            }
-          etat_xprt[tcp_sock] = 0;
-          V(mutex_cond_xprt[tcp_sock]);
 
           LogFullDebug(COMPONENT_DISPATCH, "Thread #%d has committed the operation",
                        worker_index);
