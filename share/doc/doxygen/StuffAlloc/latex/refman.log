@@ -1,4 +1,4 @@
-This is pdfTeXk, Version 3.141592-1.40.3 (Web2C 7.5.6) (format=latex 2008.6.23)  31 MAR 2009 14:37
+This is pdfTeXk, Version 3.141592-1.40.3 (Web2C 7.5.6) (format=latex 2010.9.15)  15 SEP 2010 08:25
 entering extended mode
  %&-line parsing enabled.
 **refman.tex
@@ -38,17 +38,6 @@ Package: a4 2004/04/15 v1.2g A4 based page layout
 (/usr/share/texmf/tex/latex/base/makeidx.sty
 Package: makeidx 2000/03/29 v1.0m Standard LaTeX package
 )
-(/usr/share/texmf/tex/latex/fancyhdr/fancyhdr.sty
-\fancy@headwidth=\skip43
-\f@ncyO@elh=\skip44
-\f@ncyO@erh=\skip45
-\f@ncyO@olh=\skip46
-\f@ncyO@orh=\skip47
-\f@ncyO@elf=\skip48
-\f@ncyO@erf=\skip49
-\f@ncyO@olf=\skip50
-\f@ncyO@orf=\skip51
-)
 (/usr/share/texmf/tex/latex/graphics/graphicx.sty
 Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
 
@@ -87,8 +76,8 @@ Package: multicol 2006/05/18 v1.6g multicolumn formatting (FMi)
 \page@free=\dimen107
 \premulticols=\dimen108
 \postmulticols=\dimen109
-\multicolsep=\skip52
-\multicolbaselineskip=\skip53
+\multicolsep=\skip43
+\multicolbaselineskip=\skip44
 \partial@page=\box27
 \last@line=\box28
 \mult@rightbox=\box29
@@ -128,6 +117,46 @@ Package: float 2001/11/08 v1.3d Float enhancements (AL)
 \@float@everytoks=\toks16
 \@floatcapt=\box53
 )
+(/usr/share/texmf/tex/latex/listings/listings.sty
+\lst@mode=\count97
+\lst@gtempboxa=\box54
+\lst@token=\toks17
+\lst@length=\count98
+\lst@currlwidth=\dimen113
+\lst@column=\count99
+\lst@pos=\count100
+\lst@lostspace=\dimen114
+\lst@width=\dimen115
+\lst@newlines=\count101
+\lst@lineno=\count102
+\c@lstlisting=\count103
+\lst@maxwidth=\dimen116
+
+(/usr/share/texmf/tex/latex/listings/lstpatch.sty
+File: lstpatch.sty 2004/10/17 1.3b (Carsten Heinz)
+)
+(/usr/share/texmf/tex/latex/listings/lstmisc.sty
+File: lstmisc.sty 2004/09/07 1.3 (Carsten Heinz)
+\c@lstnumber=\count104
+\lst@skipnumbers=\count105
+\lst@framebox=\box55
+)
+(/usr/share/texmf/tex/latex/listings/listings.cfg
+File: listings.cfg 2004/09/05 1.3 listings configuration
+))
+Package: listings 2004/10/17 1.3b (Carsten Heinz)
+
+(/usr/share/texmf/tex/latex/graphics/color.sty
+Package: color 2005/11/14 v1.0j Standard LaTeX Color (DPC)
+
+(/usr/share/texmf/tex/latex/config/color.cfg
+File: color.cfg 2007/01/18 v1.5 color configuration of teTeX/TeXLive
+)
+Package color Info: Driver file: dvips.def on input line 130.
+
+(/usr/share/texmf/tex/latex/graphics/dvipsnam.def
+File: dvipsnam.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
+))
 (/usr/share/texmf/tex/latex/base/textcomp.sty
 Package: textcomp 2005/09/27 v1.99g Standard LaTeX package
 Package textcomp Info: Sub-encoding information:
@@ -200,8 +229,8 @@ Package: alltt 1997/06/16 v2.0g defines alltt environment
 )
 (/usr/share/texmf/tex/latex/base/inputenc.sty
 Package: inputenc 2006/05/05 v1.1b Input encoding file
-\inpenc@prehook=\toks17
-\inpenc@posthook=\toks18
+\inpenc@prehook=\toks18
+\inpenc@posthook=\toks19
 
 (/usr/share/texmf/tex/latex/base/utf8.def
 File: utf8.def 2006/03/30 v1.1i UTF-8 support for inputenc
@@ -492,84 +521,115 @@ File: ts1enc.dfu 2006/03/30 v1.1i UTF-8 support for inputenc
 )) (./doxygen.sty
 Package: doxygen 
 
-(/usr/share/texmf/tex/latex/tools/calc.sty
-Package: calc 2005/08/06 v4.2 Infix arithmetic (KKT,FJ)
-\calc@Acount=\count97
-\calc@Bcount=\count98
-\calc@Adimen=\dimen113
-\calc@Bdimen=\dimen114
-\calc@Askip=\skip54
-\calc@Bskip=\skip55
-LaTeX Info: Redefining \setlength on input line 75.
-LaTeX Info: Redefining \addtolength on input line 76.
-\calc@Ccount=\count99
-\calc@Cskip=\skip56
-)
 (/usr/share/texmf/tex/latex/tools/array.sty
 Package: array 2005/08/23 v2.4b Tabular extension package (FMi)
-\col@sep=\dimen115
-\extrarowheight=\dimen116
-\NC@list=\toks19
-\extratabsurround=\skip57
-\backup@length=\skip58
+\col@sep=\dimen117
+\extrarowheight=\dimen118
+\NC@list=\toks20
+\extratabsurround=\skip45
+\backup@length=\skip46
+)
+(/usr/share/texmf/tex/latex/tools/calc.sty
+Package: calc 2005/08/06 v4.2 Infix arithmetic (KKT,FJ)
+\calc@Acount=\count106
+\calc@Bcount=\count107
+\calc@Adimen=\dimen119
+\calc@Bdimen=\dimen120
+\calc@Askip=\skip47
+\calc@Bskip=\skip48
+LaTeX Info: Redefining \setlength on input line 75.
+LaTeX Info: Redefining \addtolength on input line 76.
+\calc@Ccount=\count108
+\calc@Cskip=\skip49
+)
+(/usr/share/texmf/tex/latex/fancyhdr/fancyhdr.sty
+\fancy@headwidth=\skip50
+\f@ncyO@elh=\skip51
+\f@ncyO@erh=\skip52
+\f@ncyO@olh=\skip53
+\f@ncyO@orh=\skip54
+\f@ncyO@elf=\skip55
+\f@ncyO@erf=\skip56
+\f@ncyO@olf=\skip57
+\f@ncyO@orf=\skip58
+)
+(/usr/share/texmf/tex/latex/tools/verbatim.sty
+Package: verbatim 2003/08/22 v1.5q LaTeX2e package for verbatim enhancements
+\every@verbatim=\toks21
+\verbatim@line=\toks22
+\verbatim@in@stream=\read1
 )
 \tmplength=\skip59
-)
+
 (/usr/share/texmf/tex/latex/base/fontenc.sty
 Package: fontenc 2005/09/27 v1.99g Standard LaTeX package
 
 (/usr/share/texmf/tex/latex/base/t1enc.def
 File: t1enc.def 2005/09/27 v1.99g Standard LaTeX file
 LaTeX Font Info:    Redeclaring font encoding T1 on input line 43.
-))
+)))
+(/usr/share/texmf/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2004/09/05 1.3 listings language file
+)
+(/usr/share/texmf/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2004/09/05 1.3 listings language file
+)
+(/usr/share/texmf/tex/latex/listings/lstmisc.sty
+File: lstmisc.sty 2004/09/07 1.3 (Carsten Heinz)
+)
 \@indexfile=\write3
 \openout3 = `refman.idx'.
 
 
 Writing index file refman.idx
-(./refman.aux)
+No file refman.aux.
 \openout1 = `refman.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 15.
-LaTeX Font Info:    Try loading font information for TS1+cmr on input line 15.
- (/usr/share/texmf/tex/latex/base/ts1cmr.fd
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 17.
+LaTeX Font Info:    ... okay on input line 17.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 17.
+LaTeX Font Info:    ... okay on input line 17.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 17.
+LaTeX Font Info:    ... okay on input line 17.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 17.
+LaTeX Font Info:    ... okay on input line 17.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 17.
+LaTeX Font Info:    ... okay on input line 17.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 17.
+LaTeX Font Info:    ... okay on input line 17.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 17.
+LaTeX Font Info:    Try loading font information for TS1+cmr on input line 17.
+(/usr/share/texmf/tex/latex/base/ts1cmr.fd
 File: ts1cmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
-LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    ... okay on input line 17.
  [1
 
 
 ] [2
 
 ]
-(./refman.toc
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 2.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 2.
-)
+No file refman.toc.
 \tf@toc=\write4
 \openout4 = `refman.toc'.
 
- [1
+[1
 
 ] [2
 
 ]
 Chapter 1.
-(./files.tex) [1
+(./files.tex
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 3.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 3.
+
+
+LaTeX Warning: Reference `stuff__alloc_8h' on page 1 undefined on input line 3.
+
+
+) [1
 
 ] [2
 
@@ -579,23 +639,58 @@ Chapter 2.
 LaTeX Font Info:    Try loading font information for T1+cmtt on input line 6.
  (/usr/share/texmf/tex/latex/base/t1cmtt.fd
 File: t1cmtt.fd 1999/05/25 v2.5h Standard LaTeX font definitions
-) [3]
-Underfull \hbox (badness 10000) in paragraph at lines 39--39
-[]\T1/cmr/m/n/10 /cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/StuffAlloc/stuff_
--alloc.h,v 1.4
+)
+! Too many }'s.
+l.25 Author}
+            
+? 
+! Too many }'s.
+l.29 Date}
+          
+? 
+! Too many }'s.
+l.33 Revision}
+              
+? 
+
+LaTeX Warning: Reference `stuff__alloc_8h' on page 3 undefined on input line 34
+.
+
+! Too many }'s.
+l.36 Header}
+            
+? 
+
+Underfull \hbox (badness 5175) in paragraph at lines 36--38
+[]\T1/cmr/m/n/10 Header /cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/StuffAlloc
+/stuff_-alloc.h,v 1.4
  []
 
-[4] [5]) (./refman.ind [6] [7
+! Too many }'s.
+l.39 Log}
+         
+? 
+
+LaTeX Warning: Reference `stuff__alloc_8h' on page 3 undefined on input line 40
+.
+
+[3] [4] [5])
+No file refman.ind.
+[6] (./refman.aux)
+
+LaTeX Warning: There were undefined references.
 
 
-]) (./refman.aux) ) 
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+ ) 
 Here is how much of TeX's memory you used:
- 1983 strings out of 256217
- 23821 string characters out of 1917095
- 77446 words of memory out of 1500000
- 5237 multiletter control sequences out of 10000+200000
+ 3639 strings out of 256217
+ 47888 string characters out of 1917095
+ 107707 words of memory out of 1500000
+ 6868 multiletter control sequences out of 10000+200000
  15330 words of font info for 31 fonts, out of 1200000 for 2000
  645 hyphenation exceptions out of 8191
- 29i,11n,43p,387b,398s stack positions out of 5000i,500n,6000p,200000b,15000s
+ 33i,12n,58p,386b,317s stack positions out of 5000i,500n,6000p,200000b,15000s
 
-Output written on refman.dvi (11 pages, 12584 bytes).
+Output written on refman.dvi (10 pages, 11096 bytes).
