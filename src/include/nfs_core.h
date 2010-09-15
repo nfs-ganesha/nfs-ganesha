@@ -530,6 +530,7 @@ void *worker_thread(void *IndexArg);
 void *rpc_dispatcher_thread(void *arg);
 void *admin_thread(void *arg);
 void *stats_thread(void *IndexArg);
+void *stat_exporter_thread(void *IndexArg);
 int stats_snmp(nfs_worker_data_t * workers_data_local);
 void *file_content_gc_thread(void *IndexArg);
 void *nfs_file_content_flush_thread(void *flush_data_arg);

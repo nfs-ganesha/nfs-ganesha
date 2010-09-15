@@ -68,6 +68,7 @@ endif
 
 libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              nfs_stats_thread.c                   \
+                             nfs_stat_exporter_thread.c           \
                              nfs_worker_thread.c                  \
                              nfs_file_content_gc_thread.c         \
                              nfs_rpc_dispatcher_thread.c          \

@@ -997,6 +997,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   /* Perform statistics here */
   stat_type = (rc == NFS_REQ_OK) ? GANESHA_STAT_SUCCESS : GANESHA_STAT_DROP;
 
+  latency_stat.type = SVC_TIME;
   latency_stat.latency = timer_diff.tv_sec * 1000000 + timer_diff.tv_usec; /* microseconds */
 
   nfs_stat_update(stat_type, &(pworker_data->stats.stat_req), ptr_req, &latency_stat);
