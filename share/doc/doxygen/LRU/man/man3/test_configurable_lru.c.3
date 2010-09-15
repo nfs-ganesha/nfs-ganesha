@@ -1,4 +1,4 @@
-.TH "test_configurable_lru.c" 3 "31 Mar 2009" "Version 0.1" "LRu List Library" \" -*- nroff -*-
+.TH "test_configurable_lru.c" 3 "15 Sep 2010" "Version 0.1" "LRu List Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -17,6 +17,8 @@ test_configurable_lru.c \-
 \fC#include 'BuddyMalloc.h'\fP
 .br
 \fC#include 'LRU_List.h'\fP
+.br
+\fC#include 'log_macros.h'\fP
 .br
 
 .SS "Defines"
@@ -62,35 +64,35 @@ test_configurable_lru.c \-
 .PP 
 .SS "#define LENBUF   256"
 .PP
-Definition at line 117 of file test_configurable_lru.c.
+Definition at line 63 of file test_configurable_lru.c.
 .SS "#define MAXTEST   1000000"
 .PP
-Definition at line 120 of file test_configurable_lru.c.
+Definition at line 66 of file test_configurable_lru.c.
 .SS "#define PREALLOC   1000000"
 .PP
-Definition at line 119 of file test_configurable_lru.c.
+Definition at line 65 of file test_configurable_lru.c.
 .SS "#define STRSIZE   10"
 .PP
-Definition at line 118 of file test_configurable_lru.c.
+Definition at line 64 of file test_configurable_lru.c.
 .SH "Function Documentation"
 .PP 
 .SS "int do_gc (LRU_list_t * plru)"
 .PP
-Definition at line 166 of file test_configurable_lru.c.
+Definition at line 116 of file test_configurable_lru.c.
 .SS "int do_invalidate (LRU_list_t * plru, int key)"
 .PP
-Definition at line 134 of file test_configurable_lru.c.
+Definition at line 81 of file test_configurable_lru.c.
 .SS "int do_new (LRU_list_t * plru, int key)"
 .PP
-Definition at line 143 of file test_configurable_lru.c.
+Definition at line 90 of file test_configurable_lru.c.
 .SS "int main (int argc, char * argv[])"
 .PP
-Definition at line 172 of file test_configurable_lru.c.
+Definition at line 121 of file test_configurable_lru.c.
 .SH "Variable Documentation"
 .PP 
 .SS "LRU_entry_t* \fBtabentry\fP[MAXTEST]"
 .PP
-Definition at line 122 of file test_configurable_lru.c.
+Definition at line 68 of file test_configurable_lru.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for LRu List Library from the source code.

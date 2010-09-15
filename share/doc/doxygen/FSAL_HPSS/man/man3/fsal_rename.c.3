@@ -1,10 +1,11 @@
-.TH "fsal_rename.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "fsal_rename.c" 3 "15 Sep 2010" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_rename.c \- object renaming/moving function.  
-
+fsal_rename.c \- 
 .PP
+object renaming/moving function.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -16,12 +17,14 @@ fsal_rename.c \- object renaming/moving function.
 .br
 \fC#include 'fsal_common.h'\fP
 .br
+\fC#include <hpss_errno.h>\fP
+.br
 
 .SS "Functions"
 
 .in +1c
 .ti -1c
-.RI "fsal_status_t \fBFSAL_rename\fP (fsal_handle_t *old_parentdir_handle, fsal_name_t *p_old_name, fsal_handle_t *new_parentdir_handle, fsal_name_t *p_new_name, fsal_op_context_t *p_context, fsal_attrib_list_t *src_dir_attributes, fsal_attrib_list_t *tgt_dir_attributes)"
+.RI "fsal_status_t \fBHPSSFSAL_rename\fP (hpssfsal_handle_t *old_parentdir_handle, fsal_name_t *p_old_name, hpssfsal_handle_t *new_parentdir_handle, fsal_name_t *p_new_name, hpssfsal_op_context_t *p_context, fsal_attrib_list_t *src_dir_attributes, fsal_attrib_list_t *tgt_dir_attributes)"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -57,9 +60,7 @@ leibovic
 Definition in file \fBfsal_rename.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "fsal_status_t FSAL_rename (fsal_handle_t * old_parentdir_handle, fsal_name_t * p_old_name, fsal_handle_t * new_parentdir_handle, fsal_name_t * p_new_name, fsal_op_context_t * p_context, fsal_attrib_list_t * src_dir_attributes, fsal_attrib_list_t * tgt_dir_attributes)"
-.PP
-FSAL_rename: Change name and/or parent dir of a filesystem object.
+.SS "fsal_status_t HPSSFSAL_rename (hpssfsal_handle_t * old_parentdir_handle, fsal_name_t * p_old_name, hpssfsal_handle_t * new_parentdir_handle, fsal_name_t * p_new_name, hpssfsal_op_context_t * p_context, fsal_attrib_list_t * src_dir_attributes, fsal_attrib_list_t * tgt_dir_attributes)"FSAL_rename: Change name and/or parent dir of a filesystem object.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -104,7 +105,7 @@ Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
 .PP
 Definition at line 66 of file fsal_rename.c.
 .PP
-References FSAL_getattrs(), FSAL_handlecmp(), hpss2fsal_error(), and TakeTokenFSCall().
+References hpss2fsal_error(), HPSSFSAL_getattrs(), and TakeTokenFSCall().
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File System Abstraction Layer (HPSS) library from the source code.

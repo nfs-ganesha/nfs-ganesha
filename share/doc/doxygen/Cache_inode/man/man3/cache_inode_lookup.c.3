@@ -1,16 +1,17 @@
-.TH "cache_inode_lookup.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_lookup.c" 3 "15 Sep 2010" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_lookup.c \- Perform lookup through the cache.  
-
+cache_inode_lookup.c \- 
 .PP
+Perform lookup through the cache.  
+
 .SH SYNOPSIS
 .br
 .PP
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -79,9 +80,7 @@ deniel
 Definition in file \fBcache_inode_lookup.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "cache_entry_t* cache_inode_lookup (cache_entry_t * pentry_parent, fsal_name_t * pname, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
-.PP
-cache_inode_lookup: looks up for a name in a directory indicated by a cached entry.
+.SS "cache_entry_t* cache_inode_lookup (cache_entry_t * pentry_parent, fsal_name_t * pname, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"cache_inode_lookup: looks up for a name in a directory indicated by a cached entry.
 .PP
 Looks up for a name in a directory indicated by a cached entry. The directory should have been cached before.
 .PP
@@ -113,10 +112,8 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 493 of file cache_inode_lookup.c.
-.SS "cache_entry_t* cache_inode_lookup_no_mutex (cache_entry_t * pentry_parent, fsal_name_t * pname, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
-.PP
-cache_inode_lookup_no_mutex: looks up for a name in a directory indicated by a cached entry (no mutex management).
+Definition at line 465 of file cache_inode_lookup.c.
+.SS "cache_entry_t* cache_inode_lookup_no_mutex (cache_entry_t * pentry_parent, fsal_name_t * pname, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"cache_inode_lookup_no_mutex: looks up for a name in a directory indicated by a cached entry (no mutex management).
 .PP
 Looks up for a name in a directory indicated by a cached entry. The directory should have been cached before. This function has no mutex management and suppose that is it properly done in the clling function
 .PP
@@ -148,10 +145,8 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 456 of file cache_inode_lookup.c.
-.SS "cache_entry_t* cache_inode_lookup_sw (cache_entry_t * pentry_parent, fsal_name_t * pname, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus, int use_mutex)"
-.PP
-cache_inode_lookup_sw: looks up for a name in a directory indicated by a cached entry.
+Definition at line 435 of file cache_inode_lookup.c.
+.SS "cache_entry_t* cache_inode_lookup_sw (cache_entry_t * pentry_parent, fsal_name_t * pname, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus, int use_mutex)"cache_inode_lookup_sw: looks up for a name in a directory indicated by a cached entry.
 .PP
 Looks up for a name in a directory indicated by a cached entry. The directory should have been cached before.
 .PP
@@ -185,7 +180,7 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 128 of file cache_inode_lookup.c.
+Definition at line 78 of file cache_inode_lookup.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

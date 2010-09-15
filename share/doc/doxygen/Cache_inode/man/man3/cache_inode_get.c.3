@@ -1,16 +1,17 @@
-.TH "cache_inode_get.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_get.c" 3 "15 Sep 2010" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_get.c \- Get and eventually cache an entry.  
-
+cache_inode_get.c \- 
 .PP
+Get and eventually cache an entry.  
+
 .SH SYNOPSIS
 .br
 .PP
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -73,9 +74,7 @@ deniel
 Definition in file \fBcache_inode_get.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "cache_entry_t* cache_inode_get (cache_inode_fsal_data_t * pfsdata, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
-.PP
-cache_inode_get: Gets an entry by using its fsdata as a key and caches it if needed.
+.SS "cache_entry_t* cache_inode_get (cache_inode_fsal_data_t * pfsdata, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"cache_inode_get: Gets an entry by using its fsdata as a key and caches it if needed.
 .PP
 Gets an entry by using its fsdata as a key and caches it if needed. ASSUMPTION: DIR_CONT entries are always garbabbaged before their related DIR_BEGINNG
 .PP
@@ -101,7 +100,7 @@ the pointer to the entry is successfull, NULL otherwise.
 .PP
 
 .PP
-Definition at line 127 of file cache_inode_get.c.
+Definition at line 76 of file cache_inode_get.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

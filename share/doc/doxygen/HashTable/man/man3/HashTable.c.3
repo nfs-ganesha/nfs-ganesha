@@ -1,10 +1,11 @@
-.TH "HashTable.c" 3 "31 Mar 2009" "Version 0.1" "Hash Table Library" \" -*- nroff -*-
+.TH "HashTable.c" 3 "15 Sep 2010" "Version 0.1" "Hash Table Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-HashTable.c \- Gestion des tables de hachage a base de Red/Black Trees.  
-
+HashTable.c \- 
 .PP
+Gestion des tables de hachage a base de Red/Black Trees.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -21,6 +22,8 @@ HashTable.c \- Gestion des tables de hachage a base de Red/Black Trees.
 \fC#include 'HashTable.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
+.br
+\fC#include 'log_macros.h'\fP
 .br
 
 .SS "Defines"
@@ -68,6 +71,9 @@ HashTable.c \- Gestion des tables de hachage a base de Red/Black Trees.
 .br
 .ti -1c
 .RI "unsigned int \fBHashTable_GetSize\fP (hash_table_t *ht)"
+.br
+.ti -1c
+.RI "void \fBHashTable_Log\fP (log_components_t component, hash_table_t *ht)"
 .br
 .ti -1c
 .RI "void \fBHashTable_Print\fP (hash_table_t *ht)"
@@ -119,8 +125,6 @@ Revision 1.40 2006/01/27 10:28:36 deniel Now support rpm
 Revision 1.39 2006/01/24 13:47:31 leibovic Disabling prealloc checks when _NO_BLOCK_PREALLOC falg is set.
 .PP
 Revision 1.38 2006/01/20 07:39:22 leibovic Back to the previous version.
-.PP
-Revision 1.36 2005/11/28 17:02:37 deniel Added CeCILL headers
 .PP
 Revision 1.35 2005/11/10 07:53:24 deniel Corrected some memory leaks
 .PP
@@ -203,16 +207,16 @@ Definition in file \fBHashTable.c\fP.
 .PP 
 .SS "#define FALSE   0"
 .PP
-Definition at line 242 of file HashTable.c.
+Definition at line 188 of file HashTable.c.
 .SS "#define P(a)   pthread_mutex_lock( &a )"
 .PP
-Definition at line 246 of file HashTable.c.
+Definition at line 192 of file HashTable.c.
 .SS "#define TRUE   1"
 .PP
-Definition at line 238 of file HashTable.c.
+Definition at line 184 of file HashTable.c.
 .SS "#define V(a)   pthread_mutex_unlock( &a )"
 .PP
-Definition at line 250 of file HashTable.c.
+Definition at line 196 of file HashTable.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Hash Table Library from the source code.

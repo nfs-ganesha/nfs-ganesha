@@ -1,10 +1,11 @@
-.TH "commands_NFS.c" 3 "31 Mar 2009" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.TH "commands_NFS.c" 3 "15 Sep 2010" "Version 0.1" "ganeshell" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-commands_NFS.c \- calls to NFSv2, NFSv3, MNTv1, MNTv3 commands.  
-
+commands_NFS.c \- 
 .PP
+calls to NFSv2, NFSv3, MNTv1, MNTv3 commands.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -161,6 +162,9 @@ commands_NFS.c \- calls to NFSv2, NFSv3, MNTv1, MNTv3 commands.
 .RI "nfs_parameter_t \fBnfs_param\fP"
 .br
 .ti -1c
+.RI "writeverf3 \fBNFS3_write_verifier\fP"
+.br
+.ti -1c
 .RI "hash_table_t * \fBht\fP"
 .br
 .ti -1c
@@ -230,8 +234,6 @@ Revision 1.25 2006/01/18 08:02:04 deniel Order in includes and libraries
 .PP
 Revision 1.24 2006/01/17 16:40:54 leibovic New interface for readexport.
 .PP
-Revision 1.23 2005/11/28 17:03:00 deniel Added CeCILL headers
-.PP
 Revision 1.22 2005/11/21 09:55:18 leibovic Once for all thread's credential initialization.
 .PP
 Revision 1.21 2005/11/08 15:22:24 deniel WildCard and Netgroup entry for exportlist are now supported
@@ -280,121 +282,77 @@ Definition in file \fBcommands_NFS.c\fP.
 .SH "Define Documentation"
 .PP 
 .SS "#define MAX_GRPS   128"
-.PP
 .SS "#define NFS_READDIR_SIZE   10"
-.PP
 .SH "Typedef Documentation"
 .PP 
 .SS "typedef struct \fBcmdnfs_thr_info__\fP  \fBcmdnfs_thr_info_t\fP"
-.PP
 .SS "typedef struct \fBshell_fh3__\fP  \fBshell_fh3_t\fP"
-.PP
 .SH "Function Documentation"
 .PP 
-.SS "int fn_MNT1_command (int argc, char ** argv, FILE * output)"
+.SS "int fn_MNT1_command (int argc, char ** argv, FILE * output)"process MNT1 protocol's command. 
 .PP
-process MNT1 protocol's command. 
+Definition at line 571 of file commands_NFS.c.
+.SS "int fn_MNT3_command (int argc, char ** argv, FILE * output)"process MNT3 protocol's command. 
 .PP
-Definition at line 628 of file commands_NFS.c.
-.SS "int fn_MNT3_command (int argc, char ** argv, FILE * output)"
+Definition at line 661 of file commands_NFS.c.
+.SS "int fn_NFS2_command (int argc, char ** argv, FILE * output)"process NFS2 protocol's command. 
 .PP
-process MNT3 protocol's command. 
+Definition at line 750 of file commands_NFS.c.
+.SS "int fn_NFS3_command (int argc, char ** argv, FILE * output)"process NFS3 protocol's command. 
 .PP
-Definition at line 732 of file commands_NFS.c.
-.SS "int fn_NFS2_command (int argc, char ** argv, FILE * output)"
+Definition at line 857 of file commands_NFS.c.
+.SS "int fn_nfs_cd (int argc, char ** argv, FILE * output)"change current path 
 .PP
-process NFS2 protocol's command. 
+Definition at line 2407 of file commands_NFS.c.
+.SS "int fn_nfs_create (int argc, char ** argv, FILE * output)"create a file 
 .PP
-Definition at line 833 of file commands_NFS.c.
-.SS "int fn_NFS3_command (int argc, char ** argv, FILE * output)"
+Definition at line 2493 of file commands_NFS.c.
+.SS "int fn_nfs_hardlink (int argc, char ** argv, FILE * output)"proceed a hardlink command. 
 .PP
-process NFS3 protocol's command. 
-.PP
-Definition at line 952 of file commands_NFS.c.
-.SS "int fn_nfs_cd (int argc, char ** argv, FILE * output)"
-.PP
-change current path 
-.PP
-Definition at line 2682 of file commands_NFS.c.
-.SS "int fn_nfs_create (int argc, char ** argv, FILE * output)"
-.PP
-create a file 
-.PP
-Definition at line 2768 of file commands_NFS.c.
-.SS "int fn_nfs_hardlink (int argc, char ** argv, FILE * output)"
-.PP
-proceed a hardlink command. 
-.PP
-Definition at line 3418 of file commands_NFS.c.
+Definition at line 3152 of file commands_NFS.c.
 .SS "int fn_nfs_id (int argc, char ** argv, FILE * output)"
 .PP
-Definition at line 3958 of file commands_NFS.c.
-.SS "int fn_nfs_init (int argc, char ** argv, FILE * output)"
+Definition at line 3686 of file commands_NFS.c.
+.SS "int fn_nfs_init (int argc, char ** argv, FILE * output)"Init nfs layer 
 .PP
-Init nfs layer 
+Definition at line 489 of file commands_NFS.c.
+.SS "int fn_nfs_ln (int argc, char ** argv, FILE * output)"proceed an ln command. 
 .PP
-Definition at line 541 of file commands_NFS.c.
-.SS "int fn_nfs_ln (int argc, char ** argv, FILE * output)"
+Definition at line 3288 of file commands_NFS.c.
+.SS "int fn_nfs_ls (int argc, char ** argv, FILE * output)"proceed an ls command using NFS protocol NFS 
 .PP
-proceed an ln command. 
+Definition at line 2084 of file commands_NFS.c.
+.SS "int fn_nfs_mkdir (int argc, char ** argv, FILE * output)"create a directory 
 .PP
-Definition at line 3551 of file commands_NFS.c.
-.SS "int fn_nfs_ls (int argc, char ** argv, FILE * output)"
+Definition at line 2620 of file commands_NFS.c.
+.SS "int fn_nfs_mount (int argc, char ** argv, FILE * output)"mount a path to browse it. 
 .PP
-proceed an ls command using NFS protocol NFS 
+Definition at line 1871 of file commands_NFS.c.
+.SS "int fn_nfs_pwd (int argc, char ** argv, FILE * output)"prints current path 
 .PP
-Definition at line 2343 of file commands_NFS.c.
-.SS "int fn_nfs_mkdir (int argc, char ** argv, FILE * output)"
+Definition at line 2051 of file commands_NFS.c.
+.SS "int fn_nfs_rename (int argc, char ** argv, FILE * output)"proceed a rename command. 
 .PP
-create a directory 
+Definition at line 3015 of file commands_NFS.c.
+.SS "int fn_nfs_setattr (int argc, char ** argv, FILE * output)"setattr 
 .PP
-Definition at line 2895 of file commands_NFS.c.
-.SS "int fn_nfs_mount (int argc, char ** argv, FILE * output)"
+Definition at line 2885 of file commands_NFS.c.
+.SS "int fn_nfs_stat (int argc, char ** argv, FILE * output)"proceed an ls command using NFS protocol NFS 
 .PP
-mount a path to browse it. 
+Definition at line 3430 of file commands_NFS.c.
+.SS "int fn_nfs_su (int argc, char ** argv, FILE * output)"change thread credentials. 
 .PP
-Definition at line 2105 of file commands_NFS.c.
-.SS "int fn_nfs_pwd (int argc, char ** argv, FILE * output)"
+Definition at line 3585 of file commands_NFS.c.
+.SS "int fn_nfs_umount (int argc, char ** argv, FILE * output)"umount a mounted path. 
 .PP
-prints current path 
+Definition at line 1970 of file commands_NFS.c.
+.SS "int fn_nfs_unlink (int argc, char ** argv, FILE * output)"unlink a file 
 .PP
-Definition at line 2309 of file commands_NFS.c.
-.SS "int fn_nfs_rename (int argc, char ** argv, FILE * output)"
-.PP
-proceed a rename command. 
-.PP
-Definition at line 3281 of file commands_NFS.c.
-.SS "int fn_nfs_setattr (int argc, char ** argv, FILE * output)"
-.PP
-setattr 
-.PP
-Definition at line 3153 of file commands_NFS.c.
-.SS "int fn_nfs_stat (int argc, char ** argv, FILE * output)"
-.PP
-proceed an ls command using NFS protocol NFS 
-.PP
-Definition at line 3692 of file commands_NFS.c.
-.SS "int fn_nfs_su (int argc, char ** argv, FILE * output)"
-.PP
-change thread credentials. 
-.PP
-Definition at line 3854 of file commands_NFS.c.
-.SS "int fn_nfs_umount (int argc, char ** argv, FILE * output)"
-.PP
-umount a mounted path. 
-.PP
-Definition at line 2216 of file commands_NFS.c.
-.SS "int fn_nfs_unlink (int argc, char ** argv, FILE * output)"
-.PP
-unlink a file 
-.PP
-Definition at line 3021 of file commands_NFS.c.
+Definition at line 2747 of file commands_NFS.c.
 .SS "\fBcmdnfs_thr_info_t\fP* GetNFSClient ()"
 .PP
-Definition at line 341 of file commands_NFS.c.
+Definition at line 285 of file commands_NFS.c.
 .SS "int InitNFSClient (\fBcmdnfs_thr_info_t\fP * p_thr_info)"
-.PP
-
 .PP
 \fBTodo\fP
 .RS 4
@@ -403,10 +361,8 @@ No secondary groups support.
 .PP
 
 .PP
-Definition at line 384 of file commands_NFS.c.
+Definition at line 329 of file commands_NFS.c.
 .SS "int nfs_init (char * filename, int flag_v, FILE * output)"
-.PP
-
 .PP
 \fBTodo\fP
 .RS 4
@@ -415,37 +371,36 @@ Are there other things to initialize ?
 .PP
 
 .PP
-Definition at line 474 of file commands_NFS.c.
+Definition at line 420 of file commands_NFS.c.
 .SS "void nfs_layer_SetLogLevel (int log_lvl)"
 .PP
-Definition at line 458 of file commands_NFS.c.
+Definition at line 404 of file commands_NFS.c.
 .SS "void nfs_readdirplus_free (nfs_res_t * to_free)"
 .PP
-Definition at line 1515 of file commands_NFS.c.
+Definition at line 1361 of file commands_NFS.c.
 .SH "Variable Documentation"
 .PP 
-.SS "cache_inode_client_parameter_t \fBcache_client_param\fP"
+.SS "cache_inode_client_parameter_t \fBcache_client_param\fP"Global (exported) variable : init parameters for clients. 
 .PP
-Global (exported) variable : init parameters for clients. 
-.PP
-Definition at line 137 of file commands_Cache_inode.c.
+Definition at line 88 of file commands_Cache_inode.c.
 .SS "cache_content_client_parameter_t \fBdatacache_client_param\fP"
 .PP
-Definition at line 138 of file commands_Cache_inode.c.
+Definition at line 89 of file commands_Cache_inode.c.
 .SS "exportlist_t \fBexportlist\fP[128]"
 .PP
-Definition at line 277 of file commands_NFS.c.
-.SS "hash_table_t* \fBht\fP"
+Definition at line 224 of file commands_NFS.c.
+.SS "hash_table_t* \fBht\fP"Global (exported) variable : The cache hash table 
 .PP
-Global (exported) variable : The cache hash table 
+Definition at line 80 of file commands_Cache_inode.c.
+.SS "writeverf3 \fBNFS3_write_verifier\fP"
 .PP
-Definition at line 129 of file commands_Cache_inode.c.
+Definition at line 172 of file commands_NFS.c.
 .SS "nfs_parameter_t \fBnfs_param\fP"
 .PP
-Definition at line 224 of file commands_NFS.c.
+Definition at line 171 of file commands_NFS.c.
 .SS "exportlist_t* \fBpexportlist\fP = \fBexportlist\fP"
 .PP
-Definition at line 278 of file commands_NFS.c.
+Definition at line 225 of file commands_NFS.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for ganeshell from the source code.

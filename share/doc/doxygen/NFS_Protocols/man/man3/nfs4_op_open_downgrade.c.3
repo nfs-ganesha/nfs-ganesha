@@ -1,10 +1,11 @@
-.TH "nfs4_op_open_downgrade.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs4_op_open_downgrade.c" 3 "15 Sep 2010" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs4_op_open_downgrade.c \- Routines used for managing the NFS4 COMPOUND functions.  
-
+nfs4_op_open_downgrade.c \- 
 .PP
+Routines used for managing the NFS4 COMPOUND functions.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -30,7 +31,7 @@ nfs4_op_open_downgrade.c \- Routines used for managing the NFS4 COMPOUND functio
 .br
 \fC#include <rpc/pmap_clnt.h>\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
 .br
@@ -110,9 +111,7 @@ deniel
 Definition in file \fBnfs4_op_open_downgrade.c\fP.
 .SH "Define Documentation"
 .PP 
-.SS "#define arg_OPEN_DOWNGRADE4   op->nfs_argop4_u.opopen_downgrade"
-.PP
-nfs4_op_open_downgrade: The NFS4_OP_OPEN_DOWNGRADE
+.SS "#define arg_OPEN_DOWNGRADE4   op->nfs_argop4_u.opopen_downgrade"nfs4_op_open_downgrade: The NFS4_OP_OPEN_DOWNGRADE
 .PP
 Implements the NFS4_OP_OPEN_DOWNGRADE
 .PP
@@ -132,18 +131,16 @@ NFS4_OK if ok, any other value show an error.
 .PP
 
 .PP
-Definition at line 140 of file nfs4_op_open_downgrade.c.
+Definition at line 90 of file nfs4_op_open_downgrade.c.
 .SS "#define res_OPEN_DOWNGRADE4   resp->nfs_resop4_u.opopen_downgrade"
 .PP
-Definition at line 141 of file nfs4_op_open_downgrade.c.
+Definition at line 91 of file nfs4_op_open_downgrade.c.
 .SH "Function Documentation"
 .PP 
 .SS "int nfs4_op_open_downgrade (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
 .PP
-Definition at line 143 of file nfs4_op_open_downgrade.c.
-.SS "void nfs4_op_open_downgrade_Free (OPEN_DOWNGRADE4res * resp)"
-.PP
-nfs4_op_open_downgrade_Free: frees what was allocared to handle nfs4_op_open_downgrade.
+Definition at line 93 of file nfs4_op_open_downgrade.c.
+.SS "void nfs4_op_open_downgrade_Free (OPEN_DOWNGRADE4res * resp)"nfs4_op_open_downgrade_Free: frees what was allocared to handle nfs4_op_open_downgrade.
 .PP
 Frees what was allocared to handle nfs4_op_open_downgrade.
 .PP
@@ -159,7 +156,7 @@ nothing (void function )
 .PP
 
 .PP
-Definition at line 216 of file nfs4_op_open_downgrade.c.
+Definition at line 164 of file nfs4_op_open_downgrade.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

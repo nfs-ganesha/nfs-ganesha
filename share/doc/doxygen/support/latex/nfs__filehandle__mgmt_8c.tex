@@ -1,37 +1,37 @@
 \section{nfs\_\-filehandle\_\-mgmt.c File Reference}
 \label{nfs__filehandle__mgmt_8c}\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+
+
 Some tools for managing the file handles.  
-
-
-{\tt \#include $<$stdio.h$>$}\par
-{\tt \#include $<$sys/types.h$>$}\par
-{\tt \#include $<$ctype.h$>$}\par
-{\tt \#include $<$stdlib.h$>$}\par
-{\tt \#include $<$dirent.h$>$}\par
-{\tt \#include $<$netdb.h$>$}\par
-{\tt \#include $<$netinet/in.h$>$}\par
-{\tt \#include $<$arpa/inet.h$>$}\par
-{\tt \#include $<$string.h$>$}\par
-{\tt \#include $<$pthread.h$>$}\par
-{\tt \#include $<$fcntl.h$>$}\par
-{\tt \#include $<$sys/file.h$>$}\par
-{\tt \#include $<$pwd.h$>$}\par
-{\tt \#include $<$grp.h$>$}\par
-{\tt \#include $<$rpc/types.h$>$}\par
-{\tt \#include $<$rpc/rpc.h$>$}\par
-{\tt \#include $<$rpc/auth.h$>$}\par
-{\tt \#include $<$rpc/pmap\_\-clnt.h$>$}\par
-{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
-{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
-{\tt \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
-{\tt \#include \char`\"{}nfs23.h\char`\"{}}\par
-{\tt \#include \char`\"{}nfs4.h\char`\"{}}\par
-{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
-{\tt \#include \char`\"{}nfs\_\-tools.h\char`\"{}}\par
-{\tt \#include \char`\"{}nfs\_\-exports.h\char`\"{}}\par
-{\tt \#include \char`\"{}nfs\_\-file\_\-handle.h\char`\"{}}\par
+{\ttfamily \#include $<$stdio.h$>$}\par
+{\ttfamily \#include $<$sys/types.h$>$}\par
+{\ttfamily \#include $<$ctype.h$>$}\par
+{\ttfamily \#include $<$stdlib.h$>$}\par
+{\ttfamily \#include $<$dirent.h$>$}\par
+{\ttfamily \#include $<$netdb.h$>$}\par
+{\ttfamily \#include $<$netinet/in.h$>$}\par
+{\ttfamily \#include $<$arpa/inet.h$>$}\par
+{\ttfamily \#include $<$string.h$>$}\par
+{\ttfamily \#include $<$pthread.h$>$}\par
+{\ttfamily \#include $<$fcntl.h$>$}\par
+{\ttfamily \#include $<$sys/file.h$>$}\par
+{\ttfamily \#include $<$pwd.h$>$}\par
+{\ttfamily \#include $<$grp.h$>$}\par
+{\ttfamily \#include $<$rpc/types.h$>$}\par
+{\ttfamily \#include $<$rpc/rpc.h$>$}\par
+{\ttfamily \#include $<$rpc/auth.h$>$}\par
+{\ttfamily \#include $<$rpc/pmap\_\-clnt.h$>$}\par
+{\ttfamily \#include \char`\"{}log\_\-macros.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}nfs23.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}nfs4.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}fsal.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}nfs\_\-tools.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}nfs\_\-exports.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}nfs\_\-file\_\-handle.h\char`\"{}}\par
 \subsection*{Functions}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
 int {\bf nfs4\_\-FhandleToFSAL} (nfs\_\-fh4 $\ast$pfh4, fsal\_\-handle\_\-t $\ast$pfsalhandle, fsal\_\-op\_\-context\_\-t $\ast$pcontext)
 \item 
@@ -63,69 +63,61 @@ int {\bf nfs4\_\-Is\_\-Fh\_\-Expired} (nfs\_\-fh4 $\ast$pfh)
 \item 
 int {\bf nfs4\_\-Is\_\-Fh\_\-Invalid} (nfs\_\-fh4 $\ast$pfh)
 \item 
-unsigned int {\bf nfs2\_\-FhandleCheckSum} (file\_\-handle\_\-v2\_\-t $\ast$pfh)
+int {\bf nfs4\_\-Is\_\-Fh\_\-Referral} (nfs\_\-fh4 $\ast$pfh)
 \item 
-unsigned long long {\bf nfs3\_\-FhandleCheckSum} (file\_\-handle\_\-v3\_\-t $\ast$pfh)
-\item 
-unsigned long long {\bf nfs4\_\-FhandleCheckSum} (file\_\-handle\_\-v4\_\-t $\ast$pfh)
-\item 
-void {\bf print\_\-fhandle2} (fhandle2 fh)
+void {\bf print\_\-fhandle2} (log\_\-components\_\-t component, fhandle2 fh)
 \item 
 void {\bf sprint\_\-fhandle2} (char $\ast$str, fhandle2 fh)
 \item 
-void {\bf print\_\-fhandle3} (nfs\_\-fh3 fh)
+void {\bf print\_\-fhandle3} (log\_\-components\_\-t component, nfs\_\-fh3 fh)
 \item 
 void {\bf sprint\_\-fhandle3} (char $\ast$str, nfs\_\-fh3 fh)
 \item 
-void {\bf print\_\-fhandle4} (nfs\_\-fh4 fh)
+void {\bf print\_\-fhandle4} (log\_\-components\_\-t component, nfs\_\-fh4 fh)
 \item 
 void {\bf sprint\_\-fhandle4} (char $\ast$str, nfs\_\-fh4 fh)
 \item 
-void {\bf print\_\-buff} (char $\ast$buff, int len)
+void {\bf print\_\-buff} (log\_\-components\_\-t component, char $\ast$buff, int len)
 \item 
 void {\bf sprint\_\-buff} (char $\ast$str, char $\ast$buff, int len)
 \item 
-void {\bf print\_\-compound\_\-fh} (compound\_\-data\_\-t $\ast$data)
+void {\bf sprint\_\-mem} (char $\ast$str, char $\ast$buff, int len)
+\item 
+void {\bf print\_\-compound\_\-fh} (log\_\-components\_\-t component, compound\_\-data\_\-t $\ast$data)
 \item 
 void {\bf nfs4\_\-sprint\_\-fhandle} (nfs\_\-fh4 $\ast$fh4p, char $\ast$outstr)
-\end{CompactItemize}
+\end{DoxyCompactItemize}
 \subsection*{Variables}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
 time\_\-t {\bf ServerBootTime}
 \item 
 nfs\_\-parameter\_\-t {\bf nfs\_\-param}
-\end{CompactItemize}
+\end{DoxyCompactItemize}
 
 
 \subsection{Detailed Description}
-Some tools for managing the file handles. 
+Some tools for managing the file handles. \begin{DoxyAuthor}{Author}
 
-\begin{Desc}
-\item[Author:]\end{Desc}
-\begin{Desc}
-\item[Author]deniel \end{Desc}
-\begin{Desc}
-\item[Date:]\end{Desc}
-\begin{Desc}
-\item[Date]2006/01/24 11:43:05 \end{Desc}
-\begin{Desc}
-\item[Version:]\end{Desc}
-\begin{Desc}
-\item[Revision]1.12 \end{Desc}
-\doxyref{nfs\_\-filehandle\_\-mgmt.c}{p.}{nfs__filehandle__mgmt_8c} : Some tools for managing the file handles.
+\end{DoxyAuthor}
+Author}
+deniel \begin{DoxyDate}{Date}
 
-\begin{Desc}
-\item[Header]/cea/S/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/support/nfs\_\-filehandle\_\-mgmt.c,v 1.12 2006/01/24 11:43:05 deniel Exp \end{Desc}
+\end{DoxyDate}
+Date}
+2006/01/24 11:43:05 \begin{DoxyVersion}{Version}
 
+\end{DoxyVersion}
+Revision}
+1.12 \doxyref{nfs\_\-filehandle\_\-mgmt.c}{p.}{nfs__filehandle__mgmt_8c} : Some tools for managing the file handles.
 
-\begin{Desc}
-\item[Log]\doxyref{nfs\_\-filehandle\_\-mgmt.c}{p.}{nfs__filehandle__mgmt_8c},v \end{Desc}
-Revision 1.12 2006/01/24 11:43:05 deniel Code cleaning in progress
+Header}
+/cea/S/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/support/nfs\_\-filehandle\_\-mgmt.c,v 1.12 2006/01/24 11:43:05 deniel Exp 
+
+Log}
+\doxyref{nfs\_\-filehandle\_\-mgmt.c}{p.}{nfs__filehandle__mgmt_8c},v Revision 1.12 2006/01/24 11:43:05 deniel Code cleaning in progress
 
 Revision 1.11 2006/01/11 08:12:18 deniel Added bug track and warning for badly formed handles
-
-Revision 1.10 2005/11/28 17:03:03 deniel Added CeCILL headers
 
 Revision 1.9 2005/09/07 08:58:30 deniel NFSv2 FH was only 31 byte long instead of 32
 
@@ -156,476 +148,367 @@ Revision 1.1 2005/07/20 12:56:54 deniel Reorganisation of the source files
 Definition in file {\bf nfs\_\-filehandle\_\-mgmt.c}.
 
 \subsection{Function Documentation}
-\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs2\_\-FhandleCheckSum@{nfs2\_\-FhandleCheckSum}}
-\index{nfs2\_\-FhandleCheckSum@{nfs2\_\-FhandleCheckSum}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs2\_\-FhandleCheckSum}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int nfs2\_\-FhandleCheckSum (file\_\-handle\_\-v2\_\-t $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_fe358eed3215d37db0bf13e69270e2d3}
-
-
-nfs2\_\-FhandleCheckSum
-
-Computes the checksum associated with a nfsv2 file handle.
-
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em pfh}][IN] pointer to the file handle whose checksum is to be computed.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]the computed checksum. \end{Desc}
-
-
-Definition at line 730 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs2\_\-FhandleToExportId@{nfs2\_\-FhandleToExportId}}
+\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs2\_\-FhandleToExportId@{nfs2\_\-FhandleToExportId}}
 \index{nfs2\_\-FhandleToExportId@{nfs2\_\-FhandleToExportId}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs2\_\-FhandleToExportId}]{\setlength{\rightskip}{0pt plus 5cm}short nfs2\_\-FhandleToExportId (fhandle2 $\ast$ {\em pfh2})}\label{nfs__filehandle__mgmt_8c_4e15ee51a5126d013954cb8ddf34b62b}
-
-
+\subsubsection[{nfs2\_\-FhandleToExportId}]{\setlength{\rightskip}{0pt plus 5cm}short nfs2\_\-FhandleToExportId (fhandle2 $\ast$ {\em pfh2})}\label{nfs__filehandle__mgmt_8c_a4e15ee51a5126d013954cb8ddf34b62b}
 nfs2\_\-FhandleToExportId
 
 This routine extracts the export id from the file handle NFSv2
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em pfh2}][IN] file handle to manage.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]the export id. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em pfh2}][IN] file handle to manage.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the export id. 
+\end{DoxyReturn}
 
 
-Definition at line 556 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs2\_\-FhandleToFSAL@{nfs2\_\-FhandleToFSAL}}
+Definition at line 463 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs2\_\-FhandleToFSAL@{nfs2\_\-FhandleToFSAL}}
 \index{nfs2\_\-FhandleToFSAL@{nfs2\_\-FhandleToFSAL}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs2\_\-FhandleToFSAL}]{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-FhandleToFSAL (fhandle2 $\ast$ {\em pfh2}, \/  fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext})}\label{nfs__filehandle__mgmt_8c_778946079c6c9ae6ec341476e2a882d2}
-
-
+\subsubsection[{nfs2\_\-FhandleToFSAL}]{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-FhandleToFSAL (fhandle2 $\ast$ {\em pfh2}, \/  fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext})}\label{nfs__filehandle__mgmt_8c_a778946079c6c9ae6ec341476e2a882d2}
 nfs2\_\-FhandleToFSAL: converts a nfs2 file handle to a FSAL file handle.
 
 Converts a nfs2 file handle to a FSAL file handle.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em pfh2}][IN] pointer to the file handle to be converted \item[{\em pfsalhandle}][OUT] pointer to the extracted FSAL handle\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]1 if successful, 0 otherwise \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em pfh2}][IN] pointer to the file handle to be converted \item[{\em pfsalhandle}][OUT] pointer to the extracted FSAL handle\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+1 if successful, 0 otherwise 
+\end{DoxyReturn}
 
 
-Definition at line 297 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs2\_\-FSALToFhandle@{nfs2\_\-FSALToFhandle}}
+Definition at line 225 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs2\_\-FSALToFhandle@{nfs2\_\-FSALToFhandle}}
 \index{nfs2\_\-FSALToFhandle@{nfs2\_\-FSALToFhandle}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs2\_\-FSALToFhandle}]{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-FSALToFhandle (fhandle2 $\ast$ {\em pfh2}, \/  fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, \/  exportlist\_\-t $\ast$ {\em pexport})}\label{nfs__filehandle__mgmt_8c_474e4d9f932d603dc25c3f49a00edbe2}
-
-
+\subsubsection[{nfs2\_\-FSALToFhandle}]{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-FSALToFhandle (fhandle2 $\ast$ {\em pfh2}, \/  fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, \/  exportlist\_\-t $\ast$ {\em pexport})}\label{nfs__filehandle__mgmt_8c_a474e4d9f932d603dc25c3f49a00edbe2}
 nfs2\_\-FSALToFhandle: converts a FSAL file handle to a nfs2 file handle.
 
 Converts a nfs2 file handle to a FSAL file handle.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em pfh2}][OUT] pointer to the extracted file handle \item[{\em pfsalhandle}][IN] pointer to the FSAL handle to be converted \item[{\em pfsalhandle}][IN] pointer to the FSAL handle to be converted\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]1 if successful, 0 otherwise \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em pfh2}][OUT] pointer to the extracted file handle \item[{\em pfsalhandle}][IN] pointer to the FSAL handle to be converted \item[{\em pfsalhandle}][IN] pointer to the FSAL handle to be converted\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+1 if successful, 0 otherwise 
+\end{DoxyReturn}
 
 
-Definition at line 457 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs3\_\-FhandleCheckSum@{nfs3\_\-FhandleCheckSum}}
-\index{nfs3\_\-FhandleCheckSum@{nfs3\_\-FhandleCheckSum}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs3\_\-FhandleCheckSum}]{\setlength{\rightskip}{0pt plus 5cm}unsigned long long nfs3\_\-FhandleCheckSum (file\_\-handle\_\-v3\_\-t $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_0bc52bbfb9029cc09160f14f08422bb1}
-
-
-nfs3\_\-FhandleCheckSum
-
-Computes the checksum associated with a nfsv3 file handle.
-
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em pfh}][IN] pointer to the file handle whose checksum is to be computed.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]the computed checksum. \end{Desc}
-
-
-Definition at line 750 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs3\_\-FhandleToExportId@{nfs3\_\-FhandleToExportId}}
+Definition at line 372 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs3\_\-FhandleToExportId@{nfs3\_\-FhandleToExportId}}
 \index{nfs3\_\-FhandleToExportId@{nfs3\_\-FhandleToExportId}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs3\_\-FhandleToExportId}]{\setlength{\rightskip}{0pt plus 5cm}short nfs3\_\-FhandleToExportId (nfs\_\-fh3 $\ast$ {\em pfh3})}\label{nfs__filehandle__mgmt_8c_8453425f543449aa0b989e06731395f3}
-
-
+\subsubsection[{nfs3\_\-FhandleToExportId}]{\setlength{\rightskip}{0pt plus 5cm}short nfs3\_\-FhandleToExportId (nfs\_\-fh3 $\ast$ {\em pfh3})}\label{nfs__filehandle__mgmt_8c_a8453425f543449aa0b989e06731395f3}
 nfs3\_\-FhandleToExportId
 
 This routine extracts the export id from the file handle NFSv3
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em pfh3}][IN] file handle to manage.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]the export id. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em pfh3}][IN] file handle to manage.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the export id. 
+\end{DoxyReturn}
 
 
-Definition at line 529 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs3\_\-FhandleToFSAL@{nfs3\_\-FhandleToFSAL}}
+Definition at line 438 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs3\_\-FhandleToFSAL@{nfs3\_\-FhandleToFSAL}}
 \index{nfs3\_\-FhandleToFSAL@{nfs3\_\-FhandleToFSAL}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs3\_\-FhandleToFSAL}]{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-FhandleToFSAL (nfs\_\-fh3 $\ast$ {\em pfh3}, \/  fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext})}\label{nfs__filehandle__mgmt_8c_31cf854436824a6294d676d9caeef45e}
-
-
+\subsubsection[{nfs3\_\-FhandleToFSAL}]{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-FhandleToFSAL (nfs\_\-fh3 $\ast$ {\em pfh3}, \/  fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext})}\label{nfs__filehandle__mgmt_8c_a31cf854436824a6294d676d9caeef45e}
 nfs3\_\-FhandleToFSAL: converts a nfs3 file handle to a FSAL file handle.
 
 Converts a nfs3 file handle to a FSAL file handle.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em pfh3}][IN] pointer to the file handle to be converted \item[{\em pfsalhandle}][OUT] pointer to the extracted FSAL handle\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]1 if successful, 0 otherwise \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em pfh3}][IN] pointer to the file handle to be converted \item[{\em pfsalhandle}][OUT] pointer to the extracted FSAL handle\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+1 if successful, 0 otherwise 
+\end{DoxyReturn}
 
 
-Definition at line 248 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs3\_\-FSALToFhandle@{nfs3\_\-FSALToFhandle}}
+Definition at line 186 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs3\_\-FSALToFhandle@{nfs3\_\-FSALToFhandle}}
 \index{nfs3\_\-FSALToFhandle@{nfs3\_\-FSALToFhandle}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs3\_\-FSALToFhandle}]{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-FSALToFhandle (nfs\_\-fh3 $\ast$ {\em pfh3}, \/  fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, \/  exportlist\_\-t $\ast$ {\em pexport})}\label{nfs__filehandle__mgmt_8c_28ace18419e381b0bf3d17215e47f34f}
-
-
+\subsubsection[{nfs3\_\-FSALToFhandle}]{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-FSALToFhandle (nfs\_\-fh3 $\ast$ {\em pfh3}, \/  fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, \/  exportlist\_\-t $\ast$ {\em pexport})}\label{nfs__filehandle__mgmt_8c_a28ace18419e381b0bf3d17215e47f34f}
 nfs3\_\-FSALToFhandle: converts a FSAL file handle to a nfs3 file handle.
 
 Converts a nfs3 file handle to a FSAL file handle.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em pfh3}][OUT] pointer to the extracted file handle \item[{\em pfsalhandle}][IN] pointer to the FSAL handle to be converted \item[{\em pexport}][IN] pointer to the export list entry the FH belongs to\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]1 if successful, 0 otherwise \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em pfh3}][OUT] pointer to the extracted file handle \item[{\em pfsalhandle}][IN] pointer to the FSAL handle to be converted \item[{\em pexport}][IN] pointer to the export list entry the FH belongs to\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+1 if successful, 0 otherwise 
+\end{DoxyReturn}
 
 
-Definition at line 400 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs3\_\-Is\_\-Fh\_\-Xattr@{nfs3\_\-Is\_\-Fh\_\-Xattr}}
+Definition at line 322 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs3\_\-Is\_\-Fh\_\-Xattr@{nfs3\_\-Is\_\-Fh\_\-Xattr}}
 \index{nfs3\_\-Is\_\-Fh\_\-Xattr@{nfs3\_\-Is\_\-Fh\_\-Xattr}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs3\_\-Is\_\-Fh\_\-Xattr}]{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-Is\_\-Fh\_\-Xattr (nfs\_\-fh3 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_668b574eeda3bc36c6b891636a37a82d}
-
-
+\subsubsection[{nfs3\_\-Is\_\-Fh\_\-Xattr}]{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-Is\_\-Fh\_\-Xattr (nfs\_\-fh3 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_a668b574eeda3bc36c6b891636a37a82d}
 nfs4\_\-Is\_\-Fh\_\-Xattr
 
 This routine is used to test is a fh refers to a Xattr related stuff
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em pfh}][IN] file handle to test.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]TRUE if in pseudo fh, FALSE otherwise \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em pfh}][IN] file handle to test.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+TRUE if in pseudo fh, FALSE otherwise 
+\end{DoxyReturn}
 
 
-Definition at line 579 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-FhandleCheckSum@{nfs4\_\-FhandleCheckSum}}
-\index{nfs4\_\-FhandleCheckSum@{nfs4\_\-FhandleCheckSum}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs4\_\-FhandleCheckSum}]{\setlength{\rightskip}{0pt plus 5cm}unsigned long long nfs4\_\-FhandleCheckSum (file\_\-handle\_\-v4\_\-t $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_776df7ad1fba8644dbc2015134ffeada}
-
-
-nfs4\_\-FhandleCheckSum
-
-Computes the checksum associated with a nfsv4 file handle.
-
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em pfh}][IN] pointer to the file handle whose checksum is to be computed.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]the computed checksum. \end{Desc}
-
-
-Definition at line 770 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-FhandleToExportId@{nfs4\_\-FhandleToExportId}}
+Definition at line 486 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-FhandleToExportId@{nfs4\_\-FhandleToExportId}}
 \index{nfs4\_\-FhandleToExportId@{nfs4\_\-FhandleToExportId}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs4\_\-FhandleToExportId}]{\setlength{\rightskip}{0pt plus 5cm}short nfs4\_\-FhandleToExportId (nfs\_\-fh4 $\ast$ {\em pfh4})}\label{nfs__filehandle__mgmt_8c_bd252dd5f6d20c1b81760f8b2185e35d}
-
-
+\subsubsection[{nfs4\_\-FhandleToExportId}]{\setlength{\rightskip}{0pt plus 5cm}short nfs4\_\-FhandleToExportId (nfs\_\-fh4 $\ast$ {\em pfh4})}\label{nfs__filehandle__mgmt_8c_abd252dd5f6d20c1b81760f8b2185e35d}
 nfs4\_\-FhandleToExportId
 
 This routine extracts the export id from the file handle NFSv4
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em pfh4}][IN] file handle to manage.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]the export id. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em pfh4}][IN] file handle to manage.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the export id. 
+\end{DoxyReturn}
 
 
-Definition at line 505 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-FhandleToFSAL@{nfs4\_\-FhandleToFSAL}}
+Definition at line 415 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-FhandleToFSAL@{nfs4\_\-FhandleToFSAL}}
 \index{nfs4\_\-FhandleToFSAL@{nfs4\_\-FhandleToFSAL}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs4\_\-FhandleToFSAL}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-FhandleToFSAL (nfs\_\-fh4 $\ast$ {\em pfh4}, \/  fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext})}\label{nfs__filehandle__mgmt_8c_81434184a7fe8e65bced9b1be7ae95b8}
-
-
+\subsubsection[{nfs4\_\-FhandleToFSAL}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-FhandleToFSAL (nfs\_\-fh4 $\ast$ {\em pfh4}, \/  fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext})}\label{nfs__filehandle__mgmt_8c_a81434184a7fe8e65bced9b1be7ae95b8}
 nfs4\_\-FhandleToFSAL: converts a nfs4 file handle to a FSAL file handle.
 
 Converts a nfs4 file handle to a FSAL file handle.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em pfh4}][IN] pointer to the file handle to be converted \item[{\em pfsalhandle}][OUT] pointer to the extracted FSAL handle\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]1 if successful, 0 otherwise \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em pfh4}][IN] pointer to the file handle to be converted \item[{\em pfsalhandle}][OUT] pointer to the extracted FSAL handle\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+1 if successful, 0 otherwise 
+\end{DoxyReturn}
 
 
-Definition at line 198 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-FSALToFhandle@{nfs4\_\-FSALToFhandle}}
+Definition at line 142 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-FSALToFhandle@{nfs4\_\-FSALToFhandle}}
 \index{nfs4\_\-FSALToFhandle@{nfs4\_\-FSALToFhandle}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs4\_\-FSALToFhandle}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-FSALToFhandle (nfs\_\-fh4 $\ast$ {\em pfh4}, \/  fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, \/  compound\_\-data\_\-t $\ast$ {\em data})}\label{nfs__filehandle__mgmt_8c_3c39bdd89b373290fb7050bf6faded41}
-
-
+\subsubsection[{nfs4\_\-FSALToFhandle}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-FSALToFhandle (nfs\_\-fh4 $\ast$ {\em pfh4}, \/  fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, \/  compound\_\-data\_\-t $\ast$ {\em data})}\label{nfs__filehandle__mgmt_8c_a3c39bdd89b373290fb7050bf6faded41}
 nfs4\_\-FSALToFhandle: converts a FSAL file handle to a nfs4 file handle.
 
 Converts a nfs4 file handle to a FSAL file handle.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em pfh4}][OUT] pointer to the extracted file handle \item[{\em pfsalhandle}][IN] pointer to the FSAL handle to be converted \item[{\em data}][IN] pointer to NFSv4 compound data structure.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]1 if successful, 0 otherwise \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em pfh4}][OUT] pointer to the extracted file handle \item[{\em pfsalhandle}][IN] pointer to the FSAL handle to be converted \item[{\em data}][IN] pointer to NFSv4 compound data structure.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+1 if successful, 0 otherwise 
+\end{DoxyReturn}
 
 
-Definition at line 335 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-Is\_\-Fh\_\-Empty@{nfs4\_\-Is\_\-Fh\_\-Empty}}
+Definition at line 260 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-Is\_\-Fh\_\-Empty@{nfs4\_\-Is\_\-Fh\_\-Empty}}
 \index{nfs4\_\-Is\_\-Fh\_\-Empty@{nfs4\_\-Is\_\-Fh\_\-Empty}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs4\_\-Is\_\-Fh\_\-Empty}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Empty (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_ea877e7eb396fbb3c64ff2eb789cf5fc}
-
-
+\subsubsection[{nfs4\_\-Is\_\-Fh\_\-Empty}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Empty (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_aea877e7eb396fbb3c64ff2eb789cf5fc}
 nfs4\_\-Is\_\-Fh\_\-Empty
 
 This routine is used to test if a fh is empty (contains no data).
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em pfh}][IN] file handle to test.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]NFS4\_\-OK if successfull, NFS4ERR\_\-NOFILEHANDLE is fh is empty. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em pfh}][IN] file handle to test.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+NFS4\_\-OK if successfull, NFS4ERR\_\-NOFILEHANDLE is fh is empty. 
+\end{DoxyReturn}
 
 
-Definition at line 602 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-Is\_\-Fh\_\-Expired@{nfs4\_\-Is\_\-Fh\_\-Expired}}
+Definition at line 509 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-Is\_\-Fh\_\-Expired@{nfs4\_\-Is\_\-Fh\_\-Expired}}
 \index{nfs4\_\-Is\_\-Fh\_\-Expired@{nfs4\_\-Is\_\-Fh\_\-Expired}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs4\_\-Is\_\-Fh\_\-Expired}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Expired (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_5dd8010e82ca42c8cfb5afd636426813}
-
-
+\subsubsection[{nfs4\_\-Is\_\-Fh\_\-Expired}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Expired (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_a5dd8010e82ca42c8cfb5afd636426813}
 nfs4\_\-Is\_\-Fh\_\-Expired
 
 This routine is used to test if a fh is expired
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em pfh}][IN] file handle to test.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]NFS4\_\-OK if successfull. All the FH are persistent for now. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em pfh}][IN] file handle to test.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+NFS4\_\-OK if successfull. All the FH are persistent for now. 
+\end{DoxyReturn}
 
 
-Definition at line 671 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-Is\_\-Fh\_\-Invalid@{nfs4\_\-Is\_\-Fh\_\-Invalid}}
+Definition at line 577 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-Is\_\-Fh\_\-Invalid@{nfs4\_\-Is\_\-Fh\_\-Invalid}}
 \index{nfs4\_\-Is\_\-Fh\_\-Invalid@{nfs4\_\-Is\_\-Fh\_\-Invalid}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs4\_\-Is\_\-Fh\_\-Invalid}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Invalid (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_c9471373d4493abc215f5d8b86783764}
-
-
+\subsubsection[{nfs4\_\-Is\_\-Fh\_\-Invalid}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Invalid (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_ac9471373d4493abc215f5d8b86783764}
 nfs4\_\-Is\_\-Fh\_\-Invalid
 
 This routine is used to test if a fh is invalid.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em pfh}][IN] file handle to test.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]NFS4\_\-OK if successfull. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em pfh}][IN] file handle to test.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+NFS4\_\-OK if successfull. 
+\end{DoxyReturn}
 
 
-Definition at line 704 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-Is\_\-Fh\_\-Pseudo@{nfs4\_\-Is\_\-Fh\_\-Pseudo}}
+Definition at line 607 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-Is\_\-Fh\_\-Pseudo@{nfs4\_\-Is\_\-Fh\_\-Pseudo}}
 \index{nfs4\_\-Is\_\-Fh\_\-Pseudo@{nfs4\_\-Is\_\-Fh\_\-Pseudo}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs4\_\-Is\_\-Fh\_\-Pseudo}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Pseudo (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_517dfc86532641b32ac7c178aeb30c46}
-
-
+\subsubsection[{nfs4\_\-Is\_\-Fh\_\-Pseudo}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Pseudo (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_a517dfc86532641b32ac7c178aeb30c46}
 nfs4\_\-Is\_\-Fh\_\-Pseudo
 
 This routine is used to test if a fh refers to pseudo fs
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em pfh}][IN] file handle to test.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]TRUE if in pseudo fh, FALSE otherwise \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em pfh}][IN] file handle to test.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+TRUE if in pseudo fh, FALSE otherwise 
+\end{DoxyReturn}
 
 
-Definition at line 647 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-Is\_\-Fh\_\-Xattr@{nfs4\_\-Is\_\-Fh\_\-Xattr}}
+Definition at line 554 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-Is\_\-Fh\_\-Referral@{nfs4\_\-Is\_\-Fh\_\-Referral}}
+\index{nfs4\_\-Is\_\-Fh\_\-Referral@{nfs4\_\-Is\_\-Fh\_\-Referral}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs4\_\-Is\_\-Fh\_\-Referral}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Referral (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_a9c76d0dc9e953967d9ea5946495623eb}
+nfs4\_\-Is\_\-Fh\_\-Referral
+
+This routine is used to identify fh related to a pure referral
+
+
+\begin{DoxyParams}{Parameters}
+\item[{\em pfh}][IN] file handle to test.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+TRUE is fh is a referral, FALSE otherwise 
+\end{DoxyReturn}
+
+
+Definition at line 632 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-Is\_\-Fh\_\-Xattr@{nfs4\_\-Is\_\-Fh\_\-Xattr}}
 \index{nfs4\_\-Is\_\-Fh\_\-Xattr@{nfs4\_\-Is\_\-Fh\_\-Xattr}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs4\_\-Is\_\-Fh\_\-Xattr}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Xattr (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_342a0d49502947ec34dffa7b6b95f505}
-
-
+\subsubsection[{nfs4\_\-Is\_\-Fh\_\-Xattr}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Xattr (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_a342a0d49502947ec34dffa7b6b95f505}
 nfs4\_\-Is\_\-Fh\_\-Xattr
 
 This routine is used to test is a fh refers to a Xattr related stuff
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em pfh}][IN] file handle to test.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]TRUE if in pseudo fh, FALSE otherwise \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em pfh}][IN] file handle to test.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+TRUE if in pseudo fh, FALSE otherwise 
+\end{DoxyReturn}
 
 
-Definition at line 624 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-sprint\_\-fhandle@{nfs4\_\-sprint\_\-fhandle}}
+Definition at line 531 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-sprint\_\-fhandle@{nfs4\_\-sprint\_\-fhandle}}
 \index{nfs4\_\-sprint\_\-fhandle@{nfs4\_\-sprint\_\-fhandle}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs4\_\-sprint\_\-fhandle}]{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-sprint\_\-fhandle (nfs\_\-fh4 $\ast$ {\em fh4p}, \/  char $\ast$ {\em outstr})}\label{nfs__filehandle__mgmt_8c_03954b5fee52c62dbcdcbc85c8f08377}
-
-
+\subsubsection[{nfs4\_\-sprint\_\-fhandle}]{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-sprint\_\-fhandle (nfs\_\-fh4 $\ast$ {\em fh4p}, \/  char $\ast$ {\em outstr})}\label{nfs__filehandle__mgmt_8c_a03954b5fee52c62dbcdcbc85c8f08377}
 nfs4\_\-sprint\_\-fhandle : converts a file handle v4 to a string.
 
 Converts a file handle v4 to a string. This will be used mostly for debugging purpose.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em fh4p}][OUT] pointer to the file handle to be converted to a string. \item[{\em data}][INOUT] pointer to the char $\ast$ resulting from the operation.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]nothing (void function). \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em fh4p}][OUT] pointer to the file handle to be converted to a string. \item[{\em data}][INOUT] pointer to the char $\ast$ resulting from the operation.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+nothing (void function). 
+\end{DoxyReturn}
 
 
-Definition at line 943 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print\_\-buff@{print\_\-buff}}
+Definition at line 817 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print\_\-buff@{print\_\-buff}}
 \index{print\_\-buff@{print\_\-buff}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{print\_\-buff}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-buff (char $\ast$ {\em buff}, \/  int {\em len})}\label{nfs__filehandle__mgmt_8c_10b1bdddf21fc52b0bf2e6c0cbce35dc}
-
-
+\subsubsection[{print\_\-buff}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-buff (log\_\-components\_\-t {\em component}, \/  char $\ast$ {\em buff}, \/  int {\em len})}\label{nfs__filehandle__mgmt_8c_a3d381aeccd1e8570ce7e216bc912d2ea}
 print\_\-buff
 
 This routine prints the content of a buffer.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em buff}][IN] buffer to print. \item[{\em len}][IN] length of the buffer.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]nothing (void function). \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em buff}][IN] buffer to print. \item[{\em len}][IN] length of the buffer.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+nothing (void function). 
+\end{DoxyReturn}
 
 
-Definition at line 884 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print\_\-compound\_\-fh@{print\_\-compound\_\-fh}}
+Definition at line 749 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print\_\-compound\_\-fh@{print\_\-compound\_\-fh}}
 \index{print\_\-compound\_\-fh@{print\_\-compound\_\-fh}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{print\_\-compound\_\-fh}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-compound\_\-fh (compound\_\-data\_\-t $\ast$ {\em data})}\label{nfs__filehandle__mgmt_8c_8c353da8213f21121f211cfe38f7bea3}
-
-
+\subsubsection[{print\_\-compound\_\-fh}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-compound\_\-fh (log\_\-components\_\-t {\em component}, \/  compound\_\-data\_\-t $\ast$ {\em data})}\label{nfs__filehandle__mgmt_8c_a17caa784d57a84f9a16140f914777929}
 print\_\-compound\_\-fh
 
 This routine prints all the file handle within a compoud request's data structure.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em data}][IN] compound's data to manage.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]nothing (void function). \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em data}][IN] compound's data to manage.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+nothing (void function). 
+\end{DoxyReturn}
 
 
-Definition at line 914 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print\_\-fhandle2@{print\_\-fhandle2}}
+Definition at line 787 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print\_\-fhandle2@{print\_\-fhandle2}}
 \index{print\_\-fhandle2@{print\_\-fhandle2}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{print\_\-fhandle2}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fhandle2 (fhandle2 {\em fh})}\label{nfs__filehandle__mgmt_8c_10e06247348b27f316d070800abc4721}
-
-
+\subsubsection[{print\_\-fhandle2}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fhandle2 (log\_\-components\_\-t {\em component}, \/  fhandle2 {\em fh})}\label{nfs__filehandle__mgmt_8c_a75653214f116700f7662508bd21e9104}
 print\_\-fhandle2
 
 This routine prints a NFSv2 file handle (for debugging purpose)
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em fh}][IN] file handle to print.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]nothing (void function). \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em fh}][IN] file handle to print.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+nothing (void function). 
+\end{DoxyReturn}
 
 
-Definition at line 791 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print\_\-fhandle3@{print\_\-fhandle3}}
+Definition at line 661 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print\_\-fhandle3@{print\_\-fhandle3}}
 \index{print\_\-fhandle3@{print\_\-fhandle3}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{print\_\-fhandle3}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fhandle3 (nfs\_\-fh3 {\em fh})}\label{nfs__filehandle__mgmt_8c_a2081ffe155d2ced8a1c6acc7bf819dd}
-
-
+\subsubsection[{print\_\-fhandle3}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fhandle3 (log\_\-components\_\-t {\em component}, \/  nfs\_\-fh3 {\em fh})}\label{nfs__filehandle__mgmt_8c_a13f7b8dce39df17de00b982c2450bf1b}
 print\_\-fhandle3
 
 This routine prints a NFSv3 file handle (for debugging purpose)
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em fh}][IN] file handle to print.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]nothing (void function). \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em fh}][IN] file handle to print.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+nothing (void function). 
+\end{DoxyReturn}
 
 
-Definition at line 821 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print\_\-fhandle4@{print\_\-fhandle4}}
+Definition at line 690 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print\_\-fhandle4@{print\_\-fhandle4}}
 \index{print\_\-fhandle4@{print\_\-fhandle4}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{print\_\-fhandle4}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fhandle4 (nfs\_\-fh4 {\em fh})}\label{nfs__filehandle__mgmt_8c_dab5d456a2e0014569528c181a620fc1}
-
-
+\subsubsection[{print\_\-fhandle4}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fhandle4 (log\_\-components\_\-t {\em component}, \/  nfs\_\-fh4 {\em fh})}\label{nfs__filehandle__mgmt_8c_ad583b4804b9afcb490feb16a02177839}
 print\_\-fhandle4
 
 This routine prints a NFSv4 file handle (for debugging purpose)
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em fh}][IN] file handle to print.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]nothing (void function). \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em fh}][IN] file handle to print.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+nothing (void function). 
+\end{DoxyReturn}
 
 
-Definition at line 852 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!sprint\_\-buff@{sprint\_\-buff}}
+Definition at line 719 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!sprint\_\-buff@{sprint\_\-buff}}
 \index{sprint\_\-buff@{sprint\_\-buff}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{sprint\_\-buff}]{\setlength{\rightskip}{0pt plus 5cm}void sprint\_\-buff (char $\ast$ {\em str}, \/  char $\ast$ {\em buff}, \/  int {\em len})}\label{nfs__filehandle__mgmt_8c_4fd593aa6e94740c4152538b3c956e3a}
+\subsubsection[{sprint\_\-buff}]{\setlength{\rightskip}{0pt plus 5cm}void sprint\_\-buff (char $\ast$ {\em str}, \/  char $\ast$ {\em buff}, \/  int {\em len})}\label{nfs__filehandle__mgmt_8c_a4fd593aa6e94740c4152538b3c956e3a}
 
 
-
-
-Definition at line 894 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!sprint\_\-fhandle2@{sprint\_\-fhandle2}}
+Definition at line 760 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!sprint\_\-fhandle2@{sprint\_\-fhandle2}}
 \index{sprint\_\-fhandle2@{sprint\_\-fhandle2}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{sprint\_\-fhandle2}]{\setlength{\rightskip}{0pt plus 5cm}void sprint\_\-fhandle2 (char $\ast$ {\em str}, \/  fhandle2 {\em fh})}\label{nfs__filehandle__mgmt_8c_55fc7459348089cdbd9e800fb6a6b5e5}
+\subsubsection[{sprint\_\-fhandle2}]{\setlength{\rightskip}{0pt plus 5cm}void sprint\_\-fhandle2 (char $\ast$ {\em str}, \/  fhandle2 {\em fh})}\label{nfs__filehandle__mgmt_8c_a55fc7459348089cdbd9e800fb6a6b5e5}
 
 
-
-
-Definition at line 801 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!sprint\_\-fhandle3@{sprint\_\-fhandle3}}
+Definition at line 672 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!sprint\_\-fhandle3@{sprint\_\-fhandle3}}
 \index{sprint\_\-fhandle3@{sprint\_\-fhandle3}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{sprint\_\-fhandle3}]{\setlength{\rightskip}{0pt plus 5cm}void sprint\_\-fhandle3 (char $\ast$ {\em str}, \/  nfs\_\-fh3 {\em fh})}\label{nfs__filehandle__mgmt_8c_4955bd04be3b76f2569c6b77d88fc313}
+\subsubsection[{sprint\_\-fhandle3}]{\setlength{\rightskip}{0pt plus 5cm}void sprint\_\-fhandle3 (char $\ast$ {\em str}, \/  nfs\_\-fh3 {\em fh})}\label{nfs__filehandle__mgmt_8c_a4955bd04be3b76f2569c6b77d88fc313}
 
 
-
-
-Definition at line 831 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!sprint\_\-fhandle4@{sprint\_\-fhandle4}}
+Definition at line 701 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!sprint\_\-fhandle4@{sprint\_\-fhandle4}}
 \index{sprint\_\-fhandle4@{sprint\_\-fhandle4}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{sprint\_\-fhandle4}]{\setlength{\rightskip}{0pt plus 5cm}void sprint\_\-fhandle4 (char $\ast$ {\em str}, \/  nfs\_\-fh4 {\em fh})}\label{nfs__filehandle__mgmt_8c_38f80116c3a5d6583931831df4cb64ca}
+\subsubsection[{sprint\_\-fhandle4}]{\setlength{\rightskip}{0pt plus 5cm}void sprint\_\-fhandle4 (char $\ast$ {\em str}, \/  nfs\_\-fh4 {\em fh})}\label{nfs__filehandle__mgmt_8c_a38f80116c3a5d6583931831df4cb64ca}
 
 
+Definition at line 730 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!sprint\_\-mem@{sprint\_\-mem}}
+\index{sprint\_\-mem@{sprint\_\-mem}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{sprint\_\-mem}]{\setlength{\rightskip}{0pt plus 5cm}void sprint\_\-mem (char $\ast$ {\em str}, \/  char $\ast$ {\em buff}, \/  int {\em len})}\label{nfs__filehandle__mgmt_8c_a5943b0ebcd28d76e5e84618e470942c6}
 
 
-Definition at line 862 of file nfs\_\-filehandle\_\-mgmt.c.
+Definition at line 768 of file nfs\_\-filehandle\_\-mgmt.c.
 
 \subsection{Variable Documentation}
 \index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs\_\-param@{nfs\_\-param}}
 \index{nfs\_\-param@{nfs\_\-param}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{nfs\_\-param}]{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-parameter\_\-t {\bf nfs\_\-param}}\label{nfs__filehandle__mgmt_8c_eb8fc46586993cf210777049fca03969}
-
-
+\subsubsection[{nfs\_\-param}]{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-parameter\_\-t {\bf nfs\_\-param}}\label{nfs__filehandle__mgmt_8c_aeb8fc46586993cf210777049fca03969}
 \index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!ServerBootTime@{ServerBootTime}}
 \index{ServerBootTime@{ServerBootTime}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection[{ServerBootTime}]{\setlength{\rightskip}{0pt plus 5cm}time\_\-t {\bf ServerBootTime}}\label{nfs__filehandle__mgmt_8c_7b4df488832bc1f60082b16b51472dc5}
-
-
+\subsubsection[{ServerBootTime}]{\setlength{\rightskip}{0pt plus 5cm}time\_\-t {\bf ServerBootTime}}\label{nfs__filehandle__mgmt_8c_a7b4df488832bc1f60082b16b51472dc5}

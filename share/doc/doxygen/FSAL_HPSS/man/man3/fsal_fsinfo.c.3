@@ -1,10 +1,11 @@
-.TH "fsal_fsinfo.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "fsal_fsinfo.c" 3 "15 Sep 2010" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_fsinfo.c \- functions for retrieving filesystem info.  
-
+fsal_fsinfo.c \- 
 .PP
+functions for retrieving filesystem info.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -19,10 +20,10 @@ fsal_fsinfo.c \- functions for retrieving filesystem info.
 
 .in +1c
 .ti -1c
-.RI "fsal_status_t \fBFSAL_static_fsinfo\fP (fsal_handle_t *filehandle, fsal_op_context_t *p_context, fsal_staticfsinfo_t *staticinfo)"
+.RI "fsal_status_t \fBHPSSFSAL_static_fsinfo\fP (hpssfsal_handle_t *filehandle, hpssfsal_op_context_t *p_context, fsal_staticfsinfo_t *staticinfo)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_dynamic_fsinfo\fP (fsal_handle_t *filehandle, fsal_op_context_t *p_context, fsal_dynamicfsinfo_t *dynamicinfo)"
+.RI "fsal_status_t \fBHPSSFSAL_dynamic_fsinfo\fP (hpssfsal_handle_t *filehandle, hpssfsal_op_context_t *p_context, fsal_dynamicfsinfo_t *dynamicinfo)"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -58,9 +59,7 @@ leibovic
 Definition in file \fBfsal_fsinfo.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "fsal_status_t FSAL_dynamic_fsinfo (fsal_handle_t * filehandle, fsal_op_context_t * p_context, fsal_dynamicfsinfo_t * dynamicinfo)"
-.PP
-FSAL_dynamic_fsinfo: Return dynamic filesystem info such as used size, free size, number of objects...
+.SS "fsal_status_t HPSSFSAL_dynamic_fsinfo (hpssfsal_handle_t * filehandle, hpssfsal_op_context_t * p_context, fsal_dynamicfsinfo_t * dynamicinfo)"FSAL_dynamic_fsinfo: Return dynamic filesystem info such as used size, free size, number of objects...
 .PP
 \fBParameters:\fP
 .RS 4
@@ -85,12 +84,10 @@ Other error codes can be returned : ERR_FSAL_IO, ...
 .PP
 
 .PP
-Definition at line 85 of file fsal_fsinfo.c.
+Definition at line 82 of file fsal_fsinfo.c.
 .PP
 References hpss2fsal_error(), and TakeTokenFSCall().
-.SS "fsal_status_t FSAL_static_fsinfo (fsal_handle_t * filehandle, fsal_op_context_t * p_context, fsal_staticfsinfo_t * staticinfo)"
-.PP
-FSAL_static_fsinfo: Return static filesystem info such as behavior, configuration, supported operations...
+.SS "fsal_status_t HPSSFSAL_static_fsinfo (hpssfsal_handle_t * filehandle, hpssfsal_op_context_t * p_context, fsal_staticfsinfo_t * staticinfo)"FSAL_static_fsinfo: Return static filesystem info such as behavior, configuration, supported operations...
 .PP
 \fBParameters:\fP
 .RS 4
@@ -115,7 +112,7 @@ Other error codes can be returned : ERR_FSAL_IO, ...
 .PP
 
 .PP
-Definition at line 47 of file fsal_fsinfo.c.
+Definition at line 46 of file fsal_fsinfo.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File System Abstraction Layer (HPSS) library from the source code.

@@ -1,10 +1,11 @@
-.TH "fsal_stats.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "fsal_stats.c" 3 "15 Sep 2010" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_stats.c \- Statistics functions.  
-
+fsal_stats.c \- 
 .PP
+Statistics functions.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -17,7 +18,7 @@ fsal_stats.c \- Statistics functions.
 
 .in +1c
 .ti -1c
-.RI "void \fBFSAL_get_stats\fP (fsal_statistics_t *stats, fsal_boolean_t reset)"
+.RI "void \fBHPSSFSAL_get_stats\fP (fsal_statistics_t *stats, fsal_boolean_t reset)"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -53,9 +54,7 @@ leibovic
 Definition in file \fBfsal_stats.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "void FSAL_get_stats (fsal_statistics_t * stats, fsal_boolean_t reset)"
-.PP
-FSAL_get_stats: Retrieve call statistics for current thread.
+.SS "void HPSSFSAL_get_stats (fsal_statistics_t * stats, fsal_boolean_t reset)"FSAL_get_stats: Retrieve call statistics for current thread.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -71,7 +70,7 @@ Nothing.
 .PP
 
 .PP
-Definition at line 34 of file fsal_stats.c.
+Definition at line 33 of file fsal_stats.c.
 .PP
 References fsal_internal_getstats().
 .SH "Author"

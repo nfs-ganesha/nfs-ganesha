@@ -1,10 +1,11 @@
-.TH "fsal_convert.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "fsal_convert.c" 3 "15 Sep 2010" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_convert.c \- HPSS-FSAL type translation functions.  
-
+fsal_convert.c \- 
 .PP
+HPSS-FSAL type translation functions.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -15,6 +16,8 @@ fsal_convert.c \- HPSS-FSAL type translation functions.
 \fC#include <sys/types.h>\fP
 .br
 \fC#include <errno.h>\fP
+.br
+\fC#include <hpss_errno.h>\fP
 .br
 
 .SS "Defines"
@@ -38,12 +41,6 @@ fsal_convert.c \- HPSS-FSAL type translation functions.
 .br
 .ti -1c
 .RI "int \fBfsal2hpss_openflags\fP (fsal_openflags_t fsal_flags, int *p_hpss_flags)"
-.br
-.ti -1c
-.RI "mode_t \fBfsal2unix_mode\fP (fsal_accessmode_t fsal_mode)"
-.br
-.ti -1c
-.RI "fsal_accessmode_t \fBunix2fsal_mode\fP (mode_t unix_mode)"
 .br
 .ti -1c
 .RI "fsal_nodetype_t \fBhpss2fsal_type\fP (unsigned32 hpss_type_in)"
@@ -73,7 +70,7 @@ fsal_convert.c \- HPSS-FSAL type translation functions.
 .RI "fsal_status_t \fBhpssHandle2fsalAttributes\fP (ns_ObjHandle_t *p_hpsshandle_in, fsal_attrib_list_t *p_fsalattr_out)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBfsal2hpss_attribset\fP (fsal_handle_t *p_fsal_handle, fsal_attrib_list_t *p_attrib_set, hpss_fileattrbits_t *p_hpss_attrmask, hpss_Attrs_t *p_hpss_attrs)"
+.RI "fsal_status_t \fBfsal2hpss_attribset\fP (hpssfsal_handle_t *p_fsal_handle, fsal_attrib_list_t *p_attrib_set, hpss_fileattrbits_t *p_hpss_attrmask, hpss_Attrs_t *p_hpss_attrs)"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -109,9 +106,7 @@ leibovic
 Definition in file \fBfsal_convert.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "u_signed64 fsal2hpss_64 (fsal_u64_t fsal_size_in)"
-.PP
-fsal2hpss_64: Convert fsal_u64_t type to HPSS u_signed64 type.
+.SS "u_signed64 fsal2hpss_64 (fsal_u64_t fsal_size_in)"fsal2hpss_64: Convert fsal_u64_t type to HPSS u_signed64 type.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -125,12 +120,10 @@ fsal2hpss_64: Convert fsal_u64_t type to HPSS u_signed64 type.
 .PP
 
 .PP
-Definition at line 443 of file fsal_convert.c.
+Definition at line 389 of file fsal_convert.c.
 .PP
-Referenced by fsal2hpss_attribset(), and FSAL_truncate().
-.SS "fsal_status_t fsal2hpss_attribset (fsal_handle_t * p_fsal_handle, fsal_attrib_list_t * p_attrib_set, hpss_fileattrbits_t * p_hpss_attrmask, hpss_Attrs_t * p_hpss_attrs)"
-.PP
-fsal2hpss_attribset: Converts an fsal attrib list to a hpss attrib list and values to be used in Setattr.
+Referenced by fsal2hpss_attribset(), and HPSSFSAL_truncate().
+.SS "fsal_status_t fsal2hpss_attribset (hpssfsal_handle_t * p_fsal_handle, fsal_attrib_list_t * p_attrib_set, hpss_fileattrbits_t * p_hpss_attrmask, hpss_Attrs_t * p_hpss_attrs)"fsal2hpss_attribset: Converts an fsal attrib list to a hpss attrib list and values to be used in Setattr.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -174,14 +167,12 @@ ACL management
 .PP
 
 .PP
-Definition at line 919 of file fsal_convert.c.
+Definition at line 882 of file fsal_convert.c.
 .PP
 References fsal2hpss_64(), and fsal2hpss_mode().
 .PP
-Referenced by FSAL_setattrs().
-.SS "void fsal2hpss_mode (fsal_accessmode_t fsal_mode, unsigned32 * uid_bit, unsigned32 * gid_bit, unsigned32 * sticky_bit, unsigned32 * user_perms, unsigned32 * group_perms, unsigned32 * other_perms)"
-.PP
-fsal2hpss_mode: converts FSAL mode to HPSS mode.
+Referenced by HPSSFSAL_setattrs().
+.SS "void fsal2hpss_mode (fsal_accessmode_t fsal_mode, unsigned32 * uid_bit, unsigned32 * gid_bit, unsigned32 * sticky_bit, unsigned32 * user_perms, unsigned32 * group_perms, unsigned32 * other_perms)"fsal2hpss_mode: converts FSAL mode to HPSS mode.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -207,12 +198,10 @@ Nothing.
 .PP
 
 .PP
-Definition at line 556 of file fsal_convert.c.
+Definition at line 505 of file fsal_convert.c.
 .PP
 Referenced by fsal2hpss_attribset().
-.SS "int fsal2hpss_openflags (fsal_openflags_t fsal_flags, int * p_hpss_flags)"
-.PP
-fsal2hpss_openflags: Convert FSAL open flags to (HPSS) Posix open flags.
+.SS "int fsal2hpss_openflags (fsal_openflags_t fsal_flags, int * p_hpss_flags)"fsal2hpss_openflags: Convert FSAL open flags to (HPSS) Posix open flags.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -233,12 +222,10 @@ ERR_FSAL_INVAL (invalid or incompatible input flags).
 .PP
 
 .PP
-Definition at line 245 of file fsal_convert.c.
+Definition at line 252 of file fsal_convert.c.
 .PP
-Referenced by FSAL_open().
-.SS "int fsal2hpss_testperm (fsal_accessflags_t testperm)"
-.PP
-fsal2hpss_testperm: Convert FSAL permission flags to (HPSS) Posix permission flags.
+Referenced by HPSSFSAL_open().
+.SS "int fsal2hpss_testperm (fsal_accessflags_t testperm)"fsal2hpss_testperm: Convert FSAL permission flags to (HPSS) Posix permission flags.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -252,31 +239,10 @@ The HPSS permission flags to be tested.
 .PP
 
 .PP
-Definition at line 218 of file fsal_convert.c.
+Definition at line 221 of file fsal_convert.c.
 .PP
-Referenced by FSAL_access().
-.SS "mode_t fsal2unix_mode (fsal_accessmode_t fsal_mode)"
-.PP
-fsal2unix_mode: Convert FSAL mode to posix mode.
-.PP
-\fBParameters:\fP
-.RS 4
-\fIfsal_mode\fP (input): The FSAL mode to be translated.
-.RE
-.PP
-\fBReturns:\fP
-.RS 4
-The posix mode associated to fsal_mode. 
-.RE
-.PP
-
-.PP
-Definition at line 304 of file fsal_convert.c.
-.PP
-Referenced by FSAL_create(), and FSAL_mkdir().
-.SS "fsal_u64_t hpss2fsal_64 (u_signed64 hpss_size_in)"
-.PP
-hpss2fsal_64: Convert HPSS u_signed64 type to fsal_u64_t type.
+Referenced by HPSSFSAL_access().
+.SS "fsal_u64_t hpss2fsal_64 (u_signed64 hpss_size_in)"hpss2fsal_64: Convert HPSS u_signed64 type to fsal_u64_t type.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -290,12 +256,10 @@ hpss2fsal_64: Convert HPSS u_signed64 type to fsal_u64_t type.
 .PP
 
 .PP
-Definition at line 424 of file fsal_convert.c.
+Definition at line 371 of file fsal_convert.c.
 .PP
 Referenced by hpss2fsal_attributes().
-.SS "fsal_status_t hpss2fsal_attributes (ns_ObjHandle_t * p_hpss_handle_in, hpss_Attrs_t * p_hpss_attr_in, fsal_attrib_list_t * p_fsalattr_out)"
-.PP
-hpss2fsal_attributes: Fills an FSAL attributes structure with the info provided by the hpss handle and the hpss attributes of an object.
+.SS "fsal_status_t hpss2fsal_attributes (ns_ObjHandle_t * p_hpss_handle_in, hpss_Attrs_t * p_hpss_attr_in, fsal_attrib_list_t * p_fsalattr_out)"hpss2fsal_attributes: Fills an FSAL attributes structure with the info provided by the hpss handle and the hpss attributes of an object.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -331,14 +295,12 @@ ERR_FSAL_SERVERFAULT: Unexpected error.
 .PP
 
 .PP
-Definition at line 631 of file fsal_convert.c.
+Definition at line 602 of file fsal_convert.c.
 .PP
 References hpss2fsal_64(), hpss2fsal_fsid(), hpss2fsal_mode(), hpss2fsal_time(), and hpss2fsal_type().
 .PP
-Referenced by FSAL_create(), FSAL_getattrs(), FSAL_lookup(), FSAL_lookupJunction(), FSAL_mkdir(), FSAL_open(), FSAL_readdir(), FSAL_setattrs(), and FSAL_symlink().
-.SS "int hpss2fsal_error (int hpss_errorcode)"
-.PP
-hpss2fsal_error : Convert HPSS error codes to FSAL error codes.
+Referenced by HPSSFSAL_create(), HPSSFSAL_getattrs(), HPSSFSAL_lookup(), HPSSFSAL_lookupJunction(), HPSSFSAL_mkdir(), HPSSFSAL_open(), HPSSFSAL_readdir(), HPSSFSAL_setattrs(), and HPSSFSAL_symlink().
+.SS "int hpss2fsal_error (int hpss_errorcode)"hpss2fsal_error : Convert HPSS error codes to FSAL error codes.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -360,17 +322,15 @@ The FSAL error code associated to hpss_errorcode.
 .PP
 \fBWarning:\fP
 .RS 4
-AIX returns EEXIST where BSD uses ENOTEMPTY; We want ENOTEMPTY to be interpreted anyway on AIX plateforms. Thus, we explicitely write its value (87). 
+AIX returns EEXIST where BSD uses ENOTEMPTY; We want ENOTEMPTY to be interpreted anyway on AIX plateforms. Thus, we explicitely write its value (87).
 .RE
 .PP
 
 .PP
 Definition at line 38 of file fsal_convert.c.
 .PP
-Referenced by FSAL_access(), FSAL_close(), FSAL_create(), FSAL_dynamic_fsinfo(), FSAL_getattrs(), FSAL_link(), FSAL_lookup(), FSAL_lookupJunction(), FSAL_mkdir(), FSAL_open(), FSAL_rcp(), FSAL_read(), FSAL_readdir(), FSAL_readlink(), FSAL_rename(), FSAL_setattrs(), FSAL_symlink(), FSAL_truncate(), FSAL_unlink(), and FSAL_write().
-.SS "fsal_fsid_t hpss2fsal_fsid (u_signed64 hpss_fsid_in)"
-.PP
-hpss2fsal_fsid: Convert HPSS fsid type to FSAL fsid type.
+Referenced by HPSSFSAL_access(), HPSSFSAL_close(), HPSSFSAL_create(), HPSSFSAL_dynamic_fsinfo(), HPSSFSAL_getattrs(), HPSSFSAL_GetXAttrValueById(), HPSSFSAL_GetXAttrValueByName(), HPSSFSAL_link(), HPSSFSAL_lookup(), HPSSFSAL_lookupJunction(), HPSSFSAL_mkdir(), HPSSFSAL_open(), HPSSFSAL_rcp(), HPSSFSAL_read(), HPSSFSAL_readdir(), HPSSFSAL_readlink(), HPSSFSAL_rename(), HPSSFSAL_setattrs(), HPSSFSAL_symlink(), HPSSFSAL_truncate(), HPSSFSAL_unlink(), and HPSSFSAL_write().
+.SS "fsal_fsid_t hpss2fsal_fsid (u_signed64 hpss_fsid_in)"hpss2fsal_fsid: Convert HPSS fsid type to FSAL fsid type.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -384,12 +344,10 @@ hpss2fsal_fsid: Convert HPSS fsid type to FSAL fsid type.
 .PP
 
 .PP
-Definition at line 463 of file fsal_convert.c.
+Definition at line 408 of file fsal_convert.c.
 .PP
 Referenced by hpss2fsal_attributes().
-.SS "fsal_accessmode_t hpss2fsal_mode (unsigned32 uid_bit, unsigned32 gid_bit, unsigned32 sticky_bit, unsigned32 user_perms, unsigned32 group_perms, unsigned32 other_perms)"
-.PP
-hpss2fsal_mode: Convert HPSS mode to FSAL mode.
+.SS "fsal_accessmode_t hpss2fsal_mode (unsigned32 uid_bit, unsigned32 gid_bit, unsigned32 sticky_bit, unsigned32 user_perms, unsigned32 group_perms, unsigned32 other_perms)"hpss2fsal_mode: Convert HPSS mode to FSAL mode.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -413,19 +371,15 @@ The FSAL mode associated to input parameters.
 .PP
 
 .PP
-Definition at line 496 of file fsal_convert.c.
+Definition at line 439 of file fsal_convert.c.
 .PP
 Referenced by hpss2fsal_attributes().
-.SS "fsal_time_t hpss2fsal_time (timestamp_sec_t tsec)"
+.SS "fsal_time_t hpss2fsal_time (timestamp_sec_t tsec)"hpss2fsal_time: Convert HPSS time structure (timestamp_sec_t) to FSAL time type (fsal_time_t). 
 .PP
-hpss2fsal_time: Convert HPSS time structure (timestamp_sec_t) to FSAL time type (fsal_time_t). 
-.PP
-Definition at line 402 of file fsal_convert.c.
+Definition at line 350 of file fsal_convert.c.
 .PP
 Referenced by hpss2fsal_attributes().
-.SS "fsal_nodetype_t hpss2fsal_type (unsigned32 hpss_type_in)"
-.PP
-hpss2fsal_type: Convert HPSS NS object type to FSAL node type.
+.SS "fsal_nodetype_t hpss2fsal_type (unsigned32 hpss_type_in)"hpss2fsal_type: Convert HPSS NS object type to FSAL node type.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -442,12 +396,10 @@ hpss2fsal_type: Convert HPSS NS object type to FSAL node type.
 .PP
 
 .PP
-Definition at line 370 of file fsal_convert.c.
+Definition at line 319 of file fsal_convert.c.
 .PP
-Referenced by FSAL_ExpandHandle(), FSAL_lookup(), FSAL_lookupJunction(), FSAL_readdir(), hpss2fsal_attributes(), and hpssHandle2fsalAttributes().
-.SS "fsal_status_t hpssHandle2fsalAttributes (ns_ObjHandle_t * p_hpsshandle_in, fsal_attrib_list_t * p_fsalattr_out)"
-.PP
-hpssHandle2fsalAttributes: Fills an FSAL attributes structure with the info provided (only) by the hpss handle of an object.
+Referenced by hpss2fsal_attributes(), HPSSFSAL_ExpandHandle(), HPSSFSAL_lookup(), HPSSFSAL_lookupJunction(), HPSSFSAL_readdir(), and hpssHandle2fsalAttributes().
+.SS "fsal_status_t hpssHandle2fsalAttributes (ns_ObjHandle_t * p_hpsshandle_in, fsal_attrib_list_t * p_fsalattr_out)"hpssHandle2fsalAttributes: Fills an FSAL attributes structure with the info provided (only) by the hpss handle of an object.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -472,28 +424,11 @@ ERR_FSAL_SERVERFAULT: Unexpected error.
 .PP
 
 .PP
-Definition at line 848 of file fsal_convert.c.
+Definition at line 816 of file fsal_convert.c.
 .PP
 References hpss2fsal_type().
 .PP
-Referenced by FSAL_readdir().
-.SS "fsal_accessmode_t unix2fsal_mode (mode_t unix_mode)"
-.PP
-unix2fsal_mode: Convert posix mode to FSAL mode.
-.PP
-\fBParameters:\fP
-.RS 4
-\fIunix_mode\fP (input): The posix mode to be translated.
-.RE
-.PP
-\fBReturns:\fP
-.RS 4
-The FSAL mode associated to unix_mode. 
-.RE
-.PP
-
-.PP
-Definition at line 336 of file fsal_convert.c.
+Referenced by HPSSFSAL_readdir().
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File System Abstraction Layer (HPSS) library from the source code.

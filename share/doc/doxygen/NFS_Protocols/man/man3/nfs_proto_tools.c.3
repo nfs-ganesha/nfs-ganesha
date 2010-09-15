@@ -1,10 +1,11 @@
-.TH "nfs_proto_tools.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs_proto_tools.c" 3 "15 Sep 2010" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_proto_tools.c \- A set of functions used to managed NFS.  
-
+nfs_proto_tools.c \- 
 .PP
+A set of functions used to managed NFS.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -34,7 +35,7 @@ nfs_proto_tools.c \- A set of functions used to managed NFS.
 .br
 \fC#include <rpc/pmap_clnt.h>\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
 .br
@@ -197,9 +198,7 @@ leibovic
 Definition in file \fBnfs_proto_tools.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "nfsstat2 nfs2_Errno (cache_inode_status_t error)"
-.PP
-nfs2_Errno: Converts a cache_inode status to a nfsv2 status.
+.SS "nfsstat2 nfs2_Errno (cache_inode_status_t error)"nfs2_Errno: Converts a cache_inode status to a nfsv2 status.
 .PP
 Converts a cache_inode status to a nfsv2 status.
 .PP
@@ -215,10 +214,8 @@ the converted NFSv2 status.
 .PP
 
 .PP
-Definition at line 3353 of file nfs_proto_tools.c.
-.SS "int nfs2_FSALattr_To_Fattr (exportlist_t * pexport, fsal_attrib_list_t * pFSAL_attr, fattr2 * pFattr)"
-.PP
-nfs2_FSALattr_To_Fattr: Converts FSAL Attributes to NFSv2 attributes.
+Definition at line 3344 of file nfs_proto_tools.c.
+.SS "int nfs2_FSALattr_To_Fattr (exportlist_t * pexport, fsal_attrib_list_t * pFSAL_attr, fattr2 * pFattr)"nfs2_FSALattr_To_Fattr: Converts FSAL Attributes to NFSv2 attributes.
 .PP
 Converts FSAL Attributes to NFSv2 attributes.
 .PP
@@ -251,10 +248,8 @@ mode mask ?
 .PP
 
 .PP
-Definition at line 1681 of file nfs_proto_tools.c.
-.SS "int nfs2_Sattr_To_FSALattr (fsal_attrib_list_t * pFSAL_attr, sattr2 * Fattr)"
-.PP
-nfs2_Sattr_To_FSALattr: Converts NFSv2 Set Attributes to FSAL attributes.
+Definition at line 1714 of file nfs_proto_tools.c.
+.SS "int nfs2_Sattr_To_FSALattr (fsal_attrib_list_t * pFSAL_attr, sattr2 * Fattr)"nfs2_Sattr_To_FSALattr: Converts NFSv2 Set Attributes to FSAL attributes.
 .PP
 Converts NFSv2 Set Attributes to FSAL attributes.
 .PP
@@ -272,10 +267,8 @@ Converts NFSv2 Set Attributes to FSAL attributes.
 .PP
 
 .PP
-Definition at line 2240 of file nfs_proto_tools.c.
-.SS "nfsstat3 nfs3_Errno (cache_inode_status_t error)"
-.PP
-nfs3_Errno: Converts a cache_inode status to a nfsv3 status.
+Definition at line 2253 of file nfs_proto_tools.c.
+.SS "nfsstat3 nfs3_Errno (cache_inode_status_t error)"nfs3_Errno: Converts a cache_inode status to a nfsv3 status.
 .PP
 Converts a cache_inode status to a nfsv3 status.
 .PP
@@ -298,10 +291,8 @@ the converted NFSv3 status.
 .PP
 
 .PP
-Definition at line 3234 of file nfs_proto_tools.c.
-.SS "int nfs3_FSALattr_To_Fattr (exportlist_t * pexport, fsal_attrib_list_t * FSAL_attr, fattr3 * Fattr)"
-.PP
-nfs3_FSALattr_To_Fattr: Converts FSAL Attributes to NFSv3 attributes.
+Definition at line 3223 of file nfs_proto_tools.c.
+.SS "int nfs3_FSALattr_To_Fattr (exportlist_t * pexport, fsal_attrib_list_t * FSAL_attr, fattr3 * Fattr)"nfs3_FSALattr_To_Fattr: Converts FSAL Attributes to NFSv3 attributes.
 .PP
 Converts FSAL Attributes to NFSv3 attributes.
 .PP
@@ -321,10 +312,8 @@ Converts FSAL Attributes to NFSv3 attributes.
 .PP
 
 .PP
-Definition at line 2143 of file nfs_proto_tools.c.
-.SS "int nfs3_Sattr_To_FSALattr (fsal_attrib_list_t * pFSAL_attr, sattr3 * psattr)"
-.PP
-nfs3_Sattr_To_FSALattr: Converts NFSv3 Sattr to FSAL Attributes.
+Definition at line 2160 of file nfs_proto_tools.c.
+.SS "int nfs3_Sattr_To_FSALattr (fsal_attrib_list_t * pFSAL_attr, sattr3 * psattr)"nfs3_Sattr_To_FSALattr: Converts NFSv3 Sattr to FSAL Attributes.
 .PP
 Converts NFSv3 Sattr to FSAL Attributes.
 .PP
@@ -342,10 +331,8 @@ Converts NFSv3 Sattr to FSAL Attributes.
 .PP
 
 .PP
-Definition at line 1573 of file nfs_proto_tools.c.
-.SS "int nfs4_AllocateFH (nfs_fh4 * fh)"
-.PP
-nfs4_AllocateFH: Allocates a buffer to be used for storing a NFSv4 filehandle.
+Definition at line 1616 of file nfs_proto_tools.c.
+.SS "int nfs4_AllocateFH (nfs_fh4 * fh)"nfs4_AllocateFH: Allocates a buffer to be used for storing a NFSv4 filehandle.
 .PP
 Allocates a buffer to be used for storing a NFSv4 filehandle.
 .PP
@@ -361,10 +348,8 @@ NFS4_OK if successful, NFS3ERR_SERVERFAULT, NFS4ERR_RESOURCE or NFS4ERR_STALE ot
 .PP
 
 .PP
-Definition at line 3456 of file nfs_proto_tools.c.
-.SS "void nfs4_bitmap4_to_list (bitmap4 * b, uint_t * plen, uint32_t * pval)"
-.PP
-nfs_bitmap4_to_list: convert an attribute's bitmap to a list of attributes.
+Definition at line 3447 of file nfs_proto_tools.c.
+.SS "void nfs4_bitmap4_to_list (bitmap4 * b, uint_t * plen, uint32_t * pval)"nfs_bitmap4_to_list: convert an attribute's bitmap to a list of attributes.
 .PP
 Convert an attribute's bitmap to a list of attributes.
 .PP
@@ -384,10 +369,8 @@ nothing (void function)
 .PP
 
 .PP
-Definition at line 2020 of file nfs_proto_tools.c.
-.SS "nfsstat4 nfs4_Errno (cache_inode_status_t error)"
-.PP
-nfs4_Errno: Converts a cache_inode status to a nfsv4 status.
+Definition at line 2039 of file nfs_proto_tools.c.
+.SS "nfsstat4 nfs4_Errno (cache_inode_status_t error)"nfs4_Errno: Converts a cache_inode status to a nfsv4 status.
 .PP
 Converts a cache_inode status to a nfsv4 status.
 .PP
@@ -403,10 +386,8 @@ the converted NFSv4 status.
 .PP
 
 .PP
-Definition at line 3114 of file nfs_proto_tools.c.
-.SS "int nfs4_Fattr_Check_Access (fattr4 * Fattr, int access)"
-.PP
-nfs4_Fattr_Check_Access: checks if attributes have READ or WRITE access.
+Definition at line 3105 of file nfs_proto_tools.c.
+.SS "int nfs4_Fattr_Check_Access (fattr4 * Fattr, int access)"nfs4_Fattr_Check_Access: checks if attributes have READ or WRITE access.
 .PP
 Checks if attributes have READ or WRITE access.
 .PP
@@ -424,10 +405,8 @@ Checks if attributes have READ or WRITE access.
 .PP
 
 .PP
-Definition at line 2336 of file nfs_proto_tools.c.
-.SS "int nfs4_Fattr_Check_Access_Bitmap (bitmap4 * pbitmap, int access)"
-.PP
-nfs4_Fattr_Check_Access_Bitmap: checks if attributes bitmaps have READ or WRITE access.
+Definition at line 2347 of file nfs_proto_tools.c.
+.SS "int nfs4_Fattr_Check_Access_Bitmap (bitmap4 * pbitmap, int access)"nfs4_Fattr_Check_Access_Bitmap: checks if attributes bitmaps have READ or WRITE access.
 .PP
 Checks if attributes have READ or WRITE access.
 .PP
@@ -445,10 +424,8 @@ Checks if attributes have READ or WRITE access.
 .PP
 
 .PP
-Definition at line 2383 of file nfs_proto_tools.c.
-.SS "int nfs4_Fattr_cmp (fattr4 * Fattr1, fattr4 * Fattr2)"
-.PP
-nfs4_Fattr_cmp: compares 2 fattr4 buffers.
+Definition at line 2396 of file nfs_proto_tools.c.
+.SS "int nfs4_Fattr_cmp (fattr4 * Fattr1, fattr4 * Fattr2)"nfs4_Fattr_cmp: compares 2 fattr4 buffers.
 .PP
 Compares 2 fattr4 buffers.
 .PP
@@ -466,10 +443,8 @@ TRUE if attributes are the same, FALSE otherwise, but -1 if RDATTR_ERROR is set
 .PP
 
 .PP
-Definition at line 2523 of file nfs_proto_tools.c.
-.SS "int nfs4_Fattr_Supported (fattr4 * Fattr)"
-.PP
-nfs4_Fattr_Supported: Checks if an attribute is supported.
+Definition at line 2533 of file nfs_proto_tools.c.
+.SS "int nfs4_Fattr_Supported (fattr4 * Fattr)"nfs4_Fattr_Supported: Checks if an attribute is supported.
 .PP
 Checks if an attribute is supported.
 .PP
@@ -485,10 +460,8 @@ Checks if an attribute is supported.
 .PP
 
 .PP
-Definition at line 2429 of file nfs_proto_tools.c.
-.SS "int nfs4_Fattr_Supported_Bitmap (bitmap4 * pbitmap)"
-.PP
-nfs4_Fattr_Supported: Checks if an attribute is supported.
+Definition at line 2440 of file nfs_proto_tools.c.
+.SS "int nfs4_Fattr_Supported_Bitmap (bitmap4 * pbitmap)"nfs4_Fattr_Supported: Checks if an attribute is supported.
 .PP
 Checks if an attribute is supported.
 .PP
@@ -504,10 +477,8 @@ Checks if an attribute is supported.
 .PP
 
 .PP
-Definition at line 2476 of file nfs_proto_tools.c.
-.SS "int nfs4_Fattr_To_FSAL_attr (fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)"
-.PP
-nfs4_Fattr_To_FSAL_attr: Converts NFSv4 attributes buffer to a FSAL attributes structure.
+Definition at line 2487 of file nfs_proto_tools.c.
+.SS "int nfs4_Fattr_To_FSAL_attr (fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)"nfs4_Fattr_To_FSAL_attr: Converts NFSv4 attributes buffer to a FSAL attributes structure.
 .PP
 Converts NFSv4 attributes buffer to a FSAL attributes structure.
 .PP
@@ -525,10 +496,8 @@ Converts NFSv4 attributes buffer to a FSAL attributes structure.
 .PP
 
 .PP
-Definition at line 2694 of file nfs_proto_tools.c.
-.SS "int nfs4_FhandleToExId (nfs_fh4 * fh4p, unsigned short * ExIdp)"
-.PP
-nfs4_FhandleToExId
+Definition at line 2702 of file nfs_proto_tools.c.
+.SS "int nfs4_FhandleToExId (nfs_fh4 * fh4p, unsigned short * ExIdp)"nfs4_FhandleToExId
 .PP
 This routine extracts the export id from the filehandle
 .PP
@@ -546,10 +515,8 @@ TRUE is successful, FALSE otherwise.
 .PP
 
 .PP
-Definition at line 1823 of file nfs_proto_tools.c.
-.SS "int nfs4_FSALattr_To_Fattr (exportlist_t * pexport, fsal_attrib_list_t * pattr, fattr4 * Fattr, compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap)"
-.PP
-nfs4_FSALattr_To_Fattr: Converts FSAL Attributes to NFSv4 Fattr buffer.
+Definition at line 1853 of file nfs_proto_tools.c.
+.SS "int nfs4_FSALattr_To_Fattr (exportlist_t * pexport, fsal_attrib_list_t * pattr, fattr4 * Fattr, compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap)"nfs4_FSALattr_To_Fattr: Converts FSAL Attributes to NFSv4 Fattr buffer.
 .PP
 Converts FSAL Attributes to NFSv4 Fattr buffer.
 .PP
@@ -586,10 +553,8 @@ Converts FSAL Attributes to NFSv4 Fattr buffer.
 .PP
 
 .PP
-Definition at line 508 of file nfs_proto_tools.c.
-.SS "void nfs4_list_to_bitmap4 (bitmap4 * b, uint_t * plen, uint32_t * pval)"
-.PP
-nfs4_list_to_bitmap4: convert a list of attributes to an attributes's bitmap.
+Definition at line 444 of file nfs_proto_tools.c.
+.SS "void nfs4_list_to_bitmap4 (bitmap4 * b, uint_t * plen, uint32_t * pval)"nfs4_list_to_bitmap4: convert a list of attributes to an attributes's bitmap.
 .PP
 Convert a list of attributes to an attributes's bitmap.
 .PP
@@ -609,10 +574,8 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 2098 of file nfs_proto_tools.c.
-.SS "int nfs4_MakeCred (compound_data_t * data)"
-.PP
-nfs4_MakeCred
+Definition at line 2117 of file nfs_proto_tools.c.
+.SS "int nfs4_MakeCred (compound_data_t * data)"nfs4_MakeCred
 .PP
 This routine fills in the pcontext field in the compound data.
 .PP
@@ -628,10 +591,8 @@ NFS4_OK if successful, NFS4ERR_WRONGSEC otherwise.
 .PP
 
 .PP
-Definition at line 3498 of file nfs_proto_tools.c.
-.SS "seqid4 nfs4_NextSeqId (seqid4 seqid)"
-.PP
-nfs4_NextSeqId: compute the next nfsv4 sequence id.
+Definition at line 3487 of file nfs_proto_tools.c.
+.SS "seqid4 nfs4_NextSeqId (seqid4 seqid)"nfs4_NextSeqId: compute the next nfsv4 sequence id.
 .PP
 Compute the next nfsv4 sequence id.
 .PP
@@ -647,10 +608,8 @@ the requested sequence number.
 .PP
 
 .PP
-Definition at line 1963 of file nfs_proto_tools.c.
-.SS "int nfs4_SetCompoundExport (compound_data_t * data)"
-.PP
-nfs4_SetCompoundExport
+Definition at line 1982 of file nfs_proto_tools.c.
+.SS "int nfs4_SetCompoundExport (compound_data_t * data)"nfs4_SetCompoundExport
 .PP
 This routine fills in the pexport field in the compound data.
 .PP
@@ -666,10 +625,8 @@ NFS4_OK if successfull. Possible errors are NFS4ERR_BADHANDLE and NFS4ERR_WRONGS
 .PP
 
 .PP
-Definition at line 1788 of file nfs_proto_tools.c.
-.SS "void nfs4_stringid_split (char * buff, char * uidname, char * domainname)"
-.PP
-nfs4_stringid_split: Splits a domain stamped name in two different parts.
+Definition at line 1820 of file nfs_proto_tools.c.
+.SS "void nfs4_stringid_split (char * buff, char * uidname, char * domainname)"nfs4_stringid_split: Splits a domain stamped name in two different parts.
 .PP
 Splits a domain stamped name in two different parts.
 .PP
@@ -689,10 +646,8 @@ nothing (void function)
 .PP
 
 .PP
-Definition at line 1855 of file nfs_proto_tools.c.
-.SS "cache_entry_t* nfs_FhandleToCache (u_long rq_vers, fhandle2 * pfh2, nfs_fh3 * pfh3, nfs_fh4 * pfh4, nfsstat2 * pstatus2, nfsstat3 * pstatus3, nfsstat4 * pstatus4, fsal_attrib_list_t * pattr, fsal_op_context_t * pcontext, cache_inode_client_t * pclient, hash_table_t * ht, int * prc)"
-.PP
-nfs_FhandleToCache: Gets a cache entry using a file handle (v2 or v3) as input.
+Definition at line 1883 of file nfs_proto_tools.c.
+.SS "cache_entry_t* nfs_FhandleToCache (u_long rq_vers, fhandle2 * pfh2, nfs_fh3 * pfh3, nfs_fh4 * pfh4, nfsstat2 * pstatus2, nfsstat3 * pstatus3, nfsstat4 * pstatus4, fsal_attrib_list_t * pattr, fsal_op_context_t * pcontext, cache_inode_client_t * pclient, hash_table_t * ht, int * prc)"nfs_FhandleToCache: Gets a cache entry using a file handle (v2 or v3) as input.
 .PP
 Gets a cache entry using a file handle (v2 or v3) as input.
 .PP
@@ -730,10 +685,8 @@ a pointer to the related pentry if successful, NULL is returned in case of a fai
 .PP
 
 .PP
-Definition at line 156 of file nfs_proto_tools.c.
-.SS "int nfs_RetryableError (cache_inode_status_t cache_status)"
-.PP
-nfs_RetryableError: Indicates if an error is retryable or not.
+Definition at line 105 of file nfs_proto_tools.c.
+.SS "int nfs_RetryableError (cache_inode_status_t cache_status)"nfs_RetryableError: Indicates if an error is retryable or not.
 .PP
 Indicates if an error is retryable or not.
 .PP
@@ -754,13 +707,11 @@ TRUE if retryable, FALSE otherwise.
 .PP
 
 .PP
-Definition at line 372 of file nfs_proto_tools.c.
+Definition at line 303 of file nfs_proto_tools.c.
 .SS "void nfs_SetFailedStatus (fsal_op_context_t * pcontext, exportlist_t * pexport, int version, cache_inode_status_t status, nfsstat2 * pstatus2, nfsstat3 * pstatus3, cache_entry_t * pentry0, post_op_attr * ppost_op_attr, cache_entry_t * pentry1, fsal_attrib_list_t * ppre_vattr1, wcc_data * pwcc_data1, cache_entry_t * pentry2, fsal_attrib_list_t * ppre_vattr2, wcc_data * pwcc_data2)"
 .PP
-Definition at line 454 of file nfs_proto_tools.c.
-.SS "int nfs_SetPostOpAttr (fsal_op_context_t * pcontext, exportlist_t * pexport, cache_entry_t * pentry, fsal_attrib_list_t * pfsal_attr, post_op_attr * presult)"
-.PP
-nfs_SetPostOpAttr: Converts FSAL Attributes to NFSv3 PostOp Attributes structure.
+Definition at line 390 of file nfs_proto_tools.c.
+.SS "int nfs_SetPostOpAttr (fsal_op_context_t * pcontext, exportlist_t * pexport, cache_entry_t * pentry, fsal_attrib_list_t * pfsal_attr, post_op_attr * presult)"nfs_SetPostOpAttr: Converts FSAL Attributes to NFSv3 PostOp Attributes structure.
 .PP
 Converts FSAL Attributes to NFSv3 PostOp Attributes structure.
 .PP
@@ -780,10 +731,8 @@ Converts FSAL Attributes to NFSv3 PostOp Attributes structure.
 .PP
 
 .PP
-Definition at line 261 of file nfs_proto_tools.c.
-.SS "void nfs_SetPreOpAttr (fsal_attrib_list_t * pfsal_attr, pre_op_attr * pattr)"
-.PP
-nfs_SetPreOpAttr: Converts FSAL Attributes to NFSv3 PreOp Attributes structure.
+Definition at line 202 of file nfs_proto_tools.c.
+.SS "void nfs_SetPreOpAttr (fsal_attrib_list_t * pfsal_attr, pre_op_attr * pattr)"nfs_SetPreOpAttr: Converts FSAL Attributes to NFSv3 PreOp Attributes structure.
 .PP
 Converts FSAL Attributes to NFSv3 PreOp Attributes structure.
 .PP
@@ -801,10 +750,8 @@ nothing (void function)
 .PP
 
 .PP
-Definition at line 300 of file nfs_proto_tools.c.
-.SS "void nfs_SetWccData (fsal_op_context_t * pcontext, exportlist_t * pexport, cache_entry_t * pentry, fsal_attrib_list_t * pbefore_attr, fsal_attrib_list_t * pafter_attr, wcc_data * pwcc_data)"
-.PP
-nfs_SetWccData: Sets NFSv3 Weak Cache Coherency structure.
+Definition at line 240 of file nfs_proto_tools.c.
+.SS "void nfs_SetWccData (fsal_op_context_t * pcontext, exportlist_t * pexport, cache_entry_t * pentry, fsal_attrib_list_t * pbefore_attr, fsal_attrib_list_t * pafter_attr, wcc_data * pwcc_data)"nfs_SetWccData: Sets NFSv3 Weak Cache Coherency structure.
 .PP
 Sets NFSv3 Weak Cache Coherency structure.
 .PP
@@ -828,10 +775,8 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 338 of file nfs_proto_tools.c.
-.SS "int str2utf8 (char * str, utf8string * utf8str)"
-.PP
-str2utf8: converts a string buffer into a UTF8 string descriptor.
+Definition at line 275 of file nfs_proto_tools.c.
+.SS "int str2utf8 (char * str, utf8string * utf8str)"str2utf8: converts a string buffer into a UTF8 string descriptor.
 .PP
 Converts a string buffer into a UTF8 string descriptor.
 .PP
@@ -849,10 +794,8 @@ Converts a string buffer into a UTF8 string descriptor.
 .PP
 
 .PP
-Definition at line 1928 of file nfs_proto_tools.c.
-.SS "int utf82str (char * str, utf8string * utf8str)"
-.PP
-utf82str: converts a UTF8 string buffer into a string descriptor.
+Definition at line 1952 of file nfs_proto_tools.c.
+.SS "int utf82str (char * str, utf8string * utf8str)"utf82str: converts a UTF8 string buffer into a string descriptor.
 .PP
 Converts a UTF8 string buffer into a string descriptor.
 .PP
@@ -870,11 +813,10 @@ Converts a UTF8 string buffer into a string descriptor.
 .PP
 
 .PP
-Definition at line 1886 of file nfs_proto_tools.c.
+Definition at line 1911 of file nfs_proto_tools.c.
 .SH "Variable Documentation"
 .PP 
 .SS "nfs_parameter_t \fBnfs_param\fP"
-.PP
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

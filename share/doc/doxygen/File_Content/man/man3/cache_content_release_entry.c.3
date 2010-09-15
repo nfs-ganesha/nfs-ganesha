@@ -1,16 +1,17 @@
-.TH "cache_content_release_entry.c" 3 "31 Mar 2009" "Version 0.1" "File Content layer" \" -*- nroff -*-
+.TH "cache_content_release_entry.c" 3 "15 Sep 2010" "Version 0.1" "File Content layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_content_release_entry.c \- Management of the file content cache: release an entry.  
-
+cache_content_release_entry.c \- 
 .PP
+Management of the file content cache: release an entry.  
+
 .SH SYNOPSIS
 .br
 .PP
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -81,9 +82,7 @@ deniel
 Definition in file \fBcache_content_release_entry.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "cache_content_status_t cache_content_release_entry (cache_content_entry_t * pentry, cache_content_client_t * pclient, cache_content_status_t * pstatus)"
-.PP
-cache_content_release_entry: removes an entry from the cache and free the associated resources.
+.SS "cache_content_status_t cache_content_release_entry (cache_content_entry_t * pentry, cache_content_client_t * pclient, cache_content_status_t * pstatus)"cache_content_release_entry: removes an entry from the cache and free the associated resources.
 .PP
 Removes an entry from the cache and free the associated resources.
 .PP
@@ -103,7 +102,7 @@ CACHE_CONTENT_SUCCESS is successful, other values show an error.
 .PP
 
 .PP
-Definition at line 131 of file cache_content_release_entry.c.
+Definition at line 79 of file cache_content_release_entry.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File Content layer from the source code.

@@ -1,10 +1,11 @@
-.TH "nfs4_op_secinfo.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs4_op_secinfo.c" 3 "15 Sep 2010" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs4_op_secinfo.c \- Routines used for managing the NFS4 COMPOUND functions.  
-
+nfs4_op_secinfo.c \- 
 .PP
+Routines used for managing the NFS4 COMPOUND functions.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -30,7 +31,7 @@ nfs4_op_secinfo.c \- Routines used for managing the NFS4 COMPOUND functions.
 .br
 \fC#include <rpc/pmap_clnt.h>\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
 .br
@@ -108,9 +109,7 @@ deniel
 Definition in file \fBnfs4_op_secinfo.c\fP.
 .SH "Define Documentation"
 .PP 
-.SS "#define arg_SECINFO4   op->nfs_argop4_u.opsecinfo"
-.PP
-nfs4_op_secinfo: The NFS4_OP_SECINFO
+.SS "#define arg_SECINFO4   op->nfs_argop4_u.opsecinfo"nfs4_op_secinfo: The NFS4_OP_SECINFO
 .PP
 Implements the NFS4_OP_SECINFO
 .PP
@@ -130,18 +129,16 @@ NFS4_OK if ok, any other value show an error.
 .PP
 
 .PP
-Definition at line 141 of file nfs4_op_secinfo.c.
+Definition at line 89 of file nfs4_op_secinfo.c.
 .SS "#define res_SECINFO4   resp->nfs_resop4_u.opsecinfo"
 .PP
-Definition at line 142 of file nfs4_op_secinfo.c.
+Definition at line 90 of file nfs4_op_secinfo.c.
 .SH "Function Documentation"
 .PP 
 .SS "int nfs4_op_secinfo (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
 .PP
-Definition at line 144 of file nfs4_op_secinfo.c.
-.SS "void nfs4_op_secinfo_Free (SECINFO4res * resp)"
-.PP
-nfs4_op_secinfo_Free: frees what was allocared to handle nfs4_op_secinfo.
+Definition at line 92 of file nfs4_op_secinfo.c.
+.SS "void nfs4_op_secinfo_Free (SECINFO4res * resp)"nfs4_op_secinfo_Free: frees what was allocared to handle nfs4_op_secinfo.
 .PP
 Frees what was allocared to handle nfs4_op_secinfo.
 .PP
@@ -157,7 +154,7 @@ nothing (void function )
 .PP
 
 .PP
-Definition at line 180 of file nfs4_op_secinfo.c.
+Definition at line 125 of file nfs4_op_secinfo.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

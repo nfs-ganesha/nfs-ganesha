@@ -1,10 +1,11 @@
-.TH "nfs_export_list.c" 3 "31 Mar 2009" "Version 0.1" "Support routines layer" \" -*- nroff -*-
+.TH "nfs_export_list.c" 3 "15 Sep 2010" "Version 0.1" "Support routines layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_export_list.c \- routines for managing the export list.  
-
+nfs_export_list.c \- 
 .PP
+routines for managing the export list.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -44,7 +45,7 @@ nfs_export_list.c \- routines for managing the export list.
 .br
 \fC#include <rpc/pmap_clnt.h>\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
 .br
@@ -78,12 +79,15 @@ nfs_export_list.c \- routines for managing the export list.
 .ti -1c
 .RI "int \fBnfs_rpc_req2client_cred\fP (struct svc_req *reqp, nfs_client_cred_t *pcred)"
 .br
+.ti -1c
+.RI "int \fBnfs_export_tag2path\fP (exportlist_t *exportroot, char *tag, int taglen, char *path, int pathlen)"
+.br
 .in -1c
 .SS "Variables"
 
 .in +1c
 .ti -1c
-.RI "const char * \fBRpc_gss_svc_name\fP [] = { 'no name', 'RPCSEC_GSS_SVC_NONE', 'RPCSEC_GSS_SVC_INTEGRITY', 'RPCSEC_GSS_SVC_PRIVACY' }"
+.RI "const char * \fBRpc_gss_svc_name\fP []"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -131,8 +135,6 @@ Revision 1.12 2006/01/19 07:40:26 leibovic Better exportlist management (test wh
 .PP
 Revision 1.11 2005/12/20 10:52:18 deniel exportlist is no longer dynamic but static
 .PP
-Revision 1.10 2005/11/28 17:03:03 deniel Added CeCILL headers
-.PP
 Revision 1.9 2005/11/21 15:04:34 leibovic Displaying acquired Credential.
 .PP
 Revision 1.8 2005/11/21 11:32:07 deniel Got ride of nfs_SetPostOpFh3 because of memory leaks
@@ -156,9 +158,7 @@ Revision 1.2 2005/08/02 13:49:43 deniel Ok NFSv3
 Definition in file \fBnfs_export_list.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "int nfs_build_fsal_context (struct svc_req * ptr_req, exportlist_client_entry_t * pexport_client, exportlist_t * pexport, fsal_op_context_t * pcontext)"
-.PP
-nfs_build_fsal_context: Builds the FSAL context according to the request and the export entry.
+.SS "int nfs_build_fsal_context (struct svc_req * ptr_req, exportlist_client_entry_t * pexport_client, exportlist_t * pexport, fsal_op_context_t * pcontext)"nfs_build_fsal_context: Builds the FSAL context according to the request and the export entry.
 .PP
 Builds the FSAL credentials according to the request and the export entry.
 .PP
@@ -180,10 +180,8 @@ TRUE if successful, FALSE otherwise
 .PP
 
 .PP
-Definition at line 295 of file nfs_export_list.c.
-.SS "int nfs_compare_clientcred (nfs_client_cred_t * pcred1, nfs_client_cred_t * pcred2)"
-.PP
-nfs_compare_rpc_cred: Compares two RPC creds
+Definition at line 253 of file nfs_export_list.c.
+.SS "int nfs_compare_clientcred (nfs_client_cred_t * pcred1, nfs_client_cred_t * pcred2)"nfs_compare_rpc_cred: Compares two RPC creds
 .PP
 \fBParameters:\fP
 .RS 4
@@ -199,10 +197,11 @@ TRUE if same, FALSE otherwise
 .PP
 
 .PP
-Definition at line 453 of file nfs_export_list.c.
-.SS "exportlist_t* nfs_Get_export_by_id (exportlist_t * exportroot, unsigned short exportid)"
+Definition at line 406 of file nfs_export_list.c.
+.SS "int nfs_export_tag2path (exportlist_t * exportroot, char * tag, int taglen, char * path, int pathlen)"
 .PP
-nfs_Get_export_by_id: Gets an export entry from its export id.
+Definition at line 512 of file nfs_export_list.c.
+.SS "exportlist_t* nfs_Get_export_by_id (exportlist_t * exportroot, unsigned short exportid)"nfs_Get_export_by_id: Gets an export entry from its export id.
 .PP
 Gets an export entry from its export id.
 .PP
@@ -220,15 +219,22 @@ the pointer to the pointer to the export list or NULL if failed.
 .PP
 
 .PP
-Definition at line 261 of file nfs_export_list.c.
+Definition at line 219 of file nfs_export_list.c.
 .SS "int nfs_rpc_req2client_cred (struct svc_req * reqp, nfs_client_cred_t * pcred)"
 .PP
-Definition at line 481 of file nfs_export_list.c.
+Definition at line 440 of file nfs_export_list.c.
 .SH "Variable Documentation"
 .PP 
-.SS "const char* \fBRpc_gss_svc_name\fP[] = { 'no name', 'RPCSEC_GSS_SVC_NONE', 'RPCSEC_GSS_SVC_INTEGRITY', 'RPCSEC_GSS_SVC_PRIVACY' }"
+.SS "const char* \fBRpc_gss_svc_name\fP[]"\fBInitial value:\fP
 .PP
-Definition at line 200 of file nfs_export_list.c.
+.nf
+
+    { 'no name', 'RPCSEC_GSS_SVC_NONE', 'RPCSEC_GSS_SVC_INTEGRITY',
+  'RPCSEC_GSS_SVC_PRIVACY'
+}
+.fi
+.PP
+Definition at line 146 of file nfs_export_list.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Support routines layer from the source code.

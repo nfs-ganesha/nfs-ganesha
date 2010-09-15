@@ -1,10 +1,11 @@
-.TH "fsal_create.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "fsal_create.c" 3 "15 Sep 2010" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_create.c \- Filesystem objects creation functions.  
-
+fsal_create.c \- 
 .PP
+Filesystem objects creation functions.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -18,21 +19,23 @@ fsal_create.c \- Filesystem objects creation functions.
 .br
 \fC#include 'HPSSclapiExt/hpssclapiext.h'\fP
 .br
+\fC#include <hpss_errno.h>\fP
+.br
 
 .SS "Functions"
 
 .in +1c
 .ti -1c
-.RI "fsal_status_t \fBFSAL_create\fP (fsal_handle_t *parent_directory_handle, fsal_name_t *p_filename, fsal_op_context_t *p_context, fsal_accessmode_t accessmode, fsal_handle_t *object_handle, fsal_attrib_list_t *object_attributes)"
+.RI "fsal_status_t \fBHPSSFSAL_create\fP (hpssfsal_handle_t *parent_directory_handle, fsal_name_t *p_filename, hpssfsal_op_context_t *p_context, fsal_accessmode_t accessmode, hpssfsal_handle_t *object_handle, fsal_attrib_list_t *object_attributes)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_mkdir\fP (fsal_handle_t *parent_directory_handle, fsal_name_t *p_dirname, fsal_op_context_t *p_context, fsal_accessmode_t accessmode, fsal_handle_t *object_handle, fsal_attrib_list_t *object_attributes)"
+.RI "fsal_status_t \fBHPSSFSAL_mkdir\fP (hpssfsal_handle_t *parent_directory_handle, fsal_name_t *p_dirname, hpssfsal_op_context_t *p_context, fsal_accessmode_t accessmode, hpssfsal_handle_t *object_handle, fsal_attrib_list_t *object_attributes)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_link\fP (fsal_handle_t *target_handle, fsal_handle_t *dir_handle, fsal_name_t *p_link_name, fsal_op_context_t *p_context, fsal_attrib_list_t *attributes)"
+.RI "fsal_status_t \fBHPSSFSAL_link\fP (hpssfsal_handle_t *target_handle, hpssfsal_handle_t *dir_handle, fsal_name_t *p_link_name, hpssfsal_op_context_t *p_context, fsal_attrib_list_t *attributes)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_mknode\fP (fsal_handle_t *parentdir_handle, fsal_name_t *p_node_name, fsal_op_context_t *p_context, fsal_accessmode_t accessmode, fsal_nodetype_t nodetype, fsal_dev_t *dev, fsal_handle_t *p_object_handle, fsal_attrib_list_t *node_attributes)"
+.RI "fsal_status_t \fBHPSSFSAL_mknode\fP (hpssfsal_handle_t *parentdir_handle, fsal_name_t *p_node_name, hpssfsal_op_context_t *p_context, fsal_accessmode_t accessmode, fsal_nodetype_t nodetype, fsal_dev_t *dev, hpssfsal_handle_t *p_object_handle, fsal_attrib_list_t *node_attributes)"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -68,9 +71,7 @@ leibovic
 Definition in file \fBfsal_create.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "fsal_status_t FSAL_create (fsal_handle_t * parent_directory_handle, fsal_name_t * p_filename, fsal_op_context_t * p_context, fsal_accessmode_t accessmode, fsal_handle_t * object_handle, fsal_attrib_list_t * object_attributes)"
-.PP
-FSAL_create: Create a regular file.
+.SS "fsal_status_t HPSSFSAL_create (hpssfsal_handle_t * parent_directory_handle, fsal_name_t * p_filename, hpssfsal_op_context_t * p_context, fsal_accessmode_t accessmode, hpssfsal_handle_t * object_handle, fsal_attrib_list_t * object_attributes)"FSAL_create: Create a regular file.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -105,10 +106,8 @@ NB: if getting postop attributes failed, the function does not return an error b
 .PP
 Definition at line 62 of file fsal_create.c.
 .PP
-References fsal2unix_mode(), hpss2fsal_attributes(), hpss2fsal_error(), and TakeTokenFSCall().
-.SS "fsal_status_t FSAL_link (fsal_handle_t * target_handle, fsal_handle_t * dir_handle, fsal_name_t * p_link_name, fsal_op_context_t * p_context, fsal_attrib_list_t * attributes)"
-.PP
-FSAL_link: Create a hardlink.
+References hpss2fsal_attributes(), hpss2fsal_error(), and TakeTokenFSCall().
+.SS "fsal_status_t HPSSFSAL_link (hpssfsal_handle_t * target_handle, hpssfsal_handle_t * dir_handle, fsal_name_t * p_link_name, hpssfsal_op_context_t * p_context, fsal_attrib_list_t * attributes)"FSAL_link: Create a hardlink.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -141,12 +140,10 @@ Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_EXIST, ERR_FSAL_IO
 .PP
 NB: if getting postop attributes failed, the function does not return an error but the FSAL_ATTR_RDATTR_ERR bit is set in the attributes->asked_attributes field. 
 .PP
-Definition at line 363 of file fsal_create.c.
+Definition at line 333 of file fsal_create.c.
 .PP
-References FSAL_getattrs(), hpss2fsal_error(), and TakeTokenFSCall().
-.SS "fsal_status_t FSAL_mkdir (fsal_handle_t * parent_directory_handle, fsal_name_t * p_dirname, fsal_op_context_t * p_context, fsal_accessmode_t accessmode, fsal_handle_t * object_handle, fsal_attrib_list_t * object_attributes)"
-.PP
-FSAL_mkdir: Create a directory.
+References hpss2fsal_error(), HPSSFSAL_getattrs(), and TakeTokenFSCall().
+.SS "fsal_status_t HPSSFSAL_mkdir (hpssfsal_handle_t * parent_directory_handle, fsal_name_t * p_dirname, hpssfsal_op_context_t * p_context, fsal_accessmode_t accessmode, hpssfsal_handle_t * object_handle, fsal_attrib_list_t * object_attributes)"FSAL_mkdir: Create a directory.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -179,12 +176,10 @@ Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_EXIST, ERR_FSAL_IO
 .PP
 NB: if getting postop attributes failed, the function does not return an error but the FSAL_ATTR_RDATTR_ERR bit is set in the object_attributes->asked_attributes field. 
 .PP
-Definition at line 232 of file fsal_create.c.
+Definition at line 216 of file fsal_create.c.
 .PP
-References fsal2unix_mode(), hpss2fsal_attributes(), hpss2fsal_error(), and TakeTokenFSCall().
-.SS "fsal_status_t FSAL_mknode (fsal_handle_t * parentdir_handle, fsal_name_t * p_node_name, fsal_op_context_t * p_context, fsal_accessmode_t accessmode, fsal_nodetype_t nodetype, fsal_dev_t * dev, fsal_handle_t * p_object_handle, fsal_attrib_list_t * node_attributes)"
-.PP
-FSAL_mknode: Create a special object in the filesystem. Not supported upon HPSS.
+References hpss2fsal_attributes(), hpss2fsal_error(), and TakeTokenFSCall().
+.SS "fsal_status_t HPSSFSAL_mknode (hpssfsal_handle_t * parentdir_handle, fsal_name_t * p_node_name, hpssfsal_op_context_t * p_context, fsal_accessmode_t accessmode, fsal_nodetype_t nodetype, fsal_dev_t * dev, hpssfsal_handle_t * p_object_handle, fsal_attrib_list_t * node_attributes)"FSAL_mknode: Create a special object in the filesystem. Not supported upon HPSS.
 .PP
 \fBReturns:\fP
 .RS 4
@@ -193,7 +188,7 @@ ERR_FSAL_NOTSUPP.
 .PP
 
 .PP
-Definition at line 453 of file fsal_create.c.
+Definition at line 416 of file fsal_create.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File System Abstraction Layer (HPSS) library from the source code.

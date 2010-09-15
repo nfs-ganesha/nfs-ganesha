@@ -1,4 +1,4 @@
-.TH "conf_lex.c" 3 "31 Mar 2009" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
+.TH "conf_lex.c" 3 "15 Sep 2010" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -303,7 +303,7 @@ conf_lex.c \-
 .RI "#define \fBYY_READ_BUF_SIZE\fP   8192"
 .br
 .ti -1c
-.RI "#define \fBECHO\fP   fwrite( \fBganesha_yytext\fP, \fBganesha_yyleng\fP, 1, \fBganesha_yyout\fP )"
+.RI "#define \fBECHO\fP   do { if (fwrite( \fBganesha_yytext\fP, \fBganesha_yyleng\fP, 1, \fBganesha_yyout\fP )) {} } while (0)"
 .br
 .ti -1c
 .RI "#define \fBYY_INPUT\fP(buf, result, max_size)"
@@ -536,7 +536,7 @@ Definition at line 631 of file conf_lex.c.
 .SS "#define DEBUG_LEX"
 .PP
 Definition at line 618 of file conf_lex.c.
-.SS "#define ECHO   fwrite( \fBganesha_yytext\fP, \fBganesha_yyleng\fP, 1, \fBganesha_yyout\fP )"
+.SS "#define ECHO   do { if (fwrite( \fBganesha_yytext\fP, \fBganesha_yyleng\fP, 1, \fBganesha_yyout\fP )) {} } while (0)"
 .PP
 Definition at line 728 of file conf_lex.c.
 .SS "#define ENDVALUE   6"
@@ -647,9 +647,7 @@ Definition at line 255 of file conf_lex.c.
 .SS "#define yy_create_buffer   ganesha_yy_create_buffer"
 .PP
 Definition at line 9 of file conf_lex.c.
-.SS "#define YY_CURRENT_BUFFER"
-.PP
-\fBValue:\fP
+.SS "#define YY_CURRENT_BUFFER"\fBValue:\fP
 .PP
 .nf
 ( (yy_buffer_stack) \
@@ -670,9 +668,7 @@ Definition at line 791 of file conf_lex.c.
 .SS "#define yy_delete_buffer   ganesha_yy_delete_buffer"
 .PP
 Definition at line 10 of file conf_lex.c.
-.SS "#define YY_DO_BEFORE_ACTION"
-.PP
-\fBValue:\fP
+.SS "#define YY_DO_BEFORE_ACTION"\fBValue:\fP
 .PP
 .nf
 (yytext_ptr) = yy_bp; \
@@ -722,9 +718,7 @@ Definition at line 630 of file conf_lex.c.
 .SS "#define yy_init_buffer   ganesha_yy_init_buffer"
 .PP
 Definition at line 12 of file conf_lex.c.
-.SS "#define YY_INPUT(buf, result, max_size)"
-.PP
-\fBValue:\fP
+.SS "#define YY_INPUT(buf, result, max_size)"\fBValue:\fP
 .PP
 .nf
 if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
@@ -794,9 +788,7 @@ Definition at line 810 of file conf_lex.c.
 .SS "#define YY_SC_TO_UI(c)   ((unsigned int) (unsigned char) c)"
 .PP
 Definition at line 138 of file conf_lex.c.
-.SS "#define yy_set_bol(at_bol)"
-.PP
-\fBValue:\fP
+.SS "#define yy_set_bol(at_bol)"\fBValue:\fP
 .PP
 .nf
 { \
@@ -810,9 +802,7 @@ Definition at line 138 of file conf_lex.c.
 .fi
 .PP
 Definition at line 340 of file conf_lex.c.
-.SS "#define yy_set_interactive(is_interactive)"
-.PP
-\fBValue:\fP
+.SS "#define yy_set_interactive(is_interactive)"\fBValue:\fP
 .PP
 .nf
 { \
@@ -841,9 +831,7 @@ Definition at line 154 of file conf_lex.c.
 .SS "#define yy_switch_to_buffer   ganesha_yy_switch_to_buffer"
 .PP
 Definition at line 15 of file conf_lex.c.
-.SS "#define YY_USER_INIT"
-.PP
-\fBValue:\fP
+.SS "#define YY_USER_INIT"\fBValue:\fP
 .PP
 .nf
 {          \
@@ -875,9 +863,7 @@ Definition at line 16 of file conf_lex.c.
 .SS "#define yyleng   \fBganesha_yyleng\fP"
 .PP
 Definition at line 17 of file conf_lex.c.
-.SS "#define yyless(n)"
-.PP
-\fBValue:\fP
+.SS "#define yyless(n)"\fBValue:\fP
 .PP
 .nf
 do \
@@ -895,9 +881,7 @@ do \
 .fi
 .PP
 Definition at line 2060 of file conf_lex.c.
-.SS "#define yyless(n)"
-.PP
-\fBValue:\fP
+.SS "#define yyless(n)"\fBValue:\fP
 .PP
 .nf
 do \
@@ -985,12 +969,8 @@ Definition at line 358 of file conf_lex.c.
 .SH "Function Documentation"
 .PP 
 .SS "\fBYY_BUFFER_STATE\fP ganesha_yy_create_buffer (FILE * file, int size)"
-.PP
 .SS "void ganesha_yy_delete_buffer (\fBYY_BUFFER_STATE\fP b)"
-.PP
-.SS "void ganesha_yy_flush_buffer (\fBYY_BUFFER_STATE\fP b)"
-.PP
-Discard all buffered characters. On the next scan, YY_INPUT will be called. 
+.SS "void ganesha_yy_flush_buffer (\fBYY_BUFFER_STATE\fP b)"Discard all buffered characters. On the next scan, YY_INPUT will be called. 
 .PP
 \fBParameters:\fP
 .RS 4
@@ -1000,9 +980,7 @@ Discard all buffered characters. On the next scan, YY_INPUT will be called.
 
 .PP
 Definition at line 1840 of file conf_lex.c.
-.SS "\fBYY_BUFFER_STATE\fP ganesha_yy_scan_buffer (char * base, \fByy_size_t\fP size)"
-.PP
-Setup the input buffer state to scan directly from a user-specified character buffer. 
+.SS "\fBYY_BUFFER_STATE\fP ganesha_yy_scan_buffer (char * base, \fByy_size_t\fP size)"Setup the input buffer state to scan directly from a user-specified character buffer. 
 .PP
 \fBParameters:\fP
 .RS 4
@@ -1019,9 +997,7 @@ the newly allocated buffer state object.
 
 .PP
 Definition at line 1967 of file conf_lex.c.
-.SS "\fBYY_BUFFER_STATE\fP ganesha_yy_scan_bytes (yyconst char * yybytes, int _yybytes_len)"
-.PP
-Setup the input buffer state to scan the given bytes. The next call to \fBganesha_yylex()\fP will scan from a \fIcopy\fP of \fIbytes\fP. 
+.SS "\fBYY_BUFFER_STATE\fP ganesha_yy_scan_bytes (yyconst char * yybytes, int _yybytes_len)"Setup the input buffer state to scan the given bytes. The next call to \fBganesha_yylex()\fP will scan from a \fIcopy\fP of \fIbytes\fP. 
 .PP
 \fBParameters:\fP
 .RS 4
@@ -1038,9 +1014,7 @@ the newly allocated buffer state object.
 
 .PP
 Definition at line 2017 of file conf_lex.c.
-.SS "\fBYY_BUFFER_STATE\fP ganesha_yy_scan_string (yyconst char * yystr)"
-.PP
-Setup the input buffer state to scan a string. The next call to \fBganesha_yylex()\fP will scan from a \fIcopy\fP of \fIstr\fP. 
+.SS "\fBYY_BUFFER_STATE\fP ganesha_yy_scan_string (yyconst char * yystr)"Setup the input buffer state to scan a string. The next call to \fBganesha_yylex()\fP will scan from a \fIcopy\fP of \fIstr\fP. 
 .PP
 \fBParameters:\fP
 .RS 4
@@ -1064,7 +1038,6 @@ Definition at line 2004 of file conf_lex.c.
 .PP
 Definition at line 2265 of file conf_lex.c.
 .SS "void ganesha_yy_switch_to_buffer (\fBYY_BUFFER_STATE\fP new_buffer)"
-.PP
 .SS "void * ganesha_yyalloc (\fByy_size_t\fP size)"
 .PP
 Definition at line 2228 of file conf_lex.c.
@@ -1075,45 +1048,29 @@ Definition at line 2245 of file conf_lex.c.
 .PP
 Definition at line 2144 of file conf_lex.c.
 .SS "YY_EXTRA_TYPE ganesha_yyget_extra (void)"
-.PP
-.SS "FILE * ganesha_yyget_in (void)"
-.PP
-Get the input stream. 
+.SS "FILE * ganesha_yyget_in (void)"Get the input stream. 
 .PP
 Definition at line 2088 of file conf_lex.c.
-.SS "int ganesha_yyget_leng (void)"
-.PP
-Get the length of the current token. 
+.SS "int ganesha_yyget_leng (void)"Get the length of the current token. 
 .PP
 Definition at line 2104 of file conf_lex.c.
-.SS "int ganesha_yyget_lineno (void)"
-.PP
-Get the current line number. 
+.SS "int ganesha_yyget_lineno (void)"Get the current line number. 
 .PP
 Definition at line 2079 of file conf_lex.c.
-.SS "FILE * ganesha_yyget_out (void)"
-.PP
-Get the output stream. 
+.SS "FILE * ganesha_yyget_out (void)"Get the output stream. 
 .PP
 Definition at line 2096 of file conf_lex.c.
-.SS "char * ganesha_yyget_text (void)"
-.PP
-Get the current token. 
+.SS "char * ganesha_yyget_text (void)"Get the current token. 
 .PP
 Definition at line 2113 of file conf_lex.c.
 .SS "int ganesha_yylex (void)"
-.PP
 .SS "int ganesha_yylex_destroy (void)"
 .PP
 Definition at line 2183 of file conf_lex.c.
-.SS "void ganesha_yypop_buffer_state (void)"
-.PP
-Removes and deletes the top of the stack, if present. The next element becomes the new top. 
+.SS "void ganesha_yypop_buffer_state (void)"Removes and deletes the top of the stack, if present. The next element becomes the new top. 
 .PP
 Definition at line 1899 of file conf_lex.c.
-.SS "void ganesha_yypush_buffer_state (\fBYY_BUFFER_STATE\fP new_buffer)"
-.PP
-Pushes the new state onto the stack. The new state becomes the current state. This function will allocate the stack if necessary. 
+.SS "void ganesha_yypush_buffer_state (\fBYY_BUFFER_STATE\fP new_buffer)"Pushes the new state onto the stack. The new state becomes the current state. This function will allocate the stack if necessary. 
 .PP
 \fBParameters:\fP
 .RS 4
@@ -1130,15 +1087,11 @@ Definition at line 2233 of file conf_lex.c.
 .PP
 Definition at line 2260 of file conf_lex.c.
 .SS "void ganesha_yyrestart (FILE * input_file)"
-.PP
 .SS "void ganesha_yyset_debug (int debug_flag)"
 .PP
 Definition at line 2149 of file conf_lex.c.
 .SS "void ganesha_yyset_extra (YY_EXTRA_TYPE user_defined)"
-.PP
-.SS "void ganesha_yyset_in (FILE * in_str)"
-.PP
-Set the input stream. This does not discard the current input buffer. 
+.SS "void ganesha_yyset_in (FILE * in_str)"Set the input stream. This does not discard the current input buffer. 
 .PP
 \fBParameters:\fP
 .RS 4
@@ -1153,9 +1106,7 @@ Set the input stream. This does not discard the current input buffer.
 
 .PP
 Definition at line 2134 of file conf_lex.c.
-.SS "void ganesha_yyset_lineno (int line_number)"
-.PP
-Set the current line number. 
+.SS "void ganesha_yyset_lineno (int line_number)"Set the current line number. 
 .PP
 \fBParameters:\fP
 .RS 4
@@ -1173,7 +1124,7 @@ Definition at line 2139 of file conf_lex.c.
 Definition at line 2256 of file conf_lex.c.
 .SS "void set_error (char * s)"
 .PP
-Definition at line 1638 of file conf_yacc.c.
+Definition at line 1665 of file conf_yacc.c.
 .SS "void YY_BUFFER_APPEND (char * s)"
 .PP
 Definition at line 576 of file conf_lex.c.

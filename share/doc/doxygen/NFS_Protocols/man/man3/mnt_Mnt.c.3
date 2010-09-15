@@ -1,10 +1,11 @@
-.TH "mnt_Mnt.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "mnt_Mnt.c" 3 "15 Sep 2010" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-mnt_Mnt.c \- MOUNTPROC_MNT for Mount protocol v1 and v3.  
-
+mnt_Mnt.c \- 
 .PP
+MOUNTPROC_MNT for Mount protocol v1 and v3.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -30,7 +31,7 @@ mnt_Mnt.c \- MOUNTPROC_MNT for Mount protocol v1 and v3.
 .br
 \fC#include <rpc/pmap_clnt.h>\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
 .br
@@ -118,12 +119,9 @@ Definition in file \fBmnt_Mnt.c\fP.
 .SH "Define Documentation"
 .PP 
 .SS "#define RES_MOUNTINFO   pres->res_mnt3.mountres3_u.mountinfo"
-.PP
 .SH "Function Documentation"
 .PP 
-.SS "void mnt1_Mnt_Free (nfs_res_t * pres)"
-.PP
-mnt_Mnt_Free: Frees the result structure allocated for mnt_Mnt.
+.SS "void mnt1_Mnt_Free (nfs_res_t * pres)"mnt_Mnt_Free: Frees the result structure allocated for mnt_Mnt.
 .PP
 Frees the result structure allocated for mnt_Mnt.
 .PP
@@ -134,13 +132,11 @@ Frees the result structure allocated for mnt_Mnt.
 .PP
 
 .PP
-Definition at line 339 of file mnt_Mnt.c.
+Definition at line 350 of file mnt_Mnt.c.
 .SS "void mnt3_Mnt_Free (nfs_res_t * pres)"
 .PP
-Definition at line 345 of file mnt_Mnt.c.
-.SS "int mnt_Mnt (nfs_arg_t * parg, exportlist_t * pexport, fsal_op_context_t * pcontext, cache_inode_client_t * pclient, hash_table_t * ht, struct svc_req * preq, nfs_res_t * pres)"
-.PP
-mnt_Mnt: The Mount proc mount function, for all versions.
+Definition at line 355 of file mnt_Mnt.c.
+.SS "int mnt_Mnt (nfs_arg_t * parg, exportlist_t * pexport, fsal_op_context_t * pcontext, cache_inode_client_t * pclient, hash_table_t * ht, struct svc_req * preq, nfs_res_t * pres)"mnt_Mnt: The Mount proc mount function, for all versions.
 .PP
 The MOUNT proc proc function, for all versions.
 .PP
@@ -163,11 +159,10 @@ The MOUNT proc proc function, for all versions.
 .PP
 
 .PP
-Definition at line 146 of file mnt_Mnt.c.
+Definition at line 95 of file mnt_Mnt.c.
 .SH "Variable Documentation"
 .PP 
 .SS "nfs_parameter_t \fBnfs_param\fP"
-.PP
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

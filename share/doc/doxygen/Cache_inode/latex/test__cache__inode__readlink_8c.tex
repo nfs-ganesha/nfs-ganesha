@@ -1,105 +1,92 @@
 \section{test\_\-cache\_\-inode\_\-readlink.c File Reference}
 \label{test__cache__inode__readlink_8c}\index{test\_\-cache\_\-inode\_\-readlink.c@{test\_\-cache\_\-inode\_\-readlink.c}}
+
+
 Program for testing cache\_\-inode / readlink functions.  
-
-
-{\tt \#include \char`\"{}BuddyMalloc.h\char`\"{}}\par
-{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
-{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
-{\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
-{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
-{\tt \#include \char`\"{}err\_\-fsal.h\char`\"{}}\par
-{\tt \#include \char`\"{}err\_\-cache\_\-inode.h\char`\"{}}\par
-{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
-{\tt \#include $<$unistd.h$>$}\par
-{\tt \#include $<$stdlib.h$>$}\par
-{\tt \#include $<$strings.h$>$}\par
-{\tt \#include $<$sys/types.h$>$}\par
+{\ttfamily \#include \char`\"{}BuddyMalloc.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}fsal.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}log\_\-macros.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}err\_\-fsal.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}err\_\-cache\_\-inode.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\ttfamily \#include $<$unistd.h$>$}\par
+{\ttfamily \#include $<$stdlib.h$>$}\par
+{\ttfamily \#include $<$strings.h$>$}\par
+{\ttfamily \#include $<$sys/types.h$>$}\par
 \subsection*{Defines}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
 \#define {\bf HPSS\_\-SSM}~\char`\"{}hpss\_\-ssm\char`\"{}
 \item 
 \#define {\bf HPSS\_\-KEYTAB}~\char`\"{}/krb5/hpssserver.keytab\char`\"{}
-\end{CompactItemize}
+\end{DoxyCompactItemize}
 \subsection*{Functions}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
 int {\bf lru\_\-entry\_\-to\_\-str} (LRU\_\-data\_\-t data, char $\ast$str)
 \item 
 int {\bf lru\_\-clean\_\-entry} (LRU\_\-entry\_\-t $\ast$entry, void $\ast$adddata)
 \item 
 {\bf main} (int argc, char $\ast$argv[$\,$])
-\end{CompactItemize}
+\end{DoxyCompactItemize}
 
 
 \subsection{Detailed Description}
-Program for testing cache\_\-inode / readlink functions. 
+Program for testing cache\_\-inode / readlink functions. \begin{DoxyAuthor}{Author}
 
-\begin{Desc}
-\item[Author:]\end{Desc}
-\begin{Desc}
-\item[Author]deniel \end{Desc}
-\begin{Desc}
-\item[Date:]\end{Desc}
-\begin{Desc}
-\item[Date]2005/11/28 17:02:28 \end{Desc}
-\begin{Desc}
-\item[Version:]\end{Desc}
-\begin{Desc}
-\item[Revision]1.9 \end{Desc}
+\end{DoxyAuthor}
+Author}
+deniel \begin{DoxyDate}{Date}
 
+\end{DoxyDate}
+Date}
+2005/11/28 17:02:28 \begin{DoxyVersion}{Version}
+
+\end{DoxyVersion}
+Revision}
+1.9 
 
 Definition in file {\bf test\_\-cache\_\-inode\_\-readlink.c}.
 
 \subsection{Define Documentation}
 \index{test\_\-cache\_\-inode\_\-readlink.c@{test\_\-cache\_\-inode\_\-readlink.c}!HPSS\_\-KEYTAB@{HPSS\_\-KEYTAB}}
 \index{HPSS\_\-KEYTAB@{HPSS\_\-KEYTAB}!test_cache_inode_readlink.c@{test\_\-cache\_\-inode\_\-readlink.c}}
-\subsubsection[{HPSS\_\-KEYTAB}]{\setlength{\rightskip}{0pt plus 5cm}\#define HPSS\_\-KEYTAB~\char`\"{}/krb5/hpssserver.keytab\char`\"{}}\label{test__cache__inode__readlink_8c_547201ff2674f71edbe3ba4ec6296d93}
+\subsubsection[{HPSS\_\-KEYTAB}]{\setlength{\rightskip}{0pt plus 5cm}\#define HPSS\_\-KEYTAB~\char`\"{}/krb5/hpssserver.keytab\char`\"{}}\label{test__cache__inode__readlink_8c_a547201ff2674f71edbe3ba4ec6296d93}
 
 
-
-
-Definition at line 105 of file test\_\-cache\_\-inode\_\-readlink.c.\index{test\_\-cache\_\-inode\_\-readlink.c@{test\_\-cache\_\-inode\_\-readlink.c}!HPSS\_\-SSM@{HPSS\_\-SSM}}
+Definition at line 54 of file test\_\-cache\_\-inode\_\-readlink.c.\index{test\_\-cache\_\-inode\_\-readlink.c@{test\_\-cache\_\-inode\_\-readlink.c}!HPSS\_\-SSM@{HPSS\_\-SSM}}
 \index{HPSS\_\-SSM@{HPSS\_\-SSM}!test_cache_inode_readlink.c@{test\_\-cache\_\-inode\_\-readlink.c}}
-\subsubsection[{HPSS\_\-SSM}]{\setlength{\rightskip}{0pt plus 5cm}\#define HPSS\_\-SSM~\char`\"{}hpss\_\-ssm\char`\"{}}\label{test__cache__inode__readlink_8c_863b7cbf4c49b9bdda01992b993130a2}
+\subsubsection[{HPSS\_\-SSM}]{\setlength{\rightskip}{0pt plus 5cm}\#define HPSS\_\-SSM~\char`\"{}hpss\_\-ssm\char`\"{}}\label{test__cache__inode__readlink_8c_a863b7cbf4c49b9bdda01992b993130a2}
 
 
-
-
-Definition at line 104 of file test\_\-cache\_\-inode\_\-readlink.c.
+Definition at line 53 of file test\_\-cache\_\-inode\_\-readlink.c.
 
 \subsection{Function Documentation}
 \index{test\_\-cache\_\-inode\_\-readlink.c@{test\_\-cache\_\-inode\_\-readlink.c}!lru\_\-clean\_\-entry@{lru\_\-clean\_\-entry}}
 \index{lru\_\-clean\_\-entry@{lru\_\-clean\_\-entry}!test_cache_inode_readlink.c@{test\_\-cache\_\-inode\_\-readlink.c}}
-\subsubsection[{lru\_\-clean\_\-entry}]{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-clean\_\-entry (LRU\_\-entry\_\-t $\ast$ {\em entry}, \/  void $\ast$ {\em adddata})}\label{test__cache__inode__readlink_8c_27ecbab481a3103e078489a212a52e3f}
+\subsubsection[{lru\_\-clean\_\-entry}]{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-clean\_\-entry (LRU\_\-entry\_\-t $\ast$ {\em entry}, \/  void $\ast$ {\em adddata})}\label{test__cache__inode__readlink_8c_a27ecbab481a3103e078489a212a52e3f}
 
 
-
-
-Definition at line 115 of file test\_\-cache\_\-inode\_\-readlink.c.\index{test\_\-cache\_\-inode\_\-readlink.c@{test\_\-cache\_\-inode\_\-readlink.c}!lru\_\-entry\_\-to\_\-str@{lru\_\-entry\_\-to\_\-str}}
+Definition at line 65 of file test\_\-cache\_\-inode\_\-readlink.c.\index{test\_\-cache\_\-inode\_\-readlink.c@{test\_\-cache\_\-inode\_\-readlink.c}!lru\_\-entry\_\-to\_\-str@{lru\_\-entry\_\-to\_\-str}}
 \index{lru\_\-entry\_\-to\_\-str@{lru\_\-entry\_\-to\_\-str}!test_cache_inode_readlink.c@{test\_\-cache\_\-inode\_\-readlink.c}}
-\subsubsection[{lru\_\-entry\_\-to\_\-str}]{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-entry\_\-to\_\-str (LRU\_\-data\_\-t {\em data}, \/  char $\ast$ {\em str})}\label{test__cache__inode__readlink_8c_d3e6e5506644e1986e6475939863ad3e}
+\subsubsection[{lru\_\-entry\_\-to\_\-str}]{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-entry\_\-to\_\-str (LRU\_\-data\_\-t {\em data}, \/  char $\ast$ {\em str})}\label{test__cache__inode__readlink_8c_ad3e6e5506644e1986e6475939863ad3e}
 
 
-
-
-Definition at line 106 of file test\_\-cache\_\-inode\_\-readlink.c.\index{test\_\-cache\_\-inode\_\-readlink.c@{test\_\-cache\_\-inode\_\-readlink.c}!main@{main}}
+Definition at line 55 of file test\_\-cache\_\-inode\_\-readlink.c.\index{test\_\-cache\_\-inode\_\-readlink.c@{test\_\-cache\_\-inode\_\-readlink.c}!main@{main}}
 \index{main@{main}!test_cache_inode_readlink.c@{test\_\-cache\_\-inode\_\-readlink.c}}
-\subsubsection[{main}]{\setlength{\rightskip}{0pt plus 5cm}main (int {\em argc}, \/  char $\ast$ {\em argv}[$\,$])}\label{test__cache__inode__readlink_8c_e0665038b72011f5c680c660fcb59459}
-
-
+\subsubsection[{main}]{\setlength{\rightskip}{0pt plus 5cm}main (int {\em argc}, \/  char $\ast$ {\em argv}[$\,$])}\label{test__cache__inode__readlink_8c_ae0665038b72011f5c680c660fcb59459}
 main: test main function.
 
 test main function.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em argc}][IN] number of command line arguments. \item[{\em argv}][IN] arguments set on the command line.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]an integer sent back to the calling shell. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em argc}][IN] number of command line arguments. \item[{\em argv}][IN] arguments set on the command line.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+an integer sent back to the calling shell. 
+\end{DoxyReturn}
 
 
-Definition at line 133 of file test\_\-cache\_\-inode\_\-readlink.c.
+Definition at line 83 of file test\_\-cache\_\-inode\_\-readlink.c.

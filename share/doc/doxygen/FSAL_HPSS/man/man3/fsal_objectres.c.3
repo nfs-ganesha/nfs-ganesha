@@ -1,10 +1,11 @@
-.TH "fsal_objectres.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "fsal_objectres.c" 3 "15 Sep 2010" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_objectres.c \- FSAL remanent resources management routines.  
-
+fsal_objectres.c \- 
 .PP
+FSAL remanent resources management routines.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -17,7 +18,7 @@ fsal_objectres.c \- FSAL remanent resources management routines.
 
 .in +1c
 .ti -1c
-.RI "fsal_status_t \fBFSAL_CleanObjectResources\fP (fsal_handle_t *in_fsal_handle)"
+.RI "fsal_status_t \fBHPSSFSAL_CleanObjectResources\fP (hpssfsal_handle_t *in_fsal_handle)"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -44,9 +45,7 @@ $Revision$
 Definition in file \fBfsal_objectres.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "fsal_status_t FSAL_CleanObjectResources (fsal_handle_t * in_fsal_handle)"
-.PP
-FSAL_CleanObjectResources: This function cleans remanent internal resources that are kept for a given FSAL handle.
+.SS "fsal_status_t HPSSFSAL_CleanObjectResources (hpssfsal_handle_t * in_fsal_handle)"FSAL_CleanObjectResources: This function cleans remanent internal resources that are kept for a given FSAL handle.
 .PP
 \fBParameters:\fP
 .RS 4

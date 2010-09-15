@@ -1,10 +1,11 @@
-.TH "fsal_unlink.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "fsal_unlink.c" 3 "15 Sep 2010" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_unlink.c \- object removing function.  
-
+fsal_unlink.c \- 
 .PP
+object removing function.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -19,7 +20,7 @@ fsal_unlink.c \- object removing function.
 
 .in +1c
 .ti -1c
-.RI "fsal_status_t \fBFSAL_unlink\fP (fsal_handle_t *parentdir_handle, fsal_name_t *p_object_name, fsal_op_context_t *p_context, fsal_attrib_list_t *parentdir_attributes)"
+.RI "fsal_status_t \fBHPSSFSAL_unlink\fP (hpssfsal_handle_t *parentdir_handle, fsal_name_t *p_object_name, hpssfsal_op_context_t *p_context, fsal_attrib_list_t *parentdir_attributes)"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -55,9 +56,7 @@ leibovic
 Definition in file \fBfsal_unlink.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "fsal_status_t FSAL_unlink (fsal_handle_t * parentdir_handle, fsal_name_t * p_object_name, fsal_op_context_t * p_context, fsal_attrib_list_t * parentdir_attributes)"
-.PP
-FSAL_unlink: Remove a filesystem object .
+.SS "fsal_status_t HPSSFSAL_unlink (hpssfsal_handle_t * parentdir_handle, fsal_name_t * p_object_name, hpssfsal_op_context_t * p_context, fsal_attrib_list_t * parentdir_attributes)"FSAL_unlink: Remove a filesystem object .
 .PP
 \fBParameters:\fP
 .RS 4
@@ -92,9 +91,9 @@ Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
 .PP
 
 .PP
-Definition at line 52 of file fsal_unlink.c.
+Definition at line 51 of file fsal_unlink.c.
 .PP
-References FSAL_getattrs(), FSAL_lookup(), hpss2fsal_error(), and TakeTokenFSCall().
+References hpss2fsal_error(), HPSSFSAL_getattrs(), HPSSFSAL_lookup(), and TakeTokenFSCall().
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File System Abstraction Layer (HPSS) library from the source code.

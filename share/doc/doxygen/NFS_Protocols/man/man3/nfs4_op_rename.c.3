@@ -1,10 +1,11 @@
-.TH "nfs4_op_rename.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs4_op_rename.c" 3 "15 Sep 2010" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs4_op_rename.c \- Routines used for managing the NFS4 COMPOUND functions.  
-
+nfs4_op_rename.c \- 
 .PP
+Routines used for managing the NFS4 COMPOUND functions.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -30,7 +31,7 @@ nfs4_op_rename.c \- Routines used for managing the NFS4 COMPOUND functions.
 .br
 \fC#include <rpc/pmap_clnt.h>\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
 .br
@@ -110,9 +111,7 @@ deniel
 Definition in file \fBnfs4_op_rename.c\fP.
 .SH "Define Documentation"
 .PP 
-.SS "#define arg_RENAME4   op->nfs_argop4_u.oprename"
-.PP
-nfs4_op_rename: The NFS4_OP_RENAME operation.
+.SS "#define arg_RENAME4   op->nfs_argop4_u.oprename"nfs4_op_rename: The NFS4_OP_RENAME operation.
 .PP
 This functions handles the NFS4_OP_RENAME operation in NFSv4. This function can be called only from nfs4_Compound
 .PP
@@ -132,18 +131,16 @@ NFS4_OK if successfull, other values show an error.
 .PP
 
 .PP
-Definition at line 141 of file nfs4_op_rename.c.
+Definition at line 91 of file nfs4_op_rename.c.
 .SS "#define res_RENAME4   resp->nfs_resop4_u.oprename"
 .PP
-Definition at line 142 of file nfs4_op_rename.c.
+Definition at line 92 of file nfs4_op_rename.c.
 .SH "Function Documentation"
 .PP 
 .SS "int nfs4_op_rename (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
 .PP
-Definition at line 144 of file nfs4_op_rename.c.
-.SS "void nfs4_op_rename_Free (RENAME4res * resp)"
-.PP
-nfs4_op_rename_Free: frees what was allocared to handle nfs4_op_rename.
+Definition at line 94 of file nfs4_op_rename.c.
+.SS "void nfs4_op_rename_Free (RENAME4res * resp)"nfs4_op_rename_Free: frees what was allocared to handle nfs4_op_rename.
 .PP
 Frees what was allocared to handle nfs4_op_rename.
 .PP
@@ -159,7 +156,7 @@ nothing (void function )
 .PP
 
 .PP
-Definition at line 510 of file nfs4_op_rename.c.
+Definition at line 468 of file nfs4_op_rename.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

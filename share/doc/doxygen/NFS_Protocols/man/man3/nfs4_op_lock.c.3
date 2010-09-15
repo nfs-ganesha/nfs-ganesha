@@ -1,10 +1,11 @@
-.TH "nfs4_op_lock.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs4_op_lock.c" 3 "15 Sep 2010" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs4_op_lock.c \- Routines used for managing the NFS4 COMPOUND functions.  
-
+nfs4_op_lock.c \- 
 .PP
+Routines used for managing the NFS4 COMPOUND functions.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -30,7 +31,7 @@ nfs4_op_lock.c \- Routines used for managing the NFS4 COMPOUND functions.
 .br
 \fC#include <rpc/pmap_clnt.h>\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
 .br
@@ -77,6 +78,16 @@ nfs4_op_lock.c \- Routines used for managing the NFS4 COMPOUND functions.
 .RI "void \fBnfs4_op_lock_Free\fP (LOCK4res *resp)"
 .br
 .in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "char \fBall_zero\fP []"
+.br
+.ti -1c
+.RI "char \fBall_one\fP [12]"
+.br
+.in -1c
 .SH "Detailed Description"
 .PP 
 Routines used for managing the NFS4 COMPOUND functions. 
@@ -110,9 +121,7 @@ deniel
 Definition in file \fBnfs4_op_lock.c\fP.
 .SH "Define Documentation"
 .PP 
-.SS "#define arg_LOCK4   op->nfs_argop4_u.oplock"
-.PP
-nfs4_op_lock: The NFS4_OP_LOCK operation.
+.SS "#define arg_LOCK4   op->nfs_argop4_u.oplock"nfs4_op_lock: The NFS4_OP_LOCK operation.
 .PP
 This function implements the NFS4_OP_LOCK operation.
 .PP
@@ -139,27 +148,16 @@ all the nfs4_op_<*> function
 .PP
 
 .PP
-Definition at line 145 of file nfs4_op_lock.c.
+Definition at line 95 of file nfs4_op_lock.c.
 .SS "#define res_LOCK4   resp->nfs_resop4_u.oplock"
 .PP
-Definition at line 146 of file nfs4_op_lock.c.
+Definition at line 96 of file nfs4_op_lock.c.
 .SH "Function Documentation"
 .PP 
 .SS "int nfs4_op_lock (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
 .PP
-
-.PP
-\fBTodo\fP
-.RS 4
-BUGAZOMEU: Manage the case if lock conflicts 
-.RE
-.PP
-
-.PP
-Definition at line 148 of file nfs4_op_lock.c.
-.SS "void nfs4_op_lock_Free (LOCK4res * resp)"
-.PP
-nfs4_op_lock_Free: frees what was allocared to handle nfs4_op_lock.
+Definition at line 101 of file nfs4_op_lock.c.
+.SS "void nfs4_op_lock_Free (LOCK4res * resp)"nfs4_op_lock_Free: frees what was allocared to handle nfs4_op_lock.
 .PP
 Frees what was allocared to handle nfs4_op_lock.
 .PP
@@ -175,7 +173,11 @@ nothing (void function )
 .PP
 
 .PP
-Definition at line 483 of file nfs4_op_lock.c.
+Definition at line 599 of file nfs4_op_lock.c.
+.SH "Variable Documentation"
+.PP 
+.SS "char \fBall_one\fP[12]"
+.SS "char \fBall_zero\fP[]"
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

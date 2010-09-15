@@ -1,13 +1,16 @@
-.TH "fsal_dirs.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "fsal_dirs.c" 3 "15 Sep 2010" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_dirs.c \- Directory browsing operations.  
-
+fsal_dirs.c \- 
 .PP
+Directory browsing operations.  
+
 .SH SYNOPSIS
 .br
 .PP
+\fC#include 'stuff_alloc.h'\fP
+.br
 \fC#include 'fsal.h'\fP
 .br
 \fC#include 'fsal_internal.h'\fP
@@ -23,13 +26,13 @@ fsal_dirs.c \- Directory browsing operations.
 
 .in +1c
 .ti -1c
-.RI "fsal_status_t \fBFSAL_opendir\fP (fsal_handle_t *dir_handle, fsal_op_context_t *p_context, fsal_dir_t *dir_descriptor, fsal_attrib_list_t *dir_attributes)"
+.RI "fsal_status_t \fBHPSSFSAL_opendir\fP (hpssfsal_handle_t *dir_handle, hpssfsal_op_context_t *p_context, hpssfsal_dir_t *dir_descriptor, fsal_attrib_list_t *dir_attributes)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_readdir\fP (fsal_dir_t *dir_descriptor, fsal_cookie_t start_position, fsal_attrib_mask_t get_attr_mask, fsal_mdsize_t buffersize, fsal_dirent_t *pdirent, fsal_cookie_t *end_position, fsal_count_t *nb_entries, fsal_boolean_t *end_of_dir)"
+.RI "fsal_status_t \fBHPSSFSAL_readdir\fP (hpssfsal_dir_t *dir_descriptor, hpssfsal_cookie_t start_position, fsal_attrib_mask_t get_attr_mask, fsal_mdsize_t buffersize, fsal_dirent_t *pdirent, hpssfsal_cookie_t *end_position, fsal_count_t *nb_entries, fsal_boolean_t *end_of_dir)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_closedir\fP (fsal_dir_t *dir_descriptor)"
+.RI "fsal_status_t \fBHPSSFSAL_closedir\fP (hpssfsal_dir_t *dir_descriptor)"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -65,9 +68,7 @@ leibovic
 Definition in file \fBfsal_dirs.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "fsal_status_t FSAL_closedir (fsal_dir_t * dir_descriptor)"
-.PP
-FSAL_closedir : Free the resources allocated for reading directory entries.
+.SS "fsal_status_t HPSSFSAL_closedir (hpssfsal_dir_t * dir_descriptor)"FSAL_closedir : Free the resources allocated for reading directory entries.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -88,10 +89,8 @@ Other error codes can be returned : ERR_FSAL_IO, ...
 .PP
 
 .PP
-Definition at line 304 of file fsal_dirs.c.
-.SS "fsal_status_t FSAL_opendir (fsal_handle_t * dir_handle, fsal_op_context_t * p_context, fsal_dir_t * dir_descriptor, fsal_attrib_list_t * dir_attributes)"
-.PP
-FSAL_opendir : Opens a directory for reading its content.
+Definition at line 307 of file fsal_dirs.c.
+.SS "fsal_status_t HPSSFSAL_opendir (hpssfsal_handle_t * dir_handle, hpssfsal_op_context_t * p_context, hpssfsal_dir_t * dir_descriptor, fsal_attrib_list_t * dir_attributes)"FSAL_opendir : Opens a directory for reading its content.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -122,12 +121,10 @@ Other error codes can be returned : ERR_FSAL_IO, ...
 .PP
 
 .PP
-Definition at line 49 of file fsal_dirs.c.
+Definition at line 48 of file fsal_dirs.c.
 .PP
-References FSAL_access().
-.SS "fsal_status_t FSAL_readdir (fsal_dir_t * dir_descriptor, fsal_cookie_t start_position, fsal_attrib_mask_t get_attr_mask, fsal_mdsize_t buffersize, fsal_dirent_t * pdirent, fsal_cookie_t * end_position, fsal_count_t * nb_entries, fsal_boolean_t * end_of_dir)"
-.PP
-FSAL_readdir : Read the entries of an opened directory.
+References HPSSFSAL_access().
+.SS "fsal_status_t HPSSFSAL_readdir (hpssfsal_dir_t * dir_descriptor, hpssfsal_cookie_t start_position, fsal_attrib_mask_t get_attr_mask, fsal_mdsize_t buffersize, fsal_dirent_t * pdirent, hpssfsal_cookie_t * end_position, fsal_count_t * nb_entries, fsal_boolean_t * end_of_dir)"FSAL_readdir : Read the entries of an opened directory.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -180,9 +177,9 @@ Other error codes can be returned : ERR_FSAL_IO, ...
 .PP
 
 .PP
-Definition at line 117 of file fsal_dirs.c.
+Definition at line 115 of file fsal_dirs.c.
 .PP
-References FSAL_str2name(), hpss2fsal_attributes(), hpss2fsal_error(), hpss2fsal_type(), hpssHandle2fsalAttributes(), and TakeTokenFSCall().
+References hpss2fsal_attributes(), hpss2fsal_error(), hpss2fsal_type(), hpssHandle2fsalAttributes(), and TakeTokenFSCall().
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File System Abstraction Layer (HPSS) library from the source code.

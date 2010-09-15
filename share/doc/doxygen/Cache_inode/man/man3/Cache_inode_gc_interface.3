@@ -1,4 +1,4 @@
-.TH "Cache Inode GC interface." 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "Cache Inode GC interface." 3 "15 Sep 2010" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,15 +15,19 @@ Cache Inode GC interface. \-
 .ti -1c
 .RI "cache_inode_status_t \fBcache_inode_gc\fP (hash_table_t *ht, cache_inode_client_t *pclient, cache_inode_status_t *pstatus)"
 .br
+.ti -1c
+.RI "int \fBcache_inode_gc_fd_func\fP (LRU_entry_t *plru_entry, void *addparam)"
+.br
+.ti -1c
+.RI "cache_inode_status_t \fBcache_inode_gc_fd\fP (cache_inode_client_t *pclient, cache_inode_status_t *pstatus)"
+.br
 .in -1c
 .SH "Detailed Description"
 .PP 
 These functions are used to run and configure the Cache inode GC 
 .SH "Function Documentation"
 .PP 
-.SS "cache_inode_status_t cache_inode_gc (hash_table_t * ht, cache_inode_client_t * pclient, cache_inode_status_t * pstatus)"
-.PP
-cache_inode_gc: Perform garbbage collection on the ressources managed by a client.
+.SS "cache_inode_status_t cache_inode_gc (hash_table_t * ht, cache_inode_client_t * pclient, cache_inode_status_t * pstatus)"cache_inode_gc: Perform garbbage collection on the ressources managed by a client.
 .PP
 Perform garbbage collection on the ressources managed by a client.
 .PP
@@ -56,10 +60,14 @@ LRU_gc_invalid
 .PP
 
 .PP
-Definition at line 609 of file cache_inode_gc.c.
-.SS "cache_inode_gc_policy_t cache_inode_get_gc_policy (void)"
+Definition at line 567 of file cache_inode_gc.c.
+.SS "cache_inode_status_t cache_inode_gc_fd (cache_inode_client_t * pclient, cache_inode_status_t * pstatus)"Garbagge opened file descriptors 
 .PP
-cache_inode_get_gc_policy: Set the cache_inode garbagge collecting policy.
+Definition at line 691 of file cache_inode_gc.c.
+.SS "int cache_inode_gc_fd_func (LRU_entry_t * plru_entry, void * addparam)"
+.PP
+Definition at line 655 of file cache_inode_gc.c.
+.SS "cache_inode_gc_policy_t cache_inode_get_gc_policy (void)"cache_inode_get_gc_policy: Set the cache_inode garbage collecting policy.
 .PP
 \fBReturns:\fP
 .RS 4
@@ -68,10 +76,8 @@ the current policy.
 .PP
 
 .PP
-Definition at line 586 of file cache_inode_gc.c.
-.SS "void cache_inode_set_gc_policy (cache_inode_gc_policy_t policy)"
-.PP
-cache_inode_set_gc_policy: Set the cache_inode garbagge collecting policy.
+Definition at line 544 of file cache_inode_gc.c.
+.SS "void cache_inode_set_gc_policy (cache_inode_gc_policy_t policy)"cache_inode_set_gc_policy: Set the cache_inode garbage collecting policy.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -85,7 +91,7 @@ nothing (void function)
 .PP
 
 .PP
-Definition at line 573 of file cache_inode_gc.c.
+Definition at line 532 of file cache_inode_gc.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

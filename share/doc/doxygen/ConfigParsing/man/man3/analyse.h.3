@@ -1,4 +1,4 @@
-.TH "analyse.h" 3 "31 Mar 2009" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
+.TH "analyse.h" 3 "15 Sep 2010" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -78,18 +78,15 @@ analyse.h \-
 .PP 
 .SS "#define MAXSTRLEN   1024"
 .PP
-Definition at line 71 of file analyse.h.
+Definition at line 27 of file analyse.h.
 .SH "Typedef Documentation"
 .PP 
 .SS "typedef struct \fB_generic_item_\fP  \fBgeneric_item\fP"
-.PP
 .SS "typedef \fBgeneric_item\fP* \fBlist_items\fP"
 .PP
-Definition at line 119 of file analyse.h.
+Definition at line 74 of file analyse.h.
 .SS "typedef struct \fB_type_affect_\fP  \fBtype_affect\fP"
-.PP
 .SS "typedef struct \fB_type_block_\fP  \fBtype_block\fP"
-.PP
 .SH "Enumeration Type Documentation"
 .PP 
 .SS "enum \fBtype_item\fP"
@@ -102,41 +99,29 @@ Definition at line 119 of file analyse.h.
 \fB\fITYPE_AFFECT \fP\fP
 
 .PP
-Definition at line 82 of file analyse.h.
+Definition at line 37 of file analyse.h.
 .SH "Function Documentation"
 .PP 
-.SS "void config_AddItem (\fBlist_items\fP * list, \fBgeneric_item\fP * item)"
-.PP
-Add an item to a list
+.SS "void config_AddItem (\fBlist_items\fP * list, \fBgeneric_item\fP * item)"Add an item to a list
 .PP
 Add an item to a list as first element 
 .PP
-Definition at line 140 of file analyse.c.
-.SS "\fBgeneric_item\fP* config_CreateAffect (char * varname, char * varval)"
+Definition at line 91 of file analyse.c.
+.SS "\fBgeneric_item\fP* config_CreateAffect (char * varname, char * varval)"Create a key=value peer (assignment) 
 .PP
-Create a key=value peer (assignment) 
+Definition at line 74 of file analyse.c.
+.SS "\fBgeneric_item\fP* config_CreateBlock (char * blockname, \fBlist_items\fP * list)"Create a block item with the given content 
 .PP
-Definition at line 122 of file analyse.c.
-.SS "\fBgeneric_item\fP* config_CreateBlock (char * blockname, \fBlist_items\fP * list)"
+Definition at line 49 of file analyse.c.
+.SS "\fBlist_items\fP* config_CreateItemsList ()"create a list of items 
 .PP
-Create a block item with the given content 
+Definition at line 38 of file analyse.c.
+.SS "void config_free_list (\fBlist_items\fP * list)"config_free_list: Free ressources for a list 
 .PP
-Definition at line 99 of file analyse.c.
-.SS "\fBlist_items\fP* config_CreateItemsList ()"
+Definition at line 183 of file analyse.c.
+.SS "void config_print_list (FILE * output, \fBlist_items\fP * list)"Displays the content of a list of blocks. 
 .PP
-create a list of items 
-.PP
-Definition at line 87 of file analyse.c.
-.SS "void config_free_list (\fBlist_items\fP * list)"
-.PP
-config_free_list: Free ressources for a list 
-.PP
-Definition at line 229 of file analyse.c.
-.SS "void config_print_list (FILE * output, \fBlist_items\fP * list)"
-.PP
-Displays the content of a list of blocks. 
-.PP
-Definition at line 191 of file analyse.c.
+Definition at line 144 of file analyse.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for ConfigParsing from the source code.

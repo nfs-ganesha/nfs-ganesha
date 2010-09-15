@@ -1,10 +1,11 @@
-.TH "test_mnt_proto.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "test_mnt_proto.c" 3 "15 Sep 2010" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-test_mnt_proto.c \- Tests for testing the mount protocol routines.  
-
+test_mnt_proto.c \- 
 .PP
+Tests for testing the mount protocol routines.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -32,7 +33,7 @@ test_mnt_proto.c \- Tests for testing the mount protocol routines.
 .br
 \fC#include <rpc/pmap_clnt.h>\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
 .br
@@ -116,40 +117,38 @@ deniel
 Definition in file \fBtest_mnt_proto.c\fP.
 .SH "Define Documentation"
 .PP 
-.SS "#define Maketest(func, name)"
-.PP
-\fBValue:\fP
+.SS "#define Maketest(func, name)"\fBValue:\fP
 .PP
 .nf
 do {                      \
   int rc;                                             \
-  printf('\n======== TEST %s =========\n\n',name);    \
+  LogTest('\n======== TEST %s =========\n\n',name);    \
   rc = func();                                        \
   if (rc)                                             \
-    printf('\n-------- %s : %d ---------\n',name,rc); \
+    LogTest('\n-------- %s : %d ---------\n',name,rc); \
   else                                                \
-    printf('\n-------- %s : OK ---------\n',name); \
+    LogTest('\n-------- %s : OK ---------\n',name); \
   } while (0)
 .fi
 .PP
-Definition at line 314 of file test_mnt_proto.c.
+Definition at line 279 of file test_mnt_proto.c.
 .SS "#define NB_EXPORT_ENTRIES   5"
 .PP
-Definition at line 168 of file test_mnt_proto.c.
+Definition at line 125 of file test_mnt_proto.c.
 .SH "Function Documentation"
 .PP 
 .SS "int main (int argc, char ** argv)"
 .PP
-Definition at line 324 of file test_mnt_proto.c.
+Definition at line 289 of file test_mnt_proto.c.
 .SS "void print_export_list (exports export_list)"
 .PP
-Definition at line 127 of file test_mnt_proto.c.
+Definition at line 77 of file test_mnt_proto.c.
 .SS "int test_mnt_Export ()"
 .PP
-Definition at line 169 of file test_mnt_proto.c.
+Definition at line 126 of file test_mnt_proto.c.
 .SS "int test_mnt_Null ()"
 .PP
-Definition at line 151 of file test_mnt_proto.c.
+Definition at line 104 of file test_mnt_proto.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

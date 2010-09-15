@@ -1,4 +1,4 @@
-This is pdfTeXk, Version 3.141592-1.40.3 (Web2C 7.5.6) (format=latex 2010.9.15)  15 SEP 2010 08:25
+This is pdfTeXk, Version 3.141592-1.40.3 (Web2C 7.5.6) (format=latex 2010.9.15)  15 SEP 2010 16:04
 entering extended mode
  %&-line parsing enabled.
 **refman.tex
@@ -641,42 +641,25 @@ LaTeX Font Info:    Try loading font information for T1+cmtt on input line 6.
 File: t1cmtt.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 ! Too many }'s.
-l.25 Author}
+l.41 Author}
             
 ? 
 ! Too many }'s.
-l.29 Date}
+l.45 Date}
           
 ? 
+[3]
 ! Too many }'s.
-l.33 Revision}
+l.49 Revision}
               
 ? 
 
-LaTeX Warning: Reference `stuff__alloc_8h' on page 3 undefined on input line 34
+LaTeX Warning: Reference `stuff__alloc_8h' on page 4 undefined on input line 50
 .
 
-! Too many }'s.
-l.36 Header}
-            
-? 
-
-Underfull \hbox (badness 5175) in paragraph at lines 36--38
-[]\T1/cmr/m/n/10 Header /cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/StuffAlloc
-/stuff_-alloc.h,v 1.4
- []
-
-! Too many }'s.
-l.39 Log}
-         
-? 
-
-LaTeX Warning: Reference `stuff__alloc_8h' on page 3 undefined on input line 40
-.
-
-[3] [4] [5])
+[4] [5] [6] [7])
 No file refman.ind.
-[6] (./refman.aux)
+[8] (./refman.aux)
 
 LaTeX Warning: There were undefined references.
 
@@ -685,12 +668,12 @@ LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
 
  ) 
 Here is how much of TeX's memory you used:
- 3639 strings out of 256217
- 47888 string characters out of 1917095
+ 3647 strings out of 256217
+ 48296 string characters out of 1917095
  107707 words of memory out of 1500000
- 6868 multiletter control sequences out of 10000+200000
+ 6876 multiletter control sequences out of 10000+200000
  15330 words of font info for 31 fonts, out of 1200000 for 2000
  645 hyphenation exceptions out of 8191
- 33i,12n,58p,386b,317s stack positions out of 5000i,500n,6000p,200000b,15000s
+ 33i,12n,58p,493b,417s stack positions out of 5000i,500n,6000p,200000b,15000s
 
-Output written on refman.dvi (10 pages, 11096 bytes).
+Output written on refman.dvi (12 pages, 19232 bytes).

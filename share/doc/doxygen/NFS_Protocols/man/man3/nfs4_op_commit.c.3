@@ -1,10 +1,11 @@
-.TH "nfs4_op_commit.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs4_op_commit.c" 3 "15 Sep 2010" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs4_op_commit.c \- Routines used for managing the NFS4 COMPOUND functions.  
-
+nfs4_op_commit.c \- 
 .PP
+Routines used for managing the NFS4 COMPOUND functions.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -30,7 +31,7 @@ nfs4_op_commit.c \- Routines used for managing the NFS4 COMPOUND functions.
 .br
 \fC#include <rpc/pmap_clnt.h>\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
 .br
@@ -77,6 +78,13 @@ nfs4_op_commit.c \- Routines used for managing the NFS4 COMPOUND functions.
 .RI "void \fBnfs4_op_commit_Free\fP (COMMIT4res *resp)"
 .br
 .in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "verifier4 \fBNFS4_write_verifier\fP"
+.br
+.in -1c
 .SH "Detailed Description"
 .PP 
 Routines used for managing the NFS4 COMPOUND functions. 
@@ -112,7 +120,35 @@ Definition in file \fBnfs4_op_commit.c\fP.
 .PP 
 .SS "#define arg_COMMIT4   op->nfs_argop4_u.opcommit"
 .PP
-nfs4_op_commit: Implemtation of NFS4_OP_COMMIT
+Definition at line 94 of file nfs4_op_commit.c.
+.SS "#define res_COMMIT4   resp->nfs_resop4_u.opcommit"
+.PP
+Definition at line 95 of file nfs4_op_commit.c.
+.SH "Function Documentation"
+.PP 
+.SS "int nfs4_op_commit (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
+.PP
+Definition at line 97 of file nfs4_op_commit.c.
+.SS "void nfs4_op_commit_Free (COMMIT4res * resp)"nfs4_op_commit_Free: frees what was allocared to handle nfs4_op_commit.
+.PP
+Frees what was allocared to handle nfs4_op_commit.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIresp\fP [INOUT] Pointer to nfs4_op results
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+nothing (void function ) 
+.RE
+.PP
+
+.PP
+Definition at line 181 of file nfs4_op_commit.c.
+.SH "Variable Documentation"
+.PP 
+.SS "verifier4 \fBNFS4_write_verifier\fP"nfs4_op_commit: Implemtation of NFS4_OP_COMMIT
 .PP
 Implemtation of NFS4_OP_COMMIT. This is usually made for cache validator implementation.
 .PP
@@ -131,35 +167,6 @@ NFS4_OK
 .RE
 .PP
 
-.PP
-Definition at line 143 of file nfs4_op_commit.c.
-.SS "#define res_COMMIT4   resp->nfs_resop4_u.opcommit"
-.PP
-Definition at line 144 of file nfs4_op_commit.c.
-.SH "Function Documentation"
-.PP 
-.SS "int nfs4_op_commit (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
-.PP
-Definition at line 146 of file nfs4_op_commit.c.
-.SS "void nfs4_op_commit_Free (COMMIT4res * resp)"
-.PP
-nfs4_op_commit_Free: frees what was allocared to handle nfs4_op_commit.
-.PP
-Frees what was allocared to handle nfs4_op_commit.
-.PP
-\fBParameters:\fP
-.RS 4
-\fIresp\fP [INOUT] Pointer to nfs4_op results
-.RE
-.PP
-\fBReturns:\fP
-.RS 4
-nothing (void function ) 
-.RE
-.PP
-
-.PP
-Definition at line 215 of file nfs4_op_commit.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

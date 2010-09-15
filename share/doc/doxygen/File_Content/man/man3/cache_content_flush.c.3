@@ -1,4 +1,4 @@
-.TH "cache_content_flush.c" 3 "31 Mar 2009" "Version 0.1" "File Content layer" \" -*- nroff -*-
+.TH "cache_content_flush.c" 3 "15 Sep 2010" "Version 0.1" "File Content layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -8,7 +8,7 @@ cache_content_flush.c \-
 .PP
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -50,9 +50,7 @@ cache_content_flush.c \-
 .in -1c
 .SH "Function Documentation"
 .PP 
-.SS "cache_content_status_t cache_content_flush (cache_content_entry_t * pentry, cache_content_flush_behaviour_t flushhow, cache_content_client_t * pclient, fsal_op_context_t * pcontext, cache_content_status_t * pstatus)"
-.PP
-cache_content_flush: Flushes the content of a file in the local cache to the FSAL data.
+.SS "cache_content_status_t cache_content_flush (cache_content_entry_t * pentry, cache_content_flush_behaviour_t flushhow, cache_content_client_t * pclient, fsal_op_context_t * pcontext, cache_content_status_t * pstatus)"cache_content_flush: Flushes the content of a file in the local cache to the FSAL data.
 .PP
 Flushes the content of a file in the local cache to the FSAL data. This routine should be called only from the cache_inode layer.
 .PP
@@ -74,10 +72,8 @@ CACHE_CONTENT_SUCCESS is successful .
 .PP
 
 .PP
-Definition at line 128 of file cache_content_flush.c.
-.SS "cache_content_status_t cache_content_refresh (cache_content_entry_t * pentry, cache_content_client_t * pclient, fsal_op_context_t * pcontext, cache_content_refresh_how_t how, cache_content_status_t * pstatus)"
-.PP
-cache_content_refresh: Refreshes the whole content of a file in the local cache to the FSAL data.
+Definition at line 78 of file cache_content_flush.c.
+.SS "cache_content_status_t cache_content_refresh (cache_content_entry_t * pentry, cache_content_client_t * pclient, fsal_op_context_t * pcontext, cache_content_refresh_how_t how, cache_content_status_t * pstatus)"cache_content_refresh: Refreshes the whole content of a file in the local cache to the FSAL data.
 .PP
 Refreshes the whole content of a file in the local cache to the FSAL data. This routine should be called only from the cache_inode layer.
 .PP
@@ -102,10 +98,10 @@ CACHE_CONTENT_SUCCESS is successful .
 .PP
 
 .PP
-Definition at line 275 of file cache_content_flush.c.
+Definition at line 224 of file cache_content_flush.c.
 .SS "cache_content_status_t cache_content_sync_all (cache_content_client_t * pclient, fsal_op_context_t * pcontext, cache_content_status_t * pstatus)"
 .PP
-Definition at line 405 of file cache_content_flush.c.
+Definition at line 354 of file cache_content_flush.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File Content layer from the source code.

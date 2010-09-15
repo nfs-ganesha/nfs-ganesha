@@ -1,10 +1,11 @@
-.TH "nfs4_pseudo.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs4_pseudo.c" 3 "15 Sep 2010" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs4_pseudo.c \- Routines used for managing the NFS4 pseudo file system.  
-
+nfs4_pseudo.c \- 
 .PP
+Routines used for managing the NFS4 pseudo file system.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -30,7 +31,7 @@ nfs4_pseudo.c \- Routines used for managing the NFS4 pseudo file system.
 .br
 \fC#include <rpc/pmap_clnt.h>\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
 .br
@@ -176,10 +177,8 @@ Definition in file \fBnfs4_pseudo.c\fP.
 .PP 
 .SS "#define arg_ACCESS4   op->nfs_argop4_u.opaccess"
 .PP
-Definition at line 1430 of file nfs4_pseudo.c.
-.SS "#define arg_GETATTR4   op->nfs_argop4_u.opgetattr"
-.PP
-nfs4_op_getattr_pseudo: Gets attributes for directory in pseudo fs
+Definition at line 1385 of file nfs4_pseudo.c.
+.SS "#define arg_GETATTR4   op->nfs_argop4_u.opgetattr"nfs4_op_getattr_pseudo: Gets attributes for directory in pseudo fs
 .PP
 Gets attributes for directory in pseudo fs. These are hardcoded constants.
 .PP
@@ -199,10 +198,8 @@ NFS4_OK
 .PP
 
 .PP
-Definition at line 1374 of file nfs4_pseudo.c.
-.SS "#define arg_LOOKUP4   op->nfs_argop4_u.oplookup"
-.PP
-nfs4_op_lookup_pseudo: looks up into the pseudo fs.
+Definition at line 1336 of file nfs4_pseudo.c.
+.SS "#define arg_LOOKUP4   op->nfs_argop4_u.oplookup"nfs4_op_lookup_pseudo: looks up into the pseudo fs.
 .PP
 looks up into the pseudo fs. If a junction traversal is detected, does the necessary stuff for correcting traverse.
 .PP
@@ -222,10 +219,8 @@ NFS4_OK if successfull, other values show an error.
 .PP
 
 .PP
-Definition at line 1463 of file nfs4_pseudo.c.
-.SS "#define arg_LOOKUPP4   op->nfs_argop4_u.oplookupp"
-.PP
-nfs4_op_lookupp_pseudo: looks up into the pseudo fs for the parent directory
+Definition at line 1418 of file nfs4_pseudo.c.
+.SS "#define arg_LOOKUPP4   op->nfs_argop4_u.oplookupp"nfs4_op_lookupp_pseudo: looks up into the pseudo fs for the parent directory
 .PP
 looks up into the pseudo fs for the parent directory of the current file handle.
 .PP
@@ -245,10 +240,8 @@ NFS4_OK if successfull, other values show an error.
 .PP
 
 .PP
-Definition at line 1676 of file nfs4_pseudo.c.
-.SS "#define arg_READDIR4   op->nfs_argop4_u.opreaddir"
-.PP
-nfs4_op_readdir_pseudo: Reads a directory in the pseudo fs
+Definition at line 1621 of file nfs4_pseudo.c.
+.SS "#define arg_READDIR4   op->nfs_argop4_u.opreaddir"nfs4_op_readdir_pseudo: Reads a directory in the pseudo fs
 .PP
 Reads a directory in the pseudo fs.
 .PP
@@ -268,19 +261,17 @@ NFS4_OK if successfull, other values show an error.
 .PP
 
 .PP
-Definition at line 1734 of file nfs4_pseudo.c.
+Definition at line 1680 of file nfs4_pseudo.c.
 .SS "#define NB_OPT_TOK   10"
 .PP
-Definition at line 126 of file nfs4_pseudo.c.
+Definition at line 75 of file nfs4_pseudo.c.
 .SS "#define NB_TOK_ARG   10"
 .PP
-Definition at line 125 of file nfs4_pseudo.c.
+Definition at line 74 of file nfs4_pseudo.c.
 .SS "#define NB_TOK_PATH   20"
 .PP
-Definition at line 127 of file nfs4_pseudo.c.
-.SS "#define res_ACCESS4   resp->nfs_resop4_u.opaccess"
-.PP
-nfs4_op_access_pseudo: Checks for object accessibility in pseudo fs.
+Definition at line 76 of file nfs4_pseudo.c.
+.SS "#define res_ACCESS4   resp->nfs_resop4_u.opaccess"nfs4_op_access_pseudo: Checks for object accessibility in pseudo fs.
 .PP
 Checks for object accessibility in pseudo fs. All entries in pseudo fs return can't be accessed as ACCESS4_MODIFY|ACCESS4_EXTEND|ACCESS4_DELETE because pseudo fs is behaving as a read-only fs.
 .PP
@@ -300,24 +291,22 @@ NFS4_OK
 .PP
 
 .PP
-Definition at line 1429 of file nfs4_pseudo.c.
+Definition at line 1384 of file nfs4_pseudo.c.
 .SS "#define res_GETATTR4   resp->nfs_resop4_u.opgetattr"
 .PP
-Definition at line 1375 of file nfs4_pseudo.c.
+Definition at line 1337 of file nfs4_pseudo.c.
 .SS "#define res_LOOKUP4   resp->nfs_resop4_u.oplookup"
 .PP
-Definition at line 1464 of file nfs4_pseudo.c.
+Definition at line 1419 of file nfs4_pseudo.c.
 .SS "#define res_LOOKUPP4   resp->nfs_resop4_u.oplookupp"
 .PP
-Definition at line 1677 of file nfs4_pseudo.c.
+Definition at line 1622 of file nfs4_pseudo.c.
 .SS "#define res_READDIR4   resp->nfs_resop4_u.opreaddir"
 .PP
-Definition at line 1735 of file nfs4_pseudo.c.
+Definition at line 1681 of file nfs4_pseudo.c.
 .SH "Function Documentation"
 .PP 
-.SS "int nfs4_CreateROOTFH4 (nfs_fh4 * fh4p, compound_data_t * data)"
-.PP
-nfs4_CreateROOTFH: Creates the file handle for the '/' of the pseudo file system
+.SS "int nfs4_CreateROOTFH4 (nfs_fh4 * fh4p, compound_data_t * data)"nfs4_CreateROOTFH: Creates the file handle for the '/' of the pseudo file system
 .PP
 Creates the file handle for the '/' of the pseudo file syste.
 .PP
@@ -335,10 +324,8 @@ NFS4_OK if successfull, NFS4ERR_BADHANDLE if an error occured when creating the 
 .PP
 
 .PP
-Definition at line 1331 of file nfs4_pseudo.c.
-.SS "int nfs4_ExportToPseudoFS (exportlist_t * pexportlist)"
-.PP
-nfs4_ExportToPseudoFS: Build a pseudo fs from an exportlist
+Definition at line 1294 of file nfs4_pseudo.c.
+.SS "int nfs4_ExportToPseudoFS (exportlist_t * pexportlist)"nfs4_ExportToPseudoFS: Build a pseudo fs from an exportlist
 .PP
 Build a pseudo fs from an exportlist. This export list itself is obtained by reading the configuration file.
 .PP
@@ -349,10 +336,8 @@ the pseudo fs root
 .PP
 
 .PP
-Definition at line 183 of file nfs4_pseudo.c.
-.SS "int nfs4_FhandleToPseudo (nfs_fh4 * fh4p, pseudofs_t * psfstree, pseudofs_entry_t * psfsentry)"
-.PP
-nfs4_FhandleToPseudo: converts a NFSv4 file handle fs to an id in the pseudo
+Definition at line 131 of file nfs4_pseudo.c.
+.SS "int nfs4_FhandleToPseudo (nfs_fh4 * fh4p, pseudofs_t * psfstree, pseudofs_entry_t * psfsentry)"nfs4_FhandleToPseudo: converts a NFSv4 file handle fs to an id in the pseudo
 .PP
 Converts a NFSv4 file handle fs to an id in the pseudo, and check if the fh is related to a pseudo entry
 .PP
@@ -370,10 +355,8 @@ TRUE if successfull, FALSE if an error occured (this means the fh4 was not relat
 .PP
 
 .PP
-Definition at line 1271 of file nfs4_pseudo.c.
-.SS "pseudofs_t* nfs4_GetPseudoFs (void)"
-.PP
-nfs4_GetPseudoFs: Gets the root of the pseudo file system.
+Definition at line 1233 of file nfs4_pseudo.c.
+.SS "pseudofs_t* nfs4_GetPseudoFs (void)"nfs4_GetPseudoFs: Gets the root of the pseudo file system.
 .PP
 Gets the root of the pseudo file system. This is only a wrapper to static variable gPseudoFs.
 .PP
@@ -384,25 +367,23 @@ the pseudo fs root
 .PP
 
 .PP
-Definition at line 169 of file nfs4_pseudo.c.
+Definition at line 117 of file nfs4_pseudo.c.
 .SS "int nfs4_op_access_pseudo (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
 .PP
-Definition at line 1432 of file nfs4_pseudo.c.
+Definition at line 1387 of file nfs4_pseudo.c.
 .SS "int nfs4_op_getattr_pseudo (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
 .PP
-Definition at line 1377 of file nfs4_pseudo.c.
+Definition at line 1339 of file nfs4_pseudo.c.
 .SS "int nfs4_op_lookup_pseudo (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
 .PP
-Definition at line 1466 of file nfs4_pseudo.c.
+Definition at line 1421 of file nfs4_pseudo.c.
 .SS "int nfs4_op_lookupp_pseudo (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
 .PP
-Definition at line 1680 of file nfs4_pseudo.c.
+Definition at line 1624 of file nfs4_pseudo.c.
 .SS "int nfs4_op_readdir_pseudo (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
 .PP
-Definition at line 1737 of file nfs4_pseudo.c.
-.SS "int nfs4_PseudoToFattr (pseudofs_entry_t * psfsp, fattr4 * Fattr, compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap)"
-.PP
-nfs4_PseudoToFattr: Gets the attributes for an entry in the pseudofs
+Definition at line 1683 of file nfs4_pseudo.c.
+.SS "int nfs4_PseudoToFattr (pseudofs_entry_t * psfsp, fattr4 * Fattr, compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap)"nfs4_PseudoToFattr: Gets the attributes for an entry in the pseudofs
 .PP
 Gets the attributes for an entry in the pseudofs. Because pseudo fs structure is very simple (it is read-only and contains only directory that belongs to root), a set of standardized values is returned
 .PP
@@ -426,12 +407,6 @@ Gets the attributes for an entry in the pseudofs. Because pseudo fs structure is
 .PP
 \fBTodo\fP
 .RS 4
-: BUGAZOMEU: Allocation at NULL Adress here.... 
-.RE
-.PP
-.PP
-\fBTodo\fP
-.RS 4
 : not the right answer, actual quotas should be implemented 
 .RE
 .PP
@@ -455,10 +430,8 @@ Gets the attributes for an entry in the pseudofs. Because pseudo fs structure is
 .PP
 
 .PP
-Definition at line 344 of file nfs4_pseudo.c.
-.SS "int nfs4_PseudoToFhandle (nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry)"
-.PP
-nfs4_PseudoToFhandle: converts an id in the pseudo fs to a NFSv4 file handle
+Definition at line 299 of file nfs4_pseudo.c.
+.SS "int nfs4_PseudoToFhandle (nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry)"nfs4_PseudoToFhandle: converts an id in the pseudo fs to a NFSv4 file handle
 .PP
 Converts an id in the pseudo fs to a NFSv4 file handle.
 .PP
@@ -476,10 +449,8 @@ NFS4_OK if successfull, other values show an error.
 .PP
 
 .PP
-Definition at line 1300 of file nfs4_pseudo.c.
-.SS "uint64_t nfs4_PseudoToId (nfs_fh4 * fh4p)"
-.PP
-nfs4_PseudoToId: TConverts a file handle (to a pseudo object) to the id of this pseudo object in the pseudofs
+Definition at line 1264 of file nfs4_pseudo.c.
+.SS "uint64_t nfs4_PseudoToId (nfs_fh4 * fh4p)"nfs4_PseudoToId: TConverts a file handle (to a pseudo object) to the id of this pseudo object in the pseudofs
 .PP
 This routine merely extracts a field from the file handle which is not seen as opaque in this case. Because file handle are opaque structure, it is prefered to have a dedicated function for this and so hiding the file handle internal structure.
 .PP
@@ -500,11 +471,10 @@ nfs_GetPseudoFs
 .PP
 
 .PP
-Definition at line 148 of file nfs4_pseudo.c.
+Definition at line 97 of file nfs4_pseudo.c.
 .SH "Variable Documentation"
 .PP 
 .SS "time_t \fBServerBootTime\fP"
-.PP
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

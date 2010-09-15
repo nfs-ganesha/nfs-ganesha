@@ -1,16 +1,17 @@
-.TH "cache_inode_gc.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_gc.c" 3 "15 Sep 2010" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_gc.c \- Do garbagge collection on a cache inode client.  
-
+cache_inode_gc.c \- 
 .PP
+Do garbage collection on a cache inode client.  
+
 .SH SYNOPSIS
 .br
 .PP
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -54,10 +55,16 @@ cache_inode_gc.c \- Do garbagge collection on a cache inode client.
 .ti -1c
 .RI "cache_inode_status_t \fBcache_inode_gc\fP (hash_table_t *ht, cache_inode_client_t *pclient, cache_inode_status_t *pstatus)"
 .br
+.ti -1c
+.RI "int \fBcache_inode_gc_fd_func\fP (LRU_entry_t *plru_entry, void *addparam)"
+.br
+.ti -1c
+.RI "cache_inode_status_t \fBcache_inode_gc_fd\fP (cache_inode_client_t *pclient, cache_inode_status_t *pstatus)"
+.br
 .in -1c
 .SH "Detailed Description"
 .PP 
-Do garbagge collection on a cache inode client. 
+Do garbage collection on a cache inode client. 
 
 \fBAuthor:\fP
 .RS 4
@@ -83,7 +90,7 @@ deniel
 1.21 
 .RE
 .PP
-\fBcache_inode_gc.c\fP: do garbagge collection on a cache inode client. 
+\fBcache_inode_gc.c\fP: do garbage collection on a cache inode client. 
 .PP
 Definition in file \fBcache_inode_gc.c\fP.
 .SH "Author"

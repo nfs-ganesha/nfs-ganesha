@@ -1,10 +1,11 @@
-.TH "nfs4_op_write.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs4_op_write.c" 3 "15 Sep 2010" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs4_op_write.c \- Routines used for managing the NFS4 COMPOUND functions.  
-
+nfs4_op_write.c \- 
 .PP
+Routines used for managing the NFS4 COMPOUND functions.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -30,7 +31,7 @@ nfs4_op_write.c \- Routines used for managing the NFS4 COMPOUND functions.
 .br
 \fC#include <rpc/pmap_clnt.h>\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
 .br
@@ -88,6 +89,12 @@ nfs4_op_write.c \- Routines used for managing the NFS4 COMPOUND functions.
 .ti -1c
 .RI "verifier4 \fBNFS4_write_verifier\fP"
 .br
+.ti -1c
+.RI "char \fBall_zero\fP []"
+.br
+.ti -1c
+.RI "char \fBall_one\fP [12]"
+.br
 .in -1c
 .SH "Detailed Description"
 .PP 
@@ -124,18 +131,16 @@ Definition in file \fBnfs4_op_write.c\fP.
 .PP 
 .SS "#define arg_WRITE4   op->nfs_argop4_u.opwrite"
 .PP
-Definition at line 146 of file nfs4_op_write.c.
+Definition at line 95 of file nfs4_op_write.c.
 .SS "#define res_WRITE4   resp->nfs_resop4_u.opwrite"
 .PP
-Definition at line 147 of file nfs4_op_write.c.
+Definition at line 96 of file nfs4_op_write.c.
 .SH "Function Documentation"
 .PP 
 .SS "int nfs4_op_write (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
 .PP
-Definition at line 149 of file nfs4_op_write.c.
-.SS "void nfs4_op_write_Free (WRITE4res * resp)"
-.PP
-nfs4_op_write_Free: frees what was allocared to handle nfs4_op_write.
+Definition at line 101 of file nfs4_op_write.c.
+.SS "void nfs4_op_write_Free (WRITE4res * resp)"nfs4_op_write_Free: frees what was allocared to handle nfs4_op_write.
 .PP
 Frees what was allocared to handle nfs4_op_write.
 .PP
@@ -151,12 +156,12 @@ nothing (void function )
 .PP
 
 .PP
-Definition at line 396 of file nfs4_op_write.c.
+Definition at line 395 of file nfs4_op_write.c.
 .SH "Variable Documentation"
 .PP 
-.SS "verifier4 \fBNFS4_write_verifier\fP"
-.PP
-nfs4_op_write: The NFS4_OP_WRITE operation
+.SS "char \fBall_one\fP[12]"
+.SS "char \fBall_zero\fP[]"
+.SS "verifier4 \fBNFS4_write_verifier\fP"nfs4_op_write: The NFS4_OP_WRITE operation
 .PP
 This functions handles the NFS4_OP_WRITE operation in NFSv4. This function can be called only from nfs4_Compound.
 .PP
@@ -176,7 +181,6 @@ NFS4_OK if successfull, other values show an error.
 .PP
 
 .SS "nfs_parameter_t \fBnfs_param\fP"
-.PP
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

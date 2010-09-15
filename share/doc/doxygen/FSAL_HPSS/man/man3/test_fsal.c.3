@@ -1,16 +1,17 @@
-.TH "test_fsal.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "test_fsal.c" 3 "15 Sep 2010" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-test_fsal.c \- Program for testing fsal.  
-
+test_fsal.c \- 
 .PP
+Program for testing fsal.  
+
 .SH SYNOPSIS
 .br
 .PP
 \fC#include 'fsal.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include <unistd.h>\fP
 .br
@@ -85,21 +86,19 @@ leibovic
 Definition in file \fBtest_fsal.c\fP.
 .SH "Define Documentation"
 .PP 
-.SS "#define CHANGE_ATTRS(str_nom, nom, flag, new_val)"
-.PP
-\fBValue:\fP
+.SS "#define CHANGE_ATTRS(str_nom, nom, flag, new_val)"\fBValue:\fP
 .PP
 .nf
 do {\
   memset(&attr_set, 0, sizeof(fsal_attrib_list_t) );    \
-  printf('\nTry to change '%s' :\n',str_nom);           \
+  LogTest('\nTry to change '%s' :',str_nom);           \
   FSAL_SET_MASK( attr_set.asked_attributes , flag );    \
   attr_set.nom = new_val;                               \
   attribs.asked_attributes = attr_set.asked_attributes; \
 /*  attribs.asked_attributes = mask;                      */\
   st = FSAL_setattrs( &dir_hdl, &op_ctx, &attr_set, &attribs );\
   if ( FSAL_IS_ERROR(st) )                              \
-    DisplayErrorJd(log_desc,ERR_FSAL,st.major,st.minor);\
+    LogError(COMPONENT_STDOUT,ERR_FSAL,st.major,st.minor);\
   else                                                  \
     printattributes( attribs );                         \
   } while(0)

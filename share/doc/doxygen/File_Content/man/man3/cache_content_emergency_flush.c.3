@@ -1,16 +1,17 @@
-.TH "cache_content_emergency_flush.c" 3 "31 Mar 2009" "Version 0.1" "File Content layer" \" -*- nroff -*-
+.TH "cache_content_emergency_flush.c" 3 "15 Sep 2010" "Version 0.1" "File Content layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_content_emergency_flush.c \- Emergency flush for forcing flush of data cached files to FSAL.  
-
+cache_content_emergency_flush.c \- 
 .PP
+Emergency flush for forcing flush of data cached files to FSAL.  
+
 .SH SYNOPSIS
 .br
 .PP
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -43,6 +44,16 @@ cache_content_emergency_flush.c \- Emergency flush for forcing flush of data cac
 \fC#include <string.h>\fP
 .br
 
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBXSTR\fP(s)   STR(s)"
+.br
+.ti -1c
+.RI "#define \fBSTR\fP(s)   #s"
+.br
+.in -1c
 .SS "Functions"
 
 .in +1c
@@ -82,11 +93,13 @@ $Revision$ \fBcache_content_emergency_flush.c\fP : Emergency flush for forcing f
 
 .PP
 Definition in file \fBcache_content_emergency_flush.c\fP.
+.SH "Define Documentation"
+.PP 
+.SS "#define STR(s)   #s"
+.SS "#define XSTR(s)   STR(s)"
 .SH "Function Documentation"
 .PP 
-.SS "cache_content_status_t cache_content_emergency_flush (char * cachedir, cache_content_flush_behaviour_t flushhow, unsigned int lw_mark_trigger_flag, time_t grace_period, unsigned int index, unsigned int mod, unsigned int * p_nb_flushed, unsigned int * p_nb_too_young, unsigned int * p_nb_errors, unsigned int * p_nb_orphans, fsal_op_context_t * pcontext, cache_content_status_t * pstatus)"
-.PP
-cache_content_emergency_flush: Flushes the content of a file in the local cache to the FSAL data.
+.SS "cache_content_status_t cache_content_emergency_flush (char * cachedir, cache_content_flush_behaviour_t flushhow, unsigned int lw_mark_trigger_flag, time_t grace_period, unsigned int index, unsigned int mod, unsigned int * p_nb_flushed, unsigned int * p_nb_too_young, unsigned int * p_nb_errors, unsigned int * p_nb_orphans, fsal_op_context_t * pcontext, cache_content_status_t * pstatus)"cache_content_emergency_flush: Flushes the content of a file in the local cache to the FSAL data.
 .PP
 Flushes the content of a file in the local cache to the FSAL data. This routine should be called only from the cache_inode layer.
 .PP
@@ -120,14 +133,13 @@ CACHE_CONTENT_SUCCESS if successful, an error otherwise.
 .PP
 
 .PP
-Definition at line 156 of file cache_content_emergency_flush.c.
+Definition at line 104 of file cache_content_emergency_flush.c.
 .SH "Variable Documentation"
 .PP 
 .SS "unsigned int \fBcache_content_dir_errno\fP"
 .PP
-Definition at line 126 of file cache_content_misc.c.
+Definition at line 75 of file cache_content_misc.c.
 .SS "nfs_parameter_t \fBnfs_param\fP"
-.PP
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File Content layer from the source code.

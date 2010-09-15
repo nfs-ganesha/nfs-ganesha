@@ -1,16 +1,17 @@
-.TH "cache_inode_link.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_link.c" 3 "15 Sep 2010" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_link.c \- Creation of an hardlink.  
-
+cache_inode_link.c \- 
 .PP
+Creation of an hardlink.  
+
 .SH SYNOPSIS
 .br
 .PP
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -71,9 +72,7 @@ deniel
 Definition in file \fBcache_inode_link.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "cache_inode_status_t cache_inode_link (cache_entry_t * pentry_src, cache_entry_t * pentry_dir_dest, fsal_name_t * plink_name, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
-.PP
-cache_inode_link: hardlinks a pentry to another.
+.SS "cache_inode_status_t cache_inode_link (cache_entry_t * pentry_src, cache_entry_t * pentry_dir_dest, fsal_name_t * plink_name, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"cache_inode_link: hardlinks a pentry to another.
 .PP
 Hard links a pentry to another. This is basically a equivalent of FSAL_link in the cache inode layer.
 .PP
@@ -115,7 +114,7 @@ CACHE_INODE_ENTRY_EXISTS entry of that name already exists in destination.
 .PP
 
 .PP
-Definition at line 129 of file cache_inode_link.c.
+Definition at line 79 of file cache_inode_link.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

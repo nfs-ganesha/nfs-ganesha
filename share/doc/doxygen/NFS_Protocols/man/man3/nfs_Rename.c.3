@@ -1,10 +1,11 @@
-.TH "nfs_Rename.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs_Rename.c" 3 "15 Sep 2010" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_Rename.c \- Routines used for managing the NFS4 COMPOUND functions.  
-
+nfs_Rename.c \- 
 .PP
+Routines used for managing the NFS4 COMPOUND functions.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -30,7 +31,7 @@ nfs_Rename.c \- Routines used for managing the NFS4 COMPOUND functions.
 .br
 \fC#include <rpc/pmap_clnt.h>\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
 .br
@@ -100,9 +101,7 @@ deniel
 Definition in file \fBnfs_Rename.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "int nfs_Rename (nfs_arg_t * parg, exportlist_t * pexport, fsal_op_context_t * pcontext, cache_inode_client_t * pclient, hash_table_t * ht, struct svc_req * preq, nfs_res_t * pres)"
-.PP
-nfs_Create: The NFS PROC2 and PROC3 SYMLINK
+.SS "int nfs_Rename (nfs_arg_t * parg, exportlist_t * pexport, fsal_op_context_t * pcontext, cache_inode_client_t * pclient, hash_table_t * ht, struct svc_req * preq, nfs_res_t * pres)"nfs_Create: The NFS PROC2 and PROC3 SYMLINK
 .PP
 Implements the NFS PROC SYMLINK function (for V2 and V3).
 .PP
@@ -134,10 +133,8 @@ NFS_REQ_OK if successfull
 .PP
 
 .PP
-Definition at line 148 of file nfs_Rename.c.
-.SS "void nfs_Rename_Free (nfs_res_t * resp)"
-.PP
-nfs_Rename_Free: Frees the result structure allocated for nfs_Rename.
+Definition at line 98 of file nfs_Rename.c.
+.SS "void nfs_Rename_Free (nfs_res_t * resp)"nfs_Rename_Free: Frees the result structure allocated for nfs_Rename.
 .PP
 Frees the result structure allocated for nfs_Rename.
 .PP
@@ -148,7 +145,7 @@ Frees the result structure allocated for nfs_Rename.
 .PP
 
 .PP
-Definition at line 504 of file nfs_Rename.c.
+Definition at line 435 of file nfs_Rename.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

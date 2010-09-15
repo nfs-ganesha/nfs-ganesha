@@ -1,33 +1,33 @@
 <?xml version='1.0' encoding='UTF-8' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.6.1">
   <compounddef id="unionyyalloc" kind="union" prot="public">
     <compoundname>yyalloc</compoundname>
       <sectiondef kind="public-attrib">
-      <memberdef kind="variable" id="unionyyalloc_1ad44e4a724037e32eeb58333c516bb45" prot="public" static="no" mutable="no">
-        <type><ref refid="conf__yacc_8c_1de5b97f0021a4f6c5922ead3744ab297" kindref="member">yytype_int16</ref></type>
-        <definition>yytype_int16 yyalloc::yyss</definition>
+      <memberdef kind="variable" id="unionyyalloc_1a4800e0520a89a4789afa7b5d82197e65" prot="public" static="no" mutable="no">
+        <type><ref refid="conf__yacc_8c_1ade5b97f0021a4f6c5922ead3744ab297" kindref="member">yytype_int16</ref></type>
+        <definition>yytype_int16 yyalloc::yyss_alloc</definition>
         <argsstring></argsstring>
-        <name>yyss</name>
+        <name>yyss_alloc</name>
         <briefdescription>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/ConfigParsing/conf_yacc.c" line="339" bodyfile="/export/GANESHA/src/ConfigParsing/conf_yacc.c" bodystart="339" bodyend="-1"/>
+        <location file="/export/GANESHA/src/ConfigParsing/conf_yacc.c" line="354" bodyfile="/export/GANESHA/src/ConfigParsing/conf_yacc.c" bodystart="354" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="variable" id="unionyyalloc_19494cc8d8cd0eba1b44ca20fe89de5d2" prot="public" static="no" mutable="no">
+      <memberdef kind="variable" id="unionyyalloc_1a9326f4fdc6f737a929444427836d8928" prot="public" static="no" mutable="no">
         <type><ref refid="unionYYSTYPE" kindref="compound">YYSTYPE</ref></type>
-        <definition>YYSTYPE yyalloc::yyvs</definition>
+        <definition>YYSTYPE yyalloc::yyvs_alloc</definition>
         <argsstring></argsstring>
-        <name>yyvs</name>
+        <name>yyvs_alloc</name>
         <briefdescription>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/ConfigParsing/conf_yacc.c" line="340" bodyfile="/export/GANESHA/src/ConfigParsing/conf_yacc.c" bodystart="340" bodyend="-1"/>
+        <location file="/export/GANESHA/src/ConfigParsing/conf_yacc.c" line="355" bodyfile="/export/GANESHA/src/ConfigParsing/conf_yacc.c" bodystart="355" bodyend="-1"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
@@ -39,7 +39,7 @@
         <label>yyalloc</label>
         <link refid="unionyyalloc"/>
         <childnode refid="21" relation="usage">
-          <edgelabel>yyvs</edgelabel>
+          <edgelabel>yyvs_alloc</edgelabel>
         </childnode>
       </node>
       <node id="24">
@@ -75,10 +75,10 @@
         </childnode>
       </node>
     </collaborationgraph>
-    <location file="/export/GANESHA/src/ConfigParsing/conf_yacc.c" line="338" bodyfile="/export/GANESHA/src/ConfigParsing/conf_yacc.c" bodystart="337" bodyend="341"/>
+    <location file="/export/GANESHA/src/ConfigParsing/conf_yacc.c" line="353" bodyfile="/export/GANESHA/src/ConfigParsing/conf_yacc.c" bodystart="352" bodyend="356"/>
     <listofallmembers>
-      <member refid="unionyyalloc_1ad44e4a724037e32eeb58333c516bb45" prot="public" virt="non-virtual"><scope>yyalloc</scope><name>yyss</name></member>
-      <member refid="unionyyalloc_19494cc8d8cd0eba1b44ca20fe89de5d2" prot="public" virt="non-virtual"><scope>yyalloc</scope><name>yyvs</name></member>
+      <member refid="unionyyalloc_1a4800e0520a89a4789afa7b5d82197e65" prot="public" virt="non-virtual"><scope>yyalloc</scope><name>yyss_alloc</name></member>
+      <member refid="unionyyalloc_1a9326f4fdc6f737a929444427836d8928" prot="public" virt="non-virtual"><scope>yyalloc</scope><name>yyvs_alloc</name></member>
     </listofallmembers>
   </compounddef>
 </doxygen>

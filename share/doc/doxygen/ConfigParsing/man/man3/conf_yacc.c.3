@@ -1,4 +1,4 @@
-.TH "conf_yacc.c" 3 "31 Mar 2009" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
+.TH "conf_yacc.c" 3 "15 Sep 2010" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -30,13 +30,19 @@ conf_yacc.c \-
 .RI "#define \fBYYBISON\fP   1"
 .br
 .ti -1c
-.RI "#define \fBYYBISON_VERSION\fP   '2.3'"
+.RI "#define \fBYYBISON_VERSION\fP   '2.4.1'"
 .br
 .ti -1c
 .RI "#define \fBYYSKELETON_NAME\fP   'yacc.c'"
 .br
 .ti -1c
 .RI "#define \fBYYPURE\fP   0"
+.br
+.ti -1c
+.RI "#define \fBYYPUSH\fP   0"
+.br
+.ti -1c
+.RI "#define \fBYYPULL\fP   1"
 .br
 .ti -1c
 .RI "#define \fBYYLSP_NEEDED\fP   0"
@@ -61,6 +67,18 @@ conf_yacc.c \-
 .br
 .ti -1c
 .RI "#define \fByynerrs\fP   ganesha_yynerrs"
+.br
+.ti -1c
+.RI "#define \fBDEBUG_YACK\fP"
+.br
+.ti -1c
+.RI "#define \fBYYDEBUG\fP   0"
+.br
+.ti -1c
+.RI "#define \fBYYERROR_VERBOSE\fP   0"
+.br
+.ti -1c
+.RI "#define \fBYYTOKEN_TABLE\fP   0"
 .br
 .ti -1c
 .RI "#define \fB_ERROR_\fP   258"
@@ -90,25 +108,13 @@ conf_yacc.c \-
 .RI "#define \fBKEYVALUE\fP   266"
 .br
 .ti -1c
-.RI "#define \fBDEBUG_YACK\fP"
-.br
-.ti -1c
-.RI "#define \fBYYDEBUG\fP   0"
-.br
-.ti -1c
-.RI "#define \fBYYERROR_VERBOSE\fP   0"
-.br
-.ti -1c
-.RI "#define \fBYYTOKEN_TABLE\fP   0"
+.RI "#define \fBYYSTYPE_IS_TRIVIAL\fP   1"
 .br
 .ti -1c
 .RI "#define \fByystype\fP   \fBYYSTYPE\fP"
 .br
 .ti -1c
 .RI "#define \fBYYSTYPE_IS_DECLARED\fP   1"
-.br
-.ti -1c
-.RI "#define \fBYYSTYPE_IS_TRIVIAL\fP   1"
 .br
 .ti -1c
 .RI "#define \fBYYSIZE_T\fP   unsigned int"
@@ -150,7 +156,7 @@ conf_yacc.c \-
 .RI "#define \fBYYCOPY\fP(To, From, Count)"
 .br
 .ti -1c
-.RI "#define \fBYYSTACK_RELOCATE\fP(Stack)"
+.RI "#define \fBYYSTACK_RELOCATE\fP(Stack_alloc, Stack)"
 .br
 .ti -1c
 .RI "#define \fBYYFINAL\fP   6"
@@ -320,61 +326,59 @@ conf_yacc.c \-
 .PP 
 .SS "#define _ERROR_   258"
 .PP
-Definition at line 89 of file conf_yacc.c.
+Definition at line 152 of file conf_yacc.c.
 .SS "#define AFFECTATION   263"
 .PP
-Definition at line 94 of file conf_yacc.c.
+Definition at line 157 of file conf_yacc.c.
 .SS "#define BEGIN_BLOCK   259"
 .PP
-Definition at line 90 of file conf_yacc.c.
+Definition at line 153 of file conf_yacc.c.
 .SS "#define BEGIN_SUB_BLOCK   261"
 .PP
-Definition at line 92 of file conf_yacc.c.
+Definition at line 155 of file conf_yacc.c.
 .SS "#define DEBUG_YACK"
 .PP
-Definition at line 130 of file conf_yacc.c.
+Definition at line 106 of file conf_yacc.c.
 .SS "#define END_AFFECT   264"
 .PP
-Definition at line 95 of file conf_yacc.c.
+Definition at line 158 of file conf_yacc.c.
 .SS "#define END_BLOCK   260"
 .PP
-Definition at line 91 of file conf_yacc.c.
+Definition at line 154 of file conf_yacc.c.
 .SS "#define END_SUB_BLOCK   262"
 .PP
-Definition at line 93 of file conf_yacc.c.
+Definition at line 156 of file conf_yacc.c.
 .SS "#define IDENTIFIER   265"
 .PP
-Definition at line 96 of file conf_yacc.c.
+Definition at line 159 of file conf_yacc.c.
 .SS "#define KEYVALUE   266"
 .PP
-Definition at line 97 of file conf_yacc.c.
+Definition at line 160 of file conf_yacc.c.
 .SS "#define YY_(msgid)   msgid"
 .PP
-Definition at line 233 of file conf_yacc.c.
+Definition at line 248 of file conf_yacc.c.
 .SS "#define YY_LOCATION_PRINT(File, Loc)   ((void) 0)"
 .PP
-Definition at line 638 of file conf_yacc.c.
+Definition at line 653 of file conf_yacc.c.
 .SS "#define YY_REDUCE_PRINT(Rule)"
 .PP
-Definition at line 808 of file conf_yacc.c.
+Definition at line 826 of file conf_yacc.c.
 .SS "#define YY_STACK_PRINT(Bottom, Top)"
 .PP
-Definition at line 807 of file conf_yacc.c.
+Definition at line 825 of file conf_yacc.c.
 .SS "#define YY_SYMBOL_PRINT(Title, Type, Value, Location)"
 .PP
-Definition at line 806 of file conf_yacc.c.
+Definition at line 824 of file conf_yacc.c.
 .SS "#define YYABORT   goto yyabortlab"
 .PP
-Definition at line 567 of file conf_yacc.c.
+Definition at line 582 of file conf_yacc.c.
 .SS "#define YYACCEPT   goto yyacceptlab"
 .PP
-Definition at line 566 of file conf_yacc.c.
-.SS "#define YYBACKUP(Token, Value)"
-.PP
-\fBValue:\fP
+Definition at line 581 of file conf_yacc.c.
+.SS "#define YYBACKUP(Token, Value)"\fBValue:\fP
 .PP
 .nf
-do                                                          \
+do                                                            \
   if (yychar == YYEMPTY && yylen == 1)                          \
     {                                                           \
       yychar = (Token);                                         \
@@ -391,25 +395,23 @@ do                                                          \
 while (YYID (0))
 .fi
 .PP
-Definition at line 579 of file conf_yacc.c.
+Definition at line 594 of file conf_yacc.c.
 .SS "#define YYBISON   1"
 .PP
-Definition at line 47 of file conf_yacc.c.
-.SS "#define YYBISON_VERSION   '2.3'"
+Definition at line 46 of file conf_yacc.c.
+.SS "#define YYBISON_VERSION   '2.4.1'"
 .PP
-Definition at line 50 of file conf_yacc.c.
+Definition at line 49 of file conf_yacc.c.
 .SS "#define \fByychar\fP   ganesha_yychar"
 .PP
-Definition at line 66 of file conf_yacc.c.
+Definition at line 71 of file conf_yacc.c.
 .SS "#define yyclearin   (\fByychar\fP = YYEMPTY)"
 .PP
-Definition at line 562 of file conf_yacc.c.
-.SS "#define YYCOPY(To, From, Count)"
-.PP
-\fBValue:\fP
+Definition at line 577 of file conf_yacc.c.
+.SS "#define YYCOPY(To, From, Count)"\fBValue:\fP
 .PP
 .nf
-do                                 \
+do                                       \
         {                                       \
           YYSIZE_T yyi;                         \
           for (yyi = 0; yyi < (Count); yyi++)   \
@@ -418,64 +420,62 @@ do                                 \
       while (YYID (0))
 .fi
 .PP
-Definition at line 359 of file conf_yacc.c.
+Definition at line 374 of file conf_yacc.c.
 .SS "#define YYDEBUG   0"
 .PP
-Definition at line 138 of file conf_yacc.c.
+Definition at line 117 of file conf_yacc.c.
 .SS "#define yydebug   ganesha_yydebug"
 .PP
-Definition at line 67 of file conf_yacc.c.
+Definition at line 72 of file conf_yacc.c.
 .SS "#define YYDPRINTF(Args)"
 .PP
-Definition at line 805 of file conf_yacc.c.
+Definition at line 823 of file conf_yacc.c.
 .SS "#define YYEMPTY   (-2)"
 .PP
-Definition at line 563 of file conf_yacc.c.
+Definition at line 578 of file conf_yacc.c.
 .SS "#define YYEOF   0"
 .PP
-Definition at line 564 of file conf_yacc.c.
+Definition at line 579 of file conf_yacc.c.
 .SS "#define YYERRCODE   256"
 .PP
-Definition at line 598 of file conf_yacc.c.
+Definition at line 613 of file conf_yacc.c.
 .SS "#define yyerrok   (yyerrstatus = 0)"
 .PP
-Definition at line 561 of file conf_yacc.c.
+Definition at line 576 of file conf_yacc.c.
 .SS "#define YYERROR   goto yyerrorlab"
 .PP
-Definition at line 568 of file conf_yacc.c.
+Definition at line 583 of file conf_yacc.c.
 .SS "#define yyerror   ganesha_yyerror"
 .PP
-Definition at line 64 of file conf_yacc.c.
+Definition at line 69 of file conf_yacc.c.
 .SS "#define YYERROR_VERBOSE   0"
 .PP
-Definition at line 146 of file conf_yacc.c.
+Definition at line 125 of file conf_yacc.c.
 .SS "#define YYFAIL   goto yyerrlab"
 .PP
-Definition at line 575 of file conf_yacc.c.
+Definition at line 590 of file conf_yacc.c.
 .SS "#define YYFINAL   6"
 .PP
-Definition at line 389 of file conf_yacc.c.
+Definition at line 404 of file conf_yacc.c.
 .SS "#define YYFREE   free"
 .PP
-Definition at line 322 of file conf_yacc.c.
+Definition at line 337 of file conf_yacc.c.
 .SS "#define YYID(n)   (n)"
 .PP
-Definition at line 246 of file conf_yacc.c.
+Definition at line 261 of file conf_yacc.c.
 .SS "#define YYINITDEPTH   200"
 .PP
-Definition at line 814 of file conf_yacc.c.
+Definition at line 832 of file conf_yacc.c.
 .SS "#define YYLAST   14"
 .PP
-Definition at line 391 of file conf_yacc.c.
+Definition at line 406 of file conf_yacc.c.
 .SS "#define YYLEX   yylex ()"
 .PP
-Definition at line 648 of file conf_yacc.c.
+Definition at line 663 of file conf_yacc.c.
 .SS "#define yylex   ganesha_yylex"
 .PP
-Definition at line 63 of file conf_yacc.c.
-.SS "#define YYLLOC_DEFAULT(Current, Rhs, N)"
-.PP
-\fBValue:\fP
+Definition at line 68 of file conf_yacc.c.
+.SS "#define YYLLOC_DEFAULT(Current, Rhs, N)"\fBValue:\fP
 .PP
 .nf
 do                                                                      \
@@ -496,143 +496,144 @@ do                                                                      \
     while (YYID (0))
 .fi
 .PP
-Definition at line 607 of file conf_yacc.c.
+Definition at line 622 of file conf_yacc.c.
 .SS "#define YYLSP_NEEDED   0"
 .PP
-Definition at line 59 of file conf_yacc.c.
+Definition at line 64 of file conf_yacc.c.
 .SS "#define \fByylval\fP   \fBganesha_yylval\fP"
 .PP
-Definition at line 65 of file conf_yacc.c.
+Definition at line 70 of file conf_yacc.c.
 .SS "#define YYMALLOC   malloc"
 .PP
-Definition at line 315 of file conf_yacc.c.
+Definition at line 330 of file conf_yacc.c.
 .SS "#define YYMAXDEPTH   10000"
 .PP
-Definition at line 825 of file conf_yacc.c.
+Definition at line 843 of file conf_yacc.c.
 .SS "#define YYMAXUTOK   266"
 .PP
-Definition at line 404 of file conf_yacc.c.
+Definition at line 419 of file conf_yacc.c.
 .SS "#define \fByynerrs\fP   ganesha_yynerrs"
 .PP
-Definition at line 68 of file conf_yacc.c.
+Definition at line 73 of file conf_yacc.c.
 .SS "#define YYNNTS   8"
 .PP
-Definition at line 396 of file conf_yacc.c.
+Definition at line 411 of file conf_yacc.c.
 .SS "#define YYNRULES   11"
 .PP
-Definition at line 398 of file conf_yacc.c.
+Definition at line 413 of file conf_yacc.c.
 .SS "#define YYNSTATES   21"
 .PP
-Definition at line 400 of file conf_yacc.c.
+Definition at line 415 of file conf_yacc.c.
 .SS "#define YYNTOKENS   12"
 .PP
-Definition at line 394 of file conf_yacc.c.
+Definition at line 409 of file conf_yacc.c.
 .SS "#define YYPACT_NINF   -11"
 .PP
-Definition at line 521 of file conf_yacc.c.
+Definition at line 536 of file conf_yacc.c.
 .SS "int yyparse   ganesha_yyparse"
 .PP
-Definition at line 62 of file conf_yacc.c.
+Definition at line 67 of file conf_yacc.c.
 .SS "#define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))"
+.SS "#define YYPULL   1"
 .PP
+Definition at line 61 of file conf_yacc.c.
 .SS "#define YYPURE   0"
 .PP
-Definition at line 56 of file conf_yacc.c.
+Definition at line 55 of file conf_yacc.c.
+.SS "#define YYPUSH   0"
+.PP
+Definition at line 58 of file conf_yacc.c.
 .SS "#define YYRECOVERING()   (!!yyerrstatus)"
 .PP
-Definition at line 577 of file conf_yacc.c.
+Definition at line 592 of file conf_yacc.c.
 .SS "#define YYRHSLOC(Rhs, K)   ((Rhs)[K])"
 .PP
-Definition at line 605 of file conf_yacc.c.
+Definition at line 620 of file conf_yacc.c.
 .SS "#define YYSIZE_MAXIMUM   ((YYSIZE_T) -1)"
 .PP
-Definition at line 223 of file conf_yacc.c.
+Definition at line 238 of file conf_yacc.c.
 .SS "#define YYSIZE_T   unsigned int"
 .PP
-Definition at line 219 of file conf_yacc.c.
+Definition at line 234 of file conf_yacc.c.
 .SS "#define YYSKELETON_NAME   'yacc.c'"
 .PP
-Definition at line 53 of file conf_yacc.c.
+Definition at line 52 of file conf_yacc.c.
 .SS "#define YYSTACK_ALLOC   YYMALLOC"
 .PP
-Definition at line 301 of file conf_yacc.c.
+Definition at line 316 of file conf_yacc.c.
 .SS "#define YYSTACK_ALLOC_MAXIMUM   YYSIZE_MAXIMUM"
 .PP
-Definition at line 304 of file conf_yacc.c.
-.SS "#define YYSTACK_BYTES(N)"
-.PP
-\fBValue:\fP
+Definition at line 319 of file conf_yacc.c.
+.SS "#define YYSTACK_BYTES(N)"\fBValue:\fP
 .PP
 .nf
 ((N) * (sizeof (yytype_int16) + sizeof (YYSTYPE)) \
       + YYSTACK_GAP_MAXIMUM)
 .fi
 .PP
-Definition at line 348 of file conf_yacc.c.
+Definition at line 363 of file conf_yacc.c.
 .SS "#define YYSTACK_FREE   YYFREE"
 .PP
-Definition at line 302 of file conf_yacc.c.
+Definition at line 317 of file conf_yacc.c.
 .SS "#define YYSTACK_GAP_MAXIMUM   (sizeof (union \fByyalloc\fP) - 1)"
 .PP
-Definition at line 344 of file conf_yacc.c.
-.SS "#define YYSTACK_RELOCATE(Stack)"
-.PP
-\fBValue:\fP
+Definition at line 359 of file conf_yacc.c.
+.SS "#define YYSTACK_RELOCATE(Stack_alloc, Stack)"\fBValue:\fP
 .PP
 .nf
-do                                                                    \
+do                                                                       \
       {                                                                 \
         YYSIZE_T yynewbytes;                                            \
-        YYCOPY (&yyptr->Stack, Stack, yysize);                          \
-        Stack = &yyptr->Stack;                                          \
+        YYCOPY (&yyptr->Stack_alloc, Stack, yysize);                    \
+        Stack = &yyptr->Stack_alloc;                                    \
         yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
         yyptr += yynewbytes / sizeof (*yyptr);                          \
       }                                                                 \
     while (YYID (0))
 .fi
 .PP
-Definition at line 375 of file conf_yacc.c.
+Definition at line 390 of file conf_yacc.c.
 .SS "#define yystype   \fBYYSTYPE\fP"
 .PP
-Definition at line 165 of file conf_yacc.c.
+Definition at line 182 of file conf_yacc.c.
 .SS "#define YYSTYPE_IS_DECLARED   1"
 .PP
-Definition at line 166 of file conf_yacc.c.
+Definition at line 183 of file conf_yacc.c.
 .SS "#define YYSTYPE_IS_TRIVIAL   1"
 .PP
-Definition at line 167 of file conf_yacc.c.
+Definition at line 181 of file conf_yacc.c.
 .SS "#define YYTABLE_NINF   -1"
 .PP
-Definition at line 539 of file conf_yacc.c.
+Definition at line 554 of file conf_yacc.c.
 .SS "#define YYTERROR   1"
 .PP
-Definition at line 597 of file conf_yacc.c.
+Definition at line 612 of file conf_yacc.c.
 .SS "#define YYTOKEN_TABLE   0"
 .PP
-Definition at line 151 of file conf_yacc.c.
+Definition at line 130 of file conf_yacc.c.
 .SS "#define YYTRANSLATE(YYX)   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)"
 .PP
-Definition at line 406 of file conf_yacc.c.
+Definition at line 421 of file conf_yacc.c.
 .SS "#define YYUNDEFTOK   2"
 .PP
-Definition at line 403 of file conf_yacc.c.
+Definition at line 418 of file conf_yacc.c.
 .SS "#define YYUSE(e)   ((void) (e))"
 .PP
-Definition at line 239 of file conf_yacc.c.
+Definition at line 254 of file conf_yacc.c.
 .SH "Typedef Documentation"
 .PP 
 .SS "typedef short int \fByytype_int16\fP"
 .PP
-Definition at line 206 of file conf_yacc.c.
+Definition at line 221 of file conf_yacc.c.
 .SS "typedef short int \fByytype_int8\fP"
 .PP
-Definition at line 194 of file conf_yacc.c.
+Definition at line 209 of file conf_yacc.c.
 .SS "typedef unsigned short int \fByytype_uint16\fP"
 .PP
-Definition at line 200 of file conf_yacc.c.
+Definition at line 215 of file conf_yacc.c.
 .SS "typedef unsigned char \fByytype_uint8\fP"
 .PP
-Definition at line 185 of file conf_yacc.c.
+Definition at line 200 of file conf_yacc.c.
 .SH "Enumeration Type Documentation"
 .PP 
 .SS "enum \fByytokentype\fP"
@@ -677,39 +678,39 @@ Definition at line 185 of file conf_yacc.c.
 \fB\fIKEYVALUE \fP\fP
 
 .PP
-Definition at line 76 of file conf_yacc.c.
+Definition at line 139 of file conf_yacc.c.
 .SH "Function Documentation"
 .PP 
 .SS "void ganesha_yyerror (char * s)"
 .PP
-Definition at line 1631 of file conf_yacc.c.
+Definition at line 1658 of file conf_yacc.c.
 .SS "int ganesha_yylex (void)"
-.PP
 .SS "void set_error (char * s)"
 .PP
-Definition at line 1638 of file conf_yacc.c.
+Definition at line 1665 of file conf_yacc.c.
 .SS "int yyparse ()"
 .PP
+Definition at line 1138 of file conf_yacc.c.
 .SH "Variable Documentation"
 .PP 
 .SS "char \fBextern_errormsg\fP[1024] = ''"
 .PP
-Definition at line 125 of file conf_yacc.c.
+Definition at line 101 of file conf_yacc.c.
 .SS "char \fBlocal_errormsg\fP[1024] = ''"
 .PP
-Definition at line 122 of file conf_yacc.c.
+Definition at line 98 of file conf_yacc.c.
 .SS "\fBlist_items\fP* \fBprogram_result\fP = NULL"
 .PP
-Definition at line 119 of file conf_yacc.c.
+Definition at line 95 of file conf_yacc.c.
 .SS "int \fByychar\fP"
 .PP
-Definition at line 1092 of file conf_yacc.c.
+Definition at line 1107 of file conf_yacc.c.
 .SS "\fBYYSTYPE\fP \fByylval\fP"
 .PP
-Definition at line 1095 of file conf_yacc.c.
+Definition at line 1110 of file conf_yacc.c.
 .SS "int \fByynerrs\fP"
 .PP
-Definition at line 1098 of file conf_yacc.c.
+Definition at line 1113 of file conf_yacc.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for ConfigParsing from the source code.

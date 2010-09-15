@@ -3,7 +3,6 @@ ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = include             \
           Log 		      \
           BuddyMalloc         \
-          StuffAlloc          \
           Common              \
           ConfigParsing       \
           RW_Lock             \

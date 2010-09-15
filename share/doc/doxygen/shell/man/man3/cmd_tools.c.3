@@ -1,10 +1,11 @@
-.TH "cmd_tools.c" 3 "31 Mar 2009" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.TH "cmd_tools.c" 3 "15 Sep 2010" "Version 0.1" "ganeshell" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cmd_tools.c \- Header file for functions used by several layers.  
-
+cmd_tools.c \- 
 .PP
+Header file for functions used by several layers.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -124,8 +125,6 @@ Revision 1.24 2006/01/20 14:44:13 leibovic altgroups support.
 .PP
 Revision 1.23 2006/01/17 14:56:22 leibovic Adaptation de HPSS 6.2.
 .PP
-Revision 1.22 2005/11/28 17:03:00 deniel Added CeCILL headers
-.PP
 Revision 1.21 2005/09/28 09:08:00 leibovic thread-safe version of localtime.
 .PP
 Revision 1.20 2005/09/09 15:23:11 leibovic Adding 'cross' command for crossing junctions.
@@ -171,9 +170,7 @@ Revision 1.1 2004/12/09 15:46:22 leibovic Tools externalisation.
 Definition in file \fBcmd_tools.c\fP.
 .SH "Define Documentation"
 .PP 
-.SS "#define print_mask(_out, _mode, _mask, _lettre)"
-.PP
-\fBValue:\fP
+.SS "#define print_mask(_out, _mode, _mask, _lettre)"\fBValue:\fP
 .PP
 .nf
 do {    \
@@ -201,17 +198,14 @@ Nothing.
 .PP
 
 .PP
-Definition at line 836 of file cmd_tools.c.
+Definition at line 821 of file cmd_tools.c.
 .SS "#define TIME_STRLEN   30"
-.PP
 .SH "Function Documentation"
 .PP 
 .SS "int ato64 (char * str, unsigned long long * out64)"
 .PP
-Definition at line 265 of file cmd_tools.c.
-.SS "int atomode (char * str)"
-.PP
-atomode: This function converts a string to a unix access mode.
+Definition at line 215 of file cmd_tools.c.
+.SS "int atomode (char * str)"atomode: This function converts a string to a unix access mode.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -225,15 +219,11 @@ A negative value on error. Else, the access mode integer.
 .PP
 
 .PP
-Definition at line 242 of file cmd_tools.c.
-.SS "time_t atotime (char * str)"
+Definition at line 190 of file cmd_tools.c.
+.SS "time_t atotime (char * str)"convert time from 'YYYYMMDDHHMMSS' to time_t. 
 .PP
-convert time from 'YYYYMMDDHHMMSS' to time_t. 
-.PP
-Definition at line 293 of file cmd_tools.c.
-.SS "void clean_path (char * str, int len)"
-.PP
-clean_path: Transform a path to a cannonical path. Remove //, /./, /../, final / from a POSIX-like path.
+Definition at line 247 of file cmd_tools.c.
+.SS "void clean_path (char * str, int len)"clean_path: Transform a path to a cannonical path. Remove //, /./, /../, final / from a POSIX-like path.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -249,10 +239,8 @@ Nothing.
 .PP
 
 .PP
-Definition at line 540 of file cmd_tools.c.
-.SS "char* concat (char * str1, char * str2, size_t max_len)"
-.PP
-concat: concatenates 2 strings with a limitation of the size of the destination string.
+Definition at line 513 of file cmd_tools.c.
+.SS "char* concat (char * str1, char * str2, size_t max_len)"concat: concatenates 2 strings with a limitation of the size of the destination string.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -270,16 +258,14 @@ NULL on error, the destination string, else.
 .PP
 
 .PP
-Definition at line 1114 of file cmd_tools.c.
+Definition at line 1123 of file cmd_tools.c.
 .SS "int getugroups (int maxcount, gid_t * grouplist, char * username, gid_t gid)"
 .PP
-Definition at line 1128 of file cmd_tools.c.
+Definition at line 1138 of file cmd_tools.c.
 .SS "struct tm* Localtime_r (const time_t * p_time, struct tm * p_tm)\fC [read]\fP"
 .PP
-Definition at line 179 of file cmd_tools.c.
-.SS "int MkFSALSetAttrStruct (char * attribute_list, fsal_attrib_list_t * fsal_set_attr_struct)"
-.PP
-this function converts peers (attr_name=attr_value,attr_name=attr_value,...) to a fsal_attrib_list_t to be used in the FSAL_setattr call). 
+Definition at line 125 of file cmd_tools.c.
+.SS "int MkFSALSetAttrStruct (char * attribute_list, fsal_attrib_list_t * fsal_set_attr_struct)"this function converts peers (attr_name=attr_value,attr_name=attr_value,...) to a fsal_attrib_list_t to be used in the FSAL_setattr call). 
 .PP
 \fBReturns:\fP
 .RS 4
@@ -288,10 +274,8 @@ this function converts peers (attr_name=attr_value,attr_name=attr_value,...) to 
 .PP
 
 .PP
-Definition at line 945 of file cmd_tools.c.
-.SS "int my_atoi (char * str)"
-.PP
-my_atoi: This function converts a string to an integer.
+Definition at line 956 of file cmd_tools.c.
+.SS "int my_atoi (char * str)"my_atoi: This function converts a string to an integer.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -305,10 +289,8 @@ A negative value on error. Else, the converted integer.
 .PP
 
 .PP
-Definition at line 211 of file cmd_tools.c.
-.SS "void print_fsal_attrib_mask (fsal_attrib_mask_t mask, FILE * output)"
-.PP
-print_fsal_attrib_mask: Print an fsal_attrib_mask_t to a given output file.
+Definition at line 156 of file cmd_tools.c.
+.SS "void print_fsal_attrib_mask (fsal_attrib_mask_t mask, FILE * output)"print_fsal_attrib_mask: Print an fsal_attrib_mask_t to a given output file.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -324,10 +306,8 @@ Nothing.
 .PP
 
 .PP
-Definition at line 707 of file cmd_tools.c.
-.SS "void print_fsal_attributes (fsal_attrib_list_t attrs, FILE * output)"
-.PP
-print_fsal_attributes: print an fsal_attrib_list_t to a given output file.
+Definition at line 693 of file cmd_tools.c.
+.SS "void print_fsal_attributes (fsal_attrib_list_t attrs, FILE * output)"print_fsal_attributes: print an fsal_attrib_list_t to a given output file.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -343,10 +323,8 @@ Nothing.
 .PP
 
 .PP
-Definition at line 784 of file cmd_tools.c.
-.SS "void print_fsal_status (FILE * output, fsal_status_t status)"
-.PP
-print_fsal_status: this function prints an fsal_status_t to a given output file.
+Definition at line 771 of file cmd_tools.c.
+.SS "void print_fsal_status (FILE * output, fsal_status_t status)"print_fsal_status: this function prints an fsal_status_t to a given output file.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -362,10 +340,8 @@ Nothing.
 .PP
 
 .PP
-Definition at line 677 of file cmd_tools.c.
-.SS "void print_item_line (FILE * out, fsal_attrib_list_t * attrib, char * name, char * target)"
-.PP
-print_item_line: Prints a filesystem element on one line, like the Unix ls command.
+Definition at line 665 of file cmd_tools.c.
+.SS "void print_item_line (FILE * out, fsal_attrib_list_t * attrib, char * name, char * target)"print_item_line: Prints a filesystem element on one line, like the Unix ls command.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -385,10 +361,8 @@ Nothing.
 .PP
 
 .PP
-Definition at line 841 of file cmd_tools.c.
-.SS "void split_path (char * in_path, char ** p_path, char ** p_file)"
-.PP
-split_path: splits a path 'dir/dir/dir/obj' in two strings : 'dir/dir/dir' and 'obj'.
+Definition at line 826 of file cmd_tools.c.
+.SS "void split_path (char * in_path, char ** p_path, char ** p_file)"split_path: splits a path 'dir/dir/dir/obj' in two strings : 'dir/dir/dir' and 'obj'.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -401,10 +375,8 @@ split_path: splits a path 'dir/dir/dir/obj' in two strings : 'dir/dir/dir' and '
 .PP
 
 .PP
-Definition at line 443 of file cmd_tools.c.
-.SS "char* strtype (fsal_nodetype_t type)"
-.PP
-strtype: convert an FSAL object type to a string.
+Definition at line 408 of file cmd_tools.c.
+.SS "char* strtype (fsal_nodetype_t type)"strtype: convert an FSAL object type to a string.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -418,13 +390,13 @@ The name (char *) for this FSAL object type.
 .PP
 
 .PP
-Definition at line 754 of file cmd_tools.c.
+Definition at line 740 of file cmd_tools.c.
 .SS "char* time2str (time_t time_in, char * str_out)"
 .PP
-Definition at line 501 of file cmd_tools.c.
+Definition at line 472 of file cmd_tools.c.
 .SS "struct timeval time_diff (struct timeval time_from, struct timeval time_to)\fC [read]\fP"
 .PP
-Definition at line 1094 of file cmd_tools.c.
+Definition at line 1101 of file cmd_tools.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for ganeshell from the source code.

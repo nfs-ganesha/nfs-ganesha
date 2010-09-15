@@ -1,15 +1,23 @@
 <?xml version='1.0' encoding='UTF-8' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.6.1">
   <compounddef id="todo" kind="page">
     <compoundname>todo</compoundname>
     <title>Todo List</title>
     <detaileddescription>
 <para><anchor id="todo_1_todo000001"/> <variablelist>
-<varlistentry><term>Member <ref refid="cache__inode__rdwr_8c_1f3878e8cd9fc756551aa55064bd83a24" kindref="member">cache_inode_rdwr</ref>  </term></varlistentry>
+<varlistentry><term>Member <ref refid="cache__inode__commit_8c_1adabd45468b128f8dcafa8494ee675b3a" kindref="member">cache_inode_commit</ref>  </term></varlistentry>
 <listitem><para>: BUGAZEOMEU; gestion de la taille du fichier a prendre en compte.</para><para></para></listitem>
 </variablelist>
 </para><para><anchor id="todo_1_todo000002"/> <variablelist>
-<varlistentry><term>Member <ref refid="cache__inode__truncate_8c_147a841b1e374c1ae863334405a900e0f" kindref="member">cache_inode_truncate_sw</ref>  </term></varlistentry>
+<varlistentry><term>Member <ref refid="cache__inode__rdwr_8c_1a6f2d5512bbd82c42e48f7b4e969f5695" kindref="member">cache_inode_rdwr</ref>  </term></varlistentry>
+<listitem><para>: BUGAZEOMEU; gestion de la taille du fichier a prendre en compte.</para><para></para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000003"/> <variablelist>
+<varlistentry><term>Member <ref refid="cache__inode__state_8c_1ad9aa54863f2c131ddaa786fbdf4d21c1" kindref="member">cache_inode_state_conflict</ref>  </term></varlistentry>
+<listitem><para>No conflict management on layout for now </para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000004"/> <variablelist>
+<varlistentry><term>Member <ref refid="cache__inode__truncate_8c_1a47a841b1e374c1ae863334405a900e0f" kindref="member">cache_inode_truncate_sw</ref>  </term></varlistentry>
 <listitem><para>&amp;pentry-&gt;object.file.open_fd.fd, </para></listitem>
 </variablelist>
 </para>    </detaileddescription>

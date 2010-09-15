@@ -1,16 +1,17 @@
-.TH "cache_content_read_conf.c" 3 "31 Mar 2009" "Version 0.1" "File Content layer" \" -*- nroff -*-
+.TH "cache_content_read_conf.c" 3 "15 Sep 2010" "Version 0.1" "File Content layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_content_read_conf.c \- Management of the file content cache: configuration file parsing.  
-
+cache_content_read_conf.c \- 
 .PP
+Management of the file content cache: configuration file parsing.  
+
 .SH SYNOPSIS
 .br
 .PP
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -60,7 +61,7 @@ cache_content_read_conf.c \- Management of the file content cache: configuration
 .RI "char \fBfcc_log_path\fP [MAXPATHLEN]"
 .br
 .ti -1c
-.RI "int \fBfcc_debug_level\fP"
+.RI "int \fBfcc_debug_level\fP = -1"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -96,9 +97,7 @@ deniel
 Definition in file \fBcache_content_read_conf.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "void cache_content_print_conf_client_parameter (FILE * output, cache_content_client_parameter_t param)"
-.PP
-cache_content_print_conf_client_parameter: prints the client parameter.
+.SS "void cache_content_print_conf_client_parameter (FILE * output, cache_content_client_parameter_t param)"cache_content_print_conf_client_parameter: prints the client parameter.
 .PP
 Prints the client parameters.
 .PP
@@ -116,12 +115,10 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 274 of file cache_content_read_conf.c.
-.SS "void cache_content_print_conf_gc_policy (FILE * output, cache_content_gc_policy_t gcpolicy)"
+Definition at line 215 of file cache_content_read_conf.c.
+.SS "void cache_content_print_conf_gc_policy (FILE * output, cache_content_gc_policy_t gcpolicy)"cache_content_print_gc_pol: prints the garbage collection policy.
 .PP
-cache_content_print_gc_pol: prints the garbagge collection policy.
-.PP
-Prints the garbagge collection policy.
+Prints the garbage collection policy.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -137,11 +134,9 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 394 of file cache_content_read_conf.c.
+Definition at line 334 of file cache_content_read_conf.c.
 .SS "cache_content_status_t cache_content_read_conf_client_parameter (config_file_t in_config, cache_content_client_parameter_t * pparam)"
 .PP
-
-.PP
 \fBTodo\fP
 .RS 4
 : BUGAZOMEU: to be removed 
@@ -161,12 +156,10 @@ Definition at line 394 of file cache_content_read_conf.c.
 .PP
 
 .PP
-Definition at line 128 of file cache_content_read_conf.c.
-.SS "cache_content_status_t cache_content_read_conf_gc_policy (config_file_t in_config, cache_content_gc_policy_t * ppolicy)"
+Definition at line 77 of file cache_content_read_conf.c.
+.SS "cache_content_status_t cache_content_read_conf_gc_policy (config_file_t in_config, cache_content_gc_policy_t * ppolicy)"cache_content_read_conf_gc_policy: read the garbage collection policy in configuration file.
 .PP
-cache_content_read_conf_gc_policy: read the garbagge collection policy in configuration file.
-.PP
-Reads the garbagge collection policy in configuration file.
+Reads the garbage collection policy in configuration file.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -182,15 +175,15 @@ CACHE_CONTENT_SUCCESS if ok, CACHE_CONTENT_NOT_FOUND is stanza is not there, CAC
 .PP
 
 .PP
-Definition at line 296 of file cache_content_read_conf.c.
+Definition at line 238 of file cache_content_read_conf.c.
 .SH "Variable Documentation"
 .PP 
-.SS "int \fBfcc_debug_level\fP"
+.SS "int \fBfcc_debug_level\fP = -1"
 .PP
-Definition at line 114 of file cache_content_read_conf.c.
+Definition at line 63 of file cache_content_read_conf.c.
 .SS "char \fBfcc_log_path\fP[MAXPATHLEN]"
 .PP
-Definition at line 113 of file cache_content_read_conf.c.
+Definition at line 62 of file cache_content_read_conf.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File Content layer from the source code.

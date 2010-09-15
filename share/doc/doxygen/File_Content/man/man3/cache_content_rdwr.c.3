@@ -1,10 +1,11 @@
-.TH "cache_content_rdwr.c" 3 "31 Mar 2009" "Version 0.1" "File Content layer" \" -*- nroff -*-
+.TH "cache_content_rdwr.c" 3 "15 Sep 2010" "Version 0.1" "File Content layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_content_rdwr.c \- Management of the file content cache: read/write operations.  
-
+cache_content_rdwr.c \- 
 .PP
+Management of the file content cache: read/write operations.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -12,7 +13,7 @@ cache_content_rdwr.c \- Management of the file content cache: read/write operati
 .br
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -83,9 +84,7 @@ cache_content_rdwr.c.c : Management of the file content cache, read and write op
 Definition in file \fBcache_content_rdwr.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "cache_content_status_t cache_content_close (cache_content_entry_t * pentry, cache_content_client_t * pclient, cache_content_status_t * pstatus)"
-.PP
-cache_content_close: closes the local fd on the cache.
+.SS "cache_content_status_t cache_content_close (cache_content_entry_t * pentry, cache_content_client_t * pclient, cache_content_status_t * pstatus)"cache_content_close: closes the local fd on the cache.
 .PP
 Closes the local fd on the cache.
 .PP
@@ -105,10 +104,8 @@ CACHE_CONTENT_SUCCESS is successful .
 .PP
 
 .PP
-Definition at line 203 of file cache_content_rdwr.c.
-.SS "cache_content_status_t cache_content_open (cache_content_entry_t * pentry, cache_content_client_t * pclient, cache_content_status_t * pstatus)"
-.PP
-cache_content_open: opens the local fd on the cache.
+Definition at line 152 of file cache_content_rdwr.c.
+.SS "cache_content_status_t cache_content_open (cache_content_entry_t * pentry, cache_content_client_t * pclient, cache_content_status_t * pstatus)"cache_content_open: opens the local fd on the cache.
 .PP
 Opens the local fd on the cache.
 .PP
@@ -128,10 +125,8 @@ CACHE_CONTENT_SUCCESS is successful .
 .PP
 
 .PP
-Definition at line 132 of file cache_content_rdwr.c.
-.SS "cache_content_status_t cache_content_rdwr (cache_content_entry_t * pentry, cache_content_io_direction_t read_or_write, fsal_seek_t * seek_descriptor, fsal_size_t * pio_size_in, fsal_size_t * pio_size_out, caddr_t buffer, fsal_boolean_t * p_fsal_eof, struct stat * pbuffstat, cache_content_client_t * pclient, fsal_op_context_t * pcontext, cache_content_status_t * pstatus)"
-.PP
-cache_content_rdwr: Reads/Writes through the cache layer.
+Definition at line 81 of file cache_content_rdwr.c.
+.SS "cache_content_status_t cache_content_rdwr (cache_content_entry_t * pentry, cache_content_io_direction_t read_or_write, fsal_seek_t * seek_descriptor, fsal_size_t * pio_size_in, fsal_size_t * pio_size_out, caddr_t buffer, fsal_boolean_t * p_fsal_eof, struct stat * pbuffstat, cache_content_client_t * pclient, fsal_op_context_t * pcontext, cache_content_status_t * pstatus)"cache_content_rdwr: Reads/Writes through the cache layer.
 .PP
 Reads/Writes through the cache layer. This routine should be called only from the cache_inode layer.
 .PP
@@ -165,7 +160,7 @@ CACHE_CONTENT_SUCCESS is successful .
 .PP
 
 .PP
-Definition at line 256 of file cache_content_rdwr.c.
+Definition at line 203 of file cache_content_rdwr.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File Content layer from the source code.

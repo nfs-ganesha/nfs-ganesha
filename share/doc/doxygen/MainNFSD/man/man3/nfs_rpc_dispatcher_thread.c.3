@@ -1,4 +1,4 @@
-.TH "nfs_rpc_dispatcher_thread.c" 3 "31 Mar 2009" "Version 0.1" "Daemon Main" \" -*- nroff -*-
+.TH "nfs_rpc_dispatcher_thread.c" 3 "15 Sep 2010" "Version 0.1" "Daemon Main" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -16,8 +16,6 @@ nfs_rpc_dispatcher_thread.c \-
 .br
 \fC#include <sys/file.h>\fP
 .br
-\fC#include <gssapi/gssapi.h>\fP
-.br
 \fC#include <sys/select.h>\fP
 .br
 \fC#include 'HashData.h'\fP
@@ -30,7 +28,7 @@ nfs_rpc_dispatcher_thread.c \-
 .br
 \fC#include <rpc/pmap_clnt.h>\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
 .br
@@ -39,6 +37,10 @@ nfs_rpc_dispatcher_thread.c \-
 \fC#include 'nfs4.h'\fP
 .br
 \fC#include 'mount.h'\fP
+.br
+\fC#include 'nlm4.h'\fP
+.br
+\fC#include 'rquota.h'\fP
 .br
 \fC#include 'nfs_init.h'\fP
 .br
@@ -141,7 +143,7 @@ nfs_rpc_dispatcher_thread.c \-
 .RI "nfs_parameter_t \fBnfs_param\fP"
 .br
 .ti -1c
-.RI "SVCXPRT ** \fBXports\fP"
+.RI "SVCXPRT * \fBXports\fP [FD_SETSIZE]"
 .br
 .ti -1c
 .RI "hash_table_t * \fBht_dupreq\fP"
@@ -165,15 +167,12 @@ nfs_rpc_dispatcher_thread.c \-
 .SH "Define Documentation"
 .PP 
 .SS "#define NO_VALUE_CHOOSEN   1000000"
-.PP
 .SS "#define NULL_SVC   ((struct svc_callout *)0)"
 .PP
-Definition at line 156 of file nfs_rpc_dispatcher_thread.c.
+Definition at line 107 of file nfs_rpc_dispatcher_thread.c.
 .SH "Function Documentation"
 .PP 
-.SS "int clean_pending_request (LRU_entry_t * pentry, void * addparam)"
-.PP
-clean_pending_request: cleans an entry in a nfs request LRU,
+.SS "int clean_pending_request (LRU_entry_t * pentry, void * addparam)"clean_pending_request: cleans an entry in a nfs request LRU,
 .PP
 cleans an entry in a nfs request LRU.
 .PP
@@ -191,10 +190,8 @@ cleans an entry in a nfs request LRU.
 .PP
 
 .PP
-Definition at line 1569 of file nfs_rpc_dispatcher_thread.c.
-.SS "void constructor_nfs_request_data_t (void * ptr)"
-.PP
-constructor_nfs_request_data_t: Constructor for a nfs_request_data_t structure
+Definition at line 1937 of file nfs_rpc_dispatcher_thread.c.
+.SS "void constructor_nfs_request_data_t (void * ptr)"constructor_nfs_request_data_t: Constructor for a nfs_request_data_t structure
 .PP
 This function is used to init the nfs_request_data for a worker. These data are used by the worker for RPC processing.
 .PP
@@ -210,10 +207,8 @@ nothing (void function) will exit the program if failed.
 .PP
 
 .PP
-Definition at line 1777 of file nfs_rpc_dispatcher_thread.c.
-.SS "int nfs_Init_gc_counter (void)"
-.PP
-nfs_Init_gc_counter: Init the worker's gc counters.
+Definition at line 2169 of file nfs_rpc_dispatcher_thread.c.
+.SS "int nfs_Init_gc_counter (void)"nfs_Init_gc_counter: Init the worker's gc counters.
 .PP
 This functions is used to init a mutex and a counter associated with it, to keep track of the number of worker currently performing the garbagge collection.
 .PP
@@ -229,10 +224,8 @@ This functions is used to init a mutex and a counter associated with it, to keep
 .PP
 
 .PP
-Definition at line 1798 of file nfs_rpc_dispatcher_thread.c.
-.SS "int nfs_Init_request_data (nfs_request_data_t * pdata)"
-.PP
-nfs_Init_request_data: Init the data associated with a pending request
+Definition at line 2190 of file nfs_rpc_dispatcher_thread.c.
+.SS "int nfs_Init_request_data (nfs_request_data_t * pdata)"nfs_Init_request_data: Init the data associated with a pending request
 .PP
 This function is used to init the nfs_request_data for a worker. These data are used by the worker for RPC processing.
 .PP
@@ -250,17 +243,13 @@ This function is used to init the nfs_request_data for a worker. These data are 
 .PP
 
 .PP
-Definition at line 1726 of file nfs_rpc_dispatcher_thread.c.
-.SS "int nfs_Init_svc ()"
-.PP
-nfs_Init_svc: Init the svc descriptors for the nfs daemon.
+Definition at line 2083 of file nfs_rpc_dispatcher_thread.c.
+.SS "int nfs_Init_svc ()"nfs_Init_svc: Init the svc descriptors for the nfs daemon.
 .PP
 Perform all the required initialization for the SVCXPRT pointer. 
 .PP
-Definition at line 250 of file nfs_rpc_dispatcher_thread.c.
-.SS "void nfs_rpc_dispatch_dummy (struct svc_req * ptr_req, SVCXPRT * ptr_svc)"
-.PP
-nfs_rpc_dispatch_dummy: Function never called, but the symbol is necessary for Svc_register/
+Definition at line 197 of file nfs_rpc_dispatcher_thread.c.
+.SS "void nfs_rpc_dispatch_dummy (struct svc_req * ptr_req, SVCXPRT * ptr_svc)"nfs_rpc_dispatch_dummy: Function never called, but the symbol is necessary for Svc_register/
 .PP
 \fBParameters:\fP
 .RS 4
@@ -276,10 +265,8 @@ nothing (void function) and is never called indeed.
 .PP
 
 .PP
-Definition at line 236 of file nfs_rpc_dispatcher_thread.c.
-.SS "int nfs_rpc_get_worker_index (int mount_protocol_flag)"
-.PP
-nfs_rpc_get_worker_index: Returns the index of the worker to be used
+Definition at line 183 of file nfs_rpc_dispatcher_thread.c.
+.SS "int nfs_rpc_get_worker_index (int mount_protocol_flag)"nfs_rpc_get_worker_index: Returns the index of the worker to be used
 .PP
 \fBParameters:\fP
 .RS 4
@@ -293,10 +280,8 @@ the chosen worker index.
 .PP
 
 .PP
-Definition at line 1276 of file nfs_rpc_dispatcher_thread.c.
-.SS "void nfs_rpc_getreq (fd_set * readfds, nfs_parameter_t * pnfs_para)"
-.PP
-nfs_rpc_getreq: Do half of the work done by svc_getreqset.
+Definition at line 1596 of file nfs_rpc_dispatcher_thread.c.
+.SS "void nfs_rpc_getreq (fd_set * readfds, nfs_parameter_t * pnfs_para)"nfs_rpc_getreq: Do half of the work done by svc_getreqset.
 .PP
 This function wait for an incoming ONC message by waiting on a 'select' statement. Then getting a request it perform the authentication and extracts the RPC message for the related socket. It then find the less busy worker (the one with the shortest pending queue) and put the msg in this queue.
 .PP
@@ -312,10 +297,8 @@ Nothing (void function), but calls svcerr_* function to notify the client when a
 .PP
 
 .PP
-Definition at line 1306 of file nfs_rpc_dispatcher_thread.c.
-.SS "int print_pending_request (LRU_data_t data, char * str)"
-.PP
-print_pending_request: prints an entry related to a pending request in the LRU list.
+Definition at line 1625 of file nfs_rpc_dispatcher_thread.c.
+.SS "int print_pending_request (LRU_data_t data, char * str)"print_pending_request: prints an entry related to a pending request in the LRU list.
 .PP
 prints an entry related to a pending request in the LRU list.
 .PP
@@ -333,10 +316,8 @@ prints an entry related to a pending request in the LRU list.
 .PP
 
 .PP
-Definition at line 1592 of file nfs_rpc_dispatcher_thread.c.
-.SS "void rpc_dispatcher_svc_run (nfs_parameter_t * pnfs_param)"
-.PP
-nfs_rpc_dispatcher_svc_run: the same as svc_run.
+Definition at line 1960 of file nfs_rpc_dispatcher_thread.c.
+.SS "void rpc_dispatcher_svc_run (nfs_parameter_t * pnfs_param)"nfs_rpc_dispatcher_svc_run: the same as svc_run.
 .PP
 The same as svc_run.
 .PP
@@ -352,10 +333,8 @@ nothing (void function)
 .PP
 
 .PP
-Definition at line 1608 of file nfs_rpc_dispatcher_thread.c.
-.SS "void* rpc_dispatcher_thread (void * Arg)"
-.PP
-rpc_dispatcher_thread: thread used for RPC dispatching.
+Definition at line 1976 of file nfs_rpc_dispatcher_thread.c.
+.SS "void* rpc_dispatcher_thread (void * Arg)"rpc_dispatcher_thread: thread used for RPC dispatching.
 .PP
 Thead used for RPC dispatching. It gets the requests and then spool it to one of the worker's LRU. The worker chosen is the one with the smaller load (its LRU is the shorter one).
 .PP
@@ -371,22 +350,22 @@ Pointer to the result (but this function will mostly loop forever).
 .PP
 
 .PP
-Definition at line 1685 of file nfs_rpc_dispatcher_thread.c.
+Definition at line 2044 of file nfs_rpc_dispatcher_thread.c.
 .SS "void socket_setoptions (int socketFd)"
 .PP
-Definition at line 251 of file nfs_tools.c.
+Definition at line 196 of file nfs_tools.c.
 .SS "bool_t Svc_register (SVCXPRT * xprt, u_long prog, u_long vers, void(*)() dispatch, int protocol)"
 .PP
-Definition at line 127 of file Svc_oncrpc.c.
+Definition at line 120 of file Svc_oncrpc.c.
 .SS "SVCXPRT* Svcfd_create (int fd, u_int sendsize, u_int recvsize)"
 .PP
-Definition at line 223 of file Svc_tcp_gssrpc.c.
+Definition at line 226 of file Svc_tcp_gssrpc.c.
 .SS "SVCXPRT* Svctcp_create (register int sock, u_int sendsize, u_int recvsize)"
 .PP
 Definition at line 155 of file Svc_tcp_gssrpc.c.
 .SS "SVCXPRT* Svcudp_bufcreate (register int sock, u_int sendsz, u_int recvsz)"
 .PP
-Definition at line 119 of file Svc_udp_gssrpc.c.
+Definition at line 118 of file Svc_udp_gssrpc.c.
 .SH "Variable Documentation"
 .PP 
 .SS "pthread_cond_t \fBcondvar_xprt\fP[FD_SETSIZE]"
@@ -397,31 +376,31 @@ Definition at line 77 of file Svc_tcp_gssrpc.c.
 Definition at line 78 of file Svc_tcp_gssrpc.c.
 .SS "hash_table_t* \fBht_dupreq\fP"
 .PP
-Definition at line 140 of file nfs_dupreq.c.
+Definition at line 97 of file nfs_dupreq.c.
 .SS "pthread_mutex_t \fBlock_nb_current_gc_workers\fP"
 .PP
-Definition at line 180 of file nfs_rpc_dispatcher_thread.c.
+Definition at line 130 of file nfs_rpc_dispatcher_thread.c.
 .SS "pthread_mutex_t \fBmutex_cond_xprt\fP[FD_SETSIZE]"
 .PP
 Definition at line 76 of file Svc_tcp_gssrpc.c.
 .SS "unsigned int \fBnb_current_gc_workers\fP"
 .PP
-Definition at line 179 of file nfs_rpc_dispatcher_thread.c.
+Definition at line 129 of file nfs_rpc_dispatcher_thread.c.
 .SS "nfs_parameter_t \fBnfs_param\fP"
 .PP
-Definition at line 135 of file nfs_init.c.
+Definition at line 85 of file nfs_init.c.
 .SS "\fBnfs_start_info_t\fP \fBnfs_start_info\fP"
 .PP
-Definition at line 142 of file nfs_init.c.
+Definition at line 93 of file nfs_init.c.
 .SS "fd_set \fBSvc_fdset\fP"
 .PP
-Definition at line 76 of file Svc_gssrpc.c.
+Definition at line 67 of file Svc_gssrpc.c.
 .SS "nfs_worker_data_t* \fBworkers_data\fP"
 .PP
-Definition at line 137 of file nfs_init.c.
-.SS "SVCXPRT** \fBXports\fP"
+Definition at line 87 of file nfs_init.c.
+.SS "SVCXPRT* \fBXports\fP[FD_SETSIZE]"
 .PP
-Definition at line 70 of file Svc_gssrpc.c.
+Definition at line 27 of file Svc_oncrpc.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Daemon Main from the source code.

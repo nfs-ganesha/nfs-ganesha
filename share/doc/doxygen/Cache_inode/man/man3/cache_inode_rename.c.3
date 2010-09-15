@@ -1,16 +1,17 @@
-.TH "cache_inode_rename.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_rename.c" 3 "15 Sep 2010" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_rename.c \- Renames an entry.  
-
+cache_inode_rename.c \- 
 .PP
+Renames an entry.  
+
 .SH SYNOPSIS
 .br
 .PP
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -74,9 +75,7 @@ deniel
 Definition in file \fBcache_inode_rename.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "cache_inode_status_t cache_inode_rename (cache_entry_t * pentry_dirsrc, fsal_name_t * poldname, cache_entry_t * pentry_dirdest, fsal_name_t * pnewname, fsal_attrib_list_t * pattr_src, fsal_attrib_list_t * pattr_dst, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
-.PP
-cache_inode_rename: renames an entry in the cache.
+.SS "cache_inode_status_t cache_inode_rename (cache_entry_t * pentry_dirsrc, fsal_name_t * poldname, cache_entry_t * pentry_dirdest, fsal_name_t * pnewname, fsal_attrib_list_t * pattr_src, fsal_attrib_list_t * pattr_dst, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"cache_inode_rename: renames an entry in the cache.
 .PP
 Renames an entry in the cache. This operation is used for moving an object into a different directory.
 .PP
@@ -118,10 +117,8 @@ CACHE_INODE_NOT_FOUND source object does not exist
 .PP
 
 .PP
-Definition at line 180 of file cache_inode_rename.c.
-.SS "cache_inode_status_t cache_inode_rename_cached_dirent (cache_entry_t * pentry_parent, fsal_name_t * oldname, fsal_name_t * newname, hash_table_t * ht, cache_inode_client_t * pclient, cache_inode_status_t * pstatus)"
-.PP
-cache_inode_rename_cached_dirent: renames an entry in the same directory.
+Definition at line 127 of file cache_inode_rename.c.
+.SS "cache_inode_status_t cache_inode_rename_cached_dirent (cache_entry_t * pentry_parent, fsal_name_t * oldname, fsal_name_t * newname, hash_table_t * ht, cache_inode_client_t * pclient, cache_inode_status_t * pstatus)"cache_inode_rename_cached_dirent: renames an entry in the same directory.
 .PP
 Renames an entry in the same directory.
 .PP
@@ -147,7 +144,7 @@ the same as *pstatus
 .PP
 
 .PP
-Definition at line 126 of file cache_inode_rename.c.
+Definition at line 74 of file cache_inode_rename.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

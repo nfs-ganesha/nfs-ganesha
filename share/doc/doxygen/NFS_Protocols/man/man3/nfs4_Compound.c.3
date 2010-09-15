@@ -1,10 +1,11 @@
-.TH "nfs4_Compound.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs4_Compound.c" 3 "15 Sep 2010" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs4_Compound.c \- Routines used for managing the NFS4 COMPOUND functions.  
-
+nfs4_Compound.c \- 
 .PP
+Routines used for managing the NFS4 COMPOUND functions.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -30,7 +31,7 @@ nfs4_Compound.c \- Routines used for managing the NFS4 COMPOUND functions.
 .br
 \fC#include <rpc/pmap_clnt.h>\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
 .br
@@ -64,6 +65,9 @@ nfs4_Compound.c \- Routines used for managing the NFS4 COMPOUND functions.
 
 .in +1c
 .ti -1c
+.RI "#define \fBPOS_ILLEGAL\fP   40"
+.br
+.ti -1c
 .RI "#define \fBCOMPOUND4_ARRAY\fP   parg->arg_compound4.argarray"
 .br
 .in -1c
@@ -86,12 +90,18 @@ nfs4_Compound.c \- Routines used for managing the NFS4 COMPOUND functions.
 .ti -1c
 .RI "void \fBcompound_data_Free\fP (compound_data_t *data)"
 .br
+.ti -1c
+.RI "int \fBnfs4_op_stat_update\fP (nfs_arg_t *parg, nfs_res_t *pres, nfs_request_stat_t *pstat_req)"
+.br
 .in -1c
 .SS "Variables"
 
 .in +1c
 .ti -1c
 .RI "const int \fBoptab4index\fP []"
+.br
+.ti -1c
+.RI "\fBnfs4_op_desc_t\fP * \fBoptabvers\fP [] = { (\fBnfs4_op_desc_t\fP *) optab4v0 }"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -128,16 +138,15 @@ Definition in file \fBnfs4_Compound.c\fP.
 .SH "Define Documentation"
 .PP 
 .SS "#define COMPOUND4_ARRAY   parg->arg_compound4.argarray"
+.SS "#define POS_ILLEGAL   40"
 .PP
+Definition at line 90 of file nfs4_Compound.c.
 .SH "Typedef Documentation"
 .PP 
 .SS "typedef struct \fBnfs4_op_desc__\fP  \fBnfs4_op_desc_t\fP"
-.PP
 .SH "Function Documentation"
 .PP 
-.SS "void compound_data_Free (compound_data_t * data)"
-.PP
-compound_data_Free: Mem_Frees the compound data structure.
+.SS "void compound_data_Free (compound_data_t * data)"compound_data_Free: Mem_Frees the compound data structure.
 .PP
 Mem_Frees the compound data structure..
 .PP
@@ -158,10 +167,8 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 580 of file nfs4_Compound.c.
-.SS "int nfs4_Compound (nfs_arg_t * parg, exportlist_t * pexport, fsal_op_context_t * pcontext, cache_inode_client_t * pclient, hash_table_t * ht, struct svc_req * preq, nfs_res_t * pres)"
-.PP
-nfs4_COMPOUND: The NFS PROC4 COMPOUND
+Definition at line 834 of file nfs4_Compound.c.
+.SS "int nfs4_Compound (nfs_arg_t * parg, exportlist_t * pexport, fsal_op_context_t * pcontext, cache_inode_client_t * pclient, hash_table_t * ht, struct svc_req * preq, nfs_res_t * pres)"nfs4_COMPOUND: The NFS PROC4 COMPOUND
 .PP
 Implements the NFS PROC4 COMPOUND. This routine processes the content of the nfsv4 operation list and composes the result. On this aspect it is a little similar to a dispatch routine. Operation and functions necessary to process them are defined in array optab4 .
 .PP
@@ -198,10 +205,8 @@ BUGAZOMEU: Reminder: Stats on NFSv4 operations are to be set here
 .PP
 
 .PP
-Definition at line 206 of file nfs4_Compound.c.
-.SS "void nfs4_Compound_Free (nfs_res_t * pres)"
-.PP
-nfs4_Compound_Free: Mem_Free the result for NFS4PROC_COMPOUND
+Definition at line 235 of file nfs4_Compound.c.
+.SS "void nfs4_Compound_Free (nfs_res_t * pres)"nfs4_Compound_Free: Mem_Free the result for NFS4PROC_COMPOUND
 .PP
 Mem_Free the result for NFS4PROC_COMPOUND.
 .PP
@@ -222,19 +227,44 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 390 of file nfs4_Compound.c.
+Definition at line 519 of file nfs4_Compound.c.
+.SS "int nfs4_op_stat_update (nfs_arg_t * parg, nfs_res_t * pres, nfs_request_stat_t * pstat_req)"nfs4_op_stat_update: updates the NFSv4 operations specific statistics for a COMPOUND4 requests (either v4.0 or v4.1).
+.PP
+Updates the NFSv4 operations specific statistics for a COMPOUND4 requests (either v4.0 or v4.1).
+.PP
+\fBParameters:\fP
+.RS 4
+\fIparg\fP argument for the COMPOUND4 request 
+.br
+\fIpres\fP result for the COMPOUND4 request 
+.br
+\fIpstat_req\fP pointer to the worker's structure for NFSv4 stats
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+-1 if failed 0 otherwise 
+.RE
+.PP
+
+.PP
+Definition at line 867 of file nfs4_Compound.c.
 .SH "Variable Documentation"
 .PP 
-.SS "const int \fBoptab4index\fP[]"
-.PP
-\fBInitial value:\fP
+.SS "const int \fBoptab4index\fP[]"\fBInitial value:\fP
 .PP
 .nf
- { 0,0,0,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,
-                            24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39 }
+
+    { 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+  21, 22, 23,
+  24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39
+}
 .fi
 .PP
-Definition at line 137 of file nfs4_Compound.c.
+Definition at line 84 of file nfs4_Compound.c.
+.SS "\fBnfs4_op_desc_t\fP* \fBoptabvers\fP[] = { (\fBnfs4_op_desc_t\fP *) optab4v0 }"
+.PP
+Definition at line 210 of file nfs4_Compound.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

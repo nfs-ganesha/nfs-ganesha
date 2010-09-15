@@ -1,4 +1,4 @@
-.TH "nfs4_op_getfh.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs4_op_getfh.c" 3 "15 Sep 2010" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -28,7 +28,7 @@ nfs4_op_getfh.c \-
 .br
 \fC#include <rpc/pmap_clnt.h>\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
 .br
@@ -67,9 +67,7 @@ nfs4_op_getfh.c \-
 .in -1c
 .SH "Function Documentation"
 .PP 
-.SS "int nfs4_op_getfh (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
-.PP
-nfs4_op_getfh: The NFS4_OP_GETFH operation
+.SS "int nfs4_op_getfh (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"nfs4_op_getfh: The NFS4_OP_GETFH operation
 .PP
 Gets the currentFH for the current compound requests. This operation returns the current FH in the reply structure.
 .PP
@@ -96,10 +94,8 @@ all the nfs4_op_<*> function
 .PP
 
 .PP
-Definition at line 131 of file nfs4_op_getfh.c.
-.SS "void nfs4_op_getfh_Free (GETFH4res * resp)"
-.PP
-nfs4_op_getfh_Free: frees what was allocared to handle nfs4_op_getfh.
+Definition at line 81 of file nfs4_op_getfh.c.
+.SS "void nfs4_op_getfh_Free (GETFH4res * resp)"nfs4_op_getfh_Free: frees what was allocared to handle nfs4_op_getfh.
 .PP
 Frees what was allocared to handle nfs4_op_getfh.
 .PP
@@ -115,7 +111,7 @@ nothing (void function )
 .PP
 
 .PP
-Definition at line 205 of file nfs4_op_getfh.c.
+Definition at line 154 of file nfs4_op_getfh.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

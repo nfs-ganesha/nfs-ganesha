@@ -1,10 +1,11 @@
-.TH "fsal_internal.c" 3 "31 Mar 2009" "Version 0.1" "File System Abstraction Layer (POSIX) library" \" -*- nroff -*-
+.TH "fsal_internal.c" 3 "15 Sep 2010" "Version 0.1" "File System Abstraction Layer (POSIX) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_internal.c \- Defines the datas that are to be accessed as extern by the fsal modules.  
-
+fsal_internal.c \- 
 .PP
+Defines the datas that are to be accessed as extern by the fsal modules.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -25,6 +26,8 @@ fsal_internal.c \- Defines the datas that are to be accessed as extern by the fs
 \fC#include <pthread.h>\fP
 .br
 \fC#include <string.h>\fP
+.br
+\fC#include <mntent.h>\fP
 .br
 
 .SS "Defines"
@@ -62,32 +65,35 @@ fsal_internal.c \- Defines the datas that are to be accessed as extern by the fs
 .RI "void \fBReleaseTokenFSCall\fP ()"
 .br
 .ti -1c
-.RI "fsal_status_t \fBfsal_internal_init_global\fP (fsal_init_info_t *fsal_info, fs_common_initinfo_t *fs_common_info, fs_specific_initinfo_t *fs_specific_info)"
+.RI "fsal_status_t \fBfsal_internal_init_global\fP (fsal_init_info_t *fsal_info, fs_common_initinfo_t *fs_common_info, posixfs_specific_initinfo_t *fs_specific_info)"
 .br
 .ti -1c
 .RI "fsal_status_t \fBfsal_internal_posix2posixdb_fileinfo\fP (struct stat *buffstat, fsal_posixdb_fileinfo_t *info)"
 .br
 .RI "\fIconvert 'struct stat' to 'fsal_posixdb_fileinfo_t' \fP"
 .ti -1c
-.RI "fsal_status_t \fBfsal_internal_posixdb_add_entry\fP (fsal_posixdb_conn *p_conn, fsal_name_t *p_filename, fsal_posixdb_fileinfo_t *p_info, fsal_handle_t *p_dir_handle, fsal_handle_t *p_new_handle)"
+.RI "fsal_status_t \fBfsal_internal_posixdb_add_entry\fP (fsal_posixdb_conn *p_conn, fsal_name_t *p_filename, fsal_posixdb_fileinfo_t *p_info, posixfsal_handle_t *p_dir_handle, posixfsal_handle_t *p_new_handle)"
 .br
 .ti -1c
 .RI "fsal_status_t \fBfsal_internal_appendFSALNameToFSALPath\fP (fsal_path_t *p_path, fsal_name_t *p_name)"
 .br
 .RI "\fIp_path <- p_path + '/' + p_name \fP"
 .ti -1c
-.RI "fsal_status_t \fBfsal_internal_getPathFromHandle\fP (fsal_op_context_t *p_context, fsal_handle_t *p_handle, int is_dir, fsal_path_t *p_fsalpath, struct stat *p_buffstat)"
+.RI "fsal_status_t \fBfsal_internal_getPathFromHandle\fP (posixfsal_op_context_t *p_context, posixfsal_handle_t *p_handle, int is_dir, fsal_path_t *p_fsalpath, struct stat *p_buffstat)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBfsal_internal_getInfoFromName\fP (fsal_op_context_t *p_context, fsal_handle_t *p_parent_dir_handle, fsal_name_t *p_fsalname, fsal_posixdb_fileinfo_t *p_infofs, fsal_handle_t *p_object_handle)"
+.RI "fsal_status_t \fBfsal_internal_getInfoFromName\fP (posixfsal_op_context_t *p_context, posixfsal_handle_t *p_parent_dir_handle, fsal_name_t *p_fsalname, fsal_posixdb_fileinfo_t *p_infofs, posixfsal_handle_t *p_object_handle)"
 .br
 .RI "\fIGet the handle of a file, knowing its name and its parent dir. \fP"
 .ti -1c
-.RI "fsal_status_t \fBfsal_internal_getInfoFromChildrenList\fP (fsal_op_context_t *p_context, fsal_handle_t *p_parent_dir_handle, fsal_name_t *p_fsalname, fsal_posixdb_fileinfo_t *p_infofs, fsal_posixdb_child *p_children, unsigned int children_count, fsal_handle_t *p_object_handle)"
+.RI "fsal_status_t \fBfsal_internal_getInfoFromChildrenList\fP (posixfsal_op_context_t *p_context, posixfsal_handle_t *p_parent_dir_handle, fsal_name_t *p_fsalname, fsal_posixdb_fileinfo_t *p_infofs, fsal_posixdb_child *p_children, unsigned int children_count, posixfsal_handle_t *p_object_handle)"
 .br
 .RI "\fIGet the handle of a file from a fsal_posixdb_child array, knowing its name. \fP"
 .ti -1c
-.RI "fsal_status_t \fBfsal_internal_testAccess\fP (fsal_op_context_t *p_context, fsal_accessflags_t access_type, struct stat *p_buffstat, fsal_attrib_list_t *p_object_attributes)"
+.RI "fsal_status_t \fBfsal_internal_testAccess\fP (posixfsal_op_context_t *p_context, fsal_accessflags_t access_type, struct stat *p_buffstat, fsal_attrib_list_t *p_object_attributes)"
+.br
+.ti -1c
+.RI "int \fBfsal_internal_path2fsname\fP (char *rpath, char *fs_spec)"
 .br
 .in -1c
 .SS "Variables"
@@ -101,9 +107,6 @@ fsal_internal.c \- Defines the datas that are to be accessed as extern by the fs
 .br
 .ti -1c
 .RI "fsal_posixdb_conn_params_t \fBglobal_posixdb_params\fP"
-.br
-.ti -1c
-.RI "log_t \fBfsal_log\fP"
 .br
 .ti -1c
 .RI "semaphore_t \fBsem_fs_calls\fP"
@@ -142,9 +145,7 @@ leibovic
 Definition in file \fBfsal_internal.c\fP.
 .SH "Define Documentation"
 .PP 
-.SS "#define SET_BITMAP_PARAM(cfg, p_init_info, _field)"
-.PP
-\fBValue:\fP
+.SS "#define SET_BITMAP_PARAM(cfg, p_init_info, _field)"\fBValue:\fP
 .PP
 .nf
 switch( (p_init_info)->behaviors._field ){                    \
@@ -164,10 +165,8 @@ switch( (p_init_info)->behaviors._field ){                    \
     }
 .fi
 .PP
-Definition at line 293 of file fsal_internal.c.
-.SS "#define SET_BOOLEAN_PARAM(cfg, p_init_info, _field)"
-.PP
-\fBValue:\fP
+Definition at line 283 of file fsal_internal.c.
+.SS "#define SET_BOOLEAN_PARAM(cfg, p_init_info, _field)"\fBValue:\fP
 .PP
 .nf
 switch( (p_init_info)->behaviors._field ){                    \
@@ -187,10 +186,8 @@ switch( (p_init_info)->behaviors._field ){                    \
     }
 .fi
 .PP
-Definition at line 311 of file fsal_internal.c.
-.SS "#define SET_INTEGER_PARAM(cfg, p_init_info, _field)"
-.PP
-\fBValue:\fP
+Definition at line 300 of file fsal_internal.c.
+.SS "#define SET_INTEGER_PARAM(cfg, p_init_info, _field)"\fBValue:\fP
 .PP
 .nf
 switch( (p_init_info)->behaviors._field ){                    \
@@ -212,12 +209,10 @@ switch( (p_init_info)->behaviors._field ){                    \
     }
 .fi
 .PP
-Definition at line 273 of file fsal_internal.c.
+Definition at line 264 of file fsal_internal.c.
 .SH "Function Documentation"
 .PP 
-.SS "void fsal_increment_nbcall (int function_index, fsal_status_t status)"
-.PP
-fsal_increment_nbcall: Updates fonction call statistics.
+.SS "void fsal_increment_nbcall (int function_index, fsal_status_t status)"fsal_increment_nbcall: Updates fonction call statistics.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -233,14 +228,12 @@ Nothing.
 .PP
 
 .PP
-Definition at line 107 of file fsal_internal.c.
+Definition at line 98 of file fsal_internal.c.
 .PP
 References fsal_is_retryable().
 .SS "fsal_status_t fsal_internal_appendFSALNameToFSALPath (fsal_path_t * p_path, fsal_name_t * p_name)"
 .PP
-p_path <- p_path + '/' + p_name 
-.PP
-\fBParameters:\fP
+p_path <- p_path + '/' + p_name \fBParameters:\fP
 .RS 4
 \fIp_path\fP 
 .br
@@ -253,14 +246,12 @@ p_path <- p_path + '/' + p_name
 .PP
 
 .PP
-Definition at line 515 of file fsal_internal.c.
+Definition at line 555 of file fsal_internal.c.
 .PP
-Referenced by FSAL_create(), FSAL_link(), FSAL_lookup(), FSAL_mkdir(), FSAL_mknode(), FSAL_readdir(), FSAL_rename(), FSAL_symlink(), and FSAL_unlink().
-.SS "fsal_status_t fsal_internal_getInfoFromChildrenList (fsal_op_context_t * p_context, fsal_handle_t * p_parent_dir_handle, fsal_name_t * p_fsalname, fsal_posixdb_fileinfo_t * p_infofs, fsal_posixdb_child * p_children, unsigned int children_count, fsal_handle_t * p_object_handle)"
+Referenced by POSIXFSAL_create(), POSIXFSAL_link(), POSIXFSAL_lookup(), POSIXFSAL_mkdir(), POSIXFSAL_mknode(), POSIXFSAL_readdir(), POSIXFSAL_rename(), POSIXFSAL_symlink(), and POSIXFSAL_unlink().
+.SS "fsal_status_t fsal_internal_getInfoFromChildrenList (posixfsal_op_context_t * p_context, posixfsal_handle_t * p_parent_dir_handle, fsal_name_t * p_fsalname, fsal_posixdb_fileinfo_t * p_infofs, fsal_posixdb_child * p_children, unsigned int children_count, posixfsal_handle_t * p_object_handle)"
 .PP
-Get the handle of a file from a fsal_posixdb_child array, knowing its name. 
-.PP
-\fBParameters:\fP
+Get the handle of a file from a fsal_posixdb_child array, knowing its name. \fBParameters:\fP
 .RS 4
 \fIp_context\fP 
 .br
@@ -282,16 +273,14 @@ ERR_FSAL_NOERR, if no error Anothere error code else.
 .PP
 
 .PP
-Definition at line 714 of file fsal_internal.c.
+Definition at line 776 of file fsal_internal.c.
 .PP
-References FSAL_namecmp(), and posixdb2fsal_error().
+References posixdb2fsal_error().
 .PP
-Referenced by FSAL_readdir().
-.SS "fsal_status_t fsal_internal_getInfoFromName (fsal_op_context_t * p_context, fsal_handle_t * p_parent_dir_handle, fsal_name_t * p_fsalname, fsal_posixdb_fileinfo_t * p_infofs, fsal_handle_t * p_object_handle)"
+Referenced by POSIXFSAL_readdir().
+.SS "fsal_status_t fsal_internal_getInfoFromName (posixfsal_op_context_t * p_context, posixfsal_handle_t * p_parent_dir_handle, fsal_name_t * p_fsalname, fsal_posixdb_fileinfo_t * p_infofs, posixfsal_handle_t * p_object_handle)"
 .PP
-Get the handle of a file, knowing its name and its parent dir. 
-.PP
-\fBParameters:\fP
+Get the handle of a file, knowing its name and its parent dir. \fBParameters:\fP
 .RS 4
 \fIp_context\fP 
 .br
@@ -311,23 +300,19 @@ ERR_FSAL_NOERR, if no error Anothere error code else.
 .PP
 
 .PP
-Definition at line 649 of file fsal_internal.c.
+Definition at line 709 of file fsal_internal.c.
 .PP
 References posixdb2fsal_error().
 .PP
-Referenced by FSAL_lookup(), and FSAL_readdir().
-.SS "fsal_status_t fsal_internal_getPathFromHandle (fsal_op_context_t * p_context, fsal_handle_t * p_handle, int is_dir, fsal_path_t * p_fsalpath, struct stat * p_buffstat)"
+Referenced by POSIXFSAL_lookup(), and POSIXFSAL_readdir().
+.SS "fsal_status_t fsal_internal_getPathFromHandle (posixfsal_op_context_t * p_context, posixfsal_handle_t * p_handle, int is_dir, fsal_path_t * p_fsalpath, struct stat * p_buffstat)"Get a valid path associated to an handle. The function selects many paths from the DB and return the first valid one. If is_dir is set, then only 1 path will be constructed from the database. 
 .PP
-Get a valid path associated to an handle. The function selects many paths from the DB and return the first valid one. If is_dir is set, then only 1 path will be constructed from the database. 
+Definition at line 589 of file fsal_internal.c.
 .PP
-Definition at line 545 of file fsal_internal.c.
+References fsal_internal_posix2posixdb_fileinfo(), posixdb2fsal_error(), POSIXFSAL_lookupPath(), and TakeTokenFSCall().
 .PP
-References fsal_internal_posix2posixdb_fileinfo(), FSAL_lookupPath(), FSAL_pathcpy(), FSAL_str2name(), FSAL_str2path(), posixdb2fsal_error(), and TakeTokenFSCall().
-.PP
-Referenced by FSAL_create(), FSAL_dynamic_fsinfo(), FSAL_getattrs(), FSAL_link(), FSAL_lookup(), FSAL_mkdir(), FSAL_mknode(), FSAL_open(), FSAL_opendir(), FSAL_readlink(), FSAL_rename(), FSAL_setattrs(), FSAL_symlink(), FSAL_truncate(), and FSAL_unlink().
-.SS "void fsal_internal_getstats (fsal_statistics_t * output_stats)"
-.PP
-fsal_internal_getstats: (For internal use in the FSAL). Retrieve call statistics for current thread.
+Referenced by POSIXFSAL_create(), POSIXFSAL_dynamic_fsinfo(), POSIXFSAL_getattrs(), POSIXFSAL_link(), POSIXFSAL_lookup(), POSIXFSAL_mkdir(), POSIXFSAL_mknode(), POSIXFSAL_open(), POSIXFSAL_opendir(), POSIXFSAL_readlink(), POSIXFSAL_rename(), POSIXFSAL_setattrs(), POSIXFSAL_symlink(), POSIXFSAL_truncate(), and POSIXFSAL_unlink().
+.SS "void fsal_internal_getstats (fsal_statistics_t * output_stats)"fsal_internal_getstats: (For internal use in the FSAL). Retrieve call statistics for current thread.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -341,14 +326,12 @@ Nothing.
 .PP
 
 .PP
-Definition at line 186 of file fsal_internal.c.
+Definition at line 176 of file fsal_internal.c.
 .PP
-Referenced by FSAL_get_stats().
+Referenced by POSIXFSAL_get_stats().
 .SS "fsal_status_t fsal_internal_posix2posixdb_fileinfo (struct stat * buffstat, fsal_posixdb_fileinfo_t * info)"
 .PP
-convert 'struct stat' to 'fsal_posixdb_fileinfo_t' 
-.PP
-\fBParameters:\fP
+convert 'struct stat' to 'fsal_posixdb_fileinfo_t' \fBParameters:\fP
 .RS 4
 \fIbuffstat\fP 
 .br
@@ -361,14 +344,10 @@ convert 'struct stat' to 'fsal_posixdb_fileinfo_t'
 .PP
 
 .PP
-Definition at line 464 of file fsal_internal.c.
+Definition at line 499 of file fsal_internal.c.
 .PP
-References posix2fsal_type().
-.PP
-Referenced by FSAL_create(), fsal_internal_getPathFromHandle(), FSAL_link(), FSAL_lookup(), FSAL_mkdir(), FSAL_mknode(), FSAL_readdir(), FSAL_rename(), FSAL_symlink(), and FSAL_unlink().
-.SS "void fsal_internal_SetCredentialLifetime (fsal_uint_t lifetime_in)"
-.PP
-Set credential lifetime. (For internal use in the FSAL). Set the period for thread's credential renewal.
+Referenced by fsal_internal_getPathFromHandle(), POSIXFSAL_create(), POSIXFSAL_link(), POSIXFSAL_lookup(), POSIXFSAL_mkdir(), POSIXFSAL_mknode(), POSIXFSAL_readdir(), POSIXFSAL_rename(), POSIXFSAL_symlink(), and POSIXFSAL_unlink().
+.SS "void fsal_internal_SetCredentialLifetime (fsal_uint_t lifetime_in)"Set credential lifetime. (For internal use in the FSAL). Set the period for thread's credential renewal.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -382,14 +361,12 @@ Nothing.
 .PP
 
 .PP
-Definition at line 241 of file fsal_internal.c.
-.SS "void TakeTokenFSCall ()"
+Definition at line 234 of file fsal_internal.c.
+.SS "void TakeTokenFSCall ()"Used to limit the number of simultaneous calls to Filesystem. 
 .PP
-Used to limit the number of simultaneous calls to Filesystem. 
+Definition at line 242 of file fsal_internal.c.
 .PP
-Definition at line 250 of file fsal_internal.c.
-.PP
-Referenced by FSAL_close(), FSAL_create(), FSAL_dynamic_fsinfo(), fsal_internal_getPathFromHandle(), FSAL_link(), FSAL_lookup(), FSAL_mkdir(), FSAL_mknode(), FSAL_open(), FSAL_opendir(), FSAL_read(), FSAL_readdir(), FSAL_readlink(), FSAL_rename(), FSAL_setattrs(), FSAL_symlink(), FSAL_truncate(), FSAL_unlink(), and FSAL_write().
+Referenced by fsal_internal_getPathFromHandle(), POSIXFSAL_close(), POSIXFSAL_create(), POSIXFSAL_dynamic_fsinfo(), POSIXFSAL_link(), POSIXFSAL_lookup(), POSIXFSAL_mkdir(), POSIXFSAL_mknode(), POSIXFSAL_open(), POSIXFSAL_opendir(), POSIXFSAL_read(), POSIXFSAL_readdir(), POSIXFSAL_readlink(), POSIXFSAL_rename(), POSIXFSAL_setattrs(), POSIXFSAL_symlink(), POSIXFSAL_truncate(), POSIXFSAL_unlink(), and POSIXFSAL_write().
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File System Abstraction Layer (POSIX) library from the source code.

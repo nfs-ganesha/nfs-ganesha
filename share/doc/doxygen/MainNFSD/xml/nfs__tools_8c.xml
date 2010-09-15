@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.6.1">
   <compounddef id="nfs__tools_8c" kind="file">
     <compoundname>nfs_tools.c</compoundname>
     <includes local="no">stdio.h</includes>
@@ -33,48 +33,36 @@
     <includes local="yes">nfs_exports.h</includes>
     <includes local="yes">nfs_file_handle.h</includes>
     <incdepgraph>
-      <node id="277">
+      <node id="283">
         <label>grp.h</label>
       </node>
-      <node id="262">
+      <node id="268">
         <label>netinet/in.h</label>
       </node>
-      <node id="269">
+      <node id="275">
         <label>arpa/inet.h</label>
       </node>
-      <node id="280">
+      <node id="286">
         <label>rpc/pmap_clnt.h</label>
       </node>
-      <node id="286">
+      <node id="292">
         <label>fsal.h</label>
       </node>
-      <node id="266">
+      <node id="272">
         <label>stdlib.h</label>
       </node>
-      <node id="272">
+      <node id="278">
         <label>sys/poll.h</label>
       </node>
-      <node id="274">
+      <node id="280">
         <label>fcntl.h</label>
       </node>
-      <node id="279">
+      <node id="285">
         <label>rpc/svc.h</label>
       </node>
-      <node id="259">
+      <node id="265">
         <label>nfs_tools.c</label>
         <link refid="nfs_tools.c"/>
-        <childnode refid="260" relation="include">
-        </childnode>
-        <childnode refid="261" relation="include">
-        </childnode>
-        <childnode refid="262" relation="include">
-        </childnode>
-        <childnode refid="263" relation="include">
-        </childnode>
-        <childnode refid="264" relation="include">
-        </childnode>
-        <childnode refid="265" relation="include">
-        </childnode>
         <childnode refid="266" relation="include">
         </childnode>
         <childnode refid="267" relation="include">
@@ -123,74 +111,86 @@
         </childnode>
         <childnode refid="289" relation="include">
         </childnode>
+        <childnode refid="290" relation="include">
+        </childnode>
+        <childnode refid="291" relation="include">
+        </childnode>
+        <childnode refid="292" relation="include">
+        </childnode>
+        <childnode refid="293" relation="include">
+        </childnode>
+        <childnode refid="294" relation="include">
+        </childnode>
+        <childnode refid="295" relation="include">
+        </childnode>
       </node>
-      <node id="268">
+      <node id="274">
         <label>netdb.h</label>
       </node>
-      <node id="281">
+      <node id="287">
         <label>log_functions.h</label>
       </node>
-      <node id="285">
+      <node id="291">
         <label>nfs4.h</label>
       </node>
-      <node id="263">
+      <node id="269">
         <label>netinet/tcp.h</label>
       </node>
-      <node id="273">
+      <node id="279">
         <label>pthread.h</label>
       </node>
-      <node id="264">
+      <node id="270">
         <label>sys/types.h</label>
       </node>
-      <node id="270">
+      <node id="276">
         <label>string.h</label>
       </node>
-      <node id="271">
+      <node id="277">
         <label>unistd.h</label>
       </node>
-      <node id="275">
+      <node id="281">
         <label>sys/file.h</label>
       </node>
-      <node id="278">
+      <node id="284">
         <label>rpc/rpc.h</label>
       </node>
-      <node id="288">
+      <node id="294">
         <label>nfs_exports.h</label>
       </node>
-      <node id="283">
+      <node id="289">
         <label>nfs_core.h</label>
       </node>
-      <node id="284">
+      <node id="290">
         <label>nfs23.h</label>
       </node>
-      <node id="265">
+      <node id="271">
         <label>ctype.h</label>
       </node>
-      <node id="261">
+      <node id="267">
         <label>sys/socket.h</label>
       </node>
-      <node id="276">
+      <node id="282">
         <label>pwd.h</label>
       </node>
-      <node id="282">
+      <node id="288">
         <label>stuff_alloc.h</label>
       </node>
-      <node id="260">
+      <node id="266">
         <label>stdio.h</label>
       </node>
-      <node id="289">
+      <node id="295">
         <label>nfs_file_handle.h</label>
       </node>
-      <node id="287">
+      <node id="293">
         <label>nfs_tools.h</label>
       </node>
-      <node id="267">
+      <node id="273">
         <label>dirent.h</label>
       </node>
     </incdepgraph>
     <innerclass refid="structtcp__conn" prot="public">tcp_conn</innerclass>
       <sectiondef kind="func">
-      <memberdef kind="function" id="nfs__tools_8c_18decbd7a3557fd2c788ade7abed9a407" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__tools_8c_1a8decbd7a3557fd2c788ade7abed9a407" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>unsigned long</type>
         <definition>unsigned long decimal_simple_hash_func</definition>
         <argsstring>(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)</argsstring>
@@ -209,9 +209,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="148" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="147" bodyend="151"/>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="97" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="95" bodyend="100"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__tools_8c_185f4af1a161f534f296b85372fba0413" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__tools_8c_1a85f4af1a161f534f296b85372fba0413" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>unsigned long</type>
         <definition>unsigned long decimal_rbt_hash_func</definition>
         <argsstring>(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)</argsstring>
@@ -230,9 +230,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="154" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="153" bodyend="157"/>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="103" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="102" bodyend="106"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__tools_8c_15eeaebff3f2862b2b16395d537bce1a1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__tools_8c_1a5eeaebff3f2862b2b16395d537bce1a1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int display_cache</definition>
         <argsstring>(hash_buffer_t *pbuff, char *str)</argsstring>
@@ -251,9 +251,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="160" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="159" bodyend="162"/>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="109" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="108" bodyend="111"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__tools_8c_12a033479a0d020e76de2586d26f8db5b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__tools_8c_1a2a033479a0d020e76de2586d26f8db5b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int compare_cache</definition>
         <argsstring>(hash_buffer_t *buff1, hash_buffer_t *buff2)</argsstring>
@@ -272,9 +272,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="165" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="164" bodyend="167"/>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="114" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="113" bodyend="116"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__tools_8c_19649b9bb0b478385d0c0a46cc96df5ff" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__tools_8c_1a9649b9bb0b478385d0c0a46cc96df5ff" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int print_cache</definition>
         <argsstring>(LRU_data_t data, char *str)</argsstring>
@@ -293,9 +293,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="170" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="169" bodyend="172"/>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="119" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="118" bodyend="121"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__tools_8c_19c7c012283e03dc52eda904db37562ff" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__tools_8c_1a9c7c012283e03dc52eda904db37562ff" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int clean_cache</definition>
         <argsstring>(LRU_entry_t *pentry, void *addparam)</argsstring>
@@ -314,9 +314,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="175" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="174" bodyend="177"/>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="124" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="123" bodyend="126"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__tools_8c_1fc0713ab6f936fa664d7c92a1ecc79c3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__tools_8c_1afc0713ab6f936fa664d7c92a1ecc79c3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int lru_inode_entry_to_str</definition>
         <argsstring>(LRU_data_t data, char *str)</argsstring>
@@ -351,9 +351,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="194" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="193" bodyend="196"/>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="141" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="140" bodyend="143"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__tools_8c_1738899949b8da5c9128e6296a7ad7043" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__tools_8c_1a738899949b8da5c9128e6296a7ad7043" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int lru_data_entry_to_str</definition>
         <argsstring>(LRU_data_t data, char *str)</argsstring>
@@ -388,9 +388,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="211" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="210" bodyend="213"/>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="158" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="157" bodyend="160"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__tools_8c_1230b0440af10caba4b9c4697e23ac36a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__tools_8c_1a230b0440af10caba4b9c4697e23ac36a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int lru_inode_clean_entry</definition>
         <argsstring>(LRU_entry_t *entry, void *adddata)</argsstring>
@@ -425,9 +425,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="229" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="228" bodyend="231"/>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="175" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="174" bodyend="177"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__tools_8c_11fff2fdd16477f241028cf536bc5ff2d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__tools_8c_1a1fff2fdd16477f241028cf536bc5ff2d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int lru_data_clean_entry</definition>
         <argsstring>(LRU_entry_t *entry, void *adddata)</argsstring>
@@ -462,9 +462,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="246" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="245" bodyend="248"/>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="192" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="191" bodyend="194"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__tools_8c_1724cb81161f478d63c680f3e1f3f3a62" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__tools_8c_1a724cb81161f478d63c680f3e1f3f3a62" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void socket_setoptions</definition>
         <argsstring>(int socketFd)</argsstring>
@@ -479,7 +479,28 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="252" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="251" bodyend="269"/>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="197" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="196" bodyend="214"/>
+      </memberdef>
+      <memberdef kind="function" id="nfs__tools_8c_1a13d72fdcfbf42ca6b83bb8c3e09b056a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int cmp_sockaddr</definition>
+        <argsstring>(struct sockaddr *addr_1, struct sockaddr *addr_2)</argsstring>
+        <name>cmp_sockaddr</name>
+        <param>
+          <type>struct sockaddr *</type>
+          <declname>addr_1</declname>
+        </param>
+        <param>
+          <type>struct sockaddr *</type>
+          <declname>addr_2</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c" line="217" bodyfile="/export/GANESHA/src/MainNFSD/nfs_tools.c" bodystart="216" bodyend="241"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
@@ -507,210 +528,180 @@
 <codeline lineno="6"><highlight class="comment"><sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Thomas<sp/>LEIBOVICI<sp/><sp/>thomas.leibovici@cea.fr</highlight></codeline>
 <codeline lineno="7"><highlight class="comment"><sp/>*</highlight></codeline>
 <codeline lineno="8"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="9"><highlight class="comment"><sp/>*<sp/>Ce<sp/>logiciel<sp/>est<sp/>un<sp/>serveur<sp/>implementant<sp/>le<sp/>protocole<sp/>NFS.</highlight></codeline>
-<codeline lineno="10"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="11"><highlight class="comment"><sp/>*<sp/>Ce<sp/>logiciel<sp/>est<sp/>régi<sp/>par<sp/>la<sp/>licence<sp/>CeCILL<sp/>soumise<sp/>au<sp/>droit<sp/>français<sp/>et</highlight></codeline>
-<codeline lineno="12"><highlight class="comment"><sp/>*<sp/>respectant<sp/>les<sp/>principes<sp/>de<sp/>diffusion<sp/>des<sp/>logiciels<sp/>libres.<sp/>Vous<sp/>pouvez</highlight></codeline>
-<codeline lineno="13"><highlight class="comment"><sp/>*<sp/>utiliser,<sp/>modifier<sp/>et/ou<sp/>redistribuer<sp/>ce<sp/>programme<sp/>sous<sp/>les<sp/>conditions</highlight></codeline>
-<codeline lineno="14"><highlight class="comment"><sp/>*<sp/>de<sp/>la<sp/>licence<sp/>CeCILL<sp/>telle<sp/>que<sp/>diffusée<sp/>par<sp/>le<sp/>CEA,<sp/>le<sp/>CNRS<sp/>et<sp/>l&apos;INRIA</highlight></codeline>
-<codeline lineno="15"><highlight class="comment"><sp/>*<sp/>sur<sp/>le<sp/>site<sp/>&quot;http://www.cecill.info&quot;.</highlight></codeline>
-<codeline lineno="16"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="17"><highlight class="comment"><sp/>*<sp/>En<sp/>contrepartie<sp/>de<sp/>l&apos;accessibilité<sp/>au<sp/>code<sp/>source<sp/>et<sp/>des<sp/>droits<sp/>de<sp/>copie,</highlight></codeline>
-<codeline lineno="18"><highlight class="comment"><sp/>*<sp/>de<sp/>modification<sp/>et<sp/>de<sp/>redistribution<sp/>accordés<sp/>par<sp/>cette<sp/>licence,<sp/>il<sp/>n&apos;est</highlight></codeline>
-<codeline lineno="19"><highlight class="comment"><sp/>*<sp/>offert<sp/>aux<sp/>utilisateurs<sp/>qu&apos;une<sp/>garantie<sp/>limitée.<sp/><sp/>Pour<sp/>les<sp/>mêmes<sp/>raisons,</highlight></codeline>
-<codeline lineno="20"><highlight class="comment"><sp/>*<sp/>seule<sp/>une<sp/>responsabilité<sp/>restreinte<sp/>pèse<sp/>sur<sp/>l&apos;auteur<sp/>du<sp/>programme,<sp/><sp/>le</highlight></codeline>
-<codeline lineno="21"><highlight class="comment"><sp/>*<sp/>titulaire<sp/>des<sp/>droits<sp/>patrimoniaux<sp/>et<sp/>les<sp/>concédants<sp/>successifs.</highlight></codeline>
-<codeline lineno="22"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="23"><highlight class="comment"><sp/>*<sp/>A<sp/>cet<sp/>égard<sp/><sp/>l&apos;attention<sp/>de<sp/>l&apos;utilisateur<sp/>est<sp/>attirée<sp/>sur<sp/>les<sp/>risques</highlight></codeline>
-<codeline lineno="24"><highlight class="comment"><sp/>*<sp/>associés<sp/>au<sp/>chargement,<sp/><sp/>à<sp/>l&apos;utilisation,<sp/><sp/>à<sp/>la<sp/>modification<sp/>et/ou<sp/>au</highlight></codeline>
-<codeline lineno="25"><highlight class="comment"><sp/>*<sp/>développement<sp/>et<sp/>à<sp/>la<sp/>reproduction<sp/>du<sp/>logiciel<sp/>par<sp/>l&apos;utilisateur<sp/>étant</highlight></codeline>
-<codeline lineno="26"><highlight class="comment"><sp/>*<sp/>donné<sp/>sa<sp/>spécificité<sp/>de<sp/>logiciel<sp/>libre,<sp/>qui<sp/>peut<sp/>le<sp/>rendre<sp/>complexe<sp/>à</highlight></codeline>
-<codeline lineno="27"><highlight class="comment"><sp/>*<sp/>manipuler<sp/>et<sp/>qui<sp/>le<sp/>réserve<sp/>donc<sp/>à<sp/>des<sp/>développeurs<sp/>et<sp/>des<sp/>professionnels</highlight></codeline>
-<codeline lineno="28"><highlight class="comment"><sp/>*<sp/>avertis<sp/>possédant<sp/><sp/>des<sp/><sp/>connaissances<sp/><sp/>informatiques<sp/>approfondies.<sp/><sp/>Les</highlight></codeline>
-<codeline lineno="29"><highlight class="comment"><sp/>*<sp/>utilisateurs<sp/>sont<sp/>donc<sp/>invités<sp/>à<sp/>charger<sp/><sp/>et<sp/><sp/>tester<sp/><sp/>l&apos;adéquation<sp/><sp/>du</highlight></codeline>
-<codeline lineno="30"><highlight class="comment"><sp/>*<sp/>logiciel<sp/>à<sp/>leurs<sp/>besoins<sp/>dans<sp/>des<sp/>conditions<sp/>permettant<sp/>d&apos;assurer<sp/>la</highlight></codeline>
-<codeline lineno="31"><highlight class="comment"><sp/>*<sp/>sécurité<sp/>de<sp/>leurs<sp/>systèmes<sp/>et<sp/>ou<sp/>de<sp/>leurs<sp/>données<sp/>et,<sp/>plus<sp/>généralement,</highlight></codeline>
-<codeline lineno="32"><highlight class="comment"><sp/>*<sp/>à<sp/>l&apos;utiliser<sp/>et<sp/>l&apos;exploiter<sp/>dans<sp/>les<sp/>mêmes<sp/>conditions<sp/>de<sp/>sécurité.</highlight></codeline>
-<codeline lineno="33"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="34"><highlight class="comment"><sp/>*<sp/>Le<sp/>fait<sp/>que<sp/>vous<sp/>puissiez<sp/>accéder<sp/>à<sp/>cet<sp/>en-tête<sp/>signifie<sp/>que<sp/>vous<sp/>avez</highlight></codeline>
-<codeline lineno="35"><highlight class="comment"><sp/>*<sp/>pris<sp/>connaissance<sp/>de<sp/>la<sp/>licence<sp/>CeCILL,<sp/>et<sp/>que<sp/>vous<sp/>en<sp/>avez<sp/>accepté<sp/>les</highlight></codeline>
-<codeline lineno="36"><highlight class="comment"><sp/>*<sp/>termes.</highlight></codeline>
-<codeline lineno="37"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="38"><highlight class="comment"><sp/>*<sp/>---------------------</highlight></codeline>
-<codeline lineno="39"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="40"><highlight class="comment"><sp/>*<sp/>Copyright<sp/>CEA/DAM/DIF<sp/>(2005)</highlight></codeline>
-<codeline lineno="41"><highlight class="comment"><sp/>*<sp/><sp/>Contributor:<sp/>Philippe<sp/>DENIEL<sp/><sp/>philippe.deniel@cea.fr</highlight></codeline>
-<codeline lineno="42"><highlight class="comment"><sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Thomas<sp/>LEIBOVICI<sp/>thomas.leibovici@cea.fr</highlight></codeline>
-<codeline lineno="43"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="44"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="45"><highlight class="comment"><sp/>*<sp/>This<sp/>software<sp/>is<sp/>a<sp/>server<sp/>that<sp/>implements<sp/>the<sp/>NFS<sp/>protocol.</highlight></codeline>
-<codeline lineno="46"><highlight class="comment"><sp/>*<sp/></highlight></codeline>
-<codeline lineno="47"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="48"><highlight class="comment"><sp/>*<sp/>This<sp/>software<sp/>is<sp/>governed<sp/>by<sp/>the<sp/>CeCILL<sp/><sp/>license<sp/>under<sp/>French<sp/>law<sp/>and</highlight></codeline>
-<codeline lineno="49"><highlight class="comment"><sp/>*<sp/>abiding<sp/>by<sp/>the<sp/>rules<sp/>of<sp/>distribution<sp/>of<sp/>free<sp/>software.<sp/><sp/>You<sp/>can<sp/><sp/>use,</highlight></codeline>
-<codeline lineno="50"><highlight class="comment"><sp/>*<sp/>modify<sp/>and/<sp/>or<sp/>redistribute<sp/>the<sp/>software<sp/>under<sp/>the<sp/>terms<sp/>of<sp/>the<sp/>CeCILL</highlight></codeline>
-<codeline lineno="51"><highlight class="comment"><sp/>*<sp/>license<sp/>as<sp/>circulated<sp/>by<sp/>CEA,<sp/>CNRS<sp/>and<sp/>INRIA<sp/>at<sp/>the<sp/>following<sp/>URL</highlight></codeline>
-<codeline lineno="52"><highlight class="comment"><sp/>*<sp/>&quot;http://www.cecill.info&quot;.</highlight></codeline>
-<codeline lineno="53"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="54"><highlight class="comment"><sp/>*<sp/>As<sp/>a<sp/>counterpart<sp/>to<sp/>the<sp/>access<sp/>to<sp/>the<sp/>source<sp/>code<sp/>and<sp/><sp/>rights<sp/>to<sp/>copy,</highlight></codeline>
-<codeline lineno="55"><highlight class="comment"><sp/>*<sp/>modify<sp/>and<sp/>redistribute<sp/>granted<sp/>by<sp/>the<sp/>license,<sp/>users<sp/>are<sp/>provided<sp/>only</highlight></codeline>
-<codeline lineno="56"><highlight class="comment"><sp/>*<sp/>with<sp/>a<sp/>limited<sp/>warranty<sp/><sp/>and<sp/>the<sp/>software&apos;s<sp/>author,<sp/><sp/>the<sp/>holder<sp/>of<sp/>the</highlight></codeline>
-<codeline lineno="57"><highlight class="comment"><sp/>*<sp/>economic<sp/>rights,<sp/><sp/>and<sp/>the<sp/>successive<sp/>licensors<sp/><sp/>have<sp/>only<sp/><sp/>limited</highlight></codeline>
-<codeline lineno="58"><highlight class="comment"><sp/>*<sp/>liability.</highlight></codeline>
-<codeline lineno="59"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="60"><highlight class="comment"><sp/>*<sp/>In<sp/>this<sp/>respect,<sp/>the<sp/>user&apos;s<sp/>attention<sp/>is<sp/>drawn<sp/>to<sp/>the<sp/>risks<sp/>associated</highlight></codeline>
-<codeline lineno="61"><highlight class="comment"><sp/>*<sp/>with<sp/>loading,<sp/><sp/>using,<sp/><sp/>modifying<sp/>and/or<sp/>developing<sp/>or<sp/>reproducing<sp/>the</highlight></codeline>
-<codeline lineno="62"><highlight class="comment"><sp/>*<sp/>software<sp/>by<sp/>the<sp/>user<sp/>in<sp/>light<sp/>of<sp/>its<sp/>specific<sp/>status<sp/>of<sp/>free<sp/>software,</highlight></codeline>
-<codeline lineno="63"><highlight class="comment"><sp/>*<sp/>that<sp/>may<sp/>mean<sp/><sp/>that<sp/>it<sp/>is<sp/>complicated<sp/>to<sp/>manipulate,<sp/><sp/>and<sp/><sp/>that<sp/><sp/>also</highlight></codeline>
-<codeline lineno="64"><highlight class="comment"><sp/>therefore<sp/>means<sp/><sp/>that<sp/>it<sp/>is<sp/>reserved<sp/>for<sp/>developers<sp/><sp/>and<sp/><sp/>experienced</highlight></codeline>
-<codeline lineno="65"><highlight class="comment"><sp/>*<sp/>professionals<sp/>having<sp/>in-depth<sp/>computer<sp/>knowledge.<sp/>Users<sp/>are<sp/>therefore</highlight></codeline>
-<codeline lineno="66"><highlight class="comment"><sp/>*<sp/>encouraged<sp/>to<sp/>load<sp/>and<sp/>test<sp/>the<sp/>software&apos;s<sp/>suitability<sp/>as<sp/>regards<sp/>their</highlight></codeline>
-<codeline lineno="67"><highlight class="comment"><sp/>*<sp/>requirements<sp/>in<sp/>conditions<sp/>enabling<sp/>the<sp/>security<sp/>of<sp/>their<sp/>systems<sp/>and/or</highlight></codeline>
-<codeline lineno="68"><highlight class="comment"><sp/>*<sp/>data<sp/>to<sp/>be<sp/>ensured<sp/>and,<sp/><sp/>more<sp/>generally,<sp/>to<sp/>use<sp/>and<sp/>operate<sp/>it<sp/>in<sp/>the</highlight></codeline>
-<codeline lineno="69"><highlight class="comment"><sp/>*<sp/>same<sp/>conditions<sp/>as<sp/>regards<sp/>security.</highlight></codeline>
-<codeline lineno="70"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="71"><highlight class="comment"><sp/>*<sp/>The<sp/>fact<sp/>that<sp/>you<sp/>are<sp/>presently<sp/>reading<sp/>this<sp/>means<sp/>that<sp/>you<sp/>have<sp/>had</highlight></codeline>
-<codeline lineno="72"><highlight class="comment"><sp/>*<sp/>knowledge<sp/>of<sp/>the<sp/>CeCILL<sp/>license<sp/>and<sp/>that<sp/>you<sp/>accept<sp/>its<sp/>terms.</highlight></codeline>
-<codeline lineno="73"><highlight class="comment"><sp/>*<sp/>---------------------------------------</highlight></codeline>
-<codeline lineno="74"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="75"><highlight class="normal"></highlight></codeline>
-<codeline lineno="87"><highlight class="preprocessor">#ifdef<sp/>HAVE_CONFIG_H</highlight></codeline>
-<codeline lineno="88"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;config.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="89"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="90"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="91"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
-<codeline lineno="92"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;solaris_port.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="93"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="94"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="95"><highlight class="normal"></highlight></codeline>
-<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/socket.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;netinet/in.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#ifndef<sp/>_FREEBSD</highlight></codeline>
-<codeline lineno="100"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;netinet/tcp.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#endif<sp/></highlight><highlight class="comment">/*<sp/>_FREEBSD<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="103"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;ctype.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>isalnum<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="104"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdlib.h&gt;</highlight><highlight class="normal"><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>atoi<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="105"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;dirent.h&gt;</highlight><highlight class="normal"><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>MAXNAMLEN<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;netdb.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="107"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;netinet/in.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="108"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;arpa/inet.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="109"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="110"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;unistd.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="111"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/poll.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="112"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="113"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="114"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="115"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pwd.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="116"><highlight class="normal"></highlight></codeline>
-<codeline lineno="117"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;grp.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
-<codeline lineno="119"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/svc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="121"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="122"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
-<codeline lineno="123"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="124"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/svc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="125"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="126"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="127"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="128"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="129"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="130"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="131"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="132"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="133"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;fsal.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="134"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="135"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="136"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_file_handle.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="137"><highlight class="normal"></highlight></codeline>
-<codeline lineno="138" refid="structtcp__conn" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal"><ref refid="structtcp__conn" kindref="compound">tcp_conn</ref><sp/>{<sp/><sp/></highlight><highlight class="comment">/*<sp/>kept<sp/>in<sp/>xprt-&gt;xp_p1<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="139" refid="structtcp__conn_1bb3a69238ecaebce9aebb735681c0fe7" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">enum</highlight><highlight class="normal"><sp/>xprt_stat<sp/><ref refid="structtcp__conn_1bb3a69238ecaebce9aebb735681c0fe7" kindref="member">strm_stat</ref>;</highlight></codeline>
-<codeline lineno="140" refid="structtcp__conn_112a899d89f7156954fae4cf94bb16f2e" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>u_long<sp/><ref refid="structtcp__conn_112a899d89f7156954fae4cf94bb16f2e" kindref="member">x_id</ref>;</highlight></codeline>
-<codeline lineno="141" refid="structtcp__conn_1feeaf8f16f5c71970e87d224d19c06f1" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>XDR<sp/><ref refid="structtcp__conn_1feeaf8f16f5c71970e87d224d19c06f1" kindref="member">xdrs</ref>;</highlight></codeline>
-<codeline lineno="142" refid="structtcp__conn_1abf682f3b226fe822f3eb934432f37dc" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/><ref refid="structtcp__conn_1abf682f3b226fe822f3eb934432f37dc" kindref="member">verf_body</ref>[MAX_AUTH_BYTES];</highlight></codeline>
-<codeline lineno="143"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="9"><highlight class="comment"><sp/>*<sp/>This<sp/>program<sp/>is<sp/>free<sp/>software;<sp/>you<sp/>can<sp/>redistribute<sp/>it<sp/>and/or</highlight></codeline>
+<codeline lineno="10"><highlight class="comment"><sp/>*<sp/>modify<sp/>it<sp/>under<sp/>the<sp/>terms<sp/>of<sp/>the<sp/>GNU<sp/>Lesser<sp/>General<sp/>Public</highlight></codeline>
+<codeline lineno="11"><highlight class="comment"><sp/>*<sp/>License<sp/>as<sp/>published<sp/>by<sp/>the<sp/>Free<sp/>Software<sp/>Foundation;<sp/>either</highlight></codeline>
+<codeline lineno="12"><highlight class="comment"><sp/>*<sp/>version<sp/>3<sp/>of<sp/>the<sp/>License,<sp/>or<sp/>(at<sp/>your<sp/>option)<sp/>any<sp/>later<sp/>version.</highlight></codeline>
+<codeline lineno="13"><highlight class="comment"><sp/>*<sp/></highlight></codeline>
+<codeline lineno="14"><highlight class="comment"><sp/>*<sp/>This<sp/>program<sp/>is<sp/>distributed<sp/>in<sp/>the<sp/>hope<sp/>that<sp/>it<sp/>will<sp/>be<sp/>useful,</highlight></codeline>
+<codeline lineno="15"><highlight class="comment"><sp/>*<sp/>but<sp/>WITHOUT<sp/>ANY<sp/>WARRANTY;<sp/>without<sp/>even<sp/>the<sp/>implied<sp/>warranty<sp/>of</highlight></codeline>
+<codeline lineno="16"><highlight class="comment"><sp/>*<sp/>MERCHANTABILITY<sp/>or<sp/>FITNESS<sp/>FOR<sp/>A<sp/>PARTICULAR<sp/>PURPOSE.<sp/><sp/>See<sp/>the<sp/>GNU</highlight></codeline>
+<codeline lineno="17"><highlight class="comment"><sp/>*<sp/>Lesser<sp/>General<sp/>Public<sp/>License<sp/>for<sp/>more<sp/>details.</highlight></codeline>
+<codeline lineno="18"><highlight class="comment"><sp/>*<sp/></highlight></codeline>
+<codeline lineno="19"><highlight class="comment"><sp/>*<sp/>You<sp/>should<sp/>have<sp/>received<sp/>a<sp/>copy<sp/>of<sp/>the<sp/>GNU<sp/>Lesser<sp/>General<sp/>Public</highlight></codeline>
+<codeline lineno="20"><highlight class="comment"><sp/>*<sp/>License<sp/>along<sp/>with<sp/>this<sp/>library;<sp/>if<sp/>not,<sp/>write<sp/>to<sp/>the<sp/>Free<sp/>Software</highlight></codeline>
+<codeline lineno="21"><highlight class="comment"><sp/>*<sp/>Foundation,<sp/>Inc.,<sp/>51<sp/>Franklin<sp/>Street,<sp/>Fifth<sp/>Floor,<sp/>Boston,<sp/>MA<sp/><sp/>02110-1301<sp/><sp/>USA</highlight></codeline>
+<codeline lineno="22"><highlight class="comment"><sp/>*<sp/></highlight></codeline>
+<codeline lineno="23"><highlight class="comment"><sp/>*<sp/>---------------------------------------</highlight></codeline>
+<codeline lineno="24"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="25"><highlight class="normal"></highlight></codeline>
+<codeline lineno="37"><highlight class="preprocessor">#ifdef<sp/>HAVE_CONFIG_H</highlight></codeline>
+<codeline lineno="38"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;config.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="39"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="40"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="41"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
+<codeline lineno="42"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;solaris_port.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="43"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="44"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="45"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="46"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/socket.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="47"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;netinet/in.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="48"><highlight class="normal"></highlight><highlight class="preprocessor">#ifndef<sp/>_FREEBSD</highlight></codeline>
+<codeline lineno="49"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;netinet/tcp.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="50"><highlight class="normal"></highlight><highlight class="preprocessor">#endif<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>_FREEBSD<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="51"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="52"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;ctype.h&gt;</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>isalnum<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="53"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdlib.h&gt;</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>atoi<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="54"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;dirent.h&gt;</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>MAXNAMLEN<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="55"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;netdb.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="56"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;netinet/in.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="57"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;arpa/inet.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="58"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="59"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;unistd.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="60"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/poll.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="61"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="62"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="63"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="64"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pwd.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="65"><highlight class="normal"></highlight></codeline>
+<codeline lineno="66"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;grp.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="67"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
+<codeline lineno="68"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="69"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/svc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="70"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="71"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
+<codeline lineno="72"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="73"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/svc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="74"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="75"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="76"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="77"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="78"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="79"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="80"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="81"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="82"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;fsal.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="83"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="84"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="85"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_file_handle.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="86"><highlight class="normal"></highlight></codeline>
+<codeline lineno="87" refid="structtcp__conn" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal"><ref refid="structtcp__conn" kindref="compound">tcp_conn</ref></highlight></codeline>
+<codeline lineno="88"><highlight class="normal">{<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>kept<sp/>in<sp/>xprt-&gt;xp_p1<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="89" refid="structtcp__conn_1abb3a69238ecaebce9aebb735681c0fe7" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">enum</highlight><highlight class="normal"><sp/>xprt_stat<sp/><ref refid="structtcp__conn_1abb3a69238ecaebce9aebb735681c0fe7" kindref="member">strm_stat</ref>;</highlight></codeline>
+<codeline lineno="90" refid="structtcp__conn_1a12a899d89f7156954fae4cf94bb16f2e" refkind="member"><highlight class="normal"><sp/><sp/>u_long<sp/><ref refid="structtcp__conn_1a12a899d89f7156954fae4cf94bb16f2e" kindref="member">x_id</ref>;</highlight></codeline>
+<codeline lineno="91" refid="structtcp__conn_1afeeaf8f16f5c71970e87d224d19c06f1" refkind="member"><highlight class="normal"><sp/><sp/>XDR<sp/><ref refid="structtcp__conn_1afeeaf8f16f5c71970e87d224d19c06f1" kindref="member">xdrs</ref>;</highlight></codeline>
+<codeline lineno="92" refid="structtcp__conn_1aabf682f3b226fe822f3eb934432f37dc" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/><ref refid="structtcp__conn_1aabf682f3b226fe822f3eb934432f37dc" kindref="member">verf_body</ref>[MAX_AUTH_BYTES];</highlight></codeline>
+<codeline lineno="93"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="94"><highlight class="normal"></highlight></codeline>
+<codeline lineno="95" refid="nfs__tools_8c_1a8decbd7a3557fd2c788ade7abed9a407" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_1a8decbd7a3557fd2c788ade7abed9a407" kindref="member">decimal_simple_hash_func</ref>(hash_parameter_t<sp/>*<sp/>p_hparam,</highlight></codeline>
+<codeline lineno="96"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>hash_buffer_t<sp/>*<sp/>buffclef)</highlight></codeline>
+<codeline lineno="97"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="98"><highlight class="normal"><sp/><sp/>LogMajor(COMPONENT_MAIN,<sp/></highlight><highlight class="stringliteral">&quot;ATTENTION:<sp/>CALLING<sp/>A<sp/>DUMMY<sp/>FUNCTION&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="99"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
+<codeline lineno="100"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="101"><highlight class="normal"></highlight></codeline>
+<codeline lineno="102" refid="nfs__tools_8c_1a85f4af1a161f534f296b85372fba0413" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_1a85f4af1a161f534f296b85372fba0413" kindref="member">decimal_rbt_hash_func</ref>(hash_parameter_t<sp/>*<sp/>p_hparam,<sp/>hash_buffer_t<sp/>*<sp/>buffclef)</highlight></codeline>
+<codeline lineno="103"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="104"><highlight class="normal"><sp/><sp/>LogMajor(COMPONENT_MAIN,<sp/></highlight><highlight class="stringliteral">&quot;ATTENTION:<sp/>CALLING<sp/>A<sp/>DUMMY<sp/>FUNCTION&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="105"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
+<codeline lineno="106"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="107"><highlight class="normal"></highlight></codeline>
+<codeline lineno="108" refid="nfs__tools_8c_1a5eeaebff3f2862b2b16395d537bce1a1" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_1a5eeaebff3f2862b2b16395d537bce1a1" kindref="member">display_cache</ref>(hash_buffer_t<sp/>*<sp/>pbuff,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*str)</highlight></codeline>
+<codeline lineno="109"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="110"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
+<codeline lineno="111"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="112"><highlight class="normal"></highlight></codeline>
+<codeline lineno="113" refid="nfs__tools_8c_1a2a033479a0d020e76de2586d26f8db5b" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_1a2a033479a0d020e76de2586d26f8db5b" kindref="member">compare_cache</ref>(hash_buffer_t<sp/>*<sp/>buff1,<sp/>hash_buffer_t<sp/>*<sp/>buff2)</highlight></codeline>
+<codeline lineno="114"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="115"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
+<codeline lineno="116"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="117"><highlight class="normal"></highlight></codeline>
+<codeline lineno="118" refid="nfs__tools_8c_1a9649b9bb0b478385d0c0a46cc96df5ff" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_1a9649b9bb0b478385d0c0a46cc96df5ff" kindref="member">print_cache</ref>(LRU_data_t<sp/>data,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*str)</highlight></codeline>
+<codeline lineno="119"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="120"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
+<codeline lineno="121"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="122"><highlight class="normal"></highlight></codeline>
+<codeline lineno="123" refid="nfs__tools_8c_1a9c7c012283e03dc52eda904db37562ff" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_1a9c7c012283e03dc52eda904db37562ff" kindref="member">clean_cache</ref>(LRU_entry_t<sp/>*<sp/>pentry,<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*addparam)</highlight></codeline>
+<codeline lineno="124"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="125"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
+<codeline lineno="126"><highlight class="normal">}<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>clean_cache<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="127"><highlight class="normal"></highlight></codeline>
+<codeline lineno="140" refid="nfs__tools_8c_1afc0713ab6f936fa664d7c92a1ecc79c3" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_1afc0713ab6f936fa664d7c92a1ecc79c3" kindref="member">lru_inode_entry_to_str</ref>(LRU_data_t<sp/>data,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*str)</highlight></codeline>
+<codeline lineno="141"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="142"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>sprintf(str,<sp/></highlight><highlight class="stringliteral">&quot;N/A<sp/>&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="143"><highlight class="normal">}<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>lru_inode_entry_to_str<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="144"><highlight class="normal"></highlight></codeline>
-<codeline lineno="145"><highlight class="normal"></highlight></codeline>
-<codeline lineno="146"><highlight class="normal"></highlight></codeline>
-<codeline lineno="147" refid="nfs__tools_8c_18decbd7a3557fd2c788ade7abed9a407" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_18decbd7a3557fd2c788ade7abed9a407" kindref="member">decimal_simple_hash_func</ref>(<sp/>hash_parameter_t<sp/>*<sp/>p_hparam,<sp/>hash_buffer_t<sp/>*<sp/>buffclef<sp/>)<sp/></highlight></codeline>
-<codeline lineno="148"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="149"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;ATTENTION:<sp/>APPEL<sp/>D&apos;UNE<sp/>DUMMY<sp/>FUNCTION\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="150"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0<sp/>;</highlight></codeline>
-<codeline lineno="151"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="152"><highlight class="normal"></highlight></codeline>
-<codeline lineno="153" refid="nfs__tools_8c_185f4af1a161f534f296b85372fba0413" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_185f4af1a161f534f296b85372fba0413" kindref="member">decimal_rbt_hash_func</ref>(<sp/>hash_parameter_t<sp/>*<sp/>p_hparam,<sp/>hash_buffer_t<sp/>*<sp/>buffclef<sp/>)<sp/></highlight></codeline>
-<codeline lineno="154"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="155"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;ATTENTION:<sp/>APPEL<sp/>D&apos;UNE<sp/>DUMMY<sp/>FUNCTION\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="156"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0<sp/>;</highlight></codeline>
-<codeline lineno="157"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="158"><highlight class="normal"></highlight></codeline>
-<codeline lineno="159" refid="nfs__tools_8c_15eeaebff3f2862b2b16395d537bce1a1" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_15eeaebff3f2862b2b16395d537bce1a1" kindref="member">display_cache</ref>(<sp/>hash_buffer_t<sp/>*<sp/>pbuff,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str<sp/>)<sp/></highlight></codeline>
-<codeline lineno="160"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="161"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0<sp/>;</highlight></codeline>
-<codeline lineno="162"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="163"><highlight class="normal"></highlight></codeline>
-<codeline lineno="164" refid="nfs__tools_8c_12a033479a0d020e76de2586d26f8db5b" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_12a033479a0d020e76de2586d26f8db5b" kindref="member">compare_cache</ref>(<sp/><sp/>hash_buffer_t<sp/>*<sp/>buff1,<sp/>hash_buffer_t<sp/>*<sp/>buff2<sp/>)<sp/></highlight></codeline>
-<codeline lineno="165"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="166"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0<sp/>;</highlight></codeline>
-<codeline lineno="167"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="168"><highlight class="normal"></highlight></codeline>
-<codeline lineno="169" refid="nfs__tools_8c_19649b9bb0b478385d0c0a46cc96df5ff" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_19649b9bb0b478385d0c0a46cc96df5ff" kindref="member">print_cache</ref>(<sp/>LRU_data_t<sp/>data,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*str<sp/>)<sp/></highlight></codeline>
-<codeline lineno="170"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="171"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0<sp/>;</highlight></codeline>
-<codeline lineno="172"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="173"><highlight class="normal"></highlight></codeline>
-<codeline lineno="174" refid="nfs__tools_8c_19c7c012283e03dc52eda904db37562ff" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_19c7c012283e03dc52eda904db37562ff" kindref="member">clean_cache</ref>(<sp/><sp/>LRU_entry_t<sp/>*<sp/>pentry,<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*<sp/>addparam<sp/>)<sp/></highlight></codeline>
+<codeline lineno="157" refid="nfs__tools_8c_1a738899949b8da5c9128e6296a7ad7043" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_1a738899949b8da5c9128e6296a7ad7043" kindref="member">lru_data_entry_to_str</ref>(LRU_data_t<sp/>data,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*str)</highlight></codeline>
+<codeline lineno="158"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="159"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>sprintf(str,<sp/></highlight><highlight class="stringliteral">&quot;addr=%p,len=%llu<sp/>&quot;</highlight><highlight class="normal">,<sp/>data.pdata,<sp/>(</highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal">)data.len);</highlight></codeline>
+<codeline lineno="160"><highlight class="normal">}<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>lru_data_entry_to_str<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="161"><highlight class="normal"></highlight></codeline>
+<codeline lineno="174" refid="nfs__tools_8c_1a230b0440af10caba4b9c4697e23ac36a" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_1a230b0440af10caba4b9c4697e23ac36a" kindref="member">lru_inode_clean_entry</ref>(LRU_entry_t<sp/>*<sp/>entry,<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*adddata)</highlight></codeline>
 <codeline lineno="175"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="176"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0<sp/>;</highlight></codeline>
-<codeline lineno="177"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>clean_cache<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="176"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
+<codeline lineno="177"><highlight class="normal">}<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>lru_inode_clean_entry<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="178"><highlight class="normal"></highlight></codeline>
-<codeline lineno="179"><highlight class="normal"></highlight></codeline>
-<codeline lineno="180"><highlight class="normal"></highlight></codeline>
-<codeline lineno="193" refid="nfs__tools_8c_1fc0713ab6f936fa664d7c92a1ecc79c3" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_1fc0713ab6f936fa664d7c92a1ecc79c3" kindref="member">lru_inode_entry_to_str</ref>(<sp/>LRU_data_t<sp/>data,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str)</highlight></codeline>
-<codeline lineno="194"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="195"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>sprintf(<sp/>str,<sp/></highlight><highlight class="stringliteral">&quot;N/A<sp/>&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="196"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>lru_inode_entry_to_str<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="197"><highlight class="normal"></highlight></codeline>
-<codeline lineno="210" refid="nfs__tools_8c_1738899949b8da5c9128e6296a7ad7043" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_1738899949b8da5c9128e6296a7ad7043" kindref="member">lru_data_entry_to_str</ref>(<sp/>LRU_data_t<sp/>data,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str)</highlight></codeline>
-<codeline lineno="211"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="212"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>sprintf(<sp/>str,<sp/></highlight><highlight class="stringliteral">&quot;addr=%p,len=%llu<sp/>&quot;</highlight><highlight class="normal">,<sp/>data.pdata,<sp/>(</highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal">)data.len<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="213"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>lru_data_entry_to_str<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="214"><highlight class="normal"></highlight></codeline>
+<codeline lineno="191" refid="nfs__tools_8c_1a1fff2fdd16477f241028cf536bc5ff2d" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_1a1fff2fdd16477f241028cf536bc5ff2d" kindref="member">lru_data_clean_entry</ref>(LRU_entry_t<sp/>*<sp/>entry,<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*adddata)</highlight></codeline>
+<codeline lineno="192"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="193"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
+<codeline lineno="194"><highlight class="normal">}<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>lru_data_clean_entry<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="195"><highlight class="normal"></highlight></codeline>
+<codeline lineno="196" refid="Svc__tcp__oncrpc_8c_1a724cb81161f478d63c680f3e1f3f3a62" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="nfs__rpc__dispatcher__thread_8c_1a724cb81161f478d63c680f3e1f3f3a62" kindref="member">socket_setoptions</ref>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>socketFd)</highlight></codeline>
+<codeline lineno="197"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="198"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>SbMax<sp/>=<sp/>(1<sp/>&lt;&lt;<sp/>30);<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>1GB<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="199"><highlight class="normal"></highlight></codeline>
+<codeline lineno="200"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">while</highlight><highlight class="normal">(SbMax<sp/>&gt;<sp/>1048576)</highlight></codeline>
+<codeline lineno="201"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="202"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">((setsockopt(socketFd,<sp/>SOL_SOCKET,<sp/>SO_SNDBUF,<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)&amp;SbMax,<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(SbMax))<sp/>&lt;<sp/>0)</highlight></codeline>
+<codeline lineno="203"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>||<sp/>(setsockopt(socketFd,<sp/>SOL_SOCKET,<sp/>SO_RCVBUF,<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)&amp;SbMax,<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(SbMax))<sp/>&lt;</highlight></codeline>
+<codeline lineno="204"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>0))</highlight></codeline>
+<codeline lineno="205"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="206"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>SbMax<sp/>&gt;&gt;=<sp/>1;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>SbMax<sp/>=<sp/>SbMax/2<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="207"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">continue</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="208"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="209"><highlight class="normal"></highlight></codeline>
+<codeline lineno="210"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">break</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="211"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="212"><highlight class="normal"></highlight></codeline>
+<codeline lineno="213"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="214"><highlight class="normal">}<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>socket_setoptions_ctrl<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="215"><highlight class="normal"></highlight></codeline>
-<codeline lineno="228" refid="nfs__tools_8c_1230b0440af10caba4b9c4697e23ac36a" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_1230b0440af10caba4b9c4697e23ac36a" kindref="member">lru_inode_clean_entry</ref>(<sp/>LRU_entry_t<sp/>*<sp/>entry,<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*<sp/>adddata)</highlight></codeline>
-<codeline lineno="229"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="230"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0<sp/>;</highlight></codeline>
-<codeline lineno="231"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>lru_inode_clean_entry<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="232"><highlight class="normal"></highlight></codeline>
-<codeline lineno="245" refid="nfs__tools_8c_11fff2fdd16477f241028cf536bc5ff2d" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_11fff2fdd16477f241028cf536bc5ff2d" kindref="member">lru_data_clean_entry</ref>(<sp/>LRU_entry_t<sp/>*<sp/>entry,<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*<sp/>adddata)</highlight></codeline>
-<codeline lineno="246"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="247"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0<sp/>;</highlight></codeline>
-<codeline lineno="248"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>lru_data_clean_entry<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="249"><highlight class="normal"></highlight></codeline>
-<codeline lineno="250"><highlight class="normal"></highlight></codeline>
-<codeline lineno="251" refid="Svc__tcp__oncrpc_8c_1724cb81161f478d63c680f3e1f3f3a62" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="nfs__rpc__dispatcher__thread_8c_1724cb81161f478d63c680f3e1f3f3a62" kindref="member">socket_setoptions</ref>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>socketFd<sp/>)</highlight></codeline>
-<codeline lineno="252"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="253"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>SbMax<sp/>=<sp/>(1&lt;&lt;30)<sp/>;<sp/><sp/></highlight><highlight class="comment">/*<sp/>1GB*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="254"><highlight class="normal"></highlight></codeline>
-<codeline lineno="255"><highlight class="normal"></highlight></codeline>
-<codeline lineno="256"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">while</highlight><highlight class="normal"><sp/>(SbMax<sp/>&gt;<sp/>1048576<sp/>)</highlight></codeline>
-<codeline lineno="257"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="258"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>((setsockopt(socketFd,<sp/>SOL_SOCKET,<sp/>SO_SNDBUF,<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)&amp;SbMax,<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(<sp/>SbMax<sp/>)<sp/>)<sp/>&lt;<sp/>0<sp/>)<sp/>||</highlight></codeline>
-<codeline lineno="259"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>(setsockopt(socketFd,<sp/>SOL_SOCKET,<sp/>SO_RCVBUF,<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)&amp;SbMax,<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(<sp/>SbMax<sp/>)<sp/>)<sp/>&lt;<sp/>0<sp/>)<sp/>)</highlight></codeline>
-<codeline lineno="260"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="261"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>SbMax<sp/>&gt;&gt;=<sp/>1;<sp/></highlight><highlight class="comment">/*<sp/>SbMax<sp/>=<sp/>SbMax/2<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="262"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">continue</highlight><highlight class="normal">;</highlight></codeline>
-<codeline lineno="263"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="264"><highlight class="normal"></highlight></codeline>
-<codeline lineno="265"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">break</highlight><highlight class="normal">;</highlight></codeline>
-<codeline lineno="266"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="267"><highlight class="normal"></highlight></codeline>
-<codeline lineno="268"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal">;</highlight></codeline>
-<codeline lineno="269"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>socket_setoptions_ctrl<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="270"><highlight class="normal"></highlight></codeline>
-<codeline lineno="271"><highlight class="normal"></highlight></codeline>
+<codeline lineno="216" refid="nfs__tools_8c_1a13d72fdcfbf42ca6b83bb8c3e09b056a" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__tools_8c_1a13d72fdcfbf42ca6b83bb8c3e09b056a" kindref="member">cmp_sockaddr</ref>(</highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>sockaddr<sp/>*addr_1,<sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>sockaddr<sp/>*addr_2)</highlight></codeline>
+<codeline lineno="217"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="218"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(addr_1-&gt;sa_family<sp/>==<sp/>AF_INET<sp/>&amp;&amp;<sp/>(addr_2-&gt;sa_family<sp/>==<sp/>AF_INET))</highlight></codeline>
+<codeline lineno="219"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="220"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(((</highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>sockaddr_in<sp/>*)addr_1)-&gt;sin_addr.s_addr</highlight></codeline>
+<codeline lineno="221"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>==<sp/>((</highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>sockaddr_in<sp/>*)addr_2)-&gt;sin_addr.s_addr</highlight></codeline>
+<codeline lineno="222"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;&amp;<sp/>((</highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>sockaddr_in<sp/>*)addr_1)-&gt;sin_port</highlight></codeline>
+<codeline lineno="223"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>==<sp/>((</highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>sockaddr_in<sp/>*)addr_2)-&gt;sin_port)</highlight></codeline>
+<codeline lineno="224"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="225"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1;</highlight></codeline>
+<codeline lineno="226"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="227"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="228"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_TIRPC_IPV6</highlight></codeline>
+<codeline lineno="229"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(addr_1-&gt;sa_family<sp/>==<sp/>AF_INET6<sp/>&amp;&amp;<sp/>addr_2-&gt;sa_family<sp/>==<sp/>AF_INET6)</highlight></codeline>
+<codeline lineno="230"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="231"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(((</highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>sockaddr_in6<sp/>*)addr_1)-&gt;sin6_addr.s6_addr</highlight></codeline>
+<codeline lineno="232"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>==<sp/>((</highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>sockaddr_in6<sp/>*)addr_2)-&gt;sin6_addr.s6_addr</highlight></codeline>
+<codeline lineno="233"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;&amp;<sp/>((</highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>sockaddr_in6<sp/>*)addr_1)-&gt;sin6_port</highlight></codeline>
+<codeline lineno="234"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>==<sp/>((</highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>sockaddr_in6<sp/>*)addr_2)-&gt;sin6_port)</highlight></codeline>
+<codeline lineno="235"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="236"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1;</highlight></codeline>
+<codeline lineno="237"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="238"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="239"><highlight class="normal"></highlight><highlight class="preprocessor">#endif<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>_USE_TIRPC_IPV6<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="240"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
+<codeline lineno="241"><highlight class="normal">}</highlight></codeline>
     </programlisting>
     <location file="/export/GANESHA/src/MainNFSD/nfs_tools.c"/>
   </compounddef>

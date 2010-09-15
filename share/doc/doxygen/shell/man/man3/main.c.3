@@ -1,10 +1,11 @@
-.TH "main.c" 3 "31 Mar 2009" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.TH "main.c" 3 "15 Sep 2010" "Version 0.1" "ganeshell" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-main.c \- main shell routine.  
-
+main.c \- 
 .PP
+main shell routine.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -101,8 +102,6 @@ leibovic
 .PP
 Revision 1.28 2006/02/23 07:42:53 leibovic Adding -n option to shell.
 .PP
-Revision 1.27 2005/11/28 17:03:00 deniel Added CeCILL headers
-.PP
 Revision 1.26 2005/08/12 11:56:59 leibovic coquille.
 .PP
 Revision 1.25 2005/07/26 12:54:47 leibovic Multi-thread shell with synchronisation routines.
@@ -114,30 +113,29 @@ Definition in file \fBmain.c\fP.
 .PP 
 .SS "#define NBTHRMAX   64"
 .PP
-Definition at line 120 of file main.c.
+Definition at line 66 of file main.c.
 .SH "Typedef Documentation"
 .PP 
 .SS "typedef struct \fBshell_info__\fP  \fBshell_info_t\fP"
-.PP
 .SH "Function Documentation"
 .PP 
 .SS "void* LaunchShell (void * arg)"
 .PP
-Definition at line 145 of file main.c.
+Definition at line 89 of file main.c.
 .SS "int main (int argc, char ** argv)"
 .PP
-Definition at line 177 of file main.c.
+Definition at line 120 of file main.c.
 .SH "Variable Documentation"
 .PP 
 .SS "time_t \fBServerBootTime\fP = 0"
 .PP
-Definition at line 122 of file main.c.
+Definition at line 68 of file main.c.
 .SS "\fBshell_info_t\fP \fBthrlist\fP[NBTHRMAX]"
 .PP
-Definition at line 139 of file main.c.
+Definition at line 85 of file main.c.
 .SS "int \fBverbose\fP = 0"
 .PP
-Definition at line 141 of file main.c.
+Definition at line 87 of file main.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for ganeshell from the source code.

@@ -1,16 +1,17 @@
-.TH "cache_inode_read_conf.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_read_conf.c" 3 "15 Sep 2010" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_read_conf.c \- Read the configuration file for the Cache inode initialization.  
-
+cache_inode_read_conf.c \- 
 .PP
+Read the configuration file for the Cache inode initialization.  
+
 .SH SYNOPSIS
 .br
 .PP
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -92,9 +93,7 @@ leibovic
 Definition in file \fBcache_inode_read_conf.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "void cache_inode_print_conf_client_parameter (FILE * output, cache_inode_client_parameter_t param)"
-.PP
-cache_inode_print_conf_client_parameter: prints the client parameter.
+.SS "void cache_inode_print_conf_client_parameter (FILE * output, cache_inode_client_parameter_t param)"cache_inode_print_conf_client_parameter: prints the client parameter.
 .PP
 Prints the client parameters.
 .PP
@@ -112,12 +111,10 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 489 of file cache_inode_read_conf.c.
-.SS "void cache_inode_print_conf_gc_policy (FILE * output, cache_inode_gc_policy_t gcpolicy)"
+Definition at line 419 of file cache_inode_read_conf.c.
+.SS "void cache_inode_print_conf_gc_policy (FILE * output, cache_inode_gc_policy_t gcpolicy)"cache_inode_print_gc_pol: prints the garbage collection policy.
 .PP
-cache_inode_print_gc_pol: prints the garbagge collection policy.
-.PP
-Prints the garbagge collection policy.
+Prints the garbage collection policy.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -133,12 +130,10 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 517 of file cache_inode_read_conf.c.
-.SS "void cache_inode_print_conf_hash_parameter (FILE * output, cache_inode_parameter_t param)"
+Definition at line 454 of file cache_inode_read_conf.c.
+.SS "void cache_inode_print_conf_hash_parameter (FILE * output, cache_inode_parameter_t param)"cache_inode_print_conf_gc_policy: prints the garbage collection policy.
 .PP
-cache_inode_print_conf_gc_policy: prints the garbagge collection policy.
-.PP
-Prints the garbagge collection policy in configuration file.
+Prints the garbage collection policy in configuration file.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -154,10 +149,8 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 469 of file cache_inode_read_conf.c.
-.SS "cache_inode_status_t cache_inode_read_conf_client_parameter (config_file_t in_config, cache_inode_client_parameter_t * pparam)"
-.PP
-cache_inode_read_conf_client_parameter: read the configuration for a client to Cache inode layer.
+Definition at line 397 of file cache_inode_read_conf.c.
+.SS "cache_inode_status_t cache_inode_read_conf_client_parameter (config_file_t in_config, cache_inode_client_parameter_t * pparam)"cache_inode_read_conf_client_parameter: read the configuration for a client to Cache inode layer.
 .PP
 Reads the configuration for a client to Cache inode layer (typically a worker thread).
 .PP
@@ -175,12 +168,10 @@ CACHE_INODE_SUCCESS if ok, CACHE_INODE_NOT_FOUND is stanza is not there, CACHE_I
 .PP
 
 .PP
-Definition at line 208 of file cache_inode_read_conf.c.
-.SS "cache_inode_status_t cache_inode_read_conf_gc_policy (config_file_t in_config, cache_inode_gc_policy_t * ppolicy)"
+Definition at line 153 of file cache_inode_read_conf.c.
+.SS "cache_inode_status_t cache_inode_read_conf_gc_policy (config_file_t in_config, cache_inode_gc_policy_t * ppolicy)"cache_inode_read_conf_gc_policy: read the garbage collection policy in configuration file.
 .PP
-cache_inode_read_conf_gc_policy: read the garbagge collection policy in configuration file.
-.PP
-Reads the garbagge collection policy in configuration file.
+Reads the garbage collection policy in configuration file.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -196,10 +187,8 @@ CACHE_INODE_SUCCESS if ok, CACHE_INODE_NOT_FOUND is stanza is not there, CACHE_I
 .PP
 
 .PP
-Definition at line 374 of file cache_inode_read_conf.c.
-.SS "cache_inode_status_t cache_inode_read_conf_hash_parameter (config_file_t in_config, cache_inode_parameter_t * pparam)"
-.PP
-cache_inode_read_conf_hash_parameter: read the configuration for the hash in Cache_inode layer.
+Definition at line 305 of file cache_inode_read_conf.c.
+.SS "cache_inode_status_t cache_inode_read_conf_hash_parameter (config_file_t in_config, cache_inode_parameter_t * pparam)"cache_inode_read_conf_hash_parameter: read the configuration for the hash in Cache_inode layer.
 .PP
 Reads the configuration for the hash in Cache_inode layer.
 .PP
@@ -217,7 +206,7 @@ CACHE_INODE_SUCCESS if ok, CACHE_INODE_NOT_FOUND is stanza is not there, CACHE_I
 .PP
 
 .PP
-Definition at line 124 of file cache_inode_read_conf.c.
+Definition at line 73 of file cache_inode_read_conf.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

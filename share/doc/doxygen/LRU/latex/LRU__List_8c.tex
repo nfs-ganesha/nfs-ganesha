@@ -1,14 +1,15 @@
 \section{LRU\_\-List.c File Reference}
 \label{LRU__List_8c}\index{LRU\_\-List.c@{LRU\_\-List.c}}
+
+
 Management of the thread safe LRU lists.  
-
-
-{\tt \#include $<$stdlib.h$>$}\par
-{\tt \#include \char`\"{}BuddyMalloc.h\char`\"{}}\par
-{\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
-{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\ttfamily \#include $<$stdlib.h$>$}\par
+{\ttfamily \#include \char`\"{}BuddyMalloc.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}log\_\-macros.h\char`\"{}}\par
 \subsection*{Functions}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
 LRU\_\-list\_\-t $\ast$ {\bf LRU\_\-Init} (LRU\_\-parameter\_\-t lru\_\-param, LRU\_\-status\_\-t $\ast$pstatus)
 \item 
@@ -23,37 +24,31 @@ int {\bf LRU\_\-invalidate\_\-by\_\-function} (LRU\_\-list\_\-t $\ast$plru, int(
 int {\bf LRU\_\-apply\_\-function} (LRU\_\-list\_\-t $\ast$plru, int($\ast$myfunc)(LRU\_\-entry\_\-t $\ast$, void $\ast$addparam), void $\ast$addparam)
 \item 
 void {\bf LRU\_\-Print} (LRU\_\-list\_\-t $\ast$plru)
-\end{CompactItemize}
+\end{DoxyCompactItemize}
 
 
 \subsection{Detailed Description}
-Management of the thread safe LRU lists. 
+Management of the thread safe LRU lists. \begin{DoxyAuthor}{Author}
 
-\begin{Desc}
-\item[Author:]\end{Desc}
-\begin{Desc}
-\item[Author]deniel \end{Desc}
-\begin{Desc}
-\item[Date:]\end{Desc}
-\begin{Desc}
-\item[Date]2006/01/31 09:51:13 \end{Desc}
-\begin{Desc}
-\item[Version:]\end{Desc}
-\begin{Desc}
-\item[Revision]1.20 \end{Desc}
-\doxyref{LRU\_\-List.c}{p.}{LRU__List_8c} :Management of the thread safe LRU lists.
+\end{DoxyAuthor}
+Author}
+deniel \begin{DoxyDate}{Date}
 
-\begin{Desc}
-\item[Header]/cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/LRU/LRU\_\-List.c,v 1.20 2006/01/31 09:51:13 deniel Exp \end{Desc}
+\end{DoxyDate}
+Date}
+2006/01/31 09:51:13 \begin{DoxyVersion}{Version}
 
+\end{DoxyVersion}
+Revision}
+1.20 \doxyref{LRU\_\-List.c}{p.}{LRU__List_8c} :Management of the thread safe LRU lists.
 
-\begin{Desc}
-\item[Log]\doxyref{LRU\_\-List.c}{p.}{LRU__List_8c},v \end{Desc}
-Revision 1.20 2006/01/31 09:51:13 deniel Fixed LRU prev bug
+Header}
+/cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/LRU/LRU\_\-List.c,v 1.20 2006/01/31 09:51:13 deniel Exp 
+
+Log}
+\doxyref{LRU\_\-List.c}{p.}{LRU__List_8c},v Revision 1.20 2006/01/31 09:51:13 deniel Fixed LRU prev bug
 
 Revision 1.19 2006/01/24 08:57:34 leibovic Fixing LRU allocation bug.
-
-Revision 1.18 2005/11/28 17:02:39 deniel Added CeCILL headers
 
 Revision 1.17 2005/11/10 07:53:24 deniel Corrected some memory leaks
 

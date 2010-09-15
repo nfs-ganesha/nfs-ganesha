@@ -1,4 +1,4 @@
-.TH "nfs_convert.c" 3 "31 Mar 2009" "Version 0.1" "Support routines layer" \" -*- nroff -*-
+.TH "nfs_convert.c" 3 "15 Sep 2010" "Version 0.1" "Support routines layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -52,9 +52,7 @@ nfs_convert.c \-
 .in -1c
 .SH "Function Documentation"
 .PP 
-.SS "void auth_stat2str (enum auth_stat why, char * str)"
-.PP
-auth_stat2str: converts a auth_stat enum to a string
+.SS "void auth_stat2str (enum auth_stat why, char * str)"auth_stat2str: converts a auth_stat enum to a string
 .PP
 \fBParameters:\fP
 .RS 4
@@ -70,10 +68,8 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 355 of file nfs_convert.c.
-.SS "uint64_t nfs_htonl64 (uint64_t arg64)"
-.PP
-nfs_htonl64: Same as htonl, but on 64 bits.
+Definition at line 360 of file nfs_convert.c.
+.SS "uint64_t nfs_htonl64 (uint64_t arg64)"nfs_htonl64: Same as htonl, but on 64 bits.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -87,10 +83,8 @@ converted value.
 .PP
 
 .PP
-Definition at line 251 of file nfs_convert.c.
-.SS "uint64_t nfs_ntohl64 (uint64_t arg64)"
-.PP
-nfs_ntohl64: Same as ntohl, but on 64 bits.
+Definition at line 261 of file nfs_convert.c.
+.SS "uint64_t nfs_ntohl64 (uint64_t arg64)"nfs_ntohl64: Same as ntohl, but on 64 bits.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -104,19 +98,19 @@ converted value.
 .PP
 
 .PP
-Definition at line 279 of file nfs_convert.c.
+Definition at line 289 of file nfs_convert.c.
 .SS "char* nfsstat2_to_str (nfsstat2 code)"
 .PP
-Definition at line 126 of file nfs_convert.c.
+Definition at line 74 of file nfs_convert.c.
 .SS "char* nfsstat3_to_str (nfsstat3 code)"
 .PP
-Definition at line 157 of file nfs_convert.c.
+Definition at line 123 of file nfs_convert.c.
 .SS "char* nfstype2_to_str (ftype2 code)"
 .PP
-Definition at line 199 of file nfs_convert.c.
+Definition at line 194 of file nfs_convert.c.
 .SS "char* nfstype3_to_str (ftype3 code)"
 .PP
-Definition at line 222 of file nfs_convert.c.
+Definition at line 225 of file nfs_convert.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Support routines layer from the source code.

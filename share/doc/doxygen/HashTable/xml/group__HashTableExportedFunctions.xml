@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='UTF-8' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.6.1">
   <compounddef id="group__HashTableExportedFunctions" kind="group">
     <compoundname>HashTableExportedFunctions</compoundname>
     <title>HashTableExportedFunctions</title>
       <sectiondef kind="func">
-      <memberdef kind="function" id="group__HashTableExportedFunctions_1gb4e795677661542fc1a84e0ffd9ec41d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__HashTableExportedFunctions_1gab4e795677661542fc1a84e0ffd9ec41d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>hash_table_t *</type>
         <definition>hash_table_t* HashTable_Init</definition>
         <argsstring>(hash_parameter_t hparam)</argsstring>
@@ -25,13 +25,13 @@
 </parameteritem>
 </parameterlist>
 <simplesect kind="return"><para>NULL if init failed, the pointeur to the hashtable otherwise.</para></simplesect>
-<simplesect kind="see"><para><ref refid="group__HashTableExportedFunctions_1ge002d8403bd95e1ae432333bb16ae509" kindref="member">HashTable_Get</ref> </para><para>HashTable_Set </para><para><ref refid="group__HashTableExportedFunctions_1gdda0535c9f1748795d9eeb2514f5458c" kindref="member">HashTable_Del</ref> </para></simplesect>
+<simplesect kind="see"><para><ref refid="group__HashTableExportedFunctions_1gae002d8403bd95e1ae432333bb16ae509" kindref="member">HashTable_Get</ref> </para><simplesectsep/><para>HashTable_Set </para><simplesectsep/><para><ref refid="group__HashTableExportedFunctions_1gadda0535c9f1748795d9eeb2514f5458c" kindref="member">HashTable_Del</ref> </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="513" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="512" bodyend="594"/>
+        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="456" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="455" bodyend="546"/>
       </memberdef>
-      <memberdef kind="function" id="group__HashTableExportedFunctions_1g9fd137ceaac7ec4918a51b59d5e73031" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__HashTableExportedFunctions_1ga9fd137ceaac7ec4918a51b59d5e73031" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int HashTable_Test_And_Set</definition>
         <argsstring>(hash_table_t *ht, hash_buffer_t *buffkey, hash_buffer_t *buffval, hashtable_set_how_t how)</argsstring>
@@ -85,14 +85,14 @@
 </parameteritem>
 </parameterlist>
 <simplesect kind="return"><para>HASHTABLE_SUCCESS if successfull<linebreak/>
-. </para><para>HASHTABLE_INSERT_MALLOC_ERROR if an error occured during the insertion process.</para></simplesect>
-<simplesect kind="see"><para><ref refid="group__HashTableExportedFunctions_1ge002d8403bd95e1ae432333bb16ae509" kindref="member">HashTable_Get</ref> </para><para><ref refid="group__HashTableExportedFunctions_1gb4e795677661542fc1a84e0ffd9ec41d" kindref="member">HashTable_Init</ref> </para><para><ref refid="group__HashTableExportedFunctions_1gdda0535c9f1748795d9eeb2514f5458c" kindref="member">HashTable_Del</ref> </para></simplesect>
+. </para><simplesectsep/><para>HASHTABLE_INSERT_MALLOC_ERROR if an error occured during the insertion process.</para></simplesect>
+<simplesect kind="see"><para><ref refid="group__HashTableExportedFunctions_1gae002d8403bd95e1ae432333bb16ae509" kindref="member">HashTable_Get</ref> </para><simplesectsep/><para><ref refid="group__HashTableExportedFunctions_1gab4e795677661542fc1a84e0ffd9ec41d" kindref="member">HashTable_Init</ref> </para><simplesectsep/><para><ref refid="group__HashTableExportedFunctions_1gadda0535c9f1748795d9eeb2514f5458c" kindref="member">HashTable_Del</ref> </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="615" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="614" bodyend="730"/>
+        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="568" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="566" bodyend="682"/>
       </memberdef>
-      <memberdef kind="function" id="group__HashTableExportedFunctions_1ge002d8403bd95e1ae432333bb16ae509" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__HashTableExportedFunctions_1gae002d8403bd95e1ae432333bb16ae509" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int HashTable_Get</definition>
         <argsstring>(hash_table_t *ht, hash_buffer_t *buffkey, hash_buffer_t *buffval)</argsstring>
@@ -135,14 +135,14 @@
 </parameteritem>
 </parameterlist>
 <simplesect kind="return"><para>HASHTABLE_SUCCESS if successfull<linebreak/>
-. </para><para>HASHTABLE_ERROR_NO_SUCH_KEY is the key was not found.</para></simplesect>
-<simplesect kind="see"><para>HashTable_Set </para><para><ref refid="group__HashTableExportedFunctions_1gb4e795677661542fc1a84e0ffd9ec41d" kindref="member">HashTable_Init</ref> </para><para><ref refid="group__HashTableExportedFunctions_1gdda0535c9f1748795d9eeb2514f5458c" kindref="member">HashTable_Del</ref> </para></simplesect>
+. </para><simplesectsep/><para>HASHTABLE_ERROR_NO_SUCH_KEY is the key was not found.</para></simplesect>
+<simplesect kind="see"><para>HashTable_Set </para><simplesectsep/><para><ref refid="group__HashTableExportedFunctions_1gab4e795677661542fc1a84e0ffd9ec41d" kindref="member">HashTable_Init</ref> </para><simplesectsep/><para><ref refid="group__HashTableExportedFunctions_1gadda0535c9f1748795d9eeb2514f5458c" kindref="member">HashTable_Del</ref> </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="752" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="751" bodyend="793"/>
+        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="703" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="702" bodyend="744"/>
       </memberdef>
-      <memberdef kind="function" id="group__HashTableExportedFunctions_1gdda0535c9f1748795d9eeb2514f5458c" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__HashTableExportedFunctions_1gadda0535c9f1748795d9eeb2514f5458c" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int HashTable_Del</definition>
         <argsstring>(hash_table_t *ht, hash_buffer_t *buffkey, hash_buffer_t *p_usedbuffkey, hash_buffer_t *p_usedbuffdata)</argsstring>
@@ -189,14 +189,14 @@
 </parameteritem>
 </parameterlist>
 <simplesect kind="return"><para>HASHTABLE_SUCCESS if successfull<linebreak/>
-. </para><para>HASHTABLE_ERROR_NO_SUCH_KEY is the key was not found.</para></simplesect>
-<simplesect kind="see"><para>HashTable_Set </para><para><ref refid="group__HashTableExportedFunctions_1gb4e795677661542fc1a84e0ffd9ec41d" kindref="member">HashTable_Init</ref> </para><para><ref refid="group__HashTableExportedFunctions_1ge002d8403bd95e1ae432333bb16ae509" kindref="member">HashTable_Get</ref> </para></simplesect>
+. </para><simplesectsep/><para>HASHTABLE_ERROR_NO_SUCH_KEY is the key was not found.</para></simplesect>
+<simplesect kind="see"><para>HashTable_Set </para><simplesectsep/><para><ref refid="group__HashTableExportedFunctions_1gab4e795677661542fc1a84e0ffd9ec41d" kindref="member">HashTable_Init</ref> </para><simplesectsep/><para><ref refid="group__HashTableExportedFunctions_1gae002d8403bd95e1ae432333bb16ae509" kindref="member">HashTable_Get</ref> </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="816" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="813" bodyend="874"/>
+        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="766" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="764" bodyend="823"/>
       </memberdef>
-      <memberdef kind="function" id="group__HashTableExportedFunctions_1g8cc973332d8c4a92258793acc228e084" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__HashTableExportedFunctions_1ga8cc973332d8c4a92258793acc228e084" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void HashTable_GetStats</definition>
         <argsstring>(hash_table_t *ht, hash_stat_t *hstat)</argsstring>
@@ -228,13 +228,13 @@
 </parameteritem>
 </parameterlist>
 <simplesect kind="return"><para>none (returns void).</para></simplesect>
-<simplesect kind="see"><para>HashTable_Set </para><para><ref refid="group__HashTableExportedFunctions_1gb4e795677661542fc1a84e0ffd9ec41d" kindref="member">HashTable_Init</ref> </para><para><ref refid="group__HashTableExportedFunctions_1ge002d8403bd95e1ae432333bb16ae509" kindref="member">HashTable_Get</ref> </para></simplesect>
+<simplesect kind="see"><para>HashTable_Set </para><simplesectsep/><para><ref refid="group__HashTableExportedFunctions_1gab4e795677661542fc1a84e0ffd9ec41d" kindref="member">HashTable_Init</ref> </para><simplesectsep/><para><ref refid="group__HashTableExportedFunctions_1gae002d8403bd95e1ae432333bb16ae509" kindref="member">HashTable_Get</ref> </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="894" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="893" bodyend="955"/>
+        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="842" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="841" bodyend="903"/>
       </memberdef>
-      <memberdef kind="function" id="group__HashTableExportedFunctions_1g882a11e8509b2fb9de233145f923d516" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__HashTableExportedFunctions_1ga882a11e8509b2fb9de233145f923d516" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>unsigned int</type>
         <definition>unsigned int HashTable_GetSize</definition>
         <argsstring>(hash_table_t *ht)</argsstring>
@@ -255,13 +255,51 @@
 </parameteritem>
 </parameterlist>
 <simplesect kind="return"><para>the number of found entries</para></simplesect>
-<simplesect kind="see"><para>HashTable_Set </para><para><ref refid="group__HashTableExportedFunctions_1gb4e795677661542fc1a84e0ffd9ec41d" kindref="member">HashTable_Init</ref> </para><para><ref refid="group__HashTableExportedFunctions_1ge002d8403bd95e1ae432333bb16ae509" kindref="member">HashTable_Get</ref> </para></simplesect>
+<simplesect kind="see"><para>HashTable_Set </para><simplesectsep/><para><ref refid="group__HashTableExportedFunctions_1gab4e795677661542fc1a84e0ffd9ec41d" kindref="member">HashTable_Init</ref> </para><simplesectsep/><para><ref refid="group__HashTableExportedFunctions_1gae002d8403bd95e1ae432333bb16ae509" kindref="member">HashTable_Get</ref> </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="972" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="971" bodyend="984"/>
+        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="920" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="919" bodyend="932"/>
       </memberdef>
-      <memberdef kind="function" id="group__HashTableExportedFunctions_1g8403154cc1223657b499272deef394ae" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__HashTableExportedFunctions_1gaf5add10f55a1624787f981099d005806" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void HashTable_Log</definition>
+        <argsstring>(log_components_t component, hash_table_t *ht)</argsstring>
+        <name>HashTable_Log</name>
+        <param>
+          <type>log_components_t</type>
+          <declname>component</declname>
+        </param>
+        <param>
+          <type>hash_table_t *</type>
+          <declname>ht</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>HashTable_Print: Print information about the hashtable (mostly for debugging purpose).</para><para>Print information about the hashtable (mostly for debugging purpose).</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>component</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>the component debugging config to use. </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>ht</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>the hashtable to be used. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>none (returns void).</para></simplesect>
+<simplesect kind="see"><para>HashTable_Set </para><simplesectsep/><para><ref refid="group__HashTableExportedFunctions_1gab4e795677661542fc1a84e0ffd9ec41d" kindref="member">HashTable_Init</ref> </para><simplesectsep/><para><ref refid="group__HashTableExportedFunctions_1gae002d8403bd95e1ae432333bb16ae509" kindref="member">HashTable_Get</ref> </para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="949" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="948" bodyend="994"/>
+      </memberdef>
+      <memberdef kind="function" id="group__HashTableExportedFunctions_1ga8403154cc1223657b499272deef394ae" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void HashTable_Print</definition>
         <argsstring>(hash_table_t *ht)</argsstring>
@@ -278,15 +316,14 @@
 <parametername>ht</parametername>
 </parameternamelist>
 <parameterdescription>
-<para>the hashtable to be used.</para></parameterdescription>
+<para>the hashtable to be used. </para></parameterdescription>
 </parameteritem>
 </parameterlist>
-<simplesect kind="return"><para>none (returns void).</para></simplesect>
-<simplesect kind="see"><para>HashTable_Set </para><para><ref refid="group__HashTableExportedFunctions_1gb4e795677661542fc1a84e0ffd9ec41d" kindref="member">HashTable_Init</ref> </para><para><ref refid="group__HashTableExportedFunctions_1ge002d8403bd95e1ae432333bb16ae509" kindref="member">HashTable_Get</ref> </para></simplesect>
+<simplesect kind="return"><para>none (returns void). </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="1001" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="1000" bodyend="1050"/>
+        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="1007" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="1006" bodyend="1009"/>
       </memberdef>
       </sectiondef>
     <briefdescription>

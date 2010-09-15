@@ -1,10 +1,11 @@
-.TH "fsal_init.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "fsal_init.c" 3 "15 Sep 2010" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_init.c \- Initialization functions.  
-
+fsal_init.c \- 
 .PP
+Initialization functions.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -34,10 +35,10 @@ fsal_init.c \- Initialization functions.
 
 .in +1c
 .ti -1c
-.RI "fsal_status_t \fBFSAL_Init\fP (fsal_parameter_t *init_info)"
+.RI "fsal_status_t \fBHPSSFSAL_Init\fP (fsal_parameter_t *init_info)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_terminate\fP ()"
+.RI "fsal_status_t \fBHPSSFSAL_terminate\fP ()"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -73,9 +74,7 @@ leibovic
 Definition in file \fBfsal_init.c\fP.
 .SH "Define Documentation"
 .PP 
-.SS "#define SET_BITMAP_PARAM(api_cfg, p_init_info, _field)"
-.PP
-\fBValue:\fP
+.SS "#define SET_BITMAP_PARAM(api_cfg, p_init_info, _field)"\fBValue:\fP
 .PP
 .nf
 switch( (p_init_info)->behaviors._field ){                \
@@ -95,10 +94,8 @@ switch( (p_init_info)->behaviors._field ){                \
     }                                                         \
 .fi
 .PP
-Definition at line 83 of file fsal_init.c.
-.SS "#define SET_INTEGER_PARAM(api_cfg, p_init_info, _field)"
-.PP
-\fBValue:\fP
+Definition at line 81 of file fsal_init.c.
+.SS "#define SET_INTEGER_PARAM(api_cfg, p_init_info, _field)"\fBValue:\fP
 .PP
 .nf
 switch( (p_init_info)->behaviors._field ){                    \
@@ -120,10 +117,8 @@ switch( (p_init_info)->behaviors._field ){                    \
     }                                                             \
 .fi
 .PP
-Definition at line 101 of file fsal_init.c.
-.SS "#define SET_STRING_PARAM(api_cfg, p_init_info, _field)"
-.PP
-\fBValue:\fP
+Definition at line 99 of file fsal_init.c.
+.SS "#define SET_STRING_PARAM(api_cfg, p_init_info, _field)"\fBValue:\fP
 .PP
 .nf
 switch( (p_init_info)->behaviors._field ){                    \
@@ -135,12 +130,10 @@ switch( (p_init_info)->behaviors._field ){                    \
     }                                                             \
 .fi
 .PP
-Definition at line 121 of file fsal_init.c.
+Definition at line 119 of file fsal_init.c.
 .SH "Function Documentation"
 .PP 
-.SS "fsal_status_t FSAL_Init (fsal_parameter_t * init_info)"
-.PP
-FSAL_Init : Initializes the FileSystem Abstraction Layer.
+.SS "fsal_status_t HPSSFSAL_Init (fsal_parameter_t * init_info)"FSAL_Init : Initializes the FileSystem Abstraction Layer.
 .PP
 \fBParameters:\fP
 .RS 4

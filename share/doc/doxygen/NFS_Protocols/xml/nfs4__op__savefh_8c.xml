@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.6.1">
   <compounddef id="nfs4__op__savefh_8c" kind="file">
     <compoundname>nfs4_op_savefh.c</compoundname>
     <includes local="no">stdio.h</includes>
@@ -13,7 +13,7 @@
     <includes local="no">rpc/rpc.h</includes>
     <includes local="no">rpc/auth.h</includes>
     <includes local="no">rpc/pmap_clnt.h</includes>
-    <includes local="yes">log_functions.h</includes>
+    <includes local="yes">log_macros.h</includes>
     <includes local="yes">stuff_alloc.h</includes>
     <includes local="yes">nfs23.h</includes>
     <includes local="yes">nfs4.h</includes>
@@ -27,133 +27,133 @@
     <includes local="yes">nfs_tools.h</includes>
     <includes local="yes">nfs_file_handle.h</includes>
     <incdepgraph>
-      <node id="1325">
+      <node id="1796">
         <label>rpc/pmap_clnt.h</label>
       </node>
-      <node id="1330">
+      <node id="1797">
+        <label>log_macros.h</label>
+      </node>
+      <node id="1801">
         <label>mount.h</label>
       </node>
-      <node id="1333">
+      <node id="1804">
         <label>cache_content.h</label>
       </node>
-      <node id="1318">
+      <node id="1789">
         <label>fcntl.h</label>
       </node>
-      <node id="1322">
+      <node id="1793">
         <label>rpc/types.h</label>
       </node>
-      <node id="1326">
-        <label>log_functions.h</label>
-      </node>
-      <node id="1329">
+      <node id="1800">
         <label>nfs4.h</label>
       </node>
-      <node id="1314">
+      <node id="1785">
         <label>nfs4_op_savefh.c</label>
         <link refid="nfs4_op_savefh.c"/>
-        <childnode refid="1315" relation="include">
+        <childnode refid="1786" relation="include">
         </childnode>
-        <childnode refid="1316" relation="include">
+        <childnode refid="1787" relation="include">
         </childnode>
-        <childnode refid="1317" relation="include">
+        <childnode refid="1788" relation="include">
         </childnode>
-        <childnode refid="1318" relation="include">
+        <childnode refid="1789" relation="include">
         </childnode>
-        <childnode refid="1319" relation="include">
+        <childnode refid="1790" relation="include">
         </childnode>
-        <childnode refid="1320" relation="include">
+        <childnode refid="1791" relation="include">
         </childnode>
-        <childnode refid="1321" relation="include">
+        <childnode refid="1792" relation="include">
         </childnode>
-        <childnode refid="1322" relation="include">
+        <childnode refid="1793" relation="include">
         </childnode>
-        <childnode refid="1323" relation="include">
+        <childnode refid="1794" relation="include">
         </childnode>
-        <childnode refid="1324" relation="include">
+        <childnode refid="1795" relation="include">
         </childnode>
-        <childnode refid="1325" relation="include">
+        <childnode refid="1796" relation="include">
         </childnode>
-        <childnode refid="1326" relation="include">
+        <childnode refid="1797" relation="include">
         </childnode>
-        <childnode refid="1327" relation="include">
+        <childnode refid="1798" relation="include">
         </childnode>
-        <childnode refid="1328" relation="include">
+        <childnode refid="1799" relation="include">
         </childnode>
-        <childnode refid="1329" relation="include">
+        <childnode refid="1800" relation="include">
         </childnode>
-        <childnode refid="1330" relation="include">
+        <childnode refid="1801" relation="include">
         </childnode>
-        <childnode refid="1331" relation="include">
+        <childnode refid="1802" relation="include">
         </childnode>
-        <childnode refid="1332" relation="include">
+        <childnode refid="1803" relation="include">
         </childnode>
-        <childnode refid="1333" relation="include">
+        <childnode refid="1804" relation="include">
         </childnode>
-        <childnode refid="1334" relation="include">
+        <childnode refid="1805" relation="include">
         </childnode>
-        <childnode refid="1335" relation="include">
+        <childnode refid="1806" relation="include">
         </childnode>
-        <childnode refid="1336" relation="include">
+        <childnode refid="1807" relation="include">
         </childnode>
-        <childnode refid="1337" relation="include">
+        <childnode refid="1808" relation="include">
         </childnode>
-        <childnode refid="1338" relation="include">
+        <childnode refid="1809" relation="include">
         </childnode>
       </node>
-      <node id="1317">
+      <node id="1788">
         <label>pthread.h</label>
       </node>
-      <node id="1316">
+      <node id="1787">
         <label>string.h</label>
       </node>
-      <node id="1321">
+      <node id="1792">
         <label>HashTable.h</label>
       </node>
-      <node id="1324">
+      <node id="1795">
         <label>rpc/auth.h</label>
       </node>
-      <node id="1319">
+      <node id="1790">
         <label>sys/file.h</label>
       </node>
-      <node id="1323">
+      <node id="1794">
         <label>rpc/rpc.h</label>
       </node>
-      <node id="1334">
+      <node id="1805">
         <label>nfs_exports.h</label>
       </node>
-      <node id="1331">
+      <node id="1802">
         <label>nfs_core.h</label>
       </node>
-      <node id="1328">
+      <node id="1799">
         <label>nfs23.h</label>
       </node>
-      <node id="1336">
+      <node id="1807">
         <label>nfs_proto_functions.h</label>
       </node>
-      <node id="1327">
+      <node id="1798">
         <label>stuff_alloc.h</label>
       </node>
-      <node id="1315">
+      <node id="1786">
         <label>stdio.h</label>
       </node>
-      <node id="1332">
+      <node id="1803">
         <label>cache_inode.h</label>
       </node>
-      <node id="1320">
+      <node id="1791">
         <label>HashData.h</label>
       </node>
-      <node id="1338">
+      <node id="1809">
         <label>nfs_file_handle.h</label>
       </node>
-      <node id="1335">
+      <node id="1806">
         <label>nfs_creds.h</label>
       </node>
-      <node id="1337">
+      <node id="1808">
         <label>nfs_tools.h</label>
       </node>
     </incdepgraph>
       <sectiondef kind="func">
-      <memberdef kind="function" id="nfs4__op__savefh_8c_16e55b91063b897f0f49113a0576af2f1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs4__op__savefh_8c_1a6e55b91063b897f0f49113a0576af2f1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int nfs4_op_savefh</definition>
         <argsstring>(struct nfs_argop4 *op, compound_data_t *data, struct nfs_resop4 *resp)</argsstring>
@@ -196,13 +196,13 @@
 </parameteritem>
 </parameterlist>
 <simplesect kind="return"><para>NFS4_OK if successfull, other values show an error.</para></simplesect>
-<simplesect kind="see"><para>all the nfs4_op_&lt;*&gt; function </para><para><ref refid="nfs4__Compound_8c_1a1516130248e7ae55d3c2e1bffe90016" kindref="member">nfs4_Compound</ref> </para></simplesect>
+<simplesect kind="see"><para>all the nfs4_op_&lt;*&gt; function </para><simplesectsep/><para><ref refid="nfs4__Compound_8c_1aa1516130248e7ae55d3c2e1bffe90016" kindref="member">nfs4_Compound</ref> </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_savefh.c" line="151" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs4_op_savefh.c" bodystart="148" bodyend="210"/>
+        <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_savefh.c" line="97" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs4_op_savefh.c" bodystart="96" bodyend="153"/>
       </memberdef>
-      <memberdef kind="function" id="nfs4__op__savefh_8c_11df4091d7cc137f329eb50a1636e3648" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs4__op__savefh_8c_1a1df4091d7cc137f329eb50a1636e3648" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void nfs4_op_savefh_Free</definition>
         <argsstring>(SAVEFH4res *resp)</argsstring>
@@ -226,7 +226,7 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_savefh.c" line="224" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs4_op_savefh.c" bodystart="223" bodyend="227"/>
+        <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_savefh.c" line="166" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs4_op_savefh.c" bodystart="165" bodyend="169"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
@@ -248,185 +248,128 @@
 <codeline lineno="6"><highlight class="comment"><sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Thomas<sp/>LEIBOVICI<sp/><sp/>thomas.leibovici@cea.fr</highlight></codeline>
 <codeline lineno="7"><highlight class="comment"><sp/>*</highlight></codeline>
 <codeline lineno="8"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="9"><highlight class="comment"><sp/>*<sp/>Ce<sp/>logiciel<sp/>est<sp/>un<sp/>serveur<sp/>implementant<sp/>le<sp/>protocole<sp/>NFS.</highlight></codeline>
-<codeline lineno="10"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="11"><highlight class="comment"><sp/>*<sp/>Ce<sp/>logiciel<sp/>est<sp/>régi<sp/>par<sp/>la<sp/>licence<sp/>CeCILL<sp/>soumise<sp/>au<sp/>droit<sp/>français<sp/>et</highlight></codeline>
-<codeline lineno="12"><highlight class="comment"><sp/>*<sp/>respectant<sp/>les<sp/>principes<sp/>de<sp/>diffusion<sp/>des<sp/>logiciels<sp/>libres.<sp/>Vous<sp/>pouvez</highlight></codeline>
-<codeline lineno="13"><highlight class="comment"><sp/>*<sp/>utiliser,<sp/>modifier<sp/>et/ou<sp/>redistribuer<sp/>ce<sp/>programme<sp/>sous<sp/>les<sp/>conditions</highlight></codeline>
-<codeline lineno="14"><highlight class="comment"><sp/>*<sp/>de<sp/>la<sp/>licence<sp/>CeCILL<sp/>telle<sp/>que<sp/>diffusée<sp/>par<sp/>le<sp/>CEA,<sp/>le<sp/>CNRS<sp/>et<sp/>l&apos;INRIA</highlight></codeline>
-<codeline lineno="15"><highlight class="comment"><sp/>*<sp/>sur<sp/>le<sp/>site<sp/>&quot;http://www.cecill.info&quot;.</highlight></codeline>
-<codeline lineno="16"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="17"><highlight class="comment"><sp/>*<sp/>En<sp/>contrepartie<sp/>de<sp/>l&apos;accessibilité<sp/>au<sp/>code<sp/>source<sp/>et<sp/>des<sp/>droits<sp/>de<sp/>copie,</highlight></codeline>
-<codeline lineno="18"><highlight class="comment"><sp/>*<sp/>de<sp/>modification<sp/>et<sp/>de<sp/>redistribution<sp/>accordés<sp/>par<sp/>cette<sp/>licence,<sp/>il<sp/>n&apos;est</highlight></codeline>
-<codeline lineno="19"><highlight class="comment"><sp/>*<sp/>offert<sp/>aux<sp/>utilisateurs<sp/>qu&apos;une<sp/>garantie<sp/>limitée.<sp/><sp/>Pour<sp/>les<sp/>mêmes<sp/>raisons,</highlight></codeline>
-<codeline lineno="20"><highlight class="comment"><sp/>*<sp/>seule<sp/>une<sp/>responsabilité<sp/>restreinte<sp/>pèse<sp/>sur<sp/>l&apos;auteur<sp/>du<sp/>programme,<sp/><sp/>le</highlight></codeline>
-<codeline lineno="21"><highlight class="comment"><sp/>*<sp/>titulaire<sp/>des<sp/>droits<sp/>patrimoniaux<sp/>et<sp/>les<sp/>concédants<sp/>successifs.</highlight></codeline>
-<codeline lineno="22"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="23"><highlight class="comment"><sp/>*<sp/>A<sp/>cet<sp/>égard<sp/><sp/>l&apos;attention<sp/>de<sp/>l&apos;utilisateur<sp/>est<sp/>attirée<sp/>sur<sp/>les<sp/>risques</highlight></codeline>
-<codeline lineno="24"><highlight class="comment"><sp/>*<sp/>associés<sp/>au<sp/>chargement,<sp/><sp/>à<sp/>l&apos;utilisation,<sp/><sp/>à<sp/>la<sp/>modification<sp/>et/ou<sp/>au</highlight></codeline>
-<codeline lineno="25"><highlight class="comment"><sp/>*<sp/>développement<sp/>et<sp/>à<sp/>la<sp/>reproduction<sp/>du<sp/>logiciel<sp/>par<sp/>l&apos;utilisateur<sp/>étant</highlight></codeline>
-<codeline lineno="26"><highlight class="comment"><sp/>*<sp/>donné<sp/>sa<sp/>spécificité<sp/>de<sp/>logiciel<sp/>libre,<sp/>qui<sp/>peut<sp/>le<sp/>rendre<sp/>complexe<sp/>à</highlight></codeline>
-<codeline lineno="27"><highlight class="comment"><sp/>*<sp/>manipuler<sp/>et<sp/>qui<sp/>le<sp/>réserve<sp/>donc<sp/>à<sp/>des<sp/>développeurs<sp/>et<sp/>des<sp/>professionnels</highlight></codeline>
-<codeline lineno="28"><highlight class="comment"><sp/>*<sp/>avertis<sp/>possédant<sp/><sp/>des<sp/><sp/>connaissances<sp/><sp/>informatiques<sp/>approfondies.<sp/><sp/>Les</highlight></codeline>
-<codeline lineno="29"><highlight class="comment"><sp/>*<sp/>utilisateurs<sp/>sont<sp/>donc<sp/>invités<sp/>à<sp/>charger<sp/><sp/>et<sp/><sp/>tester<sp/><sp/>l&apos;adéquation<sp/><sp/>du</highlight></codeline>
-<codeline lineno="30"><highlight class="comment"><sp/>*<sp/>logiciel<sp/>à<sp/>leurs<sp/>besoins<sp/>dans<sp/>des<sp/>conditions<sp/>permettant<sp/>d&apos;assurer<sp/>la</highlight></codeline>
-<codeline lineno="31"><highlight class="comment"><sp/>*<sp/>sécurité<sp/>de<sp/>leurs<sp/>systèmes<sp/>et<sp/>ou<sp/>de<sp/>leurs<sp/>données<sp/>et,<sp/>plus<sp/>généralement,</highlight></codeline>
-<codeline lineno="32"><highlight class="comment"><sp/>*<sp/>à<sp/>l&apos;utiliser<sp/>et<sp/>l&apos;exploiter<sp/>dans<sp/>les<sp/>mêmes<sp/>conditions<sp/>de<sp/>sécurité.</highlight></codeline>
-<codeline lineno="33"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="34"><highlight class="comment"><sp/>*<sp/>Le<sp/>fait<sp/>que<sp/>vous<sp/>puissiez<sp/>accéder<sp/>à<sp/>cet<sp/>en-tête<sp/>signifie<sp/>que<sp/>vous<sp/>avez</highlight></codeline>
-<codeline lineno="35"><highlight class="comment"><sp/>*<sp/>pris<sp/>connaissance<sp/>de<sp/>la<sp/>licence<sp/>CeCILL,<sp/>et<sp/>que<sp/>vous<sp/>en<sp/>avez<sp/>accepté<sp/>les</highlight></codeline>
-<codeline lineno="36"><highlight class="comment"><sp/>*<sp/>termes.</highlight></codeline>
-<codeline lineno="37"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="38"><highlight class="comment"><sp/>*<sp/>---------------------</highlight></codeline>
-<codeline lineno="39"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="40"><highlight class="comment"><sp/>*<sp/>Copyright<sp/>CEA/DAM/DIF<sp/>(2005)</highlight></codeline>
-<codeline lineno="41"><highlight class="comment"><sp/>*<sp/><sp/>Contributor:<sp/>Philippe<sp/>DENIEL<sp/><sp/>philippe.deniel@cea.fr</highlight></codeline>
-<codeline lineno="42"><highlight class="comment"><sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Thomas<sp/>LEIBOVICI<sp/>thomas.leibovici@cea.fr</highlight></codeline>
-<codeline lineno="43"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="44"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="45"><highlight class="comment"><sp/>*<sp/>This<sp/>software<sp/>is<sp/>a<sp/>server<sp/>that<sp/>implements<sp/>the<sp/>NFS<sp/>protocol.</highlight></codeline>
-<codeline lineno="46"><highlight class="comment"><sp/>*<sp/></highlight></codeline>
-<codeline lineno="47"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="48"><highlight class="comment"><sp/>*<sp/>This<sp/>software<sp/>is<sp/>governed<sp/>by<sp/>the<sp/>CeCILL<sp/><sp/>license<sp/>under<sp/>French<sp/>law<sp/>and</highlight></codeline>
-<codeline lineno="49"><highlight class="comment"><sp/>*<sp/>abiding<sp/>by<sp/>the<sp/>rules<sp/>of<sp/>distribution<sp/>of<sp/>free<sp/>software.<sp/><sp/>You<sp/>can<sp/><sp/>use,</highlight></codeline>
-<codeline lineno="50"><highlight class="comment"><sp/>*<sp/>modify<sp/>and/<sp/>or<sp/>redistribute<sp/>the<sp/>software<sp/>under<sp/>the<sp/>terms<sp/>of<sp/>the<sp/>CeCILL</highlight></codeline>
-<codeline lineno="51"><highlight class="comment"><sp/>*<sp/>license<sp/>as<sp/>circulated<sp/>by<sp/>CEA,<sp/>CNRS<sp/>and<sp/>INRIA<sp/>at<sp/>the<sp/>following<sp/>URL</highlight></codeline>
-<codeline lineno="52"><highlight class="comment"><sp/>*<sp/>&quot;http://www.cecill.info&quot;.</highlight></codeline>
-<codeline lineno="53"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="54"><highlight class="comment"><sp/>*<sp/>As<sp/>a<sp/>counterpart<sp/>to<sp/>the<sp/>access<sp/>to<sp/>the<sp/>source<sp/>code<sp/>and<sp/><sp/>rights<sp/>to<sp/>copy,</highlight></codeline>
-<codeline lineno="55"><highlight class="comment"><sp/>*<sp/>modify<sp/>and<sp/>redistribute<sp/>granted<sp/>by<sp/>the<sp/>license,<sp/>users<sp/>are<sp/>provided<sp/>only</highlight></codeline>
-<codeline lineno="56"><highlight class="comment"><sp/>*<sp/>with<sp/>a<sp/>limited<sp/>warranty<sp/><sp/>and<sp/>the<sp/>software&apos;s<sp/>author,<sp/><sp/>the<sp/>holder<sp/>of<sp/>the</highlight></codeline>
-<codeline lineno="57"><highlight class="comment"><sp/>*<sp/>economic<sp/>rights,<sp/><sp/>and<sp/>the<sp/>successive<sp/>licensors<sp/><sp/>have<sp/>only<sp/><sp/>limited</highlight></codeline>
-<codeline lineno="58"><highlight class="comment"><sp/>*<sp/>liability.</highlight></codeline>
-<codeline lineno="59"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="60"><highlight class="comment"><sp/>*<sp/>In<sp/>this<sp/>respect,<sp/>the<sp/>user&apos;s<sp/>attention<sp/>is<sp/>drawn<sp/>to<sp/>the<sp/>risks<sp/>associated</highlight></codeline>
-<codeline lineno="61"><highlight class="comment"><sp/>*<sp/>with<sp/>loading,<sp/><sp/>using,<sp/><sp/>modifying<sp/>and/or<sp/>developing<sp/>or<sp/>reproducing<sp/>the</highlight></codeline>
-<codeline lineno="62"><highlight class="comment"><sp/>*<sp/>software<sp/>by<sp/>the<sp/>user<sp/>in<sp/>light<sp/>of<sp/>its<sp/>specific<sp/>status<sp/>of<sp/>free<sp/>software,</highlight></codeline>
-<codeline lineno="63"><highlight class="comment"><sp/>*<sp/>that<sp/>may<sp/>mean<sp/><sp/>that<sp/>it<sp/>is<sp/>complicated<sp/>to<sp/>manipulate,<sp/><sp/>and<sp/><sp/>that<sp/><sp/>also</highlight></codeline>
-<codeline lineno="64"><highlight class="comment"><sp/>therefore<sp/>means<sp/><sp/>that<sp/>it<sp/>is<sp/>reserved<sp/>for<sp/>developers<sp/><sp/>and<sp/><sp/>experienced</highlight></codeline>
-<codeline lineno="65"><highlight class="comment"><sp/>*<sp/>professionals<sp/>having<sp/>in-depth<sp/>computer<sp/>knowledge.<sp/>Users<sp/>are<sp/>therefore</highlight></codeline>
-<codeline lineno="66"><highlight class="comment"><sp/>*<sp/>encouraged<sp/>to<sp/>load<sp/>and<sp/>test<sp/>the<sp/>software&apos;s<sp/>suitability<sp/>as<sp/>regards<sp/>their</highlight></codeline>
-<codeline lineno="67"><highlight class="comment"><sp/>*<sp/>requirements<sp/>in<sp/>conditions<sp/>enabling<sp/>the<sp/>security<sp/>of<sp/>their<sp/>systems<sp/>and/or</highlight></codeline>
-<codeline lineno="68"><highlight class="comment"><sp/>*<sp/>data<sp/>to<sp/>be<sp/>ensured<sp/>and,<sp/><sp/>more<sp/>generally,<sp/>to<sp/>use<sp/>and<sp/>operate<sp/>it<sp/>in<sp/>the</highlight></codeline>
-<codeline lineno="69"><highlight class="comment"><sp/>*<sp/>same<sp/>conditions<sp/>as<sp/>regards<sp/>security.</highlight></codeline>
-<codeline lineno="70"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="71"><highlight class="comment"><sp/>*<sp/>The<sp/>fact<sp/>that<sp/>you<sp/>are<sp/>presently<sp/>reading<sp/>this<sp/>means<sp/>that<sp/>you<sp/>have<sp/>had</highlight></codeline>
-<codeline lineno="72"><highlight class="comment"><sp/>*<sp/>knowledge<sp/>of<sp/>the<sp/>CeCILL<sp/>license<sp/>and<sp/>that<sp/>you<sp/>accept<sp/>its<sp/>terms.</highlight></codeline>
-<codeline lineno="73"><highlight class="comment"><sp/>*<sp/>---------------------------------------</highlight></codeline>
-<codeline lineno="74"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="75"><highlight class="normal"></highlight></codeline>
-<codeline lineno="87"><highlight class="preprocessor">#ifdef<sp/>HAVE_CONFIG_H</highlight></codeline>
-<codeline lineno="88"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;config.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="89"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="90"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="91"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
-<codeline lineno="92"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;solaris_port.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="93"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="94"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
-<codeline lineno="103"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="104"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="105"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="107"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
-<codeline lineno="108"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="109"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="110"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="111"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="112"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="113"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="114"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="115"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="116"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="117"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;mount.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="121"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_content.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="122"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="123"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_creds.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="124"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="125"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="126"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_file_handle.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="127"><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="comment"><sp/>*<sp/>This<sp/>program<sp/>is<sp/>free<sp/>software;<sp/>you<sp/>can<sp/>redistribute<sp/>it<sp/>and/or</highlight></codeline>
+<codeline lineno="10"><highlight class="comment"><sp/>*<sp/>modify<sp/>it<sp/>under<sp/>the<sp/>terms<sp/>of<sp/>the<sp/>GNU<sp/>Lesser<sp/>General<sp/>Public</highlight></codeline>
+<codeline lineno="11"><highlight class="comment"><sp/>*<sp/>License<sp/>as<sp/>published<sp/>by<sp/>the<sp/>Free<sp/>Software<sp/>Foundation;<sp/>either</highlight></codeline>
+<codeline lineno="12"><highlight class="comment"><sp/>*<sp/>version<sp/>3<sp/>of<sp/>the<sp/>License,<sp/>or<sp/>(at<sp/>your<sp/>option)<sp/>any<sp/>later<sp/>version.</highlight></codeline>
+<codeline lineno="13"><highlight class="comment"><sp/>*<sp/></highlight></codeline>
+<codeline lineno="14"><highlight class="comment"><sp/>*<sp/>This<sp/>program<sp/>is<sp/>distributed<sp/>in<sp/>the<sp/>hope<sp/>that<sp/>it<sp/>will<sp/>be<sp/>useful,</highlight></codeline>
+<codeline lineno="15"><highlight class="comment"><sp/>*<sp/>but<sp/>WITHOUT<sp/>ANY<sp/>WARRANTY;<sp/>without<sp/>even<sp/>the<sp/>implied<sp/>warranty<sp/>of</highlight></codeline>
+<codeline lineno="16"><highlight class="comment"><sp/>*<sp/>MERCHANTABILITY<sp/>or<sp/>FITNESS<sp/>FOR<sp/>A<sp/>PARTICULAR<sp/>PURPOSE.<sp/><sp/>See<sp/>the<sp/>GNU</highlight></codeline>
+<codeline lineno="17"><highlight class="comment"><sp/>*<sp/>Lesser<sp/>General<sp/>Public<sp/>License<sp/>for<sp/>more<sp/>details.</highlight></codeline>
+<codeline lineno="18"><highlight class="comment"><sp/>*<sp/></highlight></codeline>
+<codeline lineno="19"><highlight class="comment"><sp/>*<sp/>You<sp/>should<sp/>have<sp/>received<sp/>a<sp/>copy<sp/>of<sp/>the<sp/>GNU<sp/>Lesser<sp/>General<sp/>Public</highlight></codeline>
+<codeline lineno="20"><highlight class="comment"><sp/>*<sp/>License<sp/>along<sp/>with<sp/>this<sp/>library;<sp/>if<sp/>not,<sp/>write<sp/>to<sp/>the<sp/>Free<sp/>Software</highlight></codeline>
+<codeline lineno="21"><highlight class="comment"><sp/>*<sp/>Foundation,<sp/>Inc.,<sp/>51<sp/>Franklin<sp/>Street,<sp/>Fifth<sp/>Floor,<sp/>Boston,<sp/>MA<sp/><sp/>02110-1301<sp/><sp/>USA</highlight></codeline>
+<codeline lineno="22"><highlight class="comment"><sp/>*<sp/></highlight></codeline>
+<codeline lineno="23"><highlight class="comment"><sp/>*<sp/>---------------------------------------</highlight></codeline>
+<codeline lineno="24"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="25"><highlight class="normal"></highlight></codeline>
+<codeline lineno="37"><highlight class="preprocessor">#ifdef<sp/>HAVE_CONFIG_H</highlight></codeline>
+<codeline lineno="38"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;config.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="39"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="40"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="41"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
+<codeline lineno="42"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;solaris_port.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="43"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="44"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="45"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="46"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="47"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="48"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="49"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="50"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="51"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="52"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
+<codeline lineno="53"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="54"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="55"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="56"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="57"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
+<codeline lineno="58"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="59"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="60"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="61"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="62"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="63"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="64"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_macros.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="65"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="66"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="67"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="68"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;mount.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="69"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="70"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="71"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_content.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="72"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="73"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_creds.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="74"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="75"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="76"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_file_handle.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="77"><highlight class="normal"></highlight></codeline>
+<codeline lineno="96" refid="nfs4__op__savefh_8c_1a6e55b91063b897f0f49113a0576af2f1" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__savefh_8c_1a6e55b91063b897f0f49113a0576af2f1" kindref="member">nfs4_op_savefh</ref>(</highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_argop4<sp/>*op,<sp/>compound_data_t<sp/>*<sp/>data,<sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_resop4<sp/>*resp)</highlight></codeline>
+<codeline lineno="97"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="98"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>error;</highlight></codeline>
+<codeline lineno="99"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i;</highlight></codeline>
+<codeline lineno="100"><highlight class="normal"></highlight></codeline>
+<codeline lineno="101"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>First<sp/>of<sp/>all,<sp/>set<sp/>the<sp/>reply<sp/>to<sp/>zero<sp/>to<sp/>make<sp/>sure<sp/>it<sp/>contains<sp/>no<sp/>parasite<sp/>information<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="102"><highlight class="normal"><sp/><sp/>memset(resp,<sp/>0,<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(</highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_resop4));</highlight></codeline>
+<codeline lineno="103"><highlight class="normal"></highlight></codeline>
+<codeline lineno="104"><highlight class="normal"><sp/><sp/>resp-&gt;resop<sp/>=<sp/>NFS4_OP_SAVEFH;</highlight></codeline>
+<codeline lineno="105"><highlight class="normal"><sp/><sp/>resp-&gt;nfs_resop4_u.opsavefh.status<sp/>=<sp/>NFS4_OK;</highlight></codeline>
+<codeline lineno="106"><highlight class="normal"></highlight></codeline>
+<codeline lineno="107"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>If<sp/>there<sp/>is<sp/>no<sp/>currentFH,<sp/>teh<sp/><sp/>return<sp/>an<sp/>error<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="108"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(nfs4_Is_Fh_Empty(&amp;(data-&gt;currentFH)))</highlight></codeline>
+<codeline lineno="109"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="110"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>There<sp/>is<sp/>no<sp/>current<sp/>FH,<sp/>return<sp/>NFS4ERR_NOFILEHANDLE<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="111"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>resp-&gt;nfs_resop4_u.opsavefh.status<sp/>=<sp/>NFS4ERR_NOFILEHANDLE;</highlight></codeline>
+<codeline lineno="112"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS4ERR_NOFILEHANDLE;</highlight></codeline>
+<codeline lineno="113"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="114"><highlight class="normal"></highlight></codeline>
+<codeline lineno="115"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>If<sp/>the<sp/>filehandle<sp/>is<sp/>invalid<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="116"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(nfs4_Is_Fh_Invalid(&amp;(data-&gt;currentFH)))</highlight></codeline>
+<codeline lineno="117"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="118"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>resp-&gt;nfs_resop4_u.opgetfh.status<sp/>=<sp/>NFS4ERR_BADHANDLE;</highlight></codeline>
+<codeline lineno="119"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS4ERR_BADHANDLE;</highlight></codeline>
+<codeline lineno="120"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="121"><highlight class="normal"></highlight></codeline>
+<codeline lineno="122"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Tests<sp/>if<sp/>teh<sp/>Filehandle<sp/>is<sp/>expired<sp/>(for<sp/>volatile<sp/>filehandle)<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="123"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(nfs4_Is_Fh_Expired(&amp;(data-&gt;currentFH)))</highlight></codeline>
+<codeline lineno="124"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="125"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>resp-&gt;nfs_resop4_u.opgetfh.status<sp/>=<sp/>NFS4ERR_FHEXPIRED;</highlight></codeline>
+<codeline lineno="126"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS4ERR_FHEXPIRED;</highlight></codeline>
+<codeline lineno="127"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="128"><highlight class="normal"></highlight></codeline>
-<codeline lineno="148" refid="nfs4__op__savefh_8c_16e55b91063b897f0f49113a0576af2f1" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__savefh_8c_16e55b91063b897f0f49113a0576af2f1" kindref="member">nfs4_op_savefh</ref>(<sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_argop4<sp/>*<sp/>op<sp/>,<sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="149"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>compound_data_t<sp/><sp/><sp/>*<sp/>data,</highlight></codeline>
-<codeline lineno="150"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_resop4<sp/>*<sp/>resp)</highlight></codeline>
-<codeline lineno="151"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="152"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>error<sp/>;</highlight></codeline>
-<codeline lineno="153"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_NFS_V4</highlight></codeline>
-<codeline lineno="154"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i<sp/>;</highlight></codeline>
-<codeline lineno="155"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="156"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="157"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>First<sp/>of<sp/>all,<sp/>set<sp/>the<sp/>reply<sp/>to<sp/>zero<sp/>to<sp/>make<sp/>sure<sp/>it<sp/>contains<sp/>no<sp/>parasite<sp/>information<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="158"><highlight class="normal"><sp/><sp/>memset(<sp/>resp,<sp/>0,<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(<sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_resop4<sp/>)<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="159"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="160"><highlight class="normal"><sp/><sp/>resp-&gt;resop<sp/>=<sp/>NFS4_OP_SAVEFH<sp/>;</highlight></codeline>
-<codeline lineno="161"><highlight class="normal"><sp/><sp/>resp-&gt;nfs_resop4_u.opsavefh.status<sp/>=<sp/><sp/>NFS4_OK<sp/><sp/>;</highlight></codeline>
-<codeline lineno="162"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="163"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>If<sp/>there<sp/>is<sp/>no<sp/>currentFH,<sp/>teh<sp/><sp/>return<sp/>an<sp/>error<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="164"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>nfs4_Is_Fh_Empty(<sp/>&amp;(data-&gt;currentFH<sp/>)<sp/>)<sp/>)</highlight></codeline>
-<codeline lineno="165"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="166"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>There<sp/>is<sp/>no<sp/>current<sp/>FH,<sp/>return<sp/>NFS4ERR_NOFILEHANDLE<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="167"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>resp-&gt;nfs_resop4_u.opsavefh.status<sp/>=<sp/>NFS4ERR_NOFILEHANDLE<sp/>;</highlight></codeline>
-<codeline lineno="168"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS4ERR_NOFILEHANDLE<sp/>;</highlight></codeline>
-<codeline lineno="169"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="170"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="171"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>If<sp/>the<sp/>filehandle<sp/>is<sp/>invalid<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="172"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>nfs4_Is_Fh_Invalid(<sp/>&amp;(data-&gt;currentFH)<sp/>)<sp/>)</highlight></codeline>
-<codeline lineno="173"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="174"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>resp-&gt;nfs_resop4_u.opgetfh.status<sp/>=<sp/>NFS4ERR_BADHANDLE<sp/>;</highlight></codeline>
-<codeline lineno="175"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS4ERR_BADHANDLE<sp/>;</highlight></codeline>
-<codeline lineno="176"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="177"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="178"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Tests<sp/>if<sp/>teh<sp/>Filehandle<sp/>is<sp/>expired<sp/>(for<sp/>volatile<sp/>filehandle)<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="179"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>nfs4_Is_Fh_Expired(<sp/>&amp;(data-&gt;currentFH)<sp/>)<sp/>)</highlight></codeline>
-<codeline lineno="180"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="181"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>resp-&gt;nfs_resop4_u.opgetfh.status<sp/>=<sp/>NFS4ERR_FHEXPIRED<sp/>;</highlight></codeline>
-<codeline lineno="182"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS4ERR_FHEXPIRED<sp/>;</highlight></codeline>
-<codeline lineno="183"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="184"><highlight class="normal"></highlight></codeline>
-<codeline lineno="185"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>If<sp/>the<sp/>savefh<sp/>is<sp/>not<sp/>allocated,<sp/>do<sp/>it<sp/>now<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="186"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>data-&gt;savedFH.nfs_fh4_len<sp/>==<sp/>0<sp/>)</highlight></codeline>
-<codeline lineno="187"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="188"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>error<sp/>=<sp/><ref refid="nfs__proto__tools_8c_19f988a714dadc7d8a6c107bc864d30ff" kindref="member">nfs4_AllocateFH</ref>(<sp/>&amp;(data-&gt;savedFH)<sp/>)<sp/>)<sp/>!=<sp/>NFS4_OK<sp/>)</highlight></codeline>
-<codeline lineno="189"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="190"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>resp-&gt;nfs_resop4_u.opsavefh.status<sp/>=<sp/>error<sp/>;</highlight></codeline>
-<codeline lineno="191"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>error<sp/>;</highlight></codeline>
-<codeline lineno="192"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="193"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="194"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="195"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Copy<sp/>the<sp/>data<sp/>from<sp/>current<sp/>FH<sp/>to<sp/>saved<sp/>FH<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="196"><highlight class="normal"><sp/><sp/>memcpy(<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)(data-&gt;savedFH.nfs_fh4_val),<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)(data-&gt;currentFH.nfs_fh4_val),<sp/>data-&gt;currentFH.nfs_fh4_len<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="197"><highlight class="normal"></highlight></codeline>
-<codeline lineno="198"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Keep<sp/>the<sp/>vnodep<sp/>in<sp/>mind<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="199"><highlight class="normal"><sp/><sp/>data-&gt;saved_entry<sp/><sp/><sp/>=<sp/>data-&gt;current_entry<sp/>;</highlight></codeline>
-<codeline lineno="200"><highlight class="normal"><sp/><sp/>data-&gt;saved_filetype<sp/>=<sp/>data-&gt;current_filetype<sp/>;</highlight></codeline>
-<codeline lineno="201"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="202"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_NFS_V4</highlight></codeline>
-<codeline lineno="203"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;SAVEDFH:<sp/>File<sp/>handle<sp/>=<sp/>{<sp/>Length<sp/>=<sp/>%d<sp/><sp/>Val<sp/>=<sp/>&quot;</highlight><highlight class="normal">,<sp/>data-&gt;savedFH.nfs_fh4_len<sp/>);</highlight></codeline>
-<codeline lineno="204"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(<sp/>i<sp/>=<sp/>0<sp/>;<sp/>i<sp/>&lt;<sp/>data-&gt;savedFH.nfs_fh4_len<sp/>;<sp/>i++<sp/>)</highlight></codeline>
-<codeline lineno="205"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;%02X&quot;</highlight><highlight class="normal">,<sp/>data-&gt;savedFH.nfs_fh4_val[i]<sp/>);</highlight></codeline>
-<codeline lineno="206"><highlight class="normal"><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;<sp/>}\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="207"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="208"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="209"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS4_OK<sp/>;</highlight></codeline>
-<codeline lineno="210"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs4_op_savefh<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="211"><highlight class="normal"></highlight></codeline>
-<codeline lineno="212"><highlight class="normal"></highlight></codeline>
-<codeline lineno="223" refid="nfs4__op__savefh_8c_11df4091d7cc137f329eb50a1636e3648" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__savefh_8c_11df4091d7cc137f329eb50a1636e3648" kindref="member">nfs4_op_savefh_Free</ref>(<sp/>SAVEFH4res<sp/>*<sp/>resp<sp/>)</highlight></codeline>
-<codeline lineno="224"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="225"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Nothing<sp/>to<sp/>be<sp/>done<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="226"><highlight class="normal"><sp/><sp/>return<sp/>;</highlight></codeline>
-<codeline lineno="227"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs4_op_savefh_Free<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="129"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>If<sp/>the<sp/>savefh<sp/>is<sp/>not<sp/>allocated,<sp/>do<sp/>it<sp/>now<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="130"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(data-&gt;savedFH.nfs_fh4_len<sp/>==<sp/>0)</highlight></codeline>
+<codeline lineno="131"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="132"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">((error<sp/>=<sp/><ref refid="nfs__proto__tools_8c_1a9f988a714dadc7d8a6c107bc864d30ff" kindref="member">nfs4_AllocateFH</ref>(&amp;(data-&gt;savedFH)))<sp/>!=<sp/>NFS4_OK)</highlight></codeline>
+<codeline lineno="133"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="134"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>resp-&gt;nfs_resop4_u.opsavefh.status<sp/>=<sp/>error;</highlight></codeline>
+<codeline lineno="135"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>error;</highlight></codeline>
+<codeline lineno="136"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="137"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="138"><highlight class="normal"></highlight></codeline>
+<codeline lineno="139"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Copy<sp/>the<sp/>data<sp/>from<sp/>current<sp/>FH<sp/>to<sp/>saved<sp/>FH<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="140"><highlight class="normal"><sp/><sp/>memcpy((</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)(data-&gt;savedFH.nfs_fh4_val),<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)(data-&gt;currentFH.nfs_fh4_val),</highlight></codeline>
+<codeline lineno="141"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>data-&gt;currentFH.nfs_fh4_len);</highlight></codeline>
+<codeline lineno="142"><highlight class="normal"></highlight></codeline>
+<codeline lineno="143"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Keep<sp/>the<sp/>vnodep<sp/>in<sp/>mind<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="144"><highlight class="normal"><sp/><sp/>data-&gt;saved_entry<sp/>=<sp/>data-&gt;current_entry;</highlight></codeline>
+<codeline lineno="145"><highlight class="normal"><sp/><sp/>data-&gt;saved_filetype<sp/>=<sp/>data-&gt;current_filetype;</highlight></codeline>
+<codeline lineno="146"><highlight class="normal"></highlight></codeline>
+<codeline lineno="147"><highlight class="normal"><sp/><sp/>LogFullDebug(COMPONENT_NFS_V4,<sp/></highlight><highlight class="stringliteral">&quot;SAVEDFH:<sp/>File<sp/>handle<sp/>=<sp/>{<sp/>Length<sp/>=<sp/>%d<sp/><sp/>Val<sp/>=<sp/>&quot;</highlight><highlight class="normal">,<sp/>data-&gt;savedFH.nfs_fh4_len);</highlight></codeline>
+<codeline lineno="148"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(i<sp/>=<sp/>0;<sp/>i<sp/>&lt;<sp/>data-&gt;savedFH.nfs_fh4_len;<sp/>i++)</highlight></codeline>
+<codeline lineno="149"><highlight class="normal"><sp/><sp/><sp/><sp/>LogFullDebug(COMPONENT_NFS_V4,<sp/></highlight><highlight class="stringliteral">&quot;%02X&quot;</highlight><highlight class="normal">,<sp/>data-&gt;savedFH.nfs_fh4_val[i]);</highlight></codeline>
+<codeline lineno="150"><highlight class="normal"><sp/><sp/>LogFullDebug(COMPONENT_NFS_V4,<sp/></highlight><highlight class="stringliteral">&quot;<sp/>}\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="151"><highlight class="normal"></highlight></codeline>
+<codeline lineno="152"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS4_OK;</highlight></codeline>
+<codeline lineno="153"><highlight class="normal">}<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>nfs4_op_savefh<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="154"><highlight class="normal"></highlight></codeline>
+<codeline lineno="165" refid="nfs4__op__savefh_8c_1a1df4091d7cc137f329eb50a1636e3648" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__savefh_8c_1a1df4091d7cc137f329eb50a1636e3648" kindref="member">nfs4_op_savefh_Free</ref>(SAVEFH4res<sp/>*<sp/>resp)</highlight></codeline>
+<codeline lineno="166"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="167"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Nothing<sp/>to<sp/>be<sp/>done<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="168"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="169"><highlight class="normal">}<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>nfs4_op_savefh_Free<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
     <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_savefh.c"/>
   </compounddef>

@@ -1,10 +1,11 @@
-.TH "nfs_tools.c" 3 "31 Mar 2009" "Version 0.1" "Daemon Main" \" -*- nroff -*-
+.TH "nfs_tools.c" 3 "15 Sep 2010" "Version 0.1" "Daemon Main" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_tools.c \- Some tools very usefull in the nfs protocol implementation.  
-
+nfs_tools.c \- 
 .PP
+Some tools very usefull in the nfs protocol implementation.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -112,6 +113,9 @@ nfs_tools.c \- Some tools very usefull in the nfs protocol implementation.
 .ti -1c
 .RI "void \fBsocket_setoptions\fP (int socketFd)"
 .br
+.ti -1c
+.RI "int \fBcmp_sockaddr\fP (struct sockaddr *addr_1, struct sockaddr *addr_2)"
+.br
 .in -1c
 .SH "Detailed Description"
 .PP 
@@ -174,22 +178,23 @@ Definition in file \fBnfs_tools.c\fP.
 .PP 
 .SS "int clean_cache (LRU_entry_t * pentry, void * addparam)"
 .PP
-Definition at line 174 of file nfs_tools.c.
+Definition at line 123 of file nfs_tools.c.
+.SS "int cmp_sockaddr (struct sockaddr * addr_1, struct sockaddr * addr_2)"
+.PP
+Definition at line 216 of file nfs_tools.c.
 .SS "int compare_cache (hash_buffer_t * buff1, hash_buffer_t * buff2)"
 .PP
-Definition at line 164 of file nfs_tools.c.
+Definition at line 113 of file nfs_tools.c.
 .SS "unsigned long decimal_rbt_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
 .PP
-Definition at line 153 of file nfs_tools.c.
+Definition at line 102 of file nfs_tools.c.
 .SS "unsigned long decimal_simple_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
 .PP
-Definition at line 147 of file nfs_tools.c.
+Definition at line 95 of file nfs_tools.c.
 .SS "int display_cache (hash_buffer_t * pbuff, char * str)"
 .PP
-Definition at line 159 of file nfs_tools.c.
-.SS "int lru_data_clean_entry (LRU_entry_t * entry, void * adddata)"
-.PP
-lru_data_clean_entry: a function used to clean up a LRU entry during cache inode gc.
+Definition at line 108 of file nfs_tools.c.
+.SS "int lru_data_clean_entry (LRU_entry_t * entry, void * adddata)"lru_data_clean_entry: a function used to clean up a LRU entry during cache inode gc.
 .PP
 a function used to clean up a LRU entry during cache inode gc.
 .PP
@@ -207,10 +212,8 @@ a function used to clean up a LRU entry during cache inode gc.
 .PP
 
 .PP
-Definition at line 245 of file nfs_tools.c.
-.SS "int lru_data_entry_to_str (LRU_data_t data, char * str)"
-.PP
-lru_data_entry_to_str: printing function for internal worker's LRU.
+Definition at line 191 of file nfs_tools.c.
+.SS "int lru_data_entry_to_str (LRU_data_t data, char * str)"lru_data_entry_to_str: printing function for internal worker's LRU.
 .PP
 printing function for internal worker's LRU.
 .PP
@@ -228,10 +231,8 @@ the length of the computed string of -1 if failed.
 .PP
 
 .PP
-Definition at line 210 of file nfs_tools.c.
-.SS "int lru_inode_clean_entry (LRU_entry_t * entry, void * adddata)"
-.PP
-lru_inode_clean_entry: a function used to clean up a LRU entry during cache inode gc.
+Definition at line 157 of file nfs_tools.c.
+.SS "int lru_inode_clean_entry (LRU_entry_t * entry, void * adddata)"lru_inode_clean_entry: a function used to clean up a LRU entry during cache inode gc.
 .PP
 a function used to clean up a LRU entry during cache inode gc.
 .PP
@@ -249,10 +250,8 @@ a function used to clean up a LRU entry during cache inode gc.
 .PP
 
 .PP
-Definition at line 228 of file nfs_tools.c.
-.SS "int lru_inode_entry_to_str (LRU_data_t data, char * str)"
-.PP
-lru_inode_entry_to_str: printing function for internal worker's LRU.
+Definition at line 174 of file nfs_tools.c.
+.SS "int lru_inode_entry_to_str (LRU_data_t data, char * str)"lru_inode_entry_to_str: printing function for internal worker's LRU.
 .PP
 printing function for internal worker's LRU.
 .PP
@@ -270,13 +269,13 @@ the length of the computed string of -1 if failed.
 .PP
 
 .PP
-Definition at line 193 of file nfs_tools.c.
+Definition at line 140 of file nfs_tools.c.
 .SS "int print_cache (LRU_data_t data, char * str)"
 .PP
-Definition at line 169 of file nfs_tools.c.
+Definition at line 118 of file nfs_tools.c.
 .SS "void socket_setoptions (int socketFd)"
 .PP
-Definition at line 251 of file nfs_tools.c.
+Definition at line 196 of file nfs_tools.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Daemon Main from the source code.

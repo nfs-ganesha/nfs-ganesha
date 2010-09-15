@@ -1,4 +1,4 @@
-.TH "test_lru.c" 3 "31 Mar 2009" "Version 0.1" "LRu List Library" \" -*- nroff -*-
+.TH "test_lru.c" 3 "15 Sep 2010" "Version 0.1" "LRu List Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -17,6 +17,8 @@ test_lru.c \-
 \fC#include 'BuddyMalloc.h'\fP
 .br
 \fC#include 'LRU_List.h'\fP
+.br
+\fC#include 'log_macros.h'\fP
 .br
 
 .SS "Defines"
@@ -49,24 +51,24 @@ test_lru.c \-
 .PP 
 .SS "#define KEPT_ENTRY   5"
 .PP
-Definition at line 123 of file test_lru.c.
+Definition at line 69 of file test_lru.c.
 .SS "#define MAXTEST   10"
 .PP
-Definition at line 122 of file test_lru.c.
+Definition at line 68 of file test_lru.c.
 .SS "#define PREALLOC   10000"
 .PP
-Definition at line 121 of file test_lru.c.
+Definition at line 67 of file test_lru.c.
 .SH "Function Documentation"
 .PP 
 .SS "int clean_entry (LRU_entry_t * pentry, void * addparam)"
 .PP
-Definition at line 130 of file test_lru.c.
+Definition at line 76 of file test_lru.c.
 .SS "int main (int argc, char * argv[])"
 .PP
-Definition at line 135 of file test_lru.c.
+Definition at line 81 of file test_lru.c.
 .SS "int print_entry (LRU_data_t data, char * str)"
 .PP
-Definition at line 125 of file test_lru.c.
+Definition at line 71 of file test_lru.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for LRu List Library from the source code.
