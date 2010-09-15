@@ -1,10 +1,11 @@
-.TH "stuff_alloc.h" 3 "31 Mar 2009" "Version 0.1" "Stuff Allocator" \" -*- nroff -*-
+.TH "stuff_alloc.h" 3 "15 Sep 2010" "Version 0.1" "Stuff Allocator" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-stuff_alloc.h \- Stuff allocators macros.  
-
+stuff_alloc.h \- 
 .PP
+Stuff allocators macros.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -81,9 +82,7 @@ Revision 1.1 2004/10/13 13:01:44 deniel Now using the stuff allocator
 Definition in file \fBstuff_alloc.h\fP.
 .SH "Define Documentation"
 .PP 
-.SS "#define GET_PREALLOC(entry, pool, nb, type, name_next)"
-.PP
-\fBValue:\fP
+.SS "#define GET_PREALLOC(entry, pool, nb, type, name_next)"\fBValue:\fP
 .PP
 .nf
 do                                                                        \
@@ -125,13 +124,11 @@ nothing (this is a macro), but entry will be NULL if an error occures.
 .PP
 
 .PP
-Definition at line 105 of file stuff_alloc.h.
+Definition at line 102 of file stuff_alloc.h.
 .SS "#define Mem_Alloc(a)   BuddyMalloc( a )"
 .PP
-Definition at line 43 of file stuff_alloc.h.
-.SS "#define RELEASE_PREALLOC(entry, pool, name_next)"
-.PP
-\fBValue:\fP
+Definition at line 42 of file stuff_alloc.h.
+.SS "#define RELEASE_PREALLOC(entry, pool, name_next)"\fBValue:\fP
 .PP
 .nf
 do                                                                        \
@@ -160,10 +157,8 @@ nothing (this is a macro).
 .PP
 
 .PP
-Definition at line 136 of file stuff_alloc.h.
-.SS "#define STUFF_PREALLOC(pool, nb, type, name_next)"
-.PP
-\fBValue:\fP
+Definition at line 133 of file stuff_alloc.h.
+.SS "#define STUFF_PREALLOC(pool, nb, type, name_next)"\fBValue:\fP
 .PP
 .nf
 do                                                                        \
@@ -208,7 +203,7 @@ nothing (this is a macro), but pool will be NULL if an error occures.
 .PP
 
 .PP
-Definition at line 66 of file stuff_alloc.h.
+Definition at line 65 of file stuff_alloc.h.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Stuff Allocator from the source code.

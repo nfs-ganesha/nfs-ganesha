@@ -613,6 +613,10 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
   p_nfs_param->buddy_param_tcp_mgr.keep_minimum = 0;
   p_nfs_param->buddy_param_tcp_mgr.keep_factor = 0;
   p_nfs_param->buddy_param_tcp_mgr.free_areas = TRUE;
+
+  /* Do not use a too big page size for TCP connection manager */
+  p_nfs_param->buddy_param_tcp_mgr.memory_area_size = 1048576LL ;
+
 #endif
 
   /* Core parameters */
