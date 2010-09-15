@@ -1,67 +1,64 @@
 \section{fsal\_\-lock.c File Reference}
 \label{fsal__lock_8c}\index{fsal\_\-lock.c@{fsal\_\-lock.c}}
+
+
 Locking operations.  
-
-
-{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
-{\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}fsal.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
 \subsection*{Functions}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
-fsal\_\-status\_\-t {\bf FSAL\_\-lock} (fsal\_\-handle\_\-t $\ast$objecthandle, fsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-lockparam\_\-t $\ast$lock\_\-info, fsal\_\-lockdesc\_\-t $\ast$lock\_\-descriptor)
+fsal\_\-status\_\-t {\bf HPSSFSAL\_\-lock} (hpssfsal\_\-file\_\-t $\ast$obj\_\-handle, hpssfsal\_\-lockdesc\_\-t $\ast$ldesc, fsal\_\-boolean\_\-t callback)
 \item 
-fsal\_\-status\_\-t {\bf FSAL\_\-changelock} (fsal\_\-lockdesc\_\-t $\ast$lock\_\-descriptor, fsal\_\-lockparam\_\-t $\ast$lock\_\-info)
+fsal\_\-status\_\-t {\bf HPSSFSAL\_\-changelock} (hpssfsal\_\-lockdesc\_\-t $\ast$lock\_\-descriptor, fsal\_\-lockparam\_\-t $\ast$lock\_\-info)
 \item 
-fsal\_\-status\_\-t {\bf FSAL\_\-unlock} (fsal\_\-lockdesc\_\-t $\ast$lock\_\-descriptor)
-\end{CompactItemize}
+fsal\_\-status\_\-t {\bf HPSSFSAL\_\-unlock} (hpssfsal\_\-file\_\-t $\ast$obj\_\-handle, hpssfsal\_\-lockdesc\_\-t $\ast$ldesc)
+\item 
+fsal\_\-status\_\-t {\bf HPSSFSAL\_\-getlock} (hpssfsal\_\-file\_\-t $\ast$obj\_\-handle, hpssfsal\_\-lockdesc\_\-t $\ast$ldesc)
+\end{DoxyCompactItemize}
 
 
 \subsection{Detailed Description}
-Locking operations. 
+Locking operations. \begin{DoxyAuthor}{Author}
 
-\begin{Desc}
-\item[Author:]\end{Desc}
-\begin{Desc}
-\item[Author]leibovic \end{Desc}
-\begin{Desc}
-\item[Date:]\end{Desc}
-\begin{Desc}
-\item[Date]2005/07/27 13:30:26 \end{Desc}
-\begin{Desc}
-\item[Version:]\end{Desc}
-\begin{Desc}
-\item[Revision]1.2 \end{Desc}
+\end{DoxyAuthor}
+Author}
+leibovic \begin{DoxyDate}{Date}
 
+\end{DoxyDate}
+Date}
+2005/07/27 13:30:26 \begin{DoxyVersion}{Version}
+
+\end{DoxyVersion}
+Revision}
+1.2 
 
 Definition in file {\bf fsal\_\-lock.c}.
 
 \subsection{Function Documentation}
-\index{fsal\_\-lock.c@{fsal\_\-lock.c}!FSAL\_\-changelock@{FSAL\_\-changelock}}
-\index{FSAL\_\-changelock@{FSAL\_\-changelock}!fsal_lock.c@{fsal\_\-lock.c}}
-\subsubsection[{FSAL\_\-changelock}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-changelock (fsal\_\-lockdesc\_\-t $\ast$ {\em lock\_\-descriptor}, \/  fsal\_\-lockparam\_\-t $\ast$ {\em lock\_\-info})}\label{fsal__lock_8c_d7440144c01257bb00d1a357760739ec}
-
-
+\index{fsal\_\-lock.c@{fsal\_\-lock.c}!HPSSFSAL\_\-changelock@{HPSSFSAL\_\-changelock}}
+\index{HPSSFSAL\_\-changelock@{HPSSFSAL\_\-changelock}!fsal_lock.c@{fsal\_\-lock.c}}
+\subsubsection[{HPSSFSAL\_\-changelock}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t HPSSFSAL\_\-changelock (hpssfsal\_\-lockdesc\_\-t $\ast$ {\em lock\_\-descriptor}, \/  fsal\_\-lockparam\_\-t $\ast$ {\em lock\_\-info})}\label{fsal__lock_8c_a1477a0a33dbc4e71308baa30e1f72417}
 FSAL\_\-changelock: Not implemented. 
 
-Definition at line 56 of file fsal\_\-lock.c.\index{fsal\_\-lock.c@{fsal\_\-lock.c}!FSAL\_\-lock@{FSAL\_\-lock}}
-\index{FSAL\_\-lock@{FSAL\_\-lock}!fsal_lock.c@{fsal\_\-lock.c}}
-\subsubsection[{FSAL\_\-lock}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-lock (fsal\_\-handle\_\-t $\ast$ {\em objecthandle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-lockparam\_\-t $\ast$ {\em lock\_\-info}, \/  fsal\_\-lockdesc\_\-t $\ast$ {\em lock\_\-descriptor})}\label{fsal__lock_8c_c3ed7385fa0551a1f1e6e82cae20f971}
-
-
-FSAL\_\-lock: Lock an entry in the filesystem.
-
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em objecthandle}](input): Handle of the object to be locked. \item[{\em p\_\-context}](input): Authentication context for the operation (user, export...). \item[{\em typelock}](input): Type of lock to be taken \item[{\em lock\_\-descriptor}](output): The returned lock descriptor \end{description}
-\end{Desc}
-
-
-Definition at line 36 of file fsal\_\-lock.c.\index{fsal\_\-lock.c@{fsal\_\-lock.c}!FSAL\_\-unlock@{FSAL\_\-unlock}}
-\index{FSAL\_\-unlock@{FSAL\_\-unlock}!fsal_lock.c@{fsal\_\-lock.c}}
-\subsubsection[{FSAL\_\-unlock}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-unlock (fsal\_\-lockdesc\_\-t $\ast$ {\em lock\_\-descriptor})}\label{fsal__lock_8c_842a0ed5dbbda6ba1febd76ed2c32b6d}
-
-
+Definition at line 49 of file fsal\_\-lock.c.\index{fsal\_\-lock.c@{fsal\_\-lock.c}!HPSSFSAL\_\-getlock@{HPSSFSAL\_\-getlock}}
+\index{HPSSFSAL\_\-getlock@{HPSSFSAL\_\-getlock}!fsal_lock.c@{fsal\_\-lock.c}}
+\subsubsection[{HPSSFSAL\_\-getlock}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t HPSSFSAL\_\-getlock (hpssfsal\_\-file\_\-t $\ast$ {\em obj\_\-handle}, \/  hpssfsal\_\-lockdesc\_\-t $\ast$ {\em ldesc})}\label{fsal__lock_8c_ab3f9128422583ee2fa1ab1308bc5dc43}
 FSAL\_\-unlock: Not implemented. 
 
-Definition at line 74 of file fsal\_\-lock.c.
+Definition at line 83 of file fsal\_\-lock.c.\index{fsal\_\-lock.c@{fsal\_\-lock.c}!HPSSFSAL\_\-lock@{HPSSFSAL\_\-lock}}
+\index{HPSSFSAL\_\-lock@{HPSSFSAL\_\-lock}!fsal_lock.c@{fsal\_\-lock.c}}
+\subsubsection[{HPSSFSAL\_\-lock}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t HPSSFSAL\_\-lock (hpssfsal\_\-file\_\-t $\ast$ {\em obj\_\-handle}, \/  hpssfsal\_\-lockdesc\_\-t $\ast$ {\em ldesc}, \/  fsal\_\-boolean\_\-t {\em callback})}\label{fsal__lock_8c_aaeb5054fb0a9ca51e57a72ad04a05edb}
+FSAL\_\-lock: Lock an entry in the filesystem.
+
+
+\begin{DoxyParams}{Parameters}
+\item[{\em objecthandle}](input): Handle of the object to be locked. \item[{\em p\_\-context}](input): Authentication context for the operation (user, export...). \item[{\em typelock}](input): Type of lock to be taken \item[{\em lock\_\-descriptor}](output): The returned lock descriptor \end{DoxyParams}
+
+
+Definition at line 34 of file fsal\_\-lock.c.\index{fsal\_\-lock.c@{fsal\_\-lock.c}!HPSSFSAL\_\-unlock@{HPSSFSAL\_\-unlock}}
+\index{HPSSFSAL\_\-unlock@{HPSSFSAL\_\-unlock}!fsal_lock.c@{fsal\_\-lock.c}}
+\subsubsection[{HPSSFSAL\_\-unlock}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t HPSSFSAL\_\-unlock (hpssfsal\_\-file\_\-t $\ast$ {\em obj\_\-handle}, \/  hpssfsal\_\-lockdesc\_\-t $\ast$ {\em ldesc})}\label{fsal__lock_8c_ae875ec69f247f05783edb99664c4fc24}
+FSAL\_\-unlock: Not implemented. 
+
+Definition at line 66 of file fsal\_\-lock.c.

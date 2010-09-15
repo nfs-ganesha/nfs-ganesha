@@ -1,45 +1,45 @@
 \section{nfs\_\-tools.c File Reference}
 \label{nfs__tools_8c}\index{nfs\_\-tools.c@{nfs\_\-tools.c}}
+
+
 Some tools very usefull in the nfs protocol implementation.  
-
-
-{\tt \#include $<$stdio.h$>$}\par
-{\tt \#include $<$sys/socket.h$>$}\par
-{\tt \#include $<$netinet/in.h$>$}\par
-{\tt \#include $<$netinet/tcp.h$>$}\par
-{\tt \#include $<$sys/types.h$>$}\par
-{\tt \#include $<$ctype.h$>$}\par
-{\tt \#include $<$stdlib.h$>$}\par
-{\tt \#include $<$dirent.h$>$}\par
-{\tt \#include $<$netdb.h$>$}\par
-{\tt \#include $<$arpa/inet.h$>$}\par
-{\tt \#include $<$string.h$>$}\par
-{\tt \#include $<$unistd.h$>$}\par
-{\tt \#include $<$sys/poll.h$>$}\par
-{\tt \#include $<$pthread.h$>$}\par
-{\tt \#include $<$fcntl.h$>$}\par
-{\tt \#include $<$sys/file.h$>$}\par
-{\tt \#include $<$pwd.h$>$}\par
-{\tt \#include $<$grp.h$>$}\par
-{\tt \#include $<$rpc/rpc.h$>$}\par
-{\tt \#include $<$rpc/svc.h$>$}\par
-{\tt \#include $<$rpc/pmap\_\-clnt.h$>$}\par
-{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
-{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
-{\tt \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
-{\tt \#include \char`\"{}nfs23.h\char`\"{}}\par
-{\tt \#include \char`\"{}nfs4.h\char`\"{}}\par
-{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
-{\tt \#include \char`\"{}nfs\_\-tools.h\char`\"{}}\par
-{\tt \#include \char`\"{}nfs\_\-exports.h\char`\"{}}\par
-{\tt \#include \char`\"{}nfs\_\-file\_\-handle.h\char`\"{}}\par
+{\ttfamily \#include $<$stdio.h$>$}\par
+{\ttfamily \#include $<$sys/socket.h$>$}\par
+{\ttfamily \#include $<$netinet/in.h$>$}\par
+{\ttfamily \#include $<$netinet/tcp.h$>$}\par
+{\ttfamily \#include $<$sys/types.h$>$}\par
+{\ttfamily \#include $<$ctype.h$>$}\par
+{\ttfamily \#include $<$stdlib.h$>$}\par
+{\ttfamily \#include $<$dirent.h$>$}\par
+{\ttfamily \#include $<$netdb.h$>$}\par
+{\ttfamily \#include $<$arpa/inet.h$>$}\par
+{\ttfamily \#include $<$string.h$>$}\par
+{\ttfamily \#include $<$unistd.h$>$}\par
+{\ttfamily \#include $<$sys/poll.h$>$}\par
+{\ttfamily \#include $<$pthread.h$>$}\par
+{\ttfamily \#include $<$fcntl.h$>$}\par
+{\ttfamily \#include $<$sys/file.h$>$}\par
+{\ttfamily \#include $<$pwd.h$>$}\par
+{\ttfamily \#include $<$grp.h$>$}\par
+{\ttfamily \#include $<$rpc/rpc.h$>$}\par
+{\ttfamily \#include $<$rpc/svc.h$>$}\par
+{\ttfamily \#include $<$rpc/pmap\_\-clnt.h$>$}\par
+{\ttfamily \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}nfs23.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}nfs4.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}fsal.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}nfs\_\-tools.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}nfs\_\-exports.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}nfs\_\-file\_\-handle.h\char`\"{}}\par
 \subsection*{Classes}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
 struct {\bf tcp\_\-conn}
-\end{CompactItemize}
+\end{DoxyCompactItemize}
 \subsection*{Functions}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
 unsigned long {\bf decimal\_\-simple\_\-hash\_\-func} (hash\_\-parameter\_\-t $\ast$p\_\-hparam, hash\_\-buffer\_\-t $\ast$buffclef)
 \item 
@@ -62,162 +62,141 @@ int {\bf lru\_\-inode\_\-clean\_\-entry} (LRU\_\-entry\_\-t $\ast$entry, void $\
 int {\bf lru\_\-data\_\-clean\_\-entry} (LRU\_\-entry\_\-t $\ast$entry, void $\ast$adddata)
 \item 
 void {\bf socket\_\-setoptions} (int socketFd)
-\end{CompactItemize}
+\item 
+int {\bf cmp\_\-sockaddr} (struct sockaddr $\ast$addr\_\-1, struct sockaddr $\ast$addr\_\-2)
+\end{DoxyCompactItemize}
 
 
 \subsection{Detailed Description}
-Some tools very usefull in the nfs protocol implementation. 
+Some tools very usefull in the nfs protocol implementation. \begin{DoxyAuthor}{Author}
 
-\begin{Desc}
-\item[Author:]\end{Desc}
-\begin{Desc}
-\item[Author]deniel \end{Desc}
-\begin{Desc}
-\item[Date:]\end{Desc}
-\begin{Desc}
-\item[Date]2006/01/20 07:39:22 \end{Desc}
-\begin{Desc}
-\item[Version:]\end{Desc}
-\begin{Desc}
-\item[Revision]1.14 \end{Desc}
-\doxyref{nfs\_\-tools.c}{p.}{nfs__tools_8c} : Some tools very usefull in the nfs protocol implementation
+\end{DoxyAuthor}
+Author}
+deniel \begin{DoxyDate}{Date}
 
-\begin{Desc}
-\item[Author:]\end{Desc}
-\begin{Desc}
-\item[Author]deniel \end{Desc}
-\begin{Desc}
-\item[Date:]\end{Desc}
-\begin{Desc}
-\item[Date]2006/01/20 07:39:22 \end{Desc}
-\begin{Desc}
-\item[Version:]\end{Desc}
-\begin{Desc}
-\item[Revision]1.43 \end{Desc}
-\doxyref{nfs\_\-tools.c}{p.}{nfs__tools_8c} : Some tools very usefull in the nfs protocol implementation 
+\end{DoxyDate}
+Date}
+2006/01/20 07:39:22 \begin{DoxyVersion}{Version}
+
+\end{DoxyVersion}
+Revision}
+1.14 \doxyref{nfs\_\-tools.c}{p.}{nfs__tools_8c} : Some tools very usefull in the nfs protocol implementation
+
+\begin{DoxyAuthor}{Author}
+
+\end{DoxyAuthor}
+Author}
+deniel \begin{DoxyDate}{Date}
+
+\end{DoxyDate}
+Date}
+2006/01/20 07:39:22 \begin{DoxyVersion}{Version}
+
+\end{DoxyVersion}
+Revision}
+1.43 \doxyref{nfs\_\-tools.c}{p.}{nfs__tools_8c} : Some tools very usefull in the nfs protocol implementation 
 
 Definition in file {\bf nfs\_\-tools.c}.
 
 \subsection{Function Documentation}
 \index{nfs\_\-tools.c@{nfs\_\-tools.c}!clean\_\-cache@{clean\_\-cache}}
 \index{clean\_\-cache@{clean\_\-cache}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection[{clean\_\-cache}]{\setlength{\rightskip}{0pt plus 5cm}int clean\_\-cache (LRU\_\-entry\_\-t $\ast$ {\em pentry}, \/  void $\ast$ {\em addparam})}\label{nfs__tools_8c_9c7c012283e03dc52eda904db37562ff}
+\subsubsection[{clean\_\-cache}]{\setlength{\rightskip}{0pt plus 5cm}int clean\_\-cache (LRU\_\-entry\_\-t $\ast$ {\em pentry}, \/  void $\ast$ {\em addparam})}\label{nfs__tools_8c_a9c7c012283e03dc52eda904db37562ff}
 
 
+Definition at line 123 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!cmp\_\-sockaddr@{cmp\_\-sockaddr}}
+\index{cmp\_\-sockaddr@{cmp\_\-sockaddr}!nfs_tools.c@{nfs\_\-tools.c}}
+\subsubsection[{cmp\_\-sockaddr}]{\setlength{\rightskip}{0pt plus 5cm}int cmp\_\-sockaddr (struct sockaddr $\ast$ {\em addr\_\-1}, \/  struct sockaddr $\ast$ {\em addr\_\-2})}\label{nfs__tools_8c_a13d72fdcfbf42ca6b83bb8c3e09b056a}
 
 
-Definition at line 174 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!compare\_\-cache@{compare\_\-cache}}
+Definition at line 216 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!compare\_\-cache@{compare\_\-cache}}
 \index{compare\_\-cache@{compare\_\-cache}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection[{compare\_\-cache}]{\setlength{\rightskip}{0pt plus 5cm}int compare\_\-cache (hash\_\-buffer\_\-t $\ast$ {\em buff1}, \/  hash\_\-buffer\_\-t $\ast$ {\em buff2})}\label{nfs__tools_8c_2a033479a0d020e76de2586d26f8db5b}
+\subsubsection[{compare\_\-cache}]{\setlength{\rightskip}{0pt plus 5cm}int compare\_\-cache (hash\_\-buffer\_\-t $\ast$ {\em buff1}, \/  hash\_\-buffer\_\-t $\ast$ {\em buff2})}\label{nfs__tools_8c_a2a033479a0d020e76de2586d26f8db5b}
 
 
-
-
-Definition at line 164 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!decimal\_\-rbt\_\-hash\_\-func@{decimal\_\-rbt\_\-hash\_\-func}}
+Definition at line 113 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!decimal\_\-rbt\_\-hash\_\-func@{decimal\_\-rbt\_\-hash\_\-func}}
 \index{decimal\_\-rbt\_\-hash\_\-func@{decimal\_\-rbt\_\-hash\_\-func}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection[{decimal\_\-rbt\_\-hash\_\-func}]{\setlength{\rightskip}{0pt plus 5cm}unsigned long decimal\_\-rbt\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, \/  hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{nfs__tools_8c_85f4af1a161f534f296b85372fba0413}
+\subsubsection[{decimal\_\-rbt\_\-hash\_\-func}]{\setlength{\rightskip}{0pt plus 5cm}unsigned long decimal\_\-rbt\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, \/  hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{nfs__tools_8c_a85f4af1a161f534f296b85372fba0413}
 
 
-
-
-Definition at line 153 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!decimal\_\-simple\_\-hash\_\-func@{decimal\_\-simple\_\-hash\_\-func}}
+Definition at line 102 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!decimal\_\-simple\_\-hash\_\-func@{decimal\_\-simple\_\-hash\_\-func}}
 \index{decimal\_\-simple\_\-hash\_\-func@{decimal\_\-simple\_\-hash\_\-func}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection[{decimal\_\-simple\_\-hash\_\-func}]{\setlength{\rightskip}{0pt plus 5cm}unsigned long decimal\_\-simple\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, \/  hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{nfs__tools_8c_8decbd7a3557fd2c788ade7abed9a407}
+\subsubsection[{decimal\_\-simple\_\-hash\_\-func}]{\setlength{\rightskip}{0pt plus 5cm}unsigned long decimal\_\-simple\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, \/  hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{nfs__tools_8c_a8decbd7a3557fd2c788ade7abed9a407}
 
 
-
-
-Definition at line 147 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!display\_\-cache@{display\_\-cache}}
+Definition at line 95 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!display\_\-cache@{display\_\-cache}}
 \index{display\_\-cache@{display\_\-cache}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection[{display\_\-cache}]{\setlength{\rightskip}{0pt plus 5cm}int display\_\-cache (hash\_\-buffer\_\-t $\ast$ {\em pbuff}, \/  char $\ast$ {\em str})}\label{nfs__tools_8c_5eeaebff3f2862b2b16395d537bce1a1}
+\subsubsection[{display\_\-cache}]{\setlength{\rightskip}{0pt plus 5cm}int display\_\-cache (hash\_\-buffer\_\-t $\ast$ {\em pbuff}, \/  char $\ast$ {\em str})}\label{nfs__tools_8c_a5eeaebff3f2862b2b16395d537bce1a1}
 
 
-
-
-Definition at line 159 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!lru\_\-data\_\-clean\_\-entry@{lru\_\-data\_\-clean\_\-entry}}
+Definition at line 108 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!lru\_\-data\_\-clean\_\-entry@{lru\_\-data\_\-clean\_\-entry}}
 \index{lru\_\-data\_\-clean\_\-entry@{lru\_\-data\_\-clean\_\-entry}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection[{lru\_\-data\_\-clean\_\-entry}]{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-data\_\-clean\_\-entry (LRU\_\-entry\_\-t $\ast$ {\em entry}, \/  void $\ast$ {\em adddata})}\label{nfs__tools_8c_1fff2fdd16477f241028cf536bc5ff2d}
-
-
+\subsubsection[{lru\_\-data\_\-clean\_\-entry}]{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-data\_\-clean\_\-entry (LRU\_\-entry\_\-t $\ast$ {\em entry}, \/  void $\ast$ {\em adddata})}\label{nfs__tools_8c_a1fff2fdd16477f241028cf536bc5ff2d}
 lru\_\-data\_\-clean\_\-entry: a function used to clean up a LRU entry during cache inode gc.
 
 a function used to clean up a LRU entry during cache inode gc.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em entry}][INOUT] the entry to be cleaned up. \item[{\em adddata}][IN] a buffer with additional input parameters.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]0 if successful, other values show an error. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em entry}][INOUT] the entry to be cleaned up. \item[{\em adddata}][IN] a buffer with additional input parameters.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+0 if successful, other values show an error. 
+\end{DoxyReturn}
 
 
-Definition at line 245 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!lru\_\-data\_\-entry\_\-to\_\-str@{lru\_\-data\_\-entry\_\-to\_\-str}}
+Definition at line 191 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!lru\_\-data\_\-entry\_\-to\_\-str@{lru\_\-data\_\-entry\_\-to\_\-str}}
 \index{lru\_\-data\_\-entry\_\-to\_\-str@{lru\_\-data\_\-entry\_\-to\_\-str}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection[{lru\_\-data\_\-entry\_\-to\_\-str}]{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-data\_\-entry\_\-to\_\-str (LRU\_\-data\_\-t {\em data}, \/  char $\ast$ {\em str})}\label{nfs__tools_8c_738899949b8da5c9128e6296a7ad7043}
-
-
+\subsubsection[{lru\_\-data\_\-entry\_\-to\_\-str}]{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-data\_\-entry\_\-to\_\-str (LRU\_\-data\_\-t {\em data}, \/  char $\ast$ {\em str})}\label{nfs__tools_8c_a738899949b8da5c9128e6296a7ad7043}
 lru\_\-data\_\-entry\_\-to\_\-str: printing function for internal worker's LRU.
 
 printing function for internal worker's LRU.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em data}][IN] the LRU data to be printed. \item[{\em str}][OUT] the string result.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]the length of the computed string of -1 if failed. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em data}][IN] the LRU data to be printed. \item[{\em str}][OUT] the string result.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the length of the computed string of -\/1 if failed. 
+\end{DoxyReturn}
 
 
-Definition at line 210 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!lru\_\-inode\_\-clean\_\-entry@{lru\_\-inode\_\-clean\_\-entry}}
+Definition at line 157 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!lru\_\-inode\_\-clean\_\-entry@{lru\_\-inode\_\-clean\_\-entry}}
 \index{lru\_\-inode\_\-clean\_\-entry@{lru\_\-inode\_\-clean\_\-entry}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection[{lru\_\-inode\_\-clean\_\-entry}]{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-inode\_\-clean\_\-entry (LRU\_\-entry\_\-t $\ast$ {\em entry}, \/  void $\ast$ {\em adddata})}\label{nfs__tools_8c_230b0440af10caba4b9c4697e23ac36a}
-
-
+\subsubsection[{lru\_\-inode\_\-clean\_\-entry}]{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-inode\_\-clean\_\-entry (LRU\_\-entry\_\-t $\ast$ {\em entry}, \/  void $\ast$ {\em adddata})}\label{nfs__tools_8c_a230b0440af10caba4b9c4697e23ac36a}
 lru\_\-inode\_\-clean\_\-entry: a function used to clean up a LRU entry during cache inode gc.
 
 a function used to clean up a LRU entry during cache inode gc.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em entry}][INOUT] the entry to be cleaned up. \item[{\em adddata}][IN] a buffer with additional input parameters.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]0 if successful, other values show an error. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em entry}][INOUT] the entry to be cleaned up. \item[{\em adddata}][IN] a buffer with additional input parameters.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+0 if successful, other values show an error. 
+\end{DoxyReturn}
 
 
-Definition at line 228 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!lru\_\-inode\_\-entry\_\-to\_\-str@{lru\_\-inode\_\-entry\_\-to\_\-str}}
+Definition at line 174 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!lru\_\-inode\_\-entry\_\-to\_\-str@{lru\_\-inode\_\-entry\_\-to\_\-str}}
 \index{lru\_\-inode\_\-entry\_\-to\_\-str@{lru\_\-inode\_\-entry\_\-to\_\-str}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection[{lru\_\-inode\_\-entry\_\-to\_\-str}]{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-inode\_\-entry\_\-to\_\-str (LRU\_\-data\_\-t {\em data}, \/  char $\ast$ {\em str})}\label{nfs__tools_8c_fc0713ab6f936fa664d7c92a1ecc79c3}
-
-
+\subsubsection[{lru\_\-inode\_\-entry\_\-to\_\-str}]{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-inode\_\-entry\_\-to\_\-str (LRU\_\-data\_\-t {\em data}, \/  char $\ast$ {\em str})}\label{nfs__tools_8c_afc0713ab6f936fa664d7c92a1ecc79c3}
 lru\_\-inode\_\-entry\_\-to\_\-str: printing function for internal worker's LRU.
 
 printing function for internal worker's LRU.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em data}][IN] the LRU data to be printed. \item[{\em str}][OUT] the string result.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]the length of the computed string of -1 if failed. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em data}][IN] the LRU data to be printed. \item[{\em str}][OUT] the string result.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the length of the computed string of -\/1 if failed. 
+\end{DoxyReturn}
 
 
-Definition at line 193 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!print\_\-cache@{print\_\-cache}}
+Definition at line 140 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!print\_\-cache@{print\_\-cache}}
 \index{print\_\-cache@{print\_\-cache}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection[{print\_\-cache}]{\setlength{\rightskip}{0pt plus 5cm}int print\_\-cache (LRU\_\-data\_\-t {\em data}, \/  char $\ast$ {\em str})}\label{nfs__tools_8c_9649b9bb0b478385d0c0a46cc96df5ff}
+\subsubsection[{print\_\-cache}]{\setlength{\rightskip}{0pt plus 5cm}int print\_\-cache (LRU\_\-data\_\-t {\em data}, \/  char $\ast$ {\em str})}\label{nfs__tools_8c_a9649b9bb0b478385d0c0a46cc96df5ff}
 
 
-
-
-Definition at line 169 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!socket\_\-setoptions@{socket\_\-setoptions}}
+Definition at line 118 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!socket\_\-setoptions@{socket\_\-setoptions}}
 \index{socket\_\-setoptions@{socket\_\-setoptions}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection[{socket\_\-setoptions}]{\setlength{\rightskip}{0pt plus 5cm}void socket\_\-setoptions (int {\em socketFd})}\label{nfs__tools_8c_724cb81161f478d63c680f3e1f3f3a62}
+\subsubsection[{socket\_\-setoptions}]{\setlength{\rightskip}{0pt plus 5cm}void socket\_\-setoptions (int {\em socketFd})}\label{nfs__tools_8c_a724cb81161f478d63c680f3e1f3f3a62}
 
 
-
-
-Definition at line 251 of file nfs\_\-tools.c.
+Definition at line 196 of file nfs\_\-tools.c.

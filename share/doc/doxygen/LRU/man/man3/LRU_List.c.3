@@ -1,10 +1,11 @@
-.TH "LRU_List.c" 3 "31 Mar 2009" "Version 0.1" "LRu List Library" \" -*- nroff -*-
+.TH "LRU_List.c" 3 "15 Sep 2010" "Version 0.1" "LRu List Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-LRU_List.c \- Management of the thread safe LRU lists.  
-
+LRU_List.c \- 
 .PP
+Management of the thread safe LRU lists.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -15,6 +16,8 @@ LRU_List.c \- Management of the thread safe LRU lists.
 \fC#include 'LRU_List.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
+.br
+\fC#include 'log_macros.h'\fP
 .br
 
 .SS "Functions"
@@ -84,8 +87,6 @@ deniel
 Revision 1.20 2006/01/31 09:51:13 deniel Fixed LRU prev bug
 .PP
 Revision 1.19 2006/01/24 08:57:34 leibovic Fixing LRU allocation bug.
-.PP
-Revision 1.18 2005/11/28 17:02:39 deniel Added CeCILL headers
 .PP
 Revision 1.17 2005/11/10 07:53:24 deniel Corrected some memory leaks
 .PP

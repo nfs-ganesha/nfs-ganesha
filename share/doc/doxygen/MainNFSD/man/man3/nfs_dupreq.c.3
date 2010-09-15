@@ -1,4 +1,4 @@
-.TH "nfs_dupreq.c" 3 "31 Mar 2009" "Version 0.1" "Daemon Main" \" -*- nroff -*-
+.TH "nfs_dupreq.c" 3 "15 Sep 2010" "Version 0.1" "Daemon Main" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -46,7 +46,7 @@ nfs_dupreq.c \-
 .br
 \fC#include 'HashTable.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'nfs_core.h'\fP
 .br
@@ -134,9 +134,7 @@ nfs_dupreq.c \-
 .in -1c
 .SH "Function Documentation"
 .PP 
-.SS "int clean_entry_dupreq (LRU_entry_t * pentry, void * addparam)"
-.PP
-clean_entry_dupreq: cleans an entry in the dupreq cache.
+.SS "int clean_entry_dupreq (LRU_entry_t * pentry, void * addparam)"clean_entry_dupreq: cleans an entry in the dupreq cache.
 .PP
 cleans an entry in the dupreq cache.
 .PP
@@ -154,10 +152,8 @@ cleans an entry in the dupreq cache.
 .PP
 
 .PP
-Definition at line 227 of file nfs_dupreq.c.
-.SS "int compare_xid (hash_buffer_t * buff1, hash_buffer_t * buff2)"
-.PP
-compare_xid: compares the xid stored in the key buffers.
+Definition at line 182 of file nfs_dupreq.c.
+.SS "int compare_xid (hash_buffer_t * buff1, hash_buffer_t * buff2)"compare_xid: compares the xid stored in the key buffers.
 .PP
 compare the xid stored in the key buffers. This function is to be used as 'compare_key' field in the hashtable storing the nfs duplicated requests.
 .PP
@@ -175,10 +171,8 @@ compare the xid stored in the key buffers. This function is to be used as 'compa
 .PP
 
 .PP
-Definition at line 364 of file nfs_dupreq.c.
-.SS "int display_xid (hash_buffer_t * pbuff, char * str)"
-.PP
-display_xid: displays the xid stored in the buffer.
+Definition at line 349 of file nfs_dupreq.c.
+.SS "int display_xid (hash_buffer_t * pbuff, char * str)"display_xid: displays the xid stored in the buffer.
 .PP
 displays the xid stored in the buffer. This function is to be used as 'key_to_str' field in the hashtable storing the nfs duplicated requests.
 .PP
@@ -196,10 +190,8 @@ number of character written.
 .PP
 
 .PP
-Definition at line 384 of file nfs_dupreq.c.
-.SS "unsigned long dupreq_rbt_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
-.PP
-dupreq_rbt_hash_func: computes the rbt value for the entry in dupreq cache.
+Definition at line 369 of file nfs_dupreq.c.
+.SS "unsigned long dupreq_rbt_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"dupreq_rbt_hash_func: computes the rbt value for the entry in dupreq cache.
 .PP
 Computes the rbt value for the entry in dupreq cache. In fact, it just use the Xid itself (which is an unsigned integer) as the rbt value. This function is called internal in the HasTable_* function
 .PP
@@ -222,10 +214,8 @@ HashTable_Init
 .PP
 
 .PP
-Definition at line 345 of file nfs_dupreq.c.
-.SS "unsigned long dupreq_value_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
-.PP
-dupreq_rbt_hash_func: computes the hash value for the entry in dupreq cache.
+Definition at line 330 of file nfs_dupreq.c.
+.SS "unsigned long dupreq_value_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"dupreq_rbt_hash_func: computes the hash value for the entry in dupreq cache.
 .PP
 Computes the hash value for the entry in dupreq cache. In fact, it just use the Xid modulo the hash array size. This function is called internal in the HasTable_* function
 .PP
@@ -248,10 +238,8 @@ HashTable_Init
 .PP
 
 .PP
-Definition at line 324 of file nfs_dupreq.c.
-.SS "unsigned int get_rpc_xid (struct svc_req * reqp)"
-.PP
-get_rpc_xid: extract the transfer Id from a RPC request.
+Definition at line 308 of file nfs_dupreq.c.
+.SS "unsigned int get_rpc_xid (struct svc_req * reqp)"get_rpc_xid: extract the transfer Id from a RPC request.
 .PP
 RPC Xid is used for RPC Reply cache. With UDP connection, the xid is in an opaque structure stored in xprt->xp_p2, but with TCP connection, the xid is in another opaque structure stored in xprt->xp_p1. xp_p2 and xp_p1 are mutually exclusive. The opaque structure are well defined in ONC RPC protocol definitions, and used internally by the ONC layers. Since I need to know the xid the structures are defined here.
 .PP
@@ -267,10 +255,8 @@ the found xid.
 .PP
 
 .PP
-Definition at line 158 of file nfs_dupreq.c.
-.SS "int nfs_dupreq_add (long xid, struct svc_req * ptr_req, nfs_res_t * p_res_nfs, LRU_list_t * lru_dupreq, dupreq_entry_t ** p_dupreq_pool)"
-.PP
-nfs_dupreq_add: adds an entry in the duplicate requests cache.
+Definition at line 115 of file nfs_dupreq.c.
+.SS "int nfs_dupreq_add (long xid, struct svc_req * ptr_req, nfs_res_t * p_res_nfs, LRU_list_t * lru_dupreq, dupreq_entry_t ** p_dupreq_pool)"nfs_dupreq_add: adds an entry in the duplicate requests cache.
 .PP
 Adds an entry in the duplicate requests cache.
 .PP
@@ -292,10 +278,8 @@ DUPREQ_INSERT_MALLOC_ERROR if an error occured during the insertion process.
 .PP
 
 .PP
-Definition at line 428 of file nfs_dupreq.c.
-.SS "int nfs_dupreq_gc_function (LRU_entry_t * pentry, void * addparam)"
-.PP
-nfs_dupreq_gc_function: Tests is an entry in dupreq cache is to be set invalid (has expired).
+Definition at line 412 of file nfs_dupreq.c.
+.SS "int nfs_dupreq_gc_function (LRU_entry_t * pentry, void * addparam)"nfs_dupreq_gc_function: Tests is an entry in dupreq cache is to be set invalid (has expired).
 .PP
 Tests is an entry in dupreq cache is to be set invalid (has expired).
 .PP
@@ -318,10 +302,8 @@ LRU_gc_invalid
 .PP
 
 .PP
-Definition at line 543 of file nfs_dupreq.c.
-.SS "nfs_res_t nfs_dupreq_get (long xid, int * pstatus)"
-.PP
-nfs_dupreq_get: Tries to get a duplicated requests for dupreq cache
+Definition at line 522 of file nfs_dupreq.c.
+.SS "nfs_res_t nfs_dupreq_get (long xid, int * pstatus)"nfs_dupreq_get: Tries to get a duplicated requests for dupreq cache
 .PP
 Tries to get a duplicated requests for dupreq cache.
 .PP
@@ -339,10 +321,8 @@ the result previously set if *pstatus == DUPREQ_SUCCESS
 .PP
 
 .PP
-Definition at line 502 of file nfs_dupreq.c.
-.SS "void nfs_dupreq_get_stats (hash_stat_t * phstat)"
-.PP
-nfs_dupreq_get_stats: gets the hash table statistics for the duplicate requests.
+Definition at line 483 of file nfs_dupreq.c.
+.SS "void nfs_dupreq_get_stats (hash_stat_t * phstat)"nfs_dupreq_get_stats: gets the hash table statistics for the duplicate requests.
 .PP
 Gets the hash table statistics for the duplicate requests.
 .PP
@@ -363,10 +343,8 @@ HashTable_GetStats
 .PP
 
 .PP
-Definition at line 570 of file nfs_dupreq.c.
-.SS "int nfs_Init_dupreq (nfs_rpc_dupreq_parameter_t param)"
-.PP
-nfs_Init_dupreq: Init the hashtable and LRU for duplicate request cache
+Definition at line 548 of file nfs_dupreq.c.
+.SS "int nfs_Init_dupreq (nfs_rpc_dupreq_parameter_t param)"nfs_Init_dupreq: Init the hashtable and LRU for duplicate request cache
 .PP
 Perform all the required initialization for hashtable and LRU for duplicate request cache
 .PP
@@ -382,10 +360,8 @@ Perform all the required initialization for hashtable and LRU for duplicate requ
 .PP
 
 .PP
-Definition at line 402 of file nfs_dupreq.c.
-.SS "int print_entry_dupreq (LRU_data_t data, char * str)"
-.PP
-print_entry_dupreq: prints an entry in the LRU list.
+Definition at line 387 of file nfs_dupreq.c.
+.SS "int print_entry_dupreq (LRU_data_t data, char * str)"print_entry_dupreq: prints an entry in the LRU list.
 .PP
 prints an entry in the LRU list.
 .PP
@@ -403,30 +379,30 @@ prints an entry in the LRU list.
 .PP
 
 .PP
-Definition at line 208 of file nfs_dupreq.c.
+Definition at line 164 of file nfs_dupreq.c.
 .SH "Variable Documentation"
 .PP 
 .SS "hash_table_t* \fBht_dupreq\fP"
 .PP
-Definition at line 140 of file nfs_dupreq.c.
+Definition at line 97 of file nfs_dupreq.c.
 .SS "nfs_function_desc_t \fBmnt1_func_desc\fP[]"
 .PP
-Definition at line 224 of file nfs_worker_thread.c.
+Definition at line 215 of file nfs_worker_thread.c.
 .SS "nfs_function_desc_t \fBmnt3_func_desc\fP[]"
 .PP
-Definition at line 234 of file nfs_worker_thread.c.
+Definition at line 230 of file nfs_worker_thread.c.
 .SS "nfs_function_desc_t \fBnfs2_func_desc\fP[]"
 .PP
-Definition at line 169 of file nfs_worker_thread.c.
+Definition at line 119 of file nfs_worker_thread.c.
 .SS "nfs_function_desc_t \fBnfs3_func_desc\fP[]"
 .PP
-Definition at line 191 of file nfs_worker_thread.c.
+Definition at line 158 of file nfs_worker_thread.c.
 .SS "nfs_function_desc_t \fBnfs4_func_desc\fP[]"
 .PP
-Definition at line 218 of file nfs_worker_thread.c.
+Definition at line 208 of file nfs_worker_thread.c.
 .SS "nfs_parameter_t \fBnfs_param\fP"
 .PP
-Definition at line 135 of file nfs_init.c.
+Definition at line 85 of file nfs_init.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Daemon Main from the source code.

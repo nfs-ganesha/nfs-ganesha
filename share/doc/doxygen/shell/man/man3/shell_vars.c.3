@@ -1,10 +1,11 @@
-.TH "shell_vars.c" 3 "31 Mar 2009" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.TH "shell_vars.c" 3 "15 Sep 2010" "Version 0.1" "ganeshell" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-shell_vars.c \- variables management for the shell.  
-
+shell_vars.c \- 
 .PP
+variables management for the shell.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -104,8 +105,6 @@ leibovic
 .PP
 Revision 1.8 2006/01/24 13:49:33 leibovic Adding missing includes.
 .PP
-Revision 1.7 2005/11/28 17:03:01 deniel Added CeCILL headers
-.PP
 Revision 1.6 2005/07/26 12:54:47 leibovic Multi-thread shell with synchronisation routines.
 .PP
 Revision 1.5 2005/05/10 14:02:45 leibovic Removing adherence to BuddyMalloc.
@@ -123,47 +122,36 @@ Definition in file \fBshell_vars.c\fP.
 .PP 
 .SS "#define IS_LETTER(_c_)   (((_c_) >= 'a') && ((_c_) <= 'z'))"
 .PP
-Definition at line 265 of file shell_vars.c.
+Definition at line 217 of file shell_vars.c.
 .SS "#define IS_LETTER_CAP(_c_)   (((_c_) >= 'A') && ((_c_) <= 'Z'))"
 .PP
-Definition at line 266 of file shell_vars.c.
+Definition at line 218 of file shell_vars.c.
 .SS "#define IS_NUMERIC(_c_)   (((_c_) >= '0') && ((_c_) <= '9'))"
 .PP
-Definition at line 267 of file shell_vars.c.
+Definition at line 219 of file shell_vars.c.
 .SH "Typedef Documentation"
 .PP 
 .SS "typedef struct \fBshell_variable__\fP  \fBshell_variable_t\fP"
-.PP
 .SH "Function Documentation"
 .PP 
-.SS "int free_var (char * varname)"
+.SS "int free_var (char * varname)"free the resources used by a variable. 
 .PP
-free the resources used by a variable. 
+Definition at line 288 of file shell_vars.c.
+.SS "char* get_var_value (char * varname)"returns the value for a variable, NULL if the variable doesn't exist. 
 .PP
-Definition at line 333 of file shell_vars.c.
-.SS "char* get_var_value (char * varname)"
+Definition at line 254 of file shell_vars.c.
+.SS "int is_authorized_varname (char * str)"indicates whether a name is authorized for a variable. A variable name must be in [a-zA-Z0-9._:]* 
 .PP
-returns the value for a variable, NULL if the variable doesn't exist. 
+Definition at line 224 of file shell_vars.c.
+.SS "void print_varlist (FILE * output, int is_dlen)"print var list. 
 .PP
-Definition at line 304 of file shell_vars.c.
-.SS "int is_authorized_varname (char * str)"
+Definition at line 121 of file shell_vars.c.
+.SS "int set_var_value (char * varname, char * var_value)"set the value for a variable, and create it if necessary. 
 .PP
-indicates whether a name is authorized for a variable. A variable name must be in [a-zA-Z0-9._:]* 
-.PP
-Definition at line 272 of file shell_vars.c.
-.SS "void print_varlist (FILE * output, int is_dlen)"
-.PP
-print var list. 
-.PP
-Definition at line 179 of file shell_vars.c.
-.SS "int set_var_value (char * varname, char * var_value)"
-.PP
-set the value for a variable, and create it if necessary. 
-.PP
-Definition at line 317 of file shell_vars.c.
+Definition at line 270 of file shell_vars.c.
 .SS "void SetVarTable (\fBshell_variable_t\fP * var_table)"
 .PP
-Definition at line 167 of file shell_vars.c.
+Definition at line 111 of file shell_vars.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for ganeshell from the source code.

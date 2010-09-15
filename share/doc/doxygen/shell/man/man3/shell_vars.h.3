@@ -1,10 +1,11 @@
-.TH "shell_vars.h" 3 "31 Mar 2009" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.TH "shell_vars.h" 3 "15 Sep 2010" "Version 0.1" "ganeshell" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-shell_vars.h \- variables management for the shell.  
-
+shell_vars.h \- 
 .PP
+variables management for the shell.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -81,24 +82,16 @@ Definition in file \fBshell_vars.h\fP.
 Definition at line 24 of file shell_vars.h.
 .SH "Function Documentation"
 .PP 
-.SS "int free_var (char * varname)"
+.SS "int free_var (char * varname)"free the resources used by a variable. 
 .PP
-free the resources used by a variable. 
+Definition at line 288 of file shell_vars.c.
+.SS "char* get_var_value (char * varname)"returns the value for a variable, NULL if the variable doesn't exist. 
 .PP
-Definition at line 333 of file shell_vars.c.
-.SS "char* get_var_value (char * varname)"
+Definition at line 254 of file shell_vars.c.
+.SS "int is_authorized_varname (char * str)"indicates whether a name is authorized for a variable. A variable name must be in [a-zA-Z0-9._:]* 
 .PP
-returns the value for a variable, NULL if the variable doesn't exist. 
-.PP
-Definition at line 304 of file shell_vars.c.
-.SS "int is_authorized_varname (char * str)"
-.PP
-indicates whether a name is authorized for a variable. A variable name must be in [a-zA-Z0-9._:]* 
-.PP
-Definition at line 272 of file shell_vars.c.
-.SS "void print_varlist (FILE * output, int is_dlen)"
-.PP
-print var list. 
+Definition at line 224 of file shell_vars.c.
+.SS "void print_varlist (FILE * output, int is_dlen)"print var list. 
 .PP
 \fBParameters:\fP
 .RS 4
@@ -107,12 +100,10 @@ print var list.
 .PP
 print var list. 
 .PP
-Definition at line 179 of file shell_vars.c.
-.SS "int set_var_value (char * varname, char * var_value)"
+Definition at line 121 of file shell_vars.c.
+.SS "int set_var_value (char * varname, char * var_value)"set the value for a variable, and create it if necessary. 
 .PP
-set the value for a variable, and create it if necessary. 
-.PP
-Definition at line 317 of file shell_vars.c.
+Definition at line 270 of file shell_vars.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for ganeshell from the source code.

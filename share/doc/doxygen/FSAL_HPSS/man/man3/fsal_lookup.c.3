@@ -1,10 +1,11 @@
-.TH "fsal_lookup.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "fsal_lookup.c" 3 "15 Sep 2010" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_lookup.c \- Lookup operations.  
-
+fsal_lookup.c \- 
 .PP
+Lookup operations.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -18,18 +19,20 @@ fsal_lookup.c \- Lookup operations.
 .br
 \fC#include 'HPSSclapiExt/hpssclapiext.h'\fP
 .br
+\fC#include <hpss_errno.h>\fP
+.br
 
 .SS "Functions"
 
 .in +1c
 .ti -1c
-.RI "fsal_status_t \fBFSAL_lookup\fP (fsal_handle_t *parent_directory_handle, fsal_name_t *p_filename, fsal_op_context_t *p_context, fsal_handle_t *object_handle, fsal_attrib_list_t *object_attributes)"
+.RI "fsal_status_t \fBHPSSFSAL_lookup\fP (hpssfsal_handle_t *parent_directory_handle, fsal_name_t *p_filename, hpssfsal_op_context_t *p_context, hpssfsal_handle_t *object_handle, fsal_attrib_list_t *object_attributes)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_lookupJunction\fP (fsal_handle_t *p_junction_handle, fsal_op_context_t *p_context, fsal_handle_t *p_fsoot_handle, fsal_attrib_list_t *p_fsroot_attributes)"
+.RI "fsal_status_t \fBHPSSFSAL_lookupJunction\fP (hpssfsal_handle_t *p_junction_handle, hpssfsal_op_context_t *p_context, hpssfsal_handle_t *p_fsoot_handle, fsal_attrib_list_t *p_fsroot_attributes)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_lookupPath\fP (fsal_path_t *p_path, fsal_op_context_t *p_context, fsal_handle_t *object_handle, fsal_attrib_list_t *object_attributes)"
+.RI "fsal_status_t \fBHPSSFSAL_lookupPath\fP (fsal_path_t *p_path, hpssfsal_op_context_t *p_context, hpssfsal_handle_t *object_handle, fsal_attrib_list_t *object_attributes)"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -65,9 +68,7 @@ leibovic
 Definition in file \fBfsal_lookup.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "fsal_status_t FSAL_lookup (fsal_handle_t * parent_directory_handle, fsal_name_t * p_filename, fsal_op_context_t * p_context, fsal_handle_t * object_handle, fsal_attrib_list_t * object_attributes)"
-.PP
-FSAL_lookup : Looks up for an object into a directory.
+.SS "fsal_status_t HPSSFSAL_lookup (hpssfsal_handle_t * parent_directory_handle, fsal_name_t * p_filename, hpssfsal_op_context_t * p_context, hpssfsal_handle_t * object_handle, fsal_attrib_list_t * object_attributes)"FSAL_lookup : Looks up for an object into a directory.
 .PP
 Note : if parent handle and filename are NULL, this retrieves root's handle.
 .PP
@@ -106,16 +107,14 @@ Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
 .PP
 
 .PP
-/!\\ WARNING : When the directory handle is stale, HPSS returns ENOTDIR. Thus, in this case, we must double check by checking the directory handle. 
+/!\\ WARNING : When the directory handle is stale, HPSS returns ENOTDIR. Thus, in this case, we must double check by checking the directory handle.
 .PP
-Definition at line 59 of file fsal_lookup.c.
+Definition at line 60 of file fsal_lookup.c.
 .PP
-References FSAL_getattrs(), hpss2fsal_attributes(), hpss2fsal_error(), hpss2fsal_type(), and TakeTokenFSCall().
+References hpss2fsal_attributes(), hpss2fsal_error(), hpss2fsal_type(), HPSSFSAL_getattrs(), and TakeTokenFSCall().
 .PP
-Referenced by FSAL_lookupPath(), FSAL_open_by_name(), and FSAL_unlink().
-.SS "fsal_status_t FSAL_lookupJunction (fsal_handle_t * p_junction_handle, fsal_op_context_t * p_context, fsal_handle_t * p_fsoot_handle, fsal_attrib_list_t * p_fsroot_attributes)"
-.PP
-FSAL_lookupJunction : Get the fileset root for a junction.
+Referenced by HPSSFSAL_lookupPath(), HPSSFSAL_open_by_name(), and HPSSFSAL_unlink().
+.SS "fsal_status_t HPSSFSAL_lookupJunction (hpssfsal_handle_t * p_junction_handle, hpssfsal_op_context_t * p_context, hpssfsal_handle_t * p_fsoot_handle, fsal_attrib_list_t * p_fsroot_attributes)"FSAL_lookupJunction : Get the fileset root for a junction.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -144,14 +143,12 @@ Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
 .PP
 
 .PP
-Definition at line 233 of file fsal_lookup.c.
+Definition at line 220 of file fsal_lookup.c.
 .PP
 References hpss2fsal_attributes(), hpss2fsal_error(), hpss2fsal_type(), and TakeTokenFSCall().
 .PP
-Referenced by FSAL_lookupPath().
-.SS "fsal_status_t FSAL_lookupPath (fsal_path_t * p_path, fsal_op_context_t * p_context, fsal_handle_t * object_handle, fsal_attrib_list_t * object_attributes)"
-.PP
-FSAL_lookupPath : Looks up for an object into the namespace.
+Referenced by HPSSFSAL_lookupPath().
+.SS "fsal_status_t HPSSFSAL_lookupPath (fsal_path_t * p_path, hpssfsal_op_context_t * p_context, hpssfsal_handle_t * object_handle, fsal_attrib_list_t * object_attributes)"FSAL_lookupPath : Looks up for an object into the namespace.
 .PP
 Note : if path equals '/', this retrieves root's handle.
 .PP
@@ -195,9 +192,9 @@ Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
 .PP
 
 .PP
-Definition at line 334 of file fsal_lookup.c.
+Definition at line 307 of file fsal_lookup.c.
 .PP
-References FSAL_lookup(), and FSAL_lookupJunction().
+References HPSSFSAL_lookup(), and HPSSFSAL_lookupJunction().
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File System Abstraction Layer (HPSS) library from the source code.

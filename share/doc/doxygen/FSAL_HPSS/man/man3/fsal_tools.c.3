@@ -1,10 +1,11 @@
-.TH "fsal_tools.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "fsal_tools.c" 3 "15 Sep 2010" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_tools.c \- miscelaneous FSAL tools.  
-
+fsal_tools.c \- 
 .PP
+miscelaneous FSAL tools.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -28,6 +29,15 @@ fsal_tools.c \- miscelaneous FSAL tools.
 .RI "#define \fBSTRCMP\fP   strcasecmp"
 .br
 .ti -1c
+.RI "#define \fBTYPE_UUIDT\fP   hpss_uuid_t"
+.br
+.ti -1c
+.RI "#define \fBINTMACRO_TO_STR\fP(_x)   _DEREF(_x)"
+.br
+.ti -1c
+.RI "#define \fB_DEREF\fP(_x)   #_x"
+.br
+.ti -1c
 .RI "#define \fBSMALL_PRIME_MULT\fP   3"
 .br
 .ti -1c
@@ -41,40 +51,40 @@ fsal_tools.c \- miscelaneous FSAL tools.
 
 .in +1c
 .ti -1c
-.RI "char * \fBFSAL_GetFSName\fP ()"
+.RI "char * \fBHPSSFSAL_GetFSName\fP ()"
 .br
 .ti -1c
-.RI "int \fBFSAL_handlecmp\fP (fsal_handle_t *handle1, fsal_handle_t *handle2, fsal_status_t *status)"
+.RI "int \fBHPSSFSAL_handlecmp\fP (hpssfsal_handle_t *handle1, hpssfsal_handle_t *handle2, fsal_status_t *status)"
 .br
 .ti -1c
-.RI "unsigned int \fBFSAL_Handle_to_HashIndex\fP (fsal_handle_t *p_handle, unsigned int cookie, unsigned int alphabet_len, unsigned int index_size)"
+.RI "unsigned int \fBHPSSFSAL_Handle_to_HashIndex\fP (hpssfsal_handle_t *p_handle, unsigned int cookie, unsigned int alphabet_len, unsigned int index_size)"
 .br
 .ti -1c
-.RI "unsigned int \fBFSAL_Handle_to_RBTIndex\fP (fsal_handle_t *p_handle, unsigned int cookie)"
+.RI "unsigned int \fBHPSSFSAL_Handle_to_RBTIndex\fP (hpssfsal_handle_t *p_handle, unsigned int cookie)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_DigestHandle\fP (fsal_export_context_t *p_expcontext, fsal_digesttype_t output_type, fsal_handle_t *in_fsal_handle, caddr_t out_buff)"
+.RI "fsal_status_t \fBHPSSFSAL_DigestHandle\fP (hpssfsal_export_context_t *p_expcontext, fsal_digesttype_t output_type, hpssfsal_handle_t *in_fsal_handle, caddr_t out_buff)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_ExpandHandle\fP (fsal_export_context_t *p_expcontext, fsal_digesttype_t in_type, caddr_t in_buff, fsal_handle_t *out_fsal_handle)"
+.RI "fsal_status_t \fBHPSSFSAL_ExpandHandle\fP (hpssfsal_export_context_t *p_expcontext, fsal_digesttype_t in_type, caddr_t in_buff, hpssfsal_handle_t *out_fsal_handle)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_SetDefault_FSAL_parameter\fP (fsal_parameter_t *out_parameter)"
+.RI "fsal_status_t \fBHPSSFSAL_SetDefault_FSAL_parameter\fP (fsal_parameter_t *out_parameter)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_SetDefault_FS_common_parameter\fP (fsal_parameter_t *out_parameter)"
+.RI "fsal_status_t \fBHPSSFSAL_SetDefault_FS_common_parameter\fP (fsal_parameter_t *out_parameter)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_SetDefault_FS_specific_parameter\fP (fsal_parameter_t *out_parameter)"
+.RI "fsal_status_t \fBHPSSFSAL_SetDefault_FS_specific_parameter\fP (fsal_parameter_t *out_parameter)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_load_FSAL_parameter_from_conf\fP (config_file_t in_config, fsal_parameter_t *out_parameter)"
+.RI "fsal_status_t \fBHPSSFSAL_load_FSAL_parameter_from_conf\fP (config_file_t in_config, fsal_parameter_t *out_parameter)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_load_FS_common_parameter_from_conf\fP (config_file_t in_config, fsal_parameter_t *out_parameter)"
+.RI "fsal_status_t \fBHPSSFSAL_load_FS_common_parameter_from_conf\fP (config_file_t in_config, fsal_parameter_t *out_parameter)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_load_FS_specific_parameter_from_conf\fP (config_file_t in_config, fsal_parameter_t *out_parameter)"
+.RI "fsal_status_t \fBHPSSFSAL_load_FS_specific_parameter_from_conf\fP (config_file_t in_config, fsal_parameter_t *out_parameter)"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -110,9 +120,7 @@ leibovic
 Definition in file \fBfsal_tools.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "fsal_status_t FSAL_DigestHandle (fsal_export_context_t * p_expcontext, fsal_digesttype_t output_type, fsal_handle_t * in_fsal_handle, caddr_t out_buff)"
-.PP
-FSAL_DigestHandle : Convert an fsal_handle_t to a buffer to be included into NFS handles, or another digest.
+.SS "fsal_status_t HPSSFSAL_DigestHandle (hpssfsal_export_context_t * p_expcontext, fsal_digesttype_t output_type, hpssfsal_handle_t * in_fsal_handle, caddr_t out_buff)"FSAL_DigestHandle : Convert an hpssfsal_handle_t to a buffer to be included into NFS handles, or another digest.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -130,10 +138,8 @@ The major code is ERR_FSAL_NO_ERROR is no error occured. Else, it is a non null 
 .PP
 
 .PP
-Definition at line 202 of file fsal_tools.c.
-.SS "fsal_status_t FSAL_ExpandHandle (fsal_export_context_t * p_expcontext, fsal_digesttype_t in_type, caddr_t in_buff, fsal_handle_t * out_fsal_handle)"
-.PP
-FSAL_ExpandHandle : Convert a buffer extracted from NFS handles to an FSAL handle.
+Definition at line 196 of file fsal_tools.c.
+.SS "fsal_status_t HPSSFSAL_ExpandHandle (hpssfsal_export_context_t * p_expcontext, fsal_digesttype_t in_type, caddr_t in_buff, hpssfsal_handle_t * out_fsal_handle)"FSAL_ExpandHandle : Convert a buffer extracted from NFS handles to an FSAL handle.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -151,12 +157,10 @@ The major code is ERR_FSAL_NO_ERROR is no error occured. Else, it is a non null 
 .PP
 
 .PP
-Definition at line 449 of file fsal_tools.c.
+Definition at line 439 of file fsal_tools.c.
 .PP
 References hpss2fsal_type().
-.SS "unsigned int FSAL_Handle_to_HashIndex (fsal_handle_t * p_handle, unsigned int cookie, unsigned int alphabet_len, unsigned int index_size)"
-.PP
-FSAL_Handle_to_HashIndex This function is used for hashing a FSAL handle in order to dispatch entries into the hash table array.
+.SS "unsigned int HPSSFSAL_Handle_to_HashIndex (hpssfsal_handle_t * p_handle, unsigned int cookie, unsigned int alphabet_len, unsigned int index_size)"FSAL_Handle_to_HashIndex This function is used for hashing a FSAL handle in order to dispatch entries into the hash table array.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -176,10 +180,8 @@ The hash value
 .PP
 
 .PP
-Definition at line 108 of file fsal_tools.c.
-.SS "int FSAL_handlecmp (fsal_handle_t * handle1, fsal_handle_t * handle2, fsal_status_t * status)"
-.PP
-FSAL_handlecmp: Compare 2 handles.
+Definition at line 104 of file fsal_tools.c.
+.SS "int HPSSFSAL_handlecmp (hpssfsal_handle_t * handle1, hpssfsal_handle_t * handle2, fsal_status_t * status)"FSAL_handlecmp: Compare 2 handles.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -202,12 +204,8 @@ Segfault if status is a NULL pointer.
 .PP
 
 .PP
-Definition at line 63 of file fsal_tools.c.
-.PP
-Referenced by FSAL_rename().
-.SS "fsal_status_t FSAL_load_FSAL_parameter_from_conf (config_file_t in_config, fsal_parameter_t * out_parameter)"
-.PP
-FSAL_load_FSAL_parameter_from_conf, FSAL_load_FS_common_parameter_from_conf, FSAL_load_FS_specific_parameter_from_conf:
+Definition at line 59 of file fsal_tools.c.
+.SS "fsal_status_t HPSSFSAL_load_FSAL_parameter_from_conf (config_file_t in_config, fsal_parameter_t * out_parameter)"FSAL_load_FSAL_parameter_from_conf, FSAL_load_FS_common_parameter_from_conf, FSAL_load_FS_specific_parameter_from_conf:
 .PP
 Those functions initialize the FSAL init parameter structure from a configuration structure.
 .PP
@@ -225,10 +223,8 @@ ERR_FSAL_NO_ERROR (no error) , ERR_FSAL_NOENT (missing a mandatory stanza in con
 .PP
 
 .PP
-Definition at line 642 of file fsal_tools.c.
-.SS "fsal_status_t FSAL_SetDefault_FSAL_parameter (fsal_parameter_t * out_parameter)"
-.PP
-Those routines set the default parameters for FSAL init structure. 
+Definition at line 616 of file fsal_tools.c.
+.SS "fsal_status_t HPSSFSAL_SetDefault_FSAL_parameter (fsal_parameter_t * out_parameter)"Those routines set the default parameters for FSAL init structure. 
 .PP
 \fBReturns:\fP
 .RS 4
@@ -237,7 +233,7 @@ ERR_FSAL_NO_ERROR (no error) , ERR_FSAL_FAULT (null pointer given as parameter),
 .PP
 
 .PP
-Definition at line 517 of file fsal_tools.c.
+Definition at line 507 of file fsal_tools.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File System Abstraction Layer (HPSS) library from the source code.

@@ -1,10 +1,11 @@
-.TH "cache_content_init.c" 3 "31 Mar 2009" "Version 0.1" "File Content layer" \" -*- nroff -*-
+.TH "cache_content_init.c" 3 "15 Sep 2010" "Version 0.1" "File Content layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_content_init.c \- Management of the file content cache: initialisation.  
-
+cache_content_init.c \- 
 .PP
+Management of the file content cache: initialisation.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -12,7 +13,7 @@ cache_content_init.c \- Management of the file content cache: initialisation.
 .br
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -111,9 +112,7 @@ cache_content.c : Management of the file content cache: initialisation.
 Definition in file \fBcache_content_init.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "int cache_content_client_init (cache_content_client_t * pclient, cache_content_client_parameter_t param)"
-.PP
-cache_content_client_init: Init the ressource necessary for the cache content client.
+.SS "int cache_content_client_init (cache_content_client_t * pclient, cache_content_client_parameter_t param)"cache_content_client_init: Init the ressource necessary for the cache content client.
 .PP
 Init the ressource necessary for the cache content client.
 .PP
@@ -131,10 +130,8 @@ Init the ressource necessary for the cache content client.
 .PP
 
 .PP
-Definition at line 178 of file cache_content_init.c.
-.SS "int cache_content_init (cache_content_client_parameter_t param, cache_content_status_t * pstatus)"
-.PP
-cache_inode_init: Init the ressource necessary for the cache inode management.
+Definition at line 128 of file cache_content_init.c.
+.SS "int cache_content_init (cache_content_client_parameter_t param, cache_content_status_t * pstatus)"cache_inode_init: Init the ressource necessary for the cache inode management.
 .PP
 Init the ressource necessary for the cache inode management.
 .PP
@@ -152,10 +149,8 @@ Init the ressource necessary for the cache inode management.
 .PP
 
 .PP
-Definition at line 124 of file cache_content_init.c.
-.SS "int cache_content_init_dir (cache_content_client_parameter_t param, unsigned short export_id)"
-.PP
-cache_content_init_dir: Init the directory for caching entries from a given export id.
+Definition at line 73 of file cache_content_init.c.
+.SS "int cache_content_init_dir (cache_content_client_parameter_t param, unsigned short export_id)"cache_content_init_dir: Init the directory for caching entries from a given export id.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -171,7 +166,7 @@ cache_content_init_dir: Init the directory for caching entries from a given expo
 .PP
 
 .PP
-Definition at line 152 of file cache_content_init.c.
+Definition at line 101 of file cache_content_init.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File Content layer from the source code.

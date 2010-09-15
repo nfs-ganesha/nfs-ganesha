@@ -1,10 +1,11 @@
-.TH "nfs_ip_stats.c" 3 "31 Mar 2009" "Version 0.1" "Support routines layer" \" -*- nroff -*-
+.TH "nfs_ip_stats.c" 3 "15 Sep 2010" "Version 0.1" "Support routines layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_ip_stats.c \- The management of the IP stats per machines.  
-
+nfs_ip_stats.c \- 
 .PP
+The management of the IP stats per machines.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -118,9 +119,7 @@ Revision 1.1 2005/11/30 09:28:42 deniel IP/stats cache per thread (no bottleneck
 Definition in file \fBnfs_ip_stats.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "int compare_ip_stats (hash_buffer_t * buff1, hash_buffer_t * buff2)"
-.PP
-compare_ip_stats: compares the ip address stored in the key buffers.
+.SS "int compare_ip_stats (hash_buffer_t * buff1, hash_buffer_t * buff2)"compare_ip_stats: compares the ip address stored in the key buffers.
 .PP
 compare the ip address stored in the key buffers. This function is to be used as 'compare_key' field in the hashtable storing the nfs duplicated requests.
 .PP
@@ -138,10 +137,8 @@ compare the ip address stored in the key buffers. This function is to be used as
 .PP
 
 .PP
-Definition at line 181 of file nfs_ip_stats.c.
-.SS "int display_ip_stats (hash_buffer_t * pbuff, char * str)"
-.PP
-display_ip_stats: displays the ip_stats stored in the buffer.
+Definition at line 129 of file nfs_ip_stats.c.
+.SS "int display_ip_stats (hash_buffer_t * pbuff, char * str)"display_ip_stats: displays the ip_stats stored in the buffer.
 .PP
 displays the ip_stats stored in the buffer. This function is to be used as 'key_to_str' field in the hashtable storing the nfs duplicated requests.
 .PP
@@ -159,10 +156,8 @@ number of character written.
 .PP
 
 .PP
-Definition at line 202 of file nfs_ip_stats.c.
-.SS "unsigned long int ip_stats_rbt_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
-.PP
-ip_stats_rbt_hash_func: computes the rbt value for the entry in IP stats cache.
+Definition at line 149 of file nfs_ip_stats.c.
+.SS "unsigned long int ip_stats_rbt_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"ip_stats_rbt_hash_func: computes the rbt value for the entry in IP stats cache.
 .PP
 Computes the rbt value for the entry in IP stats cache. In fact, it just use the address value itself (which is an unsigned integer) as the rbt value. This function is called internal in the HasTable_* function
 .PP
@@ -185,10 +180,8 @@ HashTable_Init
 .PP
 
 .PP
-Definition at line 162 of file nfs_ip_stats.c.
-.SS "unsigned long int ip_stats_value_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
-.PP
-ip_stats_rbt_hash_func: computes the hash value for the entry in IP stats cache.
+Definition at line 109 of file nfs_ip_stats.c.
+.SS "unsigned long int ip_stats_value_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"ip_stats_rbt_hash_func: computes the hash value for the entry in IP stats cache.
 .PP
 Computes the hash value for the entry in IP stats cache. In fact, it just use addresse as value (identity function) modulo the size of the hash. This function is called internal in the HasTable_* function
 .PP
@@ -211,10 +204,8 @@ HashTable_Init
 .PP
 
 .PP
-Definition at line 140 of file nfs_ip_stats.c.
-.SS "hash_table_t* nfs_Init_ip_stats (nfs_ip_stats_parameter_t param)"
-.PP
-nfs_Init_ip_stats: Init the hashtable for IP stats cache.
+Definition at line 87 of file nfs_ip_stats.c.
+.SS "hash_table_t* nfs_Init_ip_stats (nfs_ip_stats_parameter_t param)"nfs_Init_ip_stats: Init the hashtable for IP stats cache.
 .PP
 Perform all the required initialization for hashtable IP stats cache
 .PP
@@ -230,10 +221,8 @@ Perform all the required initialization for hashtable IP stats cache
 .PP
 
 .PP
-Definition at line 469 of file nfs_ip_stats.c.
-.SS "int nfs_ip_stats_add (hash_table_t * ht_ip_stats, unsigned int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool)"
-.PP
-nfs_ip_stats_add: adds an entry in the duplicate requests cache.
+Definition at line 403 of file nfs_ip_stats.c.
+.SS "int nfs_ip_stats_add (hash_table_t * ht_ip_stats, unsigned int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool)"nfs_ip_stats_add: adds an entry in the duplicate requests cache.
 .PP
 Adds an entry in the duplicate requests cache.
 .PP
@@ -259,10 +248,8 @@ IP_STATS_NETDB_ERROR if an error occured during the netdb query (via gethostbyad
 .PP
 
 .PP
-Definition at line 230 of file nfs_ip_stats.c.
-.SS "void nfs_ip_stats_dump (hash_table_t ** ht_ip_stats, unsigned int nb_worker, char * path_stat)"
-.PP
-nfs_ip_stats_dump: Dumps the IP Stats for each client to a file per client
+Definition at line 176 of file nfs_ip_stats.c.
+.SS "void nfs_ip_stats_dump (hash_table_t ** ht_ip_stats, unsigned int nb_worker, char * path_stat)"nfs_ip_stats_dump: Dumps the IP Stats for each client to a file per client
 .PP
 \fBParameters:\fP
 .RS 4
@@ -278,10 +265,8 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 493 of file nfs_ip_stats.c.
-.SS "int nfs_ip_stats_get (hash_table_t * ht_ip_stats, unsigned int ipaddr, nfs_ip_stats_t ** pnfs_ip_stats)"
-.PP
-nfs_ip_stats_get: gets the stats value.
+Definition at line 426 of file nfs_ip_stats.c.
+.SS "int nfs_ip_stats_get (hash_table_t * ht_ip_stats, unsigned int ipaddr, nfs_ip_stats_t ** pnfs_ip_stats)"nfs_ip_stats_get: gets the stats value.
 .PP
 gets the stats value.
 .PP
@@ -297,10 +282,8 @@ the computed number of call for this ipaddr. Negative value is a failure
 .PP
 
 .PP
-Definition at line 382 of file nfs_ip_stats.c.
-.SS "int nfs_ip_stats_incr (hash_table_t * ht_ip_stats, unsigned int ipaddr, unsigned int nfs_prog, unsigned int mnt_prog, struct svc_req * ptr_req)"
-.PP
-nfs_ip_stats_incr: increments the stats value.
+Definition at line 322 of file nfs_ip_stats.c.
+.SS "int nfs_ip_stats_incr (hash_table_t * ht_ip_stats, unsigned int ipaddr, unsigned int nfs_prog, unsigned int mnt_prog, struct svc_req * ptr_req)"nfs_ip_stats_incr: increments the stats value.
 .PP
 increments the stats value.
 .PP
@@ -316,10 +299,8 @@ the computed number of call for this ipaddr. Negative value is a failure
 .PP
 
 .PP
-Definition at line 303 of file nfs_ip_stats.c.
-.SS "int nfs_ip_stats_remove (hash_table_t * ht_ip_stats, int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool)"
-.PP
-nfs_ip_stats_remove: Tries to remove an entry for ip_stats cache
+Definition at line 244 of file nfs_ip_stats.c.
+.SS "int nfs_ip_stats_remove (hash_table_t * ht_ip_stats, int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool)"nfs_ip_stats_remove: Tries to remove an entry for ip_stats cache
 .PP
 Tries to remove an entry for ip_stats cache.
 .PP
@@ -337,11 +318,10 @@ the result previously set if *pstatus == IP_STATS_SUCCESS
 .PP
 
 .PP
-Definition at line 425 of file nfs_ip_stats.c.
+Definition at line 362 of file nfs_ip_stats.c.
 .SH "Variable Documentation"
 .PP 
 .SS "nfs_parameter_t \fBnfs_param\fP"
-.PP
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Support routines layer from the source code.

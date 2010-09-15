@@ -1,10 +1,11 @@
-.TH "shell.h" 3 "31 Mar 2009" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.TH "shell.h" 3 "15 Sep 2010" "Version 0.1" "ganeshell" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-shell.h \- Internal routines for the shell.  
-
+shell.h \- 
 .PP
+Internal routines for the shell.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -197,32 +198,28 @@ Definition in file \fBshell.h\fP.
 .PP 
 .SS "#define MAX_ARGS   256"
 .PP
-Definition at line 42 of file shell.h.
+Definition at line 41 of file shell.h.
 .SS "#define MAX_LINE_LEN   1024"
 .PP
-Definition at line 41 of file shell.h.
+Definition at line 40 of file shell.h.
 .SS "#define SHELL_ERROR   -1"
 .PP
-Definition at line 50 of file shell.h.
+Definition at line 48 of file shell.h.
 .SS "#define SHELL_NOT_FOUND   -2"
 .PP
-Definition at line 51 of file shell.h.
+Definition at line 49 of file shell.h.
 .SS "#define SHELL_SUCCESS   0"
 .PP
-Definition at line 49 of file shell.h.
+Definition at line 47 of file shell.h.
 .SS "#define SHELL_SYNTAX_ERROR   -22"
 .PP
-Definition at line 52 of file shell.h.
+Definition at line 50 of file shell.h.
 .SH "Function Documentation"
 .PP 
-.SS "int shell_BarrierInit (int nb_threads)"
+.SS "int shell_BarrierInit (int nb_threads)"Initialize the barrier for shell synchronization routines. The number of threads to wait for is given as parameter. 
 .PP
-Initialize the barrier for shell synchronization routines. The number of threads to wait for is given as parameter. 
-.PP
-Definition at line 259 of file shell.c.
-.SS "void shell_CleanArgs (int argc, char ** in_out_argv, int * in_allocated)"
-.PP
-shell_CleanArgs: Free allocated arguments.
+Definition at line 211 of file shell.c.
+.SS "void shell_CleanArgs (int argc, char ** in_out_argv, int * in_allocated)"shell_CleanArgs: Free allocated arguments.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -251,10 +248,8 @@ shell_CleanArgs: Free allocated arguments.
 .PP
 
 .PP
-Definition at line 1152 of file shell.c.
-.SS "int shell_Execute (int argc, char ** argv, FILE * output)"
-.PP
-shell_Execute: Execute a command.
+Definition at line 1062 of file shell.c.
+.SS "int shell_Execute (int argc, char ** argv, FILE * output)"shell_Execute: Execute a command.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -288,43 +283,27 @@ The returned status of this command.
 .PP
 
 .PP
-Definition at line 1185 of file shell.c.
-.SS "int shell_GetDbgLvl ()"
+Definition at line 1093 of file shell.c.
+.SS "int shell_GetDbgLvl ()"shell_GetDbgLvl Get the special variable $DEBUG_LEVEL and $DBG_LVL (internal use). 
+.SS "FILE* shell_GetInputStream (\fBshell_state_t\fP * context)"shell_GetInputStream Get the input stream for reading commands (internal use). 
 .PP
-shell_GetDbgLvl Get the special variable $DEBUG_LEVEL and $DBG_LVL (internal use). 
-.SS "FILE* shell_GetInputStream (\fBshell_state_t\fP * context)"
+Definition at line 1617 of file shell.c.
+.SS "\fBlayer_def_t\fP* shell_GetLayer (\fBshell_state_t\fP * context)"shell_GetLayer: Retrieves the current active layer (internal use). 
 .PP
-shell_GetInputStream Get the input stream for reading commands (internal use). 
+Definition at line 1319 of file shell.c.
+.SS "int shell_GetLine (\fBshell_state_t\fP * context)"shell_GetLine Get the special variable $LINE 
 .PP
-Definition at line 1750 of file shell.c.
-.SS "\fBlayer_def_t\fP* shell_GetLayer (\fBshell_state_t\fP * context)"
+Definition at line 1708 of file shell.c.
+.SS "char* shell_GetPrompt (\fBshell_state_t\fP * context)"shell_GetPrompt Get the special variable $PROMPT 
 .PP
-shell_GetLayer: Retrieves the current active layer (internal use). 
+Definition at line 1648 of file shell.c.
+.SS "int shell_GetStatus (\fBshell_state_t\fP * context)"shell_GetStatus Get the special variables $? or $STATUS (internal use). 
 .PP
-Definition at line 1428 of file shell.c.
-.SS "int shell_GetLine (\fBshell_state_t\fP * context)"
+Definition at line 1366 of file shell.c.
+.SS "int shell_GetVerbose (\fBshell_state_t\fP * context)"shell_GetVerbose Get the special variable $VERBOSE (internal use). 
 .PP
-shell_GetLine Get the special variable $LINE 
-.PP
-Definition at line 1852 of file shell.c.
-.SS "char* shell_GetPrompt (\fBshell_state_t\fP * context)"
-.PP
-shell_GetPrompt Get the special variable $PROMPT 
-.PP
-Definition at line 1786 of file shell.c.
-.SS "int shell_GetStatus (\fBshell_state_t\fP * context)"
-.PP
-shell_GetStatus Get the special variables $? or $STATUS (internal use). 
-.PP
-Definition at line 1478 of file shell.c.
-.SS "int shell_GetVerbose (\fBshell_state_t\fP * context)"
-.PP
-shell_GetVerbose Get the special variable $VERBOSE (internal use). 
-.PP
-Definition at line 1552 of file shell.c.
-.SS "int shell_Init (int verbose, char * input_file, char * prompt, int shell_index)"
-.PP
-Initialize the shell. The command line for the shell is given as parameter. 
+Definition at line 1431 of file shell.c.
+.SS "int shell_Init (int verbose, char * input_file, char * prompt, int shell_index)"Initialize the shell. The command line for the shell is given as parameter. 
 .PP
 \fBParameters:\fP
 .RS 4
@@ -333,17 +312,13 @@ Initialize the shell. The command line for the shell is given as parameter.
 .PP
 
 .PP
-Definition at line 407 of file shell.c.
-.SS "int shell_Launch ()"
-.PP
-Launch the interpreter.
+Definition at line 353 of file shell.c.
+.SS "int shell_Launch ()"Launch the interpreter.
 .PP
 Run the interpreter. 
 .PP
-Definition at line 535 of file shell.c.
-.SS "int shell_ParseLine (char * in_out_line, char ** out_arglist, int * p_argcount)"
-.PP
-shell_ParseLine: Extract an arglist from a command line.
+Definition at line 471 of file shell.c.
+.SS "int shell_ParseLine (char * in_out_line, char ** out_arglist, int * p_argcount)"shell_ParseLine: Extract an arglist from a command line.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -361,25 +336,17 @@ shell_ParseLine: Extract an arglist from a command line.
 .PP
 
 .PP
-Definition at line 757 of file shell.c.
-.SS "void shell_PrintError (\fBshell_state_t\fP * context, char * error_msg)"
+Definition at line 681 of file shell.c.
+.SS "void shell_PrintError (\fBshell_state_t\fP * context, char * error_msg)"shell_PrintError: Prints an error. 
 .PP
-shell_PrintError: Prints an error. 
+Definition at line 1224 of file shell.c.
+.SS "void shell_PrintTrace (\fBshell_state_t\fP * context, char * msg)"shell_PrintTrace: Prints a verbose trace. 
 .PP
-Definition at line 1319 of file shell.c.
-.SS "void shell_PrintTrace (\fBshell_state_t\fP * context, char * msg)"
+Definition at line 1238 of file shell.c.
+.SS "int shell_SetDbgLvl (\fBshell_state_t\fP * context, char * str_debug_level)"shell_SetDbgLvl Set the special variables $DEBUG_LEVEL and $DBG_LVL 
 .PP
-shell_PrintTrace: Prints a verbose trace. 
-.PP
-Definition at line 1337 of file shell.c.
-.SS "int shell_SetDbgLvl (\fBshell_state_t\fP * context, char * str_debug_level)"
-.PP
-shell_SetDbgLvl Set the special variables $DEBUG_LEVEL and $DBG_LVL 
-.PP
-Definition at line 1562 of file shell.c.
-.SS "int shell_SetInput (\fBshell_state_t\fP * context, char * file_name)"
-.PP
-shell_SetInput Set the input for reading commands and set the value of $INPUT and $INTERACTIVE.
+Definition at line 1440 of file shell.c.
+.SS "int shell_SetInput (\fBshell_state_t\fP * context, char * file_name)"shell_SetInput Set the input for reading commands and set the value of $INPUT and $INTERACTIVE.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -388,10 +355,8 @@ shell_SetInput Set the input for reading commands and set the value of $INPUT an
 .PP
 
 .PP
-Definition at line 1635 of file shell.c.
-.SS "int shell_SetLayer (\fBshell_state_t\fP * context, char * layer_name)"
-.PP
-shell_SetLayer: Set the current active layer. 
+Definition at line 1508 of file shell.c.
+.SS "int shell_SetLayer (\fBshell_state_t\fP * context, char * layer_name)"shell_SetLayer: Set the current active layer. 
 .PP
 \fBReturns:\fP
 .RS 4
@@ -400,35 +365,23 @@ shell_SetLayer: Set the current active layer.
 .PP
 
 .PP
-Definition at line 1368 of file shell.c.
-.SS "int shell_SetLine (\fBshell_state_t\fP * context, int lineno)"
+Definition at line 1263 of file shell.c.
+.SS "int shell_SetLine (\fBshell_state_t\fP * context, int lineno)"shell_SetLine Set the special variable $LINE 
 .PP
-shell_SetLine Set the special variable $LINE 
+Definition at line 1681 of file shell.c.
+.SS "int shell_SetPrompt (\fBshell_state_t\fP * context, char * str_prompt)"shell_SetPrompt Set the special variable $PROMPT 
 .PP
-Definition at line 1823 of file shell.c.
-.SS "int shell_SetPrompt (\fBshell_state_t\fP * context, char * str_prompt)"
+Definition at line 1629 of file shell.c.
+.SS "int shell_SetShellId (\fBshell_state_t\fP * context, int shell_index)"shell_SetShellId Set the special variable $SHELLID 
 .PP
-shell_SetPrompt Set the special variable $PROMPT 
+Definition at line 1657 of file shell.c.
+.SS "int shell_SetStatus (\fBshell_state_t\fP * context, int returned_status)"shell_SetStatus Set the special variables $? and $STATUS. 
 .PP
-Definition at line 1765 of file shell.c.
-.SS "int shell_SetShellId (\fBshell_state_t\fP * context, int shell_index)"
+Definition at line 1330 of file shell.c.
+.SS "int shell_SetVerbose (\fBshell_state_t\fP * context, char * str_verbose)"shell_SetVerbose Set the special variable $VERBOSE. 
 .PP
-shell_SetShellId Set the special variable $SHELLID 
-.PP
-Definition at line 1797 of file shell.c.
-.SS "int shell_SetStatus (\fBshell_state_t\fP * context, int returned_status)"
-.PP
-shell_SetStatus Set the special variables $? and $STATUS. 
-.PP
-Definition at line 1440 of file shell.c.
-.SS "int shell_SetVerbose (\fBshell_state_t\fP * context, char * str_verbose)"
-.PP
-shell_SetVerbose Set the special variable $VERBOSE. 
-.PP
-Definition at line 1488 of file shell.c.
-.SS "int shell_SolveArgs (int argc, char ** in_out_argv, int * out_allocated)"
-.PP
-shell_SolveArgs: Interprets arguments if they are vars or commands.
+Definition at line 1375 of file shell.c.
+.SS "int shell_SolveArgs (int argc, char ** in_out_argv, int * out_allocated)"shell_SolveArgs: Interprets arguments if they are vars or commands.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -446,44 +399,42 @@ shell_SolveArgs: Interprets arguments if they are vars or commands.
 .PP
 
 .PP
-Definition at line 866 of file shell.c.
+Definition at line 785 of file shell.c.
 .SS "int shellcmd_barrier (int argc, char ** argv, FILE * output)"
 .PP
-Definition at line 2368 of file shell.c.
+Definition at line 2183 of file shell.c.
 .SS "int shellcmd_help (int argc, char ** argv, FILE * output)"
 .PP
-Definition at line 1864 of file shell.c.
+Definition at line 1717 of file shell.c.
 .SS "int shellcmd_if (int argc, char ** argv, FILE * output)"
 .PP
-Definition at line 1941 of file shell.c.
+Definition at line 1788 of file shell.c.
 .SS "int shellcmd_interactive (int argc, char ** argv, FILE * output)"
 .PP
-Definition at line 2035 of file shell.c.
+Definition at line 1878 of file shell.c.
 .SS "int shellcmd_print (int argc, char ** argv, FILE * output)"
 .PP
-Definition at line 2241 of file shell.c.
+Definition at line 2069 of file shell.c.
 .SS "int shellcmd_quit (int argc, char ** argv, FILE * output)"
 .PP
-Definition at line 2340 of file shell.c.
+Definition at line 2158 of file shell.c.
 .SS "int shellcmd_set (int argc, char ** argv, FILE * output)"
 .PP
-Definition at line 2065 of file shell.c.
+Definition at line 1904 of file shell.c.
 .SS "int shellcmd_time (int argc, char ** argv, FILE * output)"
 .PP
-Definition at line 2293 of file shell.c.
+Definition at line 2113 of file shell.c.
 .SS "int shellcmd_unset (int argc, char ** argv, FILE * output)"
 .PP
-Definition at line 2177 of file shell.c.
+Definition at line 2011 of file shell.c.
 .SS "int shellcmd_varlist (int argc, char ** argv, FILE * output)"
 .PP
-Definition at line 2263 of file shell.c.
+Definition at line 2087 of file shell.c.
 .SH "Variable Documentation"
 .PP 
-.SS "char* \fBshell_special_vars\fP[]"
+.SS "char* \fBshell_special_vars\fP[]"List of the shell special variables 
 .PP
-List of the shell special variables 
-.PP
-Definition at line 197 of file shell.c.
+Definition at line 153 of file shell.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for ganeshell from the source code.

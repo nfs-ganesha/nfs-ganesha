@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.6.1">
   <compounddef id="shell__vars_8h" kind="file">
     <compoundname>shell_vars.h</compoundname>
     <includes local="no">stdio.h</includes>
@@ -35,7 +35,7 @@
       </node>
     </invincdepgraph>
       <sectiondef kind="define">
-      <memberdef kind="define" id="shell__vars_8h_1b88da9f4af960323f7db2e63b7491975" prot="public" static="no">
+      <memberdef kind="define" id="shell__vars_8h_1ab88da9f4af960323f7db2e63b7491975" prot="public" static="no">
         <name>MAX_VAR_LEN</name>
         <initializer>32</initializer>
         <briefdescription>
@@ -48,7 +48,7 @@
       </memberdef>
       </sectiondef>
       <sectiondef kind="func">
-      <memberdef kind="function" id="shell__vars_8h_1f857dc4843a1ef1f36d21b6060578470" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell__vars_8h_1af857dc4843a1ef1f36d21b6060578470" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int is_authorized_varname</definition>
         <argsstring>(char *str)</argsstring>
@@ -63,9 +63,9 @@
 <para>indicates whether a name is authorized for a variable. A variable name must be in [a-zA-Z0-9._:]* </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/shell_vars.h" line="31" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="272" bodyend="298"/>
+        <location file="/export/GANESHA/src/shell/shell_vars.h" line="29" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="224" bodyend="249"/>
       </memberdef>
-      <memberdef kind="function" id="shell__vars_8h_129bc337d24deebcc1d223335830f03a4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell__vars_8h_1a29bc337d24deebcc1d223335830f03a4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>char *</type>
         <definition>char* get_var_value</definition>
         <argsstring>(char *varname)</argsstring>
@@ -80,9 +80,9 @@
 <para>returns the value for a variable, NULL if the variable doesn&apos;t exist. </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/shell_vars.h" line="36" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="304" bodyend="312"/>
+        <location file="/export/GANESHA/src/shell/shell_vars.h" line="34" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="254" bodyend="265"/>
       </memberdef>
-      <memberdef kind="function" id="shell__vars_8h_142c616a19301305c64bfd5abc4b45add" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell__vars_8h_1a42c616a19301305c64bfd5abc4b45add" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int set_var_value</definition>
         <argsstring>(char *varname, char *var_value)</argsstring>
@@ -101,9 +101,9 @@
 <para>set the value for a variable, and create it if necessary. </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/shell_vars.h" line="41" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="317" bodyend="329"/>
+        <location file="/export/GANESHA/src/shell/shell_vars.h" line="39" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="270" bodyend="284"/>
       </memberdef>
-      <memberdef kind="function" id="shell__vars_8h_1228c7f788656a8815ca10a5e942d3705" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell__vars_8h_1a228c7f788656a8815ca10a5e942d3705" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int free_var</definition>
         <argsstring>(char *varname)</argsstring>
@@ -118,9 +118,9 @@
 <para>free the resources used by a variable. </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/shell_vars.h" line="45" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="333" bodyend="344"/>
+        <location file="/export/GANESHA/src/shell/shell_vars.h" line="43" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="288" bodyend="301"/>
       </memberdef>
-      <memberdef kind="function" id="shell__vars_8h_1108be7d3668f688da7ac24d2e95f89c6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell__vars_8h_1a108be7d3668f688da7ac24d2e95f89c6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void print_varlist</definition>
         <argsstring>(FILE *output, int is_dlen)</argsstring>
@@ -148,7 +148,7 @@
 print var list. </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/shell_vars.h" line="52" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="179" bodyend="190"/>
+        <location file="/export/GANESHA/src/shell/shell_vars.h" line="50" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="121" bodyend="133"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
@@ -169,22 +169,19 @@ Revision 1.2 2005/05/09 12:23:55 leibovic Version 2 of ganeshell.</para><para>Re
 <codeline lineno="21"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="22"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="23"><highlight class="normal"></highlight></codeline>
-<codeline lineno="24" refid="shell__vars_8h_1b88da9f4af960323f7db2e63b7491975" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>MAX_VAR_LEN<sp/><sp/><sp/>32</highlight></codeline>
-<codeline lineno="25"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="26"><highlight class="normal"></highlight></codeline>
-<codeline lineno="27"><highlight class="normal"></highlight></codeline>
-<codeline lineno="31"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__vars_8c_1f857dc4843a1ef1f36d21b6060578470" kindref="member">is_authorized_varname</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str);</highlight></codeline>
-<codeline lineno="32"><highlight class="normal"></highlight></codeline>
-<codeline lineno="36"><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><ref refid="shell__vars_8c_129bc337d24deebcc1d223335830f03a4" kindref="member">get_var_value</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>varname);</highlight></codeline>
-<codeline lineno="37"><highlight class="normal"></highlight></codeline>
-<codeline lineno="41"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__vars_8c_142c616a19301305c64bfd5abc4b45add" kindref="member">set_var_value</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>varname,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><ref refid="structshell__variable_____1529321e06f79480c4b0c485ef71442da" kindref="member">var_value</ref>);</highlight></codeline>
-<codeline lineno="42"><highlight class="normal"></highlight></codeline>
-<codeline lineno="45"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__vars_8c_1228c7f788656a8815ca10a5e942d3705" kindref="member">free_var</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>varname);</highlight></codeline>
-<codeline lineno="46"><highlight class="normal"></highlight></codeline>
-<codeline lineno="52"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="shell__vars_8c_1108be7d3668f688da7ac24d2e95f89c6" kindref="member">print_varlist</ref>(<sp/>FILE<sp/>*<sp/>output,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>is_dlen<sp/>);</highlight></codeline>
-<codeline lineno="53"><highlight class="normal"></highlight></codeline>
-<codeline lineno="54"><highlight class="normal"></highlight></codeline>
-<codeline lineno="55"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="24" refid="shell__vars_8h_1ab88da9f4af960323f7db2e63b7491975" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>MAX_VAR_LEN<sp/><sp/><sp/>32</highlight></codeline>
+<codeline lineno="25"><highlight class="preprocessor"></highlight></codeline>
+<codeline lineno="29"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__vars_8c_1af857dc4843a1ef1f36d21b6060578470" kindref="member">is_authorized_varname</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*str);</highlight></codeline>
+<codeline lineno="30"><highlight class="normal"></highlight></codeline>
+<codeline lineno="34"><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<ref refid="shell__vars_8c_1a29bc337d24deebcc1d223335830f03a4" kindref="member">get_var_value</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*varname);</highlight></codeline>
+<codeline lineno="35"><highlight class="normal"></highlight></codeline>
+<codeline lineno="39"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__vars_8c_1a42c616a19301305c64bfd5abc4b45add" kindref="member">set_var_value</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*varname,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<ref refid="structshell__variable_____1a529321e06f79480c4b0c485ef71442da" kindref="member">var_value</ref>);</highlight></codeline>
+<codeline lineno="40"><highlight class="normal"></highlight></codeline>
+<codeline lineno="43"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__vars_8c_1a228c7f788656a8815ca10a5e942d3705" kindref="member">free_var</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*varname);</highlight></codeline>
+<codeline lineno="44"><highlight class="normal"></highlight></codeline>
+<codeline lineno="50"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="shell__vars_8c_1a108be7d3668f688da7ac24d2e95f89c6" kindref="member">print_varlist</ref>(FILE<sp/>*<sp/>output,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>is_dlen);</highlight></codeline>
+<codeline lineno="51"><highlight class="normal"></highlight></codeline>
+<codeline lineno="52"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
     </programlisting>
     <location file="/export/GANESHA/src/shell/shell_vars.h"/>
   </compounddef>

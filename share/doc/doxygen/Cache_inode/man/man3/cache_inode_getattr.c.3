@@ -1,16 +1,17 @@
-.TH "cache_inode_getattr.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_getattr.c" 3 "15 Sep 2010" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_getattr.c \- Gets the attributes for an entry.  
-
+cache_inode_getattr.c \- 
 .PP
+Gets the attributes for an entry.  
+
 .SH SYNOPSIS
 .br
 .PP
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -73,9 +74,7 @@ deniel
 Definition in file \fBcache_inode_getattr.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "cache_inode_status_t cache_inode_getattr (cache_entry_t * pentry, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
-.PP
-cache_inode_getattr: Gets the attributes for a cached entry.
+.SS "cache_inode_status_t cache_inode_getattr (cache_entry_t * pentry, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"cache_inode_getattr: Gets the attributes for a cached entry.
 .PP
 Gets the attributes for a cached entry. The FSAL attributes are kept in a structure when the entry is added to the cache.
 .PP
@@ -105,7 +104,7 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 127 of file cache_inode_getattr.c.
+Definition at line 78 of file cache_inode_getattr.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

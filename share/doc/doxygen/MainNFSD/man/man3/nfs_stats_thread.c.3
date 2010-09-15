@@ -1,10 +1,11 @@
-.TH "nfs_stats_thread.c" 3 "31 Mar 2009" "Version 0.1" "Daemon Main" \" -*- nroff -*-
+.TH "nfs_stats_thread.c" 3 "15 Sep 2010" "Version 0.1" "Daemon Main" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_stats_thread.c \- The file that contain the 'stats_thread' routine for the nfsd.  
-
+nfs_stats_thread.c \- 
 .PP
+The file that contain the 'stats_thread' routine for the nfsd.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -24,10 +25,18 @@ nfs_stats_thread.c \- The file that contain the 'stats_thread' routine for the n
 .br
 \fC#include 'nfs_exports.h'\fP
 .br
+\fC#include 'log_macros.h'\fP
+.br
 
 .SS "Functions"
 
 .in +1c
+.ti -1c
+.RI "void \fBset_min_latency\fP (nfs_request_stat_item_t *cur_stat, unsigned int val)"
+.br
+.ti -1c
+.RI "void \fBset_max_latency\fP (nfs_request_stat_item_t *cur_stat, unsigned int val)"
+.br
 .ti -1c
 .RI "void * \fBstats_thread\fP (void *addr)"
 .br
@@ -78,20 +87,26 @@ deniel
 Definition in file \fBnfs_stats_thread.c\fP.
 .SH "Function Documentation"
 .PP 
+.SS "void set_max_latency (nfs_request_stat_item_t * cur_stat, unsigned int val)"
+.PP
+Definition at line 69 of file nfs_stats_thread.c.
+.SS "void set_min_latency (nfs_request_stat_item_t * cur_stat, unsigned int val)"
+.PP
+Definition at line 58 of file nfs_stats_thread.c.
 .SS "void* stats_thread (void * addr)"
 .PP
-Definition at line 108 of file nfs_stats_thread.c.
+Definition at line 77 of file nfs_stats_thread.c.
 .SH "Variable Documentation"
 .PP 
 .SS "hash_table_t* \fBht_ip_stats\fP[NB_MAX_WORKER_THREAD]"
 .PP
-Definition at line 141 of file nfs_init.c.
+Definition at line 92 of file nfs_init.c.
 .SS "nfs_parameter_t \fBnfs_param\fP"
 .PP
-Definition at line 135 of file nfs_init.c.
+Definition at line 85 of file nfs_init.c.
 .SS "time_t \fBServerBootTime\fP"
 .PP
-Definition at line 136 of file nfs_init.c.
+Definition at line 86 of file nfs_init.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Daemon Main from the source code.

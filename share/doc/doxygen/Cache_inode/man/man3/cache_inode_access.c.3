@@ -1,16 +1,17 @@
-.TH "cache_inode_access.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_access.c" 3 "15 Sep 2010" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_access.c \- Check for object accessibility.  
-
+cache_inode_access.c \- 
 .PP
+Check for object accessibility.  
+
 .SH SYNOPSIS
 .br
 .PP
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -79,9 +80,7 @@ deniel
 Definition in file \fBcache_inode_access.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "cache_inode_status_t cache_inode_access (cache_entry_t * pentry, fsal_accessflags_t access_type, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
-.PP
-cache_inode_access: checks for an entry accessibility.
+.SS "cache_inode_status_t cache_inode_access (cache_entry_t * pentry, fsal_accessflags_t access_type, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"cache_inode_access: checks for an entry accessibility.
 .PP
 Checks for an entry accessibility.
 .PP
@@ -111,10 +110,8 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 284 of file cache_inode_access.c.
-.SS "cache_inode_status_t cache_inode_access_no_mutex (cache_entry_t * pentry, fsal_accessflags_t access_type, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
-.PP
-cache_inode_access_no_mutex: checks for an entry accessibility. No mutex management
+Definition at line 246 of file cache_inode_access.c.
+.SS "cache_inode_status_t cache_inode_access_no_mutex (cache_entry_t * pentry, fsal_accessflags_t access_type, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"cache_inode_access_no_mutex: checks for an entry accessibility. No mutex management
 .PP
 Checks for an entry accessibility.
 .PP
@@ -144,10 +141,8 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 251 of file cache_inode_access.c.
-.SS "cache_inode_status_t cache_inode_access_sw (cache_entry_t * pentry, fsal_accessflags_t access_type, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus, int use_mutex)"
-.PP
-cache_inode_access: checks for an entry accessibility.
+Definition at line 217 of file cache_inode_access.c.
+.SS "cache_inode_status_t cache_inode_access_sw (cache_entry_t * pentry, fsal_accessflags_t access_type, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus, int use_mutex)"cache_inode_access: checks for an entry accessibility.
 .PP
 Checks for an entry accessibility.
 .PP
@@ -183,7 +178,7 @@ any other values show an unauthorized access.
 .PP
 
 .PP
-Definition at line 127 of file cache_inode_access.c.
+Definition at line 78 of file cache_inode_access.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

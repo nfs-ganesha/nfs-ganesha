@@ -1,4 +1,4 @@
-.TH "test_liblog_functions.c" 3 "31 Mar 2009" "Version 0.1" "Log Library" \" -*- nroff -*-
+.TH "test_liblog_functions.c" 3 "15 Sep 2010" "Version 0.1" "Log Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -12,17 +12,32 @@ test_liblog_functions.c \-
 .br
 \fC#include <string.h>\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 
 .SS "Defines"
 
 .in +1c
 .ti -1c
-.RI "#define \fBERR_PIPO_1\fP   0"
+.RI "#define \fBTRUE\fP   1"
 .br
 .ti -1c
-.RI "#define \fBERR_PIPO_2\fP   1"
+.RI "#define \fBFALSE\fP   0"
+.br
+.ti -1c
+.RI "#define \fBERR_DUMMY\fP   3"
+.br
+.ti -1c
+.RI "#define \fBERR_DUMMY_1\fP   0"
+.br
+.ti -1c
+.RI "#define \fBERR_DUMMY_2\fP   1"
+.br
+.ti -1c
+.RI "#define \fBTestFormat\fP(format, args...)"
+.br
+.ti -1c
+.RI "#define \fBTestGaneshaFormat\fP(expect, compare, format, args...)"
 .br
 .ti -1c
 .RI "#define \fBNB_THREADS\fP   20"
@@ -32,7 +47,34 @@ test_liblog_functions.c \-
 
 .in +1c
 .ti -1c
-.RI "void * \fBTest1\fP (void *arg)"
+.RI "void \fBTestAlways\fP (int expect, char *buff, log_components_t component, char *string)"
+.br
+.ti -1c
+.RI "void \fBTestMajor\fP (int expect, char *buff, log_components_t component, char *string)"
+.br
+.ti -1c
+.RI "void \fBTestCrit\fP (int expect, char *buff, log_components_t component, char *string)"
+.br
+.ti -1c
+.RI "void \fBTestEvent\fP (int expect, char *buff, log_components_t component, char *string)"
+.br
+.ti -1c
+.RI "void \fBTestDebug\fP (int expect, char *buff, log_components_t component, char *string)"
+.br
+.ti -1c
+.RI "void \fBTestFullDebug\fP (int expect, char *buff, log_components_t component, char *string)"
+.br
+.ti -1c
+.RI "int \fBTest1\fP (char *str, char *file)"
+.br
+.ti -1c
+.RI "void \fBTest2\fP ()"
+.br
+.ti -1c
+.RI "\fBrun_Tests\fP (int all, char *arg, char *str, char *file)"
+.br
+.ti -1c
+.RI "void * \fBrun_MT_Tests\fP (void *arg)"
 .br
 .ti -1c
 .RI "int \fBmain\fP (int argc, char *argv[])"
@@ -40,23 +82,94 @@ test_liblog_functions.c \-
 .in -1c
 .SH "Define Documentation"
 .PP 
-.SS "#define ERR_PIPO_1   0"
+.SS "#define ERR_DUMMY   3"
 .PP
-.SS "#define ERR_PIPO_2   1"
+Definition at line 44 of file test_liblog_functions.c.
+.SS "#define ERR_DUMMY_1   0"
+.SS "#define ERR_DUMMY_2   1"
+.SS "#define FALSE   0"
 .PP
+Definition at line 41 of file test_liblog_functions.c.
 .SS "#define NB_THREADS   20"
 .PP
-Definition at line 174 of file test_liblog_functions.c.
+Definition at line 492 of file test_liblog_functions.c.
+.SS "#define TestFormat(format, args...)"\fBValue:\fP
+.PP
+.nf
+do {                                                  \
+    char compare[2048], buff[2048];                     \
+    sprintf(compare, format, ## args);                  \
+    log_snprintf(buff, 2048, format, ## args);          \
+    if (strcmp(compare, buff) != 0)                     \
+      {                                                 \
+        LogTest('FAILURE: %s produced \'%s\' expected \'%s\'',  \
+                format, buff, compare);                 \
+        exit(1);                                        \
+      }                                                 \
+    else                                                \
+      LogTest('SUCCESS: %s produced \'%s\'', format, buff); \
+  } while (0)
+.fi
+.PP
+Definition at line 153 of file test_liblog_functions.c.
+.SS "#define TestGaneshaFormat(expect, compare, format, args...)"\fBValue:\fP
+.PP
+.nf
+do {                                                  \
+    char buff[2048];                                    \
+    log_snprintf(buff, 2048, format, ## args);          \
+    if (strcmp(compare, buff) != 0 && expect)           \
+      {                                                 \
+        LogTest('FAILURE: %s produced \'%s\' expected \'%s\'',  \
+                format, buff, compare);                 \
+        exit(1);                                        \
+      }                                                 \
+    else if (expect)                                    \
+      LogTest('SUCCESS: %s produced \'%s\'', format, buff); \
+    else                                                \
+      LogTest('FAILURE (EXPECTED):  %s produced \'%s\'', format, buff); \
+  } while (0)
+.fi
+.PP
+Definition at line 168 of file test_liblog_functions.c.
+.SS "#define TRUE   1"
+.PP
+Definition at line 38 of file test_liblog_functions.c.
 .SH "Function Documentation"
 .PP 
 .SS "int main (int argc, char * argv[])"
 .PP
-Definition at line 176 of file test_liblog_functions.c.
-.SS "void* Test1 (void * arg)"
+Definition at line 494 of file test_liblog_functions.c.
+.SS "void* run_MT_Tests (void * arg)"
 .PP
-Tests about Log streams and special printf functions. 
+Definition at line 483 of file test_liblog_functions.c.
+.SS "run_Tests (int all, char * arg, char * str, char * file)"
 .PP
-Definition at line 104 of file test_liblog_functions.c.
+Definition at line 472 of file test_liblog_functions.c.
+.SS "int Test1 (char * str, char * file)"Tests about Log streams and special printf functions. 
+.PP
+Definition at line 187 of file test_liblog_functions.c.
+.SS "void Test2 ()"
+.PP
+Definition at line 341 of file test_liblog_functions.c.
+.SS "void TestAlways (int expect, char * buff, log_components_t component, char * string)"
+.PP
+Definition at line 54 of file test_liblog_functions.c.
+.SS "void TestCrit (int expect, char * buff, log_components_t component, char * string)"
+.PP
+Definition at line 85 of file test_liblog_functions.c.
+.SS "void TestDebug (int expect, char * buff, log_components_t component, char * string)"
+.PP
+Definition at line 119 of file test_liblog_functions.c.
+.SS "void TestEvent (int expect, char * buff, log_components_t component, char * string)"
+.PP
+Definition at line 102 of file test_liblog_functions.c.
+.SS "void TestFullDebug (int expect, char * buff, log_components_t component, char * string)"
+.PP
+Definition at line 136 of file test_liblog_functions.c.
+.SS "void TestMajor (int expect, char * buff, log_components_t component, char * string)"
+.PP
+Definition at line 68 of file test_liblog_functions.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Log Library from the source code.

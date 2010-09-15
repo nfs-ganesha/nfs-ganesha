@@ -1,4 +1,4 @@
-.TH "LRUExportedFunctions" 3 "31 Mar 2009" "Version 0.1" "LRu List Library" \" -*- nroff -*-
+.TH "LRUExportedFunctions" 3 "15 Sep 2010" "Version 0.1" "LRu List Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -30,9 +30,7 @@ LRUExportedFunctions \-
 .in -1c
 .SH "Function Documentation"
 .PP 
-.SS "int LRU_apply_function (LRU_list_t * plru, int(*)(LRU_entry_t *, void *addparam) myfunc, void * addparam)"
-.PP
-LRU_apply_function: apply the same function to every LRU entry, but do not change their states.
+.SS "int LRU_apply_function (LRU_list_t * plru, int(*)(LRU_entry_t *, void *addparam) myfunc, void * addparam)"LRU_apply_function: apply the same function to every LRU entry, but do not change their states.
 .PP
 apply the same function to every LRU entry, but do not change their states.
 .PP
@@ -59,10 +57,8 @@ LRU_LIST_SUCCESS if ok, other values shows an error
 .PP
 
 .PP
-Definition at line 451 of file LRU_List.c.
-.SS "int LRU_gc_invalid (LRU_list_t * plru, void * cleanparam)"
-.PP
-LRU_gc_invalid : garbagge collection for invalid entries.
+Definition at line 392 of file LRU_List.c.
+.SS "int LRU_gc_invalid (LRU_list_t * plru, void * cleanparam)"LRU_gc_invalid : garbagge collection for invalid entries.
 .PP
 Read the whole LRU list and put the invalid entries back to the pool.
 .PP
@@ -83,10 +79,8 @@ An integer to contain the status for the operation.
 .PP
 
 .PP
-Definition at line 318 of file LRU_List.c.
-.SS "LRU_list_t* LRU_Init (LRU_parameter_t lru_param, LRU_status_t * pstatus)"
-.PP
-LRU_Init: Init the LRU list.
+Definition at line 262 of file LRU_List.c.
+.SS "LRU_list_t* LRU_Init (LRU_parameter_t lru_param, LRU_status_t * pstatus)"LRU_Init: Init the LRU list.
 .PP
 Init the Hash Table .
 .PP
@@ -109,10 +103,8 @@ PreAllocEntry
 .PP
 
 .PP
-Definition at line 180 of file LRU_List.c.
-.SS "int LRU_invalidate (LRU_list_t * plru, LRU_entry_t * pentry)"
-.PP
-LRU_invalidate: Tag an entry as invalid.
+Definition at line 126 of file LRU_List.c.
+.SS "int LRU_invalidate (LRU_list_t * plru, LRU_entry_t * pentry)"LRU_invalidate: Tag an entry as invalid.
 .PP
 Tag an entry as invalid, this kind of entry will be put off the LRU (and sent back to the pool) when a garbagge collection will be performed.
 .PP
@@ -135,10 +127,8 @@ LRU_LIST_SUCCESS if successfull, other values show an error.
 .PP
 
 .PP
-Definition at line 236 of file LRU_List.c.
-.SS "int LRU_invalidate_by_function (LRU_list_t * plru, int(*)(LRU_entry_t *, void *addparam) testfunc, void * addparam)"
-.PP
-LRU_invalidate_by_function: Browse the lru to test if entries should ne invalidated.
+Definition at line 181 of file LRU_List.c.
+.SS "int LRU_invalidate_by_function (LRU_list_t * plru, int(*)(LRU_entry_t *, void *addparam) testfunc, void * addparam)"LRU_invalidate_by_function: Browse the lru to test if entries should ne invalidated.
 .PP
 Browse the lru to test if entries should ne invalidated. This function is used for garbagge collection
 .PP
@@ -165,10 +155,8 @@ LRU_LIST_SUCCESS if ok, other values shows an error
 .PP
 
 .PP
-Definition at line 395 of file LRU_List.c.
-.SS "LRU_entry_t* LRU_new_entry (LRU_list_t * plru, LRU_status_t * pstatus)"
-.PP
-LRU_new_entry : acquire a new entry from the pool.
+Definition at line 335 of file LRU_List.c.
+.SS "LRU_entry_t* LRU_new_entry (LRU_list_t * plru, LRU_status_t * pstatus)"LRU_new_entry : acquire a new entry from the pool.
 .PP
 acquire a new entry from the pool. If pool is empty, a new chunck is added to complete the operation.
 .PP
@@ -191,10 +179,8 @@ PreAllocEntry
 .PP
 
 .PP
-Definition at line 260 of file LRU_List.c.
-.SS "void LRU_Print (LRU_list_t * plru)"
-.PP
-HashTable_Print: Print information about the LRU (mostly for debugging purpose).
+Definition at line 205 of file LRU_List.c.
+.SS "void LRU_Print (LRU_list_t * plru)"HashTable_Log: Print information about the LRU (mostly for debugging purpose).
 .PP
 Print information about the LRU (mostly for debugging purpose).
 .PP
@@ -210,7 +196,7 @@ none (returns void).
 .PP
 
 .PP
-Definition at line 497 of file LRU_List.c.
+Definition at line 439 of file LRU_List.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for LRu List Library from the source code.

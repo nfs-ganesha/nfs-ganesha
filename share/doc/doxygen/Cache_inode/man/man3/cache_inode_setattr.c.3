@@ -1,16 +1,17 @@
-.TH "cache_inode_setattr.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_setattr.c" 3 "15 Sep 2010" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_setattr.c \- Sets the attributes for an entry.  
-
+cache_inode_setattr.c \- 
 .PP
+Sets the attributes for an entry.  
+
 .SH SYNOPSIS
 .br
 .PP
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -73,9 +74,7 @@ leibovic
 Definition in file \fBcache_inode_setattr.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "cache_inode_status_t cache_inode_setattr (cache_entry_t * pentry, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
-.PP
-cache_inode_setattrs: set the attributes for an entry located in the cache by its address.
+.SS "cache_inode_status_t cache_inode_setattr (cache_entry_t * pentry, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"cache_inode_setattrs: set the attributes for an entry located in the cache by its address.
 .PP
 Sets the attributes for an entry located in the cache by its address. Attributes are provided with compliance to the underlying FSAL semantics. Attributes that are set are returned in '*pattr'.
 .PP
@@ -105,7 +104,7 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 128 of file cache_inode_setattr.c.
+Definition at line 77 of file cache_inode_setattr.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

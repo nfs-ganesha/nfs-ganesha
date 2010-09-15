@@ -1,10 +1,11 @@
-.TH "nfs_filehandle_mgmt.c" 3 "31 Mar 2009" "Version 0.1" "Support routines layer" \" -*- nroff -*-
+.TH "nfs_filehandle_mgmt.c" 3 "15 Sep 2010" "Version 0.1" "Support routines layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_filehandle_mgmt.c \- Some tools for managing the file handles.  
-
+nfs_filehandle_mgmt.c \- 
 .PP
+Some tools for managing the file handles.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -44,7 +45,7 @@ nfs_filehandle_mgmt.c \- Some tools for managing the file handles.
 .br
 \fC#include <rpc/pmap_clnt.h>\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
 .br
@@ -112,40 +113,37 @@ nfs_filehandle_mgmt.c \- Some tools for managing the file handles.
 .RI "int \fBnfs4_Is_Fh_Invalid\fP (nfs_fh4 *pfh)"
 .br
 .ti -1c
-.RI "unsigned int \fBnfs2_FhandleCheckSum\fP (file_handle_v2_t *pfh)"
+.RI "int \fBnfs4_Is_Fh_Referral\fP (nfs_fh4 *pfh)"
 .br
 .ti -1c
-.RI "unsigned long long \fBnfs3_FhandleCheckSum\fP (file_handle_v3_t *pfh)"
-.br
-.ti -1c
-.RI "unsigned long long \fBnfs4_FhandleCheckSum\fP (file_handle_v4_t *pfh)"
-.br
-.ti -1c
-.RI "void \fBprint_fhandle2\fP (fhandle2 fh)"
+.RI "void \fBprint_fhandle2\fP (log_components_t component, fhandle2 fh)"
 .br
 .ti -1c
 .RI "void \fBsprint_fhandle2\fP (char *str, fhandle2 fh)"
 .br
 .ti -1c
-.RI "void \fBprint_fhandle3\fP (nfs_fh3 fh)"
+.RI "void \fBprint_fhandle3\fP (log_components_t component, nfs_fh3 fh)"
 .br
 .ti -1c
 .RI "void \fBsprint_fhandle3\fP (char *str, nfs_fh3 fh)"
 .br
 .ti -1c
-.RI "void \fBprint_fhandle4\fP (nfs_fh4 fh)"
+.RI "void \fBprint_fhandle4\fP (log_components_t component, nfs_fh4 fh)"
 .br
 .ti -1c
 .RI "void \fBsprint_fhandle4\fP (char *str, nfs_fh4 fh)"
 .br
 .ti -1c
-.RI "void \fBprint_buff\fP (char *buff, int len)"
+.RI "void \fBprint_buff\fP (log_components_t component, char *buff, int len)"
 .br
 .ti -1c
 .RI "void \fBsprint_buff\fP (char *str, char *buff, int len)"
 .br
 .ti -1c
-.RI "void \fBprint_compound_fh\fP (compound_data_t *data)"
+.RI "void \fBsprint_mem\fP (char *str, char *buff, int len)"
+.br
+.ti -1c
+.RI "void \fBprint_compound_fh\fP (log_components_t component, compound_data_t *data)"
 .br
 .ti -1c
 .RI "void \fBnfs4_sprint_fhandle\fP (nfs_fh4 *fh4p, char *outstr)"
@@ -204,8 +202,6 @@ Revision 1.12 2006/01/24 11:43:05 deniel Code cleaning in progress
 .PP
 Revision 1.11 2006/01/11 08:12:18 deniel Added bug track and warning for badly formed handles
 .PP
-Revision 1.10 2005/11/28 17:03:03 deniel Added CeCILL headers
-.PP
 Revision 1.9 2005/09/07 08:58:30 deniel NFSv2 FH was only 31 byte long instead of 32
 .PP
 Revision 1.8 2005/09/07 08:16:07 deniel The checksum is filled with zeros before being computed to avoid 'dead beef' values
@@ -235,28 +231,7 @@ Revision 1.1 2005/07/20 12:56:54 deniel Reorganisation of the source files
 Definition in file \fBnfs_filehandle_mgmt.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "unsigned int nfs2_FhandleCheckSum (file_handle_v2_t * pfh)"
-.PP
-nfs2_FhandleCheckSum
-.PP
-Computes the checksum associated with a nfsv2 file handle.
-.PP
-\fBParameters:\fP
-.RS 4
-\fIpfh\fP [IN] pointer to the file handle whose checksum is to be computed.
-.RE
-.PP
-\fBReturns:\fP
-.RS 4
-the computed checksum. 
-.RE
-.PP
-
-.PP
-Definition at line 730 of file nfs_filehandle_mgmt.c.
-.SS "short nfs2_FhandleToExportId (fhandle2 * pfh2)"
-.PP
-nfs2_FhandleToExportId
+.SS "short nfs2_FhandleToExportId (fhandle2 * pfh2)"nfs2_FhandleToExportId
 .PP
 This routine extracts the export id from the file handle NFSv2
 .PP
@@ -272,10 +247,8 @@ the export id.
 .PP
 
 .PP
-Definition at line 556 of file nfs_filehandle_mgmt.c.
-.SS "int nfs2_FhandleToFSAL (fhandle2 * pfh2, fsal_handle_t * pfsalhandle, fsal_op_context_t * pcontext)"
-.PP
-nfs2_FhandleToFSAL: converts a nfs2 file handle to a FSAL file handle.
+Definition at line 463 of file nfs_filehandle_mgmt.c.
+.SS "int nfs2_FhandleToFSAL (fhandle2 * pfh2, fsal_handle_t * pfsalhandle, fsal_op_context_t * pcontext)"nfs2_FhandleToFSAL: converts a nfs2 file handle to a FSAL file handle.
 .PP
 Converts a nfs2 file handle to a FSAL file handle.
 .PP
@@ -293,10 +266,8 @@ Converts a nfs2 file handle to a FSAL file handle.
 .PP
 
 .PP
-Definition at line 297 of file nfs_filehandle_mgmt.c.
-.SS "int nfs2_FSALToFhandle (fhandle2 * pfh2, fsal_handle_t * pfsalhandle, exportlist_t * pexport)"
-.PP
-nfs2_FSALToFhandle: converts a FSAL file handle to a nfs2 file handle.
+Definition at line 225 of file nfs_filehandle_mgmt.c.
+.SS "int nfs2_FSALToFhandle (fhandle2 * pfh2, fsal_handle_t * pfsalhandle, exportlist_t * pexport)"nfs2_FSALToFhandle: converts a FSAL file handle to a nfs2 file handle.
 .PP
 Converts a nfs2 file handle to a FSAL file handle.
 .PP
@@ -316,29 +287,8 @@ Converts a nfs2 file handle to a FSAL file handle.
 .PP
 
 .PP
-Definition at line 457 of file nfs_filehandle_mgmt.c.
-.SS "unsigned long long nfs3_FhandleCheckSum (file_handle_v3_t * pfh)"
-.PP
-nfs3_FhandleCheckSum
-.PP
-Computes the checksum associated with a nfsv3 file handle.
-.PP
-\fBParameters:\fP
-.RS 4
-\fIpfh\fP [IN] pointer to the file handle whose checksum is to be computed.
-.RE
-.PP
-\fBReturns:\fP
-.RS 4
-the computed checksum. 
-.RE
-.PP
-
-.PP
-Definition at line 750 of file nfs_filehandle_mgmt.c.
-.SS "short nfs3_FhandleToExportId (nfs_fh3 * pfh3)"
-.PP
-nfs3_FhandleToExportId
+Definition at line 372 of file nfs_filehandle_mgmt.c.
+.SS "short nfs3_FhandleToExportId (nfs_fh3 * pfh3)"nfs3_FhandleToExportId
 .PP
 This routine extracts the export id from the file handle NFSv3
 .PP
@@ -354,10 +304,8 @@ the export id.
 .PP
 
 .PP
-Definition at line 529 of file nfs_filehandle_mgmt.c.
-.SS "int nfs3_FhandleToFSAL (nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle, fsal_op_context_t * pcontext)"
-.PP
-nfs3_FhandleToFSAL: converts a nfs3 file handle to a FSAL file handle.
+Definition at line 438 of file nfs_filehandle_mgmt.c.
+.SS "int nfs3_FhandleToFSAL (nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle, fsal_op_context_t * pcontext)"nfs3_FhandleToFSAL: converts a nfs3 file handle to a FSAL file handle.
 .PP
 Converts a nfs3 file handle to a FSAL file handle.
 .PP
@@ -375,10 +323,8 @@ Converts a nfs3 file handle to a FSAL file handle.
 .PP
 
 .PP
-Definition at line 248 of file nfs_filehandle_mgmt.c.
-.SS "int nfs3_FSALToFhandle (nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle, exportlist_t * pexport)"
-.PP
-nfs3_FSALToFhandle: converts a FSAL file handle to a nfs3 file handle.
+Definition at line 186 of file nfs_filehandle_mgmt.c.
+.SS "int nfs3_FSALToFhandle (nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle, exportlist_t * pexport)"nfs3_FSALToFhandle: converts a FSAL file handle to a nfs3 file handle.
 .PP
 Converts a nfs3 file handle to a FSAL file handle.
 .PP
@@ -398,10 +344,8 @@ Converts a nfs3 file handle to a FSAL file handle.
 .PP
 
 .PP
-Definition at line 400 of file nfs_filehandle_mgmt.c.
-.SS "int nfs3_Is_Fh_Xattr (nfs_fh3 * pfh)"
-.PP
-nfs4_Is_Fh_Xattr
+Definition at line 322 of file nfs_filehandle_mgmt.c.
+.SS "int nfs3_Is_Fh_Xattr (nfs_fh3 * pfh)"nfs4_Is_Fh_Xattr
 .PP
 This routine is used to test is a fh refers to a Xattr related stuff
 .PP
@@ -417,29 +361,8 @@ TRUE if in pseudo fh, FALSE otherwise
 .PP
 
 .PP
-Definition at line 579 of file nfs_filehandle_mgmt.c.
-.SS "unsigned long long nfs4_FhandleCheckSum (file_handle_v4_t * pfh)"
-.PP
-nfs4_FhandleCheckSum
-.PP
-Computes the checksum associated with a nfsv4 file handle.
-.PP
-\fBParameters:\fP
-.RS 4
-\fIpfh\fP [IN] pointer to the file handle whose checksum is to be computed.
-.RE
-.PP
-\fBReturns:\fP
-.RS 4
-the computed checksum. 
-.RE
-.PP
-
-.PP
-Definition at line 770 of file nfs_filehandle_mgmt.c.
-.SS "short nfs4_FhandleToExportId (nfs_fh4 * pfh4)"
-.PP
-nfs4_FhandleToExportId
+Definition at line 486 of file nfs_filehandle_mgmt.c.
+.SS "short nfs4_FhandleToExportId (nfs_fh4 * pfh4)"nfs4_FhandleToExportId
 .PP
 This routine extracts the export id from the file handle NFSv4
 .PP
@@ -455,10 +378,8 @@ the export id.
 .PP
 
 .PP
-Definition at line 505 of file nfs_filehandle_mgmt.c.
-.SS "int nfs4_FhandleToFSAL (nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle, fsal_op_context_t * pcontext)"
-.PP
-nfs4_FhandleToFSAL: converts a nfs4 file handle to a FSAL file handle.
+Definition at line 415 of file nfs_filehandle_mgmt.c.
+.SS "int nfs4_FhandleToFSAL (nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle, fsal_op_context_t * pcontext)"nfs4_FhandleToFSAL: converts a nfs4 file handle to a FSAL file handle.
 .PP
 Converts a nfs4 file handle to a FSAL file handle.
 .PP
@@ -476,10 +397,8 @@ Converts a nfs4 file handle to a FSAL file handle.
 .PP
 
 .PP
-Definition at line 198 of file nfs_filehandle_mgmt.c.
-.SS "int nfs4_FSALToFhandle (nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle, compound_data_t * data)"
-.PP
-nfs4_FSALToFhandle: converts a FSAL file handle to a nfs4 file handle.
+Definition at line 142 of file nfs_filehandle_mgmt.c.
+.SS "int nfs4_FSALToFhandle (nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle, compound_data_t * data)"nfs4_FSALToFhandle: converts a FSAL file handle to a nfs4 file handle.
 .PP
 Converts a nfs4 file handle to a FSAL file handle.
 .PP
@@ -499,10 +418,8 @@ Converts a nfs4 file handle to a FSAL file handle.
 .PP
 
 .PP
-Definition at line 335 of file nfs_filehandle_mgmt.c.
-.SS "int nfs4_Is_Fh_Empty (nfs_fh4 * pfh)"
-.PP
-nfs4_Is_Fh_Empty
+Definition at line 260 of file nfs_filehandle_mgmt.c.
+.SS "int nfs4_Is_Fh_Empty (nfs_fh4 * pfh)"nfs4_Is_Fh_Empty
 .PP
 This routine is used to test if a fh is empty (contains no data).
 .PP
@@ -518,10 +435,8 @@ NFS4_OK if successfull, NFS4ERR_NOFILEHANDLE is fh is empty.
 .PP
 
 .PP
-Definition at line 602 of file nfs_filehandle_mgmt.c.
-.SS "int nfs4_Is_Fh_Expired (nfs_fh4 * pfh)"
-.PP
-nfs4_Is_Fh_Expired
+Definition at line 509 of file nfs_filehandle_mgmt.c.
+.SS "int nfs4_Is_Fh_Expired (nfs_fh4 * pfh)"nfs4_Is_Fh_Expired
 .PP
 This routine is used to test if a fh is expired
 .PP
@@ -537,10 +452,8 @@ NFS4_OK if successfull. All the FH are persistent for now.
 .PP
 
 .PP
-Definition at line 671 of file nfs_filehandle_mgmt.c.
-.SS "int nfs4_Is_Fh_Invalid (nfs_fh4 * pfh)"
-.PP
-nfs4_Is_Fh_Invalid
+Definition at line 577 of file nfs_filehandle_mgmt.c.
+.SS "int nfs4_Is_Fh_Invalid (nfs_fh4 * pfh)"nfs4_Is_Fh_Invalid
 .PP
 This routine is used to test if a fh is invalid.
 .PP
@@ -556,10 +469,8 @@ NFS4_OK if successfull.
 .PP
 
 .PP
-Definition at line 704 of file nfs_filehandle_mgmt.c.
-.SS "int nfs4_Is_Fh_Pseudo (nfs_fh4 * pfh)"
-.PP
-nfs4_Is_Fh_Pseudo
+Definition at line 607 of file nfs_filehandle_mgmt.c.
+.SS "int nfs4_Is_Fh_Pseudo (nfs_fh4 * pfh)"nfs4_Is_Fh_Pseudo
 .PP
 This routine is used to test if a fh refers to pseudo fs
 .PP
@@ -575,10 +486,25 @@ TRUE if in pseudo fh, FALSE otherwise
 .PP
 
 .PP
-Definition at line 647 of file nfs_filehandle_mgmt.c.
-.SS "int nfs4_Is_Fh_Xattr (nfs_fh4 * pfh)"
+Definition at line 554 of file nfs_filehandle_mgmt.c.
+.SS "int nfs4_Is_Fh_Referral (nfs_fh4 * pfh)"nfs4_Is_Fh_Referral
 .PP
-nfs4_Is_Fh_Xattr
+This routine is used to identify fh related to a pure referral
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpfh\fP [IN] file handle to test.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+TRUE is fh is a referral, FALSE otherwise 
+.RE
+.PP
+
+.PP
+Definition at line 632 of file nfs_filehandle_mgmt.c.
+.SS "int nfs4_Is_Fh_Xattr (nfs_fh4 * pfh)"nfs4_Is_Fh_Xattr
 .PP
 This routine is used to test is a fh refers to a Xattr related stuff
 .PP
@@ -594,10 +520,8 @@ TRUE if in pseudo fh, FALSE otherwise
 .PP
 
 .PP
-Definition at line 624 of file nfs_filehandle_mgmt.c.
-.SS "void nfs4_sprint_fhandle (nfs_fh4 * fh4p, char * outstr)"
-.PP
-nfs4_sprint_fhandle : converts a file handle v4 to a string.
+Definition at line 531 of file nfs_filehandle_mgmt.c.
+.SS "void nfs4_sprint_fhandle (nfs_fh4 * fh4p, char * outstr)"nfs4_sprint_fhandle : converts a file handle v4 to a string.
 .PP
 Converts a file handle v4 to a string. This will be used mostly for debugging purpose.
 .PP
@@ -615,10 +539,8 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 943 of file nfs_filehandle_mgmt.c.
-.SS "void print_buff (char * buff, int len)"
-.PP
-print_buff
+Definition at line 817 of file nfs_filehandle_mgmt.c.
+.SS "void print_buff (log_components_t component, char * buff, int len)"print_buff
 .PP
 This routine prints the content of a buffer.
 .PP
@@ -636,10 +558,8 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 884 of file nfs_filehandle_mgmt.c.
-.SS "void print_compound_fh (compound_data_t * data)"
-.PP
-print_compound_fh
+Definition at line 749 of file nfs_filehandle_mgmt.c.
+.SS "void print_compound_fh (log_components_t component, compound_data_t * data)"print_compound_fh
 .PP
 This routine prints all the file handle within a compoud request's data structure.
 .PP
@@ -655,10 +575,8 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 914 of file nfs_filehandle_mgmt.c.
-.SS "void print_fhandle2 (fhandle2 fh)"
-.PP
-print_fhandle2
+Definition at line 787 of file nfs_filehandle_mgmt.c.
+.SS "void print_fhandle2 (log_components_t component, fhandle2 fh)"print_fhandle2
 .PP
 This routine prints a NFSv2 file handle (for debugging purpose)
 .PP
@@ -674,10 +592,8 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 791 of file nfs_filehandle_mgmt.c.
-.SS "void print_fhandle3 (nfs_fh3 fh)"
-.PP
-print_fhandle3
+Definition at line 661 of file nfs_filehandle_mgmt.c.
+.SS "void print_fhandle3 (log_components_t component, nfs_fh3 fh)"print_fhandle3
 .PP
 This routine prints a NFSv3 file handle (for debugging purpose)
 .PP
@@ -693,10 +609,8 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 821 of file nfs_filehandle_mgmt.c.
-.SS "void print_fhandle4 (nfs_fh4 fh)"
-.PP
-print_fhandle4
+Definition at line 690 of file nfs_filehandle_mgmt.c.
+.SS "void print_fhandle4 (log_components_t component, nfs_fh4 fh)"print_fhandle4
 .PP
 This routine prints a NFSv4 file handle (for debugging purpose)
 .PP
@@ -712,25 +626,26 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 852 of file nfs_filehandle_mgmt.c.
+Definition at line 719 of file nfs_filehandle_mgmt.c.
 .SS "void sprint_buff (char * str, char * buff, int len)"
 .PP
-Definition at line 894 of file nfs_filehandle_mgmt.c.
+Definition at line 760 of file nfs_filehandle_mgmt.c.
 .SS "void sprint_fhandle2 (char * str, fhandle2 fh)"
 .PP
-Definition at line 801 of file nfs_filehandle_mgmt.c.
+Definition at line 672 of file nfs_filehandle_mgmt.c.
 .SS "void sprint_fhandle3 (char * str, nfs_fh3 fh)"
 .PP
-Definition at line 831 of file nfs_filehandle_mgmt.c.
+Definition at line 701 of file nfs_filehandle_mgmt.c.
 .SS "void sprint_fhandle4 (char * str, nfs_fh4 fh)"
 .PP
-Definition at line 862 of file nfs_filehandle_mgmt.c.
+Definition at line 730 of file nfs_filehandle_mgmt.c.
+.SS "void sprint_mem (char * str, char * buff, int len)"
+.PP
+Definition at line 768 of file nfs_filehandle_mgmt.c.
 .SH "Variable Documentation"
 .PP 
 .SS "nfs_parameter_t \fBnfs_param\fP"
-.PP
 .SS "time_t \fBServerBootTime\fP"
-.PP
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Support routines layer from the source code.

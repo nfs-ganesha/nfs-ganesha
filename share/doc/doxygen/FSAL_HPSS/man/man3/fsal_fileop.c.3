@@ -1,10 +1,11 @@
-.TH "fsal_fileop.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "fsal_fileop.c" 3 "15 Sep 2010" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_fileop.c \- Files operations.  
-
+fsal_fileop.c \- 
 .PP
+Files operations.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -16,30 +17,35 @@ fsal_fileop.c \- Files operations.
 .br
 \fC#include 'HPSSclapiExt/hpssclapiext.h'\fP
 .br
+\fC#include <hpss_errno.h>\fP
+.br
 
 .SS "Functions"
 
 .in +1c
 .ti -1c
-.RI "fsal_status_t \fBFSAL_open_by_name\fP (fsal_handle_t *dirhandle, fsal_name_t *filename, fsal_op_context_t *p_context, fsal_openflags_t openflags, fsal_file_t *file_descriptor, fsal_attrib_list_t *file_attributes)"
+.RI "fsal_status_t \fBHPSSFSAL_open_by_name\fP (hpssfsal_handle_t *dirhandle, fsal_name_t *filename, hpssfsal_op_context_t *p_context, fsal_openflags_t openflags, hpssfsal_file_t *file_descriptor, fsal_attrib_list_t *file_attributes)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_open\fP (fsal_handle_t *filehandle, fsal_op_context_t *p_context, fsal_openflags_t openflags, fsal_file_t *file_descriptor, fsal_attrib_list_t *file_attributes)"
+.RI "fsal_status_t \fBHPSSFSAL_open\fP (hpssfsal_handle_t *filehandle, hpssfsal_op_context_t *p_context, fsal_openflags_t openflags, hpssfsal_file_t *file_descriptor, fsal_attrib_list_t *file_attributes)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_read\fP (fsal_file_t *file_descriptor, fsal_seek_t *seek_descriptor, fsal_size_t buffer_size, caddr_t buffer, fsal_size_t *read_amount, fsal_boolean_t *end_of_file)"
+.RI "fsal_status_t \fBHPSSFSAL_read\fP (hpssfsal_file_t *file_descriptor, fsal_seek_t *seek_descriptor, fsal_size_t buffer_size, caddr_t buffer, fsal_size_t *read_amount, fsal_boolean_t *end_of_file)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_write\fP (fsal_file_t *file_descriptor, fsal_seek_t *seek_descriptor, fsal_size_t buffer_size, caddr_t buffer, fsal_size_t *write_amount)"
+.RI "fsal_status_t \fBHPSSFSAL_write\fP (hpssfsal_file_t *file_descriptor, fsal_seek_t *seek_descriptor, fsal_size_t buffer_size, caddr_t buffer, fsal_size_t *write_amount)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_close\fP (fsal_file_t *file_descriptor)"
+.RI "fsal_status_t \fBHPSSFSAL_close\fP (hpssfsal_file_t *file_descriptor)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_open_by_fileid\fP (fsal_handle_t *filehandle, fsal_u64_t fileid, fsal_op_context_t *p_context, fsal_openflags_t openflags, fsal_file_t *file_descriptor, fsal_attrib_list_t *file_attributes)"
+.RI "fsal_status_t \fBHPSSFSAL_open_by_fileid\fP (hpssfsal_handle_t *filehandle, fsal_u64_t fileid, hpssfsal_op_context_t *p_context, fsal_openflags_t openflags, hpssfsal_file_t *file_descriptor, fsal_attrib_list_t *file_attributes)"
 .br
 .ti -1c
-.RI "fsal_status_t \fBFSAL_close_by_fileid\fP (fsal_file_t *file_descriptor, fsal_u64_t fileid)"
+.RI "fsal_status_t \fBHPSSFSAL_close_by_fileid\fP (hpssfsal_file_t *file_descriptor, fsal_u64_t fileid)"
+.br
+.ti -1c
+.RI "unsigned int \fBHPSSFSAL_GetFileno\fP (hpssfsal_file_t *pfile)"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -75,9 +81,7 @@ leibovic
 Definition in file \fBfsal_fileop.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "fsal_status_t FSAL_close (fsal_file_t * file_descriptor)"
-.PP
-FSAL_close: Free the resources allocated by the FSAL_open call.
+.SS "fsal_status_t HPSSFSAL_close (hpssfsal_file_t * file_descriptor)"FSAL_close: Free the resources allocated by the FSAL_open call.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -98,14 +102,12 @@ Other error codes can be returned : ERR_FSAL_IO, ...
 .PP
 
 .PP
-Definition at line 530 of file fsal_fileop.c.
+Definition at line 495 of file fsal_fileop.c.
 .PP
 References hpss2fsal_error(), and TakeTokenFSCall().
 .PP
-Referenced by FSAL_rcp().
-.SS "fsal_status_t FSAL_open (fsal_handle_t * filehandle, fsal_op_context_t * p_context, fsal_openflags_t openflags, fsal_file_t * file_descriptor, fsal_attrib_list_t * file_attributes)"
-.PP
-FSAL_open: Open a regular file for reading/writing its data content.
+Referenced by HPSSFSAL_rcp().
+.SS "fsal_status_t HPSSFSAL_open (hpssfsal_handle_t * filehandle, hpssfsal_op_context_t * p_context, fsal_openflags_t openflags, hpssfsal_file_t * file_descriptor, fsal_attrib_list_t * file_attributes)"FSAL_open: Open a regular file for reading/writing its data content.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -151,14 +153,12 @@ Other error codes can be returned : ERR_FSAL_IO, ...
 .PP
 
 .PP
-Definition at line 122 of file fsal_fileop.c.
+Definition at line 121 of file fsal_fileop.c.
 .PP
 References fsal2hpss_openflags(), hpss2fsal_attributes(), hpss2fsal_error(), and TakeTokenFSCall().
 .PP
-Referenced by FSAL_open_by_name(), and FSAL_rcp().
-.SS "fsal_status_t FSAL_open_by_name (fsal_handle_t * dirhandle, fsal_name_t * filename, fsal_op_context_t * p_context, fsal_openflags_t openflags, fsal_file_t * file_descriptor, fsal_attrib_list_t * file_attributes)"
-.PP
-FSAL_open_byname: Open a regular file for reading/writing its data content.
+Referenced by HPSSFSAL_open_by_name(), and HPSSFSAL_rcp().
+.SS "fsal_status_t HPSSFSAL_open_by_name (hpssfsal_handle_t * dirhandle, fsal_name_t * filename, hpssfsal_op_context_t * p_context, fsal_openflags_t openflags, hpssfsal_file_t * file_descriptor, fsal_attrib_list_t * file_attributes)"FSAL_open_byname: Open a regular file for reading/writing its data content.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -208,10 +208,8 @@ Other error codes can be returned : ERR_FSAL_IO, ...
 .PP
 Definition at line 62 of file fsal_fileop.c.
 .PP
-References FSAL_lookup(), and FSAL_open().
-.SS "fsal_status_t FSAL_read (fsal_file_t * file_descriptor, fsal_seek_t * seek_descriptor, fsal_size_t buffer_size, caddr_t buffer, fsal_size_t * read_amount, fsal_boolean_t * end_of_file)"
-.PP
-FSAL_read: Perform a read operation on an opened file.
+References HPSSFSAL_lookup(), and HPSSFSAL_open().
+.SS "fsal_status_t HPSSFSAL_read (hpssfsal_file_t * file_descriptor, fsal_seek_t * seek_descriptor, fsal_size_t buffer_size, caddr_t buffer, fsal_size_t * read_amount, fsal_boolean_t * end_of_file)"FSAL_read: Perform a read operation on an opened file.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -236,7 +234,7 @@ ERR_FSAL_NO_ERROR (no error)
 .IP "\(bu" 2
 ERR_FSAL_INVAL (invalid parameter)
 .IP "\(bu" 2
-ERR_FSAL_NOT_OPENED (tried to read in a non-opened fsal_file_t)
+ERR_FSAL_NOT_OPENED (tried to read in a non-opened hpssfsal_file_t)
 .IP "\(bu" 2
 ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
 .IP "\(bu" 2
@@ -259,14 +257,12 @@ Other error codes can be returned : ERR_FSAL_IO, ...
 .PP
 
 .PP
-Definition at line 249 of file fsal_fileop.c.
+Definition at line 240 of file fsal_fileop.c.
 .PP
 References hpss2fsal_error(), and TakeTokenFSCall().
 .PP
-Referenced by FSAL_rcp().
-.SS "fsal_status_t FSAL_write (fsal_file_t * file_descriptor, fsal_seek_t * seek_descriptor, fsal_size_t buffer_size, caddr_t buffer, fsal_size_t * write_amount)"
-.PP
-FSAL_write: Perform a write operation on an opened file.
+Referenced by HPSSFSAL_rcp().
+.SS "fsal_status_t HPSSFSAL_write (hpssfsal_file_t * file_descriptor, fsal_seek_t * seek_descriptor, fsal_size_t buffer_size, caddr_t buffer, fsal_size_t * write_amount)"FSAL_write: Perform a write operation on an opened file.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -289,7 +285,7 @@ ERR_FSAL_NO_ERROR (no error)
 .IP "\(bu" 2
 ERR_FSAL_INVAL (invalid parameter)
 .IP "\(bu" 2
-ERR_FSAL_NOT_OPENED (tried to write in a non-opened fsal_file_t)
+ERR_FSAL_NOT_OPENED (tried to write in a non-opened hpssfsal_file_t)
 .IP "\(bu" 2
 ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
 .IP "\(bu" 2
@@ -312,11 +308,11 @@ Other error codes can be returned : ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT.
 .PP
 
 .PP
-Definition at line 397 of file fsal_fileop.c.
+Definition at line 374 of file fsal_fileop.c.
 .PP
 References hpss2fsal_error(), and TakeTokenFSCall().
 .PP
-Referenced by FSAL_rcp().
+Referenced by HPSSFSAL_rcp().
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File System Abstraction Layer (HPSS) library from the source code.

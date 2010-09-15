@@ -1,10 +1,11 @@
-.TH "fsal_errors.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "fsal_errors.c" 3 "15 Sep 2010" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_errors.c \- Routines for handling errors.  
-
+fsal_errors.c \- 
 .PP
+Routines for handling errors.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -51,9 +52,7 @@ leibovic
 Definition in file \fBfsal_errors.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "fsal_boolean_t fsal_is_retryable (fsal_status_t status)"
-.PP
-fsal_is_retryable: Indicates if an FSAL error is retryable, i.e. if the caller has a chance of succeeding if it tries to call again the function that returned such an error code.
+.SS "fsal_boolean_t fsal_is_retryable (fsal_status_t status)"fsal_is_retryable: Indicates if an FSAL error is retryable, i.e. if the caller has a chance of succeeding if it tries to call again the function that returned such an error code.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -77,7 +76,7 @@ FALSE if the error is NOT retryable.
 .PP
 
 .PP
-Definition at line 34 of file fsal_errors.c.
+Definition at line 33 of file fsal_errors.c.
 .PP
 Referenced by fsal_increment_nbcall().
 .SH "Author"

@@ -1,4 +1,4 @@
-.TH "Cache Inode GC internal functions." 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "Cache Inode GC internal functions." 3 "15 Sep 2010" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -18,12 +18,10 @@ Cache Inode GC internal functions. \-
 .in -1c
 .SH "Detailed Description"
 .PP 
-These functions are used for Garbagge collector internal management. 
+These functions are used for Garbage collector internal management. 
 .SH "Function Documentation"
 .PP 
-.SS "int cache_inode_gc_function (LRU_entry_t * plru_entry, void * addparam)"
-.PP
-cache_inode_gc_function: Tests is an entry in cache inode is to be set invalid (has expired).
+.SS "int cache_inode_gc_function (LRU_entry_t * plru_entry, void * addparam)"cache_inode_gc_function: Tests is an entry in cache inode is to be set invalid (has expired).
 .PP
 Tests is an entry in cache inode is to be set invalid (has expired). If entry is invalidated, does the cleaning stuff on it.
 .PP
@@ -46,10 +44,8 @@ LRU_gc_invalid
 .PP
 
 .PP
-Definition at line 492 of file cache_inode_gc.c.
-.SS "int cache_inode_gc_suppress_directory (cache_entry_t * pentry, cache_inode_param_gc_t * pgcparam)"
-.PP
-cache_inode_gc_suppress_directory: suppress a directory entry from the cache inode.
+Definition at line 444 of file cache_inode_gc.c.
+.SS "int cache_inode_gc_suppress_directory (cache_entry_t * pentry, cache_inode_param_gc_t * pgcparam)"cache_inode_gc_suppress_directory: suppress a directory entry from the cache inode.
 .PP
 Suppress a file entry from the cache inode.
 .PP
@@ -72,10 +68,8 @@ LRU_gc_invalid
 .PP
 
 .PP
-Definition at line 418 of file cache_inode_gc.c.
-.SS "int cache_inode_gc_suppress_file (cache_entry_t * pentry, cache_inode_param_gc_t * pgcparam)"
-.PP
-cache_inode_gc_suppress_file: suppress a file entry from the cache inode.
+Definition at line 369 of file cache_inode_gc.c.
+.SS "int cache_inode_gc_suppress_file (cache_entry_t * pentry, cache_inode_param_gc_t * pgcparam)"cache_inode_gc_suppress_file: suppress a file entry from the cache inode.
 .PP
 Suppress a file entry from the cache inode.
 .PP
@@ -98,7 +92,7 @@ LRU_gc_invalid
 .PP
 
 .PP
-Definition at line 374 of file cache_inode_gc.c.
+Definition at line 326 of file cache_inode_gc.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

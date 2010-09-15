@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='UTF-8' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.6.1">
   <compounddef id="group__Cache__inode__gc__interface" kind="group">
     <compoundname>Cache_inode_gc_interface</compoundname>
     <title>Cache Inode GC interface.</title>
       <sectiondef kind="func">
-      <memberdef kind="function" id="group__Cache__inode__gc__interface_1g69c5ffce5cdb7882aa52f72c665a2790" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__Cache__inode__gc__interface_1ga69c5ffce5cdb7882aa52f72c665a2790" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void cache_inode_set_gc_policy</definition>
         <argsstring>(cache_inode_gc_policy_t policy)</argsstring>
@@ -16,7 +16,7 @@
         <briefdescription>
         </briefdescription>
         <detaileddescription>
-<para>cache_inode_set_gc_policy: Set the cache_inode garbagge collecting policy.</para><para><parameterlist kind="param"><parameteritem>
+<para>cache_inode_set_gc_policy: Set the cache_inode garbage collecting policy.</para><para><parameterlist kind="param"><parameteritem>
 <parameternamelist>
 <parametername>policy</parametername>
 </parameternamelist>
@@ -28,9 +28,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="574" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="573" bodyend="576"/>
+        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="533" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="532" bodyend="535"/>
       </memberdef>
-      <memberdef kind="function" id="group__Cache__inode__gc__interface_1gb355d80bfbbb711ce94b45b7a3cc7df9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__Cache__inode__gc__interface_1gab355d80bfbbb711ce94b45b7a3cc7df9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>cache_inode_gc_policy_t</type>
         <definition>cache_inode_gc_policy_t cache_inode_get_gc_policy</definition>
         <argsstring>(void)</argsstring>
@@ -41,13 +41,13 @@
         <briefdescription>
         </briefdescription>
         <detaileddescription>
-<para>cache_inode_get_gc_policy: Set the cache_inode garbagge collecting policy.</para><para><simplesect kind="return"><para>the current policy. </para></simplesect>
+<para>cache_inode_get_gc_policy: Set the cache_inode garbage collecting policy.</para><para><simplesect kind="return"><para>the current policy. </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="587" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="586" bodyend="589"/>
+        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="545" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="544" bodyend="547"/>
       </memberdef>
-      <memberdef kind="function" id="group__Cache__inode__gc__interface_1g2c07f75a5a24f519e42b34e8718bf79b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__Cache__inode__gc__interface_1ga2c07f75a5a24f519e42b34e8718bf79b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>cache_inode_status_t</type>
         <definition>cache_inode_status_t cache_inode_gc</definition>
         <argsstring>(hash_table_t *ht, cache_inode_client_t *pclient, cache_inode_status_t *pstatus)</argsstring>
@@ -90,12 +90,54 @@
 </parameteritem>
 </parameterlist>
 <simplesect kind="return"><para>CACHE_INODE_SUCCESS if operation is a success <linebreak/>
- </para><para>CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry</para></simplesect>
-<simplesect kind="see"><para>HashTable_GetSize </para><para>LRU_invalidate_by_function </para><para>LRU_gc_invalid </para></simplesect>
+ </para><simplesectsep/><para>CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry</para></simplesect>
+<simplesect kind="see"><para>HashTable_GetSize </para><simplesectsep/><para>LRU_invalidate_by_function </para><simplesectsep/><para>LRU_gc_invalid </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="612" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="609" bodyend="691"/>
+        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="570" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="567" bodyend="653"/>
+      </memberdef>
+      <memberdef kind="function" id="group__Cache__inode__gc__interface_1ga04db13ebf2c5e871dda72102bf922d3f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int cache_inode_gc_fd_func</definition>
+        <argsstring>(LRU_entry_t *plru_entry, void *addparam)</argsstring>
+        <name>cache_inode_gc_fd_func</name>
+        <param>
+          <type>LRU_entry_t *</type>
+          <declname>plru_entry</declname>
+        </param>
+        <param>
+          <type>void *</type>
+          <declname>addparam</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="656" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="655" bodyend="686"/>
+      </memberdef>
+      <memberdef kind="function" id="group__Cache__inode__gc__interface_1ga44c4a77761d87309e6230c59a8f7a656" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>cache_inode_status_t</type>
+        <definition>cache_inode_status_t cache_inode_gc_fd</definition>
+        <argsstring>(cache_inode_client_t *pclient, cache_inode_status_t *pstatus)</argsstring>
+        <name>cache_inode_gc_fd</name>
+        <param>
+          <type>cache_inode_client_t *</type>
+          <declname>pclient</declname>
+        </param>
+        <param>
+          <type>cache_inode_status_t *</type>
+          <declname>pstatus</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Garbagge opened file descriptors </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="693" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="691" bodyend="725"/>
       </memberdef>
       </sectiondef>
     <briefdescription>

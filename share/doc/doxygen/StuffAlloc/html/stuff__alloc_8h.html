@@ -32,58 +32,59 @@
 <p><a href="stuff__alloc_8h_source.html">Go to the source code of this file.</a></p>
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td colspan="2"><h2>Defines</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="stuff__alloc_8h.html#ad6b7282e7c215186f8514097b04d5bfa">Mem_Alloc</a>(a)&nbsp;&nbsp;&nbsp;BuddyMalloc( a )</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="stuff__alloc_8h.html#a33eb598e1abd423b85812262b3691f70">STUFF_PREALLOC</a>(pool, nb, type, name_next)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="stuff__alloc_8h.html#a457d47f8b2bbac516aee6fd69707e74a">GET_PREALLOC</a>(entry, pool, nb, type, name_next)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="stuff__alloc_8h.html#aeb0d01b2e3cfab695f1240110e0994c5">RELEASE_PREALLOC</a>(entry, pool, name_next)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="stuff__alloc_8h.html#ad6b7282e7c215186f8514097b04d5bfa">Mem_Alloc</a>(a)&nbsp;&nbsp;&nbsp;BuddyMallocExit( a )</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="stuff__alloc_8h.html#a44c3aa0d5261064e512efe252dd1600f">Mem_Calloc</a>(s1, s2)&nbsp;&nbsp;&nbsp;BuddyCalloc( s1, s2 )</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="stuff__alloc_8h.html#a493e3330b67be95e7844e98de50c126a">Mem_Realloc</a>(p, s)&nbsp;&nbsp;&nbsp;BuddyRealloc( (caddr_t)(p), s )</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="stuff__alloc_8h.html#a4e6d06ceac8fce7d7b9dde85e225ad4a">Mem_Free</a>(a)&nbsp;&nbsp;&nbsp;BuddyFree((caddr_t) (a))</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="stuff__alloc_8h.html#acd84738997b6c23395138cbfe5f296b1">Mem_Errno</a>&nbsp;&nbsp;&nbsp;BuddyErrno</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="stuff__alloc_8h.html#a589a6aa3b3312bedf3f6bf7644fe631d">GetPreferedPool</a>(_n, _s)&nbsp;&nbsp;&nbsp;BuddyPreferedPoolCount( _n, _s)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="stuff__alloc_8h.html#a6c09779d3013b3d009840bd835481dfb">STUFF_PREALLOC</a>(_pool, _nb, _type, _name_next)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="stuff__alloc_8h.html#a4ba0f04a3d862387dcc4115476b08fda">GET_PREALLOC</a>(_entry, _pool, _nb, _type, _name_next)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="stuff__alloc_8h.html#a75ffcec8cebe37ccd4044d7e9bb52ae1">RELEASE_PREALLOC</a>(_entry, _pool, _name_next)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="stuff__alloc_8h.html#aedd85b3e73701cd559e6ec90f0c42b86">STUFF_PREALLOC_CONSTRUCT</a>(_pool, _nb, _type, _name_next, _construct)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="stuff__alloc_8h.html#a7e08994c1fb518ad7d9f427ab6c93bf2">GET_PREALLOC_CONSTRUCT</a>(_entry, _pool, _nb, _type, _name_next, _construct)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="stuff__alloc_8h.html#ab23410492b8d0a00fec44cf80ce0da74">RELEASE_PREALLOC_DESTRUCT</a>(entry, pool, name_next, destruct)</td></tr>
 </table>
 <hr/><a name="_details"></a><h2>Detailed Description</h2>
 <p>Stuff allocators macros. </p>
 <dl class="author"><dt><b>Author:</b></dt><dd></dd></dl>
-<dl class="rcs"><dt><b>Author</b></dt><dd>deniel </dd></dl>
+<dl class="rcs"><dt><b>Author</b></dt><dd>leibovic </dd></dl>
 <dl class="date"><dt><b>Date:</b></dt><dd></dd></dl>
-<dl class="rcs"><dt><b>Date</b></dt><dd>2005/05/03 07:24:33 </dd></dl>
+<dl class="rcs"><dt><b>Date</b></dt><dd>2006/01/24 15:06:30 </dd></dl>
 <dl class="version"><dt><b>Version:</b></dt><dd></dd></dl>
-<dl class="rcs"><dt><b>Revision</b></dt><dd>1.4 </dd></dl>
-<p><a class="el" href="stuff__alloc_8h.html" title="Stuff allocators macros.">stuff_alloc.h</a> : Stuff allocators macros.</p>
-<dl class="rcs"><dt><b>Header</b></dt><dd>/cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/StuffAlloc/stuff_alloc.h,v 1.4 2005/05/03 07:24:33 deniel Exp </dd></dl>
-<dl class="rcs"><dt><b>Log</b></dt><dd><a class="el" href="stuff__alloc_8h.html" title="Stuff allocators macros.">stuff_alloc.h</a>,v </dd></dl>
-<p>Revision 1.4 2005/05/03 07:24:33 deniel Using Buddy System instead of regular malloc/free</p>
-<p>Revision 1.3 2004/10/20 16:51:25 deniel Comments added to stuuf allocator macros</p>
-<p>Revision 1.2 2004/10/19 14:40:26 deniel Ok for UDP and TCP processing</p>
-<p>Revision 1.2 2004/10/18 08:43:49 deniel Many changes in protootypes ans data structures Adding some functions in preallocator</p>
-<p>Revision 1.1 2004/10/13 13:01:44 deniel Now using the stuff allocator </p>
+<dl class="rcs"><dt><b>Revision</b></dt><dd>1.18 </dd></dl>
+<p><a class="el" href="stuff__alloc_8h.html" title="Stuff allocators macros.">stuff_alloc.h</a> : Stuff allocators macros. </p>
 
 <p>Definition in file <a class="el" href="stuff__alloc_8h_source.html">stuff_alloc.h</a>.</p>
 <hr/><h2>Define Documentation</h2>
-<a class="anchor" id="a457d47f8b2bbac516aee6fd69707e74a"></a><!-- doxytag: member="stuff_alloc.h::GET_PREALLOC" ref="a457d47f8b2bbac516aee6fd69707e74a" args="(entry, pool, nb, type, name_next)" -->
+<a class="anchor" id="a4ba0f04a3d862387dcc4115476b08fda"></a><!-- doxytag: member="stuff_alloc.h::GET_PREALLOC" ref="a4ba0f04a3d862387dcc4115476b08fda" args="(_entry, _pool, _nb, _type, _name_next)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">#define GET_PREALLOC</td>
           <td>(</td>
-          <td class="paramtype">entry, </td>
+          <td class="paramtype">_entry, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">pool, </td>
+          <td class="paramtype">_pool, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">nb, </td>
+          <td class="paramtype">_nb, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">type, </td>
+          <td class="paramtype">_type, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">name_next&nbsp;</td>
+          <td class="paramtype">_name_next&nbsp;</td>
           <td class="paramname"></td>
           <td>&nbsp;)&nbsp;</td>
           <td></td>
@@ -94,16 +95,16 @@
 <b>Value:</b><div class="fragment"><pre class="fragment"><span class="keywordflow">do</span>                                                                        \
 {                                                                         \
                                                                           \
-  <span class="keywordflow">if</span>( ( pool == NULL ) &amp;&amp; ( nb != 0 ) )                                   \
-    <a class="code" href="stuff__alloc_8h.html#a33eb598e1abd423b85812262b3691f70">STUFF_PREALLOC</a>( pool, nb, type, name_next ) ;                         \
+  <span class="keywordflow">if</span>( ( _pool == NULL ) &amp;&amp; ( _nb != 0 ) )                                 \
+    <a class="code" href="stuff__alloc_8h.html#a6c09779d3013b3d009840bd835481dfb">STUFF_PREALLOC</a>( _pool, _nb, _type, _name_next ) ;                     \
                                                                           \
-  <span class="keywordflow">if</span>( pool != NULL )                                                      \
+  <span class="keywordflow">if</span>( _pool != NULL )                                                     \
     {                                                                     \
-      entry = pool ;                                                      \
-      pool = entry-&gt;name_next ;                                           \
+      _entry = _pool ;                                                    \
+      _pool = _entry-&gt;_name_next ;                                        \
     }                                                                     \
   <span class="keywordflow">else</span>                                                                    \
-   entry = NULL ;                                                         \
+   _entry = NULL ;                                                        \
 } <span class="keywordflow">while</span>( 0 )
 </pre></div><p>GET_PREALLOC: Gets an entry in a preallocated pool.</p>
 <p>This macro is used to get an entry from a pre-allocated pool. If the pool is empty, the macro STUFF_PREALLOC will be called with the same last four arguments to extend the pool. If nb is set to zero during this call, STUFF_PREALLOC is not called and no entry is get from the pool that is empty.</p>
@@ -119,7 +120,104 @@
 </dl>
 <dl class="return"><dt><b>Returns:</b></dt><dd>nothing (this is a macro), but entry will be NULL if an error occures. </dd></dl>
 
-<p>Definition at line <a class="el" href="stuff__alloc_8h_source.html#l00102">102</a> of file <a class="el" href="stuff__alloc_8h_source.html">stuff_alloc.h</a>.</p>
+<p>Definition at line <a class="el" href="stuff__alloc_8h_source.html#l00137">137</a> of file <a class="el" href="stuff__alloc_8h_source.html">stuff_alloc.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a7e08994c1fb518ad7d9f427ab6c93bf2"></a><!-- doxytag: member="stuff_alloc.h::GET_PREALLOC_CONSTRUCT" ref="a7e08994c1fb518ad7d9f427ab6c93bf2" args="(_entry, _pool, _nb, _type, _name_next, _construct)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define GET_PREALLOC_CONSTRUCT</td>
+          <td>(</td>
+          <td class="paramtype">_entry, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">_pool, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">_nb, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">_type, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">_name_next, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">_construct&nbsp;</td>
+          <td class="paramname"></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<b>Value:</b><div class="fragment"><pre class="fragment"><span class="keywordflow">do</span>                                                                             \
+{                                                                              \
+  <span class="keywordflow">if</span>( ( _pool == NULL ) &amp;&amp; ( _nb != 0 ) )                                      \
+    <a class="code" href="stuff__alloc_8h.html#aedd85b3e73701cd559e6ec90f0c42b86">STUFF_PREALLOC_CONSTRUCT</a>( _pool, _nb, _type, _name_next, _construct ) ;    \
+                                                                               \
+  <span class="keywordflow">if</span>( _pool != NULL )                                                          \
+    {                                                                          \
+      _entry = _pool ;                                                         \
+      _pool = _entry-&gt;_name_next ;                                             \
+    }                                                                          \
+  <span class="keywordflow">else</span>                                                                         \
+   _entry = NULL ;                                                             \
+} <span class="keywordflow">while</span>( 0 )
+</pre></div><p>GET_PREALLOC_CONSTRUCT: Gets an entry in a preallocated pool.</p>
+<p>This macro is used to get an entry from a pre-allocated pool. If the pool is empty, the macro STUFF_PREALLOC will be called with the same last four arguments to extend the pool. If nb is set to zero during this call, STUFF_PREALLOC is not called and no entry is get from the pool that is empty.</p>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>entry</em>&nbsp;</td><td>the entry we need. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>pool</em>&nbsp;</td><td>the preallocted pool that we want to init. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>nb</em>&nbsp;</td><td>the number of entries to be allocated. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>type</em>&nbsp;</td><td>the type of the entries to be allocated. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>name_next</em>&nbsp;</td><td>the name of the field, in structure of type 'type' which pointer to the next entry. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>construct</em>&nbsp;</td><td>the constructor for the object: takes a pointer to void as argument and returns void</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="return"><dt><b>Returns:</b></dt><dd>nothing (this is a macro), but entry will be NULL if an error occures. </dd></dl>
+
+<p>Definition at line <a class="el" href="stuff__alloc_8h_source.html#l00241">241</a> of file <a class="el" href="stuff__alloc_8h_source.html">stuff_alloc.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a589a6aa3b3312bedf3f6bf7644fe631d"></a><!-- doxytag: member="stuff_alloc.h::GetPreferedPool" ref="a589a6aa3b3312bedf3f6bf7644fe631d" args="(_n, _s)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define GetPreferedPool</td>
+          <td>(</td>
+          <td class="paramtype">_n, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">_s&nbsp;</td>
+          <td class="paramname"></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td>&nbsp;&nbsp;&nbsp;BuddyPreferedPoolCount( _n, _s)</td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Definition at line <a class="el" href="stuff__alloc_8h_source.html#l00072">72</a> of file <a class="el" href="stuff__alloc_8h_source.html">stuff_alloc.h</a>.</p>
 
 </div>
 </div>
@@ -133,34 +231,119 @@
           <td class="paramtype">a&nbsp;</td>
           <td class="paramname"></td>
           <td>&nbsp;)&nbsp;</td>
-          <td>&nbsp;&nbsp;&nbsp;BuddyMalloc( a )</td>
+          <td>&nbsp;&nbsp;&nbsp;BuddyMallocExit( a )</td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
 
-<p>Definition at line <a class="el" href="stuff__alloc_8h_source.html#l00042">42</a> of file <a class="el" href="stuff__alloc_8h_source.html">stuff_alloc.h</a>.</p>
+<p>Definition at line <a class="el" href="stuff__alloc_8h_source.html#l00064">64</a> of file <a class="el" href="stuff__alloc_8h_source.html">stuff_alloc.h</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="aeb0d01b2e3cfab695f1240110e0994c5"></a><!-- doxytag: member="stuff_alloc.h::RELEASE_PREALLOC" ref="aeb0d01b2e3cfab695f1240110e0994c5" args="(entry, pool, name_next)" -->
+<a class="anchor" id="a44c3aa0d5261064e512efe252dd1600f"></a><!-- doxytag: member="stuff_alloc.h::Mem_Calloc" ref="a44c3aa0d5261064e512efe252dd1600f" args="(s1, s2)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define Mem_Calloc</td>
+          <td>(</td>
+          <td class="paramtype">s1, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">s2&nbsp;</td>
+          <td class="paramname"></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td>&nbsp;&nbsp;&nbsp;BuddyCalloc( s1, s2 )</td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Definition at line <a class="el" href="stuff__alloc_8h_source.html#l00065">65</a> of file <a class="el" href="stuff__alloc_8h_source.html">stuff_alloc.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="acd84738997b6c23395138cbfe5f296b1"></a><!-- doxytag: member="stuff_alloc.h::Mem_Errno" ref="acd84738997b6c23395138cbfe5f296b1" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define Mem_Errno&nbsp;&nbsp;&nbsp;BuddyErrno</td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Definition at line <a class="el" href="stuff__alloc_8h_source.html#l00070">70</a> of file <a class="el" href="stuff__alloc_8h_source.html">stuff_alloc.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a4e6d06ceac8fce7d7b9dde85e225ad4a"></a><!-- doxytag: member="stuff_alloc.h::Mem_Free" ref="a4e6d06ceac8fce7d7b9dde85e225ad4a" args="(a)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define Mem_Free</td>
+          <td>(</td>
+          <td class="paramtype">a&nbsp;</td>
+          <td class="paramname"></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td>&nbsp;&nbsp;&nbsp;BuddyFree((caddr_t) (a))</td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Definition at line <a class="el" href="stuff__alloc_8h_source.html#l00069">69</a> of file <a class="el" href="stuff__alloc_8h_source.html">stuff_alloc.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a493e3330b67be95e7844e98de50c126a"></a><!-- doxytag: member="stuff_alloc.h::Mem_Realloc" ref="a493e3330b67be95e7844e98de50c126a" args="(p, s)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define Mem_Realloc</td>
+          <td>(</td>
+          <td class="paramtype">p, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">s&nbsp;</td>
+          <td class="paramname"></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td>&nbsp;&nbsp;&nbsp;BuddyRealloc( (caddr_t)(p), s )</td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Definition at line <a class="el" href="stuff__alloc_8h_source.html#l00066">66</a> of file <a class="el" href="stuff__alloc_8h_source.html">stuff_alloc.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a75ffcec8cebe37ccd4044d7e9bb52ae1"></a><!-- doxytag: member="stuff_alloc.h::RELEASE_PREALLOC" ref="a75ffcec8cebe37ccd4044d7e9bb52ae1" args="(_entry, _pool, _name_next)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">#define RELEASE_PREALLOC</td>
           <td>(</td>
-          <td class="paramtype">entry, </td>
+          <td class="paramtype">_entry, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">pool, </td>
+          <td class="paramtype">_pool, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">name_next&nbsp;</td>
+          <td class="paramtype">_name_next&nbsp;</td>
           <td class="paramname"></td>
           <td>&nbsp;)&nbsp;</td>
           <td></td>
@@ -170,8 +353,8 @@
 <div class="memdoc">
 <b>Value:</b><div class="fragment"><pre class="fragment"><span class="keywordflow">do</span>                                                                        \
 {                                                                         \
-  entry-&gt;name_next = pool ;                                               \
-  pool = entry ;                                                          \
+  _entry-&gt;_name_next = _pool ;                                            \
+  _pool = _entry ;                                                        \
 } <span class="keywordflow">while</span>( 0 )
 </pre></div><p>RELEASE_PREALLOC: Releases an entry and puts it back to the pool.</p>
 <p>When an entry is no used any more, this macro is used to put it back to the pool, so that it could be reuse later. The released entry is chained to the pool, through the 'name_next' field.</p>
@@ -185,33 +368,33 @@
 </dl>
 <dl class="return"><dt><b>Returns:</b></dt><dd>nothing (this is a macro). </dd></dl>
 
-<p>Definition at line <a class="el" href="stuff__alloc_8h_source.html#l00133">133</a> of file <a class="el" href="stuff__alloc_8h_source.html">stuff_alloc.h</a>.</p>
+<p>Definition at line <a class="el" href="stuff__alloc_8h_source.html#l00168">168</a> of file <a class="el" href="stuff__alloc_8h_source.html">stuff_alloc.h</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a33eb598e1abd423b85812262b3691f70"></a><!-- doxytag: member="stuff_alloc.h::STUFF_PREALLOC" ref="a33eb598e1abd423b85812262b3691f70" args="(pool, nb, type, name_next)" -->
+<a class="anchor" id="ab23410492b8d0a00fec44cf80ce0da74"></a><!-- doxytag: member="stuff_alloc.h::RELEASE_PREALLOC_DESTRUCT" ref="ab23410492b8d0a00fec44cf80ce0da74" args="(entry, pool, name_next, destruct)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define STUFF_PREALLOC</td>
+          <td class="memname">#define RELEASE_PREALLOC_DESTRUCT</td>
           <td>(</td>
+          <td class="paramtype">entry, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">pool, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">nb, </td>
+          <td class="paramtype">name_next, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">type, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">name_next&nbsp;</td>
+          <td class="paramtype">destruct&nbsp;</td>
           <td class="paramname"></td>
           <td>&nbsp;)&nbsp;</td>
           <td></td>
@@ -221,20 +404,75 @@
 <div class="memdoc">
 <b>Value:</b><div class="fragment"><pre class="fragment"><span class="keywordflow">do</span>                                                                        \
 {                                                                         \
-  <span class="keywordtype">int</span> i = 0 ;                                                             \
-                                                                          \
-  pool= NULL ;                                                            \
-                                                                          \
-  <span class="keywordflow">if</span>( ( pool = ( type *)<a class="code" href="stuff__alloc_8h.html#ad6b7282e7c215186f8514097b04d5bfa">Mem_Alloc</a>( <span class="keyword">sizeof</span>( type ) * nb ) ) != NULL )         \
-    {                                                                     \
-      <span class="keywordflow">for</span>( i = 0 ; i &lt; nb ; i++ )                                         \
-        {                                                                 \
-          <span class="keywordflow">if</span>( i != nb -1 )                                                \
-            pool[i].name_next = &amp;(pool[i+1]) ;                            \
-          <span class="keywordflow">else</span>                                                            \
-            pool[i].name_next = NULL ;                                    \
-        }                                                                 \
-    }                                                                     \
+  destruct( (<span class="keywordtype">void</span> *)entry ) ;                                             \
+  entry-&gt;name_next = pool ;                                               \
+  pool = entry ;                                                          \
+} <span class="keywordflow">while</span>( 0 )
+</pre></div><p>RELEASE_PREALLOC_DESTRUCT: Releases an entry and puts it back to the pool with a destructor.</p>
+<p>When an entry is no used any more, this macro is used to put it back to the pool, so that it could be reuse later. The released entry is chained to the pool, through the 'name_next' field.</p>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>entry</em>&nbsp;</td><td>the entry to be released. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>pool</em>&nbsp;</td><td>the pool to which the entry belongs. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>name_next</em>&nbsp;</td><td>the name of the field, in structure of type 'type' which pointer to the next entry. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>destruct</em>&nbsp;</td><td>the destructor for the object: takes a pointer to void as argument and returns void</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="return"><dt><b>Returns:</b></dt><dd>nothing (this is a macro). </dd></dl>
+
+<p>Definition at line <a class="el" href="stuff__alloc_8h_source.html#l00272">272</a> of file <a class="el" href="stuff__alloc_8h_source.html">stuff_alloc.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a6c09779d3013b3d009840bd835481dfb"></a><!-- doxytag: member="stuff_alloc.h::STUFF_PREALLOC" ref="a6c09779d3013b3d009840bd835481dfb" args="(_pool, _nb, _type, _name_next)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define STUFF_PREALLOC</td>
+          <td>(</td>
+          <td class="paramtype">_pool, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">_nb, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">_type, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">_name_next&nbsp;</td>
+          <td class="paramname"></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<b>Value:</b><div class="fragment"><pre class="fragment"><span class="keywordflow">do</span>                                                                            \
+{                                                                             \
+  <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> _i = 0 ;                                                       \
+  <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> _prefered = 0 ;                                                \
+                                                                              \
+  _prefered = <a class="code" href="stuff__alloc_8h.html#a589a6aa3b3312bedf3f6bf7644fe631d">GetPreferedPool</a>( _nb, <span class="keyword">sizeof</span>(_type) );                          \
+  _pool= NULL ;                                                               \
+                                                                              \
+  <span class="keywordflow">if</span>( ( _pool = ( _type *)<a class="code" href="stuff__alloc_8h.html#ad6b7282e7c215186f8514097b04d5bfa">Mem_Alloc</a>( <span class="keyword">sizeof</span>( _type ) * _prefered ) ) != NULL ) \
+    {                                                                         \
+      <span class="keywordflow">for</span>( _i = 0 ; _i &lt; ( <span class="keywordtype">unsigned</span> int)_prefered ; _i++ )                    \
+        {                                                                     \
+          <span class="keywordflow">if</span>( _i != _prefered -1 )                                            \
+            _pool[_i]._name_next = &amp;(_pool[_i+1]) ;                           \
+          <span class="keywordflow">else</span>                                                                \
+            _pool[_i]._name_next = NULL ;                                     \
+        }                                                                     \
+    }                                                                         \
 } <span class="keywordflow">while</span>( 0 )
 </pre></div><p>STUFF_PREALLOC: Allocates a pool of pre-allocated entries.</p>
 <p>This macro Allocates a pool of pre-allocated entries. It calls malloc to get the spool as an arry and then chains all the entries together. Each entry is supposed to have a specific 'next' field, a pointer to an object of its own type, to be used as a pointer to the next entry in the pool.</p>
@@ -250,7 +488,85 @@
 </dl>
 <dl class="return"><dt><b>Returns:</b></dt><dd>nothing (this is a macro), but pool will be NULL if an error occures. </dd></dl>
 
-<p>Definition at line <a class="el" href="stuff__alloc_8h_source.html#l00065">65</a> of file <a class="el" href="stuff__alloc_8h_source.html">stuff_alloc.h</a>.</p>
+<p>Definition at line <a class="el" href="stuff__alloc_8h_source.html#l00098">98</a> of file <a class="el" href="stuff__alloc_8h_source.html">stuff_alloc.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="aedd85b3e73701cd559e6ec90f0c42b86"></a><!-- doxytag: member="stuff_alloc.h::STUFF_PREALLOC_CONSTRUCT" ref="aedd85b3e73701cd559e6ec90f0c42b86" args="(_pool, _nb, _type, _name_next, _construct)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define STUFF_PREALLOC_CONSTRUCT</td>
+          <td>(</td>
+          <td class="paramtype">_pool, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">_nb, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">_type, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">_name_next, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">_construct&nbsp;</td>
+          <td class="paramname"></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<b>Value:</b><div class="fragment"><pre class="fragment"><span class="keywordflow">do</span>                                                                        \
+{                                                                         \
+  <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> _i = 0 ;                                                   \
+  <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> _prefered = 0 ;                                            \
+                                                                          \
+  _prefered = <a class="code" href="stuff__alloc_8h.html#a589a6aa3b3312bedf3f6bf7644fe631d">GetPreferedPool</a>( _nb, <span class="keyword">sizeof</span>(_type) );                       \
+                                                                          \
+  _pool = ( _type *)<a class="code" href="stuff__alloc_8h.html#a44c3aa0d5261064e512efe252dd1600f">Mem_Calloc</a>( _prefered, <span class="keyword">sizeof</span>( _type ) ) ;            \
+                                                                          \
+  <span class="keywordflow">if</span>( _pool != NULL )                                                     \
+    {                                                                     \
+      <span class="keywordflow">for</span>( _i = 0 ; _i &lt; _prefered ; _i++ )                               \
+        {                                                                 \
+          <span class="keywordflow">if</span>( _i != _prefered -1 )                                        \
+            _pool[_i]._name_next = &amp;(_pool[_i+1]) ;                       \
+          <span class="keywordflow">else</span>                                                            \
+            _pool[_i]._name_next = NULL ;                                 \
+                                                                          \
+          <span class="keywordflow">if</span>( _construct != NULL )                                        \
+            _construct( (<span class="keywordtype">void</span> *)&amp;(_pool[_i]) )  ;                         \
+                                                                          \
+        }                                                                 \
+    }                                                                     \
+} <span class="keywordflow">while</span>( 0 )
+</pre></div><p>STUFF_PREALLOC_CONSTRUCT: Allocates a pool of pre-allocated entries with a call to a constructor.</p>
+<p>This macro Allocates a pool of pre-allocated entries. It calls malloc to get the spool as an arry and then chains all the entries together. Each entry is supposed to have a specific 'next' field, a pointer to an object of its own type, to be used as a pointer to the next entry in the pool.</p>
+<p>If BuddyMalloc is used, it is supposed to be already initialised.</p>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>pool</em>&nbsp;</td><td>the preallocted pool that we want to init. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>nb</em>&nbsp;</td><td>the number of entries to be allocated. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>type</em>&nbsp;</td><td>the type of the entries to be allocated. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>name_next</em>&nbsp;</td><td>the name of the field, in structure of type 'type' which pointer to the next entry. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>construct</em>&nbsp;</td><td>the constructor for the object: takes a pointer to void as argument and returns void</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="return"><dt><b>Returns:</b></dt><dd>nothing (this is a macro), but pool will be NULL if an error occures. </dd></dl>
+
+<p>Definition at line <a class="el" href="stuff__alloc_8h_source.html#l00196">196</a> of file <a class="el" href="stuff__alloc_8h_source.html">stuff_alloc.h</a>.</p>
 
 </div>
 </div>

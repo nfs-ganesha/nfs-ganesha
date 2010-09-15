@@ -1,4 +1,4 @@
-.TH "test_cache_inode_readdir.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "test_cache_inode_readdir.c" 3 "15 Sep 2010" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -14,7 +14,7 @@ test_cache_inode_readdir.c \-
 .br
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'err_fsal.h'\fP
 .br
@@ -58,21 +58,19 @@ test_cache_inode_readdir.c \-
 .PP 
 .SS "#define HPSS_KEYTAB   '/krb5/hpssserver.keytab'"
 .PP
-Definition at line 105 of file test_cache_inode_readdir.c.
+Definition at line 54 of file test_cache_inode_readdir.c.
 .SS "#define HPSS_SSM   'hpss_ssm'"
 .PP
-Definition at line 104 of file test_cache_inode_readdir.c.
+Definition at line 53 of file test_cache_inode_readdir.c.
 .SH "Function Documentation"
 .PP 
 .SS "int lru_clean_entry (LRU_entry_t * entry, void * adddata)"
 .PP
-Definition at line 116 of file test_cache_inode_readdir.c.
+Definition at line 66 of file test_cache_inode_readdir.c.
 .SS "int lru_entry_to_str (LRU_data_t data, char * str)"
 .PP
-Definition at line 107 of file test_cache_inode_readdir.c.
-.SS "main (int argc, char * argv[])"
-.PP
-main: test main function.
+Definition at line 56 of file test_cache_inode_readdir.c.
+.SS "main (int argc, char * argv[])"main: test main function.
 .PP
 test main function.
 .PP
@@ -90,7 +88,7 @@ an integer sent back to the calling shell.
 .PP
 
 .PP
-Definition at line 134 of file test_cache_inode_readdir.c.
+Definition at line 84 of file test_cache_inode_readdir.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

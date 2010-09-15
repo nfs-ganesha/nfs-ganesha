@@ -1,10 +1,11 @@
-.TH "cache_content_gc.c" 3 "31 Mar 2009" "Version 0.1" "File Content layer" \" -*- nroff -*-
+.TH "cache_content_gc.c" 3 "15 Sep 2010" "Version 0.1" "File Content layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_content_gc.c \- Management of the file content cache: initialisation.  
-
+cache_content_gc.c \- 
 .PP
+Management of the file content cache: initialisation.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -12,7 +13,7 @@ cache_content_gc.c \- Management of the file content cache: initialisation.
 .br
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -87,9 +88,7 @@ cache_content.c : Management of the file content cache: initialisation.
 Definition in file \fBcache_content_gc.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "cache_content_gc_policy_t cache_content_get_gc_policy (void)"
-.PP
-cache_content_get_gc_policy: Set the cache_content garbagge collecting policy.
+.SS "cache_content_gc_policy_t cache_content_get_gc_policy (void)"cache_content_get_gc_policy: Set the cache_content garbagge collecting policy.
 .PP
 \fBReturns:\fP
 .RS 4
@@ -98,10 +97,8 @@ the current policy.
 .PP
 
 .PP
-Definition at line 145 of file cache_content_gc.c.
-.SS "void cache_content_set_gc_policy (cache_content_gc_policy_t policy)"
-.PP
-cache_content_set_gc_policy: Set the cache_content garbagge collecting policy.
+Definition at line 92 of file cache_content_gc.c.
+.SS "void cache_content_set_gc_policy (cache_content_gc_policy_t policy)"cache_content_set_gc_policy: Set the cache_content garbagge collecting policy.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -115,12 +112,12 @@ nothing (void function)
 .PP
 
 .PP
-Definition at line 132 of file cache_content_gc.c.
+Definition at line 80 of file cache_content_gc.c.
 .SH "Variable Documentation"
 .PP 
 .SS "cache_content_gc_policy_t \fBcache_content_gc_policy\fP"
 .PP
-Definition at line 120 of file cache_content_gc.c.
+Definition at line 69 of file cache_content_gc.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File Content layer from the source code.

@@ -1,12 +1,11 @@
 <?xml version='1.0' encoding='UTF-8' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.6.1">
   <compounddef id="unionYYSTYPE" kind="union" prot="public">
     <compoundname>YYSTYPE</compoundname>
-    <includes refid="conf__yacc_8h" local="no">conf_yacc.h</includes>
       <sectiondef kind="public-attrib">
-      <memberdef kind="variable" id="unionYYSTYPE_134e921f67f43dd8b6d493b186ca9b2d4" prot="public" static="no" mutable="no">
+      <memberdef kind="variable" id="unionYYSTYPE_1ad82f920247734a90a4435b2937dfa2f5" prot="public" static="no" mutable="no">
         <type>char</type>
-        <definition>char YYSTYPE::str_val</definition>
+        <definition>char YYSTYPE::str_val[MAXSTRLEN]</definition>
         <argsstring>[MAXSTRLEN]</argsstring>
         <name>str_val</name>
         <briefdescription>
@@ -15,11 +14,11 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/ConfigParsing/conf_yacc.c" line="158" bodyfile="/export/GANESHA/src/ConfigParsing/conf_yacc.c" bodystart="158" bodyend="-1"/>
+        <location file="/export/GANESHA/src/ConfigParsing/conf_yacc.c" line="172" bodyfile="/export/GANESHA/src/ConfigParsing/conf_yacc.c" bodystart="172" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="variable" id="unionYYSTYPE_11ad09a5d61f1c94d432b5280b317e32b" prot="public" static="no" mutable="no">
+      <memberdef kind="variable" id="unionYYSTYPE_1a6fd5a12753b8acea6f9bb065fd978df3" prot="public" static="no" mutable="no">
         <type><ref refid="struct__generic__item__" kindref="compound">list_items</ref> *</type>
-        <definition>list_items * YYSTYPE::list</definition>
+        <definition>list_items* YYSTYPE::list</definition>
         <argsstring></argsstring>
         <name>list</name>
         <briefdescription>
@@ -28,11 +27,11 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/ConfigParsing/conf_yacc.c" line="159" bodyfile="/export/GANESHA/src/ConfigParsing/conf_yacc.c" bodystart="159" bodyend="-1"/>
+        <location file="/export/GANESHA/src/ConfigParsing/conf_yacc.c" line="173" bodyfile="/export/GANESHA/src/ConfigParsing/conf_yacc.c" bodystart="173" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="variable" id="unionYYSTYPE_1e308b03740722be501b9d4df53df15df" prot="public" static="no" mutable="no">
+      <memberdef kind="variable" id="unionYYSTYPE_1aec78baf3d9add65c2e0d4555fb19af87" prot="public" static="no" mutable="no">
         <type><ref refid="struct__generic__item__" kindref="compound">generic_item</ref> *</type>
-        <definition>generic_item * YYSTYPE::item</definition>
+        <definition>generic_item* YYSTYPE::item</definition>
         <argsstring></argsstring>
         <name>item</name>
         <briefdescription>
@@ -41,7 +40,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/ConfigParsing/conf_yacc.c" line="160" bodyfile="/export/GANESHA/src/ConfigParsing/conf_yacc.c" bodystart="160" bodyend="-1"/>
+        <location file="/export/GANESHA/src/ConfigParsing/conf_yacc.c" line="174" bodyfile="/export/GANESHA/src/ConfigParsing/conf_yacc.c" bodystart="174" bodyend="-1"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
@@ -82,11 +81,11 @@
         </childnode>
       </node>
     </collaborationgraph>
-    <location file="/export/GANESHA/src/ConfigParsing/conf_yacc.c" line="157" bodyfile="/export/GANESHA/src/ConfigParsing/conf_yacc.c" bodystart="155" bodyend="161"/>
+    <location file="/export/GANESHA/src/ConfigParsing/conf_yacc.c" line="167" bodyfile="/export/GANESHA/src/ConfigParsing/conf_yacc.c" bodystart="166" bodyend="180"/>
     <listofallmembers>
-      <member refid="unionYYSTYPE_1e308b03740722be501b9d4df53df15df" prot="public" virt="non-virtual"><scope>YYSTYPE</scope><name>item</name></member>
-      <member refid="unionYYSTYPE_11ad09a5d61f1c94d432b5280b317e32b" prot="public" virt="non-virtual"><scope>YYSTYPE</scope><name>list</name></member>
-      <member refid="unionYYSTYPE_134e921f67f43dd8b6d493b186ca9b2d4" prot="public" virt="non-virtual"><scope>YYSTYPE</scope><name>str_val</name></member>
+      <member refid="unionYYSTYPE_1aec78baf3d9add65c2e0d4555fb19af87" prot="public" virt="non-virtual"><scope>YYSTYPE</scope><name>item</name></member>
+      <member refid="unionYYSTYPE_1a6fd5a12753b8acea6f9bb065fd978df3" prot="public" virt="non-virtual"><scope>YYSTYPE</scope><name>list</name></member>
+      <member refid="unionYYSTYPE_1ad82f920247734a90a4435b2937dfa2f5" prot="public" virt="non-virtual"><scope>YYSTYPE</scope><name>str_val</name></member>
     </listofallmembers>
   </compounddef>
 </doxygen>

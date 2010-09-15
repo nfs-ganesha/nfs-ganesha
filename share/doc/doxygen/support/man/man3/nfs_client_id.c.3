@@ -1,4 +1,4 @@
-.TH "nfs_client_id.c" 3 "31 Mar 2009" "Version 0.1" "Support routines layer" \" -*- nroff -*-
+.TH "nfs_client_id.c" 3 "15 Sep 2010" "Version 0.1" "Support routines layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -10,7 +10,7 @@ nfs_client_id.c \-
 .br
 \fC#include 'HashTable.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
 .br
@@ -72,6 +72,9 @@ nfs_client_id.c \-
 .RI "int \fBnfs_client_id_get\fP (clientid4 clientid, nfs_client_id_t *client_id_res)"
 .br
 .ti -1c
+.RI "int \fBnfs_client_id_Get_Pointer\fP (clientid4 clientid, nfs_client_id_t **ppclient_id_res)"
+.br
+.ti -1c
 .RI "int \fBnfs_client_id_get_reverse\fP (char *key, nfs_client_id_t *client_id_res)"
 .br
 .ti -1c
@@ -105,9 +108,7 @@ nfs_client_id.c \-
 .in -1c
 .SH "Function Documentation"
 .PP 
-.SS "unsigned long client_id_rbt_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
-.PP
-client_id_rbt_hash_func: computes the rbt value for the entry in Client Id cache.
+.SS "unsigned long client_id_rbt_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"client_id_rbt_hash_func: computes the rbt value for the entry in Client Id cache.
 .PP
 Computes the rbt value for the entry in Client Id cache. In fact, it just use the address value itself (which is an unsigned integer) as the rbt value. This function is called internal in the HasTable_* function
 .PP
@@ -130,13 +131,11 @@ HashTable_Init
 .PP
 
 .PP
-Definition at line 188 of file nfs_client_id.c.
+Definition at line 138 of file nfs_client_id.c.
 .SS "unsigned long client_id_rbt_hash_func_reverse (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
 .PP
-Definition at line 202 of file nfs_client_id.c.
-.SS "unsigned long client_id_value_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
-.PP
-client_id_rbt_hash_func: computes the hash value for the entry in Client Id cache.
+Definition at line 153 of file nfs_client_id.c.
+.SS "unsigned long client_id_value_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"client_id_rbt_hash_func: computes the hash value for the entry in Client Id cache.
 .PP
 Computes the hash value for the entry in Client Id cache. In fact, it just use addresse as value (identity function) modulo the size of the hash. This function is called internal in the HasTable_* function
 .PP
@@ -159,10 +158,8 @@ HashTable_Init
 .PP
 
 .PP
-Definition at line 130 of file nfs_client_id.c.
-.SS "unsigned long client_id_value_hash_func_reverse (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
-.PP
-client_id_reverse_hash_func: computes the hash value for the entry in Client Id cache.
+Definition at line 78 of file nfs_client_id.c.
+.SS "unsigned long client_id_value_hash_func_reverse (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"client_id_reverse_hash_func: computes the hash value for the entry in Client Id cache.
 .PP
 Computes the hash value for the entry in Client Id cache. In fact, it just use addresse as value (identity function) modulo the size of the hash. This function is called internal in the HasTable_* function
 .PP
@@ -185,10 +182,8 @@ HashTable_Init
 .PP
 
 .PP
-Definition at line 160 of file nfs_client_id.c.
-.SS "int compare_client_id (hash_buffer_t * buff1, hash_buffer_t * buff2)"
-.PP
-compare_client_id: compares the ip address stored in the key buffers.
+Definition at line 108 of file nfs_client_id.c.
+.SS "int compare_client_id (hash_buffer_t * buff1, hash_buffer_t * buff2)"compare_client_id: compares the ip address stored in the key buffers.
 .PP
 compare the ip address stored in the key buffers. This function is to be used as 'compare_key' field in the hashtable storing the client ids.
 .PP
@@ -206,13 +201,11 @@ compare the ip address stored in the key buffers. This function is to be used as
 .PP
 
 .PP
-Definition at line 226 of file nfs_client_id.c.
+Definition at line 177 of file nfs_client_id.c.
 .SS "int compare_client_id_reverse (hash_buffer_t * buff1, hash_buffer_t * buff2)"
 .PP
-Definition at line 233 of file nfs_client_id.c.
-.SS "int display_client_id (hash_buffer_t * pbuff, char * str)"
-.PP
-display_client_id: displays the client_id stored in the buffer.
+Definition at line 184 of file nfs_client_id.c.
+.SS "int display_client_id (hash_buffer_t * pbuff, char * str)"display_client_id: displays the client_id stored in the buffer.
 .PP
 displays the client_id stored in the buffer. This function is to be used as 'key_to_str' field in the hashtable storing the client ids.
 .PP
@@ -230,16 +223,14 @@ number of character written.
 .PP
 
 .PP
-Definition at line 254 of file nfs_client_id.c.
+Definition at line 204 of file nfs_client_id.c.
 .SS "int display_client_id_reverse (hash_buffer_t * pbuff, char * str)"
 .PP
-Definition at line 263 of file nfs_client_id.c.
+Definition at line 213 of file nfs_client_id.c.
 .SS "int display_client_id_val (hash_buffer_t * pbuff, char * str)"
 .PP
-Definition at line 269 of file nfs_client_id.c.
-.SS "int nfs_client_id_add (clientid4 clientid, nfs_client_id_t client_record, nfs_client_id_t * nfs_client_id_pool)"
-.PP
-nfs_client_id_add: adds an entry in the duplicate requests cache.
+Definition at line 218 of file nfs_client_id.c.
+.SS "int nfs_client_id_add (clientid4 clientid, nfs_client_id_t client_record, nfs_client_id_t * nfs_client_id_pool)"nfs_client_id_add: adds an entry in the duplicate requests cache.
 .PP
 Adds an entry in the duplicate requests cache.
 .PP
@@ -267,20 +258,16 @@ CLIENT_ID_NETDB_ERROR if an error occured during the netdb query (via gethostbya
 .PP
 
 .PP
-Definition at line 299 of file nfs_client_id.c.
+Definition at line 246 of file nfs_client_id.c.
 .SS "int nfs_client_id_basic_compute (char * name, clientid4 * pclientid)"
 .PP
-Definition at line 640 of file nfs_client_id.c.
-.SS "int nfs_client_id_compute (char * name, clientid4 * pclientid)"
-.PP
-nfs_client_id_compute: computes the client id, based on the string.
+Definition at line 619 of file nfs_client_id.c.
+.SS "int nfs_client_id_compute (char * name, clientid4 * pclientid)"nfs_client_id_compute: computes the client id, based on the string.
 .PP
 Computes the client id, based on the string. 
 .PP
-Definition at line 670 of file nfs_client_id.c.
-.SS "int nfs_client_id_get (clientid4 clientid, nfs_client_id_t * client_id_res)"
-.PP
-nfs_client_id_get: Tries to get an entry for client_id cache.
+Definition at line 647 of file nfs_client_id.c.
+.SS "int nfs_client_id_get (clientid4 clientid, nfs_client_id_t * client_id_res)"nfs_client_id_get: Tries to get an entry for client_id cache.
 .PP
 Tries to get an entry for client_id cache.
 .PP
@@ -298,13 +285,14 @@ the result previously set if *pstatus == CLIENT_ID_SUCCESS
 .PP
 
 .PP
-Definition at line 461 of file nfs_client_id.c.
+Definition at line 408 of file nfs_client_id.c.
+.SS "int nfs_client_id_Get_Pointer (clientid4 clientid, nfs_client_id_t ** ppclient_id_res)"
+.PP
+Definition at line 450 of file nfs_client_id.c.
 .SS "int nfs_client_id_get_reverse (char * key, nfs_client_id_t * client_id_res)"
 .PP
-Definition at line 506 of file nfs_client_id.c.
-.SS "int nfs_client_id_remove (clientid4 clientid, nfs_client_id_t * nfs_client_id_pool)"
-.PP
-nfs_client_id_remove: Tries to remove an entry for client_id cache
+Definition at line 490 of file nfs_client_id.c.
+.SS "int nfs_client_id_remove (clientid4 clientid, nfs_client_id_t * nfs_client_id_pool)"nfs_client_id_remove: Tries to remove an entry for client_id cache
 .PP
 Tries to remove an entry for client_id cache.
 .PP
@@ -322,10 +310,8 @@ the result previously set if *pstatus == CLIENT_ID_SUCCESS
 .PP
 
 .PP
-Definition at line 548 of file nfs_client_id.c.
-.SS "int nfs_client_id_set (clientid4 clientid, nfs_client_id_t client_record, nfs_client_id_t * nfs_client_id_pool)"
-.PP
-nfs_client_id_sets: sets an entry that already exists.
+Definition at line 530 of file nfs_client_id.c.
+.SS "int nfs_client_id_set (clientid4 clientid, nfs_client_id_t client_record, nfs_client_id_t * nfs_client_id_pool)"nfs_client_id_sets: sets an entry that already exists.
 .PP
 Sets an entry that already exists
 .PP
@@ -353,10 +339,8 @@ CLIENT_ID_NETDB_ERROR if an error occured during the netdb query (via gethostbya
 .PP
 
 .PP
-Definition at line 385 of file nfs_client_id.c.
-.SS "int nfs_Init_client_id (nfs_client_id_parameter_t param)"
-.PP
-nfs_Init_client_id: Init the hashtable for Client Id cache.
+Definition at line 332 of file nfs_client_id.c.
+.SS "int nfs_Init_client_id (nfs_client_id_parameter_t param)"nfs_Init_client_id: Init the hashtable for Client Id cache.
 .PP
 Perform all the required initialization for hashtable Client Id cache
 .PP
@@ -372,10 +356,8 @@ Perform all the required initialization for hashtable Client Id cache
 .PP
 
 .PP
-Definition at line 607 of file nfs_client_id.c.
-.SS "int nfs_Init_client_id_reverse (nfs_client_id_parameter_t param)"
-.PP
-nfs_Init_client_id_reverse: Init the reverse hashtable for Client Id cache.
+Definition at line 586 of file nfs_client_id.c.
+.SS "int nfs_Init_client_id_reverse (nfs_client_id_parameter_t param)"nfs_Init_client_id_reverse: Init the reverse hashtable for Client Id cache.
 .PP
 Perform all the required initialization for hashtable Client Id cache
 .PP
@@ -391,36 +373,18 @@ Perform all the required initialization for hashtable Client Id cache
 .PP
 
 .PP
-Definition at line 629 of file nfs_client_id.c.
-.SS "size_t strnlen (const char * s, size_t maxlen)"
-.PP
-vim:expandtab:shiftwidth=8:tabstop=8:
+Definition at line 608 of file nfs_client_id.c.
+.SS "size_t strnlen (const char * s, size_t maxlen)"vim:expandtab:shiftwidth=8:tabstop=8:
 .PP
 Copyright CEA/DAM/DIF (2008) contributeur : Philippe DENIEL philippe.deniel@cea.fr Thomas LEIBOVICI thomas.leibovici@cea.fr
 .PP
-Ce logiciel est un serveur implementant le protocole NFS.
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
 .PP
-Ce logiciel est régi par la licence CeCILL soumise au droit français et respectant les principes de diffusion des logiciels libres. Vous pouvez utiliser, modifier et/ou redistribuer ce programme sous les conditions de la licence CeCILL telle que diffusée par le CEA, le CNRS et l'INRIA sur le site 'http://www.cecill.info'.
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 .PP
-En contrepartie de l'accessibilité au code source et des droits de copie, de modification et de redistribution accordés par cette licence, il n'est offert aux utilisateurs qu'une garantie limitée. Pour les mêmes raisons, seule une responsabilité restreinte pèse sur l'auteur du programme, le titulaire des droits patrimoniaux et les concédants successifs.
+You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 .PP
-A cet égard l'attention de l'utilisateur est attirée sur les risques associés au chargement, à l'utilisation, à la modification et/ou au développement et à la reproduction du logiciel par l'utilisateur étant donné sa spécificité de logiciel libre, qui peut le rendre complexe à manipuler et qui le réserve donc à des développeurs et des professionnels avertis possédant des connaissances informatiques approfondies. Les utilisateurs sont donc invités à charger et tester l'adéquation du logiciel à leurs besoins dans des conditions permettant d'assurer la sécurité de leurs systèmes et ou de leurs données et, plus généralement, à l'utiliser et l'exploiter dans les mêmes conditions de sécurité.
-.PP
-Le fait que vous puissiez accéder à cet en-tête signifie que vous avez pris connaissance de la licence CeCILL, et que vous en avez accepté les termes.
-.PP
----------------------
-.PP
-Copyright CEA/DAM/DIF (2005) Contributor: Philippe DENIEL philippe.deniel@cea.fr Thomas LEIBOVICI thomas.leibovici@cea.fr
-.PP
-This software is a server that implements the NFS protocol.
-.PP
-This software is governed by the CeCILL license under French law and abiding by the rules of distribution of free software. You can use, modify and/ or redistribute the software under the terms of the CeCILL license as circulated by CEA, CNRS and INRIA at the following URL 'http://www.cecill.info'.
-.PP
-As a counterpart to the access to the source code and rights to copy, modify and redistribute granted by the license, users are provided only with a limited warranty and the software's author, the holder of the economic rights, and the successive licensors have only limited liability.
-.PP
-In this respect, the user's attention is drawn to the risks associated with loading, using, modifying and/or developing or reproducing the software by the user in light of its specific status of free software, that may mean that it is complicated to manipulate, and that also therefore means that it is reserved for developers and experienced professionals having in-depth computer knowledge. Users are therefore encouraged to load and test the software's suitability as regards their requirements in conditions enabling the security of their systems and/or data to be ensured and, more generally, to use and operate it in the same conditions as regards security.
-.PP
-The fact that you are presently reading this means that you have had knowledge of the CeCILL license and that you accept its terms. ---------------------------------------
+---------------------------------------
 .PP
 \fBnfs_client_id.c\fP : The management of the client id cache.
 .PP
@@ -431,12 +395,11 @@ $Log$
 .PP 
 .SS "hash_table_t* \fBht_client_id\fP"
 .PP
-Definition at line 109 of file nfs_client_id.c.
+Definition at line 59 of file nfs_client_id.c.
 .SS "hash_table_t* \fBht_client_id_reverse\fP"
 .PP
-Definition at line 110 of file nfs_client_id.c.
+Definition at line 60 of file nfs_client_id.c.
 .SS "nfs_parameter_t \fBnfs_param\fP"
-.PP
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Support routines layer from the source code.

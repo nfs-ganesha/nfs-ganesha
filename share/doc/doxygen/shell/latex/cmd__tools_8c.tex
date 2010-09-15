@@ -1,27 +1,27 @@
 \section{cmd\_\-tools.c File Reference}
 \label{cmd__tools_8c}\index{cmd\_\-tools.c@{cmd\_\-tools.c}}
+
+
 Header file for functions used by several layers.  
-
-
-{\tt \#include $<$strings.h$>$}\par
-{\tt \#include $<$string.h$>$}\par
-{\tt \#include $<$errno.h$>$}\par
-{\tt \#include $<$err\_\-ghost\_\-fs.h$>$}\par
-{\tt \#include $<$sys/types.h$>$}\par
-{\tt \#include $<$unistd.h$>$}\par
-{\tt \#include $<$time.h$>$}\par
-{\tt \#include $<$pthread.h$>$}\par
-{\tt \#include \char`\"{}cmd\_\-tools.h\char`\"{}}\par
-{\tt \#include $<$grp.h$>$}\par
+{\ttfamily \#include $<$strings.h$>$}\par
+{\ttfamily \#include $<$string.h$>$}\par
+{\ttfamily \#include $<$errno.h$>$}\par
+{\ttfamily \#include $<$err\_\-ghost\_\-fs.h$>$}\par
+{\ttfamily \#include $<$sys/types.h$>$}\par
+{\ttfamily \#include $<$unistd.h$>$}\par
+{\ttfamily \#include $<$time.h$>$}\par
+{\ttfamily \#include $<$pthread.h$>$}\par
+{\ttfamily \#include \char`\"{}cmd\_\-tools.h\char`\"{}}\par
+{\ttfamily \#include $<$grp.h$>$}\par
 \subsection*{Defines}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
 \#define {\bf TIME\_\-STRLEN}~30
 \item 
 \#define {\bf print\_\-mask}(\_\-out, \_\-mode, \_\-mask, \_\-lettre)
-\end{CompactItemize}
+\end{DoxyCompactItemize}
 \subsection*{Functions}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
 struct tm $\ast$ {\bf Localtime\_\-r} (const time\_\-t $\ast$p\_\-time, struct tm $\ast$p\_\-tm)
 \item 
@@ -56,29 +56,26 @@ struct timeval {\bf time\_\-diff} (struct timeval time\_\-from, struct timeval t
 char $\ast$ {\bf concat} (char $\ast$str1, char $\ast$str2, size\_\-t max\_\-len)
 \item 
 int {\bf getugroups} (int maxcount, gid\_\-t $\ast$grouplist, char $\ast$username, gid\_\-t gid)
-\end{CompactItemize}
+\end{DoxyCompactItemize}
 
 
 \subsection{Detailed Description}
-Header file for functions used by several layers. 
+Header file for functions used by several layers. \begin{DoxyAuthor}{Author}
 
-\begin{Desc}
-\item[Author:]\end{Desc}
-\begin{Desc}
-\item[Author]leibovic \end{Desc}
-\begin{Desc}
-\item[Date:]\$Date \$ \end{Desc}
-\begin{Desc}
-\item[Version:]\$Revision \$ \end{Desc}
-\begin{Desc}
-\item[Log]\doxyref{cmd\_\-tools.c}{p.}{cmd__tools_8c},v \end{Desc}
-Revision 1.24 2006/01/20 14:44:13 leibovic altgroups support.
+\end{DoxyAuthor}
+Author}
+leibovic \begin{DoxyDate}{Date}
+\$Date \$ 
+\end{DoxyDate}
+\begin{DoxyVersion}{Version}
+\$Revision \$ 
+\end{DoxyVersion}
+Log}
+\doxyref{cmd\_\-tools.c}{p.}{cmd__tools_8c},v Revision 1.24 2006/01/20 14:44:13 leibovic altgroups support.
 
 Revision 1.23 2006/01/17 14:56:22 leibovic Adaptation de HPSS 6.2.
 
-Revision 1.22 2005/11/28 17:03:00 deniel Added CeCILL headers
-
-Revision 1.21 2005/09/28 09:08:00 leibovic thread-safe version of localtime.
+Revision 1.21 2005/09/28 09:08:00 leibovic thread-\/safe version of localtime.
 
 Revision 1.20 2005/09/09 15:23:11 leibovic Adding \char`\"{}cross\char`\"{} command for crossing junctions.
 
@@ -98,11 +95,11 @@ Revision 1.13 2005/04/14 11:21:56 leibovic Changing command syntax.
 
 Revision 1.12 2005/04/13 09:28:05 leibovic Adding unlink and mkdir calls.
 
-Revision 1.11 2005/03/15 15:30:07 leibovic localtime\_\-r -$>$ localtime.
+Revision 1.11 2005/03/15 15:30:07 leibovic localtime\_\-r -\/$>$ localtime.
 
 Revision 1.10 2005/03/14 10:49:18 leibovic Changing time printing.
 
-Revision 1.9 2005/03/09 15:43:25 leibovic Multi-OS compiling.
+Revision 1.9 2005/03/09 15:43:25 leibovic Multi-\/OS compiling.
 
 Revision 1.8 2005/03/04 08:01:32 leibovic removing snprintmem (moved to FSAL layer)à.
 
@@ -125,243 +122,193 @@ Definition in file {\bf cmd\_\-tools.c}.
 \subsection{Define Documentation}
 \index{cmd\_\-tools.c@{cmd\_\-tools.c}!print\_\-mask@{print\_\-mask}}
 \index{print\_\-mask@{print\_\-mask}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{print\_\-mask}]{\setlength{\rightskip}{0pt plus 5cm}\#define print\_\-mask(\_\-out, \/  \_\-mode, \/  \_\-mask, \/  \_\-lettre)}\label{cmd__tools_8c_7e7d03757ddb79aaafd21dcbd9c8131b}
-
-
-\textbf{Value:}
-
-\begin{Code}\begin{verbatim}do {    \
+\subsubsection[{print\_\-mask}]{\setlength{\rightskip}{0pt plus 5cm}\#define print\_\-mask(\_\-out, \/  \_\-mode, \/  \_\-mask, \/  \_\-lettre)}\label{cmd__tools_8c_a7e7d03757ddb79aaafd21dcbd9c8131b}
+{\bfseries Value:}
+\begin{DoxyCode}
+do {    \
         if (_mode & _mask) fprintf(_out,_lettre);\
         else fprintf(_out,"-");                  \
       } while(0)
-\end{verbatim}
-\end{Code}
+\end{DoxyCode}
 print\_\-item\_\-line: Prints a filesystem element on one line, like the Unix ls command.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em out}](in FILE$\ast$) The file where the item is to be printed. \item[{\em attrib}](in fsal\_\-attrib\_\-list\_\-t $\ast$) the attributes for the item. \item[{\em name}](in char $\ast$) The name of the item to be printed. \item[{\em target}](in char $\ast$) It the item is a symbolic link, this contains the link target. \end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]Nothing. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em out}](in FILE$\ast$) The file where the item is to be printed. \item[{\em attrib}](in fsal\_\-attrib\_\-list\_\-t $\ast$) the attributes for the item. \item[{\em name}](in char $\ast$) The name of the item to be printed. \item[{\em target}](in char $\ast$) It the item is a symbolic link, this contains the link target. \end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Nothing. 
+\end{DoxyReturn}
 
 
-Definition at line 836 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!TIME\_\-STRLEN@{TIME\_\-STRLEN}}
+Definition at line 821 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!TIME\_\-STRLEN@{TIME\_\-STRLEN}}
 \index{TIME\_\-STRLEN@{TIME\_\-STRLEN}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{TIME\_\-STRLEN}]{\setlength{\rightskip}{0pt plus 5cm}\#define TIME\_\-STRLEN~30}\label{cmd__tools_8c_4cbdd93c3d4aaf9d61b6e3e53614ed8a}
-
-
+\subsubsection[{TIME\_\-STRLEN}]{\setlength{\rightskip}{0pt plus 5cm}\#define TIME\_\-STRLEN~30}\label{cmd__tools_8c_a4cbdd93c3d4aaf9d61b6e3e53614ed8a}
 
 
 \subsection{Function Documentation}
 \index{cmd\_\-tools.c@{cmd\_\-tools.c}!ato64@{ato64}}
 \index{ato64@{ato64}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{ato64}]{\setlength{\rightskip}{0pt plus 5cm}int ato64 (char $\ast$ {\em str}, \/  unsigned long long $\ast$ {\em out64})}\label{cmd__tools_8c_6e4bec3955f66ac34221da2c4117595f}
+\subsubsection[{ato64}]{\setlength{\rightskip}{0pt plus 5cm}int ato64 (char $\ast$ {\em str}, \/  unsigned long long $\ast$ {\em out64})}\label{cmd__tools_8c_a6e4bec3955f66ac34221da2c4117595f}
 
 
-
-
-Definition at line 265 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!atomode@{atomode}}
+Definition at line 215 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!atomode@{atomode}}
 \index{atomode@{atomode}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{atomode}]{\setlength{\rightskip}{0pt plus 5cm}int atomode (char $\ast$ {\em str})}\label{cmd__tools_8c_0dcb2075e79b984f98f9b7cd729c5724}
-
-
+\subsubsection[{atomode}]{\setlength{\rightskip}{0pt plus 5cm}int atomode (char $\ast$ {\em str})}\label{cmd__tools_8c_a0dcb2075e79b984f98f9b7cd729c5724}
 atomode: This function converts a string to a unix access mode.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em str}](in char $\ast$) The string to be converted.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]A negative value on error. Else, the access mode integer. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em str}](in char $\ast$) The string to be converted.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A negative value on error. Else, the access mode integer. 
+\end{DoxyReturn}
 
 
-Definition at line 242 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!atotime@{atotime}}
+Definition at line 190 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!atotime@{atotime}}
 \index{atotime@{atotime}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{atotime}]{\setlength{\rightskip}{0pt plus 5cm}time\_\-t atotime (char $\ast$ {\em str})}\label{cmd__tools_8c_3663a6a631535306a284cfc4e5e00916}
-
-
+\subsubsection[{atotime}]{\setlength{\rightskip}{0pt plus 5cm}time\_\-t atotime (char $\ast$ {\em str})}\label{cmd__tools_8c_a3663a6a631535306a284cfc4e5e00916}
 convert time from \char`\"{}YYYYMMDDHHMMSS\char`\"{} to time\_\-t. 
 
-Definition at line 293 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!clean\_\-path@{clean\_\-path}}
+Definition at line 247 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!clean\_\-path@{clean\_\-path}}
 \index{clean\_\-path@{clean\_\-path}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{clean\_\-path}]{\setlength{\rightskip}{0pt plus 5cm}void clean\_\-path (char $\ast$ {\em str}, \/  int {\em len})}\label{cmd__tools_8c_09125ca0b71220b45815198cfd0a65d3}
+\subsubsection[{clean\_\-path}]{\setlength{\rightskip}{0pt plus 5cm}void clean\_\-path (char $\ast$ {\em str}, \/  int {\em len})}\label{cmd__tools_8c_a09125ca0b71220b45815198cfd0a65d3}
+clean\_\-path: Transform a path to a cannonical path. Remove //, /./, /../, final / from a POSIX-\/like path.
 
 
-clean\_\-path: Transform a path to a cannonical path. Remove //, /./, /../, final / from a POSIX-like path.
-
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em str}](in/out char$\ast$) The path to be transformed. \item[{\em len}](in int) The max path length. \end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]Nothing. \end{Desc}
+\begin{DoxyParams}{Parameters}
+\item[{\em str}](in/out char$\ast$) The path to be transformed. \item[{\em len}](in int) The max path length. \end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Nothing. 
+\end{DoxyReturn}
 
 
-Definition at line 540 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!concat@{concat}}
+Definition at line 513 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!concat@{concat}}
 \index{concat@{concat}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{concat}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ concat (char $\ast$ {\em str1}, \/  char $\ast$ {\em str2}, \/  size\_\-t {\em max\_\-len})}\label{cmd__tools_8c_848f9515f036e0d86c6369fd03f80774}
-
-
+\subsubsection[{concat}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ concat (char $\ast$ {\em str1}, \/  char $\ast$ {\em str2}, \/  size\_\-t {\em max\_\-len})}\label{cmd__tools_8c_a848f9515f036e0d86c6369fd03f80774}
 concat: concatenates 2 strings with a limitation of the size of the destination string.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em str1}](in/out char$\ast$) The destination string. \item[{\em str2}](in char$\ast$) The string to be added at the end of str1. \item[{\em max\_\-len}](in int) The max str1 length. \end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]NULL on error, the destination string, else. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em str1}](in/out char$\ast$) The destination string. \item[{\em str2}](in char$\ast$) The string to be added at the end of str1. \item[{\em max\_\-len}](in int) The max str1 length. \end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+NULL on error, the destination string, else. 
+\end{DoxyReturn}
 
 
-Definition at line 1114 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!getugroups@{getugroups}}
+Definition at line 1123 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!getugroups@{getugroups}}
 \index{getugroups@{getugroups}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{getugroups}]{\setlength{\rightskip}{0pt plus 5cm}int getugroups (int {\em maxcount}, \/  gid\_\-t $\ast$ {\em grouplist}, \/  char $\ast$ {\em username}, \/  gid\_\-t {\em gid})}\label{cmd__tools_8c_4f37575046a10c5356f42ca83d527fa6}
+\subsubsection[{getugroups}]{\setlength{\rightskip}{0pt plus 5cm}int getugroups (int {\em maxcount}, \/  gid\_\-t $\ast$ {\em grouplist}, \/  char $\ast$ {\em username}, \/  gid\_\-t {\em gid})}\label{cmd__tools_8c_a4f37575046a10c5356f42ca83d527fa6}
 
 
-
-
-Definition at line 1128 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!Localtime\_\-r@{Localtime\_\-r}}
+Definition at line 1138 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!Localtime\_\-r@{Localtime\_\-r}}
 \index{Localtime\_\-r@{Localtime\_\-r}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{Localtime\_\-r}]{\setlength{\rightskip}{0pt plus 5cm}struct tm$\ast$ Localtime\_\-r (const time\_\-t $\ast$ {\em p\_\-time}, \/  struct tm $\ast$ {\em p\_\-tm})\hspace{0.3cm}{\tt  [read]}}\label{cmd__tools_8c_cf2839e4f9588b83b02d406cabffee0a}
+\subsubsection[{Localtime\_\-r}]{\setlength{\rightskip}{0pt plus 5cm}struct tm$\ast$ Localtime\_\-r (const time\_\-t $\ast$ {\em p\_\-time}, \/  struct tm $\ast$ {\em p\_\-tm})\hspace{0.3cm}{\ttfamily  [read]}}\label{cmd__tools_8c_acf2839e4f9588b83b02d406cabffee0a}
 
 
-
-
-Definition at line 179 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!MkFSALSetAttrStruct@{MkFSALSetAttrStruct}}
+Definition at line 125 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!MkFSALSetAttrStruct@{MkFSALSetAttrStruct}}
 \index{MkFSALSetAttrStruct@{MkFSALSetAttrStruct}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{MkFSALSetAttrStruct}]{\setlength{\rightskip}{0pt plus 5cm}int MkFSALSetAttrStruct (char $\ast$ {\em attribute\_\-list}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em fsal\_\-set\_\-attr\_\-struct})}\label{cmd__tools_8c_bccc4389b9df09ee20930429d95fcd68}
+\subsubsection[{MkFSALSetAttrStruct}]{\setlength{\rightskip}{0pt plus 5cm}int MkFSALSetAttrStruct (char $\ast$ {\em attribute\_\-list}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em fsal\_\-set\_\-attr\_\-struct})}\label{cmd__tools_8c_abccc4389b9df09ee20930429d95fcd68}
+this function converts peers (attr\_\-name=attr\_\-value,attr\_\-name=attr\_\-value,...) to a fsal\_\-attrib\_\-list\_\-t to be used in the FSAL\_\-setattr call). \begin{DoxyReturn}{Returns}
+0 if no error occured, a non null value else. 
+\end{DoxyReturn}
 
 
-this function converts peers (attr\_\-name=attr\_\-value,attr\_\-name=attr\_\-value,...) to a fsal\_\-attrib\_\-list\_\-t to be used in the FSAL\_\-setattr call). \begin{Desc}
-\item[Returns:]0 if no error occured, a non null value else. \end{Desc}
-
-
-Definition at line 945 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!my\_\-atoi@{my\_\-atoi}}
+Definition at line 956 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!my\_\-atoi@{my\_\-atoi}}
 \index{my\_\-atoi@{my\_\-atoi}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{my\_\-atoi}]{\setlength{\rightskip}{0pt plus 5cm}int my\_\-atoi (char $\ast$ {\em str})}\label{cmd__tools_8c_688b18dd9abbd7f9b3bab90531c0a066}
-
-
+\subsubsection[{my\_\-atoi}]{\setlength{\rightskip}{0pt plus 5cm}int my\_\-atoi (char $\ast$ {\em str})}\label{cmd__tools_8c_a688b18dd9abbd7f9b3bab90531c0a066}
 my\_\-atoi: This function converts a string to an integer.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em str}](in char $\ast$) The string to be converted.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]A negative value on error. Else, the converted integer. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em str}](in char $\ast$) The string to be converted.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A negative value on error. Else, the converted integer. 
+\end{DoxyReturn}
 
 
-Definition at line 211 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!print\_\-fsal\_\-attrib\_\-mask@{print\_\-fsal\_\-attrib\_\-mask}}
+Definition at line 156 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!print\_\-fsal\_\-attrib\_\-mask@{print\_\-fsal\_\-attrib\_\-mask}}
 \index{print\_\-fsal\_\-attrib\_\-mask@{print\_\-fsal\_\-attrib\_\-mask}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{print\_\-fsal\_\-attrib\_\-mask}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fsal\_\-attrib\_\-mask (fsal\_\-attrib\_\-mask\_\-t {\em mask}, \/  FILE $\ast$ {\em output})}\label{cmd__tools_8c_f71b62e41793b8cf9108ac5773477589}
-
-
+\subsubsection[{print\_\-fsal\_\-attrib\_\-mask}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fsal\_\-attrib\_\-mask (fsal\_\-attrib\_\-mask\_\-t {\em mask}, \/  FILE $\ast$ {\em output})}\label{cmd__tools_8c_af71b62e41793b8cf9108ac5773477589}
 print\_\-fsal\_\-attrib\_\-mask: Print an fsal\_\-attrib\_\-mask\_\-t to a given output file.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em mask}](in fsal\_\-attrib\_\-mask\_\-t) The mask to be printed. \item[{\em output}](in FILE $\ast$) The output where the mask is to be printed. \end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]Nothing. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em mask}](in fsal\_\-attrib\_\-mask\_\-t) The mask to be printed. \item[{\em output}](in FILE $\ast$) The output where the mask is to be printed. \end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Nothing. 
+\end{DoxyReturn}
 
 
-Definition at line 707 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!print\_\-fsal\_\-attributes@{print\_\-fsal\_\-attributes}}
+Definition at line 693 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!print\_\-fsal\_\-attributes@{print\_\-fsal\_\-attributes}}
 \index{print\_\-fsal\_\-attributes@{print\_\-fsal\_\-attributes}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{print\_\-fsal\_\-attributes}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fsal\_\-attributes (fsal\_\-attrib\_\-list\_\-t {\em attrs}, \/  FILE $\ast$ {\em output})}\label{cmd__tools_8c_85d37e0b70c90a35c94421758b030010}
-
-
+\subsubsection[{print\_\-fsal\_\-attributes}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fsal\_\-attributes (fsal\_\-attrib\_\-list\_\-t {\em attrs}, \/  FILE $\ast$ {\em output})}\label{cmd__tools_8c_a85d37e0b70c90a35c94421758b030010}
 print\_\-fsal\_\-attributes: print an fsal\_\-attrib\_\-list\_\-t to a given output file.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em attrs}](in fsal\_\-attrib\_\-list\_\-t) The attributes to be printed. \item[{\em output}](in FILE $\ast$) The file where the attributes are to be printed. \end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]Nothing. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em attrs}](in fsal\_\-attrib\_\-list\_\-t) The attributes to be printed. \item[{\em output}](in FILE $\ast$) The file where the attributes are to be printed. \end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Nothing. 
+\end{DoxyReturn}
 
 
-Definition at line 784 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!print\_\-fsal\_\-status@{print\_\-fsal\_\-status}}
+Definition at line 771 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!print\_\-fsal\_\-status@{print\_\-fsal\_\-status}}
 \index{print\_\-fsal\_\-status@{print\_\-fsal\_\-status}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{print\_\-fsal\_\-status}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fsal\_\-status (FILE $\ast$ {\em output}, \/  fsal\_\-status\_\-t {\em status})}\label{cmd__tools_8c_2a9b6650aa4980dae77783e7494e0685}
-
-
+\subsubsection[{print\_\-fsal\_\-status}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fsal\_\-status (FILE $\ast$ {\em output}, \/  fsal\_\-status\_\-t {\em status})}\label{cmd__tools_8c_a2a9b6650aa4980dae77783e7494e0685}
 print\_\-fsal\_\-status: this function prints an fsal\_\-status\_\-t to a given output file.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em output}](in FILE $\ast$) The output where the status is to be printed. \item[{\em status}](in status) The status to be printed.\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]Nothing. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em output}](in FILE $\ast$) The output where the status is to be printed. \item[{\em status}](in status) The status to be printed.\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Nothing. 
+\end{DoxyReturn}
 
 
-Definition at line 677 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!print\_\-item\_\-line@{print\_\-item\_\-line}}
+Definition at line 665 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!print\_\-item\_\-line@{print\_\-item\_\-line}}
 \index{print\_\-item\_\-line@{print\_\-item\_\-line}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{print\_\-item\_\-line}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-item\_\-line (FILE $\ast$ {\em out}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em attrib}, \/  char $\ast$ {\em name}, \/  char $\ast$ {\em target})}\label{cmd__tools_8c_77416db263ae0a4ff6acf365f1122733}
-
-
+\subsubsection[{print\_\-item\_\-line}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-item\_\-line (FILE $\ast$ {\em out}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em attrib}, \/  char $\ast$ {\em name}, \/  char $\ast$ {\em target})}\label{cmd__tools_8c_a77416db263ae0a4ff6acf365f1122733}
 print\_\-item\_\-line: Prints a filesystem element on one line, like the Unix ls command.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em out}](in FILE$\ast$) The file where the item is to be printed. \item[{\em attrib}](in fsal\_\-attrib\_\-list\_\-t $\ast$) the attributes for the item. \item[{\em name}](in char $\ast$) The name of the item to be printed. \item[{\em target}](in char $\ast$) It the item is a symbolic link, this contains the link target. \end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]Nothing. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em out}](in FILE$\ast$) The file where the item is to be printed. \item[{\em attrib}](in fsal\_\-attrib\_\-list\_\-t $\ast$) the attributes for the item. \item[{\em name}](in char $\ast$) The name of the item to be printed. \item[{\em target}](in char $\ast$) It the item is a symbolic link, this contains the link target. \end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Nothing. 
+\end{DoxyReturn}
 
 
-Definition at line 841 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!split\_\-path@{split\_\-path}}
+Definition at line 826 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!split\_\-path@{split\_\-path}}
 \index{split\_\-path@{split\_\-path}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{split\_\-path}]{\setlength{\rightskip}{0pt plus 5cm}void split\_\-path (char $\ast$ {\em in\_\-path}, \/  char $\ast$$\ast$ {\em p\_\-path}, \/  char $\ast$$\ast$ {\em p\_\-file})}\label{cmd__tools_8c_8571ce79d40b0f332664d626d4ab185a}
-
-
+\subsubsection[{split\_\-path}]{\setlength{\rightskip}{0pt plus 5cm}void split\_\-path (char $\ast$ {\em in\_\-path}, \/  char $\ast$$\ast$ {\em p\_\-path}, \/  char $\ast$$\ast$ {\em p\_\-file})}\label{cmd__tools_8c_a8571ce79d40b0f332664d626d4ab185a}
 split\_\-path: splits a path 'dir/dir/dir/obj' in two strings : 'dir/dir/dir' and 'obj'.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em in\_\-path}](in/out char $\ast$) \item[{\em p\_\-path}](out char $\ast$$\ast$) \item[{\em p\_\-file}](out char $\ast$$\ast$) \end{description}
-\end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em in\_\-path}](in/out char $\ast$) \item[{\em p\_\-path}](out char $\ast$$\ast$) \item[{\em p\_\-file}](out char $\ast$$\ast$) \end{DoxyParams}
 
 
-Definition at line 443 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!strtype@{strtype}}
+Definition at line 408 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!strtype@{strtype}}
 \index{strtype@{strtype}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{strtype}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ strtype (fsal\_\-nodetype\_\-t {\em type})}\label{cmd__tools_8c_55da3e758cacb2e7378990063ef42124}
-
-
+\subsubsection[{strtype}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ strtype (fsal\_\-nodetype\_\-t {\em type})}\label{cmd__tools_8c_a55da3e758cacb2e7378990063ef42124}
 strtype: convert an FSAL object type to a string.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em type}](in fsal\_\-nodetype\_\-t) The type to be printed. \end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]The name (char $\ast$) for this FSAL object type. \end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em type}](in fsal\_\-nodetype\_\-t) The type to be printed. \end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The name (char $\ast$) for this FSAL object type. 
+\end{DoxyReturn}
 
 
-Definition at line 754 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!time2str@{time2str}}
+Definition at line 740 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!time2str@{time2str}}
 \index{time2str@{time2str}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{time2str}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ time2str (time\_\-t {\em time\_\-in}, \/  char $\ast$ {\em str\_\-out})}\label{cmd__tools_8c_b89ae5e88592c4a71a93fe8183249a02}
+\subsubsection[{time2str}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ time2str (time\_\-t {\em time\_\-in}, \/  char $\ast$ {\em str\_\-out})}\label{cmd__tools_8c_ab89ae5e88592c4a71a93fe8183249a02}
 
 
-
-
-Definition at line 501 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!time\_\-diff@{time\_\-diff}}
+Definition at line 472 of file cmd\_\-tools.c.\index{cmd\_\-tools.c@{cmd\_\-tools.c}!time\_\-diff@{time\_\-diff}}
 \index{time\_\-diff@{time\_\-diff}!cmd_tools.c@{cmd\_\-tools.c}}
-\subsubsection[{time\_\-diff}]{\setlength{\rightskip}{0pt plus 5cm}struct timeval time\_\-diff (struct timeval {\em time\_\-from}, \/  struct timeval {\em time\_\-to})\hspace{0.3cm}{\tt  [read]}}\label{cmd__tools_8c_cf045ccad77a69933c72ecf0f7beeb14}
+\subsubsection[{time\_\-diff}]{\setlength{\rightskip}{0pt plus 5cm}struct timeval time\_\-diff (struct timeval {\em time\_\-from}, \/  struct timeval {\em time\_\-to})\hspace{0.3cm}{\ttfamily  [read]}}\label{cmd__tools_8c_acf045ccad77a69933c72ecf0f7beeb14}
 
 
-
-
-Definition at line 1094 of file cmd\_\-tools.c.
+Definition at line 1101 of file cmd\_\-tools.c.

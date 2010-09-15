@@ -1,10 +1,11 @@
-.TH "nfs_Create.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs_Create.c" 3 "15 Sep 2010" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_Create.c \- Routines used for managing the NFS4 COMPOUND functions.  
-
+nfs_Create.c \- 
 .PP
+Routines used for managing the NFS4 COMPOUND functions.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -30,7 +31,7 @@ nfs_Create.c \- Routines used for managing the NFS4 COMPOUND functions.
 .br
 \fC#include <rpc/pmap_clnt.h>\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'stuff_alloc.h'\fP
 .br
@@ -102,9 +103,7 @@ deniel
 Definition in file \fBnfs_Create.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "int nfs_Create (nfs_arg_t * parg, exportlist_t * pexport, fsal_op_context_t * pcontext, cache_inode_client_t * pclient, hash_table_t * ht, struct svc_req * preq, nfs_res_t * pres)"
-.PP
-nfs_Create: The NFS PROC2 and PROC3 CREATE
+.SS "int nfs_Create (nfs_arg_t * parg, exportlist_t * pexport, fsal_op_context_t * pcontext, cache_inode_client_t * pclient, hash_table_t * ht, struct svc_req * preq, nfs_res_t * pres)"nfs_Create: The NFS PROC2 and PROC3 CREATE
 .PP
 Implements the NFS PROC CREATE function (for V2 and V3).
 .PP
@@ -136,10 +135,8 @@ NFS_REQ_OK if successfull
 .PP
 
 .PP
-Definition at line 150 of file nfs_Create.c.
-.SS "void nfs_Create_Free (nfs_res_t * resp)"
-.PP
-nfs_Create_Free: Frees the result structure allocated for nfs_Create.
+Definition at line 99 of file nfs_Create.c.
+.SS "void nfs_Create_Free (nfs_res_t * resp)"nfs_Create_Free: Frees the result structure allocated for nfs_Create.
 .PP
 Frees the result structure allocated for nfs_Create.
 .PP
@@ -150,7 +147,7 @@ Frees the result structure allocated for nfs_Create.
 .PP
 
 .PP
-Definition at line 576 of file nfs_Create.c.
+Definition at line 530 of file nfs_Create.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

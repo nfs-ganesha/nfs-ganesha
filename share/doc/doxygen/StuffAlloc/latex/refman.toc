@@ -5,6 +5,14 @@
 \contentsline {subsection}{\numberline {2.1.1}Detailed Description}{3}
 \contentsline {subsection}{\numberline {2.1.2}Define Documentation}{4}
 \contentsline {subsubsection}{\numberline {2.1.2.1}GET\_\discretionary {-}{}{}PREALLOC}{4}
-\contentsline {subsubsection}{\numberline {2.1.2.2}Mem\_\discretionary {-}{}{}Alloc}{4}
-\contentsline {subsubsection}{\numberline {2.1.2.3}RELEASE\_\discretionary {-}{}{}PREALLOC}{5}
-\contentsline {subsubsection}{\numberline {2.1.2.4}STUFF\_\discretionary {-}{}{}PREALLOC}{5}
+\contentsline {subsubsection}{\numberline {2.1.2.2}GET\_\discretionary {-}{}{}PREALLOC\_\discretionary {-}{}{}CONSTRUCT}{4}
+\contentsline {subsubsection}{\numberline {2.1.2.3}GetPreferedPool}{5}
+\contentsline {subsubsection}{\numberline {2.1.2.4}Mem\_\discretionary {-}{}{}Alloc}{5}
+\contentsline {subsubsection}{\numberline {2.1.2.5}Mem\_\discretionary {-}{}{}Calloc}{5}
+\contentsline {subsubsection}{\numberline {2.1.2.6}Mem\_\discretionary {-}{}{}Errno}{5}
+\contentsline {subsubsection}{\numberline {2.1.2.7}Mem\_\discretionary {-}{}{}Free}{6}
+\contentsline {subsubsection}{\numberline {2.1.2.8}Mem\_\discretionary {-}{}{}Realloc}{6}
+\contentsline {subsubsection}{\numberline {2.1.2.9}RELEASE\_\discretionary {-}{}{}PREALLOC}{6}
+\contentsline {subsubsection}{\numberline {2.1.2.10}RELEASE\_\discretionary {-}{}{}PREALLOC\_\discretionary {-}{}{}DESTRUCT}{6}
+\contentsline {subsubsection}{\numberline {2.1.2.11}STUFF\_\discretionary {-}{}{}PREALLOC}{7}
+\contentsline {subsubsection}{\numberline {2.1.2.12}STUFF\_\discretionary {-}{}{}PREALLOC\_\discretionary {-}{}{}CONSTRUCT}{8}

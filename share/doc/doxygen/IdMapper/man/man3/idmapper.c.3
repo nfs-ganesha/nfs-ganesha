@@ -1,10 +1,11 @@
-.TH "idmapper.c" 3 "31 Mar 2009" "Version 0.1" "Id Mapper" \" -*- nroff -*-
+.TH "idmapper.c" 3 "15 Sep 2010" "Version 0.1" "Id Mapper" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-idmapper.c \- Id mapping functions.  
-
+idmapper.c \- 
 .PP
+Id mapping functions.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -37,13 +38,13 @@ idmapper.c \- Id mapping functions.
 
 .in +1c
 .ti -1c
-.RI "int \fBuid2name\fP (char *name, uid_t uid)"
+.RI "int \fBuid2name\fP (char *name, uid_t *puid)"
 .br
 .ti -1c
 .RI "int \fBname2uid\fP (char *name, uid_t *puid)"
 .br
 .ti -1c
-.RI "int \fBgid2name\fP (char *name, gid_t gid)"
+.RI "int \fBgid2name\fP (char *name, gid_t *pgid)"
 .br
 .ti -1c
 .RI "int \fBname2gid\fP (char *name, gid_t *pgid)"
@@ -65,6 +66,13 @@ idmapper.c \- Id mapping functions.
 .br
 .ti -1c
 .RI "int \fButf82gid\fP (utf8string *utf8str, gid_t *Gid)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "nfs_parameter_t \fBnfs_param\fP"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -100,9 +108,7 @@ deniel
 Definition in file \fBidmapper.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "int gid2name (char * name, gid_t gid)"
-.PP
-gid2name: convert a gid to a name.
+.SS "int gid2name (char * name, gid_t * pgid)"gid2name: convert a gid to a name.
 .PP
 convert a uid to a name.
 .PP
@@ -115,10 +121,8 @@ convert a uid to a name.
 .PP
 return 1 if successful, 0 otherwise 
 .PP
-Definition at line 213 of file idmapper.c.
-.SS "int gid2str (gid_t gid, char * str)"
-.PP
-gid2ustr: convert a gid to a string.
+Definition at line 288 of file idmapper.c.
+.SS "int gid2str (gid_t gid, char * str)"gid2ustr: convert a gid to a string.
 .PP
 Convert a gidonvert a gid to a string. to a string.
 .PP
@@ -136,10 +140,8 @@ the length of the utf8 buffer if succesfull, -1 if failed
 .PP
 
 .PP
-Definition at line 312 of file idmapper.c.
-.SS "int gid2utf8 (gid_t gid, utf8string * utf8str)"
-.PP
-gid2utf8: converts a gid to a utf8 string descriptor.
+Definition at line 437 of file idmapper.c.
+.SS "int gid2utf8 (gid_t gid, utf8string * utf8str)"gid2utf8: converts a gid to a utf8 string descriptor.
 .PP
 Converts a gid to a utf8 string descriptor.
 .PP
@@ -157,10 +159,8 @@ the length of the utf8 buffer if succesfull, -1 if failed
 .PP
 
 .PP
-Definition at line 379 of file idmapper.c.
-.SS "int name2gid (char * name, gid_t * pgid)"
-.PP
-name2gid: convert a name to a gid
+Definition at line 507 of file idmapper.c.
+.SS "int name2gid (char * name, gid_t * pgid)"name2gid: convert a name to a gid
 .PP
 convert a name to a gid
 .PP
@@ -173,10 +173,8 @@ convert a name to a gid
 .PP
 return 1 if successful, 0 otherwise 
 .PP
-Definition at line 243 of file idmapper.c.
-.SS "int name2uid (char * name, uid_t * puid)"
-.PP
-name2uid: convert a name to a uid
+Definition at line 350 of file idmapper.c.
+.SS "int name2uid (char * name, uid_t * puid)"name2uid: convert a name to a uid
 .PP
 convert a name to a uid
 .PP
@@ -189,10 +187,8 @@ convert a name to a uid
 .PP
 return 1 if successful, 0 otherwise 
 .PP
-Definition at line 153 of file idmapper.c.
-.SS "int uid2name (char * name, uid_t uid)"
-.PP
-uid2name: convert a uid to a name.
+Definition at line 198 of file idmapper.c.
+.SS "int uid2name (char * name, uid_t * puid)"uid2name: convert a uid to a name.
 .PP
 convert a uid to a name.
 .PP
@@ -205,10 +201,8 @@ convert a uid to a name.
 .PP
 return 1 if successful, 0 otherwise 
 .PP
-Definition at line 124 of file idmapper.c.
-.SS "int uid2str (uid_t uid, char * str)"
-.PP
-uid2ustr: convert a uid to a string.
+Definition at line 126 of file idmapper.c.
+.SS "int uid2str (uid_t uid, char * str)"uid2ustr: convert a uid to a string.
 .PP
 Convert a gidonvert a uid to a string. to a string.
 .PP
@@ -226,10 +220,8 @@ the length of the utf8 buffer if succesfull, -1 if failed
 .PP
 
 .PP
-Definition at line 290 of file idmapper.c.
-.SS "int uid2utf8 (uid_t uid, utf8string * utf8str)"
-.PP
-uid2utf8: converts a uid to a utf8 string descriptor.
+Definition at line 409 of file idmapper.c.
+.SS "int uid2utf8 (uid_t uid, utf8string * utf8str)"uid2utf8: converts a uid to a utf8 string descriptor.
 .PP
 Converts a uid to a utf8 string descriptor.
 .PP
@@ -247,10 +239,8 @@ the length of the utf8 buffer if succesfull, -1 if failed
 .PP
 
 .PP
-Definition at line 336 of file idmapper.c.
-.SS "int utf82gid (utf8string * utf8str, gid_t * Gid)"
-.PP
-utf82gid: converts a utf8 string descriptorto a gid .
+Definition at line 465 of file idmapper.c.
+.SS "int utf82gid (utf8string * utf8str, gid_t * Gid)"utf82gid: converts a utf8 string descriptorto a gid .
 .PP
 Converts a utf8 string descriptor to a gid .
 .PP
@@ -268,10 +258,8 @@ Converts a utf8 string descriptor to a gid .
 .PP
 
 .PP
-Definition at line 455 of file idmapper.c.
-.SS "int utf82uid (utf8string * utf8str, uid_t * Uid)"
-.PP
-utf82gid: converts a utf8 string descriptor to a uid .
+Definition at line 586 of file idmapper.c.
+.SS "int utf82uid (utf8string * utf8str, uid_t * Uid)"utf82gid: converts a utf8 string descriptor to a uid .
 .PP
 Converts a utf8 string descriptor to a uid.
 .PP
@@ -289,7 +277,12 @@ Converts a utf8 string descriptor to a uid.
 .PP
 
 .PP
-Definition at line 421 of file idmapper.c.
+Definition at line 548 of file idmapper.c.
+.SH "Variable Documentation"
+.PP 
+.SS "nfs_parameter_t \fBnfs_param\fP"
+.PP
+Definition at line 49 of file test_idmapper.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Id Mapper from the source code.

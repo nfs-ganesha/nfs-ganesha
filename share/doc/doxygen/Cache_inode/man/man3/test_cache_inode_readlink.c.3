@@ -1,10 +1,11 @@
-.TH "test_cache_inode_readlink.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "test_cache_inode_readlink.c" 3 "15 Sep 2010" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-test_cache_inode_readlink.c \- Program for testing cache_inode / readlink functions.  
-
+test_cache_inode_readlink.c \- 
 .PP
+Program for testing cache_inode / readlink functions.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -16,7 +17,7 @@ test_cache_inode_readlink.c \- Program for testing cache_inode / readlink functi
 .br
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'err_fsal.h'\fP
 .br
@@ -91,21 +92,19 @@ Definition in file \fBtest_cache_inode_readlink.c\fP.
 .PP 
 .SS "#define HPSS_KEYTAB   '/krb5/hpssserver.keytab'"
 .PP
-Definition at line 105 of file test_cache_inode_readlink.c.
+Definition at line 54 of file test_cache_inode_readlink.c.
 .SS "#define HPSS_SSM   'hpss_ssm'"
 .PP
-Definition at line 104 of file test_cache_inode_readlink.c.
+Definition at line 53 of file test_cache_inode_readlink.c.
 .SH "Function Documentation"
 .PP 
 .SS "int lru_clean_entry (LRU_entry_t * entry, void * adddata)"
 .PP
-Definition at line 115 of file test_cache_inode_readlink.c.
+Definition at line 65 of file test_cache_inode_readlink.c.
 .SS "int lru_entry_to_str (LRU_data_t data, char * str)"
 .PP
-Definition at line 106 of file test_cache_inode_readlink.c.
-.SS "main (int argc, char * argv[])"
-.PP
-main: test main function.
+Definition at line 55 of file test_cache_inode_readlink.c.
+.SS "main (int argc, char * argv[])"main: test main function.
 .PP
 test main function.
 .PP
@@ -123,7 +122,7 @@ an integer sent back to the calling shell.
 .PP
 
 .PP
-Definition at line 133 of file test_cache_inode_readlink.c.
+Definition at line 83 of file test_cache_inode_readlink.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

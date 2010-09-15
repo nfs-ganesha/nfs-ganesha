@@ -1,10 +1,11 @@
-.TH "cache_inode_truncate.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_truncate.c" 3 "15 Sep 2010" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_truncate.c \- Truncates a regular file.  
-
+cache_inode_truncate.c \- 
 .PP
+Truncates a regular file.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -12,7 +13,7 @@ cache_inode_truncate.c \- Truncates a regular file.
 .br
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -79,9 +80,7 @@ deniel
 Definition in file \fBcache_inode_truncate.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "cache_inode_status_t cache_inode_truncate (cache_entry_t * pentry, fsal_size_t length, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
-.PP
-cache_inode_truncate: truncates a regular file specified by its cache entry.
+.SS "cache_inode_status_t cache_inode_truncate (cache_entry_t * pentry, fsal_size_t length, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"cache_inode_truncate: truncates a regular file specified by its cache entry.
 .PP
 Truncates a regular file specified by its cache entry.
 .PP
@@ -113,10 +112,8 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 315 of file cache_inode_truncate.c.
-.SS "cache_inode_status_t cache_inode_truncate_no_mutex (cache_entry_t * pentry, fsal_size_t length, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
-.PP
-cache_inode_truncate_no_mutex: truncates a regular file specified by its cache entry (no mutex management).
+Definition at line 252 of file cache_inode_truncate.c.
+.SS "cache_inode_status_t cache_inode_truncate_no_mutex (cache_entry_t * pentry, fsal_size_t length, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"cache_inode_truncate_no_mutex: truncates a regular file specified by its cache entry (no mutex management).
 .PP
 Truncates a regular file specified by its cache entry.
 .PP
@@ -148,10 +145,8 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 279 of file cache_inode_truncate.c.
-.SS "cache_inode_status_t cache_inode_truncate_sw (cache_entry_t * pentry, fsal_size_t length, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus, int use_mutex)"
-.PP
-cache_inode_truncate_sw: truncates a regular file specified by its cache entry.
+Definition at line 222 of file cache_inode_truncate.c.
+.SS "cache_inode_status_t cache_inode_truncate_sw (cache_entry_t * pentry, fsal_size_t length, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus, int use_mutex)"cache_inode_truncate_sw: truncates a regular file specified by its cache entry.
 .PP
 Truncates a regular file specified by its cache entry.
 .PP
@@ -192,7 +187,7 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 130 of file cache_inode_truncate.c.
+Definition at line 78 of file cache_inode_truncate.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

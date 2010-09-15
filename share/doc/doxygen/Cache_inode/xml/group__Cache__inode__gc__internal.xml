@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='UTF-8' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.6.1">
   <compounddef id="group__Cache__inode__gc__internal" kind="group">
     <compoundname>Cache_inode_gc_internal</compoundname>
     <title>Cache Inode GC internal functions.</title>
       <sectiondef kind="func">
-      <memberdef kind="function" id="group__Cache__inode__gc__internal_1gc455f809239ae644dd9abbe40660c0e8" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__Cache__inode__gc__internal_1gac455f809239ae644dd9abbe40660c0e8" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>static int cache_inode_gc_clean_entry</definition>
         <argsstring>(cache_entry_t *pentry, cache_inode_param_gc_t *pgcparam)</argsstring>
@@ -39,9 +39,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="132" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="131" bodyend="275"/>
+        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="83" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="81" bodyend="219"/>
       </memberdef>
-      <memberdef kind="function" id="group__Cache__inode__gc__internal_1g2b5be1ddd7c9b28123d421b97f8b18cd" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__Cache__inode__gc__internal_1ga2b5be1ddd7c9b28123d421b97f8b18cd" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>static int cache_inode_gc_invalidate_related_dirent</definition>
         <argsstring>(cache_entry_t *pentry, cache_inode_param_gc_t *pgcparam)</argsstring>
@@ -76,9 +76,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="290" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="289" bodyend="358"/>
+        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="235" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="233" bodyend="310"/>
       </memberdef>
-      <memberdef kind="function" id="group__Cache__inode__gc__internal_1g135dcc8a575d9f808b57ae2a74e615b3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__Cache__inode__gc__internal_1ga135dcc8a575d9f808b57ae2a74e615b3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int cache_inode_gc_suppress_file</definition>
         <argsstring>(cache_entry_t *pentry, cache_inode_param_gc_t *pgcparam)</argsstring>
@@ -103,13 +103,13 @@
 </parameteritem>
 </parameterlist>
 <simplesect kind="return"><para>LRU_LIST_SET_INVALID if entry is successfully suppressed, LRU_LIST_DO_NOT_SET_INVALID otherwise</para></simplesect>
-<simplesect kind="see"><para>LRU_invalidate_by_function </para><para>LRU_gc_invalid </para></simplesect>
+<simplesect kind="see"><para>LRU_invalidate_by_function </para><simplesectsep/><para>LRU_gc_invalid </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="375" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="374" bodyend="402"/>
+        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="328" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="326" bodyend="353"/>
       </memberdef>
-      <memberdef kind="function" id="group__Cache__inode__gc__internal_1g24883ab5f9452a23cab665aabfc71873" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__Cache__inode__gc__internal_1ga24883ab5f9452a23cab665aabfc71873" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int cache_inode_gc_suppress_directory</definition>
         <argsstring>(cache_entry_t *pentry, cache_inode_param_gc_t *pgcparam)</argsstring>
@@ -134,13 +134,13 @@
 </parameteritem>
 </parameterlist>
 <simplesect kind="return"><para>1 if entry is successfully suppressed, 0 otherwise</para></simplesect>
-<simplesect kind="see"><para>LRU_invalidate_by_function </para><para>LRU_gc_invalid </para></simplesect>
+<simplesect kind="see"><para>LRU_invalidate_by_function </para><simplesectsep/><para>LRU_gc_invalid </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="419" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="418" bodyend="475"/>
+        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="371" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="369" bodyend="427"/>
       </memberdef>
-      <memberdef kind="function" id="group__Cache__inode__gc__internal_1g1a749f9170eb28914650d29382b6ed81" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__Cache__inode__gc__internal_1ga1a749f9170eb28914650d29382b6ed81" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int cache_inode_gc_function</definition>
         <argsstring>(LRU_entry_t *plru_entry, void *addparam)</argsstring>
@@ -165,16 +165,16 @@
 </parameteritem>
 </parameterlist>
 <simplesect kind="return"><para>1 if entry must be set invalid, 0 if not.</para></simplesect>
-<simplesect kind="see"><para>LRU_invalidate_by_function </para><para>LRU_gc_invalid </para></simplesect>
+<simplesect kind="see"><para>LRU_invalidate_by_function </para><simplesectsep/><para>LRU_gc_invalid </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="493" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="492" bodyend="552"/>
+        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="445" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="444" bodyend="511"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
     </briefdescription>
     <detaileddescription>
-<para>These functions are used for Garbagge collector internal management. </para>    </detaileddescription>
+<para>These functions are used for Garbage collector internal management. </para>    </detaileddescription>
   </compounddef>
 </doxygen>

@@ -1,3 +1,5 @@
+/* The standard CSS for doxygen */
+
 body, table, div, p, dl {
 	font-family: Lucida Grande, Verdana, Geneva, Arial, sans-serif;
 	font-size: 12px;
@@ -18,13 +20,41 @@ h3 {
 	font-size: 100%;
 }
 
+dt {
+	font-weight: bold;
+}
+
+div.multicol {
+	-moz-column-gap: 1em;
+	-webkit-column-gap: 1em;
+	-moz-column-count: 3;
+	-webkit-column-count: 3;
+}
+
+p.startli, p.startdd {
+	margin-top: 2px;
+}
+
+p.endli {
+	margin-bottom: 0px;
+}
+
+p.enddd {
+	margin-bottom: 4px;
+}
+
 /* @end */
 
 caption {
 	font-weight: bold;
 }
 
-div.qindex, div.navpath, div.navtab{
+span.legend {
+        font-size: 70%;
+        text-align: center;
+}
+
+div.qindex, div.navtab{
 	background-color: #e8eef2;
 	border: 1px solid #84b0c7;
 	text-align: center;
@@ -66,6 +96,10 @@ a.qindexHL {
 	background-color: #6666cc;
 	color: #ffffff;
 	border: 1px double #9295C2;
+}
+
+.contents a.qindexHL:visited {
+        color: #ffffff;
 }
 
 a.el {
@@ -154,6 +188,22 @@ img.formulaDsp {
 }
 
 img.formulaInl {
+	vertical-align: middle;
+}
+
+div.center {
+	text-align: center;
+        margin-top: 0px;
+        margin-bottom: 0px;
+        padding: 0px;
+}
+
+div.center img {
+	border: 0px;
+}
+
+img.footer {
+	border: 0px;
 	vertical-align: middle;
 }
 
@@ -263,8 +313,13 @@ hr {
 	border-top: 1px solid #ccc;
 }
 
+.memItemLeft, .memTemplItemLeft {
+        white-space: nowrap;
+}
+
 .memTemplParams {
 	color: #606060;
+        white-space: nowrap;
 }
 
 /* @end */
@@ -291,6 +346,7 @@ hr {
 
 .memitem {
 	padding: 0;
+	margin-bottom: 10px;
 }
 
 .memname {
@@ -308,8 +364,11 @@ hr {
 	font-weight: bold;
 	-webkit-border-top-left-radius: 8px;
 	-webkit-border-top-right-radius: 8px;
+        -webkit-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.15);
 	-moz-border-radius-topleft: 8px;
 	-moz-border-radius-topright: 8px;
+        -moz-box-shadow: rgba(0, 0, 0, 0.15) 5px 5px 5px;
+
 }
 
 .memdoc {
@@ -318,12 +377,10 @@ hr {
 	border-top-width: 0;
 	-webkit-border-bottom-left-radius: 8px;
 	-webkit-border-bottom-right-radius: 8px;
+        -webkit-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.15);
 	-moz-border-radius-bottomleft: 8px;
 	-moz-border-radius-bottomright: 8px;
-}
-
-.memdoc p, .memdoc dl, .memdoc ul {
-	margin: 6px 0;
+        -moz-box-shadow: rgba(0, 0, 0, 0.15) 5px 5px 5px;
 }
 
 .paramkey {

@@ -2,8 +2,16 @@
 <doxygenindex xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="index.xsd" version="1.6.1">
   <compound refid="stuff__alloc_8h" kind="file"><name>stuff_alloc.h</name>
     <member refid="stuff__alloc_8h_1ad6b7282e7c215186f8514097b04d5bfa" kind="define"><name>Mem_Alloc</name></member>
-    <member refid="stuff__alloc_8h_1a33eb598e1abd423b85812262b3691f70" kind="define"><name>STUFF_PREALLOC</name></member>
-    <member refid="stuff__alloc_8h_1a457d47f8b2bbac516aee6fd69707e74a" kind="define"><name>GET_PREALLOC</name></member>
-    <member refid="stuff__alloc_8h_1aeb0d01b2e3cfab695f1240110e0994c5" kind="define"><name>RELEASE_PREALLOC</name></member>
+    <member refid="stuff__alloc_8h_1a44c3aa0d5261064e512efe252dd1600f" kind="define"><name>Mem_Calloc</name></member>
+    <member refid="stuff__alloc_8h_1a493e3330b67be95e7844e98de50c126a" kind="define"><name>Mem_Realloc</name></member>
+    <member refid="stuff__alloc_8h_1a4e6d06ceac8fce7d7b9dde85e225ad4a" kind="define"><name>Mem_Free</name></member>
+    <member refid="stuff__alloc_8h_1acd84738997b6c23395138cbfe5f296b1" kind="define"><name>Mem_Errno</name></member>
+    <member refid="stuff__alloc_8h_1a589a6aa3b3312bedf3f6bf7644fe631d" kind="define"><name>GetPreferedPool</name></member>
+    <member refid="stuff__alloc_8h_1a6c09779d3013b3d009840bd835481dfb" kind="define"><name>STUFF_PREALLOC</name></member>
+    <member refid="stuff__alloc_8h_1a4ba0f04a3d862387dcc4115476b08fda" kind="define"><name>GET_PREALLOC</name></member>
+    <member refid="stuff__alloc_8h_1a75ffcec8cebe37ccd4044d7e9bb52ae1" kind="define"><name>RELEASE_PREALLOC</name></member>
+    <member refid="stuff__alloc_8h_1aedd85b3e73701cd559e6ec90f0c42b86" kind="define"><name>STUFF_PREALLOC_CONSTRUCT</name></member>
+    <member refid="stuff__alloc_8h_1a7e08994c1fb518ad7d9f427ab6c93bf2" kind="define"><name>GET_PREALLOC_CONSTRUCT</name></member>
+    <member refid="stuff__alloc_8h_1ab23410492b8d0a00fec44cf80ce0da74" kind="define"><name>RELEASE_PREALLOC_DESTRUCT</name></member>
   </compound>
 </doxygenindex>

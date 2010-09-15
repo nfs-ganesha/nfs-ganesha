@@ -1,49 +1,49 @@
 \section{commands\_\-NFS.c File Reference}
 \label{commands__NFS_8c}\index{commands\_\-NFS.c@{commands\_\-NFS.c}}
+
+
 calls to NFSv2, NFSv3, MNTv1, MNTv3 commands.  
-
-
-{\tt \#include $<$rpc/types.h$>$}\par
-{\tt \#include $<$rpc/rpc.h$>$}\par
-{\tt \#include $<$rpc/svc.h$>$}\par
-{\tt \#include $<$rpc/auth.h$>$}\par
-{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
-{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
-{\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
-{\tt \#include \char`\"{}commands.h\char`\"{}}\par
-{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
-{\tt \#include \char`\"{}Getopt.h\char`\"{}}\par
-{\tt \#include \char`\"{}cmd\_\-nfstools.h\char`\"{}}\par
-{\tt \#include \char`\"{}cmd\_\-tools.h\char`\"{}}\par
-{\tt \#include \char`\"{}nfs\_\-file\_\-handle.h\char`\"{}}\par
-{\tt \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
-{\tt \#include $<$ctype.h$>$}\par
-{\tt \#include $<$unistd.h$>$}\par
-{\tt \#include $<$pwd.h$>$}\par
-{\tt \#include $<$string.h$>$}\par
+{\ttfamily \#include $<$rpc/types.h$>$}\par
+{\ttfamily \#include $<$rpc/rpc.h$>$}\par
+{\ttfamily \#include $<$rpc/svc.h$>$}\par
+{\ttfamily \#include $<$rpc/auth.h$>$}\par
+{\ttfamily \#include \char`\"{}fsal.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}commands.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}Getopt.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}cmd\_\-nfstools.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}cmd\_\-tools.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}nfs\_\-file\_\-handle.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
+{\ttfamily \#include $<$ctype.h$>$}\par
+{\ttfamily \#include $<$unistd.h$>$}\par
+{\ttfamily \#include $<$pwd.h$>$}\par
+{\ttfamily \#include $<$string.h$>$}\par
 \subsection*{Classes}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
 struct {\bf shell\_\-fh3\_\-\_\-}
 \item 
 struct {\bf cmdnfs\_\-thr\_\-info\_\-\_\-}
-\end{CompactItemize}
+\end{DoxyCompactItemize}
 \subsection*{Defines}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
 \#define {\bf NFS\_\-READDIR\_\-SIZE}~10
 \item 
 \#define {\bf MAX\_\-GRPS}~128
-\end{CompactItemize}
+\end{DoxyCompactItemize}
 \subsection*{Typedefs}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
 typedef struct {\bf shell\_\-fh3\_\-\_\-} {\bf shell\_\-fh3\_\-t}
 \item 
 typedef struct {\bf cmdnfs\_\-thr\_\-info\_\-\_\-} {\bf cmdnfs\_\-thr\_\-info\_\-t}
-\end{CompactItemize}
+\end{DoxyCompactItemize}
 \subsection*{Functions}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
 {\bf cmdnfs\_\-thr\_\-info\_\-t} $\ast$ {\bf GetNFSClient} ()
 \item 
@@ -94,11 +94,13 @@ int {\bf fn\_\-nfs\_\-stat} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
 int {\bf fn\_\-nfs\_\-su} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
 \item 
 int {\bf fn\_\-nfs\_\-id} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
-\end{CompactItemize}
+\end{DoxyCompactItemize}
 \subsection*{Variables}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
 nfs\_\-parameter\_\-t {\bf nfs\_\-param}
+\item 
+writeverf3 {\bf NFS3\_\-write\_\-verifier}
 \item 
 hash\_\-table\_\-t $\ast$ {\bf ht}
 \item 
@@ -109,27 +111,24 @@ cache\_\-content\_\-client\_\-parameter\_\-t {\bf datacache\_\-client\_\-param}
 exportlist\_\-t {\bf exportlist} [128]
 \item 
 exportlist\_\-t $\ast$ {\bf pexportlist} = {\bf exportlist}
-\end{CompactItemize}
+\end{DoxyCompactItemize}
 
 
 \subsection{Detailed Description}
-calls to NFSv2, NFSv3, MNTv1, MNTv3 commands. 
+calls to NFSv2, NFSv3, MNTv1, MNTv3 commands. \begin{DoxyAuthor}{Author}
 
-\begin{Desc}
-\item[Author:]\end{Desc}
-\begin{Desc}
-\item[Author]leibovic \end{Desc}
-\begin{Desc}
-\item[Date:]\end{Desc}
-\begin{Desc}
-\item[Date]2006/02/23 07:42:53 \end{Desc}
-\begin{Desc}
-\item[Version:]\end{Desc}
-\begin{Desc}
-\item[Revision]1.34 \end{Desc}
-\begin{Desc}
-\item[Log]\doxyref{commands\_\-NFS.c}{p.}{commands__NFS_8c},v \end{Desc}
-Revision 1.34 2006/02/23 07:42:53 leibovic Adding -n option to shell.
+\end{DoxyAuthor}
+Author}
+leibovic \begin{DoxyDate}{Date}
+
+\end{DoxyDate}
+Date}
+2006/02/23 07:42:53 \begin{DoxyVersion}{Version}
+
+\end{DoxyVersion}
+Revision}
+1.34 Log}
+\doxyref{commands\_\-NFS.c}{p.}{commands__NFS_8c},v Revision 1.34 2006/02/23 07:42:53 leibovic Adding -\/n option to shell.
 
 Revision 1.33 2006/02/22 09:07:45 leibovic Correcting bug for returned value.
 
@@ -150,8 +149,6 @@ Revision 1.26 2006/01/20 14:44:14 leibovic altgroups support.
 Revision 1.25 2006/01/18 08:02:04 deniel Order in includes and libraries
 
 Revision 1.24 2006/01/17 16:40:54 leibovic New interface for readexport.
-
-Revision 1.23 2005/11/28 17:03:00 deniel Added CeCILL headers
 
 Revision 1.22 2005/11/21 09:55:18 leibovic Once for all thread's credential initialization.
 
@@ -202,256 +199,191 @@ Definition in file {\bf commands\_\-NFS.c}.
 \subsection{Define Documentation}
 \index{commands\_\-NFS.c@{commands\_\-NFS.c}!MAX\_\-GRPS@{MAX\_\-GRPS}}
 \index{MAX\_\-GRPS@{MAX\_\-GRPS}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{MAX\_\-GRPS}]{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-GRPS~128}\label{commands__NFS_8c_44b278760f7184302d0070c0c39f5ba8}
-
-
+\subsubsection[{MAX\_\-GRPS}]{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-GRPS~128}\label{commands__NFS_8c_a44b278760f7184302d0070c0c39f5ba8}
 \index{commands\_\-NFS.c@{commands\_\-NFS.c}!NFS\_\-READDIR\_\-SIZE@{NFS\_\-READDIR\_\-SIZE}}
 \index{NFS\_\-READDIR\_\-SIZE@{NFS\_\-READDIR\_\-SIZE}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{NFS\_\-READDIR\_\-SIZE}]{\setlength{\rightskip}{0pt plus 5cm}\#define NFS\_\-READDIR\_\-SIZE~10}\label{commands__NFS_8c_0cfd75d1d2e68a26f985ef64131ac6aa}
-
-
+\subsubsection[{NFS\_\-READDIR\_\-SIZE}]{\setlength{\rightskip}{0pt plus 5cm}\#define NFS\_\-READDIR\_\-SIZE~10}\label{commands__NFS_8c_a0cfd75d1d2e68a26f985ef64131ac6aa}
 
 
 \subsection{Typedef Documentation}
 \index{commands\_\-NFS.c@{commands\_\-NFS.c}!cmdnfs\_\-thr\_\-info\_\-t@{cmdnfs\_\-thr\_\-info\_\-t}}
 \index{cmdnfs\_\-thr\_\-info\_\-t@{cmdnfs\_\-thr\_\-info\_\-t}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{cmdnfs\_\-thr\_\-info\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf cmdnfs\_\-thr\_\-info\_\-\_\-}  {\bf cmdnfs\_\-thr\_\-info\_\-t}}\label{commands__NFS_8c_6df64c506b00f2aba467fc96c4416122}
-
-
+\subsubsection[{cmdnfs\_\-thr\_\-info\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf cmdnfs\_\-thr\_\-info\_\-\_\-}  {\bf cmdnfs\_\-thr\_\-info\_\-t}}\label{commands__NFS_8c_a6df64c506b00f2aba467fc96c4416122}
 \index{commands\_\-NFS.c@{commands\_\-NFS.c}!shell\_\-fh3\_\-t@{shell\_\-fh3\_\-t}}
 \index{shell\_\-fh3\_\-t@{shell\_\-fh3\_\-t}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{shell\_\-fh3\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf shell\_\-fh3\_\-\_\-}  {\bf shell\_\-fh3\_\-t}}\label{commands__NFS_8c_d3154e54d2b805dedabc31d664b28dcf}
-
-
+\subsubsection[{shell\_\-fh3\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf shell\_\-fh3\_\-\_\-}  {\bf shell\_\-fh3\_\-t}}\label{commands__NFS_8c_ad3154e54d2b805dedabc31d664b28dcf}
 
 
 \subsection{Function Documentation}
 \index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-MNT1\_\-command@{fn\_\-MNT1\_\-command}}
 \index{fn\_\-MNT1\_\-command@{fn\_\-MNT1\_\-command}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-MNT1\_\-command}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-MNT1\_\-command (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_d9e57b227010916f9c9168a00b14c1ed}
-
-
+\subsubsection[{fn\_\-MNT1\_\-command}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-MNT1\_\-command (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_ad9e57b227010916f9c9168a00b14c1ed}
 process MNT1 protocol's command. 
 
-Definition at line 628 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-MNT3\_\-command@{fn\_\-MNT3\_\-command}}
+Definition at line 571 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-MNT3\_\-command@{fn\_\-MNT3\_\-command}}
 \index{fn\_\-MNT3\_\-command@{fn\_\-MNT3\_\-command}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-MNT3\_\-command}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-MNT3\_\-command (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_fcb010876c8c82ba28498eff4e33466a}
-
-
+\subsubsection[{fn\_\-MNT3\_\-command}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-MNT3\_\-command (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_afcb010876c8c82ba28498eff4e33466a}
 process MNT3 protocol's command. 
 
-Definition at line 732 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-NFS2\_\-command@{fn\_\-NFS2\_\-command}}
+Definition at line 661 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-NFS2\_\-command@{fn\_\-NFS2\_\-command}}
 \index{fn\_\-NFS2\_\-command@{fn\_\-NFS2\_\-command}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-NFS2\_\-command}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-NFS2\_\-command (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_684fcaaca8949d8362e3b4d23fa1821c}
-
-
+\subsubsection[{fn\_\-NFS2\_\-command}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-NFS2\_\-command (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_a684fcaaca8949d8362e3b4d23fa1821c}
 process NFS2 protocol's command. 
 
-Definition at line 833 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-NFS3\_\-command@{fn\_\-NFS3\_\-command}}
+Definition at line 750 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-NFS3\_\-command@{fn\_\-NFS3\_\-command}}
 \index{fn\_\-NFS3\_\-command@{fn\_\-NFS3\_\-command}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-NFS3\_\-command}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-NFS3\_\-command (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_07e03c4595dc082f2a667e25574e2d90}
-
-
+\subsubsection[{fn\_\-NFS3\_\-command}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-NFS3\_\-command (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_a07e03c4595dc082f2a667e25574e2d90}
 process NFS3 protocol's command. 
 
-Definition at line 952 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-cd@{fn\_\-nfs\_\-cd}}
+Definition at line 857 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-cd@{fn\_\-nfs\_\-cd}}
 \index{fn\_\-nfs\_\-cd@{fn\_\-nfs\_\-cd}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-nfs\_\-cd}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-cd (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_0d725e646fab51fc0eb5560df33bc1a0}
-
-
+\subsubsection[{fn\_\-nfs\_\-cd}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-cd (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_a0d725e646fab51fc0eb5560df33bc1a0}
 change current path 
 
-Definition at line 2682 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-create@{fn\_\-nfs\_\-create}}
+Definition at line 2407 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-create@{fn\_\-nfs\_\-create}}
 \index{fn\_\-nfs\_\-create@{fn\_\-nfs\_\-create}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-nfs\_\-create}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-create (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_2afba74460f41057660fe0e4837af49f}
-
-
+\subsubsection[{fn\_\-nfs\_\-create}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-create (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_a2afba74460f41057660fe0e4837af49f}
 create a file 
 
-Definition at line 2768 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-hardlink@{fn\_\-nfs\_\-hardlink}}
+Definition at line 2493 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-hardlink@{fn\_\-nfs\_\-hardlink}}
 \index{fn\_\-nfs\_\-hardlink@{fn\_\-nfs\_\-hardlink}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-nfs\_\-hardlink}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-hardlink (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_c99922021c335b7fba99edb49a2c096c}
-
-
+\subsubsection[{fn\_\-nfs\_\-hardlink}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-hardlink (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_ac99922021c335b7fba99edb49a2c096c}
 proceed a hardlink command. 
 
-Definition at line 3418 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-id@{fn\_\-nfs\_\-id}}
+Definition at line 3152 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-id@{fn\_\-nfs\_\-id}}
 \index{fn\_\-nfs\_\-id@{fn\_\-nfs\_\-id}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-nfs\_\-id}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-id (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_e82413f9ea4aee4e5004e68864d9d9e0}
+\subsubsection[{fn\_\-nfs\_\-id}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-id (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_ae82413f9ea4aee4e5004e68864d9d9e0}
 
 
-
-
-Definition at line 3958 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-init@{fn\_\-nfs\_\-init}}
+Definition at line 3686 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-init@{fn\_\-nfs\_\-init}}
 \index{fn\_\-nfs\_\-init@{fn\_\-nfs\_\-init}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-nfs\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-init (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_3888e7f1af730319f7a0ff8b28a2268f}
-
-
+\subsubsection[{fn\_\-nfs\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-init (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_a3888e7f1af730319f7a0ff8b28a2268f}
 Init nfs layer 
 
-Definition at line 541 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-ln@{fn\_\-nfs\_\-ln}}
+Definition at line 489 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-ln@{fn\_\-nfs\_\-ln}}
 \index{fn\_\-nfs\_\-ln@{fn\_\-nfs\_\-ln}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-nfs\_\-ln}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-ln (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_c030f04189dccaf1c907d78c250c0ea0}
-
-
+\subsubsection[{fn\_\-nfs\_\-ln}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-ln (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_ac030f04189dccaf1c907d78c250c0ea0}
 proceed an ln command. 
 
-Definition at line 3551 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-ls@{fn\_\-nfs\_\-ls}}
+Definition at line 3288 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-ls@{fn\_\-nfs\_\-ls}}
 \index{fn\_\-nfs\_\-ls@{fn\_\-nfs\_\-ls}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-nfs\_\-ls}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-ls (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_4d233995059a84db95c99ebc1e773d51}
-
-
+\subsubsection[{fn\_\-nfs\_\-ls}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-ls (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_a4d233995059a84db95c99ebc1e773d51}
 proceed an ls command using NFS protocol NFS 
 
-Definition at line 2343 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-mkdir@{fn\_\-nfs\_\-mkdir}}
+Definition at line 2084 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-mkdir@{fn\_\-nfs\_\-mkdir}}
 \index{fn\_\-nfs\_\-mkdir@{fn\_\-nfs\_\-mkdir}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-nfs\_\-mkdir}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-mkdir (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_0e472c68ced403215582ac08170cf489}
-
-
+\subsubsection[{fn\_\-nfs\_\-mkdir}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-mkdir (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_a0e472c68ced403215582ac08170cf489}
 create a directory 
 
-Definition at line 2895 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-mount@{fn\_\-nfs\_\-mount}}
+Definition at line 2620 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-mount@{fn\_\-nfs\_\-mount}}
 \index{fn\_\-nfs\_\-mount@{fn\_\-nfs\_\-mount}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-nfs\_\-mount}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-mount (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_9f9ce437f72847bc50a8b27738d0792c}
-
-
+\subsubsection[{fn\_\-nfs\_\-mount}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-mount (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_a9f9ce437f72847bc50a8b27738d0792c}
 mount a path to browse it. 
 
-Definition at line 2105 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-pwd@{fn\_\-nfs\_\-pwd}}
+Definition at line 1871 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-pwd@{fn\_\-nfs\_\-pwd}}
 \index{fn\_\-nfs\_\-pwd@{fn\_\-nfs\_\-pwd}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-nfs\_\-pwd}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-pwd (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_4a2c75d01a912e996f8f8e4fdbb02058}
-
-
+\subsubsection[{fn\_\-nfs\_\-pwd}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-pwd (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_a4a2c75d01a912e996f8f8e4fdbb02058}
 prints current path 
 
-Definition at line 2309 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-rename@{fn\_\-nfs\_\-rename}}
+Definition at line 2051 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-rename@{fn\_\-nfs\_\-rename}}
 \index{fn\_\-nfs\_\-rename@{fn\_\-nfs\_\-rename}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-nfs\_\-rename}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-rename (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_29f386c1c9b5e0de5c8e9c35993e683f}
-
-
+\subsubsection[{fn\_\-nfs\_\-rename}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-rename (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_a29f386c1c9b5e0de5c8e9c35993e683f}
 proceed a rename command. 
 
-Definition at line 3281 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-setattr@{fn\_\-nfs\_\-setattr}}
+Definition at line 3015 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-setattr@{fn\_\-nfs\_\-setattr}}
 \index{fn\_\-nfs\_\-setattr@{fn\_\-nfs\_\-setattr}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-nfs\_\-setattr}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-setattr (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_ca7fba47173c3eac4e4d16f13a439533}
-
-
+\subsubsection[{fn\_\-nfs\_\-setattr}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-setattr (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_aca7fba47173c3eac4e4d16f13a439533}
 setattr 
 
-Definition at line 3153 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-stat@{fn\_\-nfs\_\-stat}}
+Definition at line 2885 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-stat@{fn\_\-nfs\_\-stat}}
 \index{fn\_\-nfs\_\-stat@{fn\_\-nfs\_\-stat}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-nfs\_\-stat}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-stat (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_60d880fc087d6b800b305eef1518532b}
-
-
+\subsubsection[{fn\_\-nfs\_\-stat}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-stat (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_a60d880fc087d6b800b305eef1518532b}
 proceed an ls command using NFS protocol NFS 
 
-Definition at line 3692 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-su@{fn\_\-nfs\_\-su}}
+Definition at line 3430 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-su@{fn\_\-nfs\_\-su}}
 \index{fn\_\-nfs\_\-su@{fn\_\-nfs\_\-su}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-nfs\_\-su}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-su (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_467b8bbb73091f0399b2f9d15a2de9d5}
-
-
+\subsubsection[{fn\_\-nfs\_\-su}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-su (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_a467b8bbb73091f0399b2f9d15a2de9d5}
 change thread credentials. 
 
-Definition at line 3854 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-umount@{fn\_\-nfs\_\-umount}}
+Definition at line 3585 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-umount@{fn\_\-nfs\_\-umount}}
 \index{fn\_\-nfs\_\-umount@{fn\_\-nfs\_\-umount}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-nfs\_\-umount}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-umount (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_d3705a7ae5f94ea44dc6ad4da82a38e7}
-
-
+\subsubsection[{fn\_\-nfs\_\-umount}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-umount (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_ad3705a7ae5f94ea44dc6ad4da82a38e7}
 umount a mounted path. 
 
-Definition at line 2216 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-unlink@{fn\_\-nfs\_\-unlink}}
+Definition at line 1970 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!fn\_\-nfs\_\-unlink@{fn\_\-nfs\_\-unlink}}
 \index{fn\_\-nfs\_\-unlink@{fn\_\-nfs\_\-unlink}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{fn\_\-nfs\_\-unlink}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-unlink (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_a154fe7fc1c4ab72505656deab8feb85}
-
-
+\subsubsection[{fn\_\-nfs\_\-unlink}]{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-nfs\_\-unlink (int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_aa154fe7fc1c4ab72505656deab8feb85}
 unlink a file 
 
-Definition at line 3021 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!GetNFSClient@{GetNFSClient}}
+Definition at line 2747 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!GetNFSClient@{GetNFSClient}}
 \index{GetNFSClient@{GetNFSClient}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{GetNFSClient}]{\setlength{\rightskip}{0pt plus 5cm}{\bf cmdnfs\_\-thr\_\-info\_\-t}$\ast$ GetNFSClient ()}\label{commands__NFS_8c_3dfb64b55e900bea414ba7319e384072}
+\subsubsection[{GetNFSClient}]{\setlength{\rightskip}{0pt plus 5cm}{\bf cmdnfs\_\-thr\_\-info\_\-t}$\ast$ GetNFSClient ()}\label{commands__NFS_8c_a3dfb64b55e900bea414ba7319e384072}
 
 
-
-
-Definition at line 341 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!InitNFSClient@{InitNFSClient}}
+Definition at line 285 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!InitNFSClient@{InitNFSClient}}
 \index{InitNFSClient@{InitNFSClient}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{InitNFSClient}]{\setlength{\rightskip}{0pt plus 5cm}int InitNFSClient ({\bf cmdnfs\_\-thr\_\-info\_\-t} $\ast$ {\em p\_\-thr\_\-info})}\label{commands__NFS_8c_aa0ab69e9940c48a351da4ffb6e60f6f}
-
-
+\subsubsection[{InitNFSClient}]{\setlength{\rightskip}{0pt plus 5cm}int InitNFSClient ({\bf cmdnfs\_\-thr\_\-info\_\-t} $\ast$ {\em p\_\-thr\_\-info})}\label{commands__NFS_8c_aaa0ab69e9940c48a351da4ffb6e60f6f}
 
 
 \begin{Desc}
 \item[{\bf Todo}]No secondary groups support. \end{Desc}
 
 
-Definition at line 384 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!nfs\_\-init@{nfs\_\-init}}
+Definition at line 329 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!nfs\_\-init@{nfs\_\-init}}
 \index{nfs\_\-init@{nfs\_\-init}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{nfs\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-init (char $\ast$ {\em filename}, \/  int {\em flag\_\-v}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_d22e2d1bf7f72368de2719c01d60f81e}
-
-
+\subsubsection[{nfs\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-init (char $\ast$ {\em filename}, \/  int {\em flag\_\-v}, \/  FILE $\ast$ {\em output})}\label{commands__NFS_8c_ad22e2d1bf7f72368de2719c01d60f81e}
 
 
 \begin{Desc}
 \item[{\bf Todo}]Are there other things to initialize ? \end{Desc}
 
 
-Definition at line 474 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!nfs\_\-layer\_\-SetLogLevel@{nfs\_\-layer\_\-SetLogLevel}}
+Definition at line 420 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!nfs\_\-layer\_\-SetLogLevel@{nfs\_\-layer\_\-SetLogLevel}}
 \index{nfs\_\-layer\_\-SetLogLevel@{nfs\_\-layer\_\-SetLogLevel}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{nfs\_\-layer\_\-SetLogLevel}]{\setlength{\rightskip}{0pt plus 5cm}void nfs\_\-layer\_\-SetLogLevel (int {\em log\_\-lvl})}\label{commands__NFS_8c_b887a5c5a0911df2c6be04b92c3a9693}
+\subsubsection[{nfs\_\-layer\_\-SetLogLevel}]{\setlength{\rightskip}{0pt plus 5cm}void nfs\_\-layer\_\-SetLogLevel (int {\em log\_\-lvl})}\label{commands__NFS_8c_ab887a5c5a0911df2c6be04b92c3a9693}
 
 
-
-
-Definition at line 458 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!nfs\_\-readdirplus\_\-free@{nfs\_\-readdirplus\_\-free}}
+Definition at line 404 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!nfs\_\-readdirplus\_\-free@{nfs\_\-readdirplus\_\-free}}
 \index{nfs\_\-readdirplus\_\-free@{nfs\_\-readdirplus\_\-free}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{nfs\_\-readdirplus\_\-free}]{\setlength{\rightskip}{0pt plus 5cm}void nfs\_\-readdirplus\_\-free (nfs\_\-res\_\-t $\ast$ {\em to\_\-free})}\label{commands__NFS_8c_da4844db4c423fa66c87369713c5148c}
+\subsubsection[{nfs\_\-readdirplus\_\-free}]{\setlength{\rightskip}{0pt plus 5cm}void nfs\_\-readdirplus\_\-free (nfs\_\-res\_\-t $\ast$ {\em to\_\-free})}\label{commands__NFS_8c_ada4844db4c423fa66c87369713c5148c}
 
 
-
-
-Definition at line 1515 of file commands\_\-NFS.c.
+Definition at line 1361 of file commands\_\-NFS.c.
 
 \subsection{Variable Documentation}
 \index{commands\_\-NFS.c@{commands\_\-NFS.c}!cache\_\-client\_\-param@{cache\_\-client\_\-param}}
 \index{cache\_\-client\_\-param@{cache\_\-client\_\-param}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{cache\_\-client\_\-param}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-client\_\-parameter\_\-t {\bf cache\_\-client\_\-param}}\label{commands__NFS_8c_c4a598ccee46876cdc0985f55efe423e}
-
-
+\subsubsection[{cache\_\-client\_\-param}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-client\_\-parameter\_\-t {\bf cache\_\-client\_\-param}}\label{commands__NFS_8c_ac4a598ccee46876cdc0985f55efe423e}
 Global (exported) variable : init parameters for clients. 
 
-Definition at line 137 of file commands\_\-Cache\_\-inode.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!datacache\_\-client\_\-param@{datacache\_\-client\_\-param}}
+Definition at line 88 of file commands\_\-Cache\_\-inode.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!datacache\_\-client\_\-param@{datacache\_\-client\_\-param}}
 \index{datacache\_\-client\_\-param@{datacache\_\-client\_\-param}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{datacache\_\-client\_\-param}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-client\_\-parameter\_\-t {\bf datacache\_\-client\_\-param}}\label{commands__NFS_8c_ba08423105348649c3c814a48c699f4f}
+\subsubsection[{datacache\_\-client\_\-param}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-client\_\-parameter\_\-t {\bf datacache\_\-client\_\-param}}\label{commands__NFS_8c_aba08423105348649c3c814a48c699f4f}
 
 
-
-
-Definition at line 138 of file commands\_\-Cache\_\-inode.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!exportlist@{exportlist}}
+Definition at line 89 of file commands\_\-Cache\_\-inode.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!exportlist@{exportlist}}
 \index{exportlist@{exportlist}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{exportlist}]{\setlength{\rightskip}{0pt plus 5cm}exportlist\_\-t {\bf exportlist}[128]}\label{commands__NFS_8c_35ec43a4a024ecc9741b49bbf6df444e}
+\subsubsection[{exportlist}]{\setlength{\rightskip}{0pt plus 5cm}exportlist\_\-t {\bf exportlist}[128]}\label{commands__NFS_8c_a35ec43a4a024ecc9741b49bbf6df444e}
 
 
-
-
-Definition at line 277 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!ht@{ht}}
+Definition at line 224 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!ht@{ht}}
 \index{ht@{ht}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{ht}]{\setlength{\rightskip}{0pt plus 5cm}hash\_\-table\_\-t$\ast$ {\bf ht}}\label{commands__NFS_8c_b1121adcdb706f580e1a8375f126c0f4}
-
-
+\subsubsection[{ht}]{\setlength{\rightskip}{0pt plus 5cm}hash\_\-table\_\-t$\ast$ {\bf ht}}\label{commands__NFS_8c_ab1121adcdb706f580e1a8375f126c0f4}
 Global (exported) variable : The cache hash table 
 
-Definition at line 129 of file commands\_\-Cache\_\-inode.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!nfs\_\-param@{nfs\_\-param}}
+Definition at line 80 of file commands\_\-Cache\_\-inode.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!NFS3\_\-write\_\-verifier@{NFS3\_\-write\_\-verifier}}
+\index{NFS3\_\-write\_\-verifier@{NFS3\_\-write\_\-verifier}!commands_NFS.c@{commands\_\-NFS.c}}
+\subsubsection[{NFS3\_\-write\_\-verifier}]{\setlength{\rightskip}{0pt plus 5cm}writeverf3 {\bf NFS3\_\-write\_\-verifier}}\label{commands__NFS_8c_ac75a3dafdfdc69436850ab6d14017097}
+
+
+Definition at line 172 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!nfs\_\-param@{nfs\_\-param}}
 \index{nfs\_\-param@{nfs\_\-param}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{nfs\_\-param}]{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-parameter\_\-t {\bf nfs\_\-param}}\label{commands__NFS_8c_eb8fc46586993cf210777049fca03969}
+\subsubsection[{nfs\_\-param}]{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-parameter\_\-t {\bf nfs\_\-param}}\label{commands__NFS_8c_aeb8fc46586993cf210777049fca03969}
 
 
-
-
-Definition at line 224 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!pexportlist@{pexportlist}}
+Definition at line 171 of file commands\_\-NFS.c.\index{commands\_\-NFS.c@{commands\_\-NFS.c}!pexportlist@{pexportlist}}
 \index{pexportlist@{pexportlist}!commands_NFS.c@{commands\_\-NFS.c}}
-\subsubsection[{pexportlist}]{\setlength{\rightskip}{0pt plus 5cm}exportlist\_\-t$\ast$ {\bf pexportlist} = {\bf exportlist}}\label{commands__NFS_8c_4a2bf9eb86fa336804dc77a48947355d}
+\subsubsection[{pexportlist}]{\setlength{\rightskip}{0pt plus 5cm}exportlist\_\-t$\ast$ {\bf pexportlist} = {\bf exportlist}}\label{commands__NFS_8c_a4a2bf9eb86fa336804dc77a48947355d}
 
 
-
-
-Definition at line 278 of file commands\_\-NFS.c.
+Definition at line 225 of file commands\_\-NFS.c.

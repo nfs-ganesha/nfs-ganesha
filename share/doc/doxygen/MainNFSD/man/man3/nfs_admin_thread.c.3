@@ -1,10 +1,11 @@
-.TH "nfs_admin_thread.c" 3 "31 Mar 2009" "Version 0.1" "Daemon Main" \" -*- nroff -*-
+.TH "nfs_admin_thread.c" 3 "15 Sep 2010" "Version 0.1" "Daemon Main" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_admin_thread.c \- The file that contain the 'admin_thread' routine for the nfsd.  
-
+nfs_admin_thread.c \- 
 .PP
+The file that contain the 'admin_thread' routine for the nfsd.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -16,12 +17,38 @@ nfs_admin_thread.c \- The file that contain the 'admin_thread' routine for the n
 .br
 \fC#include 'nfs_core.h'\fP
 .br
+\fC#include 'stuff_alloc.h'\fP
+.br
+\fC#include 'log_macros.h'\fP
+.br
 
 .SS "Functions"
 
 .in +1c
 .ti -1c
-.RI "void * \fBadmin_thread\fP (void *IndexArg)"
+.RI "int \fBnfs_Init_admin_data\fP (nfs_admin_data_t *pdata)"
+.br
+.ti -1c
+.RI "void \fBadmin_replace_exports\fP ()"
+.br
+.ti -1c
+.RI "int \fBRemoveAllExportsExceptHead\fP (exportlist_t *\fBpexportlist\fP)"
+.br
+.ti -1c
+.RI "int \fBrebuild_export_list\fP (char *config_file)"
+.br
+.ti -1c
+.RI "void * \fBadmin_thread\fP (void *Arg)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "nfs_parameter_t \fBnfs_param\fP"
+.br
+.ti -1c
+.RI "nfs_admin_data_t * \fBpmydata\fP"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -57,9 +84,29 @@ deniel
 Definition in file \fBnfs_admin_thread.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "void* admin_thread (void * IndexArg)"
+.SS "void admin_replace_exports ()"
 .PP
-Definition at line 102 of file nfs_admin_thread.c.
+Definition at line 69 of file nfs_admin_thread.c.
+.SS "void* admin_thread (void * Arg)"
+.PP
+Definition at line 218 of file nfs_admin_thread.c.
+.SS "int nfs_Init_admin_data (nfs_admin_data_t * pdata)"
+.PP
+Definition at line 56 of file nfs_admin_thread.c.
+.SS "int rebuild_export_list (char * config_file)"
+.PP
+Definition at line 150 of file nfs_admin_thread.c.
+.SS "int RemoveAllExportsExceptHead (exportlist_t * pexportlist)"
+.PP
+Definition at line 127 of file nfs_admin_thread.c.
+.SH "Variable Documentation"
+.PP 
+.SS "nfs_parameter_t \fBnfs_param\fP"
+.PP
+Definition at line 85 of file nfs_init.c.
+.SS "nfs_admin_data_t* \fBpmydata\fP"
+.PP
+Definition at line 54 of file nfs_admin_thread.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Daemon Main from the source code.

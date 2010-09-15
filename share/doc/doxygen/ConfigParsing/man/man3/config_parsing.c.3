@@ -1,4 +1,4 @@
-.TH "config_parsing.c" 3 "31 Mar 2009" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
+.TH "config_parsing.c" 3 "15 Sep 2010" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -106,55 +106,49 @@ config_parsing.c \-
 .PP 
 .SS "#define STRNCMP   strncasecmp"
 .PP
-Definition at line 75 of file config_parsing.c.
+Definition at line 32 of file config_parsing.c.
 .SH "Function Documentation"
 .PP 
 .SS "config_item_t config_FindItemByName (config_file_t config, const char * name)"
 .PP
-Definition at line 405 of file config_parsing.c.
+Definition at line 346 of file config_parsing.c.
 .SS "char* config_FindKeyValueByName (config_file_t config, const char * key_name)"
 .PP
-Definition at line 464 of file config_parsing.c.
-.SS "void config_Free (config_file_t config)"
+Definition at line 403 of file config_parsing.c.
+.SS "void config_Free (config_file_t config)"config_Free: Free the memory structure that store the configuration. 
 .PP
-config_Free: Free the memory structure that store the configuration. 
-.PP
-Definition at line 220 of file config_parsing.c.
+Definition at line 164 of file config_parsing.c.
 .SS "config_item_t config_GetBlockByIndex (config_file_t config, unsigned int block_no)"
 .PP
-Definition at line 267 of file config_parsing.c.
+Definition at line 214 of file config_parsing.c.
 .SS "char* config_GetBlockName (config_item_t block)"
 .PP
-Definition at line 290 of file config_parsing.c.
+Definition at line 235 of file config_parsing.c.
 .SS "char* config_GetErrorMsg ()"
 .PP
-Definition at line 186 of file config_parsing.c.
+Definition at line 136 of file config_parsing.c.
 .SS "config_item_t config_GetItemByIndex (config_item_t block, unsigned int item_no)"
 .PP
-Definition at line 330 of file config_parsing.c.
+Definition at line 276 of file config_parsing.c.
 .SS "config_item_t config_GetItemByName (config_item_t block, const char * name)"
 .PP
-Definition at line 482 of file config_parsing.c.
+Definition at line 417 of file config_parsing.c.
 .SS "int config_GetKeyValue (config_item_t item, char ** var_name, char ** var_value)"
 .PP
-Definition at line 368 of file config_parsing.c.
+Definition at line 310 of file config_parsing.c.
 .SS "char* config_GetKeyValueByName (config_item_t block, const char * key_name)"
 .PP
-Definition at line 539 of file config_parsing.c.
-.SS "int config_GetNbBlocks (config_file_t config)"
+Definition at line 473 of file config_parsing.c.
+.SS "int config_GetNbBlocks (config_file_t config)"config_GetNbBlocks: Indicates how many blocks are defined into the config file. 
 .PP
-config_GetNbBlocks: Indicates how many blocks are defined into the config file. 
-.PP
-Definition at line 241 of file config_parsing.c.
+Definition at line 184 of file config_parsing.c.
 .SS "int config_GetNbItems (config_item_t block)"
 .PP
-Definition at line 302 of file config_parsing.c.
+Definition at line 246 of file config_parsing.c.
 .SS "config_item_type config_ItemType (config_item_t item)"
 .PP
-Definition at line 354 of file config_parsing.c.
+Definition at line 297 of file config_parsing.c.
 .SS "config_file_t config_ParseFile (char * file_path)"
-.PP
-
 .PP
 \fBTodo\fP
 .RS 4
@@ -163,17 +157,14 @@ Definition at line 354 of file config_parsing.c.
 .PP
 
 .PP
-Definition at line 116 of file config_parsing.c.
-.SS "void config_Print (FILE * output, config_file_t config)"
+Definition at line 69 of file config_parsing.c.
+.SS "void config_Print (FILE * output, config_file_t config)"config_Print: Print the content of the syntax tree to a file. 
 .PP
-config_Print: Print the content of the syntax tree to a file. 
-.PP
-Definition at line 200 of file config_parsing.c.
+Definition at line 148 of file config_parsing.c.
 .SS "void ganesha_yy_set_current_file (char * file)"
 .PP
 Definition at line 2265 of file conf_lex.c.
 .SS "int ganesha_yyparse ()"
-.PP
 .SS "void ganesha_yyreset (void)"
 .PP
 Definition at line 2260 of file conf_lex.c.
@@ -181,12 +172,11 @@ Definition at line 2260 of file conf_lex.c.
 .PP 
 .SS "char \fBextern_errormsg\fP[1024]"
 .PP
-Definition at line 125 of file conf_yacc.c.
+Definition at line 101 of file conf_yacc.c.
 .SS "FILE* \fBganesha_yyin\fP"
-.PP
 .SS "\fBlist_items\fP* \fBprogram_result\fP"
 .PP
-Definition at line 119 of file conf_yacc.c.
+Definition at line 95 of file conf_yacc.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for ConfigParsing from the source code.

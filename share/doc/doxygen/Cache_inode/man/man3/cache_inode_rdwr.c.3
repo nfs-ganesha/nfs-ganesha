@@ -1,10 +1,11 @@
-.TH "cache_inode_rdwr.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_rdwr.c" 3 "15 Sep 2010" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_rdwr.c \- Removes an entry of any type.  
-
+cache_inode_rdwr.c \- 
 .PP
+Removes an entry of any type.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -12,7 +13,7 @@ cache_inode_rdwr.c \- Removes an entry of any type.
 .br
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -41,7 +42,7 @@ cache_inode_rdwr.c \- Removes an entry of any type.
 
 .in +1c
 .ti -1c
-.RI "cache_inode_status_t \fBcache_inode_rdwr\fP (cache_entry_t *pentry, cache_inode_io_direction_t read_or_write, fsal_seek_t *seek_descriptor, fsal_size_t buffer_size, fsal_size_t *pio_size, fsal_attrib_list_t *pfsal_attr, caddr_t buffer, fsal_boolean_t *p_fsal_eof, hash_table_t *ht, cache_inode_client_t *pclient, fsal_op_context_t *pcontext, cache_inode_status_t *pstatus)"
+.RI "cache_inode_status_t \fBcache_inode_rdwr\fP (cache_entry_t *pentry, cache_inode_io_direction_t read_or_write, fsal_seek_t *seek_descriptor, fsal_size_t buffer_size, fsal_size_t *pio_size, fsal_attrib_list_t *pfsal_attr, caddr_t buffer, fsal_boolean_t *p_fsal_eof, hash_table_t *ht, cache_inode_client_t *pclient, fsal_op_context_t *pcontext, bool_t stable, cache_inode_status_t *pstatus)"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -77,9 +78,7 @@ deniel
 Definition in file \fBcache_inode_rdwr.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "cache_inode_status_t cache_inode_rdwr (cache_entry_t * pentry, cache_inode_io_direction_t read_or_write, fsal_seek_t * seek_descriptor, fsal_size_t buffer_size, fsal_size_t * pio_size, fsal_attrib_list_t * pfsal_attr, caddr_t buffer, fsal_boolean_t * p_fsal_eof, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
-.PP
-cache_inode_rdwr: Reads/Writes through the cache layer.
+.SS "cache_inode_status_t cache_inode_rdwr (cache_entry_t * pentry, cache_inode_io_direction_t read_or_write, fsal_seek_t * seek_descriptor, fsal_size_t buffer_size, fsal_size_t * pio_size, fsal_attrib_list_t * pfsal_attr, caddr_t buffer, fsal_boolean_t * p_fsal_eof, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, bool_t stable, cache_inode_status_t * pstatus)"cache_inode_rdwr: Reads/Writes through the cache layer.
 .PP
 Reads/Writes through the cache layer.
 .PP
@@ -103,7 +102,9 @@ Reads/Writes through the cache layer.
 .br
 \fIpclient\fP [IN] ressource allocated by the client for the nfs management. 
 .br
-\fIpcontext\fP [IN] fsal context for the operation.  [OUT] returned status.
+\fIpcontext\fP [IN] fsal context for the operation. 
+.br
+\fIstable[IN]\fP if FALSE, data will be written to unstable storage (for implementing write/commit)  [OUT] returned status.
 .RE
 .PP
 \fBReturns:\fP
@@ -118,7 +119,7 @@ CACHE_CONTENT_SUCCESS is successful .
 .PP
 
 .PP
-Definition at line 137 of file cache_inode_rdwr.c.
+Definition at line 87 of file cache_inode_rdwr.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

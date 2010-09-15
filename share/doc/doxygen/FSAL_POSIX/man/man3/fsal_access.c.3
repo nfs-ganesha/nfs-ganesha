@@ -1,10 +1,11 @@
-.TH "fsal_access.c" 3 "31 Mar 2009" "Version 0.1" "File System Abstraction Layer (POSIX) library" \" -*- nroff -*-
+.TH "fsal_access.c" 3 "15 Sep 2010" "Version 0.1" "File System Abstraction Layer (POSIX) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_access.c \- FSAL access permissions functions.  
-
+fsal_access.c \- 
 .PP
+FSAL access permissions functions.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -19,7 +20,7 @@ fsal_access.c \- FSAL access permissions functions.
 
 .in +1c
 .ti -1c
-.RI "fsal_status_t \fBFSAL_access\fP (fsal_handle_t *p_object_handle, fsal_op_context_t *p_context, fsal_accessflags_t access_type, fsal_attrib_list_t *p_object_attributes)"
+.RI "fsal_status_t \fBPOSIXFSAL_access\fP (posixfsal_handle_t *p_object_handle, posixfsal_op_context_t *p_context, fsal_accessflags_t access_type, fsal_attrib_list_t *p_object_attributes)"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -55,9 +56,7 @@ leibovic
 Definition in file \fBfsal_access.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "fsal_status_t FSAL_access (fsal_handle_t * p_object_handle, fsal_op_context_t * p_context, fsal_accessflags_t access_type, fsal_attrib_list_t * p_object_attributes)"
-.PP
-FSAL_access : Tests whether the user or entity identified by its cred can access the object identified by object_handle, as indicated by the access_type parameters.
+.SS "fsal_status_t POSIXFSAL_access (posixfsal_handle_t * p_object_handle, posixfsal_op_context_t * p_context, fsal_accessflags_t access_type, fsal_attrib_list_t * p_object_attributes)"FSAL_access : Tests whether the user or entity identified by its cred can access the object identified by object_handle, as indicated by the access_type parameters.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -91,9 +90,9 @@ Another error code if an error occured.
 .PP
 
 .PP
-Definition at line 60 of file fsal_access.c.
+Definition at line 53 of file fsal_access.c.
 .PP
-References FSAL_getattrs().
+References POSIXFSAL_getattrs().
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File System Abstraction Layer (POSIX) library from the source code.

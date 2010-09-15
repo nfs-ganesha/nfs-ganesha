@@ -1,16 +1,17 @@
-.TH "cache_inode_remove.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_remove.c" 3 "15 Sep 2010" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_remove.c \- Removes an entry of any type.  
-
+cache_inode_remove.c \- 
 .PP
+Removes an entry of any type.  
+
 .SH SYNOPSIS
 .br
 .PP
 \fC#include 'LRU_List.h'\fP
 .br
-\fC#include 'log_functions.h'\fP
+\fC#include 'log_macros.h'\fP
 .br
 \fC#include 'HashData.h'\fP
 .br
@@ -90,9 +91,7 @@ leibovic
 Definition in file \fBcache_inode_remove.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "cache_inode_status_t cache_inode_clean_internal (cache_entry_t * to_remove_entry, hash_table_t * ht, cache_inode_client_t * pclient)"
-.PP
-cache_inode_clean_internal: remove a pentry from cache and all LRUs, and release related resources.
+.SS "cache_inode_status_t cache_inode_clean_internal (cache_entry_t * to_remove_entry, hash_table_t * ht, cache_inode_client_t * pclient)"cache_inode_clean_internal: remove a pentry from cache and all LRUs, and release related resources.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -105,10 +104,8 @@ cache_inode_clean_internal: remove a pentry from cache and all LRUs, and release
 .PP
 
 .PP
-Definition at line 130 of file cache_inode_remove.c.
-.SS "cache_inode_status_t cache_inode_is_dir_empty (cache_entry_t * pentry)"
-.PP
-cache_inode_is_dir_empty: checks if a directory is empty or not. No mutex management.
+Definition at line 128 of file cache_inode_remove.c.
+.SS "cache_inode_status_t cache_inode_is_dir_empty (cache_entry_t * pentry)"cache_inode_is_dir_empty: checks if a directory is empty or not. No mutex management.
 .PP
 Checks if a directory is empty or not. No mutex management
 .PP
@@ -132,10 +129,8 @@ CACHE_INODE_DIR_NOT_EMPTY if pentry is a non empty DIR_BEGINNING
 .PP
 
 .PP
-Definition at line 50 of file cache_inode_remove.c.
-.SS "cache_inode_status_t cache_inode_is_dir_empty_WithLock (cache_entry_t * pentry)"
-.PP
-cache_inode_is_dir_empty_WithLock: checks if a directory is empty or not, BUT has lock management.
+Definition at line 49 of file cache_inode_remove.c.
+.SS "cache_inode_status_t cache_inode_is_dir_empty_WithLock (cache_entry_t * pentry)"cache_inode_is_dir_empty_WithLock: checks if a directory is empty or not, BUT has lock management.
 .PP
 Checks if a directory is empty or not, BUT has lock management.
 .PP
@@ -159,10 +154,8 @@ CACHE_INODE_DIR_NOT_EMPTY if pentry is a non empty DIR_BEGINNING
 .PP
 
 .PP
-Definition at line 110 of file cache_inode_remove.c.
-.SS "cache_inode_status_t cache_inode_remove (cache_entry_t * pentry, fsal_name_t * pnode_name, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
-.PP
-cache_inode_remove: removes a pentry addressed by its parent pentry and its FSAL name.
+Definition at line 109 of file cache_inode_remove.c.
+.SS "cache_inode_status_t cache_inode_remove (cache_entry_t * pentry, fsal_name_t * pnode_name, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"cache_inode_remove: removes a pentry addressed by its parent pentry and its FSAL name.
 .PP
 Removes a pentry addressed by its parent pentry and its FSAL name.
 .PP
@@ -192,18 +185,15 @@ CACHE_INODE_SUCCESS if operation is a success
 CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry 
 .RE
 .PP
+\fBParameters:\fP
+.RS 4
+\fIpentry\fP Parent entry 
+.RE
+.PP
 
 .PP
-\fBParameters: \fP
-.in +1c
-.TP
-\fB\fIpentry\fP\fP
-Parent entry 
-.PP
-Definition at line 615 of file cache_inode_remove.c.
-.SS "cache_inode_status_t cache_inode_remove_no_mutex (cache_entry_t * pentry, fsal_name_t * pnode_name, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
-.PP
-cache_inode_remove_no_mutex: removes a pentry addressed by its parent pentry and its FSAL name. No mutex management.
+Definition at line 677 of file cache_inode_remove.c.
+.SS "cache_inode_status_t cache_inode_remove_no_mutex (cache_entry_t * pentry, fsal_name_t * pnode_name, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"cache_inode_remove_no_mutex: removes a pentry addressed by its parent pentry and its FSAL name. No mutex management.
 .PP
 Removes a pentry addressed by its parent pentry and its FSAL name.
 .PP
@@ -233,18 +223,15 @@ CACHE_INODE_SUCCESS if operation is a success
 CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry 
 .RE
 .PP
+\fBParameters:\fP
+.RS 4
+\fIpentry\fP Parent entry 
+.RE
+.PP
 
 .PP
-\fBParameters: \fP
-.in +1c
-.TP
-\fB\fIpentry\fP\fP
-Parent entry 
-.PP
-Definition at line 578 of file cache_inode_remove.c.
-.SS "cache_inode_status_t cache_inode_remove_sw (cache_entry_t * pentry, fsal_name_t * pnode_name, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus, int use_mutex)"
-.PP
-cache_inode_remove_sw: removes a pentry addressed by its parent pentry and its FSAL name. Mutex management is switched.
+Definition at line 647 of file cache_inode_remove.c.
+.SS "cache_inode_status_t cache_inode_remove_sw (cache_entry_t * pentry, fsal_name_t * pnode_name, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus, int use_mutex)"cache_inode_remove_sw: removes a pentry addressed by its parent pentry and its FSAL name. Mutex management is switched.
 .PP
 Removes a pentry addressed by its parent pentry and its FSAL name. Mutex management is switched.
 .PP
@@ -274,13 +261,12 @@ CACHE_INODE_SUCCESS if operation is a success
 CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry 
 .RE
 .PP
-
+\fBParameters:\fP
+.RS 4
+\fIpentry\fP Parent entry 
+.RE
 .PP
-\fBParameters: \fP
-.in +1c
-.TP
-\fB\fIpentry\fP\fP
-Parent entry 
+
 .PP
 Definition at line 247 of file cache_inode_remove.c.
 .SH "Author"

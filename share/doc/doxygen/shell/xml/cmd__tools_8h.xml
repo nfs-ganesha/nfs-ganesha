@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.6.1">
   <compounddef id="cmd__tools_8h" kind="file">
     <compoundname>cmd_tools.h</compoundname>
     <includes local="yes">fsal.h</includes>
@@ -91,7 +91,7 @@
     </invincdepgraph>
     <innerclass refid="structshell__attribute____" prot="public">shell_attribute__</innerclass>
       <sectiondef kind="define">
-      <memberdef kind="define" id="cmd__tools_8h_11424b3bf6847b8179a9e3b25a9c4863b" prot="public" static="no">
+      <memberdef kind="define" id="cmd__tools_8h_1a1424b3bf6847b8179a9e3b25a9c4863b" prot="public" static="no">
         <name>print_timeval</name>
         <param><defname>out</defname></param>
         <param><defname>_tv_</defname></param>
@@ -102,13 +102,13 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="277" bodyfile="/export/GANESHA/src/shell/cmd_tools.h" bodystart="277" bodyend="-1"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="264" bodyfile="/export/GANESHA/src/shell/cmd_tools.h" bodystart="264" bodyend="-1"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="enum">
-      <memberdef kind="enum" id="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518" prot="public" static="no">
+      <memberdef kind="enum" id="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518" prot="public" static="no">
         <name>shell_attr_type__</name>
-        <enumvalue id="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518b27212240b03ce5a23837658b63a31e7" prot="public">
+        <enumvalue id="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518ab27212240b03ce5a23837658b63a31e7" prot="public">
           <name>ATTR_NONE</name>
           <initializer> 0</initializer>
           <briefdescription>
@@ -116,28 +116,28 @@
           <detaileddescription>
           </detaileddescription>
         </enumvalue>
-        <enumvalue id="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518ac06b439a85fc65cb1560af23c8d9d6a" prot="public">
+        <enumvalue id="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518aac06b439a85fc65cb1560af23c8d9d6a" prot="public">
           <name>ATTR_32</name>
           <briefdescription>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
         </enumvalue>
-        <enumvalue id="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b5188e30b976c8fd042f4ee1ac635769ee8e" prot="public">
+        <enumvalue id="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518a8e30b976c8fd042f4ee1ac635769ee8e" prot="public">
           <name>ATTR_64</name>
           <briefdescription>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
         </enumvalue>
-        <enumvalue id="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b51860d91fd56220bae942a9e3e48e744cce" prot="public">
+        <enumvalue id="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518a60d91fd56220bae942a9e3e48e744cce" prot="public">
           <name>ATTR_OCTAL</name>
           <briefdescription>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
         </enumvalue>
-        <enumvalue id="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518d4dc69dfe667197925f278cda8ec39d6" prot="public">
+        <enumvalue id="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518ad4dc69dfe667197925f278cda8ec39d6" prot="public">
           <name>ATTR_TIME</name>
           <briefdescription>
           </briefdescription>
@@ -150,12 +150,12 @@
 <para>Type of attributes </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="220" bodyfile="/export/GANESHA/src/shell/cmd_tools.h" bodystart="220" bodyend="230"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="205" bodyfile="/export/GANESHA/src/shell/cmd_tools.h" bodystart="204" bodyend="214"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="typedef">
-      <memberdef kind="typedef" id="cmd__tools_8h_175950087da4d34f0133255c11750f276" prot="public" static="no">
-        <type>enum <ref refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518" kindref="member">shell_attr_type__</ref></type>
+      <memberdef kind="typedef" id="cmd__tools_8h_1a75950087da4d34f0133255c11750f276" prot="public" static="no">
+        <type>enum <ref refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518" kindref="member">shell_attr_type__</ref></type>
         <definition>typedef enum shell_attr_type__  shell_attr_type_t</definition>
         <argsstring></argsstring>
         <name>shell_attr_type_t</name>
@@ -165,9 +165,9 @@
 <para>Type of attributes </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="230"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="214"/>
       </memberdef>
-      <memberdef kind="typedef" id="cmd__tools_8h_17c4a36399c793db5fbec2103146ad2a0" prot="public" static="no">
+      <memberdef kind="typedef" id="cmd__tools_8h_1a7c4a36399c793db5fbec2103146ad2a0" prot="public" static="no">
         <type>struct <ref refid="structshell__attribute____" kindref="compound">shell_attribute__</ref></type>
         <definition>typedef struct shell_attribute__  shell_attribute_t</definition>
         <argsstring></argsstring>
@@ -178,11 +178,11 @@
 <para>Attribute definition structure. </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="241"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="225"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="func">
-      <memberdef kind="function" id="cmd__tools_8h_1cf2839e4f9588b83b02d406cabffee0a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cmd__tools_8h_1acf2839e4f9588b83b02d406cabffee0a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>struct tm *</type>
         <definition>struct tm* Localtime_r</definition>
         <argsstring>(const time_t *p_time, struct tm *p_tm)</argsstring>
@@ -201,9 +201,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="83" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="179" bodyend="199"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="81" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="125" bodyend="145"/>
       </memberdef>
-      <memberdef kind="function" id="cmd__tools_8h_1688b18dd9abbd7f9b3bab90531c0a066" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cmd__tools_8h_1a688b18dd9abbd7f9b3bab90531c0a066" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int my_atoi</definition>
         <argsstring>(char *str)</argsstring>
@@ -227,9 +227,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="94" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="211" bodyend="230"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="92" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="156" bodyend="179"/>
       </memberdef>
-      <memberdef kind="function" id="cmd__tools_8h_10dcb2075e79b984f98f9b7cd729c5724" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cmd__tools_8h_1a0dcb2075e79b984f98f9b7cd729c5724" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int atomode</definition>
         <argsstring>(char *str)</argsstring>
@@ -253,9 +253,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="107" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="242" bodyend="262"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="103" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="190" bodyend="213"/>
       </memberdef>
-      <memberdef kind="function" id="cmd__tools_8h_16e4bec3955f66ac34221da2c4117595f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cmd__tools_8h_1a6e4bec3955f66ac34221da2c4117595f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int ato64</definition>
         <argsstring>(char *str, unsigned long long *out64)</argsstring>
@@ -274,9 +274,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="110" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="265" bodyend="287"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="105" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="215" bodyend="242"/>
       </memberdef>
-      <memberdef kind="function" id="cmd__tools_8h_13663a6a631535306a284cfc4e5e00916" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cmd__tools_8h_1a3663a6a631535306a284cfc4e5e00916" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>time_t</type>
         <definition>time_t atotime</definition>
         <argsstring>(char *str)</argsstring>
@@ -291,9 +291,9 @@
 <para>convert time from &quot;YYYYMMDDHHMMSS&quot; to time_t. </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="113" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="293" bodyend="425"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="107" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="247" bodyend="394"/>
       </memberdef>
-      <memberdef kind="function" id="cmd__tools_8h_1b89ae5e88592c4a71a93fe8183249a02" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cmd__tools_8h_1ab89ae5e88592c4a71a93fe8183249a02" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>char *</type>
         <definition>char* time2str</definition>
         <argsstring>(time_t time_in, char *str_out)</argsstring>
@@ -312,9 +312,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="114" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="501" bodyend="526"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="108" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="472" bodyend="501"/>
       </memberdef>
-      <memberdef kind="function" id="cmd__tools_8h_18571ce79d40b0f332664d626d4ab185a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cmd__tools_8h_1a8571ce79d40b0f332664d626d4ab185a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void split_path</definition>
         <argsstring>(char *in_path, char **p_path, char **p_file)</argsstring>
@@ -359,9 +359,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="126" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="443" bodyend="495"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="119" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="408" bodyend="469"/>
       </memberdef>
-      <memberdef kind="function" id="cmd__tools_8h_109125ca0b71220b45815198cfd0a65d3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cmd__tools_8h_1a09125ca0b71220b45815198cfd0a65d3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void clean_path</definition>
         <argsstring>(char *str, int len)</argsstring>
@@ -396,9 +396,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="139" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="540" bodyend="664"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="131" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="513" bodyend="654"/>
       </memberdef>
-      <memberdef kind="function" id="cmd__tools_8h_1848f9515f036e0d86c6369fd03f80774" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cmd__tools_8h_1a848f9515f036e0d86c6369fd03f80774" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>char *</type>
         <definition>char* concat</definition>
         <argsstring>(char *str1, char *str2, size_t max_len)</argsstring>
@@ -444,9 +444,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="152" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="1114" bodyend="1125"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="143" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="1123" bodyend="1135"/>
       </memberdef>
-      <memberdef kind="function" id="cmd__tools_8h_12a9b6650aa4980dae77783e7494e0685" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cmd__tools_8h_1a2a9b6650aa4980dae77783e7494e0685" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void print_fsal_status</definition>
         <argsstring>(FILE *output, fsal_status_t status)</argsstring>
@@ -481,9 +481,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="164" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="677" bodyend="696"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="154" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="665" bodyend="683"/>
       </memberdef>
-      <memberdef kind="function" id="cmd__tools_8h_1f71b62e41793b8cf9108ac5773477589" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cmd__tools_8h_1af71b62e41793b8cf9108ac5773477589" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void print_fsal_attrib_mask</definition>
         <argsstring>(fsal_attrib_mask_t mask, FILE *output)</argsstring>
@@ -518,9 +518,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="176" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="707" bodyend="744"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="164" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="693" bodyend="731"/>
       </memberdef>
-      <memberdef kind="function" id="cmd__tools_8h_155da3e758cacb2e7378990063ef42124" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cmd__tools_8h_1a55da3e758cacb2e7378990063ef42124" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>char *</type>
         <definition>char* strtype</definition>
         <argsstring>(fsal_nodetype_t type)</argsstring>
@@ -544,9 +544,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="185" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="754" bodyend="773"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="173" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="740" bodyend="761"/>
       </memberdef>
-      <memberdef kind="function" id="cmd__tools_8h_185d37e0b70c90a35c94421758b030010" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cmd__tools_8h_1a85d37e0b70c90a35c94421758b030010" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void print_fsal_attributes</definition>
         <argsstring>(fsal_attrib_list_t attrs, FILE *output)</argsstring>
@@ -581,9 +581,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="196" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="784" bodyend="820"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="183" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="771" bodyend="807"/>
       </memberdef>
-      <memberdef kind="function" id="cmd__tools_8h_177416db263ae0a4ff6acf365f1122733" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cmd__tools_8h_1a77416db263ae0a4ff6acf365f1122733" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void print_item_line</definition>
         <argsstring>(FILE *out, fsal_attrib_list_t *attrib, char *name, char *target)</argsstring>
@@ -640,9 +640,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="212" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="841" bodyend="934"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="197" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="826" bodyend="948"/>
       </memberdef>
-      <memberdef kind="function" id="cmd__tools_8h_197707e3fa1e892b600346df9d5592fb0" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cmd__tools_8h_1a97707e3fa1e892b600346df9d5592fb0" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="structshell__attribute____" kindref="compound">shell_attribute_t</ref></type>
         <definition>static shell_attribute_t __attribute__</definition>
         <argsstring>((__unused__)) shell_attr_list[]</argsstring>
@@ -656,9 +656,9 @@
 <para>This structure contains FSAL settable attributes. </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="259"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="250"/>
       </memberdef>
-      <memberdef kind="function" id="cmd__tools_8h_1bccc4389b9df09ee20930429d95fcd68" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cmd__tools_8h_1abccc4389b9df09ee20930429d95fcd68" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int MkFSALSetAttrStruct</definition>
         <argsstring>(char *attribute_list, fsal_attrib_list_t *fsal_set_attr_struct)</argsstring>
@@ -678,9 +678,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="268" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="945" bodyend="1087"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="258" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="956" bodyend="1097"/>
       </memberdef>
-      <memberdef kind="function" id="cmd__tools_8h_1cf045ccad77a69933c72ecf0f7beeb14" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cmd__tools_8h_1acf045ccad77a69933c72ecf0f7beeb14" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>struct timeval</type>
         <definition>struct timeval time_diff</definition>
         <argsstring>(struct timeval time_from, struct timeval time_to)</argsstring>
@@ -699,9 +699,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="274" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="1094" bodyend="1109"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="261" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="1101" bodyend="1119"/>
       </memberdef>
-      <memberdef kind="function" id="cmd__tools_8h_14f37575046a10c5356f42ca83d527fa6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cmd__tools_8h_1a4f37575046a10c5356f42ca83d527fa6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int getugroups</definition>
         <argsstring>(int maxcount, gid_t *grouplist, char *username, gid_t gid)</argsstring>
@@ -728,7 +728,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="280" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="1128" bodyend="1178"/>
+        <location file="/export/GANESHA/src/shell/cmd_tools.h" line="266" bodyfile="/export/GANESHA/src/shell/cmd_tools.c" bodystart="1138" bodyend="1188"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
@@ -742,131 +742,117 @@
 Revision 1.14 2006/01/24 13:49:33 leibovic Adding missing includes.</para><para>Revision 1.13 2006/01/20 14:44:14 leibovic altgroups support.</para><para>Revision 1.12 2006/01/17 14:56:22 leibovic Adaptation de HPSS 6.2.</para><para>Revision 1.11 2005/09/28 09:08:00 leibovic thread-safe version of localtime.</para><para>Revision 1.10 2005/08/12 11:56:58 leibovic coquille.</para><para>Revision 1.9 2005/08/12 11:21:27 leibovic Now, set cat concatenate strings.</para><para>Revision 1.8 2005/05/11 15:53:37 leibovic Adding time function.</para><para>Revision 1.7 2005/05/09 12:23:54 leibovic Version 2 of ganeshell.</para><para>Revision 1.6 2005/04/25 12:57:48 leibovic Implementing setattr.</para><para>Revision 1.5 2005/04/14 11:21:56 leibovic Changing command syntax.</para><para>Revision 1.4 2005/04/13 09:28:05 leibovic Adding unlink and mkdir calls.</para><para>Revision 1.3 2005/03/04 08:01:32 leibovic removing snprintmem (moved to FSAL layer)à.</para><para>Revision 1.2 2004/12/17 16:05:27 leibovic Replacing X with snprintmem for handles printing.</para><para>Revision 1.1 2004/12/09 15:46:22 leibovic Tools externalisation. </para>    </detaileddescription>
     <programlisting>
 <codeline lineno="1"></codeline>
-<codeline lineno="57"><highlight class="preprocessor">#ifndef<sp/>_CMD_TOOLS_H</highlight></codeline>
-<codeline lineno="58"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>_CMD_TOOLS_H</highlight></codeline>
-<codeline lineno="59"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="60"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_LINUX</highlight></codeline>
-<codeline lineno="61"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;stddef.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="62"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="63"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="64"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_APPLE</highlight></codeline>
-<codeline lineno="65"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;stddef.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="66"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="67"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="68"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
-<codeline lineno="69"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;solaris_port.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="70"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="71"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="72"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;fsal.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="73"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;time.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="74"><highlight class="normal"></highlight></codeline>
-<codeline lineno="75"><highlight class="normal"></highlight></codeline>
-<codeline lineno="76"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
-<codeline lineno="77"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#ifndef<sp/>offsetof</highlight></codeline>
-<codeline lineno="78"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>offsetof(type,<sp/>member)<sp/>(<sp/>(int)<sp/>&amp;<sp/>((type*)0)<sp/>-&gt;<sp/>member<sp/>)</highlight></codeline>
-<codeline lineno="79"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="80"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="81"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="82"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>thread-safe<sp/>and<sp/>PORTABLE<sp/>version<sp/>of<sp/>localtime...<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="83"><highlight class="normal"></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">tm<sp/>*<sp/><ref refid="cmd__tools_8c_1cf2839e4f9588b83b02d406cabffee0a" kindref="member">Localtime_r</ref>(<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>time_t<sp/>*<sp/>p_time,<sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>tm<sp/>*<sp/>p_tm<sp/>);</highlight></codeline>
-<codeline lineno="84"><highlight class="normal"></highlight></codeline>
-<codeline lineno="94"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_1688b18dd9abbd7f9b3bab90531c0a066" kindref="member">my_atoi</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str);</highlight></codeline>
-<codeline lineno="95"><highlight class="normal"></highlight></codeline>
-<codeline lineno="96"><highlight class="normal"></highlight></codeline>
-<codeline lineno="97"><highlight class="normal"></highlight></codeline>
-<codeline lineno="107"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_10dcb2075e79b984f98f9b7cd729c5724" kindref="member">atomode</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str);</highlight></codeline>
-<codeline lineno="108"><highlight class="normal"></highlight></codeline>
+<codeline lineno="56"><highlight class="preprocessor">#ifndef<sp/>_CMD_TOOLS_H</highlight></codeline>
+<codeline lineno="57"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>_CMD_TOOLS_H</highlight></codeline>
+<codeline lineno="58"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="59"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_LINUX</highlight></codeline>
+<codeline lineno="60"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;stddef.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="61"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="62"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="63"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_APPLE</highlight></codeline>
+<codeline lineno="64"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;stddef.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="65"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="66"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="67"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
+<codeline lineno="68"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;solaris_port.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="69"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="70"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="71"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;fsal.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="72"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;time.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="73"><highlight class="normal"></highlight></codeline>
+<codeline lineno="74"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
+<codeline lineno="75"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#ifndef<sp/>offsetof</highlight></codeline>
+<codeline lineno="76"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>offsetof(type,<sp/>member)<sp/>(<sp/>(int)<sp/>&amp;<sp/>((type*)0)<sp/>-&gt;<sp/>member<sp/>)</highlight></codeline>
+<codeline lineno="77"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="78"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="79"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="80"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>thread-safe<sp/>and<sp/>PORTABLE<sp/>version<sp/>of<sp/>localtime...<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="81"><highlight class="normal"></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">tm<sp/>*<ref refid="cmd__tools_8c_1acf2839e4f9588b83b02d406cabffee0a" kindref="member">Localtime_r</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>time_t<sp/>*<sp/>p_time,<sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>tm<sp/>*p_tm);</highlight></codeline>
+<codeline lineno="82"><highlight class="normal"></highlight></codeline>
+<codeline lineno="92"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_1a688b18dd9abbd7f9b3bab90531c0a066" kindref="member">my_atoi</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*str);</highlight></codeline>
+<codeline lineno="93"><highlight class="normal"></highlight></codeline>
+<codeline lineno="103"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_1a0dcb2075e79b984f98f9b7cd729c5724" kindref="member">atomode</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*str);</highlight></codeline>
+<codeline lineno="104"><highlight class="normal"></highlight></codeline>
+<codeline lineno="105"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_1a6e4bec3955f66ac34221da2c4117595f" kindref="member">ato64</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*str,<sp/></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/>*out64);</highlight></codeline>
+<codeline lineno="106"><highlight class="normal"></highlight></codeline>
+<codeline lineno="107"><highlight class="normal">time_t<sp/><ref refid="cmd__tools_8c_1a3663a6a631535306a284cfc4e5e00916" kindref="member">atotime</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*str);</highlight></codeline>
+<codeline lineno="108"><highlight class="normal"></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<ref refid="cmd__tools_8c_1ab89ae5e88592c4a71a93fe8183249a02" kindref="member">time2str</ref>(time_t<sp/>time_in,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*str_out);</highlight></codeline>
 <codeline lineno="109"><highlight class="normal"></highlight></codeline>
-<codeline lineno="110"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_16e4bec3955f66ac34221da2c4117595f" kindref="member">ato64</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str,<sp/></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/>*<sp/>out64);</highlight></codeline>
-<codeline lineno="111"><highlight class="normal"></highlight></codeline>
-<codeline lineno="112"><highlight class="normal"></highlight></codeline>
-<codeline lineno="113"><highlight class="normal">time_t<sp/><ref refid="cmd__tools_8c_13663a6a631535306a284cfc4e5e00916" kindref="member">atotime</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str);</highlight></codeline>
-<codeline lineno="114"><highlight class="normal"></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><ref refid="cmd__tools_8c_1b89ae5e88592c4a71a93fe8183249a02" kindref="member">time2str</ref>(time_t<sp/>time_in,</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str_out);</highlight></codeline>
-<codeline lineno="115"><highlight class="normal"></highlight></codeline>
-<codeline lineno="116"><highlight class="normal"></highlight></codeline>
-<codeline lineno="126"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_18571ce79d40b0f332664d626d4ab185a" kindref="member">split_path</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>in_path,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>p_path,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>p_file);</highlight></codeline>
-<codeline lineno="127"><highlight class="normal"></highlight></codeline>
-<codeline lineno="128"><highlight class="normal"></highlight></codeline>
-<codeline lineno="139"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_109125ca0b71220b45815198cfd0a65d3" kindref="member">clean_path</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str,</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>len);</highlight></codeline>
-<codeline lineno="140"><highlight class="normal"></highlight></codeline>
-<codeline lineno="141"><highlight class="normal"></highlight></codeline>
-<codeline lineno="152"><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><ref refid="cmd__tools_8c_1848f9515f036e0d86c6369fd03f80774" kindref="member">concat</ref>(<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str1,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str2,<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>max_len<sp/>);</highlight></codeline>
-<codeline lineno="153"><highlight class="normal"></highlight></codeline>
-<codeline lineno="154"><highlight class="normal"></highlight></codeline>
-<codeline lineno="164"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_12a9b6650aa4980dae77783e7494e0685" kindref="member">print_fsal_status</ref>(FILE<sp/>*<sp/>output,fsal_status_t<sp/>status);</highlight></codeline>
+<codeline lineno="119"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_1a8571ce79d40b0f332664d626d4ab185a" kindref="member">split_path</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*in_path,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**p_path,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**p_file);</highlight></codeline>
+<codeline lineno="120"><highlight class="normal"></highlight></codeline>
+<codeline lineno="131"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_1a09125ca0b71220b45815198cfd0a65d3" kindref="member">clean_path</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*str,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>len);</highlight></codeline>
+<codeline lineno="132"><highlight class="normal"></highlight></codeline>
+<codeline lineno="143"><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<ref refid="cmd__tools_8c_1a848f9515f036e0d86c6369fd03f80774" kindref="member">concat</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*str1,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*str2,<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>max_len);</highlight></codeline>
+<codeline lineno="144"><highlight class="normal"></highlight></codeline>
+<codeline lineno="154"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_1a2a9b6650aa4980dae77783e7494e0685" kindref="member">print_fsal_status</ref>(FILE<sp/>*<sp/>output,<sp/>fsal_status_t<sp/>status);</highlight></codeline>
+<codeline lineno="155"><highlight class="normal"></highlight></codeline>
+<codeline lineno="164"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_1af71b62e41793b8cf9108ac5773477589" kindref="member">print_fsal_attrib_mask</ref>(fsal_attrib_mask_t<sp/>mask,<sp/>FILE<sp/>*<sp/>output);</highlight></codeline>
 <codeline lineno="165"><highlight class="normal"></highlight></codeline>
-<codeline lineno="166"><highlight class="normal"></highlight></codeline>
-<codeline lineno="167"><highlight class="normal"></highlight></codeline>
-<codeline lineno="176"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_1f71b62e41793b8cf9108ac5773477589" kindref="member">print_fsal_attrib_mask</ref>(fsal_attrib_mask_t<sp/>mask,FILE<sp/>*<sp/>output);</highlight></codeline>
-<codeline lineno="177"><highlight class="normal"></highlight></codeline>
-<codeline lineno="185"><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><ref refid="cmd__tools_8c_155da3e758cacb2e7378990063ef42124" kindref="member">strtype</ref>(fsal_nodetype_t<sp/>type);</highlight></codeline>
-<codeline lineno="186"><highlight class="normal"></highlight></codeline>
-<codeline lineno="187"><highlight class="normal"></highlight></codeline>
-<codeline lineno="196"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_185d37e0b70c90a35c94421758b030010" kindref="member">print_fsal_attributes</ref>(<sp/>fsal_attrib_list_t<sp/>attrs,FILE<sp/>*<sp/>output);</highlight></codeline>
-<codeline lineno="197"><highlight class="normal"></highlight></codeline>
+<codeline lineno="173"><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<ref refid="cmd__tools_8c_1a55da3e758cacb2e7378990063ef42124" kindref="member">strtype</ref>(fsal_nodetype_t<sp/>type);</highlight></codeline>
+<codeline lineno="174"><highlight class="normal"></highlight></codeline>
+<codeline lineno="183"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_1a85d37e0b70c90a35c94421758b030010" kindref="member">print_fsal_attributes</ref>(fsal_attrib_list_t<sp/>attrs,<sp/>FILE<sp/>*<sp/>output);</highlight></codeline>
+<codeline lineno="184"><highlight class="normal"></highlight></codeline>
+<codeline lineno="197"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_1a77416db263ae0a4ff6acf365f1122733" kindref="member">print_item_line</ref>(FILE<sp/>*<sp/>out,<sp/>fsal_attrib_list_t<sp/>*<sp/>attrib,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*name,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*target);</highlight></codeline>
 <codeline lineno="198"><highlight class="normal"></highlight></codeline>
-<codeline lineno="199"><highlight class="normal"></highlight></codeline>
-<codeline lineno="212"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_177416db263ae0a4ff6acf365f1122733" kindref="member">print_item_line</ref>(<sp/>FILE<sp/>*<sp/>out,fsal_attrib_list_t<sp/>*<sp/>attrib,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>name<sp/>,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>target);</highlight></codeline>
-<codeline lineno="213"><highlight class="normal"></highlight></codeline>
-<codeline lineno="214"><highlight class="normal"></highlight></codeline>
-<codeline lineno="215"><highlight class="normal"></highlight><highlight class="comment">/*</highlight></codeline>
-<codeline lineno="216"><highlight class="comment"><sp/>*<sp/>Thoses<sp/>structures<sp/>are<sp/>used<sp/>to<sp/>handle<sp/>FSAL<sp/>attributes.</highlight></codeline>
-<codeline lineno="217"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="218"><highlight class="normal"></highlight></codeline>
-<codeline lineno="220" refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518" refkind="member"><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">enum</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518" kindref="member">shell_attr_type__</ref><sp/>{<sp/><sp/></highlight></codeline>
-<codeline lineno="221"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="222" refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518b27212240b03ce5a23837658b63a31e7" refkind="member"><highlight class="normal"><sp/><sp/><ref refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518b27212240b03ce5a23837658b63a31e7" kindref="member">ATTR_NONE</ref><sp/>=<sp/>0,<sp/></highlight><highlight class="comment">/*<sp/>this<sp/>special<sp/>value<sp/>is<sp/>used</highlight></codeline>
-<codeline lineno="223"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>to<sp/>indicate<sp/>the<sp/>end<sp/>of<sp/>the<sp/>attribute<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="224"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="225" refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518ac06b439a85fc65cb1560af23c8d9d6a" refkind="member"><highlight class="normal"><sp/><sp/><ref refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518ac06b439a85fc65cb1560af23c8d9d6a" kindref="member">ATTR_32</ref>,<sp/></highlight><highlight class="comment">/*<sp/>32<sp/>bits<sp/>attribute<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="226" refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b5188e30b976c8fd042f4ee1ac635769ee8e" refkind="member"><highlight class="normal"><sp/><sp/><ref refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b5188e30b976c8fd042f4ee1ac635769ee8e" kindref="member">ATTR_64</ref>,<sp/></highlight><highlight class="comment">/*<sp/>64<sp/>bits<sp/>attribute<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="227" refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b51860d91fd56220bae942a9e3e48e744cce" refkind="member"><highlight class="normal"><sp/><sp/><ref refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b51860d91fd56220bae942a9e3e48e744cce" kindref="member">ATTR_OCTAL</ref>,<sp/></highlight><highlight class="comment">/*<sp/>octal<sp/>number<sp/>attribute<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="228" refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518d4dc69dfe667197925f278cda8ec39d6" refkind="member"><highlight class="normal"><sp/><sp/><ref refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518d4dc69dfe667197925f278cda8ec39d6" kindref="member">ATTR_TIME</ref><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>YYYYMMDDhhmmss<sp/>attribute<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="229"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="230"><highlight class="normal">}<sp/><ref refid="cmd__tools_8h_175950087da4d34f0133255c11750f276" kindref="member">shell_attr_type_t</ref>;</highlight></codeline>
-<codeline lineno="231"><highlight class="normal"></highlight></codeline>
-<codeline lineno="232"><highlight class="normal"></highlight></codeline>
-<codeline lineno="234" refid="structshell__attribute____" refkind="compound"><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal"><ref refid="structshell__attribute____" kindref="compound">shell_attribute__</ref><sp/>{</highlight></codeline>
-<codeline lineno="235"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="236" refid="structshell__attribute_____120b64795e8300f56437578bd7fd99be9" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="structshell__attribute_____120b64795e8300f56437578bd7fd99be9" kindref="member">attr_name</ref><sp/>;<sp/></highlight><highlight class="comment">/*<sp/>name<sp/>of<sp/>the<sp/>attribute.<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="237" refid="structshell__attribute_____112dbb5c64119c94cb7d50ed027233601" refkind="member"><highlight class="normal"><sp/><sp/><ref refid="cmd__tools_8h_175950087da4d34f0133255c11750f276" kindref="member">shell_attr_type_t</ref><sp/><sp/><sp/><sp/><sp/><ref refid="structshell__attribute_____112dbb5c64119c94cb7d50ed027233601" kindref="member">attr_type</ref><sp/>;<sp/></highlight><highlight class="comment">/*<sp/>type<sp/>of<sp/>the<sp/>attribute.<sp/>*/</highlight><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="238" refid="structshell__attribute_____1975e907b2930a059e71faa41725aa853" refkind="member"><highlight class="normal"><sp/><sp/>fsal_attrib_mask_t<sp/><sp/><sp/><sp/><ref refid="structshell__attribute_____1975e907b2930a059e71faa41725aa853" kindref="member">attr_mask</ref><sp/>;<sp/></highlight><highlight class="comment">/*<sp/>fsal<sp/>mask<sp/>constant<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="239" refid="structshell__attribute_____14c8737502cb8a3036839f61402199d3d" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><ref refid="structshell__attribute_____14c8737502cb8a3036839f61402199d3d" kindref="member">attr_offset</ref>;</highlight><highlight class="comment">/*<sp/>fsal<sp/>field<sp/>offset<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="240"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="241"><highlight class="normal">}<sp/><ref refid="structshell__attribute____" kindref="compound">shell_attribute_t</ref><sp/>;<sp/></highlight></codeline>
-<codeline lineno="242"><highlight class="normal"></highlight></codeline>
-<codeline lineno="243"><highlight class="normal"></highlight></codeline>
-<codeline lineno="247"><highlight class="keyword">static</highlight><highlight class="normal"><sp/><ref refid="structshell__attribute____" kindref="compound">shell_attribute_t</ref><sp/><sp/>__attribute__((<sp/>__unused__<sp/>))<sp/>shell_attr_list[]<sp/>=<sp/>{<sp/><sp/></highlight></codeline>
-<codeline lineno="248"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;SIZE&quot;</highlight><highlight class="normal"><sp/>,<sp/><ref refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b5188e30b976c8fd042f4ee1ac635769ee8e" kindref="member">ATTR_64</ref>,<sp/><sp/><sp/><sp/><sp/>FSAL_ATTR_SIZE,<sp/><sp/>offsetof(<sp/>fsal_attrib_list_t,<sp/>filesize<sp/>)},</highlight></codeline>
-<codeline lineno="249"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;MODE&quot;</highlight><highlight class="normal"><sp/>,<sp/><ref refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b51860d91fd56220bae942a9e3e48e744cce" kindref="member">ATTR_OCTAL</ref>,<sp/><sp/>FSAL_ATTR_MODE,<sp/><sp/>offsetof(<sp/>fsal_attrib_list_t,<sp/>mode<sp/>)},</highlight></codeline>
-<codeline lineno="250"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;OWNER&quot;</highlight><highlight class="normal">,<sp/><ref refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518ac06b439a85fc65cb1560af23c8d9d6a" kindref="member">ATTR_32</ref>,<sp/><sp/><sp/><sp/><sp/>FSAL_ATTR_OWNER,<sp/>offsetof(<sp/>fsal_attrib_list_t,<sp/>owner<sp/>)},</highlight></codeline>
-<codeline lineno="251"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;GROUP&quot;</highlight><highlight class="normal">,<sp/><ref refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518ac06b439a85fc65cb1560af23c8d9d6a" kindref="member">ATTR_32</ref>,<sp/><sp/><sp/><sp/><sp/>FSAL_ATTR_GROUP,<sp/>offsetof(<sp/>fsal_attrib_list_t,<sp/>group<sp/>)},</highlight></codeline>
-<codeline lineno="252"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;ATIME&quot;</highlight><highlight class="normal">,<sp/><ref refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518d4dc69dfe667197925f278cda8ec39d6" kindref="member">ATTR_TIME</ref>,<sp/><sp/><sp/>FSAL_ATTR_ATIME,<sp/>offsetof(<sp/>fsal_attrib_list_t,<sp/>atime<sp/>)},</highlight></codeline>
-<codeline lineno="253"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;CTIME&quot;</highlight><highlight class="normal">,<sp/><ref refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518d4dc69dfe667197925f278cda8ec39d6" kindref="member">ATTR_TIME</ref>,<sp/><sp/><sp/>FSAL_ATTR_CTIME,<sp/>offsetof(<sp/>fsal_attrib_list_t,<sp/>ctime<sp/>)},</highlight></codeline>
-<codeline lineno="254"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;MTIME&quot;</highlight><highlight class="normal">,<sp/><ref refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518d4dc69dfe667197925f278cda8ec39d6" kindref="member">ATTR_TIME</ref>,<sp/><sp/><sp/>FSAL_ATTR_MTIME,<sp/>offsetof(<sp/>fsal_attrib_list_t,<sp/>mtime<sp/>)},</highlight></codeline>
-<codeline lineno="255"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="256"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>end<sp/>of<sp/>the<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="257"><highlight class="normal"><sp/><sp/>{<ref refid="Getopt_8c_1070d2ce7b6bb7e5c05602aa8c308d0c4" kindref="member">NULL</ref>,<sp/><ref refid="cmd__tools_8h_1173b6ef9f101e3c7ae625af1f250b518b27212240b03ce5a23837658b63a31e7" kindref="member">ATTR_NONE</ref>,<sp/>0,<sp/>0}</highlight></codeline>
-<codeline lineno="258"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="259"><highlight class="normal">};</highlight></codeline>
-<codeline lineno="260"><highlight class="normal"></highlight></codeline>
-<codeline lineno="261"><highlight class="normal"></highlight></codeline>
-<codeline lineno="268"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_1bccc4389b9df09ee20930429d95fcd68" kindref="member">MkFSALSetAttrStruct</ref>(<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>attribute_list,<sp/>fsal_attrib_list_t<sp/>*<sp/>fsal_set_attr_struct<sp/>);</highlight></codeline>
-<codeline lineno="269"><highlight class="normal"></highlight></codeline>
-<codeline lineno="270"><highlight class="normal"></highlight></codeline>
-<codeline lineno="271"><highlight class="normal"></highlight></codeline>
-<codeline lineno="272"><highlight class="normal"></highlight></codeline>
-<codeline lineno="273"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Time<sp/>diffing<sp/>function<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="274"><highlight class="normal"></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">timeval<sp/><ref refid="cmd__tools_8c_1cf045ccad77a69933c72ecf0f7beeb14" kindref="member">time_diff</ref>(struct<sp/>timeval<sp/>time_from,<sp/>struct<sp/>timeval<sp/>time_to);</highlight></codeline>
-<codeline lineno="275"><highlight class="normal"></highlight></codeline>
-<codeline lineno="276"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Timeval<sp/>printing<sp/>function<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="277" refid="cmd__tools_8h_11424b3bf6847b8179a9e3b25a9c4863b" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>print_timeval(out,_tv_)<sp/>fprintf(out,&quot;%ld.%.6ld<sp/>s\n&quot;,_tv_.tv_sec,_tv_.tv_usec)</highlight></codeline>
-<codeline lineno="278"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="279"><highlight class="normal"></highlight></codeline>
-<codeline lineno="280"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_14f37575046a10c5356f42ca83d527fa6" kindref="member">getugroups</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>maxcount,<sp/>gid_t<sp/>*<sp/>grouplist,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>username,<sp/>gid_t<sp/>gid<sp/>);</highlight></codeline>
-<codeline lineno="281"><highlight class="normal"></highlight></codeline>
-<codeline lineno="282"><highlight class="normal"></highlight></codeline>
-<codeline lineno="283"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="199"><highlight class="normal"></highlight><highlight class="comment">/*</highlight></codeline>
+<codeline lineno="200"><highlight class="comment"><sp/>*<sp/>Thoses<sp/>structures<sp/>are<sp/>used<sp/>to<sp/>handle<sp/>FSAL<sp/>attributes.</highlight></codeline>
+<codeline lineno="201"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="202"><highlight class="normal"></highlight></codeline>
+<codeline lineno="204" refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518" refkind="member"><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">enum</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518" kindref="member">shell_attr_type__</ref></highlight></codeline>
+<codeline lineno="205"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="206"><highlight class="normal"></highlight></codeline>
+<codeline lineno="207" refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518ab27212240b03ce5a23837658b63a31e7" refkind="member"><highlight class="normal"><sp/><sp/><ref refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518ab27212240b03ce5a23837658b63a31e7" kindref="member">ATTR_NONE</ref><sp/>=<sp/>0,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>this<sp/>special<sp/>value<sp/>is<sp/>used</highlight></codeline>
+<codeline lineno="208"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>to<sp/>indicate<sp/>the<sp/>end<sp/>of<sp/>the<sp/>attribute<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="209"><highlight class="normal"></highlight></codeline>
+<codeline lineno="210" refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518aac06b439a85fc65cb1560af23c8d9d6a" refkind="member"><highlight class="normal"><sp/><sp/><ref refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518aac06b439a85fc65cb1560af23c8d9d6a" kindref="member">ATTR_32</ref>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>32<sp/>bits<sp/>attribute<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="211" refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518a8e30b976c8fd042f4ee1ac635769ee8e" refkind="member"><highlight class="normal"><sp/><sp/><ref refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518a8e30b976c8fd042f4ee1ac635769ee8e" kindref="member">ATTR_64</ref>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>64<sp/>bits<sp/>attribute<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="212" refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518a60d91fd56220bae942a9e3e48e744cce" refkind="member"><highlight class="normal"><sp/><sp/><ref refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518a60d91fd56220bae942a9e3e48e744cce" kindref="member">ATTR_OCTAL</ref>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>octal<sp/>number<sp/>attribute<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="213" refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518ad4dc69dfe667197925f278cda8ec39d6" refkind="member"><highlight class="normal"><sp/><sp/><ref refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518ad4dc69dfe667197925f278cda8ec39d6" kindref="member">ATTR_TIME</ref><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>YYYYMMDDhhmmss<sp/>attribute<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="214"><highlight class="normal">}<sp/><ref refid="cmd__tools_8h_1a75950087da4d34f0133255c11750f276" kindref="member">shell_attr_type_t</ref>;</highlight></codeline>
+<codeline lineno="215"><highlight class="normal"></highlight></codeline>
+<codeline lineno="217" refid="structshell__attribute____" refkind="compound"><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal"><ref refid="structshell__attribute____" kindref="compound">shell_attribute__</ref></highlight></codeline>
+<codeline lineno="218"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="219"><highlight class="normal"></highlight></codeline>
+<codeline lineno="220" refid="structshell__attribute_____1a20b64795e8300f56437578bd7fd99be9" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<ref refid="structshell__attribute_____1a20b64795e8300f56437578bd7fd99be9" kindref="member">attr_name</ref>;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>name<sp/>of<sp/>the<sp/>attribute.<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="221" refid="structshell__attribute_____1a12dbb5c64119c94cb7d50ed027233601" refkind="member"><highlight class="normal"><sp/><sp/><ref refid="cmd__tools_8h_1a75950087da4d34f0133255c11750f276" kindref="member">shell_attr_type_t</ref><sp/><ref refid="structshell__attribute_____1a12dbb5c64119c94cb7d50ed027233601" kindref="member">attr_type</ref>;<sp/><sp/></highlight><highlight class="comment">/*<sp/>type<sp/>of<sp/>the<sp/>attribute.<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="222" refid="structshell__attribute_____1a975e907b2930a059e71faa41725aa853" refkind="member"><highlight class="normal"><sp/><sp/>fsal_attrib_mask_t<sp/><ref refid="structshell__attribute_____1a975e907b2930a059e71faa41725aa853" kindref="member">attr_mask</ref>;<sp/></highlight><highlight class="comment">/*<sp/>fsal<sp/>mask<sp/>constant<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="223" refid="structshell__attribute_____1a4c8737502cb8a3036839f61402199d3d" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="structshell__attribute_____1a4c8737502cb8a3036839f61402199d3d" kindref="member">attr_offset</ref>;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>fsal<sp/>field<sp/>offset<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="224"><highlight class="normal"></highlight></codeline>
+<codeline lineno="225"><highlight class="normal">}<sp/><ref refid="structshell__attribute____" kindref="compound">shell_attribute_t</ref>;</highlight></codeline>
+<codeline lineno="226"><highlight class="normal"></highlight></codeline>
+<codeline lineno="230"><highlight class="keyword">static</highlight><highlight class="normal"><sp/><ref refid="structshell__attribute____" kindref="compound">shell_attribute_t</ref><sp/>__attribute__<sp/>((__unused__))<sp/>shell_attr_list[]<sp/>=</highlight></codeline>
+<codeline lineno="231"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="232"><highlight class="normal"><sp/><sp/>{</highlight></codeline>
+<codeline lineno="233"><highlight class="normal"><sp/><sp/></highlight><highlight class="stringliteral">&quot;SIZE&quot;</highlight><highlight class="normal">,<sp/><ref refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518a8e30b976c8fd042f4ee1ac635769ee8e" kindref="member">ATTR_64</ref>,<sp/>FSAL_ATTR_SIZE,<sp/>offsetof(fsal_attrib_list_t,<sp/>filesize)},</highlight></codeline>
+<codeline lineno="234"><highlight class="normal"><sp/><sp/>{</highlight></codeline>
+<codeline lineno="235"><highlight class="normal"><sp/><sp/></highlight><highlight class="stringliteral">&quot;MODE&quot;</highlight><highlight class="normal">,<sp/><ref refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518a60d91fd56220bae942a9e3e48e744cce" kindref="member">ATTR_OCTAL</ref>,<sp/>FSAL_ATTR_MODE,<sp/>offsetof(fsal_attrib_list_t,<sp/>mode)},</highlight></codeline>
+<codeline lineno="236"><highlight class="normal"><sp/><sp/>{</highlight></codeline>
+<codeline lineno="237"><highlight class="normal"><sp/><sp/></highlight><highlight class="stringliteral">&quot;OWNER&quot;</highlight><highlight class="normal">,<sp/><ref refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518aac06b439a85fc65cb1560af23c8d9d6a" kindref="member">ATTR_32</ref>,<sp/>FSAL_ATTR_OWNER,<sp/>offsetof(fsal_attrib_list_t,<sp/>owner)},</highlight></codeline>
+<codeline lineno="238"><highlight class="normal"><sp/><sp/>{</highlight></codeline>
+<codeline lineno="239"><highlight class="normal"><sp/><sp/></highlight><highlight class="stringliteral">&quot;GROUP&quot;</highlight><highlight class="normal">,<sp/><ref refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518aac06b439a85fc65cb1560af23c8d9d6a" kindref="member">ATTR_32</ref>,<sp/>FSAL_ATTR_GROUP,<sp/>offsetof(fsal_attrib_list_t,<sp/>group)},</highlight></codeline>
+<codeline lineno="240"><highlight class="normal"><sp/><sp/>{</highlight></codeline>
+<codeline lineno="241"><highlight class="normal"><sp/><sp/></highlight><highlight class="stringliteral">&quot;ATIME&quot;</highlight><highlight class="normal">,<sp/><ref refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518ad4dc69dfe667197925f278cda8ec39d6" kindref="member">ATTR_TIME</ref>,<sp/>FSAL_ATTR_ATIME,<sp/>offsetof(fsal_attrib_list_t,<sp/>atime)},</highlight></codeline>
+<codeline lineno="242"><highlight class="normal"><sp/><sp/>{</highlight></codeline>
+<codeline lineno="243"><highlight class="normal"><sp/><sp/></highlight><highlight class="stringliteral">&quot;CTIME&quot;</highlight><highlight class="normal">,<sp/><ref refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518ad4dc69dfe667197925f278cda8ec39d6" kindref="member">ATTR_TIME</ref>,<sp/>FSAL_ATTR_CTIME,<sp/>offsetof(fsal_attrib_list_t,<sp/>ctime)},</highlight></codeline>
+<codeline lineno="244"><highlight class="normal"><sp/><sp/>{</highlight></codeline>
+<codeline lineno="245"><highlight class="normal"><sp/><sp/></highlight><highlight class="stringliteral">&quot;MTIME&quot;</highlight><highlight class="normal">,<sp/><ref refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518ad4dc69dfe667197925f278cda8ec39d6" kindref="member">ATTR_TIME</ref>,<sp/>FSAL_ATTR_MTIME,<sp/>offsetof(fsal_attrib_list_t,<sp/>mtime)},</highlight></codeline>
+<codeline lineno="246"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>end<sp/>of<sp/>the<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="247"><highlight class="normal"><sp/><sp/>{</highlight></codeline>
+<codeline lineno="248"><highlight class="normal"><sp/><sp/><ref refid="Getopt_8c_1a070d2ce7b6bb7e5c05602aa8c308d0c4" kindref="member">NULL</ref>,<sp/><ref refid="cmd__tools_8h_1a173b6ef9f101e3c7ae625af1f250b518ab27212240b03ce5a23837658b63a31e7" kindref="member">ATTR_NONE</ref>,<sp/>0,<sp/>0}</highlight></codeline>
+<codeline lineno="249"><highlight class="normal"></highlight></codeline>
+<codeline lineno="250"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="251"><highlight class="normal"></highlight></codeline>
+<codeline lineno="258"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_1abccc4389b9df09ee20930429d95fcd68" kindref="member">MkFSALSetAttrStruct</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*attribute_list,<sp/>fsal_attrib_list_t<sp/>*<sp/>fsal_set_attr_struct);</highlight></codeline>
+<codeline lineno="259"><highlight class="normal"></highlight></codeline>
+<codeline lineno="260"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Time<sp/>diffing<sp/>function<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="261"><highlight class="normal"></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">timeval<sp/><ref refid="cmd__tools_8c_1acf045ccad77a69933c72ecf0f7beeb14" kindref="member">time_diff</ref>(struct<sp/>timeval<sp/>time_from,<sp/>struct<sp/>timeval<sp/>time_to);</highlight></codeline>
+<codeline lineno="262"><highlight class="normal"></highlight></codeline>
+<codeline lineno="263"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Timeval<sp/>printing<sp/>function<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="264" refid="cmd__tools_8h_1a1424b3bf6847b8179a9e3b25a9c4863b" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>print_timeval(out,_tv_)<sp/>fprintf(out,&quot;%ld.%.6ld<sp/>s\n&quot;,_tv_.tv_sec,_tv_.tv_usec)</highlight></codeline>
+<codeline lineno="265"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="266"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="cmd__tools_8c_1a4f37575046a10c5356f42ca83d527fa6" kindref="member">getugroups</ref>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>maxcount,<sp/>gid_t<sp/>*<sp/>grouplist,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*username,<sp/>gid_t<sp/>gid);</highlight></codeline>
+<codeline lineno="267"><highlight class="normal"></highlight></codeline>
+<codeline lineno="268"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
     </programlisting>
     <location file="/export/GANESHA/src/shell/cmd_tools.h"/>
   </compounddef>

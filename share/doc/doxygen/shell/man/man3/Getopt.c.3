@@ -1,10 +1,11 @@
-.TH "Getopt.c" 3 "31 Mar 2009" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.TH "Getopt.c" 3 "15 Sep 2010" "Version 0.1" "ganeshell" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-Getopt.c \- GANESHA's version of getopt, to avoid portability issues.  
-
+Getopt.c \- 
 .PP
+GANESHA's version of getopt, to avoid portability issues.  
+
 .SH SYNOPSIS
 .br
 .PP
@@ -85,8 +86,6 @@ This source code is an adaptation of the AT&T public domain source for getopt(3)
 .PP
 Revision 1.4 2006/01/18 17:03:35 leibovic Removing some warnings.
 .PP
-Revision 1.3 2005/11/28 17:02:59 deniel Added CeCILL headers
-.PP
 Revision 1.2 2005/03/09 15:43:25 leibovic Multi-OS compiling.
 .PP
 Revision 1.1 2005/02/02 09:05:30 leibovic Adding our own version of getopt, to avoid portability issues. 
@@ -96,10 +95,8 @@ Definition in file \fBGetopt.c\fP.
 .PP 
 .SS "#define EOF   (-1)"
 .PP
-Definition at line 114 of file Getopt.c.
-.SS "#define ERR(s, c)"
-.PP
-\fBValue:\fP
+Definition at line 61 of file Getopt.c.
+.SS "#define ERR(s, c)"\fBValue:\fP
 .PP
 .nf
 if(Opterr){\
@@ -111,29 +108,29 @@ if(Opterr){\
     (void) write(2, errbuf, 2);}
 .fi
 .PP
-Definition at line 115 of file Getopt.c.
+Definition at line 62 of file Getopt.c.
 .SS "#define NULL   0"
 .PP
-Definition at line 111 of file Getopt.c.
+Definition at line 58 of file Getopt.c.
 .SH "Function Documentation"
 .PP 
 .SS "int Getopt (int argc, char * argv[], char * opts)"
 .PP
-Definition at line 128 of file Getopt.c.
+Definition at line 75 of file Getopt.c.
 .SH "Variable Documentation"
 .PP 
 .SS "char* \fBOptarg\fP"
 .PP
-Definition at line 126 of file Getopt.c.
+Definition at line 73 of file Getopt.c.
 .SS "int \fBOpterr\fP = 1"
 .PP
-Definition at line 123 of file Getopt.c.
+Definition at line 70 of file Getopt.c.
 .SS "int \fBOptind\fP = 1"
 .PP
-Definition at line 124 of file Getopt.c.
+Definition at line 71 of file Getopt.c.
 .SS "int \fBOptopt\fP"
 .PP
-Definition at line 125 of file Getopt.c.
+Definition at line 72 of file Getopt.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for ganeshell from the source code.

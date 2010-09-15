@@ -1,17 +1,18 @@
 \section{HashTable.c File Reference}
 \label{HashTable_8c}\index{HashTable.c@{HashTable.c}}
+
+
 Gestion des tables de hachage a base de Red/Black Trees.  
-
-
-{\tt \#include $<$stdio.h$>$}\par
-{\tt \#include $<$string.h$>$}\par
-{\tt \#include $<$pthread.h$>$}\par
-{\tt \#include \char`\"{}RW\_\-Lock.h\char`\"{}}\par
-{\tt \#include \char`\"{}BuddyMalloc.h\char`\"{}}\par
-{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
-{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\ttfamily \#include $<$stdio.h$>$}\par
+{\ttfamily \#include $<$string.h$>$}\par
+{\ttfamily \#include $<$pthread.h$>$}\par
+{\ttfamily \#include \char`\"{}RW\_\-Lock.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}BuddyMalloc.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}HashTable.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}log\_\-macros.h\char`\"{}}\par
 \subsection*{Defines}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
 \#define {\bf TRUE}~1
 \item 
@@ -20,9 +21,9 @@ Gestion des tables de hachage a base de Red/Black Trees.
 \#define {\bf P}(a)~pthread\_\-mutex\_\-lock( \&a )
 \item 
 \#define {\bf V}(a)~pthread\_\-mutex\_\-unlock( \&a )
-\end{CompactItemize}
+\end{DoxyCompactItemize}
 \subsection*{Functions}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
 unsigned long {\bf simple\_\-hash\_\-func} (hash\_\-parameter\_\-t $\ast$p\_\-hparam, hash\_\-buffer\_\-t $\ast$buffclef)
 \item 
@@ -42,42 +43,38 @@ void {\bf HashTable\_\-GetStats} (hash\_\-table\_\-t $\ast$ht, hash\_\-stat\_\-t
 \item 
 unsigned int {\bf HashTable\_\-GetSize} (hash\_\-table\_\-t $\ast$ht)
 \item 
+void {\bf HashTable\_\-Log} (log\_\-components\_\-t component, hash\_\-table\_\-t $\ast$ht)
+\item 
 void {\bf HashTable\_\-Print} (hash\_\-table\_\-t $\ast$ht)
-\end{CompactItemize}
+\end{DoxyCompactItemize}
 
 
 \subsection{Detailed Description}
-Gestion des tables de hachage a base de Red/Black Trees. 
+Gestion des tables de hachage a base de Red/Black Trees. \begin{DoxyAuthor}{Author}
 
-\begin{Desc}
-\item[Author:]\end{Desc}
-\begin{Desc}
-\item[Author]deniel \end{Desc}
-\begin{Desc}
-\item[Date:]\end{Desc}
-\begin{Desc}
-\item[Date]2006/01/31 09:12:06 \end{Desc}
-\begin{Desc}
-\item[Version:]\end{Desc}
-\begin{Desc}
-\item[Revision]1.41 \end{Desc}
-\doxyref{HashTable.c}{p.}{HashTable_8c} : gestion d'une table de hachage
+\end{DoxyAuthor}
+Author}
+deniel \begin{DoxyDate}{Date}
 
-\begin{Desc}
-\item[Header]/cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/HashTable/HashTable.c,v 1.41 2006/01/31 09:12:06 deniel Exp \end{Desc}
+\end{DoxyDate}
+Date}
+2006/01/31 09:12:06 \begin{DoxyVersion}{Version}
 
+\end{DoxyVersion}
+Revision}
+1.41 \doxyref{HashTable.c}{p.}{HashTable_8c} : gestion d'une table de hachage
 
-\begin{Desc}
-\item[Log]\doxyref{HashTable.c}{p.}{HashTable_8c},v \end{Desc}
-Revision 1.41 2006/01/31 09:12:06 deniel First step in efence debugging
+Header}
+/cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/HashTable/HashTable.c,v 1.41 2006/01/31 09:12:06 deniel Exp 
+
+Log}
+\doxyref{HashTable.c}{p.}{HashTable_8c},v Revision 1.41 2006/01/31 09:12:06 deniel First step in efence debugging
 
 Revision 1.40 2006/01/27 10:28:36 deniel Now support rpm
 
 Revision 1.39 2006/01/24 13:47:31 leibovic Disabling prealloc checks when \_\-NO\_\-BLOCK\_\-PREALLOC falg is set.
 
 Revision 1.38 2006/01/20 07:39:22 leibovic Back to the previous version.
-
-Revision 1.36 2005/11/28 17:02:37 deniel Added CeCILL headers
 
 Revision 1.35 2005/11/10 07:53:24 deniel Corrected some memory leaks
 
@@ -123,11 +120,11 @@ Revision 1.15 2004/08/26 06:52:58 deniel Bug tres con dans \doxyref{HashTable.c}
 
 Revision 1.14 2004/08/25 06:21:24 deniel Mise en place du test configurable ok
 
-Revision 1.13 2004/08/24 10:41:14 deniel Avant re-ecriture d'un autre test.
+Revision 1.13 2004/08/24 10:41:14 deniel Avant re-\/ecriture d'un autre test.
 
 Revision 1.12 2004/08/23 16:05:20 deniel Mise en palce d'un test and set a la place du set pure
 
-Revision 1.11 2004/08/23 09:14:35 deniel Ajout de tests de non-regression (pour le delete)
+Revision 1.11 2004/08/23 09:14:35 deniel Ajout de tests de non-\/regression (pour le delete)
 
 Revision 1.10 2004/08/23 08:20:55 deniel Mise en place de RBT\_\-FIND\_\-LEFT
 
@@ -160,30 +157,22 @@ Definition in file {\bf HashTable.c}.
 \subsection{Define Documentation}
 \index{HashTable.c@{HashTable.c}!FALSE@{FALSE}}
 \index{FALSE@{FALSE}!HashTable.c@{HashTable.c}}
-\subsubsection[{FALSE}]{\setlength{\rightskip}{0pt plus 5cm}\#define FALSE~0}\label{HashTable_8c_a93f0eb578d23995850d61f7d61c55c1}
+\subsubsection[{FALSE}]{\setlength{\rightskip}{0pt plus 5cm}\#define FALSE~0}\label{HashTable_8c_aa93f0eb578d23995850d61f7d61c55c1}
 
 
-
-
-Definition at line 242 of file HashTable.c.\index{HashTable.c@{HashTable.c}!P@{P}}
+Definition at line 188 of file HashTable.c.\index{HashTable.c@{HashTable.c}!P@{P}}
 \index{P@{P}!HashTable.c@{HashTable.c}}
-\subsubsection[{P}]{\setlength{\rightskip}{0pt plus 5cm}\#define P(a)~pthread\_\-mutex\_\-lock( \&a )}\label{HashTable_8c_15abb4ae29738d2dd59f592b02ceccfd}
+\subsubsection[{P}]{\setlength{\rightskip}{0pt plus 5cm}\#define P(a)~pthread\_\-mutex\_\-lock( \&a )}\label{HashTable_8c_a15abb4ae29738d2dd59f592b02ceccfd}
 
 
-
-
-Definition at line 246 of file HashTable.c.\index{HashTable.c@{HashTable.c}!TRUE@{TRUE}}
+Definition at line 192 of file HashTable.c.\index{HashTable.c@{HashTable.c}!TRUE@{TRUE}}
 \index{TRUE@{TRUE}!HashTable.c@{HashTable.c}}
-\subsubsection[{TRUE}]{\setlength{\rightskip}{0pt plus 5cm}\#define TRUE~1}\label{HashTable_8c_a8cecfc5c5c054d2875c03e77b7be15d}
+\subsubsection[{TRUE}]{\setlength{\rightskip}{0pt plus 5cm}\#define TRUE~1}\label{HashTable_8c_aa8cecfc5c5c054d2875c03e77b7be15d}
 
 
-
-
-Definition at line 238 of file HashTable.c.\index{HashTable.c@{HashTable.c}!V@{V}}
+Definition at line 184 of file HashTable.c.\index{HashTable.c@{HashTable.c}!V@{V}}
 \index{V@{V}!HashTable.c@{HashTable.c}}
-\subsubsection[{V}]{\setlength{\rightskip}{0pt plus 5cm}\#define V(a)~pthread\_\-mutex\_\-unlock( \&a )}\label{HashTable_8c_751d733b0539d56fca1a17f94f54e605}
+\subsubsection[{V}]{\setlength{\rightskip}{0pt plus 5cm}\#define V(a)~pthread\_\-mutex\_\-unlock( \&a )}\label{HashTable_8c_a751d733b0539d56fca1a17f94f54e605}
 
 
-
-
-Definition at line 250 of file HashTable.c.
+Definition at line 196 of file HashTable.c.

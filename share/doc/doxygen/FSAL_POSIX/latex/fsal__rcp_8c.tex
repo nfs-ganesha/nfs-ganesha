@@ -1,69 +1,70 @@
 \section{fsal\_\-rcp.c File Reference}
 \label{fsal__rcp_8c}\index{fsal\_\-rcp.c@{fsal\_\-rcp.c}}
+
+
 Transfer operations.  
-
-
-{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
-{\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
-{\tt \#include \char`\"{}fsal\_\-convert.h\char`\"{}}\par
-{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
-{\tt \#include $<$string.h$>$}\par
+{\ttfamily \#include \char`\"{}fsal.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}fsal\_\-convert.h\char`\"{}}\par
+{\ttfamily \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\ttfamily \#include $<$string.h$>$}\par
 \subsection*{Defines}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
-\#define \textbf{RCP\_\-BUFFER\_\-SIZE}~10485760\label{fsal__rcp_8c_a89c28e4de124af032c98de9f22616fe}
+\#define {\bfseries RCP\_\-BUFFER\_\-SIZE}~10485760\label{fsal__rcp_8c_aa89c28e4de124af032c98de9f22616fe}
 
-\end{CompactItemize}
+\end{DoxyCompactItemize}
 \subsection*{Functions}
-\begin{CompactItemize}
+\begin{DoxyCompactItemize}
 \item 
-fsal\_\-status\_\-t {\bf FSAL\_\-rcp} (fsal\_\-handle\_\-t $\ast$filehandle, fsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-path\_\-t $\ast$p\_\-local\_\-path, fsal\_\-rcpflag\_\-t transfer\_\-opt)
+fsal\_\-status\_\-t {\bf POSIXFSAL\_\-rcp} (posixfsal\_\-handle\_\-t $\ast$filehandle, posixfsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-path\_\-t $\ast$p\_\-local\_\-path, fsal\_\-rcpflag\_\-t transfer\_\-opt)
 \item 
-fsal\_\-status\_\-t \textbf{FSAL\_\-rcp\_\-by\_\-fileid} (fsal\_\-handle\_\-t $\ast$filehandle, fsal\_\-u64\_\-t fileid, fsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-path\_\-t $\ast$p\_\-local\_\-path, fsal\_\-rcpflag\_\-t transfer\_\-opt)\label{fsal__rcp_8c_ac719f82cfdb21bc35fc2178332c202c}
+fsal\_\-status\_\-t {\bfseries POSIXFSAL\_\-rcp\_\-by\_\-fileid} (posixfsal\_\-handle\_\-t $\ast$filehandle, fsal\_\-u64\_\-t fileid, posixfsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-path\_\-t $\ast$p\_\-local\_\-path, fsal\_\-rcpflag\_\-t transfer\_\-opt)\label{fsal__rcp_8c_a10beb91085f91a99cedf4355d23bebb1}
 
-\end{CompactItemize}
+\end{DoxyCompactItemize}
 
 
 \subsection{Detailed Description}
-Transfer operations. 
+Transfer operations. \begin{DoxyAuthor}{Author}
 
-\begin{Desc}
-\item[Author:]\end{Desc}
-\begin{Desc}
-\item[Author]leibovic \end{Desc}
-\begin{Desc}
-\item[Date:]\end{Desc}
-\begin{Desc}
-\item[Date]2006/01/24 13:45:37 \end{Desc}
-\begin{Desc}
-\item[Version:]\end{Desc}
-\begin{Desc}
-\item[Revision]1.7 \end{Desc}
+\end{DoxyAuthor}
+Author}
+leibovic \begin{DoxyDate}{Date}
 
+\end{DoxyDate}
+Date}
+2006/01/24 13:45:37 \begin{DoxyVersion}{Version}
+
+\end{DoxyVersion}
+Revision}
+1.7 
 
 Definition in file {\bf fsal\_\-rcp.c}.
 
 \subsection{Function Documentation}
-\index{fsal\_\-rcp.c@{fsal\_\-rcp.c}!FSAL\_\-rcp@{FSAL\_\-rcp}}
-\index{FSAL\_\-rcp@{FSAL\_\-rcp}!fsal_rcp.c@{fsal\_\-rcp.c}}
-\subsubsection[{FSAL\_\-rcp}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-rcp (fsal\_\-handle\_\-t $\ast$ {\em filehandle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-path\_\-t $\ast$ {\em p\_\-local\_\-path}, \/  fsal\_\-rcpflag\_\-t {\em transfer\_\-opt})}\label{fsal__rcp_8c_e5f4157c669528dfde3ab5b83bc20fdf}
-
-
+\index{fsal\_\-rcp.c@{fsal\_\-rcp.c}!POSIXFSAL\_\-rcp@{POSIXFSAL\_\-rcp}}
+\index{POSIXFSAL\_\-rcp@{POSIXFSAL\_\-rcp}!fsal_rcp.c@{fsal\_\-rcp.c}}
+\subsubsection[{POSIXFSAL\_\-rcp}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t POSIXFSAL\_\-rcp (posixfsal\_\-handle\_\-t $\ast$ {\em filehandle}, \/  posixfsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-path\_\-t $\ast$ {\em p\_\-local\_\-path}, \/  fsal\_\-rcpflag\_\-t {\em transfer\_\-opt})}\label{fsal__rcp_8c_aaca81037c1994935b9526f730dd8ea38}
 FSAL\_\-rcp: Copy an HPSS file to/from a local filesystem.
 
-\begin{Desc}
-\item[Parameters:]
-\begin{description}
-\item[{\em filehandle}](input): Handle of the HPSS file to be copied. \item[{\em cred}](input): Authentication context for the operation (user,...). \item[{\em p\_\-local\_\-path}](input): Path of the file in the local filesystem. \item[{\em transfer\_\-opt}](input): Flags that indicate transfer direction and options. This consists of an inclusive OR between the following values :\begin{itemize}
-\item FSAL\_\-RCP\_\-FS\_\-TO\_\-LOCAL: Copy the file from the filesystem to a local path.\item FSAL\_\-RCP\_\-LOCAL\_\-TO\_\-FS: Copy the file from local path to the filesystem.\item FSAL\_\-RCP\_\-LOCAL\_\-CREAT: Create the target local file if it doesn't exist.\item FSAL\_\-RCP\_\-LOCAL\_\-EXCL: Produce an error if the target local file already exists.\end{itemize}
-\end{description}
-\end{Desc}
-\begin{Desc}
-\item[Returns:]Major error codes :\begin{itemize}
-\item ERR\_\-FSAL\_\-NO\_\-ERROR (no error)\item Another error code if an error occured. \end{itemize}
-\end{Desc}
+
+\begin{DoxyParams}{Parameters}
+\item[{\em filehandle}](input): Handle of the HPSS file to be copied. \item[{\em cred}](input): Authentication context for the operation (user,...). \item[{\em p\_\-local\_\-path}](input): Path of the file in the local filesystem. \item[{\em transfer\_\-opt}](input): Flags that indicate transfer direction and options. This consists of an inclusive OR between the following values :
+\begin{DoxyItemize}
+\item FSAL\_\-RCP\_\-FS\_\-TO\_\-LOCAL: Copy the file from the filesystem to a local path.
+\item FSAL\_\-RCP\_\-LOCAL\_\-TO\_\-FS: Copy the file from local path to the filesystem.
+\item FSAL\_\-RCP\_\-LOCAL\_\-CREAT: Create the target local file if it doesn't exist.
+\item FSAL\_\-RCP\_\-LOCAL\_\-EXCL: Produce an error if the target local file already exists.
+\end{DoxyItemize}\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Major error codes :
+\begin{DoxyItemize}
+\item ERR\_\-FSAL\_\-NO\_\-ERROR (no error)
+\item Another error code if an error occured. 
+\end{DoxyItemize}
+\end{DoxyReturn}
 
 
-Definition at line 53 of file fsal\_\-rcp.c.
+Definition at line 51 of file fsal\_\-rcp.c.
 
-References FSAL\_\-close(), FSAL\_\-open(), FSAL\_\-read(), FSAL\_\-write(), and posix2fsal\_\-error().
+References posix2fsal\_\-error(), POSIXFSAL\_\-close(), POSIXFSAL\_\-open(), POSIXFSAL\_\-read(), and POSIXFSAL\_\-write().
