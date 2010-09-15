@@ -99,6 +99,7 @@ nfs_flush_thread_data_t flush_info[NB_MAX_FLUSHER_THREAD];
 
 pthread_t rpc_dispatcher_thrid;
 pthread_t stat_thrid;
+pthread_t stat_exporter_thrid;
 pthread_t admin_thrid;
 pthread_t fcc_gc_thrid;
 
@@ -1288,6 +1289,15 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
       exit(1);
     }
   LogEvent(COMPONENT_INIT, "statistics thread was started successfully");
+
+  /* Starting the stat exporter thread */
+  if((rc =
+      pthread_create(&stat_exporter_thrid, &attr_thr, stat_exporter_thread, (void *)workers_data)) != 0)
+    {
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
+      exit(1);
+    }
+  LogEvent(COMPONENT_INIT, "statistics exporter thread was started successfully");
 
   /* Starting the nfs file content gc thread  */
   if((rc =

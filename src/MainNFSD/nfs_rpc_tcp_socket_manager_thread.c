@@ -316,6 +316,19 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
         }
       else
         {
+          struct timeval timer_start;
+          struct timeval timer_end;
+          struct timeval timer_diff;
+
+          nfs_stat_type_t stat_type;
+          nfs_request_latency_stat_t latency_stat;
+
+          memset(&timer_start, 0, sizeof(struct timeval));
+          memset(&timer_end, 0, sizeof(struct timeval));
+          memset(&timer_diff, 0, sizeof(struct timeval));
+
+          gettimeofday(&timer_start, NULL);
+
           /* Regular management of the request (UDP request or TCP request on connected handler */
           LogFullDebug(COMPONENT_DISPATCH, "Awaking thread #%d Xprt=%p", worker_index,
                        pnfsreq->xprt);
@@ -361,8 +374,17 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
           LogFullDebug(COMPONENT_DISPATCH, "Waiting for commit from thread #%d",
                        worker_index);
 
-          LogFullDebug(COMPONENT_DISPATCH, "Thread #%d has committed the operation",
-                       worker_index);
+          gettimeofday(&timer_end, NULL);
+          timer_diff = time_diff(timer_start, timer_end);
+
+          /* Update await time. */
+          stat_type = GANESHA_STAT_SUCCESS;
+          latency_stat.type = AWAIT_TIME;
+          latency_stat.latency = timer_diff.tv_sec * 1000000 + timer_diff.tv_usec; /* microseconds */
+          nfs_stat_update(stat_type, &(workers_data[worker_index].stats.stat_req), &(pnfsreq->req), &latency_stat);
+
+          LogFullDebug(COMPONENT_DISPATCH, "Thread #%d has committed the operation: end_time %llu.%.6llu await %llu.%.6llu",
+                       worker_index, timer_end.tv_sec, timer_end.tv_usec, timer_diff.tv_sec, timer_diff.tv_usec);
         }
     }
 
