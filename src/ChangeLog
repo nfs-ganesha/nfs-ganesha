@@ -383,5 +383,6 @@
 	- Add new call FSAL_getextattrs to get info such a generation number
 	  or creation time
 	- New Log management from IBM
+	- Several potential buffer overflow in fscanf fixed
        
 `	
