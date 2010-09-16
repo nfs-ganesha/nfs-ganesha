@@ -352,7 +352,7 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           strncpy(pparam->stats_per_client_directory, key_value, MAXPATHLEN);
         }
-      else if(!strcasecmp(key_name, "FSAL_Shared_Libraray"))
+      else if(!strcasecmp(key_name, "FSAL_Shared_Library"))
         {
           strncpy(pparam->fsal_shared_library, key_value, MAXPATHLEN);
         }
@@ -1372,7 +1372,7 @@ int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib)
           return CACHE_INODE_INVALID_ARGUMENT;
         }
 
-      if(!strcasecmp(key_name, "FSAL_Shared_Libraray"))
+      if(!strcasecmp(key_name, "FSAL_Shared_Library"))
         {
           strncpy(PathLib, key_value, MAXPATHLEN);
           found = TRUE;

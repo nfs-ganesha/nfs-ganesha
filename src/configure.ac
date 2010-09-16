@@ -327,7 +327,7 @@ if test "${with_extra_includedir+set}" == "set"; then
 fi
 
 # FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|ZFS|DLPOEN (default=PROXY)],[specify the type of filesystem to be exported] ),
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|ZFS|DYNFSAL (default=PROXY)],[specify the type of filesystem to be exported] ),
 	     FSAL="$withval", FSAL="PROXY")
 
 # exporting USE_FSAL_... for conditional compilation
