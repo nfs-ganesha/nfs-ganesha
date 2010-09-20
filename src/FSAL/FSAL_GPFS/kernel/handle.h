@@ -23,6 +23,7 @@
 #ifdef __KERNEL__
 #include <linux/mount.h>
 #include <linux/dcache.h>
+#include <linux/stat.h>
 #endif
 
 /*FIXME!!  need compat arg or rework the structure */
@@ -64,11 +65,21 @@ struct readlink_arg
     int size;
 };
 
+struct stat_arg
+{
+    int mountdirfd;
+    struct file_handle *handle;
+    struct stat *buf;
+};
+
+
 #ifdef __KERNEL__
 extern long name_to_handle_at(int dfd, const char __user * name,
                               struct file_handle __user * handle, int flag);
 extern long open_by_handle(int mountdirfd, struct file_handle __user * handle, int flags);
 extern long link_by_fd(int file_fd, int newdfd, const char __user * newname);
 extern long readlink_by_fd(int fd, char __user * buf, int buffsize);
+extern long stat_by_handle(int mountdirfd, struct file_handle __user * handle,
+                           struct stat __user *buf);
 #endif
 #endif

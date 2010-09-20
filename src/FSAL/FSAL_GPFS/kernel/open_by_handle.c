@@ -48,6 +48,7 @@ struct file_operations openhandle_fops = {
 #define OPENHANDLE_OPEN_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 1, struct open_arg)
 #define OPENHANDLE_LINK_BY_FD     _IOWR(OPENHANDLE_DRIVER_MAGIC, 2, struct link_arg)
 #define OPENHANDLE_READLINK_BY_FD _IOWR(OPENHANDLE_DRIVER_MAGIC, 3, struct readlink_arg)
+#define OPENHANDLE_STAT_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 4, struct stat_arg)
 
 long openhandle_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
@@ -56,6 +57,7 @@ long openhandle_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
     struct link_arg linkarg;
     struct name_handle_arg harg;
     struct readlink_arg readlinkarg;
+    struct stat_arg statarg;
 
     switch (cmd)
         {
@@ -79,6 +81,10 @@ long openhandle_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
                 return -EFAULT;
             retval = readlink_by_fd(readlinkarg.fd, readlinkarg.buffer, readlinkarg.size);
             break;
+        case OPENHANDLE_STAT_BY_HANDLE:
+            if (copy_from_user(&statarg, (void *)arg, sizeof(struct stat_arg)))
+                return -EFAULT;
+            retval = stat_by_handle(statarg.mountdirfd, statarg.handle, statarg.buf);
         default:
             break;
         }
