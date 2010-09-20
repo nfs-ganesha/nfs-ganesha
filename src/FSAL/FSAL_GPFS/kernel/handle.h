@@ -28,40 +28,40 @@
 /*FIXME!!  need compat arg or rework the structure */
 struct file_handle
 {
-  int handle_size;
-  int handle_type;
-  /* file identifier */
-  unsigned char f_handle[0];
+    int handle_size;
+    int handle_type;
+    /* file identifier */
+    unsigned char f_handle[0];
 };
 
 struct open_arg
 {
-  int mountdirfd;
-  int flags;
-  int openfd;
-  struct file_handle *handle;
+    int mountdirfd;
+    int flags;
+    int openfd;
+    struct file_handle *handle;
 };
 
 struct name_handle_arg
 {
-  int dfd;
-  int flag;
-  char *name;
-  struct file_handle *handle;
+    int dfd;
+    int flag;
+    char *name;
+    struct file_handle *handle;
 };
 
 struct link_arg
 {
-  int file_fd;
-  int dir_fd;
-  char *name;
+    int file_fd;
+    int dir_fd;
+    char *name;
 };
 
 struct readlink_arg
 {
-  int fd;
-  char *buffer;
-  int size;
+    int fd;
+    char *buffer;
+    int size;
 };
 
 #ifdef __KERNEL__
