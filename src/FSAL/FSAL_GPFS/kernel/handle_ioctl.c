@@ -72,6 +72,15 @@ static long do_sys_name_to_handle(struct nameidata *nd, struct file_handle __use
     struct file_handle *handle = NULL;
     const struct export_operations *exop = nd->dentry->d_sb->s_export_op;
 
+    if (!exop)
+        {
+            /*
+             * Check whether local file system support
+             * file system export
+             */
+            retval = -EINVAL;
+            goto err_out;
+        }
     if(copy_from_user(&f_handle, ufh, sizeof(struct file_handle)))
         {
             retval = -EFAULT;
@@ -208,6 +217,15 @@ static struct dentry *handle_to_dentry(int mountdirfd,
             goto out_err;
         }
     exop = mnt->mnt_sb->s_export_op;
+    if (!exop)
+        {
+            /*
+             * Check whether local file system support
+             * file system export
+             */
+            retval = -EINVAL;
+            goto out_err;
+        }
     /* change the handle size to multiple of sizeof(u32) */
     handle_size = handle->handle_size >> 2;
     /*
