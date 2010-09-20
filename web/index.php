@@ -70,9 +70,6 @@
     <td height="40"><table width="70%" border="0" cellspacing="0" cellpadding="0">
       <tr>
         <td><a href="index.php?page=overview" class="toplinks">Overview</a></td>
-        <td><a href="index.php?page=doc" class="toplinks">Documentation</a></td>
-        <td><a href="index.php?page=downloads" class="toplinks">Downloads</a></td>
-        <td><a href="index.php?page=features_to_be_added" class="toplinks">Features Roadmap</a></td>
         <td><a href="index.php?page=contacts" class="toplinks">Contacts</a></td>
         <td><a href="index.php?page=links" class="toplinks">Links</a></td>
       </tr>
