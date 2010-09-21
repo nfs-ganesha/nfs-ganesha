@@ -65,7 +65,7 @@ and namespaces. This package provides support for NFS-GANESHA as a PROXY.
 Summary: The NFS-GANESHA server compiled as a NFS gateway to XFS.
 Group: Applications/System
 Requires: xfsprogs
-BuildRequires: xfsprogs-devel xfsprogs-qa-devel
+BuildRequires: xfsprogs-devel libattr-devel
 Requires: %{name}-common = %{version}-%{release}
 
 %description xfs
@@ -109,6 +109,7 @@ interface.
 %package lustre
 Summary: The NFS-GANESHA server compiled for using the LUSTRE interface 
 Group: Applications/System
+BuildRequires: libattr-devel
 Requires: %{name}-common = %{version}-%{release}
 
 %description lustre
