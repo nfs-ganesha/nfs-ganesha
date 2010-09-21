@@ -47,6 +47,15 @@ NFS-GANESHA is a NFS Server running in user space with a large cache.
 It comes with various backend modules to support different file systems
 and namespaces. This package contains the common files for all variants.
 
+%package doc
+Summary: Documentation for NFS-GANESHA
+Group: Applications/System
+
+%description doc
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various backend modules to support different file systems
+and namespaces. This package provides the documentation for NFS-GANESHA
+and its backends.
 
 %if %{?_with_proxy:1}%{!?_with_proxy:0}
 %package proxy
@@ -307,8 +316,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %files common
 %defattr(-,root,root,-)
-%doc LICENSE.txt Docs/nfs-ganesha-userguide.pdf Docs/nfs-ganesha-adminguide.pdf Docs/nfs-ganeshell-userguide.pdf Docs/nfs-ganesha-ganestat.pdf Docs/using_ganeshell.pdf Docs/nfs-ganesha-convert_fh.pdf Docs/using_*_fsal.pdf
-%doc Docs/ganesha_snmp_adm.pdf
 %dir %{_sysconfdir}/ganesha/
 %dir %{_datadir}/%{name}
 %config(noreplace) %{_sysconfdir}/ganesha/hosts.ganesha
@@ -321,6 +328,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/vim/*/syntax/*
 %{_datadir}/vim/*/autoload/*
 
+%files doc
+%defattr(-,root,root)
+%doc LICENSE.txt Docs/nfs-ganesha-userguide.pdf Docs/nfs-ganesha-adminguide.pdf Docs/nfs-ganeshell-userguide.pdf Docs/nfs-ganesha-ganestat.pdf Docs/using_ganeshell.pdf Docs/nfs-ganesha-convert_fh.pdf Docs/using_*_fsal.pdf
+%doc Docs/ganesha_snmp_adm.pdf
 
 %if %{?_with_proxy:1}%{!?_with_proxy:0}
 %files proxy
