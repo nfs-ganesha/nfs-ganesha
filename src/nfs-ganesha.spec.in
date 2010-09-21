@@ -240,46 +240,32 @@ mkdir -p $RPM_BUILD_ROOT%{_bindir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/pkgconfig
 
-make install DESTDIR=$RPM_BUILD_ROOT
+make install DESTDIR=$RPM_BUILD_ROOT sysconfdir=/etc/ganesha
 
-install -m 644 config_samples/snmp.conf $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-
-%if %{?_with_hpss:1}%{!?_with_hpss:0}
-install -m 644 config_samples/hpss.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-%endif
 %if %{?_with_posix:1}%{!?_with_posix:0}
 install -m 755 nfs-ganesha.posix.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.posix
-install -m 644 config_samples/posix.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v8.sql      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v7.sql      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 FSAL/FSAL_POSIX/DBExt/MYSQL/posixdb_mysql5.sql  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
 %if %{?_with_proxy:1}%{!?_with_proxy:0}
 install -m 755 nfs-ganesha.proxy.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.proxy
-install -m 644 config_samples/proxy.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
 %if %{?_with_xfs:1}%{!?_with_xfs:0}
 install -m 755 nfs-ganesha.xfs.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.xfs
-install -m 644 config_samples/xfs.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
 %if %{?_with_gpfs:1}%{!?_with_gpfs:0}
 install -m 755 nfs-ganesha.gpfs.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.gpfs
-install -m 644 config_samples/gpfs.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 config_samples/gpfs.ganesha.main.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 config_samples/gpfs.ganesha.exports.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 rm -f $RPM_BUILD_ROOT/lib/modules/*/modules*
 %endif
 %if %{?_with_lustre:1}%{!?_with_lustre:0}
 install -m 755 nfs-ganesha.lustre.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.lustre
-install -m 644 config_samples/lustre.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
 %if %{?_with_dynfsal:1}%{!?_with_dynfsal:0}
 install -m 755 nfs-ganesha.dynfsal.init                         $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.dynfsal
-install -m 644 config_samples/dynfsal.ganesha.nfsd.conf         $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
 %if %{?_with_snmp:1}%{!?_with_snmp:0}
 install -m 755 nfs-ganesha.snmp.init                           $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.snmp
-install -m 644 config_samples/snmp.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
 install -m 755 nfs-ganesha.hpss.init                           $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.hpss
@@ -287,9 +273,6 @@ install -m 755 nfs-ganesha.hpss.init                           $RPM_BUILD_ROOT%{
 %if %{?_with_zfs:1}%{!?_with_zfs:0}
 install -m 755 nfs-ganesha.zfs.init                            $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.zfs
 %endif
-install -m 644 config_samples/hosts.ganesha                    $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 config_samples/uidgid_mapfile.ganesha           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 755 tools/ganestat.pl                               $RPM_BUILD_ROOT%{_bindir}
 
 %if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
 %if %{?_with_fuse:0}%{!?_with_fuse:1}
