@@ -206,7 +206,7 @@ LRU_entry_t *LRU_new_entry(LRU_list_t * plru, LRU_status_t * pstatus)
 {
   LRU_entry_t *new_entry = NULL;
 
-  LogDebug(COMPONENT_LRU, "==> LRU_new_entry: nb_entry = %d nb_entry_prealloc = %d\n", plru->nb_entry,
+  LogDebug(COMPONENT_LRU, "==> LRU_new_entry: nb_entry = %d nb_entry_prealloc = %d", plru->nb_entry,
          plru->parameter.nb_entry_prealloc);
 
 #ifdef _DEBUG_MEMLEAKS
