@@ -299,7 +299,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
               tcp_sock = (long int )pfe->arg ;
               LogEvent( COMPONENT_DISPATCH,
-			"TCP SOCKET MANAGER Now working on sock=%d after going out od the fridge", tcp_sock ) ;
+			"TCP SOCKET MANAGER Now working on sock=%d after going out of the fridge", tcp_sock ) ;
          
               continue ;
 		

@@ -316,11 +316,9 @@ static hash_data_t *PreAllocPdata(int nb_alloc)
   BuddySetDebugLabel("hash_data_t");
 #endif
 
-#ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pdata, (unsigned int)nb_alloc, hash_data_t, next_alloc);
   if(pdata == NULL)
     return NULL;
-#endif
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
@@ -353,11 +351,9 @@ static struct rbt_node *PreAllocNode(int nb_alloc)
   BuddySetDebugLabel("rbt_node_t");
 #endif
 
-#ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pnode, (unsigned int)nb_alloc, rbt_node_t, next);
   if(pnode == NULL)
     return NULL;
-#endif
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
@@ -500,16 +496,11 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
 
   for(i = 0; i < hparam.index_size; i++)
     {
-#ifndef _NO_BLOCK_PREALLOC
       if((ht->node_prealloc[i] = PreAllocNode(hparam.nb_node_prealloc)) == NULL)
         return NULL;
 
       if((ht->pdata_prealloc[i] = PreAllocPdata(hparam.nb_node_prealloc)) == NULL)
         return NULL;
-#else
-      ht->node_prealloc[i] = PreAllocNode(hparam.nb_node_prealloc);
-      ht->pdata_prealloc[i] = PreAllocPdata(hparam.nb_node_prealloc);
-#endif
     }
 
   /* Initialize each of the RB-Tree, mutexes and stats */

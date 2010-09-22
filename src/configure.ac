@@ -293,7 +293,6 @@ AC_SUBST(EFENCE)
 # Debugging options
 GA_DISABLE_FLAG( [concurrent-memalloc],  [a thread is not allowed to free a block allocated by another thread], [-D_MONOTHREAD_MEMALLOC] )
 GA_DISABLE_FLAG( [buddy-malloc],         [disable GANESHA's memory allocator, for debug purpose only],   [-D_NO_BUDDY_SYSTEM] )
-GA_DISABLE_FLAG( [block-prealloc],       [disable GANESHA's memory chunks allocator, for debug purpose only],   [-D_NO_BLOCK_PREALLOC] )
 GA_DISABLE_FLAG( [tcp-register], 	 [disable registration of tcp services on portmapper], 		 [-D_NO_TCP_REGISTER] )
 GA_DISABLE_FLAG( [portmapper], 	         [disable registration on portmapper], 				 [-D_NO_PORTMAPPER] )
 GA_DISABLE_FLAG( [xattr-directory],      [disable ghost xattr directory and files support],              [-D_NO_XATTRD])
