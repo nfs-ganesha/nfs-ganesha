@@ -8,7 +8,8 @@ EXTRA_DIST = hosts.ganesha uidgid_mapfile.ganesha snmp.conf \
 	     gpfs.ganesha.nfsd.conf \
 	     gpfs.ganesha.main.conf \
 	     gpfs.ganesha.exports.conf \
-	     dynfsal.ganesha.nfsd.conf
+	     dynfsal.ganesha.nfsd.conf \
+	     zfs.ganesha.nfsd.conf \
 
 sysconf_DATA = hosts.ganesha snmp.conf uidgid_mapfile.ganesha \
 	     @FS_NAME@.ganesha.nfsd.conf
