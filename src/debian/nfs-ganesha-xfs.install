@@ -1,3 +1,4 @@
+etc/init.d/nfs-ganesha.xfs
 etc/ganesha/xfs.ganesha.nfsd.conf
 usr/bin/xfs.ganesha.nfsd
 usr/bin/xfs.ganesha.convertFH
