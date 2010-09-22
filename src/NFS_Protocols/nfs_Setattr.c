@@ -197,7 +197,7 @@ int nfs_Setattr(nfs_arg_t * parg,
               pres->res_setattr3.status = NFS3ERR_NOT_SYNC;
               return NFS_REQ_OK;
             }
-          LogFullDebug(COMPONENT_NFSPROTO, "css=%d acs=%d    csn=%d acn=%d\n",
+          LogFullDebug(COMPONENT_NFSPROTO, "css=%d acs=%d    csn=%d acn=%d",
                  parg->arg_setattr3.guard.sattrguard3_u.obj_ctime.seconds,
                  attributes.ctime.seconds,
                  parg->arg_setattr3.guard.sattrguard3_u.obj_ctime.nseconds,
@@ -304,7 +304,7 @@ int nfs_Setattr(nfs_arg_t * parg,
       return NFS_REQ_OK;
     }
 
-  LogFullDebug(COMPONENT_NFSPROTO, "nfs_Setattr: failed\n");
+  LogFullDebug(COMPONENT_NFSPROTO, "nfs_Setattr: failed");
 
   /* If we are here, there was an error */
   if(nfs_RetryableError(cache_status))

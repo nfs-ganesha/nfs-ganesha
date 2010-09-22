@@ -74,7 +74,7 @@ int idmap_computer_hash_value(char *name, uint32_t * phashval)
   /* Copy the string to the padded one */
   for(i = 0; i < strnlen(name, PWENT_MAX_LEN); padded_name[i] = name[i], i++) ;
 
-  LogTest("%s \n", padded_name);
+  LogTest("%s ", padded_name);
 
   /* For each 9 character pack:
    *   - keep the 7 first bit (the 8th is often 0: ascii string)
@@ -129,7 +129,7 @@ int idmap_computer_hash_value(char *name, uint32_t * phashval)
   if(computed_value > 0x00000000FFFFFFFFLL)
     computed_value = (computed_value >> 32) ^ (computed_value & 0x00000000FFFFFFFFLL);
 
-  LogTest("===>%x\n", computed_value);
+  LogTest("===>%x", computed_value);
 
   *phashval = computed_value;
 
@@ -153,6 +153,6 @@ main(int argc, char *argv[])
       strncpy(name, argv[i], 30);
 
       idmap_computer_hash_value(name, &valeur);
-      LogTest("%s %x\n", name, valeur);
+      LogTest("%s %x", name, valeur);
     }
 }

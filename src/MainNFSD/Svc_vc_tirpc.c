@@ -347,7 +347,6 @@ struct rpc_msg *msg;
   SVCXPRT *newxprt;
   fd_set cleanfds;
 
-  pthread_attr_t attr_thr;
   pthread_t sockmgr_thrid;
   int rc = 0;
 
@@ -433,11 +432,6 @@ struct rpc_msg *msg;
     cd->nonblock = FALSE;
   gettimeofday(&cd->last_recv_time, NULL);
 
-  /* Spawns a new thread to handle the connection */
-  pthread_attr_init(&attr_thr);
-  pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
-  pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED);      /* If not, the conn mgr will be "defunct" threads */
-
   FD_CLR(newxprt->xp_fd, &Svc_fdset);
 
   if(pthread_cond_init(&condvar_xprt[newxprt->xp_fd], NULL) != 0)
@@ -449,7 +443,7 @@ struct rpc_msg *msg;
   etat_xprt[newxprt->xp_fd] = 0;
 
   if((rc =
-      pthread_create(&sockmgr_thrid, &attr_thr, rpc_tcp_socket_manager_thread,
+      fridge_get(&sockmgr_thrid, rpc_tcp_socket_manager_thread,
                      (void *)(newxprt->xp_fd))) != 0)
     return FALSE;
 

@@ -146,11 +146,11 @@ int nfs3_Fsinfo(nfs_arg_t * parg,
   FSINFO_FIELD.time_delta.seconds = 1;
   FSINFO_FIELD.time_delta.nseconds = 0;
 
-  LogFullDebug(COMPONENT_NFSPROTO, "rtmax = %d | rtpref = %d | trmult = %d\n",
+  LogFullDebug(COMPONENT_NFSPROTO, "rtmax = %d | rtpref = %d | trmult = %d",
          FSINFO_FIELD.rtmax, FSINFO_FIELD.rtpref, FSINFO_FIELD.rtmult = DEV_BSIZE);
-  LogFullDebug(COMPONENT_NFSPROTO, "wtmax = %d | wtpref = %d | wrmult = %d\n",
+  LogFullDebug(COMPONENT_NFSPROTO, "wtmax = %d | wtpref = %d | wrmult = %d",
          FSINFO_FIELD.wtmax, FSINFO_FIELD.wtpref, FSINFO_FIELD.wtmult = DEV_BSIZE);
-  LogFullDebug(COMPONENT_NFSPROTO, "dtpref = %d | maxfilesize = %llu \n", FSINFO_FIELD.dtpref,
+  LogFullDebug(COMPONENT_NFSPROTO, "dtpref = %d | maxfilesize = %llu ", FSINFO_FIELD.dtpref,
          FSINFO_FIELD.maxfilesize);
 
   /*

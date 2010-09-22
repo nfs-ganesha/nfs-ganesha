@@ -353,7 +353,7 @@ cache_inode_status_t cache_inode_get_state(char other[12],
 
   /* Sanity check, mostly for debug */
   if(memcmp(other, (*ppstate)->stateid_other, 12))
-    LogFullDebug(COMPONENT_STATES, "-------------> Warning !!!! Stateid(other) differs !!!!!!\n");
+    LogFullDebug(COMPONENT_STATES, "-------------> Warning !!!! Stateid(other) differs !!!!!!");
 
   *pstatus = CACHE_INODE_SUCCESS;
   return *pstatus;

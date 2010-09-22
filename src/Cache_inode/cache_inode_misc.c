@@ -858,7 +858,7 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
   pclient->call_since_last_gc += 1;
 
   /* If open/close fd cache is used for FSAL, manage it here */
-    LogFullDebug(COMPONENT_CACHE_INODE, "--------> use_cache=%u fileno=%d last_op=%u time(NULL)=%u delta=%d retention=%u\n",
+    LogFullDebug(COMPONENT_CACHE_INODE, "--------> use_cache=%u fileno=%d last_op=%u time(NULL)=%u delta=%d retention=%u",
        pclient->use_cache, pentry->object.file.open_fd.fileno,
        pentry->object.file.open_fd.last_op, time(NULL),
        time(NULL) - pentry->object.file.open_fd.last_op, pclient->retention);
@@ -902,19 +902,19 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
 #if 0
   BuddyGetStats(&bstats);
   LogFullDebug(COMPONENT_CACHE_INODE,
-      "(pthread_self=%u) NbStandard=%lu  NbStandardUsed=%lu  InsideStandard(nb=%lu, size=%lu)\n",
+      "(pthread_self=%u) NbStandard=%lu  NbStandardUsed=%lu  InsideStandard(nb=%lu, size=%lu)",
        (unsigned int)pthread_self(), (long unsigned int)bstats.NbStdPages, (long unsigned int)bstats.NbStdUsed, (long unsigned int)bstats.StdUsedSpace,
        (long unsigned int)bstats.NbStdUsed);
 #endif
 
 #endif
   LogFullDebug(COMPONENT_CACHE_INODE,
-      "(pthread_self=%u) LRU GC state: nb_entries=%d nb_invalid=%d nb_call_gc=%d param.nb_call_gc_invalid=%d\n",
+      "(pthread_self=%u) LRU GC state: nb_entries=%d nb_invalid=%d nb_call_gc=%d param.nb_call_gc_invalid=%d",
        pthread_self(), pclient->lru_gc->nb_entry, pclient->lru_gc->nb_invalid,
        pclient->lru_gc->nb_call_gc, pclient->lru_gc->parameter.nb_call_gc_invalid);
 
   LogFullDebug(COMPONENT_CACHE_INODE,
-      "LRU GC state: nb_entries=%d nb_invalid=%d nb_call_gc=%d param.nb_call_gc_invalid=%d\n",
+      "LRU GC state: nb_entries=%d nb_invalid=%d nb_call_gc=%d param.nb_call_gc_invalid=%d",
        pclient->lru_gc->nb_entry, pclient->lru_gc->nb_invalid,
        pclient->lru_gc->nb_call_gc, pclient->lru_gc->parameter.nb_call_gc_invalid);
 
@@ -1228,7 +1228,7 @@ void cache_inode_print_dir(cache_entry_t * cache_entry_root)
   if(cache_entry_root->internal_md.type != DIR_BEGINNING &&
      cache_entry_root->internal_md.type != DIR_CONTINUE)
     {
-      LogFullDebug(COMPONENT_CACHE_INODE, "This entry is not a directory segment\n");
+      LogFullDebug(COMPONENT_CACHE_INODE, "This entry is not a directory segment");
       return;
     }
 
@@ -1239,7 +1239,7 @@ void cache_inode_print_dir(cache_entry_t * cache_entry_root)
       if(cache_entry_iter->internal_md.type == DIR_BEGINNING)
         {
           for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
-            LogFullDebug(COMPONENT_CACHE_INODE, "Name = %s, DIR_BEGINNING entry = %p, active=%d, i=%d\n",
+            LogFullDebug(COMPONENT_CACHE_INODE, "Name = %s, DIR_BEGINNING entry = %p, active=%d, i=%d",
                    cache_entry_iter->object.dir_begin.pdir_data->dir_entries[i].name.name,
                    cache_entry_iter->object.dir_begin.pdir_data->dir_entries[i].pentry,
                    cache_entry_iter->object.dir_begin.pdir_data->dir_entries[i].active,
@@ -1250,7 +1250,7 @@ void cache_inode_print_dir(cache_entry_t * cache_entry_root)
       else
         {
           for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
-            LogFullDebug(COMPONENT_CACHE_INODE, "Name = %s, DIR_CONTINUE entry = %p, active=%d, i=%d\n",
+            LogFullDebug(COMPONENT_CACHE_INODE, "Name = %s, DIR_CONTINUE entry = %p, active=%d, i=%d",
                    cache_entry_iter->object.dir_cont.pdir_data->dir_entries[i].name.name,
                    cache_entry_iter->object.dir_cont.pdir_data->dir_entries[i].pentry,
                    cache_entry_iter->object.dir_cont.pdir_data->dir_entries[i].active, i);
@@ -1258,7 +1258,7 @@ void cache_inode_print_dir(cache_entry_t * cache_entry_root)
           cache_entry_iter = cache_entry_iter->object.dir_cont.pdir_cont;
         }
     }
-  LogFullDebug(COMPONENT_CACHE_INODE,"------------------\n");
+  LogFullDebug(COMPONENT_CACHE_INODE,"------------------");
 }                               /* cache_inode_print_dir */
 
 /**

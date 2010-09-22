@@ -46,6 +46,7 @@ void Xprt_unregister(SVCXPRT * xprt);
 
 void socket_setoptions(int socketFd);
 
+int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
 bool_t svcauth_wrap_dummy(XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr);
 
 pthread_mutex_t mutex_cond_xprt[FD_SETSIZE];
@@ -279,7 +280,6 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt)
   struct sockaddr_in addr;
   unsigned long len;
 
-  pthread_attr_t attr_thr;
   pthread_t sockmgr_thrid;
   int rc = 0;
 
@@ -307,11 +307,6 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt)
   memcpy(&(xprt->xp_raddr), &addr, sizeof(addr));
   xprt->xp_addrlen = len;
 
-  /* Spawns a new thread to handle the connection */
-  pthread_attr_init(&attr_thr);
-  pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
-  pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED);      /* If not, the conn mgr will be "defunct" threads */
-
 #ifdef _FREEBSD
   FD_CLR(xprt->xp_fd, &Svc_fdset);
   if(pthread_cond_init(&condvar_xprt[xprt->xp_fd], NULL) != 0)
@@ -322,8 +317,8 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt)
   etat_xprt[xprt->xp_fd] = 0;
 
   if((rc =
-      pthread_create(&sockmgr_thrid, &attr_thr, rpc_tcp_socket_manager_thread,
-                     (void *)((unsigned long)xprt->xp_fd))) != 0)
+	fridgethr_get( &sockmgr_thrid, rpc_tcp_socket_manager_thread,
+                     (void *)((unsigned long)xprt->xp_fd))) != 0 )
     return FALSE;
 #else
   FD_CLR(xprt->xp_sock, &Svc_fdset);
@@ -335,8 +330,8 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt)
   etat_xprt[xprt->xp_sock] = 0;
 
   if((rc =
-      pthread_create(&sockmgr_thrid, &attr_thr, rpc_tcp_socket_manager_thread,
-                     (void *)((unsigned long)xprt->xp_sock))) != 0)
+	fridgethr_get( &sockmgr_thrid, rpc_tcp_socket_manager_thread,
+                     (void *)((unsigned long)xprt->xp_sock))) != 0 )
     return FALSE;
 
 #endif

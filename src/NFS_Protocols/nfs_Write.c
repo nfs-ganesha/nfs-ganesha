@@ -254,7 +254,7 @@ int nfs_Write(nfs_arg_t * parg,
           stable_flag = TRUE;
         }
 
-      LogFullDebug(COMPONENT_NFSPROTO, "----> Write offset=%lld count=%u\n", parg->arg_write3.offset,
+      LogFullDebug(COMPONENT_NFSPROTO, "----> Write offset=%lld count=%u", parg->arg_write3.offset,
              parg->arg_write3.count);
 
       /*
@@ -427,7 +427,7 @@ int nfs_Write(nfs_arg_t * parg,
         }
     }
 
-  LogFullDebug(COMPONENT_NFSPROTO, "---> failed write: cache_status=%d\n", cache_status);
+  LogFullDebug(COMPONENT_NFSPROTO, "---> failed write: cache_status=%d", cache_status);
 
   /* If we are here, there was an error */
   if(nfs_RetryableError(cache_status))

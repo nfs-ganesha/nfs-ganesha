@@ -199,7 +199,7 @@ static void convert_gss_status2str(char *str, OM_uint32 maj_stat, OM_uint32 min_
   gss_release_buffer(&min, &msg);
 
   gss_display_status(&min, min_stat, GSS_C_MECH_CODE, GSS_C_NULL_OID, &msg_ctx, &msg);
-  sprintf(str, "MECH_CODE=%s\n", (char *)msg.value);
+  sprintf(str, "MECH_CODE=%s", (char *)msg.value);
   gss_release_buffer(&min, &msg);
 }                               /* convert_gss_status2str */
 #endif
@@ -309,24 +309,24 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
       if(isFullDebug(COMPONENT_RPCSEC_GSS))
         {
           LogFullDebug(COMPONENT_RPCSEC_GSS,
-               "----> RPCSEC_GSS svc=%u RPCSEC_GSS_SVC_NONE=%u RPCSEC_GSS_SVC_INTEGRITY=%u RPCSEC_GSS_SVC_PRIVACY=%u\n",
+               "----> RPCSEC_GSS svc=%u RPCSEC_GSS_SVC_NONE=%u RPCSEC_GSS_SVC_INTEGRITY=%u RPCSEC_GSS_SVC_PRIVACY=%u",
                gd->sec.svc, RPCSEC_GSS_SVC_NONE, RPCSEC_GSS_SVC_INTEGRITY,
                RPCSEC_GSS_SVC_PRIVACY);
 
           memcpy(&ptr, (void *)gd->ctx + 4, 4);
           LogFullDebug(COMPONENT_RPCSEC_GSS,
-                 "----> Client=%s length=%u  Qop=%u established=%u gss_ctx_id=%p|%p\n",
+                 "----> Client=%s length=%u  Qop=%u established=%u gss_ctx_id=%p|%p",
                  (char *)gd->cname.value, gd->cname.length, gd->established, gd->sec.qop,
                  gd->ctx, ptr);
        }
 
       if((maj_stat = gss_oid_to_str(&min_stat, gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
         {
-          LogCrit(COMPONENT_DISPATCH, "Error in gss_oid_to_str: %u|%u\n",
+          LogCrit(COMPONENT_DISPATCH, "Error in gss_oid_to_str: %u|%u",
                   maj_stat, min_stat);
           exit(1);
         }
-      LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Client mech=%s len=%u\n",
+      LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Client mech=%s len=%u",
                    (char *)oidbuff.value, oidbuff.length);
 
       /* Je fais le menage derriere moi */
@@ -334,7 +334,7 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
 
       split_credname(gd->cname, username, domainname);
 
-      LogFullDebug(COMPONENT_RPCSEC_GSS, "----> User=%s Domain=%s\n",
+      LogFullDebug(COMPONENT_RPCSEC_GSS, "----> User=%s Domain=%s",
                    username, domainname);
 
       /* Convert to uid */
@@ -348,7 +348,7 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
                    caller_uid);
           caller_gid = -1;
         }
-      LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Uid=%u Gid=%u\n",
+      LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Uid=%u Gid=%u",
                    (unsigned int)caller_uid, (unsigned int)caller_gid);
       caller_glen = 0;
       caller_garray = 0;

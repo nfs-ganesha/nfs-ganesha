@@ -175,7 +175,7 @@ static ThreadLogContext_t *Log_GetThreadContext(int ok_errors)
       pthread_setspecific(thread_key, (void *)p_current_thread_vars);
 
       if (ok_errors)
-        LogFullDebug(COMPONENT_LOG_EMERG, "malloc => %p\n", p_current_thread_vars);
+        LogFullDebug(COMPONENT_LOG_EMERG, "malloc => %p", p_current_thread_vars);
     }
 
   return p_current_thread_vars;
