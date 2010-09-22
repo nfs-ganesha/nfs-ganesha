@@ -57,6 +57,17 @@ It comes with various backend modules to support different file systems
 and namespaces. This package provides the documentation for NFS-GANESHA
 and its backends.
 
+%package vim
+Summary: Vim configuration files for NFS-GANESHA
+Group: Applications/System
+
+%description vim
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various backend modules to support different file systems
+and namespaces. This package provides the vim configuration files for
+NFS-GANESHA.
+
+
 %if %{?_with_proxy:1}%{!?_with_proxy:0}
 %package proxy
 Summary: The NFS-GANESHA server compiled as a PROXY 
@@ -287,15 +298,18 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/ganesha/uidgid_mapfile.ganesha
 %{_bindir}/ganestat.pl
 %{_bindir}/ganesha_log_level
+
+%files doc
+%defattr(-,root,root,-)
+%doc LICENSE.txt Docs/nfs-ganesha-userguide.pdf Docs/nfs-ganesha-adminguide.pdf Docs/nfs-ganeshell-userguide.pdf Docs/nfs-ganesha-ganestat.pdf Docs/using_ganeshell.pdf Docs/nfs-ganesha-convert_fh.pdf Docs/using_*_fsal.pdf
+%doc Docs/ganesha_snmp_adm.pdf
+
+%files vim
+%defattr(-,root,root,-)
 %{_datadir}/%{name}/ganesha.vim
 %{_datadir}/%{name}/ganesha_au.vim
 %{_datadir}/vim/*/syntax/*
 %{_datadir}/vim/*/autoload/*
-
-%files doc
-%defattr(-,root,root)
-%doc LICENSE.txt Docs/nfs-ganesha-userguide.pdf Docs/nfs-ganesha-adminguide.pdf Docs/nfs-ganeshell-userguide.pdf Docs/nfs-ganesha-ganestat.pdf Docs/using_ganeshell.pdf Docs/nfs-ganesha-convert_fh.pdf Docs/using_*_fsal.pdf
-%doc Docs/ganesha_snmp_adm.pdf
 
 %if %{?_with_proxy:1}%{!?_with_proxy:0}
 %files proxy

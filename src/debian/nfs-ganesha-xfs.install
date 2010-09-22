@@ -1,0 +1,4 @@
+etc/ganesha/xfs.ganesha.nfsd.conf
+usr/bin/xfs.ganesha.nfsd
+usr/bin/xfs.ganesha.convertFH
+usr/bin/xfs.ganeshell
