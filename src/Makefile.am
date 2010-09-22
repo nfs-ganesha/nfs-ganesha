@@ -45,7 +45,19 @@ new: clean all
 deb:
 	cp debian/rules.auto debian/rules
 	chmod 754 debian/rules
-	cp debian/control.auto debian/control
+	cp debian/control.base debian/control
+if USE_FSAL_ZFS
+	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libzfswrap-dev/' debian/control
+else
+if USE_FSAL_POSIX
+	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libmysqlclient-dev/' debian/control
+else
+if USE_FSAL_XFS
+	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libattr1-dev, xfslibs-dev/' debian/control
+endif
+endif
+endif
+	cat debian/control.@FS_NAME@ >> debian/control
 	dpkg-buildpackage -rfakeroot
 
 rpms: rpm srpm
