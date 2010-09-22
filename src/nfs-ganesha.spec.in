@@ -242,36 +242,17 @@ mkdir -p $RPM_BUILD_ROOT%{_libdir}/pkgconfig
 
 make install DESTDIR=$RPM_BUILD_ROOT sysconfdir=/etc/ganesha
 
+%if %{?_with_fuse:0}%{!?_with_fuse:1}
+install -m 755 nfs-ganesha.@FS_NAME@.init                      $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.@FS_NAME@
+%endif
+
 %if %{?_with_posix:1}%{!?_with_posix:0}
-install -m 755 nfs-ganesha.posix.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.posix
 install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v8.sql      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v7.sql      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 FSAL/FSAL_POSIX/DBExt/MYSQL/posixdb_mysql5.sql  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
-%if %{?_with_proxy:1}%{!?_with_proxy:0}
-install -m 755 nfs-ganesha.proxy.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.proxy
-%endif
-%if %{?_with_xfs:1}%{!?_with_xfs:0}
-install -m 755 nfs-ganesha.xfs.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.xfs
-%endif
 %if %{?_with_gpfs:1}%{!?_with_gpfs:0}
-install -m 755 nfs-ganesha.gpfs.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.gpfs
 rm -f $RPM_BUILD_ROOT/lib/modules/*/modules*
-%endif
-%if %{?_with_lustre:1}%{!?_with_lustre:0}
-install -m 755 nfs-ganesha.lustre.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.lustre
-%endif
-%if %{?_with_dynfsal:1}%{!?_with_dynfsal:0}
-install -m 755 nfs-ganesha.dynfsal.init                         $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.dynfsal
-%endif
-%if %{?_with_snmp:1}%{!?_with_snmp:0}
-install -m 755 nfs-ganesha.snmp.init                           $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.snmp
-%endif
-%if %{?_with_hpss:1}%{!?_with_hpss:0}
-install -m 755 nfs-ganesha.hpss.init                           $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.hpss
-%endif
-%if %{?_with_zfs:1}%{!?_with_zfs:0}
-install -m 755 nfs-ganesha.zfs.init                            $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.zfs
 %endif
 
 %if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
