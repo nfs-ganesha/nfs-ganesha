@@ -142,7 +142,6 @@ int cache_content_client_init(cache_content_client_t * pclient,
   BuddySetDebugLabel("cache_content_entry_t");
 #endif
 
-#ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_entry,
                  pclient->nb_prealloc, cache_content_entry_t, next_alloc);
 
@@ -157,7 +156,6 @@ int cache_content_client_init(cache_content_client_t * pclient,
                    "Error : can't init data_cache client entry pool");
       return 1;
     }
-#endif
 
   /* Successfull exit */
   return 0;

@@ -145,7 +145,6 @@ LRU_list_t *LRU_Init(LRU_parameter_t lru_param, LRU_status_t * pstatus)
   BuddySetDebugLabel("LRU_entry_t");
 #endif
 
-#ifndef _NO_BLOCK_PREALLOC
   /* Pre allocate entries */
   STUFF_PREALLOC(plru->entry_prealloc, lru_param.nb_entry_prealloc, LRU_entry_t, next);
   if(plru->entry_prealloc == NULL)
@@ -153,7 +152,6 @@ LRU_list_t *LRU_Init(LRU_parameter_t lru_param, LRU_status_t * pstatus)
       *pstatus = LRU_LIST_MALLOC_ERROR;
       return NULL;
     }
-#endif
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
