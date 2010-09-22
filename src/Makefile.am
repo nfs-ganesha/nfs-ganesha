@@ -43,7 +43,10 @@ DOCDIRS = Cache_inode ConfigParsing File_Content File_Content_Policy HashTable I
 new: clean all
 
 deb:
-	dpkg-buildpackage -rfakeroot -d
+	cp debian/rules.auto debian/rules
+	chmod 754 debian/rules
+	cp debian/control.auto debian/control
+	dpkg-buildpackage -rfakeroot
 
 rpms: rpm srpm
 

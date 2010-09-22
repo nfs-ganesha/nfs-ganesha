@@ -715,7 +715,8 @@ AC_CONFIG_FILES([include/Makefile
 		 check/layers/Makefile
 		 check/layers/maketest.conf
 		 debian/Makefile
-		 debian/control
+		 debian/control.auto
+		 debian/rules.auto
                  rpm/Makefile
                  Makefile
                  libganeshaNFS.pc

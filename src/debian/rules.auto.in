@@ -2,7 +2,7 @@
 # -*- makefile -*-
 export PREFIX=/usr
 
-FSAL_NAME=`echo xfs | tr '[:lower:]' '[:upper:]'`
+FSAL_NAME=`echo @FS_NAME@ | tr '[:lower:]' '[:upper:]'`
 
 %:
 	 dh $@ --parallel
@@ -14,5 +14,5 @@ override_dh_auto_test:
 
 override_dh_install:
 	 mkdir -p debian/tmp/etc/init.d/
-	 cp nfs-ganesha.xfs.init debian/tmp/etc/init.d/nfs-ganesha.xfs
+	 cp nfs-ganesha.@FS_NAME@.init debian/tmp/etc/init.d/nfs-ganesha.@FS_NAME@
 	 dh_install --sourcedir=debian/tmp
