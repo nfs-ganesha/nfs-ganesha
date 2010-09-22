@@ -386,3 +386,5 @@
        
 1.0.2	- 
 	- New TCP connection management to avoid DOSi-like attack
+	- Tag _NO_BLOCK_PREALLOC was removed
+	- New debian packaging
