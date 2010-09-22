@@ -135,7 +135,7 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
          data->currentFH.nfs_fh4_len);
   for(cpt = 0; cpt < data->currentFH.nfs_fh4_len; cpt++)
     LogFullDebug(COMPONENT_NFS_V4, "%02X", data->currentFH.nfs_fh4_val[cpt]);
-  LogFullDebug(COMPONENT_NFS_V4, " } \n");
+  LogFullDebug(COMPONENT_NFS_V4, " } ");
 
   /* Sanity check: if no attributes are wanted, nothing is to be done.
    * In this case NFS4_OK is to be returned */

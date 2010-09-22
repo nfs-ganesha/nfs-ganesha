@@ -126,7 +126,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
 
   if(!BuddyCheck(parg->arg_mnt))
     {
-      LogFullDebug(COMPONENT_MEMCORRUPT, "Memory corruption in mnt_Mnt. arg_mnt = %p\n", parg->arg_mnt);
+      LogFullDebug(COMPONENT_MEMCORRUPT, "Memory corruption in mnt_Mnt. arg_mnt = %p", parg->arg_mnt);
     }
 
   if(parg->arg_mnt == NULL)

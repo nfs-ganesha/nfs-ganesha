@@ -105,7 +105,7 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   resp->resop = NFS4_OP_COMMIT;
   res_COMMIT4.status = NFS4_OK;
 
-  LogFullDebug(COMPONENT_NFS_V4, "      COMMIT4: Demande de commit sur offset = %llu, size = %llu\n",
+  LogFullDebug(COMPONENT_NFS_V4, "      COMMIT4: Demande de commit sur offset = %llu, size = %llu",
          arg_COMMIT4.offset, arg_COMMIT4.count);
 
   /* If there is no FH */

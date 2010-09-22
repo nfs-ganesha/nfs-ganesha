@@ -144,7 +144,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
   estimated_num_entries = dircount / sizeof(entryplus3);
 
   LogFullDebug(COMPONENT_NFS_READDIR,
-      "---> nfs3_Readdirplus: dircount=%d  maxcount=%d  begin_cookie=%d  space_used=%d  estimated_num_entries=%d\n",
+      "---> nfs3_Readdirplus: dircount=%d  maxcount=%d  begin_cookie=%d  space_used=%d  estimated_num_entries=%d",
        dircount, maxcount, begin_cookie, space_used, estimated_num_entries);
 
   /* Is this a xattr FH ? */
@@ -265,12 +265,12 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                          ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
       LogFullDebug(COMPONENT_NFS_READDIR,
-          "-- Readdirplus3 -> Call to cache_inode_readdir( cookie=%d, asked=%d ) -> num_entries = %d\n",
+          "-- Readdirplus3 -> Call to cache_inode_readdir( cookie=%d, asked=%d ) -> num_entries = %d",
            cache_inode_cookie, asked_num_entries, num_entries);
 
       if(eod_met == END_OF_DIR)
         {
-          LogFullDebug(COMPONENT_NFS_READDIR, "+++++++++++++++++++++++++++++++++++++++++> EOD MET \n");
+          LogFullDebug(COMPONENT_NFS_READDIR, "+++++++++++++++++++++++++++++++++++++++++> EOD MET ");
         }
 
       /* If nothing was found, return nothing, but if cookie=0, we should return . and .. */
@@ -519,7 +519,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
               needed =
                   sizeof(entry3) + ((strlen(dirent_array[i - delta].name.name) + 3) & ~3);
 
-              /* LogFullDebug(COMPONENT_NFS_READDIR, "==============> i=%d sizeof(entryplus3)=%d needed=%d space_used=%d maxcount=%d num_entries=%d asked_num_entries=%d\n",
+              /* LogFullDebug(COMPONENT_NFS_READDIR, "==============> i=%d sizeof(entryplus3)=%d needed=%d space_used=%d maxcount=%d num_entries=%d asked_num_entries=%d",
                  i, sizeof( entryplus3 ), needed, space_used, maxcount, num_entries, asked_num_entries ) ; */
               if((space_used += needed) > maxcount)
                 {
@@ -593,7 +593,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                   return NFS_REQ_OK;
                 }
               LogFullDebug(COMPONENT_NFS_READDIR,
-                  "-- Readdirplus3 -> i=%d num_entries=%d needed=%d space_used=%lu maxcount=%lu Name=%s FileId=%llu Cookie=%llu\n",
+                  "-- Readdirplus3 -> i=%d num_entries=%d needed=%d space_used=%lu maxcount=%lu Name=%s FileId=%llu Cookie=%llu",
                    i, num_entries, needed, space_used, maxcount,
                    dirent_array[i - delta].name.name,
                    RES_READDIRPLUS_REPLY.entries[i].fileid,
@@ -635,7 +635,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
         {
           /* End of directory */
           LogFullDebug(COMPONENT_NFS_READDIR,
-              "============================================================> EOD MET !!!!!!\n");
+              "============================================================> EOD MET !!!!!!");
           pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof = TRUE;
         }
       else
@@ -648,7 +648,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
       memcpy(pres->res_readdirplus3.READDIRPLUS3res_u.resok.cookieverf, cookie_verifier,
              sizeof(cookieverf3));
 
-      LogFullDebug(COMPONENT_NFS_READDIR,"============================================================\n");
+      LogFullDebug(COMPONENT_NFS_READDIR,"============================================================");
 
       /* Free the memory */
       Mem_Free((char *)dirent_array);

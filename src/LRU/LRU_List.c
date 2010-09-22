@@ -292,7 +292,7 @@ int LRU_gc_invalid(LRU_list_t * plru, void *cleanparam)
         {
           if(plru->parameter.clean_entry(pentry, cleanparam) != 0)
             {
-              LogDebug(COMPONENT_LRU, "Error cleaning pentry %p\n", pentry);
+              LogDebug(COMPONENT_LRU, "Error cleaning pentry %p", pentry);
               rc = LRU_LIST_BAD_RELEASE_ENTRY;
             }
 
@@ -304,7 +304,7 @@ int LRU_gc_invalid(LRU_list_t * plru, void *cleanparam)
           if(pentry->next != NULL)
             pentry->next->prev = pentry->prev;
           else
-            LogDebug(COMPONENT_LRU, "SHOULD Never appear  !!!! line %d file %s\n", __LINE__, __FILE__);
+            LogDebug(COMPONENT_LRU, "SHOULD Never appear  !!!! line %d file %s", __LINE__, __FILE__);
           plru->nb_entry -= 1;
           plru->nb_invalid -= 1;
 
@@ -444,9 +444,9 @@ void LRU_Print(LRU_list_t * plru)
   for(pentry = plru->LRU; pentry != NULL; pentry = pentry->next)
     {
       plru->parameter.entry_to_str(pentry->buffdata, dispdata);
-      LogFullDebug(COMPONENT_LRU, "Entry value = %s, valid_state = %d\n", dispdata, pentry->valid_state);
+      LogFullDebug(COMPONENT_LRU, "Entry value = %s, valid_state = %d", dispdata, pentry->valid_state);
     }
-  LogFullDebug(COMPONENT_LRU, "-----------------------------------------\n");
+  LogFullDebug(COMPONENT_LRU, "-----------------------------------------");
 }                               /* LRU_Print */
 
 /* @} */

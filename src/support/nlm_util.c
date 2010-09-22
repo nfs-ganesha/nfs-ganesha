@@ -644,7 +644,7 @@ void nlm_node_recovery(char *name,
     nlm_lock_entry_t *nlm_entry;
     struct glist_head *glist, *glistn;
 
-    LogFullDebug(COMPONENT_NFSPROTO, "Recovery for host %s\n", name);
+    LogFullDebug(COMPONENT_NFSPROTO, "Recovery for host %s", name);
 
     pthread_mutex_lock(&nlm_lock_list_mutex);
     glist_for_each_safe(glist, glistn, &nlm_lock_list)
@@ -701,7 +701,7 @@ int nlm_monitor_host(char *name)
         }
     pthread_mutex_unlock(&nlm_lock_list_mutex);
     /* There is nobody monitoring the host */
-    LogFullDebug(COMPONENT_NFSPROTO, "Monitoring host %s\n", name);
+    LogFullDebug(COMPONENT_NFSPROTO, "Monitoring host %s", name);
     return nsm_monitor(name);
 }
 
@@ -726,7 +726,7 @@ int nlm_unmonitor_host(char *name)
         }
     pthread_mutex_unlock(&nlm_lock_list_mutex);
     /* There is nobody holding a lock with host */
-    LogFullDebug(COMPONENT_NFSPROTO, "Unmonitoring host %s\n", name);
+    LogFullDebug(COMPONENT_NFSPROTO, "Unmonitoring host %s", name);
     return nsm_unmonitor(name);
 }
 
@@ -783,7 +783,7 @@ static void nlm4_send_grant_msg(void *arg)
              * the lock again. So remove the existing blocked nlm entry
              */
             LogMajor(COMPONENT_NFSPROTO,
-                     "%s: GRANTED_MSG RPC call failed. Removing the blocking lock\n",
+                     "%s: GRANTED_MSG RPC call failed. Removing the blocking lock",
                      __func__);
             goto free_nlm_lock_entry;
         }
@@ -793,7 +793,7 @@ static void nlm4_send_grant_msg(void *arg)
              * We already have marked the locks granted
              */
             LogMajor(COMPONENT_NFSPROTO,
-                     "%s: Granted the blocking lock successfully\n", __func__);
+                     "%s: Granted the blocking lock successfully", __func__);
         }
 free_nlm_lock_entry:
     nlm_remove_from_locklist(nlm_entry);

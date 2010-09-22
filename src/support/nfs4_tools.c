@@ -112,10 +112,10 @@ int nfs4_is_lease_expired(cache_entry_t * pentry)
      CLIENT_ID_SUCCESS)
     return 0;                   /* No client id, manage it as non-expired */
 
-  LogFullDebug(COMPONENT_NFS_V4, "Lease on %p for client_name = %s id=%lld\n", pentry, nfs_clientid.client_name,
+  LogFullDebug(COMPONENT_NFS_V4, "Lease on %p for client_name = %s id=%lld", pentry, nfs_clientid.client_name,
          nfs_clientid.clientid);
 
-  LogFullDebug(COMPONENT_NFS_V4, "--------- nfs4_is_lease_expired ---------> %u %u delta=%u lease=%u\n",
+  LogFullDebug(COMPONENT_NFS_V4, "--------- nfs4_is_lease_expired ---------> %u %u delta=%u lease=%u",
          time(NULL), time(NULL), nfs_clientid.last_renew,
          time(NULL) - nfs_clientid.last_renew, nfs_param.nfsv4_param.lease_lifetime);
 #endif

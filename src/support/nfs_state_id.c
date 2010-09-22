@@ -100,7 +100,7 @@ int display_state_id_val(hash_buffer_t * pbuff, char *str)
   cache_inode_state_t *pstate = (cache_inode_state_t *) (pbuff->pdata);
 
   return sprintf(str,
-                 "state %p is associated with pentry=%p type=%u seqid=%u prev=%p next=%p\n",
+                 "state %p is associated with pentry=%p type=%u seqid=%u prev=%p next=%p",
                  pstate, pstate->pentry, pstate->state_type, pstate->seqid, pstate->prev,
                  pstate->next);
 }                               /* display_state_id_val */
@@ -124,7 +124,7 @@ unsigned long state_id_value_hash_func(hash_parameter_t * p_hparam,
       sum += c;
     }
 
-  LogFullDebug(COMPONENT_STATES, "---> state_id_value_hash_func=%lu\n",
+  LogFullDebug(COMPONENT_STATES, "---> state_id_value_hash_func=%lu",
          (unsigned long)(sum % p_hparam->index_size));
 
   return (unsigned long)(sum % p_hparam->index_size);
@@ -143,14 +143,14 @@ unsigned long state_id_rbt_hash_func(hash_parameter_t * p_hparam,
       char str[25];
 
       sprint_mem(str, (char *)buffclef->pdata, 12);
-      LogFullDebug(COMPONENT_SESSIONS, "         ----- state_id_rbt_hash_func : %s\n", str);
+      LogFullDebug(COMPONENT_SESSIONS, "         ----- state_id_rbt_hash_func : %s", str);
     }
 
   memcpy(&i1, &(buffclef->pdata[0]), sizeof(u_int32_t));
   memcpy(&i2, &(buffclef->pdata[4]), sizeof(u_int32_t));
   memcpy(&i3, &(buffclef->pdata[8]), sizeof(u_int32_t));
 
-  LogFullDebug(COMPONENT_STATES, "--->  state_id_rbt_hash_func=%lu\n", (unsigned long)(i1 ^ i2 ^ i3));
+  LogFullDebug(COMPONENT_STATES, "--->  state_id_rbt_hash_func=%lu", (unsigned long)(i1 ^ i2 ^ i3));
 
   return (unsigned long)(i1 ^ i2 ^ i3);
 }                               /* state_id_rbt_hash_func */
@@ -220,7 +220,7 @@ int nfs4_BuildStateId_Other(cache_entry_t * pentry,
     return 0;
 
   LogFullDebug(COMPONENT_STATES,
-         "----  nfs4_BuildStateId_Other : pentry=%p popen_owner=%u|%s\n",
+         "----  nfs4_BuildStateId_Other : pentry=%p popen_owner=%u|%s",
          pentry, popen_owner->owner_len, popen_owner->owner_val);
 
   /* Get several digests to build the stateid : the server boot time, the fileid and a monotonic counter */
@@ -234,7 +234,7 @@ int nfs4_BuildStateId_Other(cache_entry_t * pentry,
   open_owner_digest = popen_owner->counter;
 
   LogFullDebug(COMPONENT_STATES,
-         "----  nfs4_BuildStateId_Other : pentry=%p fileid=%llu open_owner_digest=%u\n",
+         "----  nfs4_BuildStateId_Other : pentry=%p fileid=%llu open_owner_digest=%u",
          pentry, fileid_digest, open_owner_digest);
 
   /* Now, let's do the time's warp again.... Well, in fact we'll just build the stateid.other field */
@@ -266,7 +266,7 @@ int nfs4_State_Set(char other[12], cache_inode_state_t * pstate_data)
       char str[25];
 
       sprint_mem(str, (char *)other, 12);
-      LogFullDebug(COMPONENT_SESSIONS, "         ----- SetStateid : %s\n", str);
+      LogFullDebug(COMPONENT_SESSIONS, "         ----- SetStateid : %s", str);
     }
 
   if((buffkey.pdata = (caddr_t) Mem_Alloc(12)) == NULL)
@@ -307,7 +307,7 @@ int nfs4_State_Get(char other[12], cache_inode_state_t * pstate_data)
       char str[25];
 
       sprint_mem(str, (char *)other, 12);
-      LogFullDebug(COMPONENT_SESSIONS, "         ----- GetStateid : %s\n", str);
+      LogFullDebug(COMPONENT_SESSIONS, "         ----- GetStateid : %s", str);
     }
 
   buffkey.pdata = (caddr_t) other;
@@ -315,13 +315,13 @@ int nfs4_State_Get(char other[12], cache_inode_state_t * pstate_data)
 
   if(HashTable_Get(ht_state_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
-      LogFullDebug(COMPONENT_STATES, "---> nfs4_State_Get  NOT FOUND !!!!!!\n");
+      LogFullDebug(COMPONENT_STATES, "---> nfs4_State_Get  NOT FOUND !!!!!!");
       return 0;
     }
 
   memcpy(pstate_data, buffval.pdata, sizeof(cache_inode_state_t));
 
-  LogFullDebug(COMPONENT_STATES, "---> nfs4_State_Get Found :-)\n");
+  LogFullDebug(COMPONENT_STATES, "---> nfs4_State_Get Found :-)");
 
   return 1;
 }                               /* nfs4_State_Get */
@@ -348,7 +348,7 @@ int nfs4_State_Get_Pointer(char other[12], cache_inode_state_t * *pstate_data)
       char str[25];
 
       sprint_mem(str, (char *)other, 12);
-      LogFullDebug(COMPONENT_SESSIONS, "         ----- Get_PointerStateid : %s\n", str);
+      LogFullDebug(COMPONENT_SESSIONS, "         ----- Get_PointerStateid : %s", str);
     }
 
   buffkey.pdata = (caddr_t) other;
@@ -356,13 +356,13 @@ int nfs4_State_Get_Pointer(char other[12], cache_inode_state_t * *pstate_data)
 
   if(HashTable_Get(ht_state_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
-      LogFullDebug(COMPONENT_STATES, "---> nfs4_State_Get_Pointer  NOT FOUND !!!!!!\n");
+      LogFullDebug(COMPONENT_STATES, "---> nfs4_State_Get_Pointer  NOT FOUND !!!!!!");
       return 0;
     }
 
   *pstate_data = (cache_inode_state_t *) buffval.pdata;
 
-  LogFullDebug(COMPONENT_STATES, "---> nfs4_State_Get_Pointer Found :-)\n");
+  LogFullDebug(COMPONENT_STATES, "---> nfs4_State_Get_Pointer Found :-)");
 
   return 1;
 }                               /* nfs4_State_Get_Pointer */
@@ -389,7 +389,7 @@ int nfs4_State_Update(char other[12], cache_inode_state_t * pstate_data)
       char str[25];
 
       sprint_mem(str, (char *)other, 12);
-      LogFullDebug(COMPONENT_SESSIONS, "         ----- UpdateStateid : %s\n", str);
+      LogFullDebug(COMPONENT_SESSIONS, "         ----- UpdateStateid : %s", str);
     }
 
   buffkey.pdata = (caddr_t) other;
@@ -397,13 +397,13 @@ int nfs4_State_Update(char other[12], cache_inode_state_t * pstate_data)
 
   if(HashTable_Get(ht_state_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
-      LogFullDebug(COMPONENT_STATES, "---> nfs4_State_Update  NOT FOUND !!!!!!\n");
+      LogFullDebug(COMPONENT_STATES, "---> nfs4_State_Update  NOT FOUND !!!!!!");
       return 0;
     }
 
   memcpy(buffval.pdata, pstate_data, sizeof(cache_inode_state_t));
 
-  LogFullDebug(COMPONENT_STATES, "---> nfs4_State_Update Found :-)\n");
+  LogFullDebug(COMPONENT_STATES, "---> nfs4_State_Update Found :-)");
 
   return 1;
 }                               /* nfs4_State_Update */
@@ -428,7 +428,7 @@ int nfs4_State_Del(char other[12])
       char str[25];
 
       sprint_mem(str, (char *)other, 12);
-      LogFullDebug(COMPONENT_SESSIONS, "         ----- DelStateid : %s\n", str);
+      LogFullDebug(COMPONENT_SESSIONS, "         ----- DelStateid : %s", str);
     }
 
   buffkey.pdata = (caddr_t) other;
@@ -471,7 +471,7 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
       char str[25];
 
       sprint_mem(str, (char *)pstate->other, 12);
-      LogFullDebug(COMPONENT_SESSIONS, "         ----- CheckStateid : %s\n", str);
+      LogFullDebug(COMPONENT_SESSIONS, "         ----- CheckStateid : %s", str);
     }
 
   if(pstate == NULL)
@@ -498,7 +498,7 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
       char str[25];
 
       sprint_mem(str, (char *)pstate->other, 12);
-      LogFullDebug(COMPONENT_SESSIONS, "         ----- CheckStateid state found: %s\n", str);
+      LogFullDebug(COMPONENT_SESSIONS, "         ----- CheckStateid state found: %s", str);
     }
 
   /* Get the related clientid */

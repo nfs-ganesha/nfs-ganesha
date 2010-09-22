@@ -1544,7 +1544,7 @@ void *worker_thread(void *IndexArg)
           pthread_cond_signal(&(condvar_xprt[xprt->xp_fd]));
           V(mutex_cond_xprt[xprt->xp_fd]);
 #else
-          //LogFullDebug(COMPONENT_DISPATCH, "worker : P pour sur %u\n", pnfsreq->xprt->xp_sock ) ; 
+          //LogFullDebug(COMPONENT_DISPATCH, "worker : P pour sur %u", pnfsreq->xprt->xp_sock ) ; 
           P(mutex_cond_xprt[xprt->xp_sock]);
           etat_xprt[xprt->xp_sock] = 1;
           pthread_cond_signal(&(condvar_xprt[xprt->xp_sock]));

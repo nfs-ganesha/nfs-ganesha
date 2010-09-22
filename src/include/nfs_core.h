@@ -518,6 +518,17 @@ typedef struct nfs_flush_thread_data__
 
 } nfs_flush_thread_data_t;
 
+typedef struct fridge_entry__
+{
+  pthread_t thrid ;
+  pthread_mutex_t condmutex ;
+  pthread_cond_t condvar ;
+  unsigned int frozen ;
+  void * arg ;
+  struct fridge_entry__ * prev ;
+} fridge_entry_t  ;
+
+
 /* 
  *functions prototypes
  */
@@ -724,6 +735,10 @@ int nfs4_State_Get_Pointer(char other[12], cache_inode_state_t * *pstate_data);
 int nfs4_State_Del(char other[12]);
 int nfs4_State_Update(char other[12], cache_inode_state_t * pstate_data);
 void nfs_State_PrintAll(void);
+
+int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
+fridge_entry_t * fridgethr_freeze( ) ;
+int fridgethr_init() ;
 
 #ifdef _USE_NFS4_1
 int display_session_id_key(hash_buffer_t * pbuff, char *str);

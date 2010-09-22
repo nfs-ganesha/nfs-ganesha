@@ -108,7 +108,7 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
           for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
             {
 
-              LogFullDebug(COMPONENT_CACHE_INODE, "DIR_BEGINNING %d | %d | %s | %s\n",
+              LogFullDebug(COMPONENT_CACHE_INODE, "DIR_BEGINNING %d | %d | %s | %s",
                      pdir_chain->object.dir_begin.pdir_data->dir_entries[i].active,
                      pdir_chain->object.dir_begin.pdir_data->dir_entries[i].pentry->
                      internal_md.valid_state, pname->name,
@@ -1003,7 +1003,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
   pclient->stat.nb_call_total += 1;
   pclient->stat.func_stats.nb_call[CACHE_INODE_READDIR] += 1;
 
-  LogFullDebug(COMPONENT_NFSPROTO, "--> Cache_inode_readdir: parameters are cookie=%u nbwanted=%u\n", cookie,
+  LogFullDebug(COMPONENT_NFSPROTO, "--> Cache_inode_readdir: parameters are cookie=%u nbwanted=%u", cookie,
          nbwanted);
 
   /* Sanity check */
@@ -1159,7 +1159,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
               V_r(&dir_pentry->lock);
 
               LogFullDebug(COMPONENT_NFS_READDIR,
-                  "Big input cookie found in cache_inode_readdir (DIR_BEGIN) : pentry=%p cookie=%d first_pentry_cookie=%d nbdirchain=%d\n",
+                  "Big input cookie found in cache_inode_readdir (DIR_BEGIN) : pentry=%p cookie=%d first_pentry_cookie=%d nbdirchain=%d",
                    pentry_to_read, cookie, first_pentry_cookie, nbdirchain);
 
               /* Set the returned values */
@@ -1183,7 +1183,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
               /* OPeration is a success */
               *pstatus = CACHE_INODE_SUCCESS;
               LogFullDebug(COMPONENT_NFS_READDIR, 
-                  "Trouble found in cache_inode_readdir (DIR_CONTINUE) : pentry=%p cookie=%d first_pentry_cookie=%d nbdirchain=%d\n",
+                  "Trouble found in cache_inode_readdir (DIR_CONTINUE) : pentry=%p cookie=%d first_pentry_cookie=%d nbdirchain=%d",
                    pentry_to_read, cookie, first_pentry_cookie, nbdirchain);
               /* Set the returned values */
               *pnbfound = 0;
@@ -1205,7 +1205,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
     }                           /* while */
 
   LogFullDebug(COMPONENT_NFS_READDIR, 
-      "About to readdir in  cache_inode_readdir: pentry=%p cookie=%d first_pentry_cookie=%d nbdirchain=%d\n",
+      "About to readdir in  cache_inode_readdir: pentry=%p cookie=%d first_pentry_cookie=%d nbdirchain=%d",
        pentry_to_read, cookie, first_pentry_cookie, nbdirchain);
 
   /* Get prepaired for readdir */
@@ -1225,7 +1225,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
                                                                           CHILDREN_ARRAY_SIZE];
               cookie_array[i] = cookie_iter;
 
-              LogFullDebug(COMPONENT_CACHE_INODE,"--> Cache_inode_readdir: Found slot with file named %s\n",
+              LogFullDebug(COMPONENT_CACHE_INODE,"--> Cache_inode_readdir: Found slot with file named %s",
                      pentry_to_read->object.dir_begin.pdir_data->dir_entries[cookie_iter %
                                                                              CHILDREN_ARRAY_SIZE].
                      name.name);
@@ -1247,7 +1247,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
                                                                          CHILDREN_ARRAY_SIZE];
               cookie_array[i] = cookie_iter;
 
-              LogFullDebug(COMPONENT_CACHE_INODE,"--> Cache_inode_readdir: Found slot with file named %s\n",
+              LogFullDebug(COMPONENT_CACHE_INODE,"--> Cache_inode_readdir: Found slot with file named %s",
                      pentry_to_read->object.dir_cont.pdir_data->dir_entries[cookie_iter %
                                                                             CHILDREN_ARRAY_SIZE].
                      name.name);

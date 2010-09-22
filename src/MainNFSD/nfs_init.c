@@ -1238,6 +1238,13 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
   if(pthread_attr_setstacksize(&attr_thr, THREAD_STACK_SIZE) != 0)
     LogDebug(COMPONENT_INIT, "can't set pthread's stack size");
 
+  /* Initialisation of Threads's fridge */
+  if( fridgethr_init() != 0 )
+   {
+     LogCrit( COMPONENT_INIT, "can't run fridgethr_init... exiting");
+     exit( 1 ) ;
+   }
+
   /* Starting all of the worker thread */
   for(i = 0; i < pnfs_param->core_param.nb_worker; i++)
     {

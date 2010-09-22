@@ -322,7 +322,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       return *pstatus;
     }
 
-  LogFullDebug(COMPONENT_CACHE_INODE, "---> Cache_inode_remove : %s\n", pnode_name->name);
+  LogFullDebug(COMPONENT_CACHE_INODE, "---> Cache_inode_remove : %s", pnode_name->name);
 
   /* Non-empty directories should not be removed. If entry is of type DIR_CONTINUE, then the directory is not empty */
   if(to_remove_entry->internal_md.type == DIR_CONTINUE)

@@ -393,7 +393,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                  && (pentry->object.file.open_fd.fileno != 0))
                 {
 
-                  LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_rdwr: CLOSING pentry %p: fd=%d\n", pentry,
+                  LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_rdwr: CLOSING pentry %p: fd=%d", pentry,
                          pentry->object.file.open_fd.fileno);
 
 #ifdef _USE_MFSL
