@@ -1,6 +1,7 @@
 EXTRA_DIST = changelog                          \
              compat                             \
 	     control.base                       \
+	     control.fuse                       \
 	     control.posix                      \
 	     control.proxy                      \
 	     control.snmp                       \
@@ -10,6 +11,8 @@ EXTRA_DIST = changelog                          \
              dirs                               \
 	     nfs-ganesha-common.install         \
 	     nfs-ganesha-doc.docs               \
+	     nfs-ganesha-fuselike.install       \
+	     nfs-ganesha-fuselike-dev.install   \
 	     nfs-ganesha-posix.install          \
 	     nfs-ganesha-proxy.install          \
 	     nfs-ganesha-snmp.install           \
