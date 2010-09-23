@@ -11,8 +11,12 @@ EXTRA_DIST = hosts.ganesha uidgid_mapfile.ganesha snmp.conf \
 	     dynfsal.ganesha.nfsd.conf \
 	     zfs.ganesha.nfsd.conf
 
+if USE_FSAL_FUSE
+sysconf_DATA = hosts.ganesha snmp.conf uidgid_mapfile.ganesha 
+else
 sysconf_DATA = hosts.ganesha snmp.conf uidgid_mapfile.ganesha \
 	     @FS_NAME@.ganesha.nfsd.conf
+endif
 
 if USE_FSAL_GPFS
 sysconf_DATA += gpfs.ganesha.main.conf \
