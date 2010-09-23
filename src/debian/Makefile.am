@@ -3,6 +3,7 @@ EXTRA_DIST = changelog                          \
 	     control.base                       \
 	     control.posix                      \
 	     control.proxy                      \
+	     control.snmp                       \
 	     control.xfs                        \
 	     control.zfs                        \
 	     copyright                          \
@@ -11,6 +12,7 @@ EXTRA_DIST = changelog                          \
 	     nfs-ganesha-doc.docs               \
 	     nfs-ganesha-posix.install          \
 	     nfs-ganesha-proxy.install          \
+	     nfs-ganesha-snmp.install           \
 	     nfs-ganesha-xfs.install            \
 	     nfs-ganesha-zfs.install            \
 	     rules.auto                         \
