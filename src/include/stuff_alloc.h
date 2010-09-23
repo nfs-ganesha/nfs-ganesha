@@ -73,8 +73,6 @@
 
 #endif
 
-#ifndef _NO_BLOCK_PREALLOC
-
 /**
  *
  * STUFF_PREALLOC: Allocates a pool of pre-allocated entries.
@@ -314,7 +312,5 @@ do                                                                        \
   destruct( (void *)(entry) ) ;                                           \
   Mem_Free( entry );                                                      \
 } while( 0 )
-
-#endif                          /* no block preallocation */
 
 #endif                          /* _STUFF_ALLOC_H */
