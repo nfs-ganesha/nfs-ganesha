@@ -413,6 +413,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/zfs.ganesha.*
 %{_bindir}/zfs.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha.zfs
+%config %{_sysconfdir}/ganesha/zfs.ganesha*
 %endif
 
 %if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
