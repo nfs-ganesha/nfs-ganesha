@@ -1,3 +1,16 @@
+nfs-ganesha (1.0.1-1) stable; urgency=low
+  * New FSAL model: FSAL modules can now be compile as shared object and can be loaded at runtime
+  * New FSAL to support ZFS filesystem
+  * Add the capability to build a "FSAL-less" daemon that loads FSAL shared object by using the dlopen function.
+  * FSAL_PROXY: the embedded client now can allocate a tcp socket on a privileged port to contact the "proxyfied" server
+  * FSAL shared objects are provided as precompiled rpms
+  * Log layer now uses syslog as a possible log stream
+  * Add new call FSAL_getextattrs to get info such a generation number or creation time
+  * New Log management from IBM
+  * Several potential buffer overflow in fscanf fixed
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Thu, 23 Sep 2010 10:10:00 +0200
+
 nfs-ganesha (0.99.65-1) stable; urgency=low
 
   * FSAL_XFS now has lock support
