@@ -1,0 +1,63 @@
+Add force-reload as an alias for reload in the init scripts.
+
+--- nfs-ganesha-1.0.1.orig/nfs-ganesha.posix.init	2010-09-23 13:49:52.500805311 +0200
++++ nfs-ganesha-1.0.1/nfs-ganesha.posix.init	        2010-09-23 13:49:43.137555322 +0200
+@@ -90,7 +90,7 @@
+   restart)
+ 	restart
+         ;;
+-  reload)
++  reload|force-reload)
+ 	reload
+         ;;
+   condrestart)
+
+--- nfs-ganesha-1.0.1.orig/nfs-ganesha.proxy.init	2010-09-23 13:49:52.500805311 +0200
++++ nfs-ganesha-1.0.1/nfs-ganesha.proxy.init	        2010-09-23 13:49:43.137555322 +0200
+@@ -90,7 +90,7 @@
+   restart)
+ 	restart
+         ;;
+-  reload)
++  reload|force-reload)
+ 	reload
+         ;;
+   condrestart)
+
+--- nfs-ganesha-1.0.1.orig/nfs-ganesha.snmp.init	2010-09-23 13:49:52.500805311 +0200
++++ nfs-ganesha-1.0.1/nfs-ganesha.snmp.init	        2010-09-23 13:49:43.137555322 +0200
+@@ -90,7 +90,7 @@
+   restart)
+ 	restart
+         ;;
+-  reload)
++  reload|force-reload)
+ 	reload
+         ;;
+   condrestart)
+
+--- nfs-ganesha-1.0.1.orig/nfs-ganesha.xfs.init	2010-09-23 13:49:52.500805311 +0200
++++ nfs-ganesha-1.0.1/nfs-ganesha.xfs.init	2010-09-23 13:49:43.137555322 +0200
+@@ -90,7 +90,7 @@
+   restart)
+ 	restart
+         ;;
+-  reload)
++  reload|force-reload)
+ 	reload
+         ;;
+   condrestart)
+
+--- nfs-ganesha-1.0.1.orig/nfs-ganesha.zfs.init	2010-09-23 13:49:52.500805311 +0200
++++ nfs-ganesha-1.0.1/nfs-ganesha.zfs.init	2010-09-23 13:49:43.137555322 +0200
+@@ -90,7 +90,7 @@
+   restart)
+ 	restart
+         ;;
+-  reload)
++  reload|force-reload)
+ 	reload
+         ;;
+   condrestart)
+
+

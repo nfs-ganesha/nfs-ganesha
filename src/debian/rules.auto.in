@@ -5,7 +5,7 @@ export PREFIX=/usr
 FSAL_NAME=`echo @FS_NAME@ | tr '[:lower:]' '[:upper:]'`
 
 %:
-	 dh $@ --parallel
+	 dh --with quilt $@
 
 override_dh_auto_configure:
 	 dh_auto_configure -- --with-fsal=$(FSAL_NAME) --sysconfdir=/etc/ganesha
