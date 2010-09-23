@@ -13,4 +13,5 @@ EXTRA_DIST = changelog                          \
 	     nfs-ganesha-proxy.install          \
 	     nfs-ganesha-xfs.install            \
 	     nfs-ganesha-zfs.install            \
-	     rules.auto
+	     rules.auto                         \
+             source
