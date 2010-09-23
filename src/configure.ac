@@ -424,6 +424,7 @@ case $FSAL in
                 ;;
 	SNMP)
 		AC_DEFINE([_USE_SNMP], 1, [GANESHA is compiled with SNMP FSAL])
+                AC_CHECK_HEADERS([net-snmp/net-snmp-config.h], [], [AC_MSG_ERROR(missing libsnmp include files)])
                 case "$MYOS" in 
 			FREEBSD) 
 				FSAL_CFLAGS=`$NETSNMP_CONFIG --cflags`
