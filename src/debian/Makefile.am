@@ -14,4 +14,5 @@ EXTRA_DIST = changelog                          \
 	     nfs-ganesha-xfs.install            \
 	     nfs-ganesha-zfs.install            \
 	     rules.auto                         \
-             source
+             source                             \
+             patches
