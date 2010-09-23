@@ -1,6 +1,6 @@
 Package: nfs-ganesha-zfs
 Architecture: any
-Depends: nfs-ganesha-common, libzfswrap1
+Depends: nfs-ganesha-common, libzfswrap1, ${shlibs:Depends}
 Description: NFS-GANESHA usable to export ZFS
  NFS-GANESHA is a NFS Server running in user space with a large cache.
  It comes with various backend modules to support different file systems

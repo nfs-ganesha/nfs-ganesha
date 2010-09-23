@@ -60,6 +60,10 @@ if USE_FSAL_POSIX
 else
 if USE_FSAL_XFS
 	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libattr1-dev, xfslibs-dev/' pkg-deb/nfs-ganesha-@PACKAGE_VERSION@/debian/control
+else
+if USE_FSAL_SNMP
+	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libsnmp-dev/' pkg-deb/nfs-ganesha-@PACKAGE_VERSION@/debian/control
+endif
 endif
 endif
 endif
