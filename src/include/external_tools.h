@@ -1,6 +1,8 @@
 #ifndef _EXTERNAL_TOOLS_H
 #define _EXTERNAL_TOOLS_H
 
+#include "nfs_exports.h"
+
 typedef struct snmp_adm_parameter__
 {
   char snmp_agentx_socket[MAXPATHLEN];
@@ -15,6 +17,11 @@ typedef struct snmp_adm_parameter__
   int export_nfs_calls_detail;
   int export_cache_inode_calls_detail;
   int export_fsal_calls_detail;
+
+  /* for the statistics exporter thread */
+  int export_stat_port;
+  exportlist_client_t allowed_clients;
+
 } snmp_adm_parameter_t;
 
 typedef struct external_tools_parameter__
