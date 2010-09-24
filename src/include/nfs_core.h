@@ -564,6 +564,13 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam);
 
 int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht);
 
+/* Add a list of clients to the client array of either an exports entry or
+ * another service that has a client array (like snmp or statistics exporter) */
+int nfs_AddClientsToClientArray(exportlist_client_t *clients, int new_clients_number,
+    char **new_clients_name, int option);
+int parseAccessParam(char *var_name, char *var_value,
+                     exportlist_t *p_entry, int access_option);
+
 /* Config reparsing routines */
 void admin_replace_exports();
 int CleanUpExportContext(fsal_export_context_t * p_export_context);
