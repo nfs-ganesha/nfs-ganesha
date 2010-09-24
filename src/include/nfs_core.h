@@ -740,7 +740,6 @@ void nfs_State_PrintAll(void);
 
 int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
 fridge_entry_t * fridgethr_freeze( ) ;
-void fridgethr_remove( fridge_entry_t * pfe ) ;
 int fridgethr_init() ;
 
 #ifdef _USE_NFS4_1
