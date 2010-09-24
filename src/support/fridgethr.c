@@ -52,6 +52,8 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
+extern nfs_parameter_t nfs_param ;
+
 static pthread_mutex_t fridge_mutex ;
 static fridge_entry_t * fridge_content = NULL ;
 static pthread_attr_t attr_thr ;
@@ -62,9 +64,16 @@ void fridgethr_remove( fridge_entry_t * pfe )
 	return ;
 
    P( fridge_mutex ) ;
+ 
    if( pfe->pprev != NULL ) pfe->pprev->pnext = pfe->pnext ;
    if( pfe->pnext != NULL ) pfe->pnext->pprev = pfe->pprev ;
+ 
+   if( pfe->pnext == NULL && pfe->pprev == NULL ) /* Is the fridge empty ? */
+     fridge_content = NULL ;  
+
    V( fridge_mutex ) ;
+
+   Mem_Free( pfe ) ;
 
    return ;
  } /* fridgethr_remove */
@@ -106,7 +115,17 @@ int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg )
 fridge_entry_t * fridgethr_freeze( )
 {
   fridge_entry_t * pfe = NULL ;
+  struct timespec timeout ;
+  struct timeval    tp;
   int rc = 0 ;
+
+
+  if( ( rc = gettimeofday( &tp, NULL ) ) != 0 )
+    return NULL ;
+
+  /* Be careful : pthread_cond_timedwait take an *absolute* time as time specification, not a duration */ 
+  timeout.tv_sec = tp.tv_sec + nfs_param.core_param.tcp_fridge_expiration_delay ;
+  timeout.tv_nsec = 0 ; 
 
   if( ( pfe = (fridge_entry_t *)Mem_Alloc( sizeof( fridge_entry_t ) ) ) == NULL )
     return NULL ;
@@ -135,13 +154,16 @@ fridge_entry_t * fridgethr_freeze( )
 
   P( pfe->condmutex ) ;
   while( pfe->frozen == TRUE && rc == 0 ) 
-    rc = pthread_cond_wait( &pfe->condvar, &pfe->condmutex ) ;
+    if( nfs_param.core_param.tcp_fridge_expiration_delay > 0 )
+       rc = pthread_cond_timedwait( &pfe->condvar, &pfe->condmutex, &timeout ) ;
+    else
+       rc = pthread_cond_wait( &pfe->condvar, &pfe->condmutex ) ;
   V( pfe->condmutex ) ;
 
-  if( rc != 0 )
-    return NULL ;
-   
-  return pfe ;
+  if( rc == ETIMEDOUT )
+    fridgethr_remove( pfe );  
+
+  return (rc == 0 )?pfe:NULL ; 
 } /* fridgethr_freeze */
 
 int fridgethr_init( )
