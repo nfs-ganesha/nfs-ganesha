@@ -56,6 +56,19 @@ static pthread_mutex_t fridge_mutex ;
 static fridge_entry_t * fridge_content = NULL ;
 static pthread_attr_t attr_thr ;
 
+void fridgethr_remove( fridge_entry_t * pfe ) 
+{
+   if( pfe == NULL )
+	return ;
+
+   P( fridge_mutex ) ;
+   if( pfe->pprev != NULL ) pfe->pprev->pnext = pfe->pnext ;
+   if( pfe->pnext != NULL ) pfe->pnext->pprev = pfe->pprev ;
+   V( fridge_mutex ) ;
+
+   return ;
+ } /* fridgethr_remove */
+
 int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg )
 {
   fridge_entry_t * pfe = NULL ;
@@ -69,7 +82,13 @@ int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg )
 
   pfe = fridge_content ;
   pfe->frozen = FALSE ;
-  fridge_content = fridge_content->prev ;
+  if( pfe->pprev != NULL )
+      pfe->pprev->pnext = pfe->pnext ;
+
+  if( pfe->pnext != NULL )
+      pfe->pnext->pprev = pfe->pprev ;
+
+  fridge_content = fridge_content->pprev ;
 
   pfe->arg = thrarg ;
   if( pthread_cond_signal( &pfe->condvar ) )
@@ -82,7 +101,7 @@ int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg )
  
   V( fridge_mutex ) ;
   return 0 ;
-}
+} /* fridgethr_get */
 
 fridge_entry_t * fridgethr_freeze( )
 {
@@ -95,11 +114,22 @@ fridge_entry_t * fridgethr_freeze( )
   pfe->thrid = pthread_self() ;
   pthread_mutex_init( &(pfe->condmutex), NULL ) ;
   pthread_cond_init( &(pfe->condvar), NULL ) ;
-  pfe->prev = NULL ; 
+  pfe->pprev = NULL ; 
+  pfe->pnext = NULL ; 
   pfe->frozen = TRUE ;
 
   P( fridge_mutex ) ;
-  pfe->prev = fridge_content ;
+  if( fridge_content == NULL )
+   {
+     pfe->pprev = NULL ;
+     pfe->pnext = NULL ;
+   }
+  else
+   {
+     pfe->pprev = fridge_content ;
+     pfe->pnext = NULL ;
+     fridge_content->pnext = pfe ;
+   }
   fridge_content = pfe ;
   V( fridge_mutex ) ;
 
@@ -109,7 +139,7 @@ fridge_entry_t * fridgethr_freeze( )
   V( pfe->condmutex ) ;
 
   return pfe ;
-}
+} /* fridgethr_freeze */
 
 int fridgethr_init( )
 {
@@ -124,4 +154,4 @@ int fridgethr_init( )
     return -1 ;
 
   return 0 ;
-}
+} /* fridgethr_init */
