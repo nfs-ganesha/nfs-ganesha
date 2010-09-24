@@ -229,6 +229,7 @@ int merge_nfs_stats(char *stat_buf, nfs_stat_client_req_t *stat_client_req,
 
       default:
         // TODO: Invalid NFS version handling
+	LogCrit(COMPONENT_MAIN, "Error: Invalid NFS version.");
       break;
     }
 
@@ -261,6 +262,7 @@ int merge_nfs_stats(char *stat_buf, nfs_stat_client_req_t *stat_client_req,
 
       default:
         // TODO: Invalid stat type handling
+	LogCrit(COMPONENT_MAIN, "Error: Invalid stat type.");
       break;
 	}
 
@@ -284,10 +286,10 @@ int process_stat_request(void *addr, int new_fd)
   nfs_worker_stat_t global_worker_stat;
   nfs_stat_client_req_t stat_client_req;
   memset(&stat_client_req, 0, sizeof(nfs_stat_client_req_t));
-
   memset(cmd_buf, 0, 4096);
-  if(recv(new_fd, cmd_buf, 4096, 0) == -1)
-    perror("recv");
+
+  if((rc = recv(new_fd, cmd_buf, 4096, 0)) == -1)
+    LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
 
   /* Parse command options. */
   token = strtok_r(cmd_buf, ",", &saveptr1);
@@ -301,6 +303,7 @@ int process_stat_request(void *addr, int new_fd)
       if(strcmp(key, "version") == 0)
       {
         stat_client_req.nfs_version = atoi(value);
+	LogMajor(COMPONENT_MAIN, "NFS VERSION: %d", stat_client_req.nfs_version);
       }
       else if(strcmp(key, "type") == 0)
       {
@@ -320,13 +323,16 @@ int process_stat_request(void *addr, int new_fd)
 
   memset(stat_buf, 0, 4096);
   merge_nfs_stats(stat_buf, &stat_client_req, &global_worker_stat, workers_data);
-
-  if(send(new_fd, stat_buf, 4096, 0) == -1)
-    perror("send");
+  if((rc = send(new_fd, stat_buf, 4096, 0)) == -1)
+    LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
 
   close(new_fd);
 
   return rc;
+}
+
+int check_permissions() {
+  return 0;
 }
 
 void *stat_exporter_thread(void *addr)
@@ -338,16 +344,18 @@ void *stat_exporter_thread(void *addr)
   struct sigaction sa;
   int yes = 1;
   char s[INET6_ADDRSTRLEN];
-  int rv;
+  int rc;
+
+  SetNameFunction("statistics_exporter");
 
   memset(&hints, 0, sizeof hints);
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE;
 
-  if((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0)
+  if((rc = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0)
     {
-      fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+      LogCrit(COMPONENT_MAIN, "getaddrinfo: %s\n", gai_strerror(rc));
       return NULL;
     }
 
@@ -356,21 +364,21 @@ void *stat_exporter_thread(void *addr)
       if((sockfd = socket(p->ai_family, p->ai_socktype,
                           p->ai_protocol)) == -1)
         {
-          perror("server: socket");
+	  LogError(COMPONENT_MAIN, ERR_SYS, errno, sockfd);
           continue;
         }
 
-      if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
-                     sizeof(int)) == -1)
+      if((rc = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
+			  sizeof(int))) == -1)
         {
-          perror("setsockopt");
+	  LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
           return NULL;
         }
 
-      if(bind(sockfd, p->ai_addr, p->ai_addrlen) == -1)
+      if((rc = bind(sockfd, p->ai_addr, p->ai_addrlen)) == -1)
         {
           close(sockfd);
-          perror("server: bind");
+	  LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
           continue;
         }
 
@@ -379,28 +387,28 @@ void *stat_exporter_thread(void *addr)
 
   if(p == NULL)
     {
-      fprintf(stderr, "server: failed to bind\n");
+      LogCrit(COMPONENT_MAIN, "server: failed to bind");
       return NULL;
     }
 
   freeaddrinfo(servinfo);
 
-  if(listen(sockfd, BACKLOG) == -1)
+  if((rc = listen(sockfd, BACKLOG)) == -1)
     {
-      perror("listen");
+      LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
       return NULL;
     }
 
   sa.sa_handler = sigchld_handler;
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = SA_RESTART;
-  if(sigaction(SIGCHLD, &sa, NULL) == -1)
+  if((rc = sigaction(SIGCHLD, &sa, NULL)) == -1)
     {
-      perror("sigaction");
+      LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
       return NULL;
     }
 
-  printf("Stat export server: Waiting for connections...\n");
+  LogEvent(COMPONENT_MAIN, "Stat export server: Waiting for connections...");
 
   while(1)
     {
@@ -408,14 +416,14 @@ void *stat_exporter_thread(void *addr)
       new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
       if(new_fd == -1)
         {
-          perror("accept");
+	  LogError(COMPONENT_MAIN, ERR_SYS, errno, new_fd);
           continue;
         }
-
       inet_ntop(their_addr.ss_family,
                 get_in_addr((struct sockaddr *)&their_addr),
                 s, sizeof s);
 
+      /* security!! */
       process_stat_request(addr, new_fd);
     }                           /* while ( 1 ) */
 
