@@ -301,7 +301,19 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
              
               if( ( pfe = fridgethr_freeze( ) ) == NULL ) 
-                    return NULL  ;
+                {
+		  /* Fridge expiration, the thread and exit */
+                  LogEvent( COMPONENT_DISPATCH,
+		            "TCP connection manager has expired in the fridge, let's kill it" ) ;
+#ifndef _NO_BUDDY_SYSTEM
+                  /* Free stuff allocated by BuddyMalloc before thread exists */
+                  if((rc = BuddyDestroy()) != BUDDY_SUCCESS)
+                    LogCrit(COMPONENT_DISPATCH,
+                           "TCP SOCKET MANAGER (on exit): got error %u from BuddyDestroy",rc ) ;
+#endif                          /*  _NO_BUDDY_SYSTEM */
+
+                  return NULL  ;
+                }
 
               tcp_sock = (long int )pfe->arg ;
               LogEvent( COMPONENT_DISPATCH,
