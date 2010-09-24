@@ -525,7 +525,8 @@ typedef struct fridge_entry__
   pthread_cond_t condvar ;
   unsigned int frozen ;
   void * arg ;
-  struct fridge_entry__ * prev ;
+  struct fridge_entry__ * pprev ;
+  struct fridge_entry__ * pnext ;
 } fridge_entry_t  ;
 
 
@@ -738,6 +739,7 @@ void nfs_State_PrintAll(void);
 
 int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
 fridge_entry_t * fridgethr_freeze( ) ;
+void fridgethr_remove( fridge_entry_t * pfe ) ;
 int fridgethr_init() ;
 
 #ifdef _USE_NFS4_1
