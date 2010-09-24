@@ -40,6 +40,9 @@
 
 #include <stdlib.h>
 
+typedef void (*constructor)(void *entry);
+struct prealloc_pool;
+
 #ifdef _NO_BUDDY_SYSTEM
 
 #include <errno.h>
@@ -80,6 +83,20 @@
 #  define Mem_Free_Label( a, lbl )        BuddyFree( (caddr_t) (a) )
 #endif
 
+#ifdef _DEBUG_MEMLEAKS
+void FillPool(struct prealloc_pool *pool,
+              const char           *file,
+              const char           *function,
+              const unsigned int    line,
+              const char           *str);
+void _InitPool(struct prealloc_pool *pool,
+               int                   num_alloc,
+               int                   size_type,
+               constructor           ctor,
+               constructor           dtor,
+               char                 *type);
+#endif
+
 #define Mem_Errno            BuddyErrno
 
 #define GetPreferedPool( _n, _s )  BuddyPreferedPoolCount( _n, _s)
@@ -87,6 +104,128 @@
 #endif
 
 #ifndef _NO_BLOCK_PREALLOC
+
+typedef struct prealloc_header
+{
+  int                     pa_inuse; // flag indicating block is in use
+  struct prealloc_header *pa_next;  // next pool entry in free lists (or self if in use)
+#ifdef _DEBUG_MEMLEAKS
+  struct prealloc_header *pa_nextb; // next pool entry in buddy block
+#endif
+  struct prealloc_pool   *pa_pool;  // owning pool
+} prealloc_header;
+
+#define size_prealloc_header64 ((ptrdiff_t) ( (sizeof(prealloc_header) + 7) & ~7 ))
+#define get_prealloc_entry(header, type) ((type *) ((ptrdiff_t) header + size_prealloc_header64))
+#define get_prealloc_header(entry) ((prealloc_header *) ((ptrdiff_t) entry - size_prealloc_header64))
+
+typedef struct prealloc_pool
+{
+#ifdef _DEBUG_MEMLEAKS
+  struct prealloc_pool   *pa_next_pool;   // next pool
+#endif
+  char                   *pa_type;
+  struct prealloc_header *pa_free;        // free list
+  constructor             pa_constructor; // constructor
+  constructor             pa_destructor;  // destructor
+  size_t                  pa_size;        // size of entry
+  int                     pa_num;         // optimized number of entries per block
+  int                     pa_blocks;      // number of blocks allocated
+  int                     pa_allocated;   // number of entries preallocated
+  int                     pa_used;        // number of entries in use
+  int                     pa_high;        // high water mark of used entries
+} prealloc_pool;
+
+#define LogPoolData(component, pool)                                \
+  LogDebug(component,                                               \
+           "Pool %s NumBlocks=%d Num/Block=%d SizeOfEntry=%d NumAllocated=%d NumInUse=%d MaxInUse=%d", \
+           (pool)->pa_type,                                         \
+           (pool)->pa_blocks, (pool)->pa_num, (pool)->pa_size,      \
+           (pool)->pa_allocated, (pool)->pa_used, (pool)->pa_high);
+
+#define IsPoolPreallocated(pool) ((pool)->pa_allocated > 0)
+
+#if defined(_NO_BUDDY_SYSTEM) || !defined(_DEBUG_MEMLEAKS)
+#define FillPool(pool, fi, fu, li, str)                      \
+do {                                                         \
+  int size = (pool)->pa_size + size_prealloc_header64;       \
+  char *mem = (char *) Mem_Calloc((pool)->pa_num, size);     \
+  int num = (pool)->pa_num;                                  \
+                                                             \
+  if (mem != NULL)                                           \
+    {                                                        \
+      (pool)->pa_allocated += num;                           \
+      (pool)->pa_blocks++;                                   \
+      while (num > 0)                                        \
+        {                                                    \
+          prealloc_header *h = (prealloc_header *) mem;      \
+          h->pa_next  = (pool)->pa_free;                     \
+          h->pa_inuse = 0;                                   \
+          h->pa_pool  = pool;                                \
+          (pool)->pa_free = h;                               \
+          mem += size;                                       \
+          if((pool)->pa_constructor != NULL)                 \
+            (pool)->pa_constructor(h + 1);                   \
+          num--;                                             \
+        }                                                    \
+    }                                                        \
+} while (0)
+
+#define InitPool(pool, num_alloc, type, ctor, dtor)          \
+do {                                                         \
+  int size;                                                  \
+  (pool)->pa_type        = # type;                           \
+  (pool)->pa_free        = NULL;                             \
+  (pool)->pa_constructor = ctor;                             \
+  (pool)->pa_destructor  = dtor;                             \
+  (pool)->pa_size        = sizeof(type);                     \
+  size = (pool)->pa_size + size_prealloc_header64;           \
+  (pool)->pa_num         = GetPreferedPool(num_alloc, size); \
+  (pool)->pa_blocks      = 0;                                \
+  (pool)->pa_allocated   = 0;                                \
+  (pool)->pa_used        = 0;                                \
+  (pool)->pa_high        = 0;                                \
+} while (0)
+#else
+#define InitPool(pool, num_alloc, type, ctor, dtor)          \
+  _InitPool(pool, num_alloc, sizeof(type), ctor, dtor, # type)
+#endif
+
+#define MakePool(pool, num_alloc, type, ctor, dtor)          \
+do {                                                         \
+  InitPool(pool, num_alloc, type, ctor, dtor);               \
+  FillPool(pool, __FILE__, __FUNCTION__, __LINE__, # type);  \
+} while (0)
+
+#define GetFromPool(entry, pool, type)                       \
+do {                                                         \
+  if ((pool)->pa_free == NULL)                               \
+    FillPool(pool, __FILE__, __FUNCTION__, __LINE__, # type);\
+  if ((pool)->pa_free != NULL)                               \
+    {                                                        \
+      prealloc_header *h = (pool)->pa_free;                  \
+      (pool)->pa_free = h->pa_next;                          \
+      h->pa_next = h;                                        \
+      h->pa_inuse = 1;                                       \
+      entry = get_prealloc_entry(h, type);                   \
+      (pool)->pa_used++;                                     \
+      if ((pool)->pa_used > (pool)->pa_high)                 \
+        (pool)->pa_high = (pool)->pa_used;                   \
+    }                                                        \
+  else                                                       \
+    entry = NULL;                                            \
+} while (0)
+
+#define ReleaseToPool(entry, pool)                           \
+do {                                                         \
+  prealloc_header *h = get_prealloc_header(entry);           \
+  if ((pool)->pa_destructor != NULL)                         \
+    (pool)->pa_destructor(entry);                            \
+  h->pa_next = (pool)->pa_free;                              \
+  h->pa_inuse = 0;                                           \
+  (pool)->pa_free = h;                                       \
+  (pool)->pa_used--;                                         \
+} while (0)
 
 /**
  *
@@ -117,7 +256,7 @@ do                                                                            \
   _prefered = GetPreferedPool( _nb, sizeof(_type) );                          \
   _pool= NULL ;                                                               \
                                                                               \
-  if( ( _pool = ( _type *)Mem_Alloc_Label( sizeof( _type ) * _prefered, # _type ) ) != NULL ) \
+  if( ( _pool = ( _type *)Mem_Calloc_Label( _prefered, sizeof( _type ), # _type ) ) != NULL ) \
     {                                                                         \
       for( _i = 0 ; _i < ( unsigned int)_prefered ; _i++ )                    \
         {                                                                     \
@@ -293,6 +432,40 @@ do                                                                        \
 
 #else                           /* no block preallocation */
 
+typedef struct prealloc_pool
+{
+  constructor             pa_constructor;
+  constructor             pa_destructor;
+}
+
+/* Don't care if pool is pre-allocated */
+#define IsPoolPreallocated(pool) (1)
+
+#define LogPoolData(component, pool)
+    
+#define InitPool(pool, num_alloc, type, ctor, dtor)          \
+do {                                                         \
+  (pool)->pa_constructor = ctor;                             \
+  (pool)->pa_destructor  = dtor;                             \
+} while (0)
+
+#define MakePool(pool, num_alloc, type, ctor, dtor)          \
+  InitPool(pool, num_alloc, type, ctor, dtor)
+
+#define GetFromPool(entry, pool, type)                       \
+do {                                                         \
+  entry = (type *)Mem_Alloc_Label(sizeof(type), # type);     \
+  if ((pool)->pa_constructor != NULL)                        \
+    (pool)->pa_constructor(entry);                           \
+} while (0)
+
+#define ReleaseToPool(entry, pool, type)                     \
+do {                                                         \
+  if ((pool)->pa_destructor != NULL)                         \
+    (pool)->pa_destructor(entry);                            \
+  Mem_Free_Label(entry, # type);                             \
+} while (0)
+
 #define STUFF_PREALLOC( pool, nb, type, name_next )                       \
               do {                                                        \
                 /* No pool management in this mode */                     \
@@ -306,7 +479,7 @@ do                                                                        \
   entry->name_next = NULL;                                                \
 } while( 0 )
 
-#define RELEASE_PREALLOC( entry, pool, name_next ) Mem_Free( entry, # _type )
+#define RELEASE_PREALLOC( entry, pool, name_next ) Mem_Free( entry )
 
 #define STUFF_PREALLOC_CONSTRUCT( pool, nb, type, name_next, construct )  \
               do {                                                        \
@@ -326,7 +499,7 @@ do                                                                        \
 do                                                                        \
 {                                                                         \
   destruct( (void *)(entry) ) ;                                           \
-  Mem_Free_Label( entry, # _type );                                       \
+  Mem_Free( entry );                                                      \
 } while( 0 )
 
 #endif                          /* no block preallocation */

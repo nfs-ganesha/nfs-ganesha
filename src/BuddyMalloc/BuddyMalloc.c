@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -32,7 +32,7 @@
  *
  * BuddyMalloc.c: Module for Buddy block allocator.
  *
- * 
+ *
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -40,6 +40,7 @@
 #endif
 
 #include "BuddyMalloc.h"
+#include "stuff_alloc.h"
 #include <pthread.h>
 
 #include "log_macros.h"
@@ -131,6 +132,10 @@ typedef struct BuddyHeader_t
 
   /* pointer to the next allocated block */
   BuddyBlockPtr_t p_next_allocated;
+
+#ifndef _NO_BLOCK_PREALLOC
+  struct prealloc_header *pa_entry;
+#endif
 
 #endif
 
@@ -234,6 +239,7 @@ typedef struct BuddyThreadContext_t
 pthread_mutex_t ContextListMutex = PTHREAD_MUTEX_INITIALIZER;
 BuddyThreadContext_t *first_context = NULL;
 BuddyThreadContext_t *last_context  = NULL;
+struct prealloc_pool *first_pool = NULL;
 
 void insert_context(BuddyThreadContext_t *context)
 {
@@ -1012,6 +1018,9 @@ BUDDY_ADDR_T AllocLargeBlock(BuddyThreadContext_t * context, size_t Size)
   p_block->Header.label_file = context->label_file;
   p_block->Header.label_func = context->label_func;
   p_block->Header.label_line = context->label_line;
+#ifndef _NO_BLOCK_PREALLOC
+  p_block->Header.pa_entry = NULL;
+#endif
 
   /* add it to the list of allocated blocks */
   add_allocated_block(context, p_block);
@@ -1160,7 +1169,7 @@ static int TryContextCleanup(BuddyThreadContext_t * context)
                 LogDebug(COMPONENT_MEMALLOC,
                          "Another thread still holds a block: "
                          "deferred cleanup for context=%s (%p), thread=%p",
-                         context, context->label_thread, context->OwnerThread);
+                         context->label_thread, context, context->OwnerThread);
                 /* set the context in "destroy_pending" state,
                  * if it was not already */
                 context->destroy_pending = TRUE;
@@ -1439,7 +1448,7 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
 
     }
 
-  /* It is a standard block, we look for a large enough block 
+  /* It is a standard block, we look for a large enough block
    * in the block pool.
    */
 
@@ -1551,6 +1560,9 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
   p_block->Header.label_file = context->label_file;
   p_block->Header.label_func = context->label_func;
   p_block->Header.label_line = context->label_line;
+#ifndef _NO_BLOCK_PREALLOC
+  p_block->Header.pa_entry = NULL;
+#endif
 
   p_block->Header.StdInfo.user_size = Size + size_header64;
 
@@ -1805,7 +1817,7 @@ void BuddyFree(BUDDY_ADDR_T ptr)
  * If ptr is NULL, the call is equivalent to malloc(size);
  * if size is equal to zero, the  call is equivalent to free(ptr).
  * Unless ptr is NULL, it must have been returned by an
- * earlier call to malloc(), calloc() or realloc(). 
+ * earlier call to malloc(), calloc() or realloc().
  */
 BUDDY_ADDR_T BuddyRealloc(BUDDY_ADDR_T ptr, size_t Size)
 {
@@ -2143,7 +2155,77 @@ void BuddyGetStats(buddy_stats_t * budd_stats)
 
 }
 
+
 #ifdef _DEBUG_MEMLEAKS
+
+#ifndef _NO_BLOCK_PREALLOC
+void FillPool(struct prealloc_pool *pool,
+              const char           *file,
+              const char           *function,
+              const unsigned int    line,
+              const char           *str)
+{
+  int size = pool->pa_size + size_prealloc_header64;
+  char *mem;
+  BuddyBlock_t *p_block;
+  int num = pool->pa_num;
+
+  BuddySetDebugLabel(file, function, line, str);
+  mem = (char *) BuddyCalloc(pool->pa_num, size);
+
+  if (mem == NULL)
+    return;
+
+  /* retrieves block address */
+  p_block = (BuddyBlock_t *) (mem - size_header64);
+  p_block->Header.pa_entry = NULL;
+
+  pool->pa_allocated += num;
+  pool->pa_blocks++;
+  while (num > 0)
+    {
+      prealloc_header *h = (prealloc_header *) mem;
+
+      h->pa_next  = pool->pa_free;
+      h->pa_inuse = 0;
+      h->pa_pool  = pool;
+      h->pa_nextb = p_block->Header.pa_entry;
+      p_block->Header.pa_entry = h;
+      pool->pa_free = h;
+      mem += size;
+      if(pool->pa_constructor != NULL)
+        pool->pa_constructor(get_prealloc_entry(h, void));
+      num--;
+    }
+}
+
+void _InitPool(struct prealloc_pool *pool,
+               int                   num_alloc,
+               int                   size_type,
+               constructor           ctor,
+               constructor           dtor,
+               char                 *type)
+{
+  int size;
+  pool->pa_free        = NULL;
+  pool->pa_constructor = ctor;
+  pool->pa_destructor  = dtor;
+  pool->pa_size        = size_type;
+  size = (pool)->pa_size + size_prealloc_header64;
+  pool->pa_num         = GetPreferedPool(num_alloc, size);
+  pool->pa_blocks      = 0;
+  pool->pa_allocated   = 0;
+  pool->pa_used        = 0;
+  pool->pa_high        = 0;
+  pool->pa_type        = type;
+#ifndef _MONOTHREAD_MEMALLOC
+  P(ContextListMutex);
+  pool->pa_next_pool = first_pool;
+  first_pool = pool;
+  V(ContextListMutex);
+#endif
+}
+#endif
 
 /** Set a label for allocated areas, for debugging. */
 int BuddySetDebugLabel(const char *file, const char *func, const unsigned int line,
@@ -2417,7 +2499,7 @@ static void hash_label_display(label_info_list_t * label_hash[], unsigned int ha
     {
       LogFullDebug(COMPONENT_MEMLEAKS,"%-*s | %-*s | %5s | %-*s | %s", max_file, "file", max_func, "function",
                 "line", max_descr, "description", "count");
-      
+
       for(i = 0; i < hash_sz; i++)
         {
           for(p_curr = label_hash[i]; p_curr != NULL; p_curr = p_curr->next)
@@ -2467,6 +2549,29 @@ void BuddyLabelsSummary()
   hash_label_display(label_hash, LBL_HASH_SZ);
   hash_label_free(label_hash, LBL_HASH_SZ);
 
+}
+
+void BuddyDumpPools(FILE *output)
+{
+#ifndef _MONOTHREAD_MEMALLOC
+#ifndef _NO_BLOCK_PREALLOC
+  struct prealloc_pool *pool;
+  P(ContextListMutex);
+  pool = first_pool;
+  fprintf(output, "Num Blocks  Num/Block  Size of Entry  Num Allocated  Num in Use  Max in Use  Type\n"
+                  "----------  ---------  -------------  -------------  ----------  ----------  ------------------------");
+  while (pool != NULL)
+    {
+      fprintf(output,
+              "%10d  %9d  %13d  %13d  %10d  %10d  %s\n",
+              pool->pa_blocks, pool->pa_num, pool->pa_size,
+              pool->pa_allocated, pool->pa_used, pool->pa_high,
+              pool->pa_type);
+      pool = pool->pa_next_pool;
+    }
+  V(ContextListMutex);
+#endif
+#endif
 }
 
 void BuddyDumpAll(FILE *output)
@@ -2522,6 +2627,22 @@ void BuddyDumpAll(FILE *output)
                   p_curr_block->Header.label_line,
                   p_curr_block->Header.label_func,
                   p_curr_block->Header.label_user_defined);;
+#ifndef _NO_BLOCK_PREALLOC
+          if (p_curr_block->Header.pa_entry != NULL)
+            {
+              int used = 0;
+              prealloc_header *h = p_curr_block->Header.pa_entry;
+              prealloc_pool   *p = h->pa_pool;
+              while (h != NULL)
+                {
+                  used += h->pa_inuse;
+                  h = h->pa_nextb;
+                }
+              fprintf(output,
+                      "                   Pool=%p Num/Block=%d In Use=%d (Overall Pool Blocks=%d, Allocated=%d, In Use=%d, High=%d)\n",
+                      p, p->pa_num, used, p->pa_blocks, p->pa_allocated, p->pa_used, p->pa_high);
+            }
+#endif
         }
     }
 
