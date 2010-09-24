@@ -58,7 +58,7 @@ static pthread_mutex_t fridge_mutex ;
 static fridge_entry_t * fridge_content = NULL ;
 static pthread_attr_t attr_thr ;
 
-void fridgethr_remove( fridge_entry_t * pfe ) 
+static void fridgethr_remove( fridge_entry_t * pfe ) 
 {
    if( pfe == NULL )
 	return ;
