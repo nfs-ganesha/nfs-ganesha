@@ -294,8 +294,14 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                 LogCrit(COMPONENT_DISPATCH,
                      "TCP SOCKET MANAGER : /!\\ **** ERROR **** Mismatch between tcp_sock and xprt array");
 
-              if( ( pfe = fridgethr_freeze( ) ) == NULL )
-                  return NULL  ;
+              P(workers_data[worker_index].request_pool_mutex);
+              RELEASE_PREALLOC(pnfsreq, workers_data[worker_index].request_pool,
+                               next_alloc);
+              V(workers_data[worker_index].request_pool_mutex);
+
+             
+              if( ( pfe = fridgethr_freeze( ) ) == NULL ) 
+                    return NULL  ;
 
               tcp_sock = (long int )pfe->arg ;
               LogEvent( COMPONENT_DISPATCH,

@@ -138,6 +138,9 @@ fridge_entry_t * fridgethr_freeze( )
     rc = pthread_cond_wait( &pfe->condvar, &pfe->condmutex ) ;
   V( pfe->condmutex ) ;
 
+  if( rc != 0 )
+    return NULL ;
+   
   return pfe ;
 } /* fridgethr_freeze */
 
