@@ -155,6 +155,11 @@ cache_content_client_t recover_datacache_client;
 #define FLAG_EXPORT_MAX_CACHE_SIZE  0x01000000
 #define FLAG_EXPORT_USE_PNFS        0x02000000
 
+/* limites for nfs_ParseConfLine */
+/* Used in BuildExportEntry() */
+#define EXPORT_MAX_CLIENTS   EXPORTS_NB_MAX_CLIENTS     /* number of clients */
+#define EXPORT_MAX_CLIENTLEN 256        /* client name len */
+
 int local_lru_inode_entry_to_str(LRU_data_t data, char *str)
 {
   return sprintf(str, "N/A ");
@@ -426,18 +431,9 @@ int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
   return (error);
 }                               /* nfs_LookupNetworkAddr */
 
-/**
- *
- * nfs_AddClientsToExportList : Adds a client to an export list 
- *
- * Adds a client to an export list (temporary function ?).
- *
- * @todo BUGAZOMEU : handling wildcards.
- *
- */
-static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
-                                      int new_clients_number,
-                                      char **new_clients_name, int option)
+int nfs_AddClientsToClientArray(exportlist_client_t *clients,
+				int new_clients_number,
+				char **new_clients_name, int option)
 {
   int i = 0;
   int j = 0;
@@ -449,18 +445,11 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
   unsigned long netMask;
   unsigned long netAddr;
   int error;
-  char __attribute__ ((__unused__)) FunctionName[] = "nfs_AddClientsToExportList";
 
-  /*
-   * Notifying the export list structure that another option is to be
-   * handled 
-   */
-  ExportEntry->options |= option;
+  /* How many clients are there already? */
+  j = (*clients).num_clients;
 
-  /* How many clients are there in the ExportEntry ? */
-  j = ExportEntry->clients.num_clients;
-
-  p_clients = ExportEntry->clients.clientarray;
+  p_clients = (*clients).clientarray;
 
   if(p_clients == NULL)
     return ENOMEM;
@@ -571,13 +560,133 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
   /* Before we finish, do not forget to set the new number of clients
    * and the new pointer to client array.
    */
-  ExportEntry->clients.num_clients += new_clients_number;
+  (*clients).num_clients += new_clients_number;
 
   return 0;                     /* success !! */
+}                               /* nfs_AddClientsToClientArray */
+
+
+/**
+ *
+ * nfs_AddClientsToExportList : Adds a client to an export list
+ *
+ * Adds a client to an export list (temporary function ?).
+ *
+ * @todo BUGAZOMEU : handling wildcards.
+ *
+ */
+static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
+                                      int new_clients_number,
+                                      char **new_clients_name, int option)
+{
+  int i = 0;
+  int j = 0;
+  unsigned int l = 0;
+  char *client_hostname;
+  struct hostent *hostEntry;
+  exportlist_client_entry_t *p_clients;
+  int is_wildcarded_host = FALSE;
+  unsigned long netMask;
+  unsigned long netAddr;
+  int error;
+
+  /*
+   * Notifying the export list structure that another option is to be
+   * handled
+   */
+  ExportEntry->options |= option;
+  nfs_AddClientsToClientArray( &ExportEntry->clients, new_clients_number,
+			       new_clients_name, option);
+  return 0;
 }                               /* nfs_AddClientsToExportList */
 
 #define DEFINED_TWICE_WARNING( _str_ ) \
   LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: WARNING: %s defined twice !!! (ignored)", _str_ )
+
+
+int parseAccessParam(char *var_name, char *var_value,
+		     exportlist_t *p_entry, int access_option) {
+  int rc, err_flag = FALSE;
+  char *expended_node_list;
+
+  /* temp array of clients */
+  char *client_list[EXPORT_MAX_CLIENTS];
+  int idx;
+  int count;
+
+  /* expends host[n-m] notations */
+  count =
+    nodelist_common_condensed2extended_nodelist(var_value, &expended_node_list);
+
+  if(count <= 0)
+    {
+      err_flag = TRUE;
+      LogCrit(COMPONENT_CONFIG,
+	      "NFS READ_EXPORT: ERROR: Invalid format for client list in EXPORT::%s definition",
+	      var_name);
+
+      return -1;
+    }
+  else if(count > EXPORT_MAX_CLIENTS)
+    {
+      err_flag = TRUE;
+      LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Client list too long (%d>%d)",
+	      count, EXPORT_MAX_CLIENTS);
+      return -1;
+    }
+
+  /* allocate clients strings  */
+  for(idx = 0; idx < count; idx++)
+    {
+      client_list[idx] = (char *)Mem_Alloc(EXPORT_MAX_CLIENTLEN);
+      client_list[idx][0] = '\0';
+    }
+
+  /*
+   * Search for coma-separated list of hosts, networks and netgroups
+   */
+  rc = nfs_ParseConfLine(client_list, count,
+			 expended_node_list, find_comma, find_endLine);
+
+  /* free the buffer the nodelist module has allocated */
+  free(expended_node_list);
+
+  if(rc < 0)
+    {
+      err_flag = TRUE;
+      LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Client list too long (>%d)", count);
+
+      /* free client strings */
+      for(idx = 0; idx < count; idx++)
+	Mem_Free((caddr_t) client_list[idx]);
+
+      return rc;
+    }
+
+  rc = nfs_AddClientsToExportList(p_entry,
+				  rc, (char **)client_list, access_option);
+
+  if(rc != 0)
+    {
+      err_flag = TRUE;
+      LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid client found in \"%s\"",
+	      var_value);
+
+      /* free client strings */
+      for(idx = 0; idx < count; idx++)
+	Mem_Free((caddr_t) client_list[idx]);
+
+      return rc;
+    }
+
+  /* everything is OK */
+
+  /* free client strings */
+  for(idx = 0; idx < count; idx++)
+    Mem_Free((caddr_t) client_list[idx]);
+
+  return rc;
+}
 
 /** 
  * BuildExportEntry : builds an export entry from configutation file.
@@ -586,10 +695,6 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
  */
 static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 {
-  /* limites for nfs_ParseConfLine */
-#define EXPORT_MAX_CLIENTS   EXPORTS_NB_MAX_CLIENTS     /* number of clients */
-#define EXPORT_MAX_CLIENTLEN 256        /* client name len */
-
   exportlist_t *p_entry;
   int i, rc;
   char *var_name;
@@ -731,84 +836,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ROOT))
         {
-          char *expended_node_list;
-
-          /* temp array of clients */
-          char *client_list[EXPORT_MAX_CLIENTS];
-          int idx;
-          int count;
-
-          /* expends host[n-m] notations */
-          count =
-              nodelist_common_condensed2extended_nodelist(var_value, &expended_node_list);
-
-          if(count <= 0)
-            {
-              err_flag = TRUE;
-              LogCrit(COMPONENT_CONFIG,
-                   "NFS READ_EXPORT: ERROR: Invalid format for client list in EXPORT::%s definition",
-                   var_name);
-
-              continue;
-            }
-          else if(count > EXPORT_MAX_CLIENTS)
-            {
-              err_flag = TRUE;
-              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Client list too long (%d>%d)",
-                         count, EXPORT_MAX_CLIENTS);
-              continue;
-            }
-
-          /* allocate clients strings  */
-          for(idx = 0; idx < count; idx++)
-            {
-              client_list[idx] = (char *)Mem_Alloc(EXPORT_MAX_CLIENTLEN);
-              client_list[idx][0] = '\0';
-            }
-
-          /*
-           * Search for coma-separated list of hosts, networks and netgroups
-           */
-          rc = nfs_ParseConfLine(client_list, count,
-                                 expended_node_list, find_comma, find_endLine);
-
-          /* free the buffer the nodelist module has allocated */
-          free(expended_node_list);
-
-          if(rc < 0)
-            {
-              err_flag = TRUE;
-              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Client list too long (>%d)", count);
-
-              /* free client strings */
-              for(idx = 0; idx < count; idx++)
-                Mem_Free((caddr_t) client_list[idx]);
-
-              continue;
-            }
-
-          rc = nfs_AddClientsToExportList(p_entry,
-                                          rc, (char **)client_list, EXPORT_OPTION_ROOT);
-
-          if(rc != 0)
-            {
-              err_flag = TRUE;
-              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid client found in \"%s\"",
-                         var_value);
-
-              /* free client strings */
-              for(idx = 0; idx < count; idx++)
-                Mem_Free((caddr_t) client_list[idx]);
-
-              continue;
-            }
-
-          /* everything is OK */
-
-          /* free client strings */
-          for(idx = 0; idx < count; idx++)
-            Mem_Free((caddr_t) client_list[idx]);
-
+	  parseAccessParam(var_name, var_value, p_entry,
+			   EXPORT_OPTION_ROOT);
           /* Notice that as least one of the two options
            * Root_Access or access has been specified.
            */
@@ -817,89 +846,12 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ACCESS))
         {
-          char *expended_node_list;
-
-          /* array of clients */
-          char *client_list[EXPORT_MAX_CLIENTS];
-          int idx;
-          int count;
-
-          /* expends host[n-m] notations */
-          count =
-              nodelist_common_condensed2extended_nodelist(var_value, &expended_node_list);
-
-          if(count <= 0)
-            {
-              err_flag = TRUE;
-              LogCrit(COMPONENT_CONFIG,
-                   "NFS READ_EXPORT: ERROR: Invalid format for client list in EXPORT::%s definition",
-                   var_name);
-
-              continue;
-            }
-          else if(count > EXPORT_MAX_CLIENTS)
-            {
-              err_flag = TRUE;
-              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Client list too long (%d>%d)",
-                         count, EXPORT_MAX_CLIENTS);
-              continue;
-            }
-
-          /* allocate clients strings  */
-          for(idx = 0; idx < count; idx++)
-            {
-              client_list[idx] = (char *)Mem_Alloc(EXPORT_MAX_CLIENTLEN);
-              client_list[idx][0] = '\0';
-            }
-
-          /*
-           * Search for coma-separated list of hosts, networks and netgroups
-           */
-          rc = nfs_ParseConfLine(client_list, count,
-                                 expended_node_list, find_comma, find_endLine);
-
-          /* free the buffer the nodelist module has allocated */
-          free(expended_node_list);
-
-          if(rc < 0)
-            {
-              err_flag = TRUE;
-              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Client list too long (>%d)", count);
-
-              /* free client strings */
-              for(idx = 0; idx < count; idx++)
-                Mem_Free((caddr_t) client_list[idx]);
-
-              continue;
-            }
-
-          rc = nfs_AddClientsToExportList(p_entry, rc,
-                                          (char **)client_list, EXPORT_OPTION_ACCESS);
-
-          if(rc != 0)
-            {
-              err_flag = TRUE;
-              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid client found in \"%s\"",
-                         var_value);
-
-              /* free client strings */
-              for(idx = 0; idx < count; idx++)
-                Mem_Free((caddr_t) client_list[idx]);
-
-              continue;
-            }
-
-          /* everything is OK */
-
-          /* free client strings */
-          for(idx = 0; idx < count; idx++)
-            Mem_Free((caddr_t) client_list[idx]);
-
-          /* Notice that as least one of the two options
-           * Root_Access or access has been specified.
-           */
-          set_options |= FLAG_EXPORT_ROOT_OR_ACCESS;
-
+	  parseAccessParam(var_name, var_value, p_entry,
+			   EXPORT_OPTION_ACCESS);
+	  /* Notice that as least one of the two options
+	   * Root_Access or access has been specified.
+	   */
+	  set_options |= FLAG_EXPORT_ROOT_OR_ACCESS;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_PSEUDO))
         {
