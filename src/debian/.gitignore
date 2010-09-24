@@ -1,9 +1,2 @@
-control
 control.auto
-files
-rules
 rules.auto
-*.debhelper.log
-*.substvars
-tmp/
-nfs-ganesha-*/
