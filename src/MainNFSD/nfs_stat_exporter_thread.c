@@ -59,6 +59,8 @@
 #include "nfs_core.h"
 #include "nfs_stat.h"
 #include "nfs_exports.h"
+#include "nodelist.h"
+#include "stuff_alloc.h"
 
 extern nfs_parameter_t nfs_param;
 
@@ -66,18 +68,257 @@ extern nfs_parameter_t nfs_param;
 
 #define BACKLOG 10
 
-void sigchld_handler(int s)
+#define  CONF_STAT_EXPORTER_LABEL  "STAT_EXPORTER"
+#define STRCMP   strcasecmp
+
+/* Make sure this is <= the same macro in support/exports.c */
+#define EXPORT_MAX_CLIENTS 20
+#define EXPORT_MAX_CLIENTLEN 256        /* client name len */
+
+extern nfs_parameter_t nfs_param;
+
+int stat_export_check_access(struct sockaddr_storage *pssaddr,
+			     exportlist_client_t *clients,
+			     exportlist_client_entry_t * pclient_found)
 {
-  while(waitpid(-1, NULL, WNOHANG) > 0);
+  int rc;
+  unsigned int addr;
+  struct sockaddr_in *psockaddr_in;
+#ifdef _USE_TIRPC_IPV6
+  struct sockaddr_in6 *psockaddr_in6;
+#endif
+  static char ten_bytes_all_0[10];
+  static unsigned two_bytes_all_1 = 0xFFFF;
+  char ipstring[MAXHOSTNAMELEN];
+  char ip6string[MAXHOSTNAMELEN];
+
+  memset(ten_bytes_all_0, 0, 10);
+
+  psockaddr_in = (struct sockaddr_in *)pssaddr;
+  addr = psockaddr_in->sin_addr.s_addr;
+
+  /* For now, no matching client is found */
+  memset(pclient_found, 0, sizeof(exportlist_client_entry_t));
+
+#ifdef _USE_TIPRC_IPV6
+  if(psockaddr_in->sin_family == AF_INET)
+    {
+#endif                          /* _USE_TIRPC_IPV6 */
+      /* Convert IP address into a string for wild character access checks. */
+      inet_ntop(psockaddr_in->sin_family, &psockaddr_in->sin_addr,
+                ipstring, INET_ADDRSTRLEN);
+      if(ipstring == NULL)
+        {
+          LogCrit(COMPONENT_MAIN, "Error: Could not convert the IPv4 address to a character string.");
+          return FALSE;
+        }
+      if(export_client_match
+	 (addr, ipstring, clients, pclient_found, EXPORT_OPTION_ACCESS))
+        return TRUE;
+#ifdef _USE_TIRPC_IPV6
+    }
+  else
+    {
+      psockaddr_in6 = (struct sockaddr_in6 *)pssaddr;
+      if(isFulldebug(COMPONENT_MAIN))
+        {
+          char txtaddrv6[100];
+
+          inet_ntop(psockaddr_in6->sin6_family,
+                    psockaddr_in6->sin6_addr.s6_addr, txtaddrv6, 100);
+          LogFullDebug(COMPONENT_MAIN, "Client has IPv6 adress = %s\n", txtaddrv6);
+        }
+      /* If the client socket is IPv4, then it is wrapped into a   ::ffff:a.b.c.d IPv6 address. We check this here
+       * This kind of adress is shaped like this:
+       * |---------------------------------------------------------------|
+       * |   80 bits = 10 bytes  | 16 bits = 2 bytes | 32 bits = 4 bytes |
+       * |---------------------------------------------------------------|
+       * |            0          |        FFFF       |    IPv4 address   |
+       * |---------------------------------------------------------------|   */
+      if(!memcmp(psockaddr_in6->sin6_addr.s6_addr, ten_bytes_all_0, 10) &&
+         !memcmp((char *)(psockaddr_in6->sin6_addr.s6_addr + 10),
+                 (char *)&two_bytes_all_1, 2))
+        {
+          /* Convert IP address into a string for wild character access checks. */
+          inet_ntop(psockaddr_in->sin6_family, &psockaddr_in->sin6_addr,
+                    ip6string, INET6_ADDRSTRLEN);
+          if(ip6string == NULL)
+            {
+              LogCrit(COMPONENT_MAIN,
+                   "Error: Could not convert the IPv6 address to a character string.");
+              return FALSE;
+            }
+          /* This is an IPv4 address mapped to an IPv6 one. Extract the IPv4 address and proceed with IPv4 autentication */
+          memcpy((char *)&addr, (char *)(psockaddr_in6->sin6_addr.s6_addr + 12), 4);
+
+          /* Proceed with IPv4 dedicated function */
+          /* else, check if any access only export matches this client */
+          if(export_client_match
+	     (addr, ip6string, clients, pclient_found, EXPORT_OPTION_ACCESS))
+            return TRUE;
+        }
+      if(export_client_matchv6
+	 (&(psockaddr_in6->sin6_addr), clients, pclient_found, EXPORT_OPTION_ACCESS))
+        return TRUE;
+    }
+#endif                          /* _USE_TIRPC_IPV6 */
+  /* If this point is reached, no matching entry was found */
+  return FALSE;
+
+}                               /* stat_export_check_access */
+
+static int parseAccessParam(char *var_name, char *var_value,
+			    exportlist_client_t *clients) {
+  int rc, err_flag = FALSE;
+  char *expended_node_list;
+
+  /* temp array of clients */
+  char *client_list[EXPORT_MAX_CLIENTS];
+  int idx;
+  int count;
+
+  /* expends host[n-m] notations */
+  count =
+    nodelist_common_condensed2extended_nodelist(var_value, &expended_node_list);
+
+  if(count <= 0)
+    {
+      err_flag = TRUE;
+      LogCrit(COMPONENT_CONFIG,
+	      "STAT_EXPORT_ACCESS: ERROR: Invalid format for client list in EXPORT::%s definition",
+	      var_name);
+
+      return -1;
+    }
+  else if(count > EXPORT_MAX_CLIENTS)
+    {
+      err_flag = TRUE;
+      LogCrit(COMPONENT_CONFIG, "STAT_EXPORT_ACCESS: ERROR: Client list too long (%d>%d)",
+	      count, EXPORT_MAX_CLIENTS);
+      return -1;
+    }
+
+  /* allocate clients strings  */
+  for(idx = 0; idx < count; idx++)
+    {
+      client_list[idx] = (char *)Mem_Alloc(EXPORT_MAX_CLIENTLEN);
+      client_list[idx][0] = '\0';
+    }
+
+  /*
+   * Search for coma-separated list of hosts, networks and netgroups
+   */
+  rc = nfs_ParseConfLine(client_list, count,
+			 expended_node_list, find_comma, find_endLine);
+
+  /* free the buffer the nodelist module has allocated */
+  free(expended_node_list);
+
+  if(rc < 0)
+    {
+      err_flag = TRUE;
+      LogCrit(COMPONENT_CONFIG, "STAT_EXPORT_ACCESS: ERROR: Client list too long (>%d)", count);
+
+      /* free client strings */
+      for(idx = 0; idx < count; idx++)
+	Mem_Free((caddr_t) client_list[idx]);
+
+      return rc;
+    }
+
+  rc = nfs_AddClientsToClientArray( clients, rc,
+				    (char **)client_list, EXPORT_OPTION_ACCESS);
+  if(rc != 0)
+    {
+      err_flag = TRUE;
+      LogCrit(COMPONENT_CONFIG, "STAT_EXPORT_ACCESS: ERROR: Invalid client found in \"%s\"",
+	      var_value);
+
+      /* free client strings */
+      for(idx = 0; idx < count; idx++)
+	Mem_Free((caddr_t) client_list[idx]);
+
+      return rc;
+    }
+
+  /* everything is OK */
+
+  /* free client strings */
+  for(idx = 0; idx < count; idx++)
+    Mem_Free((caddr_t) client_list[idx]);
+
+  return rc;
+}
+
+
+int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t * out_parameter)
+{
+  int err;
+  int blk_index;
+  int var_max, var_index;
+  char *key_name;
+  char *key_value;
+  config_item_t block;
+  config_item_t item;
+
+   /* Get the config BLOCK */
+ if((block = config_FindItemByName(in_config, CONF_STAT_EXPORTER_LABEL)) == NULL)
+    {
+      /* cannot read item */
+      LogCrit(COMPONENT_INIT, "STAT_EXPORTER: Cannot read item \"%s\" from configuration file",
+              CONF_STAT_EXPORTER_LABEL);
+      /* Expected to be a block */
+      return ENOENT;
+    }
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
+     {
+       LogCrit(COMPONENT_INIT, "STAT_EXPORTER: Cannot read item \"%s\" from configuration file",
+               CONF_STAT_EXPORTER_LABEL);
+      /* Expected to be a block */
+       return ENOENT;
+     }
+
+  /* makes an iteration on the (key, value) couplets */
+  var_max = config_GetNbItems(block);
+
+  for(var_index = 0; var_index < var_max; var_index++)
+    {
+       /* retrieve key's name */
+      item = config_GetItemByIndex(block, var_index);
+      err = config_GetKeyValue(item, &key_name, &key_value);
+
+      if(err)
+        {
+          LogCrit(COMPONENT_INIT,
+                  "STAT_EXPORTER: ERROR reading key[%d] from section \"%s\" of configuration file.",
+                  var_index, CONF_LABEL_FS_SPECIFIC);
+          return err;
+        }
+
+      if(!STRCMP(key_name, "Access"))
+        {
+	  parseAccessParam(key_name, key_value,
+			   &(out_parameter->stat_export.allowed_clients));
+        }
+      else if(!STRCMP(key_name, "Port"))
+        {
+	  out_parameter->stat_export.export_stat_port = atoi(key_value);
+        }
+      else
+        {
+          LogCrit(COMPONENT_INIT,
+                  "STAT_EXPORTER LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
+                  key_name, CONF_LABEL_FS_SPECIFIC);
+          return EINVAL;
+        }
+    }
+  return 0;
 }
 
 void *get_in_addr(struct sockaddr *sa)
 {
   if(sa->sa_family == AF_INET)
-    {
-      return &(((struct sockaddr_in*)sa)->sin_addr);
-    }
-
+    return &(((struct sockaddr_in*)sa)->sin_addr);
   return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
@@ -341,15 +582,20 @@ void *stat_exporter_thread(void *addr)
   struct addrinfo hints, *servinfo, *p;
   struct sockaddr_storage their_addr;
   socklen_t sin_size;
-  struct sigaction sa;
   int yes = 1;
   char s[INET6_ADDRSTRLEN];
   int rc;
+  exportlist_client_entry_t pclient_found;
 
   SetNameFunction("statistics_exporter");
 
   memset(&hints, 0, sizeof hints);
-  hints.ai_family = AF_UNSPEC;
+
+#ifndef _USE_TIRPC_IPV6
+  hints.ai_family = AF_INET;
+#else
+  hints.ai_family = AF_INET6;
+#endif
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE;
 
@@ -399,15 +645,6 @@ void *stat_exporter_thread(void *addr)
       return NULL;
     }
 
-  sa.sa_handler = sigchld_handler;
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = SA_RESTART;
-  if((rc = sigaction(SIGCHLD, &sa, NULL)) == -1)
-    {
-      LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
-      return NULL;
-    }
-
   LogEvent(COMPONENT_MAIN, "Stat export server: Waiting for connections...");
 
   while(1)
@@ -419,12 +656,19 @@ void *stat_exporter_thread(void *addr)
 	  LogError(COMPONENT_MAIN, ERR_SYS, errno, new_fd);
           continue;
         }
-      inet_ntop(their_addr.ss_family,
-                get_in_addr((struct sockaddr *)&their_addr),
-                s, sizeof s);
 
-      /* security!! */
-      process_stat_request(addr, new_fd);
+      inet_ntop(their_addr.ss_family,
+		get_in_addr((struct sockaddr *)&their_addr),
+		s, sizeof s);
+
+      if (stat_export_check_access(&their_addr,
+				   &(nfs_param.extern_param.stat_export.allowed_clients),
+				   &pclient_found)) {
+	LogDebug(COMPONENT_MAIN, "Stat export server: Access granted to %s", s);
+	process_stat_request(addr, new_fd);
+      } else {
+	LogEvent(COMPONENT_MAIN, "Stat export server: Access denied to %s", s);
+      }
     }                           /* while ( 1 ) */
 
   return NULL;
