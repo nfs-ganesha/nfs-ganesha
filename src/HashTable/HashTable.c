@@ -384,6 +384,10 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
 {
   hash_table_t *ht;
   unsigned int i = 0;
+  char *name = "Unamed";
+
+  if (hparam.name != NULL)
+    name = hparam.name;
 
   pthread_mutexattr_t mutexattr;
 
@@ -439,12 +443,14 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
                    hparam.nb_node_prealloc);
 
       /* Allocate a group of nodes to be managed by the RB Tree. */
-      MakePool(&ht->node_prealloc[i],  hparam.nb_node_prealloc, rbt_node_t,  NULL, NULL);
+      MakePool(&ht->node_prealloc[i], hparam.nb_node_prealloc, rbt_node_t, NULL, NULL);
+      NamePool(&ht->node_prealloc[i], "%s Hash RBT Nodes index %d", name, i);
       if(!IsPoolPreallocated(&ht->node_prealloc[i]))
         return NULL;
 
       /* Allocate a group of hash_data_t to be managed as RBT_OPAQ values. */
       MakePool(&ht->pdata_prealloc[i], hparam.nb_node_prealloc, hash_data_t, NULL, NULL);
+      NamePool(&ht->pdata_prealloc[i], "%s Hash Data Nodes index %d", name, i);
       if(!IsPoolPreallocated(&ht->pdata_prealloc[i]))
         return NULL;
     }
