@@ -1034,6 +1034,14 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
     }
 #endif                          /* _SNMP_ADM_ACTIVE */
 
+  if(get_stat_exporter_conf(config_struct, &p_nfs_param->extern_param) != 0)
+    {
+      LogCrit(COMPONENT_INIT, "Error loading STAT_EXPORTER configuration");
+      return -1;
+    }
+  else
+      LogDebug(COMPONENT_INIT, "STAT_EXPORTER configuration read from config file");
+
   /* Load export entries from parsed file
    * returns the number of export entries.
    */
