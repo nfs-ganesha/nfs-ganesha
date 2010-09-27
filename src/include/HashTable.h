@@ -105,8 +105,8 @@ typedef struct hashtable__
   hash_stat_dynamic_t *stat_dynamic;    /**< Dynamic statistics for the HashTable. */
   struct rbt_head *array_rbt;           /**< Array of reb-black tree (of size parameter.index_size) */
   rw_lock_t *array_lock;                /**< Array of rw-locks for MT-safe management */
-  struct rbt_node **node_prealloc;      /**< Pre-allocated nodes, ready to use for new entries (array of size parameter.nb_node_prealloc) */
-  hash_data_t **pdata_prealloc;         /**< Pre-allocated pdata buffers  ready to use for new entries */
+  struct prealloc_pool *node_prealloc;  /**< Pre-allocated nodes, ready to use for new entries (array of size parameter.nb_node_prealloc) */
+  struct prealloc_pool *pdata_prealloc; /**< Pre-allocated pdata buffers  ready to use for new entries */
 } hash_table_t;
 
 typedef enum hashtable_set_how__
