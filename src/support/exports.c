@@ -2198,7 +2198,7 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
                             unsigned int nfs_prog,
                             unsigned int mnt_prog,
                             hash_table_t * ht_ip_stats,
-                            nfs_ip_stats_t * ip_stats_pool,
+                            struct prealloc_pool *ip_stats_pool,
                             exportlist_client_entry_t * pclient_found)
 {
   int rc;

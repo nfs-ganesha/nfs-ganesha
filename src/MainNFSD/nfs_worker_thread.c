@@ -889,7 +889,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                                  nfs_param.core_param.nfs_program,
                                  nfs_param.core_param.mnt_program,
                                  pworker_data->ht_ip_stats,
-                                 pworker_data->ip_stats_pool, &related_client) == FALSE)
+                                 &pworker_data->ip_stats_pool, &related_client) == FALSE)
         {
           LogEvent(COMPONENT_DISPATCH,
                    "/!\\ | Host 0x%x = %d.%d.%d.%d is not allowed to access this export entry, vers=%d, proc=%d",

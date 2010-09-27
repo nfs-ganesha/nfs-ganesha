@@ -3452,7 +3452,7 @@ int nfs4_MakeCred(compound_data_t * data)
                              nfs_param.core_param.nfs_program,
                              nfs_param.core_param.mnt_program,
                              pworker->ht_ip_stats,
-                             pworker->ip_stats_pool, &related_client) == FALSE)
+                             &pworker->ip_stats_pool, &related_client) == FALSE)
     return NFS4ERR_WRONGSEC;
 
   if(nfs_build_fsal_context(data->reqp, &related_client, data->pexport, data->pcontext)
