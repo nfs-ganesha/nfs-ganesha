@@ -2218,6 +2218,7 @@ void _InitPool(struct prealloc_pool *pool,
   pool->pa_used        = 0;
   pool->pa_high        = 0;
   pool->pa_type        = type;
+  pool->pa_name[0]     = '\0';
 #ifndef _MONOTHREAD_MEMALLOC
   P(ContextListMutex);
   pool->pa_next_pool = first_pool;
@@ -2558,15 +2559,18 @@ void BuddyDumpPools(FILE *output)
   struct prealloc_pool *pool;
   P(ContextListMutex);
   pool = first_pool;
-  fprintf(output, "Num Blocks  Num/Block  Size of Entry  Num Allocated  Num in Use  Max in Use  Type\n"
+  fprintf(output, "Num Blocks  Num/Block  Size of Entry  Num Allocated  Num in Use  Max in Use  Type/Name\n"
                   "----------  ---------  -------------  -------------  ----------  ----------  ------------------------\n");
   while (pool != NULL)
     {
+      char *n = pool->pa_type;
+      if (pool->pa_name[0] != '\0')
+        n = pool->pa_name;
       fprintf(output,
               "%10d  %9d  %13d  %13d  %10d  %10d  %s\n",
               pool->pa_blocks, pool->pa_num, pool->pa_size,
               pool->pa_allocated, pool->pa_used, pool->pa_high,
-              pool->pa_type);
+              n);
       pool = pool->pa_next_pool;
     }
   V(ContextListMutex);
