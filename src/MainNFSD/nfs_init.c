@@ -1299,7 +1299,6 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
 
 static void nfs_Init(const nfs_start_info_t * p_start_info)
 {
-  nfs_ip_stats_t *ip_stats_pool;
   hash_table_t *ht = NULL;      /* Cache inode main hash table */
 
   cache_inode_status_t cache_status;
@@ -1502,8 +1501,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       /* Allocation of the nfs dupreq pool */
       MakePool(&workers_data[i].dupreq_pool,
                nfs_param.worker_param.nb_dupreq_prealloc,
-               dupreq_entry_t,
-               NULL, NULL);
+               dupreq_entry_t, NULL, NULL);
 
       if(!IsPoolPreallocated(&workers_data[i].dupreq_pool))
         {
@@ -1513,21 +1511,16 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
         }
 
       /* ALlocation of the IP/name pool */
-      ip_stats_pool = NULL;     /* empty pool */
-      STUFF_PREALLOC(ip_stats_pool,
-                     nfs_param.worker_param.nb_ip_stats_prealloc,
-                     nfs_ip_stats_t, next_alloc);
+      MakePool(&workers_data[i].ip_stats_pool,
+               nfs_param.worker_param.nb_ip_stats_prealloc,
+               nfs_ip_stats_t, NULL, NULL);
 
-#ifndef _NO_BLOCK_PREALLOC
-      if(ip_stats_pool == NULL)
+      if(!IsPoolPreallocated(&workers_data[i].ip_stats_pool))
         {
           LogCrit(COMPONENT_INIT, "NFS_INIT: Error while allocating IP stats cache pool #%d", i);
           LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
-#endif
-
-      workers_data[i].ip_stats_pool = ip_stats_pool;
 
       LogDebug(COMPONENT_INIT, "NFS_INIT: worker data #%d successfully initialized", i);
     }                           /* for i */

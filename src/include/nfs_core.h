@@ -472,7 +472,7 @@ typedef struct nfs_worker_data__
   LRU_list_t *duplicate_request;
   struct prealloc_pool request_pool;
   struct prealloc_pool dupreq_pool;
-  nfs_ip_stats_t *ip_stats_pool;
+  struct prealloc_pool ip_stats_pool;
   nfs_client_id_t *clientid_pool;
   cache_inode_client_t cache_inode_client;
   cache_content_client_t cache_content_client;

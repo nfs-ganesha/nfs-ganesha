@@ -174,7 +174,7 @@ int display_ip_stats(hash_buffer_t * pbuff, char *str)
  */
 
 int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
-                     unsigned int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool)
+                     unsigned int ipaddr, struct prealloc_pool *nfs_ip_stats_pool)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
@@ -186,9 +186,7 @@ int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
     return IP_STATS_SUCCESS;
 
   /* Entry to be cached */
-  GET_PREALLOC(pnfs_ip_stats,
-               nfs_ip_stats_pool,
-               nfs_param.worker_param.nb_ip_stats_prealloc, nfs_ip_stats_t, next_alloc);
+  GetFromPool(pnfs_ip_stats, nfs_ip_stats_pool, nfs_ip_stats_t);
 
   if(pnfs_ip_stats == NULL)
     return IP_STATS_INSERT_MALLOC_ERROR;
@@ -350,7 +348,7 @@ int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
  *
  */
 int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
-                        int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool)
+                        int ipaddr, struct prealloc_pool *nfs_ip_stats_pool)
 {
   hash_buffer_t buffkey, old_value;
   int status = IP_STATS_SUCCESS;
@@ -369,7 +367,7 @@ int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
   if(HashTable_Del(ht_ip_stats, &buffkey, NULL, &old_value) == HASHTABLE_SUCCESS)
     {
       pnfs_ip_stats = (nfs_ip_stats_t *) old_value.pdata;
-      RELEASE_PREALLOC(pnfs_ip_stats, nfs_ip_stats_pool, next_alloc);
+      ReleaseToPool(pnfs_ip_stats, nfs_ip_stats_pool);
     }
   else
     {
