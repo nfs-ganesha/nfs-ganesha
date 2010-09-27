@@ -18,15 +18,19 @@ typedef struct snmp_adm_parameter__
   int export_cache_inode_calls_detail;
   int export_fsal_calls_detail;
 
-  /* for the statistics exporter thread */
-  int export_stat_port;
-  exportlist_client_t allowed_clients;
 
 } snmp_adm_parameter_t;
+
+typedef struct stat_exporter_parameter__
+{
+  int export_stat_port;
+  exportlist_client_t allowed_clients;
+} stat_exporter_parameter_t;
 
 typedef struct external_tools_parameter__
 {
   snmp_adm_parameter_t snmp_adm;
+  stat_exporter_parameter_t stat_export;
 } external_tools_parameter_t;
 
 int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_parameter);
