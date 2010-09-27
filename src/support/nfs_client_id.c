@@ -244,7 +244,7 @@ int display_client_id_val(hash_buffer_t * pbuff, char *str)
  */
 
 int nfs_client_id_add(clientid4 clientid,
-                      nfs_client_id_t client_record, nfs_client_id_t * nfs_client_id_pool)
+                      nfs_client_id_t client_record, struct prealloc_pool *nfs_client_id_pool)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
@@ -254,9 +254,7 @@ int nfs_client_id_add(clientid4 clientid,
   clientid4 *pclientid = NULL;
 
   /* Entry to be cached */
-  GET_PREALLOC(pnfs_client_id,
-               nfs_client_id_pool,
-               nfs_param.worker_param.nb_client_id_prealloc, nfs_client_id_t, next_alloc);
+  GetFromPool(pnfs_client_id, nfs_client_id_pool, nfs_client_id_t);
 
   if(pnfs_client_id == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
@@ -320,7 +318,7 @@ int nfs_client_id_add(clientid4 clientid,
  */
 
 int nfs_client_id_set(clientid4 clientid,
-                      nfs_client_id_t client_record, nfs_client_id_t * nfs_client_id_pool)
+                      nfs_client_id_t client_record, struct prealloc_pool *nfs_client_id_pool)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
@@ -330,9 +328,7 @@ int nfs_client_id_set(clientid4 clientid,
   clientid4 *pclientid = NULL;
 
   /* Entry to be cached */
-  GET_PREALLOC(pnfs_client_id,
-               nfs_client_id_pool,
-               nfs_param.worker_param.nb_client_id_prealloc, nfs_client_id_t, next_alloc);
+  GetFromPool(pnfs_client_id, nfs_client_id_pool, nfs_client_id_t);
 
   if(pnfs_client_id == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
@@ -507,7 +503,7 @@ int nfs_client_id_get_reverse(char *key, nfs_client_id_t * client_id_res)
  * @return the result previously set if *pstatus == CLIENT_ID_SUCCESS
  *
  */
-int nfs_client_id_remove(clientid4 clientid, nfs_client_id_t * nfs_client_id_pool)
+int nfs_client_id_remove(clientid4 clientid, struct prealloc_pool *nfs_client_id_pool)
 {
   hash_buffer_t buffkey, old_key, old_key_reverse, old_value;
   nfs_client_id_t *pnfs_client_id = NULL;
@@ -537,13 +533,13 @@ int nfs_client_id_remove(clientid4 clientid, nfs_client_id_t * nfs_client_id_poo
   if(HashTable_Del(ht_client_id_reverse, &buffkey, &old_key_reverse, &old_value) !=
      HASHTABLE_SUCCESS)
     {
-      RELEASE_PREALLOC(pnfs_client_id, nfs_client_id_pool, next_alloc);
+      ReleaseToPool(pnfs_client_id, nfs_client_id_pool);
       Mem_Free(old_key.pdata);
       Mem_Free(pclientid);
       return CLIENT_ID_NOT_FOUND;
     }
 
-  RELEASE_PREALLOC(pnfs_client_id, nfs_client_id_pool, next_alloc);
+  ReleaseToPool(pnfs_client_id, nfs_client_id_pool);
   Mem_Free(old_key_reverse.pdata);
   Mem_Free(old_key.pdata);
   Mem_Free(pclientid);

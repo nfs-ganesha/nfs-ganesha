@@ -1510,7 +1510,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
           exit(1);
         }
 
-      /* ALlocation of the IP/name pool */
+      /* Allocation of the IP/name pool */
       MakePool(&workers_data[i].ip_stats_pool,
                nfs_param.worker_param.nb_ip_stats_prealloc,
                nfs_ip_stats_t, NULL, NULL);
@@ -1521,6 +1521,11 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
           LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
+
+      /* Initialize, but do not pre-alloc client-id pool */
+      InitPool(&workers_data[i].clientid_pool,
+               nfs_param.worker_param.nb_client_id_prealloc,
+               nfs_client_id_t, NULL, NULL);
 
       LogDebug(COMPONENT_INIT, "NFS_INIT: worker data #%d successfully initialized", i);
     }                           /* for i */

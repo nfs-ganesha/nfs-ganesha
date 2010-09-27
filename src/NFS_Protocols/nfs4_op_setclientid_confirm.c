@@ -146,7 +146,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
           nfs_clientid.last_renew = time(NULL);
 
           /* Set the new value */
-          if(nfs_client_id_set(clientid, nfs_clientid, pworker->clientid_pool) !=
+          if(nfs_client_id_set(clientid, nfs_clientid, &pworker->clientid_pool) !=
              CLIENT_ID_SUCCESS)
             {
               res_SETCLIENTID_CONFIRM4.status = NFS4ERR_SERVERFAULT;
