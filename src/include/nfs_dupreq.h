@@ -72,7 +72,6 @@ typedef struct dupreq_entry__
   u_long rq_vers;               /* service protocol version      */
   u_long rq_proc;
   time_t timestamp;
-  struct dupreq_entry__ *next_alloc;
 } dupreq_entry_t;
 
 unsigned int get_rpc_xid(struct svc_req *reqp);
@@ -87,7 +86,7 @@ nfs_res_t nfs_dupreq_get(long xid, int *pstatus);
 int nfs_dupreq_add(long xid,
                    struct svc_req *ptr_req,
                    nfs_res_t * p_res_nfs,
-                   LRU_list_t * lru_dupreq, dupreq_entry_t ** dupreq_pool);
+                   LRU_list_t * lru_dupreq, struct prealloc_pool *dupreq_pool);
 
 unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
                                      hash_buffer_t * buffclef);

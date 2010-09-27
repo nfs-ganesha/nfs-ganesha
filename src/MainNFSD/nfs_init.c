@@ -1300,7 +1300,6 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
 static void nfs_Init(const nfs_start_info_t * p_start_info)
 {
   nfs_request_data_t *reqpool;
-  dupreq_entry_t *dupreq_pool;
   nfs_ip_stats_t *ip_stats_pool;
   hash_table_t *ht = NULL;      /* Cache inode main hash table */
 
@@ -1506,21 +1505,17 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       workers_data[i].request_pool = reqpool;
 
       /* Allocation of the nfs dupreq pool */
-      dupreq_pool = NULL;       /* empty pool */
+      MakePool(&workers_data[i].dupreq_pool,
+               nfs_param.worker_param.nb_dupreq_prealloc,
+               dupreq_entry_t,
+               NULL, NULL);
 
-      STUFF_PREALLOC(dupreq_pool,
-                     nfs_param.worker_param.nb_dupreq_prealloc,
-                     dupreq_entry_t, next_alloc);
-
-#ifndef _NO_BLOCK_PREALLOC
-      if(dupreq_pool == NULL)
+      if(!IsPoolPreallocated(&workers_data[i].dupreq_pool))
         {
           LogCrit(COMPONENT_INIT, "NFS_INIT: Error while allocating duplicate request pool #%d", i);
           LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
-#endif
-      workers_data[i].dupreq_pool = dupreq_pool;
 
       /* ALlocation of the IP/name pool */
       ip_stats_pool = NULL;     /* empty pool */

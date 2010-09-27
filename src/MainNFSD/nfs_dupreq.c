@@ -183,7 +183,7 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
 {
   hash_buffer_t buffkey;
   nfs_function_desc_t funcdesc;
-  dupreq_entry_t **dupreq_pool = (dupreq_entry_t **) addparam;
+  struct prealloc_pool *dupreq_pool = (struct prealloc_pool *) addparam;
   dupreq_entry_t *pdupreq = (dupreq_entry_t *) (pentry->buffdata.pdata);
   int rc;
 
@@ -285,7 +285,7 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
   funcdesc.free_function(&(pdupreq->res_nfs));
 
   /* Send the entry back to the pool */
-  RELEASE_PREALLOC(pdupreq, *dupreq_pool, next_alloc);
+  ReleaseToPool(pdupreq, dupreq_pool);
 
   return 0;
 }                               /* clean_entry_dupreq */
@@ -412,7 +412,7 @@ int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param)
 int nfs_dupreq_add(long xid,
                    struct svc_req *ptr_req,
                    nfs_res_t * p_res_nfs,
-                   LRU_list_t * lru_dupreq, dupreq_entry_t ** p_dupreq_pool)
+                   LRU_list_t * lru_dupreq, struct prealloc_pool *dupreq_pool)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
@@ -421,9 +421,7 @@ int nfs_dupreq_add(long xid,
   LRU_status_t lru_status;
 
   /* Entry to be cached */
-  GET_PREALLOC(pdupreq,
-               (*p_dupreq_pool),
-               nfs_param.worker_param.nb_dupreq_prealloc, dupreq_entry_t, next_alloc);
+  GetFromPool(pdupreq, dupreq_pool, dupreq_entry_t);
 
   if(pdupreq == NULL)
     return DUPREQ_INSERT_MALLOC_ERROR;

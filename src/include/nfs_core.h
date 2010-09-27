@@ -63,9 +63,7 @@
 #include "nfs_stat.h"
 #include "external_tools.h"
 
-#ifndef _NO_BUDDY_SYSTEM
-#include "BuddyMalloc.h"        /* for stats */
-#endif
+#include "stuff_alloc.h"
 
 #include "nfs23.h"
 #include "nfs4.h"
@@ -474,7 +472,7 @@ typedef struct nfs_worker_data__
   LRU_list_t *pending_request;
   LRU_list_t *duplicate_request;
   nfs_request_data_t *request_pool;
-  dupreq_entry_t *dupreq_pool;
+  struct prealloc_pool dupreq_pool;
   nfs_ip_stats_t *ip_stats_pool;
   nfs_client_id_t *clientid_pool;
   cache_inode_client_t cache_inode_client;
