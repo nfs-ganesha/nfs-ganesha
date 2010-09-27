@@ -544,7 +544,6 @@ int process_stat_request(void *addr, int new_fd)
       if(strcmp(key, "version") == 0)
       {
         stat_client_req.nfs_version = atoi(value);
-	LogMajor(COMPONENT_MAIN, "NFS VERSION: %d", stat_client_req.nfs_version);
       }
       else if(strcmp(key, "type") == 0)
       {
