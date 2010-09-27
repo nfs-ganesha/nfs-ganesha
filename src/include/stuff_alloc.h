@@ -107,12 +107,12 @@ void _InitPool(struct prealloc_pool *pool,
 
 typedef struct prealloc_header
 {
-  int                     pa_inuse; // flag indicating block is in use
   struct prealloc_header *pa_next;  // next pool entry in free lists (or self if in use)
 #ifdef _DEBUG_MEMLEAKS
+  int                     pa_inuse; // flag indicating block is in use
   struct prealloc_header *pa_nextb; // next pool entry in buddy block
-#endif
   struct prealloc_pool   *pa_pool;  // owning pool
+#endif
 } prealloc_header;
 
 #define size_prealloc_header64 ((ptrdiff_t) ( (sizeof(prealloc_header) + 7) & ~7 ))
@@ -123,8 +123,11 @@ typedef struct prealloc_pool
 {
 #ifdef _DEBUG_MEMLEAKS
   struct prealloc_pool   *pa_next_pool;   // next pool
+  char                    pa_name[256];   // name of pool
+  char                   *pa_type;        // data type stored in pool
+  int                     pa_used;        // number of entries in use
+  int                     pa_high;        // high water mark of used entries
 #endif
-  char                   *pa_type;
   struct prealloc_header *pa_free;        // free list
   constructor             pa_constructor; // constructor
   constructor             pa_destructor;  // destructor
@@ -132,16 +135,7 @@ typedef struct prealloc_pool
   int                     pa_num;         // optimized number of entries per block
   int                     pa_blocks;      // number of blocks allocated
   int                     pa_allocated;   // number of entries preallocated
-  int                     pa_used;        // number of entries in use
-  int                     pa_high;        // high water mark of used entries
 } prealloc_pool;
-
-#define LogPoolData(component, pool)                                \
-  LogDebug(component,                                               \
-           "Pool %s NumBlocks=%d Num/Block=%d SizeOfEntry=%d NumAllocated=%d NumInUse=%d MaxInUse=%d", \
-           (pool)->pa_type,                                         \
-           (pool)->pa_blocks, (pool)->pa_num, (pool)->pa_size,      \
-           (pool)->pa_allocated, (pool)->pa_used, (pool)->pa_high);
 
 #define IsPoolPreallocated(pool) ((pool)->pa_allocated > 0)
 
@@ -160,8 +154,6 @@ do {                                                         \
         {                                                    \
           prealloc_header *h = (prealloc_header *) mem;      \
           h->pa_next  = (pool)->pa_free;                     \
-          h->pa_inuse = 0;                                   \
-          h->pa_pool  = pool;                                \
           (pool)->pa_free = h;                               \
           mem += size;                                       \
           if((pool)->pa_constructor != NULL)                 \
@@ -174,28 +166,49 @@ do {                                                         \
 #define InitPool(pool, num_alloc, type, ctor, dtor)          \
 do {                                                         \
   int size;                                                  \
-  (pool)->pa_type        = # type;                           \
   (pool)->pa_free        = NULL;                             \
   (pool)->pa_constructor = ctor;                             \
   (pool)->pa_destructor  = dtor;                             \
   (pool)->pa_size        = sizeof(type);                     \
   size = (pool)->pa_size + size_prealloc_header64;           \
   (pool)->pa_num         = GetPreferedPool(num_alloc, size); \
-  (pool)->pa_blocks      = 0;                                \
-  (pool)->pa_allocated   = 0;                                \
-  (pool)->pa_used        = 0;                                \
-  (pool)->pa_high        = 0;                                \
 } while (0)
+
+#define NamePool(pool, fmt, args...)
+
+#define GetFromPool(entry, pool, type)                       \
+do {                                                         \
+  if ((pool)->pa_free == NULL)                               \
+    FillPool(pool, __FILE__, __FUNCTION__, __LINE__, # type);\
+  if ((pool)->pa_free != NULL)                               \
+    {                                                        \
+      prealloc_header *h = (pool)->pa_free;                  \
+      (pool)->pa_free = h->pa_next;                          \
+      h->pa_next = h;                                        \
+      entry = get_prealloc_entry(h, type);                   \
+    }                                                        \
+  else                                                       \
+    entry = NULL;                                            \
+} while (0)
+
+#define ReleaseToPool(entry, pool)                           \
+do {                                                         \
+  prealloc_header *h = get_prealloc_header(entry);           \
+  if ((pool)->pa_destructor != NULL)                         \
+    (pool)->pa_destructor(entry);                            \
+  h->pa_next = (pool)->pa_free;                              \
+  (pool)->pa_free = h;                                       \
+} while (0)
+
+#define LogPoolData(component, pool)
+
 #else
+
 #define InitPool(pool, num_alloc, type, ctor, dtor)          \
   _InitPool(pool, num_alloc, sizeof(type), ctor, dtor, # type)
-#endif
 
-#define MakePool(pool, num_alloc, type, ctor, dtor)          \
-do {                                                         \
-  InitPool(pool, num_alloc, type, ctor, dtor);               \
-  FillPool(pool, __FILE__, __FUNCTION__, __LINE__, # type);  \
-} while (0)
+#define NamePool(pool, fmt, args...)                         \
+  snprintf((pool)->pa_name, 256, fmt, ## args)
 
 #define GetFromPool(entry, pool, type)                       \
 do {                                                         \
@@ -225,6 +238,21 @@ do {                                                         \
   h->pa_inuse = 0;                                           \
   (pool)->pa_free = h;                                       \
   (pool)->pa_used--;                                         \
+} while (0)
+
+#define LogPoolData(component, pool)                                \
+  LogDebug(component,                                               \
+           "Pool %s NumBlocks=%d Num/Block=%d SizeOfEntry=%d NumAllocated=%d NumInUse=%d MaxInUse=%d", \
+           (pool)->pa_type,                                         \
+           (pool)->pa_blocks, (pool)->pa_num, (pool)->pa_size,      \
+           (pool)->pa_allocated, (pool)->pa_used, (pool)->pa_high);
+
+#endif
+
+#define MakePool(pool, num_alloc, type, ctor, dtor)          \
+do {                                                         \
+  InitPool(pool, num_alloc, type, ctor, dtor);               \
+  FillPool(pool, __FILE__, __FUNCTION__, __LINE__, # type);  \
 } while (0)
 
 /**
