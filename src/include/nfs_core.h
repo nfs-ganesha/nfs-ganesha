@@ -457,7 +457,6 @@ typedef struct nfs_client_id__
   nfs41_session_slot_t create_session_slot;
   unsigned create_session_sequence;
 #endif
-  struct nfs_client_id__ *next_alloc;
 } nfs_client_id_t;
 
 typedef enum idmap_type__
@@ -473,7 +472,7 @@ typedef struct nfs_worker_data__
   struct prealloc_pool request_pool;
   struct prealloc_pool dupreq_pool;
   struct prealloc_pool ip_stats_pool;
-  nfs_client_id_t *clientid_pool;
+  struct prealloc_pool clientid_pool;
   cache_inode_client_t cache_inode_client;
   cache_content_client_t cache_content_client;
   hash_table_t *ht;
@@ -592,7 +591,7 @@ void auth_stat2str(enum auth_stat, char *str);
 int nfs_Init_client_id(nfs_client_id_parameter_t param);
 int nfs_Init_client_id_reverse(nfs_client_id_parameter_t param);
 
-int nfs_client_id_remove(clientid4 clientid, nfs_client_id_t * nfs_client_id_pool);
+int nfs_client_id_remove(clientid4 clientid, struct prealloc_pool *nfs_client_id_pool);
 
 int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res);
 
@@ -602,11 +601,11 @@ int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id
 
 int nfs_client_id_add(clientid4 clientid,
                       nfs_client_id_t client_record,
-                      nfs_client_id_t * nfs_client_id_pool);
+                      struct prealloc_pool *nfs_client_id_pool);
 
 int nfs_client_id_set(clientid4 clientid,
                       nfs_client_id_t client_record,
-                      nfs_client_id_t * nfs_client_id_pool);
+                      struct prealloc_pool *nfs_client_id_pool);
 
 int nfs_client_id_compute(char *name, clientid4 * pclientid);
 int nfs_client_id_basic_compute(char *name, clientid4 * pclientid);
