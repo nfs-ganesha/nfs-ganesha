@@ -436,7 +436,6 @@ typedef struct nfs_request_data__
   char cred_area[2 * MAX_AUTH_BYTES + RQCRED_SIZE];
   int status;
   nfs_res_t res_nfs;
-  struct nfs_request_data__ *next_alloc;
 } nfs_request_data_t;
 
 typedef struct nfs_client_id__
@@ -471,7 +470,7 @@ typedef struct nfs_worker_data__
   int index;
   LRU_list_t *pending_request;
   LRU_list_t *duplicate_request;
-  nfs_request_data_t *request_pool;
+  struct prealloc_pool request_pool;
   struct prealloc_pool dupreq_pool;
   nfs_ip_stats_t *ip_stats_pool;
   nfs_client_id_t *clientid_pool;

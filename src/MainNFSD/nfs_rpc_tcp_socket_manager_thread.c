@@ -164,11 +164,8 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
       /* Get a pnfsreq from the worker's pool */
       P(workers_data[worker_index].request_pool_mutex);
 
-      GET_PREALLOC_CONSTRUCT(pnfsreq,
-                             workers_data[worker_index].request_pool,
-                             nfs_param.worker_param.nb_pending_prealloc,
-                             nfs_request_data_t,
-                             next_alloc, constructor_nfs_request_data_t );
+      GetFromPool(pnfsreq, &workers_data[worker_index].request_pool,
+                  nfs_request_data_t);
  
       V(workers_data[worker_index].request_pool_mutex);
 
@@ -286,8 +283,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                      "TCP SOCKET MANAGER : /!\\ **** ERROR **** Mismatch between tcp_sock and xprt array");
 
               P(workers_data[worker_index].request_pool_mutex);
-              RELEASE_PREALLOC(pnfsreq, workers_data[worker_index].request_pool,
-                               next_alloc);
+              ReleaseToPool(pnfsreq, &workers_data[worker_index].request_pool);
               V(workers_data[worker_index].request_pool_mutex);
 
 #ifdef _DEBUG_MEMLEAKS

@@ -1682,11 +1682,8 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
           /* Get a pnfsreq from the worker's pool */
           P(workers_data[worker_index].request_pool_mutex);
 
-          GET_PREALLOC_CONSTRUCT(pnfsreq,
-                                 workers_data[worker_index].request_pool,
-                                 nfs_param.worker_param.nb_pending_prealloc,
-                                 nfs_request_data_t,
-                                 next_alloc, constructor_nfs_request_data_t);
+          GetFromPool(pnfsreq, &workers_data[worker_index].request_pool,
+                      nfs_request_data_t);
 
           V(workers_data[worker_index].request_pool_mutex);
 
@@ -1855,8 +1852,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
 #endif
 
                   P(workers_data[worker_index].request_pool_mutex);
-                  RELEASE_PREALLOC(pnfsreq, workers_data[worker_index].request_pool,
-                                   next_alloc);
+                  ReleaseToPool(pnfsreq, &workers_data[worker_index].request_pool);
                   V(workers_data[worker_index].request_pool_mutex);
 
                 }
@@ -1927,11 +1923,11 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
  */
 int clean_pending_request(LRU_entry_t * pentry, void *addparam)
 {
-  nfs_request_data_t **preqnfspool = (nfs_request_data_t **) addparam;
+  struct prealloc_pool *preqnfspool = (struct prealloc_pool *) addparam;
   nfs_request_data_t *preqnfs = (nfs_request_data_t *) (pentry->buffdata.pdata);
 
   /* Send the entry back to the pool */
-  RELEASE_PREALLOC(preqnfs, *preqnfspool, next_alloc);
+  ReleaseToPool(preqnfs, preqnfspool);
 
   return 0;
 }                               /* clean_pending_request */
