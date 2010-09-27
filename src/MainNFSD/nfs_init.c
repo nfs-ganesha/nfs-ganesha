@@ -1299,7 +1299,6 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
 
 static void nfs_Init(const nfs_start_info_t * p_start_info)
 {
-  nfs_request_data_t *reqpool;
   nfs_ip_stats_t *ip_stats_pool;
   hash_table_t *ht = NULL;      /* Cache inode main hash table */
 
@@ -1488,21 +1487,17 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       workers_data[i].ht_ip_stats = ht_ip_stats[i];
 
       /* Allocation of the nfs request pool */
-      reqpool = NULL;           /* empty pool */
-      STUFF_PREALLOC_CONSTRUCT(reqpool,
-                               nfs_param.worker_param.nb_pending_prealloc,
-                               nfs_request_data_t,
-                               next_alloc, constructor_nfs_request_data_t);
-
-#ifndef _NO_BLOCK_PREALLOC
-      if(reqpool == NULL)
+      MakePool(&workers_data[i].request_pool,
+               nfs_param.worker_param.nb_pending_prealloc,
+               nfs_request_data_t,
+               constructor_nfs_request_data_t, NULL);
+               
+      if(!IsPoolPreallocated(&workers_data[i].request_pool))
         {
           LogCrit(COMPONENT_INIT, "NFS_INIT: Error while allocating request data pool #%d", i);
           LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
-#endif
-      workers_data[i].request_pool = reqpool;
 
       /* Allocation of the nfs dupreq pool */
       MakePool(&workers_data[i].dupreq_pool,
