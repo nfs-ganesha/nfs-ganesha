@@ -1490,6 +1490,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                nfs_param.worker_param.nb_pending_prealloc,
                nfs_request_data_t,
                constructor_nfs_request_data_t, NULL);
+      NamePool(&workers_data[i].request_pool, "Request Data Pool %d", i);
                
       if(!IsPoolPreallocated(&workers_data[i].request_pool))
         {
@@ -1502,6 +1503,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       MakePool(&workers_data[i].dupreq_pool,
                nfs_param.worker_param.nb_dupreq_prealloc,
                dupreq_entry_t, NULL, NULL);
+      NamePool(&workers_data[i].dupreq_pool, "Duplicate Request Pool %d", i);
 
       if(!IsPoolPreallocated(&workers_data[i].dupreq_pool))
         {
@@ -1514,6 +1516,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       MakePool(&workers_data[i].ip_stats_pool,
                nfs_param.worker_param.nb_ip_stats_prealloc,
                nfs_ip_stats_t, NULL, NULL);
+      NamePool(&workers_data[i].ip_stats_pool, "IP Stats Cache Pool %d", i);
 
       if(!IsPoolPreallocated(&workers_data[i].ip_stats_pool))
         {
@@ -1526,6 +1529,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       InitPool(&workers_data[i].clientid_pool,
                nfs_param.worker_param.nb_client_id_prealloc,
                nfs_client_id_t, NULL, NULL);
+      NamePool(&workers_data[i].clientid_pool, "Client ID Pool %d", i);
 
       LogDebug(COMPONENT_INIT, "NFS_INIT: worker data #%d successfully initialized", i);
     }                           /* for i */
