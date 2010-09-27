@@ -701,6 +701,7 @@ static int get_buddy(snmp_adm_type_union * param, void *opt_arg)
           param->bigint = workers_data[i].stats.buddy_stats.NbStdUsed;
       break;
     case 10:
+    case 11:
       strcpy(param->string, "filename to dump to");
       break;
     default:
@@ -711,7 +712,7 @@ static int get_buddy(snmp_adm_type_union * param, void *opt_arg)
 
 #ifdef _DEBUG_MEMLEAKS
 
-static int set_buddy(snmp_adm_type_union * param, void *opt_arg)
+static int set_buddy(const snmp_adm_type_union * param, void *opt_arg)
 {
   long cs = (long)opt_arg;
   unsigned int i;
@@ -723,10 +724,29 @@ static int set_buddy(snmp_adm_type_union * param, void *opt_arg)
         int rc;
         FILE *output = fopen(param->string, "w");
         if (output == NULL)
-          return 1;
+          {
+            LogCrit(COMPONENT_MEMLEAKS, "Open of %s failed, error=%s(%d)",
+                    param->string, strerror(errno), errno);
+            return 1;
+          }
         BuddyDumpAll(output);
         rc = fclose(output);
         LogDebug(COMPONENT_MEMLEAKS, "Dumped buddy memory to %s, rc=%d", param->string, rc);
+      }
+      break;
+    case 11:
+      {
+        int rc;
+        FILE *output = fopen(param->string, "w");
+        if (output == NULL)
+          {
+            LogCrit(COMPONENT_MEMLEAKS, "Open of %s failed, error=%s(%d)",
+                    param->string, strerror(errno), errno);
+            return 1;
+          }
+        BuddyDumpPools(output);
+        rc = fclose(output);
+        LogDebug(COMPONENT_MEMLEAKS, "Dumped buddy pools to %s, rc=%d", param->string, rc);
       }
       break;
     default:
@@ -1051,11 +1071,13 @@ static register_get_set snmp_export_stat_buddy[] = {
 #ifdef _DEBUG_MEMLEAKS
   {"buddy_dump_to_file", "BUDDY_MEMORY", SNMP_ADM_STRING, SNMP_ADM_ACCESS_RW,
    get_buddy, set_buddy, (void *)10},
+  {"buddy_dump_pools_to_file",  "BUDDY_MEMORY", SNMP_ADM_STRING, SNMP_ADM_ACCESS_RW,
+   get_buddy, set_buddy, (void *)11},
 #endif
 };
 
 #ifdef _DEBUG_MEMLEAKS
-#define SNMPADM_STAT_BUDDY_COUNT 11
+#define SNMPADM_STAT_BUDDY_COUNT 12
 #else
 #define SNMPADM_STAT_BUDDY_COUNT 10
 #endif

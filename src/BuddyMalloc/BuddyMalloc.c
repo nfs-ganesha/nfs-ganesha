@@ -2559,7 +2559,7 @@ void BuddyDumpPools(FILE *output)
   P(ContextListMutex);
   pool = first_pool;
   fprintf(output, "Num Blocks  Num/Block  Size of Entry  Num Allocated  Num in Use  Max in Use  Type\n"
-                  "----------  ---------  -------------  -------------  ----------  ----------  ------------------------");
+                  "----------  ---------  -------------  -------------  ----------  ----------  ------------------------\n");
   while (pool != NULL)
     {
       fprintf(output,
