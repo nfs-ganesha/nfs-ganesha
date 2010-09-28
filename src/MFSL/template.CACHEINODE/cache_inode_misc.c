@@ -273,8 +273,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
 
   /* Allocate a client entry parent. Ath the pentry creation, there is only one parent. List is 
    * extended if hard links are made  */
-  GET_PREALLOC(pparent, pclient->pool_parent,
-               pclient->nb_pre_parent, cache_inode_parent_entry_t, next_alloc);
+  GetParent(pparent, &pclient->pool_parent, pclient->nb_pre_parent, cache_inode_parent_entry_t);
   if(pparent == NULL)
     {
       LogDebug(COMPONENT_CACHE_INODE, 
@@ -1598,7 +1597,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
     {
       parent_iter_next = parent_iter->next_parent;
 
-      RELEASE_PREALLOC(parent_iter, pclient->pool_parent, next_alloc);
+      ReleaseToPool(parent_iter, &pclient->pool_parent);
 
       parent_iter = parent_iter_next;
     }

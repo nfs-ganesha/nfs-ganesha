@@ -179,7 +179,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
     {
       parent_iter_next = parent_iter->next_parent;
 
-      RELEASE_PREALLOC(parent_iter, pgcparam->pclient->pool_parent, next_alloc);
+      ReleaseToPool(parent_iter, &pgcparam->pclient->pool_parent);
 
       parent_iter = parent_iter_next;
     }

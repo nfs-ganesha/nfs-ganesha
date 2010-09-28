@@ -1561,7 +1561,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
     {
       parent_iter_next = parent_iter->next_parent;
 
-      RELEASE_PREALLOC(parent_iter, pclient->pool_parent, next_alloc);
+      ReleaseToPool(parent_iter, &pclient->pool_parent);
 
       parent_iter = parent_iter_next;
     }
