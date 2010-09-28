@@ -103,6 +103,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
                             int thread_index, void *pworker_data)
 {
   LRU_status_t lru_status;
+  char name[256];
 
   pclient->attrmask = param.attrmask;
   pclient->nb_prealloc = param.nb_prealloc_entry;
@@ -200,6 +201,9 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
                    "Error : can't init cache_inode client key pool Worker %d", thread_index);
       return 1;
     }
+
+  sprintf(name, "Cache Inode Worker %d", thread_index);
+  param.lru_param.name = name;
 
   if((pclient->lru_gc = LRU_Init(param.lru_param, &lru_status)) == NULL)
     {

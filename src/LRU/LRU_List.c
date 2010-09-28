@@ -126,6 +126,10 @@
 LRU_list_t *LRU_Init(LRU_parameter_t lru_param, LRU_status_t * pstatus)
 {
   LRU_list_t *plru = NULL;
+  char *name = "Unamed";
+
+  if (lru_param.name != NULL)
+    name = lru_param.name;
 
   /* Sanity check */
   if((plru = (LRU_list_t *) Mem_Alloc(sizeof(LRU_list_t))) == NULL)
@@ -143,7 +147,7 @@ LRU_list_t *LRU_Init(LRU_parameter_t lru_param, LRU_status_t * pstatus)
 #ifndef _NO_BLOCK_PREALLOC
   /* Pre allocate entries */
   MakePool(&plru->lru_entry_pool, lru_param.nb_entry_prealloc, LRU_entry_t, NULL, NULL);
-  NamePool(&plru->lru_entry_pool, "LRU Entry Pool");
+  NamePool(&plru->lru_entry_pool, "%s LRU Entry Pool", name);
   if(!IsPoolPreallocated(&plru->lru_entry_pool))
     {
       *pstatus = LRU_LIST_MALLOC_ERROR;
