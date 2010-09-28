@@ -1479,6 +1479,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
   for(i = 0; i < nfs_param.core_param.nb_worker; i++)
     {
+      char name[256];
+
       /* Fill in workers fields (semaphores and other stangenesses */
       if(nfs_Init_worker_data(&(workers_data[i])) != 0)
         {
@@ -1492,6 +1494,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       /* Set the pointer for the Cache inode hash table */
       workers_data[i].ht = ht;
 
+      sprintf(name, "IP Stats for worker %d", i);
+      nfs_param.ip_stats_param.hash_param.name = name;
       ht_ip_stats[i] = nfs_Init_ip_stats(nfs_param.ip_stats_param);
       if(ht_ip_stats[i] == NULL)
         {
