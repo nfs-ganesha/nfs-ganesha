@@ -171,15 +171,14 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
       return 1;
     }
 
-#ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC(pclient->pool_async_op,
-                 pclient->nb_pre_async_op_desc, cache_inode_async_op_desc_t, next_alloc);
-  if(pclient->pool_async_op == NULL)
+  /* TODO: this can't possibly compile... */
+  MakePool(&pclient->pool_async_op, pclient->nb_pre_async_op_desc, cache_inode_async_op_desc_t, NULL, NULL);
+  NamePool(&pclient->pool_async_op, "Cache Inode Client Async Op Pool for Worker %d", thread_index);
+  if(!IsPoolPreallocated(&pclient->pool_async_op))
     {
       LogCrit(COMPONENT_CACHE_INODE, "Error : can't init cache_inode async op pool for Worker %d", thread_index);
       return 1;
     }
-#endif
 
   MakePool(&pclient->pool_key, pclient->nb_prealloc, cache_inode_fsal_data_t, NULL, NULL);
   NamePool(&pclient->pool_key, "Cache Inode Client Key Pool for Worker %d", thread_index);
