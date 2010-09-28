@@ -295,9 +295,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
   /* if entry is of tyep DIR_CONTINUE or DIR_BEGINNING, it should have a pdir_data */
   if(type == DIR_BEGINNING || type == DIR_CONTINUE)
     {
-      GET_PREALLOC(pdir_data,
-                   pclient->pool_dir_data,
-                   pclient->nb_pre_dir_data, cache_inode_dir_data_t, next_alloc);
+      GetFromPool(pdir_data, &pclient->pool_dir_data, cache_inode_dir_data_t);
       if(pdir_data == NULL)
         {
           LogDebug(COMPONENT_CACHE_INODE, 
@@ -1628,8 +1626,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
           pentry->object.dir_begin.pdir_data->dir_entries[i].pentry = NULL;
         }
       /* Put the pentry back to the pool */
-      RELEASE_PREALLOC(pentry->object.dir_begin.pdir_data, pclient->pool_dir_data,
-                       next_alloc);
+      ReleaseToPool(pentry->object.dir_begin.pdir_data, &pclient->pool_dir_data);
     }
 
   if(pentry->internal_md.type == DIR_CONTINUE)
@@ -1640,8 +1637,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
           pentry->object.dir_cont.pdir_data->dir_entries[i].pentry = NULL;
         }
       /* Put the pentry back to the pool */
-      RELEASE_PREALLOC(pentry->object.dir_cont.pdir_data, pclient->pool_dir_data,
-                       next_alloc);
+      ReleaseToPool(pentry->object.dir_cont.pdir_data, &pclient->pool_dir_data);
     }
 
   /* Put the pentry back to the pool */

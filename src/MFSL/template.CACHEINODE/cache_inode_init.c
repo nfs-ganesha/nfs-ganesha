@@ -144,16 +144,14 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
       return 1;
     }
 
-#ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC(pclient->pool_dir_data,
-                 pclient->nb_pre_dir_data, cache_inode_dir_data_t, next_alloc);
-  if(pclient->pool_dir_data == NULL)
+  MakePool(&pclient->pool_dir_data, pclient->nb_pre_dir_data, cache_inode_dir_data_t, NULL, NULL);
+  NamePool(&pclient->pool_dir_data, "Cache Inode Client Dir Data Pool for Worker %d", thread_index);
+  if(!IsPoolPreallocated(&pclient->pool_dir_data))
     {
       LogCrit(COMPONENT_CACHE_INODE,
                    "Error : can't init cache_inode client dir data pool");
       return 1;
     }
-#endif
 
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_parent,

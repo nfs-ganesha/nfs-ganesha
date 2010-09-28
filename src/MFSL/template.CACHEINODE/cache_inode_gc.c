@@ -168,15 +168,13 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
   if(pentry->internal_md.type == DIR_BEGINNING)
     {
       /* Put the pentry back to the pool */
-      RELEASE_PREALLOC(pentry->object.dir_begin.pdir_data,
-                       pgcparam->pclient->pool_dir_data, next_alloc);
+      ReleaseToPool(pentry->object.dir_begin.pdir_data, &pgcparam->pclient->pool_dir_data);
     }
 
   if(pentry->internal_md.type == DIR_CONTINUE)
     {
       /* Put the pentry back to the pool */
-      RELEASE_PREALLOC(pentry->object.dir_cont.pdir_data,
-                       pgcparam->pclient->pool_dir_data, next_alloc);
+      ReleaseToPool(pentry->object.dir_cont.pdir_data, &pgcparam->pclient->pool_dir_data);
     }
 
   LogFullDebug(COMPONENT_CACHE_INODE_GC, "++++> pdir_data (if needed) sent back to pool\n");
