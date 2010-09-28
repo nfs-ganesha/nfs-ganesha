@@ -552,7 +552,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       /* Destroy the mutex associated with the pentry */
       cache_inode_mutex_destroy(to_remove_entry);
 
-      RELEASE_PREALLOC(to_remove_entry, pclient->pool_entry, next_alloc);
+      ReleaseToPool(to_remove_entry, &pclient->pool_entry);
     }
 
   /* Set the 'after' attr */

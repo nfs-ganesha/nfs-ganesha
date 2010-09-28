@@ -208,7 +208,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
   cache_inode_mutex_destroy(pentry);
 
   /* Put the pentry back to the pool */
-  RELEASE_PREALLOC(pentry, pgcparam->pclient->pool_entry, next_alloc);
+  ReleaseToPool(pentry, &pgcparam->pclient->pool_entry);
 
   /* Regular exit */
   pgcparam->nb_to_be_purged = pgcparam->nb_to_be_purged - 1;
