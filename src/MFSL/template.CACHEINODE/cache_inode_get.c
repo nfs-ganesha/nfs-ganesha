@@ -104,7 +104,7 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;
 
       ppoolfsdata = (cache_inode_fsal_data_t *) key.pdata;
-      RELEASE_PREALLOC(ppoolfsdata, pclient->pool_key, next_alloc);
+      ReleaseToPool(ppoolfsdata, &pclient->pool_key);
 
       return NULL;
     }

@@ -125,9 +125,7 @@ int cache_inode_fsaldata_2_key(hash_buffer_t * pkey, cache_inode_fsal_data_t * p
 
   if(pclient != NULL)
     {
-      GET_PREALLOC(ppoolfsdata,
-                   pclient->pool_key,
-                   pclient->nb_prealloc, cache_inode_fsal_data_t, next_alloc);
+      GetFromPool(ppoolfsdata, &pclient->pool_key, cache_inode_fsal_data_t);
       if(ppoolfsdata == NULL)
         {
           LogDebug(COMPONENT_CACHE_INODE, 
@@ -166,7 +164,7 @@ void cache_inode_release_fsaldata_key(hash_buffer_t * pkey,
 
   ppoolfsdata = (cache_inode_fsal_data_t *) pkey->pdata;
 
-  RELEASE_PREALLOC(ppoolfsdata, pclient->pool_key, next_alloc);
+  ReleaseToPool(ppoolfsdata, &pclient->pool_key);
 }                               /* cache_inode_release_fsaldata_key */
 
 /**
