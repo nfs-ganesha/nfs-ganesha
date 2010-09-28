@@ -248,7 +248,7 @@ static int InitClient(cmdCacheInode_thr_info_t * thr_info)
     return 1;
 
   /* Init the cache content client */
-  if(cache_content_client_init(&thr_info->dc_client, datacache_client_param) != 0)
+  if(cache_content_client_init(&thr_info->dc_client, datacache_client_param, "") != 0)
     return 1;
 
   thr_info->client.pcontent_client = (caddr_t) & thr_info->dc_client;
@@ -710,7 +710,7 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
 #endif
 
   /* Init the cache content client */
-  if(cache_content_client_init(&context->dc_client, datacache_client_param) != 0)
+  if(cache_content_client_init(&context->dc_client, datacache_client_param, "") != 0)
     return 1;
 
   context->client.pcontent_client = (caddr_t) & context->dc_client;

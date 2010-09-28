@@ -2383,7 +2383,8 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       /* creating the datacache client for recovering data cache */
       if(cache_content_client_init
          (&recover_datacache_client,
-          nfs_param.cache_layers_param.cache_content_client_param))
+          nfs_param.cache_layers_param.cache_content_client_param,
+          "recovering"))
         {
           LogCrit(COMPONENT_INIT,
                "cache content client (for datacache recovery) could not be allocated, exiting...");

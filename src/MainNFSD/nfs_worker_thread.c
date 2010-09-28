@@ -1189,7 +1189,8 @@ void *worker_thread(void *IndexArg)
 
   /* Init the Cache content client for this worker */
   if(cache_content_client_init(&pmydata->cache_content_client,
-                               nfs_param.cache_layers_param.cache_content_client_param))
+                               nfs_param.cache_layers_param.cache_content_client_param,
+                               thr_name))
     {
       /* Failed init */
       LogCrit(COMPONENT_DISPATCH,

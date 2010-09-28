@@ -52,6 +52,7 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
+#include "stuff_alloc.h"
 
 typedef int cache_content_status_t;
 
@@ -119,7 +120,6 @@ typedef struct cache_content_client_parameter__
   unsigned int max_fd_per_thread;             /**< Max fd open per client */
   time_t retention;                           /**< Fd retention duration */
   unsigned int use_cache;                     /** Do we cache fd or not ? */
-
 } cache_content_client_parameter_t;
 
 #define CACHE_CONTENT_SPEC_DATA_SIZE 400
@@ -151,7 +151,6 @@ typedef struct cache_content_entry__
   cache_content_internal_md_t internal_md;              /**< Metadata for this data cache entry                   */
   cache_content_local_entry_t local_fs_entry;           /**< Handle to the data cached in local fs                */
   cache_entry_t *pentry_inode;                          /**< The related cache inode entry                        */
-  struct cache_content_entry__ *next_alloc;             /**< Required for STUFF ALLOCATOR                         */
 } cache_content_entry_t;
 
 typedef struct cache_content_stat__
@@ -172,7 +171,7 @@ typedef struct cache_content_stat__
 
 typedef struct cache_content_client__
 {
-  cache_content_entry_t *pool_entry;                /**< Worker's preallocad cache entries pool                   */
+  struct prealloc_pool content_pool;                /**< Worker's preallocad cache entries pool                   */
   unsigned int nb_prealloc;                         /**< Size of the preallocated pool                            */
   cache_content_stat_t stat;                        /**< File content statistics for this client                  */
   char cache_dir[MAXPATHLEN];                       /**< Path to the directory where data are cached              */
@@ -254,7 +253,8 @@ typedef struct cache_content_flush_thread_data__
 } cache_content_flush_thread_data_t;
 
 int cache_content_client_init(cache_content_client_t * pclient,
-                              cache_content_client_parameter_t param);
+                              cache_content_client_parameter_t param,
+                              char *name);
 
 cache_content_status_t cache_content_create_name(char *path,
                                                  cache_content_nametype_t type,
@@ -264,9 +264,6 @@ cache_content_status_t cache_content_create_name(char *path,
 
 int cache_content_init(cache_content_client_parameter_t param,
                        cache_content_status_t * pstatus);
-
-int cache_content_client_init(cache_content_client_t * pclient,
-                              cache_content_client_parameter_t param);
 
 int cache_content_init_dir(cache_content_client_parameter_t param,
                            unsigned short export_id);
