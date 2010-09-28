@@ -182,7 +182,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
   LogFullDebug(COMPONENT_CACHE_INODE_GC, "++++> pdir_data (if needed) sent back to pool\n");
 
   /* Put the pentry back to the pool */
-  RELEASE_PREALLOC(pentry, pgcparam->pclient->pool_entry, next_alloc);
+  ReleaseToPool(pentry, &pgcparam->pclient->pool_entry);
 
   /* Destroy the mutex associated with the pentry */
   cache_inode_mutex_destroy(pentry);

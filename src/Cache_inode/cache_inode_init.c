@@ -125,15 +125,14 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
 
   pclient->time_of_last_gc_fd = time(NULL);
 
-#ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC(pclient->pool_entry, pclient->nb_prealloc, cache_entry_t, next_alloc);
-  if(pclient->pool_entry == NULL)
+  MakePool(&pclient->pool_entry, pclient->nb_prealloc, cache_entry_t, NULL, NULL);
+  NamePool(&pclient->pool_entry, "Cache Inode Client Entry Pool for Worker %d", thread_index);
+  if(!IsPoolPreallocated(&pclient->pool_entry))
     {
       LogCrit(COMPONENT_CACHE_INODE,
                    "Error : can't init cache_inode client entry pool");
       return 1;
     }
-#endif
 
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_dir_data,

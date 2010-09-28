@@ -52,6 +52,7 @@
 #include <rpc/rpc.h>
 #endif
 
+#include "stuff_alloc.h"
 #include "RW_Lock.h"
 #include "LRU_List.h"
 #include "HashData.h"
@@ -411,7 +412,6 @@ typedef struct cache_entry__
   cache_inode_internal_md_t internal_md;      /**< My metadata (from this cache's point of view)      */
   LRU_entry_t *gc_lru_entry;                  /**< related LRU entry in the LRU list used for GC      */
   LRU_list_t *gc_lru;                         /**< related LRU list for GC                            */
-  struct cache_entry__ *next_alloc;           /**< Required for STUFF ALLOCATOR                       */
 
   struct cache_inode_parent_entry__
   {
@@ -484,7 +484,7 @@ typedef struct cache_inode_fsal_data__
 typedef struct cache_inode_client__
 {
   LRU_list_t *lru_gc;                                              /**< Pointer to the worker's LRU used for Garbagge collection */
-  cache_entry_t *pool_entry;                                       /**< Worker's preallocad cache entries pool                   */
+  struct prealloc_pool pool_entry;                                 /**< Worker's preallocad cache entries pool                   */
   cache_inode_dir_data_t *pool_dir_data;                           /**< Worker's preallocad cache directory data pool            */
   cache_inode_parent_entry_t *pool_parent;                         /**< Pool of pointers to the parent entries                   */
   cache_inode_fsal_data_t *pool_key;                               /**< Pool for building hash's keys                            */
