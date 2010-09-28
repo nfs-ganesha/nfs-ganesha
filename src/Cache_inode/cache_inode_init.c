@@ -181,10 +181,10 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
       return 1;
     }
 #ifdef _USE_NFS4_1
-  STUFF_PREALLOC(pclient->pool_session,
-                 pclient->nb_pre_state_v4, nfs41_session_t, next_alloc);
-
-  if(pclient->pool_session == NULL)
+  /* TODO: warning - entries in this pool are never released! */
+  MakePool(&pclient->pool_session, pclient->nb_pre_state_v4, nfs41_session_t, NULL, NULL);
+  NamePool(&pclient->pool_session, "Cache Inode Client Session Pool for Worker %d", thread_index);
+  if(!IsPoolPreallocated(&pclient->pool_session))
     {
       LogCrit(COMPONENT_CACHE_INODE,
                    "Error : can't init cache_inode client session pool Worker %d", thread_index);

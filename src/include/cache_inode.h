@@ -487,7 +487,7 @@ typedef struct cache_inode_client__
   struct prealloc_pool pool_open_owner;                            /**< Pool for NFSv4 files's open owner                        */
   struct prealloc_pool pool_open_owner_name;                       /**< Pool for NFSv4 files's open_owner                        */
 #ifdef _USE_NFS4_1
-  nfs41_session_t *pool_session;                                   /**< Pool for NFSv4.1 session                                 */
+  struct prealloc_pool pool_session;                               /**< Pool for NFSv4.1 session                                 */
 #ifdef _USE_PNFS
   pnfs_client_t pnfsclient;                                        /**< pNFS client structure                                    */
 #endif                          /* _USE_PNFS */
