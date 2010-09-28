@@ -212,15 +212,13 @@ cache_inode_status_t cache_inode_clean_internal(cache_entry_t * to_remove_entry,
   if(to_remove_entry->internal_md.type == DIR_BEGINNING)
     {
       /* Put the pentry back to the pool */
-      RELEASE_PREALLOC(to_remove_entry->object.dir_begin.pdir_data,
-                       pclient->pool_dir_data, next_alloc);
+      ReleaseToPool(to_remove_entry->object.dir_begin.pdir_data, &pclient->pool_dir_data);
     }
 
   if(to_remove_entry->internal_md.type == DIR_CONTINUE)
     {
       /* Put the pentry back to the pool */
-      RELEASE_PREALLOC(to_remove_entry->object.dir_cont.pdir_data,
-                       pclient->pool_dir_data, next_alloc);
+      ReleaseToPool(to_remove_entry->object.dir_cont.pdir_data, &pclient->pool_dir_data);
     }
 
   return CACHE_INODE_SUCCESS;

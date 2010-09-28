@@ -383,7 +383,6 @@ typedef struct cache_entry__
           struct cache_entry__ *pentry;                 /**< Pointer to the cached entry (if direntry is active) */
           fsal_name_t name;                             /**< Name of the entry                                   */
         } dir_entries[CHILDREN_ARRAY_SIZE];             /**< Array of cached directory entries                   */
-        struct cache_inode_dir_data__ *next_alloc;      /**< for stuff allocator                                 */
       } *pdir_data;
 
     } dir_begin;                                /**< DIR_BEGINNING related field                               */
@@ -485,7 +484,7 @@ typedef struct cache_inode_client__
 {
   LRU_list_t *lru_gc;                                              /**< Pointer to the worker's LRU used for Garbagge collection */
   struct prealloc_pool pool_entry;                                 /**< Worker's preallocad cache entries pool                   */
-  cache_inode_dir_data_t *pool_dir_data;                           /**< Worker's preallocad cache directory data pool            */
+  struct prealloc_pool pool_dir_data;                              /**< Worker's preallocad cache directory data pool            */
   cache_inode_parent_entry_t *pool_parent;                         /**< Pool of pointers to the parent entries                   */
   cache_inode_fsal_data_t *pool_key;                               /**< Pool for building hash's keys                            */
   cache_inode_state_t *pool_state_v4;                              /**< Pool for NFSv4 files's states                            */
