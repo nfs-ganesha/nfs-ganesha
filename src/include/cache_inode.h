@@ -428,7 +428,6 @@ typedef struct cache_inode_open_owner_name__
   clientid4 clientid;
   unsigned int owner_len;
   char owner_val[MAXNAMLEN];
-  struct cache_inode_open_owner_name__ *next;
 } cache_inode_open_owner_name_t;
 
 typedef struct cache_inode_open_owner__
@@ -441,7 +440,6 @@ typedef struct cache_inode_open_owner__
   pthread_mutex_t lock;
   uint32_t counter;                           /** < Counter is used to build unique stateids */
   struct cache_inode_open_owner__ *related_owner;
-  struct cache_inode_open_owner__ *next;
 } cache_inode_open_owner_t;
 
 typedef struct cache_inode_state__
@@ -487,7 +485,7 @@ typedef struct cache_inode_client__
   struct prealloc_pool pool_key;                                   /**< Pool for building hash's keys                            */
   struct prealloc_pool pool_state_v4;                              /**< Pool for NFSv4 files's states                            */
   struct prealloc_pool pool_open_owner;                            /**< Pool for NFSv4 files's open owner                        */
-  cache_inode_open_owner_name_t *pool_open_owner_name;             /**< Pool for NFSv4 files's open_owner                        */
+  struct prealloc_pool pool_open_owner_name;                       /**< Pool for NFSv4 files's open_owner                        */
 #ifdef _USE_NFS4_1
   nfs41_session_t *pool_session;                                   /**< Pool for NFSv4.1 session                                 */
 #ifdef _USE_PNFS
