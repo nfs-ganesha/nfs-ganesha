@@ -591,7 +591,7 @@ void auth_stat2str(enum auth_stat, char *str);
 int nfs_Init_client_id(nfs_client_id_parameter_t param);
 int nfs_Init_client_id_reverse(nfs_client_id_parameter_t param);
 
-int nfs_client_id_remove(clientid4 clientid, struct prealloc_pool *nfs_client_id_pool);
+int nfs_client_id_remove(clientid4 clientid, struct prealloc_pool *clientid_pool);
 
 int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res);
 
@@ -601,11 +601,11 @@ int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id
 
 int nfs_client_id_add(clientid4 clientid,
                       nfs_client_id_t client_record,
-                      struct prealloc_pool *nfs_client_id_pool);
+                      struct prealloc_pool *clientid_pool);
 
 int nfs_client_id_set(clientid4 clientid,
                       nfs_client_id_t client_record,
-                      struct prealloc_pool *nfs_client_id_pool);
+                      struct prealloc_pool *clientid_pool);
 
 int nfs_client_id_compute(char *name, clientid4 * pclientid);
 int nfs_client_id_basic_compute(char *name, clientid4 * pclientid);

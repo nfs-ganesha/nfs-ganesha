@@ -1923,11 +1923,11 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
  */
 int clean_pending_request(LRU_entry_t * pentry, void *addparam)
 {
-  struct prealloc_pool *preqnfspool = (struct prealloc_pool *) addparam;
+  struct prealloc_pool *request_pool = (struct prealloc_pool *) addparam;
   nfs_request_data_t *preqnfs = (nfs_request_data_t *) (pentry->buffdata.pdata);
 
   /* Send the entry back to the pool */
-  ReleaseToPool(preqnfs, preqnfspool);
+  ReleaseToPool(preqnfs, request_pool);
 
   return 0;
 }                               /* clean_pending_request */
