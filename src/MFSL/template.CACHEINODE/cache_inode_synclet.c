@@ -1190,7 +1190,7 @@ void *cache_inode_synclet_thread(void *Arg)
 
           /* Release this entry to the pool it came from */
           pthread_mutex_lock(piter_opdesc->ppool_lock);
-          RELEASE_PREALLOC(piter_opdesc, piter_opdesc->origine_pool, next_alloc);
+          ReleaseToPool(piter_opdesc, &piter_opdesc->origine_pool);
           pthread_mutex_unlock(piter_opdesc->ppool_lock);
         }
 
