@@ -86,7 +86,6 @@ typedef struct mfsl_precreated_object__
   fsal_name_t name;
   fsal_attrib_list_t attr;
   unsigned int inited;
-  struct mfsl_precreated_object__ *next_alloc;
 } mfsl_precreated_object_t;
 
 typedef struct mfsl_synclet_context__
@@ -306,10 +305,8 @@ typedef struct mfsl_context__
   mfsl_async_op_desc_t *pool_async_op;
   pthread_mutex_t lock;
   unsigned int synclet_index;
-  mfsl_precreated_object_t *pool_dirs;
-  mfsl_precreated_object_t *pool_files;
-  unsigned int avail_pool_dirs;
-  unsigned int avail_pool_files;
+  struct prealloc_pool pool_dirs;
+  struct prealloc_pool pool_files;
 } mfsl_context_t;
 
 int mfsl_async_hash_init(void);
@@ -323,12 +320,11 @@ fsal_status_t mfsl_async_post_async_op(mfsl_async_op_desc_t * popdes,
                                        mfsl_object_t * pmobject);
 fsal_status_t MFSL_async_post(mfsl_async_op_desc_t * popdesc);
 
-fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t * pcontext,
-                                                     mfsl_precreated_object_t *
-                                                     pool_dirs);
+fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t    *pcontext,
+                                                     struct prealloc_pool *pool_dirs);
 
-fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t * pcontext,
-                                               mfsl_precreated_object_t * pool_dirs);
+fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t    *pcontext,
+                                               struct prealloc_pool *pool_dirs);
 
 fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcontext);
 
