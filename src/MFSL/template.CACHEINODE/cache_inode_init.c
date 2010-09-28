@@ -140,7 +140,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   NamePool(&pclient->pool_entry, "Cache Inode Client Entry Pool for Worker %d", thread_index);
   if(!IsPoolPreallocated(&pclient->pool_entry))
     {
-      LogCrit(COMPONENT_CACHE_INODE, "Error : can't init cache_inode client entry pool");
+      LogCrit(COMPONENT_CACHE_INODE, "Error : can't init cache_inode client entry pool for Worker %d", thread_index);
       return 1;
     }
 
@@ -149,7 +149,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   if(!IsPoolPreallocated(&pclient->pool_dir_data))
     {
       LogCrit(COMPONENT_CACHE_INODE,
-                   "Error : can't init cache_inode client dir data pool");
+                   "Error : can't init cache_inode client dir data pool for Worker %d", thread_index);
       return 1;
     }
 
@@ -158,7 +158,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   if(!IsPoolPreallocated(&pclient->pool_parent))
     {
       LogCrit(COMPONENT_CACHE_INODE,
-                   "Error : can't init cache_inode client parent link pool");
+                   "Error : can't init cache_inode client parent link pool for Worker %d", thread_index);
       return 1;
     }
 
@@ -168,7 +168,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   if(pclient->pool_state_v4 == NULL)
     {
       LogCrit(COMPONENT_CACHE_INODE,
-                   "Error : can't init cache_inode client state v4 pool");
+                   "Error : can't init cache_inode client state v4 pool for Worker %d", thread_index);
       return 1;
     }
 #endif
@@ -178,26 +178,23 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
                  pclient->nb_pre_async_op_desc, cache_inode_async_op_desc_t, next_alloc);
   if(pclient->pool_async_op == NULL)
     {
-      LogCrit(COMPONENT_CACHE_INODE, "Error : can't init cache_inode async op pool");
+      LogCrit(COMPONENT_CACHE_INODE, "Error : can't init cache_inode async op pool for Worker %d", thread_index);
       return 1;
     }
 #endif
 
-#ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC(pclient->pool_key,
-                 pclient->nb_prealloc, cache_inode_fsal_data_t, next_alloc);
-
-  if(pclient->pool_key == NULL)
+  MakePool(&pclient->pool_key, pclient->nb_prealloc, cache_inode_fsal_data_t, NULL, NULL);
+  NamePool(&pclient->pool_key, "Cache Inode Client Key Pool for Worker %d", thread_index);
+  if(!IsPoolPreallocated(&pclient->pool_key))
     {
       LogCrit(COMPONENT_CACHE_INODE,
-                   "Error : can't init cache_inode client key pool");
+                   "Error : can't init cache_inode client key pool for Worker %d", thread_index);
       return 1;
     }
-#endif
 
   if((pclient->lru_gc = LRU_Init(param.lru_param, &lru_status)) == NULL)
     {
-      LogCrit(COMPONENT_CACHE_INODE, "Error : can't init cache_inode client lru gc");
+      LogCrit(COMPONENT_CACHE_INODE, "Error : can't init cache_inode client lru gc for Worker %d", thread_index);
       return 1;
     }
 

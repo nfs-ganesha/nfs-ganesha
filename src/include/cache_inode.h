@@ -476,7 +476,6 @@ typedef struct cache_inode_fsal_data__
 {
   fsal_handle_t handle;                         /**< FSAL handle           */
   unsigned int cookie;                          /**< Cache inode cookie    */
-  struct cache_inode_fsal_data__ *next_alloc;   /**< For STUFF_ALLOC macro */
 } cache_inode_fsal_data_t;
 
 typedef struct cache_inode_client__
@@ -485,7 +484,7 @@ typedef struct cache_inode_client__
   struct prealloc_pool pool_entry;                                 /**< Worker's preallocad cache entries pool                   */
   struct prealloc_pool pool_dir_data;                              /**< Worker's preallocad cache directory data pool            */
   struct prealloc_pool pool_parent;                                /**< Pool of pointers to the parent entries                   */
-  cache_inode_fsal_data_t *pool_key;                               /**< Pool for building hash's keys                            */
+  struct prealloc_pool pool_key;                                   /**< Pool for building hash's keys                            */
   cache_inode_state_t *pool_state_v4;                              /**< Pool for NFSv4 files's states                            */
   cache_inode_open_owner_t *pool_open_owner;                       /**< Pool for NFSv4 files's open owner                        */
   cache_inode_open_owner_name_t *pool_open_owner_name;             /**< Pool for NFSv4 files's open_owner                        */
