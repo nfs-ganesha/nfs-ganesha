@@ -417,7 +417,6 @@ typedef struct cache_entry__
     unsigned int subdirpos;                           /**< Position of the entry in the dirent array          */
     struct cache_entry__ *parent;                     /**< Parent entry (a dir_begin or a dir_count)          */
     struct cache_inode_parent_entry__ *next_parent;   /**< Next parent (for gc, in case of a hard link)       */
-    struct cache_inode_parent_entry__ *next_alloc;    /**< Next parent (for gc, in case of a hard link)       */
   } *parent_list;
 #ifdef _USE_MFSL
   mfsl_object_t mobject;
@@ -485,7 +484,7 @@ typedef struct cache_inode_client__
   LRU_list_t *lru_gc;                                              /**< Pointer to the worker's LRU used for Garbagge collection */
   struct prealloc_pool pool_entry;                                 /**< Worker's preallocad cache entries pool                   */
   struct prealloc_pool pool_dir_data;                              /**< Worker's preallocad cache directory data pool            */
-  cache_inode_parent_entry_t *pool_parent;                         /**< Pool of pointers to the parent entries                   */
+  struct prealloc_pool pool_parent;                                /**< Pool of pointers to the parent entries                   */
   cache_inode_fsal_data_t *pool_key;                               /**< Pool for building hash's keys                            */
   cache_inode_state_t *pool_state_v4;                              /**< Pool for NFSv4 files's states                            */
   cache_inode_open_owner_t *pool_open_owner;                       /**< Pool for NFSv4 files's open owner                        */

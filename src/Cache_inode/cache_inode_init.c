@@ -143,16 +143,14 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
       return 1;
     }
 
-#ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC(pclient->pool_parent,
-                 pclient->nb_pre_parent, cache_inode_parent_entry_t, next_alloc);
-  if(pclient->pool_parent == NULL)
+  MakePool(&pclient->pool_parent, pclient->nb_pre_parent, cache_inode_parent_entry_t, NULL, NULL);
+  NamePool(&pclient->pool_parent, "Cache Inode Client Parent Link Pool for Worker %d", thread_index);
+  if(!IsPoolPreallocated(&pclient->pool_parent))
     {
       LogCrit(COMPONENT_CACHE_INODE,
                    "Error : can't init cache_inode client parent link pool");
       return 1;
     }
-#endif
 
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_state_v4,
