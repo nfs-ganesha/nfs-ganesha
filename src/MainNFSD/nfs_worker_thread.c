@@ -1053,6 +1053,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 int nfs_Init_worker_data(nfs_worker_data_t * pdata)
 {
   LRU_status_t status = LRU_LIST_SUCCESS;
+  char name[256];
 
   if(pthread_mutex_init(&(pdata->mutex_req_condvar), NULL) != 0)
     return -1;
@@ -1069,12 +1070,18 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   if(pthread_cond_init(&(pdata->export_condvar), NULL) != 0)
     return -1;
 
+  sprintf(name, "Worker %d Pending Request", pdata->index);
+  nfs_param.worker_param.lru_param.name = name;
+
   if((pdata->pending_request =
       LRU_Init(nfs_param.worker_param.lru_param, &status)) == NULL)
     {
       LogError(COMPONENT_DISPATCH, ERR_LRU, ERR_LRU_LIST_INIT, status);
       return -1;
     }
+
+  sprintf(name, "Worker %d Duplicate Request", pdata->index);
+  nfs_param.worker_param.lru_dupreq.name = name;
 
   if((pdata->duplicate_request =
       LRU_Init(nfs_param.worker_param.lru_dupreq, &status)) == NULL)
