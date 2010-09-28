@@ -78,7 +78,7 @@ unsigned long mfsl_async_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * 
   h = FSAL_Handle_to_HashIndex(&mobject->handle, 0, mfsl_hparam.alphabet_length,
                                mfsl_hparam.index_size);
 
-  if (isFullDebug(COMPONENT_HASHTABLE)
+  if (isFullDebug(COMPONENT_HASHTABLE))
     {
       char printbuf[128];
       snprintHandle(printbuf, 128, &mobject->handle);
@@ -110,7 +110,7 @@ unsigned long mfsl_async_rbt_func(hash_parameter_t * p_hparam, hash_buffer_t * b
   h = FSAL_Handle_to_RBTIndex(&mobject->handle, 0);
 
 
-  if (isFullDebug(COMPONENT_HASHTABLE)
+  if (isFullDebug(COMPONENT_HASHTABLE))
     {
       char printbuf[128];
       snprintHandle(printbuf, 128, &mobject->handle);
@@ -216,7 +216,7 @@ int mfsl_async_set_specdata(mfsl_object_t * key, mfsl_object_specific_data_t * v
   if(rc != HASHTABLE_SUCCESS && rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
     return 0;
 
-  if (isFulDebug(COMPONENT_HASHTABLE)
+  if (isFullDebug(COMPONENT_HASHTABLE))
       HashTable_Log(COMPONENT_MFSL, mfsl_ht);
 
   return 1;
@@ -232,7 +232,7 @@ int mfsl_async_get_specdata(mfsl_object_t * key, mfsl_object_specific_data_t ** 
   if(key == NULL || ppvalue == NULL)
     return 0;
 
-  if (isFulDebug(COMPONENT_HASHTABLE)
+  if (isFullDebug(COMPONENT_HASHTABLE))
       HashTable_Log(COMPONENT_MFSL, mfsl_ht);
 
   buffkey.pdata = (caddr_t) key;
@@ -287,7 +287,7 @@ int mfsl_async_is_object_asynchronous(mfsl_object_t * object)
   if(object == NULL)
     return 0;
 
-  if (isFulDebug(COMPONENT_HASHTABLE)
+  if (isFullDebug(COMPONENT_HASHTABLE))
   HashTable_Log(COMPONENT_MFSL, mfsl_ht);
 
   buffkey.pdata = (caddr_t) object;
