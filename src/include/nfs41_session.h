@@ -87,7 +87,6 @@ typedef struct nfs41_session__
   channel_attrs4 fore_channel_attrs;
   channel_attrs4 back_channel_attrs;
   nfs41_session_slot_t slots[NFS41_NB_SLOTS];
-  struct nfs41_session__ *next_alloc;
 } nfs41_session_t;
 
 #endif                          /* _NFS41_SESSION_H */
