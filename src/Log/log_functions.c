@@ -1504,7 +1504,12 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
-  }
+  },
+  { COMPONENT_MFSL,              "COMPONENT_MFSL", "MFSL",
+    NIV_EVENT,
+    SYSLOG,
+    "SYSLOG"
+  },
 };
 
 int DisplayLogComponentLevel(log_components_t component, int level, char *format, ...)
