@@ -162,16 +162,14 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
       return 1;
     }
 
-#ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC(pclient->pool_state_v4,
-                 pclient->nb_pre_state_v4, cache_inode_state_v4_t, next);
-  if(pclient->pool_state_v4 == NULL)
+  MakePool(&pclient->pool_state_v4, pclient->nb_pre_state_v4, cache_inode_state_t, NULL, NULL);
+  NamePool(&pclient->pool_state_v4, "Cache Inode Client State V4 Pool for Worker %d", thread_index);
+  if(!IsPoolPreallocated(&pclient->pool_state_v4))
     {
       LogCrit(COMPONENT_CACHE_INODE,
                    "Error : can't init cache_inode client state v4 pool for Worker %d", thread_index);
       return 1;
     }
-#endif
 
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_async_op,

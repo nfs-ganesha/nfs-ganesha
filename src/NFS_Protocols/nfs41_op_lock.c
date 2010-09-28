@@ -391,9 +391,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
 
       /* This open owner is not known yet, allocated and set up a new one */
-      GET_PREALLOC(powner,
-                   data->pclient->pool_open_owner,
-                   data->pclient->nb_pre_state_v4, cache_inode_open_owner_t, next);
+      GetFromPool(powner, &data->pclient->pool_open_owner, cache_inode_open_owner_t);
 
       GET_PREALLOC(powner_name,
                    data->pclient->pool_open_owner_name,
