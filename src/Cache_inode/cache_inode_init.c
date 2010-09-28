@@ -152,18 +152,19 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
       return 1;
     }
 
-  STUFF_PREALLOC(pclient->pool_state_v4,
-                 pclient->nb_pre_state_v4, cache_inode_state_t, next);
-  if(pclient->pool_state_v4 == NULL)
+  MakePool(&pclient->pool_state_v4, pclient->nb_pre_state_v4, cache_inode_state_t, NULL, NULL);
+  NamePool(&pclient->pool_state_v4, "Cache Inode Client State V4 Pool for Worker %d", thread_index);
+  if(!IsPoolPreallocated(&pclient->pool_state_v4))
     {
       LogCrit(COMPONENT_CACHE_INODE,
                    "Error : can't init cache_inode client state v4 pool Worker %d", thread_index);
       return 1;
     }
 
-  STUFF_PREALLOC(pclient->pool_open_owner,
-                 pclient->nb_pre_state_v4, cache_inode_open_owner_t, next);
-  if(pclient->pool_open_owner == NULL)
+  /* TODO: warning - entries in this pool are never released! */
+  MakePool(&pclient->pool_open_owner, pclient->nb_pre_state_v4, cache_inode_open_owner_t, NULL, NULL);
+  NamePool(&pclient->pool_open_owner, "Cache Inode Client Open Owner Pool for Worker %d", thread_index);
+  if(!IsPoolPreallocated(&pclient->pool_open_owner))
     {
       LogCrit(COMPONENT_CACHE_INODE,
                    "Error : can't init cache_inode client open owner pool Worker %d", thread_index);

@@ -374,10 +374,7 @@ cache_inode_status_t cache_inode_lock_create(cache_entry_t * pentry,
         }
 
     /* Get a new lock */
-    GET_PREALLOC(pfilelock,
-                 pclient->pool_state_v4,
-                 pclient->nb_pre_state_v4,
-                 cache_inode_state_v4_t, next);
+    GetFromPool(pfilelock, &pclient->pool_state_v4, cache_inode_state_t);
 
     if(pfilelock == NULL)
         {

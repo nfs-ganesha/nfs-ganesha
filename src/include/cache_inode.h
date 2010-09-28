@@ -485,8 +485,8 @@ typedef struct cache_inode_client__
   struct prealloc_pool pool_dir_data;                              /**< Worker's preallocad cache directory data pool            */
   struct prealloc_pool pool_parent;                                /**< Pool of pointers to the parent entries                   */
   struct prealloc_pool pool_key;                                   /**< Pool for building hash's keys                            */
-  cache_inode_state_t *pool_state_v4;                              /**< Pool for NFSv4 files's states                            */
-  cache_inode_open_owner_t *pool_open_owner;                       /**< Pool for NFSv4 files's open owner                        */
+  struct prealloc_pool pool_state_v4;                              /**< Pool for NFSv4 files's states                            */
+  struct prealloc_pool pool_open_owner;                            /**< Pool for NFSv4 files's open owner                        */
   cache_inode_open_owner_name_t *pool_open_owner_name;             /**< Pool for NFSv4 files's open_owner                        */
 #ifdef _USE_NFS4_1
   nfs41_session_t *pool_session;                                   /**< Pool for NFSv4.1 session                                 */
