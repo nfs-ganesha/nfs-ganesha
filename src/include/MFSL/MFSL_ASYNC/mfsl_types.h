@@ -70,7 +70,6 @@ typedef struct mfsl_object_specific_data__
 {
   fsal_attrib_list_t async_attr;
   unsigned int deleted;
-  struct mfsl_object_specific_data__ *next_alloc;
 } mfsl_object_specific_data_t;
 
 typedef struct mfsl_object__
@@ -268,7 +267,6 @@ typedef struct mfsl_async_op_desc__
   fsal_op_context_t fsal_op_context;
   caddr_t ptr_mfsl_context;
   unsigned int related_synclet_index;
-  struct mfsl_async_op_desc__ *next_alloc;
 } mfsl_async_op_desc_t;
 
 void *mfsl_synclet_thread(void *Arg);
@@ -301,8 +299,8 @@ typedef struct mfsl_parameter__
 
 typedef struct mfsl_context__
 {
-  mfsl_object_specific_data_t *pool_spec_data;
-  mfsl_async_op_desc_t *pool_async_op;
+  struct prealloc_pool pool_spec_data;
+  struct prealloc_pool pool_async_op;
   pthread_mutex_t lock;
   unsigned int synclet_index;
   struct prealloc_pool pool_dirs;

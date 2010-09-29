@@ -136,9 +136,7 @@ fsal_status_t MFSL_unlink(mfsl_object_t * dir_handle,   /* IN */
   mfsl_object_specific_data_t *dir_pasyncdata = NULL;
   mfsl_object_specific_data_t *obj_pasyncdata = NULL;
 
-  GET_PREALLOC(pasyncopdesc,
-               p_mfsl_context->pool_async_op,
-               mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
+  GetFromPool(pasyncopdesc, &p_mfsl_context->pool_async_op, mfsl_async_op_desc_t);
 
   if(pasyncopdesc == NULL)
     MFSL_return(ERR_FSAL_INVAL, 0);
@@ -154,10 +152,7 @@ fsal_status_t MFSL_unlink(mfsl_object_t * dir_handle,   /* IN */
     {
       /* Target is not yet asynchronous */
 
-      GET_PREALLOC(dir_pasyncdata,
-                   p_mfsl_context->pool_spec_data,
-                   mfsl_param.nb_pre_async_op_desc,
-                   mfsl_object_specific_data_t, next_alloc);
+      GetFromPool(dir_pasyncdata, &p_mfsl_context->pool_spec_data, mfsl_object_specific_data_t);
 
       /* In this case use object_attributes parameter to initiate asynchronous object */
       dir_pasyncdata->async_attr = *dir_attributes;
@@ -201,10 +196,7 @@ fsal_status_t MFSL_unlink(mfsl_object_t * dir_handle,   /* IN */
     {
       /* The object to be deleted is not asynchronous, but it has
        * has to become asynchronous to be correctly managed until the FSAL deletes it */
-      GET_PREALLOC(obj_pasyncdata,
-                   p_mfsl_context->pool_spec_data,
-                   mfsl_param.nb_pre_async_op_desc,
-                   mfsl_object_specific_data_t, next_alloc);
+      GetFromPool(obj_pasyncdata, &p_mfsl_context->pool_spec_data, mfsl_object_specific_data_t);
 
       /* Possible bug here with getattr because it has not data */
     }
