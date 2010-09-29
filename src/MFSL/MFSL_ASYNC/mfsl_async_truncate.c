@@ -132,9 +132,7 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle, /* IN */
 
   P(p_mfsl_context->lock);
 
-  GET_PREALLOC(pasyncopdesc,
-               p_mfsl_context->pool_async_op,
-               mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
+  GetFromPool(pasyncopdesc, &p_mfsl_context->pool_async_op, mfsl_async_op_desc_t);
 
   V(p_mfsl_context->lock);
 
@@ -154,10 +152,7 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle, /* IN */
       /* Not yet asynchronous object */
       P(p_mfsl_context->lock);
 
-      GET_PREALLOC(pasyncdata,
-                   p_mfsl_context->pool_spec_data,
-                   mfsl_param.nb_pre_async_op_desc,
-                   mfsl_object_specific_data_t, next_alloc);
+      GetFromPool(pasyncdata, &p_mfsl_context->pool_spec_data, mfsl_object_specific_data_t);
 
       V(p_mfsl_context->lock);
 

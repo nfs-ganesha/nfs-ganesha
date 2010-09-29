@@ -516,12 +516,9 @@ fsal_status_t MFSL_GetContext(mfsl_context_t * pcontext,
 
   pcontext->synclet_index = 0;  /* only one synclet for now */
 
-  STUFF_PREALLOC(pcontext->pool_async_op,
-                 mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
+  MakePool(&pcontext->pool_async_op, mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, NULL, NULL);
 
-  STUFF_PREALLOC(pcontext->pool_spec_data,
-                 mfsl_param.nb_pre_async_op_desc,
-                 mfsl_object_specific_data_t, next_alloc);
+  MakePool(&pcontext->pool_spec_data, mfsl_param.nb_pre_async_op_desc, mfsl_object_specific_data_t, NULL, NULL);
 
   /* Preallocate files and dirs for this thread */
   P(pcontext->lock);
