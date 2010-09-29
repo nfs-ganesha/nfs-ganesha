@@ -73,7 +73,7 @@ int mfsl_async_clean_pending_request(LRU_entry_t * pentry, void *addparam)
   //nfs_request_data_t *  preqnfs     = (nfs_request_data_t *)(pentry->buffdata.pdata) ;
 
   /* Send the entry back to the pool */
-  //RELEASE_PREALLOC( preqnfs, *preqnfspool, next_alloc ) ;
+  //ReleaseToPool( preqnfs, preqnfspool ) ;
 
   return 0;
 }                               /* mfsl_async_clean_pending_request */
