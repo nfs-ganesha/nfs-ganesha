@@ -83,25 +83,17 @@ struct prealloc_pool;
 #  define Mem_Free_Label( a, lbl )        BuddyFree( (caddr_t) (a) )
 #endif
 
-#ifdef _DEBUG_MEMLEAKS
-void FillPool(struct prealloc_pool *pool,
-              const char           *file,
-              const char           *function,
-              const unsigned int    line,
-              const char           *str);
-void _InitPool(struct prealloc_pool *pool,
-               int                   num_alloc,
-               int                   size_type,
-               constructor           ctor,
-               constructor           dtor,
-               char                 *type);
-#endif
-
 #define Mem_Errno            BuddyErrno
 
 #define GetPreferedPool( _n, _s )  BuddyPreferedPoolCount( _n, _s)
 
 #endif
+
+/*******************************************************************************
+ *
+ * block preallocation
+ *
+ ******************************************************************************/
 
 #ifndef _NO_BLOCK_PREALLOC
 
@@ -139,7 +131,33 @@ typedef struct prealloc_pool
 
 #define IsPoolPreallocated(pool) ((pool)->pa_allocated > 0)
 
+/*******************************************
+ *
+ * No Buddy System or No debug of memleaks
+ *
+ ******************************************/
+ 
 #if defined(_NO_BUDDY_SYSTEM) || !defined(_DEBUG_MEMLEAKS)
+
+/**
+ *
+ * FillPool: Allocates entries for a pool of pre-allocated entries.
+ *
+ * This macro Allocates a pool of pre-allocated entries. It calls malloc to get
+ * the pool as an arry and then chains all the entries together. If a
+ * constructor has been defined for the pool, it will be invoked on each entry.
+ *
+ * If BuddyMalloc is used, it is supposed to be already initialised.
+ *
+ * @param pool the preallocted pool that we want to fill.
+ * @param fi   dummy parameter for the file
+ * @param fu   dummy parameter for the function
+ * @param li   dummy parameter for the line number
+ * @param str  dummy parameter for the string version of the type
+ *
+ * @return  nothing (this is a macro)
+ *
+ */
 #define FillPool(pool, fi, fu, li, str)                      \
 do {                                                         \
   int size = (pool)->pa_size + size_prealloc_header64;       \
@@ -157,12 +175,25 @@ do {                                                         \
           (pool)->pa_free = h;                               \
           mem += size;                                       \
           if((pool)->pa_constructor != NULL)                 \
-            (pool)->pa_constructor(h + 1);                   \
+            (pool)->pa_constructor(get_prealloc_entry(h, void)); \
           num--;                                             \
         }                                                    \
     }                                                        \
 } while (0)
 
+/**
+ *
+ * InitPool: Initializes a pool of pre-allocated entries.
+ *
+ * @param pool      the preallocted pool that we want to init.
+ * @param num_alloc the number of entries to be allocated at once
+ * @param type      the type of the entries to be allocated.
+ * @param ctor      the constructor for the objects
+ * @param dtor      the destructor for the entries
+ *
+ * @return  nothing (this is a macro)
+ *
+ */
 #define InitPool(pool, num_alloc, type, ctor, dtor)          \
 do {                                                         \
   int size;                                                  \
@@ -174,8 +205,35 @@ do {                                                         \
   (pool)->pa_num         = GetPreferedPool(num_alloc, size); \
 } while (0)
 
+/**
+ *
+ * NamePool: Names a pool of pre-allocated entries (for debug)
+ *
+ * @param pool the preallocted pool that we want to init.
+ * @param fmt  sprintf format
+ * @param args sprintf args
+ *
+ * @return  nothing (this is a macro)
+ *
+ */
 #define NamePool(pool, fmt, args...)
 
+/**
+ *
+ * GetFromPool: Gets an entry in a preallocated pool. 
+ *
+ * This macro is used to get an entry from a pre-allocated pool. If the pool is
+ * empty, the macro FillPool will be called with the same type to extend the
+ * pool. If pa_num is set to zero during this call, FillPool is not called and
+ * no entry is get from the pool that is empty.
+ *
+ * @param entry the entry we need.
+ * @param pool the preallocted pool that we want to fetch from.
+ * @param type the type of the entries to be allocated.
+ *
+ * @return  nothing (this is a macro), but entry will be NULL if an error occurs. 
+ *
+ */
 #define GetFromPool(entry, pool, type)                       \
 do {                                                         \
   if ((pool)->pa_free == NULL)                               \
@@ -191,6 +249,19 @@ do {                                                         \
     entry = NULL;                                            \
 } while (0)
 
+/**
+ *
+ * ReleaseToPool: Releases an entry and puts it back to the pool.
+ *
+ * When an entry is no used any more, this macro is used to put it back to the
+ * pool, so that it could be reuse later.
+ *
+ * @param entry the entry to be released.
+ * @param pool the pool to which the entry belongs.
+ *
+ * @return nothing (this is a macro).
+ *
+ */
 #define ReleaseToPool(entry, pool)                           \
 do {                                                         \
   prealloc_header *h = get_prealloc_header(entry);           \
@@ -200,19 +271,95 @@ do {                                                         \
   (pool)->pa_free = h;                                       \
 } while (0)
 
-#define LogPoolData(component, pool)
-
 #else
+
+/*******************************************
+ *
+ * Buddy System with debug of memleaks
+ *
+ ******************************************/
+
+/**
+ *
+ * FillPool: Allocates entries for a pool of pre-allocated entries.
+ *
+ * This macro Allocates a pool of pre-allocated entries. It calls malloc to get
+ * the pool as an arry and then chains all the entries together. If a
+ * constructor has been defined for the pool, it will be invoked on each entry.
+ *
+ * If BuddyMalloc is used, it is supposed to be already initialised.
+ *
+ * @param pool     the preallocted pool that we want to fill.
+ * @param file     file FillPool call is in
+ * @param function function FillPool call is in
+ * @param line     line FillPool call is on
+ * @param str      parameter for the string version of the type
+ *
+ * @return  nothing (this is a macro)
+ *
+ */
+void FillPool(struct prealloc_pool *pool,
+              const char           *file,
+              const char           *function,
+              const unsigned int    line,
+              const char           *str);
+
+/**
+ *
+ * InitPool: Initializes a pool of pre-allocated entries.
+ *
+ * @param pool      the preallocted pool that we want to init.
+ * @param num_alloc the number of entries to be allocated at once
+ * @param type      the type of the entries to be allocated.
+ * @param ctor      the constructor for the objects
+ * @param dtor      the destructor for the entries
+ *
+ * @return  nothing (this is a macro)
+ *
+ */
+void _InitPool(struct prealloc_pool *pool,
+               int                   num_alloc,
+               int                   size_type,
+               constructor           ctor,
+               constructor           dtor,
+               char                 *type);
 
 #define InitPool(pool, num_alloc, type, ctor, dtor)          \
   _InitPool(pool, num_alloc, sizeof(type), ctor, dtor, # type)
 
+/**
+ *
+ * NamePool: Names a pool of pre-allocated entries (for debug)
+ *
+ * @param pool the preallocted pool that we want to init.
+ * @param fmt  sprintf format
+ * @param args sprintf args
+ *
+ * @return  nothing (this is a macro)
+ *
+ */
 #define NamePool(pool, fmt, args...)                         \
   snprintf((pool)->pa_name, 256, fmt, ## args)
 
+/**
+ *
+ * GetFromPool: Gets an entry in a preallocated pool. 
+ *
+ * This macro is used to get an entry from a pre-allocated pool. If the pool is
+ * empty, the macro FillPool will be called with the same type to extend the
+ * pool. If pa_num is set to zero during this call, FillPool is not called and
+ * no entry is get from the pool that is empty.
+ *
+ * @param entry the entry we need.
+ * @param pool the preallocted pool that we want to fetch from.
+ * @param type the type of the entries to be allocated.
+ *
+ * @return  nothing (this is a macro), but entry will be NULL if an error occurs. 
+ *
+ */
 #define GetFromPool(entry, pool, type)                       \
 do {                                                         \
-  if ((pool)->pa_free == NULL)                               \
+  if ((pool)->pa_free == NULL && (pool)->pa_num != 0)        \
     FillPool(pool, __FILE__, __FUNCTION__, __LINE__, # type);\
   if ((pool)->pa_free != NULL)                               \
     {                                                        \
@@ -229,6 +376,19 @@ do {                                                         \
     entry = NULL;                                            \
 } while (0)
 
+/**
+ *
+ * ReleaseToPool: Releases an entry and puts it back to the pool.
+ *
+ * When an entry is no used any more, this macro is used to put it back to the
+ * pool, so that it could be reuse later.
+ *
+ * @param entry the entry to be released.
+ * @param pool the pool to which the entry belongs.
+ *
+ * @return nothing (this is a macro).
+ *
+ */
 #define ReleaseToPool(entry, pool)                           \
 do {                                                         \
   prealloc_header *h = get_prealloc_header(entry);           \
@@ -240,225 +400,34 @@ do {                                                         \
   (pool)->pa_used--;                                         \
 } while (0)
 
-#define LogPoolData(component, pool)                                \
-  LogDebug(component,                                               \
-           "Pool %s NumBlocks=%d Num/Block=%d SizeOfEntry=%d NumAllocated=%d NumInUse=%d MaxInUse=%d", \
-           (pool)->pa_type,                                         \
-           (pool)->pa_blocks, (pool)->pa_num, (pool)->pa_size,      \
-           (pool)->pa_allocated, (pool)->pa_used, (pool)->pa_high);
-
 #endif
 
+/**
+ *
+ * MakePool: Initializes and fills a pool of pre-allocated entries.
+ *
+ * @param pool      the preallocted pool that we want to init.
+ * @param num_alloc the number of entries to be allocated at once
+ * @param type      the type of the entries to be allocated.
+ * @param ctor      the constructor for the objects
+ * @param dtor      the destructor for the entries
+ *
+ * @return  nothing (this is a macro)
+ *
+ */
 #define MakePool(pool, num_alloc, type, ctor, dtor)          \
 do {                                                         \
   InitPool(pool, num_alloc, type, ctor, dtor);               \
   FillPool(pool, __FILE__, __FUNCTION__, __LINE__, # type);  \
 } while (0)
 
-/**
- *
- * STUFF_PREALLOC: Allocates a pool of pre-allocated entries.
- *
- * This macro Allocates a pool of pre-allocated entries. It calls
- * malloc to get the spool as an arry and then chains all the
- * entries together. Each entry is supposed to have a specific
- * 'next' field, a pointer to an object of its own type, to be
- * used as a pointer to the next entry in the pool.
- *
- * If BuddyMalloc is used, it is supposed to be already initialised.
- *
- * @param pool the preallocted pool that we want to init.
- * @param nb the number of entries to be allocated.
- * @param type the type of the entries to be allocated.
- * @param name_next the name of the field, in structure of type 'type' which pointer to the next entry.
- *
- * @return  nothing (this is a macro), but pool will be NULL if an error occures. 
- *
- */
-#define STUFF_PREALLOC( _pool, _nb, _type, _name_next)                        \
-do                                                                            \
-{                                                                             \
-  unsigned int _i = 0 ;                                                       \
-  unsigned int _prefered = 0 ;                                                \
-                                                                              \
-  _prefered = GetPreferedPool( _nb, sizeof(_type) );                          \
-  _pool= NULL ;                                                               \
-                                                                              \
-  if( ( _pool = ( _type *)Mem_Calloc_Label( _prefered, sizeof( _type ), # _type ) ) != NULL ) \
-    {                                                                         \
-      for( _i = 0 ; _i < ( unsigned int)_prefered ; _i++ )                    \
-        {                                                                     \
-          if( _i != _prefered -1 )                                            \
-            _pool[_i]._name_next = &(_pool[_i+1]) ;                           \
-          else                                                                \
-            _pool[_i]._name_next = NULL ;                                     \
-        }                                                                     \
-    }                                                                         \
-} while( 0 )
+#else 
 
-
-/**
+/*******************************************************************************
  *
- * GET_PREALLOC: Gets an entry in a preallocated pool. 
+ * no block preallocation
  *
- * This macro is used to get an entry from a pre-allocated pool. If the pool is empty,
- * the macro STUFF_PREALLOC will be called with the same last four arguments to extend 
- * the pool. If nb is set to zero during this call, STUFF_PREALLOC is not called and no 
- * entry is get from the pool that is empty.
- *
- * @param entry the entry we need.
- * @param pool the preallocted pool that we want to init.
- * @param nb the number of entries to be allocated.
- * @param type the type of the entries to be allocated.
- * @param name_next the name of the field, in structure of type 'type' which pointer to the next entry.
- *
- * @return  nothing (this is a macro), but entry will be NULL if an error occures. 
- *
- */
-#define GET_PREALLOC( _entry, _pool, _nb, _type, _name_next )             \
-do                                                                        \
-{                                                                         \
-                                                                          \
-  if( ( _pool == NULL ) && ( _nb != 0 ) )                                 \
-    STUFF_PREALLOC( _pool, _nb, _type, _name_next ) ;                     \
-                                                                          \
-  if( _pool != NULL )                                                     \
-    {                                                                     \
-      _entry = _pool ;                                                    \
-      _pool = _entry->_name_next ;                                        \
-    }                                                                     \
-  else                                                                    \
-   _entry = NULL ;                                                        \
-} while( 0 )
-
-/**
- *
- * RELEASE_PREALLOC: Releases an entry and puts it back to the pool.
- *
- * When an entry is no used any more, this macro is used to put it 
- * back to the pool, so that it could be reuse later. The released 
- * entry is chained to the pool, through the 'name_next' field.
- *
- * @param entry the entry to be released.
- * @param pool the pool to which the entry belongs.
- * @param name_next the name of the field, in structure of type 'type' which pointer to the next entry.
- *
- * @return nothing (this is a macro).
- *
- */
-#define RELEASE_PREALLOC( _entry, _pool, _name_next )                     \
-do                                                                        \
-{                                                                         \
-  _entry->_name_next = _pool ;                                            \
-  _pool = _entry ;                                                        \
-} while( 0 )
-
-/**
- *
- * STUFF_PREALLOC_CONSTRUCT: Allocates a pool of pre-allocated entries with a call to a constructor.
- *
- * This macro Allocates a pool of pre-allocated entries. It calls
- * malloc to get the spool as an arry and then chains all the
- * entries together. Each entry is supposed to have a specific
- * 'next' field, a pointer to an object of its own type, to be
- * used as a pointer to the next entry in the pool.
- *
- * If BuddyMalloc is used, it is supposed to be already initialised.
- *
- * @param pool the preallocted pool that we want to init.
- * @param nb the number of entries to be allocated.
- * @param type the type of the entries to be allocated.
- * @param name_next the name of the field, in structure of type 'type' which pointer to the next entry.
- * @param construct the constructor for the object: takes a pointer to void as argument and returns void
- *
- * @return  nothing (this is a macro), but pool will be NULL if an error occures.
- *
- */
-#define STUFF_PREALLOC_CONSTRUCT( _pool, _nb, _type, _name_next, _construct )  \
-do                                                                        \
-{                                                                         \
-  unsigned int _i = 0 ;                                                   \
-  unsigned int _prefered = 0 ;                                            \
-                                                                          \
-  _prefered = GetPreferedPool( _nb, sizeof(_type) );                      \
-                                                                          \
-  _pool = ( _type *)Mem_Calloc_Label( _prefered, sizeof( _type ), # _type ) ; \
-                                                                          \
-  if( _pool != NULL )                                                     \
-    {                                                                     \
-      for( _i = 0 ; _i < _prefered ; _i++ )                               \
-        {                                                                 \
-          if( _i != _prefered -1 )                                        \
-            _pool[_i]._name_next = &(_pool[_i+1]) ;                       \
-          else                                                            \
-            _pool[_i]._name_next = NULL ;                                 \
-                                                                          \
-          if( _construct != NULL )                                        \
-            _construct( (void *)&(_pool[_i]) )  ;                         \
-                                                                          \
-        }                                                                 \
-    }                                                                     \
-} while( 0 )
-
-/**
- *
- * GET_PREALLOC_CONSTRUCT: Gets an entry in a preallocated pool.
- *
- * This macro is used to get an entry from a pre-allocated pool. If the pool is empty,
- * the macro STUFF_PREALLOC will be called with the same last four arguments to extend
- * the pool. If nb is set to zero during this call, STUFF_PREALLOC is not called and no
- * entry is get from the pool that is empty.
- *
- * @param entry the entry we need.
- * @param pool the preallocted pool that we want to init.
- * @param nb the number of entries to be allocated.
- * @param type the type of the entries to be allocated.
- * @param name_next the name of the field, in structure of type 'type' which pointer to the next entry.
- * @param construct the constructor for the object: takes a pointer to void as argument and returns void
- *
- * @return  nothing (this is a macro), but entry will be NULL if an error occures.
- *
- */
-#define GET_PREALLOC_CONSTRUCT( _entry, _pool, _nb, _type, _name_next, _construct )  \
-do                                                                             \
-{                                                                              \
-  if( ( _pool == NULL ) && ( _nb != 0 ) )                                      \
-    STUFF_PREALLOC_CONSTRUCT( _pool, _nb, _type, _name_next, _construct ) ;    \
-                                                                               \
-  if( _pool != NULL )                                                          \
-    {                                                                          \
-      _entry = _pool ;                                                         \
-      _pool = _entry->_name_next ;                                             \
-    }                                                                          \
-  else                                                                         \
-   _entry = NULL ;                                                             \
-} while( 0 )
-
-/**
- *
- * RELEASE_PREALLOC_DESTRUCT: Releases an entry and puts it back to the pool with a destructor.
- *
- * When an entry is no used any more, this macro is used to put it
- * back to the pool, so that it could be reuse later. The released
- * entry is chained to the pool, through the 'name_next' field.
- *
- * @param entry the entry to be released.
- * @param pool the pool to which the entry belongs.
- * @param name_next the name of the field, in structure of type 'type' which pointer to the next entry.
- * @param destruct the destructor for the object: takes a pointer to void as argument and returns void
- *
- * @return nothing (this is a macro).
- *
- */
-#define RELEASE_PREALLOC_DESTRUCT( entry, pool, name_next, destruct )     \
-do                                                                        \
-{                                                                         \
-  destruct( (void *)entry ) ;                                             \
-  entry->name_next = pool ;                                               \
-  pool = entry ;                                                          \
-} while( 0 )
-
-#else                           /* no block preallocation */
+ ******************************************************************************/
 
 typedef struct prealloc_pool
 {
@@ -468,8 +437,6 @@ typedef struct prealloc_pool
 
 /* Don't care if pool is pre-allocated */
 #define IsPoolPreallocated(pool) (1)
-
-#define LogPoolData(component, pool)
     
 #define InitPool(pool, num_alloc, type, ctor, dtor)          \
 do {                                                         \
@@ -493,42 +460,6 @@ do {                                                         \
     (pool)->pa_destructor(entry);                            \
   Mem_Free_Label(entry, # type);                             \
 } while (0)
-
-#define STUFF_PREALLOC( pool, nb, type, name_next )                       \
-              do {                                                        \
-                /* No pool management in this mode */                     \
-                pool = NULL;                                              \
-              } while(0)
-
-#define GET_PREALLOC( entry, pool, nb, type, name_next )                  \
-do                                                                        \
-{                                                                         \
-  entry = (type *)Mem_Alloc_Label( sizeof( type ), # _type );             \
-  entry->name_next = NULL;                                                \
-} while( 0 )
-
-#define RELEASE_PREALLOC( entry, pool, name_next ) Mem_Free( entry )
-
-#define STUFF_PREALLOC_CONSTRUCT( pool, nb, type, name_next, construct )  \
-              do {                                                        \
-                /* No pool management in this mode */                     \
-                pool = NULL;                                              \
-              } while(0)
-
-#define GET_PREALLOC_CONSTRUCT( entry, pool, nb, type, name_next, construct ) \
-do                                                                        \
-{                                                                         \
-  entry = (type *)Mem_Alloc_Label( sizeof( type ), # _type );             \
-  construct( (void *)(entry) );                                           \
-  entry->name_next = NULL;                                                \
-} while( 0 )
-
-#define RELEASE_PREALLOC_DESTRUCT( entry, pool, name_next, destruct )     \
-do                                                                        \
-{                                                                         \
-  destruct( (void *)(entry) ) ;                                           \
-  Mem_Free( entry );                                                      \
-} while( 0 )
 
 #endif                          /* no block preallocation */
 
