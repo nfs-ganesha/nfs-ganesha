@@ -81,7 +81,7 @@ typedef struct __fsnode__
 /* TODO: externalize pool size parameter */
 
 #define POOL_CHUNK_SIZE   1024
-static fsnode_t *node_pool = NULL;
+static struct prealloc_pool node_pool;
 static pthread_mutex_t node_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static fsnode_t *node_alloc()
@@ -89,7 +89,7 @@ static fsnode_t *node_alloc()
   fsnode_t *p_new;
 
   P(node_pool_mutex);
-  GET_PREALLOC(p_new, node_pool, POOL_CHUNK_SIZE, fsnode_t, p_next);
+  GetFromPool(p_new, &node_pool, fsnode_t);
   V(node_pool_mutex);
 
   memset(p_new, 0, sizeof(fsnode_t));
@@ -102,13 +102,13 @@ static void node_free(fsnode_t * p_node)
   memset(p_node, 0, sizeof(fsnode_t));
 
   P(node_pool_mutex);
-  RELEASE_PREALLOC(p_node, node_pool, p_next);
+  ReleaseToPool(p_node, &node_pool);
   V(node_pool_mutex);
 }
 
 /* pool of preallocated lookup peers */
 
-static lookup_peer_t *peer_pool = NULL;
+static struct prealloc_pool peer_pool;
 static pthread_mutex_t peer_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static lookup_peer_t *peer_alloc()
@@ -116,7 +116,7 @@ static lookup_peer_t *peer_alloc()
   lookup_peer_t *p_new;
 
   P(peer_pool_mutex);
-  GET_PREALLOC(p_new, peer_pool, POOL_CHUNK_SIZE, lookup_peer_t, p_next);
+  GetFromPool(p_new, &peer_pool, lookup_peer_t);
   V(peer_pool_mutex);
 
   memset(p_new, 0, sizeof(lookup_peer_t));
@@ -129,7 +129,7 @@ static void peer_free(lookup_peer_t * p_peer)
   memset(p_peer, 0, sizeof(lookup_peer_t));
 
   P(peer_pool_mutex);
-  RELEASE_PREALLOC(p_peer, peer_pool, p_next);
+  ReleaseToPool(p_peer, &peer_pool);
   V(peer_pool_mutex);
 }
 
@@ -590,9 +590,9 @@ int NamespaceInit(ino_t root_inode, dev_t root_dev, unsigned int *p_root_gen)
   /* Initialize pools.
    */
 
-  STUFF_PREALLOC(peer_pool, POOL_CHUNK_SIZE, lookup_peer_t, p_next);
+  MakePool(&peer_pool, POOL_CHUNK_SIZE, lookup_peer_t, NULL, NULL);
 
-  STUFF_PREALLOC(node_pool, POOL_CHUNK_SIZE, fsnode_t, p_next);
+  MakePool(&node_pool, POOL_CHUNK_SIZE, fsnode_t, NULL, NULL);
 
   /* initialize namespace lock */
   if(rw_lock_init(&ns_lock))
