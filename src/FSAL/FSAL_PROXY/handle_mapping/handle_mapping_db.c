@@ -141,14 +141,13 @@ typedef struct db_thread_info__
   /* this pool is accessed by submitter
    * and by the db thread */
   pthread_mutex_t pool_mutex;
-  db_op_item_t *dbop_pool;
+  struct prealloc_pool dbop_pool;
 
 } db_thread_info_t;
 
 static char dbmap_dir[MAXPATHLEN];
 static char db_tmpdir[MAXPATHLEN];
 static unsigned int nb_db_threads;
-static unsigned int nb_prealloc;
 static int synchronous;
 
 /* used for clean shutdown */
@@ -158,7 +157,8 @@ static int do_terminate = FALSE;
 static db_thread_info_t db_thread[MAX_DB];
 
 /* Initialize basic structures for a thread */
-static int init_db_thread_info(db_thread_info_t * p_thr_info)
+static int init_db_thread_info(db_thread_info_t * p_thr_info,
+                               unsigned int nb_dbop_prealloc)
 {
   unsigned int i;
 
@@ -196,7 +196,7 @@ static int init_db_thread_info(db_thread_info_t * p_thr_info)
   if(pthread_mutex_init(&p_thr_info->pool_mutex, NULL))
     return HANDLEMAP_SYSTEM_ERROR;
 
-  p_thr_info->dbop_pool = NULL;
+  InitPool(&p_thr_info->dbop_pool, nb_dbop_prealloc, db_op_item_t, NULL, NULL);
 
   return HANDLEMAP_SUCCESS;
 }
@@ -601,7 +601,7 @@ static void *database_worker_thread(void *arg)
 
       /* free the db operation item */
       P(p_info->pool_mutex);
-      RELEASE_PREALLOC(to_be_done, p_info->dbop_pool, p_next);
+      ReleaseToPool(to_be_done, &p_info->dbop_pool);
       V(p_info->pool_mutex);
 
     }                           /* loop forever */
@@ -714,7 +714,6 @@ int handlemap_db_init(const char *db_dir,
     return HANDLEMAP_INVALID_PARAM;
 
   nb_db_threads = db_count;
-  nb_prealloc = nb_dbop_prealloc;
   synchronous = synchronous_insert;
   /* set global database engine info */
 
@@ -777,7 +776,7 @@ int handlemap_db_reaload_all(hash_table_t * target_hash)
       /* get a new db operation  */
       P(db_thread[i].pool_mutex);
 
-      GET_PREALLOC(new_task, db_thread[i].dbop_pool, nb_prealloc, db_op_item_t, p_next);
+      GetFromPool(new_task, &db_thread[i].dbop_pool, db_op_item_t);
 
       V(db_thread[i].pool_mutex);
 
@@ -825,7 +824,7 @@ int handlemap_db_insert(nfs23_map_handle_t * p_in_nfs23_digest,
       /* get a new db operation  */
       P(db_thread[i].pool_mutex);
 
-      GET_PREALLOC(new_task, db_thread[i].dbop_pool, nb_prealloc, db_op_item_t, p_next);
+      GetFromPool(new_task, &db_thread[i].dbop_pool, db_op_item_t);
 
       V(db_thread[i].pool_mutex);
 
@@ -866,7 +865,7 @@ int handlemap_db_delete(nfs23_map_handle_t * p_in_nfs23_digest)
   /* get a new db operation  */
   P(db_thread[i].pool_mutex);
 
-  GET_PREALLOC(new_task, db_thread[i].dbop_pool, nb_prealloc, db_op_item_t, p_next);
+  GetFromPool(new_task, &db_thread[i].dbop_pool, db_op_item_t);
 
   V(db_thread[i].pool_mutex);
 
