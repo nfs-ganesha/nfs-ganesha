@@ -79,10 +79,10 @@ typedef struct handle_pool_entry__
 
 static unsigned int nb_pool_prealloc = 1024;
 
-static digest_pool_entry_t *digest_pool = NULL;
+struct prealloc_pool digest_pool;
 static pthread_mutex_t digest_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static handle_pool_entry_t *handle_pool = NULL;
+struct prealloc_pool handle_pool;
 static pthread_mutex_t handle_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* helpers for pool allocation */
@@ -92,7 +92,7 @@ static digest_pool_entry_t *digest_alloc()
   digest_pool_entry_t *p_new;
 
   P(digest_pool_mutex);
-  GET_PREALLOC(p_new, digest_pool, nb_pool_prealloc, digest_pool_entry_t, p_next);
+  GetFromPool(p_new, &digest_pool, digest_pool_entry_t);
   V(digest_pool_mutex);
 
   memset(p_new, 0, sizeof(digest_pool_entry_t));
@@ -105,7 +105,7 @@ static void digest_free(digest_pool_entry_t * p_digest)
   memset(p_digest, 0, sizeof(digest_pool_entry_t));
 
   P(digest_pool_mutex);
-  RELEASE_PREALLOC(p_digest, digest_pool, p_next);
+  ReleaseToPool(p_digest, &digest_pool);
   V(digest_pool_mutex);
 }
 
@@ -114,7 +114,7 @@ static handle_pool_entry_t *handle_alloc()
   handle_pool_entry_t *p_new;
 
   P(handle_pool_mutex);
-  GET_PREALLOC(p_new, handle_pool, nb_pool_prealloc, handle_pool_entry_t, p_next);
+  GetFromPool(p_new, &handle_pool, handle_pool_entry_t);
   V(handle_pool_mutex);
 
   memset(p_new, 0, sizeof(handle_pool_entry_t));
@@ -127,7 +127,7 @@ static void handle_free(handle_pool_entry_t * p_handle)
   memset(p_handle, 0, sizeof(handle_pool_entry_t));
 
   P(handle_pool_mutex);
-  RELEASE_PREALLOC(p_handle, handle_pool, p_next);
+  ReleaseToPool(p_handle, &handle_pool);
   V(handle_pool_mutex);
 }
 
@@ -280,9 +280,9 @@ int HandleMap_Init(const handle_map_param_t * p_param)
 
   /* initialize memory pool of digests and handles */
 
-  STUFF_PREALLOC(digest_pool, nb_pool_prealloc, digest_pool_entry_t, p_next);
+  MakePool(&digest_pool, nb_pool_prealloc, digest_pool_entry_t, NULL, NULL);
 
-  STUFF_PREALLOC(handle_pool, nb_pool_prealloc, handle_pool_entry_t, p_next);
+  MakePool(&handle_pool, nb_pool_prealloc, handle_pool_entry_t, NULL, NULL);
 
   /* create hash table */
 
