@@ -123,13 +123,18 @@ static void action_sigusr1(int sig)
 
 static void action_sigterm(int sig)
 {
+  static int once = 0 ;
+
   if(sig == SIGTERM)
     LogEvent(COMPONENT_MAIN, "SIGTERM_HANDLER: Received SIGTERM.... initiating daemon shutdown");
   else if(sig == SIGINT)
     LogEvent(COMPONENT_MAIN, "SIGINT_HANDLER: Received SIGINT.... initiating daemon shutdown");
 
-  nfs_stop();
-
+  if( once == 0 )
+   {
+     once += 1 ;
+     nfs_stop();
+   }
 }                               /* action_sigterm */
 
 static void action_sighup(int sig)
