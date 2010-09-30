@@ -182,7 +182,7 @@ GA_ENABLE_AM_CONDITION([gssrpc],[enable GSSRPC security management (from MIT ker
 if test "$enable_gssrpc" == "yes"; then
         AC_DEFINE(_USE_GSSRPC,1,[enable security management with GSSRPC])
 	# ==> Add here libraries needed for GSSRPC
-        AC_CHECK_LIB([gssapi], [gss_import_name], [AC_DEFINE( _HAVE_GSSAPI,1,[enable GSSAPI support] ) ], [AC_MSG_ERROR( [GSSAPI could not be found...] ) ] )
+        AC_CHECK_LIB([gssapi_krb5], [gss_import_name], [AC_DEFINE( _HAVE_GSSAPI,1,[enable GSSAPI support] ) ], [AC_MSG_ERROR( [GSSAPI could not be found...] ) ] )
         AC_CHECK_LIB([gssrpc], [gssrpc_authunix_create_default], [AC_DEFINE( _HAVE_GSSRPC,1,[enable GSSRPC support] ) ], [AC_MSG_ERROR( [GSSRPC_KRB5 could not be found...] ) ] )
 fi
 

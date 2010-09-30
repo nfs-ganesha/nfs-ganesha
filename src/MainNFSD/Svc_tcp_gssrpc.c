@@ -35,6 +35,9 @@
 #include "solaris_port.h"
 #endif
 
+#include "log_macros.h"
+int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
+
 /*
  * svc_tcp.c, Server side for TCP/IP based RPC. 
  *
@@ -309,7 +312,7 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt, struct rpc_msg *msg)
   etat_xprt[xprt->xp_sock] = 0;
 
   if((rc =
-      fridge_get(&sockmgr_thrid, rpc_tcp_socket_manager_thread,
+      fridgethr_get(&sockmgr_thrid, rpc_tcp_socket_manager_thread,
                      (void *)(xprt->xp_sock))) != 0)
     {
       return FALSE;

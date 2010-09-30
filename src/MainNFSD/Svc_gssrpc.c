@@ -56,10 +56,10 @@
 #include <string.h>
 #include <errno.h>
 
-#ifdef FD_SETSIZE
+//#ifdef FD_SETSIZE
 SVCXPRT *Xports[FD_SETSIZE];
 extern int gssrpc_svc_fdset_init;
-#else
+//#else
 
 #define NULL_SVC ((struct svc_callout *)0)
 #define	RQCRED_SIZE	1024    /* this size is excessive */
