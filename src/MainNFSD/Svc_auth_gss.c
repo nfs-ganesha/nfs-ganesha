@@ -514,7 +514,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       
       memcpy(&buff64, gc->gc_ctx.value, gc->gc_ctx.length);
       LogFullDebug(COMPONENT_RPCSEC_GSS, 
-          ("Call to Gssrpc__svcauth_gss ----> Client=%s length=%u (GD: established=%u ctx=%llx) (RQ:sock=%u) (GC: Proc=%u Svc=%u ctx=%u|%llx)",
+          "Call to Gssrpc__svcauth_gss ----> Client=%s length=%u (GD: established=%u ctx=%llx) (RQ:sock=%u) (GC: Proc=%u Svc=%u ctx=%u|%llx)",
            (char *)gd->cname.value, gd->cname.length, gd->established, buff64_2,
            rqst->rq_xprt->xp_sock, gc->gc_proc, gc->gc_svc, gc->gc_ctx.length, buff64);
     }

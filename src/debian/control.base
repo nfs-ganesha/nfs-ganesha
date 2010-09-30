@@ -2,12 +2,12 @@ Source: nfs-ganesha
 Section: net
 Priority: extra
 Maintainer: Philippe Deniel <philippe.deniel@cea.fr>
-Build-Depends: debhelper (>= 7), quilt
+Build-Depends: debhelper (>= 7), quilt, bison, flex
 Standards-Version: 3.7.2
 
 Package: nfs-ganesha-common
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${perl:Depends}, ${misc:Depends}
 Description: nfs-ganesha is a NFS server in User Space
  NFS-GANESHA is a NFS Server running in user space with a large cache.
  It comes with various backend modules to support different file systems

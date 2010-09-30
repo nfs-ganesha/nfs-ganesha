@@ -153,7 +153,7 @@ bin_PROGRAMS               = $(FS_NAME).ganesha.nfsd
 __FS_NAME__ganesha_nfsd_SOURCES    = nfs_main.c  \
                                      nfs_init.h
 __FS_NAME__ganesha_nfsd_LDADD      =  ./libMainServices.la \
-                                      $(FSAL_LDFLAGS) $(EXT_LDADD) 
+                                      $(FSAL_LDFLAGS) $(EXT_LDADD)  \
                                       $(SEC_LIB_FLAGS) @EFENCE@ @EXTRA_LIB@
 
 endif

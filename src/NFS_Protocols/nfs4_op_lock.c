@@ -262,7 +262,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   if((pstate_exists == pstate_found_iterate) &&
                      (pstate_exists->state_data.lock.lock_type != arg_LOCK4.locktype))
                     LogFullDebug(COMPONENT_NFS_V4,
-                        ("&&&&&&&&&&&&&& CAS FOIREUX !!!!!!!!!!!!!!!!!!");
+                        "&&&&&&&&&&&&&& CAS FOIREUX !!!!!!!!!!!!!!!!!!");
                 }
 
               a = pstate_found_iterate->state_data.lock.offset;
