@@ -301,7 +301,7 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
         }
 #ifdef HAVE_HEIMDAL
 #else
-      if(isFulleDebug(COMPONENT_RPCSEC_GSS))
+      if(isFullDebug(COMPONENT_RPCSEC_GSS))
         {
           gss_buffer_desc mechname;
 
@@ -474,7 +474,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
     }
   XDR_DESTROY(&xdrs);
 
-  if(IsFulldebug(COMPONENT_RPCSEC_GSS))
+  if(isFullDebug(COMPONENT_RPCSEC_GSS))
     Gss_ctx_Hash_Print();
 
         /** @todo Think about restoring the correct lines */
