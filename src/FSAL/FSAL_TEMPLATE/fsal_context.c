@@ -147,7 +147,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
         default:
           {
             LogCrit(COMPONENT_CONFIG,
-                ("FSAL LOAD PARAMETER: ERROR: Invalid suboption found in EXPORT::FS_Specific : %s : xxxxxx expected.",
+                "FSAL LOAD PARAMETER: ERROR: Invalid suboption found in EXPORT::FS_Specific : %s : xxxxxx expected.",
                  value);
             Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_BuildExportContext);
           }
