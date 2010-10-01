@@ -216,7 +216,7 @@ int mfsl_async_set_specdata(mfsl_object_t * key, mfsl_object_specific_data_t * v
   if(rc != HASHTABLE_SUCCESS && rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
     return 0;
 
-  if (isFulDebug(COMPONENT_HASHTABLE)
+  if (isFulDebug(COMPONENT_HASHTABLE))
       HashTable_Log(COMPONENT_MFSL, mfsl_ht);
 
   return 1;

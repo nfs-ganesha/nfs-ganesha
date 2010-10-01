@@ -1351,6 +1351,7 @@ cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pent
           "Error recovering cache content index %s: Invalid handle length. Expected length=%u, Found=%u",
            path, (unsigned int)(2 * sizeof(fsal_handle_t)), (unsigned int)strlen(buff));
 
+      fclose(stream);
       return CACHE_INODE_INCONSISTENT_ENTRY;
     }
 
