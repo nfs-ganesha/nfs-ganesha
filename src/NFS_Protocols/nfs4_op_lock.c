@@ -575,7 +575,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
       else
         LogDebug(COMPONENT_NFS_V4,
-            ("/!\\ : IMPLEMENTATION ERROR File=%s Line=%s pstate_found->powner->related_owner should not be NULL",
+            "/!\\ : IMPLEMENTATION ERROR File=%s Line=%s pstate_found->powner->related_owner should not be NULL",
              __FILE__, __LINE__);
 
       break;
