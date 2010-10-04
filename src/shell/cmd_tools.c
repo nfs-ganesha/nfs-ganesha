@@ -987,6 +987,7 @@ int MkFSALSetAttrStruct(char *attribute_list, fsal_attrib_list_t * fsal_set_attr
 
   /* temporary copy the attribute list */
   strncpy(attrib_list_tmp, attribute_list, 2048);
+  attrib_list_tmp[2047] = '\0';
 
   /* get the first token */
   attrib_str = strtok_r(attrib_list_tmp, ",", &next_str);
