@@ -58,7 +58,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "fsal.h"
 #include "nfs23.h"
@@ -604,8 +604,8 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
   LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: WARNING: %s defined twice !!! (ignored)", _str_ )
 
 
-int parseAccessParam(char *var_name, char *var_value,
-		     exportlist_t *p_entry, int access_option) {
+static int parseAccessParam(char *var_name, char *var_value,
+			    exportlist_t *p_entry, int access_option) {
   int rc, err_flag = FALSE;
   char *expended_node_list;
 
@@ -1932,11 +1932,11 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
 /**
  * function for matching a specific option in the client export list.
  */
-static int export_client_match(unsigned int addr,
-                               char *ipstring,
-                               exportlist_t * pexport,
-                               exportlist_client_entry_t * pclient_found,
-                               unsigned int export_option)
+int export_client_match(unsigned int addr,
+			char *ipstring,
+			exportlist_client_t *clients,
+			exportlist_client_entry_t * pclient_found,
+			unsigned int export_option)
 {
   unsigned int i;
   int rc;
@@ -1947,46 +1947,44 @@ static int export_client_match(unsigned int addr,
   if(export_option & EXPORT_OPTION_ACCESS)
     LogFullDebug(COMPONENT_DISPATCH, "Looking for access only entries\n");
 
-  for(i = 0; i < pexport->clients.num_clients; i++)
+  for(i = 0; i < clients->num_clients; i++)
     {
 
       /* only match the specified flags */
-      if((pexport->clients.clientarray[i].options & export_option) != export_option)
+      if((clients->clientarray[i].options & export_option) != export_option)
         continue;
-
-      switch (pexport->clients.clientarray[i].type)
+      switch (clients->clientarray[i].type)
         {
         case HOSTIF_CLIENT:
 
-          if(pexport->clients.clientarray[i].client.hostif.clientaddr == addr)
+          if(clients->clientarray[i].client.hostif.clientaddr == addr)
             {
-              LogFullDebug(COMPONENT_DISPATCH, "This matches host adress\n");
-              *pclient_found = pexport->clients.clientarray[i];
+              LogFullDebug(COMPONENT_DISPATCH, "This matches host address");
+              *pclient_found = clients->clientarray[i];
               return TRUE;
             }
           break;
 
         case NETWORK_CLIENT:
-
-          LogFullDebug(COMPONENT_DISPATCH, "Test net %d.%d.%d.%d in %d.%d.%d.%d ??\n",
-                 (unsigned int)(pexport->clients.clientarray[i].client.
+          LogFullDebug(COMPONENT_DISPATCH, "Test net %d.%d.%d.%d in %d.%d.%d.%d ??",
+                 (unsigned int)(clients->clientarray[i].client.
                                 network.netaddr >> 24),
                  (unsigned
-                  int)((pexport->clients.clientarray[i].client.
+                  int)((clients->clientarray[i].client.
                         network.netaddr >> 16) & 0xFF),
                  (unsigned
-                  int)((pexport->clients.clientarray[i].client.
+                  int)((clients->clientarray[i].client.
                         network.netaddr >> 8) & 0xFF),
-                 (unsigned int)(pexport->clients.clientarray[i].client.
+                 (unsigned int)(clients->clientarray[i].client.
                                 network.netaddr & 0xFF), (unsigned int)(addr >> 24),
                  (unsigned int)(addr >> 16) & 0xFF, (unsigned int)(addr >> 8) & 0xFF,
                  (unsigned int)(addr & 0xFF));
 
-          if((pexport->clients.clientarray[i].client.network.netmask & addr) ==
-             pexport->clients.clientarray[i].client.network.netaddr)
+          if((clients->clientarray[i].client.network.netmask & addr) ==
+             clients->clientarray[i].client.network.netaddr)
             {
-              LogFullDebug(COMPONENT_DISPATCH, "This matches network adress\n");
-              *pclient_found = pexport->clients.clientarray[i];
+              LogFullDebug(COMPONENT_DISPATCH, "This matches network adress");
+              *pclient_found = clients->clientarray[i];
               return TRUE;
             }
           break;
@@ -2008,10 +2006,10 @@ static int export_client_match(unsigned int addr,
 
           /* At this point 'hostname' should contain the name that was found */
           if(innetgr
-             (pexport->clients.clientarray[i].client.netgroup.netgroupname, hostname,
+             (clients->clientarray[i].client.netgroup.netgroupname, hostname,
               NULL, NULL) == 1)
             {
-              *pclient_found = pexport->clients.clientarray[i];
+              *pclient_found = clients->clientarray[i];
               return TRUE;
             }
           break;
@@ -2035,26 +2033,26 @@ static int export_client_match(unsigned int addr,
                     }
                 }
             }
-          LogFullDebug(COMPONENT_DISPATCH, "Wildcarded hostname: testing if '%s' matches '%s'\n",
-                 hostname, pexport->clients.clientarray[i].client.wildcard.wildcard);
+          LogFullDebug(COMPONENT_DISPATCH, "Wildcarded hostname: testing if '%s' matches '%s'",
+                 hostname, clients->clientarray[i].client.wildcard.wildcard);
 
           /* At this point 'hostname' should contain the name that was found */
           if(fnmatch
-             (pexport->clients.clientarray[i].client.wildcard.wildcard, hostname,
+             (clients->clientarray[i].client.wildcard.wildcard, hostname,
               FNM_PATHNAME) == 0)
             {
-              *pclient_found = pexport->clients.clientarray[i];
+              *pclient_found = clients->clientarray[i];
               return TRUE;
             }
-          LogFullDebug(COMPONENT_DISPATCH, "'%s' not matching '%s'\n",
-                 hostname, pexport->clients.clientarray[i].client.wildcard.wildcard);
+          LogFullDebug(COMPONENT_DISPATCH, "'%s' not matching '%s'",
+                 hostname, clients->clientarray[i].client.wildcard.wildcard);
 
           /* Now checking for IP wildcards */
           if(fnmatch
-             (pexport->clients.clientarray[i].client.wildcard.wildcard, ipstring,
+             (clients->clientarray[i].client.wildcard.wildcard, ipstring,
               FNM_PATHNAME) == 0)
             {
-              *pclient_found = pexport->clients.clientarray[i];
+              *pclient_found = clients->clientarray[i];
               return TRUE;
             }
 
@@ -2077,10 +2075,10 @@ static int export_client_match(unsigned int addr,
 
 }                               /* export_client_match */
 
-static int export_client_matchv6(struct in6_addr *paddrv6,
-                                 exportlist_t * pexport,
-                                 exportlist_client_entry_t * pclient_found,
-                                 unsigned int export_option)
+int export_client_matchv6(struct in6_addr *paddrv6,
+			  exportlist_client_t *clients,
+			  exportlist_client_entry_t * pclient_found,
+			  unsigned int export_option)
 {
   unsigned int i;
   int rc;
@@ -2091,14 +2089,14 @@ static int export_client_matchv6(struct in6_addr *paddrv6,
   if(export_option & EXPORT_OPTION_ACCESS)
     LogFullDebug(COMPONENT_DISPATCH, "Looking for access only entries\n");
 
-  for(i = 0; i < pexport->clients.num_clients; i++)
+  for(i = 0; i < clients->num_clients; i++)
     {
 
       /* only match the specified flags */
-      if((pexport->clients.clientarray[i].options & export_option) != export_option)
+      if((clients->clientarray[i].options & export_option) != export_option)
         continue;
 
-      switch (pexport->clients.clientarray[i].type)
+      switch (clients->clientarray[i].type)
         {
         case HOSTIF_CLIENT:
         case NETWORK_CLIENT:
@@ -2108,10 +2106,10 @@ static int export_client_matchv6(struct in6_addr *paddrv6,
           break;
 
         case HOSTIF_CLIENT_V6:
-          if(!memcmp(pexport->clients.clientarray[i].client.hostif.clientaddr6.s6_addr, paddrv6->s6_addr, 16))  /* Remember that IPv6 address are 128 bits = 16 bytes long */
+          if(!memcmp(clients->clientarray[i].client.hostif.clientaddr6.s6_addr, paddrv6->s6_addr, 16))  /* Remember that IPv6 address are 128 bits = 16 bytes long */
             {
-              LogFullDebug(COMPONENT_DISPATCH, "This matches host adress in IPv6\n");
-              *pclient_found = pexport->clients.clientarray[i];
+              LogFullDebug(COMPONENT_DISPATCH, "This matches host adress in IPv6");
+              *pclient_found = clients->clientarray[i];
               return TRUE;
             }
 
@@ -2210,11 +2208,11 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
         }
 
       /* check if any root access export matches this client */
-      if(export_client_match(addr, ipstring, pexport, pclient_found, EXPORT_OPTION_ROOT))
+      if(export_client_match(addr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_ROOT))
         return TRUE;
       /* else, check if any access only export matches this client */
       else if(export_client_match
-              (addr, ipstring, pexport, pclient_found, EXPORT_OPTION_ACCESS))
+              (addr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_ACCESS))
         return TRUE;
 #ifdef _USE_TIRPC_IPV6
     }
@@ -2257,20 +2255,20 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
           /* Proceed with IPv4 dedicated function */
           /* check if any root access export matches this client */
           if(export_client_match
-             (addr, ip6string, pexport, pclient_found, EXPORT_OPTION_ROOT))
+             (addr, ip6string, &(pexport->clients), pclient_found, EXPORT_OPTION_ROOT))
             return TRUE;
           /* else, check if any access only export matches this client */
           else if(export_client_match
-                  (addr, ip6string, pexport, pclient_found, EXPORT_OPTION_ACCESS))
+                  (addr, ip6string, &(pexport->clients), pclient_found, EXPORT_OPTION_ACCESS))
             return TRUE;
         }
 
       if(export_client_matchv6
-         (&(psockaddr_in6->sin6_addr), pexport, pclient_found, EXPORT_OPTION_ROOT))
+         (&(psockaddr_in6->sin6_addr), &(pexport->clients), pclient_found, EXPORT_OPTION_ROOT))
         return TRUE;
       /* else, check if any access only export matches this client */
       else if(export_client_matchv6
-              (&(psockaddr_in6->sin6_addr), pexport, pclient_found, EXPORT_OPTION_ACCESS))
+              (&(psockaddr_in6->sin6_addr), &(pexport->clients), pclient_found, EXPORT_OPTION_ACCESS))
         return TRUE;
     }
 #endif                          /* _USE_TIRPC_IPV6 */
