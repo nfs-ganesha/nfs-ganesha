@@ -125,6 +125,7 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
   if(!p_vfs)
   {
     LogMajor(COMPONENT_FSAL,"FSAL INIT: *** ERROR: Unable to mount the file system.");
+    libzfswrap_exit(p_zhd);
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
   }
 
