@@ -14,4 +14,10 @@
  * Ex: YouFS_GetRoot( zfsfsal_handle_t * out_hdl, char * server_name, ... );
  */
 
+#define ZFS_SNAP_DIR ".zfs"
+#define ZFS_SNAP_DIR_INODE 2
+
+#include "HashTable.h"
+extern hash_table_t *p_snapshots;
+
 #endif

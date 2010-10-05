@@ -21,6 +21,7 @@
 #include "fsal_internal.h"
 #include "stuff_alloc.h"
 #include "SemN.h"
+#include "HashTable.h"
 
 #include <pthread.h>
 
@@ -31,6 +32,7 @@
 fsal_staticfsinfo_t global_fs_info;
 libzfswrap_handle_t *p_zhd;
 libzfswrap_vfs_t *p_vfs;
+hash_table_t *p_snapshots;
 
 /* filesystem info for your filesystem */
 static fsal_staticfsinfo_t default_zfs_info = {

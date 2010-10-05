@@ -93,6 +93,7 @@ fsal_status_t ZFSFSAL_create(zfsfsal_handle_t * parent_directory_handle,      /*
   /* >> set output handle << */
   object_handle->data.zfs_handle = object;
   object_handle->data.type = FSAL_TYPE_FILE;
+  object_handle->data.is_snap = 0;
 
   if(object_attributes)
     {
@@ -189,6 +190,7 @@ fsal_status_t ZFSFSAL_mkdir(zfsfsal_handle_t * parent_directory_handle,       /*
   /* set output handle */
   object_handle->data.zfs_handle = object;
   object_handle->data.type = FSAL_TYPE_DIR;
+  object_handle->data.is_snap = 0;
 
   if(object_attributes)
     {

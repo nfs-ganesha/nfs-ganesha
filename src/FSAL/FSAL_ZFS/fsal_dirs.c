@@ -18,6 +18,7 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include "fsal_common.h"
 #include <string.h>
 
 /**
@@ -62,10 +63,34 @@ fsal_status_t ZFSFSAL_opendir(zfsfsal_handle_t * dir_handle,  /* IN */
   /* >> You can prepare your directory for beeing read  
    * and check that the user has the right for reading its content <<*/
   libzfswrap_vnode_t *p_vnode;
-  TakeTokenFSCall();
-  rc = libzfswrap_opendir(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                          dir_handle->data.zfs_handle, &p_vnode);
-  ReleaseTokenFSCall();
+  /* Hook for the zfs snapshot directory */
+  if(dir_handle->data.zfs_handle.inode == ZFS_SNAP_DIR_INODE)
+  {
+    dir_descriptor->p_vnode = NULL;
+    dir_descriptor->zfs_handle = dir_handle->data.zfs_handle;
+    dir_descriptor->p_vfs = p_context->export_context->p_vfs;
+    dir_descriptor->cred = p_context->user_credential.cred;
+    Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_opendir);
+  }
+  else if(dir_handle->data.is_snap == 1)
+  {
+    //TODO: get the right one, not only "bla" !!
+    hash_buffer_t key = { .pdata = "bla", .len = sizeof("bla") };
+    hash_buffer_t value;
+    HashTable_Get(p_snapshots, &key, &value);
+    
+    TakeTokenFSCall();
+    rc = libzfswrap_opendir((libzfswrap_vfs_t*)value.pdata, &p_context->user_credential.cred,
+                            dir_handle->data.zfs_handle, &p_vnode);
+    ReleaseTokenFSCall();
+  }
+  else
+  {
+    TakeTokenFSCall();
+    rc = libzfswrap_opendir(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                            dir_handle->data.zfs_handle, &p_vnode);
+    ReleaseTokenFSCall();
+  }
 
   if(rc)
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
@@ -131,6 +156,26 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
   if(!dir_descriptor || !p_dirent || !end_position || !nb_entries || !end_of_dir)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
+  /* Hook to create the pseudo directory */
+  if(dir_descriptor->zfs_handle.inode == ZFS_SNAP_DIR_INODE)
+  {
+    /*TODO: really list the files */
+    p_dirent[0].handle.data.zfs_handle.inode = 3;
+    p_dirent[0].handle.data.zfs_handle.generation = 4;
+    p_dirent[0].handle.data.is_snap = 1;
+    p_dirent[0].handle.data.type = FSAL_TYPE_DIR;
+    strncpy(p_dirent[0].name.name, "bla", FSAL_MAX_NAME_LEN);
+    p_dirent[0].name.len = strlen("bla");
+    p_dirent[0].nextentry = NULL;
+
+    p_dirent[0].attributes.asked_attributes = get_attr_mask;
+    memset(&p_dirent[0].attributes, 0, sizeof(p_dirent[0].attributes));
+
+    *nb_entries = 1;
+    *end_of_dir = 1;
+    Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
+  }
+
   max_dir_entries = buffersize / sizeof(fsal_dirent_t);
   libzfswrap_entry_t *entries = malloc( max_dir_entries * sizeof(libzfswrap_entry_t));
 
@@ -168,6 +213,7 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
 
     p_dirent[*nb_entries].handle.data.zfs_handle = entries[index].object;
     p_dirent[*nb_entries].handle.data.type = posix2fsal_type(entries[index].type);
+    p_dirent[*nb_entries].handle.data.is_snap = 0;
     FSAL_str2name(entries[index].psz_filename, FSAL_MAX_NAME_LEN, &(p_dirent[*nb_entries].name));
 
     /* Add the attributes */
@@ -220,6 +266,10 @@ fsal_status_t ZFSFSAL_closedir(zfsfsal_dir_t * dir_descriptor /* IN */
   /* sanity checks */
   if(!dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_closedir);
+
+  /* Hook for the ZFS directory */
+  if(dir_descriptor->zfs_handle.inode == ZFS_SNAP_DIR_INODE)
+    Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_closedir);
 
   /* >> release the resources used for reading your directory << */
   if((rc = libzfswrap_closedir(dir_descriptor->p_vfs, &dir_descriptor->cred, dir_descriptor->p_vnode)))

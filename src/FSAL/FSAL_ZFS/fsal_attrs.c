@@ -18,7 +18,9 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include "fsal_common.h"
 
+#include <string.h>
 #include <fcntl.h>
 
 /**
@@ -59,8 +61,16 @@ fsal_status_t ZFSFSAL_getattrs(zfsfsal_handle_t * filehandle, /* IN */
 
   TakeTokenFSCall();
 
-  rc = libzfswrap_getattr(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                          filehandle->data.zfs_handle, &fstat, &type);
+  if(filehandle->data.zfs_handle.inode == ZFS_SNAP_DIR_INODE &&
+     filehandle->data.zfs_handle.generation == 0)
+  {
+    memset(&fstat, 0, sizeof(fstat));
+    fstat.st_mode = S_IFDIR | 0755;
+    rc = 0;
+  }
+  else
+    rc = libzfswrap_getattr(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                            filehandle->data.zfs_handle, &fstat, &type);
 
   ReleaseTokenFSCall();
 
