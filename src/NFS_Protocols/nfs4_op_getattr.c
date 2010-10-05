@@ -152,12 +152,12 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
       return res_GETATTR4.status;
     }
 
-  /* Ask only for supported attributes */
-  if(!nfs4_Fattr_Supported_Bitmap(&arg_GETATTR4.attr_request))
+  if( !nfs4_bitmap4_Remove_Unsupported( &arg_GETATTR4.attr_request ) )
     {
-      res_GETATTR4.status = NFS4ERR_ATTRNOTSUPP;
+      res_GETATTR4.status = NFS4ERR_SERVERFAULT ;
       return res_GETATTR4.status;
     }
+   
 
   /*
    * Get attributes.

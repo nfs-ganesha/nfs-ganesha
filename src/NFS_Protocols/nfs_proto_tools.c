@@ -2427,6 +2427,59 @@ int nfs4_Fattr_Check_Access_Bitmap(bitmap4 * pbitmap, int access)
 
 /**
  *
+ * nfs4_bitmap4_Remove_Unsupported: removes unsupported attributes from bitmap4
+ *
+ * Removes unsupported attributes from bitmap4
+ *
+ * @param pbitmap    [IN] pointer to NFSv4 attributes's bitmap.
+ *
+ * @return 1 if successful, 0 otherwise.
+ *
+ */
+int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap )
+{
+  uint_t i = 0;
+  uint_t val = 0;
+  uint_t index = 0;
+  uint_t offset = 0;
+
+  uint32_t bitmap_val[2] ;
+  bitmap4 bout ;
+
+  bout.bitmap4_val = bitmap_val ;
+  bout.bitmap4_len = pbitmap->bitmap4_len  ;
+
+  if(pbitmap->bitmap4_len > 0)
+    LogFullDebug(COMPONENT_NFS_V4, "Bitmap: Len = %u Val = %u|%u", pbitmap->bitmap4_len, pbitmap->bitmap4_val[0],
+           pbitmap->bitmap4_val[1]);
+  else
+    LogFullDebug(COMPONENT_NFS_V4, "Bitmap: Len = %u ... ", pbitmap->bitmap4_len);
+
+  bout.bitmap4_val[0] = 0 ;
+  bout.bitmap4_val[1] = 0 ;
+
+  for(offset = 0; offset < pbitmap->bitmap4_len; offset++)
+    {
+      for(i = 0; i < 32; i++)
+        {
+          val = 1 << i;         /* Compute 2**i */
+          if(pbitmap->bitmap4_val[offset] & val)
+           {
+             if( fattr4tab[i+32*offset].supported ) /* keep only supported stuff */
+               bout.bitmap4_val[offset] |= val ; 
+           }
+        }
+    }
+
+  pbitmap->bitmap4_val[0] = bout.bitmap4_val[0] ;  
+  pbitmap->bitmap4_val[1] = bout.bitmap4_val[1] ;  
+
+  return 1 ;
+}                               /* nfs4_Fattr_Bitmap_Remove_Unsupported */
+
+
+/**
+ *
  * nfs4_Fattr_Supported: Checks if an attribute is supported.
  *
  * Checks if an attribute is supported.
@@ -2462,7 +2515,7 @@ int nfs4_Fattr_Supported(fattr4 * Fattr)
         }
 #endif
 
-      LogFullDebug(COMPONENT_NFS_V4, "nfs4_Fattr_Supported  ==============> %s supported flag=%u",
+      LogFullDebug(COMPONENT_NFS_V4, "nfs4_Fattr_Supported  ==============> %s supported flag=%u | ",
              fattr4tab[attrmasklist[i]].name, fattr4tab[attrmasklist[i]].supported);
 
       if(!fattr4tab[attrmasklist[i]].supported)
@@ -2508,7 +2561,7 @@ int nfs4_Fattr_Supported_Bitmap(bitmap4 * pbitmap)
           continue;
         }
 #endif
-
+      
       LogFullDebug(COMPONENT_NFS_V4, "nfs4_Fattr_Supported  ==============> %s supported flag=%u",
              fattr4tab[attrmasklist[i]].name, fattr4tab[attrmasklist[i]].supported);
       if(!fattr4tab[attrmasklist[i]].supported)

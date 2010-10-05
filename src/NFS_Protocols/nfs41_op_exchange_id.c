@@ -92,7 +92,7 @@ extern nfs_parameter_t nfs_param;
  *
  */
 
-static uint32_t all_eia_flags = EXCHGID4_FLAG_SUPP_MOVED_REFER |
+static uint32_t all_eia_flags = 
     EXCHGID4_FLAG_SUPP_MOVED_MIGR |
     EXCHGID4_FLAG_BIND_PRINC_STATEID |
     EXCHGID4_FLAG_USE_NON_PNFS |
@@ -140,12 +140,14 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
   LogDebug(COMPONENT_NFS_V4, "EXCHANGE_ID computed clientid4=%llx for name='%s'",
                   clientid, str_client);
 
+#if 0 //plante le client sous windows. Ai-je réellement besoin de cela ???? //
   /* Check flags value (test EID4) */
   if(arg_EXCHANGE_ID4.eia_flags & all_eia_flags != arg_EXCHANGE_ID4.eia_flags)
     {
       res_EXCHANGE_ID4.eir_status = NFS4ERR_INVAL;
       return res_EXCHANGE_ID4.eir_status;
     }
+#endif 
 
   /* Does this id already exists ? */
   if(nfs_client_id_get(clientid, &nfs_clientid) == CLIENT_ID_SUCCESS)
