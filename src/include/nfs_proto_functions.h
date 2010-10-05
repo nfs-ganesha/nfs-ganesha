@@ -1484,6 +1484,9 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 void nfs4_list_to_bitmap4(bitmap4 * b, uint_t * plen, uint32_t * pval);
 void nfs4_bitmap4_to_list(bitmap4 * b, uint_t * plen, uint32_t * pval);
 
+int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap) ;
+
+
 /* Error conversion routines */
 nfsstat4 nfs4_Errno(cache_inode_status_t error);
 nfsstat3 nfs3_Errno(cache_inode_status_t error);
