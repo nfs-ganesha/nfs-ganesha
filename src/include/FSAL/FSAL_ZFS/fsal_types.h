@@ -75,6 +75,7 @@ typedef union
   {
     inogen_t zfs_handle;
     fsal_nodetype_t type;
+    char is_snap;
   }data;
 #ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_HANDLE_T_SIZE];

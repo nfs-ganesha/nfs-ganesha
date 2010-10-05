@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include "HashTable.h"
 
 extern libzfswrap_vfs_t *p_vfs;
 
