@@ -17,7 +17,6 @@
 #define ZFS_SNAP_DIR ".zfs"
 #define ZFS_SNAP_DIR_INODE 2
 
-#include "HashTable.h"
-extern hash_table_t *p_snapshots;
+libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfsfsal_handle_t *handle);
 
 #endif

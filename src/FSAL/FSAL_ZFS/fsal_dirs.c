@@ -63,41 +63,28 @@ fsal_status_t ZFSFSAL_opendir(zfsfsal_handle_t * dir_handle,  /* IN */
   /* >> You can prepare your directory for beeing read  
    * and check that the user has the right for reading its content <<*/
   libzfswrap_vnode_t *p_vnode;
+  libzfswrap_vfs_t *p_vfs = ZFSFSAL_GetVFS(dir_handle);
   /* Hook for the zfs snapshot directory */
   if(dir_handle->data.zfs_handle.inode == ZFS_SNAP_DIR_INODE)
   {
-    dir_descriptor->p_vnode = NULL;
-    dir_descriptor->zfs_handle = dir_handle->data.zfs_handle;
-    dir_descriptor->p_vfs = p_context->export_context->p_vfs;
-    dir_descriptor->cred = p_context->user_credential.cred;
-    Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_opendir);
-  }
-  else if(dir_handle->data.is_snap == 1)
-  {
-    //TODO: get the right one, not only "bla" !!
-    hash_buffer_t key = { .pdata = "bla", .len = sizeof("bla") };
-    hash_buffer_t value;
-    HashTable_Get(p_snapshots, &key, &value);
-    
-    TakeTokenFSCall();
-    rc = libzfswrap_opendir((libzfswrap_vfs_t*)value.pdata, &p_context->user_credential.cred,
-                            dir_handle->data.zfs_handle, &p_vnode);
-    ReleaseTokenFSCall();
+    p_vnode = NULL;
+    rc = 0;
   }
   else
   {
     TakeTokenFSCall();
-    rc = libzfswrap_opendir(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+    rc = libzfswrap_opendir(p_vfs, &p_context->user_credential.cred,
                             dir_handle->data.zfs_handle, &p_vnode);
     ReleaseTokenFSCall();
   }
 
   if(rc)
-    Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_opendir);
 
   dir_descriptor->p_vnode = p_vnode;
   dir_descriptor->zfs_handle = dir_handle->data.zfs_handle;
-  dir_descriptor->p_vfs = p_context->export_context->p_vfs;
+  dir_descriptor->i_snap = dir_handle->data.i_snap;
+  dir_descriptor->p_vfs = p_vfs;
   dir_descriptor->cred = p_context->user_credential.cred;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_opendir);
@@ -162,14 +149,19 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
     /*TODO: really list the files */
     p_dirent[0].handle.data.zfs_handle.inode = 3;
     p_dirent[0].handle.data.zfs_handle.generation = 4;
-    p_dirent[0].handle.data.is_snap = 1;
+    p_dirent[0].handle.data.i_snap = 1;
     p_dirent[0].handle.data.type = FSAL_TYPE_DIR;
     strncpy(p_dirent[0].name.name, "bla", FSAL_MAX_NAME_LEN);
     p_dirent[0].name.len = strlen("bla");
     p_dirent[0].nextentry = NULL;
 
     p_dirent[0].attributes.asked_attributes = get_attr_mask;
-    memset(&p_dirent[0].attributes, 0, sizeof(p_dirent[0].attributes));
+
+    struct stat fstat;
+    memset(&fstat, 0, sizeof(fstat));
+    fstat.st_mode = S_IFDIR | 0755;
+    fstat.st_dev = 1;
+    posix2fsal_attributes(&fstat, &p_dirent[0].attributes);
 
     *nb_entries = 1;
     *end_of_dir = 1;
@@ -191,7 +183,7 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
   if(rc)
   {
     free(entries);
-    Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_readdir);
   }
 
   /* >> fill the output dirent array << */
@@ -213,7 +205,8 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
 
     p_dirent[*nb_entries].handle.data.zfs_handle = entries[index].object;
     p_dirent[*nb_entries].handle.data.type = posix2fsal_type(entries[index].type);
-    p_dirent[*nb_entries].handle.data.is_snap = 0;
+    p_dirent[*nb_entries].handle.data.i_snap = dir_descriptor->i_snap;
+    entries[index].stats.st_dev = dir_descriptor->i_snap;
     FSAL_str2name(entries[index].psz_filename, FSAL_MAX_NAME_LEN, &(p_dirent[*nb_entries].name));
 
     /* Add the attributes */
@@ -273,7 +266,7 @@ fsal_status_t ZFSFSAL_closedir(zfsfsal_dir_t * dir_descriptor /* IN */
 
   /* >> release the resources used for reading your directory << */
   if((rc = libzfswrap_closedir(dir_descriptor->p_vfs, &dir_descriptor->cred, dir_descriptor->p_vnode)))
-    Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_closedir);
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_closedir);
 

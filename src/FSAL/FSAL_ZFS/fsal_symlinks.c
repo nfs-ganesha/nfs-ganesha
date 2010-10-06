@@ -177,7 +177,7 @@ fsal_status_t ZFSFSAL_symlink(zfsfsal_handle_t * parent_directory_handle,     /*
   /* >> set output handle << */
   link_handle->data.zfs_handle = object;
   link_handle->data.type = FSAL_TYPE_LNK;
-  link_handle->data.is_snap = 0;
+  link_handle->data.i_snap = 0;
 
   if(link_attributes)
     {

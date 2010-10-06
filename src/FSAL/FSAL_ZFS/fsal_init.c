@@ -20,7 +20,8 @@
 #include "fsal_common.h"
 #include "HashTable.h"
 
-extern libzfswrap_vfs_t *p_vfs;
+extern libzfswrap_vfs_t **pp_vfs;
+extern size_t i_vfs;
 
 /* Macros for analysing parameters. */
 #define SET_BITMAP_PARAM( api_cfg, p_init_info, _field )      \
@@ -69,47 +70,6 @@ extern libzfswrap_vfs_t *p_vfs;
       break;                                                \
     /* In the other cases, we keep the default value. */          \
     }                                                             \
-
-
-/* functions for hashing/comparing lookup peers */
-static unsigned long hash_idx(hash_parameter_t *p_conf, hash_buffer_t *p_key)
-{
-  return 0;
-}
-
-static unsigned long hash_rbt(hash_parameter_t *p_conf, hash_buffer_t *p_key)
-{
-  unsigned int i;
-  unsigned long hash;
-  const char *psz_key = (const char*)p_key->pdata;
-
-  hash = 1;
-
-  for(; *psz_key; psz_key++)
-    hash = ((hash << 5) - hash + (unsigned long)(*psz_key));
-
-  return hash;
-}
-
-static int cmp_key(hash_buffer_t * p_key1, hash_buffer_t * p_key2)
-{
-  const char *psz_key1 = (const char *) p_key1->pdata;
-  const char *psz_key2 = (const char *) p_key2->pdata;
-
-  return strncmp(psz_key1, psz_key2, FSAL_MAX_NAME_LEN);
-}
-
-/* display functions */
-
-static int print_key(hash_buffer_t * p_val, char *outbuff)
-{
-  return sprintf(outbuff, "%s", p_val->pdata);
-}
-
-static int print_value(hash_buffer_t * p_val, char *outbuff)
-{
-  return sprintf(outbuff, "%p", p_val->pdata);
-}
 
 
 size_t stack_size = 0;
@@ -163,27 +123,13 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
   }
 
-  p_vfs = libzfswrap_mount(init_info->fs_specific_info.psz_zpool, "/tank", "");
+  libzfswrap_vfs_t *p_vfs = libzfswrap_mount(init_info->fs_specific_info.psz_zpool, "/tank", "");
   if(!p_vfs)
   {
     LogMajor(COMPONENT_FSAL,"FSAL INIT: *** ERROR: Unable to mount the file system.");
     libzfswrap_exit(p_zhd);
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
   }
-
-  /* Mount every snapshots and store them in a hashtable */
-  static hash_parameter_t hash_config = {
-                .index_size = 1,
-                .alphabet_length = 36, /*TODO find the right value here */
-                .nb_node_prealloc = 1024,
-                .hash_func_key = hash_idx,
-                .hash_func_rbt = hash_rbt,
-                .compare_key = cmp_key,
-                .key_to_str = print_key,
-                .val_to_str = print_value
-        };
-
-  p_snapshots = HashTable_Init(hash_config);
 
   libzfswrap_vfs_t *p_snap_vfs = libzfswrap_mount("tank@bla", "/tank/bla", "");
   if(!p_snap_vfs)
@@ -194,16 +140,10 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
   }
 
-  hash_buffer_t key = { .pdata = "bla", .len = sizeof("bla") };
-  hash_buffer_t val = { .pdata = p_snap_vfs, .len = sizeof(p_snap_vfs) };
-  HashTable_Set(p_snapshots, &key, &val);
-
-/*
-  p_snap_vfs = libzfswrap_mount("tank@blop", "/tank/blop", "");
-  key.pdata = "blop"; key.len = sizeof("blop");
-  val.pdata = p_snap_vfs; val.len = sizeof(p_snap_vfs);
-  HashTable_Set(p_snapshots, &key, &val);
-*/
+  pp_vfs = calloc( 2, sizeof( *pp_vfs ) );
+  pp_vfs[0] = p_vfs;
+  pp_vfs[1] = p_snap_vfs;
+  i_vfs = 2;
 
   /* Everything went OK. */
 
@@ -214,17 +154,11 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
 /* To be called before exiting */
 fsal_status_t ZFSFSAL_terminate()
 {
-  /* Find a way to walk the list of snapshots */
-  hash_buffer_t key, value;
-  key.pdata = "bla"; key.len = sizeof("bla");
-  HashTable_Get(p_snapshots, &key, &value);
-  libzfswrap_umount(value.pdata, 1);
+  /* Unmount every snapshots */
+  size_t i;
+  for(i = i_vfs; i > 0; i--)
+    libzfswrap_umount(pp_vfs[i - 1], 1);
 
-//  key.pdata = "blop"; key.len = sizeof("blop");
-//  HashTable_Get(p_snapshots, &key, &value);
-//  libzfswrap_umount(value.pdata, 1);
-
-  libzfswrap_umount(p_vfs, 1);
   libzfswrap_exit(p_zhd);
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
