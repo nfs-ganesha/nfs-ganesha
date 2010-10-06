@@ -15,6 +15,7 @@
 #endif
 
 #include "fsal.h"
+#include "fsal_common.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 
@@ -69,9 +70,7 @@ fsal_status_t ZFSFSAL_open(zfsfsal_handle_t * filehandle,     /* IN */
   if(!filehandle || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
 
-  /* >> you can check if this is a file if the information
-   * is stored into the handle << */
-
+  /* Check if this is a file */
   if(filehandle->data.type != FSAL_TYPE_FILE)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
 

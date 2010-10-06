@@ -66,6 +66,11 @@ fsal_status_t ZFSFSAL_getattrs(zfsfsal_handle_t * filehandle, /* IN */
   {
     memset(&fstat, 0, sizeof(fstat));
     fstat.st_mode = S_IFDIR | 0755;
+    fstat.st_ino = ZFS_SNAP_DIR_INODE;
+    fstat.st_nlink = 2;
+    time(&fstat.st_atime);
+    fstat.st_ctime = fstat.st_atime;
+    fstat.st_mtime = fstat.st_atime;
     rc = 0;
   }
   else
