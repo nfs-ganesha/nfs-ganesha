@@ -359,7 +359,7 @@ int main(int argc, char *argv[])
 	     "Signals SIGTERM and SIGINT (daemon shutdown) are ready to be used");
 
   /* Set the signal handler */
-  memset(&act_sigterm, 0, sizeof(act_sighup));
+  memset(&act_sighup, 0, sizeof(act_sighup));
   act_sighup.sa_flags = 0;
   act_sighup.sa_handler = action_sighup;
   if(sigaction(SIGHUP, &act_sighup, NULL) == -1)
