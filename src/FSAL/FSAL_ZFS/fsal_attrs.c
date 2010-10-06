@@ -69,8 +69,11 @@ fsal_status_t ZFSFSAL_getattrs(zfsfsal_handle_t * filehandle, /* IN */
     rc = 0;
   }
   else
-    rc = libzfswrap_getattr(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+    rc = libzfswrap_getattr(ZFSFSAL_GetVFS(filehandle), &p_context->user_credential.cred,
                             filehandle->data.zfs_handle, &fstat, &type);
+
+  // Set st_dev to be the snapshot number.
+  fstat.st_dev = filehandle->data.i_snap;
 
   ReleaseTokenFSCall();
 
@@ -200,7 +203,7 @@ fsal_status_t ZFSFSAL_setattrs(zfsfsal_handle_t * filehandle, /* IN */
 
   struct stat new_stat = { 0 };
   /**@TODO: use the new_stat info ! */
-  rc = libzfswrap_setattr(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_setattr(ZFSFSAL_GetVFS(filehandle), &p_context->user_credential.cred,
                           filehandle->data.zfs_handle, &stats, flags, &new_stat);
 
   ReleaseTokenFSCall();

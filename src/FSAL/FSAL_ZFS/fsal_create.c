@@ -93,7 +93,7 @@ fsal_status_t ZFSFSAL_create(zfsfsal_handle_t * parent_directory_handle,      /*
   /* >> set output handle << */
   object_handle->data.zfs_handle = object;
   object_handle->data.type = FSAL_TYPE_FILE;
-  object_handle->data.is_snap = 0;
+  object_handle->data.i_snap = 0;
 
   if(object_attributes)
     {
@@ -185,12 +185,12 @@ fsal_status_t ZFSFSAL_mkdir(zfsfsal_handle_t * parent_directory_handle,       /*
 
   /* >> interpret returned error << */
   if(rc)
-    Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_mkdir);
 
   /* set output handle */
   object_handle->data.zfs_handle = object;
   object_handle->data.type = FSAL_TYPE_DIR;
-  object_handle->data.is_snap = 0;
+  object_handle->data.i_snap = 0;
 
   if(object_attributes)
     {

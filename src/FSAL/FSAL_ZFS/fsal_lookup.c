@@ -89,7 +89,7 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       object_handle->data.type = FSAL_TYPE_DIR;
-      object_handle->data.is_snap = 0;
+      object_handle->data.i_snap = 0;
 
       /* >> retrieves root attributes, if asked << */
 
@@ -140,7 +140,7 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
       /* >> Be carefull you don't traverse junction nor follow symlinks << */
       inogen_t object;
       int type;
-      char is_snap = parent_directory_handle->data.is_snap;
+      char i_snap = parent_directory_handle->data.i_snap;
 
       /* Hook to add the hability to go inside a .zfs directory inside the root dir */
       if(parent_directory_handle->data.zfs_handle.inode == 3 &&
@@ -149,7 +149,6 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
         object.inode = ZFS_SNAP_DIR_INODE;
         object.generation = 0;
         type = S_IFDIR;
-        is_snap = 1;
         rc = 0;
       }
       /* Hook for the files inside the .zfs directory */
@@ -159,13 +158,19 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
         object.inode = 3;
         object.generation = 4;
         type = S_IFDIR;
-        is_snap = 1;
+        i_snap = 1;
         rc = 0;
       }
       else
-        rc = libzfswrap_lookup(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+      {
+        rc = libzfswrap_lookup(ZFSFSAL_GetVFS(parent_directory_handle),
+                               &p_context->user_credential.cred,
                                parent_directory_handle->data.zfs_handle, p_filename->name, &object,
                                &type);
+        //FIXME!!! Hook to remove the i_snap bit when going up from the .zfs directory
+        if(object.inode == 3)
+          i_snap = 0;
+      }
 
       ReleaseTokenFSCall();
 
@@ -176,7 +181,7 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
       /* >> set output handle << */
       object_handle->data.zfs_handle = object;
       object_handle->data.type = posix2fsal_type(type);
-      object_handle->data.is_snap = is_snap;
+      object_handle->data.i_snap = i_snap;
       if(object_attributes)
         {
           fsal_status_t status = ZFSFSAL_getattrs(object_handle, p_context, object_attributes);

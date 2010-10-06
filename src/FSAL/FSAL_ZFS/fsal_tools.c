@@ -83,7 +83,7 @@ unsigned int ZFSFSAL_Handle_to_HashIndex(zfsfsal_handle_t * p_handle,
 {
 
   /* >> here must be your implementation of your zfsfsal_handle_t hashing */
-  return (3 * (unsigned int)(p_handle->data.zfs_handle.inode*p_handle->data.zfs_handle.generation) + 1999 + cookie) % index_size;
+  return (3 * (unsigned int)(p_handle->data.zfs_handle.inode*p_handle->data.zfs_handle.generation*(p_handle->data.i_snap+1)) + 1999 + cookie) % index_size;
 
 }
 
@@ -102,7 +102,7 @@ unsigned int ZFSFSAL_Handle_to_HashIndex(zfsfsal_handle_t * p_handle,
 unsigned int ZFSFSAL_Handle_to_RBTIndex(zfsfsal_handle_t * p_handle, unsigned int cookie)
 {
   /* >> here must be your implementation of your zfsfsal_handle_t hashing << */
-  return (unsigned int)(0xABCD1234 ^ (p_handle->data.zfs_handle.inode*p_handle->data.zfs_handle.generation) ^ cookie);
+  return (unsigned int)(0xABCD1234 ^ (p_handle->data.zfs_handle.inode*p_handle->data.zfs_handle.generation*(p_handle->data.i_snap+1)) ^ cookie);
 
 }
 
