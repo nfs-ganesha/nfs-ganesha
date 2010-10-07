@@ -388,3 +388,9 @@
 	- New TCP connection management to avoid DOS-like attack
 	- Tag _NO_BLOCK_PREALLOC was removed
 	- New debian packaging
+        - Bug Fix : OP4_REMOVE did not operate if the destination was an existing file
+        - Bug Fix : FATTR4_ACL is now an unsupported attributes (it is in fact)
+        - Bug Fix : OP4_GETATTR on unsupported attributes should ignore them instead 
+          of returning NFS4ERR_ATTR_NOTSUPP
+        - Bug Fix : locks_held counter was badly managed in OP4_LOCKU
+        - Bug Fix : OP4_DESTROY_SESSION returned bad session when session was successfully destroyed.
