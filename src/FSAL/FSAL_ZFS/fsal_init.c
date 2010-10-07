@@ -22,6 +22,8 @@
 
 extern libzfswrap_vfs_t **pp_vfs;
 extern size_t i_vfs;
+extern char **ppsz_snapshots;
+size_t i_snapshots;
 
 /* Macros for analysing parameters. */
 #define SET_BITMAP_PARAM( api_cfg, p_init_info, _field )      \
@@ -123,6 +125,7 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
   }
 
+  /* Mount the zpool */
   libzfswrap_vfs_t *p_vfs = libzfswrap_mount(init_info->fs_specific_info.psz_zpool, "/tank", "");
   if(!p_vfs)
   {
@@ -131,22 +134,35 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
   }
 
-  libzfswrap_vfs_t *p_snap_vfs = libzfswrap_mount("tank@bla", "/tank/bla", "");
-  if(!p_snap_vfs)
+  /* List the snapshots of the given zpool and mount them */
+  const char *psz_error;
+  i_snapshots = libzfswrap_zfs_get_list_snapshots(p_zhd, init_info->fs_specific_info.psz_zpool,
+                                                  &ppsz_snapshots, &psz_error);
+
+  if(i_snapshots != -1)
   {
-    LogMajor(COMPONENT_FSAL, "FSAL INIT: *** ERROR: Unable to mount the snapshot");
-    libzfswrap_umount(p_vfs, 1);
-    libzfswrap_exit(p_zhd);
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
+    pp_vfs = calloc(i_snapshots + 1, sizeof(*pp_vfs));
+    pp_vfs[0] = p_vfs;
+
+    int i,j;
+    for(i = 0; i < i_snapshots; i++)
+    {
+      libzfswrap_vfs_t *p_snap_vfs = libzfswrap_mount(ppsz_snapshots[i], ppsz_snapshots[i], "");
+      if(!p_snap_vfs)
+      {
+        LogMajor(COMPONENT_FSAL, "FSAL INIT: *** ERROR: Unable to mount the snapshot %s", ppsz_snapshots[i]);
+        for(j = i; j >= 0; j--)
+          libzfswrap_umount(pp_vfs[j], 1);
+        free(pp_vfs);
+        libzfswrap_exit(p_zhd);
+        Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
+      }
+      pp_vfs[i+1] = p_snap_vfs;
+    }
+    i_vfs = i_snapshots + 1;
   }
 
-  pp_vfs = calloc( 2, sizeof( *pp_vfs ) );
-  pp_vfs[0] = p_vfs;
-  pp_vfs[1] = p_snap_vfs;
-  i_vfs = 2;
-
   /* Everything went OK. */
-
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);
 
 }
@@ -154,10 +170,15 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
 /* To be called before exiting */
 fsal_status_t ZFSFSAL_terminate()
 {
-  /* Unmount every snapshots */
-  size_t i;
-  for(i = i_vfs; i > 0; i--)
-    libzfswrap_umount(pp_vfs[i - 1], 1);
+  /* Unmount every snapshots and free the memory */
+  int i;
+  for(i = i_vfs - 1; i >= 0; i--)
+    libzfswrap_umount(pp_vfs[i], 1);
+  free(pp_vfs);
+
+  for(i = 0; i < i_snapshots; i++)
+    free(ppsz_snapshots[i]);
+  free(ppsz_snapshots);
 
   libzfswrap_exit(p_zhd);
   ReturnCode(ERR_FSAL_NO_ERROR, 0);

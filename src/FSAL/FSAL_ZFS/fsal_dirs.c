@@ -21,6 +21,9 @@
 #include "fsal_common.h"
 #include <string.h>
 
+extern char **ppsz_snapshots;
+extern size_t i_snapshots;
+
 /**
  * FSAL_opendir :
  *     Opens a directory for reading its content.
@@ -137,7 +140,7 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
     )
 {
   int rc;
-  fsal_count_t max_dir_entries;
+  fsal_count_t max_dir_entries = buffersize / sizeof(fsal_dirent_t);
   /* sanity checks */
 
   if(!dir_descriptor || !p_dirent || !end_position || !nb_entries || !end_of_dir)
@@ -146,29 +149,36 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
   /* Hook to create the pseudo directory */
   if(dir_descriptor->zfs_handle.inode == ZFS_SNAP_DIR_INODE)
   {
-    /*TODO: really list the files */
-    p_dirent[0].handle.data.zfs_handle.inode = 3;
-    p_dirent[0].handle.data.zfs_handle.generation = 4;
-    p_dirent[0].handle.data.i_snap = 1;
-    p_dirent[0].handle.data.type = FSAL_TYPE_DIR;
-    strncpy(p_dirent[0].name.name, "bla", FSAL_MAX_NAME_LEN);
-    p_dirent[0].name.len = strlen("bla");
-    p_dirent[0].nextentry = NULL;
-
-    p_dirent[0].attributes.asked_attributes = get_attr_mask;
-
+    int i;
     struct stat fstat;
     memset(&fstat, 0, sizeof(fstat));
     fstat.st_mode = S_IFDIR | 0755;
-    fstat.st_dev = 1;
-    posix2fsal_attributes(&fstat, &p_dirent[0].attributes);
 
-    *nb_entries = 1;
-    *end_of_dir = 1;
+    for(i = 0; i < max_dir_entries && i < i_snapshots; i++)
+    {
+      p_dirent[i].handle.data.zfs_handle.inode = 3;
+      p_dirent[i].handle.data.zfs_handle.generation = 4;
+      p_dirent[i].handle.data.i_snap = i + start_position.data.cookie + 1;
+      p_dirent[i].handle.data.type = FSAL_TYPE_DIR;
+      strncpy(p_dirent[i].name.name, ppsz_snapshots[i + start_position.data.cookie], FSAL_MAX_NAME_LEN);
+      p_dirent[i].name.len = strlen(ppsz_snapshots[i + start_position.data.cookie]);
+
+      fstat.st_dev = i + start_position.data.cookie + 1;
+      posix2fsal_attributes(&fstat, &p_dirent[i].attributes);
+
+      p_dirent[i].nextentry = NULL;
+      if(i)
+        p_dirent[i-1].nextentry = &(p_dirent[i]);
+    }
+    *nb_entries = i + 1;
+    if(i == i_snapshots)
+      *end_of_dir = 1;
+    else
+      end_position->data.cookie = start_position.data.cookie + i;
+
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
   }
 
-  max_dir_entries = buffersize / sizeof(fsal_dirent_t);
   libzfswrap_entry_t *entries = malloc( max_dir_entries * sizeof(libzfswrap_entry_t));
 
   TakeTokenFSCall();
