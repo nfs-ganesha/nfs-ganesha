@@ -21,6 +21,10 @@
 
 #include <string.h>
 
+extern libzfswrap_vfs_t **pp_vfs;
+extern char **ppsz_snapshots;
+extern size_t i_snapshots;
+
 /**
  * FSAL_lookup :
  * Looks up for an object into a directory.
@@ -151,14 +155,24 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
         type = S_IFDIR;
         rc = 0;
       }
+
       /* Hook for the files inside the .zfs directory */
       else if(parent_directory_handle->data.zfs_handle.inode == ZFS_SNAP_DIR_INODE)
       {
-        /*TODO: get the root object */
-        object.inode = 3;
-        object.generation = 4;
+        int i;
+        for(i = 0; i < i_snapshots; i++)
+          if(!strcmp(ppsz_snapshots[i], p_filename->name))
+            break;
+
+        if(i == i_snapshots)
+        {
+          ReleaseTokenFSCall();
+          Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_lookup);
+        }
+
+        libzfswrap_getroot(pp_vfs[i + 1], &object);
         type = S_IFDIR;
-        i_snap = 1;
+        i_snap = i + 1;
         rc = 0;
       }
       else
