@@ -894,6 +894,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp);
 
 nfsstat4 nfs4_fh_to_xattrfh(nfs_fh4 * pfhin, nfs_fh4 * pfhout);
+nfsstat4 nfs4_xattrfh_to_fh(nfs_fh4 * pfhin, nfs_fh4 * pfhout);
 
 int nfs4_op_open_xattr(struct nfs_argop4 *op,
                        compound_data_t * data, struct nfs_resop4 *resp);
@@ -988,10 +989,10 @@ static const fattr4_dent_t __attribute__ ((__unused__)) fattr4tab[] =
   "FATTR4_RDATTR_ERROR", 11, 1, sizeof(fattr4_rdattr_error), FATTR4_ATTR_READ}
   ,
   {
-  "FATTR4_ACL", 12, 1, sizeof(fattr4_acl), FATTR4_ATTR_READ_WRITE}
+  "FATTR4_ACL", 12, 0, sizeof(fattr4_acl), FATTR4_ATTR_READ_WRITE}
   ,
   {
-  "FATTR4_ACLSUPPORT", 13, 1, sizeof(fattr4_aclsupport), FATTR4_ATTR_READ}
+  "FATTR4_ACLSUPPORT", 13, 0, sizeof(fattr4_aclsupport), FATTR4_ATTR_READ}
   ,
   {
   "FATTR4_ARCHIVE", 14, 1, sizeof(fattr4_archive), FATTR4_ATTR_READ_WRITE}

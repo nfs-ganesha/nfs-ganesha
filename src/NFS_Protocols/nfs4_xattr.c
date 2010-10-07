@@ -1005,6 +1005,29 @@ nfsstat4 nfs4_fh_to_xattrfh(nfs_fh4 * pfhin, nfs_fh4 * pfhout)
   return NFS4_OK;
 }                               /* nfs4_fh_to_xattrfh */
 
+/** 
+ * nfs4_xattrfh_to_fh: builds the fh from the xattrs ghost directory 
+ *
+ * @param pfhin  [IN]  input file handle 
+ * @param pfhout [OUT] output file handle
+ *
+ * @return NFS4_OK 
+ *
+ */
+nfsstat4 nfs4_xattrfh_to_fh(nfs_fh4 * pfhin, nfs_fh4 * pfhout)
+{
+  file_handle_v4_t *pfile_handle = NULL;
+
+  memcpy(pfhout->nfs_fh4_val, pfhin->nfs_fh4_val, pfhin->nfs_fh4_len);
+
+  pfile_handle = (file_handle_v4_t *) (pfhout->nfs_fh4_val);
+
+  pfile_handle->xattr_pos = 0;  /**< 0 = real filehandle */
+
+  return NFS4_OK;
+}                               /* nfs4_fh_to_xattrfh */
+
+
 /**
  * nfs4_op_getattr_xattr: Gets attributes for xattrs objects
  * 
@@ -1172,6 +1195,8 @@ int nfs4_op_lookupp_xattr(struct nfs_argop4 *op,
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lookup_xattr";
 
   resp->resop = NFS4_OP_LOOKUPP;
+
+  res_LOOKUPP4.status = nfs4_xattrfh_to_fh(&(data->currentFH), &(data->currentFH));
 
   res_LOOKUPP4.status = NFS4_OK;
   return NFS4_OK;
