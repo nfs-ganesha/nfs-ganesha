@@ -64,7 +64,7 @@
 
 extern nfs_parameter_t nfs_param;
 
-#define PORT "10401"
+#define DEFAULT_PORT "10401"
 
 #define BACKLOG 10
 
@@ -261,6 +261,8 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
   config_item_t block;
   config_item_t item;
 
+  strncpy(out_parameter->stat_export.export_stat_port, DEFAULT_PORT, MAXPORTLEN);
+
    /* Get the config BLOCK */
  if((block = config_FindItemByName(in_config, CONF_STAT_EXPORTER_LABEL)) == NULL)
     {
@@ -302,7 +304,7 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
         }
       else if(!STRCMP(key_name, "Port"))
         {
-	  out_parameter->stat_export.export_stat_port = atoi(key_value);
+	  strncpy(out_parameter->stat_export.export_stat_port, key_value, MAXPORTLEN);
         }
       else
         {
@@ -598,12 +600,11 @@ void *stat_exporter_thread(void *addr)
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE;
 
-  if((rc = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0)
+  if((rc = getaddrinfo(NULL, nfs_param.extern_param.stat_export.export_stat_port, &hints, &servinfo)) != 0)
     {
       LogCrit(COMPONENT_MAIN, "getaddrinfo: %s\n", gai_strerror(rc));
       return NULL;
     }
-
   for(p = servinfo; p != NULL; p = p->ai_next)
     {
       if((sockfd = socket(p->ai_family, p->ai_socktype,
@@ -637,13 +638,11 @@ void *stat_exporter_thread(void *addr)
     }
 
   freeaddrinfo(servinfo);
-
   if((rc = listen(sockfd, BACKLOG)) == -1)
     {
       LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
       return NULL;
     }
-
   LogEvent(COMPONENT_MAIN, "Stat export server: Waiting for connections...");
 
   while(1)

@@ -3,6 +3,8 @@
 
 #include "nfs_exports.h"
 
+#define MAXPORTLEN 15
+
 typedef struct snmp_adm_parameter__
 {
   char snmp_agentx_socket[MAXPATHLEN];
@@ -23,7 +25,7 @@ typedef struct snmp_adm_parameter__
 
 typedef struct stat_exporter_parameter__
 {
-  int export_stat_port;
+  char export_stat_port[MAXPORTLEN];
   exportlist_client_t allowed_clients;
 } stat_exporter_parameter_t;
 

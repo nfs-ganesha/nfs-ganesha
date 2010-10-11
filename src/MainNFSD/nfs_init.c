@@ -1034,6 +1034,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
     }
 #endif                          /* _SNMP_ADM_ACTIVE */
 
+#ifdef _USE_STAT_EXPORTER
   if(get_stat_exporter_conf(config_struct, &p_nfs_param->extern_param) != 0)
     {
       LogCrit(COMPONENT_INIT, "Error loading STAT_EXPORTER configuration");
@@ -1041,6 +1042,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
     }
   else
       LogDebug(COMPONENT_INIT, "STAT_EXPORTER configuration read from config file");
+#endif                          /* _USE_STAT_EXPORTER */
 
   /* Load export entries from parsed file
    * returns the number of export entries.
@@ -1298,6 +1300,7 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
     }
   LogEvent(COMPONENT_INIT, "statistics thread was started successfully");
 
+#ifdef _USE_STAT_EXPORTER
   /* Starting the stat exporter thread */
   if((rc =
       pthread_create(&stat_exporter_thrid, &attr_thr, stat_exporter_thread, (void *)workers_data)) != 0)
@@ -1306,6 +1309,7 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
       exit(1);
     }
   LogEvent(COMPONENT_INIT, "statistics exporter thread was started successfully");
+#endif      /*  _USE_STAT_EXPORTER */
 
   /* Starting the nfs file content gc thread  */
   if((rc =
