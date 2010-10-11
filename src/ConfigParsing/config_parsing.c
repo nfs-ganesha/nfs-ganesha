@@ -359,6 +359,7 @@ config_item_t config_FindItemByName(config_file_t config, const char *name)
   list = *config_struct->syntax_tree;
 
   strncpy(tmp_name, name, MAXSTRLEN);
+  tmp_name[MAXSTRLEN - 1] = '\0';
   current = tmp_name;
 
   while(current)
@@ -429,6 +430,7 @@ config_item_t config_GetItemByName(config_item_t block, const char *name)
   list = curr_block->item.block.block_content;
 
   strncpy(tmp_name, name, MAXSTRLEN);
+  tmp_name[MAXSTRLEN - 1] = '\0';
   current = tmp_name;
 
   while(current)
