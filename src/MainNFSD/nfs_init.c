@@ -101,6 +101,7 @@ pthread_t rpc_dispatcher_thrid;
 pthread_t stat_thrid;
 pthread_t admin_thrid;
 pthread_t fcc_gc_thrid;
+pthread_t sigmgr_thrid ;
 
 char config_path[MAXPATHLEN];
 
@@ -111,6 +112,85 @@ extern char my_config_path[MAXPATHLEN];
 bool_t Svcauth_gss_set_svc_name(gss_name_t name);
 int Gss_ctx_Hash_Init(nfs_krb5_parameter_t param);
 #endif
+
+/* States managed by signal handler */
+unsigned int sigusr1_triggered = FALSE ;
+unsigned int sigterm_triggered = FALSE ;
+unsigned int sighup_triggered = FALSE ;
+
+static void operate_on_sigterm()
+{
+  static int once = 0 ;
+
+  LogEvent(COMPONENT_MAIN, "SIGTERM_HANDLER: Received SIGTERM.... initiating daemon shutdown");
+
+  if( once == 0 )
+   {
+     once += 1 ;
+     nfs_stop();
+   }
+}                               /* action_sigterm */
+
+static void operate_on_sighup()
+{
+  LogEvent(COMPONENT_MAIN, "SIGHUP_HANDLER: Received SIGHUP.... initiating export list reload");
+
+  admin_replace_exports();
+}                               /* action_sigsigh */
+
+static void operate_on_sigusr1()
+{
+  LogEvent(COMPONENT_MAIN, "SIGUSR1_HANDLER: Received SIGUSR1.... signal will be managed");
+
+  /* Set variable force_flush_by_signal that is used in file content cache gc thread */
+  if(force_flush_by_signal)
+    {
+      LogEvent(COMPONENT_MAIN, "SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
+      force_flush_by_signal = FALSE;
+    }
+  else
+    {
+      LogEvent(COMPONENT_MAIN, "SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
+      force_flush_by_signal = TRUE;
+    }
+}                               /* action_sigusr1 */
+
+/**
+ *
+ * This thread is in charge of signal management 
+ *
+ * @param (unused)
+ * @return (never returns : never ending loop)
+ *
+ */
+void *sigmgr_thread( void * arg )
+{
+  while( 1 ) /* Never ending loop */
+   {
+     sleep( 1 ) ;
+
+     if( sigusr1_triggered == TRUE )
+      {
+        operate_on_sigusr1() ;
+        sigusr1_triggered = FALSE ;
+      }
+
+     if( sigterm_triggered == TRUE )
+      {
+        operate_on_sigterm() ;
+        sigterm_triggered = FALSE ;
+      }
+
+     if( sighup_triggered == TRUE )
+      {
+        operate_on_sighup() ;
+        sighup_triggered = FALSE ;
+      }
+   }
+
+  /* This statement is never reached */
+  return NULL ;
+} /* sigmgr_thread */
 
 /**
  * nfs_prereq_init:
@@ -1245,6 +1325,13 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
   if( fridgethr_init() != 0 )
    {
      LogCrit( COMPONENT_INIT, "can't run fridgethr_init... exiting");
+     exit( 1 ) ;
+   }
+
+  /* Starting the thread dedicated to signal handling */
+  if( ( rc = pthread_create( &sigmgr_thrid, &attr_thr, sigmgr_thread, (void *)NULL ) ) != 0 )
+   {
+     LogError( COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc ) ;
      exit( 1 ) ;
    }
 

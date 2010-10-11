@@ -538,9 +538,14 @@ void *worker_thread(void *IndexArg);
 void *rpc_dispatcher_thread(void *arg);
 void *admin_thread(void *arg);
 void *stats_thread(void *IndexArg);
+void *sigmgr_thread(void *arg);
 int stats_snmp(nfs_worker_data_t * workers_data_local);
 void *file_content_gc_thread(void *IndexArg);
 void *nfs_file_content_flush_thread(void *flush_data_arg);
+
+void nfs_operate_on_sigusr1() ;
+void nfs_operate_on_sigterm() ;
+void nfs_operate_on_sighup() ;
 
 int nfs_Init_svc(void);
 int nfs_Init_admin_data(nfs_admin_data_t * pdata);
