@@ -394,3 +394,4 @@
           of returning NFS4ERR_ATTR_NOTSUPP
         - Bug Fix : locks_held counter was badly managed in OP4_LOCKU
         - Bug Fix : OP4_DESTROY_SESSION returned bad session when session was successfully destroyed.
+	- Bug Fix : FSAL_XFS:fsal_create always made files owned by root.
