@@ -137,6 +137,7 @@ fsal_status_t PROXYFSAL_BuildExportContext(proxyfsal_export_context_t * p_export
 
       /* copy the option string (because it is modified by getsubopt call) */
       strncpy(subopts, fs_specific_options, 256);
+      subopts[255] = '\0';
       p_subop = subopts;        /* set initial pointer */
 
       /* parse the FS specific option string */

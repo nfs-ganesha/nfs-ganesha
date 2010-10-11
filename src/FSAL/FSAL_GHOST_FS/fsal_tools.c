@@ -626,6 +626,7 @@ static int ParseGhostFsDirDef(char *string, ghostfs_dir_def_t * p_dir)
   int owner, group;
 
   strncpy(buff, string, 2048);
+  buff[2047] = '\0';
 
   path = strtok(buff, ":");
   if(path == NULL)
