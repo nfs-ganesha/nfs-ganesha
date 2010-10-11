@@ -51,6 +51,8 @@ typedef struct __nfs_start_info
   int lw_mark_trigger;
 } nfs_start_info_t;
 
+void *sigmgr_thread( void * arg ) ;
+
 /**
  * nfs_prereq_init:
  * Initialize NFSd prerequisites: memory management, logging, ...
