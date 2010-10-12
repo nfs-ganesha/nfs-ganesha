@@ -29,11 +29,15 @@
 
 #include <assert.h>
 
+#ifdef DEBUG
 #define ASSERT_FAIL(EX, FILE, LINE) \
         do { \
         	fprintf(stderr, "%s:%i: %s: Assertion `%s` failed.\n", FILE, LINE, __PRETTY_FUNCTION__, EX); \
-        	abort(); \
+                assert(0); \
         } while(0)
+#else
+#define ASSERT_FAIL(EX, FILE, LINE) ((void)0)
+#endif
 
 #define VERIFY(EX) do { if(!(EX)) ASSERT_FAIL(#EX, __FILE__, __LINE__); } while(0)
 

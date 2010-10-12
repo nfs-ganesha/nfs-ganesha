@@ -7,55 +7,23 @@
 #include <sys/vfs.h>
 #include <sys/systm.h>
 #include <libzfs.h>
+#include <libzfs_impl.h>
+#include <sys/dmu_objset.h>
 #include <sys/zfs_znode.h>
 #include <sys/mode.h>
 #include <sys/fcntl.h>
 
+#include <limits.h>
+
 #include "zfs_ioctl.h"
+#include <ctype.h>
 
 #include "libzfswrap.h"
+#include "libzfswrap_utils.h"
 
 extern int zfs_vfsinit(int fstype, char *name);
 
 static int getattr_helper(libzfswrap_vfs_t *p_vfs, creden_t *p_cred, inogen_t object, struct stat *p_stat, uint64_t *p_gen, int *p_type);
-
-static void flags2zfs(int i_flags, int *p_flags, int *p_mode)
-{
-        if(i_flags & O_WRONLY)
-        {
-                *p_mode = VWRITE;
-                *p_flags = FWRITE;
-        }
-        else if(i_flags & O_RDWR)
-        {
-               *p_mode = VREAD | VWRITE;
-               *p_flags = FREAD | FWRITE;
-        }
-        else
-        {
-                *p_mode = VREAD;
-                *p_flags = FREAD;
-        }
-
-        if(i_flags & O_CREAT)
-                *p_flags |= FCREAT;
-        if(i_flags & O_SYNC)
-                *p_flags |= FSYNC;
-        if(i_flags & O_DSYNC)
-                *p_flags |= FDSYNC;
-        if(i_flags & O_RSYNC)
-                *p_flags |= FRSYNC;
-        if(i_flags & O_APPEND)
-                *p_flags |= FAPPEND;
-        if(i_flags & O_LARGEFILE)
-                *p_flags |= FOFFMAX;
-        if(i_flags & O_NOFOLLOW)
-                *p_flags |= FNOFOLLOW;
-        if(i_flags & O_TRUNC)
-                *p_flags |= FTRUNC;
-        if(i_flags & O_EXCL)
-                *p_flags |= FEXCL;
-}
 
 /**
  * Initialize the libzfswrap library
@@ -63,6 +31,9 @@ static void flags2zfs(int i_flags, int *p_flags, int *p_mode)
  */
 libzfswrap_handle_t *libzfswrap_init()
 {
+        // Create the cache directory if it does not exist
+        mkdir(ZPOOL_CACHE_DIR, 0700);
+
         init_mmap();
         libsolkerncompat_init();
         zfs_vfsinit(zfstype, NULL);
@@ -77,12 +48,725 @@ libzfswrap_handle_t *libzfswrap_init()
 
 /**
  * Uninitialize the library
- * @param p_zfsw: the libzfswrap handle
+ * @param p_zhd: the libzfswrap handle
  */
 void libzfswrap_exit(libzfswrap_handle_t *p_zhd)
 {
         libzfs_fini((libzfs_handle_t*)p_zhd);
         libsolkerncompat_exit();
+}
+
+/**
+ * Create a zpool
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_name: the name of the zpool
+ * @param psz_type: type of the zpool (mirror, raidz, raidz([1,255])
+ * @param ppsz_error: the error message (if any)
+ * @return 0 on success, the error code overwise
+ */
+int libzfswrap_zpool_create(libzfswrap_handle_t *p_zhd, const char *psz_name, const char *psz_type,
+                            const char **ppsz_dev, size_t i_dev, const char **ppsz_error)
+{
+        int i_error;
+        nvlist_t *pnv_root    = NULL;
+        nvlist_t *pnv_fsprops = NULL;
+        nvlist_t *pnv_props   = NULL;
+
+        // Create the zpool
+        if(!(pnv_root = lzwu_make_root_vdev(psz_type, ppsz_dev, i_dev, ppsz_error)))
+                return 1;
+
+        i_error = libzfs_zpool_create((libzfs_handle_t*)p_zhd, psz_name, pnv_root,
+                                      pnv_props, pnv_fsprops, ppsz_error);
+
+        nvlist_free(pnv_props);
+        nvlist_free(pnv_fsprops);
+        nvlist_free(pnv_root);
+        return i_error;
+}
+
+/**
+ * Destroy the given zpool
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_name: zpool name
+ * @param b_force: force the unmount process or not
+ * @param ppsz_error: the error message (if any)
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zpool_destroy(libzfswrap_handle_t *p_zhd, const char *psz_name, int b_force, const char **ppsz_error)
+{
+        zpool_handle_t *p_zpool;
+        int i_error;
+
+        /** Open the zpool */
+        if((p_zpool = libzfs_zpool_open_canfail((libzfs_handle_t*)p_zhd, psz_name, ppsz_error)) == NULL)
+        {
+                /** If the name contain a '/' redirect the user to zfs_destroy */
+                if(strchr(psz_name, '/') != NULL)
+                        *ppsz_error = "the pool name cannot contain a '/'";
+                return 1;
+        }
+
+        i_error = spa_destroy((char*)psz_name);
+        libzfs_zpool_close(p_zpool);
+
+        return i_error;
+}
+
+/**
+ * Add to the given zpool the following device
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_zpool: the zpool name
+ * @param psz_type: type of the device group to add
+ * @param ppsz_dev: the list of devices
+ * @param i_dev: the number of devices
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zpool_add(libzfswrap_handle_t *p_zhd, const char *psz_zpool, const char *psz_type, const char **ppsz_dev, size_t i_dev, const char **ppsz_error)
+{
+        zpool_handle_t *p_zpool;
+        nvlist_t *pnv_root;
+        int i_error;
+
+        if(!(p_zpool = libzfs_zpool_open((libzfs_handle_t*)p_zhd, psz_zpool, ppsz_error)))
+                return 1;
+
+        if(!(pnv_root = lzwu_make_root_vdev(psz_type, ppsz_dev, i_dev, ppsz_error)))
+        {
+                libzfs_zpool_close(p_zpool);
+                return 2;
+        }
+
+        i_error = libzfs_zpool_vdev_add(psz_zpool, pnv_root);
+
+        nvlist_free(pnv_root);
+        libzfs_zpool_close(p_zpool);
+
+        return i_error;
+}
+
+/**
+ * Remove the given vdevs from the zpool
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_zpool: the zpool name
+ * @param ppsz_vdevs: the vdevs
+ * @param i_vdevs: the number of vdevs
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zpool_remove(libzfswrap_handle_t *p_zhd, const char *psz_zpool, const char **ppsz_dev, size_t i_vdevs, const char **ppsz_error)
+{
+        zpool_handle_t *p_zpool;
+        size_t i;
+        int i_error;
+
+        if(!(p_zpool = libzfs_zpool_open((libzfs_handle_t*)p_zhd, psz_zpool, ppsz_error)))
+                return 1;
+
+        for(i = 0; i < i_vdevs; i++)
+        {
+                if((i_error = libzfs_zpool_vdev_remove(p_zpool, ppsz_dev[i], ppsz_error)))
+                        break;
+        }
+
+        libzfs_zpool_close(p_zpool);
+
+        return i_error;
+}
+
+/**
+ * Attach the given device to the given vdev in the zpool
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_zpool: the zpool name
+ * @param psz_current_dev: the device to use as an attachment point
+ * @param psz_new_dev: the device to attach
+ * @param i_replacing: replacing the device ?
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zpool_attach(libzfswrap_handle_t *p_zhd, const char *psz_zpool, const char *psz_current_dev, const char *psz_new_dev, int i_replacing, const char **ppsz_error)
+{
+        zpool_handle_t *p_zpool;
+        nvlist_t *pnv_root;
+        int i_error;
+
+        if(!(p_zpool = libzfs_zpool_open((libzfs_handle_t*)p_zhd, psz_zpool, ppsz_error)))
+                return 1;
+
+        if(!(pnv_root = lzwu_make_root_vdev("", &psz_new_dev, 1, ppsz_error)))
+        {
+                libzfs_zpool_close(p_zpool);
+                return 2;
+        }
+
+        i_error = libzfs_zpool_vdev_attach(p_zpool, psz_current_dev, pnv_root, i_replacing, ppsz_error);
+
+        nvlist_free(pnv_root);
+        libzfs_zpool_close(p_zpool);
+
+        return i_error;
+}
+
+/**
+ * Detach the given vdevs from the zpool
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_zpool: the zpool name
+ * @param psz_dev: the device to detach
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zpool_detach(libzfswrap_handle_t *p_zhd, const char *psz_zpool, const char *psz_dev, const char **ppsz_error)
+{
+        zpool_handle_t *p_zpool;
+        int i_error;
+
+        if(!(p_zpool = libzfs_zpool_open((libzfs_handle_t*)p_zhd, psz_zpool, ppsz_error)))
+                return 1;
+
+        i_error = libzfs_zpool_vdev_detach(p_zpool, psz_dev, ppsz_error);
+
+        libzfs_zpool_close(p_zpool);
+        return i_error;
+}
+
+/**
+ * Callback called for each pool, that print the information
+ * @param p_zpool: a pointer to the current zpool
+ * @param p_data: a obscure data pointer (the zpool property list)
+ * @return 0
+ */
+static int libzfswrap_zpool_list_callback(zpool_handle_t *p_zpool, void *p_data)
+{
+        zprop_list_t *p_zpl = (zprop_list_t*)p_data;
+        char property[ZPOOL_MAXPROPLEN];
+        char *psz_prop;
+        boolean_t first = B_TRUE;
+
+        for(; p_zpl; p_zpl = p_zpl->pl_next)
+        {
+                boolean_t right_justify = B_FALSE;
+                if(first)
+                        first = B_FALSE;
+                else
+                        printf("  ");
+
+                if(p_zpl->pl_prop != ZPROP_INVAL)
+                {
+                        if(zpool_get_prop(p_zpool, p_zpl->pl_prop, property, sizeof(property), NULL))
+                                psz_prop = "-";
+                        else
+                                psz_prop = property;
+                        right_justify = zpool_prop_align_right(p_zpl->pl_prop);
+                }
+                else
+                        psz_prop = "-";
+
+                // Print the string
+                if(p_zpl->pl_next == NULL && !right_justify)
+                        printf("%s", psz_prop);
+                else if(right_justify)
+                        printf("%*s", (int)p_zpl->pl_width, psz_prop);
+                else
+                        printf("%-*s", (int)p_zpl->pl_width, psz_prop);
+        }
+        printf("\n");
+
+        return 0;
+}
+
+/**
+ * List the available zpools
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_props: the properties to retrieve
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zpool_list(libzfswrap_handle_t *p_zhd, const char *psz_props, const char **ppsz_error)
+{
+        zprop_list_t *p_zprop_list = NULL;
+        static char psz_default_props[] = "name,size,allocated,free,capacity,dedupratio,health,altroot";
+        if(zprop_get_list((libzfs_handle_t*)p_zhd, psz_props ? psz_props : psz_default_props,
+                          &p_zprop_list, ZFS_TYPE_POOL))
+        {
+                *ppsz_error = "unable to get the list of properties";
+                return 1;
+        }
+
+        lzwu_zpool_print_list_header(p_zprop_list);
+        libzfs_zpool_iter((libzfs_handle_t*)p_zhd, libzfswrap_zpool_list_callback, p_zprop_list);
+        zprop_free_list(p_zprop_list);
+
+        return 0;
+}
+
+static int libzfswrap_zpool_status_callback(zpool_handle_t *zhp, void *data)
+{
+        status_cbdata_t *cbp = data;
+        nvlist_t *config, *nvroot;
+        char *msgid;
+        int reason;
+        const char *health;
+        uint_t c;
+        vdev_stat_t *vs;
+
+        config = zpool_get_config(zhp, NULL);
+        reason = zpool_get_status(zhp, &msgid);
+        cbp->cb_count++;
+
+        /*
+         * If we were given 'zpool status -x', only report those pools with
+         * problems.
+         */
+        if(reason == ZPOOL_STATUS_OK && cbp->cb_explain)
+        {
+                if(!cbp->cb_allpools)
+                {
+                        printf("pool '%s' is healthy\n", zpool_get_name(zhp));
+                        if(cbp->cb_first)
+                                cbp->cb_first = B_FALSE;
+                }
+                return 0;
+        }
+
+        if (cbp->cb_first)
+                cbp->cb_first = B_FALSE;
+        else
+                printf("\n");
+
+        assert(nvlist_lookup_nvlist(config, ZPOOL_CONFIG_VDEV_TREE, &nvroot) == 0);
+        assert(nvlist_lookup_uint64_array(nvroot, ZPOOL_CONFIG_STATS,
+               (uint64_t **)&vs, &c) == 0);
+        health = zpool_state_to_name(vs->vs_state, vs->vs_aux);
+
+        printf("  pool: %s\n", zpool_get_name(zhp));
+        printf(" state: %s\n", health);
+
+        switch (reason)
+        {
+        case ZPOOL_STATUS_MISSING_DEV_R:
+                printf("status: One or more devices could not be opened. "
+                       "Sufficient replicas exist for\n\tthe pool to "
+                       "continue functioning in a degraded state.\n");
+                printf("action: Attach the missing device and "
+                       "online it using 'zpool online'.\n");
+                break;
+
+        case ZPOOL_STATUS_MISSING_DEV_NR:
+                printf("status: One or more devices could not "
+                       "be opened.  There are insufficient\n\treplicas for the "
+                       "pool to continue functioning.\n");
+                printf("action: Attach the missing device and "
+                       "online it using 'zpool online'.\n");
+                break;
+
+        case ZPOOL_STATUS_CORRUPT_LABEL_R:
+                printf("status: One or more devices could not "
+                       "be used because the label is missing or\n\tinvalid.  "
+                       "Sufficient replicas exist for the pool to continue\n\t"
+                       "functioning in a degraded state.\n");
+                printf("action: Replace the device using 'zpool replace'.\n");
+                break;
+
+        case ZPOOL_STATUS_CORRUPT_LABEL_NR:
+                printf("status: One or more devices could not "
+                       "be used because the label is missing \n\tor invalid.  "
+                       "There are insufficient replicas for the pool to "
+                       "continue\n\tfunctioning.\n");
+                zpool_explain_recover(zpool_get_handle(zhp),
+                    zpool_get_name(zhp), reason, config);
+                break;
+
+        case ZPOOL_STATUS_FAILING_DEV:
+                printf("status: One or more devices has "
+                       "experienced an unrecoverable error.  An\n\tattempt was "
+                       "made to correct the error.  Applications are "
+                       "unaffected.\n");
+                printf("action: Determine if the device needs "
+                       "to be replaced, and clear the errors\n\tusing "
+                       "'zpool clear' or replace the device with 'zpool "
+                       "replace'.\n");
+                break;
+
+        case ZPOOL_STATUS_OFFLINE_DEV:
+                printf("status: One or more devices has "
+                       "been taken offline by the administrator.\n\tSufficient "
+                       "replicas exist for the pool to continue functioning in "
+                       "a\n\tdegraded state.\n");
+                printf("action: Online the device using "
+                       "'zpool online' or replace the device with\n\t'zpool "
+                       "replace'.\n");
+                break;
+
+        case ZPOOL_STATUS_REMOVED_DEV:
+                printf("status: One or more devices has "
+                       "been removed by the administrator.\n\tSufficient "
+                       "replicas exist for the pool to continue functioning in "
+                       "a\n\tdegraded state.\n");
+                printf("action: Online the device using "
+                       "'zpool online' or replace the device with\n\t'zpool "
+                       "replace'.\n");
+                break;
+
+
+        case ZPOOL_STATUS_RESILVERING:
+                printf("status: One or more devices is "
+                       "currently being resilvered.  The pool will\n\tcontinue "
+                       "to function, possibly in a degraded state.\n");
+                printf("action: Wait for the resilver to complete.\n");
+                break;
+
+        case ZPOOL_STATUS_CORRUPT_DATA:
+                printf("status: One or more devices has "
+                       "experienced an error resulting in data\n\tcorruption.  "
+                       "Applications may be affected.\n");
+                printf("action: Restore the file in question "
+                       "if possible.  Otherwise restore the\n\tentire pool from "
+                       "backup.\n");
+                break;
+
+        case ZPOOL_STATUS_CORRUPT_POOL:
+                printf("status: The pool metadata is corrupted "
+                       "and the pool cannot be opened.\n");
+                zpool_explain_recover(zpool_get_handle(zhp),
+                    zpool_get_name(zhp), reason, config);
+                break;
+
+        case ZPOOL_STATUS_VERSION_OLDER:
+                printf("status: The pool is formatted using an "
+                       "older on-disk format.  The pool can\n\tstill be used, but "
+                       "some features are unavailable.\n");
+                printf("action: Upgrade the pool using 'zpool "
+                       "upgrade'.  Once this is done, the\n\tpool will no longer "
+                       "be accessible on older software versions.\n");
+                break;
+
+        case ZPOOL_STATUS_VERSION_NEWER:
+                printf("status: The pool has been upgraded to a "
+                       "newer, incompatible on-disk version.\n\tThe pool cannot "
+                       "be accessed on this system.\n");
+                printf("action: Access the pool from a system "
+                       "running more recent software, or\n\trestore the pool from "
+                       "backup.\n");
+                break;
+
+        case ZPOOL_STATUS_FAULTED_DEV_R:
+                printf("status: One or more devices are "
+                       "faulted in response to persistent errors.\n\tSufficient "
+                       "replicas exist for the pool to continue functioning "
+                       "in a\n\tdegraded state.\n");
+                printf("action: Replace the faulted device, "
+                       "or use 'zpool clear' to mark the device\n\trepaired.\n");
+                break;
+
+        case ZPOOL_STATUS_FAULTED_DEV_NR:
+                printf("status: One or more devices are "
+                       "faulted in response to persistent errors.  There are "
+                       "insufficient replicas for the pool to\n\tcontinue "
+                       "functioning.\n");
+                printf("action: Destroy and re-create the pool "
+                       "from a backup source.  Manually marking the device\n"
+                       "\trepaired using 'zpool clear' may allow some data "
+                       "to be recovered.\n");
+                break;
+
+        case ZPOOL_STATUS_IO_FAILURE_WAIT:
+        case ZPOOL_STATUS_IO_FAILURE_CONTINUE:
+                printf("status: One or more devices are "
+                       "faulted in response to IO failures.\n");
+                printf("action: Make sure the affected devices "
+                       "are connected, then run 'zpool clear'.\n");
+                break;
+
+        case ZPOOL_STATUS_BAD_LOG:
+                printf("status: An intent log record "
+                       "could not be read.\n"
+                       "\tWaiting for adminstrator intervention to fix the "
+                       "faulted pool.\n");
+                printf("action: Either restore the affected "
+                       "device(s) and run 'zpool online',\n"
+                       "\tor ignore the intent log records by running "
+                       "'zpool clear'.\n");
+                break;
+
+        default:
+                /*
+                 * The remaining errors can't actually be generated, yet.
+                 */
+                assert(reason == ZPOOL_STATUS_OK);
+        }
+
+        if(msgid != NULL)
+                printf("   see: http://www.sun.com/msg/%s\n", msgid);
+
+        if(config != NULL)
+        {
+                int namewidth;
+                uint64_t nerr;
+                nvlist_t **spares, **l2cache;
+                uint_t nspares, nl2cache;
+
+
+                printf(" scrub: ");
+                lzwu_zpool_print_scrub_status(nvroot);
+
+                namewidth = lzwu_zpool_max_width(cbp->p_zhd, zhp, nvroot, 0, 0);
+                if(namewidth < 10)
+                        namewidth = 10;
+
+                printf("config:\n\n");
+                printf("\t%-*s  %-8s %5s %5s %5s\n", namewidth,
+                       "NAME", "STATE", "READ", "WRITE", "CKSUM");
+                lzwu_zpool_print_status_config(cbp->p_zhd, zhp, zpool_get_name(zhp), nvroot, namewidth, 0, B_FALSE);
+                if(lzwu_num_logs(nvroot) > 0)
+                        lzwu_print_logs(cbp->p_zhd, zhp, nvroot, namewidth, B_TRUE);
+                if(nvlist_lookup_nvlist_array(nvroot, ZPOOL_CONFIG_L2CACHE,
+                   &l2cache, &nl2cache) == 0)
+                        lzwu_print_l2cache(cbp->p_zhd, zhp, l2cache, nl2cache, namewidth);
+
+                if(nvlist_lookup_nvlist_array(nvroot, ZPOOL_CONFIG_SPARES,
+                   &spares, &nspares) == 0)
+                        lzwu_print_spares(cbp->p_zhd, zhp, spares, nspares, namewidth);
+
+                if(nvlist_lookup_uint64(config, ZPOOL_CONFIG_ERRCOUNT, &nerr) == 0)
+                {
+                        nvlist_t *nverrlist = NULL;
+
+                        /*
+                         * If the approximate error count is small, get a
+                         * precise count by fetching the entire log and
+                         * uniquifying the results.
+                         */
+                        if (nerr > 0 && nerr < 100 && !cbp->cb_verbose &&
+                            zpool_get_errlog(zhp, &nverrlist) == 0) {
+                                nvpair_t *elem;
+
+                                elem = NULL;
+                                nerr = 0;
+                                while ((elem = nvlist_next_nvpair(nverrlist,
+                                    elem)) != NULL) {
+                                        nerr++;
+                                }
+                        }
+                        nvlist_free(nverrlist);
+
+                        printf("\n");
+
+                        if(nerr == 0)
+                                printf("errors: No known data errors\n");
+                        else if (!cbp->cb_verbose)
+                                printf("errors: %llu data errors, use '-v' for a list\n",
+                                       (u_longlong_t)nerr);
+                        else
+                                lzwu_print_error_log(zhp);
+                }
+
+                if(cbp->cb_dedup_stats)
+                        lzwu_print_dedup_stats(config);
+        }
+        else
+        {
+                printf("config: The configuration cannot be determined.\n");
+        }
+        return (0);
+}
+
+/**
+ * Print the status of the available zpools
+ * @param p_zhd: the libzfswrap handle
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zpool_status(libzfswrap_handle_t *p_zhd, const char **ppsz_error)
+{
+        status_cbdata_t cb_data;
+        cb_data.cb_count = 0;
+        cb_data.cb_allpools = B_FALSE;
+        cb_data.cb_verbose = B_FALSE;
+        cb_data.cb_explain = B_FALSE;
+        cb_data.cb_first = B_TRUE;
+        cb_data.cb_dedup_stats = B_FALSE;
+        cb_data.p_zhd = (libzfs_handle_t*)p_zhd;
+
+        libzfs_zpool_iter((libzfs_handle_t*)p_zhd, libzfswrap_zpool_status_callback, &cb_data);
+
+        return 0;
+}
+
+static int libzfswrap_zfs_list_callback(zfs_handle_t *p_zfs, void *data)
+{
+        zprop_list_t *pl = (zprop_list_t*)data;
+
+        boolean_t first = B_TRUE;
+        char property[ZFS_MAXPROPLEN];
+        nvlist_t *userprops = zfs_get_user_props(p_zfs);
+        nvlist_t *propval;
+        char *propstr;
+        boolean_t right_justify;
+        int width;
+
+        for(; pl != NULL; pl = pl->pl_next)
+        {
+                if(!first)
+                        printf("  ");
+                else
+                        first = B_FALSE;
+
+                if(pl->pl_prop != ZPROP_INVAL)
+                {
+                        if(zfs_prop_get(p_zfs, pl->pl_prop, property,
+                            sizeof (property), NULL, NULL, 0, B_FALSE) != 0)
+                                propstr = "-";
+                        else
+                                propstr = property;
+
+                        right_justify = zfs_prop_align_right(pl->pl_prop);
+                }
+                else if(zfs_prop_userquota(pl->pl_user_prop))
+                {
+                        if(zfs_prop_get_userquota(p_zfs, pl->pl_user_prop,
+                            property, sizeof (property), B_FALSE) != 0)
+                                propstr = "-";
+                        else
+                                propstr = property;
+                        right_justify = B_TRUE;
+                }
+                else
+                {
+                        if(nvlist_lookup_nvlist(userprops,
+                            pl->pl_user_prop, &propval) != 0)
+                                propstr = "-";
+                        else
+                                verify(nvlist_lookup_string(propval,
+                                    ZPROP_VALUE, &propstr) == 0);
+                        right_justify = B_FALSE;
+                }
+
+                width = pl->pl_width;
+
+                /*
+                 * If this is being called in scripted mode, or if this is the
+                 * last column and it is left-justified, don't include a width
+                 * format specifier.
+                 */
+                if((pl->pl_next == NULL && !right_justify))
+                        printf("%s", propstr);
+                else if(right_justify)
+                        printf("%*s", width, propstr);
+                else
+                        printf("%-*s", width, propstr);
+        }
+
+        printf("\n");
+
+        return 0;
+}
+
+/**
+ * Print the list of ZFS file systems and properties
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_props: the properties to retrieve
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zfs_list(libzfswrap_handle_t *p_zhd, const char *psz_props, const char **ppsz_error)
+{
+        zprop_list_t *p_zprop_list = NULL;
+        static char psz_default_props[] = "name,used,available,referenced,mountpoint";
+        if(zprop_get_list((libzfs_handle_t*)p_zhd, psz_props ? psz_props : psz_default_props,
+                          &p_zprop_list, ZFS_TYPE_DATASET))
+        {
+                *ppsz_error = "Unable to get the list of properties";
+                return 1;
+        }
+
+        lzwu_zfs_print_list_header(p_zprop_list);
+        libzfs_zfs_iter((libzfs_handle_t*)p_zhd, libzfswrap_zfs_list_callback, p_zprop_list, ppsz_error );
+        zprop_free_list(p_zprop_list);
+
+        return 0;
+}
+
+/**
+ * Create a snapshot of the given ZFS file system
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_zfs: name of the file system
+ * @param psz_snapshot: name of the snapshot
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zfs_snapshot(libzfswrap_handle_t *p_zhd, const char *psz_zfs, const char *psz_snapshot, const char **ppsz_error)
+{
+        zfs_handle_t *p_zfs;
+        int i_error;
+
+        /**@TODO: check the name of the filesystem and snapshot*/
+
+        if(!(p_zfs = libzfs_zfs_open((libzfs_handle_t*)p_zhd, psz_zfs, ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME, ppsz_error)))
+                return ENOENT;
+
+        if((i_error = dmu_objset_snapshot(p_zfs->zfs_name, (char*)psz_snapshot, NULL, 0)))
+                *ppsz_error = "Unable to create the snapshot";
+
+        libzfs_zfs_close(p_zfs);
+        return i_error;
+}
+
+/**
+ * List the available snapshots for the given zfs
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_zfs: name of the file system
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zfs_list_snapshot(libzfswrap_handle_t *p_zhd, const char *psz_zfs, const char **ppsz_error)
+{
+        zprop_list_t *p_zprop_list = NULL;
+        static char psz_default_props[] = "name,used,available,referenced,mountpoint";
+        if(zprop_get_list((libzfs_handle_t*)p_zhd, psz_default_props, &p_zprop_list, ZFS_TYPE_DATASET))
+        {
+                *ppsz_error = "Unable to get the list of properties";
+                return 1;
+        }
+
+        lzwu_zfs_print_list_header(p_zprop_list);
+
+        return libzfs_zfs_snapshot_iter((libzfs_handle_t*)p_zhd, psz_zfs, libzfswrap_zfs_list_callback, p_zprop_list, ppsz_error);
+}
+
+typedef struct
+{
+        char **ppsz_names;
+        size_t i_num;
+}callback_data_t;
+
+static int libzfswrap_zfs_get_list_snapshots_callback(zfs_handle_t *p_zfs, void *data)
+{
+        callback_data_t *p_cb = (callback_data_t*)data;
+        p_cb->i_num++;
+        p_cb->ppsz_names = realloc(p_cb->ppsz_names, p_cb->i_num*sizeof(char*));
+        p_cb->ppsz_names[p_cb->i_num-1] = strdup(p_zfs->zfs_name);
+        return 0;
+}
+
+/**
+ * Return the list of snapshots for the given zfs in an array of strings
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_zfs: name of the file system
+ * @param pppsz_snapshots: the array of snapshots names
+ * @param ppsz_error: the error message if any
+ * @return the number of snapshots in case of success, -1 overwise
+ */
+int libzfswrap_zfs_get_list_snapshots(libzfswrap_handle_t *p_zhd, const char *psz_zfs, char ***pppsz_snapshots, const char **ppsz_error)
+{
+        callback_data_t cb = { .ppsz_names = NULL, .i_num = 0 };
+        if(libzfs_zfs_snapshot_iter((libzfs_handle_t*)p_zhd, psz_zfs,
+                                    libzfswrap_zfs_get_list_snapshots_callback,
+                                    &cb, ppsz_error))
+                return -1;
+
+        *pppsz_snapshots = cb.ppsz_names;
+        return cb.i_num;
 }
 
 extern vfsops_t *zfs_vfsops;
@@ -248,11 +932,11 @@ int libzfswrap_lookup(libzfswrap_vfs_t *p_vfs, creden_t *p_cred, inogen_t parent
                 VN_RELE(p_parent_vnode);
                 ZFS_EXIT(p_zfsvfs);
                 return i_error;
-	}
+        }
 
-	p_object->inode = VTOZ(p_vnode)->z_id;
-	p_object->generation = VTOZ(p_vnode)->z_phys->zp_gen;
-	*p_type = VTTOIF(p_vnode->v_type);
+        p_object->inode = VTOZ(p_vnode)->z_id;
+        p_object->generation = VTOZ(p_vnode)->z_phys->zp_gen;
+        *p_type = VTTOIF(p_vnode->v_type);
 
         VN_RELE(p_vnode);
         VN_RELE(p_parent_vnode);
@@ -322,7 +1006,7 @@ int libzfswrap_open(libzfswrap_vfs_t *p_vfs, creden_t *p_cred, inogen_t object, 
 {
         zfsvfs_t *p_zfsvfs = ((vfs_t*)p_vfs)->vfs_data;
         int mode = 0, flags = 0, i_error;
-        flags2zfs(i_flags, &flags, &mode);
+        lzwu_flags2zfs(i_flags, &flags, &mode);
 
         znode_t *p_znode;
 
@@ -498,7 +1182,7 @@ int libzfswrap_readdir(libzfswrap_vfs_t *p_vfs, creden_t *p_cred, libzfswrap_vno
         uio.uio_llimit = RLIM64_INFINITY;
 
         off_t next_entry = *cookie;
-        int i_error, eofp = 0;
+        int eofp = 0;
         union {
                 char buf[DIRENT64_RECLEN(MAXNAMELEN)];
                 struct dirent64 dirent;
@@ -514,7 +1198,7 @@ int libzfswrap_readdir(libzfswrap_vfs_t *p_vfs, creden_t *p_cred, libzfswrap_vno
                 uio.uio_loffset = next_entry;
 
                 /* TODO: do only one call for more than one entry ? */
-                if((i_error = VOP_READDIR((vnode_t*)p_vnode, &uio, (cred_t*)p_cred, &eofp, NULL, 0)))
+                if(VOP_READDIR((vnode_t*)p_vnode, &uio, (cred_t*)p_cred, &eofp, NULL, 0))
                         break;
 
                 // End of directory ?
@@ -620,7 +1304,7 @@ static int getattr_helper(libzfswrap_vfs_t *p_vfs, creden_t *p_cred, inogen_t ob
         memset(p_stat, 0, sizeof(*p_stat));
 
         if(p_type)
-	        *p_type = VTTOIF(p_vnode->v_type);
+                *p_type = VTTOIF(p_vnode->v_type);
 
         if((i_error = VOP_GETATTR(p_vnode, &vattr, 0, (cred_t*)p_cred, NULL)))
         {
@@ -1032,7 +1716,6 @@ int libzfswrap_removexattr(libzfswrap_vfs_t *p_vfs, creden_t *p_cred, inogen_t o
         zfsvfs_t *p_zfsvfs = ((vfs_t*)p_vfs)->vfs_data;
         int i_error;
         vnode_t *p_vnode;
-        char *psz_value;
 
         ZFS_ENTER(p_zfsvfs);
         if((i_error = xattr_helper(p_zfsvfs, p_cred, object, &p_vnode)))
@@ -1139,7 +1822,7 @@ int libzfswrap_close(libzfswrap_vfs_t *p_vfs, creden_t *p_cred, libzfswrap_vnode
         zfsvfs_t *p_zfsvfs = ((vfs_t*)p_vfs)->vfs_data;
 
         int mode, flags, i_error;
-        flags2zfs(i_flags, &flags, &mode);
+        lzwu_flags2zfs(i_flags, &flags, &mode);
 
         ZFS_ENTER(p_zfsvfs);
         i_error = VOP_CLOSE((vnode_t*)p_vnode, flags, 1, (offset_t)0, (cred_t*)p_cred, NULL);
@@ -1195,7 +1878,7 @@ int libzfswrap_mkdir(libzfswrap_vfs_t *p_vfs, creden_t *p_cred, inogen_t parent,
                 return i_error;
         }
 
-	p_directory->inode = VTOZ(p_vnode)->z_id;
+        p_directory->inode = VTOZ(p_vnode)->z_id;
         p_directory->generation = VTOZ(p_vnode)->z_phys->zp_gen;
 
         VN_RELE(p_vnode);

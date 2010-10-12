@@ -60,6 +60,7 @@ void libsolkerncompat_init()
 
 	VERIFY(ncpus > 0 && physmem > 0);
 
+#if 0
 #ifdef DEBUG
 	printf("hostname = %s\n", utsname.nodename);
 	printf("hw_serial = %s\n", hw_serial);
@@ -68,7 +69,7 @@ void libsolkerncompat_init()
 	printf("pagesize = %li, pageshift: %i\n", _pagesize, _pageshift);
 	printf("pwd_buflen = %li, grp_buflen = %li\n\n", pwd_buflen, grp_buflen);
 #endif
-
+#endif
 	vnode_cache = kmem_cache_create("vnode_t", sizeof(vnode_t), 0, NULL, NULL, NULL, NULL, NULL, 0);
 	VERIFY(vnode_cache != NULL);
 

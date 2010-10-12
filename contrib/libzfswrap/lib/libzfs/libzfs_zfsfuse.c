@@ -146,6 +146,8 @@ int zfsfuse_sendfd(int sock, int fd)
 
 int zfsfuse_ioctl(int fd, int32_t request, void *arg)
 {
+printf("zfsfuse_ioctl => gonna crash sooner or later !!!\n");
+abort();
 	zfsfuse_cmd_t cmd;
 	int ret;
 

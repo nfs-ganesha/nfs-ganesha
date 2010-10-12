@@ -113,6 +113,22 @@ const char *hist_event_table[LOG_END] = {
 static int
 zpool_get_all_props(zpool_handle_t *zhp)
 {
+        spa_t *p_spa;
+        int i_error;
+
+        if((i_error = spa_open(zhp->zpool_name, &p_spa, FTAG)))
+        {
+                //TODO !!
+//                fprintf(stderr, "FIXME !!!\n");
+                return -1;
+        }
+        else
+        {
+                i_error = spa_prop_get(p_spa, &zhp->zpool_props);
+                spa_close(p_spa, FTAG);
+                return 0;
+        }
+#if 0 //libzfswrap
 	zfs_cmd_t zc = { 0 };
 	libzfs_handle_t *hdl = zhp->zpool_hdl;
 
@@ -141,6 +157,7 @@ zpool_get_all_props(zpool_handle_t *zhp)
 	zcmd_free_nvlists(&zc);
 
 	return (0);
+#endif
 }
 
 static int
@@ -920,7 +937,7 @@ int
 zpool_create(libzfs_handle_t *hdl, const char *pool, nvlist_t *nvroot,
     nvlist_t *props, nvlist_t *fsprops)
 {
-	zfs_cmd_t zc = { 0 };
+//	zfs_cmd_t zc = { 0 };
 	nvlist_t *zc_fsprops = NULL;
 	nvlist_t *zc_props = NULL;
 	char msg[1024];
@@ -933,8 +950,10 @@ zpool_create(libzfs_handle_t *hdl, const char *pool, nvlist_t *nvroot,
 	if (!zpool_name_valid(hdl, B_FALSE, pool))
 		return (zfs_error(hdl, EZFS_INVALIDNAME, msg));
 
+#if 0
 	if (zcmd_write_conf_nvlist(hdl, &zc, nvroot) != 0)
 		return (-1);
+#endif
 
 	if (props) {
 		if ((zc_props = zpool_valid_proplist(hdl, pool, props,
@@ -965,14 +984,18 @@ zpool_create(libzfs_handle_t *hdl, const char *pool, nvlist_t *nvroot,
 		}
 	}
 
+#if 0 //libzfswrap
 	if (zc_props && zcmd_write_src_nvlist(hdl, &zc, zc_props) != 0)
 		goto create_failed;
 
 	(void) strlcpy(zc.zc_name, pool, sizeof (zc.zc_name));
 
 	if ((ret = zfs_ioctl(hdl, ZFS_IOC_POOL_CREATE, &zc)) != 0) {
+#endif
+        if((ret = spa_create(pool, nvroot, props, "libzfswrap_zpool_create", fsprops)) != 0)
+        {
 
-		zcmd_free_nvlists(&zc);
+//		zcmd_free_nvlists(&zc);
 		nvlist_free(zc_props);
 		nvlist_free(zc_fsprops);
 
@@ -1037,7 +1060,7 @@ zpool_create(libzfs_handle_t *hdl, const char *pool, nvlist_t *nvroot,
 	}
 
 create_failed:
-	zcmd_free_nvlists(&zc);
+//	zcmd_free_nvlists(&zc);
 	nvlist_free(zc_props);
 	nvlist_free(zc_fsprops);
 	return (ret);
