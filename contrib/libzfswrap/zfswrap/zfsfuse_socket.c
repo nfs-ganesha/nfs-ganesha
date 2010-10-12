@@ -45,6 +45,7 @@
 
 __thread int cur_fd = -1;
 
+#if 0
 avl_tree_t fd_avl;
 pthread_mutex_t fd_avl_mtx = PTHREAD_MUTEX_INITIALIZER;
 
@@ -124,6 +125,7 @@ void zfsfuse_socket_close(int fd)
 
 	avl_destroy(&fd_avl);
 }
+#endif
 
 /*
  * This function is repeated in lib/libzfs/libzfs_zfsfuse.c
@@ -238,6 +240,7 @@ int copyinstr(const char *from, char *to, size_t max, size_t *len)
 
 int xcopyout(const void *src, void *dest, size_t size)
 {
+assert(0);
 #ifdef DEBUG
 	/* Clear valgrind's uninitialized byte(s) warning */
 	zfsfuse_cmd_t cmd = { 0 };
@@ -261,6 +264,7 @@ int xcopyout(const void *src, void *dest, size_t size)
 	return 0;
 }
 
+#if 0
 /*
  * Request a file descriptor from the "user" process.
  * The file descriptor is passed through the UNIX socket.
@@ -368,3 +372,4 @@ void releasef(int fd)
 
 	kmem_free(node, sizeof(file_t));
 }
+#endif

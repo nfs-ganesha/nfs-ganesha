@@ -677,6 +677,22 @@ extern boolean_t libzfs_fru_compare(libzfs_handle_t *, const char *,
 extern boolean_t libzfs_fru_notself(libzfs_handle_t *, const char *);
 extern int zpool_fru_set(zpool_handle_t *, uint64_t, const char *);
 
+
+int libzfs_zpool_create(libzfs_handle_t *p_libzhd, const char* psz_pool,
+                        nvlist_t *pnv_root, nvlist_t *pnv_props,
+                        nvlist_t *pnv_fsprops, const char **ppsz_error);
+zpool_handle_t *libzfs_zpool_open_canfail(libzfs_handle_t *p_libzfshd,
+                                          const char* psz_zpool,
+                                          const char **ppsz_error);
+zpool_handle_t *libzfs_zpool_open(libzfs_handle_t *p_libzfshd,
+                                  const char *psz_pool,
+                                  const char **ppsz_error);
+void libzfs_zpool_close(zpool_handle_t *p_zpool);
+int libzfs_zpool_vdev_add(const char *psz_name, nvlist_t *pnv_config);
+int libzfs_zpool_vdev_remove(zpool_handle_t *p_zpool, const char *psz_name, const char **ppsz_error);
+int libzfs_zpool_vdev_attach(zpool_handle_t *p_zpool, const char *psz_current_dev, nvlist_t *pnv_root, int i_replacing, const char **ppsz_error);
+int libzfs_zpool_vdev_detach(zpool_handle_t *p_zpool, const char *psz_device, const char **ppsz_error);
+
 #ifdef	__cplusplus
 }
 #endif

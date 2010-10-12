@@ -7,8 +7,6 @@ config.h
 config.log
 config.status
 INSTALL
-COPYING
-HACKING
 libtool
 Makefile
 stamp-h1
