@@ -23,8 +23,6 @@
 #include <string.h>
 #include <fcntl.h>
 
-extern time_t ServerBootTime;
-
 /**
  * ZFSFSAL_getattrs:
  * Get attributes for the object specified by its filehandle.
@@ -70,9 +68,9 @@ fsal_status_t ZFSFSAL_getattrs(zfsfsal_handle_t * filehandle, /* IN */
     fstat.st_mode = S_IFDIR | 0755;
     fstat.st_ino = ZFS_SNAP_DIR_INODE;
     fstat.st_nlink = 2;
-    fstat.st_ctime = ServerBootTime;
-    fstat.st_atime = ServerBootTime;
-    fstat.st_mtime = ServerBootTime;
+    fstat.st_ctime = time(NULL);
+    fstat.st_atime = fstat.st_ctime;
+    fstat.st_mtime = fstat.st_ctime;
     rc = 0;
   }
   else
@@ -149,6 +147,9 @@ fsal_status_t ZFSFSAL_setattrs(zfsfsal_handle_t * filehandle, /* IN */
    */
   if(!filehandle || !p_context || !attrib_set)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_setattrs);
+
+  if(filehandle->data.i_snap != 0)
+    Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_setattrs);
 
   /* local copy of attributes */
   attrs = *attrib_set;
