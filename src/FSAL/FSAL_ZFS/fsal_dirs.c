@@ -178,7 +178,7 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
       if(i)
         p_dirent[i-1].nextentry = &(p_dirent[i]);
     }
-    *nb_entries = i + 1;
+    *nb_entries = i;
     if(i == i_snapshots)
       *end_of_dir = 1;
     else
