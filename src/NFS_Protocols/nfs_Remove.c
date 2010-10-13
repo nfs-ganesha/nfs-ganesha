@@ -223,7 +223,7 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
                   return NFS_REQ_OK;
                 }
 
-              LogFullDebug(COMPONENT_NFSPROTO, "==== NFS REMOVE ====> Trying to remove file %s\n", name.name);
+              LogFullDebug(COMPONENT_NFSPROTO, "==== NFS REMOVE ====> Trying to remove file %s", name.name);
 
               /*
                * Remove the entry. 

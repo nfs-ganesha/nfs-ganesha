@@ -210,7 +210,7 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
            * we can avoid looking at PathTok[0] which is necessary '\0'. That's 
            * the reason why we start looping at pos = 1 */
           for(j = 1; j < NbTokPath; j++)
-            LogFullDebug(COMPONENT_NFS_V4, "     tokens are #%s#\n", PathTok[j]);
+            LogFullDebug(COMPONENT_NFS_V4, "     tokens are #%s#", PathTok[j]);
 
           for(j = 1; j < NbTokPath; j++)
             {
@@ -431,7 +431,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
       switch (attribute_to_set)
         {
         case FATTR4_SUPPORTED_ATTRS:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_SUPPORTED_ATTRS\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_SUPPORTED_ATTRS");
 
           /* The supported attributes have field ',supported' set in tab fattr4tab, I will proceed in 2 pass 
            * 1st: compute the number of supported attributes
@@ -494,7 +494,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_TYPE:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_TYPE\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_TYPE");
 
           op_attr_success = 1;
           file_type = htonl(NF4DIR);    /* There are only directories in the pseudo fs */
@@ -504,7 +504,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_FH_EXPIRE_TYPE:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO,"-----> Wanting FATTR4_FH_EXPIRE_TYPE\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO,"-----> Wanting FATTR4_FH_EXPIRE_TYPE");
 
           /* For the moment, we handle only the persistent filehandle */
           expire_type = htonl(FH4_VOLATILE_ANY);
@@ -516,7 +516,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_CHANGE:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_CHANGE\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_CHANGE");
 
           /* Use boot time as time value for every pseudo fs object */
           memset(&file_change, 0, sizeof(changeid4));
@@ -529,7 +529,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_SIZE:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_SIZE\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_SIZE");
 
           file_size = nfs_htonl64((fattr4_size) DEV_BSIZE);
           memcpy((char *)(attrvalsBuffer + LastOffset), &file_size, sizeof(fattr4_size));
@@ -538,7 +538,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_LINK_SUPPORT:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_LINK_SUPPORT\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_LINK_SUPPORT");
 
           /* HPSS NameSpace support hard link */
           link_support = htonl(TRUE);
@@ -549,7 +549,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_SYMLINK_SUPPORT:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_SYMLINK_SUPPORT\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_SYMLINK_SUPPORT");
 
           /* HPSS NameSpace support symbolic link */
           symlink_support = htonl(TRUE);
@@ -560,7 +560,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_NAMED_ATTR:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_NAMED_ATTR\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_NAMED_ATTR");
 
           /* For this version of the binary, named attributes is not supported */
           named_attr = htonl(FALSE);
@@ -571,7 +571,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_FSID:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_FSID\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_FSID");
 
           /* The file system id (should be unique per fileset according to the HPSS logic) */
           if(psfsp->junction_export == NULL)
@@ -590,7 +590,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_UNIQUE_HANDLES:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_UNIQUE_HANDLES\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_UNIQUE_HANDLES");
 
           /* Filehandles are unique */
           unique_handles = htonl(TRUE);
@@ -601,7 +601,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_LEASE_TIME:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_LEASE_TIME\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_LEASE_TIME");
 
           lease_time = htonl(NFS4_LEASE_LIFETIME);
           memcpy((char *)(attrvalsBuffer + LastOffset), &lease_time,
@@ -611,13 +611,13 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_RDATTR_ERROR:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_RDATTR_ERROR\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_RDATTR_ERROR");
 
           op_attr_success = htonl(0);   /* not used in a getattr call */
           break;
 
         case FATTR4_ACL:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_ACL\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_ACL");
 
           acl.fattr4_acl_len = htonl(0);
           memcpy((char *)(attrvalsBuffer + LastOffset), &acl, sizeof(fattr4_acl));
@@ -626,7 +626,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_ACLSUPPORT:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_ACL_SUPPORT\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_ACL_SUPPORT");
 
           aclsupport = htonl(ACL4_SUPPORT_DENY_ACL);    /* temporary, wanting for houston to give me information to implemente ACL's support */
           memcpy((char *)(attrvalsBuffer + LastOffset), &aclsupport,
@@ -636,7 +636,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_ARCHIVE:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_ARCHIVE\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_ARCHIVE");
 
           /* Archive flag is not supported */
           archive = htonl(FALSE);
@@ -646,7 +646,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_CANSETTIME:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_CANSETTIME\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_CANSETTIME");
 
           /* The time can be set on files */
           cansettime = htonl(TRUE);
@@ -657,7 +657,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_CASE_INSENSITIVE:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_CASE_INSENSITIVE\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_CASE_INSENSITIVE");
 
           /* pseudofs is not case INSENSITIVE... it is Read-Only */
           case_insensitive = htonl(FALSE);
@@ -668,7 +668,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_CASE_PRESERVING:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_PRESERVING\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_PRESERVING");
 
           /* pseudofs is case preserving... it is Read-Only */
           case_preserving = htonl(TRUE);
@@ -679,7 +679,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_CHOWN_RESTRICTED:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_CHOWN_RESTRICTED\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_CHOWN_RESTRICTED");
 
           /* chown is restricted to root, but in fact no chown will be done on pseudofs */
           chown_restricted = htonl(TRUE);
@@ -690,7 +690,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_FILEHANDLE:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_FILEHANDLE\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_FILEHANDLE");
 
           /* Return the file handle */
           fhandle_len = htonl(objFH->nfs_fh4_len);
@@ -718,7 +718,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_FILEID:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_FILEID\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_FILEID");
 
           /* The analog to the inode number. RFC3530 says "a number uniquely identifying the file within the filesystem" 
            * In the case of a pseudofs entry, the entry's unique id is used */
@@ -730,7 +730,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_FILES_AVAIL:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_FILES_AVAIL\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_FILES_AVAIL");
 
           files_avail = nfs_htonl64((fattr4_files_avail) 512);  /* Fake value */
           memcpy((char *)(attrvalsBuffer + LastOffset), &files_avail,
@@ -740,7 +740,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_FILES_FREE:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_FILES_FREE\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_FILES_FREE");
 
           files_free = nfs_htonl64((fattr4_files_avail) 512);   /* Fake value */
           memcpy((char *)(attrvalsBuffer + LastOffset), &files_free,
@@ -750,7 +750,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_FILES_TOTAL:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_FILES_TOTAL\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_FILES_TOTAL");
 
           files_total = nfs_htonl64((fattr4_files_avail) 512);  /* Fake value */
           memcpy((char *)(attrvalsBuffer + LastOffset), &files_total,
@@ -760,7 +760,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_FS_LOCATIONS:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_FS_LOCATIONS\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_FS_LOCATIONS");
 
           fs_locations.fs_root.pathname4_len = 0;
           fs_locations.locations.locations_len = 0;     /* No FS_LOCATIONS no now */
@@ -769,7 +769,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_HIDDEN:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_HIDDEN\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_HIDDEN");
 
           /* There are no hidden file in pseudofs */
           hidden = htonl(FALSE);
@@ -779,7 +779,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_HOMOGENEOUS:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_HOMOGENEOUS\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_HOMOGENEOUS");
 
           /* Unix semantic is homogeneous (all objects have the same kind of attributes) */
           homogeneous = htonl(TRUE);
@@ -790,7 +790,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_MAXFILESIZE:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_MAXFILESIZE\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_MAXFILESIZE");
 
           max_filesize = nfs_htonl64((fattr4_maxfilesize) FSINFO_MAX_FILESIZE);
           memcpy((char *)(attrvalsBuffer + LastOffset), &max_filesize,
@@ -800,7 +800,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_MAXLINK:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_MAXLINK\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_MAXLINK");
 
           maxlink = htonl(MAX_HARD_LINK_VALUE);
           memcpy((char *)(attrvalsBuffer + LastOffset), &maxlink, sizeof(fattr4_maxlink));
@@ -809,7 +809,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_MAXNAME:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_MAXNAME\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_MAXNAME");
 
           maxname = htonl((fattr4_maxname) MAXNAMLEN);
           memcpy((char *)(attrvalsBuffer + LastOffset), &maxname, sizeof(fattr4_maxname));
@@ -818,7 +818,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_MAXREAD:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_MAXREAD\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_MAXREAD");
 
           maxread = nfs_htonl64((fattr4_maxread) NFS4_PSEUDOFS_MAX_READ_SIZE);
           memcpy((char *)(attrvalsBuffer + LastOffset), &maxread, sizeof(fattr4_maxread));
@@ -827,7 +827,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_MAXWRITE:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_MAXWRITE\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_MAXWRITE");
 
           maxwrite = nfs_htonl64((fattr4_maxwrite) NFS4_PSEUDOFS_MAX_WRITE_SIZE);
           memcpy((char *)(attrvalsBuffer + LastOffset), &maxwrite,
@@ -837,7 +837,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_MIMETYPE:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_MIMETYPE\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_MIMETYPE");
 
           mimetype.utf8string_len = htonl(0);
           memcpy((char *)(attrvalsBuffer + LastOffset), &mimetype,
@@ -847,7 +847,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_MODE:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_MODE\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_MODE");
 
           file_mode = htonl(0555);      /* Every pseudo fs object is dr-xr-xr-x */
           memcpy((char *)(attrvalsBuffer + LastOffset), &file_mode, sizeof(fattr4_mode));
@@ -856,7 +856,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_NO_TRUNC:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_NO_TRUNC\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_NO_TRUNC");
 
           /* File's names are not truncated, an error is returned is name is too long */
           no_trunc = htonl(TRUE);
@@ -867,7 +867,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_NUMLINKS:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_NUMLINKS\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_NUMLINKS");
 
           /* Reply the number of links found in vattr structure */
           file_numlinks = htonl((fattr4_numlinks) 1);
@@ -878,7 +878,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_OWNER:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_OWNER\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_OWNER");
 
           /* Return the uid as a human readable utf8 string */
           if(uid2utf8(NFS4_ROOT_UID, &file_owner) == 0)
@@ -915,7 +915,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_OWNER_GROUP:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_OWNER_GROUP\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_OWNER_GROUP");
 
           /* Return the uid as a human readable utf8 string */
           if(gid2utf8(2, &file_owner_group) == 0)
@@ -952,7 +952,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_QUOTA_AVAIL_HARD:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_QUOTA_AVAIL_HARD\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_QUOTA_AVAIL_HARD");
 
           quota_avail_hard = nfs_htonl64((fattr4_quota_avail_hard) NFS_V4_MAX_QUOTA_HARD);    /** @todo: not the right answer, actual quotas should be implemented */
           memcpy((char *)(attrvalsBuffer + LastOffset), &quota_avail_hard,
@@ -962,7 +962,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_QUOTA_AVAIL_SOFT:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_QUOTA_AVAIL_SOFT\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_QUOTA_AVAIL_SOFT");
 
           quota_avail_soft = nfs_htonl64((fattr4_quota_avail_soft) NFS_V4_MAX_QUOTA_SOFT);    /** @todo: not the right answer, actual quotas should be implemented */
           memcpy((char *)(attrvalsBuffer + LastOffset), &quota_avail_soft,
@@ -972,7 +972,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_QUOTA_USED:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_QUOTA_AVAIL_USED\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_QUOTA_AVAIL_USED");
 
           quota_used = nfs_htonl64((fattr4_quota_used) NFS_V4_MAX_QUOTA);
           memcpy((char *)(attrvalsBuffer + LastOffset), &quota_used,
@@ -982,7 +982,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_RAWDEV:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_RAWDEV\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_RAWDEV");
 
           /* Not usefull, there are no special block or character file in HPSS */
           /* since FATTR4_TYPE will never be NFS4BLK or NFS4CHR, this value should not be used by the client */
@@ -994,7 +994,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_SPACE_AVAIL:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_SPACE_AVAIL\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_SPACE_AVAIL");
 
           space_avail = nfs_htonl64(512000LL);  /* Fake value */
           memcpy((char *)(attrvalsBuffer + LastOffset), &space_avail,
@@ -1004,7 +1004,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_SPACE_FREE:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_SPACE_FREE\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_SPACE_FREE");
 
           space_free = nfs_htonl64(512000LL);   /* Fake value */
           memcpy((char *)(attrvalsBuffer + LastOffset), &space_free,
@@ -1014,7 +1014,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_SPACE_TOTAL:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_SPACE_TOTAL\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_SPACE_TOTAL");
 
           space_total = nfs_htonl64(1024000LL); /* Fake value */
           memcpy((char *)(attrvalsBuffer + LastOffset), &space_total,
@@ -1024,7 +1024,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_SPACE_USED:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_SPACE_USED\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_SPACE_USED");
 
           /* the number of bytes on the filesystem used by the object, which is slightly different 
            * from the file's size (there can be hole in the file) */
@@ -1036,7 +1036,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_SYSTEM:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_SYSTEM\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_SYSTEM");
 
           /* This is not a windows system File-System with respect to the regarding API */
           system = htonl(FALSE);
@@ -1046,7 +1046,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_TIME_ACCESS:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_TIME_ACCESS\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_TIME_ACCESS");
 
           /* This will contain the object's time os last access, the 'atime' in the Unix semantic */
           memset(&(time_access.seconds), 0, sizeof(int64_t));
@@ -1059,14 +1059,14 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_TIME_ACCESS_SET:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_TIME_ACCESS_SET\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_TIME_ACCESS_SET");
 
           /* To be used with NFS4_OP_SETATTR only */
           op_attr_success = 0;
           break;
 
         case FATTR4_TIME_BACKUP:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_TIME_BACKUP\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_TIME_BACKUP");
 
           /* No time backup, return unix's beginning of time */
           time_backup.seconds = nfs_htonl64(0LL);
@@ -1078,7 +1078,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_TIME_CREATE:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_TIME_CREATE\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_TIME_CREATE");
 
           /* No time create, return unix's beginning of time */
           time_create.seconds = nfs_htonl64(0LL);
@@ -1090,7 +1090,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_TIME_DELTA:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_TIME_DELTA\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_TIME_DELTA");
 
 
           /* According to RFC3530, this is "the smallest usefull server time granularity", I set this to 1s */
@@ -1103,7 +1103,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_TIME_METADATA:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_TIME_METADATA\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_TIME_METADATA");
 
           /* The time for the last metadata operation, the ctime in the unix's semantic */
           memset(&(time_metadata.seconds), 0, sizeof(int64_t));
@@ -1116,7 +1116,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_TIME_MODIFY:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_TIME_MODIFY\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_TIME_MODIFY");
 
           /* The time for the last modify operation, the mtime in the unix's semantic */
           memset(&(time_modify.seconds), 0, sizeof(int64_t));
@@ -1129,13 +1129,13 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           break;
 
         case FATTR4_TIME_MODIFY_SET:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_TIME_MODIFY_SET\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_TIME_MODIFY_SET");
 
           op_attr_success = 0;  /* should never be used here, only for setattr */
           break;
 
         case FATTR4_MOUNTED_ON_FILEID:
-          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_MOUNTED_ON_FILEID\n");
+          LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "-----> Wanting FATTR4_MOUNTED_ON_FILEID");
 
           mounted_on_fileid = nfs_htonl64((fattr4_fileid) psfsp->pseudo_id);
           memcpy((char *)(attrvalsBuffer + LastOffset), &mounted_on_fileid,
@@ -1183,7 +1183,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 
     }                           /* for i */
 
-  LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "----------------------------------------\n");
+  LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "----------------------------------------");
 
   /* LastOffset contains the length of the attrvalsBuffer usefull data */
   LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
@@ -1315,7 +1315,7 @@ int nfs4_CreateROOTFH4(nfs_fh4 * fh4p, compound_data_t * data)
   LogFullDebug(COMPONENT_NFS_V4, "File handle = { Length = %d  Val = ", data->rootFH.nfs_fh4_len);
   for(i = 0; i < data->rootFH.nfs_fh4_len; i++)
     LogFullDebug(COMPONENT_NFS_V4, "%02X", data->rootFH.nfs_fh4_val[i]);
-  LogFullDebug(COMPONENT_NFS_V4, " } \n");
+  LogFullDebug(COMPONENT_NFS_V4, " } ");
 
   return NFS4_OK;
 }                               /* nfs4_CreateROOTFH4 */
@@ -1359,7 +1359,7 @@ int nfs4_op_getattr_pseudo(struct nfs_argop4 *op,
   else
     res_GETATTR4.status = NFS4_OK;
 
-  LogFullDebug(COMPONENT_NFS_V4, "Apres nfs4_PseudoToFattr: attrmask(bitmap4_len)=%d attrlist4_len=%d\n",
+  LogFullDebug(COMPONENT_NFS_V4, "Apres nfs4_PseudoToFattr: attrmask(bitmap4_len)=%d attrlist4_len=%d",
          res_GETATTR4.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len,
          res_GETATTR4.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len);
 
@@ -1755,7 +1755,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
     {
       /* This is a junction */
       LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
-                        "PSEUDOFS READDIR : DIR #%s# id=%u is a junction\n",
+                        "PSEUDOFS READDIR : DIR #%s# id=%u is a junction",
                         psfsentry.name, psfsentry.junction_export->id);
 
       /* Step up the compound data */

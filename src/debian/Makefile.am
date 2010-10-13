@@ -1,17 +1,23 @@
 EXTRA_DIST = changelog                          \
-             dirs                               \
              compat                             \
-	     docs                               \
-	     rules                              \
-             control                            \
-             copyright                          \
-	     nfs-ganesha-common.conffiles       \
-	     nfs-ganesha-doc.docs               \
-	     nfs-ganesha-fuselike-devel.install \
-	     nfs-ganesha-snmp.install           \
+	     control.base                       \
+	     control.fuse                       \
+	     control.posix                      \
+	     control.proxy                      \
+	     control.snmp                       \
+	     control.xfs                        \
+	     control.zfs                        \
+	     copyright                          \
+             dirs                               \
 	     nfs-ganesha-common.install         \
+	     nfs-ganesha-doc.docs               \
 	     nfs-ganesha-fuselike.install       \
+	     nfs-ganesha-fuselike-dev.install   \
 	     nfs-ganesha-posix.install          \
-	     nfs-ganesha-doc.install            \
-	     nfs-ganesha-proxy.install
-
+	     nfs-ganesha-proxy.install          \
+	     nfs-ganesha-snmp.install           \
+	     nfs-ganesha-xfs.install            \
+	     nfs-ganesha-zfs.install            \
+	     rules.auto                         \
+             source                             \
+             patches

@@ -191,6 +191,9 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   pstate_open = (cache_inode_state_t *) (pstate_found->state_data.lock.popenstate);
   memcpy(res_LOCKU4.LOCKU4res_u.lock_stateid.other, pstate_found->stateid_other, 12);
 
+  /* update the lock counter in the related open-stateid */
+  pstate_open->state_data.share.lockheld -= 1;
+
   /* Remove the state associated with the lock */
   if(cache_inode_del_state(pstate_found,
                            data->pclient, &cache_status) != CACHE_INODE_SUCCESS)

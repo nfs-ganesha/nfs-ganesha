@@ -285,7 +285,7 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
   /* if FH expires, set it there */
   if(nfs_param.nfsv4_param.fh_expire == TRUE)
     {
-      LogFullDebug(COMPONENT_NFS_V4, "Un fh expirable a ete cree\n");
+      LogFullDebug(COMPONENT_NFS_V4, "Un fh expirable a ete cree");
       file_handle.srvboot_time = ServerBootTime;
     }
   else
@@ -665,7 +665,7 @@ void print_fhandle2(log_components_t component, fhandle2 fh)
       char str[LEN_FH_STR];
 
       sprint_fhandle2(str, fh);
-      LogFullDebug(component, "%s\n", str);
+      LogFullDebug(component, "%s", str);
     }
 }                               /* print_fhandle2 */
 
@@ -694,7 +694,7 @@ void print_fhandle3(log_components_t component, nfs_fh3 fh)
       char str[LEN_FH_STR];
 
       sprint_fhandle3(str, fh);
-      LogFullDebug(component, "%s\n", str);
+      LogFullDebug(component, "%s", str);
     }
 }                               /* print_fhandle3 */
 
@@ -723,7 +723,7 @@ void print_fhandle4(log_components_t component, nfs_fh4 fh)
       char str[LEN_FH_STR];
 
       sprint_fhandle4(str, fh);
-      LogFullDebug(component, "%s\n", str);
+      LogFullDebug(component, "%s", str);
     }
 }                               /* print_fhandle4 */
 
@@ -753,7 +753,7 @@ void print_buff(log_components_t component, char *buff, int len)
       char str[1024];
 
       sprint_buff(str, buff, len);
-      LogFullDebug(component, "%s\n", str);
+      LogFullDebug(component, "%s", str);
     }
 }                               /* print_buff */
 

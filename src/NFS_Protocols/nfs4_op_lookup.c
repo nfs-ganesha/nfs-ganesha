@@ -241,9 +241,9 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 #endif
       if(isFullDebug(COMPONENT_NFS_V4))
         {
-          LogFullDebug(COMPONENT_NFS_V4, "----> nfs4_op_lookup: name=%s  dir_pentry=%p  looked up pentry=%p\n",
+          LogFullDebug(COMPONENT_NFS_V4, "----> nfs4_op_lookup: name=%s  dir_pentry=%p  looked up pentry=%p",
                  strname, dir_pentry, file_pentry);
-          LogFullDebug(COMPONENT_NFS_V4, "----> FSAL handle parent puis fils dans nfs4_op_lookup\n");
+          LogFullDebug(COMPONENT_NFS_V4, "----> FSAL handle parent puis fils dans nfs4_op_lookup");
           print_buff(COMPONENT_NFS_V4, (char *)cache_inode_get_fsal_handle(file_pentry, &cache_status),
                      sizeof(fsal_handle_t));
           print_buff(COMPONENT_NFS_V4, (char *)cache_inode_get_fsal_handle(dir_pentry, &cache_status),

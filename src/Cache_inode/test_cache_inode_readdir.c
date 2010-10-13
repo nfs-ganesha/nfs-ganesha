@@ -148,7 +148,7 @@ main(int argc, char *argv[])
 #if defined( _USE_GHOSTFS )
   if(argc != 2)
     {
-      LogTest("Please set the configuration file as parameter\n");
+      LogTest("Please set the configuration file as parameter");
       exit(1);
     }
 #endif
@@ -315,7 +315,7 @@ main(int argc, char *argv[])
                          dirent_array,
                          ht, &client, &cred, &cache_status) != CACHE_INODE_SUCCESS)
     {
-      LogTest("Error: cache_inode_readdir failed\n");
+      LogTest("Error: cache_inode_readdir failed");
       exit(1);
     }
 
@@ -343,7 +343,7 @@ main(int argc, char *argv[])
                              dirent_array_loop,
                              ht, &client, &cred, &cache_status) != CACHE_INODE_SUCCESS)
         {
-          LogTest("Error: cache_inode_readdir failed: %d\n", cache_status);
+          LogTest("Error: cache_inode_readdir failed: %d", cache_status);
           exit(1);
         }
 
@@ -389,7 +389,7 @@ main(int argc, char *argv[])
 
   if(cache_entry_lookup2 != cache_entry_lookup)
     {
-      LogTest("Error: lookup results should be the same\n");
+      LogTest("Error: lookup results should be the same");
       exit(1);
     }
 
@@ -422,7 +422,7 @@ main(int argc, char *argv[])
 
   if(cache_entry_lookup3 != cache_entry_lookup4)
     {
-      LogTest("Error: lookup results should be the same\n");
+      LogTest("Error: lookup results should be the same");
       exit(1);
     }
 

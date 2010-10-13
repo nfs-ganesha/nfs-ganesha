@@ -144,10 +144,10 @@ int nfs_Fsstat(nfs_arg_t * parg,
         {
 
           LogFullDebug(COMPONENT_NFSPROTO, 
-              "-- nfs_Fsstat --> dynamicinfo.total_bytes = %llu dynamicinfo.free_bytes = %llu dynamicinfo.avail_bytes = %llu\n",
+              "-- nfs_Fsstat --> dynamicinfo.total_bytes = %llu dynamicinfo.free_bytes = %llu dynamicinfo.avail_bytes = %llu",
                dynamicinfo.total_bytes, dynamicinfo.free_bytes, dynamicinfo.avail_bytes);
           LogFullDebug(COMPONENT_NFSPROTO, 
-              "-- nfs_Fsstat --> dynamicinfo.total_files = %llu dynamicinfo.free_files = %llu dynamicinfo.avail_files = %llu\n",
+              "-- nfs_Fsstat --> dynamicinfo.total_files = %llu dynamicinfo.free_files = %llu dynamicinfo.avail_files = %llu",
                dynamicinfo.total_files, dynamicinfo.free_files, dynamicinfo.avail_files);
 
           switch (preq->rq_vers)
@@ -179,12 +179,12 @@ int nfs_Fsstat(nfs_arg_t * parg,
               pres->res_fsstat3.FSSTAT3res_u.resok.invarsec = 0;        /* volatile FS */
               pres->res_fsstat3.status = NFS3_OK;
 
-              LogFullDebug(COMPONENT_NFSPROTO, "-- nfs_Fsstat --> tbytes=%llu fbytes=%llu abytes=%llu\n",
+              LogFullDebug(COMPONENT_NFSPROTO, "-- nfs_Fsstat --> tbytes=%llu fbytes=%llu abytes=%llu",
                      pres->res_fsstat3.FSSTAT3res_u.resok.tbytes,
                      pres->res_fsstat3.FSSTAT3res_u.resok.fbytes,
                      pres->res_fsstat3.FSSTAT3res_u.resok.abytes);
 
-	      LogFullDebug(COMPONENT_NFSPROTO, "-- nfs_Fsstat --> tfiles=%llu fffiles=%llu afiles=%llu\n",
+	      LogFullDebug(COMPONENT_NFSPROTO, "-- nfs_Fsstat --> tfiles=%llu fffiles=%llu afiles=%llu",
                      pres->res_fsstat3.FSSTAT3res_u.resok.tfiles,
                      pres->res_fsstat3.FSSTAT3res_u.resok.ffiles,
                      pres->res_fsstat3.FSSTAT3res_u.resok.afiles);

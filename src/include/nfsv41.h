@@ -1971,6 +1971,7 @@ extern "C"
   };
   typedef struct SECINFO4args SECINFO4args;
 
+#ifndef _USE_GSSRPC  // This enum is already defined in auth_gss.h
   enum rpc_gss_svc_t
   {
     RPC_GSS_SVC_NONE = 1,
@@ -1978,6 +1979,7 @@ extern "C"
     RPC_GSS_SVC_PRIVACY = 3,
   };
   typedef enum rpc_gss_svc_t rpc_gss_svc_t;
+#endif 
 
   struct rpcsec_gss_info
   {

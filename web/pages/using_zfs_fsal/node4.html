@@ -1,0 +1,110 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Getting information about zpool</TITLE>
+<META NAME="description" CONTENT="Getting information about zpool">
+<META NAME="keywords" CONTENT="using_zfs_fsal">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="using_zfs_fsal.css">
+
+<LINK REL="next" HREF="node5.html">
+<LINK REL="previous" HREF="node3.html">
+<LINK REL="up" HREF="node2.html">
+<LINK REL="next" HREF="node5.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A NAME="tex2html54"
+  HREF="node5.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="../../images/next.png"></A> 
+<A NAME="tex2html52"
+  HREF="node2.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="../../images/up.png"></A> 
+<A NAME="tex2html46"
+  HREF="node3.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="../../images/prev.png"></A>   
+<BR>
+<B> Next:</B> <A NAME="tex2html55"
+  HREF="node5.html">Modifying a zpool</A>
+<B> Up:</B> <A NAME="tex2html53"
+  HREF="node2.html">Managing zpool</A>
+<B> Previous:</B> <A NAME="tex2html47"
+  HREF="node3.html">Creating zpool</A>
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H2><A NAME="SECTION00022000000000000000">
+Getting information about zpool</A>
+</H2>
+<P>
+<I><I>To list the available zpool on the system and some information about them:
+</I></I><PRE>
+    root@localhost% lzw_zpool list
+      NAME   SIZE  ALLOC   FREE    CAP  DEDUP  HEALTH  ALTROOT
+      pool  1016M   106K  1016M     0%  1.00x  ONLINE  -
+      tank  4.59G  2.02G  2.57G    43%  1.00x  ONLINE  -
+</PRE>
+<P>
+<I><I>You can specify the list of properties you want to get by providing as second
+argument the name of them separated by colons.
+</I></I><PRE>
+    root@localhost% lzw_zpool list name,size,health
+      NAME   SIZE  HEALTH
+      pool  1016M  ONLINE
+      tank  4.59G  ONLINE
+</PRE>
+<P>
+<I><I>To get more detailed information about the structure and the status of each disk in the pool, just use the <I>status command:
+</I></I></I><PRE>
+    root@localhost% lzw_zpool status
+      pool: pool
+     state: ONLINE
+     scrub: none requested
+    config:
+    
+            NAME            STATE     READ WRITE CKSUM
+            pool            ONLINE       0     0     0
+              mirror-0      ONLINE       0     0     0
+                /dev/sda    ONLINE       0     0     0
+                /dev/sdb    ONLINE       0     0     0
+    
+    errors: No known data errors
+    
+      pool: tank
+     state: ONLINE
+     scrub: none requested
+    config:
+    
+            NAME        STATE     READ WRITE CKSUM
+            tank        ONLINE       0     0     0
+              mirror-0  ONLINE       0     0     0
+                hda3    ONLINE       0     0     0
+                hda4    ONLINE       0     0     0
+    
+    errors: No known data errors
+</PRE>
+<P>
+<BR><HR>
+<ADDRESS>
+remi
+2010-09-17
+</ADDRESS>
+</BODY>
+</HTML>

@@ -3,7 +3,6 @@ ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = include             \
           Log 		      \
           BuddyMalloc         \
-          StuffAlloc          \
           Common              \
           ConfigParsing       \
           RW_Lock             \
@@ -43,8 +42,41 @@ DOCDIRS = Cache_inode ConfigParsing File_Content File_Content_Policy HashTable I
 
 new: clean all
 
-deb:
-	dpkg-buildpackage -rfakeroot -d
+prepare-deb: distdir
+	rm -rf pkg-deb ; \
+	mkdir pkg-deb ; \
+	mv nfs-ganesha-@PACKAGE_VERSION@ pkg-deb/ ; \
+	cd pkg-deb/nfs-ganesha-@PACKAGE_VERSION@ ; \
+	cp debian/rules.auto debian/rules ; \
+	chmod 754 debian/rules ; \
+	cp debian/control.base debian/control
+
+prepare-deb-control: prepare-deb
+if USE_FSAL_FUSE
+	sed -i 's/debhelper (>= 7)/debhelper (>= 7), pkg-config/' pkg-deb/nfs-ganesha-@PACKAGE_VERSION@/debian/control
+else
+if USE_FSAL_POSIX
+	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libmysqlclient-dev/' pkg-deb/nfs-ganesha-@PACKAGE_VERSION@/debian/control
+else
+if USE_FSAL_SNMP
+	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libsnmp-dev/' pkg-deb/nfs-ganesha-@PACKAGE_VERSION@/debian/control
+else
+if USE_FSAL_XFS
+	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libattr1-dev, xfslibs-dev/' pkg-deb/nfs-ganesha-@PACKAGE_VERSION@/debian/control
+else
+if USE_FSAL_ZFS
+	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libzfswrap-dev/' pkg-deb/nfs-ganesha-@PACKAGE_VERSION@/debian/control
+endif
+endif
+endif
+endif
+endif
+
+deb: prepare-deb-control
+	cd pkg-deb/nfs-ganesha-@PACKAGE_VERSION@ ; \
+	cat debian/control.@FS_NAME@ >> debian/control ; \
+	dpkg-buildpackage -rfakeroot ; \
+	cd ../../
 
 rpms: rpm srpm
 

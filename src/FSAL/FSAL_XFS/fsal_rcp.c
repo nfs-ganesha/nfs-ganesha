@@ -22,6 +22,8 @@
 #include <string.h>
 #include <fcntl.h>
 
+char *strcat(char *dest, const char *src);
+
 /**
  * FSAL_rcp:
  * Copy an HPSS file to/from a local filesystem.

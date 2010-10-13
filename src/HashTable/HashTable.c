@@ -529,7 +529,7 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
   tete_rbt = &(ht->array_rbt[hashval]);
   rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
 
-  LogFullDebug(COMPONENT_HASHTABLE,"Key = %p   Value = %p  hashval = %u  rbt_value = %x\n", buffkey->pdata,
+  LogFullDebug(COMPONENT_HASHTABLE,"Key = %p   Value = %p  hashval = %u  rbt_value = %x", buffkey->pdata,
          buffval->pdata, hashval, rbt_value);
 
   /* acquire mutex for protection */
@@ -554,7 +554,7 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
       qn = pn;
       pdata = RBT_OPAQ(qn);
 
-      LogFullDebug(COMPONENT_HASHTABLE,"Ecrasement d'une ancienne entree (k=%p,v=%p)\n", buffkey->pdata,
+      LogFullDebug(COMPONENT_HASHTABLE,"Ecrasement d'une ancienne entree (k=%p,v=%p)", buffkey->pdata,
              buffval->pdata);
 
     }
@@ -593,8 +593,8 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
       RBT_VALUE(qn) = rbt_value;
       RBT_INSERT(tete_rbt, qn, pn);
 
-      LogFullDebug(COMPONENT_HASHTABLE,"Creation d'une nouvelle entree (k=%p,v=%p), qn=%p, pdata=%p\n",
-                   buffkey->pdata, buffval->pdata, qn, RBT_OPAQ(qn));
+      LogFullDebug(COMPONENT_HASHTABLE,"Creation d'une nouvelle entree (k=%p,v=%p), qn=%p, pdata=%p",
+             buffkey->pdata, buffval->pdata, qn, RBT_OPAQ(qn));
     }
 
   pdata->buffval.pdata = buffval->pdata;
@@ -894,18 +894,18 @@ void HashTable_Log(log_components_t component, hash_table_t * ht)
     return;
 
   LogFullDebug(COMPONENT_HASHTABLE,
-      "The hash has %d nodes (this number MUST be a prime integer for performance's issues)\n",
+      "The hash has %d nodes (this number MUST be a prime integer for performance's issues)",
        ht->parameter.index_size);
 
   for(i = 0; i < ht->parameter.index_size; i++)
     nb_entries += ht->stat_dynamic[i].nb_entries;
 
-  LogFullDebug(COMPONENT_HASHTABLE,"The hash contains %d entries\n", nb_entries);
+  LogFullDebug(COMPONENT_HASHTABLE,"The hash contains %d entries", nb_entries);
 
   for(i = 0; i < ht->parameter.index_size; i++)
     {
       tete_rbt = &((ht->array_rbt)[i]);
-      LogFullDebug(COMPONENT_HASHTABLE,"The node in position %d contains:  %d entries \n", i,
+      LogFullDebug(COMPONENT_HASHTABLE,"The node in position %d contains:  %d entries ", i,
              tete_rbt->rbt_num_node);
       RBT_LOOP(tete_rbt, it)
       {

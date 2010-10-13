@@ -1,9 +1,0 @@
-<?xml version='1.0' encoding='UTF-8' standalone='no'?>
-<doxygenindex xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="index.xsd" version="1.5.7.1">
-  <compound refid="stuff__alloc_8h" kind="file"><name>stuff_alloc.h</name>
-    <member refid="stuff__alloc_8h_1d6b7282e7c215186f8514097b04d5bfa" kind="define"><name>Mem_Alloc</name></member>
-    <member refid="stuff__alloc_8h_133eb598e1abd423b85812262b3691f70" kind="define"><name>STUFF_PREALLOC</name></member>
-    <member refid="stuff__alloc_8h_1457d47f8b2bbac516aee6fd69707e74a" kind="define"><name>GET_PREALLOC</name></member>
-    <member refid="stuff__alloc_8h_1eb0d01b2e3cfab695f1240110e0994c5" kind="define"><name>RELEASE_PREALLOC</name></member>
-  </compound>
-</doxygenindex>

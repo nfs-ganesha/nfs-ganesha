@@ -127,6 +127,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
   struct sockaddr_in *paddr_caller = NULL;
   char str_caller[MAXNAMLEN];
   nfs_function_desc_t funcdesc;
+  fridge_entry_t * pfe = NULL ;
 
   snprintf(my_name, MAXNAMLEN, "tcp_sock_mgr#fd=%ld", tcp_sock);
   SetNameFunction(my_name);
@@ -273,8 +274,8 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                 strncpy(str_caller, "unresolved", MAXNAMLEN);
 
               LogEvent(COMPONENT_DISPATCH,
-                       "TCP SOCKET MANAGER Sock=%d: the client (%s) disappeared... Stopping thread %p",
-                       tcp_sock, str_caller, pthread_self());
+                   "TCP SOCKET MANAGER Sock=%d: the client (%s) disappeared... Freezing thread %p",
+                   tcp_sock, str_caller, pthread_self());
 
               if(Xports[tcp_sock] != NULL)
                 SVC_DESTROY(Xports[tcp_sock]);
@@ -286,20 +287,30 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
               ReleaseToPool(pnfsreq, &workers_data[worker_index].request_pool);
               V(workers_data[worker_index].request_pool_mutex);
 
-#ifdef _DEBUG_MEMLEAKS
-              BuddyLabelsSummary();
-#endif                          /* _DEBUG_MEMLEAKS */
-
+             
+              if( ( pfe = fridgethr_freeze( ) ) == NULL ) 
+                {
+		  /* Fridge expiration, the thread and exit */
+                  LogEvent( COMPONENT_DISPATCH,
+		            "TCP connection manager has expired in the fridge, let's kill it" ) ;
 #ifndef _NO_BUDDY_SYSTEM
               /* Free stuff allocated by BuddyMalloc before thread exists */
-              sleep(nfs_param.core_param.expiration_dupreq * 2);   /** @todo : remove this for a cleaner fix */
+		  /*              sleep(nfs_param.core_param.expiration_dupreq * 2);   / ** @todo : remove this for a cleaner fix */
               if((rc = BuddyDestroy()) != BUDDY_SUCCESS)
                 LogCrit(COMPONENT_DISPATCH,
                         "TCP SOCKET MANAGER Sock=%d (on exit): got error %d from BuddyDestroy",
                         tcp_sock, rc);
 #endif                          /*  _NO_BUDDY_SYSTEM */
 
-              return NULL;
+                  return NULL  ;
+                }
+
+              tcp_sock = (long int )pfe->arg ;
+              LogEvent( COMPONENT_DISPATCH,
+			"TCP SOCKET MANAGER Now working on sock=%d after going out of the fridge", tcp_sock ) ;
+         
+              continue ;
+		
             }
           else if(stat == XPRT_MOREREQS)
             {
@@ -390,5 +401,6 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
   LogDebug(COMPONENT_DISPATCH, "TCP SOCKET MANAGER Sock=%d: Stopping", tcp_sock);
 
+  /* Never reached */ 
   return NULL;
 }                               /* rpc_tcp_socket_manager_thread */

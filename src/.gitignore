@@ -14,7 +14,7 @@ build-aux/
 libganeshaNFS.pc
 nfs-ganesha.spec
 rpm/
-deb-pkg/
+pkg-deb/
 cppcheck.*
 cscope.*
 nfs-ganesha*.tar.gz

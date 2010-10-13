@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT( [nfs-ganesha], [1.0.1], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
+AC_INIT( [nfs-ganesha], [1.0.2], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -182,7 +182,7 @@ GA_ENABLE_AM_CONDITION([gssrpc],[enable GSSRPC security management (from MIT ker
 if test "$enable_gssrpc" == "yes"; then
         AC_DEFINE(_USE_GSSRPC,1,[enable security management with GSSRPC])
 	# ==> Add here libraries needed for GSSRPC
-        AC_CHECK_LIB([gssapi], [gss_import_name], [AC_DEFINE( _HAVE_GSSAPI,1,[enable GSSAPI support] ) ], [AC_MSG_ERROR( [GSSAPI could not be found...] ) ] )
+        AC_CHECK_LIB([gssapi_krb5], [gss_import_name], [AC_DEFINE( _HAVE_GSSAPI,1,[enable GSSAPI support] ) ], [AC_MSG_ERROR( [GSSAPI could not be found...] ) ] )
         AC_CHECK_LIB([gssrpc], [gssrpc_authunix_create_default], [AC_DEFINE( _HAVE_GSSRPC,1,[enable GSSRPC support] ) ], [AC_MSG_ERROR( [GSSRPC_KRB5 could not be found...] ) ] )
 fi
 
@@ -297,9 +297,8 @@ fi
 AC_SUBST(EFENCE)
 
 # Debugging options
-GA_DISABLE_FLAG( [concurrent-memalloc],  [a thread is not allowed to free a block allocated by another thread], [-D_MONOTHREAD_MEMALLOC] )
+#GA_DISABLE_FLAG( [concurrent-memalloc],  [a thread is not allowed to free a block allocated by another thread], [-D_MONOTHREAD_MEMALLOC] )
 GA_DISABLE_FLAG( [buddy-malloc],         [disable GANESHA's memory allocator, for debug purpose only],   [-D_NO_BUDDY_SYSTEM] )
-GA_DISABLE_FLAG( [block-prealloc],       [disable GANESHA's memory chunks allocator, for debug purpose only],   [-D_NO_BLOCK_PREALLOC] )
 GA_DISABLE_FLAG( [tcp-register], 	 [disable registration of tcp services on portmapper], 		 [-D_NO_TCP_REGISTER] )
 GA_DISABLE_FLAG( [portmapper], 	         [disable registration on portmapper], 				 [-D_NO_PORTMAPPER] )
 GA_DISABLE_FLAG( [xattr-directory],      [disable ghost xattr directory and files support],              [-D_NO_XATTRD])
@@ -331,7 +330,7 @@ if test "${with_extra_includedir+set}" == "set"; then
 fi
 
 # FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|ZFS|DLPOEN (default=PROXY)],[specify the type of filesystem to be exported] ),
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|ZFS|DYNFSAL (default=PROXY)],[specify the type of filesystem to be exported] ),
 	     FSAL="$withval", FSAL="PROXY")
 
 # exporting USE_FSAL_... for conditional compilation
@@ -429,6 +428,7 @@ case $FSAL in
                 ;;
 	SNMP)
 		AC_DEFINE([_USE_SNMP], 1, [GANESHA is compiled with SNMP FSAL])
+                AC_CHECK_HEADERS([net-snmp/net-snmp-config.h], [], [AC_MSG_ERROR(missing libsnmp include files)])
                 case "$MYOS" in 
 			FREEBSD) 
 				FSAL_CFLAGS=`$NETSNMP_CONFIG --cflags`
@@ -668,7 +668,6 @@ AC_CONFIG_FILES([include/Makefile
                  include/PNFS/Makefile
 		 include/PNFS/LAYOUT4_NFSV4_1_FILES/Makefile
                  BuddyMalloc/Makefile
-                 StuffAlloc/Makefile
                  Common/Makefile
                  support/Makefile
                  Log/Makefile
@@ -721,7 +720,7 @@ AC_CONFIG_FILES([include/Makefile
 		 check/layers/Makefile
 		 check/layers/maketest.conf
 		 debian/Makefile
-		 debian/control
+		 debian/rules.auto
                  rpm/Makefile
                  Makefile
                  libganeshaNFS.pc

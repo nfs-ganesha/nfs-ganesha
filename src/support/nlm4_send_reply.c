@@ -73,7 +73,7 @@ int nlm_send_reply(int proc, char *host, void *inarg, void *outarg)
   clnt = clnt_create(host, NLMPROG, NLM4_VERS, "tcp");
   if(!clnt)
     {
-      LogMajor(COMPONENT_NFSPROTO, "%s: Cannot create connection to %s client\n",
+      LogMajor(COMPONENT_NFSPROTO, "%s: Cannot create connection to %s client",
                __func__, host);
       return -1;
     }
@@ -83,7 +83,7 @@ int nlm_send_reply(int proc, char *host, void *inarg, void *outarg)
   retval = clnt_call(clnt, proc, inproc, inarg, outproc, outarg, tout);
   if(retval != RPC_SUCCESS)
     {
-      LogMajor(COMPONENT_NFSPROTO, "%s: Client procedure call %d failed\n", __func__, proc);
+      LogMajor(COMPONENT_NFSPROTO, "%s: Client procedure call %d failed", __func__, proc);
     }
 
   clnt_destroy(clnt);

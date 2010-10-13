@@ -62,8 +62,12 @@ fsal_status_t ZFSFSAL_opendir(zfsfsal_handle_t * dir_handle,  /* IN */
   /* >> You can prepare your directory for beeing read  
    * and check that the user has the right for reading its content <<*/
   libzfswrap_vnode_t *p_vnode;
-  if((rc = libzfswrap_opendir(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                              dir_handle->data.zfs_handle, &p_vnode)))
+  TakeTokenFSCall();
+  rc = libzfswrap_opendir(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+                          dir_handle->data.zfs_handle, &p_vnode);
+  ReleaseTokenFSCall();
+
+  if(rc)
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
 
   dir_descriptor->p_vnode = p_vnode;

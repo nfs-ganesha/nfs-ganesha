@@ -71,7 +71,7 @@ void fsal_interval_proxy_fsalattr2bitmap4(fsal_attrib_list_t * pfsalattr,
     tmpattrlist[attrlen++] = FATTR4_TIME_MODIFY_SET;
   if(FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_CTIME))
     tmpattrlist[attrlen++] = FATTR4_TIME_METADATA;
-
+ 
   nfs4_list_to_bitmap4(pbitmap, &attrlen, tmpattrlist);
 }                               /* fsal_interval_proxy_fsalattr2bitmap4 */
 

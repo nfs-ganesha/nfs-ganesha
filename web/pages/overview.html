@@ -8,35 +8,4 @@ NFS exports to various files systems and namespaces (a set of data
 organized as trees, with a structure similar to a files system)</li></ul>
 </p>
 
-<p> NFS-GANESHA uses dedicated backend modules called FSAL (which stand for File System
-Abstraction Layer) that provided the product with a unique API (used
-internally) to access the underlying namespace. The FSAL module is
-basically the "glue" between the namespace and the other part of
-NFS-GANESHA</p>
-<p>Available FSALs are:<br>
-<ul>
-	<li>FSAL/POSIX: this module is based on the well known POSIX API which is included in the
-LibC. It allows NFS export for anything accessible via the POSIX
-interface. POSIX API addresses files and directories by their names
-(which are volatile identifiers, they may change if object is renamed).
-FSAL API uses persistent, opaque, unique identifier called handles.
-Because a this, FSAL/POSIX use the service of a PostGresQL database to
-perform "reverse lookup" from handle to filename.</li>
-	<li>FSAL/SNMP:
-information available via SNMP are organized as trees, they constitute
-a namespace. This backend module provides with the capability to export
-SNMP information data via NFS and browse them in a "procfs-like" way.</li>
-	<li>FSAL/PROXY:
-the module is in fact a NFSv4 client. Used with NFS-GANESHA, it turns
-the NFS server into a NFS proxy server. This module is still in its
-alpha version</li>
-	<li>FSAL/FUSELIKE: many product use FUSE to have NFS
-export. Often they resided in the user space. NFS-GANESHA is in user
-space too, and via this module it allow user space product to have NFS
-export from user space, without explicit kernel communication. The
-module use the same interface as the classical fuse binding: if your
-application have a fuse binding module ready, you'll need nothing else
-to interface it with NFS-GANESHA. For this specific use, the
-NFS-GANESHA's engine is wrap in a library to be use and compile with
-your proprieritary application.</li></p>
-
+Information is now located on the Trac Wiki hosted by sourceforge. Follow this link : <a class="bodylinks" href="http://sourceforge.net/apps/trac/nfs-ganesha/">Trac Wiki</a></li>

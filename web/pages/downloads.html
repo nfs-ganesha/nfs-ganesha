@@ -5,6 +5,19 @@
 <p>
 <ul>
        <li>
+       <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/nfs-ganesha/1.0.1">NFS-GANESHA v 1.0.1</a><br>
+       <ul>
+       <li>New FSAL model: FSAL modules can now be compiled as shared objects and loaded at runtime</li> 
+       <li>New FSAL to support ZFS filesystem</li>
+       <li>The capability to build a "FSAL-less" daemon has been added. It loads FSAL shared object by using the dlopen function.</li>
+       <li>FSAL_PROXY: the embedded client now can allocate a tcp socket on a privileged port to contact the "proxyfied" server. </li>
+       <li> FSAL shared objects are provided as precompiled rpms </li>
+       <li>Log layer now uses syslog as a possible log stream</li>
+       <li>Add new call FSAL_getextattrs to get info such a generation number and/or creation time.</li>
+       <li>New Log management from IBM</li>
+       </ul>  
+       </li>
+       <li>
        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/nfs-ganesha/0.99.66">NFS-GANESHA v 0.99.66</a><br>
        <ul>
        <li>FSAL_XFS now has lock support</li>
@@ -14,7 +27,6 @@
        <li>pNFS/LAYOUT_FILES works with multiple Data Server</li>
        </ul>  
        </li>
-       <li>
        <li>
        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/nfs-ganesha/0.99.65">NFS-GANESHA v 0.99.65</a><br>
        <ul>

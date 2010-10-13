@@ -141,7 +141,7 @@ fsal_status_t XFSFSAL_open(xfsfsal_handle_t * p_filehandle,     /* IN */
   int rc, errsv;
   fsal_status_t status;
 
-  int fd;
+  int fd = 0 ;
   struct stat buffstat;
   int posix_flags = 0;
 

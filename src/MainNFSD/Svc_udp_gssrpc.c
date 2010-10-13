@@ -35,6 +35,8 @@
 #include "solaris_port.h"
 #endif
 
+#include "log_macros.h"
+
 /*
  * svc_udp.c,
  * Server side for UDP/IP based RPC.  (Does some caching in the hopes of
@@ -293,6 +295,8 @@ static bool_t Svcudp_freeargs(SVCXPRT * xprt, xdrproc_t xdr_args, void *args_ptr
 
 void Svcudp_soft_destroy(register SVCXPRT * xprt)
 {
+  register struct svcudp_data * su = xprt->xp_p2 ;
+
   mem_free(rpc_buffer(xprt), su->su_iosz);
   mem_free((caddr_t) su, sizeof(struct svcudp_data));
   mem_free((caddr_t) xprt, sizeof(SVCXPRT));

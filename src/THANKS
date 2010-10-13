@@ -10,7 +10,8 @@ Thanks to:
 	- Erik Levinson <erik@caneris.com> who did lots of work to make libnfsidmap work with gssrpc in nfs-ganesha
 	- Sean Dague <japh@us.ibm.com> who provides me with several typos and memleaks patches
 	- Aneesh Kumar K. V. <aneesh.kumar@linux.vnet.ibm.com> who implemented NLMv4 support (locking for NFSv3)
-	- Frank Filz <ffilzlnx@us.ibm.com> who provided me with several small fixes on the server's behavior.
+	- Frank Filz <ffilzlnx@us.ibm.com> who provided me with several small fixes on the server's behavior. He idesigned i
+          and wrote as well the new Log layer API.
 
    Students that came to make an intership with us and worked on the project
 	- Mickael Guerin who wrote the first release of the FSAL_POSIX
@@ -18,4 +19,5 @@ Thanks to:
           and non-regression test
 	- Cedric Cabessa who worked on the SNMP admin module
 	- Adrien Grellier who provided us with the first TI-RPC support in the product
+        - Rémi Duraffort who wrote the FSAL_ZFS implementation as well as the libzfswrap contrib. He fixed many other small bugs too
 

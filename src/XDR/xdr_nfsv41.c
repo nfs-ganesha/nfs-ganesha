@@ -42,6 +42,38 @@ bool_t xdr_int64_t(XDR * __xdrs, uint64_t * __up);
 typedef struct authsys_parms authsys_parms;
 #endif                          /*  _AUTH_SYS_DEFINE_FOR_NFSv41 */
 
+bool_t xdr_int32_t(xdrs, objp)
+register XDR *xdrs;
+int32_t *objp;
+{
+
+#if defined(_LP64) || defined(_KERNEL)
+  register int __attribute((__unused__)) * buf;
+#else
+  register long __attribute((__unused__)) * buf;
+#endif
+
+  if(!xdr_int(xdrs, objp))
+    return (FALSE);
+  return (TRUE);
+}
+
+bool_t xdr_uint32_t(xdrs, objp)
+register XDR *xdrs;
+uint32_t *objp;
+{
+
+#if defined(_LP64) || defined(_KERNEL)
+  register int *buf;
+#else
+  register long *buf;
+#endif
+
+  if(!xdr_u_int(xdrs, objp))
+    return (FALSE);
+  return (TRUE);
+}
+
 bool_t xdr_nfs_ftype4(XDR * xdrs, nfs_ftype4 * objp)
 {
   register int32_t *buf;

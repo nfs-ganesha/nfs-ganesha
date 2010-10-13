@@ -140,7 +140,7 @@ int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * ppara
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_WORKER)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_WORKER  ) ; */
+      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_NFS_WORKER  ) ; */
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
@@ -161,7 +161,7 @@ int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * ppara
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_NFS_WORKER);
           return CACHE_INODE_INVALID_ARGUMENT;
         }
@@ -201,7 +201,7 @@ int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * ppara
       else
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Unknown or unsettable key: %s (item %s)\n",
+                  "Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_NFS_WORKER);
           return -1;
         }
@@ -239,7 +239,7 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_CORE)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_CORE  ) ; */
+      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_NFS_CORE  ) ; */
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
@@ -260,7 +260,7 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_NFS_CORE);
           return CACHE_INODE_INVALID_ARGUMENT;
         }
@@ -344,6 +344,10 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->stats_update_delay = atoi(key_value);
         }
+      else if(!strcasecmp( key_name, "TCP_Fridge_Expiration_Delay" ) )
+        {
+          pparam->tcp_fridge_expiration_delay = atoi(key_value);
+        }
       else if(!strcasecmp(key_name, "Dump_Stats_Per_Client"))
         {
           pparam->dump_stats_per_client = StrToBoolean(key_value);
@@ -352,14 +356,14 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           strncpy(pparam->stats_per_client_directory, key_value, MAXPATHLEN);
         }
-      else if(!strcasecmp(key_name, "FSAL_Shared_Libraray"))
+      else if(!strcasecmp(key_name, "FSAL_Shared_Library"))
         {
           strncpy(pparam->fsal_shared_library, key_value, MAXPATHLEN);
         }
       else
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Unknown or unsettable key: %s (item %s)\n",
+                  "Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_NFS_CORE);
           return -1;
         }
@@ -398,7 +402,7 @@ int nfs_read_dupreq_hash_conf(config_file_t in_config,
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_DUPREQ)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_DUPREQ ) ; */
+      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_NFS_DUPREQ ) ; */
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
@@ -419,7 +423,7 @@ int nfs_read_dupreq_hash_conf(config_file_t in_config,
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_NFS_DUPREQ);
           return -1;
         }
@@ -439,7 +443,7 @@ int nfs_read_dupreq_hash_conf(config_file_t in_config,
       else
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Unknown or unsettable key: %s (item %s)\n",
+                  "Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_NFS_DUPREQ);
           return -1;
         }
@@ -476,7 +480,7 @@ int nfs_read_ip_name_conf(config_file_t in_config, nfs_ip_name_parameter_t * ppa
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_IP_NAME)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_IP_NAME ) ; */
+      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_NFS_IP_NAME ) ; */
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
@@ -497,7 +501,7 @@ int nfs_read_ip_name_conf(config_file_t in_config, nfs_ip_name_parameter_t * ppa
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_NFS_IP_NAME);
           return -1;
         }
@@ -525,7 +529,7 @@ int nfs_read_ip_name_conf(config_file_t in_config, nfs_ip_name_parameter_t * ppa
       else
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Unknown or unsettable key: %s (item %s)\n",
+                  "Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_NFS_IP_NAME);
           return -1;
         }
@@ -562,7 +566,7 @@ int nfs_read_client_id_conf(config_file_t in_config, nfs_client_id_parameter_t *
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_CLIENT_ID)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_CLIENT_ID ) ; */
+      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_CLIENT_ID ) ; */
       return 1;
     }
 
@@ -578,7 +582,7 @@ int nfs_read_client_id_conf(config_file_t in_config, nfs_client_id_parameter_t *
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_CLIENT_ID);
           return -1;
         }
@@ -598,7 +602,7 @@ int nfs_read_client_id_conf(config_file_t in_config, nfs_client_id_parameter_t *
       else
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Unknown or unsettable key: %s (item %s)\n",
+                  "Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_CLIENT_ID);
           return -1;
         }
@@ -635,7 +639,7 @@ int nfs_read_state_id_conf(config_file_t in_config, nfs_state_id_parameter_t * p
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_STATE_ID)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_STATE_ID ) ; */
+      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_STATE_ID ) ; */
       return 1;
     }
 
@@ -651,7 +655,7 @@ int nfs_read_state_id_conf(config_file_t in_config, nfs_state_id_parameter_t * p
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_STATE_ID);
           return -1;
         }
@@ -671,7 +675,7 @@ int nfs_read_state_id_conf(config_file_t in_config, nfs_state_id_parameter_t * p
       else
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Unknown or unsettable key: %s (item %s)\n",
+                  "Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_STATE_ID);
           return -1;
         }
@@ -697,7 +701,7 @@ int nfs_read_session_id_conf(config_file_t in_config, nfs_session_id_parameter_t
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_SESSION_ID)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file\n",
+      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file",
               CONF_LABEL_STATE_ID); */
       return 1;
     }
@@ -714,7 +718,7 @@ int nfs_read_session_id_conf(config_file_t in_config, nfs_session_id_parameter_t
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_SESSION_ID);
           return -1;
         }
@@ -734,7 +738,7 @@ int nfs_read_session_id_conf(config_file_t in_config, nfs_session_id_parameter_t
       else
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Unknown or unsettable key: %s (item %s)\n",
+                  "Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_SESSION_ID);
           return -1;
         }
@@ -763,7 +767,7 @@ static int nfs_read_conf_pnfs_ds_conf(config_item_t subblock,
       /* Here, we are managing a configuration sub block, it has nothing but CONFIG_ITEM_VAR in it */
       if(config_ItemType(item) != CONFIG_ITEM_VAR)
         {
-          LogCrit(COMPONENT_CONFIG, "No sub-block expected \n");
+          LogCrit(COMPONENT_CONFIG, "No sub-block expected ");
           return -EINVAL;
         }
 
@@ -771,7 +775,7 @@ static int nfs_read_conf_pnfs_ds_conf(config_item_t subblock,
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_NFS_WORKER);
           return CACHE_INODE_INVALID_ARGUMENT;
         }
@@ -829,7 +833,7 @@ static int nfs_read_conf_pnfs_ds_conf(config_item_t subblock,
       else
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Unknown or unsettable key: %s (item %s)\n", key_name, CONF_LABEL_PNFS);
+                  "Unknown or unsettable key: %s (item %s)", key_name, CONF_LABEL_PNFS);
           return -1;
         }
     }                           /* for */
@@ -857,7 +861,7 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_PNFS)) == NULL)
     {
-      LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file\n",
+      LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file",
               CONF_LABEL_PNFS);
       return 1;
     }
@@ -883,7 +887,7 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
           if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                      "Error reading key[%d] from section \"%s\" of configuration file.",
                       var_index, CONF_LABEL_PNFS);
               return -1;
             }
@@ -898,7 +902,7 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
           else
             {
               LogCrit(COMPONENT_CONFIG,
-                      "Unknown or unsettable key: %s (item %s)\n", key_name,
+                      "Unknown or unsettable key: %s (item %s)", key_name,
                       CONF_LABEL_PNFS);
               return -1;
             }
@@ -913,7 +917,7 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
                0)
               {
                 LogCrit(COMPONENT_CONFIG,
-                        "Unknown or unsettable key: %s (item %s)\n", key_name,
+                        "Unknown or unsettable key: %s (item %s)", key_name,
                         CONF_LABEL_PNFS);
                 return -1;
               }
@@ -923,7 +927,7 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
 
         default:
           LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_PNFS);
           return -1;
           break;
@@ -935,7 +939,7 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
   if(ds_count < pparam->layoutfile.stripe_width)
     {
       LogCrit(COMPONENT_CONFIG,
-              "You must define more pNFS data server for strip_width=%u (only %u defined)\n",
+              "You must define more pNFS data server for strip_width=%u (only %u defined)",
               pparam->layoutfile.stripe_width, ds_count);
       return -1;
     }
@@ -974,7 +978,7 @@ int nfs_read_uidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_UID_MAPPER)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_CLIENT_ID ) ; */
+      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_CLIENT_ID ) ; */
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
@@ -995,7 +999,7 @@ int nfs_read_uidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_UID_MAPPER);
           return -1;
         }
@@ -1019,7 +1023,7 @@ int nfs_read_uidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
       else
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Unknown or unsettable key: %s (item %s)\n",
+                  "Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_UID_MAPPER);
           return -1;
         }
@@ -1056,7 +1060,7 @@ int nfs_read_gidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_GID_MAPPER)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_CLIENT_ID ) ; */
+      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_CLIENT_ID ) ; */
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
@@ -1077,7 +1081,7 @@ int nfs_read_gidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_GID_MAPPER);
           return -1;
         }
@@ -1101,7 +1105,7 @@ int nfs_read_gidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
       else
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Unknown or unsettable key: %s (item %s)\n",
+                  "Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_GID_MAPPER);
           return -1;
         }
@@ -1138,7 +1142,7 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_KRB5)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_KRB5 ) ; */
+      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_NFS_KRB5 ) ; */
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
@@ -1159,7 +1163,7 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_NFS_KRB5);
           return -1;
         }
@@ -1179,7 +1183,7 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
       else
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Unknown or unsettable key: %s (item %s)\n",
+                  "Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_NFS_KRB5);
           return -1;
         }
@@ -1216,7 +1220,7 @@ int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * p
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_VERSION4)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_VERSION4 ) ; */
+      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_NFS_VERSION4 ) ; */
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
@@ -1237,7 +1241,7 @@ int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * p
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_NFS_VERSION4);
           return -1;
         }
@@ -1273,7 +1277,7 @@ int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * p
       else
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Unknown or unsettable key: %s (item %s)\n",
+                  "Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_NFS_VERSION4);
           return -1;
         }
@@ -1346,7 +1350,7 @@ int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib)
   /* Get the config BLOCK */
   if((block = config_FindItemByName(config_struct, CONF_LABEL_NFS_CORE)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_CORE  ) ; */
+      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_NFS_CORE  ) ; */
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
@@ -1367,12 +1371,12 @@ int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib)
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_NFS_CORE);
           return CACHE_INODE_INVALID_ARGUMENT;
         }
 
-      if(!strcasecmp(key_name, "FSAL_Shared_Libraray"))
+      if(!strcasecmp(key_name, "FSAL_Shared_Library"))
         {
           strncpy(PathLib, key_value, MAXPATHLEN);
           found = TRUE;

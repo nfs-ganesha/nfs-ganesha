@@ -262,7 +262,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   if((pstate_exists == pstate_found_iterate) &&
                      (pstate_exists->state_data.lock.lock_type != arg_LOCK4.locktype))
                     LogFullDebug(COMPONENT_NFS_V4,
-                        ("&&&&&&&&&&&&&& CAS FOIREUX !!!!!!!!!!!!!!!!!!\n");
+                        "&&&&&&&&&&&&&& CAS FOIREUX !!!!!!!!!!!!!!!!!!");
                 }
 
               a = pstate_found_iterate->state_data.lock.offset;
@@ -400,7 +400,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           return res_LOCK4.status;
         }
 
-      LogFullDebug(COMPONENT_NFS_V4_LOCK, "=== New Owner ===> %u %u %u\n",
+      LogFullDebug(COMPONENT_NFS_V4_LOCK, "=== New Owner ===> %u %u %u",
              arg_LOCK4.locker.locker4_u.open_owner.open_stateid.seqid,
              arg_LOCK4.locker.locker4_u.open_owner.open_seqid, pstate_found->seqid);
 
@@ -522,7 +522,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           res_LOCK4.status = NFS4ERR_BAD_STATEID;
           return res_LOCK4.status;
         }
-      LogFullDebug(COMPONENT_NFS_V4_LOCK, "=== Konwn LockOwner ===> %u %u %u\n",
+      LogFullDebug(COMPONENT_NFS_V4_LOCK, "=== Konwn LockOwner ===> %u %u %u",
              arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.seqid,
              arg_LOCK4.locker.locker4_u.lock_owner.lock_seqid, pstate_found->seqid);
 
@@ -570,7 +570,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
       else
         LogDebug(COMPONENT_NFS_V4,
-            ("/!\\ : IMPLEMENTATION ERROR File=%s Line=%s pstate_found->powner->related_owner should not be NULL",
+            "/!\\ : IMPLEMENTATION ERROR File=%s Line=%s pstate_found->powner->related_owner should not be NULL",
              __FILE__, __LINE__);
 
       break;
