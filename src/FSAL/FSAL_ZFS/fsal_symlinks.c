@@ -159,9 +159,12 @@ fsal_status_t ZFSFSAL_symlink(zfsfsal_handle_t * parent_directory_handle,     /*
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_symlink);
 
   /* Tests if symlinking is allowed by configuration. */
-
   if(!global_fs_info.symlink_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_symlink);
+
+  /* Hook to prevent creation of anything inside the snapshot */
+  if(parent_directory_handle->data.i_snap != 0)
+    Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_symlink);
 
   TakeTokenFSCall();
 
