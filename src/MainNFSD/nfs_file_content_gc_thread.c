@@ -198,7 +198,7 @@ void *file_content_gc_thread(void *IndexArg)
                   if(is_hw_reached)
                     {
                       LogEvent(COMPONENT_MAIN,
-                               "NFS FILE CONTENT GARBAGE COLLECTION : High Water Mark is  reached, %llu blocks to be removed",
+                               "NFS FILE CONTENT GARBAGE COLLECTION : High Water Mark is  reached, %lu blocks to be removed",
                                nb_blocks_to_manage);
                       some_flush_to_do = TRUE;
                       break;

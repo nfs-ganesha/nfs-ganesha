@@ -191,7 +191,7 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
   buffkey.pdata = (caddr_t) pdupreq->xid;
   buffkey.len = 0;
 
-  LogDebug(COMPONENT_DUPREQ, "NFS DUPREQ: Garbage collection on xid=%u", pdupreq->xid);
+  LogDebug(COMPONENT_DUPREQ, "NFS DUPREQ: Garbage collection on xid=%ld", pdupreq->xid);
 
   rc = HashTable_Del(ht_dupreq, &buffkey, NULL, NULL);
 
@@ -221,7 +221,7 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
         default:
           /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
           LogMajor(COMPONENT_DUPREQ, "NFS DUPREQ: NFS Protocol version %d unknown in dupreq_gc",
-                   pdupreq->rq_vers);
+                   (int)pdupreq->rq_vers);
           funcdesc = nfs2_func_desc[0]; /* free function for PROC_NULL does nothing */
           break;
         }
@@ -241,7 +241,7 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
         default:
           /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
           LogMajor(COMPONENT_DUPREQ, "NFS DUPREQ: MOUNT Protocol version %d unknown in dupreq_gc",
-                   pdupreq->rq_vers);
+                   (int)pdupreq->rq_vers);
           break;
 
         }                       /* switch( pdupreq->vers ) */
@@ -278,7 +278,7 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
   else
     {
       /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
-      LogMajor(COMPONENT_DUPREQ, "NFS DUPREQ: protocol %d is not managed", pdupreq->rq_prog);
+      LogMajor(COMPONENT_DUPREQ, "NFS DUPREQ: protocol %d is not managed", (int)pdupreq->rq_prog);
     }
 
   /* Call the free function */
@@ -496,7 +496,7 @@ nfs_res_t nfs_dupreq_get(long xid, int *pstatus)
 
       *pstatus = DUPREQ_SUCCESS;
       res_nfs = ((dupreq_entry_t *) buffval.pdata)->res_nfs;
-      LogDebug(COMPONENT_DUPREQ, "NFS DUPREQ: Hit in the dupreq cache for xid=%u", xid);
+      LogDebug(COMPONENT_DUPREQ, "NFS DUPREQ: Hit in the dupreq cache for xid=%ld", xid);
     }
   else
     {

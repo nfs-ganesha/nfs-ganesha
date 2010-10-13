@@ -194,7 +194,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
           /* But do we control sock? */
           LogCrit(COMPONENT_DISPATCH,
                   "CRITICAL ERROR: Incoherency found in Xports array, sock=%d",
-                  tcp_sock);
+                  (int)tcp_sock);
           return NULL;
         }
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
@@ -245,17 +245,17 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
       if(pnfsreq->xprt->xp_sock != tcp_sock)
 #endif
         LogCrit(COMPONENT_DISPATCH,
-             "TCP SOCKET MANAGER : /!\\ Trying to access a bad socket ! Check the source file=%s, line=%s",
+             "TCP SOCKET MANAGER : /!\\ Trying to access a bad socket ! Check the source file=%s, line=%u",
              __FILE__, __LINE__);
 
       //TODO FSF: I think this is a redundant message
-      LogFullDebug(COMPONENT_DISPATCH, "Before waiting on select for socket %d", tcp_sock);
+      LogFullDebug(COMPONENT_DISPATCH, "Before waiting on select for socket %d", (int)tcp_sock);
 
-      LogFullDebug(COMPONENT_DISPATCH, "Before calling SVC_RECV on socket %d", tcp_sock);
+      LogFullDebug(COMPONENT_DISPATCH, "Before calling SVC_RECV on socket %d", (int)tcp_sock);
 
       /* Will block until the client operates on the socket */
       pnfsreq->status = SVC_RECV(pnfsreq->xprt, pmsg);
-      LogFullDebug(COMPONENT_DISPATCH, "Status for SVC_RECV on socket %d is %d", tcp_sock,
+      LogFullDebug(COMPONENT_DISPATCH, "Status for SVC_RECV on socket %d is %d", (int)tcp_sock,
                    pnfsreq->status);
 
       /* If status is ok, the request will be processed by the related
@@ -286,7 +286,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
               LogEvent(COMPONENT_DISPATCH,
                    "TCP SOCKET MANAGER Sock=%d: the client (%s) disappeared... Freezing thread ",
-                   tcp_sock, str_caller);
+                   (int)tcp_sock, str_caller);
 
               if(Xports[tcp_sock] != NULL)
                 SVC_DESTROY(Xports[tcp_sock]);
@@ -317,7 +317,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
               tcp_sock = (long int )pfe->arg ;
               LogEvent( COMPONENT_DISPATCH,
-			"TCP SOCKET MANAGER Now working on sock=%d after going out of the fridge", tcp_sock ) ;
+			"TCP SOCKET MANAGER Now working on sock=%d after going out of the fridge", (int)tcp_sock ) ;
          
               continue ;
 		
@@ -326,13 +326,13 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
             {
               LogDebug(COMPONENT_DISPATCH,
                        "TCP SOCKET MANAGER Sock=%d: XPRT has MOREREQS status",
-                       tcp_sock);
+                       (int)tcp_sock);
             }
 
           /* Release the entry */
           LogFullDebug(COMPONENT_DISPATCH,
                        "TCP SOCKET MANAGER Sock=%d: Invalidating entry with xprt_stat=%d",
-                       tcp_sock, stat);
+                       (int)tcp_sock, stat);
           workers_data[worker_index].passcounter += 1;
         }
       else
@@ -362,7 +362,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
               V(workers_data[worker_index].request_pool_mutex);
               LogCrit(COMPONENT_DISPATCH,
                    "TCP SOCKET MANAGER Sock=%d: Cond signal failed for thr#%d , errno = %d",
-                   tcp_sock, worker_index, errno);
+                   (int)tcp_sock, worker_index, errno);
             }
           V(workers_data[worker_index].mutex_req_condvar);
           V(workers_data[worker_index].request_pool_mutex);
@@ -382,7 +382,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
         }
     }
 
-  LogDebug(COMPONENT_DISPATCH, "TCP SOCKET MANAGER Sock=%d: Stopping", tcp_sock);
+  LogDebug(COMPONENT_DISPATCH, "TCP SOCKET MANAGER Sock=%d: Stopping", (int)tcp_sock);
 
   /* Never reached */ 
   return NULL;

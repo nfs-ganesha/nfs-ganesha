@@ -156,7 +156,7 @@ int nfs_Readdir(nfs_arg_t * parg,
       space_used = sizeof(READDIR2resok);
       estimated_num_entries = count / sizeof(entry2);
 
-      LogFullDebug(COMPONENT_NFS_READDIR, "-- Readdir2 -> count=%d  cookie = %d  estimated_num_entries=%d", count,
+      LogFullDebug(COMPONENT_NFS_READDIR, "-- Readdir2 -> count=%lu  cookie = %u  estimated_num_entries=%lu", count,
              cookie, estimated_num_entries);
 
       if(estimated_num_entries == 0)
@@ -175,7 +175,7 @@ int nfs_Readdir(nfs_arg_t * parg,
         estimated_num_entries = count / sizeof(entry3);
 
         LogFullDebug(COMPONENT_NFS_READDIR,
-            "---> nfs3_Readdir: count=%d  cookie=%d  space_used=%d  estimated_num_entries=%d",
+            "---> nfs3_Readdir: count=%lu  cookie=%u  space_used=%lu  estimated_num_entries=%lu",
              count, cookie, space_used, estimated_num_entries);
 
         if(estimated_num_entries == 0)
@@ -359,7 +359,7 @@ int nfs_Readdir(nfs_arg_t * parg,
     {
 
       LogFullDebug(COMPONENT_NFS_READDIR,
-          "-- Readdir -> Call to cache_inode_readdir( cookie=%d, asked=%d ) -> num_entries = %d",
+          "-- Readdir -> Call to cache_inode_readdir( cookie=%d, asked=%lu ) -> num_entries = %u",
            cache_inode_cookie, asked_num_entries, num_entries);
 
       if(eod_met == END_OF_DIR)

@@ -1275,8 +1275,8 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   estimated_num_entries = maxcount / sizeof(entry4);
 
   LogFullDebug(COMPONENT_NFS_V4_XATTR,
-                    "PSEUDOFS READDIR: dircount=%d, maxcount=%d, cookie=%d, sizeof(entry4)=%d num_entries=%d",
-                    dircount, maxcount, cookie, space_used, estimated_num_entries);
+                    "PSEUDOFS READDIR: dircount=%lu, maxcount=%lu, cookie=%"PRIu64", sizeof(entry4)=%lu num_entries=%lu",
+                    dircount, maxcount, (uint64_t)cookie, space_used, estimated_num_entries);
 
   /* If maxcount is too short, return NFS4ERR_TOOSMALL */
   if(maxcount < sizeof(entry4) || estimated_num_entries == 0)

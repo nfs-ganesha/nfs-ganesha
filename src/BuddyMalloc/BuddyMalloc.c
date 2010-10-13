@@ -281,7 +281,7 @@ static BuddyThreadContext_t *GetThreadContext()
           return NULL;
         }
       LogDebug(COMPONENT_MEMALLOC, "Allocating pthread key %p for thread %p",
-               p_current_thread_vars, pthread_self());
+               p_current_thread_vars, (caddr_t)pthread_self());
 
       /* Clean thread context */
 
@@ -554,7 +554,7 @@ static BuddyBlock_t *Get_BuddyBlock(BuddyThreadContext_t * context,
 
   Offset_buddy = Offset_block ^ (1 << k);
 
-  LogFullDebug(COMPONENT_MEMALLOC, "buddy(%p,%u,%X)=%p", Offset_block, k, 1 << k, Offset_buddy);
+  LogFullDebug(COMPONENT_MEMALLOC, "buddy(%tx,%u,%X)=%tx", Offset_block, k, 1 << k, Offset_buddy);
 
   return (BuddyBlock_t *) (Offset_buddy + BaseAddr);
 
@@ -775,7 +775,7 @@ BuddyBlock_t *NewStdPage(BuddyThreadContext_t * context)
   p_block = (BuddyBlock_t *) malloc(allocation);
 
   LogFullDebug(COMPONENT_MEMALLOC, "Memory area allocation for thread %p : ptr=%p ; size=%llu=2^%u",
-               pthread_self(), p_block, (unsigned long long)allocation, k_size);
+               (caddr_t)pthread_self(), p_block, (unsigned long long)allocation, k_size);
 
   if(!p_block)
     return NULL;
@@ -835,7 +835,7 @@ static void Garbage_StdPages(BuddyThreadContext_t * context,
 
   UpdateStats_RemoveStdPage(context);
 
-  LogFullDebug(COMPONENT_MEMALLOC, "%p: A standard page has been Garbaged", pthread_self());
+  LogFullDebug(COMPONENT_MEMALLOC, "%p: A standard page has been Garbaged", (caddr_t)pthread_self());
 
   return;
 
@@ -863,7 +863,7 @@ BUDDY_ADDR_T AllocLargeBlock(BuddyThreadContext_t * context, size_t Size)
   p_block = (BuddyBlock_t *) malloc(total_size);
 
   LogFullDebug(COMPONENT_MEMALLOC, "Memory EXTRA area allocation for thread %p : ptr=%p ; size=%llu",
-               pthread_self(), p_block, (unsigned long long)total_size);
+               (caddr_t)pthread_self(), p_block, (unsigned long long)total_size);
 
   if(!p_block)
     {
@@ -931,7 +931,7 @@ void FreeLargeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_block)
 
   UpdateStats_RemoveExtraPage(context, page_size);
 
-  LogFullDebug(COMPONENT_MEMALLOC, "%p: An extra page has been free (size %lu)", pthread_self(), page_size);
+  LogFullDebug(COMPONENT_MEMALLOC, "%p: An extra page has been free (size %zu)", (caddr_t)pthread_self(), page_size);
 
   return;
 
@@ -1161,7 +1161,7 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
 
   p_block = NewStdPage(context);
 
-  LogFullDebug(COMPONENT_MEMALLOC, "sizeof header = %lu, size_header64 = %lu", sizeof(BuddyHeader_t),
+  LogFullDebug(COMPONENT_MEMALLOC, "sizeof header = %zu, size_header64 = %zu", sizeof(BuddyHeader_t),
                size_header64);
 
   if(p_block)

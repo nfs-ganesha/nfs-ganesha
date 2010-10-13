@@ -249,7 +249,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
                                   "SETCLIENTID with same arguments for aleady confirmed client '%s'",
                                   nfs_clientid.client_name);
                   LogDebug(COMPONENT_NFS_V4,
-                                  "SETCLIENTID will set the client UNCONFIRMED and returns NFS4_OK",
+                                  "SETCLIENTID '%s' will set the client UNCONFIRMED and returns NFS4_OK",
                                   nfs_clientid.client_name);
 
                   /* Set the client UNCONFIRMED */

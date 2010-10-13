@@ -119,7 +119,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
   unsigned int bytag = FALSE;
 
   LogFullDebug(COMPONENT_NFSPROTO,
-                    "REQUEST PROCESSING: Calling mnt_Mnt, version %u", preq->rq_vers);
+                    "REQUEST PROCESSING: Calling mnt_Mnt, version %u", (unsigned int)preq->rq_vers);
 
   /* Paranoid command to clean the result struct. */
   memset(pres, 0, sizeof(nfs_res_t));
