@@ -242,7 +242,7 @@ void nfs_stat_update(nfs_stat_type_t type,
     default:
       /* Bad type ? */
       LogCrit(COMPONENT_DISPATCH,
-           "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
+           "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %u",
            __FILE__, __LINE__);
       break;
     }

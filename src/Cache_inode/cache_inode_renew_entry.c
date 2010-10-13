@@ -91,10 +91,10 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
   *pstatus = CACHE_INODE_SUCCESS;
 
   LogFullDebug(COMPONENT_CACHE_INODE,
-                  "Entry=%p, type=%d, current=%d, read=%d, refresh=%d, alloc=%d",
-                  pentry, pentry->internal_md.type, current_time,
-                  pentry->internal_md.read_time, pentry->internal_md.refresh_time,
-                  pentry->internal_md.alloc_time);
+                  "Entry=%p, type=%u, current=%u, read=%u, refresh=%u, alloc=%d",
+                  pentry, (unsigned int)pentry->internal_md.type, (unsigned int)current_time,
+                  (unsigned int)pentry->internal_md.read_time, (unsigned int)pentry->internal_md.refresh_time,
+                  (unsigned int)pentry->internal_md.alloc_time);
 
   /* An entry that is a regular file with an associated File Content Entry won't
    * expire until data exists in File Content Cache, to avoid attributes incoherency */
@@ -196,9 +196,9 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
 
       /* Log */
       LogFullDebug(COMPONENT_CACHE_INODE,
-                        "Entry=%p, type=%d, Time=%d, current=%d, grace_period_dirent=%d",
+                        "Entry=%p, type=%d, Time=%u, current=%u, grace_period_dirent=%u",
                         pentry, pentry->internal_md.type,
-                        entry_time, current_time, pclient->grace_period_dirent);
+                        (unsigned int)entry_time, (unsigned int)current_time, (unsigned int)pclient->grace_period_dirent);
 
       LogFullDebug(COMPONENT_CACHE_INODE,
                         "cached directory entries for entry %p must be renewed", pentry);
@@ -268,9 +268,9 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
 
       /* Log */
       LogDebug(COMPONENT_CACHE_INODE,
-                        "Entry=%p, type=%d, Time=%d, current=%d, grace_period_dirent=%d",
+                        "Entry=%p, type=%d, Time=%u, current=%u, grace_period_dirent=%u",
                         pentry, pentry->internal_md.type,
-                        entry_time, current_time, pclient->grace_period_dirent);
+                        (unsigned int)entry_time, (unsigned int)current_time, (unsigned int)pclient->grace_period_dirent);
 
       LogDebug(COMPONENT_CACHE_INODE,
                         "cached directory entries for entry %p must be renewed", pentry);
@@ -332,9 +332,9 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
 
       /* Log */
       LogDebug(COMPONENT_CACHE_INODE,
-                        "Entry=%p, type=%d, Time=%d, current=%d, grace_period_attr=%d",
+                        "Entry=%p, type=%u, Time=%u, current=%u, grace_period_attr=%u",
                         pentry, pentry->internal_md.type,
-                        entry_time, current_time, pclient->grace_period_attr);
+                        (unsigned int)entry_time, (unsigned int)current_time, (unsigned int)pclient->grace_period_attr);
 
       LogDebug(COMPONENT_CACHE_INODE,
                         "Attributes for entry %p must be renewed", pentry);
@@ -425,15 +425,15 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
 
       /* TMP Debug */
       LogFullDebug(COMPONENT_CACHE_INODE,
-                   "Entry=%p, type=%d, Time=%d, current=%d, grace_period_link=%d", pentry,
-                   pentry->internal_md.type, entry_time, current_time,
-                   pclient->grace_period_link);
+                   "Entry=%p, type=%d, Time=%d, current=%u, grace_period_link=%u", pentry,
+                   pentry->internal_md.type, (unsigned int)entry_time, (unsigned int)current_time,
+                   (unsigned int)pclient->grace_period_link);
 
       /* Log */
       LogDebug(COMPONENT_CACHE_INODE,
-                        "Entry=%p, type=%d, Time=%d, current=%d, grace_period_link=%d",
+                        "Entry=%p, type=%d, Time=%u, current=%u, grace_period_link=%u",
                         pentry, pentry->internal_md.type,
-                        entry_time, current_time, pclient->grace_period_link);
+                        (unsigned int)entry_time, (unsigned int)current_time, (unsigned int)pclient->grace_period_link);
       LogDebug(COMPONENT_CACHE_INODE,
                         "cached link content for entry %p must be renewed", pentry);
 

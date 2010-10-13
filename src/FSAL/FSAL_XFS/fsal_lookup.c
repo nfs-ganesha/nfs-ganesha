@@ -61,7 +61,6 @@
  *        wants to retrieve (by positioning flags into this structure)
  *        and the output is built considering this input
  *        (it fills the structure according to the flags it contains).
- *        It can be NULL (increases performances).
  *
  * \return - ERR_FSAL_NO_ERROR, if no error.
  *         - Another error code else.
@@ -160,7 +159,7 @@ fsal_status_t XFSFSAL_lookup(xfsfsal_handle_t * p_parent_directory_handle,      
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_lookup);
     }
 
-  LogFullDebug(COMPONENT_FSAL, "lookup of inode=%u/%s", buffstat.st_ino,
+  LogFullDebug(COMPONENT_FSAL, "lookup of inode=%"PRIu64"/%s", buffstat.st_ino,
           p_filename->name);
 
   /* check rights to enter into the directory */

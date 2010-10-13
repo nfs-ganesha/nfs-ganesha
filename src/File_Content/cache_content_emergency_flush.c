@@ -261,7 +261,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
 
           LogFullDebug(COMPONENT_CACHE_CONTENT,
               "date=%d max_acmtime=%d ,time( NULL ) - max_acmtime = %d, grace_period = %d",
-               time(NULL), max_acmtime, time(NULL) - max_acmtime, grace_period);
+               (int)time(NULL), (int)max_acmtime, (int)(time(NULL) - max_acmtime), (int)grace_period);
 
           if(time(NULL) - max_acmtime < grace_period)
             {

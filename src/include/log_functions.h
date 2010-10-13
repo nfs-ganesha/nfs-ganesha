@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <syslog.h>
+#include <inttypes.h>
 
 #ifndef LIBLOG_NO_THREAD
 #include <errno.h>

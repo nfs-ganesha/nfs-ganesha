@@ -775,7 +775,7 @@ cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status)
 
   /* We should never reach this line, this may produce a warning with certain compiler */
   LogEvent(COMPONENT_CACHE_INODE,
-      "cache_inode_error_convert: default conversion to CACHE_INODE_FSAL_ERROR for error %d, this line should never be reached",
+      "cache_inode_error_convert: default conversion to CACHE_INODE_FSAL_ERROR for error %d, line %u should never be reached",
        fsal_status.major, __LINE__);
   return CACHE_INODE_FSAL_ERROR;
 }                               /* cache_inode_error_convert */
@@ -858,10 +858,10 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
   pclient->call_since_last_gc += 1;
 
   /* If open/close fd cache is used for FSAL, manage it here */
-    LogFullDebug(COMPONENT_CACHE_INODE, "--------> use_cache=%u fileno=%d last_op=%u time(NULL)=%u delta=%d retention=%u",
+    LogFullDebug(COMPONENT_CACHE_INODE, "--------> use_cache=%u fileno=%d last_op=%u time(NULL)=%u delta=%u retention=%u",
        pclient->use_cache, pentry->object.file.open_fd.fileno,
-       pentry->object.file.open_fd.last_op, time(NULL),
-       time(NULL) - pentry->object.file.open_fd.last_op, pclient->retention);
+       (unsigned int)pentry->object.file.open_fd.last_op, (unsigned int)time(NULL),
+       (unsigned int)(time(NULL) - pentry->object.file.open_fd.last_op), (unsigned int)pclient->retention);
 
   if(pentry->internal_md.type == REGULAR_FILE)
     {
@@ -909,8 +909,8 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
 
 #endif
   LogFullDebug(COMPONENT_CACHE_INODE,
-      "(pthread_self=%u) LRU GC state: nb_entries=%d nb_invalid=%d nb_call_gc=%d param.nb_call_gc_invalid=%d",
-       pthread_self(), pclient->lru_gc->nb_entry, pclient->lru_gc->nb_invalid,
+      "(pthread_self=%p) LRU GC state: nb_entries=%d nb_invalid=%d nb_call_gc=%d param.nb_call_gc_invalid=%d",
+       (caddr_t)pthread_self(), pclient->lru_gc->nb_entry, pclient->lru_gc->nb_invalid,
        pclient->lru_gc->nb_call_gc, pclient->lru_gc->parameter.nb_call_gc_invalid);
 
   LogFullDebug(COMPONENT_CACHE_INODE,

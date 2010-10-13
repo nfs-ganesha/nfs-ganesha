@@ -1583,7 +1583,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       ht_ip_stats[i] = nfs_Init_ip_stats(nfs_param.ip_stats_param);
       if(ht_ip_stats[i] == NULL)
         {
-          LogCrit(COMPONENT_INIT, "NFS_INIT: Error %d while initializing IP/stats cache #%d", i);
+          LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing IP/stats cache #%d", i);
           exit(1);
         }
       workers_data[i].ht_ip_stats = ht_ip_stats[i];
@@ -1744,7 +1744,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 clientid cache");
   if(nfs_Init_client_id(nfs_param.client_id_param) != CLIENT_ID_SUCCESS)
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error %d while initializing NFSv4 clientid cache");
+      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing NFSv4 clientid cache");
       exit(1);
     }
   LogEvent(COMPONENT_INIT,  "NFS_INIT: NFSv4 clientid cache successfully initialized");
@@ -1753,7 +1753,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 clientid cache reverse");
   if(nfs_Init_client_id_reverse(nfs_param.client_id_param) != CLIENT_ID_SUCCESS)
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error %d while initializing NFSv4 clientid cache reverse");
+      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing NFSv4 clientid cache reverse");
       exit(1);
     }
   LogEvent(COMPONENT_INIT, 
@@ -1763,7 +1763,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 State Id cache");
   if(nfs4_Init_state_id(nfs_param.state_id_param) != 0)
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error %d while initializing NFSv4 State Id cache");
+      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing NFSv4 State Id cache");
       exit(1);
     }
   LogEvent(COMPONENT_INIT, "NFS_INIT: NFSv4 State Id cache successfully initialized");
@@ -1772,7 +1772,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 Open Owner cache");
   if(nfs4_Init_open_owner(nfs_param.open_owner_param) != 0)
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error %d while initializing NFSv4 Open Owner cache");
+      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing NFSv4 Open Owner cache");
       exit(1);
     }
   LogEvent(COMPONENT_INIT, "NFS_INIT: NFSv4 Open Owner cache successfully initialized");
@@ -1781,7 +1781,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 Session Id cache");
   if(nfs41_Init_session_id(nfs_param.session_id_param) != 0)
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error %d while initializing NFSv4 Session Id cache");
+      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing NFSv4 Session Id cache");
       exit(1);
     }
   LogEvent(COMPONENT_INIT,  "NFS_INIT: NFSv4 Session Id cache successfully initialized");
@@ -1844,7 +1844,7 @@ static void nfs_Start_file_content_flushers(unsigned int nb_threads)
           exit(1);
         }
       else
-        LogEvent(COMPONENT_INIT, "datacache flusher #%u started", i);
+        LogEvent(COMPONENT_INIT, "datacache flusher #%lu started", i);
 
     }
   LogEvent(COMPONENT_INIT, "%u datacache flushers threads were started successfully",
@@ -1938,7 +1938,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
   /* Set the Core dump size if set */
   if(nfs_param.core_param.core_dump_size != -1)
     {
-      LogDebug(COMPONENT_INIT, "I set the core size rlimit to %d",
+      LogDebug(COMPONENT_INIT, "I set the core size rlimit to %ld",
                  nfs_param.core_param.core_dump_size);
       ulimit_data.rlim_cur = nfs_param.core_param.core_dump_size;
       ulimit_data.rlim_max = nfs_param.core_param.core_dump_size;
@@ -1946,7 +1946,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
       if(setrlimit(RLIMIT_CORE, &ulimit_data) != 0)
         {
           LogError(COMPONENT_INIT, ERR_SYS, ERR_SETRLIMIT, errno);
-          LogCrit(COMPONENT_INIT, "/!\\ | Impossible to set RLIMIT_CORE to %d",
+          LogCrit(COMPONENT_INIT, "/!\\ | Impossible to set RLIMIT_CORE to %ld",
                      nfs_param.core_param.core_dump_size);
         }
     }
@@ -1954,7 +1954,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
   /* Set up Max Open file descriptors if set */
   if(nfs_param.core_param.nb_max_fd != -1)
     {
-      LogDebug(COMPONENT_INIT, "I set the max fd rlimit to %d",
+      LogDebug(COMPONENT_INIT, "I set the max fd rlimit to %u",
                  nfs_param.core_param.nb_max_fd);
       ulimit_data.rlim_cur = nfs_param.core_param.nb_max_fd;
       ulimit_data.rlim_max = nfs_param.core_param.nb_max_fd;

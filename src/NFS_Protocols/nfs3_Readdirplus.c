@@ -144,7 +144,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
   estimated_num_entries = dircount / sizeof(entryplus3);
 
   LogFullDebug(COMPONENT_NFS_READDIR,
-      "---> nfs3_Readdirplus: dircount=%d  maxcount=%d  begin_cookie=%d  space_used=%d  estimated_num_entries=%d",
+      "---> nfs3_Readdirplus: dircount=%lu  maxcount=%lu  begin_cookie=%u  space_used=%lu  estimated_num_entries=%lu",
        dircount, maxcount, begin_cookie, space_used, estimated_num_entries);
 
   /* Is this a xattr FH ? */
@@ -265,7 +265,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                          ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
       LogFullDebug(COMPONENT_NFS_READDIR,
-          "-- Readdirplus3 -> Call to cache_inode_readdir( cookie=%d, asked=%d ) -> num_entries = %d",
+          "-- Readdirplus3 -> Call to cache_inode_readdir( cookie=%d, asked=%lu ) -> num_entries = %u",
            cache_inode_cookie, asked_num_entries, num_entries);
 
       if(eod_met == END_OF_DIR)
@@ -593,7 +593,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                   return NFS_REQ_OK;
                 }
               LogFullDebug(COMPONENT_NFS_READDIR,
-                  "-- Readdirplus3 -> i=%d num_entries=%d needed=%d space_used=%lu maxcount=%lu Name=%s FileId=%llu Cookie=%llu",
+                  "-- Readdirplus3 -> i=%d num_entries=%d needed=%lu space_used=%lu maxcount=%lu Name=%s FileId=%llu Cookie=%llu",
                    i, num_entries, needed, space_used, maxcount,
                    dirent_array[i - delta].name.name,
                    RES_READDIRPLUS_REPLY.entries[i].fileid,

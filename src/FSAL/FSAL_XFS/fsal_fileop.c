@@ -463,7 +463,7 @@ fsal_status_t XFSFSAL_write(xfsfsal_file_t * p_file_descriptor, /* IN */
   if(nb_written <= 0)
     {
       LogDebug(COMPONENT_FSAL,
-                        "Write operation of size %llu at offset %lld failed. fd=%d, errno=%d.",
+                        "Write operation of size %zu at offset %lld failed. fd=%d, errno=%d.",
                         i_size, p_seek_descriptor->offset, p_file_descriptor->fd, errsv);
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_write);
     }

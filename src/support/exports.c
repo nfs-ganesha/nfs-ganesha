@@ -1585,7 +1585,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_PRIVILEGED_PORT) == FLAG_EXPORT_PRIVILEGED_PORT)
             {
-              DEFINED_TWICE_WARNING(FLAG_EXPORT_PRIVILEGED_PORT);
+              DEFINED_TWICE_WARNING("FLAG_EXPORT_PRIVILEGED_PORT");
               continue;
             }
 
@@ -1613,7 +1613,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_USE_DATACACHE) == FLAG_EXPORT_USE_DATACACHE)
             {
-              DEFINED_TWICE_WARNING(FLAG_EXPORT_USE_DATACACHE);
+              DEFINED_TWICE_WARNING("FLAG_EXPORT_USE_DATACACHE");
               continue;
             }
 
@@ -1641,7 +1641,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_USE_PNFS) == FLAG_EXPORT_USE_PNFS)
             {
-              DEFINED_TWICE_WARNING(FLAG_EXPORT_USE_PNFS);
+              DEFINED_TWICE_WARNING("FLAG_EXPORT_USE_PNFS");
               continue;
             }
 
@@ -1879,7 +1879,7 @@ exportlist_t *BuildDefaultExport()
 
   if(rc != 0)
     {
-      LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid client \"%s\"", client_root_access);
+      LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid client \"%s\"", (char *)client_root_access);
       return NULL;
     }
 

@@ -185,8 +185,7 @@ cache_content_status_t cache_content_read_conf_client_parameter(config_file_t in
     strncpy(fcc_log_path, LogFile, MAXPATHLEN);
   }
   else {
-    LogDebug(COMPONENT_INIT, "No log file set for emergency cache flush thread in configuration. Setting to default.",
-	     LogFile);    
+    LogDebug(COMPONENT_INIT, "No log file set for emergency cache flush thread in configuration. Setting to default.") ;
     strncpy(fcc_log_path, "/dev/null", MAXPATHLEN);
   }
 

@@ -163,7 +163,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
   estimated_num_entries = maxcount / sizeof(entry4);    /* Estimated_num_entries is probably far too big */
 
   LogFullDebug(COMPONENT_NFS_V4,
-      "--- nfs4_op_readdir ---> dircount=%u maxcount=%u arg_cookie=%llu cookie=%d estimated_num_entries=%u",
+      "--- nfs4_op_readdir ---> dircount=%lu maxcount=%lu arg_cookie=%llu cookie=%d estimated_num_entries=%u",
        dircount, maxcount, arg_READDIR4.cookie, cookie, estimated_num_entries);
 
   /* Do not use a cookie of 1 or 2 (reserved values) */
