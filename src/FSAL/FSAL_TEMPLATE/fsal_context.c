@@ -122,6 +122,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
 
       /* copy the option string (because it is modified by getsubopt call) */
       strncpy(subopts, fs_specific_options, 256);
+      subopts[255] = '\0';
       p_subop = subopts;        /* set initial pointer */
 
       /* parse the FS specific option string */
@@ -147,7 +148,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
         default:
           {
             LogCrit(COMPONENT_CONFIG,
-                ("FSAL LOAD PARAMETER: ERROR: Invalid suboption found in EXPORT::FS_Specific : %s : xxxxxx expected.",
+                "FSAL LOAD PARAMETER: ERROR: Invalid suboption found in EXPORT::FS_Specific : %s : xxxxxx expected.",
                  value);
             Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_BuildExportContext);
           }

@@ -477,7 +477,7 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
           p_clients[i].options |= EXPORT_OPTION_NETGRP;
           p_clients[i].type = NETGROUP_CLIENT;
 
-          LogFullDebug(COMPONENT_CONFIG, "----------------- %s to netgroup %s\n",
+          LogDebug(COMPONENT_CONFIG, "----------------- %s to netgroup %s",
                  (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                  p_clients[i].client.netgroup.netgroupname);
         }
@@ -491,7 +491,7 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
                      hostEntry->h_length);
               p_clients[i].type = HOSTIF_CLIENT;
 
-              LogFullDebug(COMPONENT_CONFIG, "----------------- %s to client %s = %d.%d.%d.%d\n",
+              LogDebug(COMPONENT_CONFIG, "----------------- %s to client %s = %d.%d.%d.%d",
                      (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                      client_hostname,
                      (unsigned int)(p_clients[i].client.hostif.clientaddr >> 24),
@@ -517,7 +517,7 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
           p_clients[i].client.network.netmask = netMask;
           p_clients[i].type = NETWORK_CLIENT;
 
-          LogFullDebug(COMPONENT_CONFIG, "----------------- %s to network %s = %d.%d.%d.%d\n",
+          LogDebug(COMPONENT_CONFIG, "----------------- %s to network %s = %d.%d.%d.%d",
                  (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                  client_hostname,
                  (unsigned int)(p_clients[i].client.network.netaddr >> 24),
@@ -545,7 +545,7 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
               strncpy(p_clients[i].client.wildcard.wildcard, client_hostname,
                       MAXHOSTNAMELEN);
 
-              LogFullDebug(COMPONENT_CONFIG, "----------------- %s to wildcard %s\n",
+              LogFullDebug(COMPONENT_CONFIG, "----------------- %s to wildcard %s",
                      (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                      client_hostname);
             }
@@ -1943,9 +1943,9 @@ int export_client_match(unsigned int addr,
   char hostname[MAXHOSTNAMELEN];
 
   if(export_option & EXPORT_OPTION_ROOT)
-    LogFullDebug(COMPONENT_DISPATCH, "Looking for root access entries\n");
+    LogFullDebug(COMPONENT_DISPATCH, "Looking for root access entries");
   if(export_option & EXPORT_OPTION_ACCESS)
-    LogFullDebug(COMPONENT_DISPATCH, "Looking for access only entries\n");
+    LogFullDebug(COMPONENT_DISPATCH, "Looking for access only entries");
 
   for(i = 0; i < clients->num_clients; i++)
     {
@@ -2024,7 +2024,7 @@ int export_client_match(unsigned int addr,
                   if(nfs_ip_name_add(addr, hostname) != IP_NAME_SUCCESS)
                     {
                       /* Major failure, name could not be resolved */
-                      LogFullDebug(COMPONENT_DISPATCH, "Could not resolve addr %u.%u.%u.%u\n",
+                      LogFullDebug(COMPONENT_DISPATCH, "Could not resolve addr %u.%u.%u.%u",
                              (unsigned int)(addr >> 24),
                              (unsigned int)(addr >> 16) & 0xFF,
                              (unsigned int)(addr >> 8) & 0xFF,
@@ -2060,7 +2060,7 @@ int export_client_match(unsigned int addr,
 
         case GSSPRINCIPAL_CLIENT:
           /** @toto BUGAZOMEU a completer lors de l'integration de RPCSEC_GSS */
-          LogFullDebug(COMPONENT_DISPATCH, "----------> Unsupported type GSS_PRINCIPAL_CLIENT\n");
+          LogFullDebug(COMPONENT_DISPATCH, "----------> Unsupported type GSS_PRINCIPAL_CLIENT");
           return FALSE;
           break;
 
@@ -2085,9 +2085,9 @@ int export_client_matchv6(struct in6_addr *paddrv6,
   char hostname[MAXHOSTNAMELEN];
 
   if(export_option & EXPORT_OPTION_ROOT)
-    LogFullDebug(COMPONENT_DISPATCH, "Looking for root access entries\n");
+    LogFullDebug(COMPONENT_DISPATCH, "Looking for root access entries");
   if(export_option & EXPORT_OPTION_ACCESS)
-    LogFullDebug(COMPONENT_DISPATCH, "Looking for access only entries\n");
+    LogFullDebug(COMPONENT_DISPATCH, "Looking for access only entries");
 
   for(i = 0; i < clients->num_clients; i++)
     {
@@ -2225,7 +2225,7 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
 
           inet_ntop(psockaddr_in6->sin6_family,
                     psockaddr_in6->sin6_addr.s6_addr, txtaddrv6, 100);
-          LogFullDebug(COMPONENT_DISPATCH, "Client has IPv6 adress = %s\n", txtaddrv6);
+          LogFullDebug(COMPONENT_DISPATCH, "Client has IPv6 adress = %s", txtaddrv6);
         }
 
       /* If the client socket is IPv4, then it is wrapped into a   ::ffff:a.b.c.d IPv6 address. We check this here 

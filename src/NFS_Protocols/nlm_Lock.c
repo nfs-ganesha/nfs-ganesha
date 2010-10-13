@@ -132,7 +132,7 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
       /*
        * ok failed to register monitor for the host
        */
-      LogDebug(COMPONENT_NFSPROTO, "Failed to register a monitor for the host %s\n",
+      LogDebug(COMPONENT_NFSPROTO, "Failed to register a monitor for the host %s",
                  arg->alock.caller_name);
       pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
       return NFS_REQ_OK;

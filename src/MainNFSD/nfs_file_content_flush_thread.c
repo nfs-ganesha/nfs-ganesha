@@ -105,6 +105,8 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
   unsigned long index = 0;
   exportlist_t *pexport;
   char function_name[MAXNAMLEN];
+  fsal_export_context_t export_context ;
+  fsal_path_t export_path ;
 
   p_flush_data = (nfs_flush_thread_data_t *) flush_data_arg;
 
@@ -155,6 +157,17 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
           if(FSAL_IS_ERROR(fsal_status))
             LogError(COMPONENT_MAIN, ERR_FSAL, fsal_status.major, fsal_status.minor);
 
+#ifdef _USE_XFS
+	  /* Export Context is required for FSAL_XFS to work properly (it set the XFS fshandle) */
+          fsal_status = FSAL_str2path( pexport->dirname, strlen( pexport->dirname )   , &export_path ) ;
+          if(FSAL_IS_ERROR(fsal_status))
+            LogError(COMPONENT_MAIN, ERR_FSAL, fsal_status.major, fsal_status.minor);
+
+          strncpy( export_context.mount_point, pexport->dirname, FSAL_MAX_PATH_LEN -1 ) ;
+          fsal_status = FSAL_BuildExportContext( &export_context, &export_path, NULL ) ;
+          if(FSAL_IS_ERROR(fsal_status))
+            LogError(COMPONENT_MAIN, ERR_FSAL, fsal_status.major, fsal_status.minor);
+#endif
           /* XXX: all entries are put in the same export_id path with id=0 */
           snprintf(cache_sub_dir, MAXPATHLEN, "%s/export_id=%d",
                    nfs_param.cache_layers_param.cache_content_client_param.cache_dir, 0);
@@ -162,8 +175,7 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
           if(cache_content_emergency_flush(cache_sub_dir,
                                            nfs_start_info.flush_behaviour,
                                            nfs_start_info.lw_mark_trigger,
-                                           nfs_param.cache_layers_param.dcgcpol.
-                                           emergency_grace_delay,
+                                           nfs_param.cache_layers_param.dcgcpol.emergency_grace_delay,
                                            p_flush_data->thread_index,
                                            nfs_start_info.nb_flush_threads,
                                            &p_flush_data->nb_flushed,

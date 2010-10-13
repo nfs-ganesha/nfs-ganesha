@@ -70,6 +70,11 @@ char ganesha_exec_path[MAXPATHLEN];
 extern fsal_functions_t fsal_functions;
 extern fsal_const_t fsal_consts;
 
+/* States managed by signal handler */
+extern unsigned int sigusr1_triggered ;
+extern unsigned int sigterm_triggered ;
+extern unsigned int sighup_triggered  ;
+
 /* command line syntax */
 
 char options[] = "h@RTdS:F:S:P:f:L:N:";
@@ -98,22 +103,10 @@ char usage[] =
  *
  */
 
-static void action_sigusr1(int sig)
+static void action_sigusr1( int sig )
 {
-  LogEvent(COMPONENT_MAIN, "SIGUSR1_HANDLER: Received SIGUSR1.... signal will be managed");
-
-  /* Set variable force_flush_by_signal that is used in file content cache gc thread */
-  if(force_flush_by_signal)
-    {
-      LogEvent(COMPONENT_MAIN, "SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
-      force_flush_by_signal = FALSE;
-    }
-  else
-    {
-      LogEvent(COMPONENT_MAIN, "SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
-      force_flush_by_signal = TRUE;
-    }
-}                               /* action_sigusr1 */
+   sigusr1_triggered = TRUE ;
+}
 
 /**
  *
@@ -123,26 +116,15 @@ static void action_sigusr1(int sig)
 
 static void action_sigterm(int sig)
 {
-  if(sig == SIGTERM)
-    LogEvent(COMPONENT_MAIN, "SIGTERM_HANDLER: Received SIGTERM.... initiating daemon shutdown");
-  else if(sig == SIGINT)
-    LogEvent(COMPONENT_MAIN, "SIGINT_HANDLER: Received SIGINT.... initiating daemon shutdown");
-
-  nfs_stop();
-
-}                               /* action_sigterm */
+   sigterm_triggered = TRUE ;
+}
 
 static void action_sighup(int sig)
 {
-  if(sig == SIGTERM)
-    LogEvent(COMPONENT_MAIN, "SIGTERM_HANDLER: Received SIGTERM.... initiating daemon shutdown");
-  else if(sig == SIGINT)
-    LogEvent(COMPONENT_MAIN, "SIGINT_HANDLER: Received SIGINT.... initiating daemon shutdown");
-  else if(sig == SIGHUP)
-    LogEvent(COMPONENT_MAIN, "SIGHUP_HANDLER: Received SIGHUP.... initiating export list reload");
+  sighup_triggered = TRUE ;
+}
 
-  admin_replace_exports();
-}                               /* action_sigsigh */
+
 
 /**
  * main: simply the main function.
@@ -343,8 +325,8 @@ int main(int argc, char *argv[])
   memset(&act_sigterm, 0, sizeof(act_sigterm));
   act_sigterm.sa_flags = 0;
   act_sigterm.sa_handler = action_sigterm;
-  if(sigaction(SIGTERM, &act_sigterm, NULL) == -1
-     || sigaction(SIGINT, &act_sigterm, NULL) == -1)
+
+  if(sigaction(SIGTERM, &act_sigterm, NULL) == -1 )
     {
       LogError(COMPONENT_INIT, ERR_SYS, ERR_SIGACTION, errno);
       exit(1);
@@ -354,7 +336,7 @@ int main(int argc, char *argv[])
 	     "Signals SIGTERM and SIGINT (daemon shutdown) are ready to be used");
 
   /* Set the signal handler */
-  memset(&act_sigterm, 0, sizeof(act_sighup));
+  memset(&act_sighup, 0, sizeof(act_sighup));
   act_sighup.sa_flags = 0;
   act_sighup.sa_handler = action_sighup;
   if(sigaction(SIGHUP, &act_sighup, NULL) == -1)

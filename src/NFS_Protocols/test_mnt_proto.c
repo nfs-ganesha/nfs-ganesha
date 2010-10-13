@@ -84,16 +84,16 @@ void print_export_list(exports export_list)
 
       groups p_group;
 
-      LogTest("exportnode.ex_dir = \"%s\"\n", p_expnode->ex_dir);
-      LogTest("exportnode.ex_groups = {\n");
+      LogTest("exportnode.ex_dir = \"%s\"", p_expnode->ex_dir);
+      LogTest("exportnode.ex_groups = {");
 
       p_group = p_expnode->ex_groups;
       while(p_group)
         {
-          LogTest("  \"%s\"\n", p_group->gr_name);
+          LogTest("  \"%s\"", p_group->gr_name);
           p_group = p_group->gr_next;
         }
-      LogTest("}\n\n");
+      LogTest("}");
 
       p_expnode = p_expnode->ex_next;
     }
@@ -107,17 +107,17 @@ int test_mnt_Null()
   int rc;
 
   rc = mnt_Null(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-  LogTest("MNTPROC_NULL()=%d\n", rc);
+  LogTest("MNTPROC_NULL()=%d", rc);
 
   /* Must return MNT3_OK */
   if(rc == MNT3_OK)
     {
-      LogTest("TEST MNT_NULL : OK\n");
+      LogTest("TEST MNT_NULL : OK");
       return 0;
     }
   else
     {
-      LogTest("TEST MNT_NULL : ERROR\n");
+      LogTest("TEST MNT_NULL : ERROR");
       return rc;
     }
 }
@@ -140,15 +140,15 @@ int test_mnt_Export()
 
   rc = mnt_Export(NULL, NULL, NULL, NULL, NULL, NULL, &result);
   /* rc must be OK and result.res_mntexport must be NULL */
-  LogTest("MNTPROC_EXPORT(NULL)=(%d,%p)\n", rc, result.res_mntexport);
+  LogTest("MNTPROC_EXPORT(NULL)=(%d,%p)", rc, result.res_mntexport);
 
   if((rc == MNT3_OK) && (result.res_mntexport == NULL))
     {
-      LogTest("TEST MNT_EXPORT : OK\n\n");
+      LogTest("TEST MNT_EXPORT : OK");
     }
   else
     {
-      LogTest("TEST MNT_EXPORT : ERROR\n\n");
+      LogTest("TEST MNT_EXPORT : ERROR");
       error++;
     }
 
@@ -156,7 +156,7 @@ int test_mnt_Export()
 
   if((mysock = socket(PF_INET, SOCK_STREAM, 0)) == -1)
     {
-      LogTest("socket ERROR %d : %s\n", errno, strerror(errno));
+      LogTest("socket ERROR %d : %s", errno, strerror(errno));
     }
 
   in_addr.sin_family = AF_INET;
@@ -165,13 +165,13 @@ int test_mnt_Export()
 
   if(bind(mysock, (struct sockaddr *)&in_addr, sizeof(in_addr)) == -1)
     {
-      LogTest("bind ERROR %d : %s\n", errno, strerror(errno));
+      LogTest("bind ERROR %d : %s", errno, strerror(errno));
     }
 
   size = sizeof(struct sockaddr);
   if(getsockname(mysock, (struct sockaddr *)&addr, (socklen_t *) & size) == -1)
     {
-      LogTest("getsockname ERROR %d : %s\n", errno, strerror(errno));
+      LogTest("getsockname ERROR %d : %s", errno, strerror(errno));
     }
   /* we don't use the resource, only its adress. */
   close(mysock);
@@ -249,7 +249,7 @@ int test_mnt_Export()
 
           break;
         default:
-          LogTest("!!!!!***** TEST ERROR *****!!!!!\n");
+          LogTest("!!!!!***** TEST ERROR *****!!!!!");
           return -1;
         }
 
@@ -257,15 +257,15 @@ int test_mnt_Export()
 
   rc = mnt_Export(NULL, export_entries, NULL, NULL, NULL, NULL, &result);
   /* rc must be OK and result.res_mntexport must be NULL */
-  LogTest("MNTPROC_EXPORT(entries)=(%d,%p)\n", rc, result.res_mntexport);
+  LogTest("MNTPROC_EXPORT(entries)=(%d,%p)", rc, result.res_mntexport);
 
   if((rc == MNT3_OK) && (result.res_mntexport != NULL))
     {
-      LogTest("TEST MNT_EXPORT : OK\n\n");
+      LogTest("TEST MNT_EXPORT : OK");
     }
   else
     {
-      LogTest("TEST MNT_EXPORT : ERROR\n\n");
+      LogTest("TEST MNT_EXPORT : ERROR");
       error++;
     }
 
@@ -278,12 +278,12 @@ int test_mnt_Export()
 
 #define Maketest(func,name) do {                      \
   int rc;                                             \
-  LogTest("\n======== TEST %s =========\n\n",name);    \
+  LogTest("\n======== TEST %s =========",name);    \
   rc = func();                                        \
   if (rc)                                             \
-    LogTest("\n-------- %s : %d ---------\n",name,rc); \
+    LogTest("\n-------- %s : %d ---------",name,rc); \
   else                                                \
-    LogTest("\n-------- %s : OK ---------\n",name); \
+    LogTest("\n-------- %s : OK ---------",name); \
   } while (0)
 
 int main(int argc, char **argv)

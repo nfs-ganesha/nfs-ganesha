@@ -120,7 +120,7 @@ unsigned long session_id_value_hash_func(hash_parameter_t * p_hparam,
       sum += c;
     }
 
-  LogFullDebug(COMPONENT_SESSIONS, "---> session_id_value_hash_func=%lu\n",
+  LogFullDebug(COMPONENT_SESSIONS, "---> session_id_value_hash_func=%lu",
          (unsigned long)(sum % p_hparam->index_size));
 
   return (unsigned long)(sum % p_hparam->index_size);
@@ -140,7 +140,7 @@ unsigned long session_id_rbt_hash_func(hash_parameter_t * p_hparam,
       char str[NFS4_SESSIONID_SIZE *2 + 1];
 
       sprint_mem(str, (char *)buffclef->pdata, NFS4_SESSIONID_SIZE);
-      LogFullDebug(COMPONENT_SESSIONS, "         ----- session_id_rbt_hash_func : %s\n", str);
+      LogFullDebug(COMPONENT_SESSIONS, "         ----- session_id_rbt_hash_func : %s", str);
     }
 
   memcpy(&i1, &(buffclef->pdata[0]), sizeof(u_int32_t));
@@ -148,7 +148,7 @@ unsigned long session_id_rbt_hash_func(hash_parameter_t * p_hparam,
   memcpy(&i3, &(buffclef->pdata[8]), sizeof(u_int32_t));
   memcpy(&i4, &(buffclef->pdata[12]), sizeof(u_int32_t));
 
-  LogFullDebug(COMPONENT_SESSIONS, "--->  session_id_rbt_hash_func=%lu\n", (unsigned long)(i1 ^ i2 ^ i3));
+  LogFullDebug(COMPONENT_SESSIONS, "--->  session_id_rbt_hash_func=%lu", (unsigned long)(i1 ^ i2 ^ i3));
 
   return (unsigned long)(i1 ^ i2 ^ i3 | i4);
 }                               /* session_id_rbt_hash_func */
@@ -226,7 +226,7 @@ int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
       char str[NFS4_SESSIONID_SIZE *2 + 1];
 
       sprint_mem(str, (char *)sessionid, NFS4_SESSIONID_SIZE);
-      LogFullDebug(COMPONENT_SESSIONS, "         -----  SetSSession : %s\n", str);
+      LogFullDebug(COMPONENT_SESSIONS, "         -----  SetSSession : %s", str);
     }
 
   if((buffkey.pdata = (caddr_t) Mem_Alloc(NFS4_SESSIONID_SIZE)) == NULL)
@@ -268,7 +268,7 @@ int nfs41_Session_Get(char sessionid[NFS4_SESSIONID_SIZE],
       char str[NFS4_SESSIONID_SIZE *2 + 1];
 
       sprint_mem(str, (char *)sessionid, NFS4_SESSIONID_SIZE);
-      LogFullDebug(COMPONENT_SESSIONS, "         -----  GetSessionId : %s\n", str);
+      LogFullDebug(COMPONENT_SESSIONS, "         -----  GetSessionId : %s", str);
     }
 
   buffkey.pdata = (caddr_t) sessionid;
@@ -276,12 +276,12 @@ int nfs41_Session_Get(char sessionid[NFS4_SESSIONID_SIZE],
 
   if(HashTable_Get(ht_session_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
-      LogFullDebug(COMPONENT_SESSIONS, "---> nfs41_Session_Get  NOT FOUND !!!!!!\n");
+      LogFullDebug(COMPONENT_SESSIONS, "---> nfs41_Session_Get  NOT FOUND !!!!!!");
       return 0;
     }
 
   memcpy(psession_data, buffval.pdata, sizeof(nfs41_session_t));
-  LogFullDebug(COMPONENT_SESSIONS, "---> nfs41_Session_Get Found :-)\n");
+  LogFullDebug(COMPONENT_SESSIONS, "---> nfs41_Session_Get Found :-)");
 
   return 1;
 }                               /* nfs41_Session_Get */
@@ -309,7 +309,7 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
       char str[NFS4_SESSIONID_SIZE *2 + 1];
 
       sprint_mem(str, (char *)sessionid, NFS4_SESSIONID_SIZE);
-      LogFullDebug(COMPONENT_SESSIONS, "         -----  Get_PointerSession : %s\n", str);
+      LogFullDebug(COMPONENT_SESSIONS, "         -----  Get_PointerSession : %s", str);
     }
 
   buffkey.pdata = (caddr_t) sessionid;
@@ -317,13 +317,13 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
 
   if(HashTable_Get(ht_session_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
-      LogFullDebug(COMPONENT_SESSIONS, "---> nfs41_Session_Get_Pointer  NOT FOUND !!!!!!\n");
+      LogFullDebug(COMPONENT_SESSIONS, "---> nfs41_Session_Get_Pointer  NOT FOUND !!!!!!");
       return 0;
     }
 
   *psession_data = (nfs41_session_t *) buffval.pdata;
 
-  LogFullDebug(COMPONENT_SESSIONS, "---> nfs41_Session_Get_Pointer Found :-)\n");
+  LogFullDebug(COMPONENT_SESSIONS, "---> nfs41_Session_Get_Pointer Found :-)");
 
   return 1;
 }                               /* nfs41_Session_Get_Pointer */
@@ -351,7 +351,7 @@ int nfs41_Session_Update(char sessionid[NFS4_SESSIONID_SIZE],
       char str[NFS4_SESSIONID_SIZE *2 + 1];
 
       sprint_mem(str, (char *)sessionid, NFS4_SESSIONID_SIZE);
-      LogFullDebug(COMPONENT_SESSIONS, "         -----  UpdateSession : %s\n", str);
+      LogFullDebug(COMPONENT_SESSIONS, "         -----  UpdateSession : %s", str);
     }
 
   buffkey.pdata = (caddr_t) sessionid;
@@ -359,13 +359,13 @@ int nfs41_Session_Update(char sessionid[NFS4_SESSIONID_SIZE],
 
   if(HashTable_Get(ht_session_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
-      LogFullDebug(COMPONENT_SESSIONS, "---> nfs41_Session_Update  NOT FOUND !!!!!!\n");
+      LogFullDebug(COMPONENT_SESSIONS, "---> nfs41_Session_Update  NOT FOUND !!!!!!");
       return 0;
     }
 
   memcpy(buffval.pdata, psession_data, sizeof(nfs41_session_t));
 
-  LogFullDebug(COMPONENT_SESSIONS, "---> nfs41_Session_Update Found :-)\n");
+  LogFullDebug(COMPONENT_SESSIONS, "---> nfs41_Session_Update Found :-)");
 
   return 1;
 }                               /* nfs41_Session_Update */
@@ -390,7 +390,7 @@ int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
       char str[NFS4_SESSIONID_SIZE *2 + 1];
 
       sprint_mem(str, (char *)sessionid, NFS4_SESSIONID_SIZE);
-      LogFullDebug(COMPONENT_SESSIONS, "         -----  DelSession : %s\n", str);
+      LogFullDebug(COMPONENT_SESSIONS, "         -----  DelSession : %s", str);
     }
 
   buffkey.pdata = (caddr_t) sessionid;

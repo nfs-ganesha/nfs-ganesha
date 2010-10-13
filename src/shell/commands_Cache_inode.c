@@ -362,6 +362,7 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
 
   /* is it a relative or an absolute path ? */
   strncpy(str_path, i_spec_path, FSAL_MAX_PATH_LEN);
+  str_path[FSAL_MAX_PATH_LEN - 1] = '\0';
 
   curr = str_path;
   next_name = str_path;
@@ -401,6 +402,7 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
         }
 
       strncpy(io_global_path, str_path, size_global_path);
+      io_global_path[size_global_path - 1] = '\0';
       *pnew_pentry = pentry_tmp;
 
       return 0;
@@ -4077,6 +4079,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
             {
               flag_s++;
               strncpy(str_seek_buff, Optarg, 256);
+              str_seek_buff[255] = '\0';
               str_seek_type = str_seek_buff;
             }
           break;
@@ -4145,6 +4148,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
 
   /* copy current absolute path to a local variable. */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
+  glob_path[FSAL_MAX_PATH_LEN - 1] = '\0';
 
   /* retrieve handle to the file whose permissions are to be tested */
   if(rc =
@@ -4524,6 +4528,7 @@ int fn_Cache_inode_open_by_name(int argc,       /* IN : number of args in argv *
   context = RetrieveInitializedContext();
 
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
+  glob_path[FSAL_MAX_PATH_LEN - 1] = '\0';
 
   if((pentry_file = cache_inode_lookup(context->pentry,
                                        &filename,
@@ -4643,6 +4648,7 @@ int fn_Cache_inode_close(int argc,      /* IN : number of args in argv */
 
   /* copy current absolute path to a local variable. */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
+  glob_path[FSAL_MAX_PATH_LEN - 1] = '\0';
 
   /* retrieve handle to the file whose permissions are to be tested */
   if(rc =

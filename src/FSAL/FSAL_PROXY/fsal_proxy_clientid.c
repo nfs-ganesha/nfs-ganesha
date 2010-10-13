@@ -262,6 +262,7 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
 
   while(1)
     {
+      sleep(600);  /** @todo: use getattr to have an actual value of server's lease duration */
 
       /* Call the NFSv4 function */
       TakeTokenFSCall();
@@ -282,6 +283,5 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
                 "FSAL_PROXY: /!\\ NFSv4 error %u occured when trying to new clienitf %llu",
                 resnfs4.status, fsal_clientid);
 
-      sleep(6);  /** @todo: use getattr to have an actual value of server's lease duration */
     }                           /* while( 1 ) */
 }                               /* FSAL_proxy_clientid_renewer_thread */

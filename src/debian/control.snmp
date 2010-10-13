@@ -1,0 +1,9 @@
+Package: nfs-ganesha-snmp
+Architecture: any
+Depends: nfs-ganesha-common, libsnmp15, ${shlibs:Depends}
+Description: NFS-GANESHA as a NFS gateway to SNMP
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. This package provides support for NFS-GANESHA to export
+ SNMP.
+

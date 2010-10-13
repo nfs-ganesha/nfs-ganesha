@@ -147,7 +147,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   LogFullDebug(COMPONENT_NFS_V4, "SAVEDFH: File handle = { Length = %d  Val = ", data->savedFH.nfs_fh4_len);
   for(i = 0; i < data->savedFH.nfs_fh4_len; i++)
     LogFullDebug(COMPONENT_NFS_V4, "%02X", data->savedFH.nfs_fh4_val[i]);
-  LogFullDebug(COMPONENT_NFS_V4, " }\n");
+  LogFullDebug(COMPONENT_NFS_V4, " }");
 
   return NFS4_OK;
 }                               /* nfs4_op_savefh */

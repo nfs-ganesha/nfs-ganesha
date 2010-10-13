@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Configuring Ganesha</TITLE>
+<META NAME="description" CONTENT="Configuring Ganesha">
+<META NAME="keywords" CONTENT="using_zfs_fsal">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="using_zfs_fsal.css">
+
+<LINK REL="next" HREF="node8.html">
+<LINK REL="previous" HREF="node2.html">
+<LINK REL="up" HREF="using_zfs_fsal.html">
+<LINK REL="next" HREF="node8.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A NAME="tex2html82"
+  HREF="node8.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="../../images/next.png"></A> 
+<A NAME="tex2html80"
+  HREF="using_zfs_fsal.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="../../images/up.png"></A> 
+<A NAME="tex2html74"
+  HREF="node6.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="../../images/prev.png"></A>   
+<BR>
+<B> Next:</B> <A NAME="tex2html83"
+  HREF="node8.html">About this document ...</A>
+<B> Up:</B> <A NAME="tex2html81"
+  HREF="using_zfs_fsal.html">using_zfs_fsal</A>
+<B> Previous:</B> <A NAME="tex2html75"
+  HREF="node6.html">Destroying a zpool</A>
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION00030000000000000000">
+Configuring Ganesha</A>
+</H1>
+<P>
+<I><I><I>To configure NFS-Ganesha to access to a zpool, you must set some options in the
+configuration file, in the <TT>ZFS</TT> configuration block
+</I></I></I>
+<P>
+<I><I><I>The only parameter to set is the name of the pool that NFS-Ganesha must use.
+</I></I></I>
+<P>
+<PRE>
+ZFS
+{
+    # Zpool to use
+    zpool = "tank";
+}
+</PRE>
+<P>
+<I><I><I>Moreover the Path variable in the Export block must be "/".
+</I></I></I>
+<P>
+<BR><HR>
+<ADDRESS>
+remi
+2010-09-17
+</ADDRESS>
+</BODY>
+</HTML>

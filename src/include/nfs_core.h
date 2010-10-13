@@ -294,6 +294,7 @@ typedef struct nfs_core_param__
   char stats_file_path[MAXPATHLEN];
   char stats_per_client_directory[MAXPATHLEN];
   char fsal_shared_library[MAXPATHLEN];
+  int tcp_fridge_expiration_delay ;
 } nfs_core_parameter_t;
 
 typedef struct nfs_ip_name_param__
@@ -523,6 +524,18 @@ typedef struct nfs_flush_thread_data__
 
 } nfs_flush_thread_data_t;
 
+typedef struct fridge_entry__
+{
+  pthread_t thrid ;
+  pthread_mutex_t condmutex ;
+  pthread_cond_t condvar ;
+  unsigned int frozen ;
+  void * arg ;
+  struct fridge_entry__ * pprev ;
+  struct fridge_entry__ * pnext ;
+} fridge_entry_t  ;
+
+
 /* 
  *functions prototypes
  */
@@ -531,9 +544,14 @@ void *rpc_dispatcher_thread(void *arg);
 void *admin_thread(void *arg);
 void *stats_thread(void *IndexArg);
 void *stat_exporter_thread(void *IndexArg);
+void *sigmgr_thread(void *arg);
 int stats_snmp(nfs_worker_data_t * workers_data_local);
 void *file_content_gc_thread(void *IndexArg);
 void *nfs_file_content_flush_thread(void *flush_data_arg);
+
+void nfs_operate_on_sigusr1() ;
+void nfs_operate_on_sigterm() ;
+void nfs_operate_on_sighup() ;
 
 int nfs_Init_svc(void);
 int nfs_Init_admin_data(nfs_admin_data_t * pdata);
@@ -746,6 +764,10 @@ int nfs4_State_Get_Pointer(char other[12], cache_inode_state_t * *pstate_data);
 int nfs4_State_Del(char other[12]);
 int nfs4_State_Update(char other[12], cache_inode_state_t * pstate_data);
 void nfs_State_PrintAll(void);
+
+int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
+fridge_entry_t * fridgethr_freeze( ) ;
+int fridgethr_init() ;
 
 #ifdef _USE_NFS4_1
 int display_session_id_key(hash_buffer_t * pbuff, char *str);

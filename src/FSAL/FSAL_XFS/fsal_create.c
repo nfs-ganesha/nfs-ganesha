@@ -161,7 +161,7 @@ fsal_status_t XFSFSAL_create(xfsfsal_handle_t * p_parent_directory_handle,      
     {
       TakeTokenFSCall();
       /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-      rc = fchown(fd, p_context->credential.user,
+      rc = fchown(newfd, p_context->credential.user,
                   setgid_bit ? -1 : (int)p_context->credential.group);
       errsv = errno;
       ReleaseTokenFSCall();

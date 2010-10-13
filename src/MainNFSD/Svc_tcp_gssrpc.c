@@ -35,6 +35,9 @@
 #include "solaris_port.h"
 #endif
 
+#include "log_macros.h"
+int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
+
 /*
  * svc_tcp.c, Server side for TCP/IP based RPC. 
  *
@@ -268,7 +271,6 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt, struct rpc_msg *msg)
   struct sockaddr_in addr, laddr;
   int len, llen;
 
-  pthread_attr_t attr_thr;
   pthread_t sockmgr_thrid;
   int rc = 0;
 
@@ -293,11 +295,6 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt, struct rpc_msg *msg)
   xprt->xp_laddr = laddr;
   xprt->xp_laddrlen = llen;
 
-  /* Spawns a new thread to handle the connection */
-  pthread_attr_init(&attr_thr);
-  pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
-  pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED);
-
   FD_CLR(xprt->xp_sock, &Svc_fdset);
 
   if(pthread_cond_init(&condvar_xprt[xprt->xp_sock], NULL) != 0)
@@ -309,7 +306,7 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt, struct rpc_msg *msg)
   etat_xprt[xprt->xp_sock] = 0;
 
   if((rc =
-      pthread_create(&sockmgr_thrid, &attr_thr, rpc_tcp_socket_manager_thread,
+      fridgethr_get(&sockmgr_thrid, rpc_tcp_socket_manager_thread,
                      (void *)(xprt->xp_sock))) != 0)
     {
       return FALSE;

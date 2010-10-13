@@ -16,6 +16,7 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          nfs_open_owner.c                   \
                          nfs4_tools.c                       \
                          exports.c                          \
+                         fridgethr.c                        \
                          ../include/nfs_file_handle.h       \
                          ../include/nfs_core.h              \
                          ../include/nfs_tools.h             \

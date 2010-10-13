@@ -1,0 +1,22 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+export PREFIX=/usr
+
+FSAL_NAME=`echo @FS_NAME@ | tr '[:lower:]' '[:upper:]'`
+
+%:
+	 dh --with quilt $@
+
+override_dh_auto_configure:
+	 dh_auto_configure -- --with-fsal=$(FSAL_NAME) --sysconfdir=/etc/ganesha
+
+override_dh_auto_test:
+
+override_dh_install:
+	 mkdir -p debian/tmp/etc/init.d/
+	 @if test "@FS_NAME@" != "fuse" ; then \
+           cp nfs-ganesha.@FS_NAME@.init debian/tmp/etc/init.d/nfs-ganesha.@FS_NAME@; \
+         fi
+	 # Copy this if we need it (HACK)
+	 cp FSAL/FSAL_POSIX/DBExt/MYSQL/posixdb_mysql5.sql debian/tmp/etc/ganesha/posixdb_mysql5.sql
+	 dh_install --sourcedir=debian/tmp

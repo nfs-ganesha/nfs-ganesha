@@ -159,17 +159,17 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
   /* This attributes is equivalent to a "mount" command line,
    * To understand what's follow, imagine that you do kind of "mount refer@server nfs_ref" */
 
-  LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "--> %s\n", input_str);
+  LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "--> %s", input_str);
 
-  LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "   %u comp local\n", nb_comp_local);
+  LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "   %u comp local", nb_comp_local);
   for(tmp_int = 0; tmp_int < nb_comp_local; tmp_int++)
-    LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "     #%s#\n", local_comp[tmp_int]);
+    LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "     #%s#", local_comp[tmp_int]);
 
-  LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "   %u comp remote\n", nb_comp_remote);
+  LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "   %u comp remote", nb_comp_remote);
   for(tmp_int = 0; tmp_int < nb_comp_remote; tmp_int++)
-    LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "     #%s#\n", remote_comp[tmp_int]);
+    LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "     #%s#", remote_comp[tmp_int]);
 
-  LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "   server = #%s#\n", server_part);
+  LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "   server = #%s#", server_part);
 
   /* 1- Number of component in local path */
   tmp_int = htonl(nb_comp_local);

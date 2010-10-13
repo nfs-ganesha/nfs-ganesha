@@ -299,7 +299,7 @@ off_t cache_content_recover_size(char *basepath, u_int64_t inum)
       return -1;
     }
 
-  LogFullDebug(COMPONENT_CACHE_CONTENT, "path ----> %s %llu\n", path, buffstat.st_size);
+  LogFullDebug(COMPONENT_CACHE_CONTENT, "path ----> %s %llu", path, buffstat.st_size);
 
   /* Stat is ok, we now return the size */
   return buffstat.st_size;
@@ -590,7 +590,7 @@ cache_content_status_t cache_content_check_threshold(char *datacache_path,
 
   if(statfs(fspath, &info_fs) != 0)
     {
-      LogCrit(COMPONENT_CACHE_CONTENT, "Error getting local filesystem info: path=%s errno=%u\n", fspath,
+      LogCrit(COMPONENT_CACHE_CONTENT, "Error getting local filesystem info: path=%s errno=%u", fspath,
                  errno);
       return CACHE_CONTENT_LOCAL_CACHE_ERROR;
     }
@@ -778,7 +778,7 @@ int cache_content_local_cache_dir_iter(cache_content_dirinfo_t * directory,
               if(!strcmp(".", pdir_entry->d_name) || !strcmp("..", pdir_entry->d_name))
                 continue;
 
-              LogFullDebug(COMPONENT_CACHE_CONTENT,"iterator --> %s/%s/%s/%s\n", directory->level0_path,
+              LogFullDebug(COMPONENT_CACHE_CONTENT,"iterator --> %s/%s/%s/%s", directory->level0_path,
                      directory->level1_name, directory->level2_name, pdir_entry->d_name);
 
               /* the d_name must actually be the relative path from
@@ -827,7 +827,7 @@ int cache_content_local_cache_dir_iter(cache_content_dirinfo_t * directory,
               directory->level1_cnt++;
 
               LogFullDebug(COMPONENT_CACHE_CONTENT,
-                  "---> directory->level1_cnt=%u mod=%u index=%u modulocalcule=%u name=%s\n",
+                  "---> directory->level1_cnt=%u mod=%u index=%u modulocalcule=%u name=%s",
                    directory->level1_cnt, mod, index, directory->level1_cnt % mod,
                    pdir_entry->d_name);
 

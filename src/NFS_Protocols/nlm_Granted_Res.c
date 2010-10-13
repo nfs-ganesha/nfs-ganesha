@@ -96,8 +96,8 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
 
   if(arg->stat.stat == NLM4_DENIED_GRACE_PERIOD)
     {
-      LogMajor(COMPONENT_NFSPROTO, "%s: Granted call failed due to client grace period\n");
-      LogMajor(COMPONENT_NFSPROTO, "Retrying...\n");
+      LogMajor(COMPONENT_NFSPROTO, "%s: Granted call failed due to client grace period");
+      LogMajor(COMPONENT_NFSPROTO, "Retrying...");
 
       /*
        * nlm_resend_grant_msg will drop the lock entry ref count

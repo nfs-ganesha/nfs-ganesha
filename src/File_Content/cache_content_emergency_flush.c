@@ -119,7 +119,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
   cache_content_dirinfo_t directory;
   struct dirent dir_entry;
   FILE *stream = NULL;
-  char buff[CACHE_INODE_DUMP_LEN];
+  char buff[CACHE_INODE_DUMP_LEN + 1];
   int inum;
   char indexpath[MAXPATHLEN];
   char datapath[MAXPATHLEN];
@@ -167,7 +167,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
 
               if(statfs(cachedir, &info_fs) != 0)
                 {
-                  LogCrit(COMPONENT_CACHE_CONTENT,"Error getting local filesystem info: path=%s errno=%u\n",
+                  LogCrit(COMPONENT_CACHE_CONTENT,"Error getting local filesystem info: path=%s errno=%u",
                              cachedir, errno);
                   return CACHE_CONTENT_LOCAL_CACHE_ERROR;
                 }
@@ -216,10 +216,14 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
           if((stream = fopen(indexpath, "r")) == NULL)
             return CACHE_CONTENT_LOCAL_CACHE_ERROR;
 
-          fscanf(stream, "internal:read_time=%s\n", buff);
-          fscanf(stream, "internal:mod_time=%s\n", buff);
-          fscanf(stream, "internal:export_id=%s\n", buff);
-          fscanf(stream, "file: FSAL handle=%s", buff);
+          #define XSTR(s) STR(s)
+          #define STR(s) #s
+          fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
+          #undef STR
+          #undef XSTR
 
           if(sscanHandle(&fsal_handle, buff) < 0)
             {
@@ -256,7 +260,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
             max_acmtime = buffstat.st_ctime;
 
           LogFullDebug(COMPONENT_CACHE_CONTENT,
-              "date=%d max_acmtime=%d ,time( NULL ) - max_acmtime = %d, grace_period = %d\n",
+              "date=%d max_acmtime=%d ,time( NULL ) - max_acmtime = %d, grace_period = %d",
                time(NULL), max_acmtime, time(NULL) - max_acmtime, grace_period);
 
           if(time(NULL) - max_acmtime < grace_period)
@@ -279,7 +283,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
 #if defined(  _USE_PROXY ) && defined( _BY_FILEID )
           fileid = cache_content_get_inum(dir_entry.d_name);
 
-          LogFullDebug(COMPONENT_CACHE_CONTENT, "====> Fileid = %llu %llx\n", fileid, fileid);
+          LogFullDebug(COMPONENT_CACHE_CONTENT, "====> Fileid = %llu %llx", fileid, fileid);
 
           if(!FSAL_IS_ERROR(fsal_status))
             {

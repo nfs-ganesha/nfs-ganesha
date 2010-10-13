@@ -1,0 +1,224 @@
+\documentclass[english]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf-8]{inputenc}
+
+\makeatletter
+
+\usepackage{babel}
+\makeatother
+\begin{document}
+
+{\Large \textbf{Exporting a ZFS filesystem with GANESHA} }\\
+
+\section{Introduction}
+
+Thanks to the ZFS FSAL, NFS-Ganesha is able to access and manipulate a ZFS
+filesystem. This access is not done through FUSE and the zfs-fuse project but
+directly using a custom library.
+
+This library called libzfswrap is distributed along with NFS-Ganesha and is
+mostly based on zfs-fuse. Packages for rpm based distributions and deb based
+distributions are also available.
+
+This document will explain the creation and managing of zpool and the
+configuration of NFS-Ganesha to use the zpool newly created.
+
+\section{Managing zpool}
+
+A set of tools has been created on top of libzfswrap to manage ZFS zpools. This
+set of tools is not fully finished as some features are still missing. Anyway
+the classical zfs-fuse based tools can also be used to manage the same zpool.
+
+A zpool created and managed by libzfswrap is also visible by zfs-fuse and
+conversely.
+
+\subsection{Creating zpool}
+
+A zpool is a set of disk that can be grouped together with or without
+redundancy to form a logical volume. This pool of disk form the first ZFS
+filesystem that you can directly access and use in NFS-Ganesha.
+
+Creating a zpool is really straightforward:
+\begin{verbatim}
+    root@localhost% lzw_zpool create tank mirror /dev/sda /dev/sdb
+\end{verbatim}
+
+This command will create a zpool called tank that form a mirror using
+\it{/dev/sda} and \it{/dev/sdb}.
+
+The third argument of the command is the type of zpool that will be created.
+Several types exist:
+\begin{itemize}
+    \item mirror: each disk is a mirror
+    \item raidz: like a classical RAID5
+    \item raidz[1..255]: like a RAID5 with n disk for the parity (raidz3 implies n=3)
+\end{itemize}
+
+\subsection{Getting information about zpool}
+
+To list the available zpool on the system and some information about them:
+\begin{verbatim}
+    root@localhost% lzw_zpool list
+      NAME   SIZE  ALLOC   FREE    CAP  DEDUP  HEALTH  ALTROOT
+      pool  1016M   106K  1016M     0%  1.00x  ONLINE  -
+      tank  4.59G  2.02G  2.57G    43%  1.00x  ONLINE  -
+\end{verbatim}
+
+You can specify the list of properties you want to get by providing as second
+argument the name of them separated by colons.
+\begin{verbatim}
+    root@localhost% lzw_zpool list name,size,health
+      NAME   SIZE  HEALTH
+      pool  1016M  ONLINE
+      tank  4.59G  ONLINE
+\end{verbatim}
+
+To get more detailed information about the structure and the status of each disk in the pool, just use the \it{status} command:
+\begin{verbatim}
+    root@localhost% lzw_zpool status
+      pool: pool
+     state: ONLINE
+     scrub: none requested
+    config:
+    
+            NAME            STATE     READ WRITE CKSUM
+            pool            ONLINE       0     0     0
+              mirror-0      ONLINE       0     0     0
+                /dev/sda    ONLINE       0     0     0
+                /dev/sdb    ONLINE       0     0     0
+    
+    errors: No known data errors
+    
+      pool: tank
+     state: ONLINE
+     scrub: none requested
+    config:
+    
+            NAME        STATE     READ WRITE CKSUM
+            tank        ONLINE       0     0     0
+              mirror-0  ONLINE       0     0     0
+                hda3    ONLINE       0     0     0
+                hda4    ONLINE       0     0     0
+    
+    errors: No known data errors
+\end{verbatim}
+
+\subsection{Modifying a zpool}
+
+It's always possible to add disk or group of disk to a zpool.
+\begin{verbatim}
+    root@localhost% lzw_zpool add pool raidz /dev/sdc /dev/sdd /dev/sde
+    root@localhost% lzw_zpool status
+      pool: pool
+     state: ONLINE
+     scrub: none requested
+    config:
+    
+            NAME            STATE     READ WRITE CKSUM
+            pool            ONLINE       0     0     0
+              mirror-0      ONLINE       0     0     0
+                /dev/sda    ONLINE       0     0     0
+                /dev/sdb    ONLINE       0     0     0
+              raidz1-1      ONLINE       0     0     0
+                /dev/sdc    ONLINE       0     0     0
+                /dev/sdd    ONLINE       0     0     0
+                /dev/sde    ONLINE       0     0     0
+    
+    errors: No known data errors
+    
+      pool: tank
+     state: ONLINE
+     scrub: none requested
+    config:
+    
+            NAME        STATE     READ WRITE CKSUM
+            tank        ONLINE       0     0     0
+              mirror-0  ONLINE       0     0     0
+                hda3    ONLINE       0     0     0
+                hda4    ONLINE       0     0     0
+    
+    errors: No known data errors
+\end{verbatim}
+
+The 'add' command takes as arguments:
+\begin{itemize}
+    \item 'pool': name of the pool
+    \item 'raidz': type of the disk set to add
+    \item the list of devices that form the disk set to add
+\end{itemize}
+
+
+That's also possible to detach a device from a mirror. In this example,
+detaching one device from the mirror inside the first pool is possible with:
+\begin{verbatim}
+    root@localhost% lzw_zpool detach pool /dev/sdb
+    root@localhost% lsz_zpool status
+      pool: pool
+     state: ONLINE
+     scrub: none requested
+    config:
+    
+            NAME            STATE     READ WRITE CKSUM
+            pool            ONLINE       0     0     0
+              /dev/sda      ONLINE       0     0     0
+              raidz1-1      ONLINE       0     0     0
+                /dev/sdc    ONLINE       0     0     0
+                /dev/sdd    ONLINE       0     0     0
+                /dev/sde    ONLINE       0     0     0
+    
+    errors: No known data errors
+    
+      pool: tank
+     state: ONLINE
+     scrub: none requested
+    config:
+    
+            NAME        STATE     READ WRITE CKSUM
+            tank        ONLINE       0     0     0
+              mirror-0  ONLINE       0     0     0
+                hda3    ONLINE       0     0     0
+                hda4    ONLINE       0     0     0
+    
+    errors: No known data errors
+\end{verbatim}
+
+To undo this operation just use the 'attach' command:
+\begin{verbatim}
+    root@localhost% lzw_zpool attach pool /dev/sda /dev/sdb
+\end{verbatim}
+
+This command takes as argument:
+\begin{itemize}
+    \item 'pool': name of the pool
+    \item '/dev/sda': device to use as attachment point
+    \item '/dev/sdb': device to attach to the previous argument
+\end{itemize}
+
+\subsection{Destroying a zpool}
+
+To destroy a zpool only one command is needed:
+\begin{verbatim}
+  root@localhost% lzw_zpool destroy pool
+  root@localhost% lzw_zpool list
+      NAME   SIZE  ALLOC   FREE    CAP  DEDUP  HEALTH  ALTROOT
+      tank  4.59G  2.02G  2.57G    43%  1.00x  ONLINE  -
+\end{verbatim}
+
+\section{Configuring Ganesha}
+
+To configure NFS-Ganesha to access to a zpool, you must set some options in the
+configuration file, in the \texttt{ZFS} configuration block
+
+The only parameter to set is the name of the pool that NFS-Ganesha must use.
+
+\begin{verbatim}
+ZFS
+{
+    # Zpool to use
+    zpool = "tank";
+}
+\end{verbatim}
+
+Moreover the Path variable in the Export block must be "/".
+
+\end{document}

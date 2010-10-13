@@ -6,7 +6,13 @@
 #ifndef _NLM4_H_RPCGEN
 #define _NLM4_H_RPCGEN
 
+#ifdef _USE_GSSRPC
+#include <gssrpc/rpc.h>
+#include <gssrpc/types.h>
+#else
 #include <rpc/rpc.h>
+#include <rpc/types.h>
+#endif
 
 #ifdef __cplusplus
 extern "C"
