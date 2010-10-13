@@ -149,7 +149,7 @@ fsal_status_t ZFSFSAL_setattrs(zfsfsal_handle_t * filehandle, /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_setattrs);
 
   if(filehandle->data.i_snap != 0)
-    Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_setattrs);
+    Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_setattrs);
 
   /* local copy of attributes */
   attrs = *attrib_set;

@@ -125,6 +125,7 @@ typedef struct fsal_file__
   libzfswrap_vfs_t *p_vfs;
   creden_t cred;
   inogen_t zfs_handle;
+  char i_snap;
   off_t current_offset;
   int flags;
   libzfswrap_vnode_t *p_vnode;

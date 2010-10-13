@@ -18,6 +18,7 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include "fsal_common.h"
 
 /**
  * FSAL_access :
