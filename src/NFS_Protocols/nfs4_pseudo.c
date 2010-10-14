@@ -1988,7 +1988,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   /* @todo : Is this reallocation actually needed ? */
 #ifdef BUGAZOMEU
   if(i < estimated_num_entries)
-    if((entry_nfs_array = Mem_Realloc(entry_nfs_array, i * sizeof(entry4))) == NULL)
+    if((entry_nfs_array = Mem_Realloc_Label(entry_nfs_array, i * sizeof(entry4),
+                                            "entry4")) == NULL)
       {
         LogError(COMPONENT_NFS_V4_PSEUDO, ERR_SYS, ERR_MALLOC, errno);
         res_READDIR4.status = NFS4ERR_SERVERFAULT;

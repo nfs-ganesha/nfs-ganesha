@@ -295,8 +295,8 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
  * @return a FSAL status
  *
  */
-fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t * pcontext,
-                                                     mfsl_precreated_object_t * pool_dirs)
+fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t    *pcontext,
+                                                     struct prealloc_pool *pool_dirs)
 {
   unsigned int i = 0;
   char newdirpath[MAXNAMLEN];
@@ -308,7 +308,7 @@ fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t * pcontex
   mfsl_precreated_object_t *pprecreated;
   fsal_attrib_list_t dir_attr;
   static unsigned int counter = 0;
-  mfsl_precreated_object_t *piter = NULL;
+  struct prealloc_header *piter;
 
   fsal_status.major = ERR_FSAL_NO_ERROR;
   fsal_status.minor = 0;
@@ -338,9 +338,12 @@ fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t * pcontex
       dir_handle_set = 1;
     }
 
-  for(piter = pool_dirs; piter != NULL; piter = piter->next_alloc)
+#ifndef _NO_BLOCK_PREALLOC
+  for(piter = pool_dirs->pa_free; piter != NULL; piter = piter->pa_next)
     {
-      if(piter->inited != 0)
+      pprecreated = get_prealloc_entry(piter, mfsl_precreated_object_t);
+
+      if(pprecreated->inited != 0)
         continue;
 
       snprintf(newdirpath, MAXNAMLEN, "dir.%u.%lu.%u", pid, me, counter++);
@@ -351,13 +354,12 @@ fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t * pcontex
           exit(1);
         }
 
-      pprecreated = piter;
       pprecreated->name = fsal_name;
       pprecreated->attr.asked_attributes = FSAL_ATTRS_POSIX;
       pprecreated->attr.supported_attributes = FSAL_ATTRS_POSIX;
       pthread_mutex_init(&pprecreated->mobject.lock, NULL);
 
-      piter->inited = 1;
+      pprecreated->inited = 1;
 
       fsal_status = FSAL_mkdir(&dir_handle_precreate,
                                &fsal_name,
@@ -372,6 +374,7 @@ fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t * pcontex
           exit(1);
         }
     }
+#endif
 
   return fsal_status;
 }                               /* mfsl_async_init_precreated_directories */
@@ -388,8 +391,8 @@ fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t * pcontex
  * @return a FSAL status
  *
  */
-fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t * pcontext,
-                                               mfsl_precreated_object_t * pool_files)
+fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t    *pcontext,
+                                               struct prealloc_pool *pool_files)
 {
   unsigned int i = 0;
   char newdirpath[MAXNAMLEN];
@@ -401,7 +404,7 @@ fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t * pcontext,
   mfsl_precreated_object_t *pprecreated;
   fsal_attrib_list_t dir_attr;
   fsal_attrib_list_t obj_attr;
-  mfsl_precreated_object_t *piter = NULL;
+  struct prealloc_header *piter;
   static unsigned int counter = 0;
 
   fsal_status.major = ERR_FSAL_NO_ERROR;
@@ -431,9 +434,12 @@ fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t * pcontext,
       dir_handle_set = 1;
     }
 
-  for(piter = pool_files; piter != NULL; piter = piter->next_alloc)
+#ifndef _NO_BLOCK_PREALLOC
+  for(piter = pool_files->pa_free; piter != NULL; piter = piter->pa_next)
     {
-      if(piter->inited != 0)
+      pprecreated = get_prealloc_entry(piter, mfsl_precreated_object_t);
+
+      if(pprecreated->inited != 0)
         continue;
 
       snprintf(newdirpath, MAXNAMLEN, "file.%u.%lu.%u", pid, me, counter++);
@@ -444,13 +450,12 @@ fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t * pcontext,
           exit(1);
         }
 
-      pprecreated = piter;
       pprecreated->name = fsal_name;
       pprecreated->attr.asked_attributes = FSAL_ATTRS_POSIX;
       pprecreated->attr.supported_attributes = FSAL_ATTRS_POSIX;
       pthread_mutex_init(&pprecreated->mobject.lock, NULL);
 
-      piter->inited = 1;
+      pprecreated->inited = 1;
 
       fsal_status = FSAL_create(&dir_handle_precreate,
                                 &fsal_name,
@@ -465,6 +470,7 @@ fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t * pcontext,
           /* exit( 1 ) ;  */
         }
     }
+#endif
 
   return fsal_status;
 }                               /* mfsl_async_init_precreated_files */
@@ -510,12 +516,9 @@ fsal_status_t MFSL_GetContext(mfsl_context_t * pcontext,
 
   pcontext->synclet_index = 0;  /* only one synclet for now */
 
-  STUFF_PREALLOC(pcontext->pool_async_op,
-                 mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
+  MakePool(&pcontext->pool_async_op, mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, NULL, NULL);
 
-  STUFF_PREALLOC(pcontext->pool_spec_data,
-                 mfsl_param.nb_pre_async_op_desc,
-                 mfsl_object_specific_data_t, next_alloc);
+  MakePool(&pcontext->pool_spec_data, mfsl_param.nb_pre_async_op_desc, mfsl_object_specific_data_t, NULL, NULL);
 
   /* Preallocate files and dirs for this thread */
   P(pcontext->lock);
@@ -571,15 +574,14 @@ fsal_status_t MFSL_ASYNC_RefreshContextDirs(mfsl_context_t * pcontext,
   status.major = ERR_FSAL_NO_ERROR;
   status.minor = 0;
 
-  if(pcontext->pool_dirs == NULL)
+  if(pcontext->pool_dirs.pa_constructor == NULL)
     {
-      STUFF_PREALLOC_CONSTRUCT(pcontext->pool_dirs,
-                               mfsl_param.nb_pre_create_dirs,
-                               mfsl_precreated_object_t,
-                               next_alloc, constructor_preacreated_entries);
-      pcontext->avail_pool_dirs = mfsl_param.nb_pre_create_dirs;
+      MakePool(&pcontext->pool_dirs,
+               mfsl_param.nb_pre_create_dirs,
+               mfsl_precreated_object_t,
+               constructor_preacreated_entries, NULL);
 
-      status = mfsl_async_init_precreated_directories(pfsal_context, pcontext->pool_dirs);
+      status = mfsl_async_init_precreated_directories(pfsal_context, &pcontext->pool_dirs);
       if(FSAL_IS_ERROR(status))
         return status;
     }
@@ -589,7 +591,7 @@ fsal_status_t MFSL_ASYNC_RefreshContextDirs(mfsl_context_t * pcontext,
 
 /**
  * 
- * MFSL_ASYNC_RefreshContextDirs: Refreshes the pool of pre-allocated files for a MFSL context.
+ * MFSL_ASYNC_RefreshContextFiles: Refreshes the pool of pre-allocated files for a MFSL context.
  *
  * Refreshes the pool of pre-allocated files for a MFSL conte
  *
@@ -609,15 +611,14 @@ fsal_status_t MFSL_ASYNC_RefreshContextFiles(mfsl_context_t * pcontext,
   status.major = ERR_FSAL_NO_ERROR;
   status.minor = 0;
 
-  if(pcontext->pool_files == NULL)
+  if(pcontext->pool_files.pa_constructor == NULL)
     {
-      STUFF_PREALLOC_CONSTRUCT(pcontext->pool_files,
-                               mfsl_param.nb_pre_create_files,
-                               mfsl_precreated_object_t,
-                               next_alloc, constructor_preacreated_entries);
-      pcontext->avail_pool_files = mfsl_param.nb_pre_create_files;
+      MakePool(&pcontext->pool_files,
+               mfsl_param.nb_pre_create_files,
+               mfsl_precreated_object_t,
+               constructor_preacreated_entries, NULL);
 
-      status = mfsl_async_init_precreated_files(pfsal_context, pcontext->pool_files);
+      status = mfsl_async_init_precreated_files(pfsal_context, &pcontext->pool_files);
       if(FSAL_IS_ERROR(status))
         return status;
     }
@@ -647,7 +648,7 @@ fsal_status_t MFSL_RefreshContext(mfsl_context_t * pcontext,
   status.major = ERR_FSAL_NO_ERROR;
   status.minor = 0;
 
-  if(!pcontext->pool_dirs || !pcontext->pool_files)
+  if(pcontext->pool_dirs.pa_constructor == NULL || pcontext->pool_files.pa_constructor == NULL)
     {
       status = FSAL_BuildExportContext(&fsal_export_context, NULL, NULL);
       if(FSAL_IS_ERROR(status))
@@ -658,21 +659,14 @@ fsal_status_t MFSL_RefreshContext(mfsl_context_t * pcontext,
         return status;
     }
 
-  /*  if( !pcontext->pool_dirs || !pcontext->pool_files ) */
-  if(pcontext->pool_dirs == NULL)
-    {
-      status = MFSL_ASYNC_RefreshContextDirs(pcontext, pfsal_context);
-      if(FSAL_IS_ERROR(status))
-        return status;
-    }
-
-  if(pcontext->pool_files == NULL)
-    {
-      status = MFSL_ASYNC_RefreshContextFiles(pcontext, pfsal_context);
-      if(FSAL_IS_ERROR(status))
-        return status;
-    }
-
+  status = MFSL_ASYNC_RefreshContextDirs(pcontext, pfsal_context);
+  if(FSAL_IS_ERROR(status))
+    return status;
+ 
+  status = MFSL_ASYNC_RefreshContextFiles(pcontext, pfsal_context);
+  if(FSAL_IS_ERROR(status))
+    return status;
+ 
   return status;
 }                               /* MFSL_ASYNC_RefreshContext */
 

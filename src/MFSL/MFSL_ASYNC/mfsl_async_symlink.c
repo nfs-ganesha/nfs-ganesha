@@ -184,13 +184,9 @@ fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,     /* IN */
 
   P(p_mfsl_context->lock);
 
-  GET_PREALLOC(pasyncopdesc,
-               p_mfsl_context->pool_async_op,
-               mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
+  GetFromPool(pasyncopdesc, &p_mfsl_context->pool_async_op, mfsl_async_op_desc_t);
 
-  GET_PREALLOC(symlink_pasyncdata,
-               p_mfsl_context->pool_spec_data,
-               mfsl_param.nb_pre_async_op_desc, mfsl_object_specific_data_t, next_alloc);
+  GetFromPool(symlink_pasyncdata, &p_mfsl_context->pool_spec_data, mfsl_object_specific_data_t);
 
   V(p_mfsl_context->lock);
 

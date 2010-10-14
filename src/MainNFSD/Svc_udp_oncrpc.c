@@ -128,20 +128,20 @@ SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz)
       return ((SVCXPRT *) NULL);
     }
 
-  xprt = (SVCXPRT *) Mem_Alloc(sizeof(SVCXPRT));
+  xprt = (SVCXPRT *) Mem_Alloc_Label(sizeof(SVCXPRT), "SVCXPRT (UDP)");
   if(xprt == NULL)
     {
       return (NULL);
     }
 
-  su = (struct Svcudp_data *)Mem_Alloc(sizeof(*su));
+  su = (struct Svcudp_data *)Mem_Alloc_Label(sizeof(*su), "struct Svcudp_data");
 
   if(su == NULL)
     {
       return (NULL);
     }
   su->su_iosz = ((MAX(sendsz, recvsz) + 3) / 4) * 4;
-  if((rpc_buffer(xprt) = Mem_Alloc(su->su_iosz)) == NULL)
+  if((rpc_buffer(xprt) = Mem_Alloc_Label(su->su_iosz, "UDP IO Buffer")) == NULL)
     {
       return (NULL);
     }

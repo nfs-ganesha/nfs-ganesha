@@ -174,9 +174,8 @@ void *TEST1(void *arg)
 
   for(i = 0; i < NB_STR; i++)
     {
-#ifdef _DEBUG_MEMALLOC
-      LogTest("%d>%d:%d:%s", th, strings[i].len, strlen(strings[i].str), strings[i].str);
-#endif
+      if(isFullDebug(COMPONENT_MEMALLOC))
+        LogTest("%d>%d:%d:%s", th, strings[i].len, strlen(strings[i].str), strings[i].str);
       if(strings[i].len - 1 != (int)strlen(strings[i].str))
         LogTest("************ INTEGRITY ERROR !!! ************");
 
@@ -319,10 +318,9 @@ void *TEST3(void *arg)
 
       usleep(1000);             /* for mixing threads actions */
 
-#ifdef _DEBUG_MEMALLOC
       /* print hexa part of adress */
-      LogTest("%p", ptr);
-#endif
+      if(isFullDebug(COMPONENT_MEMALLOC))
+        LogTest("%p", ptr);
 
       /* 32 bits alignment test */
       if((unsigned long)ptr & 3)
@@ -530,9 +528,8 @@ void *TEST5(void *arg)
 
   for(i = 0; i < NB_STR; i++)
     {
-#ifdef _DEBUG_MEMALLOC
-      LogTest("%d>%d:%d:%s", th, strings[i].len, strlen(strings[i].str), strings[i].str);
-#endif
+      if(isFullDebug(COMPONENT_MEMALLOC))
+        LogTest("%d>%d:%d:%s", th, strings[i].len, strlen(strings[i].str), strings[i].str);
       if(strings[i].len - 1 != (int)strlen(strings[i].str))
         LogTest("************ INTEGRITY ERROR !!! ************");
 
@@ -592,9 +589,8 @@ void *TEST5(void *arg)
 
   for(i = 0; i < NB_STR; i++)
     {
-#ifdef _DEBUG_MEMALLOC
-      LogTest("%d>%d:%d:%s", th, strings[i].len, strlen(strings[i].str), strings[i].str);
-#endif
+      if(isFullDebug(COMPONENT_MEMALLOC))
+        LogTest("%d>%d:%d:%s", th, strings[i].len, strlen(strings[i].str), strings[i].str);
       if(strings[i].len - 1 != (int)strlen(strings[i].str))
         LogTest("************ INTEGRITY ERROR !!! ************");
 
@@ -648,10 +644,9 @@ void *TEST6(void *arg)
   if(rc)
     exit(1);
 
-#ifdef _DEBUG_MEMALLOC
   /* Final config */
-  BuddyDumpMem(stdout);
-#endif
+  if(isFullDebug(COMPONENT_MEMALLOC))
+    BuddyDumpMem(stdout);
 #ifdef _DEBUG_MEMLEAKS
   DisplayMemoryMap(stdout);
 #endif
@@ -675,10 +670,9 @@ void *TEST6(void *arg)
 
       total += len;
 
-#ifdef _DEBUG_MEMALLOC
       /* Final config */
-      BuddyDumpMem(stdout);
-#endif
+      if(isFullDebug(COMPONENT_MEMALLOC))
+        BuddyDumpMem(stdout);
 #ifdef _DEBUG_MEMLEAKS
       DisplayMemoryMap(stdout);
 #endif
@@ -727,10 +721,9 @@ void *TEST7(void *arg)
   if(rc)
     exit(1);
 
-#ifdef _DEBUG_MEMALLOC
   /* Final config */
-  BuddyDumpMem(stdout);
-#endif
+  if(isFullDebug(COMPONENT_MEMALLOC))
+    BuddyDumpMem(stdout);
 #ifdef _DEBUG_MEMLEAKS
   DisplayMemoryMap(stdout);
 #endif
@@ -751,9 +744,8 @@ void *TEST7(void *arg)
 
           len = (unsigned long)my_rand() % (max_alloc - min_alloc) + min_alloc;
 
-#ifdef _DEBUG_MEMALLOC
-          LogTest("---------- BuddyMalloc( %lu ) ---------", len);
-#endif
+          if(isFullDebug(COMPONENT_MEMALLOC))
+            LogTest("---------- BuddyMalloc( %lu ) ---------", len);
 
           ptr = BuddyMalloc(len);
 
@@ -769,9 +761,8 @@ void *TEST7(void *arg)
         }
       else
         {
-#ifdef _DEBUG_MEMALLOC
-          LogTest("---------- BuddyFree( %p ) ---------", table_alloc[index]);
-#endif
+          if(isFullDebug(COMPONENT_MEMALLOC))
+            LogTest("---------- BuddyFree( %p ) ---------", table_alloc[index]);
 
           /* The slot is not empty, we free it. */
 
@@ -781,10 +772,9 @@ void *TEST7(void *arg)
 
         }
 
-#ifdef _DEBUG_MEMALLOC
       /* Final config */
-      BuddyDumpMem(stdout);
-#endif
+      if(isFullDebug(COMPONENT_MEMALLOC))
+        BuddyDumpMem(stdout);
 #ifdef _DEBUG_MEMLEAKS
       DisplayMemoryMap(stdout);
 #endif
@@ -863,10 +853,9 @@ void *TEST8(void *arg)
   if(rc)
     exit(1);
 
-#ifdef _DEBUG_MEMALLOC
   /* Final config */
-  BuddyDumpMem(stdout);
-#endif
+  if(isFullDebug(COMPONENT_MEMALLOC))
+    BuddyDumpMem(stdout);
 #ifdef _DEBUG_MEMLEAKS
   DisplayMemoryMap(stdout);
 #endif
@@ -889,9 +878,8 @@ void *TEST8(void *arg)
 
           len = (unsigned long)my_rand() % (max_alloc - min_alloc) + min_alloc;
 
-#ifdef _DEBUG_MEMALLOC
-          LogTest("---------- BuddyMalloc( %lu ) ---------", len);
-#endif
+          if(isFullDebug(COMPONENT_MEMALLOC))
+            LogTest("---------- BuddyMalloc( %lu ) ---------", len);
 
           ptr = BuddyMalloc(len);
 
@@ -907,9 +895,8 @@ void *TEST8(void *arg)
         }
       else
         {
-#ifdef _DEBUG_MEMALLOC
-          LogTest("---------- BuddyFree( %p ) ---------", table_alloc[index]);
-#endif
+          if(isFullDebug(COMPONENT_MEMALLOC))
+            LogTest("---------- BuddyFree( %p ) ---------", table_alloc[index]);
 
           /* The slot is not empty, we free it. */
 
@@ -919,10 +906,9 @@ void *TEST8(void *arg)
 
         }
 
-#ifdef _DEBUG_MEMALLOC
       /* Final config */
-      BuddyDumpMem(stdout);
-#endif
+      if(isFullDebug(COMPONENT_MEMALLOC))
+        BuddyDumpMem(stdout);
 #ifdef _DEBUG_MEMLEAKS
       DisplayMemoryMap(stdout);
 #endif
@@ -930,18 +916,16 @@ void *TEST8(void *arg)
       /* Prints csv statistics */
       BuddyGetStats(&stats);
 
-#ifdef _DEBUG_MEMALLOC
-      LogTest("%d;%lu;%lu;%u;%u;", th, stats.StdMemSpace, stats.StdUsedSpace,
-             stats.NbStdPages, stats.NbStdUsed);
-#else
-
-      if((stats.NbStdPages != last_pages) || (stats.NbStdUsed != last_used))
-        {
-          LogTest("%d;%u;%u;", th, stats.NbStdPages, stats.NbStdUsed);
-          last_pages = stats.NbStdPages;
-          last_used = stats.NbStdUsed;
-        }
-#endif
+      if(isFullDebug(COMPONENT_MEMALLOC))
+        LogTest("%d;%lu;%lu;%u;%u;", th, stats.StdMemSpace, stats.StdUsedSpace,
+                stats.NbStdPages, stats.NbStdUsed);
+      else
+        if((stats.NbStdPages != last_pages) || (stats.NbStdUsed != last_used))
+          {
+            LogTest("%d;%u;%u;", th, stats.NbStdPages, stats.NbStdUsed);
+            last_pages = stats.NbStdPages;
+            last_used = stats.NbStdUsed;
+          }
 
       usleep(1000);             /* for mixing threads actions */
 
@@ -985,11 +969,9 @@ void *TEST9(void *arg)
       if(len == 0)
         len = 1;
 
-      snLogTest(labels[i], 64, "%d-%d-%d", th, i, len);
+      snprintf(labels[i], 64, "%d-%d-%d", th, i, len);
 
-      BuddySetDebugLabel(labels[i]);
-
-      strings[i].str = BuddyMalloc(len);
+      strings[i].str = BuddyMalloc_Autolabel(len, __FILE__, __FUNCTION__, __LINE__, labels[i]);
 
       if(!strings[i].str)
         {
@@ -1007,10 +989,9 @@ void *TEST9(void *arg)
   LogTest("========== END OF ALLOCATION =============");
 
   BuddyDumpMem(stdout);
-#ifdef _DEBUG_MEMLEAKS
+
   LogTest("_DEBUG_MEMLEAKS enabled");
   BuddyLabelsSummary();
-#endif
 
   LogTest("Number of blocks with the label %s: %d", labels[0],
          BuddyCountDebugLabel(labels[0]));
@@ -1158,10 +1139,11 @@ void *TESTB(void *arg)
 
   pointer = BuddyMalloc(1024);
 
-#ifdef _DEBUG_MEMCORRUPT
-  LogTest("--> Checking an good address %p", pointer);
-  BuddyCheck(pointer);
-#endif
+  if(isFullDebug(COMPONENT_MEMCORRUPT))
+    {
+      LogTest("--> Checking an good address %p", pointer);
+      BuddyCheck(pointer);
+    }
 
   LogTest("--> Trying to free a good address %p", pointer);
 
@@ -1171,11 +1153,11 @@ void *TESTB(void *arg)
 
   pointer = (caddr_t) & arg;
 
-#ifdef _DEBUG_MEMCORRUPT
-  LogTest("--> Checking an invalid address %p", pointer);
-
-  BuddyCheck(pointer);
-#endif
+  if(isFullDebug(COMPONENT_MEMCORRUPT))
+    {
+      LogTest("--> Checking an invalid address %p", pointer);
+      BuddyCheck(pointer);
+    }
 
   LogTest("--> Trying to free an invalid address %p", pointer);
 
@@ -1190,11 +1172,11 @@ void *TESTB(void *arg)
   else
     pointer = p2;
 
-#ifdef _DEBUG_MEMCORRUPT
-  LogTest("--> Checking a libc malloc address %p", pointer);
-
-  BuddyCheck(pointer);
-#endif
+  if(isFullDebug(COMPONENT_MEMCORRUPT))
+    {
+      LogTest("--> Checking a libc malloc address %p", pointer);
+      BuddyCheck(pointer);
+    }
 
   LogTest("--> Trying to free a libc malloc address %p", pointer);
 
@@ -1207,11 +1189,11 @@ void *TESTB(void *arg)
 
   pointer = NULL;
 
-#ifdef _DEBUG_MEMCORRUPT
-  LogTest("--> Checking a NULL address %p", pointer);
-
-  BuddyCheck(pointer);
-#endif
+  if(isFullDebug(COMPONENT_MEMCORRUPT))
+    {
+      LogTest("--> Checking a NULL address %p", pointer);
+      BuddyCheck(pointer);
+    }
 
   LogTest("--> Trying to free a NULL address %p", pointer);
 

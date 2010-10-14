@@ -297,74 +297,6 @@ unsigned int rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef
 
 /**
  * 
- * PreAllocPdata: Does the allocation of a groups of hash_data_t to be managed as RBT_OPAQ values.
- *
- * Does the allocation of a groups of hash_data_t to be managed as RBT_OPAQ values.
- *
- * @param nb_alloc number of pdata to be pre-allocated 
- *
- * @return A pointer to the list of allocated pdata of NULL if allocation failed
- *
- * @see HashTable_Init
- */
-static hash_data_t *PreAllocPdata(int nb_alloc)
-{
-  hash_data_t *pdata = NULL;
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("hash_data_t");
-#endif
-
-  STUFF_PREALLOC(pdata, (unsigned int)nb_alloc, hash_data_t, next_alloc);
-  if(pdata == NULL)
-    return NULL;
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
-
-  return pdata;
-}                               /* PreAllocPdata */
-
-/**
- * 
- * PreAllocNode: Does the allocation of a groups of nodes to be managed by the RB Tree
- *
- * Does the allocation of a groups of nodes to be managed by the RB Tree.
- *
- * @param nb_alloc number of rbt-node to be pre-allocated 
- *
- * @return A pointer to the list of allocated nodes of NULL if allocation failed
- *
- * @see HashTable_Init
- */
-static struct rbt_node *PreAllocNode(int nb_alloc)
-{
-  struct rbt_node *pnode = NULL;
-
-  LogFullDebug(COMPONENT_HASHTABLE, "HASH TABLE PREALLOC: Allocating %d new nodes", nb_alloc);
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("rbt_node_t");
-#endif
-
-  STUFF_PREALLOC(pnode, (unsigned int)nb_alloc, rbt_node_t, next);
-  if(pnode == NULL)
-    return NULL;
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
-
-  return pnode;
-}                               /* PreAllocNode */
-
-/**
- * 
  * Key_Locate: Locate a buffer key in the hash table, as a rbt node.
  * 
  * This function is for internal use only 
@@ -452,11 +384,16 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
 {
   hash_table_t *ht;
   unsigned int i = 0;
+  char *name = "Unamed";
+
+  if (hparam.name != NULL)
+    name = hparam.name;
 
   pthread_mutexattr_t mutexattr;
 
   /* Sanity check */
-  if((ht = (hash_table_t *) Mem_Alloc(sizeof(hash_table_t))) == NULL)
+  if((ht = (hash_table_t *) Mem_Alloc_Label(sizeof(hash_table_t),
+                                            "hash_table_t")) == NULL)
     return NULL;
 
   /* we have to keep the discriminant values */
@@ -467,13 +404,15 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
 
   /* Initialization of the node array */
   if((ht->array_rbt =
-      (struct rbt_head *)Mem_Alloc(sizeof(struct rbt_head) * hparam.index_size)) == NULL)
+      (struct rbt_head *)Mem_Alloc_Label(sizeof(struct rbt_head) * hparam.index_size,
+                                         "rbt_head")) == NULL)
     return NULL;
 
   /* Initialization of the stat array */
   if((ht->stat_dynamic =
-      (hash_stat_dynamic_t *) Mem_Alloc(sizeof(hash_stat_dynamic_t) *
-                                        hparam.index_size)) == NULL)
+      (hash_stat_dynamic_t *) Mem_Alloc_Label(sizeof(hash_stat_dynamic_t) *
+                                              hparam.index_size,
+                                              "hash_stat_dynamic_t")) == NULL)
     return NULL;
 
   /* Init the stats */
@@ -481,25 +420,38 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
 
   /* Initialization of the semaphores array */
   if((ht->array_lock =
-      (rw_lock_t *) Mem_Alloc(sizeof(rw_lock_t) * hparam.index_size)) == NULL)
+      (rw_lock_t *) Mem_Alloc_Label(sizeof(rw_lock_t) * hparam.index_size,
+                                    "rw_lock_t")) == NULL)
     return NULL;
 
   /* Initialize the array of pre-allocated node */
   if((ht->node_prealloc =
-      (struct rbt_node **)Mem_Alloc(sizeof(struct rbt_node *) * hparam.index_size)) ==
-     NULL)
+      (struct prealloc_pool *)Mem_Calloc_Label(hparam.index_size,
+                                               sizeof(struct prealloc_pool),
+                                               "rbt_node_pool")) == NULL)
     return NULL;
 
   if((ht->pdata_prealloc =
-      (hash_data_t **) Mem_Alloc(sizeof(hash_data_t *) * hparam.index_size)) == NULL)
+      (struct prealloc_pool *) Mem_Calloc_Label(hparam.index_size,
+                                                sizeof(struct prealloc_pool),
+                                                "hash_data_pool")) == NULL)
     return NULL;
 
   for(i = 0; i < hparam.index_size; i++)
     {
-      if((ht->node_prealloc[i] = PreAllocNode(hparam.nb_node_prealloc)) == NULL)
+      LogFullDebug(COMPONENT_HASHTABLE, "HASH TABLE PREALLOC: Allocating %d new nodes\n",
+                   hparam.nb_node_prealloc);
+
+      /* Allocate a group of nodes to be managed by the RB Tree. */
+      MakePool(&ht->node_prealloc[i], hparam.nb_node_prealloc, rbt_node_t, NULL, NULL);
+      NamePool(&ht->node_prealloc[i], "%s Hash RBT Nodes index %d", name, i);
+      if(!IsPoolPreallocated(&ht->node_prealloc[i]))
         return NULL;
 
-      if((ht->pdata_prealloc[i] = PreAllocPdata(hparam.nb_node_prealloc)) == NULL)
+      /* Allocate a group of hash_data_t to be managed as RBT_OPAQ values. */
+      MakePool(&ht->pdata_prealloc[i], hparam.nb_node_prealloc, hash_data_t, NULL, NULL);
+      NamePool(&ht->pdata_prealloc[i], "%s Hash Data Nodes index %d", name, i);
+      if(!IsPoolPreallocated(&ht->pdata_prealloc[i]))
         return NULL;
     }
 
@@ -619,36 +571,24 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
       /* Insert a new node in the table */
       RBT_FIND(tete_rbt, pn, rbt_value);
 
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("rbt_node_t");
-#endif
       /* This entry does not exist, create it */
       /* First get a new entry in the preallocated node array */
-      GET_PREALLOC(qn, ht->node_prealloc[hashval], ht->parameter.nb_node_prealloc,
-                   rbt_node_t, next);
+      GetFromPool(qn, &ht->node_prealloc[hashval], rbt_node_t);
       if(qn == NULL)
         {
           ht->stat_dynamic[hashval].err.nb_set += 1;
           V_w(&(ht->array_lock[hashval]));
           return HASHTABLE_INSERT_MALLOC_ERROR;
         }
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("hash_data_t");
-#endif
-      GET_PREALLOC(pdata, ht->pdata_prealloc[hashval], ht->parameter.nb_node_prealloc,
-                   hash_data_t, next_alloc);
+
+      GetFromPool(pdata, &ht->pdata_prealloc[hashval], hash_data_t);
       if(pdata == NULL)
         {
           ht->stat_dynamic[hashval].err.nb_set += 1;
           V_w(&(ht->array_lock[hashval]));
           return HASHTABLE_INSERT_MALLOC_ERROR;
         }
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("N/A");
-#endif
+
       RBT_OPAQ(qn) = pdata;
       RBT_VALUE(qn) = rbt_value;
       RBT_INSERT(tete_rbt, qn, pn);
@@ -800,10 +740,10 @@ int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
   ht->stat_dynamic[hashval].nb_entries -= 1;
 
   /* put back the pdata buffer to pool */
-  RELEASE_PREALLOC(pdata, ht->pdata_prealloc[hashval], next_alloc);
+  ReleaseToPool(pdata, &ht->pdata_prealloc[hashval]);
 
   /* Put the node back in the table of preallocated nodes (it could be reused) */
-  RELEASE_PREALLOC(pn, ht->node_prealloc[hashval], next);
+  ReleaseToPool(pn, &ht->node_prealloc[hashval]);
 
   ht->stat_dynamic[hashval].ok.nb_del += 1;
 

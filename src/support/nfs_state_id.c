@@ -269,7 +269,7 @@ int nfs4_State_Set(char other[12], cache_inode_state_t * pstate_data)
       LogFullDebug(COMPONENT_SESSIONS, "         ----- SetStateid : %s", str);
     }
 
-  if((buffkey.pdata = (caddr_t) Mem_Alloc(12)) == NULL)
+  if((buffkey.pdata = (caddr_t) Mem_Alloc_Label(12, "nfs4_State_Set")) == NULL)
     return 0;
   memcpy(buffkey.pdata, other, 12);
   buffkey.len = 12;

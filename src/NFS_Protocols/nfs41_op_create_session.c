@@ -148,9 +148,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   /** @todo: BUGAZOMEU Gerer les parametres de secu */
 
   /* Record session related information at the right place */
-  GET_PREALLOC(pnfs41_session,
-               data->pclient->pool_session,
-               data->pclient->nb_pre_state_v4, nfs41_session_t, next_alloc);
+  GetFromPool(pnfs41_session, &data->pclient->pool_session, nfs41_session_t);
 
   if(pnfs41_session == NULL)
     {

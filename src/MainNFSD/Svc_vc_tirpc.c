@@ -74,11 +74,10 @@
 
 int getpeereid(int s, uid_t * euid, gid_t * egid);
 
-pthread_mutex_t mutex_cond_xprt[FD_SETSIZE];
-pthread_cond_t condvar_xprt[FD_SETSIZE];
-int etat_xprt[FD_SETSIZE];
+pthread_mutex_t *mutex_cond_xprt;
+pthread_cond_t *condvar_xprt;
+int *etat_xprt;
 
-extern SVCXPRT **Xports;
 extern rw_lock_t Svc_fd_lock;
 extern fd_set Svc_fdset;
 

@@ -293,9 +293,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
 
   /* Post an asynchronous operation */
   P(pclient->pool_lock);
-  GET_PREALLOC(pasyncopdesc,
-               pclient->pool_async_op,
-               pclient->nb_pre_async_op_desc, cache_inode_async_op_desc_t, next_alloc);
+  GetFromPool(pasyncopdesc, &pclient->pool_async_op, cache_inode_async_op_desc_t);
   V(pclient->pool_lock);
 
   if(pasyncopdesc == NULL)

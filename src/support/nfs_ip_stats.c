@@ -165,7 +165,7 @@ int display_ip_stats(hash_buffer_t * pbuff, char *str)
  * Adds an entry in the duplicate requests cache.
  *
  * @param ipaddr           [IN]    the ipaddr to be used as key
- * @param nfs_ip_stats_pool [INOUT] values pool for hash table
+ * @param ip_stats_pool    [INOUT] values pool for hash table
  *
  * @return IP_STATS_SUCCESS if successfull\n.
  * @return IP_STATS_INSERT_MALLOC_ERROR if an error occured during the insertion process \n
@@ -174,7 +174,7 @@ int display_ip_stats(hash_buffer_t * pbuff, char *str)
  */
 
 int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
-                     unsigned int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool)
+                     unsigned int ipaddr, struct prealloc_pool *ip_stats_pool)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
@@ -185,20 +185,8 @@ int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
   if(nfs_param.core_param.dump_stats_per_client == 0)
     return IP_STATS_SUCCESS;
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("nfs_ip_stats_t");
-#endif
-
   /* Entry to be cached */
-  GET_PREALLOC(pnfs_ip_stats,
-               nfs_ip_stats_pool,
-               nfs_param.worker_param.nb_ip_stats_prealloc, nfs_ip_stats_t, next_alloc);
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
+  GetFromPool(pnfs_ip_stats, ip_stats_pool, nfs_ip_stats_t);
 
   if(pnfs_ip_stats == NULL)
     return IP_STATS_INSERT_MALLOC_ERROR;
@@ -354,13 +342,13 @@ int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
  * Tries to remove an entry for ip_stats cache.
  * 
  * @param ipaddr           [IN]    the ip address to be uncached.
- * @param nfs_ip_stats_pool [INOUT] values pool for hash table
+ * @param ip_stats_pool    [INOUT] values pool for hash table
  *
  * @return the result previously set if *pstatus == IP_STATS_SUCCESS
  *
  */
 int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
-                        int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool)
+                        int ipaddr, struct prealloc_pool *ip_stats_pool)
 {
   hash_buffer_t buffkey, old_value;
   int status = IP_STATS_SUCCESS;
@@ -379,7 +367,7 @@ int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
   if(HashTable_Del(ht_ip_stats, &buffkey, NULL, &old_value) == HASHTABLE_SUCCESS)
     {
       pnfs_ip_stats = (nfs_ip_stats_t *) old_value.pdata;
-      RELEASE_PREALLOC(pnfs_ip_stats, nfs_ip_stats_pool, next_alloc);
+      ReleaseToPool(pnfs_ip_stats, ip_stats_pool);
     }
   else
     {

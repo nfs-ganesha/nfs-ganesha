@@ -210,25 +210,19 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
           return NFS_REQ_OK;
         }
     }
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_inode_dir_entry_t in nfs3_Readdirplus");
-#endif
 
   if((dirent_array =
-      (cache_inode_dir_entry_t *) Mem_Alloc(estimated_num_entries *
-                                            sizeof(cache_inode_dir_entry_t))) == NULL)
+      (cache_inode_dir_entry_t *) Mem_Alloc_Label(estimated_num_entries *
+                                                  sizeof(cache_inode_dir_entry_t),
+                                                  "cache_inode_dir_entry_t in nfs3_Readdirplus")) == NULL)
     {
       pres->res_readdirplus3.status = NFS3ERR_IO;
       return NFS_REQ_DROP;
     }
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cookie array in nfs3_Readdirplus");
-#endif
 
   if((cookie_array =
-      (unsigned int *)Mem_Alloc(estimated_num_entries * sizeof(unsigned int))) == NULL)
+      (unsigned int *)Mem_Alloc_Label(estimated_num_entries * sizeof(unsigned int),
+                                      "cookie array in nfs3_Readdirplus")) == NULL)
     {
       Mem_Free((char *)dirent_array);
       pres->res_readdirplus3.status = NFS3ERR_IO;
@@ -291,14 +285,11 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
         }
       else
         {
-#ifdef _DEBUG_MEMLEAKS
-          /* For debugging memory leaks */
-          BuddySetDebugLabel("entry_name_array in nfs3_Readdirplus");
-#endif
           /* Allocation of the structure for reply */
           entry_name_array =
-              (entry_name_array_item_t *) Mem_Alloc(estimated_num_entries *
-                                                    (FSAL_MAX_NAME_LEN + 1));
+              (entry_name_array_item_t *) Mem_Alloc_Label(estimated_num_entries *
+                                                          (FSAL_MAX_NAME_LEN + 1),
+                                                          "entry_name_array in nfs3_Readdirplus");
 
           if(entry_name_array == NULL)
             {
@@ -306,12 +297,10 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
               Mem_Free((char *)cookie_array);
               return NFS_REQ_DROP;
             }
-#ifdef _DEBUG_MEMLEAKS
-          /* For debugging memory leaks */
-          BuddySetDebugLabel("READDIRPLUS3res_u.resok.reply.entries");
-#endif
+
           pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries =
-              (entryplus3 *) Mem_Alloc(estimated_num_entries * sizeof(entryplus3));
+              (entryplus3 *) Mem_Alloc_Label(estimated_num_entries * sizeof(entryplus3),
+                                             "READDIRPLUS3res_u.resok.reply.entries");
 
           if(pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries == NULL)
             {
@@ -322,17 +311,9 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
             }
 
           /* Allocation of the file handles */
-#ifdef _DEBUG_MEMLEAKS
-          /* For debugging memory leaks */
-          BuddySetDebugLabel("Filehandle V3 in nfs3_Readdirplus");
-#endif
           fh3_array =
-              (fh3_buffer_item_t *) Mem_Alloc(estimated_num_entries * NFS3_FHSIZE);
-
-#ifdef _DEBUG_MEMLEAKS
-          /* For debugging memory leaks */
-          BuddySetDebugLabel("N/A");
-#endif
+              (fh3_buffer_item_t *) Mem_Alloc_Label(estimated_num_entries * NFS3_FHSIZE,
+                                                    "Filehandle V3 in nfs3_Readdirplus");
 
           if(fh3_array == NULL)
             {

@@ -495,10 +495,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
     {
       /* Post an asynchronous operation */
       P(pclient->pool_lock);
-      GET_PREALLOC(pasyncopdesc_src,
-                   pclient->pool_async_op,
-                   pclient->nb_pre_async_op_desc,
-                   cache_inode_async_op_desc_t, next_alloc);
+      GetFromPool(pasyncopdesc_src, &pclient->pool_async_op, cache_inode_async_op_desc_t);
       V(pclient->pool_lock);
 
       if(pasyncopdesc_src == NULL)
@@ -562,10 +559,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
       if(pentry_dirsrc != pentry_dirdest)
         {
           P(pclient->pool_lock);
-          GET_PREALLOC(pasyncopdesc_dst,
-                       pclient->pool_async_op,
-                       pclient->nb_pre_async_op_desc,
-                       cache_inode_async_op_desc_t, next_alloc);
+          GetFromPool(pasyncopdesc_dst, &pclient->pool_async_op, cache_inode_async_op_desc_t);
           V(pclient->pool_lock);
 
           pasyncopdesc_dst->op_type = CACHE_INODE_ASYNC_OP_RENAME_DST;

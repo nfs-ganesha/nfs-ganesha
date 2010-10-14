@@ -66,7 +66,7 @@
 
 /* public data : */
 fd_set Svc_fdset;
-SVCXPRT *Xports[FD_SETSIZE];
+SVCXPRT **Xports;
 
 extern rw_lock_t Svc_lock;
 extern rw_lock_t Svc_fd_lock;

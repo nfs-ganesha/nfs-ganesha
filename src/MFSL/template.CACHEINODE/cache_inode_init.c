@@ -130,109 +130,68 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   pclient->file_pool_fileid = NULL;
   pclient->file_pool_handle = NULL;
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_entry_t");
-#endif
-
   if(pthread_mutexattr_init(&mutexattr) != 0)
     return 1;
 
   if(pthread_mutex_init(&pclient->pool_lock, &mutexattr) != 0)
     return 1;
 
-#ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC(pclient->pool_entry, pclient->nb_prealloc, cache_entry_t, next_alloc);
-  if(pclient->pool_entry == NULL)
+  MakePool(&pclient->pool_entry, pclient->nb_prealloc, cache_entry_t, NULL, NULL);
+  NamePool(&pclient->pool_entry, "Cache Inode Client Entry Pool for Worker %d", thread_index);
+  if(!IsPoolPreallocated(&pclient->pool_entry))
     {
-      LogCrit(COMPONENT_CACHE_INODE, "Error : can't init cache_inode client entry pool");
+      LogCrit(COMPONENT_CACHE_INODE, "Error : can't init cache_inode client entry pool for Worker %d", thread_index);
       return 1;
     }
-#endif
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_inode_dir_data_t");
-#endif
-
-#ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC(pclient->pool_dir_data,
-                 pclient->nb_pre_dir_data, cache_inode_dir_data_t, next_alloc);
-  if(pclient->pool_dir_data == NULL)
+  MakePool(&pclient->pool_dir_data, pclient->nb_pre_dir_data, cache_inode_dir_data_t, NULL, NULL);
+  NamePool(&pclient->pool_dir_data, "Cache Inode Client Dir Data Pool for Worker %d", thread_index);
+  if(!IsPoolPreallocated(&pclient->pool_dir_data))
     {
       LogCrit(COMPONENT_CACHE_INODE,
-                   "Error : can't init cache_inode client dir data pool");
+                   "Error : can't init cache_inode client dir data pool for Worker %d", thread_index);
       return 1;
     }
-#endif
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_inode_parent_entry_t");
-#endif
-
-#ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC(pclient->pool_parent,
-                 pclient->nb_pre_parent, cache_inode_parent_entry_t, next_alloc);
-  if(pclient->pool_parent == NULL)
+  MakePool(&pclient->pool_parent, pclient->nb_pre_parent, cache_inode_parent_entry_t, NULL, NULL);
+  NamePool(&pclient->pool_parent, "Cache Inode Client Parent Link Pool for Worker %d", thread_index);
+  if(!IsPoolPreallocated(&pclient->pool_parent))
     {
       LogCrit(COMPONENT_CACHE_INODE,
-                   "Error : can't init cache_inode client parent link pool");
+                   "Error : can't init cache_inode client parent link pool for Worker %d", thread_index);
       return 1;
     }
-#endif
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_inode_state_v4_t");
-#endif
-
-#ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC(pclient->pool_state_v4,
-                 pclient->nb_pre_state_v4, cache_inode_state_v4_t, next);
-  if(pclient->pool_state_v4 == NULL)
+  MakePool(&pclient->pool_state_v4, pclient->nb_pre_state_v4, cache_inode_state_t, NULL, NULL);
+  NamePool(&pclient->pool_state_v4, "Cache Inode Client State V4 Pool for Worker %d", thread_index);
+  if(!IsPoolPreallocated(&pclient->pool_state_v4))
     {
       LogCrit(COMPONENT_CACHE_INODE,
-                   "Error : can't init cache_inode client state v4 pool");
+                   "Error : can't init cache_inode client state v4 pool for Worker %d", thread_index);
       return 1;
     }
-#endif
 
-#ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC(pclient->pool_async_op,
-                 pclient->nb_pre_async_op_desc, cache_inode_async_op_desc_t, next_alloc);
-  if(pclient->pool_async_op == NULL)
+  /* TODO: this can't possibly compile... */
+  MakePool(&pclient->pool_async_op, pclient->nb_pre_async_op_desc, cache_inode_async_op_desc_t, NULL, NULL);
+  NamePool(&pclient->pool_async_op, "Cache Inode Client Async Op Pool for Worker %d", thread_index);
+  if(!IsPoolPreallocated(&pclient->pool_async_op))
     {
-      LogCrit(COMPONENT_CACHE_INODE, "Error : can't init cache_inode async op pool");
+      LogCrit(COMPONENT_CACHE_INODE, "Error : can't init cache_inode async op pool for Worker %d", thread_index);
       return 1;
     }
-#endif
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_inode_fsal_data_t:init");
-#endif
-
-#ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC(pclient->pool_key,
-                 pclient->nb_prealloc, cache_inode_fsal_data_t, next_alloc);
-
-# ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-# endif
-
-  if(pclient->pool_key == NULL)
+  MakePool(&pclient->pool_key, pclient->nb_prealloc, cache_inode_fsal_data_t, NULL, NULL);
+  NamePool(&pclient->pool_key, "Cache Inode Client Key Pool for Worker %d", thread_index);
+  if(!IsPoolPreallocated(&pclient->pool_key))
     {
       LogCrit(COMPONENT_CACHE_INODE,
-                   "Error : can't init cache_inode client key pool");
+                   "Error : can't init cache_inode client key pool for Worker %d", thread_index);
       return 1;
     }
-#endif
 
   if((pclient->lru_gc = LRU_Init(param.lru_param, &lru_status)) == NULL)
     {
-      LogCrit(COMPONENT_CACHE_INODE, "Error : can't init cache_inode client lru gc");
+      LogCrit(COMPONENT_CACHE_INODE, "Error : can't init cache_inode client lru gc for Worker %d", thread_index);
       return 1;
     }
 

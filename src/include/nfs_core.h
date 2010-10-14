@@ -63,9 +63,7 @@
 #include "nfs_stat.h"
 #include "external_tools.h"
 
-#ifndef _NO_BUDDY_SYSTEM
-#include "BuddyMalloc.h"        /* for stats */
-#endif
+#include "stuff_alloc.h"
 
 #include "nfs23.h"
 #include "nfs4.h"
@@ -210,6 +208,13 @@ bool_t Svcauth_gss_acquire_cred(void);
 #endif
 void Xprt_register(SVCXPRT * xprt);
 void Xprt_unregister(SVCXPRT * xprt);
+
+
+/* Declare the various RPC transport dynamic arrays */
+extern SVCXPRT         **Xports;
+extern pthread_mutex_t  *mutex_cond_xprt;
+extern pthread_cond_t   *condvar_xprt;
+extern int              *etat_xprt;
 
 /* The default attribute mask for NFSv2/NFSv3 */
 #define FSAL_ATTR_MASK_V2_V3   ( FSAL_ATTRS_MANDATORY | FSAL_ATTR_MODE     | FSAL_ATTR_FILEID | \
@@ -427,12 +432,13 @@ typedef struct nfs_request_data__
   SVCXPRT *rquota_udp_xprt;
   SVCXPRT *rquota_tcp_xprt;
   SVCXPRT *xprt;
+  SVCXPRT *xprt_copy;
   struct svc_req req;
   struct rpc_msg msg;
   char cred_area[2 * MAX_AUTH_BYTES + RQCRED_SIZE];
   int status;
   nfs_res_t res_nfs;
-  struct nfs_request_data__ *next_alloc;
+  nfs_arg_t arg_nfs;
 } nfs_request_data_t;
 
 typedef struct nfs_client_id__
@@ -454,7 +460,6 @@ typedef struct nfs_client_id__
   nfs41_session_slot_t create_session_slot;
   unsigned create_session_sequence;
 #endif
-  struct nfs_client_id__ *next_alloc;
 } nfs_client_id_t;
 
 typedef enum idmap_type__
@@ -467,10 +472,10 @@ typedef struct nfs_worker_data__
   int index;
   LRU_list_t *pending_request;
   LRU_list_t *duplicate_request;
-  nfs_request_data_t *request_pool;
-  dupreq_entry_t *dupreq_pool;
-  nfs_ip_stats_t *ip_stats_pool;
-  nfs_client_id_t *clientid_pool;
+  struct prealloc_pool request_pool;
+  struct prealloc_pool dupreq_pool;
+  struct prealloc_pool ip_stats_pool;
+  struct prealloc_pool clientid_pool;
   cache_inode_client_t cache_inode_client;
   cache_content_client_t cache_content_client;
   hash_table_t *ht;
@@ -538,6 +543,7 @@ void *worker_thread(void *IndexArg);
 void *rpc_dispatcher_thread(void *arg);
 void *admin_thread(void *arg);
 void *stats_thread(void *IndexArg);
+void *stat_exporter_thread(void *IndexArg);
 void *sigmgr_thread(void *arg);
 int stats_snmp(nfs_worker_data_t * workers_data_local);
 void *file_content_gc_thread(void *IndexArg);
@@ -576,6 +582,22 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam);
 
 int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht);
 
+/* Add a list of clients to the client array of either an exports entry or
+ * another service that has a client array (like snmp or statistics exporter) */
+int nfs_AddClientsToClientArray(exportlist_client_t *clients, int new_clients_number,
+    char **new_clients_name, int option);
+
+/* Checks an access list for a specific client */
+int export_client_match(unsigned int addr,
+                        char *ipstring,
+                        exportlist_client_t *clients,
+                        exportlist_client_entry_t * pclient_found,
+                        unsigned int export_option);
+int export_client_matchv6(struct in6_addr *paddrv6,
+                          exportlist_client_t *clients,
+                          exportlist_client_entry_t * pclient_found,
+                          unsigned int export_option);
+
 /* Config reparsing routines */
 void admin_replace_exports();
 int CleanUpExportContext(fsal_export_context_t * p_export_context);
@@ -606,7 +628,7 @@ void auth_stat2str(enum auth_stat, char *str);
 int nfs_Init_client_id(nfs_client_id_parameter_t param);
 int nfs_Init_client_id_reverse(nfs_client_id_parameter_t param);
 
-int nfs_client_id_remove(clientid4 clientid, nfs_client_id_t * nfs_client_id_pool);
+int nfs_client_id_remove(clientid4 clientid, struct prealloc_pool *clientid_pool);
 
 int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res);
 
@@ -616,11 +638,11 @@ int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id
 
 int nfs_client_id_add(clientid4 clientid,
                       nfs_client_id_t client_record,
-                      nfs_client_id_t * nfs_client_id_pool);
+                      struct prealloc_pool *clientid_pool);
 
 int nfs_client_id_set(clientid4 clientid,
                       nfs_client_id_t client_record,
-                      nfs_client_id_t * nfs_client_id_pool);
+                      struct prealloc_pool *clientid_pool);
 
 int nfs_client_id_compute(char *name, clientid4 * pclientid);
 int nfs_client_id_basic_compute(char *name, clientid4 * pclientid);
@@ -785,5 +807,12 @@ int display_gss_ctx(hash_buffer_t * pbuff, char *str);
 int display_gss_svc_data(hash_buffer_t * pbuff, char *str);
 
 #endif                          /* _USE_GSSRPC */
+
+void Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig);
+void Svcxprt_copydestroy(register SVCXPRT * xprt);
+SVCXPRT *Svcxprt_copycreate();
+
+int nfs_rpc_get_funcdesc(nfs_request_data_t * preqnfs, nfs_function_desc_t *pfuncdesc);
+int nfs_rpc_get_args(nfs_request_data_t * preqnfs, nfs_function_desc_t *pfuncdesc);
 
 #endif                          /* _NFS_CORE_H */

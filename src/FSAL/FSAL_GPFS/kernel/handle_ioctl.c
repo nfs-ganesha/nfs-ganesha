@@ -26,6 +26,7 @@
 #include <linux/file.h>
 #include <linux/fsnotify.h>
 #include <linux/quotaops.h>
+#include <linux/highuid.h>
 #include <asm/uaccess.h>
 
 /* Ugly GPFS hack!!! */
@@ -72,6 +73,15 @@ static long do_sys_name_to_handle(struct nameidata *nd, struct file_handle __use
     struct file_handle *handle = NULL;
     const struct export_operations *exop = nd->dentry->d_sb->s_export_op;
 
+    if (!exop)
+        {
+            /*
+             * Check whether local file system support
+             * file system export
+             */
+            retval = -EINVAL;
+            goto err_out;
+        }
     if(copy_from_user(&f_handle, ufh, sizeof(struct file_handle)))
         {
             retval = -EFAULT;
@@ -208,6 +218,15 @@ static struct dentry *handle_to_dentry(int mountdirfd,
             goto out_err;
         }
     exop = mnt->mnt_sb->s_export_op;
+    if (!exop)
+        {
+            /*
+             * Check whether local file system support
+             * file system export
+             */
+            retval = -EINVAL;
+            goto out_err;
+        }
     /* change the handle size to multiple of sizeof(u32) */
     handle_size = handle->handle_size >> 2;
     /*
@@ -572,4 +591,122 @@ long readlink_by_fd(int fd, char __user * buf, int buffsize)
 
     fput_light(filep, fput_needed);
     return error;
+}
+
+static int cp_new_stat(struct kstat *stat, struct stat __user *statbuf)
+{
+	struct stat tmp;
+
+#if BITS_PER_LONG == 32
+	if (!old_valid_dev(stat->dev) || !old_valid_dev(stat->rdev))
+		return -EOVERFLOW;
+#else
+	if (!new_valid_dev(stat->dev) || !new_valid_dev(stat->rdev))
+		return -EOVERFLOW;
+#endif
+
+	memset(&tmp, 0, sizeof(tmp));
+#if BITS_PER_LONG == 32
+	tmp.st_dev = old_encode_dev(stat->dev);
+#else
+	tmp.st_dev = new_encode_dev(stat->dev);
+#endif
+	tmp.st_ino = stat->ino;
+	if (sizeof(tmp.st_ino) < sizeof(stat->ino) && tmp.st_ino != stat->ino)
+		return -EOVERFLOW;
+	tmp.st_mode = stat->mode;
+	tmp.st_nlink = stat->nlink;
+	if (tmp.st_nlink != stat->nlink)
+		return -EOVERFLOW;
+	SET_UID(tmp.st_uid, stat->uid);
+	SET_GID(tmp.st_gid, stat->gid);
+#if BITS_PER_LONG == 32
+	tmp.st_rdev = old_encode_dev(stat->rdev);
+#else
+	tmp.st_rdev = new_encode_dev(stat->rdev);
+#endif
+#if BITS_PER_LONG == 32
+	if (stat->size > MAX_NON_LFS)
+		return -EOVERFLOW;
+#endif
+	tmp.st_size = stat->size;
+	tmp.st_atime = stat->atime.tv_sec;
+	tmp.st_mtime = stat->mtime.tv_sec;
+	tmp.st_ctime = stat->ctime.tv_sec;
+#ifdef STAT_HAVE_NSEC
+	tmp.st_atime_nsec = stat->atime.tv_nsec;
+	tmp.st_mtime_nsec = stat->mtime.tv_nsec;
+	tmp.st_ctime_nsec = stat->ctime.tv_nsec;
+#endif
+	tmp.st_blocks = stat->blocks;
+	tmp.st_blksize = stat->blksize;
+	return copy_to_user(statbuf,&tmp,sizeof(tmp)) ? -EFAULT : 0;
+}
+
+long do_sys_stat_by_handle(int mountdirfd, struct file_handle __user * ufh,
+                           struct stat __user *ubuf)
+{
+    long retval = 0;
+    struct kstat stat;
+    struct dentry *dentry;
+    struct file_handle f_handle;
+    struct vfsmount *mnt = NULL;
+    struct file_handle *handle = NULL;
+
+    if(copy_from_user(&f_handle, ufh, sizeof(struct file_handle)))
+        {
+            retval = -EFAULT;
+            goto out_err;
+        }
+    if((f_handle.handle_size > MAX_HANDLE_SZ) || (f_handle.handle_size <= 0))
+        {
+            retval = -EINVAL;
+            goto out_err;
+        }
+    handle = kmalloc(sizeof(struct file_handle) + f_handle.handle_size, GFP_KERNEL);
+    if(!handle)
+        {
+            retval = -ENOMEM;
+            goto out_err;
+        }
+    /* copy the full handle */
+    if(copy_from_user(handle, ufh, sizeof(struct file_handle) + f_handle.handle_size))
+        {
+            retval = -EFAULT;
+            goto out_handle;
+        }
+    dentry = handle_to_dentry(mountdirfd, handle, &mnt);
+    if(IS_ERR(dentry))
+        {
+            retval = PTR_ERR(dentry);
+            goto out_handle;
+
+
+        }
+    retval = vfs_getattr(mnt, dentry, &stat);
+    if (retval)
+        goto out_dentry;
+
+    retval = cp_new_stat(&stat, ubuf);
+
+out_dentry:
+    dput(dentry);
+    mntput(mnt);
+out_handle:
+    kfree(handle);
+out_err:
+    return retval;
+}
+
+long stat_by_handle(int mountdirfd, struct file_handle __user * handle,
+                    struct stat __user *buf)
+
+{
+    long ret;
+
+    if(!capable(CAP_DAC_OVERRIDE))
+        return -EPERM;
+
+    ret = do_sys_stat_by_handle(mountdirfd, handle, buf);
+    return ret;
 }

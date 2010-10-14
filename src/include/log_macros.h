@@ -74,6 +74,7 @@ typedef enum log_components
   COMPONENT_PNFS,
   COMPONENT_RPC_CACHE,
   COMPONENT_RW_LOCK,
+  COMPONENT_MFSL,
   
   COMPONENT_COUNT
 } log_components_t;

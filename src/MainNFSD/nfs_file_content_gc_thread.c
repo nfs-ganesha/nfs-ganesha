@@ -113,7 +113,7 @@ int ___cache_content_invalidate_flushed(LRU_entry_t * plru_entry, void *addparam
   V_w(&pentry->pentry_inode->lock);
 
   /* Release the entry */
-  RELEASE_PREALLOC(pentry, pclient->pool_entry, next_alloc);
+  ReleaseToPool(pentry, &pclient->content_pool);
 
   /* Retour de la pentry dans le pool */
   return LRU_LIST_SET_INVALID;

@@ -88,20 +88,7 @@ cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t * pfsdata,
   if((pentry = cache_inode_new_entry(pfsdata, NULL, DIR_BEGINNING, NULL, NULL, ht, pclient, pcontext, FALSE,    /* This is a population, not a creation */
                                      pstatus)) != NULL)
     {
-
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("cache_inode_parent_entry_t");
-#endif
-
-      GET_PREALLOC(next_parent_entry,
-                   pclient->pool_parent,
-                   pclient->nb_pre_parent, cache_inode_parent_entry_t, next_alloc);
-
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("N/A");
-#endif
+      GetFromPool(next_parent_entry, &pclient->pool_parent, cache_inode_parent_entry_t);
 
       if(next_parent_entry == NULL)
         {
@@ -116,7 +103,6 @@ cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t * pfsdata,
       pentry->parent_list->parent = pentry;
       pentry->parent_list->next_parent = NULL;
       pentry->parent_list->subdirpos = 0;
-
     }
 
   return pentry;

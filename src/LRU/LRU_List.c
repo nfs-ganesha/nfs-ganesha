@@ -126,6 +126,10 @@
 LRU_list_t *LRU_Init(LRU_parameter_t lru_param, LRU_status_t * pstatus)
 {
   LRU_list_t *plru = NULL;
+  char *name = "Unamed";
+
+  if (lru_param.name != NULL)
+    name = lru_param.name;
 
   /* Sanity check */
   if((plru = (LRU_list_t *) Mem_Alloc(sizeof(LRU_list_t))) == NULL)
@@ -140,23 +144,14 @@ LRU_list_t *LRU_Init(LRU_parameter_t lru_param, LRU_status_t * pstatus)
   plru->MRU = plru->LRU = NULL;
   plru->parameter = lru_param;
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("LRU_entry_t");
-#endif
-
   /* Pre allocate entries */
-  STUFF_PREALLOC(plru->entry_prealloc, lru_param.nb_entry_prealloc, LRU_entry_t, next);
-  if(plru->entry_prealloc == NULL)
+  MakePool(&plru->lru_entry_pool, lru_param.nb_entry_prealloc, LRU_entry_t, NULL, NULL);
+  NamePool(&plru->lru_entry_pool, "%s LRU Entry Pool", name);
+  if(!IsPoolPreallocated(&plru->lru_entry_pool))
     {
       *pstatus = LRU_LIST_MALLOC_ERROR;
       return NULL;
     }
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   *pstatus = LRU_LIST_SUCCESS;
   return plru;
@@ -207,22 +202,12 @@ LRU_entry_t *LRU_new_entry(LRU_list_t * plru, LRU_status_t * pstatus)
   LogDebug(COMPONENT_LRU, "==> LRU_new_entry: nb_entry = %d nb_entry_prealloc = %d", plru->nb_entry,
          plru->parameter.nb_entry_prealloc);
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("LRU_entry_t");
-#endif
-
-  GET_PREALLOC(new_entry, plru->entry_prealloc, plru->parameter.nb_entry_prealloc,
-               LRU_entry_t, next);
+  GetFromPool(new_entry, &plru->lru_entry_pool, LRU_entry_t);
   if(new_entry == NULL)
     {
       *pstatus = LRU_LIST_MALLOC_ERROR;
       return NULL;
     }
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   new_entry->valid_state = LRU_ENTRY_VALID;
   new_entry->next = NULL;       /* Entry is added as the MRU entry */
@@ -307,7 +292,7 @@ int LRU_gc_invalid(LRU_list_t * plru, void *cleanparam)
           plru->nb_invalid -= 1;
 
           /* Put it back to pre-allocated pool */
-          RELEASE_PREALLOC(pentry, plru->entry_prealloc, next);
+          ReleaseToPool(pentry, &plru->lru_entry_pool);
         }
     }
 

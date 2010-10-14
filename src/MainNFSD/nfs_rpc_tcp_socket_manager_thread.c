@@ -87,7 +87,6 @@ extern fd_set Svc_fdset;
 extern nfs_worker_data_t *workers_data;
 extern nfs_parameter_t nfs_param;
 extern exportlist_t *pexportlist;
-extern SVCXPRT *Xports[FD_SETSIZE];     /* The one from RPCSEC_GSS library */
 #ifdef _RPCSEC_GS_64_INSTALLED
 struct svc_rpc_gss_data **TabGssData;
 #endif
@@ -97,10 +96,6 @@ extern int rpcsec_gss_flag;
 #ifndef _NO_BUDDY_SYSTEM
 extern buddy_parameter_t buddy_param_worker;
 #endif
-
-extern pthread_mutex_t mutex_cond_xprt[FD_SETSIZE];
-extern pthread_cond_t condvar_xprt[FD_SETSIZE];
-extern int etat_xprt[FD_SETSIZE];
 
 /**
  * rpc_tcp_socket_manager_thread: manages a TCP socket connected to a client.
@@ -112,8 +107,6 @@ extern int etat_xprt[FD_SETSIZE];
  * @return Pointer to the result (but this function will mostly loop forever).
  *
  */
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-
 void *rpc_tcp_socket_manager_thread(void *Arg)
 {
   int rc = 0;
@@ -123,6 +116,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
   struct rpc_msg *pmsg;
   struct svc_req *preq;
   register SVCXPRT *xprt;
+  register SVCXPRT *xprt_copy;
   char *cred_area;
   LRU_entry_t *pentry = NULL;
   LRU_status_t status;
@@ -132,6 +126,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
   struct sockaddr_in *paddr_caller = NULL;
   char str_caller[MAXNAMLEN];
+  nfs_function_desc_t funcdesc;
   fridge_entry_t * pfe = NULL ;
 
   snprintf(my_name, MAXNAMLEN, "tcp_sock_mgr#fd=%ld", tcp_sock);
@@ -142,6 +137,13 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
     {
       /* Failed init */
       LogCrit(COMPONENT_DISPATCH, "Memory manager could not be initialized");
+      #ifdef _DEBUG_MEMLEAKS
+      {
+        FILE *output = fopen("/tmp/buddymem", "w");
+        if (output != NULL)
+          BuddyDumpAll(output);
+      }
+      #endif
       exit(1);
     }
 #endif
@@ -163,22 +165,9 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
       /* Get a pnfsreq from the worker's pool */
       P(workers_data[worker_index].request_pool_mutex);
 
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("nfs_request_data_t");
-#endif
-
-      GET_PREALLOC_CONSTRUCT(pnfsreq,
-                             workers_data[worker_index].request_pool,
-                             nfs_param.worker_param.nb_pending_prealloc,
-                             nfs_request_data_t,
-                             next_alloc, constructor_nfs_request_data_t );
+      GetFromPool(pnfsreq, &workers_data[worker_index].request_pool,
+                  nfs_request_data_t);
  
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("N/A");
-#endif
-
       V(workers_data[worker_index].request_pool_mutex);
 
       if(pnfsreq == NULL)
@@ -285,8 +274,8 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                 strncpy(str_caller, "unresolved", MAXNAMLEN);
 
               LogEvent(COMPONENT_DISPATCH,
-                   "TCP SOCKET MANAGER Sock=%d: the client (%s) disappeared... Freezing thread ",
-                   (int)tcp_sock, str_caller);
+                   "TCP SOCKET MANAGER Sock=%d: the client (%s) disappeared... Freezing thread %p",
+                   (int)tcp_sock, str_caller, pthread_self());
 
               if(Xports[tcp_sock] != NULL)
                 SVC_DESTROY(Xports[tcp_sock]);
@@ -295,8 +284,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                      "TCP SOCKET MANAGER : /!\\ **** ERROR **** Mismatch between tcp_sock and xprt array");
 
               P(workers_data[worker_index].request_pool_mutex);
-              RELEASE_PREALLOC(pnfsreq, workers_data[worker_index].request_pool,
-                               next_alloc);
+              ReleaseToPool(pnfsreq, &workers_data[worker_index].request_pool);
               V(workers_data[worker_index].request_pool_mutex);
 
              
@@ -306,10 +294,12 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                   LogEvent( COMPONENT_DISPATCH,
 		            "TCP connection manager has expired in the fridge, let's kill it" ) ;
 #ifndef _NO_BUDDY_SYSTEM
-                  /* Free stuff allocated by BuddyMalloc before thread exists */
-                  if((rc = BuddyDestroy()) != BUDDY_SUCCESS)
-                    LogCrit(COMPONENT_DISPATCH,
-                           "TCP SOCKET MANAGER (on exit): got error %u from BuddyDestroy",rc ) ;
+              /* Free stuff allocated by BuddyMalloc before thread exists */
+		  /*              sleep(nfs_param.core_param.expiration_dupreq * 2);   / ** @todo : remove this for a cleaner fix */
+              if((rc = BuddyDestroy()) != BUDDY_SUCCESS)
+                LogCrit(COMPONENT_DISPATCH,
+                        "TCP SOCKET MANAGER Sock=%d (on exit): got error %d from BuddyDestroy",
+                        tcp_sock, rc);
 #endif                          /*  _NO_BUDDY_SYSTEM */
 
                   return NULL  ;
@@ -337,6 +327,19 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
         }
       else
         {
+          struct timeval timer_start;
+          struct timeval timer_end;
+          struct timeval timer_diff;
+
+          nfs_stat_type_t stat_type;
+          nfs_request_latency_stat_t latency_stat;
+
+          memset(&timer_start, 0, sizeof(struct timeval));
+          memset(&timer_end, 0, sizeof(struct timeval));
+          memset(&timer_diff, 0, sizeof(struct timeval));
+
+          gettimeofday(&timer_start, NULL);
+
           /* Regular management of the request (UDP request or TCP request on connected handler */
           LogFullDebug(COMPONENT_DISPATCH, "Awaking thread #%d Xprt=%p", worker_index,
                        pnfsreq->xprt);
@@ -353,6 +356,19 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                        worker_index);
               return NULL;
             }
+
+          /* Call svc_getargs before making copy to prevent race conditions. */
+          pnfsreq->req.rq_prog = pmsg->rm_call.cb_prog;
+          pnfsreq->req.rq_vers = pmsg->rm_call.cb_vers;
+          pnfsreq->req.rq_proc = pmsg->rm_call.cb_proc;
+          nfs_rpc_get_funcdesc(pnfsreq, &funcdesc);
+          nfs_rpc_get_args(pnfsreq, &funcdesc);
+
+          /* Update a copy of SVCXPRT and pass it to the worker thread to use it. */
+          xprt_copy = pnfsreq->xprt_copy;
+          Svcxprt_copy(xprt_copy, xprt);
+          pnfsreq->xprt = xprt_copy;
+
           pentry->buffdata.pdata = (caddr_t) pnfsreq;
           pentry->buffdata.len = sizeof(*pnfsreq);
 
@@ -369,16 +385,17 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
           LogFullDebug(COMPONENT_DISPATCH, "Waiting for commit from thread #%d",
                        worker_index);
 
-          P(mutex_cond_xprt[tcp_sock]);
-          while(etat_xprt[tcp_sock] != 1)
-            {
-              pthread_cond_wait(&(condvar_xprt[tcp_sock]), &(mutex_cond_xprt[tcp_sock]));
-            }
-          etat_xprt[tcp_sock] = 0;
-          V(mutex_cond_xprt[tcp_sock]);
+          gettimeofday(&timer_end, NULL);
+          timer_diff = time_diff(timer_start, timer_end);
 
-          LogFullDebug(COMPONENT_DISPATCH, "Thread #%d has committed the operation",
-                       worker_index);
+          /* Update await time. */
+          stat_type = GANESHA_STAT_SUCCESS;
+          latency_stat.type = AWAIT_TIME;
+          latency_stat.latency = timer_diff.tv_sec * 1000000 + timer_diff.tv_usec; /* microseconds */
+          nfs_stat_update(stat_type, &(workers_data[worker_index].stats.stat_req), &(pnfsreq->req), &latency_stat);
+
+          LogFullDebug(COMPONENT_DISPATCH, "Thread #%d has committed the operation: end_time %llu.%.6llu await %llu.%.6llu",
+                       worker_index, timer_end.tv_sec, timer_end.tv_usec, timer_diff.tv_sec, timer_diff.tv_usec);
         }
     }
 
