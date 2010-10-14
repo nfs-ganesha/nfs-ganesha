@@ -4,8 +4,8 @@
 Name: @PACKAGE@ 
 Version: @VERSION@ 
 Release: 1%{?dist}
-Summary: NFS Server running in user space with large cache 
-License: LGPL
+Summary: NFS Server running in user space with large cache
+License: LGPLv3
 Group: Applications/System
 %if %{?_with_posix:1}%{!?_with_posix:0}
 %if %{?_with_postgresql:1}%{!?_with_postgresql:0}
@@ -33,8 +33,8 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %description
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems
-and name-spaces. This version is compiled to support the @FS_NAME@ back-end.
+It comes with various back-end modules to support different file systems and
+name-spaces. This version is compiled to support the @FS_NAME@ back-end.
 
 %package common
 Summary: Common files for all NFS-GANESHA server variants
@@ -44,8 +44,8 @@ Obsoletes: %{name} < @VERSION@
 
 %description common
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems
-and name-spaces. This package contains the common files for all variants.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package contains the common files for all variants.
 
 %package doc
 Summary: Documentation for NFS-GANESHA
@@ -53,9 +53,9 @@ Group: Applications/System
 
 %description doc
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems
-and name-spaces. This package provides the documentation for NFS-GANESHA
-and its back-ends.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides the documentation for NFS-GANESHA and its
+back-ends.
 
 %package vim
 Summary: Vim configuration files for NFS-GANESHA
@@ -63,26 +63,25 @@ Group: Applications/System
 
 %description vim
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems
-and name-spaces. This package provides the vim configuration files for
-NFS-GANESHA.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides the vim configuration files for NFS-GANESHA.
 
 
 %if %{?_with_proxy:1}%{!?_with_proxy:0}
 %package proxy
-Summary: The NFS-GANESHA server compiled as a PROXY 
+Summary: The NFS-GANESHA server compiled as a PROXY
 Group: Applications/System
 Requires: %{name}-common = %{version}-%{release}
 
 %description proxy
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems
-and name-spaces. This package provides support for NFS-GANESHA as a PROXY.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for NFS-GANESHA as a PROXY.
 %endif
 
 %if %{?_with_xfs:1}%{!?_with_xfs:0}
 %package xfs
-Summary: The NFS-GANESHA server compiled as a NFS gateway to XFS.
+Summary: The NFS-GANESHA server compiled as a NFS gateway to XFS
 Group: Applications/System
 Requires: xfsprogs
 BuildRequires: xfsprogs-devel libattr-devel
@@ -90,26 +89,25 @@ Requires: %{name}-common = %{version}-%{release}
 
 %description xfs
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems
-and name-spaces. This package provides support for NFS-GANESHA used on top of XFS.
-
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for NFS-GANESHA used on top of XFS.
 %endif
 
 %if %{?_with_gpfs:1}%{!?_with_gpfs:0}
 %package gpfs
-Summary: The NFS-GANESHA server compiled for use with GPFS. 
+Summary: The NFS-GANESHA server compiled for use with GPFS
 Group: Applications/System
 Requires: %{name}-common = %{version}-%{release}
 
 %description gpfs
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems
-and name-spaces. This package provides support for NFS-GANESHA used on top of GPFS.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for NFS-GANESHA used on top of GPFS.
 %endif
 
 %if %{?_with_posix:1}%{!?_with_posix:0}
 %package posix
-Summary: The NFS-GANESHA server compiled for using the POSIX interface 
+Summary: The NFS-GANESHA server compiled for using the POSIX interface
 Group: Applications/System
 %if %{?_with_postgresql:1}%{!?_with_postgresql:0}
 Requires: postgresql >= 7.1  postgresql-server >= 7.1
@@ -120,39 +118,40 @@ Requires: %{name}-common = %{version}-%{release}
 
 %description posix
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems
-and name-spaces. This package provides support for GANESHA using the POSIX
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for GANESHA using the POSIX
 interface.
 %endif
 
 %if %{?_with_lustre:1}%{!?_with_lustre:0}
 %package lustre
-Summary: The NFS-GANESHA server compiled for using the LUSTRE interface 
+Summary: The NFS-GANESHA server compiled for using the LUSTRE interface
 Group: Applications/System
 BuildRequires: libattr-devel
 Requires: %{name}-common = %{version}-%{release}
 
 %description lustre
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems
-and name-spaces. This package provides support for GANESHA using the LUSTRE
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for GANESHA using the LUSTRE
 interface.
 %endif
 
 %if %{?_with_dynfsal:1}%{!?_with_dynfsal:0}
 %package dynfsal
-Summary: The NFS-GANESHA server compiled in a FSAL-les way. 
+Summary: The NFS-GANESHA server compiled in a FSAL-les way
 Group: Applications/System
 Requires: %{name}-common = %{version}-%{release}
 
 %description dynfsal
 The NFS-GANESHA server compiled in a FSAL-les way. 
-This requires the use of FSAL compiled as shared objects. FSALs are loaded dynamically at runtime using the dlopen() function.
+This requires the use of FSAL compiled as shared objects. FSALs are loaded
+dynamically at runtime using the dlopen() function.
 %endif 
 
 %if %{?_with_snmp:1}%{!?_with_snmp:0}
 %package snmp
-Summary: The NFS-GANESHA server compiled as a NFS gateway to SNMP. 
+Summary: The NFS-GANESHA server compiled as a NFS gateway to SNMP
 Group: Applications/System
 Requires: net-snmp >= 5.1
 Requires: lm_sensors-devel >= 2.10
@@ -162,9 +161,9 @@ Requires: %{name}-common = %{version}-%{release}
 
 %description snmp
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems
-and name-spaces. This package provides a NFS gateway to SNMP, making it 
-possible to browse SNMP exported information in a procfs-like way.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides a NFS gateway to SNMP, making it possible to
+browse SNMP exported information in a procfs-like way.
 %endif
 
 
@@ -176,9 +175,8 @@ Requires: %{name}-common = %{version}-%{release}
 
 %description fuselike
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems
-and name-spaces. This package contains the components for FUSE-like
-bindings.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package contains the components for FUSE-like bindings.
 
 %package fuselike-devel
 Summary: The NFS-GANESHA development files for FUSE-like bindings
@@ -188,26 +186,26 @@ Requires: %{name}-fuselike = %{version}-%{release}
 
 %description fuselike-devel
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems
-and name-spaces. This package contains the development headers for FUSE-like
+It comes with various back-end modules to support different file systems and
+name-spaces. This package contains the development headers for FUSE-like
 %endif
 
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
 %package hpss
-Summary: The NFS-GANESHA server compiled as a NFS gateway to HPSS.
+Summary: The NFS-GANESHA server compiled as a NFS gateway to HPSS
 Group: Applications/System
 Requires: %{name}-common = %{version}-%{release}
 
 %description hpss
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems
-and name-spaces. This package provides support for NFS-GANESHA used with HPSS.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for NFS-GANESHA used with HPSS.
 %endif
 
 
 %if %{?_with_zfs:1}%{!?_with_zfs:0}
 %package zfs
-Summary: The NFS-GANESHA server compiled as a NFS gateway to ZFS.
+Summary: The NFS-GANESHA server compiled as a NFS gateway to ZFS
 Group: Applications/System
 Requires: libzfswrap
 BuildRequires: libzfswrap-devel
@@ -215,19 +213,20 @@ Requires: %{name}-common = %{version}-%{release}
 
 %description zfs
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems
-and name-spaces. This package provides support for NFS-GANESHA used on top of ZFS.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for NFS-GANESHA used on top of ZFS.
 %endif
 
 %if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
 %if %{?_with_fuse:0}%{!?_with_fuse:1}
 %package fsal-@FS_NAME@
-Summary: The NFS-GANESHA's FSAL dedicated to @FS_NAME@, provided as a shared object 
+Summary: The NFS-GANESHA's FSAL dedicated to @FS_NAME@, provided as a shared object
 Group: Applications/System
 Requires: %{name}-common = %{version}-%{release}
 
 %description fsal-@FS_NAME@
-This package contains a FSAL library compiled as a shared object. It can be loaded dynamically in a FSAL-less NFS-GANESHA daemon
+This package contains a FSAL library compiled as a shared object.
+It can be loaded dynamically in a FSAL-less NFS-GANESHA daemon
 %endif
 %endif
 

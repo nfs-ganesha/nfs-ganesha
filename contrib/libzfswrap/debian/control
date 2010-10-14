@@ -36,3 +36,14 @@ Description: library for direct access to ZFS file system
  need of fuse.
  .
  This package contains the shared library for libzfswrap.
+
+Package: libzfswrap1-utils
+Architecture: any
+Depends: libzfswrap1 (= ${binary:Version}),
+         ${shlibs:Depends}, ${misc:Depends}
+Description: administration tools for libzfswrap
+ Libzfswrap is a library that allows direct access to ZFS file systmes with no
+ need of fuse.
+ .
+ This package contains the tools to manage ZFS filesystems.
+

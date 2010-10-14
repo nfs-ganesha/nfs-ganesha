@@ -3,7 +3,7 @@ lib_LTLIBRARIES = libzfswrap.la
 library_includedir=$(includedir)
 library_include_HEADERS = libzfswrap.h
 
-libzfswrap_la_SOURCES = ptrace.c zfs_acl.c zfs_dir.c zfs_ioctl.c zfs_log.c zfs_replay.c zfs_rlock.c zfs_vfsops.c zfs_vnops.c zvol.c zfsfuse_socket.c libzfswrap.c
+libzfswrap_la_SOURCES = ptrace.c zfs_acl.c zfs_dir.c zfs_ioctl.c zfs_log.c zfs_replay.c zfs_rlock.c zfs_vfsops.c zfs_vnops.c zvol.c zfsfuse_socket.c libzfswrap_utils.c libzfswrap.c
 libzfswrap_la_LIBADD = ${top_builddir}/lib/libatomic/libatomic.la \
                        ${top_builddir}/lib/libzpool/libzpool-kernel.la \
                        ${top_builddir}/lib/libnvpair/libnvpair-kernel.la \
@@ -27,7 +27,8 @@ AM_LDFLAGS = -lrt -lpthread -ldl -lz -laio -lcrypto -lm
 
 noinst_HEADERS = kmem_asprintf.h \
                  zfs_ioctl.h \
-                 zfsfuse_socket.h
+                 zfsfuse_socket.h \
+                 libzfswrap_utils.h
 
 doc:
 	doxygen

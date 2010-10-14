@@ -15,6 +15,7 @@
 #endif
 
 #include "fsal.h"
+#include "fsal_common.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 
@@ -69,9 +70,7 @@ fsal_status_t ZFSFSAL_open(zfsfsal_handle_t * filehandle,     /* IN */
   if(!filehandle || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
 
-  /* >> you can check if this is a file if the information
-   * is stored into the handle << */
-
+  /* Check if this is a file */
   if(filehandle->data.type != FSAL_TYPE_FILE)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
 
@@ -86,7 +85,7 @@ fsal_status_t ZFSFSAL_open(zfsfsal_handle_t * filehandle,     /* IN */
 
   /* >> call your FS open function << */
   libzfswrap_vnode_t *p_vnode;
-  rc = libzfswrap_open(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_open(ZFSFSAL_GetVFS(filehandle), &p_context->user_credential.cred,
                        filehandle->data.zfs_handle, posix_flags, &p_vnode);
 
   ReleaseTokenFSCall();
@@ -96,11 +95,12 @@ fsal_status_t ZFSFSAL_open(zfsfsal_handle_t * filehandle,     /* IN */
     Return(posix2fsal_error(rc), rc, INDEX_FSAL_open);
 
   /* >> fill output struct << */
-  file_descriptor->p_vfs = p_context->export_context->p_vfs;
+  file_descriptor->p_vfs = ZFSFSAL_GetVFS(filehandle);
   file_descriptor->flags = posix_flags;
   file_descriptor->current_offset = 0;
   file_descriptor->p_vnode = p_vnode;
   file_descriptor->zfs_handle = filehandle->data.zfs_handle;
+  file_descriptor->i_snap = filehandle->data.i_snap;
   file_descriptor->cred = p_context->user_credential.cred;
   file_descriptor->is_closed = 0;
 
@@ -294,6 +294,10 @@ fsal_status_t ZFSFSAL_write(zfsfsal_file_t * file_descriptor, /* IN */
   /* sanity checks. */
   if(!file_descriptor || !buffer || !write_amount)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_write);
+
+  /* Hook to prevent writing into a snapshot */
+  if(file_descriptor->i_snap != 0)
+    Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_write);
 
   TakeTokenFSCall();
 

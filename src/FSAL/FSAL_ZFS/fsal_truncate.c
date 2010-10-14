@@ -65,6 +65,10 @@ fsal_status_t ZFSFSAL_truncate(zfsfsal_handle_t * filehandle, /* IN */
   if(filehandle->data.type != FSAL_TYPE_FILE)
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_truncate);
 
+  /* Hook to prevent any modification in a snapshot */
+  if(filehandle->data.i_snap != 0)
+    Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_truncate);
+
   TakeTokenFSCall();
 
   rc = libzfswrap_truncate(p_context->export_context->p_vfs, &p_context->user_credential.cred,

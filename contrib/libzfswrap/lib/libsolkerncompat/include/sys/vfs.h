@@ -53,7 +53,6 @@ typedef struct vfs {
 	ulong_t       vfs_bcount;
 	uint_t        vfs_count;
 	refstr_t     *vfs_resource;
-	int	      fuse_attribute;
 } vfs_t;
 
 /*

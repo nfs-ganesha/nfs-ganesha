@@ -32,8 +32,10 @@
 
 extern __thread int cur_fd;
 
+#if 0
 extern int zfsfuse_socket_create();
 extern void zfsfuse_socket_close(int fd);
+#endif
 
 extern int zfsfuse_socket_read_loop(int fd, void *buf, int bytes);
 extern int zfsfuse_socket_ioctl_write(int fd, int ret);

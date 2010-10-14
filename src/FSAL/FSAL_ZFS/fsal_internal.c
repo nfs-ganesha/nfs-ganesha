@@ -30,7 +30,10 @@
  */
 fsal_staticfsinfo_t global_fs_info;
 libzfswrap_handle_t *p_zhd;
-libzfswrap_vfs_t *p_vfs;
+libzfswrap_vfs_t **pp_vfs;
+size_t i_vfs;
+char **ppsz_snapshots;
+size_t i_snapshots;
 
 /* filesystem info for your filesystem */
 static fsal_staticfsinfo_t default_zfs_info = {

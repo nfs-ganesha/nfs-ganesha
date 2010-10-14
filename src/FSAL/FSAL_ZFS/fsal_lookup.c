@@ -19,6 +19,12 @@
 #include "fsal_convert.h"
 #include "fsal_common.h"
 
+#include <string.h>
+
+extern libzfswrap_vfs_t **pp_vfs;
+extern char **ppsz_snapshots;
+extern size_t i_snapshots;
+
 /**
  * FSAL_lookup :
  * Looks up for an object into a directory.
@@ -87,6 +93,7 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       object_handle->data.type = FSAL_TYPE_DIR;
+      object_handle->data.i_snap = 0;
 
       /* >> retrieves root attributes, if asked << */
 
@@ -137,9 +144,47 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
       /* >> Be carefull you don't traverse junction nor follow symlinks << */
       inogen_t object;
       int type;
-      rc = libzfswrap_lookup(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                             parent_directory_handle->data.zfs_handle, p_filename->name, &object,
-                             &type);
+      char i_snap = parent_directory_handle->data.i_snap;
+
+      /* Hook to add the hability to go inside a .zfs directory inside the root dir */
+      if(parent_directory_handle->data.zfs_handle.inode == 3 &&
+          !strcmp(p_filename->name, ZFS_SNAP_DIR))
+      {
+        object.inode = ZFS_SNAP_DIR_INODE;
+        object.generation = 0;
+        type = S_IFDIR;
+        rc = 0;
+      }
+
+      /* Hook for the files inside the .zfs directory */
+      else if(parent_directory_handle->data.zfs_handle.inode == ZFS_SNAP_DIR_INODE)
+      {
+        int i;
+        for(i = 0; i < i_snapshots; i++)
+          if(!strcmp(ppsz_snapshots[i], p_filename->name))
+            break;
+
+        if(i == i_snapshots)
+        {
+          ReleaseTokenFSCall();
+          Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_lookup);
+        }
+
+        libzfswrap_getroot(pp_vfs[i + 1], &object);
+        type = S_IFDIR;
+        i_snap = i + 1;
+        rc = 0;
+      }
+      else
+      {
+        rc = libzfswrap_lookup(ZFSFSAL_GetVFS(parent_directory_handle),
+                               &p_context->user_credential.cred,
+                               parent_directory_handle->data.zfs_handle, p_filename->name, &object,
+                               &type);
+        //FIXME!!! Hook to remove the i_snap bit when going up from the .zfs directory
+        if(object.inode == 3)
+          i_snap = 0;
+      }
 
       ReleaseTokenFSCall();
 
@@ -150,6 +195,7 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
       /* >> set output handle << */
       object_handle->data.zfs_handle = object;
       object_handle->data.type = posix2fsal_type(type);
+      object_handle->data.i_snap = i_snap;
       if(object_attributes)
         {
           fsal_status_t status = ZFSFSAL_getattrs(object_handle, p_context, object_attributes);

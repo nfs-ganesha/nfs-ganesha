@@ -22,8 +22,9 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include "HashTable.h"
 
-extern libzfswrap_vfs_t *p_vfs;
+extern libzfswrap_vfs_t **pp_vfs;
 
 /** usefull subopt definitions */
 
@@ -159,9 +160,8 @@ fsal_status_t ZFSFSAL_BuildExportContext(zfsfsal_export_context_t * p_export_con
     }
 
   /* Initialize the libzfs library here */
-  p_export_context->p_vfs = p_vfs;
+  p_export_context->p_vfs = pp_vfs[0];
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
-
 }
 
 /**
