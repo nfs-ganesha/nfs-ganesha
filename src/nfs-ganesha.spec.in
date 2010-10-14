@@ -207,7 +207,6 @@ name-spaces. This package provides support for NFS-GANESHA used with HPSS.
 %package zfs
 Summary: The NFS-GANESHA server compiled as a NFS gateway to ZFS
 Group: Applications/System
-Requires: libzfswrap
 BuildRequires: libzfswrap-devel
 Requires: %{name}-common = %{version}-%{release}
 
