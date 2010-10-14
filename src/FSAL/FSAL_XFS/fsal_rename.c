@@ -117,6 +117,7 @@ fsal_status_t XFSFSAL_rename(xfsfsal_handle_t * p_old_parentdir_handle, /* IN */
 
   if(rc)
     {
+      close(old_parent_fd);
       if(errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_rename);
       else
@@ -195,16 +196,24 @@ fsal_status_t XFSFSAL_rename(xfsfsal_handle_t * p_old_parentdir_handle, /* IN */
   errsv = errno;
   ReleaseTokenFSCall();
   if(rc)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
-
+   {
+     close(old_parent_fd);
+     if (!src_equal_tgt)
+       close(new_parent_fd);
+     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
+   }
   /* Check sticky bits */
 
   /* Sticky bit on the source directory => the user who wants to delete the file must own it or its parent dir */
   if((old_parent_buffstat.st_mode & S_ISVTX)
      && old_parent_buffstat.st_uid != p_context->credential.user
      && buffstat.st_uid != p_context->credential.user && p_context->credential.user != 0)
-    Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
-
+   {
+     close(old_parent_fd);
+    if (!src_equal_tgt)
+      close(new_parent_fd);
+     Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
+   }
   /* Sticky bit on the target directory => the user who wants to create the file must own it or its parent dir */
   if(new_parent_buffstat.st_mode & S_ISVTX)
     {
