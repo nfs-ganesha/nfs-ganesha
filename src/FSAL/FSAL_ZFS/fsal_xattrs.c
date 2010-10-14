@@ -346,6 +346,11 @@ fsal_status_t ZFSFSAL_ListXAttrs(zfsfsal_handle_t * p_objecthandle,   /* IN */
   if(!p_objecthandle || !p_context || !xattrs_tab || !p_nb_returned || !end_of_list)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_ListXAttrs);
 
+  /* Get the right VFS */
+  libzfswrap_vfs_t *p_vfs = ZFSFSAL_GetVFS(p_objecthandle);
+  if(!p_vfs)
+    Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_ListXAttrs);
+
   /* object attributes we want to retrieve from parent */
   file_attrs.asked_attributes = FSAL_ATTR_MODE | FSAL_ATTR_FILEID | FSAL_ATTR_OWNER
       | FSAL_ATTR_GROUP | FSAL_ATTR_ATIME | FSAL_ATTR_MTIME | FSAL_ATTR_TYPE
@@ -398,7 +403,7 @@ fsal_status_t ZFSFSAL_ListXAttrs(zfsfsal_handle_t * p_objecthandle,   /* IN */
   char *psz_buffer;
   size_t i_size;
   TakeTokenFSCall();
-  rc = libzfswrap_listxattr(ZFSFSAL_GetVFS(p_objecthandle), &p_context->user_credential.cred,
+  rc = libzfswrap_listxattr(p_vfs, &p_context->user_credential.cred,
                             p_objecthandle->data.zfs_handle, &psz_buffer, &i_size);
   ReleaseTokenFSCall();
 
@@ -458,7 +463,7 @@ fsal_status_t ZFSFSAL_ListXAttrs(zfsfsal_handle_t * p_objecthandle,   /* IN */
 
 }
 
-static int xattr_id_to_name(zfsfsal_op_context_t *p_context, zfsfsal_handle_t *p_objecthandle, unsigned int xattr_id, char *psz_name)
+static int xattr_id_to_name(libzfswrap_vfs_t *p_vfs, zfsfsal_op_context_t *p_context, zfsfsal_handle_t *p_objecthandle, unsigned int xattr_id, char *psz_name)
 {
   unsigned int index;
   unsigned int curr_idx;
@@ -475,7 +480,7 @@ static int xattr_id_to_name(zfsfsal_op_context_t *p_context, zfsfsal_handle_t *p
   /* get xattrs */
 
   TakeTokenFSCall();
-  rc = libzfswrap_listxattr(ZFSFSAL_GetVFS(p_objecthandle), &p_context->user_credential.cred,
+  rc = libzfswrap_listxattr(p_vfs, &p_context->user_credential.cred,
                             p_objecthandle->data.zfs_handle, &psz_buffer, &i_size);
   ReleaseTokenFSCall();
 
@@ -500,7 +505,7 @@ static int xattr_id_to_name(zfsfsal_op_context_t *p_context, zfsfsal_handle_t *p
  *  return index if found,
  *  negative value on error.
  */
-static int xattr_name_to_id(zfsfsal_op_context_t *p_context, zfsfsal_handle_t *p_objecthandle, const char *psz_name, unsigned int *p_id)
+static int xattr_name_to_id(libzfswrap_vfs_t *p_vfs, zfsfsal_op_context_t *p_context, zfsfsal_handle_t *p_objecthandle, const char *psz_name, unsigned int *p_id)
 {
   unsigned int i;
   char *psz_buffer, *ptr;
@@ -508,9 +513,8 @@ static int xattr_name_to_id(zfsfsal_op_context_t *p_context, zfsfsal_handle_t *p
   size_t len = 0;
 
   /* get xattrs */
-
   TakeTokenFSCall();
-  int rc = libzfswrap_listxattr(ZFSFSAL_GetVFS(p_objecthandle), &p_context->user_credential.cred,
+  int rc = libzfswrap_listxattr(p_vfs, &p_context->user_credential.cred,
                                 p_objecthandle->data.zfs_handle, &psz_buffer, &i_size);
   ReleaseTokenFSCall();
 
@@ -561,15 +565,21 @@ fsal_status_t ZFSFSAL_GetXAttrValueById(zfsfsal_handle_t * p_objecthandle,    /*
   {
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrValue);
   }
-  else if(xattr_id >= XATTR_COUNT)
+
+  /* Get the right VFS */
+  libzfswrap_vfs_t *p_vfs = ZFSFSAL_GetVFS(p_objecthandle);
+  if(!p_vfs)
+    Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_GetXAttrValue);
+
+  if(xattr_id >= XATTR_COUNT)
   {
     char psz_attr_name[MAXPATHLEN];
     char *psz_value;
 
-    if((rc = xattr_id_to_name(p_context, p_objecthandle, xattr_id, psz_attr_name)))
+    if((rc = xattr_id_to_name(p_vfs, p_context, p_objecthandle, xattr_id, psz_attr_name)))
       Return(rc, errno, INDEX_FSAL_GetXAttrValue);
 
-    if((rc = libzfswrap_getxattr(ZFSFSAL_GetVFS(p_objecthandle), &p_context->user_credential.cred,
+    if((rc = libzfswrap_getxattr(p_vfs, &p_context->user_credential.cred,
                                  p_objecthandle->data.zfs_handle, psz_attr_name, &psz_value)))
       Return(posix2fsal_error(rc), 0, INDEX_FSAL_GetXAttrValue);
 
@@ -594,12 +604,9 @@ fsal_status_t ZFSFSAL_GetXAttrValueById(zfsfsal_handle_t * p_objecthandle,    /*
                                          buff, MAXNAMLEN, p_output_size);
       xattr_list[xattr_id].print_func(buff, MAXNAMLEN, buffer_addr, p_output_size);
     }
-
-    Return(rc, 0, INDEX_FSAL_GetXAttrValue);
   }
 
   Return(rc, 0, INDEX_FSAL_GetXAttrValue);
-
 }
 
 /**
@@ -636,7 +643,13 @@ fsal_status_t ZFSFSAL_GetXAttrIdByName(zfsfsal_handle_t * p_objecthandle,     /*
 
   if(!found)
   {
-    if((rc = xattr_name_to_id(p_context, p_objecthandle, xattr_name->name, &index)))
+
+    /* Get the right VFS */
+    libzfswrap_vfs_t *p_vfs = ZFSFSAL_GetVFS(p_objecthandle);
+    if(!p_vfs)
+      Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_access);
+
+    if((rc = xattr_name_to_id(p_vfs, p_context, p_objecthandle, xattr_name->name, &index)))
         Return(rc, 0, INDEX_FSAL_GetXAttrValue);
     found = TRUE;
   }
@@ -676,8 +689,12 @@ fsal_status_t ZFSFSAL_GetXAttrValueByName(zfsfsal_handle_t * p_objecthandle,  /*
   if(!p_objecthandle || !p_context || !p_output_size || !buffer_addr || !xattr_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetXAttrValue);
 
-  /* look for this name */
+  /* Get the right VFS */
+  libzfswrap_vfs_t *p_vfs = ZFSFSAL_GetVFS(p_objecthandle);
+  if(!p_vfs)
+    Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_GetXAttrValue);
 
+  /* look for this name */
   for(index = 0; index < XATTR_COUNT; index++)
     {
       if(do_match_type(xattr_list[index].flags, p_objecthandle->data.type)
@@ -690,7 +707,7 @@ fsal_status_t ZFSFSAL_GetXAttrValueByName(zfsfsal_handle_t * p_objecthandle,  /*
     }
 
   TakeTokenFSCall();
-  if((rc = libzfswrap_getxattr(ZFSFSAL_GetVFS(p_objecthandle), &p_context->user_credential.cred,
+  if((rc = libzfswrap_getxattr(p_vfs, &p_context->user_credential.cred,
                                p_objecthandle->data.zfs_handle, xattr_name->name, &psz_value)))
       Return(posix2fsal_error(rc), 0, INDEX_FSAL_GetXAttrValue);
 
@@ -759,12 +776,17 @@ fsal_status_t ZFSFSAL_SetXAttrValueById(zfsfsal_handle_t * p_objecthandle,    /*
   char psz_name[FSAL_MAX_NAME_LEN];
   fsal_name_t attr_name;
 
+  /* Hook to prevent any modification in the snapshots */
+  if(p_objecthandle->data.i_snap != 0)
+    Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_SetXAttrValue);
+
   if(attr_is_read_only(xattr_id))
     Return(ERR_FSAL_PERM, 0, INDEX_FSAL_SetXAttrValue);
   else if(xattr_id < XATTR_COUNT)
     Return(ERR_FSAL_PERM, 0, INDEX_FSAL_SetXAttrValue);
 
-  if((rc = xattr_id_to_name(p_context, p_objecthandle, xattr_id, psz_name)))
+  if((rc = xattr_id_to_name(p_context->export_context->p_vfs, p_context, p_objecthandle,
+                            xattr_id, psz_name)))
     Return(rc, 0, INDEX_FSAL_SetXAttrValue);
 
   FSAL_str2name(psz_name, FSAL_MAX_NAME_LEN, &attr_name);
@@ -791,7 +813,8 @@ fsal_status_t ZFSFSAL_RemoveXAttrById(zfsfsal_handle_t * p_objecthandle,      /*
   if(p_objecthandle->data.i_snap != 0)
     Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_SetXAttrValue);
 
-  if((rc = xattr_id_to_name(p_context, p_objecthandle, xattr_id, psz_name)))
+  if((rc = xattr_id_to_name(p_context->export_context->p_vfs, p_context, p_objecthandle,
+                            xattr_id, psz_name)))
     Return(rc, 0, INDEX_FSAL_SetXAttrValue);
 
   TakeTokenFSCall();

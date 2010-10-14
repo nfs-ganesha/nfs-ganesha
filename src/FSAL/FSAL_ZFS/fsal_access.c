@@ -69,11 +69,16 @@ fsal_status_t ZFSFSAL_access(zfsfsal_handle_t * object_handle,        /* IN */
   if(!object_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_access);
 
+  /* Get the right VFS */
+  libzfswrap_vfs_t *p_vfs = ZFSFSAL_GetVFS(object_handle);
+  if(!p_vfs)
+    Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_access);
+
   /* >> convert your fsal access type to your FS access type << */
   int mask = fsal2posix_testperm(access_type);
 
   TakeTokenFSCall();
-  int rc = libzfswrap_access(ZFSFSAL_GetVFS(object_handle), &p_context->user_credential.cred,
+  int rc = libzfswrap_access(p_vfs, &p_context->user_credential.cred,
                              object_handle->data.zfs_handle, mask);
   ReleaseTokenFSCall();
 

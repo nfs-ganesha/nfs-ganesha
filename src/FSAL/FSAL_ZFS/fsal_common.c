@@ -20,8 +20,7 @@ libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfsfsal_handle_t *handle)
 {
   if(handle->data.i_snap < i_vfs)
     return pp_vfs[handle->data.i_snap];
-
   else
-    return pp_vfs[0];
+    return NULL;
 }
 
