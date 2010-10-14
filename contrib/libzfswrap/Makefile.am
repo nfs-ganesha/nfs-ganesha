@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = lib zfswrap
+SUBDIRS = lib zfswrap cmd
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libzfswrap.pc
@@ -15,7 +15,7 @@ doc:
 deb: distdir
 	tar cvzf libzfswrap_@PACKAGE_VERSION@.orig.tar.gz libzfswrap-@PACKAGE_VERSION@ ; \
 	cd libzfswrap-@PACKAGE_VERSION@ ; \
-	dpkg-buildpackage ; \
+	dpkg-buildpackage -rfakeroot ; \
 	cd ../
 
 rpms: rpm srpm

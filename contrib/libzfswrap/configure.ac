@@ -1,4 +1,4 @@
-AC_PREREQ([2.59])
+AC_PREREQ([2.65])
 AC_INIT(libzfswrap, 1.0.0, remi.duraffort.ocre@cea.fr)
 
 AC_CONFIG_AUX_DIR([build-aux])
@@ -70,6 +70,7 @@ AC_SUBST(ARCH)
 AC_CONFIG_FILES([libzfswrap.pc
                  libzfswrap.spec
                  Makefile
+                 cmd/Makefile
                  lib/Makefile
                  lib/libatomic/Makefile
                  lib/libavl/Makefile

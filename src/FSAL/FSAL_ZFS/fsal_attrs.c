@@ -18,7 +18,9 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include "fsal_common.h"
 
+#include <string.h>
 #include <fcntl.h>
 
 /**
@@ -59,8 +61,24 @@ fsal_status_t ZFSFSAL_getattrs(zfsfsal_handle_t * filehandle, /* IN */
 
   TakeTokenFSCall();
 
-  rc = libzfswrap_getattr(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                          filehandle->data.zfs_handle, &fstat, &type);
+  if(filehandle->data.zfs_handle.inode == ZFS_SNAP_DIR_INODE &&
+     filehandle->data.zfs_handle.generation == 0)
+  {
+    memset(&fstat, 0, sizeof(fstat));
+    fstat.st_mode = S_IFDIR | 0755;
+    fstat.st_ino = ZFS_SNAP_DIR_INODE;
+    fstat.st_nlink = 2;
+    fstat.st_ctime = time(NULL);
+    fstat.st_atime = fstat.st_ctime;
+    fstat.st_mtime = fstat.st_ctime;
+    rc = 0;
+  }
+  else
+    rc = libzfswrap_getattr(ZFSFSAL_GetVFS(filehandle), &p_context->user_credential.cred,
+                            filehandle->data.zfs_handle, &fstat, &type);
+
+  // Set st_dev to be the snapshot number.
+  fstat.st_dev = filehandle->data.i_snap;
 
   ReleaseTokenFSCall();
 
@@ -130,6 +148,9 @@ fsal_status_t ZFSFSAL_setattrs(zfsfsal_handle_t * filehandle, /* IN */
   if(!filehandle || !p_context || !attrib_set)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_setattrs);
 
+  if(filehandle->data.i_snap != 0)
+    Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_setattrs);
+
   /* local copy of attributes */
   attrs = *attrib_set;
 
@@ -190,7 +211,7 @@ fsal_status_t ZFSFSAL_setattrs(zfsfsal_handle_t * filehandle, /* IN */
 
   struct stat new_stat = { 0 };
   /**@TODO: use the new_stat info ! */
-  rc = libzfswrap_setattr(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_setattr(ZFSFSAL_GetVFS(filehandle), &p_context->user_credential.cred,
                           filehandle->data.zfs_handle, &stats, flags, &new_stat);
 
   ReleaseTokenFSCall();

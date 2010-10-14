@@ -1,5 +1,6 @@
 noinst_LTLIBRARIES = libzfs.la
-libzfs_la_SOURCES = libzfs_changelist.c \
+libzfs_la_SOURCES = libzfs.c \
+                    libzfs_changelist.c \
                     libzfs_config.c \
                     libzfs_dataset.c \
                     libzfs_graph.c \

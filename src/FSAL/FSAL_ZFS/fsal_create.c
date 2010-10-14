@@ -73,9 +73,9 @@ fsal_status_t ZFSFSAL_create(zfsfsal_handle_t * parent_directory_handle,      /*
   if(!parent_directory_handle || !p_context || !object_handle || !p_filename)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_create);
 
-  /* >> convert fsal args to your fs args.
-   * Don't forget applying FSAL umask :
-   * mode = mode & ~global_fs_info.umask << */
+  /* Hook to prevent creating objects in a snapashot */
+  if(parent_directory_handle->data.i_snap != 0)
+    Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_create);
 
   TakeTokenFSCall();
 
@@ -93,6 +93,7 @@ fsal_status_t ZFSFSAL_create(zfsfsal_handle_t * parent_directory_handle,      /*
   /* >> set output handle << */
   object_handle->data.zfs_handle = object;
   object_handle->data.type = FSAL_TYPE_FILE;
+  object_handle->data.i_snap = 0;
 
   if(object_attributes)
     {
@@ -166,6 +167,10 @@ fsal_status_t ZFSFSAL_mkdir(zfsfsal_handle_t * parent_directory_handle,       /*
   if(!parent_directory_handle || !p_context || !object_handle || !p_dirname)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mkdir);
 
+  /* Hook to prevent creating objects in a snapashot */
+  if(parent_directory_handle->data.i_snap != 0)
+    Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_mkdir);
+
   /* convert fsal args to ZFS args */
   unix_mode = fsal2unix_mode(accessmode);
 
@@ -184,11 +189,12 @@ fsal_status_t ZFSFSAL_mkdir(zfsfsal_handle_t * parent_directory_handle,       /*
 
   /* >> interpret returned error << */
   if(rc)
-    Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_mkdir);
 
   /* set output handle */
   object_handle->data.zfs_handle = object;
   object_handle->data.type = FSAL_TYPE_DIR;
+  object_handle->data.i_snap = 0;
 
   if(object_attributes)
     {
@@ -262,8 +268,11 @@ fsal_status_t ZFSFSAL_link(zfsfsal_handle_t * target_handle,  /* IN */
   if(!target_handle || !dir_handle || !p_context || !p_link_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_link);
 
-  /* Tests if hardlinking is allowed by configuration. */
+  /* Hook to prevent creating objects in a snapashot */
+  if(target_handle->data.i_snap != 0)
+    Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_link);
 
+  /* Tests if hardlinking is allowed by configuration. */
   if(!global_fs_info.link_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
 

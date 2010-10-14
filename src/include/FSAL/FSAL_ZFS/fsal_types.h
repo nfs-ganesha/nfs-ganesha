@@ -75,6 +75,7 @@ typedef union
   {
     inogen_t zfs_handle;
     fsal_nodetype_t type;
+    char i_snap;
   }data;
 #ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_HANDLE_T_SIZE];
@@ -115,6 +116,7 @@ typedef struct fsal_dir__
   creden_t cred;
   libzfswrap_vnode_t *p_vnode;
   inogen_t zfs_handle;
+  char i_snap;
 
 } zfsfsal_dir_t;
 
@@ -123,6 +125,7 @@ typedef struct fsal_file__
   libzfswrap_vfs_t *p_vfs;
   creden_t cred;
   inogen_t zfs_handle;
+  char i_snap;
   off_t current_offset;
   int flags;
   libzfswrap_vnode_t *p_vnode;

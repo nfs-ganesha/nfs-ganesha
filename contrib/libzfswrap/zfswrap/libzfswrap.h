@@ -68,6 +68,134 @@ libzfswrap_handle_t *libzfswrap_init();
  */
 void libzfswrap_exit(libzfswrap_handle_t *p_zhd);
 
+/**
+ * Create a zpool
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_name: the name of the zpool
+ * @param psz_type: type of the zpool (mirror, raidz, raidz([1,255])
+ * @param ppsz_error: the error message (if any)
+ * @return 0 on success, the error code overwise
+ */
+int libzfswrap_zpool_create(libzfswrap_handle_t *p_zhd, const char *psz_name, const char *psz_type,
+                            const char **ppsz_dev, size_t i_dev, const char **ppsz_error);
+
+/**
+ * Destroy the given zpool
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_name: zpool name
+ * @param b_force: force the unmount process or not
+ * @param ppsz_error: the error message (if any)
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zpool_destroy(libzfswrap_handle_t *p_zhd, const char *psz_name, int b_force,
+                             const char **ppsz_error);
+
+/**
+ * Add to the given zpool the following device
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_zpool: the zpool name
+ * @param psz_type: type of the device group to add
+ * @param ppsz_dev: the list of devices
+ * @param i_dev: the number of devices
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zpool_add(libzfswrap_handle_t *p_zhd, const char *psz_zpool,
+                         const char *psz_type, const char **ppsz_dev,
+                         size_t i_dev, const char **ppsz_error);
+
+/**
+ * Remove the given vdevs from the zpool
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_zpool: the zpool name
+ * @param ppsz_vdevs: the vdevs
+ * @param i_vdevs: the number of vdevs
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zpool_remove(libzfswrap_handle_t *p_zhd, const char *psz_zpool,
+                            const char **ppsz_dev, size_t i_vdevs,
+                            const char **ppsz_error);
+
+/**
+ * Attach the given device to the given vdev in the zpool
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_zpool: the zpool name
+ * @param psz_current_dev: the device to use as an attachment point
+ * @param psz_new_dev: the device to attach
+ * @param i_replacing: do we have to attach or replace ?
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zpool_attach(libzfswrap_handle_t *p_zhd, const char *psz_zpool,
+                            const char *psz_current_dev, const char *psz_new_dev,
+                            int i_replacing, const char **ppsz_error);
+
+/**
+ * Detach the given vdevs from the zpool
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_zpool: the zpool name
+ * @param psz_dev: the device to detach
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error message overwise
+ */
+int libzfswrap_zpool_detach(libzfswrap_handle_t *p_zhd, const char *psz_zpool, const char *psz_dev, const char **ppsz_error);
+
+/**
+ * List the available zpools
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_props: the properties to retrieve
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zpool_list(libzfswrap_handle_t *p_zhd, const char *psz_props, const char **ppsz_error);
+
+/**
+ * Print the status of the available zpools
+ * @param p_zhd: the libzfswrap handle
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zpool_status(libzfswrap_handle_t *p_zhd, const char **ppsz_error);
+
+
+/**
+ * Print the list of ZFS file systems and properties
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_props: the properties to retrieve
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zfs_list(libzfswrap_handle_t *p_zhd, const char *psz_props, const char **ppsz_error);
+
+/**
+ * List the available snapshots for the given zfs
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_zfs: name of the file system
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zfs_list_snapshot(libzfswrap_handle_t *p_zhd, const char *psz_zfs, const char **ppsz_error);
+
+/**
+ * Return the list of snapshots for the given zfs in an array of strings
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_zfs: name of the file system
+ * @param pppsz_snapshots: the array of snapshots names
+ * @param ppsz_error: the error message if any
+ * @return the number of snapshots in case of success, -1 overwise
+ */
+int libzfswrap_zfs_get_list_snapshots(libzfswrap_handle_t *p_zhd, const char *psz_zfs, char ***pppsz_snapshots, const char **ppsz_error);
+
+/**
+ * Create a snapshot of the given ZFS file system
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_zfs: name of the file system
+ * @param psz_snapshot: name of the snapshot
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zfs_snapshot(libzfswrap_handle_t *p_zhd, const char *psz_zfs, const char *psz_snapshot, const char **ppsz_error);
 
 /**
  * Mount the given file system

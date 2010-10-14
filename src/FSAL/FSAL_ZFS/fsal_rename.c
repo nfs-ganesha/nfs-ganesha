@@ -80,6 +80,10 @@ fsal_status_t ZFSFSAL_rename(zfsfsal_handle_t * old_parentdir_handle, /* IN */
      !new_parentdir_handle || !p_old_name || !p_new_name || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_rename);
 
+  /* Hook to prenvet moving thing from or to a snapshot */
+  if(old_parentdir_handle->data.i_snap != 0 || new_parentdir_handle->data.i_snap != 0)
+    Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_rename);
+
   TakeTokenFSCall();
 
   rc = libzfswrap_rename(p_context->export_context->p_vfs, &p_context->user_credential.cred,

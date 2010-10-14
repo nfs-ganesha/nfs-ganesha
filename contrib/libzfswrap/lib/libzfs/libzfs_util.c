@@ -784,9 +784,9 @@ zcmd_read_dst_nvlist(libzfs_handle_t *hdl, zfs_cmd_t *zc, nvlist_t **nvlp)
 int
 zfs_ioctl(libzfs_handle_t *hdl, int request, zfs_cmd_t *zc)
 {
+abort();
 	int error;
-        return -1;
-/*
+
 	zc->zc_history = (uint64_t)(uintptr_t)hdl->libzfs_log_str;
 	error = ioctl(hdl->libzfs_fd, request, zc);
 	if (hdl->libzfs_log_str) {
@@ -796,7 +796,6 @@ zfs_ioctl(libzfs_handle_t *hdl, int request, zfs_cmd_t *zc)
 	zc->zc_history = 0;
 
 	return (error);
-*/
 }
 
 /*
