@@ -186,6 +186,8 @@ fsal_status_t XFSFSAL_open(xfsfsal_handle_t * p_filehandle,     /* IN */
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_open);
     }
 
+#if 0
+  /* No required, the open would have failed if not permitted */
   status =
       fsal_internal_testAccess(p_context,
                                openflags & FSAL_O_RDONLY ? FSAL_R_OK : FSAL_W_OK,
@@ -195,6 +197,7 @@ fsal_status_t XFSFSAL_open(xfsfsal_handle_t * p_filehandle,     /* IN */
       close(fd);
       ReturnStatus(status, INDEX_FSAL_open);
     }
+#endif
 
   TakeTokenFSCall();
   p_file_descriptor->fd = fd;
