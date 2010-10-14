@@ -56,8 +56,9 @@
 #include <string.h>
 #include <errno.h>
 
-//#ifdef FD_SETSIZE
-SVCXPRT *Xports[FD_SETSIZE];
+
+#ifdef FD_SETSIZE
+SVCXPRT **Xports;
 extern int gssrpc_svc_fdset_init;
 //#else
 

@@ -99,6 +99,7 @@ nfs_flush_thread_data_t flush_info[NB_MAX_FLUSHER_THREAD];
 
 pthread_t rpc_dispatcher_thrid;
 pthread_t stat_thrid;
+pthread_t stat_exporter_thrid;
 pthread_t admin_thrid;
 pthread_t fcc_gc_thrid;
 pthread_t sigmgr_thrid ;
@@ -359,6 +360,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->krb5_param.hash_param.compare_key = compare_gss_ctx;
   p_nfs_param->krb5_param.hash_param.key_to_str = display_gss_ctx;
   p_nfs_param->krb5_param.hash_param.val_to_str = display_gss_svc_data;
+  p_nfs_param->krb5_param.hash_param.name = "KRB5 ID Mapper";
 #endif
 
   /* NFSv4 parameter */
@@ -379,6 +381,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->dupreq_param.hash_param.compare_key = compare_xid;
   p_nfs_param->dupreq_param.hash_param.key_to_str = display_xid;
   p_nfs_param->dupreq_param.hash_param.val_to_str = display_xid;
+  p_nfs_param->dupreq_param.hash_param.name = "Duplicate Request Cache";
 
   /*  Worker parameters : IP/name hash table */
   p_nfs_param->ip_name_param.hash_param.index_size = PRIME_IP_NAME;
@@ -389,6 +392,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->ip_name_param.hash_param.compare_key = compare_ip_name;
   p_nfs_param->ip_name_param.hash_param.key_to_str = display_ip_name;
   p_nfs_param->ip_name_param.hash_param.val_to_str = display_ip_value;
+  p_nfs_param->ip_name_param.hash_param.name = "IP Name";
   p_nfs_param->ip_name_param.expiration_time = IP_NAME_EXPIRATION;
   strncpy(p_nfs_param->ip_name_param.mapfile, "", MAXPATHLEN);
 
@@ -401,6 +405,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->uidmap_cache_param.hash_param.compare_key = compare_idmapper;
   p_nfs_param->uidmap_cache_param.hash_param.key_to_str = display_idmapper_key;
   p_nfs_param->uidmap_cache_param.hash_param.val_to_str = display_idmapper_val;
+  p_nfs_param->uidmap_cache_param.hash_param.name = "UID Map Cache";
   strncpy(p_nfs_param->uidmap_cache_param.mapfile, "", MAXPATHLEN);
 
   /*  Worker parameters : UNAME_MAPPER hash table */
@@ -412,6 +417,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->unamemap_cache_param.hash_param.compare_key = compare_namemapper;
   p_nfs_param->unamemap_cache_param.hash_param.key_to_str = display_idmapper_val;
   p_nfs_param->unamemap_cache_param.hash_param.val_to_str = display_idmapper_key;
+  p_nfs_param->unamemap_cache_param.hash_param.name = "UNAME Map Cache";
   strncpy(p_nfs_param->unamemap_cache_param.mapfile, "", MAXPATHLEN);
 
   /*  Worker parameters : GID_MAPPER hash table */
@@ -423,6 +429,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->gidmap_cache_param.hash_param.compare_key = compare_idmapper;
   p_nfs_param->gidmap_cache_param.hash_param.key_to_str = display_idmapper_key;
   p_nfs_param->gidmap_cache_param.hash_param.val_to_str = display_idmapper_val;
+  p_nfs_param->gidmap_cache_param.hash_param.name = "GID Map Cache";
   strncpy(p_nfs_param->gidmap_cache_param.mapfile, "", MAXPATHLEN);
 
   /*  Worker parameters : UID->GID  hash table (for RPCSEC_GSS) */
@@ -435,6 +442,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->uidgidmap_cache_param.hash_param.compare_key = compare_namemapper;
   p_nfs_param->uidgidmap_cache_param.hash_param.key_to_str = display_idmapper_key;
   p_nfs_param->uidgidmap_cache_param.hash_param.val_to_str = display_idmapper_key;
+  p_nfs_param->uidgidmap_cache_param.hash_param.name = "UID->GID Map Cache";
 
   /*  Worker parameters : GNAME_MAPPER hash table */
   p_nfs_param->gnamemap_cache_param.hash_param.index_size = PRIME_ID_MAPPER;
@@ -445,9 +453,10 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->gnamemap_cache_param.hash_param.compare_key = compare_namemapper;
   p_nfs_param->gnamemap_cache_param.hash_param.key_to_str = display_idmapper_val;
   p_nfs_param->gnamemap_cache_param.hash_param.val_to_str = display_idmapper_key;
+  p_nfs_param->gnamemap_cache_param.hash_param.name = "GNAME Map Cache";
   strncpy(p_nfs_param->gnamemap_cache_param.mapfile, "", MAXPATHLEN);
 
-  /*  Worker parameters : IP/name hash table */
+  /*  Worker parameters : IP/stats hash table */
   p_nfs_param->ip_stats_param.hash_param.index_size = PRIME_IP_STATS;
   p_nfs_param->ip_stats_param.hash_param.alphabet_length = 10;  /* ipaddr is a numerical decimal value */
   p_nfs_param->ip_stats_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_IP_STATS;
@@ -456,6 +465,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->ip_stats_param.hash_param.compare_key = compare_ip_stats;
   p_nfs_param->ip_stats_param.hash_param.key_to_str = display_ip_stats;
   p_nfs_param->ip_stats_param.hash_param.val_to_str = display_ip_stats;
+  p_nfs_param->ip_stats_param.hash_param.name = "IP Stats";
 
   /*  Worker parameters : NFSv4 Client id table */
   p_nfs_param->client_id_param.hash_param.index_size = PRIME_CLIENT_ID;
@@ -466,6 +476,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->client_id_param.hash_param.compare_key = compare_client_id;
   p_nfs_param->client_id_param.hash_param.key_to_str = display_client_id;
   p_nfs_param->client_id_param.hash_param.val_to_str = display_client_id_val;
+  p_nfs_param->client_id_param.hash_param.name = "Client ID";
 
   /* NFSv4 Client id reverse table */
   p_nfs_param->client_id_param.hash_param_reverse.index_size = PRIME_CLIENT_ID;
@@ -479,6 +490,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->client_id_param.hash_param_reverse.compare_key = compare_client_id_reverse;
   p_nfs_param->client_id_param.hash_param_reverse.key_to_str = display_client_id_reverse;
   p_nfs_param->client_id_param.hash_param_reverse.val_to_str = display_client_id_val;
+  p_nfs_param->client_id_param.hash_param_reverse.name = "Client ID Reverse";
 
   /* NFSv4 State Id hash */
   p_nfs_param->state_id_param.hash_param.index_size = PRIME_STATE_ID;
@@ -489,6 +501,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->state_id_param.hash_param.compare_key = compare_state_id;
   p_nfs_param->state_id_param.hash_param.key_to_str = display_state_id_key;
   p_nfs_param->state_id_param.hash_param.val_to_str = display_state_id_val;
+  p_nfs_param->state_id_param.hash_param.name = "State ID";
 
 #ifdef _USE_NFS4_1
   /* NFSv4 State Id hash */
@@ -500,6 +513,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->session_id_param.hash_param.compare_key = compare_session_id;
   p_nfs_param->session_id_param.hash_param.key_to_str = display_session_id_key;
   p_nfs_param->session_id_param.hash_param.val_to_str = display_session_id_val;
+  p_nfs_param->session_id_param.hash_param.name = "Session ID";
 
 #ifdef _USE_PNFS
   /* pNFS parameters */
@@ -533,6 +547,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->open_owner_param.hash_param.compare_key = compare_open_owner;
   p_nfs_param->open_owner_param.hash_param.key_to_str = display_open_owner_key;
   p_nfs_param->open_owner_param.hash_param.val_to_str = display_open_owner_val;
+  p_nfs_param->open_owner_param.hash_param.name = "Open Owner";
 
   /* Cache inode parameters : hash table */
   p_nfs_param->cache_layers_param.cache_param.hparam.index_size = PRIME_CACHE_INODE;
@@ -547,6 +562,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
       cache_inode_compare_key_fsal;
   p_nfs_param->cache_layers_param.cache_param.hparam.key_to_str = display_cache;
   p_nfs_param->cache_layers_param.cache_param.hparam.val_to_str = display_cache;
+  p_nfs_param->cache_layers_param.cache_param.hparam.name = "Cache Inode";
 
   /* Cache inode parameters : Garbage collection policy */
   p_nfs_param->cache_layers_param.gcpol.file_expiration_delay = -1;     /* No gc */
@@ -1105,6 +1121,16 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
     }
 #endif                          /* _SNMP_ADM_ACTIVE */
 
+#ifdef _USE_STAT_EXPORTER
+  if(get_stat_exporter_conf(config_struct, &p_nfs_param->extern_param) != 0)
+    {
+      LogCrit(COMPONENT_INIT, "Error loading STAT_EXPORTER configuration");
+      return -1;
+    }
+  else
+      LogDebug(COMPONENT_INIT, "STAT_EXPORTER configuration read from config file");
+#endif                          /* _USE_STAT_EXPORTER */
+
   /* Load export entries from parsed file
    * returns the number of export entries.
    */
@@ -1375,6 +1401,17 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
     }
   LogEvent(COMPONENT_INIT, "statistics thread was started successfully");
 
+#ifdef _USE_STAT_EXPORTER
+  /* Starting the stat exporter thread */
+  if((rc =
+      pthread_create(&stat_exporter_thrid, &attr_thr, stat_exporter_thread, (void *)workers_data)) != 0)
+    {
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
+      exit(1);
+    }
+  LogEvent(COMPONENT_INIT, "statistics exporter thread was started successfully");
+#endif      /*  _USE_STAT_EXPORTER */
+
   /* Starting the nfs file content gc thread  */
   if((rc =
       pthread_create(&fcc_gc_thrid, &attr_thr, file_content_gc_thread,
@@ -1400,9 +1437,6 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
 
 static void nfs_Init(const nfs_start_info_t * p_start_info)
 {
-  nfs_request_data_t *reqpool;
-  dupreq_entry_t *dupreq_pool;
-  nfs_ip_stats_t *ip_stats_pool;
   hash_table_t *ht = NULL;      /* Cache inode main hash table */
 
   cache_inode_status_t cache_status;
@@ -1547,8 +1581,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
   /* Worker initialisation */
   if((workers_data =
-      (nfs_worker_data_t *) Mem_Alloc(sizeof(nfs_worker_data_t) *
-                                      nfs_param.core_param.nb_worker)) == NULL)
+      (nfs_worker_data_t *) Mem_Alloc_Label(sizeof(nfs_worker_data_t) *
+                                            nfs_param.core_param.nb_worker,
+                                            "nfs_worker_data_t")) == NULL)
     {
       LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
       exit(1);
@@ -1567,6 +1602,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
   for(i = 0; i < nfs_param.core_param.nb_worker; i++)
     {
+      char name[256];
+
       /* Fill in workers fields (semaphores and other stangenesses */
       if(nfs_Init_worker_data(&(workers_data[i])) != 0)
         {
@@ -1580,6 +1617,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       /* Set the pointer for the Cache inode hash table */
       workers_data[i].ht = ht;
 
+      sprintf(name, "IP Stats for worker %d", i);
+      nfs_param.ip_stats_param.hash_param.name = name;
       ht_ip_stats[i] = nfs_Init_ip_stats(nfs_param.ip_stats_param);
       if(ht_ip_stats[i] == NULL)
         {
@@ -1588,74 +1627,59 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
         }
       workers_data[i].ht_ip_stats = ht_ip_stats[i];
 
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("nfs_request_data_t");
-#endif
       /* Allocation of the nfs request pool */
-      reqpool = NULL;           /* empty pool */
-      STUFF_PREALLOC_CONSTRUCT(reqpool,
-                               nfs_param.worker_param.nb_pending_prealloc,
-                               nfs_request_data_t,
-                               next_alloc, constructor_nfs_request_data_t);
-
-      if(reqpool == NULL)
+      MakePool(&workers_data[i].request_pool,
+               nfs_param.worker_param.nb_pending_prealloc,
+               nfs_request_data_t,
+               constructor_nfs_request_data_t, NULL);
+      NamePool(&workers_data[i].request_pool, "Request Data Pool %d", i);
+               
+      if(!IsPoolPreallocated(&workers_data[i].request_pool))
         {
           LogCrit(COMPONENT_INIT, "NFS_INIT: Error while allocating request data pool #%d", i);
           LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
-      workers_data[i].request_pool = reqpool;
 
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("dupreq_entry_t");
-#endif
       /* Allocation of the nfs dupreq pool */
-      dupreq_pool = NULL;       /* empty pool */
+      MakePool(&workers_data[i].dupreq_pool,
+               nfs_param.worker_param.nb_dupreq_prealloc,
+               dupreq_entry_t, NULL, NULL);
+      NamePool(&workers_data[i].dupreq_pool, "Duplicate Request Pool %d", i);
 
-      STUFF_PREALLOC(dupreq_pool,
-                     nfs_param.worker_param.nb_dupreq_prealloc,
-                     dupreq_entry_t, next_alloc);
-
-      if(dupreq_pool == NULL)
+      if(!IsPoolPreallocated(&workers_data[i].dupreq_pool))
         {
           LogCrit(COMPONENT_INIT, "NFS_INIT: Error while allocating duplicate request pool #%d", i);
           LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
-      workers_data[i].dupreq_pool = dupreq_pool;
 
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("nfs_ip_name_t");
-#endif
+      /* Allocation of the IP/name pool */
+      MakePool(&workers_data[i].ip_stats_pool,
+               nfs_param.worker_param.nb_ip_stats_prealloc,
+               nfs_ip_stats_t, NULL, NULL);
+      NamePool(&workers_data[i].ip_stats_pool, "IP Stats Cache Pool %d", i);
 
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("nfs_ip_stats_t");
-#endif
-      /* ALlocation of the IP/name pool */
-      ip_stats_pool = NULL;     /* empty pool */
-      STUFF_PREALLOC(ip_stats_pool,
-                     nfs_param.worker_param.nb_ip_stats_prealloc,
-                     nfs_ip_stats_t, next_alloc);
-
-      if(ip_stats_pool == NULL)
+      if(!IsPoolPreallocated(&workers_data[i].ip_stats_pool))
         {
           LogCrit(COMPONENT_INIT, "NFS_INIT: Error while allocating IP stats cache pool #%d", i);
           LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
 
-      workers_data[i].ip_stats_pool = ip_stats_pool;
+      /* Initialize, but do not pre-alloc client-id pool */
+      InitPool(&workers_data[i].clientid_pool,
+               nfs_param.worker_param.nb_client_id_prealloc,
+               nfs_client_id_t, NULL, NULL);
+      NamePool(&workers_data[i].clientid_pool, "Client ID Pool %d", i);
 
       LogDebug(COMPONENT_INIT, "NFS_INIT: worker data #%d successfully initialized", i);
     }                           /* for i */
 
   /* Admin initialisation */
   if((admin_data =
-      (nfs_admin_data_t *) Mem_Alloc(sizeof(nfs_admin_data_t))) == NULL)
+      (nfs_admin_data_t *) Mem_Alloc_Label(sizeof(nfs_admin_data_t),
+                                           "nfs_admin_data_t")) == NULL)
     {
       LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
       exit(1);
@@ -1673,11 +1697,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
   /* Set the stats to zero */
   nfs_reset_stats();
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   /* Creates the pseudo fs */
   LogDebug(COMPONENT_INIT, "NFS_INIT: Now building pseudo fs");
@@ -1963,8 +1982,22 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
         {
           LogError(COMPONENT_INIT, ERR_SYS, ERR_SETRLIMIT, errno);
           LogCrit(COMPONENT_INIT, "/!\\ | Impossible to set RLIMIT_NOFILE to %d",
-                     nfs_param.core_param.nb_max_fd);
+                  nfs_param.core_param.nb_max_fd);
         }
+      else
+        LogEvent(COMPONENT_INIT, "Setting RLIMIT_NOFILE to %d",
+                 nfs_param.core_param.nb_max_fd);
+    }
+  else
+    {
+      if(getrlimit(RLIMIT_NOFILE, &ulimit_data) != 0)
+        {
+          LogError(COMPONENT_INIT, ERR_SYS, ERR_SETRLIMIT, errno);
+          LogMajor(COMPONENT_INIT, "/!\\ | Impossible to get RLIMIT_NOFILE");
+          exit(1);
+        }
+      nfs_param.core_param.nb_max_fd = ulimit_data.rlim_cur;
+      LogEvent(COMPONENT_INIT, "RLIMIT_NOFILE was cur %d max %d", ulimit_data.rlim_cur, ulimit_data.rlim_max);
     }
 
   /* Allocate the directories for the datacache */

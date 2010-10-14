@@ -23,46 +23,55 @@
 #ifdef __KERNEL__
 #include <linux/mount.h>
 #include <linux/dcache.h>
+#include <linux/stat.h>
 #endif
 
 /*FIXME!!  need compat arg or rework the structure */
 struct file_handle
 {
-  int handle_size;
-  int handle_type;
-  /* file identifier */
-  unsigned char f_handle[0];
+    int handle_size;
+    int handle_type;
+    /* file identifier */
+    unsigned char f_handle[0];
 };
 
 struct open_arg
 {
-  int mountdirfd;
-  int flags;
-  int openfd;
-  struct file_handle *handle;
+    int mountdirfd;
+    int flags;
+    int openfd;
+    struct file_handle *handle;
 };
 
 struct name_handle_arg
 {
-  int dfd;
-  int flag;
-  char *name;
-  struct file_handle *handle;
+    int dfd;
+    int flag;
+    char *name;
+    struct file_handle *handle;
 };
 
 struct link_arg
 {
-  int file_fd;
-  int dir_fd;
-  char *name;
+    int file_fd;
+    int dir_fd;
+    char *name;
 };
 
 struct readlink_arg
 {
-  int fd;
-  char *buffer;
-  int size;
+    int fd;
+    char *buffer;
+    int size;
 };
+
+struct stat_arg
+{
+    int mountdirfd;
+    struct file_handle *handle;
+    struct stat *buf;
+};
+
 
 #ifdef __KERNEL__
 extern long name_to_handle_at(int dfd, const char __user * name,
@@ -70,5 +79,7 @@ extern long name_to_handle_at(int dfd, const char __user * name,
 extern long open_by_handle(int mountdirfd, struct file_handle __user * handle, int flags);
 extern long link_by_fd(int file_fd, int newdfd, const char __user * newname);
 extern long readlink_by_fd(int fd, char __user * buf, int buffsize);
+extern long stat_by_handle(int mountdirfd, struct file_handle __user * handle,
+                           struct stat __user *buf);
 #endif
 #endif

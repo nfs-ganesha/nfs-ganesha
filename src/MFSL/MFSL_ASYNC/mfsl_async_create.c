@@ -190,13 +190,9 @@ fsal_status_t MFSL_create(mfsl_object_t * parent_directory_handle,      /* IN */
 
   P(p_mfsl_context->lock);
 
-  GET_PREALLOC(pasyncopdesc,
-               p_mfsl_context->pool_async_op,
-               mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
+  GetFromPool(pasyncopdesc, &p_mfsl_context->pool_async_op, mfsl_async_op_desc_t);
 
-  GET_PREALLOC(newfile_pasyncdata,
-               p_mfsl_context->pool_spec_data,
-               mfsl_param.nb_pre_async_op_desc, mfsl_object_specific_data_t, next_alloc);
+  GetFromPool(newfile_pasyncdata, &p_mfsl_context->pool_spec_data, mfsl_object_specific_data_t);
 
   V(p_mfsl_context->lock);
 
@@ -212,12 +208,7 @@ fsal_status_t MFSL_create(mfsl_object_t * parent_directory_handle,      /* IN */
 
   /* Now get a pre-allocated directory from the synclet data */
   P(p_mfsl_context->lock);
-  GET_PREALLOC_CONSTRUCT(pprecreated,
-                         p_mfsl_context->pool_files,
-                         mfsl_param.nb_pre_create_files,
-                         mfsl_precreated_object_t,
-                         next_alloc, constructor_preacreated_entries);
-  p_mfsl_context->avail_pool_files -= 1;
+  GetFromPool(pprecreated, &p_mfsl_context->pool_files, mfsl_precreated_object_t);
   V(p_mfsl_context->lock);
 
   pnewfile_handle = &(pprecreated->mobject);

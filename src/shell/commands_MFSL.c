@@ -47,7 +47,7 @@
 #include <pwd.h>
 #include "fsal.h"
 #include "mfsl.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "err_ghost_fs.h"
 #include "config_parsing.h"
 #include "cmd_tools.h"
@@ -56,10 +56,6 @@
 #include "stuff_alloc.h"
 
 static pthread_mutex_t mutex_log = PTHREAD_MUTEX_INITIALIZER;
-
-static desc_log_stream_t voie;
-static int log_level = -1;
-static log_t log_desc = LOG_INITIALIZER;
 
 static int is_loaded = FALSE;   /* filsystem initialization status */
 
@@ -249,33 +245,12 @@ int Init_Thread_MFSL(FILE * output, cmdmfsl_thr_info_t * context, int flag_v)
 
 void mfsl_layer_SetLogLevel(int log_lvl)
 {
-
-  log_stream_t *curr;
-
   /* mutex pour proteger le descriptor de log */
   pthread_mutex_lock(&mutex_log);
 
-  /* first time */
-  if(log_level == -1)
-    {
-      log_level = log_lvl;
-      voie.fd = fileno(stderr);
-      AddLogStreamJd(&log_desc, V_FD, voie, log_level, SUP);
-    }
-  else
-    {
-      log_level = log_lvl;
-      /* changing log level */
-      curr = log_desc.liste_voies;
-      while(curr)
-        {
-          curr->niveau = log_level;
-          curr = curr->suivante;
-        }
-    }
+  SetComponentLogLevel(COMPONENT_MFSL, log_lvl);
 
   pthread_mutex_unlock(&mutex_log);
-
 }
 
 static void getopt_init()

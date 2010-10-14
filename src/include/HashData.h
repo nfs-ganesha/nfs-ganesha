@@ -43,14 +43,12 @@ typedef struct hashbuff__
   caddr_t pdata;
   size_t len;
   unsigned int type;
-  struct hashbuff__ *next_alloc;        /* for stuff allocator */
 } hash_buffer_t;
 
 typedef struct hash_data__
 {
   hash_buffer_t buffval;
   hash_buffer_t buffkey;
-  struct hash_data__ *next_alloc;
 } hash_data_t;
 
 #endif

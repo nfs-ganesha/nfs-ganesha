@@ -288,10 +288,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
 
       /* Post an asynchronous operation */
       P(pclient->pool_lock);
-      GET_PREALLOC(pasyncopdesc,
-                   pclient->pool_async_op,
-                   pclient->nb_pre_async_op_desc,
-                   cache_inode_async_op_desc_t, next_alloc);
+      GetFromPool(pasyncopdesc, pclient->pool_async_op, cache_inode_async_op_desc_t);
       V(pclient->pool_lock);
 
       if(pasyncopdesc == NULL)
@@ -534,15 +531,13 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       if(to_remove_entry->internal_md.type == DIR_BEGINNING)
         {
           /* Put the pentry back to the pool */
-          RELEASE_PREALLOC(to_remove_entry->object.dir_begin.pdir_data,
-                           pclient->pool_dir_data, next_alloc);
+          ReleaseToPool(to_remove_entry->object.dir_begin.pdir_data, &pclient->pool_dir_data);
         }
 
       if(to_remove_entry->internal_md.type == DIR_CONTINUE)
         {
           /* Put the pentry back to the pool */
-          RELEASE_PREALLOC(to_remove_entry->object.dir_cont.pdir_data,
-                           pclient->pool_dir_data, next_alloc);
+          ReleaseToPool(to_remove_entry->object.dir_cont.pdir_data, &pclient->pool_dir_data);
         }
 
       /* Put the pentry back to pool */
@@ -552,7 +547,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       /* Destroy the mutex associated with the pentry */
       cache_inode_mutex_destroy(to_remove_entry);
 
-      RELEASE_PREALLOC(to_remove_entry, pclient->pool_entry, next_alloc);
+      ReleaseToPool(to_remove_entry, &pclient->pool_entry);
     }
 
   /* Set the 'after' attr */

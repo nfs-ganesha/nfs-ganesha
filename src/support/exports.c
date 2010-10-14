@@ -58,7 +58,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "fsal.h"
 #include "nfs23.h"
@@ -154,6 +154,11 @@ cache_content_client_t recover_datacache_client;
 #define FLAG_EXPORT_MAX_OFF_READ    0x00800000
 #define FLAG_EXPORT_MAX_CACHE_SIZE  0x01000000
 #define FLAG_EXPORT_USE_PNFS        0x02000000
+
+/* limites for nfs_ParseConfLine */
+/* Used in BuildExportEntry() */
+#define EXPORT_MAX_CLIENTS   EXPORTS_NB_MAX_CLIENTS     /* number of clients */
+#define EXPORT_MAX_CLIENTLEN 256        /* client name len */
 
 int local_lru_inode_entry_to_str(LRU_data_t data, char *str)
 {
@@ -426,18 +431,9 @@ int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
   return (error);
 }                               /* nfs_LookupNetworkAddr */
 
-/**
- *
- * nfs_AddClientsToExportList : Adds a client to an export list 
- *
- * Adds a client to an export list (temporary function ?).
- *
- * @todo BUGAZOMEU : handling wildcards.
- *
- */
-static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
-                                      int new_clients_number,
-                                      char **new_clients_name, int option)
+int nfs_AddClientsToClientArray(exportlist_client_t *clients,
+				int new_clients_number,
+				char **new_clients_name, int option)
 {
   int i = 0;
   int j = 0;
@@ -449,18 +445,11 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
   unsigned long netMask;
   unsigned long netAddr;
   int error;
-  char __attribute__ ((__unused__)) FunctionName[] = "nfs_AddClientsToExportList";
 
-  /*
-   * Notifying the export list structure that another option is to be
-   * handled 
-   */
-  ExportEntry->options |= option;
+  /* How many clients are there already? */
+  j = (*clients).num_clients;
 
-  /* How many clients are there in the ExportEntry ? */
-  j = ExportEntry->clients.num_clients;
-
-  p_clients = ExportEntry->clients.clientarray;
+  p_clients = (*clients).clientarray;
 
   if(p_clients == NULL)
     return ENOMEM;
@@ -571,13 +560,133 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
   /* Before we finish, do not forget to set the new number of clients
    * and the new pointer to client array.
    */
-  ExportEntry->clients.num_clients += new_clients_number;
+  (*clients).num_clients += new_clients_number;
 
   return 0;                     /* success !! */
+}                               /* nfs_AddClientsToClientArray */
+
+
+/**
+ *
+ * nfs_AddClientsToExportList : Adds a client to an export list
+ *
+ * Adds a client to an export list (temporary function ?).
+ *
+ * @todo BUGAZOMEU : handling wildcards.
+ *
+ */
+static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
+                                      int new_clients_number,
+                                      char **new_clients_name, int option)
+{
+  int i = 0;
+  int j = 0;
+  unsigned int l = 0;
+  char *client_hostname;
+  struct hostent *hostEntry;
+  exportlist_client_entry_t *p_clients;
+  int is_wildcarded_host = FALSE;
+  unsigned long netMask;
+  unsigned long netAddr;
+  int error;
+
+  /*
+   * Notifying the export list structure that another option is to be
+   * handled
+   */
+  ExportEntry->options |= option;
+  nfs_AddClientsToClientArray( &ExportEntry->clients, new_clients_number,
+			       new_clients_name, option);
+  return 0;
 }                               /* nfs_AddClientsToExportList */
 
 #define DEFINED_TWICE_WARNING( _str_ ) \
   LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: WARNING: %s defined twice !!! (ignored)", _str_ )
+
+
+static int parseAccessParam(char *var_name, char *var_value,
+			    exportlist_t *p_entry, int access_option) {
+  int rc, err_flag = FALSE;
+  char *expended_node_list;
+
+  /* temp array of clients */
+  char *client_list[EXPORT_MAX_CLIENTS];
+  int idx;
+  int count;
+
+  /* expends host[n-m] notations */
+  count =
+    nodelist_common_condensed2extended_nodelist(var_value, &expended_node_list);
+
+  if(count <= 0)
+    {
+      err_flag = TRUE;
+      LogCrit(COMPONENT_CONFIG,
+	      "NFS READ_EXPORT: ERROR: Invalid format for client list in EXPORT::%s definition",
+	      var_name);
+
+      return -1;
+    }
+  else if(count > EXPORT_MAX_CLIENTS)
+    {
+      err_flag = TRUE;
+      LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Client list too long (%d>%d)",
+	      count, EXPORT_MAX_CLIENTS);
+      return -1;
+    }
+
+  /* allocate clients strings  */
+  for(idx = 0; idx < count; idx++)
+    {
+      client_list[idx] = (char *)Mem_Alloc(EXPORT_MAX_CLIENTLEN);
+      client_list[idx][0] = '\0';
+    }
+
+  /*
+   * Search for coma-separated list of hosts, networks and netgroups
+   */
+  rc = nfs_ParseConfLine(client_list, count,
+			 expended_node_list, find_comma, find_endLine);
+
+  /* free the buffer the nodelist module has allocated */
+  free(expended_node_list);
+
+  if(rc < 0)
+    {
+      err_flag = TRUE;
+      LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Client list too long (>%d)", count);
+
+      /* free client strings */
+      for(idx = 0; idx < count; idx++)
+	Mem_Free((caddr_t) client_list[idx]);
+
+      return rc;
+    }
+
+  rc = nfs_AddClientsToExportList(p_entry,
+				  rc, (char **)client_list, access_option);
+
+  if(rc != 0)
+    {
+      err_flag = TRUE;
+      LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid client found in \"%s\"",
+	      var_value);
+
+      /* free client strings */
+      for(idx = 0; idx < count; idx++)
+	Mem_Free((caddr_t) client_list[idx]);
+
+      return rc;
+    }
+
+  /* everything is OK */
+
+  /* free client strings */
+  for(idx = 0; idx < count; idx++)
+    Mem_Free((caddr_t) client_list[idx]);
+
+  return rc;
+}
 
 /** 
  * BuildExportEntry : builds an export entry from configutation file.
@@ -586,10 +695,6 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
  */
 static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 {
-  /* limites for nfs_ParseConfLine */
-#define EXPORT_MAX_CLIENTS   EXPORTS_NB_MAX_CLIENTS     /* number of clients */
-#define EXPORT_MAX_CLIENTLEN 256        /* client name len */
-
   exportlist_t *p_entry;
   int i, rc;
   char *var_name;
@@ -731,84 +836,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ROOT))
         {
-          char *expended_node_list;
-
-          /* temp array of clients */
-          char *client_list[EXPORT_MAX_CLIENTS];
-          int idx;
-          int count;
-
-          /* expends host[n-m] notations */
-          count =
-              nodelist_common_condensed2extended_nodelist(var_value, &expended_node_list);
-
-          if(count <= 0)
-            {
-              err_flag = TRUE;
-              LogCrit(COMPONENT_CONFIG,
-                   "NFS READ_EXPORT: ERROR: Invalid format for client list in EXPORT::%s definition",
-                   var_name);
-
-              continue;
-            }
-          else if(count > EXPORT_MAX_CLIENTS)
-            {
-              err_flag = TRUE;
-              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Client list too long (%d>%d)",
-                         count, EXPORT_MAX_CLIENTS);
-              continue;
-            }
-
-          /* allocate clients strings  */
-          for(idx = 0; idx < count; idx++)
-            {
-              client_list[idx] = (char *)Mem_Alloc(EXPORT_MAX_CLIENTLEN);
-              client_list[idx][0] = '\0';
-            }
-
-          /*
-           * Search for coma-separated list of hosts, networks and netgroups
-           */
-          rc = nfs_ParseConfLine(client_list, count,
-                                 expended_node_list, find_comma, find_endLine);
-
-          /* free the buffer the nodelist module has allocated */
-          free(expended_node_list);
-
-          if(rc < 0)
-            {
-              err_flag = TRUE;
-              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Client list too long (>%d)", count);
-
-              /* free client strings */
-              for(idx = 0; idx < count; idx++)
-                Mem_Free((caddr_t) client_list[idx]);
-
-              continue;
-            }
-
-          rc = nfs_AddClientsToExportList(p_entry,
-                                          rc, (char **)client_list, EXPORT_OPTION_ROOT);
-
-          if(rc != 0)
-            {
-              err_flag = TRUE;
-              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid client found in \"%s\"",
-                         var_value);
-
-              /* free client strings */
-              for(idx = 0; idx < count; idx++)
-                Mem_Free((caddr_t) client_list[idx]);
-
-              continue;
-            }
-
-          /* everything is OK */
-
-          /* free client strings */
-          for(idx = 0; idx < count; idx++)
-            Mem_Free((caddr_t) client_list[idx]);
-
+	  parseAccessParam(var_name, var_value, p_entry,
+			   EXPORT_OPTION_ROOT);
           /* Notice that as least one of the two options
            * Root_Access or access has been specified.
            */
@@ -817,89 +846,12 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ACCESS))
         {
-          char *expended_node_list;
-
-          /* array of clients */
-          char *client_list[EXPORT_MAX_CLIENTS];
-          int idx;
-          int count;
-
-          /* expends host[n-m] notations */
-          count =
-              nodelist_common_condensed2extended_nodelist(var_value, &expended_node_list);
-
-          if(count <= 0)
-            {
-              err_flag = TRUE;
-              LogCrit(COMPONENT_CONFIG,
-                   "NFS READ_EXPORT: ERROR: Invalid format for client list in EXPORT::%s definition",
-                   var_name);
-
-              continue;
-            }
-          else if(count > EXPORT_MAX_CLIENTS)
-            {
-              err_flag = TRUE;
-              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Client list too long (%d>%d)",
-                         count, EXPORT_MAX_CLIENTS);
-              continue;
-            }
-
-          /* allocate clients strings  */
-          for(idx = 0; idx < count; idx++)
-            {
-              client_list[idx] = (char *)Mem_Alloc(EXPORT_MAX_CLIENTLEN);
-              client_list[idx][0] = '\0';
-            }
-
-          /*
-           * Search for coma-separated list of hosts, networks and netgroups
-           */
-          rc = nfs_ParseConfLine(client_list, count,
-                                 expended_node_list, find_comma, find_endLine);
-
-          /* free the buffer the nodelist module has allocated */
-          free(expended_node_list);
-
-          if(rc < 0)
-            {
-              err_flag = TRUE;
-              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Client list too long (>%d)", count);
-
-              /* free client strings */
-              for(idx = 0; idx < count; idx++)
-                Mem_Free((caddr_t) client_list[idx]);
-
-              continue;
-            }
-
-          rc = nfs_AddClientsToExportList(p_entry, rc,
-                                          (char **)client_list, EXPORT_OPTION_ACCESS);
-
-          if(rc != 0)
-            {
-              err_flag = TRUE;
-              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Invalid client found in \"%s\"",
-                         var_value);
-
-              /* free client strings */
-              for(idx = 0; idx < count; idx++)
-                Mem_Free((caddr_t) client_list[idx]);
-
-              continue;
-            }
-
-          /* everything is OK */
-
-          /* free client strings */
-          for(idx = 0; idx < count; idx++)
-            Mem_Free((caddr_t) client_list[idx]);
-
-          /* Notice that as least one of the two options
-           * Root_Access or access has been specified.
-           */
-          set_options |= FLAG_EXPORT_ROOT_OR_ACCESS;
-
+	  parseAccessParam(var_name, var_value, p_entry,
+			   EXPORT_OPTION_ACCESS);
+	  /* Notice that as least one of the two options
+	   * Root_Access or access has been specified.
+	   */
+	  set_options |= FLAG_EXPORT_ROOT_OR_ACCESS;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_PSEUDO))
         {
@@ -1980,11 +1932,11 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
 /**
  * function for matching a specific option in the client export list.
  */
-static int export_client_match(unsigned int addr,
-                               char *ipstring,
-                               exportlist_t * pexport,
-                               exportlist_client_entry_t * pclient_found,
-                               unsigned int export_option)
+int export_client_match(unsigned int addr,
+			char *ipstring,
+			exportlist_client_t *clients,
+			exportlist_client_entry_t * pclient_found,
+			unsigned int export_option)
 {
   unsigned int i;
   int rc;
@@ -1995,46 +1947,44 @@ static int export_client_match(unsigned int addr,
   if(export_option & EXPORT_OPTION_ACCESS)
     LogFullDebug(COMPONENT_DISPATCH, "Looking for access only entries");
 
-  for(i = 0; i < pexport->clients.num_clients; i++)
+  for(i = 0; i < clients->num_clients; i++)
     {
 
       /* only match the specified flags */
-      if((pexport->clients.clientarray[i].options & export_option) != export_option)
+      if((clients->clientarray[i].options & export_option) != export_option)
         continue;
-
-      switch (pexport->clients.clientarray[i].type)
+      switch (clients->clientarray[i].type)
         {
         case HOSTIF_CLIENT:
 
-          if(pexport->clients.clientarray[i].client.hostif.clientaddr == addr)
+          if(clients->clientarray[i].client.hostif.clientaddr == addr)
             {
-              LogFullDebug(COMPONENT_DISPATCH, "This matches host adress");
-              *pclient_found = pexport->clients.clientarray[i];
+              LogFullDebug(COMPONENT_DISPATCH, "This matches host address");
+              *pclient_found = clients->clientarray[i];
               return TRUE;
             }
           break;
 
         case NETWORK_CLIENT:
-
           LogFullDebug(COMPONENT_DISPATCH, "Test net %d.%d.%d.%d in %d.%d.%d.%d ??",
-                 (unsigned int)(pexport->clients.clientarray[i].client.
+                 (unsigned int)(clients->clientarray[i].client.
                                 network.netaddr >> 24),
                  (unsigned
-                  int)((pexport->clients.clientarray[i].client.
+                  int)((clients->clientarray[i].client.
                         network.netaddr >> 16) & 0xFF),
                  (unsigned
-                  int)((pexport->clients.clientarray[i].client.
+                  int)((clients->clientarray[i].client.
                         network.netaddr >> 8) & 0xFF),
-                 (unsigned int)(pexport->clients.clientarray[i].client.
+                 (unsigned int)(clients->clientarray[i].client.
                                 network.netaddr & 0xFF), (unsigned int)(addr >> 24),
                  (unsigned int)(addr >> 16) & 0xFF, (unsigned int)(addr >> 8) & 0xFF,
                  (unsigned int)(addr & 0xFF));
 
-          if((pexport->clients.clientarray[i].client.network.netmask & addr) ==
-             pexport->clients.clientarray[i].client.network.netaddr)
+          if((clients->clientarray[i].client.network.netmask & addr) ==
+             clients->clientarray[i].client.network.netaddr)
             {
               LogFullDebug(COMPONENT_DISPATCH, "This matches network adress");
-              *pclient_found = pexport->clients.clientarray[i];
+              *pclient_found = clients->clientarray[i];
               return TRUE;
             }
           break;
@@ -2056,10 +2006,10 @@ static int export_client_match(unsigned int addr,
 
           /* At this point 'hostname' should contain the name that was found */
           if(innetgr
-             (pexport->clients.clientarray[i].client.netgroup.netgroupname, hostname,
+             (clients->clientarray[i].client.netgroup.netgroupname, hostname,
               NULL, NULL) == 1)
             {
-              *pclient_found = pexport->clients.clientarray[i];
+              *pclient_found = clients->clientarray[i];
               return TRUE;
             }
           break;
@@ -2084,25 +2034,25 @@ static int export_client_match(unsigned int addr,
                 }
             }
           LogFullDebug(COMPONENT_DISPATCH, "Wildcarded hostname: testing if '%s' matches '%s'",
-                 hostname, pexport->clients.clientarray[i].client.wildcard.wildcard);
+                 hostname, clients->clientarray[i].client.wildcard.wildcard);
 
           /* At this point 'hostname' should contain the name that was found */
           if(fnmatch
-             (pexport->clients.clientarray[i].client.wildcard.wildcard, hostname,
+             (clients->clientarray[i].client.wildcard.wildcard, hostname,
               FNM_PATHNAME) == 0)
             {
-              *pclient_found = pexport->clients.clientarray[i];
+              *pclient_found = clients->clientarray[i];
               return TRUE;
             }
           LogFullDebug(COMPONENT_DISPATCH, "'%s' not matching '%s'",
-                 hostname, pexport->clients.clientarray[i].client.wildcard.wildcard);
+                 hostname, clients->clientarray[i].client.wildcard.wildcard);
 
           /* Now checking for IP wildcards */
           if(fnmatch
-             (pexport->clients.clientarray[i].client.wildcard.wildcard, ipstring,
+             (clients->clientarray[i].client.wildcard.wildcard, ipstring,
               FNM_PATHNAME) == 0)
             {
-              *pclient_found = pexport->clients.clientarray[i];
+              *pclient_found = clients->clientarray[i];
               return TRUE;
             }
 
@@ -2125,10 +2075,10 @@ static int export_client_match(unsigned int addr,
 
 }                               /* export_client_match */
 
-static int export_client_matchv6(struct in6_addr *paddrv6,
-                                 exportlist_t * pexport,
-                                 exportlist_client_entry_t * pclient_found,
-                                 unsigned int export_option)
+int export_client_matchv6(struct in6_addr *paddrv6,
+			  exportlist_client_t *clients,
+			  exportlist_client_entry_t * pclient_found,
+			  unsigned int export_option)
 {
   unsigned int i;
   int rc;
@@ -2139,14 +2089,14 @@ static int export_client_matchv6(struct in6_addr *paddrv6,
   if(export_option & EXPORT_OPTION_ACCESS)
     LogFullDebug(COMPONENT_DISPATCH, "Looking for access only entries");
 
-  for(i = 0; i < pexport->clients.num_clients; i++)
+  for(i = 0; i < clients->num_clients; i++)
     {
 
       /* only match the specified flags */
-      if((pexport->clients.clientarray[i].options & export_option) != export_option)
+      if((clients->clientarray[i].options & export_option) != export_option)
         continue;
 
-      switch (pexport->clients.clientarray[i].type)
+      switch (clients->clientarray[i].type)
         {
         case HOSTIF_CLIENT:
         case NETWORK_CLIENT:
@@ -2156,10 +2106,10 @@ static int export_client_matchv6(struct in6_addr *paddrv6,
           break;
 
         case HOSTIF_CLIENT_V6:
-          if(!memcmp(pexport->clients.clientarray[i].client.hostif.clientaddr6.s6_addr, paddrv6->s6_addr, 16))  /* Remember that IPv6 address are 128 bits = 16 bytes long */
+          if(!memcmp(clients->clientarray[i].client.hostif.clientaddr6.s6_addr, paddrv6->s6_addr, 16))  /* Remember that IPv6 address are 128 bits = 16 bytes long */
             {
               LogFullDebug(COMPONENT_DISPATCH, "This matches host adress in IPv6");
-              *pclient_found = pexport->clients.clientarray[i];
+              *pclient_found = clients->clientarray[i];
               return TRUE;
             }
 
@@ -2198,7 +2148,7 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
                             unsigned int nfs_prog,
                             unsigned int mnt_prog,
                             hash_table_t * ht_ip_stats,
-                            nfs_ip_stats_t * ip_stats_pool,
+                            struct prealloc_pool *ip_stats_pool,
                             exportlist_client_entry_t * pclient_found)
 {
   int rc;
@@ -2258,11 +2208,11 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
         }
 
       /* check if any root access export matches this client */
-      if(export_client_match(addr, ipstring, pexport, pclient_found, EXPORT_OPTION_ROOT))
+      if(export_client_match(addr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_ROOT))
         return TRUE;
       /* else, check if any access only export matches this client */
       else if(export_client_match
-              (addr, ipstring, pexport, pclient_found, EXPORT_OPTION_ACCESS))
+              (addr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_ACCESS))
         return TRUE;
 #ifdef _USE_TIRPC_IPV6
     }
@@ -2305,20 +2255,20 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
           /* Proceed with IPv4 dedicated function */
           /* check if any root access export matches this client */
           if(export_client_match
-             (addr, ip6string, pexport, pclient_found, EXPORT_OPTION_ROOT))
+             (addr, ip6string, &(pexport->clients), pclient_found, EXPORT_OPTION_ROOT))
             return TRUE;
           /* else, check if any access only export matches this client */
           else if(export_client_match
-                  (addr, ip6string, pexport, pclient_found, EXPORT_OPTION_ACCESS))
+                  (addr, ip6string, &(pexport->clients), pclient_found, EXPORT_OPTION_ACCESS))
             return TRUE;
         }
 
       if(export_client_matchv6
-         (&(psockaddr_in6->sin6_addr), pexport, pclient_found, EXPORT_OPTION_ROOT))
+         (&(psockaddr_in6->sin6_addr), &(pexport->clients), pclient_found, EXPORT_OPTION_ROOT))
         return TRUE;
       /* else, check if any access only export matches this client */
       else if(export_client_matchv6
-              (&(psockaddr_in6->sin6_addr), pexport, pclient_found, EXPORT_OPTION_ACCESS))
+              (&(psockaddr_in6->sin6_addr), &(pexport->clients), pclient_found, EXPORT_OPTION_ACCESS))
         return TRUE;
     }
 #endif                          /* _USE_TIRPC_IPV6 */
@@ -2383,7 +2333,8 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       /* creating the datacache client for recovering data cache */
       if(cache_content_client_init
          (&recover_datacache_client,
-          nfs_param.cache_layers_param.cache_content_client_param))
+          nfs_param.cache_layers_param.cache_content_client_param,
+          "recovering"))
         {
           LogCrit(COMPONENT_INIT,
                "cache content client (for datacache recovery) could not be allocated, exiting...");

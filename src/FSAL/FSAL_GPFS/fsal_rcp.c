@@ -203,7 +203,8 @@ fsal_status_t GPFSFSAL_rcp(gpfsfsal_handle_t * filehandle,      /* IN */
 
   /* Allocates buffer */
 
-  IObuffer = (caddr_t) Mem_Alloc(RCP_BUFFER_SIZE);
+  IObuffer = (caddr_t) Mem_Alloc_Label(RCP_BUFFER_SIZE,
+                                       "IO Buffer");
 
   if(IObuffer == NULL)
     {

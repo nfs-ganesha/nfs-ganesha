@@ -390,7 +390,7 @@ int InitNFSClient(cmdnfs_thr_info_t * p_thr_info)
     return 1;
 
   /* Init the cache content client */
-  if(cache_content_client_init(&p_thr_info->dc_client, datacache_client_param) != 0)
+  if(cache_content_client_init(&p_thr_info->dc_client, datacache_client_param, "") != 0)
     return 1;
 
   p_thr_info->client.pcontent_client = (caddr_t) & p_thr_info->dc_client;

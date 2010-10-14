@@ -84,11 +84,11 @@ extern nfs_parameter_t nfs_param;
  * 
  *  @param parg        [IN]    The export path to be mounted.
  *  @param pexportlist [IN]    The export list.
- *	@param pcontextp      [IN]    ignored
+ *  @param pcontextp   [IN]    ignored
  *  @param pclient     [INOUT] ignored
  *  @param ht          [INOUT] ignored
  *  @param preq        [IN]    ignored 
- *	@param pres        [OUT]   Pointer to the result structure.
+ *  @param pres        [OUT]   Pointer to the result structure.
  *
  */
 
@@ -119,28 +119,21 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
   unsigned int bytag = FALSE;
 
   LogFullDebug(COMPONENT_NFSPROTO,
-                    "REQUEST PROCESSING: Calling mnt_Mnt, version %u", (unsigned int)preq->rq_vers);
+               "REQUEST PROCESSING: Calling mnt_Mnt, version %u", (unsigned int)preq->rq_vers);
 
   /* Paranoid command to clean the result struct. */
   memset(pres, 0, sizeof(nfs_res_t));
 
-  if(!BuddyCheck(parg->arg_mnt))
-    {
-      LogFullDebug(COMPONENT_MEMCORRUPT, "Memory corruption in mnt_Mnt. arg_mnt = %p", parg->arg_mnt);
-    }
-
   if(parg->arg_mnt == NULL)
     {
-      LogCrit(COMPONENT_NFSPROTO,
-                        "/!\\ | MOUNT: NULL path passed as Mount argument !!!");
+      LogCrit(COMPONENT_NFSPROTO, "MOUNT: NULL path passed as Mount argument !!!");
       return NFS_REQ_DROP;
     }
 
   /* Retrieving arguments */
   strncpy(exportPath, parg->arg_mnt, MNTPATHLEN + 1);
 
-  LogFullDebug(COMPONENT_NFSPROTO,
-		    "MOUNT: Asked path=%s", exportPath);
+  LogFullDebug(COMPONENT_NFSPROTO, "MOUNT: Asked path=%s", exportPath);
 
   /*
    * Find the export for the dirname (using as well Path or Tag ) 
@@ -187,8 +180,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
 
   if(!p_current_item)
     {
-      LogCrit(COMPONENT_NFSPROTO,
-                        "MOUNT: Export entry %s not found", exportPath);
+      LogCrit(COMPONENT_NFSPROTO, "MOUNT: Export entry %s not found", exportPath);
 
       /* entry not found. */
       /* @todo : not MNT3ERR_NOENT => ok */
@@ -205,9 +197,9 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
       return NFS_REQ_OK;
     }
   LogEvent(COMPONENT_NFSPROTO,
-                    "MOUNT: Export entry Path=%s Tag=%s matches %s, export_id=%u",
-                    exported_path, p_current_item->FS_tag, exportPath,
-                    p_current_item->id);
+           "MOUNT: Export entry Path=%s Tag=%s matches %s, export_id=%u",
+           exported_path, p_current_item->FS_tag, exportPath,
+           p_current_item->id);
 
   /* @todo : check wether mount is allowed.
    *  to do so, retrieve client identifier from the credential.
@@ -306,7 +298,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
 #endif
 
       LogEvent(COMPONENT_NFSPROTO,
-                        "MOUNT: Entry support %d different flavours", index_auth);
+               "MOUNT: Entry support %d different flavours", index_auth);
 
 #define RES_MOUNTINFO pres->res_mnt3.mountres3_u.mountinfo
       if((RES_MOUNTINFO.auth_flavors.auth_flavors_val =

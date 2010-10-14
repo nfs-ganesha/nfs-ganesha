@@ -278,7 +278,13 @@ if test "$enable_snmp_adm" == "yes"; then
 fi
 
 AC_SUBST(EXT_LDADD)
-	
+
+# statistics exporter thread
+GA_ENABLE_AM_CONDITION([stat-exporter], [export GANESHA NFS request statistics with a dedicated thread and socket], [USE_STAT_EXPORTER])
+if test "$enable_stat_exporter" == "yes"; then
+	AC_DEFINE(_USE_STAT_EXPORTER,1,[export GANESHA NFS request statistics with a dedicated thread and socket])
+fi
+
 
 GA_ENABLE_AM_CONDITION([efence],[link with efence memory debug library],[USE_EFENCE])
 
@@ -297,8 +303,6 @@ GA_DISABLE_FLAG( [tcp-register], 	 [disable registration of tcp services on port
 GA_DISABLE_FLAG( [portmapper], 	         [disable registration on portmapper], 				 [-D_NO_PORTMAPPER] )
 GA_DISABLE_FLAG( [xattr-directory],      [disable ghost xattr directory and files support],              [-D_NO_XATTRD])
 
-GA_ENABLE_FLAG(  [debug-memcorrupt],     [enable debugging for memory corruption],                       [-D_DEBUG_MEMCORRUPT] )
-GA_ENABLE_FLAG(  [debug-memalloc],       [enable debug traces in memory allocator],                      [-D_DEBUG_MEMALLOC] )
 GA_ENABLE_FLAG(  [debug-memleaks],       [enable allocator features for tracking memory usage],          [-D_DEBUG_MEMLEAKS] )
 GA_ENABLE_FLAG(  [debug-nfsshell],       [enable extended debug traces for ganeshell utility],           [-D_DEBUG_NFS_SHELL] )
 

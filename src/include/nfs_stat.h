@@ -100,6 +100,9 @@ static char *rquota_functions_names[] = {
 #define NFS_V40_NB_OPERATION 39
 #define NFS_V41_NB_OPERATION 58
 
+#define ERR_STAT_NO_ERROR 0
+#define ERR_STAT_ERROR    1
+
 typedef enum nfs_stat_type__
 { GANESHA_STAT_SUCCESS = 0,
   GANESHA_STAT_DROP = 1
@@ -123,6 +126,7 @@ typedef struct nfs_request_stat_item__
   unsigned int tot_latency;
   unsigned int min_latency;
   unsigned int max_latency;
+  unsigned int tot_await_time;
 } nfs_request_stat_item_t;
 
 typedef struct nfs_request_stat__
@@ -149,13 +153,43 @@ typedef struct nfs_request_stat__
   nfs_request_stat_item_t stat_req_rquota2[RQUOTA_NB_COMMAND];
 } nfs_request_stat_t;
 
+typedef enum
+{
+  SVC_TIME = 0,
+  AWAIT_TIME
+} nfs_stat_latency_type_t;
+
 typedef struct nfs_request_latency_stat__
 {
+  nfs_stat_latency_type_t type;
   unsigned int latency;
 } nfs_request_latency_stat_t;
+
+typedef enum
+{
+  PER_SERVER = 0,
+  PER_SERVER_DETAIL,
+  PER_CLIENT,
+  PER_SHARE,
+  PER_CLIENTSHARE
+} nfs_stat_client_req_type_t;
+
+typedef struct
+{
+  int nfs_version;
+  nfs_stat_client_req_type_t stat_type;
+  char client_name[1024];
+  char share_name[1024];
+} nfs_stat_client_req_t;
 
 void nfs_stat_update(nfs_stat_type_t type,
                      nfs_request_stat_t * pstat_req, struct svc_req *preq,
                      nfs_request_latency_stat_t * lstat_req);
+
+void set_min_latency(nfs_request_stat_item_t *cur_stat, unsigned int val);
+
+void set_max_latency(nfs_request_stat_item_t *cur_stat, unsigned int val);
+
+struct timeval time_diff(struct timeval time_from, struct timeval time_to);
 
 #endif                          /* _NFS_STAT_H */

@@ -342,11 +342,6 @@ int ganefuse_main(int argc, char *argv[],
   nfs_param.fsal_param.fs_specific_info.fs_ops = &ops;
   nfs_param.fsal_param.fs_specific_info.user_data = user_data;
 
-#ifndef _NO_BUDDY_SYSTEM
-  if(!nfs_param.buddy_param_worker.buddy_error_file[0])
-    strcpy(nfs_param.buddy_param_worker.buddy_error_file, log_path);
-#endif
-
 #ifdef _SNMP_ADM_ACTIVE
   if(!nfs_param.extern_param.snmp_adm.snmp_log_file[0])
     strcpy(nfs_param.extern_param.snmp_adm.snmp_log_file, log_path);

@@ -169,9 +169,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
   /* Acquire lock to enter critical section on this entry */
   P_w(&pentry->lock);
 
-  GET_PREALLOC(pnew_state,
-               pclient->pool_state_v4,
-               pclient->nb_pre_state_v4, cache_inode_state_t, next);
+  GetFromPool(pnew_state, &pclient->pool_state_v4, cache_inode_state_t);
 
   if(pnew_state == NULL)
     {
@@ -490,7 +488,7 @@ cache_inode_status_t cache_inode_del_state_by_key(char other[12],
       pstate->prev = NULL;
       pstate->pentry = NULL;
 
-      RELEASE_PREALLOC(pstate, pclient->pool_state_v4, next);
+      ReleaseToPool(pstate, &pclient->pool_state_v4);
     }
 
   *pstatus = CACHE_INODE_SUCCESS;
@@ -595,7 +593,7 @@ cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
   pstate->prev = NULL;
   pstate->pentry = NULL;
 
-  RELEASE_PREALLOC(pstate, pclient->pool_state_v4, next);
+  ReleaseToPool(pstate, &pclient->pool_state_v4);
 
   *pstatus = CACHE_INODE_SUCCESS;
 

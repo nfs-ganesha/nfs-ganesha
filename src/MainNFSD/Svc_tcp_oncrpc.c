@@ -37,6 +37,8 @@ typedef unsigned int u_int32_t;
 
 #include   "log_macros.h"
 
+#include   "nfs_core.h"
+
 #ifndef MAX
 #define MAX(a, b)     ((a > b) ? a : b)
 #endif
@@ -49,9 +51,9 @@ void socket_setoptions(int socketFd);
 int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
 bool_t svcauth_wrap_dummy(XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr);
 
-pthread_mutex_t mutex_cond_xprt[FD_SETSIZE];
-pthread_cond_t condvar_xprt[FD_SETSIZE];
-int etat_xprt[FD_SETSIZE];
+pthread_mutex_t *mutex_cond_xprt;
+pthread_cond_t *condvar_xprt;
+int *etat_xprt;
 
 #define SVCAUTH_WRAP(auth, xdrs, xfunc, xwhere) svcauth_wrap_dummy( xdrs, xfunc, xwhere)
 #define SVCAUTH_UNWRAP(auth, xdrs, xfunc, xwhere) svcauth_wrap_dummy( xdrs, xfunc, xwhere)
@@ -91,7 +93,6 @@ static struct xp_ops Svctcp_rendezvous_op = {
 };
 
 int Readtcp(), Writetcp();
-static SVCXPRT *Makefd_xprt();
 
 struct tcp_rendezvous
 {                               /* kept in xprt->xp_p1 */
@@ -188,15 +189,9 @@ SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize)
 
 /*
  * Like svtcp_create(), except the routine takes any *open* UNIX file
- * descriptor as its first input.
+ * descriptor as its first input. It is only called by Rendezvous_request
+ * which will use poll() not select() so it doesn't need to call Xprt_register.
  */
-/*  */
-SVCXPRT *Svcfd_create(int fd, u_int sendsize, u_int recvsize)
-{
-
-  return (Makefd_xprt(fd, sendsize, recvsize));
-}
-
 static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
 {
   register SVCXPRT *xprt;
@@ -227,9 +222,79 @@ static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
 #else
   xprt->xp_sock = fd;
 #endif
-  Xprt_register(xprt);
+  Xports[fd] = xprt;
  done:
   return (xprt);
+}
+
+/*
+ * Free xprt copy. Currently, it is not called, but it should be called
+ * when cleanup is needed.
+ */
+void Svcxprt_copydestroy(register SVCXPRT * xprt)
+{
+  register struct tcp_conn *cd = NULL;
+
+  if(xprt == (SVCXPRT *) NULL)
+    return;
+
+  cd = (struct tcp_conn *)xprt->xp_p1;
+  if(cd == (struct tcp_conn *) NULL)
+    return;
+
+  XDR_DESTROY(&(cd->xdrs));
+  Mem_Free((caddr_t) cd);
+  Mem_Free((caddr_t) xprt);
+}
+
+/*
+ * Create a copy of xprt. Currently, sendsize and recvsize of XDR is
+ * hard-coded. This should be fixed.
+ */
+SVCXPRT *Svcxprt_copycreate()
+{
+  register SVCXPRT *xprt;
+  register struct tcp_conn *cd;
+
+  xprt = (SVCXPRT *) Mem_Alloc(sizeof(SVCXPRT));
+  if(xprt == (SVCXPRT *) NULL)
+    {
+      goto done;
+    }
+
+  cd = (struct tcp_conn *) Mem_Alloc(sizeof(struct tcp_conn));
+  if(cd == (struct tcp_conn *) NULL)
+    {
+      Mem_Free((char *)xprt);
+      xprt = (SVCXPRT *) NULL;
+      goto done;
+    }
+
+  cd->strm_stat = XPRT_IDLE;
+  xdrrec_create(&(cd->xdrs), 32768, 32768, (caddr_t) xprt, Readtcp, Writetcp);
+
+  xprt->xp_p1 = (caddr_t) cd;
+  xprt->xp_verf.oa_base = cd->verf_body;
+
+  done:
+    return (xprt);
+ }
+
+/*
+ * Duplicate xprt from original to copy.
+ */
+void Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
+{
+  register struct tcp_conn *cd_copy = (struct tcp_conn *)(xprt_copy->xp_p1);
+  register struct tcp_conn *cd_orig = (struct tcp_conn *)(xprt_orig->xp_p1);
+
+  memcpy(xprt_copy, xprt_orig, sizeof(SVCXPRT));
+  xprt_copy->xp_p1 = (caddr_t) cd_copy;
+  xprt_copy->xp_verf.oa_base = cd_copy->verf_body;
+
+  cd_copy->strm_stat = cd_orig->strm_stat;
+  cd_copy->x_id = cd_orig->x_id;
+  memcpy(cd_copy->verf_body, cd_orig->verf_body, MAX_AUTH_BYTES);
 }
 
 void print_xdrrec_fbtbc(char *tag, SVCXPRT * xprt)
@@ -308,7 +373,6 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt)
   xprt->xp_addrlen = len;
 
 #ifdef _FREEBSD
-  FD_CLR(xprt->xp_fd, &Svc_fdset);
   if(pthread_cond_init(&condvar_xprt[xprt->xp_fd], NULL) != 0)
     return FALSE;
 
@@ -321,7 +385,6 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt)
                      (void *)((unsigned long)xprt->xp_fd))) != 0 )
     return FALSE;
 #else
-  FD_CLR(xprt->xp_sock, &Svc_fdset);
   if(pthread_cond_init(&condvar_xprt[xprt->xp_sock], NULL) != 0)
     return FALSE;
 
@@ -390,6 +453,7 @@ int Readtcp(register SVCXPRT * xprt, caddr_t buf, register int len)
   int milliseconds = 35 * 1000;
   struct pollfd pollfd;
 
+  LogFullDebug(COMPONENT_DISPATCH, "Readtcp socket %d", sock);
   do
     {
       pollfd.fd = sock;

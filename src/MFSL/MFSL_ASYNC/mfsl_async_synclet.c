@@ -123,7 +123,7 @@ fsal_status_t mfsl_async_process_async_op(mfsl_async_op_desc_t * pasyncopdesc)
   pmfsl_context = (mfsl_context_t *) pasyncopdesc->ptr_mfsl_context;
 
   P(pmfsl_context->lock);
-  RELEASE_PREALLOC(pasyncopdesc, pmfsl_context->pool_async_op, next_alloc);
+  ReleaseToPool(pasyncopdesc, &pmfsl_context->pool_async_op);
   V(pmfsl_context->lock);
 
   /* Regular exit */

@@ -179,7 +179,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
     {
       parent_iter_next = parent_iter->next_parent;
 
-      RELEASE_PREALLOC(parent_iter, pgcparam->pclient->pool_parent, next_alloc);
+      ReleaseToPool(parent_iter, &pgcparam->pclient->pool_parent);
 
       parent_iter = parent_iter_next;
     }
@@ -190,15 +190,13 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
   if(pentry->internal_md.type == DIR_BEGINNING)
     {
       /* Put the pentry back to the pool */
-      RELEASE_PREALLOC(pentry->object.dir_begin.pdir_data,
-                       pgcparam->pclient->pool_dir_data, next_alloc);
+      ReleaseToPool(pentry->object.dir_begin.pdir_data, &pgcparam->pclient->pool_dir_data);
     }
 
   if(pentry->internal_md.type == DIR_CONTINUE)
     {
       /* Put the pentry back to the pool */
-      RELEASE_PREALLOC(pentry->object.dir_cont.pdir_data,
-                       pgcparam->pclient->pool_dir_data, next_alloc);
+      ReleaseToPool(pentry->object.dir_cont.pdir_data, &pgcparam->pclient->pool_dir_data);
     }
   LogFullDebug(COMPONENT_CACHE_INODE_GC,"++++> pdir_data (if needed) sent back to pool");
 
@@ -208,7 +206,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
   cache_inode_mutex_destroy(pentry);
 
   /* Put the pentry back to the pool */
-  RELEASE_PREALLOC(pentry, pgcparam->pclient->pool_entry, next_alloc);
+  ReleaseToPool(pentry, &pgcparam->pclient->pool_entry);
 
   /* Regular exit */
   pgcparam->nb_to_be_purged = pgcparam->nb_to_be_purged - 1;

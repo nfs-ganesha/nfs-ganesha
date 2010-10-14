@@ -123,7 +123,8 @@ static nlm_lock_entry_t *nlm4_lock_to_nlm_lock_entry(struct nlm4_lockargs *args)
     int exclusive = args->exclusive;
     nlm4_lock *nlm_lock = &args->alock;
 
-    nlm_entry = (nlm_lock_entry_t *) Mem_Calloc(1, sizeof(nlm_lock_entry_t));
+    nlm_entry = (nlm_lock_entry_t *) Mem_Calloc_Label(1, sizeof(nlm_lock_entry_t),
+                                                      "nlm_lock_entry_t");
     if(!nlm_entry)
         return NULL;
     nlm_entry->caller_name = strdup(nlm_lock->caller_name);
@@ -455,7 +456,8 @@ nlm_lock_entry_t *nlm_find_lock_entry(struct nlm4_lock *nlm_lock,
 static nlm_lock_entry_t *nlm_lock_entry_t_dup(nlm_lock_entry_t * orig_nlm_entry)
 {
     nlm_lock_entry_t *nlm_entry;
-    nlm_entry = (nlm_lock_entry_t *) Mem_Calloc(1, sizeof(nlm_lock_entry_t));
+    nlm_entry = (nlm_lock_entry_t *) Mem_Calloc_Label(1, sizeof(nlm_lock_entry_t),
+                                                      "nlm_lock_entry_t");
     if(!nlm_entry)
         return NULL;
     nlm_entry->caller_name = strdup(orig_nlm_entry->caller_name);

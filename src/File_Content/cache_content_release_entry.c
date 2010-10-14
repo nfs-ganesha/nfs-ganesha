@@ -97,7 +97,7 @@ cache_content_status_t cache_content_release_entry(cache_content_entry_t * pentr
     }
 
   /* Finally puts the entry back to entry pool for future use */
-  RELEASE_PREALLOC(pentry, pclient->pool_entry, next_alloc);
+  ReleaseToPool(pentry, &pclient->content_pool);
 
   /* Remove the index file */
   if(unlink(pentry->local_fs_entry.cache_path_index) != 0)

@@ -95,11 +95,6 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
   /* stat */
   pclient->stat.func_stats.nb_call[CACHE_CONTENT_NEW_ENTRY] += 1;
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_content_entry_t");
-#endif
-
   if(pentry_inode == NULL)
     {
       *pstatus = CACHE_CONTENT_INVALID_ARGUMENT;
@@ -113,14 +108,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
   if(how != RENEW_ENTRY)
     {
       /* Get the entry from the preallocated pool */
-      GET_PREALLOC(pfc_pentry,
-                   pclient->pool_entry,
-                   pclient->nb_prealloc, cache_content_entry_t, next_alloc);
-
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("N/A");
-#endif
+      GetFromPool(pfc_pentry, &pclient->content_pool, cache_content_entry_t);
 
       if(pfc_pentry == NULL)
         {
@@ -147,7 +135,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
                                          pcontext,
                                          pentry_inode, pclient)) != CACHE_CONTENT_SUCCESS)
     {
-      RELEASE_PREALLOC(pfc_pentry, pclient->pool_entry, next_alloc);
+      ReleaseToPool(pfc_pentry, &pclient->content_pool);
 
       *pstatus = CACHE_CONTENT_ENTRY_EXISTS;
 
@@ -165,7 +153,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
                                          pcontext,
                                          pentry_inode, pclient)) != CACHE_CONTENT_SUCCESS)
     {
-      RELEASE_PREALLOC(pfc_pentry, pclient->pool_entry, next_alloc);
+      ReleaseToPool(pfc_pentry, &pclient->content_pool);
 
       *pstatus = CACHE_CONTENT_ENTRY_EXISTS;
 
@@ -203,8 +191,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
   if(cache_inode_dump_content(pfc_pentry->local_fs_entry.cache_path_index, pentry_inode)
      != CACHE_INODE_SUCCESS)
     {
-
-      RELEASE_PREALLOC(pfc_pentry, pclient->pool_entry, next_alloc);
+      ReleaseToPool(pfc_pentry, &pclient->content_pool);
 
       *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
 
@@ -222,7 +209,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
     {
       if((tmpfd = creat(pfc_pentry->local_fs_entry.cache_path_data, 0750)) == -1)
         {
-          RELEASE_PREALLOC(pfc_pentry, pclient->pool_entry, next_alloc);
+          ReleaseToPool(pfc_pentry, &pclient->content_pool);
 
           *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
 
@@ -258,7 +245,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
 
       if(status != CACHE_CONTENT_SUCCESS)
         {
-          RELEASE_PREALLOC(pfc_pentry, pclient->pool_entry, next_alloc);
+          ReleaseToPool(pfc_pentry, &pclient->content_pool);
 
           *pstatus = status;
 

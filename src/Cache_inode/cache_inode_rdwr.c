@@ -178,7 +178,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
       if(pentry->object.file.unstable_data.buffer == NULL)
         {
           if((pentry->object.file.unstable_data.buffer =
-              Mem_Alloc(CACHE_INODE_UNSTABLE_BUFFERSIZE)) == NULL)
+              Mem_Alloc_Label(CACHE_INODE_UNSTABLE_BUFFERSIZE,
+                              "Cache_Inode Unstable Buffer")) == NULL)
             {
               *pstatus = CACHE_INODE_MALLOC_ERROR;
               V_w(&pentry->lock);
