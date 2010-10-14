@@ -146,7 +146,7 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
               if((inum = cache_content_get_inum(dirent_export.d_name)) > 0)
                 {
                   LogEvent(COMPONENT_CACHE_CONTENT,
-                                    "Cache entry for File ID %llx has been found", inum);
+                                    "Cache entry for File ID %"PRIx64" has been found", inum);
 
                   /* Get the content of the file */
                   sprintf(fullpath, "%s/%s/%s", pclient_data->cache_dir, direntp->d_name,
@@ -157,13 +157,13 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                      CACHE_INODE_SUCCESS)
                     {
                       LogMajor(COMPONENT_CACHE_CONTENT,
-                                        "File Content Cache record for File ID %llx is unreadable",
+                                        "File Content Cache record for File ID %"PRIx64" is unreadable",
                                         inum);
                       continue;
                     }
                   else
                     LogMajor(COMPONENT_CACHE_CONTENT,
-                                      "File Content Cache record for File ID %llx : READ OK",
+                                      "File Content Cache record for File ID %"PRIx64" : READ OK",
                                       inum);
 
                   /* Populating the cache_inode... */
@@ -177,13 +177,13 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                                                pcontext, &cache_inode_status)) == NULL)
                     {
                       LogCrit(COMPONENT_CACHE_CONTENT,
-                                   "Error adding cached inode for file ID %llx, error=%d",
+                                   "Error adding cached inode for file ID %"PRIx64", error=%d",
                                    inum, cache_inode_status);
                       continue;
                     }
                   else
                     LogEvent(COMPONENT_CACHE_CONTENT,
-                                      "Cached inode added successfully for file ID %llx",
+                                      "Cached inode added successfully for file ID %"PRIx64,
                                       inum);
 
                   /* Get the size from the cache */
@@ -191,7 +191,7 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                       cache_content_recover_size(cache_exportdir, inum)) == -1)
                     {
                       LogCrit(COMPONENT_CACHE_CONTENT,
-                                   "Error when recovering size for file ID %llx", inum);
+                                   "Error when recovering size for file ID %"PRIx64, inum);
                     }
                   else
                     pentry->object.file.attributes.filesize = (fsal_size_t) size_in_cache;
@@ -206,13 +206,13 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                      NULL)
                     {
                       LogCrit(COMPONENT_CACHE_CONTENT,
-                                   "Error adding cached data for file ID %llx, error=%d",
+                                   "Error adding cached data for file ID %"PRIx64", error=%d",
                                    inum, cache_inode_status);
                       continue;
                     }
                   else
                     LogEvent(COMPONENT_CACHE_CONTENT,
-                                      "Cached data added successfully for file ID %llx",
+                                      "Cached data added successfully for file ID %"PRIx64,
                                       inum);
 
                   if((cache_content_status =
