@@ -68,7 +68,12 @@ fsal_status_t ZFSFSAL_opendir(zfsfsal_handle_t * dir_handle,  /* IN */
   /* >> You can prepare your directory for beeing read  
    * and check that the user has the right for reading its content <<*/
   libzfswrap_vnode_t *p_vnode;
+
+  /* Get the right VFS */
   libzfswrap_vfs_t *p_vfs = ZFSFSAL_GetVFS(dir_handle);
+  if(!p_vfs)
+    Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_opendir);
+
   /* Hook for the zfs snapshot directory */
   if(dir_handle->data.zfs_handle.inode == ZFS_SNAP_DIR_INODE)
   {

@@ -74,6 +74,11 @@ fsal_status_t ZFSFSAL_open(zfsfsal_handle_t * filehandle,     /* IN */
   if(filehandle->data.type != FSAL_TYPE_FILE)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
 
+  /* Get the right VFS */
+  libzfswrap_vfs_t *p_vfs = ZFSFSAL_GetVFS(filehandle);
+  if(!p_vfs)
+    Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_open);
+
   /* >> convert fsal open flags to your FS open flags
    * Take care of conflicting flags << */
   int posix_flags;
@@ -85,7 +90,7 @@ fsal_status_t ZFSFSAL_open(zfsfsal_handle_t * filehandle,     /* IN */
 
   /* >> call your FS open function << */
   libzfswrap_vnode_t *p_vnode;
-  rc = libzfswrap_open(ZFSFSAL_GetVFS(filehandle), &p_context->user_credential.cred,
+  rc = libzfswrap_open(p_vfs, &p_context->user_credential.cred,
                        filehandle->data.zfs_handle, posix_flags, &p_vnode);
 
   ReleaseTokenFSCall();
@@ -95,7 +100,7 @@ fsal_status_t ZFSFSAL_open(zfsfsal_handle_t * filehandle,     /* IN */
     Return(posix2fsal_error(rc), rc, INDEX_FSAL_open);
 
   /* >> fill output struct << */
-  file_descriptor->p_vfs = ZFSFSAL_GetVFS(filehandle);
+  file_descriptor->p_vfs = p_vfs;
   file_descriptor->flags = posix_flags;
   file_descriptor->current_offset = 0;
   file_descriptor->p_vnode = p_vnode;

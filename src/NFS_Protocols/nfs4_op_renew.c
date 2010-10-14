@@ -105,7 +105,7 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   resp->resop = NFS4_OP_RENEW;
 
   /* Tell the admin what I am doing... */
-  LogDebug(COMPONENT_NFS_V4, "RENEW Client id = %llx", arg_RENEW4.clientid);
+  LogDebug(COMPONENT_NFS_V4, "RENEW Client id = %"PRIx64, arg_RENEW4.clientid);
 
   /* Is this an existing client id ? */
   if(nfs_client_id_get(arg_RENEW4.clientid, &nfs_clientid) == CLIENT_ID_SUCCESS)

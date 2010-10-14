@@ -234,7 +234,7 @@ int nfs4_BuildStateId_Other(cache_entry_t * pentry,
   open_owner_digest = popen_owner->counter;
 
   LogFullDebug(COMPONENT_STATES,
-         "----  nfs4_BuildStateId_Other : pentry=%p fileid=%llu open_owner_digest=%u",
+         "----  nfs4_BuildStateId_Other : pentry=%p fileid=%"PRIu64" open_owner_digest=%u",
          pentry, fileid_digest, open_owner_digest);
 
   /* Now, let's do the time's warp again.... Well, in fact we'll just build the stateid.other field */

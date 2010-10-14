@@ -299,7 +299,7 @@ off_t cache_content_recover_size(char *basepath, u_int64_t inum)
       return -1;
     }
 
-  LogFullDebug(COMPONENT_CACHE_CONTENT, "path ----> %s %llu", path, buffstat.st_size);
+  LogFullDebug(COMPONENT_CACHE_CONTENT, "path ----> %s %"PRIu64, path, buffstat.st_size);
 
   /* Stat is ok, we now return the size */
   return buffstat.st_size;
