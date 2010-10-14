@@ -215,7 +215,7 @@ int nfs_Read(nfs_arg_t * parg,
       offset = parg->arg_read3.offset;
       size = parg->arg_read3.count;
 
-      LogFullDebug(COMPONENT_NFSPROTO, "-----> Read offset=%lld count=%u MaxOffSet=%lld", parg->arg_read3.offset,
+      LogFullDebug(COMPONENT_NFSPROTO, "-----> Read offset=%lld count=%u MaxOffSet=%"PRId64, parg->arg_read3.offset,
              parg->arg_read3.count, pexport->MaxOffsetRead);
 
       /* 
@@ -226,7 +226,7 @@ int nfs_Read(nfs_arg_t * parg,
           {
 
             LogEvent(COMPONENT_NFSPROTO,
-                              "NFS READ: A client tryed to violate max file size %lld for exportid #%hu",
+                              "NFS READ: A client tryed to violate max file size %"PRId64" for exportid #%hu",
                               pexport->MaxOffsetRead, pexport->id);
 
             switch (preq->rq_vers)

@@ -286,7 +286,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
            arg_OPEN4.share_access);
 
       /* It this a known client id ? */
-      LogDebug(COMPONENT_NFS_V4, "OPEN Client id = %llx", arg_OPEN4.owner.clientid);
+      LogDebug(COMPONENT_NFS_V4, "OPEN Client id = %"PRIx64, arg_OPEN4.owner.clientid);
       if(nfs_client_id_get(arg_OPEN4.owner.clientid, &nfs_clientid) != CLIENT_ID_SUCCESS)
         {
           res_OPEN4.status = NFS4ERR_STALE_CLIENTID;
