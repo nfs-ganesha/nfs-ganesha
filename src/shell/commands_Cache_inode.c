@@ -3884,7 +3884,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
       if(isFullDebug(COMPONENT_CACHE_INODE))
         {
           fprintf(output,
-                  "shell: block_size=%llu, once_nb_read=%llu, total_bytes=%llu, total_nb_read=%llu, eof=%d, seek=%d.%llu",
+                  "shell: block_size=%llu, once_nb_read=%llu, total_bytes=%llu, total_nb_read=%llu, eof=%d, seek=%d.%"PRIu64,
                   block_size, once_nb_read, total_bytes, total_nb_read, is_eof,
                   seek_desc.whence, seek_desc.offset);
         }

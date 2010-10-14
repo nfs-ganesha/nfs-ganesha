@@ -123,7 +123,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
   io_size = buffer_size;
 
   LogFullDebug(COMPONENT_CACHE_INODE,
-                    "---> INODE : IO Size = %llu fdsize =%d seeksize=%d",
+                    "---> INODE : IO Size = %llu fdsize =%zu seeksize=%zu",
                     buffer_size, sizeof(fsal_file_t), sizeof(fsal_seek_t));
 
   /* stat */
@@ -305,7 +305,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
             }
 
           LogFullDebug(COMPONENT_CACHE_INODE,
-                            "inode/dc: io_size=%llu, pio_size=%llu,  eof=%d, seek=%d.%llu",
+                            "inode/dc: io_size=%llu, pio_size=%llu,  eof=%d, seek=%d.%"PRIu64,
                             io_size, *pio_size, *p_fsal_eof, seek_descriptor->whence,
                             seek_descriptor->offset);
 
@@ -425,7 +425,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
             }
 
           LogFullDebug(COMPONENT_CACHE_INODE,
-                            "inode/direct: io_size=%llu, pio_size=%llu, eof=%d, seek=%d.%llu",
+                            "inode/direct: io_size=%llu, pio_size=%llu, eof=%d, seek=%d.%"PRIu64,
                             io_size, *pio_size, *p_fsal_eof, seek_descriptor->whence,
                             seek_descriptor->offset);
 

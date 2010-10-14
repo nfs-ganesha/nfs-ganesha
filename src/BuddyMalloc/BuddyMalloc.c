@@ -1777,7 +1777,7 @@ BUDDY_ADDR_T BuddyRealloc(BUDDY_ADDR_T ptr, size_t Size)
   if(IS_EXTRA_BLOCK(p_block))
     {
 
-      LogFullDebug(COMPONENT_MEMALLOC, "%p:Copying %d bytes from @%p to @%p->@%p", (BUDDY_ADDR_T) pthread_self(),
+      LogFullDebug(COMPONENT_MEMALLOC, "%p:Copying %zu bytes from @%p to @%p->@%p", (BUDDY_ADDR_T) pthread_self(),
                    p_block->Header.ExtraInfo - size_header64, ptr, new_ptr,
                    new_ptr + p_block->Header.ExtraInfo - size_header64);
 
@@ -1787,7 +1787,7 @@ BUDDY_ADDR_T BuddyRealloc(BUDDY_ADDR_T ptr, size_t Size)
   else
     {
 
-      LogFullDebug(COMPONENT_MEMALLOC, "%p:Copying %d bytes from @%p to @%p->@%p", (BUDDY_ADDR_T) pthread_self(),
+      LogFullDebug(COMPONENT_MEMALLOC, "%p:Copying %zu bytes from @%p to @%p->@%p", (BUDDY_ADDR_T) pthread_self(),
                    (1 << p_block->Header.StdInfo.k_size) - size_header64, ptr, new_ptr,
                    new_ptr + (1 << p_block->Header.StdInfo.k_size) - size_header64);
 
@@ -1818,7 +1818,7 @@ BUDDY_ADDR_T BuddyCalloc(size_t NumberOfElements, size_t ElementSize)
   if(!ptr)
     return NULL;
 
-  LogFullDebug(COMPONENT_MEMALLOC, "%p:Setting %d bytes from @%p to 0", (BUDDY_ADDR_T) pthread_self(),
+  LogFullDebug(COMPONENT_MEMALLOC, "%p:Setting %zu bytes from @%p to 0", (BUDDY_ADDR_T) pthread_self(),
                NumberOfElements * ElementSize, ptr);
   memset(ptr, 0, NumberOfElements * ElementSize);
 

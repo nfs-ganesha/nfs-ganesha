@@ -228,7 +228,7 @@ cache_content_status_t cache_content_rdwr(cache_content_entry_t * pentry,
   *pstatus = CACHE_CONTENT_SUCCESS;
 
   LogFullDebug(COMPONENT_CACHE_CONTENT,
-                    "---> DATA : IO Size IN = %llu fdsize=%d seeksize=%d",
+                    "---> DATA : IO Size IN = %llu fdsize=%zu seeksize=%zu",
                     *pio_size_in, sizeof(fsal_file_t), sizeof(fsal_seek_t));
 
   /* For now, only FSAL_SEEK_SET is supported */
