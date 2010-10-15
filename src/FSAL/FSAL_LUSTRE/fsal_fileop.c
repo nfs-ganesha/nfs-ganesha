@@ -150,12 +150,14 @@ fsal_status_t LUSTREFSAL_open(lustrefsal_handle_t * p_filehandle,       /* IN */
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_open);
     }
 
+#if 0
   status =
       fsal_internal_testAccess(p_context,
                                openflags & FSAL_O_RDONLY ? FSAL_R_OK : FSAL_W_OK,
                                &buffstat, NULL);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_open);
+#endif
 
   /* convert fsal open flags to posix open flags */
   rc = fsal2posix_openflags(openflags, &posix_flags);
