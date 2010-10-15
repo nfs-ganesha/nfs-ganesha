@@ -29,11 +29,13 @@
  * it is read-only, except during initialization.
  */
 fsal_staticfsinfo_t global_fs_info;
+
 libzfswrap_handle_t *p_zhd;
-libzfswrap_vfs_t **pp_vfs;
-size_t i_vfs;
-char **ppsz_snapshots;
+
 size_t i_snapshots;
+char **ppsz_snapshots;
+int *pi_indexes;
+libzfswrap_vfs_t **pp_vfs;
 
 /* filesystem info for your filesystem */
 static fsal_staticfsinfo_t default_zfs_info = {

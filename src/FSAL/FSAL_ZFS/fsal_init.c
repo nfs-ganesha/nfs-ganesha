@@ -18,12 +18,12 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_common.h"
-#include "HashTable.h"
+#include <string.h>
 
-extern libzfswrap_vfs_t **pp_vfs;
-extern size_t i_vfs;
+extern size_t i_snapshots;
 extern char **ppsz_snapshots;
-size_t i_snapshots;
+extern int *pi_indexes;
+extern libzfswrap_vfs_t **pp_vfs;
 
 /* Macros for analysing parameters. */
 #define SET_BITMAP_PARAM( api_cfg, p_init_info, _field )      \
@@ -158,8 +158,19 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
       }
       pp_vfs[i+1] = p_snap_vfs;
+
+      /* Change the name of the snapshot from zpool_name@snap_name to snap_name
+         The '@' character is allways present, so no need to check it */
+      char *psz_snap = strdup(strchr(ppsz_snapshots[i], '@') + 1);
+      free(ppsz_snapshots[i]);
+      ppsz_snapshots[i] = psz_snap;
     }
-    i_vfs = i_snapshots + 1;
+  }
+  else
+  {
+    pp_vfs = malloc(sizeof(*pp_vfs));
+    pp_vfs[0] = p_vfs;
+    i_snapshots = 0;
   }
 
   /* Everything went OK. */
@@ -172,7 +183,7 @@ fsal_status_t ZFSFSAL_terminate()
 {
   /* Unmount every snapshots and free the memory */
   int i;
-  for(i = i_vfs - 1; i >= 0; i--)
+  for(i = i_snapshots; i >= 0; i--)
     libzfswrap_umount(pp_vfs[i], 1);
   free(pp_vfs);
 
