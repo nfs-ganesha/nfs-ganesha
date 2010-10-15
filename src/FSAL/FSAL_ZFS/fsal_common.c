@@ -14,13 +14,23 @@
 #include "fsal_internal.h"
 
 extern libzfswrap_vfs_t **pp_vfs;
+extern int *pi_indexes;
 extern size_t i_snapshots;
 
 libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfsfsal_handle_t *handle)
 {
-  if(handle->data.i_snap <= i_snapshots)
-    return pp_vfs[handle->data.i_snap];
-  else
-    return NULL;
+  /* Check for the zpool (index == 0) */
+  if(handle->data.i_snap == 0)
+    return pp_vfs[0];
+
+  /* Handle the indirection */
+  int i;
+  for(i = 1; i <= i_snapshots; i++)
+  {
+    if(pi_indexes[i] == handle->data.i_snap)
+      return pp_vfs[i];
+  }
+
+  return NULL;
 }
 

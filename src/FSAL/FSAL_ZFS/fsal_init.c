@@ -143,6 +143,8 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
   {
     pp_vfs = calloc(i_snapshots + 1, sizeof(*pp_vfs));
     pp_vfs[0] = p_vfs;
+    pi_indexes = calloc(i_snapshots + 1, sizeof(*pi_indexes));
+    pi_indexes[0] = 0;
 
     int i,j;
     for(i = 0; i < i_snapshots; i++)
@@ -158,6 +160,7 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
       }
       pp_vfs[i+1] = p_snap_vfs;
+      pi_indexes[i+1] = i + 1;
 
       /* Change the name of the snapshot from zpool_name@snap_name to snap_name
          The '@' character is allways present, so no need to check it */
@@ -186,6 +189,7 @@ fsal_status_t ZFSFSAL_terminate()
   for(i = i_snapshots; i >= 0; i--)
     libzfswrap_umount(pp_vfs[i], 1);
   free(pp_vfs);
+  free(pi_indexes);
 
   for(i = 0; i < i_snapshots; i++)
     free(ppsz_snapshots[i]);
