@@ -468,8 +468,7 @@ int nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs, nfs_function_desc_t *pfunc
             break;
 
           default:
-            /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
-            LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: NFS Protocol version %d unknown", ptr_req->rq_vers);
+            LogDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: NFS Protocol version %d unknown", ptr_req->rq_vers);
             svcerr_decode(ptr_svc);
             return FALSE;
             break;
@@ -494,8 +493,7 @@ int nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs, nfs_function_desc_t *pfunc
             break;
 
           default:
-            /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
-            LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: MOUNT Protocol version %d unknown",
+            LogDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: MOUNT Protocol version %d unknown",
             ptr_req->rq_vers);
             svcerr_decode(ptr_svc);
             return FALSE;
@@ -518,8 +516,7 @@ int nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs, nfs_function_desc_t *pfunc
             break;
 
           default:
-            /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
-            LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: NLM Protocol version %d unknown", ptr_req->rq_vers);
+            LogDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: NLM Protocol version %d unknown", ptr_req->rq_vers);
             svcerr_decode(ptr_svc);
             return FALSE;
             break;
@@ -554,8 +551,7 @@ int nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs, nfs_function_desc_t *pfunc
             break;
 
           default:
-            /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
-            LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: RQUOTA Protocol version %d unknown",
+            LogDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: RQUOTA Protocol version %d unknown",
             ptr_req->rq_vers);
             svcerr_decode(ptr_svc);
             return FALSE;
@@ -565,8 +561,7 @@ int nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs, nfs_function_desc_t *pfunc
 #endif                          /* _USE_QUOTA */
   else
     {
-      /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
-      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: protocol %d is not managed", ptr_req->rq_prog);
+      LogDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: protocol %d is not managed", ptr_req->rq_prog);
       svcerr_decode(ptr_svc);
       return FALSE;
     }							/* switch( ptr_req->rq_prog ) */
