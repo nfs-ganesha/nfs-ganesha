@@ -14,11 +14,11 @@
 #include "fsal_internal.h"
 
 extern libzfswrap_vfs_t **pp_vfs;
-extern size_t i_vfs;
+extern size_t i_snapshots;
 
 libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfsfsal_handle_t *handle)
 {
-  if(handle->data.i_snap < i_vfs)
+  if(handle->data.i_snap <= i_snapshots)
     return pp_vfs[handle->data.i_snap];
   else
     return NULL;
