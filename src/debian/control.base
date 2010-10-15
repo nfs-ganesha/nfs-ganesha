@@ -4,6 +4,7 @@ Priority: extra
 Maintainer: Philippe Deniel <philippe.deniel@cea.fr>
 Build-Depends: debhelper (>= 7), quilt, bison, flex
 Standards-Version: 3.7.2
+Homepage: http://nfs-ganesha.sourceforge.net
 
 Package: nfs-ganesha-common
 Architecture: any
