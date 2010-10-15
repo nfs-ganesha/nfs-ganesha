@@ -54,7 +54,18 @@
 #include <fcntl.h>
 #include <ctype.h>
 
+#ifndef LPX64
 #define LPX64 "%#llx"
+#endif
+
+#ifndef LPX64i
+#define LPX64i "%llx"
+#endif
+
+#ifndef DFID_NOBRACE
+#define DFID_NOBRACE    LPX64":0x%x:0x%x"
+#endif
+
 #include <asm/types.h>
 #include <lustre/liblustreapi.h>
 
