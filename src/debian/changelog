@@ -1,4 +1,22 @@
 nfs-ganesha (1.0.1-1) stable; urgency=low
+ * New TCP connection management to avoid DOS-like attack
+ * Tag _NO_BLOCK_PREALLOC was removed
+ * Bug Fix : OP4_REMOVE did not operate if the destination was an existing file
+ * Bug Fix : FATTR4_ACL is now an unsupported attributes (it is in fact)
+ * Bug Fix : OP4_GETATTR on unsupported attributes should ignore them instead
+   of returning NFS4ERR_ATTR_NOTSUPP
+ * Bug Fix : locks_held counter was badly managed in OP4_LOCKU
+ * Bug Fix : OP4_DESTROY_SESSION returned bad session when session was
+   successfully destroyed.
+ *  Bug Fix : FSAL_XFS:fsal_create always made files owned by root.
+ * Code Cleaning : all Log* functions's format were reviewed and fixed
+ * Memory manager improvement : stuff_alloc macros and BuddyMalloc are now
+   closely tied.
+ * Bug Fix : erroneous EACCESS in FSAL_XFS and FSAL_LUSTRE when
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Thu, 18 Oct 2010 10:10:00 +0200
+
+nfs-ganesha (1.0.1-1) stable; urgency=low
   * New FSAL model: FSAL modules can now be compile as shared object and can
     be loaded at runtime
   * New FSAL to support ZFS filesystem
