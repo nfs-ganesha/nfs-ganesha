@@ -341,3 +341,117 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
+
+
+fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
+                                            fsal_attrib_list_t *p_fsalattr_out)
+{
+
+    fsal_attrib_mask_t supp_attr, unsupp_attr;
+
+    /* sanity checks */
+    if(!p_buffstat || !p_fsalattr_out)
+        ReturnCode(ERR_FSAL_FAULT, 0);
+
+    /* check that asked attributes are supported */
+    supp_attr = global_fs_info.supported_attrs;
+
+    unsupp_attr = (p_fsalattr_out->asked_attributes) & (~supp_attr);
+    if(unsupp_attr)
+        {
+            LogFullDebug(COMPONENT_FSAL, "Unsupported attributes: %#llX",
+                         unsupp_attr);
+            ReturnCode(ERR_FSAL_ATTRNOTSUPP, 0);
+        }
+
+    /* Fills the output struct */
+    if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
+        {
+            p_fsalattr_out->supported_attributes = supp_attr;
+        }
+    if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_TYPE))
+        {
+            p_fsalattr_out->type = posix2fsal_type(p_buffstat->st_mode);
+        }
+    if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SIZE))
+        {
+            p_fsalattr_out->filesize = p_buffstat->st_size;
+        }
+    if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FSID))
+        {
+            p_fsalattr_out->fsid = posix2fsal_fsid(p_buffstat->st_dev);
+        }
+    if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ACL))
+        {
+
+            /* XXX : manage ACL */
+            int i;
+            for(i = 0; i < FSAL_MAX_ACL; i++)
+                {
+                    p_fsalattr_out->acls[i].type = FSAL_ACL_EMPTY;        /* empty ACL slot */
+                }
+
+        }
+    if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
+        {
+            p_fsalattr_out->fileid = (fsal_u64_t) (p_buffstat->st_ino);
+        }
+
+    if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MODE))
+        {
+            p_fsalattr_out->mode = unix2fsal_mode(p_buffstat->st_mode);
+        }
+    if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_NUMLINKS))
+        {
+            p_fsalattr_out->numlinks = p_buffstat->st_nlink;
+        }
+    if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_OWNER))
+        {
+            p_fsalattr_out->owner = p_buffstat->st_uid;
+        }
+    if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_GROUP))
+        {
+            p_fsalattr_out->group = p_buffstat->st_gid;
+        }
+    if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ATIME))
+        {
+            p_fsalattr_out->atime = posix2fsal_time(p_buffstat->st_atime);
+
+        }
+
+    if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CTIME))
+        {
+            p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime);
+        }
+    if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME))
+        {
+            p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime);
+        }
+
+    if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
+        {
+            p_fsalattr_out->chgtime
+                = posix2fsal_time(MAX_2(p_buffstat->st_mtime, p_buffstat->st_ctime));
+        }
+
+    if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
+        {
+            p_fsalattr_out->spaceused = p_buffstat->st_blocks * S_BLKSIZE;
+        }
+
+    if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_RAWDEV))
+        {
+            p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);    /* XXX: convert ? */
+        }
+    /* mounted_on_fileid :
+       if ( FSAL_TEST_MASK(p_fsalattr_out->asked_attributes,
+       FSAL_ATTR_MOUNTFILEID )){
+       p_fsalattr_out->mounted_on_fileid =
+       hpss2fsal_64( p_hpss_attr_in->FilesetRootId );
+       }
+    */
+
+    /* everything has been copied ! */
+
+    ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}

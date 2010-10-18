@@ -40,6 +40,9 @@
 #include <unistd.h>
 #include <utime.h>
 
+extern fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
+                                                   fsal_attrib_list_t * p_fsalattr_out);
+
 /**
  * GPFSFSAL_getattrs:
  * Get attributes for the object specified by its filehandle.
@@ -83,8 +86,7 @@ fsal_status_t GPFSFSAL_getattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
     ReturnStatus(st, INDEX_FSAL_getattrs);
 
   /* convert attributes */
-  /* FIXME!! the typecast */
-  st = posix2fsal_attributes((struct stat *)&buffstat, p_object_attributes);
+  st = posixstat64_2_fsal_attributes(&buffstat, p_object_attributes);
   if(FSAL_IS_ERROR(st))
     {
       FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
