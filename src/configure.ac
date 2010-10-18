@@ -454,6 +454,13 @@ case $FSAL in
 	            AC_MSG_ERROR([Lustre 2.x and liblustreapi are required])
 		fi
 		AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystem])
+
+		# check if this Lustre version has HSM functions
+    		AC_CHECK_LIB([lustreapi], [llapi_hsm_state_get], [lustre_hsm="yes"])
+		if test "x$lustre_hsm" == "xyes"; then
+			AC_DEFINE([_LUSTRE_HSM], 1, [Lustre version supports HSM binding])
+		fi
+
 		FSAL_CFLAGS=
                 FSAL_LDFLAGS="-llustreapi"
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"

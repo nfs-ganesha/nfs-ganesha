@@ -75,6 +75,13 @@ int print_fid(lustrefsal_handle_t * p_objecthandle,     /* object handle */
 #define ARG_STRIPE_SIZE  ((long)0)
 #define ARG_STRIPE_COUNT ((long)1)
 #define ARG_STORAGE_TGT  ((long)2)
+#define ARG_POOL         ((long)3)
+
+#ifdef _LUSTRE_HSM
+#define ARG_HSM_STATE    ((long)0)
+#define ARG_HSM_ACTION   ((long)1)
+#define ARG_HSM_ARCH_NUM ((long)2)
+#endif
 
 int print_stripe(lustrefsal_handle_t * p_objecthandle,  /* object handle */
                  lustrefsal_op_context_t * p_context,   /* IN */
@@ -104,7 +111,7 @@ int print_stripe(lustrefsal_handle_t * p_objecthandle,  /* object handle */
 
   if(rc != 0)
     {
-      if(rc == ENODATA)
+      if(abs(rc) == ENODATA)
         {
           LogDebug(COMPONENT_FSAL, "%s has no stripe information", entry_path.path);
           *p_output_size = sprintf(buffer_addr, "none\n");
@@ -112,7 +119,7 @@ int print_stripe(lustrefsal_handle_t * p_objecthandle,  /* object handle */
         }
       else
           LogCrit(COMPONENT_FSAL, "Error %d getting stripe info for %s", rc, entry_path.path);
-      return posix2fsal_error(rc);
+      return posix2fsal_error(abs(rc));
     }
 
   /* Check for protocol version number */
@@ -130,6 +137,11 @@ int print_stripe(lustrefsal_handle_t * p_objecthandle,  /* object handle */
           *p_output_size =
               snprintf(buffer_addr, buffer_size, "%u\n", p_lum->lmm_stripe_count);
           break;
+
+        case ARG_POOL: /* no pool if the structure is LOV V1 */
+            ((char*)buffer_addr)[0]='\0';
+            *p_output_size = 0;
+            break;
 
         case ARG_STORAGE_TGT:
           *p_output_size = 0;
@@ -152,6 +164,51 @@ int print_stripe(lustrefsal_handle_t * p_objecthandle,  /* object handle */
           break;
         }
     }
+#ifdef LOV_USER_MAGIC_V3 /* pool support */
+  else if(p_lum->lmm_magic == LOV_USER_MAGIC_V3)
+    {
+        struct lov_user_md_v3 *p_lum3 = ( struct lov_user_md_v3 * ) p_lum;
+
+        switch ((long)arg)
+        {
+            case ARG_STRIPE_SIZE:
+              *p_output_size =
+                  snprintf(buffer_addr, buffer_size, "%u\n", p_lum3->lmm_stripe_size);
+              break;
+
+            case ARG_STRIPE_COUNT:
+                *p_output_size =
+                    snprintf(buffer_addr, buffer_size, "%u\n", p_lum3->lmm_stripe_count);
+                break;
+
+            case ARG_POOL: /* pool structure in LOV V3 */
+                *p_output_size = snprintf( buffer_addr, buffer_size, "%s\n",
+                                           p_lum3->lmm_pool_name );
+                break;
+
+            case ARG_STORAGE_TGT:
+              *p_output_size = 0;
+              curr = buffer_addr;
+              curr[0] = '\0';
+
+              for(i = 0; i < p_lum3->lmm_stripe_count; i++)
+                {
+                  int sz;
+                  if(i != p_lum3->lmm_stripe_count - 1)
+                    sz = snprintf(curr, buffer_size - *p_output_size, "%u,",
+                                  p_lum3->lmm_objects[i].l_ost_idx);
+                  else
+                    sz = snprintf(curr, buffer_size - *p_output_size, "%u\n",
+                                  p_lum3->lmm_objects[i].l_ost_idx);
+                  curr += sz;
+                  *p_output_size += sz;
+                }
+
+              break;
+        }
+
+    }
+#endif
   else
     {
         LogCrit(COMPONENT_FSAL, "Wrong Luster magic number for %s: %#X <> %#X",
@@ -162,18 +219,134 @@ int print_stripe(lustrefsal_handle_t * p_objecthandle,  /* object handle */
   return 0;
 }
 
+/* ------------ Lustre-HSM specific attributes ------------ */
+#ifdef _LUSTRE_HSM
+
+#define TEST_FLAG_APPEND( _mask, _flg_val, _flg_name, _p_sz )               \
+        do { if ((_mask) & (_flg_val)) {                                   \
+                size_t sz = 0;                                             \
+                if ( (*_p_sz) > 0 )                                         \
+                    sz = snprintf(curr, buffer_size-(*_p_sz), " %s", _flg_name); \
+                else                                                       \
+                    sz = snprintf(curr, buffer_size-(*_p_sz), "%s", _flg_name);  \
+                curr += sz;                                                \
+                (*_p_sz) += sz;                                             \
+         }} while(0)
+
+
+int print_hsm_info(lustrefsal_handle_t * p_objecthandle,  /* object handle */
+                   lustrefsal_op_context_t * p_context,   /* IN */
+                   caddr_t buffer_addr,   /* IN/OUT */
+                   size_t buffer_size,    /* IN */
+                   size_t * p_output_size,        /* OUT */
+                   void *arg)
+{
+    int rc;
+    fsal_path_t entry_path;
+    fsal_status_t st;
+    unsigned int i;
+    struct hsm_user_state hus = {0};
+
+    /* set empty output, by default */
+    ((char*)buffer_addr)[0]='\0';
+    *p_output_size = 0;
+
+    st = fsal_internal_Handle2FidPath(p_context, p_objecthandle, &entry_path);
+    if(FSAL_IS_ERROR(st))
+        return st.major;
+
+    rc = llapi_hsm_state_get(entry_path.path, &hus);
+
+    if(rc != 0)
+        return posix2fsal_error(-rc);
+
+    switch ((long)arg)
+    {
+        case ARG_HSM_STATE:
+            if ( hus.hus_states == 0 )
+            {
+                *p_output_size =
+                    snprintf(buffer_addr, buffer_size, "new\n" );
+            }
+            else
+            {
+                char * curr = (char*)buffer_addr;
+
+                TEST_FLAG_APPEND( hus.hus_states, HS_RELEASED, "released",
+                                  p_output_size );
+                TEST_FLAG_APPEND( hus.hus_states, HS_EXISTS, "exists",
+                                  p_output_size );
+                TEST_FLAG_APPEND( hus.hus_states, HS_DIRTY, "dirty",
+                                  p_output_size );
+                TEST_FLAG_APPEND( hus.hus_states, HS_ARCHIVED, "archived",
+                                  p_output_size );
+                TEST_FLAG_APPEND( hus.hus_states, HS_NORELEASE, "never_release",
+                                  p_output_size );
+                TEST_FLAG_APPEND( hus.hus_states, HS_NOARCHIVE, "never_archive",
+                                  p_output_size );
+                TEST_FLAG_APPEND( hus.hus_states, HS_LOST, "lost_from_hsm",
+                                  p_output_size );
+                if ( (*p_output_size) > 0 )
+                    (*p_output_size) += snprintf( curr,
+                                                  buffer_size-(*p_output_size),
+                                                  "\n" );
+            }
+          break;
+
+        case ARG_HSM_ACTION:
+            if ( hus.hus_in_progress_action != HUA_NONE )
+            {
+                *p_output_size =
+                    snprintf(buffer_addr, buffer_size, "%s (%s)\n",
+                             hsm_user_action2name(hus.hus_in_progress_action),
+                             hsm_progress_state2name(hus.hus_in_progress_state));
+            }
+            else
+                *p_output_size =
+                    snprintf(buffer_addr, buffer_size, "%s\n",
+                             hsm_user_action2name(hus.hus_in_progress_action));
+            break;
+
+        case ARG_HSM_ARCH_NUM:
+            if (hus.hus_archive_num != 0)
+            {
+                *p_output_size =
+                    snprintf(buffer_addr, buffer_size, "%u\n",
+                             hus.hus_archive_num);
+            }
+          break;
+    }
+
+    return 0;
+}
+#endif
+
 /* DEFINE HERE YOUR ATTRIBUTES LIST */
 
 static fsal_xattr_def_t xattr_list[] = {
-  {"fid", print_fid, NULL, XATTR_FOR_ALL | XATTR_RO, NULL},
-  {"stripe_size", print_stripe, NULL, XATTR_FOR_FILE | XATTR_FOR_DIR | XATTR_RO,
-   (void *)ARG_STRIPE_SIZE},
-  {"stripe_count", print_stripe, NULL, XATTR_FOR_FILE | XATTR_FOR_DIR | XATTR_RO,
-   (void *)ARG_STRIPE_COUNT},
-  {"OSTs", print_stripe, NULL, XATTR_FOR_FILE | XATTR_RO, (void *)ARG_STORAGE_TGT}
+    {"fid", print_fid, NULL, XATTR_FOR_ALL | XATTR_RO, NULL},
+    {"stripe_size", print_stripe, NULL, XATTR_FOR_FILE | XATTR_FOR_DIR | XATTR_RO,
+        (void *)ARG_STRIPE_SIZE},
+    {"stripe_count", print_stripe, NULL, XATTR_FOR_FILE | XATTR_FOR_DIR | XATTR_RO,
+        (void *)ARG_STRIPE_COUNT},
+    {"pool", print_stripe, NULL, XATTR_FOR_FILE | XATTR_FOR_DIR | XATTR_RO,
+        (void *)ARG_POOL},
+    {"OSTs", print_stripe, NULL, XATTR_FOR_FILE | XATTR_RO,
+        (void *)ARG_STORAGE_TGT},
+#ifdef _LUSTRE_HSM
+    /* additionnal attributes from HSM state */
+    {"hsm_state", print_hsm_info, NULL, XATTR_FOR_FILE | XATTR_RO,
+        (void *)ARG_HSM_STATE },
+    {"hsm_action", print_hsm_info, NULL, XATTR_FOR_FILE | XATTR_RO,
+        (void *)ARG_HSM_ACTION },
+#endif
 };
 
-#define XATTR_COUNT 4
+#ifdef _LUSTRE_HSM
+#define XATTR_COUNT 7
+#else
+#define XATTR_COUNT 5
+#endif
 
 /* we assume that this number is < 254 */
 #if ( XATTR_COUNT > 254 )

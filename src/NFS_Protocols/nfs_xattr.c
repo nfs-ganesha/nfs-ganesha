@@ -268,7 +268,10 @@ int nfs_SetPostOpXAttrFile(fsal_op_context_t * pcontext,
      == 0)
     presult->attributes_follow = FALSE;
   else
+  {
+    nfs_set_times_current(&(presult->post_op_attr_u.attributes));
     presult->attributes_follow = TRUE;
+  }
 
   return 0;
 }                               /* nfs_SetPostOpXAttrFile */
