@@ -42,7 +42,7 @@ filesystem using libzfswrap.
 
 %build
 %configure @ac_configure_args@
-make %{?_smp_mflags} || make
+make %{?_smp_mflags}  || make %{?_smp_mflags}  || make
 
 %install
 rm -rf $RPM_BUILD_ROOT

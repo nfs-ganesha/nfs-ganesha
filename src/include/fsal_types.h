@@ -248,8 +248,10 @@ static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 #include "FSAL/FSAL_TEMPLATE/fsal_types.h"
 #else                           /* no _USE_<filesystem> flag ! */
 #error "No filesystem compilation flag set for the FSAL."
+#endif /* _USE_GHOSTFS */
 
-#endif
+#else /* _USE_SHARED_FSAL */
+#define CONF_LABEL_FS_SPECIFIC   "DYNFSAL"
 
 #endif                          /* _USE_SHARED_FSAL */
 

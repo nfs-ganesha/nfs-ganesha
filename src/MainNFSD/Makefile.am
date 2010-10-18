@@ -44,6 +44,12 @@ STAT_SNMP_FILES =
 STAT_SNMP_LIB_FLAGS =
 endif
 
+if USE_STAT_EXPORTER
+STAT_EXPORTER_FILE = nfs_stat_exporter_thread.c
+else
+STAT_EXPORTER_FILE = 
+endif
+
 if USE_FSAL_FUSE
 noinst_LTLIBRARIES           = libMainServices.la
 lib_LTLIBRARIES              = libganeshaNFS.la
@@ -68,7 +74,7 @@ endif
 
 libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              nfs_stats_thread.c                   \
-                             nfs_stat_exporter_thread.c           \
+                             $(STAT_EXPORTER_FILE)                \
                              nfs_worker_thread.c                  \
                              nfs_file_content_gc_thread.c         \
                              nfs_rpc_dispatcher_thread.c          \
