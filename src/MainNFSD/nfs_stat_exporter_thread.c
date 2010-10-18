@@ -61,6 +61,7 @@
 #include "nfs_exports.h"
 #include "nodelist.h"
 #include "stuff_alloc.h"
+#include "fsal.h"
 
 extern nfs_parameter_t nfs_param;
 
