@@ -275,7 +275,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
               LogEvent(COMPONENT_DISPATCH,
                    "TCP SOCKET MANAGER Sock=%d: the client (%s) disappeared... Freezing thread %p",
-                   (int)tcp_sock, str_caller, pthread_self());
+                   (int)tcp_sock, str_caller, (caddr_t)pthread_self());
 
               if(Xports[tcp_sock] != NULL)
                 SVC_DESTROY(Xports[tcp_sock]);
@@ -299,7 +299,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
               if((rc = BuddyDestroy()) != BUDDY_SUCCESS)
                 LogCrit(COMPONENT_DISPATCH,
                         "TCP SOCKET MANAGER Sock=%d (on exit): got error %d from BuddyDestroy",
-                        tcp_sock, rc);
+                        (int)tcp_sock, (int)rc);
 #endif                          /*  _NO_BUDDY_SYSTEM */
 
                   return NULL  ;
@@ -403,7 +403,8 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
             nfs_stat_update(stat_type, &(workers_data[worker_index].stats.stat_req), &(pnfsreq->req), &latency_stat);
             
             LogFullDebug(COMPONENT_DISPATCH, "Thread #%d has committed the operation: end_time %llu.%.6llu await %llu.%.6llu",
-                         worker_index, timer_end.tv_sec, timer_end.tv_usec, timer_diff.tv_sec, timer_diff.tv_usec);
+                         worker_index, (unsigned long long int)timer_end.tv_sec, (unsigned long long int)timer_end.tv_usec, 
+                         (unsigned long long int)timer_diff.tv_sec,(unsigned long long int)timer_diff.tv_usec);
             }
         }
     }

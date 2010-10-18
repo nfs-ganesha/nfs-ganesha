@@ -1997,7 +1997,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
           exit(1);
         }
       nfs_param.core_param.nb_max_fd = ulimit_data.rlim_cur;
-      LogEvent(COMPONENT_INIT, "RLIMIT_NOFILE was cur %d max %d", ulimit_data.rlim_cur, ulimit_data.rlim_max);
+      LogEvent(COMPONENT_INIT, "RLIMIT_NOFILE was cur %d max %d", (int)ulimit_data.rlim_cur, (int)ulimit_data.rlim_max);
     }
 
   /* Allocate the directories for the datacache */

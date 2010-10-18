@@ -199,7 +199,7 @@ void GetNameFunction(char *name, int len)
   if (s != emergency && s != NULL)
     strncpy(name, s, len);
   else
-    snprintf(name, len, "Thread %p", pthread_self());
+    snprintf(name, len, "Thread %p", (caddr_t)pthread_self());
 }
 
 /*

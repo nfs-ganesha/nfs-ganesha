@@ -300,7 +300,7 @@ void ShowAllContext()
       count++;
       LogDebug(COMPONENT_MEMALLOC, "Context for thread %s (%p) Total Mem Space: %lld MB Used: %lld MB",
                context->label_thread,
-               context->OwnerThread,
+               (caddr_t)context->OwnerThread,
                (unsigned long long) context->Stats.TotalMemSpace / 1024 / 1024,
                (unsigned long long) (context->Stats.StdUsedSpace + context->Stats.ExtraMemSpace) / 1024 / 1024);
     }
@@ -1170,7 +1170,7 @@ static int TryContextCleanup(BuddyThreadContext_t * context)
                 LogDebug(COMPONENT_MEMALLOC,
                          "Another thread still holds a block: "
                          "deferred cleanup for context=%s (%p), thread=%p",
-                         context->label_thread, context, context->OwnerThread);
+                         (caddr_t)context->label_thread, context, (caddr_t)context->OwnerThread);
                 /* set the context in "destroy_pending" state,
                  * if it was not already */
                 context->destroy_pending = TRUE;
@@ -1187,11 +1187,11 @@ static int TryContextCleanup(BuddyThreadContext_t * context)
         if (pthread_self() == context->OwnerThread)
           LogDebug(COMPONENT_MEMALLOC,
                    "thread (%s) %p successfully released resources for itself",
-                   context->label_thread, pthread_self());
+                   (caddr_t)context->label_thread, (caddr_t)pthread_self());
         else
           LogDebug(COMPONENT_MEMALLOC,
                    "thread %p successfully released resources of thread %s (%p)",
-                   pthread_self(), context->label_thread, context->OwnerThread);
+                   (caddr_t)pthread_self(), context->label_thread, (caddr_t)context->OwnerThread);
 
         /* destroy thread context */
 #ifndef _MONOTHREAD_MEMALLOC
@@ -1222,7 +1222,7 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
   if(!context)
     {
       LogCrit(COMPONENT_MEMALLOC, "Buddy Malloc thread context could not be allocated for thread %p",
-              pthread_self());
+              (caddr_t)pthread_self());
       ShowAllContext();
       return BUDDY_ERR_MALLOC;
     }
@@ -1232,7 +1232,7 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
   if(context->initialized)
     {
       LogCrit(COMPONENT_MEMALLOC, "The memory descriptor is already initialized for thread %p.",
-              pthread_self());
+              (caddr_t)pthread_self());
       ShowAllContext();
       return BUDDY_ERR_ALREADYINIT;
     }
@@ -1301,7 +1301,7 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
   if(pthread_mutex_init(&context->ToBeFreed_mutex, NULL) != 0)
     {
       LogCrit(COMPONENT_MEMALLOC, "BuddyInit could not initialize ToBeFreed_mutex for thread %p",
-              pthread_self());
+              (caddr_t)pthread_self());
       ShowAllContext();
       return BUDDY_ERR_EINVAL;
     }
@@ -1324,13 +1324,13 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
   if(p_block)
     {
       LogDebug(COMPONENT_MEMALLOC, "BuddyInit successful for thread %p",
-               pthread_self());
+               (caddr_t)pthread_self());
       return BUDDY_SUCCESS;
     }
   else
     {
       LogCrit(COMPONENT_MEMALLOC, "BuddyInit could not allocate a page for thread %p",
-              pthread_self());
+              (caddr_t)pthread_self());
       ShowAllContext();
       return BUDDY_ERR_MALLOC;
     }
