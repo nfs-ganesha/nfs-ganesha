@@ -807,8 +807,7 @@ fsal_status_t POSIXFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
      || out_parameter->fs_specific_info.dbparams.dbname[0] == '\0')
     {
       LogCrit(COMPONENT_CONFIG,
-           "FSAL LOAD PARAMETER: DB_Host and DB_Name MUST be specified in the configuration file",
-           CONF_LABEL_FS_SPECIFIC);
+           "FSAL LOAD PARAMETER: DB_Host and DB_Name MUST be specified in the configuration file");
       ReturnCode(ERR_FSAL_NOENT, 0);
     }
 

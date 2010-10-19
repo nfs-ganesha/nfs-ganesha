@@ -354,7 +354,7 @@ fsal_status_t POSIXFSAL_read(posixfsal_file_t * p_file_descriptor,      /* IN */
           if(rc)
             {
               LogEvent(COMPONENT_FSAL,
-                       "Error in posix fseek operation (whence=%s, offset=%lld)",
+                       "Error in posix fseek operation (whence=%s, offset=%"PRId64")",
                        (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
                         (p_seek_descriptor->whence ==
                          FSAL_SEEK_SET ? "SEEK_SET" : (p_seek_descriptor->whence
@@ -586,7 +586,7 @@ fsal_status_t POSIXFSAL_write(posixfsal_file_t * p_file_descriptor,     /* IN */
           if(rc)
             {
               LogEvent(COMPONENT_FSAL,
-                       "Error in posix fseek operation (whence=%s, offset=%lld)",
+                       "Error in posix fseek operation (whence=%s, offset=%"PRId64")",
                        (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
                         (p_seek_descriptor->whence ==
                          FSAL_SEEK_SET ? "SEEK_SET" : (p_seek_descriptor->whence

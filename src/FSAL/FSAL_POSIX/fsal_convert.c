@@ -413,7 +413,7 @@ fsal_status_t posixdb2fsal_error(fsal_posixdb_status_t statusdb)
   switch (statusdb.major)
     {
     case ERR_FSAL_POSIXDB_TOOMANYPATHS:
-      LogEvent(COMPONENT_FSAL, "Fsal posixdb : too many paths !", statusdb.minor);
+      LogEvent(COMPONENT_FSAL, "Fsal posixdb : too many paths ! (%d)", statusdb.minor);
     case ERR_FSAL_POSIXDB_NOERR:
       ReturnCode(ERR_FSAL_NO_ERROR, statusdb.major);
 
