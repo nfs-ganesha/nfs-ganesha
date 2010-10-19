@@ -384,7 +384,7 @@
 	- New Log management from IBM
 	- Several potential buffer overflow in fscanf fixed
        
-1.0.2	- 
+1.0.2	- Mon 18 Oct 2010
 	- New TCP connection management to avoid DOS-like attack
 	- Tag _NO_BLOCK_PREALLOC was removed
 	- New debian packaging
@@ -400,6 +400,6 @@
 	  now closely tied.  
 	- Bug Fix : erroneous EACCESS in FSAL_XFS and FSAL_LUSTRE when
 	  creating file as a regulat user 
-	- New feature : FSAL_ZFS provides access to ZFS snapshoti directory
+	- New feature : FSAL_ZFS provides access to ZFS snapshot directory
 	  .zfs  based on  ZFS's COW feature.
 	 
