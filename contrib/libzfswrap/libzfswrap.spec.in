@@ -12,8 +12,8 @@ BuildRequires: autoconf automake gcc
 Requires: openssl
 
 %description
-libzfswrap is a library that allows access and manipulation of a ZFS filesystem
-with no need of fuse.
+libzfswrap is a library that allows access and manipulation of a ZFS file
+system with no need of fuse.
 
 %package devel
 Summary: Development file for the library that access to a ZFS file system without fuse
@@ -27,14 +27,14 @@ Requires: %{name} = %{version}-%{release}
 
 
 %description devel
-libzfswrap is a library that allows access and manipulation of a ZFS filesystem
-with no need of fuse. This package contains the development headers
-for the libzfswrap library.
+libzfswrap is a library that allows access and manipulation of a ZFS file
+system with no need of fuse. This package contains the development headers for
+the libzfswrap library.
 
 %description utils
-libzfswrap is a library that allows access and manipulation of a ZFS filesystem
-with no need of fuse. This package contains the tools to administrate the ZFS
-filesystem using libzfswrap.
+libzfswrap is a library that allows access and manipulation of a ZFS file
+system with no need of fuse. This package contains the tools to administrate
+the ZFS file system using libzfswrap.
 
 
 %prep
@@ -42,7 +42,7 @@ filesystem using libzfswrap.
 
 %build
 %configure @ac_configure_args@
-make %{?_smp_mflags}  || make %{?_smp_mflags}  || make
+make %{?_smp_mflags} || make %{?_smp_mflags} || make
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -76,5 +76,8 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Oct 19 2010 Duraffort Remi <duraffortr@ocre.cea.fr> 1.0.1
+- add snapshots handling
+
 * Wed Jul 21 2010 Duraffort Remi <duraffortr@ocre.cea.fr> 1.0.0
 - add spec file
