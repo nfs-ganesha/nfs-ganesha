@@ -70,9 +70,13 @@ fsal_status_t ZFSFSAL_opendir(zfsfsal_handle_t * dir_handle,  /* IN */
   libzfswrap_vnode_t *p_vnode;
 
   /* Get the right VFS */
+  ZFSFSAL_VFS_RDLock();
   libzfswrap_vfs_t *p_vfs = ZFSFSAL_GetVFS(dir_handle);
   if(!p_vfs)
+  {
+    ZFSFSAL_VFS_Unlock();
     Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_opendir);
+  }
 
   /* Hook for the zfs snapshot directory */
   if(dir_handle->data.zfs_handle.inode == ZFS_SNAP_DIR_INODE)
@@ -87,18 +91,16 @@ fsal_status_t ZFSFSAL_opendir(zfsfsal_handle_t * dir_handle,  /* IN */
                             dir_handle->data.zfs_handle, &p_vnode);
     ReleaseTokenFSCall();
   }
+  ZFSFSAL_VFS_Unlock();
 
   if(rc)
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_opendir);
 
-  dir_descriptor->p_vnode = p_vnode;
-  dir_descriptor->zfs_handle = dir_handle->data.zfs_handle;
-  dir_descriptor->i_snap = dir_handle->data.i_snap;
-  dir_descriptor->p_vfs = p_vfs;
   dir_descriptor->cred = p_context->user_credential.cred;
+  dir_descriptor->handle = *dir_handle;
+  dir_descriptor->p_vnode = p_vnode;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_opendir);
-
 }
 
 /**
@@ -154,7 +156,7 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
   /* Hook to create the pseudo directory */
-  if(dir_descriptor->zfs_handle.inode == ZFS_SNAP_DIR_INODE)
+  if(dir_descriptor->handle.data.zfs_handle.inode == ZFS_SNAP_DIR_INODE)
   {
     int i;
     struct stat fstat;
@@ -165,6 +167,7 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
     fstat.st_atime = ServerBootTime;
     fstat.st_mtime = ServerBootTime;
 
+    ZFSFSAL_VFS_RDLock();
     for(i = 0; i < max_dir_entries && i < i_snapshots; i++)
     {
       libzfswrap_getroot(pp_vfs[i + start_position.data.cookie + 1],
@@ -188,19 +191,29 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
       *end_of_dir = 1;
     else
       end_position->data.cookie = start_position.data.cookie + i;
+    ZFSFSAL_VFS_Unlock();
 
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
   }
 
-  libzfswrap_entry_t *entries = malloc( max_dir_entries * sizeof(libzfswrap_entry_t));
+  /* Check that the vfs is still existing */
+  ZFSFSAL_VFS_RDLock();
+  libzfswrap_vfs_t *p_vfs = ZFSFSAL_GetVFS(&dir_descriptor->handle);
+  if(p_vfs == NULL)
+  {
+    ZFSFSAL_VFS_Unlock();
+    Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_readdir);
+  }
 
+  libzfswrap_entry_t *entries = malloc( max_dir_entries * sizeof(libzfswrap_entry_t));
   TakeTokenFSCall();
 
   /* >> read some entry from you filesystem << */
-  rc = libzfswrap_readdir(dir_descriptor->p_vfs, &dir_descriptor->cred,
-                          dir_descriptor->p_vnode, entries, max_dir_entries, (off_t*)(&start_position));
+  rc = libzfswrap_readdir(p_vfs, &dir_descriptor->cred, dir_descriptor->p_vnode, entries,
+                          max_dir_entries, (off_t*)(&start_position));
 
   ReleaseTokenFSCall();
+  ZFSFSAL_VFS_Unlock();
 
   /* >> convert error code and return on error << */
   if(rc)
@@ -228,8 +241,8 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
 
     p_dirent[*nb_entries].handle.data.zfs_handle = entries[index].object;
     p_dirent[*nb_entries].handle.data.type = posix2fsal_type(entries[index].type);
-    p_dirent[*nb_entries].handle.data.i_snap = dir_descriptor->i_snap;
-    entries[index].stats.st_dev = dir_descriptor->i_snap;
+    p_dirent[*nb_entries].handle.data.i_snap = dir_descriptor->handle.data.i_snap;
+    entries[index].stats.st_dev = dir_descriptor->handle.data.i_snap;
     FSAL_str2name(entries[index].psz_filename, FSAL_MAX_NAME_LEN, &(p_dirent[*nb_entries].name));
 
     /* Add the attributes */
@@ -284,13 +297,24 @@ fsal_status_t ZFSFSAL_closedir(zfsfsal_dir_t * dir_descriptor /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_closedir);
 
   /* Hook for the ZFS directory */
-  if(dir_descriptor->zfs_handle.inode == ZFS_SNAP_DIR_INODE)
+  if(dir_descriptor->handle.data.zfs_handle.inode == ZFS_SNAP_DIR_INODE)
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_closedir);
 
+  /* Check that the vfs still exist */
+  ZFSFSAL_VFS_RDLock();
+  libzfswrap_vfs_t *p_vfs = ZFSFSAL_GetVFS(&dir_descriptor->handle);
+  if(!p_vfs)
+  {
+    ZFSFSAL_VFS_Unlock();
+    Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_closedir);
+  }
+
   /* >> release the resources used for reading your directory << */
-  if((rc = libzfswrap_closedir(dir_descriptor->p_vfs, &dir_descriptor->cred, dir_descriptor->p_vnode)))
+  rc = libzfswrap_closedir(p_vfs, &dir_descriptor->cred, dir_descriptor->p_vnode);
+  ZFSFSAL_VFS_Unlock();
+
+  if(rc)
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_closedir);
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_closedir);
-
+  else
+    Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_closedir);
 }

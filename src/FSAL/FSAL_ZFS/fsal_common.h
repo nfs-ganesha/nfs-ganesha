@@ -18,5 +18,8 @@
 #define ZFS_SNAP_DIR_INODE 2
 
 libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfsfsal_handle_t *handle);
+void ZFSFSAL_VFS_RDLock();
+void ZFSFSAL_VFS_WRLock();
+void ZFSFSAL_VFS_Unlock();
 
 #endif

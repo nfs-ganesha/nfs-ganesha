@@ -21,6 +21,7 @@
 
 #include <string.h>
 
+/*@FIXME: do not export pp_vfs */
 extern libzfswrap_vfs_t **pp_vfs;
 extern char **ppsz_snapshots;
 extern size_t i_snapshots;
@@ -159,6 +160,7 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
       /* Hook for the files inside the .zfs directory */
       else if(parent_directory_handle->data.zfs_handle.inode == ZFS_SNAP_DIR_INODE)
       {
+        ZFSFSAL_VFS_RDLock();
         int i;
         for(i = 0; i < i_snapshots; i++)
           if(!strcmp(ppsz_snapshots[i], p_filename->name))
@@ -171,14 +173,16 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
         }
 
         libzfswrap_getroot(pp_vfs[i + 1], &object);
+        ZFSFSAL_VFS_Unlock();
+
         type = S_IFDIR;
         i_snap = i + 1;
         rc = 0;
       }
       else
       {
-
         /* Get the right VFS */
+        ZFSFSAL_VFS_RDLock();
         libzfswrap_vfs_t *p_vfs = ZFSFSAL_GetVFS(parent_directory_handle);
         if(!p_vfs)
           rc = ENOENT;
@@ -186,6 +190,8 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
           rc = libzfswrap_lookup(p_vfs, &p_context->user_credential.cred,
                                  parent_directory_handle->data.zfs_handle, p_filename->name,
                                  &object, &type);
+        ZFSFSAL_VFS_Unlock();
+
         //FIXME!!! Hook to remove the i_snap bit when going up from the .zfs directory
         if(object.inode == 3)
           i_snap = 0;

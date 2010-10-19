@@ -24,6 +24,7 @@ extern size_t i_snapshots;
 extern char **ppsz_snapshots;
 extern int *pi_indexes;
 extern libzfswrap_vfs_t **pp_vfs;
+extern pthread_rwlock_t vfs_lock;
 
 /* Macros for analysing parameters. */
 #define SET_BITMAP_PARAM( api_cfg, p_init_info, _field )      \
@@ -175,6 +176,7 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
     pp_vfs[0] = p_vfs;
     i_snapshots = 0;
   }
+  pthread_rwlock_init(&vfs_lock, NULL);
 
   /* Everything went OK. */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);
@@ -194,6 +196,8 @@ fsal_status_t ZFSFSAL_terminate()
   for(i = 0; i < i_snapshots; i++)
     free(ppsz_snapshots[i]);
   free(ppsz_snapshots);
+
+  pthread_rwlock_destroy(&vfs_lock);
 
   libzfswrap_exit(p_zhd);
   ReturnCode(ERR_FSAL_NO_ERROR, 0);

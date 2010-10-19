@@ -76,12 +76,14 @@ fsal_status_t ZFSFSAL_getattrs(zfsfsal_handle_t * filehandle, /* IN */
   else
   {
     /* Get the right VFS */
+    ZFSFSAL_VFS_RDLock();
     libzfswrap_vfs_t *p_vfs = ZFSFSAL_GetVFS(filehandle);
     if(!p_vfs)
       rc = ENOENT;
     else
       rc = libzfswrap_getattr(p_vfs, &p_context->user_credential.cred,
                               filehandle->data.zfs_handle, &fstat, &type);
+    ZFSFSAL_VFS_Unlock();
   }
 
   // Set st_dev to be the snapshot number.
