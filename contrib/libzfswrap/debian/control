@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 7.0.50~),
                libaio-dev,
                libssl-dev,
                zlib1g-dev
-Standards-Version: 3.8.4
+Standards-Version: 3.9.1
 Section: libs
 Homepage: http://nfs-ganesha.sourceforge.net
 #Vcs-Git: git://git.debian.org/collab-maint/libzfswrap.git
