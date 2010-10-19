@@ -150,7 +150,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
                  (unsigned int)p_object_handle->data.ts);
       if((mysql_num_rows(res) != 1) || ((row = mysql_fetch_row(res)) == NULL))
         {
-          LogDebug(COMPONENT_FSAL, "lookupHandle=%d entries", mysql_num_rows(res));
+          LogDebug(COMPONENT_FSAL, "lookupHandle=%"PRIu64" entries", (uint64_t)mysql_num_rows(res));
           mysql_free_result(res);
           RollbackTransaction(p_conn);
           ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
