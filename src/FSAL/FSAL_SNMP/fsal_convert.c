@@ -244,7 +244,7 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
     case ASN_OCTET_STR:
       if(p_in_var->val.string)
         written = snprintf(p_out_string, *in_out_len, "%.*s\n",
-                           p_in_var->val_len, p_in_var->val.string);
+                           (int)p_in_var->val_len, p_in_var->val.string);
       else
         written = snprintf(p_out_string, *in_out_len, "(null string pointer)\n");
       break;
@@ -325,7 +325,7 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
   if(written > *in_out_len)
     {
       LogMajor(COMPONENT_FSAL,
-               "Warning: actual datasize is over client buffer limit (%llu > %llu)",
+               "Warning: actual datasize is over client buffer limit (%zu > %zu)",
                written, *in_out_len);
       written = *in_out_len;
     }

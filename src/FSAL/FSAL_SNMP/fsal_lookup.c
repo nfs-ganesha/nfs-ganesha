@@ -170,7 +170,7 @@ fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      
       /* lookup up for parent entry  */
       if(!FSAL_namecmp(p_filename, (fsal_name_t *) & FSAL_DOT_DOT))
         {
-          LogFullDebug(COMPONENT_FSAL, "lookup for parent (oid len = %u)",
+          LogFullDebug(COMPONENT_FSAL, "lookup for parent (oid len = %zu)",
                        parent_directory_handle->data.oid_len);
 
           FSAL_OID_DUP(object_handle, parent_directory_handle->data.oid_tab,
@@ -181,7 +181,7 @@ fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      
           else
             object_handle->data.object_type_reminder = FSAL_NODETYPE_NODE;
 
-          LogFullDebug(COMPONENT_FSAL, "parent handle has (oid len = %u)",
+          LogFullDebug(COMPONENT_FSAL, "parent handle has (oid len = %zu)",
                        object_handle->data.oid_len);
 
           if(object_attributes)
