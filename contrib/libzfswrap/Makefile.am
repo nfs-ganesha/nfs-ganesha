@@ -13,7 +13,6 @@ doc:
 	curdir=`pwd` ; cd zfswrap ; make doc ; cd $$curdir
 
 deb: distdir
-	tar cvzf libzfswrap_@PACKAGE_VERSION@.orig.tar.gz libzfswrap-@PACKAGE_VERSION@ ; \
 	cd libzfswrap-@PACKAGE_VERSION@ ; \
 	dpkg-buildpackage -rfakeroot ; \
 	cd ../
