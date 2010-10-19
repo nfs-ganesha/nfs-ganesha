@@ -236,6 +236,7 @@ fsal_status_t XFSFSAL_setattrs(xfsfsal_handle_t * p_filehandle, /* IN */
           TakeTokenFSCall();
           rc = fchmod(fd, fsal2unix_mode(attrs.mode));
           errsv = errno;
+
           ReleaseTokenFSCall();
 
           if(rc)
