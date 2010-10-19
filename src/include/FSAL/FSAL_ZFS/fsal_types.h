@@ -112,20 +112,16 @@ typedef struct fsal_op_context__
 
 typedef struct fsal_dir__
 {
-  libzfswrap_vfs_t* p_vfs;
   creden_t cred;
   libzfswrap_vnode_t *p_vnode;
-  inogen_t zfs_handle;
-  char i_snap;
+  zfsfsal_handle_t handle;
 
 } zfsfsal_dir_t;
 
 typedef struct fsal_file__
 {
-  libzfswrap_vfs_t *p_vfs;
   creden_t cred;
-  inogen_t zfs_handle;
-  char i_snap;
+  zfsfsal_handle_t handle;
   off_t current_offset;
   int flags;
   libzfswrap_vnode_t *p_vnode;
