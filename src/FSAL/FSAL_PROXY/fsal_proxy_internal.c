@@ -851,7 +851,7 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_TYPE;
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          LogFullDebug(COMPONENT_NFS_V4, "SATTR: On voit le type %d\n", pFSAL_attr->filesize);
+          LogFullDebug(COMPONENT_NFS_V4, "SATTR: On voit le type %d\n", (int)pFSAL_attr->filesize);
           break;
 
         case FATTR4_FILEID:    /* Used only by FSAL_PROXY to reverse convert */
@@ -900,7 +900,7 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_SIZE;
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          LogFullDebug(COMPONENT_NFS_V4, "SATTR: On voit la taille %d\n", pFSAL_attr->filesize);
+          LogFullDebug(COMPONENT_NFS_V4, "SATTR: On voit la taille %d\n", (int)pFSAL_attr->filesize);
           break;
 
         case FATTR4_MODE:
