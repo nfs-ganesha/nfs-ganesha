@@ -71,7 +71,9 @@ typedef struct file_handle_v3__
   char xattr_pos;               /* Used for xattr management                len = 1  byte  */
 } file_handle_v3_t;
 
-/* This must be up to 64 bytes, aligned on 32 bits */
+
+
+/* This must be up to 128 bytes, aligned on 32 bits */
 typedef struct file_handle_v4__
 {
   unsigned short pseudofs_id;   /* Id for the pseudo fs related to this fh  len = 2 bytes   */
@@ -80,7 +82,11 @@ typedef struct file_handle_v4__
   unsigned int exportid;        /* must be correlated to exportlist_t::id   len = 4 bytes   */
   unsigned short refid;         /* used for referral                        len = 2 bytes   */
   unsigned int srvboot_time;    /* 0 if FH won't expire                     len = 4 bytes   */
-  char fsopaque[93];            /* persistent part of FSAL handle */
+#ifdef _USE_PROXY
+  char fsopaque[108];            /* persistent part of FSAL handle */
+#else
+  char fsopaque[61];            /* persistent part of FSAL handle */
+#endif /* _USE_FSAL_PROXY */
   char xattr_pos;               /*                                          len = 1 byte    */
 } file_handle_v4_t;
 
@@ -130,5 +136,7 @@ void sprint_fhandle3(char *str, nfs_fh3 fh);
 void sprint_fhandle4(char *str, nfs_fh4 fh);
 void sprint_buff(char *str, char *buff, int len);
 void sprint_mem(char *str, char *buff, int len);
+
+void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr) ;
 
 #endif                          /* _NFS_FILE_HANDLE_H */

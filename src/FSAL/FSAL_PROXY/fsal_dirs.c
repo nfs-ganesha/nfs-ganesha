@@ -169,7 +169,7 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
    }
 
   LogFullDebug(COMPONENT_FSAL, "---> Readdir Offset=%llu sizeof(entry4)=%u sizeof(fsal_dirent_t)=%u \n",
-               start_position, sizeof(entry4), sizeof(fsal_dirent_t));
+               (unsigned long long)start_position.data, sizeof(entry4), sizeof(fsal_dirent_t));
 
   /* >> retrieve root handle filehandle here << */
   bitmap.bitmap4_len = 2;

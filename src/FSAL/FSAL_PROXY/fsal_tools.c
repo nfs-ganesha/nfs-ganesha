@@ -207,7 +207,7 @@ unsigned int PROXYFSAL_Handle_to_RBTIndex(proxyfsal_handle_t * p_handle,
  *         Else, it is a non null value.
  */
 
-#define NFSV4_FH_OPAQUE_SIZE 95 /* Take care of coherency with size of file_handle_v4_t::fsopaque */
+#define NFSV4_FH_OPAQUE_SIZE 108 /* Take care of coherency with size of file_handle_v4_t::fsopaque */
 
 fsal_status_t PROXYFSAL_DigestHandle(proxyfsal_export_context_t * p_expcontext, /* IN */
                                      fsal_digesttype_t output_type,     /* IN */
