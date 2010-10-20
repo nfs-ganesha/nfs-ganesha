@@ -183,7 +183,7 @@ fsal_status_t FUSEFSAL_open(fusefsal_handle_t * filehandle,     /* IN */
   file_descriptor->context = *p_context;
 
   if(file_info_provided)
-    LogFullDebug(COMPONENT_FSAL, "FSAL_open: FH=%d", file_descriptor->file_info.fh);
+    LogFullDebug(COMPONENT_FSAL, "FSAL_open: FH=%"PRId64, file_descriptor->file_info.fh);
 
   if(file_attributes)
     {
@@ -333,7 +333,7 @@ fsal_status_t FUSEFSAL_read(fusefsal_file_t * file_descriptor,  /* IN */
   /* set context so it can be retrieved by FS */
   fsal_set_thread_context(&file_descriptor->context);
 
-  LogFullDebug(COMPONENT_FSAL, "FSAL_read: FH=%d", file_descriptor->file_info.fh);
+  LogFullDebug(COMPONENT_FSAL, "FSAL_read: FH=%"PRId64, file_descriptor->file_info.fh);
 
   if(seek_descriptor)
     {
@@ -457,7 +457,7 @@ fsal_status_t FUSEFSAL_write(fusefsal_file_t * file_descriptor, /* IN */
   /* set context so it can be retrieved by FS */
   fsal_set_thread_context(&file_descriptor->context);
 
-  LogFullDebug(COMPONENT_FSAL, "FSAL_write: FH=%d", file_descriptor->file_info.fh);
+  LogFullDebug(COMPONENT_FSAL, "FSAL_write: FH=%"PRId64, file_descriptor->file_info.fh);
 
   /* get file's full path */
   rc = NamespacePath(file_descriptor->file_handle.data.inode,
@@ -566,7 +566,7 @@ fsal_status_t FUSEFSAL_close(fusefsal_file_t * file_descriptor  /* IN */
   /* set context so it can be retrieved by FS */
   fsal_set_thread_context(&file_descriptor->context);
 
-  LogFullDebug(COMPONENT_FSAL, "FSAL_close: FH=%d", file_descriptor->file_info.fh);
+  LogFullDebug(COMPONENT_FSAL, "FSAL_close: FH=%"PRId64, file_descriptor->file_info.fh);
 
   TakeTokenFSCall();
 
