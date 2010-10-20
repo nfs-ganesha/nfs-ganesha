@@ -207,7 +207,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
   hash_buffer_t key, value;
   fsal_attrib_list_t fsal_attributes;
   fsal_status_t fsal_status;
-  cache_content_status_t cache_content_status;
   int i = 0;
   int rc = 0;
   off_t size_in_cache;
@@ -262,7 +261,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
     }
 
   /* if entry is of tyep DIR_CONTINUE or DIR_BEGINNING, it should have a pdir_data */
-  if(type == DIR_BEGINNING || type == DIR_CONTINUE)
+  if(type == DIR_BEGINNING || type == DIR_CONTINUE || type == FS_JUNCTION )
     {
       GetFromPool(pdir_data, &pclient->pool_dir_data, cache_inode_dir_data_t);
       if(pdir_data == NULL)
@@ -277,7 +276,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
           return NULL;
         }
 
-      if(type == DIR_BEGINNING)
+      if(type == DIR_BEGINNING || type == FS_JUNCTION )
         pentry->object.dir_begin.pdir_data = pdir_data;
       else
         pentry->object.dir_cont.pdir_data = pdir_data;
@@ -527,11 +526,47 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       pentry->object.special_obj.attributes = fsal_attributes;
       break;
 
+    case FS_JUNCTION:
+        LogFullDebug(COMPONENT_CACHE_INODE,
+                     "cache_inode_new_entry: Adding a FS_JUNCTION");
+
+        fsal_status = FSAL_lookupJunction( &pfsdata->handle, pcontext, &pentry->object.dir_begin.handle, &fsal_attributes); 
+        if( FSAL_IS_ERROR( fsal_status ) )
+         {
+           *pstatus = cache_inode_error_convert(fsal_status);
+           LogDebug(COMPONENT_CACHE_INODE,
+                            "cache_inode_new_entry: FSAL_lookupJunction failed");
+           ReleaseToPool(pentry, &pclient->pool_entry);
+         }
+
+#ifdef _USE_MFSL
+      pentry->mobject.handle = pentry->object.dir_begin.handle;
+#endif
+      pentry->object.dir_begin.attributes = fsal_attributes;
+
+      pentry->object.dir_begin.has_been_readdir = CACHE_INODE_NO;
+      pentry->object.dir_begin.end_of_dir = END_OF_DIR;
+      pentry->object.dir_begin.pdir_cont = NULL;
+      pentry->object.dir_begin.pdir_last = pentry;
+      pentry->object.dir_begin.nbactive = 0;
+      pentry->object.dir_begin.nbdircont = 0;
+      pentry->object.dir_begin.referral = NULL;
+
+      for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+        {
+          pentry->object.dir_begin.pdir_data->dir_entries[i].active = INVALID;
+          pentry->object.dir_begin.pdir_data->dir_entries[i].pentry = NULL;
+          FSAL_str2name("", 1, &pentry->object.dir_begin.pdir_data->dir_entries[i].name);
+        }
+
+
+      break ;
+
     default:
       /* Should never happen */
       *pstatus = CACHE_INODE_INCONSISTENT_ENTRY;
       LogMajor(COMPONENT_CACHE_INODE,
-                        "/!\\ | cache_inode_new_entry: unknown type provided");
+                        "/!\\ | cache_inode_new_entry: unknown type %u provided", type);
       ReleaseToPool(pentry, &pclient->pool_entry);
 
       /* stat */
@@ -1042,6 +1077,10 @@ cache_inode_file_type_t cache_inode_fsal_type_convert(fsal_nodetype_t type)
       rctype = SOCKET_FILE;
       break;
 
+    case FSAL_TYPE_JUNCTION:
+      rctype = FS_JUNCTION ;
+      break ;
+ 
     default:
       rctype = UNASSIGNED;
       break;
