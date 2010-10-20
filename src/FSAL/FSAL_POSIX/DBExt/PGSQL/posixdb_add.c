@@ -40,7 +40,7 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
 
   CheckConn(p_conn);
 
-  LogFullDebug(COMPONENT_FSAL, "adding entry with parentid=%llu, id=%llu, name=%s\n",
+  LogFullDebug(COMPONENT_FSAL, "adding entry with parentid=%llu, id=%"PRIu64", name=%s\n",
          p_parent_directory_handle ? p_parent_directory_handle->data.id : 0,
          p_object_info ? p_object_info->inode : 0,
          p_filename ? p_filename->name : "NULL");
