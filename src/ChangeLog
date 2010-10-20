@@ -402,4 +402,9 @@
 	  creating file as a regulat user 
 	- New feature : FSAL_ZFS provides access to ZFS snapshot directory
 	  .zfs  based on  ZFS's COW feature.
+
+1.0.3	- 
+        - A regression in FSAL_PROXY was fixed (size of NFSv4 handles)
+
 	 
+	
