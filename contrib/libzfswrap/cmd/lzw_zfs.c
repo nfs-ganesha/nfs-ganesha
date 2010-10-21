@@ -12,6 +12,7 @@ static void usage(const char *psz_prog)
 {
         fprintf(stderr, "Usage: %s list [snapshot]\n", psz_prog);
         fprintf(stderr, "       %s snapshot pool name\n", psz_prog);
+        fprintf(stderr, "       %s destroy pool snapname\n", psz_prog);
         exit(1);
 }
 
@@ -42,6 +43,11 @@ int main(int argc, char *argv[])
         {
                 if(argc != 4) goto error;
                 i_error = libzfswrap_zfs_snapshot(p_zhd, argv[2], argv[3], &psz_error);
+        }
+        else if(!strcmp(argv[1], "destroy"))
+        {
+                if(argc != 4) goto error;
+                i_error = libzfswrap_zfs_snapshot_destroy(p_zhd, argv[2], argv[3], &psz_error);
         }
         else
         {
