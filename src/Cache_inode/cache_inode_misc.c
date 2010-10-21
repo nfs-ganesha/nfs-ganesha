@@ -210,6 +210,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
   int i = 0;
   int rc = 0;
   off_t size_in_cache;
+  cache_content_status_t cache_content_status ;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
@@ -530,7 +531,9 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
         LogFullDebug(COMPONENT_CACHE_INODE,
                      "cache_inode_new_entry: Adding a FS_JUNCTION");
 
-        fsal_status = FSAL_lookupJunction( &pfsdata->handle, pcontext, &pentry->object.dir_begin.handle, &fsal_attributes); 
+        printf( "=====> Junction +++++++++++++++++++++++++++++\n" ) ;
+
+        fsal_status = FSAL_lookupJunction( &pfsdata->handle, pcontext, &pentry->object.dir_begin.handle, NULL); 
         if( FSAL_IS_ERROR( fsal_status ) )
          {
            *pstatus = cache_inode_error_convert(fsal_status);
@@ -538,6 +541,20 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
                             "cache_inode_new_entry: FSAL_lookupJunction failed");
            ReleaseToPool(pentry, &pclient->pool_entry);
          }
+       
+      fsal_attributes.asked_attributes = pclient->attrmask;
+      fsal_status = FSAL_getattrs( &pentry->object.dir_begin.handle, pcontext, &fsal_attributes);
+      if( FSAL_IS_ERROR( fsal_status ) )
+         {
+           *pstatus = cache_inode_error_convert(fsal_status);
+           LogDebug(COMPONENT_CACHE_INODE,
+                            "cache_inode_new_entry: FSAL_getattrs on junction fh failed");
+           ReleaseToPool(pentry, &pclient->pool_entry);
+         }
+
+
+      /* Fake FS_JUNCTION into directory */
+      pentry->internal_md.type = DIR_BEGINNING;
 
 #ifdef _USE_MFSL
       pentry->mobject.handle = pentry->object.dir_begin.handle;
@@ -965,6 +982,7 @@ void cache_inode_get_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
       *pattr = pentry->object.symlink.attributes;
       break;
 
+    case FS_JUNCTION:
     case DIR_BEGINNING:
       *pattr = pentry->object.dir_begin.attributes;
       break;
@@ -1011,6 +1029,7 @@ void cache_inode_set_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
       pentry->object.symlink.attributes = *pattr;
       break;
 
+    case FS_JUNCTION:
     case DIR_BEGINNING:
       pentry->object.dir_begin.attributes = *pattr;
       break;

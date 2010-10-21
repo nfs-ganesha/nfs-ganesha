@@ -322,8 +322,8 @@ fsal_status_t HPSSFSAL_DigestHandle(hpssfsal_export_context_t * p_expcontext,   
           char buffer[128];
           snprintmem(buffer, 128, (caddr_t) & (in_fsal_handle->data.ns_handle.CoreServerUUID),
                      sizeof(TYPE_UUIDT));
-          LogDebug(COMPONENT_FSAL,
-                            "Invalid CoreServerUUID in HPSS handle: %s", buffer);
+          LogMajor(COMPONENT_FSAL,
+                   "Invalid CoreServerUUID in HPSS handle: %s", buffer);
         }
 
       /* building digest :
