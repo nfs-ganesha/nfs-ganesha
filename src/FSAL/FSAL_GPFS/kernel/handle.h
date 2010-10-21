@@ -65,21 +65,40 @@ struct readlink_arg
     int size;
 };
 
+
+#ifdef __KERNEL__
 struct stat_arg
 {
     int mountdirfd;
     struct file_handle *handle;
+#if BITS_PER_LONG != 64
+    struct stat64 *buf;
+#else
     struct stat *buf;
+#endif
 };
 
-
-#ifdef __KERNEL__
 extern long name_to_handle_at(int dfd, const char __user * name,
                               struct file_handle __user * handle, int flag);
 extern long open_by_handle(int mountdirfd, struct file_handle __user * handle, int flags);
 extern long link_by_fd(int file_fd, int newdfd, const char __user * newname);
 extern long readlink_by_fd(int fd, char __user * buf, int buffsize);
+#if BITS_PER_LONG != 64
+extern long stat_by_handle(int mountdirfd, struct file_handle __user * handle,
+                           struct stat64 __user *buf);
+#else
 extern long stat_by_handle(int mountdirfd, struct file_handle __user * handle,
                            struct stat __user *buf);
+#endif
+#else
+/* User space definition of with stat64 */
+
+struct stat_arg
+{
+    int mountdirfd;
+    struct file_handle *handle;
+    struct stat64 *buf;
+};
+
 #endif
 #endif

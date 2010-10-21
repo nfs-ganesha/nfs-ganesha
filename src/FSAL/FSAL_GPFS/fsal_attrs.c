@@ -40,6 +40,9 @@
 #include <unistd.h>
 #include <utime.h>
 
+extern fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
+                                                   fsal_attrib_list_t * p_fsalattr_out);
+
 /**
  * GPFSFSAL_getattrs:
  * Get attributes for the object specified by its filehandle.
@@ -64,10 +67,8 @@ fsal_status_t GPFSFSAL_getattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
                             fsal_attrib_list_t * p_object_attributes    /* IN/OUT */
     )
 {
-  int rc, errsv;
   fsal_status_t st;
-  int fd;
-  struct stat buffstat;
+  struct stat64 buffstat;
 
   /* sanity checks.
    * note : object_attributes is mandatory in GPFSFSAL_getattrs.
@@ -76,30 +77,16 @@ fsal_status_t GPFSFSAL_getattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
 
   TakeTokenFSCall();
-  st = fsal_internal_handle2fd(p_context, p_filehandle, &fd, O_RDONLY);
+  st = fsal_stat_by_handle(p_context,
+                           p_filehandle,
+                           &buffstat);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(st))
     ReturnStatus(st, INDEX_FSAL_getattrs);
 
-  /* get file metadata */
-  TakeTokenFSCall();
-  rc = fstat(fd, &buffstat);
-  errsv = errno;
-  ReleaseTokenFSCall();
-
-  close(fd);
-
-  if(rc != 0)
-    {
-      if(errsv == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_getattrs);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_getattrs);
-    }
-
   /* convert attributes */
-  st = posix2fsal_attributes(&buffstat, p_object_attributes);
+  st = posixstat64_2_fsal_attributes(&buffstat, p_object_attributes);
   if(FSAL_IS_ERROR(st))
     {
       FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
