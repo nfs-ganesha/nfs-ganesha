@@ -29,6 +29,7 @@
 #include <linux/highuid.h>
 #include <asm/uaccess.h>
 
+
 /* Ugly GPFS hack!!! */
 #define NFSEXP_NOSUBTREECHECK	0x0400
 struct cache_head
@@ -593,6 +594,113 @@ long readlink_by_fd(int fd, char __user * buf, int buffsize)
     return error;
 }
 
+long do_sys_stat_by_handle(int mountdirfd, struct file_handle __user * ufh,
+                           struct kstat *stat)
+{
+    long retval = 0;
+    struct dentry *dentry;
+    struct file_handle f_handle;
+    struct vfsmount *mnt = NULL;
+    struct file_handle *handle = NULL;
+
+    if(copy_from_user(&f_handle, ufh, sizeof(struct file_handle)))
+        {
+            retval = -EFAULT;
+            goto out_err;
+        }
+    if((f_handle.handle_size > MAX_HANDLE_SZ) || (f_handle.handle_size <= 0))
+        {
+            retval = -EINVAL;
+            goto out_err;
+        }
+    handle = kmalloc(sizeof(struct file_handle) + f_handle.handle_size, GFP_KERNEL);
+    if(!handle)
+        {
+            retval = -ENOMEM;
+            goto out_err;
+        }
+    /* copy the full handle */
+    if(copy_from_user(handle, ufh, sizeof(struct file_handle) + f_handle.handle_size))
+        {
+            retval = -EFAULT;
+            goto out_handle;
+        }
+    dentry = handle_to_dentry(mountdirfd, handle, &mnt);
+    if(IS_ERR(dentry))
+        {
+            retval = PTR_ERR(dentry);
+            goto out_handle;
+
+
+        }
+    retval = vfs_getattr(mnt, dentry, stat);
+
+    dput(dentry);
+    mntput(mnt);
+out_handle:
+    kfree(handle);
+out_err:
+    return retval;
+}
+
+#if BITS_PER_LONG != 64
+static long cp_new_stat64(struct kstat *stat, struct stat64 __user *statbuf)
+{
+	struct stat64 tmp;
+
+	memset(&tmp, 0, sizeof(struct stat64));
+#ifdef CONFIG_MIPS
+	/* mips has weird padding, so we don't get 64 bits there */
+	if (!new_valid_dev(stat->dev) || !new_valid_dev(stat->rdev))
+		return -EOVERFLOW;
+	tmp.st_dev = new_encode_dev(stat->dev);
+	tmp.st_rdev = new_encode_dev(stat->rdev);
+#else
+	tmp.st_dev = huge_encode_dev(stat->dev);
+	tmp.st_rdev = huge_encode_dev(stat->rdev);
+#endif
+	tmp.st_ino = stat->ino;
+	if (sizeof(tmp.st_ino) < sizeof(stat->ino) && tmp.st_ino != stat->ino)
+		return -EOVERFLOW;
+#ifdef STAT64_HAS_BROKEN_ST_INO
+	tmp.__st_ino = stat->ino;
+#endif
+	tmp.st_mode = stat->mode;
+	tmp.st_nlink = stat->nlink;
+	tmp.st_uid = stat->uid;
+	tmp.st_gid = stat->gid;
+	tmp.st_atime = stat->atime.tv_sec;
+	tmp.st_atime_nsec = stat->atime.tv_nsec;
+	tmp.st_mtime = stat->mtime.tv_sec;
+	tmp.st_mtime_nsec = stat->mtime.tv_nsec;
+	tmp.st_ctime = stat->ctime.tv_sec;
+	tmp.st_ctime_nsec = stat->ctime.tv_nsec;
+	tmp.st_size = stat->size;
+	tmp.st_blocks = stat->blocks;
+	tmp.st_blksize = stat->blksize;
+	return copy_to_user(statbuf,&tmp,sizeof(tmp)) ? -EFAULT : 0;
+}
+
+long stat_by_handle(int mountdirfd, struct file_handle __user * handle,
+                    struct stat64 __user *buf)
+
+{
+    long ret;
+    struct kstat stat;
+
+    if(!capable(CAP_DAC_OVERRIDE))
+        return -EPERM;
+
+    ret = do_sys_stat_by_handle(mountdirfd, handle, &stat);
+    if (ret)
+        return ret;
+
+    ret = cp_new_stat64(&stat, buf);
+    return ret;
+}
+
+#else
+
 static int cp_new_stat(struct kstat *stat, struct stat __user *statbuf)
 {
 	struct stat tmp;
@@ -643,70 +751,21 @@ static int cp_new_stat(struct kstat *stat, struct stat __user *statbuf)
 	return copy_to_user(statbuf,&tmp,sizeof(tmp)) ? -EFAULT : 0;
 }
 
-long do_sys_stat_by_handle(int mountdirfd, struct file_handle __user * ufh,
-                           struct stat __user *ubuf)
-{
-    long retval = 0;
-    struct kstat stat;
-    struct dentry *dentry;
-    struct file_handle f_handle;
-    struct vfsmount *mnt = NULL;
-    struct file_handle *handle = NULL;
-
-    if(copy_from_user(&f_handle, ufh, sizeof(struct file_handle)))
-        {
-            retval = -EFAULT;
-            goto out_err;
-        }
-    if((f_handle.handle_size > MAX_HANDLE_SZ) || (f_handle.handle_size <= 0))
-        {
-            retval = -EINVAL;
-            goto out_err;
-        }
-    handle = kmalloc(sizeof(struct file_handle) + f_handle.handle_size, GFP_KERNEL);
-    if(!handle)
-        {
-            retval = -ENOMEM;
-            goto out_err;
-        }
-    /* copy the full handle */
-    if(copy_from_user(handle, ufh, sizeof(struct file_handle) + f_handle.handle_size))
-        {
-            retval = -EFAULT;
-            goto out_handle;
-        }
-    dentry = handle_to_dentry(mountdirfd, handle, &mnt);
-    if(IS_ERR(dentry))
-        {
-            retval = PTR_ERR(dentry);
-            goto out_handle;
-
-
-        }
-    retval = vfs_getattr(mnt, dentry, &stat);
-    if (retval)
-        goto out_dentry;
-
-    retval = cp_new_stat(&stat, ubuf);
-
-out_dentry:
-    dput(dentry);
-    mntput(mnt);
-out_handle:
-    kfree(handle);
-out_err:
-    return retval;
-}
-
 long stat_by_handle(int mountdirfd, struct file_handle __user * handle,
                     struct stat __user *buf)
 
 {
     long ret;
+    struct kstat stat;
 
     if(!capable(CAP_DAC_OVERRIDE))
         return -EPERM;
 
-    ret = do_sys_stat_by_handle(mountdirfd, handle, buf);
+    ret = do_sys_stat_by_handle(mountdirfd, handle, &stat);
+    if (ret)
+        return ret;
+
+    ret = cp_new_stat(&stat, buf);
     return ret;
 }
+#endif
