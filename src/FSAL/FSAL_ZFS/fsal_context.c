@@ -114,8 +114,6 @@ fsal_status_t ZFSFSAL_BuildExportContext(zfsfsal_export_context_t * p_export_con
   char *p_subop;
   char *value;
 
-  int rc;
-
   /* sanity check */
   if(!p_export_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
@@ -180,8 +178,6 @@ fsal_status_t ZFSFSAL_CleanUpExportContext(zfsfsal_export_context_t * p_export_c
 fsal_status_t ZFSFSAL_InitClientContext(zfsfsal_op_context_t * p_thr_context)
 {
 
-  int rc, i;
-
   /* sanity check */
   if(!p_thr_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
@@ -226,8 +222,6 @@ fsal_status_t ZFSFSAL_GetClientContext(zfsfsal_op_context_t * p_thr_context,  /*
                                        fsal_count_t nb_alt_groups  /* IN */
     )
 {
-
-  fsal_status_t st;
 
   /* sanity check */
   if(!p_thr_context || !p_export_context)

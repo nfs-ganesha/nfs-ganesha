@@ -69,7 +69,6 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
     )
 {
   int rc;
-  fsal_status_t status;
 
   /* sanity checks
    * note : object_attributes is optionnal
@@ -257,9 +256,6 @@ fsal_status_t ZFSFSAL_lookupJunction(zfsfsal_handle_t * p_junction_handle,    /*
                                      fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
     )
 {
-  int rc;
-  fsal_status_t status;
-
   /* sanity checks
    * note : p_fsroot_attributes is optionnal
    */

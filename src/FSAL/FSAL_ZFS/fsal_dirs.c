@@ -57,7 +57,6 @@ fsal_status_t ZFSFSAL_opendir(zfsfsal_handle_t * dir_handle,  /* IN */
     )
 {
   int rc;
-  fsal_status_t st;
 
   /* sanity checks
    * note : dir_attributes is optionnal.
