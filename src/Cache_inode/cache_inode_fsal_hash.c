@@ -103,6 +103,30 @@ unsigned long cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
      * A polynomial function too, but reversed, to avoid
      * producing same value as decimal_simple_hash_func
      */
+    uint32_t h = 0;
+    char printbuf[512];
+
+    cache_inode_fsal_data_t *pfsdata = (cache_inode_fsal_data_t *) (buffclef->pdata);
+
+    h = HashTable_hash_buff(&pfsdata->handle.data, sizeof(pfsdata->handle.data ) );
+
+    if(isFullDebug(COMPONENT_HASHTABLE))
+        {
+            snprintHandle(printbuf, 512, &pfsdata->handle);
+            LogFullDebug(COMPONENT_HASHTABLE, "hash_func rbt: buff = "
+                         "(Handle=%s, Cookie=%u), value=%lu\n",
+                         printbuf, pfsdata->cookie, h);
+        }
+    return h;
+}                               /* cache_inode_fsal_rbt_func */
+
+unsigned long __cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
+                                        hash_buffer_t * buffclef)
+{
+    /*
+     * A polynomial function too, but reversed, to avoid
+     * producing same value as decimal_simple_hash_func
+     */
     unsigned long h = 0;
     char printbuf[512];
 
