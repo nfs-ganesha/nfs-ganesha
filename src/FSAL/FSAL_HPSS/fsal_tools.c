@@ -433,7 +433,7 @@ fsal_status_t HPSSFSAL_ExpandHandle(hpssfsal_export_context_t * p_expcontext,   
 {
 
   /* significant size in nfs digests */
-  int memlen; memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
+  int memlen;
 
   /* sanity checks */
   if(!out_fsal_handle || !in_buff || !p_expcontext)
@@ -443,6 +443,8 @@ fsal_status_t HPSSFSAL_ExpandHandle(hpssfsal_export_context_t * p_expcontext,   
     {
 
     case FSAL_DIGEST_NFSV2:
+      /* core server UUID is always stripped for NFSv2 handles */
+      memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
 
       memset(out_fsal_handle, 0, sizeof(out_fsal_handle->data));
       memcpy(&out_fsal_handle->data.ns_handle, in_buff, memlen);
@@ -456,11 +458,18 @@ fsal_status_t HPSSFSAL_ExpandHandle(hpssfsal_export_context_t * p_expcontext,   
 
     case FSAL_DIGEST_NFSV3:
 
+#ifdef _STRIP_CORESERVER_UUID
+      memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
+#else
+      memlen = sizeof(ns_ObjHandle_t);
+#endif
       memset(out_fsal_handle, 0, sizeof(out_fsal_handle->data));
       memcpy(&out_fsal_handle->data.ns_handle, in_buff, memlen);
 
+#ifdef _STRIP_CORESERVER_UUID
       memcpy(&out_fsal_handle->data.ns_handle.CoreServerUUID,
              &p_expcontext->fileset_root_handle.CoreServerUUID, sizeof(TYPE_UUIDT));
+#endif
 
       out_fsal_handle->data.obj_type = hpss2fsal_type(out_fsal_handle->data.ns_handle.Type);
 
@@ -468,10 +477,19 @@ fsal_status_t HPSSFSAL_ExpandHandle(hpssfsal_export_context_t * p_expcontext,   
 
     case FSAL_DIGEST_NFSV4:
 
+#ifdef _STRIP_CORESERVER_UUID
+      memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
+#else
+      memlen = sizeof(ns_ObjHandle_t);
+#endif
+
       memset(out_fsal_handle, 0, sizeof(out_fsal_handle->data));
       memcpy(&out_fsal_handle->data.ns_handle, in_buff, memlen);
+
+#ifdef _STRIP_CORESERVER_UUID
       memcpy(&out_fsal_handle->data.ns_handle.CoreServerUUID,
              &p_expcontext->fileset_root_handle.CoreServerUUID, sizeof(TYPE_UUIDT));
+#endif
 
       out_fsal_handle->data.obj_type = hpss2fsal_type(out_fsal_handle->data.ns_handle.Type);
 
