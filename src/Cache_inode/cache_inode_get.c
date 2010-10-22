@@ -80,6 +80,17 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
                                fsal_op_context_t * pcontext,
                                cache_inode_status_t * pstatus)
 {
+  return cache_inode_get_located( pfsdata, NULL, pattr, ht, pclient, pcontext, pstatus ) ;
+} /* cache_inode_get */
+
+cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
+                                       cache_entry_t * plocation, 
+                                       fsal_attrib_list_t * pattr,
+                                       hash_table_t * ht,
+                                       cache_inode_client_t * pclient,
+                                       fsal_op_context_t * pcontext,
+                                       cache_inode_status_t * pstatus)
+{
   hash_buffer_t key, value;
   cache_entry_t *pentry = NULL;
   fsal_status_t fsal_status;
@@ -265,14 +276,17 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* valid the found entry, if this is not feasable, returns nothing to the client */
-  P_w(&pentry->lock);
-  if((*pstatus =
-      cache_inode_valid(pentry, CACHE_INODE_OP_GET, pclient)) != CACHE_INODE_SUCCESS)
-    {
-      V_w(&pentry->lock);
-      pentry = NULL;
-    }
-  V_w(&pentry->lock);
+  if( plocation != pentry )
+   {
+     P_w(&pentry->lock);
+     if((*pstatus =
+        cache_inode_valid(pentry, CACHE_INODE_OP_GET, pclient)) != CACHE_INODE_SUCCESS)
+       {
+         V_w(&pentry->lock);
+         pentry = NULL;
+       }
+     V_w(&pentry->lock);
+   }
 
   /* stats */
   pclient->stat.func_stats.nb_success[CACHE_INODE_GET] += 1;
@@ -281,4 +295,4 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
   cache_inode_release_fsaldata_key(&key, pclient);
 
   return pentry;
-}                               /* cache_inode_get */
+}  /* cache_inode_get_located */
