@@ -159,6 +159,14 @@ struct readlink_arg
   char *buffer;
   int size;
 };
+
+struct stat_arg
+{
+    int mountdirfd;
+    struct file_handle *handle;
+    struct stat64 *buf;
+};
+
 /** end of open by handle structures */
 
 #ifndef _USE_SHARED_FSAL

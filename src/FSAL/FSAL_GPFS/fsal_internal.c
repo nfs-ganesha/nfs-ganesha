@@ -886,3 +886,35 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
     ReturnCode(ERR_FSAL_ACCESS, 0);
 
 }
+
+/**
+ * fsal_stat_by_handle:
+ * get the stat value
+ *
+ *
+ * \return status of operation
+ */
+
+fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
+                                  fsal_handle_t * p_handle, struct stat64 *buf)
+{
+  int rc;
+  int dirfd = 0;
+  struct stat_arg statarg;
+
+  if(!p_handle || !p_context || !p_context->export_context)
+      ReturnCode(ERR_FSAL_FAULT, 0);
+
+  dirfd = p_context->export_context->mount_root_fd;
+
+  statarg.mountdirfd = dirfd;
+
+  p_handle->handle.handle_size = OPENHANDLE_HANDLE_LEN;
+  statarg.handle = &p_handle->handle;
+  statarg.buf = buf;
+
+  if((rc = ioctl(open_by_handle_fd, OPENHANDLE_STAT_BY_HANDLE, &statarg)) < 0)
+      ReturnCode(posix2fsal_error(errno), errno);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
