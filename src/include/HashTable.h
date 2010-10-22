@@ -44,6 +44,7 @@
 #include "RW_Lock.h"
 #include "HashData.h"
 #include "log_macros.h"
+#include "lookup3.h"
 
 /**
  * @defgroup HashTableStructs
