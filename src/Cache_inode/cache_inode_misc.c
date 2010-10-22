@@ -531,8 +531,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
         LogFullDebug(COMPONENT_CACHE_INODE,
                      "cache_inode_new_entry: Adding a FS_JUNCTION");
 
-        printf( "=====> Junction +++++++++++++++++++++++++++++\n" ) ;
-
         fsal_status = FSAL_lookupJunction( &pfsdata->handle, pcontext, &pentry->object.dir_begin.handle, NULL); 
         if( FSAL_IS_ERROR( fsal_status ) )
          {
