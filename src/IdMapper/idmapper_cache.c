@@ -98,6 +98,7 @@ unsigned long idmapper_value_hash_func(hash_parameter_t * p_hparam,
   return (unsigned long)(sum % p_hparam->index_size);
 }                               /*  ip_name_value_hash_func */
 
+
 unsigned long namemapper_value_hash_func(hash_parameter_t * p_hparam,
                                          hash_buffer_t * buffclef)
 {
@@ -284,6 +285,15 @@ int idmap_gname_init(nfs_idmap_cache_parameter_t param)
  */
 
 int idmap_compute_hash_value(char *name, uint32_t * phashval)
+{
+   uint32_t res ;
+  
+   res = HashTable_hash_buff( name, strlen( name ) ) ;
+
+    return (int)res ;
+}
+
+int ___idmap_compute_hash_value(char *name, uint32_t * phashval)
 {
   char padded_name[PWENT_MAX_LEN];
   uint64_t computed_value = 0;

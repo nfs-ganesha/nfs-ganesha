@@ -142,4 +142,6 @@ void HashTable_Log(log_components_t component, hash_table_t * ht);
 void HashTable_Print(hash_table_t * ht);
 unsigned int HashTable_GetSize(hash_table_t * ht);
 
+uint32_t HashTable_hash_buff( char * str, uint32_t len ) ;
+
 #endif                          /* _HASHTABLE_H */

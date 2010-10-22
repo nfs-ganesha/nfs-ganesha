@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT( [nfs-ganesha], [1.0.3], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
+AC_INIT( [nfs-ganesha], [1.0.3-beta1], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -451,6 +451,7 @@ case $FSAL in
 		FS_NAME="fuse"
 		;;
 	LUSTRE)
+		AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
 		AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
 		if test "x$have_lustre2_api" != "xyes" ; then
 	            AC_MSG_ERROR([Lustre 2.x and liblustreapi are required])
@@ -472,6 +473,7 @@ case $FSAL in
 		AC_DEFINE([_USE_XFS], 1, [GANESHA exports XFS Filesystem])
  		AC_CHECK_HEADERS([xfs/xfs.h], [], [AC_MSG_ERROR( missing xfs include files)])
                 AC_CHECK_HEADERS([xfs/handle.h], [], [AC_MSG_ERROR(missimg xfs include files)])
+		AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
 		FSAL_CFLAGS=
                 FSAL_LDFLAGS="-lhandle"
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_XFS/libfsalxfs.la"
