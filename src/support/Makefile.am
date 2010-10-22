@@ -17,6 +17,7 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          nfs4_tools.c                       \
                          exports.c                          \
                          fridgethr.c                        \
+                         lookup3.c                          \
                          ../include/nfs_file_handle.h       \
                          ../include/nfs_core.h              \
                          ../include/nfs_tools.h             \
@@ -29,6 +30,7 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          ../include/config_parsing.h        \
                          ../include/fsal.h                  \
                          ../include/log_functions.h         \
+                         ../include/lookup3.h               \
                          ../include/mount.h                 \
                          ../include/nfs23.h                 \
                          ../include/nfs4.h                  \

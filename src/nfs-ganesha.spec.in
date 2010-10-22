@@ -3,7 +3,7 @@
 
 Name: @PACKAGE@ 
 Version: @VERSION@ 
-Release: 1%{?dist}
+Release: @RELEASE@%{?dist}
 Summary: NFS Server running in user space with large cache
 License: LGPLv3
 Group: Applications/System
