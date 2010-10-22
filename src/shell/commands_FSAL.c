@@ -5724,6 +5724,149 @@ int fn_fsal_cross(int argc,     /* IN : number of args in argv */
 
 }
 
+/** Digest/expand a FSAL HANDLE */
+int fn_fsal_handle(int argc,     /* IN : number of args in argv */
+                   char **argv,  /* IN : arg list               */
+                   FILE * output /* IN : output stream          */
+    )
+{
+
+  static char help_handle[] = "usage: handle digest {2|3|4} <handle|path>\n"
+                              "       handle expand {2|3|4} <handle>\n";
+  cmdfsal_thr_info_t *context;
+  char glob_path[FSAL_MAX_PATH_LEN];
+  char buff[1024];
+  char buff2[1024];
+  fsal_handle_t filehdl;
+  fsal_status_t st;
+  int rc;
+  fsal_digesttype_t dt ; /* digest type */
+  size_t            ds ; /* digest size */
+
+
+  /* is the fs initialized ? */
+  if(!is_loaded)
+    {
+      fprintf(output, "Error: filesystem not initialized\n");
+      return -1;
+    }
+
+  /* initialize current thread */
+
+  context = GetFSALCmdContext();
+
+  if(context->is_thread_ok != TRUE)
+    {
+      int rc;
+      rc = Init_Thread_Context(output, context, 0);
+      if(rc != 0)
+        return rc;
+    }
+
+  /* Exactly 3 args expected */
+  if(argc != 4)
+    {
+      fprintf(output, help_handle);
+      return -1;
+    }
+
+  switch( atoi(argv[2]) )
+  {
+        case 2:
+                dt = FSAL_DIGEST_NFSV2;
+                ds = FSAL_DIGEST_SIZE_HDLV2;
+                break;
+        case 3:
+                dt = FSAL_DIGEST_NFSV3;
+                ds = FSAL_DIGEST_SIZE_HDLV3;
+                break;
+        case 4:
+                dt = FSAL_DIGEST_NFSV4;
+                ds = FSAL_DIGEST_SIZE_HDLV4;
+                break;
+        default:
+                fprintf(output, "Unsupported NFS version: '%s' (2, 3 or 4 expected)\n", argv[2]);
+                fprintf(output, help_handle);
+                return EINVAL;
+  }
+
+  /* digest operation */
+  if ( !strcmp(argv[1], "digest") )
+  {
+        /* retrieves object handle */
+        strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
+        if(rc = solvepath(glob_path, FSAL_MAX_PATH_LEN,
+                          argv[3], context->current_dir, &filehdl, output))
+                return rc;
+
+        st = FSAL_DigestHandle(&context->exp_context, dt, &filehdl, buff);
+        if(FSAL_IS_ERROR(st))
+        {
+              snprintHandle(buff, 2 * sizeof(fsal_handle_t) + 1, &filehdl);
+              fprintf(output, "Error executing FSAL_DigestHandle(@%s):", buff);
+              print_fsal_status(output, st);
+              fprintf(output, "\n");
+              return st.major;
+        }
+        /* display the result */
+        snprintmem(buff2, 1024, buff, ds);
+        fprintf(output, "%s\n", buff2);
+  }
+  /* expand operation */
+  else if ( !strcmp(argv[1], "expand") )
+  {
+        memset(buff, 0, 1024);
+        size_t length = strlen(argv[3]);
+        size_t datasize = (length >> 1);
+
+        if(length % 2)
+        {
+          /* if it is not odd: error */
+          fprintf(output,
+                  "handle expand: error: in \"%s\", data length is not a multiple of 8 bits.\n",
+                  argv[3]);
+          return EINVAL;
+        }
+
+        /* try to read hexa from the string */
+        rc = sscanmem(buff, datasize, argv[3]);
+
+        if (rc < 0)
+        {
+                fprintf(output, "Error %d reading digest from command line (%s)",
+                        -rc, argv[3]);
+                return rc;
+        }
+        else if (rc != 2*ds)
+        {
+                fprintf(output, "Unexpected data size for digest type NFSv%s: 2x%u expected, %u read\n",
+                        argv[2], ds, rc);
+                return EINVAL;
+        }
+
+        /* Expand the handle */
+        st = FSAL_ExpandHandle(&context->exp_context, dt, buff, &filehdl);
+        if(FSAL_IS_ERROR(st))
+        {
+              fprintf(output, "Error executing FSAL_ExpandHandle(%s):", argv[3]);
+              print_fsal_status(output, st);
+              fprintf(output, "\n");
+              return st.major;
+        }
+
+        snprintHandle(buff2, 2 * sizeof(fsal_handle_t) + 1, &filehdl);
+        fprintf(output, "@%s\n", buff2);
+  }
+  else
+  {
+      fprintf(output, help_handle);
+      return -1;
+  }
+  return 0;
+}
+
+
+
 /** compare 2 handles. */
 int fn_fsal_handlecmp(int argc, /* IN : number of args in argv */
                       char **argv,      /* IN : arg list   */
