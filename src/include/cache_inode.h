@@ -624,6 +624,14 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
                                fsal_op_context_t * pcontext,
                                cache_inode_status_t * pstatus);
 
+cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
+                                       cache_entry_t * plocation,
+                                       fsal_attrib_list_t * pattr,
+                                       hash_table_t * ht,
+                                       cache_inode_client_t * pclient,
+                                       fsal_op_context_t * pcontext,
+                                       cache_inode_status_t * pstatus) ;
+
 cache_inode_status_t cache_inode_access_sw(cache_entry_t * pentry,
                                            fsal_accessflags_t access_type,
                                            hash_table_t * ht,
