@@ -159,9 +159,9 @@ cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
       /* Call cache_inode_get to populate the cache with the parent entry */
       fsdata.cookie = 0;
 
-      if((pentry_parent = cache_inode_get(&fsdata,
-                                          &object_attributes,
-                                          ht, pclient, pcontext, pstatus)) == NULL)
+      if((pentry_parent = cache_inode_get_located(&fsdata, pentry,
+                                                  &object_attributes,
+                                                  ht, pclient, pcontext, pstatus)) == NULL)
         {
           if(use_mutex)
             V_r(&pentry->lock);

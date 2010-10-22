@@ -199,14 +199,9 @@ fsal_status_t HPSSFSAL_DigestHandle(hpssfsal_export_context_t * p_expcontext,   
                                     caddr_t out_buff    /* OUT */
     )
 {
-
-  /* min size for nfs handle digest. */
-  int memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
-
+  int memlen;
   unsigned32 objid;             /* to store objID */
-
   fsal_u64_t objid64;           /* to cast the objID */
-
   fsal_nodetype_t nodetype;     /* to store object  type */
 
   /* sanity checks */
@@ -218,6 +213,9 @@ fsal_status_t HPSSFSAL_DigestHandle(hpssfsal_export_context_t * p_expcontext,   
 
       /* NFSV2 handle digest */
     case FSAL_DIGEST_NFSV2:
+
+        /* min size for nfs handle digest. */
+        memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
 
       /* The hpss handle must be converted
        * to a 25 bytes handle. To do so,
@@ -242,8 +240,8 @@ fsal_status_t HPSSFSAL_DigestHandle(hpssfsal_export_context_t * p_expcontext,   
           char buffer[128];
           snprintmem(buffer, 128, (caddr_t) & (in_fsal_handle->data.ns_handle.CoreServerUUID),
                      sizeof(TYPE_UUIDT));
-          LogDebug(COMPONENT_FSAL,
-                            "Invalid CoreServerUUID in HPSS handle: %s", buffer);
+          LogMajor(COMPONENT_FSAL,
+                   "Invalid CoreServerUUID in HPSS handle: %s", buffer);
         }
 
       /* building digest :
@@ -259,37 +257,33 @@ fsal_status_t HPSSFSAL_DigestHandle(hpssfsal_export_context_t * p_expcontext,   
       /* NFSV3 handle digest */
     case FSAL_DIGEST_NFSV3:
 
-      /* The hpss handle must be converted
-       * to a 25 bytes handle. To do so,
-       * We copy all the fields from the hpss handle,
-       *  except the Coreserver ID.
-       */
-
-#ifndef _NO_CHECKS
+#ifdef _STRIP_CORESERVER_UUID
+      memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
+#else /* store the whole HPSS handle in the NFS handle */
+      memlen = sizeof(ns_ObjHandle_t);
+#endif
 
       /* sanity check about output size */
-
       if(memlen > FSAL_DIGEST_SIZE_HDLV3)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
-#endif
-
       /* sanity check about core server ID */
 
+#ifdef _STRIP_CORESERVER_UUID
       if(memcmp(&in_fsal_handle->data.ns_handle.CoreServerUUID,
                 &p_expcontext->fileset_root_handle.CoreServerUUID, sizeof(TYPE_UUIDT)))
         {
           char buffer[128];
           snprintmem(buffer, 128, (caddr_t) & (in_fsal_handle->data.ns_handle.CoreServerUUID),
                      sizeof(TYPE_UUIDT));
-          LogDebug(COMPONENT_FSAL,
-                            "Invalid CoreServerUUID in HPSS handle: %s", buffer);
+          LogMajor(COMPONENT_FSAL,
+                   "Invalid CoreServerUUID in HPSS handle: %s", buffer);
         }
+#endif
 
       /* building digest :
        * - fill it with zeros
        * - setting the first bytes to the fsal_handle value
-       *   (except CoreServerUUID)
        */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV3);
       memcpy(out_buff, &(in_fsal_handle->data.ns_handle), memlen);
@@ -299,37 +293,32 @@ fsal_status_t HPSSFSAL_DigestHandle(hpssfsal_export_context_t * p_expcontext,   
       /* NFSV4 handle digest */
     case FSAL_DIGEST_NFSV4:
 
-      /* The hpss handle must be converted
-       * to a 25 bytes handle. To do so,
-       * We copy all the fields from the hpss handle,
-       *  except the Coreserver ID.
-       */
-
-#ifndef _NO_CHECKS
+#ifdef _STRIP_CORESERVER_UUID
+      memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
+#else /* store the whole HPSS handle in the NFS handle */
+      memlen = sizeof(ns_ObjHandle_t);
+#endif
 
       /* sanity check about output size */
-
       if(memlen > FSAL_DIGEST_SIZE_HDLV4)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
-#endif
-
       /* sanity check about core server ID */
-
+#ifdef _STRIP_CORESERVER_UUID
       if(memcmp(&in_fsal_handle->data.ns_handle.CoreServerUUID,
                 &p_expcontext->fileset_root_handle.CoreServerUUID, sizeof(TYPE_UUIDT)))
         {
           char buffer[128];
           snprintmem(buffer, 128, (caddr_t) & (in_fsal_handle->data.ns_handle.CoreServerUUID),
                      sizeof(TYPE_UUIDT));
-          LogDebug(COMPONENT_FSAL,
-                            "Invalid CoreServerUUID in HPSS handle: %s", buffer);
+          LogMajor(COMPONENT_FSAL,
+                   "Invalid CoreServerUUID in HPSS handle: %s", buffer);
         }
+#endif
 
       /* building digest :
        * - fill it with zeros
        * - setting the first bytes to the fsal_handle value
-       *   (except CoreServerUUID)
        */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
       memcpy(out_buff, &(in_fsal_handle->data.ns_handle), memlen);
@@ -444,7 +433,7 @@ fsal_status_t HPSSFSAL_ExpandHandle(hpssfsal_export_context_t * p_expcontext,   
 {
 
   /* significant size in nfs digests */
-  int memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
+  int memlen;
 
   /* sanity checks */
   if(!out_fsal_handle || !in_buff || !p_expcontext)
@@ -454,6 +443,8 @@ fsal_status_t HPSSFSAL_ExpandHandle(hpssfsal_export_context_t * p_expcontext,   
     {
 
     case FSAL_DIGEST_NFSV2:
+      /* core server UUID is always stripped for NFSv2 handles */
+      memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
 
       memset(out_fsal_handle, 0, sizeof(out_fsal_handle->data));
       memcpy(&out_fsal_handle->data.ns_handle, in_buff, memlen);
@@ -467,11 +458,18 @@ fsal_status_t HPSSFSAL_ExpandHandle(hpssfsal_export_context_t * p_expcontext,   
 
     case FSAL_DIGEST_NFSV3:
 
+#ifdef _STRIP_CORESERVER_UUID
+      memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
+#else
+      memlen = sizeof(ns_ObjHandle_t);
+#endif
       memset(out_fsal_handle, 0, sizeof(out_fsal_handle->data));
       memcpy(&out_fsal_handle->data.ns_handle, in_buff, memlen);
 
+#ifdef _STRIP_CORESERVER_UUID
       memcpy(&out_fsal_handle->data.ns_handle.CoreServerUUID,
              &p_expcontext->fileset_root_handle.CoreServerUUID, sizeof(TYPE_UUIDT));
+#endif
 
       out_fsal_handle->data.obj_type = hpss2fsal_type(out_fsal_handle->data.ns_handle.Type);
 
@@ -479,10 +477,19 @@ fsal_status_t HPSSFSAL_ExpandHandle(hpssfsal_export_context_t * p_expcontext,   
 
     case FSAL_DIGEST_NFSV4:
 
+#ifdef _STRIP_CORESERVER_UUID
+      memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
+#else
+      memlen = sizeof(ns_ObjHandle_t);
+#endif
+
       memset(out_fsal_handle, 0, sizeof(out_fsal_handle->data));
       memcpy(&out_fsal_handle->data.ns_handle, in_buff, memlen);
+
+#ifdef _STRIP_CORESERVER_UUID
       memcpy(&out_fsal_handle->data.ns_handle.CoreServerUUID,
              &p_expcontext->fileset_root_handle.CoreServerUUID, sizeof(TYPE_UUIDT));
+#endif
 
       out_fsal_handle->data.obj_type = hpss2fsal_type(out_fsal_handle->data.ns_handle.Type);
 
