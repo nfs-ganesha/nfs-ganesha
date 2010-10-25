@@ -185,8 +185,11 @@ struct stat_arg
 
 typedef struct
 {
-//  unsigned int fsid[2];
-  struct file_handle handle;
+  struct
+  {
+    //  unsigned int fsid[2];
+    struct file_handle handle;
+  } data ;
 } gpfsfsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */

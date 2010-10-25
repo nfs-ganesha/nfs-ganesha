@@ -77,11 +77,11 @@ int GPFSFSAL_handlecmp(gpfsfsal_handle_t * handle1, gpfsfsal_handle_t * handle2,
       return -1;
     }
 
-  if(handle1->handle.handle_size != handle2->handle.handle_size)
+  if(handle1->data.handle.handle_size != handle2->data.handle.handle_size)
     return -2;
 
   if(memcmp
-     (handle1->handle.f_handle, handle2->handle.f_handle, handle1->handle.handle_size))
+     (handle1->data.handle.f_handle, handle2->data.handle.f_handle, handle1->data.handle.handle_size))
     //FSF && (handle1->fsid[0] == handle2->fsid[0])
     //FSF && (handle1->fsid[1] == handle2->fsid[1]) )
     return -3;
@@ -115,24 +115,24 @@ unsigned int GPFSFSAL_Handle_to_HashIndex(gpfsfsal_handle_t * p_handle,
    * chars after the end of the handle. We must avoid this by skipping the last loop
    * and doing a special processing for the last bytes */
 
-  mod = p_handle->handle.handle_size % sizeof(unsigned int);
+  mod = p_handle->data.handle.handle_size % sizeof(unsigned int);
 
   sum = cookie;
-  for(cpt = 0; cpt < p_handle->handle.handle_size - mod; cpt += sizeof(unsigned int))
+  for(cpt = 0; cpt < p_handle->data.handle.handle_size - mod; cpt += sizeof(unsigned int))
     {
-      memcpy(&extract, &(p_handle->handle.f_handle[cpt]), sizeof(unsigned int));
+      memcpy(&extract, &(p_handle->data.handle.f_handle[cpt]), sizeof(unsigned int));
       sum = (3 * sum + 5 * extract + 1999) % index_size;
     }
 
   if(mod)
     {
       extract = 0;
-      for(cpt = p_handle->handle.handle_size - mod; cpt < p_handle->handle.handle_size;
+      for(cpt = p_handle->data.handle.handle_size - mod; cpt < p_handle->data.handle.handle_size;
           cpt++)
         {
           /* shift of 1 byte */
           extract <<= 8;
-          extract |= (unsigned int)p_handle->handle.f_handle[cpt];
+          extract |= (unsigned int)p_handle->data.handle.f_handle[cpt];
         }
       sum = (3 * sum + 5 * extract + 1999) % index_size;
     }
@@ -165,23 +165,23 @@ unsigned int GPFSFSAL_Handle_to_RBTIndex(gpfsfsal_handle_t * p_handle, unsigned 
    * chars after the end of the handle. We must avoid this by skipping the last loop
    * and doing a special processing for the last bytes */
 
-  mod = p_handle->handle.handle_size % sizeof(unsigned int);
+  mod = p_handle->data.handle.handle_size % sizeof(unsigned int);
 
-  for(cpt = 0; cpt < p_handle->handle.handle_size - mod; cpt += sizeof(unsigned int))
+  for(cpt = 0; cpt < p_handle->data.handle.handle_size - mod; cpt += sizeof(unsigned int))
     {
-      memcpy(&extract, &(p_handle->handle.f_handle[cpt]), sizeof(unsigned int));
+      memcpy(&extract, &(p_handle->data.handle.f_handle[cpt]), sizeof(unsigned int));
       h = (857 * h ^ extract) % 715827883;
     }
 
   if(mod)
     {
       extract = 0;
-      for(cpt = p_handle->handle.handle_size - mod; cpt < p_handle->handle.handle_size;
+      for(cpt = p_handle->data.handle.handle_size - mod; cpt < p_handle->data.handle.handle_size;
           cpt++)
         {
           /* shift of 1 byte */
           extract <<= 8;
-          extract |= (unsigned int)p_handle->handle.f_handle[cpt];
+          extract |= (unsigned int)p_handle->data.handle.f_handle[cpt];
         }
       h = (857 * h ^ extract) % 715827883;
     }
@@ -255,7 +255,7 @@ fsal_status_t GPFSFSAL_DigestHandle(gpfsfsal_export_context_t * p_expcontext,   
 
       /* sanity check about output size */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID2);
-      memcpy(out_buff, p_in_fsal_handle->handle.f_handle, sizeof(int));
+      memcpy(out_buff, p_in_fsal_handle->data.handle.f_handle, sizeof(int));
 
       break;
 
@@ -264,14 +264,14 @@ fsal_status_t GPFSFSAL_DigestHandle(gpfsfsal_export_context_t * p_expcontext,   
 
       /* sanity check about output size */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID3);
-      memcpy(out_buff, p_in_fsal_handle->handle.f_handle, sizeof(fsal_u64_t));
+      memcpy(out_buff, p_in_fsal_handle->data.handle.f_handle, sizeof(fsal_u64_t));
       break;
 
       /* FileId digest for NFSv4 */
     case FSAL_DIGEST_FILEID4:
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID4);
-      memcpy(out_buff, p_in_fsal_handle->handle.f_handle, sizeof(fsal_u64_t));
+      memcpy(out_buff, p_in_fsal_handle->data.handle.f_handle, sizeof(fsal_u64_t));
       break;
 
     default:
