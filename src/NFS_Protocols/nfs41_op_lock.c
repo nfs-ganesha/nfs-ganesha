@@ -124,7 +124,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   resp->resop = NFS4_OP_LOCK;
   res_LOCK4.status = NFS4ERR_LOCK_NOTSUPP;
 
-#ifndef _WITH_NFSV4_LOCKS
+#ifdef _WITH_NO_NFSV41_LOCKS
   return res_LOCK4.status;
 #else
 
