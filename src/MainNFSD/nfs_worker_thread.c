@@ -694,12 +694,13 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                    "Dupreq #%u was asked for process since another thread manage it, reject for avoiding threads starvation...",
                    rpcxid);
           /* Free the arguments */
-          if(!SVC_FREEARGS(ptr_svc, funcdesc.xdr_decode_func, (caddr_t) parg_nfs))
-            {
-              LogCrit(COMPONENT_DISPATCH,
-                      "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
-                      funcdesc.funcname);
-            }
+          if(preqnfs->req.rq_vers == 2 || preqnfs->req.rq_vers == 3 || preqnfs->req.rq_vers == 4)
+            if(!SVC_FREEARGS(ptr_svc, funcdesc.xdr_decode_func, (caddr_t) parg_nfs))
+              {
+                LogCrit(COMPONENT_DISPATCH,
+                        "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
+                        funcdesc.funcname);
+              }
           return;
         }
     }
@@ -1073,12 +1074,13 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   /* Free the allocated resources once the work is done */
 
   /* Free the arguments */
-  if(!SVC_FREEARGS(ptr_svc, funcdesc.xdr_decode_func, (caddr_t) parg_nfs))
-    {
-      LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
-              funcdesc.funcname);
-    }
-
+  if(preqnfs->req.rq_vers == 2 || preqnfs->req.rq_vers == 3 || preqnfs->req.rq_vers == 4)
+    if(!SVC_FREEARGS(ptr_svc, funcdesc.xdr_decode_func, (caddr_t) parg_nfs))
+      {
+        LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
+                funcdesc.funcname);
+      }
+  
   /* Free the reply.
    * This should not be done if the request is dupreq cached because this will
    * mark the dupreq cached info eligible for being reuse by other requests */
