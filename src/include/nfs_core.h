@@ -561,6 +561,7 @@ int nfs_Init_gc_counter(void);
 void constructor_nfs_request_data_t(void *ptr);
 
 /* Config parsing routines */
+int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t * out_parameter);
 int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam);
 int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * pparam);
 int nfs_read_dupreq_hash_conf(config_file_t in_config,
