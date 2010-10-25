@@ -83,6 +83,28 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
   return cache_inode_get_located( pfsdata, NULL, pattr, ht, pclient, pcontext, pstatus ) ;
 } /* cache_inode_get */
 
+/**
+ *
+ * cache_inode_geti_located: Gets an entry by using its fsdata as a key and caches it if needed, with origin information.
+ * 
+ * Gets an entry by using its fsdata as a key and caches it if needed, with origin/location information.
+ * The reason to this call is cross-junction management : you can go through a directory that it its own parent from a 
+ * FSAL point of view. This could lead to hang (same P_w taken twice on the same entry). To deal this, a check feature is 
+ * added through the plocation argument.
+ * ASSUMPTION: DIR_CONT entries are always garbabbaged before their related DIR_BEGINNG 
+ *
+ * @param fsdata [IN] file system data
+ * @param plocation [IN] pentry used as "location form where the call is done". Usually a son of a parent entry
+ * @param pattr [OUT] pointer to the attributes for the result. 
+ * @param ht [IN] hash table used for the cache, unused in this call.
+ * @param pclient [INOUT] ressource allocated by the client for the nfs management.
+ * @param pcontext [IN] FSAL credentials 
+ * @param pstatus [OUT] returned status.
+ * 
+ * @return the pointer to the entry is successfull, NULL otherwise.
+ *
+ */
+
 cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
                                        cache_entry_t * plocation, 
                                        fsal_attrib_list_t * pattr,
@@ -276,16 +298,19 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* valid the found entry, if this is not feasable, returns nothing to the client */
-  if( plocation != pentry )
+  if( plocation != NULL )
    {
-     P_w(&pentry->lock);
-     if((*pstatus =
-        cache_inode_valid(pentry, CACHE_INODE_OP_GET, pclient)) != CACHE_INODE_SUCCESS)
-       {
-         V_w(&pentry->lock);
-         pentry = NULL;
-       }
-     V_w(&pentry->lock);
+     if( plocation != pentry )
+      {
+        P_w(&pentry->lock);
+        if((*pstatus =
+           cache_inode_valid(pentry, CACHE_INODE_OP_GET, pclient)) != CACHE_INODE_SUCCESS)
+          {
+            V_w(&pentry->lock);
+            pentry = NULL;
+          }
+        V_w(&pentry->lock);
+      }
    }
 
   /* stats */
