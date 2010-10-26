@@ -677,6 +677,9 @@ unsigned long client_id_value_hash_func(hash_parameter_t * p_hparam,
                                         hash_buffer_t * buffclef);
 unsigned long client_id_value_hash_func_reverse(hash_parameter_t * p_hparam,
                                                 hash_buffer_t * buffclef);
+unsigned int client_id_value_both_reverse( hash_parameter_t * p_hparam,
+				           hash_buffer_t    * buffclef, 
+				           uint32_t * phashval, uint32_t * prbtval ) ;
 
 unsigned long idmapper_rbt_hash_func(hash_parameter_t * p_hparam,
                                      hash_buffer_t * buffclef);

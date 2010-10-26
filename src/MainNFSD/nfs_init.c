@@ -474,6 +474,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->client_id_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_CLIENT_ID;
   p_nfs_param->client_id_param.hash_param.hash_func_key = client_id_value_hash_func;
   p_nfs_param->client_id_param.hash_param.hash_func_rbt = client_id_rbt_hash_func;
+  p_nfs_param->client_id_param.hash_param.hash_func_both = NULL ;
   p_nfs_param->client_id_param.hash_param.compare_key = compare_client_id;
   p_nfs_param->client_id_param.hash_param.key_to_str = display_client_id;
   p_nfs_param->client_id_param.hash_param.val_to_str = display_client_id_val;
@@ -484,10 +485,10 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->client_id_param.hash_param_reverse.alphabet_length = 10; /* ipaddr is a numerical decimal value */
   p_nfs_param->client_id_param.hash_param_reverse.nb_node_prealloc =
       NB_PREALLOC_HASH_CLIENT_ID;
-  p_nfs_param->client_id_param.hash_param_reverse.hash_func_key =
-      client_id_value_hash_func_reverse;
-  p_nfs_param->client_id_param.hash_param_reverse.hash_func_rbt =
-      client_id_rbt_hash_func_reverse;
+  p_nfs_param->client_id_param.hash_param_reverse.hash_func_key = NULL ;
+  p_nfs_param->client_id_param.hash_param_reverse.hash_func_rbt = NULL ;
+  p_nfs_param->client_id_param.hash_param_reverse.hash_func_both =
+	client_id_value_both_reverse ;
   p_nfs_param->client_id_param.hash_param_reverse.compare_key = compare_client_id_reverse;
   p_nfs_param->client_id_param.hash_param_reverse.key_to_str = display_client_id_reverse;
   p_nfs_param->client_id_param.hash_param_reverse.val_to_str = display_client_id_val;
