@@ -357,6 +357,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->krb5_param.hash_param.nb_node_prealloc = NB_PREALLOC_ID_MAPPER;
   p_nfs_param->krb5_param.hash_param.hash_func_key = gss_ctx_hash_func;
   p_nfs_param->krb5_param.hash_param.hash_func_rbt = gss_ctx_rbt_hash_func;
+  p_nfs_param->krb5_param.hash_param.hash_func_both = NULL ; /* BUGAZOMEU */
   p_nfs_param->krb5_param.hash_param.compare_key = compare_gss_ctx;
   p_nfs_param->krb5_param.hash_param.key_to_str = display_gss_ctx;
   p_nfs_param->krb5_param.hash_param.val_to_str = display_gss_svc_data;
@@ -554,10 +555,10 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->cache_layers_param.cache_param.hparam.alphabet_length = 10;      /* Buffer seen as a decimal polynom */
   p_nfs_param->cache_layers_param.cache_param.hparam.nb_node_prealloc =
       NB_PREALLOC_HASH_CACHE_INODE;
-  p_nfs_param->cache_layers_param.cache_param.hparam.hash_func_key =
-      cache_inode_fsal_hash_func;
-  p_nfs_param->cache_layers_param.cache_param.hparam.hash_func_rbt =
-      cache_inode_fsal_rbt_func;
+  p_nfs_param->cache_layers_param.cache_param.hparam.hash_func_key = NULL ;
+  p_nfs_param->cache_layers_param.cache_param.hparam.hash_func_rbt = NULL ;
+  p_nfs_param->cache_layers_param.cache_param.hparam.hash_func_both =
+      cache_inode_fsal_rbt_both;
   p_nfs_param->cache_layers_param.cache_param.hparam.compare_key =
       cache_inode_compare_key_fsal;
   p_nfs_param->cache_layers_param.cache_param.hparam.key_to_str = display_cache;

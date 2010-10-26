@@ -290,7 +290,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
 
       /* It this a known client id ? */
-      LogDebug(COMPONENT_NFS_V4, "OPEN Client id = %llx", arg_OPEN4.owner.clientid);
+      LogDebug(COMPONENT_NFS_V4, "OPEN Client id = %llx", (long long unsigned int)arg_OPEN4.owner.clientid);
 
       /* Is this open_owner known ? */
       if(!nfs_convert_open_owner(&arg_OPEN4.owner, &owner_name))

@@ -5839,7 +5839,7 @@ int fn_fsal_handle(int argc,     /* IN : number of args in argv */
         }
         else if (rc != 2*ds)
         {
-                fprintf(output, "Unexpected data size for digest type NFSv%s: 2x%u expected, %u read\n",
+                fprintf(output, "Unexpected data size for digest type NFSv%s: 2x%zu expected, %u read\n",
                         argv[2], ds, rc);
                 return EINVAL;
         }

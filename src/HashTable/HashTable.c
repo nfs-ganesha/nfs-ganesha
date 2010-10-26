@@ -524,11 +524,19 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
   else if(buffval == NULL)
     return HASHTABLE_ERROR_INVALID_ARGUMENT;
 
-  /* Find the RB Tree to be used */
-  hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
-  tete_rbt = &(ht->array_rbt[hashval]);
-  rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
+  /* Compute values to locate into the hashtable */
+  if( ht->parameter.hash_func_both != NULL )
+   {
+      if( (*(ht->parameter.hash_func_both))( &ht->parameter, buffkey, &hashval, &rbt_value ) == 0 ) 
+       return HASHTABLE_ERROR_INVALID_ARGUMENT;
+   }
+  else
+   {
+    hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
+    rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
+   }
 
+  tete_rbt = &(ht->array_rbt[hashval]);
   LogFullDebug(COMPONENT_HASHTABLE,"Key = %p   Value = %p  hashval = %u  rbt_value = %x", buffkey->pdata,
          buffval->pdata, hashval, rbt_value);
 
@@ -643,12 +651,19 @@ int HashTable_Get(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * bu
   if(ht == NULL || buffkey == NULL || buffval == NULL)
     return HASHTABLE_ERROR_INVALID_ARGUMENT;
 
-  /* Find the RB Tree to be processed */
-  hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
-  tete_rbt = &(ht->array_rbt[hashval]);
+  /* Compute values to locate into the hashtable */
+  if( ht->parameter.hash_func_both != NULL )
+   {
+      if( (*(ht->parameter.hash_func_both))( &ht->parameter, buffkey, &hashval, &rbt_value ) == 0 ) 
+       return HASHTABLE_ERROR_INVALID_ARGUMENT;
+   }
+  else
+   {
+    hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
+    rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
+   }
 
-  /* Seek into the RB Tree */
-  rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
+  tete_rbt = &(ht->array_rbt[hashval]);
 
   /* Acquire mutex */
   P_r(&(ht->array_lock[hashval]));
@@ -706,11 +721,17 @@ int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
   if(ht == NULL || buffkey == NULL)
     return HASHTABLE_ERROR_INVALID_ARGUMENT;
 
-  /* Find the RB Tree to be processed */
-  hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
-
-  /* Find the entry to be deleted */
-  rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
+  /* Compute values to locate into the hashtable */
+  if( ht->parameter.hash_func_both != NULL )
+   {
+      if( (*(ht->parameter.hash_func_both))( &ht->parameter, buffkey, &hashval, &rbt_value ) == 0 ) 
+       return HASHTABLE_ERROR_INVALID_ARGUMENT;
+   }
+  else
+   {
+    hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
+    rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
+   }
 
   /* acquire mutex */
   P_w(&(ht->array_lock[hashval]));
@@ -914,8 +935,21 @@ void HashTable_Log(log_components_t component, hash_table_t * ht)
         ht->parameter.key_to_str(&(pdata->buffkey), dispkey);
         ht->parameter.val_to_str(&(pdata->buffval), dispval);
 
-        hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, &(pdata->buffkey));
-        rbtval = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, &(pdata->buffkey));
+        /* Compute values to locate into the hashtable */
+        if( ht->parameter.hash_func_both != NULL )
+         {
+           if( (*(ht->parameter.hash_func_both))( &ht->parameter, &(pdata->buffkey), (uint32_t *)&hashval, (uint32_t *)&rbtval ) == 0 ) 
+	     {
+               LogCrit(COMPONENT_HASHTABLE,"Possible implementation error at line %u file %s", __LINE__, __FILE__ ) ;
+               hashval = 0 ;
+               rbtval = 0 ;
+             }
+          }
+        else
+          {
+            hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, &(pdata->buffkey));
+            rbtval = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, &(pdata->buffkey));
+          }
 
         LogFullDebug(component, "%s => %s; hashval=%lu rbtval=%lu\n ", dispkey, dispval, hashval, rbtval);
         RBT_INCREMENT(it);

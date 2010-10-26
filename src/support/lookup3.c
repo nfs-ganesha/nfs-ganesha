@@ -44,6 +44,7 @@ on 1 byte), but shoehorning those bytes into integers efficiently is messy.
 #endif
 
 #include <inttypes.h> 
+#include "config.h"
 
 /*
  * My best guess at if you are big-endian or little-endian.  This may
@@ -776,5 +777,14 @@ uint32_t Lookup3_hash_buff( char * str, uint32_t len )
 #endif
 
   return ret ;
+} /* HashTable_hash_buff */
+
+void Lookup3_hash_buff_dual( char * str, uint32_t len, uint32_t * pval1, uint32_t *pval2 )
+{
+#ifdef LITTLEEND
+  hashlittle2( (caddr_t)str, (size_t)len, pval1, pval2 ) ;
+#else
+  hashword2( (caddr_t)str, (size_t)len, pval1, pval2 ) ;
+#endif
 } /* HashTable_hash_buff */
 

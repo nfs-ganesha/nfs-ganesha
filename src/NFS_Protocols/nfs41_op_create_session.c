@@ -109,7 +109,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   res_CREATE_SESSION4.csr_status = NFS4_OK;
   clientid = arg_CREATE_SESSION4.csa_clientid;
 
-  LogDebug(COMPONENT_NFS_V4, "CREATE_SESSION clientid = %llx", clientid);
+  LogDebug(COMPONENT_NFS_V4, "CREATE_SESSION clientid = %llx", (long long unsigned int)clientid);
 
   /* Does this id already exists ? */
   if(nfs_client_id_Get_Pointer(clientid, &pnfs_clientid) != CLIENT_ID_SUCCESS)

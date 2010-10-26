@@ -239,7 +239,7 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   offset = arg_WRITE4.offset;
   size = arg_WRITE4.data.data_len;
   stable_how = arg_WRITE4.stable;
-  LogFullDebug(COMPONENT_NFS_V4,"   NFS4_OP_WRITE: offset = %llu  length = %llu   stable = %d", offset, size,
+  LogFullDebug(COMPONENT_NFS_V4,"   NFS4_OP_WRITE: offset = %llu  length = %llu   stable = %d", (unsigned long long)offset, size,
          stable_how);
 
   if((data->pexport->options & EXPORT_OPTION_MAXOFFSETWRITE) ==
@@ -265,7 +265,7 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Where are the data ? */
   bufferdata = arg_WRITE4.data.data_val;
 
-  LogFullDebug(COMPONENT_NFS_V4, "             NFS4_OP_WRITE: offset = %llu  length = %llu", offset, size);
+  LogFullDebug(COMPONENT_NFS_V4, "             NFS4_OP_WRITE: offset = %llu  length = %llu", (unsigned long long)offset, size);
 
   /* if size == 0 , no I/O) are actually made and everything is alright */
   if(size == 0)

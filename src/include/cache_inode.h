@@ -1096,6 +1096,9 @@ unsigned long cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,
                                          hash_buffer_t * buffclef);
 unsigned long cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
                                         hash_buffer_t * buffclef);
+unsigned int cache_inode_fsal_rbt_both( hash_parameter_t * p_hparam,
+				        hash_buffer_t    * buffclef, 
+				        uint32_t * phashval, uint32_t * prbtval ) ;
 int display_key(hash_buffer_t * pbuff, char *str);
 int display_not_implemented(hash_buffer_t * pbuff, char *str);
 int display_value(hash_buffer_t * pbuff, char *str);
