@@ -200,6 +200,7 @@ int main(int argc, char *argv[])
   hparam.nb_node_prealloc = NB_PREALLOC;
   hparam.hash_func_key = simple_hash_func;
   hparam.hash_func_rbt = rbt_hash_func;
+  hparam.hash_func_both = NULL ; /* BUGAZOMEU */
   hparam.compare_key = compare_string_buffer;
   hparam.key_to_str = display_buff;
   hparam.val_to_str = display_buff;

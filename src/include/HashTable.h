@@ -61,7 +61,9 @@ typedef struct hashparameter__
   unsigned int nb_node_prealloc;                              /**< Number of node to allocated when new nodes are necessary. */
   unsigned long (*hash_func_key) (p_hash_parameter_t, hash_buffer_t *);     /**< Hashing function, returns an integer from 0 to index_size - 1 . */
   unsigned long (*hash_func_rbt) (p_hash_parameter_t, hash_buffer_t *);     /**< Rbt value calculator (for rbt management). */
-  int (*compare_key) (hash_buffer_t *, hash_buffer_t *);                        /**< Function used to compare two keys together. */
+  unsigned int (*hash_func_both) (p_hash_parameter_t, hash_buffer_t *,
+                                  uint32_t * phashval, uint32_t * prbtval ); /**< Rbt + hash value calculator (for rbt management). */
+  int (*compare_key) (hash_buffer_t *, hash_buffer_t *);                     /**< Function used to compare two keys together. */
   int (*key_to_str) (hash_buffer_t *, char *);                                  /**< Function used to convert a key to a string. */
   int (*val_to_str) (hash_buffer_t *, char *);                                  /**< Function used to convert a value to a string. */
   char *name;                                                                   /**< Name of this hash table. */
