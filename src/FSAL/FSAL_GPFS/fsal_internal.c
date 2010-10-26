@@ -547,8 +547,8 @@ fsal_status_t fsal_internal_handle2fd_at(int dirfd,
 
   oarg.mountdirfd = dirfd;
 
-  phandle->handle.handle_size = OPENHANDLE_HANDLE_LEN;
-  oarg.handle = &phandle->handle;
+  phandle->data.handle.handle_size = OPENHANDLE_HANDLE_LEN;
+  oarg.handle = &phandle->data.handle;
   oarg.flags = oflags;
 
   if((rc = ioctl(open_by_handle_fd, OPENHANDLE_OPEN_BY_HANDLE, &oarg)) < 0)
@@ -583,7 +583,7 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  harg.handle = &p_handle->handle;
+  harg.handle = &p_handle->data.handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.name = p_fsalpath->path;
   harg.dfd = AT_FDCWD;
@@ -623,7 +623,7 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
   if(!p_handle || !p_fsalname)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  harg.handle = &p_handle->handle;
+  harg.handle = &p_handle->data.handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.name = p_fsalname->name;
   harg.dfd = dfd;
@@ -653,11 +653,11 @@ fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * p_handle)
   int rc;
   struct name_handle_arg harg;
 
-  if(!p_handle || !&p_handle->handle)
+  if(!p_handle || !&p_handle->data.handle)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  harg.handle = &p_handle->handle;
-  memset(&p_handle->handle, 0, sizeof(struct file_handle));
+  harg.handle = &p_handle->data.handle;
+  memset(&p_handle->data.handle, 0, sizeof(struct file_handle));
 
   harg.handle->handle_size = 20;
   harg.name = NULL;
@@ -721,7 +721,7 @@ fsal_status_t fsal_readlink_by_handle(fsal_op_context_t * p_context,
   fsal_status_t status;
   struct readlink_arg readlinkarg;
 
-  p_handle->handle.handle_size = OPENHANDLE_HANDLE_LEN;
+  p_handle->data.handle.handle_size = OPENHANDLE_HANDLE_LEN;
 
   status = fsal_internal_handle2fd(p_context, p_handle, &fd, O_RDONLY);
 
@@ -909,8 +909,8 @@ fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
 
   statarg.mountdirfd = dirfd;
 
-  p_handle->handle.handle_size = OPENHANDLE_HANDLE_LEN;
-  statarg.handle = &p_handle->handle;
+  p_handle->data.handle.handle_size = OPENHANDLE_HANDLE_LEN;
+  statarg.handle = &p_handle->data.handle;
   statarg.buf = buf;
 
   if((rc = ioctl(open_by_handle_fd, OPENHANDLE_STAT_BY_HANDLE, &statarg)) < 0)
