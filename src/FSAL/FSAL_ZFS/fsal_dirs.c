@@ -21,9 +21,8 @@
 #include "fsal_common.h"
 #include <string.h>
 
-extern libzfswrap_vfs_t **pp_vfs;
-extern char **ppsz_snapshots;
 extern size_t i_snapshots;
+extern snapshot_t *p_snapshots;
 extern time_t ServerBootTime;
 
 /**
@@ -57,7 +56,6 @@ fsal_status_t ZFSFSAL_opendir(zfsfsal_handle_t * dir_handle,  /* IN */
     )
 {
   int rc;
-  fsal_status_t st;
 
   /* sanity checks
    * note : dir_attributes is optionnal.
@@ -170,12 +168,13 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
     ZFSFSAL_VFS_RDLock();
     for(i = 0; i < max_dir_entries && i < i_snapshots; i++)
     {
-      libzfswrap_getroot(pp_vfs[i + start_position.data.cookie + 1],
+      libzfswrap_getroot(p_snapshots[i + start_position.data.cookie + 1].p_vfs,
                          &p_dirent[i].handle.data.zfs_handle);
       p_dirent[i].handle.data.i_snap = i + start_position.data.cookie + 1;
       p_dirent[i].handle.data.type = FSAL_TYPE_DIR;
-      strncpy(p_dirent[i].name.name, ppsz_snapshots[i + start_position.data.cookie], FSAL_MAX_NAME_LEN);
-      p_dirent[i].name.len = strlen(ppsz_snapshots[i + start_position.data.cookie]);
+      strncpy(p_dirent[i].name.name, p_snapshots[i + start_position.data.cookie + 1].psz_name,
+              FSAL_MAX_NAME_LEN);
+      p_dirent[i].name.len = strlen(p_snapshots[i + start_position.data.cookie + 1].psz_name);
 
       fstat.st_dev = i + start_position.data.cookie + 1;
       fstat.st_ino = p_dirent[i].handle.data.zfs_handle.inode;

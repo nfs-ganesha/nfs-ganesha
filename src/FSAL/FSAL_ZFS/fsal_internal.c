@@ -33,9 +33,7 @@ fsal_staticfsinfo_t global_fs_info;
 libzfswrap_handle_t *p_zhd;
 
 size_t i_snapshots;
-char **ppsz_snapshots;
-int *pi_indexes;
-libzfswrap_vfs_t **pp_vfs;
+snapshot_t *p_snapshots;
 pthread_rwlock_t vfs_lock = PTHREAD_RWLOCK_INITIALIZER;
 
 /* filesystem info for your filesystem */

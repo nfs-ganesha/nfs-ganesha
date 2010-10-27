@@ -517,7 +517,6 @@ static int xattr_name_to_id(libzfswrap_vfs_t *p_vfs, zfsfsal_op_context_t *p_con
   unsigned int i;
   char *psz_buffer, *ptr;
   size_t i_size;
-  size_t len = 0;
 
   /* get xattrs */
   TakeTokenFSCall();

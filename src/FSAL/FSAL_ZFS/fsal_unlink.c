@@ -58,7 +58,6 @@ fsal_status_t ZFSFSAL_unlink(zfsfsal_handle_t * parentdir_handle,     /* IN */
   fsal_status_t st;
   int rc, type;
   inogen_t object;
-  zfsfsal_handle_t obj_handle;
 
   /* sanity checks.
    * note : parentdir_attributes are optional.

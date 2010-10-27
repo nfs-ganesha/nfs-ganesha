@@ -693,7 +693,7 @@ static int NamespaceAdd_nl(ino_t parent_ino, dev_t parent_dev, unsigned int pare
                 LogCrit(COMPONENT_FSAL,
                         "NAMESPACE MANAGER: An incompatible direntry was found. Existing: %lX.%lu,%s->%lX.%lu  New:%lX.%lu,%s->%lX.%lu",
                         parent_dev, parent_ino, name, p_node_exist->inode.dev,
-                        p_node_exist->inode.inum, parent_dev, parent_ino, name, entry_ino);
+                        p_node_exist->inode.inum, parent_dev, parent_ino, name, entry_dev, entry_ino);
                 return EEXIST;
               }
           }

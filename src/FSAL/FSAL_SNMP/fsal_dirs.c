@@ -239,7 +239,7 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
               if(isFullDebug(COMPONENT_FSAL))
                 {
                   LogFullDebug(COMPONENT_FSAL,
-                               "FOUND A DIRECT CHILD (LEAF) = %s, parent_oid_len=%d, oid_len=%d, index=%d",
+                               "FOUND A DIRECT CHILD (LEAF) = %s, parent_oid_len=%zu, oid_len=%zu, index=%d",
                                pdirent[cur_nb_entries].name.name, dir_descriptor->node_handle.data.oid_len,
                                p_curr_var->name_length, p_curr_var->index);
                   if(nearest_node)
@@ -354,7 +354,7 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
               if(isFullDebug(COMPONENT_FSAL))
                 {
                   LogFullDebug(COMPONENT_FSAL,
-                               "FOUND A DIRECT CHILD (LEAF) = %s, parent_oid_len=%d, oid_len=%d, index=%d",
+                               "FOUND A DIRECT CHILD (LEAF) = %s, parent_oid_len=%zu, oid_len=%zu, index=%d",
                                pdirent[cur_nb_entries].name.name, dir_descriptor->node_handle.data.oid_len,
                                p_curr_var->name_length, p_curr_var->index);
                   if(nearest_node)

@@ -198,6 +198,16 @@ int libzfswrap_zfs_get_list_snapshots(libzfswrap_handle_t *p_zhd, const char *ps
 int libzfswrap_zfs_snapshot(libzfswrap_handle_t *p_zhd, const char *psz_zfs, const char *psz_snapshot, const char **ppsz_error);
 
 /**
+ * Destroy a snapshot of the given ZFS file system
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_zfs: name of the file system
+ * @param psz_snapshot: name of the snapshot
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zfs_snapshot_destroy(libzfswrap_handle_t *p_zhd, const char *psz_zfs, const char *psz_snapshot, const char **ppsz_error);
+
+/**
  * Mount the given file system
  * @param psz_zpool: the pool to mount
  * @param psz_dir: the directory to mount

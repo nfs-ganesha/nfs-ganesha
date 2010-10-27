@@ -713,6 +713,24 @@ int libzfswrap_zfs_snapshot(libzfswrap_handle_t *p_zhd, const char *psz_zfs, con
 }
 
 /**
+ * Destroy a snapshot of the given ZFS file system
+ * @param p_zhd: the libzfswrap handle
+ * @param psz_zfs: name of the file system
+ * @param psz_snapshot: name of the snapshot
+ * @param ppsz_error: the error message if any
+ * @return 0 in case of success, the error code overwise
+ */
+int libzfswrap_zfs_snapshot_destroy(libzfswrap_handle_t *p_zhd, const char *psz_zfs, const char *psz_snapshot, const char **ppsz_error)
+{
+        int rc = dmu_snapshots_destroy(psz_zfs, psz_snapshot, B_FALSE);
+        if(rc)
+                *ppsz_error = "Unable to destroy the snapshot";
+
+        return rc;
+}
+
+
+/**
  * List the available snapshots for the given zfs
  * @param p_zhd: the libzfswrap handle
  * @param psz_zfs: name of the file system
