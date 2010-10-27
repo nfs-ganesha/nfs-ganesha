@@ -16,6 +16,13 @@
 /* libzfswrap handler, used only when the FSAL is created and destroyed */
 extern libzfswrap_handle_t *p_zhd;
 
+typedef struct
+{
+  char *psz_name;
+  libzfswrap_vfs_t *p_vfs;
+  unsigned int index;
+} snapshot_t;
+
 /* defined the set of attributes supported with POSIX */
 #define POSIX_SUPPORTED_ATTRIBUTES (                                       \
           FSAL_ATTR_SUPPATTR | FSAL_ATTR_TYPE     | FSAL_ATTR_SIZE      | \

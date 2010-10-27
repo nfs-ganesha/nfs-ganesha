@@ -22,9 +22,8 @@
 #include <string.h>
 
 /*@FIXME: do not export pp_vfs */
-extern libzfswrap_vfs_t **pp_vfs;
-extern char **ppsz_snapshots;
 extern size_t i_snapshots;
+extern snapshot_t *p_snapshots;
 
 /**
  * FSAL_lookup :
@@ -161,8 +160,8 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
       {
         ZFSFSAL_VFS_RDLock();
         int i;
-        for(i = 0; i < i_snapshots; i++)
-          if(!strcmp(ppsz_snapshots[i], p_filename->name))
+        for(i = 1; i < i_snapshots + 1; i++)
+          if(!strcmp(p_snapshots[i].psz_name, p_filename->name))
             break;
 
         if(i == i_snapshots)
@@ -171,7 +170,7 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
           Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_lookup);
         }
 
-        libzfswrap_getroot(pp_vfs[i + 1], &object);
+        libzfswrap_getroot(p_snapshots[i].p_vfs, &object);
         ZFSFSAL_VFS_Unlock();
 
         type = S_IFDIR;
