@@ -155,6 +155,25 @@ unsigned long state_id_rbt_hash_func(hash_parameter_t * p_hparam,
   return (unsigned long)(i1 ^ i2 ^ i3);
 }                               /* state_id_rbt_hash_func */
 
+unsigned int state_id_hash_both( hash_parameter_t * p_hparam,
+				 hash_buffer_t    * buffclef, 
+				 uint32_t * phashval, uint32_t * prbtval )
+{
+   uint32_t h1 = 0 ;
+   uint32_t h2 = 0 ;
+
+   Lookup3_hash_buff_dual( (char *)(buffclef->pdata), 12, &h1, &h2 ) ;
+
+    h1 = h1 % p_hparam->index_size ;
+
+    *phashval = h1 ;
+    *prbtval = h2 ; 
+
+   /* Success */
+   return 1 ;
+} /* state_id_hash_both */
+
+
 /**
  *
  * nfs4_Init_state_id: Init the hashtable for Client Id cache.

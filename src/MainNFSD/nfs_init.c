@@ -498,8 +498,9 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->state_id_param.hash_param.index_size = PRIME_STATE_ID;
   p_nfs_param->state_id_param.hash_param.alphabet_length = 10;  /* ipaddr is a numerical decimal value */
   p_nfs_param->state_id_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
-  p_nfs_param->state_id_param.hash_param.hash_func_key = state_id_value_hash_func;
-  p_nfs_param->state_id_param.hash_param.hash_func_rbt = state_id_rbt_hash_func;
+  p_nfs_param->state_id_param.hash_param.hash_func_key = NULL ;
+  p_nfs_param->state_id_param.hash_param.hash_func_rbt = NULL ;
+  p_nfs_param->state_id_param.hash_param.hash_func_both = state_id_hash_both ;
   p_nfs_param->state_id_param.hash_param.compare_key = compare_state_id;
   p_nfs_param->state_id_param.hash_param.key_to_str = display_state_id_key;
   p_nfs_param->state_id_param.hash_param.val_to_str = display_state_id_val;
