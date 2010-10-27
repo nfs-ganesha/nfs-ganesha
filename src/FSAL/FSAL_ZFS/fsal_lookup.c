@@ -21,7 +21,6 @@
 
 #include <string.h>
 
-/*@FIXME: do not export pp_vfs */
 extern size_t i_snapshots;
 extern snapshot_t *p_snapshots;
 
@@ -149,6 +148,8 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
       if(parent_directory_handle->data.zfs_handle.inode == 3 &&
           !strcmp(p_filename->name, ZFS_SNAP_DIR))
       {
+        LogDebug(COMPONENT_FSAL, "Lookup for the .zfs/ pseudo-directory");
+
         object.inode = ZFS_SNAP_DIR_INODE;
         object.generation = 0;
         type = S_IFDIR;
@@ -158,6 +159,8 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
       /* Hook for the files inside the .zfs directory */
       else if(parent_directory_handle->data.zfs_handle.inode == ZFS_SNAP_DIR_INODE)
       {
+        LogDebug(COMPONENT_FSAL, "Lookup inside the .zfs/ pseudo-directory");
+
         ZFSFSAL_VFS_RDLock();
         int i;
         for(i = 1; i < i_snapshots + 1; i++)

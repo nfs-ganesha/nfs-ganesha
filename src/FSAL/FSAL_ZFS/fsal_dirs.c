@@ -79,6 +79,7 @@ fsal_status_t ZFSFSAL_opendir(zfsfsal_handle_t * dir_handle,  /* IN */
   /* Hook for the zfs snapshot directory */
   if(dir_handle->data.zfs_handle.inode == ZFS_SNAP_DIR_INODE)
   {
+    LogDebug(COMPONENT_FSAL, "Opening the .zfs pseudo-directory");
     p_vnode = NULL;
     rc = 0;
   }
@@ -156,6 +157,8 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
   /* Hook to create the pseudo directory */
   if(dir_descriptor->handle.data.zfs_handle.inode == ZFS_SNAP_DIR_INODE)
   {
+    LogDebug(COMPONENT_FSAL, "Listing the snapshots in .zfs/");
+
     int i;
     struct stat fstat;
     memset(&fstat, 0, sizeof(fstat));

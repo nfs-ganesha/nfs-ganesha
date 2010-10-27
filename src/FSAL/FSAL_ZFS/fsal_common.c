@@ -32,9 +32,13 @@ libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfsfsal_handle_t *handle)
   for(i = 1; i < i_snapshots + 1; i++)
   {
     if(p_snapshots[i].index == handle->data.i_snap)
+    {
+      LogFullDebug(COMPONENT_FSAL, "Looking up inside the snapshot n°%d", handle->data.i_snap);
       return p_snapshots[i].p_vfs;
+    }
   }
 
+  LogMajor(COMPONENT_FSAL, "Unable to get the right VFS");
   return NULL;
 }
 

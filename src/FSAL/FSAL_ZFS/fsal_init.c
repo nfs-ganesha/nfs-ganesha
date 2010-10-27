@@ -126,7 +126,7 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
   p_zhd = libzfswrap_init();
   if(!p_zhd)
   {
-    LogCrit(COMPONENT_FSAL,"FSAL INIT: *** ERROR: Unable to initialize the libzfswrap library.");
+    LogCrit(COMPONENT_FSAL, "FSAL INIT: *** ERROR: Unable to initialize the libzfswrap library.");
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
   }
 
@@ -134,8 +134,8 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
   libzfswrap_vfs_t *p_vfs = libzfswrap_mount(init_info->fs_specific_info.psz_zpool, "/tank", "");
   if(!p_vfs)
   {
-    LogMajor(COMPONENT_FSAL,"FSAL INIT: *** ERROR: Unable to mount the file system.");
     libzfswrap_exit(p_zhd);
+    LogCrit(COMPONENT_FSAL, "FSAL INIT: *** ERROR: Unable to mount the file system.");
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
   }
 
@@ -145,8 +145,9 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
   i_snapshots = libzfswrap_zfs_get_list_snapshots(p_zhd, init_info->fs_specific_info.psz_zpool,
                                                   &ppsz_snapshots, &psz_error);
 
-  if(i_snapshots != -1)
+  if(i_snapshots > 0)
   {
+    LogDebug(COMPONENT_FSAL, "FSAL INIT: Found %zu snapshots.", i_snapshots);
     p_snapshots = calloc(i_snapshots + 1, sizeof(*p_snapshots));
     p_snapshots[0].p_vfs = p_vfs;
     p_snapshots[0].index = 0;
@@ -157,7 +158,7 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
       libzfswrap_vfs_t *p_snap_vfs = libzfswrap_mount(ppsz_snapshots[i], ppsz_snapshots[i], "");
       if(!p_snap_vfs)
       {
-        LogMajor(COMPONENT_FSAL, "FSAL INIT: *** ERROR: Unable to mount the snapshot %s", ppsz_snapshots[i]);
+        LogCrit(COMPONENT_FSAL, "FSAL INIT: *** ERROR: Unable to mount the snapshot %s", ppsz_snapshots[i]);
         for(j = i; j >= 0; j--)
           libzfswrap_umount(p_snapshots[j].p_vfs, 1);
 
@@ -176,6 +177,7 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
   }
   else
   {
+    LogDebug(COMPONENT_FSAL, "FSAL INIT: No snapshot found.");
     p_snapshots = calloc(1, sizeof(*p_snapshots));
     p_snapshots[0].p_vfs = p_vfs;
     i_snapshots = 0;
@@ -185,6 +187,7 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
   /* Create a thread to handle snapshot creation */
   if(init_info->fs_specific_info.auto_snapshots)
   {
+    LogDebug(COMPONENT_FSAL, "FSAL INIT: Creating the auto-snapshot thread");
     fs_specific_initinfo_t *fs_configuration = malloc(sizeof(*fs_configuration));
     *fs_configuration = init_info->fs_specific_info;
     if(pthread_create(&snapshot_thread, NULL, SnapshotThread, fs_configuration))
@@ -195,7 +198,10 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
     }
   }
   else
+  {
+    LogDebug(COMPONENT_FSAL, "FSAL INIT: No automatic snapshot creation");
     snapshot_thread = (pthread_t)NULL;
+  }
 
   /* Everything went OK. */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);

@@ -69,7 +69,10 @@ fsal_status_t ZFSFSAL_unlink(zfsfsal_handle_t * parentdir_handle,     /* IN */
 
   /* Hook to prevent removing anything from snapshots */
   if(parentdir_handle->data.i_snap != 0)
+  {
+    LogDebug(COMPONENT_FSAL, "Trying to remove an object from a snapshot");
     Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_unlink);
+  }
 
   TakeTokenFSCall();
 
