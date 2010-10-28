@@ -278,6 +278,12 @@ fsal_status_t ZFSFSAL_getextattrs(zfsfsal_handle_t * p_filehandle, /* IN */
                                   fsal_extattrib_list_t * p_object_attributes /* OUT */
     )
 {
+  /* sanity checks.
+   * note : object_attributes is mandatory in FSAL_getattrs.
+   */
+  if(!p_filehandle || !p_context || !p_object_attributes)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
+
   if( p_object_attributes->asked_attributes & FSAL_ATTR_GENERATION )
     p_object_attributes->generation = p_filehandle->data.zfs_handle.generation;
 
