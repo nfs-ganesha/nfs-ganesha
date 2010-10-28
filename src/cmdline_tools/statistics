@@ -1,0 +1,254 @@
+#!/usr/bin/perl
+
+use strict;
+use IO::Socket;
+use Getopt::Std;
+use Time::HiRes;
+
+# otherwise error catching doesn't work
+$ENV{LC_ALL} = "en_US";
+
+our %opts;
+our $VERSION = "0.1";
+
+our @label = (
+    "NULL", "GETATTR", "SETATTR", "LOOKUP",
+    "ACCESS", "READLINK", "READ", "WRITE",
+    "CREATE", "MKDIR", "SYMLINK", "MKNODE",
+    "REMOVE", "REMOVEDIR", "RENAME", "LINK",
+    "READDIR", "READDIRPLUS", "FSSTAT", "FSINFO",
+    "PATHCONF", "COMMIT"
+    );
+
+our @protocol = (
+    "_null_", "_getattr_", "_setattr_", "_lookup_",
+    "_access_", "_readlink_" , "_read_" ,"_write_",
+    "_create_", "_mkdir_" , "_symlink_" ,"_mknod_",
+    "_remove_", "_rmdir_" , "_rename_" ,"_link_",
+    "_readdir_", "_readdirplus_" , "_fsstat_" ,"_fsinfo_",
+    "_pathconf_", "_commit_" 
+    );
+
+our $NUM_REQUESTS = @label;
+
+our %total1;
+our %total2;
+
+our %await1;
+our %await2;
+
+our %process1;
+our %process2;
+
+sub usage() {
+    print <<USAGE;
+get NFS request statistics from Ganesha
+
+Usage: statistics [-H hostname] [-P port] [options]...
+
+Options:
+   -h        : display help
+   -v        : display version
+   -H        : hostname (required argument)
+   -P        : port (required argument)
+   -V        : NFS version (default is 3)
+   -a        : get await time as well as process time of requests
+   -f        : frequency (in seconds) to collect statistics
+   -o        : collect statistics one time, then exit
+USAGE
+    exit(0);
+}
+
+sub version {
+    my $VERSION = shift(@_);
+    print <<VERSION;
+statistics -- $VERSION
+VERSION
+    exit(0);
+}
+
+sub get_statistics {
+    my $HOSTNAME = shift(@_);
+    my $PORT = shift(@_);
+    my $NFSVERSION = shift(@_);
+    my $DATATYPE = shift(@_);
+
+    my $request_message = "type=${DATATYPE},version=${NFSVERSION}\015\012";
+
+    my $SOCK = open_socket($HOSTNAME, $PORT);
+    $SOCK->autoflush();
+    $SOCK->print($request_message);
+    my $statistics = join('', $SOCK->getlines());
+    close_socket($SOCK);
+
+    my @data = split(' ', $statistics);
+
+    # Now organize the data
+    foreach(0 .. $NUM_REQUESTS) {
+	if ($DATATYPE eq "all_detail") {
+	    my $command = $data[$_*4];
+	    my $total = $data[$_*4+1];
+	    my $await = $data[$_*4+2];
+	    my $process = $data[$_*4+3];
+	    #total
+	    $total2{$label[$_]} = $total1{$label[$_]};
+	    $total1{$label[$_]} = $total;
+	    #await
+	    $await2{$label[$_]} = $await1{$label[$_]};
+	    $await1{$label[$_]} = $await;
+	    #process
+	    $process2{$label[$_]} = $process1{$label[$_]};
+	    $process1{$label[$_]} = $process;
+	} else {
+	    my $command = $data[$_*3];
+	    my $total = $data[$_*3+1];
+	    my $process = $data[$_*3+2];
+	    #total
+	    $total2{$label[$_]} = $total1{$label[$_]};
+	    $total1{$label[$_]} = $total;
+	    #process
+	    $process2{$label[$_]} = $process1{$label[$_]};
+	    $process1{$label[$_]} = $process;
+	}
+    }
+    return @data;
+}
+
+sub open_socket {
+    my $HOSTNAME = shift(@_);
+    my $PORT = shift(@_);
+    my $sock = IO::Socket::INET->new(
+	PeerHost => $HOSTNAME,
+	PeerPort => $PORT,
+	Proto    => 'tcp');
+    die "$!" unless $sock;
+
+    return $sock;
+}
+
+sub close_socket {
+    my $sock = shift(@_);
+    close($sock);
+}
+
+sub print_statistics {
+  my $data = shift(@_);
+  my $DETAIL = shift(@_);
+  my $only_once = shift(@_);
+  my $FREQUENCY = shift(@_);
+
+  if (! $only_once) {
+      print "------------------------------------" . 
+	  "--------------------------------------" . 
+	  "---------------------------------------------\n";
+  }
+  if ($DETAIL eq "all_detail") {
+      my $counter = 0;
+
+      while($counter < $NUM_REQUESTS) {
+	  foreach(0 .. 3) {
+	      if ($label[$counter+$_]) {
+		  print "\t" . $label[$counter+$_] . "\t\t";
+		  if (length(@label[$counter+$_]) < 8) { print "\t"; }
+	      }
+	  }
+	  print "\n";
+	  foreach(0 .. 3) {
+	      if ($label[$counter+$_]) {
+	      print "Tot" . "\t"
+		  . "Await". "\t"
+		  . "Proc" . "\t\t";
+	      }
+	  }
+	  print "\n";
+	  foreach(0 .. 3) {
+	      if ($only_once) {
+		  if ($label[$counter+$_]) {
+		      print $total1{$label[$counter+$_]} . "\t"
+			  . $await1{$label[$counter+$_]} . "\t"
+			  . $process1{$label[$counter+$_]} . "\t\t";
+		  }
+	      } else {
+		  if ($label[$counter+$_]) {
+		      printf("%.0f", ($total1{$label[$counter+$_]} - $total2{$label[$counter+$_]})/$FREQUENCY);
+		      print "\t";
+		      printf("%.0f", ($await1{$label[$counter+$_]} - $await2{$label[$counter+$_]})/$FREQUENCY);
+		      print "\t";
+		      printf("%.0f", ($process1{$label[$counter+$_]} - $process2{$label[$counter+$_]})/$FREQUENCY);
+		      print "\t\t";
+		  }
+	      }
+	  }
+	  print "\n\n";
+      $counter += 4;
+      }
+  } else {
+      my $counter = 0;
+
+      while($counter < $NUM_REQUESTS) {
+	  foreach(0 .. 3) {
+	      if ($label[$counter+$_]) {
+		  print "" . $label[$counter+$_] . "\t\t";
+		  if (length(@label[$counter+$_]) < 8) { print "\t"; }
+	      }
+	  }
+	  print "\n";
+	  foreach(0 .. 3) {
+	      if ($label[$counter+$_]) {
+	      print "Tot" . "\t"
+		  . "Proc" . "\t\t";
+	      }
+	  }
+	  print "\n";
+	  foreach(0 .. 3) {
+	      if ($only_once) {
+		  if ($label[$counter+$_]) {
+		      print $total1{$label[$counter+$_]} . "\t"
+			  . $process1{$label[$counter+$_]} . "\t\t";
+		  }
+	      } else {
+		      print ($total1{$label[$counter+$_]} - $total2{$label[$counter+$_]})/$FREQUENCY . "\t"
+			  . ($process1{$label[$counter+$_]} - $process2{$label[$counter+$_]})/$FREQUENCY . "\t\t";
+	      }
+	  }
+	  print "\n\n";
+      $counter += 4;
+      }
+  }
+}
+
+sub main() {
+    my $data;
+    my $NFSVERSION = 3;
+    my $DATATYPE = "all";
+    my $HOSTNAME;
+    my $PORT;
+    my $FREQUENCY = 1;
+    my $input;
+
+    getopts("vhH:P:af:o",\%opts);
+
+    version($VERSION) unless !$opts{v};
+    usage() unless !($opts{h} or !$opts{H} or !$opts{P});
+
+    $HOSTNAME = $opts{H};
+    $PORT = $opts{P};
+    ($FREQUENCY = $opts{f}) unless !$opts{f};
+    ($NFSVERSION = $opts{V}) unless !$opts{V};
+    ($DATATYPE = "all_detail") unless !$opts{a};
+
+    if ($opts{o}) {
+	$data = get_statistics($HOSTNAME, $PORT, $NFSVERSION, $DATATYPE);
+	print_statistics($data, $DATATYPE, 1, 0);
+    } else {
+	get_statistics($HOSTNAME, $PORT, $NFSVERSION, $DATATYPE);
+	Time::HiRes::sleep($FREQUENCY);
+	while(1) {
+	    get_statistics($HOSTNAME, $PORT, $NFSVERSION, $DATATYPE);
+	    print_statistics($data, $DATATYPE, 0, $FREQUENCY);
+	    Time::HiRes::sleep($FREQUENCY);
+	}
+    }
+}
+
+main();
