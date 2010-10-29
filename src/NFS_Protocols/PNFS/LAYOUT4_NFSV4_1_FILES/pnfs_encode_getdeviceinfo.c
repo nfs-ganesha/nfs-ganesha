@@ -32,7 +32,7 @@
 
 /**
  *
- * pnfs_encode_getdeviceinfo: encodes the addr_body_val structure in GETDEVICEINFO.
+ * pnfs_ds_encode_getdeviceinfo: encodes the addr_body_val structure in GETDEVICEINFO.
  *
  * Encode the addr_body_val structure in GETDEVICEINFO.
  *
@@ -45,7 +45,7 @@
 
 extern nfs_parameter_t nfs_param;
 
-void pnfs_encode_getdeviceinfo(char *buff, unsigned int *plen)
+void pnfs_ds_encode_getdeviceinfo(char *buff, unsigned int *plen)
 {
   unsigned int offset = 0;
   uint32_t int32 = 0;
@@ -113,4 +113,4 @@ void pnfs_encode_getdeviceinfo(char *buff, unsigned int *plen)
 
       *plen = offset;
     }                           /* for */
-}                               /* pnfs_encode_getdeviceinfo */
+}                               /* pnfs_ds_encode_getdeviceinfo */

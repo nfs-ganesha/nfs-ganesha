@@ -107,7 +107,11 @@ cache_inode_create(cache_entry_t * pentry_parent,
     cache_inode_fsal_data_t fsal_data;
     cache_inode_status_t status;
     struct cache_inode_dir_begin__ *dir_begin;
+#ifdef _USE_PNFS
     int pnfs_status;
+    pnfs_fileloc_t pnfs_location ;
+    fsal_extattrib_list_t  npattr_file ;
+#endif
 
     /* Set the return default to CACHE_INODE_SUCCESS */
     *pstatus = CACHE_INODE_SUCCESS;
@@ -389,18 +393,36 @@ cache_inode_create(cache_entry_t * pentry_parent,
        (pcreate_arg != NULL) &&
        (pcreate_arg->use_pnfs == TRUE))
         {
-            pnfs_status = pnfs_create_ds_file(&pclient->pnfsclient,
-                                              pentry->object.file.attributes.fileid,
-                                              &pentry->object.file.pnfs_file.ds_file);
-            if (pnfs_status != NFS4_OK)
-                {
-                    V_w(&pentry_parent->lock);
-                    LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS CREATE DS FILE : Error %u",
-                             pnfs_status);
+            npattr_file.asked_attributes = FSAL_ATTR_GENERATION ;
+            fsal_status = FSAL_getextattrs( &pentry->object.file.handle,  
+					    pcontext, 
+                                            &npattr_file ) ;
+ 
+            if( FSAL_IS_ERROR( fsal_status ) )
+               {
+                  LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS support : can't call FSAL_getextattrs" ) ;
 
-                    *pstatus = CACHE_INODE_IO_ERROR;
-                    return NULL;
-                }
+                  V_w(&pentry_parent->lock);
+
+                  *pstatus = CACHE_INODE_IO_ERROR;
+                  return NULL;
+               }
+
+            pnfs_location.ds_loc.fileid = pentry->object.file.attributes.fileid ;
+            pnfs_location.ds_loc.generation =  npattr_file.generation ;
+
+            pnfs_status = pnfs_create_file( &pclient->pnfsclient,
+					    &pnfs_location,
+                                            &pentry->object.file.pnfs_file ) ;
+            if (pnfs_status != NFS4_OK)
+               {
+                  V_w(&pentry_parent->lock);
+                  LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS CREATE DS FILE : Error %u",
+                           pnfs_status);
+
+                  *pstatus = CACHE_INODE_IO_ERROR;
+                  return NULL;
+               }
         }
 #endif
 

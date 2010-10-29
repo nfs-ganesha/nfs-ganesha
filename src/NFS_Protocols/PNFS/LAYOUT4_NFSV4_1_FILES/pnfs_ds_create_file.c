@@ -4,7 +4,7 @@
 
 /**
  *
- * \file    pnfs_create_ds_file.c
+ * \file    pnfs_ds_create_file.c
  * \brief   pNFS objects creation functions.
  *
  */
@@ -16,6 +16,8 @@
 #ifdef _SOLARIS
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
+
+#include <inttypes.h>
 
 #include <string.h>
 #include <signal.h>
@@ -159,8 +161,8 @@ static int pnfs_create_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
   return NFS4_OK;
 }                               /* pnfs_create_ds_partfile */
 
-int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
-                        fattr4_fileid fileid, pnfs_ds_file_t * pfile)
+int pnfs_ds_create_file(pnfs_client_t * pnfsclient,
+                        pnfs_ds_loc_t * plocation, pnfs_ds_file_t * pfile)
 {
   component4 name;
   char nameval[MAXNAMLEN];
@@ -168,13 +170,14 @@ int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
   int rc;
   unsigned int i = 0;
 
-  if(!pnfsclient || !pfile)
+  if(!pnfsclient || !pfile || !plocation)
     return NFS4ERR_SERVERFAULT;
 
   name.utf8string_val = nameval;
   name.utf8string_len = 0;
 
-  snprintf(filename, MAXNAMLEN, "fileid=%llu", (unsigned long long)fileid);
+  snprintf(filename, MAXNAMLEN, "fileid=%llu,generation=%"PRIu64,
+          (unsigned long long)plocation->fileid, plocation->generation );
 
   if(str2utf8(filename, &name) == -1)
     return NFS4ERR_SERVERFAULT;
@@ -183,7 +186,7 @@ int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
     {
 
       if((rc = pnfs_create_ds_partfile(&(pnfsclient->ds_client[i]),
-                                       name, fileid, &(pfile->filepart[i]))) != NFS4_OK)
+                                       name, plocation->fileid, &(pfile->filepart[i]))) != NFS4_OK)
         return rc;
 
     }                           /* for */
@@ -192,4 +195,4 @@ int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
   pfile->stripe = pnfsclient->nb_ds;
 
   return NFS4_OK;
-}                               /* pnfs_create_ds_file */
+}                               /* pnfs_ds_create_file */
