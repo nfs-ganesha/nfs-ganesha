@@ -263,8 +263,6 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
   int to_remove_numlinks = 0;
 #ifdef _USE_PNFS
   int pnfs_status;
-  pnfs_fileloc_t pnfs_location ;
-  fsal_extattrib_list_t  npattr_file ;
 #endif
 
   /* stats */
@@ -528,31 +526,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
             }
 #ifdef _USE_PNFS
           if(to_remove_entry->object.file.pnfs_file.ds_file.allocated == TRUE)
-            {
-              npattr_file.asked_attributes = FSAL_ATTR_GENERATION ;
-              fsal_status = FSAL_getextattrs( &to_remove_entry->object.file.handle,  
-					      pcontext, 
-                                              &npattr_file ) ;
-
-              if( FSAL_IS_ERROR( fsal_status ) )
-                {
-                  LogDebug(COMPONENT_CACHE_INODE, "REMOVE PNFS support : can't call FSAL_getextattrs" ) ;
-
-                  if(use_mutex)
-                    {
-                      V_w(&to_remove_entry->lock);
-                      V_w(&pentry->lock);
-                    }
-
-                  *pstatus = CACHE_INODE_IO_ERROR;
-                  return *pstatus;
-                }
-
-              pnfs_location.ds_loc.fileid =  to_remove_entry->object.special_obj.attributes.fileid ;
-              pnfs_location.ds_loc.generation =  npattr_file.generation ;
-
+           {
               if((pnfs_status = pnfs_remove_file( &pclient->pnfsclient,
-                                                  &pnfs_location,
                                                   &to_remove_entry->object.file.pnfs_file ) ) != NFS4_OK )
                   {
                   LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS CREATE DS FILE : Error %u",

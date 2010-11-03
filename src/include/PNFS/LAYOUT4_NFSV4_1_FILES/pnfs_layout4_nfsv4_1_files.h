@@ -103,6 +103,12 @@ typedef struct pnfs_client__
   pnfs_ds_client_t ds_client[NB_MAX_PNFS_DS];
 } pnfs_client_t;
 
+typedef struct pnfs_ds_loc__
+{
+  fattr4_fileid fileid ;
+  uint64_t      generation ;
+}  pnfs_ds_loc_t ;
+
 typedef struct pnfs_part_file__
 {
   bool_t is_ganesha;
@@ -115,14 +121,11 @@ typedef struct pnfs_ds_file__
 {
   unsigned int stripe;
   bool_t allocated;
+  pnfs_ds_loc_t location ;
   pnfs_part_file_t filepart[NB_MAX_PNFS_DS];
 } pnfs_ds_file_t;
 
-typedef struct pnfs_ds_loc__
-{
-  fattr4_fileid fileid ;
-  uint64_t      generation ;
-}  pnfs_ds_loc_t ;
+
 
 /* Mandatory functions */
 int pnfs_ds_init( pnfs_client_t * pnfsclient,
@@ -135,7 +138,7 @@ int pnfs_ds_lookup_file( pnfs_client_t * pnfsclient,
                          pnfs_ds_loc_t * plocation, pnfs_ds_file_t * pfile);
 
 int pnfs_ds_unlink_file( pnfs_client_t * pnfsclient,
-                         pnfs_ds_loc_t * plocation, pnfs_ds_file_t * pfile);
+                         pnfs_ds_file_t * pfile);
 
 int pnfs_ds_open_file( pnfs_client_t * pnfsdsclient,
                        pnfs_ds_loc_t * plocation, pnfs_ds_file_t * pfile);

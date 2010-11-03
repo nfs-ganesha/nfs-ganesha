@@ -40,7 +40,8 @@
 #define PNFS_LAYOUTFILE_CREATE_VAL_BUFFER  1024
 
 static int pnfs_create_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
-                                   component4 name, fattr4_fileid fileid,
+                                   component4 name, 
+                                   pnfs_ds_loc_t    * plocation,
                                    pnfs_part_file_t * ppartfile)
 {
   COMPOUND4args argnfs4;
@@ -65,13 +66,13 @@ static int pnfs_create_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
 #define PNFS_LAYOUTFILE_CREATE_IDX_OP_OPEN     2
 #define PNFS_LAYOUTFILE_CREATE_IDX_OP_GETFH    3
 
-  if(!pnfsdsclient || !ppartfile)
+  if(!pnfsdsclient || !ppartfile || !plocation )
     return NFS4ERR_SERVERFAULT;
 
   /* Create the owner */
   snprintf(owner_val, PNFS_LAYOUTFILE_OWNER_LEN,
            "GANESHA/PNFS: pid=%u clnt=%p fileid=%llu", getpid(), pnfsdsclient,
-           (unsigned long long)fileid);
+           (unsigned long long)plocation->fileid);
   owner_len = strnlen(owner_val, PNFS_LAYOUTFILE_OWNER_LEN);
 
   inattr.attrmask.bitmap4_len = 2;
@@ -140,7 +141,7 @@ static int pnfs_create_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
   /* Close the file */
   argnfs4.argarray.argarray_val = argoparray_close_ds_file;
   resnfs4.resarray.resarray_val = resoparray_close_ds_file;
-  argnfs4.argarray.argarray_len = i;
+  argnfs4.argarray.argarray_len = 0;
 
   COMPOUNDV41_ARG_ADD_OP_SEQUENCE(argnfs4, pnfsdsclient->session, pnfsdsclient->sequence);
   pnfsdsclient->sequence += 1;  /* In all cases, failure or not, increment the sequence counter */
@@ -186,11 +187,14 @@ int pnfs_ds_create_file(pnfs_client_t * pnfsclient,
     {
 
       if((rc = pnfs_create_ds_partfile(&(pnfsclient->ds_client[i]),
-                                       name, plocation->fileid, &(pfile->filepart[i]))) != NFS4_OK)
+                                       name, plocation, &(pfile->filepart[i]))) != NFS4_OK)
         return rc;
 
     }                           /* for */
 
+  pfile->location.fileid = plocation->fileid ;
+  pfile->location.generation = plocation->generation ;
+  
   pfile->allocated = TRUE;
   pfile->stripe = pnfsclient->nb_ds;
 

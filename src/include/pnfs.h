@@ -87,7 +87,6 @@ int pnfs_create_file( pnfs_client_t  * pnfsclient,
 		      pnfs_file_t    * pnfs_file ) ;
 
 int pnfs_remove_file( pnfs_client_t  * pnfsclient,
-                      pnfs_fileloc_t * pnfs_fileloc,
                       pnfs_file_t    * pfile ) ;
 
 int pnfs_lookup_file( pnfs_client_t  * pnfsclient,

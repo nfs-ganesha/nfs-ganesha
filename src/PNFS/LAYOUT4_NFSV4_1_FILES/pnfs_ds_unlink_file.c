@@ -36,7 +36,7 @@
 
 #define PNFS_LAYOUTFILE_CREATE_VAL_BUFFER  1024
 static int pnfs_unlink_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
-                                   component4 name, fattr4_fileid fileid,
+                                   component4 name, 
                                    pnfs_part_file_t * ppartfile)
 {
   COMPOUND4args argnfs4;
@@ -46,7 +46,7 @@ static int pnfs_unlink_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
   nfs_resop4 resoparray[PNFS_LAYOUTFILE_NB_OP_UNLINK_DS_FILE];
   unsigned int i;
 
-  if(!pnfsdsclient || !ppartfile)
+  if(!pnfsdsclient || !ppartfile )
     return NFS4ERR_SERVERFAULT;
 
   /* Step 1 OP4_OPEN as OPEN4_CREATE */
@@ -83,7 +83,7 @@ static int pnfs_unlink_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
 }                               /* pnfs_ds_unlink_file */
 
 int pnfs_ds_unlink_file(pnfs_client_t * pnfsclient,
-                        pnfs_ds_loc_t * plocation, pnfs_ds_file_t * pfile)
+                        pnfs_ds_file_t * pfile)
 {
   component4 name;
   char nameval[MAXNAMLEN];
@@ -96,14 +96,14 @@ int pnfs_ds_unlink_file(pnfs_client_t * pnfsclient,
 
   name.utf8string_val = nameval;
   name.utf8string_len = 0;
-  snprintf(filename, MAXNAMLEN, "fileid=%llu,generation=%"PRIu64, (unsigned long long)plocation->fileid, plocation->generation);
+  snprintf(filename, MAXNAMLEN, "fileid=%llu,generation=%"PRIu64, (unsigned long long)pfile->location.fileid, pfile->location.generation);
   if(str2utf8(filename, &name) == -1)
     return NFS4ERR_SERVERFAULT;
 
   for(i = 0; i < pnfsclient->nb_ds; i++)
     {
       if((rc =
-          pnfs_unlink_ds_partfile(&(pnfsclient->ds_client[i]), name, plocation->fileid,
+          pnfs_unlink_ds_partfile(&(pnfsclient->ds_client[i]), name, 
                                   &(pfile->filepart[i]))) != NFS4_OK)
         return rc;
     }

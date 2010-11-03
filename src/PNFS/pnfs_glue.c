@@ -25,10 +25,9 @@ int pnfs_lookup_file( pnfs_client_t  * pnfsclient,
 }
 
 int pnfs_remove_file( pnfs_client_t  * pnfsclient,
-		      pnfs_fileloc_t * pnfs_fileloc,
                       pnfs_file_t    * pfile ) 
 {
-   return pnfs_ds_unlink_file( pnfsclient, &pnfs_fileloc->ds_loc, &pfile->ds_file ) ;
+   return pnfs_ds_unlink_file( pnfsclient, &pfile->ds_file ) ;
 }
 
 void pnfs_encode_getdeviceinfo( char *buff, unsigned int *plen)
