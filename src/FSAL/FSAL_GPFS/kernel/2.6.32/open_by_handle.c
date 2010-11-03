@@ -2,6 +2,7 @@
  *   Copyright (C) International Business Machines  Corp., 2010
  *   Author(s): Varun Chandramohan <varunc@linux.vnet.ibm.com>
  *              Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
+ *              Chandra Seetharaman <sekharan@us.ibm.com>
  *
  *   This library is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published
@@ -42,13 +43,6 @@ struct file_operations openhandle_fops = {
     .release = openhandle_release,
     .unlocked_ioctl = openhandle_ioctl,
 };
-
-#define OPENHANDLE_DRIVER_MAGIC     'O'
-#define OPENHANDLE_NAME_TO_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 0, struct name_handle_arg)
-#define OPENHANDLE_OPEN_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 1, struct open_arg)
-#define OPENHANDLE_LINK_BY_FD     _IOWR(OPENHANDLE_DRIVER_MAGIC, 2, struct link_arg)
-#define OPENHANDLE_READLINK_BY_FD _IOWR(OPENHANDLE_DRIVER_MAGIC, 3, struct readlink_arg)
-#define OPENHANDLE_STAT_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 4, struct stat_arg)
 
 long openhandle_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {

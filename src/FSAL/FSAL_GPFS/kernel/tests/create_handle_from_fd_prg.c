@@ -27,9 +27,6 @@
 
 #include "../include/handle.h"
 
-#define OPENHANDLE_DRIVER_MAGIC     'O'
-#define OPENHANDLE_NAME_TO_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 0, struct name_handle_arg)
-
 main(int argc, char *argv[])
 {
   int fd, file_fd, handle_fd, rc;
