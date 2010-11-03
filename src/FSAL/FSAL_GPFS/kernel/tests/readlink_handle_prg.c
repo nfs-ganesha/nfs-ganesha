@@ -1,6 +1,7 @@
 /*
  *   Copyright (C) International Business Machines  Corp., 2010
- *   Author(s): Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
+ *   Author(s): Varun Chandramohan <varunc@linux.vnet.ibm.com>
+ *              Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
  *
  *   This library is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published
@@ -25,7 +26,7 @@
 #include <fcntl.h>
 #include <string.h>
 
-#include "handle.h"
+#include "../include/handle.h"
 
 #define AT_FDCWD   -100
 
@@ -41,6 +42,7 @@ main(int argc, char *argv[])
   int fd, rc, file_fd;
   struct open_arg oarg;
   struct file_handle *handle;
+  struct readlink_arg readlinkarg;
 
   if(argc != 4)
     {
@@ -66,16 +68,16 @@ main(int argc, char *argv[])
   file_fd = ioctl(fd, OPENHANDLE_OPEN_BY_HANDLE, &oarg);
   if(file_fd < 0)
     perror("ioctl"), exit(2);
+  readlinkarg.fd = file_fd;
   memset(buf, 0, 100);
-  while(1)
-    {
-      rc = read(file_fd, buf, 99);
-      if(rc <= 0)
-        break;
-      buf[rc] = '\0';
-      printf("%s", buf);
-      memset(buf, 0, 100);
-    }
+  readlinkarg.buffer = (char *)&buf;
+  readlinkarg.size = 100;
+  rc = ioctl(fd, OPENHANDLE_READLINK_BY_FD, &readlinkarg);
+  if(rc < 0)
+    perror("ioctl"), exit(2);
+  else
+    printf("Link name %s\n", buf);
+
   close(file_fd);
   close(fd);
 }

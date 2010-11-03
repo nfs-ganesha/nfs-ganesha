@@ -25,43 +25,57 @@
 #include <fcntl.h>
 #include <string.h>
 
-#include "handle.h"
+#include "../include/handle.h"
+
+#define AT_FDCWD   -100
 
 #define OPENHANDLE_DRIVER_MAGIC     'O'
-#define OPENHANDLE_NAME_TO_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 0, struct name_handle_arg)
+#define OPENHANDLE_OPEN_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 1, struct open_arg)
+#define OPENHANDLE_LINK_BY_FD     _IOWR(OPENHANDLE_DRIVER_MAGIC, 2, struct link_arg)
+#define OPENHANDLE_READLINK_BY_FD _IOWR(OPENHANDLE_DRIVER_MAGIC, 3, struct readlink_arg)
 
 main(int argc, char *argv[])
 {
-  int fd, file_fd, handle_fd, rc;
-  struct name_handle_arg harg;
+  int handle_fd;
+  char buf[100];
+  int fd, rc, file_fd;
+  struct open_arg oarg;
+  struct file_handle *handle;
 
   if(argc != 4)
     {
-      fprintf(stderr, "Usage: %s,  <device> <filename> <handle_file>\n", argv[0]);
+      fprintf(stderr, "Usage: %s,  <device> <mountdir> <handle-file>\n", argv[0]);
       exit(1);
     }
   fd = open(argv[1], O_RDONLY);
   if(fd < 0)
     perror("open"), exit(1);
 
-  file_fd = open(argv[2], O_RDONLY);
-  if(fd < 0)
-    perror("open"), exit(1);
-  harg.name = NULL;
-  harg.dfd = file_fd;
-  harg.flag = 0;
-  harg.handle = malloc(sizeof(struct file_handle) + 20);
-  harg.handle->handle_size = 20;
+  handle = malloc(sizeof(struct file_handle) + 20);
 
-  rc = ioctl(fd, OPENHANDLE_NAME_TO_HANDLE, &harg);
-  if(rc < 0)
+  /* read the handle to a handle.data file */
+  handle_fd = open(argv[3], O_RDONLY);
+  read(handle_fd, handle, sizeof(struct file_handle) + 20);
+  printf("Handle size is %d\n", handle->handle_size);
+
+  oarg.mountdirfd = open(argv[2], O_RDONLY | O_DIRECTORY);
+  if(oarg.mountdirfd < 0)
+    perror("open"), exit(2);
+  oarg.handle = handle;
+  oarg.flags = O_RDONLY;
+  file_fd = ioctl(fd, OPENHANDLE_OPEN_BY_HANDLE, &oarg);
+  if(file_fd < 0)
     perror("ioctl"), exit(2);
-
-  /* write the handle to a handle.data file */
-  handle_fd = open(argv[3], O_RDWR | O_CREAT | O_TRUNC, 0600);
-  write(handle_fd, harg.handle, sizeof(harg) + harg.handle->handle_size);
-  printf("Handle size is %d\n", harg.handle->handle_size);
-
-  close(handle_fd);
+  memset(buf, 0, 100);
+  while(1)
+    {
+      rc = read(file_fd, buf, 99);
+      if(rc <= 0)
+        break;
+      buf[rc] = '\0';
+      printf("%s", buf);
+      memset(buf, 0, 100);
+    }
+  close(file_fd);
   close(fd);
 }

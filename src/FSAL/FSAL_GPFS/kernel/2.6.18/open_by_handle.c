@@ -26,7 +26,7 @@
 #include <linux/uaccess.h>
 #include <linux/vmalloc.h>
 
-#include "handle.h"
+#include "../include/handle.h"
 
 MODULE_LICENSE("GPL");
 
