@@ -2317,6 +2317,12 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       small_client_param.grace_period_link = 0;
       small_client_param.grace_period_attr = 0;
       small_client_param.grace_period_dirent = 0;
+      small_client_param.grace_period_attr   = 0;
+      small_client_param.grace_period_link   = 0;
+      small_client_param.grace_period_dirent = 0;
+      small_client_param.expire_type_attr    = CACHE_INODE_EXPIRE_NEVER;
+      small_client_param.expire_type_link    = CACHE_INODE_EXPIRE_NEVER;
+      small_client_param.expire_type_dirent  = CACHE_INODE_EXPIRE_NEVER;
       small_client_param.use_test_access = 1;
       small_client_param.attrmask = FSAL_ATTR_MASK_V2_V3;
 

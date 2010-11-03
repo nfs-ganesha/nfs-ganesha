@@ -90,11 +90,75 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
   /* If we do nothing (no expiration) then everything is all right */
   *pstatus = CACHE_INODE_SUCCESS;
 
-  LogFullDebug(COMPONENT_CACHE_INODE,
-                  "Entry=%p, type=%u, current=%u, read=%u, refresh=%u, alloc=%d",
-                  pentry, (unsigned int)pentry->internal_md.type, (unsigned int)current_time,
-                  (unsigned int)pentry->internal_md.read_time, (unsigned int)pentry->internal_md.refresh_time,
-                  (unsigned int)pentry->internal_md.alloc_time);
+  if(isFullDebug(COMPONENT_CACHE_INODE))
+    {
+      char *type;
+      char grace[20], grace2[20];
+      unsigned int elapsed = (unsigned int)current_time - (unsigned int)entry_time;
+      int print = 1;
+
+      cache_inode_expire_to_str(pclient->expire_type_attr, pclient->grace_period_attr, grace);
+
+     switch(pentry->internal_md.type)
+        {
+          case UNASSIGNED:
+            type = "UNASSIGNED";
+            break;
+          case REGULAR_FILE:
+            type = "REGULAR_FILE";
+            break;
+          case CHARACTER_FILE:
+            type = "CHARACTER_FILE";
+            break;
+          case BLOCK_FILE:
+            type = "BLOCK_FILE";
+            break;
+          case SYMBOLIC_LINK:
+            print = 0;
+            cache_inode_expire_to_str(pclient->expire_type_link, pclient->grace_period_link, grace2);
+            LogFullDebug(COMPONENT_CACHE_INODE,
+                         "Renew Entry test of %p for SYMBOLIC_LINK elapsed time=%u, grace_period_attr=%s, grace_period_link=%s",
+                         pentry, elapsed, grace, grace2);
+            break;
+          case SOCKET_FILE:
+            type = "SOCKET_FILE";
+            break;
+          case FIFO_FILE:
+            type = "FIFO_FILE";
+            break;
+          case DIR_BEGINNING:
+            print = 0;
+            cache_inode_expire_to_str(pclient->expire_type_dirent, pclient->grace_period_dirent, grace2);
+            LogFullDebug(COMPONENT_CACHE_INODE,
+                         "Renew Entry test of %p for DIR_BEGINNING elapsed time=%u, grace_period_attr=%s, grace_period_dirent=%u, has_been_readdir=%u",
+                         pentry, elapsed, grace, grace2,
+                         pentry->object.dir_begin.has_been_readdir);
+            break;
+          case DIR_CONTINUE:
+            print = 0;
+            cache_inode_expire_to_str(pclient->expire_type_dirent, pclient->grace_period_dirent, grace2);
+            LogFullDebug(COMPONENT_CACHE_INODE,
+                         "Renew Entry test of %p for DIR_CONTINUE elapsed time=%u, grace_period_attr=%s, grace_period_dirent=%u, has_been_readdir=%u",
+                         pentry, elapsed, grace, grace2,
+                         pentry->object.dir_begin.has_been_readdir);
+            break;
+          case FS_JUNCTION:
+            type = "FS_JUNCTION";
+            break;
+          case RECYCLED:
+            type = "RECYCLED";
+            break;
+          default:
+            type = "UNKNOWN";
+            break;
+        }
+      if(print)
+        {
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "Renew Entry test of %p for %s elapsed time=%u, grace_period_attr=%s",
+                       pentry, type, elapsed, grace);
+        }
+    }
 
   /* An entry that is a regular file with an associated File Content Entry won't
    * expire until data exists in File Content Cache, to avoid attributes incoherency */
@@ -187,19 +251,14 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
   /* if( pclient->getattr_dir_invalidation && ... */
   /* Check for dir content expiration */
   if(pentry->internal_md.type == DIR_BEGINNING &&
-     pclient->grace_period_dirent != 0 &&
+     pclient->expire_type_dirent != CACHE_INODE_EXPIRE_NEVER &&
      pentry->object.dir_begin.has_been_readdir == CACHE_INODE_YES &&
-     (current_time - entry_time > pclient->grace_period_dirent))
+     (current_time - entry_time >= pclient->grace_period_dirent))
     {
       /* stat */
       pclient->stat.func_stats.nb_call[CACHE_INODE_RENEW_ENTRY] += 1;
 
       /* Log */
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                        "Entry=%p, type=%d, Time=%u, current=%u, grace_period_dirent=%u",
-                        pentry, pentry->internal_md.type,
-                        (unsigned int)entry_time, (unsigned int)current_time, (unsigned int)pclient->grace_period_dirent);
-
       LogFullDebug(COMPONENT_CACHE_INODE,
                         "cached directory entries for entry %p must be renewed", pentry);
 
@@ -259,19 +318,14 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
   /* if( pentry->internal_md.type == DIR_BEGINNING && ... */
   /* if the directory has not been readdir, only update its attributes */
   else if(pentry->internal_md.type == DIR_BEGINNING &&
-          pclient->grace_period_attr != 0 &&
+          pclient->expire_type_attr != CACHE_INODE_EXPIRE_NEVER &&
           pentry->object.dir_begin.has_been_readdir != CACHE_INODE_YES &&
-          (current_time - entry_time > pclient->grace_period_attr))
+          (current_time - entry_time >= pclient->grace_period_attr))
     {
       /* stat */
       pclient->stat.func_stats.nb_call[CACHE_INODE_RENEW_ENTRY] += 1;
 
       /* Log */
-      LogDebug(COMPONENT_CACHE_INODE,
-                        "Entry=%p, type=%d, Time=%u, current=%u, grace_period_dirent=%u",
-                        pentry, pentry->internal_md.type,
-                        (unsigned int)entry_time, (unsigned int)current_time, (unsigned int)pclient->grace_period_dirent);
-
       LogDebug(COMPONENT_CACHE_INODE,
                         "cached directory entries for entry %p must be renewed", pentry);
 
@@ -324,18 +378,13 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
   /* Check for attributes expiration in other cases */
   else if(pentry->internal_md.type != DIR_CONTINUE &&
           pentry->internal_md.type != DIR_BEGINNING &&
-          pclient->grace_period_attr != 0 &&
-          (current_time - entry_time > pclient->grace_period_attr))
+          pclient->expire_type_attr != CACHE_INODE_EXPIRE_NEVER &&
+          (current_time - entry_time >= pclient->grace_period_attr))
     {
       /* stat */
       pclient->stat.func_stats.nb_call[CACHE_INODE_RENEW_ENTRY] += 1;
 
       /* Log */
-      LogDebug(COMPONENT_CACHE_INODE,
-                        "Entry=%p, type=%u, Time=%u, current=%u, grace_period_attr=%u",
-                        pentry, pentry->internal_md.type,
-                        (unsigned int)entry_time, (unsigned int)current_time, (unsigned int)pclient->grace_period_attr);
-
       LogDebug(COMPONENT_CACHE_INODE,
                         "Attributes for entry %p must be renewed", pentry);
 
@@ -418,22 +467,12 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
   /* if(  pentry->internal_md.type   != DIR_CONTINUE && ... */
   /* Check for link content expiration */
   if(pentry->internal_md.type == SYMBOLIC_LINK &&
-     pclient->grace_period_link != 0 &&
-     (current_time - entry_time > pclient->grace_period_link))
+     pclient->expire_type_link != CACHE_INODE_EXPIRE_NEVER &&
+     (current_time - entry_time >= pclient->grace_period_link))
     {
       pfsal_handle = &pentry->object.symlink.handle;
 
-      /* TMP Debug */
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                   "Entry=%p, type=%d, Time=%d, current=%u, grace_period_link=%u", pentry,
-                   pentry->internal_md.type, (unsigned int)entry_time, (unsigned int)current_time,
-                   (unsigned int)pclient->grace_period_link);
-
       /* Log */
-      LogDebug(COMPONENT_CACHE_INODE,
-                        "Entry=%p, type=%d, Time=%u, current=%u, grace_period_link=%u",
-                        pentry, pentry->internal_md.type,
-                        (unsigned int)entry_time, (unsigned int)current_time, (unsigned int)pclient->grace_period_link);
       LogDebug(COMPONENT_CACHE_INODE,
                         "cached link content for entry %p must be renewed", pentry);
 

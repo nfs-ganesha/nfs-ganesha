@@ -586,9 +586,12 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->cache_layers_param.cache_inode_client_param.nb_pre_dir_data = 256;
   p_nfs_param->cache_layers_param.cache_inode_client_param.nb_pre_parent = 2048;
   p_nfs_param->cache_layers_param.cache_inode_client_param.nb_pre_state_v4 = 512;
-  p_nfs_param->cache_layers_param.cache_inode_client_param.grace_period_link = 0;
-  p_nfs_param->cache_layers_param.cache_inode_client_param.grace_period_attr = 0;
+  p_nfs_param->cache_layers_param.cache_inode_client_param.grace_period_attr   = 0;
+  p_nfs_param->cache_layers_param.cache_inode_client_param.grace_period_link   = 0;
   p_nfs_param->cache_layers_param.cache_inode_client_param.grace_period_dirent = 0;
+  p_nfs_param->cache_layers_param.cache_inode_client_param.expire_type_attr    = CACHE_INODE_EXPIRE_NEVER;
+  p_nfs_param->cache_layers_param.cache_inode_client_param.expire_type_link    = CACHE_INODE_EXPIRE_NEVER;
+  p_nfs_param->cache_layers_param.cache_inode_client_param.expire_type_dirent  = CACHE_INODE_EXPIRE_NEVER;
   p_nfs_param->cache_layers_param.cache_inode_client_param.use_test_access = 1;
   p_nfs_param->cache_layers_param.cache_inode_client_param.getattr_dir_invalidation = 0;
   p_nfs_param->cache_layers_param.cache_inode_client_param.attrmask =
@@ -1207,24 +1210,24 @@ int nfs_check_param_consistency(nfs_parameter_t * p_nfs_param)
       return 1;
     }
 #ifdef _USE_MFSL_ASYNC
-  if(p_nfs_param->cache_layers_param.cache_inode_client_param.grace_period_attr != 0)
+  if(p_nfs_param->cache_layers_param.cache_inode_client_param.expire_type_attr != CACHE_INODE_EXPIRE_NEVER)
     {
       LogCrit
-          (COMPONENT_INIT, "BAD PARAMETER (Cache_Inode): Attr_Expiration_Time should be 0 when used with MFSL_ASYNC");
+          (COMPONENT_INIT, "BAD PARAMETER (Cache_Inode): Attr_Expiration_Time should be Never when used with MFSL_ASYNC");
       return 1;
     }
 
-  if(p_nfs_param->cache_layers_param.cache_inode_client_param.grace_period_dirent != 0)
+  if(p_nfs_param->cache_layers_param.cache_inode_client_param.expire_type_dirent != CACHE_INODE_EXPIRE_NEVER)
     {
       LogCrit
-          (COMPONENT_INIT, "BAD PARAMETER (Cache_Inode): Directory_Expiration_Time should be 0 when used with MFSL_ASYNC");
+          (COMPONENT_INIT, "BAD PARAMETER (Cache_Inode): Directory_Expiration_Time should be Never when used with MFSL_ASYNC");
       return 1;
     }
 
-  if(p_nfs_param->cache_layers_param.cache_inode_client_param.grace_period_link != 0)
+  if(p_nfs_param->cache_layers_param.cache_inode_client_param.expire_type_link != CACHE_INODE_EXPIRE_NEVER)
     {
       LogCrit
-          (COMPONENT_INIT, "BAD PARAMETER (Cache_Inode): Symlink_Expiration_Time should be 0 when used with MFSL_ASYNC");
+          (COMPONENT_INIT, "BAD PARAMETER (Cache_Inode): Symlink_Expiration_Time should be Never when used with MFSL_ASYNC");
       return 1;
     }
 
