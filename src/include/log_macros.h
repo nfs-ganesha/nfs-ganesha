@@ -152,7 +152,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 #define LogFullDebug(component, format, args...) \
   do { \
     if (LogComponents[component].comp_log_level >= NIV_FULL_DEBUG) \
-      DisplayLogComponentLevel(component, NIV_FULL_DEBUG, "%s: DEBUG: " format, LogComponents[component].comp_str, ## args ); \
+      DisplayLogComponentLevel(component, NIV_FULL_DEBUG, "%s: FULLDEBUG: " format, LogComponents[component].comp_str, ## args ); \
   } while (0)
 
 #define LogError( component, a, b, c ) \

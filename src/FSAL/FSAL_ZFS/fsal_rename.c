@@ -82,7 +82,10 @@ fsal_status_t ZFSFSAL_rename(zfsfsal_handle_t * old_parentdir_handle, /* IN */
 
   /* Hook to prenvet moving thing from or to a snapshot */
   if(old_parentdir_handle->data.i_snap != 0 || new_parentdir_handle->data.i_snap != 0)
+  {
+    LogDebug(COMPONENT_FSAL, "Trying to rename an object from/to a snapshot");
     Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_rename);
+  }
 
   TakeTokenFSCall();
 

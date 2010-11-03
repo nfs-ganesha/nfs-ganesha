@@ -136,7 +136,7 @@ void TestDebug(int expect, char *buff, log_components_t component, char *string)
 void TestFullDebug(int expect, char *buff, log_components_t component, char *string)
 {
   char compare[2048];
-  sprintf(compare, "%s: DEBUG: %s", LogComponents[component].comp_str, string);
+  sprintf(compare, "%s: FULLDEBUG: %s", LogComponents[component].comp_str, string);
   buff[0] = '\0';
   LogFullDebug(component, "%s", string);
   if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
@@ -390,9 +390,9 @@ void Test2()
   TestFormat("%Lg %LG %Lg %LG %s", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10, "extra");
   TestFormat("%La %LA %La %LA %s", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10, "extra");
   TestFormat("%lle %llE %lle %llE %s", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10, "extra");
-  TestFormat("%llf %llF %llf %llF %s", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10, "extra");
+  TestFormat("%llf %llF %llf %llf %s", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10, "extra");
   TestFormat("%llg %llG %llg %llG %s", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10, "extra");
-  TestFormat("%lla %llA %lla %llA", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10, "extra");
+  TestFormat("%lla %llA %lla %llA %s", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10, "extra");
   TestFormat("Field Length: %8f %8.2f %8f %8.2f %s", 1.1, 1.1, 1.1E10, 1.1E3, "extra");
   TestFormat("Field Length: %08f %08.2f %08f %08.2f %s", 1.1, 1.1, 1.1E10, 1.1E3, "extra");
   TestFormat("Field Length: %-8f %-8.2f %-8f %-8.2f %s", 1.1, 1.1, 1.1E10, 1.1E3, "extra");

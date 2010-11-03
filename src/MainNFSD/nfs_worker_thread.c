@@ -508,7 +508,7 @@ int nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs, nfs_function_desc_t *pfunc
           case NLM4_VERS:
             if(ptr_req->rq_proc > NLMPROC4_FREE_ALL)
               {
-                LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: NLM proc number %d unknown", ptr_req->rq_proc);
+                LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: NLM proc number %d unknown", (int)ptr_req->rq_proc);
                 svcerr_decode(ptr_svc);
                 return FALSE;
               }
@@ -516,7 +516,7 @@ int nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs, nfs_function_desc_t *pfunc
             break;
 
           default:
-            LogDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: NLM Protocol version %d unknown", ptr_req->rq_vers);
+            LogDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: NLM Protocol version %d unknown", (int)ptr_req->rq_vers);
             svcerr_decode(ptr_svc);
             return FALSE;
             break;

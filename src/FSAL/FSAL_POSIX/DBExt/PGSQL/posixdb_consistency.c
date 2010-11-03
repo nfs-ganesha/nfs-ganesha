@@ -27,10 +27,10 @@ int fsal_posixdb_consistency_check(fsal_posixdb_fileinfo_t * p_info1,   /* IN */
   if(isFullDebug(COMPONENT_FSAL))
     {
       if(p_info1->inode != p_info2->inode)
-        LogFullDebug(COMPONENT_FSAL, "inode 1 <> inode 2 : %llu != %llu\n", p_info1->inode, p_info2->inode);
+        LogFullDebug(COMPONENT_FSAL, "inode 1 <> inode 2 : %"PRIu64" != %"PRIu64"\n", p_info1->inode, p_info2->inode);
 
       if(p_info1->devid != p_info2->devid)
-        LogFullDebug(COMPONENT_FSAL, "devid 1 <> devid 2 : %llu != %llu\n", p_info1->devid, p_info2->devid);
+        LogFullDebug(COMPONENT_FSAL, "devid 1 <> devid 2 : %"PRIu64" != %"PRIu64"\n", p_info1->devid, p_info2->devid);
 
       if(p_info1->ftype != p_info2->ftype)
         LogFullDebug(COMPONENT_FSAL, "ftype 1 <> ftype 2 : %u != %u\n", p_info1->ftype, p_info2->ftype);

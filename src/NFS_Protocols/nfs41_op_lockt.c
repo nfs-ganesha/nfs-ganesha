@@ -107,7 +107,7 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Lock are not supported */
   resp->resop = NFS4_OP_LOCKT;
 
-#ifndef _WITH_NFSV4_LOCKS
+#ifdef _WITH_NO_NFSV41_LOCKS
   res_LOCKT4.status = NFS4ERR_LOCK_NOTSUPP;
   return res_LOCKT4.status;
 #else

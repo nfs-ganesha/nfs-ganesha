@@ -31,6 +31,12 @@ Url: http://nfs-ganesha.sourceforge.net
 Source0: http://downloads.sourceforge.net/nfs-ganesha/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
+# Removing HPSS related dependencies (for hpss packages)
+%if %{?_with_hpss:1}%{!?_with_hpss:0}
+%define _use_internal_dependency_generator 0 
+%define our_find_requires %{_builddir}/%{name}-%{version}/find_requires
+%endif
+
 %description
 NFS-GANESHA is a NFS Server running in user space with a large cache.
 It comes with various back-end modules to support different file systems and
@@ -231,6 +237,18 @@ It can be loaded dynamically in a FSAL-less NFS-GANESHA daemon
 
 %prep
 %setup -q -n %{name}-%{version}
+
+
+# Removing HPSS related dependencies (for hpss packages)
+%if %{?_with_hpss:1}%{!?_with_hpss:0}
+cat << EOF > %{our_find_requires}
+#!/bin/sh
+exec %{__find_requires} | /bin/grep -v 'libhpss'
+exit 0
+EOF
+chmod +x %{our_find_requires}
+%define __find_requires %{our_find_requires}
+%endif
 
 %build
 
