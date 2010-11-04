@@ -152,16 +152,16 @@ int parse_cache_expire(cache_inode_expire_type_t *type, time_t *value, char *key
     }
 
   /*
-   * Note the CACHE_INODE_EXPIRE_ALWAYS is now a special value that works
+   * Note the CACHE_INODE_EXPIRE_IMMEDIATE is now a special value that works
    * fine with the value being set to 0, there will not need to be special
-   * tests for CACHE_INODE_EXPIRE_ALWAYS.
+   * tests for CACHE_INODE_EXPIRE_IMMEDIATE.
    */
   *value = 0;
 
   if(strcasecmp(key_value, "Never") == 0)
     *type = CACHE_INODE_EXPIRE_NEVER;
-  else if (strcasecmp(key_value, "Always") == 0)
-    *type = CACHE_INODE_EXPIRE_ALWAYS;
+  else if (strcasecmp(key_value, "Immediate") == 0)
+    *type = CACHE_INODE_EXPIRE_IMMEDIATE;
   else
     return CACHE_INODE_INVALID_ARGUMENT;
 
@@ -178,8 +178,8 @@ void cache_inode_expire_to_str(cache_inode_expire_type_t type, time_t value, cha
       case CACHE_INODE_EXPIRE_NEVER:
         strcpy(out, "Never");
         break;
-      case CACHE_INODE_EXPIRE_ALWAYS:
-        strcpy(out, "Always");
+      case CACHE_INODE_EXPIRE_IMMEDIATE:
+        strcpy(out, "Immediate");
         break;
     }
 }

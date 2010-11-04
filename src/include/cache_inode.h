@@ -179,7 +179,7 @@ static char *cache_inode_function_names[] = {
 typedef enum cache_inode_expire_type__
 { CACHE_INODE_EXPIRE = 0,
   CACHE_INODE_EXPIRE_NEVER = 1,
-  CACHE_INODE_EXPIRE_ALWAYS = 2
+  CACHE_INODE_EXPIRE_IMMEDIATE = 2
 } cache_inode_expire_type_t;
 
 typedef struct cache_inode_stat__
