@@ -59,7 +59,7 @@ struct handle_svc_export
     int ex_flags;
 };
 
-#include "handle.h"
+#include "../include/handle.h"
 
 extern struct export_operations export_op_default;
 #define CALL(ops,fun) ((ops->fun)?(ops->fun):export_op_default.fun)

@@ -25,12 +25,9 @@
 #include <fcntl.h>
 #include <string.h>
 
-#include "handle.h"
+#include "../include/handle.h"
 
 #define AT_FDCWD   -100
-
-#define OPENHANDLE_DRIVER_MAGIC     'O'
-#define OPENHANDLE_STAT_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 4, struct stat_arg)
 
 /*
  * All stat ugliness

@@ -1,6 +1,7 @@
 /*
  *   Copyright (C) International Business Machines  Corp., 2010
- *   Author(s): Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
+ *   Author(s): Varun Chandramohan <varunc@linux.vnet.ibm.com>
+ *              Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
  *
  *   This library is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published
@@ -25,14 +26,9 @@
 #include <fcntl.h>
 #include <string.h>
 
-#include "handle.h"
+#include "../include/handle.h"
 
 #define AT_FDCWD   -100
-
-#define OPENHANDLE_DRIVER_MAGIC     'O'
-#define OPENHANDLE_OPEN_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 1, struct open_arg)
-#define OPENHANDLE_LINK_BY_FD     _IOWR(OPENHANDLE_DRIVER_MAGIC, 2, struct link_arg)
-#define OPENHANDLE_READLINK_BY_FD _IOWR(OPENHANDLE_DRIVER_MAGIC, 3, struct readlink_arg)
 
 main(int argc, char *argv[])
 {
@@ -40,13 +36,12 @@ main(int argc, char *argv[])
   char buf[100];
   int fd, rc, file_fd;
   struct open_arg oarg;
-  struct link_arg linkarg;
   struct file_handle *handle;
+  struct readlink_arg readlinkarg;
 
-  if(argc != 5)
+  if(argc != 4)
     {
-      fprintf(stderr, "Usage: %s,  <device> <mountdir> <linkname> <handle-file> \n",
-              argv[0]);
+      fprintf(stderr, "Usage: %s,  <device> <mountdir> <handle-file>\n", argv[0]);
       exit(1);
     }
   fd = open(argv[1], O_RDONLY);
@@ -56,7 +51,7 @@ main(int argc, char *argv[])
   handle = malloc(sizeof(struct file_handle) + 20);
 
   /* read the handle to a handle.data file */
-  handle_fd = open(argv[4], O_RDONLY);
+  handle_fd = open(argv[3], O_RDONLY);
   read(handle_fd, handle, sizeof(struct file_handle) + 20);
   printf("Handle size is %d\n", handle->handle_size);
 
@@ -68,12 +63,15 @@ main(int argc, char *argv[])
   file_fd = ioctl(fd, OPENHANDLE_OPEN_BY_HANDLE, &oarg);
   if(file_fd < 0)
     perror("ioctl"), exit(2);
-  linkarg.file_fd = file_fd;
-  linkarg.dir_fd = AT_FDCWD;
-  linkarg.name = argv[3];
-  rc = ioctl(fd, OPENHANDLE_LINK_BY_FD, &linkarg);
+  readlinkarg.fd = file_fd;
+  memset(buf, 0, 100);
+  readlinkarg.buffer = (char *)&buf;
+  readlinkarg.size = 100;
+  rc = ioctl(fd, OPENHANDLE_READLINK_BY_FD, &readlinkarg);
   if(rc < 0)
     perror("ioctl"), exit(2);
+  else
+    printf("Link name %s\n", buf);
 
   close(file_fd);
   close(fd);

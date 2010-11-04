@@ -2,6 +2,7 @@
  *   Copyright (C) International Business Machines  Corp., 2010
  *   Author(s): Varun Chandramohan <varunc@linux.vnet.ibm.com>
  *              Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
+ *              Chandra Seetharaman <sekharan@us.ibm.com>
  *
  *   This library is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published
@@ -26,7 +27,7 @@
 #include <linux/uaccess.h>
 #include <linux/vmalloc.h>
 
-#include "handle.h"
+#include "../include/handle.h"
 
 MODULE_LICENSE("GPL");
 
@@ -43,16 +44,9 @@ struct file_operations openhandle_fops = {
     .unlocked_ioctl = openhandle_ioctl,
 };
 
-#define OPENHANDLE_DRIVER_MAGIC     'O'
-#define OPENHANDLE_NAME_TO_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 0, struct name_handle_arg)
-#define OPENHANDLE_OPEN_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 1, struct open_arg)
-#define OPENHANDLE_LINK_BY_FD     _IOWR(OPENHANDLE_DRIVER_MAGIC, 2, struct link_arg)
-#define OPENHANDLE_READLINK_BY_FD _IOWR(OPENHANDLE_DRIVER_MAGIC, 3, struct readlink_arg)
-#define OPENHANDLE_STAT_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 4, struct stat_arg)
-
 long openhandle_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-    int retval = 0;
+    int retval = -ENOSYS;
     struct open_arg oarg;
     struct link_arg linkarg;
     struct name_handle_arg harg;
@@ -122,7 +116,7 @@ int init_module()
         goto erro2;
 
     openbyhandle_dev = device_create(openbyhandle_class, NULL,
-                                     MKDEV(major, 0), openbyhandle_devname);
+                               MKDEV(major, 0), NULL, openbyhandle_devname);
     ptr_err = openbyhandle_dev;
     if(IS_ERR(ptr_err))
         goto erro1;

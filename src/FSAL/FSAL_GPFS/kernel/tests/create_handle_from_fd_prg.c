@@ -25,10 +25,7 @@
 #include <fcntl.h>
 #include <string.h>
 
-#include "handle.h"
-
-#define OPENHANDLE_DRIVER_MAGIC     'O'
-#define OPENHANDLE_NAME_TO_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 0, struct name_handle_arg)
+#include "../include/handle.h"
 
 main(int argc, char *argv[])
 {

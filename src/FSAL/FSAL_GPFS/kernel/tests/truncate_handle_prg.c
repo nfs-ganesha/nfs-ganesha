@@ -25,14 +25,9 @@
 #include <fcntl.h>
 #include <string.h>
 
-#include "handle.h"
+#include "../include/handle.h"
 
 #define AT_FDCWD   -100
-
-#define OPENHANDLE_DRIVER_MAGIC     'O'
-#define OPENHANDLE_OPEN_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 1, struct open_arg)
-#define OPENHANDLE_LINK_BY_FD     _IOWR(OPENHANDLE_DRIVER_MAGIC, 2, struct link_arg)
-#define OPENHANDLE_READLINK_BY_FD _IOWR(OPENHANDLE_DRIVER_MAGIC, 3, struct readlink_arg)
 
 main(int argc, char *argv[])
 {
@@ -62,11 +57,12 @@ main(int argc, char *argv[])
   if(oarg.mountdirfd < 0)
     perror("open"), exit(2);
   oarg.handle = handle;
-  oarg.flags = O_RDONLY;
+  oarg.flags = O_RDWR | O_TRUNC;
   file_fd = ioctl(fd, OPENHANDLE_OPEN_BY_HANDLE, &oarg);
   if(file_fd < 0)
     perror("ioctl"), exit(2);
   memset(buf, 0, 100);
+  printf("There should not be any content shown afte this\n");
   while(1)
     {
       rc = read(file_fd, buf, 99);
