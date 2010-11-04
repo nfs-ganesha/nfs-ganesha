@@ -4,6 +4,10 @@ all:
 	$(MAKE) -C $(dir) all
 	$(MAKE) -C tests all
 
+distdir:
+
+check:
+
 install:
 	$(MAKE) -C $(dir) install
 
