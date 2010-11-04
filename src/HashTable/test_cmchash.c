@@ -311,6 +311,14 @@ int main(int argc, char *argv[])
   srandom(getpid());
   random_val = random() % MAXTEST;
 
+  /* 
+     if we end up with a random value less than CRITERE_2 we'll
+     overrun holes in the hash when we do our delete runs.  This
+     ensures we start above there.
+  */
+  if (random_val <= CRITERE_2) 
+    random_val = CRITERE_2 + 1;
+
   MesureTemps(&debut, NULL);
   for(i = 0; i < MAXDESTROY; i++)
     {
@@ -332,7 +340,7 @@ int main(int argc, char *argv[])
 
       if(rc != HASHTABLE_SUCCESS)
         {
-          LogTest("Error on delete %d = %d", i, rc);
+          LogTest("Error on delete %d = %d", random_val, rc);
           LogTest("Test FAILED: delete incorrect");
           exit(1);
         }
