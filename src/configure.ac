@@ -236,7 +236,7 @@ GA_ENABLE_AM_CONDITION([pnfs],[enable pNFS support (NFSv4.1 support is mandatory
 PNFS_LIB=""
 if test "$enable_pnfs" == "yes"; then
 	AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
-	PNFS_LIB="\$(top_builddir)/NFS_Protocols/PNFS/LAYOUT4_NFSV4_1_FILES/libpnfslayoutfile.la"
+	PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
 fi
 AM_CONDITIONAL(USE_PNFS, test "$enable_pnfs" = "yes")
 
@@ -698,8 +698,8 @@ AC_CONFIG_FILES([include/Makefile
                  File_Content/Makefile
                  File_Content_Policy/Makefile
 		 NFS_Protocols/Makefile
-		 NFS_Protocols/PNFS/Makefile
-		 NFS_Protocols/PNFS/LAYOUT4_NFSV4_1_FILES/Makefile
+		 PNFS/Makefile
+		 PNFS/LAYOUT4_NFSV4_1_FILES/Makefile
                  XDR/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile

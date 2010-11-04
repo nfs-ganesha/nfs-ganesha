@@ -8,10 +8,10 @@ libpnfslayoutfile_la_SOURCES = pnfs_init.c                 \
                                pnfs_connect.c              \
                                pnfs_do_mount.c             \
                                pnfs_lookup.c               \
-                               pnfs_create_ds_file.c       \
-                               pnfs_open_ds_file.c         \
-                               pnfs_lookup_ds_file.c       \
-                               pnfs_unlink_ds_file.c       \
+                               pnfs_ds_create_file.c       \
+                               pnfs_ds_open_file.c         \
+                               pnfs_ds_lookup_file.c       \
+                               pnfs_ds_unlink_file.c       \
                                pnfs_nfsv41_macros.h 
 
 new: clean all

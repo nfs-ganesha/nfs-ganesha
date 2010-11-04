@@ -261,7 +261,9 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
   cache_inode_status_t status;
   cache_content_status_t cache_content_status;
   int to_remove_numlinks = 0;
+#ifdef _USE_PNFS
   int pnfs_status;
+#endif
 
   /* stats */
   pclient->stat.nb_call_total += 1;
@@ -524,13 +526,10 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
             }
 #ifdef _USE_PNFS
           if(to_remove_entry->object.file.pnfs_file.ds_file.allocated == TRUE)
-            {
-              if((pnfs_status = pnfs_unlink_ds_file(&pclient->pnfsclient,
-                                                    to_remove_entry->object.file.
-                                                    attributes.fileid,
-                                                    &to_remove_entry->object.file.
-                                                    pnfs_file.ds_file)) != NFS4_OK)
-                {
+           {
+              if((pnfs_status = pnfs_remove_file( &pclient->pnfsclient,
+                                                  &to_remove_entry->object.file.pnfs_file ) ) != NFS4_OK )
+                  {
                   LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS CREATE DS FILE : Error %u",
                                   pnfs_status);
 

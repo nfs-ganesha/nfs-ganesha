@@ -33,7 +33,7 @@
 
 /**
  *
- * pnfs_init: Inits a pnfs client structure.
+ * pnfs_ds_init: Inits a pnfs client structure.
  *
  * Inits a pnfs client structure to a DS.
  *
@@ -44,7 +44,7 @@
  * @return -1 if one of its argument is NULL, exists if failed
  *
  */
-int pnfs_init(pnfs_client_t * pnfsclient, pnfs_layoutfile_parameter_t * pnfs_layout_param)
+int pnfs_ds_init(pnfs_client_t * pnfsclient, pnfs_layoutfile_parameter_t * pnfs_layout_param)
 {
   unsigned int i;
 
@@ -93,4 +93,4 @@ int pnfs_init(pnfs_client_t * pnfsclient, pnfs_layoutfile_parameter_t * pnfs_lay
   pnfsclient->nb_ds = pnfs_layout_param->stripe_width;
 
   return 0;
-}                               /* pnfs_init */
+}                               /* pnfs_ds_init */

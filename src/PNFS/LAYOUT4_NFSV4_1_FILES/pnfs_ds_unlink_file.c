@@ -4,9 +4,8 @@
 
 /**
  *
- * \file    pnfs_lookup_ds_file.c
- * \brief   pNFS objects lookup functions.
- *
+ * \file    pnfs_create_ds_file.c
+ * \brief   pNFS objects creation functions.
  *
  */
 
@@ -33,31 +32,26 @@
 #include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
 #include "pnfs_nfsv41_macros.h"
 
-#define PNFS_LAYOUTFILE_NB_OP_LOOKUP_DS_FILE 4
+#define PNFS_LAYOUTFILE_NB_OP_UNLINK_DS_FILE 3
 
 #define PNFS_LAYOUTFILE_CREATE_VAL_BUFFER  1024
-
-static int pnfs_lookup_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
-                                   component4 name, fattr4_fileid fileid,
+static int pnfs_unlink_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
+                                   component4 name, 
                                    pnfs_part_file_t * ppartfile)
 {
   COMPOUND4args argnfs4;
   COMPOUND4res resnfs4;
   struct timeval timeout = { 25, 0 };
-  nfs_argop4 argoparray_open_ds_file[PNFS_LAYOUTFILE_NB_OP_LOOKUP_DS_FILE];
-  nfs_resop4 resoparray_open_ds_file[PNFS_LAYOUTFILE_NB_OP_LOOKUP_DS_FILE];
+  nfs_argop4 argoparray[PNFS_LAYOUTFILE_NB_OP_UNLINK_DS_FILE];
+  nfs_resop4 resoparray[PNFS_LAYOUTFILE_NB_OP_UNLINK_DS_FILE];
+  unsigned int i;
 
-#define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_SEQUENCE 0
-#define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_PUTFH    1
-#define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_LOOKUP   2
-#define PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH    3
-
-  if(!pnfsdsclient || !ppartfile)
+  if(!pnfsdsclient || !ppartfile )
     return NFS4ERR_SERVERFAULT;
 
   /* Step 1 OP4_OPEN as OPEN4_CREATE */
-  argnfs4.argarray.argarray_val = argoparray_open_ds_file;
-  resnfs4.resarray.resarray_val = resoparray_open_ds_file;
+  argnfs4.argarray.argarray_val = argoparray;
+  resnfs4.resarray.resarray_val = resoparray;
   argnfs4.minorversion = 1;
 
   /* argnfs4.tag.utf8string_val = "GANESHA NFSv4 Proxy: Mkdir" ; */
@@ -65,14 +59,9 @@ static int pnfs_lookup_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
   argnfs4.tag.utf8string_len = 0;
   argnfs4.argarray.argarray_len = 0;
 
-  resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.
-      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val =
-      (char *)Mem_Alloc(PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN);
-
   COMPOUNDV41_ARG_ADD_OP_SEQUENCE(argnfs4, pnfsdsclient->session, pnfsdsclient->sequence);
   COMPOUNDV41_ARG_ADD_OP_PUTFH(argnfs4, pnfsdsclient->ds_rootfh);
-  COMPOUNDV41_ARG_ADD_OP_LOOKUP(argnfs4, name);
-  COMPOUNDV41_ARG_ADD_OP_GETFH(argnfs4);
+  COMPOUNDV41_ARG_ADD_OP_REMOVE(argnfs4, name);
 
   /* Call the NFSv4 function */
   if(clnt_call(pnfsdsclient->rpc_client, NFSPROC4_COMPOUND,
@@ -83,32 +72,23 @@ static int pnfs_lookup_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
     }
 
   if(resnfs4.status != NFS4_OK)
-    {
-      return resnfs4.status;
-    }
+    return resnfs4.status;
 
   pnfsdsclient->sequence += 1;
 
-  ppartfile->deviceid = 1;
-  ppartfile->is_ganesha = FALSE;
-
-  ppartfile->handle.nfs_fh4_len =
-      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].
-      nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len;
-  ppartfile->handle.nfs_fh4_val =
-      resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_LOOKUP_IDX_OP_GETFH].
-      nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val;
+  /* Free the ressources */
+  Mem_Free((char *)ppartfile->handle.nfs_fh4_val);
 
   return NFS4_OK;
-}                               /* pnfs_lookup_ds_partfile */
+}                               /* pnfs_ds_unlink_file */
 
-int pnfs_lookup_ds_file(pnfs_client_t * pnfsclient,
-                        fattr4_fileid fileid, pnfs_ds_file_t * pfile)
+int pnfs_ds_unlink_file(pnfs_client_t * pnfsclient,
+                        pnfs_ds_file_t * pfile)
 {
   component4 name;
   char nameval[MAXNAMLEN];
   char filename[MAXNAMLEN];
-  unsigned int i = 0;
+  unsigned int i;
   int rc = 0;
 
   if(!pnfsclient || !pfile)
@@ -116,22 +96,17 @@ int pnfs_lookup_ds_file(pnfs_client_t * pnfsclient,
 
   name.utf8string_val = nameval;
   name.utf8string_len = 0;
-
-  snprintf(filename, MAXNAMLEN, "fileid=%llu", (unsigned long long)fileid);
-
+  snprintf(filename, MAXNAMLEN, "fileid=%llu,generation=%"PRIu64, (unsigned long long)pfile->location.fileid, pfile->location.generation);
   if(str2utf8(filename, &name) == -1)
     return NFS4ERR_SERVERFAULT;
 
   for(i = 0; i < pnfsclient->nb_ds; i++)
     {
       if((rc =
-          pnfs_lookup_ds_partfile(&(pnfsclient->ds_client[i]), name, fileid,
+          pnfs_unlink_ds_partfile(&(pnfsclient->ds_client[i]), name, 
                                   &(pfile->filepart[i]))) != NFS4_OK)
         return rc;
     }
 
-  pfile->allocated = TRUE;
-  pfile->stripe = pnfsclient->nb_ds;
-
   return NFS4_OK;
-}                               /* pnfs_lookup_ds_file */
+}                               /* pnfs_ds_unlink_file */
