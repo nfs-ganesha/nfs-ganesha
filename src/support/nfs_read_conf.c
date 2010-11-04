@@ -851,6 +851,7 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
   char *block_name;
   config_item_t block;
   struct hostent *hp = NULL;
+  int unique;
 
   unsigned int ds_count = 0;
 
@@ -859,16 +860,22 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
     return -1;
 
   /* Get the config BLOCK */
-  if((block = config_FindItemByName(in_config, CONF_LABEL_PNFS)) == NULL)
+  if((block = config_FindItemByName_CheckUnique(in_config, CONF_LABEL_PNFS, &unique)) == NULL)
     {
-      LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file",
-              CONF_LABEL_PNFS);
+      LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file: %s",
+              CONF_LABEL_PNFS, config_GetErrorMsg() );
       return 1;
     }
+  else if (!unique)
+  {
+      LogCrit(COMPONENT_CONFIG, "Only a single \"%s\" block is expected in config file: %s",
+              CONF_LABEL_PNFS, config_GetErrorMsg() );
+      return -1;
+  }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
-      return 1;
+      return -1;
     }
 
   var_max = config_GetNbItems(block);
@@ -876,10 +883,12 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
   for(var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
+      config_item_type item_type ;
 
       item = config_GetItemByIndex(block, var_index);
+      item_type = config_ItemType(item) ;
 
-      switch (config_ItemType(item))
+      switch( item_type )
         {
         case CONFIG_ITEM_VAR:
 

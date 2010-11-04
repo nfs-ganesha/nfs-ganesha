@@ -103,6 +103,12 @@ typedef struct pnfs_client__
   pnfs_ds_client_t ds_client[NB_MAX_PNFS_DS];
 } pnfs_client_t;
 
+typedef struct pnfs_ds_loc__
+{
+  fattr4_fileid fileid ;
+  uint64_t      generation ;
+}  pnfs_ds_loc_t ;
+
 typedef struct pnfs_part_file__
 {
   bool_t is_ganesha;
@@ -115,27 +121,30 @@ typedef struct pnfs_ds_file__
 {
   unsigned int stripe;
   bool_t allocated;
+  pnfs_ds_loc_t location ;
   pnfs_part_file_t filepart[NB_MAX_PNFS_DS];
 } pnfs_ds_file_t;
 
+
+
 /* Mandatory functions */
-int pnfs_init(pnfs_client_t * pnfsclient,
-              pnfs_layoutfile_parameter_t * pnfs_layout_param);
+int pnfs_ds_init( pnfs_client_t * pnfsclient,
+                  pnfs_layoutfile_parameter_t * pnfs_layout_param);
 
-int pnfs_create_ds_file(pnfs_client_t * pnfsclient,
-                        fattr4_fileid fileid, pnfs_ds_file_t * pfile);
+int pnfs_ds_create_file( pnfs_client_t * pnfsclient,
+                          pnfs_ds_loc_t * plocation, pnfs_ds_file_t * pfile);
 
-int pnfs_lookup_ds_file(pnfs_client_t * pnfsclient,
-                        fattr4_fileid fileid, pnfs_ds_file_t * pfile);
+int pnfs_ds_lookup_file( pnfs_client_t * pnfsclient,
+                         pnfs_ds_loc_t * plocation, pnfs_ds_file_t * pfile);
 
-int pnfs_unlink_ds_file(pnfs_client_t * pnfsclient,
-                        fattr4_fileid fileid, pnfs_ds_file_t * pfile);
+int pnfs_ds_unlink_file( pnfs_client_t * pnfsclient,
+                         pnfs_ds_file_t * pfile);
 
-int pnfs_open_ds_file(pnfs_client_t * pnfsdsclient,
-                      fattr4_fileid fileid, pnfs_ds_file_t * pfile);
+int pnfs_ds_open_file( pnfs_client_t * pnfsdsclient,
+                       pnfs_ds_loc_t * plocation, pnfs_ds_file_t * pfile);
 
-void pnfs_encode_getdeviceinfo(char *buff, unsigned int *plen);
-void pnfs_encode_layoutget(pnfs_ds_file_t * pds_file, char *buff, unsigned int *plen);
+void pnfs_ds_encode_getdeviceinfo(char *buff, unsigned int *plen);
+void pnfs_ds_encode_layoutget(pnfs_ds_file_t * pds_file, char *buff, unsigned int *plen);
 
 /* Internal functions */
 int pnfs_connect(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pnfs_ds_param);

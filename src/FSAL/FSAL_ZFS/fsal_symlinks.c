@@ -164,7 +164,10 @@ fsal_status_t ZFSFSAL_symlink(zfsfsal_handle_t * parent_directory_handle,     /*
 
   /* Hook to prevent creation of anything inside the snapshot */
   if(parent_directory_handle->data.i_snap != 0)
+  {
+    LogDebug(COMPONENT_FSAL, "Trying to create a symlink inside a snapshot");
     Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_symlink);
+  }
 
   TakeTokenFSCall();
 

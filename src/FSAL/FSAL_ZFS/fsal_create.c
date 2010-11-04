@@ -75,7 +75,10 @@ fsal_status_t ZFSFSAL_create(zfsfsal_handle_t * parent_directory_handle,      /*
 
   /* Hook to prevent creating objects in a snapashot */
   if(parent_directory_handle->data.i_snap != 0)
+  {
+    LogDebug(COMPONENT_FSAL, "Trying to create a file inside a snapshot");
     Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_create);
+  }
 
   TakeTokenFSCall();
 
@@ -169,7 +172,10 @@ fsal_status_t ZFSFSAL_mkdir(zfsfsal_handle_t * parent_directory_handle,       /*
 
   /* Hook to prevent creating objects in a snapashot */
   if(parent_directory_handle->data.i_snap != 0)
+  {
+    LogDebug(COMPONENT_FSAL, "Trying to create a directory inside a snapshot");
     Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_mkdir);
+  }
 
   /* convert fsal args to ZFS args */
   unix_mode = fsal2unix_mode(accessmode);
@@ -270,7 +276,10 @@ fsal_status_t ZFSFSAL_link(zfsfsal_handle_t * target_handle,  /* IN */
 
   /* Hook to prevent creating objects in a snapashot */
   if(target_handle->data.i_snap != 0)
+  {
+    LogDebug(COMPONENT_FSAL, "Trying to create hard link inside a snapshot");
     Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_link);
+  }
 
   /* Tests if hardlinking is allowed by configuration. */
   if(!global_fs_info.link_support)

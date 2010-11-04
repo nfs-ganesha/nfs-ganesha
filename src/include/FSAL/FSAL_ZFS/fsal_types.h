@@ -146,6 +146,16 @@ typedef struct fs_specific_initinfo__
 {
   char psz_zpool[FSAL_MAX_NAME_LEN];
 
+  int auto_snapshots;
+
+  char psz_snap_hourly_prefix[FSAL_MAX_NAME_LEN];
+  int snap_hourly_time;
+  int snap_hourly_number;
+
+  char psz_snap_daily_prefix[FSAL_MAX_NAME_LEN];
+  int snap_daily_time;
+  int snap_daily_number;
+
 } zfsfs_specific_initinfo_t;
 
 typedef void *fsal_lockdesc_t;

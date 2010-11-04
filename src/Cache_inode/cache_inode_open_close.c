@@ -197,7 +197,11 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
   fsal_size_t save_filesize;
   fsal_size_t save_spaceused;
   fsal_time_t save_mtime;
+#ifdef _USE_PNFS
   int pnfs_status;
+  pnfs_fileloc_t pnfs_location ;
+  fsal_extattrib_list_t  npattr_file ;
+#endif
 
   if((pentry_dir == NULL) || (pname == NULL) || (pentry_file == NULL) ||
      (pclient == NULL) || (pcontext == NULL) || (pstatus == NULL))
@@ -313,20 +317,34 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
     }
 
 #ifdef _USE_PNFS
-  if((pnfs_status = pnfs_lookup_ds_file(&pclient->pnfsclient,
-                                        pentry_file->object.file.attributes.fileid,
-                                        &pentry_file->object.file.pnfs_file.ds_file)) !=
-     NFS4_OK)
+  npattr_file.asked_attributes = FSAL_ATTR_GENERATION ;
+  fsal_status = FSAL_getextattrs( &pentry_file->object.file.handle,  
+				  pcontext, 
+                                 &npattr_file ) ;
+  
+   if( FSAL_IS_ERROR( fsal_status ) )
+     {
+        LogDebug(COMPONENT_CACHE_INODE, "LOOKUP PNFS support : can't call FSAL_getextattrs" ) ;
+
+        *pstatus = CACHE_INODE_IO_ERROR;
+        return *pstatus ;
+     }
+ 
+
+  pnfs_location.ds_loc.fileid = pentry_file->object.file.attributes.fileid ;
+  pnfs_location.ds_loc.generation =  npattr_file.generation ;
+
+  if((pnfs_status = pnfs_lookup_file( &pclient->pnfsclient,
+                                      &pnfs_location, 
+                                      &pentry_file->object.file.pnfs_file ) ) != NFS4_OK )  
     {
       LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS LOOKUP DS FILE : Error %u", pnfs_status);
 
       if(pnfs_status == NFS4ERR_NOENT)
         {
-          if((pnfs_status = pnfs_create_ds_file(&pclient->pnfsclient,
-                                                pentry_file->object.file.attributes.
-                                                fileid,
-                                                &pentry_file->object.file.pnfs_file.
-                                                ds_file)) != NFS4_OK)
+          if((pnfs_status = pnfs_create_file(&pclient->pnfsclient,
+                                             &pnfs_location,
+                                             &pentry_file->object.file.pnfs_file ) ) != NFS4_OK )
             {
 
               LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS CREATE DS FILE : Error %u",

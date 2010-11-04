@@ -81,9 +81,7 @@ fsal_status_t ZFSFSAL_test_access(zfsfsal_op_context_t * p_context,   /* IN */
     )
 {
   fsal_accessflags_t missing_access;
-  gid_t grp;
   int is_grp;
-  unsigned int i;
 
   /* sanity checks. */
 

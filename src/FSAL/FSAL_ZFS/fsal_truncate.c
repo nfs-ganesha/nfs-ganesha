@@ -67,7 +67,10 @@ fsal_status_t ZFSFSAL_truncate(zfsfsal_handle_t * filehandle, /* IN */
 
   /* Hook to prevent any modification in a snapshot */
   if(filehandle->data.i_snap != 0)
+  {
+    LogDebug(COMPONENT_FSAL, "Trying to truncate a file inside a snapshot");
     Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_truncate);
+  }
 
   TakeTokenFSCall();
 

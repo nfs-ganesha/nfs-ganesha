@@ -21,9 +21,8 @@
 #include "fsal_common.h"
 #include <string.h>
 
-extern libzfswrap_vfs_t **pp_vfs;
-extern char **ppsz_snapshots;
 extern size_t i_snapshots;
+extern snapshot_t *p_snapshots;
 extern time_t ServerBootTime;
 
 /**
@@ -57,7 +56,6 @@ fsal_status_t ZFSFSAL_opendir(zfsfsal_handle_t * dir_handle,  /* IN */
     )
 {
   int rc;
-  fsal_status_t st;
 
   /* sanity checks
    * note : dir_attributes is optionnal.
@@ -81,6 +79,7 @@ fsal_status_t ZFSFSAL_opendir(zfsfsal_handle_t * dir_handle,  /* IN */
   /* Hook for the zfs snapshot directory */
   if(dir_handle->data.zfs_handle.inode == ZFS_SNAP_DIR_INODE)
   {
+    LogDebug(COMPONENT_FSAL, "Opening the .zfs pseudo-directory");
     p_vnode = NULL;
     rc = 0;
   }
@@ -158,6 +157,8 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
   /* Hook to create the pseudo directory */
   if(dir_descriptor->handle.data.zfs_handle.inode == ZFS_SNAP_DIR_INODE)
   {
+    LogDebug(COMPONENT_FSAL, "Listing the snapshots in .zfs/");
+
     int i;
     struct stat fstat;
     memset(&fstat, 0, sizeof(fstat));
@@ -170,12 +171,13 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
     ZFSFSAL_VFS_RDLock();
     for(i = 0; i < max_dir_entries && i < i_snapshots; i++)
     {
-      libzfswrap_getroot(pp_vfs[i + start_position.data.cookie + 1],
+      libzfswrap_getroot(p_snapshots[i + start_position.data.cookie + 1].p_vfs,
                          &p_dirent[i].handle.data.zfs_handle);
       p_dirent[i].handle.data.i_snap = i + start_position.data.cookie + 1;
       p_dirent[i].handle.data.type = FSAL_TYPE_DIR;
-      strncpy(p_dirent[i].name.name, ppsz_snapshots[i + start_position.data.cookie], FSAL_MAX_NAME_LEN);
-      p_dirent[i].name.len = strlen(ppsz_snapshots[i + start_position.data.cookie]);
+      strncpy(p_dirent[i].name.name, p_snapshots[i + start_position.data.cookie + 1].psz_name,
+              FSAL_MAX_NAME_LEN);
+      p_dirent[i].name.len = strlen(p_snapshots[i + start_position.data.cookie + 1].psz_name);
 
       fstat.st_dev = i + start_position.data.cookie + 1;
       fstat.st_ino = p_dirent[i].handle.data.zfs_handle.inode;

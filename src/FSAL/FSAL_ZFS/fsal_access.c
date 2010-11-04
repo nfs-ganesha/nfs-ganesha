@@ -60,9 +60,6 @@ fsal_status_t ZFSFSAL_access(zfsfsal_handle_t * object_handle,        /* IN */
                              fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
-
-  fsal_status_t st;
-
   /* sanity checks.
    * note : object_attributes is optional in FSAL_access.
    */

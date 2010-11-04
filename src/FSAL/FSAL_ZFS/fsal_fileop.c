@@ -316,7 +316,10 @@ fsal_status_t ZFSFSAL_write(zfsfsal_file_t * file_descriptor, /* IN */
 
   /* Hook to prevent writing into a snapshot */
   if(file_descriptor->handle.data.i_snap != 0)
+  {
+    LogDebug(COMPONENT_FSAL, "Trying to write to a file inside a snapshot");
     Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_write);
+  }
 
   TakeTokenFSCall();
 
