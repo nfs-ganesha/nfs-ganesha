@@ -10,7 +10,7 @@ install: all
 	/sbin/depmod -b $(DESTDIR)/
 
 clean:
-	$(MAKE) -C $(DESTDIR)/lib/modules/$(shell uname -r)/build/ M=$(shell pwd) clean
+	$(MAKE) -C $(DESTDIR)/lib/modules/$(shell uname -r)/build/ M="$(shell pwd) clean"
 
 modules:
-	$(MAKE) -C /lib/modules/$(shell uname -r)/build/ M=$(shell pwd)
+	$(MAKE) -C /lib/modules/$(shell uname -r)/build/ M="$(shell pwd)"
