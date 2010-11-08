@@ -83,7 +83,8 @@ deb: prepare-deb-control
 rpms: rpm srpm
 
 codecheck:
-	 cppcheck -v --force --enable=all -I`pwd`/include . 2>cppcheck-xml/cppcheck.xml
+	rm -f cppcheck-xml/cppcheck.xml
+	 cppcheck -v --force --xml --enable=all -I`pwd`/include . 2>cppcheck-xml/cppcheck.xml
 
 cscope:
 	find . -type f -name "*.[ch]" | grep -v rpm/ > cscope.namefile
