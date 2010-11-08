@@ -489,12 +489,9 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
     }
 #endif
 
-  LogDebug(COMPONENT_NFS_V4,
-                    "NFS V4 COMPOUND: end status = %d|%d  lastindex = %d  last status = %d",
-                    status, pres->res_compound4.status, i,
-                    pres->res_compound4.resarray.resarray_val[i -
-                                                              1].nfs_resop4_u.opaccess.
-                    status);
+  LogDebug( COMPONENT_NFS_V4,               
+            "NFS V4 COMPOUND: end status = %d|%d  lastindex = %d",
+            status, pres->res_compound4.status, i ) ;
   LogDebug(COMPONENT_NFS_V4,
                     "===============================================================");
 
