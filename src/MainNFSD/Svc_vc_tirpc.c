@@ -73,6 +73,7 @@
 #include <pthread.h>
 
 int getpeereid(int s, uid_t * euid, gid_t * egid);
+int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
 
 pthread_mutex_t *mutex_cond_xprt;
 pthread_cond_t *condvar_xprt;
@@ -442,7 +443,7 @@ struct rpc_msg *msg;
   etat_xprt[newxprt->xp_fd] = 0;
 
   if((rc =
-      fridge_get(&sockmgr_thrid, rpc_tcp_socket_manager_thread,
+      fridgethr_get(&sockmgr_thrid, rpc_tcp_socket_manager_thread,
                      (void *)(newxprt->xp_fd))) != 0)
     return FALSE;
 

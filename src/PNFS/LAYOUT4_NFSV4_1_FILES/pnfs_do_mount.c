@@ -55,6 +55,7 @@ int pnfs_do_mount(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pds_par
 
   char clientowner_name[MAXNAMLEN];
   char server_owner_pad[PNFS_LAYOUTFILE_PADDING_LEN];
+  char server_scope[PNFS_LAYOUTFILE_PADDING_LEN];
   uint32_t bitmap1[2];
   uint32_t bitmap2[2];
 
@@ -87,6 +88,8 @@ int pnfs_do_mount(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pds_par
       bitmap2;
   resoparray_exchangeid[0].nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4.
       eir_server_owner.so_major_id.so_major_id_val = server_owner_pad;
+  resoparray_exchangeid[0].nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4.
+      eir_server_scope.eir_server_scope_val = server_scope ;
 
   snprintf(clientowner_name, MAXNAMLEN, "GANESHA PNFS MDS Thread=(%u,%llu)", getpid(),
            (unsigned long long)pthread_self());
@@ -96,8 +99,8 @@ int pnfs_do_mount(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pds_par
 
   COMPOUNDV41_ARG_ADD_OP_EXCHANGEID(argnfs4, client_owner);
   if(clnt_call(pnfsdsclient->rpc_client, NFSPROC4_COMPOUND,
-               (xdrproc_t) xdr_COMPOUND4args, (caddr_t) & argnfs4,
-               (xdrproc_t) xdr_COMPOUND4res, (caddr_t) & resnfs4, timeout) != RPC_SUCCESS)
+               (xdrproc_t) xdr_COMPOUND4args, (caddr_t)&argnfs4,
+               (xdrproc_t) xdr_COMPOUND4res, (caddr_t)&resnfs4, timeout) != RPC_SUCCESS)
     {
       return NFS4ERR_IO;        /* @todo: For wanting of something more appropriate */
     }
