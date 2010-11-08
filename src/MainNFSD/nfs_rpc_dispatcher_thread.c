@@ -123,6 +123,8 @@ rw_lock_t Svc_fd_lock;
 unsigned int nb_current_gc_workers;
 pthread_mutex_t lock_nb_current_gc_workers;
 
+static pthread_mutex_t lock_worker_selection = PTHREAD_MUTEX_INITIALIZER;
+
 #ifdef _DEBUG_MEMLEAKS
 /**
  *
@@ -1540,32 +1542,47 @@ int nfs_Init_svc()
  */
 static unsigned int select_worker_queue()
 {
-#define NO_VALUE_CHOOSEN  1000000
+  #define NO_VALUE_CHOOSEN  1000000
   unsigned int worker_index = NO_VALUE_CHOOSEN;
   unsigned int min_number_pending = NO_VALUE_CHOOSEN;
+  unsigned int avg_number_pending = NO_VALUE_CHOOSEN;
+  unsigned int total_number_pending = 0;
+
+  static unsigned int counter;
 
   unsigned int i;
   static unsigned int last;
   unsigned int cpt = 0;
 
-  do
+  P(lock_worker_selection);
+  counter++;
+
+  /* Calculate the average queue length if counter is bigger than configured value. */
+  if(counter > nfs_param.core_param.nb_call_before_queue_avg)
     {
+      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
+        {
+          total_number_pending += workers_data[i].pending_request->nb_entry;
+        }
+      avg_number_pending = total_number_pending / nfs_param.core_param.nb_worker;
+      /* Reset counter. */
+      counter = 0;
+    }
+  V(lock_worker_selection);
 
-      /* chose the smallest queue */
-
+  /* Choose the queue whose length is smaller than average. */
       for(i = (last + 1) % nfs_param.core_param.nb_worker, cpt = 0;
           cpt < nfs_param.core_param.nb_worker;
           cpt++, i = (i + 1) % nfs_param.core_param.nb_worker)
         {
-          /* Choose only fully initialized workers and that does not gc */
-
+      /* Choose only fully initialized workers and that does not gc. */
           if((workers_data[i].gc_in_progress == FALSE)
              && (workers_data[i].is_ready == TRUE))
             {
-              if(workers_data[i].pending_request->nb_entry < min_number_pending)
+         if(workers_data[i].pending_request->nb_entry < avg_number_pending)
                 {
                   worker_index = i;
-                  min_number_pending = workers_data[i].pending_request->nb_entry;
+             break;
                 }
             }
           else if(!workers_data[i].is_ready)
@@ -1575,8 +1592,8 @@ static unsigned int select_worker_queue()
                          "worker thread #%u is doing garbage collection", i);
         }
 
-    }
-  while(worker_index == NO_VALUE_CHOOSEN);
+  if(worker_index == NO_VALUE_CHOOSEN)
+    worker_index = (last + 1) % nfs_param.core_param.nb_worker;
 
   last = worker_index;
 

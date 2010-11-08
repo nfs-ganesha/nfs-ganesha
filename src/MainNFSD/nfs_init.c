@@ -255,6 +255,7 @@ int nfs_print_param_config(nfs_parameter_t * p_nfs_param)
   printf("\tNFS_Program = %u ;\n", p_nfs_param->core_param.nfs_program);
   printf("\tMNT_Program = %u ;\n", p_nfs_param->core_param.mnt_program);
   printf("\tNb_Worker = %u ; \n", p_nfs_param->core_param.nb_worker);
+  printf("\Nb_Call_Before_Queue_Avg = %u ; \n", p_nfs_param->core_param.nb_call_before_queue_avg);
   printf("\tNb_MaxConcurrentGC = %u ; \n", p_nfs_param->core_param.nb_max_concurrent_gc);
   printf("\tDupReq_Expiration = %lu ; \n", p_nfs_param->core_param.expiration_dupreq);
   printf("\tCore_Dump_Size = %ld ; \n", p_nfs_param->core_param.core_dump_size);
@@ -302,6 +303,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
 
   /* Core parameters */
   p_nfs_param->core_param.nb_worker = NB_WORKER_THREAD_DEFAULT;
+  p_nfs_param->core_param.nb_call_before_queue_avg = NB_REQUEST_BEFORE_QUEUE_AVG;
   p_nfs_param->core_param.nb_max_concurrent_gc = NB_MAX_CONCURRENT_GC;
   p_nfs_param->core_param.expiration_dupreq = DUPREQ_EXPIRATION;
   p_nfs_param->core_param.nfs_port = NFS_PORT;

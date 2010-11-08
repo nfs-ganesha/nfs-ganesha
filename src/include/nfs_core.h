@@ -82,12 +82,13 @@
 #endif
 
 /* Maximum thread count */
-#define NB_MAX_WORKER_THREAD 100
+#define NB_MAX_WORKER_THREAD 4096
 #define NB_MAX_FLUSHER_THREAD 100
 
 /* NFS daemon behavior default values */
 #define NB_WORKER_THREAD_DEFAULT  16
 #define NB_FLUSHER_THREAD_DEFAULT 16
+#define NB_REQUEST_BEFORE_QUEUE_AVG  1000
 #define NB_MAX_CONCURRENT_GC 3
 #define NB_MAX_PENDING_REQUEST 30
 #define NB_PREALLOC_LRU_WORKER 100
@@ -282,6 +283,7 @@ typedef struct nfs_core_param__
   unsigned int nlm_program;
   unsigned int rquota_program;
   unsigned int nb_worker;
+  unsigned int nb_call_before_queue_avg;
   unsigned int nb_max_concurrent_gc;
   long core_dump_size;
   int nb_max_fd;

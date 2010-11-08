@@ -269,6 +269,10 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->nb_worker = atoi(key_value);
         }
+      else if(!strcasecmp(key_name, "Nb_Call_Before_Queue_Avg"))
+        {
+          pparam->nb_call_before_queue_avg = atoi(key_value);
+        }
       else if(!strcasecmp(key_name, "Nb_MaxConcurrentGC"))
         {
           pparam->nb_max_concurrent_gc = atoi(key_value);
