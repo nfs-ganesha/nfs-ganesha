@@ -105,10 +105,15 @@ size_t stack_size = 0;
 fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
     )
 {
-
+  static int is_initialized = 0;
   fsal_status_t status;
 
   /* sanity check.  */
+  if(is_initialized)
+  {
+    LogEvent(COMPONENT_FSAL, "INIT: blocking second call to FSAL_Init");
+    Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);
+  }
 
   if(!init_info)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
@@ -204,6 +209,7 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
   }
 
   /* Everything went OK. */
+  is_initialized = 1;
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);
 
 }
