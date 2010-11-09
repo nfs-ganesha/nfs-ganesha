@@ -4,9 +4,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "u_signed64.h"
-#include "hpssclapiext.h"
-#include "api_internal.h"
+#include <u_signed64.h>
+#include <hpssclapiext.h>
+#include <api_internal.h>
 
 /*
  *  For determining if a returned access ticket is NULL.

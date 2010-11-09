@@ -5,11 +5,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "hpss_dirent.h"
-#include "u_signed64.h"
-#include "hpssclapiext.h"
-#include "hpss_api.h"
-#include "api_internal.h"
+#include <hpss_dirent.h>
+#include <u_signed64.h>
+#include <hpssclapiext.h>
+#include <hpss_api.h>
+#include <api_internal.h>
 
 /*
  *  Prototypes for static functions.

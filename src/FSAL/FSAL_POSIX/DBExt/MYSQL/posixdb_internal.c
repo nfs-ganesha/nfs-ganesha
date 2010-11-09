@@ -4,10 +4,10 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#include <string.h>
 #include "fsal_types.h"
 #include "posixdb_internal.h"
 #include "posixdb_consistency.h"
-#include "string.h"
 #include "RW_Lock.h"
 
 /* cyclic cache of paths */

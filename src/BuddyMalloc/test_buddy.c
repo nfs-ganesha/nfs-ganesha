@@ -29,7 +29,7 @@
 #include "BuddyMalloc.h"
 #include <pthread.h>
 #include "log_macros.h"
-#include "errno.h"
+#include <errno.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <unistd.h>

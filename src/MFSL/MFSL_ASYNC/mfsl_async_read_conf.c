@@ -46,8 +46,8 @@
 #include "log_macros.h"
 #include "config_parsing.h"
 
-#include "strings.h"
-#include "string.h"
+#include <strings.h>
+#include <string.h>
 
 #ifndef _USE_SWIG
 

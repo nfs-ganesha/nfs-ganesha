@@ -4,7 +4,7 @@
 #include "fsal_types.h"
 #include "posixdb_internal.h"
 #include <stdio.h>
-#include "string.h"
+#include <string.h>
 
 int main(void)
 {

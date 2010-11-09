@@ -1,9 +1,9 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#include <string.h>
 #include "fsal_types.h"
 #include "posixdb_internal.h"
-#include "string.h"
 
 fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  /* IN */
                                                    posixfsal_handle_t * p_parent_directory_handle,      /* IN/OUT */

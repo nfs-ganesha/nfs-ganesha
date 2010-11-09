@@ -10,13 +10,13 @@
 #include <sys/select.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include "hpss_soid_func.h"
-#include "u_signed64.h"
-#include "pdata.h"
-#include "hpssclapiext.h"
-#include "api_internal.h"
+#include <hpss_soid_func.h>
+#include <u_signed64.h>
+#include <pdata.h>
+#include <hpssclapiext.h>
+#include <api_internal.h>
 /*#include "dmg_types.h"*/
-#include "acct_av_lib.h"
+#include <acct_av_lib.h>
 
 #ifdef LINUX
 #define pthread_mutexattr_default NULL
