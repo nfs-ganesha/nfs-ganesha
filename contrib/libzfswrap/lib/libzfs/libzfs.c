@@ -946,6 +946,7 @@ top:
 
                 if(!(p_zfs_snap = libzfs_make_dataset_handle(p_libzfshd, psz_buffer)))
                         *ppsz_error = "Unable to create a zfs handle for the snapshot";
+                dmu_objset_rele(p_os, FTAG);
         }
         return p_zfs_snap;
 }

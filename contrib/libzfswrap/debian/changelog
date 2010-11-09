@@ -1,11 +1,17 @@
+libzfswrap (1.0.2-1) unstable; urgency=low
+
+  * Fix the destruction of snapshots
+
+ -- Rémi Duraffort <duraffortr@ocre.cea.fr>  Thu, 9 Nov 2010 13:57:00 +0200
+
 libzfswrap (1.0.1-1) unstable; urgency=low
 
-  * Add support for the snapshots
+  * Add snapshots handling
 
- -- Rémi Duraffort <ivoire@videolan.org>  Thu, 19 Oct 2010 11:18:00 +0200
+ -- Rémi Duraffort <duraffortr@ocre.cea.fr>  Thu, 19 Oct 2010 11:18:00 +0200
 
 libzfswrap (1.0.0-1) unstable; urgency=low
 
   * Initial release
 
- -- Rémi Duraffort <ivoire@videolan.org>  Thu, 22 Jul 2010 13:22:54 +0200
+ -- Rémi Duraffort <duraffortr@ocre.cea.fr>  Thu, 22 Jul 2010 13:22:54 +0200
