@@ -11,7 +11,7 @@
 
 #include  "fsal.h"
 
-#include "libzfswrap.h"
+#include <libzfswrap.h>
 
 /* libzfswrap handler, used only when the FSAL is created and destroyed */
 extern libzfswrap_handle_t *p_zhd;
