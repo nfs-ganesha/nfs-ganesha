@@ -167,7 +167,7 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
           if(!strcmp(p_snapshots[i].psz_name, p_filename->name))
             break;
 
-        if(i == i_snapshots)
+        if(i == i_snapshots + 1)
         {
           ReleaseTokenFSCall();
           Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_lookup);
