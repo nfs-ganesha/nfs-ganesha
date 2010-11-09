@@ -246,6 +246,8 @@ static libzfswrap_vfs_t *TakeSnapshotAndMount(const char *psz_zpool, const char 
     snprintf(psz_buffer, FSAL_MAX_NAME_LEN, "%s@%s%d_%02d_%02d-%02d_%02d",
              psz_zpool, psz_prefix, now->tm_year + 1900, now->tm_mon,
              now->tm_mday, now->tm_hour, now->tm_min);
+
+    LogDebug(COMPONENT_FSAL, "SNAPSHOTS: creating a new snapshot '%s'", psz_buffer);
     return libzfswrap_mount(psz_buffer, psz_buffer, "");
 }
 
@@ -301,6 +303,7 @@ static void RemoveOldSnapshots(const char *psz_prefix, int number)
     p_snapshots = realloc(p_snapshots, (i_snapshots + 1) * sizeof(*p_snapshots));
 
     /* Really remove the snapshot */
+    LogDebug(COMPONENT_FSAL, "SNAPSHOTS: removing the snapshot '%s' (%d/%d)", psz_name, i + 1, number);
     libzfswrap_umount(p_vfs, 1);
     libzfswrap_zfs_snapshot_destroy(p_zhd, "tank", psz_name, &psz_error);
   }
@@ -323,6 +326,7 @@ static void *SnapshotThread(void *data)
       i_wait = fs_info->snap_hourly_time - now->tm_min;
 
     /* Sleep for the given time */
+    LogDebug(COMPONENT_FSAL, "SNAPSHOTS: next snapshot in %"PRIu64" minutes", i_wait);
     sleep(i_wait*60);
 
     /* Create a snapshot */
