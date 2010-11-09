@@ -76,8 +76,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Nov 9 2010 Duraffort Remi <duraffortr@ocre.cea.fr> 1.0.2
+- fix the destruction of snapshots
+
 * Tue Oct 19 2010 Duraffort Remi <duraffortr@ocre.cea.fr> 1.0.1
 - add snapshots handling
 
 * Wed Jul 21 2010 Duraffort Remi <duraffortr@ocre.cea.fr> 1.0.0
-- add spec file
+- initial release

@@ -722,11 +722,23 @@ int libzfswrap_zfs_snapshot(libzfswrap_handle_t *p_zhd, const char *psz_zfs, con
  */
 int libzfswrap_zfs_snapshot_destroy(libzfswrap_handle_t *p_zhd, const char *psz_zfs, const char *psz_snapshot, const char **ppsz_error)
 {
-        int rc = dmu_snapshots_destroy(psz_zfs, psz_snapshot, B_FALSE);
-        if(rc)
-                *ppsz_error = "Unable to destroy the snapshot";
+        zpool_handle_t *p_zpool;
+        int i_error;
 
-        return rc;
+        /** Open the zpool */
+        if((p_zpool = libzfs_zpool_open_canfail((libzfs_handle_t*)p_zhd, psz_zfs, ppsz_error)) == NULL)
+        {
+                /** If the name contain a '/' redirect the user to zfs_destroy */
+                if(strchr(psz_zfs, '/') != NULL)
+                        *ppsz_error = "the pool name cannot contain a '/'";
+                return 1;
+        }
+
+        if((i_error = dmu_snapshots_destroy(psz_zfs, psz_snapshot, B_TRUE)))
+                *ppsz_error = "Unable to destro the snapshot";
+
+        libzfs_zpool_close(p_zpool);
+        return i_error;
 }
 
 
