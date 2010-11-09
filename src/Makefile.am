@@ -84,7 +84,7 @@ rpms: rpm srpm
 
 codecheck:
 	rm -f cppcheck-xml/cppcheck.xml
-	 cppcheck -j12 -v --force --xml --enable=unusedFunction,missingInclude -I`pwd`/include . 2>cppcheck-xml/cppcheck.xml
+	 cppcheck -j12 -v --force --xml --enable=unusedFunction -I`pwd`/include . 2>cppcheck-xml/cppcheck.xml
 
 cscope:
 	find . -type f -name "*.[ch]" | grep -v rpm/ > cscope.namefile
