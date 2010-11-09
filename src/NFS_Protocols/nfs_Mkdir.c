@@ -190,7 +190,8 @@ int nfs_Mkdir(nfs_arg_t * parg,
       break;
     }
 
-  if(str_dir_name == NULL || strlen(str_dir_name) == 0)
+  //if(str_dir_name == NULL || strlen(str_dir_name) == 0)
+  if(str_dir_name == NULL || *str_dir_name == '\0' )
     {
       if(preq->rq_vers == NFS_V2)
         pres->res_dirop2.status = NFSERR_IO;

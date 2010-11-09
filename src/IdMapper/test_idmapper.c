@@ -50,7 +50,7 @@ nfs_parameter_t nfs_param;
 
 int idmap_computer_hash_value(char *name, uint32_t * phashval)
 {
-  char padded_name[PWENT_MAX_LEN];
+  char padded_name[PWENT_MAX_LEN+8]; /* +8 to avoid array bounds overflow */
   uint32_t computed_value = 0;
   unsigned int i = 0;
   unsigned int offset = 0;
@@ -69,7 +69,7 @@ int idmap_computer_hash_value(char *name, uint32_t * phashval)
   if(name == NULL || phashval == NULL)
     return CLIENT_ID_INVALID_ARGUMENT;
 
-  memset(padded_name, 0, PWENT_MAX_LEN);
+  memset(padded_name, 0, PWENT_MAX_LEN+8);
 
   /* Copy the string to the padded one */
   for(i = 0; i < strnlen(name, PWENT_MAX_LEN); padded_name[i] = name[i], i++) ;

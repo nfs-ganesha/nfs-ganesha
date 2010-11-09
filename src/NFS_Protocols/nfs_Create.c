@@ -212,7 +212,8 @@ int nfs_Create(nfs_arg_t * parg,
       break;
     }
 
-  if(str_file_name == NULL || strlen(str_file_name) == 0)
+  // if(str_file_name == NULL || strlen(str_file_name) == 0)
+  if(str_file_name == NULL || *str_file_name == '\0' )
     {
       if(preq->rq_vers == NFS_V2)
         pres->res_dirop2.status = NFSERR_IO;

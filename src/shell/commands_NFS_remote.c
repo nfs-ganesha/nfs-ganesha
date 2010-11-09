@@ -480,13 +480,15 @@ int rpc_reinit(char *name,      /* IN */
   char *hostname;
 
   hostname = getHostname(name);
-  if(strlen(hostname) == 0)
+  //if(strlen(hostname) == 0)
+  if(*hostname == "\0")
     {
       fprintf(output, "rpc_reinit client %s : getHostname failed\n", name);
       return -1;
     }
   proto = getProto(name);
-  if(strlen(proto) == 0)
+  //if(strlen(proto) == 0)
+  if( *proto == '\0' )
     {
       fprintf(output, "rpc_reinit client %s : getProto failed\n", name);
       return -1;
@@ -630,7 +632,8 @@ int fn_rpc_init(int argc,       /* IN : number of args in argv */
     }
 
   /* getting the hostname */
-  if(strlen(localmachine) == 0)
+  //if(strlen(localmachine) == 0)
+  if(*localmachine == '\0' )
     {
       rc = gethostname(localmachine, sizeof(localmachine));
       if(rc != 0)

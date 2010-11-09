@@ -213,7 +213,8 @@ int nfs3_Mknod(nfs_arg_t * parg,
       return NFS_REQ_OK;
     }
 
-  if(str_file_name == NULL || strlen(str_file_name) == 0)
+  //if(str_file_name == NULL || strlen(str_file_name) == 0)
+  if(str_file_name == NULL || *str_file_name == '\0' )
     {
       pres->res_mknod3.status = NFS3ERR_INVAL;
       return NFS_REQ_OK;

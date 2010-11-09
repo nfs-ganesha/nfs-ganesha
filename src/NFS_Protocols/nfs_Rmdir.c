@@ -175,7 +175,8 @@ int nfs_Rmdir(nfs_arg_t * parg /* IN  */ ,
 
     }
 
-  if(dir_name == NULL || strlen(dir_name) == 0)
+  //if(dir_name == NULL || strlen(dir_name) == 0)
+  if(dir_name == NULL || *dir_name == '\0' )
     {
       cache_status = CACHE_INODE_INVALID_ARGUMENT;      /* for lack of better... */
     }

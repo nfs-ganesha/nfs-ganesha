@@ -198,7 +198,8 @@ int nfs_Link(nfs_arg_t * parg,
       }
     }
 
-  if(str_link_name == NULL || strlen(str_link_name) == 0)
+  // if(str_link_name == NULL || strlen(str_link_name) == 0)
+  if(str_link_name == NULL || *str_link_name == '\0' )
     {
       if(preq->rq_vers == NFS_V2)
         pres->res_stat2 = NFSERR_IO;

@@ -211,9 +211,9 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
   pentry = new_pentry = NULL;
 
   if(str_entry_name == NULL ||
-     strlen(str_entry_name) == 0 ||
+     *str_entry_name == '\0' ||
      str_new_entry_name == NULL ||
-     strlen(str_new_entry_name) == 0 ||
+     *str_new_entry_name == '\0' ||
      FSAL_IS_ERROR(FSAL_str2name(str_entry_name, FSAL_MAX_NAME_LEN, &entry_name)) ||
      FSAL_IS_ERROR(FSAL_str2name(str_new_entry_name, FSAL_MAX_NAME_LEN, &new_entry_name)))
     {

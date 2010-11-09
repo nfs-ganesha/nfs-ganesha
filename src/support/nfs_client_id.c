@@ -641,7 +641,7 @@ int nfs_client_id_basic_compute(char *name, clientid4 * pclientid)
 
 int nfs_client_id_compute(char *name, clientid4 * pclientid)
 {
-  char padded_name[CLIENT_ID_MAX_LEN];
+  char padded_name[CLIENT_ID_MAX_LEN+9]; /* +9 to avoid array bounds overflow */
   clientid4 computed_value = 0;
   unsigned int i = 0;
   unsigned int offset = 0;
@@ -661,7 +661,7 @@ int nfs_client_id_compute(char *name, clientid4 * pclientid)
   if(name == NULL || pclientid == NULL)
     return CLIENT_ID_INVALID_ARGUMENT;
 
-  memset(padded_name, 0, CLIENT_ID_MAX_LEN);
+  memset(padded_name, 0, CLIENT_ID_MAX_LEN+9);
 
   /* Copy the string to the padded one */
   for(i = 0; i < strnlen(name, CLIENT_ID_MAX_LEN); padded_name[i] = name[i], i++) ;
