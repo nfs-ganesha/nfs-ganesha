@@ -464,7 +464,7 @@ chkconfig --del nfs-ganesha-gpfs
 
 %post gpfs
 chkconfig --add nfs-ganesha-gpfs
-/sbin/depmod
+/sbin/depmod -a
 %endif
 
 %if %{?_with_lustre:1}%{!?_with_lustre:0}
