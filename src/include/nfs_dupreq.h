@@ -64,9 +64,34 @@ typedef unsigned long u_long;
 #include "fsal.h"
 #include "nfs_tools.h"
 
+typedef struct dupreq_key__
+{
+  /* Each NFS request is identified by the client by an xid.
+   * The same xids can be recycled by the same client or used
+   * by different clients ... it's too weak to make the dup req
+   * cache useful. */
+  int xid;
+
+  /* The IP and port are also used to identify duplicate requests.
+   * This is much much stronger. */
+  struct sockaddr addr;
+
+  /* In very rare cases, ip/port/xid is not enough. In databases
+   * and other specific applications this may be a greater concern.
+   * In those cases a checksum of the first 200 bytes of the request
+   * should be used */
+  int checksum;
+} dupreq_key_t;
+
 typedef struct dupreq_entry__
 {
   long xid;
+  struct sockaddr addr;
+  int checksum;
+
+  pthread_mutex_t dupreq_mutex;
+  int processing; /* if currently being processed, this should be = 1 */
+
   nfs_res_t res_nfs;
   u_long rq_prog;               /* service program number        */
   u_long rq_vers;               /* service protocol version      */
@@ -76,17 +101,25 @@ typedef struct dupreq_entry__
 
 unsigned int get_rpc_xid(struct svc_req *reqp);
 
-int compare_xid(hash_buffer_t * buff1, hash_buffer_t * buff2);
+int compare_req(hash_buffer_t * buff1, hash_buffer_t * buff2);
 int print_entry_dupreq(LRU_data_t data, char *str);
 int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam);
 int nfs_dupreq_gc_function(LRU_entry_t * pentry, void *addparam);
 
-nfs_res_t nfs_dupreq_get(long xid, int *pstatus);
+nfs_res_t nfs_dupreq_get(long xid, struct svc_req *ptr_req, SVCXPRT *xprt, int *pstatus);
+int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt,
+                      struct prealloc_pool *dupreq_pool);
+int nfs_dupreq_add_not_finished(long xid,
+				struct svc_req *ptr_req,
+				SVCXPRT *xprt,
+				struct prealloc_pool *dupreq_pool,
+				nfs_res_t *res_nfs);
 
-int nfs_dupreq_add(long xid,
-                   struct svc_req *ptr_req,
-                   nfs_res_t * p_res_nfs,
-                   LRU_list_t * lru_dupreq, struct prealloc_pool *dupreq_pool);
+int nfs_dupreq_finish(long xid,
+		      struct svc_req *ptr_req,
+		      SVCXPRT *xprt,
+		      nfs_res_t * p_res_nfs,
+		      LRU_list_t * lru_dupreq);
 
 unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
                                      hash_buffer_t * buffclef);
@@ -96,5 +129,7 @@ void nfs_dupreq_get_stats(hash_stat_t * phstat);
 #define DUPREQ_SUCCESS             0
 #define DUPREQ_INSERT_MALLOC_ERROR 1
 #define DUPREQ_NOT_FOUND           2
+#define DUPREQ_BEING_PROCESSED     3
+#define DUPREQ_ALREADY_EXISTS      4
 
 #endif                          /* _NFS_DUPREQ_H */
