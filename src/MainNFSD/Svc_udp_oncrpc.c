@@ -138,11 +138,15 @@ SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz)
 
   if(su == NULL)
     {
+      Mem_Free( xprt ) ;
       return (NULL);
     }
+
   su->su_iosz = ((MAX(sendsz, recvsz) + 3) / 4) * 4;
   if((rpc_buffer(xprt) = Mem_Alloc_Label(su->su_iosz, "UDP IO Buffer")) == NULL)
     {
+      Mem_Free( su ) ;
+      Mem_Free( xprt ) ;
       return (NULL);
     }
 

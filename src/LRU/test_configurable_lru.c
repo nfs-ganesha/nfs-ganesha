@@ -252,8 +252,6 @@ int main(int argc, char *argv[])
           LogTest("ordre '%c' non-reconnu", c);
           break;
         }
-
-      fflush(stdin);
     }
 
   LogTest("====================================================");
