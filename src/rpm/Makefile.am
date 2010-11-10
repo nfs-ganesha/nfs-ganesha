@@ -1,0 +1,2 @@
+clean:
+	rm -rf BUILD RPMS SOURCES SPECS SRPMS
