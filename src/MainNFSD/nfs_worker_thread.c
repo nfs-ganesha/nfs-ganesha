@@ -1260,6 +1260,7 @@ void *worker_thread(void *IndexArg)
   long index;
   bool_t found = FALSE;
   int rc = 0;
+  int low_vers, hi_vers;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   unsigned int gc_allowed = FALSE;
   char thr_name[128];
@@ -1513,8 +1514,9 @@ void *worker_thread(void *IndexArg)
                             /* If we go there, preq->rq_prog ==  nfs_param.core_param.nfs_program */
 /* FSAL_PROXY supports only NFSv4 except if handle mapping is enabled */
 #if ! defined( _USE_PROXY ) || defined( _HANDLE_MAPPING )
-                            if((preq->rq_vers != NFS_V2) &&
-                               (preq->rq_vers != NFS_V3) && (preq->rq_vers != NFS_V4))
+                            if(((preq->rq_vers != NFS_V2) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) == 0)) &&
+                               ((preq->rq_vers != NFS_V3) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) == 0)) &&
+                               ((preq->rq_vers != NFS_V4) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) == 0)))
 #else
                             if(preq->rq_vers != NFS_V4)
 #endif
@@ -1523,7 +1525,19 @@ void *worker_thread(void *IndexArg)
                                              "/!\\ | Invalid NFS Version #%d",
                                              (int)preq->rq_vers);
 #if ! defined( _USE_PROXY ) || defined( _HANDLE_MAPPING )
-                                svcerr_progvers(xprt, NFS_V2, NFS_V4);  /* Bad NFS version */
+                                low_vers = NFS_V4;
+                                hi_vers = NFS_V2;
+                                if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
+                                  low_vers = NFS_V2;
+                                if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
+                                  {
+                                    if(low_vers == NFS_V4)
+                                      low_vers = NFS_V3;
+                                    hi_vers = NFS_V3;
+                                  }
+                                if((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)
+                                  hi_vers = NFS_V4;
+                                svcerr_progvers(xprt, low_vers, hi_vers);  /* Bad NFS version */
 #else
                                 svcerr_progvers(xprt, NFS_V4, NFS_V4);  /* Bad NFS version */
 #endif
@@ -1534,9 +1548,13 @@ void *worker_thread(void *IndexArg)
                                 nfs_rpc_execute(pnfsreq, pmydata);
                               }
                           }     /* if( preq->rq_prog ==  nfs_param.core_param.nfs_program ) */
-                        else if(preq->rq_prog == nfs_param.core_param.mnt_program)
+                        else if(preq->rq_prog == nfs_param.core_param.mnt_program &&
+                                ((nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0))
                           {
                             /* Call is with MOUNTPROG */
+                            /* Don't verify mount version because some NFS clients UMOUNT with version 1
+                             * even if they mounted with version 3
+                             */
                             if((preq->rq_vers != MOUNT_V1) && (preq->rq_vers != MOUNT_V3))
                               {
                                 LogFullDebug(COMPONENT_DISPATCH,
@@ -1551,7 +1569,8 @@ void *worker_thread(void *IndexArg)
                               }
                           }
 #ifdef _USE_NLM
-                        else if(preq->rq_prog == nfs_param.core_param.nlm_program)
+                        else if(preq->rq_prog == nfs_param.core_param.nlm_program &&
+                                ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0))
                           {
                             /* Call is with NLMPROG */
                             if(preq->rq_vers != NLM4_VERS)
