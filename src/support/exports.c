@@ -967,7 +967,13 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           for(idx = 0; idx < count; idx++)
             {
-              if(!STRCMP(nfsvers_list[idx], "2"))
+              if(!STRCMP(nfsvers_list[idx], "4"))
+                {
+                  p_entry->options |= EXPORT_OPTION_NFSV4;
+                }
+/* only NFSv4 is supported for the FSAL_PROXY */
+#if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
+              else if(!STRCMP(nfsvers_list[idx], "2"))
                 {
                   p_entry->options |= EXPORT_OPTION_NFSV2;
                 }
@@ -975,10 +981,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                 {
                   p_entry->options |= EXPORT_OPTION_NFSV3;
                 }
-              else if(!STRCMP(nfsvers_list[idx], "4"))
-                {
-                  p_entry->options |= EXPORT_OPTION_NFSV4;
-                }
+#endif                          /* _USE_PROXY */
               else
                 {
                   LogCrit(COMPONENT_CONFIG,

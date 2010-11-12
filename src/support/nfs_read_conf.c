@@ -351,7 +351,13 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
 
           for(idx = 0; idx < count; idx++)
             {
-              if(!strcmp(nfsvers_list[idx], "2"))
+              if(!strcmp(nfsvers_list[idx], "4"))
+                {
+                  pparam->core_options |= CORE_OPTION_NFSV4;
+                }
+/* only NFSv4 is supported for the FSAL_PROXY */
+#if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
+              else if(!strcmp(nfsvers_list[idx], "2"))
                 {
                   pparam->core_options |= CORE_OPTION_NFSV2;
                 }
@@ -359,10 +365,7 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
                 {
                   pparam->core_options |= CORE_OPTION_NFSV3;
                 }
-              else if(!strcmp(nfsvers_list[idx], "4"))
-                {
-                  pparam->core_options |= CORE_OPTION_NFSV4;
-                }
+#endif                          /* _USE_PROXY */
               else
                 {
                   LogCrit(COMPONENT_CONFIG,

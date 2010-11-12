@@ -322,7 +322,12 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->core_param.nb_max_fd = -1;       /* Use OS's default */
   p_nfs_param->core_param.stats_update_delay = 60;
   p_nfs_param->core_param.tcp_fridge_expiration_delay = -1;
+/* only NFSv4 is supported for the FSAL_PROXY */
+#if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
   p_nfs_param->core_param.core_options = CORE_OPTION_ALL_VERS;
+#else
+  p_nfs_param->core_param.core_options = CORE_OPTION_NFSV4;
+#endif                          /* _USE_PROXY */
 
   p_nfs_param->core_param.use_nfs_commit = FALSE;
   strncpy(p_nfs_param->core_param.stats_file_path, "/tmp/ganesha.stat", MAXPATHLEN);
