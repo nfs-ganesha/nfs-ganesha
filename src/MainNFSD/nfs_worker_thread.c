@@ -802,7 +802,12 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
               if((pexport =
                   nfs_Get_export_by_id(nfs_param.pexportlist, exportid)) == NULL)
                 {
-                  /* Reject the request for authentication reason (incompatible file handle */
+                  /* Reject the request for authentication reason (incompatible file handle) */
+                  svcerr_auth(ptr_svc, AUTH_FAILED);
+                }
+              if((pexport->options & EXPORT_OPTION_NFSV2) == 0)
+                {
+                  /* Reject the request for authentication reason (NFS v2 not allowed for this export) */
                   svcerr_auth(ptr_svc, AUTH_FAILED);
                 }
               LogFullDebug(COMPONENT_DISPATCH,
@@ -858,6 +863,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 		      LogCrit(COMPONENT_DISPATCH, "Attempt to delete duplicate request failed on line %d", __LINE__);
 		    }
                   return;
+                }
+              if((pexport->options & EXPORT_OPTION_NFSV3) == 0)
+                {
+                  /* Reject the request for authentication reason (NFS v3 not allowed for this export) */
+                  svcerr_auth(ptr_svc, AUTH_FAILED);
                 }
               LogFullDebug(COMPONENT_DISPATCH,
                            "Found export entry for dirname=%s as exportid=%d",
