@@ -332,7 +332,7 @@ static void *SnapshotThread(void *data)
       i_wait = fs_info->snap_hourly_time - now->tm_min;
 
     /* Sleep for the given time */
-    LogDebug(COMPONENT_FSAL, "SNAPSHOTS: next snapshot in %"PRIu64" minutes", i_wait);
+    LogDebug(COMPONENT_FSAL, "SNAPSHOTS: next snapshot in %u minutes", i_wait);
     sleep(i_wait*60);
 
     /* Create a snapshot */
