@@ -87,8 +87,6 @@
 #define __FDS_BITS(set) ((set)->fds_bits)
 #endif
 
-extern nfs_start_info_t nfs_start_info;
-
 #ifdef _USE_TIRPC
 struct netconfig *getnetconfigent(const char *netid);
 void freenetconfigent(struct netconfig *);

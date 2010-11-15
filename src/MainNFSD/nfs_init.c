@@ -1955,8 +1955,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
   printf("---> fsal_cred_t:%lu\n", sizeof(snmpfsal_cred_t));
 #endif
 
-  /* store the configuration so it is available for all layers */
-  nfs_param = *p_nfs_param;
+  /* store the start info so it is available for all layers */
   nfs_start_info = *p_start_info;
 
   if(p_start_info->dump_default_config == TRUE)
