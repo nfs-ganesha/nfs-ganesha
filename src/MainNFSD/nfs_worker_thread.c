@@ -1513,18 +1513,13 @@ void *worker_thread(void *IndexArg)
                           {
                             /* If we go there, preq->rq_prog ==  nfs_param.core_param.nfs_program */
 /* FSAL_PROXY supports only NFSv4 except if handle mapping is enabled */
-#if ! defined( _USE_PROXY ) || defined( _HANDLE_MAPPING )
                             if(((preq->rq_vers != NFS_V2) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) == 0)) &&
                                ((preq->rq_vers != NFS_V3) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) == 0)) &&
                                ((preq->rq_vers != NFS_V4) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) == 0)))
-#else
-                            if(preq->rq_vers != NFS_V4)
-#endif
                               {
                                 LogFullDebug(COMPONENT_DISPATCH,
                                              "/!\\ | Invalid NFS Version #%d",
                                              (int)preq->rq_vers);
-#if ! defined( _USE_PROXY ) || defined( _HANDLE_MAPPING )
                                 low_vers = NFS_V4;
                                 hi_vers = NFS_V2;
                                 if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
@@ -1538,9 +1533,6 @@ void *worker_thread(void *IndexArg)
                                 if((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)
                                   hi_vers = NFS_V4;
                                 svcerr_progvers(xprt, low_vers, hi_vers);  /* Bad NFS version */
-#else
-                                svcerr_progvers(xprt, NFS_V4, NFS_V4);  /* Bad NFS version */
-#endif
                               }
                             else
                               {

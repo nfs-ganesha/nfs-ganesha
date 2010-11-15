@@ -967,26 +967,44 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           for(idx = 0; idx < count; idx++)
             {
-              if(!STRCMP(nfsvers_list[idx], "4"))
+              if(!STRCMP(nfsvers_list[idx], "2"))
                 {
-                  p_entry->options |= EXPORT_OPTION_NFSV4;
-                }
-/* only NFSv4 is supported for the FSAL_PROXY */
-#if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
-              else if(!STRCMP(nfsvers_list[idx], "2"))
-                {
-                  p_entry->options |= EXPORT_OPTION_NFSV2;
+                  if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
+                    p_entry->options |= EXPORT_OPTION_NFSV2;
+                  else
+                    {
+                      LogCrit(COMPONENT_CONFIG,
+                              "NFS READ_EXPORT: ERROR: NFS version 2 is disabled in NFS_Core_Param.");
+                      err_flag = TRUE;
+                    }
                 }
               else if(!STRCMP(nfsvers_list[idx], "3"))
                 {
-                  p_entry->options |= EXPORT_OPTION_NFSV3;
+                  if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
+                    p_entry->options |= EXPORT_OPTION_NFSV3;
+                  else
+                    {
+                      LogCrit(COMPONENT_CONFIG,
+                              "NFS READ_EXPORT: ERROR: NFS version 3 is disabled in NFS_Core_Param.");
+                      err_flag = TRUE;
+                    }
                 }
-#endif                          /* _USE_PROXY */
+              else if(!STRCMP(nfsvers_list[idx], "4"))
+                {
+                  if((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)
+                    p_entry->options |= EXPORT_OPTION_NFSV4;
+                  else
+                    {
+                      LogCrit(COMPONENT_CONFIG,
+                              "NFS READ_EXPORT: ERROR: NFS version 4 is disabled in NFS_Core_Param.");
+                      err_flag = TRUE;
+                    }
+                }
               else
                 {
                   LogCrit(COMPONENT_CONFIG,
-                       "NFS READ_EXPORT: ERROR: Invalid NFS version \"%s\". Values can be: 2, 3, 4.",
-                       nfsvers_list[idx]);
+                          "NFS READ_EXPORT: ERROR: Invalid NFS version \"%s\". Values can be: 2, 3, 4.",
+                          nfsvers_list[idx]);
                   err_flag = TRUE;
                 }
             }

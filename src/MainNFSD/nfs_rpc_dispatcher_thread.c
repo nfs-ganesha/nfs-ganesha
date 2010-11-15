@@ -1122,8 +1122,6 @@ int nfs_Init_svc()
   LogEvent(COMPONENT_DISPATCH,
            "Registration to the portmapper for NFS and MOUNT, on UDP and TCP");
 
-/* only NFSv4 is supported for the FSAL_PROXY */
-#if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
     {
       LogEvent(COMPONENT_DISPATCH, "Registering NFS V2/UDP");
@@ -1163,7 +1161,6 @@ int nfs_Init_svc()
       else
         nb_svc_nfs_ok += 1;
     }
-#endif                          /* _USE_PROXY */
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)
     {
@@ -1184,9 +1181,6 @@ int nfs_Init_svc()
       else
         {
           nb_svc_nfs_ok += 1;
-#ifdef _USE_PROXY
-          nb_svc_nfs_ok += 1;
-#endif
         }
     }
 
@@ -1237,9 +1231,6 @@ int nfs_Init_svc()
 
 #ifndef _NO_TCP_REGISTER
 
-/* only NFSv4 is supported for the FSAL_PROXY */
-#if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
-
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
     {
       LogEvent(COMPONENT_DISPATCH, "Registering NFS V2/TCP");
@@ -1279,7 +1270,6 @@ int nfs_Init_svc()
       else
         nb_svc_nfs_ok += 1;
     }
-#endif                          /* _USE_PROXY */
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)
     {
@@ -1300,9 +1290,6 @@ int nfs_Init_svc()
       else
         {
           nb_svc_nfs_ok += 1;
-#ifdef _USE_PROXY
-          nb_svc_nfs_ok = 1;
-#endif
         }
     }
 #ifdef _USE_TIRPC_IPV6
@@ -1352,7 +1339,6 @@ int nfs_Init_svc()
 
 #endif
 
-#if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
     {
       LogEvent(COMPONENT_DISPATCH, "Registering MOUNT V1/UDP");
@@ -1392,7 +1378,6 @@ int nfs_Init_svc()
       else
         nb_svc_mnt_ok += 1;
     }
-#endif                          /* _USE_PROXY */
 
 #ifdef _USE_TIRPC_IPV6
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
@@ -1427,7 +1412,6 @@ int nfs_Init_svc()
 
 #ifndef _NO_TCP_REGISTER
 
-#if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
     {
       LogEvent(COMPONENT_DISPATCH, "Registering MOUNT V1/TCP");
@@ -1469,7 +1453,6 @@ int nfs_Init_svc()
     }
 #else
   nb_svc_mnt_ok += 1;
-#endif                          /* _USE_PROXY */
 
 #ifdef _USE_TIRPC_IPV6
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
@@ -1503,7 +1486,6 @@ int nfs_Init_svc()
 #endif
 
 #ifdef _USE_NLM
-#if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
     {
       LogEvent(COMPONENT_DISPATCH, "Registering NLM V4/UDP");
@@ -1523,14 +1505,9 @@ int nfs_Init_svc()
       else
         nb_svc_nlm_ok += 1;
     }
-#else
-  nb_svc_nlm_ok = 1;
-#endif                          /* _USE_PROXY */
-
 #endif                          /* USE_NLM */
 
 #ifdef _USE_QUOTA
-#if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
 
   LogEvent(COMPONENT_DISPATCH, "Registering RQUOTA/UDP");
 #ifdef _USE_TIRPC
@@ -1600,14 +1577,9 @@ int nfs_Init_svc()
   else
     nb_svc_rquota_ok += 1;
 
-#else
-  nb_svc_rquota_ok = 1;
-#endif                          /* _USE_PROXY */
-
 #endif                          /* USE_QUOTA */
 
 #ifdef _USE_NLM
-#if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
     {
       LogEvent(COMPONENT_DISPATCH, "Registering NLM V4/TCP");
@@ -1628,14 +1600,10 @@ int nfs_Init_svc()
         nb_svc_nlm_ok += 1;
     }
 #else
-  nb_svc_nlm_ok += 1;
-#endif                          /* _USE_PROXY */
-#else
   nb_svc_nlm_ok = 1;
 #endif                          /* _USE_NLM */
 
 #ifdef _USE_QUOTA
-#if!defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
   LogEvent(COMPONENT_DISPATCH, "Registering NLM V4/TCP");
 #ifdef _USE_TIRPC
   if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_rquota_tcp,
@@ -1652,9 +1620,6 @@ int nfs_Init_svc()
     }
   else
     nb_svc_rquota_ok += 1;
-#else
-  nb_svc_rquota_ok += 1;
-#endif                          /* _USE_PROXY */
 #else
   nb_svc_rquota_ok = 1;
 #endif                          /* _USE_QUOTA */
