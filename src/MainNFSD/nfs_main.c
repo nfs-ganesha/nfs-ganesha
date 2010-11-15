@@ -321,6 +321,11 @@ int main(int argc, char *argv[])
     LogEvent(COMPONENT_INIT, NIV_EVENT, "Signal SIGUSR1 (force flush) is ready to be used");
   */
 
+  /* Make sure Linux file i/o will return with error if file size is exceeded. */
+#ifdef _LINUX
+  signal(SIGXFSZ, SIG_IGN);
+#endif
+
   /* Set the signal handler */
   memset(&act_sigterm, 0, sizeof(act_sigterm));
   act_sigterm.sa_flags = 0;

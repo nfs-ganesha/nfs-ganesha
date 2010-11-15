@@ -717,7 +717,6 @@ fsal_status_t fsal_readlink_by_handle(fsal_op_context_t * p_context,
 {
   int fd;
   int rc;
-  int char_fd;
   fsal_status_t status;
   struct readlink_arg readlinkarg;
 
@@ -733,11 +732,12 @@ fsal_status_t fsal_readlink_by_handle(fsal_op_context_t * p_context,
   readlinkarg.buffer = __buf;
   readlinkarg.size = maxlen;
 
-  if((rc = ioctl(open_by_handle_fd, OPENHANDLE_READLINK_BY_FD, &readlinkarg)) < 0)
-    {
-      Return(rc, 0, INDEX_FSAL_readlink);
+  rc = ioctl(open_by_handle_fd, OPENHANDLE_READLINK_BY_FD, &readlinkarg);
 
-    }
+  close(fd);
+
+  if(rc < 0)
+      Return(rc, 0, INDEX_FSAL_readlink);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
