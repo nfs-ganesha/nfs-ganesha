@@ -110,6 +110,9 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   pclient->nb_pre_dir_data = param.nb_pre_dir_data;
   pclient->nb_pre_parent = param.nb_pre_parent;
   pclient->nb_pre_state_v4 = param.nb_pre_state_v4;
+  pclient->expire_type_attr = param.expire_type_attr;
+  pclient->expire_type_link = param.expire_type_link;
+  pclient->expire_type_dirent = param.expire_type_dirent;
   pclient->grace_period_attr = param.grace_period_attr;
   pclient->grace_period_link = param.grace_period_link;
   pclient->grace_period_dirent = param.grace_period_dirent;
