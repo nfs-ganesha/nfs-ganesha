@@ -143,6 +143,10 @@ int pnfs_ds_unlink_file( pnfs_client_t * pnfsclient,
 int pnfs_ds_open_file( pnfs_client_t * pnfsdsclient,
                        pnfs_ds_loc_t * plocation, pnfs_ds_file_t * pfile);
 
+int pnfs_ds_truncate_file( pnfs_client_t * pnfsclient,
+                           size_t newsize,
+                           pnfs_ds_file_t * pfile);
+
 void pnfs_ds_encode_getdeviceinfo(char *buff, unsigned int *plen);
 void pnfs_ds_encode_layoutget(pnfs_ds_file_t * pds_file, char *buff, unsigned int *plen);
 

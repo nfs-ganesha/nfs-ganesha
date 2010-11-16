@@ -93,6 +93,10 @@ int pnfs_lookup_file( pnfs_client_t  * pnfsclient,
 	              pnfs_fileloc_t * pnfs_fileloc,
 		      pnfs_file_t    * pnfs_file ) ;
 
+int pnfs_truncate_file( pnfs_client_t * pnfsclient,
+			size_t newsize,
+			pnfs_file_t * pnfs_file ) ;
+
 void pnfs_encode_getdeviceinfo( char *buff, unsigned int *plen) ;
 
 void pnfs_encode_layoutget( void * pds_file, char *buff, unsigned int *plen) ;

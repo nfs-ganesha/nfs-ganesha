@@ -181,4 +181,11 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                         \
 } while ( 0 )
 
+#define COMPOUNDV41_ARG_ADD_OP_SETATTR( argcompound, inattr )                                                            \
+do {                                                                                                                     \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_SETATTR ;                         \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsetattr.obj_attributes = inattr ;  \
+  argcompound.argarray.argarray_len += 1 ;                                                                               \
+} while( 0 )
+
 #endif                          /* _PNFS_NFSV41_MACROS_H */
