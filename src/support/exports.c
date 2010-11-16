@@ -733,8 +733,13 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   /* by default, we support auth_none and auth_sys */
   p_entry->options |= EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
 
-  /* by default, we support both NFS versions and transport protocols */
-  p_entry->options |= EXPORT_OPTION_NFSV2 | EXPORT_OPTION_NFSV3 | EXPORT_OPTION_NFSV4;
+  /* by default, we support all NFS versions supported by the core and both transport protocols */
+  if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
+    p_entry->options |= EXPORT_OPTION_NFSV2;
+  if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
+    p_entry->options |= EXPORT_OPTION_NFSV3;
+  if((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)
+    p_entry->options |= EXPORT_OPTION_NFSV4;
   p_entry->options |= EXPORT_OPTION_UDP | EXPORT_OPTION_TCP;
 
   p_entry->filesystem_id.major = (fsal_u64_t) 666;
@@ -1016,7 +1021,10 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           /* check that at least one nfs protocol has been specified */
           if((p_entry->options & (EXPORT_OPTION_NFSV2
                                   | EXPORT_OPTION_NFSV3 | EXPORT_OPTION_NFSV4)) == 0)
-            LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: WARNING: /!\\ Empty NFS_protocols list");
+            {
+              LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: WARNING: /!\\ Empty NFS_protocols list");
+              err_flag = TRUE;
+            }
 
           set_options |= FLAG_EXPORT_NFS_PROTO;
 
@@ -1819,8 +1827,13 @@ exportlist_t *BuildDefaultExport()
   /* by default, we support auth_none and auth_sys */
   p_entry->options |= EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
 
-  /* by default, we support both NFS versions and transport protocols */
-  p_entry->options |= EXPORT_OPTION_NFSV2 | EXPORT_OPTION_NFSV3 | EXPORT_OPTION_NFSV4;
+  /* by default, we support all NFS versions supported by the core and both transport protocols */
+  if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
+    p_entry->options |= EXPORT_OPTION_NFSV2;
+  if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
+    p_entry->options |= EXPORT_OPTION_NFSV3;
+  if((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)
+    p_entry->options |= EXPORT_OPTION_NFSV4;
   p_entry->options |= EXPORT_OPTION_UDP | EXPORT_OPTION_TCP;
 
   p_entry->filesystem_id.major = (fsal_u64_t) 101;
