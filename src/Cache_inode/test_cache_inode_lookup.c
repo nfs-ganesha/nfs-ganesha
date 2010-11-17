@@ -272,8 +272,12 @@ main(int argc, char *argv[])
   cache_client_param.lru_param.entry_to_str = lru_entry_to_str;
   cache_client_param.lru_param.clean_entry = lru_clean_entry;
 
-  cache_client_param.grace_period_attr = 0;
-  cache_client_param.grace_period_link = 0;
+  cache_client_param.grace_period_attr   = 0;
+  cache_client_param.grace_period_link   = 0;
+  cache_client_param.grace_period_dirent = 0;
+  cache_client_param.expire_type_attr    = CACHE_INODE_EXPIRE_NEVER;
+  cache_client_param.expire_type_link    = CACHE_INODE_EXPIRE_NEVER;
+  cache_client_param.expire_type_dirent  = CACHE_INODE_EXPIRE_NEVER;
 
   /* Init the cache_inode client */
   if(cache_inode_client_init(&client, cache_client_param, 0) != 0)

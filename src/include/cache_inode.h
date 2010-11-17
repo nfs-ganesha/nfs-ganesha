@@ -176,6 +176,12 @@ static char *cache_inode_function_names[] = {
 
 #define CACHE_INODE_NB_COMMAND      33
 
+typedef enum cache_inode_expire_type__
+{ CACHE_INODE_EXPIRE = 0,
+  CACHE_INODE_EXPIRE_NEVER = 1,
+  CACHE_INODE_EXPIRE_IMMEDIATE = 2
+} cache_inode_expire_type_t;
+
 typedef struct cache_inode_stat__
 {
   unsigned int nb_gc_lru_active;        /**< Number of active entries in Garbagge collecting list */
@@ -207,6 +213,9 @@ typedef struct cache_inode_client_parameter__
   unsigned int nb_pre_parent;                          /**< number of preallocated parent link               */
   unsigned int nb_pre_state_v4;                        /**< number of preallocated State_v4                  */
   unsigned int nb_pre_lock;                            /**< number of preallocated file lock                 */
+  cache_inode_expire_type_t expire_type_attr;          /**< Cache inode expiration type for attributes       */
+  cache_inode_expire_type_t expire_type_link;          /**< Cache inode expiration type for symbolic links   */
+  cache_inode_expire_type_t expire_type_dirent;        /**< Cache inode expiration type for directory entries*/
   time_t grace_period_attr;                            /**< Cached attributes grace period                   */
   time_t grace_period_link;                            /**< Cached link grace period                         */
   time_t grace_period_dirent;                          /**< Cached dirent grace period                       */
@@ -498,6 +507,9 @@ typedef struct cache_inode_client__
   unsigned int nb_pre_state_v4;                                    /**< Number of preallocated NFSv4 File States                 */
   fsal_attrib_mask_t attrmask;                                     /**< Mask of the supported attributes for the underlying FSAL */
   cache_inode_stat_t stat;                                         /**< Cache inode statistics for this client                   */
+  cache_inode_expire_type_t expire_type_attr;                      /**< Cache inode expiration type for attributes               */
+  cache_inode_expire_type_t expire_type_link;                      /**< Cache inode expiration type for symbolic links           */
+  cache_inode_expire_type_t expire_type_dirent;                    /**< Cache inode expiration type for directory entries        */
   time_t grace_period_attr;                                        /**< Cached attributes grace period                           */
   time_t grace_period_link;                                        /**< Cached link grace period                                 */
   time_t grace_period_dirent;                                      /**< Cached directory entries grace period                    */
@@ -1090,6 +1102,8 @@ cache_inode_status_t cache_inode_state_iterate(cache_entry_t * pentry,
 cache_inode_status_t cache_inode_del_state_by_key(char other[12],
                                                   cache_inode_client_t * pclient,
                                                   cache_inode_status_t * pstatus);
+
+void cache_inode_expire_to_str(cache_inode_expire_type_t type, time_t value, char *out);
 
 /* Hash functions for hashtables and RBT */
 unsigned long cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,

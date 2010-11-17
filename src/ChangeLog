@@ -409,4 +409,8 @@
         - Cache_inode uses a "dual value compute function" in its hashtable
         - Reverse clientid mapper uses a "dual value compute function" in its hashtable
         - pNFS/LAYOUT4_NFSV4_1_FILES : several bug fixed (see git log)
+        - DupReq indexation has been reviewed: now (src_ipaddr,port,xid,additional cksum) tuple is used as key
+	- workers's selection has been reviewed to reduce CPU comsumption in the case a very large number 
+          of workers is used.
+        - security fixed : when 'root' is mapped as nobody, its 'altgroups' is cleared
 	

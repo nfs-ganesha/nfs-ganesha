@@ -138,6 +138,52 @@ cache_inode_status_t cache_inode_read_conf_hash_parameter(config_file_t in_confi
   return CACHE_INODE_SUCCESS;
 }                               /* cache_inode_read_conf_hash_parameter */
 
+int parse_cache_expire(cache_inode_expire_type_t *type, time_t *value, char *key_value)
+{
+  if(key_value[0] >= '0' && key_value[0] <= '9')
+    {
+      *value = atoi(key_value);
+      /* special case backwards compatible meaning of 0 */
+      if (*value == 0)
+        *type = CACHE_INODE_EXPIRE_NEVER;
+      else
+        *type = CACHE_INODE_EXPIRE;
+      return CACHE_INODE_SUCCESS;
+    }
+
+  /*
+   * Note the CACHE_INODE_EXPIRE_IMMEDIATE is now a special value that works
+   * fine with the value being set to 0, there will not need to be special
+   * tests for CACHE_INODE_EXPIRE_IMMEDIATE.
+   */
+  *value = 0;
+
+  if(strcasecmp(key_value, "Never") == 0)
+    *type = CACHE_INODE_EXPIRE_NEVER;
+  else if (strcasecmp(key_value, "Immediate") == 0)
+    *type = CACHE_INODE_EXPIRE_IMMEDIATE;
+  else
+    return CACHE_INODE_INVALID_ARGUMENT;
+
+  return CACHE_INODE_SUCCESS;
+}
+
+void cache_inode_expire_to_str(cache_inode_expire_type_t type, time_t value, char *out)
+{
+  switch(type)
+    {
+      case CACHE_INODE_EXPIRE:
+        sprintf(out, "%u", (unsigned int) value);
+        break;
+      case CACHE_INODE_EXPIRE_NEVER:
+        strcpy(out, "Never");
+        break;
+      case CACHE_INODE_EXPIRE_IMMEDIATE:
+        strcpy(out, "Immediate");
+        break;
+    }
+}
+
 /**
  *
  * cache_inode_read_conf_client_parameter: read the configuration for a client to Cache inode layer.
@@ -223,15 +269,27 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
         }
       else if(!strcasecmp(key_name, "Attr_Expiration_Time"))
         {
-          pparam->grace_period_attr = atoi(key_value);
+          err = parse_cache_expire(&pparam->expire_type_attr,
+                                   &pparam->grace_period_attr,
+                                   key_value);
+          if(err != CACHE_INODE_SUCCESS)
+            return err;
         }
       else if(!strcasecmp(key_name, "Symlink_Expiration_Time"))
         {
-          pparam->grace_period_link = atoi(key_value);
+          err = parse_cache_expire(&pparam->expire_type_link,
+                                   &pparam->grace_period_link,
+                                   key_value);
+          if(err != CACHE_INODE_SUCCESS)
+            return err;
         }
       else if(!strcasecmp(key_name, "Directory_Expiration_Time"))
         {
-          pparam->grace_period_dirent = atoi(key_value);
+          err = parse_cache_expire(&pparam->expire_type_dirent,
+                                   &pparam->grace_period_dirent,
+                                   key_value);
+          if(err != CACHE_INODE_SUCCESS)
+            return err;
         }
       else if(!strcasecmp(key_name, "Use_Getattr_Directory_Invalidation"))
         {

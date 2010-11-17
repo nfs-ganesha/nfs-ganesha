@@ -372,6 +372,10 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
       /* caller_uid = ANON_UID ; */
       caller_uid = pexport->anonymous_uid;
       caller_gid = ANON_GID;
+
+      /* No alternate groups for "nobody" */
+      caller_glen = 0 ;
+      caller_garray = NULL ;
     }
 
   /* Build the credentials */
