@@ -19,6 +19,7 @@ BuildRequires:  mysql-libs >= 5.0
 %if %{?_with_gpfs:1}%{!?_with_gpfs:0}
 # we have to be really specific on kernel version
 # because we are packaging a module
+%global _use_internal_dependency_generator 0
 BuildRequires: kernel-devel
 %endif
 BuildRequires: flex
@@ -461,10 +462,20 @@ chkconfig --add nfs-ganesha-xfs
 %preun gpfs
 chkconfig --del nfs-ganesha-gpfs
 /sbin/depmod
+rpm -ql nfs-ganesha-gpfs | grep ".ko$" > /var/run/nfs-ganesha-gpfs.modules
 
 %post gpfs
 chkconfig --add nfs-ganesha-gpfs
 /sbin/depmod -a
+if [ -x "/sbin/weak-modules" ]; then
+    rpm -ql nfs-ganesha-gpfs | grep ".ko$" | /sbin/weak-modules --add-modules
+fi
+
+%postun gpfs
+if [ -x "/sbin/weak-modules" ]; then
+    cat /var/run/nfs-ganesha-gpfs.modules | /sbin/weak-modules --remove-modules
+fi
+rm -f /var/run/nfs-ganesha-gpfs.modules
 %endif
 
 %if %{?_with_lustre:1}%{!?_with_lustre:0}
