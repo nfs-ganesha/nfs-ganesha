@@ -9,6 +9,7 @@ libpnfslayoutfile_la_SOURCES = pnfs_init.c                 \
                                pnfs_do_mount.c             \
                                pnfs_lookup.c               \
                                pnfs_ds_create_file.c       \
+                               pnfs_ds_get_location.c      \
                                pnfs_ds_open_file.c         \
                                pnfs_ds_lookup_file.c       \
                                pnfs_ds_truncate_file.c     \

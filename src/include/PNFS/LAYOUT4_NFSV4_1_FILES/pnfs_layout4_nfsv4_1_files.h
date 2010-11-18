@@ -128,6 +128,13 @@ typedef struct pnfs_ds_file__
 
 
 /* Mandatory functions */
+
+int pnfs_ds_get_location( pnfs_client_t      * pnfsclient,
+                          fsal_handle_t      * phandle, 
+                          fsal_attrib_list_t * pattr,
+                          pnfs_hints_t       * phints,
+	                  pnfs_ds_loc_t      * plocation ) ; 
+
 int pnfs_ds_init( pnfs_client_t * pnfsclient,
                   pnfs_layoutfile_parameter_t * pnfs_layout_param);
 

@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
   rc = HashTable_Get(ht, &buffkey, &buffval);
   MesureTemps(&fin, &debut);
 
-  LogTest("Recovery of %d th key (test 2) -> %s", critere_recherche, rc);
+  LogTest("Recovery of %d th key (test 2) -> %d", critere_recherche, rc);
 
   LogTest("Time to recover = %s", ConvertiTempsChaine(fin, NULL));
 
@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-  LogTest("----> retrieved value = len %d ; val = %s", buffval.len, buffval.pdata);
+  LogTest("----> retrieved value = len %zu ; val = %s", buffval.len, buffval.pdata);
   val = atoi(buffval.pdata);
 
   if(val != critere_recherche)

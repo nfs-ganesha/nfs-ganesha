@@ -32,7 +32,8 @@ SUBDIRS = include             \
           check               \
 	  debian              \
           rpm                 \
-          cppcheck-xml
+          cppcheck-xml        \
+          testres-xml
 
 if USE_FSAL_FUSE
 SUBDIRS += example-fuse

@@ -82,6 +82,17 @@ typedef union pnfs_file_loc__
   pnfs_ds_loc_t ds_loc ;
 } pnfs_fileloc_t ;
 
+typedef union pnfs_hints__
+{
+  int nothing_right_now
+} pnfs_hints_t ;
+
+int pnfs_get_location(  pnfs_client_t      * pnfsclient,
+                        fsal_handle_t      * phandle, 
+                        fsal_attrib_list_t * pattr,
+                        pnfs_hints_t       * phints,
+	                pnfs_fileloc_t * pnfs_fileloc ) ;
+
 int pnfs_create_file( pnfs_client_t  * pnfsclient,
 	              pnfs_fileloc_t * pnfs_fileloc,
 		      pnfs_file_t    * pnfs_file ) ;
