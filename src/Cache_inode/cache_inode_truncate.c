@@ -86,6 +86,9 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
 {
   fsal_status_t fsal_status;
   cache_content_status_t cache_content_status;
+#ifdef _USE_PNFS
+  int pnfs_status;
+#endif
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
@@ -181,6 +184,28 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
           return *pstatus;
         }
     }
+
+#ifdef _USE_PNFS
+  if(pentry->object.file.pnfs_file.ds_file.allocated == TRUE)
+    {
+        if((pnfs_status = pnfs_truncate_file( &pclient->pnfsclient,
+                                              length,
+                                              &pentry->object.file.pnfs_file ) ) != NFS4_OK )
+          {
+             LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS TRUNCATE DS FILE : Error %u",
+                      pnfs_status);
+
+             if(use_mutex)
+               {
+                 V_w(&pentry->lock);
+               }
+
+             *pstatus = CACHE_INODE_IO_ERROR;
+             return *pstatus;
+          }
+
+    }
+#endif
 
   /* Validate the entry */
   *pstatus = cache_inode_valid(pentry, CACHE_INODE_OP_SET, pclient);

@@ -130,7 +130,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
             print = 0;
             cache_inode_expire_to_str(pclient->expire_type_dirent, pclient->grace_period_dirent, grace2);
             LogFullDebug(COMPONENT_CACHE_INODE,
-                         "Renew Entry test of %p for DIR_BEGINNING elapsed time=%u, grace_period_attr=%s, grace_period_dirent=%u, has_been_readdir=%u",
+                         "Renew Entry test of %p for DIR_BEGINNING elapsed time=%u, grace_period_attr=%s, grace_period_dirent=%s, has_been_readdir=%u",
                          pentry, elapsed, grace, grace2,
                          pentry->object.dir_begin.has_been_readdir);
             break;
@@ -138,7 +138,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
             print = 0;
             cache_inode_expire_to_str(pclient->expire_type_dirent, pclient->grace_period_dirent, grace2);
             LogFullDebug(COMPONENT_CACHE_INODE,
-                         "Renew Entry test of %p for DIR_CONTINUE elapsed time=%u, grace_period_attr=%s, grace_period_dirent=%u, has_been_readdir=%u",
+                         "Renew Entry test of %p for DIR_CONTINUE elapsed time=%u, grace_period_attr=%s, grace_period_dirent=%s, has_been_readdir=%u",
                          pentry, elapsed, grace, grace2,
                          pentry->object.dir_begin.has_been_readdir);
             break;

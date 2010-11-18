@@ -255,7 +255,7 @@ int nfs_print_param_config(nfs_parameter_t * p_nfs_param)
   printf("\tNFS_Program = %u ;\n", p_nfs_param->core_param.nfs_program);
   printf("\tMNT_Program = %u ;\n", p_nfs_param->core_param.mnt_program);
   printf("\tNb_Worker = %u ; \n", p_nfs_param->core_param.nb_worker);
-  printf("\Nb_Call_Before_Queue_Avg = %u ; \n", p_nfs_param->core_param.nb_call_before_queue_avg);
+  printf("\tb_Call_Before_Queue_Avg = %u ; \n", p_nfs_param->core_param.nb_call_before_queue_avg);
   printf("\tNb_MaxConcurrentGC = %u ; \n", p_nfs_param->core_param.nb_max_concurrent_gc);
   printf("\tDupReq_Expiration = %lu ; \n", p_nfs_param->core_param.expiration_dupreq);
   printf("\tCore_Dump_Size = %ld ; \n", p_nfs_param->core_param.core_dump_size);
@@ -322,6 +322,12 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->core_param.nb_max_fd = -1;       /* Use OS's default */
   p_nfs_param->core_param.stats_update_delay = 60;
   p_nfs_param->core_param.tcp_fridge_expiration_delay = -1;
+/* only NFSv4 is supported for the FSAL_PROXY */
+#if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
+  p_nfs_param->core_param.core_options = CORE_OPTION_NFSV3 | CORE_OPTION_NFSV4;
+#else
+  p_nfs_param->core_param.core_options = CORE_OPTION_NFSV4;
+#endif                          /* _USE_PROXY */
 
   p_nfs_param->core_param.use_nfs_commit = FALSE;
   strncpy(p_nfs_param->core_param.stats_file_path, "/tmp/ganesha.stat", MAXPATHLEN);
@@ -1952,8 +1958,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
   printf("---> fsal_cred_t:%lu\n", sizeof(snmpfsal_cred_t));
 #endif
 
-  /* store the configuration so it is available for all layers */
-  nfs_param = *p_nfs_param;
+  /* store the start info so it is available for all layers */
   nfs_start_info = *p_start_info;
 
   if(p_start_info->dump_default_config == TRUE)
