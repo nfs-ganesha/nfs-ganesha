@@ -1805,6 +1805,9 @@ int nfs4_SetCompoundExport(compound_data_t * data)
   if((data->pexport = nfs_Get_export_by_id(data->pfullexportlist, exportid)) == NULL)
     return NFS4ERR_BADHANDLE;
 
+  if((data->pexport->options & EXPORT_OPTION_NFSV4) == 0)
+    return NFS4ERR_ACCESS;
+
   if(nfs4_MakeCred(data) != NFS4_OK)
     return NFS4ERR_WRONGSEC;
 

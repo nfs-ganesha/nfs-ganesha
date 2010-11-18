@@ -205,6 +205,22 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
    *  to do so, retrieve client identifier from the credential.
    */
 
+  switch (preq->rq_vers)
+    {
+    case MOUNT_V1:
+      if((p_current_item->options & EXPORT_OPTION_NFSV2) != 0)
+        break;
+      pres->res_mnt1.status = NFSERR_ACCES;
+      return NFS_REQ_OK;
+
+    case MOUNT_V3:
+      if((p_current_item->options & EXPORT_OPTION_NFSV3) != 0)
+        break;
+      pres->res_mnt3.fhs_status = MNT3ERR_ACCES;
+      return NFS_REQ_OK;
+    }
+  
+
   /*
    * retrieve the associated NFS handle
    */

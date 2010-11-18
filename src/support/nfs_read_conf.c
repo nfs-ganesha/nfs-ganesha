@@ -313,6 +313,79 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->nlm_program = atoi(key_value);
         }
+      else if(!strcasecmp(key_name, "NFS_Protocols"))
+        {
+
+#     define MAX_NFSPROTO      10       /* large enough !!! */
+#     define MAX_NFSPROTO_LEN  256      /* so is it !!! */
+
+          char *nfsvers_list[MAX_NFSPROTO];
+          int idx, count;
+
+          /* reset nfs versions flags (clean defaults) */
+          pparam->core_options &= ~(CORE_OPTION_ALL_VERS);
+
+          /* allocate nfs vers strings */
+          for(idx = 0; idx < MAX_NFSPROTO; idx++)
+            nfsvers_list[idx] = (char *)Mem_Alloc(MAX_NFSPROTO_LEN);
+
+          /*
+           * Search for coma-separated list of nfsprotos
+           */
+          count = nfs_ParseConfLine(nfsvers_list, MAX_NFSPROTO,
+                                    key_value, find_comma, find_endLine);
+
+          if(count < 0)
+            {
+              LogCrit(COMPONENT_CONFIG, "NFS_Protocols list too long (>%d)",
+                      MAX_NFSPROTO);
+
+              /* free sec strings */
+              for(idx = 0; idx < MAX_NFSPROTO; idx++)
+                Mem_Free((caddr_t) nfsvers_list[idx]);
+
+              return -1;
+            }
+
+          /* add each Nfs protocol flag to the option field.  */
+
+          for(idx = 0; idx < count; idx++)
+            {
+              if(!strcmp(nfsvers_list[idx], "4"))
+                {
+                  pparam->core_options |= CORE_OPTION_NFSV4;
+                }
+/* only NFSv4 is supported for the FSAL_PROXY */
+#if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
+              else if(!strcmp(nfsvers_list[idx], "2"))
+                {
+                  pparam->core_options |= CORE_OPTION_NFSV2;
+                }
+              else if(!strcmp(nfsvers_list[idx], "3"))
+                {
+                  pparam->core_options |= CORE_OPTION_NFSV3;
+                }
+#endif                          /* _USE_PROXY */
+              else
+                {
+                  LogCrit(COMPONENT_CONFIG,
+                          "Invalid NFS Protocol \"%s\". Values can be: 2, 3, 4.",
+                          nfsvers_list[idx]);
+                  return -1;
+                }
+            }
+
+          /* free sec strings */
+          for(idx = 0; idx < MAX_NFSPROTO; idx++)
+            Mem_Free((caddr_t) nfsvers_list[idx]);
+
+          /* check that at least one nfs protocol has been specified */
+          if((pparam->core_options & (CORE_OPTION_ALL_VERS)) == 0)
+            {
+              LogCrit(COMPONENT_CONFIG, "Empty NFS_Protocols list");
+              return -1;
+            }
+        }
       else if(!strcasecmp(key_name, "Rquota_Program"))
         {
           pparam->rquota_program = atoi(key_value);

@@ -362,13 +362,9 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
           pnfsreq->req.rq_vers = pmsg->rm_call.cb_vers;
           pnfsreq->req.rq_proc = pmsg->rm_call.cb_proc;
 
-          int rc = FALSE;
-          if(pnfsreq->req.rq_vers == 2 || pnfsreq->req.rq_vers == 3 || pnfsreq->req.rq_vers == 4)
-            {
-              rc = nfs_rpc_get_funcdesc(pnfsreq, &funcdesc);
-              if (rc != FALSE)
-                nfs_rpc_get_args(pnfsreq, &funcdesc);
-            }
+          rc = nfs_rpc_get_funcdesc(pnfsreq, &funcdesc);
+          if (rc != FALSE)
+            nfs_rpc_get_args(pnfsreq, &funcdesc);
 
           /* Update a copy of SVCXPRT and pass it to the worker thread to use it. */
           xprt_copy = pnfsreq->xprt_copy;
@@ -393,18 +389,18 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
           if (rc != FALSE)
             {
-            gettimeofday(&timer_end, NULL);
-            timer_diff = time_diff(timer_start, timer_end);
+              gettimeofday(&timer_end, NULL);
+              timer_diff = time_diff(timer_start, timer_end);
             
-            /* Update await time. */
-            stat_type = GANESHA_STAT_SUCCESS;
-            latency_stat.type = AWAIT_TIME;
-            latency_stat.latency = timer_diff.tv_sec * 1000000 + timer_diff.tv_usec; /* microseconds */
-            nfs_stat_update(stat_type, &(workers_data[worker_index].stats.stat_req), &(pnfsreq->req), &latency_stat);
+              /* Update await time. */
+              stat_type = GANESHA_STAT_SUCCESS;
+              latency_stat.type = AWAIT_TIME;
+              latency_stat.latency = timer_diff.tv_sec * 1000000 + timer_diff.tv_usec; /* microseconds */
+              nfs_stat_update(stat_type, &(workers_data[worker_index].stats.stat_req), &(pnfsreq->req), &latency_stat);
             
-            LogFullDebug(COMPONENT_DISPATCH, "Thread #%d has committed the operation: end_time %llu.%.6llu await %llu.%.6llu",
-                         worker_index, (unsigned long long int)timer_end.tv_sec, (unsigned long long int)timer_end.tv_usec, 
-                         (unsigned long long int)timer_diff.tv_sec,(unsigned long long int)timer_diff.tv_usec);
+              LogFullDebug(COMPONENT_DISPATCH, "Thread #%d has committed the operation: end_time %llu.%.6llu await %llu.%.6llu",
+                           worker_index, (unsigned long long int)timer_end.tv_sec, (unsigned long long int)timer_end.tv_usec, 
+                           (unsigned long long int)timer_diff.tv_sec,(unsigned long long int)timer_diff.tv_usec);
             }
         }
     }

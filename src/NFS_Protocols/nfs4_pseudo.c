@@ -169,6 +169,14 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
       PseudoFsCurrent = &(PseudoFs->root);
       PseudoFs->reverse_tab[0] = &(PseudoFs->root);
 
+      /* skip exports that aren't for NFS v4 */
+      if((entry->options & EXPORT_OPTION_NFSV4) == 0)
+        {
+          next = entry->next;
+          entry = next;
+          continue;
+        }
+
       if(entry->options & EXPORT_OPTION_PSEUDO)
         {
           LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "BUILDING PSEUDOFS: Id          = %d",
@@ -195,6 +203,8 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
               /* Path is badly formed */
               LogCrit(COMPONENT_NFS_V4_PSEUDO, "BUILDING PSEUDOFS: Invalid 'pseudo' option: %s",
                          entry->pseudopath);
+              next = entry->next;
+              entry = next;
               continue;
             }
 
@@ -203,6 +213,8 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
             {
               /* Path is badly formed */
               LogCrit(COMPONENT_NFS_V4_PSEUDO, "Pseudo Path '%s' is badly formed", entry->pseudopath);
+              next = entry->next;
+              entry = next;
               continue;
             }
 

@@ -124,7 +124,8 @@ static void action_sighup(int sig)
   sighup_triggered = TRUE ;
 }
 
-
+/* Use the nfs_param from nfs_init.c */
+extern nfs_parameter_t nfs_param;
 
 /**
  * main: simply the main function.
@@ -143,7 +144,6 @@ int main(int argc, char *argv[])
   char *tempo_exec_name = NULL;
   char localmachine[MAXHOSTNAMELEN];
   int c;
-  nfs_parameter_t nfs_param;
   pid_t son_pid;
   struct sigaction act_sigusr1;
   struct sigaction act_sigterm;
