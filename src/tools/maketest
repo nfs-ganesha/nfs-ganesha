@@ -646,7 +646,7 @@ if( ( $NbFailed == 0 )&& ( $NbIndeterminate == 0 ) )
 if( $xml_mode ) 
 {
 
-  print"<testsuite errors=".'"0" '."failures=".'"'."$NbFailed".'"'." hostname=\"".hostname."\" name=\"maketest\" tests=\"$NbTotal\" time=\"0.0\">\n" ;
+  print"<testsuite errors=\"0\" failures=\"$NbFailed\" hostname=\"".hostname."\" name=\"maketest\" tests=\"$NbTotal\" time=\"0.0\">\n" ;
   print $output_xml ;
   print "<system-out>No system out displayed by maketest</system-out>\n" ;
   print "<system-err>No system err displayed by maketest</system-err>\n" ;
