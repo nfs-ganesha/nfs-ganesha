@@ -607,7 +607,7 @@ my $NbIndeterminate = 0 ;
 my $NbTotal         = 0 ;
 my $res ;
 
-print "<?xml version=".'"'."1.0"."encoding=".'"'."UTF-8".'"'."?>\n" if( $xml_mode ) ; 
+print "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" if( $xml_mode ) ; 
 
 foreach $test ( @testlist )
 {
@@ -642,7 +642,6 @@ if( ( $NbFailed == 0 )&& ( $NbIndeterminate == 0 ) )
 
 if( $xml_mode ) 
 {
-  print "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" ; 
 
   print"<testsuite errors=".'"0" '."failures=".'"'."$NbFailed".'"'." hostname=\"".hostname."\" name=\"maketest\" tests=\"$NbTotal\" time'\"0.0\">\n" ;
 
