@@ -301,7 +301,7 @@ nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs * arg)
              */
             nlm_lock_entry_inc_ref(nlm_entry);
             pthread_mutex_unlock(&nlm_lock_list_mutex);
-            LogFullDebug(COMPONENT_NFSPROTO,
+            LogFullDebug(COMPONENT_NLM,
                          "lock request (but found blocked locks)");
             return nlm_entry;
         }
@@ -646,7 +646,7 @@ void nlm_node_recovery(char *name,
     nlm_lock_entry_t *nlm_entry;
     struct glist_head *glist, *glistn;
 
-    LogFullDebug(COMPONENT_NFSPROTO, "Recovery for host %s", name);
+    LogFullDebug(COMPONENT_NLM, "Recovery for host %s", name);
 
     pthread_mutex_lock(&nlm_lock_list_mutex);
     glist_for_each_safe(glist, glistn, &nlm_lock_list)
@@ -703,7 +703,7 @@ int nlm_monitor_host(char *name)
         }
     pthread_mutex_unlock(&nlm_lock_list_mutex);
     /* There is nobody monitoring the host */
-    LogFullDebug(COMPONENT_NFSPROTO, "Monitoring host %s", name);
+    LogFullDebug(COMPONENT_NLM, "Monitoring host %s", name);
     return nsm_monitor(name);
 }
 
@@ -728,7 +728,7 @@ int nlm_unmonitor_host(char *name)
         }
     pthread_mutex_unlock(&nlm_lock_list_mutex);
     /* There is nobody holding a lock with host */
-    LogFullDebug(COMPONENT_NFSPROTO, "Unmonitoring host %s", name);
+    LogFullDebug(COMPONENT_NLM, "Unmonitoring host %s", name);
     return nsm_unmonitor(name);
 }
 
@@ -784,7 +784,7 @@ static void nlm4_send_grant_msg(void *arg)
              * We are not able call granted callback. Some client may retry
              * the lock again. So remove the existing blocked nlm entry
              */
-            LogMajor(COMPONENT_NFSPROTO,
+            LogMajor(COMPONENT_NLM,
                      "%s: GRANTED_MSG RPC call failed. Removing the blocking lock",
                      __func__);
             goto free_nlm_lock_entry;
@@ -794,7 +794,7 @@ static void nlm4_send_grant_msg(void *arg)
             /*
              * We already have marked the locks granted
              */
-            LogMajor(COMPONENT_NFSPROTO,
+            LogMajor(COMPONENT_NLM,
                      "%s: Granted the blocking lock successfully", __func__);
         }
 free_nlm_lock_entry:

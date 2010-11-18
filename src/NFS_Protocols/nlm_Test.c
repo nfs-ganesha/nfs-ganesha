@@ -89,8 +89,7 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
   cache_inode_status_t cache_status;
   cache_inode_fsal_data_t fsal_data;
 
-  LogFullDebug(COMPONENT_NFSPROTO,
-                    "REQUEST PROCESSING: Calling nlm_Test");
+  LogFullDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Test");
 
   if(in_nlm_grace_period())
     {
