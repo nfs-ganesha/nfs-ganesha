@@ -216,6 +216,11 @@ void nlm_lock_entry_dec_ref(nlm_lock_entry_t * nlm_entry)
     pthread_mutex_unlock(&nlm_entry->lock);
     if(to_free)
         {
+            LogFullDebug(COMPONENT_NLM,
+                         "do_nlm_remove_from_locklist Freeing %p svid=%d start=%llu end=%llu %s",
+                         nlm_entry, nlm_entry->svid, nlm_entry->start, nlm_entry->len,
+                         lock_result_str(nlm_entry->state));
+
             free(nlm_entry->caller_name);
             netobj_free(&nlm_entry->fh);
             netobj_free(&nlm_entry->oh);
@@ -850,17 +855,20 @@ static void nlm4_send_grant_msg(void *arg)
     netobj_free(&inarg.alock.fh);
     netobj_free(&inarg.alock.oh);
     netobj_free(&inarg.cookie);
-    if(retval != RPC_SUCCESS)
-        {
-            /*
-             * We are not able call granted callback. Some client may retry
-             * the lock again. So remove the existing blocked nlm entry
-             */
-            LogMajor(COMPONENT_NLM,
-                     "%s: GRANTED_MSG RPC call failed. Removing the blocking lock",
-                     __func__);
-            goto free_nlm_lock_entry;
-        }
+
+    /* If success, we are done. */
+    if(retval == RPC_SUCCESS)
+      return;
+
+    /*
+     * We are not able call granted callback. Some client may retry
+     * the lock again. So remove the existing blocked nlm entry
+     */
+    LogMajor(COMPONENT_NLM,
+             "%s: GRANTED_MSG RPC call failed. Removing the blocking lock",
+             __func__);
+    goto free_nlm_lock_entry;
+
 free_nlm_lock_entry:
     nlm_remove_from_locklist(nlm_entry);
     /*
