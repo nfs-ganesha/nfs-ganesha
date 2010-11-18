@@ -128,6 +128,13 @@ typedef struct pnfs_ds_file__
 
 
 /* Mandatory functions */
+
+int pnfs_ds_get_location( pnfs_client_t      * pnfsclient,
+                          fsal_handle_t      * phandle, 
+                          fsal_attrib_list_t * pattr,
+                          pnfs_hints_t       * phints,
+	                  pnfs_ds_loc_t      * plocation ) ; 
+
 int pnfs_ds_init( pnfs_client_t * pnfsclient,
                   pnfs_layoutfile_parameter_t * pnfs_layout_param);
 
@@ -142,6 +149,10 @@ int pnfs_ds_unlink_file( pnfs_client_t * pnfsclient,
 
 int pnfs_ds_open_file( pnfs_client_t * pnfsdsclient,
                        pnfs_ds_loc_t * plocation, pnfs_ds_file_t * pfile);
+
+int pnfs_ds_truncate_file( pnfs_client_t * pnfsclient,
+                           size_t newsize,
+                           pnfs_ds_file_t * pfile);
 
 void pnfs_ds_encode_getdeviceinfo(char *buff, unsigned int *plen);
 void pnfs_ds_encode_layoutget(pnfs_ds_file_t * pds_file, char *buff, unsigned int *plen);

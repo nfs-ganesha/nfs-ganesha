@@ -481,7 +481,7 @@ int rpc_reinit(char *name,      /* IN */
 
   hostname = getHostname(name);
   //if(strlen(hostname) == 0)
-  if(*hostname == "\0")
+  if(*hostname == '\0')
     {
       fprintf(output, "rpc_reinit client %s : getHostname failed\n", name);
       return -1;

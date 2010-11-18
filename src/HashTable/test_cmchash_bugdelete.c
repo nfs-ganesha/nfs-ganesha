@@ -297,7 +297,7 @@ int main(int argc, char *argv[])
 
       buffkey.len = strlen(tmpstr);
       buffkey.pdata = tmpstr;
-      LogFullDebug(COMPONENT_HASHTABLE, "\t Erase %d -> %d | %d",
+      LogFullDebug(COMPONENT_HASHTABLE, "\t Erase %u -> %lu | %lu",
              random_val,
              simple_hash_func(&hparam, &buffkey), rbt_hash_func(&hparam, &buffkey));
 

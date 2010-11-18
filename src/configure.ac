@@ -738,6 +738,7 @@ AC_CONFIG_FILES([include/Makefile
 		 debian/rules.auto
                  rpm/Makefile
                  cppcheck-xml/Makefile
+                 testres-xml/Makefile
                  Makefile
                  libganeshaNFS.pc
                  nfs-ganesha.spec])

@@ -61,16 +61,38 @@ struct handle_svc_export
 
 #include "../include/handle.h"
 
+/* limit the handle size to some value */
+#define MAX_HANDLE_SZ 4096
 extern struct export_operations export_op_default;
 #define CALL(ops,fun) ((ops->fun)?(ops->fun):export_op_default.fun)
 
-/* limit the handle size to some value */
-#define MAX_HANDLE_SZ 4096
+static struct file_handle *get_kernel_handle(struct file_handle __user * ufh)
+{
+    struct file_handle f_handle;
+    struct file_handle *handle = NULL;
+
+    if(copy_from_user(&f_handle, ufh, sizeof(struct file_handle)))
+            return ERR_PTR(-EFAULT);
+
+    if((f_handle.handle_size > MAX_HANDLE_SZ) || (f_handle.handle_size <= 0))
+            return ERR_PTR(-EINVAL);
+
+    handle = kmalloc(sizeof(struct file_handle) + f_handle.handle_size, GFP_KERNEL);
+    if (!handle)
+            return ERR_PTR(-ENOMEM);
+
+    /* copy the full handle */
+    if(copy_from_user(handle, ufh, sizeof(struct file_handle) + f_handle.handle_size)) {
+            kfree(handle);
+            handle = ERR_PTR(-EFAULT);
+       }
+    return handle;
+}
+
 static long do_sys_name_to_handle(struct nameidata *nd, struct file_handle __user * ufh)
 {
     long retval;
     int handle_size;
-    struct file_handle f_handle;
     struct file_handle *handle = NULL;
     const struct export_operations *exop = nd->dentry->d_sb->s_export_op;
 
@@ -83,24 +105,13 @@ static long do_sys_name_to_handle(struct nameidata *nd, struct file_handle __use
             retval = -EINVAL;
             goto err_out;
         }
-    if(copy_from_user(&f_handle, ufh, sizeof(struct file_handle)))
+    handle = get_kernel_handle(ufh);
+    if(IS_ERR(handle))
         {
-            retval = -EFAULT;
+            retval = PTR_ERR(handle);
             goto err_out;
         }
-    if(f_handle.handle_size > MAX_HANDLE_SZ)
-        {
-            retval = -EINVAL;
-            goto err_out;
-        }
-    handle = kmalloc(sizeof(struct file_handle) + f_handle.handle_size, GFP_KERNEL);
-    if(!handle)
-        {
-            retval = -ENOMEM;
-            goto err_out;
-        }
-
-    handle_size = f_handle.handle_size >> 2;
+    handle_size = handle->handle_size >> 2;
     /* we ask for a non connected handle */
     retval = CALL(exop, encode_fh) (nd->dentry, (__u32 *) handle->f_handle,
                                     &handle_size, 0);
@@ -226,7 +237,7 @@ static struct dentry *handle_to_dentry(int mountdirfd,
              * file system export
              */
             retval = -EINVAL;
-            goto out_err;
+            goto out_mnt;
         }
     /* change the handle size to multiple of sizeof(u32) */
     handle_size = handle->handle_size >> 2;
@@ -452,38 +463,17 @@ long do_sys_open_by_handle(int mountdirfd, struct file_handle __user * ufh, int 
     long retval = 0;
     struct file *filp;
     struct dentry *dentry;
-    struct file_handle f_handle;
     struct vfsmount *mnt = NULL;
     struct file_handle *handle = NULL;
 
     /* can't use O_CREATE with open_by_handle */
     if(open_flag & O_CREAT)
-        {
-            retval = -EINVAL;
-            goto out_err;
-        }
-    if(copy_from_user(&f_handle, ufh, sizeof(struct file_handle)))
-        {
-            retval = -EFAULT;
-            goto out_err;
-        }
-    if((f_handle.handle_size > MAX_HANDLE_SZ) || (f_handle.handle_size <= 0))
-        {
-            retval = -EINVAL;
-            goto out_err;
-        }
-    handle = kmalloc(sizeof(struct file_handle) + f_handle.handle_size, GFP_KERNEL);
-    if(!handle)
-        {
-            retval = -ENOMEM;
-            goto out_err;
-        }
-    /* copy the full handle */
-    if(copy_from_user(handle, ufh, sizeof(struct file_handle) + f_handle.handle_size))
-        {
-            retval = -EFAULT;
-            goto out_handle;
-        }
+            return -EINVAL;
+
+    handle = get_kernel_handle(ufh);
+    if(IS_ERR(handle))
+            return PTR_ERR(handle);
+
     dentry = handle_to_dentry(mountdirfd, handle, &mnt);
     if(IS_ERR(dentry))
         {
@@ -492,7 +482,7 @@ long do_sys_open_by_handle(int mountdirfd, struct file_handle __user * ufh, int 
         }
     retval = may_handle_open(dentry, open_flag);
     if(retval)
-        goto out_handle;
+        goto out_dentry;
     fd = get_unused_fd();
     if(fd < 0)
         {
@@ -504,6 +494,7 @@ long do_sys_open_by_handle(int mountdirfd, struct file_handle __user * ufh, int 
         {
             put_unused_fd(fd);
             retval = PTR_ERR(filp);
+            goto out_dentry;
         }
     else
         {
@@ -519,7 +510,6 @@ out_dentry:
     mntput(mnt);
 out_handle:
     kfree(handle);
-out_err:
     return retval;
 }
 
@@ -566,7 +556,6 @@ out_release:
     path_release(&nd);
 file_out:
     fput_light(filep, fput_needed);
-
     return error;
 }
 
@@ -599,39 +588,18 @@ long do_sys_stat_by_handle(int mountdirfd, struct file_handle __user * ufh,
 {
     long retval = 0;
     struct dentry *dentry;
-    struct file_handle f_handle;
     struct vfsmount *mnt = NULL;
     struct file_handle *handle = NULL;
 
-    if(copy_from_user(&f_handle, ufh, sizeof(struct file_handle)))
-        {
-            retval = -EFAULT;
-            goto out_err;
-        }
-    if((f_handle.handle_size > MAX_HANDLE_SZ) || (f_handle.handle_size <= 0))
-        {
-            retval = -EINVAL;
-            goto out_err;
-        }
-    handle = kmalloc(sizeof(struct file_handle) + f_handle.handle_size, GFP_KERNEL);
-    if(!handle)
-        {
-            retval = -ENOMEM;
-            goto out_err;
-        }
-    /* copy the full handle */
-    if(copy_from_user(handle, ufh, sizeof(struct file_handle) + f_handle.handle_size))
-        {
-            retval = -EFAULT;
-            goto out_handle;
-        }
+    handle = get_kernel_handle(ufh);
+    if(IS_ERR(handle))
+            return PTR_ERR(handle);
+
     dentry = handle_to_dentry(mountdirfd, handle, &mnt);
     if(IS_ERR(dentry))
         {
             retval = PTR_ERR(dentry);
             goto out_handle;
-
-
         }
     retval = vfs_getattr(mnt, dentry, stat);
 
@@ -639,7 +607,6 @@ long do_sys_stat_by_handle(int mountdirfd, struct file_handle __user * ufh,
     mntput(mnt);
 out_handle:
     kfree(handle);
-out_err:
     return retval;
 }
 

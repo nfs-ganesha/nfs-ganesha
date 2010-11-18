@@ -301,14 +301,14 @@ int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt,
 
       status = DUPREQ_SUCCESS;
       dupreq = (dupreq_entry_t *) buffval.pdata;
-      LogDebug(COMPONENT_DUPREQ, "NFS DUPREQ: Hit in the dupreq cache for xid=%u addr=%d", xid,
+      LogDebug(COMPONENT_DUPREQ, "NFS DUPREQ: Hit in the dupreq cache for xid=%ld addr=%d", xid,
 	       phostaddr->sin_addr.s_addr);
     }
   else {
     return DUPREQ_NOT_FOUND;  
   }
 
-  LogFullDebug(COMPONENT_DUPREQ, "NFS_DUPREQ: REMOVING ip= %d.%d.%d.%d port=%d xid=%u rq_prog=%d",
+  LogFullDebug(COMPONENT_DUPREQ, "NFS_DUPREQ: REMOVING ip= %d.%d.%d.%d port=%d xid=%ld rq_prog=%ld",
                (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
                (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
                (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,
@@ -355,7 +355,7 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
   buffkey.pdata = (caddr_t) &pdupkey;
   buffkey.len = sizeof(dupreq_key_t);
 
-  LogDebug(COMPONENT_DUPREQ, "NFS DUPREQ: Garbage collection on xid=%u", pdupreq->xid);
+  LogDebug(COMPONENT_DUPREQ, "NFS DUPREQ: Garbage collection on xid=%ld", pdupreq->xid);
 
   return _remove_dupreq(&buffkey, pdupreq, dupreq_pool, NFS_REQ_OK);
 }                               /* clean_entry_dupreq */
@@ -579,7 +579,7 @@ int nfs_dupreq_add_not_finished(long xid,
   buffdata.pdata = (caddr_t) pdupreq;
   buffdata.len = sizeof(dupreq_entry_t);
 
-  LogFullDebug(COMPONENT_DUPREQ, "NFS_DUPREQ: TEST_AND_SET ip= %d.%d.%d.%d port=%d xid=%u rq_prog=%d",
+  LogFullDebug(COMPONENT_DUPREQ, "NFS_DUPREQ: TEST_AND_SET ip= %d.%d.%d.%d port=%d xid=%ld rq_prog=%ld",
                (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
                (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
                (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,
@@ -666,7 +666,7 @@ int nfs_dupreq_finish(long xid,
   if(HashTable_Get(ht_dupreq, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     return DUPREQ_NOT_FOUND;
 
-  LogDebug(COMPONENT_DUPREQ, "NFS DUPREQ: Hit in the dupreq cache for xid=%u", xid);
+  LogDebug(COMPONENT_DUPREQ, "NFS DUPREQ: Hit in the dupreq cache for xid=%ld", xid);
 
   P(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
   ((dupreq_entry_t *)buffval.pdata)->res_nfs = *p_res_nfs;
@@ -725,7 +725,7 @@ nfs_res_t nfs_dupreq_get(long xid, struct svc_req *ptr_req, SVCXPRT *xprt, int *
       LogDebug(COMPONENT_DUPREQ, "NFS DUPREQ: Hit in the dupreq cache for xid=%ld", xid);
     }
   else {
-    LogFullDebug(COMPONENT_DUPREQ, "Failed to get dupreq entry: ip= %d.%d.%d.%d port=%d xid=%u",
+    LogFullDebug(COMPONENT_DUPREQ, "Failed to get dupreq entry: ip= %d.%d.%d.%d port=%d xid=%ld",
                  (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
                  (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
                  (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,

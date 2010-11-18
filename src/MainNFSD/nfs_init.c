@@ -255,7 +255,7 @@ int nfs_print_param_config(nfs_parameter_t * p_nfs_param)
   printf("\tNFS_Program = %u ;\n", p_nfs_param->core_param.nfs_program);
   printf("\tMNT_Program = %u ;\n", p_nfs_param->core_param.mnt_program);
   printf("\tNb_Worker = %u ; \n", p_nfs_param->core_param.nb_worker);
-  printf("\Nb_Call_Before_Queue_Avg = %u ; \n", p_nfs_param->core_param.nb_call_before_queue_avg);
+  printf("\tb_Call_Before_Queue_Avg = %u ; \n", p_nfs_param->core_param.nb_call_before_queue_avg);
   printf("\tNb_MaxConcurrentGC = %u ; \n", p_nfs_param->core_param.nb_max_concurrent_gc);
   printf("\tDupReq_Expiration = %lu ; \n", p_nfs_param->core_param.expiration_dupreq);
   printf("\tCore_Dump_Size = %ld ; \n", p_nfs_param->core_param.core_dump_size);
