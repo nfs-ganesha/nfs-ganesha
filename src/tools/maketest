@@ -398,7 +398,7 @@ sub do_test
     print "    Comment = $$refhash{ 'Comment' } \n" if( !$quiet_mode && !$xml_mode);
     print "    Command = $$refhash{ 'Command' } \n" if( !$quiet_mode && !$xml_mode);
 
-    print "<testcase classname=".'"maketest"'." name=".'"'."$testname".'"'." time=\"0.0\"/>\n" if( $xml_mode ) ;
+    print "<testcase classname=".'"maketest"'." name=".'"'."$testname".'"'." time=\"0.0\">\n" if( $xml_mode ) ;
 
     my $cmd =  $$refhash{ 'Command' } ; 
     
@@ -538,6 +538,7 @@ sub do_test
       }
     }
 
+    print "</testcase>\n" if( $xml_mode ) ;
     print "------------------------------------------------------\n" if( !$quiet_mode && !$xml_mode ) ;
     return $result_test ;
 } # do_test 
