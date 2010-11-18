@@ -49,6 +49,7 @@ my $colored_mode = 0;
 my $xml_mode = 0;
 my $debug = 0;
 my $error_only = 0;
+my $output_xml = "" ;
 
 # definition des elements parametrables du fichier de configuration
 my %hash_vars = ();
@@ -398,7 +399,7 @@ sub do_test
     print "    Comment = $$refhash{ 'Comment' } \n" if( !$quiet_mode && !$xml_mode);
     print "    Command = $$refhash{ 'Command' } \n" if( !$quiet_mode && !$xml_mode);
 
-    print "<testcase classname=".'"maketest"'." name=".'"'."$testname".'"'." time=\"0.0\">\n" if( $xml_mode ) ;
+    $output_xml .= "<testcase classname=\"maketest\" name=\"$testname\" time=\"0.0\">\n" if( $xml_mode ) ;
 
     my $cmd =  $$refhash{ 'Command' } ; 
     
@@ -490,9 +491,9 @@ sub do_test
 
           if( $xml_mode ) 
           {
-              print "<failure type=".'"'."$fail".'">' ;
-              print "Test $testname has recognized failure $fail\n" ;
-              print "</failure>\n"  ;
+              $output_xml .= "<failure type=".'"'."$fail".'">' ;
+              $output_xml .= "Test $testname has recognized failure $fail\n" ;
+              $output_xml .= "</failure>\n"  ;
           }
 
   	      $failfound = 1 ;
@@ -516,9 +517,9 @@ sub do_test
 
          if( $xml_mode ) 
           {
-              print "<failure type=".'"'."unrecognized".'">' ;
-              print "Test $testname has unrecognized failure\n" ;
-              print "</failure>\n"  ;
+              $output_xml .= "<failure type=".'"'."unrecognized".'">' ;
+              $output_xml .= "Test $testname has unrecognized failure\n" ;
+              $output_xml .= "</failure>\n"  ;
           }
 
           $result_test = 2 ;
@@ -538,7 +539,7 @@ sub do_test
       }
     }
 
-    print "</testcase>\n" if( $xml_mode ) ;
+    $output_xml .= "</testcase>\n" if( $xml_mode ) ;
     print "------------------------------------------------------\n" if( !$quiet_mode && !$xml_mode ) ;
     return $result_test ;
 } # do_test 
@@ -610,6 +611,7 @@ my $res ;
 
 print "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" if( $xml_mode ) ; 
 
+
 foreach $test ( @testlist )
 {
     if( defined( $hashconf{ $test } ) )
@@ -644,8 +646,8 @@ if( ( $NbFailed == 0 )&& ( $NbIndeterminate == 0 ) )
 if( $xml_mode ) 
 {
 
-  print"<testsuite errors=".'"0" '."failures=".'"'."$NbFailed".'"'." hostname=\"".hostname."\" name=\"maketest\" tests=\"$NbTotal\" time'\"0.0\">\n" ;
-
+  print"<testsuite errors=".'"0" '."failures=".'"'."$NbFailed".'"'." hostname=\"".hostname."\" name=\"maketest\" tests=\"$NbTotal\" time=\"0.0\">\n" ;
+  print $output_xml ;
   print "<system-out>No system out displayed by maketest</system-out>\n" ;
   print "<system-err>No system err displayed by maketest</system-err>\n" ;
 
