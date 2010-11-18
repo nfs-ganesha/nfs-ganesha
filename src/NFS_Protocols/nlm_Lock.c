@@ -89,8 +89,7 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
   cache_inode_status_t cache_status;
   cache_inode_fsal_data_t fsal_data;
 
-  LogFullDebug(COMPONENT_NFSPROTO,
-                    "REQUEST PROCESSING: Calling nlm4_Lock");
+  LogFullDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm4_Lock");
 
   /* Convert file handle into a cache entry */
   arg = &parg->arg_nlm4_lock;
@@ -132,8 +131,8 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
       /*
        * ok failed to register monitor for the host
        */
-      LogDebug(COMPONENT_NFSPROTO, "Failed to register a monitor for the host %s",
-                 arg->alock.caller_name);
+      LogDebug(COMPONENT_NLM, "Failed to register a monitor for the host %s",
+               arg->alock.caller_name);
       pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
       return NFS_REQ_OK;
 
@@ -148,10 +147,14 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
       /* We failed to create a lock entry and add to the list */
       nlm_unmonitor_host(arg->alock.caller_name);
       pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
+      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
+                   lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
   pres->res_nlm4.stat.stat = nlm_entry->state;
   nlm_lock_entry_dec_ref(nlm_entry);
+  LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
   return NFS_REQ_OK;
 }
 
