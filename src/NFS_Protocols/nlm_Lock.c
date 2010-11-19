@@ -101,6 +101,8 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
        * Should we do a REQ_OK so that the client get
        * a response ? FIXME!!
        */
+      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
+                   lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_DROP;
     }
   /* Now get the cached inode attributes */
@@ -110,6 +112,8 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
     {
       /* handle is not valid */
       pres->res_nlm4.stat.stat = NLM4_STALE_FH;
+      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
+                   lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
 
@@ -117,11 +121,15 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
   if(in_nlm_grace_period() && !arg->reclaim)
     {
       pres->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
+      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
+                   lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
   if(!in_nlm_grace_period() && arg->reclaim)
     {
       pres->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
+      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
+                   lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
 
@@ -134,6 +142,8 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
       LogDebug(COMPONENT_NLM, "Failed to register a monitor for the host %s",
                arg->alock.caller_name);
       pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
+      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
+                   lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
 
     }

@@ -94,6 +94,8 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
   if(in_nlm_grace_period())
     {
       pres->res_nlm4test.test_stat.stat = NLM4_DENIED_GRACE_PERIOD;
+      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm_Test %s",
+                   lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
 
@@ -107,6 +109,8 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
        * Should we do a REQ_OK so that the client get
        * a response ? FIXME!!
        */
+      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm_Test %s",
+                   lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_DROP;
     }
   /* Now get the cached inode attributes */
@@ -116,8 +120,13 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
     {
       /* handle is not valid */
       pres->res_nlm4test.test_stat.stat = NLM4_STALE_FH;
+      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm_Test %s",
+                   lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
+  LogFullDebug(COMPONENT_NLM,
+               "nlm_Test Sending svid=%d start=%llx len=%llx",
+               arg->alock.svid, arg->alock.l_offset, arg->alock.l_len);
   nlm_entry = nlm_overlapping_entry(&(arg->alock), arg->exclusive);
   if(!nlm_entry)
     {
@@ -131,6 +140,8 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
       nlm_lock_entry_dec_ref(nlm_entry);
     }
 
+  LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm_Test %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
   return NFS_REQ_OK;
 }
 

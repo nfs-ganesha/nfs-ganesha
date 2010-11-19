@@ -217,7 +217,7 @@ void nlm_lock_entry_dec_ref(nlm_lock_entry_t * nlm_entry)
     if(to_free)
         {
             LogFullDebug(COMPONENT_NLM,
-                         "do_nlm_remove_from_locklist Freeing %p svid=%d start=%llu end=%llu %s",
+                         "do_nlm_remove_from_locklist Freeing %p svid=%d start=%llx end=%llx %s",
                          nlm_entry, nlm_entry->svid, nlm_entry->start, nlm_entry->len,
                          lock_result_str(nlm_entry->state));
 
@@ -240,6 +240,11 @@ static nlm_lock_entry_t *get_nlm_overlapping_entry(struct nlm4_lock *nlm_lock,
     glist_for_each(glist, &nlm_lock_list)
         {
             nlm_entry = glist_entry(glist, nlm_lock_entry_t, lock_list);
+
+            LogFullDebug(COMPONENT_NLM,
+                         "get_nlm_overlapping_entry Checking %p svid=%d start=%llx len=%llx",
+                         nlm_entry, nlm_entry->svid,
+                         nlm_entry->start, nlm_entry->len);
 
             if(netobj_compare(&nlm_entry->fh, &nlm_lock->fh))
                 continue;
@@ -325,7 +330,7 @@ nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs * arg)
             nlm_lock_entry_inc_ref(nlm_entry);
             pthread_mutex_unlock(&nlm_lock_list_mutex);
             LogFullDebug(COMPONENT_NLM,
-                         "nlm_add_to_locklist Found blocked lock svid=%d %p svid=%d start=%llu len=%llu",
+                         "nlm_add_to_locklist Found blocked lock svid=%d %p svid=%d start=%llx len=%llx",
                          nlm_lock->svid,
                          nlm_entry, nlm_entry->svid, nlm_entry->start, nlm_entry->len);
             return nlm_entry;
@@ -377,7 +382,7 @@ nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs * arg)
             nlm_entry->state = NLM4_BLOCKED;
         }
     LogFullDebug(COMPONENT_NLM,
-                 "nlm_add_to_locklist Adding %p svid=%d start=%llu end=%llu %s",
+                 "nlm_add_to_locklist Adding %p svid=%d start=%llx end=%llx %s",
                  nlm_entry, nlm_entry->svid, nlm_entry->start, nlm_entry->len,
                  lock_result_str(nlm_entry->state));
     /*
@@ -410,7 +415,7 @@ static void do_nlm_remove_from_locklist(nlm_lock_entry_t * nlm_entry)
     pthread_mutex_unlock(&nlm_entry->lock);
 
     LogFullDebug(COMPONENT_NLM,
-                 "do_nlm_remove_from_locklist Freeing %p svid=%d start=%llu end=%llu %s",
+                 "do_nlm_remove_from_locklist Freeing %p svid=%d start=%llx end=%llx %s",
                  nlm_entry, nlm_entry->svid, nlm_entry->start, nlm_entry->len,
                  lock_result_str(nlm_entry->state));
 
@@ -450,7 +455,7 @@ nlm_lock_entry_t *nlm_find_lock_entry(struct nlm4_lock *nlm_lock,
         {
             nlm_entry = glist_entry(glist, nlm_lock_entry_t, lock_list);
             LogFullDebug(COMPONENT_NLM,
-                         "nlm_find_lock_entry Checking %p svid=%d start=%llu len=%llu",
+                         "nlm_find_lock_entry Checking %p svid=%d start=%llx len=%llx",
                          nlm_entry, nlm_entry->svid,
                          nlm_entry->start, nlm_entry->len);
             if(strcmp(nlm_entry->caller_name, nlm_lock->caller_name))
@@ -489,7 +494,7 @@ nlm_lock_entry_t *nlm_find_lock_entry(struct nlm4_lock *nlm_lock,
       {
         nlm_lock_entry_inc_ref(nlm_entry);
         LogFullDebug(COMPONENT_NLM,
-                     "nlm_find_lock_entry Found %p svid=%d start=%llu len=%llu",
+                     "nlm_find_lock_entry Found %p svid=%d start=%llx len=%llx",
                      nlm_entry, nlm_entry->svid,
                      nlm_entry->start, nlm_entry->len);
       }
@@ -558,7 +563,7 @@ static int do_nlm_delete_lock_entry(nlm_lock_entry_t * nlm_entry,
         goto done;
 
     LogFullDebug(COMPONENT_NLM,
-                 "do_nlm_delete_lock_entry About to remove lock from svid=%d start=%llu len=%llu",
+                 "do_nlm_delete_lock_entry About to remove lock from svid=%d start=%llx len=%llx",
                  nlm_lock->svid, nlm_lock->l_offset, nlm_lock->l_len);
 
     if((nlm_lock->l_offset <= nlm_entry->start) &&
@@ -566,7 +571,7 @@ static int do_nlm_delete_lock_entry(nlm_lock_entry_t * nlm_entry,
       {
         /* Fully overlap */
         LogFullDebug(COMPONENT_NLM,
-                     "do_nlm_delete_lock_entry Remove complete entry %p svid=%d start=%llu len=%llu",
+                     "do_nlm_delete_lock_entry Remove complete entry %p svid=%d start=%llx len=%llx",
                      nlm_entry, nlm_entry->svid, nlm_entry->start, nlm_entry->len);
         goto complete_remove;
       }
@@ -581,7 +586,7 @@ static int do_nlm_delete_lock_entry(nlm_lock_entry_t * nlm_entry,
               {
                 nlm_entry_left->len = nlm_lock->l_offset - nlm_entry->start;
                 LogFullDebug(COMPONENT_NLM,
-                             "do_nlm_delete_lock_entry left split new lock %p svid=%d start=%llu len=%llu",
+                             "do_nlm_delete_lock_entry left split new lock %p svid=%d start=%llx len=%llx",
                              nlm_entry_left, nlm_entry_left->svid,
                              nlm_entry_left->start, nlm_entry_left->len);
               }
@@ -597,7 +602,7 @@ static int do_nlm_delete_lock_entry(nlm_lock_entry_t * nlm_entry,
                 nlm_entry_right->start = nlm_lock_end;
                 nlm_entry_right->len = nlm_entry_end - nlm_lock_end;
                 LogFullDebug(COMPONENT_NLM,
-                             "do_nlm_delete_lock_entry right split new lock %p svid=%d start=%llu len=%llu",
+                             "do_nlm_delete_lock_entry right split new lock %p svid=%d start=%llx len=%llx",
                              nlm_entry_right, nlm_entry_right->svid,
                              nlm_entry_right->start, nlm_entry_right->len);
               }
@@ -845,7 +850,7 @@ static void nlm4_send_grant_msg(void *arg)
     inarg.alock.l_offset = nlm_entry->start;
     inarg.alock.l_len = nlm_entry->len;
     LogFullDebug(COMPONENT_NLM,
-                 "nlm4_send_grant_msg Sending GRANTED for %p svid=%d start=%llu len=%llu",
+                 "nlm4_send_grant_msg Sending GRANTED for %p svid=%d start=%llx len=%llx",
                  nlm_entry, nlm_entry->svid, nlm_entry->start, nlm_entry->len);
 
     retval = nlm_send_reply(NLMPROC4_GRANTED_MSG,
@@ -867,7 +872,6 @@ static void nlm4_send_grant_msg(void *arg)
     LogMajor(COMPONENT_NLM,
              "%s: GRANTED_MSG RPC call failed. Removing the blocking lock",
              __func__);
-    goto free_nlm_lock_entry;
 
 free_nlm_lock_entry:
     nlm_remove_from_locklist(nlm_entry);
