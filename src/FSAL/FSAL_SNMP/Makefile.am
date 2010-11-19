@@ -20,10 +20,6 @@ libfsalsnmp_la_SOURCES = fsal_access.c  fsal_context.c  fsal_dirs.c    fsal_fsin
 		         ../../include/fsal.h ../../include/fsal_types.h ../../include/FSAL/FSAL_SNMP/fsal_types.h                                        \
                          ../../include/err_fsal.h
 
-check_PROGRAMS 		    = test_fsal_snmp
-test_fsal_snmp_SOURCES	    = test_fsal.c 
-test_fsal_snmp_LDADD        = $(FSAL_LIB) $(FSAL_LDFLAGS) -lpthread
-
 new: clean all
 
 doc:
