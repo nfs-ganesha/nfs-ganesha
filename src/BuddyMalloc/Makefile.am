@@ -19,3 +19,7 @@ test_buddy_LDADD            = libBuddyMalloc.la ../Log/liblog.la -lpthread
 
 new: clean all
 
+
+testrunner: check 
+	../tools/maketest -x -f ./maketest.conf > ../testres-xml/BuddyMalloc.xml
+
