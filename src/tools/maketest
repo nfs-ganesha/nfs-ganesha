@@ -50,6 +50,8 @@ my $xml_mode = 0;
 my $debug = 0;
 my $error_only = 0;
 my $output_xml = "" ;
+my $output_xml_stderr = "" ;
+my $output_xml_stdout = "" ;
 
 # definition des elements parametrables du fichier de configuration
 my %hash_vars = ();
@@ -416,6 +418,7 @@ sub do_test
     my $STDOUT = <STDOUTFILE> ;
     close STDOUTFILE ;
     unlink $stdoutfile or print "Unlink to $stdoutfile is impossible: $!\n" ;
+    if( $xml_mode ) { $output_xml_stdout .=  $STDOUT  } ;
     print "out#$STDOUT#\n" if( $debug ); ;
     
     # Dealing with STDERR
@@ -424,6 +427,7 @@ sub do_test
     close STDERRFILE ;
     print "err#$STDERR#\n" if( $debug );
     unlink $stderrfile or print "Unlink to $stderrfile is impossible: $!\n" ; 
+    if( $xml_mode ) { $output_xml_stderr .=  $STDERR  } ;
 
     # Now dealing with STATUS
     open( STATUSFILE, "<$statusfile" ) or die "Cannot open status file $statusfile: $!\n" ;
@@ -648,8 +652,10 @@ if( $xml_mode )
 
   print"<testsuite errors=\"0\" failures=\"$NbFailed\" hostname=\"".hostname."\" name=\"maketest\" tests=\"$NbTotal\" time=\"0.0\">\n" ;
   print $output_xml ;
-  print "<system-out>No system out displayed by maketest</system-out>\n" ;
-  print "<system-err>No system err displayed by maketest</system-err>\n" ;
+  ##print "<system-out>No system out displayed by maketest</system-out>\n" ;
+  ##print "<system-err>No system err displayed by maketest</system-err>\n" ;
+  print "<system-out>$output_xml_stdout</system-out>\n" ;
+  print "<system-err>$output_xml_stderr</system-err>\n" ;
 
   print "</testsuite>\n" ;
 }

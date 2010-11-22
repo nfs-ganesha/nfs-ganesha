@@ -36,10 +36,14 @@
 
 int pnfs_ds_get_location( pnfs_client_t      * pnfsclient,
                           fsal_handle_t      * phandle, 
-                          fsal_attrib_list_t * pattr,
-                          pnfs_hints_t       * phints,
+                          pnfs_ds_hints_t    * phints,
 	                  pnfs_ds_loc_t      * plocation ) 
 {
-   return 1 ;
-}
+  if( !phandle || !plocation )
+    return 0 ;
+ 
+  snprintHandle( plocation->str_mds_handle, MAXNAMLEN, phandle ) ;
+
+  return 1 ;
+} /* pnfs_ds_get_location */
 

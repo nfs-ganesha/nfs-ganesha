@@ -38,7 +38,7 @@
 #define PNFS_LAYOUTFILE_CREATE_VAL_BUFFER  1024
 
 static int pnfs_lookup_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
-                                   component4 name, fattr4_fileid fileid,
+                                   component4 name, 
                                    pnfs_part_file_t * ppartfile)
 {
   COMPOUND4args argnfs4;
@@ -117,7 +117,7 @@ int pnfs_ds_lookup_file(pnfs_client_t * pnfsclient,
   name.utf8string_val = nameval;
   name.utf8string_len = 0;
 
-  snprintf(filename, MAXNAMLEN, "fileid=%llu,generation=%"PRIu64, (unsigned long long)plocation->fileid, plocation->generation);
+  snprintf(filename, MAXNAMLEN, "%s", plocation->str_mds_handle);
 
   if(str2utf8(filename, &name) == -1)
     return NFS4ERR_SERVERFAULT;
@@ -125,11 +125,12 @@ int pnfs_ds_lookup_file(pnfs_client_t * pnfsclient,
   for(i = 0; i < pnfsclient->nb_ds; i++)
     {
       if((rc =
-          pnfs_lookup_ds_partfile(&(pnfsclient->ds_client[i]), name, plocation->fileid,
+          pnfs_lookup_ds_partfile(&(pnfsclient->ds_client[i]), name,
                                   &(pfile->filepart[i]))) != NFS4_OK)
         return rc;
     }
 
+  strncpy ( pfile->location.str_mds_handle, plocation->str_mds_handle, MAXNAMLEN ) ;
   pfile->allocated = TRUE;
   pfile->stripe = pnfsclient->nb_ds;
 

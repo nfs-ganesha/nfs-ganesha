@@ -12,11 +12,10 @@
 
 int pnfs_get_location(  pnfs_client_t      * pnfsclient,
                         fsal_handle_t      * phandle, 
-                        fsal_attrib_list_t * pattr,
                         pnfs_hints_t       * phints,
 	                pnfs_fileloc_t     * pnfs_fileloc ) 
 {
-  return pnfs_ds_get_location( pnfsclient, phandle, pattr, phints,  &pnfs_fileloc->ds_loc ) ;
+  return pnfs_ds_get_location( pnfsclient, phandle, &phints->ds_hints,  &pnfs_fileloc->ds_loc ) ;
 }
 
 int pnfs_create_file( pnfs_client_t  * pnfsclient,

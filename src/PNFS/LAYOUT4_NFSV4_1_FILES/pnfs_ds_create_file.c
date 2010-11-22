@@ -71,8 +71,7 @@ static int pnfs_create_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
 
   /* Create the owner */
   snprintf(owner_val, PNFS_LAYOUTFILE_OWNER_LEN,
-           "GANESHA/PNFS: pid=%u clnt=%p fileid=%llu", getpid(), pnfsdsclient,
-           (unsigned long long)plocation->fileid);
+           "GANESHA/PNFS: pid=%u FH=%s", getpid(), plocation->str_mds_handle);
   owner_len = strnlen(owner_val, PNFS_LAYOUTFILE_OWNER_LEN);
 
   inattr.attrmask.bitmap4_len = 2;
@@ -177,8 +176,7 @@ int pnfs_ds_create_file(pnfs_client_t * pnfsclient,
   name.utf8string_val = nameval;
   name.utf8string_len = 0;
 
-  snprintf(filename, MAXNAMLEN, "fileid=%llu,generation=%"PRIu64,
-          (unsigned long long)plocation->fileid, plocation->generation );
+  snprintf(filename, MAXNAMLEN, "%s", plocation->str_mds_handle ) ;
 
   if(str2utf8(filename, &name) == -1)
     return NFS4ERR_SERVERFAULT;
@@ -192,8 +190,7 @@ int pnfs_ds_create_file(pnfs_client_t * pnfsclient,
 
     }                           /* for */
 
-  pfile->location.fileid = plocation->fileid ;
-  pfile->location.generation = plocation->generation ;
+  strncpy ( pfile->location.str_mds_handle, plocation->str_mds_handle, MAXNAMLEN ) ;
   
   pfile->allocated = TRUE;
   pfile->stripe = pnfsclient->nb_ds;

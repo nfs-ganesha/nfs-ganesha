@@ -96,7 +96,7 @@ int pnfs_ds_unlink_file(pnfs_client_t * pnfsclient,
 
   name.utf8string_val = nameval;
   name.utf8string_len = 0;
-  snprintf(filename, MAXNAMLEN, "fileid=%llu,generation=%"PRIu64, (unsigned long long)pfile->location.fileid, pfile->location.generation);
+  snprintf(filename, MAXNAMLEN, "%s", pfile->location.str_mds_handle);
   if(str2utf8(filename, &name) == -1)
     return NFS4ERR_SERVERFAULT;
 

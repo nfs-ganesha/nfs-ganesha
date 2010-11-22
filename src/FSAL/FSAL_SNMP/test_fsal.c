@@ -254,7 +254,7 @@ int main(int argc, char **argv)
   snprintHandle(tracebuff, 2048, &root_handle);
   LogTest("Root handle (size=%u, root_type=%d, object_type=%d) = %s",
          sizeof(snmpfsal_handle_t), (int)FSAL_NODETYPE_ROOT,
-         root_handle.object_type_reminder, tracebuff);
+         root_handle.data.object_type_reminder, tracebuff);
 
   /* getting what are the supported attributes */
 
@@ -424,7 +424,8 @@ int main(int argc, char **argv)
       /* displaying attributes */
       printattributes(attribs);
 
-      from = FSAL_READDIR_FROM_BEGINNING;
+      // from = FSAL_READDIR_FROM_BEGINNING;
+      from.data.oid_len = 0 ;
 
       while(!error && !eod)
         {
@@ -481,7 +482,8 @@ int main(int argc, char **argv)
       /* displaying attributes */
       printattributes(attribs);
 
-      from = FSAL_READDIR_FROM_BEGINNING;
+      //from = FSAL_READDIR_FROM_BEGINNING;
+      from.data.oid_len = 0 ; 
 
       while(!error && !eod)
         {
@@ -536,7 +538,8 @@ int main(int argc, char **argv)
       int error = FALSE;
 
       attribs.asked_attributes = mask;
-      if(FSAL_IS_ERROR(st = SNMPFSAL_opendir(&root_handle, &op_ctx, &dir, &attribs)))
+      st = FSAL_opendir(&root_handle, &op_ctx, &dir, &attribs) ; 
+      if(FSAL_IS_ERROR( st ) )
         {
           LogError(COMPONENT_FSAL, ERR_FSAL, st.major, st.minor);
         }
@@ -545,7 +548,8 @@ int main(int argc, char **argv)
       /* displaying attributes */
       printattributes(attribs);
 
-      from = FSAL_READDIR_FROM_BEGINNING;
+      // from = FSAL_READDIR_FROM_BEGINNING;
+      from.data.oid_len = 0 ;
 
       while(!error && !eod)
         {
