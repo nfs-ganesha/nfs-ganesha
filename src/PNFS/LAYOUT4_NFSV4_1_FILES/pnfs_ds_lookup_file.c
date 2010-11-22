@@ -130,6 +130,7 @@ int pnfs_ds_lookup_file(pnfs_client_t * pnfsclient,
         return rc;
     }
 
+  strncpy ( pfile->location.str_mds_handle, plocation->str_mds_handle, MAXNAMLEN ) ;
   pfile->allocated = TRUE;
   pfile->stripe = pnfsclient->nb_ds;
 
