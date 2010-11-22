@@ -46,11 +46,11 @@ main(int argc, char *argv[])
   if(fd < 0)
     perror("open"), exit(1);
 
-  handle = malloc(sizeof(struct file_handle) + 20);
+  handle = malloc(sizeof(struct file_handle) + OPENHANDLE_HANDLE_LEN);
 
   /* read the handle to a handle.data file */
   handle_fd = open(argv[3], O_RDONLY);
-  read(handle_fd, handle, sizeof(struct file_handle) + 20);
+  read(handle_fd, handle, sizeof(struct file_handle) + OPENHANDLE_HANDLE_LEN);
   printf("Handle size is %d\n", handle->handle_size);
 
   oarg.mountdirfd = open(argv[2], O_RDONLY | O_DIRECTORY);
