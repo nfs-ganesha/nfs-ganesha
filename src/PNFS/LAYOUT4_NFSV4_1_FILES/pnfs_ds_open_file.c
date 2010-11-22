@@ -40,7 +40,7 @@
 #define PNFS_LAYOUTFILE_OPEN_VAL_BUFFER  1024
 
 static int pnfs_open_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
-                                 component4 name, fattr4_fileid fileid,
+                                 component4 name, 
                                  pnfs_part_file_t * ppartfile)
 {
   COMPOUND4args argnfs4;
@@ -70,8 +70,7 @@ static int pnfs_open_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
 
   /* Create the owner */
   snprintf(owner_val, PNFS_LAYOUTFILE_OWNER_LEN,
-           "GANESHA/PNFS: pid=%u clnt=%p fileid=%llu", getpid(), pnfsdsclient,
-           (unsigned long long)fileid);
+           "GANESHA/PNFS: pid=%u clnt=%p name=%s", getpid(), pnfsdsclient, name.utf8string_val ) ;
   owner_len = strnlen(owner_val, PNFS_LAYOUTFILE_OWNER_LEN);
 
   resnfs4.resarray.resarray_val[PNFS_LAYOUTFILE_OPEN_IDX_OP_GETFH].nfs_resop4_u.
@@ -165,12 +164,12 @@ int pnfs_open_ds_file(pnfs_client_t * pnfsclient,
   name.utf8string_val = nameval;
   name.utf8string_len = 0;
 
-  snprintf(filename, MAXNAMLEN, "fileid=%llu,generation=%"PRIu64, (unsigned long long)plocation->fileid, plocation->generation);
+  snprintf(filename, MAXNAMLEN, "%s", plocation->str_mds_handle ) ;
 
   for(i = 0; i < pnfsclient->nb_ds; i++)
     {
       if((rc =
-          pnfs_open_ds_partfile(&(pnfsclient->ds_client[i]), name, plocation->fileid,
+          pnfs_open_ds_partfile(&(pnfsclient->ds_client[i]), name, 
                                 &(pfile->filepart[i]))) != NFS4_OK)
         return rc;
     }

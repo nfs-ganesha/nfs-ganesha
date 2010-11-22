@@ -84,12 +84,11 @@ typedef union pnfs_file_loc__
 
 typedef union pnfs_hints__
 {
-  int nothing_right_now
+  pnfs_ds_hints_t ds_hints ;
 } pnfs_hints_t ;
 
 int pnfs_get_location(  pnfs_client_t      * pnfsclient,
                         fsal_handle_t      * phandle, 
-                        fsal_attrib_list_t * pattr,
                         pnfs_hints_t       * phints,
 	                pnfs_fileloc_t * pnfs_fileloc ) ;
 

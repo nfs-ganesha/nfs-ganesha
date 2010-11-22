@@ -105,8 +105,7 @@ typedef struct pnfs_client__
 
 typedef struct pnfs_ds_loc__
 {
-  fattr4_fileid fileid ;
-  uint64_t      generation ;
+  char          str_mds_handle[MAXNAMLEN];
 }  pnfs_ds_loc_t ;
 
 typedef struct pnfs_part_file__
@@ -125,15 +124,17 @@ typedef struct pnfs_ds_file__
   pnfs_part_file_t filepart[NB_MAX_PNFS_DS];
 } pnfs_ds_file_t;
 
-
+typedef struct pnfs_layoutfile_hints__
+{
+  int nothing_right_now ;
+} pnfs_ds_hints_t ;
 
 /* Mandatory functions */
 
-int pnfs_ds_get_location( pnfs_client_t      * pnfsclient,
-                          fsal_handle_t      * phandle, 
-                          fsal_attrib_list_t * pattr,
-                          pnfs_hints_t       * phints,
-	                  pnfs_ds_loc_t      * plocation ) ; 
+int pnfs_ds_get_location( pnfs_client_t    * pnfsclient,
+                          fsal_handle_t    * phandle, 
+                          pnfs_ds_hints_t  * phints,
+	                  pnfs_ds_loc_t    * plocation ) ; 
 
 int pnfs_ds_init( pnfs_client_t * pnfsclient,
                   pnfs_layoutfile_parameter_t * pnfs_layout_param);

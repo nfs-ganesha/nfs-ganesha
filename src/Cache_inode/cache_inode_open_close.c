@@ -200,7 +200,6 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
 #ifdef _USE_PNFS
   int pnfs_status;
   pnfs_fileloc_t pnfs_location ;
-  fsal_extattrib_list_t  npattr_file ;
 #endif
 
   if((pentry_dir == NULL) || (pname == NULL) || (pentry_file == NULL) ||
@@ -317,22 +316,15 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
     }
 
 #ifdef _USE_PNFS
-  npattr_file.asked_attributes = FSAL_ATTR_GENERATION ;
-  fsal_status = FSAL_getextattrs( &pentry_file->object.file.handle,  
-				  pcontext, 
-                                 &npattr_file ) ;
-  
-   if( FSAL_IS_ERROR( fsal_status ) )
-     {
-        LogDebug(COMPONENT_CACHE_INODE, "LOOKUP PNFS support : can't call FSAL_getextattrs" ) ;
+  if(! pnfs_get_location( &pclient->pnfsclient, &pentry_file->object.file.handle,
+                                   NULL,  &pnfs_location ) )
+    {
+       LogDebug(COMPONENT_CACHE_INODE, "LOOKUP PNFS support : can't build pnfs_location" ) ;
 
-        *pstatus = CACHE_INODE_IO_ERROR;
-        return *pstatus ;
-     }
- 
+       *pstatus = CACHE_INODE_IO_ERROR;
+       return *pstatus;
+    }
 
-  pnfs_location.ds_loc.fileid = pentry_file->object.file.attributes.fileid ;
-  pnfs_location.ds_loc.generation =  npattr_file.generation ;
 
   if((pnfs_status = pnfs_lookup_file( &pclient->pnfsclient,
                                       &pnfs_location, 

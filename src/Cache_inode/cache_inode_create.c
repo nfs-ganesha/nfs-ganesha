@@ -110,7 +110,6 @@ cache_inode_create(cache_entry_t * pentry_parent,
 #ifdef _USE_PNFS
     int pnfs_status;
     pnfs_fileloc_t pnfs_location ;
-    fsal_extattrib_list_t  npattr_file ;
 #endif
 
     /* Set the return default to CACHE_INODE_SUCCESS */
@@ -393,23 +392,16 @@ cache_inode_create(cache_entry_t * pentry_parent,
        (pcreate_arg != NULL) &&
        (pcreate_arg->use_pnfs == TRUE))
         {
-            npattr_file.asked_attributes = FSAL_ATTR_GENERATION ;
-            fsal_status = FSAL_getextattrs( &pentry->object.file.handle,  
-					    pcontext, 
-                                            &npattr_file ) ;
- 
-            if( FSAL_IS_ERROR( fsal_status ) )
+            if(! pnfs_get_location( &pclient->pnfsclient, &pentry->object.file.handle,
+                                   NULL,  &pnfs_location ) )
                {
-                  LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS support : can't call FSAL_getextattrs" ) ;
-
                   V_w(&pentry_parent->lock);
+                  LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS CREATE DS FILE : can't get pnfs_location Error %u",
+                           pnfs_status);
 
                   *pstatus = CACHE_INODE_IO_ERROR;
                   return NULL;
                }
-
-            pnfs_location.ds_loc.fileid = pentry->object.file.attributes.fileid ;
-            pnfs_location.ds_loc.generation =  npattr_file.generation ;
 
             pnfs_status = pnfs_create_file( &pclient->pnfsclient,
 					    &pnfs_location,
