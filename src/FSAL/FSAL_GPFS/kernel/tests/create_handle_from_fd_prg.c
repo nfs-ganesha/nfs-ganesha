@@ -47,8 +47,8 @@ main(int argc, char *argv[])
   harg.name = NULL;
   harg.dfd = file_fd;
   harg.flag = 0;
-  harg.handle = malloc(sizeof(struct file_handle) + 20);
-  harg.handle->handle_size = 20;
+  harg.handle = malloc(sizeof(struct file_handle) + OPENHANDLE_HANDLE_LEN);
+  harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
 
   rc = ioctl(fd, OPENHANDLE_NAME_TO_HANDLE, &harg);
   if(rc < 0)
