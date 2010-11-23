@@ -25,10 +25,12 @@ use Sys::Hostname;
 # I like to have human-readable variables 
 use English '-no_match_vars' ;
 
+use Time::HiRes qw( gettimeofday tv_interval );
+
 # For the option's management
-my $options = "hdTxqcf:D:e" ;
+my $options = "hdTqcf:D:ex:" ;
 my %opt ;
-my $usage = sprintf("Usage: %s [-h] [-q][-c][-e] [-f <config_file>] [-T] [-D var1=value[,var2=value[,...]]] test_name\n"
+my $usage = sprintf("Usage: %s [-h] [-q][-c][-e][-x <tag>][-f <config_file>] [-T] [-D var1=value[,var2=value[,...]]] test_name\n"
                    ."    -h : print this help\n"
                    ."    -q : quiet mode\n"
                    ."    -c : colored mode\n"
@@ -47,6 +49,7 @@ my $DefaultConfFile = "./maketest.conf" ;
 my $quiet_mode = 0;
 my $colored_mode = 0;
 my $xml_mode = 0;
+my $xml_tag = 0;
 my $debug = 0;
 my $error_only = 0;
 my $output_xml = "" ;
@@ -396,15 +399,23 @@ sub do_test
 
     my $result_test = -1 ;
 
+    my $timer_start  ;
+    my $timer_end  ;
+    my $timer_delta ;
+
     print "Now performing test '", $testname, "'\n" if( !$quiet_mode && !$xml_mode);
     print "    Product = $$refhash{ 'Product' } \n" if( !$quiet_mode && !$xml_mode);
     print "    Comment = $$refhash{ 'Comment' } \n" if( !$quiet_mode && !$xml_mode);
     print "    Command = $$refhash{ 'Command' } \n" if( !$quiet_mode && !$xml_mode);
 
-    $output_xml .= "<testcase classname=\"maketest\" name=\"$testname\" time=\"0.0\">\n" if( $xml_mode ) ;
 
+    $timer_start = [gettimeofday()] ;
     my $cmd =  $$refhash{ 'Command' } ; 
-    
+    $timer_end = [gettimeofday()]  ;
+    $timer_delta = sprintf( "%.6f",tv_interval( $timer_start, $timer_end ) ) ;
+
+    $output_xml .= "<testcase classname=\"$xml_tag\" name=\"$testname\" time=\"$timer_delta\">\n" if( $xml_mode ) ;
+
     $cmd .= " 2>$stderrfile 1>$stdoutfile ; " . ' echo "STATUS=$?"' . " >$statusfile" ;
     print "===> Running $cmd \n" if( $debug ) ;
     system $cmd ;
@@ -568,6 +579,7 @@ my $ConfFile = $opt{ f } || $DefaultConfFile ;
 $quiet_mode = defined( $opt{ q } );
 $colored_mode = defined( $opt{ c } );
 $xml_mode = defined( $opt{ x } );
+$xml_tag =  $opt{ x } if defined( $opt{ x } ) ;
 $debug = defined( $opt{ d } );
 $error_only = defined( $opt{ e } );
 
@@ -654,8 +666,16 @@ if( $xml_mode )
   print $output_xml ;
   ##print "<system-out>No system out displayed by maketest</system-out>\n" ;
   ##print "<system-err>No system err displayed by maketest</system-err>\n" ;
-  print "<system-out>$output_xml_stdout</system-out>\n" ;
-  print "<system-err>$output_xml_stderr</system-err>\n" ;
+
+  # Remove < and > from XML
+  #$output_xml_stdout =~ s/\</_sup_/g ;
+  #$output_xml_stdout =~ s/\>/_inf_/g ;
+
+  #$output_xml_stderr =~ s/\</_sup_/g ;
+  #$output_xml_stderr =~ s/\>/_inf_/g ;
+
+  print "<system-out><![CDATA[$output_xml_stdout]]></system-out>\n" ;
+  print "<system-err><![CDATA[$output_xml_stderr]]></system-err>\n" ;
 
   print "</testsuite>\n" ;
 }
