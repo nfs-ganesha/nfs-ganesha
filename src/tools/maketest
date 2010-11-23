@@ -668,14 +668,14 @@ if( $xml_mode )
   ##print "<system-err>No system err displayed by maketest</system-err>\n" ;
 
   # Remove < and > from XML
-  $output_xml_stdout =~ s/\</_sup_/g ;
-  $output_xml_stdout =~ s/\>/_inf_/g ;
+  #$output_xml_stdout =~ s/\</_sup_/g ;
+  #$output_xml_stdout =~ s/\>/_inf_/g ;
 
-  $output_xml_stderr =~ s/\</_sup_/g ;
-  $output_xml_stderr =~ s/\>/_inf_/g ;
+  #$output_xml_stderr =~ s/\</_sup_/g ;
+  #$output_xml_stderr =~ s/\>/_inf_/g ;
 
-  print "<system-out>$output_xml_stdout</system-out>\n" ;
-  print "<system-err>$output_xml_stderr</system-err>\n" ;
+  print "<system-out><![CDATA[$output_xml_stdout]]></system-out>\n" ;
+  print "<system-err><![CDATA[$output_xml_stderr]]></system-err>\n" ;
 
   print "</testsuite>\n" ;
 }
