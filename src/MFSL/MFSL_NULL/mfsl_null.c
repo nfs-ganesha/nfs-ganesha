@@ -108,7 +108,19 @@ fsal_status_t MFSL_Init(mfsl_parameter_t * init_info    /* IN */
   return status;
 }
 
-fsal_status_t MFSL_GetContext(mfsl_context_t * pcontext)
+fsal_status_t MFSL_GetContext(mfsl_context_t * pcontext,
+			      fsal_op_context_t * pfsal_context)
+{
+  fsal_status_t status;
+
+  status.major = ERR_FSAL_NO_ERROR;
+  status.minor = 0;
+
+  return status;
+}
+
+fsal_status_t MFSL_RefreshContext(mfsl_context_t * pcontext,
+                                  fsal_op_context_t * pfsal_context)
 {
   fsal_status_t status;
 
@@ -233,8 +245,7 @@ fsal_status_t MFSL_link(mfsl_object_t * target_handle,  /* IN */
                         fsal_name_t * p_link_name,      /* IN */
                         fsal_op_context_t * p_context,  /* IN */
                         mfsl_context_t * p_mfsl_context,        /* IN */
-                        fsal_attrib_list_t * attributes /* [ IN/OUT ] */
-    )
+                        fsal_attrib_list_t * attributes    /* [ IN/OUT ] */ )
 {
   return FSAL_link(&target_handle->handle,
                    &dir_handle->handle, p_link_name, p_context, attributes);
@@ -392,8 +403,9 @@ fsal_status_t MFSL_rename(mfsl_object_t * old_parentdir_handle, /* IN */
                      p_new_name, p_context, src_dir_attributes, tgt_dir_attributes);
 }                               /* MFSL_rename */
 
-fsal_status_t MFSL_unlink(mfsl_object_t * parentdir_handle,     /* IN */
+fsal_status_t MFSL_unlink(mfsl_object_t * parentdir_handle,     /* INOUT */
                           fsal_name_t * p_object_name,  /* IN */
+                          mfsl_object_t * object_handle,        /* INOUT */
                           fsal_op_context_t * p_context,        /* IN */
                           mfsl_context_t * p_mfsl_context,      /* IN */
                           fsal_attrib_list_t * parentdir_attributes     /* [IN/OUT ] */
@@ -460,30 +472,36 @@ fsal_status_t MFSL_terminate(void)
 /******************************************************
  *                FSAL locks management.
  ******************************************************/
-
-fsal_status_t MFSL_lock(mfsl_object_t * objecthandle,   /* IN */
-                        fsal_op_context_t * p_context,  /* IN */
-                        mfsl_context_t * p_mfsl_context,        /* IN */
-                        fsal_lockparam_t * lock_info,   /* IN */
-                        fsal_lockdesc_t * lock_descriptor       /* OUT */
+fsal_status_t MSFL_lock(fsal_file_t * obj_handle,       /* IN */
+                        fsal_lockdesc_t * ldesc,        /*IN/OUT */
+                        fsal_boolean_t callback /* IN */
     )
 {
-  return FSAL_lock(&objecthandle->handle, p_context, lock_info, lock_descriptor);
+  return FSAL_lock(obj_handle, ldesc, callback );
 }                               /* MFSL_lock */
 
+
 fsal_status_t MFSL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
-                              fsal_lockparam_t * lock_info,     /* IN */
-                              mfsl_context_t * p_mfsl_context   /* IN */
+                              fsal_lockparam_t * lock_info      /* IN */
     )
 {
   return FSAL_changelock(lock_descriptor, lock_info);
 }                               /* MFSL_changelock */
 
-fsal_status_t MFSL_unlock(fsal_lockdesc_t * lock_descriptor,    /* IN/OUT */
-                          mfsl_context_t * p_mfsl_context       /* IN */
+fsal_status_t MFSL_unlock(fsal_file_t * obj_handle,     /* IN */
+                          fsal_lockdesc_t * ldesc       /*IN/OUT */
     )
 {
-  return FSAL_unlock(lock_descriptor);
+  return FSAL_unlock(obj_handle, ldesc);
 }                               /* MFSL_unlock */
+
+fsal_status_t MFSL_getlock(fsal_file_t * obj_handle,    /* IN */
+                           fsal_lockdesc_t * ldesc      /*IN/OUT */
+    )
+{
+   return FSAL_getlock( obj_handle, ldesc ) ;
+}
+
+
 
 #endif                          /* ! _USE_SWIG */

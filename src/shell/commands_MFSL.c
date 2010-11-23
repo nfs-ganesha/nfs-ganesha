@@ -2120,7 +2120,7 @@ int fn_mfsl_hardlink(int argc,  /* IN : number of args in argv */
                  &link_name,    /* IN - link name */
                  &context->context,     /* IN - user contexte */
                  &context->mcontext,    /* IN - user contexte */
-                 NULL, NULL);   /* OUT - new attributes */
+                 NULL);   /* OUT - new attributes */
 
   if(FSAL_IS_ERROR(st))
     {
