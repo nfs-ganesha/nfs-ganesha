@@ -25,6 +25,8 @@ use Sys::Hostname;
 # I like to have human-readable variables 
 use English '-no_match_vars' ;
 
+use Time::HiRes qw( gettimeofday tv_interval );
+
 # For the option's management
 my $options = "hdTxqcf:D:e" ;
 my %opt ;
@@ -396,15 +398,23 @@ sub do_test
 
     my $result_test = -1 ;
 
+    my $timer_start  ;
+    my $timer_end  ;
+    my $timer_delta ;
+
     print "Now performing test '", $testname, "'\n" if( !$quiet_mode && !$xml_mode);
     print "    Product = $$refhash{ 'Product' } \n" if( !$quiet_mode && !$xml_mode);
     print "    Comment = $$refhash{ 'Comment' } \n" if( !$quiet_mode && !$xml_mode);
     print "    Command = $$refhash{ 'Command' } \n" if( !$quiet_mode && !$xml_mode);
 
-    $output_xml .= "<testcase classname=\"maketest\" name=\"$testname\" time=\"0.0\">\n" if( $xml_mode ) ;
 
+    $timer_start = [gettimeofday()] ;
     my $cmd =  $$refhash{ 'Command' } ; 
-    
+    $timer_end = [gettimeofday()]  ;
+    $timer_delta = sprintf( "%.6f",tv_interval( $timer_start, $timer_end ) ) ;
+
+    $output_xml .= "<testcase classname=\"maketest\" name=\"$testname\" time=\"$timer_delta\">\n" if( $xml_mode ) ;
+
     $cmd .= " 2>$stderrfile 1>$stdoutfile ; " . ' echo "STATUS=$?"' . " >$statusfile" ;
     print "===> Running $cmd \n" if( $debug ) ;
     system $cmd ;
