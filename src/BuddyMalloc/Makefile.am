@@ -21,5 +21,5 @@ new: clean all
 
 
 testrunner: check 
-	../tools/maketest -x -f ./maketest.conf > ../testres-xml/BuddyMalloc.xml
+	../tools/maketest -x BuddyMalloc -f ./maketest.conf > ../testres-xml/BuddyMalloc.xml
 

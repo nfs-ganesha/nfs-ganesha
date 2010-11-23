@@ -28,9 +28,9 @@ use English '-no_match_vars' ;
 use Time::HiRes qw( gettimeofday tv_interval );
 
 # For the option's management
-my $options = "hdTxqcf:D:e" ;
+my $options = "hdTqcf:D:ex:" ;
 my %opt ;
-my $usage = sprintf("Usage: %s [-h] [-q][-c][-e] [-f <config_file>] [-T] [-D var1=value[,var2=value[,...]]] test_name\n"
+my $usage = sprintf("Usage: %s [-h] [-q][-c][-e][-x <tag>][-f <config_file>] [-T] [-D var1=value[,var2=value[,...]]] test_name\n"
                    ."    -h : print this help\n"
                    ."    -q : quiet mode\n"
                    ."    -c : colored mode\n"
@@ -49,6 +49,7 @@ my $DefaultConfFile = "./maketest.conf" ;
 my $quiet_mode = 0;
 my $colored_mode = 0;
 my $xml_mode = 0;
+my $xml_tag = 0;
 my $debug = 0;
 my $error_only = 0;
 my $output_xml = "" ;
@@ -413,7 +414,7 @@ sub do_test
     $timer_end = [gettimeofday()]  ;
     $timer_delta = sprintf( "%.6f",tv_interval( $timer_start, $timer_end ) ) ;
 
-    $output_xml .= "<testcase classname=\"maketest\" name=\"$testname\" time=\"$timer_delta\">\n" if( $xml_mode ) ;
+    $output_xml .= "<testcase classname=\"$xml_tag\" name=\"$testname\" time=\"$timer_delta\">\n" if( $xml_mode ) ;
 
     $cmd .= " 2>$stderrfile 1>$stdoutfile ; " . ' echo "STATUS=$?"' . " >$statusfile" ;
     print "===> Running $cmd \n" if( $debug ) ;
@@ -578,6 +579,7 @@ my $ConfFile = $opt{ f } || $DefaultConfFile ;
 $quiet_mode = defined( $opt{ q } );
 $colored_mode = defined( $opt{ c } );
 $xml_mode = defined( $opt{ x } );
+$xml_tag =  $opt{ x } if defined( $opt{ x } ) ;
 $debug = defined( $opt{ d } );
 $error_only = defined( $opt{ e } );
 
