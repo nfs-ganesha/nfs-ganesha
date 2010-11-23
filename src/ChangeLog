@@ -414,4 +414,5 @@
           of workers is used.
         - security fixed : when 'root' is mapped as nobody, its 'altgroups' is cleared
         - Configuration can now reduce the version of NFS advertsised to rpcbind (to avoid NFSv2 for example).
+        - XML output has been added to non-regression tests for easier integration in HudsonCI
 	

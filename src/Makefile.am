@@ -43,6 +43,11 @@ DOCDIRS = Cache_inode ConfigParsing File_Content File_Content_Policy HashTable I
           FSAL/FSAL_HPSS FSAL/FSAL_POSIX FSAL/FSAL_PROXY FSAL/FSAL_SNMP FSAL/FSAL_FUSE FSAL/FSAL_ZFS \
           MFSL/MFSL_NULL MFSL/MFSL_ASYNC MFSL/MFSL_PROXY_RPCSECGSS
 
+TESTRUNNER_DIRS = BuddyMalloc HashTable LRU Log
+
+testrunner: check 
+	for i in $(TESTRUNNER_DIRS) ; do cd $$i ; make testrunner ; cd .. ; done
+
 new: clean all
 
 prepare-deb: distdir
