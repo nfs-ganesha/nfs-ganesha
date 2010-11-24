@@ -65,13 +65,13 @@ void *nlm_async_func(void *argp)
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogMajor(COMPONENT_NFSPROTO, "NLM async thread: Memory manager could not be initialized, exiting...");
+      LogMajor(COMPONENT_NLM, "NLM async thread: Memory manager could not be initialized, exiting...");
       exit(1);
     }
-  LogEvent(COMPONENT_NFSPROTO, "NLM async thread: Memory manager successfully initialized");
+  LogEvent(COMPONENT_NLM, "NLM async thread: Memory manager successfully initialized");
 #endif
-  LogDebug(COMPONENT_NFSPROTO, "NLM async thread: my pthread id is %p",
-                  (caddr_t) pthread_self());
+  LogDebug(COMPONENT_NLM, "NLM async thread: my pthread id is %p",
+           (caddr_t) pthread_self());
 
   while(1)
     {

@@ -94,7 +94,7 @@ int nlm4_Test_Message(nfs_arg_t * parg /* IN     */ ,
                       nfs_res_t * pres /* OUT    */ )
 {
   struct nlm_async_res *arg;
-  LogFullDebug(COMPONENT_NFSPROTO,
+  LogFullDebug(COMPONENT_NLM,
                     "REQUEST PROCESSING: Calling nlm_Test_Message");
   nlm4_Test(parg, pexport, pcontext, pclient, ht, preq, pres);
   arg = nlm_build_async_res(parg->arg_nlm4_test.alock.caller_name, pres);

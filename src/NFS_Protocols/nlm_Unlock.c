@@ -91,8 +91,8 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
   cache_inode_status_t cache_status;
   cache_inode_fsal_data_t fsal_data;
 
-  LogFullDebug(COMPONENT_NFSPROTO,
-                    "REQUEST PROCESSING: Calling nlm4_Lock");
+  LogFullDebug(COMPONENT_NLM,
+               "REQUEST PROCESSING: Calling nlm4_Unlock");
 
   if(in_nlm_grace_period())
     {
@@ -133,6 +133,8 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
   if(!nlm_entry)
     {
       pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
+      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
+                   lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
   lck_state = nlm_lock_entry_get_state(nlm_entry);
@@ -146,6 +148,8 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
   if(lck_state == NLM4_GRANTED)
     nlm_grant_blocked_locks(&(arg->alock.fh));
   nlm_lock_entry_dec_ref(nlm_entry);
+  LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
   return NFS_REQ_OK;
 }
 

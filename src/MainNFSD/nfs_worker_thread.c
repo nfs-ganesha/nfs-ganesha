@@ -541,7 +541,7 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
             svcerr_progvers(xprt, NLM4_VERS, NLM4_VERS);
           return FALSE;
         }
-      if(preq->rq_proc > NFSPROC4_COMPOUND)
+      if(preq->rq_proc > NLMPROC4_FREE_ALL)
         {
           if(xprt != NULL)
             svcerr_noproc(xprt);

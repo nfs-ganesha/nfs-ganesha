@@ -45,7 +45,7 @@ struct file_operations openhandle_fops = {
 
 long openhandle_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-    int retval = 0;
+    int retval = -ENOSYS;
     struct open_arg oarg;
     struct link_arg linkarg;
     struct name_handle_arg harg;

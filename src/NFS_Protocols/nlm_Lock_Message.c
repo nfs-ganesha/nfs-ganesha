@@ -103,8 +103,7 @@ int nlm4_Lock_Message(nfs_arg_t * parg /* IN     */ ,
                       nfs_res_t * pres /* OUT    */ )
 {
   nlm_async_res_t *arg;
-  LogFullDebug(COMPONENT_NFSPROTO,
-                    "REQUEST PROCESSING: Calling nlm_Lock_Message");
+  LogFullDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Lock_Message");
 
   nlm4_Lock(parg, pexport, pcontext, pclient, ht, preq, pres);
 
