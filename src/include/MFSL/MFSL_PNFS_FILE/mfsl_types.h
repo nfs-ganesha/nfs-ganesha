@@ -27,8 +27,9 @@
  * \file    mfsl_types.h
  */
 
-#ifndef _MFSL_TYPES_H
-#define _MFSL_TYPES_H
+#ifndef _MFSL_AIO_TYPES_H
+#define _MFSL_AIO_TYPES_H
+
 
 #ifndef TRUE
 #define TRUE 1
@@ -41,36 +42,31 @@
  * labels in the config file
  */
 
-#define CONF_LABEL_MFSL          "MFSL"
+#define CONF_LABEL_MFSL_AIO          "MFSL_AIO"
 
 /* other includes */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <dirent.h>             /* for MAXNAMLEN */
 #include "config_parsing.h"
-#include "fsal.h"
-#include "fsal_types.h"
 #include "err_fsal.h"
 #include "err_mfsl.h"
 
-#ifdef _USE_MFSL_NULL
-#include "MFSL/MFSL_NULL/mfsl_types.h"
-#endif
+typedef struct mfsl_parameter__
+{
 
-#ifdef _USE_MFSL_ASYNC
-#include "MFSL/MFSL_ASYNC/mfsl_types.h"
-#endif
+  int nothing;
+} mfsl_parameter_t;
 
-#ifdef _USE_MFSL_AIO
-#include "MFSL/MFSL_AIO/mfsl_types.h"
-#endif
+typedef struct mfsl_context__
+{
 
-#ifdef _USE_MFSL_PROXY_RPCSECGSS
-#include "MFSL/MFSL_PROXY_RPCSECGSS/mfsl_types.h"
-#endif
+  int nothing;
+} mfsl_context_t;
 
-#ifdef _USE_MFSL_PNFS_FILE
-#include "MFSL/MFSL_PNFS_FILE/mfsl_types.h"
-#endif
+typedef struct mfsl_object__
+{
+  fsal_handle_t handle;
+} mfsl_object_t;
 
-#endif                          /* _MFSL_TYPES_H */
+#endif                          /* _MFSL_AIO_TYPES_H */
