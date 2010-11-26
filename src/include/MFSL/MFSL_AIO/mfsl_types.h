@@ -69,4 +69,9 @@ typedef struct mfsl_object__
   fsal_handle_t handle;
 } mfsl_object_t;
 
+typedef struct mfsl_file__
+{
+  fsal_file_t fsal_file ;
+} mfsl_file_t ;
+
 #endif                          /* _MFSL_AIO_TYPES_H */

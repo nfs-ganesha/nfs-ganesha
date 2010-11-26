@@ -229,7 +229,11 @@ typedef struct cache_inode_client_parameter__
 
 typedef struct cache_inode_opened_file__
 {
+#ifdef _USE_MFSL
+  mfsl_file_t mfsl_fd ;
+#else
   fsal_file_t fd;
+#endif 
   unsigned int fileno;
   fsal_openflags_t openflags;
   time_t last_op;
@@ -355,6 +359,9 @@ typedef struct cache_entry__
     struct cache_inode_file__
     {
       fsal_handle_t handle;                                          /**< The FSAL Handle                                      */
+#ifdef _USE_PNFS
+      pnfs_file_t * ppnfs_file ;
+#endif
 #ifdef _USE_PROXY
       fsal_name_t *pname;                                            /**< Pointer to filename, for PROXY only                  */
       struct cache_entry__ *pentry_parent_open;                      /**< Parent associated with pname, for PROXY only         */
@@ -365,9 +372,6 @@ typedef struct cache_entry__
       void *pstate_head;                                             /**< Pointer used for the head of the state chain         */
       void *pstate_tail;                                             /**< Current pointer for the state chain                  */
       cache_inode_unstable_data_t unstable_data;                     /**< Unstable data, for use with WRITE/COMMIT             */
-#ifdef _USE_PNFS
-      pnfs_file_t pnfs_file;
-#endif                          /* _USE_PNFS */
     } file;                                   /**< file related filed     */
 
     struct cache_inode_symlink__ symlink;     /**< symlink related field  */
@@ -497,9 +501,6 @@ typedef struct cache_inode_client__
   struct prealloc_pool pool_open_owner_name;                       /**< Pool for NFSv4 files's open_owner                        */
 #ifdef _USE_NFS4_1
   struct prealloc_pool pool_session;                               /**< Pool for NFSv4.1 session                                 */
-#ifdef _USE_PNFS
-  pnfs_client_t pnfsclient;                                        /**< pNFS client structure                                    */
-#endif                          /* _USE_PNFS */
 #endif                          /* _USE_NFS4_1 */
   unsigned int nb_prealloc;                                        /**< Size of the preallocated pool                            */
   unsigned int nb_pre_dir_data;                                    /**< Number of preallocated pdir data buffers                 */

@@ -213,12 +213,12 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle, /* IN */
                             fsal_op_context_t * p_context,      /* IN */
                             mfsl_context_t * p_mfsl_context,    /* IN */
                             fsal_size_t length, /* IN */
-                            fsal_file_t * file_descriptor,      /* INOUT */
+                            mfsl_file_t * file_descriptor,      /* INOUT */
                             fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
 {
   return FSAL_truncate(&filehandle->handle,
-                       p_context, length, file_descriptor, object_attributes);
+                       p_context, length, &file_descriptor->fsal_file, object_attributes);
 }                               /* MFSL_truncate */
 
 fsal_status_t MFSL_getattrs(mfsl_object_t * filehandle, /* IN */
@@ -290,12 +290,12 @@ fsal_status_t MFSL_open(mfsl_object_t * filehandle,     /* IN */
                         fsal_op_context_t * p_context,  /* IN */
                         mfsl_context_t * p_mfsl_context,        /* IN */
                         fsal_openflags_t openflags,     /* IN */
-                        fsal_file_t * file_descriptor,  /* OUT */
+                        mfsl_file_t * file_descriptor,  /* OUT */
                         fsal_attrib_list_t * file_attributes    /* [ IN/OUT ] */
     )
 {
   return FSAL_open(&filehandle->handle,
-                   p_context, openflags, file_descriptor, file_attributes);
+                   p_context, openflags, &file_descriptor->fsal_file, file_attributes);
 }                               /* MFSL_open */
 
 fsal_status_t MFSL_open_by_name(mfsl_object_t * dirhandle,      /* IN */
@@ -303,12 +303,12 @@ fsal_status_t MFSL_open_by_name(mfsl_object_t * dirhandle,      /* IN */
                                 fsal_op_context_t * p_context,  /* IN */
                                 mfsl_context_t * p_mfsl_context,        /* IN */
                                 fsal_openflags_t openflags,     /* IN */
-                                fsal_file_t * file_descriptor,  /* OUT */
+                                mfsl_file_t * file_descriptor,  /* OUT */
                                 fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
   return FSAL_open_by_name(&dirhandle->handle,
                            filename,
-                           p_context, openflags, file_descriptor, file_attributes);
+                           p_context, openflags, &file_descriptor->fsal_file, file_attributes);
 }                               /* MFSL_open_by_name */
 
 fsal_status_t MFSL_open_by_fileid(mfsl_object_t * filehandle,   /* IN */
@@ -316,15 +316,16 @@ fsal_status_t MFSL_open_by_fileid(mfsl_object_t * filehandle,   /* IN */
                                   fsal_op_context_t * p_context,        /* IN */
                                   mfsl_context_t * p_mfsl_context,      /* IN */
                                   fsal_openflags_t openflags,   /* IN */
-                                  fsal_file_t * file_descriptor,        /* OUT */
+                                  mfsl_file_t * file_descriptor,        /* OUT */
+
                                   fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
   return FSAL_open_by_fileid(&filehandle->handle,
                              fileid,
-                             p_context, openflags, file_descriptor, file_attributes);
+                             p_context, openflags, &file_descriptor->fsal_file, file_attributes);
 }                               /* MFSL_open_by_fileid */
 
-fsal_status_t MFSL_read(fsal_file_t * file_descriptor,  /*  IN  */
+fsal_status_t MFSL_read(mfsl_file_t * file_descriptor,  /*  IN  */
                         fsal_seek_t * seek_descriptor,  /* [IN] */
                         fsal_size_t buffer_size,        /*  IN  */
                         caddr_t buffer, /* OUT  */
@@ -333,11 +334,11 @@ fsal_status_t MFSL_read(fsal_file_t * file_descriptor,  /*  IN  */
                         mfsl_context_t * p_mfsl_context /* IN */
     )
 {
-  return FSAL_read(file_descriptor,
+  return FSAL_read(&file_descriptor->fsal_file,
                    seek_descriptor, buffer_size, buffer, read_amount, end_of_file);
 }                               /* MFSL_read */
 
-fsal_status_t MFSL_write(fsal_file_t * file_descriptor, /* IN */
+fsal_status_t MFSL_write(mfsl_file_t * file_descriptor, /* IN */
                          fsal_seek_t * seek_descriptor, /* IN */
                          fsal_size_t buffer_size,       /* IN */
                          caddr_t buffer,        /* IN */
@@ -345,20 +346,20 @@ fsal_status_t MFSL_write(fsal_file_t * file_descriptor, /* IN */
                          mfsl_context_t * p_mfsl_context        /* IN */
     )
 {
-  return FSAL_write(file_descriptor, seek_descriptor, buffer_size, buffer, write_amount);
+  return FSAL_write(&file_descriptor->fsal_file, seek_descriptor, buffer_size, buffer, write_amount);
 }                               /* MFSL_write */
 
-fsal_status_t MFSL_close(fsal_file_t * file_descriptor, /* IN */
+fsal_status_t MFSL_close(mfsl_file_t * file_descriptor, /* IN */
                          mfsl_context_t * p_mfsl_context        /* IN */
     )
 {
-  return FSAL_close(file_descriptor);
+  return FSAL_close(&file_descriptor->fsal_file);
 }                               /* MFSL_close */
 
-fsal_status_t MFSL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
+fsal_status_t MFSL_close_by_fileid(mfsl_file_t * file_descriptor /* IN */ ,
                                    fsal_u64_t fileid, mfsl_context_t * p_mfsl_context)  /* IN */
 {
-  return FSAL_close_by_fileid(file_descriptor, fileid);
+  return FSAL_close_by_fileid(&file_descriptor->fsal_file, fileid);
 }                               /* MFSL_close_by_fileid */
 
 fsal_status_t MFSL_readlink(mfsl_object_t * linkhandle, /* IN */
@@ -472,12 +473,12 @@ fsal_status_t MFSL_terminate(void)
 /******************************************************
  *                FSAL locks management.
  ******************************************************/
-fsal_status_t MSFL_lock(fsal_file_t * obj_handle,       /* IN */
+fsal_status_t MSFL_lock(mfsl_file_t * obj_handle,       /* IN */
                         fsal_lockdesc_t * ldesc,        /*IN/OUT */
                         fsal_boolean_t callback /* IN */
     )
 {
-  return FSAL_lock(obj_handle, ldesc, callback );
+  return FSAL_lock(&obj_handle->fsal_file, ldesc, callback );
 }                               /* MFSL_lock */
 
 
@@ -488,18 +489,18 @@ fsal_status_t MFSL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / 
   return FSAL_changelock(lock_descriptor, lock_info);
 }                               /* MFSL_changelock */
 
-fsal_status_t MFSL_unlock(fsal_file_t * obj_handle,     /* IN */
+fsal_status_t MFSL_unlock(mfsl_file_t * obj_handle,     /* IN */
                           fsal_lockdesc_t * ldesc       /*IN/OUT */
     )
 {
-  return FSAL_unlock(obj_handle, ldesc);
+  return FSAL_unlock(&obj_handle->fsal_file, ldesc);
 }                               /* MFSL_unlock */
 
-fsal_status_t MFSL_getlock(fsal_file_t * obj_handle,    /* IN */
+fsal_status_t MFSL_getlock(mfsl_file_t * obj_handle,    /* IN */
                            fsal_lockdesc_t * ldesc      /*IN/OUT */
     )
 {
-   return FSAL_getlock( obj_handle, ldesc ) ;
+   return FSAL_getlock( &obj_handle->fsal_file, ldesc ) ;
 }
 
 

@@ -49,10 +49,6 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "stuff_alloc.h"
-#ifdef _USE_PNFS
-#include "pnfs.h"
-#endif                          /* _USE_PNFS */
-
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,10 +103,6 @@ cache_inode_create(cache_entry_t * pentry_parent,
     cache_inode_fsal_data_t fsal_data;
     cache_inode_status_t status;
     struct cache_inode_dir_begin__ *dir_begin;
-#ifdef _USE_PNFS
-    int pnfs_status;
-    pnfs_fileloc_t pnfs_location ;
-#endif
 
     /* Set the return default to CACHE_INODE_SUCCESS */
     *pstatus = CACHE_INODE_SUCCESS;
@@ -386,37 +378,6 @@ cache_inode_create(cache_entry_t * pentry_parent,
                     return NULL;
                 }
         }
-
-#ifdef _USE_PNFS
-    if((type == REGULAR_FILE) &&
-       (pcreate_arg != NULL) &&
-       (pcreate_arg->use_pnfs == TRUE))
-        {
-            if(! pnfs_get_location( &pclient->pnfsclient, &pentry->object.file.handle,
-                                   NULL,  &pnfs_location ) )
-               {
-                  V_w(&pentry_parent->lock);
-                  LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS CREATE DS FILE : can't get pnfs_location Error %u",
-                           pnfs_status);
-
-                  *pstatus = CACHE_INODE_IO_ERROR;
-                  return NULL;
-               }
-
-            pnfs_status = pnfs_create_file( &pclient->pnfsclient,
-					    &pnfs_location,
-                                            &pentry->object.file.pnfs_file ) ;
-            if (pnfs_status != NFS4_OK)
-               {
-                  V_w(&pentry_parent->lock);
-                  LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS CREATE DS FILE : Error %u",
-                           pnfs_status);
-
-                  *pstatus = CACHE_INODE_IO_ERROR;
-                  return NULL;
-               }
-        }
-#endif
 
        /* Update the parent cached attributes */
        if(pentry_parent->internal_md.type == DIR_BEGINNING)

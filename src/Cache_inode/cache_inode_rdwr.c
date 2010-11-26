@@ -348,7 +348,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
             {
             case CACHE_INODE_READ:
 #ifdef _USE_MFSL
-              fsal_status = MFSL_read(&(pentry->object.file.open_fd.fd),
+              fsal_status = MFSL_read(&(pentry->object.file.open_fd.mfsl_fd),
                                       seek_descriptor,
                                       io_size,
                                       buffer,
@@ -362,7 +362,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 
             case CACHE_INODE_WRITE:
 #ifdef _USE_MFSL
-              fsal_status = MFSL_write(&(pentry->object.file.open_fd.fd),
+              fsal_status = MFSL_write(&(pentry->object.file.open_fd.mfsl_fd),
                                        seek_descriptor,
                                        io_size, buffer, pio_size, &pclient->mfsl_context);
 #else
@@ -398,7 +398,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                          pentry->object.file.open_fd.fileno);
 
 #ifdef _USE_MFSL
-                  MFSL_close(&(pentry->object.file.open_fd.fd), &pclient->mfsl_context);
+                  MFSL_close(&(pentry->object.file.open_fd.mfsl_fd), &pclient->mfsl_context);
 #else
                   FSAL_close(&(pentry->object.file.open_fd.fd));
 #endif

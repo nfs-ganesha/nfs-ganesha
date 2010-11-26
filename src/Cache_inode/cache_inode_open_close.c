@@ -98,7 +98,7 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
      (pentry->object.file.open_fd.openflags != openflags))
     {
 #ifdef _USE_MFSL
-      fsal_status = MFSL_close(&(pentry->object.file.open_fd.fd), &pclient->mfsl_context);
+      fsal_status = MFSL_close(&(pentry->object.file.open_fd.mfsl_fd), &pclient->mfsl_context);
 #else
       fsal_status = FSAL_close(&(pentry->object.file.open_fd.fd));
 #endif
@@ -124,7 +124,7 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
                               pcontext,
                               &pclient->mfsl_context,
                               openflags,
-                              &pentry->object.file.open_fd.fd,
+                              &pentry->object.file.open_fd.mfsl_fd,
                               &(pentry->object.file.attributes));
 #else
       fsal_status = FSAL_open(&(pentry->object.file.handle),
@@ -141,7 +141,11 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
           return *pstatus;
         }
 
+#ifdef _USE_MFSL
+      pentry->object.file.open_fd.fileno = FSAL_FILENO(&(pentry->object.file.open_fd.mfsl_fd.fsal_file));
+#else
       pentry->object.file.open_fd.fileno = FSAL_FILENO(&(pentry->object.file.open_fd.fd));
+#endif
       pentry->object.file.open_fd.openflags = openflags;
 
       LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_open: pentry %p: lastop=0, fileno = %d", pentry,
@@ -197,10 +201,6 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
   fsal_size_t save_filesize;
   fsal_size_t save_spaceused;
   fsal_time_t save_mtime;
-#ifdef _USE_PNFS
-  int pnfs_status;
-  pnfs_fileloc_t pnfs_location ;
-#endif
 
   if((pentry_dir == NULL) || (pname == NULL) || (pentry_file == NULL) ||
      (pclient == NULL) || (pcontext == NULL) || (pstatus == NULL))
@@ -226,7 +226,7 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
     {
 #ifdef _USE_MFSL
       fsal_status =
-          MFSL_close(&(pentry_file->object.file.open_fd.fd), &pclient->mfsl_context);
+          MFSL_close(&(pentry_file->object.file.open_fd.mfsl_fd), &pclient->mfsl_context);
 #else
       fsal_status = FSAL_close(&(pentry_file->object.file.open_fd.fd));
 #endif
@@ -261,7 +261,7 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
                                       pcontext,
                                       &pclient->mfsl_context,
                                       openflags,
-                                      &pentry_file->object.file.open_fd.fd,
+                                      &pentry_file->object.file.open_fd.mfsl_fd,
                                       &(pentry_file->object.file.attributes));
 #else
       fsal_status = FSAL_open_by_name(&(pentry_dir->object.file.handle),
@@ -278,6 +278,11 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
 
           return *pstatus;
         }
+
+#ifdef _USE_PNFS
+      pentry_file->object.file.ppnfs_file = &pentry_file->object.file.open_fd.mfsl_fd.pnfs_file ;
+#endif
+
 #ifdef _USE_PROXY
 
       /* If proxy if used, we should keep the name of the file to do FSAL_rcp if needed */
@@ -304,8 +309,13 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
           pentry_file->object.file.attributes.mtime = save_mtime;
         }
 
+#ifdef _USE_MFSL
+      pentry_file->object.file.open_fd.fileno =
+          (int)FSAL_FILENO(&(pentry_file->object.file.open_fd.mfsl_fd.fsal_file));
+#else
       pentry_file->object.file.open_fd.fileno =
           (int)FSAL_FILENO(&(pentry_file->object.file.open_fd.fd));
+#endif
       pentry_file->object.file.open_fd.last_op = time(NULL);
       pentry_file->object.file.open_fd.openflags = openflags;
 
@@ -313,45 +323,6 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
              pentry_file->object.file.open_fd.fileno);
 
     }
-
-#ifdef _USE_PNFS
-  if(! pnfs_get_location( &pclient->pnfsclient, &pentry_file->object.file.handle,
-                                   NULL,  &pnfs_location ) )
-    {
-       LogDebug(COMPONENT_CACHE_INODE, "LOOKUP PNFS support : can't build pnfs_location" ) ;
-
-       *pstatus = CACHE_INODE_IO_ERROR;
-       return *pstatus;
-    }
-
-
-  if((pnfs_status = pnfs_lookup_file( &pclient->pnfsclient,
-                                      &pnfs_location, 
-                                      &pentry_file->object.file.pnfs_file ) ) != NFS4_OK )  
-    {
-      LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS LOOKUP DS FILE : Error %u", pnfs_status);
-
-      if(pnfs_status == NFS4ERR_NOENT)
-        {
-          if((pnfs_status = pnfs_create_file(&pclient->pnfsclient,
-                                             &pnfs_location,
-                                             &pentry_file->object.file.pnfs_file ) ) != NFS4_OK )
-            {
-
-              LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS CREATE DS FILE : Error %u",
-                              pnfs_status);
-
-              *pstatus = CACHE_INODE_IO_ERROR;
-              return *pstatus;
-            }
-        }
-      else
-        {
-          *pstatus = CACHE_INODE_IO_ERROR;
-          return *pstatus;
-        }
-    }
-#endif
 
   /* regular exit */
   pentry_file->object.file.open_fd.last_op = time(NULL);
@@ -420,7 +391,7 @@ cache_inode_status_t cache_inode_close(cache_entry_t * pentry,
              (int)(time(NULL) - pentry->object.file.open_fd.last_op));
 
 #ifdef _USE_MFSL
-      fsal_status = MFSL_close(&(pentry->object.file.open_fd.fd), &pclient->mfsl_context);
+      fsal_status = MFSL_close(&(pentry->object.file.open_fd.mfsl_fd), &pclient->mfsl_context);
 #else
       fsal_status = FSAL_close(&(pentry->object.file.open_fd.fd));
 #endif

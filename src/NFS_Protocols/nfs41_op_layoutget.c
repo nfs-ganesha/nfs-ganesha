@@ -250,7 +250,8 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
       lo_content.loc_type = LAYOUT4_NFSV4_1_FILES;
 
-  pnfs_encode_layoutget(&data->current_entry->object.file.pnfs_file.ds_file, buff,
+  pnfs_encode_layoutget(data->current_entry->object.file.ppnfs_file,
+                        buff,
                         &lenbuff);
 
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].

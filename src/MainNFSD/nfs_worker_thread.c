@@ -1439,7 +1439,7 @@ void *worker_thread(void *IndexArg)
 
 #ifdef _USE_PNFS
   /* Init the pNFS engine for each worker */
-  if(pnfs_init(&pmydata->cache_inode_client.pnfsclient, &nfs_param.pnfs_param.layoutfile))
+  if(pnfs_init(&pmydata->cache_inode_client.mfsl_context.pnfsclient, &nfs_param.pnfs_param.layoutfile))
     {
       /* Failed init */
       LogCrit(COMPONENT_DISPATCH,

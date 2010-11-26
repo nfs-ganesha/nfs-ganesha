@@ -377,18 +377,17 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       pentry->object.file.open_fd.fileno = 0;
       pentry->object.file.open_fd.last_op = 0;
       pentry->object.file.open_fd.openflags = 0;
+#ifdef _USE_MFSL
+      memset(&(pentry->object.file.open_fd.mfsl_fd), 0, sizeof(mfsl_file_t));
+#else
       memset(&(pentry->object.file.open_fd.fd), 0, sizeof(fsal_file_t));
+#endif
       memset(&(pentry->object.file.unstable_data), 0,
              sizeof(cache_inode_unstable_data_t));
 #ifdef _USE_PROXY
       pentry->object.file.pname = NULL;
       pentry->object.file.pentry_parent_open = NULL;
 #endif
-
-#ifdef _USE_PNFS
-      pentry->object.file.pnfs_file.ds_file.allocated = FALSE;
-#endif
-
       break;
 
     case DIR_BEGINNING:
