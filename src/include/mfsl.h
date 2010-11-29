@@ -175,8 +175,7 @@ fsal_status_t MFSL_link(mfsl_object_t * target_handle,  /* IN */
                         fsal_name_t * p_link_name,      /* IN */
                         fsal_op_context_t * p_context,  /* IN */
                         mfsl_context_t * p_mfsl_context,        /* IN */
-                        fsal_attrib_list_t * tgt_attributes,    /* [ IN/OUT ] */
-                        fsal_attrib_list_t * dir_attributes     /* [ IN/OUT ] */
+                        fsal_attrib_list_t * attributes     /* [ IN/OUT ] */
     );
 
 fsal_status_t MFSL_opendir(mfsl_object_t * dir_handle,  /* IN */
@@ -211,7 +210,6 @@ fsal_status_t MFSL_open(mfsl_object_t * filehandle,     /* IN */
 
 fsal_status_t MFSL_open_by_name(mfsl_object_t * dirhandle,      /* IN */
                                 fsal_name_t * filename, /* IN */
-                                mfsl_object_t * filehandle,     /* IN */
                                 fsal_op_context_t * p_context,  /* IN */
                                 mfsl_context_t * p_mfsl_context,        /* IN */
                                 fsal_openflags_t openflags,     /* IN */
@@ -327,21 +325,21 @@ fsal_status_t MFSL_terminate();
 /******************************************************
  *                FSAL locks management.
  ******************************************************/
-
-fsal_status_t MFSL_lock(mfsl_object_t * objecthandle,   /* IN */
-                        fsal_op_context_t * p_context,  /* IN */
-                        mfsl_context_t * p_mfsl_context,        /* IN */
-                        fsal_lockparam_t * lock_info,   /* IN */
-                        fsal_lockdesc_t * lock_descriptor       /* OUT */
+fsal_status_t MSFL_lock(fsal_file_t * obj_handle,       /* IN */
+                        fsal_lockdesc_t * ldesc,        /*IN/OUT */
+                        fsal_boolean_t callback /* IN */
     );
 
 fsal_status_t MFSL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
-                              fsal_lockparam_t * lock_info,     /* IN */
-                              mfsl_context_t * p_mfsl_context   /* IN */
+                              fsal_lockparam_t * lock_info      /* IN */
     );
 
-fsal_status_t MFSL_unlock(fsal_lockdesc_t * lock_descriptor,    /* IN/OUT */
-                          mfsl_context_t * p_mfsl_context       /* IN */
+fsal_status_t MFSL_unlock(fsal_file_t * obj_handle,     /* IN */
+                          fsal_lockdesc_t * ldesc       /*IN/OUT */
+    );
+
+fsal_status_t MFSL_getlock(fsal_file_t * obj_handle,    /* IN */
+                           fsal_lockdesc_t * ldesc      /*IN/OUT */
     );
 
 #endif                          /* ! _USE_SWIG */

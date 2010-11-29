@@ -1718,10 +1718,8 @@ void *worker_thread(void *IndexArg)
        * set as "making garbagge collection" to avoid new requests to come in its pending queue */
       pmydata->gc_in_progress = TRUE;
 
-      P(pmydata->cache_inode_client.mfsl_context.lock);
       fsal_status = MFSL_RefreshContext(&pmydata->cache_inode_client.mfsl_context,
                                         &pmydata->thread_fsal_context);
-      V(pmydata->cache_inode_client.mfsl_context.lock);
 
       if(FSAL_IS_ERROR(fsal_status))
         {

@@ -240,8 +240,6 @@ if test "$enable_pnfs" == "yes"; then
 fi
 AM_CONDITIONAL(USE_PNFS, test "$enable_pnfs" = "yes")
 
-
-
 # TI-RPC
 GA_ENABLE_AM_CONDITION([tirpc],[enable TIRPC support],[USE_TIRPC])
 
@@ -359,14 +357,24 @@ AM_CONDITIONAL(USE_NFS4_1, test "$NFS4_MINOR" = "1")
 AM_CONDITIONAL(USE_NFS4_0, test "$NFS4_MINOR" = "0")
 
 # MFSL switch argument (default is NULL )
-AC_ARG_WITH( [mfsl], AS_HELP_STRING([--with-mfsl=NONE|NULL|ASYNC|MIRROR|PROXY_RPCSECGSS (default=NULL)],[specify the type of intermediate FSAL module to be used] ),
+AC_ARG_WITH( [mfsl], AS_HELP_STRING([--with-mfsl=NONE|NULL|ASYNC|AIO|MIRROR|PROXY_RPCSECGSS (default=NULL)],[specify the type of intermediate FSAL module to be used] ),
 	     MFSL="$withval", MFSL="NONE" )
 
 AM_CONDITIONAL(USE_MFSL_NONE,            test "$MFSL" = "NONE")
+AM_CONDITIONAL(USE_MFSL_AIO,             test "$MFSL" = "AIO")
 AM_CONDITIONAL(USE_MFSL_NULL,            test "$MFSL" = "NULL")
 AM_CONDITIONAL(USE_MFSL_ASYNC,           test "$MFSL" = "ASYNC")
 AM_CONDITIONAL(USE_MFSL_PROXY_RPCSECGSS, test "$MFSL" = "PROXY_RPCSECGSS")
+
 AM_CONDITIONAL(USE_MFSL,                 test "$MFSL" != "NONE" ) 
+
+# PNFS_FILE is to be used with implicit MFSL == MFSL_PNFS_FILE
+if test "$enable_pnfs" == "yes"; then
+    AM_CONDITIONAL(USE_MFSL_PNFS_FILE, test "$enable_pnfs" = "yes")
+    AM_CONDITIONAL(USE_MFSL,           test "$enable_pnfs" = "yes")
+    MFSL="PNFS_FILE"
+fi
+AM_CONDITIONAL(USE_MFSL_PNFS_FILE, test "$enable_pnfs" = "yes")
 
 # Database switch (for POSIX FSAL)
 AC_ARG_WITH( [db], AS_HELP_STRING([--with-db=MYSQL|PGSQL (default=MYSQL)],[specify the database engine for POSIX FSAL] ),
@@ -600,6 +608,16 @@ case $MFSL in
 		AC_DEFINE([_USE_MFSL_ASYNC], 1, [Use MFSL_ASYNC module which calls the FSAL functions asynchronously])
 		MFSL_LIB="\$(top_builddir)/MFSL/MFSL_ASYNC/libmfslasync.la"
 		;;
+	AIO)
+		AC_DEFINE([_USE_MFSL], 1, [Use MFSL module])
+		AC_DEFINE([_USE_MFSL_AIO], 1, [Use MFSL_AIO module with asynchronous FSAL read and write ])
+		MFSL_LIB="\$(top_builddir)/MFSL/MFSL_AIO/libmfslaio.la"
+		;;
+	PNFS_FILE)
+		AC_DEFINE([_USE_MFSL], 1, [Use MFSL module])
+		AC_DEFINE([_USE_MFSL_PNFS_FILE], 1, [Use MFSL_PNFS_FILE module with pNFS/Files model ])
+		MFSL_LIB="\$(top_builddir)/MFSL/MFSL_PNFS_FILE/libmfslpnfs_file.la"
+		;;
 	PROXY_RPCSECGSS)
 		AC_DEFINE([_USE_MFSL], 1, [Use MFSL module])
 		AC_DEFINE([_USE_MFSL_PROXY_RPCSECGSS], 1, [Use MFSL_PROXY_RPCSECGSS, wraps the FSAL call for RPCSECGSS client side in proxy])
@@ -678,7 +696,9 @@ AC_CONFIG_FILES([include/Makefile
                  include/FSAL/FSAL_GHOST_FS/Makefile
                  include/MFSL/Makefile
                  include/MFSL/MFSL_NULL/Makefile
+                 include/MFSL/MFSL_AIO/Makefile
                  include/MFSL/MFSL_ASYNC/Makefile
+                 include/MFSL/MFSL_PNFS_FILE/Makefile
                  include/MFSL/MFSL_PROXY_RPCSECGSS/Makefile
                  include/PNFS/Makefile
 		 include/PNFS/LAYOUT4_NFSV4_1_FILES/Makefile
@@ -722,6 +742,8 @@ AC_CONFIG_FILES([include/Makefile
 		 MFSL/Makefile
 		 MFSL/MFSL_NULL/Makefile                 
 		 MFSL/MFSL_ASYNC/Makefile                 
+		 MFSL/MFSL_AIO/Makefile                 
+		 MFSL/MFSL_PNFS_FILE/Makefile                 
 		 MFSL/MFSL_PROXY_RPCSECGSS/Makefile                 
                  MainNFSD/Makefile
                  cmdline_tools/Makefile
