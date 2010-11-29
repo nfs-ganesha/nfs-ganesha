@@ -197,11 +197,11 @@ cache_inode_create(cache_entry_t * pentry_parent,
                                       pname, pcontext,
                                       &pclient->mfsl_context,
                                       mode, &object_handle,
-                                      &object_attributes, &parent_attributes);
+                                      &object_attributes, &parent_attributes, NULL);
 #else
             fsal_status = FSAL_create(&dir_handle,
                                       pname, pcontext, mode,
-                                      &object_handle, &object_attributes);
+                                      &object_handle, &object_attributes, NULL);
 #endif
             break;
 
@@ -212,11 +212,11 @@ cache_inode_create(cache_entry_t * pentry_parent,
                                      pname, pcontext,
                                      &pclient->mfsl_context,
                                      mode, &object_handle,
-                                     &object_attributes, &parent_attributes);
+                                     &object_attributes, &parent_attributes, NULL);
 #else
             fsal_status = FSAL_mkdir(&dir_handle,
                                      pname, pcontext, mode,
-                                     &object_handle, &object_attributes);
+                                     &object_handle, &object_attributes, NULL);
 #endif
             break;
 
@@ -226,7 +226,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
             fsal_status = MFSL_symlink(&pentry_parent->mobject,
                                        pname, &pcreate_arg->link_content,
                                        pcontext, &pclient->mfsl_context,
-                                       mode, &object_handle, &object_attributes);
+                                       mode, &object_handle, &object_attributes, NULL);
 #else
             fsal_status = FSAL_symlink(&dir_handle,
                                        pname, &pcreate_arg->link_content,
@@ -240,7 +240,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
             fsal_status = MFSL_mknode(&pentry_parent->mobject, pname,
                                       pcontext, &pclient->mfsl_context, mode,
                                       FSAL_TYPE_SOCK, NULL, /* no dev_t needed for socket file */
-                                      &object_handle, &object_attributes);
+                                      &object_handle, &object_attributes, NULL);
 #else
             fsal_status = FSAL_mknode(&dir_handle, pname, pcontext,
                                       mode, FSAL_TYPE_SOCK, NULL, /* no dev_t needed for socket file */
@@ -253,7 +253,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
             fsal_status = MFSL_mknode(&pentry_parent->mobject, pname,
                                       pcontext, &pclient->mfsl_context,
                                       mode, FSAL_TYPE_FIFO, NULL, /* no dev_t needed for FIFO file */
-                                      &object_handle, &object_attributes);
+                                      &object_handle, &object_attributes, NULL);
 #else
             fsal_status = FSAL_mknode(&dir_handle, pname, pcontext,
                                       mode, FSAL_TYPE_FIFO, NULL, /* no dev_t needed for FIFO file */
@@ -268,7 +268,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
                                       &pclient->mfsl_context,
                                       mode, FSAL_TYPE_BLK,
                                       &pcreate_arg->dev_spec,
-                                      &object_handle, &object_attributes);
+                                      &object_handle, &object_attributes, NULL);
 #else
             fsal_status = FSAL_mknode(&dir_handle,
                                       pname, pcontext,
@@ -285,7 +285,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
                                       &pclient->mfsl_context,
                                       mode, FSAL_TYPE_CHR,
                                       &pcreate_arg->dev_spec,
-                                      &object_handle, &object_attributes);
+                                      &object_handle, &object_attributes, NULL);
 #else
             fsal_status = FSAL_mknode(&dir_handle,
                                       pname, pcontext,

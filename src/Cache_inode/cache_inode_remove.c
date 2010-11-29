@@ -380,7 +380,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       fsal_status = MFSL_unlink(&pentry->mobject,
                                 pnode_name,
                                 &to_remove_entry->mobject,
-                                pcontext, &pclient->mfsl_context, &after_attr);
+                                pcontext, &pclient->mfsl_context, &after_attr, NULL);
 #else
       fsal_status = FSAL_unlink(&fsal_handle_parent, pnode_name, pcontext, &after_attr);
 #endif

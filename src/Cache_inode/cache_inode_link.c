@@ -235,7 +235,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
   cache_inode_get_attributes(pentry_dir_dest, &dirdest_attributes);
   fsal_status =
       MFSL_link(&pentry_src->mobject, &pentry_dir_dest->mobject, plink_name, pcontext,
-                &pclient->mfsl_context, &link_attributes);
+                &pclient->mfsl_context, &link_attributes, NULL);
 #else
   fsal_status =
       FSAL_link(&handle_src, &handle_dest, plink_name, pcontext, &link_attributes);

@@ -98,7 +98,7 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
      (pentry->object.file.open_fd.openflags != openflags))
     {
 #ifdef _USE_MFSL
-      fsal_status = MFSL_close(&(pentry->object.file.open_fd.mfsl_fd), &pclient->mfsl_context);
+      fsal_status = MFSL_close(&(pentry->object.file.open_fd.mfsl_fd), &pclient->mfsl_context, NULL);
 #else
       fsal_status = FSAL_close(&(pentry->object.file.open_fd.fd));
 #endif
@@ -125,7 +125,8 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
                               &pclient->mfsl_context,
                               openflags,
                               &pentry->object.file.open_fd.mfsl_fd,
-                              &(pentry->object.file.attributes));
+                              &(pentry->object.file.attributes),
+                              NULL );
 #else
       fsal_status = FSAL_open(&(pentry->object.file.handle),
                               pcontext,
@@ -226,7 +227,7 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
     {
 #ifdef _USE_MFSL
       fsal_status =
-          MFSL_close(&(pentry_file->object.file.open_fd.mfsl_fd), &pclient->mfsl_context);
+          MFSL_close(&(pentry_file->object.file.open_fd.mfsl_fd), &pclient->mfsl_context, NULL);
 #else
       fsal_status = FSAL_close(&(pentry_file->object.file.open_fd.fd));
 #endif
@@ -262,7 +263,8 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
                                       &pclient->mfsl_context,
                                       openflags,
                                       &pentry_file->object.file.open_fd.mfsl_fd,
-                                      &(pentry_file->object.file.attributes));
+                                      &(pentry_file->object.file.attributes),
+                                      NULL );
 #else
       fsal_status = FSAL_open_by_name(&(pentry_dir->object.file.handle),
                                       pname,
@@ -391,7 +393,7 @@ cache_inode_status_t cache_inode_close(cache_entry_t * pentry,
              (int)(time(NULL) - pentry->object.file.open_fd.last_op));
 
 #ifdef _USE_MFSL
-      fsal_status = MFSL_close(&(pentry->object.file.open_fd.mfsl_fd), &pclient->mfsl_context);
+      fsal_status = MFSL_close(&(pentry->object.file.open_fd.mfsl_fd), &pclient->mfsl_context, NULL);
 #else
       fsal_status = FSAL_close(&(pentry->object.file.open_fd.fd));
 #endif
