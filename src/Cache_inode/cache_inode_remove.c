@@ -378,7 +378,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
 #ifdef _USE_MFSL
       cache_inode_get_attributes(pentry, &after_attr);
 #ifdef _USE_PNFS
-      if( pentry->internal_md.type == REGULAR_FILE )
+      if( to_remove_entry->internal_md.type == REGULAR_FILE )
         fsal_status = MFSL_unlink(&pentry->mobject,
                                   pnode_name,
                                   &to_remove_entry->mobject,
