@@ -360,7 +360,7 @@ typedef struct cache_entry__
     {
       fsal_handle_t handle;                                          /**< The FSAL Handle                                      */
 #ifdef _USE_PNFS
-      pnfs_file_t * ppnfs_file ;
+      pnfs_file_t pnfs_file ;
 #endif
 #ifdef _USE_PROXY
       fsal_name_t *pname;                                            /**< Pointer to filename, for PROXY only                  */

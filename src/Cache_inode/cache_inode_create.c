@@ -97,6 +97,10 @@ cache_inode_create(cache_entry_t * pentry_parent,
 #else
     fsal_handle_t object_handle;
 #endif
+
+#ifdef _USE_PNFS
+    pnfs_file_t pnfs_file ;
+#endif
     fsal_attrib_list_t parent_attributes;
     fsal_attrib_list_t object_attributes;
     fsal_handle_t dir_handle;
@@ -197,11 +201,16 @@ cache_inode_create(cache_entry_t * pentry_parent,
                                       pname, pcontext,
                                       &pclient->mfsl_context,
                                       mode, &object_handle,
-                                      &object_attributes, &parent_attributes, NULL);
+                                      &object_attributes, &parent_attributes,
+#ifdef _USE_PNFS
+	                              &pnfs_file ) ;			      
+#else
+                                      NULL);
+#endif /* _USE_PNFS */
 #else
             fsal_status = FSAL_create(&dir_handle,
                                       pname, pcontext, mode,
-                                      &object_handle, &object_attributes, NULL);
+                                      &object_handle, &object_attributes);
 #endif
             break;
 
@@ -216,7 +225,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
 #else
             fsal_status = FSAL_mkdir(&dir_handle,
                                      pname, pcontext, mode,
-                                     &object_handle, &object_attributes, NULL);
+                                     &object_handle, &object_attributes);
 #endif
             break;
 
@@ -379,6 +388,10 @@ cache_inode_create(cache_entry_t * pentry_parent,
                 }
         }
 
+#ifdef _USE_PNFS
+       if( type == REGULAR_FILE )
+          memcpy( (char *)&pentry->object.file.pnfs_file, (char *)&pnfs_file, sizeof( pnfs_file_t ) ) ;
+#endif
        /* Update the parent cached attributes */
        if(pentry_parent->internal_md.type == DIR_BEGINNING)
            dir_begin = &pentry_parent->object.dir_begin;

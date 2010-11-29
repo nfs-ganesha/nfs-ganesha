@@ -264,7 +264,12 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
                                       openflags,
                                       &pentry_file->object.file.open_fd.mfsl_fd,
                                       &(pentry_file->object.file.attributes),
+#ifdef _USE_PNFS
+                                      &pentry_file->object.file.pnfs_file ) ;
+#else
                                       NULL );
+#endif /* _USE_PNFS */
+
 #else
       fsal_status = FSAL_open_by_name(&(pentry_dir->object.file.handle),
                                       pname,
@@ -280,10 +285,6 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
 
           return *pstatus;
         }
-
-#ifdef _USE_PNFS
-      pentry_file->object.file.ppnfs_file = &pentry_file->object.file.open_fd.mfsl_fd.pnfs_file ;
-#endif
 
 #ifdef _USE_PROXY
 
