@@ -383,7 +383,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
                                   pnode_name,
                                   &to_remove_entry->mobject,
                                   pcontext, &pclient->mfsl_context, &after_attr,
-                                  &pentry->object.file.pnfs_file );
+                                  &to_remove_entry->object.file.pnfs_file );
       else
 #endif /* _USE_PNFS */
       fsal_status = MFSL_unlink(&pentry->mobject,

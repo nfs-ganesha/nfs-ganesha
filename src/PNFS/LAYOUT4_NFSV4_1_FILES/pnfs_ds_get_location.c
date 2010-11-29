@@ -41,8 +41,9 @@ int pnfs_ds_get_location( pnfs_client_t      * pnfsclient,
 {
   if( !phandle || !plocation )
     return 0 ;
- 
-  snprintHandle( plocation->str_mds_handle, MAXNAMLEN, phandle ) ;
+
+  memset( (char *)plocation->str_mds_handle, 0, MAXNAMLEN );
+  snprintmem(  plocation->str_mds_handle, sizeof( fsal_handle_t ), (char *)phandle,  sizeof( fsal_handle_t ) ) ;
 
   return 1 ;
 } /* pnfs_ds_get_location */

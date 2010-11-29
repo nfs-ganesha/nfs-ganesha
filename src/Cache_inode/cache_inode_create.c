@@ -97,16 +97,17 @@ cache_inode_create(cache_entry_t * pentry_parent,
 #else
     fsal_handle_t object_handle;
 #endif
-
-#ifdef _USE_PNFS
-    pnfs_file_t pnfs_file ;
-#endif
     fsal_attrib_list_t parent_attributes;
     fsal_attrib_list_t object_attributes;
     fsal_handle_t dir_handle;
     cache_inode_fsal_data_t fsal_data;
     cache_inode_status_t status;
     struct cache_inode_dir_begin__ *dir_begin;
+#ifdef _USE_PNFS
+    pnfs_file_t pnfs_file ;
+
+    pnfs_file.ds_file.allocated = FALSE ;
+#endif
 
     /* Set the return default to CACHE_INODE_SUCCESS */
     *pstatus = CACHE_INODE_SUCCESS;

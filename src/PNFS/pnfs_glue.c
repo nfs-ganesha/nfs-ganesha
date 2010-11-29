@@ -61,5 +61,8 @@ int pnfs_init(pnfs_client_t * pnfsclient,
    return pnfs_ds_init( pnfsclient, pnfs_layout_param ) ;
 }
 
-void pnfs_terminate();
+void pnfs_terminate()
+{
+   return ;
+}
 

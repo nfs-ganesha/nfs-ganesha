@@ -226,9 +226,11 @@ fsal_status_t MFSL_create(mfsl_object_t * parent_directory_handle,      /* IN */
 
       return fsal_status ;
    }
-   
+
+  pnfs_file.ds_file.allocated = TRUE ;  
+ 
   if( pextra != NULL )
-      memcpy( (char *)pextra, &pnfs_file, sizeof( pnfs_file ) );
+    memcpy( (char *)pextra, &pnfs_file, sizeof( pnfs_file ) );
  
   /* SUCCES */
   fsal_status.major = ERR_FSAL_NO_ERROR ;
@@ -265,6 +267,7 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle, /* IN */
   int             pnfs_status ;
   fsal_status_t   fsal_status ;
   pnfs_file_t   * ppnfs_file = NULL ;
+  pnfs_fileloc_t  pnfs_location ;
 
   fsal_status = FSAL_truncate(&filehandle->handle,
                                p_context, length, &file_descriptor->fsal_file, object_attributes);
@@ -277,6 +280,34 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle, /* IN */
 
   ppnfs_file = (pnfs_file_t *)pextra ;
 
+  if( ppnfs_file->ds_file.allocated == FALSE ) 
+   {
+     if(! pnfs_get_location( &p_mfsl_context->pnfsclient, &filehandle->handle,
+                             NULL,  &pnfs_location ) )
+     {
+       LogDebug(COMPONENT_MFSL, "LOOKUP PNFS support : can't build pnfs_location" ) ;
+
+       fsal_status.major = ERR_FSAL_IO ;
+       fsal_status.minor = 0 ;
+
+       return fsal_status ;
+     }
+   
+    if((pnfs_status = pnfs_lookup_file( &p_mfsl_context->pnfsclient,
+  				         &pnfs_location, 
+				         ppnfs_file ) ) != NFS4_OK )  
+       {
+         LogDebug(COMPONENT_MFSL, "LOOKUP PNFS support : can't build pnfs_location" ) ;
+
+         fsal_status.major = ERR_FSAL_IO ;
+         fsal_status.minor = 0 ;
+
+         return fsal_status ;
+       }
+   
+     ppnfs_file->ds_file.allocated = TRUE ; 
+   }
+ 
 
   if((pnfs_status = pnfs_truncate_file( &p_mfsl_context->pnfsclient,
                                         length,
@@ -565,6 +596,7 @@ fsal_status_t MFSL_unlink(mfsl_object_t * parentdir_handle,     /* INOUT */
   fsal_status_t   fsal_status ;
   int             pnfs_status;
   pnfs_file_t   * ppnfs_file = NULL ;
+  pnfs_fileloc_t  pnfs_location ;
 
   fsal_status =  FSAL_unlink(&parentdir_handle->handle,
                              p_object_name, p_context, parentdir_attributes);
@@ -577,9 +609,38 @@ fsal_status_t MFSL_unlink(mfsl_object_t * parentdir_handle,     /* INOUT */
 
   ppnfs_file = (pnfs_file_t *)pextra ;
  
+  if( ppnfs_file->ds_file.allocated == FALSE ) 
+   {
+     if(! pnfs_get_location( &p_mfsl_context->pnfsclient, &object_handle->handle,
+                             NULL,  &pnfs_location ) )
+     {
+       LogDebug(COMPONENT_MFSL, "LOOKUP PNFS support : can't build pnfs_location" ) ;
 
-  if((pnfs_status = pnfs_remove_file( &p_mfsl_context->pnfsclient,
-                                      ppnfs_file ) ) != NFS4_OK )
+       fsal_status.major = ERR_FSAL_IO ;
+       fsal_status.minor = 0 ;
+
+       return fsal_status ;
+     }
+   
+     if((pnfs_status = pnfs_lookup_file( &p_mfsl_context->pnfsclient,
+  				         &pnfs_location, 
+				         ppnfs_file ) ) != NFS4_OK )  
+       {
+         LogDebug(COMPONENT_MFSL, "LOOKUP PNFS support : can't build pnfs_location" ) ;
+
+         fsal_status.major = ERR_FSAL_IO ;
+         fsal_status.minor = 0 ;
+
+         return fsal_status ;
+       }
+   
+     ppnfs_file->ds_file.allocated = TRUE ; 
+   }
+ 
+  
+  pnfs_status = pnfs_remove_file( &p_mfsl_context->pnfsclient, ppnfs_file ) ;
+
+  if( pnfs_status != NFS4_OK )
    {
        LogDebug(COMPONENT_MFSL, "UNLINK DS FILE : Error %u", pnfs_status ) ;
 
@@ -589,7 +650,7 @@ fsal_status_t MFSL_unlink(mfsl_object_t * parentdir_handle,     /* INOUT */
        return fsal_status ;
    }
 
-  fsal_status.major = ERR_FSAL_IO ;
+  fsal_status.major = ERR_FSAL_NO_ERROR ;
   fsal_status.minor = 0 ;
 
   return fsal_status ;
