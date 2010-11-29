@@ -8,10 +8,6 @@ all:
 	$(MAKE) -C $(dir) all
 	$(MAKE) -C tests all
 
-distdir:
-
-check:
-
 install:
 	$(MAKE) -C $(dir) install
 
@@ -21,9 +17,11 @@ clean:
 else
 
 all:
-distdir:
-check:
 install:
 clean:
 
 endif
+
+distclean: clean
+
+.PHONY: distclean distdir check
