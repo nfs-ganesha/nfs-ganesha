@@ -214,11 +214,15 @@ fsal_status_t MFSL_create(mfsl_object_t * parent_directory_handle,      /* IN */
          return fsal_status ;
       }
 
+  printf( "------> MFSL_create : loc=%s\n", pnfs_location.ds_loc.str_mds_handle ) ;
+
   pnfs_status = pnfs_create_file( &p_mfsl_context->pnfsclient,
       			          &pnfs_location,
                                   &pnfs_file ) ;
   if (pnfs_status != NFS4_OK)
    {
+      printf( "OPEN PNFS CREATE DS FILE : Error %u\n", pnfs_status ) ;
+
       LogDebug(COMPONENT_MFSL, "OPEN PNFS CREATE DS FILE : Error %u", pnfs_status ) ;
 
       fsal_status.major = ERR_FSAL_IO ;
@@ -232,6 +236,7 @@ fsal_status_t MFSL_create(mfsl_object_t * parent_directory_handle,      /* IN */
   if( pextra != NULL )
     memcpy( (char *)pextra, &pnfs_file, sizeof( pnfs_file ) );
  
+  printf( "=+=+=+=+> CREATE DS FILE : SUCCESS\n", pnfs_status ) ;
   /* SUCCES */
   fsal_status.major = ERR_FSAL_NO_ERROR ;
   fsal_status.minor = 0 ;
@@ -308,6 +313,7 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle, /* IN */
      ppnfs_file->ds_file.allocated = TRUE ; 
    }
  
+  printf( "------> MFSL_truncate : loc=%s\n", ppnfs_file->ds_file.location.str_mds_handle ) ;
 
   if((pnfs_status = pnfs_truncate_file( &p_mfsl_context->pnfsclient,
                                         length,
@@ -447,6 +453,8 @@ fsal_status_t MFSL_open_by_name(mfsl_object_t * dirhandle,      /* IN */
 				      &pnfs_location, 
 				      &file_descriptor->pnfs_file ) ) != NFS4_OK )  
        {
+	      printf( "OPEN PNFS LOOKUP DS FILE : Error %u\n", pnfs_status);
+
 	      LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS LOOKUP DS FILE : Error %u", pnfs_status);
 
 	      if(pnfs_status == NFS4ERR_NOENT)
@@ -473,8 +481,12 @@ fsal_status_t MFSL_open_by_name(mfsl_object_t * dirhandle,      /* IN */
                }
        }
 
+  printf( "------> MFSL_open_by_name : loc=%s\n", file_descriptor->pnfs_file.ds_file.location.str_mds_handle ) ;
+
   if( pextra != NULL )
     memcpy( (char *)pextra, (char *)&file_descriptor->pnfs_file, sizeof( pnfs_file_t ) ) ;
+
+  printf( "OPEN PNFS LOOKUP DS FILE : SUCCESS \n");
 
   /* SUCCES */
   fsal_status.major = ERR_FSAL_NO_ERROR ;
@@ -637,18 +649,24 @@ fsal_status_t MFSL_unlink(mfsl_object_t * parentdir_handle,     /* INOUT */
      ppnfs_file->ds_file.allocated = TRUE ; 
    }
  
+  printf( "------> MFSL_remove : loc=%s\n", ppnfs_file->ds_file.location.str_mds_handle ) ;
   
-  pnfs_status = pnfs_remove_file( &p_mfsl_context->pnfsclient, ppnfs_file ) ;
-
-  if( pnfs_status != NFS4_OK )
+  if( ( pnfs_status = pnfs_remove_file( &p_mfsl_context->pnfsclient, ppnfs_file ) ) != NFS4_OK )
    {
-       LogDebug(COMPONENT_MFSL, "UNLINK DS FILE : Error %u", pnfs_status ) ;
+       printf( "====> UNLINK DS FILE : Error %u\n", pnfs_status ) ;
 
-       fsal_status.major = ERR_FSAL_IO ;
-       fsal_status.minor = 0 ;
+       LogDebug(COMPONENT_MFSL, "UNLINK DS FILE : Error %u\n", pnfs_status ) ;
 
-       return fsal_status ;
+       if( pnfs_status != NFS4ERR_NOENT ) 
+        {
+          fsal_status.major = ERR_FSAL_IO ;
+          fsal_status.minor = 0 ;
+
+          return fsal_status ;
+        }
    }
+
+  printf( "=+=+=+=+> UNLINK DS FILE : SUCCESS\n", pnfs_status ) ;
 
   fsal_status.major = ERR_FSAL_NO_ERROR ;
   fsal_status.minor = 0 ;
