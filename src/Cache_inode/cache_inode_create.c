@@ -390,7 +390,9 @@ cache_inode_create(cache_entry_t * pentry_parent,
         }
 
 #ifdef _USE_PNFS
-       if( type == REGULAR_FILE )
+       if((type == REGULAR_FILE) &&
+       (pcreate_arg != NULL) &&
+       (pcreate_arg->use_pnfs == TRUE))
           memcpy( (char *)&pentry->object.file.pnfs_file, (char *)&pnfs_file, sizeof( pnfs_file_t ) ) ;
 #endif
        /* Update the parent cached attributes */
