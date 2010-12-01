@@ -424,7 +424,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
                             poldname,
                             &pentry_dirdest->mobject,
                             pnewname,
-                            pcontext, &pclient->mfsl_context, pattrsrc, pattrdest);
+                            pcontext, &pclient->mfsl_context, pattrsrc, pattrdest, NULL);
 #else
   fsal_status = FSAL_rename(phandle_dirsrc,
                             poldname,

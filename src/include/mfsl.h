@@ -105,7 +105,8 @@ fsal_status_t MFSL_lookup(mfsl_object_t * parent_directory_handle,      /* IN */
                           fsal_op_context_t * p_context,        /* IN */
                           mfsl_context_t * p_mfsl_context,      /* IN */
                           mfsl_object_t * object_handle,        /* OUT */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
+                          fsal_attrib_list_t * object_attributes,        /* [ IN/OUT ] */
+			  void * pextra
     );
 
 fsal_status_t MFSL_lookupPath(fsal_path_t * p_path,     /* IN */
@@ -126,7 +127,8 @@ fsal_status_t MFSL_access(mfsl_object_t * object_handle,        /* IN */
                           fsal_op_context_t * p_context,        /* IN */
                           mfsl_context_t * p_mfsl_context,      /* IN */
                           fsal_accessflags_t access_type,       /* IN */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
+                          fsal_attrib_list_t * object_attributes,        /* [ IN/OUT ] */
+                          void * pextra
     );
 
 fsal_status_t MFSL_create(mfsl_object_t * parent_directory_handle,      /* IN */
@@ -136,7 +138,8 @@ fsal_status_t MFSL_create(mfsl_object_t * parent_directory_handle,      /* IN */
                           fsal_accessmode_t accessmode, /* IN */
                           mfsl_object_t * object_handle,        /* OUT */
                           fsal_attrib_list_t * object_attributes,       /* [ IN/OUT ] */
-                          fsal_attrib_list_t * parent_attributes        /* IN */
+                          fsal_attrib_list_t * parent_attributes,        /* IN */
+                          void * pextra
     );
 
 fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,       /* IN */
@@ -146,28 +149,32 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,       /* IN */
                          fsal_accessmode_t accessmode,  /* IN */
                          mfsl_object_t * object_handle, /* OUT */
                          fsal_attrib_list_t * object_attributes,        /* [ IN/OUT ] */
-                         fsal_attrib_list_t * parent_attributes /* IN */
+                         fsal_attrib_list_t * parent_attributes, /* IN */
+			 void * pextra 
     );
 
 fsal_status_t MFSL_truncate(mfsl_object_t * filehandle, /* IN */
                             fsal_op_context_t * p_context,      /* IN */
                             mfsl_context_t * p_mfsl_context,    /* IN */
                             fsal_size_t length, /* IN */
-                            fsal_file_t * file_descriptor,      /* INOUT */
-                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
+                            mfsl_file_t * file_descriptor,      /* INOUT */
+                            fsal_attrib_list_t * object_attributes,      /* [ IN/OUT ] */
+			    void * pextra
     );
 
 fsal_status_t MFSL_getattrs(mfsl_object_t * filehandle, /* IN */
                             fsal_op_context_t * p_context,      /* IN */
                             mfsl_context_t * p_mfsl_context,    /* IN */
-                            fsal_attrib_list_t * object_attributes      /* IN/OUT */
+                            fsal_attrib_list_t * object_attributes,      /* IN/OUT */
+			    void * pextra
     );
 
 fsal_status_t MFSL_setattrs(mfsl_object_t * filehandle, /* IN */
                             fsal_op_context_t * p_context,      /* IN */
                             mfsl_context_t * p_mfsl_context,    /* IN */
                             fsal_attrib_list_t * attrib_set,    /* IN */
-                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
+                            fsal_attrib_list_t * object_attributes,      /* [ IN/OUT ] */
+			    void * pextra
     );
 
 fsal_status_t MFSL_link(mfsl_object_t * target_handle,  /* IN */
@@ -175,14 +182,16 @@ fsal_status_t MFSL_link(mfsl_object_t * target_handle,  /* IN */
                         fsal_name_t * p_link_name,      /* IN */
                         fsal_op_context_t * p_context,  /* IN */
                         mfsl_context_t * p_mfsl_context,        /* IN */
-                        fsal_attrib_list_t * attributes     /* [ IN/OUT ] */
+                        fsal_attrib_list_t * attributes,     /* [ IN/OUT ] */
+			void * pextra
     );
 
 fsal_status_t MFSL_opendir(mfsl_object_t * dir_handle,  /* IN */
                            fsal_op_context_t * p_context,       /* IN */
                            mfsl_context_t * p_mfsl_context,     /* IN */
                            fsal_dir_t * dir_descriptor, /* OUT */
-                           fsal_attrib_list_t * dir_attributes  /* [ IN/OUT ] */
+                           fsal_attrib_list_t * dir_attributes,  /* [ IN/OUT ] */
+			   void * pextra
     );
 
 fsal_status_t MFSL_readdir(fsal_dir_t * dir_descriptor, /* IN */
@@ -193,19 +202,22 @@ fsal_status_t MFSL_readdir(fsal_dir_t * dir_descriptor, /* IN */
                            fsal_cookie_t * end_position,        /* OUT */
                            fsal_count_t * nb_entries,   /* OUT */
                            fsal_boolean_t * end_of_dir, /* OUT */
-                           mfsl_context_t * p_mfsl_context      /* IN */
+                           mfsl_context_t * p_mfsl_context,      /* IN */
+			   void * pextra
     );
 
 fsal_status_t MFSL_closedir(fsal_dir_t * dir_descriptor,        /* IN */
-                            mfsl_context_t * p_mfsl_context     /* IN */
+                            mfsl_context_t * p_mfsl_context,     /* IN */
+			    void * pextra
     );
 
 fsal_status_t MFSL_open(mfsl_object_t * filehandle,     /* IN */
                         fsal_op_context_t * p_context,  /* IN */
                         mfsl_context_t * p_mfsl_context,        /* IN */
                         fsal_openflags_t openflags,     /* IN */
-                        fsal_file_t * file_descriptor,  /* OUT */
-                        fsal_attrib_list_t * file_attributes    /* [ IN/OUT ] */
+                        mfsl_file_t * file_descriptor,  /* OUT */
+                        fsal_attrib_list_t * file_attributes,    /* [ IN/OUT ] */
+			void * pextra
     );
 
 fsal_status_t MFSL_open_by_name(mfsl_object_t * dirhandle,      /* IN */
@@ -213,46 +225,54 @@ fsal_status_t MFSL_open_by_name(mfsl_object_t * dirhandle,      /* IN */
                                 fsal_op_context_t * p_context,  /* IN */
                                 mfsl_context_t * p_mfsl_context,        /* IN */
                                 fsal_openflags_t openflags,     /* IN */
-                                fsal_file_t * file_descriptor,  /* OUT */
-                                fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ );
+                                mfsl_file_t * file_descriptor,  /* OUT */
+                                fsal_attrib_list_t * file_attributes, /* [ IN/OUT ] */ 
+				void * pextra);
 
 fsal_status_t MFSL_open_by_fileid(mfsl_object_t * filehandle,   /* IN */
                                   fsal_u64_t fileid,    /* IN */
                                   fsal_op_context_t * p_context,        /* IN */
                                   mfsl_context_t * p_mfsl_context,      /* IN */
                                   fsal_openflags_t openflags,   /* IN */
-                                  fsal_file_t * file_descriptor,        /* OUT */
-                                  fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ );
+                                  mfsl_file_t * file_descriptor,        /* OUT */
+                                  fsal_attrib_list_t * file_attributes, /* [ IN/OUT ] */ 
+				  void * pextra );
 
-fsal_status_t MFSL_read(fsal_file_t * file_descriptor,  /*  IN  */
+fsal_status_t MFSL_read(mfsl_file_t * file_descriptor,  /*  IN  */
                         fsal_seek_t * seek_descriptor,  /* [IN] */
                         fsal_size_t buffer_size,        /*  IN  */
                         caddr_t buffer, /* OUT  */
                         fsal_size_t * read_amount,      /* OUT  */
                         fsal_boolean_t * end_of_file,   /* OUT  */
-                        mfsl_context_t * p_mfsl_context /* IN */
+                        mfsl_context_t * p_mfsl_context, /* IN */
+			void * pextra
     );
 
-fsal_status_t MFSL_write(fsal_file_t * file_descriptor, /* IN */
+fsal_status_t MFSL_write(mfsl_file_t * file_descriptor, /* IN */
                          fsal_seek_t * seek_descriptor, /* IN */
                          fsal_size_t buffer_size,       /* IN */
                          caddr_t buffer,        /* IN */
                          fsal_size_t * write_amount,    /* OUT */
-                         mfsl_context_t * p_mfsl_context        /* IN */
+                         mfsl_context_t * p_mfsl_context,        /* IN */
+			 void * pextra
     );
 
-fsal_status_t MFSL_close(fsal_file_t * file_descriptor, /* IN */
-                         mfsl_context_t * p_mfsl_context        /* IN */
+fsal_status_t MFSL_close(mfsl_file_t * file_descriptor, /* IN */
+                         mfsl_context_t * p_mfsl_context,        /* IN */
+			 void * pextra
     );
 
-fsal_status_t MFSL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
-                                   fsal_u64_t fileid, mfsl_context_t * p_mfsl_context); /* IN */
+fsal_status_t MFSL_close_by_fileid(mfsl_file_t * file_descriptor /* IN */ ,
+                                   fsal_u64_t fileid,
+                                   mfsl_context_t * p_mfsl_context, /* IN */
+				   void * pextra ) ;
 
 fsal_status_t MFSL_readlink(mfsl_object_t * linkhandle, /* IN */
                             fsal_op_context_t * p_context,      /* IN */
                             mfsl_context_t * p_mfsl_context,    /* IN */
                             fsal_path_t * p_link_content,       /* OUT */
-                            fsal_attrib_list_t * link_attributes        /* [ IN/OUT ] */
+                            fsal_attrib_list_t * link_attributes,        /* [ IN/OUT ] */
+			    void * pextra 
     );
 
 fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,     /* IN */
@@ -262,7 +282,8 @@ fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,     /* IN */
                            mfsl_context_t * p_mfsl_context,     /* IN */
                            fsal_accessmode_t accessmode,        /* IN (ignored); */
                            mfsl_object_t * link_handle, /* OUT */
-                           fsal_attrib_list_t * link_attributes /* [ IN/OUT ] */
+                           fsal_attrib_list_t * link_attributes, /* [ IN/OUT ] */
+			   void * pextra
     );
 
 fsal_status_t MFSL_rename(mfsl_object_t * old_parentdir_handle, /* IN */
@@ -272,7 +293,8 @@ fsal_status_t MFSL_rename(mfsl_object_t * old_parentdir_handle, /* IN */
                           fsal_op_context_t * p_context,        /* IN */
                           mfsl_context_t * p_mfsl_context,      /* IN */
                           fsal_attrib_list_t * src_dir_attributes,      /* [ IN/OUT ] */
-                          fsal_attrib_list_t * tgt_dir_attributes       /* [ IN/OUT ] */
+                          fsal_attrib_list_t * tgt_dir_attributes,       /* [ IN/OUT ] */
+			  void * pextra 
     );
 
 fsal_status_t MFSL_unlink(mfsl_object_t * parentdir_handle,     /* INOUT */
@@ -280,7 +302,8 @@ fsal_status_t MFSL_unlink(mfsl_object_t * parentdir_handle,     /* INOUT */
                           mfsl_object_t * object_handle,        /* INOUT */
                           fsal_op_context_t * p_context,        /* IN */
                           mfsl_context_t * p_mfsl_context,      /* IN */
-                          fsal_attrib_list_t * parentdir_attributes     /* [IN/OUT ] */
+                          fsal_attrib_list_t * parentdir_attributes,     /* [IN/OUT ] */
+			  void * pextra
     );
 
 fsal_status_t MFSL_mknode(mfsl_object_t * parentdir_handle,     /* IN */
@@ -291,14 +314,16 @@ fsal_status_t MFSL_mknode(mfsl_object_t * parentdir_handle,     /* IN */
                           fsal_nodetype_t nodetype,     /* IN */
                           fsal_dev_t * dev,     /* IN */
                           mfsl_object_t * p_object_handle,      /* OUT */
-                          fsal_attrib_list_t * node_attributes  /* [ IN/OUT ] */
+                          fsal_attrib_list_t * node_attributes,  /* [ IN/OUT ] */
+			  void * pextra
     );
 
 fsal_status_t MFSL_rcp(mfsl_object_t * filehandle,      /* IN */
                        fsal_op_context_t * p_context,   /* IN */
                        mfsl_context_t * p_mfsl_context, /* IN */
                        fsal_path_t * p_local_path,      /* IN */
-                       fsal_rcpflag_t transfer_opt      /* IN */
+                       fsal_rcpflag_t transfer_opt,     /* IN */
+		       void * pextra
     );
 
 fsal_status_t MFSL_rcp_by_name(mfsl_object_t * filehandle,      /* IN */
@@ -306,7 +331,8 @@ fsal_status_t MFSL_rcp_by_name(mfsl_object_t * filehandle,      /* IN */
                                fsal_op_context_t * p_context,   /* IN */
                                mfsl_context_t * p_mfsl_context, /* IN */
                                fsal_path_t * p_local_path,      /* IN */
-                               fsal_rcpflag_t transfer_opt      /* IN */
+                               fsal_rcpflag_t transfer_opt,     /* IN */
+			       void * pextra 
     );
 
 fsal_status_t MFSL_rcp_by_fileid(mfsl_object_t * filehandle,    /* IN */
@@ -314,7 +340,8 @@ fsal_status_t MFSL_rcp_by_fileid(mfsl_object_t * filehandle,    /* IN */
                                  fsal_op_context_t * p_context, /* IN */
                                  mfsl_context_t * p_mfsl_context,       /* IN */
                                  fsal_path_t * p_local_path,    /* IN */
-                                 fsal_rcpflag_t transfer_opt    /* IN */
+                                 fsal_rcpflag_t transfer_opt,    /* IN */
+				 void * pextra
     );
 
 /* To be called before exiting */
@@ -325,7 +352,7 @@ fsal_status_t MFSL_terminate();
 /******************************************************
  *                FSAL locks management.
  ******************************************************/
-fsal_status_t MSFL_lock(fsal_file_t * obj_handle,       /* IN */
+fsal_status_t MSFL_lock(mfsl_file_t * obj_handle,       /* IN */
                         fsal_lockdesc_t * ldesc,        /*IN/OUT */
                         fsal_boolean_t callback /* IN */
     );
@@ -334,11 +361,11 @@ fsal_status_t MFSL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / 
                               fsal_lockparam_t * lock_info      /* IN */
     );
 
-fsal_status_t MFSL_unlock(fsal_file_t * obj_handle,     /* IN */
+fsal_status_t MFSL_unlock(mfsl_file_t * obj_handle,     /* IN */
                           fsal_lockdesc_t * ldesc       /*IN/OUT */
     );
 
-fsal_status_t MFSL_getlock(fsal_file_t * obj_handle,    /* IN */
+fsal_status_t MFSL_getlock(mfsl_file_t * obj_handle,    /* IN */
                            fsal_lockdesc_t * ldesc      /*IN/OUT */
     );
 

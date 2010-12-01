@@ -50,9 +50,9 @@ void pnfs_encode_getdeviceinfo( char *buff, unsigned int *plen)
    return pnfs_ds_encode_getdeviceinfo( buff, plen) ;
 }
 
-void pnfs_encode_layoutget( void * pds_file, char *buff, unsigned int *plen)
+void pnfs_encode_layoutget( pnfs_file_t * pnfs_file, char *buff, unsigned int *plen)
 {
-   return pnfs_ds_encode_layoutget( pds_file, buff, plen ) ;
+   return pnfs_ds_encode_layoutget( &pnfs_file->ds_file, buff, plen ) ;
 }
 
 int pnfs_init(pnfs_client_t * pnfsclient,
@@ -61,5 +61,8 @@ int pnfs_init(pnfs_client_t * pnfsclient,
    return pnfs_ds_init( pnfsclient, pnfs_layout_param ) ;
 }
 
-void pnfs_terminate();
+void pnfs_terminate()
+{
+   return ;
+}
 

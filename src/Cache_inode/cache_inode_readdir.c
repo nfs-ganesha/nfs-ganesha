@@ -776,7 +776,7 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
 #ifdef _USE_MFSL
   fsal_status = MFSL_opendir(&pentry_dir->mobject,
                              pcontext,
-                             &pclient->mfsl_context, &fsal_dirhandle, &dir_attributes);
+                             &pclient->mfsl_context, &fsal_dirhandle, &dir_attributes, NULL);
 #else
   fsal_status = FSAL_opendir(&pentry_dir->object.dir_begin.handle,
                              pcontext, &fsal_dirhandle, &dir_attributes);
@@ -817,7 +817,7 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
                                  FSAL_READDIR_SIZE * sizeof(fsal_dirent_t),
                                  array_dirent,
                                  &end_cookie,
-                                 &nbfound, &fsal_eod, &pclient->mfsl_context);
+                                 &nbfound, &fsal_eod, &pclient->mfsl_context, NULL);
 #else
       fsal_status = FSAL_readdir(&fsal_dirhandle,
                                  begin_cookie,
@@ -862,7 +862,7 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
               fsal_status = MFSL_readlink(&tmp_mfsl,
                                           pcontext,
                                           &pclient->mfsl_context,
-                                          &create_arg.link_content, &object_attributes);
+                                          &create_arg.link_content, &object_attributes, NULL);
 #else
               fsal_status = FSAL_readlink(&array_dirent[iter].handle,
                                           pcontext,
@@ -922,7 +922,7 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
 
   /* Close the directory */
 #ifdef _USE_MFSL
-  fsal_status = MFSL_closedir(&fsal_dirhandle, &pclient->mfsl_context);
+  fsal_status = MFSL_closedir(&fsal_dirhandle, &pclient->mfsl_context, NULL);
 #else
   fsal_status = FSAL_closedir(&fsal_dirhandle);
 #endif

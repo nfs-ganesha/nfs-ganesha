@@ -482,7 +482,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
 #ifdef _USE_MFSL
       fsal_status =
           MFSL_readlink(&pentry->mobject, pcontext, &pclient->mfsl_context, &link_content,
-                        &object_attributes);
+                        &object_attributes, NULL);
 #else
       fsal_status =
           FSAL_readlink(pfsal_handle, pcontext, &link_content, &object_attributes);

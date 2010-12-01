@@ -141,7 +141,8 @@ fsal_status_t MFSL_lookup(mfsl_object_t * parent_directory_handle,      /* IN */
                           fsal_op_context_t * p_context,        /* IN */
                           mfsl_context_t * p_mfsl_context,      /* IN */
                           mfsl_object_t * object_handle,        /* OUT */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
+                          fsal_attrib_list_t * object_attributes,        /* [ IN/OUT ] */
+                          void * pextra
     )
 {
   return FSAL_lookup(&parent_directory_handle->handle,
@@ -173,7 +174,8 @@ fsal_status_t MFSL_access(mfsl_object_t * object_handle,        /* IN */
                           fsal_op_context_t * p_context,        /* IN */
                           mfsl_context_t * p_mfsl_context,      /* IN */
                           fsal_accessflags_t access_type,       /* IN */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
+                          fsal_attrib_list_t * object_attributes,        /* [ IN/OUT ] */
+                          void * pextra
     )
 {
   return FSAL_access(&object_handle->handle, p_context, access_type, object_attributes);
@@ -186,13 +188,61 @@ fsal_status_t MFSL_create(mfsl_object_t * parent_directory_handle,      /* IN */
                           fsal_accessmode_t accessmode, /* IN */
                           mfsl_object_t * object_handle,        /* OUT */
                           fsal_attrib_list_t * object_attributes,       /* [ IN/OUT ] */
-                          fsal_attrib_list_t * parent_attributes        /* [ IN/OUT ] */
+                          fsal_attrib_list_t * parent_attributes,        /* [ IN/OUT ] */
+			  void * pextra
     )
 {
-  return FSAL_create(&parent_directory_handle->handle,
-                     p_filename,
-                     p_context, accessmode, &object_handle->handle, object_attributes);
-}                               /* MFSL_create */
+  fsal_status_t fsal_status ; 
+  int pnfs_status;
+  pnfs_fileloc_t pnfs_location ;
+  pnfs_file_t pnfs_file ;
+
+  fsal_status = FSAL_create( &parent_directory_handle->handle,
+                              p_filename,
+                              p_context, accessmode, &object_handle->handle, object_attributes);
+
+  if( FSAL_IS_ERROR( fsal_status ) )
+    return fsal_status ;
+
+  if(! pnfs_get_location( &p_mfsl_context->pnfsclient, &object_handle->handle,
+                          NULL,  &pnfs_location ) )
+      {
+         LogDebug(COMPONENT_MFSL, "OPEN PNFS CREATE DS FILE : can't get pnfs_location" ) ;
+         fsal_status.major = ERR_FSAL_IO ;
+         fsal_status.minor = 0 ;
+
+         return fsal_status ;
+      }
+
+  printf( "------> MFSL_create : loc=%s\n", pnfs_location.ds_loc.str_mds_handle ) ;
+
+  pnfs_status = pnfs_create_file( &p_mfsl_context->pnfsclient,
+      			          &pnfs_location,
+                                  &pnfs_file ) ;
+  if (pnfs_status != NFS4_OK)
+   {
+      printf( "OPEN PNFS CREATE DS FILE : Error %u\n", pnfs_status ) ;
+
+      LogDebug(COMPONENT_MFSL, "OPEN PNFS CREATE DS FILE : Error %u", pnfs_status ) ;
+
+      fsal_status.major = ERR_FSAL_IO ;
+      fsal_status.minor = 0 ;
+
+      return fsal_status ;
+   }
+
+  pnfs_file.ds_file.allocated = TRUE ;  
+ 
+  if( pextra != NULL )
+    memcpy( (char *)pextra, &pnfs_file, sizeof( pnfs_file ) );
+ 
+  printf( "=+=+=+=+> CREATE DS FILE : SUCCESS\n", pnfs_status ) ;
+  /* SUCCES */
+  fsal_status.major = ERR_FSAL_NO_ERROR ;
+  fsal_status.minor = 0 ;
+
+  return fsal_status ;
+}                               /* MFSL_create */ 
 
 fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,       /* IN */
                          fsal_name_t * p_dirname,       /* IN */
@@ -201,7 +251,8 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,       /* IN */
                          fsal_accessmode_t accessmode,  /* IN */
                          mfsl_object_t * object_handle, /* OUT */
                          fsal_attrib_list_t * object_attributes,        /* [ IN/OUT ] */
-                         fsal_attrib_list_t * parent_attributes /* [ IN/OUT ] */
+                         fsal_attrib_list_t * parent_attributes, /* [ IN/OUT ] */
+			 void * pextra
     )
 {
   return FSAL_mkdir(&parent_directory_handle->handle,
@@ -213,18 +264,81 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle, /* IN */
                             fsal_op_context_t * p_context,      /* IN */
                             mfsl_context_t * p_mfsl_context,    /* IN */
                             fsal_size_t length, /* IN */
-                            fsal_file_t * file_descriptor,      /* INOUT */
-                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
+                            mfsl_file_t * file_descriptor,      /* INOUT */
+                            fsal_attrib_list_t * object_attributes,      /* [ IN/OUT ] */
+                            void * pextra
     )
 {
-  return FSAL_truncate(&filehandle->handle,
-                       p_context, length, file_descriptor, object_attributes);
+  int             pnfs_status ;
+  fsal_status_t   fsal_status ;
+  pnfs_file_t   * ppnfs_file = NULL ;
+  pnfs_fileloc_t  pnfs_location ;
+
+  fsal_status = FSAL_truncate(&filehandle->handle,
+                               p_context, length, &file_descriptor->fsal_file, object_attributes);
+
+  if( FSAL_IS_ERROR( fsal_status ) )
+    return fsal_status ;
+
+  if( pextra == NULL )  /* Not a regular file */
+    return fsal_status ;
+
+  ppnfs_file = (pnfs_file_t *)pextra ;
+
+  if( ppnfs_file->ds_file.allocated == FALSE ) 
+   {
+     if(! pnfs_get_location( &p_mfsl_context->pnfsclient, &filehandle->handle,
+                             NULL,  &pnfs_location ) )
+     {
+       LogDebug(COMPONENT_MFSL, "LOOKUP PNFS support : can't build pnfs_location" ) ;
+
+       fsal_status.major = ERR_FSAL_IO ;
+       fsal_status.minor = 0 ;
+
+       return fsal_status ;
+     }
+   
+    if((pnfs_status = pnfs_lookup_file( &p_mfsl_context->pnfsclient,
+  				         &pnfs_location, 
+				         ppnfs_file ) ) != NFS4_OK )  
+       {
+         LogDebug(COMPONENT_MFSL, "LOOKUP PNFS support : can't build pnfs_location" ) ;
+
+         fsal_status.major = ERR_FSAL_IO ;
+         fsal_status.minor = 0 ;
+
+         return fsal_status ;
+       }
+   
+     ppnfs_file->ds_file.allocated = TRUE ; 
+   }
+ 
+  printf( "------> MFSL_truncate : loc=%s\n", ppnfs_file->ds_file.location.str_mds_handle ) ;
+
+  if((pnfs_status = pnfs_truncate_file( &p_mfsl_context->pnfsclient,
+                                        length,
+                                        ppnfs_file ) ) != NFS4_OK )
+    {
+      LogDebug(COMPONENT_MFSL, "OPEN PNFS TRUNCATE DS FILE : Error %u", pnfs_status ) ;
+
+ 
+      fsal_status.major == ERR_FSAL_IO ; 
+      fsal_status.minor == 0 ;
+
+      return fsal_status ;
+    }
+
+  fsal_status.major == ERR_FSAL_NO_ERROR ; 
+  fsal_status.minor == 0 ;
+
+  return fsal_status ;
 }                               /* MFSL_truncate */
 
 fsal_status_t MFSL_getattrs(mfsl_object_t * filehandle, /* IN */
                             fsal_op_context_t * p_context,      /* IN */
                             mfsl_context_t * p_mfsl_context,    /* IN */
-                            fsal_attrib_list_t * object_attributes      /* IN/OUT */
+                            fsal_attrib_list_t * object_attributes,      /* IN/OUT */
+			    void * pextra
     )
 {
   return FSAL_getattrs(&filehandle->handle, p_context, object_attributes);
@@ -234,7 +348,8 @@ fsal_status_t MFSL_setattrs(mfsl_object_t * filehandle, /* IN */
                             fsal_op_context_t * p_context,      /* IN */
                             mfsl_context_t * p_mfsl_context,    /* IN */
                             fsal_attrib_list_t * attrib_set,    /* IN */
-                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
+                            fsal_attrib_list_t * object_attributes,      /* [ IN/OUT ] */
+			    void * pextra
     )
 {
   return FSAL_setattrs(&filehandle->handle, p_context, attrib_set, object_attributes);
@@ -245,7 +360,8 @@ fsal_status_t MFSL_link(mfsl_object_t * target_handle,  /* IN */
                         fsal_name_t * p_link_name,      /* IN */
                         fsal_op_context_t * p_context,  /* IN */
                         mfsl_context_t * p_mfsl_context,        /* IN */
-                        fsal_attrib_list_t * attributes    /* [ IN/OUT ] */ )
+                        fsal_attrib_list_t * attributes,    /* [ IN/OUT ] */ 
+			void * pextra )
 {
   return FSAL_link(&target_handle->handle,
                    &dir_handle->handle, p_link_name, p_context, attributes);
@@ -255,7 +371,8 @@ fsal_status_t MFSL_opendir(mfsl_object_t * dir_handle,  /* IN */
                            fsal_op_context_t * p_context,       /* IN */
                            mfsl_context_t * p_mfsl_context,     /* IN */
                            fsal_dir_t * dir_descriptor, /* OUT */
-                           fsal_attrib_list_t * dir_attributes  /* [ IN/OUT ] */
+                           fsal_attrib_list_t * dir_attributes,  /* [ IN/OUT ] */
+			   void * pextra
     )
 {
   return FSAL_opendir(&dir_handle->handle, p_context, dir_descriptor, dir_attributes);
@@ -269,7 +386,8 @@ fsal_status_t MFSL_readdir(fsal_dir_t * dir_descriptor, /* IN */
                            fsal_cookie_t * end_position,        /* OUT */
                            fsal_count_t * nb_entries,   /* OUT */
                            fsal_boolean_t * end_of_dir, /* OUT */
-                           mfsl_context_t * p_mfsl_context      /* IN */
+                           mfsl_context_t * p_mfsl_context,      /* IN */
+			   void * pextra
     )
 {
   return FSAL_readdir(dir_descriptor,
@@ -280,7 +398,8 @@ fsal_status_t MFSL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 }                               /* MFSL_readdir */
 
 fsal_status_t MFSL_closedir(fsal_dir_t * dir_descriptor,        /* IN */
-                            mfsl_context_t * p_mfsl_context     /* IN */
+                            mfsl_context_t * p_mfsl_context,     /* IN */
+			    void * pextra
     )
 {
   return FSAL_closedir(dir_descriptor);
@@ -290,12 +409,13 @@ fsal_status_t MFSL_open(mfsl_object_t * filehandle,     /* IN */
                         fsal_op_context_t * p_context,  /* IN */
                         mfsl_context_t * p_mfsl_context,        /* IN */
                         fsal_openflags_t openflags,     /* IN */
-                        fsal_file_t * file_descriptor,  /* OUT */
-                        fsal_attrib_list_t * file_attributes    /* [ IN/OUT ] */
+                        mfsl_file_t * file_descriptor,  /* OUT */
+                        fsal_attrib_list_t * file_attributes,    /* [ IN/OUT ] */
+			void * pextra
     )
 {
   return FSAL_open(&filehandle->handle,
-                   p_context, openflags, file_descriptor, file_attributes);
+                   p_context, openflags, &file_descriptor->fsal_file, file_attributes);
 }                               /* MFSL_open */
 
 fsal_status_t MFSL_open_by_name(mfsl_object_t * dirhandle,      /* IN */
@@ -303,12 +423,76 @@ fsal_status_t MFSL_open_by_name(mfsl_object_t * dirhandle,      /* IN */
                                 fsal_op_context_t * p_context,  /* IN */
                                 mfsl_context_t * p_mfsl_context,        /* IN */
                                 fsal_openflags_t openflags,     /* IN */
-                                fsal_file_t * file_descriptor,  /* OUT */
-                                fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
+                                mfsl_file_t * file_descriptor,  /* OUT */
+                                fsal_attrib_list_t * file_attributes, /* [ IN/OUT ] */ 
+				void * pextra )
 {
-  return FSAL_open_by_name(&dirhandle->handle,
-                           filename,
-                           p_context, openflags, file_descriptor, file_attributes);
+  fsal_status_t   fsal_status ;
+  int             pnfs_status;
+  pnfs_fileloc_t  pnfs_location ;
+
+  fsal_status = FSAL_open_by_name(&dirhandle->handle,
+                                  filename,
+                                  p_context, openflags, &file_descriptor->fsal_file, file_attributes);
+
+  if( FSAL_IS_ERROR( fsal_status ) ) 
+    return fsal_status ;
+
+  if(! pnfs_get_location( &p_mfsl_context->pnfsclient, &file_descriptor->fsal_file.handle,
+                          NULL,  &pnfs_location ) )
+    {
+       LogDebug(COMPONENT_MFSL, "LOOKUP PNFS support : can't build pnfs_location" ) ;
+
+       fsal_status.major = ERR_FSAL_IO ;
+       fsal_status.minor = 0 ;
+
+       return fsal_status ;
+    }
+
+  if((pnfs_status = pnfs_lookup_file( &p_mfsl_context->pnfsclient,
+				      &pnfs_location, 
+				      &file_descriptor->pnfs_file ) ) != NFS4_OK )  
+       {
+	      printf( "OPEN PNFS LOOKUP DS FILE : Error %u\n", pnfs_status);
+
+	      LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS LOOKUP DS FILE : Error %u", pnfs_status);
+
+	      if(pnfs_status == NFS4ERR_NOENT)
+               {
+                  if((pnfs_status = pnfs_create_file(&p_mfsl_context->pnfsclient,
+                                                     &pnfs_location,
+                                                     &file_descriptor->pnfs_file ) ) != NFS4_OK )
+                   {
+
+                      LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS CREATE DS FILE : Error %u", pnfs_status ) ;
+
+                      fsal_status.major = ERR_FSAL_IO ;
+                      fsal_status.minor = 0 ;
+
+                      return fsal_status ;
+                  }
+               }
+              else
+               {
+                 fsal_status.major = ERR_FSAL_IO ;
+                 fsal_status.minor = 0 ;
+
+                 return fsal_status ;
+               }
+       }
+
+  printf( "------> MFSL_open_by_name : loc=%s\n", file_descriptor->pnfs_file.ds_file.location.str_mds_handle ) ;
+
+  if( pextra != NULL )
+    memcpy( (char *)pextra, (char *)&file_descriptor->pnfs_file, sizeof( pnfs_file_t ) ) ;
+
+  printf( "OPEN PNFS LOOKUP DS FILE : SUCCESS \n");
+
+  /* SUCCES */
+  fsal_status.major = ERR_FSAL_NO_ERROR ;
+  fsal_status.minor = 0 ;
+
+  return fsal_status ;
 }                               /* MFSL_open_by_name */
 
 fsal_status_t MFSL_open_by_fileid(mfsl_object_t * filehandle,   /* IN */
@@ -316,56 +500,63 @@ fsal_status_t MFSL_open_by_fileid(mfsl_object_t * filehandle,   /* IN */
                                   fsal_op_context_t * p_context,        /* IN */
                                   mfsl_context_t * p_mfsl_context,      /* IN */
                                   fsal_openflags_t openflags,   /* IN */
-                                  fsal_file_t * file_descriptor,        /* OUT */
-                                  fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
+                                  mfsl_file_t * file_descriptor,        /* OUT */
+                                  fsal_attrib_list_t * file_attributes, /* [ IN/OUT ] */ 
+				  void * pextra )
 {
   return FSAL_open_by_fileid(&filehandle->handle,
                              fileid,
-                             p_context, openflags, file_descriptor, file_attributes);
+                             p_context, openflags, &file_descriptor->fsal_file, file_attributes);
 }                               /* MFSL_open_by_fileid */
 
-fsal_status_t MFSL_read(fsal_file_t * file_descriptor,  /*  IN  */
+fsal_status_t MFSL_read(mfsl_file_t * file_descriptor,  /*  IN  */
                         fsal_seek_t * seek_descriptor,  /* [IN] */
                         fsal_size_t buffer_size,        /*  IN  */
                         caddr_t buffer, /* OUT  */
                         fsal_size_t * read_amount,      /* OUT  */
                         fsal_boolean_t * end_of_file,   /* OUT  */
-                        mfsl_context_t * p_mfsl_context /* IN */
+                        mfsl_context_t * p_mfsl_context, /* IN */
+			void * pextra
     )
 {
-  return FSAL_read(file_descriptor,
+  return FSAL_read(&file_descriptor->fsal_file,
                    seek_descriptor, buffer_size, buffer, read_amount, end_of_file);
 }                               /* MFSL_read */
 
-fsal_status_t MFSL_write(fsal_file_t * file_descriptor, /* IN */
+fsal_status_t MFSL_write(mfsl_file_t * file_descriptor, /* IN */
                          fsal_seek_t * seek_descriptor, /* IN */
                          fsal_size_t buffer_size,       /* IN */
                          caddr_t buffer,        /* IN */
                          fsal_size_t * write_amount,    /* OUT */
-                         mfsl_context_t * p_mfsl_context        /* IN */
+                         mfsl_context_t * p_mfsl_context,        /* IN */
+			 void * pextra
     )
 {
-  return FSAL_write(file_descriptor, seek_descriptor, buffer_size, buffer, write_amount);
+  return FSAL_write(&file_descriptor->fsal_file, seek_descriptor, buffer_size, buffer, write_amount);
 }                               /* MFSL_write */
 
-fsal_status_t MFSL_close(fsal_file_t * file_descriptor, /* IN */
-                         mfsl_context_t * p_mfsl_context        /* IN */
+fsal_status_t MFSL_close(mfsl_file_t * file_descriptor, /* IN */
+                         mfsl_context_t * p_mfsl_context,        /* IN */
+			 void * pextra
     )
 {
-  return FSAL_close(file_descriptor);
+  return FSAL_close(&file_descriptor->fsal_file);
 }                               /* MFSL_close */
 
-fsal_status_t MFSL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
-                                   fsal_u64_t fileid, mfsl_context_t * p_mfsl_context)  /* IN */
+fsal_status_t MFSL_close_by_fileid(mfsl_file_t * file_descriptor /* IN */ ,
+                                   fsal_u64_t fileid, 
+                                   mfsl_context_t * p_mfsl_context,  /* IN */
+                                   void * pextra )
 {
-  return FSAL_close_by_fileid(file_descriptor, fileid);
+  return FSAL_close_by_fileid(&file_descriptor->fsal_file, fileid);
 }                               /* MFSL_close_by_fileid */
 
 fsal_status_t MFSL_readlink(mfsl_object_t * linkhandle, /* IN */
                             fsal_op_context_t * p_context,      /* IN */
                             mfsl_context_t * p_mfsl_context,    /* IN */
                             fsal_path_t * p_link_content,       /* OUT */
-                            fsal_attrib_list_t * link_attributes        /* [ IN/OUT ] */
+                            fsal_attrib_list_t * link_attributes,        /* [ IN/OUT ] */
+			    void * pextra
     )
 {
   return FSAL_readlink(&linkhandle->handle, p_context, p_link_content, link_attributes);
@@ -378,7 +569,8 @@ fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,     /* IN */
                            mfsl_context_t * p_mfsl_context,     /* IN */
                            fsal_accessmode_t accessmode,        /* IN (ignored); */
                            mfsl_object_t * link_handle, /* OUT */
-                           fsal_attrib_list_t * link_attributes /* [ IN/OUT ] */
+                           fsal_attrib_list_t * link_attributes, /* [ IN/OUT ] */
+			   void * pextra
     )
 {
   return FSAL_symlink(&parent_directory_handle->handle,
@@ -394,7 +586,8 @@ fsal_status_t MFSL_rename(mfsl_object_t * old_parentdir_handle, /* IN */
                           fsal_op_context_t * p_context,        /* IN */
                           mfsl_context_t * p_mfsl_context,      /* IN */
                           fsal_attrib_list_t * src_dir_attributes,      /* [ IN/OUT ] */
-                          fsal_attrib_list_t * tgt_dir_attributes       /* [ IN/OUT ] */
+                          fsal_attrib_list_t * tgt_dir_attributes,       /* [ IN/OUT ] */
+			  void * pextra
     )
 {
   return FSAL_rename(&old_parentdir_handle->handle,
@@ -408,11 +601,77 @@ fsal_status_t MFSL_unlink(mfsl_object_t * parentdir_handle,     /* INOUT */
                           mfsl_object_t * object_handle,        /* INOUT */
                           fsal_op_context_t * p_context,        /* IN */
                           mfsl_context_t * p_mfsl_context,      /* IN */
-                          fsal_attrib_list_t * parentdir_attributes     /* [IN/OUT ] */
+                          fsal_attrib_list_t * parentdir_attributes,     /* [IN/OUT ] */
+			  void * pextra
     )
 {
-  return FSAL_unlink(&parentdir_handle->handle,
-                     p_object_name, p_context, parentdir_attributes);
+  fsal_status_t   fsal_status ;
+  int             pnfs_status;
+  pnfs_file_t   * ppnfs_file = NULL ;
+  pnfs_fileloc_t  pnfs_location ;
+
+  fsal_status =  FSAL_unlink(&parentdir_handle->handle,
+                             p_object_name, p_context, parentdir_attributes);
+
+  if( FSAL_IS_ERROR( fsal_status ) ) 
+    return fsal_status ;
+
+  if( pextra == NULL ) /* Not a regular file */
+    return fsal_status ;
+
+  ppnfs_file = (pnfs_file_t *)pextra ;
+ 
+  if( ppnfs_file->ds_file.allocated == FALSE ) 
+   {
+     if(! pnfs_get_location( &p_mfsl_context->pnfsclient, &object_handle->handle,
+                             NULL,  &pnfs_location ) )
+     {
+       LogDebug(COMPONENT_MFSL, "LOOKUP PNFS support : can't build pnfs_location" ) ;
+
+       fsal_status.major = ERR_FSAL_IO ;
+       fsal_status.minor = 0 ;
+
+       return fsal_status ;
+     }
+   
+     if((pnfs_status = pnfs_lookup_file( &p_mfsl_context->pnfsclient,
+  				         &pnfs_location, 
+				         ppnfs_file ) ) != NFS4_OK )  
+       {
+         LogDebug(COMPONENT_MFSL, "LOOKUP PNFS support : can't build pnfs_location" ) ;
+
+         fsal_status.major = ERR_FSAL_IO ;
+         fsal_status.minor = 0 ;
+
+         return fsal_status ;
+       }
+   
+     ppnfs_file->ds_file.allocated = TRUE ; 
+   }
+ 
+  printf( "------> MFSL_remove : loc=%s\n", ppnfs_file->ds_file.location.str_mds_handle ) ;
+  
+  if( ( pnfs_status = pnfs_remove_file( &p_mfsl_context->pnfsclient, ppnfs_file ) ) != NFS4_OK )
+   {
+       printf( "====> UNLINK DS FILE : Error %u\n", pnfs_status ) ;
+
+       LogDebug(COMPONENT_MFSL, "UNLINK DS FILE : Error %u\n", pnfs_status ) ;
+
+       if( pnfs_status != NFS4ERR_NOENT ) 
+        {
+          fsal_status.major = ERR_FSAL_IO ;
+          fsal_status.minor = 0 ;
+
+          return fsal_status ;
+        }
+   }
+
+  printf( "=+=+=+=+> UNLINK DS FILE : SUCCESS\n", pnfs_status ) ;
+
+  fsal_status.major = ERR_FSAL_NO_ERROR ;
+  fsal_status.minor = 0 ;
+
+  return fsal_status ;
 }                               /* MFSL_unlink */
 
 fsal_status_t MFSL_mknode(mfsl_object_t * parentdir_handle,     /* IN */
@@ -423,7 +682,8 @@ fsal_status_t MFSL_mknode(mfsl_object_t * parentdir_handle,     /* IN */
                           fsal_nodetype_t nodetype,     /* IN */
                           fsal_dev_t * dev,     /* IN */
                           mfsl_object_t * p_object_handle,      /* OUT */
-                          fsal_attrib_list_t * node_attributes  /* [ IN/OUT ] */
+                          fsal_attrib_list_t * node_attributes,  /* [ IN/OUT ] */
+			  void * pextra
     )
 {
   return FSAL_mknode(&parentdir_handle->handle,
@@ -437,7 +697,8 @@ fsal_status_t MFSL_rcp(mfsl_object_t * filehandle,      /* IN */
                        fsal_op_context_t * p_context,   /* IN */
                        mfsl_context_t * p_mfsl_context, /* IN */
                        fsal_path_t * p_local_path,      /* IN */
-                       fsal_rcpflag_t transfer_opt      /* IN */
+                       fsal_rcpflag_t transfer_opt,      /* IN */
+		       void * pextra
     )
 {
   return FSAL_rcp(&filehandle->handle, p_context, p_local_path, transfer_opt);
@@ -448,7 +709,8 @@ fsal_status_t MFSL_rcp_by_fileid(mfsl_object_t * filehandle,    /* IN */
                                  fsal_op_context_t * p_context, /* IN */
                                  mfsl_context_t * p_mfsl_context,       /* IN */
                                  fsal_path_t * p_local_path,    /* IN */
-                                 fsal_rcpflag_t transfer_opt    /* IN */
+                                 fsal_rcpflag_t transfer_opt,    /* IN */
+				 void * pextra
     )
 {
   return FSAL_rcp_by_fileid(&filehandle->handle,
@@ -472,12 +734,12 @@ fsal_status_t MFSL_terminate(void)
 /******************************************************
  *                FSAL locks management.
  ******************************************************/
-fsal_status_t MSFL_lock(fsal_file_t * obj_handle,       /* IN */
+fsal_status_t MSFL_lock(mfsl_file_t * obj_handle,       /* IN */
                         fsal_lockdesc_t * ldesc,        /*IN/OUT */
                         fsal_boolean_t callback /* IN */
     )
 {
-  return FSAL_lock(obj_handle, ldesc, callback );
+  return FSAL_lock(&obj_handle->fsal_file, ldesc, callback );
 }                               /* MFSL_lock */
 
 
@@ -488,18 +750,18 @@ fsal_status_t MFSL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / 
   return FSAL_changelock(lock_descriptor, lock_info);
 }                               /* MFSL_changelock */
 
-fsal_status_t MFSL_unlock(fsal_file_t * obj_handle,     /* IN */
+fsal_status_t MFSL_unlock(mfsl_file_t * obj_handle,     /* IN */
                           fsal_lockdesc_t * ldesc       /*IN/OUT */
     )
 {
-  return FSAL_unlock(obj_handle, ldesc);
+  return FSAL_unlock(&obj_handle->fsal_file, ldesc);
 }                               /* MFSL_unlock */
 
-fsal_status_t MFSL_getlock(fsal_file_t * obj_handle,    /* IN */
+fsal_status_t MFSL_getlock(mfsl_file_t * obj_handle,    /* IN */
                            fsal_lockdesc_t * ldesc      /*IN/OUT */
     )
 {
-   return FSAL_getlock( obj_handle, ldesc ) ;
+   return FSAL_getlock( &obj_handle->fsal_file, ldesc ) ;
 }
 
 

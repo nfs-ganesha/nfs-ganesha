@@ -261,9 +261,6 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
   cache_inode_status_t status;
   cache_content_status_t cache_content_status;
   int to_remove_numlinks = 0;
-#ifdef _USE_PNFS
-  int pnfs_status;
-#endif
 
   /* stats */
   pclient->stat.nb_call_total += 1;
@@ -380,10 +377,21 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       after_attr.asked_attributes = pclient->attrmask;
 #ifdef _USE_MFSL
       cache_inode_get_attributes(pentry, &after_attr);
+#ifdef _USE_PNFS
+      if( to_remove_entry->internal_md.type == REGULAR_FILE )
+        fsal_status = MFSL_unlink(&pentry->mobject,
+                                  pnode_name,
+                                  &to_remove_entry->mobject,
+                                  pcontext, &pclient->mfsl_context, &after_attr,
+                                  &to_remove_entry->object.file.pnfs_file );
+      else
+#endif /* _USE_PNFS */
       fsal_status = MFSL_unlink(&pentry->mobject,
                                 pnode_name,
                                 &to_remove_entry->mobject,
-                                pcontext, &pclient->mfsl_context, &after_attr);
+                                pcontext, &pclient->mfsl_context, &after_attr,
+                                NULL);
+
 #else
       fsal_status = FSAL_unlink(&fsal_handle_parent, pnode_name, pcontext, &after_attr);
 #endif
@@ -524,27 +532,6 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
                                     cache_content_status);
                 }
             }
-#ifdef _USE_PNFS
-          if(to_remove_entry->object.file.pnfs_file.ds_file.allocated == TRUE)
-           {
-              if((pnfs_status = pnfs_remove_file( &pclient->pnfsclient,
-                                                  &to_remove_entry->object.file.pnfs_file ) ) != NFS4_OK )
-                  {
-                  LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS CREATE DS FILE : Error %u",
-                                  pnfs_status);
-
-                  if(use_mutex)
-                    {
-                      V_w(&to_remove_entry->lock);
-                      V_w(&pentry->lock);
-                    }
-
-                  *pstatus = CACHE_INODE_IO_ERROR;
-                  return *pstatus;
-                }
-
-            }
-#endif
         }
 
       /* browse and clean all DIR_CONTINUEs */

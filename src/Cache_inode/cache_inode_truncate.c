@@ -86,9 +86,6 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
 {
   fsal_status_t fsal_status;
   cache_content_status_t cache_content_status;
-#ifdef _USE_PNFS
-  int pnfs_status;
-#endif
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
@@ -149,12 +146,16 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
       /* Call FSAL to actually truncate */
       pentry->object.file.attributes.asked_attributes = pclient->attrmask;
 #ifdef _USE_MFSL
-      fsal_status = MFSL_truncate(&pentry->mobject, pcontext, &pclient->mfsl_context, length, NULL,     /** @todo &pentry->object.file.open_fd.fd, *//* Used only with FSAL_PROXY */
-                                  &pentry->object.file.attributes);
+      fsal_status = MFSL_truncate(&pentry->mobject, pcontext, &pclient->mfsl_context, length, NULL,    
+#ifdef _USE_PNFS
+                                  &pentry->object.file.attributes, &pentry->object.file.pnfs_file);
+#else
+                                  &pentry->object.file.attributes, NULL);
+#endif /* _USE_PNFS */
 #else
       fsal_status = FSAL_truncate(&pentry->object.file.handle, pcontext, length, NULL,  /** @todo &pentry->object.file.open_fd.fd, *//* Used only with FSAL_PROXY */
                                   &pentry->object.file.attributes);
-#endif
+#endif /* _USE_MFSL */
 
       if(FSAL_IS_ERROR(fsal_status))
         {
@@ -185,27 +186,6 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
         }
     }
 
-#ifdef _USE_PNFS
-  if(pentry->object.file.pnfs_file.ds_file.allocated == TRUE)
-    {
-        if((pnfs_status = pnfs_truncate_file( &pclient->pnfsclient,
-                                              length,
-                                              &pentry->object.file.pnfs_file ) ) != NFS4_OK )
-          {
-             LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS TRUNCATE DS FILE : Error %u",
-                      pnfs_status);
-
-             if(use_mutex)
-               {
-                 V_w(&pentry->lock);
-               }
-
-             *pstatus = CACHE_INODE_IO_ERROR;
-             return *pstatus;
-          }
-
-    }
-#endif
 
   /* Validate the entry */
   *pstatus = cache_inode_valid(pentry, CACHE_INODE_OP_SET, pclient);

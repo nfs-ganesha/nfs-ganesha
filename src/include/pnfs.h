@@ -57,9 +57,6 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "fsal_types.h"
-#ifdef _USE_MFSL
-#include "mfsl.h"
-#endif
 #include "log_macros.h"
 #include "config_parsing.h"
 #include "nfs23.h"
@@ -109,7 +106,7 @@ int pnfs_truncate_file( pnfs_client_t * pnfsclient,
 
 void pnfs_encode_getdeviceinfo( char *buff, unsigned int *plen) ;
 
-void pnfs_encode_layoutget( void * pds_file, char *buff, unsigned int *plen) ;
+void pnfs_encode_layoutget( pnfs_file_t * pds_file, char *buff, unsigned int *plen) ;
 
 int pnfs_init(pnfs_client_t * pnfsclient,
               pnfs_layoutfile_parameter_t * pnfs_layout_param) ;

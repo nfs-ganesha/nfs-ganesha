@@ -27,8 +27,8 @@
  * \file    mfsl_types.h
  */
 
-#ifndef _MFSL_AIO_TYPES_H
-#define _MFSL_AIO_TYPES_H
+#ifndef _MFSL_PNFS_FILE_TYPES_H
+#define _MFSL_PNFS_FILE_TYPES_H
 
 
 #ifndef TRUE
@@ -42,7 +42,7 @@
  * labels in the config file
  */
 
-#define CONF_LABEL_MFSL_AIO          "MFSL_AIO"
+#define CONF_LABEL_MFSL_PNFS_FILE          "MFSL_PNFS_FILE"
 
 /* other includes */
 #include <sys/types.h>
@@ -51,6 +51,7 @@
 #include "config_parsing.h"
 #include "err_fsal.h"
 #include "err_mfsl.h"
+#include "pnfs.h"
 
 typedef struct mfsl_parameter__
 {
@@ -60,13 +61,19 @@ typedef struct mfsl_parameter__
 
 typedef struct mfsl_context__
 {
-
-  int nothing;
+   pnfs_client_t pnfsclient;     
 } mfsl_context_t;
+
+typedef struct mfsl_file__
+{ 
+  fsal_file_t  fsal_file ;
+  pnfs_file_t  pnfs_file ;  
+} mfsl_file_t ;
 
 typedef struct mfsl_object__
 {
   fsal_handle_t handle;
 } mfsl_object_t;
+
 
 #endif                          /* _MFSL_AIO_TYPES_H */

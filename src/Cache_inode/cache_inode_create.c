@@ -49,10 +49,6 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "stuff_alloc.h"
-#ifdef _USE_PNFS
-#include "pnfs.h"
-#endif                          /* _USE_PNFS */
-
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,8 +104,9 @@ cache_inode_create(cache_entry_t * pentry_parent,
     cache_inode_status_t status;
     struct cache_inode_dir_begin__ *dir_begin;
 #ifdef _USE_PNFS
-    int pnfs_status;
-    pnfs_fileloc_t pnfs_location ;
+    pnfs_file_t pnfs_file ;
+
+    pnfs_file.ds_file.allocated = FALSE ;
 #endif
 
     /* Set the return default to CACHE_INODE_SUCCESS */
@@ -205,7 +202,12 @@ cache_inode_create(cache_entry_t * pentry_parent,
                                       pname, pcontext,
                                       &pclient->mfsl_context,
                                       mode, &object_handle,
-                                      &object_attributes, &parent_attributes);
+                                      &object_attributes, &parent_attributes,
+#ifdef _USE_PNFS
+	                              &pnfs_file ) ;			      
+#else
+                                      NULL);
+#endif /* _USE_PNFS */
 #else
             fsal_status = FSAL_create(&dir_handle,
                                       pname, pcontext, mode,
@@ -220,7 +222,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
                                      pname, pcontext,
                                      &pclient->mfsl_context,
                                      mode, &object_handle,
-                                     &object_attributes, &parent_attributes);
+                                     &object_attributes, &parent_attributes, NULL);
 #else
             fsal_status = FSAL_mkdir(&dir_handle,
                                      pname, pcontext, mode,
@@ -234,7 +236,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
             fsal_status = MFSL_symlink(&pentry_parent->mobject,
                                        pname, &pcreate_arg->link_content,
                                        pcontext, &pclient->mfsl_context,
-                                       mode, &object_handle, &object_attributes);
+                                       mode, &object_handle, &object_attributes, NULL);
 #else
             fsal_status = FSAL_symlink(&dir_handle,
                                        pname, &pcreate_arg->link_content,
@@ -248,7 +250,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
             fsal_status = MFSL_mknode(&pentry_parent->mobject, pname,
                                       pcontext, &pclient->mfsl_context, mode,
                                       FSAL_TYPE_SOCK, NULL, /* no dev_t needed for socket file */
-                                      &object_handle, &object_attributes);
+                                      &object_handle, &object_attributes, NULL);
 #else
             fsal_status = FSAL_mknode(&dir_handle, pname, pcontext,
                                       mode, FSAL_TYPE_SOCK, NULL, /* no dev_t needed for socket file */
@@ -261,7 +263,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
             fsal_status = MFSL_mknode(&pentry_parent->mobject, pname,
                                       pcontext, &pclient->mfsl_context,
                                       mode, FSAL_TYPE_FIFO, NULL, /* no dev_t needed for FIFO file */
-                                      &object_handle, &object_attributes);
+                                      &object_handle, &object_attributes, NULL);
 #else
             fsal_status = FSAL_mknode(&dir_handle, pname, pcontext,
                                       mode, FSAL_TYPE_FIFO, NULL, /* no dev_t needed for FIFO file */
@@ -276,7 +278,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
                                       &pclient->mfsl_context,
                                       mode, FSAL_TYPE_BLK,
                                       &pcreate_arg->dev_spec,
-                                      &object_handle, &object_attributes);
+                                      &object_handle, &object_attributes, NULL);
 #else
             fsal_status = FSAL_mknode(&dir_handle,
                                       pname, pcontext,
@@ -293,7 +295,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
                                       &pclient->mfsl_context,
                                       mode, FSAL_TYPE_CHR,
                                       &pcreate_arg->dev_spec,
-                                      &object_handle, &object_attributes);
+                                      &object_handle, &object_attributes, NULL);
 #else
             fsal_status = FSAL_mknode(&dir_handle,
                                       pname, pcontext,
@@ -388,36 +390,11 @@ cache_inode_create(cache_entry_t * pentry_parent,
         }
 
 #ifdef _USE_PNFS
-    if((type == REGULAR_FILE) &&
+       if((type == REGULAR_FILE) &&
        (pcreate_arg != NULL) &&
        (pcreate_arg->use_pnfs == TRUE))
-        {
-            if(! pnfs_get_location( &pclient->pnfsclient, &pentry->object.file.handle,
-                                   NULL,  &pnfs_location ) )
-               {
-                  V_w(&pentry_parent->lock);
-                  LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS CREATE DS FILE : can't get pnfs_location Error %u",
-                           pnfs_status);
-
-                  *pstatus = CACHE_INODE_IO_ERROR;
-                  return NULL;
-               }
-
-            pnfs_status = pnfs_create_file( &pclient->pnfsclient,
-					    &pnfs_location,
-                                            &pentry->object.file.pnfs_file ) ;
-            if (pnfs_status != NFS4_OK)
-               {
-                  V_w(&pentry_parent->lock);
-                  LogDebug(COMPONENT_CACHE_INODE, "OPEN PNFS CREATE DS FILE : Error %u",
-                           pnfs_status);
-
-                  *pstatus = CACHE_INODE_IO_ERROR;
-                  return NULL;
-               }
-        }
+          memcpy( (char *)&pentry->object.file.pnfs_file, (char *)&pnfs_file, sizeof( pnfs_file_t ) ) ;
 #endif
-
        /* Update the parent cached attributes */
        if(pentry_parent->internal_md.type == DIR_BEGINNING)
            dir_begin = &pentry_parent->object.dir_begin;
