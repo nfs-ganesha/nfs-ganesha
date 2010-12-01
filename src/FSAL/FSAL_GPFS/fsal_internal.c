@@ -659,7 +659,7 @@ fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * p_handle)
   harg.handle = &p_handle->data.handle;
   memset(&p_handle->data.handle, 0, sizeof(struct file_handle));
 
-  harg.handle->handle_size = 20;
+  harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.name = NULL;
   harg.dfd = fd;
   harg.flag = 0;
