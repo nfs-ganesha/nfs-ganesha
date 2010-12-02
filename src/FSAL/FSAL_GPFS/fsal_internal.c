@@ -547,7 +547,6 @@ fsal_status_t fsal_internal_handle2fd_at(int dirfd,
 
   oarg.mountdirfd = dirfd;
 
-  phandle->data.handle.handle_size = OPENHANDLE_HANDLE_LEN;
   oarg.handle = &phandle->data.handle;
   oarg.flags = oflags;
 
@@ -719,8 +718,6 @@ fsal_status_t fsal_readlink_by_handle(fsal_op_context_t * p_context,
   int rc;
   fsal_status_t status;
   struct readlink_arg readlinkarg;
-
-  p_handle->data.handle.handle_size = OPENHANDLE_HANDLE_LEN;
 
   status = fsal_internal_handle2fd(p_context, p_handle, &fd, O_RDONLY);
 
@@ -909,7 +906,6 @@ fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
 
   statarg.mountdirfd = dirfd;
 
-  p_handle->data.handle.handle_size = OPENHANDLE_HANDLE_LEN;
   statarg.handle = &p_handle->data.handle;
   statarg.buf = buf;
 
