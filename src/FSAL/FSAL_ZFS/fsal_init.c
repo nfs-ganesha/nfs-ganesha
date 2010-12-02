@@ -260,7 +260,13 @@ static libzfswrap_vfs_t *TakeSnapshotAndMount(const char *psz_zpool, const char 
 static void AddSnapshot(libzfswrap_vfs_t *p_vfs, char *psz_name)
 {
     i_snapshots++;
-    p_snapshots = realloc(p_snapshots, (i_snapshots + 1) * sizeof(*p_snapshots));
+    if( ( p_snapshots = realloc(p_snapshots, (i_snapshots + 1) * sizeof(*p_snapshots)) ) == NULL )
+     {
+       LogMajor(COMPONENT_FSAL, "SNAPSHOTS: recan't allocate memory... exiting");
+       exit( 1 ) ;
+       return ;
+     }
+
     p_snapshots[i_snapshots].psz_name = psz_name;
     p_snapshots[i_snapshots].p_vfs = p_vfs;
     p_snapshots[i_snapshots].index = i_snapshots;
@@ -306,7 +312,12 @@ static void RemoveOldSnapshots(const char *psz_prefix, int number)
         memmove(&p_snapshots[index], &p_snapshots[index+1], (i_snapshots - index) * sizeof(*p_snapshots));
 
     i_snapshots--;
-    p_snapshots = realloc(p_snapshots, (i_snapshots + 1) * sizeof(*p_snapshots));
+    if( ( p_snapshots = realloc(p_snapshots, (i_snapshots + 1) * sizeof(*p_snapshots)) ) == NULL )
+     {
+       LogMajor(COMPONENT_FSAL, "SNAPSHOTS: recan't allocate memory... exiting");
+       exit( 1 ) ;
+       return ;
+     }
 
     /* Really remove the snapshot */
     LogDebug(COMPONENT_FSAL, "SNAPSHOTS: removing the snapshot '%s' (%d/%d)", psz_name, i + 1, number);

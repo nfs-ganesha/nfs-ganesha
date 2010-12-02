@@ -537,8 +537,9 @@ void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
 
         /* Check next client */
         RBT_INCREMENT(it);
+
+        fclose(flushipstat);
       }
 
-      fclose(flushipstat);
     }
 }                               /* nfs_ip_stats_dump */

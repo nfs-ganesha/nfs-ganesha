@@ -436,7 +436,7 @@ int main(int argc, char *argv[])
           break;
         }
 
-      fflush(stdin);
+      fflush(stdout);
     }
 
   BuddyDumpMem(stderr);
