@@ -610,17 +610,22 @@ fsal_status_t MFSL_unlink(mfsl_object_t * parentdir_handle,     /* INOUT */
   pnfs_file_t   * ppnfs_file = NULL ;
   pnfs_fileloc_t  pnfs_location ;
 
+  unsigned int numlinks = 0  ;
+
+  if( parentdir_attributes )
+     numlinks = parentdir_attributes->numlinks ;
+
   fsal_status =  FSAL_unlink(&parentdir_handle->handle,
                              p_object_name, p_context, parentdir_attributes);
 
   if( FSAL_IS_ERROR( fsal_status ) ) 
     return fsal_status ;
 
-  if( pextra == NULL ) /* Not a regular file */
+  if( pextra == NULL || numlinks > 1 ) /* Not a regular file or something with too many links */
     return fsal_status ;
 
   ppnfs_file = (pnfs_file_t *)pextra ;
- 
+
   if( ppnfs_file->ds_file.allocated == FALSE ) 
    {
      if(! pnfs_get_location( &p_mfsl_context->pnfsclient, &object_handle->handle,

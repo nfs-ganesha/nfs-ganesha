@@ -668,8 +668,12 @@ int snmp_adm_register_poll_trap(unsigned int second, trap_test test_fct, void *a
   if(polling_list_size >= capacity - 1)
     {
       capacity *= 2;
-      polling_threads = realloc(polling_threads, sizeof(pthread_t) * capacity);
-      polling_args = realloc(polling_args, sizeof(polling_arg) * capacity);
+
+      if ( ( polling_threads = realloc(polling_threads, sizeof(pthread_t) * capacity) ) == NULL )
+        return -1 ; 
+
+      if( ( polling_args = realloc(polling_args, sizeof(polling_arg) * capacity) ) == NULL )
+	return -1 ;
     }
 
   polling_args[polling_list_size].second = second;
