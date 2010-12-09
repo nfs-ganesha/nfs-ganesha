@@ -49,7 +49,6 @@ extern buddy_parameter_t default_buddy_parameter;
 
 clientid4 fsal_clientid;
 pthread_mutex_t fsal_clientid_mutex = PTHREAD_MUTEX_INITIALIZER;
-unsigned int done = 0;
 
 /**
  * FSAL_proxy_setclientid:
@@ -89,104 +88,100 @@ fsal_status_t FSAL_proxy_setclientid(proxyfsal_op_context_t * p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
 
   /* Client id negociation is to be done only one time for the whole FSAL */
-  P(fsal_clientid_mutex);
-  if(done == 0)
-    {
-      /* Setup results structures */
-      argnfs4.argarray.argarray_val = argoparray;
-      resnfs4.resarray.resarray_val = resoparray;
-      argnfs4.minorversion = 0;
-      argnfs4.tag.utf8string_val = NULL;
-      argnfs4.tag.utf8string_len = 0;
-      argnfs4.argarray.argarray_len = 0;
 
-      snprintf(clientid_name, MAXNAMLEN, "GANESHA NFSv4 Proxy Pid=%u", getpid());
-      nfsclientid.id.id_len = strlen(clientid_name);
-      nfsclientid.id.id_val = clientid_name;
-      snprintf(nfsclientid.verifier, NFS4_VERIFIER_SIZE, "%x", (int)ServerBootTime);
+  /* Setup results structures */
+  argnfs4.argarray.argarray_val = argoparray;
+  resnfs4.resarray.resarray_val = resoparray;
+  argnfs4.minorversion = 0;
+  argnfs4.tag.utf8string_val = NULL;
+  argnfs4.tag.utf8string_len = 0;
+  argnfs4.argarray.argarray_len = 0;
 
-      cbproxy.cb_program = 0;
-      strncpy(cbnetid, "tcp", MAXNAMLEN);
-      strncpy(cbaddr, "127.0.0.1", MAXNAMLEN);
+  snprintf(clientid_name, MAXNAMLEN, "GANESHA NFSv4 Proxy Pid=%u", getpid());
+  nfsclientid.id.id_len = strlen(clientid_name);
+  nfsclientid.id.id_val = clientid_name;
+  snprintf(nfsclientid.verifier, NFS4_VERIFIER_SIZE, "%x", (int)ServerBootTime);
+
+  cbproxy.cb_program = 0;
+  strncpy(cbnetid, "tcp", MAXNAMLEN);
+  strncpy(cbaddr, "127.0.0.1", MAXNAMLEN);
 #ifdef _USE_NFS4_1
-      cbproxy.cb_location.na_r_netid = cbnetid;
-      cbproxy.cb_location.na_r_addr = cbaddr;
+  cbproxy.cb_location.na_r_netid = cbnetid;
+  cbproxy.cb_location.na_r_addr = cbaddr;
 #else
-      cbproxy.cb_location.r_netid = cbnetid;
-      cbproxy.cb_location.r_addr = cbaddr;
+  cbproxy.cb_location.r_netid = cbnetid;
+  cbproxy.cb_location.r_addr = cbaddr;
 #endif
 
-      COMPOUNDV4_ARG_ADD_OP_SETCLIENTID(argnfs4, nfsclientid, cbproxy);
+  COMPOUNDV4_ARG_ADD_OP_SETCLIENTID(argnfs4, nfsclientid, cbproxy);
 
-      TakeTokenFSCall();
+  TakeTokenFSCall();
 
-      p_context->user_credential.user = 0;
-      p_context->user_credential.group = 0;
-      p_context->user_credential.nbgroups = 0;
+  p_context->user_credential.user = 0;
+  p_context->user_credential.group = 0;
+  p_context->user_credential.nbgroups = 0;
 
-      /* Call the NFSv4 function */
-      COMPOUNDV4_EXECUTE(p_context, argnfs4, resnfs4, rc);
-      if(rc != RPC_SUCCESS)
-        {
-          ReleaseTokenFSCall();
-
-          V(fsal_clientid_mutex);
-
-          Return(ERR_FSAL_IO, rc, INDEX_FSAL_unlink);
-        }
-
+  /* Call the NFSv4 function */
+  rc = COMPOUNDV4_EXECUTE_SIMPLE(p_context, argnfs4, resnfs4 );
+  if(rc != RPC_SUCCESS)
+    {
       ReleaseTokenFSCall();
 
-      if(resnfs4.status != NFS4_OK)
-        {
-          V(fsal_clientid_mutex);
-          return fsal_internal_proxy_error_convert(resnfs4.status,
+      V(fsal_clientid_mutex);
+
+      Return(ERR_FSAL_IO, rc, INDEX_FSAL_unlink);
+    }
+
+  ReleaseTokenFSCall();
+
+  if(resnfs4.status != NFS4_OK)
+    {
+      V(fsal_clientid_mutex);
+      return fsal_internal_proxy_error_convert(resnfs4.status,
                                                    INDEX_FSAL_InitClientContext);
-        }
+    }
 
-      resultclientid =
+  resultclientid =
           resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.
           resok4.clientid;
 
-      /* Step 2: Confirm the client id */
-      argnfs4.minorversion = 0;
-      argnfs4.tag.utf8string_val = NULL;
-      argnfs4.tag.utf8string_len = 0;
-      argnfs4.argarray.argarray_len = 0;
+  /* Step 2: Confirm the client id */
+  argnfs4.minorversion = 0;
+  argnfs4.tag.utf8string_val = NULL;
+  argnfs4.tag.utf8string_len = 0;
+  argnfs4.argarray.argarray_len = 0;
 
-      argnfs4.argarray.argarray_val[0].argop = NFS4_OP_SETCLIENTID_CONFIRM;
-      argnfs4.argarray.argarray_val[0].nfs_argop4_u.opsetclientid_confirm.clientid =
-          resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.
-          resok4.clientid;
-      memcpy((char *)argnfs4.argarray.argarray_val[0].nfs_argop4_u.opsetclientid_confirm.
+  argnfs4.argarray.argarray_val[0].argop = NFS4_OP_SETCLIENTID_CONFIRM;
+  argnfs4.argarray.argarray_val[0].nfs_argop4_u.opsetclientid_confirm.clientid =
+      resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.
+      resok4.clientid;
+  memcpy((char *)argnfs4.argarray.argarray_val[0].nfs_argop4_u.opsetclientid_confirm.
              setclientid_confirm,
              (char *)resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.
              SETCLIENTID4res_u.resok4.setclientid_confirm, NFS4_VERIFIER_SIZE);
-      argnfs4.argarray.argarray_len = 1;
+  argnfs4.argarray.argarray_len = 1;
 
-      /* Call the NFSv4 function */
-      COMPOUNDV4_EXECUTE(p_context, argnfs4, resnfs4, rc);
-      if(rc != RPC_SUCCESS)
-        {
-          ReleaseTokenFSCall();
-
-          V(fsal_clientid_mutex);
-
-          Return(ERR_FSAL_IO, rc, INDEX_FSAL_unlink);
-        }
-
+  /* Call the NFSv4 function */
+  rc = COMPOUNDV4_EXECUTE_SIMPLE(p_context, argnfs4, resnfs4);
+  if(rc != RPC_SUCCESS)
+    {
       ReleaseTokenFSCall();
 
-      if(resnfs4.status != NFS4_OK)
-        return fsal_internal_proxy_error_convert(resnfs4.status,
+      V(fsal_clientid_mutex);
+
+      Return(ERR_FSAL_IO, rc, INDEX_FSAL_unlink);
+    }
+
+  ReleaseTokenFSCall();
+
+  if(resnfs4.status != NFS4_OK)
+    return fsal_internal_proxy_error_convert(resnfs4.status,
                                                  INDEX_FSAL_InitClientContext);
 
-      /* Keep the confirmed client id */
-      fsal_clientid =
+  /* Keep the confirmed client id */
+  fsal_clientid =
           argnfs4.argarray.argarray_val[0].nfs_argop4_u.opsetclientid_confirm.clientid;
 
-      done = 1;
-    }                           /* if ( done == 0 ) */
   V(fsal_clientid_mutex);
 
   p_context->clientid = fsal_clientid;
