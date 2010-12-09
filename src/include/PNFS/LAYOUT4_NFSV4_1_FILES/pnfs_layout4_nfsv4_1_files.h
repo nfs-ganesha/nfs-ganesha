@@ -89,6 +89,7 @@ typedef struct pnfs_layoutfile_parameter__
 typedef struct pnfs_ds_client__
 {
   sessionid4 session;
+  clientid4  clientid;
   sequenceid4 sequence;
   nfs_fh4 ds_rootfh;
   CLIENT *rpc_client;
