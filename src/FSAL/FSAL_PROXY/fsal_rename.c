@@ -113,7 +113,7 @@ fsal_status_t PROXYFSAL_rename(proxyfsal_handle_t * old_parentdir_handle,       
 
   fsal_proxy_internal_fattr_t fattr_internal_new;
   fsal_proxy_internal_fattr_t fattr_internal_old;
-  struct timeval timeout = { 25, 0 };
+  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
 
   /* sanity checks.
    * note : src/tgt_dir_attributes are optional.

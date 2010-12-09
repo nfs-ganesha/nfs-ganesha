@@ -346,7 +346,7 @@ static int db_load_operation(db_thread_info_t * p_info, hash_table_t * p_hash)
   gettimeofday(&t2, NULL);
   timersub(&t2, &t1, &tdiff);
 
-  DLogEvent(COMPONENT_FSAL, "Reloaded %u items in %d.%06ds",
+  LogEvent(COMPONENT_FSAL, "Reloaded %u items in %d.%06ds",
             nb_loaded, (int)tdiff.tv_sec, (int)tdiff.tv_usec);
 
   return HANDLEMAP_SUCCESS;
@@ -723,7 +723,8 @@ int handlemap_db_init(const char *db_dir,
 
   for(i = 0; i < nb_db_threads; i++)
     {
-      rc = init_db_thread_info(&db_thread[i]);
+      /** @todo ici coller  out_parameter->fs_specific_info.hdlmap_nb_db_op_prealloc */
+      rc = init_db_thread_info(&db_thread[i], 100);
       if(rc)
         return rc;
 
