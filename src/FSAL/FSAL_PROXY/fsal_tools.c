@@ -962,7 +962,7 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
         {
           out_parameter->fs_specific_info.retry_sleeptime = (unsigned int)atoi(key_value);
         }
-#ifdef _ALLOW_NFS_PROTO_CHOICE
+#ifndef _ALLOW_NFS_PROTO_CHOICE
       else if(!STRCMP(key_name, "NFS_Proto"))
         {
           /* key_value should be either "udp" or "tcp" */
