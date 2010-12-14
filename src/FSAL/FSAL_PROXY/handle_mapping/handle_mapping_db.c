@@ -723,7 +723,8 @@ int handlemap_db_init(const char *db_dir,
 
   for(i = 0; i < nb_db_threads; i++)
     {
-      rc = init_db_thread_info(&db_thread[i]);
+      /** @todo ici coller  out_parameter->fs_specific_info.hdlmap_nb_db_op_prealloc */
+      rc = init_db_thread_info(&db_thread[i], 100);
       if(rc)
         return rc;
 

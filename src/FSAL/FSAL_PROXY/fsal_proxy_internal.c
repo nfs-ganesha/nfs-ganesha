@@ -1368,7 +1368,7 @@ fsal_status_t FSAL_proxy_open_confirm(proxyfsal_file_t * pfd)
 #define FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM 1
   nfs_argop4 argoparray[FSAL_PROXY_OPEN_CONFIRM_NB_OP_ALLOC];
   nfs_resop4 resoparray[FSAL_PROXY_OPEN_CONFIRM_NB_OP_ALLOC];
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC
+  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC ;
 
   if(pfd == NULL)
     {

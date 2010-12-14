@@ -81,7 +81,7 @@ fsal_status_t FSAL_proxy_setclientid(proxyfsal_op_context_t * p_context)
   char cbaddr[MAXNAMLEN];
   char cbnetid[MAXNAMLEN];
   clientid4 resultclientid;
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC
+  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC ;
 
   /* sanity checks.
    */
@@ -212,7 +212,7 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
 
   COMPOUND4args argnfs4;
   COMPOUND4res resnfs4;
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC
+  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC ;
   fsal_status_t fsal_status;
   proxyfsal_op_context_t fsal_context;
   proxyfsal_op_context_t *p_context = &fsal_context;

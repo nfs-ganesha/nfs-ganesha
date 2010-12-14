@@ -567,7 +567,7 @@ fsal_status_t PROXYFSAL_link(proxyfsal_handle_t * target_handle,        /* IN */
 
   fsal_proxy_internal_fattr_t fattr_internal;
 
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC
+  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC ;
 
   /* sanity checks.
    * note : attributes is optional.

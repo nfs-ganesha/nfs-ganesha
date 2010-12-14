@@ -682,7 +682,7 @@ fsal_status_t PROXYFSAL_write(proxyfsal_file_t * file_descriptor,       /* IN */
 
   fsal_off_t offset;
 
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC
+  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC ;
 
 #define FSAL_WRITE_NB_OP_ALLOC 2
 
