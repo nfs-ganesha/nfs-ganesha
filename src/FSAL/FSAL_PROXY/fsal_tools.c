@@ -504,7 +504,7 @@ fsal_status_t PROXYFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_
   out_parameter->fs_specific_info.srv_addr = htonl(0x7F000001); /* 127.0.0.1 aka localhost     */
   out_parameter->fs_specific_info.srv_prognum = 100003; /* Default NFS prognum         */
   out_parameter->fs_specific_info.srv_port = htons(2049);       /* Default NFS port            */
-  out_parameter->fs_specific_info.srv_timeout = 25;     /* RPC Client timeout          */
+  out_parameter->fs_specific_info.srv_timeout = 2;     /* RPC Client timeout          */
   out_parameter->fs_specific_info.srv_sendsize = FSAL_PROXY_SEND_BUFFER_SIZE;   /* Default Buffer Send Size    */
   out_parameter->fs_specific_info.srv_recvsize = FSAL_PROXY_RECV_BUFFER_SIZE;   /* Default Buffer Send Size    */
   out_parameter->fs_specific_info.use_privileged_client_port = FALSE;   /* No privileged port by default */
@@ -962,7 +962,7 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
         {
           out_parameter->fs_specific_info.retry_sleeptime = (unsigned int)atoi(key_value);
         }
-#ifndef _ALLOW_NFS_PROTO_CHOICE
+////#ifdef _ALLOW_NFS_PROTO_CHOICE
       else if(!STRCMP(key_name, "NFS_Proto"))
         {
           /* key_value should be either "udp" or "tcp" */
@@ -975,7 +975,7 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
             }
           strncpy(out_parameter->fs_specific_info.srv_proto, key_value, MAXNAMLEN);
         }
-#endif
+/////#endif
       else if(!STRCMP(key_name, "Active_krb5"))
         {
           out_parameter->fs_specific_info.active_krb5 = StrToBoolean(key_value);
