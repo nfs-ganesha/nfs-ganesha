@@ -30,7 +30,7 @@
 #include "fsal_convert.h"
 #include "fsal_common.h"
 
-#define TIMEOUTRPC { 2, 0 }
+#define TIMEOUTRPC {2, 0} 
 
 #define PRINT_HANDLE( tag, handle )                                                     \
   do {                                                                                  \

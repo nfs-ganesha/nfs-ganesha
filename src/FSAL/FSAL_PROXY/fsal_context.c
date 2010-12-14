@@ -32,7 +32,7 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_common.h"
-#include <fsal_nfsv4_macros.h> 
+#include "fsal_nfsv4_macros.h"
 #include <pwd.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -194,7 +194,7 @@ fsal_status_t PROXYFSAL_InitClientContext(proxyfsal_op_context_t * p_thr_context
 
   int sock;
   struct sockaddr_in addr_rpc;
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC ;
+  struct timeval timeout = TIMEOUTRPC;
   int rc;
   int priv_port = 0 ; 
   fsal_status_t fsal_status;
@@ -240,7 +240,9 @@ fsal_status_t PROXYFSAL_InitClientContext(proxyfsal_op_context_t * p_thr_context
       if((p_thr_context->rpc_client = clntudp_bufcreate(&addr_rpc,
                                                         p_thr_context->srv_prognum,
                                                         FSAL_PROXY_NFS_V4,
-                                                        (struct timeval)TIMEOUTRPC,
+                                                        (struct timeval)
+                                                        {
+                                                        25, 0},
                                                         &sock,
                                                         p_thr_context->srv_sendsize,
                                                         p_thr_context->srv_recvsize)) ==
