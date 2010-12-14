@@ -38,6 +38,7 @@
 #include "nfs_proto_functions.h"
 #include "fsal_nfsv4_macros.h"
 
+
 /**
  * PROXYFSAL_lookup :
  * Looks up for an object into a directory.
@@ -103,7 +104,7 @@ fsal_status_t PROXYFSAL_lookup(proxyfsal_handle_t * parent_directory_handle,    
   fsal_proxy_internal_fattr_t fattr_internal;
   char padfilehandle[FSAL_PROXY_FILEHANDLE_MAX_LEN];
 
-  struct timeval timeout = { 25, 0 };
+  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
   /* sanity checks
    * note : object_attributes is optionnal
    *        parent_directory_handle may be null for getting FS root.

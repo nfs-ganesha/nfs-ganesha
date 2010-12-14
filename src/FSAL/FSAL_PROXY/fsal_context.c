@@ -38,6 +38,8 @@
 #include <string.h>
 #include <netdb.h> /* For rresvport */
 
+#include <fsal_nfsv4_macros.h> 
+
 extern proxyfs_specific_initinfo_t global_fsal_proxy_specific_info;
 
 /** usefull subopt definitions */
@@ -193,7 +195,7 @@ fsal_status_t PROXYFSAL_InitClientContext(proxyfsal_op_context_t * p_thr_context
 
   int sock;
   struct sockaddr_in addr_rpc;
-  struct timeval timeout = { 25, 0 };
+  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
   int rc;
   int priv_port = 0 ; 
   fsal_status_t fsal_status;

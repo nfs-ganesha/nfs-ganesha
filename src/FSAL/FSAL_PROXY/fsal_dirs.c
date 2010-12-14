@@ -144,7 +144,7 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
   //char tabentry4name[FSAL_READDIR_SIZE][MAXNAMLEN];
   char * tabentry4name = NULL ;
   uint32_t tabentry4bitmap[FSAL_READDIR_SIZE][2];
-  struct timeval timeout = { 25, 0 };
+  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
   //fsal_proxy_internal_fattr_readdir_t tabentry4attr[FSAL_READDIR_SIZE];
   fsal_proxy_internal_fattr_readdir_t * tabentry4attr = NULL ;
 #define FSAL_READDIR_NB_OP_ALLOC 2

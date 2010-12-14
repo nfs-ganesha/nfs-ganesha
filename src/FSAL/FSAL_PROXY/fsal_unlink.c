@@ -91,7 +91,7 @@ fsal_status_t PROXYFSAL_unlink(proxyfsal_handle_t * parentdir_handle,   /* IN */
   uint32_t bitmap_res[2];
 
   fsal_proxy_internal_fattr_t fattr_internal;
-  struct timeval timeout = { 25, 0 };
+  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
 
   /* sanity checks.
    * note : parentdir_attributes are optional.

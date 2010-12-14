@@ -66,7 +66,7 @@ fsal_status_t FSAL_proxy_truncate_stateless(proxyfsal_handle_t * filehandle,    
   fsal_attrib_list_t fsal_attr_set;
   fattr4 fattr_set;
   fsal_proxy_internal_fattr_t fattr_internal;
-  struct timeval timeout = { 25, 0 };
+  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -240,7 +240,7 @@ fsal_status_t PROXYFSAL_truncate(proxyfsal_handle_t * filehandle,       /* IN */
   fsal_attrib_list_t fsal_attr_set;
   fattr4 fattr_set;
   fsal_proxy_internal_fattr_t fattr_internal;
-  struct timeval timeout = { 25, 0 };
+  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
 
   /* sanity checks.
    * note : object_attributes is optional.

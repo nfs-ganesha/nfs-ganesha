@@ -91,7 +91,7 @@ fsal_status_t PROXYFSAL_access(proxyfsal_handle_t * object_handle,      /* IN */
 
   fsal_proxy_internal_fattr_t fattr_internal;
 
-  struct timeval __attribute__ ((__unused__)) timeout = {25, 0};
+  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
   nfs_fh4 nfs4fh;
 
 #define FSAL_ACCESS_NB_OP_ACCESS 3
