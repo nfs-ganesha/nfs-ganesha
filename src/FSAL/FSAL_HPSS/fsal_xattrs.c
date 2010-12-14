@@ -188,9 +188,21 @@ int get_file_slevel(fsal_handle_t * p_objecthandle,     /* IN */
 
     }
 
-  *p_output_size = strlen(outbuff) + 1;
+    /* free the returned structure (Cf. HPSS ClAPI documentation) */
+    for ( i = 0; i < HPSS_MAX_STORAGE_LEVEL; i++ )
+    {
+        for ( j = 0; j < attrs.SCAttrib[i].NumberOfVVs; j++ )
+        {
+            if ( attrs.SCAttrib[i].VVAttrib[j].PVList != NULL )
+            {
+                free( attrs.SCAttrib[i].VVAttrib[j].PVList );
+            }
+        }
+    }
 
-  return 0;
+    *p_output_size = strlen(outbuff) + 1;
+
+    return 0;
 }
 
 int print_ns_handle(caddr_t InBuff, size_t InSize, caddr_t OutBuff, size_t * pOutSize)
