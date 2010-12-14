@@ -73,7 +73,7 @@
 #include <rpc/auth.h>
 #include <rpc/pmap_clnt.h>
 #endif
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -104,9 +104,17 @@ extern nfs_parameter_t nfs_param;
  *
  */
 void nfs_stat_update(nfs_stat_type_t type,
-                     nfs_request_stat_t * pstat_req, struct svc_req *preq)
+                     nfs_request_stat_t * pstat_req, struct svc_req *preq,
+                     nfs_request_latency_stat_t * lstat_req)
 {
   nfs_request_stat_item_t *pitem = NULL;
+  int up_counter = 1;
+
+  /* Don't increase counters when updating await time. */
+  if(lstat_req->type == AWAIT_TIME)
+    {
+      up_counter = 0;
+    }
 
   if(preq->rq_prog == nfs_param.core_param.nfs_program)
     {
@@ -114,24 +122,27 @@ void nfs_stat_update(nfs_stat_type_t type,
         {
         case NFS_V2:
           pitem = &pstat_req->stat_req_nfs2[preq->rq_proc];
-          pstat_req->nb_nfs2_req += 1;
+          if(up_counter)
+            pstat_req->nb_nfs2_req += 1;
           break;
 
         case NFS_V3:
           pitem = &pstat_req->stat_req_nfs3[preq->rq_proc];
-          pstat_req->nb_nfs3_req += 1;
+          if(up_counter)
+            pstat_req->nb_nfs3_req += 1;
           break;
 
         case NFS_V4:
           pitem = &pstat_req->stat_req_nfs4[preq->rq_proc];
-          pstat_req->nb_nfs4_req += 1;
+          if(up_counter)
+            pstat_req->nb_nfs4_req += 1;
 
           break;
 
         default:
           /* Bad vers ? */
-          DisplayLog
-              ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
+          LogCrit(COMPONENT_DISPATCH,
+               "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
                __FILE__, __LINE__);
           return;
           break;
@@ -143,18 +154,20 @@ void nfs_stat_update(nfs_stat_type_t type,
         {
         case MOUNT_V1:
           pitem = &pstat_req->stat_req_mnt1[preq->rq_proc];
-          pstat_req->nb_mnt1_req += 1;
+          if(up_counter)
+            pstat_req->nb_mnt1_req += 1;
           break;
 
         case MOUNT_V3:
           pitem = &pstat_req->stat_req_mnt3[preq->rq_proc];
-          pstat_req->nb_mnt3_req += 1;
+          if(up_counter)
+            pstat_req->nb_mnt3_req += 1;
           break;
 
         default:
           /* Bad vers ? */
-          DisplayLog
-              ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
+          LogCrit(COMPONENT_DISPATCH,
+               "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
                __FILE__, __LINE__);
           return;
           break;
@@ -166,43 +179,95 @@ void nfs_stat_update(nfs_stat_type_t type,
         {
         case NLM4_VERS:
           pitem = &pstat_req->stat_req_nlm4[preq->rq_proc];
-          pstat_req->nb_nlm4_req += 1;
+          if(up_counter)
+            pstat_req->nb_nlm4_req += 1;
           break;
         default:
           /* Bad vers ? */
-          DisplayLog
-              ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %s",
+          LogCrit(COMPONENT_DISPATCH,
+               "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
                __FILE__, __LINE__);
           return;
           break;
         }
     }
+  else if(preq->rq_prog == nfs_param.core_param.rquota_program)
+    {
+      switch (preq->rq_vers)
+        {
+        case RQUOTAVERS:
+          pitem = &pstat_req->stat_req_rquota1[preq->rq_proc];
+          if(up_counter)
+            pstat_req->nb_rquota1_req += 1;
+          break;
+        case EXT_RQUOTAVERS:
+          pitem = &pstat_req->stat_req_rquota2[preq->rq_proc];
+          if(up_counter)
+            pstat_req->nb_rquota2_req += 1;
+          break;
+        default:
+          /* Bad vers ? */
+          LogCrit(COMPONENT_DISPATCH,
+               "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
+               __FILE__, __LINE__);
+          return;
+          break;
+        }
 
+    }
   else
     {
       /* Bad program ? */
-      DisplayLog
-          ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
+      LogCrit(COMPONENT_DISPATCH,
+           "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
            __FILE__, __LINE__);
       return;
     }
 
-  pitem->total += 1;
+  if(up_counter)
+    pitem->total += 1;
+
+  if(lstat_req->type == SVC_TIME)
+    {
+      /* Set the initial value of latencies */
+      if(pitem->tot_latency == 0)
+        {
+          pitem->max_latency = lstat_req->latency;
+          pitem->min_latency = lstat_req->latency;
+        }
+
+      /* Update total, min and max latency */
+      pitem->tot_latency += lstat_req->latency;
+      if(lstat_req->latency > pitem->max_latency)
+        {
+          pitem->max_latency = lstat_req->latency;
+        }
+      else if(lstat_req->latency < pitem->min_latency)
+        {
+          pitem->min_latency = lstat_req->latency;
+        }
+    }
+  else if(lstat_req->type == AWAIT_TIME)
+    {
+      pitem->tot_await_time += lstat_req->latency;
+    }
 
   switch (type)
     {
     case GANESHA_STAT_SUCCESS:
-      pitem->success += 1;
+      if(up_counter)
+        pitem->success += 1;
       break;
 
     case GANESHA_STAT_DROP:
-      pitem->dropped += 1;
+      if(up_counter)
+        pitem->dropped += 1;
       break;
 
     default:
       /* Bad type ? */
-      DisplayLog
-          ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
+      LogCrit(COMPONENT_DISPATCH,
+           "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %u",
            __FILE__, __LINE__);
       break;
     }

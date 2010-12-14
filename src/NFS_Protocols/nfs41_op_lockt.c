@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -107,7 +107,7 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Lock are not supported */
   resp->resop = NFS4_OP_LOCKT;
 
-#ifndef _WITH_NFSV4_LOCKS
+#ifdef _WITH_NO_NFSV41_LOCKS
   res_LOCKT4.status = NFS4ERR_LOCK_NOTSUPP;
   return res_LOCKT4.status;
 #else

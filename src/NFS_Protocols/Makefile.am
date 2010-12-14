@@ -1,7 +1,5 @@
 AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
-SUBDIRS = PNFS
-
 noinst_LTLIBRARIES            = libnfsproto.la
 
 check_PROGRAMS                = test_mnt_proto
@@ -109,9 +107,22 @@ libnfsproto_la_SOURCES += nlm_Unlock.c	  	\
                           nlm_Cancel_Message.c	\
                           nlm_Lock_Message.c	\
                           nlm_Unlock_Message.c  \
-                          nlm_Granted_Res.c
+                          nlm_Granted_Res.c \
+			../include/nlm4.h  \
+			../include/nlm_async.h \
+			../include/nlm_list.h \
+			../include/nlm_send_reply.h \
+			../include/nlm_util.h
 endif
 
+if USE_QUOTA
+libnfsproto_la_SOURCES += rquota_Null.c            \
+                          rquota_getquota.c        \
+                          rquota_getactivequota.c  \
+                          rquota_setquota.c        \
+                          rquota_setactivequota.c 
+
+endif
 
 
 if USE_NFS4_1
@@ -139,6 +150,7 @@ endif
 test_mnt_proto_SOURCES       = test_mnt_proto.c
 
 test_mnt_proto_LDADD = libnfsproto.la ../BuddyMalloc/libBuddyMalloc.la ../Log/liblog.la
+
 new: clean all
 
 doc:

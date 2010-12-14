@@ -5,11 +5,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "hpss_dirent.h"
-#include "u_signed64.h"
-#include "hpssclapiext.h"
-#include "hpss_api.h"
-#include "api_internal.h"
+#include <hpss_dirent.h>
+#include <u_signed64.h>
+#include <hpssclapiext.h>
+#include <hpss_api.h>
+#include <api_internal.h>
 
 /*
  *  Prototypes for static functions.
@@ -297,7 +297,7 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
        *  Now load in the results from the call.
        */
 
-      (void)memset(DirentPtr, 0, BufferSize);
+      (void)memset(DirentPtr, 0, BufferSize); /* Todo Why does this crash the daemon ??*/
       cnt = 0;
 
 #if HPSS_LEVEL >= 622

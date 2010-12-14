@@ -68,8 +68,10 @@ static pthread_mutex_t mutex_log = PTHREAD_MUTEX_INITIALIZER;
 /** global variables for logging */
 static int log_level = -1;
 static char localmachine[256];
+#ifdef OLD_LOGGING
 static desc_log_stream_t voie_cache;
 static log_t log_desc_cache = LOG_INITIALIZER;
+#endif
 
 /** Global variable: root pentry */
 static cache_entry_t *pentry_root;
@@ -246,7 +248,7 @@ static int InitClient(cmdCacheInode_thr_info_t * thr_info)
     return 1;
 
   /* Init the cache content client */
-  if(cache_content_client_init(&thr_info->dc_client, datacache_client_param) != 0)
+  if(cache_content_client_init(&thr_info->dc_client, datacache_client_param, "") != 0)
     return 1;
 
   thr_info->client.pcontent_client = (caddr_t) & thr_info->dc_client;
@@ -284,7 +286,7 @@ cmdCacheInode_thr_info_t *RetrieveInitializedContext()
 
 void Cache_inode_layer_SetLogLevel(int log_lvl)
 {
-
+#ifdef OLD_LOGGING
   log_stream_t *curr;
 
   /* mutex pour proteger le descriptor de log */
@@ -311,7 +313,7 @@ void Cache_inode_layer_SetLogLevel(int log_lvl)
 
   /* mutex pour proteger le descriptor de log */
   pthread_mutex_unlock(&mutex_log);
-
+#endif
 }
 
 int lru_entry_to_str(LRU_data_t data, char *str)
@@ -360,6 +362,7 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
 
   /* is it a relative or an absolute path ? */
   strncpy(str_path, i_spec_path, FSAL_MAX_PATH_LEN);
+  str_path[FSAL_MAX_PATH_LEN - 1] = '\0';
 
   curr = str_path;
   next_name = str_path;
@@ -399,6 +402,7 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
         }
 
       strncpy(io_global_path, str_path, size_global_path);
+      io_global_path[size_global_path - 1] = '\0';
       *pnew_pentry = pentry_tmp;
 
       return 0;
@@ -518,7 +522,7 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   /* geting the hostname */
   if(gethostname(localmachine, sizeof(localmachine)) != 0)
     {
-      DisplayErrorLog(ERR_SYS, ERR_GETHOSTNAME, errno);
+      fprintf(stderr, "Error in gethostname is %s", strerror(errno));
       exit(1);
     }
   else
@@ -559,6 +563,7 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
 
   cache_param.hparam.hash_func_key = cache_inode_fsal_hash_func;
   cache_param.hparam.hash_func_rbt = cache_inode_fsal_rbt_func;
+  cache_param.hparam.hash_func_both = NULL ; /* BUGAZOMEU */
   cache_param.hparam.compare_key = cache_inode_compare_key_fsal;
   cache_param.hparam.key_to_str = NULL;
   cache_param.hparam.val_to_str = NULL;
@@ -593,21 +598,30 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   /*if( FSAL_IS_ERROR( status = FSAL_str2path( "/users/thomas/./", FSAL_MAX_PATH_LEN, &pathroot ) ) ) */
   if(FSAL_IS_ERROR(status = FSAL_str2path("/", FSAL_MAX_PATH_LEN, &pathroot)))
     {
-      DisplayErrorFlux(output, ERR_FSAL, status.major, status.minor);
+      char buffer[LOG_MAX_STRLEN];
+
+      MakeLogError(buffer, ERR_FSAL, status.major, status.minor, __LINE__);
+      fprintf(output, "%s\n", buffer);
       return 1;
     }
 
   if(FSAL_IS_ERROR
      (status = FSAL_lookupPath(&pathroot, &context->context, &root_handle, NULL)))
     {
-      DisplayErrorFlux(output, ERR_FSAL, status.major, status.minor);
+      char buffer[LOG_MAX_STRLEN];
+
+      MakeLogError(buffer, ERR_FSAL, status.major, status.minor, __LINE__);
+      fprintf(output, "%s\n", buffer);
       return 1;
     }
 #else
   if(FSAL_IS_ERROR
      (status = FSAL_lookup(NULL, NULL, &context->context, &root_handle, NULL)))
     {
-      DisplayErrorFlux(output, ERR_FSAL, status.major, status.minor);
+      char buffer[LOG_MAX_STRLEN];
+
+      MakeLogError(buffer, ERR_FSAL, status.major, status.minor, __LINE__);
+      fprintf(output, "%s\n", buffer);
       return 1;
     }
 #endif
@@ -624,7 +638,9 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
       return status.major;
     }
 
+#ifdef OLD_LOGGING
   cache_client_param.log_outputs = log_desc_cache;
+#endif
   cache_client_param.attrmask = attrs.supported_attributes;
 
   cache_client_param.lru_param.entry_to_str = lru_entry_to_str;
@@ -649,7 +665,9 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
                   ERR_CACHE_INODE, rc);
       return 1;
     }
+#ifdef OLD_LOGGING
   datacache_client_param.log_outputs = log_desc_cache;
+#endif
 /*
   DEPRECATED :
   datacache_client_param.lru_param.entry_to_str = lru_entry_to_str ;
@@ -682,20 +700,20 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   if(cache_inode_async_precreate_object
      (&context->client, DIR_BEGINNING, &context->exp_context) == -1)
     {
-      DisplayLog("NFS INIT: /!\\ Impossible to pre-create asynchronous direcory pool");
+      fprintf(stderr, "NFS INIT: /!\\ Impossible to pre-create asynchronous direcory pool");
       exit(1);
     }
 
   if(cache_inode_async_precreate_object
      (&context->client, REGULAR_FILE, &context->exp_context) == -1)
     {
-      DisplayLog("NFS INIT: /!\\ Impossible to pre-create asynchronous file pool");
+      fprintf(stderr, "NFS INIT: /!\\ Impossible to pre-create asynchronous file pool");
       exit(1);
     }
 #endif
 
   /* Init the cache content client */
-  if(cache_content_client_init(&context->dc_client, datacache_client_param) != 0)
+  if(cache_content_client_init(&context->dc_client, datacache_client_param, "") != 0)
     return 1;
 
   context->client.pcontent_client = (caddr_t) & context->dc_client;
@@ -707,13 +725,13 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
                                               &context->context,
                                               &context->cache_status)) == NULL)
     {
-      DisplayLogFlux(output, "Error: can't init fs's root");
+      fprintf(output, "Error: can't init fs's root");
       return 1;
     }
 
   if(cache_content_init_dir(datacache_client_param, EXPORT_ID) != 0)
     {
-      DisplayLogFlux(output, "Error: can't init datacache directory");
+      fprintf(output, "Error: can't init datacache directory");
       return 1;
     }
 
@@ -1497,12 +1515,10 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
         }
 
       /* Ready for next iteration */
-#ifdef _DEBUG_CACHE_INODE
-      printf
-          ("--------------> begin_cookie = %d, nbfound=%d, last cookie=%d, end_cookie=%d, begin_cookie + nbfound =%d\n",
-           begin_cookie, nbfound, cookie_array[nbfound - 1], end_cookie,
-           begin_cookie + nbfound);
-#endif
+      LogFullDebug(COMPONENT_CACHE_INODE,
+                   "--------------> begin_cookie = %d, nbfound=%d, last cookie=%d, end_cookie=%d, begin_cookie + nbfound =%d\n",
+                   begin_cookie, nbfound, cookie_array[nbfound - 1], end_cookie,
+                   begin_cookie + nbfound);
       begin_cookie = end_cookie;
     }
 
@@ -3254,9 +3270,8 @@ int fn_Cache_inode_recover_cache(int argc,      /* IN : number of args in argv *
   if(cache_content_crash_recover(EXPORT_ID,
                                  0,
                                  1,
-                                 (cache_content_client_t *) context->
-                                 client.pcontent_client, &context->client, ht,
-                                 &context->context,
+                                 (cache_content_client_t *) context->client.
+                                 pcontent_client, &context->client, ht, &context->context,
                                  &cache_content_status) != CACHE_CONTENT_SUCCESS)
     {
       fprintf(output, "Error executing cache_content_crash_recover: %d\n",
@@ -3866,12 +3881,14 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
 
           return context->cache_status;
         }
-#ifdef _DEBUG_CACHE_INODE
-      DisplayLogFlux(output,
-                     "shell: block_size=%llu, once_nb_read=%llu, total_bytes=%llu, total_nb_read=%llu, eof=%d, seek=%d.%llu",
-                     block_size, once_nb_read, total_bytes, total_nb_read, is_eof,
-                     seek_desc.whence, seek_desc.offset);
-#endif
+
+      if(isFullDebug(COMPONENT_CACHE_INODE))
+        {
+          fprintf(output,
+                  "shell: block_size=%llu, once_nb_read=%llu, total_bytes=%llu, total_nb_read=%llu, eof=%d, seek=%d.%"PRIu64,
+                  block_size, once_nb_read, total_bytes, total_nb_read, is_eof,
+                  seek_desc.whence, seek_desc.offset);
+        }
 
       /* print what was read. */
       if(flag_A)
@@ -4063,6 +4080,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
             {
               flag_s++;
               strncpy(str_seek_buff, Optarg, 256);
+              str_seek_buff[255] = '\0';
               str_seek_type = str_seek_buff;
             }
           break;
@@ -4131,6 +4149,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
 
   /* copy current absolute path to a local variable. */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
+  glob_path[FSAL_MAX_PATH_LEN - 1] = '\0';
 
   /* retrieve handle to the file whose permissions are to be tested */
   if(rc =
@@ -4510,6 +4529,7 @@ int fn_Cache_inode_open_by_name(int argc,       /* IN : number of args in argv *
   context = RetrieveInitializedContext();
 
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
+  glob_path[FSAL_MAX_PATH_LEN - 1] = '\0';
 
   if((pentry_file = cache_inode_lookup(context->pentry,
                                        &filename,
@@ -4629,6 +4649,7 @@ int fn_Cache_inode_close(int argc,      /* IN : number of args in argv */
 
   /* copy current absolute path to a local variable. */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
+  glob_path[FSAL_MAX_PATH_LEN - 1] = '\0';
 
   /* retrieve handle to the file whose permissions are to be tested */
   if(rc =

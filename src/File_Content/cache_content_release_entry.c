@@ -43,7 +43,7 @@
 #endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -97,13 +97,13 @@ cache_content_status_t cache_content_release_entry(cache_content_entry_t * pentr
     }
 
   /* Finally puts the entry back to entry pool for future use */
-  RELEASE_PREALLOC(pentry, pclient->pool_entry, next_alloc);
+  ReleaseToPool(pentry, &pclient->content_pool);
 
   /* Remove the index file */
   if(unlink(pentry->local_fs_entry.cache_path_index) != 0)
     {
       if(errno != ENOENT)
-        DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+        LogEvent(COMPONENT_CACHE_CONTENT,
                           "cache_content_release_entry: error when unlinking index file %s, errno = ( %d, '%s' )",
                           pentry->local_fs_entry.cache_path_index,
                           errno, strerror(errno));
@@ -113,7 +113,7 @@ cache_content_status_t cache_content_release_entry(cache_content_entry_t * pentr
   if(unlink(pentry->local_fs_entry.cache_path_data) != 0)
     {
       if(errno != ENOENT)
-        DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+        LogEvent(COMPONENT_CACHE_CONTENT,
                           "cache_content_release_entry: error when unlinking index file %s, errno = ( %d, '%s' )",
                           pentry->local_fs_entry.cache_path_data, errno, strerror(errno));
     }

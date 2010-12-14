@@ -109,9 +109,10 @@ typedef struct fsal_export_context__
 
 typedef struct fsal_op_context__
 {
+  fsal_export_context_t *export_context;        /* Must be the first entry in this structure */
+
   fsal_cred_t user_credential;
   int thread_connect_array[32];
-  fsal_export_context_t *export_context;
 
 } fsal_op_context_t;
 
@@ -121,7 +122,7 @@ typedef struct fsal_op_context__
 typedef int fsal_dir_t;
 typedef int fsal_file_t;
 
-# define FSAL_FILENO(_f) fileno(_f)
+//# define FSAL_FILENO(_f) fileno(_f)
 
 typedef int fsal_cookie_t;
 

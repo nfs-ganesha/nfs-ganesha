@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -211,9 +211,9 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
   pentry = new_pentry = NULL;
 
   if(str_entry_name == NULL ||
-     strlen(str_entry_name) == 0 ||
+     *str_entry_name == '\0' ||
      str_new_entry_name == NULL ||
-     strlen(str_new_entry_name) == 0 ||
+     *str_new_entry_name == '\0' ||
      FSAL_IS_ERROR(FSAL_str2name(str_entry_name, FSAL_MAX_NAME_LEN, &entry_name)) ||
      FSAL_IS_ERROR(FSAL_str2name(str_new_entry_name, FSAL_MAX_NAME_LEN, &new_entry_name)))
     {
@@ -372,15 +372,15 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                                                  parent_pentry,
                                                  ppre_attr,
                                                  &attr,
-                                                 &(pres->res_rename3.RENAME3res_u.
-                                                   resok.fromdir_wcc));
+                                                 &(pres->res_rename3.RENAME3res_u.resok.
+                                                   fromdir_wcc));
 
                                   nfs_SetWccData(pcontext, pexport,
                                                  parent_pentry,
                                                  ppre_attr,
                                                  &attr,
-                                                 &(pres->res_rename3.RENAME3res_u.
-                                                   resok.todir_wcc));
+                                                 &(pres->res_rename3.RENAME3res_u.resok.
+                                                   todir_wcc));
 
                                   pres->res_rename3.status = NFS3_OK;
                                   break;

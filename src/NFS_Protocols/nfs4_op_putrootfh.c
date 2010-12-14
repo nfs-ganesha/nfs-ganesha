@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -94,9 +94,7 @@ int CreateROOTFH4(nfs_fh4 * fh, compound_data_t * data)
 {
   pseudofs_entry_t psfsentry;
   int status = 0;
-#ifdef _DEBUG_NFS_V4
   char fhstr[LEN_FH_STR];
-#endif
 
   psfsentry = *(data->pseudofs->reverse_tab[0]);
 
@@ -109,10 +107,8 @@ int CreateROOTFH4(nfs_fh4 * fh, compound_data_t * data)
     }
 
   /* Test */
-#ifdef _DEBUG_NFS_V4
   nfs4_sprint_fhandle(&data->rootFH, fhstr);
-  DisplayLog("CREATE ROOTFH: %s", fhstr);
-#endif
+  LogDebug(COMPONENT_NFS_V4, "CREATE ROOTFH: %s", fhstr);
 
   return NFS4_OK;
 }                               /* CreateROOTFH4 */
@@ -142,9 +138,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
   int error;
 
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_putrootfh";
-#ifdef _DEBUG_NFS_V4
   char fhstr[LEN_FH_STR];
-#endif
 
   /* This NFS4 Operation has no argument, it just get then ROOTFH (replace MOUNTPROC3_MNT) */
 
@@ -203,15 +197,13 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
   data->publicFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
 
   /* Test */
-#ifdef _DEBUG_NFS_V4
   nfs4_sprint_fhandle(&data->rootFH, fhstr);
-  DisplayLog("NFS4 PUTROOTFH: rootFH=%s", fhstr);
+  LogDebug(COMPONENT_NFS_V4, "NFS4 PUTROOTFH: rootFH=%s", fhstr);
   nfs4_sprint_fhandle(&data->currentFH, fhstr);
-  DisplayLog("NFS4 PUTROOTFH: currentFH=%s", fhstr);
-#endif
+  LogDebug(COMPONENT_NFS_V4, "NFS4 PUTROOTFH: currentFH=%s", fhstr);
 
-  DisplayLogJdLevel(data->pclient->log_outputs,
-                    NIV_FULL_DEBUG, "NFS4 PUTROOTFH: Ending on status %d",
+  LogFullDebug(COMPONENT_NFS_V4,
+                    "NFS4 PUTROOTFH: Ending on status %d",
                     resp->nfs_resop4_u.opputrootfh.status);
 
   return resp->nfs_resop4_u.opputrootfh.status;

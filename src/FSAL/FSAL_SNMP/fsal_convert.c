@@ -147,7 +147,7 @@ int snmp2fsal_error(int snmp_error)
 
 /* extract the object handle from the variable info.
  */
-int snmp_object2handle(netsnmp_variable_list * p_in_var, fsal_handle_t * p_out_handle)
+int snmp_object2handle(netsnmp_variable_list * p_in_var, snmpfsal_handle_t * p_out_handle)
 {
   /* sanity check */
   if(!p_out_handle || !p_in_var)
@@ -166,7 +166,7 @@ int snmp_object2handle(netsnmp_variable_list * p_in_var, fsal_handle_t * p_out_h
  * else, it returns the string representation of the object subid.
  */
 int snmp_object2name(netsnmp_variable_list * p_in_var, struct tree *p_in_node,
-                     fsal_handle_t * p_handle, fsal_name_t * p_out_name)
+                     snmpfsal_handle_t * p_handle, fsal_name_t * p_out_name)
 {
   fsal_status_t st;
 
@@ -182,9 +182,9 @@ int snmp_object2name(netsnmp_variable_list * p_in_var, struct tree *p_in_node,
   else if(p_in_var && p_in_var->name && p_in_var->name_length > 0)
     snprintf(tmp_name, FSAL_MAX_NAME_LEN, "%lu",
              p_in_var->name[p_in_var->name_length - 1]);
-  else if(p_handle && p_handle->oid_len > 0)
+  else if(p_handle && p_handle->data.oid_len > 0)
     snprintf(tmp_name, FSAL_MAX_NAME_LEN, "%lu",
-             p_handle->oid_tab[p_handle->oid_len - 1]);
+             p_handle->data.oid_tab[p_handle->data.oid_len - 1]);
   else
     return ERR_FSAL_SERVERFAULT;
 
@@ -244,7 +244,7 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
     case ASN_OCTET_STR:
       if(p_in_var->val.string)
         written = snprintf(p_out_string, *in_out_len, "%.*s\n",
-                           p_in_var->val_len, p_in_var->val.string);
+                           (int)p_in_var->val_len, p_in_var->val.string);
       else
         written = snprintf(p_out_string, *in_out_len, "(null string pointer)\n");
       break;
@@ -295,9 +295,8 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
       if(p_in_var->val.counter64)
         {
           int64 =
-              (((unsigned long long)p_in_var->val.
-                counter64->high) << 32) | (unsigned long long)p_in_var->val.counter64->
-              low;
+              (((unsigned long long)p_in_var->val.counter64->
+                high) << 32) | (unsigned long long)p_in_var->val.counter64->low;
           written = snprintf(p_out_string, *in_out_len, "%llu\n", int64);
         }
       else
@@ -325,9 +324,9 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
   /* snprintf() function return the number of bytes that would be written to s had n been sufficiently large */
   if(written > *in_out_len)
     {
-      DisplayLogJdLevel(fsal_log, NIV_MAJOR,
-                        "Warning: actual datasize is over client buffer limit (%llu > %llu)",
-                        written, *in_out_len);
+      LogMajor(COMPONENT_FSAL,
+               "Warning: actual datasize is over client buffer limit (%zu > %zu)",
+               written, *in_out_len);
       written = *in_out_len;
     }
 
@@ -378,8 +377,8 @@ fsal_accessmode_t snmp_object2access_mode(nodetype_t obj_type, struct tree * p_i
 
         default:
           mode = 0;
-          DisplayLogJdLevel(fsal_log, NIV_MAJOR, "Warning: unsupported access mode %#X",
-                            p_in_node->access);
+          LogMajor(COMPONENT_FSAL, "Warning: unsupported access mode %#X",
+                   p_in_node->access);
         }
     }
   else
@@ -406,8 +405,8 @@ fsal_nodetype_t intern2extern_type(nodetype_t internal_type)
       return FSAL_TYPE_DIR;
 
     default:
-      DisplayLogJdLevel(fsal_log, NIV_CRIT, "Error: unexpected internal type %d",
-                        internal_type);
+      LogCrit(COMPONENT_FSAL, "Error: unexpected internal type %d",
+              internal_type);
       return 0;
 
     }
@@ -416,16 +415,16 @@ fsal_nodetype_t intern2extern_type(nodetype_t internal_type)
 #define PRIME_32BITS  479001599
 
 /* compute the object id from the handle */
-fsal_u64_t build_object_id(fsal_handle_t * p_in_handle)
+fsal_u64_t build_object_id(snmpfsal_handle_t * p_in_handle)
 {
   unsigned int i;
   fsal_u64_t hash = 1;
 
   /* for the moment, we make a very silly hash of the object  */
 
-  for(i = 0; i < p_in_handle->oid_len; i++)
+  for(i = 0; i < p_in_handle->data.oid_len; i++)
     {
-      hash = ((hash << 8) ^ p_in_handle->oid_tab[i]) % PRIME_32BITS;
+      hash = ((hash << 8) ^ p_in_handle->data.oid_tab[i]) % PRIME_32BITS;
     }
 
   return hash;
@@ -435,7 +434,7 @@ fsal_u64_t build_object_id(fsal_handle_t * p_in_handle)
 /* fill the p_fsalattr_out structure depending on the given information
  * /!\ the p_in_node is the PARENT NODE (access right are stored in the parent node)
  */
-int snmp2fsal_attributes(fsal_handle_t * p_handle, netsnmp_variable_list * p_var,
+int snmp2fsal_attributes(snmpfsal_handle_t * p_handle, netsnmp_variable_list * p_var,
                          struct tree *p_in_node, fsal_attrib_list_t * p_fsalattr_out)
 {
   fsal_attrib_mask_t supp_attr, unsupp_attr;
@@ -449,9 +448,9 @@ int snmp2fsal_attributes(fsal_handle_t * p_handle, netsnmp_variable_list * p_var
     {
       p_fsalattr_out->asked_attributes = global_fs_info.supported_attrs;
 
-      DisplayLogJdLevel(fsal_log, NIV_MAJOR,
-                        "Error: p_fsalattr_out->asked_attributes was set to 0 in snmp2fsal_attributes line %d, file %s: retrieving all supported attributes",
-                        __LINE__, __FILE__);
+      LogMajor(COMPONENT_FSAL,
+               "Error: p_fsalattr_out->asked_attributes was set to 0 in snmp2fsal_attributes line %d, file %s: retrieving all supported attributes",
+               __LINE__, __FILE__);
     }
 
   /* check that asked attributes are supported */
@@ -460,9 +459,9 @@ int snmp2fsal_attributes(fsal_handle_t * p_handle, netsnmp_variable_list * p_var
 
   if(unsupp_attr)
     {
-      DisplayLogJdLevel(fsal_log, NIV_MAJOR,
-                        "Unsupported attributes: %#llX removing it from asked attributes ",
-                        unsupp_attr);
+      LogMajor(COMPONENT_FSAL,
+               "Unsupported attributes: %#llX removing it from asked attributes ",
+               unsupp_attr);
       p_fsalattr_out->asked_attributes =
           p_fsalattr_out->asked_attributes & (~unsupp_attr);
     }
@@ -472,12 +471,12 @@ int snmp2fsal_attributes(fsal_handle_t * p_handle, netsnmp_variable_list * p_var
     p_fsalattr_out->supported_attributes = supp_attr;
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_TYPE))
-    p_fsalattr_out->type = intern2extern_type(p_handle->object_type_reminder);
+    p_fsalattr_out->type = intern2extern_type(p_handle->data.object_type_reminder);
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SIZE) ||
      FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
     {
-      if(p_handle->object_type_reminder == FSAL_NODETYPE_LEAF)
+      if(p_handle->data.object_type_reminder == FSAL_NODETYPE_LEAF)
         {
           char object_val_buf[FSALSNMP_MAX_FILESIZE];
           size_t buf_sz = FSALSNMP_MAX_FILESIZE;
@@ -487,8 +486,8 @@ int snmp2fsal_attributes(fsal_handle_t * p_handle, netsnmp_variable_list * p_var
 
           if(rc != 0)
             {
-              DisplayLogJdLevel(fsal_log, NIV_CRIT,
-                                "Error %d converting object data to string", rc);
+              LogCrit(COMPONENT_FSAL,
+                      "Error %d converting object data to string", rc);
               return rc;
             }
 
@@ -519,7 +518,7 @@ int snmp2fsal_attributes(fsal_handle_t * p_handle, netsnmp_variable_list * p_var
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MODE))
     p_fsalattr_out->mode =
-        snmp_object2access_mode(p_handle->object_type_reminder, p_in_node);
+        snmp_object2access_mode(p_handle->data.object_type_reminder, p_in_node);
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_NUMLINKS))
     p_fsalattr_out->numlinks = 1;       /* @todo */
@@ -589,93 +588,5 @@ char ASN2add_var(u_char asn_type)
       /* give a chance to net-snmp for finding the type  */
       return '=';
     }
-
-}
-
-/* THOSE FUNCTIONS CAN BE USED FROM OUTSIDE THE MODULE : */
-
-/**
- * fsal2unix_mode:
- * Convert FSAL mode to posix mode.
- *
- * \param fsal_mode (input):
- *        The FSAL mode to be translated.
- *
- * \return The posix mode associated to fsal_mode.
- */
-mode_t fsal2unix_mode(fsal_accessmode_t fsal_mode)
-{
-
-  mode_t out_mode = 0;
-
-  if((fsal_mode & FSAL_MODE_SUID))
-    out_mode |= S_ISUID;
-  if((fsal_mode & FSAL_MODE_SGID))
-    out_mode |= S_ISGID;
-
-  if((fsal_mode & FSAL_MODE_RUSR))
-    out_mode |= S_IRUSR;
-  if((fsal_mode & FSAL_MODE_WUSR))
-    out_mode |= S_IWUSR;
-  if((fsal_mode & FSAL_MODE_XUSR))
-    out_mode |= S_IXUSR;
-  if((fsal_mode & FSAL_MODE_RGRP))
-    out_mode |= S_IRGRP;
-  if((fsal_mode & FSAL_MODE_WGRP))
-    out_mode |= S_IWGRP;
-  if((fsal_mode & FSAL_MODE_XGRP))
-    out_mode |= S_IXGRP;
-  if((fsal_mode & FSAL_MODE_ROTH))
-    out_mode |= S_IROTH;
-  if((fsal_mode & FSAL_MODE_WOTH))
-    out_mode |= S_IWOTH;
-  if((fsal_mode & FSAL_MODE_XOTH))
-    out_mode |= S_IXOTH;
-
-  return out_mode;
-
-}
-
-/**
- * unix2fsal_mode:
- * Convert posix mode to FSAL mode.
- *
- * \param unix_mode (input):
- *        The posix mode to be translated.
- *
- * \return The FSAL mode associated to unix_mode.
- */
-fsal_accessmode_t unix2fsal_mode(mode_t unix_mode)
-{
-
-  fsal_accessmode_t fsalmode = 0;
-
-  if(unix_mode & S_ISUID)
-    fsalmode |= FSAL_MODE_SUID;
-  if(unix_mode & S_ISGID)
-    fsalmode |= FSAL_MODE_SGID;
-
-  if(unix_mode & S_IRUSR)
-    fsalmode |= FSAL_MODE_RUSR;
-  if(unix_mode & S_IWUSR)
-    fsalmode |= FSAL_MODE_WUSR;
-  if(unix_mode & S_IXUSR)
-    fsalmode |= FSAL_MODE_XUSR;
-
-  if(unix_mode & S_IRGRP)
-    fsalmode |= FSAL_MODE_RGRP;
-  if(unix_mode & S_IWGRP)
-    fsalmode |= FSAL_MODE_WGRP;
-  if(unix_mode & S_IXGRP)
-    fsalmode |= FSAL_MODE_XGRP;
-
-  if(unix_mode & S_IROTH)
-    fsalmode |= FSAL_MODE_ROTH;
-  if(unix_mode & S_IWOTH)
-    fsalmode |= FSAL_MODE_WOTH;
-  if(unix_mode & S_IXOTH)
-    fsalmode |= FSAL_MODE_XOTH;
-
-  return fsalmode;
 
 }

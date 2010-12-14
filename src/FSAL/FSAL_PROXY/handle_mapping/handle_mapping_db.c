@@ -13,54 +13,54 @@
 /* sqlite check macros */
 
 #define CheckTable( _p_conn_, _code_, _msg_str_, _result_ ) do { \
-                             if ( (_code_) != SQLITE_OK ) \
-                                {                                                                             \
-                                    DisplayLogJdLevel( fsal_log, NIV_CRIT,"SQLite command failed in %s line %i", __FUNCTION__, __LINE__); \
-                                    DisplayLogJdLevel( fsal_log, NIV_CRIT,"%s (%d)", (_msg_str_?_msg_str_:sqlite3_errmsg(_p_conn_)), _code_ ); \
-                                    if (_msg_str_) { sqlite3_free( _msg_str_); _msg_str_ = NULL; }     \
-                                    if (_result_) { sqlite3_free_table( _result_ ); _result_ = NULL; } \
-                                    return HANDLEMAP_DB_ERROR;  \
-                                } \
-                              } while (0)
+ if ( (_code_) != SQLITE_OK ) \
+    {                                                                             \
+        LogCrit(COMPONENT_FSAL, "SQLite command failed in %s line %i", __FUNCTION__, __LINE__); \
+        LogCrit(COMPONENT_FSAL, "%s (%d)", (_msg_str_?_msg_str_:sqlite3_errmsg(_p_conn_)), _code_ ); \
+        if (_msg_str_) { sqlite3_free( _msg_str_); _msg_str_ = NULL; }     \
+        if (_result_) { sqlite3_free_table( _result_ ); _result_ = NULL; } \
+        return HANDLEMAP_DB_ERROR;  \
+    } \
+  } while (0)
 
 #define CheckCommand( _p_conn_, _code_, _msg_str_ ) do { \
-                              if ( (_code_) != SQLITE_OK ) \
-                                {                                                                             \
-                                    DisplayLogJdLevel( fsal_log, NIV_CRIT,"SQLite command failed in %s line %i", __FUNCTION__, __LINE__); \
-                                    DisplayLogJdLevel( fsal_log, NIV_CRIT,"%s (%d)", (_msg_str_?_msg_str_:sqlite3_errmsg(_p_conn_)), _code_ ); \
-                                    if (_msg_str_) {sqlite3_free( _msg_str_); _msg_str_ = NULL ; } \
-                                    return HANDLEMAP_DB_ERROR;  \
-                                } \
-                              } while (0)
+  if ( (_code_) != SQLITE_OK ) \
+    {                                                                             \
+        LogCrit(COMPONENT_FSAL, "SQLite command failed in %s line %i", __FUNCTION__, __LINE__); \
+        LogCrit(COMPONENT_FSAL, "%s (%d)", (_msg_str_?_msg_str_:sqlite3_errmsg(_p_conn_)), _code_ ); \
+        if (_msg_str_) {sqlite3_free( _msg_str_); _msg_str_ = NULL ; } \
+        return HANDLEMAP_DB_ERROR;  \
+    } \
+  } while (0)
 
 #define CheckPrepare( _p_conn_, _code_ ) do { \
-                              if ( (_code_) != SQLITE_OK)                        \
-                                {                                                                             \
-                                    DisplayLogJdLevel( fsal_log, NIV_CRIT,"SQLite prepare statement failed in %s line %i", __FUNCTION__, __LINE__); \
-                                    DisplayLogJdLevel( fsal_log, NIV_CRIT,"%s (%d)", sqlite3_errmsg( _p_conn_ ), _code_ ); \
-                                    return HANDLEMAP_DB_ERROR;  \
-                                } \
-                              } while (0)
+  if ( (_code_) != SQLITE_OK)                        \
+    {                                                                             \
+        LogCrit(COMPONENT_FSAL, "SQLite prepare statement failed in %s line %i", __FUNCTION__, __LINE__); \
+        LogCrit(COMPONENT_FSAL, "%s (%d)", sqlite3_errmsg( _p_conn_ ), _code_ ); \
+        return HANDLEMAP_DB_ERROR;  \
+    } \
+  } while (0)
 
 #define CheckBind( _p_conn_, _code_, _stmt_ ) do { \
-                              if ( (_code_) != SQLITE_OK)                                                        \
-                                {                                                                                \
-                                    DisplayLogJdLevel( fsal_log, NIV_CRIT,"SQLite parameter binding failed in %s line %i", __FUNCTION__, __LINE__); \
-                                    DisplayLogJdLevel( fsal_log, NIV_CRIT,"%s (%d)", sqlite3_errmsg( _p_conn_ ), _code_ ); \
-                                    sqlite3_clear_bindings( _stmt_ ); \
-                                    return HANDLEMAP_DB_ERROR;  \
-                                }  \
-                              } while (0)
+  if ( (_code_) != SQLITE_OK)                                                        \
+    {                                                                                \
+        LogCrit(COMPONENT_FSAL, "SQLite parameter binding failed in %s line %i", __FUNCTION__, __LINE__); \
+        LogCrit(COMPONENT_FSAL, "%s (%d)", sqlite3_errmsg( _p_conn_ ), _code_ ); \
+        sqlite3_clear_bindings( _stmt_ ); \
+        return HANDLEMAP_DB_ERROR;  \
+    }  \
+  } while (0)
 
 #define CheckStep( _p_conn_, _code_, _stmt_ ) do { \
-                              if ( (_code_) != SQLITE_OK  && (_code_) != SQLITE_ROW && (_code_) != SQLITE_DONE ) \
-                                {                                                                                \
-                                    DisplayLogJdLevel( fsal_log, NIV_CRIT,"SQLite command failed in %s line %i", __FUNCTION__, __LINE__); \
-                                    DisplayLogJdLevel( fsal_log, NIV_CRIT,"%s (%d)", sqlite3_errmsg( _p_conn_ ), _code_ ); \
-                                    sqlite3_reset( _stmt_ );    \
-                                    return HANDLEMAP_DB_ERROR;  \
-                                }  \
-                              } while (0)
+  if ( (_code_) != SQLITE_OK  && (_code_) != SQLITE_ROW && (_code_) != SQLITE_DONE ) \
+    {                                                                                \
+        LogCrit(COMPONENT_FSAL, "SQLite command failed in %s line %i", __FUNCTION__, __LINE__); \
+        LogCrit(COMPONENT_FSAL, "%s (%d)", sqlite3_errmsg( _p_conn_ ), _code_ ); \
+        sqlite3_reset( _stmt_ );    \
+        return HANDLEMAP_DB_ERROR;  \
+    }  \
+  } while (0)
 
 /* Type of DB operations */
 typedef enum
@@ -141,14 +141,13 @@ typedef struct db_thread_info__
   /* this pool is accessed by submitter
    * and by the db thread */
   pthread_mutex_t pool_mutex;
-  db_op_item_t *dbop_pool;
+  struct prealloc_pool dbop_pool;
 
 } db_thread_info_t;
 
 static char dbmap_dir[MAXPATHLEN];
 static char db_tmpdir[MAXPATHLEN];
 static unsigned int nb_db_threads;
-static unsigned int nb_prealloc;
 static int synchronous;
 
 /* used for clean shutdown */
@@ -158,7 +157,8 @@ static int do_terminate = FALSE;
 static db_thread_info_t db_thread[MAX_DB];
 
 /* Initialize basic structures for a thread */
-static int init_db_thread_info(db_thread_info_t * p_thr_info)
+static int init_db_thread_info(db_thread_info_t * p_thr_info,
+                               unsigned int nb_dbop_prealloc)
 {
   unsigned int i;
 
@@ -196,7 +196,7 @@ static int init_db_thread_info(db_thread_info_t * p_thr_info)
   if(pthread_mutex_init(&p_thr_info->pool_mutex, NULL))
     return HANDLEMAP_SYSTEM_ERROR;
 
-  p_thr_info->dbop_pool = NULL;
+  InitPool(&p_thr_info->dbop_pool, nb_dbop_prealloc, db_op_item_t, NULL, NULL);
 
   return HANDLEMAP_SUCCESS;
 }
@@ -227,16 +227,16 @@ static int init_database_access(db_thread_info_t * p_thr_info)
     {
       if(p_thr_info->db_conn)
         {
-          DisplayLogJdLevel(fsal_log, NIV_CRIT,
-                            "ERROR: could not connect to SQLite3 database (file %s): %s",
-                            db_file, sqlite3_errmsg(p_thr_info->db_conn));
+          LogCrit(COMPONENT_FSAL,
+                  "ERROR: could not connect to SQLite3 database (file %s): %s",
+                  db_file, sqlite3_errmsg(p_thr_info->db_conn));
           sqlite3_close(p_thr_info->db_conn);
         }
       else
         {
-          DisplayLogJdLevel(fsal_log, NIV_CRIT,
-                            "ERROR: could not connect to SQLite3 database (file %s): status=%d",
-                            db_file, rc);
+          LogCrit(COMPONENT_FSAL,
+                  "ERROR: could not connect to SQLite3 database (file %s): status=%d",
+                  db_file, rc);
         }
       return HANDLEMAP_DB_ERROR;
     }
@@ -329,9 +329,9 @@ static int db_load_operation(db_thread_info_t * p_info, hash_table_t * p_hash)
       if(rc == 0)
         nb_loaded++;
       else
-        DisplayLogJdLevel(fsal_log, NIV_CRIT,
-                          "ERROR %d adding entry to hash table <object_id=%llu, FH_hash=%u, FSAL_Handle=%s>",
-                          (unsigned long long)object_id, handle_hash, fsal_handle_str);
+        LogCrit(COMPONENT_FSAL,
+                "ERROR %d adding entry to hash table <object_id=%llu, FH_hash=%u, FSAL_Handle=%s>",
+                (unsigned long long)object_id, handle_hash, fsal_handle_str);
 
       rc = sqlite3_step(p_info->prep_stmt[LOAD_ALL_STATEMENT]);
       CheckStep(p_info->db_conn, rc, p_info->prep_stmt[LOAD_ALL_STATEMENT]);
@@ -346,8 +346,8 @@ static int db_load_operation(db_thread_info_t * p_info, hash_table_t * p_hash)
   gettimeofday(&t2, NULL);
   timersub(&t2, &t1, &tdiff);
 
-  DisplayLogJdLevel(fsal_log, NIV_EVENT, "Reloaded %u items in %d.%06ds",
-                    nb_loaded, (int)tdiff.tv_sec, (int)tdiff.tv_usec);
+  LogEvent(COMPONENT_FSAL, "Reloaded %u items in %d.%06ds",
+            nb_loaded, (int)tdiff.tv_sec, (int)tdiff.tv_usec);
 
   return HANDLEMAP_SUCCESS;
 
@@ -461,8 +461,8 @@ static int dbop_push(flusher_queue_t * p_queue, db_op_item_t * p_op)
       break;
 
     default:
-      DisplayLogJdLevel(fsal_log, NIV_CRIT,
-                        "ERROR in dbop_push: Invalid operation type %d", p_op->op_type);
+      LogCrit(COMPONENT_FSAL,
+              "ERROR in dbop_push: Invalid operation type %d", p_op->op_type);
     }
 
   /* there now some work available */
@@ -492,7 +492,7 @@ static void *database_worker_thread(void *arg)
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: Could not initialize memory manager");
+      LogCrit(COMPONENT_FSAL, "ERROR: Could not initialize memory manager");
       exit(rc);
     }
 #endif
@@ -502,8 +502,7 @@ static void *database_worker_thread(void *arg)
   if(rc != HANDLEMAP_SUCCESS)
     {
       /* Failed init */
-      DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: Database initialization error %d",
-                        rc);
+      LogCrit(COMPONENT_FSAL, "ERROR: Database initialization error %d", rc);
       exit(rc);
     }
 
@@ -596,13 +595,13 @@ static void *database_worker_thread(void *arg)
           break;
 
         default:
-          DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: Invalid operation type %d",
-                            to_be_done->op_type);
+          LogCrit(COMPONENT_FSAL, "ERROR: Invalid operation type %d",
+                  to_be_done->op_type);
         }
 
       /* free the db operation item */
       P(p_info->pool_mutex);
-      RELEASE_PREALLOC(to_be_done, p_info->dbop_pool, p_next);
+      ReleaseToPool(to_be_done, &p_info->dbop_pool);
       V(p_info->pool_mutex);
 
     }                           /* loop forever */
@@ -632,8 +631,8 @@ int handlemap_db_count(const char *dir)
 
   if(dir_hdl == NULL)
     {
-      DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: could not access directory %s: %s",
-                        dir, strerror(errno));
+      LogCrit(COMPONENT_FSAL, "ERROR: could not access directory %s: %s",
+              dir, strerror(errno));
       return -HANDLEMAP_SYSTEM_ERROR;
     }
 
@@ -660,8 +659,8 @@ int handlemap_db_count(const char *dir)
       else if(errno != 0)
         {
           /* error */
-          DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: error reading directory %s: %s",
-                            dir, strerror(errno));
+          LogCrit(COMPONENT_FSAL, "ERROR: error reading directory %s: %s",
+                  dir, strerror(errno));
 
           closedir(dir_hdl);
           return -HANDLEMAP_SYSTEM_ERROR;
@@ -715,7 +714,6 @@ int handlemap_db_init(const char *db_dir,
     return HANDLEMAP_INVALID_PARAM;
 
   nb_db_threads = db_count;
-  nb_prealloc = nb_dbop_prealloc;
   synchronous = synchronous_insert;
   /* set global database engine info */
 
@@ -725,7 +723,8 @@ int handlemap_db_init(const char *db_dir,
 
   for(i = 0; i < nb_db_threads; i++)
     {
-      rc = init_db_thread_info(&db_thread[i]);
+      /** @todo ici coller  out_parameter->fs_specific_info.hdlmap_nb_db_op_prealloc */
+      rc = init_db_thread_info(&db_thread[i], 100);
       if(rc)
         return rc;
 
@@ -778,7 +777,7 @@ int handlemap_db_reaload_all(hash_table_t * target_hash)
       /* get a new db operation  */
       P(db_thread[i].pool_mutex);
 
-      GET_PREALLOC(new_task, db_thread[i].dbop_pool, nb_prealloc, db_op_item_t, p_next);
+      GetFromPool(new_task, &db_thread[i].dbop_pool, db_op_item_t);
 
       V(db_thread[i].pool_mutex);
 
@@ -826,7 +825,7 @@ int handlemap_db_insert(nfs23_map_handle_t * p_in_nfs23_digest,
       /* get a new db operation  */
       P(db_thread[i].pool_mutex);
 
-      GET_PREALLOC(new_task, db_thread[i].dbop_pool, nb_prealloc, db_op_item_t, p_next);
+      GetFromPool(new_task, &db_thread[i].dbop_pool, db_op_item_t);
 
       V(db_thread[i].pool_mutex);
 
@@ -867,7 +866,7 @@ int handlemap_db_delete(nfs23_map_handle_t * p_in_nfs23_digest)
   /* get a new db operation  */
   P(db_thread[i].pool_mutex);
 
-  GET_PREALLOC(new_task, db_thread[i].dbop_pool, nb_prealloc, db_op_item_t, p_next);
+  GetFromPool(new_task, &db_thread[i].dbop_pool, db_op_item_t);
 
   V(db_thread[i].pool_mutex);
 
@@ -904,9 +903,9 @@ int handlemap_db_flush()
       to_sync += db_thread[i].work_queue.nb_waiting;
     }
 
-  DisplayLogJdLevel(fsal_log, NIV_EVENT,
-                    "Waiting for database synchronization (%u operations pending)",
-                    to_sync);
+  LogEvent(COMPONENT_FSAL,
+           "Waiting for database synchronization (%u operations pending)",
+           to_sync);
 
   gettimeofday(&t1, NULL);
 
@@ -921,8 +920,8 @@ int handlemap_db_flush()
 
   timersub(&t2, &t1, &tdiff);
 
-  DisplayLogJdLevel(fsal_log, NIV_EVENT, "Database synchronized in %d.%06ds",
-                    (int)tdiff.tv_sec, (int)tdiff.tv_usec);
+  LogEvent(COMPONENT_FSAL, "Database synchronized in %d.%06ds",
+           (int)tdiff.tv_sec, (int)tdiff.tv_usec);
 
   return HANDLEMAP_SUCCESS;
 

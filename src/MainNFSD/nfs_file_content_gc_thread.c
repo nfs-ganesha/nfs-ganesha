@@ -60,7 +60,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -113,7 +113,7 @@ int ___cache_content_invalidate_flushed(LRU_entry_t * plru_entry, void *addparam
   V_w(&pentry->pentry_inode->lock);
 
   /* Release the entry */
-  RELEASE_PREALLOC(pentry, pclient->pool_entry, next_alloc);
+  ReleaseToPool(pentry, &pclient->content_pool);
 
   /* Retour de la pentry dans le pool */
   return LRU_LIST_SET_INVALID;
@@ -140,8 +140,8 @@ int file_content_gc_manage_entry(LRU_entry_t * plru_entry, void *addparam)
                                                  &cache_content_status)) !=
      CACHE_CONTENT_SUCCESS)
     {
-      DisplayLog("NFS FILE CONTENT GARBAGE COLLECTION : /!\\ Can't flush %s : error %d",
-                 pentry->local_fs_entry.cache_path_data, cache_content_status);
+      LogCrit(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : /!\\ Can't flush %s : error %d",
+              pentry->local_fs_entry.cache_path_data, cache_content_status);
     }
 
   /* Continue with next entry in LRU_Apply_function */
@@ -152,7 +152,6 @@ void *file_content_gc_thread(void *IndexArg)
 {
   long index = (long)IndexArg;
   char command[2 * MAXPATHLEN];
-  char *debuglevelstr;
   unsigned int i;
   exportlist_t *pexport = NULL;
   int is_hw_reached = FALSE;
@@ -162,21 +161,21 @@ void *file_content_gc_thread(void *IndexArg)
   cache_content_status_t cache_content_status;
   FILE *command_stream = NULL;
 
+  char logfile_arg[MAXPATHLEN];
+  char *loglevel_arg;
+
   SetNameFunction("file_content_fc_thread");
 
-  DisplayLog("NFS FILE CONTENT GARBAGE COLLECTION : Starting GC thread");
-  DisplayLog("NFS FILE CONTENT GARBAGE COLLECTION : my pthread id is %p",
-             (caddr_t) pthread_self());
-
-  debuglevelstr = ReturnLevelInt(fcc_debug_level);
+  LogEvent(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : Starting GC thread");
+  LogDebug(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : my pthread id is %p",
+           (caddr_t) pthread_self());
 
   while(1)
     {
       /* Sleep until some work is to be done */
       sleep(nfs_param.cache_layers_param.dcgcpol.run_interval);
 
-      DisplayLogLevel(NIV_EVENT, "NFS FILE CONTENT GARBAGE COLLECTION : awakening...");
-
+      LogEvent(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : awakening...");
       for(pexport = nfs_param.pexportlist; pexport != NULL; pexport = pexport->next)
         {
           if(pexport->options & EXPORT_OPTION_USE_DATACACHE)
@@ -186,25 +185,28 @@ void *file_content_gc_thread(void *IndexArg)
                        0);
 
               if((cache_content_status = cache_content_check_threshold(cache_sub_dir,
-                                                                       nfs_param.cache_layers_param.dcgcpol.
-                                                                       lwmark_df,
-                                                                       nfs_param.cache_layers_param.dcgcpol.
-                                                                       hwmark_df,
+                                                                       nfs_param.
+                                                                       cache_layers_param.
+                                                                       dcgcpol.lwmark_df,
+                                                                       nfs_param.
+                                                                       cache_layers_param.
+                                                                       dcgcpol.hwmark_df,
                                                                        &is_hw_reached,
                                                                        &nb_blocks_to_manage))
                  == CACHE_CONTENT_SUCCESS)
                 {
                   if(is_hw_reached)
                     {
-                      DisplayLogLevel(NIV_EVENT,
-                                      "NFS FILE CONTENT GARBAGE COLLECTION : High Water Mark is  reached, %llu blocks to be removed",
-                                      nb_blocks_to_manage);
+                      LogEvent(COMPONENT_MAIN,
+                               "NFS FILE CONTENT GARBAGE COLLECTION : High Water Mark is  reached, %lu blocks to be removed",
+                               nb_blocks_to_manage);
                       some_flush_to_do = TRUE;
                       break;
                     }
-                  else
-                    DisplayLogLevel(NIV_EVENT,
-                                    "NFS FILE CONTENT GARBAGE COLLECTION : High Water Mark is not reached");
+                  else {
+                    LogEvent(COMPONENT_MAIN,
+                             "NFS FILE CONTENT GARBAGE COLLECTION : High Water Mark is not reached");
+		  }
 
                   /* Use signal management */
                   if(force_flush_by_signal == TRUE)
@@ -216,24 +218,46 @@ void *file_content_gc_thread(void *IndexArg)
             }
         }                       /* for */
 
-      if(debuglevelstr)
-        snprintf(command, 2 * MAXPATHLEN, "%s -f %s -N %s -L %s",
-                 ganesha_exec_path, config_path, debuglevelstr, fcc_log_path);
+      if (strncmp(fcc_log_path, "/dev/null", 9) == 0)
+	switch(LogComponents[COMPONENT_CACHE_INODE_GC].comp_log_type)
+	  {
+	  case FILELOG:
+	    strncpy(logfile_arg, LogComponents[COMPONENT_CACHE_INODE_GC].comp_log_file, MAXPATHLEN);
+	    break;
+	  case SYSLOG:
+	    strncpy(logfile_arg, "SYSLOG", MAXPATHLEN);
+	    break;
+	  case STDERRLOG:
+	    strncpy(logfile_arg, "STDERRLOG", MAXPATHLEN);
+	    break;
+	  case STDOUTLOG:
+	    strncpy(logfile_arg, "STDOUTLOG", MAXPATHLEN);
+	    break;
+	  default:
+	    LogCrit(COMPONENT_MAIN, "Could not figure out the proper -L option for emergency cache flush thread.");
+	  }
       else
-        snprintf(command, 2 * MAXPATHLEN, "%s -f %s -N NIV_MAJ -L %s",
-                 ganesha_exec_path, config_path, fcc_log_path);
+	strncpy(logfile_arg, fcc_log_path, MAXPATHLEN); /* config variable */
 
+      if(fcc_debug_level != -1) /* config variable */
+	loglevel_arg = ReturnLevelInt(fcc_debug_level);
+      else
+	loglevel_arg = ReturnLevelInt(ReturnLevelComponent(COMPONENT_CACHE_INODE_GC));
+
+      snprintf(command, 2 * MAXPATHLEN, "%s -f %s -N %s -L %s",
+	       ganesha_exec_path, config_path, loglevel_arg, logfile_arg);
+	       
       if(some_flush_to_do)
         strncat(command, " -P 3", 2 * MAXPATHLEN);      /* Sync and erase */
       else
         strncat(command, " -S 3", 2 * MAXPATHLEN);      /* Sync Only */
 
       if((command_stream = popen(command, "r")) == NULL)
-        DisplayLog("NFS FILE CONTENT GARBAGE COLLECTION : /!\\ Cannot lauch command %s",
-                   command);
+        LogCrit(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : /!\\ Cannot lauch command %s",
+                command);
       else
-        DisplayLog("NFS FILE CONTENT GARBAGE COLLECTION : I launched command %s",
-                   command);
+        LogEvent(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : I launched command %s",
+                 command);
 
       pclose(command_stream);
     }

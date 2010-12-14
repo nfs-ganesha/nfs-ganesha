@@ -39,7 +39,7 @@
 #endif
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -145,13 +145,13 @@ cache_inode_status_t cache_inode_access_sw(cache_entry_t * pentry,
             {
               cache_inode_status_t kill_status;
 
-              DisplayLog
-                  ("cache_inode_access: Stale FSAL File Handle detected for pentry = %p",
+              LogEvent(COMPONENT_CACHE_INODE,
+                  "cache_inode_access: Stale FSAL File Handle detected for pentry = %p",
                    pentry);
 
               if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
-                DisplayLog("cache_inode_access: Could not kill entry %p, status = %u",
+                LogCrit(COMPONENT_CACHE_INODE,"cache_inode_access: Could not kill entry %p, status = %u",
                            pentry, kill_status);
 
               *pstatus = CACHE_INODE_FSAL_ESTALE;

@@ -39,7 +39,7 @@
 #endif
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -62,8 +62,8 @@ static void cache_inode_lock_print(cache_entry_t * pentry)
         piter_state = piter_state->next)
       {
         if(piter_state->state_type == CACHE_INODE_STATE_SHARE)
-          printf
-              ("       piter_lock=%p   next=%p prev=%p         offset=%llu      length=%llu\n",
+          LogFullDebug(COMPONENT_CACHE_INODE,
+              "       piter_lock=%p   next=%p prev=%p         offset=%llu      length=%llu\n",
                piter_state, piter_state->next, piter_state->prev,
                piter_state->data.lock.offset, piter_state->data.lock.length);
       }
@@ -130,8 +130,8 @@ cache_inode_status_t cache_inode_lock_check_conflicting_range(cache_entry_t * pe
       if(piter_state->state_type != CACHE_INODE_STATE_LOCK)
         continue;
 
-      printf
-          ("--- check_conflicting_range : offset=%llu length=%llu piter_state->offset=%llu piter_state->length=%llu lock_type=%u piter_state->lock_type=%u\n",
+          LogFullDebug(COMPONENT_CACHE_INODE,
+          "--- check_conflicting_range : offset=%llu length=%llu piter_state->offset=%llu piter_state->length=%llu lock_type=%u piter_state->lock_type=%u\n",
            offset, length, piter_state->data.lock.offset, piter_state->data.lock.length,
            lock_type, piter_state->data.lock.lock_type);
 
@@ -284,7 +284,7 @@ void cache_inode_lock_remove(cache_entry_t * pentry,
   if(pfilelock->prev != NULL)
     pfilelock->prev->next = pfilelock->next;
 
-  RELEASE_PREALLOC(pfilelock, pclient->pool_state_v4, next);
+  ReleaseToPool(pfilelock, &pclient->pool_state_v4);
 
 }                               /* cache_inode_lock_remove */
 
@@ -392,13 +392,11 @@ cache_inode_status_t cache_inode_lock_create(cache_entry_t * pentry,
     }
 
   /* Get a new lock */
-  GET_PREALLOC(pfilelock,
-               pclient->pool_state_v4,
-               pclient->nb_pre_state_v4, cache_inode_state_v4_t, next);
+  GetFromPool(pfilelock, &pclient->pool_state_v4, cache_inode_state_t);
 
   if(pfilelock == NULL)
     {
-      DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+      LogDebug(COMPONENT_CACHE_INODE, 
                         "Can't allocate a new file lock from cache pool");
       *pstatus = CACHE_INODE_MALLOC_ERROR;
 

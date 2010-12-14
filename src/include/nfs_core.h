@@ -63,9 +63,7 @@
 #include "nfs_stat.h"
 #include "external_tools.h"
 
-#ifndef _NO_BUDDY_SYSTEM
-#include "BuddyMalloc.h"        /* for stats */
-#endif
+#include "stuff_alloc.h"
 
 #include "nfs23.h"
 #include "nfs4.h"
@@ -84,12 +82,13 @@
 #endif
 
 /* Maximum thread count */
-#define NB_MAX_WORKER_THREAD 100
+#define NB_MAX_WORKER_THREAD 4096
 #define NB_MAX_FLUSHER_THREAD 100
 
 /* NFS daemon behavior default values */
 #define NB_WORKER_THREAD_DEFAULT  16
 #define NB_FLUSHER_THREAD_DEFAULT 16
+#define NB_REQUEST_BEFORE_QUEUE_AVG  1000
 #define NB_MAX_CONCURRENT_GC 3
 #define NB_MAX_PENDING_REQUEST 30
 #define NB_PREALLOC_LRU_WORKER 100
@@ -140,8 +139,12 @@
 #define CONF_LABEL_IP_NAME_HOSTS    "Hosts"
 #define CONF_LABEL_NFSV4_REFERRALS  "NFSv4_Referrals"
 
+/* Worker and sidpatcher stack size */
+#define THREAD_STACK_SIZE  2116488
+
 /* NFS/RPC specific values */
 #define NFS_PORT             2049
+#define RQUOTA_PORT           875
 #define	RQCRED_SIZE	     400        /* this size is excessive */
 #define NFS_SEND_BUFFER_SIZE 32768
 #define NFS_RECV_BUFFER_SIZE 32768
@@ -172,6 +175,12 @@
 #define NFS_V4_MAX_QUOTA_HARD 17179869184LL     /* 16 GB */
 #define NFS_V4_MAX_QUOTA      34359738368LL     /* 32 GB */
 
+/* protocol flags */
+#define CORE_OPTION_NFSV2           0x00000002        /* NFSv2 operations are supported      */
+#define CORE_OPTION_NFSV3           0x00000004        /* NFSv3 operations are supported      */
+#define CORE_OPTION_NFSV4           0x00000008        /* NFSv4 operations are supported      */
+#define CORE_OPTION_ALL_VERS        0x0000000E
+
 /* Things related to xattr ghost directory */
 #define XATTRD_NAME ".xattr.d."
 #define XATTRD_NAME_LEN 9       /* MUST be equal to strlen( XATTRD_NAME ) */
@@ -194,12 +203,25 @@ typedef enum nfs_clientid_confirm_state__
 #define V( sem ) pthread_mutex_unlock( &sem )
 #endif
 
+#ifdef _USE_TIRPC
+void Svc_dg_soft_destroy(SVCXPRT * xport);
+#else
+void Svcudp_soft_destroy(SVCXPRT * xprt);
+#endif                          /* _USE_TIRPC */
+
 #ifdef _USE_GSSRPC
 bool_t Svcauth_gss_import_name(char *service);
 bool_t Svcauth_gss_acquire_cred(void);
 #endif
 void Xprt_register(SVCXPRT * xprt);
 void Xprt_unregister(SVCXPRT * xprt);
+
+
+/* Declare the various RPC transport dynamic arrays */
+extern SVCXPRT         **Xports;
+extern pthread_mutex_t  *mutex_cond_xprt;
+extern pthread_cond_t   *condvar_xprt;
+extern int              *etat_xprt;
 
 /* The default attribute mask for NFSv2/NFSv3 */
 #define FSAL_ATTR_MASK_V2_V3   ( FSAL_ATTRS_MANDATORY | FSAL_ATTR_MODE     | FSAL_ATTR_FILEID | \
@@ -216,12 +238,16 @@ typedef struct nfs_svc_data__
   int socket_mnt_tcp;
   int socket_nlm_udp;
   int socket_nlm_tcp;
+  int socket_rquota_udp;
+  int socket_rquota_tcp;
   SVCXPRT *xprt_nfs_udp;
   SVCXPRT *xprt_nfs_tcp;
   SVCXPRT *xprt_mnt_udp;
   SVCXPRT *xprt_mnt_tcp;
   SVCXPRT *xprt_nlm_udp;
   SVCXPRT *xprt_nlm_tcp;
+  SVCXPRT *xprt_rquota_udp;
+  SVCXPRT *xprt_rquota_tcp;
 } nfs_svc_data_t;
 
 typedef struct nfs_worker_param__
@@ -256,11 +282,14 @@ typedef struct nfs_core_param__
   unsigned short nfs_port;
   unsigned short mnt_port;
   unsigned short nlm_port;
+  unsigned short rquota_port;
   struct sockaddr_in bind_addr; // IPv4 only for now...
   unsigned int nfs_program;
   unsigned int mnt_program;
   unsigned int nlm_program;
+  unsigned int rquota_program;
   unsigned int nb_worker;
+  unsigned int nb_call_before_queue_avg;
   unsigned int nb_max_concurrent_gc;
   long core_dump_size;
   int nb_max_fd;
@@ -272,6 +301,9 @@ typedef struct nfs_core_param__
   unsigned int dump_stats_per_client;
   char stats_file_path[MAXPATHLEN];
   char stats_per_client_directory[MAXPATHLEN];
+  char fsal_shared_library[MAXPATHLEN];
+  int tcp_fridge_expiration_delay ;
+  unsigned int core_options;
 } nfs_core_parameter_t;
 
 typedef struct nfs_ip_name_param__
@@ -368,6 +400,8 @@ typedef struct nfs_param__
 #ifndef _NO_BUDDY_SYSTEM
   /* buddy parameter for workers and dispatcher */
   buddy_parameter_t buddy_param_worker;
+  buddy_parameter_t buddy_param_admin;
+  buddy_parameter_t buddy_param_tcp_mgr;
 #endif
 
 #ifdef _USE_MFSL
@@ -404,13 +438,16 @@ typedef struct nfs_request_data__
   SVCXPRT *nfs_udp_xprt;
   SVCXPRT *mnt_udp_xprt;
   SVCXPRT *nlm_udp_xprt;
+  SVCXPRT *rquota_udp_xprt;
+  SVCXPRT *rquota_tcp_xprt;
   SVCXPRT *xprt;
+  SVCXPRT *xprt_copy;
   struct svc_req req;
   struct rpc_msg msg;
   char cred_area[2 * MAX_AUTH_BYTES + RQCRED_SIZE];
   int status;
   nfs_res_t res_nfs;
-  struct nfs_request_data__ *next_alloc;
+  nfs_arg_t arg_nfs;
 } nfs_request_data_t;
 
 typedef struct nfs_client_id__
@@ -432,7 +469,6 @@ typedef struct nfs_client_id__
   nfs41_session_slot_t create_session_slot;
   unsigned create_session_sequence;
 #endif
-  struct nfs_client_id__ *next_alloc;
 } nfs_client_id_t;
 
 typedef enum idmap_type__
@@ -445,17 +481,26 @@ typedef struct nfs_worker_data__
   int index;
   LRU_list_t *pending_request;
   LRU_list_t *duplicate_request;
-  nfs_request_data_t *request_pool;
-  dupreq_entry_t *dupreq_pool;
-  nfs_ip_stats_t *ip_stats_pool;
-  nfs_client_id_t *clientid_pool;
+  struct prealloc_pool request_pool;
+  struct prealloc_pool dupreq_pool;
+  struct prealloc_pool ip_stats_pool;
+  struct prealloc_pool clientid_pool;
   cache_inode_client_t cache_inode_client;
   cache_content_client_t cache_content_client;
   hash_table_t *ht;
   hash_table_t *ht_ip_stats;
   pthread_mutex_t request_pool_mutex;
+
+  /* Used for blocking when request queue is empty. */
   pthread_cond_t req_condvar;
   pthread_mutex_t mutex_req_condvar;
+
+  /* Used for blocking when the export list is being replaced. */
+  bool_t waiting_for_exports;
+  bool_t reparse_exports_in_progress;
+  pthread_cond_t export_condvar;
+  pthread_mutex_t mutex_export_condvar;
+
   nfs_worker_stat_t stats;
   unsigned int passcounter;
   struct sockaddr_storage hostaddr;
@@ -464,6 +509,16 @@ typedef struct nfs_worker_data__
   unsigned int current_xid;
   fsal_op_context_t thread_fsal_context;
 } nfs_worker_data_t;
+
+typedef struct nfs_admin_data_
+{
+  pthread_cond_t admin_condvar;
+  pthread_mutex_t mutex_admin_condvar;
+  bool_t reload_exports;
+  char *config_path;
+  hash_table_t *ht;
+  nfs_worker_data_t *workers_data;
+} nfs_admin_data_t;
 
 /* flush thread data */
 typedef struct nfs_flush_thread_data__
@@ -478,6 +533,18 @@ typedef struct nfs_flush_thread_data__
 
 } nfs_flush_thread_data_t;
 
+typedef struct fridge_entry__
+{
+  pthread_t thrid ;
+  pthread_mutex_t condmutex ;
+  pthread_cond_t condvar ;
+  unsigned int frozen ;
+  void * arg ;
+  struct fridge_entry__ * pprev ;
+  struct fridge_entry__ * pnext ;
+} fridge_entry_t  ;
+
+
 /* 
  *functions prototypes
  */
@@ -485,17 +552,25 @@ void *worker_thread(void *IndexArg);
 void *rpc_dispatcher_thread(void *arg);
 void *admin_thread(void *arg);
 void *stats_thread(void *IndexArg);
+void *stat_exporter_thread(void *IndexArg);
+void *sigmgr_thread(void *arg);
 int stats_snmp(nfs_worker_data_t * workers_data_local);
 void *file_content_gc_thread(void *IndexArg);
 void *nfs_file_content_flush_thread(void *flush_data_arg);
 
+void nfs_operate_on_sigusr1() ;
+void nfs_operate_on_sigterm() ;
+void nfs_operate_on_sighup() ;
+
 int nfs_Init_svc(void);
+int nfs_Init_admin_data(nfs_admin_data_t * pdata);
 int nfs_Init_worker_data(nfs_worker_data_t * pdata);
 int nfs_Init_request_data(nfs_request_data_t * pdata);
 int nfs_Init_gc_counter(void);
 void constructor_nfs_request_data_t(void *ptr);
 
 /* Config parsing routines */
+int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t * out_parameter);
 int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam);
 int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * pparam);
 int nfs_read_dupreq_hash_conf(config_file_t in_config,
@@ -516,6 +591,27 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam);
 #endif                          /* _USE_NFS4_1 */
 
 int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht);
+
+/* Add a list of clients to the client array of either an exports entry or
+ * another service that has a client array (like snmp or statistics exporter) */
+int nfs_AddClientsToClientArray(exportlist_client_t *clients, int new_clients_number,
+    char **new_clients_name, int option);
+
+/* Checks an access list for a specific client */
+int export_client_match(unsigned int addr,
+                        char *ipstring,
+                        exportlist_client_t *clients,
+                        exportlist_client_entry_t * pclient_found,
+                        unsigned int export_option);
+int export_client_matchv6(struct in6_addr *paddrv6,
+                          exportlist_client_t *clients,
+                          exportlist_client_entry_t * pclient_found,
+                          unsigned int export_option);
+
+/* Config reparsing routines */
+void admin_replace_exports();
+int CleanUpExportContext(fsal_export_context_t * p_export_context);
+exportlist_t *RemoveExportEntry(exportlist_t * exportEntry);
 
 /* Tools */
 unsigned int get_rpc_xid(struct svc_req *reqp);
@@ -542,7 +638,7 @@ void auth_stat2str(enum auth_stat, char *str);
 int nfs_Init_client_id(nfs_client_id_parameter_t param);
 int nfs_Init_client_id_reverse(nfs_client_id_parameter_t param);
 
-int nfs_client_id_remove(clientid4 clientid, nfs_client_id_t * nfs_client_id_pool);
+int nfs_client_id_remove(clientid4 clientid, struct prealloc_pool *clientid_pool);
 
 int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res);
 
@@ -552,11 +648,11 @@ int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id
 
 int nfs_client_id_add(clientid4 clientid,
                       nfs_client_id_t client_record,
-                      nfs_client_id_t * nfs_client_id_pool);
+                      struct prealloc_pool *clientid_pool);
 
 int nfs_client_id_set(clientid4 clientid,
                       nfs_client_id_t client_record,
-                      nfs_client_id_t * nfs_client_id_pool);
+                      struct prealloc_pool *clientid_pool);
 
 int nfs_client_id_compute(char *name, clientid4 * pclientid);
 int nfs_client_id_basic_compute(char *name, clientid4 * pclientid);
@@ -585,11 +681,17 @@ unsigned long state_id_value_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t * buffclef);
 unsigned long state_id_rbt_hash_func(hash_parameter_t * p_hparam,
                                      hash_buffer_t * buffclef);
+unsigned int state_id_hash_both( hash_parameter_t * p_hparam,
+				 hash_buffer_t    * buffclef, 
+				 uint32_t * phashval, uint32_t * prbtval );
 
 unsigned long client_id_value_hash_func(hash_parameter_t * p_hparam,
                                         hash_buffer_t * buffclef);
 unsigned long client_id_value_hash_func_reverse(hash_parameter_t * p_hparam,
                                                 hash_buffer_t * buffclef);
+unsigned int client_id_value_both_reverse( hash_parameter_t * p_hparam,
+				           hash_buffer_t    * buffclef, 
+				           uint32_t * phashval, uint32_t * prbtval ) ;
 
 unsigned long idmapper_rbt_hash_func(hash_parameter_t * p_hparam,
                                      hash_buffer_t * buffclef);
@@ -679,6 +781,10 @@ int nfs4_State_Del(char other[12]);
 int nfs4_State_Update(char other[12], cache_inode_state_t * pstate_data);
 void nfs_State_PrintAll(void);
 
+int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
+fridge_entry_t * fridgethr_freeze( ) ;
+int fridgethr_init() ;
+
 #ifdef _USE_NFS4_1
 int display_session_id_key(hash_buffer_t * pbuff, char *str);
 int display_session_id_val(hash_buffer_t * pbuff, char *str);
@@ -706,6 +812,7 @@ hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param);
 int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param);
 
 void socket_setoptions(int socketFd);
+int cmp_sockaddr(struct sockaddr *addr_1, struct sockaddr *addr_2);
 
 #ifdef _USE_GSSRPC
 unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
@@ -716,5 +823,12 @@ int display_gss_ctx(hash_buffer_t * pbuff, char *str);
 int display_gss_svc_data(hash_buffer_t * pbuff, char *str);
 
 #endif                          /* _USE_GSSRPC */
+
+void Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig);
+void Svcxprt_copydestroy(register SVCXPRT * xprt);
+SVCXPRT *Svcxprt_copycreate();
+
+int nfs_rpc_get_funcdesc(nfs_request_data_t * preqnfs, nfs_function_desc_t *pfuncdesc);
+int nfs_rpc_get_args(nfs_request_data_t * preqnfs, nfs_function_desc_t *pfuncdesc);
 
 #endif                          /* _NFS_CORE_H */

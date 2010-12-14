@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -162,7 +162,8 @@ int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
     }
 
   /* For the moment, returns no new size */
-  res_LAYOUTCOMMIT4.LAYOUTCOMMIT4res_u.locr_resok4.locr_newsize.ns_sizechanged = FALSE;
+  res_LAYOUTCOMMIT4.LAYOUTCOMMIT4res_u.locr_resok4.locr_newsize.ns_sizechanged = TRUE;
+  res_LAYOUTCOMMIT4.LAYOUTCOMMIT4res_u.locr_resok4.locr_newsize.newsize4_u.ns_size = arg_LAYOUTCOMMIT4.loca_length ;
 
   res_LAYOUTCOMMIT4.locr_status = NFS4_OK;
 

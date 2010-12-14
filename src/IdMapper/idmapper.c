@@ -87,7 +87,7 @@ void nfsidmap_logger(const char *str, ...)
 {
   va_list arg;
   va_start(arg, str);
-  printf("nfsidmap_logger: ");
+  LogDebug(COMPONENT_IDMAPPER, "nfsidmap_logger: ");
   vprintf(str, arg);
   va_end(arg);
 }
@@ -168,10 +168,12 @@ int uid2name(char *name, uid_t * puid)
 #ifdef _SOLARIS
       if(getpwuid_r(*puid, &p, buff, MAXPATHLEN) != 0)
 #else
-      if(getpwuid_r(*puid, &p, buff, MAXPATHLEN, &pp) != 0)
+      if((getpwuid_r(*puid, &p, buff, MAXPATHLEN, &pp) != 0) ||
+	 (pp == NULL))
 #endif                          /* _SOLARIS */
         return 0;
 
+      strncpy(name, p.pw_name, MAXNAMLEN);
       if(uidmap_add(name, *puid) != ID_MAPPER_SUCCESS)
         return 0;
 
@@ -318,14 +320,15 @@ int gid2name(char *name, gid_t * pgid)
 #ifdef _SOLARIS
       if(getgrgid_r(*pgid, &g, buff, MAXPATHLEN) != 0)
 #else
-      if(getgrgid_r(*pgid, &g, buff, MAXPATHLEN, &pg) != 0)
+      if((getgrgid_r(*pgid, &g, buff, MAXPATHLEN, &pg) != 0) ||
+	 (pg == NULL))
 #endif                          /* _SOLARIS */
         return 0;
 
+      strncpy(name, g.gr_name, MAXNAMLEN);
       if(gidmap_add(name, *pgid) != ID_MAPPER_SUCCESS)
         return 0;
 
-      strncpy(name, g.gr_name, MAXNAMLEN);
     }
 
   return 1;
@@ -410,6 +413,7 @@ int uid2str(uid_t uid, char *str)
 
   if(uid2name(buffer, &local_uid) == 0)
     return -1;
+    
 #ifndef _USE_NFSIDMAP
   return sprintf(str, "%s@%s", buffer, nfs_param.nfsv4_param.domainname);
 #else
@@ -469,20 +473,10 @@ int uid2utf8(uid_t uid, utf8string * utf8str)
   len = strlen(buff);
 
   /* A matching uid was found, now do the conversion to utf8 */
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("uid2utf8");
-#endif
-
-  if((utf8str->utf8string_val = (char *)Mem_Alloc(len)) == NULL)
+  if((utf8str->utf8string_val = (char *)Mem_Alloc_Label(len, "uid2utf8")) == NULL)
     return -1;
   else
     utf8str->utf8string_len = len;
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   return str2utf8(buff, utf8str);
 
@@ -512,20 +506,10 @@ int gid2utf8(gid_t gid, utf8string * utf8str)
 
   /* A matching gid was found */
   /* Do the conversion to uft8 format */
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("gid2utf8");
-#endif
-
-  if((utf8str->utf8string_val = (char *)Mem_Alloc(len)) == NULL)
+  if((utf8str->utf8string_val = (char *)Mem_Alloc_Label(len, "gid2utf8")) == NULL)
     return -1;
   else
     utf8str->utf8string_len = len;
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
 
   return str2utf8(buff, utf8str);
 }                               /* gid2utf8 */

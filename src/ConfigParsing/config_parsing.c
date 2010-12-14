@@ -342,8 +342,34 @@ static generic_item *GetItemFromList(generic_item * list, const char *name)
 
 }
 
+/**
+ * \retval 0 if the entry is unique in the list
+ * \retval != if there are several items with this name in the list
+ */
+static int CheckDuplicateEntry(generic_item * list, const char *name)
+{
+    generic_item *curr;
+    unsigned int found=0;
+
+    if(!list)
+        return 0;
+
+    for(curr = list; curr != NULL; curr = curr->next)
+    {
+      if((curr->type == TYPE_BLOCK)
+         && !STRNCMP(curr->item.block.block_name, name, MAXSTRLEN))
+        found++;
+      if((curr->type == TYPE_AFFECT)
+         && !STRNCMP(curr->item.affect.varname, name, MAXSTRLEN))
+        found++;
+	if ( found > 1 )
+	    break;
+    }
+  return ( found > 1 );
+}
+
 /* Returns the block with the specified name. This name can be "BLOCK::SUBBLOCK::SUBBLOCK" */
-config_item_t config_FindItemByName(config_file_t config, const char *name)
+config_item_t internal_FindItemByName(config_file_t config, const char *name, int * unique)
 {
   config_struct_t *config_struct = (config_struct_t *) config;
   generic_item *block;
@@ -359,6 +385,7 @@ config_item_t config_FindItemByName(config_file_t config, const char *name)
   list = *config_struct->syntax_tree;
 
   strncpy(tmp_name, name, MAXSTRLEN);
+  tmp_name[MAXSTRLEN - 1] = '\0';
   current = tmp_name;
 
   while(current)
@@ -368,7 +395,13 @@ config_item_t config_FindItemByName(config_file_t config, const char *name)
 
       /* it is a whole name */
       if(!separ)
+      {
+	if (unique) {
+		*unique = !CheckDuplicateEntry(list, current);
+      		sprintf(extern_errormsg, "Configuration item '%s' is not unique", name);
+	}
         return (config_item_t) GetItemFromList(list, current);
+      }
       else
         {
           /* split the name */
@@ -394,7 +427,16 @@ config_item_t config_FindItemByName(config_file_t config, const char *name)
 
   /* not found */
   return NULL;
+}
 
+config_item_t config_FindItemByName(config_file_t config, const char *name)
+{
+	return internal_FindItemByName(config, name, NULL);
+}
+
+config_item_t config_FindItemByName_CheckUnique(config_file_t config, const char *name, int * unique)
+{
+	return internal_FindItemByName(config, name, unique);
 }
 
 /* Directly returns the value of the key with the specified name.
@@ -429,6 +471,7 @@ config_item_t config_GetItemByName(config_item_t block, const char *name)
   list = curr_block->item.block.block_content;
 
   strncpy(tmp_name, name, MAXSTRLEN);
+  tmp_name[MAXSTRLEN - 1] = '\0';
   current = tmp_name;
 
   while(current)

@@ -56,19 +56,11 @@
 #include <string.h>
 #include <errno.h>
 
+
 #ifdef FD_SETSIZE
 SVCXPRT **Xports;
 extern int gssrpc_svc_fdset_init;
-#else
-
-#ifdef NBBY
-#define NOFILE (sizeof(int) * NBBY)
-#else
-#define NOFILE (sizeof(int) * 8)
-#endif
-
-SVCXPRT *Xports[NOFILE];
-#endif                          /* def FD_SETSIZE */
+//#else
 
 #define NULL_SVC ((struct svc_callout *)0)
 #define	RQCRED_SIZE	1024    /* this size is excessive */
@@ -107,11 +99,6 @@ void Xprt_register(SVCXPRT * xprt)
     {
       FD_ZERO(&Svc_fdset);
       gssrpc_svc_fdset_init++;
-    }
-  if(Xports == NULL)
-    {
-      Xports = (SVCXPRT **) mem_alloc(FD_SETSIZE * sizeof(SVCXPRT *));
-      memset(Xports, 0, FD_SETSIZE * sizeof(SVCXPRT *));
     }
   if(sock < FD_SETSIZE)
     {

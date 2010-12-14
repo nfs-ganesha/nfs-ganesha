@@ -237,20 +237,17 @@
 #include "Getopt.h"
 #include "stuff_alloc.h"
 
-fsal_status_t FSAL_open_crade(fsal_handle_t * dirhandle,        /* IN */
-                              fsal_name_t * filename,   /* IN */
-                              fsal_op_context_t * p_context,    /* IN */
-                              fsal_openflags_t openflags,       /* IN */
-                              fsal_file_t * file_descriptor,    /* OUT */
-                              fsal_attrib_list_t * file_attributes);    /* [ IN/OUT ] */
+int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib);
 
 /* global FS configuration variables */
 
 static pthread_mutex_t mutex_log = PTHREAD_MUTEX_INITIALIZER;
 
-static desc_log_stream_t voie;
 static int log_level = -1;
+#ifdef OLD_LOGGING
+static desc_log_stream_t voie;
 static log_t log_desc = LOG_INITIALIZER;
+#endif
 
 static int is_loaded = FALSE;   /* filsystem initialization status */
 
@@ -355,7 +352,7 @@ int Init_Thread_Context(FILE * output, cmdfsal_thr_info_t * context, int flag_v)
   struct passwd *pw_struct;
 
   /* for the moment, create export context for root fileset */
-#ifdef _USE_XFS____toto
+#ifdef _USE_XFS
   fsal_path_t local_path_fsal;
   st = FSAL_str2path("/xfs", strlen("/xfs"), &local_path_fsal);
   st = FSAL_BuildExportContext(&context->exp_context, &local_path_fsal, NULL);
@@ -436,7 +433,7 @@ int Init_Thread_Context(FILE * output, cmdfsal_thr_info_t * context, int flag_v)
 
 void fsal_layer_SetLogLevel(int log_lvl)
 {
-
+#ifdef OLD_LOGGING
   log_stream_t *curr;
 
   /* mutex pour proteger le descriptor de log */
@@ -462,7 +459,7 @@ void fsal_layer_SetLogLevel(int log_lvl)
     }
 
   pthread_mutex_unlock(&mutex_log);
-
+#endif
 }
 
 static void getopt_init()
@@ -484,6 +481,29 @@ int fsal_init(char *filename, int flag_v, FILE * output)
   cmdfsal_thr_info_t *context;
 
   /* Initializes the FSAL */
+  char fsal_path_lib[MAXPATHLEN];
+
+#ifdef _USE_SHARED_FSAL
+  if(nfs_get_fsalpathlib_conf(filename, fsal_path_lib))
+    {
+      fprintf(stderr, "NFS MAIN: Error parsing configuration file.\n");
+      exit(1);
+    }
+#endif                          /* _USE_SHARED_FSAL */
+
+  /* Load the FSAL library (if needed) */
+  if(!FSAL_LoadLibrary(fsal_path_lib))
+    {
+      fprintf(stderr, "NFS MAIN: Could not load FSAL dynamic library %s\n",
+              fsal_path_lib);
+      exit(1);
+    }
+
+  /* Get the FSAL functions */
+  FSAL_LoadFunctions();
+
+  /* Get the FSAL consts */
+  FSAL_LoadConsts();
 
   /* use FSAL error family. */
 
@@ -562,9 +582,10 @@ int fsal_init(char *filename, int flag_v, FILE * output)
   /* Free config struct */
   config_Free(config_file);
 
+#ifdef OLD_LOGGING
   /* overide log descriptor for FSAL */
-
   init_param.fsal_info.log_outputs = log_desc;
+#endif
 
   /* Initialization */
 
@@ -1747,7 +1768,7 @@ int fn_fsal_ls(int argc,        /* IN : number of args in argv */
       return st.major;
     }
 
-  from = FSAL_READDIR_FROM_BEGINNING;
+  FSAL_SET_COOKIE_BEGINNING(from);
 
   while(!error && !eod)
     {
@@ -5702,6 +5723,149 @@ int fn_fsal_cross(int argc,     /* IN : number of args in argv */
   return 0;
 
 }
+
+/** Digest/expand a FSAL HANDLE */
+int fn_fsal_handle(int argc,     /* IN : number of args in argv */
+                   char **argv,  /* IN : arg list               */
+                   FILE * output /* IN : output stream          */
+    )
+{
+
+  static char help_handle[] = "usage: handle digest {2|3|4} <handle|path>\n"
+                              "       handle expand {2|3|4} <handle>\n";
+  cmdfsal_thr_info_t *context;
+  char glob_path[FSAL_MAX_PATH_LEN];
+  char buff[1024];
+  char buff2[1024];
+  fsal_handle_t filehdl;
+  fsal_status_t st;
+  int rc;
+  fsal_digesttype_t dt ; /* digest type */
+  size_t            ds ; /* digest size */
+
+
+  /* is the fs initialized ? */
+  if(!is_loaded)
+    {
+      fprintf(output, "Error: filesystem not initialized\n");
+      return -1;
+    }
+
+  /* initialize current thread */
+
+  context = GetFSALCmdContext();
+
+  if(context->is_thread_ok != TRUE)
+    {
+      int rc;
+      rc = Init_Thread_Context(output, context, 0);
+      if(rc != 0)
+        return rc;
+    }
+
+  /* Exactly 3 args expected */
+  if(argc != 4)
+    {
+      fprintf(output, help_handle);
+      return -1;
+    }
+
+  switch( atoi(argv[2]) )
+  {
+        case 2:
+                dt = FSAL_DIGEST_NFSV2;
+                ds = FSAL_DIGEST_SIZE_HDLV2;
+                break;
+        case 3:
+                dt = FSAL_DIGEST_NFSV3;
+                ds = FSAL_DIGEST_SIZE_HDLV3;
+                break;
+        case 4:
+                dt = FSAL_DIGEST_NFSV4;
+                ds = FSAL_DIGEST_SIZE_HDLV4;
+                break;
+        default:
+                fprintf(output, "Unsupported NFS version: '%s' (2, 3 or 4 expected)\n", argv[2]);
+                fprintf(output, help_handle);
+                return EINVAL;
+  }
+
+  /* digest operation */
+  if ( !strcmp(argv[1], "digest") )
+  {
+        /* retrieves object handle */
+        strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
+        if(rc = solvepath(glob_path, FSAL_MAX_PATH_LEN,
+                          argv[3], context->current_dir, &filehdl, output))
+                return rc;
+
+        st = FSAL_DigestHandle(&context->exp_context, dt, &filehdl, buff);
+        if(FSAL_IS_ERROR(st))
+        {
+              snprintHandle(buff, 2 * sizeof(fsal_handle_t) + 1, &filehdl);
+              fprintf(output, "Error executing FSAL_DigestHandle(@%s):", buff);
+              print_fsal_status(output, st);
+              fprintf(output, "\n");
+              return st.major;
+        }
+        /* display the result */
+        snprintmem(buff2, 1024, buff, ds);
+        fprintf(output, "%s\n", buff2);
+  }
+  /* expand operation */
+  else if ( !strcmp(argv[1], "expand") )
+  {
+        memset(buff, 0, 1024);
+        size_t length = strlen(argv[3]);
+        size_t datasize = (length >> 1);
+
+        if(length % 2)
+        {
+          /* if it is not odd: error */
+          fprintf(output,
+                  "handle expand: error: in \"%s\", data length is not a multiple of 8 bits.\n",
+                  argv[3]);
+          return EINVAL;
+        }
+
+        /* try to read hexa from the string */
+        rc = sscanmem(buff, datasize, argv[3]);
+
+        if (rc < 0)
+        {
+                fprintf(output, "Error %d reading digest from command line (%s)",
+                        -rc, argv[3]);
+                return rc;
+        }
+        else if (rc != 2*ds)
+        {
+                fprintf(output, "Unexpected data size for digest type NFSv%s: 2x%zu expected, %u read\n",
+                        argv[2], ds, rc);
+                return EINVAL;
+        }
+
+        /* Expand the handle */
+        st = FSAL_ExpandHandle(&context->exp_context, dt, buff, &filehdl);
+        if(FSAL_IS_ERROR(st))
+        {
+              fprintf(output, "Error executing FSAL_ExpandHandle(%s):", argv[3]);
+              print_fsal_status(output, st);
+              fprintf(output, "\n");
+              return st.major;
+        }
+
+        snprintHandle(buff2, 2 * sizeof(fsal_handle_t) + 1, &filehdl);
+        fprintf(output, "@%s\n", buff2);
+  }
+  else
+  {
+      fprintf(output, help_handle);
+      return -1;
+  }
+  return 0;
+}
+
+
 
 /** compare 2 handles. */
 int fn_fsal_handlecmp(int argc, /* IN : number of args in argv */

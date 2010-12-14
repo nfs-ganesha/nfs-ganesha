@@ -61,7 +61,7 @@
 #ifdef _USE_MFSL
 #include "mfsl.h"
 #endif
-#include "log_functions.h"
+#include "log_macros.h"
 #include "config_parsing.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -87,7 +87,6 @@ typedef struct nfs41_session__
   channel_attrs4 fore_channel_attrs;
   channel_attrs4 back_channel_attrs;
   nfs41_session_slot_t slots[NFS41_NB_SLOTS];
-  struct nfs41_session__ *next_alloc;
 } nfs41_session_t;
 
 #endif                          /* _NFS41_SESSION_H */

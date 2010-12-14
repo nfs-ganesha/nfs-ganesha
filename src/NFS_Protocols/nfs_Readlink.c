@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -181,8 +181,8 @@ int nfs_Readlink(nfs_arg_t * parg,
           nfs_SetPostOpAttr(pcontext, pexport,
                             pentry,
                             &attr,
-                            &(pres->res_readlink3.READLINK3res_u.
-                              resok.symlink_attributes));
+                            &(pres->res_readlink3.READLINK3res_u.resok.
+                              symlink_attributes));
           pres->res_readlink3.status = NFS3_OK;
           break;
         }

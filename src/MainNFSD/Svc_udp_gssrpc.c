@@ -35,6 +35,8 @@
 #include "solaris_port.h"
 #endif
 
+#include "log_macros.h"
+
 /*
  * svc_udp.c,
  * Server side for UDP/IP based RPC.  (Does some caching in the hopes of
@@ -152,19 +154,19 @@ SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz)
   xprt = (SVCXPRT *) mem_alloc(sizeof(SVCXPRT));
   if(xprt == NULL)
     {
-      (void)fprintf(stderr, "svcudp_create: out of memory\n");
+      LogCrit(COMPONENT_DISPATCH, "svcudp_create: out of memory");
       return (NULL);
     }
   su = (struct svcudp_data *)mem_alloc(sizeof(*su));
   if(su == NULL)
     {
-      (void)fprintf(stderr, "svcudp_create: out of memory\n");
+      LogCrit(COMPONENT_DISPATCH, "svcudp_create: out of memory");
       return (NULL);
     }
   su->su_iosz = ((MAX(sendsz, recvsz) + 3) / 4) * 4;
   if((rpc_buffer(xprt) = mem_alloc(su->su_iosz)) == NULL)
     {
-      (void)fprintf(stderr, "svcudp_create: out of memory\n");
+      LogCrit(COMPONENT_DISPATCH, "svcudp_create: out of memory");
       return (NULL);
     }
   xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt), su->su_iosz, XDR_DECODE);
@@ -289,6 +291,15 @@ static bool_t Svcudp_freeargs(SVCXPRT * xprt, xdrproc_t xdr_args, void *args_ptr
 
   xdrs->x_op = XDR_FREE;
   return ((*xdr_args) (xdrs, args_ptr));
+}
+
+void Svcudp_soft_destroy(register SVCXPRT * xprt)
+{
+  register struct svcudp_data * su = xprt->xp_p2 ;
+
+  mem_free(rpc_buffer(xprt), su->su_iosz);
+  mem_free((caddr_t) su, sizeof(struct svcudp_data));
+  mem_free((caddr_t) xprt, sizeof(SVCXPRT));
 }
 
 static void Svcudp_destroy(register SVCXPRT * xprt)

@@ -43,7 +43,7 @@
 #endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -119,7 +119,7 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
 
       if((found_export_id = cache_content_get_export_id(direntp->d_name)) >= 0)
         {
-          DisplayLogJdLevel(pclient_data->log_outputs, NIV_EVENT,
+          LogEvent(COMPONENT_CACHE_CONTENT,
                             "Directory cache for Export ID %d has been found",
                             found_export_id);
           snprintf(cache_exportdir, MAXPATHLEN, "%s/%s", pclient_data->cache_dir,
@@ -145,8 +145,8 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
 
               if((inum = cache_content_get_inum(dirent_export.d_name)) > 0)
                 {
-                  DisplayLogJdLevel(pclient_data->log_outputs, NIV_EVENT,
-                                    "Cache entry for File ID %llx has been found", inum);
+                  LogEvent(COMPONENT_CACHE_CONTENT,
+                                    "Cache entry for File ID %"PRIx64" has been found", inum);
 
                   /* Get the content of the file */
                   sprintf(fullpath, "%s/%s/%s", pclient_data->cache_dir, direntp->d_name,
@@ -156,14 +156,14 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                                                                       &inode_entry)) !=
                      CACHE_INODE_SUCCESS)
                     {
-                      DisplayLogJdLevel(pclient_data->log_outputs, NIV_MAJOR,
-                                        "File Content Cache record for File ID %llx is unreadable",
+                      LogMajor(COMPONENT_CACHE_CONTENT,
+                                        "File Content Cache record for File ID %"PRIx64" is unreadable",
                                         inum);
                       continue;
                     }
                   else
-                    DisplayLogJdLevel(pclient_data->log_outputs, NIV_MAJOR,
-                                      "File Content Cache record for File ID %llx : READ OK",
+                    LogMajor(COMPONENT_CACHE_CONTENT,
+                                      "File Content Cache record for File ID %"PRIx64" : READ OK",
                                       inum);
 
                   /* Populating the cache_inode... */
@@ -176,22 +176,22 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                                                pclient_inode,
                                                pcontext, &cache_inode_status)) == NULL)
                     {
-                      DisplayLogJd(pclient_inode->log_outputs,
-                                   "Error adding cached inode for file ID %llx, error=%d",
+                      LogCrit(COMPONENT_CACHE_CONTENT,
+                                   "Error adding cached inode for file ID %"PRIx64", error=%d",
                                    inum, cache_inode_status);
                       continue;
                     }
                   else
-                    DisplayLogJdLevel(pclient_inode->log_outputs, NIV_EVENT,
-                                      "Cached inode added successfully for file ID %llx",
+                    LogEvent(COMPONENT_CACHE_CONTENT,
+                                      "Cached inode added successfully for file ID %"PRIx64,
                                       inum);
 
                   /* Get the size from the cache */
                   if((size_in_cache =
                       cache_content_recover_size(cache_exportdir, inum)) == -1)
                     {
-                      DisplayLogJd(pclient_inode->log_outputs,
-                                   "Error when recovering size for file ID %llx", inum);
+                      LogCrit(COMPONENT_CACHE_CONTENT,
+                                   "Error when recovering size for file ID %"PRIx64, inum);
                     }
                   else
                     pentry->object.file.attributes.filesize = (fsal_size_t) size_in_cache;
@@ -205,14 +205,14 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                                                                &cache_content_status)) ==
                      NULL)
                     {
-                      DisplayLogJd(pclient_data->log_outputs,
-                                   "Error adding cached data for file ID %llx, error=%d",
+                      LogCrit(COMPONENT_CACHE_CONTENT,
+                                   "Error adding cached data for file ID %"PRIx64", error=%d",
                                    inum, cache_inode_status);
                       continue;
                     }
                   else
-                    DisplayLogJdLevel(pclient_data->log_outputs, NIV_EVENT,
-                                      "Cached data added successfully for file ID %llx",
+                    LogEvent(COMPONENT_CACHE_CONTENT,
+                                      "Cached data added successfully for file ID %"PRIx64,
                                       inum);
 
                   if((cache_content_status =

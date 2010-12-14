@@ -34,7 +34,7 @@
 #define INTMACRO_TO_STR(_x) _DEREF(_x)
 #define _DEREF(_x) #_x
 
-char *FSAL_GetFSName()
+char *HPSSFSAL_GetFSName()
 {
   return "HPSS " INTMACRO_TO_STR(HPSS_MAJOR_VERSION) "."
       INTMACRO_TO_STR(HPSS_MINOR_VERSION) "." INTMACRO_TO_STR(HPSS_PATCH_LEVEL);
@@ -56,8 +56,8 @@ char *FSAL_GetFSName()
  *         - Segfault if status is a NULL pointer.
  */
 
-int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
-                   fsal_status_t * status)
+int HPSSFSAL_handlecmp(hpssfsal_handle_t * handle1, hpssfsal_handle_t * handle2,
+                       fsal_status_t * status)
 {
 
   fsal_u64_t fileid1, fileid2;
@@ -75,8 +75,8 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
    * so we use our own comparation method,
    * by comparing fileids.
    */
-  fileid1 = hpss_GetObjId(&handle1->ns_handle);
-  fileid2 = hpss_GetObjId(&handle2->ns_handle);
+  fileid1 = hpss_GetObjId(&handle1->data.ns_handle);
+  fileid2 = hpss_GetObjId(&handle2->data.ns_handle);
 
   if(fileid1 > fileid2)
     return 1;
@@ -101,9 +101,10 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
  * \return The hash value
  */
 
-unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
-                                      unsigned int cookie,
-                                      unsigned int alphabet_len, unsigned int index_size)
+unsigned int HPSSFSAL_Handle_to_HashIndex(hpssfsal_handle_t * p_handle,
+                                          unsigned int cookie,
+                                          unsigned int alphabet_len,
+                                          unsigned int index_size)
 {
 #define SMALL_PRIME_MULT        3
 #define SMALL_PRIME_ADD         1999
@@ -111,26 +112,26 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
 
   unsigned int h = cookie;
   unsigned int i;
-  unsigned32 objid = hpss_GetObjId(&p_handle->ns_handle);
+  unsigned32 objid = hpss_GetObjId(&p_handle->data.ns_handle);
 
-  h ^= p_handle->ns_handle.Generation;
+  h ^= p_handle->data.ns_handle.Generation;
   HASH_INCR(h, index_size);
   h ^= objid;
   HASH_INCR(h, index_size);
-  h ^= p_handle->ns_handle.CoreServerUUID.time_low;
+  h ^= p_handle->data.ns_handle.CoreServerUUID.time_low;
   HASH_INCR(h, index_size);
-  h ^= p_handle->ns_handle.CoreServerUUID.time_mid;
+  h ^= p_handle->data.ns_handle.CoreServerUUID.time_mid;
   HASH_INCR(h, index_size);
-  h ^= p_handle->ns_handle.CoreServerUUID.time_hi_and_version;
+  h ^= p_handle->data.ns_handle.CoreServerUUID.time_hi_and_version;
   HASH_INCR(h, index_size);
-  h ^= p_handle->ns_handle.CoreServerUUID.clock_seq_hi_and_reserved;
+  h ^= p_handle->data.ns_handle.CoreServerUUID.clock_seq_hi_and_reserved;
   HASH_INCR(h, index_size);
-  h ^= p_handle->ns_handle.CoreServerUUID.clock_seq_low;
+  h ^= p_handle->data.ns_handle.CoreServerUUID.clock_seq_low;
   HASH_INCR(h, index_size);
 
   for(i = 0; i < 6; i++)
     {
-      h ^= p_handle->ns_handle.CoreServerUUID.node[i];
+      h ^= p_handle->data.ns_handle.CoreServerUUID.node[i];
       HASH_INCR(h, index_size);
     }
 
@@ -150,25 +151,26 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cookie)
+unsigned int HPSSFSAL_Handle_to_RBTIndex(hpssfsal_handle_t * p_handle,
+                                         unsigned int cookie)
 {
   unsigned int h;
   unsigned int i;
-  unsigned32 objid = hpss_GetObjId(&p_handle->ns_handle);
+  unsigned32 objid = hpss_GetObjId(&p_handle->data.ns_handle);
 
   h = cookie;
-  h ^= p_handle->ns_handle.Generation << 1;
+  h ^= p_handle->data.ns_handle.Generation << 1;
   h ^= objid << 2;
 
-  h ^= p_handle->ns_handle.CoreServerUUID.time_low << 3;
-  h ^= p_handle->ns_handle.CoreServerUUID.time_mid << 4;
-  h ^= p_handle->ns_handle.CoreServerUUID.time_hi_and_version << 5;
-  h ^= p_handle->ns_handle.CoreServerUUID.clock_seq_hi_and_reserved << 6;
-  h ^= p_handle->ns_handle.CoreServerUUID.clock_seq_low << 7;
+  h ^= p_handle->data.ns_handle.CoreServerUUID.time_low << 3;
+  h ^= p_handle->data.ns_handle.CoreServerUUID.time_mid << 4;
+  h ^= p_handle->data.ns_handle.CoreServerUUID.time_hi_and_version << 5;
+  h ^= p_handle->data.ns_handle.CoreServerUUID.clock_seq_hi_and_reserved << 6;
+  h ^= p_handle->data.ns_handle.CoreServerUUID.clock_seq_low << 7;
 
   for(i = 0; i < 6; i++)
     {
-      h ^= ((unsigned int)p_handle->ns_handle.CoreServerUUID.node[i]) << 8 + i;
+      h ^= ((unsigned int)p_handle->data.ns_handle.CoreServerUUID.node[i]) << 8 + i;
     }
 
   return h;
@@ -176,7 +178,7 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
 
 /**
  * FSAL_DigestHandle :
- *  Convert an fsal_handle_t to a buffer
+ *  Convert an hpssfsal_handle_t to a buffer
  *  to be included into NFS handles,
  *  or another digest.
  *
@@ -191,20 +193,15 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
  *         Else, it is a non null value.
  */
 
-fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t output_type,  /* IN */
-                                fsal_handle_t * in_fsal_handle, /* IN */
-                                caddr_t out_buff        /* OUT */
+fsal_status_t HPSSFSAL_DigestHandle(hpssfsal_export_context_t * p_expcontext,   /* IN */
+                                    fsal_digesttype_t output_type,      /* IN */
+                                    hpssfsal_handle_t * in_fsal_handle, /* IN */
+                                    caddr_t out_buff    /* OUT */
     )
 {
-
-  /* min size for nfs handle digest. */
-  int memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
-
+  int memlen;
   unsigned32 objid;             /* to store objID */
-
   fsal_u64_t objid64;           /* to cast the objID */
-
   fsal_nodetype_t nodetype;     /* to store object  type */
 
   /* sanity checks */
@@ -216,6 +213,9 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
       /* NFSV2 handle digest */
     case FSAL_DIGEST_NFSV2:
+
+        /* min size for nfs handle digest. */
+        memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
 
       /* The hpss handle must be converted
        * to a 25 bytes handle. To do so,
@@ -234,14 +234,14 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
       /* sanity check about core server ID */
 
-      if(memcmp(&in_fsal_handle->ns_handle.CoreServerUUID,
+      if(memcmp(&in_fsal_handle->data.ns_handle.CoreServerUUID,
                 &p_expcontext->fileset_root_handle.CoreServerUUID, sizeof(TYPE_UUIDT)))
         {
           char buffer[128];
-          snprintmem(buffer, 128, (caddr_t) & (in_fsal_handle->ns_handle.CoreServerUUID),
+          snprintmem(buffer, 128, (caddr_t) & (in_fsal_handle->data.ns_handle.CoreServerUUID),
                      sizeof(TYPE_UUIDT));
-          DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                            "Invalid CoreServerUUID in HPSS handle: %s", buffer);
+          LogMajor(COMPONENT_FSAL,
+                   "Invalid CoreServerUUID in HPSS handle: %s", buffer);
         }
 
       /* building digest :
@@ -250,87 +250,78 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
        *   (except CoreServerUUID)
        */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV2);
-      memcpy(out_buff, &(in_fsal_handle->ns_handle), memlen);
+      memcpy(out_buff, &(in_fsal_handle->data.ns_handle), memlen);
 
       break;
 
       /* NFSV3 handle digest */
     case FSAL_DIGEST_NFSV3:
 
-      /* The hpss handle must be converted
-       * to a 25 bytes handle. To do so,
-       * We copy all the fields from the hpss handle,
-       *  except the Coreserver ID.
-       */
-
-#ifndef _NO_CHECKS
+#ifdef _STRIP_CORESERVER_UUID
+      memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
+#else /* store the whole HPSS handle in the NFS handle */
+      memlen = sizeof(ns_ObjHandle_t);
+#endif
 
       /* sanity check about output size */
-
       if(memlen > FSAL_DIGEST_SIZE_HDLV3)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
-#endif
-
       /* sanity check about core server ID */
 
-      if(memcmp(&in_fsal_handle->ns_handle.CoreServerUUID,
+#ifdef _STRIP_CORESERVER_UUID
+      if(memcmp(&in_fsal_handle->data.ns_handle.CoreServerUUID,
                 &p_expcontext->fileset_root_handle.CoreServerUUID, sizeof(TYPE_UUIDT)))
         {
           char buffer[128];
-          snprintmem(buffer, 128, (caddr_t) & (in_fsal_handle->ns_handle.CoreServerUUID),
+          snprintmem(buffer, 128, (caddr_t) & (in_fsal_handle->data.ns_handle.CoreServerUUID),
                      sizeof(TYPE_UUIDT));
-          DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                            "Invalid CoreServerUUID in HPSS handle: %s", buffer);
+          LogMajor(COMPONENT_FSAL,
+                   "Invalid CoreServerUUID in HPSS handle: %s", buffer);
         }
+#endif
 
       /* building digest :
        * - fill it with zeros
        * - setting the first bytes to the fsal_handle value
-       *   (except CoreServerUUID)
        */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV3);
-      memcpy(out_buff, &(in_fsal_handle->ns_handle), memlen);
+      memcpy(out_buff, &(in_fsal_handle->data.ns_handle), memlen);
 
       break;
 
       /* NFSV4 handle digest */
     case FSAL_DIGEST_NFSV4:
 
-      /* The hpss handle must be converted
-       * to a 25 bytes handle. To do so,
-       * We copy all the fields from the hpss handle,
-       *  except the Coreserver ID.
-       */
-
-#ifndef _NO_CHECKS
+#ifdef _STRIP_CORESERVER_UUID
+      memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
+#else /* store the whole HPSS handle in the NFS handle */
+      memlen = sizeof(ns_ObjHandle_t);
+#endif
 
       /* sanity check about output size */
-
       if(memlen > FSAL_DIGEST_SIZE_HDLV4)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
-#endif
-
       /* sanity check about core server ID */
-
-      if(memcmp(&in_fsal_handle->ns_handle.CoreServerUUID,
+#ifdef _STRIP_CORESERVER_UUID
+      if(memcmp(&in_fsal_handle->data.ns_handle.CoreServerUUID,
                 &p_expcontext->fileset_root_handle.CoreServerUUID, sizeof(TYPE_UUIDT)))
         {
           char buffer[128];
-          snprintmem(buffer, 128, (caddr_t) & (in_fsal_handle->ns_handle.CoreServerUUID),
+          snprintmem(buffer, 128, (caddr_t) & (in_fsal_handle->data.ns_handle.CoreServerUUID),
                      sizeof(TYPE_UUIDT));
-          DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                            "Invalid CoreServerUUID in HPSS handle: %s", buffer);
+          LogMajor(COMPONENT_FSAL,
+                   "Invalid CoreServerUUID in HPSS handle: %s", buffer);
         }
+#endif
 
       /* building digest :
        * - fill it with zeros
        * - setting the first bytes to the fsal_handle value
-       *   (except CoreServerUUID)
        */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
-      memcpy(out_buff, &(in_fsal_handle->ns_handle), memlen);
+      memcpy(out_buff, &(in_fsal_handle->data.ns_handle), memlen);
 
       break;
 
@@ -338,7 +329,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
     case FSAL_DIGEST_FILEID2:
 
       /* get object ID from handle */
-      objid = hpss_GetObjId(&in_fsal_handle->ns_handle);
+      objid = hpss_GetObjId(&in_fsal_handle->data.ns_handle);
 
 #ifndef _NO_CHECKS
 
@@ -358,7 +349,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
     case FSAL_DIGEST_FILEID3:
 
       /* get object ID from handle */
-      objid64 = hpss_GetObjId(&in_fsal_handle->ns_handle);
+      objid64 = hpss_GetObjId(&in_fsal_handle->data.ns_handle);
 
 #ifndef _NO_CHECKS
 
@@ -377,7 +368,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
 
     case FSAL_DIGEST_FILEID4:
       /* get object ID from handle */
-      objid64 = hpss_GetObjId(&in_fsal_handle->ns_handle);
+      objid64 = hpss_GetObjId(&in_fsal_handle->data.ns_handle);
 
 #ifndef _NO_CHECKS
 
@@ -395,7 +386,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
       /* Nodetype digest. */
     case FSAL_DIGEST_NODETYPE:
 
-      nodetype = in_fsal_handle->obj_type;
+      nodetype = in_fsal_handle->data.obj_type;
 
 #ifndef _NO_CHECKS
 
@@ -434,15 +425,15 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t in_type,      /* IN */
-                                caddr_t in_buff,        /* IN */
-                                fsal_handle_t * out_fsal_handle /* OUT */
+fsal_status_t HPSSFSAL_ExpandHandle(hpssfsal_export_context_t * p_expcontext,   /* IN */
+                                    fsal_digesttype_t in_type,  /* IN */
+                                    caddr_t in_buff,    /* IN */
+                                    hpssfsal_handle_t * out_fsal_handle /* OUT */
     )
 {
 
   /* significant size in nfs digests */
-  int memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
+  int memlen;
 
   /* sanity checks */
   if(!out_fsal_handle || !in_buff || !p_expcontext)
@@ -452,37 +443,55 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
     {
 
     case FSAL_DIGEST_NFSV2:
+      /* core server UUID is always stripped for NFSv2 handles */
+      memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
 
-      memset(out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(&out_fsal_handle->ns_handle, in_buff, memlen);
+      memset(out_fsal_handle, 0, sizeof(out_fsal_handle->data));
+      memcpy(&out_fsal_handle->data.ns_handle, in_buff, memlen);
 
-      memcpy(&out_fsal_handle->ns_handle.CoreServerUUID,
+      memcpy(&out_fsal_handle->data.ns_handle.CoreServerUUID,
              &p_expcontext->fileset_root_handle.CoreServerUUID, sizeof(TYPE_UUIDT));
 
-      out_fsal_handle->obj_type = hpss2fsal_type(out_fsal_handle->ns_handle.Type);
+      out_fsal_handle->data.obj_type = hpss2fsal_type(out_fsal_handle->data.ns_handle.Type);
 
       break;
 
     case FSAL_DIGEST_NFSV3:
 
-      memset(out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(&out_fsal_handle->ns_handle, in_buff, memlen);
+#ifdef _STRIP_CORESERVER_UUID
+      memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
+#else
+      memlen = sizeof(ns_ObjHandle_t);
+#endif
+      memset(out_fsal_handle, 0, sizeof(out_fsal_handle->data));
+      memcpy(&out_fsal_handle->data.ns_handle, in_buff, memlen);
 
-      memcpy(&out_fsal_handle->ns_handle.CoreServerUUID,
+#ifdef _STRIP_CORESERVER_UUID
+      memcpy(&out_fsal_handle->data.ns_handle.CoreServerUUID,
              &p_expcontext->fileset_root_handle.CoreServerUUID, sizeof(TYPE_UUIDT));
+#endif
 
-      out_fsal_handle->obj_type = hpss2fsal_type(out_fsal_handle->ns_handle.Type);
+      out_fsal_handle->data.obj_type = hpss2fsal_type(out_fsal_handle->data.ns_handle.Type);
 
       break;
 
     case FSAL_DIGEST_NFSV4:
 
-      memset(out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(&out_fsal_handle->ns_handle, in_buff, memlen);
-      memcpy(&out_fsal_handle->ns_handle.CoreServerUUID,
-             &p_expcontext->fileset_root_handle.CoreServerUUID, sizeof(TYPE_UUIDT));
+#ifdef _STRIP_CORESERVER_UUID
+      memlen = sizeof(ns_ObjHandle_t) - sizeof(TYPE_UUIDT);
+#else
+      memlen = sizeof(ns_ObjHandle_t);
+#endif
 
-      out_fsal_handle->obj_type = hpss2fsal_type(out_fsal_handle->ns_handle.Type);
+      memset(out_fsal_handle, 0, sizeof(out_fsal_handle->data));
+      memcpy(&out_fsal_handle->data.ns_handle, in_buff, memlen);
+
+#ifdef _STRIP_CORESERVER_UUID
+      memcpy(&out_fsal_handle->data.ns_handle.CoreServerUUID,
+             &p_expcontext->fileset_root_handle.CoreServerUUID, sizeof(TYPE_UUIDT));
+#endif
+
+      out_fsal_handle->data.obj_type = hpss2fsal_type(out_fsal_handle->data.ns_handle.Type);
 
       break;
 
@@ -502,17 +511,13 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
  *         ERR_FSAL_FAULT (null pointer given as parameter),
  *         ERR_FSAL_SERVERFAULT (unexpected error)
  */
-fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t HPSSFSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 {
-
-  log_t no_logging = LOG_INITIALIZER;
 
   /* defensive programming... */
   if(out_parameter == NULL)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  /* init logging to no logging */
-  out_parameter->fsal_info.log_outputs = no_logging;
 
   /* init max FS calls = unlimited */
   out_parameter->fsal_info.max_fs_calls = 0;
@@ -521,7 +526,7 @@ fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
 
 }
 
-fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t HPSSFSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter)
 {
   /* defensive programming... */
   if(out_parameter == NULL)
@@ -557,7 +562,7 @@ fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_paramet
 
 }
 
-fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t HPSSFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
 {
   /* defensive programming... */
   if(out_parameter == NULL)
@@ -615,8 +620,8 @@ fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_param
 
 /* load FSAL init info */
 
-fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
-                                                 fsal_parameter_t * out_parameter)
+fsal_status_t HPSSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
+                                                     fsal_parameter_t * out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -633,13 +638,13 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
   if(block == NULL)
     {
-      DisplayLog("FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
+      LogCrit(COMPONENT_FSAL,"FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
                  CONF_LABEL_FSAL);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
-      DisplayLog("FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
+      LogCrit(COMPONENT_FSAL,"FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
                  CONF_LABEL_FSAL);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
@@ -657,8 +662,8 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
       err = config_GetKeyValue(item, &key_name, &key_value);
       if(err)
         {
-          DisplayLog
-              ("FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
+          LogCrit(COMPONENT_FSAL,
+              "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
                var_index, CONF_LABEL_FSAL);
           ReturnCode(ERR_FSAL_SERVERFAULT, err);
         }
@@ -669,7 +674,7 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
           if(DebugLevel == -1)
             {
-              DisplayLog("FSAL LOAD PARAMETER: ERROR: Invalid debug level name: \"%s\".",
+              LogCrit(COMPONENT_FSAL,"FSAL LOAD PARAMETER: ERROR: Invalid debug level name: \"%s\".",
                          key_value);
               ReturnCode(ERR_FSAL_INVAL, -1);
             }
@@ -688,8 +693,8 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
           if(maxcalls < 0)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: null or positive integer expected.",
+              LogCrit(COMPONENT_FSAL,
+                  "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: null or positive integer expected.",
                    key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -699,8 +704,8 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
         }
       else
         {
-          DisplayLog
-              ("FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
+          LogCrit(COMPONENT_FSAL,
+              "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
                key_name, CONF_LABEL_FSAL);
           ReturnCode(ERR_FSAL_INVAL, 0);
         }
@@ -708,23 +713,11 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
     }
 
   /* init logging */
-
   if(LogFile)
-    {
-      desc_log_stream_t log_stream;
+    SetComponentLogFile(COMPONENT_FSAL, LogFile);
 
-      strcpy(log_stream.path, LogFile);
-
-      /* Default : NIV_CRIT */
-
-      if(DebugLevel == -1)
-        AddLogStreamJd(&(out_parameter->fsal_info.log_outputs),
-                       V_FILE, log_stream, NIV_CRIT, SUP);
-      else
-        AddLogStreamJd(&(out_parameter->fsal_info.log_outputs),
-                       V_FILE, log_stream, DebugLevel, SUP);
-
-    }
+  if(DebugLevel != -1)
+    SetComponentLogLevel(COMPONENT_FSAL, DebugLevel);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
@@ -732,8 +725,9 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
 /* load general filesystem configuration options */
 
-fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
-                                                      fsal_parameter_t * out_parameter)
+fsal_status_t HPSSFSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
+                                                          fsal_parameter_t *
+                                                          out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -746,13 +740,13 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
   /* cannot read item */
   if(block == NULL)
     {
-      DisplayLog("FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
+      LogCrit(COMPONENT_FSAL,"FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
                  CONF_LABEL_FS_COMMON);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
-      DisplayLog("FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
+      LogCrit(COMPONENT_FSAL,"FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
                  CONF_LABEL_FS_COMMON);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
@@ -780,8 +774,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
       err = config_GetKeyValue(item, &key_name, &key_value);
       if(err)
         {
-          DisplayLog
-              ("FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
+          LogCrit(COMPONENT_FSAL,
+              "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
                var_index, CONF_LABEL_FS_COMMON);
           ReturnCode(ERR_FSAL_SERVERFAULT, err);
         }
@@ -794,8 +788,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
           if(bool == -1)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
+              LogCrit(COMPONENT_FSAL,
+                  "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
                    key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -813,8 +807,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
           if(bool == -1)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
+              LogCrit(COMPONENT_FSAL,
+                  "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
                    key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -831,8 +825,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
           if(bool == -1)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
+              LogCrit(COMPONENT_FSAL,
+                  "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
                    key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -850,8 +844,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
           if(s_read_int64(key_value, &size))
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
+              LogCrit(COMPONENT_FSAL,
+                  "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
                    key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -866,8 +860,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
           if(s_read_int64(key_value, &size))
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
+              LogCrit(COMPONENT_FSAL,
+                  "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
                    key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -882,8 +876,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
           if(mode < 0)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: octal expected.",
+              LogCrit(COMPONENT_FSAL,
+                  "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: octal expected.",
                    key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -898,8 +892,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
           if(bool == -1)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
+              LogCrit(COMPONENT_FSAL,
+                  "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
                    key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -913,8 +907,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
           if(mode < 0)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: octal expected.",
+              LogCrit(COMPONENT_FSAL,
+                  "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: octal expected.",
                    key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -925,8 +919,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
         }
       else
         {
-          DisplayLog
-              ("FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
+          LogCrit(COMPONENT_FSAL,
+              "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
                key_name, CONF_LABEL_FS_COMMON);
           ReturnCode(ERR_FSAL_INVAL, 0);
         }
@@ -939,8 +933,9 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
 /* load specific filesystem configuration options */
 
-fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
-                                                        fsal_parameter_t * out_parameter)
+fsal_status_t HPSSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
+                                                            fsal_parameter_t *
+                                                            out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -953,13 +948,13 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
   /* cannot read item */
   if(block == NULL)
     {
-      DisplayLog("FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
+      LogCrit(COMPONENT_FSAL,"FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
                  CONF_LABEL_FS_SPECIFIC);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
-      DisplayLog("FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
+      LogCrit(COMPONENT_FSAL,"FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
                  CONF_LABEL_FS_SPECIFIC);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
@@ -975,8 +970,8 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
       err = config_GetKeyValue(item, &key_name, &key_value);
       if(err)
         {
-          DisplayLog
-              ("FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
+          LogCrit(COMPONENT_FSAL,
+              "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
                var_index, CONF_LABEL_FS_SPECIFIC);
           ReturnCode(ERR_FSAL_SERVERFAULT, err);
         }
@@ -1016,12 +1011,12 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
           out_parameter->fs_specific_info.behaviors.AuthnMech = FSAL_INIT_FORCE_VALUE;
 
           error = hpss_AuthnMechTypeFromString(key_value,
-                                               &out_parameter->
-                                               fs_specific_info.hpss_config.AuthnMech);
+                                               &out_parameter->fs_specific_info.
+                                               hpss_config.AuthnMech);
 
           if(error != HPSS_E_NOERROR)
             {
-              DisplayLog("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s.",
+              LogCrit(COMPONENT_FSAL,"FSAL LOAD PARAMETER: ERROR: Unexpected value for %s.",
                          key_name);
               ReturnCode(ERR_FSAL_INVAL, error);
             }
@@ -1033,8 +1028,8 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
 
           if(busydelay < 0)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
+              LogCrit(COMPONENT_FSAL,
+                  "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
                    key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -1051,8 +1046,8 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
               busyretries = s_read_int((char *)(key_value + 1));
               if(busyretries < 0)
                 {
-                  DisplayLog
-                      ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: integer expected.",
+                  LogCrit(COMPONENT_FSAL,
+                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: integer expected.",
                        key_name);
                   ReturnCode(ERR_FSAL_INVAL, 0);
                 }
@@ -1064,8 +1059,8 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
 
               if(busyretries < 0)
                 {
-                  DisplayLog
-                      ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: integer expected.",
+                  LogCrit(COMPONENT_FSAL,
+                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: integer expected.",
                        key_name);
                   ReturnCode(ERR_FSAL_INVAL, 0);
                 }
@@ -1083,8 +1078,8 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
               numretries = s_read_int((char *)(key_value + 1));
               if(numretries < 0)
                 {
-                  DisplayLog
-                      ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: integer expected.",
+                  LogCrit(COMPONENT_FSAL,
+                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: integer expected.",
                        key_name);
                   ReturnCode(ERR_FSAL_INVAL, 0);
                 }
@@ -1096,8 +1091,8 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
 
               if(numretries < 0)
                 {
-                  DisplayLog
-                      ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: integer expected.",
+                  LogCrit(COMPONENT_FSAL,
+                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: integer expected.",
                        key_name);
                   ReturnCode(ERR_FSAL_INVAL, 0);
                 }
@@ -1112,8 +1107,8 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
 
           if(maxconn < 0)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
+              LogCrit(COMPONENT_FSAL,
+                  "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
                    key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -1134,8 +1129,8 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
 
           if(cred_life < 1)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
+              LogCrit(COMPONENT_FSAL,
+                  "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
                    key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -1150,8 +1145,8 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
 
           if(bool == -1)
             {
-              DisplayLog
-                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
+              LogCrit(COMPONENT_FSAL,
+                  "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
                    key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -1162,8 +1157,8 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
         }
       else
         {
-          DisplayLog
-              ("FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
+          LogCrit(COMPONENT_FSAL,
+              "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
                key_name, CONF_LABEL_FS_SPECIFIC);
           ReturnCode(ERR_FSAL_INVAL, 0);
         }

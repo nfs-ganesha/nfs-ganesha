@@ -1,18 +1,26 @@
-This package was debianized by root <philippe.deniel@cea.fr> on
-Thu, 15 Jan 2009 09:27:08 -0600.
+Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=135
+Name: nfs-ganesha
+Maintener: Philippe Deniel <philippe.deniel@cea.fr>
+Source: http://downloads.sourceforge.net/nfs-ganesha
 
-It was downloaded from:   http://downloads.sourceforge.net/nfs-ganesha
+Copyright: 2008-2010 Philippe Deniel <philippe.deniel@cea.fr>
+           2008-2010 Thomas Leibovici <thomas.leibovici@cea.fr>
+           2008-2010 Jacques-Charles Lafoucriere <jc.lafoucriere@cea.fr>
+License: LGPL-3
 
-Upstream Author: Philippe Deniel <philippe.deniel@cea.fr>
-		 Thomas Leibovici <thomas.leibovici@cea.fr>
-		 Jacques-Charles Lafoucriere <jc.lafoucriere@cea.fr>
-
-Copyright: <put the year(s) of the copyright, and the names of the
-            copyright holder(s) here>
-
-License: This product in distributed under the CeCILL free software license. 
-
-See wesite www.cecill.info for details
-
-
-
+License: LGPL-3
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 3 of the License, or (at your option) any later version.
+.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+.
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+X-Comment: On Debian systems, the complete text of the GNU Lesser General
+ Public License version 3 can be found in "/usr/share/common-licenses/LGPL-3".

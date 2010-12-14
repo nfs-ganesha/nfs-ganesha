@@ -1,18 +1,68 @@
+nfs-ganesha (1.0.2-1) stable; urgency=low
+  * New TCP connection management to avoid DOS-like attack
+  * Tag _NO_BLOCK_PREALLOC was removed
+  * Bug Fix : OP4_REMOVE did not operate if the destination was an existing file
+  * Bug Fix : FATTR4_ACL is now an unsupported attributes (it is in fact)
+  * Bug Fix : OP4_GETATTR on unsupported attributes should ignore them instead
+    of returning NFS4ERR_ATTR_NOTSUPP
+  * Bug Fix : locks_held counter was badly managed in OP4_LOCKU
+  * Bug Fix : OP4_DESTROY_SESSION returned bad session when session was
+    successfully destroyed.
+  *  Bug Fix : FSAL_XFS:fsal_create always made files owned by root.
+  * Code Cleaning : all Log* functions's format were reviewed and fixed
+  * Memory manager improvement : stuff_alloc macros and BuddyMalloc are now
+    closely tied.
+  * Bug Fix : erroneous EACCESS in FSAL_XFS and FSAL_LUSTRE when
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Thu, 18 Oct 2010 10:10:00 +0200
+
+nfs-ganesha (1.0.1-1) stable; urgency=low
+  * New FSAL model: FSAL modules can now be compile as shared object and can
+    be loaded at runtime
+  * New FSAL to support ZFS filesystem
+  * Add the capability to build a "FSAL-less" daemon that loads FSAL shared
+    object by using the dlopen function.
+  * FSAL_PROXY: the embedded client now can allocate a tcp socket on a
+    privileged port to contact the "proxyfied" server
+  * FSAL shared objects are provided as precompiled rpms
+  * Log layer now uses syslog as a possible log stream
+  * Add new call FSAL_getextattrs to get info such a generation number or
+    creation time
+  * New Log management from IBM
+  * Several potential buffer overflow in fscanf fixed
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Thu, 23 Sep 2010 10:10:00 +0200
+
+nfs-ganesha (0.99.65-1) stable; urgency=low
+
+  * FSAL_XFS now has lock support
+  * Brand new FSAL_GPFS added (patch from IBM) to natively support GPFS
+  * FSAL_POSIX and FSAL_XFS now have quota support (via rquota v1/v2 protocol
+    and the use of the quotactl function)
+  * Typos fixed in doxygen.conf files
+  * FSAL_TEMPLATE updated (had new functions for quota and lock management)
+  * pNFS/LAYOUT_FILES works with multiple Data Server
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Fri, 25 Apr 2010 13:14:00 -0600
+
 nfs-ganesha (0.99.64-1) stable; urgency=low
 
   * Export Access Type "MDONLY" was not managed when using NFSv4
-  * Add safety check to cache_inode_remove/cache_inode_create and cache_inode_link to prevent from non allowed access.
+  * Add safety check to cache_inode_remove/cache_inode_create and
+    cache_inode_link to prevent from non allowed access.
   * Statistics for NFSv4.0 and NFSv4.1 operations have been added
   * Bug Fix: default value for FSINFO3::dtpref was 0. Value 16384 is now used.
   * Bug Fix: OPEN4 returns NFS4ERR_ROFS when used from the pseudofs
-  * Early (unstable) implementation of pNFS provided. Will continue and be stabilized in later releases.
+  * Early (unstable) implementation of pNFS provided. Will continue and be
+    stabilized in later releases.
   * Project is now released under the terms of the LGPLv3
 
  -- Philippe Deniel <philippe.deniel@cea.fr>  Thu, 29 Apr 2010 13:14:00 -0600
 
 nfs-ganesha (0.99.63-1) stable; urgency=low
 
-  * A big patch provided by Aneesh Kumar (aneesh.kumar@linux.vnet.ibm.com) implements the NLMv4 protocol
+  * A big patch provided by Aneesh Kumar (aneesh.kumar@linux.vnet.ibm.com)
+    implements the NLMv4 protocol
   * A "indent" target has been add to the src/Makefile.am .
   * C-format style template for emacs provided by Sean Dague (japh@us.ibm.com)
   * Bug fix (Frank Filz) : readdir had an extraneous empty request with eod=TRUE

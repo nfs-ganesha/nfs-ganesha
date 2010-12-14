@@ -45,7 +45,7 @@
 #endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -119,7 +119,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
   cache_content_dirinfo_t directory;
   struct dirent dir_entry;
   FILE *stream = NULL;
-  char buff[CACHE_INODE_DUMP_LEN];
+  char buff[CACHE_INODE_DUMP_LEN + 1];
   int inum;
   char indexpath[MAXPATHLEN];
   char datapath[MAXPATHLEN];
@@ -148,7 +148,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
 
   if(cache_content_local_cache_opendir(cachedir, &directory) == FALSE)
     {
-      DisplayLog("cache_content_emergency_flush can't open directory %s, errno=%u (%s)",
+      LogCrit(COMPONENT_CACHE_CONTENT, "cache_content_emergency_flush can't open directory %s, errno=%u (%s)",
                  cachedir, cache_content_dir_errno, strerror(cache_content_dir_errno));
       *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
       return *pstatus;
@@ -167,7 +167,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
 
               if(statfs(cachedir, &info_fs) != 0)
                 {
-                  DisplayLog("Error getting local filesystem info: path=%s errno=%u\n",
+                  LogCrit(COMPONENT_CACHE_CONTENT,"Error getting local filesystem info: path=%s errno=%u",
                              cachedir, errno);
                   return CACHE_CONTENT_LOCAL_CACHE_ERROR;
                 }
@@ -186,7 +186,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                   ((double)info_fs.f_blocks + (double)info_fs.f_bavail -
                    (double)info_fs.f_bfree);
 
-              DisplayLogLevel(NIV_EVENT,
+              LogEvent(COMPONENT_CACHE_CONTENT,
                               "Datacache: %s: %.2f%% used, low_wm = %.2f%%, high_wm = %.2f%%",
                               cachedir, tx_used, lw, hw);
 
@@ -194,7 +194,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                 {
                   /* No need to purge more, downgrade to sync mode */
                   local_flushhow = CACHE_CONTENT_FLUSH_SYNC_ONLY;
-                  DisplayLogLevel(NIV_EVENT,
+                  LogEvent(COMPONENT_CACHE_CONTENT,
                                   "Datacache: Low Water is reached, I stop purging but continue on syncing");
                 }
             }
@@ -205,7 +205,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
         {
           if((inum = cache_content_get_inum(dir_entry.d_name)) == -1)
             {
-              DisplayLog("Bad file name %s found in cache", dir_entry.d_name);
+              LogCrit(COMPONENT_CACHE_CONTENT, "Bad file name %s found in cache", dir_entry.d_name);
               continue;
             }
 
@@ -216,16 +216,20 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
           if((stream = fopen(indexpath, "r")) == NULL)
             return CACHE_CONTENT_LOCAL_CACHE_ERROR;
 
-          fscanf(stream, "internal:read_time=%s\n", buff);
-          fscanf(stream, "internal:mod_time=%s\n", buff);
-          fscanf(stream, "internal:export_id=%s\n", buff);
-          fscanf(stream, "file: FSAL handle=%s", buff);
+          #define XSTR(s) STR(s)
+          #define STR(s) #s
+          fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
+          #undef STR
+          #undef XSTR
 
           if(sscanHandle(&fsal_handle, buff) < 0)
             {
               /* expected = 2*sizeof(fsal_handle_t) in hexa representation */
-              DisplayLog
-                  ("Invalid FSAL handle in index file %s: unexpected length %u (expected=%u)",
+              LogCrit(COMPONENT_CACHE_CONTENT,
+                  "Invalid FSAL handle in index file %s: unexpected length %u (expected=%u)",
                    indexpath, (unsigned int)strlen(buff),
                    (unsigned int)(2 * sizeof(fsal_handle_t)));
               continue;
@@ -239,8 +243,8 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
           /* Stat the data file to now if it is eligible or not */
           if(stat(datapath, &buffstat) == -1)
             {
-              DisplayLog
-                  ("Can't stat file %s errno=%u(%s), continuing with next entries...",
+              LogCrit(COMPONENT_CACHE_CONTENT,
+                  "Can't stat file %s errno=%u(%s), continuing with next entries...",
                    datapath, errno, strerror(errno));
               continue;
             }
@@ -255,11 +259,9 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
           if(buffstat.st_ctime > max_acmtime)
             max_acmtime = buffstat.st_ctime;
 
-#ifdef _DEBUG_CACHE_CONTENT
-          printf
-              ("date=%d max_acmtime=%d ,time( NULL ) - max_acmtime = %d, grace_period = %d\n",
-               time(NULL), max_acmtime, time(NULL) - max_acmtime, grace_period);
-#endif
+          LogFullDebug(COMPONENT_CACHE_CONTENT,
+              "date=%d max_acmtime=%d ,time( NULL ) - max_acmtime = %d, grace_period = %d",
+               (int)time(NULL), (int)max_acmtime, (int)(time(NULL) - max_acmtime), (int)grace_period);
 
           if(time(NULL) - max_acmtime < grace_period)
             {
@@ -267,21 +269,21 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
               if(p_nb_too_young != NULL)
                 *p_nb_too_young += 1;
 
-              DisplayLog("File %s is too young to die, preserving it...", datapath);
+              LogDebug(COMPONENT_CACHE_CONTENT, "File %s is too young to die, preserving it...", datapath);
               continue;
             }
-#ifdef _DEBUG_CACHE_CONTENT
-          printf("=====> local=%s FSAL HANDLE=", datapath);
-          print_buff((char *)&fsal_handle, sizeof(fsal_handle));
-#endif
+
+          if(isFullDebug(COMPONENT_CACHE_CONTENT))
+            {
+              LogFullDebug(COMPONENT_CACHE_CONTENT, "=====> local=%s FSAL HANDLE=", datapath);
+              print_buff(COMPONENT_CACHE_CONTENT, (char *)&fsal_handle, sizeof(fsal_handle));
+            }
 
           fsal_status = FSAL_str2path(datapath, strsize, &fsal_path);
 #if defined(  _USE_PROXY ) && defined( _BY_FILEID )
           fileid = cache_content_get_inum(dir_entry.d_name);
 
-#ifdef _DEBUG_CACHE_CONTENT
-          printf("====> Fileid = %llu %llx\n", fileid, fileid);
-#endif
+          LogFullDebug(COMPONENT_CACHE_CONTENT, "====> Fileid = %llu %llx", fileid, fileid);
 
           if(!FSAL_IS_ERROR(fsal_status))
             {
@@ -303,8 +305,8 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
               if((fsal_status.major == ERR_FSAL_NOENT) ||
                  (fsal_status.major == ERR_FSAL_STALE))
                 {
-                  DisplayLog
-                      ("Cached entry %x doesn't exist anymore in FSAL, removing....",
+                  LogDebug(COMPONENT_CACHE_CONTENT,
+                      "Cached entry %x doesn't exist anymore in FSAL, removing....",
                        inum);
 
                   /* update stats, if provided */
@@ -314,7 +316,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                   /* Remove the index file from the data cache */
                   if(unlink(indexpath))
                     {
-                      DisplayLog("Can't unlink flushed index %s, errno=%u(%s)", indexpath,
+                      LogCrit(COMPONENT_CACHE_CONTENT,"Can't unlink flushed index %s, errno=%u(%s)", indexpath,
                                  errno, strerror(errno));
                       return CACHE_CONTENT_LOCAL_CACHE_ERROR;
                     }
@@ -322,7 +324,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                   /* Remove the data file from the data cache */
                   if(unlink(datapath))
                     {
-                      DisplayLog("Can't unlink flushed index %s, errno=%u(%s)", datapath,
+		      LogCrit(COMPONENT_CACHE_CONTENT,"Can't unlink flushed index %s, errno=%u(%s)", datapath,
                                  errno, strerror(errno));
                       return CACHE_CONTENT_LOCAL_CACHE_ERROR;
                     }
@@ -333,8 +335,8 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                   if(p_nb_errors != NULL)
                     *p_nb_errors += 1;
 
-                  DisplayLog
-                      ("Can't flush file #%x, fsal_status.major=%u fsal_status.minor=%u",
+                  LogCrit(COMPONENT_CACHE_CONTENT,
+                      "Can't flush file #%x, fsal_status.major=%u fsal_status.minor=%u",
                        inum, fsal_status.major, fsal_status.minor);
                 }
             }
@@ -351,7 +353,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                   /* Remove the index file from the data cache */
                   if(unlink(indexpath))
                     {
-                      DisplayLog("Can't unlink flushed index %s, errno=%u(%s)", indexpath,
+                      LogCrit(COMPONENT_CACHE_CONTENT,"Can't unlink flushed index %s, errno=%u(%s)", indexpath,
                                  errno, strerror(errno));
                       return CACHE_CONTENT_LOCAL_CACHE_ERROR;
                     }
@@ -359,7 +361,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                   /* Remove the data file from the data cache */
                   if(unlink(datapath))
                     {
-                      DisplayLog("Can't unlink flushed index %s, errno=%u(%s)", datapath,
+                      LogCrit(COMPONENT_CACHE_CONTENT,"Can't unlink flushed index %s, errno=%u(%s)", datapath,
                                  errno, strerror(errno));
                       return CACHE_CONTENT_LOCAL_CACHE_ERROR;
                     }

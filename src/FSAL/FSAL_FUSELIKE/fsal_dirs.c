@@ -24,7 +24,7 @@
 /**
  * FSAL_opendir :
  *     Opens a directory for reading its content.
- *     
+ *
  * \param dir_handle (input)
  *         the handle of the directory to be opened.
  * \param p_context (input)
@@ -36,7 +36,7 @@
  *         On successfull completion,the structure pointed
  *         by dir_attributes receives the new directory attributes.
  *         Can be NULL.
- * 
+ *
  * \return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - ERR_FSAL_ACCESS       (user does not have read permission on directory)
@@ -45,10 +45,10 @@
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
-                           fsal_op_context_t * p_context,       /* IN */
-                           fsal_dir_t * dir_descriptor, /* OUT */
-                           fsal_attrib_list_t * dir_attributes  /* [ IN/OUT ] */
+fsal_status_t FUSEFSAL_opendir(fusefsal_handle_t * dir_handle,  /* IN */
+                               fusefsal_op_context_t * p_context,       /* IN */
+                               fsal_dir_t * dir_descriptor,     /* OUT */
+                               fsal_attrib_list_t * dir_attributes      /* [ IN/OUT ] */
     )
 {
   int rc;
@@ -61,7 +61,7 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_opendir);
 
   /* get the full path for this directory */
-  rc = NamespacePath(dir_handle->inode, dir_handle->device, dir_handle->validator,
+  rc = NamespacePath(dir_handle->data.inode, dir_handle->data.device, dir_handle->data.validator,
                      object_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_opendir);
@@ -99,7 +99,7 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
     {
       fsal_status_t status;
 
-      status = FSAL_getattrs(dir_handle, p_context, dir_attributes);
+      status = FUSEFSAL_getattrs(dir_handle, p_context, dir_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -141,14 +141,14 @@ static void fill_dirent(fsal_dirent_t * to_be_filled,
     {
       if(stbuf->st_ino == 0)
         {
-          DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                            "WARNING in fill_dirent: Filesystem doesn't provide inode numbers !!!");
+          LogDebug(COMPONENT_FSAL,
+                   "WARNING in fill_dirent: Filesystem doesn't provide inode numbers !!!");
         }
 
-      to_be_filled->handle.inode = stbuf->st_ino;
-      to_be_filled->handle.device = stbuf->st_dev;
+      to_be_filled->handle.data.inode = stbuf->st_ino;
+      to_be_filled->handle.data.device = stbuf->st_dev;
       FSAL_str2name(name, strlen(name) + 1, &(to_be_filled->name));
-      to_be_filled->cookie = off;
+      to_be_filled->cookie.data = off;
 
       /* local copy for non "const" calls */
       tmp_statbuff = *stbuf;
@@ -157,14 +157,13 @@ static void fill_dirent(fsal_dirent_t * to_be_filled,
       to_be_filled->attributes.asked_attributes = getattr_mask;
       status = posix2fsal_attributes(&tmp_statbuff, &to_be_filled->attributes);
 
-#ifdef _DEBUG_FSAL
-      printf
-          ("getattr_mask = %X, recupere = %X, status=%d, inode=%llX.%llu, type=%d, posixmode=%#o, mode=%#o\n",
+      LogFullDebug(COMPONENT_FSAL,
+           "getattr_mask = %X, recupere = %X, status=%d, inode=%llX.%llu, type=%d, posixmode=%#o, mode=%#o",
            getattr_mask, to_be_filled->attributes.asked_attributes, status.major,
            to_be_filled->attributes.fsid.major, to_be_filled->attributes.fileid,
            to_be_filled->attributes.type, tmp_statbuff.st_mode,
            to_be_filled->attributes.mode);
-#endif
+
       if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(to_be_filled->attributes.asked_attributes);
@@ -187,9 +186,9 @@ static void fill_dirent(fsal_dirent_t * to_be_filled,
       FSAL_CLEAR_MASK(to_be_filled->attributes.asked_attributes);
       /* we only known entry name, we tag it for a later lookup.
        */
-      to_be_filled->handle.inode = INODE_TO_BE_COMPLETED;
+      to_be_filled->handle.data.inode = INODE_TO_BE_COMPLETED;
       FSAL_str2name(name, strlen(name) + 1, &(to_be_filled->name));
-      to_be_filled->cookie = off;
+      to_be_filled->cookie.data = off;
     }
 
 }                               /* fill_dirent */
@@ -262,7 +261,7 @@ static int ganefuse_fill_dir(void *buf, const char *name,
 }
 
 /* this function is used by filesystems binded to old version of FUSE
- * that use getdir() instead of readdir(). 
+ * that use getdir() instead of readdir().
  */
 static int ganefuse_dirfil_old(ganefuse_dirh_t h, const char *name, int type, ino_t ino)
 {
@@ -272,7 +271,7 @@ static int ganefuse_dirfil_old(ganefuse_dirh_t h, const char *name, int type, in
 /**
  * FSAL_readdir :
  *     Read the entries of an opened directory.
- *     
+ *
  * \param dir_descriptor (input):
  *        Pointer to the directory descriptor filled by FSAL_opendir.
  * \param start_position (input):
@@ -297,21 +296,21 @@ static int ganefuse_dirfil_old(ganefuse_dirh_t h, const char *name, int type, in
  * \param end_of_dir (output)
  *        Pointer to a boolean that indicates if the end of dir
  *        has been reached during the call.
- * 
+ *
  * \return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
- *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument) 
+ *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
-                           fsal_cookie_t start_position,        /* IN */
-                           fsal_attrib_mask_t get_attr_mask,    /* IN */
-                           fsal_mdsize_t buffersize,    /* IN */
-                           fsal_dirent_t * pdirent,     /* OUT */
-                           fsal_cookie_t * end_position,        /* OUT */
-                           fsal_count_t * nb_entries,   /* OUT */
-                           fsal_boolean_t * end_of_dir  /* OUT */
+fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_descriptor,     /* IN */
+                               fusefsal_cookie_t start_position,        /* IN */
+                               fsal_attrib_mask_t get_attr_mask,        /* IN */
+                               fsal_mdsize_t buffersize,        /* IN */
+                               fsal_dirent_t * pdirent, /* OUT */
+                               fusefsal_cookie_t * end_position,        /* OUT */
+                               fsal_count_t * nb_entries,       /* OUT */
+                               fsal_boolean_t * end_of_dir      /* OUT */
     )
 {
   int rc;
@@ -326,9 +325,9 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
   /* get the full path for dir inode */
-  rc = NamespacePath(dir_descriptor->dir_handle.inode,
-                     dir_descriptor->dir_handle.device,
-                     dir_descriptor->dir_handle.validator, dir_path);
+  rc = NamespacePath(dir_descriptor->dir_handle.data.inode,
+                     dir_descriptor->dir_handle.data.device,
+                     dir_descriptor->dir_handle.data.validator, dir_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_readdir);
 
@@ -346,14 +345,14 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
   reqbuff.p_entries = pdirent;
   reqbuff.status.major = 0;
   reqbuff.status.minor = 0;
-  reqbuff.begin_off = start_position;
-  reqbuff.curr_off = FSAL_READDIR_FROM_BEGINNING;
+  reqbuff.begin_off = start_position.data;
+  reqbuff.curr_off = 0 ;
 
   TakeTokenFSCall();
 
   if(p_fs_ops->readdir)
     rc = p_fs_ops->readdir(dir_path, (void *)&reqbuff, ganefuse_fill_dir,
-                           start_position, &dir_descriptor->dir_info);
+                           start_position.data, &dir_descriptor->dir_info);
   else
     rc = p_fs_ops->getdir(dir_path, (ganefuse_dirh_t) & reqbuff, ganefuse_dirfil_old);
 
@@ -371,9 +370,9 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
       *end_position = start_position;
       *end_of_dir = TRUE;
       *nb_entries = 0;
-#ifdef _DEBUG_FSAL
-      printf("No entries found\n");
-#endif
+
+      LogFullDebug(COMPONENT_FSAL, "No entries found");
+
       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
     }
 
@@ -400,20 +399,19 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
       /* 2) check weither the filesystem provided stat buff */
 
-      if(pdirent[i].handle.inode == INODE_TO_BE_COMPLETED)
+      if(pdirent[i].handle.data.inode == INODE_TO_BE_COMPLETED)
         {
           /* If not, make a lookup operation for this entry.
            * (this with automatically add it to namespace) */
 
           pdirent[i].attributes.asked_attributes = get_attr_mask;
 
-#ifdef _DEBUG_FSAL
-          printf("Inode to be completed\n");
-#endif
-          st = FSAL_lookup(&dir_descriptor->dir_handle,
-                           &pdirent[i].name,
-                           &dir_descriptor->context,
-                           &pdirent[i].handle, &pdirent[i].attributes);
+          LogFullDebug(COMPONENT_FSAL, "Inode to be completed");
+
+          st = FUSEFSAL_lookup(&dir_descriptor->dir_handle,
+                               &pdirent[i].name,
+                               &dir_descriptor->context,
+                               &pdirent[i].handle, &pdirent[i].attributes);
 
           if(FSAL_IS_ERROR(st))
             Return(st.major, st.minor, INDEX_FSAL_readdir);
@@ -426,19 +424,18 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
           if(strcmp(pdirent[i].name.name, ".") && strcmp(pdirent[i].name.name, ".."))
             {
-#ifdef _DEBUG_FSAL
-              printf("adding entry to namespace: %lX.%ld %s\n",
-                     pdirent[i].handle.device,
-                     pdirent[i].handle.inode, pdirent[i].name.name);
-#endif
-              pdirent[i].handle.validator = pdirent[i].attributes.ctime.seconds;
+              LogFullDebug(COMPONENT_FSAL, "adding entry to namespace: %lX.%ld %s",
+                     pdirent[i].handle.data.device,
+                     pdirent[i].handle.data.inode, pdirent[i].name.name);
 
-              NamespaceAdd(dir_descriptor->dir_handle.inode,
-                           dir_descriptor->dir_handle.device,
-                           dir_descriptor->dir_handle.validator,
+              pdirent[i].handle.data.validator = pdirent[i].attributes.ctime.seconds;
+
+              NamespaceAdd(dir_descriptor->dir_handle.data.inode,
+                           dir_descriptor->dir_handle.data.device,
+                           dir_descriptor->dir_handle.data.validator,
                            pdirent[i].name.name,
-                           pdirent[i].handle.inode,
-                           pdirent[i].handle.device, &(pdirent[i].handle.validator));
+                           pdirent[i].handle.data.inode,
+                           pdirent[i].handle.data.device, &(pdirent[i].handle.data.validator));
             }
         }
 
@@ -448,9 +445,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
   *end_of_dir = (reqbuff.nb_entries < reqbuff.max_entries);
   *nb_entries = reqbuff.nb_entries;
 
-#ifdef _DEBUG_FSAL
-  printf("EOD = %d\n", *end_of_dir);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "EOD = %d", *end_of_dir);
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
 
@@ -459,17 +454,17 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 /**
  * FSAL_closedir :
  * Free the resources allocated for reading directory entries.
- *     
+ *
  * \param dir_descriptor (input):
  *        Pointer to a directory descriptor filled by FSAL_opendir.
- * 
+ *
  * \return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
+fsal_status_t FUSEFSAL_closedir(fsal_dir_t * dir_descriptor     /* IN */
     )
 {
 
@@ -481,9 +476,9 @@ fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_closedir);
 
   /* get the full path for dir inode */
-  rc = NamespacePath(dir_descriptor->dir_handle.inode,
-                     dir_descriptor->dir_handle.device,
-                     dir_descriptor->dir_handle.validator, dir_path);
+  rc = NamespacePath(dir_descriptor->dir_handle.data.inode,
+                     dir_descriptor->dir_handle.data.device,
+                     dir_descriptor->dir_handle.data.validator, dir_path);
   if(rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_closedir);
 

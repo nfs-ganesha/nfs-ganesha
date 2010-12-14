@@ -113,15 +113,6 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
   if(!init_info)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
 
-  /* >> You can check args bellow << */
-
-  if(init_info->fsal_info.log_outputs.liste_voies == NULL)
-    {
-      /* issue a warning on stderr */
-      DisplayLog
-          ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
-    }
-
   /* proceeds FSAL internal status initialization */
 
   status = fsal_internal_init_global(&(init_info->fsal_info),

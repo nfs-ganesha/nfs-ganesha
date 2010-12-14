@@ -35,6 +35,8 @@
 #include "solaris_port.h"
 #endif
 
+#include "log_macros.h"
+
 /*
  * svc_auth_unix.c
  * Handles UNIX flavor authentication parameters on the service side of rpc.
@@ -114,8 +116,8 @@ Gssrpc__svcauth_unix(register struct svc_req *rqst,
        */
       if((5 + gid_len) * BYTES_PER_XDR_UNIT + str_len > (int)auth_len)
         {
-          (void)printf("bad auth_len gid %d str %d auth %d\n",
-                       gid_len, str_len, auth_len);
+          LogCrit(COMPONENT_DISPATCH, "bad auth_len gid %d str %d auth %d",
+                  gid_len, str_len, auth_len);
           stat = AUTH_BADCRED;
           goto done;
         }

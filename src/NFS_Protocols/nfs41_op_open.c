@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -259,9 +259,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       /* Check if filename is correct */
       if((cache_status =
           cache_inode_error_convert(FSAL_buffdesc2name
-                                    ((fsal_buffdesc_t *) & arg_OPEN4.claim.
-                                     open_claim4_u.file,
-                                     &filename))) != CACHE_INODE_SUCCESS)
+                                    ((fsal_buffdesc_t *) & arg_OPEN4.claim.open_claim4_u.
+                                     file, &filename))) != CACHE_INODE_SUCCESS)
         {
           res_OPEN4.status = nfs4_Errno(cache_status);
           return res_OPEN4.status;
@@ -284,17 +283,15 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
 
       /* What kind of open is it ? */
-#ifdef _DEBUG_NFS_V4
-      printf
-          ("     OPEN: Claim type = %d   Open Type = %d  Share Deny = %d   Share Access = %d \n",
+      LogFullDebug(COMPONENT_NFS_V4,
+           "     OPEN: Claim type = %d   Open Type = %d  Share Deny = %d   Share Access = %d ",
            arg_OPEN4.claim.claim, arg_OPEN4.openhow.opentype, arg_OPEN4.share_deny,
            arg_OPEN4.share_access);
-#endif
+
 
       /* It this a known client id ? */
-#ifdef _DEBUG_NFS_V4
-      DisplayLogLevel(NIV_DEBUG, "OPEN Client id = %llx", arg_OPEN4.owner.clientid);
-#endif
+      LogDebug(COMPONENT_NFS_V4, "OPEN Client id = %llx", (long long unsigned int)arg_OPEN4.owner.clientid);
+
       /* Is this open_owner known ? */
       if(!nfs_convert_open_owner(&arg_OPEN4.owner, &owner_name))
         {
@@ -305,14 +302,9 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       if(!nfs_open_owner_Get_Pointer(&owner_name, &powner))
         {
           /* This open owner is not known yet, allocated and set up a new one */
-          GET_PREALLOC(powner,
-                       data->pclient->pool_open_owner,
-                       data->pclient->nb_pre_state_v4, cache_inode_open_owner_t, next);
+          GetFromPool(powner, &data->pclient->pool_open_owner, cache_inode_open_owner_t);
 
-          GET_PREALLOC(powner_name,
-                       data->pclient->pool_open_owner_name,
-                       data->pclient->nb_pre_state_v4,
-                       cache_inode_open_owner_name_t, next);
+          GetFromPool(powner_name, &data->pclient->pool_open_owner_name, cache_inode_open_owner_name_t);
 
           if(powner == NULL || powner_name == NULL)
             {
@@ -327,7 +319,6 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           powner->confirmed = FALSE;
           powner->seqid = 1;    /* NFSv4.1 specific, initial seqid is 1 */
           powner->related_owner = NULL;
-          powner->next = NULL;
           powner->clientid = arg_OPEN4.owner.clientid;
           powner->owner_len = arg_OPEN4.owner.owner.owner_len;
           memcpy((char *)powner->owner_val, (char *)arg_OPEN4.owner.owner.owner_val,
@@ -363,14 +354,14 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       if(arg_OPEN4.openhow.openflag4_u.how.mode == GUARDED4 ||
          arg_OPEN4.openhow.openflag4_u.how.mode == UNCHECKED4)
         {
-          if(arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs.
-             attrmask.bitmap4_len != 0)
+          if(arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs.attrmask.
+             bitmap4_len != 0)
             {
               /* Convert fattr4 so nfs4_sattr */
               convrc =
                   nfs4_Fattr_To_FSAL_attr(&sattr,
-                                          &(arg_OPEN4.openhow.openflag4_u.
-                                            how.createhow4_u.createattrs));
+                                          &(arg_OPEN4.openhow.openflag4_u.how.
+                                            createhow4_u.createattrs));
 
               if(convrc == 0)
                 {
@@ -457,8 +448,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                         }
 
                       res_OPEN4.OPEN4res_u.resok4.attrset =
-                          arg_OPEN4.openhow.openflag4_u.how.createhow4_u.
-                          createattrs.attrmask;
+                          arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs.
+                          attrmask;
                     }
                   else
                     res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0;
@@ -525,9 +516,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
                   res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 2;
                   if((res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val =
-                      (uint32_t *) Mem_Alloc(res_OPEN4.OPEN4res_u.resok4.
-                                             attrset.bitmap4_len * sizeof(uint32_t))) ==
-                     NULL)
+                      (uint32_t *) Mem_Alloc(res_OPEN4.OPEN4res_u.resok4.attrset.
+                                             bitmap4_len * sizeof(uint32_t))) == NULL)
                     {
                       res_OPEN4.status = NFS4ERR_SERVERFAULT;
                       return res_OPEN4.status;
@@ -547,10 +537,6 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                   res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type =
                       OPEN_DELEGATE_NONE;
                   res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
-
-#ifdef _DEBUG_STATES
-                  nfs_State_PrintAll();
-#endif
 
                   /* Now produce the filehandle to this file */
                   if((pnewfsal_handle =
@@ -624,11 +610,10 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                  && !memcmp(arg_OPEN4.owner.owner.owner_val,
                                             pstate_found_iterate->powner->owner_val,
                                             pstate_found_iterate->powner->owner_len)
-                                 && !memcmp(pstate_found_iterate->state_data.
-                                            share.oexcl_verifier,
-                                            arg_OPEN4.openhow.openflag4_u.
-                                            how.createhow4_u.createverf,
-                                            NFS4_VERIFIER_SIZE))
+                                 && !memcmp(pstate_found_iterate->state_data.share.
+                                            oexcl_verifier,
+                                            arg_OPEN4.openhow.openflag4_u.how.
+                                            createhow4_u.createverf, NFS4_VERIFIER_SIZE))
                                 {
 
                                   /* A former open EXCLUSIVE with same owner and verifier was found, resend it */
@@ -702,9 +687,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
             }
 
           /*  if( cache_status != CACHE_INODE_NOT_FOUND ), if file already exists basically */
-#ifdef _DEBUG_NFS_V4
-          printf("    OPEN open.how = %d\n", arg_OPEN4.openhow.openflag4_u.how.mode);
-#endif
+          LogFullDebug(COMPONENT_NFS_V4, "    OPEN open.how = %d", arg_OPEN4.openhow.openflag4_u.how.mode);
 
           create_arg.use_pnfs = FALSE;
 #ifdef _USE_PNFS
@@ -947,8 +930,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                           switch (pstate_found_iterate->state_type)
                             {
                             case CACHE_INODE_STATE_SHARE:
-                              if((pstate_found_iterate->state_data.
-                                  share.share_access & OPEN4_SHARE_ACCESS_WRITE)
+                              if((pstate_found_iterate->state_data.share.
+                                  share_access & OPEN4_SHARE_ACCESS_WRITE)
                                  && (arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE))
                                 {
                                   res_OPEN4.status = NFS4ERR_SHARE_DENIED;
@@ -966,8 +949,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                   if(pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE)
                     {
                       /* deny read access on read denied file */
-                      if((pstate_found_iterate->state_data.
-                          share.share_deny & OPEN4_SHARE_DENY_READ)
+                      if((pstate_found_iterate->state_data.share.
+                          share_deny & OPEN4_SHARE_DENY_READ)
                          && (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ))
                         {
                           /* Seqid has to be incremented even in this case */
@@ -981,8 +964,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                         }
 
                       /* deny write access on write denied file */
-                      if((pstate_found_iterate->state_data.
-                          share.share_deny & OPEN4_SHARE_DENY_WRITE)
+                      if((pstate_found_iterate->state_data.share.
+                          share_deny & OPEN4_SHARE_DENY_WRITE)
                          && (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE))
                         {
                           /* Seqid has to be incremented even in this case */
@@ -1166,10 +1149,6 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE;
 
   res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
-
-#ifdef _DEBUG_STATES
-  nfs_State_PrintAll();
-#endif
 
   /* regular exit */
   res_OPEN4.status = NFS4_OK;

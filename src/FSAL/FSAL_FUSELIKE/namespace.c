@@ -81,7 +81,7 @@ typedef struct __fsnode__
 /* TODO: externalize pool size parameter */
 
 #define POOL_CHUNK_SIZE   1024
-static fsnode_t *node_pool = NULL;
+static struct prealloc_pool node_pool;
 static pthread_mutex_t node_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static fsnode_t *node_alloc()
@@ -89,7 +89,7 @@ static fsnode_t *node_alloc()
   fsnode_t *p_new;
 
   P(node_pool_mutex);
-  GET_PREALLOC(p_new, node_pool, POOL_CHUNK_SIZE, fsnode_t, p_next);
+  GetFromPool(p_new, &node_pool, fsnode_t);
   V(node_pool_mutex);
 
   memset(p_new, 0, sizeof(fsnode_t));
@@ -102,13 +102,13 @@ static void node_free(fsnode_t * p_node)
   memset(p_node, 0, sizeof(fsnode_t));
 
   P(node_pool_mutex);
-  RELEASE_PREALLOC(p_node, node_pool, p_next);
+  ReleaseToPool(p_node, &node_pool);
   V(node_pool_mutex);
 }
 
 /* pool of preallocated lookup peers */
 
-static lookup_peer_t *peer_pool = NULL;
+static struct prealloc_pool peer_pool;
 static pthread_mutex_t peer_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static lookup_peer_t *peer_alloc()
@@ -116,7 +116,7 @@ static lookup_peer_t *peer_alloc()
   lookup_peer_t *p_new;
 
   P(peer_pool_mutex);
-  GET_PREALLOC(p_new, peer_pool, POOL_CHUNK_SIZE, lookup_peer_t, p_next);
+  GetFromPool(p_new, &peer_pool, lookup_peer_t);
   V(peer_pool_mutex);
 
   memset(p_new, 0, sizeof(lookup_peer_t));
@@ -129,7 +129,7 @@ static void peer_free(lookup_peer_t * p_peer)
   memset(p_peer, 0, sizeof(lookup_peer_t));
 
   P(peer_pool_mutex);
-  RELEASE_PREALLOC(p_peer, peer_pool, p_next);
+  ReleaseToPool(p_peer, &peer_pool);
   V(peer_pool_mutex);
 }
 
@@ -448,11 +448,11 @@ fsnode_t *h_del_lookup(ino_t parent_inode, dev_t parent_dev, unsigned int parent
                  || (p_lpeer->parent.generation != parent_gen)
                  || strncmp(p_lpeer->name, name, FSAL_MAX_NAME_LEN))
                 {
-                  DisplayLog
-                      ("NAMESPACE MANAGER: An incompatible direntry was found. In node: %lu.%lu (gen:%u) ,%s  Deleted:%lu.%lu (gen:%u),%s",
-                       p_lpeer->parent.inum, p_lpeer->parent.dev,
-                       p_lpeer->parent.generation, p_lpeer->name, parent_dev,
-                       parent_inode, parent_gen, name);
+                  LogCrit(COMPONENT_FSAL,
+                          "NAMESPACE MANAGER: An incompatible direntry was found. In node: %lu.%lu (gen:%u) ,%s  Deleted:%lu.%lu (gen:%u),%s",
+                          p_lpeer->parent.inum, p_lpeer->parent.dev,
+                          p_lpeer->parent.generation, p_lpeer->name, parent_dev,
+                          parent_inode, parent_gen, name);
                   /* remove it anyway... */
                 }
 
@@ -590,9 +590,9 @@ int NamespaceInit(ino_t root_inode, dev_t root_dev, unsigned int *p_root_gen)
   /* Initialize pools.
    */
 
-  STUFF_PREALLOC(peer_pool, POOL_CHUNK_SIZE, lookup_peer_t, p_next);
+  MakePool(&peer_pool, POOL_CHUNK_SIZE, lookup_peer_t, NULL, NULL);
 
-  STUFF_PREALLOC(node_pool, POOL_CHUNK_SIZE, fsnode_t, p_next);
+  MakePool(&node_pool, POOL_CHUNK_SIZE, fsnode_t, NULL, NULL);
 
   /* initialize namespace lock */
   if(rw_lock_init(&ns_lock))
@@ -611,10 +611,8 @@ int NamespaceInit(ino_t root_inode, dev_t root_dev, unsigned int *p_root_gen)
   if(!root)
     return ENOMEM;
 
-#ifdef _DEBUG_FSAL
-  printf("namespace: Root=%lX.%ld (gen:%u)\n", root_dev, root_inode,
+  LogFullDebug(COMPONENT_FSAL, "namespace: Root=%lX.%ld (gen:%u)", root_dev, root_inode,
          root->inode.generation);
-#endif
 
   *p_root_gen = root->inode.generation;
 
@@ -636,10 +634,8 @@ static int NamespaceAdd_nl(ino_t parent_ino, dev_t parent_dev, unsigned int pare
   lookup_peer_t *p_lpeer;
   int rc;
 
-#ifdef _DEBUG_FSAL
-  printf("namespace: Adding (%lX.%ld,%s)=%lX.%ld\n",
+  LogFullDebug(COMPONENT_FSAL, "namespace: Adding (%lX.%ld,%s)=%lX.%ld",
          parent_dev, parent_ino, name, entry_dev, entry_ino);
-#endif
 
   /* does parent inode exist in namespace ? */
 
@@ -694,10 +690,10 @@ static int NamespaceAdd_nl(ino_t parent_ino, dev_t parent_dev, unsigned int pare
 
                 /* TODO: REMOVE IT silently because the filesystem changed behind us */
 
-                DisplayLog
-                    ("NAMESPACE MANAGER: An incompatible direntry was found. Existing: %lX.%lu,%s->%lX.%lu  New:%lX.%lu,%s->%lX.%lu",
-                     parent_dev, parent_ino, name, p_node_exist->inode.dev,
-                     p_node_exist->inode.inum, parent_dev, parent_ino, name, entry_ino);
+                LogCrit(COMPONENT_FSAL,
+                        "NAMESPACE MANAGER: An incompatible direntry was found. Existing: %lX.%lu,%s->%lX.%lu  New:%lX.%lu,%s->%lX.%lu",
+                        parent_dev, parent_ino, name, p_node_exist->inode.dev,
+                        p_node_exist->inode.inum, parent_dev, parent_ino, name, entry_dev, entry_ino);
                 return EEXIST;
               }
           }
@@ -736,11 +732,9 @@ static int NamespaceAdd_nl(ino_t parent_ino, dev_t parent_dev, unsigned int pare
       return EFAULT;            /* should not occur ! */
     }
 
-#ifdef _DEBUG_FSAL
-  printf("namespace: Entry %lX.%ld (gen:%u)  has now link count = %u\n",
+  LogFullDebug(COMPONENT_FSAL, "namespace: Entry %lX.%ld (gen:%u)  has now link count = %u",
          p_node->inode.dev, p_node->inode.inum, p_node->inode.generation,
          p_node->n_lookup);
-#endif
 
   *p_new_gen = p_node->inode.generation;
 
@@ -756,9 +750,7 @@ static int NamespaceRemove_nl(ino_t parent_ino, dev_t parent_dev, unsigned int p
   fsnode_t *p_node = NULL;
   int rc;
 
-#ifdef _DEBUG_FSAL
-  printf("namespace: removing %lX.%ld/%s\n", parent_dev, parent_ino, name);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "namespace: removing %lX.%ld/%s", parent_dev, parent_ino, name);
 
   /* get parent node */
   p_parent = h_get_node(parent_ino, parent_dev, &rc);
@@ -788,10 +780,8 @@ static int NamespaceRemove_nl(ino_t parent_ino, dev_t parent_dev, unsigned int p
   /* decrement parents' lookup count */
   p_parent->n_children--;
 
-#ifdef _DEBUG_FSAL
-  printf("namespace: Entry %lX.%ld has now link count = %u\n",
+  LogFullDebug(COMPONENT_FSAL, "namespace: Entry %lX.%ld has now link count = %u",
          p_node->inode.dev, p_node->inode.inum, p_node->n_lookup);
-#endif
 
   /* node not in namespace tree anymore */
   if(p_node->n_lookup == 0)
@@ -918,9 +908,7 @@ int NamespaceGetGen(ino_t inode, dev_t dev, unsigned int *p_gen)
   /* get entry from hash */
   p_node = h_get_node(inode, dev, &rc);
 
-#ifdef _DEBUG_FSAL
-  printf("NamespaceGetGen(%lX,%ld): p_node = %p, rc = %d\n", dev, inode, p_node, rc);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "NamespaceGetGen(%lX,%ld): p_node = %p, rc = %d", dev, inode, p_node, rc);
 
   if(!p_node)
     return ENOENT;
@@ -962,10 +950,8 @@ int NamespacePath(ino_t entry, dev_t dev, unsigned int gen, char *path)
           V_r(&ns_lock);
           if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
             {
-#ifdef _DEBUG_FSAL
-              printf("namespace: %lX.%ld not found\n", (unsigned long)dev,
+              LogFullDebug(COMPONENT_FSAL, "namespace: %lX.%ld not found", (unsigned long)dev,
                      (unsigned long)entry);
-#endif
               return ENOENT;
             }
           else
@@ -980,9 +966,8 @@ int NamespacePath(ino_t entry, dev_t dev, unsigned int gen, char *path)
       if(!p_node->parent_list)
         {
           /* this is the root entry, just add '/' at the begining and return */
-#ifdef _DEBUG_FSAL
-          printf("namespace: root entry reached\n");
-#endif
+
+          LogFullDebug(COMPONENT_FSAL, "namespace: root entry reached");
 
           snprintf(path, FSAL_MAX_PATH_LEN, "/%s", tmp_path);
           break;
@@ -998,20 +983,18 @@ int NamespacePath(ino_t entry, dev_t dev, unsigned int gen, char *path)
           /* this is a parent dir, path is now <dirname>/<subpath> */
           snprintf(path, FSAL_MAX_PATH_LEN, "%s/%s", p_node->parent_list->name, tmp_path);
 
-#ifdef _DEBUG_FSAL
-          printf("lookup peer found: (%lX.%ld,%s)\n",
+          LogFullDebug(COMPONENT_FSAL, "lookup peer found: (%lX.%ld,%s)",
                  p_node->parent_list->parent.dev,
                  p_node->parent_list->parent.inum, p_node->parent_list->name);
-#endif
 
           /* loop detection */
           if((curr_inode.inum == p_node->parent_list->parent.inum)
              && (curr_inode.dev == p_node->parent_list->parent.dev))
             {
-              DisplayLog
-                  ("NAMESPACE MANAGER: loop detected in namespace: %lX.%ld/%s = %lX.%ld",
-                   p_node->parent_list->parent.dev, p_node->parent_list->parent.inum,
-                   p_node->parent_list->name, curr_inode.dev, curr_inode.inum);
+              LogCrit(COMPONENT_FSAL,
+                      "NAMESPACE MANAGER: loop detected in namespace: %lX.%ld/%s = %lX.%ld",
+                      p_node->parent_list->parent.dev, p_node->parent_list->parent.inum,
+                      p_node->parent_list->name, curr_inode.dev, curr_inode.inum);
               V_r(&ns_lock);
               return ELOOP;
             }
@@ -1025,9 +1008,7 @@ int NamespacePath(ino_t entry, dev_t dev, unsigned int gen, char *path)
     }
   while(1);
 
-#ifdef _DEBUG_FSAL
-  printf("inode=%lX.%ld (gen %u), path='%s'\n", dev, entry, gen, path);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "inode=%lX.%ld (gen %u), path='%s'", dev, entry, gen, path);
 
   /* reverse lookup succeeded */
   V_r(&ns_lock);

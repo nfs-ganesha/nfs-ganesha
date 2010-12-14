@@ -27,7 +27,7 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 
-static int do_blocking_lock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
+static int do_blocking_lock(posixfsal_file_t * obj_handle, posixfsal_lockdesc_t * ldesc)
 {
   /*
    * Linux client have this grant hack of pooling for
@@ -42,12 +42,12 @@ static int do_blocking_lock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 /**
  * FSAL_lock:
  */
-fsal_status_t FSAL_lock(fsal_file_t * obj_handle,
-                        fsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
+fsal_status_t POSIXFSAL_lock(posixfsal_file_t * obj_handle,
+                             posixfsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
 {
   int cmd;
   int retval;
-  int fd = FSAL_FILENO(obj_handle);
+  int fd = obj_handle->filefd;
 
   errno = 0;
   /*
@@ -75,8 +75,8 @@ fsal_status_t FSAL_lock(fsal_file_t * obj_handle,
  * FSAL_changelock:
  * Not implemented.
  */
-fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
-                              fsal_lockparam_t * lock_info      /* IN */
+fsal_status_t POSIXFSAL_changelock(posixfsal_lockdesc_t * lock_descriptor,      /* IN / OUT */
+                                   fsal_lockparam_t * lock_info /* IN */
     )
 {
 
@@ -92,10 +92,11 @@ fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / 
  * FSAL_unlock:
  *
  */
-fsal_status_t FSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
+fsal_status_t POSIXFSAL_unlock(posixfsal_file_t * obj_handle,
+                               posixfsal_lockdesc_t * ldesc)
 {
   int retval;
-  int fd = FSAL_FILENO(obj_handle);
+  int fd = obj_handle->filefd;
 
   errno = 0;
   ldesc->flock.l_type = F_UNLCK;
@@ -106,10 +107,11 @@ fsal_status_t FSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_unlock);
 }
 
-fsal_status_t FSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
+fsal_status_t POSIXFSAL_getlock(posixfsal_file_t * obj_handle,
+                                posixfsal_lockdesc_t * ldesc)
 {
   int retval;
-  int fd = FSAL_FILENO(obj_handle);
+  int fd = obj_handle->filefd;
 
   errno = 0;
   retval = fcntl(fd, F_GETLK, &ldesc->flock);

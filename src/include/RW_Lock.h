@@ -32,14 +32,21 @@
 #define _RW_LOCK_H
 
 #include <pthread.h>
+#include "log_macros.h"
+
 /* My habit with mutex */
-#ifndef DEBUG
-#define P( mutex ) pthread_mutex_lock( &mutex )
-#define V( mutex )  pthread_mutex_unlock( &mutex )
-#else
-#define P( mutex ){ int rc ; if( ( rc = pthread_mutex_lock( &mutex ) ) != 0 ) printf( "  --> Erreur P: %d %d\n", rc, errno ) ;}
-#define V( mutex ){ int rc ; if( ( rc = pthread_mutex_unlock( &mutex ) ) != 0 ) printf( "  --> Erreur V: %d %d\n", rc, errno ) ;}
-#endif
+
+#define P( mutex )                                                          \
+  do { int rc ;                                                             \
+    if( ( rc = pthread_mutex_lock( &mutex ) ) != 0 )                        \
+      LogFullDebug(COMPONENT_RW_LOCK, "  --> Error P: %d %d", rc, errno );  \
+  } while (0)
+
+#define V( mutex )                                                          \
+  do { int rc ;                                                             \
+    if( ( rc = pthread_mutex_unlock( &mutex ) ) != 0 )                      \
+      LogFullDebug(COMPONENT_RW_LOCK, "  --> Error V: %d %d", rc, errno );  \
+  } while (0)
 
 /* Type representing the lock itself */
 typedef struct _RW_LOCK

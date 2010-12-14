@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -198,7 +198,8 @@ int nfs_Link(nfs_arg_t * parg,
       }
     }
 
-  if(str_link_name == NULL || strlen(str_link_name) == 0)
+  // if(str_link_name == NULL || strlen(str_link_name) == 0)
+  if(str_link_name == NULL || *str_link_name == '\0' )
     {
       if(preq->rq_vers == NFS_V2)
         pres->res_stat2 = NFSERR_IO;
@@ -255,8 +256,8 @@ int nfs_Link(nfs_arg_t * parg,
                           nfs_SetPostOpAttr(pcontext, pexport,
                                             target_pentry,
                                             &attr,
-                                            &(pres->res_link3.LINK3res_u.
-                                              resok.file_attributes));
+                                            &(pres->res_link3.LINK3res_u.resok.
+                                              file_attributes));
 
                           /*
                            * Build Weak Cache Coherency

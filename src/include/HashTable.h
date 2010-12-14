@@ -43,6 +43,8 @@
 #include <pthread.h>
 #include "RW_Lock.h"
 #include "HashData.h"
+#include "log_macros.h"
+#include "lookup3.h"
 
 /**
  * @defgroup HashTableStructs
@@ -59,9 +61,12 @@ typedef struct hashparameter__
   unsigned int nb_node_prealloc;                              /**< Number of node to allocated when new nodes are necessary. */
   unsigned long (*hash_func_key) (p_hash_parameter_t, hash_buffer_t *);     /**< Hashing function, returns an integer from 0 to index_size - 1 . */
   unsigned long (*hash_func_rbt) (p_hash_parameter_t, hash_buffer_t *);     /**< Rbt value calculator (for rbt management). */
-  int (*compare_key) (hash_buffer_t *, hash_buffer_t *);                        /**< Function used to compare two keys together. */
+  unsigned int (*hash_func_both) (p_hash_parameter_t, hash_buffer_t *,
+                                  uint32_t * phashval, uint32_t * prbtval ); /**< Rbt + hash value calculator (for rbt management). */
+  int (*compare_key) (hash_buffer_t *, hash_buffer_t *);                     /**< Function used to compare two keys together. */
   int (*key_to_str) (hash_buffer_t *, char *);                                  /**< Function used to convert a key to a string. */
   int (*val_to_str) (hash_buffer_t *, char *);                                  /**< Function used to convert a value to a string. */
+  char *name;                                                                   /**< Name of this hash table. */
 } hash_parameter_t;
 
 typedef unsigned long (*hash_function_t) (hash_parameter_t *, hash_buffer_t *);
@@ -104,8 +109,8 @@ typedef struct hashtable__
   hash_stat_dynamic_t *stat_dynamic;    /**< Dynamic statistics for the HashTable. */
   struct rbt_head *array_rbt;           /**< Array of reb-black tree (of size parameter.index_size) */
   rw_lock_t *array_lock;                /**< Array of rw-locks for MT-safe management */
-  struct rbt_node **node_prealloc;      /**< Pre-allocated nodes, ready to use for new entries (array of size parameter.nb_node_prealloc) */
-  hash_data_t **pdata_prealloc;         /**< Pre-allocated pdata buffers  ready to use for new entries */
+  struct prealloc_pool *node_prealloc;  /**< Pre-allocated nodes, ready to use for new entries (array of size parameter.nb_node_prealloc) */
+  struct prealloc_pool *pdata_prealloc; /**< Pre-allocated pdata buffers  ready to use for new entries */
 } hash_table_t;
 
 typedef enum hashtable_set_how__
@@ -136,7 +141,10 @@ int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
                   hash_buffer_t * p_usedbuffkey, hash_buffer_t * p_usedbuffdata);
 #define HashTable_Set( ht, buffkey, buffval ) HashTable_Test_And_Set( ht, buffkey, buffval, HASHTABLE_SET_HOW_SET_OVERWRITE )
 void HashTable_GetStats(hash_table_t * ht, hash_stat_t * hstat);
+void HashTable_Log(log_components_t component, hash_table_t * ht);
 void HashTable_Print(hash_table_t * ht);
 unsigned int HashTable_GetSize(hash_table_t * ht);
+
+uint32_t HashTable_hash_buff( char * str, uint32_t len ) ;
 
 #endif                          /* _HASHTABLE_H */

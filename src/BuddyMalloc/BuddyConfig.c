@@ -37,7 +37,7 @@
 #endif
 
 #include "BuddyMalloc.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "common_utils.h"
 #include <strings.h>
 #include <string.h>
@@ -88,14 +88,14 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
 
   if(block == NULL)
     {
-      DisplayLog("BUDDY LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
-                 CONF_LABEL_BUDDY);
+      LogCrit(COMPONENT_MEMALLOC, "BUDDY LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
+              CONF_LABEL_BUDDY);
       return BUDDY_ERR_ENOENT;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
-      DisplayLog("BUDDY LOAD PARAMETER: Item \"%s\" is expected to be a block",
-                 CONF_LABEL_BUDDY);
+      LogCrit(COMPONENT_MEMALLOC, "BUDDY LOAD PARAMETER: Item \"%s\" is expected to be a block",
+              CONF_LABEL_BUDDY);
       return BUDDY_ERR_EINVAL;
     }
 
@@ -112,9 +112,9 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
       err = config_GetKeyValue(item, &key_name, &key_value);
       if(err)
         {
-          DisplayLog
-              ("BUDDY LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
-               var_index, CONF_LABEL_BUDDY);
+          LogCrit(COMPONENT_MEMALLOC,
+                  "BUDDY LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
+                  var_index, CONF_LABEL_BUDDY);
           return BUDDY_ERR_EFAULT;
         }
 
@@ -124,9 +124,9 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
 
           if(s_read_size(key_value, &page_size) || !check_2power(page_size))
             {
-              DisplayLog
-                  ("BUDDY LOAD PARAMETER: ERROR: Unexpected value for %s: must be a 2^n value.",
-                   key_name);
+              LogCrit(COMPONENT_MEMALLOC,
+                      "BUDDY LOAD PARAMETER: ERROR: Unexpected value for %s: must be a 2^n value.",
+                      key_name);
               return BUDDY_ERR_EINVAL;
             }
 
@@ -141,9 +141,9 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
 
           if(bool == -1)
             {
-              DisplayLog
-                  ("BUDDY LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
-                   key_name);
+              LogCrit(COMPONENT_MEMALLOC,
+                      "BUDDY LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
+                      key_name);
               return BUDDY_ERR_EINVAL;
             }
 
@@ -158,9 +158,9 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
 
           if(bool == -1)
             {
-              DisplayLog
-                  ("BUDDY LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
-                   key_name);
+              LogCrit(COMPONENT_MEMALLOC,
+                      "BUDDY LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
+                      key_name);
               return BUDDY_ERR_EINVAL;
             }
 
@@ -175,9 +175,9 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
 
           if(bool == -1)
             {
-              DisplayLog
-                  ("BUDDY LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
-                   key_name);
+              LogCrit(COMPONENT_MEMALLOC,
+                      "BUDDY LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
+                      key_name);
               return BUDDY_ERR_EINVAL;
             }
 
@@ -191,9 +191,9 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
 
           if(keep_factor < 1)
             {
-              DisplayLog
-                  ("BUDDY LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
-                   key_name);
+              LogCrit(COMPONENT_MEMALLOC,
+                      "BUDDY LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
+                      key_name);
               return BUDDY_ERR_EINVAL;
             }
 
@@ -207,9 +207,9 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
 
           if(keep_min < 0)
             {
-              DisplayLog
-                  ("BUDDY LOAD PARAMETER: ERROR: Unexpected value for %s: null or positive integer expected.",
-                   key_name);
+              LogCrit(COMPONENT_MEMALLOC,
+                      "BUDDY LOAD PARAMETER: ERROR: Unexpected value for %s: null or positive integer expected.",
+                      key_name);
               return BUDDY_ERR_EINVAL;
             }
 
@@ -218,15 +218,14 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
         }
       else if(!STRCMP(key_name, "LogFile"))
         {
-
-          strncpy(out_parameter->buddy_error_file, key_value, 256);
-
+          SetComponentLogFile(COMPONENT_MEMALLOC, key_value);
+          SetComponentLogFile(COMPONENT_MEMLEAKS, key_value);
         }
       else
         {
-          DisplayLog
-              ("BUDDY LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
-               key_name, CONF_LABEL_BUDDY);
+          LogCrit(COMPONENT_MEMALLOC,
+                  "BUDDY LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
+                  key_name, CONF_LABEL_BUDDY);
           return BUDDY_ERR_EINVAL;
         }
 

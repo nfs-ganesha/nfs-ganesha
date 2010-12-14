@@ -15,7 +15,7 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 
-fsal_status_t FSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle)
+fsal_status_t XFSFSAL_CleanObjectResources(xfsfsal_handle_t * in_fsal_handle)
 {
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanObjectResources);

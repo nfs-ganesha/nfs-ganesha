@@ -48,7 +48,7 @@
 #include <rpc/auth.h>
 #include <rpc/pmap_clnt.h>
 #endif
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -95,8 +95,7 @@ int nlm4_Cancel_Message(nfs_arg_t * parg /* IN     */ ,
                         nfs_res_t * pres /* OUT    */ )
 {
   nlm_async_res_t *arg;
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-                    "REQUEST PROCESSING: Calling nlm_Cancel_Message");
+  LogFullDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Cancel_Message");
   nlm4_Cancel(parg, pexport, pcontext, pclient, ht, preq, pres);
   arg = nlm_build_async_res(parg->arg_nlm4_cancel.alock.caller_name, pres);
   nlm_async_callback(nlm4_cancel_message_resp, arg);

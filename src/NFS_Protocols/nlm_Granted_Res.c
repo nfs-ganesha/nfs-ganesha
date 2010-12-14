@@ -47,7 +47,7 @@
 #include <rpc/auth.h>
 #include <rpc/pmap_clnt.h>
 #endif
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -86,8 +86,7 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
   nlm4_res *arg;
   nlm_lock_entry_t *nlm_entry;
 
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-                    "REQUEST PROCESSING: Calling nlm_Granted_Res");
+  LogFullDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Granted_Res");
 
   arg = &parg->arg_nlm4_res;
   nlm_entry = nlm_find_lock_entry_by_cookie(&arg->cookie);
@@ -96,8 +95,7 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
 
   if(arg->stat.stat == NLM4_DENIED_GRACE_PERIOD)
     {
-      DisplayLogLevel(NIV_MAJ, "%s: Granted call failed due to client grace period\n");
-      DisplayLogLevel(NIV_MAJ, "Retrying...\n");
+      LogMajor(COMPONENT_NLM, "Granted call failed due to client grace period, Retrying...");
 
       /*
        * nlm_resend_grant_msg will drop the lock entry ref count

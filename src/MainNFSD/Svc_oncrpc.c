@@ -14,6 +14,7 @@ typedef unsigned long u_long;
 
 #include   <sys/errno.h>
 #include   "stuff_alloc.h"
+#include   "nfs_core.h"
 
 #include   <rpc/rpc.h>
 #include   <rpc/auth.h>
@@ -73,19 +74,12 @@ void Xprt_register(SVCXPRT * xprt)
   register int sock = xprt->xp_sock;
 #endif
 
-  if(Xports == NULL)
-    {
-      Xports = (SVCXPRT **) Mem_Alloc(FD_SETSIZE * sizeof(SVCXPRT *));
-      memset(Xports, '\0', FD_SETSIZE * sizeof(SVCXPRT *));
-
-    }
+  Xports[sock] = xprt;
 
   if(sock < FD_SETSIZE)
     {
-      Xports[sock] = xprt;
       FD_SET(sock, &Svc_fdset);
       mysvc_maxfd = max(mysvc_maxfd, sock);
-
     }
 }
 
@@ -101,10 +95,13 @@ void Xprt_unregister(SVCXPRT * xprt)
   register int sock = xprt->xp_sock;
 #endif
 
-  if((sock < FD_SETSIZE) && (Xports[sock] == xprt))
+  if(Xports[sock] == xprt)
     {
       Xports[sock] = (SVCXPRT *) 0;
+    }
 
+  if(sock < FD_SETSIZE)
+    {
       FD_CLR(sock, &Svc_fdset);
       if(sock == mysvc_maxfd)
         {

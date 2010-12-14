@@ -27,11 +27,14 @@
  */
 
 #include "config_parsing.h"
+#include "log_macros.h"
 #include <errno.h>
 
 int main(int argc, char **argv)
 {
 
+  SetDefaultLogging("TEST");
+  SetNamePgm("verif_syntax");
   char *errtxt;
   char *fichier;
 
@@ -43,7 +46,7 @@ int main(int argc, char **argv)
     }
   else
     {
-      fprintf(stderr, "Usage %s <config_file>\n", argv[0]);
+      LogTest("Usage %s <config_file>", argv[0]);
       exit(EINVAL);
     }
 
@@ -52,15 +55,15 @@ int main(int argc, char **argv)
   if(config == NULL)
     {
       errtxt = config_GetErrorMsg();
-      fprintf(stderr, "Erreur de parsing de %s : %s\n", argv[1], errtxt);
+      LogTest("Error parsing %s : %s", argv[1], errtxt);
       exit(EINVAL);
     }
   else
     {
-      fprintf(stderr, "La syntaxe du fichier %s est correcte !\n", argv[1]);
+      LogTest("The syntax of the file %s is correct!", argv[1]);
       exit(0);
     }
 
-  return 0;                     /* supprime warning du compilo */
+  return 0;
 
 }

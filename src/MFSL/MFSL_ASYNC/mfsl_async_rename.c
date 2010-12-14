@@ -64,7 +64,7 @@ fsal_status_t MFSL_rename_async_op(mfsl_async_op_desc_t * popasyncdesc)
 {
   fsal_status_t fsal_status;
 
-  DisplayLogLevel(NIV_DEBUG, "Making asynchronous FSAL_rename for async op %p",
+  LogDebug(COMPONENT_MFSL, "Making asynchronous FSAL_rename for async op %p",
                   popasyncdesc);
 
   if(popasyncdesc->op_args.rename.pmobject_src !=
@@ -168,9 +168,7 @@ fsal_status_t MFSL_rename(mfsl_object_t * old_parentdir_handle, /* IN */
 
   P(p_mfsl_context->lock);
 
-  GET_PREALLOC(pasyncopdesc,
-               p_mfsl_context->pool_async_op,
-               mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
+  GetFromPool(pasyncopdesc, &p_mfsl_context->pool_async_op, mfsl_async_op_desc_t);
 
   V(p_mfsl_context->lock);
 
@@ -180,7 +178,7 @@ fsal_status_t MFSL_rename(mfsl_object_t * old_parentdir_handle, /* IN */
   if(gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
     {
       /* Could'not get time of day... Stopping, this may need a major failure */
-      DisplayLog("MFSL_link: cannot get time of day... exiting");
+      LogMajor(COMPONENT_MFSL,"MFSL_link: cannot get time of day... exiting");
       exit(1);
     }
 
@@ -189,10 +187,7 @@ fsal_status_t MFSL_rename(mfsl_object_t * old_parentdir_handle, /* IN */
       /* Target is not yet asynchronous */
       P(p_mfsl_context->lock);
 
-      GET_PREALLOC(old_parentdir_pasyncdata,
-                   p_mfsl_context->pool_spec_data,
-                   mfsl_param.nb_pre_async_op_desc,
-                   mfsl_object_specific_data_t, next_alloc);
+      GetFromPool(old_parentdir_pasyncdata, &p_mfsl_context->pool_spec_data, mfsl_object_specific_data_t);
 
       V(p_mfsl_context->lock);
 
@@ -205,10 +200,7 @@ fsal_status_t MFSL_rename(mfsl_object_t * old_parentdir_handle, /* IN */
       /* Target is not yet asynchronous */
       P(p_mfsl_context->lock);
 
-      GET_PREALLOC(new_parentdir_pasyncdata,
-                   p_mfsl_context->pool_spec_data,
-                   mfsl_param.nb_pre_async_op_desc,
-                   mfsl_object_specific_data_t, next_alloc);
+      GetFromPool(new_parentdir_pasyncdata, &p_mfsl_context->pool_spec_data, mfsl_object_specific_data_t);
 
       V(p_mfsl_context->lock);
 
@@ -226,7 +218,7 @@ fsal_status_t MFSL_rename(mfsl_object_t * old_parentdir_handle, /* IN */
   if(FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
-  DisplayLogJdLevel(p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p",
+  LogDebug(COMPONENT_MFSL, "Creating asyncop %p",
                     pasyncopdesc);
 
   pasyncopdesc->op_type = MFSL_ASYNC_OP_RENAME;

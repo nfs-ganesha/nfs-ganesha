@@ -35,7 +35,7 @@
 #ifndef _ERR_FSAL_H
 #define _ERR_FSAL_H
 
-#include <log_functions.h>
+#include "log_macros.h"
 
 static family_error_t __attribute__ ((__unused__)) tab_errstatus_FSAL[] =
 {
@@ -147,6 +147,9 @@ static family_error_t __attribute__ ((__unused__)) tab_errstatus_FSAL[] =
 #define ERR_FSAL_SEC       20004
   {
   ERR_FSAL_SEC, "ERR_FSAL_SEC", "Security context error"},
+#define ERR_FSAL_NO_QUOTA 20005
+  {
+  ERR_FSAL_NO_QUOTA, "ERR_FSAL_NO_QUOTA", "No Quota available"},
 #define ERR_FSAL_NOT_OPENED     20010
   {
   ERR_FSAL_NOT_OPENED, "ERR_FSAL_NOT_OPENED", "File/directory not opened"},

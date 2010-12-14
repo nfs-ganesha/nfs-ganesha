@@ -390,7 +390,7 @@ int InitNFSClient(cmdnfs_thr_info_t * p_thr_info)
     return 1;
 
   /* Init the cache content client */
-  if(cache_content_client_init(&p_thr_info->dc_client, datacache_client_param) != 0)
+  if(cache_content_client_init(&p_thr_info->dc_client, datacache_client_param, "") != 0)
     return 1;
 
   p_thr_info->client.pcontent_client = (caddr_t) & p_thr_info->dc_client;
@@ -442,9 +442,9 @@ int nfs_init(char *filename, int flag_v, FILE * output)
 
   if((rc =
       cache_content_read_conf_client_parameter(config_file,
-                                               &nfs_param.
-                                               cache_layers_param.cache_content_client_param))
-     != CACHE_CONTENT_SUCCESS)
+                                               &nfs_param.cache_layers_param.
+                                               cache_content_client_param)) !=
+     CACHE_CONTENT_SUCCESS)
     {
       fprintf(output, "nfs_init: Error %d reading cache content parameters.\n", -rc);
       return -1;

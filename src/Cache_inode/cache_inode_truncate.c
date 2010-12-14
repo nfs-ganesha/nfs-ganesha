@@ -44,7 +44,7 @@
 
 #include "fsal.h"
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "cache_inode.h"
@@ -146,12 +146,16 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
       /* Call FSAL to actually truncate */
       pentry->object.file.attributes.asked_attributes = pclient->attrmask;
 #ifdef _USE_MFSL
-      fsal_status = MFSL_truncate(&pentry->mobject, pcontext, &pclient->mfsl_context, length, NULL,     /** @todo &pentry->object.file.open_fd.fd, *//* Used only with FSAL_PROXY */
-                                  &pentry->object.file.attributes);
+      fsal_status = MFSL_truncate(&pentry->mobject, pcontext, &pclient->mfsl_context, length, NULL,    
+#ifdef _USE_PNFS
+                                  &pentry->object.file.attributes, &pentry->object.file.pnfs_file);
+#else
+                                  &pentry->object.file.attributes, NULL);
+#endif /* _USE_PNFS */
 #else
       fsal_status = FSAL_truncate(&pentry->object.file.handle, pcontext, length, NULL,  /** @todo &pentry->object.file.open_fd.fd, *//* Used only with FSAL_PROXY */
                                   &pentry->object.file.attributes);
-#endif
+#endif /* _USE_MFSL */
 
       if(FSAL_IS_ERROR(fsal_status))
         {
@@ -166,13 +170,13 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
             {
               cache_inode_status_t kill_status;
 
-              DisplayLog
-                  ("cache_inode_truncate: Stale FSAL File Handle detected for pentry = %p",
+              LogEvent(COMPONENT_CACHE_INODE,
+                  "cache_inode_truncate: Stale FSAL File Handle detected for pentry = %p",
                    pentry);
 
               if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
-                DisplayLog("cache_inode_truncate: Could not kill entry %p, status = %u",
+                LogCrit(COMPONENT_CACHE_INODE,"cache_inode_truncate: Could not kill entry %p, status = %u",
                            pentry, kill_status);
 
               *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -181,6 +185,7 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
           return *pstatus;
         }
     }
+
 
   /* Validate the entry */
   *pstatus = cache_inode_valid(pentry, CACHE_INODE_OP_SET, pclient);

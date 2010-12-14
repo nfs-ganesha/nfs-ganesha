@@ -60,7 +60,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -175,7 +175,8 @@ int nfs_Rmdir(nfs_arg_t * parg /* IN  */ ,
 
     }
 
-  if(dir_name == NULL || strlen(dir_name) == 0)
+  //if(dir_name == NULL || strlen(dir_name) == 0)
+  if(dir_name == NULL || *dir_name == '\0' )
     {
       cache_status = CACHE_INODE_INVALID_ARGUMENT;      /* for lack of better... */
     }

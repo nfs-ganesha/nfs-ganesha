@@ -64,10 +64,10 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
-                          fsal_name_t * p_object_name,  /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_attrib_list_t * p_parent_directory_attributes    /* [IN/OUT ] */
+fsal_status_t XFSFSAL_unlink(xfsfsal_handle_t * p_parent_directory_handle,      /* IN */
+                             fsal_name_t * p_object_name,       /* IN */
+                             xfsfsal_op_context_t * p_context,  /* IN */
+                             fsal_attrib_list_t * p_parent_directory_attributes /* [IN/OUT ] */
     )
 {
 
@@ -140,8 +140,8 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
   /* If the object to delete is a directory, use 'rmdir' to delete the object, else use 'unlink' */
   rc = (S_ISDIR(buffstat.st_mode)) ? unlinkat(fd, p_object_name->name,
                                               AT_REMOVEDIR) : unlinkat(fd,
-                                                                       p_object_name->
-                                                                       name, 0);
+                                                                       p_object_name->name,
+                                                                       0);
   errsv = errno;
   ReleaseTokenFSCall();
 
@@ -157,8 +157,8 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
   if(p_parent_directory_attributes)
     {
       status =
-          FSAL_getattrs(p_parent_directory_handle, p_context,
-                        p_parent_directory_attributes);
+          XFSFSAL_getattrs(p_parent_directory_handle, p_context,
+                           p_parent_directory_attributes);
       if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_parent_directory_attributes->asked_attributes);

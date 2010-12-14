@@ -307,92 +307,6 @@ int fsal2hpss_openflags(fsal_openflags_t fsal_flags, int *p_hpss_flags)
 }
 
 /**
- * fsal2unix_mode:
- * Convert FSAL mode to posix mode.
- *
- * \param fsal_mode (input):
- *        The FSAL mode to be translated.
- *
- * \return The posix mode associated to fsal_mode.
- */
-mode_t fsal2unix_mode(fsal_accessmode_t fsal_mode)
-{
-
-  mode_t out_mode = 0;
-
-  if((fsal_mode & FSAL_MODE_SUID))
-    out_mode |= S_ISUID;
-  if((fsal_mode & FSAL_MODE_SGID))
-    out_mode |= S_ISGID;
-
-  if((fsal_mode & FSAL_MODE_RUSR))
-    out_mode |= S_IRUSR;
-  if((fsal_mode & FSAL_MODE_WUSR))
-    out_mode |= S_IWUSR;
-  if((fsal_mode & FSAL_MODE_XUSR))
-    out_mode |= S_IXUSR;
-  if((fsal_mode & FSAL_MODE_RGRP))
-    out_mode |= S_IRGRP;
-  if((fsal_mode & FSAL_MODE_WGRP))
-    out_mode |= S_IWGRP;
-  if((fsal_mode & FSAL_MODE_XGRP))
-    out_mode |= S_IXGRP;
-  if((fsal_mode & FSAL_MODE_ROTH))
-    out_mode |= S_IROTH;
-  if((fsal_mode & FSAL_MODE_WOTH))
-    out_mode |= S_IWOTH;
-  if((fsal_mode & FSAL_MODE_XOTH))
-    out_mode |= S_IXOTH;
-
-  return out_mode;
-
-}
-
-/**
- * unix2fsal_mode:
- * Convert posix mode to FSAL mode.
- *
- * \param unix_mode (input):
- *        The posix mode to be translated.
- *
- * \return The FSAL mode associated to unix_mode.
- */
-fsal_accessmode_t unix2fsal_mode(mode_t unix_mode)
-{
-
-  fsal_accessmode_t fsalmode = 0;
-
-  if(unix_mode & S_ISUID)
-    fsalmode |= FSAL_MODE_SUID;
-  if(unix_mode & S_ISGID)
-    fsalmode |= FSAL_MODE_SGID;
-
-  if(unix_mode & S_IRUSR)
-    fsalmode |= FSAL_MODE_RUSR;
-  if(unix_mode & S_IWUSR)
-    fsalmode |= FSAL_MODE_WUSR;
-  if(unix_mode & S_IXUSR)
-    fsalmode |= FSAL_MODE_XUSR;
-
-  if(unix_mode & S_IRGRP)
-    fsalmode |= FSAL_MODE_RGRP;
-  if(unix_mode & S_IWGRP)
-    fsalmode |= FSAL_MODE_WGRP;
-  if(unix_mode & S_IXGRP)
-    fsalmode |= FSAL_MODE_XGRP;
-
-  if(unix_mode & S_IROTH)
-    fsalmode |= FSAL_MODE_ROTH;
-  if(unix_mode & S_IWOTH)
-    fsalmode |= FSAL_MODE_WOTH;
-  if(unix_mode & S_IXOTH)
-    fsalmode |= FSAL_MODE_XOTH;
-
-  return fsalmode;
-
-}
-
-/**
  * hpss2fsal_type:
  * Convert HPSS NS object type to FSAL node type.
  *
@@ -422,7 +336,7 @@ fsal_nodetype_t hpss2fsal_type(unsigned32 hpss_type_in)
       return FSAL_TYPE_JUNCTION;
 
     default:
-      DisplayLogJdLevel(fsal_log, NIV_EVENT, "Unknown object type: %d", hpss_type_in);
+      LogEvent(COMPONENT_FSAL, "Unknown object type: %d", hpss_type_in);
       return -1;
     }
 
@@ -700,8 +614,8 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
     {
       p_fsalattr_out->asked_attributes = global_fs_info.supported_attrs;
 
-      DisplayLog
-          ("Error: p_fsalattr_out->asked_attributes  valait 0 dans hpss2fsal_attributes line %d, fichier %s",
+      LogCrit(COMPONENT_FSAL,
+          "Error: p_fsalattr_out->asked_attributes  valait 0 dans hpss2fsal_attributes line %d, fichier %s",
            __LINE__, __FILE__);
     }
 
@@ -712,7 +626,7 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
 
   if(unsupp_attr)
     {
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_FSAL,
                         "Unsupported attributes: %#llX    removing it from asked attributes ",
                         unsupp_attr);
 
@@ -794,13 +708,11 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ATIME))
     {
 
-#ifdef _DEBUG_FSAL
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Getting ATIME:");
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeLastRead = %d",
+      LogFullDebug(COMPONENT_FSAL, "Getting ATIME:");
+      LogFullDebug(COMPONENT_FSAL, "\tTimeLastRead = %d",
                         p_hpss_attr_in->TimeLastRead);
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeCreated = %d",
+      LogFullDebug(COMPONENT_FSAL, "\tTimeCreated = %d",
                         p_hpss_attr_in->TimeCreated);
-#endif
 
       if(p_hpss_attr_in->TimeLastRead != 0)
         p_fsalattr_out->atime = hpss2fsal_time(p_hpss_attr_in->TimeLastRead);
@@ -820,17 +732,15 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME))
     {
 
-#ifdef _DEBUG_FSAL
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Getting MTIME:");
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tType = %d",
+      LogFullDebug(COMPONENT_FSAL, "Getting MTIME:");
+      LogFullDebug(COMPONENT_FSAL, "\tType = %d",
                         hpss2fsal_type(p_hpss_handle_in->Type));
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeLastWritten = %d",
+      LogFullDebug(COMPONENT_FSAL, "\tTimeLastWritten = %d",
                         p_hpss_attr_in->TimeLastWritten);
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeModified = %d",
+      LogFullDebug(COMPONENT_FSAL, "\tTimeModified = %d",
                         p_hpss_attr_in->TimeModified);
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeCreated = %d",
+      LogFullDebug(COMPONENT_FSAL, "\tTimeCreated = %d",
                         p_hpss_attr_in->TimeCreated);
-#endif
 
       switch (hpss2fsal_type(p_hpss_handle_in->Type))
         {
@@ -919,7 +829,7 @@ fsal_status_t hpssHandle2fsalAttributes(ns_ObjHandle_t * p_hpsshandle_in,
   unavail_attr = (p_fsalattr_out->asked_attributes) & (~avail_attr);
   if(unavail_attr)
     {
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_FSAL,
                         "Attributes not available: %#llX", unavail_attr);
       ReturnCode(ERR_FSAL_ATTRNOTSUPP, 0);
     }
@@ -969,7 +879,7 @@ fsal_status_t hpssHandle2fsalAttributes(ns_ObjHandle_t * p_hpsshandle_in,
  *          Some of the asked attributes are read-only.
  *      - ERR_FSAL_SERVERFAULT: Unexpected error.
  */
-fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
+fsal_status_t fsal2hpss_attribset(hpssfsal_handle_t * p_fsal_handle,
                                   fsal_attrib_list_t * p_attrib_set,
                                   hpss_fileattrbits_t * p_hpss_attrmask,
                                   hpss_Attrs_t * p_hpss_attrs)
@@ -1006,7 +916,7 @@ fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
 
   if(unavail_attrs)
     {
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_FSAL,
                         "Attributes not supported: %#llX", unavail_attrs);
 
       /* Error : unsupported attribute. */
@@ -1020,7 +930,7 @@ fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
 
   if(unsettable_attrs)
     {
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_FSAL,
                         "Read-Only Attributes: %#llX", unsettable_attrs);
 
       /* Error : unsettable attribute. */
@@ -1077,10 +987,8 @@ fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
 
       p_hpss_attrs->UID = p_attrib_set->owner;
 
-#ifdef _DEBUG_FSAL
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Setting Owner = : %d ",
+      LogFullDebug(COMPONENT_FSAL, "Setting Owner = : %d ",
                         p_attrib_set->owner);
-#endif
     }
 
   if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_GROUP))
@@ -1100,23 +1008,18 @@ fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
 
       p_hpss_attrs->TimeLastRead = fsal2hpss_time(p_attrib_set->atime);
 
-#ifdef _DEBUG_FSAL
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Setting ATIME:");
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeLastRead = %d",
+      LogFullDebug(COMPONENT_FSAL, "Setting ATIME:");
+      LogFullDebug(COMPONENT_FSAL, "\tTimeLastRead = %d",
                         p_hpss_attrs->TimeLastRead);
-#endif
 
     }
 
   if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_MTIME))
     {
+      LogFullDebug(COMPONENT_FSAL, "Setting MTIME:");
+      LogFullDebug(COMPONENT_FSAL, "\tType = %d", p_fsal_handle->data.obj_type);
 
-#ifdef _DEBUG_FSAL
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Setting MTIME:");
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tType = %d", p_fsal_handle->obj_type);
-#endif
-
-      switch (p_fsal_handle->obj_type)
+      switch (p_fsal_handle->data.obj_type)
         {
         case FSAL_TYPE_FILE:
         case FSAL_TYPE_LNK:
@@ -1125,10 +1028,8 @@ fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
               API_AddRegisterValues(*p_hpss_attrmask, CORE_ATTR_TIME_LAST_WRITTEN, -1);
           p_hpss_attrs->TimeLastWritten = fsal2hpss_time(p_attrib_set->mtime);
 
-#ifdef _DEBUG_FSAL
-          DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeLastWritten = %d",
+          LogFullDebug(COMPONENT_FSAL, "\tTimeLastWritten = %d",
                             p_hpss_attrs->TimeLastWritten);
-#endif
 
           break;
 
@@ -1139,10 +1040,8 @@ fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
               API_AddRegisterValues(*p_hpss_attrmask, CORE_ATTR_TIME_MODIFIED, -1);
           p_hpss_attrs->TimeModified = fsal2hpss_time(p_attrib_set->mtime);
 
-#ifdef _DEBUG_FSAL
-          DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeModified = %d",
+          LogFullDebug(COMPONENT_FSAL, "\tTimeModified = %d",
                             p_hpss_attrs->TimeModified);
-#endif
 
           break;
 

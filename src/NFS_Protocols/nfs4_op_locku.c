@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -234,9 +234,6 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       res_LOCKU4.status = nfs4_Errno(cache_status);
       return res_LOCKU4.status;
     }
-#ifdef _DEBUG_STATES
-  nfs_State_PrintAll();
-#endif
 
   /* Successful exit */
   res_LOCKU4.status = NFS4_OK;

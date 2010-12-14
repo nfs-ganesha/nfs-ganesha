@@ -4,7 +4,7 @@
 #include "fsal_types.h"
 #include "posixdb_internal.h"
 #include "posixdb_consistency.h"
-#include "string.h"
+#include <string.h>
 #include "RW_Lock.h"
 
 /* cyclic cache of paths */
@@ -14,7 +14,7 @@ typedef struct cache_path_entry__
   int is_set;
   int path_is_set;
   int info_is_set;
-  fsal_handle_t handle;
+  posixfsal_handle_t handle;
   fsal_path_t path;
   rw_lock_t entry_lock;
 
@@ -55,7 +55,7 @@ static unsigned int hash_cache_path(fsal_u64_t id, int ts)
  * ayant un hash donne peut occuper une case du tableau.
  */
 
-void fsal_posixdb_CachePath(fsal_handle_t * p_handle,   /* IN */
+void fsal_posixdb_CachePath(posixfsal_handle_t * p_handle,      /* IN */
                             fsal_path_t * p_path /* IN */ )
 {
 
@@ -63,10 +63,8 @@ void fsal_posixdb_CachePath(fsal_handle_t * p_handle,   /* IN */
 
   unsigned int i;
 
-#ifdef _DEBUG_FSAL
-  DisplayLog("fsal_posixdb_CachePath: %u, %u = %s", (unsigned int)(p_handle->id),
-             (unsigned int)(p_handle->ts), p_path->path);
-#endif
+  LogDebug(COMPONENT_FSAL, "fsal_posixdb_CachePath: %u, %u = %s", (unsigned int)(p_handle->id),
+           (unsigned int)(p_handle->ts), p_path->path);
 
   i = hash_cache_path(p_handle->id, p_handle->ts);
 
@@ -99,15 +97,13 @@ void fsal_posixdb_CachePath(fsal_handle_t * p_handle,   /* IN */
 }
 
 /* set/update informations about a handle */
-int fsal_posixdb_UpdateInodeCache(fsal_handle_t * p_handle)     /* IN */
+int fsal_posixdb_UpdateInodeCache(posixfsal_handle_t * p_handle)        /* IN */
 {
 #ifdef _ENABLE_CACHE_PATH
 
   unsigned int i;
 
-#ifdef _DEBUG_FSAL
-  DisplayLog("UpdateInodeCache: inode_id=%llu", p_handle->info.inode);
-#endif
+  LogDebug(COMPONENT_FSAL, "UpdateInodeCache: inode_id=%llu", p_handle->info.inode);
 
   i = hash_cache_path(p_handle->id, p_handle->ts);
 
@@ -122,19 +118,15 @@ int fsal_posixdb_UpdateInodeCache(fsal_handle_t * p_handle)     /* IN */
       cache_array[i].handle.info = p_handle->info;
       cache_array[i].info_is_set = TRUE;
 
-#ifdef _DEBUG_FSAL
-      DisplayLog("fsal_posixdb_UpdateInodeCache: %u, %u (existing entry)",
-                 (unsigned int)(p_handle->id), (unsigned int)(p_handle->ts));
-#endif
+      LogDebug(COMPONENT_FSAL, "fsal_posixdb_UpdateInodeCache: %u, %u (existing entry)",
+               (unsigned int)(p_handle->id), (unsigned int)(p_handle->ts));
 
       V_w(&cache_array[i].entry_lock);
 
       return TRUE;
     }
-#ifdef _DEBUG_FSAL
-  DisplayLog("fsal_posixdb_UpdateInodeCache: %u, %u (new entry)",
-             (unsigned int)(p_handle->id), (unsigned int)(p_handle->ts));
-#endif
+  LogDebug(COMPONENT_FSAL, "fsal_posixdb_UpdateInodeCache: %u, %u (new entry)",
+           (unsigned int)(p_handle->id), (unsigned int)(p_handle->ts));
 
   /* add it (replace previous handle) */
   cache_array[i].is_set = TRUE;
@@ -150,7 +142,7 @@ int fsal_posixdb_UpdateInodeCache(fsal_handle_t * p_handle)     /* IN */
 }
 
 /* retrieve last informations about a handle */
-int fsal_posixdb_GetInodeCache(fsal_handle_t * p_handle)        /* IN/OUT */
+int fsal_posixdb_GetInodeCache(posixfsal_handle_t * p_handle)   /* IN/OUT */
 {
 #ifdef _ENABLE_CACHE_PATH
   unsigned int i;
@@ -167,10 +159,8 @@ int fsal_posixdb_GetInodeCache(fsal_handle_t * p_handle)        /* IN/OUT */
         {
           p_handle->info = cache_array[i].handle.info;
 
-#ifdef _DEBUG_FSAL
-          DisplayLog("fsal_posixdb_GetInodeCache(%u, %u)", (unsigned int)(p_handle->id),
-                     (unsigned int)(p_handle->ts));
-#endif
+          LogDebug(COMPONENT_FSAL, "fsal_posixdb_GetInodeCache(%u, %u)", (unsigned int)(p_handle->id),
+                   (unsigned int)(p_handle->ts));
           V_r(&cache_array[i].entry_lock);
 
           return TRUE;
@@ -187,9 +177,7 @@ void fsal_posixdb_InvalidateCache()
 #ifdef _ENABLE_CACHE_PATH
   unsigned int i;
 
-#ifdef _DEBUG_FSAL
-  DisplayLog("fsal_posixdb_InvalidateCache");
-#endif
+  LogDebug(COMPONENT_FSAL, "fsal_posixdb_InvalidateCache");
 
   for(i = 0; i < CACHE_PATH_SIZE; i++)
     {
@@ -205,7 +193,7 @@ void fsal_posixdb_InvalidateCache()
 #endif
 }
 
-int fsal_posixdb_GetPathCache(fsal_handle_t * p_handle, /* IN */
+int fsal_posixdb_GetPathCache(posixfsal_handle_t * p_handle,    /* IN */
                               fsal_path_t * p_path /* OUT */ )
 {
 #ifdef _ENABLE_CACHE_PATH
@@ -226,11 +214,9 @@ int fsal_posixdb_GetPathCache(fsal_handle_t * p_handle, /* IN */
           memcpy(p_path, &cache_array[i].path, sizeof(fsal_path_t));
           V_r(&cache_array[i].entry_lock);
 
-#ifdef _DEBUG_FSAL
-          DisplayLog("fsal_posixdb_GetPathCache(%u, %u)=%s",
-                     (unsigned int)p_handle->id, (unsigned int)p_handle->ts,
-                     p_path->path);
-#endif
+          LogDebug(COMPONENT_FSAL, "fsal_posixdb_GetPathCache(%u, %u)=%s",
+                   (unsigned int)p_handle->id, (unsigned int)p_handle->ts,
+                   p_path->path);
           return TRUE;
         }
     }
@@ -240,7 +226,7 @@ int fsal_posixdb_GetPathCache(fsal_handle_t * p_handle, /* IN */
 }
 
 fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
-                                                fsal_handle_t * p_handle,
+                                                posixfsal_handle_t * p_handle,
                                                 fsal_path_t * p_path)
 {
   PGresult *p_res;
@@ -253,22 +239,22 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
 
   if(!p_conn || !p_handle || !p_path)
     {
-      ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
     }
 
   /* init values */
   memset(p_path, 0, sizeof(fsal_path_t));
 
   /* Nothing to do, it's the root path */
-  if(p_handle->id == 0 && p_handle->ts == 0)
-    ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+  if(p_handle->data.id == 0 && p_handle->data.ts == 0)
+    ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 
   /* check if the entry is in the cache */
   if(fsal_posixdb_GetPathCache(p_handle, p_path))
-    ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+    ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 
-  snprintf(handleid_str, MAX_HANDLEIDSTR_SIZE, "%lli", p_handle->id);
-  snprintf(handlets_str, MAX_HANDLETSSTR_SIZE, "%i", p_handle->ts);
+  snprintf(handleid_str, MAX_HANDLEIDSTR_SIZE, "%lli", p_handle->data.id);
+  snprintf(handlets_str, MAX_HANDLETSSTR_SIZE, "%i", p_handle->data.ts);
 
   /* with PL/PGSQL */
 #ifdef _WITH_PLPGSQL
@@ -278,14 +264,14 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
   p_path->len = strlen(PQgetvalue(p_res, 0, 0));
 
   if(p_path->len >= FSAL_MAX_PATH_LEN)
-    ReturnCode(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
+    ReturnCodeDB(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
 
   strcpy(p_path->path, PQgetvalue(p_res, 0, 0));
 
   /* set result in cache */
   fsal_posixdb_CachePath(p_handle, p_path);
 
-  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+  ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 
 #else
   /* without PL/PGSQL */
@@ -295,11 +281,11 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
       CheckResult(p_res);
 
       if(PQntuples(p_res) == 0)
-        ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);  /* not found */
+        ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);        /* not found */
       if(PQntuples(p_res) > 1)
         {
-          DisplayLog("Too many paths found for object %s.%s: found=%d, expected=1",
-                     handleid_str, handlets_str, PQntuples(p_res));
+          LogCrit(COMPONENT_FSAL, "Too many paths found for object %s.%s: found=%d, expected=1",
+                  handleid_str, handlets_str, PQntuples(p_res));
 
           toomanypaths++;       /* too many entries */
         }
@@ -313,7 +299,7 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
       /* insertion of the name at the beginning of the path */
       shift = strlen(PQgetvalue(p_res, 0, 0));
       if(p_path->len + shift >= FSAL_MAX_PATH_LEN)
-        ReturnCode(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
+        ReturnCodeDB(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
       new_pos = p_path->path + shift;
       memmove(new_pos, p_path->path, p_path->len);
       memcpy(p_path->path, PQgetvalue(p_res, 0, 0), shift);
@@ -324,15 +310,15 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
 
   if(toomanypaths)
     {
-      DisplayLog("Returned path: %s", p_path->path);
-      ReturnCode(ERR_FSAL_POSIXDB_TOOMANYPATHS, toomanypaths);  /* too many entries */
+      LogCrit(COMPONENT_FSAL, "Returned path: %s", p_path->path);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_TOOMANYPATHS, toomanypaths);        /* too many entries */
     }
   else
     {
       /* set result in cache */
       fsal_posixdb_CachePath(p_handle, p_path);
 
-      ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
     }
 #endif
 }
@@ -351,7 +337,7 @@ fsal_posixdb_status_t fsal_posixdb_recursiveDelete(fsal_posixdb_conn * p_conn,
   /* Sanity check */
   if(!p_conn || !handleid_str || !handlets_str)
     {
-      ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
     }
 
   if(ftype == FSAL_TYPE_DIR)
@@ -398,7 +384,7 @@ fsal_posixdb_status_t fsal_posixdb_recursiveDelete(fsal_posixdb_conn * p_conn,
   p_res = PQexecPrepared(p_conn, "deleteHandle", 2, paramValues, NULL, NULL, 0);
   CheckCommand(p_res);
 
-  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+  ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 }
 
 fsal_posixdb_status_t fsal_posixdb_deleteParent(fsal_posixdb_conn * p_conn,     /* IN */
@@ -416,7 +402,7 @@ fsal_posixdb_status_t fsal_posixdb_deleteParent(fsal_posixdb_conn * p_conn,     
   /* Sanity check */
   if(!p_conn || !filename || nlink < 1)
     {
-      ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
     }
 
   /* delete the Parent entry */
@@ -459,7 +445,7 @@ fsal_posixdb_status_t fsal_posixdb_deleteParent(fsal_posixdb_conn * p_conn,     
       CheckCommand(p_res);
     }
 
-  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+  ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 }
 
 fsal_posixdb_status_t fsal_posixdb_internal_delete(fsal_posixdb_conn * p_conn,  /* IN */
@@ -478,7 +464,7 @@ fsal_posixdb_status_t fsal_posixdb_internal_delete(fsal_posixdb_conn * p_conn,  
   const char *paramValues[3];
 
   if(!p_conn || !handleidparent_str || !handletsparent_str || !filename)
-    ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+    ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
 
   paramValues[0] = handleidparent_str;
   paramValues[1] = handletsparent_str;
@@ -490,7 +476,7 @@ fsal_posixdb_status_t fsal_posixdb_internal_delete(fsal_posixdb_conn * p_conn,  
   /* no entry found */
   if(PQntuples(p_res) != 1)
     {
-      ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);
     }
 
   strncpy(handleid_str, PQgetvalue(p_res, 0, 0), MAX_HANDLEIDSTR_SIZE);
@@ -508,7 +494,7 @@ fsal_posixdb_status_t fsal_posixdb_internal_delete(fsal_posixdb_conn * p_conn,  
   if(p_object_info && fsal_posixdb_consistency_check(&infodb, p_object_info))
     {
       /* not consistent, the bad handle have to be deleted */
-      DisplayLog("Consistency check failed while deleting a Path : Handle deleted");
+      LogCrit(COMPONENT_FSAL, "Consistency check failed while deleting a Path : Handle deleted");
       infodb.ftype = FSAL_TYPE_DIR;     /* considers that the entry is a directory in order to delete all its Parent entries and its Handle */
     }
 
@@ -537,7 +523,7 @@ fsal_posixdb_status_t posixdb_internal_fillFileinfoFromStrValues(fsal_posixdb_fi
 {
 
   if(!p_info)
-    ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+    ReturnCodeDB(ERR_FSAL_POSIXDB_FAULT, 0);
 
   p_info->devid = devid_str ? (dev_t) atoll(devid_str) : 0;
   p_info->inode = inode_str ? (ino_t) atoll(inode_str) : 0;
@@ -545,5 +531,5 @@ fsal_posixdb_status_t posixdb_internal_fillFileinfoFromStrValues(fsal_posixdb_fi
   p_info->ctime = ctime_str ? (time_t) atoi(ctime_str) : 0;
   p_info->ftype = ftype_str ? (fsal_nodetype_t) atoi(ftype_str) : 0;
 
-  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
+  ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 }

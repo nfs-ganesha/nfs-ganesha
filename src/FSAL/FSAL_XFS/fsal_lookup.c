@@ -61,17 +61,16 @@
  *        wants to retrieve (by positioning flags into this structure)
  *        and the output is built considering this input
  *        (it fills the structure according to the flags it contains).
- *        It can be NULL (increases performances).
  *
  * \return - ERR_FSAL_NO_ERROR, if no error.
  *         - Another error code else.
  *          
  */
-fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
-                          fsal_name_t * p_filename,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_handle_t * p_object_handle,      /* OUT */
-                          fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
+fsal_status_t XFSFSAL_lookup(xfsfsal_handle_t * p_parent_directory_handle,      /* IN */
+                             fsal_name_t * p_filename,  /* IN */
+                             xfsfsal_op_context_t * p_context,  /* IN */
+                             xfsfsal_handle_t * p_object_handle,        /* OUT */
+                             fsal_attrib_list_t * p_object_attributes   /* [ IN/OUT ] */
     )
 {
   int rc, errsv;
@@ -99,14 +98,14 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
   if(!p_parent_directory_handle)
     {
       /* get handle for the mount point  */
-      memcpy(p_object_handle->handle_val, p_context->export_context->mnt_handle_val,
+      memcpy(p_object_handle->data.handle_val, p_context->export_context->mnt_handle_val,
              p_context->export_context->mnt_handle_len);
-      p_object_handle->handle_len = p_context->export_context->mnt_handle_len;
+      p_object_handle->data.handle_len = p_context->export_context->mnt_handle_len;
 
       /* get attributes, if asked */
       if(p_object_attributes)
         {
-          status = FSAL_getattrs(p_object_handle, p_context, p_object_attributes);
+          status = XFSFSAL_getattrs(p_object_handle, p_context, p_object_attributes);
           if(FSAL_IS_ERROR(status))
             {
               FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
@@ -160,11 +159,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_lookup);
     }
 
-#ifdef _DEBUG_FSAL
-  fprintf(stderr, "lookup of %#llx:%#x:%#x/%s\n", p_parent_directory_handle->seq,
-          p_parent_directory_handle->oid, p_parent_directory_handle->ver,
+  LogFullDebug(COMPONENT_FSAL, "lookup of inode=%"PRIu64"/%s", buffstat.st_ino,
           p_filename->name);
-#endif
 
   /* check rights to enter into the directory */
   status = fsal_internal_testAccess(p_context, FSAL_X_OK, &buffstat, NULL);
@@ -193,7 +189,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
   /* get object attributes */
   if(p_object_attributes)
     {
-      status = FSAL_getattrs(p_object_handle, p_context, p_object_attributes);
+      status = XFSFSAL_getattrs(p_object_handle, p_context, p_object_attributes);
       if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
@@ -228,10 +224,10 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
  *        It can be NULL (increases performances).
  */
 
-fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
-                              fsal_op_context_t * p_context,    /* IN */
-                              fsal_handle_t * object_handle,    /* OUT */
-                              fsal_attrib_list_t * p_object_attributes  /* [ IN/OUT ] */
+fsal_status_t XFSFSAL_lookupPath(fsal_path_t * p_path,  /* IN */
+                                 xfsfsal_op_context_t * p_context,      /* IN */
+                                 xfsfsal_handle_t * object_handle,      /* OUT */
+                                 fsal_attrib_list_t * p_object_attributes       /* [ IN/OUT ] */
     )
 {
   fsal_status_t status;
@@ -257,7 +253,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
   /* get object attributes */
   if(p_object_attributes)
     {
-      status = FSAL_getattrs(object_handle, p_context, p_object_attributes);
+      status = XFSFSAL_getattrs(object_handle, p_context, p_object_attributes);
       if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
@@ -292,10 +288,10 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
  *         - Another error code else.
  *          
  */
-fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
-                                  fsal_op_context_t * p_context,        /* IN */
-                                  fsal_handle_t * p_fsoot_handle,       /* OUT */
-                                  fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
+fsal_status_t XFSFSAL_lookupJunction(xfsfsal_handle_t * p_junction_handle,      /* IN */
+                                     xfsfsal_op_context_t * p_context,  /* IN */
+                                     xfsfsal_handle_t * p_fsoot_handle, /* OUT */
+                                     fsal_attrib_list_t * p_fsroot_attributes   /* [ IN/OUT ] */
     )
 {
   //hpss_Attrs_t    root_attr;

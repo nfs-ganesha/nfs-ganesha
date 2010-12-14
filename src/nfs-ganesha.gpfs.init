@@ -1,0 +1,249 @@
+#!/bin/bash
+# init file for ganesha
+#
+# chkconfig: - 50 50
+# description: GANESHA NFS Daemon
+#
+# processname: /usr/bin/gpfs.ganesha.nfsd
+# config: /etc/ganesha/gpfs.ganesha.nfsd.conf
+# pidfile: /var/run/snmpd
+### BEGIN INIT INFO
+# Provides: nfs-ganesha.gpfs
+# Required-Start: $local_fs $network
+# Required-Stop: $local_fs $network
+# Should-Start:
+# Should-Stop:
+# Default-Start:
+# Default-Stop:
+# Short-Description: start and stop nfs-ganesha/GPFS daemon
+# Description: NFS-GANESHA
+### END INIT INFO
+
+
+# source function library
+. /etc/init.d/functions
+
+PATHPROG=/usr/bin/gpfs.ganesha.nfsd 
+#LOGFILE=/var/log/gpfs.ganesha.nfsd.log
+LOGFILE=SYSLOG
+#LOGFILE=STDERR
+#LOGFILE=STDOUT
+
+CONFFILE=/etc/ganesha/gpfs.ganesha.nfsd.conf
+
+#DEBUGLEVEL=NIV_NULL
+#DEBUGLEVEL=NIV_MAJOR
+#DEBUGLEVEL=NIV_CRIT
+DEBUGLEVEL=NIV_EVENT
+#DEBUGLEVEL=NIV_DEBUG
+#DEBUGLEVEL=NIV_FULL_DEBUG
+
+OPTIONS="-d -f $CONFFILE -N $DEBUGLEVEL -L $LOGFILE"
+RETVAL=0
+prog="gpfs.ganesha.nfsd"
+
+start() {
+        echo $"Starting $prog: "
+
+	# Check if the user is root
+        if [ $UID -ne 0 ]; then
+	        echo "GPFS Ganesha must be started by the root user."
+                RETVAL=1
+                failure
+		echo
+		return $RETVAL
+	fi
+
+	# Check if a Ganesha configuration file is available
+	if [ ! -f "$CONFFILE" ]; then
+	        echo "The following configuration file is required but does not exist: $CONFFILE"
+		RETVAL=1
+		failure
+	        echo
+	        return $RETVAL
+	fi
+
+	# Check if Ganesha is already running
+	result=`pidof "$PATHPROG"`
+	if [ $result ]; then
+	        echo "GPFS Ganesha is already running."
+		RETVAL=1
+		failure
+	        echo
+	        return $RETVAL	    
+	fi
+
+	# Load the open-by-handle module
+	result=`modprobe open-by-handle`
+	if [ $result ]; then
+	        echo "Could not load the open-by-handle module. Make sure it is installed."
+		echo "Message returned from modprobe: $result"
+	        RETVAL=1
+	        failure
+	        echo
+	        return $RETVAL
+	fi;
+
+	# Make sure open-by-handle loaded properly and give it time if needed
+	result=`grep openhandle_dev /proc/devices`
+	counter=0
+	while [ true ]; do
+	    if [[ ! $result ]]; then
+		if [ $counter -eq 10 ]; then
+    	                echo "Could not load the open-by-handle module. Make sure it is installed."
+			RETVAL=1
+			failure
+			echo
+			return $RETVAL
+		else
+			sleep .1
+			let counter+=1
+			result=`grep openhandle_dev /proc/devices`
+		fi
+	    else
+	        break
+	    fi
+	done
+
+	# Start the Ganesha daemon
+	daemon $PATHPROG $OPTIONS
+	RETVAL=$?
+	
+        # Sleeping here gives Ganesha an adequate amount of time to 
+        # initialize the server and fail if anything goes wrong.
+        # Without this sleep and the server will be in the midst of 
+        # initializing. It may fail immediately after this script runs.
+	sleep 2
+
+	# Check if Ganesha is still running
+	result=`pidof "$PATHPROG"`
+	if [ ! $result ]; then
+	    failure
+	    echo
+	    return $RETVAL
+	fi
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/gpfs.ganesha.nfsd
+
+        echo 
+        return $RETVAL
+}
+
+stop() {
+        echo -n $"Stopping $prog: "
+
+	# Check if user is root
+        if [ $UID -ne 0 ]; then
+	        echo "GPFS Ganesha must be stopped by the root user."
+                RETVAL=1
+                failure
+		echo
+		return $RETVAL
+	fi
+
+	# Kill the Ganesha process
+	killproc $PATHPROG
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && rm -f  /var/lock/subsys/gpfs.ganesha.nfsd
+
+	# Give Ganesha time to quit
+	result=`pidof "$PATHPROG"`
+	while true; do
+	         if [ $result ]; then
+		         sleep .1
+			 result=`pidof "$PATHPROG"`
+	         else
+		         break
+		 fi
+	done
+
+	# Unload open-by-handle module
+	result=`rmmod open_by_handle`
+	if [ $result ]; then
+	        echo "GPFS Ganesha stopped but failed to unload open-by-handle module."
+	        echo "Message printed by rmmod: $result"
+                RETVAL=1
+                failure
+		echo
+		return $RETVAL	    
+	fi
+
+	# Wait until the module has unloaded
+	result=`grep openhandle_dev /proc/devices`
+	counter=0
+	while [ true ]; do
+	    if [[ $result ]]; then
+		if [ $counter -eq 10 ]; then
+    	                echo "Could not unload the open-by-handle module."
+			RETVAL=1
+			failure
+			echo
+			return $RETVAL
+		else
+			sleep .1
+			let counter+=1
+			result=`grep openhandle_dev /proc/devices`
+		fi
+	    else
+	        break
+	    fi
+	done
+	sleep 1
+        echo
+        return $RETVAL
+}
+
+restart(){
+	stop
+	start
+        return $RETVAL
+}
+
+condrestart(){
+    [ -e /var/lock/subsys/gpfs.ganesha.nfsd ] && restart
+    return 0
+}
+
+ganesha_status() {
+    result=`pidof "$PATHPROG"`
+    if [ $result ]; then
+	    echo "GPFS Ganesha is running."
+	    RETVAL=0
+    else
+	    echo "GPFS Ganesha is not running."
+	    RETVAL=1
+    fi
+
+    if grep -q openhandle_dev /proc/devices; then
+	    echo "Open-by-handle module is loaded."
+	    if [ ! $RETVAL -eq 1 ]; then
+		RETVAL=0
+	    fi
+    else
+	    echo "Open-by-handle module is not loaded."	
+	    RETVAL=1
+    fi
+    return $RETVAL
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+        ;;
+  condrestart)
+	condrestart
+	;;
+  status)
+        ganesha_status
+        ;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart|condrestart|reload}"
+	RETVAL=1
+esac
+
+exit $RETVAL

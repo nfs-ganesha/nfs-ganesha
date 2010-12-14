@@ -59,9 +59,12 @@
 /** Returned values for buddy init or for BuddyErrno. */
 
 #define BUDDY_SUCCESS         0
-#define BUDDY_ERR_ENOENT       ENOENT
+#define BUDDY_ERR_ENOENT      ENOENT
 #define BUDDY_ERR_EINVAL      EINVAL
 #define BUDDY_ERR_EFAULT      EFAULT
+
+/* trying to destroy a resource that is still in use */
+#define BUDDY_ERR_INUSE       EBUSY
 
 /* We may want to differenciate the two error codes:
  * BUDDY_ERR_MALLOC is for system malloc errors.
@@ -134,9 +137,6 @@ typedef struct buddy_paremeter__
    */
   unsigned int keep_minimum;
 
-  /* memory error file */
-  char buddy_error_file[256];
-
 } buddy_parameter_t;
 
 /**
@@ -170,6 +170,11 @@ void BuddyFree(BUDDY_ADDR_T ptr);
 BUDDY_ADDR_T BuddyRealloc(BUDDY_ADDR_T ptr, size_t Size);
 
 BUDDY_ADDR_T BuddyCalloc(size_t NumberOfElements, size_t ElementSize);
+
+/**
+ *  Release all thread resources.
+ */
+int BuddyDestroy();
 
 /**
  * For pool allocation, the user should know how much entries
@@ -237,23 +242,27 @@ void BuddyGetStats(buddy_stats_t * budd_stats);
  */
 BUDDY_ADDR_T BuddyMalloc_Autolabel(size_t sz,
                                    const char *file,
-                                   const char *function, const unsigned int line);
+                                   const char *function,
+                                   const unsigned int line,
+                                   const char *str);
 
 BUDDY_ADDR_T BuddyCalloc_Autolabel(size_t NumberOfElements, size_t ElementSize,
                                    const char *file,
-                                   const char *function, const unsigned int line);
+                                   const char *function,
+                                   const unsigned int line,
+                                   const char *str);
 
 BUDDY_ADDR_T BuddyRealloc_Autolabel(BUDDY_ADDR_T ptr, size_t Size,
                                     const char *file,
-                                    const char *function, const unsigned int line);
+                                    const char *function,
+                                    const unsigned int line,
+                                    const char *str);
 
-/**
- *  Set a label for allocated areas, for debugging.
- */
-int _BuddySetDebugLabel(const char *file, const char *func, const unsigned int line,
-                        const char *label);
-
-#define BuddySetDebugLabel( _user_lbl_ )  _BuddySetDebugLabel(  __FILE__, __FUNCTION__, __LINE__, _user_lbl_ )
+void BuddyFree_Autolabel(BUDDY_ADDR_T ptr,
+                         const char *file,
+                         const char *function,
+                         const unsigned int line,
+                         const char *str);
 
 /**
  *  Retrieves the debugging label for a given block.
@@ -275,20 +284,35 @@ void BuddyLabelsSummary();
 /**
  * Display allocation map, and fragmentation info.
  */
-void DisplayMemoryMap();
+void DisplayMemoryMap(FILE *output);
+void BuddyDumpAll(FILE *output);
+void BuddyDumpPools(FILE *output);
 
+int _BuddyCheck_Autolabel(BUDDY_ADDR_T ptr,
+                          const char *file,
+                          const char *function,
+                          const unsigned int line,
+                          const char *str);
+
+#define BuddyCheck(ptr)           _BuddyCheck_Autolabel(ptr, __FILE__, __FUNCTION__, __LINE__, "BuddyCheck")
+#define BuddyCheckLabel(ptr, lbl) _BuddyCheck_Autolabel(ptr, __FILE__, __FUNCTION__, __LINE__, lbl)
+#else
+/**
+ *  test memory corruption for a block.
+ *  true if the block is OK,
+ *  false else.
+ */
+
+#define BuddyCheck(ptr)           _BuddyCheck(ptr)
+#define BuddyCheckLabel(ptr, lbl) _BuddyCheck(ptr)
 #endif
-
-#ifdef _DETECT_MEMCORRUPT
 
 /**
  *  test memory corruption for a block.
  *  true if the block is OK,
  *  false else.
  */
-int BuddyCheck(BUDDY_ADDR_T ptr);
-
-#endif
+int _BuddyCheck(BUDDY_ADDR_T ptr);
 
 /**
  * sets default values for buddy configuration structure.

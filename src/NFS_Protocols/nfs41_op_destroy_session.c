@@ -60,7 +60,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -102,7 +102,7 @@ int nfs41_op_destroy_session(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_DESTROY_SESSION;
   res_DESTROY_SESSION4.dsr_status = NFS4_OK;
 
-  if(nfs41_Session_Del(arg_DESTROY_SESSION4.dsa_sessionid))
+  if(!nfs41_Session_Del(arg_DESTROY_SESSION4.dsa_sessionid))
     res_DESTROY_SESSION4.dsr_status = NFS4ERR_BADSESSION;
   else
     res_DESTROY_SESSION4.dsr_status = NFS4_OK;

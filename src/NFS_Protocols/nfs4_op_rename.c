@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -336,8 +336,9 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if(((tst_entry_src->internal_md.type == DIR_BEGINNING)
       || (tst_entry_src->internal_md.type == DIR_CONTINUE)) && ((tst_entry_dst != NULL)
                                                                 &&
-                                                                (tst_entry_dst->internal_md.
-                                                                 type == REGULAR_FILE)))
+                                                                (tst_entry_dst->
+                                                                 internal_md.type ==
+                                                                 REGULAR_FILE)))
     {
       res_RENAME4.status = NFS4ERR_EXIST;
       return res_RENAME4.status;
@@ -404,7 +405,7 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
           return res_RENAME4.status;
         }
 
-      if(FSAL_handlecmp(handlenew, handleold, &fsal_status))
+      if(!FSAL_handlecmp(handlenew, handleold, &fsal_status))
         {
           /* For the change_info4, get the 'change' attributes for both directories */
           res_RENAME4.RENAME4res_u.resok4.source_cinfo.before =
@@ -419,8 +420,30 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
         }
       else
         {
-          res_RENAME4.status = NFS4ERR_EXIST;
-          return NFS4ERR_EXIST;
+          /* Destination exists and is something different from source */
+          if( tst_entry_src->internal_md.type == REGULAR_FILE &&
+              tst_entry_dst->internal_md.type == REGULAR_FILE )
+            {
+              if(cache_inode_rename(src_entry,
+                                    &oldname,
+                                    dst_entry,
+                                    &newname,
+                                    &attr_src,
+                                    &attr_dst,
+                                    data->ht,
+                                    data->pclient,
+                                    data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+               {
+
+                 res_RENAME4.status = nfs4_Errno(cache_status);
+                 return res_RENAME4.status;
+               }
+            }
+          else
+            { 
+              res_RENAME4.status = NFS4ERR_EXIST;
+              return NFS4ERR_EXIST;
+            }
         }
     }
   else

@@ -66,12 +66,12 @@ static int linkat2(int srcfd, int dirdestfd, char *destname)
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occurred.
  */
-fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
-                          fsal_name_t * p_filename,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_accessmode_t accessmode, /* IN */
-                          fsal_handle_t * p_object_handle,      /* OUT */
-                          fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
+fsal_status_t XFSFSAL_create(xfsfsal_handle_t * p_parent_directory_handle,      /* IN */
+                             fsal_name_t * p_filename,  /* IN */
+                             xfsfsal_op_context_t * p_context,  /* IN */
+                             fsal_accessmode_t accessmode,      /* IN */
+                             xfsfsal_handle_t * p_object_handle,        /* OUT */
+                             fsal_attrib_list_t * p_object_attributes   /* [ IN/OUT ] */
     )
 {
 
@@ -95,9 +95,7 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
   /* Apply umask */
   unix_mode = unix_mode & ~global_fs_info.umask;
 
-#ifdef _DEBUG_FSAL
-  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Creation mode: 0%o", accessmode);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
 
   TakeTokenFSCall();
   status =
@@ -163,7 +161,7 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
     {
       TakeTokenFSCall();
       /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-      rc = fchown(fd, p_context->credential.user,
+      rc = fchown(newfd, p_context->credential.user,
                   setgid_bit ? -1 : (int)p_context->credential.group);
       errsv = errno;
       ReleaseTokenFSCall();
@@ -181,7 +179,7 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
   /* retrieve file attributes */
   if(p_object_attributes)
     {
-      status = FSAL_getattrs(p_object_handle, p_context, p_object_attributes);
+      status = XFSFSAL_getattrs(p_object_handle, p_context, p_object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -226,12 +224,12 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
-                         fsal_name_t * p_dirname,       /* IN */
-                         fsal_op_context_t * p_context, /* IN */
-                         fsal_accessmode_t accessmode,  /* IN */
-                         fsal_handle_t * p_object_handle,       /* OUT */
-                         fsal_attrib_list_t * p_object_attributes       /* [ IN/OUT ] */
+fsal_status_t XFSFSAL_mkdir(xfsfsal_handle_t * p_parent_directory_handle,       /* IN */
+                            fsal_name_t * p_dirname,    /* IN */
+                            xfsfsal_op_context_t * p_context,   /* IN */
+                            fsal_accessmode_t accessmode,       /* IN */
+                            xfsfsal_handle_t * p_object_handle, /* OUT */
+                            fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */
     )
 {
 
@@ -346,7 +344,7 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
   /* retrieve file attributes */
   if(p_object_attributes)
     {
-      status = FSAL_getattrs(p_object_handle, p_context, p_object_attributes);
+      status = XFSFSAL_getattrs(p_object_handle, p_context, p_object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -391,11 +389,11 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
-                        fsal_handle_t * p_dir_handle,   /* IN */
-                        fsal_name_t * p_link_name,      /* IN */
-                        fsal_op_context_t * p_context,  /* IN */
-                        fsal_attrib_list_t * p_attributes       /* [ IN/OUT ] */
+fsal_status_t XFSFSAL_link(xfsfsal_handle_t * p_target_handle,  /* IN */
+                           xfsfsal_handle_t * p_dir_handle,     /* IN */
+                           fsal_name_t * p_link_name,   /* IN */
+                           xfsfsal_op_context_t * p_context,    /* IN */
+                           fsal_attrib_list_t * p_attributes    /* [ IN/OUT ] */
     )
 {
 
@@ -415,9 +413,7 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   if(!global_fs_info.link_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
 
-#ifdef _DEBUG_FSAL
-/*  fprintf(stderr, "linking %#llx:%#x:%#x to %#llx:%#x:%#x/%s \n", */
-#endif
+/*  LogFullDebug(COMPONENT_FSAL, "linking %#llx:%#x:%#x to %#llx:%#x:%#x/%s", */
 
   /* get the target handle access by fid */
   TakeTokenFSCall();
@@ -476,7 +472,7 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
 
   if(p_attributes)
     {
-      status = FSAL_getattrs(p_target_handle, p_context, p_attributes);
+      status = XFSFSAL_getattrs(p_target_handle, p_context, p_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -500,14 +496,14 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
  *
  * \return ERR_FSAL_NOTSUPP.
  */
-fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
-                          fsal_name_t * p_node_name,    /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_accessmode_t accessmode, /* IN */
-                          fsal_nodetype_t nodetype,     /* IN */
-                          fsal_dev_t * dev,     /* IN */
-                          fsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
-                          fsal_attrib_list_t * node_attributes  /* [ IN/OUT ] */
+fsal_status_t XFSFSAL_mknode(xfsfsal_handle_t * parentdir_handle,       /* IN */
+                             fsal_name_t * p_node_name, /* IN */
+                             xfsfsal_op_context_t * p_context,  /* IN */
+                             fsal_accessmode_t accessmode,      /* IN */
+                             fsal_nodetype_t nodetype,  /* IN */
+                             fsal_dev_t * dev,  /* IN */
+                             xfsfsal_handle_t * p_object_handle,        /* OUT (handle to the created node) */
+                             fsal_attrib_list_t * node_attributes       /* [ IN/OUT ] */
     )
 {
   int rc, errsv;
@@ -555,7 +551,7 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
       break;
 
     default:
-      DisplayLogJdLevel(fsal_log, NIV_MAJOR, "Invalid node type in FSAL_mknode: %d",
+      LogMajor(COMPONENT_FSAL, "Invalid node type in FSAL_mknode: %d",
                         nodetype);
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_mknode);
     }
@@ -652,7 +648,7 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
   if(node_attributes)
     {
 
-      status = FSAL_getattrs(p_object_handle, p_context, node_attributes);
+      status = XFSFSAL_getattrs(p_object_handle, p_context, node_attributes);
 
       /* on error, we set a special bit in the mask. */
 

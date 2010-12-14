@@ -58,7 +58,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -155,12 +155,14 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_CLOSE4.status;
     }
 
+#ifdef _TOTO
   /* Check is held locks remain */
   if(pstate_found->state_data.share.lockheld > 0)
     {
       res_CLOSE4.status = NFS4ERR_LOCKS_HELD;
       return res_CLOSE4.status;
     }
+#endif
 
   /* Update the seqid for the open_owner */
   P(pstate_found->powner->lock);

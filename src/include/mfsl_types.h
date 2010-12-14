@@ -61,8 +61,16 @@
 #include "MFSL/MFSL_ASYNC/mfsl_types.h"
 #endif
 
+#ifdef _USE_MFSL_AIO
+#include "MFSL/MFSL_AIO/mfsl_types.h"
+#endif
+
 #ifdef _USE_MFSL_PROXY_RPCSECGSS
 #include "MFSL/MFSL_PROXY_RPCSECGSS/mfsl_types.h"
+#endif
+
+#ifdef _USE_MFSL_PNFS_FILE
+#include "MFSL/MFSL_PNFS_FILE/mfsl_types.h"
 #endif
 
 #endif                          /* _MFSL_TYPES_H */

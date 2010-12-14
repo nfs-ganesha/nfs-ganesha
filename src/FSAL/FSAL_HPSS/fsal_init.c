@@ -31,7 +31,7 @@ static char FSAL_PrincipalName[HPSS_MAX_PRINCIPAL_NAME];
 static char FSAL_KeytabPath[HPSS_MAX_PATH_NAME];
 
 /** Initializes security context */
-static int HPSSFSAL_SecInit(fs_specific_initinfo_t * hpss_init_info)
+static int HPSSFSAL_SecInit(hpssfs_specific_initinfo_t * hpss_init_info)
 {
 
   int rc;
@@ -41,9 +41,9 @@ static int HPSSFSAL_SecInit(fs_specific_initinfo_t * hpss_init_info)
 
   rc = hpss_SetLoginContext(FSAL_PrincipalName, FSAL_KeytabPath);
 
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "FSAL SEC INIT: DCE principal is set to '%s'",
+  LogDebug(COMPONENT_FSAL, "FSAL SEC INIT: DCE principal is set to '%s'",
                     FSAL_PrincipalName);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "FSAL SEC INIT: Keytab is set to '%s'",
+  LogDebug(COMPONENT_FSAL, "FSAL SEC INIT: Keytab is set to '%s'",
                     FSAL_KeytabPath);
 
 #elif HPSS_MAJOR_VERSION >= 6
@@ -62,13 +62,13 @@ static int HPSSFSAL_SecInit(fs_specific_initinfo_t * hpss_init_info)
                          FSAL_auth_mech,
                          auth_type, hpss_rpc_cred_client, (void *)FSAL_KeytabPath);
 
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "FSAL SEC INIT: Auth Mech is set to '%s'",
+  LogDebug(COMPONENT_FSAL, "FSAL SEC INIT: Auth Mech is set to '%s'",
                     hpss_AuthnMechTypeString(FSAL_auth_mech));
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "FSAL SEC INIT: Auth Type is set to '%s'",
+  LogDebug(COMPONENT_FSAL, "FSAL SEC INIT: Auth Type is set to '%s'",
                     hpss_AuthenticatorTypeString(auth_type));
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "FSAL SEC INIT: Principal is set to '%s'",
+  LogDebug(COMPONENT_FSAL, "FSAL SEC INIT: Principal is set to '%s'",
                     FSAL_PrincipalName);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "FSAL SEC INIT: Keytab is set to '%s'",
+  LogDebug(COMPONENT_FSAL, "FSAL SEC INIT: Keytab is set to '%s'",
                     FSAL_KeytabPath);
 
 #endif
@@ -126,7 +126,7 @@ static int HPSSFSAL_SecInit(fs_specific_initinfo_t * hpss_init_info)
     }                                                             \
 
 /** Initialize HPSS client API */
-static int HPSSFSAL_Init(fs_specific_initinfo_t * hpss_init_info)
+static int HPSSFSAL_Init_internal(hpssfs_specific_initinfo_t * hpss_init_info)
 {
 
   int rc = 0;
@@ -200,24 +200,24 @@ static int HPSSFSAL_Init(fs_specific_initinfo_t * hpss_init_info)
 
   /* Display Clapi configuration */
 
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "HPSS Client API configuration:");
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  Flags: %08X", hpss_config.Flags);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  TransferType: %d", hpss_config.TransferType);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  NumRetries: %d", hpss_config.NumRetries);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  BusyDelay: %d", hpss_config.BusyDelay);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  BusyRetries: %d", hpss_config.BusyRetries);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  TotalDelay: %d", hpss_config.TotalDelay);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  LimitedRetries: %d",
+  LogDebug(COMPONENT_FSAL, "HPSS Client API configuration:");
+  LogDebug(COMPONENT_FSAL, "  Flags: %08X", hpss_config.Flags);
+  LogDebug(COMPONENT_FSAL, "  TransferType: %d", hpss_config.TransferType);
+  LogDebug(COMPONENT_FSAL, "  NumRetries: %d", hpss_config.NumRetries);
+  LogDebug(COMPONENT_FSAL, "  BusyDelay: %d", hpss_config.BusyDelay);
+  LogDebug(COMPONENT_FSAL, "  BusyRetries: %d", hpss_config.BusyRetries);
+  LogDebug(COMPONENT_FSAL, "  TotalDelay: %d", hpss_config.TotalDelay);
+  LogDebug(COMPONENT_FSAL, "  LimitedRetries: %d",
                     hpss_config.LimitedRetries);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  MaxConnections: %d",
+  LogDebug(COMPONENT_FSAL, "  MaxConnections: %d",
                     hpss_config.MaxConnections);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  ReuseDataConnections: %d",
+  LogDebug(COMPONENT_FSAL, "  ReuseDataConnections: %d",
                     hpss_config.ReuseDataConnections);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  UsePortRange: %d", hpss_config.UsePortRange);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  RetryStageInp: %d",
+  LogDebug(COMPONENT_FSAL, "  UsePortRange: %d", hpss_config.UsePortRange);
+  LogDebug(COMPONENT_FSAL, "  RetryStageInp: %d",
                     hpss_config.RetryStageInp);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  DebugValue: %#X", hpss_config.DebugValue);
-  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  DebugPath: %s", hpss_config.DebugPath);
+  LogDebug(COMPONENT_FSAL, "  DebugValue: %#X", hpss_config.DebugValue);
+  LogDebug(COMPONENT_FSAL, "  DebugPath: %s", hpss_config.DebugPath);
 
 #endif
 
@@ -251,7 +251,7 @@ static int HPSSFSAL_Init(fs_specific_initinfo_t * hpss_init_info)
  *                                for this error.)
  *         ERR_FSAL_SEC_INIT     (Security context init error).
  */
-fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
+fsal_status_t HPSSFSAL_Init(fsal_parameter_t * init_info        /* IN */
     )
 {
 
@@ -264,33 +264,25 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
   if(!init_info)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
 
-  /* Check for very important args */
-
-  if(init_info->fsal_info.log_outputs.liste_voies == NULL)
-    {
-      /* issue a warning on stderr */
-      DisplayLog
-          ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
-    }
 #if HPSS_MAJOR_VERSION == 5
 
   if(init_info->fs_specific_info.behaviors.KeytabPath == FSAL_INIT_FS_DEFAULT)
     {
       /* issue a warning on stderr if no credential is specified */
-      DisplayLog
-          ("FSAL INIT: *** WARNING: No keytab file specified for HPSS, default client keytab will be used...");
-      DisplayLog
-          ("FSAL INIT: ***          Set %s::KeytabPath into config file to use another keytab",
+      LogCrit(COMPONENT_FSAL,
+          "FSAL INIT: *** WARNING: No keytab file specified for HPSS, default client keytab will be used...");
+      LogCrit(COMPONENT_FSAL,
+          "FSAL INIT: ***          Set %s::KeytabPath into config file to use another keytab",
            CONF_LABEL_FS_SPECIFIC);
     }
 
   if(init_info->fs_specific_info.behaviors.PrincipalName == FSAL_INIT_FS_DEFAULT)
     {
       /* issue a warning on stderr if no credential is specified */
-      DisplayLog
-          ("FSAL INIT: *** WARNING: No principal name specified for HPSS, default will be used...");
-      DisplayLog
-          ("FSAL INIT: ***          Set %s::PrincipalName into config file to use another principal",
+      LogCrit(COMPONENT_FSAL,
+          "FSAL INIT: *** WARNING: No principal name specified for HPSS, default will be used...");
+      LogCrit(COMPONENT_FSAL,
+          "FSAL INIT: ***          Set %s::PrincipalName into config file to use another principal",
            CONF_LABEL_FS_SPECIFIC);
     }
 #elif HPSS_MAJOR_VERSION >= 6
@@ -298,30 +290,30 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
   if(init_info->fs_specific_info.behaviors.AuthnMech == FSAL_INIT_FS_DEFAULT)
     {
       /* issue a warning on stderr if no credential is specified */
-      DisplayLog
-          ("FSAL INIT: *** WARNING: No authentication mechanism specified for HPSS, default authentication mechanism will be used...");
-      DisplayLog
-          ("FSAL INIT: ***          Set %s::AuthMech into config file to use another Authentication Mechanism",
+      LogCrit(COMPONENT_FSAL,
+          "FSAL INIT: *** WARNING: No authentication mechanism specified for HPSS, default authentication mechanism will be used...");
+      LogCrit(COMPONENT_FSAL,
+          "FSAL INIT: ***          Set %s::AuthMech into config file to use another Authentication Mechanism",
            CONF_LABEL_FS_SPECIFIC);
     }
 
   if(init_info->fs_specific_info.behaviors.KeytabPath == FSAL_INIT_FS_DEFAULT)
     {
       /* issue a warning on stderr if no credential is specified */
-      DisplayLog
-          ("FSAL INIT: *** WARNING: No keytab file specified for HPSS, default client keytab will be used...");
-      DisplayLog
-          ("FSAL INIT: ***          Set %s::KeytabPath into config file to use another keytab",
+      LogCrit(COMPONENT_FSAL,
+          "FSAL INIT: *** WARNING: No keytab file specified for HPSS, default client keytab will be used...");
+      LogCrit(COMPONENT_FSAL,
+          "FSAL INIT: ***          Set %s::KeytabPath into config file to use another keytab",
            CONF_LABEL_FS_SPECIFIC);
     }
 
   if(init_info->fs_specific_info.behaviors.Principal == FSAL_INIT_FS_DEFAULT)
     {
       /* issue a warning on stderr if no credential is specified */
-      DisplayLog
-          ("FSAL INIT: *** WARNING: No principal name specified for HPSS, default principal name will be used...");
-      DisplayLog
-          ("FSAL INIT: ***          Set %s::PrincipalName into config file to use another principal",
+      LogCrit(COMPONENT_FSAL,
+          "FSAL INIT: *** WARNING: No principal name specified for HPSS, default principal name will be used...");
+      LogCrit(COMPONENT_FSAL,
+          "FSAL INIT: ***          Set %s::PrincipalName into config file to use another principal",
            CONF_LABEL_FS_SPECIFIC);
     }
 #endif
@@ -337,7 +329,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
   /* configure HPSS cl api  
      (and retrieve current PrincipalName and KeytabName) */
 
-  if(rc = HPSSFSAL_Init(&init_info->fs_specific_info))
+  if(rc = HPSSFSAL_Init_internal(&init_info->fs_specific_info))
     Return(ERR_FSAL_BAD_INIT, -rc, INDEX_FSAL_Init);
 
   /* Init security context */
@@ -362,8 +354,8 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     {
     case FSAL_INIT_FORCE_VALUE:
       /* force the value in any case */
-      fsal_internal_SetReturnInconsistentDirent(init_info->
-                                                fs_specific_info.ReturnInconsistentDirent);
+      fsal_internal_SetReturnInconsistentDirent(init_info->fs_specific_info.
+                                                ReturnInconsistentDirent);
       break;
       /* In the other cases, we keep the default value. */
     }
@@ -375,7 +367,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
 }
 
 /* To be called before exiting */
-fsal_status_t FSAL_terminate()
+fsal_status_t HPSSFSAL_terminate()
 {
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

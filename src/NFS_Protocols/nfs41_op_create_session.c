@@ -60,7 +60,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -109,7 +109,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   res_CREATE_SESSION4.csr_status = NFS4_OK;
   clientid = arg_CREATE_SESSION4.csa_clientid;
 
-  DisplayLogLevel(NIV_DEBUG, "CREATE_SESSION clientid = %llx", clientid);
+  LogDebug(COMPONENT_NFS_V4, "CREATE_SESSION clientid = %llx", (long long unsigned int)clientid);
 
   /* Does this id already exists ? */
   if(nfs_client_id_Get_Pointer(clientid, &pnfs_clientid) != CLIENT_ID_SUCCESS)
@@ -148,9 +148,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   /** @todo: BUGAZOMEU Gerer les parametres de secu */
 
   /* Record session related information at the right place */
-  GET_PREALLOC(pnfs41_session,
-               data->pclient->pool_session,
-               data->pclient->nb_pre_state_v4, nfs41_session_t, next_alloc);
+  GetFromPool(pnfs41_session, &data->pclient->pool_session, nfs41_session_t);
 
   if(pnfs41_session == NULL)
     {

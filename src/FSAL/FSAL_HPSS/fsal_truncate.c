@@ -48,11 +48,11 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
-                            fsal_size_t length, /* IN */
-                            fsal_file_t * file_descriptor,      /* Unused in this FSAL */
-                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
+fsal_status_t HPSSFSAL_truncate(hpssfsal_handle_t * filehandle, /* IN */
+                                hpssfsal_op_context_t * p_context,      /* IN */
+                                fsal_size_t length,     /* IN */
+                                hpssfsal_file_t * file_descriptor,      /* Unused in this FSAL */
+                                fsal_attrib_list_t * object_attributes  /* [ IN/OUT ] */
     )
 {
 
@@ -71,7 +71,7 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
 
   /* check if it is a file */
 
-  if(filehandle->obj_type != FSAL_TYPE_FILE)
+  if(filehandle->data.obj_type != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_truncate);
     }
@@ -80,7 +80,7 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
 
   TakeTokenFSCall();
 
-  rc = hpss_TruncateHandle(&(filehandle->ns_handle),    /* IN - handle of file or parent */
+  rc = hpss_TruncateHandle(&(filehandle->data.ns_handle),    /* IN - handle of file or parent */
                            NULL,        /* IN (handle addressing) */
                            trunc_size,  /* IN - new file length */
                            &(p_context->credential.hpss_usercred)       /* IN - pointer to user's credentials */
@@ -100,7 +100,7 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
 
       fsal_status_t st;
 
-      st = FSAL_getattrs(filehandle, p_context, object_attributes);
+      st = HPSSFSAL_getattrs(filehandle, p_context, object_attributes);
 
       if(FSAL_IS_ERROR(st))
         {

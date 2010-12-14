@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -179,7 +179,8 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
       break;
     }
 
-  if(file_name == NULL || strlen(file_name) == 0)
+  //if(file_name == NULL || strlen(file_name) == 0)
+  if(file_name == NULL || *file_name == '\0' )
     {
       cache_status = CACHE_INODE_INVALID_ARGUMENT;      /* for lack of better... */
     }
@@ -222,9 +223,9 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
                     }
                   return NFS_REQ_OK;
                 }
-#ifdef _DEBUG_NFSPROTO
-              printf("==== NFS REMOVE ====> Trying to remove file %s\n", name.name);
-#endif
+
+              LogFullDebug(COMPONENT_NFSPROTO, "==== NFS REMOVE ====> Trying to remove file %s", name.name);
+
               /*
                * Remove the entry. 
                */

@@ -42,6 +42,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <pthread.h>
+#include "stuff_alloc.h"
 
 typedef enum LRU_List_state__
 { LRU_ENTRY_BLANK = 0,
@@ -69,6 +70,7 @@ typedef struct lru_param__
   unsigned int nb_call_gc_invalid;                 /**< How many call before garbagging invalid entries           */
   int (*entry_to_str) (LRU_data_t, char *);        /**< Function used to convert an entry to a string. */
   int (*clean_entry) (LRU_entry_t *, void *);      /**< Function used for cleaning an entry while released */
+  char *name;                                      /**< Name for LRU list */
 } LRU_parameter_t;
 
 typedef struct lru_list__
@@ -79,7 +81,7 @@ typedef struct lru_list__
   unsigned int nb_invalid;
   unsigned int nb_call_gc;
   LRU_parameter_t parameter;
-  LRU_entry_t *entry_prealloc;
+  struct prealloc_pool lru_entry_pool;
 } LRU_list_t;
 
 typedef int LRU_status_t;

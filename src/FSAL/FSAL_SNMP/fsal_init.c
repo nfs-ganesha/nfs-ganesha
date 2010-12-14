@@ -69,7 +69,7 @@
 
 
 /** Initializes filesystem, security management... */
-static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
+static int FS_Specific_Init(snmpfs_specific_initinfo_t * fs_init_info)
 {
 
   if(!fs_init_info)
@@ -110,7 +110,7 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
  *                                for this error.)
  *         ERR_FSAL_SEC_INIT     (Security context init error).
  */
-fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
+fsal_status_t SNMPFSAL_Init(fsal_parameter_t * init_info        /* IN */
     )
 {
 
@@ -121,15 +121,6 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
 
   if(!init_info)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
-
-  /* >> You can check args bellow << */
-
-  if(init_info->fsal_info.log_outputs.liste_voies == NULL)
-    {
-      /* issue a warning on stderr */
-      DisplayLog
-          ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
-    }
 
   /* proceeds FSAL internal status initialization */
 
@@ -151,7 +142,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
 }
 
 /* To be called before exiting */
-fsal_status_t FSAL_terminate()
+fsal_status_t SNMPFSAL_terminate()
 {
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

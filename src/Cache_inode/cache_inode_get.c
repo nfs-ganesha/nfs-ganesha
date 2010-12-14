@@ -43,7 +43,7 @@
 #endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -80,6 +80,39 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
                                fsal_op_context_t * pcontext,
                                cache_inode_status_t * pstatus)
 {
+  return cache_inode_get_located( pfsdata, NULL, pattr, ht, pclient, pcontext, pstatus ) ;
+} /* cache_inode_get */
+
+/**
+ *
+ * cache_inode_geti_located: Gets an entry by using its fsdata as a key and caches it if needed, with origin information.
+ * 
+ * Gets an entry by using its fsdata as a key and caches it if needed, with origin/location information.
+ * The reason to this call is cross-junction management : you can go through a directory that it its own parent from a 
+ * FSAL point of view. This could lead to hang (same P_w taken twice on the same entry). To deal this, a check feature is 
+ * added through the plocation argument.
+ * ASSUMPTION: DIR_CONT entries are always garbabbaged before their related DIR_BEGINNG 
+ *
+ * @param fsdata [IN] file system data
+ * @param plocation [IN] pentry used as "location form where the call is done". Usually a son of a parent entry
+ * @param pattr [OUT] pointer to the attributes for the result. 
+ * @param ht [IN] hash table used for the cache, unused in this call.
+ * @param pclient [INOUT] ressource allocated by the client for the nfs management.
+ * @param pcontext [IN] FSAL credentials 
+ * @param pstatus [OUT] returned status.
+ * 
+ * @return the pointer to the entry is successfull, NULL otherwise.
+ *
+ */
+
+cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
+                                       cache_entry_t * plocation, 
+                                       fsal_attrib_list_t * pattr,
+                                       hash_table_t * ht,
+                                       cache_inode_client_t * pclient,
+                                       fsal_op_context_t * pcontext,
+                                       cache_inode_status_t * pstatus)
+{
   hash_buffer_t key, value;
   cache_entry_t *pentry = NULL;
   fsal_status_t fsal_status;
@@ -105,7 +138,7 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;
 
       ppoolfsdata = (cache_inode_fsal_data_t *) key.pdata;
-      RELEASE_PREALLOC(ppoolfsdata, pclient->pool_key, next_alloc);
+      ReleaseToPool(ppoolfsdata, &pclient->pool_key);
 
       return NULL;
     }
@@ -130,8 +163,8 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
       if(pfsdata->cookie != DIR_START)
         {
           /* added for sanity check */
-          DisplayLog
-              ("=======> Pb cache_inode_get: line %u pfsdata->cookie != DIR_START (=%u) on object whose type is %u",
+          LogDebug(COMPONENT_CACHE_INODE_GC,
+              "=======> Pb cache_inode_get: line %u pfsdata->cookie != DIR_START (=%u) on object whose type is %u",
                __LINE__, pfsdata->cookie,
                cache_inode_fsal_type_convert(fsal_attributes.type));
 
@@ -151,7 +184,7 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
         {
           *pstatus = cache_inode_error_convert(fsal_status);
 
-          DisplayLog("cache_inode_get: line %u cache_inode_status=%u fsal_status=%u,%u ",
+          LogDebug(COMPONENT_CACHE_INODE_GC, "cache_inode_get: line %u cache_inode_status=%u fsal_status=%u,%u ",
                      __LINE__, *pstatus, fsal_status.major, fsal_status.minor);
 
           if(fsal_status.major == ERR_FSAL_STALE)
@@ -159,7 +192,7 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
               char handle_str[256];
 
               snprintHandle(handle_str, 256, &pfsdata->handle);
-              DisplayLog("cache_inode_get: Stale FSAL File Handle %s", handle_str);
+              LogEvent(COMPONENT_CACHE_INODE_GC,"cache_inode_get: Stale FSAL File Handle %s", handle_str);
 
               *pstatus = CACHE_INODE_FSAL_ESTALE;
             }
@@ -211,13 +244,13 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
                 {
                   cache_inode_status_t kill_status;
 
-                  DisplayLog
-                      ("cache_inode_get: Stale FSAL File Handle detected for pentry = %p",
+                  LogDebug(COMPONENT_CACHE_INODE_GC,
+                      "cache_inode_get: Stale FSAL File Handle detected for pentry = %p",
                        pentry);
 
                   if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                      CACHE_INODE_SUCCESS)
-                    DisplayLog("cache_inode_get: Could not kill entry %p, status = %u",
+                    LogCrit(COMPONENT_CACHE_INODE_GC,"cache_inode_get: Could not kill entry %p, status = %u",
                                pentry, kill_status);
 
                   *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -265,14 +298,20 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* valid the found entry, if this is not feasable, returns nothing to the client */
-  P_w(&pentry->lock);
-  if((*pstatus =
-      cache_inode_valid(pentry, CACHE_INODE_OP_GET, pclient)) != CACHE_INODE_SUCCESS)
-    {
-      V_w(&pentry->lock);
-      pentry = NULL;
-    }
-  V_w(&pentry->lock);
+  if( plocation != NULL )
+   {
+     if( plocation != pentry )
+      {
+        P_w(&pentry->lock);
+        if((*pstatus =
+           cache_inode_valid(pentry, CACHE_INODE_OP_GET, pclient)) != CACHE_INODE_SUCCESS)
+          {
+            V_w(&pentry->lock);
+            pentry = NULL;
+          }
+        V_w(&pentry->lock);
+      }
+   }
 
   /* stats */
   pclient->stat.func_stats.nb_success[CACHE_INODE_GET] += 1;
@@ -281,4 +320,4 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
   cache_inode_release_fsaldata_key(&key, pclient);
 
   return pentry;
-}                               /* cache_inode_get */
+}  /* cache_inode_get_located */

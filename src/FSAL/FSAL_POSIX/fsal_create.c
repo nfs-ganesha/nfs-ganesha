@@ -47,12 +47,12 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occurred.
  */
-fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
-                          fsal_name_t * p_filename,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_accessmode_t accessmode, /* IN */
-                          fsal_handle_t * p_object_handle,      /* OUT */
-                          fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
+fsal_status_t POSIXFSAL_create(posixfsal_handle_t * p_parent_directory_handle,  /* IN */
+                               fsal_name_t * p_filename,        /* IN */
+                               posixfsal_op_context_t * p_context,      /* IN */
+                               fsal_accessmode_t accessmode,    /* IN */
+                               posixfsal_handle_t * p_object_handle,    /* OUT */
+                               fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */
     )
 {
 
@@ -77,9 +77,7 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
   /* Apply umask */
   unix_mode = unix_mode & ~global_fs_info.umask;
 
-#ifdef _DEBUG_FSAL
-  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Creation mode: 0%o", accessmode);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
 
   /* build the destination path */
   status =
@@ -200,12 +198,12 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
-                         fsal_name_t * p_dirname,       /* IN */
-                         fsal_op_context_t * p_context, /* IN */
-                         fsal_accessmode_t accessmode,  /* IN */
-                         fsal_handle_t * p_object_handle,       /* OUT */
-                         fsal_attrib_list_t * p_object_attributes       /* [ IN/OUT ] */
+fsal_status_t POSIXFSAL_mkdir(posixfsal_handle_t * p_parent_directory_handle,   /* IN */
+                              fsal_name_t * p_dirname,  /* IN */
+                              posixfsal_op_context_t * p_context,       /* IN */
+                              fsal_accessmode_t accessmode,     /* IN */
+                              posixfsal_handle_t * p_object_handle,     /* OUT */
+                              fsal_attrib_list_t * p_object_attributes  /* [ IN/OUT ] */
     )
 {
 
@@ -338,11 +336,11 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
-                        fsal_handle_t * p_dir_handle,   /* IN */
-                        fsal_name_t * p_link_name,      /* IN */
-                        fsal_op_context_t * p_context,  /* IN */
-                        fsal_attrib_list_t * p_attributes       /* [ IN/OUT ] */
+fsal_status_t POSIXFSAL_link(posixfsal_handle_t * p_target_handle,      /* IN */
+                             posixfsal_handle_t * p_dir_handle, /* IN */
+                             fsal_name_t * p_link_name, /* IN */
+                             posixfsal_op_context_t * p_context,        /* IN */
+                             fsal_attrib_list_t * p_attributes  /* [ IN/OUT ] */
     )
 {
 
@@ -350,7 +348,7 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   fsal_status_t status;
   fsal_path_t fsalpath_old, fsalpath_new;
   fsal_posixdb_fileinfo_t info;
-  fsal_handle_t newhandle;
+  posixfsal_handle_t newhandle;
   struct stat buffstat, buffstat_dir;
 
   /* sanity checks.
@@ -364,10 +362,8 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   if(!global_fs_info.link_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
 
-#ifdef _DEBUG_FSAL
-  fprintf(stderr, "linking %llu/%i to %llu.%i/%s \n", p_target_handle->id,
-          p_target_handle->ts, p_dir_handle->id, p_dir_handle->ts, p_link_name->name);
-#endif
+  LogFullDebug(COMPONENT_FSAL, "linking %llu/%i to %llu.%i/%s \n", p_target_handle->data.id,
+               p_target_handle->data.ts, p_dir_handle->data.id, p_dir_handle->data.ts, p_link_name->name);
 
   /* get the old path */
   status =
@@ -454,14 +450,14 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
  *
  * \return ERR_FSAL_NOTSUPP.
  */
-fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
-                          fsal_name_t * p_node_name,    /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_accessmode_t accessmode, /* IN */
-                          fsal_nodetype_t nodetype,     /* IN */
-                          fsal_dev_t * dev,     /* IN */
-                          fsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
-                          fsal_attrib_list_t * node_attributes  /* [ IN/OUT ] */
+fsal_status_t POSIXFSAL_mknode(posixfsal_handle_t * parentdir_handle,   /* IN */
+                               fsal_name_t * p_node_name,       /* IN */
+                               posixfsal_op_context_t * p_context,      /* IN */
+                               fsal_accessmode_t accessmode,    /* IN */
+                               fsal_nodetype_t nodetype,        /* IN */
+                               fsal_dev_t * dev,        /* IN */
+                               posixfsal_handle_t * p_object_handle,    /* OUT (handle to the created node) */
+                               fsal_attrib_list_t * node_attributes     /* [ IN/OUT ] */
     )
 {
   int rc, errsv;
@@ -510,8 +506,7 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
       break;
 
     default:
-      DisplayLogJdLevel(fsal_log, NIV_MAJOR, "Invalid node type in FSAL_mknode: %d",
-                        nodetype);
+      LogMajor(COMPONENT_FSAL, "Invalid node type in FSAL_mknode: %d", nodetype);
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_mknode);
     }
 

@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -261,8 +261,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                 {
                   if((pstate_exists == pstate_found_iterate) &&
                      (pstate_exists->state_data.lock.lock_type != arg_LOCK4.locktype))
-                    printf
-                        ("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& CAS FOIREUX !!!!!!!!!!!!!!!!!!\n");
+                    LogFullDebug(COMPONENT_NFS_V4,
+                        "&&&&&&&&&&&&&& CAS FOIREUX !!!!!!!!!!!!!!!!!!");
                 }
 
               a = pstate_found_iterate->state_data.lock.offset;
@@ -342,10 +342,10 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           if(pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE)
             {
               /* In a correct POSIX behavior, a write lock should not be allowed on a read-mode file */
-              if((pstate_found_iterate->state_data.
-                  share.share_deny & OPEN4_SHARE_DENY_WRITE)
-                 && !(pstate_found_iterate->state_data.
-                      share.share_access & OPEN4_SHARE_ACCESS_WRITE)
+              if((pstate_found_iterate->state_data.share.
+                  share_deny & OPEN4_SHARE_DENY_WRITE)
+                 && !(pstate_found_iterate->state_data.share.
+                      share_access & OPEN4_SHARE_ACCESS_WRITE)
                  && (arg_LOCK4.locktype == WRITE_LT))
                 {
                   if(pstate_exists != NULL)
@@ -399,11 +399,10 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           res_LOCK4.status = NFS4ERR_BAD_STATEID;
           return res_LOCK4.status;
         }
-#ifdef _DEBUG_LOCK
-      printf("=== New Owner ===> %u %u %u\n",
+
+      LogFullDebug(COMPONENT_NFS_V4_LOCK, "=== New Owner ===> %u %u %u",
              arg_LOCK4.locker.locker4_u.open_owner.open_stateid.seqid,
              arg_LOCK4.locker.locker4_u.open_owner.open_seqid, pstate_found->seqid);
-#endif
 
       /* check the stateid */
       if(arg_LOCK4.locker.locker4_u.open_owner.open_stateid.seqid < pstate_open->seqid)
@@ -444,13 +443,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
 
       /* This open owner is not known yet, allocated and set up a new one */
-      GET_PREALLOC(powner,
-                   data->pclient->pool_open_owner,
-                   data->pclient->nb_pre_state_v4, cache_inode_open_owner_t, next);
+      GetFromPool(powner, &data->pclient->pool_open_owner, cache_inode_open_owner_t);
 
-      GET_PREALLOC(powner_name,
-                   data->pclient->pool_open_owner_name,
-                   data->pclient->nb_pre_state_v4, cache_inode_open_owner_name_t, next);
+      GetFromPool(powner_name, &data->pclient->pool_open_owner_name, cache_inode_open_owner_name_t);
 
       memcpy((char *)powner_name, (char *)&owner_name,
              sizeof(cache_inode_open_owner_name_t));
@@ -459,7 +454,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       powner->confirmed = FALSE;
       powner->seqid = 0;
       powner->related_owner = pstate_open->powner;
-      powner->next = NULL;
       powner->clientid = arg_LOCK4.locker.locker4_u.open_owner.lock_owner.clientid;
       powner->owner_len =
           arg_LOCK4.locker.locker4_u.open_owner.lock_owner.owner.owner_len;
@@ -528,11 +522,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           res_LOCK4.status = NFS4ERR_BAD_STATEID;
           return res_LOCK4.status;
         }
-#ifdef _DEBUG_LOCK
-      printf("=== Konwn LockOwner ===> %u %u %u\n",
+      LogFullDebug(COMPONENT_NFS_V4_LOCK, "=== Konwn LockOwner ===> %u %u %u",
              arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.seqid,
              arg_LOCK4.locker.locker4_u.lock_owner.lock_seqid, pstate_found->seqid);
-#endif
 
       /* Check if stateid is not too old */
       if(arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.seqid < pstate_found->seqid)
@@ -577,8 +569,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           V(pstate_found->powner->related_owner->lock);
         }
       else
-        DisplayLog
-            ("/!\\ : IMPLEMENTATION ERROR File=%s Line=%s pstate_found->powner->related_owner should not be NULL",
+        LogDebug(COMPONENT_NFS_V4,
+            "/!\\ : IMPLEMENTATION ERROR File=%s Line=%u pstate_found->powner->related_owner should not be NULL",
              __FILE__, __LINE__);
 
       break;

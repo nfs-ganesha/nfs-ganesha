@@ -39,7 +39,7 @@
 
 #include "HashData.h"
 #include "HashTable.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"
@@ -118,6 +118,25 @@ unsigned long client_id_value_hash_func_reverse(hash_parameter_t * p_hparam,
 
   return (unsigned long)(sum % p_hparam->index_size);
 }                               /*  client_id_reverse_value_hash_func */
+
+unsigned int client_id_value_both_reverse( hash_parameter_t * p_hparam,
+				           hash_buffer_t    * buffclef, 
+				           uint32_t * phashval, uint32_t * prbtval )
+{
+   uint32_t h1 = 0 ;
+   uint32_t h2 = 0 ;
+
+   Lookup3_hash_buff_dual( (char *)(buffclef->pdata), strnlen( (char *)(buffclef->pdata), MAXNAMLEN ), 
+                           &h1, &h2  );
+
+    h1 = h1 % p_hparam->index_size ;
+
+    *phashval = h1 ;
+    *prbtval = h2 ; 
+
+   /* Success */
+   return 1 ;
+} /* client_id_value_both_reverse */
 
 /**
  *
@@ -235,7 +254,7 @@ int display_client_id_val(hash_buffer_t * pbuff, char *str)
  *
  * @param clientid           [IN]    the client id used as key
  * @param client_record      [IN]    the candidate record for the client
- * @param nfs_client_id_pool [INOUT] values pool for hash table
+ * @param clientid_pool      [INOUT] values pool for hash table
  *
  * @return CLIENT_ID_SUCCESS if successfull\n.
  * @return CLIENT_ID_INSERT_MALLOC_ERROR if an error occured during the insertion process \n
@@ -244,7 +263,7 @@ int display_client_id_val(hash_buffer_t * pbuff, char *str)
  */
 
 int nfs_client_id_add(clientid4 clientid,
-                      nfs_client_id_t client_record, nfs_client_id_t * nfs_client_id_pool)
+                      nfs_client_id_t client_record, struct prealloc_pool *clientid_pool)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
@@ -253,20 +272,8 @@ int nfs_client_id_add(clientid4 clientid,
   nfs_client_id_t *pnfs_client_id = NULL;
   clientid4 *pclientid = NULL;
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("nfs_client_id_t");
-#endif
-
   /* Entry to be cached */
-  GET_PREALLOC(pnfs_client_id,
-               nfs_client_id_pool,
-               nfs_param.worker_param.nb_client_id_prealloc, nfs_client_id_t, next_alloc);
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
+  GetFromPool(pnfs_client_id, clientid_pool, nfs_client_id_t);
 
   if(pnfs_client_id == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
@@ -304,13 +311,12 @@ int nfs_client_id_add(clientid4 clientid,
       HASHTABLE_SET_HOW_SET_OVERWRITE) != HASHTABLE_SUCCESS)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-  printf("-=-=-=-=-=-=-=-=-=-> ht_client_id \n");
-  HashTable_Print(ht_client_id);
-  printf("-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse \n");
-  HashTable_Print(ht_client_id_reverse);
-#endif
-
+  if(isFullDebug(COMPONENT_CLIENT_ID_COMPUTE)) {
+    LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE, "-=-=-=-=-=-=-=-=-=-> ht_client_id ");
+    HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE, ht_client_id);
+    LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE, "-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse ");
+    HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id_reverse);
+  }
   return CLIENT_ID_SUCCESS;
 }                               /* nfs_client_id_add */
 
@@ -322,7 +328,7 @@ int nfs_client_id_add(clientid4 clientid,
  *
  * @param clientid           [IN]    the client id used as key
  * @param client_record      [IN]    the candidate record for the client
- * @param nfs_client_id_pool [INOUT] values pool for hash table
+ * @param clientid_pool      [INOUT] values pool for hash table
  *
  * @return CLIENT_ID_SUCCESS if successfull\n.
  * @return CLIENT_ID_INSERT_MALLOC_ERROR if an error occured during the insertion process \n
@@ -331,7 +337,7 @@ int nfs_client_id_add(clientid4 clientid,
  */
 
 int nfs_client_id_set(clientid4 clientid,
-                      nfs_client_id_t client_record, nfs_client_id_t * nfs_client_id_pool)
+                      nfs_client_id_t client_record, struct prealloc_pool *clientid_pool)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
@@ -340,20 +346,8 @@ int nfs_client_id_set(clientid4 clientid,
   nfs_client_id_t *pnfs_client_id = NULL;
   clientid4 *pclientid = NULL;
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("nfs_client_id_t");
-#endif
-
   /* Entry to be cached */
-  GET_PREALLOC(pnfs_client_id,
-               nfs_client_id_pool,
-               nfs_param.worker_param.nb_client_id_prealloc, nfs_client_id_t, next_alloc);
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
+  GetFromPool(pnfs_client_id, clientid_pool, nfs_client_id_t);
 
   if(pnfs_client_id == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
@@ -430,13 +424,12 @@ int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res)
 
       *client_id_res = *pnfs_client_id;
       status = CLIENT_ID_SUCCESS;
-
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-      printf("-=-=-=-=-=-=-=-=-=-> ht_client_id \n");
-      HashTable_Print(ht_client_id);
-      printf("-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse \n");
-      HashTable_Print(ht_client_id_reverse);
-#endif
+      if(isFullDebug(COMPONENT_CLIENT_ID_COMPUTE)) {
+	LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,"-=-=-=-=-=-=-=-=-=-> ht_client_id ");
+	HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id);
+	LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,"-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse ");
+	HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id_reverse);
+      }
     }
   else
     {
@@ -471,13 +464,12 @@ int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id
       *ppclient_id_res = (nfs_client_id_t *) buffval.pdata;
 
       status = CLIENT_ID_SUCCESS;
-
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-      printf("-=-=-=-=-=-=-=-=-=-> ht_client_id \n");
-      HashTable_Print(ht_client_id);
-      printf("-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse \n");
-      HashTable_Print(ht_client_id_reverse);
-#endif
+      if(isFullDebug(COMPONENT_CLIENT_ID_COMPUTE)) {
+	LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,"-=-=-=-=-=-=-=-=-=-> ht_client_id ");
+	HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id);
+	LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,"-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse ");
+	HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id_reverse);
+      }
     }
   else
     {
@@ -525,12 +517,12 @@ int nfs_client_id_get_reverse(char *key, nfs_client_id_t * client_id_res)
  * Tries to remove an entry for client_id cache.
  * 
  * @param clientid           [IN]    the clientid to be used as key
- * @param nfs_client_id_pool [INOUT] values pool for hash table
+ * @param clientid_pool      [INOUT] values pool for hash table
  *
  * @return the result previously set if *pstatus == CLIENT_ID_SUCCESS
  *
  */
-int nfs_client_id_remove(clientid4 clientid, nfs_client_id_t * nfs_client_id_pool)
+int nfs_client_id_remove(clientid4 clientid, struct prealloc_pool *clientid_pool)
 {
   hash_buffer_t buffkey, old_key, old_key_reverse, old_value;
   nfs_client_id_t *pnfs_client_id = NULL;
@@ -560,13 +552,13 @@ int nfs_client_id_remove(clientid4 clientid, nfs_client_id_t * nfs_client_id_poo
   if(HashTable_Del(ht_client_id_reverse, &buffkey, &old_key_reverse, &old_value) !=
      HASHTABLE_SUCCESS)
     {
-      RELEASE_PREALLOC(pnfs_client_id, nfs_client_id_pool, next_alloc);
+      ReleaseToPool(pnfs_client_id, clientid_pool);
       Mem_Free(old_key.pdata);
       Mem_Free(pclientid);
       return CLIENT_ID_NOT_FOUND;
     }
 
-  RELEASE_PREALLOC(pnfs_client_id, nfs_client_id_pool, next_alloc);
+  ReleaseToPool(pnfs_client_id, clientid_pool);
   Mem_Free(old_key_reverse.pdata);
   Mem_Free(old_key.pdata);
   Mem_Free(pclientid);
@@ -590,7 +582,7 @@ int nfs_Init_client_id(nfs_client_id_parameter_t param)
 {
   if((ht_client_id = HashTable_Init(param.hash_param)) == NULL)
     {
-      DisplayLog("NFS CLIENT_ID: Cannot init Client Id cache");
+      LogCrit(COMPONENT_INIT, "NFS CLIENT_ID: Cannot init Client Id cache");
       return -1;
     }
 
@@ -612,7 +604,7 @@ int nfs_Init_client_id_reverse(nfs_client_id_parameter_t param)
 {
   if((ht_client_id_reverse = HashTable_Init(param.hash_param_reverse)) == NULL)
     {
-      DisplayLog("NFS CLIENT_ID: Cannot init Client Id cache");
+      LogCrit(COMPONENT_INIT, "NFS CLIENT_ID: Cannot init Client Id cache");
       return -1;
     }
 
@@ -649,7 +641,7 @@ int nfs_client_id_basic_compute(char *name, clientid4 * pclientid)
 
 int nfs_client_id_compute(char *name, clientid4 * pclientid)
 {
-  char padded_name[CLIENT_ID_MAX_LEN];
+  char padded_name[CLIENT_ID_MAX_LEN+9]; /* +9 to avoid array bounds overflow */
   clientid4 computed_value = 0;
   unsigned int i = 0;
   unsigned int offset = 0;
@@ -669,14 +661,10 @@ int nfs_client_id_compute(char *name, clientid4 * pclientid)
   if(name == NULL || pclientid == NULL)
     return CLIENT_ID_INVALID_ARGUMENT;
 
-  memset(padded_name, 0, CLIENT_ID_MAX_LEN);
+  memset(padded_name, 0, CLIENT_ID_MAX_LEN+9);
 
   /* Copy the string to the padded one */
   for(i = 0; i < strnlen(name, CLIENT_ID_MAX_LEN); padded_name[i] = name[i], i++) ;
-
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-  printf("%s :", padded_name);
-#endif
 
   /* For each 9 character pack:
    *   - keep the 7 first bit (the 8th is often 0: ascii string) 
@@ -707,11 +695,6 @@ int nfs_client_id_compute(char *name, clientid4 * pclientid)
           (uint64_t) padded_name[offset + 6] +
           (uint64_t) padded_name[offset + 7] + (uint64_t) padded_name[offset + 8];
 
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-      printf("|%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx | = ",
-             i1, i2, i3, i4, i5, i6, i7, i8, i9);
-#endif
-
       /* Get xor combibation of all the 8h bit */
       l = (padded_name[offset + 0] & 0x80) ^
           (padded_name[offset + 1] & 0x80) ^
@@ -725,16 +708,9 @@ int nfs_client_id_compute(char *name, clientid4 * pclientid)
 
       extract = i1 ^ i2 ^ i3 ^ i4 ^ i5 ^ i6 ^ i7 ^ i8 ^ i9 | l;
 
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-      printf("%llx ", extract);
-#endif
-
       computed_value ^= extract;
       computed_value ^= sum;
     }
-#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
-  printf("\n");
-#endif
 
   computed_value = (computed_value >> 32) ^ (computed_value & 0x00000000FFFFFFFFLL);
 

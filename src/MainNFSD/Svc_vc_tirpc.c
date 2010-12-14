@@ -73,12 +73,12 @@
 #include <pthread.h>
 
 int getpeereid(int s, uid_t * euid, gid_t * egid);
+int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
 
-pthread_mutex_t mutex_cond_xprt[FD_SETSIZE];
-pthread_cond_t condvar_xprt[FD_SETSIZE];
-int etat_xprt[FD_SETSIZE];
+pthread_mutex_t *mutex_cond_xprt;
+pthread_cond_t *condvar_xprt;
+int *etat_xprt;
 
-extern SVCXPRT **Xports;
 extern rw_lock_t Svc_fd_lock;
 extern fd_set Svc_fdset;
 
@@ -347,7 +347,6 @@ struct rpc_msg *msg;
   SVCXPRT *newxprt;
   fd_set cleanfds;
 
-  pthread_attr_t attr_thr;
   pthread_t sockmgr_thrid;
   int rc = 0;
 
@@ -359,7 +358,7 @@ struct rpc_msg *msg;
   len = sizeof(struct sockaddr_storage);
   if((sock = accept(xprt->xp_fd, (struct sockaddr *)(void *)&addr, &len)) < 0)
     {
-      printf("Error in accept xp_fd=%u line=%u file=%s, errno=%u\n", xprt->xp_fd,
+      LogCrit(COMPONENT_DISPATCH, "Error in accept xp_fd=%u line=%u file=%s, errno=%u", xprt->xp_fd,
              __LINE__, __FILE__, errno);
       if(errno == EINTR)
         goto again;
@@ -433,11 +432,6 @@ struct rpc_msg *msg;
     cd->nonblock = FALSE;
   gettimeofday(&cd->last_recv_time, NULL);
 
-  /* Spawns a new thread to handle the connection */
-  pthread_attr_init(&attr_thr);
-  pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
-  pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED);      /* If not, the conn mgr will be "defunct" threads */
-
   FD_CLR(newxprt->xp_fd, &Svc_fdset);
 
   if(pthread_cond_init(&condvar_xprt[newxprt->xp_fd], NULL) != 0)
@@ -449,7 +443,7 @@ struct rpc_msg *msg;
   etat_xprt[newxprt->xp_fd] = 0;
 
   if((rc =
-      pthread_create(&sockmgr_thrid, &attr_thr, rpc_tcp_socket_manager_thread,
+      fridgethr_get(&sockmgr_thrid, rpc_tcp_socket_manager_thread,
                      (void *)(newxprt->xp_fd))) != 0)
     return FALSE;
 

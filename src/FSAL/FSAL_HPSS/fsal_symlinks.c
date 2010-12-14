@@ -51,10 +51,10 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  * */
 
-fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
-                            fsal_path_t * p_link_content,       /* OUT */
-                            fsal_attrib_list_t * link_attributes        /* [ IN/OUT ] */
+fsal_status_t HPSSFSAL_readlink(hpssfsal_handle_t * linkhandle, /* IN */
+                                hpssfsal_op_context_t * p_context,      /* IN */
+                                fsal_path_t * p_link_content,   /* OUT */
+                                fsal_attrib_list_t * link_attributes    /* [ IN/OUT ] */
     )
 {
 
@@ -72,7 +72,7 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
 
   TakeTokenFSCall();
 
-  rc = hpss_ReadlinkHandle(&(linkhandle->ns_handle),    /* IN - Handle of symbolic link */
+  rc = hpss_ReadlinkHandle(&(linkhandle->data.ns_handle),    /* IN - Handle of symbolic link */
                            NULL,        /* IN - Path of the link (null=>ignored) */
                            link_content_out,    /* OUT - contents of the link */
                            FSAL_MAX_PATH_LEN,   /* IN - Size, in bytes, of contents buffer */
@@ -102,7 +102,7 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
 
       fsal_status_t status;
 
-      status = FSAL_getattrs(linkhandle, p_context, link_attributes);
+      status = HPSSFSAL_getattrs(linkhandle, p_context, link_attributes);
 
       /* On error, we set a flag in the returned attributes */
 
@@ -152,13 +152,13 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
-                           fsal_name_t * p_linkname,    /* IN */
-                           fsal_path_t * p_linkcontent, /* IN */
-                           fsal_op_context_t * p_context,       /* IN */
-                           fsal_accessmode_t accessmode,        /* IN (ignored) */
-                           fsal_handle_t * link_handle, /* OUT */
-                           fsal_attrib_list_t * link_attributes /* [ IN/OUT ] */
+fsal_status_t HPSSFSAL_symlink(hpssfsal_handle_t * parent_directory_handle,     /* IN */
+                               fsal_name_t * p_linkname,        /* IN */
+                               fsal_path_t * p_linkcontent,     /* IN */
+                               hpssfsal_op_context_t * p_context,       /* IN */
+                               fsal_accessmode_t accessmode,    /* IN (ignored) */
+                               hpssfsal_handle_t * link_handle, /* OUT */
+                               fsal_attrib_list_t * link_attributes     /* [ IN/OUT ] */
     )
 {
 
@@ -181,11 +181,11 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
 
   TakeTokenFSCall();
 
-  rc = HPSSFSAL_SymlinkHandle(&(parent_directory_handle->ns_handle),    /* IN - Handle of existing file */
+  rc = HPSSFSAL_SymlinkHandle(&(parent_directory_handle->data.ns_handle),    /* IN - Handle of existing file */
                               p_linkcontent->path,      /* IN - Desired contents of the link */
                               p_linkname->name, /* IN - New name of the symbolic link */
                               &(p_context->credential.hpss_usercred),   /* IN - pointer to user credentials */
-                              &(link_handle->ns_handle),        /* OUT */
+                              &(link_handle->data.ns_handle),        /* OUT */
                               &attrs    /* OUT - symbolic link attributes */
       );
 
@@ -197,7 +197,7 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
    */
   if(rc == HPSS_ENOTDIR || rc == HPSS_ENOENT)
     {
-      if(HPSSFSAL_IsStaleHandle(&parent_directory_handle->ns_handle,
+      if(HPSSFSAL_IsStaleHandle(&parent_directory_handle->data.ns_handle,
                                 &p_context->credential.hpss_usercred))
         {
           Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_symlink);
@@ -209,7 +209,7 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
     Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_symlink);
 
   /* set output handle */
-  link_handle->obj_type = FSAL_TYPE_LNK;
+  link_handle->data.obj_type = FSAL_TYPE_LNK;
 
   /* get attributes if asked */
 
@@ -218,7 +218,7 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
 
       fsal_status_t status;
 
-      status = hpss2fsal_attributes(&(link_handle->ns_handle), &attrs, link_attributes);
+      status = hpss2fsal_attributes(&(link_handle->data.ns_handle), &attrs, link_attributes);
 
       if(FSAL_IS_ERROR(status))
         {

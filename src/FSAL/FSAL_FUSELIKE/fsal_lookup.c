@@ -54,13 +54,13 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes can be returned :
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
- *          
+ *
  */
-fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
-                          fsal_name_t * p_filename,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_handle_t * object_handle,        /* OUT */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
+fsal_status_t FUSEFSAL_lookup(fusefsal_handle_t * parent_directory_handle,      /* IN */
+                              fsal_name_t * p_filename, /* IN */
+                              fusefsal_op_context_t * p_context,        /* IN */
+                              fusefsal_handle_t * object_handle,        /* OUT */
+                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
 
@@ -86,9 +86,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 
   if(!parent_directory_handle)
     {
-#ifdef _DEBUG_FSAL
-      printf("lookup: root handle\n");
-#endif
+      LogFullDebug(COMPONENT_FSAL, "lookup: root handle");
 
       /* check that p_filename is NULL,
        * else, parent_directory_handle should not
@@ -109,17 +107,17 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
       if(stbuff.st_ino == 0)
         {
           /* filesystem does not provide inodes ! */
-          DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                            "WARNING in lookup: filesystem does not provide inode numbers");
+          LogDebug(COMPONENT_FSAL,
+                   "WARNING in lookup: filesystem does not provide inode numbers");
           /* root will have inode nbr 1 */
           stbuff.st_ino = 1;
         }
 
       /* fill root handle */
-      object_handle->inode = stbuff.st_ino;
-      object_handle->device = stbuff.st_dev;
+      object_handle->data.inode = stbuff.st_ino;
+      object_handle->data.device = stbuff.st_dev;
 
-      rc = NamespaceGetGen(stbuff.st_ino, stbuff.st_dev, &object_handle->validator);
+      rc = NamespaceGetGen(stbuff.st_ino, stbuff.st_dev, &object_handle->data.validator);
 
       /* root not in namespace ?! => EIO */
       if(rc)
@@ -149,15 +147,13 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       /* get directory path */
-      rc = NamespacePath(parent_directory_handle->inode,
-                         parent_directory_handle->device,
-                         parent_directory_handle->validator, parent_path);
+      rc = NamespacePath(parent_directory_handle->data.inode,
+                         parent_directory_handle->data.device,
+                         parent_directory_handle->data.validator, parent_path);
       if(rc)
         Return(ERR_FSAL_STALE, rc, INDEX_FSAL_lookup);
 
-#ifdef _DEBUG_FSAL
-      printf("lookup: parent path='%s'\n", parent_path);
-#endif
+      LogFullDebug(COMPONENT_FSAL, "lookup: parent path='%s'", parent_path);
 
       /* TODO: check the parent type */
 
@@ -165,16 +161,13 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 
       if(!strcmp(p_filename->name, "."))
         {
-#ifdef _DEBUG_FSAL
-          printf("lookup on '.'\n");
-#endif
+          LogFullDebug(COMPONENT_FSAL, "lookup on '.'");
           strcpy(child_path, parent_path);
         }
       else if(!strcmp(p_filename->name, ".."))
         {
-#ifdef _DEBUG_FSAL
-          printf("lookup on '..'\n");
-#endif
+          LogFullDebug(COMPONENT_FSAL, "lookup on '..'");
+
           /* removing last '/<name>' if path != '/' */
           if(!strcmp(parent_path, "/"))
             {
@@ -196,9 +189,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
         }
       else
         {
-#ifdef _DEBUG_FSAL
-          printf("lookup on '%s/%s'\n", parent_path, p_filename->name);
-#endif
+          LogFullDebug(COMPONENT_FSAL, "lookup on '%s/%s'", parent_path, p_filename->name);
           FSAL_internal_append_path(child_path, parent_path, p_filename->name);
         }
 
@@ -206,9 +197,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
       rc = p_fs_ops->getattr(child_path, &stbuff);
       ReleaseTokenFSCall();
 
-#ifdef _DEBUG_FSAL
-      printf("%s: gettattr status=%d\n", child_path, rc);
-#endif
+      LogFullDebug(COMPONENT_FSAL, "%s: gettattr status=%d", child_path, rc);
 
       if(rc)
         Return(fuse2fsal_error(rc, FALSE), rc, INDEX_FSAL_lookup);
@@ -219,50 +208,50 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
           if(stbuff.st_ino == 0)
             {
               /* filesystem does not provide inodes ! */
-              DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-                                "WARNING in lookup: filesystem does not provide inode numbers !!!");
+              LogDebug(COMPONENT_FSAL,
+                       "WARNING in lookup: filesystem does not provide inode numbers !!!");
 
               if(!parent_directory_handle || !p_filename || !p_filename->name)
                 {
-                  DisplayLogJdLevel(fsal_log, NIV_CRIT,
-                                    "CRITICAL: Segfault avoided !!!!! %p %p %p",
-                                    parent_directory_handle, p_filename,
-                                    p_filename ? p_filename->name : NULL);
+                  LogCrit(COMPONENT_FSAL,
+                          "CRITICAL: Segfault avoided !!!!! %p %p %p",
+                          parent_directory_handle, p_filename,
+                          p_filename ? p_filename->name : NULL);
                 }
               else
                 {
                   /* create a fake handle for child = hash of its parent and its name */
                   stbuff.st_ino =
-                      hash_peer(parent_directory_handle->inode, p_filename->name);
-                  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "handle for %u, %s = %u\n",
-                                    (int)parent_directory_handle->inode, p_filename->name,
-                                    (int)stbuff.st_ino);
+                      hash_peer(parent_directory_handle->data.inode, p_filename->name);
+                  LogFullDebug(COMPONENT_FSAL, "handle for %u, %s = %u",
+                               (int)parent_directory_handle->data.inode, p_filename->name,
+                               (int)stbuff.st_ino);
                 }
             }
 
-          object_handle->validator = stbuff.st_ctime;
+          object_handle->data.validator = stbuff.st_ctime;
 
           /* add handle to namespace */
-          NamespaceAdd(parent_directory_handle->inode,
-                       parent_directory_handle->device,
-                       parent_directory_handle->validator,
+          NamespaceAdd(parent_directory_handle->data.inode,
+                       parent_directory_handle->data.device,
+                       parent_directory_handle->data.validator,
                        p_filename->name,
-                       stbuff.st_ino, stbuff.st_dev, &object_handle->validator);
+                       stbuff.st_ino, stbuff.st_dev, &object_handle->data.validator);
         }
       else
         {
-          rc = NamespaceGetGen(stbuff.st_ino, stbuff.st_dev, &object_handle->validator);
-          DisplayLogJdLevel(fsal_log, NIV_EVENT,
-                            ". or .. is stale ??? ino=%d, dev=%d\n, validator=%d\n",
-                            (int)stbuff.st_ino, (int)stbuff.st_dev,
-                            (int)object_handle->validator);
+          rc = NamespaceGetGen(stbuff.st_ino, stbuff.st_dev, &object_handle->data.validator);
+          LogEvent(COMPONENT_FSAL,
+                   ". or .. is stale ??? ino=%d, dev=%d\n, validator=%d",
+                   (int)stbuff.st_ino, (int)stbuff.st_dev,
+                   (int)object_handle->data.validator);
           if(rc)
             Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_lookup);
         }
 
       /* output handle */
-      object_handle->inode = stbuff.st_ino;
-      object_handle->device = stbuff.st_dev;
+      object_handle->data.inode = stbuff.st_ino;
+      object_handle->data.device = stbuff.st_dev;
 
       if(object_attributes)
         {
@@ -307,12 +296,12 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes can be returned :
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
- *          
+ *
  */
-fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
-                                  fsal_op_context_t * p_context,        /* IN */
-                                  fsal_handle_t * p_fsoot_handle,       /* OUT */
-                                  fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
+fsal_status_t FUSEFSAL_lookupJunction(fusefsal_handle_t * p_junction_handle,    /* IN */
+                                      fusefsal_op_context_t * p_context,        /* IN */
+                                      fusefsal_handle_t * p_fsoot_handle,       /* OUT */
+                                      fsal_attrib_list_t * p_fsroot_attributes  /* [ IN/OUT ] */
     )
 {
 
@@ -355,16 +344,16 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
-                              fsal_op_context_t * p_context,    /* IN */
-                              fsal_handle_t * object_handle,    /* OUT */
-                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
+fsal_status_t FUSEFSAL_lookupPath(fsal_path_t * p_path, /* IN */
+                                  fusefsal_op_context_t * p_context,    /* IN */
+                                  fusefsal_handle_t * object_handle,    /* OUT */
+                                  fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
 
   fsal_name_t obj_name = FSAL_NAME_INITIALIZER; /* empty string */
   char *ptr_str;
-  fsal_handle_t out_hdl;
+  fusefsal_handle_t out_hdl;
   fsal_status_t status;
   int b_is_last = FALSE;        /* is it the last lookup ? */
 
@@ -395,12 +384,12 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
 
   /* retrieves root directory */
 
-  status = FSAL_lookup(NULL,    /* looking up for root */
-                       NULL,    /* empty string to get root handle */
-                       p_context,       /* user's credentials */
-                       &out_hdl,        /* output root handle */
-                       /* retrieves attributes if this is the last lookup : */
-                       (b_is_last ? object_attributes : NULL));
+  status = FUSEFSAL_lookup(NULL,        /* looking up for root */
+                           NULL,        /* empty string to get root handle */
+                           p_context,   /* user's credentials */
+                           &out_hdl,    /* output root handle */
+                           /* retrieves attributes if this is the last lookup : */
+                           (b_is_last ? object_attributes : NULL));
 
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_lookupPath);
@@ -418,7 +407,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
   while(ptr_str[0])
     {
 
-      fsal_handle_t in_hdl;
+      fusefsal_handle_t in_hdl;
       char *dest_ptr;
 
       /* preparing lookup */
@@ -447,12 +436,12 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
         b_is_last = TRUE;
 
       /*call to FSAL_lookup */
-      status = FSAL_lookup(&in_hdl,     /* parent directory handle */
-                           &obj_name,   /* object name */
-                           p_context,   /* user's credentials */
-                           &out_hdl,    /* output root handle */
-                           /* retrieves attributes if this is the last lookup : */
-                           (b_is_last ? object_attributes : NULL));
+      status = FUSEFSAL_lookup(&in_hdl, /* parent directory handle */
+                               &obj_name,       /* object name */
+                               p_context,       /* user's credentials */
+                               &out_hdl,        /* output root handle */
+                               /* retrieves attributes if this is the last lookup : */
+                               (b_is_last ? object_attributes : NULL));
 
       if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_lookupPath);

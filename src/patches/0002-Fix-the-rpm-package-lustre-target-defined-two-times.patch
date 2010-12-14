@@ -1,0 +1,85 @@
+From b737e30e94e78287ac731fbcd44a1b590ca27b37 Mon Sep 17 00:00:00 2001
+From: Remi Duraffort <duraffortr@ocre.cea.fr>
+Date: Fri, 23 Jul 2010 15:02:21 +0200
+Subject: [PATCH 2/2] Fix the rpm package (lustre target defined two times and some typos).
+
+---
+ src/nfs-ganesha.spec.in |   25 ++++++-------------------
+ 1 files changed, 6 insertions(+), 19 deletions(-)
+
+diff --git a/src/nfs-ganesha.spec.in b/src/nfs-ganesha.spec.in
+index f16f849..314d3b3 100644
+--- a/src/nfs-ganesha.spec.in
++++ b/src/nfs-ganesha.spec.in
+@@ -20,8 +20,6 @@ BuildRequires:  mysql-libs >= 5.0
+ # because we are packaging a module
+ BuildRequires: kernel == 2.6.18-194.el5
+ %endif
+-BuildRequires:  net-snmp-libs >= 5.1
+-BuildRequires:  net-snmp-devel >= 5.1
+ BuildRequires: flex
+ BuildRequires: bison
+ BuildRequires: gcc
+@@ -61,23 +59,9 @@ It comes with various backend modules to support different file systems
+ and namespaces. This package provides support for NFS-GANESHA as a PROXY.
+ %endif
+ 
+-%if %{?_with_lustre:1}%{!?_lustre:0}
+-%package lustre
+-Summary: The NFS-GANESHA server compiled for using the LUSTRE interface 
+-Group: Applications/System
+-Requires: %{name}-common = %{version}-%{release}
+-
+-%description lustre
+-NFS-GANESHA is a NFS Server running in user space with a large cache.
+-It comes with various backend modules to support different file systems
+-and namespaces. This package provides support for GANESHA using the LUSTRE
+-interface.
+-%endif
+-
+-
+ %if %{?_with_xfs:1}%{!?_with_xfs:0}
+ %package xfs
+-Summary: The NFS-GANESHA server compiled as a NFS gateway to SNMP. 
++Summary: The NFS-GANESHA server compiled as a NFS gateway to XFS.
+ Group: Applications/System
+ Requires: xfsprogs
+ BuildRequires: xfsprogs-devel xfsprogs-qa-devel
+@@ -86,7 +70,7 @@ Requires: %{name}-common = %{version}-%{release}
+ %description xfs
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+-and namespaces. This package provides support for NFS-GANESHA used on top on XFS.
++and namespaces. This package provides support for NFS-GANESHA used on top of XFS.
+ %endif
+ 
+ %if %{?_with_gpfs:1}%{!?_with_gpfs:0}
+@@ -98,7 +82,7 @@ Requires: %{name}-common = %{version}-%{release}
+ %description gpfs
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+-and namespaces. This package provides support for NFS-GANESHA used on top on GPFS.
++and namespaces. This package provides support for NFS-GANESHA used on top of GPFS.
+ %endif
+ 
+ %if %{?_with_posix:1}%{!?_with_posix:0}
+@@ -139,6 +123,8 @@ Summary: The NFS-GANESHA server compiled as a NFS gateway to SNMP.
+ Group: Applications/System
+ Requires: net-snmp >= 5.1 
+ Requires: lm_sensors-devel >= 2.10 
++BuildRequires: net-snmp-libs >= 5.1
++BuildRequires: net-snmp-devel >= 5.1
+ Requires: %{name}-common = %{version}-%{release}
+ 
+ %description snmp
+@@ -171,6 +157,7 @@ Requires: %{name}-fuselike = %{version}-%{release}
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. This package contains the development headers for FUSE-like
++bindings.
+ %endif
+ 
+ %if %{?_with_hpss:1}%{!?_with_hpss:0}
+-- 
+1.6.1.3
+

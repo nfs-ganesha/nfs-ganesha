@@ -1,20 +1,20 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head></head>
 <body><h2 class="Welcome">Using NFS-GANESHA on a BSD system</h2>NFS-GANESHA has been ported to 2 different BSD variants:<br><ul><li>FreeBSD 7.0</li><li>Darwin 9.5.0 (aka MacOS X)</li></ul>Remember
-that NFS-GANESHA has been mostly developped on a Linux BOX, this means
-that your BSD system should look a bit lioke a linux one. Concretely,
-thne main issue is the <span style="font-style: italic;">byacc </span>program
+that NFS-GANESHA has been mostly developed on a Linux BOX, this means
+that your BSD system should look a bit like a linux one. Concretely,
+the main issue is the <span style="font-style: italic;">byacc </span>program
 that is not to be used. Bison (and flex) should be used instead. The
 trouble is that, by default, ./configure will use byacc if no bison is
 installed.<br><br>What you should do:<br><ul><li>&nbsp;On
 FreeBSD : use /usr/ports to install the last available flex and the
 last available bison, they are available as textproc/flex and
 devel/bison</li><li>On MacOS X : use the&nbsp;<span style="font-style: italic;">port</span> utility (which looks a bit like the linux <span style="font-style: italic;">yum</span> utility) to install flex and bison</li></ul>For
-a few features, installing additionnal packages are required: sqlite3,
+a few features, installing additional packages are required: sqlite3,
 postgresql-server and net-snmp are the only one that was used on the
 test machine.<br><br>NFS-GANESHA
 can be compiled with FSAL_FUSE: this makes it possible to use FUSE
 ready product on BSD and export the resulting tree in NFS via
 NFS-GANESHA.<br><br>My last words on this page will be a call to help:
 I have no idea on the way to build a BDS/MacOSX package (something like
-a .rpm or .deb file on Linux). Any available help is wellcome :-)<br></body></html>
+a .rpm or .deb file on Linux). Any available help is welcome :-)<br></body></html>

@@ -57,10 +57,7 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "fsal_types.h"
-#ifdef _USE_MFSL
-#include "mfsl.h"
-#endif
-#include "log_functions.h"
+#include "log_macros.h"
 #include "config_parsing.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -76,5 +73,44 @@ typedef union pnfs_file__
 {
   pnfs_ds_file_t ds_file;
 } pnfs_file_t;
+
+typedef union pnfs_file_loc__
+{
+  pnfs_ds_loc_t ds_loc ;
+} pnfs_fileloc_t ;
+
+typedef union pnfs_hints__
+{
+  pnfs_ds_hints_t ds_hints ;
+} pnfs_hints_t ;
+
+int pnfs_get_location(  pnfs_client_t      * pnfsclient,
+                        fsal_handle_t      * phandle, 
+                        pnfs_hints_t       * phints,
+	                pnfs_fileloc_t * pnfs_fileloc ) ;
+
+int pnfs_create_file( pnfs_client_t  * pnfsclient,
+	              pnfs_fileloc_t * pnfs_fileloc,
+		      pnfs_file_t    * pnfs_file ) ;
+
+int pnfs_remove_file( pnfs_client_t  * pnfsclient,
+                      pnfs_file_t    * pfile ) ;
+
+int pnfs_lookup_file( pnfs_client_t  * pnfsclient,
+	              pnfs_fileloc_t * pnfs_fileloc,
+		      pnfs_file_t    * pnfs_file ) ;
+
+int pnfs_truncate_file( pnfs_client_t * pnfsclient,
+			size_t newsize,
+			pnfs_file_t * pnfs_file ) ;
+
+void pnfs_encode_getdeviceinfo( char *buff, unsigned int *plen) ;
+
+void pnfs_encode_layoutget( pnfs_file_t * pds_file, char *buff, unsigned int *plen) ;
+
+int pnfs_init(pnfs_client_t * pnfsclient,
+              pnfs_layoutfile_parameter_t * pnfs_layout_param) ;
+
+void pnfs_terminate();
 
 #endif                          /* _PNFS_H */

@@ -1,7 +1,0 @@
-/export/GANESHA/src/LRU/LRU_List.c:162 Warning: missing title after \defgroup LRUExportedFunctions
-/export/GANESHA/src/LRU/LRU_List.c:307 Warning: The following parameters of LRU_gc_invalid(LRU_list_t *plru, void *cleanparam) are not documented:
-  parameter 'cleanparam'
-/export/GANESHA/src/LRU/LRU_List.c:307 Warning: The following parameters of LRU_gc_invalid(LRU_list_t *plru, void *cleanparam) are not documented:
-  parameter 'cleanparam'
-/export/GANESHA/src/LRU/LRU_List.c:307 Warning: The following parameters of LRU_gc_invalid(LRU_list_t *plru, void *cleanparam) are not documented:
-  parameter 'cleanparam'

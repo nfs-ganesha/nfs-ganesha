@@ -20,8 +20,7 @@ NB: Net-snmp library and includes must be installed on your system.<br>
 <br>
 <h2>SNMP relative options</h2><br>
 <h3>The SNMP block</h3><h4>Parameters description</h4><br>
-For
-configurating GANESHA's SNMP access, you have to set some options in the configuration file: this in done in a SNMPconfiguration block.
+To configure GANESHA's SNMP access, you have to set some options in the configuration file: this in done in a SNMPconfiguration block.
 <br>
 <br>
 In such a block, you can set the following values:<br>
@@ -32,7 +31,7 @@ SNMP v1 and v2 specific parameters:<br>
 <ul><li>community: this is the SNMP community used for authentication. Default is&nbsp;<span style="font-style: italic;">public</span>.<br>
 </li></ul><br>
 SNMP v3 specific parameters:<br>
-<ul><li>auth_proto: the authentication protocol (MD5 or SHA)</li><li>enc_proto: the privacy protocol (DES or AES).</li><li>username: the security name (or user name).</li><li>auth_phrase: authentifaction passphrase (&gt;=8 char).</li><li>enc_phrase: authentifaction passphrase (&gt;=8 char)</li></ul><br>
+<ul><li>auth_proto: the authentication protocol (MD5 or SHA)</li><li>enc_proto: the privacy protocol (DES or AES).</li><li>username: the security name (or user name).</li><li>auth_phrase: authentication passphrase (&gt;=8 char).</li><li>enc_phrase: authentication passphrase (&gt;=8 char)</li></ul><br>
 <h3>A simple SNMP v2c example</h3><div style="margin-left: 40px;">SNMP<br>
 {<br>
 &nbsp;&nbsp;&nbsp; snmp_version = 2c;<br>
@@ -136,7 +135,7 @@ $ cat udp/udpTable/udpEntry/udpLocalAddress/1/0/0/127/123<br>
 <br>
 <br>
 <h4>Modifying data</h4><br>
-To modify a value, you just have to write a string repesentation to the associated file,<br>
+To modify a value, you just have to write a string representation to the associated file,<br>
 using the way you want: a program, a script, or just the <span style="font-style: italic;">echo</span> command, ...<br>
 <br>
 For example:<br>
@@ -154,7 +153,7 @@ In general, you have to rewrite data in the format of the value read in the file
 The only exception is for timeticks: you must only write the value in 100th of seconds<br>
 (not its translation to days, hours, minutes, seconds).<br>
 <br>
-An issue when developping the SNMP FSAL has been to translate&nbsp;<span style="font-style: italic;">invalid type</span><br>
+An issue when developing the SNMP FSAL has been to translate&nbsp;<span style="font-style: italic;">invalid type</span><br>
 SNMP errors to an appropriate NFS error code. Indeed, in NFS, there is<br>
 no concept of invalid data content ! Returning NFSERR_INVAL or NFSERR_IO<br>
 may result in a bad interpretation by the client, and it would be difficult<br>

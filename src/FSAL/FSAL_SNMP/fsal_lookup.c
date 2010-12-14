@@ -54,11 +54,11 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  *          
  */
-fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
-                          fsal_name_t * p_filename,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_handle_t * object_handle,        /* OUT */
-                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
+fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      /* IN */
+                              fsal_name_t * p_filename, /* IN */
+                              snmpfsal_op_context_t * p_context,        /* IN */
+                              snmpfsal_handle_t * object_handle,        /* OUT */
+                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
 
@@ -72,7 +72,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
   if(!object_handle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
-  memset(object_handle, 0, sizeof(fsal_handle_t));
+  memset(object_handle, 0, sizeof(snmpfsal_handle_t));
 
   /* retrieves root handle */
 
@@ -95,7 +95,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
         {
           fsal_status_t status;
 
-          status = FSAL_getattrs(object_handle, p_context, object_attributes);
+          status = SNMPFSAL_getattrs(object_handle, p_context, object_attributes);
 
           /* On error, we set a flag in the returned attributes */
 
@@ -119,13 +119,11 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
       if(p_filename == NULL)
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
-#ifdef _DEBUG_FSAL
-      printf("lookup for '%s'\n", p_filename->name);
-#endif
+      LogFullDebug(COMPONENT_FSAL, "lookup for '%s'", p_filename->name);
 
       /* we check the parent type stored into the handle. */
 
-      switch (parent_directory_handle->object_type_reminder)
+      switch (parent_directory_handle->data.object_type_reminder)
         {
         case FSAL_NODETYPE_NODE:
         case FSAL_NODETYPE_ROOT:
@@ -142,14 +140,14 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 
       /* look up for . or .. on root */
 
-      if(!FSAL_namecmp(p_filename, &FSAL_DOT)
-         || (!FSAL_namecmp(p_filename, &FSAL_DOT_DOT)
-             && parent_directory_handle->oid_len == 0))
+      if(!FSAL_namecmp(p_filename, (fsal_name_t *) & FSAL_DOT)
+         || (!FSAL_namecmp(p_filename, (fsal_name_t *) & FSAL_DOT_DOT)
+             && parent_directory_handle->data.oid_len == 0))
         {
-          FSAL_OID_DUP(object_handle, parent_directory_handle->oid_tab,
-                       parent_directory_handle->oid_len);
-          object_handle->object_type_reminder =
-              parent_directory_handle->object_type_reminder;
+          FSAL_OID_DUP(object_handle, parent_directory_handle->data.oid_tab,
+                       parent_directory_handle->data.oid_len);
+          object_handle->data.object_type_reminder =
+              parent_directory_handle->data.object_type_reminder;
 
           if(object_attributes)
             {
@@ -170,19 +168,21 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
         }
 
       /* lookup up for parent entry  */
-      if(!FSAL_namecmp(p_filename, &FSAL_DOT_DOT))
+      if(!FSAL_namecmp(p_filename, (fsal_name_t *) & FSAL_DOT_DOT))
         {
-          printf("lookup for parent (oid len = %u)\n", parent_directory_handle->oid_len);
+          LogFullDebug(COMPONENT_FSAL, "lookup for parent (oid len = %zu)",
+                       parent_directory_handle->data.oid_len);
 
-          FSAL_OID_DUP(object_handle, parent_directory_handle->oid_tab,
-                       parent_directory_handle->oid_len - 1);
+          FSAL_OID_DUP(object_handle, parent_directory_handle->data.oid_tab,
+                       parent_directory_handle->data.oid_len - 1);
 
-          if(object_handle->oid_len == 0)
-            object_handle->object_type_reminder = FSAL_NODETYPE_ROOT;
+          if(object_handle->data.oid_len == 0)
+            object_handle->data.object_type_reminder = FSAL_NODETYPE_ROOT;
           else
-            object_handle->object_type_reminder = FSAL_NODETYPE_NODE;
+            object_handle->data.object_type_reminder = FSAL_NODETYPE_NODE;
 
-          printf("parent handle has (oid len = %u)\n", object_handle->oid_len);
+          LogFullDebug(COMPONENT_FSAL, "parent handle has (oid len = %zu)",
+                       object_handle->data.oid_len);
 
           if(object_attributes)
             {
@@ -207,28 +207,25 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
       for(curr_child = GetMIBChildList(p_context, parent_directory_handle);
           curr_child != NULL; curr_child = curr_child->next_peer)
         {
-#ifdef _DEBUG_FSAL
-          printf("CHILD = %s (%lu)\n", curr_child->label, curr_child->subid);
-#endif
+          LogFullDebug(COMPONENT_FSAL, "CHILD = %s (%lu)\n",
+                       curr_child->label, curr_child->subid);
 
           if(curr_child->label
              && !strncmp(p_filename->name, curr_child->label, FSAL_MAX_NAME_LEN))
             {
-#ifdef _DEBUG_FSAL
-              printf("MATCHES !!!!\n");
-#endif
+              LogFullDebug(COMPONENT_FSAL, "MATCHES !!!!\n");
 
               /* we found it ! we fill the handle using the parent handle and adding the subid value */
-              FSAL_OID_DUP(object_handle, parent_directory_handle->oid_tab,
-                           parent_directory_handle->oid_len);
-              object_handle->oid_len++;
-              object_handle->oid_tab[object_handle->oid_len - 1] = curr_child->subid;
+              FSAL_OID_DUP(object_handle, parent_directory_handle->data.oid_tab,
+                           parent_directory_handle->data.oid_len);
+              object_handle->data.oid_len++;
+              object_handle->data.oid_tab[object_handle->data.oid_len - 1] = curr_child->subid;
 
               /* if it has some childs, we are sure its a node */
               if(curr_child->child_list)
                 {
                   type_ok = TRUE;
-                  object_handle->object_type_reminder = FSAL_NODETYPE_NODE;
+                  object_handle->data.object_type_reminder = FSAL_NODETYPE_NODE;
                 }
               /* else, indetermined type */
 
@@ -249,19 +246,18 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
           /* if the name is a numerical value, we parse it and try to get its attributes */
           subid = strtoul(p_filename->name, &end_ptr, 10);
 
-#ifdef _DEBUG_FSAL
-          printf("Looking for subid = %lu end_ptr=%p='%s'\n", subid, end_ptr, end_ptr);
-#endif
+          LogFullDebug(COMPONENT_FSAL, "Looking for subid = %lu end_ptr=%p='%s'\n",
+                       subid, end_ptr, end_ptr);
 
           /* the object is not numerical and could not be found  */
           if(end_ptr != NULL && *end_ptr != '\0')
             Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_lookup);
 
           /* build the handle from parsed value */
-          FSAL_OID_DUP(object_handle, parent_directory_handle->oid_tab,
-                       parent_directory_handle->oid_len);
-          object_handle->oid_len++;
-          object_handle->oid_tab[object_handle->oid_len - 1] = subid;
+          FSAL_OID_DUP(object_handle, parent_directory_handle->data.oid_tab,
+                       parent_directory_handle->data.oid_len);
+          object_handle->data.oid_len++;
+          object_handle->data.oid_tab[object_handle->data.oid_len - 1] = subid;
         }
 
       /* type has not been set using the MIB */
@@ -275,12 +271,12 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
           TakeTokenFSCall();
 
           /* call to snmpget */
-          rc = IssueSNMPQuery(p_context, object_handle->oid_tab, object_handle->oid_len,
+          rc = IssueSNMPQuery(p_context, object_handle->data.oid_tab, object_handle->data.oid_len,
                               &query_desc);
 
           ReleaseTokenFSCall();
 
-          printf("rc = %d, snmp_errno = %d\n", rc, snmp_errno);
+          LogFullDebug(COMPONENT_FSAL, "rc = %d, snmp_errno = %d\n", rc, snmp_errno);
 
           if(rc != 0 && snmp2fsal_error(rc) != ERR_FSAL_NOENT)
             Return(snmp2fsal_error(rc), rc, INDEX_FSAL_lookup);
@@ -298,18 +294,18 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
                 case 0:
                   Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_lookup);
                 case 1:
-                  object_handle->object_type_reminder = FSAL_NODETYPE_NODE;
+                  object_handle->data.object_type_reminder = FSAL_NODETYPE_NODE;
                   break;
                 default:
-                  DisplayLogJdLevel(fsal_log, NIV_CRIT,
-                                    "ERROR: unexpected return value from HasSNMPChild");
+                  LogCrit(COMPONENT_FSAL,
+                          "ERROR: unexpected return value from HasSNMPChild");
                   Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_lookup);
                 }
             }
           else
             {
               /* this is a typed object, so its a leaf */
-              object_handle->object_type_reminder = FSAL_NODETYPE_LEAF;
+              object_handle->data.object_type_reminder = FSAL_NODETYPE_LEAF;
             }
         }
 
@@ -322,10 +318,9 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
       if(object_attributes)
         {
           rc = snmp2fsal_attributes(object_handle,
-                                    (object_handle->object_type_reminder ==
-                                     FSAL_NODETYPE_LEAF ? p_context->
-                                     snmp_response->variables : NULL), curr_child,
-                                    object_attributes);
+                                    (object_handle->data.object_type_reminder ==
+                                     FSAL_NODETYPE_LEAF ? p_context->snmp_response->
+                                     variables : NULL), curr_child, object_attributes);
 
           if(rc != 0)
             {
@@ -369,10 +364,10 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  *          
  */
-fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
-                                  fsal_op_context_t * p_context,        /* IN */
-                                  fsal_handle_t * p_fsoot_handle,       /* OUT */
-                                  fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
+fsal_status_t SNMPFSAL_lookupJunction(snmpfsal_handle_t * p_junction_handle,    /* IN */
+                                      snmpfsal_op_context_t * p_context,        /* IN */
+                                      snmpfsal_handle_t * p_fsoot_handle,       /* OUT */
+                                      fsal_attrib_list_t * p_fsroot_attributes  /* [ IN/OUT ] */
     )
 {
   int rc;
@@ -423,15 +418,15 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
-                              fsal_op_context_t * p_context,    /* IN */
-                              fsal_handle_t * object_handle,    /* OUT */
-                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
+fsal_status_t SNMPFSAL_lookupPath(fsal_path_t * p_path, /* IN */
+                                  snmpfsal_op_context_t * p_context,    /* IN */
+                                  snmpfsal_handle_t * object_handle,    /* OUT */
+                                  fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
   fsal_name_t obj_name = FSAL_NAME_INITIALIZER; /* empty string */
   char *ptr_str;
-  fsal_handle_t out_hdl;
+  snmpfsal_handle_t out_hdl;
   fsal_status_t status;
   int b_is_last = FALSE;        /* is it the last lookup ? */
   int rc;
@@ -453,9 +448,9 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
      (p_context->export_context->root_path.path, p_path->path,
       p_context->export_context->root_path.len))
     {
-      DisplayLogJdLevel(fsal_log, NIV_CRIT,
-                        "ERROR: FSAL_lookupPath was called on a path that doesn't match export info (path=%s, export=%s)",
-                        p_path->path, p_context->export_context->root_path.path);
+      LogCrit(COMPONENT_FSAL,
+              "ERROR: FSAL_lookupPath was called on a path that doesn't match export info (path=%s, export=%s)",
+              p_path->path, p_context->export_context->root_path.path);
       Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_lookupPath);
     }
 
@@ -501,7 +496,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
   while(ptr_str[0])
     {
 
-      fsal_handle_t in_hdl;
+      snmpfsal_handle_t in_hdl;
       char *dest_ptr;
 
       /* preparing lookup */
@@ -530,12 +525,12 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
         b_is_last = TRUE;
 
       /*call to FSAL_lookup */
-      status = FSAL_lookup(&in_hdl,     /* parent directory handle */
-                           &obj_name,   /* object name */
-                           p_context,   /* user's credentials */
-                           &out_hdl,    /* output root handle */
-                           /* retrieves attributes if this is the last lookup : */
-                           (b_is_last ? object_attributes : NULL));
+      status = SNMPFSAL_lookup(&in_hdl, /* parent directory handle */
+                               &obj_name,       /* object name */
+                               p_context,       /* user's credentials */
+                               &out_hdl,        /* output root handle */
+                               /* retrieves attributes if this is the last lookup : */
+                               (b_is_last ? object_attributes : NULL));
 
       if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_lookupPath);

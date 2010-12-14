@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -41,7 +41,7 @@
 #include "fsal.h"
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "cache_inode.h"
@@ -62,13 +62,13 @@
  * Reads/Writes through the cache layer.
  *
  * @param pentry [IN] entry in cache inode layer whose content is to be accessed.
- * @param read_or_write [IN] a flag of type cache_content_io_direction_t to tell if a read or write is to be done. 
+ * @param read_or_write [IN] a flag of type cache_content_io_direction_t to tell if a read or write is to be done.
  * @param seek_descriptor [IN] absolute position (in the FSAL file) where the IO will be done.
- * @param buffer_size [IN] size of the buffer pointed by parameter 'buffer'. 
+ * @param buffer_size [IN] size of the buffer pointed by parameter 'buffer'.
  * @param pio_size [OUT] the size of the io that was successfully made.
  * @param pfsal_attr [OUT] the FSAL attributes after the operation.
  * @param buffer write:[IN] read:[OUT] the buffer for the data.
- * @param ht [INOUT] the hashtable used for managing the cache. 
+ * @param ht [INOUT] the hashtable used for managing the cache.
  * @param pclient [IN]  ressource allocated by the client for the nfs management.
  * @param pcontext [IN] fsal context for the operation.
  * @pstatus [OUT] returned status.
@@ -108,7 +108,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
   /* For now, only FSAL_SEEK_SET is supported */
   if(seek_descriptor->whence != FSAL_SEEK_SET)
     {
-      DisplayLogJd(pclient->log_outputs,
+      LogDebug(COMPONENT_CACHE_INODE,
                    "Implementation trouble: seek_descriptor was not a 'FSAL_SEEK_SET' cursor");
       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
       return *pstatus;
@@ -116,11 +116,9 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 
   io_size = buffer_size;
 
-#ifdef _DEBUG_CACHE_INODE
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_CACHE_INODE,
                     "---> INODE : IO Size = %llu fdsize =%d seeksize=%d",
                     buffer_size, sizeof(fsal_file_t), sizeof(fsal_seek_t));
-#endif
 
   /* stat */
   pclient->stat.nb_call_total += 1;
@@ -191,7 +189,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                                      pcontext, &cache_content_status) == NULL)
             {
               /* Entry could not be recoverd, cache_content_status contains an error, let it be managed by the next block */
-              DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+              LogCrit(COMPONENT_CACHE_INODE,
                                 "Read/Write Operation through cache failed with status %d (renew process failed)",
                                 cache_content_status);
 
@@ -199,7 +197,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
           else
             {
               /* Entry was successfully renewed */
-              DisplayLog("----> File Content Entry %p was successfully renewed", pentry);
+              LogDebug(COMPONENT_CACHE_INODE,"----> File Content Entry %p was successfully renewed", pentry);
 
               /* Try to access the content of the file again */
               cache_content_rdwr(pentry->object.file.pentry_content,
@@ -213,7 +211,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                                  (cache_content_client_t *) pclient->pcontent_client,
                                  pcontext, &cache_content_status);
 
-              /* No management of cache_content_status in case of failure, this will be done 
+              /* No management of cache_content_status in case of failure, this will be done
                * within the next block */
             }
 
@@ -225,7 +223,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 
           V(pentry->lock);
 
-          DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+          LogCrit(COMPONENT_CACHE_INODE,
                             "Read/Write Operation through cache failed with status %d",
                             cache_content_status);
 
@@ -234,15 +232,13 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 
           return *pstatus;
         }
-#ifdef _DEBUG_CACHE_INODE
-      DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_CACHE_INODE,
                         "inode/dc: io_size=%llu, pio_size=%llu,  eof=%d, seek=%d.%llu",
                         io_size, *pio_size, *p_fsal_eof, seek_descriptor->whence,
                         seek_descriptor->offset);
 
-      DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_CACHE_INODE,
                         "---> INODE  AFTER : IO Size = %llu %llu", io_size, *pio_size);
-#endif
 
       /* Use information from the buffstat to update the file metadata */
       pentry->object.file.attributes.filesize = buffstat.st_size;
@@ -291,9 +287,9 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
           *pstatus = cache_inode_error_convert(fsal_status);
 
           if(fsal_status.major == ERR_FSAL_DELAY)
-            printf("--------------------------> EBUSY \n");
+            LogFullDebug(COMPONENT_CACHE_INODE,"-------------> EBUSY \n");
           else
-            printf("----> rdwr: fsal_status.major =%d\n", fsal_status.major);
+            LogFullDebug(COMPONENT_CACHE_INODE,"----> rdwr: fsal_status.major =%d\n", fsal_status.major);
 
           FSAL_close(&(pentry->object.file.open_fd.fd));
           pentry->object.file.open_fd.last_op = 0;
@@ -309,11 +305,11 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 
       if(read_or_write == CACHE_INODE_WRITE)
         {
-          /* Do a getattr in order to have update information on filesize 
+          /* Do a getattr in order to have update information on filesize
            * This query is done directly on FSAL (object is not data cached), and result
            * will be propagated to Cache Inode */
 
-          /* WARNING: This operation is to be done AFTER FSAL_close (some FSAL, like POSIX, 
+          /* WARNING: This operation is to be done AFTER FSAL_close (some FSAL, like POSIX,
            * may not flush data until the file is closed */
 
           /*post_write_attr.asked_attributes =  pclient->attrmask ; */
@@ -331,12 +327,11 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
               pentry->object.file.attributes.spaceused = post_write_attr.spaceused;
             }
         }
-#ifndef _DEBUG_CACHE_INODE
-      DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-                        "inode/direct: io_size=%llu, pio_size=%llu, eof=%d, seek=%d.%llu",
-                        io_size, *pio_size, *p_fsal_eof, seek_descriptor->whence,
-                        seek_descriptor->offset);
-#endif
+
+      LogFullDebug(COMPONENT_CACHE_INODE,
+                   "inode/direct: io_size=%llu, pio_size=%llu, eof=%d, seek=%d.%llu",
+                   io_size, *pio_size, *p_fsal_eof, seek_descriptor->whence,
+                   seek_descriptor->offset);
 
       if(cache_inode_close(pentry, pclient, pstatus) != CACHE_INODE_SUCCESS)
         {

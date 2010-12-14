@@ -5,10 +5,16 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <sys/param.h>
+#include <syslog.h>
+#include <inttypes.h>
 
 #ifndef LIBLOG_NO_THREAD
 #include <errno.h>
 #include <pthread.h>
+#endif
+
+#ifdef _SNMP_ADM_ACTIVE
+#include "snmp_adm.h"
 #endif
 
 /*
@@ -43,8 +49,6 @@
 #define MAXPATHLEN 1024
 #endif
 
-#define LOCALMAXPATHLEN 1024
-
 #define STR_LEN 256
 
 /*
@@ -57,28 +61,29 @@ typedef struct loglev
 {
   int value;
   char *str;
+  int syslog_level;
 } log_level_t;
 
 static log_level_t __attribute__ ((__unused__)) tabLogLevel[] =
 {
 #define NIV_NULL       0
   {
-  NIV_NULL, "NIV_NULL"},
+  NIV_NULL, "NIV_NULL", LOG_NOTICE},
 #define NIV_MAJ        1
   {
-  NIV_MAJ, "NIV_MAJ"},
+  NIV_MAJ, "NIV_MAJ", LOG_CRIT},
 #define NIV_CRIT       2
   {
-  NIV_CRIT, "NIV_CRIT"},
+  NIV_CRIT, "NIV_CRIT", LOG_ERR},
 #define NIV_EVENT      3
   {
-  NIV_EVENT, "NIV_EVENT"},
+  NIV_EVENT, "NIV_EVENT", LOG_NOTICE},
 #define NIV_DEBUG      4
   {
-  NIV_DEBUG, "NIV_DEBUG"},
+  NIV_DEBUG, "NIV_DEBUG", LOG_DEBUG},
 #define NIV_FULL_DEBUG 5
   {
-  NIV_FULL_DEBUG, "NIV_FULL_DEBUG"}
+  NIV_FULL_DEBUG, "NIV_FULL_DEBUG", LOG_DEBUG}
 };
 
 #define NB_LOG_LEVEL 6
@@ -93,6 +98,7 @@ static log_level_t __attribute__ ((__unused__)) tabLogLevel[] =
 #define LOG_MAX_STRLEN 2048
 #define LOG_LABEL_LEN 50
 #define LOG_MSG_LEN   255
+
 typedef struct
 {
   int numero;
@@ -118,14 +124,6 @@ typedef struct
   errctx_t contexte;
   status_t status;
 } log_error_t;
-
-/* les macros pour mettre dans les printf */
-#define __E(variable) variable.numero, variable.label, variable.msg
-#define __S(variable) variable.numero, variable.label, variable.msg
-#define __format(variable) variable.numero, variable.label, variable.msg
-#define __f(variable) variable.numero, variable.label, variable.msg
-#define __AE(variable) variable.contexte.numero, variable.contexte.label, variable.contexte.msg, \
-                       variable.status.numero,   variable.status.label,   variable.status.msg
 
 #define ERR_NULL -1
 
@@ -451,111 +449,34 @@ static status_t __attribute__ ((__unused__)) tab_systeme_status[] =
 
 /* les prototypes des fonctions de la lib */
 
-int SetNamePgm(char *nom);
-int SetNameHost(char *nom);
-int SetNameFileLog(char *nom);
-int SetNameFunction(char *nom); /* thread safe */
-char *ReturnNamePgm();
-char *ReturnNameHost();
-char *ReturnNameFileLog();
-char *ReturnNameFunction();     /* thread safe */
-
-int DisplayErrorStringLine(char *tampon, int num_family, int num_error, int status,
-                           int ma_ligne);
-int DisplayErrorFluxLine(FILE * flux, int num_family, int num_error, int status,
-                         int ma_ligne);
-int DisplayErrorFdLine(int fd, int num_family, int num_error, int status, int ma_ligne);
-int DisplayErrorLogLine(int num_family, int num_error, int status, int ma_ligne);
-
-#define DisplayErrorLog( a, b, c ) DisplayErrorLogLine( a, b, c, __LINE__ )
-#define DisplayErrorFlux( a, b, c, d ) DisplayErrorFluxLine( a, b, c, d, __LINE__ )
-#define DisplayErrorString( a, b, c, d ) DisplayErrorStringLine( a, b, c, d, __LINE__ )
-#define DisplayErrorFd(a, b, c, d ) DisplayErrorFdLine( a, b, c, d, __LINE__ )
-
-int DisplayLogString(char *tampon, char *format, ...);
-int DisplayLogStringLevel(char *tampon, int level, char *format, ...);
-
-int DisplayLog(char *format, ...);
-int DisplayLogLevel(int level, char *format, ...);
-
-int DisplayLogFlux(FILE * flux, char *format, ...);
-int DisplayLogFluxLevel(FILE * flux, int level, char *format, ...);
-
-int DisplayLogPath(char *path, char *format, ...);
-int DisplayLogPathLevel(char *path, int level, char *format, ...);
-
-int DisplayLogFd(int fd, char *format, ...);
-int DisplayLogFdLevel(int fd, int level, char *format, ...);
+void SetNamePgm(char *nom);
+void SetNameHost(char *nom);
+void SetDefaultLogging(char *name);
+void SetNameFunction(char *nom); /* thread safe */
+void GetNameFunction(char *name, int len);
 
 /* AddFamilyError : not thread safe */
 int AddFamilyError(int num_family, char *nom_family, family_error_t * tab_err);
 
-int RemoveFamilyError(int num_family);
-
 char *ReturnNameFamilyError(int num_family);
 
-int InitDebug(int niveau_debug);        /* not thread safe */
+void InitLogging();        /* not thread safe */
 
-int SetLevelDebug(int level_to_set);    /* not thread safe */
+void SetLevelDebug(int level_to_set);    /* not thread safe */
 
-int ReturnLevelDebug();
-int ReturnLevelAscii(char *LevelEnAscii);
+int ReturnLevelAscii(const char *LevelEnAscii);
 char *ReturnLevelInt(int level);
 
-/* A present les types et les fonctions pour les descripteurs de journaux */
-typedef enum type_voie
-{ V_STREAM = 1, V_BUFFER, V_FILE, V_FD } type_log_stream_t;
-
-typedef enum niveau
-{ LOG_RIEN = 0, LOG_MAJOR = 1, LOG_CRITICAL = 2, LOG_EVENT = 3, LOG_DEBUG = 4
-} niveau_t;
-
-typedef enum aiguillage
-{ SUP = 1, EXACT = 0, INF = -1 } aiguillage_t;
-
-typedef union desc_voie
-{
-  FILE *flux;
-  char *buffer;
-  char path[LOCALMAXPATHLEN];
-  int fd;
-} desc_log_stream_t;
-
-typedef struct voie
-{
-  desc_log_stream_t desc;
-  type_log_stream_t type;
-  niveau_t niveau;
-  aiguillage_t aiguillage;
-  struct voie *suivante;
-} log_stream_t;
-
-typedef struct journal
-{
-  int nb_voies;
-  log_stream_t *liste_voies;
-  log_stream_t *fin_liste_voies;
-
-} log_t;
-
-#define LOG_INITIALIZER { 0, NULL, NULL }
-
-int DisplayLogJd(log_t jd, char *format, ...);
-int DisplayLogJdLevel(log_t jd, int level, char *format, ...);
-int DisplayErrorJdLine(log_t jd, int num_family, int num_error, int status, int ma_ligne);
-
-#define DisplayErrorJd(a, b, c, d ) DisplayErrorJdLine( a, b, c, d, __LINE__ )
-
-int AddLogStreamJd(log_t * pjd,
-                   type_log_stream_t type,
-                   desc_log_stream_t desc_voie, niveau_t niveau, aiguillage_t aiguillage);
+int MakeLogError(char *buffer, int num_family, int num_error, int status,
+                  int ma_ligne);
 
 int log_vsnprintf(char *out, size_t n, char *format, va_list arguments);
-#define log_vsprintf( out, format, arguments ) log_vsnprintf( out, (size_t)LOG_MAX_STRLEN, format, arguments )
-int log_sprintf(char *out, char *format, ...);
 int log_snprintf(char *out, size_t n, char *format, ...);
-int log_vfprintf(FILE *, char *format, va_list arguments);
-#define log_vprintf( format, arguments ) log_vfprintf( stdout, format, arguments )
 int log_fprintf(FILE * file, char *format, ...);
-int log_printf(char *format, ...);
+
+#ifdef _SNMP_ADM_ACTIVE
+int getComponentLogLevel(snmp_adm_type_union * param, void *opt);
+int setComponentLogLevel(const snmp_adm_type_union * param, void *opt);
+#endif
+
 #endif

@@ -128,10 +128,8 @@ typedef void *fsal_export_context_t;
 
 typedef struct
 {
-
+  fsal_export_context_t *export_context;        /* Must be the first entry in this structure */
   fsal_cred_t credential;
-  fsal_export_context_t *export_context;
-
 } fsal_op_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(*pexport_context)
@@ -149,6 +147,6 @@ typedef struct fsal_dir__
 typedef void *fsal_file_t;      /**< not implemented in ghostfs */
 
 /* no fd in ghostfs for the moment */
-#define FSAL_FILENO( p_fsal_file )  ( 1 )
+//#define FSAL_FILENO( p_fsal_file )  ( 1 )
 
 #endif                          /* _FSAL_TYPES_SPECIFIC_H */

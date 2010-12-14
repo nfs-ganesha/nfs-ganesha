@@ -3,7 +3,6 @@ ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = include             \
           Log 		      \
           BuddyMalloc         \
-          StuffAlloc          \
           Common              \
           ConfigParsing       \
           RW_Lock             \
@@ -19,6 +18,7 @@ SUBDIRS = include             \
           File_Content_Policy \
           XDR                 \
           NFS_Protocols       \
+          PNFS                \
           support             \
           IdMapper            \
           snmp_adm            \
@@ -29,27 +29,68 @@ SUBDIRS = include             \
           Docs                \
           tools               \
           config_samples      \
-          connectathon        \
           check               \
-	  debian
+	  debian              \
+          rpm                 \
+          cppcheck-xml        \
+          testres-xml
 
 if USE_FSAL_FUSE
 SUBDIRS += example-fuse
 endif
 
 DOCDIRS = Cache_inode ConfigParsing File_Content File_Content_Policy HashTable IdMapper LRU Log MainNFSD NFS_Protocols SemN StuffAlloc shell support \
-          FSAL/FSAL_HPSS FSAL/FSAL_POSIX FSAL/FSAL_PROXY FSAL/FSAL_SNMP FSAL/FSAL_FUSE \
-          MFSL/MFSL_NULL MFSL/MFSL_ASYNC MFSL/MFSL_PROXY_RPCSECGSS
+          FSAL/FSAL_HPSS FSAL/FSAL_POSIX FSAL/FSAL_PROXY FSAL/FSAL_SNMP FSAL/FSAL_FUSE FSAL/FSAL_ZFS \
+          MFSL/MFSL_NULL MFSL/MFSL_ASYNC MFSL/MFSL_PROXY_RPCSECGSS MFSL/MFSL_AIO
+
+TESTRUNNER_DIRS = BuddyMalloc HashTable LRU Log RW_Lock
+
+testrunner: 
+	for i in $(TESTRUNNER_DIRS) ; do cd $$i ; make testrunner ; cd .. ; done
 
 new: clean all
 
-deb:
-	dpkg-buildpackage -rfakeroot -d
+prepare-deb: distdir
+	rm -rf pkg-deb ; \
+	mkdir pkg-deb ; \
+	mv nfs-ganesha-@PACKAGE_VERSION@ pkg-deb/ ; \
+	cd pkg-deb/nfs-ganesha-@PACKAGE_VERSION@ ; \
+	cp debian/rules.auto debian/rules ; \
+	chmod 754 debian/rules ; \
+	cp debian/control.base debian/control
+
+prepare-deb-control: prepare-deb
+if USE_FSAL_FUSE
+	sed -i 's/debhelper (>= 7)/debhelper (>= 7), pkg-config/' pkg-deb/nfs-ganesha-@PACKAGE_VERSION@/debian/control
+else
+if USE_FSAL_POSIX
+	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libmysqlclient-dev/' pkg-deb/nfs-ganesha-@PACKAGE_VERSION@/debian/control
+else
+if USE_FSAL_SNMP
+	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libsnmp-dev/' pkg-deb/nfs-ganesha-@PACKAGE_VERSION@/debian/control
+else
+if USE_FSAL_XFS
+	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libattr1-dev, xfslibs-dev/' pkg-deb/nfs-ganesha-@PACKAGE_VERSION@/debian/control
+else
+if USE_FSAL_ZFS
+	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libzfswrap-dev/' pkg-deb/nfs-ganesha-@PACKAGE_VERSION@/debian/control
+endif
+endif
+endif
+endif
+endif
+
+deb: prepare-deb-control
+	cd pkg-deb/nfs-ganesha-@PACKAGE_VERSION@ ; \
+	cat debian/control.@FS_NAME@ >> debian/control ; \
+	dpkg-buildpackage -rfakeroot ; \
+	cd ../../
 
 rpms: rpm srpm
 
 codecheck:
-	 cppcheck -v --force --enable=all -I`pwd`/include . 2>cppcheck.log
+	rm -f cppcheck-xml/cppcheck.xml
+	 cppcheck -j12 -v --force --xml --enable=unusedFunction -I`pwd`/include $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS) . 2>cppcheck-xml/cppcheck.xml
 
 cscope:
 	find . -type f -name "*.[ch]" | grep -v rpm/ > cscope.namefile
@@ -86,50 +127,27 @@ else
 RPM_DB_ARGS= --without postgresql
 endif
 
-if USE_FSAL_HPSS
-RPMARGS= --with hpss
-endif
+#indent:
+#	find . -name '*.[ch]' ! -path './rpm/*' -exec indent -linux -nsaf -nsai -nsaw -nut -bl -bls -i4 -l90 -lc90 -nce -hnl {} \;
 
-if USE_FSAL_POSIX
-RPMARGS= --with posix
-endif
+rpm/SPECS rpm/SOURCES rpm/RPMS rpm/BUILD rpm/SRPMS:
+	mkdir -p $@
 
-if USE_FSAL_SNMP
-RPMARGS= --with snmp
-endif
-
-if USE_FSAL_PROXY
-RPMARGS= --with proxy
-endif
-
-if USE_FSAL_LUSTRE
-RPMARGS= --with lustre
-endif
-
-if USE_FSAL_XFS
-RPMARGS= --with xfs
-endif
-
-if USE_FSAL_FUSE
-RPMARGS= --with fuse
-endif
-
-indent:
-	find . -name '*.[ch]' ! -path './rpm/*' -exec indent -linux -nsaf -nsai -nsaw -nut -bl -bls -i2 -l90 -lc90 -nce {} \;
+rpmdirs: rpm/SPECS rpm/SOURCES rpm/RPMS rpm/BUILD rpm/SRPMS
 
 if USE_FSAL_HPSS
-rpm: nfs-ganesha.spec dist 
-	rpmbuild $(RPMARG) $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
+rpm: nfs-ganesha.spec dist rpmdirs
+	rpmbuild $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
 
-srpm: nfs-ganesha.spec dist
-	rpmbuild $(RPMARG) $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
+srpm: nfs-ganesha.spec dist rpmdirs
+	rpmbuild $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
 
 else  
-rpm: nfs-ganesha.spec remove_hpss 
-	rpmbuild $(RPM_DB_ARGS) $(RPMARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
+rpm: nfs-ganesha.spec remove_hpss rpmdirs
+	rpmbuild  $(RPM_DB_ARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
 
-srpm: nfs-ganesha.spec remove_hpss 
-	rpmbuild $(RPM_DB_ARGS) $(RPMARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
+srpm: nfs-ganesha.spec remove_hpss rpmdirs
+	rpmbuild $(RPM_DB_ARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
 
 endif
 
@@ -145,9 +163,12 @@ EXTRA_DIST=nfs-ganesha.spec           \
            nfs-ganesha.posix.init     \
            nfs-ganesha.lustre.init    \
            nfs-ganesha.xfs.init       \
+           nfs-ganesha.gpfs.init      \
            nfs-ganesha.hpss.init      \
            nfs-ganesha.proxy.init     \
-           nfs-ganesha.snmp.init        
+           nfs-ganesha.snmp.init      \
+           nfs-ganesha.zfs.init       \
+           nfs-ganesha.dynfsal.init
 
 pkgconfigdir=$(libdir)/pkgconfig
 if USE_FSAL_FUSE

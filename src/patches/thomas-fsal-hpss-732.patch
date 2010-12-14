@@ -1,0 +1,34 @@
+diff -up nfs-ganesha-1.0.3/FSAL/FSAL_HPSS/HPSSclapiExt/api_open.c nfs-ganesha-1.0.3.fixhpss732/FSAL/FSAL_HPSS/HPSSclapiExt/api_open.c
+--- nfs-ganesha-1.0.3/FSAL/FSAL_HPSS/HPSSclapiExt/api_open.c    2010-11-09 15:57:21.000000000 +0100
++++ nfs-ganesha-1.0.3.fixhpss732/FSAL/FSAL_HPSS/HPSSclapiExt/api_open.c 2010-12-14 13:47:56.575941228 +0100
+@@ -1107,7 +1107,7 @@ static int HPSSFSAL_Common_Open(apithrds
+  return (error);
+}
+
+-#elif HPSS_LEVEL == 730
++#elif HPSS_LEVEL >= 730
+static int HPSSFSAL_Common_Open(apithrdstate_t * ThreadContext, /* IN - thread context */
+                                hpss_reqid_t RequestID, /* IN - request id */
+                                ns_ObjHandle_t * ObjHandle,     /* IN - object handle */
+@@ -1292,12 +1292,18 @@ static int HPSSFSAL_Common_Open(apithrds
+                   * with the assurance that its not a symlink anymore.
+                   * This time, its for real.
+                   */
+-
++                  /*
++                   * Note that we drop the CWD stack here because if this symlink
++                   * took us back up the directory tree, but we'd still be using
++                   * the old CwdStack, and so we'd end up going back up that stack
++                   * instead of from whatever point we were at when we hit the
++                   * symlink.
++                   */
+                  error = HPSSFSAL_Common_Open(ThreadContext,
+                                               RequestID,
+                                               hndl_ptr,
+                                               linkpath,
+-                                               CwdStack,
++                                               API_NULL_CWD_STACK,
+                                               Ucred,
+                                               Oflag,
+                                               Mode,
+

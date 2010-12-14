@@ -39,7 +39,7 @@
 #endif
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -263,9 +263,7 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
 
   /* Post an asynchronous operation */
   P(pclient->pool_lock);
-  GET_PREALLOC(pasyncopdesc,
-               pclient->pool_async_op,
-               pclient->nb_pre_async_op_desc, cache_inode_async_op_desc_t, next_alloc);
+  GetFromPool(pasyncopdesc, &pclient->pool_async_op, cache_inode_async_op_desc_t);
   V(pclient->pool_lock);
 
   if(pasyncopdesc == NULL)
@@ -323,7 +321,7 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
   if(gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
     {
       /* Could'not get time of day... Stopping, this may need a major failure */
-      DisplayLog("cache_inode_create: cannot get time of day... exiting");
+      LogMajor(COMPONENT_CACHE_INODE,"cache_inode_create: cannot get time of day... exiting");
       exit(1);
     }
 
@@ -334,7 +332,7 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1;
 
-      DisplayLog("WARNING !!! cache_inode_create could not post async op....");
+      LogCrit(COMPONENT_CACHE_INODE,"WARNING !!! cache_inode_create could not post async op....");
 
       *pstatus = CACHE_INODE_ASYNC_POST_ERROR;
 
@@ -424,10 +422,10 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
   else
     {
       /* DIR_CONTINUE */
-      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
-          mtime.seconds = time(NULL);
-      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
-          mtime.seconds = 0;
+      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime.
+          seconds = time(NULL);
+      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime.
+          seconds = 0;
       pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.ctime =
           pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime;
 
@@ -436,8 +434,8 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
        */
       if(type == DIR_BEGINNING)
         {
-          pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.
-              attributes.numlinks++;
+          pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
+              numlinks++;
         }
 
     }

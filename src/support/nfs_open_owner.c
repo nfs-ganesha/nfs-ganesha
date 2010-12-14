@@ -63,7 +63,7 @@
 #include <rpc/auth.h>
 #include <rpc/pmap_clnt.h>
 #endif
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -121,14 +121,15 @@ int compare_open_owner(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
   unsigned int rc;
 
-#ifdef _DEBUG_OPEN_OWNER_HASH
-  char str1[MAXPATHLEN];
-  char str2[MAXPATHLEN];
+  if(isFullDebug(COMPONENT_OPEN_OWNER_HASH))
+    {
+      char str1[MAXPATHLEN];
+      char str2[MAXPATHLEN];
 
-  display_open_owner_key(buff1, str1);
-  display_open_owner_key(buff2, str2);
-  printf("compare_open_owner => {%s}|{%s}\n", str1, str2);
-#endif
+      display_open_owner_key(buff1, str1);
+      display_open_owner_key(buff2, str2);
+      LogFullDebug(COMPONENT_OPEN_OWNER_HASH, "compare_open_owner => {%s}|{%s}", str1, str2);
+    }
 
   cache_inode_open_owner_name_t *pname1 = (cache_inode_open_owner_name_t *) buff1->pdata;
   cache_inode_open_owner_name_t *pname2 = (cache_inode_open_owner_name_t *) buff2->pdata;
@@ -165,9 +166,7 @@ unsigned long open_owner_value_hash_func(hash_parameter_t * p_hparam,
 
   res = (unsigned long)(pname->clientid) + (unsigned long)sum + pname->owner_len;
 
-#ifdef _DEBUG_OPEN_OWNER_HASH
-  printf("---> rbt_hash_val = %lu\n", res % p_hparam->index_size);
-#endif
+  LogFullDebug(COMPONENT_OPEN_OWNER_HASH, "---> rbt_hash_val = %lu", res % p_hparam->index_size);
 
   return (unsigned long)(res % p_hparam->index_size);
 
@@ -193,9 +192,7 @@ unsigned long open_owner_rbt_hash_func(hash_parameter_t * p_hparam,
 
   res = (unsigned long)(pname->clientid) + (unsigned long)sum + pname->owner_len;
 
-#ifdef _DEBUG_OPEN_OWNER_HASH
-  printf("---> rbt_hash_func = %lu\n", res);
-#endif
+  LogFullDebug(COMPONENT_OPEN_OWNER_HASH, "---> rbt_hash_func = %lu", res);
 
   return res;
 }                               /* state_id_rbt_hash_func */
@@ -216,7 +213,7 @@ int nfs4_Init_open_owner(nfs_open_owner_parameter_t param)
 
   if((ht_open_owner = HashTable_Init(param.hash_param)) == NULL)
     {
-      DisplayLog("NFS STATE_ID: Cannot init State Id cache");
+      LogCrit(COMPONENT_OPEN_OWNER_HASH, "NFS STATE_ID: Cannot init State Id cache");
       return -1;
     }
 
@@ -237,15 +234,17 @@ int nfs_open_owner_Set(cache_inode_open_owner_name_t * pname,
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
-#ifdef _DEBUG_OPEN_OWNER_HASH
-  char str[MAXPATHLEN];
 
-  buffkey.pdata = (caddr_t) pname;
-  buffkey.len = sizeof(cache_inode_open_owner_name_t);
+  if(isFullDebug(COMPONENT_OPEN_OWNER_HASH))
+    {
+      char str[MAXPATHLEN];
 
-  display_open_owner_key(&buffkey, str);
-  printf("nfs_open_owner_Set => KEY {%s}\n", str);
-#endif
+      buffkey.pdata = (caddr_t) pname;
+      buffkey.len = sizeof(cache_inode_open_owner_name_t);
+
+      display_open_owner_key(&buffkey, str);
+      LogFullDebug(COMPONENT_OPEN_OWNER_HASH, "nfs_open_owner_Set => KEY {%s}", str);
+    }
 
   buffkey.pdata = (caddr_t) pname;
   buffkey.len = sizeof(cache_inode_open_owner_name_t);
@@ -314,32 +313,30 @@ int nfs_open_owner_Get_Pointer(cache_inode_open_owner_name_t * pname,
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
-#ifdef _DEBUG_OPEN_OWNER_HASH
-  char str[MAXPATHLEN];
 
-  buffkey.pdata = (caddr_t) pname;
-  buffkey.len = sizeof(cache_inode_open_owner_name_t);
+  if(isFullDebug(COMPONENT_OPEN_OWNER_HASH))
+    {
+      char str[MAXPATHLEN];
 
-  display_open_owner_key(&buffkey, str);
-  printf("nfs_open_owner_Get_Pointer => KEY {%s}\n", str);
-#endif
+      buffkey.pdata = (caddr_t) pname;
+      buffkey.len = sizeof(cache_inode_open_owner_name_t);
+
+      display_open_owner_key(&buffkey, str);
+      LogFullDebug(COMPONENT_OPEN_OWNER_HASH, "nfs_open_owner_Get_Pointer => KEY {%s}", str);
+    }
 
   buffkey.pdata = (caddr_t) pname;
   buffkey.len = sizeof(cache_inode_open_owner_name_t);
 
   if(HashTable_Get(ht_open_owner, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
-#ifdef _DEBUG_OPEN_OWNER_HASH
-      printf("nfs_open_owner_Get_Pointer => NOTFOUND\n");
-#endif
+      LogFullDebug(COMPONENT_OPEN_OWNER_HASH, "nfs_open_owner_Get_Pointer => NOTFOUND");
       return 0;
     }
 
   *powner = (cache_inode_open_owner_t *) buffval.pdata;
 
-#ifdef _DEBUG_OPEN_OWNER_HASH
-  printf("nfs_open_owner_Get_Pointer => FOUND\n");
-#endif
+  LogFullDebug(COMPONENT_OPEN_OWNER_HASH, "nfs_open_owner_Get_Pointer => FOUND");
 
   return 1;
 }                               /* nfs_open_owner_Get_Pointer */
@@ -417,7 +414,7 @@ int nfs_open_owner_Del(cache_inode_open_owner_name_t * pname)
 
 void nfs_open_owner_PrintAll(void)
 {
-  HashTable_Print(ht_open_owner);
+  HashTable_Log(COMPONENT_NFSPROTO, ht_open_owner);
 }                               /* nfs_open_owner_PrintAll */
 
 int nfs_convert_open_owner(open_owner4 * pnfsowner,

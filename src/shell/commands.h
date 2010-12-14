@@ -177,6 +177,13 @@ int fn_fsal_cross(int argc,     /* IN : number of args in argv */
                   FILE * output /* IN : output stream          */
     );
 
+/** handle operations */
+int fn_fsal_handle(int argc,     /* IN : number of args in argv */
+                   char **argv,  /* IN : arg list               */
+                   FILE * output /* IN : output stream          */
+    );
+
+
 /** compare 2 handles. */
 int fn_fsal_handlecmp(int argc, /* IN : number of args in argv */
                       char **argv,      /* IN : arg list   */
@@ -722,8 +729,8 @@ static command_def_t __attribute__ ((__unused__)) commands_FSAL[] =
   "cross", fn_fsal_cross, "traverse a junction"},
   {
   "getxattr", fn_fsal_getxattr, "display the value of an extended attribute"},
-  {
-  "handlecmp", fn_fsal_handlecmp, "compare 2 handles"},
+  {"handle", fn_fsal_handle, "handle digest/expend operations"},
+  {"handlecmp", fn_fsal_handlecmp, "compare 2 handles"},
   {
   "hardlink", fn_fsal_hardlink, "create a hardlink"},
   {

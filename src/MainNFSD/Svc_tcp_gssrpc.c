@@ -35,6 +35,9 @@
 #include "solaris_port.h"
 #endif
 
+#include "log_macros.h"
+int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
+
 /*
  * svc_tcp.c, Server side for TCP/IP based RPC. 
  *
@@ -73,9 +76,9 @@ extern errno;
 void Xprt_register(SVCXPRT * xprt);
 void Xprt_unregister(SVCXPRT * xprt);
 
-pthread_mutex_t mutex_cond_xprt[FD_SETSIZE];
-pthread_cond_t condvar_xprt[FD_SETSIZE];
-int etat_xprt[FD_SETSIZE];
+pthread_mutex_t *mutex_cond_xprt;
+pthread_cond_t *condvar_xprt;
+int *etat_xprt;
 
 /*
  * Ops vector for TCP/IP based rpc service handle
@@ -116,7 +119,6 @@ static struct xp_ops Svctcp_rendezvous_op = {
 };
 
 static int Readtcp(char *, caddr_t, int), Writetcp(char *, caddr_t, int);
-static SVCXPRT *Makefd_xprt(int, u_int, u_int);
 
 struct tcp_rendezvous
 {                               /* kept in xprt->xp_p1 */
@@ -196,7 +198,7 @@ SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize)
   r = (struct tcp_rendezvous *)mem_alloc(sizeof(*r));
   if(r == NULL)
     {
-      (void)fprintf(stderr, "svctcp_create: out of memory\n");
+      LogCrit(COMPONENT_DISPATCH, "svctcp_create: out of memory");
       return (NULL);
     }
   r->sendsize = sendsize;
@@ -204,7 +206,7 @@ SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize)
   xprt = (SVCXPRT *) mem_alloc(sizeof(SVCXPRT));
   if(xprt == NULL)
     {
-      (void)fprintf(stderr, "svctcp_create: out of memory\n");
+      LogCrit(COMPONENT_DISPATCH, "svctcp_create: out of memory");
       return (NULL);
     }
   xprt->xp_p2 = NULL;
@@ -221,14 +223,9 @@ SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize)
 
 /*
  * Like svtcp_create(), except the routine takes any *open* UNIX file
- * descriptor as its first input.
+ * descriptor as its first input. It is only called by Rendezvous_request
+ * which will use poll() not select() so it doesn't need to call Xprt_register.
  */
-SVCXPRT *Svcfd_create(int fd, u_int sendsize, u_int recvsize)
-{
-
-  return (Makefd_xprt(fd, sendsize, recvsize));
-}
-
 static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
 {
   register SVCXPRT *xprt;
@@ -237,13 +234,13 @@ static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
   xprt = (SVCXPRT *) mem_alloc(sizeof(SVCXPRT));
   if(xprt == (SVCXPRT *) NULL)
     {
-      (void)fprintf(stderr, "svc_tcp: makefd_xprt: out of memory\n");
+      LogCrit(COMPONENT_DISPATCH, "svc_tcp: makefd_xprt: out of memory");
       goto done;
     }
   cd = (struct tcp_conn *)mem_alloc(sizeof(struct tcp_conn));
   if(cd == (struct tcp_conn *)NULL)
     {
-      (void)fprintf(stderr, "svc_tcp: makefd_xprt: out of memory\n");
+      LogCrit(COMPONENT_DISPATCH, "svc_tcp: makefd_xprt: out of memory");
       mem_free((char *)xprt, sizeof(SVCXPRT));
       xprt = (SVCXPRT *) NULL;
       goto done;
@@ -259,7 +256,7 @@ static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
   xprt->xp_ops = &Svctcp_op;    /* truely deals with calls */
   xprt->xp_port = 0;            /* this is a connection, not a rendezvouser */
   xprt->xp_sock = fd;
-  Xprt_register(xprt);
+  Xports[sock] = xprt;
  done:
   return (xprt);
 }
@@ -274,7 +271,6 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt, struct rpc_msg *msg)
   struct sockaddr_in addr, laddr;
   int len, llen;
 
-  pthread_attr_t attr_thr;
   pthread_t sockmgr_thrid;
   int rc = 0;
 
@@ -299,11 +295,6 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt, struct rpc_msg *msg)
   xprt->xp_laddr = laddr;
   xprt->xp_laddrlen = llen;
 
-  /* Spawns a new thread to handle the connection */
-  pthread_attr_init(&attr_thr);
-  pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
-  pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED);
-
   FD_CLR(xprt->xp_sock, &Svc_fdset);
 
   if(pthread_cond_init(&condvar_xprt[xprt->xp_sock], NULL) != 0)
@@ -315,7 +306,7 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt, struct rpc_msg *msg)
   etat_xprt[xprt->xp_sock] = 0;
 
   if((rc =
-      pthread_create(&sockmgr_thrid, &attr_thr, rpc_tcp_socket_manager_thread,
+      fridgethr_get(&sockmgr_thrid, rpc_tcp_socket_manager_thread,
                      (void *)(xprt->xp_sock))) != 0)
     {
       return FALSE;

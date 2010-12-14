@@ -47,7 +47,7 @@
 #include <pwd.h>
 #include "fsal.h"
 #include "mfsl.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "err_ghost_fs.h"
 #include "config_parsing.h"
 #include "cmd_tools.h"
@@ -56,10 +56,6 @@
 #include "stuff_alloc.h"
 
 static pthread_mutex_t mutex_log = PTHREAD_MUTEX_INITIALIZER;
-
-static desc_log_stream_t voie;
-static int log_level = -1;
-static log_t log_desc = LOG_INITIALIZER;
 
 static int is_loaded = FALSE;   /* filsystem initialization status */
 
@@ -79,7 +75,7 @@ typedef struct cmdmfsl_thr_info__
    */
   fsal_export_context_t exp_context;
   int opened;                   /* is file opened ? */
-  fsal_file_t current_fd;       /* current file descriptor */
+  mfsl_file_t current_fd;       /* current file descriptor */
 
 } cmdmfsl_thr_info_t;
 
@@ -220,7 +216,7 @@ int Init_Thread_MFSL(FILE * output, cmdmfsl_thr_info_t * context, int flag_v)
 
   /* lookup */
 
-  st = MFSL_lookup(NULL, NULL, &context->context, &context->mcontext, &hdl_dir, NULL);
+  st = MFSL_lookup(NULL, NULL, &context->context, &context->mcontext, &hdl_dir, NULL, NULL);
 
   if(FSAL_IS_ERROR(st))
     {
@@ -249,33 +245,12 @@ int Init_Thread_MFSL(FILE * output, cmdmfsl_thr_info_t * context, int flag_v)
 
 void mfsl_layer_SetLogLevel(int log_lvl)
 {
-
-  log_stream_t *curr;
-
   /* mutex pour proteger le descriptor de log */
   pthread_mutex_lock(&mutex_log);
 
-  /* first time */
-  if(log_level == -1)
-    {
-      log_level = log_lvl;
-      voie.fd = fileno(stderr);
-      AddLogStreamJd(&log_desc, V_FD, voie, log_level, SUP);
-    }
-  else
-    {
-      log_level = log_lvl;
-      /* changing log level */
-      curr = log_desc.liste_voies;
-      while(curr)
-        {
-          curr->niveau = log_level;
-          curr = curr->suivante;
-        }
-    }
+  SetComponentLogLevel(COMPONENT_MFSL, log_lvl);
 
   pthread_mutex_unlock(&mutex_log);
-
 }
 
 static void getopt_init()
@@ -615,7 +590,7 @@ int msfl_solvepath(char *io_global_path, int size_global_path,  /* [IN-OUT] glob
           if(FSAL_IS_ERROR(st = MFSL_lookup(&old_hdl,
                                             &name,
                                             &context->context,
-                                            &context->mcontext, &tmp_hdl, NULL)))
+                                            &context->mcontext, &tmp_hdl, NULL, NULL)))
             {
               fprintf(output, "Error executing MFSL_lookup:");
               print_fsal_status(output, st);
@@ -725,7 +700,7 @@ int fn_mfsl_cd(int argc,        /* IN : number of args in argv */
                 FSAL_ATTR_TYPE | FSAL_ATTR_MODE | FSAL_ATTR_GROUP | FSAL_ATTR_OWNER);
 
   if(FSAL_IS_ERROR(st = MFSL_getattrs(&new_hdl,
-                                      &context->context, &context->mcontext, &attrs)))
+                                      &context->context, &context->mcontext, &attrs, NULL)))
     {
       fprintf(output, "Error executing MFSL_getattrs:");
       print_fsal_status(output, st);
@@ -870,7 +845,7 @@ int fn_mfsl_stat(int argc,      /* IN : number of args in argv */
   FSAL_SET_MASK(attrs.asked_attributes, FSAL_ATTR_SUPPATTR);
 
   if(FSAL_IS_ERROR(st = MFSL_getattrs(&new_hdl,
-                                      &context->context, &context->mcontext, &attrs)))
+                                      &context->context, &context->mcontext, &attrs, NULL)))
     {
       fprintf(output, "Error executing MFSL_getattrs:");
       print_fsal_status(output, st);
@@ -890,7 +865,7 @@ int fn_mfsl_stat(int argc,      /* IN : number of args in argv */
   attrs.asked_attributes = attrs.supported_attributes;
 
   if(FSAL_IS_ERROR(st = MFSL_getattrs(&new_hdl,
-                                      &context->context, &context->mcontext, &attrs)))
+                                      &context->context, &context->mcontext, &attrs, NULL)))
     {
       fprintf(output, "Error executing MFSL_getattrs:");
       print_fsal_status(output, st);
@@ -1070,7 +1045,7 @@ int fn_mfsl_ls(int argc,        /* IN : number of args in argv */
   FSAL_SET_MASK(attrs.asked_attributes, FSAL_ATTR_SUPPATTR);
 
   if(FSAL_IS_ERROR(st = MFSL_getattrs(&obj_hdl,
-                                      &context->context, &context->mcontext, &attrs)))
+                                      &context->context, &context->mcontext, &attrs, NULL)))
     {
       fprintf(output, "Error executing MFSL_getattrs:");
       print_fsal_status(output, st);
@@ -1082,7 +1057,7 @@ int fn_mfsl_ls(int argc,        /* IN : number of args in argv */
   attrs.asked_attributes = (attrs.supported_attributes & mask_needed);
 
   if(FSAL_IS_ERROR(st = MFSL_getattrs(&obj_hdl,
-                                      &context->context, &context->mcontext, &attrs)))
+                                      &context->context, &context->mcontext, &attrs, NULL)))
     {
       fprintf(output, "Error executing MFSL_getattrs:");
       print_fsal_status(output, st);
@@ -1103,7 +1078,7 @@ int fn_mfsl_ls(int argc,        /* IN : number of args in argv */
           if(FSAL_IS_ERROR
              (st =
               MFSL_readlink(&obj_hdl, &context->context, &context->mcontext,
-                            &symlink_path, NULL)))
+                            &symlink_path, NULL, NULL)))
             {
               fprintf(output, "Error executing FSAL_readlink:");
               print_fsal_status(output, st);
@@ -1135,7 +1110,7 @@ int fn_mfsl_ls(int argc,        /* IN : number of args in argv */
    * the current object is a directory, we have to list its element
    */
   if(FSAL_IS_ERROR(st = MFSL_opendir(&obj_hdl,
-                                     &context->context, &context->mcontext, &dir, NULL)))
+                                     &context->context, &context->mcontext, &dir, NULL, NULL)))
     {
       fprintf(output, "Error executing MFSL_opendir:");
       print_fsal_status(output, st);
@@ -1143,7 +1118,7 @@ int fn_mfsl_ls(int argc,        /* IN : number of args in argv */
       return st.major;
     }
 
-  from = FSAL_READDIR_FROM_BEGINNING;
+  FSAL_SET_COOKIE_BEGINNING(from);
 
   while(!error && !eod)
     {
@@ -1154,7 +1129,7 @@ int fn_mfsl_ls(int argc,        /* IN : number of args in argv */
                                          from, attrs.supported_attributes & mask_needed,
                                          READDIR_SIZE * sizeof(fsal_dirent_t),
                                          entries,
-                                         &to, &number, &eod, &context->mcontext)))
+                                         &to, &number, &eod, &context->mcontext, NULL)))
         {
           fprintf(output, "Error executing MFSL_readdir:");
           print_fsal_status(output, st);
@@ -1191,7 +1166,7 @@ int fn_mfsl_ls(int argc,        /* IN : number of args in argv */
                   if(FSAL_IS_ERROR
                      (st =
                       MFSL_readlink(&tmp_mfsl, &context->context, &context->mcontext,
-                                    &symlink_path, NULL)))
+                                    &symlink_path, NULL, NULL)))
                     {
                       fprintf(output, "Error executing FSAL_readlink:");
                       print_fsal_status(output, st);
@@ -1454,7 +1429,7 @@ int fn_mfsl_unlink(int argc,    /* IN : number of args in argv */
     }
 
   if(FSAL_IS_ERROR(st = MFSL_unlink(&new_hdl, &objname, NULL,   /* Bad idea, will probably segfault */
-                                    &context->context, &context->mcontext, NULL)))
+                                    &context->context, &context->mcontext, NULL, NULL)))
     {
       fprintf(output, "Error executing MFSL_unlink:");
       print_fsal_status(output, st);
@@ -1635,7 +1610,7 @@ int fn_mfsl_mkdir(int argc,     /* IN : number of args in argv */
                                    &objname,
                                    &context->context,
                                    &context->mcontext,
-                                   fsalmode, &subdir_hdl, NULL, NULL)))
+                                   fsalmode, &subdir_hdl, NULL, NULL, NULL)))
     {                           /* Will probably segfault */
       fprintf(output, "Error executing MFSL_mkdir:");
       print_fsal_status(output, st);
@@ -1815,7 +1790,7 @@ int fn_mfsl_rename(int argc,    /* IN : number of args in argv */
                    &tgt_name,   /* IN */
                    &context->context,   /* IN */
                    &context->mcontext,  /* IN */
-                   NULL, NULL);
+                   NULL, NULL, NULL);
 
   if(FSAL_IS_ERROR(st))
     {
@@ -1980,7 +1955,7 @@ int fn_mfsl_ln(int argc,        /* IN : number of args in argv */
                     &context->mcontext, /* IN - user contexte */
                     0777,       /* IN (ignored) */
                     &link_hdl,  /* OUT - link handle */
-                    NULL);      /* OUT - link attributes */
+                    NULL, NULL);      /* OUT - link attributes */
 
   if(FSAL_IS_ERROR(st))
     {
@@ -2337,7 +2312,7 @@ int fn_mfsl_create(int argc,    /* IN : number of args in argv */
                    &file_hdl,   /* OUT */
                    /*&context->current_fd, *//* OUT */
                    NULL /* [ IN/OUT ] */ ,
-                   NULL         /* will probably segfault */
+                   NULL, NULL         /* will probably segfault */
       );
 
   if(FSAL_IS_ERROR(st))
@@ -2542,7 +2517,7 @@ int fn_mfsl_setattr(int argc,   /* IN : number of args in argv */
 
   /* executes set attrs */
 
-  st = MFSL_setattrs(&obj_hdl, &context->context, &context->mcontext, &set_attrs, NULL);
+  st = MFSL_setattrs(&obj_hdl, &context->context, &context->mcontext, &set_attrs, NULL, NULL);
 
   if(FSAL_IS_ERROR(st))
     {
@@ -2755,7 +2730,7 @@ int fn_mfsl_access(int argc,    /* IN : number of args in argv */
       if(flag_v)
         fprintf(output, "Getting file attributes...\n");
 
-      st = MFSL_getattrs(&obj_hdl, &context->context, &context->mcontext, &attributes);
+      st = MFSL_getattrs(&obj_hdl, &context->context, &context->mcontext, &attributes, NULL);
 
       if(FSAL_IS_ERROR(st))
         {
@@ -2800,7 +2775,7 @@ int fn_mfsl_access(int argc,    /* IN : number of args in argv */
       if(flag_v)
         fprintf(output, "Calling access\n");
 
-      st = MFSL_access(&obj_hdl, &context->context, &context->mcontext, test_perms, NULL);
+      st = MFSL_access(&obj_hdl, &context->context, &context->mcontext, test_perms, NULL, NULL);
 
       if(FSAL_IS_ERROR(st))
         {
@@ -2939,7 +2914,7 @@ int fn_mfsl_truncate(int argc,  /* IN : number of args in argv */
     fprintf(output, "Truncating \"%s\" to %llu bytes.\n", glob_path, trunc_size);
 
   st = MFSL_truncate(&filehdl, &context->context, &context->mcontext, trunc_size, NULL, /* Will fail with FSAL_PROXY */
-                     NULL);
+                     NULL, NULL);
 
   if(FSAL_IS_ERROR(st))
     {
@@ -3142,7 +3117,7 @@ int fn_mfsl_open(int argc,      /* IN : number of args in argv */
 
   st = MFSL_open(&filehdl,
                  &context->context,
-                 &context->mcontext, o_flags, &context->current_fd, NULL);
+                 &context->mcontext, o_flags, &context->current_fd, NULL, NULL);
 
   if(FSAL_IS_ERROR(st))
     {
@@ -3157,7 +3132,7 @@ int fn_mfsl_open(int argc,      /* IN : number of args in argv */
 
   if(flag_v)
     fprintf(output, "Open operation completed sucessfully : fd = %d.\n",
-            FSAL_FILENO(&(context->current_fd)));
+            FSAL_FILENO(&(context->current_fd.fsal_file)));
 
   return 0;
 
@@ -3496,7 +3471,7 @@ int fn_mfsl_read(int argc,      /* IN : number of args in argv */
       return ENOMEM;
     }
 
-  gettimeofday(&timer_start, NULL);
+  gettimeofday(&timer_start, NULL) ;
 
   /* while EOF is not reached, and read<asked (when total_bytes!=0) */
   while(!is_eof && !((total_bytes != 0) && (total_nb_read >= total_bytes)))
@@ -3505,7 +3480,7 @@ int fn_mfsl_read(int argc,      /* IN : number of args in argv */
       st = MFSL_read(&context->current_fd,
                      p_seek_desc,
                      block_size,
-                     (caddr_t) p_read_buff, &once_nb_read, &is_eof, &context->mcontext);
+                     (caddr_t) p_read_buff, &once_nb_read, &is_eof, &context->mcontext, NULL);
 
       if(FSAL_IS_ERROR(st))
         {
@@ -3989,7 +3964,7 @@ int fn_mfsl_write(int argc,     /* IN : number of args in argv */
       st = MFSL_write(&context->current_fd,
                       p_seek_desc,
                       block_size,
-                      (caddr_t) databuff, &size_written_once, &context->mcontext);
+                      (caddr_t) databuff, &size_written_once, &context->mcontext, NULL );
 
       if(FSAL_IS_ERROR(st))
         {
@@ -4109,7 +4084,7 @@ int fn_mfsl_close(int argc,     /* IN : number of args in argv */
       return -1;
     }
 
-  st = MFSL_close(&context->current_fd, &context->mcontext);
+  st = MFSL_close(&context->current_fd, &context->mcontext, NULL);
 
   if(FSAL_IS_ERROR(st))
     {
@@ -4155,7 +4130,7 @@ int fn_mfsl_cat(int argc,       /* IN : number of args in argv */
   int err_flag = 0;
 
   fsal_openflags_t o_flags;
-  fsal_file_t cat_fd;
+  mfsl_file_t cat_fd;
 
 #define MAX_CAT_SIZE  (1024*1024)
   fsal_size_t nb_read = 0;
@@ -4245,7 +4220,7 @@ int fn_mfsl_cat(int argc,       /* IN : number of args in argv */
 
   o_flags = FSAL_O_RDONLY;
 
-  st = MFSL_open(&filehdl, &context->context, &context->mcontext, o_flags, &cat_fd, NULL);
+  st = MFSL_open(&filehdl, &context->context, &context->mcontext, o_flags, &cat_fd, NULL, NULL);
 
   if(FSAL_IS_ERROR(st))
     {
@@ -4262,7 +4237,7 @@ int fn_mfsl_cat(int argc,       /* IN : number of args in argv */
       fsal_size_t nb_read_once;
 
       st = MFSL_read(&cat_fd, NULL, buffsize, (caddr_t) readbuff,
-                     &nb_read_once, &is_eof, &context->mcontext);
+                     &nb_read_once, &is_eof, &context->mcontext, NULL);
 
       if(FSAL_IS_ERROR(st))
         {
@@ -4287,7 +4262,7 @@ int fn_mfsl_cat(int argc,       /* IN : number of args in argv */
 
     }
 
-  MFSL_close(&cat_fd, &context->mcontext);
+  MFSL_close(&cat_fd, &context->mcontext, NULL);
 
   if(!is_eof)
     {

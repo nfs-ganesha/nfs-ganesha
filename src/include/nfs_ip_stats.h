@@ -18,6 +18,7 @@
 
 #include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>              /* for having MAXHOSTNAMELEN */
+#include "stuff_alloc.h"
 #include "HashData.h"
 #include "HashTable.h"
 
@@ -56,8 +57,6 @@ typedef struct nfs_ip_stats__
   unsigned int req_mnt3[MNT_V3_NB_COMMAND];
   unsigned int req_nfs2[NFS_V2_NB_COMMAND];
   unsigned int req_nfs3[NFS_V3_NB_COMMAND];
-
-  struct nfs_ip_stats__ *next_alloc;
 } nfs_ip_stats_t;
 
 int nfs_ip_name_get(unsigned int ipaddr, char *hostname);
@@ -65,7 +64,7 @@ int nfs_ip_name_add(unsigned int ipaddr, char *hostname);
 int nfs_ip_name_remove(int ipaddr);
 
 int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
-                     unsigned int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool);
+                     unsigned int ipaddr, struct prealloc_pool *ip_stats_pool);
 
 int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
                       unsigned int ipaddr,
@@ -76,7 +75,7 @@ int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
                      unsigned int ipaddr, nfs_ip_stats_t ** pnfs_ip_stats);
 
 int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
-                        int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool);
+                        int ipaddr, struct prealloc_pool *ip_stats_pool);
 void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
                        unsigned int nb_worker, char *path_stat);
 

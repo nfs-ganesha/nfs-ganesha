@@ -95,13 +95,13 @@ struct tcp_conn
 unsigned long decimal_simple_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t * buffclef)
 {
-  printf("ATTENTION: APPEL D'UNE DUMMY FUNCTION\n");
+  LogMajor(COMPONENT_MAIN, "ATTENTION: CALLING A DUMMY FUNCTION");
   return 0;
 }
 
 unsigned long decimal_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef)
 {
-  printf("ATTENTION: APPEL D'UNE DUMMY FUNCTION\n");
+  LogMajor(COMPONENT_MAIN, "ATTENTION: CALLING A DUMMY FUNCTION");
   return 0;
 }
 
@@ -212,3 +212,30 @@ void socket_setoptions(int socketFd)
 
   return;
 }                               /* socket_setoptions_ctrl */
+
+int cmp_sockaddr(struct sockaddr *addr_1, struct sockaddr *addr_2)
+{
+  if(addr_1->sa_family == AF_INET && (addr_2->sa_family == AF_INET))
+    {
+      if(((struct sockaddr_in *)addr_1)->sin_addr.s_addr
+         == ((struct sockaddr_in *)addr_2)->sin_addr.s_addr
+         && ((struct sockaddr_in *)addr_1)->sin_port
+         == ((struct sockaddr_in *)addr_2)->sin_port)
+        {
+          return 1;
+        }
+    }
+#ifdef _USE_TIRPC_IPV6
+  else if(addr_1->sa_family == AF_INET6 && addr_2->sa_family == AF_INET6)
+    {
+      if(((struct sockaddr_in6 *)addr_1)->sin6_addr.s6_addr
+         == ((struct sockaddr_in6 *)addr_2)->sin6_addr.s6_addr
+         && ((struct sockaddr_in6 *)addr_1)->sin6_port
+         == ((struct sockaddr_in6 *)addr_2)->sin6_port)
+        {
+          return 1;
+        }
+    }
+#endif                          /* _USE_TIRPC_IPV6 */
+  return 0;
+}

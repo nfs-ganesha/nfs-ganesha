@@ -1,9 +1,13 @@
+%define _with_@FS_NAME@ 1
+%define _with_sharedfsal@SHARED_FSAL_PKG@ 1
+
 Name: @PACKAGE@ 
 Version: @VERSION@ 
-Release: 1%{?dist}
-Summary: NFS Server running in user space with large cache 
-License: LGPL
+Release: @RELEASE@%{?dist}
+Summary: NFS Server running in user space with large cache
+License: LGPLv3
 Group: Applications/System
+%if %{?_with_posix:1}%{!?_with_posix:0}
 %if %{?_with_postgresql:1}%{!?_with_postgresql:0}
 BuildRequires:  postgresql-devel >= 7.1
 BuildRequires:  postgresql-libs >= 7.1
@@ -11,17 +15,33 @@ BuildRequires:  postgresql-libs >= 7.1
 BuildRequires:  mysql-devel >= 5.0
 BuildRequires:  mysql-libs >= 5.0
 %endif
-BuildRequires:  net-snmp-libs >= 5.1
-BuildRequires:  net-snmp-devel >= 5.1
+%endif
+%if %{?_with_gpfs:1}%{!?_with_gpfs:0}
+# we have to be really specific on kernel version
+# because we are packaging a module
+%global _use_internal_dependency_generator 0
+BuildRequires: kernel-devel
+%endif
+BuildRequires: flex
+BuildRequires: bison
+BuildRequires: gcc
+BuildRequires: autoconf
+BuildRequires: automake
 #BuildRequires:  lm_sensors-devel >= 2.8
 Url: http://nfs-ganesha.sourceforge.net
 Source0: http://downloads.sourceforge.net/nfs-ganesha/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
+# Removing HPSS related dependencies (for hpss packages)
+%if %{?_with_hpss:1}%{!?_with_hpss:0}
+%define _use_internal_dependency_generator 0 
+%define our_find_requires %{_builddir}/%{name}-%{version}/find_requires
+%endif
+
 %description
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various backend modules to support different file systems
-and namespaces. Supported name spaces ar POSIX, PROXY, SNMP, FUSE-like and HPSS.
+It comes with various back-end modules to support different file systems and
+name-spaces. This version is compiled to support the @FS_NAME@ back-end.
 
 %package common
 Summary: Common files for all NFS-GANESHA server variants
@@ -31,54 +51,70 @@ Obsoletes: %{name} < @VERSION@
 
 %description common
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various backend modules to support different file systems
-and namespaces. This package contains the common files for all variants.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package contains the common files for all variants.
+
+%package doc
+Summary: Documentation for NFS-GANESHA
+Group: Applications/System
+
+%description doc
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides the documentation for NFS-GANESHA and its
+back-ends.
+
+%package vim
+Summary: Vim configuration files for NFS-GANESHA
+Group: Applications/System
+
+%description vim
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides the vim configuration files for NFS-GANESHA.
 
 
 %if %{?_with_proxy:1}%{!?_with_proxy:0}
 %package proxy
-Summary: The NFS-GANESHA server compiled as a PROXY 
+Summary: The NFS-GANESHA server compiled as a PROXY
 Group: Applications/System
 Requires: %{name}-common = %{version}-%{release}
 
 %description proxy
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various backend modules to support different file systems
-and namespaces. This package provides support for NFS-GANESHA as a PROXY.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for NFS-GANESHA as a PROXY.
 %endif
-
-%if %{?_with_lustre:1}%{!?_lustre:0}
-%package lustre
-Summary: The NFS-GANESHA server compiled for using the LUSTRE interface 
-Group: Applications/System
-Requires: %{name}-common = %{version}-%{release}
-
-%description lustre
-NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various backend modules to support different file systems
-and namespaces. This package provides support for GANESHA using the LUSTRE
-interface.
-%endif
-
 
 %if %{?_with_xfs:1}%{!?_with_xfs:0}
 %package xfs
-Summary: The NFS-GANESHA server compiled as a NFS gateway to SNMP. 
+Summary: The NFS-GANESHA server compiled as a NFS gateway to XFS
 Group: Applications/System
 Requires: xfsprogs
-BuildRequires: xfsprogs-devel xfsprogs-qa-devel
+BuildRequires: xfsprogs-devel libattr-devel
 Requires: %{name}-common = %{version}-%{release}
 
 %description xfs
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various backend modules to support different file systems
-and namespaces. This package provides support for NFS-GANESHA used on top on XFS.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for NFS-GANESHA used on top of XFS.
 %endif
 
+%if %{?_with_gpfs:1}%{!?_with_gpfs:0}
+%package gpfs
+Summary: The NFS-GANESHA server compiled for use with GPFS
+Group: Applications/System
+Requires: %{name}-common = %{version}-%{release}
+
+%description gpfs
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for NFS-GANESHA used on top of GPFS.
+%endif
 
 %if %{?_with_posix:1}%{!?_with_posix:0}
 %package posix
-Summary: The NFS-GANESHA server compiled for using the POSIX interface 
+Summary: The NFS-GANESHA server compiled for using the POSIX interface
 Group: Applications/System
 %if %{?_with_postgresql:1}%{!?_with_postgresql:0}
 Requires: postgresql >= 7.1  postgresql-server >= 7.1
@@ -89,38 +125,52 @@ Requires: %{name}-common = %{version}-%{release}
 
 %description posix
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various backend modules to support different file systems
-and namespaces. This package provides support for GANESHA using the POSIX
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for GANESHA using the POSIX
 interface.
 %endif
 
-%if %{?_with_lustre:1}%{!?_lustre:0}
+%if %{?_with_lustre:1}%{!?_with_lustre:0}
 %package lustre
-Summary: The NFS-GANESHA server compiled for using the LUSTRE interface 
+Summary: The NFS-GANESHA server compiled for using the LUSTRE interface
 Group: Applications/System
+BuildRequires: libattr-devel
 Requires: %{name}-common = %{version}-%{release}
 
 %description lustre
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various backend modules to support different file systems
-and namespaces. This package provides support for GANESHA using the LUSTRE
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for GANESHA using the LUSTRE
 interface.
 %endif
 
+%if %{?_with_dynfsal:1}%{!?_with_dynfsal:0}
+%package dynfsal
+Summary: The NFS-GANESHA server compiled in a FSAL-les way
+Group: Applications/System
+Requires: %{name}-common = %{version}-%{release}
+
+%description dynfsal
+The NFS-GANESHA server compiled in a FSAL-les way. 
+This requires the use of FSAL compiled as shared objects. FSALs are loaded
+dynamically at runtime using the dlopen() function.
+%endif 
 
 %if %{?_with_snmp:1}%{!?_with_snmp:0}
 %package snmp
-Summary: The NFS-GANESHA server compiled as a NFS gateway to SNMP. 
+Summary: The NFS-GANESHA server compiled as a NFS gateway to SNMP
 Group: Applications/System
-Requires: net-snmp >= 5.1 
-Requires: lm_sensors-devel >= 2.10 
+Requires: net-snmp >= 5.1
+Requires: lm_sensors-devel >= 2.10
+BuildRequires: net-snmp-libs >= 5.1
+BuildRequires: net-snmp-devel >= 5.1
 Requires: %{name}-common = %{version}-%{release}
 
 %description snmp
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various backend modules to support different file systems
-and namespaces. This package provides a NFS gateway to SNMP, making it 
-possible to browse SNMP exported information in a procfs-like way.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides a NFS gateway to SNMP, making it possible to
+browse SNMP exported information in a procfs-like way.
 %endif
 
 
@@ -132,9 +182,8 @@ Requires: %{name}-common = %{version}-%{release}
 
 %description fuselike
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various backend modules to support different file systems
-and namespaces. This package contains the components for FUSE-like
-bindings.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package contains the components for FUSE-like bindings.
 
 %package fuselike-devel
 Summary: The NFS-GANESHA development files for FUSE-like bindings
@@ -144,25 +193,63 @@ Requires: %{name}-fuselike = %{version}-%{release}
 
 %description fuselike-devel
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various backend modules to support different file systems
-and namespaces. This package contains the development headers for FUSE-like
+It comes with various back-end modules to support different file systems and
+name-spaces. This package contains the development headers for FUSE-like
 %endif
 
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
 %package hpss
-Summary: The NFS-GANESHA server compiled as a NFS gateway to HPSS.
+Summary: The NFS-GANESHA server compiled as a NFS gateway to HPSS
 Group: Applications/System
 Requires: %{name}-common = %{version}-%{release}
 
 %description hpss
 NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various backend modules to support different file systems
-and namespaces. This package provides support for NFS-GANESHA used with HPSS.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for NFS-GANESHA used with HPSS.
 %endif
 
 
+%if %{?_with_zfs:1}%{!?_with_zfs:0}
+%package zfs
+Summary: The NFS-GANESHA server compiled as a NFS gateway to ZFS
+Group: Applications/System
+BuildRequires: libzfswrap-devel
+Requires: %{name}-common = %{version}-%{release}
+
+%description zfs
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for NFS-GANESHA used on top of ZFS.
+%endif
+
+%if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
+%if %{?_with_fuse:0}%{!?_with_fuse:1}
+%package fsal-@FS_NAME@
+Summary: The NFS-GANESHA's FSAL dedicated to @FS_NAME@, provided as a shared object
+Group: Applications/System
+Requires: %{name}-common = %{version}-%{release}
+
+%description fsal-@FS_NAME@
+This package contains a FSAL library compiled as a shared object.
+It can be loaded dynamically in a FSAL-less NFS-GANESHA daemon
+%endif
+%endif
+
 %prep
 %setup -q -n %{name}-%{version}
+
+
+# Removing HPSS related dependencies (for hpss packages)
+%if %{?_with_hpss:1}%{!?_with_hpss:0}
+cat << EOF > %{our_find_requires}
+#!/bin/sh
+exec %{__find_requires} | /bin/grep -v 'libhpss'
+exit 0
+EOF
+chmod +x %{our_find_requires}
+%define __find_requires %{our_find_requires}
+%endif
 
 %build
 
@@ -181,40 +268,27 @@ mkdir -p $RPM_BUILD_ROOT%{_bindir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/pkgconfig
 
-make install DESTDIR=$RPM_BUILD_ROOT
+make install DESTDIR=$RPM_BUILD_ROOT sysconfdir=/etc/ganesha
 
-%if %{?_with_hpss:1}%{!?_with_hpss:0}
-install -m 644 config_samples/hpss.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+%if %{?_with_fuse:0}%{!?_with_fuse:1}
+install -m 755 nfs-ganesha.@FS_NAME@.init                      $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha-@FS_NAME@
 %endif
+
 %if %{?_with_posix:1}%{!?_with_posix:0}
-install -m 755 nfs-ganesha.posix.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.posix
-install -m 644 config_samples/posix.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v8.sql      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v7.sql      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 FSAL/FSAL_POSIX/DBExt/MYSQL/posixdb_mysql5.sql  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
-%if %{?_with_proxy:1}%{!?_with_proxy:0}
-install -m 755 nfs-ganesha.proxy.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.proxy
-install -m 644 config_samples/proxy.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+%if %{?_with_gpfs:1}%{!?_with_gpfs:0}
+rm -f $RPM_BUILD_ROOT/lib/modules/*/modules*
 %endif
-%if %{?_with_xfs:1}%{!?_with_xfs:0}
-install -m 755 nfs-ganesha.xfs.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.xfs
-install -m 644 config_samples/xfs.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+
+%if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
+%if %{?_with_fuse:0}%{!?_with_fuse:1}
+rm -f $RPM_BUILD_ROOT%{_libdir}/libfsal@FS_NAME@.la
+rm -f $RPM_BUILD_ROOT%{_libdir}/libfsal@FS_NAME@.a
 %endif
-%if %{?_with_lustre:1}%{!?_with_lustre:0}
-install -m 755 nfs-ganesha.lustre.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.lustre
-install -m 644 config_samples/lustre.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
-%if %{?_with_snmp:1}%{!?_with_snmp:0}
-install -m 755 nfs-ganesha.snmp.init                           $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.snmp
-install -m 644 config_samples/snmp.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-%endif
-%if %{?_with_hpss:1}%{!?_with_hpss:0}
-install -m 755 nfs-ganesha.hpss.init                           $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.hpss
-%endif
-install -m 644 config_samples/hosts.ganesha                    $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 config_samples/uidgid_mapfile.ganesha           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 755 tools/ganestat.pl                               $RPM_BUILD_ROOT%{_bindir}
 
 mkdir -p  $RPM_BUILD_ROOT%{_datadir}/%{name}
 install -m 644 ganesha.vim     $RPM_BUILD_ROOT%{_datadir}/%{name}
@@ -234,26 +308,33 @@ rm -rf $RPM_BUILD_ROOT
 
 %files common
 %defattr(-,root,root,-)
-%doc LICENSE.txt Docs/nfs-ganesha-userguide.pdf Docs/nfs-ganesha-adminguide.pdf Docs/nfs-ganeshell-userguide.pdf Docs/nfs-ganesha-ganestat.pdf Docs/using_ganeshell.pdf Docs/nfs-ganesha-convert_fh.pdf Docs/using_*_fsal.pdf
-%doc Docs/ganesha_snmp_adm.pdf
 %dir %{_sysconfdir}/ganesha/
 %dir %{_datadir}/%{name}
 %config(noreplace) %{_sysconfdir}/ganesha/hosts.ganesha
+%config(noreplace) %{_sysconfdir}/ganesha/snmp.conf
 %config(noreplace) %{_sysconfdir}/ganesha/uidgid_mapfile.ganesha
 %{_bindir}/ganestat.pl
+%{_bindir}/ganesha_log_level
+
+%files doc
+%defattr(-,root,root,-)
+%doc LICENSE.txt Docs/nfs-ganesha-userguide.pdf Docs/nfs-ganesha-adminguide.pdf Docs/nfs-ganeshell-userguide.pdf Docs/nfs-ganesha-ganestat.pdf Docs/using_ganeshell.pdf Docs/nfs-ganesha-convert_fh.pdf Docs/using_*_fsal.pdf
+%doc Docs/ganesha_snmp_adm.pdf
+
+%files vim
+%defattr(-,root,root,-)
 %{_datadir}/%{name}/ganesha.vim
 %{_datadir}/%{name}/ganesha_au.vim
 %{_datadir}/vim/*/syntax/*
 %{_datadir}/vim/*/autoload/*
-
 
 %if %{?_with_proxy:1}%{!?_with_proxy:0}
 %files proxy
 %defattr(-,root,root,-)
 %{_bindir}/proxy.ganesha.*
 %{_bindir}/proxy.ganeshell
-%{_sysconfdir}/init.d/nfs-ganesha.proxy
-%config %{_sysconfdir}/ganesha/proxy.ganesha*
+%{_sysconfdir}/init.d/nfs-ganesha-proxy
+%config(noreplace) %{_sysconfdir}/ganesha/proxy.ganesha*
 %endif
 
 %if %{?_with_xfs:1}%{!?_with_xfs:0}
@@ -261,8 +342,18 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %{_bindir}/xfs.ganesha.*
 %{_bindir}/xfs.ganeshell
-%{_sysconfdir}/init.d/nfs-ganesha.xfs
-%config %{_sysconfdir}/ganesha/xfs.ganesha*
+%{_sysconfdir}/init.d/nfs-ganesha-xfs
+%config(noreplace) %{_sysconfdir}/ganesha/xfs.ganesha*
+%endif
+
+%if %{?_with_gpfs:1}%{!?_with_gpfs:0}
+%files gpfs
+%defattr(-,root,root,-)
+/lib/modules/*/extra/*.ko
+%{_bindir}/gpfs.ganesha.*
+%{_bindir}/gpfs.ganeshell
+%{_sysconfdir}/init.d/nfs-ganesha-gpfs
+%config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha*
 %endif
 
 
@@ -271,17 +362,25 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %{_bindir}/lustre.ganesha.*
 %{_bindir}/lustre.ganeshell
-%{_sysconfdir}/init.d/nfs-ganesha.lustre
-%config %{_sysconfdir}/ganesha/lustre.ganesha*
+%{_sysconfdir}/init.d/nfs-ganesha-lustre
+%config(noreplace) %{_sysconfdir}/ganesha/lustre.ganesha*
 %endif
 
+%if %{?_with_dynfsal:1}%{!?_with_dynfsal:0}
+%files dynfsal
+%defattr(-,root,root,-)
+%{_bindir}/dynfsal.ganesha.*
+%{_bindir}/dynfsal.ganeshell
+%{_sysconfdir}/init.d/nfs-ganesha-dynfsal
+%config(noreplace) %{_sysconfdir}/ganesha/dynfsal.ganesha*
+%endif
 
 %if %{?_with_posix:1}%{!?_with_posix:0}
 %files posix 
 %defattr(-,root,root,-)
 %{_bindir}/posix.ganesha.*
 %{_bindir}/posix.ganeshell
-%{_sysconfdir}/init.d/nfs-ganesha.posix
+%{_sysconfdir}/init.d/nfs-ganesha-posix
 %config(noreplace) %{_sysconfdir}/ganesha/posixdb_v8.sql 
 %config(noreplace) %{_sysconfdir}/ganesha/posixdb_mysql5.sql 
 %config(noreplace) %{_sysconfdir}/ganesha/posixdb_v7.sql 
@@ -294,7 +393,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %{_bindir}/snmp.ganesha.*
 %{_bindir}/snmp.ganeshell
-%{_sysconfdir}/init.d/nfs-ganesha.snmp
+%{_sysconfdir}/init.d/nfs-ganesha-snmp
 %config(noreplace) %{_sysconfdir}/ganesha/snmp.ganesha*
 %endif
 
@@ -321,40 +420,105 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %{_bindir}/hpss.ganesha.*
 %{_bindir}/hpss.ganeshell
-%{_sysconfdir}/init.d/nfs-ganesha.hpss
+%{_sysconfdir}/init.d/nfs-ganesha-hpss
 %config(noreplace) %{_sysconfdir}/ganesha/hpss.ganesha*
 %endif
 
+%if %{?_with_zfs:1}%{!?_with_zfs:0}
+%files zfs
+%defattr(-,root,root,-)
+%{_bindir}/zfs.ganesha.*
+%{_bindir}/zfs.ganeshell
+%{_sysconfdir}/init.d/nfs-ganesha-zfs
+%config(noreplace) %{_sysconfdir}/ganesha/zfs.ganesha*
+%endif
+
+%if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
+%if %{?_with_fuse:0}%{!?_with_fuse:1}
+%files fsal-@FS_NAME@
+%defattr(-,root,root,-)
+%{_libdir}/libfsal@FS_NAME@.so*
+%endif
+%endif
+
+
 %if %{?_with_proxy:1}%{!?_with_proxy:0}
+%preun proxy
+chkconfig --del nfs-ganesha-proxy
+
 %post proxy
-chkconfig --add nfs-ganesha.proxy
+chkconfig --add nfs-ganesha-proxy
 %endif
 
 %if %{?_with_xfs:1}%{!?_with_xfs:0}
+%preun xfs
+chkconfig --del nfs-ganesha-xfs
+
 %post xfs
-chkconfig --add nfs-ganesha.xfs
+chkconfig --add nfs-ganesha-xfs
+%endif
+
+%if %{?_with_gpfs:1}%{!?_with_gpfs:0}
+%preun gpfs
+chkconfig --del nfs-ganesha-gpfs
+/sbin/depmod
+rpm -ql nfs-ganesha-gpfs | grep ".ko$" > /var/run/nfs-ganesha-gpfs.modules
+
+%post gpfs
+chkconfig --add nfs-ganesha-gpfs
+/sbin/depmod -a
+if [ -x "/sbin/weak-modules" ]; then
+    rpm -ql nfs-ganesha-gpfs | grep ".ko$" | /sbin/weak-modules --add-modules
+fi
+
+%postun gpfs
+if [ -x "/sbin/weak-modules" ]; then
+    cat /var/run/nfs-ganesha-gpfs.modules | /sbin/weak-modules --remove-modules
+fi
+rm -f /var/run/nfs-ganesha-gpfs.modules
 %endif
 
 %if %{?_with_lustre:1}%{!?_with_lustre:0}
+%preun lustre
+chkconfig --del nfs-ganesha-lustre
+
 %post lustre
-chkconfig --add nfs-ganesha.lustre
+chkconfig --add nfs-ganesha-lustre
 %endif
 
 %if %{?_with_posix:1}%{!?_with_posix:0}
+%preun posix
+chkconfig --del nfs-ganesha-posix
+
 %post posix
-chkconfig --add nfs-ganesha.posix
+chkconfig --add nfs-ganesha-posix
 %endif
 
 %if %{?_with_snmp:1}%{!?_with_snmp:0}
+%preun snmp
+chkconfig --del nfs-ganesha-snmp
+
 %post snmp
-chkconfig --add nfs-ganesha.snmp
+chkconfig --add nfs-ganesha-snmp
 %endif
 
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
+%preun 
+
 %post
 %endif
 
+%if %{?_with_zfs:1}%{!?_with_zfs:0}
+%preun zfs
+chkconfig --del nfs-ganesha-zfs
+
+%post zfs
+chkconfig --add nfs-ganesha-zfs
+%endif
+
 %if %{?_with_fuse:1}%{!?_with_fuse:0}
+%preun 
+
 %post
 %endif
 
@@ -362,6 +526,38 @@ chkconfig --add nfs-ganesha.snmp
 
 
 %changelog
+* Mon Oct 18 2010 Philippe Deniel <philippe.deniel@cea.fr> 1.0.2-1
+- New TCP connection management to avoid DOS-like attack
+- Tag _NO_BLOCK_PREALLOC was removed
+- Bug Fix : OP4_REMOVE did not operate if the destination was an existing file
+- Bug Fix : FATTR4_ACL is now an unsupported attributes (it is in fact)
+- Bug Fix : OP4_GETATTR on unsupported attributes should ignore them instead of returning NFS4ERR_ATTR_NOTSUPP
+- Bug Fix : locks_held counter was badly managed in OP4_LOCKU
+- Bug Fix : OP4_DESTROY_SESSION returned bad session when session was successfully destroyed.
+- Bug Fix : FSAL_XFS:fsal_create always made files owned by root.
+- Code Cleaning : all Log* functions's format were reviewed and fixed
+- Memory manager improvement : stuff_alloc macros and BuddyMalloc are now closely tied.
+- Bug Fix : erroneous EACCESS in FSAL_XFS and FSAL_LUSTRE when
+
+* Fri Sep 17 2010 Philippe Deniel <philippe.deniel@cea.fr> 1.0.1-1
+- New FSAL model: FSAL modules can now be compile as shared object and can be loaded at runtime
+- New FSAL to support ZFS filesystem
+- Add the capability to build a "FSAL-less" daemon that loads FSAL shared object by using the dlopen function.
+- FSAL_PROXY: the embedded client now can allocate a tcp socket on a privileged port to contact the "proxyfied" server
+- FSAL shared objects are provided as precompiled rpms
+- Log layer now uses syslog as a possible log stream
+- Add new call FSAL_getextattrs to get info such a generation number or creation time
+- New Log management from IBM
+- Several potential buffer overflow in fscanf fixed
+
+* Fri Jun 25  2010 Philippe Deniel <philippe.deniel@cea.fr> 0.99.66-1
+- FSAL_XFS now has lock support
+- Brand new FSAL_GPFS added (patch from IBM) to natively support GPFS
+- FSAL_POSIX and FSAL_XFS now have quota support (via rquota v1/v2 protocol and the use of the quotactl function)
+- Typos fixed in doxygen.conf files
+- FSAL_TEMPLATE updated (had new functions for quota and lock management)
+- pNFS/LAYOUT_FILES works with multiple Data Server
+
 * Tue Jun  8  2010 Philippe Deniel <philippe.deniel@cea.fr> 0.99.65-1
 - New FSAL_XFS designed for natively exporting XFS filesystems
 - Integration of a patch from Aneesh Kumar that implements Async NLM and NSM support
@@ -371,7 +567,7 @@ chkconfig --add nfs-ganesha.snmp
 - Bug Fix: nfs4_op_access was not managing secondary groups properly. It now relyes on the FSAL for this.
 
 * Thu Apr 29  2010 Philippe Deniel <philippe.deniel@cea.fr> 0.99.64-1
-- RPM Packaging : add chkconfig --add in %post
+- RPM Packaging : add chkconfig --add in post
 - Export Access Type "MDONLY" was not managed when using NFSv4
 - Add safety check to cache_inode_remove/cache_inode_create and cache_inode_link to prevent from non allowed access.
 - Statistics for NFSv4.0 and NFSv4.1 operations have been added

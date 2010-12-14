@@ -1,0 +1,8 @@
+Package: nfs-ganesha-posix
+Architecture: any
+Depends: nfs-ganesha-common, libmysqlclient16, ${shlibs:Depends}
+Description: NFS-GANESHA usable to export a POSIX filesystem
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. This package provides support for NFS-GANESHA used on top of
+ the POSIX interface.

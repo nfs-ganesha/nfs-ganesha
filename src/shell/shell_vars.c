@@ -151,6 +151,8 @@ static shell_variable_t *create_var(char *str)
 
   /* remembers name */
   shell_variable_t *new_item = (shell_variable_t *) Mem_Alloc(sizeof(shell_variable_t));
+  memset( (char *)new_item, 0, sizeof(shell_variable_t ) ) ;
+
   strncpy(new_item->var_name, str, MAX_VAR_LEN);
 
   new_item->var_value = NULL;

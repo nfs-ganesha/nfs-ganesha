@@ -69,7 +69,7 @@ fsal_status_t MFSL_mkdir_async_op(mfsl_async_op_desc_t * popasyncdesc)
 
   attrsrc = attrdest = popasyncdesc->op_res.mkdir.attr;
 
-  DisplayLogLevel(NIV_DEBUG,
+  LogDebug(COMPONENT_MFSL,
                   "Renaming directory to complete asynchronous FSAL_mkdir for async op %p",
                   popasyncdesc);
 
@@ -185,13 +185,9 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,       /* IN */
 
   P(p_mfsl_context->lock);
 
-  GET_PREALLOC(pasyncopdesc,
-               p_mfsl_context->pool_async_op,
-               mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
+  GetFromPool(pasyncopdesc, &p_mfsl_context->pool_async_op, mfsl_async_op_desc_t);
 
-  GET_PREALLOC(newdir_pasyncdata,
-               p_mfsl_context->pool_spec_data,
-               mfsl_param.nb_pre_async_op_desc, mfsl_object_specific_data_t, next_alloc);
+  GetFromPool(newdir_pasyncdata, &p_mfsl_context->pool_spec_data, mfsl_object_specific_data_t);
 
   V(p_mfsl_context->lock);
 
@@ -201,23 +197,18 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,       /* IN */
   if(gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
     {
       /* Could'not get time of day... Stopping, this may need a major failure */
-      DisplayLog("MFSL_link: cannot get time of day... exiting");
+      LogMajor(COMPONENT_MFSL, "MFSL_link: cannot get time of day... exiting");
       exit(1);
     }
 
   /* Now get a pre-allocated directory from the synclet data */
   P(p_mfsl_context->lock);
-  GET_PREALLOC_CONSTRUCT(pprecreated,
-                         p_mfsl_context->pool_dirs,
-                         mfsl_param.nb_pre_create_dirs,
-                         mfsl_precreated_object_t,
-                         next_alloc, constructor_preacreated_entries);
-  p_mfsl_context->avail_pool_dirs -= 1;
+  GetFromPool(pprecreated, &p_mfsl_context->pool_dirs, mfsl_precreated_object_t);
   V(p_mfsl_context->lock);
 
   pnewdir_handle = &(pprecreated->mobject);
 
-  DisplayLogJdLevel(p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p",
+  LogDebug(COMPONENT_MFSL,  "Creating asyncop %p",
                     pasyncopdesc);
 
   pasyncopdesc->op_type = MFSL_ASYNC_OP_MKDIR;

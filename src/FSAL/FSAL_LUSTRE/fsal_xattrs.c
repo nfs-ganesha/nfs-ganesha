@@ -33,15 +33,15 @@
 
 /* function for getting an attribute value */
 
-typedef int (*xattr_getfunc_t) (fsal_handle_t *,        /* object handle */
-                                fsal_op_context_t *,    /* context */
+typedef int (*xattr_getfunc_t) (lustrefsal_handle_t *,  /* object handle */
+                                lustrefsal_op_context_t *,      /* context */
                                 caddr_t,        /* output buff */
                                 size_t, /* output buff size */
                                 size_t *,       /* output size */
                                 void *arg);     /* optionnal argument */
 
-typedef int (*xattr_setfunc_t) (fsal_handle_t *,        /* object handle */
-                                fsal_op_context_t *,    /* context */
+typedef int (*xattr_setfunc_t) (lustrefsal_handle_t *,  /* object handle */
+                                lustrefsal_op_context_t *,      /* context */
                                 caddr_t,        /* input buff */
                                 size_t, /* input size */
                                 int,    /* creation flag */
@@ -60,24 +60,31 @@ typedef struct fsal_xattr_def__
  * DEFINE GET/SET FUNCTIONS
  */
 
-int print_fid(fsal_handle_t * p_objecthandle,   /* object handle */
-              fsal_op_context_t * p_context,    /* IN */
+int print_fid(lustrefsal_handle_t * p_objecthandle,     /* object handle */
+              lustrefsal_op_context_t * p_context,      /* IN */
               caddr_t buffer_addr,      /* IN/OUT */
               size_t buffer_size,       /* IN */
               size_t * p_output_size,   /* OUT */
               void *arg)
 {
   *p_output_size = snprintf(buffer_addr, buffer_size, DFID_NOBRACE "\n",
-                            PFID(&p_objecthandle->fid));
+                            PFID(&p_objecthandle->data.fid));
   return 0;
 }                               /* print_fid */
 
 #define ARG_STRIPE_SIZE  ((long)0)
 #define ARG_STRIPE_COUNT ((long)1)
 #define ARG_STORAGE_TGT  ((long)2)
+#define ARG_POOL         ((long)3)
 
-int print_stripe(fsal_handle_t * p_objecthandle,        /* object handle */
-                 fsal_op_context_t * p_context, /* IN */
+#ifdef _LUSTRE_HSM
+#define ARG_HSM_STATE    ((long)0)
+#define ARG_HSM_ACTION   ((long)1)
+#define ARG_HSM_ARCH_NUM ((long)2)
+#endif
+
+int print_stripe(lustrefsal_handle_t * p_objecthandle,  /* object handle */
+                 lustrefsal_op_context_t * p_context,   /* IN */
                  caddr_t buffer_addr,   /* IN/OUT */
                  size_t buffer_size,    /* IN */
                  size_t * p_output_size,        /* OUT */
@@ -104,15 +111,15 @@ int print_stripe(fsal_handle_t * p_objecthandle,        /* object handle */
 
   if(rc != 0)
     {
-      if(rc == ENODATA)
+      if(abs(rc) == ENODATA)
         {
-          DisplayLogLevel(NIV_DEBUG, "%s has no stripe information", entry_path.path);
+          LogDebug(COMPONENT_FSAL, "%s has no stripe information", entry_path.path);
           *p_output_size = sprintf(buffer_addr, "none\n");
           return 0;
         }
       else
-        DisplayLog("Error %d getting stripe info for %s", rc, entry_path.path);
-      return posix2fsal_error(rc);
+          LogCrit(COMPONENT_FSAL, "Error %d getting stripe info for %s", rc, entry_path.path);
+      return posix2fsal_error(abs(rc));
     }
 
   /* Check for protocol version number */
@@ -123,13 +130,18 @@ int print_stripe(fsal_handle_t * p_objecthandle,        /* object handle */
         {
         case ARG_STRIPE_SIZE:
           *p_output_size =
-              snprintf(buffer_addr, buffer_size, "%llu\n", p_lum->lmm_stripe_size);
+              snprintf(buffer_addr, buffer_size, "%u\n", p_lum->lmm_stripe_size);
           break;
 
         case ARG_STRIPE_COUNT:
           *p_output_size =
               snprintf(buffer_addr, buffer_size, "%u\n", p_lum->lmm_stripe_count);
           break;
+
+        case ARG_POOL: /* no pool if the structure is LOV V1 */
+            ((char*)buffer_addr)[0]='\0';
+            *p_output_size = 0;
+            break;
 
         case ARG_STORAGE_TGT:
           *p_output_size = 0;
@@ -152,9 +164,54 @@ int print_stripe(fsal_handle_t * p_objecthandle,        /* object handle */
           break;
         }
     }
+#ifdef LOV_USER_MAGIC_V3 /* pool support */
+  else if(p_lum->lmm_magic == LOV_USER_MAGIC_V3)
+    {
+        struct lov_user_md_v3 *p_lum3 = ( struct lov_user_md_v3 * ) p_lum;
+
+        switch ((long)arg)
+        {
+            case ARG_STRIPE_SIZE:
+              *p_output_size =
+                  snprintf(buffer_addr, buffer_size, "%u\n", p_lum3->lmm_stripe_size);
+              break;
+
+            case ARG_STRIPE_COUNT:
+                *p_output_size =
+                    snprintf(buffer_addr, buffer_size, "%u\n", p_lum3->lmm_stripe_count);
+                break;
+
+            case ARG_POOL: /* pool structure in LOV V3 */
+                *p_output_size = snprintf( buffer_addr, buffer_size, "%s\n",
+                                           p_lum3->lmm_pool_name );
+                break;
+
+            case ARG_STORAGE_TGT:
+              *p_output_size = 0;
+              curr = buffer_addr;
+              curr[0] = '\0';
+
+              for(i = 0; i < p_lum3->lmm_stripe_count; i++)
+                {
+                  int sz;
+                  if(i != p_lum3->lmm_stripe_count - 1)
+                    sz = snprintf(curr, buffer_size - *p_output_size, "%u,",
+                                  p_lum3->lmm_objects[i].l_ost_idx);
+                  else
+                    sz = snprintf(curr, buffer_size - *p_output_size, "%u\n",
+                                  p_lum3->lmm_objects[i].l_ost_idx);
+                  curr += sz;
+                  *p_output_size += sz;
+                }
+
+              break;
+        }
+
+    }
+#endif
   else
     {
-      DisplayLog("Wrong Luster magic number for %s: %#X <> %#X",
+        LogCrit(COMPONENT_FSAL, "Wrong Luster magic number for %s: %#X <> %#X",
                  entry_path, p_lum->lmm_magic, LOV_USER_MAGIC_V1);
       return ERR_FSAL_INVAL;
     }
@@ -162,18 +219,134 @@ int print_stripe(fsal_handle_t * p_objecthandle,        /* object handle */
   return 0;
 }
 
+/* ------------ Lustre-HSM specific attributes ------------ */
+#ifdef _LUSTRE_HSM
+
+#define TEST_FLAG_APPEND( _mask, _flg_val, _flg_name, _p_sz )               \
+        do { if ((_mask) & (_flg_val)) {                                   \
+                size_t sz = 0;                                             \
+                if ( (*_p_sz) > 0 )                                         \
+                    sz = snprintf(curr, buffer_size-(*_p_sz), " %s", _flg_name); \
+                else                                                       \
+                    sz = snprintf(curr, buffer_size-(*_p_sz), "%s", _flg_name);  \
+                curr += sz;                                                \
+                (*_p_sz) += sz;                                             \
+         }} while(0)
+
+
+int print_hsm_info(lustrefsal_handle_t * p_objecthandle,  /* object handle */
+                   lustrefsal_op_context_t * p_context,   /* IN */
+                   caddr_t buffer_addr,   /* IN/OUT */
+                   size_t buffer_size,    /* IN */
+                   size_t * p_output_size,        /* OUT */
+                   void *arg)
+{
+    int rc;
+    fsal_path_t entry_path;
+    fsal_status_t st;
+    unsigned int i;
+    struct hsm_user_state hus = {0};
+
+    /* set empty output, by default */
+    ((char*)buffer_addr)[0]='\0';
+    *p_output_size = 0;
+
+    st = fsal_internal_Handle2FidPath(p_context, p_objecthandle, &entry_path);
+    if(FSAL_IS_ERROR(st))
+        return st.major;
+
+    rc = llapi_hsm_state_get(entry_path.path, &hus);
+
+    if(rc != 0)
+        return posix2fsal_error(-rc);
+
+    switch ((long)arg)
+    {
+        case ARG_HSM_STATE:
+            if ( hus.hus_states == 0 )
+            {
+                *p_output_size =
+                    snprintf(buffer_addr, buffer_size, "new\n" );
+            }
+            else
+            {
+                char * curr = (char*)buffer_addr;
+
+                TEST_FLAG_APPEND( hus.hus_states, HS_RELEASED, "released",
+                                  p_output_size );
+                TEST_FLAG_APPEND( hus.hus_states, HS_EXISTS, "exists",
+                                  p_output_size );
+                TEST_FLAG_APPEND( hus.hus_states, HS_DIRTY, "dirty",
+                                  p_output_size );
+                TEST_FLAG_APPEND( hus.hus_states, HS_ARCHIVED, "archived",
+                                  p_output_size );
+                TEST_FLAG_APPEND( hus.hus_states, HS_NORELEASE, "never_release",
+                                  p_output_size );
+                TEST_FLAG_APPEND( hus.hus_states, HS_NOARCHIVE, "never_archive",
+                                  p_output_size );
+                TEST_FLAG_APPEND( hus.hus_states, HS_LOST, "lost_from_hsm",
+                                  p_output_size );
+                if ( (*p_output_size) > 0 )
+                    (*p_output_size) += snprintf( curr,
+                                                  buffer_size-(*p_output_size),
+                                                  "\n" );
+            }
+          break;
+
+        case ARG_HSM_ACTION:
+            if ( hus.hus_in_progress_action != HUA_NONE )
+            {
+                *p_output_size =
+                    snprintf(buffer_addr, buffer_size, "%s (%s)\n",
+                             hsm_user_action2name(hus.hus_in_progress_action),
+                             hsm_progress_state2name(hus.hus_in_progress_state));
+            }
+            else
+                *p_output_size =
+                    snprintf(buffer_addr, buffer_size, "%s\n",
+                             hsm_user_action2name(hus.hus_in_progress_action));
+            break;
+
+        case ARG_HSM_ARCH_NUM:
+            if (hus.hus_archive_num != 0)
+            {
+                *p_output_size =
+                    snprintf(buffer_addr, buffer_size, "%u\n",
+                             hus.hus_archive_num);
+            }
+          break;
+    }
+
+    return 0;
+}
+#endif
+
 /* DEFINE HERE YOUR ATTRIBUTES LIST */
 
 static fsal_xattr_def_t xattr_list[] = {
-  {"fid", print_fid, NULL, XATTR_FOR_ALL | XATTR_RO, NULL},
-  {"stripe_size", print_stripe, NULL, XATTR_FOR_FILE | XATTR_FOR_DIR | XATTR_RO,
-   (void *)ARG_STRIPE_SIZE},
-  {"stripe_count", print_stripe, NULL, XATTR_FOR_FILE | XATTR_FOR_DIR | XATTR_RO,
-   (void *)ARG_STRIPE_COUNT},
-  {"OSTs", print_stripe, NULL, XATTR_FOR_FILE | XATTR_RO, (void *)ARG_STORAGE_TGT}
+    {"fid", print_fid, NULL, XATTR_FOR_ALL | XATTR_RO, NULL},
+    {"stripe_size", print_stripe, NULL, XATTR_FOR_FILE | XATTR_FOR_DIR | XATTR_RO,
+        (void *)ARG_STRIPE_SIZE},
+    {"stripe_count", print_stripe, NULL, XATTR_FOR_FILE | XATTR_FOR_DIR | XATTR_RO,
+        (void *)ARG_STRIPE_COUNT},
+    {"pool", print_stripe, NULL, XATTR_FOR_FILE | XATTR_FOR_DIR | XATTR_RO,
+        (void *)ARG_POOL},
+    {"OSTs", print_stripe, NULL, XATTR_FOR_FILE | XATTR_RO,
+        (void *)ARG_STORAGE_TGT},
+#ifdef _LUSTRE_HSM
+    /* additionnal attributes from HSM state */
+    {"hsm_state", print_hsm_info, NULL, XATTR_FOR_FILE | XATTR_RO,
+        (void *)ARG_HSM_STATE },
+    {"hsm_action", print_hsm_info, NULL, XATTR_FOR_FILE | XATTR_RO,
+        (void *)ARG_HSM_ACTION },
+#endif
 };
 
-#define XATTR_COUNT 4
+#ifdef _LUSTRE_HSM
+#define XATTR_COUNT 7
+#else
+#define XATTR_COUNT 5
+#endif
 
 /* we assume that this number is < 254 */
 #if ( XATTR_COUNT > 254 )
@@ -241,7 +414,7 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
     {
       p_xattr_attrs->asked_attributes = supported;
 
-      DisplayLogJdLevel(fsal_log, NIV_CRIT,
+      LogCrit(COMPONENT_FSAL, 
                         "Error: p_xattr_attrs->asked_attributes was 0 in %s() line %d, file %s",
                         __FUNCTION__, __LINE__, __FILE__);
     }
@@ -250,7 +423,7 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
 
   if(unsupp)
     {
-      DisplayLogJdLevel(fsal_log, NIV_DEBUG,
+      LogDebug(COMPONENT_FSAL,
                         "Asking for unsupported attributes in %s(): %#llX removing it from asked attributes",
                         __FUNCTION__, unsupp);
 
@@ -347,10 +520,10 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
  * \param xattr_cookie xattr's cookie (as returned by listxattrs).
  * \param p_attrs xattr's attributes.
  */
-fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
-                                 fsal_op_context_t * p_context, /* IN */
-                                 unsigned int xattr_id, /* IN */
-                                 fsal_attrib_list_t * p_attrs
+fsal_status_t LUSTREFSAL_GetXAttrAttrs(lustrefsal_handle_t * p_objecthandle,    /* IN */
+                                       lustrefsal_op_context_t * p_context,     /* IN */
+                                       unsigned int xattr_id,   /* IN */
+                                       fsal_attrib_list_t * p_attrs
                                           /**< IN/OUT xattr attributes (if supported) */
     )
 {
@@ -370,7 +543,7 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
   /* don't retrieve attributes not asked */
   file_attrs.asked_attributes &= p_attrs->asked_attributes;
 
-  st = FSAL_getattrs(p_objecthandle, p_context, &file_attrs);
+  st = LUSTREFSAL_getattrs(p_objecthandle, p_context, &file_attrs);
 
   if(FSAL_IS_ERROR(st))
     Return(st.major, st.minor, INDEX_FSAL_GetXAttrAttrs);
@@ -384,7 +557,7 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
   else if(xattr_id >= XATTR_COUNT)
     {
       /* This is user defined xattr */
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+      LogFullDebug(COMPONENT_FSAL,
                         "Getting attributes for xattr #%u", xattr_id - XATTR_COUNT);
     }
 
@@ -409,13 +582,13 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
  * \param p_nb_returned the number of xattr entries actually stored in xattrs_tab.
  * \param end_of_list this boolean indicates that the end of xattrs list has been reached.
  */
-fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
-                              unsigned int cookie,      /* IN */
-                              fsal_op_context_t * p_context,    /* IN */
-                              fsal_xattrent_t * xattrs_tab,     /* IN/OUT */
-                              unsigned int xattrs_tabsize,      /* IN */
-                              unsigned int *p_nb_returned,      /* OUT */
-                              int *end_of_list  /* OUT */
+fsal_status_t LUSTREFSAL_ListXAttrs(lustrefsal_handle_t * p_objecthandle,       /* IN */
+                                    unsigned int cookie,        /* IN */
+                                    lustrefsal_op_context_t * p_context,        /* IN */
+                                    fsal_xattrent_t * xattrs_tab,       /* IN/OUT */
+                                    unsigned int xattrs_tabsize,        /* IN */
+                                    unsigned int *p_nb_returned,        /* OUT */
+                                    int *end_of_list    /* OUT */
     )
 {
   unsigned int index;
@@ -440,7 +613,7 @@ fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
   /* don't retrieve unsuipported attributes */
   file_attrs.asked_attributes &= global_fs_info.supported_attrs;
 
-  st = FSAL_getattrs(p_objecthandle, p_context, &file_attrs);
+  st = LUSTREFSAL_getattrs(p_objecthandle, p_context, &file_attrs);
 
   if(FSAL_IS_ERROR(st))
     Return(st.major, st.minor, INDEX_FSAL_ListXAttrs);
@@ -707,12 +880,12 @@ static int xattr_format_value(caddr_t buffer, size_t * datalen, size_t maxlen)
  * \param buffer_size size of the buffer where the xattr value is to be stored.
  * \param p_output_size size of the data actually stored into the buffer.
  */
-fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
-                                     unsigned int xattr_id,     /* IN */
-                                     fsal_op_context_t * p_context,     /* IN */
-                                     caddr_t buffer_addr,       /* IN/OUT */
-                                     size_t buffer_size,        /* IN */
-                                     size_t * p_output_size     /* OUT */
+fsal_status_t LUSTREFSAL_GetXAttrValueById(lustrefsal_handle_t * p_objecthandle,        /* IN */
+                                           unsigned int xattr_id,       /* IN */
+                                           lustrefsal_op_context_t * p_context, /* IN */
+                                           caddr_t buffer_addr, /* IN/OUT */
+                                           size_t buffer_size,  /* IN */
+                                           size_t * p_output_size       /* OUT */
     )
 {
   int rc;
@@ -726,7 +899,7 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
   /* get type for checking it */
   file_attrs.asked_attributes = FSAL_ATTR_TYPE;
 
-  st = FSAL_getattrs(p_objecthandle, p_context, &file_attrs);
+  st = LUSTREFSAL_getattrs(p_objecthandle, p_context, &file_attrs);
 
   if(FSAL_IS_ERROR(st))
     ReturnStatus(st, INDEX_FSAL_GetXAttrValue);
@@ -784,10 +957,10 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
  *   \return ERR_FSAL_NO_ERROR if xattr_name exists, ERR_FSAL_NOENT otherwise
  */
 
-fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
-                                    const fsal_name_t * xattr_name,     /* IN */
-                                    fsal_op_context_t * p_context,      /* IN */
-                                    unsigned int *pxattr_id     /* OUT */
+fsal_status_t LUSTREFSAL_GetXAttrIdByName(lustrefsal_handle_t * p_objecthandle, /* IN */
+                                          const fsal_name_t * xattr_name,       /* IN */
+                                          lustrefsal_op_context_t * p_context,  /* IN */
+                                          unsigned int *pxattr_id       /* OUT */
     )
 {
   fsal_status_t st;
@@ -847,12 +1020,12 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
  * \param buffer_size size of the buffer where the xattr value is to be stored.
  * \param p_output_size size of the data actually stored into the buffer.
  */
-fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,  /* IN */
-                                       const fsal_name_t * xattr_name,  /* IN */
-                                       fsal_op_context_t * p_context,   /* IN */
-                                       caddr_t buffer_addr,     /* IN/OUT */
-                                       size_t buffer_size,      /* IN */
-                                       size_t * p_output_size   /* OUT */
+fsal_status_t LUSTREFSAL_GetXAttrValueByName(lustrefsal_handle_t * p_objecthandle,      /* IN */
+                                             const fsal_name_t * xattr_name,    /* IN */
+                                             lustrefsal_op_context_t * p_context,       /* IN */
+                                             caddr_t buffer_addr,       /* IN/OUT */
+                                             size_t buffer_size,        /* IN */
+                                             size_t * p_output_size     /* OUT */
     )
 {
   unsigned int index;
@@ -868,7 +1041,7 @@ fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,  /* IN */
   /* get type for checking it */
   file_attrs.asked_attributes = FSAL_ATTR_TYPE;
 
-  st = FSAL_getattrs(p_objecthandle, p_context, &file_attrs);
+  st = LUSTREFSAL_getattrs(p_objecthandle, p_context, &file_attrs);
 
   if(FSAL_IS_ERROR(st))
     ReturnStatus(st, INDEX_FSAL_GetXAttrValue);
@@ -881,8 +1054,8 @@ fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,  /* IN */
          && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
         {
 
-          return FSAL_GetXAttrValueById(p_objecthandle, index, p_context, buffer_addr,
-                                        buffer_size, p_output_size);
+          return LUSTREFSAL_GetXAttrValueById(p_objecthandle, index, p_context,
+                                              buffer_addr, buffer_size, p_output_size);
         }
     }
 
@@ -919,12 +1092,12 @@ static void chomp_attr_value(char *str, size_t size)
     str[len - 1] = '\0';
 }
 
-fsal_status_t FSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,        /* IN */
-                                 const fsal_name_t * xattr_name,        /* IN */
-                                 fsal_op_context_t * p_context, /* IN */
-                                 caddr_t buffer_addr,   /* IN */
-                                 size_t buffer_size,    /* IN */
-                                 int create     /* IN */
+fsal_status_t LUSTREFSAL_SetXAttrValue(lustrefsal_handle_t * p_objecthandle,    /* IN */
+                                       const fsal_name_t * xattr_name,  /* IN */
+                                       lustrefsal_op_context_t * p_context,     /* IN */
+                                       caddr_t buffer_addr,     /* IN */
+                                       size_t buffer_size,      /* IN */
+                                       int create       /* IN */
     )
 {
   int rc;
@@ -956,11 +1129,11 @@ fsal_status_t FSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,        /* IN */
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_SetXAttrValue);
 }
 
-fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
-                                     unsigned int xattr_id,     /* IN */
-                                     fsal_op_context_t * p_context,     /* IN */
-                                     caddr_t buffer_addr,       /* IN */
-                                     size_t buffer_size /* IN */
+fsal_status_t LUSTREFSAL_SetXAttrValueById(lustrefsal_handle_t * p_objecthandle,        /* IN */
+                                           unsigned int xattr_id,       /* IN */
+                                           lustrefsal_op_context_t * p_context, /* IN */
+                                           caddr_t buffer_addr, /* IN */
+                                           size_t buffer_size   /* IN */
     )
 {
   int rc;
@@ -986,8 +1159,8 @@ fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
 
   FSAL_str2name(name, FSAL_MAX_NAME_LEN, &attr_name);
 
-  return FSAL_SetXAttrValue(p_objecthandle, &attr_name,
-                            p_context, buffer_addr, buffer_size, FALSE);
+  return LUSTREFSAL_SetXAttrValue(p_objecthandle, &attr_name,
+                                  p_context, buffer_addr, buffer_size, FALSE);
 }
 
 /**
@@ -997,9 +1170,9 @@ fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
  * \param p_context pointer to the current security context.
  * \param xattr_id xattr's id
  */
-fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,      /* IN */
-                                   fsal_op_context_t * p_context,       /* IN */
-                                   unsigned int xattr_id)       /* IN */
+fsal_status_t LUSTREFSAL_RemoveXAttrById(lustrefsal_handle_t * p_objecthandle,  /* IN */
+                                         lustrefsal_op_context_t * p_context,   /* IN */
+                                         unsigned int xattr_id) /* IN */
 {
   int rc;
   fsal_status_t st;
@@ -1022,8 +1195,6 @@ fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,      /* IN */
     ReturnCode(posix2fsal_error(errno), errno);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
-
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /* FSAL_RemoveXAttrById */
 
 /**
@@ -1033,9 +1204,9 @@ fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,      /* IN */
  * \param p_context pointer to the current security context.
  * \param xattr_name xattr's name
  */
-fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* IN */
-                                     fsal_op_context_t * p_context,     /* IN */
-                                     const fsal_name_t * xattr_name)    /* IN */
+fsal_status_t LUSTREFSAL_RemoveXAttrByName(lustrefsal_handle_t * p_objecthandle,        /* IN */
+                                           lustrefsal_op_context_t * p_context, /* IN */
+                                           const fsal_name_t * xattr_name)      /* IN */
 {
   int rc;
   fsal_status_t st;

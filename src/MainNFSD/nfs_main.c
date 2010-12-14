@@ -42,6 +42,7 @@
 
 #include "nfs_init.h"
 #include "fsal.h"
+#include "log_macros.h"
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -59,12 +60,20 @@ nfs_start_info_t my_nfs_start_info = {
 };
 
 char my_config_path[MAXPATHLEN] = "/etc/ganesha/ganesha.conf";
-char log_path[MAXPATHLEN] = "/tmp/nfs-ganesha.log";
+char log_path[MAXPATHLEN] = "";
 char exec_name[MAXPATHLEN] = "nfs-ganesha";
 char host_name[MAXHOSTNAMELEN] = "localhost";
-int debug_level = NIV_EVENT;
+int debug_level = -1;
 int detach_flag = FALSE;
 char ganesha_exec_path[MAXPATHLEN];
+
+extern fsal_functions_t fsal_functions;
+extern fsal_const_t fsal_consts;
+
+/* States managed by signal handler */
+extern unsigned int sigusr1_triggered ;
+extern unsigned int sigterm_triggered ;
+extern unsigned int sighup_triggered  ;
 
 /* command line syntax */
 
@@ -94,22 +103,10 @@ char usage[] =
  *
  */
 
-static void action_sigusr1(int sig)
+static void action_sigusr1( int sig )
 {
-  DisplayLog("SIGUSR1_HANDLER: Receveid SIGUSR1.... signal will be managed");
-
-  /* Set variable force_flush_by_signal that is used in file content cache gc thread */
-  if(force_flush_by_signal)
-    {
-      DisplayLog("SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
-      force_flush_by_signal = FALSE;
-    }
-  else
-    {
-      DisplayLog("SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
-      force_flush_by_signal = TRUE;
-    }
-}                               /* action_sigusr1 */
+   sigusr1_triggered = TRUE ;
+}
 
 /**
  *
@@ -119,14 +116,16 @@ static void action_sigusr1(int sig)
 
 static void action_sigterm(int sig)
 {
-  if(sig == SIGTERM)
-    DisplayLog("SIGTERM_HANDLER: Receveid SIGTERM.... initiating daemon shutdown");
-  else if(sig == SIGINT)
-    DisplayLog("SIGINT_HANDLER: Receveid SIGINT.... initiating daemon shutdown");
+   sigterm_triggered = TRUE ;
+}
 
-  nfs_stop();
+static void action_sighup(int sig)
+{
+  sighup_triggered = TRUE ;
+}
 
-}                               /* action_sigterm */
+/* Use the nfs_param from nfs_init.c */
+extern nfs_parameter_t nfs_param;
 
 /**
  * main: simply the main function.
@@ -145,10 +144,12 @@ int main(int argc, char *argv[])
   char *tempo_exec_name = NULL;
   char localmachine[MAXHOSTNAMELEN];
   int c;
-  nfs_parameter_t nfs_param;
   pid_t son_pid;
   struct sigaction act_sigusr1;
   struct sigaction act_sigterm;
+  struct sigaction act_sighup;
+
+  char fsal_path_lib[MAXPATHLEN];
 
   /* retrieve executable file's name */
   strncpy(ganesha_exec_path, argv[0], MAXPATHLEN);
@@ -160,7 +161,6 @@ int main(int argc, char *argv[])
     strcpy((char *)exec_name, argv[0]);
 
   /* get host name */
-
   if(gethostname(localmachine, sizeof(localmachine)) != 0)
     {
       fprintf(stderr, "Could not get local host name, exiting...");
@@ -270,7 +270,6 @@ int main(int argc, char *argv[])
     }
 
   /* initialize memory and logging */
-
   if(nfs_prereq_init(exec_name, host_name, debug_level, log_path))
     {
       fprintf(stderr, "NFS MAIN: Error initializing NFSd prerequisites\n");
@@ -285,8 +284,8 @@ int main(int argc, char *argv[])
         {
         case -1:
           /* Fork failed */
-          DisplayErrorLog(ERR_SYS, ERR_FORK, errno);
-          DisplayLog("Could nout start nfs daemon, exiting...");
+          LogError(COMPONENT_INIT, ERR_SYS, ERR_FORK, errno);
+          LogMajor(COMPONENT_INIT, "Could not start nfs daemon, exiting...");
           exit(1);
 
         case 0:
@@ -294,54 +293,98 @@ int main(int argc, char *argv[])
            * Let's make it the leader of its group of process */
           if(setsid() == -1)
             {
-              DisplayErrorLog(ERR_SYS, ERR_SETSID, errno);
-              DisplayLog("Could nout start nfs daemon, exiting...");
+              LogError(COMPONENT_INIT, ERR_SYS, ERR_SETSID, errno);
+	      LogMajor(COMPONENT_INIT, "Could not start nfs daemon, exiting...");
               exit(1);
             }
           break;
 
         default:
           /* This code is within the father, it is useless, it must die */
-          DisplayLog("Starting a son of pid %d\n", son_pid);
+          LogFullDebug(COMPONENT_INIT, "Starting a son of pid %d\n", son_pid);
           exit(0);
           break;
         }
     }
 
-  DisplayLog(">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
-             FSAL_GetFSName());
-
   /* Set the signal handler */
+  /*
   memset(&act_sigusr1, 0, sizeof(act_sigusr1));
   act_sigusr1.sa_flags = 0;
   act_sigusr1.sa_handler = action_sigusr1;
   if(sigaction(SIGUSR1, &act_sigusr1, NULL) == -1)
     {
-      DisplayErrorLog(ERR_SYS, ERR_SIGACTION, errno);
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_SIGACTION, errno);
       exit(1);
     }
   else
-    DisplayLogLevel(NIV_EVENT, "Signal SIGUSR1 (force flush) is ready to be used");
+    LogEvent(COMPONENT_INIT, NIV_EVENT, "Signal SIGUSR1 (force flush) is ready to be used");
+  */
+
+  /* Make sure Linux file i/o will return with error if file size is exceeded. */
+#ifdef _LINUX
+  signal(SIGXFSZ, SIG_IGN);
+#endif
 
   /* Set the signal handler */
   memset(&act_sigterm, 0, sizeof(act_sigterm));
   act_sigterm.sa_flags = 0;
   act_sigterm.sa_handler = action_sigterm;
-  if(sigaction(SIGTERM, &act_sigterm, NULL) == -1
-     || sigaction(SIGINT, &act_sigterm, NULL) == -1)
+
+  if(sigaction(SIGTERM, &act_sigterm, NULL) == -1 )
     {
-      DisplayErrorLog(ERR_SYS, ERR_SIGACTION, errno);
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_SIGACTION, errno);
       exit(1);
     }
   else
-    DisplayLogLevel(NIV_EVENT,
-                    "Signals SIGTERM and SIGINT (daemon shutdown) are ready to be used");
+    LogEvent(COMPONENT_INIT,
+	     "Signals SIGTERM and SIGINT (daemon shutdown) are ready to be used");
+
+  /* Set the signal handler */
+  memset(&act_sighup, 0, sizeof(act_sighup));
+  act_sighup.sa_flags = 0;
+  act_sighup.sa_handler = action_sighup;
+  if(sigaction(SIGHUP, &act_sighup, NULL) == -1)
+    {
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_SIGACTION, errno);
+      exit(1);
+    }
+  else
+    LogEvent(COMPONENT_INIT,
+                    "Signal SIGHUP (daemon export reload) is ready to be used");
+
+
+#ifdef _USE_SHARED_FSAL
+  if(nfs_get_fsalpathlib_conf(my_config_path, fsal_path_lib))
+    {
+      LogMajor(COMPONENT_INIT, "NFS MAIN: Error parsing configuration file.");
+      exit(1);
+    }
+#endif                          /* _USE_SHARED_FSAL */
+
+  /* Load the FSAL library (if needed) */
+  if(!FSAL_LoadLibrary(fsal_path_lib))
+    {
+      LogMajor(COMPONENT_INIT,
+	      "NFS MAIN: Could not load FSAL dynamic library %s", fsal_path_lib);
+      exit(1);
+    }
+
+  /* Get the FSAL functions */
+  FSAL_LoadFunctions();
+
+  /* Get the FSAL consts */
+  FSAL_LoadConsts();
+
+  LogEvent(COMPONENT_INIT,
+	   ">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
+	   FSAL_GetFSName());
 
   /* initialize default parameters */
 
   if(nfs_set_param_default(&nfs_param))
     {
-      DisplayLog("NFS MAIN: Error setting default parameters.");
+      LogMajor(COMPONENT_INIT, "NFS MAIN: Error setting default parameters.");
       exit(1);
     }
 
@@ -349,7 +392,7 @@ int main(int argc, char *argv[])
 
   if(nfs_set_param_from_conf(&nfs_param, &my_nfs_start_info, my_config_path))
     {
-      DisplayLog("NFS MAIN: Error parsing configuration file.");
+      LogMajor(COMPONENT_INIT, "NFS MAIN: Error parsing configuration file.");
       exit(1);
     }
 
@@ -357,9 +400,9 @@ int main(int argc, char *argv[])
 
   if(nfs_check_param_consistency(&nfs_param))
     {
-      DisplayLog("NFS MAIN: Inconsistent parameters found");
-      DisplayLog
-          ("MAJOR WARNING: /!\\ | Bad Parameters could have significant impact on the daemon behavior");
+      LogMajor(COMPONENT_INIT, "NFS MAIN: Inconsistent parameters found");
+      LogMajor(COMPONENT_INIT,
+	       "MAJOR WARNING: /!\\ | Bad Parameters could have significant impact on the daemon behavior");
       exit(1);
     }
 

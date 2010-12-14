@@ -60,7 +60,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -98,14 +98,13 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   fsal_attrib_list_t attr_parent;
   fsal_attrib_list_t attr_new;
   fsal_attrib_list_t sattr;
-
   fsal_handle_t *pnewfsal_handle = NULL;
 
   nfs_fh4 newfh4;
   cache_inode_status_t cache_status;
   int convrc = 0;
 
-  fsal_accessmode_t mode = 0600;
+  fsal_accessmode_t mode = 0777;
   fsal_name_t name;
 
   cache_inode_create_arg_t create_arg;
@@ -523,12 +522,10 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Operation is supposed to be atomic .... */
   res_CREATE4.CREATE4res_u.resok4.cinfo.atomic = TRUE;
 
-#ifdef _DEBUG_NFS_V4
-  printf("           CREATE CINFO before = %llu  after = %llu  atomic = %d\n",
+  LogFullDebug(COMPONENT_NFS_V4, "           CREATE CINFO before = %"PRIu64"  after = %"PRIu64"  atomic = %d",
          res_CREATE4.CREATE4res_u.resok4.cinfo.before,
          res_CREATE4.CREATE4res_u.resok4.cinfo.after,
          res_CREATE4.CREATE4res_u.resok4.cinfo.atomic);
-#endif
 
   /* @todo : BUGAZOMEU: fair ele free dans cette fonction */
 

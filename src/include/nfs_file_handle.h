@@ -50,6 +50,7 @@
 
 #include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>              /* for having MAXHOSTNAMELEN */
+#include "log_macros.h"
 /*
  * Structure of the filehandle 
  */
@@ -70,7 +71,9 @@ typedef struct file_handle_v3__
   char xattr_pos;               /* Used for xattr management                len = 1  byte  */
 } file_handle_v3_t;
 
-/* This must be up to 64 bytes, aligned on 32 bits */
+
+
+/* This must be up to 128 bytes, aligned on 32 bits */
 typedef struct file_handle_v4__
 {
   unsigned short pseudofs_id;   /* Id for the pseudo fs related to this fh  len = 2 bytes   */
@@ -79,12 +82,15 @@ typedef struct file_handle_v4__
   unsigned int exportid;        /* must be correlated to exportlist_t::id   len = 4 bytes   */
   unsigned short refid;         /* used for referral                        len = 2 bytes   */
   unsigned int srvboot_time;    /* 0 if FH won't expire                     len = 4 bytes   */
-  char fsopaque[93];            /* persistent part of FSAL handle */
+#ifdef _USE_PROXY
+  char fsopaque[108];            /* persistent part of FSAL handle */
+#else
+  char fsopaque[61];            /* persistent part of FSAL handle */
+#endif /* _USE_FSAL_PROXY */
   char xattr_pos;               /*                                          len = 1 byte    */
 } file_handle_v4_t;
 
 #define LEN_FH_STR 1024
-void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr);
 
 /* File handle translation utility */
 int nfs4_FhandleToFSAL(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
@@ -119,15 +125,18 @@ int nfs4_Is_Fh_DSHandle(nfs_fh4 * pfh);
 int nfs3_Is_Fh_Xattr(nfs_fh3 * pfh);
 
 /* File handle print function (;ostly use for debugging) */
-void print_fhandle2(fhandle2 fh);
-void print_fhandle3(nfs_fh3 fh);
-void print_fhandle4(nfs_fh4 fh);
-void print_buff(char *buff, int len);
-void print_compound_fh(compound_data_t * data);
+void print_fhandle2(log_components_t component, fhandle2 fh);
+void print_fhandle3(log_components_t component, nfs_fh3 fh);
+void print_fhandle4(log_components_t component, nfs_fh4 fh);
+void print_buff(log_components_t component, char *buff, int len);
+void print_compound_fh(log_components_t component, compound_data_t * data);
 
 void sprint_fhandle2(char *str, fhandle2 fh);
 void sprint_fhandle3(char *str, nfs_fh3 fh);
 void sprint_fhandle4(char *str, nfs_fh4 fh);
 void sprint_buff(char *str, char *buff, int len);
+void sprint_mem(char *str, char *buff, int len);
+
+void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr) ;
 
 #endif                          /* _NFS_FILE_HANDLE_H */

@@ -178,6 +178,7 @@
 #include "BuddyMalloc.h"
 #include "HashTable.h"
 #include "stuff_alloc.h"
+#include "log_macros.h"
 
 #ifndef TRUE
 #define TRUE 1
@@ -296,80 +297,6 @@ unsigned int rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef
 
 /**
  * 
- * PreAllocPdata: Does the allocation of a groups of hash_data_t to be managed as RBT_OPAQ values.
- *
- * Does the allocation of a groups of hash_data_t to be managed as RBT_OPAQ values.
- *
- * @param nb_alloc number of pdata to be pre-allocated 
- *
- * @return A pointer to the list of allocated pdata of NULL if allocation failed
- *
- * @see HashTable_Init
- */
-static hash_data_t *PreAllocPdata(int nb_alloc)
-{
-  hash_data_t *pdata = NULL;
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("hash_data_t");
-#endif
-
-#ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC(pdata, (unsigned int)nb_alloc, hash_data_t, next_alloc);
-  if(pdata == NULL)
-    return NULL;
-#endif
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
-
-  return pdata;
-}                               /* PreAllocPdata */
-
-/**
- * 
- * PreAllocNode: Does the allocation of a groups of nodes to be managed by the RB Tree
- *
- * Does the allocation of a groups of nodes to be managed by the RB Tree.
- *
- * @param nb_alloc number of rbt-node to be pre-allocated 
- *
- * @return A pointer to the list of allocated nodes of NULL if allocation failed
- *
- * @see HashTable_Init
- */
-static struct rbt_node *PreAllocNode(int nb_alloc)
-{
-  struct rbt_node *pnode = NULL;
-
-#ifdef _DEBUG_HASHTABLE
-  printf("HASH TABLE PREALLOC: Allocating %d new nodes\n", nb_alloc);
-#endif
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("rbt_node_t");
-#endif
-
-#ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC(pnode, (unsigned int)nb_alloc, rbt_node_t, next);
-  if(pnode == NULL)
-    return NULL;
-#endif
-
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-#endif
-
-  return pnode;
-}                               /* PreAllocNode */
-
-/**
- * 
  * Key_Locate: Locate a buffer key in the hash table, as a rbt node.
  * 
  * This function is for internal use only 
@@ -457,57 +384,90 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
 {
   hash_table_t *ht;
   unsigned int i = 0;
+  char *name = "Unamed";
+
+  if (hparam.name != NULL)
+    name = hparam.name;
 
   pthread_mutexattr_t mutexattr;
 
   /* Sanity check */
-  if((ht = (hash_table_t *) Mem_Alloc(sizeof(hash_table_t))) == NULL)
+  if((ht = (hash_table_t *) Mem_Alloc_Label(sizeof(hash_table_t),
+                                            "hash_table_t")) == NULL)
     return NULL;
 
   /* we have to keep the discriminant values */
   ht->parameter = hparam;
 
   if(pthread_mutexattr_init(&mutexattr) != 0)
-    return NULL;
+   {
+     Mem_Free( ht ) ;
+     return NULL;
+   }
 
   /* Initialization of the node array */
   if((ht->array_rbt =
-      (struct rbt_head *)Mem_Alloc(sizeof(struct rbt_head) * hparam.index_size)) == NULL)
+      (struct rbt_head *)Mem_Alloc_Label(sizeof(struct rbt_head) * hparam.index_size,
+                                         "rbt_head")) == NULL)
+  {
+    Mem_Free( ht ) ;
     return NULL;
+  }
 
   /* Initialization of the stat array */
   if((ht->stat_dynamic =
-      (hash_stat_dynamic_t *) Mem_Alloc(sizeof(hash_stat_dynamic_t) *
-                                        hparam.index_size)) == NULL)
+      (hash_stat_dynamic_t *) Mem_Alloc_Label(sizeof(hash_stat_dynamic_t) *
+                                              hparam.index_size,
+                                              "hash_stat_dynamic_t")) == NULL)
+  {
+    Mem_Free( ht->array_rbt ) ;
+    Mem_Free( ht ) ;
     return NULL;
+  }
+
+  /* Init the stats */
+  memset((char *)ht->stat_dynamic, 0, sizeof(hash_stat_dynamic_t) * hparam.index_size);
 
   /* Initialization of the semaphores array */
   if((ht->array_lock =
-      (rw_lock_t *) Mem_Alloc(sizeof(rw_lock_t) * hparam.index_size)) == NULL)
+      (rw_lock_t *) Mem_Alloc_Label(sizeof(rw_lock_t) * hparam.index_size,
+                                    "rw_lock_t")) == NULL)
+  {
+    Mem_Free( ht->array_rbt ) ;
+    Mem_Free( ht->array_lock ) ;
+    Mem_Free( ht ) ;
     return NULL;
+  }
 
   /* Initialize the array of pre-allocated node */
   if((ht->node_prealloc =
-      (struct rbt_node **)Mem_Alloc(sizeof(struct rbt_node *) * hparam.index_size)) ==
-     NULL)
+      (struct prealloc_pool *)Mem_Calloc_Label(hparam.index_size,
+                                               sizeof(struct prealloc_pool),
+                                               "rbt_node_pool")) == NULL)
     return NULL;
 
   if((ht->pdata_prealloc =
-      (hash_data_t **) Mem_Alloc(sizeof(hash_data_t *) * hparam.index_size)) == NULL)
+      (struct prealloc_pool *) Mem_Calloc_Label(hparam.index_size,
+                                                sizeof(struct prealloc_pool),
+                                                "hash_data_pool")) == NULL)
     return NULL;
 
   for(i = 0; i < hparam.index_size; i++)
     {
-#ifndef _NO_BLOCK_PREALLOC
-      if((ht->node_prealloc[i] = PreAllocNode(hparam.nb_node_prealloc)) == NULL)
+      LogFullDebug(COMPONENT_HASHTABLE, "HASH TABLE PREALLOC: Allocating %d new nodes\n",
+                   hparam.nb_node_prealloc);
+
+      /* Allocate a group of nodes to be managed by the RB Tree. */
+      MakePool(&ht->node_prealloc[i], hparam.nb_node_prealloc, rbt_node_t, NULL, NULL);
+      NamePool(&ht->node_prealloc[i], "%s Hash RBT Nodes index %d", name, i);
+      if(!IsPoolPreallocated(&ht->node_prealloc[i]))
         return NULL;
 
-      if((ht->pdata_prealloc[i] = PreAllocPdata(hparam.nb_node_prealloc)) == NULL)
+      /* Allocate a group of hash_data_t to be managed as RBT_OPAQ values. */
+      MakePool(&ht->pdata_prealloc[i], hparam.nb_node_prealloc, hash_data_t, NULL, NULL);
+      NamePool(&ht->pdata_prealloc[i], "%s Hash Data Nodes index %d", name, i);
+      if(!IsPoolPreallocated(&ht->pdata_prealloc[i]))
         return NULL;
-#else
-      ht->node_prealloc[i] = PreAllocNode(hparam.nb_node_prealloc);
-      ht->pdata_prealloc[i] = PreAllocPdata(hparam.nb_node_prealloc);
-#endif
     }
 
   /* Initialize each of the RB-Tree, mutexes and stats */
@@ -579,14 +539,21 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
   else if(buffval == NULL)
     return HASHTABLE_ERROR_INVALID_ARGUMENT;
 
-  /* Find the RB Tree to be used */
-  hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
+  /* Compute values to locate into the hashtable */
+  if( ht->parameter.hash_func_both != NULL )
+   {
+      if( (*(ht->parameter.hash_func_both))( &ht->parameter, buffkey, &hashval, &rbt_value ) == 0 ) 
+       return HASHTABLE_ERROR_INVALID_ARGUMENT;
+   }
+  else
+   {
+    hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
+    rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
+   }
+
   tete_rbt = &(ht->array_rbt[hashval]);
-  rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
-#ifdef _DEBUG_HASHTABLE
-  printf("Key = %p   Value = %p  hashval = %u  rbt_value = %x\n", buffkey->pdata,
+  LogFullDebug(COMPONENT_HASHTABLE,"Key = %p   Value = %p  hashval = %u  rbt_value = %x", buffkey->pdata,
          buffval->pdata, hashval, rbt_value);
-#endif
 
   /* acquire mutex for protection */
   P_w(&(ht->array_lock[hashval]));
@@ -609,10 +576,10 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
         }
       qn = pn;
       pdata = RBT_OPAQ(qn);
-#ifdef _DEBUG_HASHTABLE
-      printf("Ecrasement d'une ancienne entree (k=%p,v=%p)\n", buffkey->pdata,
+
+      LogFullDebug(COMPONENT_HASHTABLE,"Ecrasement d'une ancienne entree (k=%p,v=%p)", buffkey->pdata,
              buffval->pdata);
-#endif
+
     }
   else
     {
@@ -627,44 +594,30 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
       /* Insert a new node in the table */
       RBT_FIND(tete_rbt, pn, rbt_value);
 
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("rbt_node_t");
-#endif
       /* This entry does not exist, create it */
       /* First get a new entry in the preallocated node array */
-      GET_PREALLOC(qn, ht->node_prealloc[hashval], ht->parameter.nb_node_prealloc,
-                   rbt_node_t, next);
+      GetFromPool(qn, &ht->node_prealloc[hashval], rbt_node_t);
       if(qn == NULL)
         {
           ht->stat_dynamic[hashval].err.nb_set += 1;
           V_w(&(ht->array_lock[hashval]));
           return HASHTABLE_INSERT_MALLOC_ERROR;
         }
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("hash_data_t");
-#endif
-      GET_PREALLOC(pdata, ht->pdata_prealloc[hashval], ht->parameter.nb_node_prealloc,
-                   hash_data_t, next_alloc);
+
+      GetFromPool(pdata, &ht->pdata_prealloc[hashval], hash_data_t);
       if(pdata == NULL)
         {
           ht->stat_dynamic[hashval].err.nb_set += 1;
           V_w(&(ht->array_lock[hashval]));
           return HASHTABLE_INSERT_MALLOC_ERROR;
         }
-#ifdef _DEBUG_MEMLEAKS
-      /* For debugging memory leaks */
-      BuddySetDebugLabel("N/A");
-#endif
+
       RBT_OPAQ(qn) = pdata;
       RBT_VALUE(qn) = rbt_value;
       RBT_INSERT(tete_rbt, qn, pn);
 
-#ifdef _DEBUG_HASHTABLE
-      printf("Creation d'une nouvelle entree (k=%p,v=%p), qn=%p, pdata=%p\n",
+      LogFullDebug(COMPONENT_HASHTABLE,"Creation d'une nouvelle entree (k=%p,v=%p), qn=%p, pdata=%p",
              buffkey->pdata, buffval->pdata, qn, RBT_OPAQ(qn));
-#endif
     }
 
   pdata->buffval.pdata = buffval->pdata;
@@ -713,12 +666,19 @@ int HashTable_Get(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * bu
   if(ht == NULL || buffkey == NULL || buffval == NULL)
     return HASHTABLE_ERROR_INVALID_ARGUMENT;
 
-  /* Find the RB Tree to be processed */
-  hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
-  tete_rbt = &(ht->array_rbt[hashval]);
+  /* Compute values to locate into the hashtable */
+  if( ht->parameter.hash_func_both != NULL )
+   {
+      if( (*(ht->parameter.hash_func_both))( &ht->parameter, buffkey, &hashval, &rbt_value ) == 0 ) 
+       return HASHTABLE_ERROR_INVALID_ARGUMENT;
+   }
+  else
+   {
+    hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
+    rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
+   }
 
-  /* Seek into the RB Tree */
-  rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
+  tete_rbt = &(ht->array_rbt[hashval]);
 
   /* Acquire mutex */
   P_r(&(ht->array_lock[hashval]));
@@ -776,11 +736,17 @@ int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
   if(ht == NULL || buffkey == NULL)
     return HASHTABLE_ERROR_INVALID_ARGUMENT;
 
-  /* Find the RB Tree to be processed */
-  hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
-
-  /* Find the entry to be deleted */
-  rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
+  /* Compute values to locate into the hashtable */
+  if( ht->parameter.hash_func_both != NULL )
+   {
+      if( (*(ht->parameter.hash_func_both))( &ht->parameter, buffkey, &hashval, &rbt_value ) == 0 ) 
+       return HASHTABLE_ERROR_INVALID_ARGUMENT;
+   }
+  else
+   {
+    hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
+    rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
+   }
 
   /* acquire mutex */
   P_w(&(ht->array_lock[hashval]));
@@ -810,10 +776,10 @@ int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
   ht->stat_dynamic[hashval].nb_entries -= 1;
 
   /* put back the pdata buffer to pool */
-  RELEASE_PREALLOC(pdata, ht->pdata_prealloc[hashval], next_alloc);
+  ReleaseToPool(pdata, &ht->pdata_prealloc[hashval]);
 
   /* Put the node back in the table of preallocated nodes (it could be reused) */
-  RELEASE_PREALLOC(pn, ht->node_prealloc[hashval], next);
+  ReleaseToPool(pn, &ht->node_prealloc[hashval]);
 
   ht->stat_dynamic[hashval].ok.nb_del += 1;
 
@@ -938,15 +904,15 @@ unsigned int HashTable_GetSize(hash_table_t * ht)
  *
  * Print information about the hashtable (mostly for debugging purpose).
  *
+ * @param component the component debugging config to use.
  * @param ht the hashtable to be used.
- *
  * @return none (returns void).
  *
  * @see HashTable_Set
  * @see HashTable_Init
  * @see HashTable_Get
  */
-void HashTable_Print(hash_table_t * ht)
+void HashTable_Log(log_components_t component, hash_table_t * ht)
 {
   struct rbt_node *it;
   struct rbt_head *tete_rbt;
@@ -963,26 +929,20 @@ void HashTable_Print(hash_table_t * ht)
   if(ht == NULL)
     return;
 
-#ifdef _DEBUG_HASHTABLE
-  printf
-      ("The hash has %d nodes (this number MUST be a prime integer for performance's issues)\n",
+  LogFullDebug(COMPONENT_HASHTABLE,
+      "The hash has %d nodes (this number MUST be a prime integer for performance's issues)",
        ht->parameter.index_size);
-#endif
 
   for(i = 0; i < ht->parameter.index_size; i++)
     nb_entries += ht->stat_dynamic[i].nb_entries;
 
-#ifndef _DEBUG_HASHTABLE
-  printf("The hash contains %d entries\n", nb_entries);
-#endif
+  LogFullDebug(COMPONENT_HASHTABLE,"The hash contains %d entries", nb_entries);
 
   for(i = 0; i < ht->parameter.index_size; i++)
     {
       tete_rbt = &((ht->array_rbt)[i]);
-#ifdef _DEBUG_HASHTABLE
-      printf("The node in position %d contains:  %d entries \n", i,
+      LogFullDebug(COMPONENT_HASHTABLE,"The node in position %d contains:  %d entries ", i,
              tete_rbt->rbt_num_node);
-#endif
       RBT_LOOP(tete_rbt, it)
       {
         pdata = (hash_data_t *) it->rbt_opaq;
@@ -990,14 +950,42 @@ void HashTable_Print(hash_table_t * ht)
         ht->parameter.key_to_str(&(pdata->buffkey), dispkey);
         ht->parameter.val_to_str(&(pdata->buffval), dispval);
 
-        hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, &(pdata->buffkey));
-        rbtval = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, &(pdata->buffkey));
+        /* Compute values to locate into the hashtable */
+        if( ht->parameter.hash_func_both != NULL )
+         {
+           if( (*(ht->parameter.hash_func_both))( &ht->parameter, &(pdata->buffkey), (uint32_t *)&hashval, (uint32_t *)&rbtval ) == 0 ) 
+	     {
+               LogCrit(COMPONENT_HASHTABLE,"Possible implementation error at line %u file %s", __LINE__, __FILE__ ) ;
+               hashval = 0 ;
+               rbtval = 0 ;
+             }
+          }
+        else
+          {
+            hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, &(pdata->buffkey));
+            rbtval = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, &(pdata->buffkey));
+          }
 
-        printf("%s => %s; hashval=%lu rbtval=%lu\n ", dispkey, dispval, hashval, rbtval);
+        LogFullDebug(component, "%s => %s; hashval=%lu rbtval=%lu\n ", dispkey, dispval, hashval, rbtval);
         RBT_INCREMENT(it);
       }
     }
   printf("\n");
+}                               /* HashTable_Print */
+
+/**
+ * 
+ * HashTable_Print: Print information about the hashtable (mostly for debugging purpose).
+ *
+ * Print information about the hashtable (mostly for debugging purpose).
+ *
+ * @param ht the hashtable to be used.
+ * @return none (returns void).
+ *
+ */
+void HashTable_Print(hash_table_t * ht)
+{
+  HashTable_Log(COMPONENT_STDOUT, ht);
 }                               /* HashTable_Print */
 
 /* @} */

@@ -360,5 +360,61 @@
         - checksum were removed from NFS file handles (more space for storing FSAL handles)
         - (Patch from Frank Filz) : new and optionnal core parameter Bind_Addr
 
-0.99.66 - 
+0.99.66 - Fri 25 Jun 2010
         - FSAL_XFS now has lock support
+	- Brand new FSAL_GPFS added (patch from IBM) to natively support GPFS
+	- FSAL_POSIX and FSAL_XFS now have quota support (via rquota v1/v2
+	  protocol and the use of the quotactl function)
+	- Typos fixed in doxygen.conf files 
+	- FSAL_TEMPLATE updated (had new functions for quota and lock management)
+        - pNFS/LAYOUT_FILES works with multiple Data Server
+
+1.0.1   - Fri 17 Sep 2010
+        - New FSAL model: FSAL modules can now be compile as shared object and
+	  can be loaded at runtime
+        - New FSAL to support ZFS filesystem
+	- Add the capability to build a "FSAL-less" daemon that loads FSAL
+  	  shared object by using the dlopen function.
+	- FSAL_PROXY: the embedded client now can allocate a tcp socket on a
+	  privileged port to contact the "proxyfied" server
+        - FSAL shared objects are provided as precompiled rpms
+	- Log layer now uses syslog as a possible log stream 
+	- Add new call FSAL_getextattrs to get info such a generation number
+	  or creation time
+	- New Log management from IBM
+	- Several potential buffer overflow in fscanf fixed
+       
+1.0.2	- Mon 18 Oct 2010
+	- New TCP connection management to avoid DOS-like attack
+	- Tag _NO_BLOCK_PREALLOC was removed
+	- New debian packaging
+        - Bug Fix : OP4_REMOVE did not operate if the destination was an existing file
+        - Bug Fix : FATTR4_ACL is now an unsupported attributes (it is in fact)
+        - Bug Fix : OP4_GETATTR on unsupported attributes should ignore them instead 
+          of returning NFS4ERR_ATTR_NOTSUPP
+        - Bug Fix : locks_held counter was badly managed in OP4_LOCKU
+        - Bug Fix : OP4_DESTROY_SESSION returned bad session when session was successfully destroyed.
+	- Bug Fix : FSAL_XFS:fsal_create always made files owned by root.
+	- Code Cleaning : all Log* functions's format were reviewed and fixed
+	- Memory manager improvement : stuff_alloc macros and BuddyMalloc are
+	  now closely tied.  
+	- Bug Fix : erroneous EACCESS in FSAL_XFS and FSAL_LUSTRE when
+	  creating file as a regulat user 
+	- New feature : FSAL_ZFS provides access to ZFS snapshot directory
+	  .zfs  based on  ZFS's COW feature.
+
+1.0.3	- 
+        - A regression in FSAL_PROXY was fixed (size of NFSv4 handles)
+        - HashTable support hash functions that compute hashval and rbtval in one pass
+        - Cache_inode uses a "dual value compute function" in its hashtable
+        - Reverse clientid mapper uses a "dual value compute function" in its hashtable
+        - pNFS/LAYOUT4_NFSV4_1_FILES : several bug fixed (see git log)
+        - DupReq indexation has been reviewed: now (src_ipaddr,port,xid,additional cksum) tuple is used as key
+	- workers's selection has been reviewed to reduce CPU comsumption in the case a very large number 
+          of workers is used.
+        - security fixed : when 'root' is mapped as nobody, its 'altgroups' is cleared
+        - Configuration can now reduce the version of NFS advertsised to rpcbind (to avoid NFSv2 for example).
+        - XML output has been added to non-regression tests for easier integration in HudsonCI
+        - A few changes in NLM implementation 
+        - FSAL_HPSS has been ported to HPSSv7.3.2
+	

@@ -128,21 +128,25 @@ SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz)
       return ((SVCXPRT *) NULL);
     }
 
-  xprt = (SVCXPRT *) Mem_Alloc(sizeof(SVCXPRT));
+  xprt = (SVCXPRT *) Mem_Alloc_Label(sizeof(SVCXPRT), "SVCXPRT (UDP)");
   if(xprt == NULL)
     {
       return (NULL);
     }
 
-  su = (struct Svcudp_data *)Mem_Alloc(sizeof(*su));
+  su = (struct Svcudp_data *)Mem_Alloc_Label(sizeof(*su), "struct Svcudp_data");
 
   if(su == NULL)
     {
+      Mem_Free( xprt ) ;
       return (NULL);
     }
+
   su->su_iosz = ((MAX(sendsz, recvsz) + 3) / 4) * 4;
-  if((rpc_buffer(xprt) = Mem_Alloc(su->su_iosz)) == NULL)
+  if((rpc_buffer(xprt) = Mem_Alloc_Label(su->su_iosz, "UDP IO Buffer")) == NULL)
     {
+      Mem_Free( su ) ;
+      Mem_Free( xprt ) ;
       return (NULL);
     }
 
@@ -167,6 +171,16 @@ SVCXPRT *Svcudp_create(int sock)
 {
 
   return (Svcudp_bufcreate(sock, UDPMSGSIZE, UDPMSGSIZE));
+}
+
+void Svcudp_soft_destroy(register SVCXPRT * xprt)
+{
+  register struct Svcudp_data *su = Su_data(xprt);
+
+  //XDR_DESTROY(&(su->su_xdrs));
+  Mem_Free(rpc_buffer(xprt));
+  Mem_Free((caddr_t) su);
+  Mem_Free((caddr_t) xprt);
 }
 
 static void Svcudp_destroy(register SVCXPRT * xprt)

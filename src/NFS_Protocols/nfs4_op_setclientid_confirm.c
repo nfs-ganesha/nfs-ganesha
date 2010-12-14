@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -109,8 +109,8 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
   res_SETCLIENTID_CONFIRM4.status = NFS4_OK;
   clientid = arg_SETCLIENTID_CONFIRM4.clientid;
 
-  DisplayLogLevel(NIV_DEBUG, "SETCLIENTID_CONFIRM clientid = %llx", clientid);
-  /* DisplayLogLevel( NIV_DEBUG, "SETCLIENTID_CONFIRM Verifier = #%s#", arg_SETCLIENTID_CONFIRM4.setclientid_confirm ) ; */
+  LogDebug(COMPONENT_NFS_V4, "SETCLIENTID_CONFIRM clientid = %"PRIx64, clientid);
+  /* LogDebug(COMPONENT_NFS_V4, "SETCLIENTID_CONFIRM Verifier = #%s#", arg_SETCLIENTID_CONFIRM4.setclientid_confirm ) ; */
 
   /* Does this id already exists ? */
   if(nfs_client_id_get(clientid, &nfs_clientid) == CLIENT_ID_SUCCESS)
@@ -134,8 +134,8 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
         {
           if(nfs_clientid.confirmed == REBOOTED_CLIENT_ID)
             {
-              DisplayLogLevel(NIV_DEBUG,
-                              "SETCLIENTID_CONFIRM clientid = %llx, client was rebooted, getting ride of old state from previous client instance",
+              LogDebug(COMPONENT_NFS_V4,
+                              "SETCLIENTID_CONFIRM clientid = %"PRIx64", client was rebooted, getting ride of old state from previous client instance",
                               clientid);
             }
 
@@ -146,7 +146,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
           nfs_clientid.last_renew = time(NULL);
 
           /* Set the new value */
-          if(nfs_client_id_set(clientid, nfs_clientid, pworker->clientid_pool) !=
+          if(nfs_client_id_set(clientid, nfs_clientid, &pworker->clientid_pool) !=
              CLIENT_ID_SUCCESS)
             {
               res_SETCLIENTID_CONFIRM4.status = NFS4ERR_SERVERFAULT;

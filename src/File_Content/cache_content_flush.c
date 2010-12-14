@@ -42,7 +42,7 @@
 #endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -101,7 +101,7 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
     {
       *pstatus = CACHE_CONTENT_BAD_CACHE_INODE_ENTRY;
 
-      DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+      LogMajor(COMPONENT_CACHE_CONTENT,
                         "cache_content_new_entry: cannot get handle");
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_FLUSH] += 1;
@@ -131,9 +131,9 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
 #if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
   fsal_status =
       FSAL_rcp_by_name(&
-                       (pentry_inode->object.file.pentry_parent_open->object.
-                        dir_begin.handle), pentry_inode->object.file.pname, pcontext,
-                       &local_path, FSAL_RCP_LOCAL_TO_FS);
+                       (pentry_inode->object.file.pentry_parent_open->object.dir_begin.
+                        handle), pentry_inode->object.file.pname, pcontext, &local_path,
+                       FSAL_RCP_LOCAL_TO_FS);
 #else
   /* Write the data from the local data file to the fs file */
   fsal_status = FSAL_rcp(pfsal_handle, pcontext, &local_path, FSAL_RCP_LOCAL_TO_FS);
@@ -142,11 +142,11 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
   if(FSAL_IS_ERROR(fsal_status))
     {
 #if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
-      DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+      LogMajor(COMPONENT_CACHE_CONTENT, 
                         "Error %d,%d from FSAL_rcp_by_name when flushing file",
                         fsal_status.major, fsal_status.minor);
 #else
-      DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+      LogMajor(COMPONENT_CACHE_CONTENT,
                         "Error %d,%d from FSAL_rcp when flushing file", fsal_status.major,
                         fsal_status.minor);
 #endif
@@ -171,7 +171,7 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
           /* Unlock related Cache Inode pentry */
           V_w(&pentry->pentry_inode->lock);
 
-          DisplayLog("Can't unlink flushed index %s, errno=%u(%s)",
+          LogCrit(COMPONENT_CACHE_CONTENT, "Can't unlink flushed index %s, errno=%u(%s)",
                      pentry->local_fs_entry.cache_path_index, errno, strerror(errno));
           *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
           return *pstatus;
@@ -183,7 +183,7 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
           /* Unlock related Cache Inode pentry */
           V_w(&pentry->pentry_inode->lock);
 
-          DisplayLog("Can't unlink flushed index %s, errno=%u(%s)",
+          LogCrit(COMPONENT_CACHE_CONTENT, "Can't unlink flushed index %s, errno=%u(%s)",
                      pentry->local_fs_entry.cache_path_data, errno, strerror(errno));
           *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
           return *pstatus;
@@ -248,7 +248,7 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
     {
       *pstatus = CACHE_CONTENT_BAD_CACHE_INODE_ENTRY;
 
-      DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+      LogMajor(COMPONENT_CACHE_CONTENT,
                         "cache_content_new_entry: cannot get handle");
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_REFRESH] += 1;
@@ -275,7 +275,7 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
     {
       *pstatus = CACHE_CONTENT_FSAL_ERROR;
 
-      DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+      LogMajor(COMPONENT_CACHE_CONTENT,
                         "cache_content_new_entry: could'nt stat on %s, errno=%u(%s)",
                         pentry->local_fs_entry.cache_path_data, errno, strerror(errno));
 
@@ -284,20 +284,20 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
 
       return *pstatus;
     }
-#ifdef _DEBUG_FSAL
+
   if(how == FORCE_FROM_FSAL)
-    printf("FORCE FROM FSAL\n");
+    LogFullDebug(COMPONENT_FSAL,"FORCE FROM FSAL");
   else
-    printf("FORCE FROM FSAL PAS ACTIVE\n");
-#endif
+    LogFullDebug(COMPONENT_FSAL,"FORCE FROM FSAL PAS ACTIVE");
+
 
   if((how != FORCE_FROM_FSAL)
      && (buffstat.st_mtime > (time_t) pentry_inode->object.file.attributes.mtime.seconds))
     {
       *pstatus = CACHE_CONTENT_SUCCESS;
 
-      DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
-                        "Entry %s is more recent in data cache, keeping it");
+      LogDebug(COMPONENT_CACHE_CONTENT,
+                        "Entry %p is more recent in data cache, keeping it", pentry);
       pentry_inode->object.file.attributes.mtime.seconds = buffstat.st_mtime;
       pentry_inode->object.file.attributes.mtime.nseconds = 0;
       pentry_inode->object.file.attributes.atime.seconds = buffstat.st_atime;
@@ -310,9 +310,9 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
 #if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
       fsal_status =
           FSAL_rcp_by_name(&
-                           (pentry_inode->object.file.pentry_parent_open->
-                            object.dir_begin.handle), pentry_inode->object.file.pname,
-                           pcontext, &local_path, FSAL_RCP_FS_TO_LOCAL);
+                           (pentry_inode->object.file.pentry_parent_open->object.
+                            dir_begin.handle), pentry_inode->object.file.pname, pcontext,
+                           &local_path, FSAL_RCP_FS_TO_LOCAL);
 #else
       /* Write the data from the local data file to the fs file */
       fsal_status = FSAL_rcp(pfsal_handle, pcontext, &local_path, FSAL_RCP_FS_TO_LOCAL);
@@ -322,12 +322,12 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
           *pstatus = CACHE_CONTENT_FSAL_ERROR;
 
 #if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
-          DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+          LogMajor(COMPONENT_CACHE_CONTENT,
                             "FSAL_rcp_by_name failed for %s: fsal_status.major=%u fsal_status.minor=%u",
                             pentry->local_fs_entry.cache_path_data, fsal_status.major,
                             fsal_status.minor);
 #else
-          DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+          LogMajor(COMPONENT_CACHE_CONTENT,
                             "FSAL_rcp failed for %s: fsal_status.major=%u fsal_status.minor=%u",
                             pentry->local_fs_entry.cache_path_data, fsal_status.major,
                             fsal_status.minor);

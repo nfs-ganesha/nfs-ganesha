@@ -3,9 +3,6 @@
 #include "stuff_alloc.h"
 #include <sys/time.h>
 
-log_t fsal_log = LOG_INITIALIZER;
-desc_log_stream_t log_stream;
-
 int main(int argc, char **argv)
 {
   unsigned int i;
@@ -16,7 +13,7 @@ int main(int argc, char **argv)
 
   if(argc != 3 || (count = atoi(argv[2])) == 0)
     {
-      printf("usage: test_handle_mapping <db_dir> <db_count>\n");
+      LogTest("usage: test_handle_mapping <db_dir> <db_count>");
       exit(1);
     }
 #ifndef _NO_BUDDY_SYSTEM
@@ -24,15 +21,12 @@ int main(int argc, char **argv)
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: Could not initialize memory manager");
+      LogCrit(COMPONENT_FSAL, "ERROR: Could not initialize memory manager");
       exit(rc);
     }
 #endif
 
   dir = argv[1];
-
-  log_stream.flux = stdout;
-  AddLogStreamJd(&fsal_log, V_STREAM, log_stream, NIV_DEBUG, SUP);
 
   /* Init logging */
   SetNamePgm("test_handle_mapping");
@@ -40,28 +34,26 @@ int main(int argc, char **argv)
   SetNameFunction("main");
   SetNameHost("localhost");
 
-  InitDebug(NIV_FULL_DEBUG);
-
   /* count databases */
 
   rc = handlemap_db_count(dir);
 
-  printf("handlemap_db_count(%s)=%d\n", dir, rc);
+  LogTest("handlemap_db_count(%s)=%d", dir, rc);
 
   if(rc != 0 && count != rc)
     {
-      printf("Warning: incompatible thread count %d <> database count %d\n", count, rc);
+      LogTest("Warning: incompatible thread count %d <> database count %d", count, rc);
     }
 
   rc = handlemap_db_init(dir, "/tmp", count, 1024, FALSE);
 
-  printf("handlemap_db_init() = %d\n", rc);
+  LogTest("handlemap_db_init() = %d", rc);
   if(rc)
     exit(rc);
 
   rc = handlemap_db_reaload_all(NULL);
 
-  printf("handlemap_db_reaload_all() = %d\n", rc);
+  LogTest("handlemap_db_reaload_all() = %d", rc);
   if(rc)
     exit(rc);
 
@@ -89,18 +81,18 @@ int main(int argc, char **argv)
 
   timersub(&tv2, &tv1, &tvdiff);
 
-  printf("%u threads inserted 10000 handles in %d.%06ds\n", count, (int)tvdiff.tv_sec,
-         (int)tvdiff.tv_usec);
+  LogTest("%u threads inserted 10000 handles in %d.%06ds", count, (int)tvdiff.tv_sec,
+          (int)tvdiff.tv_usec);
 
   rc = handlemap_db_flush();
 
   gettimeofday(&tv3, NULL);
 
   timersub(&tv3, &tv1, &tvdiff);
-  printf("Total time with %u threads (including flush): %d.%06ds\n", count,
-         (int)tvdiff.tv_sec, (int)tvdiff.tv_usec);
+  LogTest("Total time with %u threads (including flush): %d.%06ds", count,
+          (int)tvdiff.tv_sec, (int)tvdiff.tv_usec);
 
-  printf("Now, delete operations\n");
+  LogTest("Now, delete operations");
 
   for(i = 0; i < 10000; i++)
     {
@@ -117,15 +109,15 @@ int main(int argc, char **argv)
   gettimeofday(&tv2, NULL);
   timersub(&tv2, &tv3, &tvdiff);
 
-  printf("%u threads deleted 10000 handles in %d.%06ds\n", count, (int)tvdiff.tv_sec,
-         (int)tvdiff.tv_usec);
+  LogTest("%u threads deleted 10000 handles in %d.%06ds", count, (int)tvdiff.tv_sec,
+          (int)tvdiff.tv_usec);
 
   rc = handlemap_db_flush();
 
   gettimeofday(&tv1, NULL);
   timersub(&tv1, &tv3, &tvdiff);
-  printf("Delete time with %u threads (including flush): %d.%06ds\n", count,
-         (int)tvdiff.tv_sec, (int)tvdiff.tv_usec);
+  LogTest("Delete time with %u threads (including flush): %d.%06ds", count,
+          (int)tvdiff.tv_sec, (int)tvdiff.tv_usec);
 
   exit(0);
 

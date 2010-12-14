@@ -91,8 +91,17 @@ static char *mnt_function_names[] = {
   "MNT_null", "MNT_mount", "MNT_dump", "MNT_umount", "MNT_umountall", "MNT_export"
 };
 
+#define RQUOTA_NB_COMMAND 5
+static char *rquota_functions_names[] = {
+  "rquota_Null", "rquota_getquota", "rquota_getquotaspecific", "rquota_setquota",
+  "rquota_setquotaspecific"
+};
+
 #define NFS_V40_NB_OPERATION 39
 #define NFS_V41_NB_OPERATION 58
+
+#define ERR_STAT_NO_ERROR 0
+#define ERR_STAT_ERROR    1
 
 typedef enum nfs_stat_type__
 { GANESHA_STAT_SUCCESS = 0,
@@ -114,6 +123,10 @@ typedef struct nfs_request_stat_item__
   unsigned int total;
   unsigned int success;
   unsigned int dropped;
+  unsigned int tot_latency;
+  unsigned int min_latency;
+  unsigned int max_latency;
+  unsigned int tot_await_time;
 } nfs_request_stat_item_t;
 
 typedef struct nfs_request_stat__
@@ -126,6 +139,8 @@ typedef struct nfs_request_stat__
   unsigned int nb_nfs40_op;
   unsigned int nb_nfs41_op;
   unsigned int nb_nlm4_req;
+  unsigned int nb_rquota1_req;
+  unsigned int nb_rquota2_req;
   nfs_request_stat_item_t stat_req_mnt1[MNT_V1_NB_COMMAND];
   nfs_request_stat_item_t stat_req_mnt3[MNT_V3_NB_COMMAND];
   nfs_request_stat_item_t stat_req_nfs2[NFS_V2_NB_COMMAND];
@@ -134,9 +149,47 @@ typedef struct nfs_request_stat__
   nfs_op_stat_item_t stat_op_nfs40[NFS_V40_NB_OPERATION];
   nfs_op_stat_item_t stat_op_nfs41[NFS_V41_NB_OPERATION];
   nfs_request_stat_item_t stat_req_nlm4[NLM_V4_NB_OPERATION];
+  nfs_request_stat_item_t stat_req_rquota1[RQUOTA_NB_COMMAND];
+  nfs_request_stat_item_t stat_req_rquota2[RQUOTA_NB_COMMAND];
 } nfs_request_stat_t;
 
+typedef enum
+{
+  SVC_TIME = 0,
+  AWAIT_TIME
+} nfs_stat_latency_type_t;
+
+typedef struct nfs_request_latency_stat__
+{
+  nfs_stat_latency_type_t type;
+  unsigned int latency;
+} nfs_request_latency_stat_t;
+
+typedef enum
+{
+  PER_SERVER = 0,
+  PER_SERVER_DETAIL,
+  PER_CLIENT,
+  PER_SHARE,
+  PER_CLIENTSHARE
+} nfs_stat_client_req_type_t;
+
+typedef struct
+{
+  int nfs_version;
+  nfs_stat_client_req_type_t stat_type;
+  char client_name[1024];
+  char share_name[1024];
+} nfs_stat_client_req_t;
+
 void nfs_stat_update(nfs_stat_type_t type,
-                     nfs_request_stat_t * pstat_req, struct svc_req *preq);
+                     nfs_request_stat_t * pstat_req, struct svc_req *preq,
+                     nfs_request_latency_stat_t * lstat_req);
+
+void set_min_latency(nfs_request_stat_item_t *cur_stat, unsigned int val);
+
+void set_max_latency(nfs_request_stat_item_t *cur_stat, unsigned int val);
+
+struct timeval time_diff(struct timeval time_from, struct timeval time_to);
 
 #endif                          /* _NFS_STAT_H */

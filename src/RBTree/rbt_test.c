@@ -82,7 +82,6 @@ main(int argc, char **argv)
           printf("scanf retourne %d\n", rc);
           continue;
         }
-      fflush(stdin);
 
       switch (c)
         {

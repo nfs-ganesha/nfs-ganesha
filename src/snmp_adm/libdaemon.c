@@ -124,18 +124,12 @@ static int get_conf_from_env()
  */
 static register_info *new_register(char *label, char *desc, int type, int reg_len)
 {
-  int str_len;
   register_info *save;
   register_info *new = malloc(sizeof(register_info));
 
   /*fill the struct */
-  str_len = strlen(label) + 1;
-  new->label = malloc(str_len * sizeof(char));
-  strncpy(new->label, label, str_len);
-
-  str_len = strlen(desc) + 1;
-  new->desc = malloc(str_len * sizeof(char));
-  strncpy(new->desc, desc, str_len);
+  new->label = strdup(label);
+  new->desc = strdup(desc);
 
   /* set function to NULL (avoid undetermined value if scalar) */
   memset(&(new->function_info), 0, sizeof(new->function_info));
@@ -146,9 +140,8 @@ static register_info *new_register(char *label, char *desc, int type, int reg_le
   new->reg_len = reg_len;
 
   /* link the cell (insert in first) */
-  save = register_info_list;
+  new->next = register_info_list;
   register_info_list = new;
-  new->next = save;
 
   return new;
 }
@@ -180,6 +173,7 @@ static void get_oid(oid * myoid, int branch, size_t * plen)
   /* id of the object,
      increamented after each record */
   static int stat_num = 0;
+  static int log_num  = 0;
   static int conf_num = 0;
   static int proc_num = 0;
 
@@ -190,6 +184,8 @@ static void get_oid(oid * myoid, int branch, size_t * plen)
   myoid[(*plen)++] = branch;
   if(branch == STAT_OID)
     myoid[(*plen)++] = stat_num++;
+  else if(branch == LOG_OID)
+    myoid[(*plen)++] = log_num++;
   else if(branch == CONF_OID)
     myoid[(*plen)++] = conf_num++;
   else if(branch == PROC_OID)
@@ -672,8 +668,12 @@ int snmp_adm_register_poll_trap(unsigned int second, trap_test test_fct, void *a
   if(polling_list_size >= capacity - 1)
     {
       capacity *= 2;
-      polling_threads = realloc(polling_threads, sizeof(pthread_t) * capacity);
-      polling_args = realloc(polling_args, sizeof(polling_arg) * capacity);
+
+      if ( ( polling_threads = realloc(polling_threads, sizeof(pthread_t) * capacity) ) == NULL )
+        return -1 ; 
+
+      if( ( polling_args = realloc(polling_args, sizeof(polling_arg) * capacity) ) == NULL )
+	return -1 ;
     }
 
   polling_args[polling_list_size].second = second;

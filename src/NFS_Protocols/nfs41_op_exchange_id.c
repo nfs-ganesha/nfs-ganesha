@@ -60,7 +60,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -92,7 +92,7 @@ extern nfs_parameter_t nfs_param;
  *
  */
 
-static uint32_t all_eia_flags = EXCHGID4_FLAG_SUPP_MOVED_REFER |
+static uint32_t all_eia_flags = 
     EXCHGID4_FLAG_SUPP_MOVED_MIGR |
     EXCHGID4_FLAG_BIND_PRINC_STATEID |
     EXCHGID4_FLAG_USE_NON_PNFS |
@@ -122,10 +122,10 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
           arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_len);
   str_client[arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_len] = '\0';
 
-  DisplayLogLevel(NIV_DEBUG, "EXCHANGE_ID Client id len = %u",
+  LogDebug(COMPONENT_NFS_V4, "EXCHANGE_ID Client id len = %u",
                   arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_len);
-  DisplayLogLevel(NIV_DEBUG, "EXCHANGE_ID Client name = #%s#", str_client);
-  //DisplayLogLevel( NIV_DEBUG, "EXCHANGE_ID Verifier = #%s#", str_verifier ) ; 
+  LogDebug(COMPONENT_NFS_V4, "EXCHANGE_ID Client name = #%s#", str_client);
+  //LogDebug(COMPONENT_NFS_V4, "EXCHANGE_ID Verifier = #%s#", str_verifier ) ; 
 
   /* There was no pb, returns the clientid */
   resp->resop = NFS4_OP_EXCHANGE_ID;
@@ -137,23 +137,25 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
       res_EXCHANGE_ID4.eir_status = NFS4ERR_SERVERFAULT;
       return res_EXCHANGE_ID4.eir_status;
     }
-  DisplayLogLevel(NIV_DEBUG, "EXCHANGE_ID computed clientid4=%llx for name='%s'",
-                  clientid, str_client);
+  LogDebug(COMPONENT_NFS_V4, "EXCHANGE_ID computed clientid4=%llux for name='%s'",
+                  (long long unsigned int)clientid, str_client);
 
+#if 0 //plante le client sous windows. Ai-je réellement besoin de cela ???? //
   /* Check flags value (test EID4) */
   if(arg_EXCHANGE_ID4.eia_flags & all_eia_flags != arg_EXCHANGE_ID4.eia_flags)
     {
       res_EXCHANGE_ID4.eir_status = NFS4ERR_INVAL;
       return res_EXCHANGE_ID4.eir_status;
     }
+#endif 
 
   /* Does this id already exists ? */
   if(nfs_client_id_get(clientid, &nfs_clientid) == CLIENT_ID_SUCCESS)
     {
       /* Client id already in use */
-      DisplayLogLevel(NIV_DEBUG,
+      LogDebug(COMPONENT_NFS_V4,
                       "EXCHANGE_ID ClientId %llx already in use for client '%s', check if same",
-                      clientid, nfs_clientid.client_name);
+                      (long long unsigned int)clientid, nfs_clientid.client_name);
 
       /* Principals are the same, check content of the setclientid request */
       if(nfs_clientid.confirmed == CONFIRMED_CLIENT_ID)
@@ -163,7 +165,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
           if(nfs_compare_clientcred(&(nfs_clientid.credential), &(data->credential)) ==
              FALSE)
             {
-              DisplayLogLevel(NIV_DEBUG,
+              LogDebug(COMPONENT_NFS_V4,
                               "EXCHANGE_ID Confirmed ClientId %llx -> '%s': Credential do not match... Return NFS4ERR_CLID_INUSE",
                               clientid, nfs_clientid.client_name);
 
@@ -182,34 +184,34 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
               return res_EXCHANGE_ID4.eir_status;
             }
           else
-            DisplayLogLevel(NIV_DEBUG,
+            LogDebug(COMPONENT_NFS_V4,
                             "EXCHANGE_ID ClientId %llx is set again by same principal",
                             clientid);
 #endif
 
           /* Ask for a different client with the same client id... returns an error if different client */
-          DisplayLogLevel(NIV_DEBUG,
+          LogDebug(COMPONENT_NFS_V4,
                           "EXCHANGE_ID Confirmed ClientId %llx already in use for client '%s'",
-                          clientid, nfs_clientid.client_name);
+                          (long long unsigned int)clientid, nfs_clientid.client_name);
 
           if(strncmp
              (nfs_clientid.incoming_verifier,
               arg_EXCHANGE_ID4.eia_clientowner.co_verifier, NFS4_VERIFIER_SIZE))
             {
-              DisplayLogLevel(NIV_DEBUG,
+              LogDebug(COMPONENT_NFS_V4,
                               "EXCHANGE_ID Confirmed ClientId %llx already in use for client '%s', verifier do not match...",
-                              clientid, nfs_clientid.client_name);
+                              (long long unsigned int)clientid, nfs_clientid.client_name);
 
               /* A client has rebooted and rebuilds its state */
-              DisplayLogLevel(NIV_DEBUG,
+              LogDebug(COMPONENT_NFS_V4,
                               "Probably something to be done here: a client has rebooted and try recovering its state. Update the record for this client");
 
               /* Update the record, but set it as REBOOTED */
               strncpy(nfs_clientid.client_name,
                       arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_val,
                       arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_len);
-              nfs_clientid.client_name[arg_EXCHANGE_ID4.eia_clientowner.
-                                       co_ownerid.co_ownerid_len] = '\0';
+              nfs_clientid.client_name[arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.
+                                       co_ownerid_len] = '\0';
 
               strncpy(nfs_clientid.incoming_verifier,
                       arg_EXCHANGE_ID4.eia_clientowner.co_verifier, NFS4_VERIFIER_SIZE);
@@ -219,7 +221,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
               nfs_clientid.clientid = clientid;
               nfs_clientid.last_renew = 0;
 
-              if(nfs_client_id_set(clientid, nfs_clientid, pworker->clientid_pool) !=
+              if(nfs_client_id_set(clientid, nfs_clientid, &pworker->clientid_pool) !=
                  CLIENT_ID_SUCCESS)
                 {
                   res_EXCHANGE_ID4.eir_status = NFS4ERR_SERVERFAULT;
@@ -229,18 +231,18 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
             }
           else
             {
-              DisplayLogLevel(NIV_DEBUG,
+              LogDebug(COMPONENT_NFS_V4,
                               "EXCHANGE_ID Confirmed ClientId %llx already in use for client '%s', verifier matches. Now check callback",
-                              clientid, nfs_clientid.client_name);
+                              (long long unsigned int)clientid, nfs_clientid.client_name);
             }
         }
       else
         {
-          DisplayLogLevel(NIV_DEBUG,
+          LogDebug(COMPONENT_NFS_V4,
                           "EXCHANGE_ID ClientId %llx already in use for client '%s', but unconfirmed",
-                          clientid, nfs_clientid.client_name);
-          DisplayLog
-              ("Reuse of a formerly obtained clientid that is not yet confirmed. Code needs to be improved here");
+                          (long long unsigned int)clientid, nfs_clientid.client_name);
+          LogCrit(COMPONENT_NFS_V4,
+	     "Reuse of a formerly obtained clientid that is not yet confirmed."); // Code needs to be improved here.
         }
     }
   else
@@ -249,8 +251,8 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
       strncpy(nfs_clientid.client_name,
               arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_val,
               arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_len);
-      nfs_clientid.client_name[arg_EXCHANGE_ID4.eia_clientowner.
-                               co_ownerid.co_ownerid_len] = '\0';
+      nfs_clientid.client_name[arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.
+                               co_ownerid_len] = '\0';
 
       strncpy(nfs_clientid.incoming_verifier,
               arg_EXCHANGE_ID4.eia_clientowner.co_verifier, NFS4_VERIFIER_SIZE);
@@ -271,7 +273,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
         }
       strncpy(nfs_clientid.server_scope, nfs_clientid.server_owner, MAXNAMLEN);
 
-      if(nfs_client_id_add(clientid, nfs_clientid, pworker->clientid_pool) !=
+      if(nfs_client_id_add(clientid, nfs_clientid, &pworker->clientid_pool) !=
          CLIENT_ID_SUCCESS)
         {
           res_EXCHANGE_ID4.eir_status = NFS4ERR_SERVERFAULT;
@@ -299,30 +301,29 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_state_protect.spr_how = SP4_NONE;
 
-  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.
-      so_major_id.so_major_id_len = strlen(nfs_clientid.server_owner);
-  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.
-      so_major_id.so_major_id_val = Mem_Alloc(strlen(nfs_clientid.server_owner));
-  memcpy(res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.
-         so_major_id.so_major_id_val, nfs_clientid.server_owner,
-         strlen(nfs_clientid.server_owner));
+  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.
+      so_major_id_len = strlen(nfs_clientid.server_owner);
+  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.
+      so_major_id_val = Mem_Alloc(strlen(nfs_clientid.server_owner));
+  memcpy(res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.
+         so_major_id_val, nfs_clientid.server_owner, strlen(nfs_clientid.server_owner));
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_minor_id = 0;
 
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.eir_server_scope_len =
       strlen(nfs_clientid.server_scope);
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.eir_server_scope_val =
       Mem_Alloc(strlen(nfs_clientid.server_scope));
-  memcpy(res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.
-         eir_server_scope.eir_server_scope_val, nfs_clientid.server_owner,
+  memcpy(res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.
+         eir_server_scope_val, nfs_clientid.server_owner,
          strlen(nfs_clientid.server_owner));
 
-  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.
-      eir_server_impl_id.eir_server_impl_id_len = 0;
-  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.
-      eir_server_impl_id.eir_server_impl_id_val = NULL;
+  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_impl_id.
+      eir_server_impl_id_len = 0;
+  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_impl_id.
+      eir_server_impl_id_val = NULL;
 
-  DisplayLogLevel(NIV_DEBUG, "EXCHANGE_ID reply :ClientId=%llx",
-                  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_clientid);
+  LogDebug(COMPONENT_NFS_V4, "EXCHANGE_ID reply :ClientId=%llx",
+                  (long long unsigned int)res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_clientid);
 
   res_EXCHANGE_ID4.eir_status = NFS4_OK;
   return res_EXCHANGE_ID4.eir_status;
@@ -341,7 +342,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 void nfs41_op_exchange_id_Free(EXCHANGE_ID4res * resp)
 {
   Mem_Free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.eir_server_scope_val);
-  Mem_Free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.
-           so_major_id.so_major_id_val);
+  Mem_Free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.
+           so_major_id_val);
   return;
 }                               /* nfs41_op_exchange_id_Free */

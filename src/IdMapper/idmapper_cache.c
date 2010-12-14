@@ -43,7 +43,7 @@
 
 #include "HashData.h"
 #include "HashTable.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"
@@ -97,6 +97,7 @@ unsigned long idmapper_value_hash_func(hash_parameter_t * p_hparam,
 
   return (unsigned long)(sum % p_hparam->index_size);
 }                               /*  ip_name_value_hash_func */
+
 
 unsigned long namemapper_value_hash_func(hash_parameter_t * p_hparam,
                                          hash_buffer_t * buffclef)
@@ -213,7 +214,7 @@ int idmap_uid_init(nfs_idmap_cache_parameter_t param)
 {
   if((ht_pwnam = HashTable_Init(param.hash_param)) == NULL)
     {
-      DisplayLog("NFS ID MAPPER: Cannot init IDMAP_UID cache");
+      LogCrit(COMPONENT_IDMAPPER, "NFS ID MAPPER: Cannot init IDMAP_UID cache");
       return -1;
     }
 
@@ -224,7 +225,7 @@ int uidgidmap_init(nfs_idmap_cache_parameter_t param)
 {
   if((ht_uidgid = HashTable_Init(param.hash_param)) == NULL)
     {
-      DisplayLog("NFS UID/GID MAPPER: Cannot init UIDGID_MAP cache");
+      LogCrit(COMPONENT_IDMAPPER, "NFS UID/GID MAPPER: Cannot init UIDGID_MAP cache");
       return -1;
     }
 
@@ -235,7 +236,7 @@ int idmap_uname_init(nfs_idmap_cache_parameter_t param)
 {
   if((ht_pwuid = HashTable_Init(param.hash_param)) == NULL)
     {
-      DisplayLog("NFS ID MAPPER: Cannot init IDMAP_UNAME cache");
+      LogCrit(COMPONENT_IDMAPPER, "NFS ID MAPPER: Cannot init IDMAP_UNAME cache");
       return -1;
     }
 
@@ -257,7 +258,7 @@ int idmap_gid_init(nfs_idmap_cache_parameter_t param)
 {
   if((ht_grnam = HashTable_Init(param.hash_param)) == NULL)
     {
-      DisplayLog("NFS ID MAPPER: Cannot init IDMAP_GID cache");
+      LogCrit(COMPONENT_IDMAPPER, "NFS ID MAPPER: Cannot init IDMAP_GID cache");
       return -1;
     }
 
@@ -268,7 +269,7 @@ int idmap_gname_init(nfs_idmap_cache_parameter_t param)
 {
   if((ht_grgid = HashTable_Init(param.hash_param)) == NULL)
     {
-      DisplayLog("NFS ID MAPPER: Cannot init IDMAP_GNAME cache");
+      LogCrit(COMPONENT_IDMAPPER, "NFS ID MAPPER: Cannot init IDMAP_GNAME cache");
       return -1;
     }
 
@@ -284,6 +285,15 @@ int idmap_gname_init(nfs_idmap_cache_parameter_t param)
  */
 
 int idmap_compute_hash_value(char *name, uint32_t * phashval)
+{
+   uint32_t res ;
+  
+   res = HashTable_hash_buff( name, strlen( name ) ) ;
+
+    return (int)res ;
+}
+
+int ___idmap_compute_hash_value(char *name, uint32_t * phashval)
 {
   char padded_name[PWENT_MAX_LEN];
   uint64_t computed_value = 0;
@@ -789,7 +799,7 @@ int idmap_populate(char *path, idmap_type_t maptype)
 
   if(!config_file)
     {
-      DisplayLog("Can't open file %s", path);
+      LogCrit(COMPONENT_IDMAPPER, "Can't open file %s", path);
 
       return ID_MAPPER_INVALID_ARGUMENT;
     }
@@ -817,13 +827,13 @@ int idmap_populate(char *path, idmap_type_t maptype)
   /* Get the config BLOCK */
   if((block = config_FindItemByName(config_file, label)) == NULL)
     {
-      DisplayLog("Can't get label %s in file %s", label, path);
+      LogCrit(COMPONENT_IDMAPPER, "Can't get label %s in file %s", label, path);
       return ID_MAPPER_INVALID_ARGUMENT;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
-      DisplayLog("Label %s in file %s is expected to be a block", label, path);
+      LogCrit(COMPONENT_IDMAPPER, "Label %s in file %s is expected to be a block", label, path);
       return ID_MAPPER_INVALID_ARGUMENT;
     }
 
@@ -838,7 +848,7 @@ int idmap_populate(char *path, idmap_type_t maptype)
       /* Get key's name */
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
-          fprintf(stderr,
+          LogCrit(COMPONENT_IDMAPPER,
                   "Error reading key[%d] from section \"%s\" of configuration file.\n",
                   var_index, label);
           return ID_MAPPER_INVALID_ARGUMENT;
@@ -854,8 +864,8 @@ int idmap_populate(char *path, idmap_type_t maptype)
 
     }
 
-  /* HashTable_Print( ht ) ; */
-  /* HashTable_Print( ht_reverse ) ; */
+  /* HashTable_Log( ht ) ; */
+  /* HashTable_Log( ht_reverse ) ; */
 
   return ID_MAPPER_SUCCESS;
 }                               /* idmap_populate_by_conf */

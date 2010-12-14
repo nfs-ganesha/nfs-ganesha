@@ -61,7 +61,7 @@
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "log_functions.h"
+#include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -235,9 +235,7 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   offset = arg_READ4.offset;
   size = arg_READ4.count;
 
-#ifdef _DEBUG_NFS_V4
-  printf("   NFS4_OP_READ: offset = %llu  length = %llu\n", offset, size);
-#endif
+  LogFullDebug(COMPONENT_NFS_V4, "   NFS4_OP_READ: offset = %llu  length = %llu", (unsigned long long)offset, size);
 
   if((data->pexport->options & EXPORT_OPTION_MAXOFFSETREAD) ==
      EXPORT_OPTION_MAXOFFSETREAD)
@@ -287,8 +285,8 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       if((cache_status != CACHE_INODE_SUCCESS) &&
          (cache_content_cache_behaviour(entry,
                                         &datapol,
-                                        (cache_content_client_t *) (data->
-                                                                    pclient->pcontent_client),
+                                        (cache_content_client_t *) (data->pclient->
+                                                                    pcontent_client),
                                         &content_status) == CACHE_CONTENT_FULLY_CACHED)
          && (cache_status != CACHE_INODE_CACHE_CONTENT_EXISTS))
         {
@@ -332,10 +330,8 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   res_READ4.READ4res_u.resok4.data.data_len = read_size;
   res_READ4.READ4res_u.resok4.data.data_val = bufferdata;
 
-#ifdef _DEBUG_NFS_V4
-  printf("   NFS4_OP_READ: offset = %llu  read length = %llu eof=%u\n", offset, read_size,
+  LogFullDebug(COMPONENT_NFS_V4,"   NFS4_OP_READ: offset = %llu  read length = %llu eof=%u", (unsigned long long)offset, read_size,
          eof_met);
-#endif
 
   /* Is EOF met or not ? */
   if(eof_met == TRUE)

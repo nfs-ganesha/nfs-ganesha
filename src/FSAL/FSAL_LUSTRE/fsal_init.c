@@ -88,7 +88,7 @@
  *                                for this error.)
  *         ERR_FSAL_SEC_INIT     (Security context init error).
  */
-fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
+fsal_status_t LUSTREFSAL_Init(fsal_parameter_t * init_info      /* IN */
     )
 {
 
@@ -97,15 +97,6 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
   /* sanity check.  */
   if(!init_info)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
-
-  /* Check for very important args */
-
-  if(init_info->fsal_info.log_outputs.liste_voies == NULL)
-    {
-      /* issue a warning on stderr */
-      DisplayLog
-          ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
-    }
 
   /* proceeds FSAL internal initialization */
 
@@ -123,7 +114,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
 }
 
 /* To be called before exiting */
-fsal_status_t FSAL_terminate()
+fsal_status_t LUSTREFSAL_terminate()
 {
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

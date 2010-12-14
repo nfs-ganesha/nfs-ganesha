@@ -34,7 +34,7 @@
 #define _NFS_INIT_H
 
 #include "cache_content.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "nfs_core.h"
 
 /* setting this variable to TRUE causes datacache
@@ -50,6 +50,8 @@ typedef struct __nfs_start_info
   cache_content_flush_behaviour_t flush_behaviour;
   int lw_mark_trigger;
 } nfs_start_info_t;
+
+void *sigmgr_thread( void * arg ) ;
 
 /**
  * nfs_prereq_init:
@@ -87,5 +89,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info);
  * stop NFS service and exit
  */
 void nfs_stop();
+
+int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib);
 
 #endif

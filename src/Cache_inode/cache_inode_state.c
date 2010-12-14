@@ -42,7 +42,7 @@
 #endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -144,11 +144,9 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
   cache_inode_state_t *piter_state = NULL;
   cache_inode_state_t *piter_saved = NULL;
   cache_inode_open_owner_t *powner = powner_input;
-  char other_head[12];
+  char debug_str[25];
   bool_t conflict_found = FALSE;
-#ifdef _DEBUG_STATES
   unsigned int i = 0;
-#endif
 
   /* Sanity Check */
   if(pstatus == NULL)
@@ -171,13 +169,11 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
   /* Acquire lock to enter critical section on this entry */
   P_w(&pentry->lock);
 
-  GET_PREALLOC(pnew_state,
-               pclient->pool_state_v4,
-               pclient->nb_pre_state_v4, cache_inode_state_t, next);
+  GetFromPool(pnew_state, &pclient->pool_state_v4, cache_inode_state_t);
 
   if(pnew_state == NULL)
     {
-      DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+      LogDebug(COMPONENT_CACHE_INODE,
                         "Can't allocate a new file state from cache pool");
       *pstatus = CACHE_INODE_MALLOC_ERROR;
 
@@ -200,7 +196,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
       if(!nfs4_BuildStateId_Other(pentry,
                                   pcontext, powner_input, pnew_state->stateid_other))
         {
-          DisplayLogJd(pclient->log_outputs,
+          LogDebug(COMPONENT_CACHE_INODE,
                        "Can't create a new state id for the pentry %p (A)", pentry);
           *pstatus = CACHE_INODE_STATE_ERROR;
 
@@ -239,7 +235,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
       /* An error is to be returned if a conflict is found */
       if(conflict_found == TRUE)
         {
-          DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+          LogDebug(COMPONENT_CACHE_INODE,
                             "new state conflicts with another state for pentry %p",
                             pentry);
           *pstatus = CACHE_INODE_STATE_CONFLICT;
@@ -261,7 +257,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
       if(!nfs4_BuildStateId_Other
          (pentry, pcontext, powner_input, pnew_state->stateid_other))
         {
-          DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+          LogDebug(COMPONENT_CACHE_INODE,
                             "Can't create a new state id for the pentry %p (E)", pentry);
           *pstatus = CACHE_INODE_STATE_ERROR;
 
@@ -288,7 +284,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
   /* Add the state to the related hashtable */
   if(!nfs4_State_Set(pnew_state->stateid_other, pnew_state))
     {
-      DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+      LogDebug(COMPONENT_CACHE_INODE,
                         "Can't create a new state id for the pentry %p (F)", pentry);
       *pstatus = CACHE_INODE_STATE_ERROR;
 
@@ -305,13 +301,11 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
 
   /* Regular exit */
   *pstatus = CACHE_INODE_SUCCESS;
-#ifdef _DEBUG_STATES
-  printf("         -----  cache_inode_add_state : ");
-  for(i = 0; i < 12; i++)
-    printf("%02x", (unsigned char)pnew_state->stateid_other[i]);
-  printf("\n");
-#endif
 
+  if (isFullDebug(COMPONENT_STATES)) {
+    sprint_mem(debug_str, (char *)pnew_state->stateid_other, 12);
+    LogFullDebug(COMPONENT_STATES,"cache_inode_add_state : %s", debug_str);
+  }
   V_w(&pentry->lock);
 
   return *pstatus;
@@ -357,7 +351,7 @@ cache_inode_status_t cache_inode_get_state(char other[12],
 
   /* Sanity check, mostly for debug */
   if(memcmp(other, (*ppstate)->stateid_other, 12))
-    printf("-------------> Warning !!!! Stateid(other) differs !!!!!!\n");
+    LogFullDebug(COMPONENT_STATES, "-------------> Warning !!!! Stateid(other) differs !!!!!!");
 
   *pstatus = CACHE_INODE_SUCCESS;
   return *pstatus;
@@ -494,7 +488,7 @@ cache_inode_status_t cache_inode_del_state_by_key(char other[12],
       pstate->prev = NULL;
       pstate->pentry = NULL;
 
-      RELEASE_PREALLOC(pstate, pclient->pool_state_v4, next);
+      ReleaseToPool(pstate, &pclient->pool_state_v4);
     }
 
   *pstatus = CACHE_INODE_SUCCESS;
@@ -523,7 +517,7 @@ cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
 {
   cache_inode_state_t *ptest_state = NULL;
   cache_entry_t *pentry = NULL;
-
+  char str[25];
   if(pstatus == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
@@ -532,16 +526,13 @@ cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
       return *pstatus;
     }
-#ifdef _DEBUG_STATES
-  {
-    unsigned int i = 0;
 
-    printf("         -----  cache_inode_del_state : ");
-    for(i = 0; i < 12; i++)
-      printf("%02x", (unsigned char)pstate->stateid_other[i]);
-    printf("\n");
+  unsigned int i = 0;
+
+  if (isFullDebug(COMPONENT_STATES)) {
+    sprint_mem(str, (char *)pstate->stateid_other, 12);
+    LogFullDebug(COMPONENT_STATES,"cache_inode_del_state : %s", str);
   }
-#endif
 
   /* Does this state exists ? */
   if(!nfs4_State_Get_Pointer(pstate->stateid_other, &ptest_state))
@@ -602,7 +593,7 @@ cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
   pstate->prev = NULL;
   pstate->pentry = NULL;
 
-  RELEASE_PREALLOC(pstate, pclient->pool_state_v4, next);
+  ReleaseToPool(pstate, &pclient->pool_state_v4);
 
   *pstatus = CACHE_INODE_SUCCESS;
 
@@ -637,7 +628,6 @@ cache_inode_status_t cache_inode_state_iterate(cache_entry_t * pentry,
   cache_inode_state_t *piter_state = NULL;
   cache_inode_state_t *phead_state = NULL;
   uint64_t fileid_digest = 0;
-  char other_head[12];
 
   if(pstatus == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
@@ -649,12 +639,12 @@ cache_inode_status_t cache_inode_state_iterate(cache_entry_t * pentry,
     }
 
   /* Here, we need to know the file id */
-  if(FSAL_IS_ERROR(FSAL_DigestHandle(pcontext->export_context,
-                                     FSAL_DIGEST_FILEID3,
+  if(FSAL_IS_ERROR(FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
+                                     FSAL_DIGEST_FILEID4,
                                      &(pentry->object.file.handle),
                                      (caddr_t) & fileid_digest)))
     {
-      DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+      LogDebug(COMPONENT_CACHE_INODE,
                         "Can't create a new state id for the pentry %p (F)", pentry);
       *pstatus = CACHE_INODE_STATE_ERROR;
 
@@ -674,7 +664,7 @@ cache_inode_status_t cache_inode_state_iterate(cache_entry_t * pentry,
       /* Sanity check: make sure that this state is related to this pentry */
       if(previous_pstate->pentry != pentry)
         {
-          DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+          LogDebug(COMPONENT_CACHE_INODE,
                             "Bad previous pstate: related to pentry %p, not to %p",
                             previous_pstate->pentry, pentry);
 

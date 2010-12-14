@@ -15,7 +15,7 @@
 #endif
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -269,12 +269,12 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
             {
               cache_inode_status_t kill_status;
 
-              DisplayLog("cache_inode_remove: Stale FSAL FH detected for pentry %p",
+              LogCrit(COMPONENT_CACHE_INODE, "cache_inode_remove: Stale FSAL FH detected for pentry %p",
                          pentry);
 
               if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
-                DisplayLog("cache_inode_remove: Could not kill entry %p, status = %u",
+                LogEvent(COMPONENT_CACHE_INODE,"cache_inode_remove: Could not kill entry %p, status = %u",
                            pentry, kill_status);
 
               *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -288,10 +288,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
 
       /* Post an asynchronous operation */
       P(pclient->pool_lock);
-      GET_PREALLOC(pasyncopdesc,
-                   pclient->pool_async_op,
-                   pclient->nb_pre_async_op_desc,
-                   cache_inode_async_op_desc_t, next_alloc);
+      GetFromPool(pasyncopdesc, pclient->pool_async_op, cache_inode_async_op_desc_t);
       V(pclient->pool_lock);
 
       if(pasyncopdesc == NULL)
@@ -321,7 +318,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       if(gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
         {
           /* Could'not get time of day... Stopping, this may need a major failure */
-          DisplayLog("cache_inode_remove: cannot get time of day... exiting");
+          LogCrit(COMPONENT_CACHE_INODE,"cache_inode_remove: cannot get time of day... exiting");
           exit(1);
         }
 
@@ -331,7 +328,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
           /* stat */
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_REMOVE] += 1;
 
-          DisplayLog("WARNING !!! cache_inode_remove could not post async op....");
+          LogCrit(COMPONENT_CACHE_INODE,"WARNING !!! cache_inode_remove could not post async op....");
 
           *pstatus = CACHE_INODE_ASYNC_POST_ERROR;
           if(use_mutex)
@@ -351,7 +348,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
   /* Remove the entry from parent dir_entries array */
   cache_inode_remove_cached_dirent(pentry, pnode_name, ht, pclient, &status);
 
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+  LogFullDebug(COMPONENT_CACHE_INODE, 
                     "cache_inode_remove_cached_dirent: status=%d", status);
 
   /* Update the cached attributes */
@@ -451,7 +448,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
                   (cache_content_client_t *) pclient->pcontent_client,
                   &cache_content_status) != CACHE_CONTENT_SUCCESS)
                 {
-                  DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+                  LogEvent(COMPONENT_CACHE_INODE, 
                                     "pentry %p, named %s could not be released from data cache, status=%d",
                                     to_remove_entry, pnode_name->name,
                                     cache_content_status);
@@ -522,7 +519,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
        * and is released later in this function */
       if((cache_entry_t *) old_value.pdata != to_remove_entry)
         {
-          DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+          LogCrit(COMPONENT_CACHE_INODE, 
                             "cache_inode_remove: unexpected pdata %p from hash table (pentry=%p)",
                             old_value.pdata, to_remove_entry);
         }
@@ -534,15 +531,13 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       if(to_remove_entry->internal_md.type == DIR_BEGINNING)
         {
           /* Put the pentry back to the pool */
-          RELEASE_PREALLOC(to_remove_entry->object.dir_begin.pdir_data,
-                           pclient->pool_dir_data, next_alloc);
+          ReleaseToPool(to_remove_entry->object.dir_begin.pdir_data, &pclient->pool_dir_data);
         }
 
       if(to_remove_entry->internal_md.type == DIR_CONTINUE)
         {
           /* Put the pentry back to the pool */
-          RELEASE_PREALLOC(to_remove_entry->object.dir_cont.pdir_data,
-                           pclient->pool_dir_data, next_alloc);
+          ReleaseToPool(to_remove_entry->object.dir_cont.pdir_data, &pclient->pool_dir_data);
         }
 
       /* Put the pentry back to pool */
@@ -552,7 +547,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       /* Destroy the mutex associated with the pentry */
       cache_inode_mutex_destroy(to_remove_entry);
 
-      RELEASE_PREALLOC(to_remove_entry, pclient->pool_entry, next_alloc);
+      ReleaseToPool(to_remove_entry, &pclient->pool_entry);
     }
 
   /* Set the 'after' attr */

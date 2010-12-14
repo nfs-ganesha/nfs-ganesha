@@ -70,7 +70,7 @@
 
 
 /** Initializes filesystem, security management... */
-static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
+static int FS_Specific_Init(fusefs_specific_initinfo_t * fs_init_info)
 {
 
   int rc = 0;
@@ -95,7 +95,7 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
 
   fs_private_data = NULL;
 
-  FSAL_InitClientContext(&ctx);
+  FUSEFSAL_InitClientContext(&ctx);
   fsal_set_thread_context(&ctx);
 
   /* call filesystem's init */
@@ -107,7 +107,7 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
 
   /* reset context now fs_private_data is known */
 
-  FSAL_InitClientContext(&ctx);
+  FUSEFSAL_InitClientContext(&ctx);
   fsal_set_thread_context(&ctx);
 
   /* initialize namespace by getting root inode number
@@ -121,8 +121,8 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
 
   if(rc)
     {
-      DisplayLogJdLevel(fsal_log, NIV_CRIT,
-                        "FSAL INIT: Could not call initial 'getattr' on filesystem root");
+      LogCrit(COMPONENT_FSAL,
+              "FSAL INIT: Could not call initial 'getattr' on filesystem root");
 
       return rc;
     }
@@ -133,7 +133,7 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
   if(stbuf.st_ino == 0)
     {
       /* filesystem does not provide inodes ! */
-      DisplayLog("WARNING in lookup: filesystem does not provide inode numbers");
+      LogCrit(COMPONENT_FSAL, "WARNING in lookup: filesystem does not provide inode numbers");
       /* root will have inode nbr 1 */
       stbuf.st_ino = 1;
     }
@@ -166,7 +166,7 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
  *                                for this error.)
  *         ERR_FSAL_SEC_INIT     (Security context init error).
  */
-fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
+fsal_status_t FUSEFSAL_Init(fsal_parameter_t * init_info        /* IN */
     )
 {
 
@@ -177,15 +177,6 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
 
   if(!init_info)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
-
-  /* >> You can check args bellow << */
-
-  if(init_info->fsal_info.log_outputs.liste_voies == NULL)
-    {
-      /* issue a warning on stderr */
-      DisplayLog
-          ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
-    }
 
   /* proceeds FSAL internal status initialization */
 
@@ -207,7 +198,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
 }
 
 /* To be called before exiting */
-fsal_status_t FSAL_terminate()
+fsal_status_t FUSEFSAL_terminate()
 {
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

@@ -43,7 +43,7 @@
 
 #include "stuff_alloc.h"
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log_macros.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -126,11 +126,11 @@ int cache_content_init_dir(cache_content_client_parameter_t param,
  *
  */
 int cache_content_client_init(cache_content_client_t * pclient,
-                              cache_content_client_parameter_t param)
+                              cache_content_client_parameter_t param,
+                              char *name)
 {
   LRU_status_t lru_status;
 
-  pclient->log_outputs = param.log_outputs;
   pclient->nb_prealloc = param.nb_prealloc_entry;
   pclient->flush_force_fsal = param.flush_force_fsal;
   pclient->max_fd_per_thread = param.max_fd_per_thread;
@@ -138,27 +138,15 @@ int cache_content_client_init(cache_content_client_t * pclient,
   pclient->use_cache = param.use_cache;
   strncpy(pclient->cache_dir, param.cache_dir, MAXPATHLEN);
 
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("cache_content_entry_t");
-#endif
-
-#ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC(pclient->pool_entry,
-                 pclient->nb_prealloc, cache_content_entry_t, next_alloc);
-
-# ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel("N/A");
-# endif
-
-  if(pclient->pool_entry == NULL)
+  MakePool(&pclient->content_pool, pclient->nb_prealloc, cache_content_entry_t,
+           NULL, NULL);
+  NamePool(&pclient->content_pool, "Data Cache Client Pool for %s", name);
+  if(!IsPoolPreallocated(&pclient->content_pool))
     {
-      DisplayLogJd(pclient->log_outputs,
-                   "Error : can't init data_cache client entry pool");
+      LogCrit(COMPONENT_CACHE_CONTENT, 
+              "Error : can't init data_cache client entry pool");
       return 1;
     }
-#endif
 
   /* Successfull exit */
   return 0;

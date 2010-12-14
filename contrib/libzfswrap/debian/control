@@ -1,0 +1,49 @@
+Source: libzfswrap
+Priority: extra
+Maintainer: Rémi Duraffort <ivoire@videolan.org>
+Build-Depends: debhelper (>= 7.0.50~),
+               autotools-dev,
+               libaio-dev,
+               libssl-dev,
+               zlib1g-dev
+Standards-Version: 3.9.1
+Section: libs
+Homepage: http://nfs-ganesha.sourceforge.net
+#Vcs-Git: git://git.debian.org/collab-maint/libzfswrap.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/libzfswrap.git;a=summary
+
+Package: libzfswrap-dev
+Section: libdevel
+Architecture: any
+Depends: libzfswrap1 (= ${binary:Version}),
+         libaio-dev,
+         libssl-dev,
+         zlib1g-dev,
+         ${misc:Depends}
+Description: development files for libzfswrap
+ Libzfswrap is a library that allows direct access to ZFS file systems with no
+ need of fuse.
+ .
+ This package contains the header files and static libraries needed to compile
+ applications or shared objects that use libzfswrap.
+
+Package: libzfswrap1
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: library for direct access to ZFS file system
+ Libzfswrap is a library that allows direct access to ZFS file systems with no
+ need of fuse.
+ .
+ This package contains the shared library for libzfswrap.
+
+Package: libzfswrap1-utils
+Architecture: any
+Depends: libzfswrap1 (= ${binary:Version}),
+         ${shlibs:Depends}, ${misc:Depends}
+Description: administration tools for libzfswrap
+ Libzfswrap is a library that allows direct access to ZFS file systmes with no
+ need of fuse.
+ .
+ This package contains the tools to manage ZFS filesystems.
+

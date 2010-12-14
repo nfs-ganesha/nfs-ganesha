@@ -41,9 +41,9 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
-                            fsal_attrib_list_t * p_object_attributes    /* IN/OUT */
+fsal_status_t LUSTREFSAL_getattrs(lustrefsal_handle_t * p_filehandle,   /* IN */
+                                  lustrefsal_op_context_t * p_context,  /* IN */
+                                  fsal_attrib_list_t * p_object_attributes      /* IN/OUT */
     )
 {
   int rc;
@@ -113,10 +113,10 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
-                            fsal_attrib_list_t * p_attrib_set,  /* IN */
-                            fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */
+fsal_status_t LUSTREFSAL_setattrs(lustrefsal_handle_t * p_filehandle,   /* IN */
+                                  lustrefsal_op_context_t * p_context,  /* IN */
+                                  fsal_attrib_list_t * p_attrib_set,    /* IN */
+                                  fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
     )
 {
 
@@ -193,11 +193,9 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
           if((p_context->credential.user != 0)
              && (p_context->credential.user != buffstat.st_uid))
             {
-#ifdef _DEBUG_FSAL
-              DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+              LogFullDebug(COMPONENT_FSAL,
                                 "Permission denied for CHMOD opeartion: current owner=%d, credential=%d",
                                 buffstat.st_uid, p_context->credential.user);
-#endif
               Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
             }
 
@@ -227,11 +225,9 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
          ((p_context->credential.user != buffstat.st_uid) ||
           (p_context->credential.user != attrs.owner)))
         {
-#ifdef _DEBUG_FSAL
-          DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+          LogFullDebug(COMPONENT_FSAL,
                             "Permission denied for CHOWN opeartion: current owner=%d, credential=%d, new owner=%d",
                             buffstat.st_uid, p_context->credential.user, attrs.owner);
-#endif
           Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
         }
     }
@@ -258,11 +254,9 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
       /* it must also be in target group */
       if(p_context->credential.user != 0 && !in_grp)
         {
-#ifdef _DEBUG_FSAL
-          DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+          LogFullDebug(COMPONENT_FSAL,
                             "Permission denied for CHOWN operation: current group=%d, credential=%d, new group=%d",
                             buffstat.st_gid, p_context->credential.group, attrs.group);
-#endif
 
           Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
         }
@@ -270,13 +264,11 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
 
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
     {
-#ifdef _DEBUG_FSAL
-      DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Performing chown(%s, %d,%d)",
+      LogFullDebug(COMPONENT_FSAL, "Performing chown(%s, %d,%d)",
                         fsalpath.path, FSAL_TEST_MASK(attrs.asked_attributes,
                                                       FSAL_ATTR_OWNER) ? (int)attrs.owner
                         : -1, FSAL_TEST_MASK(attrs.asked_attributes,
                                              FSAL_ATTR_GROUP) ? (int)attrs.group : -1);
-#endif
 
       TakeTokenFSCall();
       rc = lchown(fsalpath.path,
@@ -315,11 +307,11 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
       struct utimbuf timebuf;
 
       timebuf.actime =
-          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME) ? (time_t) attrs.atime.
-           seconds : buffstat.st_atime);
+          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME) ? (time_t) attrs.
+           atime.seconds : buffstat.st_atime);
       timebuf.modtime =
-          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t) attrs.mtime.
-           seconds : buffstat.st_mtime);
+          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t) attrs.
+           mtime.seconds : buffstat.st_mtime);
 
       TakeTokenFSCall();
       rc = utime(fsalpath.path, &timebuf);
@@ -334,7 +326,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
 
   if(p_object_attributes)
     {
-      status = FSAL_getattrs(p_filehandle, p_context, p_object_attributes);
+      status = LUSTREFSAL_getattrs(p_filehandle, p_context, p_object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -348,3 +340,30 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_setattrs);
 
 }
+
+/**
+ * FSAL_getetxattrs:
+ * Get attributes for the object specified by its filehandle.
+ *
+ * \param filehandle (input):
+ *        The handle of the object to get parameters.
+ * \param cred (input):
+ *        Authentication context for the operation (user,...).
+ * \param object_attributes (mandatory input/output):
+ *        The retrieved attributes for the object.
+ *        As input, it defines the attributes that the caller
+ *        wants to retrieve (by positioning flags into this structure)
+ *        and the output is built considering this input
+ *        (it fills the structure according to the flags it contains).
+ *
+ * \return Major error codes :
+ *        - ERR_FSAL_NO_ERROR     (no error)
+ *        - Another error code if an error occured.
+ */
+fsal_status_t LUSTREFSAL_getextattrs(lustrefsal_handle_t * p_filehandle, /* IN */
+                                     lustrefsal_op_context_t * p_context,        /* IN */
+                                     fsal_extattrib_list_t * p_object_attributes /* OUT */
+    )
+{
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_getextattrs);
+} /* LUSTREFSAL_getextattrs */

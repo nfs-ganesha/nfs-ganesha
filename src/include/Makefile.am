@@ -14,6 +14,8 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  SemN.h                          \
                  nodelist.h                      \
                  fsal_types.h                    \
+                 fsal_glue.h                     \
+                 fsal_glue_const.h               \
                  mfsl_types.h                    \
                  cache_content.h                 \
                  cache_content_policy.h          \
@@ -31,6 +33,7 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  extended_types.h                \
                  external_tools.h                \
                  log_functions.h                 \
+                 log_macros.h                    \
                  mount.h                         \
                  nfs23.h                         \
                  nfs4.h                          \
@@ -66,3 +69,8 @@ endif
 
 
 SUBDIRS = FSAL MFSL PNFS
+
+doc:
+	doxygen ./doxygen.conf.stuff_alloc
+	rep=`grep OUTPUT_DIRECTORY doxygen.conf.stuff_alloc | grep share  | awk -F '=' '{print $$2;}'` ; cd $$rep/latex ; make
+

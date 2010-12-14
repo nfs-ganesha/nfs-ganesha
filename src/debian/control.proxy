@@ -1,0 +1,8 @@
+Package: nfs-ganesha-proxy
+Architecture: any
+Depends: nfs-ganesha-common, ${shlibs:Depends}
+Description: NFS-GANESHA running as an NFS proxy
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. This package provides support for NFS-GANESHA as a PROXY.
+
