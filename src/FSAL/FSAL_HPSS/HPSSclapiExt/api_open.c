@@ -1307,10 +1307,9 @@ static int HPSSFSAL_Common_Open(apithrdstate_t * ThreadContext, /* IN - thread c
                                                linkpath,
 #if HPSS_LEVEL > 730
 					       API_NULL_CWD_STACK,
-#elif
+#else
 					       CwdStack,
 #endif
-                                               CwdStack,
                                                Ucred,
                                                Oflag,
                                                Mode,

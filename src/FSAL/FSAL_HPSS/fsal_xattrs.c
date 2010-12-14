@@ -17,6 +17,7 @@
 
 #include <hpss_uuid.h>
 #include <hpss_errno.h>
+#include <hpss_limits.h>
 
 #if HPSS_LEVEL >= 730
 #include <hpss_xml.h>
@@ -125,7 +126,7 @@ int get_file_slevel(hpssfsal_handle_t * p_objecthandle, /* IN */
                     size_t buffer_size, /* IN */
                     size_t * p_output_size)     /* OUT */
 {
-  int rc;
+  int rc, i;
   hpss_xfileattr_t hpss_xattr;
   char tmpstr[1024];
   char *outbuff;
@@ -189,13 +190,14 @@ int get_file_slevel(hpssfsal_handle_t * p_objecthandle, /* IN */
     }
 
     /* free the returned structure (Cf. HPSS ClAPI documentation) */
-    for ( i = 0; i < HPSS_MAX_STORAGE_LEVEL; i++ )
+    for ( i = 0; i < HPSS_MAX_STORAGE_LEVELS; i++ )
     {
-        for ( j = 0; j < attrs.SCAttrib[i].NumberOfVVs; j++ )
+	int j;
+        for ( j = 0; j < hpss_xattr.SCAttrib[i].NumberOfVVs; j++ )
         {
-            if ( attrs.SCAttrib[i].VVAttrib[j].PVList != NULL )
+            if ( hpss_xattr.SCAttrib[i].VVAttrib[j].PVList != NULL )
             {
-                free( attrs.SCAttrib[i].VVAttrib[j].PVList );
+                free( hpss_xattr.SCAttrib[i].VVAttrib[j].PVList );
             }
         }
     }
