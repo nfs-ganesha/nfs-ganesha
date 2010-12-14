@@ -223,10 +223,6 @@ fsal_status_t PROXYFSAL_DigestHandle(proxyfsal_export_context_t * p_expcontext, 
   if(!in_fsal_handle || !out_buff || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  if(in_fsal_handle->data.srv_handle_len + sizeof(fsal_u64_t) + 2 * sizeof(unsigned int) >
-     NFSV4_FH_OPAQUE_SIZE)
-    ReturnCode(ERR_FSAL_INVAL, ENOSPC);
-
   switch (output_type)
     {
 
@@ -278,6 +274,10 @@ fsal_status_t PROXYFSAL_DigestHandle(proxyfsal_export_context_t * p_expcontext, 
 
       /* NFSV4 handle digest */
     case FSAL_DIGEST_NFSV4:
+
+     if(in_fsal_handle->data.srv_handle_len + sizeof(fsal_u64_t) + 2 * sizeof(unsigned int) >
+       NFSV4_FH_OPAQUE_SIZE)
+         ReturnCode(ERR_FSAL_INVAL, ENOSPC);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
 

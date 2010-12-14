@@ -1107,7 +1107,7 @@ static int HPSSFSAL_Common_Open(apithrdstate_t * ThreadContext, /* IN - thread c
   return (error);
 }
 
-#elif HPSS_LEVEL == 730
+#elif HPSS_LEVEL >= 730
 static int HPSSFSAL_Common_Open(apithrdstate_t * ThreadContext, /* IN - thread context */
                                 hpss_reqid_t RequestID, /* IN - request id */
                                 ns_ObjHandle_t * ObjHandle,     /* IN - object handle */
@@ -1291,13 +1291,25 @@ static int HPSSFSAL_Common_Open(apithrdstate_t * ThreadContext, /* IN - thread c
                    * file origins and now we're ready to try opening it again
                    * with the assurance that its not a symlink anymore.
                    * This time, its for real.
-                   */
+                    */
+
+                   /*
+                    * Note that we drop the CWD stack here because if this symlink
+                    * took us back up the directory tree, but we'd still be using
+                    * the old CwdStack, and so we'd end up going back up that stack
+                    * instead of from whatever point we were at when we hit the
+                    * symlink.
+                    */
 
                   error = HPSSFSAL_Common_Open(ThreadContext,
                                                RequestID,
                                                hndl_ptr,
                                                linkpath,
-                                               CwdStack,
+#if HPSS_LEVEL > 730
+					       API_NULL_CWD_STACK,
+#else
+					       CwdStack,
+#endif
                                                Ucred,
                                                Oflag,
                                                Mode,
