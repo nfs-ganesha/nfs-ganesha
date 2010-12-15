@@ -262,7 +262,7 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
 
   while(1)
     {
-      sleep(600);  /** @todo: use getattr to have an actual value of server's lease duration */
+      sleep(60);  /** @todo: use getattr to have an actual value of server's lease duration */
 
       /* Call the NFSv4 function */
       TakeTokenFSCall();

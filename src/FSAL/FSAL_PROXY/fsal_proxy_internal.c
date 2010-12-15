@@ -975,7 +975,10 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
           pFSAL_attr->chgtime.seconds = (uint32_t) nfs_ntohl64(attr_change);
           pFSAL_attr->chgtime.nseconds = 0;
 
+          pFSAL_attr->change = nfs_ntohl64(attr_change);
+
           pFSAL_attr->asked_attributes |= FSAL_ATTR_CHGTIME;
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_CHANGE;
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
           break;
