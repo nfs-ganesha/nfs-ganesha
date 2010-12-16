@@ -114,7 +114,7 @@ fsal_status_t PROXYFSAL_create(proxyfsal_handle_t * parent_directory_handle,    
   nfs_argop4 argoparray[FSAL_CREATE_NB_OP_ALLOC];
   nfs_resop4 resoparray[FSAL_CREATE_NB_OP_ALLOC];
   char fattr_val[FSAL_CREATE_VAL_BUFFER];
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
+  struct timeval timeout = TIMEOUTRPC;
   char owner_val[FSAL_PROXY_OWNER_LEN];
   unsigned int owner_len = 0;
 
@@ -376,7 +376,7 @@ fsal_status_t PROXYFSAL_mkdir(proxyfsal_handle_t * parent_directory_handle,     
   nfs_resop4 resoparray[FSAL_MKDIR_NB_OP_ALLOC];
 
   char fattr_val[FSAL_MKDIR_VAL_BUFFER];
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
+  struct timeval timeout = TIMEOUTRPC;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -567,7 +567,7 @@ fsal_status_t PROXYFSAL_link(proxyfsal_handle_t * target_handle,        /* IN */
 
   fsal_proxy_internal_fattr_t fattr_internal;
 
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
+  struct timeval timeout = TIMEOUTRPC;
 
   /* sanity checks.
    * note : attributes is optional.

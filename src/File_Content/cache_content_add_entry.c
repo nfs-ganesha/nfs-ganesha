@@ -143,7 +143,8 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
       pclient->stat.func_stats.nb_err_retryable[CACHE_CONTENT_NEW_ENTRY] += 1;
 
       LogEvent(COMPONENT_CACHE_CONTENT,
-                        "cache_content_new_entry: entry's index pathname could not be created");
+                        "cache_content_new_entry: entry's index pathname could not be created:%u", 
+                        status );
 
       return NULL;
     }

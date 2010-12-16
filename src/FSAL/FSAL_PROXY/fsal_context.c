@@ -32,13 +32,12 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_common.h"
+#include "fsal_nfsv4_macros.h"
 #include <pwd.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <netdb.h> /* For rresvport */
-
-#include <fsal_nfsv4_macros.h> 
 
 extern proxyfs_specific_initinfo_t global_fsal_proxy_specific_info;
 
@@ -195,7 +194,7 @@ fsal_status_t PROXYFSAL_InitClientContext(proxyfsal_op_context_t * p_thr_context
 
   int sock;
   struct sockaddr_in addr_rpc;
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
+  struct timeval timeout = TIMEOUTRPC;
   int rc;
   int priv_port = 0 ; 
   fsal_status_t fsal_status;

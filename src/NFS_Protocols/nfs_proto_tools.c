@@ -711,7 +711,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
         case FATTR4_CHANGE:
           /* a value that change when the object change. I use the file's mtime */
           memset(&file_change, 0, sizeof(changeid4));
-          file_change = nfs_htonl64((changeid4) pattr->chgtime.seconds);
+          file_change = nfs_htonl64((changeid4) pattr->change);
 
           memcpy((char *)(attrvalsBuffer + LastOffset), &file_change,
                  sizeof(fattr4_change));
@@ -2945,7 +2945,10 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
           pFSAL_attr->chgtime.seconds = (uint32_t) nfs_ntohl64(attr_change);
           pFSAL_attr->chgtime.nseconds = 0;
 
+          pFSAL_attr->change =  nfs_ntohl64(attr_change);
+
           pFSAL_attr->asked_attributes |= FSAL_ATTR_CHGTIME;
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_CHANGE;
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
           break;

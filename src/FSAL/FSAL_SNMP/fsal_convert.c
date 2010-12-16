@@ -545,6 +545,7 @@ int snmp2fsal_attributes(snmpfsal_handle_t * p_handle, netsnmp_variable_list * p
       p_fsalattr_out->mtime =
           p_fsalattr_out->ctime =
           p_fsalattr_out->atime = p_fsalattr_out->chgtime = curr_time;
+      p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds ;
 
       p_fsalattr_out->asked_attributes |= FSAL_ATTR_ATIME | FSAL_ATTR_MTIME
           | FSAL_ATTR_CTIME | FSAL_ATTR_CHGTIME;

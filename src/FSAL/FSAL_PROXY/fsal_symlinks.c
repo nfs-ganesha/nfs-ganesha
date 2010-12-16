@@ -90,7 +90,7 @@ fsal_status_t PROXYFSAL_readlink(proxyfsal_handle_t * linkhandle,       /* IN */
   fsal_proxy_internal_fattr_t fattr_internal;
   char padpath[FSAL_MAX_PATH_LEN];
 
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
+  struct timeval timeout = TIMEOUTRPC;
 
   /* sanity checks.
    * note : link_attributes is optional.
@@ -267,7 +267,7 @@ fsal_status_t PROXYFSAL_symlink(proxyfsal_handle_t * parent_directory_handle,   
   nfs_resop4 resoparray[FSAL_SYMLINK_NB_OP_ALLOC];
 
   char fattr_val[FSAL_SYMLINK_VAL_BUFFER];
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
+  struct timeval timeout = TIMEOUTRPC;
 
   /* sanity checks.
    * note : link_attributes is optional.

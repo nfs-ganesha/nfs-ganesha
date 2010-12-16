@@ -776,6 +776,7 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
           hpss2fsal_time(MAX_3
                          (p_hpss_attr_in->TimeModified, p_hpss_attr_in->TimeCreated,
                           p_hpss_attr_in->TimeLastWritten));
+      p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds ;
     }
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))

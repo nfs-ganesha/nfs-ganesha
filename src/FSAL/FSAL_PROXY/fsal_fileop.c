@@ -114,7 +114,7 @@ fsal_status_t PROXYFSAL_open_by_name(proxyfsal_handle_t * dirhandle,    /* IN */
   char fattr_val[FSAL_OPEN_VAL_BUFFER];
   char padfilehandle[FSAL_PROXY_FILEHANDLE_MAX_LEN];
   fsal_status_t fsal_status;
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
+  struct timeval timeout = TIMEOUTRPC;
   char owner_val[FSAL_PROXY_OWNER_LEN];
   unsigned int owner_len = 0;
 
@@ -335,7 +335,7 @@ static fsal_status_t PROXYFSAL_open_stateless(proxyfsal_handle_t * filehandle,  
   nfs_argop4 argoparray[FSAL_OPEN_STATELESS_NB_OP_ALLOC];
   nfs_resop4 resoparray[FSAL_OPEN_STATELESS_NB_OP_ALLOC];
   char fattr_val[FSAL_OPEN_STATELESS_VAL_BUFFER];
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
+  struct timeval timeout = TIMEOUTRPC;
   u_int32_t owner = time(NULL);
 
   /* sanity checks.
@@ -555,7 +555,7 @@ fsal_status_t PROXYFSAL_read(proxyfsal_file_t * file_descriptor,        /* IN */
   COMPOUND4res resnfs4;
   nfs_fh4 nfs4fh;
   fsal_off_t offset;
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
+  struct timeval timeout = TIMEOUTRPC;
 
 #define FSAL_READ_NB_OP_ALLOC 2
 
@@ -682,7 +682,7 @@ fsal_status_t PROXYFSAL_write(proxyfsal_file_t * file_descriptor,       /* IN */
 
   fsal_off_t offset;
 
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
+  struct timeval timeout = TIMEOUTRPC;
 
 #define FSAL_WRITE_NB_OP_ALLOC 2
 
@@ -786,7 +786,7 @@ fsal_status_t PROXYFSAL_close(proxyfsal_file_t * file_descriptor        /* IN */
   COMPOUND4res resnfs4;
   nfs_argop4 argoparray[FSAL_CLOSE_NB_OP_ALLOC];
   nfs_resop4 resoparray[FSAL_CLOSE_NB_OP_ALLOC];
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
+  struct timeval timeout = TIMEOUTRPC;
   char All_Zero[] = "\0\0\0\0\0\0\0\0\0\0\0\0"; /* 12 times \0 */
   nfs_fh4 nfs4fh;
 
@@ -870,7 +870,7 @@ fsal_status_t PROXYFSAL_close_by_fileid(proxyfsal_file_t * file_descriptor /* IN
   char nameval[MAXNAMLEN];
   char filename[MAXNAMLEN];
   fsal_status_t fsal_status;
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
+  struct timeval timeout = TIMEOUTRPC;
 
 #define FSAL_CLOSE_BY_FILEID_NB_OP 4
 
@@ -1006,7 +1006,7 @@ fsal_status_t PROXYFSAL_open_by_fileid(proxyfsal_handle_t * filehandle, /* IN */
   nfs_resop4 resoparray[FSAL_OPEN_BY_FILEID_NB_OP_ALLOC];
   char fattr_val[FSAL_OPEN_VAL_BUFFER];
   char padfilehandle[FSAL_PROXY_FILEHANDLE_MAX_LEN];
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
+  struct timeval timeout = TIMEOUTRPC;
   char owner_val[FSAL_PROXY_OWNER_LEN];
   unsigned int owner_len = 0;
 

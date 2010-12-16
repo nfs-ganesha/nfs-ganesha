@@ -36,6 +36,10 @@
 #include "handle_mapping/handle_mapping.h"
 #endif
 
+void *FSAL_proxy_clientid_renewer_thread(void *);
+
+pthread_t thrid_clientid_renewer;
+
 /* A variable to be seen (for read) in other files */
 proxyfs_specific_initinfo_t global_fsal_proxy_specific_info;
 
@@ -182,6 +186,21 @@ static int FS_Specific_Init(proxyfs_specific_initinfo_t * fs_init_info)
         return rc;
     }
 #endif
+  /* Init the thread in charge of renewing the client id */
+  /* Init for thread parameter (mostly for scheduling) */
+  pthread_attr_init(&attr_thr);
+
+  pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
+  pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE);
+
+  if((rc = pthread_create(&thrid_clientid_renewer,
+                          &attr_thr,
+                          FSAL_proxy_clientid_renewer_thread, (void *)NULL) != 0))
+    {
+      LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_CREATE, rc);
+      exit(1);
+    }
+
   return 0;
 }
 

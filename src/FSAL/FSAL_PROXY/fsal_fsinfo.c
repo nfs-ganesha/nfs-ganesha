@@ -114,7 +114,7 @@ fsal_status_t PROXYFSAL_dynamic_fsinfo(proxyfsal_handle_t * filehandle, /* IN */
   nfs_resop4 resoparray[FSAL_FSINFO_NB_OP_ALLOC];
 
   fsal_proxy_internal_fattr_t fattr_internal;
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
+  struct timeval timeout = TIMEOUTRPC;
 
   /* sanity checks. */
   if(!filehandle || !dynamicinfo || !p_context)

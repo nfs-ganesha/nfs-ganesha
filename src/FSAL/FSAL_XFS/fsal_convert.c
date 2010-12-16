@@ -320,6 +320,7 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
     {
       p_fsalattr_out->chgtime
           = posix2fsal_time(MAX_2(p_buffstat->st_mtime, p_buffstat->st_ctime));
+      p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds ;
     }
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))

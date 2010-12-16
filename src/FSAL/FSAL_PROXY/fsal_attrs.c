@@ -82,7 +82,7 @@ fsal_status_t PROXYFSAL_getattrs(proxyfsal_handle_t * filehandle,       /* IN */
   nfs_resop4 resoparray[FSAL_GETATTR_NB_OP_ALLOC];
 
   fsal_proxy_internal_fattr_t fattr_internal;
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
+  struct timeval timeout = TIMEOUTRPC;
   /* sanity checks.
    * note : object_attributes is mandatory in PROXYFSAL_getattrs.
    */
@@ -224,8 +224,7 @@ fsal_status_t PROXYFSAL_setattrs(proxyfsal_handle_t * filehandle,       /* IN */
   nfs_resop4 resoparray[FSAL_SETATTR_NB_OP_ALLOC];
 
   char fattr_val[FSAL_SETATTR_VAL_BUFFER];
-  struct timeval __attribute__ ((__unused__)) timeout = TIMEOUTRPC;
-
+  struct timeval timeout = TIMEOUTRPC;
 
   /* sanity checks.
    * note : object_attributes is optional.
