@@ -260,6 +260,8 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                                                                      \
 } while ( 0 )
 
+#define CheapRecovery() exit( 1 ) 
+
 #define COMPOUNDV4_EXECUTE( pcontext, argcompound, rescompound, rc )                \
 do {                                                                                \
   int __renew_rc = 0 ;                                                              \
@@ -272,11 +274,14 @@ do {                                                                            
                               (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argcompound,  \
                               (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&rescompound,  \
                               timeout ) )  == RPC_SUCCESS )                         \
-           break ;                                                                  \
+            {                                                                       \
+              if( rescompound.status == NFS4ERR_STALE_CLIENTID ) CheapRecovery();   \
+              break ;                                                               \
+            }                                                                       \
        }                                                                            \
   sleep( pcontext->retry_sleeptime ) ;                                              \
+  CheapRecovery( ) ;                                                                \
   pthread_mutex_lock( &pcontext->lock ) ;                                           \
-  exit( 1 ) ; \
   __renew_rc = fsal_internal_ClientReconnect( pcontext ) ;                          \
   pthread_mutex_unlock( &pcontext->lock ) ;                                         \
   } while( 1  ) ;                                                                   \
