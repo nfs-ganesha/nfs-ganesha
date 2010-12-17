@@ -195,6 +195,8 @@ void display_directory(fsal_posixdb_conn * p_conn, posixfsal_handle_t * p_handle
       if(p_children[i].handle.data.info.ftype == FSAL_TYPE_DIR)
         {
           char basedir_new[FSAL_MAX_PATH_LEN];
+
+          memset( basedir_new, 0, FSAL_MAX_PATH_LEN ) ;
           strncpy(basedir_new, basedir, FSAL_MAX_PATH_LEN);
           strncat(basedir_new, "/", FSAL_MAX_PATH_LEN);
           strncat(basedir_new, p_children[i].name.name, FSAL_MAX_PATH_LEN);
