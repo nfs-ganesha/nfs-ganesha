@@ -276,6 +276,7 @@ do {                                                                            
        }                                                                            \
   sleep( pcontext->retry_sleeptime ) ;                                              \
   pthread_mutex_lock( &pcontext->lock ) ;                                           \
+  exit( 1 ) ; \
   __renew_rc = fsal_internal_ClientReconnect( pcontext ) ;                          \
   pthread_mutex_unlock( &pcontext->lock ) ;                                         \
   } while( 1  ) ;                                                                   \
