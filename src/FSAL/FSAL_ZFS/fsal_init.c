@@ -195,12 +195,14 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
     LogDebug(COMPONENT_FSAL, "FSAL INIT: Creating the auto-snapshot thread");
     fs_specific_initinfo_t *fs_configuration = malloc(sizeof(*fs_configuration));
     *fs_configuration = init_info->fs_specific_info;
+#if 0
     if(pthread_create(&snapshot_thread, NULL, SnapshotThread, fs_configuration))
     {
       snapshot_thread = (pthread_t)NULL;
       ZFSFSAL_terminate();
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_Init);
     }
+#endif
   }
   else
   {
