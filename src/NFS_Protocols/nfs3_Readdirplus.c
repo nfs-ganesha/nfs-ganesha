@@ -452,7 +452,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                       (char *)fh3_array[delta];
 
                   if(nfs3_FSALToFhandle
-                     (&pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[0].
+                     (&pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[delta].
                       name_handle.post_op_fh3_u.handle, pfsal_handle, pexport) == 0)
                     {
                       Mem_Free((char *)dirent_array);
