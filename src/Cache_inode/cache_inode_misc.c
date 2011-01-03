@@ -620,12 +620,33 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
                         "cache_inode_new_entry: entry could not be added to hash, rc=%d",
                         rc);
 
-      *pstatus = CACHE_INODE_HASH_SET_ERROR;
+      if( rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS )
+       {
+         *pstatus = CACHE_INODE_HASH_SET_ERROR;
 
-      /* stat */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_NEW_ENTRY] += 1;
+         /* stat */
+         pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_NEW_ENTRY] += 1;
 
-      return NULL;
+         return NULL;
+       }
+     else
+      {
+        LogDebug( COMPONENT_CACHE_INODE,  "cache_inode_new_entry: concurrency detected during cache insertion" ) ;
+
+	/* This situation occurs when several threads try to init the same uncached entry
+         * at the same time. The first creates the entry and the others got  HASHTABLE_ERROR_KEY_ALREADY_EXISTS
+         * In this case, the already created entry (by the very first thread) is returned */
+        if( ( rc = HashTable_Get( ht, &key, &value ) ) != HASHTABLE_SUCCESS )
+         {
+            *pstatus = CACHE_INODE_HASH_SET_ERROR ;
+            pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_NEW_ENTRY] += 1;
+            return NULL ;
+         }
+       
+        pentry = (cache_entry_t *) value.pdata ;
+        *pstatus = CACHE_INODE_SUCCESS ; 
+        return pentry ;
+      }
     }
 
   /* if entry is a REGULAR_FILE and has a related data cache entry from a previous server instance that crashed, recover it */
