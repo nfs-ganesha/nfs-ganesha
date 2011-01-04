@@ -492,6 +492,7 @@ int msfl_solvepath(char *io_global_path, int size_global_path,  /* [IN-OUT] glob
     }
 
   /* local copy */
+  memset( str_path, 0, FSAL_MAX_PATH_LEN ) ;
   strncpy(str_path, i_spec_path, FSAL_MAX_PATH_LEN);
 
   if(str_path[0] == '@')

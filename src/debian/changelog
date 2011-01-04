@@ -1,3 +1,19 @@
+nfs-ganesha (1.0.3-1) stable; urgency=low
+  * A regression in FSAL_PROXY was fixed (size of NFSv4 handles)
+  * HashTable support hash functions that compute hashval and rbtval in one pass
+  * Cache_inode uses a "dual value compute function" in its hashtable
+  * Reverse clientid mapper uses a "dual value compute function" in its hashtable
+  * pNFS/LAYOUT4_NFSV4_1_FILES : several bug fixed (see git log)
+  * DupReq indexation has been reviewed
+  * security fixed : when 'root' is mapped as nobody, its 'altgroups' is cleared
+  * Configuration can now reduce the version of NFS advertsised to rpcbind (to avoid NFSv2 for example).
+  * XML output has been added to non-regression tests for easier integration in HudsonCI
+  * A few changes in NLM implementation 
+  * FSAL_HPSS has been ported to HPSSv7.3.2
+  * Better management of NFSv4.x attribute FATTR4_CHANGE
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Thu, 21 Dec 2010 10:10:00 +0200
+
 nfs-ganesha (1.0.2-1) stable; urgency=low
   * New TCP connection management to avoid DOS-like attack
   * Tag _NO_BLOCK_PREALLOC was removed

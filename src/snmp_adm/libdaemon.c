@@ -662,18 +662,31 @@ int snmp_adm_register_poll_trap(unsigned int second, trap_test test_fct, void *a
 
   if(polling_list_size == 0)
     {
-      polling_threads = malloc(capacity * sizeof(pthread_t));
-      polling_args = malloc(capacity * sizeof(polling_arg));
+      if( ( polling_threads = malloc(capacity * sizeof(pthread_t)) ) == NULL )
+        return -1 ;
+
+      if( ( polling_args = malloc(capacity * sizeof(polling_arg)) ) == NULL )
+       {
+         free( polling_threads ) ;
+         return -1 ;
+       }
     }
   if(polling_list_size >= capacity - 1)
     {
       capacity *= 2;
 
       if ( ( polling_threads = realloc(polling_threads, sizeof(pthread_t) * capacity) ) == NULL )
+      {
+	free( polling_args ) ;
+        free( polling_threads ) ;
         return -1 ; 
-
+      }
       if( ( polling_args = realloc(polling_args, sizeof(polling_arg) * capacity) ) == NULL )
+      {
+	free( polling_args ) ;
+        free( polling_threads ) ;
 	return -1 ;
+      }
     }
 
   polling_args[polling_list_size].second = second;

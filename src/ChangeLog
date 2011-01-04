@@ -403,7 +403,7 @@
 	- New feature : FSAL_ZFS provides access to ZFS snapshot directory
 	  .zfs  based on  ZFS's COW feature.
 
-1.0.3	- 
+1.0.3	- Tue 21 Dec 2010
         - A regression in FSAL_PROXY was fixed (size of NFSv4 handles)
         - HashTable support hash functions that compute hashval and rbtval in one pass
         - Cache_inode uses a "dual value compute function" in its hashtable
@@ -418,4 +418,8 @@
         - A few changes in NLM implementation 
         - FSAL_HPSS has been ported to HPSSv7.3.2
         - Better management of NFSv4.x attribute FATTR4_CHANGE
+
+1.0.4   -
+        - init.d scripts are now closer to LSB requirements
+
 	

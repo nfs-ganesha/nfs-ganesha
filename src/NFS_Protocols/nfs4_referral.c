@@ -113,7 +113,10 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
   *ptr = '\0';
   ptr += 1;
 
+  memset( local_part, 0, MAXPATHLEN ) ;
   strncpy(local_part, str, MAXPATHLEN);
+
+  memset( remote_part, 0, MAXPATHLEN ) ;
   strncpy(remote_part, ptr, MAXPATHLEN);
 
   /* Each part should not start with a leading slash */
@@ -128,6 +131,7 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
   *ptr = '\0';
   ptr += 1;
 
+  memset( server_part, 0 , MAXPATHLEN ) ;
   strncpy(server_part, ptr, MAXPATHLEN);
 
   local_comp[0] = local_part;

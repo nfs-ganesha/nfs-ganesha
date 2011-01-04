@@ -1,29 +1,29 @@
 #!/bin/bash
-# init file for ganesha
 #
-# chkconfig: - 50 50
+# chkconfig: 2345 50 50
 # description: GANESHA NFS Daemon
 #
 # processname: /usr/bin/zfs.ganesha.nfsd
 # config: /etc/ganesha/zfs.ganesha.nfsd.conf
-# pidfile: /var/run/snmpd
+# pidfile: /var/run/nfs-ganesha.pid
+#
 ### BEGIN INIT INFO
 # Provides: nfs-ganesha.zfs
-# Required-Start: $local_fs $network
-# Required-Stop: $local_fs $network
-# Should-Start:
-# Should-Stop:
-# Default-Start:
-# Default-Stop:
-# Short-Description: start and stop nfs-ganesha/PROXY daemon
+# Required-Start: $local_fs $named $time $network
+# Required-Stop: $local_fs $named $time $network
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: start and stop nfs-ganesha/ZFS daemon
 # Description: NFS-GANESHA
 ### END INIT INFO
 
 
 # source function library
-. /etc/init.d/functions
+. /etc/rc.d/init.d/functions
 
 PATHPROG=/usr/bin/zfs.ganesha.nfsd 
+
+[ -f /etc/sysconfig/nfs-ganesha.zfs ] && . /etc/sysconfig/nfs-ganesha.zfs 
 
 # Default HPSS options
 LOGFILE=/var/log/zfs.ganesha.nfsd.log
@@ -31,7 +31,10 @@ CONFFILE=/etc/ganesha/zfs.ganesha.nfsd.conf
 
 OPTIONS="-d -L $LOGFILE -f $CONFFILE -N NIV_EVENT"
 RETVAL=0
-prog="zfs.ganesha.nfsd"
+
+prog=zfs.ganesha.nfsd
+PID_FILE=${PID_FILE:=/var/run/${prog}.pid}
+LOCK_FILE=${LOCK_FILE:=/var/lock/subsys/${prog}}
 
 start() {
         echo -n $"Starting $prog: "
@@ -39,12 +42,15 @@ start() {
                 RETVAL=1
                 failure
         else
-                daemon $PATHPROG $OPTIONS
+                daemon --pidfile $PID_FILE $PATHPROG $OPTIONS
                 RETVAL=$?
-                [ $RETVAL -eq 0 ] && touch /var/lock/subsys/zfs.ganesha.nfsd
-        fi;
+                if [ $RETVAL -eq 0 ]; then 
+		 touch $LOCK_FILE
+		else
+		  RETVAL=1
+                fi
+        fi
         echo 
-        return $RETVAL
 }
 
 stop() {
@@ -55,29 +61,16 @@ stop() {
         else
                 killproc $PATHPROG
                 RETVAL=$?
-                [ $RETVAL -eq 0 ] && rm -f  /var/lock/subsys/zfs.ganesha.nfsd
+                if [ $RETVAL -eq 0 ]; then 
+		  rm -f  $LOCK_FILE
+                  success
+		else
+		  failure
+                fi
 
-        fi;
+        fi
         echo
         return $RETVAL
-}
-
-reload(){
-        echo -n $"Reloading $prog: "
-        killproc $PATHPROG -HUP
-        RETVAL=$?
-        echo
-        return $RETVAL
-}
-
-restart(){
-	stop
-	start
-}
-
-condrestart(){
-    [ -e /var/lock/subsys/zfs.ganesha.nfsd ] && restart
-    return 0
 }
 
 case "$1" in
@@ -88,20 +81,40 @@ case "$1" in
 	stop
 	;;
   restart)
-	restart
+	if [ -f $LOCK_FILE ] ; then
+		stop
+	fi
+	start
         ;;
   reload)
-	reload
+	if [ ! -f $LOCK_FILE ] ; then
+	   killproc -p $PID_FILE $prog -HUP
+        fi
+        RETVAL=0 ;
         ;;
-  condrestart)
-	condrestart
+  force-reload)
+	stop 
+	start
+	;;
+  try-restart)
+	if [ -f $LOCK_FILE ] ; then
+		stop
+
+		#avoid race
+		sleep 3
+		start
+	fi
 	;;
   status)
-        status $prog
-	RETVAL=$?
-        ;;
+	if [ $RETVAL -eq 5 ] ; then 
+	    RETVAL=3
+        else
+	   status -p $PID_FILE $PATHPROG
+	   RETVAL=$?
+        fi
+	;;
   *)
-	echo $"Usage: $0 {start|stop|status|restart|condrestart|reload}"
+	echo $"Usage: $0 {start|stop|restart|reload|try-restart|status}"
 	RETVAL=1
 esac
 

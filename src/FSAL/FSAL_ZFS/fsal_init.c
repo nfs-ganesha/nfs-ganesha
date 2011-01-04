@@ -195,12 +195,14 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
     LogDebug(COMPONENT_FSAL, "FSAL INIT: Creating the auto-snapshot thread");
     fs_specific_initinfo_t *fs_configuration = malloc(sizeof(*fs_configuration));
     *fs_configuration = init_info->fs_specific_info;
+#if 0
     if(pthread_create(&snapshot_thread, NULL, SnapshotThread, fs_configuration))
     {
       snapshot_thread = (pthread_t)NULL;
       ZFSFSAL_terminate();
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_Init);
     }
+#endif
   }
   else
   {
@@ -263,6 +265,7 @@ static void AddSnapshot(libzfswrap_vfs_t *p_vfs, char *psz_name)
     if( ( p_snapshots = realloc(p_snapshots, (i_snapshots + 1) * sizeof(*p_snapshots)) ) == NULL )
      {
        LogMajor(COMPONENT_FSAL, "SNAPSHOTS: recan't allocate memory... exiting");
+       free( p_snapshots ) ;
        exit( 1 ) ;
        return ;
      }
@@ -315,6 +318,7 @@ static void RemoveOldSnapshots(const char *psz_prefix, int number)
     if( ( p_snapshots = realloc(p_snapshots, (i_snapshots + 1) * sizeof(*p_snapshots)) ) == NULL )
      {
        LogMajor(COMPONENT_FSAL, "SNAPSHOTS: recan't allocate memory... exiting");
+       free( p_snapshots ) ;
        exit( 1 ) ;
        return ;
      }
@@ -337,6 +341,8 @@ static void *SnapshotThread(void *data)
     time_t time_now = time(NULL);
     struct tm *now = gmtime(&time_now);
     unsigned int i_wait;
+    char *psz_name;
+
     if(now->tm_min >= fs_info->snap_hourly_time)
       i_wait = 60 - (now->tm_min - fs_info->snap_hourly_time);
     else
@@ -347,7 +353,6 @@ static void *SnapshotThread(void *data)
     sleep(i_wait*60);
 
     /* Create a snapshot */
-    char *psz_name;
     libzfswrap_vfs_t *p_new = TakeSnapshotAndMount(fs_info->psz_zpool,
                                                    fs_info->psz_snap_hourly_prefix,
                                                    &psz_name);
