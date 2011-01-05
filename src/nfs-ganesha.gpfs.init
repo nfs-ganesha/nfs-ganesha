@@ -24,8 +24,8 @@
 . /etc/init.d/functions
 
 PATHPROG=/usr/bin/gpfs.ganesha.nfsd 
-#LOGFILE=/var/log/gpfs.ganesha.nfsd.log
-LOGFILE=SYSLOG
+LOGFILE=/var/log/nfs-ganesha.log
+#LOGFILE=SYSLOG
 #LOGFILE=STDERR
 #LOGFILE=STDOUT
 
