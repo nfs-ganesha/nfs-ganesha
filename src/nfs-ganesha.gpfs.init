@@ -271,6 +271,14 @@ condrestart(){
     return 0
 }
 
+reload() {
+    result=`pidof "$PATHPROG"`
+    if [ $result ]; then
+	    echo "Reloading Ganesha Exports"
+	    kill -HUP $result;
+    fi
+}
+
 ganesha_status() {
     result=`pidof "$PATHPROG"`
     if [ $result ]; then
@@ -305,6 +313,9 @@ case "$1" in
 	;;
   restart)
 	restart
+	;;
+  reload)
+	reload
         ;;
   condrestart)
 	condrestart
