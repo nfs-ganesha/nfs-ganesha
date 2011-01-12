@@ -819,7 +819,7 @@ fsal_status_t GPFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
   if(out_parameter->fs_specific_info.open_by_handle_dev_file[0] == '\0')
     {
       LogCrit(COMPONENT_CONFIG,
-              "FSAL LOAD PARAMETER: OpenByHandleDeviceFile MUST be specified in the configuration file",
+              "FSAL LOAD PARAMETER: OpenByHandleDeviceFile MUST be specified in the configuration file (item %s)",
               CONF_LABEL_FS_SPECIFIC);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }

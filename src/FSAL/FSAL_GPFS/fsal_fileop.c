@@ -307,7 +307,7 @@ fsal_status_t GPFSFSAL_read(gpfsfsal_file_t * p_file_descriptor,        /* IN */
                     (p_seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
                      (p_seek_descriptor->whence ==
                       FSAL_SEEK_END ? "SEEK_END" : "ERROR"))),
-                   p_seek_descriptor->offset);
+                   (long long) p_seek_descriptor->offset);
 
           Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_read);
         }
@@ -428,7 +428,7 @@ fsal_status_t GPFSFSAL_write(gpfsfsal_file_t * p_file_descriptor,       /* IN */
                     (p_seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
                      (p_seek_descriptor->whence ==
                       FSAL_SEEK_END ? "SEEK_END" : "ERROR"))),
-                   p_seek_descriptor->offset);
+                   (long long) p_seek_descriptor->offset);
 
           Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_write);
 
@@ -442,7 +442,7 @@ fsal_status_t GPFSFSAL_write(gpfsfsal_file_t * p_file_descriptor,       /* IN */
                                                   : (p_seek_descriptor->whence ==
                                                      FSAL_SEEK_END ? "SEEK_END" :
                                                      "ERROR"))),
-                   p_seek_descriptor->offset, buffer_size);
+                   (long long) p_seek_descriptor->offset, buffer_size);
 
     }
 
@@ -465,13 +465,13 @@ fsal_status_t GPFSFSAL_write(gpfsfsal_file_t * p_file_descriptor,       /* IN */
       {
         LogDebug(COMPONENT_FSAL,
                  "Write operation of size %llu at offset %lld failed. fd=%d, errno=%d.",
-                 i_size, p_seek_descriptor->offset, p_file_descriptor->fd, errsv);
+                 (unsigned long long) i_size, (long long) p_seek_descriptor->offset, p_file_descriptor->fd, errsv);
       }
       else
       {
         LogDebug(COMPONENT_FSAL,
                  "Write operation of size %llu at offset 0. fd=%d, errno=%d.",
-                 i_size, p_file_descriptor->fd, errsv);
+                 (unsigned long long) i_size, p_file_descriptor->fd, errsv);
       }
  
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_write);
