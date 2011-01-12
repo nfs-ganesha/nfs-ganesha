@@ -1742,3 +1742,36 @@ void cache_inode_print_srvhandle(char *comment, cache_entry_t * pentry)
   LogFullDebug(COMPONENT_CACHE_INODE, "-->-->-->-->--> External FH (%s) comment=%s = %s", tag, comment, outstr);
 }                               /* cache_inode_print_srvhandle */
 #endif
+
+cache_inode_status_t cache_inode_pin_pentry(cache_entry_t * pentry,
+                                      cache_inode_client_t * pclient,
+                                      fsal_op_context_t * pcontext)
+{
+   cache_inode_status_t pstatus = CACHE_INODE_SUCCESS;
+
+   if (pentry->object.file.open_fd.num_locks == 0) {
+     pstatus = cache_inode_open(pentry, pclient, FSAL_O_RDWR,
+	pcontext, &pstatus);
+     if (pstatus != CACHE_INODE_SUCCESS)
+        return pstatus;
+   }
+   pentry->object.file.open_fd.num_locks++;
+   return pstatus;
+}
+
+cache_inode_status_t cache_inode_unpin_pentry(cache_entry_t * pentry,
+                                       cache_inode_client_t * pclient,
+                                       hash_table_t * ht)
+{
+  cache_inode_status_t pstatus = CACHE_INODE_SUCCESS;
+
+  pentry->object.file.open_fd.num_locks--;
+  if (pentry->object.file.open_fd.num_locks == 0)
+    {
+      pstatus = cache_inode_close(pentry, pclient, pstatus);
+      if (pentry->internal_md.kill_entry != 0)
+        pstatus = cache_inode_kill_entry(pentry, ht, pclient, &pstatus);
+    }
+  return pstatus;
+}
+

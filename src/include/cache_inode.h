@@ -1108,6 +1108,14 @@ cache_inode_status_t cache_inode_del_state_by_key(char other[12],
 
 void cache_inode_expire_to_str(cache_inode_expire_type_t type, time_t value, char *out);
 
+cache_inode_status_t cache_inode_pin_pentry(cache_entry_t * pentry,
+                                      cache_inode_client_t * pclient,
+                                      fsal_op_context_t * pcontext);
+
+cache_inode_status_t cache_inode_unpin_pentry(cache_entry_t * pentry,
+                                       cache_inode_client_t * pclient,
+                                       hash_table_t * ht);
+
 /* Hash functions for hashtables and RBT */
 unsigned long cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,
                                          hash_buffer_t * buffclef);
