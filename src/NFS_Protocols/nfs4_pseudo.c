@@ -1438,11 +1438,13 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   pseudofs_entry_t psfsentry;
   pseudofs_entry_t *iter = NULL;
   int found = FALSE;
+  int pseudo_is_slash = FALSE ;
   int error = 0;
   cache_inode_status_t cache_status = 0;
   fsal_status_t fsal_status;
   cache_inode_fsal_data_t fsdata;
   fsal_path_t exportpath_fsal;
+  char pathfsal[MAXPATHLEN] ;
   fsal_attrib_list_t attr;
   fsal_handle_t fsal_handle;
 #ifdef _USE_MFSL
@@ -1464,15 +1466,27 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       return res_LOOKUP4.status;
     }
 
-  found = FALSE;
-  for(iter = psfsentry.sons; iter != NULL; iter = iter->next)
-    {
-      if(!strcmp(iter->name, name))
-        {
-          found = TRUE;
-          break;
-        }
-    }
+ 
+  /* If "/" is set as pseudopath, then gPseudoFS.root.junction_export is not NULL but 
+   * gPseudoFS.root has no son */
+  if( ( gPseudoFs.root.junction_export != NULL ) && ( gPseudoFs.root.sons == NULL )  )
+   {
+	iter = &gPseudoFs.root ;
+        pseudo_is_slash = TRUE ;
+        found = TRUE ;
+   }
+  else
+   {
+     found = FALSE;
+     for(iter = psfsentry.sons; iter != NULL; iter = iter->next)
+       {
+         if(!strcmp(iter->name, name))
+           {
+             found = TRUE;
+             break;
+           } 
+       } /* for */
+    } /* else */
 
   if(!found)
     {
@@ -1480,6 +1494,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       return res_LOOKUP4.status;
     }
 
+ 
   /* A matching entry was found */
   if(iter->junction_export == NULL)
     {
@@ -1510,9 +1525,17 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         }
 
       /* Build fsal data for creation of the first entry */
+      strncpy( pathfsal, data->pexport->fullpath, MAXPATHLEN ) ;
+
+      if( pseudo_is_slash == TRUE )
+       {
+         strncat( pathfsal, "/", MAXPATHLEN ) ;
+         strncat( pathfsal, name, MAXPATHLEN ) ;
+       }
+
       if(FSAL_IS_ERROR
          ((fsal_status =
-           FSAL_str2path(data->pexport->fullpath, strsize, &exportpath_fsal))))
+           FSAL_str2path( pathfsal, strsize, &exportpath_fsal))))
         {
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
           return res_LOOKUP4.status;
@@ -1611,6 +1634,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       data->current_filetype = cache_inode_fsal_type_convert(attr.type);
 
     }                           /* else */
+
 
   res_LOOKUP4.status = NFS4_OK;
   return NFS4_OK;

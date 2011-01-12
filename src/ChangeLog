@@ -421,5 +421,8 @@
 
 1.0.4   -
         - init.d scripts are now closer to LSB requirements
+	- Bug fix: race condition when inserting the same new entry several
+	  time and concurrently in metadata cache
+        - Bug fix : it was impossible to set "/" as an export's entry's pseudopath
 
 	
