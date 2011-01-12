@@ -66,8 +66,10 @@ static inline void glist_del(struct glist_head *node)
 {
   struct glist_head *left = node->prev;
   struct glist_head *right = node->next;
-  left->next = right;
-  right->prev = left;
+  if(left != NULL)
+    left->next = right;
+  if(right != NULL)
+    right->prev = left;
   node->next = NULL;
   node->prev = NULL;
 }

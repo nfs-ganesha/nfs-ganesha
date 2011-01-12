@@ -24,7 +24,20 @@
 #ifndef NLM_ASYNC_H
 #define NLM_ASYNC_H
 
+#ifdef _USE_GSSRPC
+#include <gssrpc/types.h>
+#include <gssrpc/rpc.h>
+#else
+#include <rpc/types.h>
+#include <rpc/rpc.h>
+#endif
+
+#include <pthread.h>
+
 #include "nfs_proto_functions.h"
+
+extern pthread_mutex_t nlm_async_resp_mutex;
+extern pthread_cond_t nlm_async_resp_cond;
 
 typedef struct nlm_async_res
 {
@@ -45,5 +58,15 @@ static inline nlm_async_res_t *nlm_build_async_res(char *caller_name, nfs_res_t 
   memcpy(&(arg->pres), pres, sizeof(nfs_res_t));
   return arg;
 }
+
+typedef struct
+{
+  xdrproc_t inproc;
+  xdrproc_t outproc;
+} nlm_reply_proc_t;
+
+/* Client routine  to send the asynchrnous response, key is used to wait for a response */
+extern int nlm_send_async(int proc, char *host, void *inarg, void *key);
+extern void nlm_signal_async_resp(void *key);
 
 #endif                          /* NLM_ASYNC_H */

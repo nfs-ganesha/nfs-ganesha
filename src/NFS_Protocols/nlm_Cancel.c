@@ -88,23 +88,25 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
                 struct svc_req *preq /* IN     */ ,
                 nfs_res_t * pres /* OUT    */ )
 {
-  nlm4_cancargs *arg;
+  nlm4_cancargs *arg = &parg->arg_nlm4_cancel;
   cache_entry_t *pentry;
   fsal_attrib_list_t attr;
   nlm_lock_entry_t *nlm_entry;
   cache_inode_status_t cache_status;
   cache_inode_fsal_data_t fsal_data;
 
-  LogFullDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm4_Lock");
+  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm4_Cancel svid=%d off=%llx len=%llx",
+           (int) arg->alock.svid, (unsigned long long) arg->alock.l_offset, (unsigned long long) arg->alock.l_len);
 
   if(in_nlm_grace_period())
     {
       pres->res_nlm4test.test_stat.stat = NLM4_DENIED_GRACE_PERIOD;
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Cancel %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
 
   /* Convert file handle into a cache entry */
-  arg = &parg->arg_nlm4_cancel;
   if(!nfs3_FhandleToFSAL((nfs_fh3 *) & (arg->alock.fh), &fsal_data.handle, pcontext))
     {
       /* handle is not valid */
@@ -113,6 +115,8 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
        * Should we do a REQ_OK so that the client get
        * a response ? FIXME!!
        */
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Cancel %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_DROP;
     }
   /* Now get the cached inode attributes */
@@ -122,6 +126,8 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
     {
       /* handle is not valid */
       pres->res_nlm4.stat.stat = NLM4_STALE_FH;
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Cancel %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
   nlm_entry = nlm_find_lock_entry(&(arg->alock), arg->exclusive, NLM4_BLOCKED);
@@ -133,6 +139,8 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
   do_cancel_lock(nlm_entry);
   nlm_lock_entry_dec_ref(nlm_entry);
   pres->res_nlm4.stat.stat = NLM4_GRANTED;
+  LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Cancel %s",
+           lock_result_str(pres->res_nlm4.stat.stat));
   return NFS_REQ_OK;
 }                               /* nlm4_Cancel */
 

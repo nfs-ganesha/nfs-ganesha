@@ -63,7 +63,6 @@
 #include "nlm_util.h"
 #include "nlm4.h"
 #include "nlm_async.h"
-#include "nlm_send_reply.h"
 
 static void nlm4_lock_message_resp(void *arg)
 {
@@ -78,7 +77,7 @@ static void nlm4_lock_message_resp(void *arg)
     {
       proc = NLMPROC4_LOCK_RES;
     }
-  nlm_send_reply(proc, res->caller_name, &(res->pres), NULL);
+  nlm_send_async(proc, res->caller_name, &(res->pres), NULL);
   Mem_Free(arg);
 }
 
@@ -103,7 +102,7 @@ int nlm4_Lock_Message(nfs_arg_t * parg /* IN     */ ,
                       nfs_res_t * pres /* OUT    */ )
 {
   nlm_async_res_t *arg;
-  LogFullDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Lock_Message");
+  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Lock_Message");
 
   nlm4_Lock(parg, pexport, pcontext, pclient, ht, preq, pres);
 

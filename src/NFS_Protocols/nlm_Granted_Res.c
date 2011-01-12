@@ -83,13 +83,15 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
                      struct svc_req *preq /* IN     */ ,
                      nfs_res_t * pres /* OUT    */ )
 {
-  nlm4_res *arg;
+  nlm4_res *arg = &parg->arg_nlm4_res;
   nlm_lock_entry_t *nlm_entry;
+  char buffer[1024];
 
-  LogFullDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Granted_Res");
+  netobj_to_string(&arg->cookie, buffer, 1024);
+  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Granted_Res cookie=%s", buffer);
 
-  arg = &parg->arg_nlm4_res;
   nlm_entry = nlm_find_lock_entry_by_cookie(&arg->cookie);
+  LogDebug(COMPONENT_NLM, "nlm4_Granted_Res found lock entry %p", nlm_entry);
   if(!nlm_entry)
     return NFS_REQ_OK;
 
@@ -103,7 +105,10 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
       nlm_async_callback(nlm_resend_grant_msg, (void *)nlm_entry);
     }
   else
-    nlm_lock_entry_dec_ref(nlm_entry);
+    {
+      nlm_signal_async_resp(nlm_entry);
+      nlm_lock_entry_dec_ref(nlm_entry);
+    }
   /*
    * Consider all other return status as success
    * nlm_entry is already marked NLM4_GRANTED

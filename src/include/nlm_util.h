@@ -42,6 +42,7 @@ struct nlm_lock_entry
 typedef struct nlm_lock_entry nlm_lock_entry_t;
 
 extern const char *lock_result_str(int rc);
+extern void netobj_to_string(netobj *obj, char *buffer, int maxlen);
 extern void nlm_lock_entry_to_nlm_holder(nlm_lock_entry_t * nlm_entry,
                                          struct nlm4_holder *holder);
 extern int nlm_lock_entry_get_state(nlm_lock_entry_t * nlm_entry);
