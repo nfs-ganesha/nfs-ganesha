@@ -32,15 +32,20 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <sys/time.h>
+#include <strings.h>
 
 #include "stuff_alloc.h"
 #include "nlm_list.h"
 #include "nlm_async.h"
+#include "nlm4.h"
+#include "nfs_proto_functions.h"
 
 static pthread_t nlm_async_thread;
 static pthread_mutex_t nlm_async_queue_mutex;
 static struct glist_head nlm_async_queue;
 static pthread_cond_t nlm_async_queue_cond;
+pthread_mutex_t nlm_async_resp_mutex;
+pthread_cond_t nlm_async_resp_cond;
 
 typedef struct
 {
@@ -70,13 +75,12 @@ void *nlm_async_func(void *argp)
     }
   LogEvent(COMPONENT_NLM, "NLM async thread: Memory manager successfully initialized");
 #endif
-  LogDebug(COMPONENT_NLM, "NLM async thread: my pthread id is %p",
-           (caddr_t) pthread_self());
+  LogFullDebug(COMPONENT_NLM, "NLM async thread: my pthread id is %p",
+               (caddr_t) pthread_self());
 
   while(1)
     {
       pthread_mutex_lock(&nlm_async_queue_mutex);
- restart:
       while(glist_empty(&nlm_async_queue))
         {
           gettimeofday(&now, NULL);
@@ -119,8 +123,8 @@ void nlm_async_callback(nlm_callback_func * func, void *arg)
 
   pthread_mutex_lock(&nlm_async_queue_mutex);
   glist_add_tail(&nlm_async_queue, &q->glist);
-  pthread_mutex_unlock(&nlm_async_queue_mutex);
   pthread_cond_signal(&nlm_async_queue_cond);
+  pthread_mutex_unlock(&nlm_async_queue_mutex);
 }
 
 int nlm_async_callback_init()
@@ -129,6 +133,8 @@ int nlm_async_callback_init()
 
   pthread_mutex_init(&nlm_async_queue_mutex, NULL);
   pthread_cond_init(&nlm_async_queue_cond, NULL);
+  pthread_mutex_init(&nlm_async_resp_mutex, NULL);
+  pthread_cond_init(&nlm_async_resp_cond, NULL);
   init_glist(&nlm_async_queue);
 
   rc = pthread_create(&nlm_async_thread, NULL, nlm_async_func, NULL);
@@ -138,4 +144,112 @@ int nlm_async_callback_init()
     }
 
   return 0;
+}
+
+nlm_reply_proc_t nlm_reply_proc[] = {
+
+  [NLMPROC4_GRANTED_MSG] = {
+                            .inproc = (xdrproc_t) xdr_nlm4_testargs,
+                            .outproc = (xdrproc_t) xdr_void,
+                            }
+  ,
+  [NLMPROC4_TEST_RES] = {
+                         .inproc = (xdrproc_t) xdr_nlm4_testres,
+                         .outproc = (xdrproc_t) xdr_void,
+                         }
+  ,
+  [NLMPROC4_LOCK_RES] = {
+                         .inproc = (xdrproc_t) xdr_nlm4_res,
+                         .outproc = (xdrproc_t) xdr_void,
+                         }
+  ,
+  [NLMPROC4_CANCEL_RES] = {
+                           .inproc = (xdrproc_t) xdr_nlm4_res,
+                           .outproc = (xdrproc_t) xdr_void,
+                           }
+  ,
+  [NLMPROC4_UNLOCK_RES] = {
+                           .inproc = (xdrproc_t) xdr_nlm4_res,
+                           .outproc = (xdrproc_t) xdr_void,
+                           }
+  ,
+};
+
+static void *resp_key;
+
+/* Client routine  to send the asynchrnous response, key is used to wait for a response */
+int nlm_send_async(int proc, char *host, void *inarg, void *key)
+{
+  CLIENT *clnt;
+  struct timeval tout = { 0, 10 };
+  xdrproc_t inproc = NULL, outproc = NULL;
+  int retval;
+  struct timeval start, now;
+  struct timespec timeout;
+
+  clnt = clnt_create(host, NLMPROG, NLM4_VERS, "tcp");
+  if(!clnt)
+    {
+      LogMajor(COMPONENT_NLM, "%s: Cannot create connection to %s client",
+               __func__, host);
+      return -1;
+    }
+  inproc = nlm_reply_proc[proc].inproc;
+  outproc = nlm_reply_proc[proc].outproc;
+
+  pthread_mutex_lock(&nlm_async_resp_mutex);
+  resp_key = key;
+  pthread_mutex_unlock(&nlm_async_resp_mutex);
+
+  LogFullDebug(COMPONENT_NLM, "nlm_send_async about to make clnt_call");
+  retval = clnt_call(clnt, proc, inproc, inarg, outproc, NULL, tout);
+  LogFullDebug(COMPONENT_NLM, "nlm_send_async done with clnt_call");
+
+  if(retval == RPC_TIMEDOUT)
+    retval = RPC_SUCCESS;
+  else if(retval != RPC_SUCCESS)
+    {
+      LogMajor(COMPONENT_NLM, "%s: Client procedure call %d failed with return code %d", __func__, proc, retval);
+      pthread_mutex_lock(&nlm_async_resp_mutex);
+      resp_key = NULL;
+      pthread_mutex_unlock(&nlm_async_resp_mutex);
+    }
+
+  pthread_mutex_lock(&nlm_async_resp_mutex);
+  if(resp_key != NULL)
+    {
+      /* Wait for 5 seconds or a signal */
+      gettimeofday(&start, NULL);
+      gettimeofday(&now, NULL);
+      timeout.tv_sec = 5 + start.tv_sec;
+      timeout.tv_nsec = 0;
+      LogFullDebug(COMPONENT_NLM, "nlm_send_async about to wait for signal for key %p", resp_key);
+      while(resp_key != NULL && now.tv_sec < (start.tv_sec + 5))
+        {
+          int rc = pthread_cond_timedwait(&nlm_async_resp_cond, &nlm_async_resp_mutex, &timeout);
+          LogFullDebug(COMPONENT_NLM, "pthread_cond_timedwait returned %d", rc);
+          gettimeofday(&now, NULL);
+        }
+      LogFullDebug(COMPONENT_NLM, "nlm_send_async done waiting");
+      pthread_mutex_unlock(&nlm_async_resp_mutex);
+    }
+
+  clnt_destroy(clnt);
+  return retval;
+}
+
+void nlm_signal_async_resp(void *key)
+{
+  pthread_mutex_lock(&nlm_async_resp_mutex);
+  if(resp_key == key)
+    {
+      resp_key = NULL;
+      pthread_cond_signal(&nlm_async_resp_cond);
+      LogFullDebug(COMPONENT_NLM, "nlm_signal_async_resp signaled condition variable");
+    }
+  else
+    {
+      LogFullDebug(COMPONENT_NLM, "nlm_signal_async_resp didn't signal condition variable");
+    }
+  pthread_mutex_unlock(&nlm_async_resp_mutex);
 }

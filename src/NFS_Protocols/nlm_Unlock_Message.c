@@ -63,12 +63,11 @@
 #include "nlm_util.h"
 #include "nlm4.h"
 #include "nlm_async.h"
-#include "nlm_send_reply.h"
 
 static void nlm4_unlock_message_resp(void *arg)
 {
   nlm_async_res_t *res = arg;
-  nlm_send_reply(NLMPROC4_UNLOCK_RES, res->caller_name, &(res->pres), NULL);
+  nlm_send_async(NLMPROC4_UNLOCK_RES, res->caller_name, &(res->pres), NULL);
   Mem_Free(arg);
 }
 
@@ -93,7 +92,7 @@ int nlm4_Unlock_Message(nfs_arg_t * parg /* IN     */ ,
                         nfs_res_t * pres /* OUT    */ )
 {
   nlm_async_res_t *arg;
-  LogFullDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Unlock_Message");
+  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Unlock_Message");
   nlm4_Unlock(parg, pexport, pcontext, pclient, ht, preq, pres);
 
   arg = nlm_build_async_res(parg->arg_nlm4_unlock.alock.caller_name, pres);
