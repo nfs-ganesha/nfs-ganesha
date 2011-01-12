@@ -348,6 +348,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
   pentry->internal_md.type = type;
   pentry->internal_md.valid_state = VALID;
   pentry->internal_md.read_time = 0;
+  pentry->internal_md.kill_entry = 0;
   pentry->internal_md.mod_time = pentry->internal_md.alloc_time = time(NULL);
   pentry->internal_md.refresh_time = pentry->internal_md.alloc_time;
 

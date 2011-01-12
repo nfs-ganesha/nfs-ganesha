@@ -295,6 +295,7 @@ typedef struct cache_inode_internal_md__
   time_t mod_time;                                         /**< Epoch time of the last change operation on the entry */
   time_t refresh_time;                                     /**< Epoch time of the last update operation on the entry */
   time_t alloc_time;                                       /**< Epoch time of the allocation for this entry          */
+  int kill_entry;
 } cache_inode_internal_md_t;
 
 typedef unsigned int cache_inode_state_type_t;

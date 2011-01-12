@@ -516,6 +516,13 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
   if(to_remove_numlinks == 0)
     {
 
+      /* If pentry is a regular file and has locks, do not remove, just mark it to be removed */
+      if((to_remove_entry->internal_md.type == REGULAR_FILE) &&
+                        (to_remove_entry->object.file.open_fd.num_locks))
+        {
+          to_remove_entry->internal_md.kill_entry = 1;
+          goto dontremove;
+        }
       /* If pentry is a regular file, data cached, the related data cache entry should be removed as well */
       if(to_remove_entry->internal_md.type == REGULAR_FILE)
         {
@@ -591,13 +598,14 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       ReleaseToPool(to_remove_entry, &pclient->pool_entry);
     }
 
+dontremove:
   /* Validate the entries */
   *pstatus = cache_inode_valid(pentry, CACHE_INODE_OP_SET, pclient);
 
   /* Regular exit */
   if(use_mutex)
     {
-      if(to_remove_numlinks != 0)
+      if(to_remove_numlinks != 0 || to_remove_entry->internal_md.kill_entry != 0)
         V_w(&to_remove_entry->lock);    /* This was not release yet, it should be done here */
 
       V_w(&pentry->lock);
