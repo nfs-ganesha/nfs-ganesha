@@ -216,6 +216,9 @@ void nlm_lock_entry_dec_ref(nlm_lock_entry_t * nlm_entry)
     pthread_mutex_unlock(&nlm_entry->lock);
     if(to_free)
         {
+    LogFullDebug(COMPONENT_NLM,
+                 "nlm_lock_entry_dec_ref nlm_entry %p pentry %p pclient %p\n",
+                 nlm_entry, nlm_entry->pentry, nlm_entry->pclient);
             LogFullDebug(COMPONENT_NLM,
                          "nlm_lock_entry_dec_ref Freeing %p svid=%d start=%llx end=%llx %s",
                          nlm_entry, nlm_entry->svid, nlm_entry->start, nlm_entry->len,
@@ -381,6 +384,9 @@ nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs * arg,
     nlm_entry->pentry = pentry;
     nlm_entry->pclient = pclient;
  
+    LogFullDebug(COMPONENT_NLM,
+                 "nlm_add_to_locklist nlm_entry %p pentry %p pclient %p\n",
+                 nlm_entry, nlm_entry->pentry, nlm_entry->pclient);
     /*
      * Add nlm_entry to the lock list with
      * granted or blocked state. Since we haven't yet added
@@ -437,6 +443,9 @@ static void do_nlm_remove_from_locklist(nlm_lock_entry_t * nlm_entry)
         }
     pthread_mutex_unlock(&nlm_entry->lock);
 
+    LogFullDebug(COMPONENT_NLM,
+                 "do_nlm_remove_from_locklist nlm_entry %p pentry %p pclient %p\n",
+                 nlm_entry, nlm_entry->pentry, nlm_entry->pclient);
     LogFullDebug(COMPONENT_NLM,
                  "do_nlm_remove_from_locklist Freeing %p svid=%d start=%llx end=%llx %s",
                  nlm_entry, nlm_entry->svid, nlm_entry->start, nlm_entry->len,

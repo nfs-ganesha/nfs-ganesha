@@ -1749,6 +1749,7 @@ cache_inode_status_t cache_inode_pin_pentry(cache_entry_t * pentry,
 {
    cache_inode_status_t pstatus = CACHE_INODE_SUCCESS;
 
+   LogDebug(COMPONENT_CACHE_INODE, "cache_inode_pin_pentry: pentry %p; pclient %p\n", pentry, pclient);
    if (pentry->object.file.open_fd.num_locks == 0) {
      pstatus = cache_inode_open(pentry, pclient, FSAL_O_RDWR,
 	pcontext, &pstatus);
@@ -1756,6 +1757,8 @@ cache_inode_status_t cache_inode_pin_pentry(cache_entry_t * pentry,
         return pstatus;
    }
    pentry->object.file.open_fd.num_locks++;
+   LogDebug(COMPONENT_CACHE_INODE, "cache_inode_pin_pentry: numlocks %d\n",
+                pentry->object.file.open_fd.num_locks);
    return pstatus;
 }
 
@@ -1766,6 +1769,9 @@ cache_inode_status_t cache_inode_unpin_pentry(cache_entry_t * pentry,
   cache_inode_status_t pstatus = CACHE_INODE_SUCCESS;
 
   pentry->object.file.open_fd.num_locks--;
+  LogDebug(COMPONENT_CACHE_INODE, "cache_inode_unpin_pentry: pentry %p; pclient %p"
+            "numlocks %d, kill_entry %d\n", pentry, pclient,
+            pentry->object.file.open_fd.num_locks, pentry->internal_md.kill_entry);
   if (pentry->object.file.open_fd.num_locks == 0)
     {
       pstatus = cache_inode_close(pentry, pclient, pstatus);
