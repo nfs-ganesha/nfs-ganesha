@@ -1774,7 +1774,7 @@ cache_inode_status_t cache_inode_unpin_pentry(cache_entry_t * pentry,
             pentry->object.file.open_fd.num_locks, pentry->internal_md.kill_entry);
   if (pentry->object.file.open_fd.num_locks == 0)
     {
-      pstatus = cache_inode_close(pentry, pclient, pstatus);
+      pstatus = cache_inode_close(pentry, pclient, &pstatus);
       if (pentry->internal_md.kill_entry != 0)
         pstatus = cache_inode_kill_entry(pentry, ht, pclient, &pstatus);
     }
