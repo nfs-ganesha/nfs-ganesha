@@ -234,12 +234,16 @@ void nlm_lock_entry_dec_ref(nlm_lock_entry_t * nlm_entry)
     pthread_mutex_unlock(&nlm_entry->lock);
     if(to_free)
         {
+    LogFullDebug(COMPONENT_NLM,
+                 "nlm_lock_entry_dec_ref nlm_entry %p pentry %p pclient %p\n",
+                 nlm_entry, nlm_entry->pentry, nlm_entry->pclient);
             LogFullDebug(COMPONENT_NLM,
-                         "do_nlm_remove_from_locklist Freeing %p svid=%d start=%llx end=%llx %s",
+                         "nlm_lock_entry_dec_ref Freeing %p svid=%d start=%llx end=%llx %s",
                          nlm_entry, nlm_entry->svid,
                          (unsigned long long) nlm_entry->start, (unsigned long long) nlm_entry->len,
                          lock_result_str(nlm_entry->state));
 
+            cache_inode_unpin_pentry(nlm_entry->pentry, nlm_entry->pclient, nlm_entry->ht);
             free(nlm_entry->caller_name);
             netobj_free(&nlm_entry->fh);
             netobj_free(&nlm_entry->oh);
@@ -311,7 +315,9 @@ nlm_lock_entry_t *nlm_overlapping_entry(struct nlm4_lock * nlm_lock, int exclusi
     return nlm_entry;
 }
 
-nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs * arg)
+nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs * arg,
+                cache_entry_t * pentry, cache_inode_client_t * pclient,
+                fsal_op_context_t * pcontext)
 {
     int allow = 1;
     int exclusive;
@@ -319,6 +325,7 @@ nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs * arg)
     struct nlm4_lock *nlm_lock;
     nlm_lock_entry_t *nlm_entry;
     uint64_t nlm_entry_end, nlm_lock_end;
+    cache_inode_status_t pstatus;
 
     nlm_lock = &arg->alock;
     exclusive = arg->exclusive;
@@ -386,6 +393,19 @@ nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs * arg)
     nlm_entry = nlm4_lock_to_nlm_lock_entry(arg);
     if(!nlm_entry)
         goto error_out;
+
+    /* Pin the cache entry */
+    pstatus = cache_inode_pin_pentry(pentry, pclient, pcontext);
+    if(pstatus != CACHE_INODE_SUCCESS)
+        goto free_nlm_entry;
+
+    /* Store pentry and pclient for using during removal */
+    nlm_entry->pentry = pentry;
+    nlm_entry->pclient = pclient;
+ 
+    LogFullDebug(COMPONENT_NLM,
+                 "nlm_add_to_locklist nlm_entry %p pentry %p pclient %p\n",
+                 nlm_entry, nlm_entry->pentry, nlm_entry->pclient);
     /*
      * Add nlm_entry to the lock list with
      * granted or blocked state. Since we haven't yet added
@@ -415,6 +435,15 @@ nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs * arg)
 error_out:
     pthread_mutex_unlock(&nlm_lock_list_mutex);
     return nlm_entry;
+
+free_nlm_entry:
+    free(nlm_entry->caller_name);
+    netobj_free(&nlm_entry->fh);
+    netobj_free(&nlm_entry->oh);
+    netobj_free(&nlm_entry->cookie);
+    Mem_Free(nlm_entry);
+    nlm_entry = NULL;
+    goto error_out;
 }
 
 static void do_nlm_remove_from_locklist(nlm_lock_entry_t * nlm_entry)
@@ -435,10 +464,16 @@ static void do_nlm_remove_from_locklist(nlm_lock_entry_t * nlm_entry)
     pthread_mutex_unlock(&nlm_entry->lock);
 
     LogFullDebug(COMPONENT_NLM,
+                 "do_nlm_remove_from_locklist nlm_entry %p pentry %p pclient %p\n",
+                 nlm_entry, nlm_entry->pentry, nlm_entry->pclient);
+    LogFullDebug(COMPONENT_NLM,
                  "do_nlm_remove_from_locklist Freeing %p svid=%d start=%llx end=%llx %s",
                  nlm_entry, nlm_entry->svid,
                  (unsigned long long) nlm_entry->start, (unsigned long long) nlm_entry->len,
                  lock_result_str(nlm_entry->state));
+
+    /* Remove pinned cache's pentry */
+    cache_inode_unpin_pentry(nlm_entry->pentry, nlm_entry->pclient, nlm_entry->ht);
 
     /*
      * We have dropped ourself from the lock list. So other
@@ -545,6 +580,10 @@ static nlm_lock_entry_t *nlm_lock_entry_t_dup(nlm_lock_entry_t * orig_nlm_entry)
     nlm_entry->exclusive = orig_nlm_entry->exclusive;
     nlm_entry->ref_count = 0;
     pthread_mutex_init(&nlm_entry->lock, NULL);
+    nlm_entry->pentry = orig_nlm_entry->pentry;
+    nlm_entry->pclient = orig_nlm_entry->pclient;
+    nlm_entry->ht = orig_nlm_entry->ht;
+    cache_inode_pin_pentry(nlm_entry->pentry, nlm_entry->pclient, NULL);
     return nlm_entry;
 err_out:
     free(nlm_entry->caller_name);
