@@ -235,6 +235,7 @@ typedef struct cache_inode_opened_file__
   fsal_file_t fd;
 #endif 
   unsigned int fileno;
+  unsigned int num_locks;
   fsal_openflags_t openflags;
   time_t last_op;
 } cache_inode_opened_file_t;
