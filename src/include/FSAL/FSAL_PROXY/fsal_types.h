@@ -112,7 +112,7 @@ typedef union {
 #ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_HANDLE_T_SIZE];
 #endif
-} proxyfsal_handle_t;
+} __attribute__((packed)) proxyfsal_handle_t;
 
 typedef struct fsal_cred__
 {
@@ -122,7 +122,7 @@ typedef struct fsal_cred__
   fsal_gid_t alt_groups[FSAL_NGROUPS_MAX];
 } proxyfsal_cred_t;
 
-typedef struct fsal_export_context__
+typedef struct fsal_export_context__ 
 {
   proxyfsal_handle_t root_handle;
 } proxyfsal_export_context_t;

@@ -200,8 +200,6 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
     }
 
-  /* Trace */
-
   return NFS4_OK;
 }                               /* nfs4_op_putfh */
 

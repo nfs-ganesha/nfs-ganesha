@@ -26,8 +26,8 @@ PATHPROG=/usr/bin/hpss.ganesha.nfsd
 [ -f /etc/sysconfig/nfs-ganesha.hpss ] && . /etc/sysconfig/nfs-ganesha.hpss 
 
 # Default HPSS options
-LOGFILE=/var/log/hpss.ganesha.nfsd.log
-CONFFILE=/etc/ganesha/hpss.ganesha.nfsd.conf
+LOGFILE=/var/hpss/log/nfs/hpss.ganesha.nfsd.log
+CONFFILE=/var/hpss/etc/hpss.ganesha.nfsd.conf
 
 OPTIONS="-d -L $LOGFILE -f $CONFFILE -N NIV_EVENT"
 RETVAL=0

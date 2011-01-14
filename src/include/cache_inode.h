@@ -362,13 +362,13 @@ typedef struct cache_entry__
 #ifdef _USE_PNFS
       pnfs_file_t pnfs_file ;
 #endif
+      cache_inode_opened_file_t open_fd;                             /**< Cached fsal_file_t for optimized access              */
 #ifdef _USE_PROXY
       fsal_name_t *pname;                                            /**< Pointer to filename, for PROXY only                  */
       struct cache_entry__ *pentry_parent_open;                      /**< Parent associated with pname, for PROXY only         */
 #endif                          /* _USE_PROXY */
       fsal_attrib_list_t attributes;                                 /**< The FSAL Attributes                                  */
       void *pentry_content;                                          /**< Entry in file content cache (NULL if not cached)     */
-      cache_inode_opened_file_t open_fd;                             /**< Cached fsal_file_t for optimized access              */
       void *pstate_head;                                             /**< Pointer used for the head of the state chain         */
       void *pstate_tail;                                             /**< Current pointer for the state chain                  */
       cache_inode_unstable_data_t unstable_data;                     /**< Unstable data, for use with WRITE/COMMIT             */

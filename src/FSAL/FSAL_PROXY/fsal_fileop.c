@@ -805,7 +805,9 @@ fsal_status_t PROXYFSAL_close(proxyfsal_file_t * file_descriptor        /* IN */
 
   /* Check if this was a "stateless" open, then nothing is to be done at close */
   if(!memcmp(file_descriptor->stateid.other, All_Zero, 12))
+   {
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
+   }
 
   /* Get NFSv4 File handle */
   if(fsal_internal_proxy_extract_fh(&nfs4fh, &(file_descriptor->fhandle)) == FALSE)
@@ -834,8 +836,7 @@ fsal_status_t PROXYFSAL_close(proxyfsal_file_t * file_descriptor        /* IN */
     return fsal_internal_proxy_error_convert(resnfs4.status, INDEX_FSAL_close);
 
   /* Update fd structure */
-  file_descriptor->stateid.seqid = 0;
-  memset((char *)file_descriptor->stateid.other, 0, 12);
+  file_descriptor->stateid.seqid +=  1;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
 }                               /* FSAL_close */

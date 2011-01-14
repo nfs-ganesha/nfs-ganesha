@@ -2438,7 +2438,8 @@ int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap )
     }
 
   pbitmap->bitmap4_val[0] = bout.bitmap4_val[0] ;  
-  pbitmap->bitmap4_val[1] = bout.bitmap4_val[1] ;  
+  if( pbitmap->bitmap4_len > 1 )
+     pbitmap->bitmap4_val[1] = bout.bitmap4_val[1] ;  
 
   return 1 ;
 }                               /* nfs4_Fattr_Bitmap_Remove_Unsupported */
