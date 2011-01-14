@@ -56,6 +56,50 @@
 #include <pthread.h>
 #include <string.h>
 
+const char *cache_inode_err_str(int err)
+{
+  switch(err)
+    {
+      case CACHE_INODE_SUCCESS:               return "CACHE_INODE_SUCCESS";
+      case CACHE_INODE_MALLOC_ERROR:          return "CACHE_INODE_MALLOC_ERROR";
+      case CACHE_INODE_POOL_MUTEX_INIT_ERROR: return "CACHE_INODE_POOL_MUTEX_INIT_ERROR";
+      case CACHE_INODE_GET_NEW_LRU_ENTRY:     return "CACHE_INODE_GET_NEW_LRU_ENTRY";
+      case CACHE_INODE_UNAPPROPRIATED_KEY:    return "CACHE_INODE_UNAPPROPRIATED_KEY";
+      case CACHE_INODE_INIT_ENTRY_FAILED:     return "CACHE_INODE_INIT_ENTRY_FAILED";
+      case CACHE_INODE_FSAL_ERROR:            return "CACHE_INODE_FSAL_ERROR";
+      case CACHE_INODE_LRU_ERROR:             return "CACHE_INODE_LRU_ERROR";
+      case CACHE_INODE_HASH_SET_ERROR:        return "CACHE_INODE_HASH_SET_ERROR";
+      case CACHE_INODE_NOT_A_DIRECTORY:       return "CACHE_INODE_NOT_A_DIRECTORY";
+      case CACHE_INODE_INCONSISTENT_ENTRY:    return "CACHE_INODE_INCONSISTENT_ENTRY";
+      case CACHE_INODE_BAD_TYPE:              return "CACHE_INODE_BAD_TYPE";
+      case CACHE_INODE_ENTRY_EXISTS:          return "CACHE_INODE_ENTRY_EXISTS";
+      case CACHE_INODE_DIR_NOT_EMPTY:         return "CACHE_INODE_DIR_NOT_EMPTY";
+      case CACHE_INODE_NOT_FOUND:             return "CACHE_INODE_NOT_FOUND";
+      case CACHE_INODE_INVALID_ARGUMENT:      return "CACHE_INODE_INVALID_ARGUMENT";
+      case CACHE_INODE_INSERT_ERROR:          return "CACHE_INODE_INSERT_ERROR";
+      case CACHE_INODE_HASH_TABLE_ERROR:      return "CACHE_INODE_HASH_TABLE_ERROR";
+      case CACHE_INODE_FSAL_EACCESS:          return "CACHE_INODE_FSAL_EACCESS";
+      case CACHE_INODE_IS_A_DIRECTORY:        return "CACHE_INODE_IS_A_DIRECTORY";
+      case CACHE_INODE_FSAL_EPERM:            return "CACHE_INODE_FSAL_EPERM";
+      case CACHE_INODE_NO_SPACE_LEFT:         return "CACHE_INODE_NO_SPACE_LEFT";
+      case CACHE_INODE_CACHE_CONTENT_ERROR:   return "CACHE_INODE_CACHE_CONTENT_ERROR";
+      case CACHE_INODE_CACHE_CONTENT_EXISTS:  return "CACHE_INODE_CACHE_CONTENT_EXISTS";
+      case CACHE_INODE_CACHE_CONTENT_EMPTY:   return "CACHE_INODE_CACHE_CONTENT_EMPTY";
+      case CACHE_INODE_READ_ONLY_FS:          return "CACHE_INODE_READ_ONLY_FS";
+      case CACHE_INODE_IO_ERROR:              return "CACHE_INODE_IO_ERROR";
+      case CACHE_INODE_FSAL_ESTALE:           return "CACHE_INODE_FSAL_ESTALE";
+      case CACHE_INODE_FSAL_ERR_SEC:          return "CACHE_INODE_FSAL_ERR_SEC";
+      case CACHE_INODE_STATE_CONFLICT:        return "CACHE_INODE_STATE_CONFLICT";
+      case CACHE_INODE_QUOTA_EXCEEDED:        return "CACHE_INODE_QUOTA_EXCEEDED";
+      case CACHE_INODE_DEAD_ENTRY:            return "CACHE_INODE_DEAD_ENTRY";
+      case CACHE_INODE_ASYNC_POST_ERROR:      return "CACHE_INODE_ASYNC_POST_ERROR";
+      case CACHE_INODE_NOT_SUPPORTED:         return "CACHE_INODE_NOT_SUPPORTED";
+      case CACHE_INODE_STATE_ERROR:           return "CACHE_INODE_STATE_ERROR";
+      case CACHE_INODE_FSAL_DELAY:            return "CACHE_INODE_FSAL_DELAY";
+      default: return "unknown";
+    }
+}
+
 #ifdef _USE_PROXY
 void cache_inode_print_srvhandle(char *comment, cache_entry_t * pentry);
 #endif

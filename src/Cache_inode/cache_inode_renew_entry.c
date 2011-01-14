@@ -99,7 +99,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
 
       cache_inode_expire_to_str(pclient->expire_type_attr, pclient->grace_period_attr, grace);
 
-     switch(pentry->internal_md.type)
+      switch(pentry->internal_md.type)
         {
           case UNASSIGNED:
             type = "UNASSIGNED";
@@ -170,8 +170,8 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
       /* Successfull exit without having nothing to do ... */
 
       LogDebug(COMPONENT_CACHE_INODE,
-                        "Entry %p is a REGULAR_FILE with associated data cached %p, no expiration",
-                        pentry, pentry->object.file.pentry_content);
+               "Entry %p is a REGULAR_FILE with associated data cached %p, no expiration",
+               pentry, pentry->object.file.pentry_content);
 
       *pstatus = CACHE_INODE_SUCCESS;
       return *pstatus;
@@ -214,14 +214,16 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
           /* stat */
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENEW_ENTRY] += 1;
 
+          LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry returning %d(%s) from FSAL_getattrs for getattr/mtime checking",
+                       *pstatus, cache_inode_err_str(*pstatus));
           return *pstatus;
         }
 
       LogFullDebug(COMPONENT_CACHE_INODE,
-                        "Entry=%p, type=%d, Cached Time=%d, FSAL Time=%d",
-                        pentry, pentry->internal_md.type,
-                        pentry->object.dir_begin.attributes.mtime.seconds,
-                        object_attributes.mtime.seconds);
+                   "Entry=%p, type=%d, Cached Time=%d, FSAL Time=%d",
+                   pentry, pentry->internal_md.type,
+                   pentry->object.dir_begin.attributes.mtime.seconds,
+                   object_attributes.mtime.seconds);
 
       /* Compare the FSAL mtime and the cached mtime */
       if(pentry->object.dir_begin.attributes.mtime.seconds <
@@ -242,8 +244,8 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
           pentry->internal_md.refresh_time = time(NULL);
 
           LogDebug(COMPONENT_CACHE_INODE,
-                            "cached directory content for entry %p must be renewed, due to getattr mismatch",
-                            pentry);
+                   "cached directory content for entry %p must be renewed, due to getattr mismatch",
+                   pentry);
 
         }                       /* if( pentry->object.dir_begin.attributes.mtime < object_attributes.asked_attributes.mtime ) */
     }
@@ -259,8 +261,8 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
       pclient->stat.func_stats.nb_call[CACHE_INODE_RENEW_ENTRY] += 1;
 
       /* Log */
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                        "cached directory entries for entry %p must be renewed", pentry);
+      LogDebug(COMPONENT_CACHE_INODE,
+               "cached directory entries for entry %p must be renewed", pentry);
 
       /* Do the getattr if it had not being done before */
       if(pfsal_handle == NULL)
@@ -284,18 +286,20 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
                   cache_inode_status_t kill_status;
 
                   LogEvent(COMPONENT_CACHE_INODE,
-                      "cache_inode_renew_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
-                       pentry, __LINE__);
+                           "cache_inode_renew_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
+                            pentry, __LINE__);
 
                   if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                      CACHE_INODE_SUCCESS)
                     LogCrit(COMPONENT_CACHE_INODE,
-                        "cache_inode_renew_entry: Could not kill entry %p, status = %u",
-                         pentry, kill_status);
+                            "cache_inode_renew_entry: Could not kill entry %p, status = %u",
+                             pentry, kill_status);
 
                   *pstatus = CACHE_INODE_FSAL_ESTALE;
                 }
 
+              LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry returning %d(%s) from FSAL_getattrs for directory entries (1)",
+                           *pstatus, cache_inode_err_str(*pstatus));
               return *pstatus;
             }
         }
@@ -327,7 +331,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
 
       /* Log */
       LogDebug(COMPONENT_CACHE_INODE,
-                        "cached directory entries for entry %p must be renewed", pentry);
+               "cached directory entries for entry %p must be renewed", pentry);
 
       pfsal_handle = &pentry->object.dir_begin.handle;
 
@@ -348,18 +352,20 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
               cache_inode_status_t kill_status;
 
               LogEvent(COMPONENT_CACHE_INODE,
-                  "cache_inode_renew_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
-                   pentry, __LINE__);
+                       "cache_inode_renew_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
+                        pentry, __LINE__);
 
               if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
                 LogCrit(COMPONENT_CACHE_INODE,
-                    "cache_inode_renew_entry: Could not kill entry %p, status = %u",
-                     pentry, kill_status);
+                        "cache_inode_renew_entry: Could not kill entry %p, status = %u",
+                         pentry, kill_status);
 
               *pstatus = CACHE_INODE_FSAL_ESTALE;
             }
 
+          LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry returning %d(%s) from FSAL_getattrs for directory entries (2)",
+                       *pstatus, cache_inode_err_str(*pstatus));
           return *pstatus;
         }
 
@@ -386,7 +392,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
 
       /* Log */
       LogDebug(COMPONENT_CACHE_INODE,
-                        "Attributes for entry %p must be renewed", pentry);
+               "Attributes for entry %p must be renewed", pentry);
 
       switch (pentry->internal_md.type)
         {
@@ -421,18 +427,20 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
               cache_inode_status_t kill_status;
 
               LogEvent(COMPONENT_CACHE_INODE,
-                  "cache_inode_renew_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
-                   pentry, __LINE__);
+                       "cache_inode_renew_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
+                        pentry, __LINE__);
 
               if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
                 LogCrit(COMPONENT_CACHE_INODE,
-                    "cache_inode_renew_entry: Could not kill entry %p, status = %u",
-                     pentry, kill_status);
+                        "cache_inode_renew_entry: Could not kill entry %p, status = %u",
+                         pentry, kill_status);
 
               *pstatus = CACHE_INODE_FSAL_ESTALE;
             }
 
+          LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry returning %d(%s) from FSAL_getattrs for non directories",
+                       *pstatus, cache_inode_err_str(*pstatus));
           return *pstatus;
         }
 
@@ -474,7 +482,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
 
       /* Log */
       LogDebug(COMPONENT_CACHE_INODE,
-                        "cached link content for entry %p must be renewed", pentry);
+               "cached link content for entry %p must be renewed", pentry);
 
       FSAL_CLEAR_MASK(object_attributes.asked_attributes);
       FSAL_SET_MASK(object_attributes.asked_attributes, pclient->attrmask);
@@ -498,14 +506,14 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
               cache_inode_status_t kill_status;
 
               LogEvent(COMPONENT_CACHE_INODE,
-                  "cache_inode_renew_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
-                   pentry, __LINE__);
+                       "cache_inode_renew_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
+                        pentry, __LINE__);
 
               if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
                 LogCrit(COMPONENT_CACHE_INODE,
-                    "cache_inode_renew_entry: Could not kill entry %p, status = %u",
-                     pentry, kill_status);
+                       "cache_inode_renew_entry: Could not kill entry %p, status = %u",
+                        pentry, kill_status);
 
               *pstatus = CACHE_INODE_FSAL_ESTALE;
             }
@@ -528,5 +536,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
     }
 
   /* if( pentry->internal_md.type == SYMBOLIC_LINK && ... */
+  LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry returning %d(%s)",
+               *pstatus, cache_inode_err_str(*pstatus));
   return *pstatus;
 }                               /* cache_inode_renew_entry */

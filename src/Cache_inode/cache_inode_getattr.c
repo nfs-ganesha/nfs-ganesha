@@ -91,6 +91,8 @@ cache_inode_getattr(cache_entry_t * pentry,
        ht == NULL || pclient == NULL || pcontext == NULL)
         {
             *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+            LogFullDebug(COMPONENT_CACHE_INODE,
+                         "cache_inode_getattr: returning CACHE_INODE_INVALID_ARGUMENT because of bad arg");
             return *pstatus;
         }
 
@@ -109,6 +111,9 @@ cache_inode_getattr(cache_entry_t * pentry,
         {
             V_w(&pentry->lock);
             inc_func_err_retryable(pclient, CACHE_INODE_GETATTR);
+            LogFullDebug(COMPONENT_CACHE_INODE,
+                         "cache_inode_getattr: returning %d(%s) from cache_inode_renew_entry",
+                         *pstatus, cache_inode_err_str(*pstatus));
             return *pstatus;
         }
 
@@ -168,7 +173,7 @@ cache_inode_getattr(cache_entry_t * pentry,
                         {
                             cache_inode_status_t kill_status;
 
-                            LogDebug(COMPONENT_CACHE_INODE_GC,
+                            LogDebug(COMPONENT_CACHE_INODE,
                                      "cache_inode_getattr: Stale FSAL File "
                                      "Handle detected for pentry = %p",
                                      pentry);
@@ -176,7 +181,7 @@ cache_inode_getattr(cache_entry_t * pentry,
                             cache_inode_kill_entry(pentry, ht,
                                                    pclient, &kill_status);
                             if(kill_status != CACHE_INODE_SUCCESS)
-                                LogCrit(COMPONENT_CACHE_INODE_GC,
+                                LogCrit(COMPONENT_CACHE_INODE,
                                         "cache_inode_getattr: Could not kill "
                                         "entry %p, status = %u",
                                         pentry, kill_status);
@@ -186,6 +191,9 @@ cache_inode_getattr(cache_entry_t * pentry,
 
                     /* stat */
                     inc_func_err_unrecover(pclient, CACHE_INODE_GETATTR);
+                    LogFullDebug(COMPONENT_CACHE_INODE,
+                                 "cache_inode_getattr: returning %d(%s) from FSAL_getattrs",
+                                 *pstatus, cache_inode_err_str(*pstatus));
                     return *pstatus;
                 }
 
@@ -202,5 +210,8 @@ cache_inode_getattr(cache_entry_t * pentry,
     else
         inc_func_success(pclient, CACHE_INODE_GETATTR);
 
+    LogFullDebug(COMPONENT_CACHE_INODE,
+                 "cache_inode_getattr: returning %d(%s) from cache_inode_valid",
+                 *pstatus, cache_inode_err_str(*pstatus));
     return *pstatus;
 }

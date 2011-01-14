@@ -604,6 +604,8 @@ typedef union cache_inode_create_arg__
 #define CACHE_INODE_STATE_ERROR           34
 #define CACHE_INODE_FSAL_DELAY            35
 
+const char *cache_inode_err_str(int err);
+
 #define CACHE_INODE_LOCK_OFFSET_EOF 0xFFFFFFFFFFFFFFFFLL
 
 #define inc_func_call(pclient, x)                       \
