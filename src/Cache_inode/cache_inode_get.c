@@ -122,19 +122,12 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
   fsal_attrib_list_t fsal_attributes;
   cache_inode_fsal_data_t *ppoolfsdata = NULL;
 
-  /*** A JARTER ***/
-  char printbuf[512];
-
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* stats */
   pclient->stat.nb_call_total += 1;
   pclient->stat.func_stats.nb_call[CACHE_INODE_GET] += 1;
-
-  /*** A JARTER ***/
-  snprintHandle(printbuf, 512, &pfsdata->handle);
-    
 
   /* Turn the input to a hash key */
   if(cache_inode_fsaldata_2_key(&key, pfsdata, pclient))
@@ -159,16 +152,10 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
       /* return attributes additionally */
       cache_inode_get_attributes(pentry, pattr);
 
-      /*** A JARTER ***/
-      printf( "cache_inode_get_located : HIT(%p)\n --> %s\n", pentry, printbuf ) ;
-
       break;
 
     case HASHTABLE_ERROR_NO_SUCH_KEY:
       /* Cache miss, allocate a new entry */
-
-      /*** A JARTER ***/
-      printf( "cache_inode_get_located : MISS\n --> %s\n", printbuf ) ;
 
       /* If we ask for a dir cont (in this case pfsdata.cookie != FSAL_DIR_BEGINNING, we have 
        * a client who performs a readdir in the middle of a directory, when the direcctories
@@ -331,9 +318,6 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
 
   /* Free this key */
   cache_inode_release_fsaldata_key(&key, pclient);
-
-  printf( "cache_inode_get_located (exit): pentry=%p handle::fileid4=%llu\n", 
-	  pentry, pfsdata->handle.data.fileid4 ) ;
 
   return pentry;
 }  /* cache_inode_get_located */

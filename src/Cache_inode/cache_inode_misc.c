@@ -649,18 +649,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       }
     }
 
-  /*** A JARTER ***/
-  {
-    char printbuf[512];
-
-    snprintHandle(printbuf, 512, &pfsdata->handle);
-    printf( "cache_inode_new_entry: inserted(%p) type=%d fileid4=%llu object_type_reminder=%d timestamp=%u\n --> %s\n",
-            pentry, pentry->internal_md.type, 
-            pfsdata->handle.data.fileid4, pfsdata->handle.data.object_type_reminder,
-             pfsdata->handle.data.timestamp, printbuf ) ;
-  }
-  /*** A JARTER ***/
-
   /* if entry is a REGULAR_FILE and has a related data cache entry from a previous server instance that crashed, recover it */
   /* This is done only when this is not a creation (when creating a new file, it is impossible to have it cached)           */
   if(type == REGULAR_FILE && create_flag == FALSE)

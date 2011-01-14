@@ -806,7 +806,6 @@ fsal_status_t PROXYFSAL_close(proxyfsal_file_t * file_descriptor        /* IN */
   /* Check if this was a "stateless" open, then nothing is to be done at close */
   if(!memcmp(file_descriptor->stateid.other, All_Zero, 12))
    {
-    printf( "============================> NO STATE ID \n" ) ;
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
    }
 
