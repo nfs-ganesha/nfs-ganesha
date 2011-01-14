@@ -140,6 +140,11 @@ fsal_status_t GPFSFSAL_getattrs(gpfsfsal_handle_t * p_filehandle, /* IN */
                                gpfsfsal_op_context_t * p_context,        /* IN */
                                fsal_attrib_list_t * p_object_attributes /* IN/OUT */ );
 
+fsal_status_t GPFSFSAL_getattrs_descriptor(gpfsfsal_file_t * p_file_descriptor,     /* IN */
+                                           gpfsfsal_handle_t * p_filehandle,        /* IN */
+                                           gpfsfsal_op_context_t * p_context,       /* IN */
+                                           fsal_attrib_list_t * p_object_attributes /* IN/OUT */ );
+
 fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle, /* IN */
                                gpfsfsal_op_context_t * p_context,        /* IN */
                                fsal_attrib_list_t * p_attrib_set,       /* IN */
