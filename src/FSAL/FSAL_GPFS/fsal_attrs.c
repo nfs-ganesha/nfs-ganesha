@@ -127,21 +127,21 @@ fsal_status_t GPFSFSAL_getattrs_descriptor(gpfsfsal_file_t * p_file_descriptor, 
 {
   fsal_status_t st;
   struct stat64 buffstat;
+  int rc, errsv;
 
   /* sanity checks.
    * note : object_attributes is mandatory in GPFSFSAL_getattrs.
    */
-  if(!p_filehandle || !p_context || !p_object_attributes)
+  if(!p_file_descriptor || !p_filehandle || !p_context || !p_object_attributes)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
 
   TakeTokenFSCall();
-  st = fsal_stat_by_handle(p_context,
-                           p_filehandle,
-                           &buffstat);
+  rc = fstat64(p_file_descriptor->fd, &buffstat);
+  errsv = errno;
   ReleaseTokenFSCall();
 
-  if(FSAL_IS_ERROR(st))
-    ReturnStatus(st, INDEX_FSAL_getattrs);
+  if(rc == -1)
+    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_getattrs);
 
   /* convert attributes */
   st = posixstat64_2_fsal_attributes(&buffstat, p_object_attributes);
