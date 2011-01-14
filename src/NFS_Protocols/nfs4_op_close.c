@@ -102,6 +102,8 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   memset(&res_CLOSE4, 0, sizeof(res_CLOSE4));
   resp->resop = NFS4_OP_CLOSE;
 
+  printf( "nfs4_op_close: ENTERING\n" ) ; 
+
   /* If the filehandle is Empty */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {

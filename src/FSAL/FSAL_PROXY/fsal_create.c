@@ -291,12 +291,11 @@ fsal_status_t PROXYFSAL_create(proxyfsal_handle_t * parent_directory_handle,    
       if(FSAL_IS_ERROR(fsal_status))
         Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_create);
     }
-#ifdef _FSAL_CREATE_CLOSE_FILE
-  /* The craeted file is still opened, to preserve the correct seqid for later use, we close it */
+
+  /* The created file is still opened, to preserve the correct seqid for later use, we close it */
   fsal_status = FSAL_close(&fd);
   if(FSAL_IS_ERROR(fsal_status))
     Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_create);
-#endif
 
   /* OK */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_create);

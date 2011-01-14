@@ -404,6 +404,8 @@ int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
       nfs4_sprint_fhandle(pnfs4_handle, outstr);
       LogFullDebug(COMPONENT_FSAL, "fsal_internal_proxy_create_fh: input nfsv4 server handle=%s", outstr);
     }
+ 
+  memset( (char *)pfsal_handle, 0, sizeof( proxyfsal_handle_t ) ) ;
 
   pfsal_handle->data.object_type_reminder = type;
   pfsal_handle->data.fileid4 = fileid;

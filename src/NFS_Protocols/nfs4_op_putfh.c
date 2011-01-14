@@ -201,6 +201,11 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* Trace */
+  if( data->current_filetype != REGULAR_FILE ) 
+    printf( "nfs4_op_putfh: entry=%p type=%u\n", data->current_entry, data->current_filetype ) ;
+  else
+    printf( "nfs4_op_putfh: entry=%p type=%u open_fd.fd.pcontext=%p\n", 
+	   data->current_entry, data->current_filetype, data->current_entry->object.file.open_fd.fd.pcontext ) ;
 
   return NFS4_OK;
 }                               /* nfs4_op_putfh */

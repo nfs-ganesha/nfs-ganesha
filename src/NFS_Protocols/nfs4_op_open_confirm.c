@@ -101,6 +101,8 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_OPEN_CONFIRM;
   res_OPEN_CONFIRM4.status = NFS4_OK;
 
+  printf( "nfs4_op_open_confirm: ENTERING\n" ) ; 
+
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
@@ -139,6 +141,10 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
 
         }
     }
+
+  printf( "nfs4_op_open_confirm(enter): entry=%p open_fd.fd.pcontext=%p\n", 
+	   data->current_entry, data->current_entry->object.file.open_fd.fd.pcontext ) ;
+
 
   /* Does the stateid match ? */
   if((rc =

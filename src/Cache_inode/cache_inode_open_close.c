@@ -214,6 +214,8 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
       return *pstatus;
     }
 
+  printf( "cache_inode_open_by_name (enter) : pentry_file=%p\n", pentry_file ) ;
+
   if(pentry_file->internal_md.type != REGULAR_FILE)
     {
       *pstatus = CACHE_INODE_BAD_TYPE;
@@ -326,6 +328,8 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
              pentry_file->object.file.open_fd.fileno);
 
     }
+
+  printf( "cache_inode_open_by_name (exit) : pentry_file=%p\n", pentry_file ) ;
 
   /* regular exit */
   pentry_file->object.file.open_fd.last_op = time(NULL);

@@ -139,6 +139,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
   pworker = (nfs_worker_data_t *) data->pclient->pworker;
 
+  printf( "nfs4_op_open: ENTERING\n" ) ; 
+
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
@@ -1211,6 +1213,11 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       else
         res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
     }
+
+  printf( "nfs4_op_open(exit): entry=%p open_fd.fd.pcontext=%p\n", 
+	   data->current_entry, data->current_entry->object.file.open_fd.fd.pcontext ) ;
+
+
 
   /* regular exit */
   res_OPEN4.status = NFS4_OK;
