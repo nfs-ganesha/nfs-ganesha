@@ -680,6 +680,12 @@ cache_inode_status_t cache_inode_close(cache_entry_t * pentry,
                                        cache_inode_status_t * pstatus);
 #endif
 
+#ifdef _USE_MFSL
+mfsl_file_t * cache_inode_fd(cache_entry_t * pentry);
+#else
+fsal_file_t * cache_inode_fd(cache_entry_t * pentry);
+#endif
+
 cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
                                       cache_inode_client_t * pclient,
                                       fsal_openflags_t openflags,

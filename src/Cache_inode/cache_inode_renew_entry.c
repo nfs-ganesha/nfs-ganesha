@@ -414,7 +414,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
 
       /* Call FSAL to get the attributes */
       object_attributes.asked_attributes = pclient->attrmask;
-      fsal_status = FSAL_getattrs(pfsal_handle, pcontext, &object_attributes);
+      fsal_status = FSAL_getattrs_descriptor(cache_inode_fd(pentry), pfsal_handle, pcontext, &object_attributes);
       if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);

@@ -163,7 +163,7 @@ cache_inode_getattr(cache_entry_t * pentry,
              * An error occured when trying to get
              * the attributes, they have to be renewed
              */
-            fsal_status = FSAL_getattrs(pfsal_handle, pcontext, pattr);
+            fsal_status = FSAL_getattrs_descriptor(cache_inode_fd(pentry), pfsal_handle, pcontext, pattr);
             if(FSAL_IS_ERROR(fsal_status))
                 {
                     *pstatus = cache_inode_error_convert(fsal_status);

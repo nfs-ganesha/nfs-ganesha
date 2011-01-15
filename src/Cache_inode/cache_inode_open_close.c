@@ -59,6 +59,29 @@
 #include <pthread.h>
 #include <strings.h>
 
+#ifdef _USE_MFSL
+mfsl_file_t * cache_inode_fd(cache_entry_t * pentry)
+#else
+fsal_file_t * cache_inode_fd(cache_entry_t * pentry)
+#endif
+{
+  if(pentry == NULL)
+    return NULL;
+
+  if(pentry->internal_md.type != REGULAR_FILE)
+      return NULL;
+
+  if(((pentry->object.file.open_fd.openflags == FSAL_O_RDONLY) ||
+      (pentry->object.file.open_fd.openflags == FSAL_O_RDWR) ||
+      (pentry->object.file.open_fd.openflags == FSAL_O_WRONLY)) &&
+     (pentry->object.file.open_fd.fileno != 0))
+    {
+      return &pentry->object.file.open_fd.fd;
+    }
+
+  return NULL;
+}
+
 /**
  *
  * cache_content_open: opens the local fd on  the cache.
