@@ -2128,7 +2128,12 @@ int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
                            fattr3 * Fattr)      /* Out: file attributes */
 {
   if(FSAL_attr == NULL || Fattr == NULL)
-    return 0;
+    {
+      LogFullDebug(COMPONENT_NFSPROTO,
+                   "nfs3_FSALattr_To_Fattr: FSAL_attr=%p, Fattr=%p",
+                   FSAL_attr, Fattr);
+      return 0;
+    }
 
   switch (FSAL_attr->type)
     {
@@ -2162,6 +2167,9 @@ int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
       break;
 
     default:                   /* Should not occur */
+      LogFullDebug(COMPONENT_NFSPROTO,
+                   "nfs3_FSALattr_To_Fattr: FSAL_attr->type = %d",
+                   FSAL_attr->type);
       Fattr->type = 0;
       return 0;
     }

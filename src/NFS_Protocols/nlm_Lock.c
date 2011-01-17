@@ -151,7 +151,7 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
    * Add lock details to the lock list. This check for conflicting
    * locks and add entry with correct state value.
    */
-  nlm_entry = nlm_add_to_locklist(arg);
+  nlm_entry = nlm_add_to_locklist(arg, pentry, pclient, pcontext);
   if(!nlm_entry)
     {
       /* We failed to create a lock entry and add to the list */
@@ -162,6 +162,7 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
       return NFS_REQ_OK;
     }
   pres->res_nlm4.stat.stat = nlm_entry->state;
+  nlm_entry->ht = ht;
   nlm_lock_entry_dec_ref(nlm_entry);
   LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
            lock_result_str(pres->res_nlm4.stat.stat));

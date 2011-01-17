@@ -461,6 +461,12 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
                             fsal_attrib_list_t * object_attributes      /* IN/OUT */
     );
 
+fsal_status_t FSAL_getattrs_descriptor(fsal_file_t * p_file_descriptor,         /* IN */
+                                       fsal_handle_t * p_filehandle,            /* IN */
+                                       fsal_op_context_t * p_context,           /* IN */
+                                       fsal_attrib_list_t * p_object_attributes /* IN/OUT */
+    );
+
 fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
                             fsal_op_context_t * p_context,      /* IN */
                             fsal_attrib_list_t * attrib_set,    /* IN */
@@ -895,6 +901,12 @@ typedef struct fsal_functions__
   fsal_status_t(*fsal_getattrs) (fsal_handle_t * p_filehandle,  /* IN */
                                  fsal_op_context_t * p_context, /* IN */
                                  fsal_attrib_list_t * p_object_attributes /* IN/OUT */ );
+
+  /* FSAL_getattrs_descriptor */
+  fsal_status_t(*fsal_getattrs_descriptor) (fsal_file_t * p_file_descriptor,         /* IN */
+                                            fsal_handle_t * p_filehandle,            /* IN */
+                                            fsal_op_context_t * p_context,           /* IN */
+                                            fsal_attrib_list_t * p_object_attributes /* IN/OUT */ );
 
   /* FSAL_setattrs */
   fsal_status_t(*fsal_setattrs) (fsal_handle_t * p_filehandle,  /* IN */

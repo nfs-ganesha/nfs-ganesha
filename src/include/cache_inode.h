@@ -235,6 +235,7 @@ typedef struct cache_inode_opened_file__
   fsal_file_t fd;
 #endif 
   unsigned int fileno;
+  unsigned int num_locks;
   fsal_openflags_t openflags;
   time_t last_op;
 } cache_inode_opened_file_t;
@@ -294,6 +295,7 @@ typedef struct cache_inode_internal_md__
   time_t mod_time;                                         /**< Epoch time of the last change operation on the entry */
   time_t refresh_time;                                     /**< Epoch time of the last update operation on the entry */
   time_t alloc_time;                                       /**< Epoch time of the allocation for this entry          */
+  int kill_entry;
 } cache_inode_internal_md_t;
 
 typedef unsigned int cache_inode_state_type_t;
@@ -602,6 +604,8 @@ typedef union cache_inode_create_arg__
 #define CACHE_INODE_STATE_ERROR           34
 #define CACHE_INODE_FSAL_DELAY            35
 
+const char *cache_inode_err_str(int err);
+
 #define CACHE_INODE_LOCK_OFFSET_EOF 0xFFFFFFFFFFFFFFFFLL
 
 #define inc_func_call(pclient, x)                       \
@@ -674,6 +678,12 @@ cache_inode_status_t cache_inode_close(cache_entry_t * pentry,
                                        cache_inode_client_t * pclient,
                                        fsal_op_context_t * pcontext,
                                        cache_inode_status_t * pstatus);
+#endif
+
+#ifdef _USE_MFSL
+mfsl_file_t * cache_inode_fd(cache_entry_t * pentry);
+#else
+fsal_file_t * cache_inode_fd(cache_entry_t * pentry);
 #endif
 
 cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
@@ -1105,6 +1115,14 @@ cache_inode_status_t cache_inode_del_state_by_key(char other[12],
                                                   cache_inode_status_t * pstatus);
 
 void cache_inode_expire_to_str(cache_inode_expire_type_t type, time_t value, char *out);
+
+cache_inode_status_t cache_inode_pin_pentry(cache_entry_t * pentry,
+                                      cache_inode_client_t * pclient,
+                                      fsal_op_context_t * pcontext);
+
+cache_inode_status_t cache_inode_unpin_pentry(cache_entry_t * pentry,
+                                       cache_inode_client_t * pclient,
+                                       hash_table_t * ht);
 
 /* Hash functions for hashtables and RBT */
 unsigned long cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,

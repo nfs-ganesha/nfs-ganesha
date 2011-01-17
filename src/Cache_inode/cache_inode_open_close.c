@@ -59,6 +59,29 @@
 #include <pthread.h>
 #include <strings.h>
 
+#ifdef _USE_MFSL
+mfsl_file_t * cache_inode_fd(cache_entry_t * pentry)
+#else
+fsal_file_t * cache_inode_fd(cache_entry_t * pentry)
+#endif
+{
+  if(pentry == NULL)
+    return NULL;
+
+  if(pentry->internal_md.type != REGULAR_FILE)
+      return NULL;
+
+  if(((pentry->object.file.open_fd.openflags == FSAL_O_RDONLY) ||
+      (pentry->object.file.open_fd.openflags == FSAL_O_RDWR) ||
+      (pentry->object.file.open_fd.openflags == FSAL_O_WRONLY)) &&
+     (pentry->object.file.open_fd.fileno != 0))
+    {
+      return &pentry->object.file.open_fd.fd;
+    }
+
+  return NULL;
+}
+
 /**
  *
  * cache_content_open: opens the local fd on  the cache.
@@ -92,8 +115,9 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
       return *pstatus;
     }
 
-  /* Open file need to be closed */
-  if((pentry->object.file.open_fd.openflags != 0) &&
+  /* Open file need to be closed, unless it is already open as read/write */
+  if((pentry->object.file.open_fd.openflags != FSAL_O_RDWR) &&
+     (pentry->object.file.open_fd.openflags != 0) &&
      (pentry->object.file.open_fd.fileno != 0) &&
      (pentry->object.file.open_fd.openflags != openflags))
     {
@@ -220,8 +244,9 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
       return *pstatus;
     }
 
-  /* Open file need to be close */
-  if((pentry_file->object.file.open_fd.openflags != 0) &&
+  /* Open file need to be closed, unless it is already open as read/write */
+  if((pentry_file->object.file.open_fd.openflags != FSAL_O_RDWR) &&
+     (pentry_file->object.file.open_fd.openflags != 0) &&
      (pentry_file->object.file.open_fd.fileno >= 0) &&
      (pentry_file->object.file.open_fd.openflags != openflags))
     {
@@ -379,6 +404,13 @@ cache_inode_status_t cache_inode_close(cache_entry_t * pentry,
 
   /* if nothing is opened, do nothing */
   if(pentry->object.file.open_fd.fileno < 0)
+    {
+      *pstatus = CACHE_INODE_SUCCESS;
+      return *pstatus;
+    }
+
+  /* if locks are held in the file, do not close */
+  if(pentry->object.file.open_fd.num_locks != 0)
     {
       *pstatus = CACHE_INODE_SUCCESS;
       return *pstatus;
