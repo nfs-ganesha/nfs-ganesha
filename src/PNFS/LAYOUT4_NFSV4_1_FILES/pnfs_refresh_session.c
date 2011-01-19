@@ -45,7 +45,7 @@ extern time_t ServerBootTime;
  * @return a NFSv4 error (positive value) if failed.
  *
  */
-int pnfs_do_mount(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pds_param)
+int pnfs_refresh_session(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pds_param)
 {
   COMPOUND4args argnfs4;
   COMPOUND4res resnfs4;
@@ -103,4 +103,4 @@ int pnfs_do_mount(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pds_par
     return resnfs4.status;
 
   return NFS4_OK;
-}                               /* pnfs_do_mount */
+}                               /* pnfs_refresh_session */
