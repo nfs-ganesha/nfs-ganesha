@@ -764,13 +764,11 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
   if(access_type & FSAL_F_OK)
     ReturnCode(ERR_FSAL_INVAL, 0);
 
-  /* test root access */
-
+  /* The root user ignores the mode/uid/gid of the file */
   if(p_context->credential.user == 0)
     ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
   /* unsatisfied flags */
-
   missing_access = access_type;
 
   if(p_object_attributes)
@@ -778,6 +776,7 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
       uid = p_object_attributes->owner;
       gid = p_object_attributes->group;
       mode = p_object_attributes->mode;
+
     }
   else
     {
@@ -786,13 +785,19 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
       mode = unix2fsal_mode(p_buffstat->st_mode);
     }
 
-  /* Test if file belongs to user. */
+  LogFullDebug(COMPONENT_FSAL,
+               "file Mode=%#o, file uid=%d, file gid= %d", mode,uid, gid);
+  LogFullDebug(COMPONENT_FSAL,
+               "user uid=%d, user gid= %d, access_type=%#o",
+               p_context->credential.user, p_context->credential.group, access_type);
 
+  /* If the uid of the file matches the uid of the user,
+   * then the uid mode bits take precedence. */
   if(p_context->credential.user == uid)
     {
-
+      
       LogFullDebug(COMPONENT_FSAL, "File belongs to user %d", uid);
-
+      
       if(mode & FSAL_MODE_RUSR)
         missing_access &= ~FSAL_R_OK;
 
@@ -818,34 +823,32 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
     }
 
+  /* missing_access will be nonzero triggering a failure
+   * even though FSAL_OWNER_OK is not even a real posix file
+   * permission */
+  missing_access &= ~FSAL_OWNER_OK;
+
   /* Test if the file belongs to user's group. */
-
   is_grp = (p_context->credential.group == gid);
-
   if(is_grp)
     LogFullDebug(COMPONENT_FSAL, "File belongs to user's group %d",
                  p_context->credential.group);
 
   /* Test if file belongs to alt user's groups */
-
   if(!is_grp)
-    {
-      for(i = 0; i < p_context->credential.nbgroups; i++)
-        {
-          is_grp = (p_context->credential.alt_groups[i] == gid);
+    for(i = 0; i < p_context->credential.nbgroups; i++)
+      {
+        is_grp = (p_context->credential.alt_groups[i] == gid);
+        if(is_grp)
+          LogFullDebug(COMPONENT_FSAL, "File belongs to user's alt group %d",
+                       p_context->credential.alt_groups[i]);
+        if(is_grp)
+          break;
+      }
 
-          if(is_grp)
-            LogFullDebug(COMPONENT_FSAL, "File belongs to user's alt group %d",
-                         p_context->credential.alt_groups[i]);
-
-          // exits loop if found
-          if(is_grp)
-            break;
-        }
-    }
-
-  /* finally apply group rights */
-
+  /* If the gid of the file matches the gid of the user or
+   * one of the alternatve gids of the user, then the uid mode
+   * bits take precedence. */
   if(is_grp)
     {
       if(mode & FSAL_MODE_RGRP)
@@ -864,8 +867,9 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
     }
 
-  /* test other perms */
-
+  /* If the user uid is not 0, the uid does not match the file's, and
+   * the user's gids do not match the file's gid, we apply the "other"
+   * mode bits to the user. */
   if(mode & FSAL_MODE_ROTH)
     missing_access &= ~FSAL_R_OK;
 
@@ -873,14 +877,16 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
     missing_access &= ~FSAL_W_OK;
 
   if(mode & FSAL_MODE_XOTH)
-    missing_access &= ~FSAL_X_OK;
-
-  /* XXX ACLs. */
+    missing_access &= ~FSAL_X_OK; 
 
   if(missing_access == 0)
     ReturnCode(ERR_FSAL_NO_ERROR, 0);
-  else
+  else {
+    LogFullDebug(COMPONENT_FSAL,
+                 "Mode=%#o, Access=%#o, Rights missing: %#o", mode,
+                 access_type, missing_access);
     ReturnCode(ERR_FSAL_ACCESS, 0);
+  }
 
 }
 
