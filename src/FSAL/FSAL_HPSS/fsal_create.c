@@ -150,6 +150,7 @@ fsal_status_t HPSSFSAL_create(hpssfsal_handle_t * parent_directory_handle,      
     Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_create);
 
   /* set output handle */
+  memset( (char *)object_handle, 0, sizeof( hpssfsal_handle_t ) ) ;
   object_handle->data.obj_type = FSAL_TYPE_FILE;
   object_handle->data.ns_handle = new_hdl;
 
@@ -267,7 +268,8 @@ fsal_status_t HPSSFSAL_mkdir(hpssfsal_handle_t * parent_directory_handle,       
   if(rc)
     Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_mkdir);
 
-  /* set output handle */
+  /* set output handle   */
+  memset( (char *)object_handle, 0, sizeof( hpssfsal_handle_t ) ) ;
   object_handle->data.obj_type = FSAL_TYPE_DIR;
   object_handle->data.ns_handle = lnk_hdl;
 
