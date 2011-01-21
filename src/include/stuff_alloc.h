@@ -45,6 +45,7 @@ struct prealloc_pool;
 
 #ifdef _NO_BUDDY_SYSTEM
 
+#include <malloc.h>
 #include <errno.h>
 
 #define Mem_Alloc( a )                  malloc( a )

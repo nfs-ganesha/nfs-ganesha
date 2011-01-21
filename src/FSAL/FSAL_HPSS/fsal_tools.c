@@ -114,8 +114,13 @@ unsigned int HPSSFSAL_Handle_to_HashIndex(hpssfsal_handle_t * p_handle,
   unsigned int i;
   unsigned32 objid = hpss_GetObjId(&p_handle->data.ns_handle);
 
-  h ^= p_handle->data.ns_handle.Generation;
-  HASH_INCR(h, index_size);
+  /* In HPSS, the hardlink is a separated and independant object 
+   * because of this, the ns_handle.Generation may be different between 
+   * the file and its hadlink, leading to different FSAL handle. This would
+   * mess up the cache a lot. Because of this, the next two lines are commented */
+
+  //h ^= p_handle->data.ns_handle.Generation;
+  //HASH_INCR(h, index_size);
   h ^= objid;
   HASH_INCR(h, index_size);
   h ^= p_handle->data.ns_handle.CoreServerUUID.time_low;
@@ -159,7 +164,7 @@ unsigned int HPSSFSAL_Handle_to_RBTIndex(hpssfsal_handle_t * p_handle,
   unsigned32 objid = hpss_GetObjId(&p_handle->data.ns_handle);
 
   h = cookie;
-  h ^= p_handle->data.ns_handle.Generation << 1;
+  // h ^= p_handle->data.ns_handle.Generation << 1; /* Same reason as above */
   h ^= objid << 2;
 
   h ^= p_handle->data.ns_handle.CoreServerUUID.time_low << 3;

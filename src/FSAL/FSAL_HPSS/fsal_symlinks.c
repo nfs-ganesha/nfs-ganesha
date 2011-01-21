@@ -181,6 +181,7 @@ fsal_status_t HPSSFSAL_symlink(hpssfsal_handle_t * parent_directory_handle,     
 
   TakeTokenFSCall();
 
+  memset( (char *)link_handle, 0, sizeof( hpssfsal_handle_t ) ) ;
   rc = HPSSFSAL_SymlinkHandle(&(parent_directory_handle->data.ns_handle),    /* IN - Handle of existing file */
                               p_linkcontent->path,      /* IN - Desired contents of the link */
                               p_linkname->name, /* IN - New name of the symbolic link */

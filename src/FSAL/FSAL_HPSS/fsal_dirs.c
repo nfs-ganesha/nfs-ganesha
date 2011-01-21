@@ -208,6 +208,7 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
       for(i = 0; i < returned; i++)
         {
 
+          memset( (char *)&(pdirent[current_nb_entries].handle), 0, sizeof( hpssfsal_handle_t ) ) ;
           pdirent[current_nb_entries].handle.data.ns_handle = outbuff[i].ObjHandle;
 
           pdirent[current_nb_entries].handle.data.obj_type =

@@ -93,12 +93,12 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                                            \
 } while( 0 )
 
-#define COMPOUNDV4_ARG_ADD_OP_SETATTR( argcompound, inattr )                                                             \
-do {                                                                                                                     \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_SETATTR ;                         \
-  /* argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsetattr.stateid */ ;            \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsetattr.obj_attributes = inattr ;  \
-  argcompound.argarray.argarray_len += 1 ;                                                                               \
+#define COMPOUNDV4_ARG_ADD_OP_SETATTR( argcompound, inattr )                                                                       \
+do {                                                                                                                               \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_SETATTR ;                                   \
+  memset(&argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsetattr.stateid,0,sizeof(stateid4)); \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsetattr.obj_attributes = inattr ;            \
+  argcompound.argarray.argarray_len += 1 ;                                                                                         \
 } while( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_GETFH( argcompound )                                                            \
@@ -261,7 +261,6 @@ do {                                                                            
 } while ( 0 )
 
 #define CheapRecovery() exit( 1 ) 
-
 #define COMPOUNDV4_EXECUTE( pcontext, argcompound, rescompound, rc )                \
 do {                                                                                \
   int __renew_rc = 0 ;                                                              \
@@ -280,7 +279,7 @@ do {                                                                            
             }                                                                       \
        }                                                                            \
   sleep( pcontext->retry_sleeptime ) ;                                              \
-  CheapRecovery( ) ;                                                                \
+  LogEvent(COMPONENT_FSAL, "Reconnecting to the remote server.." ) ;                \
   pthread_mutex_lock( &pcontext->lock ) ;                                           \
   __renew_rc = fsal_internal_ClientReconnect( pcontext ) ;                          \
   pthread_mutex_unlock( &pcontext->lock ) ;                                         \
