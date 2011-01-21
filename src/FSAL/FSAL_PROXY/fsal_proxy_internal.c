@@ -1033,15 +1033,20 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
           break;
 
         case FATTR4_TIME_MODIFY:       /* Used only by FSAL_PROXY to reverse convert */
-          memcpy((char *)&attr_time_modify,
+	  memcpy( (char *)&attr_time_modify.seconds,
+	          (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                  sizeof( uint64_t ) );
+          LastOffset += sizeof( uint64_t ) ;
+
+          memcpy((char *)&attr_time_modify.nseconds,
                  (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_time_modify));
+                 sizeof(uint32_t) );
+          LastOffset += sizeof( uint32_t ) ;
+
           pFSAL_attr->mtime.seconds = (uint32_t) nfs_ntohl64(attr_time_modify.seconds);
           pFSAL_attr->mtime.nseconds = (uint32_t) ntohl(attr_time_modify.nseconds);
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_MTIME;
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
           break;
 
         case FATTR4_TIME_ACCESS_SET:
