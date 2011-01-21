@@ -134,6 +134,7 @@ static int pnfs_create_ds_partfile(pnfs_ds_client_t * pnfsdsclient,
 
   if(resnfs4.status != NFS4_OK)
     {
+      printf( "+-+-+-+-> pnfs_create_ds_partfile: error=%u\n", resnfs4.status ) ;
       return resnfs4.status;
     }
 

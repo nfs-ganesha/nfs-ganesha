@@ -221,9 +221,9 @@ fsal_status_t MFSL_create(mfsl_object_t * parent_directory_handle,      /* IN */
                                   &pnfs_file ) ;
   if (pnfs_status != NFS4_OK)
    {
-      printf( "OPEN PNFS CREATE DS FILE : Error %u\n", pnfs_status ) ;
+      printf( "OPEN PNFS CREATE DS FILE : Error %u during pnfs_create_file\n", pnfs_status ) ;
 
-      LogDebug(COMPONENT_MFSL, "OPEN PNFS CREATE DS FILE : Error %u", pnfs_status ) ;
+      LogEvent(COMPONENT_MFSL, "OPEN PNFS CREATE DS FILE : Error %u", pnfs_status ) ;
 
       fsal_status.major = ERR_FSAL_IO ;
       fsal_status.minor = 0 ;

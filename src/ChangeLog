@@ -426,5 +426,6 @@
         - Bug fix : it was impossible to set "/" as an export's entry's pseudopath
         - Bug fix : badly pack fsal_handle in FSAL_PROXY could create 2 entries in 
           cache_inode for a single file.
+	- Bug fix : memory violation in FSAL_PROXY for fattr4's type based on nfs4time
 
 	
