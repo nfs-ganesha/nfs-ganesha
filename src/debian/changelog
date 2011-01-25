@@ -1,3 +1,12 @@
+nfs-ganesha (1.0.4-1) stable; urgency=low
+  * init.d scripts are now closer to LSB requirements
+  * Bug fix: race condition when inserting the same new entry several time and concurrently in metadata cache
+  * Bug fix : it was impossible to set "/" as an export's entry's pseudopath
+  * Bug fix : badly pack fsal_handle in FSAL_PROXY could create 2 entries in cache_inode for a single file.
+  * Bug Fix : misaligned structure produced memory violation in FSAL_PROXY
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Tue, 25 Dec 2011 10:10:00 +0200
+
 nfs-ganesha (1.0.3-1) stable; urgency=low
   * A regression in FSAL_PROXY was fixed (size of NFSv4 handles)
   * HashTable support hash functions that compute hashval and rbtval in one pass
