@@ -243,6 +243,8 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
           return NFS_REQ_OK;
         }
 
+      LogEvent(COMPONENT_NFSPROTO,
+           "MOUNT: Performance warning: Export entry is not cached");
       if(FSAL_IS_ERROR(FSAL_lookupPath(&fsal_path, pcontext, pfsal_handle, NULL)))
         {
           switch (preq->rq_vers)

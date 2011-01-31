@@ -150,6 +150,10 @@ AC_C_VOLATILE
 AC_CHECK_TYPES([ptrdiff_t])
 AC_CHECK_SIZEOF([long]) 
 
+# Ceck daemon() function
+AC_CHECK_FUNC([daemon],[has_daemon=yes],[has_daemon=no])
+test "$has_daemon" = "yes" && AC_DEFINE(HAVE_DAEMON, 1, [daemon function exist on this system])
+
 # ThL: temporary comment the following lines since we don't use the following "HAVE_..." defines
 # Checks for library functions.
 #AC_FUNC_CLOSEDIR_VOID

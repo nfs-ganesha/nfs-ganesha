@@ -279,6 +279,16 @@ int main(int argc, char *argv[])
   /* Start in background, if wanted */
   if(detach_flag)
     {
+#ifdef HAVE_DAEMON
+        /* daemonize the process (fork, close xterm fds,
+         * detach from parent process) */
+        if (daemon(0, 0))
+        {
+            LogCrit(COMPONENT_INIT, "Error detaching process from parent: %s",
+                    strerror(errno));
+            exit(1);
+        }
+#else
       /* Step 1: forking a service process */
       switch (son_pid = fork())
         {
@@ -305,6 +315,7 @@ int main(int argc, char *argv[])
           exit(0);
           break;
         }
+#endif
     }
 
   /* Set the signal handler */
