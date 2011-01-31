@@ -2017,7 +2017,7 @@ int export_client_match(unsigned int addr,
           if((clients->clientarray[i].client.network.netmask & addr) ==
              clients->clientarray[i].client.network.netaddr)
             {
-              LogFullDebug(COMPONENT_DISPATCH, "This matches network adress");
+              LogFullDebug(COMPONENT_DISPATCH, "This matches network address");
               *pclient_found = clients->clientarray[i];
               return TRUE;
             }
@@ -2058,11 +2058,11 @@ int export_client_match(unsigned int addr,
                   if(nfs_ip_name_add(addr, hostname) != IP_NAME_SUCCESS)
                     {
                       /* Major failure, name could not be resolved */
-                      LogFullDebug(COMPONENT_DISPATCH, "Could not resolve addr %u.%u.%u.%u",
-                             (unsigned int)(addr >> 24),
-                             (unsigned int)(addr >> 16) & 0xFF,
+                      LogMajor(COMPONENT_DISPATCH, "Could not resolve addr %u.%u.%u.%u",
+                             (unsigned int)(addr & 0xFF),
                              (unsigned int)(addr >> 8) & 0xFF,
-                             (unsigned int)(addr & 0xFF));
+                             (unsigned int)(addr >> 16) & 0xFF,
+                             (unsigned int)(addr >> 24));
                       strncpy(hostname, "unresolved", 10);
                     }
                 }

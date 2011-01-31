@@ -23,8 +23,6 @@
 
 PATHPROG=/usr/bin/xfs.ganesha.nfsd 
 
-[ -f /etc/sysconfig/nfs-ganesha.xfs ] && . /etc/sysconfig/nfs-ganesha.xfs 
-
 # Default HPSS options
 LOGFILE=/var/log/xfs.ganesha.nfsd.log
 CONFFILE=/etc/ganesha/xfs.ganesha.nfsd.conf
@@ -35,6 +33,8 @@ RETVAL=0
 prog=xfs.ganesha.nfsd
 PID_FILE=${PID_FILE:=/var/run/${prog}.pid}
 LOCK_FILE=${LOCK_FILE:=/var/lock/subsys/${prog}}
+
+[ -f /etc/sysconfig/nfs-ganesha.xfs ] && . /etc/sysconfig/nfs-ganesha.xfs 
 
 start() {
         echo -n $"Starting $prog: "

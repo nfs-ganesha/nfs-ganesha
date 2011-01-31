@@ -2,9 +2,9 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT( [nfs-ganesha], [1.0.4], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
+AC_INIT( [nfs-ganesha], [1.0.5], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 
-AC_SUBST(RELEASE, [0.beta])
+AC_SUBST(RELEASE, [0])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
@@ -149,6 +149,10 @@ AC_STRUCT_TM
 AC_C_VOLATILE
 AC_CHECK_TYPES([ptrdiff_t])
 AC_CHECK_SIZEOF([long]) 
+
+# Ceck daemon() function
+AC_CHECK_FUNC([daemon],[has_daemon=yes],[has_daemon=no])
+test "$has_daemon" = "yes" && AC_DEFINE(HAVE_DAEMON, 1, [daemon function exist on this system])
 
 # ThL: temporary comment the following lines since we don't use the following "HAVE_..." defines
 # Checks for library functions.
