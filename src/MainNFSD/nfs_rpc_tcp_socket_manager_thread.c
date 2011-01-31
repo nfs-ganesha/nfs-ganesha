@@ -126,7 +126,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
   struct sockaddr_in *paddr_caller = NULL;
   char str_caller[MAXNAMLEN];
-  nfs_function_desc_t funcdesc;
+  const nfs_function_desc_t *pfuncdesc;
   fridge_entry_t * pfe = NULL ;
 
   snprintf(my_name, MAXNAMLEN, "tcp_sock_mgr#fd=%ld", tcp_sock);
@@ -362,9 +362,9 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
           pnfsreq->req.rq_vers = pmsg->rm_call.cb_vers;
           pnfsreq->req.rq_proc = pmsg->rm_call.cb_proc;
 
-          rc = nfs_rpc_get_funcdesc(pnfsreq, &funcdesc);
-          if (rc != FALSE)
-            nfs_rpc_get_args(pnfsreq, &funcdesc);
+          pfuncdesc = nfs_rpc_get_funcdesc(pnfsreq);
+          if(pfuncdesc != INVALID_FUNCDESC)
+            nfs_rpc_get_args(pnfsreq, pfuncdesc);
 
           /* Update a copy of SVCXPRT and pass it to the worker thread to use it. */
           xprt_copy = pnfsreq->xprt_copy;
@@ -387,7 +387,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
           LogFullDebug(COMPONENT_DISPATCH, "Waiting for commit from thread #%d",
                        worker_index);
 
-          if (rc != FALSE)
+          if(pfuncdesc != INVALID_FUNCDESC)
             {
               gettimeofday(&timer_end, NULL);
               timer_diff = time_diff(timer_start, timer_end);

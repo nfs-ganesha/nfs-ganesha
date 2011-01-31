@@ -421,6 +421,10 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->stats_update_delay = atoi(key_value);
         }
+      else if(!strcasecmp(key_name, "Long_Processing_Threshold"))
+        {
+          pparam->long_processing_threshold = atoi(key_value);
+        }
       else if(!strcasecmp( key_name, "TCP_Fridge_Expiration_Delay" ) )
         {
           pparam->tcp_fridge_expiration_delay = atoi(key_value);
