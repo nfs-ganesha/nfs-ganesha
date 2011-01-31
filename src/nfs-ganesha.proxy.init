@@ -23,8 +23,6 @@
 
 PATHPROG=/usr/bin/proxy.ganesha.nfsd 
 
-[ -f /etc/sysconfig/nfs-ganesha.proxy ] && . /etc/sysconfig/nfs-ganesha.proxy 
-
 # Default HPSS options
 LOGFILE=/var/log/proxy.ganesha.nfsd.log
 CONFFILE=/etc/ganesha/proxy.ganesha.nfsd.conf
@@ -35,6 +33,8 @@ RETVAL=0
 prog=proxy.ganesha.nfsd
 PID_FILE=${PID_FILE:=/var/run/${prog}.pid}
 LOCK_FILE=${LOCK_FILE:=/var/lock/subsys/${prog}}
+
+[ -f /etc/sysconfig/nfs-ganesha.proxy ] && . /etc/sysconfig/nfs-ganesha.proxy 
 
 start() {
         echo -n $"Starting $prog: "
