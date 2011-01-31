@@ -164,6 +164,37 @@ unsigned int cache_inode_fsal_rbt_both( hash_parameter_t * p_hparam,
 				        uint32_t * phashval, uint32_t * prbtval )
 {
     char printbuf[512];
+    unsigned int rc = 0 ;
+ 
+    cache_inode_fsal_data_t *pfsdata = (cache_inode_fsal_data_t *) (buffclef->pdata);
+
+    rc = FSAL_Handle_to_Hash_both( &pfsdata->handle, pfsdata->cookie,
+				   p_hparam->alphabet_length, p_hparam->index_size,
+				   phashval, prbtval ) ;
+
+    if( rc == 0 )
+      {
+          snprintHandle(printbuf, 512, &pfsdata->handle);
+          LogMajor( COMPONENT_HASHTABLE, "Unable to hash (Handle=%s, Cookie=%u)",printbuf, pfsdata->cookie ) ;
+          return 0 ;
+      }
+
+    if(isFullDebug(COMPONENT_HASHTABLE))
+      {
+          LogFullDebug(COMPONENT_HASHTABLE, "hash_func rbt both: buff = "
+                       "(Handle=%s, Cookie=%u), hashvalue=%u rbtvalue=%u\n",
+                       printbuf, pfsdata->cookie, *phashval, *prbtval );
+      }
+
+   /* Success */
+   return 1 ;
+} /*  cache_inode_fsal_rbt_both */
+
+unsigned int _____cache_inode_fsal_rbt_both( hash_parameter_t * p_hparam,
+				        hash_buffer_t    * buffclef, 
+				        uint32_t * phashval, uint32_t * prbtval )
+{
+    char printbuf[512];
     uint32_t h1 = 0 ;
     uint32_t h2 = 0 ;
 
@@ -188,6 +219,7 @@ unsigned int cache_inode_fsal_rbt_both( hash_parameter_t * p_hparam,
    /* Success */
    return 1 ;
 } /*  cache_inode_fsal_rbt_both */
+
 
 
 int display_key(hash_buffer_t * pbuff, char *str)
