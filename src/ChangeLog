@@ -428,4 +428,6 @@
           cache_inode for a single file.
 	- Bug fix : memory violation in FSAL_PROXY for fattr4's type based on nfs4time
 
+1.0.5   -
+        
 	

@@ -172,14 +172,19 @@ int display_ip_value(hash_buffer_t * pbuff, char *str)
  *
  */
 
+#define GETHOST_BUF_SZ  4096
+
 int nfs_ip_name_add(unsigned int ipaddr, char *hostname)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
   nfs_ip_name_t *pnfs_ip_name = NULL;
-  struct hostent *hp;
+  struct hostent hostentry;
+  int    host_errno;
+  struct hostent * hp;
   unsigned long int local_ipaddr = ipaddr;
   int length = sizeof(local_ipaddr);
+  char resolv_buff[GETHOST_BUF_SZ];
 
   pnfs_ip_name = (nfs_ip_name_t *) Mem_Alloc_Label(sizeof(nfs_ip_name_t), "nfs_ip_name_t");
 
@@ -192,11 +197,21 @@ int nfs_ip_name_add(unsigned int ipaddr, char *hostname)
   buffkey.len = 0;
 
   /* Ask for the name to be cached */
-  if((hp = gethostbyaddr((char *)&local_ipaddr, length, AF_INET)) == NULL)
-    {
-      Mem_Free((void *)pnfs_ip_name);
-      return IP_NAME_NETDB_ERROR;
-    }
+  if ( (gethostbyaddr_r(&local_ipaddr, length, AF_INET, &hostentry,
+                        resolv_buff, GETHOST_BUF_SZ,
+                        &hp, &host_errno ) != 0 ) || (hp == NULL) )
+  {
+     LogEvent( COMPONENT_DISPATCH, "Cannot resolve address %u.%u.%u.%u",
+               local_ipaddr&0xFF, (local_ipaddr>>8)&0xFF, (local_ipaddr>>16)&0xFF,
+               (local_ipaddr>>24)&0xFF );
+
+     Mem_Free((void *)pnfs_ip_name);
+     return IP_NAME_NETDB_ERROR;
+  }
+
+  LogDebug( COMPONENT_DISPATCH, "Inserting %u.%u.%u.%u->%s to addr cache",
+            local_ipaddr&0xFF, (local_ipaddr>>8)&0xFF, (local_ipaddr>>16)&0xFF,
+            (local_ipaddr>>24)&0xFF, hp->h_name );
 
   /* I build the data with the request pointer that should be in state 'IN USE' */
   pnfs_ip_name->ipaddr = ipaddr;
@@ -243,10 +258,17 @@ int nfs_ip_name_get(unsigned int ipaddr, char *hostname)
       pnfs_ip_name = (nfs_ip_name_t *) buffval.pdata;
       strncpy(hostname, pnfs_ip_name->hostname, MAXHOSTNAMELEN);
 
+      LogFullDebug( COMPONENT_DISPATCH, "Cache hit for %u.%u.%u.%u->%s",
+                    local_ipaddr&0xFF, (local_ipaddr>>8)&0xFF, (local_ipaddr>>16)&0xFF,
+                    (local_ipaddr>>24)&0xFF, hostname );
+
       status = IP_NAME_SUCCESS;
     }
   else
     {
+      LogFullDebug( COMPONENT_DISPATCH, "Cache miss for %u.%u.%u.%u",
+                    local_ipaddr&0xFF, (local_ipaddr>>8)&0xFF, (local_ipaddr>>16)&0xFF,
+                    (local_ipaddr>>24)&0xFF );
       status = IP_NAME_NOT_FOUND;
     }
   return status;
@@ -383,7 +405,6 @@ int nfs_ip_name_populate(char *path)
       /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
        * this also means that buffkey->len will be 0 */
       buffkey.pdata = (caddr_t) long_ipaddr;
-
       buffkey.len = 0;
 
       if(HashTable_Set(ht_ip_name, &buffkey, &buffdata) != HASHTABLE_SUCCESS)
