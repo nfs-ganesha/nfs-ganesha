@@ -710,6 +710,7 @@ fsal_functions_t fsal_gpfs_functions = {
   .fsal_handlecmp = WRAP_GPFSFSAL_handlecmp,
   .fsal_handle_to_hashindex = WRAP_GPFSFSAL_Handle_to_HashIndex,
   .fsal_handle_to_rbtindex = WRAP_GPFSFSAL_Handle_to_RBTIndex,
+  .fsal_handle_to_hash_both = NULL, 
   .fsal_digesthandle = WRAP_GPFSFSAL_DigestHandle,
   .fsal_expandhandle = WRAP_GPFSFSAL_ExpandHandle,
   .fsal_setdefault_fsal_parameter = WRAP_GPFSFSAL_SetDefault_FSAL_parameter,
