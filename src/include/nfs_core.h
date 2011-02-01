@@ -83,6 +83,10 @@
 #endif                          /* _USE_PNFS */
 #endif
 
+#ifdef _ERROR_INJECTION
+#include "err_inject.h"
+#endif
+
 /* Maximum thread count */
 #define NB_MAX_WORKER_THREAD 4096
 #define NB_MAX_FLUSHER_THREAD 100
