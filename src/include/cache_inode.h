@@ -224,7 +224,7 @@ typedef struct cache_inode_client_parameter__
   unsigned int max_fd_per_thread;                      /**< Max fd open per client                           */
   time_t retention;                                    /**< Fd retention duration                            */
   unsigned int use_cache;                              /** Do we cache fd or not ?                           */
-
+  unsigned int use_fsal_hash ;                         /** Do we rely on FSAL to hash handle or not ?        */
 } cache_inode_client_parameter_t;
 
 typedef struct cache_inode_opened_file__

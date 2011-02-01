@@ -311,6 +311,10 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
         {
           pparam->use_cache = StrToBoolean(key_value);
         }
+      else if(!strcasecmp( key_name, "Use_FSAL_Hash" ) )
+        {
+          pparam->use_fsal_hash = StrToBoolean(key_value);
+        }
       else if(!strcasecmp(key_name, "DebugLevel"))
         {
           DebugLevel = ReturnLevelAscii(key_value);
