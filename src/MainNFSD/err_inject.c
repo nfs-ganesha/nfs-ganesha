@@ -55,6 +55,7 @@ int getErrInjectInteger(snmp_adm_type_union * param, void *opt)
   switch(option)
     {
       case 0: param->integer = 0; break;
+      case 1: param->integer = 1; break;
       default: return 1;
     }
 
@@ -68,6 +69,7 @@ int setErrInjectInteger(const snmp_adm_type_union * param, void *opt)
   switch(option)
     {
       case 0: param->integer; break;
+      case 1: param->integer; break;
       default: return 1;
     }
 
@@ -78,9 +80,11 @@ static register_get_set snmp_error_injection[] = {
 
   {"worker_delay", "Delay for each request processed by worker threads", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RW,
    getErrInjectInteger, setErrInjectInteger, (void *)0},
+  {"next_worker_delay", "Delay for next request processed by worker threads", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RW,
+   getErrInjectInteger, setErrInjectInteger, (void *)1},
 };
 
-#define SNMPADM_ERROR_INJECTION_COUNT 1
+#define SNMPADM_ERROR_INJECTION_COUNT 2
 
 int init_error_injector()
 {
