@@ -672,3 +672,32 @@ void *stat_exporter_thread(void *addr)
 
   return NULL;
 }                               /* stat_exporter_thread */
+
+void *long_processing_thread(void *addr)
+{
+  nfs_worker_data_t *workers_data = (nfs_worker_data_t *) addr;
+  struct timeval timer_end;
+  struct timeval timer_diff;
+  int i;
+
+  SetNameFunction("long_processing");
+
+  while(1)
+    {
+      sleep(1);
+      gettimeofday(&timer_end, NULL);
+
+      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
+        {
+          if(workers_data[i].timer_start.tv_sec == 0)
+            continue;
+          timer_diff = time_diff(workers_data[i].timer_start, timer_end);
+          if(timer_diff.tv_sec == nfs_param.core_param.long_processing_threshold)
+            LogEvent(COMPONENT_DISPATCH, "Worker#%d: Function %s has been running for %llu.%.6llu seconds",
+                     i, workers_data[i].pfuncdesc->funcname,
+                     (unsigned long long)timer_diff.tv_sec, (unsigned long long)timer_diff.tv_usec);
+        }
+    }
+
+  return NULL;
+}                               /* long_processing_thread */

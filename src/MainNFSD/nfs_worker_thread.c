@@ -110,6 +110,12 @@ extern pthread_mutex_t lock_nb_current_gc_workers;
 /* is daemon terminating ? If so, it drops all requests */
 int nfs_do_terminate = FALSE;
 
+const nfs_function_desc_t invalid_funcdesc =
+  {nfs_Null, nfs_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void, "invalid_function",
+   NOTHING_SPECIAL};
+
+const nfs_function_desc_t *INVALID_FUNCDESC = &invalid_funcdesc;
+
 /* Static array : all the function pointer per nfs v2 functions */
 const nfs_function_desc_t nfs2_func_desc[] = {
   {nfs_Null, nfs_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void, "nfs_Null",
@@ -593,39 +599,36 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
 /*
  * Extract nfs function descriptor from nfs request.
  */
-int nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs, nfs_function_desc_t *pfuncdesc)
+const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
 {
   struct svc_req *ptr_req = &preqnfs->req;
 
   /* Validate rpc call, but don't report any errors here */
   if(is_rpc_call_valid(NULL, ptr_req) == FALSE)
-    return FALSE;
+    return INVALID_FUNCDESC;
 
   if(ptr_req->rq_prog == nfs_param.core_param.nfs_program)
     {
       if(ptr_req->rq_vers == NFS_V2)
-        *pfuncdesc = nfs2_func_desc[ptr_req->rq_proc];
+        return &nfs2_func_desc[ptr_req->rq_proc];
       else if(ptr_req->rq_vers == NFS_V3)
-        *pfuncdesc = nfs3_func_desc[ptr_req->rq_proc];
+        return &nfs3_func_desc[ptr_req->rq_proc];
       else
-        *pfuncdesc = nfs4_func_desc[ptr_req->rq_proc];
-      return TRUE;
+        return &nfs4_func_desc[ptr_req->rq_proc];
     }
 
   if(ptr_req->rq_prog == nfs_param.core_param.mnt_program)
     {
       if(ptr_req->rq_vers == MOUNT_V1)
-        *pfuncdesc = mnt1_func_desc[ptr_req->rq_proc];
+        return &mnt1_func_desc[ptr_req->rq_proc];
       else
-        *pfuncdesc = mnt3_func_desc[ptr_req->rq_proc];
-      return TRUE;
+        return &mnt3_func_desc[ptr_req->rq_proc];
     }
 
 #ifdef _USE_NLM
   if(ptr_req->rq_prog == nfs_param.core_param.nlm_program)
     {
-      *pfuncdesc = nlm4_func_desc[ptr_req->rq_proc];
-      return TRUE;
+      return &nlm4_func_desc[ptr_req->rq_proc];
     }
 #endif                          /* _USE_NLM */
 
@@ -633,21 +636,20 @@ int nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs, nfs_function_desc_t *pfunc
   if(ptr_req->rq_prog == nfs_param.core_param.rquota_program)
     {
       if(ptr_req->rq_vers == RQUOTAVERS)
-        *pfuncdesc = rquota1_func_desc[ptr_req->rq_proc];
+        return &rquota1_func_desc[ptr_req->rq_proc];
       else
-        *pfuncdesc = rquota2_func_desc[ptr_req->rq_proc];
-      return TRUE;
+        return &rquota2_func_desc[ptr_req->rq_proc];
     }
 #endif                          /* _USE_QUOTA */
 
   /* Oops, should never get here! */
-  return FALSE;
+  return INVALID_FUNCDESC;
 }
 
 /*
  * Extract RPC argument.
  */
-int nfs_rpc_get_args(nfs_request_data_t * preqnfs, nfs_function_desc_t *pfuncdesc)
+int nfs_rpc_get_args(nfs_request_data_t * preqnfs, const nfs_function_desc_t *pfuncdesc)
 {
   SVCXPRT *ptr_svc = preqnfs->xprt;
   nfs_arg_t *parg_nfs = &preqnfs->arg_nfs;
@@ -687,7 +689,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                             nfs_worker_data_t * pworker_data)
 {
   unsigned int rpcxid = 0;
-  nfs_function_desc_t funcdesc;
 
   exportlist_t *pexport = NULL;
   nfs_arg_t arg_nfs;
@@ -720,7 +721,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   static int nb_iter_memleaks = 0;
 #endif
 
-  struct timeval timer_start;
+  struct timeval *timer_start = &pworker_data->timer_start;
   struct timeval timer_end;
   struct timeval timer_diff;
   nfs_request_latency_stat_t latency_stat;
@@ -741,19 +742,20 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 
   /* If we reach this point, there was no dupreq cache hit or no dup req cache was necessary */
   /* Get NFS function descriptor. */
-  if((nfs_rpc_get_funcdesc(preqnfs, &funcdesc)) == FALSE)
+  pworker_data->pfuncdesc = nfs_rpc_get_funcdesc(preqnfs);
+  if(pworker_data->pfuncdesc == INVALID_FUNCDESC)
     return;
 
   /* In TCP, RPC argument was already extracted. Here extract RPC argument only in UDP. */
   if(preqnfs->ipproto == IPPROTO_UDP)
     {
-      if(nfs_rpc_get_args(preqnfs, &funcdesc) == FALSE)
+      if(nfs_rpc_get_args(preqnfs, pworker_data->pfuncdesc) == FALSE)
         return;
     }
 
   rpcxid = get_rpc_xid(ptr_req);
   LogFullDebug(COMPONENT_DISPATCH, "NFS DISPATCH: Request has xid=%u", rpcxid);
-  do_dupreq_cache = funcdesc.dispatch_behaviour & CAN_BE_DUP;
+  do_dupreq_cache = pworker_data->pfuncdesc->dispatch_behaviour & CAN_BE_DUP;
   LogFullDebug(COMPONENT_DISPATCH, "do_dupreq_cache = %d", do_dupreq_cache);
   status = nfs_dupreq_add_not_finished(rpcxid,
                                        ptr_req,
@@ -788,7 +790,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 	  P(mutex_cond_xprt[ptr_svc->xp_sock]);
 #endif
 	  if(svc_sendreply
-	     (ptr_svc, funcdesc.xdr_encode_func, (caddr_t) & res_nfs) == FALSE)
+	     (ptr_svc, pworker_data->pfuncdesc->xdr_encode_func, (caddr_t) & res_nfs) == FALSE)
 	    {
 	      LogEvent(COMPONENT_DISPATCH,
 		       "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply");
@@ -825,11 +827,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 	       rpcxid);
       /* Free the arguments */
       if(preqnfs->req.rq_vers == 2 || preqnfs->req.rq_vers == 3 || preqnfs->req.rq_vers == 4)
-        if(!SVC_FREEARGS(ptr_svc, funcdesc.xdr_decode_func, (caddr_t) parg_nfs))
+        if(!SVC_FREEARGS(ptr_svc, pworker_data->pfuncdesc->xdr_decode_func, (caddr_t) parg_nfs))
           {
             LogCrit(COMPONENT_DISPATCH,
                     "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
-                    funcdesc.funcname);
+                    pworker_data->pfuncdesc->funcname);
           }
       return;
       break;
@@ -975,8 +977,13 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
     }
 #endif                          /* _USE_QUOTA */
 
+  /* Zero out timers prior to starting processing */
+  memset(timer_start, 0, sizeof(struct timeval));
+  memset(&timer_end, 0, sizeof(struct timeval));
+  memset(&timer_diff, 0, sizeof(struct timeval));
+
   /* Do not call a MAKES_WRITE function on a read-only export entry */
-  if((funcdesc.dispatch_behaviour & MAKES_WRITE)
+  if((pworker_data->pfuncdesc->dispatch_behaviour & MAKES_WRITE)
      && (pexport->access_type == ACCESSTYPE_RO ||
          pexport->access_type == ACCESSTYPE_MDONLY_RO))
     {
@@ -1072,7 +1079,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }
 
       /* Do the authentication stuff, if needed */
-      if(funcdesc.dispatch_behaviour & NEEDS_CRED)
+      if(pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_CRED)
         {
           if(nfs_build_fsal_context
              (ptr_req, &related_client, pexport,
@@ -1091,14 +1098,10 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }
 
       /* processing */
-      memset(&timer_start, 0, sizeof(struct timeval));
-      memset(&timer_end, 0, sizeof(struct timeval));
-      memset(&timer_diff, 0, sizeof(struct timeval));
-
-      gettimeofday(&timer_start, NULL);
+      gettimeofday(timer_start, NULL);
 
       LogFullDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: Calling service function %s start_time %llu.%.6llu",
-                   funcdesc.funcname, (unsigned long long)timer_start.tv_sec, (unsigned long long)timer_start.tv_usec);
+                   pworker_data->pfuncdesc->funcname, (unsigned long long)timer_start->tv_sec, (unsigned long long)timer_start->tv_usec);
 
       /* Use mutex to prevent from the same inode being modified concurrently. */
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
@@ -1107,7 +1110,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       P(mutex_cond_xprt[ptr_svc->xp_sock]);
 #endif
 
-      rc = funcdesc.service_function(parg_nfs, pexport, &pworker_data->thread_fsal_context, &(pworker_data->cache_inode_client), pworker_data->ht, ptr_req, &res_nfs);  /* BUGAZOMEU Un appel crade pour debugger */
+      rc = pworker_data->pfuncdesc->service_function(parg_nfs, pexport, &pworker_data->thread_fsal_context, &(pworker_data->cache_inode_client), pworker_data->ht, ptr_req, &res_nfs);  /* BUGAZOMEU Un appel crade pour debugger */
 
       /* Use mutex to prevent from the same inode being modified concurrently. */
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
@@ -1117,11 +1120,17 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 #endif
 
       gettimeofday(&timer_end, NULL);
-      timer_diff = time_diff(timer_start, timer_end);
+      timer_diff = time_diff(*timer_start, timer_end);
+      memset(timer_start, 0, sizeof(struct timeval));
 
-      LogFullDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: Function %s exited with status %d end_time %llu.%.6llu latency %llu.%.6llu",
-                   funcdesc.funcname, rc, (unsigned long long)timer_end.tv_sec, (unsigned long long)timer_end.tv_usec,
-                   (unsigned long long)timer_diff.tv_sec, (unsigned long long)timer_diff.tv_usec);
+      if(timer_diff.tv_sec >= nfs_param.core_param.long_processing_threshold)
+        LogEvent(COMPONENT_DISPATCH, "Function %s exited with status %d taking %llu.%.6llu seconds to process",
+                 pworker_data->pfuncdesc->funcname, rc,
+                 (unsigned long long)timer_diff.tv_sec, (unsigned long long)timer_diff.tv_usec);
+      else
+        LogFullDebug(COMPONENT_DISPATCH, "Function %s exited with status %d taking %llu.%.6llu seconds to process",
+                     pworker_data->pfuncdesc->funcname, rc,
+                     (unsigned long long)timer_diff.tv_sec, (unsigned long long)timer_diff.tv_usec);
     }
 
   /* Perform statistics here */
@@ -1165,7 +1174,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 #endif
 
       /* encoding the result on xdr output */
-      if(svc_sendreply(ptr_svc, funcdesc.xdr_encode_func, (caddr_t) & res_nfs) == FALSE)
+      if(svc_sendreply(ptr_svc, pworker_data->pfuncdesc->xdr_encode_func, (caddr_t) & res_nfs) == FALSE)
         {
           LogEvent(COMPONENT_DISPATCH,
                    "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply");
@@ -1213,10 +1222,10 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   /* Free the allocated resources once the work is done */
   /* Free the arguments */
   if(preqnfs->req.rq_vers == 2 || preqnfs->req.rq_vers == 3 || preqnfs->req.rq_vers == 4)
-    if(!SVC_FREEARGS(ptr_svc, funcdesc.xdr_decode_func, (caddr_t) parg_nfs))
+    if(!SVC_FREEARGS(ptr_svc, pworker_data->pfuncdesc->xdr_decode_func, (caddr_t) parg_nfs))
       {
         LogCrit(COMPONENT_DISPATCH, "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
-                funcdesc.funcname);
+                pworker_data->pfuncdesc->funcname);
       }
 
   /* Free the reply.
@@ -1232,7 +1241,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }
       /* Free only the non dropped requests */
       if(rc == NFS_REQ_OK) {
-        funcdesc.free_function(&res_nfs);
+        pworker_data->pfuncdesc->free_function(&res_nfs);
       }
 
     }
@@ -1317,6 +1326,7 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   pdata->gc_in_progress = FALSE;
   pdata->reparse_exports_in_progress = FALSE;
   pdata->waiting_for_exports = FALSE;
+  pdata->pfuncdesc = INVALID_FUNCDESC;
 
   return 0;
 }                               /* nfs_Init_worker_data */

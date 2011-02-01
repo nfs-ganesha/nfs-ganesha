@@ -262,6 +262,7 @@ int nfs_print_param_config(nfs_parameter_t * p_nfs_param)
   printf("\tNb_Max_Fd = %d ; \n", p_nfs_param->core_param.nb_max_fd);
   printf("\tStats_File_Path = %s ; \n", p_nfs_param->core_param.stats_file_path);
   printf("\tStats_Update_Delay = %d ; \n", p_nfs_param->core_param.stats_update_delay);
+  printf("\tLong_Processing_Threshold = %d ; \n", p_nfs_param->core_param.long_processing_threshold);
   printf("\tTCP_Fridge_Expiration_Delay = %d ; \n", p_nfs_param->core_param.tcp_fridge_expiration_delay);
   printf("\tStats_Per_Client_Directory = %s ; \n",
          p_nfs_param->core_param.stats_per_client_directory);
@@ -321,6 +322,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->core_param.core_dump_size = 0;
   p_nfs_param->core_param.nb_max_fd = -1;       /* Use OS's default */
   p_nfs_param->core_param.stats_update_delay = 60;
+  p_nfs_param->core_param.long_processing_threshold = 10; /* seconds */
   p_nfs_param->core_param.tcp_fridge_expiration_delay = -1;
 /* only NFSv4 is supported for the FSAL_PROXY */
 #if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
@@ -1416,6 +1418,16 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
   LogEvent(COMPONENT_INIT, "statistics thread was started successfully");
 
 #ifdef _USE_STAT_EXPORTER
+
+  /* Starting the long processing threshold thread */
+  if((rc =
+      pthread_create(&stat_thrid, &attr_thr, long_processing_thread, (void *)workers_data)) != 0)
+    {
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
+      exit(1);
+    }
+  LogEvent(COMPONENT_INIT, "long processing threshold thread was started successfully");
+
   /* Starting the stat exporter thread */
   if((rc =
       pthread_create(&stat_exporter_thrid, &attr_thr, stat_exporter_thread, (void *)workers_data)) != 0)
@@ -1424,6 +1436,7 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
       exit(1);
     }
   LogEvent(COMPONENT_INIT, "statistics exporter thread was started successfully");
+
 #endif      /*  _USE_STAT_EXPORTER */
 
   if(pnfs_param->cache_layers_param.dcgcpol.run_interval != 0)

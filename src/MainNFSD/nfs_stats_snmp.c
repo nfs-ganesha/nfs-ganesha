@@ -1595,6 +1595,10 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
 
   free_dyn(dyn_gs, dyn_gs_count);
 
+#ifdef _ERROR_INJECTION
+  init_error_injector();
+#endif
+
   /* finally, start the admin thread */
   if((rc = snmp_adm_start()))
     {
