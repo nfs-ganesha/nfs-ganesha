@@ -109,7 +109,23 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
 
   /* Get lock on the pentry */
   if(use_mutex == TRUE)
-    P_r(&pentry_parent->lock);
+    P_w(&pentry_parent->lock);
+
+  cache_status = cache_inode_renew_entry(pentry_parent, pattr, ht,
+                                         pclient, pcontext, pstatus);
+  if(cache_status != CACHE_INODE_SUCCESS)
+      {
+          V_w(&pentry_parent->lock);
+          inc_func_err_retryable(pclient, CACHE_INODE_GETATTR);
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "cache_inode_lookup: returning %d(%s) from cache_inode_renew_entry",
+                       *pstatus, cache_inode_err_str(*pstatus));
+          return NULL;
+      }
+
+  /* RW Lock goes for writer to reader */
+  if(use_mutex == TRUE)
+    rw_lock_downgrade(&pentry_parent->lock);
 
   if(pentry_parent->internal_md.type != DIR_BEGINNING &&
      pentry_parent->internal_md.type != DIR_CONTINUE)
