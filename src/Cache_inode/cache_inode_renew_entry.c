@@ -177,13 +177,17 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
       return *pstatus;
     }
 
+  LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry use getattr/mtime checking %d, is dir beginning %d, has bit in mask %d, has been readdir %d",
+               pclient->getattr_dir_invalidation, pentry->internal_md.type == DIR_BEGINNING,
+               (int) FSAL_TEST_MASK(pclient->attrmask, FSAL_ATTR_MTIME), pentry->object.dir_begin.has_been_readdir);
   /* Do we use getattr/mtime checking */
   if(pclient->getattr_dir_invalidation &&
      pentry->internal_md.type == DIR_BEGINNING &&
-     FSAL_TEST_MASK(pclient->attrmask, FSAL_ATTR_MTIME) &&
-     pentry->object.dir_begin.has_been_readdir == CACHE_INODE_YES)
+     FSAL_TEST_MASK(pclient->attrmask, FSAL_ATTR_MTIME) /*&&
+     pentry->object.dir_begin.has_been_readdir == CACHE_INODE_YES*/)
     {
       /* This checking is to be done ... */
+      LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry testing directory mtime");
       pfsal_handle = &pentry->object.dir_begin.handle;
 
       /* Call FSAL to get the attributes */
@@ -214,7 +218,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
           /* stat */
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENEW_ENTRY] += 1;
 
-          LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry returning %d(%s) from FSAL_getattrs for getattr/mtime checking",
+          LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry returning %d (%s) from FSAL_getattrs for getattr/mtime checking",
                        *pstatus, cache_inode_err_str(*pstatus));
           return *pstatus;
         }
@@ -247,6 +251,15 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
                    "cached directory content for entry %p must be renewed, due to getattr mismatch",
                    pentry);
 
+          if(cache_inode_invalidate_all_cached_dirent(pentry, ht, pclient, pstatus)
+             != CACHE_INODE_SUCCESS)
+            {
+              /* Should never happen */
+              LogCrit(COMPONENT_CACHE_INODE, "cache_inode_invalidate_all_cached_dirent returned %d (%s)",
+                      *pstatus, cache_inode_err_str(*pstatus));
+              return *pstatus;
+            }
+          
         }                       /* if( pentry->object.dir_begin.attributes.mtime < object_attributes.asked_attributes.mtime ) */
     }
 
@@ -262,7 +275,21 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
 
       /* Log */
       LogDebug(COMPONENT_CACHE_INODE,
-               "cached directory entries for entry %p must be renewed", pentry);
+               "cached directory entries for entry %p must be renewed (has been readdir)", pentry);
+
+      if(isFullDebug(COMPONENT_CACHE_INODE))
+        {
+          int i;
+          char name[1024];
+          for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+            {
+              if(pentry->object.dir_begin.pdir_data->dir_entries[i].active == VALID)
+                {
+                  FSAL_name2str(&(pentry->object.dir_begin.pdir_data->dir_entries[i].name), name, 1023);
+                  LogFullDebug(COMPONENT_CACHE_INODE, "Entry %d %s", i, name);
+                }
+            }
+        }
 
       /* Do the getattr if it had not being done before */
       if(pfsal_handle == NULL)
@@ -298,7 +325,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
                   *pstatus = CACHE_INODE_FSAL_ESTALE;
                 }
 
-              LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry returning %d(%s) from FSAL_getattrs for directory entries (1)",
+              LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry returning %d (%s) from FSAL_getattrs for directory entries (1)",
                            *pstatus, cache_inode_err_str(*pstatus));
               return *pstatus;
             }
@@ -331,7 +358,21 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
 
       /* Log */
       LogDebug(COMPONENT_CACHE_INODE,
-               "cached directory entries for entry %p must be renewed", pentry);
+               "cached directory entries for entry %p must be renewed (has not been readdir)", pentry);
+
+      if(isFullDebug(COMPONENT_CACHE_INODE))
+        {
+          int i;
+          char name[1024];
+          for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+            {
+              if(pentry->object.dir_begin.pdir_data->dir_entries[i].active == VALID)
+                {
+                  FSAL_name2str(&(pentry->object.dir_begin.pdir_data->dir_entries[i].name), name, 1023);
+                  LogFullDebug(COMPONENT_CACHE_INODE, "Entry %d %s", i, name);
+                }
+            }
+        }
 
       pfsal_handle = &pentry->object.dir_begin.handle;
 
@@ -364,7 +405,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
               *pstatus = CACHE_INODE_FSAL_ESTALE;
             }
 
-          LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry returning %d(%s) from FSAL_getattrs for directory entries (2)",
+          LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry returning %d (%s) from FSAL_getattrs for directory entries (2)",
                        *pstatus, cache_inode_err_str(*pstatus));
           return *pstatus;
         }
@@ -439,7 +480,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
               *pstatus = CACHE_INODE_FSAL_ESTALE;
             }
 
-          LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry returning %d(%s) from FSAL_getattrs for non directories",
+          LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry returning %d (%s) from FSAL_getattrs for non directories",
                        *pstatus, cache_inode_err_str(*pstatus));
           return *pstatus;
         }
@@ -536,7 +577,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
     }
 
   /* if( pentry->internal_md.type == SYMBOLIC_LINK && ... */
-  LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry returning %d(%s)",
+  LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry returning %d (%s)",
                *pstatus, cache_inode_err_str(*pstatus));
   return *pstatus;
 }                               /* cache_inode_renew_entry */

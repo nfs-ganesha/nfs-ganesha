@@ -155,6 +155,7 @@ int nfs_Lookup(nfs_arg_t * parg,
     }
 #endif
 
+  LogFullDebug(COMPONENT_NFSPROTO, "nfs_Lookup for %s", strpath);
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_lookup3.what.dir))))
     return nfs3_Lookup_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
 
