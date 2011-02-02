@@ -48,14 +48,17 @@
 #include "common_utils.h"
 #include "log_macros.h"
 
+int worker_delay_time = 0;
+int next_worker_delay_time = 0;
+
 int getErrInjectInteger(snmp_adm_type_union * param, void *opt)
 {
   long option = (long)opt;
 
   switch(option)
     {
-      case 0: param->integer = 0; break;
-      case 1: param->integer = 1; break;
+      case 0: param->integer = worker_delay_time; break;
+      case 1: param->integer = next_worker_delay_time; break;
       default: return 1;
     }
 
@@ -68,8 +71,8 @@ int setErrInjectInteger(const snmp_adm_type_union * param, void *opt)
 
   switch(option)
     {
-      case 0: param->integer; break;
-      case 1: param->integer; break;
+      case 0: worker_delay_time = param->integer; break;
+      case 1: next_worker_delay_time = param->integer; break;
       default: return 1;
     }
 
