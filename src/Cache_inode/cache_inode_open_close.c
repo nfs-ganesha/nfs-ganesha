@@ -409,13 +409,6 @@ cache_inode_status_t cache_inode_close(cache_entry_t * pentry,
       return *pstatus;
     }
 
-  /* if locks are held in the file, do not close */
-  if(pentry->object.file.open_fd.num_locks != 0)
-    {
-      *pstatus = CACHE_INODE_SUCCESS;
-      return *pstatus;
-    }
-
   if((pclient->use_cache == 0) ||
      (time(NULL) - pentry->object.file.open_fd.last_op > pclient->retention) ||
      (pentry->object.file.open_fd.fileno > (int)(pclient->max_fd_per_thread)))
