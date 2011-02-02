@@ -1100,21 +1100,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       LogFullDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: Calling service function %s start_time %llu.%.6llu",
                    funcdesc.funcname, (unsigned long long)timer_start.tv_sec, (unsigned long long)timer_start.tv_usec);
 
-      /* Use mutex to prevent from the same inode being modified concurrently. */
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-      P(mutex_cond_xprt[ptr_svc->xp_fd]);
-#else
-      P(mutex_cond_xprt[ptr_svc->xp_sock]);
-#endif
 
       rc = funcdesc.service_function(parg_nfs, pexport, &pworker_data->thread_fsal_context, &(pworker_data->cache_inode_client), pworker_data->ht, ptr_req, &res_nfs);  /* BUGAZOMEU Un appel crade pour debugger */
-
-      /* Use mutex to prevent from the same inode being modified concurrently. */
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-      V(mutex_cond_xprt[ptr_svc->xp_fd]);
-#else
-      V(mutex_cond_xprt[ptr_svc->xp_sock]);
-#endif
 
       gettimeofday(&timer_end, NULL);
       timer_diff = time_diff(timer_start, timer_end);
