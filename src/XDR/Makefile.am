@@ -8,6 +8,7 @@ libnfs_mnt_xdr_la_SOURCES = xdr_mount.c           \
                             ../include/nfs23.h    \
                             ../include/mount.h    \
                             ../include/nfs_core.h \
+                            ../include/err_inject.h \
                             ../include/extended_types.h
 
 if USE_QUOTA

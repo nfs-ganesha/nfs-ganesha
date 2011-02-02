@@ -45,8 +45,7 @@ STAT_SNMP_LIB_FLAGS =
 endif
 
 if ERROR_INJECTION
-ERR_INJ_FILES = err_inject.c \
-                ../include/err_inject.h
+ERR_INJ_FILES = err_inject.c
 else
 ERR_INJ_FILES =
 endif
@@ -118,6 +117,7 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/config_parsing.h          \
                              ../include/SemN.h                    \
                              ../include/external_tools.h          \
+                             ../include/err_inject.h              \
                              $(SVC_FILES) $(STAT_SNMP_FILES)      \
                              $(ERR_INJ_FILES)			  
 

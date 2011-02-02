@@ -94,6 +94,7 @@ libnfsproto_la_SOURCES = mnt_Export.c			  \
                          ../include/nfs_exports.h         \
                          ../include/nfs_creds.h           \
                          ../include/nfs_tools.h           \
+                         ../include/err_inject.h          \
                          ../include/nfs_file_handle.h
 
 if USE_NLM

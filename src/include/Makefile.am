@@ -42,6 +42,7 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  nfs41_session.h                 \
                  pnfs.h                          \
                  nfs_core.h                      \
+                 err_inject.h                    \
                  nfs_creds.h                     \
                  nfs_dupreq.h                    \
                  nfs_exports.h                   \

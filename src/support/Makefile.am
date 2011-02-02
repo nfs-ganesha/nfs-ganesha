@@ -35,6 +35,7 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          ../include/nfs23.h                 \
                          ../include/nfs4.h                  \
                          ../include/nfs_core.h              \
+                         ../include/err_inject.h            \
                          ../include/nfs_creds.h             \
                          ../include/nfs_dupreq.h            \
                          ../include/nfs_exports.h           \
