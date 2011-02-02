@@ -82,25 +82,25 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
               struct svc_req *preq /* IN     */ ,
               nfs_res_t * pres /* OUT    */ )
 {
-  nlm4_testargs *arg;
+  nlm4_testargs *arg = &parg->arg_nlm4_test;
   cache_entry_t *pentry;
   fsal_attrib_list_t attr;
   nlm_lock_entry_t *nlm_entry;
   cache_inode_status_t cache_status;
   cache_inode_fsal_data_t fsal_data;
 
-  LogFullDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Test");
+  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm4_Test svid=%d off=%llx len=%llx",
+           (int) arg->alock.svid, (unsigned long long) arg->alock.l_offset, (unsigned long long) arg->alock.l_len);
 
   if(in_nlm_grace_period())
     {
       pres->res_nlm4test.test_stat.stat = NLM4_DENIED_GRACE_PERIOD;
-      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm_Test %s",
-                   lock_result_str(pres->res_nlm4.stat.stat));
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Test %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
 
   /* Convert file handle into a cache entry */
-  arg = &parg->arg_nlm4_test;
   if(!nfs3_FhandleToFSAL((nfs_fh3 *) & (arg->alock.fh), &fsal_data.handle, pcontext))
     {
       /* handle is not valid */
@@ -109,8 +109,8 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
        * Should we do a REQ_OK so that the client get
        * a response ? FIXME!!
        */
-      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm_Test %s",
-                   lock_result_str(pres->res_nlm4.stat.stat));
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Test %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_DROP;
     }
   /* Now get the cached inode attributes */
@@ -120,13 +120,10 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
     {
       /* handle is not valid */
       pres->res_nlm4test.test_stat.stat = NLM4_STALE_FH;
-      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm_Test %s",
-                   lock_result_str(pres->res_nlm4.stat.stat));
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Test %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
-  LogFullDebug(COMPONENT_NLM,
-               "nlm_Test Sending svid=%d start=%llx len=%llx",
-               arg->alock.svid, arg->alock.l_offset, arg->alock.l_len);
   nlm_entry = nlm_overlapping_entry(&(arg->alock), arg->exclusive);
   if(!nlm_entry)
     {
@@ -140,8 +137,8 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
       nlm_lock_entry_dec_ref(nlm_entry);
     }
 
-  LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm_Test %s",
-               lock_result_str(pres->res_nlm4.stat.stat));
+  LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Test %s",
+           lock_result_str(pres->res_nlm4.stat.stat));
   return NFS_REQ_OK;
 }
 

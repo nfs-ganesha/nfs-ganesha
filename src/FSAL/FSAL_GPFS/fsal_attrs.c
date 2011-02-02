@@ -99,6 +99,64 @@ fsal_status_t GPFSFSAL_getattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
 }
 
 /**
+ * GPFSFSAL_getattrs_descriptor:
+ * Get attributes for the object specified by its descriptor or by it's filehandle.
+ *
+ * \param p_file_descriptor (input):
+ *        The file descriptor of the object to get parameters.
+ * \param p_filehandle (input):
+ *        The handle of the object to get parameters.
+ * \param p_context (input):
+ *        Authentication context for the operation (user,...).
+ * \param p_object_attributes (mandatory input/output):
+ *        The retrieved attributes for the object.
+ *        As input, it defines the attributes that the caller
+ *        wants to retrieve (by positioning flags into this structure)
+ *        and the output is built considering this input
+ *        (it fills the structure according to the flags it contains).
+ *
+ * \return Major error codes :
+ *        - ERR_FSAL_NO_ERROR     (no error)
+ *        - Another error code if an error occured.
+ */
+fsal_status_t GPFSFSAL_getattrs_descriptor(gpfsfsal_file_t * p_file_descriptor,     /* IN */
+                                           gpfsfsal_handle_t * p_filehandle,        /* IN */
+                                           gpfsfsal_op_context_t * p_context,       /* IN */
+                                           fsal_attrib_list_t * p_object_attributes /* IN/OUT */
+    )
+{
+  fsal_status_t st;
+  struct stat64 buffstat;
+  int rc, errsv;
+
+  /* sanity checks.
+   * note : object_attributes is mandatory in GPFSFSAL_getattrs.
+   */
+  if(!p_file_descriptor || !p_filehandle || !p_context || !p_object_attributes)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
+
+  TakeTokenFSCall();
+  rc = fstat64(p_file_descriptor->fd, &buffstat);
+  errsv = errno;
+  ReleaseTokenFSCall();
+
+  if(rc == -1)
+    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_getattrs);
+
+  /* convert attributes */
+  st = posixstat64_2_fsal_attributes(&buffstat, p_object_attributes);
+  if(FSAL_IS_ERROR(st))
+    {
+      FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
+      FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+      ReturnStatus(st, INDEX_FSAL_getattrs);
+    }
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_getattrs);
+
+}
+
+/**
  * GPFSFSAL_setattrs:
  * Set attributes for the object specified by its filehandle.
  *

@@ -559,7 +559,7 @@ void log_bad_block(const char *label, BuddyThreadContext_t *context, BuddyBlock_
                    guilt_block->Header.label_func,
                    guilt_block->Header.label_user_defined);
     else
-      LogFullDebug(COMPONENT_MEMALLOC, "% block %p, previous Block none???",
+      LogFullDebug(COMPONENT_MEMALLOC, "%s block %p, previous Block none???",
                    label, block);
   }
   #else
@@ -2159,6 +2159,9 @@ void BuddyGetStats(buddy_stats_t * budd_stats)
 
 #ifdef _DEBUG_MEMLEAKS
 
+int BuddySetDebugLabel(const char *file, const char *func, const unsigned int line,
+                        const char *label);
+
 #ifndef _NO_BLOCK_PREALLOC
 void FillPool(struct prealloc_pool *pool,
               const char           *file,
@@ -2569,7 +2572,7 @@ void BuddyDumpPools(FILE *output)
         n = pool->pa_name;
       fprintf(output,
               "%10d  %9d  %13d  %13d  %10d  %10d  %s\n",
-              pool->pa_blocks, pool->pa_num, pool->pa_size,
+              pool->pa_blocks, pool->pa_num, (int) pool->pa_size,
               pool->pa_allocated, pool->pa_used, pool->pa_high,
               n);
       pool = pool->pa_next_pool;
@@ -2598,10 +2601,10 @@ void BuddyDumpAll(FILE *output)
       count++;
 
       fprintf(output, "\nMemory Context for thread %s (%p) Total Mem Space: %lld MB Used: %lld MB\n",
-               context->label_thread,
-               context->OwnerThread,
-               (unsigned long long) context->Stats.TotalMemSpace / 1024 / 1024,
-               (unsigned long long) (context->Stats.StdUsedSpace + context->Stats.ExtraMemSpace) / 1024 / 1024);
+              context->label_thread,
+              (void *) context->OwnerThread,
+              (unsigned long long) context->Stats.TotalMemSpace / 1024 / 1024,
+              (unsigned long long) (context->Stats.StdUsedSpace + context->Stats.ExtraMemSpace) / 1024 / 1024);
 
       fprintf(output, "\n-SIZE-  ---USED--- -------------------LABEL-------------------\n");
 

@@ -164,7 +164,7 @@ void *file_content_gc_thread(void *IndexArg)
   char logfile_arg[MAXPATHLEN];
   char *loglevel_arg;
 
-  SetNameFunction("file_content_fc_thread");
+  SetNameFunction("file_content_gc_thread");
 
   LogEvent(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : Starting GC thread");
   LogDebug(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : my pthread id is %p",

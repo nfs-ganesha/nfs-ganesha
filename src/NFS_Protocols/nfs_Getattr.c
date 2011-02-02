@@ -118,11 +118,16 @@ int nfs_Getattr(nfs_arg_t * parg,
                                   NULL, &attr, pcontext, pclient, ht, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
+      LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr returning %d", rc);
       return rc;
     }
 
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_getattr3.object))))
-    return nfs3_Getattr_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
+    {
+      rc = nfs3_Getattr_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
+      LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr returning %d from nfs3_Getattr_Xattr", rc);
+      return rc;
+    }
 
   /*
    * Get attributes.  Use NULL for the file name since we have the
@@ -151,6 +156,7 @@ int nfs_Getattr(nfs_arg_t * parg,
                                   &pres->res_attr2.status,
                                   &pres->res_getattr3.status,
                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+              LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr set failed status v2");
               return NFS_REQ_OK;
             }
           pres->res_attr2.status = NFS_OK;
@@ -168,12 +174,14 @@ int nfs_Getattr(nfs_arg_t * parg,
                                   &pres->res_getattr3.status,
                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
+              LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr set failed status v3");
               return NFS_REQ_OK;
             }
           pres->res_getattr3.status = NFS3_OK;
           break;
         }                       /* switch */
 
+      LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr succeeded");
       return NFS_REQ_OK;
     }
 
@@ -184,6 +192,7 @@ int nfs_Getattr(nfs_arg_t * parg,
                       &pres->res_getattr3.status,
                       NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
+  LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr set failed status");
   return NFS_REQ_OK;
 }                               /* nfs_Getattr */
 

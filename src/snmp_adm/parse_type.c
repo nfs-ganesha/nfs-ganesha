@@ -47,7 +47,7 @@ int str2real(double *pnum, char *str)
 int big2str(char *str, int64_t num)
 {
   int n;
-  n = snprintf(str, PRINT_LEN, "%lld", num);
+  n = snprintf(str, PRINT_LEN, "%lld", (long long) num);
   return n == PRINT_LEN + 1;
 }
 

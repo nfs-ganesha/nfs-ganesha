@@ -221,57 +221,53 @@ fsal_status_t GPFSFSAL_DigestHandle(gpfsfsal_export_context_t * p_expcontext,   
       /* NFS handle digest */
     case FSAL_DIGEST_NFSV2:
 
-      /**
-       * This is never going to work, we need to be trickier to get
-       * this down to 29 bytes
-       */
-      if(sizeof(fsal_handle_t) > FSAL_DIGEST_SIZE_HDLV2)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV2);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(fsal_handle_t));
-      break;
+      /* GPFS FSAL can no longer support NFS v2 */
+      ReturnCode(ERR_FSAL_NOTSUPP, 0);
 
     case FSAL_DIGEST_NFSV3:
 
-      if(sizeof(fsal_handle_t) > FSAL_DIGEST_SIZE_HDLV3)
+      if(sizeof(gpfsfsal_handle_t) > FSAL_DIGEST_SIZE_HDLV3)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV3);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(fsal_handle_t));
+      memcpy(out_buff, p_in_fsal_handle, sizeof(gpfsfsal_handle_t));
       break;
 
     case FSAL_DIGEST_NFSV4:
 
-      if(sizeof(fsal_handle_t) > FSAL_DIGEST_SIZE_HDLV4)
+      if(sizeof(gpfsfsal_handle_t) > FSAL_DIGEST_SIZE_HDLV4)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(fsal_handle_t));
+      memcpy(out_buff, p_in_fsal_handle, sizeof(gpfsfsal_handle_t));
       break;
 
       /* FileId digest for NFSv2 */
     case FSAL_DIGEST_FILEID2:
 
-      /* sanity check about output size */
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID2);
-      memcpy(out_buff, p_in_fsal_handle->data.handle.f_handle, sizeof(int));
-
-      break;
+      /* GPFS FSAL can no longer support NFS v2 */
+      ReturnCode(ERR_FSAL_NOTSUPP, 0);
 
       /* FileId digest for NFSv3 */
     case FSAL_DIGEST_FILEID3:
 
       /* sanity check about output size */
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID3);
-      memcpy(out_buff, p_in_fsal_handle->data.handle.f_handle, sizeof(fsal_u64_t));
+      /* If the handle_size is the full OPENHANDLE_HANDLE_LEN then we assume it's a new style GPFS handle */
+      if(p_in_fsal_handle->data.handle.handle_size < OPENHANDLE_HANDLE_LEN)
+        memcpy(out_buff, p_in_fsal_handle->data.handle.f_handle, sizeof(int));
+      else
+        memcpy(out_buff, p_in_fsal_handle->data.handle.f_handle + OPENHANDLE_OFFSET_OF_FILEID, sizeof(uint64_t));
       break;
 
       /* FileId digest for NFSv4 */
     case FSAL_DIGEST_FILEID4:
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID4);
-      memcpy(out_buff, p_in_fsal_handle->data.handle.f_handle, sizeof(fsal_u64_t));
+      if(p_in_fsal_handle->data.handle.handle_size < OPENHANDLE_HANDLE_LEN)
+        memcpy(out_buff, p_in_fsal_handle->data.handle.f_handle, sizeof(int));
+      else
+        memcpy(out_buff, p_in_fsal_handle->data.handle.f_handle + OPENHANDLE_OFFSET_OF_FILEID, sizeof(uint64_t));
       break;
 
     default:
@@ -314,20 +310,22 @@ fsal_status_t GPFSFSAL_ExpandHandle(gpfsfsal_export_context_t * p_expcontext,   
 
       /* NFSV2 handle digest */
     case FSAL_DIGEST_NFSV2:
-      memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_handle_t));
-      break;
+
+      /* GPFS FSAL can no longer support NFS v2 */
+      ReturnCode(ERR_FSAL_NOTSUPP, 0);
 
       /* NFSV3 handle digest */
     case FSAL_DIGEST_NFSV3:
-      memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_handle_t));
+
+      memset(p_out_fsal_handle, 0, sizeof(gpfsfsal_handle_t));
+      memcpy(p_out_fsal_handle, in_buff, sizeof(gpfsfsal_handle_t));
       break;
 
       /* NFSV4 handle digest */
     case FSAL_DIGEST_NFSV4:
-      memset(p_out_fsal_handle, 0, sizeof(fsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_handle_t));
+
+      memset(p_out_fsal_handle, 0, sizeof(gpfsfsal_handle_t));
+      memcpy(p_out_fsal_handle, in_buff, sizeof(gpfsfsal_handle_t));
       break;
 
     default:
@@ -821,7 +819,7 @@ fsal_status_t GPFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
   if(out_parameter->fs_specific_info.open_by_handle_dev_file[0] == '\0')
     {
       LogCrit(COMPONENT_CONFIG,
-              "FSAL LOAD PARAMETER: OpenByHandleDeviceFile MUST be specified in the configuration file",
+              "FSAL LOAD PARAMETER: OpenByHandleDeviceFile MUST be specified in the configuration file (item %s)",
               CONF_LABEL_FS_SPECIFIC);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }

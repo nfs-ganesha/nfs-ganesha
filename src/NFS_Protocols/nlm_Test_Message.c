@@ -63,12 +63,11 @@
 #include "nlm_util.h"
 #include "nlm4.h"
 #include "nlm_async.h"
-#include "nlm_send_reply.h"
 
 static void nlm4_test_message_resp(void *arg)
 {
   nlm_async_res_t *res = arg;
-  nlm_send_reply(NLMPROC4_TEST_RES, res->caller_name, &(res->pres), NULL);
+  nlm_send_async(NLMPROC4_TEST_RES, res->caller_name, &(res->pres), NULL);
   Mem_Free(arg);
 }
 
@@ -94,8 +93,7 @@ int nlm4_Test_Message(nfs_arg_t * parg /* IN     */ ,
                       nfs_res_t * pres /* OUT    */ )
 {
   struct nlm_async_res *arg;
-  LogFullDebug(COMPONENT_NLM,
-                    "REQUEST PROCESSING: Calling nlm_Test_Message");
+  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Test_Message");
   nlm4_Test(parg, pexport, pcontext, pclient, ht, preq, pres);
   arg = nlm_build_async_res(parg->arg_nlm4_test.alock.caller_name, pres);
   nlm_async_callback(nlm4_test_message_resp, arg);

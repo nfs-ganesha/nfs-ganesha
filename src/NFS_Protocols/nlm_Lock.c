@@ -82,17 +82,17 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
               struct svc_req *preq /* IN     */ ,
               nfs_res_t * pres /* OUT    */ )
 {
-  nlm4_lockargs *arg;
+  nlm4_lockargs *arg = &parg->arg_nlm4_lock;
   cache_entry_t *pentry;
   fsal_attrib_list_t attr;
   nlm_lock_entry_t *nlm_entry = NULL;
   cache_inode_status_t cache_status;
   cache_inode_fsal_data_t fsal_data;
 
-  LogFullDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm4_Lock");
+  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm4_Lock svid=%d off=%llx len=%llx",
+           (int) arg->alock.svid, (unsigned long long) arg->alock.l_offset, (unsigned long long) arg->alock.l_len);
 
   /* Convert file handle into a cache entry */
-  arg = &parg->arg_nlm4_lock;
   if(!nfs3_FhandleToFSAL((nfs_fh3 *) & (arg->alock.fh), &fsal_data.handle, pcontext))
     {
       /* handle is not valid */
@@ -101,8 +101,8 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
        * Should we do a REQ_OK so that the client get
        * a response ? FIXME!!
        */
-      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
-                   lock_result_str(pres->res_nlm4.stat.stat));
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_DROP;
     }
   /* Now get the cached inode attributes */
@@ -112,8 +112,8 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
     {
       /* handle is not valid */
       pres->res_nlm4.stat.stat = NLM4_STALE_FH;
-      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
-                   lock_result_str(pres->res_nlm4.stat.stat));
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
 
@@ -121,15 +121,15 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
   if(in_nlm_grace_period() && !arg->reclaim)
     {
       pres->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
-      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
-                   lock_result_str(pres->res_nlm4.stat.stat));
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
   if(!in_nlm_grace_period() && arg->reclaim)
     {
       pres->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
-      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
-                   lock_result_str(pres->res_nlm4.stat.stat));
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
 
@@ -142,8 +142,8 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
       LogDebug(COMPONENT_NLM, "Failed to register a monitor for the host %s",
                arg->alock.caller_name);
       pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
-      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
-                   lock_result_str(pres->res_nlm4.stat.stat));
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
 
     }
@@ -151,20 +151,21 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
    * Add lock details to the lock list. This check for conflicting
    * locks and add entry with correct state value.
    */
-  nlm_entry = nlm_add_to_locklist(arg);
+  nlm_entry = nlm_add_to_locklist(arg, pentry, pclient, pcontext);
   if(!nlm_entry)
     {
       /* We failed to create a lock entry and add to the list */
       nlm_unmonitor_host(arg->alock.caller_name);
       pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
-      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
-                   lock_result_str(pres->res_nlm4.stat.stat));
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
   pres->res_nlm4.stat.stat = nlm_entry->state;
+  nlm_entry->ht = ht;
   nlm_lock_entry_dec_ref(nlm_entry);
-  LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
-               lock_result_str(pres->res_nlm4.stat.stat));
+  LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
+           lock_result_str(pres->res_nlm4.stat.stat));
   return NFS_REQ_OK;
 }
 

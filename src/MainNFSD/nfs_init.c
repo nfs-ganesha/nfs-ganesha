@@ -1427,15 +1427,18 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
   LogEvent(COMPONENT_INIT, "statistics exporter thread was started successfully");
 #endif      /*  _USE_STAT_EXPORTER */
 
-  /* Starting the nfs file content gc thread  */
-  if((rc =
-      pthread_create(&fcc_gc_thrid, &attr_thr, file_content_gc_thread,
-                     (void *)NULL)) != 0)
+  if(pnfs_param->cache_layers_param.dcgcpol.run_interval != 0)
     {
-      LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
-      exit(1);
+      /* Starting the nfs file content gc thread  */
+      if((rc =
+          pthread_create(&fcc_gc_thrid, &attr_thr, file_content_gc_thread,
+                         (void *)NULL)) != 0)
+        {
+          LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
+          exit(1);
+        }
+      LogEvent(COMPONENT_INIT, "file content gc thread was started successfully");
     }
-  LogEvent(COMPONENT_INIT, "file content gc thread was started successfully");
 
 }                               /* nfs_Start_threads */
 

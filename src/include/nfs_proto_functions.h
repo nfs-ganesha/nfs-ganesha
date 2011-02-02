@@ -362,6 +362,15 @@ int nlm4_Unlock_Message(nfs_arg_t * parg /* IN     */ ,
                         struct svc_req *preq /* IN     */ ,
                         nfs_res_t * pres /* OUT    */ );
 
+
+int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
+                     exportlist_t * pexport /* IN     */ ,
+                     fsal_op_context_t * pcontext /* IN     */ ,
+                     cache_inode_client_t * pclient /* INOUT  */ ,
+                     hash_table_t * ht /* INOUT  */ ,
+                     struct svc_req *preq /* IN     */ ,
+                     nfs_res_t * pres /* OUT    */ );
+
 /* @}
  * -- End of NLM protocol functions. --
  */
@@ -1235,6 +1244,7 @@ void nlm4_Test_Message_Free(nfs_res_t * pres);
 void nlm4_Cancel_Message_Free(nfs_res_t * pres);
 void nlm4_Lock_Message_Free(nfs_res_t * pres);
 void nlm4_Unlock_Message_Free(nfs_res_t * pres);
+void nlm4_Granted_Res_Free(nfs_res_t * pres);
 
 void rquota_Null_Free(nfs_res_t * pres);
 void rquota_getquota_Free(nfs_res_t * pres);

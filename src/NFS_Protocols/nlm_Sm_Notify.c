@@ -83,7 +83,7 @@ int nlm4_Sm_Notify(nfs_arg_t * parg /* IN     */ ,
                    nfs_res_t * pres /* OUT    */ )
 {
   nlm4_sm_notifyargs *arg;
-  LogFullDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm4_sm_notify");
+  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm4_sm_notify");
 
   arg = &parg->arg_nlm4_sm_notify;
   nlm_node_recovery(arg->name, pcontext, pclient, ht);

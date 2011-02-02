@@ -111,7 +111,6 @@ libnfsproto_la_SOURCES += nlm_Unlock.c	  	\
 			../include/nlm4.h  \
 			../include/nlm_async.h \
 			../include/nlm_list.h \
-			../include/nlm_send_reply.h \
 			../include/nlm_util.h
 endif
 

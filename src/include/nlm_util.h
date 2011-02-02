@@ -37,16 +37,23 @@ struct nlm_lock_entry
   int ref_count;
   pthread_mutex_t lock;
   struct glist_head lock_list;
+  cache_entry_t *pentry;
+  cache_inode_client_t *pclient;
+  hash_table_t *ht;
 };
 
 typedef struct nlm_lock_entry nlm_lock_entry_t;
 
 extern const char *lock_result_str(int rc);
+extern void netobj_to_string(netobj *obj, char *buffer, int maxlen);
 extern void nlm_lock_entry_to_nlm_holder(nlm_lock_entry_t * nlm_entry,
                                          struct nlm4_holder *holder);
 extern int nlm_lock_entry_get_state(nlm_lock_entry_t * nlm_entry);
 extern nlm_lock_entry_t *nlm_overlapping_entry(struct nlm4_lock *nlm_lock, int exclusive);
-extern nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs *args);
+extern nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs *args,
+                                      cache_entry_t * pentry,
+                                      cache_inode_client_t * pclient,
+                                      fsal_op_context_t * pcontext);
 extern void nlm_remove_from_locklist(nlm_lock_entry_t * nlm_entry);
 extern int nlm_delete_lock_entry(struct nlm4_lock *nlm_lock);
 extern void nlm_init(void);

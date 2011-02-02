@@ -24,12 +24,15 @@
 . /etc/init.d/functions
 
 PATHPROG=/usr/bin/gpfs.ganesha.nfsd 
-#LOGFILE=/var/log/gpfs.ganesha.nfsd.log
-LOGFILE=SYSLOG
+LOGFILE=/var/log/nfs-ganesha.log
+#LOGFILE=SYSLOG
 #LOGFILE=STDERR
 #LOGFILE=STDOUT
 
 CONFFILE=/etc/ganesha/gpfs.ganesha.nfsd.conf
+
+# Remote quota server
+[ -z "$RQUOTAD" ] && RQUOTAD=`type -path rpc.rquotad`
 
 #DEBUGLEVEL=NIV_NULL
 #DEBUGLEVEL=NIV_MAJOR
@@ -43,13 +46,37 @@ RETVAL=0
 prog="gpfs.ganesha.nfsd"
 
 start() {
-        echo $"Starting $prog: "
-
 	# Check if the user is root
         if [ $UID -ne 0 ]; then
 	        echo "GPFS Ganesha must be started by the root user."
                 RETVAL=1
                 failure
+		echo
+		return $RETVAL
+	fi
+
+	if [ ! -x /sbin/rpc.statd ]; then
+		echo "statd is not available"
+		RETVAL=1
+		failure
+		echo
+		return $RETVAL
+	fi
+
+	# Make sure the rpc.statd is not already running.
+	if status rpc.statd > /dev/null ; then
+		echo "statd already running. Kill it."
+		RETVAL=1
+		failure
+		echo
+		return $RETVAL
+	fi
+
+	# Make sure the rpc.rquotad is not already running.
+	if status rpc.rquotad > /dev/null ; then
+		echo "rquotad already running. Kill it."
+		RETVAL=1
+		failure
 		echo
 		return $RETVAL
 	fi
@@ -105,7 +132,39 @@ start() {
 	    fi
 	done
 
+	# start the statd daemon
+	echo -n $"Starting statd: "
+	# See if a statd's ports has been defined
+	[ -n "$STATD_PORT" ] && STATDARG="$STATDARG -p $STATD_PORT"
+	[ -n "$STATD_OUTGOING_PORT" ] \
+		&& STATDARG="$STATDARG -o $STATD_OUTGOING_PORT"
+	# See if we have an HA-callout program specified
+	[ -n "$STATD_HA_CALLOUT" ] \
+		&& STATDARG="$STATDARG -H $STATD_HA_CALLOUT"
+	daemon rpc.statd "$STATDARG"
+	RETVAL=$?
+	echo
+	if [ $RETVAL -ne 0 ]; then
+		failure
+		return $RETVAL
+	fi
+
+	# start the rquotad daemon
+	if [ -n "$RQUOTAD" ] ; then
+		echo -n $"Starting rquotad: "
+		[ -n "$RQUOTAD_PORT" ] \
+			&& RPCRQUOTADOPTS="$RPCRQUOTADOPTS -p $RQUOTAD_PORT"
+		daemon rpc.rquotad $RPCRQUOTADOPTS
+		RETVAL=$?
+		echo
+		if [ $RETVAL -ne 0 ]; then
+			failure
+			return $RETVAL
+		fi
+	fi
+
 	# Start the Ganesha daemon
+        echo  -n $"Starting $prog: "
 	daemon $PATHPROG $OPTIONS
 	RETVAL=$?
 	
@@ -129,8 +188,6 @@ start() {
 }
 
 stop() {
-        echo -n $"Stopping $prog: "
-
 	# Check if user is root
         if [ $UID -ne 0 ]; then
 	        echo "GPFS Ganesha must be stopped by the root user."
@@ -140,7 +197,18 @@ stop() {
 		return $RETVAL
 	fi
 
+	echo -n $"Stopping rquotad: "
+	killproc rpc.rquotad
+	RETVAL=$?
+	echo
+
+	echo -n $"Stopping statd: "
+	killproc rpc.statd
+	RETVAL=$?
+	echo
+
 	# Kill the Ganesha process
+	echo -n $"Stopping $prog: "
 	killproc $PATHPROG
 	RETVAL=$?
 	[ $RETVAL -eq 0 ] && rm -f  /var/lock/subsys/gpfs.ganesha.nfsd
@@ -203,6 +271,14 @@ condrestart(){
     return 0
 }
 
+reload() {
+    result=`pidof "$PATHPROG"`
+    if [ $result ]; then
+	    echo "Reloading Ganesha Exports"
+	    kill -HUP $result;
+    fi
+}
+
 ganesha_status() {
     result=`pidof "$PATHPROG"`
     if [ $result ]; then
@@ -212,7 +288,10 @@ ganesha_status() {
 	    echo "GPFS Ganesha is not running."
 	    RETVAL=1
     fi
-
+    status rpc.statd
+    if [ -n "$RQUOTAD" ] ; then
+    	status rpc.rquotad
+    fi
     if grep -q openhandle_dev /proc/devices; then
 	    echo "Open-by-handle module is loaded."
 	    if [ ! $RETVAL -eq 1 ]; then
@@ -234,6 +313,9 @@ case "$1" in
 	;;
   restart)
 	restart
+	;;
+  reload)
+	reload
         ;;
   condrestart)
 	condrestart

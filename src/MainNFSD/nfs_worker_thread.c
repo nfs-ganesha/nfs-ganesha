@@ -292,8 +292,8 @@ const nfs_function_desc_t nlm4_func_desc[] = {
                            nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t) xdr_void,
                            (xdrproc_t) xdr_void, "nlm4_Unlock_res", NOTHING_SPECIAL},
   [NLMPROC4_GRANTED_RES] = {
-                            nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t) xdr_void,
-                            (xdrproc_t) xdr_void, "nlm4_Granted_res", NOTHING_SPECIAL},
+                            nlm4_Granted_Res, nlm4_Granted_Res_Free, (xdrproc_t) xdr_nlm4_res,
+                            (xdrproc_t) xdr_void, "nlm4_Granted_res", NEEDS_CRED},
   [NLMPROC4_SM_NOTIFY] = {
                           nlm4_Sm_Notify, nlm4_Sm_Notify_Free,
                           (xdrproc_t) xdr_nlm4_sm_notifyargs, (xdrproc_t) xdr_void,

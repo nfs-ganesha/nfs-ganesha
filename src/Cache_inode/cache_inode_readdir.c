@@ -108,7 +108,7 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
           for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
             {
 
-              LogFullDebug(COMPONENT_CACHE_INODE, "DIR_BEGINNING %d | %d | %s | %s",
+              LogFullDebug(COMPONENT_NFS_READDIR, "DIR_BEGINNING %d | %d | %s | %s",
                      pdir_chain->object.dir_begin.pdir_data->dir_entries[i].active,
                      pdir_chain->object.dir_begin.pdir_data->dir_entries[i].pentry->
                      internal_md.valid_state, pname->name,
@@ -834,7 +834,7 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
 
       for(iter = 0; iter < nbfound; iter++)
         {
-          LogFullDebug(COMPONENT_CACHE_INODE,
+          LogFullDebug(COMPONENT_NFS_READDIR,
                             "cache readdir populate found entry %s",
                             array_dirent[iter].name.name);
 
@@ -842,7 +842,7 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
           if(!FSAL_namecmp(&(array_dirent[iter].name), (fsal_name_t *) & FSAL_DOT) ||
              !FSAL_namecmp(&(array_dirent[iter].name), (fsal_name_t *) & FSAL_DOT_DOT))
             {
-              LogFullDebug(COMPONENT_CACHE_INODE,
+              LogFullDebug(COMPONENT_NFS_READDIR,
                                 "cache readdir populate : do not cache . and ..");
               continue;
             }
@@ -985,13 +985,14 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* end cookie initial value is the begin cookie */
+  LogFullDebug(COMPONENT_NFS_READDIR,"--> Cache_inode_readdir: setting pend_cookie to cookie=%u", cookie);
   *pend_cookie = cookie;
 
   /* stats */
   pclient->stat.nb_call_total += 1;
   pclient->stat.func_stats.nb_call[CACHE_INODE_READDIR] += 1;
 
-  LogFullDebug(COMPONENT_NFSPROTO, "--> Cache_inode_readdir: parameters are cookie=%u nbwanted=%u", cookie,
+  LogFullDebug(COMPONENT_NFS_READDIR, "--> Cache_inode_readdir: parameters are cookie=%u nbwanted=%u", cookie,
          nbwanted);
 
   /* Sanity check */
@@ -1213,10 +1214,9 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
                                                                           CHILDREN_ARRAY_SIZE];
               cookie_array[i] = cookie_iter;
 
-              LogFullDebug(COMPONENT_CACHE_INODE,"--> Cache_inode_readdir: Found slot with file named %s",
-                     pentry_to_read->object.dir_begin.pdir_data->dir_entries[cookie_iter %
-                                                                             CHILDREN_ARRAY_SIZE].
-                     name.name);
+              LogFullDebug(COMPONENT_NFS_READDIR,"--> Cache_inode_readdir: Found slot with file named %s, cookie_array[i]=%u",
+                     pentry_to_read->object.dir_begin.pdir_data->dir_entries[cookie_iter % CHILDREN_ARRAY_SIZE].
+                     name.name, cookie_iter);
 
               /* Step to next iter */
               *pnbfound += 1;
@@ -1235,11 +1235,9 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
                                                                          CHILDREN_ARRAY_SIZE];
               cookie_array[i] = cookie_iter;
 
-              LogFullDebug(COMPONENT_CACHE_INODE,"--> Cache_inode_readdir: Found slot with file named %s",
-                     pentry_to_read->object.dir_cont.pdir_data->dir_entries[cookie_iter %
-                                                                            CHILDREN_ARRAY_SIZE].
-                     name.name);
-	      //              fflush(stdout);
+              LogFullDebug(COMPONENT_NFS_READDIR,"--> Cache_inode_readdir: Found slot with file named %s, cookie_array[i]=%u",
+                     pentry_to_read->object.dir_cont.pdir_data->dir_entries[cookie_iter % CHILDREN_ARRAY_SIZE].
+                     name.name, cookie_iter);
 
               /* Step to next iter */
               *pnbfound += 1;
@@ -1250,6 +1248,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
 
       /* Loop at next entry in dirent array */
       cookie_iter += 1;
+      LogFullDebug(COMPONENT_NFS_READDIR,"--> Cache_inode_readdir: setting pend_cookie to cookie_iter=%u", cookie_iter);
       *pend_cookie = cookie_iter;
 
       if((cookie_iter % CHILDREN_ARRAY_SIZE) == 0)

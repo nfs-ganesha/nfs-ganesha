@@ -84,24 +84,25 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
                 nfs_res_t * pres /* OUT    */ )
 {
   int lck_cnt, lck_state;
-  nlm4_unlockargs *arg;
+  nlm4_unlockargs *arg = &parg->arg_nlm4_unlock;
   cache_entry_t *pentry;
   fsal_attrib_list_t attr;
   nlm_lock_entry_t *nlm_entry;
   cache_inode_status_t cache_status;
   cache_inode_fsal_data_t fsal_data;
 
-  LogFullDebug(COMPONENT_NLM,
-               "REQUEST PROCESSING: Calling nlm4_Unlock");
+  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm4_Unlock svid=%d off=%llx len=%llx",
+           (int) arg->alock.svid, (unsigned long long) arg->alock.l_offset, (unsigned long long) arg->alock.l_len);
 
   if(in_nlm_grace_period())
     {
       pres->res_nlm4test.test_stat.stat = NLM4_DENIED_GRACE_PERIOD;
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
 
   /* Convert file handle into a cache entry */
-  arg = &parg->arg_nlm4_unlock;
   if(!nfs3_FhandleToFSAL((nfs_fh3 *) & (arg->alock.fh), &fsal_data.handle, pcontext))
     {
       /* handle is not valid */
@@ -110,6 +111,8 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
        * Should we do a REQ_OK so that the client get
        * a response ? FIXME!!
        */
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_DROP;
     }
   /* Now get the cached inode attributes */
@@ -119,6 +122,8 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
     {
       /* handle is not valid */
       pres->res_nlm4.stat.stat = NLM4_STALE_FH;
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
 
@@ -132,11 +137,13 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
   nlm_entry = nlm_find_lock_entry(&(arg->alock), 0, NLM4_GRANTED);
   if(!nlm_entry)
     {
-      pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
-      LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
-                   lock_result_str(pres->res_nlm4.stat.stat));
+      pres->res_nlm4.stat.stat = NLM4_GRANTED;
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock not found returning %s anyway",
+               lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
+  LogFullDebug(COMPONENT_NLM, "nlm4_Unlock nlm_entry %p, pentry %p pclient %p\n",
+                  nlm_entry, nlm_entry->pentry, nlm_entry->pclient);
   lck_state = nlm_lock_entry_get_state(nlm_entry);
   pres->res_nlm4.stat.stat = NLM4_GRANTED;
   lck_cnt = nlm_delete_lock_entry(&(arg->alock));
@@ -148,8 +155,8 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
   if(lck_state == NLM4_GRANTED)
     nlm_grant_blocked_locks(&(arg->alock.fh));
   nlm_lock_entry_dec_ref(nlm_entry);
-  LogFullDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
-               lock_result_str(pres->res_nlm4.stat.stat));
+  LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
+           lock_result_str(pres->res_nlm4.stat.stat));
   return NFS_REQ_OK;
 }
 
