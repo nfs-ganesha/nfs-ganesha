@@ -721,6 +721,7 @@ fsal_functions_t fsal_proxy_functions = {
   .fsal_handlecmp = WRAP_PROXYFSAL_handlecmp,
   .fsal_handle_to_hashindex = WRAP_PROXYFSAL_Handle_to_HashIndex,
   .fsal_handle_to_rbtindex = WRAP_PROXYFSAL_Handle_to_RBTIndex,
+  .fsal_handle_to_hash_both = NULL, 
   .fsal_digesthandle = WRAP_PROXYFSAL_DigestHandle,
   .fsal_expandhandle = WRAP_PROXYFSAL_ExpandHandle,
   .fsal_setdefault_fsal_parameter = WRAP_PROXYFSAL_SetDefault_FSAL_parameter,

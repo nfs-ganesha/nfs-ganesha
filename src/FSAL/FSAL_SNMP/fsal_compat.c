@@ -712,6 +712,7 @@ fsal_functions_t fsal_snmp_functions = {
   .fsal_handlecmp = WRAP_SNMPFSAL_handlecmp,
   .fsal_handle_to_hashindex = WRAP_SNMPFSAL_Handle_to_HashIndex,
   .fsal_handle_to_rbtindex = WRAP_SNMPFSAL_Handle_to_RBTIndex,
+  .fsal_handle_to_hash_both = NULL, 
   .fsal_digesthandle = WRAP_SNMPFSAL_DigestHandle,
   .fsal_expandhandle = WRAP_SNMPFSAL_ExpandHandle,
   .fsal_setdefault_fsal_parameter = WRAP_SNMPFSAL_SetDefault_FSAL_parameter,
