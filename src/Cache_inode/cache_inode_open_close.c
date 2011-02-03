@@ -76,7 +76,11 @@ fsal_file_t * cache_inode_fd(cache_entry_t * pentry)
       (pentry->object.file.open_fd.openflags == FSAL_O_WRONLY)) &&
      (pentry->object.file.open_fd.fileno != 0))
     {
+#ifdef _USE_MFSL
+      return &pentry->object.file.open_fd.mfsl_fd;
+#else
       return &pentry->object.file.open_fd.fd;
+#endif
     }
 
   return NULL;
