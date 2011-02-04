@@ -106,6 +106,7 @@ int nfs3_Commit(nfs_arg_t * parg,
   cache_inode_fsal_data_t fsal_data;
   fsal_attrib_list_t pre_attr;
   fsal_attrib_list_t *ppre_attr;
+  uint64_t typeofcommit;
 
   /* to avoid setting it on each error case */
   pres->res_commit3.COMMIT3res_u.resfail.file_wcc.before.attributes_follow = FALSE;
@@ -128,11 +129,21 @@ int nfs3_Commit(nfs_arg_t * parg,
       return NFS_REQ_OK;
     }
 
+  if((pexport->use_commit == TRUE) &&
+     (pexport->use_ganesha_write_buffer == FALSE))
+    typeofcommit = FSAL_UNSAFE_WRITE_TO_FS_BUFFER;
+  else if((pexport->use_commit == TRUE) &&
+          (pexport->use_ganesha_write_buffer == TRUE))
+    typeofcommit = FSAL_UNSAFE_WRITE_TO_GANESHA_BUFFER;
+  else 
+    /* We only do stable writes with this export so no need to execute a commit */
+    return NFS_REQ_OK;    
+  
   if(cache_inode_commit(pentry,
                         parg->arg_commit3.offset,
                         parg->arg_commit3.count,
                         &pre_attr,
-                        ht, pclient, pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+                        ht, pclient, pcontext, typeofcommit, &cache_status) != CACHE_INODE_SUCCESS)
     {
       pres->res_commit3.status = NFS3ERR_IO;;
 

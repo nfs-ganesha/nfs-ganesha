@@ -51,6 +51,7 @@
 #include "cache_inode.h"
 #include "cache_content.h"
 #include "stuff_alloc.h"
+#include "nfs_core.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -95,7 +96,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                                       hash_table_t * ht,
                                       cache_inode_client_t * pclient,
                                       fsal_op_context_t * pcontext,
-                                      bool_t stable, cache_inode_status_t * pstatus)
+                                      uint64_t stable, cache_inode_status_t * pstatus)
 {
   int statindex = 0;
   cache_content_io_direction_t io_direction;
@@ -106,7 +107,6 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
   fsal_attrib_list_t post_write_attr;
   fsal_status_t fsal_status_getattr;
   struct stat buffstat;
-  bool_t stable_flag = stable;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
@@ -170,7 +170,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
     }
 
   /* Do we use stable or unstable storage ? */
-  if(stable_flag == FALSE)
+  if(stable == FSAL_UNSAFE_WRITE_TO_GANESHA_BUFFER)
     {
       /* Data will be stored in memory and not flush to FSAL */
 
@@ -226,13 +226,14 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
           else
             {
               /* Go back to regular situation */
-              stable_flag = TRUE;
+              stable = FSAL_SAFE_WRITE_TO_FS;
             }
         }
 
     }
-  /* if( stable_flag == FALSE ) */
-  if(stable_flag == TRUE)
+  /* if( stable == FALSE ) */
+  if(stable == FSAL_SAFE_WRITE_TO_FS ||
+     stable == FSAL_UNSAFE_WRITE_TO_FS_BUFFER)
     {
       /* Calls file content cache to operate on the cache */
       if(pentry->object.file.pentry_content != NULL)
@@ -445,6 +446,12 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 
           if(read_or_write == CACHE_INODE_WRITE)
             {
+              if(stable == FSAL_SAFE_WRITE_TO_FS) {
+                fsal_status = FSAL_sync(&(pentry->object.file.open_fd.fd));
+                if(FSAL_IS_ERROR(fsal_status))
+                  LogMajor(COMPONENT_CACHE_INODE, "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
+                           fsal_status.major);
+              }
               /* Do a getattr in order to have update information on filesize 
                * This query is done directly on FSAL (object is not data cached), and result
                * will be propagated to cache Inode */
@@ -493,7 +500,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
         }
     }
 
-  /* if(stable_flag == TRUE ) */
+  /* if(stable == TRUE ) */
   /* Return attributes to caller */
   if(pfsal_attr != NULL)
     *pfsal_attr = pentry->object.file.attributes;

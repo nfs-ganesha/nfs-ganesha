@@ -215,6 +215,11 @@ fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
                                    buffer, p_write_amount);
 }
 
+fsal_status_t FSAL_sync(fsal_file_t * p_file_descriptor)
+{
+  return fsal_functions.fsal_sync(p_file_descriptor);
+}
+
 fsal_status_t FSAL_close(fsal_file_t * p_file_descriptor /* IN */ )
 {
   return fsal_functions.fsal_close(p_file_descriptor);

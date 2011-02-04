@@ -148,12 +148,16 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_COMMIT4.status;
     }
 
+  // FIX ME!! At the moment we just assume the user is _not_ using
+  // the ganesha unsafe buffer. In the future, a check based on
+  // export config params (similar to nfs3_Commit.c) should be made.
   if(cache_inode_commit(data->current_entry,
                         arg_COMMIT4.offset,
                         arg_COMMIT4.count,
                         &attr,
                         data->ht,
                         data->pclient,
+                        FSAL_UNSAFE_WRITE_TO_FS_BUFFER,
                         data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_COMMIT4.status = NFS4ERR_INVAL;
