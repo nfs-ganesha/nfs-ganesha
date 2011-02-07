@@ -66,7 +66,6 @@
 
 #include "err_LRU_List.h"
 #include "err_HashTable.h"
-#include "err_rpc.h"
 
 #define  NFS4_ATTRVALS_BUFFLEN  1024
 

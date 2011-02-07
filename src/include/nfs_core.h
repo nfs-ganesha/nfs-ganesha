@@ -74,7 +74,6 @@
 #include "nfs_dupreq.h"
 #include "err_LRU_List.h"
 #include "err_HashTable.h"
-#include "err_rpc.h"
 
 #ifdef _USE_NFS4_1
 #include "nfs41_session.h"
