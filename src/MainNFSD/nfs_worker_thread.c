@@ -733,8 +733,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   /* Get the value from the worker data */
   lru_dupreq = pworker_data->duplicate_request;
 
-  LogFullDebug(COMPONENT_DISPATCH, "NFS DISPATCH: Program %d, Version %d, Function %d",
-               (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
+  LogDebug(COMPONENT_DISPATCH, "NFS DISPATCH: Program %d, Version %d, Function %d",
+           (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
 
   /* initializing RPC structure */
   memset(&arg_nfs, 0, sizeof(arg_nfs));
@@ -903,7 +903,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                   char dumpfh[1024];
                   /* Reject the request for authentication reason (incompatible file handle) */
                   LogMajor(COMPONENT_DISPATCH,
-                           "/!\\ | Host 0x%x = %d.%d.%d.%d has badly formed file handle, vers=%d, proc=%d FH=%s",
+                           "Host 0x%x = %d.%d.%d.%d has badly formed file handle, vers=%d, proc=%d FH=%s",
                            ntohs(hostaddr.sin_addr.s_addr),
                            (ntohl(hostaddr.sin_addr.s_addr) & 0xFF000000) >> 24,
                            (ntohl(hostaddr.sin_addr.s_addr) & 0x00FF0000) >> 16,
@@ -925,7 +925,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                   char dumpfh[1024];
                   /* Reject the request for authentication reason (incompatible file handle) */
                   LogMajor(COMPONENT_DISPATCH,
-                           "/!\\ | Host 0x%x = %d.%d.%d.%d has badly formed file handle, vers=%d, proc=%d FH=%s",
+                           "Host 0x%x = %d.%d.%d.%d has badly formed file handle, vers=%d, proc=%d FH=%s",
                            ntohs(hostaddr.sin_addr.s_addr),
                            (ntohl(hostaddr.sin_addr.s_addr) & 0xFF000000) >> 24,
                            (ntohl(hostaddr.sin_addr.s_addr) & 0x00FF0000) >> 16,
@@ -1037,7 +1037,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
              (ntohs(hostaddr.sin_port) >= IPPORT_RESERVED))
             {
               LogEvent(COMPONENT_DISPATCH,
-                       "/!\\ | Port %d is too high for this export entry, rejecting client",
+                       "Port %d is too high for this export entry, rejecting client",
                        hostaddr.sin_port);
               svcerr_auth(ptr_svc, AUTH_TOOWEAK);
               pworker_data->current_xid = 0;    /* No more xid managed */
@@ -1060,7 +1060,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                                  &pworker_data->ip_stats_pool, &related_client) == FALSE)
         {
           LogEvent(COMPONENT_DISPATCH,
-                   "/!\\ | Host 0x%x = %d.%d.%d.%d is not allowed to access this export entry, vers=%d, proc=%d",
+                   "Host 0x%x = %d.%d.%d.%d is not allowed to access this export entry, vers=%d, proc=%d",
                    ntohs(phostaddr->sin_addr.s_addr),
                    (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
                    (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
@@ -1100,8 +1100,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       /* processing */
       gettimeofday(timer_start, NULL);
 
-      LogFullDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: Calling service function %s start_time %llu.%.6llu",
-                   pworker_data->pfuncdesc->funcname, (unsigned long long)timer_start->tv_sec, (unsigned long long)timer_start->tv_usec);
+      LogDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: Calling service function %s start_time %llu.%.6llu",
+               pworker_data->pfuncdesc->funcname, (unsigned long long)timer_start->tv_sec, (unsigned long long)timer_start->tv_usec);
 
       /* Use mutex to prevent from the same inode being modified concurrently. */
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
@@ -1138,9 +1138,9 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                  pworker_data->pfuncdesc->funcname, rc,
                  (unsigned long long)timer_diff.tv_sec, (unsigned long long)timer_diff.tv_usec);
       else
-        LogFullDebug(COMPONENT_DISPATCH, "Function %s exited with status %d taking %llu.%.6llu seconds to process",
-                     pworker_data->pfuncdesc->funcname, rc,
-                     (unsigned long long)timer_diff.tv_sec, (unsigned long long)timer_diff.tv_usec);
+        LogDebug(COMPONENT_DISPATCH, "Function %s exited with status %d taking %llu.%.6llu seconds to process",
+                 pworker_data->pfuncdesc->funcname, rc,
+                 (unsigned long long)timer_diff.tv_sec, (unsigned long long)timer_diff.tv_usec);
     }
 
   /* Perform statistics here */
@@ -1219,8 +1219,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       /* Mark request as finished */
       LogFullDebug(COMPONENT_DUPREQ, "YES?: %d", do_dupreq_cache);
       if(do_dupreq_cache)
-        {      LogFullDebug(COMPONENT_DUPREQ, "NOOOOO");
-
+        {
           status = nfs_dupreq_finish(rpcxid,
                                      ptr_req,
                                      preqnfs->xprt,
@@ -1228,7 +1227,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                                      lru_dupreq);
         }
     }
-  LogFullDebug(COMPONENT_DUPREQ, "aaaaaaaaaa");
   /* Free the allocated resources once the work is done */
   /* Free the arguments */
   if(preqnfs->req.rq_vers == 2 || preqnfs->req.rq_vers == 3 || preqnfs->req.rq_vers == 4)
@@ -1263,12 +1261,12 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       nfs_debug_debug_label_info();
 
       LogFullDebug(COMPONENT_MEMLEAKS,
-                "Stats de ce thread: total mnt1=%u mnt3=%u nfsv2=%u nfsv3=%u nfsv4=%u",
-                pworker_data->stats.stat_req.nb_mnt1_req,
-                pworker_data->stats.stat_req.nb_mnt3_req,
-                pworker_data->stats.stat_req.nb_nfs2_req,
-                pworker_data->stats.stat_req.nb_nfs3_req,
-                pworker_data->stats.stat_req.nb_nfs4_req);
+                   "Stats for thread: total mnt1=%u mnt3=%u nfsv2=%u nfsv3=%u nfsv4=%u",
+                   pworker_data->stats.stat_req.nb_mnt1_req,
+                   pworker_data->stats.stat_req.nb_mnt3_req,
+                   pworker_data->stats.stat_req.nb_nfs2_req,
+                   pworker_data->stats.stat_req.nb_nfs3_req,
+                   pworker_data->stats.stat_req.nb_nfs4_req);
 
     }
   else
@@ -1391,11 +1389,11 @@ void *worker_thread(void *IndexArg)
   if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogCrit(COMPONENT_DISPATCH, "NFS WORKER #%lu: Memory manager could not be initialized, exiting...",
-                 index);
+      LogMajor(COMPONENT_DISPATCH, "NFS WORKER #%lu: Memory manager could not be initialized, exiting...",
+               index);
       exit(1);
     }
-  LogEvent(COMPONENT_DISPATCH, "NFS WORKER #%lu: Memory manager successfully initialized",
+  LogDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: Memory manager successfully initialized",
            index);
 #endif
 
@@ -1408,7 +1406,7 @@ void *worker_thread(void *IndexArg)
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&pmydata->thread_fsal_context)))
     {
       /* Failed init */
-      LogCrit(COMPONENT_DISPATCH, "NFS  WORKER #%lu: Error initializing thread's credential", index);
+      LogMajor(COMPONENT_DISPATCH, "NFS  WORKER #%lu: Error initializing thread's credential", index);
       exit(1);
     }
 
@@ -1418,9 +1416,9 @@ void *worker_thread(void *IndexArg)
                              index, pmydata))
     {
       /* Failed init */
-      LogCrit(COMPONENT_DISPATCH,
-           "NFS WORKER #%lu: Cache Inode client could not be initialized, exiting...",
-           index);
+      LogMajor(COMPONENT_DISPATCH,
+               "NFS WORKER #%lu: Cache Inode client could not be initialized, exiting...",
+               index);
       exit(1);
     }
   LogDebug(COMPONENT_DISPATCH,
@@ -1431,7 +1429,7 @@ void *worker_thread(void *IndexArg)
                                    &pmydata->thread_fsal_context)))
     {
       /* Failed init */
-      LogCrit(COMPONENT_DISPATCH, "NFS  WORKER #%lu: Error initing MFSL", index);
+      LogMajor(COMPONENT_DISPATCH, "NFS  WORKER #%lu: Error initing MFSL", index);
       exit(1);
     }
 #endif
@@ -1442,9 +1440,9 @@ void *worker_thread(void *IndexArg)
                                thr_name))
     {
       /* Failed init */
-      LogCrit(COMPONENT_DISPATCH,
-           "NFS WORKER #%lu: Cache Content client could not be initialized, exiting...",
-           index);
+      LogMajor(COMPONENT_DISPATCH,
+               "NFS WORKER #%lu: Cache Content client could not be initialized, exiting...",
+               index);
       exit(1);
     }
   LogDebug(COMPONENT_DISPATCH,
@@ -1463,8 +1461,8 @@ void *worker_thread(void *IndexArg)
   if(pnfs_init(&pmydata->cache_inode_client.mfsl_context.pnfsclient, &nfs_param.pnfs_param.layoutfile))
     {
       /* Failed init */
-      LogCrit(COMPONENT_DISPATCH,
-          "NFS WORKER #%lu: pNFS engine could not be initialized, exiting...", index);
+      LogMajor(COMPONENT_DISPATCH,
+               "NFS WORKER #%lu: pNFS engine could not be initialized, exiting...", index);
       exit(1);
     }
   LogDebug(COMPONENT_DISPATCH,
@@ -1650,8 +1648,8 @@ void *worker_thread(void *IndexArg)
                                          NULL)) != LRU_LIST_SUCCESS)
             {
               LogCrit(COMPONENT_DISPATCH,
-                   "NFS WORKER #%lu: FAILURE: Impossible to invalidate entries for duplicate request cache (error %d)",
-                   index, rc);
+                      "NFS WORKER #%lu: FAILURE: Impossible to invalidate entries for duplicate request cache (error %d)",
+                      index, rc);
             }
           LogDebug(COMPONENT_DISPATCH,
                    "NFS_WORKER #%lu: after dupreq invalidation nb_entry=%d nb_invalid=%d",
@@ -1745,7 +1743,7 @@ void *worker_thread(void *IndexArg)
       if(FSAL_IS_ERROR(fsal_status))
         {
           /* Failed init */
-          LogCrit(COMPONENT_DISPATCH, "NFS  WORKER #%d: Error regreshing MFSL context", index);
+          LogMajor(COMPONENT_DISPATCH, "NFS  WORKER #%d: Error regreshing MFSL context", index);
           exit(1);
         }
 

@@ -62,14 +62,14 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
  if((block = config_FindItemByName(in_config, CONF_SNMP_ADM_LABEL)) == NULL)
     {
       /* cannot read item */
-      LogCrit(COMPONENT_INIT, "SNMP_ADM: Cannot read item \"%s\" from configuration file",
+      LogCrit(COMPONENT_CONFIG, "SNMP_ADM: Cannot read item \"%s\" from configuration file",
               CONF_SNMP_ADM_LABEL);
       /* Expected to be a block */
       return ENOENT;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
      {
-       LogCrit(COMPONENT_INIT, "SNMP_ADM: Cannot read item \"%s\" from configuration file",
+       LogCrit(COMPONENT_CONFIG, "SNMP_ADM: Cannot read item \"%s\" from configuration file",
                CONF_SNMP_ADM_LABEL);
       /* Expected to be a block */
        return ENOENT;
@@ -86,7 +86,7 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
 
       if(err)
         {
-          LogCrit(COMPONENT_INIT,
+          LogCrit(COMPONENT_CONFIG,
                   "SNMP_ADM: ERROR reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_FS_SPECIFIC);
           return err;
@@ -111,7 +111,7 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
           int bool = StrToBoolean(key_value);
           if(bool == -1)
             {
-              LogCrit(COMPONENT_INIT, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+              LogCrit(COMPONENT_CONFIG, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
                       key_name);
               return EINVAL;
             }
@@ -122,7 +122,7 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
           int bool = StrToBoolean(key_value);
           if(bool == -1)
             {
-              LogCrit(COMPONENT_INIT, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+              LogCrit(COMPONENT_CONFIG, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
                       key_name);
               return EINVAL;
             }
@@ -133,7 +133,7 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
           int bool = StrToBoolean(key_value);
           if(bool == -1)
             {
-              LogCrit(COMPONENT_INIT, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+              LogCrit(COMPONENT_CONFIG, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
                       key_name);
               return EINVAL;
             }
@@ -144,7 +144,7 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
           int bool = StrToBoolean(key_value);
           if(bool == -1)
             {
-              LogCrit(COMPONENT_INIT, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+              LogCrit(COMPONENT_CONFIG, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
                       key_name);
               return EINVAL;
             }
@@ -155,7 +155,7 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
           int bool = StrToBoolean(key_value);
           if(bool == -1)
             {
-              LogCrit(COMPONENT_INIT, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+              LogCrit(COMPONENT_CONFIG, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
                       key_name);
               return EINVAL;
             }
@@ -166,7 +166,7 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
           int bool = StrToBoolean(key_value);
           if(bool == -1)
             {
-              LogCrit(COMPONENT_INIT, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+              LogCrit(COMPONENT_CONFIG, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
                       key_name);
               return EINVAL;
             }
@@ -177,7 +177,7 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
           int bool = StrToBoolean(key_value);
           if(bool == -1)
             {
-              LogCrit(COMPONENT_INIT, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+              LogCrit(COMPONENT_CONFIG, "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
                       key_name);
               return EINVAL;
             }
@@ -185,7 +185,7 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
         }
       else
         {
-          LogCrit(COMPONENT_INIT,
+          LogCrit(COMPONENT_CONFIG,
                   "SNMP_ADM LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_FS_SPECIFIC);
           return EINVAL;

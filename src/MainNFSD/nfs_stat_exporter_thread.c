@@ -268,14 +268,14 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
  if((block = config_FindItemByName(in_config, CONF_STAT_EXPORTER_LABEL)) == NULL)
     {
       /* cannot read item */
-      LogCrit(COMPONENT_INIT, "STAT_EXPORTER: Cannot read item \"%s\" from configuration file",
+      LogCrit(COMPONENT_CONFIG, "STAT_EXPORTER: Cannot read item \"%s\" from configuration file",
               CONF_STAT_EXPORTER_LABEL);
       /* Expected to be a block */
       return ENOENT;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
      {
-       LogCrit(COMPONENT_INIT, "STAT_EXPORTER: Cannot read item \"%s\" from configuration file",
+       LogCrit(COMPONENT_CONFIG, "STAT_EXPORTER: Cannot read item \"%s\" from configuration file",
                CONF_STAT_EXPORTER_LABEL);
       /* Expected to be a block */
        return ENOENT;
@@ -292,7 +292,7 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
 
       if(err)
         {
-          LogCrit(COMPONENT_INIT,
+          LogCrit(COMPONENT_CONFIG,
                   "STAT_EXPORTER: ERROR reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_FS_SPECIFIC);
           return err;
@@ -309,7 +309,7 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
         }
       else
         {
-          LogCrit(COMPONENT_INIT,
+          LogCrit(COMPONENT_CONFIG,
                   "STAT_EXPORTER LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_FS_SPECIFIC);
           return EINVAL;

@@ -71,7 +71,7 @@ void admin_replace_exports()
   P(pmydata->mutex_admin_condvar);
   pmydata->reload_exports = TRUE;
   if(pthread_cond_signal(&(pmydata->admin_condvar)) == -1)
-      LogCrit(COMPONENT_MAIN, "admin_replace_exports - admin cond signal failed , errno = %d", errno);
+      LogCrit(COMPONENT_MAIN, "admin_replace_exports - admin cond signal failed , errno = %d (%s)", errno, strerror(errno));
   V(pmydata->mutex_admin_condvar);
 }
 
@@ -83,7 +83,7 @@ static int wake_workers_for_export_reload()
       pmydata->workers_data[i].reparse_exports_in_progress = FALSE;
       if(pthread_cond_signal(&(pmydata->workers_data[i].export_condvar)) == -1)
 	{
-	  LogCrit(COMPONENT_MAIN, "replace_exports: Export cond signal failed for thr#%d , errno = %d", i, errno);
+	  LogCrit(COMPONENT_MAIN, "replace_exports: Export cond signal failed for thr#%d , errno = %d (%s)", i, errno, strerror(errno));
 	  return -1;
 	}
     }
@@ -102,7 +102,7 @@ static int pause_workers_for_export_reload()
        * so they are blocked on the exports list replacement. */
       if(pthread_cond_signal(&(pmydata->workers_data[i].req_condvar)) == -1)
 	{
-	  LogCrit(COMPONENT_MAIN, "replace_exports: Request cond signal failed for thr#%d , errno = %d", i, errno);
+	  LogCrit(COMPONENT_MAIN, "replace_exports: Request cond signal failed for thr#%d , errno = %d (%s)", i, errno, strerror(errno));
 	  wake_workers_for_export_reload();
 	  return -1;
 	}
@@ -157,7 +157,7 @@ int rebuild_export_list(char *config_file)
    * configuration file from startup. */
   if (config_file == NULL)
     {
-      LogCrit(COMPONENT_MAIN, "Error: No configuration file was specified for reloading exports.");
+      LogCrit(COMPONENT_CONFIG, "Error: No configuration file was specified for reloading exports.");
       return -1;
     }
 
@@ -165,7 +165,7 @@ int rebuild_export_list(char *config_file)
   config_struct = config_ParseFile(config_file);
   if(!config_struct)
     {
-      LogCrit(COMPONENT_MAIN, "rebuild_export_list: Error while parsing new configuration file %s: %s",
+      LogCrit(COMPONENT_CONFIG, "rebuild_export_list: Error while parsing new configuration file %s: %s",
               config_file, config_GetErrorMsg());
       return -1;
     }  
@@ -174,12 +174,12 @@ int rebuild_export_list(char *config_file)
   status = ReadExports(config_struct, &temp_pexportlist);
   if(status < 0)
     {
-      LogCrit(COMPONENT_MAIN, "rebuild_export_list: Error while parsing export entries");
+      LogCrit(COMPONENT_CONFIG, "rebuild_export_list: Error while parsing export entries");
       return status;
     }
   else if(status == 0)
     {
-      LogCrit(COMPONENT_MAIN, "rebuild_export_list: No export entries found in configuration file !!!");
+      LogCrit(COMPONENT_CONFIG, "rebuild_export_list: No export entries found in configuration file !!!");
       return status;
     }
 
@@ -227,7 +227,7 @@ void *admin_thread(void *Arg)
   if((rc = BuddyInit(&nfs_param.buddy_param_admin)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogCrit(COMPONENT_MAIN, "ADMIN THREAD: Memory manager could not be initialized, exiting...");
+      LogMajor(COMPONENT_MAIN, "ADMIN THREAD: Memory manager could not be initialized, exiting...");
       exit(1);
     }
   LogEvent(COMPONENT_MAIN, "ADMIN THREAD: Memory manager successfully initialized");
