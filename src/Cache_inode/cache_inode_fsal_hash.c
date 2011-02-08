@@ -77,7 +77,7 @@ unsigned long cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,
         {
             snprintHandle(printbuf, 512, &pfsdata->handle);
             LogFullDebug(COMPONENT_HASHTABLE, "hash_func key: buff = "
-                         "(Handle=%s, Cookie=%u), hash value=%lu\n",
+                         "(Handle=%s, Cookie=%u), hash value=%lu",
                          printbuf, pfsdata->cookie, h);
         }
 
@@ -114,7 +114,7 @@ unsigned long cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
         {
             snprintHandle(printbuf, 512, &pfsdata->handle);
             LogFullDebug(COMPONENT_HASHTABLE, "hash_func rbt: buff = "
-                         "(Handle=%s, Cookie=%u), value=%u\n",
+                         "(Handle=%s, Cookie=%u), value=%u",
                          printbuf, pfsdata->cookie, h);
         }
     return h;
@@ -138,7 +138,7 @@ unsigned long __cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
         {
             snprintHandle(printbuf, 512, &pfsdata->handle);
             LogFullDebug(COMPONENT_HASHTABLE, "hash_func rbt: buff = "
-                         "(Handle=%s, Cookie=%u), value=%lu\n",
+                         "(Handle=%s, Cookie=%u), value=%lu",
                          printbuf, pfsdata->cookie, h);
         }
     return h;
@@ -181,7 +181,7 @@ unsigned int cache_inode_fsal_rbt_both( hash_parameter_t * p_hparam,
         {
             snprintHandle(printbuf, 512, &pfsdata->handle);
             LogFullDebug(COMPONENT_HASHTABLE, "hash_func rbt both: buff = "
-                         "(Handle=%s, Cookie=%u), hashvalue=%u rbtvalue=%u\n",
+                         "(Handle=%s, Cookie=%u), hashvalue=%u rbtvalue=%u",
                          printbuf, pfsdata->cookie, h1, h2 );
         }
 

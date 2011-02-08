@@ -884,7 +884,7 @@ cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status)
  * @param op [IN] can be set to CACHE_INODE_OP_GET or CACHE_INODE_OP_SET to show the type of operation done.
  * @param pclient [INOUT] ressource allocated by the client for the nfs management.
  *
- * @return CACHE_INODE_SUCCESS if successful \n
+ * @return CACHE_INODE_SUCCESS if successful
  * @return CACHE_INODE_LRU_ERROR if an errorr occured in LRU management.
  * 
  */
@@ -1369,8 +1369,8 @@ void cache_inode_print_dir(cache_entry_t * cache_entry_root)
  * @param path [IN] the full path to the file that will contain the data.
  * @param pentry [IN] the input pentry.
  *
- * @return CACHE_INODE_BAD_TYPE if pentry is not related to a REGULAR_FILE \n
- * @return CACHE_INODE_INVALID_ARGUMENT if path is inconsistent \n
+ * @return CACHE_INODE_BAD_TYPE if pentry is not related to a REGULAR_FILE
+ * @return CACHE_INODE_INVALID_ARGUMENT if path is inconsistent
  * @return CACHE_INODE_SUCCESS if operation succeded. 
  * 
  */
@@ -1410,7 +1410,7 @@ cache_inode_status_t cache_inode_dump_content(char *path, cache_entry_t * pentry
  * @param path [IN] the full path to the file that will contain the metadata.
  * @param pentry [IN] the input pentry.
  *
- * @return CACHE_INODE_BAD_TYPE if pentry is not related to a REGULAR_FILE \n
+ * @return CACHE_INODE_BAD_TYPE if pentry is not related to a REGULAR_FILE
  * @return CACHE_INODE_SUCCESS if operation succeded. 
  * 
  */
@@ -1560,7 +1560,7 @@ static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry,
  * @param pclient [INOUT] related cache_inode client.
  * @param pstatus [OUT] status for the operation.
  *
- * @return CACHE_INODE_BAD_TYPE if pentry is not related a REGULAR_FILE or DIR_BEGINNING \n
+ * @return CACHE_INODE_BAD_TYPE if pentry is not related a REGULAR_FILE or DIR_BEGINNING
  * @return CACHE_INODE_SUCCESS if operation succeded. 
  * 
  */
@@ -1793,7 +1793,7 @@ cache_inode_status_t cache_inode_pin_pentry(cache_entry_t * pentry,
 {
    cache_inode_status_t pstatus = CACHE_INODE_SUCCESS;
 
-   LogDebug(COMPONENT_CACHE_INODE, "cache_inode_pin_pentry: pentry %p; pclient %p\n", pentry, pclient);
+   LogDebug(COMPONENT_CACHE_INODE, "cache_inode_pin_pentry: pentry %p; pclient %p", pentry, pclient);
    if (pentry->object.file.open_fd.num_locks == 0) {
      pstatus = cache_inode_open(pentry, pclient, FSAL_O_RDWR,
 	pcontext, &pstatus);
@@ -1801,7 +1801,7 @@ cache_inode_status_t cache_inode_pin_pentry(cache_entry_t * pentry,
         return pstatus;
    }
    pentry->object.file.open_fd.num_locks++;
-   LogDebug(COMPONENT_CACHE_INODE, "cache_inode_pin_pentry: numlocks %d\n",
+   LogDebug(COMPONENT_CACHE_INODE, "cache_inode_pin_pentry: numlocks %d",
                 pentry->object.file.open_fd.num_locks);
    return pstatus;
 }
@@ -1814,7 +1814,7 @@ cache_inode_status_t cache_inode_unpin_pentry(cache_entry_t * pentry,
 
   pentry->object.file.open_fd.num_locks--;
   LogDebug(COMPONENT_CACHE_INODE, "cache_inode_unpin_pentry: pentry %p; pclient %p"
-            "numlocks %d, kill_entry %d\n", pentry, pclient,
+            "numlocks %d, kill_entry %d", pentry, pclient,
             pentry->object.file.open_fd.num_locks, pentry->internal_md.kill_entry);
   if (pentry->object.file.open_fd.num_locks == 0)
     {

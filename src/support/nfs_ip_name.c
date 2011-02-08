@@ -360,7 +360,7 @@ int nfs_ip_name_populate(char *path)
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, label);
           return ID_MAPPER_NOT_FOUND;
         }

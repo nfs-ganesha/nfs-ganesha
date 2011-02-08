@@ -454,7 +454,7 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
 
   for(i = 0; i < hparam.index_size; i++)
     {
-      LogFullDebug(COMPONENT_HASHTABLE, "HASH TABLE PREALLOC: Allocating %d new nodes\n",
+      LogFullDebug(COMPONENT_HASHTABLE, "HASH TABLE PREALLOC: Allocating %d new nodes",
                    hparam.nb_node_prealloc);
 
       /* Allocate a group of nodes to be managed by the RB Tree. */
@@ -514,7 +514,7 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
  * @param buffval a pointeur to an object of type hash_buffer_t which describe the value location in memory.
  * @param how a switch to tell if the entry is to be tested or overwritten or not
  *
- * @return HASHTABLE_SUCCESS if successfull\n.
+ * @return HASHTABLE_SUCCESS if successfull.
  * @return HASHTABLE_INSERT_MALLOC_ERROR if an error occured during the insertion process.
  *
  * @see HashTable_Get
@@ -645,7 +645,7 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
  * @param buffkey a pointeur to an object of type hash_buffer_t which describe the key location in memory.
  * @param buffval a pointeur to an object of type hash_buffer_t which describe the value location in memory.
  *
- * @return HASHTABLE_SUCCESS if successfull\n.
+ * @return HASHTABLE_SUCCESS if successfull.
  * @return HASHTABLE_ERROR_NO_SUCH_KEY is the key was not found.
  *
  * @see HashTable_Set
@@ -715,7 +715,7 @@ int HashTable_Get(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * bu
  * @param buffkey a pointeur to an object of type hash_buffer_t which describe the key location in memory.
  * @param pusedbuffkeydata the key data buffer that was associated with this entry. Not considered if equal to NULL.
  *
- * @return HASHTABLE_SUCCESS if successfull\n.
+ * @return HASHTABLE_SUCCESS if successfull.
  * @return HASHTABLE_ERROR_NO_SUCH_KEY is the key was not found.
  *
  * @see HashTable_Set
@@ -966,11 +966,10 @@ void HashTable_Log(log_components_t component, hash_table_t * ht)
             rbtval = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, &(pdata->buffkey));
           }
 
-        LogFullDebug(component, "%s => %s; hashval=%lu rbtval=%lu\n ", dispkey, dispval, hashval, rbtval);
+        LogFullDebug(component, "%s => %s; hashval=%lu rbtval=%lu ", dispkey, dispval, hashval, rbtval);
         RBT_INCREMENT(it);
       }
     }
-  printf("\n");
 }                               /* HashTable_Print */
 
 /**

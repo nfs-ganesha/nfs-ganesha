@@ -127,7 +127,7 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
 
           inet_ntop(psockaddr_in6->sin6_family,
                     psockaddr_in6->sin6_addr.s6_addr, txtaddrv6, 100);
-          LogFullDebug(COMPONENT_MAIN, "Client has IPv6 adress = %s\n", txtaddrv6);
+          LogFullDebug(COMPONENT_MAIN, "Client has IPv6 adress = %s", txtaddrv6);
         }
       /* If the client socket is IPv4, then it is wrapped into a   ::ffff:a.b.c.d IPv6 address. We check this here
        * This kind of adress is shaped like this:
@@ -603,7 +603,7 @@ void *stat_exporter_thread(void *addr)
 
   if((rc = getaddrinfo(NULL, nfs_param.extern_param.stat_export.export_stat_port, &hints, &servinfo)) != 0)
     {
-      LogCrit(COMPONENT_MAIN, "getaddrinfo: %s\n", gai_strerror(rc));
+      LogCrit(COMPONENT_MAIN, "getaddrinfo: %s", gai_strerror(rc));
       return NULL;
     }
   for(p = servinfo; p != NULL; p = p->ai_next)

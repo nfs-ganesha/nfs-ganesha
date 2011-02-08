@@ -142,7 +142,7 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
                lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
-  LogFullDebug(COMPONENT_NLM, "nlm4_Unlock nlm_entry %p, pentry %p pclient %p\n",
+  LogFullDebug(COMPONENT_NLM, "nlm4_Unlock nlm_entry %p, pentry %p pclient %p",
                   nlm_entry, nlm_entry->pentry, nlm_entry->pclient);
   lck_state = nlm_lock_entry_get_state(nlm_entry);
   pres->res_nlm4.stat.stat = NLM4_GRANTED;

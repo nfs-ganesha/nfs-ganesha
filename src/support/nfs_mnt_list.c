@@ -184,14 +184,14 @@ int nfs_Add_MountList_Entry(char *hostname, char *dirpath)
       if(!BuddyCheck(MNT_List_head) || !BuddyCheck(MNT_List_tail))
         {
           LogFullDebug(COMPONENT_MEMCORRUPT,
-                  "Memory corruption in nfs_Add_MountList_Entry. Head = %p, Tail = %p.\n",
+                  "Memory corruption in nfs_Add_MountList_Entry. Head = %p, Tail = %p.",
                   MNT_List_head, MNT_List_tail);
         }
       if(!BuddyCheck(pnew_mnt_list_entry->ml_hostname)
          || !BuddyCheck(pnew_mnt_list_entry->ml_directory))
         {
           LogFullDebug(COMPONENT_MEMCORRUPT,
-                  "Memory corruption in nfs_Add_MountList_Entry. Hostname = %p, Directory = %p.\n",
+                  "Memory corruption in nfs_Add_MountList_Entry. Hostname = %p, Directory = %p.",
                   pnew_mnt_list_entry->ml_hostname, pnew_mnt_list_entry->ml_directory);
         }
     }
@@ -239,7 +239,7 @@ int nfs_Remove_MountList_Entry(char *hostname, char *dirpath)
              || !BuddyCheck(piter_mnt_list_entry->ml_directory))
             {
               LogFullDebug(COMPONENT_MEMCORRUPT,
-                      "Memory corruption in nfs_Remove_MountList_Entry. Current = %p, Head = %p, Tail = %p.\n",
+                      "Memory corruption in nfs_Remove_MountList_Entry. Current = %p, Head = %p, Tail = %p.",
                       piter_mnt_list_entry, MNT_List_head, MNT_List_tail);
             }
         }

@@ -426,7 +426,7 @@ fsal_status_t GPFSFSAL_link(gpfsfsal_handle_t * p_target_handle,        /* IN */
   if(!global_fs_info.link_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
 
-/*  LogDebug(COMPONENT_FSAL, "linking %#llx:%#x:%#x to %#llx:%#x:%#x/%s \n", */
+/*  LogDebug(COMPONENT_FSAL, "linking %#llx:%#x:%#x to %#llx:%#x:%#x/%s", */
 
   /* get the target handle access by fid */
   TakeTokenFSCall();
