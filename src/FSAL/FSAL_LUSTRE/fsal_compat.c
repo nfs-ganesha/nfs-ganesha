@@ -210,6 +210,11 @@ fsal_status_t WRAP_LUSTREFSAL_write(fsal_file_t * p_file_descriptor,    /* IN */
                           buffer_size, buffer, p_write_amount);
 }
 
+fsal_status_t WRAP_LUSTREFSAL_sync(fsal_file_t * p_file_descriptor    /* IN */)
+{
+  return LUSTREFSAL_sync((lustrefsal_file_t *) p_file_descriptor);
+}
+
 fsal_status_t WRAP_LUSTREFSAL_close(fsal_file_t * p_file_descriptor /* IN */ )
 {
   return LUSTREFSAL_close((lustrefsal_file_t *) p_file_descriptor);
@@ -692,6 +697,7 @@ fsal_functions_t fsal_lustre_functions = {
   .fsal_open = WRAP_LUSTREFSAL_open,
   .fsal_read = WRAP_LUSTREFSAL_read,
   .fsal_write = WRAP_LUSTREFSAL_write,
+  .fsal_sync = WRAP_LUSTREFSAL_sync,
   .fsal_close = WRAP_LUSTREFSAL_close,
   .fsal_open_by_fileid = WRAP_LUSTREFSAL_open_by_fileid,
   .fsal_close_by_fileid = WRAP_LUSTREFSAL_close_by_fileid,
