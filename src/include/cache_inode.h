@@ -900,7 +900,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                                       hash_table_t * ht,
                                       cache_inode_client_t * pclient,
                                       fsal_op_context_t * pcontext,
-                                      bool_t stable, cache_inode_status_t * pstatus);
+                                      uint64_t stable, cache_inode_status_t * pstatus);
 
 #define cache_inode_read( a, b, c, d, e, f, g, h, i, j, k ) cache_inode_rdwr( a, CACHE_INODE_READ, b, c, d, e, f, g, h, i, j, k )
 #define cache_inode_write( a, b, c, d, e, f, g, h, i, j, k ) cache_inode_rdwr( a, CACHE_INODE_WRITE, b, c, d, e, f, g, h, i, j. k )
@@ -912,6 +912,7 @@ cache_inode_status_t cache_inode_commit(cache_entry_t * pentry,
                                         hash_table_t * ht,
                                         cache_inode_client_t * pclient,
                                         fsal_op_context_t * pcontext,
+                                        uint64_t typeofcommit,
                                         cache_inode_status_t * pstatus);
 
 cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,

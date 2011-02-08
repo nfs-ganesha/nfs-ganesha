@@ -50,6 +50,7 @@
 #include "cache_inode.h"
 #include "cache_content.h"
 #include "stuff_alloc.h"
+#include "nfs_core.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -90,6 +91,7 @@ cache_inode_commit(cache_entry_t * pentry,
                    hash_table_t * ht,
                    cache_inode_client_t * pclient,
                    fsal_op_context_t * pcontext,
+                   uint64_t typeofcommit,
                    cache_inode_status_t * pstatus)
 {
     cache_inode_status_t status;
@@ -97,6 +99,19 @@ cache_inode_commit(cache_entry_t * pentry,
     fsal_size_t size_io_done;
     fsal_boolean_t eof;
     cache_inode_unstable_data_t *udata;
+    fsal_status_t fsal_status;
+
+    if (typeofcommit == FSAL_UNSAFE_WRITE_TO_FS_BUFFER) {
+      fsal_status = FSAL_sync(&(pentry->object.file.open_fd.fd));
+      if(FSAL_IS_ERROR(fsal_status)) {
+        LogMajor(COMPONENT_CACHE_INODE, "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
+                 fsal_status.major);
+        *pstatus = CACHE_INODE_FSAL_ERROR;
+        return *pstatus;
+      }
+      *pstatus = CACHE_INODE_SUCCESS;
+      return *pstatus;
+    }
 
     udata = &pentry->object.file.unstable_data;
     if(udata->buffer == NULL)

@@ -475,3 +475,4 @@ fsal_status_t GPFSFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
                                    fsal_op_context_t * p_context,        /* IN */
                                    fsal_extattrib_list_t * p_object_attributes /* OUT */) ;
 
+fsal_status_t GPFSFSAL_sync(gpfsfsal_file_t * p_file_descriptor /* IN */);

@@ -96,7 +96,6 @@
  *
  */
 extern writeverf3 NFS3_write_verifier;  /* NFS V3 write verifier      */
-extern nfs_parameter_t nfs_param;
 
 int nfs_Write(nfs_arg_t * parg,
               exportlist_t * pexport,
@@ -121,7 +120,7 @@ int nfs_Write(nfs_arg_t * parg,
   enum stable_how stable;       /* NFS V3 storage stability, see RFC1813 page 50 */
   cache_inode_file_type_t filetype;
   fsal_boolean_t eof_met;
-  bool_t stable_flag = TRUE;
+  uint64_t stable_flag = FSAL_SAFE_WRITE_TO_FS;
 
   cache_content_policy_data_t datapol;
 
@@ -230,7 +229,8 @@ int nfs_Write(nfs_arg_t * parg,
       size = parg->arg_write2.data.nfsdata2_len;        /* totalcount is obsolete  */
       data = parg->arg_write2.data.nfsdata2_val;
       stable = FILE_SYNC;
-      stable_flag = TRUE;
+      if (pexport->use_commit == TRUE)
+        stable_flag = FSAL_SAFE_WRITE_TO_FS;
       break;
 
     case NFS_V3:
@@ -244,14 +244,21 @@ int nfs_Write(nfs_arg_t * parg,
           return NFS_REQ_OK;
         }
 
-      if((nfs_param.core_param.use_nfs_commit == TRUE) &&
+      if((pexport->use_commit == TRUE) &&
+         (pexport->use_ganesha_write_buffer == FALSE) &&
          (parg->arg_write3.stable == UNSTABLE))
         {
-          stable_flag = FALSE;
+          stable_flag = FSAL_UNSAFE_WRITE_TO_FS_BUFFER;
+        }
+      else if((pexport->use_commit == TRUE) &&
+              (pexport->use_ganesha_write_buffer == TRUE) &&
+              (parg->arg_write3.stable == UNSTABLE))
+        {
+          stable_flag = FSAL_UNSAFE_WRITE_TO_GANESHA_BUFFER;
         }
       else
         {
-          stable_flag = TRUE;
+          stable_flag = FSAL_SAFE_WRITE_TO_FS;
         }
 
       LogFullDebug(COMPONENT_NFSPROTO, "----> Write offset=%lld count=%u", parg->arg_write3.offset,
@@ -384,6 +391,7 @@ int nfs_Write(nfs_arg_t * parg,
                           pcontext, stable_flag, &cache_status) == CACHE_INODE_SUCCESS)
         {
 
+
           switch (preq->rq_vers)
             {
             case NFS_V2:
@@ -406,7 +414,7 @@ int nfs_Write(nfs_arg_t * parg,
               pres->res_write3.WRITE3res_u.resok.count = written_size;
 
               /* How do we commit data ? */
-              if(stable_flag == TRUE)
+              if(stable_flag == FSAL_SAFE_WRITE_TO_FS)
                 {
                   pres->res_write3.WRITE3res_u.resok.committed = FILE_SYNC;
                 }

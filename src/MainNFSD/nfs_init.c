@@ -271,11 +271,6 @@ int nfs_print_param_config(nfs_parameter_t * p_nfs_param)
   else
     printf("\tDump_Stats_Per_Client = FALSE ;\n");
 
-  if(p_nfs_param->core_param.use_nfs_commit)
-    printf("\tUse_NFS_Commit = TRUE ; \n");
-  else
-    printf("\tUse_NFS_Commit = FALSE ;\n");
-
   if(p_nfs_param->core_param.drop_io_errors)
     printf("\tDrop_IO_Errors = TRUE ; \n");
   else
