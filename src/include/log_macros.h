@@ -162,6 +162,9 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
       DisplayErrorComponentLogLine( component, a, b, c, __LINE__ ); \
   } while (0)
 
+#define isDebug(component) \
+  (LogComponents[component].comp_log_level >= NIV_DEBUG)
+
 #define isFullDebug(component) \
   (LogComponents[component].comp_log_level >= NIV_FULL_DEBUG)
 
