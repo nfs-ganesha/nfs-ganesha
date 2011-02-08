@@ -95,7 +95,6 @@
 int nfs4_op_restorefh(struct nfs_argop4 *op,
                       compound_data_t * data, struct nfs_resop4 *resp)
 {
-  int i;
   int error;
 
   /* First of all, set the reply to zero to make sure it contains no parasite information */
@@ -144,10 +143,12 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
   data->current_entry = data->saved_entry;
   data->current_filetype = data->saved_filetype;
 
-  LogFullDebug(COMPONENT_NFS_V4, "CURRENTFH: File handle = { Length = %d  Val = ", data->currentFH.nfs_fh4_len);
-  for(i = 0; i < data->currentFH.nfs_fh4_len; i++)
-    LogFullDebug(COMPONENT_NFS_V4, "%02X", data->currentFH.nfs_fh4_val[i]);
-  LogFullDebug(COMPONENT_NFS_V4, " }");
+  if(isFullDebug(COMPONENT_NFS_V4))
+    {
+      char str[LEN_FH_STR];
+      sprint_fhandle4(str, data->currentFH);
+      LogFullDebug(COMPONENT_NFS_V4, "RESTORE FH: Current FH %s", str);
+    }
 
   return NFS4_OK;
 }                               /* nfs4_op_restorefh */
