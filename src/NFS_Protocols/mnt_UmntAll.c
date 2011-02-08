@@ -93,15 +93,17 @@ int mnt_UmntAll(nfs_arg_t * parg /* IN     */ ,
                 struct svc_req *preq /* IN     */ ,
                 nfs_res_t * pres /* OUT    */ )
 {
-  LogFullDebug(COMPONENT_NFSPROTO,
-                    "REQUEST PROCESSING: Calling mnt_UmntAll");
+  LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_UmntAll");
 
+  /* TODO: This should clear all mounts for the calling client, using
+   * nfs_Remove_MountList_Entry(hostname, NULL)
+   */
   /* Just empty the Mount list, take void as argument and returns void */
   if(!nfs_Purge_MountList())
     {
       /* Purge mount list failed */
       LogCrit(COMPONENT_NFSPROTO,
-                   "UMOUNT ALL: Error when emptying the mount list");
+              "UMOUNT ALL: Error when emptying the mount list");
     }
 
   return NFS_REQ_OK;
