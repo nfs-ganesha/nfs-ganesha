@@ -146,7 +146,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if(isFullDebug(COMPONENT_NFS_V4))
     {
       char str[LEN_FH_STR];
-      sprint_fhandle4(str, data->savedFH);
+      sprint_fhandle4(str, &data->savedFH);
       LogFullDebug(COMPONENT_NFS_V4, "SAVE FH: Saved FH %s", str);
     }
 

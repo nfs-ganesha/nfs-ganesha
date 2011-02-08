@@ -125,15 +125,15 @@ int nfs4_Is_Fh_DSHandle(nfs_fh4 * pfh);
 int nfs3_Is_Fh_Xattr(nfs_fh3 * pfh);
 
 /* File handle print function (;ostly use for debugging) */
-void print_fhandle2(log_components_t component, fhandle2 fh);
-void print_fhandle3(log_components_t component, nfs_fh3 fh);
-void print_fhandle4(log_components_t component, nfs_fh4 fh);
+void print_fhandle2(log_components_t component, fhandle2 *fh);
+void print_fhandle3(log_components_t component, nfs_fh3 *fh);
+void print_fhandle4(log_components_t component, nfs_fh4 *fh);
 void print_buff(log_components_t component, char *buff, int len);
 void print_compound_fh(log_components_t component, compound_data_t * data);
 
-void sprint_fhandle2(char *str, fhandle2 fh);
-void sprint_fhandle3(char *str, nfs_fh3 fh);
-void sprint_fhandle4(char *str, nfs_fh4 fh);
+void sprint_fhandle2(char *str, fhandle2 *fh);
+void sprint_fhandle3(char *str, nfs_fh3 *fh);
+void sprint_fhandle4(char *str, nfs_fh4 *fh);
 void sprint_buff(char *str, char *buff, int len);
 void sprint_mem(char *str, char *buff, int len);
 

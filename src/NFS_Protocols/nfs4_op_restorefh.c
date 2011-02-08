@@ -146,7 +146,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
   if(isFullDebug(COMPONENT_NFS_V4))
     {
       char str[LEN_FH_STR];
-      sprint_fhandle4(str, data->currentFH);
+      sprint_fhandle4(str, &data->currentFH);
       LogFullDebug(COMPONENT_NFS_V4, "RESTORE FH: Current FH %s", str);
     }
 

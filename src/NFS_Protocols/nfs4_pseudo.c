@@ -1327,7 +1327,7 @@ int nfs4_CreateROOTFH4(nfs_fh4 * fh4p, compound_data_t * data)
   if(isFullDebug(COMPONENT_NFS_V4))
     {
       char str[LEN_FH_STR];
-      sprint_fhandle4(str, data->rootFH);
+      sprint_fhandle4(str, &data->rootFH);
       LogFullDebug(COMPONENT_NFS_V4, "CREATE ROOT FH: %s", str);
     }
 
