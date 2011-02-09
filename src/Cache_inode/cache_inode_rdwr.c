@@ -371,6 +371,15 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                                        seek_descriptor, io_size, buffer, pio_size);
 #endif
 
+              /* Alright, the unstable write is complete. Now if it was supposed to be a stable write
+               * we can sync to the hard drive. */
+              if(stable == FSAL_SAFE_WRITE_TO_FS) {
+                fsal_status = FSAL_sync(&(pentry->object.file.open_fd.fd));
+                if(FSAL_IS_ERROR(fsal_status))
+                  LogMajor(COMPONENT_CACHE_INODE, "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
+                           fsal_status.major);
+              }
+
               break;
             }
 
@@ -446,12 +455,6 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 
           if(read_or_write == CACHE_INODE_WRITE)
             {
-              if(stable == FSAL_SAFE_WRITE_TO_FS) {
-                fsal_status = FSAL_sync(&(pentry->object.file.open_fd.fd));
-                if(FSAL_IS_ERROR(fsal_status))
-                  LogMajor(COMPONENT_CACHE_INODE, "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
-                           fsal_status.major);
-              }
               /* Do a getattr in order to have update information on filesize 
                * This query is done directly on FSAL (object is not data cached), and result
                * will be propagated to cache Inode */

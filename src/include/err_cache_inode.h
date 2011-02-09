@@ -123,6 +123,9 @@ static family_error_t __attribute((__unused__)) tab_errctx_cache_inode[] =
 #define ERR_CACHE_INODE_FSAL_DELAY CACHE_INODE_FSAL_DELAY
   {
   ERR_CACHE_INODE_FSAL_DELAY, "ERR_CACHE_INODE_FSAL_DELAY", "FSAL operation was delayed"},
+#define ERR_CACHE_INODE_COMMIT   CACHE_INODE_COMMIT
+  {
+  ERR_CACHE_INODE_COMMIT, "ERR_CACHE_INODE_COMMIT", "cache_inode_commit failed"},
   {
   ERR_NULL, "ERR_NULL", ""}
 };
