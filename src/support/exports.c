@@ -2097,6 +2097,17 @@ int export_client_match(unsigned int addr,
           break;
 
         case WILDCARDHOST_CLIENT:
+          /* Now checking for IP wildcards */
+          if(fnmatch
+             (clients->clientarray[i].client.wildcard.wildcard, ipstring,
+              FNM_PATHNAME) == 0)
+            {
+              *pclient_found = clients->clientarray[i];
+              return TRUE;
+            }
+          
+          LogFullDebug(COMPONENT_DISPATCH, "Did not match the ip address with a wildcard.");
+          
           /* Try to get the entry from th IP/name cache */
           if((rc = nfs_ip_name_get(addr, hostname)) != IP_NAME_SUCCESS)
             {
@@ -2106,12 +2117,12 @@ int export_client_match(unsigned int addr,
                   if(nfs_ip_name_add(addr, hostname) != IP_NAME_SUCCESS)
                     {
                       /* Major failure, name could not be resolved */
-                      LogMajor(COMPONENT_DISPATCH, "Could not resolve addr %u.%u.%u.%u",
-                             (unsigned int)(addr & 0xFF),
-                             (unsigned int)(addr >> 8) & 0xFF,
-                             (unsigned int)(addr >> 16) & 0xFF,
-                             (unsigned int)(addr >> 24));
-                      strncpy(hostname, "unresolved", 10);
+                      LogFullDebug(COMPONENT_DISPATCH, "Could not resolve hostame for addr %u.%u.%u.%u ... not checking if a hostname wildcard matches",
+                                   (unsigned int)(addr & 0xFF),
+                                   (unsigned int)(addr >> 8) & 0xFF,
+                                   (unsigned int)(addr >> 16) & 0xFF,
+                                   (unsigned int)(addr >> 24));
+                      break;
                     }
                 }
             }
@@ -2128,16 +2139,6 @@ int export_client_match(unsigned int addr,
             }
           LogFullDebug(COMPONENT_DISPATCH, "'%s' not matching '%s'",
                  hostname, clients->clientarray[i].client.wildcard.wildcard);
-
-          /* Now checking for IP wildcards */
-          if(fnmatch
-             (clients->clientarray[i].client.wildcard.wildcard, ipstring,
-              FNM_PATHNAME) == 0)
-            {
-              *pclient_found = clients->clientarray[i];
-              return TRUE;
-            }
-
           break;
 
         case GSSPRINCIPAL_CLIENT:
