@@ -98,7 +98,7 @@ int nfs2_Writecache(nfs_arg_t * parg,
 {
   /* This is an unsupported function, it is never used */
   LogCrit(COMPONENT_NFSPROTO,
-                    "NFS2_WRITECACHE:  /!\\ | Received unexpected call to deprecated function NFS2PROC_WRITECACHE");
+          "NFS2_WRITECACHE: Received unexpected call to deprecated function NFS2PROC_WRITECACHE");
   return NFS_REQ_OK;
 }
 

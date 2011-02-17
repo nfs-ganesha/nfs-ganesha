@@ -149,8 +149,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 #endif
 
   /* Calling dispatcher main loop */
-  LogDebug(COMPONENT_DISPATCH,
-           "TCP SOCKET MANAGER Sock=%ld(%p): Starting with pthread id #%p",
+  LogDebug(COMPONENT_DISPATCH, "TCP SOCKET MANAGER Sock=%ld(%p): Starting with pthread id #%p",
            tcp_sock, Arg, (caddr_t) pthread_self());
 
   for(;;)
@@ -172,8 +171,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
       if(pnfsreq == NULL)
         {
-          LogMajor(COMPONENT_DISPATCH,
-                   "CRITICAL ERROR: empty request pool for the chosen worker ! Exiting...");
+          LogMajor(COMPONENT_DISPATCH, "CRITICAL ERROR: empty request pool for the chosen worker ! Exiting...");
           exit(1);
         }
 
@@ -181,8 +179,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
       if(xprt == NULL)
         {
           /* But do we control sock? */
-          LogCrit(COMPONENT_DISPATCH,
-                  "CRITICAL ERROR: Incoherency found in Xports array, sock=%d",
+          LogCrit(COMPONENT_DISPATCH, "CRITICAL ERROR: Incoherency found in Xports array, sock=%d",
                   (int)tcp_sock);
           return NULL;
         }
@@ -270,8 +267,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 #endif                          /* _USE_TIRPC */
                 strncpy(str_caller, "unresolved", MAXNAMLEN);
 
-              LogDebug(COMPONENT_DISPATCH,
-                       "TCP SOCKET MANAGER Sock=%d: the client (%s) disappeared... Freezing thread %p",
+              LogDebug(COMPONENT_DISPATCH, "TCP SOCKET MANAGER Sock=%d: the client (%s) disappeared... Freezing thread %p",
                        (int)tcp_sock, str_caller, (caddr_t)pthread_self());
 
               if(Xports[tcp_sock] != NULL)
@@ -288,8 +284,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
               if( ( pfe = fridgethr_freeze( ) ) == NULL ) 
                 {
 		  /* Fridge expiration, the thread and exit */
-                  LogDebug(COMPONENT_DISPATCH,
-		           "TCP connection manager has expired in the fridge, let's kill it" ) ;
+                  LogDebug(COMPONENT_DISPATCH, "TCP connection manager has expired in the fridge, let's kill it" ) ;
 #ifndef _NO_BUDDY_SYSTEM
               /* Free stuff allocated by BuddyMalloc before thread exists */
 		  /*              sleep(nfs_param.core_param.expiration_dupreq * 2);   / ** @todo : remove this for a cleaner fix */
@@ -303,16 +298,14 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                 }
 
               tcp_sock = (long int )pfe->arg ;
-              LogDebug(COMPONENT_DISPATCH,
-                       "TCP SOCKET MANAGER Now working on sock=%d after going out of the fridge", (int)tcp_sock ) ;
+              LogDebug(COMPONENT_DISPATCH, "TCP SOCKET MANAGER Now working on sock=%d after going out of the fridge", (int)tcp_sock ) ;
          
               continue ;
 		
             }
           else if(stat == XPRT_MOREREQS)
             {
-              LogDebug(COMPONENT_DISPATCH,
-                       "TCP SOCKET MANAGER Sock=%d: XPRT has MOREREQS status",
+              LogDebug(COMPONENT_DISPATCH, "TCP SOCKET MANAGER Sock=%d: XPRT has MOREREQS status",
                        (int)tcp_sock);
             }
 

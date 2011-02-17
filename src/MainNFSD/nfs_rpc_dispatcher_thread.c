@@ -1910,12 +1910,11 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                 }
               else if(stat == XPRT_MOREREQS)
                 {
-                  LogDebug(COMPONENT_DISPATCH,
-                           "Client on socket %d has status XPRT_MOREREQS",
+                  LogDebug(COMPONENT_DISPATCH, "Client on socket %d has status XPRT_MOREREQS",
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
-                                  pnfsreq->xprt->xp_fd);
+                           pnfsreq->xprt->xp_fd);
 #else
-                                  pnfsreq->xprt->xp_sock);
+                           pnfsreq->xprt->xp_sock);
 #endif
                 }
 
@@ -2027,12 +2026,12 @@ void rpc_dispatcher_svc_run(nfs_parameter_t * pnfs_param)
       readfdset = Svc_fdset;
 
       /* Select on a fdset build with all socket used in NFS/RPC */
-      LogDebug(COMPONENT_DISPATCH, "rpc dispatcher thread waiting for incoming RPC requests");
+      LogFullDebug(COMPONENT_DISPATCH, "rpc dispatcher thread waiting for incoming RPC requests");
 
       /* Do the select on the RPC fdset */
       rc = select(FD_SETSIZE, &readfdset, NULL, NULL, NULL);
 
-      LogDebug(COMPONENT_DISPATCH, "Waiting for incoming RPC requests, after select rc=%d",
+      LogFullDebug(COMPONENT_DISPATCH, "Waiting for incoming RPC requests, after select rc=%d",
                rc);
       switch (rc)
         {

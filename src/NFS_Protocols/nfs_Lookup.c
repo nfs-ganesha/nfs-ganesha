@@ -113,6 +113,30 @@ int nfs_Lookup(nfs_arg_t * parg,
   fsal_handle_t *pfsal_handle;
   int rc;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char str[LEN_FH_STR];
+
+      switch (preq->rq_vers)
+        {
+        case NFS_V2:
+          strpath = parg->arg_lookup2.name;
+          break;
+
+        case NFS_V3:
+          strpath = parg->arg_lookup3.what.name;
+          break;
+        }
+
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_lookup2.dir),
+                       &(parg->arg_lookup3.what.dir),
+                       NULL,
+                       str);
+      LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Lookup handle: %s name: %s",
+               str, strpath);
+    }
+
   if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */
@@ -155,7 +179,6 @@ int nfs_Lookup(nfs_arg_t * parg,
     }
 #endif
 
-  LogFullDebug(COMPONENT_NFSPROTO, "nfs_Lookup for %s", strpath);
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_lookup3.what.dir))))
     return nfs3_Lookup_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
 

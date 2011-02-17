@@ -124,6 +124,22 @@ int nfs_Readdir(nfs_arg_t * parg,
   unsigned int delta = 0;
   unsigned int i = 0;
 
+  if(isDebug(COMPONENT_NFSPROTO) || isDebug(COMPONENT_NFS_READDIR))
+    {
+      char str[LEN_FH_STR];
+      log_components_t component;
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_readdir2.dir),
+                       &(parg->arg_readdir3.dir),
+                       NULL,
+                       str);
+      if(isDebug(COMPONENT_NFSPROTO))
+        component = COMPONENT_NFSPROTO;
+      else
+        component = COMPONENT_NFS_READDIR;
+      LogDebug(component, "REQUEST PROCESSING: Calling nfs_Readdir handle: %s", str);
+    }
+
   if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */

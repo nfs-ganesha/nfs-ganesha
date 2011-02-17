@@ -1380,10 +1380,10 @@ void *worker_thread(void *IndexArg)
   snprintf(thr_name, 128, "worker#%ld", index);
   SetNameFunction(thr_name);
 
-  LogDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu : Starting, nb_entry=%d",
-           index, pmydata->pending_request->nb_entry);
+  LogFullDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu : Starting, nb_entry=%d",
+               index, pmydata->pending_request->nb_entry);
   /* Initialisation of the Buddy Malloc */
-  LogDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu : Initialization of memory manager", index);
+  LogFullDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu : Initialization of memory manager", index);
 
 #ifndef _NO_BUDDY_SYSTEM
   if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
@@ -1393,7 +1393,7 @@ void *worker_thread(void *IndexArg)
                index);
       exit(1);
     }
-  LogDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: Memory manager successfully initialized",
+  LogFullDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: Memory manager successfully initialized",
            index);
 #endif
 
@@ -1401,8 +1401,8 @@ void *worker_thread(void *IndexArg)
            (caddr_t) pthread_self());
 
   /* Initialisation of credential for current thread */
-  LogDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: Initialization of thread's credential",
-           index);
+  LogFullDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: Initialization of thread's credential",
+               index);
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&pmydata->thread_fsal_context)))
     {
       /* Failed init */
@@ -1416,13 +1416,11 @@ void *worker_thread(void *IndexArg)
                              index, pmydata))
     {
       /* Failed init */
-      LogMajor(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: Cache Inode client could not be initialized, exiting...",
+      LogMajor(COMPONENT_DISPATCH, "NFS WORKER #%lu: Cache Inode client could not be initialized, exiting...",
                index);
       exit(1);
     }
-  LogDebug(COMPONENT_DISPATCH,
-           "NFS WORKER #%lu: Cache Inode client successfully initialized", index);
+  LogFullDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: Cache Inode client successfully initialized", index);
 
 #ifdef _USE_MFSL
   if(FSAL_IS_ERROR(MFSL_GetContext(&pmydata->cache_inode_client.mfsl_context,
@@ -1440,13 +1438,11 @@ void *worker_thread(void *IndexArg)
                                thr_name))
     {
       /* Failed init */
-      LogMajor(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: Cache Content client could not be initialized, exiting...",
+      LogMajor(COMPONENT_DISPATCH, "NFS WORKER #%lu: Cache Content client could not be initialized, exiting...",
                index);
       exit(1);
     }
-  LogDebug(COMPONENT_DISPATCH,
-           "NFS WORKER #%lu: Cache Content client successfully initialized", index);
+  LogFullDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: Cache Content client successfully initialized", index);
 
   /* _USE_PNFS */
 
@@ -1465,8 +1461,7 @@ void *worker_thread(void *IndexArg)
                "NFS WORKER #%lu: pNFS engine could not be initialized, exiting...", index);
       exit(1);
     }
-  LogDebug(COMPONENT_DISPATCH,
-           "NFS WORKER #%lu: pNFS engine successfully initialized", index);
+  LogFullDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: pNFS engine successfully initialized", index);
 #endif
   /* notify dispatcher it is ready */
   pmydata->is_ready = TRUE;
@@ -1494,10 +1489,9 @@ void *worker_thread(void *IndexArg)
         }
 
       /* Wait on condition variable for work to be done */
-      LogDebug(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: waiting for requests to process, nb_entry=%d, nb_invalid=%d",
-               index, pmydata->pending_request->nb_entry,
-               pmydata->pending_request->nb_invalid);
+      LogFullDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: waiting for requests to process, nb_entry=%d, nb_invalid=%d",
+                   index, pmydata->pending_request->nb_entry,
+                   pmydata->pending_request->nb_invalid);
       P(pmydata->mutex_req_condvar);
       while(pmydata->pending_request->nb_entry == pmydata->pending_request->nb_invalid
 	    || pmydata->reparse_exports_in_progress == TRUE)
@@ -1515,7 +1509,7 @@ void *worker_thread(void *IndexArg)
 	  else
 	    pthread_cond_wait(&(pmydata->req_condvar), &(pmydata->mutex_req_condvar));
 	}
-      LogDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: Processing a new request", index);
+      LogFullDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: Processing a new request", index);
       V(pmydata->mutex_req_condvar);
 
       found = FALSE;
@@ -1541,10 +1535,10 @@ void *worker_thread(void *IndexArg)
 
       pnfsreq = (nfs_request_data_t *) (pentry->buffdata.pdata);
 
-      LogDebug(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu : I have some work to do, length=%d, invalid=%d",
-               index, pmydata->pending_request->nb_entry,
-               pmydata->pending_request->nb_invalid);
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "NFS WORKER #%lu : I have some work to do, length=%d, invalid=%d",
+                   index, pmydata->pending_request->nb_entry,
+                   pmydata->pending_request->nb_invalid);
 
 #if defined(_USE_TIRPC) || defined( _FREEBSD )
       if(pnfsreq->xprt->xp_fd == 0)
@@ -1638,10 +1632,10 @@ void *worker_thread(void *IndexArg)
       if(pmydata->passcounter > nfs_param.worker_param.nb_before_gc)
         {
           /* Garbage collection on dup req cache */
-          LogDebug(COMPONENT_DISPATCH,
-                   "NFS_WORKER #%lu: before dupreq invalidation nb_entry=%d nb_invalid=%d",
-                   index, pmydata->duplicate_request->nb_entry,
-                   pmydata->duplicate_request->nb_invalid);
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "NFS_WORKER #%lu: before dupreq invalidation nb_entry=%d nb_invalid=%d",
+                       index, pmydata->duplicate_request->nb_entry,
+                       pmydata->duplicate_request->nb_invalid);
           if((rc =
               LRU_invalidate_by_function(pmydata->duplicate_request,
                                          nfs_dupreq_gc_function,
@@ -1651,10 +1645,10 @@ void *worker_thread(void *IndexArg)
                       "NFS WORKER #%lu: FAILURE: Impossible to invalidate entries for duplicate request cache (error %d)",
                       index, rc);
             }
-          LogDebug(COMPONENT_DISPATCH,
-                   "NFS_WORKER #%lu: after dupreq invalidation nb_entry=%d nb_invalid=%d",
-                   index, pmydata->duplicate_request->nb_entry,
-                   pmydata->duplicate_request->nb_invalid);
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "NFS_WORKER #%lu: after dupreq invalidation nb_entry=%d nb_invalid=%d",
+                       index, pmydata->duplicate_request->nb_entry,
+                       pmydata->duplicate_request->nb_invalid);
           if((rc =
               LRU_gc_invalid(pmydata->duplicate_request,
                              (void *)&pmydata->dupreq_pool)) != LRU_LIST_SUCCESS)
@@ -1715,8 +1709,8 @@ void *worker_thread(void *IndexArg)
       if(gc_allowed == TRUE)
         {
           pmydata->gc_in_progress = TRUE;
-          LogDebug(COMPONENT_DISPATCH, "There are %d concurrent garbage collection",
-                   nb_current_gc_workers);
+          LogFullDebug(COMPONENT_DISPATCH, "There are %d concurrent garbage collection",
+                       nb_current_gc_workers);
 
           if(cache_inode_gc(pmydata->ht,
                             &(pmydata->cache_inode_client),
