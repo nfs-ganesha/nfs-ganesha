@@ -157,8 +157,9 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                         &attr,
                         data->ht,
                         data->pclient,
+                        data->pcontext,
                         FSAL_UNSAFE_WRITE_TO_FS_BUFFER,
-                        data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+                        &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_COMMIT4.status = NFS4ERR_INVAL;
       return res_COMMIT4.status;
