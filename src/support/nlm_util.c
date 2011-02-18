@@ -234,9 +234,9 @@ void nlm_lock_entry_dec_ref(nlm_lock_entry_t * nlm_entry)
     pthread_mutex_unlock(&nlm_entry->lock);
     if(to_free)
         {
-    LogFullDebug(COMPONENT_NLM,
-                 "nlm_lock_entry_dec_ref nlm_entry %p pentry %p pclient %p",
-                 nlm_entry, nlm_entry->pentry, nlm_entry->pclient);
+            LogFullDebug(COMPONENT_NLM,
+                         "nlm_lock_entry_dec_ref nlm_entry %p pentry %p pclient %p",
+                         nlm_entry, nlm_entry->pentry, nlm_entry->pclient);
             LogFullDebug(COMPONENT_NLM,
                          "nlm_lock_entry_dec_ref Freeing %p svid=%d start=%llx end=%llx %s",
                          nlm_entry, nlm_entry->svid,

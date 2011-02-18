@@ -285,7 +285,7 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
   /* if FH expires, set it there */
   if(nfs_param.nfsv4_param.fh_expire == TRUE)
     {
-      LogFullDebug(COMPONENT_NFS_V4, "Un fh expirable a ete cree");
+      LogFullDebug(COMPONENT_NFS_V4, "An expireable file handle was created.");
       file_handle.srvboot_time = ServerBootTime;
     }
   else

@@ -2410,8 +2410,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       /* creating the 'small_client' */
       if(cache_inode_client_init(&small_client, small_client_param, 255, NULL))
         {
-          LogCrit(COMPONENT_INIT,
-               "small cache inode client could not be allocated, exiting...");
+          LogMajor(COMPONENT_INIT, "small cache inode client could not be allocated, exiting...");
           exit(1);
         }
       else
@@ -2423,8 +2422,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
           nfs_param.cache_layers_param.cache_content_client_param,
           "recovering"))
         {
-          LogCrit(COMPONENT_INIT,
-               "cache content client (for datacache recovery) could not be allocated, exiting...");
+          LogMajor(COMPONENT_INIT, "cache content client (for datacache recovery) could not be allocated, exiting...");
           exit(1);
         }
 
@@ -2448,9 +2446,8 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 #ifdef _USE_MFSL_ASYNC
           if(!(pcurrent->options & EXPORT_OPTION_USE_DATACACHE))
             {
-              LogCrit(COMPONENT_INIT,
-                   "ERROR : the export entry iId=%u, Export Path=%s must have datacache enabled... exiting",
-                   pcurrent->id, pcurrent->fullpath);
+              LogMajor(COMPONENT_INIT, "ERROR : the export entry iId=%u, Export Path=%s must have datacache enabled... exiting",
+                       pcurrent->id, pcurrent->fullpath);
               exit(1);
             }
 #endif
@@ -2516,14 +2513,14 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
                                              &context, &cache_status)) == NULL)
             {
               LogCrit(COMPONENT_INIT,
-                   "/!\\ | Error when creating root cached entry for %s, export_id=%d, cache_status=%d",
-                   pcurrent->fullpath, pcurrent->id, cache_status);
+                      "Error when creating root cached entry for %s, export_id=%d, cache_status=%d",
+                      pcurrent->fullpath, pcurrent->id, cache_status);
               return FALSE;
             }
           else
             LogEvent(COMPONENT_INIT,
-                            "Added root entry for path %s on export_id=%d",
-                            pcurrent->fullpath, pcurrent->id);
+                     "Added root entry for path %s on export_id=%d",
+                     pcurrent->fullpath, pcurrent->id);
 
           /* Get FSAL specific info for this entry */
           if((pstaticinfo =
@@ -2542,8 +2539,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
             {
               /* Set the cache_entry object as a referral by setting the 'referral' field */
               pentry->object.dir_begin.referral = pcurrent->referral;
-              LogCrit(COMPONENT_INIT, "A referral is set : %s", pentry->object.dir_begin.referral =
-                         pcurrent->referral);
+              LogEvent(COMPONENT_INIT, "A referral is set : %s", pentry->object.dir_begin.referral);
             }
 #ifdef _CRASH_RECOVERY_AT_STARTUP
           /* Recover the datacache from a previous crah */

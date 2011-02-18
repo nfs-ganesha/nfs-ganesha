@@ -257,7 +257,6 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
   struct authunix_parms *punix_creds = NULL;
 #ifdef _USE_GSSRPC
   struct svc_rpc_gss_data *gd = NULL;
-  gss_buffer_desc oidbuff;
   OM_uint32 maj_stat = 0;
   OM_uint32 min_stat = 0;
   char username[MAXNAMLEN];
@@ -308,6 +307,8 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
 
       if(isFullDebug(COMPONENT_RPCSEC_GSS))
         {
+          gss_buffer_desc oidbuff;
+
           LogFullDebug(COMPONENT_RPCSEC_GSS,
                "----> RPCSEC_GSS svc=%u RPCSEC_GSS_SVC_NONE=%u RPCSEC_GSS_SVC_INTEGRITY=%u RPCSEC_GSS_SVC_PRIVACY=%u",
                gd->sec.svc, RPCSEC_GSS_SVC_NONE, RPCSEC_GSS_SVC_INTEGRITY,
@@ -318,19 +319,21 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
                  "----> Client=%s length=%u  Qop=%u established=%u gss_ctx_id=%p|%p",
                  (char *)gd->cname.value, gd->cname.length, gd->established, gd->sec.qop,
                  gd->ctx, ptr);
+
+          if((maj_stat = gss_oid_to_str(&min_stat, gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
+            {
+              LogFullDebug(COMPONENT_DISPATCH, "Error in gss_oid_to_str: %u|%u",
+                           maj_stat, min_stat);
+            }
+          else
+            {
+              LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Client mech=%s len=%u",
+                           (char *)oidbuff.value, oidbuff.length);
+
+              /* Release the string */
+              (void)gss_release_buffer(&min_stat, &oidbuff); 
+            }
        }
-
-      if((maj_stat = gss_oid_to_str(&min_stat, gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
-        {
-          LogCrit(COMPONENT_DISPATCH, "Error in gss_oid_to_str: %u|%u",
-                  maj_stat, min_stat);
-          exit(1);
-        }
-      LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Client mech=%s len=%u",
-                   (char *)oidbuff.value, oidbuff.length);
-
-      /* Je fais le menage derriere moi */
-      (void)gss_release_buffer(&min_stat, &oidbuff);
 
       split_credname(gd->cname, username, domainname);
 
