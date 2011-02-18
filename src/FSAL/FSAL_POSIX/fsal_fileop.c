@@ -705,3 +705,39 @@ unsigned int POSIXFSAL_GetFileno(posixfsal_file_t * pfile)
 {
   return pfile->filefd;
 }
+
+/**
+ * FSAL_sync:
+ * This function is used for processing stable writes and COMMIT requests.
+ * Calling this function makes sure the changes to a specific file are
+ * written to disk rather than kept in memory.
+ *
+ * \param file_descriptor (input):
+ *        The file descriptor returned by FSAL_open.
+ *
+ * \return Major error codes:
+ *      - ERR_FSAL_NO_ERROR: no error.
+ *      - Another error code if an error occured during this call.
+ */
+fsal_status_t POSIXFSAL_sync(posixfsal_file_t * p_file_descriptor       /* IN */)
+{
+  int rc, errsv;
+
+  /* sanity checks. */
+  if(!p_file_descriptor)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_sync);
+
+  /* Flush data. */
+  TakeTokenFSCall();
+  rc = fsync(p_file_descriptor->p_file);
+  errsv = errno;
+  ReleaseTokenFSCall();
+  
+  if(rc)
+    {
+      LogEvent(COMPONENT_FSAL, "Error in fsync operation");
+      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_sync);
+    }
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync);
+}

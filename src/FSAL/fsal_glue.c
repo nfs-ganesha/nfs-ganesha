@@ -215,6 +215,11 @@ fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
                                    buffer, p_write_amount);
 }
 
+fsal_status_t FSAL_sync(fsal_file_t * p_file_descriptor)
+{
+  return fsal_functions.fsal_sync(p_file_descriptor);
+}
+
 fsal_status_t FSAL_close(fsal_file_t * p_file_descriptor /* IN */ )
 {
   return fsal_functions.fsal_close(p_file_descriptor);
@@ -536,6 +541,24 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
 unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cookie)
 {
   return fsal_functions.fsal_handle_to_rbtindex(p_handle, cookie);
+}
+
+unsigned int FSAL_Handle_to_Hash_both(fsal_handle_t * p_handle, unsigned int cookie, unsigned int alphabet_len,
+                                      unsigned int index_size, unsigned int * phashval, unsigned int *prbtval ) 
+{
+
+  if( fsal_functions.fsal_handle_to_hash_both != NULL ) 
+    return fsal_functions.fsal_handle_to_hash_both( p_handle, cookie, alphabet_len, index_size, phashval, prbtval) ;
+  else
+    {
+        if( phashval == NULL || prbtval == NULL )
+	   return 0 ;
+
+	*phashval = fsal_functions.fsal_handle_to_hashindex( p_handle, cookie, alphabet_len, index_size ) ;
+        *prbtval = fsal_functions.fsal_handle_to_rbtindex( p_handle, cookie);
+
+        return 1 ;
+    }
 }
 
 fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */

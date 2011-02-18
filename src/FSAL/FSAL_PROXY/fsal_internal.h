@@ -240,6 +240,8 @@ fsal_status_t PROXYFSAL_write(proxyfsal_file_t * p_file_descriptor,     /* IN */
                               caddr_t buffer,   /* IN */
                               fsal_size_t * p_write_amount /* OUT */ );
 
+fsal_status_t PROXYFSAL_sync(proxyfsal_file_t * p_file_descriptor     /* IN */);
+
 fsal_status_t PROXYFSAL_close(proxyfsal_file_t * p_file_descriptor /* IN */ );
 
 fsal_status_t PROXYFSAL_open_by_fileid(proxyfsal_handle_t * filehandle, /* IN */

@@ -191,6 +191,11 @@
 #define XATTRD_NAME_LEN 9       /* MUST be equal to strlen( XATTRD_NAME ) */
 #define XATTR_BUFFERSIZE 4096
 
+/* Flags for how the stable flag should be interpretted */
+#define FSAL_UNSAFE_WRITE_TO_FS_BUFFER 0
+#define FSAL_SAFE_WRITE_TO_FS 1
+#define FSAL_UNSAFE_WRITE_TO_GANESHA_BUFFER 2 
+
 typedef enum nfs_clientid_confirm_state__
 { CONFIRMED_CLIENT_ID = 1,
   UNCONFIRMED_CLIENT_ID = 2,

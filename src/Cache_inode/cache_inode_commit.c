@@ -50,6 +50,7 @@
 #include "cache_inode.h"
 #include "cache_content.h"
 #include "stuff_alloc.h"
+#include "nfs_core.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -90,6 +91,7 @@ cache_inode_commit(cache_entry_t * pentry,
                    hash_table_t * ht,
                    cache_inode_client_t * pclient,
                    fsal_op_context_t * pcontext,
+                   uint64_t typeofcommit,
                    cache_inode_status_t * pstatus)
 {
     cache_inode_status_t status;
@@ -97,6 +99,64 @@ cache_inode_commit(cache_entry_t * pentry,
     fsal_size_t size_io_done;
     fsal_boolean_t eof;
     cache_inode_unstable_data_t *udata;
+    fsal_status_t fsal_status;
+
+
+    /* If we aren't using the Ganesha write buffer, then we're using the filesystem
+     * write buffer so execute a normal fsal_sync() call. */
+    if (typeofcommit == FSAL_UNSAFE_WRITE_TO_FS_BUFFER) {
+
+      P_w(&pentry->lock);
+
+      /* Can't sync a file descriptor if it's currently closed. */
+      if(cache_inode_open(pentry,
+                          pclient,
+                          FSAL_O_WRONLY, pcontext, pstatus) != CACHE_INODE_SUCCESS)
+        {
+
+          V_w(&pentry->lock);
+          
+          /* stats */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_COMMIT] += 1;
+          
+          return *pstatus;
+        }
+      
+      fsal_status = FSAL_sync(&(pentry->object.file.open_fd.fd));
+      if(FSAL_IS_ERROR(fsal_status)) {
+        LogMajor(COMPONENT_CACHE_INODE, "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
+                 fsal_status.major);
+
+        V_w(&pentry->lock);
+
+        /* stats */
+        pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_COMMIT] += 1;
+
+        *pstatus = CACHE_INODE_FSAL_ERROR;
+        return *pstatus;
+      }
+      *pstatus = CACHE_INODE_SUCCESS;
+
+      if(cache_inode_close(pentry, pclient, pstatus) != CACHE_INODE_SUCCESS)
+        {
+          LogEvent(COMPONENT_CACHE_INODE,
+                   "cache_inode_rdwr: cache_inode_close = %d", *pstatus);
+          
+          V_w(&pentry->lock);
+          
+          /* stats */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_COMMIT] += 1;
+          
+          return *pstatus;
+        }
+
+      V_w(&pentry->lock);      
+      return *pstatus;
+    }
+
+    /* Ok, it looks like we're using the Ganesha write buffer. This means we
+     * will either be writing to the buffer, or writing a stable write to the
+     * file system if the buffer is already full. */
 
     udata = &pentry->object.file.unstable_data;
     if(udata->buffer == NULL)

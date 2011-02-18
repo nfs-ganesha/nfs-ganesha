@@ -715,6 +715,7 @@ fsal_functions_t fsal_fuse_functions = {
   .fsal_handlecmp = WRAP_FUSEFSAL_handlecmp,
   .fsal_handle_to_hashindex = WRAP_FUSEFSAL_Handle_to_HashIndex,
   .fsal_handle_to_rbtindex = WRAP_FUSEFSAL_Handle_to_RBTIndex,
+  .fsal_handle_to_hash_both = NULL,
   .fsal_digesthandle = WRAP_FUSEFSAL_DigestHandle,
   .fsal_expandhandle = WRAP_FUSEFSAL_ExpandHandle,
   .fsal_setdefault_fsal_parameter = WRAP_FUSEFSAL_SetDefault_FSAL_parameter,

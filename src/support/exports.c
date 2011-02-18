@@ -123,6 +123,8 @@ cache_content_client_t recover_datacache_client;
 #define CONF_EXPORT_MAX_CACHE_SIZE     "MaxCacheSize"
 #define CONF_EXPORT_REFERRAL           "Referral"
 #define CONF_EXPORT_PNFS               "Use_pNFS"
+#define CONF_EXPORT_USE_COMMIT                  "Use_NFS_Commit"
+#define CONF_EXPORT_USE_GANESHA_WRITE_BUFFER    "Use_Ganesha_Write_Buffer"
 
 /** @todo : add encrypt handles option */
 
@@ -729,6 +731,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->MaxOffsetWrite = (fsal_off_t) 0;
   p_entry->MaxOffsetRead = (fsal_off_t) 0;
   p_entry->MaxCacheSize = (fsal_off_t) 0;
+  p_entry->use_commit = FALSE;
+  p_entry->use_ganesha_write_buffer = FALSE;
 
   /* by default, we support auth_none and auth_sys */
   p_entry->options |= EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
@@ -1745,6 +1749,50 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_MAX_OFF_READ;
 
         }
+      else if(!STRCMP(var_name, CONF_EXPORT_USE_COMMIT))
+        {
+          switch (StrToBoolean(var_value))
+            {
+            case 1:
+              p_entry->use_commit = TRUE;
+              break;
+
+            case 0:
+              p_entry->use_commit = FALSE;
+              break;
+
+            default:           /* error */
+              {
+                LogCrit(COMPONENT_CONFIG,
+                        "NFS READ_EXPORT: ERROR: Invalid value for %s (%s): TRUE or FALSE expected.",
+                        var_name, var_value);
+                err_flag = TRUE;
+                continue;
+              }
+            }
+        }
+      else if(!STRCMP(var_name, CONF_EXPORT_USE_GANESHA_WRITE_BUFFER))
+        {
+          switch (StrToBoolean(var_value))
+            {
+            case 1:
+              p_entry->use_ganesha_write_buffer = TRUE;
+              break;
+
+            case 0:
+              p_entry->use_ganesha_write_buffer = FALSE;
+              break;
+
+            default:           /* error */
+              {
+                LogCrit(COMPONENT_CONFIG,
+                        "NFS READ_EXPORT: ERROR: Invalid value for %s (%s): TRUE or FALSE expected.",
+                        var_name, var_value);
+                err_flag = TRUE;
+                continue;
+              }
+            }
+        }
       else
         {
           LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: WARNING: Unknown option: %s", var_name);
@@ -2017,7 +2065,7 @@ int export_client_match(unsigned int addr,
           if((clients->clientarray[i].client.network.netmask & addr) ==
              clients->clientarray[i].client.network.netaddr)
             {
-              LogFullDebug(COMPONENT_DISPATCH, "This matches network adress");
+              LogFullDebug(COMPONENT_DISPATCH, "This matches network address");
               *pclient_found = clients->clientarray[i];
               return TRUE;
             }
@@ -2058,11 +2106,11 @@ int export_client_match(unsigned int addr,
                   if(nfs_ip_name_add(addr, hostname) != IP_NAME_SUCCESS)
                     {
                       /* Major failure, name could not be resolved */
-                      LogFullDebug(COMPONENT_DISPATCH, "Could not resolve addr %u.%u.%u.%u",
-                             (unsigned int)(addr >> 24),
-                             (unsigned int)(addr >> 16) & 0xFF,
+                      LogMajor(COMPONENT_DISPATCH, "Could not resolve addr %u.%u.%u.%u",
+                             (unsigned int)(addr & 0xFF),
                              (unsigned int)(addr >> 8) & 0xFF,
-                             (unsigned int)(addr & 0xFF));
+                             (unsigned int)(addr >> 16) & 0xFF,
+                             (unsigned int)(addr >> 24));
                       strncpy(hostname, "unresolved", 10);
                     }
                 }
@@ -2155,7 +2203,6 @@ int export_client_matchv6(struct in6_addr *paddrv6,
 
   /* no export found for this option */
   return FALSE;
-
 }                               /* export_client_matchv6 */
 
 /**

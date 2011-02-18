@@ -211,6 +211,11 @@ fsal_status_t WRAP_PROXYFSAL_write(fsal_file_t * p_file_descriptor,     /* IN */
                          buffer_size, buffer, p_write_amount);
 }
 
+fsal_status_t WRAP_PROXYFSAL_sync(fsal_file_t * p_file_descriptor     /* IN */)
+{
+  return PROXYFSAL_sync((proxyfsal_file_t *) p_file_descriptor);
+}
+
 fsal_status_t WRAP_PROXYFSAL_close(fsal_file_t * p_file_descriptor /* IN */ )
 {
   return PROXYFSAL_close((proxyfsal_file_t *) p_file_descriptor);
@@ -688,6 +693,7 @@ fsal_functions_t fsal_proxy_functions = {
   .fsal_open = WRAP_PROXYFSAL_open,
   .fsal_read = WRAP_PROXYFSAL_read,
   .fsal_write = WRAP_PROXYFSAL_write,
+  .fsal_sync = WRAP_PROXYFSAL_sync,
   .fsal_close = WRAP_PROXYFSAL_close,
   .fsal_open_by_fileid = WRAP_PROXYFSAL_open_by_fileid,
   .fsal_close_by_fileid = WRAP_PROXYFSAL_close_by_fileid,
@@ -721,6 +727,7 @@ fsal_functions_t fsal_proxy_functions = {
   .fsal_handlecmp = WRAP_PROXYFSAL_handlecmp,
   .fsal_handle_to_hashindex = WRAP_PROXYFSAL_Handle_to_HashIndex,
   .fsal_handle_to_rbtindex = WRAP_PROXYFSAL_Handle_to_RBTIndex,
+  .fsal_handle_to_hash_both = NULL, 
   .fsal_digesthandle = WRAP_PROXYFSAL_DigestHandle,
   .fsal_expandhandle = WRAP_PROXYFSAL_ExpandHandle,
   .fsal_setdefault_fsal_parameter = WRAP_PROXYFSAL_SetDefault_FSAL_parameter,

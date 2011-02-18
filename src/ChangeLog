@@ -428,4 +428,8 @@
           cache_inode for a single file.
 	- Bug fix : memory violation in FSAL_PROXY for fattr4's type based on nfs4time
 
+1.0.5   -
+        - Using function daemon() to start the daemon in a cleaner way
+	- Using gethostbyaddr_r to avoid contention when resolving address in nfs_ip_name.c
+        
 	

@@ -240,6 +240,8 @@ fsal_status_t POSIXFSAL_write(posixfsal_file_t * p_file_descriptor,     /* IN */
                               caddr_t buffer,   /* IN */
                               fsal_size_t * p_write_amount /* OUT */ );
 
+fsal_status_t POSIXFSAL_sync(posixfsal_file_t * p_file_descriptor     /* IN */);
+
 fsal_status_t POSIXFSAL_close(posixfsal_file_t * p_file_descriptor /* IN */ );
 
 fsal_status_t POSIXFSAL_open_by_fileid(posixfsal_handle_t * filehandle, /* IN */

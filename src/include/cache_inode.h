@@ -159,22 +159,24 @@ static char *cache_inode_function_names[] = {
 #define CACHE_INODE_LOCKU               25
   "cache_inode_locku",
 #define CACHE_INODE_LOCKT               26
-  "cache_inode_lockt"
+  "cache_inode_lockt",
 #define CACHE_INODE_ADD_STATE           27
-      "cache_inode_add_state"
+  "cache_inode_add_state",
 #define CACHE_INODE_DEL_STATE           28
-      "cache_inode_add_state"
+  "cache_inode_add_state",
 #define CACHE_INODE_GET_STATE           29
-      "cache_inode_get_state"
+  "cache_inode_get_state",
 #define CACHE_INODE_SET_STATE           30
-      "cache_inode_set_state"
+  "cache_inode_set_state",
 #define CACHE_INODE_UPDATE_STATE        31
-      "cache_inode_update_state"
+  "cache_inode_update_state",
 #define CACHE_INODE_DEL_ALL_STATE       32
-  "cache_inode_state_del_all"
+  "cache_inode_state_del_all",
+#define CACHE_INODE_COMMIT              33
+  "cache_inode_commit"
 };
 
-#define CACHE_INODE_NB_COMMAND      33
+#define CACHE_INODE_NB_COMMAND      34
 
 typedef enum cache_inode_expire_type__
 { CACHE_INODE_EXPIRE = 0,
@@ -902,7 +904,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                                       hash_table_t * ht,
                                       cache_inode_client_t * pclient,
                                       fsal_op_context_t * pcontext,
-                                      bool_t stable, cache_inode_status_t * pstatus);
+                                      uint64_t stable, cache_inode_status_t * pstatus);
 
 #define cache_inode_read( a, b, c, d, e, f, g, h, i, j, k ) cache_inode_rdwr( a, CACHE_INODE_READ, b, c, d, e, f, g, h, i, j, k )
 #define cache_inode_write( a, b, c, d, e, f, g, h, i, j, k ) cache_inode_rdwr( a, CACHE_INODE_WRITE, b, c, d, e, f, g, h, i, j. k )
@@ -914,6 +916,7 @@ cache_inode_status_t cache_inode_commit(cache_entry_t * pentry,
                                         hash_table_t * ht,
                                         cache_inode_client_t * pclient,
                                         fsal_op_context_t * pcontext,
+                                        uint64_t typeofcommit,
                                         cache_inode_status_t * pstatus);
 
 cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,

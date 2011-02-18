@@ -176,6 +176,9 @@ typedef struct exportlist__
 
   unsigned char seckey[EXPORT_KEY_SIZE];        /* Checksum for FH validity */
 
+  bool_t use_ganesha_write_buffer;
+  bool_t use_commit;
+
   fsal_size_t MaxRead;          /* Max Read for this entry                           */
   fsal_size_t MaxWrite;         /* Max Write for this entry                          */
   fsal_size_t PrefRead;         /* Preferred Read size                               */

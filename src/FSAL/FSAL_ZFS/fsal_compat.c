@@ -708,6 +708,7 @@ fsal_functions_t fsal_zfs_functions = {
   .fsal_handlecmp = WRAP_ZFSFSAL_handlecmp,
   .fsal_handle_to_hashindex = WRAP_ZFSFSAL_Handle_to_HashIndex,
   .fsal_handle_to_rbtindex = WRAP_ZFSFSAL_Handle_to_RBTIndex,
+  .fsal_handle_to_hash_both = NULL, 
   .fsal_digesthandle = WRAP_ZFSFSAL_DigestHandle,
   .fsal_expandhandle = WRAP_ZFSFSAL_ExpandHandle,
   .fsal_setdefault_fsal_parameter = WRAP_ZFSFSAL_SetDefault_FSAL_parameter,
