@@ -789,9 +789,8 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
         {
           cache_inode_status_t kill_status;
 
-          LogEvent(COMPONENT_CACHE_INODE,
-              "cache_inode_readdir: Stale FSAL File Handle detected for pentry = %p",
-               pentry_dir);
+          LogEvent(COMPONENT_CACHE_INODE, "cache_inode_readdir: Stale FSAL File Handle detected for pentry = %p",
+                   pentry_dir);
 
           if(cache_inode_kill_entry(pentry_dir, ht, pclient, &kill_status) !=
              CACHE_INODE_SUCCESS)
@@ -877,7 +876,7 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
                       cache_inode_status_t kill_status;
 
 		      LogEvent(COMPONENT_CACHE_INODE, "cache_inode_readdir: Stale FSAL File Handle detected for pentry = %p",
-                           pentry_dir);
+                               pentry_dir);
 
                       if(cache_inode_kill_entry(pentry_dir, ht, pclient, &kill_status) !=
                          CACHE_INODE_SUCCESS)

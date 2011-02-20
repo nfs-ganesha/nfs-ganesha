@@ -195,7 +195,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                         pentry =
                             pentry_parent->object.dir_begin.pdir_data->dir_entries[i].
                             pentry;
-                        LogDebug(COMPONENT_CACHE_INODE, "Cache Hit detected (dir_begin)");
+                        LogFullDebug(COMPONENT_CACHE_INODE, "Cache Hit detected (dir_begin)");
                         break;
                       }
                 }
@@ -306,8 +306,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                 {
                   cache_inode_status_t kill_status;
 
-                  LogEvent(COMPONENT_CACHE_INODE,
-                      "cache_inode_lookup: Stale FSAL File Handle detected for pentry = %p",
+                  LogEvent(COMPONENT_CACHE_INODE, "cache_inode_lookup: Stale FSAL File Handle detected for pentry = %p",
                        pentry_parent);
 
                   if(cache_inode_kill_entry(pentry_parent, ht, pclient, &kill_status) !=
@@ -350,8 +349,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                     {
                       cache_inode_status_t kill_status;
 
-                      LogEvent(COMPONENT_CACHE_INODE,
-                          "cache_inode_lookup: Stale FSAL File Handle detected for pentry = %p",
+                      LogEvent(COMPONENT_CACHE_INODE, "cache_inode_lookup: Stale FSAL File Handle detected for pentry = %p",
                            pentry_parent);
 
                       if(cache_inode_kill_entry(pentry_parent, ht, pclient, &kill_status)

@@ -304,7 +304,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
 
   if (isFullDebug(COMPONENT_STATES)) {
     sprint_mem(debug_str, (char *)pnew_state->stateid_other, 12);
-    LogFullDebug(COMPONENT_STATES,"cache_inode_add_state : %s", debug_str);
+    LogDebug(COMPONENT_STATES,"cache_inode_add_state : %s", debug_str);
   }
   V_w(&pentry->lock);
 
@@ -351,7 +351,7 @@ cache_inode_status_t cache_inode_get_state(char other[12],
 
   /* Sanity check, mostly for debug */
   if(memcmp(other, (*ppstate)->stateid_other, 12))
-    LogFullDebug(COMPONENT_STATES, "-------------> Warning !!!! Stateid(other) differs !!!!!!");
+    LogDebug(COMPONENT_STATES, "-------------> Warning !!!! Stateid(other) differs !!!!!!");
 
   *pstatus = CACHE_INODE_SUCCESS;
   return *pstatus;
@@ -531,7 +531,7 @@ cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
 
   if (isFullDebug(COMPONENT_STATES)) {
     sprint_mem(str, (char *)pstate->stateid_other, 12);
-    LogFullDebug(COMPONENT_STATES,"cache_inode_del_state : %s", str);
+    LogDebug(COMPONENT_STATES,"cache_inode_del_state : %s", str);
   }
 
   /* Does this state exists ? */

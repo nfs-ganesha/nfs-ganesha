@@ -173,8 +173,8 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
 #endif
       pentry->object.file.open_fd.openflags = openflags;
 
-      LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_open: pentry %p: lastop=0, fileno = %d", pentry,
-             pentry->object.file.open_fd.fileno);
+      LogDebug(COMPONENT_CACHE_INODE, "cache_inode_open: pentry %p: lastop=0, fileno = %d, openflags = %d",
+               pentry, pentry->object.file.open_fd.fileno, (int) openflags);
     }
 
   /* regular exit */
@@ -270,7 +270,7 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
   if(pentry_file->object.file.open_fd.last_op == 0
      || pentry_file->object.file.open_fd.fileno == 0)
     {
-      LogFullDebug(COMPONENT_FSAL, "cache_inode_open_by_name: pentry %p: lastop=0", pentry_file);
+      LogDebug(COMPONENT_FSAL, "cache_inode_open_by_name: pentry %p: lastop=0", pentry_file);
 
       /* Keep coherency with the cache_content */
       if(pentry_file->object.file.pentry_content != NULL)
@@ -347,7 +347,7 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
       pentry_file->object.file.open_fd.last_op = time(NULL);
       pentry_file->object.file.open_fd.openflags = openflags;
 
-      LogFullDebug(COMPONENT_FSAL, "cache_inode_open_by_name: pentry %p: fd=%u", pentry_file,
+      LogDebug(COMPONENT_FSAL, "cache_inode_open_by_name: pentry %p: fd=%u", pentry_file,
              pentry_file->object.file.open_fd.fileno);
 
     }

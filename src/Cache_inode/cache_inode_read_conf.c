@@ -88,12 +88,13 @@ cache_inode_status_t cache_inode_read_conf_hash_parameter(config_file_t in_confi
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_CACHE_INODE_HASH)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_CACHE_INODE_HASH ) ; */
+      LogDebug(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_CACHE_INODE_HASH);
       return CACHE_INODE_NOT_FOUND;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
+      LogCrit(COMPONENT_CONFIG,"Item \"%s\" is expected to be a block", CONF_LABEL_CACHE_INODE_HASH);
       return CACHE_INODE_INVALID_ARGUMENT;
     }
 

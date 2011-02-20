@@ -283,8 +283,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       *pstatus = CACHE_INODE_ENTRY_EXISTS;
 
       LogDebug(COMPONENT_CACHE_INODE,
-                        "cache_inode_new_entry: Trying to add an already existing entry. Found entry type: %d State: %d, New type: %d",
-                        pentry->internal_md.type, pentry->internal_md.valid_state, type);
+                        "cache_inode_new_entry: Trying to add an already existing entry. Found entry %p type: %d State: %d, New type: %d",
+                        pentry, pentry->internal_md.type, pentry->internal_md.valid_state, type);
 
       /* stat */
       pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_NEW_ENTRY] += 1;
@@ -295,8 +295,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
   GetFromPool(pentry, &pclient->pool_entry, cache_entry_t);
   if(pentry == NULL)
     {
-      LogDebug(COMPONENT_CACHE_INODE,
-                        "Can't allocate a new entry from cache pool");
+      LogCrit(COMPONENT_CACHE_INODE, "cache_inode_new_entry: Can't allocate a new entry from cache pool");
       *pstatus = CACHE_INODE_MALLOC_ERROR;
 
       /* stat */
@@ -311,8 +310,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       GetFromPool(pdir_data, &pclient->pool_dir_data, cache_inode_dir_data_t);
       if(pdir_data == NULL)
         {
-          LogDebug(COMPONENT_CACHE_INODE,
-                            "Can't allocate a new dir_data from cache pool");
+          LogCrit(COMPONENT_CACHE_INODE, "cache_inode_new_entry: Can't allocate a new dir_data from cache pool");
           *pstatus = CACHE_INODE_MALLOC_ERROR;
 
           /* stat */
@@ -332,7 +330,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
   if(rw_lock_init(&(pentry->lock)) != 0)
     {
       ReleaseToPool(pentry, &pclient->pool_entry);
-      LogError(COMPONENT_CACHE_INODE, ERR_SYS, ERR_PTHREAD_MUTEX_INIT, errno);
+      LogCrit(COMPONENT_CACHE_INODE, "cache_inode_new_entry: rw_lock_init returned %d (%s)",
+              errno, strerror(errno));
       *pstatus = CACHE_INODE_INIT_ENTRY_FAILED;
 
       /* stat */
@@ -355,8 +354,9 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
           if(FSAL_IS_ERROR(fsal_status))
             {
               /* Put the entry back in its pool */
-              LogDebug(COMPONENT_CACHE_INODE,
-                                "cache_inode_new_entry: FSAL_getattrs failed");
+              LogCrit(COMPONENT_CACHE_INODE,
+                      "cache_inode_new_entry: FSAL_getattrs failed for pentry = %p",
+                      pentry);
               ReleaseToPool(pentry, &pclient->pool_entry);
               *pstatus = cache_inode_error_convert(fsal_status);
 
@@ -364,15 +364,14 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
                 {
                   cache_inode_status_t kill_status;
 
-                  LogEvent(COMPONENT_CACHE_INODE,
-                      "cache_inode_new_entry: Stale FSAL File Handle detected for pentry = %p",
-                       pentry);
+                  LogCrit(COMPONENT_CACHE_INODE, "cache_inode_new_entry: Stale FSAL File Handle detected for pentry = %p",
+                          pentry);
 
                   if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                      CACHE_INODE_SUCCESS)
                     LogCrit(COMPONENT_CACHE_INODE,
-                        "cache_inode_new_entry: Could not kill entry %p, status = %u",
-                         pentry, kill_status);
+                            "cache_inode_new_entry: Could not kill entry %p, status = %u",
+                             pentry, kill_status);
 
                 }
               /* stat */
@@ -405,8 +404,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
   switch (type)
     {
     case REGULAR_FILE:
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                        "cache_inode_new_entry: Adding a REGULAR_FILE");
+      LogDebug(COMPONENT_CACHE_INODE,
+               "cache_inode_new_entry: Adding a REGULAR_FILE pentry = %p", pentry);
 
       pentry->object.file.handle = pfsdata->handle;
 #ifdef _USE_MFSL
@@ -441,8 +440,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       break;
 
     case DIR_BEGINNING:
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                        "cache_inode_new_entry: Adding a DIR_BEGINNING");
+      LogDebug(COMPONENT_CACHE_INODE,
+               "cache_inode_new_entry: Adding a DIR_BEGINNING pentry = %p", pentry);
 
       pentry->object.dir_begin.handle = pfsdata->handle;
 #ifdef _USE_MFSL
@@ -468,8 +467,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       break;
 
     case DIR_CONTINUE:
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                        "cache_inode_new_entry: Adding a DIR_CONTINUE");
+      LogDebug(COMPONENT_CACHE_INODE,
+               "cache_inode_new_entry: Adding a DIR_CONTINUE pentry = %p", pentry);
 
       pentry->object.dir_cont.end_of_dir = END_OF_DIR;
       pentry->object.dir_cont.pdir_cont = NULL; /* The last entry has no next entry */
@@ -512,8 +511,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       break;
 
     case SYMBOLIC_LINK:
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                        "cache_inode_new_entry: Adding a SYMBOLIC_LINK");
+      LogDebug(COMPONENT_CACHE_INODE,
+               "cache_inode_new_entry: Adding a SYMBOLIC_LINK pentry = %p", pentry);
 
       pentry->object.symlink.handle = pfsdata->handle;
 #ifdef _USE_MFSL
@@ -526,15 +525,15 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
         {
           *pstatus = cache_inode_error_convert(fsal_status);
           LogDebug(COMPONENT_CACHE_INODE,
-                            "cache_inode_new_entry: FSAL_pathcpy failed");
+                   "cache_inode_new_entry: FSAL_pathcpy failed");
           ReleaseToPool(pentry, &pclient->pool_entry);
         }
 
       break;
 
     case SOCKET_FILE:
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                        "cache_inode_new_entry: Adding a SOCKET_FILE");
+      LogDebug(COMPONENT_CACHE_INODE,
+               "cache_inode_new_entry: Adding a SOCKET_FILE pentry = %p", pentry);
 
       pentry->object.special_obj.handle = pfsdata->handle;
 #ifdef _USE_MFSL
@@ -544,8 +543,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       break;
 
     case FIFO_FILE:
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                        "cache_inode_new_entry: Adding a FIFO_FILE");
+      LogDebug(COMPONENT_CACHE_INODE,
+               "cache_inode_new_entry: Adding a FIFO_FILE pentry = %p", pentry);
 
       pentry->object.special_obj.handle = pfsdata->handle;
 #ifdef _USE_MFSL
@@ -555,8 +554,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       break;
 
     case BLOCK_FILE:
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                        "cache_inode_new_entry: Adding a BLOCK_FILE");
+      LogDebug(COMPONENT_CACHE_INODE,
+               "cache_inode_new_entry: Adding a BLOCK_FILE pentry = %p", pentry);
 
       pentry->object.special_obj.handle = pfsdata->handle;
 #ifdef _USE_MFSL
@@ -566,8 +565,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       break;
 
     case CHARACTER_FILE:
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                        "cache_inode_new_entry: Adding a CHARACTER_FILE");
+      LogDebug(COMPONENT_CACHE_INODE,
+               "cache_inode_new_entry: Adding a CHARACTER_FILE pentry = %p", pentry);
 
       pentry->object.special_obj.handle = pfsdata->handle;
 #ifdef _USE_MFSL
@@ -577,15 +576,15 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       break;
 
     case FS_JUNCTION:
-        LogFullDebug(COMPONENT_CACHE_INODE,
-                     "cache_inode_new_entry: Adding a FS_JUNCTION");
+        LogDebug(COMPONENT_CACHE_INODE,
+                 "cache_inode_new_entry: Adding a FS_JUNCTION pentry = %p", pentry);
 
         fsal_status = FSAL_lookupJunction( &pfsdata->handle, pcontext, &pentry->object.dir_begin.handle, NULL); 
         if( FSAL_IS_ERROR( fsal_status ) )
          {
            *pstatus = cache_inode_error_convert(fsal_status);
            LogDebug(COMPONENT_CACHE_INODE,
-                            "cache_inode_new_entry: FSAL_lookupJunction failed");
+                    "cache_inode_new_entry: FSAL_lookupJunction failed");
            ReleaseToPool(pentry, &pclient->pool_entry);
          }
        
@@ -595,7 +594,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
          {
            *pstatus = cache_inode_error_convert(fsal_status);
            LogDebug(COMPONENT_CACHE_INODE,
-                            "cache_inode_new_entry: FSAL_getattrs on junction fh failed");
+                    "cache_inode_new_entry: FSAL_getattrs on junction fh failed");
            ReleaseToPool(pentry, &pclient->pool_entry);
          }
 
@@ -630,7 +629,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       /* Should never happen */
       *pstatus = CACHE_INODE_INCONSISTENT_ENTRY;
       LogMajor(COMPONENT_CACHE_INODE,
-                        "/!\\ | cache_inode_new_entry: unknown type %u provided", type);
+               "cache_inode_new_entry: unknown type %u provided", type);
       ReleaseToPool(pentry, &pclient->pool_entry);
 
       /* stat */
@@ -662,8 +661,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       /* Put the entry back in its pool */
       ReleaseToPool(pentry, &pclient->pool_entry);
       LogEvent(COMPONENT_CACHE_INODE,
-                        "cache_inode_new_entry: entry could not be added to hash, rc=%d",
-                        rc);
+               "cache_inode_new_entry: entry could not be added to hash, rc=%d",
+               rc);
 
       if( rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS )
        {
@@ -676,7 +675,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
        }
      else
       {
-        LogDebug( COMPONENT_CACHE_INODE,  "cache_inode_new_entry: concurrency detected during cache insertion" ) ;
+        LogDebug( COMPONENT_CACHE_INODE,  "cache_inode_new_entry: concurrency detected during cache insertion");
 
 	/* This situation occurs when several threads try to init the same uncached entry
          * at the same time. The first creates the entry and the others got  HASHTABLE_ERROR_KEY_ALREADY_EXISTS
@@ -705,8 +704,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       if(cache_content_status == CACHE_CONTENT_SUCCESS)
         {
           LogDebug(COMPONENT_CACHE_INODE,
-                            "cache_inode_new_entry: Entry %p is already datacached, recovering...",
-                            pentry);
+                   "cache_inode_new_entry: Entry %p is already datacached, recovering...",
+                   pentry);
 
           /* Adding the cached entry to the data cache */
           if((pentry->object.file.pentry_content = cache_content_new_entry(pentry,
@@ -721,11 +720,11 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
              == NULL)
             {
               LogCrit(COMPONENT_CACHE_INODE,
-                           "Error recovering cached data for pentry %p", pentry);
+                      "Error recovering cached data for pentry %p", pentry);
             }
           else
             LogDebug(COMPONENT_CACHE_INODE,
-                              "Cached data added successfully for pentry %p", pentry);
+                     "Cached data added successfully for pentry %p", pentry);
 
           /* Recover the size from the data cache too... */
           if((size_in_cache =
@@ -733,7 +732,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
                                             file.pentry_content)) == -1)
             {
               LogCrit(COMPONENT_CACHE_INODE,
-                           "Error when recovering size in cache for pentry %p", pentry);
+                      "Error when recovering size in cache for pentry %p", pentry);
             }
           else
             pentry->object.file.attributes.filesize = (fsal_size_t) size_in_cache;
@@ -746,8 +745,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
   *pstatus = cache_inode_valid(pentry, CACHE_INODE_OP_GET, pclient);
   V_w(&pentry->lock);
 
-  LogFullDebug(COMPONENT_CACHE_INODE,
-                    "cache_inode_new_entry: New entry %p added", pentry);
+  LogDebug(COMPONENT_CACHE_INODE,
+           "cache_inode_new_entry: New entry %p added", pentry);
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* stat */
@@ -860,16 +859,16 @@ cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status)
     default:
       /* generic FSAL error */
       LogEvent(COMPONENT_CACHE_INODE,
-          "cache_inode_error_convert: default conversion to CACHE_INODE_FSAL_ERROR for error %d,%d",
-           fsal_status.major, fsal_status.minor);
+              "cache_inode_error_convert: default conversion to CACHE_INODE_FSAL_ERROR for error %d,%d",
+               fsal_status.major, fsal_status.minor);
       return CACHE_INODE_FSAL_ERROR;
       break;
     }
 
   /* We should never reach this line, this may produce a warning with certain compiler */
   LogEvent(COMPONENT_CACHE_INODE,
-      "cache_inode_error_convert: default conversion to CACHE_INODE_FSAL_ERROR for error %d, line %u should never be reached",
-       fsal_status.major, __LINE__);
+           "cache_inode_error_convert: default conversion to CACHE_INODE_FSAL_ERROR for error %d, line %u should never be reached",
+            fsal_status.major, __LINE__);
   return CACHE_INODE_FSAL_ERROR;
 }                               /* cache_inode_error_convert */
 
@@ -951,10 +950,10 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
   pclient->call_since_last_gc += 1;
 
   /* If open/close fd cache is used for FSAL, manage it here */
-    LogFullDebug(COMPONENT_CACHE_INODE, "--------> use_cache=%u fileno=%d last_op=%u time(NULL)=%u delta=%u retention=%u",
-       pclient->use_cache, pentry->object.file.open_fd.fileno,
-       (unsigned int)pentry->object.file.open_fd.last_op, (unsigned int)time(NULL),
-       (unsigned int)(time(NULL) - pentry->object.file.open_fd.last_op), (unsigned int)pclient->retention);
+    LogFullDebug(COMPONENT_CACHE_INODE_GC, "--------> use_cache=%u fileno=%d last_op=%u time(NULL)=%u delta=%u retention=%u",
+                 pclient->use_cache, pentry->object.file.open_fd.fileno,
+                 (unsigned int)pentry->object.file.open_fd.last_op, (unsigned int)time(NULL),
+                 (unsigned int)(time(NULL) - pentry->object.file.open_fd.last_op), (unsigned int)pclient->retention);
 
   if(pentry->internal_md.type == REGULAR_FILE)
     {
@@ -995,27 +994,27 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
 #if 0
   BuddyGetStats(&bstats);
   LogFullDebug(COMPONENT_CACHE_INODE,
-      "(pthread_self=%u) NbStandard=%lu  NbStandardUsed=%lu  InsideStandard(nb=%lu, size=%lu)",
-       (unsigned int)pthread_self(), (long unsigned int)bstats.NbStdPages, (long unsigned int)bstats.NbStdUsed, (long unsigned int)bstats.StdUsedSpace,
-       (long unsigned int)bstats.NbStdUsed);
+               "(pthread_self=%u) NbStandard=%lu  NbStandardUsed=%lu  InsideStandard(nb=%lu, size=%lu)",
+                (unsigned int)pthread_self(), (long unsigned int)bstats.NbStdPages, (long unsigned int)bstats.NbStdUsed, (long unsigned int)bstats.StdUsedSpace,
+                (long unsigned int)bstats.NbStdUsed);
 #endif
 
 #endif
-  LogFullDebug(COMPONENT_CACHE_INODE,
-      "(pthread_self=%p) LRU GC state: nb_entries=%d nb_invalid=%d nb_call_gc=%d param.nb_call_gc_invalid=%d",
-       (caddr_t)pthread_self(), pclient->lru_gc->nb_entry, pclient->lru_gc->nb_invalid,
-       pclient->lru_gc->nb_call_gc, pclient->lru_gc->parameter.nb_call_gc_invalid);
+  LogFullDebug(COMPONENT_CACHE_INODE_GC,
+               "(pthread_self=%p) LRU GC state: nb_entries=%d nb_invalid=%d nb_call_gc=%d param.nb_call_gc_invalid=%d",
+                (caddr_t)pthread_self(), pclient->lru_gc->nb_entry, pclient->lru_gc->nb_invalid,
+                pclient->lru_gc->nb_call_gc, pclient->lru_gc->parameter.nb_call_gc_invalid);
 
-  LogFullDebug(COMPONENT_CACHE_INODE,
-      "LRU GC state: nb_entries=%d nb_invalid=%d nb_call_gc=%d param.nb_call_gc_invalid=%d",
-       pclient->lru_gc->nb_entry, pclient->lru_gc->nb_invalid,
-       pclient->lru_gc->nb_call_gc, pclient->lru_gc->parameter.nb_call_gc_invalid);
+  LogFullDebug(COMPONENT_CACHE_INODE_GC,
+               "LRU GC state: nb_entries=%d nb_invalid=%d nb_call_gc=%d param.nb_call_gc_invalid=%d",
+                pclient->lru_gc->nb_entry, pclient->lru_gc->nb_invalid,
+                pclient->lru_gc->nb_call_gc, pclient->lru_gc->parameter.nb_call_gc_invalid);
 
-  LogFullDebug(COMPONENT_CACHE_INODE,
-                    "LRU GC state: nb_entries=%d nb_invalid=%d nb_call_gc=%d param.nb_call_gc_invalid=%d",
-                    pclient->lru_gc->nb_entry, pclient->lru_gc->nb_invalid,
-                    pclient->lru_gc->nb_call_gc,
-                    pclient->lru_gc->parameter.nb_call_gc_invalid);
+  LogFullDebug(COMPONENT_CACHE_INODE_GC,
+               "LRU GC state: nb_entries=%d nb_invalid=%d nb_call_gc=%d param.nb_call_gc_invalid=%d",
+               pclient->lru_gc->nb_entry, pclient->lru_gc->nb_invalid,
+               pclient->lru_gc->nb_call_gc,
+               pclient->lru_gc->parameter.nb_call_gc_invalid);
 
 
   /* Call LRU_gc_invalid to get ride of the unused invalid lru entries */
@@ -1339,10 +1338,10 @@ void cache_inode_print_dir(cache_entry_t * cache_entry_root)
         {
           for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
             LogFullDebug(COMPONENT_CACHE_INODE, "Name = %s, DIR_BEGINNING entry = %p, active=%d, i=%d",
-                   cache_entry_iter->object.dir_begin.pdir_data->dir_entries[i].name.name,
-                   cache_entry_iter->object.dir_begin.pdir_data->dir_entries[i].pentry,
-                   cache_entry_iter->object.dir_begin.pdir_data->dir_entries[i].active,
-                   i);
+                         cache_entry_iter->object.dir_begin.pdir_data->dir_entries[i].name.name,
+                         cache_entry_iter->object.dir_begin.pdir_data->dir_entries[i].pentry,
+                         cache_entry_iter->object.dir_begin.pdir_data->dir_entries[i].active,
+                         i);
 
           cache_entry_iter = cache_entry_iter->object.dir_begin.pdir_cont;
         }
@@ -1350,9 +1349,9 @@ void cache_inode_print_dir(cache_entry_t * cache_entry_root)
         {
           for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
             LogFullDebug(COMPONENT_CACHE_INODE, "Name = %s, DIR_CONTINUE entry = %p, active=%d, i=%d",
-                   cache_entry_iter->object.dir_cont.pdir_data->dir_entries[i].name.name,
-                   cache_entry_iter->object.dir_cont.pdir_data->dir_entries[i].pentry,
-                   cache_entry_iter->object.dir_cont.pdir_data->dir_entries[i].active, i);
+                         cache_entry_iter->object.dir_cont.pdir_data->dir_entries[i].name.name,
+                         cache_entry_iter->object.dir_cont.pdir_data->dir_entries[i].pentry,
+                         cache_entry_iter->object.dir_cont.pdir_data->dir_entries[i].active, i);
 
           cache_entry_iter = cache_entry_iter->object.dir_cont.pdir_cont;
         }
@@ -1447,8 +1446,8 @@ cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pent
     {
       /* expected = 2*sizeof(fsal_handle_t) in hexa representation */
       LogCrit(COMPONENT_CACHE_INODE,
-          "Error recovering cache content index %s: Invalid handle length. Expected length=%u, Found=%u",
-           path, (unsigned int)(2 * sizeof(fsal_handle_t)), (unsigned int)strlen(buff));
+              "Error recovering cache content index %s: Invalid handle length. Expected length=%u, Found=%u",
+               path, (unsigned int)(2 * sizeof(fsal_handle_t)), (unsigned int)strlen(buff));
 
       fclose(stream);
       return CACHE_INODE_INCONSISTENT_ENTRY;
@@ -1484,8 +1483,8 @@ static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry,
       if(parent_iter->parent == NULL)
         {
           LogDebug(COMPONENT_CACHE_INODE,
-                            "cache_inode_gc_invalidate_related_dirent: pentry %p has no parent, no dirent to be removed...",
-                            pentry);
+                   "cache_inode_gc_invalidate_related_dirent: pentry %p has no parent, no dirent to be removed...",
+                   pentry);
           continue;
         }
 
@@ -1499,7 +1498,7 @@ static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry,
           V_w(&parent_iter->parent->lock);
           /* Major parent incoherency: parent is no directory */
           LogDebug(COMPONENT_CACHE_INODE,
-                            "cache_inode_gc_invalidate_related_dirent: major incoherency. Found an entry whose parent is no directory");
+                   "cache_inode_gc_invalidate_related_dirent: major incoherency. Found an entry whose parent is no directory");
           return;
         }
 
@@ -1509,10 +1508,10 @@ static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry,
           if(parent_iter->subdirpos > CHILDREN_ARRAY_SIZE)
             {
               V_w(&parent_iter->parent->lock);
-              LogFullDebug(COMPONENT_CACHE_INODE,
-                  "A known bug occured line %d file %s: pentry=%p type=%u parent_iter->subdirpos=%d, should never exceed, entry not removed %d",
-                   __LINE__, __FILE__, pentry, pentry->internal_md.type,
-                   parent_iter->subdirpos, CHILDREN_ARRAY_SIZE);
+              LogCrit(COMPONENT_CACHE_INODE,
+                      "cache_inode_gc_invalidate_related_dirent: A known bug occured line %d file %s: pentry=%p type=%u parent_iter->subdirpos=%d, should never exceed, entry not removed %d",
+                       __LINE__, __FILE__, pentry, pentry->internal_md.type,
+                       parent_iter->subdirpos, CHILDREN_ARRAY_SIZE);
               return;
             }
           else
@@ -1530,10 +1529,10 @@ static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry,
           if(parent_iter->subdirpos > CHILDREN_ARRAY_SIZE)
             {
               V_w(&parent_iter->parent->lock);
-              LogFullDebug(COMPONENT_CACHE_INODE,
-                  "A known bug occured line %d file %s: pentry=%p type=%u parent_iter->subdirpos=%d, should never exceed %d, entry not removed",
-                   __LINE__, __FILE__, pentry, pentry->internal_md.type,
-                   parent_iter->subdirpos, CHILDREN_ARRAY_SIZE);
+              LogCrit(COMPONENT_CACHE_INODE,
+                      "cache_inode_gc_invalidate_related_dirent: A known bug occured line %d file %s: pentry=%p type=%u parent_iter->subdirpos=%d, should never exceed %d, entry not removed",
+                       __LINE__, __FILE__, pentry, pentry->internal_md.type,
+                       parent_iter->subdirpos, CHILDREN_ARRAY_SIZE);
               return;
             }
           else
@@ -1597,7 +1596,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
   if((pfsal_handle = cache_inode_get_fsal_handle(pentry, pstatus)) == NULL)
     {
       LogCrit(COMPONENT_CACHE_INODE,
-                        "cache_inode_kill_entry: unable to retrieve pentry's specific filesystem info");
+              "cache_inode_kill_entry: unable to retrieve pentry's specific filesystem info");
       return *pstatus;
     }
 
@@ -1622,7 +1621,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
   if(cache_inode_fsaldata_2_key(&key, &fsaldata, pclient))
     {
       LogCrit(COMPONENT_CACHE_INODE,
-                        "cache_inode_kill_entry: could not build hashtable key");
+              "cache_inode_kill_entry: could not build hashtable key");
 
       cache_inode_release_fsaldata_key(&key, pclient);
       *pstatus = CACHE_INODE_NOT_FOUND;
@@ -1640,7 +1639,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
           if(cache_inode_kill_entry(pentry_iter, ht, pclient, &kill_status) !=
              CACHE_INODE_SUCCESS)
             LogCrit(COMPONENT_CACHE_INODE, "cache_inode_kill_entry: could not kill pentry %p of type %u",
-                       pentry_iter, pentry_iter->internal_md.type);
+                    pentry_iter, pentry_iter->internal_md.type);
 
           pentry_iter = pentry_iter_save;
         }
@@ -1653,8 +1652,8 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
   if((rc = HashTable_Del(ht, &key, &old_key, &old_value)) != HASHTABLE_SUCCESS)
     {
       LogCrit(COMPONENT_CACHE_INODE,
-                        "cache_inode_kill_entry: entry could not be deleted, status = %d",
-                        rc);
+              "cache_inode_kill_entry: entry could not be deleted, status = %d",
+              rc);
 
       cache_inode_release_fsaldata_key(&key, pclient);
 
@@ -1666,8 +1665,8 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
   if(FSAL_IS_ERROR(fsal_status = FSAL_CleanObjectResources(pfsal_handle)))
     {
       LogCrit(COMPONENT_CACHE_INODE,
-                        "cache_inode_kill_entry: Could'nt free FSAL ressources fsal_status.major=%u",
-                        fsal_status.major);
+              "cache_inode_kill_entry: Could'nt free FSAL ressources fsal_status.major=%u",
+              fsal_status.major);
     }
 
   /* Release the hash key data */
@@ -1678,8 +1677,8 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
   if((cache_entry_t *) old_value.pdata != pentry)
     {
       LogCrit(COMPONENT_CACHE_INODE,
-                        "cache_inode_kill_entry: unexpected pdata %p from hash table (pentry=%p)",
-                        old_value.pdata, pentry);
+              "cache_inode_kill_entry: unexpected pdata %p from hash table (pentry=%p)",
+              old_value.pdata, pentry);
     }
 
   /* Release the current key */
@@ -1707,7 +1706,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
             (cache_content_client_t *) pclient->pcontent_client,
             &cache_content_status) != CACHE_CONTENT_SUCCESS)
           LogCrit(COMPONENT_CACHE_INODE,
-                            "Could not removed datacached entry for pentry %p", pentry);
+                  "Could not removed datacached entry for pentry %p", pentry);
     }
 
   /* If entry is a DIR_CONTINUE or a DIR_BEGINNING, release pdir_data */
@@ -1802,7 +1801,7 @@ cache_inode_status_t cache_inode_pin_pentry(cache_entry_t * pentry,
    }
    pentry->object.file.open_fd.num_locks++;
    LogDebug(COMPONENT_CACHE_INODE, "cache_inode_pin_pentry: numlocks %d",
-                pentry->object.file.open_fd.num_locks);
+            pentry->object.file.open_fd.num_locks);
    return pstatus;
 }
 
@@ -1814,8 +1813,8 @@ cache_inode_status_t cache_inode_unpin_pentry(cache_entry_t * pentry,
 
   pentry->object.file.open_fd.num_locks--;
   LogDebug(COMPONENT_CACHE_INODE, "cache_inode_unpin_pentry: pentry %p; pclient %p"
-            "numlocks %d, kill_entry %d", pentry, pclient,
-            pentry->object.file.open_fd.num_locks, pentry->internal_md.kill_entry);
+           "numlocks %d, kill_entry %d", pentry, pclient,
+           pentry->object.file.open_fd.num_locks, pentry->internal_md.kill_entry);
   if (pentry->object.file.open_fd.num_locks == 0)
     {
       pstatus = cache_inode_close(pentry, pclient, &pstatus);

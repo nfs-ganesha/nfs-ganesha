@@ -163,10 +163,10 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
       if(pfsdata->cookie != DIR_START)
         {
           /* added for sanity check */
-          LogDebug(COMPONENT_CACHE_INODE,
-              "=======> Pb cache_inode_get: line %u pfsdata->cookie != DIR_START (=%u) on object whose type is %u",
-               __LINE__, pfsdata->cookie,
-               cache_inode_fsal_type_convert(fsal_attributes.type));
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "cache_inode_get: pfsdata->cookie != DIR_START (=%u) on object whose type is %u",
+                        pfsdata->cookie,
+                        cache_inode_fsal_type_convert(fsal_attributes.type));
 
           pfsdata->cookie = DIR_START;
 
@@ -184,8 +184,8 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
         {
           *pstatus = cache_inode_error_convert(fsal_status);
 
-          LogDebug(COMPONENT_CACHE_INODE, "cache_inode_get: line %u cache_inode_status=%u fsal_status=%u,%u ",
-                     __LINE__, *pstatus, fsal_status.major, fsal_status.minor);
+          LogDebug(COMPONENT_CACHE_INODE, "cache_inode_get: cache_inode_status=%u fsal_status=%u,%u ",
+                   *pstatus, fsal_status.major, fsal_status.minor);
 
           if(fsal_status.major == ERR_FSAL_STALE)
             {
@@ -244,14 +244,13 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
                 {
                   cache_inode_status_t kill_status;
 
-                  LogDebug(COMPONENT_CACHE_INODE,
-                      "cache_inode_get: Stale FSAL File Handle detected for pentry = %p",
-                       pentry);
+                  LogEvent(COMPONENT_CACHE_INODE, "cache_inode_get: Stale FSAL File Handle detected for pentry = %p",
+                            pentry);
 
                   if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                      CACHE_INODE_SUCCESS)
                     LogCrit(COMPONENT_CACHE_INODE,"cache_inode_get: Could not kill entry %p, status = %u",
-                               pentry, kill_status);
+                            pentry, kill_status);
 
                   *pstatus = CACHE_INODE_FSAL_ESTALE;
 

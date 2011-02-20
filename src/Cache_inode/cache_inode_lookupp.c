@@ -139,7 +139,7 @@ cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
             {
               cache_inode_status_t kill_status;
 
-              LogEvent(COMPONENT_CACHE_INODE,"cache_inode_lookupp: Stale FSAL FH detected for pentry %p",
+              LogDebug(COMPONENT_CACHE_INODE,"cache_inode_lookupp: Stale FSAL FH detected for pentry %p",
                          pentry);
 
               if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
