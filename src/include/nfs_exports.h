@@ -66,6 +66,7 @@
 #include "cache_inode.h"
 #include "cache_content.h"
 #include "nfs_ip_stats.h"
+#include "fsal_types.h"
 
 /*
  * Export List structure 
@@ -194,6 +195,14 @@ typedef struct exportlist__
 
 } exportlist_t;
 
+/* Used to record the uid and gid of the client that made a request. */
+struct user_cred {
+  uid_t caller_uid;
+  gid_t caller_gid;
+  unsigned int caller_glen;
+  gid_t *caller_garray;
+};
+
 /* Constant for options masks */
 #define EXPORT_OPTION_NOSUID          0x00000001        /* mask off setuid mode bit            */
 #define EXPORT_OPTION_NOSGID          0x00000002        /* mask off setgid mode bit            */
@@ -320,7 +329,12 @@ typedef struct compoud_data
 exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exportid);
 int nfs_build_fsal_context(struct svc_req *ptr_req,
                            exportlist_client_entry_t * pexport_client,
-                           exportlist_t * pexport, fsal_op_context_t * pcontext);
+                           exportlist_t * pexport, fsal_op_context_t * pcontext,
+                           struct user_cred *user_credentials);
+int get_req_uid_gid(struct svc_req *ptr_req,
+                    exportlist_client_entry_t * pexport_client,
+                    exportlist_t * pexport, struct user_cred *user_credentials);
+
 
 int nfs_compare_clientcred(nfs_client_cred_t * pcred1, nfs_client_cred_t * pcred2);
 int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred);
@@ -337,7 +351,8 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
                             unsigned int mnt_prog,
                             hash_table_t * ht_ip_stats,
                             struct prealloc_pool *ip_stats_pool,
-                            exportlist_client_entry_t * pclient_found);
+                            exportlist_client_entry_t * pclient_found,
+                            struct user_cred *user_credentials);
 
 int nfs_export_tag2path(exportlist_t * exportroot, char *tag, int taglen, char *path,
                         int pathlen);

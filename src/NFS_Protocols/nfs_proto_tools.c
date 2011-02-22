@@ -3510,8 +3510,14 @@ int nfs4_MakeCred(compound_data_t * data)
 {
   exportlist_client_entry_t related_client;
   nfs_worker_data_t *pworker = NULL;
+  struct user_cred user_credentials;
 
   pworker = (nfs_worker_data_t *) data->pclient->pworker;
+
+  if (get_req_uid_gid(data->reqp, &related_client,
+                      data->pexport, &user_credentials)
+      == FALSE)
+    return NFS4ERR_WRONGSEC;
 
   if(nfs_export_check_access(&pworker->hostaddr,
                              data->reqp,
@@ -3519,10 +3525,13 @@ int nfs4_MakeCred(compound_data_t * data)
                              nfs_param.core_param.nfs_program,
                              nfs_param.core_param.mnt_program,
                              pworker->ht_ip_stats,
-                             &pworker->ip_stats_pool, &related_client) == FALSE)
+                             &pworker->ip_stats_pool,
+                             &related_client,
+                             &user_credentials) == FALSE)
     return NFS4ERR_WRONGSEC;
 
-  if(nfs_build_fsal_context(data->reqp, &related_client, data->pexport, data->pcontext)
+  if(nfs_build_fsal_context(data->reqp, &related_client, 
+                            data->pexport, data->pcontext, &user_credentials)
      == FALSE)
     return NFS4ERR_WRONGSEC;
 

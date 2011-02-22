@@ -238,21 +238,21 @@ exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exp
 
 /**
  *
- * nfs_build_fsal_context: Builds the FSAL context according to the request and the export entry.
+ * get_req_uid_gid: 
  *
- * Builds the FSAL credentials according to the request and the export entry.
+ * 
  *
  * @param ptr_req [IN]  incoming request.
  * @param pexport_client [IN] related export client
  * @param pexport [IN]  related export entry
- * @param pcred   [IN/OUT] initialized credential of caller thread.
+ * @param user_credentials [OUT] Filled in structure with uid and gids
  * 
  * @return TRUE if successful, FALSE otherwise 
  *
  */
-int nfs_build_fsal_context(struct svc_req *ptr_req,
-                           exportlist_client_entry_t * pexport_client,
-                           exportlist_t * pexport, fsal_op_context_t * pcontext)
+int get_req_uid_gid(struct svc_req *ptr_req,
+                    exportlist_client_entry_t * pexport_client,
+                    exportlist_t * pexport, struct user_cred *user_credentials)
 {
   struct authunix_parms *punix_creds = NULL;
 #ifdef _USE_GSSRPC
@@ -264,13 +264,12 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
   char domainname[MAXNAMLEN];
 #endif
   fsal_status_t fsal_status;
-  uid_t caller_uid = 0;
-  gid_t caller_gid = 0;
-  unsigned int caller_glen = 0;
-  gid_t *caller_garray = NULL;
   unsigned int rpcxid = 0;
 
   char *ptr;
+
+  if (user_credentials == NULL)
+    return FALSE;
 
   rpcxid = get_rpc_xid(ptr_req);
 
@@ -291,10 +290,10 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
       punix_creds = (struct authunix_parms *)ptr_req->rq_clntcred;
 
       /* Get the uid/gid couple */
-      caller_uid = punix_creds->aup_uid;
-      caller_gid = punix_creds->aup_gid;
-      caller_glen = punix_creds->aup_len;
-      caller_garray = punix_creds->aup_gids;
+      user_credentials->caller_uid = punix_creds->aup_uid;
+      user_credentials->caller_gid = punix_creds->aup_gid;
+      user_credentials->caller_glen = punix_creds->aup_len;
+      user_credentials->caller_garray = punix_creds->aup_gids;
 
       break;
 
@@ -338,20 +337,20 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
                    username, domainname);
 
       /* Convert to uid */
-      if(!name2uid(username, &caller_uid))
+      if(!name2uid(username, &user_credentials->caller_uid))
         return FALSE;
 
-      if(uidgidmap_get(caller_uid, &caller_gid) != ID_MAPPER_SUCCESS)
+      if(uidgidmap_get(user_credentials->caller_uid, &user_credentials->caller_gid) != ID_MAPPER_SUCCESS)
         {
           LogMajor(COMPONENT_DISPATCH,
                    "NFS_DISPATCH: FAILURE: Could not resolve uidgid map for %u",
-                   caller_uid);
-          caller_gid = -1;
+                   user_credentials->caller_uid);
+          user_credentials->caller_gid = -1;
         }
       LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Uid=%u Gid=%u",
-                   (unsigned int)caller_uid, (unsigned int)caller_gid);
-      caller_glen = 0;
-      caller_garray = 0;
+                   (unsigned int)user_credentials->caller_uid, (unsigned int)user_credentials->caller_gid);
+      user_credentials->caller_glen = 0;
+      user_credentials->caller_garray = 0;
 
       break;
 #endif                          /* _USE_GSSRPC */
@@ -365,6 +364,48 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
 
       break;
     }                           /* switch( ptr_req->rq_cred.oa_flavor ) */
+  return TRUE;
+}
+
+/**
+ *
+ * nfs_build_fsal_context: Builds the FSAL context according to the request and the export entry.
+ *
+ * Builds the FSAL credentials according to the request and the export entry.
+ *
+ * @param ptr_req [IN]  incoming request.
+ * @param pexport_client [IN] related export client
+ * @param pexport [IN]  related export entry
+ * @param pcred   [IN/OUT] initialized credential of caller thread.
+ * @param user_credentials [OUT] Filled in structure with uid and gids                                                                                                            * 
+ * @return TRUE if successful, FALSE otherwise 
+ *
+ */
+int nfs_build_fsal_context(struct svc_req *ptr_req,
+                           exportlist_client_entry_t * pexport_client,
+                           exportlist_t * pexport, fsal_op_context_t * pcontext,
+                           struct user_cred *user_credentials)
+{
+  struct authunix_parms *punix_creds = NULL;
+#ifdef _USE_GSSRPC
+  struct svc_rpc_gss_data *gd = NULL;
+  gss_buffer_desc oidbuff;
+  OM_uint32 maj_stat = 0;
+  OM_uint32 min_stat = 0;
+  char username[MAXNAMLEN];
+  char domainname[MAXNAMLEN];
+#endif
+  fsal_status_t fsal_status;
+  uid_t caller_uid = 0;
+  gid_t caller_gid = 0;
+  unsigned int caller_glen = 0;
+  gid_t *caller_garray = NULL;
+  unsigned int rpcxid = 0;
+
+  char *ptr;
+
+  if (user_credentials == NULL)
+    return FALSE;
 
   /* Do we have root access ? */
   if((caller_uid == 0) && !(pexport_client->options & EXPORT_OPTION_ROOT))

@@ -2231,7 +2231,8 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
                             unsigned int mnt_prog,
                             hash_table_t * ht_ip_stats,
                             struct prealloc_pool *ip_stats_pool,
-                            exportlist_client_entry_t * pclient_found)
+                            exportlist_client_entry_t * pclient_found,
+                            struct user_cred *user_credentials)
 {
   int rc;
   unsigned int addr;
@@ -2290,11 +2291,12 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
         }
 
       /* check if any root access export matches this client */
-      if(export_client_match(addr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_ROOT))
+      if((user_credentials->caller_uid == 0) &&
+         export_client_match(addr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_ROOT))
         return TRUE;
       /* else, check if any access only export matches this client */
-      else if(export_client_match
-              (addr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_ACCESS))
+      if(export_client_match
+         (addr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_ACCESS))
         return TRUE;
 #ifdef _USE_TIRPC_IPV6
     }
@@ -2336,21 +2338,21 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
 
           /* Proceed with IPv4 dedicated function */
           /* check if any root access export matches this client */
-          if(export_client_match
-             (addr, ip6string, &(pexport->clients), pclient_found, EXPORT_OPTION_ROOT))
+          if((user_credentials->caller_uid == 0) &&
+             export_client_match(addr, ip6string, &(pexport->clients), pclient_found, EXPORT_OPTION_ROOT))
             return TRUE;
           /* else, check if any access only export matches this client */
-          else if(export_client_match
-                  (addr, ip6string, &(pexport->clients), pclient_found, EXPORT_OPTION_ACCESS))
+          if(export_client_match
+             (addr, ip6string, &(pexport->clients), pclient_found, EXPORT_OPTION_ACCESS))
             return TRUE;
         }
 
-      if(export_client_matchv6
-         (&(psockaddr_in6->sin6_addr), &(pexport->clients), pclient_found, EXPORT_OPTION_ROOT))
+      if((user_credentials->caller_uid == 0) &&
+         export_client_matchv6(&(psockaddr_in6->sin6_addr), &(pexport->clients), pclient_found, EXPORT_OPTION_ROOT))
         return TRUE;
       /* else, check if any access only export matches this client */
-      else if(export_client_matchv6
-              (&(psockaddr_in6->sin6_addr), &(pexport->clients), pclient_found, EXPORT_OPTION_ACCESS))
+      if(export_client_matchv6
+         (&(psockaddr_in6->sin6_addr), &(pexport->clients), pclient_found, EXPORT_OPTION_ACCESS))
         return TRUE;
     }
 #endif                          /* _USE_TIRPC_IPV6 */

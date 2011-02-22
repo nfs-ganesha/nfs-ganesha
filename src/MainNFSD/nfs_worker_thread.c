@@ -715,6 +715,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   int status;
   unsigned int i;
   exportlist_client_entry_t related_client;
+  struct user_cred user_credentials;
 
 #ifdef _DEBUG_MEMLEAKS
   static int nb_iter_memleaks = 0;
@@ -1044,13 +1045,31 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
             }
         }
 
+      if(funcdesc.dispatch_behaviour & NEEDS_CRED)
+        {
+          if(get_req_uid_gid(ptr_req, &related_client, pexport, &user_credentials) == FALSE)
+            {
+              svcerr_auth(ptr_svc, AUTH_TOOWEAK);
+              pworker_data->current_xid = 0;    /* No more xid managed */
+
+              if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
+                                    &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+                {
+                  LogCrit(COMPONENT_DISPATCH, "Attempt to delete duplicate request failed on line %d", __LINE__);
+                }
+              return;
+            }
+        }
+
       if(nfs_export_check_access(&pworker_data->hostaddr,
                                  ptr_req,
                                  pexport,
                                  nfs_param.core_param.nfs_program,
                                  nfs_param.core_param.mnt_program,
                                  pworker_data->ht_ip_stats,
-                                 &pworker_data->ip_stats_pool, &related_client) == FALSE)
+                                 &pworker_data->ip_stats_pool,
+                                 &related_client,
+                                 &user_credentials) == FALSE)
         {
           LogEvent(COMPONENT_DISPATCH,
                    "/!\\ | Host 0x%x = %d.%d.%d.%d is not allowed to access this export entry, vers=%d, proc=%d",
@@ -1076,7 +1095,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         {
           if(nfs_build_fsal_context
              (ptr_req, &related_client, pexport,
-              &pworker_data->thread_fsal_context) == FALSE)
+              &pworker_data->thread_fsal_context, &user_credentials) == FALSE)
             {
               svcerr_auth(ptr_svc, AUTH_TOOWEAK);
               pworker_data->current_xid = 0;    /* No more xid managed */
