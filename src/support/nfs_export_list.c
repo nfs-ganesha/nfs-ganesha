@@ -386,54 +386,39 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
                            exportlist_t * pexport, fsal_op_context_t * pcontext,
                            struct user_cred *user_credentials)
 {
-  struct authunix_parms *punix_creds = NULL;
-#ifdef _USE_GSSRPC
-  struct svc_rpc_gss_data *gd = NULL;
-  gss_buffer_desc oidbuff;
-  OM_uint32 maj_stat = 0;
-  OM_uint32 min_stat = 0;
-  char username[MAXNAMLEN];
-  char domainname[MAXNAMLEN];
-#endif
   fsal_status_t fsal_status;
-  uid_t caller_uid = 0;
-  gid_t caller_gid = 0;
-  unsigned int caller_glen = 0;
-  gid_t *caller_garray = NULL;
-  unsigned int rpcxid = 0;
-
-  char *ptr;
 
   if (user_credentials == NULL)
     return FALSE;
 
   /* Do we have root access ? */
-  if((caller_uid == 0) && !(pexport_client->options & EXPORT_OPTION_ROOT))
+  if((user_credentials->caller_uid == 0) && !(pexport_client->options & EXPORT_OPTION_ROOT))
     {
       /* caller_uid = ANON_UID ; */
-      caller_uid = pexport->anonymous_uid;
-      caller_gid = ANON_GID;
+      user_credentials->caller_uid = pexport->anonymous_uid;
+      user_credentials->caller_gid = ANON_GID;
 
       /* No alternate groups for "nobody" */
-      caller_glen = 0 ;
-      caller_garray = NULL ;
+      user_credentials->caller_glen = 0 ;
+      user_credentials->caller_garray = NULL ;
     }
 
   /* Build the credentials */
   fsal_status = FSAL_GetClientContext(pcontext,
                                       &pexport->FS_export_context,
-                                      caller_uid, caller_gid, caller_garray, caller_glen);
+                                      user_credentials->caller_uid, user_credentials->caller_gid,
+                                      user_credentials->caller_garray, user_credentials->caller_glen);
 
   if(FSAL_IS_ERROR(fsal_status))
     {
       LogEvent(COMPONENT_DISPATCH,
                "NFS DISPATCHER: FAILURE: Could not get credentials for (uid=%d,gid=%d), fsal error=(%d,%d)",
-               caller_uid, caller_gid, fsal_status.major, fsal_status.minor);
+               user_credentials->caller_uid, user_credentials->caller_gid, fsal_status.major, fsal_status.minor);
       return FALSE;
     }
   else
     LogDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: FSAL Cred acquired for (uid=%d,gid=%d)",
-             caller_uid, caller_gid);
+             user_credentials->caller_uid, user_credentials->caller_gid);
 
   return TRUE;
 }                               /* nfs_build_fsal_context */

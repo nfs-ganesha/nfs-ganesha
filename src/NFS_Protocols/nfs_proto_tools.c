@@ -3527,7 +3527,9 @@ int nfs4_MakeCred(compound_data_t * data)
                              pworker->ht_ip_stats,
                              &pworker->ip_stats_pool,
                              &related_client,
-                             &user_credentials) == FALSE)
+                             &user_credentials,
+                             FALSE) /* So check_access() doesn't deny based on whether this is a RO export. */
+     == FALSE)
     return NFS4ERR_WRONGSEC;
 
   if(nfs_build_fsal_context(data->reqp, &related_client, 

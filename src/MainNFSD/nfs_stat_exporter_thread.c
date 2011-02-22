@@ -114,7 +114,7 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
           return FALSE;
         }
       if(export_client_match
-	 (addr, ipstring, clients, pclient_found, EXPORT_OPTION_ACCESS))
+	 (addr, ipstring, clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
         return TRUE;
 #ifdef _USE_TIRPC_IPV6
     }
@@ -155,11 +155,11 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
           /* Proceed with IPv4 dedicated function */
           /* else, check if any access only export matches this client */
           if(export_client_match
-	     (addr, ip6string, clients, pclient_found, EXPORT_OPTION_ACCESS))
+	     (addr, ip6string, clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
             return TRUE;
         }
       if(export_client_matchv6
-	 (&(psockaddr_in6->sin6_addr), clients, pclient_found, EXPORT_OPTION_ACCESS))
+	 (&(psockaddr_in6->sin6_addr), clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
         return TRUE;
     }
 #endif                          /* _USE_TIRPC_IPV6 */
@@ -228,7 +228,7 @@ static int parseAccessParam(char *var_name, char *var_value,
     }
 
   rc = nfs_AddClientsToClientArray( clients, rc,
-				    (char **)client_list, EXPORT_OPTION_ACCESS);
+				    (char **)client_list, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS);
   if(rc != 0)
     {
       err_flag = TRUE;

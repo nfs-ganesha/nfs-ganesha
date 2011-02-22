@@ -208,7 +208,7 @@ struct user_cred {
 #define EXPORT_OPTION_NOSGID          0x00000002        /* mask off setgid mode bit            */
 #define EXPORT_OPTION_ROOT            0x00000004        /* allow root access as root uid       */
 #define EXPORT_OPTION_NETENT          0x00000008        /* client entry is a network entry     */
-#define EXPORT_OPTION_ACCESS          0x00000010        /* access= option specified            */
+#define EXPORT_OPTION_READ_ACCESS     0x00000010        /* r_access= option specified            */
 #define EXPORT_OPTION_NETGRP          0x00000020        /* client entry is a netgroup          */
 #define EXPORT_OPTION_WILDCARD        0x00000040        /* client entry is wildcarded          */
 #define EXPORT_OPTION_GSSPRINC        0x00000080        /* client entry is a GSS principal     */
@@ -220,6 +220,7 @@ struct user_cred {
 #define EXPORT_OPTION_PREFRDDIR       0x00002000        /* Pref readdir size is provided       */
 #define EXPORT_OPTION_PRIVILEGED_PORT 0x00004000        /* clients use only privileged port    */
 #define EXPORT_OPTION_USE_DATACACHE   0x00008000        /* Is export entry data cached ?       */
+#define EXPORT_OPTION_WRITE_ACCESS    0x00010000        /* rw_access= option specified         */
 
 /* @todo BUGAZOMEU : Mettre au carre les flags des flavors */
 
@@ -242,6 +243,12 @@ struct user_cred {
 #define EXPORT_OPTION_MAXOFFSETREAD   0x08000000        /* Maximum Offset for read is set  */
 #define EXPORT_OPTION_MAXCACHESIZE    0x10000000        /* Maximum Offset for read is set  */
 #define EXPORT_OPTION_USE_PNFS        0x20000000        /* Using pNFS or not using pNFS ?  */
+
+/* nfs_export_check_access() return values */
+#define EXPORT_PERMISSION_GRANTED            0x00000001
+#define EXPORT_PERMISSION_DENIED             0x00000002
+#define EXPORT_WRITE_ATTEMPT_WHEN_RO         0x00000003
+#define EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO  0x00000004
 
 /* NFS4 specific structures */
 
@@ -352,7 +359,8 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
                             hash_table_t * ht_ip_stats,
                             struct prealloc_pool *ip_stats_pool,
                             exportlist_client_entry_t * pclient_found,
-                            struct user_cred *user_credentials);
+                            struct user_cred *user_credentials,
+                            bool_t proc_makes_write);
 
 int nfs_export_tag2path(exportlist_t * exportroot, char *tag, int taglen, char *path,
                         int pathlen);
