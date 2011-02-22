@@ -43,6 +43,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stddef.h>
+#include <string.h>
 
 #include "config_parsing.h"
 
@@ -158,9 +159,26 @@ BUDDY_ADDR_T BuddyMalloc(size_t Size);
  *
  * The  BuddyMallocExit() function returns a pointer to a block of at least
  * Size bytes suitably aligned (32 or 64bits depending on architectures).
- * If no memory is available, it stops current processus.
+ * If no memory is available, it stops current process.
  */
 BUDDY_ADDR_T BuddyMallocExit(size_t Size);
+
+/**
+ * BuddyStr_Dup : string duplicator based on buddy system.
+ *
+ * The  BuddyStr_Dup() function returns a pointer to a block of at least
+ * Size bytes suitably aligned (32 or 64bits depending on architectures). 
+ */
+char *BuddyStr_Dup(char * Str);
+
+/**
+ * BuddyStr_Dup_Exit : string duplicator based on buddy system.
+ *
+ * The  BuddyStr_Dup_Exit() function returns a pointer to a block of at least
+ * Size bytes suitably aligned (32 or 64bits depending on architectures). 
+ * If no memory is available, it stops current process.
+ */
+char *BuddyStr_Dup_Exit(char * Str);
 
 /**
  *  Free a memory block alloced by BuddyMalloc, BuddyCalloc or BuddyCalloc.
@@ -245,6 +263,18 @@ BUDDY_ADDR_T BuddyMalloc_Autolabel(size_t sz,
                                    const char *function,
                                    const unsigned int line,
                                    const char *str);
+
+/**
+ * BuddyStr_Dup : string duplicator based on buddy system.
+ *
+ * The  BuddyStr_Dup() function returns a pointer to a block of at least
+ * Size bytes suitably aligned (32 or 64bits depending on architectures). 
+ */
+inline char *BuddyStr_Dup_Autolabel(char * OldStr,
+                                    const char *file,
+                                    const char *function,
+                                    const unsigned int line,
+                                    const char *str);
 
 BUDDY_ADDR_T BuddyCalloc_Autolabel(size_t NumberOfElements, size_t ElementSize,
                                    const char *file,
