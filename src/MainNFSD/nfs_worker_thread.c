@@ -1054,7 +1054,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,
                (ntohl(phostaddr->sin_addr.s_addr) & 0x000000FF),
                (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
-      /* svcerr_auth( ptr_svc, AUTH_TOOWEAK ) ; */
+      svcerr_auth( ptr_svc, AUTH_TOOWEAK ); 
       pworker_data->current_xid = 0;        /* No more xid managed */
       
       if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
