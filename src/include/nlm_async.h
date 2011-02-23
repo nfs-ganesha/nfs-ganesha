@@ -50,14 +50,9 @@ extern int nlm_async_callback_init();
 void nlm_async_callback(nlm_callback_func * func, void *arg);
 extern int nlm_async_callback_init();
 
-static inline nlm_async_res_t *nlm_build_async_res(char *caller_name, nfs_res_t * pres)
-{
-  nlm_async_res_t *arg;
-  arg = (nlm_async_res_t *) Mem_Alloc(sizeof(nlm_async_res_t));
-  arg->caller_name = strdup(caller_name);
-  memcpy(&(arg->pres), pres, sizeof(nfs_res_t));
-  return arg;
-}
+extern nlm_async_res_t *nlm_build_async_res_nlm4(char *caller_name, nfs_res_t * pres);
+
+extern nlm_async_res_t *nlm_build_async_res_nlm4test(char *caller_name, nfs_res_t * pres);
 
 typedef struct
 {

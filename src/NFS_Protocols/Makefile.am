@@ -104,10 +104,6 @@ libnfsproto_la_SOURCES += nlm_Unlock.c	  	\
                           nlm_Test.c	  	\
                           nlm_Null.c	  	\
                           nlm_Sm_Notify.c 	\
-                          nlm_Test_Message.c	\
-                          nlm_Cancel_Message.c	\
-                          nlm_Lock_Message.c	\
-                          nlm_Unlock_Message.c  \
                           nlm_Granted_Res.c \
 			../include/nlm4.h  \
 			../include/nlm_async.h \

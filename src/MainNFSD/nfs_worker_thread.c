@@ -267,19 +267,19 @@ const nfs_function_desc_t nlm4_func_desc[] = {
                         nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t) xdr_void,
                         (xdrproc_t) xdr_void, "nlm4_Granted", NOTHING_SPECIAL},
   [NLMPROC4_TEST_MSG] = {
-                         nlm4_Test_Message, nlm4_Test_Message_Free,
+                         nlm4_Test_Message, nlm4_Test_Free,
                          (xdrproc_t) xdr_nlm4_testargs,
                          (xdrproc_t) xdr_void, "nlm4_Test_msg", NEEDS_CRED},
   [NLMPROC4_LOCK_MSG] = {
-                         nlm4_Lock_Message, nlm4_Lock_Message_Free,
+                         nlm4_Lock_Message, nlm4_Lock_Free,
                          (xdrproc_t) xdr_nlm4_lockargs,
                          (xdrproc_t) xdr_void, "nlm4_Lock_msg", NEEDS_CRED},
   [NLMPROC4_CANCEL_MSG] = {
-                           nlm4_Cancel_Message, nlm4_Cancel_Message_Free,
+                           nlm4_Cancel_Message, nlm4_Cancel_Free,
                            (xdrproc_t) xdr_nlm4_cancargs,
                            (xdrproc_t) xdr_void, "nlm4_Cancel_msg", NEEDS_CRED},
   [NLMPROC4_UNLOCK_MSG] = {
-                           nlm4_Unlock_Message, nlm4_Unlock_Message_Free,
+                           nlm4_Unlock_Message, nlm4_Unlock_Free,
                            (xdrproc_t) xdr_nlm4_unlockargs,
                            (xdrproc_t) xdr_void, "nlm4_Unlock_msg", NEEDS_CRED},
   [NLMPROC4_GRANTED_MSG] = {
@@ -1163,7 +1163,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   if(rc == NFS_REQ_DROP)
     {
       /* The request was dropped */
-      LogEvent(COMPONENT_DISPATCH,
+      LogDebug(COMPONENT_DISPATCH,
                "Drop request rpc_xid=%u, program %u, version %u, function %u",
                rpcxid, (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
     }
@@ -1226,7 +1226,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                                      &res_nfs,
                                      lru_dupreq);
         }
-    }
+    } /* rc == NFS_REQ_DROP */
+
   /* Free the allocated resources once the work is done */
   /* Free the arguments */
   if(preqnfs->req.rq_vers == 2 || preqnfs->req.rq_vers == 3 || preqnfs->req.rq_vers == 4)

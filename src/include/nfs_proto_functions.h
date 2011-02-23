@@ -1239,10 +1239,6 @@ void nlm4_Lock_Free(nfs_res_t * pres);
 void nlm4_Cancel_Free(nfs_res_t * pres);
 void nlm4_Unlock_Free(nfs_res_t * pres);
 void nlm4_Sm_Notify_Free(nfs_res_t * pres);
-void nlm4_Test_Message_Free(nfs_res_t * pres);
-void nlm4_Cancel_Message_Free(nfs_res_t * pres);
-void nlm4_Lock_Message_Free(nfs_res_t * pres);
-void nlm4_Unlock_Message_Free(nfs_res_t * pres);
 void nlm4_Granted_Res_Free(nfs_res_t * pres);
 
 void rquota_Null_Free(nfs_res_t * pres);

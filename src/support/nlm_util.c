@@ -108,7 +108,7 @@ const char *lock_result_str(int rc)
     }
 }
 
-static netobj *copy_netobj(netobj * dst, netobj * src)
+netobj *copy_netobj(netobj * dst, netobj * src)
 {
     if(dst == NULL)
       return NULL;
@@ -121,7 +121,7 @@ static netobj *copy_netobj(netobj * dst, netobj * src)
     return dst;
 }
 
-static void netobj_free(netobj * obj)
+void netobj_free(netobj * obj)
 {
     if(obj->n_bytes)
         Mem_Free(obj->n_bytes);
@@ -163,7 +163,7 @@ static nlm_lock_entry_t *nlm4_lock_to_nlm_lock_entry(struct nlm4_lockargs *args)
                                                       "nlm_lock_entry_t");
     if(!nlm_entry)
         return NULL;
-    nlm_entry->caller_name = strdup(nlm_lock->caller_name);
+    nlm_entry->caller_name = Str_Dup(nlm_lock->caller_name);
     if(!copy_netobj(&nlm_entry->fh, &nlm_lock->fh))
         goto err_out;
     if(!copy_netobj(&nlm_entry->oh, &nlm_lock->oh))
@@ -178,7 +178,7 @@ static nlm_lock_entry_t *nlm4_lock_to_nlm_lock_entry(struct nlm4_lockargs *args)
     pthread_mutex_init(&nlm_entry->lock, NULL);
     return nlm_entry;
 err_out:
-    free(nlm_entry->caller_name);
+    Mem_Free(nlm_entry->caller_name);
     netobj_free(&nlm_entry->fh);
     netobj_free(&nlm_entry->oh);
     netobj_free(&nlm_entry->cookie);
@@ -244,7 +244,7 @@ void nlm_lock_entry_dec_ref(nlm_lock_entry_t * nlm_entry)
                          lock_result_str(nlm_entry->state));
 
             cache_inode_unpin_pentry(nlm_entry->pentry, nlm_entry->pclient, nlm_entry->ht);
-            free(nlm_entry->caller_name);
+            Mem_Free(nlm_entry->caller_name);
             netobj_free(&nlm_entry->fh);
             netobj_free(&nlm_entry->oh);
             netobj_free(&nlm_entry->cookie);
@@ -437,7 +437,7 @@ error_out:
     return nlm_entry;
 
 free_nlm_entry:
-    free(nlm_entry->caller_name);
+    Mem_Free(nlm_entry->caller_name);
     netobj_free(&nlm_entry->fh);
     netobj_free(&nlm_entry->oh);
     netobj_free(&nlm_entry->cookie);
@@ -481,7 +481,7 @@ static void do_nlm_remove_from_locklist(nlm_lock_entry_t * nlm_entry)
      * ref_count is 0 there is existing reference to the entry.
      * So update without lock held.
      */
-    free(nlm_entry->caller_name);
+    Mem_Free(nlm_entry->caller_name);
     netobj_free(&nlm_entry->fh);
     netobj_free(&nlm_entry->oh);
     netobj_free(&nlm_entry->cookie);
@@ -566,7 +566,7 @@ static nlm_lock_entry_t *nlm_lock_entry_t_dup(nlm_lock_entry_t * orig_nlm_entry)
                                                       "nlm_lock_entry_t");
     if(!nlm_entry)
         return NULL;
-    nlm_entry->caller_name = strdup(orig_nlm_entry->caller_name);
+    nlm_entry->caller_name = Str_Dup(orig_nlm_entry->caller_name);
     if(!copy_netobj(&nlm_entry->fh, &orig_nlm_entry->fh))
         goto err_out;
     if(!copy_netobj(&nlm_entry->oh, &orig_nlm_entry->oh))
@@ -586,7 +586,7 @@ static nlm_lock_entry_t *nlm_lock_entry_t_dup(nlm_lock_entry_t * orig_nlm_entry)
     cache_inode_pin_pentry(nlm_entry->pentry, nlm_entry->pclient, NULL);
     return nlm_entry;
 err_out:
-    free(nlm_entry->caller_name);
+    Mem_Free(nlm_entry->caller_name);
     netobj_free(&nlm_entry->fh);
     netobj_free(&nlm_entry->oh);
     netobj_free(&nlm_entry->cookie);
@@ -906,7 +906,7 @@ static void nlm4_send_grant_msg(void *arg)
             netobj_free(&inarg.alock.fh);
             goto free_nlm_lock_entry;
         }
-    inarg.alock.caller_name = strdup(nlm_entry->caller_name);
+    inarg.alock.caller_name = Str_Dup(nlm_entry->caller_name);
     if(!inarg.alock.caller_name)
         {
             netobj_free(&inarg.cookie);
@@ -926,7 +926,7 @@ static void nlm4_send_grant_msg(void *arg)
              buffer);
 
     retval = nlm_send_async(NLMPROC4_GRANTED_MSG, nlm_entry->caller_name, &inarg, nlm_entry);
-    free(inarg.alock.caller_name);
+    Mem_Free(inarg.alock.caller_name);
     netobj_free(&inarg.alock.fh);
     netobj_free(&inarg.alock.oh);
     netobj_free(&inarg.cookie);
