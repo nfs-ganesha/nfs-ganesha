@@ -265,6 +265,7 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
 
   /* zero-ification of the buffer to be used as handle */
   memset(pfh4->nfs_fh4_val, 0, sizeof(file_handle_v4_t));
+  memset((caddr_t) &file_handle, 0, sizeof(file_handle_v4_t));
 
   /* Fill in the fs opaque part */
   fsal_status =
@@ -330,7 +331,7 @@ int nfs3_FSALToFhandle(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
 
   /* zero-ification of the buffer to be used as handle */
   memset(pfh3->data.data_val, 0, NFS3_FHSIZE);
-  memset((caddr_t) & file_handle, 0, sizeof(file_handle_v3_t));
+  memset((caddr_t) &file_handle, 0, sizeof(file_handle_v3_t));
 
   /* Fill in the fs opaque part */
   fsal_status =
@@ -379,6 +380,7 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
 
   /* zero-ification of the buffer to be used as handle */
   memset(pfh2, 0, NFS2_FHSIZE);
+  memset((caddr_t) &file_handle, 0, sizeof(file_handle_v2_t));
 
   /* Fill in the fs opaque part */
   fsal_status =
