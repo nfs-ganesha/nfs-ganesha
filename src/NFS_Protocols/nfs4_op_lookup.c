@@ -104,6 +104,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   fsal_handle_t *pfsal_handle = NULL;
 
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lookup";
+  char fhstr[LEN_FH_STR];
 
   resp->resop = NFS4_OP_LOOKUP;
   res_LOOKUP4.status = NFS4_OK;
@@ -249,6 +250,8 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
           print_buff(COMPONENT_NFS_V4, (char *)cache_inode_get_fsal_handle(dir_pentry, &cache_status),
                      sizeof(fsal_handle_t));
         }
+      nfs4_sprint_fhandle(&data->currentFH, fhstr);
+      LogDebug(COMPONENT_NFS_V4, "NFS4 LOOKUP CURRENT FH: %s", fhstr);
 
       /* Keep the pointer within the compound data */
       data->current_entry = file_pentry;

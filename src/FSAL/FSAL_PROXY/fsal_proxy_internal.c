@@ -566,7 +566,7 @@ int fsal_internal_proxy_fsal_utf8_2_path(fsal_path_t * ppath, utf8string * utf8s
   if(ppath == NULL || utf8str == NULL)
     return FALSE;
 
-  if(utf82str(tmpstr, utf8str) == -1)
+  if(utf82str(tmpstr, sizeof(tmpstr), utf8str) == -1)
     return FALSE;
 
   fsal_status = FSAL_str2path(tmpstr, FSAL_MAX_PATH_LEN, ppath);
@@ -596,7 +596,7 @@ int fsal_internal_proxy_fsal_utf8_2_name(fsal_name_t * pname, utf8string * utf8s
   if(pname == NULL || utf8str == NULL)
     return FALSE;
 
-  if(utf82str(tmpstr, utf8str) == -1)
+  if(utf82str(tmpstr, sizeof(tmpstr), utf8str) == -1)
     return FALSE;
 
   fsal_status = FSAL_str2name(tmpstr, FSAL_MAX_NAME_LEN, pname);
