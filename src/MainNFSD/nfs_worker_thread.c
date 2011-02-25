@@ -1087,7 +1087,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       else                      /* unexpected protocol (mount doesn't make write) */
         rc = NFS_REQ_DROP;
     }
-  else if (export_check_result != EXPORT_PERMISSION_GRANTED)
+  else if ((export_check_result != EXPORT_PERMISSION_GRANTED) && 
+           (export_check_result != EXPORT_MDONLY_GRANTED))
     {
       /* If not EXPORT_PERMISSION_GRANTED, then we are all out of options! */
       LogMajor(COMPONENT_DISPATCH, "nfs_export_check_access() returned none of the expected flags. This is an unexpected state!");

@@ -167,7 +167,11 @@ typedef struct exportlist__
   char FS_tag[MAXPATHLEN];      /* filesystem "tag" string */
   fsal_export_context_t FS_export_context;      /* the export context associated with this export entry */
 
-  exportlist_access_type_t access_type; /* allowed operations for this export */
+  exportlist_access_type_t access_type; /* allowed operations for this export. Used by the older Access
+                                         * list Access_Type export permissions scheme as well as the newer
+                                         * R_Access, RW_Access, MDONLY_Access, MDONLY_R_Access lists.*/
+  bool_t new_access_list_version;   /* the new access list version (TRUE) is teh *_Access lists.
+                                     * The old (FALSE) is Access and Access_Type. */
 
   fsal_fsid_t filesystem_id;    /* fileset id         */
   fsal_handle_t *proot_handle;  /* FSAL handle for the root of the file system */
@@ -208,7 +212,7 @@ struct user_cred {
 #define EXPORT_OPTION_NOSGID          0x00000002        /* mask off setgid mode bit            */
 #define EXPORT_OPTION_ROOT            0x00000004        /* allow root access as root uid       */
 #define EXPORT_OPTION_NETENT          0x00000008        /* client entry is a network entry     */
-#define EXPORT_OPTION_READ_ACCESS     0x00000010        /* r_access= option specified            */
+#define EXPORT_OPTION_READ_ACCESS     0x00000010        /* R_Access= option specified          */
 #define EXPORT_OPTION_NETGRP          0x00000020        /* client entry is a netgroup          */
 #define EXPORT_OPTION_WILDCARD        0x00000040        /* client entry is wildcarded          */
 #define EXPORT_OPTION_GSSPRINC        0x00000080        /* client entry is a GSS principal     */
@@ -220,7 +224,9 @@ struct user_cred {
 #define EXPORT_OPTION_PREFRDDIR       0x00002000        /* Pref readdir size is provided       */
 #define EXPORT_OPTION_PRIVILEGED_PORT 0x00004000        /* clients use only privileged port    */
 #define EXPORT_OPTION_USE_DATACACHE   0x00008000        /* Is export entry data cached ?       */
-#define EXPORT_OPTION_WRITE_ACCESS    0x00010000        /* rw_access= option specified         */
+#define EXPORT_OPTION_WRITE_ACCESS    0x00010000        /* RW_Access= option specified         */
+#define EXPORT_OPTION_MD_WRITE_ACCESS 0x00020000        /* MDONLY_Access= option specified     */
+#define EXPORT_OPTION_MD_READ_ACCESS  0x00040000        /* MDONLY_RO_Access= option specified  */
 
 /* @todo BUGAZOMEU : Mettre au carre les flags des flavors */
 
@@ -246,9 +252,11 @@ struct user_cred {
 
 /* nfs_export_check_access() return values */
 #define EXPORT_PERMISSION_GRANTED            0x00000001
-#define EXPORT_PERMISSION_DENIED             0x00000002
-#define EXPORT_WRITE_ATTEMPT_WHEN_RO         0x00000003
-#define EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO  0x00000004
+#define EXPORT_MDONLY_GRANTED                0x00000002
+#define EXPORT_PERMISSION_DENIED             0x00000003
+#define EXPORT_WRITE_ATTEMPT_WHEN_RO         0x00000004
+#define EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO  0x00000005
+
 
 /* NFS4 specific structures */
 
