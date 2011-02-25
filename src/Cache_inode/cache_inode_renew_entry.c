@@ -324,7 +324,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
                 }
 
               LogDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry returning %d (%s) from FSAL_getattrs for directory entries (1)",
-                           *pstatus, cache_inode_err_str(*pstatus));
+                       *pstatus, cache_inode_err_str(*pstatus));
               return *pstatus;
             }
         }
@@ -391,7 +391,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
               cache_inode_status_t kill_status;
 
               LogEvent(COMPONENT_CACHE_INODE, "cache_inode_renew_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
-                        pentry, __LINE__);
+                       pentry, __LINE__);
 
               if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
@@ -453,6 +453,11 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
       /* Call FSAL to get the attributes */
       object_attributes.asked_attributes = pclient->attrmask;
       fsal_status = FSAL_getattrs_descriptor(cache_inode_fd(pentry), pfsal_handle, pcontext, &object_attributes);
+      if(FSAL_IS_ERROR(fsal_status) && fsal_status.major == ERR_FSAL_NOT_OPENED)
+        {
+          //TODO: LOOKATME !!!!!
+          fsal_status = FSAL_getattrs(pfsal_handle, pcontext, &object_attributes);
+        }
       if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
@@ -465,7 +470,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
               cache_inode_status_t kill_status;
 
               LogEvent(COMPONENT_CACHE_INODE, "cache_inode_renew_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
-                        pentry, __LINE__);
+                       pentry, __LINE__);
 
               if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
@@ -543,7 +548,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
               cache_inode_status_t kill_status;
 
               LogEvent(COMPONENT_CACHE_INODE, "cache_inode_renew_entry: Stale FSAL File Handle detected for pentry = %p, line %u",
-                        pentry, __LINE__);
+                       pentry, __LINE__);
 
               if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
