@@ -91,8 +91,8 @@ cache_inode_getattr(cache_entry_t * pentry,
        ht == NULL || pclient == NULL || pcontext == NULL)
         {
             *pstatus = CACHE_INODE_INVALID_ARGUMENT;
-            LogFullDebug(COMPONENT_CACHE_INODE,
-                         "cache_inode_getattr: returning CACHE_INODE_INVALID_ARGUMENT because of bad arg");
+            LogDebug(COMPONENT_CACHE_INODE,
+                     "cache_inode_getattr: returning CACHE_INODE_INVALID_ARGUMENT because of bad arg");
             return *pstatus;
         }
 
@@ -167,6 +167,7 @@ cache_inode_getattr(cache_entry_t * pentry,
             if(FSAL_IS_ERROR(fsal_status))
                 {
                     *pstatus = cache_inode_error_convert(fsal_status);
+                    
                     V_r(&pentry->lock);
 
                     if(fsal_status.major == ERR_FSAL_STALE)
@@ -188,9 +189,9 @@ cache_inode_getattr(cache_entry_t * pentry,
 
                     /* stat */
                     inc_func_err_unrecover(pclient, CACHE_INODE_GETATTR);
-                    LogFullDebug(COMPONENT_CACHE_INODE,
-                                 "cache_inode_getattr: returning %d(%s) from FSAL_getattrs",
-                                 *pstatus, cache_inode_err_str(*pstatus));
+                    LogDebug(COMPONENT_CACHE_INODE,
+                             "cache_inode_getattr: returning %d(%s) from FSAL_getattrs_descriptor",
+                             *pstatus, cache_inode_err_str(*pstatus));
                     return *pstatus;
                 }
 

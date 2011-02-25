@@ -246,7 +246,6 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   char __attribute__ ((__unused__)) funcname[] = "nfs4_Compound";
   compound_data_t data;
   int opindex;
-  char *tmpstr = NULL;
 
   /* A "local" #define to avoid typo with nfs (too) long structure names */
 #define COMPOUND4_ARRAY parg->arg_compound4.argarray
@@ -331,6 +330,11 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   /* Keeping the same tag as in the arguments */
   memcpy(&(pres->res_compound4.tag), &(parg->arg_compound4.tag),
          sizeof(parg->arg_compound4.tag));
+  if(utf8dup(&(pres->res_compound4.tag), &(parg->arg_compound4.tag)) == -1)
+    {
+      LogCrit(COMPONENT_NFS_V4, "Unable to duplicate tag into response");
+      return NFS_REQ_DROP;
+    }
 
   /* Allocating the reply nfs_resop4 */
   if((pres->res_compound4.resarray.resarray_val =
@@ -422,8 +426,13 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
 
       memcpy(&(pres->res_compound4.resarray.resarray_val[i]), &res, sizeof(res));
 
-      utf82str(tmpstr, &(pres->res_compound4.tag));
-      LogDebug(COMPONENT_NFS_V4, "--> COMPOUND REQUEST TAG is #%s#", tmpstr);
+      if(isDebug(COMPONENT_NFS_V4))
+        {
+          char tmpstr[1024];
+          tmpstr[0] = '\0';
+          utf82str(tmpstr, sizeof(tmpstr), &(pres->res_compound4.tag));          
+          LogDebug(COMPONENT_NFS_V4, "--> COMPOUND REQUEST TAG is #%s#", tmpstr);
+        }
 
       // print_compound_fh(&data);    Very very very verbose if NFSv4 is used.... 
 
@@ -809,8 +818,7 @@ void nfs4_Compound_Free(nfs_res_t * pres)
 
     }                           /* for i */
   Mem_Free((char *)pres->res_compound4.resarray.resarray_val);
-  if(pres->res_compound4.tag.utf8string_len != 0)
-    Mem_Free(pres->res_compound4.tag.utf8string_val);
+  free_utf8(&pres->res_compound4.tag);
 
   return;
 }                               /* nfs4_Compound_Free */

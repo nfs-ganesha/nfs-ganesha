@@ -283,6 +283,7 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
     default:
       /* This should not happened */
       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+      LogCrit(COMPONENT_CACHE_INODE, "cache_inode_get returning CACHE_INODE_INVALID_ARGUMENT - this should not have happened");
 
       /* stats */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;

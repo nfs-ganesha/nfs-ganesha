@@ -856,6 +856,11 @@ cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status)
       return CACHE_INODE_FSAL_DELAY;
       break;
 
+    case ERR_FSAL_NOT_OPENED:
+      LogDebug(COMPONENT_CACHE_INODE, "cache_inode_error_convert conversion of ERR_FSAL_NOT_OPENED to CACHE_INODE_FSAL_ERROR");
+      return CACHE_INODE_FSAL_ERROR;
+      break;
+
     default:
       /* generic FSAL error */
       LogEvent(COMPONENT_CACHE_INODE,
@@ -866,9 +871,9 @@ cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status)
     }
 
   /* We should never reach this line, this may produce a warning with certain compiler */
-  LogEvent(COMPONENT_CACHE_INODE,
-           "cache_inode_error_convert: default conversion to CACHE_INODE_FSAL_ERROR for error %d, line %u should never be reached",
-            fsal_status.major, __LINE__);
+  LogCrit(COMPONENT_CACHE_INODE,
+          "cache_inode_error_convert: default conversion to CACHE_INODE_FSAL_ERROR for error %d, line %u should never be reached",
+           fsal_status.major, __LINE__);
   return CACHE_INODE_FSAL_ERROR;
 }                               /* cache_inode_error_convert */
 

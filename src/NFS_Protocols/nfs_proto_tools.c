@@ -1910,6 +1910,55 @@ void nfs4_stringid_split(char *buff, char *uidname, char *domainname)
 
 /**
  *
+ * free_utf8: Free's a utf8str that was created by utf8dup
+ *
+ * @param utf8str [IN]  UTF8 string to be freed
+ *
+ */
+void free_utf8(utf8string * utf8str)
+{
+  if(utf8str != NULL)
+    {
+      if(utf8str->utf8string_val != NULL)
+        Mem_Free(utf8str->utf8string_val);
+      utf8str->utf8string_val = 0;
+      utf8str->utf8string_len = 0;
+    }
+}
+
+/**
+ *
+ * utf8dup: Makes a copy of a utf8str.
+ *
+ * @param newstr  [OUT] copied UTF8 string
+ * @param oldstr  [IN]  input UTF8 string
+ *
+ * @return -1 if failed, 0 if successful.
+ *
+ */
+int utf8dup(utf8string * newstr, utf8string * oldstr)
+{
+  if(newstr == NULL)
+    return -1;
+
+  newstr->utf8string_len = oldstr->utf8string_len;
+  newstr->utf8string_val = NULL;
+
+  if(oldstr->utf8string_len == 0 || oldstr->utf8string_val == NULL)
+    return 0;
+
+  newstr->utf8string_val = (char *)Mem_Alloc_Label(oldstr->utf8string_len,
+                                                   "utf82str");
+  if(newstr->utf8string_val == NULL)
+    return -1;
+
+  strncpy(newstr->utf8string_val, oldstr->utf8string_val, oldstr->utf8string_len);
+
+  return 0;
+}                               /* uft82str */
+
+/**
+ *
  * utf82str: converts a UTF8 string buffer into a string descriptor.
  *
  * Converts a UTF8 string buffer into a string descriptor.
@@ -1920,21 +1969,29 @@ void nfs4_stringid_split(char *buff, char *uidname, char *domainname)
  * @return -1 if failed, 0 if successful.
  *
  */
-int utf82str(char *str, utf8string * utf8str)
+int utf82str(char *str, int size, utf8string * utf8str)
 {
-  if(utf8str == NULL || utf8str->utf8string_len == 0)
+  int copy;
+
+  if(str == NULL)
     return -1;
 
-  /* BUGAZOMEU: TO BE DONE: use STUFF ALLOCATOR here */
-  if(str == NULL)
+  if(utf8str == NULL || utf8str->utf8string_len == 0)
     {
-      if((str = (char *)Mem_Alloc_Label(utf8str->utf8string_len + 1,
-                                        "utf82str")) == NULL)
-        return NFS4ERR_SERVERFAULT;
+      str[0] = '\0';
+      return -1;
     }
 
-  strncpy(str, utf8str->utf8string_val, utf8str->utf8string_len);
-  str[utf8str->utf8string_len] = '\0';
+  if(utf8str->utf8string_len >= size)
+    copy = size - 1;
+  else
+    copy = utf8str->utf8string_len;
+
+  strncpy(str, utf8str->utf8string_val, copy);
+  str[copy] = '\0';
+
+  if(copy < utf8str->utf8string_len)
+    return -1;
 
   return 0;
 }                               /* uft82str */

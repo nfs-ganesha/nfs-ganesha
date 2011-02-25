@@ -1257,6 +1257,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_READDIR;
   res_READDIR4.status = NFS4_OK;
 
+  memset(&file_handle, 0, sizeof(file_handle_v4_t));
   memcpy((char *)&file_handle, data->currentFH.nfs_fh4_val, data->currentFH.nfs_fh4_len);
   nfsfh.nfs_fh4_len = data->currentFH.nfs_fh4_len;
   nfsfh.nfs_fh4_val = (char *)&file_handle;

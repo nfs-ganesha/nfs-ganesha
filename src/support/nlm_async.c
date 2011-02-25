@@ -35,10 +35,10 @@
 #include <strings.h>
 
 #include "stuff_alloc.h"
-#include "nlm_list.h"
+#include "nfs_proto_functions.h"
+#include "nlm_util.h"
 #include "nlm_async.h"
 #include "nlm4.h"
-#include "nfs_proto_functions.h"
 
 static pthread_t nlm_async_thread;
 static pthread_mutex_t nlm_async_queue_mutex;
@@ -53,6 +53,59 @@ typedef struct
   void *arg;
   struct glist_head glist;
 } nlm_queue_t;
+
+nlm_async_res_t *nlm_build_async_res_nlm4(char *caller_name, nfs_res_t * pres)
+{
+  nlm_async_res_t *arg;
+  arg = (nlm_async_res_t *) Mem_Alloc(sizeof(nlm_async_res_t));
+  if(arg != NULL)
+    {
+      arg->caller_name = Str_Dup(caller_name);
+      if(arg->caller_name == NULL)
+        {
+          Mem_Free(arg);
+          return NULL;
+        }
+      memcpy(&(arg->pres), pres, sizeof(nfs_res_t));
+      if(!copy_netobj(&arg->pres.res_nlm4.cookie, &pres->res_nlm4.cookie))
+        {
+          Mem_Free(arg);
+          return NULL;
+        }
+   }
+  return arg;
+}
+
+nlm_async_res_t *nlm_build_async_res_nlm4test(char *caller_name, nfs_res_t * pres)
+{
+  nlm_async_res_t *arg;
+  arg = (nlm_async_res_t *) Mem_Alloc(sizeof(nlm_async_res_t));
+  if(arg != NULL)
+    {
+      arg->caller_name = Str_Dup(caller_name);
+      if(arg->caller_name == NULL)
+        {
+          Mem_Free(arg);
+          return NULL;
+        }
+      memcpy(&(arg->pres), pres, sizeof(nfs_res_t));
+      if(!copy_netobj(&arg->pres.res_nlm4test.cookie, &pres->res_nlm4test.cookie))
+        {
+          Mem_Free(arg);
+          return NULL;
+        }
+      else if(pres->res_nlm4test.test_stat.stat == NLM4_DENIED)
+        { 
+          if(!copy_netobj(&arg->pres.res_nlm4test.test_stat.nlm4_testrply_u.holder.oh, &pres->res_nlm4test.test_stat.nlm4_testrply_u.holder.oh))
+            {
+              netobj_free(&arg->pres.res_nlm4test.cookie);
+              Mem_Free(arg);
+              return NULL;
+            }
+        }
+   }
+  return arg;
+}
 
 /* Execute a func from the async queue */
 void *nlm_async_func(void *argp)
@@ -86,7 +139,9 @@ void *nlm_async_func(void *argp)
           gettimeofday(&now, NULL);
           timeout.tv_sec = 10 + now.tv_sec;
           timeout.tv_nsec = 0;
+          LogFullDebug(COMPONENT_NLM, "nlm_async_thread waiting...");
           pthread_cond_timedwait(&nlm_async_queue_cond, &nlm_async_queue_mutex, &timeout);
+          LogFullDebug(COMPONENT_NLM, "nlm_async_thread woke up");
         }
       init_glist(&nlm_async_tmp_queue);
       /* Collect all the work items and add it to the temp
@@ -95,6 +150,7 @@ void *nlm_async_func(void *argp)
        */
       glist_for_each_safe(glist, glistn, &nlm_async_queue)
       {
+        entry = glist_entry(glist, nlm_queue_t, glist);
         glist_del(glist);
         glist_add(&nlm_async_tmp_queue, glist);
 
@@ -121,6 +177,8 @@ void nlm_async_callback(nlm_callback_func * func, void *arg)
   q->func = func;
   q->arg = arg;
 
+  LogFullDebug(COMPONENT_NLM, "nlm_async_callback %p:%p",
+               func, arg);
   pthread_mutex_lock(&nlm_async_queue_mutex);
   glist_add_tail(&nlm_async_queue, &q->glist);
   pthread_cond_signal(&nlm_async_queue_cond);
@@ -231,8 +289,8 @@ int nlm_send_async(int proc, char *host, void *inarg, void *key)
           gettimeofday(&now, NULL);
         }
       LogFullDebug(COMPONENT_NLM, "nlm_send_async done waiting");
-      pthread_mutex_unlock(&nlm_async_resp_mutex);
     }
+  pthread_mutex_unlock(&nlm_async_resp_mutex);
 
   clnt_destroy(clnt);
   return retval;

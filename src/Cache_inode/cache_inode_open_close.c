@@ -130,6 +130,10 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
         {
           *pstatus = cache_inode_error_convert(fsal_status);
 
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "cache_inode_open: returning %d(%s) from FSAL_close",
+                   *pstatus, cache_inode_err_str(*pstatus));
+
           return *pstatus;
         }
 
@@ -162,6 +166,10 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
       if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
+
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "cache_inode_open: returning %d(%s) from FSAL_open",
+                   *pstatus, cache_inode_err_str(*pstatus));
 
           return *pstatus;
         }
@@ -260,6 +268,10 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
         {
           *pstatus = cache_inode_error_convert(fsal_status);
 
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "cache_inode_open_by_name: returning %d(%s) from FSAL_close",
+                   *pstatus, cache_inode_err_str(*pstatus));
+
           return *pstatus;
         }
 
@@ -307,6 +319,10 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
       if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
+
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "cache_inode_open_by_name: returning %d(%s) from FSAL_open_by_name",
+                   *pstatus, cache_inode_err_str(*pstatus));
 
           return *pstatus;
         }
@@ -437,6 +453,10 @@ cache_inode_status_t cache_inode_close(cache_entry_t * pentry,
       if(FSAL_IS_ERROR(fsal_status) && (fsal_status.major != ERR_FSAL_NOT_OPENED))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
+
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "cache_inode_close: returning %d(%s) from FSAL_close",
+                   *pstatus, cache_inode_err_str(*pstatus));
 
           return *pstatus;
         }

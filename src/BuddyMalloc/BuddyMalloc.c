@@ -1595,6 +1595,35 @@ BUDDY_ADDR_T BuddyMallocExit(size_t Size)
 }
 
 /**
+ * BuddyStr_Dup : string duplicator based on buddy system.
+ *
+ * The  BuddyStr_Dup() function returns a pointer to a block of at least
+ * Size bytes suitably aligned (32 or 64bits depending on architectures). 
+ */
+char *BuddyStr_Dup(char * Str)
+{
+  char *NewStr = (char *) BuddyMalloc(strlen(Str)+1);
+  if(NewStr != NULL)
+    strcpy(NewStr, Str);
+  return NewStr;
+}
+
+/**
+ * BuddyStr_Dup_Exit : string duplicator based on buddy system.
+ *
+ * The  BuddyStr_Dup_Exit() function returns a pointer to a block of at least
+ * Size bytes suitably aligned (32 or 64bits depending on architectures). 
+ * If no memory is available, it stops current process.
+ */
+char *BuddyStr_Dup_Exit(char * Str)
+{
+  char *NewStr = (char *) BuddyMallocExit(strlen(Str)+1);
+  if(NewStr != NULL)
+    strcpy(NewStr, Str);
+  return NewStr;
+}
+
+/**
  *  Free allocated memory (without any owner checking)
  */
 static void __BuddyFree(BuddyThreadContext_t * context, BuddyBlock_t * p_block)
@@ -2271,6 +2300,26 @@ BUDDY_ADDR_T BuddyMalloc_Autolabel(size_t sz,
 {
   BuddySetDebugLabel(file, function, line, str);
   return BuddyMallocExit(sz);
+}
+
+/**
+ * BuddyStr_Dup : string duplicator based on buddy system.
+ *
+ * The  BuddyStr_Dup() function returns a pointer to a block of at least
+ * Size bytes suitably aligned (32 or 64bits depending on architectures). 
+ */
+char *BuddyStr_Dup_Autolabel(char * OldStr,
+                             const char *file,
+                             const char *function,
+                             const unsigned int line,
+                             const char *str)
+{
+  char *NewStr;
+  BuddySetDebugLabel(file, function, line, str);
+  NewStr = (char *) BuddyMallocExit(strlen(OldStr)+1);
+  if(NewStr != NULL)
+    strcpy(NewStr, OldStr);
+  return NewStr;
 }
 
 BUDDY_ADDR_T BuddyCalloc_Autolabel(size_t NumberOfElements, size_t ElementSize,
