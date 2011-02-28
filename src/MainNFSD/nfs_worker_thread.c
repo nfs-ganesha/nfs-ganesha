@@ -689,6 +689,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                             nfs_worker_data_t * pworker_data)
 {
   unsigned int rpcxid = 0;
+  nfs_function_desc_t funcdesc; 
+  unsigned int export_check_result;
 
   exportlist_t *pexport = NULL;
   nfs_arg_t arg_nfs;
@@ -716,6 +718,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   int status;
   unsigned int i;
   exportlist_client_entry_t related_client;
+  struct user_cred user_credentials;
 
 #ifdef _DEBUG_MEMLEAKS
   static int nb_iter_memleaks = 0;
@@ -982,11 +985,97 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   memset(&timer_end, 0, sizeof(struct timeval));
   memset(&timer_diff, 0, sizeof(struct timeval));
 
-  /* Do not call a MAKES_WRITE function on a read-only export entry */
-  if((pworker_data->pfuncdesc->dispatch_behaviour & MAKES_WRITE)
-     && (pexport->access_type == ACCESSTYPE_RO ||
-         pexport->access_type == ACCESSTYPE_MDONLY_RO))
+  /*
+   * It is now time for checking if export list allows the machine to perform the request
+   */
+  
+  /* Ask the RPC layer for the adresse of the machine */
+#ifdef _USE_TIRPC
+  /*
+   * In tirpc svc_getcaller is deprecated and replaced by
+   * svc_getrpccaller().
+   * svc_getrpccaller return a struct netbuf (see rpc/types.h) instead
+   * of a struct sockaddr_in directly.
+   */
+  pnetbuf = svc_getrpccaller(ptr_svc);
+  memcpy((char *)&pworker_data->hostaddr, (char *)pnetbuf->buf, pnetbuf->len);
+#else
+  phostaddr = svc_getcaller(ptr_svc);
+  memcpy((char *)&pworker_data->hostaddr, (char *)phostaddr,
+         sizeof(pworker_data->hostaddr));
+#endif
+  
+  /* Check if client is using a privileged port, but only for NFS protocol */
+  if(ptr_req->rq_prog == nfs_param.core_param.nfs_program && ptr_req->rq_proc != 0)
     {
+      if((pexport->options & EXPORT_OPTION_PRIVILEGED_PORT) &&
+         (ntohs(hostaddr.sin_port) >= IPPORT_RESERVED))
+        {
+          LogEvent(COMPONENT_DISPATCH,
+                   "/!\\ | Port %d is too high for this export entry, rejecting client",
+                   hostaddr.sin_port);
+          svcerr_auth(ptr_svc, AUTH_TOOWEAK);
+          pworker_data->current_xid = 0;    /* No more xid managed */
+          
+          if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
+                                &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+            {
+              LogCrit(COMPONENT_DISPATCH, "Attempt to delete duplicate request failed on line %d", __LINE__);
+            }
+          return;
+        }
+    }
+
+  if(pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_CRED)
+    {
+      if(get_req_uid_gid(ptr_req, &related_client, pexport, &user_credentials) == FALSE)
+        {
+          svcerr_auth(ptr_svc, AUTH_TOOWEAK);
+          pworker_data->current_xid = 0;    /* No more xid managed */
+          
+          if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
+                                &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+            {
+              LogCrit(COMPONENT_DISPATCH, "Attempt to delete duplicate request failed on line %d", __LINE__);
+            }
+          return;
+        }
+    }
+  
+  export_check_result = nfs_export_check_access(&pworker_data->hostaddr,
+                                                ptr_req,
+                                                pexport,
+                                                nfs_param.core_param.nfs_program,
+                                                nfs_param.core_param.mnt_program,
+                                                pworker_data->ht_ip_stats,
+                                                &pworker_data->ip_stats_pool,
+                                                &related_client,
+                                                &user_credentials,
+                                                (pworker_data->pfuncdesc->dispatch_behaviour & MAKES_WRITE) == MAKES_WRITE);
+  if (export_check_result == EXPORT_PERMISSION_DENIED)
+    {
+      LogEvent(COMPONENT_DISPATCH,
+               "/!\\ | Host 0x%x = %d.%d.%d.%d is not allowed to access this export entry, vers=%d, proc=%d",
+               ntohs(phostaddr->sin_addr.s_addr),
+               (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
+               (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
+               (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,
+               (ntohl(phostaddr->sin_addr.s_addr) & 0x000000FF),
+               (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
+      svcerr_auth( ptr_svc, AUTH_TOOWEAK ); 
+      pworker_data->current_xid = 0;        /* No more xid managed */
+      
+      if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
+                            &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+        {
+          LogCrit(COMPONENT_DISPATCH, "Attempt to delete duplicate request failed on line %d", __LINE__);
+        }
+      return;
+    }
+  else if ((export_check_result == EXPORT_WRITE_ATTEMPT_WHEN_RO) || 
+           (export_check_result == EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO))
+    {
+      LogDebug(COMPONENT_DISPATCH, "Dropping request because nfs_export_check_access() reported this is a RO filesystem.");
       if(ptr_req->rq_prog == nfs_param.core_param.nfs_program)
         {
           if(ptr_req->rq_vers == NFS_V2)
@@ -1006,97 +1095,34 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       else                      /* unexpected protocol (mount doesn't make write) */
         rc = NFS_REQ_DROP;
     }
-  else
+  else if ((export_check_result != EXPORT_PERMISSION_GRANTED) && 
+           (export_check_result != EXPORT_MDONLY_GRANTED))
     {
-      /* This is not a MAKES_WRITE call done on a read-only export entry */
-
-      /*
-       * It is now time for checking if export list allows the machine to perform the request
-       */
-
-      /* Ask the RPC layer for the adresse of the machine */
-#ifdef _USE_TIRPC
-      /*
-       * In tirpc svc_getcaller is deprecated and replaced by
-       * svc_getrpccaller().
-       * svc_getrpccaller return a struct netbuf (see rpc/types.h) instead
-       * of a struct sockaddr_in directly.
-       */
-      pnetbuf = svc_getrpccaller(ptr_svc);
-      memcpy((char *)&pworker_data->hostaddr, (char *)pnetbuf->buf, pnetbuf->len);
-#else
-      phostaddr = svc_getcaller(ptr_svc);
-      memcpy((char *)&pworker_data->hostaddr, (char *)phostaddr,
-             sizeof(pworker_data->hostaddr));
-#endif
-
-      /* Check if client is using a privileged port, but only for NFS protocol */
-      if(ptr_req->rq_prog == nfs_param.core_param.nfs_program && ptr_req->rq_proc != 0)
-        {
-          if((pexport->options & EXPORT_OPTION_PRIVILEGED_PORT) &&
-             (ntohs(hostaddr.sin_port) >= IPPORT_RESERVED))
-            {
-              LogEvent(COMPONENT_DISPATCH,
-                       "Port %d is too high for this export entry, rejecting client",
-                       hostaddr.sin_port);
-              svcerr_auth(ptr_svc, AUTH_TOOWEAK);
-              pworker_data->current_xid = 0;    /* No more xid managed */
-
-	      if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
-				    &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
-		{
-		  LogCrit(COMPONENT_DISPATCH, "Attempt to delete duplicate request failed on line %d", __LINE__);
-		}
-              return;
-            }
-        }
-
-      if(nfs_export_check_access(&pworker_data->hostaddr,
-                                 ptr_req,
-                                 pexport,
-                                 nfs_param.core_param.nfs_program,
-                                 nfs_param.core_param.mnt_program,
-                                 pworker_data->ht_ip_stats,
-                                 &pworker_data->ip_stats_pool, &related_client) == FALSE)
-        {
-          LogEvent(COMPONENT_DISPATCH,
-                   "Host 0x%x = %d.%d.%d.%d is not allowed to access this export entry, vers=%d, proc=%d",
-                   ntohs(phostaddr->sin_addr.s_addr),
-                   (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
-                   (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
-                   (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,
-                   (ntohl(phostaddr->sin_addr.s_addr) & 0x000000FF),
-                   (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
-          /* svcerr_auth( ptr_svc, AUTH_TOOWEAK ) ; */
-          pworker_data->current_xid = 0;        /* No more xid managed */
-
-	  if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
-				&pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
-	    {
-	      LogCrit(COMPONENT_DISPATCH, "Attempt to delete duplicate request failed on line %d", __LINE__);
-	    }
-          return;
-        }
-
+      /* If not EXPORT_PERMISSION_GRANTED, then we are all out of options! */
+      LogMajor(COMPONENT_DISPATCH, "nfs_export_check_access() returned none of the expected flags. This is an unexpected state!");
+    }
+  else  /* export_check_result == EXPORT_PERMISSION_GRANTED is TRUE */
+    {
+      LogFullDebug(COMPONENT_DISPATCH, "nfs_export_check_access() reported PERMISSION GRANTED.");
       /* Do the authentication stuff, if needed */
       if(pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_CRED)
         {
           if(nfs_build_fsal_context
              (ptr_req, &related_client, pexport,
-              &pworker_data->thread_fsal_context) == FALSE)
+              &pworker_data->thread_fsal_context, &user_credentials) == FALSE)
             {
               svcerr_auth(ptr_svc, AUTH_TOOWEAK);
               pworker_data->current_xid = 0;    /* No more xid managed */
-
-	      if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
-				    &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
-		{
-		  LogCrit(COMPONENT_DISPATCH, "Attempt to delete duplicate request failed on line %d", __LINE__);
-		}
+              
+              if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
+                                    &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+                {
+                  LogCrit(COMPONENT_DISPATCH, "Attempt to delete duplicate request failed on line %d", __LINE__);
+                }
               return;
             }
         }
-
+      
       /* processing */
       gettimeofday(timer_start, NULL);
 
@@ -1128,7 +1154,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 #else
       V(mutex_cond_xprt[ptr_svc->xp_sock]);
 #endif
-
+      
       gettimeofday(&timer_end, NULL);
       timer_diff = time_diff(*timer_start, timer_end);
       memset(timer_start, 0, sizeof(struct timeval));
@@ -1145,7 +1171,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 
   /* Perform statistics here */
   stat_type = (rc == NFS_REQ_OK) ? GANESHA_STAT_SUCCESS : GANESHA_STAT_DROP;
-
+  
   latency_stat.type = SVC_TIME;
   latency_stat.latency = timer_diff.tv_sec * 1000000 + timer_diff.tv_usec; /* microseconds */
 

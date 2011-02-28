@@ -100,6 +100,10 @@ cache_content_client_t recover_datacache_client;
 #define CONF_EXPORT_PATH               "Path"
 #define CONF_EXPORT_ROOT               "Root_Access"
 #define CONF_EXPORT_ACCESS             "Access"
+#define CONF_EXPORT_READ_ACCESS        "R_Access"
+#define CONF_EXPORT_READWRITE_ACCESS   "RW_Access"
+#define CONF_EXPORT_MD_ACCESS          "MDONLY_Access"
+#define CONF_EXPORT_MD_RO_ACCESS       "MDONLY_RO_Access"
 #define CONF_EXPORT_PSEUDO             "Pseudo"
 #define CONF_EXPORT_ACCESSTYPE         "Access_Type"
 #define CONF_EXPORT_ANON_ROOT          "Anonymous_root_uid"
@@ -156,6 +160,8 @@ cache_content_client_t recover_datacache_client;
 #define FLAG_EXPORT_MAX_OFF_READ    0x00800000
 #define FLAG_EXPORT_MAX_CACHE_SIZE  0x01000000
 #define FLAG_EXPORT_USE_PNFS        0x02000000
+#define FLAG_EXPORT_ACCESS_LIST     0x04000000
+#define FLAG_EXPORT_ACCESSTYPE_LIST 0x08000000
 
 /* limites for nfs_ParseConfLine */
 /* Used in BuildExportEntry() */
@@ -847,20 +853,56 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         {
 	  parseAccessParam(var_name, var_value, p_entry,
 			   EXPORT_OPTION_ROOT);
-          /* Notice that as least one of the two options
-           * Root_Access or access has been specified.
-           */
+	  /* Notice that as least one of the three options
+	   * Root_Access, R_Access, or RW_Access has been specified.
+	   */
           set_options |= FLAG_EXPORT_ROOT_OR_ACCESS;
 
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ACCESS))
         {
-	  parseAccessParam(var_name, var_value, p_entry,
-			   EXPORT_OPTION_ACCESS);
-	  /* Notice that as least one of the two options
-	   * Root_Access or access has been specified.
+          parseAccessParam(var_name, var_value, p_entry,
+                           EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS);
+	  /* Notice that as least one of the three options
+	   * Root_Access, R_Access, or RW_Access has been specified.
 	   */
-	  set_options |= FLAG_EXPORT_ROOT_OR_ACCESS;
+	  set_options |= FLAG_EXPORT_ROOT_OR_ACCESS | FLAG_EXPORT_ACCESS_LIST;
+        }
+      else if(!STRCMP(var_name, CONF_EXPORT_MD_ACCESS))
+        {
+	  parseAccessParam(var_name, var_value, p_entry,
+			   EXPORT_OPTION_MD_WRITE_ACCESS | EXPORT_OPTION_MD_READ_ACCESS);
+	  /* Notice that as least one of the three options
+	   * Root_Access, R_Access, or RW_Access has been specified.
+	   */
+	  set_options |= FLAG_EXPORT_ROOT_OR_ACCESS | FLAG_EXPORT_ACCESSTYPE_LIST;
+        }
+      else if(!STRCMP(var_name, CONF_EXPORT_MD_RO_ACCESS))
+        {
+	  parseAccessParam(var_name, var_value, p_entry,
+			   EXPORT_OPTION_MD_READ_ACCESS);
+	  /* Notice that as least one of the three options
+	   * Root_Access, R_Access, or RW_Access has been specified.
+	   */
+	  set_options |= FLAG_EXPORT_ROOT_OR_ACCESS | FLAG_EXPORT_ACCESSTYPE_LIST;
+        }
+      else if(!STRCMP(var_name, CONF_EXPORT_READ_ACCESS))
+        {
+	  parseAccessParam(var_name, var_value, p_entry,
+			   EXPORT_OPTION_READ_ACCESS);
+	  /* Notice that as least one of the three options
+	   * Root_Access, R_Access, or RW_Access has been specified.
+	   */
+	  set_options |= FLAG_EXPORT_ROOT_OR_ACCESS | FLAG_EXPORT_ACCESSTYPE_LIST;
+        }
+      else if(!STRCMP(var_name, CONF_EXPORT_READWRITE_ACCESS))
+        {
+	  parseAccessParam(var_name, var_value, p_entry,
+			   EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS);
+	  /* Notice that as least one of the three options
+	   * Root_Access, R_Access, or RW_Access has been specified.
+	   */
+	  set_options |= FLAG_EXPORT_ROOT_OR_ACCESS | FLAG_EXPORT_ACCESSTYPE_LIST;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_PSEUDO))
         {
@@ -893,8 +935,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ACCESSTYPE))
         {
-
-          /* check if it has not already been set */
+          // check if it has not already been set 
           if((set_options & FLAG_EXPORT_ACCESSTYPE) == FLAG_EXPORT_ACCESSTYPE)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_ACCESSTYPE);
@@ -1801,7 +1842,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
     }
 
   /** check for mandatory options */
-
   if((set_options & mandatory_options) != mandatory_options)
     {
       if((set_options & FLAG_EXPORT_ID) != FLAG_EXPORT_ID)
@@ -1813,15 +1853,29 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                    CONF_EXPORT_PATH);
 
       if((set_options & FLAG_EXPORT_ROOT_OR_ACCESS) != FLAG_EXPORT_ROOT_OR_ACCESS)
-        LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Missing mandatory parameter %s or %s",
-                   CONF_EXPORT_ROOT, CONF_EXPORT_ACCESS);
+        LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Missing mandatory parameter %s or %s or %s",
+                CONF_EXPORT_ROOT, CONF_EXPORT_READ_ACCESS, CONF_EXPORT_READWRITE_ACCESS);
 
       if((set_options & FLAG_EXPORT_PSEUDO) != FLAG_EXPORT_PSEUDO)
         LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: Missing mandatory parameter %s",
                    CONF_EXPORT_PSEUDO);
-
+        
       err_flag = TRUE;
     }
+
+  if (
+      ((set_options & FLAG_EXPORT_ACCESSTYPE) || (set_options & FLAG_EXPORT_ACCESS_LIST)) && 
+      (set_options & FLAG_EXPORT_ACCESSTYPE_LIST))
+    {
+      LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: ERROR: %s list cannot be used when %s and/or %s are used in the same export entry config.",
+              CONF_EXPORT_READWRITE_ACCESS, CONF_EXPORT_ACCESSTYPE, CONF_EXPORT_ACCESS);
+      err_flag = TRUE;
+    }
+
+  if ((set_options & FLAG_EXPORT_ACCESSTYPE) || (set_options & FLAG_EXPORT_ACCESS_LIST))
+    p_entry->new_access_list_version = FALSE;
+  else
+    p_entry->new_access_list_version = TRUE;    
 
   /* check if there had any error.
    * if so, free the p_entry and return an error.
@@ -2026,15 +2080,19 @@ int export_client_match(unsigned int addr,
 
   if(export_option & EXPORT_OPTION_ROOT)
     LogFullDebug(COMPONENT_DISPATCH, "Looking for root access entries");
-  if(export_option & EXPORT_OPTION_ACCESS)
-    LogFullDebug(COMPONENT_DISPATCH, "Looking for access only entries");
+  if(export_option & EXPORT_OPTION_READ_ACCESS)
+    LogFullDebug(COMPONENT_DISPATCH, "Looking for nonroot access read entries");
+  if(export_option & EXPORT_OPTION_WRITE_ACCESS)
+    LogFullDebug(COMPONENT_DISPATCH, "Looking for nonroot access write entries");
 
   for(i = 0; i < clients->num_clients; i++)
     {
-
-      /* only match the specified flags */
-      if((clients->clientarray[i].options & export_option) != export_option)
+      /* Make sure the client entry has the permission flags we're looking for
+       * Also make sure we aren't looking at a root client entry when we're not root. */
+      if(((clients->clientarray[i].options & export_option) == 0) ||
+         ((clients->clientarray[i].options & EXPORT_OPTION_ROOT) != (export_option & EXPORT_OPTION_ROOT)))
         continue;
+
       switch (clients->clientarray[i].type)
         {
         case HOSTIF_CLIENT:
@@ -2169,15 +2227,17 @@ int export_client_matchv6(struct in6_addr *paddrv6,
 
   if(export_option & EXPORT_OPTION_ROOT)
     LogFullDebug(COMPONENT_DISPATCH, "Looking for root access entries");
-  if(export_option & EXPORT_OPTION_ACCESS)
-    LogFullDebug(COMPONENT_DISPATCH, "Looking for access only entries");
+  if(export_option & EXPORT_OPTION_READ_ACCESS)
+    LogFullDebug(COMPONENT_DISPATCH, "Looking for nonroot access read entries");
+  if(export_option & EXPORT_OPTION_WRITE_ACCESS)
+    LogFullDebug(COMPONENT_DISPATCH, "Looking for nonroot access write entries");
 
   for(i = 0; i < clients->num_clients; i++)
     {
-
-      /* only match the specified flags */
-      if((clients->clientarray[i].options & export_option) != export_option)
-        continue;
+      /* Make sure the client entry has the permission flags we're looking for
+       * Also make sure we aren't looking at a root client entry when we're not root. */
+      if(((clients->clientarray[i].options & export_option) == 0) ||
+         ((clients->clientarray[i].options & EXPORT_OPTION_ROOT) != (export_option & EXPORT_OPTION_ROOT)))
 
       switch (clients->clientarray[i].type)
         {
@@ -2220,7 +2280,7 @@ int export_client_matchv6(struct in6_addr *paddrv6,
  * @param ip_stats_pool [INOUT] IP/stats pool
  * @param pclient_found [OUT]   pointer to client entry found in export list, NULL if nothing was found.
  *
- * @return TRUE if access in granted, FALSE otherwise.
+ * @return EXPORT_PERMISSION_GRANTED on success and EXPORT_PERMISSION_DENIED, EXPORT_WRITE_ATTEMPT_WHEN_RO, or EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO on failure.
  *
  */
 
@@ -2231,7 +2291,9 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
                             unsigned int mnt_prog,
                             hash_table_t * ht_ip_stats,
                             struct prealloc_pool *ip_stats_pool,
-                            exportlist_client_entry_t * pclient_found)
+                            exportlist_client_entry_t * pclient_found,
+                            struct user_cred *user_credentials,
+                            bool_t proc_makes_write)
 {
   int rc;
   unsigned int addr;
@@ -2244,6 +2306,11 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
   char ipstring[MAXHOSTNAMELEN];
   char ip6string[MAXHOSTNAMELEN];
 
+  if(proc_makes_write && (pexport->access_type == ACCESSTYPE_RO))
+    return EXPORT_WRITE_ATTEMPT_WHEN_RO;
+  else if(proc_makes_write && (pexport->access_type == ACCESSTYPE_MDONLY_RO))
+    return EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO;
+
   memset(ten_bytes_all_0, 0, 10);
 
   psockaddr_in = (struct sockaddr_in *)pssaddr;
@@ -2254,15 +2321,15 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
 
   /* PROC NULL is always authorized, in all protocols */
   if(ptr_req->rq_proc == 0)
-    return TRUE;
+    return EXPORT_PERMISSION_GRANTED;
 
   /* If mount protocol is called, just check that AUTH_NONE is not used */
   if(ptr_req->rq_prog == mnt_prog)
     {
       if(ptr_req->rq_cred.oa_flavor != AUTH_NONE)
-        return TRUE;
+        return EXPORT_PERMISSION_GRANTED;
       else
-        return FALSE;
+        return EXPORT_PERMISSION_DENIED;
     }
 #ifdef _USE_TIPRC_IPV6
   if(psockaddr_in->sin_family == AF_INET)
@@ -2275,6 +2342,10 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
         if(nfs_ip_stats_add(ht_ip_stats, addr, ip_stats_pool) == IP_STATS_SUCCESS)
           rc = nfs_ip_stats_incr(ht_ip_stats, addr, nfs_prog, mnt_prog, ptr_req);
       }
+
+  if (pexport->new_access_list_version)
+    pexport->access_type = ACCESSTYPE_RW;
+
 #ifdef _USE_TIRPC_IPV6
   if(psockaddr_in->sin_family == AF_INET)
     {
@@ -2286,16 +2357,44 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
       if(ipstring == NULL)
         {
           LogCrit(COMPONENT_DISPATCH, "Error: Could not convert the IPv4 address to a character string.");
-          return FALSE;
+          return EXPORT_PERMISSION_DENIED;
         }
 
       /* check if any root access export matches this client */
-      if(export_client_match(addr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_ROOT))
-        return TRUE;
+      if((user_credentials->caller_uid == 0) &&
+         (export_client_match(addr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_ROOT)))
+        {
+          return EXPORT_PERMISSION_GRANTED;
+        }
       /* else, check if any access only export matches this client */
-      else if(export_client_match
-              (addr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_ACCESS))
-        return TRUE;
+      if(proc_makes_write) {
+        if (export_client_match(addr, ipstring, 
+                                &(pexport->clients), pclient_found, EXPORT_OPTION_WRITE_ACCESS))
+          {
+            return EXPORT_PERMISSION_GRANTED;
+          }
+        else if ( pexport->new_access_list_version && export_client_match(addr, ipstring, 
+
+                                     &(pexport->clients), pclient_found, EXPORT_OPTION_MD_WRITE_ACCESS))
+          {
+            pexport->access_type = ACCESSTYPE_MDONLY;
+            return EXPORT_MDONLY_GRANTED;
+          }
+      } else { /* request will not write anything */
+        if (export_client_match(addr, ipstring,
+                                &(pexport->clients), pclient_found, EXPORT_OPTION_READ_ACCESS))
+          {
+            return EXPORT_PERMISSION_GRANTED;
+          }
+        else if ( pexport->new_access_list_version && export_client_match(addr, ipstring, 
+                                     &(pexport->clients), pclient_found, EXPORT_OPTION_MD_READ_ACCESS))
+          {
+            pexport->access_type = ACCESSTYPE_MDONLY_RO;
+            return EXPORT_MDONLY_GRANTED;
+          }
+      }
+      return EXPORT_PERMISSION_DENIED;
+      
 #ifdef _USE_TIRPC_IPV6
     }
   else
@@ -2328,7 +2427,7 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
             {
               LogCrit(COMPONENT_DISPATCH,
                    "Error: Could not convert the IPv6 address to a character string.");
-              return FALSE;
+              return EXPORT_PERMISSION_DENIED;
             }
 
           /* This is an IPv4 address mapped to an IPv6 one. Extract the IPv4 address and proceed with IPv4 autentication */
@@ -2336,28 +2435,66 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
 
           /* Proceed with IPv4 dedicated function */
           /* check if any root access export matches this client */
-          if(export_client_match
-             (addr, ip6string, &(pexport->clients), pclient_found, EXPORT_OPTION_ROOT))
-            return TRUE;
+          if((user_credentials->caller_uid == 0) &&
+             export_client_match(addr, ip6string, &(pexport->clients),
+                                 pclient_found, EXPORT_OPTION_ROOT))
+            return EXPORT_PERMISSION_GRANTED;
           /* else, check if any access only export matches this client */
-          else if(export_client_match
-                  (addr, ip6string, &(pexport->clients), pclient_found, EXPORT_OPTION_ACCESS))
-            return TRUE;
+          if(proc_makes_write)
+            {
+              if (export_client_match(addr, ip6string, &(pexport->clients), pclient_found, EXPORT_OPTION_WRITE_ACCESS))
+                return EXPORT_PERMISSION_GRANTED;
+              else if (pexport->new_access_list_version && export_client_match(addr, ip6string, 
+                                           &(pexport->clients), pclient_found, EXPORT_OPTION_MD_WRITE_ACCESS))
+                {
+                  pexport->access_type = ACCESSTYPE_MDONLY;
+                  return EXPORT_MDONLY_GRANTED;
+                }
+            } else { /* request will not write anything */
+            if (export_client_match(addr, ip6string, &(pexport->clients), pclient_found, EXPORT_OPTION_READ_ACCESS))
+              return EXPORT_PERMISSION_GRANTED;
+            else if (pexport->new_access_list_version && export_client_match(addr, ip6string, 
+                                         &(pexport->clients), pclient_found, EXPORT_OPTION_MD_READ_ACCESS))
+              {
+                pexport->access_type = ACCESSTYPE_MDONLY_RO;
+                return EXPORT_MDONLY_GRANTED;
+              }
+          }
         }
-
-      if(export_client_matchv6
-         (&(psockaddr_in6->sin6_addr), &(pexport->clients), pclient_found, EXPORT_OPTION_ROOT))
-        return TRUE;
+      
+      if((user_credentials->caller_uid == 0) &&
+         export_client_matchv6(&(psockaddr_in6->sin6_addr), &(pexport->clients),
+                               pclient_found, EXPORT_OPTION_ROOT))
+        return EXPORT_PERMISSION_GRANTED;
       /* else, check if any access only export matches this client */
-      else if(export_client_matchv6
-              (&(psockaddr_in6->sin6_addr), &(pexport->clients), pclient_found, EXPORT_OPTION_ACCESS))
-        return TRUE;
+      if(proc_makes_write)
+        {
+          if (export_client_matchv6(&(psockaddr_in6->sin6_addr), &(pexport->clients), pclient_found, EXPORT_OPTION_WRITE_ACCESS))
+            return EXPORT_PERMISSION_GRANTED;
+          else if (pexport->new_access_list_version && export_client_matchv6(&(psockaddr_in6->sin6_addr),
+                                       &(pexport->clients), pclient_found, EXPORT_OPTION_MD_WRITE_ACCESS))
+            {
+              pexport->access_type = ACCESSTYPE_MDONLY;
+              return EXPORT_MDONLY_GRANTED;
+            }
+        }
+      else
+        { /* request will not write anything */
+          if (export_client_matchv6(&(psockaddr_in6->sin6_addr), &(pexport->clients), pclient_found, EXPORT_OPTION_READ_ACCESS))
+            return EXPORT_PERMISSION_GRANTED;
+          else if (pexport->new_access_list_version && export_client_matchv6(&(psockaddr_in6->sin6_addr),
+                                         &(pexport->clients), pclient_found, EXPORT_OPTION_MD_READ_ACCESS))
+            {
+              pexport->access_type = ACCESSTYPE_MDONLY_RO;
+              return EXPORT_MDONLY_GRANTED;
+            }
+        }
     }
 #endif                          /* _USE_TIRPC_IPV6 */
-
+  
   /* If this point is reached, no matching entry was found */
-  return FALSE;
-
+  return EXPORT_PERMISSION_DENIED;
+  
 }                               /* nfs_export_check_access */
 
 /**
