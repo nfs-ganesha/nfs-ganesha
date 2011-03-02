@@ -374,9 +374,11 @@ AM_CONDITIONAL(USE_MFSL,                 test "$MFSL" != "NONE" )
 
 # PNFS_FILE is to be used with implicit MFSL == MFSL_PNFS_FILE
 if test "$enable_pnfs" == "yes"; then
-    AM_CONDITIONAL(USE_MFSL_PNFS_FILE, test "$enable_pnfs" = "yes")
-    AM_CONDITIONAL(USE_MFSL,           test "$enable_pnfs" = "yes")
-    MFSL="PNFS_FILE"
+    if test "$FSAL" != "LUSTRE" ; then
+    	AM_CONDITIONAL(USE_MFSL_PNFS_FILE, test "$enable_pnfs" = "yes")
+    	AM_CONDITIONAL(USE_MFSL,           test "$enable_pnfs" = "yes")
+    	MFSL="PNFS_FILE"
+    fi
 fi
 AM_CONDITIONAL(USE_MFSL_PNFS_FILE, test "$enable_pnfs" = "yes")
 
