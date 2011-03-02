@@ -706,6 +706,7 @@ AC_CONFIG_FILES([include/Makefile
                  include/MFSL/MFSL_PROXY_RPCSECGSS/Makefile
                  include/PNFS/Makefile
 		 include/PNFS/LAYOUT4_NFSV4_1_FILES/Makefile
+		 include/PNFS/LAYOUT4_NFSV4_1_FILES_LUSTRE/Makefile
                  BuddyMalloc/Makefile
                  Common/Makefile
                  support/Makefile
@@ -724,6 +725,7 @@ AC_CONFIG_FILES([include/Makefile
 		 NFS_Protocols/Makefile
 		 PNFS/Makefile
 		 PNFS/LAYOUT4_NFSV4_1_FILES/Makefile
+		 PNFS/LAYOUT4_NFSV4_1_FILES_LUSTRE/Makefile
                  XDR/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile

@@ -5,17 +5,7 @@ noinst_LTLIBRARIES = libpnfslayoutfile.la
 libpnfslayoutfile_la_SOURCES = pnfs_init.c                 \
                                pnfs_encode_getdeviceinfo.c \
                                pnfs_encode_layoutget.c     \
-                               pnfs_connect.c              \
-                               pnfs_do_mount.c             \
-                               pnfs_refresh_session.c      \
-                               pnfs_lookup.c               \
-                               pnfs_ds_create_file.c       \
                                pnfs_ds_get_location.c      \
-                               pnfs_ds_open_file.c         \
-                               pnfs_ds_lookup_file.c       \
-                               pnfs_ds_truncate_file.c     \
-                               pnfs_ds_read_conf.c         \
-                               pnfs_ds_unlink_file.c       \
-                               pnfs_nfsv41_macros.h 
+                               pnfs_ds_read_conf.c         
 
 new: clean all

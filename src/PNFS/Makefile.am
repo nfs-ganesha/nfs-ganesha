@@ -8,6 +8,10 @@ noinst_LTLIBRARIES          = libpnfs.la
 
 libpnfs_la_SOURCES = pnfs_glue.c 
 
+if USE_FSAL_LUSTRE
+libpnfs_la_LIBADD =  LAYOUT4_NFSV4_1_FILES_LUSTRE/libpnfslayoutfile.la
+else
 libpnfs_la_LIBADD =  LAYOUT4_NFSV4_1_FILES/libpnfslayoutfile.la
+endif
  
 endif

@@ -73,8 +73,6 @@ typedef struct pnfs_ds_parameter__
   unsigned int ipaddr;
   unsigned short ipport;
   unsigned int prognum;
-  char rootpath[MAXPATHLEN];
-  char ipaddr_ascii[MAXNAMLEN];
   unsigned int id;
   bool_t is_ganesha;
 } pnfs_ds_parameter_t;
@@ -86,14 +84,6 @@ typedef struct pnfs_layoutfile_parameter__
   pnfs_ds_parameter_t ds_param[NB_MAX_PNFS_DS];
 } pnfs_layoutfile_parameter_t;
 
-typedef struct pnfs_ds_client__
-{
-  sessionid4 session;
-  clientid4  clientid;
-  sequenceid4 sequence;
-  nfs_fh4 ds_rootfh;
-  CLIENT *rpc_client;
-} pnfs_ds_client_t;
 
 typedef struct pnfs_client__
 {
@@ -101,26 +91,6 @@ typedef struct pnfs_client__
   pnfs_ds_client_t ds_client[NB_MAX_PNFS_DS];
 } pnfs_client_t;
 
-typedef struct pnfs_ds_loc__
-{
-  char          str_mds_handle[MAXNAMLEN];
-}  pnfs_ds_loc_t ;
-
-typedef struct pnfs_part_file__
-{
-  bool_t is_ganesha;
-  unsigned int deviceid;
-  nfs_fh4 handle;
-  stateid4 stateid;
-} pnfs_part_file_t;
-
-typedef struct pnfs_ds_file__
-{
-  unsigned int stripe;
-  bool_t allocated;
-  pnfs_ds_loc_t location ;
-  pnfs_part_file_t filepart[NB_MAX_PNFS_DS];
-} pnfs_ds_file_t;
 
 typedef struct pnfs_layoutfile_hints__
 {
@@ -129,18 +99,6 @@ typedef struct pnfs_layoutfile_hints__
 
 /* Mandatory functions */
 
-int pnfs_ds_get_location( pnfs_client_t    * pnfsclient,
-                          fsal_handle_t    * phandle, 
-                          pnfs_ds_hints_t  * phints,
-	                  pnfs_ds_loc_t    * plocation ) ; 
-
 void pnfs_ds_encode_getdeviceinfo(char *buff, unsigned int *plen);
 void pnfs_ds_encode_layoutget(pnfs_ds_file_t * pds_file, char *buff, unsigned int *plen);
-
-/* Internal functions */
-int pnfs_connect(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pnfs_ds_param);
-
-int pnfs_lookupPath(pnfs_ds_client_t * pnfsdsclient, char *p_path,
-                    nfs_fh4 * object_handle);
-
 #endif                          /* _PNFS_LAYOUT4_NFSV4_1_FILES_H */
