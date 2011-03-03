@@ -1427,6 +1427,7 @@ void *worker_thread(void *IndexArg)
 
 #ifdef _USE_PNFS
   /* Init the pNFS engine for each worker */
+#ifndef _USE_LUSTRE
   if(pnfs_init(&pmydata->cache_inode_client.mfsl_context.pnfsclient, &nfs_param.pnfs_param.layoutfile))
     {
       /* Failed init */
@@ -1436,6 +1437,8 @@ void *worker_thread(void *IndexArg)
     }
   LogDebug(COMPONENT_DISPATCH,
            "NFS WORKER #%lu: pNFS engine successfully initialized", index);
+#endif
+
 #endif
   /* notify dispatcher it is ready */
   pmydata->is_ready = TRUE;
