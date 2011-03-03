@@ -2306,10 +2306,13 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
   char ipstring[MAXHOSTNAMELEN];
   char ip6string[MAXHOSTNAMELEN];
 
-  if(proc_makes_write && (pexport->access_type == ACCESSTYPE_RO))
-    return EXPORT_WRITE_ATTEMPT_WHEN_RO;
-  else if(proc_makes_write && (pexport->access_type == ACCESSTYPE_MDONLY_RO))
-    return EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO;
+  if (pexport != NULL)
+    if (pexport->new_access_list_version)
+      pexport->access_type = ACCESSTYPE_RW;
+    else if(proc_makes_write && (pexport->access_type == ACCESSTYPE_RO))
+      return EXPORT_WRITE_ATTEMPT_WHEN_RO;
+    else if(proc_makes_write && (pexport->access_type == ACCESSTYPE_MDONLY_RO))
+      return EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO;
 
   memset(ten_bytes_all_0, 0, 10);
 
@@ -2342,9 +2345,6 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
         if(nfs_ip_stats_add(ht_ip_stats, addr, ip_stats_pool) == IP_STATS_SUCCESS)
           rc = nfs_ip_stats_incr(ht_ip_stats, addr, nfs_prog, mnt_prog, ptr_req);
       }
-
-  if (pexport->new_access_list_version)
-    pexport->access_type = ACCESSTYPE_RW;
 
 #ifdef _USE_TIRPC_IPV6
   if(psockaddr_in->sin_family == AF_INET)
