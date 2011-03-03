@@ -73,6 +73,8 @@ typedef struct pnfs_ds_parameter__
   unsigned int ipaddr;
   unsigned short ipport;
   unsigned int prognum;
+  char rootpath[MAXPATHLEN];
+  char ipaddr_ascii[MAXNAMLEN];
   unsigned int id;
   bool_t is_ganesha;
 } pnfs_ds_parameter_t;
@@ -88,8 +90,13 @@ typedef struct pnfs_layoutfile_parameter__
 typedef struct pnfs_client__
 {
   unsigned int nb_ds;
-  pnfs_ds_client_t ds_client[NB_MAX_PNFS_DS];
 } pnfs_client_t;
+
+
+typedef struct pnfs_ds_loc__
+{
+  int nothing_right_now ;
+}  pnfs_ds_loc_t ;
 
 
 typedef struct pnfs_layoutfile_hints__
@@ -99,6 +106,6 @@ typedef struct pnfs_layoutfile_hints__
 
 /* Mandatory functions */
 
-void pnfs_ds_encode_getdeviceinfo(char *buff, unsigned int *plen);
-void pnfs_ds_encode_layoutget(pnfs_ds_file_t * pds_file, char *buff, unsigned int *plen);
+void pnfs_lustre_encode_getdeviceinfo(char *buff, unsigned int *plen);
+void pnfs_lustre_encode_layoutget( char * buffin, unsigned int *plenin,  char *buffout, unsigned int *plenout);
 #endif                          /* _PNFS_LAYOUT4_NFSV4_1_FILES_H */

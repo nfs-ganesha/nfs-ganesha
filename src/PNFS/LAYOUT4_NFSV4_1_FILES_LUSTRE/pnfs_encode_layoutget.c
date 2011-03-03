@@ -43,7 +43,7 @@
  *
  */
 
-void pnfs_ds_encode_layoutget(pnfs_ds_file_t * pds_file, char *buff, unsigned int *plen)
+void pnfs_lustre_encode_layoutget( char * buffin, unsigned int * plenin, char *buff, unsigned int *plen)
 {
   unsigned int offset = 0;
   uint32_t int32 = 0;
@@ -52,9 +52,11 @@ void pnfs_ds_encode_layoutget(pnfs_ds_file_t * pds_file, char *buff, unsigned in
   char deviceid[NFS4_DEVICEID4_SIZE];
   unsigned int i;
 
+  unsigned int stripe = 1 ;
+
   /* nfl_deviceid */
   memset(deviceid, 0, NFS4_DEVICEID4_SIZE);
-  deviceid[0] = pds_file->filepart[0].deviceid;
+  deviceid[0] = 1 ; /** @todo : this part of the code is to be reviewed */
   memcpy((char *)(buff + offset), deviceid, NFS4_DEVICEID4_SIZE);
   offset += NFS4_DEVICEID4_SIZE;
 
@@ -74,33 +76,32 @@ void pnfs_ds_encode_layoutget(pnfs_ds_file_t * pds_file, char *buff, unsigned in
   offset += sizeof(int64);
 
   /* nfl_fh_list.nfl_fh_list_len */
-  int32 = htonl(pds_file->stripe);
+  int32 = htonl( stripe );
   memcpy((char *)(buff + offset), (char *)&int32, sizeof(int32));
   offset += sizeof(int32);
 
-  for(i = 0; i < pds_file->stripe; i++)
+  for(i = 0; i < stripe; i++)
     {
       /* nfl_fh_list.nfl_fh_list_val[i].nfs_fh4_len */
-      int32 = htonl(pds_file->filepart[i].handle.nfs_fh4_len);
+      int32 = htonl(*plenin);
       memcpy((char *)(buff + offset), (char *)&int32, sizeof(int32));
       offset += sizeof(int32);
 
       /* nfl_fh_list.nfl_fh_list_val[i].nfs_fh4_len */
-      memcpy((char *)(buff + offset), pds_file->filepart[i].handle.nfs_fh4_val,
-             pds_file->filepart[i].handle.nfs_fh4_len);
+      memcpy((char *)(buff + offset), buffin, *plenin ) ;
 
       /* Turn the file handle to a 'DS file handle' */
-      if(pds_file->filepart[i].is_ganesha == FALSE)
-        ((char *)(buff + offset))[2] = 9;
+      //if(pds_file->filepart[i].is_ganesha == FALSE)
+      //  ((char *)(buff + offset))[2] = 9;
 
       /* Update the offset for encoding */
-      offset += pds_file->filepart[i].handle.nfs_fh4_len;
+      offset += *plenin ;
 
       /* XDR padding : keep stuff aligned on 32 bits pattern */
-      if(pds_file->filepart[i].handle.nfs_fh4_len % 4 == 0)
+      if( *plenin == 0)
         padlen = 0;
       else
-        padlen = 4 - (pds_file->filepart[i].handle.nfs_fh4_len % 4);
+        padlen = 4 - ( *plenin % 4);
 
       if(padlen > 0)
         memset((char *)(buff + offset), 0, padlen);

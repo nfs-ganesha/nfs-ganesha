@@ -390,7 +390,9 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
 #endif
 
 #ifdef _USE_PNFS
+#ifndef _USE_LUSTRE
       pentry->object.file.pnfs_file.ds_file.allocated = FALSE;
+#endif
 #endif
 
       break;

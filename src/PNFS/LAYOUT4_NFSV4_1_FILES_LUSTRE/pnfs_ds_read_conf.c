@@ -115,7 +115,6 @@ int nfs_read_conf_pnfs_ds_conf(config_item_t subblock,
         }
       else if(!strcasecmp(key_name, "DS_Root_Path"))
         {
-          strncpy(pds_conf->rootpath, key_value, MAXPATHLEN);
         }
       else if(!strcasecmp(key_name, "DS_Id"))
         {

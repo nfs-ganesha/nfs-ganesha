@@ -106,7 +106,9 @@ cache_inode_create(cache_entry_t * pentry_parent,
 #ifdef _USE_PNFS
     pnfs_file_t pnfs_file ;
 
+#ifndef _USE_LUSTRE
     pnfs_file.ds_file.allocated = FALSE ;
+#endif
 #endif
 
     /* Set the return default to CACHE_INODE_SUCCESS */

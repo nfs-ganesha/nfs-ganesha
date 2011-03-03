@@ -51,9 +51,9 @@ void pnfs_encode_getdeviceinfo( char *buff, unsigned int *plen)
    return pnfs_ds_encode_getdeviceinfo( buff, plen) ;
 }
 
-void pnfs_encode_layoutget( pnfs_file_t * pnfs_file, char *buff, unsigned int *plen)
+void pnfs_encode_layoutget( cache_inode_file_t * pfile, char *buffin, unsigned int *plenin, char *buffout, unsigned int *plenout))
 {
-   return pnfs_ds_encode_layoutget( &pnfs_file->ds_file, buff, plen ) ;
+   return pnfs_ds_encode_layoutget( &pfile->pnfs_file.ds_file, buffout, plenout ) ;
 }
 
 int pnfs_init(pnfs_client_t * pnfsclient,
@@ -67,6 +67,8 @@ void pnfs_terminate()
    return ;
 }
 #else
+
+#if 0
 int pnfs_get_location(  pnfs_client_t      * pnfsclient,
                         fsal_handle_t      * phandle,
                         pnfs_hints_t       * phints,
@@ -102,14 +104,16 @@ int pnfs_truncate_file( pnfs_client_t * pnfsclient,
    return NFS4_OK;
 }
 
+#endif
+
 void pnfs_encode_getdeviceinfo( char *buff, unsigned int *plen)
 {
-   return pnfs_ds_encode_getdeviceinfo( buff, plen) ;
+   return pnfs_lustre_encode_getdeviceinfo( buff, plen) ;
 }
 
-void pnfs_encode_layoutget( pnfs_file_t * pnfs_file, char *buff, unsigned int *plen)
+void pnfs_encode_layoutget( char *buffin, unsigned int *plenin, char *buffout, unsigned int *plenout)
 {
-   return pnfs_ds_encode_layoutget( &pnfs_file->ds_file, buff, plen ) ;
+   return pnfs_lustre_encode_layoutget(  buffin, plenin, buffout, plenout ) ;
 }
 
 int pnfs_nit(pnfs_client_t * pnfsclient,
