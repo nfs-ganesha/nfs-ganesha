@@ -373,14 +373,15 @@ AM_CONDITIONAL(USE_MFSL_PROXY_RPCSECGSS, test "$MFSL" = "PROXY_RPCSECGSS")
 AM_CONDITIONAL(USE_MFSL,                 test "$MFSL" != "NONE" ) 
 
 # PNFS_FILE is to be used with implicit MFSL == MFSL_PNFS_FILE
-if test "$enable_pnfs" == "yes"; then
-    if test "$FSAL" != "LUSTRE" ; then
+if test "$enable_pnfs" == "yes" ; then
+  if test "$FSAL" != "LUSTRE" ; then
     	AM_CONDITIONAL(USE_MFSL_PNFS_FILE, test "$enable_pnfs" = "yes")
     	AM_CONDITIONAL(USE_MFSL,           test "$enable_pnfs" = "yes")
     	MFSL="PNFS_FILE"
-    fi
+  fi
 fi
-AM_CONDITIONAL(USE_MFSL_PNFS_FILE, test "$enable_pnfs" = "yes")
+
+AM_CONDITIONAL(USE_MFSL_PNFS_FILE, test "$enable_pnfs" = "yes" -a "$FSAL" != "LUSTRE" )
 
 # Database switch (for POSIX FSAL)
 AC_ARG_WITH( [db], AS_HELP_STRING([--with-db=MYSQL|PGSQL (default=MYSQL)],[specify the database engine for POSIX FSAL] ),
