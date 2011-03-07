@@ -138,10 +138,22 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
       DisplayLogComponentLevel(component, NIV_CRIT, "%s: CRITICAL ERROR: " format, LogComponents[component].comp_str, ## args ); \
    } while (0)
 
+#define LogWarn(component, format, args...) \
+  do { \
+    if (LogComponents[component].comp_log_level >= NIV_WARN) \
+      DisplayLogComponentLevel(component, NIV_WARN, "%s: WARN: " format, LogComponents[component].comp_str, ## args ); \
+  } while (0)
+
 #define LogEvent(component, format, args...) \
   do { \
     if (LogComponents[component].comp_log_level >= NIV_EVENT) \
       DisplayLogComponentLevel(component, NIV_EVENT, "%s: EVENT: " format, LogComponents[component].comp_str, ## args ); \
+  } while (0)
+
+#define LogInfo(component, format, args...) \
+  do { \
+    if (LogComponents[component].comp_log_level >= NIV_INFO) \
+      DisplayLogComponentLevel(component, NIV_INFO, "%s: INFO: " format, LogComponents[component].comp_str, ## args ); \
   } while (0)
 
 #define LogDebug(component, format, args...) \
