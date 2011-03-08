@@ -287,7 +287,7 @@ int LRU_gc_invalid(LRU_list_t * plru, void *cleanparam)
           if(pentry->next != NULL)
             pentry->next->prev = pentry->prev;
           else
-            LogDebug(COMPONENT_LRU, "SHOULD Never appear  !!!! line %d file %s", __LINE__, __FILE__);
+            LogCrit(COMPONENT_LRU, "SHOULD Never appear  !!!! line %d file %s", __LINE__, __FILE__);
           plru->nb_entry -= 1;
           plru->nb_invalid -= 1;
 
