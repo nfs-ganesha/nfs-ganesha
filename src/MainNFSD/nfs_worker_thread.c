@@ -1425,9 +1425,8 @@ void *worker_thread(void *IndexArg)
   /* Bind the data cache client to the inode cache client */
   pmydata->cache_inode_client.pcontent_client = (caddr_t) & pmydata->cache_content_client;
 
-#ifdef _USE_PNFS
+#ifdef _USE_PNFS_SPNFS_LIKE
   /* Init the pNFS engine for each worker */
-#ifndef _USE_LUSTRE
   if(pnfs_init(&pmydata->cache_inode_client.mfsl_context.pnfsclient, &nfs_param.pnfs_param.layoutfile))
     {
       /* Failed init */
@@ -1439,7 +1438,6 @@ void *worker_thread(void *IndexArg)
            "NFS WORKER #%lu: pNFS engine successfully initialized", index);
 #endif
 
-#endif
   /* notify dispatcher it is ready */
   pmydata->is_ready = TRUE;
 

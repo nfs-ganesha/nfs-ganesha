@@ -263,10 +263,12 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
       lo_content.loc_type = LAYOUT4_NFSV4_1_FILES;
 
-#ifdef _USE_LUSTRE
+#ifdef _USE_PNFS_PARALLEL_FS
   buffin = data->currentFH.nfs_fh4_val ;
   lenbuffin = data->currentFH.nfs_fh4_len ;
-#else
+#endif 
+
+#ifdef _USE_PNFS_SPNFS_LIKE
   buffin =  &data->current_entry->object.file.pnfs_file ;
   lenbuffin = sizeof( pnfs_file_t ) ;
 #endif

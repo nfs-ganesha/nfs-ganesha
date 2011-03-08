@@ -10,7 +10,7 @@
 
 #include "pnfs.h"
 
-#ifndef _USE_LUSTRE
+#ifdef _USE_PNFS_SPNFS_LIKE
 int pnfs_get_location(  pnfs_client_t      * pnfsclient,
                         fsal_handle_t      * phandle, 
                         pnfs_hints_t       * phints,
@@ -51,9 +51,10 @@ void pnfs_encode_getdeviceinfo( char *buff, unsigned int *plen)
    return pnfs_ds_encode_getdeviceinfo( buff, plen) ;
 }
 
-void pnfs_encode_layoutget( cache_inode_file_t * pfile, char *buffin, unsigned int *plenin, char *buffout, unsigned int *plenout))
+void pnfs_encode_layoutget( char *buffin, unsigned int *plenin, char *buffout, unsigned int *plenout)
 {
-   return pnfs_ds_encode_layoutget( &pfile->pnfs_file.ds_file, buffout, plenout ) ;
+   pnfs_ds_file_t * pnfs_ds_file = ( pnfs_ds_file_t *)buffin ;
+   return pnfs_ds_encode_layoutget( pnfs_ds_file, buffout, plenout ) ;
 }
 
 int pnfs_init(pnfs_client_t * pnfsclient,

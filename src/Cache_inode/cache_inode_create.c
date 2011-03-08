@@ -106,7 +106,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
 #ifdef _USE_PNFS
     pnfs_file_t pnfs_file ;
 
-#ifndef _USE_LUSTRE
+#ifdef _USE_PNFS_SPNFS_LIKE  /** @todo : do the thing in a cleaner way here */
     pnfs_file.ds_file.allocated = FALSE ;
 #endif
 #endif
@@ -391,7 +391,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
                 }
         }
 
-#ifdef _USE_PNFS
+#ifdef _USE_PNFS_SPNFS_LIKE /** @todo : do the thing in a cleaner way here */
        if((type == REGULAR_FILE) &&
        (pcreate_arg != NULL) &&
        (pcreate_arg->use_pnfs == TRUE))

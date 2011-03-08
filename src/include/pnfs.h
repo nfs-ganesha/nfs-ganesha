@@ -62,9 +62,11 @@
 #include "nfs23.h"
 #include "nfs4.h"
 
-#ifdef _USE_LUSTRE
+#ifdef _USE_PNFS_PARALLEL_FS 
 #include "PNFS/LAYOUT4_NFSV4_1_FILES_LUSTRE/pnfs_layout4_nfsv4_1_files.h"
-#else
+#endif
+
+#ifdef _USE_PNFS_SPNFS_LIKE
 #include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
 #endif
 
@@ -73,7 +75,7 @@ typedef union pnfs_parameter__
   pnfs_layoutfile_parameter_t layoutfile;
 } pnfs_parameter_t;
 
-#ifndef _USE_LUSTRE
+#ifdef _USE_PNFS_SPNFS_LIKE
 typedef union pnfs_file__
 {
   pnfs_ds_file_t ds_file;
@@ -113,11 +115,13 @@ int pnfs_init(pnfs_client_t * pnfsclient,
               pnfs_layoutfile_parameter_t * pnfs_layout_param) ;
 
 void pnfs_terminate();
-#endif
+#else
+
 typedef union pnfs_file__
 {
   int nothing ;
 } pnfs_file_t;
+#endif
 
 void pnfs_encode_getdeviceinfo( char *buff, unsigned int *plen) ;
 
