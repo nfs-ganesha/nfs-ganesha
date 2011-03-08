@@ -89,7 +89,7 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
   rc = statfs(p_export_path->path, &stat_buf);
   if(rc)
     {
-      LogFullDebug(COMPONENT_FSAL, "statfs call failed on file %s: %d", p_export_path->path, rc);
+      LogMajor(COMPONENT_FSAL, "statfs call failed on file %s: %d", p_export_path->path, rc);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
   p_export_context->fsid[0] = stat_buf.f_fsid.__val[0];

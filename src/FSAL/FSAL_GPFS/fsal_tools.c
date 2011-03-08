@@ -488,8 +488,7 @@ fsal_status_t GPFSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
       err = config_GetKeyValue(item, &key_name, &key_value);
       if(err)
         {
-          LogCrit(COMPONENT_CONFIG,
-                  "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
+          LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_FSAL);
           ReturnCode(ERR_FSAL_SERVERFAULT, err);
         }
@@ -519,8 +518,7 @@ fsal_status_t GPFSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
           if(maxcalls < 0)
             {
-              LogCrit(COMPONENT_CONFIG,
-                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: null or positive integer expected.",
+              LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: null or positive integer expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -530,8 +528,7 @@ fsal_status_t GPFSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
         }
       else
         {
-          LogCrit(COMPONENT_CONFIG,
-                  "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
+          LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_FSAL);
           ReturnCode(ERR_FSAL_INVAL, 0);
         }
@@ -601,8 +598,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
       err = config_GetKeyValue(item, &key_name, &key_value);
       if(err)
         {
-          LogCrit(COMPONENT_CONFIG,
-                  "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
+          LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_FS_COMMON);
           ReturnCode(ERR_FSAL_SERVERFAULT, err);
         }
@@ -615,8 +611,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 
           if(bool == -1)
             {
-              LogCrit(COMPONENT_CONFIG,
-                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 0 or 1 expected.",
+              LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 0 or 1 expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -634,8 +629,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 
           if(bool == -1)
             {
-              LogCrit(COMPONENT_CONFIG,
-                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 0 or 1 expected.",
+              LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 0 or 1 expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -652,8 +646,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 
           if(bool == -1)
             {
-              LogCrit(COMPONENT_CONFIG,
-                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 0 or 1 expected.",
+              LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 0 or 1 expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -671,8 +664,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 
           if(s_read_int64(key_value, &size))
             {
-              LogCrit(COMPONENT_CONFIG,
-                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
+              LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -687,8 +679,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 
           if(s_read_int64(key_value, &size))
             {
-              LogCrit(COMPONENT_CONFIG,
-                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
+              LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -703,8 +694,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 
           if(mode < 0)
             {
-              LogCrit(COMPONENT_CONFIG,
-                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: octal expected.",
+              LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: octal expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -719,8 +709,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 
           if(bool == -1)
             {
-              LogCrit(COMPONENT_CONFIG,
-                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
+              LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -734,8 +723,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
 
           if(mode < 0)
             {
-              LogCrit(COMPONENT_CONFIG,
-                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: octal expected.",
+              LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: octal expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -746,8 +734,7 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
         }
       else
         {
-          LogCrit(COMPONENT_CONFIG,
-                  "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
+          LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
                    key_name, CONF_LABEL_FS_COMMON);
           ReturnCode(ERR_FSAL_INVAL, 0);
         }
@@ -796,8 +783,7 @@ fsal_status_t GPFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
       err = config_GetKeyValue(item, &key_name, &key_value);
       if(err)
         {
-          LogCrit(COMPONENT_CONFIG,
-                  "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
+          LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_FS_SPECIFIC);
           ReturnCode(ERR_FSAL_SERVERFAULT, err);
         }
@@ -809,8 +795,7 @@ fsal_status_t GPFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
         }
       else
         {
-          LogCrit(COMPONENT_CONFIG,
-                  "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
+          LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_FS_SPECIFIC);
           ReturnCode(ERR_FSAL_INVAL, 0);
         }
@@ -818,8 +803,7 @@ fsal_status_t GPFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
 
   if(out_parameter->fs_specific_info.open_by_handle_dev_file[0] == '\0')
     {
-      LogCrit(COMPONENT_CONFIG,
-              "FSAL LOAD PARAMETER: OpenByHandleDeviceFile MUST be specified in the configuration file (item %s)",
+      LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: OpenByHandleDeviceFile MUST be specified in the configuration file (item %s)",
               CONF_LABEL_FS_SPECIFIC);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }

@@ -106,7 +106,8 @@ static void free_pthread_specific_stats(void *buff)
 static void init_keys(void)
 {
   if(pthread_key_create(&key_stats, free_pthread_specific_stats) == -1)
-    LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_KEY_CREATE, errno);
+    LogMajor(COMPONENT_FSAL, "Could not create thread specific stats (pthread_key_create) err %d (%s)",
+             errno, strerror(errno));
 
   return;
 }                               /* init_keys */
@@ -136,7 +137,8 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
   if(pthread_once(&once_key, init_keys) != 0)
     {
-      LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_ONCE, errno);
+      LogMajor(COMPONENT_FSAL, "Could not create thread specific stats (pthread_once) err %d (%s)",
+               errno, strerror(errno));
       return;
     }
 
@@ -154,7 +156,8 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
       if(bythread_stat == NULL)
         {
-          LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, Mem_Errno);
+          LogCrit(COMPONENT_FSAL, "Could not allocate memory for FSAL statistics err %d (%s)",
+                  Mem_Errno, strerror(Mem_Errno));
           /* we don't have real memory, bail */
           return;
         }
@@ -209,7 +212,8 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
   /* first, we init the keys if this is the first time */
   if(pthread_once(&once_key, init_keys) != 0)
     {
-      LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_ONCE, errno);
+      LogMajor(COMPONENT_FSAL, "Could not create thread specific stats (pthread_once) err %d (%s)",
+               errno, strerror(errno));
       return;
     }
 
@@ -225,7 +229,8 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
           (fsal_statistics_t *) Mem_Alloc_Label(sizeof(fsal_statistics_t), "fsal_statistics_t")) == NULL)
       {
         /* we don't have working memory, bail */
-        LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, Mem_Errno);
+        LogCrit(COMPONENT_FSAL, "Could not allocate memory for FSAL statistics err %d (%s)",
+                Mem_Errno, strerror(Mem_Errno));
         return;
       }
 
@@ -376,14 +381,12 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
       if(rc != 0)
         ReturnCode(ERR_FSAL_SERVERFAULT, rc);
 
-      LogDebug(COMPONENT_FSAL,
-               "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
+      LogDebug(COMPONENT_FSAL, "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
                fsal_info->max_fs_calls);
     }
   else
     {
-      LogDebug(COMPONENT_FSAL,
-               "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
+      LogDebug(COMPONENT_FSAL, "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
     }
 
   /* setting default values. */
@@ -464,16 +467,14 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
   SET_BITMAP_PARAM(global_fs_info, fs_common_info, xattr_access_rights);
 
-  LogFullDebug(COMPONENT_FSAL,
-               "Supported attributes constant = 0x%llX.", GPFS_SUPPORTED_ATTRIBUTES);
+  LogFullDebug(COMPONENT_FSAL, "Supported attributes constant = 0x%llX.",
+               GPFS_SUPPORTED_ATTRIBUTES);
 
-  LogFullDebug(COMPONENT_FSAL,
-               "Supported attributes default = 0x%llX.",
+  LogFullDebug(COMPONENT_FSAL, "Supported attributes default = 0x%llX.",
                default_gpfs_info.supported_attrs);
 
-  LogDebug(COMPONENT_FSAL,
-                    "FSAL INIT: Supported attributes mask = 0x%llX.",
-                    global_fs_info.supported_attrs);
+  LogFullDebug(COMPONENT_FSAL, "FSAL INIT: Supported attributes mask = 0x%llX.",
+               global_fs_info.supported_attrs);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -785,10 +786,9 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
       mode = unix2fsal_mode(p_buffstat->st_mode);
     }
 
-  LogFullDebug(COMPONENT_FSAL,
-               "file Mode=%#o, file uid=%d, file gid= %d", mode,uid, gid);
-  LogFullDebug(COMPONENT_FSAL,
-               "user uid=%d, user gid= %d, access_type=%#o",
+  LogFullDebug(COMPONENT_FSAL, "file Mode=%#o, file uid=%d, file gid= %d",
+               mode,uid, gid);
+  LogFullDebug(COMPONENT_FSAL, "user uid=%d, user gid= %d, access_type=%#o",
                p_context->credential.user, p_context->credential.group, access_type);
 
   /* If the uid of the file matches the uid of the user,
@@ -815,9 +815,8 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
       else
         {
-          LogFullDebug(COMPONENT_FSAL,
-                       "Mode=%#o, Access=%#o, Rights missing: %#o", mode,
-                       access_type, missing_access);
+          LogFullDebug(COMPONENT_FSAL, "Mode=%#o, Access=%#o, Rights missing: %#o",
+                       mode, access_type, missing_access);
           ReturnCode(ERR_FSAL_ACCESS, 0);
         }
 
@@ -882,9 +881,8 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
   if(missing_access == 0)
     ReturnCode(ERR_FSAL_NO_ERROR, 0);
   else {
-    LogFullDebug(COMPONENT_FSAL,
-                 "Mode=%#o, Access=%#o, Rights missing: %#o", mode,
-                 access_type, missing_access);
+    LogFullDebug(COMPONENT_FSAL, "Mode=%#o, Access=%#o, Rights missing: %#o",
+                 mode, access_type, missing_access);
     ReturnCode(ERR_FSAL_ACCESS, 0);
   }
 
