@@ -737,7 +737,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->MaxOffsetWrite = (fsal_off_t) 0;
   p_entry->MaxOffsetRead = (fsal_off_t) 0;
   p_entry->MaxCacheSize = (fsal_off_t) 0;
-  p_entry->use_commit = FALSE;
+  p_entry->use_commit = TRUE;
   p_entry->use_ganesha_write_buffer = FALSE;
 
   /* by default, we support auth_none and auth_sys */
