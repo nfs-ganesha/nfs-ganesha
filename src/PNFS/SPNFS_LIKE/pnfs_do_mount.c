@@ -26,7 +26,7 @@
 #endif
 
 #include "PNFS/SPNFS_LIKE/pnfs_layout4_nfsv4_1_files.h"
-#include "pnfs_nfsv41_macros.h"
+#include "PNFS/SPNFS_LIKE/pnfs_nfsv41_macros.h"
 
 #define PNFS_LAYOUTFILE_NB_OP_EXCHANGEID 2
 #define PNFS_LAYOUTFILE_NB_OP_CREATESESSION 2
