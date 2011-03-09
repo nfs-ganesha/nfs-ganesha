@@ -102,6 +102,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
   cache_content_io_direction_t io_direction;
   cache_content_status_t cache_content_status;
   fsal_status_t fsal_status;
+  fsal_status_t fsal_status_for_sync;
   fsal_openflags_t openflags;
   fsal_size_t io_size;
   fsal_attrib_list_t post_write_attr;
@@ -374,10 +375,10 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
               /* Alright, the unstable write is complete. Now if it was supposed to be a stable write
                * we can sync to the hard drive. */
               if(stable == FSAL_SAFE_WRITE_TO_FS) {
-                fsal_status = FSAL_sync(&(pentry->object.file.open_fd.fd));
-                if(FSAL_IS_ERROR(fsal_status))
+                fsal_status_for_sync = FSAL_sync(&(pentry->object.file.open_fd.fd));
+                if(FSAL_IS_ERROR(fsal_status_for_sync))
                   LogMajor(COMPONENT_CACHE_INODE, "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
-                           fsal_status.major);
+                           fsal_status_for_sync.major);
               }
 
               break;
