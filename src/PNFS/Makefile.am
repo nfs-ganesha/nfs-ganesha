@@ -8,13 +8,13 @@ noinst_LTLIBRARIES          = libpnfs.la
 libpnfs_la_SOURCES = pnfs_glue.c 
 
 if USE_PNFS_PARALLEL_FS
-SUBDIRS =  LAYOUT4_NFSV4_1_FILES_LUSTRE
-libpnfs_la_LIBADD =  LAYOUT4_NFSV4_1_FILES_LUSTRE/libpnfslayoutfile.la
+SUBDIRS =  PARALLEL_FS
+libpnfs_la_LIBADD =  PARALLEL_FS/libpnfslayoutfile.la
 endif 
 
 if USE_PNFS_SPNFS_LIKE
-SUBDIRS = LAYOUT4_NFSV4_1_FILES
-libpnfs_la_LIBADD =  LAYOUT4_NFSV4_1_FILES/libpnfslayoutfile.la
+SUBDIRS = SPNFS_LIKE
+libpnfs_la_LIBADD =  SPNFS_LIKE/libpnfslayoutfile.la
 endif
  
 endif

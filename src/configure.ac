@@ -723,8 +723,8 @@ AC_CONFIG_FILES([include/Makefile
                  include/MFSL/MFSL_PNFS_FILE/Makefile
                  include/MFSL/MFSL_PROXY_RPCSECGSS/Makefile
                  include/PNFS/Makefile
-		 include/PNFS/LAYOUT4_NFSV4_1_FILES/Makefile
-		 include/PNFS/LAYOUT4_NFSV4_1_FILES_LUSTRE/Makefile
+		 include/PNFS/SPNFS_LIKE/Makefile
+		 include/PNFS/PARALLEL_FS/Makefile
                  BuddyMalloc/Makefile
                  Common/Makefile
                  support/Makefile
@@ -742,8 +742,8 @@ AC_CONFIG_FILES([include/Makefile
                  File_Content_Policy/Makefile
 		 NFS_Protocols/Makefile
 		 PNFS/Makefile
-		 PNFS/LAYOUT4_NFSV4_1_FILES/Makefile
-		 PNFS/LAYOUT4_NFSV4_1_FILES_LUSTRE/Makefile
+		 PNFS/SPNFS_LIKE/Makefile
+		 PNFS/PARALLEL_FS/Makefile
                  XDR/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile
