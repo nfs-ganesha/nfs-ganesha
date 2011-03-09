@@ -69,44 +69,6 @@ void pnfs_terminate()
 }
 #else
 
-#if 0
-int pnfs_get_location(  pnfs_client_t      * pnfsclient,
-                        fsal_handle_t      * phandle,
-                        pnfs_hints_t       * phints,
-                    pnfs_fileloc_t     * pnfs_fileloc )
-{
-   return NFS4_OK ;
-}
-
-int pnfs_create_file( pnfs_client_t  * pnfsclient,
-                  pnfs_fileloc_t * pnfs_fileloc,
-              pnfs_file_t    * pnfs_file )
-{
-   return NFS4_OK;
-}
-
-int pnfs_lookup_file( pnfs_client_t  * pnfsclient,
-                  pnfs_fileloc_t * pnfs_fileloc,
-              pnfs_file_t    * pnfs_file )
-{
-   return NFS4_OK;
-}
-
-int pnfs_remove_file( pnfs_client_t  * pnfsclient,
-                      pnfs_file_t    * pnfs_file )
-{
-   return NFS4_OK;
-}
-
-int pnfs_truncate_file( pnfs_client_t * pnfsclient,
-            size_t newsize,
-            pnfs_file_t * pnfs_file )
-{
-   return NFS4_OK;
-}
-
-#endif
-
 void pnfs_encode_getdeviceinfo( char *buff, unsigned int *plen)
 {
    return pnfs_lustre_encode_getdeviceinfo( buff, plen) ;
