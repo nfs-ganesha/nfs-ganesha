@@ -379,6 +379,7 @@ AM_CONDITIONAL(USE_MFSL,                 test "$MFSL" != "NONE" )
 # If "spnfsd-like" pNFS layout requires MFS_PNFS_FILE
 if test "$PNFS" = "SPNFS_LIKE" ; then
     	MFSL="PNFS_FILE"
+	AM_CONDITIONAL(USE_MFSL,           test "$PNFS" = "SPNFS_LIKE")
 fi
 
 # Database switch (for POSIX FSAL)
