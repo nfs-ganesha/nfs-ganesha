@@ -32,7 +32,7 @@
 #include "nfs_proto_functions.h"
 
 #include "PNFS/SPNFS_LIKE/pnfs_layout4_nfsv4_1_files.h"
-#include "pnfs_nfsv41_macros.h"
+#include "PNFS/SPNFS_LIKE/pnfs_nfsv41_macros.h"
 
 int pnfs_ds_get_location( pnfs_client_t      * pnfsclient,
                           fsal_handle_t      * phandle, 
