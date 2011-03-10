@@ -126,13 +126,13 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
               p_flush_data->thread_index);
       exit(1);
     }
-  LogEvent(COMPONENT_MAIN, "NFS DATACACHE FLUSHER THREAD #%u : Memory manager successfully initialized",
-           p_flush_data->thread_index);
+  LogInfo(COMPONENT_MAIN, "NFS DATACACHE FLUSHER THREAD #%u : Memory manager successfully initialized",
+          p_flush_data->thread_index);
 #endif
 
   /* Initialisation of credential for current thread */
-  LogEvent(COMPONENT_MAIN, "NFS DATACACHE FLUSHER THREAD #%u : Initialization of thread's credential",
-           p_flush_data->thread_index);
+  LogInfo(COMPONENT_MAIN, "NFS DATACACHE FLUSHER THREAD #%u : Initialization of thread's credential",
+          p_flush_data->thread_index);
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&(fsal_context[p_flush_data->thread_index]))))
     {
       /* Failed init */
@@ -204,8 +204,7 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
     }
 
   /* Tell the admin that flush is done */
-  LogEvent(COMPONENT_MAIN,
-           "NFS DATACACHE FLUSHER THREAD #%d : flush of the data cache is done for this thread. Closing thread",
+  LogEvent(COMPONENT_MAIN, "NFS DATACACHE FLUSHER THREAD #%d : flush of the data cache is done for this thread. Closing thread",
            p_flush_data->thread_index);
 
   return NULL;

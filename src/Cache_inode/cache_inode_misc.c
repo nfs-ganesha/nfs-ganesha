@@ -660,9 +660,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
     {
       /* Put the entry back in its pool */
       ReleaseToPool(pentry, &pclient->pool_entry);
-      LogEvent(COMPONENT_CACHE_INODE,
-               "cache_inode_new_entry: entry could not be added to hash, rc=%d",
-               rc);
+      LogWarn(COMPONENT_CACHE_INODE, "cache_inode_new_entry: entry could not be added to hash, rc=%d",
+              rc);
 
       if( rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS )
        {
@@ -675,7 +674,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
        }
      else
       {
-        LogDebug( COMPONENT_CACHE_INODE,  "cache_inode_new_entry: concurrency detected during cache insertion");
+        LogDebug(COMPONENT_CACHE_INODE,  "cache_inode_new_entry: concurrency detected during cache insertion");
 
 	/* This situation occurs when several threads try to init the same uncached entry
          * at the same time. The first creates the entry and the others got  HASHTABLE_ERROR_KEY_ALREADY_EXISTS
@@ -863,9 +862,8 @@ cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status)
 
     default:
       /* generic FSAL error */
-      LogEvent(COMPONENT_CACHE_INODE,
-              "cache_inode_error_convert: default conversion to CACHE_INODE_FSAL_ERROR for error %d,%d",
-               fsal_status.major, fsal_status.minor);
+      LogWarn(COMPONENT_CACHE_INODE, "cache_inode_error_convert: default conversion to CACHE_INODE_FSAL_ERROR for error %d,%d",
+              fsal_status.major, fsal_status.minor);
       return CACHE_INODE_FSAL_ERROR;
       break;
     }
@@ -1586,7 +1584,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
   cache_entry_t *pentry_iter_save = NULL;
   cache_inode_status_t kill_status;
 
-  LogEvent(COMPONENT_CACHE_INODE, "Using cache_inode_kill_entry for entry %p", pentry);
+  LogInfo(COMPONENT_CACHE_INODE, "Using cache_inode_kill_entry for entry %p", pentry);
 
   if(pstatus == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
@@ -1600,8 +1598,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
   /* Get the FSAL handle */
   if((pfsal_handle = cache_inode_get_fsal_handle(pentry, pstatus)) == NULL)
     {
-      LogCrit(COMPONENT_CACHE_INODE,
-              "cache_inode_kill_entry: unable to retrieve pentry's specific filesystem info");
+      LogCrit(COMPONENT_CACHE_INODE, "cache_inode_kill_entry: unable to retrieve pentry's specific filesystem info");
       return *pstatus;
     }
 
@@ -1625,8 +1622,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
   /* Use the handle to build the key */
   if(cache_inode_fsaldata_2_key(&key, &fsaldata, pclient))
     {
-      LogCrit(COMPONENT_CACHE_INODE,
-              "cache_inode_kill_entry: could not build hashtable key");
+      LogCrit(COMPONENT_CACHE_INODE, "cache_inode_kill_entry: could not build hashtable key");
 
       cache_inode_release_fsaldata_key(&key, pclient);
       *pstatus = CACHE_INODE_NOT_FOUND;

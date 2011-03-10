@@ -1483,7 +1483,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       LogMajor(COMPONENT_INIT, "NFS_INIT: FSAL library could not be initialized");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, "NFS_INIT: FSAL library  successfully initialized");
+  LogInfo(COMPONENT_INIT, "NFS_INIT: FSAL library  successfully initialized");
 
 #ifdef _USE_MFSL
   /* MFSL Initialisation */
@@ -1494,7 +1494,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       LogMajor(COMPONENT_INIT, "NFS_INIT: MFSL library could not be initialized");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, "NFS_INIT: MFSL library  successfully initialized");
+  LogInfo(COMPONENT_INIT, "NFS_INIT: MFSL library  successfully initialized");
 #endif
 
   /* Cache Inode Initialisation */
@@ -1505,7 +1505,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                  cache_status);
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, "NFS_INIT: Cache Inode library successfully initialized");
+  LogInfo(COMPONENT_INIT, "NFS_INIT: Cache Inode library successfully initialized");
 
   /* Set the cache inode GC policy */
   cache_inode_set_gc_policy(nfs_param.cache_layers_param.gcpol);
@@ -1543,8 +1543,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
           exit(1);
         }
-      LogEvent(COMPONENT_INIT, "NFS_INIT: krb5 keytab path successfully set to %s",
-                      nfs_param.krb5_param.keytab);
+      LogInfo(COMPONENT_INIT, "NFS_INIT: krb5 keytab path successfully set to %s",
+              nfs_param.krb5_param.keytab);
 #endif
 #endif
 
@@ -1568,8 +1568,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
           exit(1);
         }
-      LogEvent(COMPONENT_INIT,  "NFS_INIT: gss principal %s successfully set",
-                      nfs_param.krb5_param.principal);
+      LogInfo(COMPONENT_INIT,  "NFS_INIT: gss principal %s successfully set",
+              nfs_param.krb5_param.principal);
 
       /* Set the principal to GSSRPC */
       if(!Svcauth_gss_set_svc_name(gss_service_name))
@@ -1585,8 +1585,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
           exit(1);
         }
       else
-        LogEvent(COMPONENT_INIT, 
-                        "NFS_INIT: Gss Context Cache successfully initialized");
+        LogInfo(COMPONENT_INIT, "NFS_INIT: Gss Context Cache successfully initialized");
 #endif                          /* _USE_GSSRPC */
 
 #ifdef HAVE_KRB5
@@ -1601,7 +1600,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing RPC server ressources");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT,  "NFS_INIT: RPC ressources successfully initialized");
+  LogInfo(COMPONENT_INIT,  "NFS_INIT: RPC ressources successfully initialized");
 
   /* Worker initialisation */
   if((workers_data =
@@ -1729,8 +1728,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       LogCrit(COMPONENT_INIT, "NFS_INIT: Error %d while initializing NFSv4 pseudo file system", rc);
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, 
-                  "NFS_INIT: NFSv4 pseudo file system successfully initialized");
+  LogInfo(COMPONENT_INIT, "NFS_INIT: NFSv4 pseudo file system successfully initialized");
 
   /* Init duplicate request cache */
   LogDebug(COMPONENT_INIT, "NFS_INIT: Now building duplicate request hash table cache");
@@ -1741,8 +1739,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
            rc);
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, 
-                  "NFS_INIT: duplicate request hash table cache successfully initialized");
+  LogInfo(COMPONENT_INIT, "NFS_INIT: duplicate request hash table cache successfully initialized");
 
   /* Init the IP/name cache */
   LogDebug(COMPONENT_INIT, "NFS_INIT: Now building IP/name cache");
@@ -1751,7 +1748,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing IP/name cache");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT,  "NFS_INIT: IP/name cache successfully initialized");
+  LogInfo(COMPONENT_INIT,  "NFS_INIT: IP/name cache successfully initialized");
 
   /* Init the UID_MAPPER cache */
   LogDebug(COMPONENT_INIT, "NFS_INIT: Now building UID_MAPPER cache");
@@ -1761,7 +1758,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing UID_MAPPER cache");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT,  "NFS_INIT: UID_MAPPER cache successfully initialized");
+  LogInfo(COMPONENT_INIT,  "NFS_INIT: UID_MAPPER cache successfully initialized");
 
   /* Init the UIDGID MAPPER Cache */
   LogDebug(COMPONENT_INIT,
@@ -1771,7 +1768,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing UIDGID_MAPPER cache");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT,  "NFS_INIT: UIDGID_MAPPER cache successfully initialized");
+  LogInfo(COMPONENT_INIT,  "NFS_INIT: UIDGID_MAPPER cache successfully initialized");
 
   /* Init the GID_MAPPER cache */
   LogDebug(COMPONENT_INIT, "NFS_INIT: Now building GID_MAPPER cache");
@@ -1781,7 +1778,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing GID_MAPPER cache");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT,  "NFS_INIT: GID_MAPPER cache successfully initialized");
+  LogInfo(COMPONENT_INIT,  "NFS_INIT: GID_MAPPER cache successfully initialized");
 
   /* Init the NFSv4 Clientid cache */
   LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 clientid cache");
@@ -1790,7 +1787,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing NFSv4 clientid cache");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT,  "NFS_INIT: NFSv4 clientid cache successfully initialized");
+  LogInfo(COMPONENT_INIT,  "NFS_INIT: NFSv4 clientid cache successfully initialized");
 
   /* Init the NFSv4 Clientid cache */
   LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 clientid cache reverse");
@@ -1799,8 +1796,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing NFSv4 clientid cache reverse");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, 
-                  "NFS_INIT: NFSv4 clientid cache reverse successfully initialized");
+  LogInfo(COMPONENT_INIT, "NFS_INIT: NFSv4 clientid cache reverse successfully initialized");
 
   /* Init The NFSv4 State id cache */
   LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 State Id cache");
@@ -1809,7 +1805,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing NFSv4 State Id cache");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, "NFS_INIT: NFSv4 State Id cache successfully initialized");
+  LogInfo(COMPONENT_INIT, "NFS_INIT: NFSv4 State Id cache successfully initialized");
 
   /* Init The NFSv4 Open Owner cache */
   LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 Open Owner cache");
@@ -1818,7 +1814,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing NFSv4 Open Owner cache");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, "NFS_INIT: NFSv4 Open Owner cache successfully initialized");
+  LogInfo(COMPONENT_INIT, "NFS_INIT: NFSv4 Open Owner cache successfully initialized");
 
 #ifdef _USE_NFS4_1
   LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 Session Id cache");
@@ -1827,7 +1823,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing NFSv4 Session Id cache");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT,  "NFS_INIT: NFSv4 Session Id cache successfully initialized");
+  LogInfo(COMPONENT_INIT,  "NFS_INIT: NFSv4 Session Id cache successfully initialized");
 #endif
 
   /* Create the root entries for each exported FS */
@@ -1836,7 +1832,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       LogCrit(COMPONENT_INIT, "NFS_INIT: Error initializing Cache Inode root entries, exiting...");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, "NFS_INIT: Cache Inode root entries successfully created");
+  LogInfo(COMPONENT_INIT, "NFS_INIT: Cache Inode root entries successfully created");
 
   /* Spawns service threads */
   nfs_Start_threads(&nfs_param);
@@ -1887,10 +1883,10 @@ static void nfs_Start_file_content_flushers(unsigned int nb_threads)
           exit(1);
         }
       else
-        LogEvent(COMPONENT_INIT, "datacache flusher #%lu started", i);
+        LogInfo(COMPONENT_INIT, "datacache flusher #%lu started", i);
 
     }
-  LogEvent(COMPONENT_INIT, "%u datacache flushers threads were started successfully",
+  LogInfo(COMPONENT_INIT, "%u datacache flushers threads were started successfully",
              nb_threads);
 
 }                               /* nfs_Start_file_content_flushers */
@@ -2008,7 +2004,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
                   nfs_param.core_param.nb_max_fd);
         }
       else
-        LogEvent(COMPONENT_INIT, "Setting RLIMIT_NOFILE to %d",
+        LogDebug(COMPONENT_INIT, "Setting RLIMIT_NOFILE to %d",
                  nfs_param.core_param.nb_max_fd);
     }
   else
@@ -2020,7 +2016,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
           exit(1);
         }
       nfs_param.core_param.nb_max_fd = ulimit_data.rlim_cur;
-      LogEvent(COMPONENT_INIT, "RLIMIT_NOFILE was cur %d max %d", (int)ulimit_data.rlim_cur, (int)ulimit_data.rlim_max);
+      LogDebug(COMPONENT_INIT, "RLIMIT_NOFILE was cur %d max %d", (int)ulimit_data.rlim_cur, (int)ulimit_data.rlim_max);
     }
 
   /* Allocate the directories for the datacache */
@@ -2029,12 +2025,11 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
                                        cache_content_client_param.cache_dir,
                                        &content_status) != CACHE_CONTENT_SUCCESS)
     {
-      LogCrit
-          (COMPONENT_INIT, "File Content Cache directories could not be allocated, exiting...");
+      LogCrit(COMPONENT_INIT, "File Content Cache directories could not be allocated, exiting...");
       exit(1);
     }
   else
-    LogEvent(COMPONENT_INIT, "File Content Cache directory initialized");
+    LogInfo(COMPONENT_INIT, "File Content Cache directory initialized");
 
   /* Print the worker parameters in log */
   Print_param_worker_in_log(&(nfs_param.worker_param));
@@ -2081,8 +2076,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
             {
               p_start_info->nb_flush_threads =
                   nfs_param.fsal_param.fsal_info.max_fs_calls;
-              LogCrit
-                  (COMPONENT_INIT, "/!\\ Too much flushers, there should be less flushers than FSAL::max_fs_calls. Using %u threads instead",
+              LogCrit(COMPONENT_INIT, "/!\\ Too much flushers, there should be less flushers than FSAL::max_fs_calls. Using %u threads instead",
                    nfs_param.fsal_param.fsal_info.max_fs_calls);
             }
         }
@@ -2171,8 +2165,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
       /* Wait for dispatcher to exit */
       pthread_join(rpc_dispatcher_thrid, NULL);
 
-      LogEvent
-          (COMPONENT_INIT, "NFS EXIT: rpc dispatcher thread has exited and was joined, nfs daemon exiting...");
+      LogInfo(COMPONENT_INIT, "NFS EXIT: rpc dispatcher thread has exited and was joined, nfs daemon exiting...");
     }
 
   /* Regular exit */
@@ -2200,13 +2193,13 @@ void nfs_stop()
   st = MFSL_terminate();
 
   if(FSAL_IS_ERROR(st))
-    LogEvent(COMPONENT_INIT, "NFS EXIT: ERROR %d.%d while synchonizing MFSL", st.major, st.minor);
+    LogCrit(COMPONENT_INIT, "NFS EXIT: ERROR %d.%d while synchonizing MFSL", st.major, st.minor);
 #endif
 
   st = FSAL_terminate();
 
   if(FSAL_IS_ERROR(st))
-    LogEvent(COMPONENT_INIT, "NFS EXIT: ERROR %d.%d while synchonizing FSAL", st.major, st.minor);
+    LogCrit(COMPONENT_INIT, "NFS EXIT: ERROR %d.%d while synchonizing FSAL", st.major, st.minor);
 
   LogEvent(COMPONENT_INIT, "NFS EXIT: regular exit");
   exit(0);

@@ -644,7 +644,7 @@ void *stat_exporter_thread(void *addr)
       LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
       return NULL;
     }
-  LogEvent(COMPONENT_MAIN, "Stat export server: Waiting for connections...");
+  LogInfo(COMPONENT_MAIN, "Stat export server: Waiting for connections...");
 
   while(1)
     {
@@ -666,7 +666,7 @@ void *stat_exporter_thread(void *addr)
 	LogDebug(COMPONENT_MAIN, "Stat export server: Access granted to %s", s);
 	process_stat_request(addr, new_fd);
       } else {
-	LogEvent(COMPONENT_MAIN, "Stat export server: Access denied to %s", s);
+	LogWarn(COMPONENT_MAIN, "Stat export server: Access denied to %s", s);
       }
     }                           /* while ( 1 ) */
 

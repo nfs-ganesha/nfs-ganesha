@@ -332,8 +332,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
   else
-    LogEvent(COMPONENT_INIT,
-	     "Signals SIGTERM and SIGINT (daemon shutdown) are ready to be used");
+    LogInfo(COMPONENT_INIT, "Signals SIGTERM and SIGINT (daemon shutdown) are ready to be used");
 
   /* Set the signal handler */
   memset(&act_sighup, 0, sizeof(act_sighup));
@@ -345,8 +344,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
   else
-    LogEvent(COMPONENT_INIT,
-                    "Signal SIGHUP (daemon export reload) is ready to be used");
+    LogInfo(COMPONENT_INIT, "Signal SIGHUP (daemon export reload) is ready to be used");
 
 
 #ifdef _USE_SHARED_FSAL
@@ -371,8 +369,7 @@ int main(int argc, char *argv[])
   /* Get the FSAL consts */
   FSAL_LoadConsts();
 
-  LogEvent(COMPONENT_INIT,
-	   ">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
+  LogEvent(COMPONENT_INIT, ">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
 	   FSAL_GetFSName());
 
   /* initialize default parameters */

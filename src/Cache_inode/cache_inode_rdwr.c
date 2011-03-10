@@ -269,8 +269,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
               else
                 {
                   /* Entry was successfully renewed */
-                  LogEvent(COMPONENT_CACHE_INODE, "----> File Content Entry %p was successfully renewed",
-                             pentry);
+                  LogInfo(COMPONENT_CACHE_INODE, "----> File Content Entry %p was successfully renewed",
+                          pentry);
 
                   /* Try to access the content of the file again */
                   cache_content_rdwr(pentry->object.file.pentry_content,
@@ -396,8 +396,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
               if(fsal_status.major == ERR_FSAL_DELAY)
                 LogEvent(COMPONENT_CACHE_INODE, "cache_inode_rdwr: FSAL_write returned EBUSY");
               else
-                LogDebug(COMPONENT_CACHE_INODE, 
-                         "cache_inode_rdwr: fsal_status.major = %d",
+                LogDebug(COMPONENT_CACHE_INODE, "cache_inode_rdwr: fsal_status.major = %d",
                          fsal_status.major);
 
               if((fsal_status.major != ERR_FSAL_NOT_OPENED)
@@ -442,8 +441,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 
           if(cache_inode_close(pentry, pclient, pstatus) != CACHE_INODE_SUCCESS)
             {
-              LogEvent(COMPONENT_CACHE_INODE,
-                       "cache_inode_rdwr: cache_inode_close = %d", *pstatus);
+              LogEvent(COMPONENT_CACHE_INODE, "cache_inode_rdwr: cache_inode_close = %d", *pstatus);
 
               V_w(&pentry->lock);
 

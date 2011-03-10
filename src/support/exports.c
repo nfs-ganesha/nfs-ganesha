@@ -1888,9 +1888,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
   *pp_export = p_entry;
 
-  LogEvent(COMPONENT_CONFIG,
-                  "NFS READ_EXPORT: Export %d (%s) successfully parsed",
-                  p_entry->id, p_entry->fullpath);
+  LogEvent(COMPONENT_CONFIG, "NFS READ_EXPORT: Export %d (%s) successfully parsed",
+           p_entry->id, p_entry->fullpath);
 
   return 0;
 
@@ -1971,9 +1970,8 @@ exportlist_t *BuildDefaultExport()
       return NULL;
     }
 
-  LogEvent(COMPONENT_CONFIG,
-                  "NFS READ_EXPORT: Export %d (%s) successfully parsed",
-                  p_entry->id, p_entry->fullpath);
+  LogEvent(COMPONENT_CONFIG, "NFS READ_EXPORT: Export %d (%s) successfully parsed",
+           p_entry->id, p_entry->fullpath);
 
   return p_entry;
 
@@ -2552,7 +2550,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
           exit(1);
         }
       else
-        LogEvent(COMPONENT_INIT, "small cache inode client successfully initialized");
+        LogInfo(COMPONENT_INIT, "small cache inode client successfully initialized");
 
       /* creating the datacache client for recovering data cache */
       if(cache_content_client_init
@@ -2650,15 +2648,13 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
                                              &small_client,
                                              &context, &cache_status)) == NULL)
             {
-              LogCrit(COMPONENT_INIT,
-                      "Error when creating root cached entry for %s, export_id=%d, cache_status=%d",
+              LogCrit(COMPONENT_INIT, "Error when creating root cached entry for %s, export_id=%d, cache_status=%d",
                       pcurrent->fullpath, pcurrent->id, cache_status);
               return FALSE;
             }
           else
-            LogEvent(COMPONENT_INIT,
-                     "Added root entry for path %s on export_id=%d",
-                     pcurrent->fullpath, pcurrent->id);
+            LogInfo(COMPONENT_INIT, "Added root entry for path %s on export_id=%d",
+                    pcurrent->fullpath, pcurrent->id);
 
           /* Get FSAL specific info for this entry */
           if((pstaticinfo =
@@ -2677,21 +2673,21 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
             {
               /* Set the cache_entry object as a referral by setting the 'referral' field */
               pentry->object.dir_begin.referral = pcurrent->referral;
-              LogEvent(COMPONENT_INIT, "A referral is set : %s", pentry->object.dir_begin.referral);
+              LogInfo(COMPONENT_INIT, "A referral is set : %s", pentry->object.dir_begin.referral);
             }
 #ifdef _CRASH_RECOVERY_AT_STARTUP
           /* Recover the datacache from a previous crah */
           if(pcurrent->options & EXPORT_OPTION_USE_DATACACHE)
             {
               LogEvent(COMPONENT_INIT, "Recovering Data Cache for export id %u",
-                              pcurrent->id);
+                       pcurrent->id);
               if(cache_content_crash_recover
                  (pcurrent->id, &recover_datacache_client, &small_client, ht, &context,
                   &cache_content_status) != CACHE_CONTENT_SUCCESS)
                 {
-                  LogEvent(COMPONENT_INIT,
-                                  "Datacache for export id %u is not recoverable: error = %d",
-                                  pcurrent->id, cache_content_status);
+                  LogWarn(COMPONENT_INIT,
+                          "Datacache for export id %u is not recoverable: error = %d",
+                          pcurrent->id, cache_content_status);
                 }
             }
 #endif

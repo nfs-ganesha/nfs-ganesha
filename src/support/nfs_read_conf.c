@@ -1182,11 +1182,12 @@ int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * p
  */
 void Print_param_worker_in_log(nfs_worker_parameter_t * pparam)
 {
-  LogEvent(COMPONENT_INIT, "NFS PARAM : worker_param.lru_param.nb_entry_prealloc = %d",
-             pparam->lru_param.nb_entry_prealloc);
-  LogEvent(COMPONENT_INIT, "NFS PARAM : worker_param.nb_pending_prealloc = %d",
-             pparam->nb_pending_prealloc);
-  LogEvent(COMPONENT_INIT, "NFS PARAM : worker_param.nb_before_gc = %d", pparam->nb_before_gc);
+  LogInfo(COMPONENT_INIT, "NFS PARAM : worker_param.lru_param.nb_entry_prealloc = %d",
+          pparam->lru_param.nb_entry_prealloc);
+  LogInfo(COMPONENT_INIT, "NFS PARAM : worker_param.nb_pending_prealloc = %d",
+          pparam->nb_pending_prealloc);
+  LogInfo(COMPONENT_INIT, "NFS PARAM : worker_param.nb_before_gc = %d",
+          pparam->nb_before_gc);
 }                               /* Print_param_worker_in_log */
 
 /**
@@ -1202,7 +1203,7 @@ void Print_param_worker_in_log(nfs_worker_parameter_t * pparam)
  */
 void Print_param_in_log(nfs_parameter_t * pparam)
 {
-  LogEvent(COMPONENT_INIT, "NFS PARAM : core_param.nb_worker = %d", pparam->core_param.nb_worker);
+  LogInfo(COMPONENT_INIT, "NFS PARAM : core_param.nb_worker = %d", pparam->core_param.nb_worker);
   Print_param_worker_in_log(&(pparam->worker_param));
 }                               /* Print_param_in_log */
 

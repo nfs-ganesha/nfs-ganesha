@@ -795,8 +795,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 	  if(svc_sendreply
 	     (ptr_svc, pworker_data->pfuncdesc->xdr_encode_func, (caddr_t) & res_nfs) == FALSE)
 	    {
-	      LogEvent(COMPONENT_DISPATCH,
-		       "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply");
+	      LogEvent(COMPONENT_DISPATCH, "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply");
 	      svcerr_decode(ptr_svc);
 	    }
 
@@ -1011,8 +1010,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       if((pexport->options & EXPORT_OPTION_PRIVILEGED_PORT) &&
          (ntohs(hostaddr.sin_port) >= IPPORT_RESERVED))
         {
-          LogEvent(COMPONENT_DISPATCH,
-                   "/!\\ | Port %d is too high for this export entry, rejecting client",
+          LogInfo(COMPONENT_DISPATCH, "Port %d is too high for this export entry, rejecting client",
                    hostaddr.sin_port);
           svcerr_auth(ptr_svc, AUTH_TOOWEAK);
           pworker_data->current_xid = 0;    /* No more xid managed */
@@ -1054,14 +1052,13 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                                                 (pworker_data->pfuncdesc->dispatch_behaviour & MAKES_WRITE) == MAKES_WRITE);
   if (export_check_result == EXPORT_PERMISSION_DENIED)
     {
-      LogEvent(COMPONENT_DISPATCH,
-               "/!\\ | Host 0x%x = %d.%d.%d.%d is not allowed to access this export entry, vers=%d, proc=%d",
-               ntohs(phostaddr->sin_addr.s_addr),
-               (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
-               (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
-               (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,
-               (ntohl(phostaddr->sin_addr.s_addr) & 0x000000FF),
-               (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
+      LogInfo(COMPONENT_DISPATCH, "Host 0x%x = %d.%d.%d.%d is not allowed to access this export entry, vers=%d, proc=%d",
+              ntohs(phostaddr->sin_addr.s_addr),
+              (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
+              (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
+              (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,
+              (ntohl(phostaddr->sin_addr.s_addr) & 0x000000FF),
+              (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
       svcerr_auth( ptr_svc, AUTH_TOOWEAK ); 
       pworker_data->current_xid = 0;        /* No more xid managed */
       
@@ -1212,8 +1209,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       /* encoding the result on xdr output */
       if(svc_sendreply(ptr_svc, pworker_data->pfuncdesc->xdr_encode_func, (caddr_t) & res_nfs) == FALSE)
         {
-          LogEvent(COMPONENT_DISPATCH,
-                   "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply");
+          LogEvent(COMPONENT_DISPATCH, "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply");
           svcerr_decode(ptr_svc);
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
           V(mutex_cond_xprt[ptr_svc->xp_fd]);
@@ -1493,7 +1489,7 @@ void *worker_thread(void *IndexArg)
   /* notify dispatcher it is ready */
   pmydata->is_ready = TRUE;
 
-  LogEvent(COMPONENT_DISPATCH, "NFS WORKER #%lu successfully initialized", index);
+  LogInfo(COMPONENT_DISPATCH, "NFS WORKER #%lu successfully initialized", index);
 
   /* Worker's infinite loop */
   while(1)
@@ -1608,9 +1604,8 @@ void *worker_thread(void *IndexArg)
 #endif
                   {
                     auth_stat2str(why, auth_str);
-                    LogEvent(COMPONENT_DISPATCH,
-                             "Could not authenticate request... rejecting with AUTH_STAT=%s",
-                             auth_str);
+                    LogInfo(COMPONENT_DISPATCH, "Could not authenticate request... rejecting with AUTH_STAT=%s",
+                            auth_str);
                     svcerr_auth(xprt, why);
                   }
                 else

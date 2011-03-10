@@ -155,7 +155,7 @@ fsal_status_t GPFSFSAL_open(gpfsfsal_handle_t * p_filehandle,   /* IN */
   /* flags conflicts. */
   if(rc)
     {
-      LogEvent(COMPONENT_FSAL, "Invalid/conflicting flags : %#X", openflags);
+      LogWarn(COMPONENT_FSAL, "Invalid/conflicting flags : %#X", openflags);
       Return(rc, 0, INDEX_FSAL_open);
     }
 

@@ -1127,10 +1127,8 @@ static int TryContextCleanup(BuddyThreadContext_t * context)
                || (p_block->Header.StdInfo.Base_kSize
                    != p_block->Header.StdInfo.k_size) )
               {
-                LogCrit(COMPONENT_MEMALLOC,
-                        "largest free page is not a root page?!" );
-                LogEvent(COMPONENT_MEMALLOC,
-                         "thread page size=2^%u, block size=2^%u, "
+                LogCrit(COMPONENT_MEMALLOC, "largest free page is not a root page?!" );
+                LogEvent(COMPONENT_MEMALLOC, "thread page size=2^%u, block size=2^%u, "
                          "block base area=%p (size=2^%u), block addr=%p",
                          context->k_size, p_block->Header.StdInfo.k_size,
                          p_block->Header.Base_ptr,
@@ -1786,8 +1784,7 @@ void BuddyFree(BUDDY_ADDR_T ptr)
   /* is it already free ? */
   if(p_block->Header.status == FREE_BLOCK)
     {
-      LogEvent(COMPONENT_MEMALLOC,
-               "WARNING : double free detected for %p", ptr);
+      LogWarn(COMPONENT_MEMALLOC, "Double free detected for %p", ptr);
       return;
     }
 
@@ -2915,19 +2912,17 @@ int _BuddyCheck(BUDDY_ADDR_T ptr)
   /* is it already free ? */
   if(p_block->Header.status == FREE_BLOCK)
     {
-      LogEvent(COMPONENT_MEMALLOC,
-               "BuddyCheck: WARNING: block %p is already free or has been set to 0",
-               ptr);
+      LogWarn(COMPONENT_MEMALLOC,  "BuddyCheck: Block %p is already free or has been set to 0",
+              ptr);
       log_bad_block("BuddyCheck:", context, p_block, 1, 1);
       return 0;
     }
 
   if(p_block->Header.OwnerThread != pthread_self())
     {
-      LogEvent(COMPONENT_MEMALLOC,
-               "BuddyCheck: WARNING: block %p has been allocated by another thread !!!! (%p<>%p)",
-               p_block, (BUDDY_ADDR_T) p_block->Header.OwnerThread,
-               (BUDDY_ADDR_T) pthread_self());
+      LogWarn(COMPONENT_MEMALLOC, "BuddyCheck: Block %p has been allocated by another thread !!!! (%p<>%p)",
+              p_block, (BUDDY_ADDR_T) p_block->Header.OwnerThread,
+              (BUDDY_ADDR_T) pthread_self());
       log_bad_block("BuddyCheck:", context, p_block, 1, 1);
       return 0;
     }

@@ -201,17 +201,17 @@ int nfs_ip_name_add(unsigned int ipaddr, char *hostname)
                         resolv_buff, GETHOST_BUF_SZ,
                         &hp, &host_errno ) != 0 ) || (hp == NULL) )
   {
-     LogEvent( COMPONENT_DISPATCH, "Cannot resolve address %lu.%lu.%lu.%lu",
-               local_ipaddr&0xFF, (local_ipaddr>>8)&0xFF, (local_ipaddr>>16)&0xFF,
-               (local_ipaddr>>24)&0xFF );
+     LogEvent(COMPONENT_DISPATCH, "Cannot resolve address %lu.%lu.%lu.%lu",
+              local_ipaddr&0xFF, (local_ipaddr>>8)&0xFF, (local_ipaddr>>16)&0xFF,
+              (local_ipaddr>>24)&0xFF);
 
      Mem_Free((void *)pnfs_ip_name);
      return IP_NAME_NETDB_ERROR;
   }
 
-  LogDebug( COMPONENT_DISPATCH, "Inserting %lu.%lu.%lu.%lu->%s to addr cache",
-            local_ipaddr&0xFF, (local_ipaddr>>8)&0xFF, (local_ipaddr>>16)&0xFF,
-            (local_ipaddr>>24)&0xFF, hp->h_name );
+  LogDebug(COMPONENT_DISPATCH, "Inserting %lu.%lu.%lu.%lu->%s to addr cache",
+           local_ipaddr&0xFF, (local_ipaddr>>8)&0xFF, (local_ipaddr>>16)&0xFF,
+           (local_ipaddr>>24)&0xFF, hp->h_name);
 
   /* I build the data with the request pointer that should be in state 'IN USE' */
   pnfs_ip_name->ipaddr = ipaddr;

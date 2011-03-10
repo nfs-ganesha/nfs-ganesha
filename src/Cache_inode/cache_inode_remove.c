@@ -544,10 +544,9 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
                   (cache_content_client_t *) pclient->pcontent_client,
                   &cache_content_status) != CACHE_CONTENT_SUCCESS)
                 {
-                  LogEvent(COMPONENT_CACHE_INODE,
-                                    "pentry %p, named %s could not be released from data cache, status=%d",
-                                    to_remove_entry, pnode_name->name,
-                                    cache_content_status);
+                  LogEvent(COMPONENT_CACHE_INODE, "pentry %p, named %s could not be released from data cache, status=%d",
+                           to_remove_entry, pnode_name->name,
+                           cache_content_status);
                 }
             }
         }

@@ -116,8 +116,7 @@ int mnt_Umnt(nfs_arg_t * parg /* IN     */ ,
       LogCrit(COMPONENT_NFSPROTO,
               "UMOUNT: Cannot remove mount entry for client %s", hostname);
     }
-  LogEvent(COMPONENT_NFSPROTO,
-           "UMOUNT: Client %s was removed from mount list", hostname);
+  LogInfo(COMPONENT_NFSPROTO, "UMOUNT: Client %s was removed from mount list", hostname);
 
   return NFS_REQ_OK;
 }                               /* mnt_Umnt */

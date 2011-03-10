@@ -119,7 +119,7 @@ void *stats_thread(void *addr)
       LogMajor(COMPONENT_MAIN, "NFS STATS : Memory manager could not be initialized, exiting...");
       exit(1);
     }
-  LogEvent(COMPONENT_MAIN, "NFS STATS : Memory manager successfully initialized");
+  LogInfo(COMPONENT_MAIN, "NFS STATS : Memory manager successfully initialized");
 #endif
 
   /* Open the stats file, in append mode */
@@ -141,7 +141,7 @@ void *stats_thread(void *addr)
 #ifdef _SNMP_ADM_ACTIVE
   /* start snmp library */
   if(stats_snmp(workers_data) == 0)
-    LogEvent(COMPONENT_MAIN, "NFS STATS: SNMP stats service was started successfully");
+    LogInfo(COMPONENT_MAIN, "NFS STATS: SNMP stats service was started successfully");
   else
     LogCrit(COMPONENT_MAIN, "NFS STATS: ERROR starting SNMP stats export thread");
 #endif /*_SNMP_ADM_ACTIVE*/
@@ -152,7 +152,7 @@ void *stats_thread(void *addr)
       sleep(nfs_param.core_param.stats_update_delay);
 
       /* Debug trace */
-      LogEvent(COMPONENT_MAIN, "NFS STATS : now dumping stats");
+      LogInfo(COMPONENT_MAIN, "NFS STATS : now dumping stats");
 
       /* Stats main loop */
       if(stat(nfs_param.core_param.stats_file_path, &stattest) == 0)
@@ -170,8 +170,7 @@ void *stats_thread(void *addr)
       if(reopen_stats == TRUE)
         {
           /* Stats file has changed */
-          LogEvent(COMPONENT_MAIN, 
-                   "NFS STATS : stats file has changed or was removed, I close and reopen it");
+          LogEvent(COMPONENT_MAIN, "NFS STATS : stats file has changed or was removed, I close and reopen it");
           fflush(stats_file);
           fclose(stats_file);
           if((stats_file = fopen(nfs_param.core_param.stats_file_path, "a")) == NULL)

@@ -414,8 +414,7 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
 
   if(FSAL_IS_ERROR(fsal_status))
     {
-      LogEvent(COMPONENT_DISPATCH,
-               "NFS DISPATCHER: FAILURE: Could not get credentials for (uid=%d,gid=%d), fsal error=(%d,%d)",
+      LogEvent(COMPONENT_DISPATCH, "NFS DISPATCHER: FAILURE: Could not get credentials for (uid=%d,gid=%d), fsal error=(%d,%d)",
                user_credentials->caller_uid, user_credentials->caller_gid, fsal_status.major, fsal_status.minor);
       return FALSE;
     }

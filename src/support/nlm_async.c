@@ -126,7 +126,7 @@ void *nlm_async_func(void *argp)
       LogMajor(COMPONENT_NLM, "NLM async thread: Memory manager could not be initialized, exiting...");
       exit(1);
     }
-  LogEvent(COMPONENT_NLM, "NLM async thread: Memory manager successfully initialized");
+  LogInfo(COMPONENT_NLM, "NLM async thread: Memory manager successfully initialized");
 #endif
   LogFullDebug(COMPONENT_NLM, "NLM async thread: my pthread id is %p",
                (caddr_t) pthread_self());

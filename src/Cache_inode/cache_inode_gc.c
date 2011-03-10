@@ -142,9 +142,8 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
     }
   else if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
     {
-      LogEvent(COMPONENT_CACHE_INODE_GC,
-                        "cache_inode_gc_clean_entry: entry already deleted, type=%d, status=%d",
-                        pentry->internal_md.type, rc);
+      LogEvent(COMPONENT_CACHE_INODE_GC, "cache_inode_gc_clean_entry: entry already deleted, type=%d, status=%d",
+               pentry->internal_md.type, rc);
 
       cache_inode_release_fsaldata_key(&key, pgcparam->pclient);
       return LRU_LIST_SET_INVALID;
@@ -153,9 +152,8 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
   /* Clean up the associated ressources in the FSAL */
   if(FSAL_IS_ERROR(fsal_status = FSAL_CleanObjectResources(pfsal_handle)))
     {
-      LogCrit(COMPONENT_CACHE_INODE_GC,
-                        "cache_inode_gc_clean_entry: Could'nt free FSAL ressources fsal_status.major=%u",
-                        fsal_status.major);
+      LogCrit(COMPONENT_CACHE_INODE_GC, "cache_inode_gc_clean_entry: Could'nt free FSAL ressources fsal_status.major=%u",
+              fsal_status.major);
     }
   LogFullDebug(COMPONENT_CACHE_INODE_GC, "++++> pentry %p deleted from HashTable", pentry);
 
@@ -166,9 +164,8 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
    * and is released later in this function */
   if((cache_entry_t *) old_value.pdata != pentry)
     {
-      LogCrit(COMPONENT_CACHE_INODE_GC,
-                        "cache_inode_gc_clean_entry: unexpected pdata %p from hash table (pentry=%p)",
-                        old_value.pdata, pentry);
+      LogCrit(COMPONENT_CACHE_INODE_GC, "cache_inode_gc_clean_entry: unexpected pdata %p from hash table (pentry=%p)",
+              old_value.pdata, pentry);
     }
 
   cache_inode_release_fsaldata_key(&key, pgcparam->pclient);
@@ -585,8 +582,7 @@ cache_inode_status_t cache_inode_gc(hash_table_t * ht,
   pclient->call_since_last_gc = 0;
   pclient->time_of_last_gc = time(NULL);
 
-  LogEvent(COMPONENT_CACHE_INODE_GC,
-                    "Checking if garbage collection is needed");
+  LogInfo(COMPONENT_CACHE_INODE_GC, "Checking if garbage collection is needed");
 
   /* 1st ; we get the hash table size to see if garbage is required */
   hash_size = HashTable_GetSize(ht);
@@ -607,9 +603,8 @@ cache_inode_status_t cache_inode_gc(hash_table_t * ht,
       gcparam.pclient = pclient;
       gcparam.nb_to_be_purged = hash_size - cache_inode_gc_policy.lwmark_nb_entries;    /* try to purge until lw mark is reached */
 
-      LogEvent(COMPONENT_CACHE_INODE_GC,
-                        "Garbage collection started (to be purged=%u, LRU size=%u)",
-                        pclient->lru_gc->nb_entry, gcparam.nb_to_be_purged);
+      LogInfo(COMPONENT_CACHE_INODE_GC, "Garbage collection started (to be purged=%u, LRU size=%u)",
+              pclient->lru_gc->nb_entry, gcparam.nb_to_be_purged);
 
       invalid_before_gc = pclient->lru_gc->nb_invalid;
       if(LRU_invalidate_by_function
@@ -628,9 +623,8 @@ cache_inode_status_t cache_inode_gc(hash_table_t * ht,
           return *pstatus;
         }
 
-      LogEvent(COMPONENT_CACHE_INODE_GC,
-                        "Garbage collection finished, %u entries removed",
-                        invalid_after_gc - invalid_before_gc);
+      LogInfo(COMPONENT_CACHE_INODE_GC, "Garbage collection finished, %u entries removed",
+              invalid_after_gc - invalid_before_gc);
 
       *pstatus = CACHE_INODE_SUCCESS;
     }

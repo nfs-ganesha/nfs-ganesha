@@ -139,8 +139,8 @@ cache_inode_commit(cache_entry_t * pentry,
 
       if(cache_inode_close(pentry, pclient, pstatus) != CACHE_INODE_SUCCESS)
         {
-          LogEvent(COMPONENT_CACHE_INODE,
-                   "cache_inode_rdwr: cache_inode_close = %d", *pstatus);
+          LogEvent(COMPONENT_CACHE_INODE, "cache_inode_rdwr: cache_inode_close = %d",
+                   *pstatus);
           
           V_w(&pentry->lock);
           

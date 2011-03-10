@@ -245,7 +245,7 @@ int nfs_Init_svc()
   nfs_param.worker_param.nfs_svc_data.socket_rquota_udp = -1;
   nfs_param.worker_param.nfs_svc_data.socket_rquota_tcp = -1;
 
-  LogEvent(COMPONENT_DISPATCH, "NFS Init for core options = %d", nfs_param.core_param.core_options);
+  LogInfo(COMPONENT_DISPATCH, "NFS Init for core options = %d", nfs_param.core_param.core_options);
 
   /* Allocate resources that are based on the maximum number of open file descriptors */
   Xports = (SVCXPRT **) Mem_Alloc_Label(num_sock * sizeof(SVCXPRT *), "Xports array");
@@ -255,7 +255,7 @@ int nfs_Init_svc()
   FD_ZERO(&Svc_fdset);
 
 #ifdef _USE_TIRPC
-  LogEvent(COMPONENT_DISPATCH, "NFS INIT: Using TIRPC");
+  LogInfo(COMPONENT_DISPATCH, "NFS INIT: Using TIRPC");
 
   /* Get the netconfig entries from /etc/netconfig */
   if((netconfig_udpv4 = (struct netconfig *)getnetconfigent("udp")) == NULL)
@@ -273,7 +273,7 @@ int nfs_Init_svc()
       return -1;
     }
 #ifdef _USE_TIRPC_IPV6
-  LogEvent(COMPONENT_DISPATCH, "NFS INIT: Using IPv6");
+  LogInfo(COMPONENT_DISPATCH, "NFS INIT: Using IPv6");
 
   /* Get the netconfig entries from /etc/netconfig */
   if((netconfig_udpv6 = (struct netconfig *)getnetconfigent("udp6")) == NULL)
@@ -293,9 +293,9 @@ int nfs_Init_svc()
 #endif
 
   /* A short message to show that /etc/netconfig parsing was a success */
-  LogEvent(COMPONENT_DISPATCH, "netconfig found for UDPv4 and TCPv4");
+  LogInfo(COMPONENT_DISPATCH, "netconfig found for UDPv4 and TCPv4");
 #ifdef _USE_TIRPC_IPV6
-  LogEvent(COMPONENT_DISPATCH, "netconfig found for UDPv6 and TCPv6");
+  LogInfo(COMPONENT_DISPATCH, "netconfig found for UDPv6 and TCPv6");
 #endif
 
   /* RW_lock need to be initialized */
@@ -534,8 +534,7 @@ int nfs_Init_svc()
     {
 #ifdef _USE_NLM
      /* Some log that can be useful when debug ONC/RPC and RPCSEC_GSS matter */
-     LogEvent(COMPONENT_DISPATCH,
-              "Socket numbers are: nfs_udp=%u  nfs_tcp=%u "
+     LogDebug(COMPONENT_DISPATCH, "Socket numbers are: nfs_udp=%u  nfs_tcp=%u "
               "mnt_udp=%u  mnt_tcp=%u nlm_tcp=%u nlm_udp=%u",
               nfs_param.worker_param.nfs_svc_data.socket_nfs_udp,
               nfs_param.worker_param.nfs_svc_data.socket_nfs_tcp,
@@ -545,8 +544,7 @@ int nfs_Init_svc()
               nfs_param.worker_param.nfs_svc_data.socket_nlm_tcp);
 #else
       /* Some log that can be useful when debug ONC/RPC and RPCSEC_GSS matter */
-      LogEvent(COMPONENT_DISPATCH,
-               "Socket numbers are: nfs_udp=%u  nfs_tcp=%u "
+      LogDebug(COMPONENT_DISPATCH, "Socket numbers are: nfs_udp=%u  nfs_tcp=%u "
                "mnt_udp=%u  mnt_tcp=%u",
                nfs_param.worker_param.nfs_svc_data.socket_nfs_udp,
                nfs_param.worker_param.nfs_svc_data.socket_nfs_tcp,
@@ -557,16 +555,14 @@ int nfs_Init_svc()
   else
     {
       /* Some log that can be useful when debug ONC/RPC and RPCSEC_GSS matter */
-      LogEvent(COMPONENT_DISPATCH,
-               "Socket numbers are: nfs_udp=%u  nfs_tcp=%u",
+      LogDebug(COMPONENT_DISPATCH, "Socket numbers are: nfs_udp=%u  nfs_tcp=%u",
                nfs_param.worker_param.nfs_svc_data.socket_nfs_udp,
                nfs_param.worker_param.nfs_svc_data.socket_nfs_tcp);
     }
 
 #ifdef _USE_QUOTA
   /* Some log that can be useful when debug ONC/RPC and RPCSEC_GSS matter */
-  LogEvent(COMPONENT_DISPATCH,
-           "Socket numbers are: rquota_udp=%u  rquota_tcp=%u",
+  LogDebug(COMPONENT_DISPATCH, "Socket numbers are: rquota_udp=%u  rquota_tcp=%u",
            nfs_param.worker_param.nfs_svc_data.socket_rquota_udp,
            nfs_param.worker_param.nfs_svc_data.socket_rquota_tcp)
 #endif
@@ -867,7 +863,7 @@ int nfs_Init_svc()
 #endif
 
   /* Allocation of the SVCXPRT */
-  LogEvent(COMPONENT_DISPATCH, "Allocation of the SVCXPRT");
+  LogInfo(COMPONENT_DISPATCH, "Allocation of the SVCXPRT");
 
   if((nfs_param.worker_param.nfs_svc_data.xprt_nfs_udp =
 #ifdef _USE_TIRPC
@@ -1039,9 +1035,8 @@ int nfs_Init_svc()
         }
       else
         {
-          LogEvent(COMPONENT_DISPATCH,
-                   "Successfully imported principal %s into GSSAPI",
-                   nfs_param.krb5_param.principal);
+          LogInfo(COMPONENT_DISPATCH, "Successfully imported principal %s into GSSAPI",
+                  nfs_param.krb5_param.principal);
 
           /* Trying to acquire a credentials for checking name's validity */
           if(!Svcauth_gss_acquire_cred())
@@ -1052,9 +1047,8 @@ int nfs_Init_svc()
             }
           else
             {
-              LogEvent(COMPONENT_DISPATCH,
-                       "Principal %s is suitable for acquiring credentials",
-                       nfs_param.krb5_param.principal);
+              LogInfo(COMPONENT_DISPATCH, "Principal %s is suitable for acquiring credentials",
+                      nfs_param.krb5_param.principal);
             }
         }
     }
@@ -1064,12 +1058,11 @@ int nfs_Init_svc()
 #ifndef _NO_PORTMAPPER
 
   /* Perform all the RPC registration, for UDP and TCP, for NFS_V2, NFS_V3 and NFS_V4 */
-  LogEvent(COMPONENT_DISPATCH,
-           "Registration to the portmapper for NFS and MOUNT, on UDP and TCP");
+  LogInfo(COMPONENT_DISPATCH, "Registration to the portmapper for NFS and MOUNT, on UDP and TCP");
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering NFS V2/UDP");
+      LogInfo(COMPONENT_DISPATCH, "Registering NFS V2/UDP");
 #ifdef _USE_TIRPC
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_nfs_udp,
                   nfs_param.core_param.nfs_program,
@@ -1088,7 +1081,7 @@ int nfs_Init_svc()
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering NFS V3/UDP");
+      LogInfo(COMPONENT_DISPATCH, "Registering NFS V3/UDP");
 #ifdef _USE_TIRPC
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_nfs_udp,
                   nfs_param.core_param.nfs_program,
@@ -1107,7 +1100,7 @@ int nfs_Init_svc()
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering NFS V4/UDP");
+      LogInfo(COMPONENT_DISPATCH, "Registering NFS V4/UDP");
 #ifdef _USE_TIRPC
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_nfs_udp,
                   nfs_param.core_param.nfs_program,
@@ -1129,7 +1122,7 @@ int nfs_Init_svc()
 #ifdef _USE_TIRPC_IPV6
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering NFS V2/UDPv6");
+      LogInfo(COMPONENT_DISPATCH, "Registering NFS V2/UDPv6");
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_nfs_udp,
                   nfs_param.core_param.nfs_program,
                   NFS_V2, nfs_rpc_dispatch_dummy, netconfig_udpv6))
@@ -1142,7 +1135,7 @@ int nfs_Init_svc()
 
    if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
     {
-     LogEvent(COMPONENT_DISPATCH, "Registering NFS V3/UDPv6");
+     LogInfo(COMPONENT_DISPATCH, "Registering NFS V3/UDPv6");
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_nfs_udp,
                   nfs_param.core_param.nfs_program,
                   NFS_V3, nfs_rpc_dispatch_dummy, netconfig_udpv6))
@@ -1155,7 +1148,7 @@ int nfs_Init_svc()
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering NFS V4/UDPv6");
+      LogInfo(COMPONENT_DISPATCH, "Registering NFS V4/UDPv6");
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_nfs_udp,
                   nfs_param.core_param.nfs_program,
                   NFS_V4, nfs_rpc_dispatch_dummy, netconfig_udpv6))
@@ -1172,7 +1165,7 @@ int nfs_Init_svc()
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering NFS V2/TCP");
+      LogInfo(COMPONENT_DISPATCH, "Registering NFS V2/TCP");
 #ifdef _USE_TIRPC
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp,
                   nfs_param.core_param.nfs_program,
@@ -1191,7 +1184,7 @@ int nfs_Init_svc()
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering NFS V3/TCP");
+      LogInfo(COMPONENT_DISPATCH, "Registering NFS V3/TCP");
 #ifdef _USE_TIRPC
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp,
                   nfs_param.core_param.nfs_program,
@@ -1210,7 +1203,7 @@ int nfs_Init_svc()
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering NFS V4/TCP");
+      LogInfo(COMPONENT_DISPATCH, "Registering NFS V4/TCP");
 #ifdef _USE_TIRPC
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp,
                   nfs_param.core_param.nfs_program,
@@ -1231,7 +1224,7 @@ int nfs_Init_svc()
 #ifdef _USE_TIRPC_IPV6
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering NFS V2/TCPv6");
+      LogInfo(COMPONENT_DISPATCH, "Registering NFS V2/TCPv6");
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp,
                   nfs_param.core_param.nfs_program,
                   NFS_V2, nfs_rpc_dispatch_dummy, netconfig_tcpv6))
@@ -1244,7 +1237,7 @@ int nfs_Init_svc()
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering NFS V3/TCPv6");
+      LogInfo(COMPONENT_DISPATCH, "Registering NFS V3/TCPv6");
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp,
                   nfs_param.core_param.nfs_program,
                   NFS_V3, nfs_rpc_dispatch_dummy, netconfig_tcpv6))
@@ -1257,7 +1250,7 @@ int nfs_Init_svc()
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering NFS V4/TCPv6");
+      LogInfo(COMPONENT_DISPATCH, "Registering NFS V4/TCPv6");
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp,
                   nfs_param.core_param.nfs_program,
                   NFS_V4, nfs_rpc_dispatch_dummy, netconfig_tcpv6))
@@ -1274,7 +1267,7 @@ int nfs_Init_svc()
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering MOUNT V1/UDP");
+      LogInfo(COMPONENT_DISPATCH, "Registering MOUNT V1/UDP");
 #ifdef _USE_TIRPC
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_mnt_udp,
                   nfs_param.core_param.mnt_program,
@@ -1293,7 +1286,7 @@ int nfs_Init_svc()
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering MOUNT V3/UDP");
+      LogInfo(COMPONENT_DISPATCH, "Registering MOUNT V3/UDP");
 #ifdef _USE_TIRPC
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_mnt_udp,
                   nfs_param.core_param.mnt_program,
@@ -1313,7 +1306,7 @@ int nfs_Init_svc()
 #ifdef _USE_TIRPC_IPV6
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering MOUNT V1/UDPv6");
+      LogInfo(COMPONENT_DISPATCH, "Registering MOUNT V1/UDPv6");
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_mnt_udp,
                   nfs_param.core_param.mnt_program,
                   MOUNT_V1, nfs_rpc_dispatch_dummy, netconfig_udpv6))
@@ -1326,7 +1319,7 @@ int nfs_Init_svc()
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering MOUNT V3/UDPv6");
+      LogInfo(COMPONENT_DISPATCH, "Registering MOUNT V3/UDPv6");
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_mnt_udp,
                   nfs_param.core_param.mnt_program,
                   MOUNT_V3, nfs_rpc_dispatch_dummy, netconfig_udpv6))
@@ -1343,7 +1336,7 @@ int nfs_Init_svc()
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering MOUNT V1/TCP");
+      LogInfo(COMPONENT_DISPATCH, "Registering MOUNT V1/TCP");
 #ifdef _USE_TIRPC
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp,
                   nfs_param.core_param.mnt_program,
@@ -1362,7 +1355,7 @@ int nfs_Init_svc()
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering MOUNT V3/TCP");
+      LogInfo(COMPONENT_DISPATCH, "Registering MOUNT V3/TCP");
 #ifdef _USE_TIRPC
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp,
                   nfs_param.core_param.mnt_program,
@@ -1382,7 +1375,7 @@ int nfs_Init_svc()
 #ifdef _USE_TIRPC_IPV6
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering MOUNT V1/TCPv6");
+      LogInfo(COMPONENT_DISPATCH, "Registering MOUNT V1/TCPv6");
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp,
                   nfs_param.core_param.mnt_program,
                   MOUNT_V1, nfs_rpc_dispatch_dummy, netconfig_tcpv6))
@@ -1395,7 +1388,7 @@ int nfs_Init_svc()
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering MOUNT V3/TCPv6");
+      LogInfo(COMPONENT_DISPATCH, "Registering MOUNT V3/TCPv6");
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp,
                   nfs_param.core_param.mnt_program,
                   MOUNT_V3, nfs_rpc_dispatch_dummy, netconfig_tcpv6))
@@ -1415,7 +1408,7 @@ int nfs_Init_svc()
 #ifdef _USE_NLM
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering NLM V4/UDP");
+      LogInfo(COMPONENT_DISPATCH, "Registering NLM V4/UDP");
 #ifdef _USE_TIRPC
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_nlm_udp,
                   nfs_param.core_param.nlm_program,
@@ -1434,7 +1427,7 @@ int nfs_Init_svc()
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
     {
-      LogEvent(COMPONENT_DISPATCH, "Registering NLM V4/TCP");
+      LogInfo(COMPONENT_DISPATCH, "Registering NLM V4/TCP");
 #ifdef _USE_TIRPC
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_nlm_tcp,
                   nfs_param.core_param.nlm_program,
@@ -1457,7 +1450,7 @@ int nfs_Init_svc()
 
 #ifdef _USE_QUOTA
 
-  LogEvent(COMPONENT_DISPATCH, "Registering RQUOTA/UDP");
+  LogInfo(COMPONENT_DISPATCH, "Registering RQUOTA/UDP");
 #ifdef _USE_TIRPC
   if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_rquota_udp,
               nfs_param.core_param.rquota_program,
@@ -1473,7 +1466,7 @@ int nfs_Init_svc()
   else
     nb_svc_rquota_ok += 1;
 
-  LogEvent(COMPONENT_DISPATCH, "Registering RQUOTA/TCP");
+  LogInfo(COMPONENT_DISPATCH, "Registering RQUOTA/TCP");
 #ifdef _USE_TIRPC
   if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_rquota_tcp,
               nfs_param.core_param.rquota_program,
@@ -1489,7 +1482,7 @@ int nfs_Init_svc()
   else
     nb_svc_rquota_ok += 1;
 
-  LogEvent(COMPONENT_DISPATCH, "Registering EXT_RQUOTA/UDP");
+  LogInfo(COMPONENT_DISPATCH, "Registering EXT_RQUOTA/UDP");
 #ifdef _USE_TIRPC
   if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_rquota_udp,
               nfs_param.core_param.rquota_program,
@@ -1505,7 +1498,7 @@ int nfs_Init_svc()
   else
     nb_svc_rquota_ok += 1;
 
-  LogEvent(COMPONENT_DISPATCH, "Registering EXT_RQUOTA/TCP");
+  LogInfo(COMPONENT_DISPATCH, "Registering EXT_RQUOTA/TCP");
 #ifdef _USE_TIRPC
   if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_rquota_tcp,
               nfs_param.core_param.rquota_program,
@@ -2088,7 +2081,7 @@ void *rpc_dispatcher_thread(void *Arg)
 
 #ifndef _NO_BUDDY_SYSTEM
   /* Initialisation of the Buddy Malloc */
-  LogEvent(COMPONENT_DISPATCH, "NFS DISPATCHER: Initialization of memory manager");
+  LogInfo(COMPONENT_DISPATCH, "NFS DISPATCHER: Initialization of memory manager");
   if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
     {
       /* Failed init */
@@ -2097,7 +2090,7 @@ void *rpc_dispatcher_thread(void *Arg)
     }
 #endif
   /* Calling dispatcher main loop */
-  LogEvent(COMPONENT_DISPATCH, "NFS DISPATCHER: Entering nfs/rpc dispatcher");
+  LogInfo(COMPONENT_DISPATCH, "NFS DISPATCHER: Entering nfs/rpc dispatcher");
 
   LogDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: my pthread id is %p", (caddr_t) pthread_self());
 

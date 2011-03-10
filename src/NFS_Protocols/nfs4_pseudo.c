@@ -1174,9 +1174,8 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 #endif
 
         default:
-	  LogEvent(COMPONENT_NFS_V4_PSEUDO,
-                            "Bad file attributes %d queried",
-                            attribute_to_set);
+	  LogWarn(COMPONENT_NFS_V4_PSEUDO, "Bad file attributes %d queried",
+                  attribute_to_set);
           /* BUGAZOMEU : un traitement special ici */
           break;
         }                       /* switch( attr_to_set ) */

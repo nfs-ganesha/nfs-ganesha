@@ -230,7 +230,7 @@ void *admin_thread(void *Arg)
       LogMajor(COMPONENT_MAIN, "ADMIN THREAD: Memory manager could not be initialized, exiting...");
       exit(1);
     }
-  LogEvent(COMPONENT_MAIN, "ADMIN THREAD: Memory manager successfully initialized");
+  LogInfo(COMPONENT_MAIN, "ADMIN THREAD: Memory manager successfully initialized");
 #endif
 
   while(1)
