@@ -123,7 +123,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
   str_client[arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_len] = '\0';
 
   LogDebug(COMPONENT_NFS_V4, "EXCHANGE_ID Client id len = %u",
-                  arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_len);
+           arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_len);
   LogDebug(COMPONENT_NFS_V4, "EXCHANGE_ID Client name = #%s#", str_client);
   //LogDebug(COMPONENT_NFS_V4, "EXCHANGE_ID Verifier = #%s#", str_verifier ) ; 
 
@@ -137,8 +137,9 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
       res_EXCHANGE_ID4.eir_status = NFS4ERR_SERVERFAULT;
       return res_EXCHANGE_ID4.eir_status;
     }
-  LogDebug(COMPONENT_NFS_V4, "EXCHANGE_ID computed clientid4=%llux for name='%s'",
-                  (long long unsigned int)clientid, str_client);
+  LogDebug(COMPONENT_NFS_V4,
+           "EXCHANGE_ID computed clientid4=%llux for name='%s'",
+           (long long unsigned int)clientid, str_client);
 
 #if 0 //plante le client sous windows. Ai-je réellement besoin de cela ???? //
   /* Check flags value (test EID4) */
@@ -154,8 +155,8 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
     {
       /* Client id already in use */
       LogDebug(COMPONENT_NFS_V4,
-                      "EXCHANGE_ID ClientId %llx already in use for client '%s', check if same",
-                      (long long unsigned int)clientid, nfs_clientid.client_name);
+               "EXCHANGE_ID ClientId %llx already in use for client '%s', check if same",
+               (long long unsigned int)clientid, nfs_clientid.client_name);
 
       /* Principals are the same, check content of the setclientid request */
       if(nfs_clientid.confirmed == CONFIRMED_CLIENT_ID)
@@ -166,8 +167,8 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
              FALSE)
             {
               LogDebug(COMPONENT_NFS_V4,
-                              "EXCHANGE_ID Confirmed ClientId %llx -> '%s': Credential do not match... Return NFS4ERR_CLID_INUSE",
-                              clientid, nfs_clientid.client_name);
+                       "EXCHANGE_ID Confirmed ClientId %llx -> '%s': Credential do not match... Return NFS4ERR_CLID_INUSE",
+                       clientid, nfs_clientid.client_name);
 
               res_EXCHANGE_ID4.eir_status = NFS4ERR_CLID_INUSE;
 #ifdef _USE_NFS4_1
@@ -185,26 +186,26 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
             }
           else
             LogDebug(COMPONENT_NFS_V4,
-                            "EXCHANGE_ID ClientId %llx is set again by same principal",
-                            clientid);
+                     "EXCHANGE_ID ClientId %llx is set again by same principal",
+                     clientid);
 #endif
 
           /* Ask for a different client with the same client id... returns an error if different client */
           LogDebug(COMPONENT_NFS_V4,
-                          "EXCHANGE_ID Confirmed ClientId %llx already in use for client '%s'",
-                          (long long unsigned int)clientid, nfs_clientid.client_name);
+                   "EXCHANGE_ID Confirmed ClientId %llx already in use for client '%s'",
+                   (long long unsigned int)clientid, nfs_clientid.client_name);
 
           if(strncmp
              (nfs_clientid.incoming_verifier,
               arg_EXCHANGE_ID4.eia_clientowner.co_verifier, NFS4_VERIFIER_SIZE))
             {
               LogDebug(COMPONENT_NFS_V4,
-                              "EXCHANGE_ID Confirmed ClientId %llx already in use for client '%s', verifier do not match...",
-                              (long long unsigned int)clientid, nfs_clientid.client_name);
+                       "EXCHANGE_ID Confirmed ClientId %llx already in use for client '%s', verifier do not match...",
+                       (long long unsigned int)clientid, nfs_clientid.client_name);
 
               /* A client has rebooted and rebuilds its state */
               LogDebug(COMPONENT_NFS_V4,
-                              "Probably something to be done here: a client has rebooted and try recovering its state. Update the record for this client");
+                       "Probably something to be done here: a client has rebooted and try recovering its state. Update the record for this client");
 
               /* Update the record, but set it as REBOOTED */
               strncpy(nfs_clientid.client_name,
@@ -232,17 +233,17 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
           else
             {
               LogDebug(COMPONENT_NFS_V4,
-                              "EXCHANGE_ID Confirmed ClientId %llx already in use for client '%s', verifier matches. Now check callback",
-                              (long long unsigned int)clientid, nfs_clientid.client_name);
+                       "EXCHANGE_ID Confirmed ClientId %llx already in use for client '%s', verifier matches. Now check callback",
+                       (long long unsigned int)clientid, nfs_clientid.client_name);
             }
         }
       else
         {
           LogDebug(COMPONENT_NFS_V4,
-                          "EXCHANGE_ID ClientId %llx already in use for client '%s', but unconfirmed",
-                          (long long unsigned int)clientid, nfs_clientid.client_name);
+                   "EXCHANGE_ID ClientId %llx already in use for client '%s', but unconfirmed",
+                   (long long unsigned int)clientid, nfs_clientid.client_name);
           LogCrit(COMPONENT_NFS_V4,
-	     "Reuse of a formerly obtained clientid that is not yet confirmed."); // Code needs to be improved here.
+	          "Reuse of a formerly obtained clientid that is not yet confirmed."); // Code needs to be improved here.
         }
     }
   else
@@ -323,7 +324,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
       eir_server_impl_id_val = NULL;
 
   LogDebug(COMPONENT_NFS_V4, "EXCHANGE_ID reply :ClientId=%llx",
-                  (long long unsigned int)res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_clientid);
+           (long long unsigned int)res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_clientid);
 
   res_EXCHANGE_ID4.eir_status = NFS4_OK;
   return res_EXCHANGE_ID4.eir_status;

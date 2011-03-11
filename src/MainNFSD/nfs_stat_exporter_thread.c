@@ -79,8 +79,8 @@ extern nfs_parameter_t nfs_param;
 extern nfs_parameter_t nfs_param;
 
 int stat_export_check_access(struct sockaddr_storage *pssaddr,
-			     exportlist_client_t *clients,
-			     exportlist_client_entry_t * pclient_found)
+                             exportlist_client_t *clients,
+                             exportlist_client_entry_t * pclient_found)
 {
   int rc;
   unsigned int addr;
@@ -114,7 +114,7 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
           return FALSE;
         }
       if(export_client_match
-	 (addr, ipstring, clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
+         (addr, ipstring, clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
         return TRUE;
 #ifdef _USE_TIRPC_IPV6
     }
@@ -155,11 +155,11 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
           /* Proceed with IPv4 dedicated function */
           /* else, check if any access only export matches this client */
           if(export_client_match
-	     (addr, ip6string, clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
+             (addr, ip6string, clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
             return TRUE;
         }
       if(export_client_matchv6
-	 (&(psockaddr_in6->sin6_addr), clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
+         (&(psockaddr_in6->sin6_addr), clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
         return TRUE;
     }
 #endif                          /* _USE_TIRPC_IPV6 */
@@ -169,7 +169,7 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
 }                               /* stat_export_check_access */
 
 static int parseAccessParam(char *var_name, char *var_value,
-			    exportlist_client_t *clients) {
+                            exportlist_client_t *clients) {
   int rc, err_flag = FALSE;
   char *expended_node_list;
 
@@ -186,8 +186,8 @@ static int parseAccessParam(char *var_name, char *var_value,
     {
       err_flag = TRUE;
       LogCrit(COMPONENT_CONFIG,
-	      "STAT_EXPORT_ACCESS: ERROR: Invalid format for client list in EXPORT::%s definition",
-	      var_name);
+              "STAT_EXPORT_ACCESS: ERROR: Invalid format for client list in EXPORT::%s definition",
+              var_name);
 
       return -1;
     }
@@ -195,7 +195,7 @@ static int parseAccessParam(char *var_name, char *var_value,
     {
       err_flag = TRUE;
       LogCrit(COMPONENT_CONFIG, "STAT_EXPORT_ACCESS: ERROR: Client list too long (%d>%d)",
-	      count, EXPORT_MAX_CLIENTS);
+              count, EXPORT_MAX_CLIENTS);
       return -1;
     }
 
@@ -210,7 +210,7 @@ static int parseAccessParam(char *var_name, char *var_value,
    * Search for coma-separated list of hosts, networks and netgroups
    */
   rc = nfs_ParseConfLine(client_list, count,
-			 expended_node_list, find_comma, find_endLine);
+                         expended_node_list, find_comma, find_endLine);
 
   /* free the buffer the nodelist module has allocated */
   free(expended_node_list);
@@ -222,22 +222,22 @@ static int parseAccessParam(char *var_name, char *var_value,
 
       /* free client strings */
       for(idx = 0; idx < count; idx++)
-	Mem_Free((caddr_t) client_list[idx]);
+        Mem_Free((caddr_t) client_list[idx]);
 
       return rc;
     }
 
   rc = nfs_AddClientsToClientArray( clients, rc,
-				    (char **)client_list, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS);
+                                    (char **)client_list, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS);
   if(rc != 0)
     {
       err_flag = TRUE;
       LogCrit(COMPONENT_CONFIG, "STAT_EXPORT_ACCESS: ERROR: Invalid client found in \"%s\"",
-	      var_value);
+              var_value);
 
       /* free client strings */
       for(idx = 0; idx < count; idx++)
-	Mem_Free((caddr_t) client_list[idx]);
+        Mem_Free((caddr_t) client_list[idx]);
 
       return rc;
     }
@@ -300,12 +300,12 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
 
       if(!STRCMP(key_name, "Access"))
         {
-	  parseAccessParam(key_name, key_value,
-			   &(out_parameter->stat_export.allowed_clients));
+          parseAccessParam(key_name, key_value,
+                           &(out_parameter->stat_export.allowed_clients));
         }
       else if(!STRCMP(key_name, "Port"))
         {
-	  strncpy(out_parameter->stat_export.export_stat_port, key_value, MAXPORTLEN);
+          strncpy(out_parameter->stat_export.export_stat_port, key_value, MAXPORTLEN);
         }
       else
         {
@@ -473,7 +473,7 @@ int merge_nfs_stats(char *stat_buf, nfs_stat_client_req_t *stat_client_req,
 
       default:
         // TODO: Invalid NFS version handling
-	LogCrit(COMPONENT_MAIN, "Error: Invalid NFS version.");
+        LogCrit(COMPONENT_MAIN, "Error: Invalid NFS version.");
       break;
     }
 
@@ -506,9 +506,9 @@ int merge_nfs_stats(char *stat_buf, nfs_stat_client_req_t *stat_client_req,
 
       default:
         // TODO: Invalid stat type handling
-	LogCrit(COMPONENT_MAIN, "Error: Invalid stat type.");
+        LogCrit(COMPONENT_MAIN, "Error: Invalid stat type.");
       break;
-	}
+        }
 
   return rc;
 }
@@ -611,21 +611,21 @@ void *stat_exporter_thread(void *addr)
       if((sockfd = socket(p->ai_family, p->ai_socktype,
                           p->ai_protocol)) == -1)
         {
-	  LogError(COMPONENT_MAIN, ERR_SYS, errno, sockfd);
+          LogError(COMPONENT_MAIN, ERR_SYS, errno, sockfd);
           continue;
         }
 
       if((rc = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
-			  sizeof(int))) == -1)
+                          sizeof(int))) == -1)
         {
-	  LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
+          LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
           return NULL;
         }
 
       if((rc = bind(sockfd, p->ai_addr, p->ai_addrlen)) == -1)
         {
           close(sockfd);
-	  LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
+          LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
           continue;
         }
 
@@ -652,21 +652,21 @@ void *stat_exporter_thread(void *addr)
       new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
       if(new_fd == -1)
         {
-	  LogError(COMPONENT_MAIN, ERR_SYS, errno, new_fd);
+          LogError(COMPONENT_MAIN, ERR_SYS, errno, new_fd);
           continue;
         }
 
       inet_ntop(their_addr.ss_family,
-		get_in_addr((struct sockaddr *)&their_addr),
-		s, sizeof s);
+                get_in_addr((struct sockaddr *)&their_addr),
+                s, sizeof s);
 
       if (stat_export_check_access(&their_addr,
-				   &(nfs_param.extern_param.stat_export.allowed_clients),
-				   &pclient_found)) {
-	LogDebug(COMPONENT_MAIN, "Stat export server: Access granted to %s", s);
-	process_stat_request(addr, new_fd);
+                                   &(nfs_param.extern_param.stat_export.allowed_clients),
+                                   &pclient_found)) {
+        LogDebug(COMPONENT_MAIN, "Stat export server: Access granted to %s", s);
+        process_stat_request(addr, new_fd);
       } else {
-	LogWarn(COMPONENT_MAIN, "Stat export server: Access denied to %s", s);
+        LogWarn(COMPONENT_MAIN, "Stat export server: Access denied to %s", s);
       }
     }                           /* while ( 1 ) */
 

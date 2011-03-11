@@ -140,7 +140,8 @@ int nfs_Create(nfs_arg_t * parg,
                        &(parg->arg_create3.where.dir),
                        NULL,
                        str);
-      LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Create handle: %s name: %s",
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Create handle: %s name: %s",
                str, str_file_name);
     }
 

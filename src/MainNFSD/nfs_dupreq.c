@@ -9,16 +9,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -97,7 +97,7 @@ extern nfs_function_desc_t rquota2_func_desc[];
 hash_table_t *ht_dupreq;
 
 /**
- * 
+ *
  * get_rpc_xid: extract the transfer Id from a RPC request.
  *
  * RPC Xid is used for RPC Reply cache. With UDP connection, the xid is in an opaque structure
@@ -152,11 +152,11 @@ unsigned int get_rpc_xid(struct svc_req *reqp)
 /**
  *
  * print_entry_dupreq: prints an entry in the LRU list.
- * 
+ *
  * prints an entry in the LRU list.
  *
  * @param data [IN] data stored in a LRU entry to be printed.
- * @param str [OUT] string used to store the result. 
+ * @param str [OUT] string used to store the result.
  *
  * @return 0 if ok, other values mean an error.
  *
@@ -168,7 +168,7 @@ int print_entry_dupreq(LRU_data_t data, char *str)
 }
 
 static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
-			  struct prealloc_pool *dupreq_pool, int nfs_req_status)
+                          struct prealloc_pool *dupreq_pool, int nfs_req_status)
 {
   int rc;
   nfs_function_desc_t funcdesc;
@@ -200,7 +200,8 @@ static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
 
         default:
           /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
-          LogMajor(COMPONENT_DUPREQ, "NFS DUPREQ: NFS Protocol version %d unknown in dupreq_gc",
+          LogMajor(COMPONENT_DUPREQ,
+                   "NFS Protocol version %d unknown in dupreq_gc",
                    (int)pdupreq->rq_vers);
           funcdesc = nfs2_func_desc[0]; /* free function for PROC_NULL does nothing */
           break;
@@ -220,7 +221,8 @@ static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
 
         default:
           /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
-          LogMajor(COMPONENT_DUPREQ, "NFS DUPREQ: MOUNT Protocol version %d unknown in dupreq_gc",
+          LogMajor(COMPONENT_DUPREQ,
+                   "MOUNT Protocol version %d unknown in dupreq_gc",
                    (int)pdupreq->rq_vers);
           break;
 
@@ -257,7 +259,9 @@ static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
   else
     {
       /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
-      LogMajor(COMPONENT_DUPREQ, "NFS DUPREQ: protocol %d is not managed", (int)pdupreq->rq_prog);
+      LogMajor(COMPONENT_DUPREQ,
+               "protocol %d is not managed",
+               (int)pdupreq->rq_prog);
     }
 
   /* Call the free function */
@@ -285,11 +289,11 @@ int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt,
   /* Get the socket address for the key */
   phostaddr = svc_getcaller(xprt);
   memcpy((char *)&pdupkey.addr, (char *)phostaddr,
-	 sizeof(pdupkey.addr));
+         sizeof(pdupkey.addr));
   pdupkey.xid = xid;
   /* Checksum the request */
   pdupkey.checksum = 0;
-  /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this, 
+  /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
    * this also means that buffkey->len will be 0 */
   buffkey.pdata = (caddr_t) &pdupkey;
   buffkey.len = sizeof(dupreq_key_t);
@@ -301,14 +305,16 @@ int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt,
 
       status = DUPREQ_SUCCESS;
       dupreq = (dupreq_entry_t *) buffval.pdata;
-      LogDebug(COMPONENT_DUPREQ, "NFS DUPREQ: Hit in the dupreq cache for xid=%ld addr=%d", xid,
-	       phostaddr->sin_addr.s_addr);
+      LogDebug(COMPONENT_DUPREQ,
+               "Hit in the dupreq cache for xid=%ld addr=%d",
+               xid, phostaddr->sin_addr.s_addr);
     }
   else {
-    return DUPREQ_NOT_FOUND;  
+    return DUPREQ_NOT_FOUND;
   }
 
-  LogFullDebug(COMPONENT_DUPREQ, "NFS_DUPREQ: REMOVING ip= %d.%d.%d.%d port=%d xid=%ld rq_prog=%ld",
+  LogFullDebug(COMPONENT_DUPREQ,
+               "REMOVING ip= %d.%d.%d.%d port=%d xid=%ld rq_prog=%ld",
                (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
                (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
                (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,
@@ -316,7 +322,7 @@ int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt,
                phostaddr->sin_port,
                xid,
                dupreq->rq_prog);
-  
+
   status = _remove_dupreq(&buffkey, dupreq, dupreq_pool, ! NFS_REQ_OK);
   return status;
 }
@@ -327,7 +333,7 @@ int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt,
  *
  * cleans an entry in the dupreq cache.
  *
- * @param pentry [INOUT] entry to be cleaned. 
+ * @param pentry [INOUT] entry to be cleaned.
  * @param addparam [IN] additional parameter used for cleaning.
  *
  * @return 0 if ok, other values mean an error.
@@ -350,12 +356,14 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
   /* Checksum the request */
   pdupkey.checksum = pdupreq->checksum;
 
-  /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this, 
+  /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
    * this also means that buffkey->len will be 0 */
   buffkey.pdata = (caddr_t) &pdupkey;
   buffkey.len = sizeof(dupreq_key_t);
 
-  LogDebug(COMPONENT_DUPREQ, "NFS DUPREQ: Garbage collection on xid=%ld", pdupreq->xid);
+  LogDebug(COMPONENT_DUPREQ,
+           "Garbage collection on xid=%ld",
+           pdupreq->xid);
 
   return _remove_dupreq(&buffkey, pdupreq, dupreq_pool, NFS_REQ_OK);
 }                               /* clean_entry_dupreq */
@@ -363,7 +371,7 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
 /**
  *
  *  dupreq_rbt_hash_func: computes the hash value for the entry in dupreq cache.
- * 
+ *
  * Computes the hash value for the entry in dupreq cache. In fact, it just use the Xid modulo the hash array size.
  * This function is called internal in the HasTable_* function
  *
@@ -396,7 +404,8 @@ unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
     }
 #endif                          /* _USE_TIRPC_IPV6 */
   else
-      LogCrit(COMPONENT_DUPREQ, "NFS DUPREQ: Could not determine whether dupreq entry used a IPV4 or IPV6 address.");
+      LogCrit(COMPONENT_DUPREQ,
+              "Could not determine whether dupreq entry used a IPV4 or IPV6 address.");
 
   return (((unsigned long)key->xid + addr_hash)^(key->checksum)) % p_hparam->index_size;
 }                               /*  dupreq_value_hash_func */
@@ -404,8 +413,8 @@ unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
 /**
  *
  *  dupreq_rbt_hash_func: computes the rbt value for the entry in dupreq cache.
- * 
- * Computes the rbt value for the entry in dupreq cache. In fact, it just use the Xid 
+ *
+ * Computes the rbt value for the entry in dupreq cache. In fact, it just use the Xid
  * itself (which is an unsigned integer) as the rbt value.
  * This function is called internal in the HasTable_* function
  *
@@ -437,7 +446,8 @@ unsigned long dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * 
     }
 #endif                          /* _USE_TIRPC_IPV6 */
   else
-      LogCrit(COMPONENT_DUPREQ, "NFS DUPREQ: Could not determine whether dupreq entry used a IPV4 or IPV6 address.");
+      LogCrit(COMPONENT_DUPREQ,
+              "Could not determine whether dupreq entry used a IPV4 or IPV6 address.");
 
   return ((unsigned long)key->xid + addr_hash)^(key->checksum);
 }                               /* dupreq_rbt_hash_func */
@@ -449,13 +459,13 @@ unsigned long dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * 
  * compile.
  *
  * compare the xid, ip, and port stored in the key buffers. This function is
- * to be used as 'compare_key' field in 
- * the hashtable storing the nfs duplicated requests. 
+ * to be used as 'compare_key' field in
+ * the hashtable storing the nfs duplicated requests.
  *
  * @param buff1 [IN] first key
  * @param buff2 [IN] second key
  *
- * @return 0 if keys are identifical, 1 if they are different. 
+ * @return 0 if keys are identifical, 1 if they are different.
  *
  */
 int compare_req(hash_buffer_t * buff1, hash_buffer_t * buff2)
@@ -476,8 +486,8 @@ int compare_req(hash_buffer_t * buff1, hash_buffer_t * buff2)
  *
  * display_xid: displays the xid stored in the buffer.
  *
- * displays the xid stored in the buffer. This function is to be used as 'key_to_str' field in 
- * the hashtable storing the nfs duplicated requests. 
+ * displays the xid stored in the buffer. This function is to be used as 'key_to_str' field in
+ * the hashtable storing the nfs duplicated requests.
  *
  * @param buff1 [IN]  buffer to display
  * @param buff2 [OUT] output string
@@ -497,7 +507,7 @@ int display_xid(hash_buffer_t * pbuff, char *str)
  * nfs_Init_dupreq: Init the hashtable and LRU for duplicate request cache
  *
  * Perform all the required initialization for hashtable and LRU for duplicate request cache
- * 
+ *
  * @param param [IN] parameter used to init the duplicate request cache
  *
  * @return 0 if successful, -1 otherwise
@@ -507,7 +517,8 @@ int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param)
 {
   if((ht_dupreq = HashTable_Init(param.hash_param)) == NULL)
     {
-      LogCrit(COMPONENT_DUPREQ, "NFS DUPREQ: Cannot init the duplicate request hash table");
+      LogCrit(COMPONENT_DUPREQ,
+              "Cannot init the duplicate request hash table");
       return -1;
     }
 
@@ -529,10 +540,10 @@ int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param)
  */
 
 int nfs_dupreq_add_not_finished(long xid,
-				struct svc_req *ptr_req,
-				SVCXPRT *xprt,
-				struct prealloc_pool *dupreq_pool,
-				nfs_res_t *res_nfs)
+                                struct svc_req *ptr_req,
+                                SVCXPRT *xprt,
+                                struct prealloc_pool *dupreq_pool,
+                                nfs_res_t *res_nfs)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -554,14 +565,14 @@ int nfs_dupreq_add_not_finished(long xid,
   /* Get the socket address for the key */
   phostaddr = svc_getcaller(xprt);
   memcpy((char *)&pdupkey->addr, (char *)phostaddr,
-	 sizeof(pdupkey->addr));
+         sizeof(pdupkey->addr));
 
   pdupkey->xid = xid;
 
   /* Checksum the request */
   pdupkey->checksum = 0;
 
-  /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this, 
+  /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
    * this also means that buffkey->len will be 0 */
   buffkey.pdata = (caddr_t) pdupkey;
   buffkey.len = sizeof(dupreq_key_t);
@@ -569,7 +580,7 @@ int nfs_dupreq_add_not_finished(long xid,
   /* I build the data with the request pointer that should be in state 'IN USE' */
   pdupreq->xid = pdupkey->xid;
   memcpy((char *)&pdupreq->addr, (char *)&pdupkey->addr,
-	sizeof(pdupkey->addr));
+        sizeof(pdupkey->addr));
   pdupreq->checksum = pdupkey->checksum;
   pdupreq->rq_prog = ptr_req->rq_prog;
   pdupreq->rq_vers = ptr_req->rq_vers;
@@ -579,7 +590,8 @@ int nfs_dupreq_add_not_finished(long xid,
   buffdata.pdata = (caddr_t) pdupreq;
   buffdata.len = sizeof(dupreq_entry_t);
 
-  LogFullDebug(COMPONENT_DUPREQ, "NFS_DUPREQ: TEST_AND_SET ip= %d.%d.%d.%d port=%d xid=%ld rq_prog=%ld",
+  LogFullDebug(COMPONENT_DUPREQ,
+               "TEST_AND_SET ip= %d.%d.%d.%d port=%d xid=%ld rq_prog=%ld",
                (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
                (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
                (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,
@@ -589,27 +601,27 @@ int nfs_dupreq_add_not_finished(long xid,
                pdupreq->rq_prog);
 
   status = HashTable_Test_And_Set(ht_dupreq, &buffkey, &buffdata,
-				  HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
+                                  HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
 
   if (status == HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
     {
       if(HashTable_Get(ht_dupreq, &buffkey, &buffval) == HASHTABLE_SUCCESS)
-	{
-	  P(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
-	  if ( ((dupreq_entry_t *)buffval.pdata)->processing == 1)
-	    { 
-	      V(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
-	      status = DUPREQ_BEING_PROCESSED;
-	    }
-	  else
-	    {
-	      *res_nfs = ((dupreq_entry_t *) buffval.pdata)->res_nfs;
-	      V(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
+        {
+          P(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
+          if ( ((dupreq_entry_t *)buffval.pdata)->processing == 1)
+            {
+              V(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
+              status = DUPREQ_BEING_PROCESSED;
+            }
+          else
+            {
+              *res_nfs = ((dupreq_entry_t *) buffval.pdata)->res_nfs;
+              V(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
               status = DUPREQ_ALREADY_EXISTS;
-	    }
-	}
+            }
+        }
       else
-	status = DUPREQ_NOT_FOUND;      
+        status = DUPREQ_NOT_FOUND;
     }
   else if (status == HASHTABLE_INSERT_MALLOC_ERROR)
       status = DUPREQ_INSERT_MALLOC_ERROR;
@@ -638,10 +650,10 @@ int nfs_dupreq_add_not_finished(long xid,
  */
 
 int nfs_dupreq_finish(long xid,
-		      struct svc_req *ptr_req,
-		      SVCXPRT *xprt,
-		      nfs_res_t * p_res_nfs,
-		      LRU_list_t * lru_dupreq)
+                      struct svc_req *ptr_req,
+                      SVCXPRT *xprt,
+                      nfs_res_t * p_res_nfs,
+                      LRU_list_t * lru_dupreq)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -655,18 +667,18 @@ int nfs_dupreq_finish(long xid,
   /* Get the socket address for the key */
   phostaddr = svc_getcaller(xprt);
   memcpy((char *)&pdupkey.addr, (char *)phostaddr,
-	 sizeof(pdupkey.addr));
+         sizeof(pdupkey.addr));
   pdupkey.xid = xid;
   /* Checksum the request */
   pdupkey.checksum = 0;
-  /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this, 
+  /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
    * this also means that buffkey->len will be 0 */
   buffkey.pdata = (caddr_t) &pdupkey;
   buffkey.len = sizeof(dupreq_key_t);
   if(HashTable_Get(ht_dupreq, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     return DUPREQ_NOT_FOUND;
 
-  LogDebug(COMPONENT_DUPREQ, "NFS DUPREQ: Hit in the dupreq cache for xid=%ld", xid);
+  LogDebug(COMPONENT_DUPREQ, "Hit in the dupreq cache for xid=%ld", xid);
 
   P(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
   ((dupreq_entry_t *)buffval.pdata)->res_nfs = *p_res_nfs;
@@ -687,8 +699,8 @@ int nfs_dupreq_finish(long xid,
  *
  * nfs_dupreq_get: Tries to get a duplicated requests for dupreq cache
  *
- * Tries to get a duplicated requests for dupreq cache. 
- * 
+ * Tries to get a duplicated requests for dupreq cache.
+ *
  * @param xid [IN] the transfer id we are looking for
  * @param pstatus [OUT] the pointer to the status for the operation
  *
@@ -707,11 +719,11 @@ nfs_res_t nfs_dupreq_get(long xid, struct svc_req *ptr_req, SVCXPRT *xprt, int *
   /* Get the socket address for the key */
   phostaddr = svc_getcaller(xprt);
   memcpy((char *)&pdupkey.addr, (char *)phostaddr,
-	 sizeof(pdupkey.addr));
+         sizeof(pdupkey.addr));
   pdupkey.xid = xid;
   /* Checksum the request */
   pdupkey.checksum = 0;
-  /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this, 
+  /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
    * this also means that buffkey->len will be 0 */
   buffkey.pdata = (caddr_t) &pdupkey;
   buffkey.len = sizeof(dupreq_key_t);
@@ -722,10 +734,11 @@ nfs_res_t nfs_dupreq_get(long xid, struct svc_req *ptr_req, SVCXPRT *xprt, int *
 
       *pstatus = DUPREQ_SUCCESS;
       res_nfs = ((dupreq_entry_t *) buffval.pdata)->res_nfs;
-      LogDebug(COMPONENT_DUPREQ, "NFS DUPREQ: Hit in the dupreq cache for xid=%ld", xid);
+      LogDebug(COMPONENT_DUPREQ, "Hit in the dupreq cache for xid=%ld", xid);
     }
   else {
-    LogFullDebug(COMPONENT_DUPREQ, "Failed to get dupreq entry: ip= %d.%d.%d.%d port=%d xid=%ld",
+    LogFullDebug(COMPONENT_DUPREQ,
+                 "Failed to get dupreq entry: ip= %d.%d.%d.%d port=%d xid=%ld",
                  (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
                  (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
                  (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,

@@ -145,7 +145,8 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                        &(parg->arg_symlink3.where.dir),
                        NULL,
                        str);
-      LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Symlink handle: %s name: %s target: %s",
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Symlink handle: %s name: %s target: %s",
                str, str_symlink_name, str_target_path);
     }
 

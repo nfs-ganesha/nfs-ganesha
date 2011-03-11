@@ -131,7 +131,9 @@ static struct tm *Localtime_r(const time_t * p_time, struct tm *p_tm)
 static void init_keys(void)
 {
   if(pthread_key_create(&thread_key, NULL) == -1)
-    LogCrit(COMPONENT_LOG, "init_keys - pthread_key_create returned %d (%s)", errno, strerror(errno));
+    LogCrit(COMPONENT_LOG,
+            "init_keys - pthread_key_create returned %d (%s)",
+            errno, strerror(errno));
 }                               /* init_keys */
 
 
@@ -149,7 +151,9 @@ static ThreadLogContext_t *Log_GetThreadContext(int ok_errors)
   if(pthread_once(&once_key, init_keys) != 0)
     {
       if (ok_errors)
-        LogCrit(COMPONENT_LOG_EMERG, "Log_GetThreadFunction - pthread_once returned %d (%s)", errno, strerror(errno));
+        LogCrit(COMPONENT_LOG_EMERG,
+                "Log_GetThreadFunction - pthread_once returned %d (%s)",
+                errno, strerror(errno));
       return NULL;
     }
 
@@ -164,7 +168,9 @@ static ThreadLogContext_t *Log_GetThreadContext(int ok_errors)
       if(p_current_thread_vars == NULL)
         {
           if (ok_errors)
-            LogCrit(COMPONENT_LOG_EMERG, "Log_GetThreadFunction - malloc returned %d (%s)", errno, strerror(errno));
+            LogCrit(COMPONENT_LOG_EMERG,
+                    "Log_GetThreadFunction - malloc returned %d (%s)",
+                    errno, strerror(errno));
           return NULL;
         }
 
@@ -175,7 +181,8 @@ static ThreadLogContext_t *Log_GetThreadContext(int ok_errors)
       pthread_setspecific(thread_key, (void *)p_current_thread_vars);
 
       if (ok_errors)
-        LogFullDebug(COMPONENT_LOG_EMERG, "malloc => %p", p_current_thread_vars);
+        LogFullDebug(COMPONENT_LOG_EMERG, "malloc => %p",
+                     p_current_thread_vars);
     }
 
   return p_current_thread_vars;
@@ -278,7 +285,9 @@ static void ArmeSignal(int signal, void (*action) ())
   sigemptyset(&act.sa_mask);
 
   if(sigaction(signal, &act, NULL) == -1)
-    LogCrit(COMPONENT_LOG, "Impossible to arm signal %d, error %d (%s)", signal, errno, strerror(errno));
+    LogCrit(COMPONENT_LOG,
+            "Impossible to arm signal %d, error %d (%s)",
+            signal, errno, strerror(errno));
 }                               /* ArmeSignal */
 
 /*
@@ -385,7 +394,8 @@ void InitLogging()
         continue;
       newlevel = ReturnLevelAscii(env_value);
       if (newlevel == -1) {
-        LogMajor(COMPONENT_LOG, "Environment variable %s exists, but the value %s is not a valid log level.",
+        LogMajor(COMPONENT_LOG,
+                 "Environment variable %s exists, but the value %s is not a valid log level.",
                  LogComponents[component].comp_name, env_value);
         continue;
       }
@@ -415,7 +425,8 @@ static void DisplayLogString_valist(char *buff_dest, log_components_t component,
   /* Ecriture sur le fichier choisi */
   log_vsnprintf(texte, STR_LEN_TXT, format, arguments);
 
-  snprintf(buff_dest, STR_LEN_TXT, "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :%s\n",
+  snprintf(buff_dest, STR_LEN_TXT,
+           "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :%s\n",
            the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
            the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, nom_host,
            nom_programme, getpid(), function,
@@ -1554,7 +1565,8 @@ int DisplayErrorComponentLogLine(log_components_t component, int num_family, int
 
   if(MakeLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
-  return DisplayLogComponentLevel(component, NIV_CRIT, "%s: %s", LogComponents[component].comp_str, buffer);
+  return DisplayLogComponentLevel(component, NIV_CRIT, "%s: %s",
+                                  LogComponents[component].comp_str, buffer);
 }                               /* DisplayErrorLogLine */
 
 static int isValidLogPath(char *pathname)
@@ -1577,26 +1589,38 @@ static int isValidLogPath(char *pathname)
     case 0:
       break; /* success !! */
     case EACCES:
-      LogCrit(COMPONENT_LOG, "Either access is denied to the file or denied to one of the directories in %s",
+      LogCrit(COMPONENT_LOG,
+              "Either access is denied to the file or denied to one of the directories in %s",
               directory_name);
       break;
     case ELOOP:
-      LogCrit(COMPONENT_LOG, "Too many symbolic links were encountered in resolving %s", directory_name);
+      LogCrit(COMPONENT_LOG,
+              "Too many symbolic links were encountered in resolving %s",
+              directory_name);
       break;
     case ENAMETOOLONG:
-      LogCrit(COMPONENT_LOG, "%s is too long of a pathname.", directory_name);
+      LogCrit(COMPONENT_LOG,
+              "%s is too long of a pathname.",
+              directory_name);
       break;
     case ENOENT:
-      LogCrit(COMPONENT_LOG, "A component of %s does not exist.", directory_name);
+      LogCrit(COMPONENT_LOG,
+              "A component of %s does not exist.",
+              directory_name);
       break;
     case ENOTDIR:
-      LogCrit(COMPONENT_LOG, "%s is not a directory.", directory_name);
+      LogCrit(COMPONENT_LOG,
+              "%s is not a directory.",
+              directory_name);
       break;
     case EROFS:
-      LogCrit(COMPONENT_LOG, "Write permission was requested for a file on a read-only file system.");
+      LogCrit(COMPONENT_LOG,
+              "Write permission was requested for a file on a read-only file system.");
       break;
     case EFAULT:
-      LogCrit(COMPONENT_LOG, "%s points outside your accessible address space.", directory_name);
+      LogCrit(COMPONENT_LOG,
+              "%s points outside your accessible address space.",
+              directory_name);
       break;
     }
 
