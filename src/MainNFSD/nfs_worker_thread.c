@@ -1129,12 +1129,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       LogDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: Calling service function %s start_time %llu.%.6llu",
                pworker_data->pfuncdesc->funcname, (unsigned long long)timer_start->tv_sec, (unsigned long long)timer_start->tv_usec);
 
-      /* Use mutex to prevent from the same inode being modified concurrently. */
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-      P(mutex_cond_xprt[ptr_svc->xp_fd]);
-#else
-      P(mutex_cond_xprt[ptr_svc->xp_sock]);
-#endif
 
 #ifdef _ERROR_INJECTION
       if(worker_delay_time != 0)
@@ -1148,13 +1142,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
           
       rc = pworker_data->pfuncdesc->service_function(parg_nfs, pexport, &pworker_data->thread_fsal_context, &(pworker_data->cache_inode_client), pworker_data->ht, ptr_req, &res_nfs);  /* BUGAZOMEU Un appel crade pour debugger */
 
-      /* Use mutex to prevent from the same inode being modified concurrently. */
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-      V(mutex_cond_xprt[ptr_svc->xp_fd]);
-#else
-      V(mutex_cond_xprt[ptr_svc->xp_sock]);
-#endif
-      
       gettimeofday(&timer_end, NULL);
       timer_diff = time_diff(*timer_start, timer_end);
       memset(timer_start, 0, sizeof(struct timeval));
@@ -1479,7 +1466,7 @@ void *worker_thread(void *IndexArg)
   /* Bind the data cache client to the inode cache client */
   pmydata->cache_inode_client.pcontent_client = (caddr_t) & pmydata->cache_content_client;
 
-#ifdef _USE_PNFS
+#ifdef _USE_PNFS_SPNFS_LIKE
   /* Init the pNFS engine for each worker */
   if(pnfs_init(&pmydata->cache_inode_client.mfsl_context.pnfsclient, &nfs_param.pnfs_param.layoutfile))
     {
@@ -1490,6 +1477,7 @@ void *worker_thread(void *IndexArg)
     }
   LogFullDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: pNFS engine successfully initialized", index);
 #endif
+
   /* notify dispatcher it is ready */
   pmydata->is_ready = TRUE;
 

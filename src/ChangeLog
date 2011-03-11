@@ -431,5 +431,7 @@
 1.0.5   -
         - Using function daemon() to start the daemon in a cleaner way
 	- Using gethostbyaddr_r to avoid contention when resolving address in nfs_ip_name.c
+        - pNFS/file support has been added for LUSTRE
+        -pNFS related sources were reorganized with a design closer to what is done with FSAL/MFSL
         
 	
