@@ -20,7 +20,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * ------------- 
+ * -------------
  */
 
 /**
@@ -31,7 +31,7 @@
  * \version $Revision: 1.24 $
  * \brief   Defines the datas that are to be
  *          accessed as extern by the fsal modules
- * 
+ *
  */
 #define FSAL_INTERNAL_C
 #ifdef HAVE_CONFIG_H
@@ -106,7 +106,8 @@ static void free_pthread_specific_stats(void *buff)
 static void init_keys(void)
 {
   if(pthread_key_create(&key_stats, free_pthread_specific_stats) == -1)
-    LogMajor(COMPONENT_FSAL, "Could not create thread specific stats (pthread_key_create) err %d (%s)",
+    LogMajor(COMPONENT_FSAL,
+             "Could not create thread specific stats (pthread_key_create) err %d (%s)",
              errno, strerror(errno));
 
   return;
@@ -137,7 +138,8 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
   if(pthread_once(&once_key, init_keys) != 0)
     {
-      LogMajor(COMPONENT_FSAL, "Could not create thread specific stats (pthread_once) err %d (%s)",
+      LogMajor(COMPONENT_FSAL,
+               "Could not create thread specific stats (pthread_once) err %d (%s)",
                errno, strerror(errno));
       return;
     }
@@ -156,7 +158,8 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
       if(bythread_stat == NULL)
         {
-          LogCrit(COMPONENT_FSAL, "Could not allocate memory for FSAL statistics err %d (%s)",
+          LogCrit(COMPONENT_FSAL,
+                  "Could not allocate memory for FSAL statistics err %d (%s)",
                   Mem_Errno, strerror(Mem_Errno));
           /* we don't have real memory, bail */
           return;
@@ -212,7 +215,8 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
   /* first, we init the keys if this is the first time */
   if(pthread_once(&once_key, init_keys) != 0)
     {
-      LogMajor(COMPONENT_FSAL, "Could not create thread specific stats (pthread_once) err %d (%s)",
+      LogMajor(COMPONENT_FSAL,
+               "Could not create thread specific stats (pthread_once) err %d (%s)",
                errno, strerror(errno));
       return;
     }
@@ -229,7 +233,8 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
           (fsal_statistics_t *) Mem_Alloc_Label(sizeof(fsal_statistics_t), "fsal_statistics_t")) == NULL)
       {
         /* we don't have working memory, bail */
-        LogCrit(COMPONENT_FSAL, "Could not allocate memory for FSAL statistics err %d (%s)",
+        LogCrit(COMPONENT_FSAL,
+                "Could not allocate memory for FSAL statistics err %d (%s)",
                 Mem_Errno, strerror(Mem_Errno));
         return;
       }
@@ -381,7 +386,8 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
       if(rc != 0)
         ReturnCode(ERR_FSAL_SERVERFAULT, rc);
 
-      LogDebug(COMPONENT_FSAL, "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
+      LogDebug(COMPONENT_FSAL,
+               "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
                fsal_info->max_fs_calls);
     }
   else
@@ -395,46 +401,69 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   if(isFullDebug(COMPONENT_FSAL))
     {
       LogFullDebug(COMPONENT_FSAL, "{");
-      LogFullDebug(COMPONENT_FSAL, "  maxfilesize  = %llX    ",
-                        default_gpfs_info.maxfilesize);
-      LogFullDebug(COMPONENT_FSAL, "  maxlink  = %lu   ",
-                        default_gpfs_info.maxlink);
-      LogFullDebug(COMPONENT_FSAL, "  maxnamelen  = %lu  ",
-                        default_gpfs_info.maxnamelen);
-      LogFullDebug(COMPONENT_FSAL, "  maxpathlen  = %lu  ",
-                        default_gpfs_info.maxpathlen);
-      LogFullDebug(COMPONENT_FSAL, "  no_trunc  = %d ", default_gpfs_info.no_trunc);
-      LogFullDebug(COMPONENT_FSAL, "  chown_restricted  = %d ",
-                        default_gpfs_info.chown_restricted);
-      LogFullDebug(COMPONENT_FSAL, "  case_insensitive  = %d ",
-                        default_gpfs_info.case_insensitive);
-      LogFullDebug(COMPONENT_FSAL, "  case_preserving  = %d ",
-                        default_gpfs_info.case_preserving);
-      LogFullDebug(COMPONENT_FSAL, "  fh_expire_type  = %hu ",
-                        default_gpfs_info.fh_expire_type);
-      LogFullDebug(COMPONENT_FSAL, "  link_support  = %d  ",
-                        default_gpfs_info.link_support);
-      LogFullDebug(COMPONENT_FSAL, "  symlink_support  = %d  ",
-                        default_gpfs_info.symlink_support);
-      LogFullDebug(COMPONENT_FSAL, "  lock_support  = %d  ",
-                        default_gpfs_info.lock_support);
-      LogFullDebug(COMPONENT_FSAL, "  named_attr  = %d  ",
-                        default_gpfs_info.named_attr);
-      LogFullDebug(COMPONENT_FSAL, "  unique_handles  = %d  ",
-                        default_gpfs_info.unique_handles);
-      LogFullDebug(COMPONENT_FSAL, "  acl_support  = %hu  ",
-                        default_gpfs_info.acl_support);
-      LogFullDebug(COMPONENT_FSAL, "  cansettime  = %d  ",
-                        default_gpfs_info.cansettime);
-      LogFullDebug(COMPONENT_FSAL, "  homogenous  = %d  ",
-                        default_gpfs_info.homogenous);
-      LogFullDebug(COMPONENT_FSAL, "  supported_attrs  = %llX  ",
-                        default_gpfs_info.supported_attrs);
-      LogFullDebug(COMPONENT_FSAL, "  maxread  = %llX     ",
-                        default_gpfs_info.maxread);
-      LogFullDebug(COMPONENT_FSAL, "  maxwrite  = %llX     ",
-                        default_gpfs_info.maxwrite);
-      LogFullDebug(COMPONENT_FSAL, "  umask  = %X ", default_gpfs_info.umask);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  maxfilesize  = %llX    ",
+                   default_gpfs_info.maxfilesize);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  maxlink  = %lu   ",
+                   default_gpfs_info.maxlink);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  maxnamelen  = %lu  ",
+                   default_gpfs_info.maxnamelen);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  maxpathlen  = %lu  ",
+                   default_gpfs_info.maxpathlen);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  no_trunc  = %d ",
+                   default_gpfs_info.no_trunc);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  chown_restricted  = %d ",
+                   default_gpfs_info.chown_restricted);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  case_insensitive  = %d ",
+                   default_gpfs_info.case_insensitive);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  case_preserving  = %d ",
+                   default_gpfs_info.case_preserving);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  fh_expire_type  = %hu ",
+                   default_gpfs_info.fh_expire_type);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  link_support  = %d  ",
+                   default_gpfs_info.link_support);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  symlink_support  = %d  ",
+                   default_gpfs_info.symlink_support);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  lock_support  = %d  ",
+                   default_gpfs_info.lock_support);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  named_attr  = %d  ",
+                   default_gpfs_info.named_attr);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  unique_handles  = %d  ",
+                   default_gpfs_info.unique_handles);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  acl_support  = %hu  ",
+                   default_gpfs_info.acl_support);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  cansettime  = %d  ",
+                   default_gpfs_info.cansettime);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  homogenous  = %d  ",
+                   default_gpfs_info.homogenous);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  supported_attrs  = %llX  ",
+                   default_gpfs_info.supported_attrs);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  maxread  = %llX     ",
+                   default_gpfs_info.maxread);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  maxwrite  = %llX     ",
+                   default_gpfs_info.maxwrite);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  umask  = %X ",
+                   default_gpfs_info.umask);
       LogFullDebug(COMPONENT_FSAL, "}");
     }
 
@@ -467,20 +496,23 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
   SET_BITMAP_PARAM(global_fs_info, fs_common_info, xattr_access_rights);
 
-  LogFullDebug(COMPONENT_FSAL, "Supported attributes constant = 0x%llX.",
+  LogFullDebug(COMPONENT_FSAL,
+               "Supported attributes constant = 0x%llX.",
                GPFS_SUPPORTED_ATTRIBUTES);
 
-  LogFullDebug(COMPONENT_FSAL, "Supported attributes default = 0x%llX.",
+  LogFullDebug(COMPONENT_FSAL,
+               "Supported attributes default = 0x%llX.",
                default_gpfs_info.supported_attrs);
 
-  LogFullDebug(COMPONENT_FSAL, "FSAL INIT: Supported attributes mask = 0x%llX.",
+  LogFullDebug(COMPONENT_FSAL,
+               "FSAL INIT: Supported attributes mask = 0x%llX.",
                global_fs_info.supported_attrs);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
 /*********************************************************************
- * 
+ *
  *  GPFS FSAL char device driver interaces
  *
  ********************************************************************/
@@ -561,7 +593,7 @@ fsal_status_t fsal_internal_handle2fd_at(int dirfd,
 
 /**
  * fsal_internal_get_handle:
- * Create a handle from a file path 
+ * Create a handle from a file path
  *
  * \param pcontext (input):
  *        A context pointer for the root of the current export
@@ -589,7 +621,9 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
   harg.dfd = AT_FDCWD;
   harg.flag = 0;
 
-  LogFullDebug(COMPONENT_FSAL, "Lookup handle for %s", p_fsalpath->path);
+  LogFullDebug(COMPONENT_FSAL,
+               "Lookup handle for %s",
+               p_fsalpath->path);
 
   if((rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg)) < 0)
     ReturnCode(posix2fsal_error(errno), errno);
@@ -629,7 +663,9 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
   harg.dfd = dfd;
   harg.flag = 0;
 
-  LogFullDebug(COMPONENT_FSAL, "Lookup handle at for %s", p_fsalname->name);
+  LogFullDebug(COMPONENT_FSAL,
+               "Lookup handle at for %s",
+               p_fsalname->name);
 
   if((rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg)) < 0)
     ReturnCode(posix2fsal_error(errno), errno);
@@ -664,7 +700,9 @@ fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * p_handle)
   harg.dfd = fd;
   harg.flag = 0;
 
-  LogFullDebug(COMPONENT_FSAL, "Lookup handle by fd for %d", fd);
+  LogFullDebug(COMPONENT_FSAL,
+               "Lookup handle by fd for %d",
+               fd);
 
   if((rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg)) < 0)
     ReturnCode(posix2fsal_error(errno), errno);
@@ -786,18 +824,23 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
       mode = unix2fsal_mode(p_buffstat->st_mode);
     }
 
-  LogFullDebug(COMPONENT_FSAL, "file Mode=%#o, file uid=%d, file gid= %d",
+  LogFullDebug(COMPONENT_FSAL,
+               "file Mode=%#o, file uid=%d, file gid= %d",
                mode,uid, gid);
-  LogFullDebug(COMPONENT_FSAL, "user uid=%d, user gid= %d, access_type=%#o",
-               p_context->credential.user, p_context->credential.group, access_type);
+  LogFullDebug(COMPONENT_FSAL,
+               "user uid=%d, user gid= %d, access_type=%#o",
+               p_context->credential.user,
+               p_context->credential.group,
+               access_type);
 
   /* If the uid of the file matches the uid of the user,
    * then the uid mode bits take precedence. */
   if(p_context->credential.user == uid)
     {
-      
-      LogFullDebug(COMPONENT_FSAL, "File belongs to user %d", uid);
-      
+
+      LogFullDebug(COMPONENT_FSAL,
+                   "File belongs to user %d", uid);
+
       if(mode & FSAL_MODE_RUSR)
         missing_access &= ~FSAL_R_OK;
 
@@ -815,7 +858,8 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
       else
         {
-          LogFullDebug(COMPONENT_FSAL, "Mode=%#o, Access=%#o, Rights missing: %#o",
+          LogFullDebug(COMPONENT_FSAL,
+                       "Mode=%#o, Access=%#o, Rights missing: %#o",
                        mode, access_type, missing_access);
           ReturnCode(ERR_FSAL_ACCESS, 0);
         }
@@ -830,7 +874,8 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
   /* Test if the file belongs to user's group. */
   is_grp = (p_context->credential.group == gid);
   if(is_grp)
-    LogFullDebug(COMPONENT_FSAL, "File belongs to user's group %d",
+    LogFullDebug(COMPONENT_FSAL,
+                 "File belongs to user's group %d",
                  p_context->credential.group);
 
   /* Test if file belongs to alt user's groups */
@@ -839,7 +884,8 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
       {
         is_grp = (p_context->credential.alt_groups[i] == gid);
         if(is_grp)
-          LogFullDebug(COMPONENT_FSAL, "File belongs to user's alt group %d",
+          LogFullDebug(COMPONENT_FSAL,
+                       "File belongs to user's alt group %d",
                        p_context->credential.alt_groups[i]);
         if(is_grp)
           break;
@@ -876,12 +922,13 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
     missing_access &= ~FSAL_W_OK;
 
   if(mode & FSAL_MODE_XOTH)
-    missing_access &= ~FSAL_X_OK; 
+    missing_access &= ~FSAL_X_OK;
 
   if(missing_access == 0)
     ReturnCode(ERR_FSAL_NO_ERROR, 0);
   else {
-    LogFullDebug(COMPONENT_FSAL, "Mode=%#o, Access=%#o, Rights missing: %#o",
+    LogFullDebug(COMPONENT_FSAL,
+                 "Mode=%#o, Access=%#o, Rights missing: %#o",
                  mode, access_type, missing_access);
     ReturnCode(ERR_FSAL_ACCESS, 0);
   }

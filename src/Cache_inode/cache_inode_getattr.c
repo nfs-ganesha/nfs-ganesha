@@ -174,7 +174,8 @@ cache_inode_getattr(cache_entry_t * pentry,
                         {
                             cache_inode_status_t kill_status;
 
-                            LogEvent(COMPONENT_CACHE_INODE, "cache_inode_getattr: Stale FSAL File Handle detected for pentry = %p",
+                            LogEvent(COMPONENT_CACHE_INODE,
+                                     "cache_inode_getattr: Stale FSAL File Handle detected for pentry = %p",
                                      pentry);
 
                             cache_inode_kill_entry(pentry, ht,

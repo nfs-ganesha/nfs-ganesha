@@ -547,8 +547,10 @@ size_t replylen;
         {
           uaddr = taddr2uaddr(nconf, &xprt->xp_rtaddr);
           freenetconfigent(nconf);
-          LogFullDebug(COMPONENT_RPC_CACHE, "cache set for xid= %x prog=%d vers=%d proc=%d for rmtaddr=%s",
-                 su->su_xid, uc->uc_prog, uc->uc_vers, uc->uc_proc, uaddr);
+          LogFullDebug(COMPONENT_RPC_CACHE,
+                       "cache set for xid= %x prog=%d vers=%d proc=%d for rmtaddr=%s",
+                       su->su_xid, uc->uc_prog,
+                       uc->uc_vers, uc->uc_proc, uaddr);
           free(uaddr);
         }
     }
@@ -608,9 +610,10 @@ size_t *replylenp;
                   uaddr = taddr2uaddr(nconf, &xprt->xp_rtaddr);
                   freenetconfigent(nconf);
                   LogFullDebug(COMPONENT_RPC_CACHE,
-                       "cache entry found for xid=%x prog=%d vers=%d proc=%d for rmtaddr=%s",
-                       su->su_xid, msg->rm_call.cb_prog, msg->rm_call.cb_vers,
-                       msg->rm_call.cb_proc, uaddr);
+                               "cache entry found for xid=%x prog=%d vers=%d proc=%d for rmtaddr=%s",
+                               su->su_xid, msg->rm_call.cb_prog,
+                               msg->rm_call.cb_vers,
+                               msg->rm_call.cb_proc, uaddr);
                   free(uaddr);
                 }
             }

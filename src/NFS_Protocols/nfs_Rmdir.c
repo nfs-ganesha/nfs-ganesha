@@ -134,7 +134,8 @@ int nfs_Rmdir(nfs_arg_t * parg /* IN  */ ,
                        &(parg->arg_rmdir3.object.dir),
                        NULL,
                        str);
-      LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Rmdir handle: %s name: %s",
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Rmdir handle: %s name: %s",
                str, dir_name);
     }
 

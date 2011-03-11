@@ -112,7 +112,8 @@ int nfs3_Commit(nfs_arg_t * parg,
     {
       char str[LEN_FH_STR];
       sprint_fhandle3(str, &(parg->arg_commit3.file));
-      LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs3_Commit handle: %s", str);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs3_Commit handle: %s", str);
     }
 
   /* to avoid setting it on each error case */

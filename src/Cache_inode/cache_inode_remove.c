@@ -35,9 +35,9 @@
 
 /**
  *
- * cache_inode_is_dir_empty: checks if a directory is empty or not. No mutex management. 
+ * cache_inode_is_dir_empty: checks if a directory is empty or not. No mutex management.
  *
- * Checks if a directory is empty or not. No mutex management 
+ * Checks if a directory is empty or not. No mutex management
  *
  * @param pentry [IN] entry to be checked (should be of type DIR_BEGINNING)
  *
@@ -170,7 +170,7 @@ cache_inode_status_t cache_inode_clean_internal(cache_entry_t * to_remove_entry,
 
   if(rc)
     LogCrit(COMPONENT_CACHE_INODE,
-                      "HashTable_Del error %d in cache_inode_clean_internal", rc);
+            "HashTable_Del error %d in cache_inode_clean_internal", rc);
 
   if((rc != HASHTABLE_SUCCESS) && (rc != HASHTABLE_ERROR_NO_SUCH_KEY))
     {
@@ -188,8 +188,8 @@ cache_inode_status_t cache_inode_clean_internal(cache_entry_t * to_remove_entry,
       if((cache_entry_t *) old_value.pdata != to_remove_entry)
         {
           LogCrit(COMPONENT_CACHE_INODE,
-                            "cache_inode_remove: unexpected pdata %p from hash table (pentry=%p)",
-                            old_value.pdata, to_remove_entry);
+                  "cache_inode_remove: unexpected pdata %p from hash table (pentry=%p)",
+                  old_value.pdata, to_remove_entry);
         }
     }
 
@@ -227,7 +227,7 @@ cache_inode_status_t cache_inode_clean_internal(cache_entry_t * to_remove_entry,
 /**
  *
  * cache_inode_remove_sw: removes a pentry addressed by its parent pentry and its FSAL name. Mutex management is switched.
- * 
+ *
  * Removes a pentry addressed by its parent pentry and its FSAL name. Mutex management is switched.
  *
  * @param pentry  [IN]     entry for the parent directory to be managed.
@@ -235,9 +235,9 @@ cache_inode_status_t cache_inode_clean_internal(cache_entry_t * to_remove_entry,
  * @param pattr   [OUT]    attributes for the entry that we have found.
  * @param ht      [IN]     hash table used for the cache, unused in this call.
  * @param pclient [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext   [IN]    FSAL credentials 
+ * @param pcontext   [IN]    FSAL credentials
  * @param pstatus [OUT]   returned status.
- * 
+ *
  * @return CACHE_INODE_SUCCESS if operation is a success \n
  * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
  *
@@ -319,7 +319,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       return *pstatus;
     }
 
-  LogDebug(COMPONENT_CACHE_INODE, "---> Cache_inode_remove : %s", pnode_name->name);
+  LogDebug(COMPONENT_CACHE_INODE,
+           "---> Cache_inode_remove : %s", pnode_name->name);
 
   /* Non-empty directories should not be removed. If entry is of type DIR_CONTINUE, then the directory is not empty */
   if(to_remove_entry->internal_md.type == DIR_CONTINUE)
@@ -351,7 +352,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
         }
     }
 
-  LogFullDebug(COMPONENT_CACHE_INODE, "---> Cache_inode_remove : 1 %s", pnode_name->name);
+  LogFullDebug(COMPONENT_CACHE_INODE,
+               "---> Cache_inode_remove : 1 %s", pnode_name->name);
   /* We have to get parent's fsal handle */
   parent_entry = pentry;
 
@@ -372,7 +374,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
         V_r(&pentry->object.dir_cont.pdir_begin->lock);
     }
 
-  LogFullDebug(COMPONENT_CACHE_INODE, "---> Cache_inode_remove : 2 %s", pnode_name->name);
+  LogFullDebug(COMPONENT_CACHE_INODE,
+               "---> Cache_inode_remove : 2 %s", pnode_name->name);
   if(status == CACHE_INODE_SUCCESS)
     {
       /* Remove the file from FSAL */
@@ -410,13 +413,14 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
               cache_inode_status_t kill_status;
 
               LogDebug(COMPONENT_CACHE_INODE,
-                  "cache_inode_remove: Stale FSAL FH detected for pentry %p", pentry);
+                       "cache_inode_remove: Stale FSAL FH detected for pentry %p",
+                       pentry);
 
               if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
                 LogCrit(COMPONENT_CACHE_INODE,
-                    "cache_inode_remove: Could not kill entry %p, status = %u",
-                     pentry, kill_status);
+                        "cache_inode_remove: Could not kill entry %p, status = %u",
+                        pentry, kill_status);
 
               *pstatus = CACHE_INODE_FSAL_ESTALE;
             }
@@ -441,7 +445,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       return status;
     }
 
-  LogFullDebug(COMPONENT_CACHE_INODE, "---> Cache_inode_remove : 3 %s", pnode_name->name);
+  LogFullDebug(COMPONENT_CACHE_INODE,
+               "---> Cache_inode_remove : 3 %s", pnode_name->name);
   /* Remove the entry from parent dir_entries array */
   cache_inode_remove_cached_dirent(pentry, pnode_name, ht, pclient, &status);
 
@@ -515,10 +520,11 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       /* No hardlink counter to be decremented for a directory: hardlink are not allowed for them */
     }
 
-  LogFullDebug(COMPONENT_CACHE_INODE, "---> Cache_inode_remove : 4 %s to_remove_numlinks %d"
-	" pentry <%p> numlocks %d to_remove_entry <%p> numlocks %d",
-	 pnode_name->name, to_remove_numlinks,
-	pentry, pentry->object.file.open_fd.num_locks, to_remove_entry, to_remove_entry->object.file.open_fd.num_locks);
+  LogFullDebug(COMPONENT_CACHE_INODE,
+               "---> Cache_inode_remove : 4 %s to_remove_numlinks %d pentry <%p> numlocks %d to_remove_entry <%p> numlocks %d",
+               pnode_name->name, to_remove_numlinks, pentry,
+               pentry->object.file.open_fd.num_locks, to_remove_entry,
+               to_remove_entry->object.file.open_fd.num_locks);
 
   /* Now, delete "to_remove_entry" from the cache inode and free its associated resources, but only if numlinks == 0 */
   if(to_remove_numlinks == 0)
@@ -529,10 +535,15 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
                         (to_remove_entry->object.file.open_fd.num_locks))
         {
           to_remove_entry->internal_md.kill_entry = 1;
-          LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_remove: setting kill_entry");
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "cache_inode_remove: setting kill_entry");
           goto dontremove;
         }
-  LogFullDebug(COMPONENT_CACHE_INODE, "---> Cache_inode_remove : 5 %s", pnode_name->name);
+
+      LogFullDebug(COMPONENT_CACHE_INODE,
+                   "---> Cache_inode_remove : 5 %s",
+                   pnode_name->name);
+
       /* If pentry is a regular file, data cached, the related data cache entry should be removed as well */
       if(to_remove_entry->internal_md.type == REGULAR_FILE)
         {
@@ -544,7 +555,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
                   (cache_content_client_t *) pclient->pcontent_client,
                   &cache_content_status) != CACHE_CONTENT_SUCCESS)
                 {
-                  LogEvent(COMPONENT_CACHE_INODE, "pentry %p, named %s could not be released from data cache, status=%d",
+                  LogEvent(COMPONENT_CACHE_INODE,
+                           "pentry %p, named %s could not be released from data cache, status=%d",
                            to_remove_entry, pnode_name->name,
                            cache_content_status);
                 }
@@ -569,7 +581,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
                 }
 
               LogCrit(COMPONENT_CACHE_INODE,
-                                "cache_inode_clean_internal ERROR %d", *pstatus);
+                      "cache_inode_clean_internal ERROR %d", *pstatus);
               return *pstatus;
             }
 
@@ -608,7 +620,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
     }
 
 dontremove:
-  LogFullDebug(COMPONENT_CACHE_INODE, "---> Cache_inode_remove : 6 %s", pnode_name->name);
+  LogFullDebug(COMPONENT_CACHE_INODE,
+               "---> Cache_inode_remove : 6 %s", pnode_name->name);
   /* Validate the entries */
   *pstatus = cache_inode_valid(pentry, CACHE_INODE_OP_SET, pclient);
 
@@ -632,7 +645,7 @@ dontremove:
 /**
  *
  * cache_inode_remove_no_mutex: removes a pentry addressed by its parent pentry and its FSAL name. No mutex management.
- * 
+ *
  * Removes a pentry addressed by its parent pentry and its FSAL name.
  *
  * @param pentry  [IN]    entry for the parent directory to be managed.
@@ -640,9 +653,9 @@ dontremove:
  * @param pattr   [OUT]   attributes for the entry that we have found.
  * @param ht      [IN]    hash table used for the cache, unused in this call.
  * @param pclient [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext   [IN]    FSAL credentials 
+ * @param pcontext   [IN]    FSAL credentials
  * @param pstatus [OUT]   returned status.
- * 
+ *
  * @return CACHE_INODE_SUCCESS if operation is a success \n
  * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
  *
@@ -662,7 +675,7 @@ cache_inode_status_t cache_inode_remove_no_mutex(cache_entry_t * pentry,        
 /**
  *
  * cache_inode_remove: removes a pentry addressed by its parent pentry and its FSAL name.
- * 
+ *
  * Removes a pentry addressed by its parent pentry and its FSAL name.
  *
  * @param pentry [IN] entry for the parent directory to be managed.
@@ -670,9 +683,9 @@ cache_inode_status_t cache_inode_remove_no_mutex(cache_entry_t * pentry,        
  * @param pattr [OUT] attributes for the entry that we have found.
  * @param ht      [IN] hash table used for the cache, unused in this call.
  * @param pclient [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext [IN] FSAL credentials 
+ * @param pcontext [IN] FSAL credentials
  * @param pstatus [OUT] returned status.
- * 
+ *
  * @return CACHE_INODE_SUCCESS if operation is a success \n
  * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
  *

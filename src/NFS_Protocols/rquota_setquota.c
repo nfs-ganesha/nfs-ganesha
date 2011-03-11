@@ -94,7 +94,8 @@ int rquota_setquota(nfs_arg_t * parg /* IN     */ ,
   int quota_id;
   char work[MAXPATHLEN];
 
-  LogFullDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling rquota_setquota");
+  LogFullDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling rquota_setquota");
 
   if(preq->rq_vers == EXT_RQUOTAVERS)
     {

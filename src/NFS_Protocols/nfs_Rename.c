@@ -155,7 +155,8 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                        &(parg->arg_rename3.to.dir),
                        NULL,
                        strto);
-      LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Rename from handle: %s name %s to handle: %s name: %s",
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Rename from handle: %s name %s to handle: %s name: %s",
                strfrom, str_entry_name, strto, str_new_entry_name);
     }
 

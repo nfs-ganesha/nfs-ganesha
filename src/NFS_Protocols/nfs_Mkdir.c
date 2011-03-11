@@ -137,7 +137,8 @@ int nfs_Mkdir(nfs_arg_t * parg,
                        &(parg->arg_mkdir3.where.dir),
                        NULL,
                        str);
-      LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Mkdir handle: %s name: %s",
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Mkdir handle: %s name: %s",
                str, str_dir_name);
     }
 
