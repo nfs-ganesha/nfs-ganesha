@@ -97,6 +97,7 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdeviceinfo";
+  int rc = 0 ;
 
   resp->resop = NFS4_OP_GETDEVICEINFO;
 
@@ -121,7 +122,12 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
   res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_layout_type =
       LAYOUT4_NFSV4_1_FILES;
 
-  pnfs_encode_getdeviceinfo(buff, &lenbuff);
+  if( ( rc = pnfs_service_getdeviceinfo( buff, &lenbuff) ) != NFS4_OK )
+    {
+       res_GETDEVICEINFO4.gdir_status = rc ; 
+       return res_GETDEVICEINFO4.gdir_status;
+    }
+
   res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
       da_addr_body_len = lenbuff;
   res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.

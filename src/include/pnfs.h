@@ -123,9 +123,11 @@ typedef union pnfs_file__
 } pnfs_file_t;
 #endif
 
-void pnfs_encode_getdeviceinfo( char *buff, unsigned int *plen) ;
-
-void pnfs_encode_layoutget( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout) ;
+int pnfs_service_getdevicelist( char * buff, unsigned int * plen ) ;
+int pnfs_service_getdeviceinfo( char *buff, unsigned int * plen) ;
+int pnfs_service_layoutcommit( char * buff, unsigned int * plen ) ;
+int pnfs_service_layoutreturn( char * buff, unsigned int * plen ) ;
+int pnfs_service_layoutget( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout) ;
 
 
 #endif                          /* _PNFS_H */

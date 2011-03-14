@@ -273,10 +273,14 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
   lenbuffin = sizeof( pnfs_file_t ) ;
 #endif
 
-  pnfs_encode_layoutget( buffin,
-                         &lenbuffin,
-                         buff,
-                         &lenbuff);
+  if( ( rc = pnfs_service_layoutget( buffin,
+                                     &lenbuffin,
+                                     buff,
+                                     &lenbuff) ) != NFS4_OK )
+    {
+       res_LAYOUTGET4.logr_status = rc ;
+       return res_LAYOUTGET4.logr_status;
+    }
 
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
       lo_content.loc_body.loc_body_len =
