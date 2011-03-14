@@ -56,18 +56,22 @@ int pnfs_ds_init(pnfs_client_t * pnfsclient, pnfs_layoutfile_parameter_t * pnfs_
       if(pnfs_connect(&pnfsclient->ds_client[i], &pnfs_layout_param->ds_param[i]))
         {
           /* Failed init */
-          LogMajor(COMPONENT_PNFS,"PNFS INIT: pNFS engine could not be initialized, exiting...");
+          LogMajor(COMPONENT_PNFS,
+                   "PNFS INIT: pNFS engine could not be initialized, exiting...");
           exit(1);
         }
-      LogDebug(COMPONENT_PNFS, "PNFS INIT: pNFS engine successfully initialized");
+      LogDebug(COMPONENT_PNFS,
+               "PNFS INIT: pNFS engine successfully initialized");
 
       if(pnfs_do_mount(&pnfsclient->ds_client[i], &pnfs_layout_param->ds_param[i]))
         {
           /* Failed init */
-          LogMajor(COMPONENT_PNFS,"PNFS INIT: pNFS engine could not initialized session, exiting...");
+          LogMajor(COMPONENT_PNFS,
+                   "PNFS INIT: pNFS engine could not initialized session, exiting...");
           exit(1);
         }
-      LogDebug(COMPONENT_PNFS, "PNFS INIT: pNFS session successfully initialized");
+      LogDebug(COMPONENT_PNFS,
+               "PNFS INIT: pNFS session successfully initialized");
 
       /* Lookup to find the DS's root FH */
       pnfsclient->ds_client[i].ds_rootfh.nfs_fh4_val =
@@ -78,14 +82,15 @@ int pnfs_ds_init(pnfs_client_t * pnfsclient, pnfs_layoutfile_parameter_t * pnfs_
           &pnfsclient->ds_client[i].ds_rootfh))
         {
           /* Failed init */
-          LogMajor(COMPONENT_PNFS,"PNFS INIT: pNFS engine could not look up %s on DS=%s",
-                     pnfs_layout_param->ds_param[i].rootpath,
-                     pnfs_layout_param->ds_param[i].ipaddr_ascii);
+          LogMajor(COMPONENT_PNFS,
+                   "PNFS INIT: pNFS engine could not look up %s on DS=%s",
+                   pnfs_layout_param->ds_param[i].rootpath,
+                   pnfs_layout_param->ds_param[i].ipaddr_ascii);
           exit(1);
         }
       LogDebug(COMPONENT_PNFS,
-                      "PNFS INIT: pNFS engine successfully got DS's rootFH for %s",
-                      pnfs_layout_param->ds_param[i].ipaddr_ascii);
+               "PNFS INIT: pNFS engine successfully got DS's rootFH for %s",
+               pnfs_layout_param->ds_param[i].ipaddr_ascii);
 
     }                           /* for */
 

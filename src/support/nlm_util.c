@@ -734,13 +734,15 @@ nlm_lock_entry_t *nlm_find_lock_entry_by_cookie(netobj * cookie)
     char buffer[1024];
 
     netobj_to_string(cookie, buffer, 1024);
-    LogFullDebug(COMPONENT_NLM, "nlm_find_lock_entry_by_cookie searching for %s", buffer);
+    LogFullDebug(COMPONENT_NLM,
+                 "nlm_find_lock_entry_by_cookie searching for %s", buffer);
     pthread_mutex_lock(&nlm_lock_list_mutex);
     glist_for_each(glist, &nlm_lock_list)
         {
             nlm_entry = glist_entry(glist, nlm_lock_entry_t, lock_list);
             netobj_to_string(&nlm_entry->cookie, buffer, 1024);
-            LogFullDebug(COMPONENT_NLM, "nlm_find_lock_entry_by_cookie checking %s", buffer);
+            LogFullDebug(COMPONENT_NLM,
+                         "nlm_find_lock_entry_by_cookie checking %s", buffer);
             if(!netobj_compare(&nlm_entry->cookie, cookie))
                 break;
         }

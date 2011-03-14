@@ -20,7 +20,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * ------------- 
+ * -------------
  */
 
 /**
@@ -109,7 +109,7 @@ fsal_status_t GPFSFSAL_open_by_name(gpfsfsal_handle_t * dirhandle,      /* IN */
  * \param openflags (input):
  *        Flags that indicates behavior for file opening and access.
  *        This is an inclusive OR of the following values
- *        ( such of them are not compatible) : 
+ *        ( such of them are not compatible) :
  *        - FSAL_O_RDONLY: opening file for reading only.
  *        - FSAL_O_RDWR: opening file for reading and writing.
  *        - FSAL_O_WRONLY: opening file for writting only.
@@ -300,7 +300,8 @@ fsal_status_t GPFSFSAL_read(gpfsfsal_file_t * p_file_descriptor,        /* IN */
 
       if(rc)
         {
-          LogFullDebug(COMPONENT_FSAL, "Error in posix fseek operation (whence=%s, offset=%lld)",
+          LogFullDebug(COMPONENT_FSAL,
+                       "Error in posix fseek operation (whence=%s, offset=%lld)",
                        (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
                         (p_seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
                          (p_seek_descriptor->whence ==
@@ -419,7 +420,8 @@ fsal_status_t GPFSFSAL_write(gpfsfsal_file_t * p_file_descriptor,       /* IN */
 
       if(rc)
         {
-          LogFullDebug(COMPONENT_FSAL, "Error in posix fseek operation (whence=%s, offset=%lld)",
+          LogFullDebug(COMPONENT_FSAL,
+                       "Error in posix fseek operation (whence=%s, offset=%lld)",
                        (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
                         (p_seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
                          (p_seek_descriptor->whence ==
@@ -430,7 +432,8 @@ fsal_status_t GPFSFSAL_write(gpfsfsal_file_t * p_file_descriptor,       /* IN */
 
         }
 
-      LogFullDebug(COMPONENT_FSAL, "Write operation (whence=%s, offset=%lld, size=%lld)",
+      LogFullDebug(COMPONENT_FSAL,
+                   "Write operation (whence=%s, offset=%lld, size=%lld)",
                    (p_seek_descriptor->whence ==
                     FSAL_SEEK_CUR ? "SEEK_CUR" : (p_seek_descriptor->whence ==
                                                   FSAL_SEEK_SET ? "SEEK_SET"
@@ -456,13 +459,20 @@ fsal_status_t GPFSFSAL_write(gpfsfsal_file_t * p_file_descriptor,       /* IN */
   /** @todo: manage ssize_t to fsal_size_t convertion */
   if(nb_written <= 0)
     {
-      if (p_seek_descriptor) 
-        LogDebug(COMPONENT_FSAL, "Write operation of size %llu at offset %lld failed. fd=%d, errno=%d.",
-                 (unsigned long long) i_size, (long long) p_seek_descriptor->offset, p_file_descriptor->fd, errsv);
+      if (p_seek_descriptor)
+        LogDebug(COMPONENT_FSAL,
+                 "Write operation of size %llu at offset %lld failed. fd=%d, errno=%d.",
+                 (unsigned long long) i_size,
+                 (long long) p_seek_descriptor->offset,
+                 p_file_descriptor->fd,
+                 errsv);
       else
-        LogDebug(COMPONENT_FSAL, "Write operation of size %llu at offset 0. fd=%d, errno=%d.",
-                 (unsigned long long) i_size, p_file_descriptor->fd, errsv);
- 
+        LogDebug(COMPONENT_FSAL,
+                 "Write operation of size %llu at offset 0. fd=%d, errno=%d.",
+                 (unsigned long long) i_size,
+                 p_file_descriptor->fd,
+                 errsv);
+
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_write);
     }
 
@@ -560,7 +570,7 @@ fsal_status_t GPFSFSAL_sync(gpfsfsal_file_t * p_file_descriptor       /* IN */)
   rc = fsync(p_file_descriptor->fd);
   errsv = errno;
   ReleaseTokenFSCall();
-  
+
   if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_sync);
 

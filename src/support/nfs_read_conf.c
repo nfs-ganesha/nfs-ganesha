@@ -573,13 +573,15 @@ int nfs_read_ip_name_conf(config_file_t in_config, nfs_ip_name_parameter_t * ppa
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_IP_NAME)) == NULL)
     {
-      LogDebug(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_NFS_IP_NAME);
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file", CONF_LABEL_NFS_IP_NAME);
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
-      LogDebug(COMPONENT_CONFIG, "Item \"%s\" is expected to be a block", CONF_LABEL_NFS_IP_NAME);
+      LogDebug(COMPONENT_CONFIG,
+               "Item \"%s\" is expected to be a block", CONF_LABEL_NFS_IP_NAME);
       return 1;
     }
 
@@ -660,7 +662,8 @@ int nfs_read_client_id_conf(config_file_t in_config, nfs_client_id_parameter_t *
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_CLIENT_ID)) == NULL)
     {
-      LogDebug(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_CLIENT_ID);
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file", CONF_LABEL_CLIENT_ID);
       return 1;
     }
 
@@ -733,7 +736,8 @@ int nfs_read_state_id_conf(config_file_t in_config, nfs_state_id_parameter_t * p
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_STATE_ID)) == NULL)
     {
-      LogDebug(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_STATE_ID);
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file", CONF_LABEL_STATE_ID);
       return 1;
     }
 
@@ -795,7 +799,8 @@ int nfs_read_session_id_conf(config_file_t in_config, nfs_session_id_parameter_t
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_SESSION_ID)) == NULL)
     {
-      LogDebug(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_STATE_ID);
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file", CONF_LABEL_STATE_ID);
       return 1;
     }
 

@@ -237,7 +237,8 @@ int Test1(char *str, char *file)
   LogTest("\nTesting LogError function");
   LogError(COMPONENT_CONFIG, ERR_SYS, ERR_MALLOC, EINVAL);
   LogTest("\nTesting possible environment variable");
-  LogTest("COMPONENT_MEMCORRUPT debug level is %s", ReturnLevelInt(LogComponents[COMPONENT_MEMCORRUPT].comp_log_level));
+  LogTest("COMPONENT_MEMCORRUPT debug level is %s",
+          ReturnLevelInt(LogComponents[COMPONENT_MEMCORRUPT].comp_log_level));
   LogFullDebug(COMPONENT_MEMCORRUPT,
                "This should appear if environment is set properly");
 

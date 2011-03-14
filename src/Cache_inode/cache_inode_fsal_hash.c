@@ -184,7 +184,7 @@ unsigned int cache_inode_fsal_rbt_both( hash_parameter_t * p_hparam,
     if(isFullDebug(COMPONENT_HASHTABLE))
       {
           LogFullDebug(COMPONENT_HASHTABLE,
-                       "hash_func rbt both: buff = (Handle=%s, Cookie=%u), hashvalue=%u rbtvalue=%u\n",
+                       "hash_func rbt both: buff = (Handle=%s, Cookie=%u), hashvalue=%u rbtvalue=%u",
                        printbuf, pfsdata->cookie, *phashval, *prbtval );
       }
 

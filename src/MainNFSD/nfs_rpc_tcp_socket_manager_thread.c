@@ -158,7 +158,8 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
       /* Get a worker to do the job */
       if((worker_index = nfs_rpc_get_worker_index(FALSE)) < 0)
         {
-          LogCrit(COMPONENT_DISPATCH, "CRITICAL ERROR: Couldn't choose a worker !!");
+          LogCrit(COMPONENT_DISPATCH,
+                  "CRITICAL ERROR: Couldn't choose a worker !!");
           return NULL;
         }
 
@@ -240,7 +241,8 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                 "TCP SOCKET MANAGER : /!\\ Trying to access a bad socket ! Check the source file=%s, line=%u",
                 __FILE__, __LINE__);
 
-      LogFullDebug(COMPONENT_DISPATCH, "Before calling SVC_RECV on socket %d", (int)tcp_sock);
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Before calling SVC_RECV on socket %d", (int)tcp_sock);
 
       /* Will block until the client operates on the socket */
       pnfsreq->status = SVC_RECV(pnfsreq->xprt, pmsg);
@@ -407,7 +409,8 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
         }
     }
 
-  LogCrit(COMPONENT_DISPATCH, "TCP SOCKET MANAGER Sock=%d: Stopping", (int)tcp_sock);
+  LogCrit(COMPONENT_DISPATCH,
+          "TCP SOCKET MANAGER Sock=%d: Stopping", (int)tcp_sock);
 
   /* Never reached */
   return NULL;

@@ -227,8 +227,11 @@ unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buf
   hash_func =
       (unsigned long)pgss_ctx->mech_type + (unsigned long)pgss_ctx->internal_ctx_id;
 
-  /* LogFullDebug(COMPONENT_HASHTABLE, "gss_ctx_hash_func : 0x%lx%lx --> %lx", 
-     (unsigned long)pgss_ctx->internal_ctx_id,  (unsigned long)pgss_ctx->mech_type, hash_func ) ; */
+  /* LogFullDebug(COMPONENT_HASHTABLE,
+                  "gss_ctx_hash_func : 0x%lx%lx --> %lx", 
+                  (unsigned long)pgss_ctx->internal_ctx_id,
+                  (unsigned long)pgss_ctx->mech_type,
+                  hash_func ) ; */
 
   return hash_func % p_hparam->index_size;
 }                               /*  gss_ctx_hash_func */
@@ -261,8 +264,11 @@ unsigned long gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t *
   hash_func =
       (unsigned long)pgss_ctx->mech_type ^ (unsigned long)pgss_ctx->internal_ctx_id;
 
-  /* LogFullDebug(COMPONENT_HASHTABLE, "gss_ctx_rbt_hash_func : 0x%lx%lx --> %lx", 
-     (unsigned long)pgss_ctx->internal_ctx_id ,(unsigned long)pgss_ctx->mech_type, hash_func ); */
+  /* LogFullDebug(COMPONENT_HASHTABLE,
+                  "gss_ctx_rbt_hash_func : 0x%lx%lx --> %lx", 
+                  (unsigned long)pgss_ctx->internal_ctx_id,
+                  (unsigned long)pgss_ctx->mech_type,
+                  hash_func ); */
 
   return hash_func;
 }                               /* gss_ctx_rbt_hash_func */
@@ -372,7 +378,10 @@ int Gss_ctx_Hash_Set(gss_union_ctx_id_desc * pgss_ctx, struct svc_rpc_gss_data *
     return 0;
 
   memcpy(&gssctx, buffkey.pdata, buffkey.len);
-  /* LogFullDebug(COMPONENT_HASHTABLE, "===> Gss_ctx_Hash_Set key=0x%lx%lx", (unsigned long)gssctx.internal_ctx_id, (unsigned long)gssctx.mech_type ); */
+  /* LogFullDebug(COMPONENT_HASHTABLE,
+                  "===> Gss_ctx_Hash_Set key=0x%lx%lx",
+                  (unsigned long)gssctx.internal_ctx_id,
+                  (unsigned long)gssctx.mech_type ); */
 
   if(HashTable_Test_And_Set
      (ht_gss_ctx, &buffkey, &buffval,

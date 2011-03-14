@@ -8,16 +8,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  *
  */
 
@@ -95,7 +95,7 @@ nlm_async_res_t *nlm_build_async_res_nlm4test(char *caller_name, nfs_res_t * pre
           return NULL;
         }
       else if(pres->res_nlm4test.test_stat.stat == NLM4_DENIED)
-        { 
+        {
           if(!copy_netobj(&arg->pres.res_nlm4test.test_stat.nlm4_testrply_u.holder.oh, &pres->res_nlm4test.test_stat.nlm4_testrply_u.holder.oh))
             {
               netobj_free(&arg->pres.res_nlm4test.cookie);
@@ -123,12 +123,15 @@ void *nlm_async_func(void *argp)
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogMajor(COMPONENT_NLM, "NLM async thread: Memory manager could not be initialized, exiting...");
+      LogMajor(COMPONENT_NLM,
+               "NLM async thread: Memory manager could not be initialized, exiting...");
       exit(1);
     }
-  LogInfo(COMPONENT_NLM, "NLM async thread: Memory manager successfully initialized");
+  LogInfo(COMPONENT_NLM,
+          "NLM async thread: Memory manager successfully initialized");
 #endif
-  LogFullDebug(COMPONENT_NLM, "NLM async thread: my pthread id is %p",
+  LogFullDebug(COMPONENT_NLM,
+               "NLM async thread: my pthread id is %p",
                (caddr_t) pthread_self());
 
   while(1)
@@ -177,8 +180,7 @@ void nlm_async_callback(nlm_callback_func * func, void *arg)
   q->func = func;
   q->arg = arg;
 
-  LogFullDebug(COMPONENT_NLM, "nlm_async_callback %p:%p",
-               func, arg);
+  LogFullDebug(COMPONENT_NLM, "nlm_async_callback %p:%p", func, arg);
   pthread_mutex_lock(&nlm_async_queue_mutex);
   glist_add_tail(&nlm_async_queue, &q->glist);
   pthread_cond_signal(&nlm_async_queue_cond);
@@ -267,7 +269,9 @@ int nlm_send_async(int proc, char *host, void *inarg, void *key)
     retval = RPC_SUCCESS;
   else if(retval != RPC_SUCCESS)
     {
-      LogMajor(COMPONENT_NLM, "%s: Client procedure call %d failed with return code %d", __func__, proc, retval);
+      LogMajor(COMPONENT_NLM,
+               "%s: Client procedure call %d failed with return code %d",
+               __func__, proc, retval);
       pthread_mutex_lock(&nlm_async_resp_mutex);
       resp_key = NULL;
       pthread_mutex_unlock(&nlm_async_resp_mutex);
@@ -281,11 +285,14 @@ int nlm_send_async(int proc, char *host, void *inarg, void *key)
       gettimeofday(&now, NULL);
       timeout.tv_sec = 5 + start.tv_sec;
       timeout.tv_nsec = 0;
-      LogFullDebug(COMPONENT_NLM, "nlm_send_async about to wait for signal for key %p", resp_key);
+      LogFullDebug(COMPONENT_NLM,
+                   "nlm_send_async about to wait for signal for key %p",
+                   resp_key);
       while(resp_key != NULL && now.tv_sec < (start.tv_sec + 5))
         {
           int rc = pthread_cond_timedwait(&nlm_async_resp_cond, &nlm_async_resp_mutex, &timeout);
-          LogFullDebug(COMPONENT_NLM, "pthread_cond_timedwait returned %d", rc);
+          LogFullDebug(COMPONENT_NLM,
+                       "pthread_cond_timedwait returned %d", rc);
           gettimeofday(&now, NULL);
         }
       LogFullDebug(COMPONENT_NLM, "nlm_send_async done waiting");
@@ -303,11 +310,13 @@ void nlm_signal_async_resp(void *key)
     {
       resp_key = NULL;
       pthread_cond_signal(&nlm_async_resp_cond);
-      LogFullDebug(COMPONENT_NLM, "nlm_signal_async_resp signaled condition variable");
+      LogFullDebug(COMPONENT_NLM,
+                   "nlm_signal_async_resp signaled condition variable");
     }
   else
     {
-      LogFullDebug(COMPONENT_NLM, "nlm_signal_async_resp didn't signal condition variable");
+      LogFullDebug(COMPONENT_NLM,
+                   "nlm_signal_async_resp didn't signal condition variable");
     }
   pthread_mutex_unlock(&nlm_async_resp_mutex);
 }

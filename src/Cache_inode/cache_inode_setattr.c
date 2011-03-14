@@ -156,13 +156,15 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
         {
           cache_inode_status_t kill_status;
 
-          LogEvent(COMPONENT_CACHE_INODE, "cache_inode_setattr: Stale FSAL File Handle detected for pentry = %p",
+          LogEvent(COMPONENT_CACHE_INODE,
+                   "cache_inode_setattr: Stale FSAL File Handle detected for pentry = %p",
                    pentry);
 
           if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
              CACHE_INODE_SUCCESS)
-            LogCrit(COMPONENT_CACHE_INODE,"cache_inode_setattr: Could not kill entry %p, status = %u",
-                       pentry, kill_status);
+            LogCrit(COMPONENT_CACHE_INODE,
+                    "cache_inode_setattr: Could not kill entry %p, status = %u",
+                    pentry, kill_status);
 
           *pstatus = CACHE_INODE_FSAL_ESTALE;
         }
@@ -188,13 +190,15 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
             {
               cache_inode_status_t kill_status;
 
-              LogEvent(COMPONENT_CACHE_INODE, "cache_inode_setattr: Stale FSAL File Handle detected for pentry = %p",
+              LogEvent(COMPONENT_CACHE_INODE,
+                       "cache_inode_setattr: Stale FSAL File Handle detected for pentry = %p",
                        pentry);
 
               if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
-                LogCrit(COMPONENT_CACHE_INODE,"cache_inode_setattr: Could not kill entry %p, status = %u",
-                           pentry, kill_status);
+                LogCrit(COMPONENT_CACHE_INODE,
+                        "cache_inode_setattr: Could not kill entry %p, status = %u",
+                        pentry, kill_status);
 
               *pstatus = CACHE_INODE_FSAL_ESTALE;
             }
@@ -263,8 +267,8 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
         }
       else if(pattr->asked_attributes & FSAL_ATTR_SIZE)
         LogCrit(COMPONENT_CACHE_INODE,
-            "WARNING !!! cache_inode_setattr tried to set size on a non REGULAR_FILE type=%d",
-             pentry->internal_md.type);
+                "WARNING !!! cache_inode_setattr tried to set size on a non REGULAR_FILE type=%d",
+                pentry->internal_md.type);
     }
 
   if(result_attributes.asked_attributes &

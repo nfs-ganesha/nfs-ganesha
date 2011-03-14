@@ -228,16 +228,19 @@ int main(int argc, char *argv[])
       buffval.pdata = strtab[i];
 
       rc = HashTable_Set(ht, &buffkey, &buffval);
-      LogFullDebug(COMPONENT_HASHTABLE,"Added %s , %d , return code = %d", strtab[i], i, rc);
+      LogFullDebug(COMPONENT_HASHTABLE,
+                   "Added %s , %d , return code = %d", strtab[i], i, rc);
     }
 
   MesureTemps(&fin, &debut);
   LogTest("Time to insert %d entries: %s", MAXTEST,
          ConvertiTempsChaine(fin, NULL));
 
-  LogFullDebug(COMPONENT_HASHTABLE, "-----------------------------------------");
+  LogFullDebug(COMPONENT_HASHTABLE,
+               "-----------------------------------------");
   HashTable_Log(COMPONENT_HASHTABLE, ht);
-  LogFullDebug(COMPONENT_HASHTABLE,"=========================================");
+  LogFullDebug(COMPONENT_HASHTABLE,
+               "=========================================");
 
   /* Premier test simple: verif de la coherence des valeurs lues */
   critere_recherche = CRITERE;
@@ -251,7 +254,8 @@ int main(int argc, char *argv[])
   MesureTemps(&fin, &debut);
 
   LogTest("Now, I try to retrieve %d entries (taken at random, almost)",
-         MAXGET);
+          MAXGET);
+
   MesureTemps(&debut, NULL);
   for(i = 0; i < MAXGET; i++)
     {
@@ -298,8 +302,9 @@ int main(int argc, char *argv[])
       buffkey.len = strlen(tmpstr);
       buffkey.pdata = tmpstr;
       LogFullDebug(COMPONENT_HASHTABLE, "\t Erase %u -> %lu | %lu",
-             random_val,
-             simple_hash_func(&hparam, &buffkey), rbt_hash_func(&hparam, &buffkey));
+                   random_val,
+                   simple_hash_func(&hparam, &buffkey),
+                   rbt_hash_func(&hparam, &buffkey));
 
       rc = HashTable_Del(ht, &buffkey, NULL, NULL);
       if(rc != HASHTABLE_SUCCESS)
@@ -311,12 +316,13 @@ int main(int argc, char *argv[])
     }
   MesureTemps(&fin, &debut);
   LogTest("Time to delete %d elements = %s", MAXDESTROY,
-         ConvertiTempsChaine(fin, NULL));
+          ConvertiTempsChaine(fin, NULL));
 
   LogTest("-----------------------------------------");
 
   LogTest("Now, I try to retrieve %d entries (possibly destroyed)",
-         MAXGET);
+          MAXGET);
+
   MesureTemps(&debut, NULL);
   for(i = 0; i < MAXGET; i++)
     {
@@ -329,7 +335,7 @@ int main(int argc, char *argv[])
     }
   MesureTemps(&fin, &debut);
   LogTest("Time to read %d elements = %s", MAXGET,
-         ConvertiTempsChaine(fin, NULL));
+          ConvertiTempsChaine(fin, NULL));
 
   LogTest("-----------------------------------------");
   LogTest("Writing a duplicated key");
@@ -354,21 +360,20 @@ int main(int argc, char *argv[])
   LogTest(" Number of Entrees = %d", statistiques.dynamic.nb_entries);
 
   LogTest(" Successful operations : Set = %d,  Get = %d,  Del = %d,  Test = %d",
-         statistiques.dynamic.ok.nb_set, statistiques.dynamic.ok.nb_get,
-         statistiques.dynamic.ok.nb_del, statistiques.dynamic.ok.nb_test);
+          statistiques.dynamic.ok.nb_set, statistiques.dynamic.ok.nb_get,
+          statistiques.dynamic.ok.nb_del, statistiques.dynamic.ok.nb_test);
 
   LogTest("   Failed operations : Set = %d,  Get = %d,  Del = %d,  Test = %d",
-         statistiques.dynamic.err.nb_set, statistiques.dynamic.err.nb_get,
-         statistiques.dynamic.err.nb_del, statistiques.dynamic.err.nb_test);
+          statistiques.dynamic.err.nb_set, statistiques.dynamic.err.nb_get,
+          statistiques.dynamic.err.nb_del, statistiques.dynamic.err.nb_test);
 
   LogTest("   Operations 'NotFound': Set = %d,  Get = %d,  Del = %d,  Test = %d",
-         statistiques.dynamic.notfound.nb_set, statistiques.dynamic.notfound.nb_get,
-         statistiques.dynamic.notfound.nb_del, statistiques.dynamic.notfound.nb_test);
+          statistiques.dynamic.notfound.nb_set, statistiques.dynamic.notfound.nb_get,
+          statistiques.dynamic.notfound.nb_del, statistiques.dynamic.notfound.nb_test);
 
-  LogTest
-      ("  Statistics computed: min_rbt_node = %d,  max_rbt_node = %d,  average_rbt_node = %d",
-       statistiques.computed.min_rbt_num_node, statistiques.computed.max_rbt_num_node,
-       statistiques.computed.average_rbt_num_node);
+  LogTest("  Statistics computed: min_rbt_node = %d,  max_rbt_node = %d,  average_rbt_node = %d",
+          statistiques.computed.min_rbt_num_node, statistiques.computed.max_rbt_num_node,
+          statistiques.computed.average_rbt_num_node);
 
   /* Test sur la pertinence des valeurs de statistiques */
   if(statistiques.dynamic.ok.nb_set != MAXTEST)
@@ -389,18 +394,14 @@ int main(int argc, char *argv[])
   if(statistiques.dynamic.ok.nb_del != MAXDESTROY)
     {
       LogTest("Test FAILED: Incorrect statistics: *.nb_del. Expected %d, got %d",
-              MAXDESTROY,
-              statistiques.dynamic.ok.nb_del
-              );
+              MAXDESTROY, statistiques.dynamic.ok.nb_del);
       exit(1);
     }
 
   if(statistiques.dynamic.notfound.nb_del != 0)
     {
       LogTest("Test FAILED: Incorrect statistics: *.nb_del. Expected %d, got %d",
-              0,
-              statistiques.dynamic.notfound.nb_del
-              );
+              0, statistiques.dynamic.notfound.nb_del);
       exit(1);
     }
 

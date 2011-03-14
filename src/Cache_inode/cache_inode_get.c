@@ -165,8 +165,8 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
           /* added for sanity check */
           LogFullDebug(COMPONENT_CACHE_INODE,
                        "cache_inode_get: pfsdata->cookie != DIR_START (=%u) on object whose type is %u",
-                        pfsdata->cookie,
-                        cache_inode_fsal_type_convert(fsal_attributes.type));
+                       pfsdata->cookie,
+                       cache_inode_fsal_type_convert(fsal_attributes.type));
 
           pfsdata->cookie = DIR_START;
 
@@ -184,7 +184,8 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
         {
           *pstatus = cache_inode_error_convert(fsal_status);
 
-          LogDebug(COMPONENT_CACHE_INODE, "cache_inode_get: cache_inode_status=%u fsal_status=%u,%u ",
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "cache_inode_get: cache_inode_status=%u fsal_status=%u,%u ",
                    *pstatus, fsal_status.major, fsal_status.minor);
 
           if(fsal_status.major == ERR_FSAL_STALE)
@@ -192,7 +193,9 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
               char handle_str[256];
 
               snprintHandle(handle_str, 256, &pfsdata->handle);
-              LogEvent(COMPONENT_CACHE_INODE,"cache_inode_get: Stale FSAL File Handle %s", handle_str);
+              LogEvent(COMPONENT_CACHE_INODE,
+                       "cache_inode_get: Stale FSAL File Handle %s",
+                       handle_str);
 
               *pstatus = CACHE_INODE_FSAL_ESTALE;
             }
@@ -244,12 +247,14 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
                 {
                   cache_inode_status_t kill_status;
 
-                  LogEvent(COMPONENT_CACHE_INODE, "cache_inode_get: Stale FSAL File Handle detected for pentry = %p",
-                            pentry);
+                  LogEvent(COMPONENT_CACHE_INODE,
+                           "cache_inode_get: Stale FSAL File Handle detected for pentry = %p",
+                           pentry);
 
                   if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
                      CACHE_INODE_SUCCESS)
-                    LogCrit(COMPONENT_CACHE_INODE,"cache_inode_get: Could not kill entry %p, status = %u",
+                    LogCrit(COMPONENT_CACHE_INODE,
+                            "cache_inode_get: Could not kill entry %p, status = %u",
                             pentry, kill_status);
 
                   *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -283,7 +288,8 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
     default:
       /* This should not happened */
       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
-      LogCrit(COMPONENT_CACHE_INODE, "cache_inode_get returning CACHE_INODE_INVALID_ARGUMENT - this should not have happened");
+      LogCrit(COMPONENT_CACHE_INODE,
+              "cache_inode_get returning CACHE_INODE_INVALID_ARGUMENT - this should not have happened");
 
       /* stats */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;

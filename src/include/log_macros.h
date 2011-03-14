@@ -127,61 +127,70 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
   do { \
     if (LogComponents[component].comp_log_type != TESTLOG || \
         LogComponents[component].comp_log_level <= NIV_FULL_DEBUG) \
-      DisplayLogComponentLevel(component, NIV_NULL, "%s: " format, \
+      DisplayLogComponentLevel(component, NIV_NULL, \
+                               "%s: " format, \
                                LogComponents[component].comp_str, ## args ); \
   } while (0)
 
 #define LogTest(format, args...) \
   do { \
-    DisplayLogComponentLevel(COMPONENT_ALL, NIV_NULL, format, ## args ); \
+    DisplayLogComponentLevel(COMPONENT_ALL, NIV_NULL, \
+                             format, ## args ); \
   } while (0)
 
 #define LogMajor(component, format, args...) \
   do { \
     if (LogComponents[component].comp_log_level >= NIV_MAJOR) \
-      DisplayLogComponentLevel(component, NIV_MAJ, "%s: MAJOR ERROR: " format, \
+      DisplayLogComponentLevel(component, NIV_MAJ, \
+                               "%s: MAJOR ERROR: " format, \
                                LogComponents[component].comp_str, ## args ); \
   } while (0)
 
 #define LogCrit(component, format, args...) \
   do { \
     if (LogComponents[component].comp_log_level >= NIV_CRIT) \
-      DisplayLogComponentLevel(component, NIV_CRIT, "%s: CRITICAL ERROR: " format, \
+      DisplayLogComponentLevel(component, NIV_CRIT, \
+                               "%s: CRITICAL ERROR: " format, \
                                LogComponents[component].comp_str, ## args ); \
    } while (0)
 
 #define LogWarn(component, format, args...) \
   do { \
     if (LogComponents[component].comp_log_level >= NIV_WARN) \
-      DisplayLogComponentLevel(component, NIV_WARN, "%s: WARN: " format, \
+      DisplayLogComponentLevel(component, NIV_WARN, \
+                               "%s: WARN: " format, \
                                LogComponents[component].comp_str, ## args ); \
   } while (0)
 
 #define LogEvent(component, format, args...) \
   do { \
     if (LogComponents[component].comp_log_level >= NIV_EVENT) \
-      DisplayLogComponentLevel(component, NIV_EVENT, "%s: EVENT: " format, \
+      DisplayLogComponentLevel(component, NIV_EVENT, \
+                               "%s: EVENT: " format, \
                                LogComponents[component].comp_str, ## args ); \
   } while (0)
 
 #define LogInfo(component, format, args...) \
   do { \
     if (LogComponents[component].comp_log_level >= NIV_INFO) \
-      DisplayLogComponentLevel(component, NIV_INFO, "%s: INFO: " format, \
+      DisplayLogComponentLevel(component, NIV_INFO, \
+                               "%s: INFO: " format, \
                                LogComponents[component].comp_str, ## args ); \
   } while (0)
 
 #define LogDebug(component, format, args...) \
   do { \
     if (LogComponents[component].comp_log_level >= NIV_DEBUG) \
-      DisplayLogComponentLevel(component, NIV_DEBUG, "%s: DEBUG: " format, \
+      DisplayLogComponentLevel(component, NIV_DEBUG, \
+                               "%s: DEBUG: " format, \
                                LogComponents[component].comp_str, ## args ); \
   } while (0)
 
 #define LogFullDebug(component, format, args...) \
   do { \
     if (LogComponents[component].comp_log_level >= NIV_FULL_DEBUG) \
-      DisplayLogComponentLevel(component, NIV_FULL_DEBUG, "%s: FULLDEBUG: " format, \
+      DisplayLogComponentLevel(component, NIV_FULL_DEBUG, \
+                               "%s: FULLDEBUG: " format, \
                                LogComponents[component].comp_str, ## args ); \
   } while (0)
 

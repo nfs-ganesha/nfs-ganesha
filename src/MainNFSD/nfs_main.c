@@ -284,7 +284,8 @@ int main(int argc, char *argv[])
          * detach from parent process) */
         if (daemon(0, 0))
         {
-            LogCrit(COMPONENT_INIT, "Error detaching process from parent: %s",
+            LogCrit(COMPONENT_INIT,
+                    "Error detaching process from parent: %s",
                     strerror(errno));
             exit(1);
         }
@@ -294,7 +295,9 @@ int main(int argc, char *argv[])
         {
         case -1:
           /* Fork failed */
-          LogMajor(COMPONENT_INIT, "Could not start nfs daemon (fork error %d (%s), exiting...", errno, strerror(errno));
+          LogMajor(COMPONENT_INIT,
+                   "Could not start nfs daemon (fork error %d (%s), exiting...",
+                   errno, strerror(errno));
           exit(1);
 
         case 0:
@@ -302,7 +305,9 @@ int main(int argc, char *argv[])
            * Let's make it the leader of its group of process */
           if(setsid() == -1)
             {
-	      LogMajor(COMPONENT_INIT, "Could not start nfs daemon (setsid error %d (%s), exiting...", errno, strerror(errno));
+	      LogMajor(COMPONENT_INIT,
+	               "Could not start nfs daemon (setsid error %d (%s), exiting...",
+	               errno, strerror(errno));
               exit(1);
             }
           break;
@@ -328,11 +333,14 @@ int main(int argc, char *argv[])
 
   if(sigaction(SIGTERM, &act_sigterm, NULL) == -1 )
     {
-      LogMajor(COMPONENT_INIT, "Could not start nfs daemon (sigaction(SIGTERM) error %d (%s), exiting...", errno, strerror(errno));
+      LogMajor(COMPONENT_INIT,
+               "Could not start nfs daemon (sigaction(SIGTERM) error %d (%s), exiting...",
+               errno, strerror(errno));
       exit(1);
     }
   else
-    LogInfo(COMPONENT_INIT, "Signals SIGTERM and SIGINT (daemon shutdown) are ready to be used");
+    LogInfo(COMPONENT_INIT,
+            "Signals SIGTERM and SIGINT (daemon shutdown) are ready to be used");
 
   /* Set the signal handler */
   memset(&act_sighup, 0, sizeof(act_sighup));
@@ -340,17 +348,21 @@ int main(int argc, char *argv[])
   act_sighup.sa_handler = action_sighup;
   if(sigaction(SIGHUP, &act_sighup, NULL) == -1)
     {
-      LogMajor(COMPONENT_INIT, "Could not start nfs daemon (sigaction(SIGHUP) error %d (%s), exiting...", errno, strerror(errno));
+      LogMajor(COMPONENT_INIT,
+               "Could not start nfs daemon (sigaction(SIGHUP) error %d (%s), exiting...",
+               errno, strerror(errno));
       exit(1);
     }
   else
-    LogInfo(COMPONENT_INIT, "Signal SIGHUP (daemon export reload) is ready to be used");
+    LogInfo(COMPONENT_INIT,
+            "Signal SIGHUP (daemon export reload) is ready to be used");
 
 
 #ifdef _USE_SHARED_FSAL
   if(nfs_get_fsalpathlib_conf(my_config_path, fsal_path_lib))
     {
-      LogMajor(COMPONENT_INIT, "NFS MAIN: Error parsing configuration file for FSAL path.");
+      LogMajor(COMPONENT_INIT,
+               "NFS MAIN: Error parsing configuration file for FSAL path.");
       exit(1);
     }
 #endif                          /* _USE_SHARED_FSAL */
@@ -369,7 +381,8 @@ int main(int argc, char *argv[])
   /* Get the FSAL consts */
   FSAL_LoadConsts();
 
-  LogEvent(COMPONENT_INIT, ">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
+  LogEvent(COMPONENT_INIT,
+           ">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
 	   FSAL_GetFSName());
 
   /* initialize default parameters */

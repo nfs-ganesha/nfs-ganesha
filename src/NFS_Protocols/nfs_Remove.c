@@ -137,7 +137,8 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
                        &(parg->arg_create3.where.dir),
                        NULL,
                        str);
-      LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Remove handle: %s name: %s",
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Remove handle: %s name: %s",
                str, file_name);
     }
 
@@ -247,7 +248,9 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
                   return NFS_REQ_OK;
                 }
 
-              LogFullDebug(COMPONENT_NFSPROTO, "==== NFS REMOVE ====> Trying to remove file %s", name.name);
+              LogFullDebug(COMPONENT_NFSPROTO,
+                           "==== NFS REMOVE ====> Trying to remove file %s",
+                           name.name);
 
               /*
                * Remove the entry. 

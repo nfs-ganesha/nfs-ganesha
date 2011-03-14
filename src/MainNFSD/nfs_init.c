@@ -1696,8 +1696,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                
       if(!IsPoolPreallocated(&workers_data[i].request_pool))
         {
-          LogCrit(COMPONENT_INIT, "Error while allocating request data pool #%d",
-                  i);
+          LogCrit(COMPONENT_INIT,
+                  "Error while allocating request data pool #%d", i);
           LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
@@ -1710,8 +1710,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
       if(!IsPoolPreallocated(&workers_data[i].dupreq_pool))
         {
-          LogCrit(COMPONENT_INIT, "Error while allocating duplicate request pool #%d",
-                  i);
+          LogCrit(COMPONENT_INIT,
+                  "Error while allocating duplicate request pool #%d", i);
           LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
@@ -1724,8 +1724,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
       if(!IsPoolPreallocated(&workers_data[i].ip_stats_pool))
         {
-          LogCrit(COMPONENT_INIT, "Error while allocating IP stats cache pool #%d",
-                  i);
+          LogCrit(COMPONENT_INIT,
+                  "Error while allocating IP stats cache pool #%d", i);
           LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }

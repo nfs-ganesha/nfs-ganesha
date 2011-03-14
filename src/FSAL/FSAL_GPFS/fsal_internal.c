@@ -392,7 +392,8 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
     }
   else
     {
-      LogDebug(COMPONENT_FSAL, "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
+      LogDebug(COMPONENT_FSAL,
+               "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
     }
 
   /* setting default values. */

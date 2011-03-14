@@ -89,7 +89,8 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT;
   do { \
     if (LogComponents[COMPONENT_LOG].comp_log_type != TESTLOG || \
         LogComponents[COMPONENT_LOG].comp_log_level == NIV_FULL_DEBUG) \
-      DisplayLogComponentLevel(COMPONENT_LOG, NIV_NULL, "LOG: " format, ## args ); \
+      DisplayLogComponentLevel(COMPONENT_LOG, \
+                               NIV_NULL, "LOG: " format, ## args ); \
   } while (0)
 
 #ifdef _DONT_HAVE_LOCALTIME_R
@@ -1525,7 +1526,9 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
   },
 };
 
-int DisplayLogComponentLevel(log_components_t component, int level, char *format, ...)
+int DisplayLogComponentLevel(log_components_t component,
+                             int level,
+                             char *format, ...)
 {
   va_list arguments;
   int rc;
@@ -1559,7 +1562,11 @@ int DisplayLogComponentLevel(log_components_t component, int level, char *format
   return rc;
 }
 
-int DisplayErrorComponentLogLine(log_components_t component, int num_family, int num_error, int status, int ma_ligne)
+int DisplayErrorComponentLogLine(log_components_t component,
+                                 int num_family,
+                                 int num_error,
+                                 int status,
+                                 int ma_ligne)
 {
   char buffer[STR_LEN_TXT];
 

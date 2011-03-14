@@ -139,7 +139,8 @@ int nfs_Read(nfs_arg_t * parg,
                        &(parg->arg_read3.file),
                        NULL,
                        str);
-      LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Read handle: %s start: %llx len: %llx",
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Read handle: %s start: %llx len: %llx",
                str, (unsigned long long) offset, (unsigned long long) size);
     }
 
@@ -245,14 +246,16 @@ int nfs_Read(nfs_arg_t * parg,
    */
   if((pexport->options & EXPORT_OPTION_MAXOFFSETREAD) == EXPORT_OPTION_MAXOFFSETREAD)
     {
-      LogFullDebug(COMPONENT_NFSPROTO, "-----> Read offset=%llu count=%llu MaxOffSet=%llu",
+      LogFullDebug(COMPONENT_NFSPROTO,
+                   "-----> Read offset=%llu count=%llu MaxOffSet=%llu",
                    (unsigned long long) offset,
                    (unsigned long long) size,
                    (unsigned long long) pexport->MaxOffsetRead);
 
       if((fsal_off_t) (offset + size) > pexport->MaxOffsetRead)
         {
-          LogEvent(COMPONENT_NFSPROTO, "NFS READ: A client tryed to violate max file size %llu for exportid #%hu",
+          LogEvent(COMPONENT_NFSPROTO,
+                   "NFS READ: A client tryed to violate max file size %llu for exportid #%hu",
                    (unsigned long long) pexport->MaxOffsetRead, pexport->id);
 
           switch (preq->rq_vers)

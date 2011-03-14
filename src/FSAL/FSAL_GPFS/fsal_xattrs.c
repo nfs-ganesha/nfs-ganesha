@@ -144,7 +144,8 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
     {
       p_xattr_attrs->asked_attributes = supported;
 
-      LogCrit(COMPONENT_FSAL, "Error: p_xattr_attrs->asked_attributes was 0 in %s() line %d, file %s",
+      LogCrit(COMPONENT_FSAL,
+              "Error: p_xattr_attrs->asked_attributes was 0 in %s() line %d, file %s",
               __FUNCTION__, __LINE__, __FILE__);
     }
 
@@ -152,7 +153,8 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
 
   if(unsupp)
     {
-      LogDebug(COMPONENT_FSAL, "Asking for unsupported attributes in %s(): %#llX removing it from asked attributes",
+      LogDebug(COMPONENT_FSAL,
+               "Asking for unsupported attributes in %s(): %#llX removing it from asked attributes",
                __FUNCTION__, unsupp);
 
       p_xattr_attrs->asked_attributes &= (~unsupp);

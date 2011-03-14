@@ -110,7 +110,8 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
                 ipstring, INET_ADDRSTRLEN);
       if(ipstring == NULL)
         {
-          LogCrit(COMPONENT_MAIN, "Error: Could not convert the IPv4 address to a character string.");
+          LogCrit(COMPONENT_MAIN,
+                  "Error: Could not convert the IPv4 address to a character string.");
           return FALSE;
         }
       if(export_client_match
@@ -127,7 +128,8 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
 
           inet_ntop(psockaddr_in6->sin6_family,
                     psockaddr_in6->sin6_addr.s6_addr, txtaddrv6, 100);
-          LogFullDebug(COMPONENT_MAIN, "Client has IPv6 adress = %s", txtaddrv6);
+          LogFullDebug(COMPONENT_MAIN,
+                       "Client has IPv6 adress = %s", txtaddrv6);
         }
       /* If the client socket is IPv4, then it is wrapped into a   ::ffff:a.b.c.d IPv6 address. We check this here
        * This kind of adress is shaped like this:
@@ -146,7 +148,7 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
           if(ip6string == NULL)
             {
               LogCrit(COMPONENT_MAIN,
-                   "Error: Could not convert the IPv6 address to a character string.");
+                      "Error: Could not convert the IPv6 address to a character string.");
               return FALSE;
             }
           /* This is an IPv4 address mapped to an IPv6 one. Extract the IPv4 address and proceed with IPv4 autentication */
@@ -194,7 +196,8 @@ static int parseAccessParam(char *var_name, char *var_value,
   else if(count > EXPORT_MAX_CLIENTS)
     {
       err_flag = TRUE;
-      LogCrit(COMPONENT_CONFIG, "STAT_EXPORT_ACCESS: ERROR: Client list too long (%d>%d)",
+      LogCrit(COMPONENT_CONFIG,
+              "STAT_EXPORT_ACCESS: ERROR: Client list too long (%d>%d)",
               count, EXPORT_MAX_CLIENTS);
       return -1;
     }
@@ -218,7 +221,8 @@ static int parseAccessParam(char *var_name, char *var_value,
   if(rc < 0)
     {
       err_flag = TRUE;
-      LogCrit(COMPONENT_CONFIG, "STAT_EXPORT_ACCESS: ERROR: Client list too long (>%d)", count);
+      LogCrit(COMPONENT_CONFIG,
+              "STAT_EXPORT_ACCESS: ERROR: Client list too long (>%d)", count);
 
       /* free client strings */
       for(idx = 0; idx < count; idx++)
@@ -232,7 +236,8 @@ static int parseAccessParam(char *var_name, char *var_value,
   if(rc != 0)
     {
       err_flag = TRUE;
-      LogCrit(COMPONENT_CONFIG, "STAT_EXPORT_ACCESS: ERROR: Invalid client found in \"%s\"",
+      LogCrit(COMPONENT_CONFIG,
+              "STAT_EXPORT_ACCESS: ERROR: Invalid client found in \"%s\"",
               var_value);
 
       /* free client strings */
@@ -268,14 +273,16 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
  if((block = config_FindItemByName(in_config, CONF_STAT_EXPORTER_LABEL)) == NULL)
     {
       /* cannot read item */
-      LogCrit(COMPONENT_CONFIG, "STAT_EXPORTER: Cannot read item \"%s\" from configuration file",
+      LogCrit(COMPONENT_CONFIG,
+              "STAT_EXPORTER: Cannot read item \"%s\" from configuration file",
               CONF_STAT_EXPORTER_LABEL);
       /* Expected to be a block */
       return ENOENT;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
      {
-       LogCrit(COMPONENT_CONFIG, "STAT_EXPORTER: Cannot read item \"%s\" from configuration file",
+       LogCrit(COMPONENT_CONFIG,
+               "STAT_EXPORTER: Cannot read item \"%s\" from configuration file",
                CONF_STAT_EXPORTER_LABEL);
       /* Expected to be a block */
        return ENOENT;
@@ -693,9 +700,11 @@ void *long_processing_thread(void *addr)
             continue;
           timer_diff = time_diff(workers_data[i].timer_start, timer_end);
           if(timer_diff.tv_sec == nfs_param.core_param.long_processing_threshold)
-            LogEvent(COMPONENT_DISPATCH, "Worker#%d: Function %s has been running for %llu.%.6llu seconds",
+            LogEvent(COMPONENT_DISPATCH,
+                     "Worker#%d: Function %s has been running for %llu.%.6llu seconds",
                      i, workers_data[i].pfuncdesc->funcname,
-                     (unsigned long long)timer_diff.tv_sec, (unsigned long long)timer_diff.tv_usec);
+                     (unsigned long long)timer_diff.tv_sec,
+                     (unsigned long long)timer_diff.tv_usec);
         }
     }
 
