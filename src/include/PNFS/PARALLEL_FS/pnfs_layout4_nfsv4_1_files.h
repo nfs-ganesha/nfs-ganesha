@@ -106,6 +106,6 @@ typedef struct pnfs_layoutfile_hints__
 
 /* Mandatory functions */
 
-void pnfs_lustre_encode_getdeviceinfo(char *buff, unsigned int *plen);
-void pnfs_lustre_encode_layoutget( char * buffin, unsigned int *plenin,  char *buffout, unsigned int *plenout);
+int pnfs_lustre_encode_getdeviceinfo(char *buff, unsigned int *plen);
+int pnfs_lustre_encode_layoutget( char * buffin, unsigned int *plenin,  char *buffout, unsigned int *plenout);
 #endif                          /* _PNFS_LAYOUT4_NFSV4_1_FILES_H */

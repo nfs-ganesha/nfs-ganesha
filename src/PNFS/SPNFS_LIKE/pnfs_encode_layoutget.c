@@ -43,7 +43,7 @@
  *
  */
 
-void pnfs_ds_encode_layoutget(pnfs_ds_file_t * pds_file, char *buff, unsigned int *plen)
+int pnfs_ds_encode_layoutget(pnfs_ds_file_t * pds_file, char *buff, unsigned int *plen)
 {
   unsigned int offset = 0;
   uint32_t int32 = 0;
@@ -109,4 +109,6 @@ void pnfs_ds_encode_layoutget(pnfs_ds_file_t * pds_file, char *buff, unsigned in
 
       *plen = offset;
     }                           /* for */
+
+  return NFS4_OK ;
 }                               /* pnfs_ds_encode_layoutget */

@@ -153,8 +153,8 @@ int pnfs_ds_truncate_file( pnfs_client_t * pnfsclient,
                            size_t newsize,
                            pnfs_ds_file_t * pfile);
 
-void pnfs_ds_encode_getdeviceinfo(char *buff, unsigned int *plen);
-void pnfs_ds_encode_layoutget(pnfs_ds_file_t * pds_file, char *buff, unsigned int *plen);
+int pnfs_ds_encode_getdeviceinfo(char *buff, unsigned int *plen);
+int pnfs_ds_encode_layoutget(pnfs_ds_file_t * pds_file, char *buff, unsigned int *plen);
 
 /* Internal functions */
 int pnfs_connect(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pnfs_ds_param);

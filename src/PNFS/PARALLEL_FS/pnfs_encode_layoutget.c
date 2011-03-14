@@ -40,11 +40,11 @@
  * @param buff     [OUT] buffer in which XDR encoding will be made
  * @param plen     [OUT] pointerlength of buffer
  *
- * @return  nothing (void function)
+ * @return  NFSv4 status (with NFSv4 error code)
  *
  */
 
-void pnfs_lustre_encode_layoutget( char * buffin, unsigned int * plenin, char *buff, unsigned int *plen)
+int pnfs_lustre_encode_layoutget( char * buffin, unsigned int * plenin, char *buff, unsigned int *plen)
 {
   unsigned int offset = 0;
   uint32_t int32 = 0;
@@ -111,4 +111,6 @@ void pnfs_lustre_encode_layoutget( char * buffin, unsigned int * plenin, char *b
 
       *plen = offset;
     }                           /* for */
+
+  return NFS4_OK ;
 }                               /* pnfs_ds_encode_layoutget */
