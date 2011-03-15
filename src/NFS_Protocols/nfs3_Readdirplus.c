@@ -133,6 +133,8 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
   fsal_handle_t *pfsal_handle = NULL;
   entry_name_array_item_t *entry_name_array = NULL;
   fh3_buffer_item_t *fh3_array = NULL;
+  entryplus3 reference_entry;
+  READDIRPLUS3resok reference_reply;
 
   if(isDebug(COMPONENT_NFSPROTO) || isDebug(COMPONENT_NFS_READDIR))
     {
@@ -152,9 +154,18 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
   dircount = parg->arg_readdirplus3.dircount;
   maxcount = parg->arg_readdirplus3.maxcount;
   begin_cookie = (unsigned int)parg->arg_readdirplus3.cookie;
-  space_used = sizeof(READDIRPLUS3resok);
-  estimated_num_entries = dircount / sizeof(entryplus3);
 
+  /* FIXME: This calculation over estimates the number of bytes that 
+   * READDIRPLUS3resok will use on the wire by 4 bytes on x86_64. */
+  space_used = sizeof(reference_reply.dir_attributes.attributes_follow) +
+    sizeof(reference_reply.dir_attributes.post_op_attr_u.attributes) +
+    sizeof(reference_reply.cookieverf) +
+    sizeof(reference_reply.reply.eof);
+
+  estimated_num_entries =
+    (dircount - space_used + sizeof(entry3 *))
+    / (sizeof(entry3) - sizeof(char *)*2);
+  //  estimated_num_entries *= 4;
   LogFullDebug(COMPONENT_NFS_READDIR,
                "nfs3_Readdirplus: dircount=%lu  maxcount=%lu  begin_cookie=%u  space_used=%lu  estimated_num_entries=%lu",
                 dircount, maxcount, begin_cookie, space_used, estimated_num_entries);
@@ -514,24 +525,43 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 
               delta += 1;
             }
+
           /* if( begin_cookie == 0 ) */
           for(i = delta; i < num_entries + delta; i++)
             {
               unsigned long needed;
 
-              /* dircount is the size without the FH and attributes overhead, so entry3 is used intead of entryplus3 */
+              /* maxcount is the size with the FH and attributes overhead,
+	       * so entryplus3 is used instead of entry3. The data structures
+	       * in nfs23.h have funny padding depending on the arch (32 or 64).
+	       * We can't get an accurate estimate by simply using
+	       * sizeof(entryplus3). */
+	      /* FIXME: There is still a 4 byte over estimate here on x86_64. */
               needed =
-                  sizeof(entry3) + ((strlen(dirent_array[i - delta].name.name) + 3) & ~3);
+		sizeof(reference_entry.fileid) +
+		sizeof(reference_entry.cookie) +
+		sizeof(reference_entry.name_attributes.attributes_follow) +
+		sizeof(reference_entry.name_attributes.post_op_attr_u.attributes) +
+		sizeof(reference_entry.name_handle.handle_follows) +
+		sizeof(reference_entry.name_handle.post_op_fh3_u.handle.data.data_len) +
+		+ 4 /* value follows field */
+		+ NFS3_FHSIZE
+		+ ((strlen(dirent_array[i - delta].name.name) + 3) & ~3);
 
-              /* LogFullDebug(COMPONENT_NFS_READDIR, "==============> i=%d sizeof(entryplus3)=%d needed=%d space_used=%d maxcount=%d num_entries=%d asked_num_entries=%d",
-                 i, sizeof( entryplus3 ), needed, space_used, maxcount, num_entries, asked_num_entries ) ; */
+	      /* if delta == 1 or 2, then "." and ".." have already been added
+	       * to the readdirplus reply. */
+	      if (i == delta) {
+		needed += needed*delta /* size of a dir entry in reply */
+		  - ((strlen(dirent_array[i - delta].name.name) + 3) & ~3)*delta /* size of filename for current entry */
+		  + 4*delta; /* size of "." and ".." filenames in reply */
+	      }
+
               if((space_used += needed) > maxcount)
                 {
-                  if(i == delta)
+		  /* If delta != 0, then we already added "." or ".." to the reply. */
+                  if(i == delta && delta == 0)
                     {
-                      /*
-                       * Not enough room to make even a single reply 
-                       */
+                      /* Not enough room to make even a single reply */
                       Mem_Free((char *)dirent_array);
                       Mem_Free((char *)cookie_array);
                       Mem_Free((char *)entry_name_array);
