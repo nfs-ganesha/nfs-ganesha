@@ -27,7 +27,8 @@
 
 #include "log_macros.h"
 
-#include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
+//#include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
+#include "pnfs.h"
 
 /**
  *

@@ -62,13 +62,20 @@
 #include "nfs23.h"
 #include "nfs4.h"
 
-#include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
+#ifdef _USE_PNFS_PARALLEL_FS 
+#include "PNFS/PARALLEL_FS/pnfs_layout4_nfsv4_1_files.h"
+#endif
+
+#ifdef _USE_PNFS_SPNFS_LIKE
+#include "PNFS/SPNFS_LIKE/pnfs_layout4_nfsv4_1_files.h"
+#endif
 
 typedef union pnfs_parameter__
 {
   pnfs_layoutfile_parameter_t layoutfile;
 } pnfs_parameter_t;
 
+#ifdef _USE_PNFS_SPNFS_LIKE
 typedef union pnfs_file__
 {
   pnfs_ds_file_t ds_file;
@@ -104,13 +111,23 @@ int pnfs_truncate_file( pnfs_client_t * pnfsclient,
 			size_t newsize,
 			pnfs_file_t * pnfs_file ) ;
 
-void pnfs_encode_getdeviceinfo( char *buff, unsigned int *plen) ;
-
-void pnfs_encode_layoutget( pnfs_file_t * pds_file, char *buff, unsigned int *plen) ;
-
 int pnfs_init(pnfs_client_t * pnfsclient,
               pnfs_layoutfile_parameter_t * pnfs_layout_param) ;
 
 void pnfs_terminate();
+#else
+
+typedef union pnfs_file__
+{
+  int nothing ;
+} pnfs_file_t;
+#endif
+
+int pnfs_service_getdevicelist( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout) ;
+int pnfs_service_getdeviceinfo( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout) ;
+int pnfs_service_layoutcommit( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout)  ;
+int pnfs_service_layoutreturn( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout)  ;
+int pnfs_service_layoutget( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout)     ;
+
 
 #endif                          /* _PNFS_H */

@@ -234,15 +234,6 @@ fi
 AM_CONDITIONAL(USE_DS, test "$enable_ds" = "yes")
 
 
-# PNFS (requires NFSv4.1)
-GA_ENABLE_AM_CONDITION([pnfs],[enable pNFS support (NFSv4.1 support is mandatory)],[USE_PNFS])
-
-PNFS_LIB=""
-if test "$enable_pnfs" == "yes"; then
-	AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
-	PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
-fi
-AM_CONDITIONAL(USE_PNFS, test "$enable_pnfs" = "yes")
 
 # TI-RPC
 GA_ENABLE_AM_CONDITION([tirpc],[enable TIRPC support],[USE_TIRPC])
@@ -360,6 +351,19 @@ AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  
 AM_CONDITIONAL(USE_NFS4_1, test "$NFS4_MINOR" = "1")
 AM_CONDITIONAL(USE_NFS4_0, test "$NFS4_MINOR" = "0")
 
+# PNFS switch argument (default is nothing)
+AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|SPNFS_LIKE|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
+	PNFS="$withval", PNFS="NONE" )
+
+AM_CONDITIONAL(USE_PNFS_NONE, 		test "$PNFS" = "NONE" )
+AM_CONDITIONAL(USE_PNFS_PARALLEL_FS,	test "$PNFS" = "PARALLEL_FS" )
+AM_CONDITIONAL(USE_PNFS_SPNFS_LIKE, 	test "$PNFS" = "SPNFS_LIKE" )
+
+AM_CONDITIONAL(USE_PNFS,                 test "$PNFS" != "NONE" ) 
+
+AM_CONDITIONAL(USE_MFSL_PNFS_FILE, test "$PNFS" = "SPNFS_LIKE")
+AM_CONDITIONAL(USE_MFSL,           test "$PNFS" = "SPNFS_LIKE")
+
 # MFSL switch argument (default is NULL )
 AC_ARG_WITH( [mfsl], AS_HELP_STRING([--with-mfsl=NONE|NULL|ASYNC|AIO|MIRROR|PROXY_RPCSECGSS (default=NULL)],[specify the type of intermediate FSAL module to be used] ),
 	     MFSL="$withval", MFSL="NONE" )
@@ -372,13 +376,11 @@ AM_CONDITIONAL(USE_MFSL_PROXY_RPCSECGSS, test "$MFSL" = "PROXY_RPCSECGSS")
 
 AM_CONDITIONAL(USE_MFSL,                 test "$MFSL" != "NONE" ) 
 
-# PNFS_FILE is to be used with implicit MFSL == MFSL_PNFS_FILE
-if test "$enable_pnfs" == "yes"; then
-    AM_CONDITIONAL(USE_MFSL_PNFS_FILE, test "$enable_pnfs" = "yes")
-    AM_CONDITIONAL(USE_MFSL,           test "$enable_pnfs" = "yes")
-    MFSL="PNFS_FILE"
+# If "spnfsd-like" pNFS layout requires MFS_PNFS_FILE
+if test "$PNFS" = "SPNFS_LIKE" ; then
+    	MFSL="PNFS_FILE"
+	AM_CONDITIONAL(USE_MFSL,           test "$PNFS" = "SPNFS_LIKE")
 fi
-AM_CONDITIONAL(USE_MFSL_PNFS_FILE, test "$enable_pnfs" = "yes")
 
 # Database switch (for POSIX FSAL)
 AC_ARG_WITH( [db], AS_HELP_STRING([--with-db=MYSQL|PGSQL (default=MYSQL)],[specify the database engine for POSIX FSAL] ),
@@ -632,6 +634,22 @@ case $MFSL in
 	
 esac
 
+case $PNFS in
+	"NONE")
+		;;
+	"PARALLEL_FS")
+		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
+		AC_DEFINE(_USE_PNFS_PARALLEL_FS,1,[enable NFSv4.1/pNFS support for parallel file system ])
+		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		;;
+	"SPNFS_LIKE")
+		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
+		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable spnfsd-like NFSv4.1/pNFS support])
+		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		;;
+	*)
+		AC_MSG_ERROR([This pNFS layout is not supported])
+esac
 
 case $NFS4_MINOR in
 	"0")
@@ -645,7 +663,7 @@ case $NFS4_MINOR in
 esac
 
 # Sanity check : no pnfs if NFS4_MINOR is not NFSv4.1
-if [[  $enable_pnfs == "yes" ]] ; then
+if [[  $PNFS != "NONE" ]] ; then
   if [[ $NFS4_MINOR == "0" ]] ; then
      AC_MSG_ERROR("You must activate NFSv4.1 support to enable pnfs support" )
   fi
@@ -705,7 +723,8 @@ AC_CONFIG_FILES([include/Makefile
                  include/MFSL/MFSL_PNFS_FILE/Makefile
                  include/MFSL/MFSL_PROXY_RPCSECGSS/Makefile
                  include/PNFS/Makefile
-		 include/PNFS/LAYOUT4_NFSV4_1_FILES/Makefile
+		 include/PNFS/SPNFS_LIKE/Makefile
+		 include/PNFS/PARALLEL_FS/Makefile
                  BuddyMalloc/Makefile
                  Common/Makefile
                  support/Makefile
@@ -723,7 +742,8 @@ AC_CONFIG_FILES([include/Makefile
                  File_Content_Policy/Makefile
 		 NFS_Protocols/Makefile
 		 PNFS/Makefile
-		 PNFS/LAYOUT4_NFSV4_1_FILES/Makefile
+		 PNFS/SPNFS_LIKE/Makefile
+		 PNFS/PARALLEL_FS/Makefile
                  XDR/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile
