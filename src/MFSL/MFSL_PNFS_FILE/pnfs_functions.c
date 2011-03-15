@@ -45,7 +45,7 @@ int pnfs_truncate_file( pnfs_client_t * pnfsclient,
    return pnfs_ds_truncate_file( pnfsclient, newsize, &pnfs_file->ds_file ) ;
 }
 
-int  pnfs_service_getdeviceinfo( char *buff, unsigned int *plen)
+int  pnfs_service_getdeviceinfo( char *buffin, unsigned int *plenin, char *buff, unsigned int *plen)
 {
    return pnfs_ds_encode_getdeviceinfo( buff, plen) ;
 }
