@@ -616,7 +616,6 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
 
   /* Data cache parameters: Garbage collection policy */
   p_nfs_param->cache_layers_param.dcgcpol.lifetime = -1;        /* No gc */
-  p_nfs_param->cache_layers_param.dcgcpol.inactivity_before_flush = -1; /* No Flush */
   p_nfs_param->cache_layers_param.dcgcpol.hwmark_df = 99;
   p_nfs_param->cache_layers_param.dcgcpol.lwmark_df = 98;
   p_nfs_param->cache_layers_param.dcgcpol.run_interval = 3600;  /* 1h */
