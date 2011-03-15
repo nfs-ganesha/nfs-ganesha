@@ -1573,8 +1573,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
             LogCrit(COMPONENT_INIT, "Error setting krb5 keytab to value %s: %s",
                        nfs_param.krb5_param.keytab, GssError);
           else
-            LogCrit
-                (COMPONENT_INIT, "Error setting krb5 keytab to value: non-translatable error");
+            LogCrit(COMPONENT_INIT,
+                    "Error setting krb5 keytab to value: non-translatable error");
 
           exit(1);
         }
@@ -1597,9 +1597,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
             LogCrit(COMPONENT_INIT, "Error importing gss principal %s: %s",
                        nfs_param.krb5_param.principal, GssError);
           else
-            LogCrit
-                (COMPONENT_INIT, "Error importing gss principal %s: non-translatable error",
-                 nfs_param.krb5_param.principal);
+            LogCrit(COMPONENT_INIT,
+                    "Error importing gss principal %s: non-translatable error",
+                     nfs_param.krb5_param.principal);
 
           exit(1);
         }
