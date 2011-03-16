@@ -342,6 +342,12 @@ fsal_status_t MFSL_close(fsal_file_t * file_descriptor, /* IN */
   return FSAL_close(file_descriptor);
 }                               /* MFSL_close */
 
+fsal_status_t MFSL_sync(mfsl_file_t * file_descriptor /* IN */,
+			 void * pextra)
+{
+   return FSAL_sync( &file_descriptor->fsal_file ) ;
+}
+
 fsal_status_t MFSL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
                                    fsal_u64_t fileid, mfsl_context_t * p_mfsl_context)  /* IN */
 {

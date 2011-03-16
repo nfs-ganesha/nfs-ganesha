@@ -243,7 +243,8 @@ void nlm_lock_entry_dec_ref(nlm_lock_entry_t * nlm_entry)
                          (unsigned long long) nlm_entry->start, (unsigned long long) nlm_entry->len,
                          lock_result_str(nlm_entry->state));
 
-            cache_inode_unpin_pentry(nlm_entry->pentry, nlm_entry->pclient, nlm_entry->ht);
+	    /** @todo : Use SAL to manage state */
+            //cache_inode_unpin_pentry(nlm_entry->pentry, nlm_entry->pclient, nlm_entry->ht);
             free(nlm_entry->caller_name);
             netobj_free(&nlm_entry->fh);
             netobj_free(&nlm_entry->oh);
@@ -394,10 +395,12 @@ nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs * arg,
     if(!nlm_entry)
         goto error_out;
 
+#if 0
     /* Pin the cache entry */
     pstatus = cache_inode_pin_pentry(pentry, pclient, pcontext);
     if(pstatus != CACHE_INODE_SUCCESS)
         goto free_nlm_entry;
+#endif
 
     /* Store pentry and pclient for using during removal */
     nlm_entry->pentry = pentry;
@@ -473,7 +476,8 @@ static void do_nlm_remove_from_locklist(nlm_lock_entry_t * nlm_entry)
                  lock_result_str(nlm_entry->state));
 
     /* Remove pinned cache's pentry */
-    cache_inode_unpin_pentry(nlm_entry->pentry, nlm_entry->pclient, nlm_entry->ht);
+    /** @todo Use SAL to manage state here */
+    //cache_inode_unpin_pentry(nlm_entry->pentry, nlm_entry->pclient, nlm_entry->ht);
 
     /*
      * We have dropped ourself from the lock list. So other
@@ -583,7 +587,7 @@ static nlm_lock_entry_t *nlm_lock_entry_t_dup(nlm_lock_entry_t * orig_nlm_entry)
     nlm_entry->pentry = orig_nlm_entry->pentry;
     nlm_entry->pclient = orig_nlm_entry->pclient;
     nlm_entry->ht = orig_nlm_entry->ht;
-    cache_inode_pin_pentry(nlm_entry->pentry, nlm_entry->pclient, NULL);
+    //cache_inode_pin_pentry(nlm_entry->pentry, nlm_entry->pclient, NULL);
     return nlm_entry;
 err_out:
     free(nlm_entry->caller_name);
