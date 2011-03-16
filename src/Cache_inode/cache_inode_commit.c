@@ -121,8 +121,12 @@ cache_inode_commit(cache_entry_t * pentry,
           
           return *pstatus;
         }
-      
+
+#ifdef _USE_MFSL      
+      fsal_status = FSAL_sync(&(pentry->object.file.open_fd.mfsl_fd.fsal_file)); /** @todo make a MFSL_sync */
+#else
       fsal_status = FSAL_sync(&(pentry->object.file.open_fd.fd));
+#endif
       if(FSAL_IS_ERROR(fsal_status)) {
         LogMajor(COMPONENT_CACHE_INODE, "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
                  fsal_status.major);
