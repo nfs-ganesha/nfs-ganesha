@@ -262,6 +262,9 @@ fsal_status_t MFSL_close(mfsl_file_t * file_descriptor, /* IN */
 			 void * pextra
     );
 
+fsal_status_t MFSL_sync(mfsl_file_t * file_descriptor /* IN */,
+			void * pextra);
+
 fsal_status_t MFSL_close_by_fileid(mfsl_file_t * file_descriptor /* IN */ ,
                                    fsal_u64_t fileid,
                                    mfsl_context_t * p_mfsl_context, /* IN */
