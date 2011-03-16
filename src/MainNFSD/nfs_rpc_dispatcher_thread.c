@@ -1382,7 +1382,7 @@ int nfs_Init_svc()
 
 #endif                          /* _NO_TCP_REGISTER */
 
-  if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
+  if((nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0)
     {
       LogInfo(COMPONENT_DISPATCH, "Registering MOUNT V1/UDP");
 #ifdef _USE_TIRPC
@@ -1423,7 +1423,7 @@ int nfs_Init_svc()
     }
 
 #ifdef _USE_TIRPC_IPV6
-  if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
+  if((nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0)
     {
       LogInfo(COMPONENT_DISPATCH, "Registering MOUNT V1/UDPv6");
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_mnt_udp,
@@ -1455,7 +1455,7 @@ int nfs_Init_svc()
 
 #ifndef _NO_TCP_REGISTER
 
-  if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
+  if((nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0)
     {
       LogInfo(COMPONENT_DISPATCH, "Registering MOUNT V1/TCP");
 #ifdef _USE_TIRPC
@@ -1496,7 +1496,7 @@ int nfs_Init_svc()
     }
 
 #ifdef _USE_TIRPC_IPV6
-  if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
+  if((nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0)
     {
       LogInfo(COMPONENT_DISPATCH, "Registering MOUNT V1/TCPv6");
       if(!svc_reg(nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp,

@@ -491,10 +491,10 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
 
       /* Some clients may use the wrong mount version to umount, so always allow umount,
        * otherwise only allow request if the appropriate mount version is enabled.
+       * also need to allow dump and export, so just disallow mount if version not supported
        */
       if((preq->rq_vers == MOUNT_V1) && (((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0) ||
-         (preq->rq_proc == MOUNTPROC2_UMNT) ||
-         (preq->rq_proc == MOUNTPROC2_UMNTALL)))
+         (preq->rq_proc != MOUNTPROC2_MNT)))
         {
           if(preq->rq_proc > MOUNTPROC2_EXPORT)
             {
@@ -505,8 +505,7 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
           return TRUE;
         }
       else if((preq->rq_vers == MOUNT_V3) && (((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0) ||
-              (preq->rq_proc == MOUNTPROC3_UMNT) ||
-              (preq->rq_proc == MOUNTPROC3_UMNTALL)))
+              (preq->rq_proc != MOUNTPROC2_MNT)))
         {
           if(preq->rq_proc > MOUNTPROC3_EXPORT)
             {
