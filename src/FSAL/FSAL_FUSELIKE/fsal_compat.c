@@ -663,6 +663,13 @@ fsal_status_t WRAP_FUSEFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
                                (fusefsal_op_context_t *) p_context, p_object_attributes ) ;
 }
 
+fsal_status_t WRAP_FUSEFSAL_sync(fsal_file_t * p_file_descriptor     /* IN */)
+{
+  return FUSEFSAL_sync((fusefsal_file_t *) p_file_descriptor);
+}
+
+
+
 fsal_functions_t fsal_fuse_functions = {
   .fsal_access = WRAP_FUSEFSAL_access,
   .fsal_getattrs = WRAP_FUSEFSAL_getattrs,
@@ -712,6 +719,7 @@ fsal_functions_t fsal_fuse_functions = {
   .fsal_get_stats = WRAP_FUSEFSAL_get_stats,
   .fsal_readlink = WRAP_FUSEFSAL_readlink,
   .fsal_symlink = WRAP_FUSEFSAL_symlink,
+  .fsal_sync = WRAP_FUSEFSAL_sync,
   .fsal_handlecmp = WRAP_FUSEFSAL_handlecmp,
   .fsal_handle_to_hashindex = WRAP_FUSEFSAL_Handle_to_HashIndex,
   .fsal_handle_to_rbtindex = WRAP_FUSEFSAL_Handle_to_RBTIndex,

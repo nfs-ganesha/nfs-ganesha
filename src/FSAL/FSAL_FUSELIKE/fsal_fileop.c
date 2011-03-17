@@ -581,6 +581,31 @@ fsal_status_t FUSEFSAL_close(fusefsal_file_t * file_descriptor  /* IN */
 
 }
 
+/**
+ * FSAL_sync:
+ * This function is used for processing stable writes and COMMIT requests.
+ * Calling this function makes sure the changes to a specific file are
+ * written to disk rather than kept in memory.
+ *
+ * \param file_descriptor (input):
+ *        The file descriptor returned by FSAL_open.
+ *
+ * \return Major error codes:
+ *      - ERR_FSAL_NO_ERROR: no error.
+ *      - Another error code if an error occured during this call.
+ */
+fsal_status_t FUSEFSAL_sync(fusefsal_file_t * p_file_descriptor       /* IN */)
+{
+  int rc, errsv;
+
+  /* sanity checks. */
+  if(!p_file_descriptor)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_sync);
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync);
+}
+
+
 /* Some unsupported calls used in FSAL_PROXY, just for permit the ganeshell to compile */
 fsal_status_t FUSEFSAL_open_by_fileid(fusefsal_handle_t * filehandle,   /* IN */
                                       fsal_u64_t fileid,        /* IN */
@@ -592,6 +617,7 @@ fsal_status_t FUSEFSAL_open_by_fileid(fusefsal_handle_t * filehandle,   /* IN */
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
+
 
 fsal_status_t FUSEFSAL_close_by_fileid(fusefsal_file_t * file_descriptor /* IN */ ,
                                        fsal_u64_t fileid)

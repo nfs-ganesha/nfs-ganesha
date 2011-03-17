@@ -729,7 +729,7 @@ fsal_status_t POSIXFSAL_sync(posixfsal_file_t * p_file_descriptor       /* IN */
 
   /* Flush data. */
   TakeTokenFSCall();
-  rc = fsync(p_file_descriptor->p_file);
+  rc = fsync(p_file_descriptor->filefd);
   errsv = errno;
   ReleaseTokenFSCall();
   

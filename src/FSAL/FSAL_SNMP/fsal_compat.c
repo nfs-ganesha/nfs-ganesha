@@ -553,6 +553,12 @@ fsal_status_t WRAP_SNMPFSAL_unlink(fsal_handle_t * p_parent_directory_handle,   
                          p_parent_directory_attributes);
 }
 
+fsal_status_t WRAP_SNMPFSAL_sync(fsal_file_t * p_file_descriptor     /* IN */)
+{
+  return SNMPFSAL_sync((snmpfsal_file_t *) p_file_descriptor);
+}
+
+
 char *WRAP_SNMPFSAL_GetFSName()
 {
   return SNMPFSAL_GetFSName();
@@ -709,6 +715,7 @@ fsal_functions_t fsal_snmp_functions = {
   .fsal_get_stats = WRAP_SNMPFSAL_get_stats,
   .fsal_readlink = WRAP_SNMPFSAL_readlink,
   .fsal_symlink = WRAP_SNMPFSAL_symlink,
+  .fsal_sync = WRAP_SNMPFSAL_sync,
   .fsal_handlecmp = WRAP_SNMPFSAL_handlecmp,
   .fsal_handle_to_hashindex = WRAP_SNMPFSAL_Handle_to_HashIndex,
   .fsal_handle_to_rbtindex = WRAP_SNMPFSAL_Handle_to_RBTIndex,

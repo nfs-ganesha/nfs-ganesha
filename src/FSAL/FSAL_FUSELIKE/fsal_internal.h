@@ -435,3 +435,6 @@ unsigned int FUSEFSAL_GetFileno(fsal_file_t * pfile);
 fsal_status_t FUSEFSAL_getextattrs(fusefsal_handle_t * p_filehandle, /* IN */
                                    fusefsal_op_context_t * p_context,        /* IN */
                                    fsal_extattrib_list_t * p_object_attributes /* OUT */) ;
+
+fsal_status_t FUSEFSAL_sync(fusefsal_file_t * p_file_descriptor     /* IN */);
+
