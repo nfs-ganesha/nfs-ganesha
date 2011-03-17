@@ -375,7 +375,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                * we can sync to the hard drive. */
               if(stable == FSAL_SAFE_WRITE_TO_FS) {
 #ifdef _USE_MFSL
-                fsal_status = MFSL_sync(&(pentry->object.file.mfsl_fd), NULL);
+                fsal_status = MFSL_sync(&(pentry->object.file.open_fd.mfsl_fd), NULL);
 #else
                 fsal_status = FSAL_sync(&(pentry->object.file.open_fd.fd));
 #endif
