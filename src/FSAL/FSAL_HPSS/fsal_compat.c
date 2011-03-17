@@ -559,6 +559,12 @@ fsal_status_t WRAP_HPSSFSAL_unlink(fsal_handle_t * p_parent_directory_handle,   
                          p_parent_directory_attributes);
 }
 
+fsal_status_t WRAP_HPSSFSAL_sync(fsal_file_t * p_file_descriptor     /* IN */)
+{
+  return HPSSFSAL_sync((hpssfsal_file_t *) p_file_descriptor);
+}
+
+
 char *WRAP_HPSSFSAL_GetFSName()
 {
   return HPSSFSAL_GetFSName();
@@ -732,6 +738,7 @@ fsal_functions_t fsal_hpss_functions = {
       WRAP_HPSSFSAL_load_FS_specific_parameter_from_conf,
   .fsal_truncate = WRAP_HPSSFSAL_truncate,
   .fsal_unlink = WRAP_HPSSFSAL_unlink,
+  .fsal_sync = WRAP_HPSSFSAL_sync,
   .fsal_getfsname = WRAP_HPSSFSAL_GetFSName,
   .fsal_getxattrattrs = WRAP_HPSSFSAL_GetXAttrAttrs,
   .fsal_listxattrs = WRAP_HPSSFSAL_ListXAttrs,
