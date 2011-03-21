@@ -612,7 +612,7 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
   LogCrit(COMPONENT_CONFIG, "NFS READ_EXPORT: WARNING: %s defined twice !!! (ignored)", _str_ )
 
 
-static int parseAccessParam(char *var_name, char *var_value,
+int parseAccessParam(char *var_name, char *var_value,
 			    exportlist_t *p_entry, int access_option) {
   int rc, err_flag = FALSE;
   char *expended_node_list;
