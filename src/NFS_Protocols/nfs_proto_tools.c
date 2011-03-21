@@ -405,6 +405,7 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
     case CACHE_INODE_FSAL_ERR_SEC:
     case CACHE_INODE_QUOTA_EXCEEDED:
     case CACHE_INODE_NOT_SUPPORTED:
+    case CACHE_INODE_NAME_TOO_LONG:
       /* Non retryable error, return error to client */
       return FALSE;
       break;
@@ -3337,6 +3338,10 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       nfserror = NFS4ERR_IO;
       break;
 
+     case CACHE_INODE_NAME_TOO_LONG:
+      nfserror = NFS4ERR_NAMETOOLONG;
+      break;
+
     case CACHE_INODE_DEAD_ENTRY:
     case CACHE_INODE_FSAL_ESTALE:
       nfserror = NFS4ERR_STALE;
@@ -3479,6 +3484,10 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
       nfserror = NFS3ERR_IO;
       break;
 
+    case CACHE_INODE_NAME_TOO_LONG:
+      nfserror = NFS3ERR_NAMETOOLONG;
+      break;
+
     default:                   /* Should not occur */
         LogDebug(COMPONENT_NFSPROTO,
                  "Line %u should never be reached in nfs3_Errno for cache_status=%u",
@@ -3584,6 +3593,10 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
       LogCrit(COMPONENT_NFSPROTO,
               "Error CACHE_INODE_IO_ERROR converted to NFSERR_IO but was set non-retryable");
       nfserror = NFSERR_IO;
+      break;
+
+    case CACHE_INODE_NAME_TOO_LONG:
+      nfserror = NFSERR_NAMETOOLONG;
       break;
 
     default:                   /* Should not occur */
