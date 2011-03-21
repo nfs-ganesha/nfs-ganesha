@@ -8,9 +8,11 @@
 #include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs_stat.h"
+#include "../MainNFSD/nfs_init.h"
 
 /* These parameters are used throughout Ganesha code and must be initilized. */
 nfs_parameter_t nfs_param;
+char ganesha_exec_path[MAXPATHLEN] = "/usr/bin/gpfs.ganesha.nfsd";
 
 void init_vars(hash_table_t **ht_ip_stats, struct prealloc_pool **ip_stats_pool)
 {
@@ -18,7 +20,7 @@ void init_vars(hash_table_t **ht_ip_stats, struct prealloc_pool **ip_stats_pool)
   *ht_ip_stats = nfs_Init_ip_stats(nfs_param.ip_stats_param);
   if(*ht_ip_stats == NULL)
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing IP/stats cache #%d", i);
+      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing IP/stats cache");
       exit(1);
     }
 
@@ -30,7 +32,7 @@ void init_vars(hash_table_t **ht_ip_stats, struct prealloc_pool **ip_stats_pool)
 
   if(!IsPoolPreallocated(*ip_stats_pool))
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while allocating IP stats cache pool #%d", i);
+      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while allocating IP stats cache pool");
       LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
       exit(1);
     }
@@ -64,11 +66,11 @@ int test_access(char *addr, char *hostname,
     }
   pssaddr = (struct sockaddr_storage *) res;
 
-  /*ptr_req*/
-  ptr_req->rq_prog = nfs_prog;
-
   /*nfs_prog*/
   nfs_prog = nfs_param.core_param.nfs_program;
+
+  /*ptr_req*/
+  ptr_req.rq_prog = nfs_prog;
 
   /*mnt_prog*/
   mnt_prog = nfs_param.core_param.mnt_program;
@@ -77,11 +79,11 @@ int test_access(char *addr, char *hostname,
   // memset(); ??
 
   /*user_credentials*/
-  user_credentials->caller_uid = uid;
+  user_credentials.caller_uid = uid;
 
-  export_check_result = nfs_export_check_access(&pssaddr,
+  export_check_result = nfs_export_check_access(pssaddr,
                                                 &ptr_req,
-                                                &pexport,
+                                                pexport,
                                                 nfs_prog,
                                                 mnt_prog,
                                                 ht_ip_stats,
@@ -92,7 +94,7 @@ int test_access(char *addr, char *hostname,
   return export_check_result;
 }
 
-void expected(int expected_result) {
+void expected(int expected_result, int export_check_result) {
   if (export_check_result == expected_result)
       LogTest("PASS");
   else
@@ -133,7 +135,7 @@ int main(int argc, char *argv[])
   hash_table_t *ht_ip_stats;
   struct prealloc_pool *ip_stats_pool;
   exportlist_t *pexport = (exportlist_t *) Mem_Alloc(sizeof(exportlist_t));
-  int root, read, write, mdonly_read, mdonly_write, uid, makes_write;
+  int root, read, write, mdonly_read, mdonly_write, root_user, uid, makes_write;
   bool_t proc_makes_write;
   char *ip = "192.0.2.10";
   char *hostname = "hostname";
@@ -151,16 +153,16 @@ int main(int argc, char *argv[])
               pexport = (exportlist_t *) Mem_Alloc(sizeof(exportlist_t));
 
               if (root)
-                  parseAccessParam(CONF_EXPORT_ROOT, ip, pexport, EXPORT_OPTION_ROOT);
+                  parseAccessParam("Root_Access", ip, pexport, EXPORT_OPTION_ROOT);
               if (read)
-                  parseAccessParam(CONF_EXPORT_READ_ACCESS, ip, pexport, EXPORT_OPTION_READ_ACCESS);
+                  parseAccessParam("R_Access", ip, pexport, EXPORT_OPTION_READ_ACCESS);
               if (write)
-                  parseAccessParam(CONF_EXPORT_READWRITE_ACCESS, ip, pexport,
+                  parseAccessParam("RW_Access", ip, pexport,
                                    EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS);
               if (mdonly_read)
-                  parseAccessParam(CONF_EXPORT_MD_RO_ACCESS, ip, pexport, EXPORT_OPTION_MD_READ_ACCESS);
+                  parseAccessParam("MDONLY_RO_Access", ip, pexport, EXPORT_OPTION_MD_READ_ACCESS);
               if (mdonly_write)
-                  parseAccessParam(CONF_EXPORT_MD_ACCESS, ip, pexport,
+                  parseAccessParam("MDONLY_Access", ip, pexport,
                                    EXPORT_OPTION_MD_WRITE_ACCESS | EXPORT_OPTION_MD_READ_ACCESS);
 
               /* With this export entry test both root and user access. */
