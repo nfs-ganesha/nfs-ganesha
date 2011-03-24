@@ -389,7 +389,6 @@ int main(int argc, char *argv[])
       for(accesstype=1; accesstype < 4; accesstype++)
       {
 	memset(&pexport, 0, sizeof(pexport));
-	printf("numclients: %d\n ",pexport.clients.num_clients);	
 
 	/* These strings come from local defines in ../support/exports.c */
 	if (root)
@@ -397,7 +396,6 @@ int main(int argc, char *argv[])
 	if (nonroot)
 	  parseAccessParam("Access", match_str, &pexport, EXPORT_OPTION_READ_ACCESS|EXPORT_OPTION_WRITE_ACCESS);
 
-	printf("numclients: %d\n ",pexport.clients.num_clients);
 	if (accesstype == READ)
 	  pexport.access_type = ACCESSTYPE_RO;
 	else if (accesstype == WRITE)
