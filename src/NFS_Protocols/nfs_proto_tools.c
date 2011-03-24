@@ -1914,7 +1914,7 @@ void nfs4_stringid_split(char *buff, char *uidname, char *domainname)
     if(*c == '@')
       break;
 
-  strcpy(uidname, buff);
+  strncpy(uidname, buff, i);
   uidname[i] = '\0';
   strcpy(domainname, c);
 
