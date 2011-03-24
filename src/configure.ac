@@ -725,6 +725,8 @@ AC_CONFIG_FILES([include/Makefile
                  include/PNFS/Makefile
 		 include/PNFS/SPNFS_LIKE/Makefile
 		 include/PNFS/PARALLEL_FS/Makefile
+		 include/PNFS/OSD/Makefile
+		 include/PNFS/BLOCK/Makefile
                  BuddyMalloc/Makefile
                  Common/Makefile
                  support/Makefile
@@ -744,6 +746,8 @@ AC_CONFIG_FILES([include/Makefile
 		 PNFS/Makefile
 		 PNFS/SPNFS_LIKE/Makefile
 		 PNFS/PARALLEL_FS/Makefile
+		 PNFS/OSD/Makefile
+		 PNFS/BLOCK/Makefile
                  XDR/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile
