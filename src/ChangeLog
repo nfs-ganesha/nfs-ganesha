@@ -432,6 +432,8 @@
         - Using function daemon() to start the daemon in a cleaner way
 	- Using gethostbyaddr_r to avoid contention when resolving address in nfs_ip_name.c
         - pNFS/file support has been added for LUSTRE
-        -pNFS related sources were reorganized with a design closer to what is done with FSAL/MFSL
+        - pNFS related sources were reorganized with a design closer to what is done with FSAL/MFSL
+	- "stable_how" flag management has been remade in deep, including a
+	  new FSAL_sync call to every FSAL
         
 	
