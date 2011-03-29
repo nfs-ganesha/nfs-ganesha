@@ -251,11 +251,16 @@ if test "$enable_ipv6" == "yes"; then
 fi
 
 # libnfsidmap
-GA_ENABLE_AM_CONDITION([nfsidmap],[enable the use of libnfsidmap], [USE_NFSIDMAP])
+GA_DISABLE_AM_CONDITION([nfsidmap],[disable the use of libnfsidmap], [USE_NO_NFSIDMAP])
 
 if test "$enable_nfsidmap" == "yes"; then
+	AC_CHECK_LIB([nfsidmap], [nfs4_uid_to_name], [have_nfsidmap="yes"])
+        if test "x$have_nfsidmap" != "xyes" ; then
+		 AC_MSG_ERROR([libnfsidmap is required])
+        fi
 	AC_DEFINE(_USE_NFSIDMAP, 1, [enable Id Mapping through libnfsidmap])
 fi
+AM_CONDITIONAL(USE_NFSIDMAP, test "$enable_nfsidmap" == "yes" )
 
 
 CACHE_INODE_DIR="Cache_inode"
