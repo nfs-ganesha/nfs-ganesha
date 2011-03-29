@@ -76,7 +76,11 @@ fsal_file_t * cache_inode_fd(cache_entry_t * pentry)
       (pentry->object.file.open_fd.openflags == FSAL_O_WRONLY)) &&
      (pentry->object.file.open_fd.fileno != 0))
     {
+#ifdef _USE_MFSL
+      return &pentry->object.file.open_fd.mfsl_fd;
+#else
       return &pentry->object.file.open_fd.fd;
+#endif
     }
 
   return NULL;
@@ -420,13 +424,6 @@ cache_inode_status_t cache_inode_close(cache_entry_t * pentry,
 
   /* if nothing is opened, do nothing */
   if(pentry->object.file.open_fd.fileno < 0)
-    {
-      *pstatus = CACHE_INODE_SUCCESS;
-      return *pstatus;
-    }
-
-  /* if locks are held in the file, do not close */
-  if(pentry->object.file.open_fd.num_locks != 0)
     {
       *pstatus = CACHE_INODE_SUCCESS;
       return *pstatus;

@@ -470,3 +470,21 @@ unsigned int SNMPFSAL_GetFileno(snmpfsal_file_t * pfile)
 {
   return 0;
 }
+
+/**
+ * FSAL_sync:
+ * This function is used for processing stable writes and COMMIT requests.
+ * Calling this function makes sure the changes to a specific file are
+ * written to disk rather than kept in memory.
+ *
+ * \param file_descriptor (input):
+ *        The file descriptor returned by FSAL_open.
+ *
+ * \return Major error codes:
+ *      - ERR_FSAL_NO_ERROR: no error.
+ *      - Another error code if an error occured during this call.
+ */
+fsal_status_t SNMPFSAL_sync(snmpfsal_file_t * p_file_descriptor     /* IN */)
+{
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync);
+}

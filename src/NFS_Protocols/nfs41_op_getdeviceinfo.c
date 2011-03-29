@@ -106,6 +106,9 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
   return res_GETDEVICEINFO4.gdir_status;
 #else
 
+  char *buffin = NULL;
+  unsigned int lenbuffin = 0;
+
   char *buff = NULL;
   unsigned int lenbuff = 0;
 
@@ -115,6 +118,11 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
       return res_GETDEVICEINFO4.gdir_status;
     }
 
+#if defined( _USE_PNFS_SPNFS_LIKE ) || defined( _USE_PNFS_PARALLEL_FS )
+  buffin = NULL ; /** @todo : do something less static */
+  lenbuffin = 0 ; 
+#endif
+
   /** @todo handle multiple DS here when this will be implemented (switch on deviceid arg) */
   res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_notification.bitmap4_len = 0;
   res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_notification.bitmap4_val = NULL;
@@ -122,7 +130,7 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
   res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_layout_type =
       LAYOUT4_NFSV4_1_FILES;
 
-  if( ( rc = pnfs_service_getdeviceinfo( buff, &lenbuff) ) != NFS4_OK )
+  if( ( rc = pnfs_service_getdeviceinfo( buffin, &lenbuffin, buff, &lenbuff) ) != NFS4_OK )
     {
        res_GETDEVICEINFO4.gdir_status = rc ; 
        return res_GETDEVICEINFO4.gdir_status;
