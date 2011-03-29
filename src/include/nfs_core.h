@@ -613,6 +613,9 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht);
 int nfs_AddClientsToClientArray(exportlist_client_t *clients, int new_clients_number,
     char **new_clients_name, int option);
 
+int parseAccessParam(char *var_name, char *var_value,
+                     exportlist_t *p_entry, int access_option);
+
 /* Checks an access list for a specific client */
 int export_client_match(unsigned int addr,
                         char *ipstring,
