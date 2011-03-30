@@ -127,6 +127,10 @@ else
 RPM_DB_ARGS= --without postgresql
 endif
 
+if USE_NFSIDMAP
+RPM_DB_ARGS += --with nfsidmap
+endif 
+
 #indent:
 #	find . -name '*.[ch]' ! -path './rpm/*' -exec indent -linux -nsaf -nsai -nsaw -nut -bl -bls -i4 -l90 -lc90 -nce -hnl {} \;
 
