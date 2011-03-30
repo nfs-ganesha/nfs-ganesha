@@ -352,8 +352,6 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
         }
     }
 
-  LogFullDebug(COMPONENT_CACHE_INODE,
-               "---> Cache_inode_remove : 1 %s", pnode_name->name);
   /* We have to get parent's fsal handle */
   parent_entry = pentry;
 
@@ -374,8 +372,6 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
         V_r(&pentry->object.dir_cont.pdir_begin->lock);
     }
 
-  LogFullDebug(COMPONENT_CACHE_INODE,
-               "---> Cache_inode_remove : 2 %s", pnode_name->name);
   if(status == CACHE_INODE_SUCCESS)
     {
       /* Remove the file from FSAL */
@@ -445,8 +441,6 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       return status;
     }
 
-  LogFullDebug(COMPONENT_CACHE_INODE,
-               "---> Cache_inode_remove : 3 %s", pnode_name->name);
   /* Remove the entry from parent dir_entries array */
   cache_inode_remove_cached_dirent(pentry, pnode_name, ht, pclient, &status);
 
@@ -520,29 +514,9 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       /* No hardlink counter to be decremented for a directory: hardlink are not allowed for them */
     }
 
-  LogFullDebug(COMPONENT_CACHE_INODE,
-               "---> Cache_inode_remove : 4 %s to_remove_numlinks %d pentry <%p> numlocks %d to_remove_entry <%p> numlocks %d",
-               pnode_name->name, to_remove_numlinks, pentry,
-               pentry->object.file.open_fd.num_locks, to_remove_entry,
-               to_remove_entry->object.file.open_fd.num_locks);
-
   /* Now, delete "to_remove_entry" from the cache inode and free its associated resources, but only if numlinks == 0 */
   if(to_remove_numlinks == 0)
     {
-
-      /* If pentry is a regular file and has locks, do not remove, just mark it to be removed */
-      if((to_remove_entry->internal_md.type == REGULAR_FILE) &&
-                        (to_remove_entry->object.file.open_fd.num_locks))
-        {
-          to_remove_entry->internal_md.kill_entry = 1;
-          LogFullDebug(COMPONENT_CACHE_INODE,
-                       "cache_inode_remove: setting kill_entry");
-          goto dontremove;
-        }
-
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                   "---> Cache_inode_remove : 5 %s",
-                   pnode_name->name);
 
       /* If pentry is a regular file, data cached, the related data cache entry should be removed as well */
       if(to_remove_entry->internal_md.type == REGULAR_FILE)
@@ -619,16 +593,13 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       ReleaseToPool(to_remove_entry, &pclient->pool_entry);
     }
 
-dontremove:
-  LogFullDebug(COMPONENT_CACHE_INODE,
-               "---> Cache_inode_remove : 6 %s", pnode_name->name);
   /* Validate the entries */
   *pstatus = cache_inode_valid(pentry, CACHE_INODE_OP_SET, pclient);
 
   /* Regular exit */
   if(use_mutex)
     {
-      if(to_remove_numlinks != 0 || to_remove_entry->internal_md.kill_entry != 0)
+      if(to_remove_numlinks != 0)
         V_w(&to_remove_entry->lock);    /* This was not release yet, it should be done here */
 
       V_w(&pentry->lock);

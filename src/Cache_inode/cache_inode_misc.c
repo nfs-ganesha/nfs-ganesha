@@ -396,7 +396,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
   pentry->internal_md.type = type;
   pentry->internal_md.valid_state = VALID;
   pentry->internal_md.read_time = 0;
-  pentry->internal_md.kill_entry = 0;
   pentry->internal_md.mod_time = pentry->internal_md.alloc_time = time(NULL);
   pentry->internal_md.refresh_time = pentry->internal_md.alloc_time;
 
@@ -439,7 +438,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       pentry->object.file.pentry_parent_open = NULL;
 #endif
 
-#ifdef _USE_PNFS
+#ifdef _USE_PNFS_SPNFS_LIKE /** @todo do the thing in a cleaner way here */
       pentry->object.file.pnfs_file.ds_file.allocated = FALSE;
 #endif
 
@@ -1833,47 +1832,3 @@ void cache_inode_print_srvhandle(char *comment, cache_entry_t * pentry)
                tag, comment, outstr);
 }                               /* cache_inode_print_srvhandle */
 #endif
-
-cache_inode_status_t cache_inode_pin_pentry(cache_entry_t * pentry,
-                                      cache_inode_client_t * pclient,
-                                      fsal_op_context_t * pcontext)
-{
-   cache_inode_status_t pstatus = CACHE_INODE_SUCCESS;
-
-   LogDebug(COMPONENT_CACHE_INODE,
-            "cache_inode_pin_pentry: pentry %p; pclient %p",
-            pentry, pclient);
-   if (pentry->object.file.open_fd.num_locks == 0) {
-     pstatus = cache_inode_open(pentry, pclient, FSAL_O_RDWR,
-        pcontext, &pstatus);
-     if (pstatus != CACHE_INODE_SUCCESS)
-        return pstatus;
-   }
-   pentry->object.file.open_fd.num_locks++;
-   LogDebug(COMPONENT_CACHE_INODE,
-            "cache_inode_pin_pentry: numlocks %d",
-            pentry->object.file.open_fd.num_locks);
-   return pstatus;
-}
-
-cache_inode_status_t cache_inode_unpin_pentry(cache_entry_t * pentry,
-                                       cache_inode_client_t * pclient,
-                                       hash_table_t * ht)
-{
-  cache_inode_status_t pstatus = CACHE_INODE_SUCCESS;
-
-  pentry->object.file.open_fd.num_locks--;
-  LogDebug(COMPONENT_CACHE_INODE,
-           "cache_inode_unpin_pentry: pentry %p; pclient %p numlocks %d, kill_entry %d",
-           pentry, pclient,
-           pentry->object.file.open_fd.num_locks,
-           pentry->internal_md.kill_entry);
-  if (pentry->object.file.open_fd.num_locks == 0)
-    {
-      pstatus = cache_inode_close(pentry, pclient, &pstatus);
-      if (pentry->internal_md.kill_entry != 0)
-        pstatus = cache_inode_kill_entry(pentry, ht, pclient, &pstatus);
-    }
-  return pstatus;
-}
-

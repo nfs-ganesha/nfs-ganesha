@@ -225,6 +225,11 @@ fsal_status_t WRAP_XFSFSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
                                 (xfsfsal_file_t *) file_descriptor, file_attributes);
 }
 
+fsal_status_t WRAP_XFSFSAL_sync(fsal_file_t * p_file_descriptor     /* IN */)
+{
+  return XFSFSAL_sync((xfsfsal_file_t *) p_file_descriptor);
+}
+
 fsal_status_t WRAP_XFSFSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
                                            fsal_u64_t fileid)
 {
@@ -705,6 +710,7 @@ fsal_functions_t fsal_xfs_functions = {
   .fsal_get_stats = WRAP_XFSFSAL_get_stats,
   .fsal_readlink = WRAP_XFSFSAL_readlink,
   .fsal_symlink = WRAP_XFSFSAL_symlink,
+  .fsal_sync = WRAP_XFSFSAL_sync,
   .fsal_handlecmp = WRAP_XFSFSAL_handlecmp,
   .fsal_handle_to_hashindex = WRAP_XFSFSAL_Handle_to_HashIndex,
   .fsal_handle_to_rbtindex = WRAP_XFSFSAL_Handle_to_RBTIndex,

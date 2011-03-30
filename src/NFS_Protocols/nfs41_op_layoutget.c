@@ -113,8 +113,21 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
   res_LAYOUTGET4.logr_status = NFS4ERR_NOTSUPP;
   return res_LAYOUTGET4.logr_status;
 #else
+  char *buffin = NULL;
+  unsigned int lenbuffin = 0;
+
   char *buff = NULL;
   unsigned int lenbuff = 0;
+
+  /* Lock are not supported */
+  resp->resop = NFS4_OP_LAYOUTGET;
+
+  if((buff = Mem_Alloc(1024)) == NULL)
+    {
+      res_LAYOUTGET4.logr_status = NFS4ERR_SERVERFAULT;
+      return res_LAYOUTGET4.logr_status;
+    }
+
 
   /* Lock are not supported */
   resp->resop = NFS4_OP_LAYOUTGET;
@@ -250,9 +263,24 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
       lo_content.loc_type = LAYOUT4_NFSV4_1_FILES;
 
-  pnfs_encode_layoutget( &data->current_entry->object.file.pnfs_file,
-                         buff,
-                         &lenbuff);
+#ifdef _USE_PNFS_PARALLEL_FS
+  buffin = data->currentFH.nfs_fh4_val ;
+  lenbuffin = data->currentFH.nfs_fh4_len ;
+#endif 
+
+#ifdef _USE_PNFS_SPNFS_LIKE
+  buffin =  &data->current_entry->object.file.pnfs_file ;
+  lenbuffin = sizeof( pnfs_file_t ) ;
+#endif
+
+  if( ( rc = pnfs_service_layoutget( buffin,
+                                     &lenbuffin,
+                                     buff,
+                                     &lenbuff) ) != NFS4_OK )
+    {
+       res_LAYOUTGET4.logr_status = rc ;
+       return res_LAYOUTGET4.logr_status;
+    }
 
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
       lo_content.loc_body.loc_body_len =

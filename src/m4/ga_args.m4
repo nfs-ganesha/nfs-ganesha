@@ -58,3 +58,20 @@ AC_DEFUN([GA_ENABLE_AM_CONDITION],
 
 	AM_CONDITIONAL([$3], test "[$enable_]m4_bpatsubst([$1],-,_)"  == "yes" )
 ])
+#
+#
+# This macro defines an AM_CONDITIONAL variable 
+# when an --disable argument is specified.
+#
+# GA_DISABLE_AM_CONDITION( FEATURE_NAME, HELP_STRING, AM_CONDITION_VAR )
+#
+# Example:
+# GA_DISABLE_AM_CONDITION( [gssrpc], [disable gssrpc security management], [USE_NO_GSSRPC] )
+#
+AC_DEFUN([GA_DISABLE_AM_CONDITION],
+[
+	AC_ARG_ENABLE( [$1], AS_HELP_STRING([--disable-$1],[$2]),
+		       [enable_]m4_bpatsubst([$1],-,_)=$enableval, [enable_]m4_bpatsubst([$1],-,_)='yes' )
+
+	AM_CONDITIONAL([$3], test "[$enable_]m4_bpatsubst([$1],-,_)"  == "no" )
+])

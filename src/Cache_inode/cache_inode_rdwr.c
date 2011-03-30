@@ -265,6 +265,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                           "Read/Write Operation through cache failed with status %d (renew process failed)",
                           cache_content_status);
 
+		  /** @todo exit on error here */
+
                 }
               else
                 {
@@ -375,7 +377,11 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
               /* Alright, the unstable write is complete. Now if it was supposed to be a stable write
                * we can sync to the hard drive. */
               if(stable == FSAL_SAFE_WRITE_TO_FS) {
+#ifdef _USE_MFSL
+                fsal_status = MFSL_sync(&(pentry->object.file.open_fd.mfsl_fd), NULL);
+#else
                 fsal_status = FSAL_sync(&(pentry->object.file.open_fd.fd));
+#endif
                 if(FSAL_IS_ERROR(fsal_status))
                   LogMajor(COMPONENT_CACHE_INODE,
                            "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",

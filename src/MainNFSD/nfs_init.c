@@ -607,6 +607,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
       FSAL_ATTR_MASK_V2_V3;
   p_nfs_param->cache_layers_param.cache_inode_client_param.max_fd_per_thread = 20;
   p_nfs_param->cache_layers_param.cache_inode_client_param.use_cache = 0;
+  p_nfs_param->cache_layers_param.cache_inode_client_param.use_fsal_hash = 1;
   p_nfs_param->cache_layers_param.cache_inode_client_param.retention = 60;
 
   /* Data cache client parameters */

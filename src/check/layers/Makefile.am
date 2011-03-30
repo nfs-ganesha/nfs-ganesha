@@ -1,6 +1,9 @@
 
-#check: user1.sav user2.sav user3.sav testdir.sav
+# check: user1.sav user2.sav user3.sav testdir.sav
 #	../../tools/maketest -qce -f maketest.conf
+
+testrunner:  $(check_PROGRAMS)
+	../../tools/maketest -e -x From_Ganeshell -f ./maketest.conf > ../../testres-xml/From_Ganeshell.xml
 	
 user1.sav:
 	./config_tests.ksh

@@ -538,6 +538,12 @@ fsal_status_t WRAP_ZFSFSAL_truncate(fsal_handle_t * p_filehandle,
                           (zfsfsal_file_t *) file_descriptor, p_object_attributes);
 }
 
+fsal_status_t WRAP_ZFSFSAL_sync(fsal_file_t * p_file_descriptor     /* IN */)
+{
+  return ZFSFSAL_sync((zfsfsal_file_t *) p_file_descriptor);
+}
+
+
 fsal_status_t WRAP_ZFSFSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
                                   fsal_name_t * p_object_name,  /* IN */
                                   fsal_op_context_t * p_context,        /* IN */
@@ -721,6 +727,7 @@ fsal_functions_t fsal_zfs_functions = {
       WRAP_ZFSFSAL_load_FS_specific_parameter_from_conf,
   .fsal_truncate = WRAP_ZFSFSAL_truncate,
   .fsal_unlink = WRAP_ZFSFSAL_unlink,
+  .fsal_sync = WRAP_ZFSFSAL_sync,
   .fsal_getfsname = WRAP_ZFSFSAL_GetFSName,
   .fsal_getxattrattrs = WRAP_ZFSFSAL_GetXAttrAttrs,
   .fsal_listxattrs = WRAP_ZFSFSAL_ListXAttrs,
