@@ -1219,6 +1219,8 @@ int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context)
   addr_rpc.sin_addr.s_addr = p_thr_context->srv_addr;
   int priv_port = 0 ;
 
+  printf( "==> fsal_internal_ClientReconnect\n" ) ;
+
   if(!strcmp(p_thr_context->srv_proto, "udp"))
     {
       if((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
