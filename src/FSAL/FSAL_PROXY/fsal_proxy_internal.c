@@ -1323,7 +1323,7 @@ int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context)
       return -1;
     }
 
-  fsal_status = FSAL_proxy_setclientid(p_thr_context);
+  fsal_status = FSAL_proxy_setclientid_force(p_thr_context);
   if(FSAL_IS_ERROR(fsal_status))
     return -1;
 
