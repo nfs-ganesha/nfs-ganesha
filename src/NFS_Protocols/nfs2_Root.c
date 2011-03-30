@@ -98,7 +98,7 @@ int nfs2_Root(nfs_arg_t * parg,
 {
   /* This is an unsupported function, it is never used */
   LogCrit(COMPONENT_NFSPROTO,
-                    "NFS2_ROOT:  /!\\ | Received unexpected call to deprecated function NFS2PROC_ROOT");
+          "NFS2_ROOT: Received unexpected call to deprecated function NFS2PROC_ROOT");
   return NFS_REQ_OK;
 }                               /* nfs2_Root */
 

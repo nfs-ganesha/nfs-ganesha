@@ -126,7 +126,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
   struct sockaddr_in *paddr_caller = NULL;
   char str_caller[MAXNAMLEN];
-  nfs_function_desc_t funcdesc;
+  const nfs_function_desc_t *pfuncdesc;
   fridge_entry_t * pfe = NULL ;
 
   snprintf(my_name, MAXNAMLEN, "tcp_sock_mgr#fd=%ld", tcp_sock);
@@ -136,7 +136,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
   if((rc = BuddyInit(&nfs_param.buddy_param_tcp_mgr)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogCrit(COMPONENT_DISPATCH, "Memory manager could not be initialized");
+      LogMajor(COMPONENT_DISPATCH, "Memory manager could not be initialized");
       #ifdef _DEBUG_MEMLEAKS
       {
         FILE *output = fopen("/tmp/buddymem", "w");
@@ -149,8 +149,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 #endif
 
   /* Calling dispatcher main loop */
-  LogDebug(COMPONENT_DISPATCH,
-           "TCP SOCKET MANAGER Sock=%ld(%p): Starting with pthread id #%p",
+  LogDebug(COMPONENT_DISPATCH, "TCP SOCKET MANAGER Sock=%ld(%p): Starting with pthread id #%p",
            tcp_sock, Arg, (caddr_t) pthread_self());
 
   for(;;)
@@ -172,17 +171,15 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
       if(pnfsreq == NULL)
         {
-          LogCrit(COMPONENT_DISPATCH,
-                  "CRITICAL ERROR: empty request pool for the chosen worker ! Exiting...");
-          exit(0);
+          LogMajor(COMPONENT_DISPATCH, "CRITICAL ERROR: empty request pool for the chosen worker ! Exiting...");
+          exit(1);
         }
 
       xprt = Xports[tcp_sock];
       if(xprt == NULL)
         {
           /* But do we control sock? */
-          LogCrit(COMPONENT_DISPATCH,
-                  "CRITICAL ERROR: Incoherency found in Xports array, sock=%d",
+          LogCrit(COMPONENT_DISPATCH, "CRITICAL ERROR: Incoherency found in Xports array, sock=%d",
                   (int)tcp_sock);
           return NULL;
         }
@@ -237,9 +234,6 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
              "TCP SOCKET MANAGER : /!\\ Trying to access a bad socket ! Check the source file=%s, line=%u",
              __FILE__, __LINE__);
 
-      //TODO FSF: I think this is a redundant message
-      LogFullDebug(COMPONENT_DISPATCH, "Before waiting on select for socket %d", (int)tcp_sock);
-
       LogFullDebug(COMPONENT_DISPATCH, "Before calling SVC_RECV on socket %d", (int)tcp_sock);
 
       /* Will block until the client operates on the socket */
@@ -273,15 +267,14 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 #endif                          /* _USE_TIRPC */
                 strncpy(str_caller, "unresolved", MAXNAMLEN);
 
-              LogEvent(COMPONENT_DISPATCH,
-                   "TCP SOCKET MANAGER Sock=%d: the client (%s) disappeared... Freezing thread %p",
-                   (int)tcp_sock, str_caller, (caddr_t)pthread_self());
+              LogDebug(COMPONENT_DISPATCH, "TCP SOCKET MANAGER Sock=%d: the client (%s) disappeared... Freezing thread %p",
+                       (int)tcp_sock, str_caller, (caddr_t)pthread_self());
 
               if(Xports[tcp_sock] != NULL)
                 SVC_DESTROY(Xports[tcp_sock]);
               else
                 LogCrit(COMPONENT_DISPATCH,
-                     "TCP SOCKET MANAGER : /!\\ **** ERROR **** Mismatch between tcp_sock and xprt array");
+                        "TCP SOCKET MANAGER: Mismatch between tcp_sock and xprt array");
 
               P(workers_data[worker_index].request_pool_mutex);
               ReleaseToPool(pnfsreq, &workers_data[worker_index].request_pool);
@@ -291,8 +284,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
               if( ( pfe = fridgethr_freeze( ) ) == NULL ) 
                 {
 		  /* Fridge expiration, the thread and exit */
-                  LogEvent( COMPONENT_DISPATCH,
-		            "TCP connection manager has expired in the fridge, let's kill it" ) ;
+                  LogDebug(COMPONENT_DISPATCH, "TCP connection manager has expired in the fridge, let's kill it" ) ;
 #ifndef _NO_BUDDY_SYSTEM
               /* Free stuff allocated by BuddyMalloc before thread exists */
 		  /*              sleep(nfs_param.core_param.expiration_dupreq * 2);   / ** @todo : remove this for a cleaner fix */
@@ -306,16 +298,14 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                 }
 
               tcp_sock = (long int )pfe->arg ;
-              LogEvent( COMPONENT_DISPATCH,
-			"TCP SOCKET MANAGER Now working on sock=%d after going out of the fridge", (int)tcp_sock ) ;
+              LogDebug(COMPONENT_DISPATCH, "TCP SOCKET MANAGER Now working on sock=%d after going out of the fridge", (int)tcp_sock ) ;
          
               continue ;
 		
             }
           else if(stat == XPRT_MOREREQS)
             {
-              LogDebug(COMPONENT_DISPATCH,
-                       "TCP SOCKET MANAGER Sock=%d: XPRT has MOREREQS status",
+              LogDebug(COMPONENT_DISPATCH, "TCP SOCKET MANAGER Sock=%d: XPRT has MOREREQS status",
                        (int)tcp_sock);
             }
 
@@ -362,9 +352,9 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
           pnfsreq->req.rq_vers = pmsg->rm_call.cb_vers;
           pnfsreq->req.rq_proc = pmsg->rm_call.cb_proc;
 
-          rc = nfs_rpc_get_funcdesc(pnfsreq, &funcdesc);
-          if (rc != FALSE)
-            nfs_rpc_get_args(pnfsreq, &funcdesc);
+          pfuncdesc = nfs_rpc_get_funcdesc(pnfsreq);
+          if(pfuncdesc != INVALID_FUNCDESC)
+            nfs_rpc_get_args(pnfsreq, pfuncdesc);
 
           /* Update a copy of SVCXPRT and pass it to the worker thread to use it. */
           xprt_copy = pnfsreq->xprt_copy;
@@ -379,15 +369,15 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
               V(workers_data[worker_index].mutex_req_condvar);
               V(workers_data[worker_index].request_pool_mutex);
               LogCrit(COMPONENT_DISPATCH,
-                   "TCP SOCKET MANAGER Sock=%d: Cond signal failed for thr#%d , errno = %d",
-                   (int)tcp_sock, worker_index, errno);
+                      "TCP SOCKET MANAGER Sock=%d: Cond signal failed for thr#%d , errno = %d",
+                      (int)tcp_sock, worker_index, errno);
             }
           V(workers_data[worker_index].mutex_req_condvar);
           V(workers_data[worker_index].request_pool_mutex);
           LogFullDebug(COMPONENT_DISPATCH, "Waiting for commit from thread #%d",
                        worker_index);
 
-          if (rc != FALSE)
+          if(pfuncdesc != INVALID_FUNCDESC)
             {
               gettimeofday(&timer_end, NULL);
               timer_diff = time_diff(timer_start, timer_end);
@@ -405,7 +395,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
         }
     }
 
-  LogDebug(COMPONENT_DISPATCH, "TCP SOCKET MANAGER Sock=%d: Stopping", (int)tcp_sock);
+  LogCrit(COMPONENT_DISPATCH, "TCP SOCKET MANAGER Sock=%d: Stopping", (int)tcp_sock);
 
   /* Never reached */ 
   return NULL;

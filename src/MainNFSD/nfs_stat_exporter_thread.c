@@ -114,7 +114,7 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
           return FALSE;
         }
       if(export_client_match
-	 (addr, ipstring, clients, pclient_found, EXPORT_OPTION_ACCESS))
+	 (addr, ipstring, clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
         return TRUE;
 #ifdef _USE_TIRPC_IPV6
     }
@@ -127,7 +127,7 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
 
           inet_ntop(psockaddr_in6->sin6_family,
                     psockaddr_in6->sin6_addr.s6_addr, txtaddrv6, 100);
-          LogFullDebug(COMPONENT_MAIN, "Client has IPv6 adress = %s\n", txtaddrv6);
+          LogFullDebug(COMPONENT_MAIN, "Client has IPv6 adress = %s", txtaddrv6);
         }
       /* If the client socket is IPv4, then it is wrapped into a   ::ffff:a.b.c.d IPv6 address. We check this here
        * This kind of adress is shaped like this:
@@ -155,11 +155,11 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
           /* Proceed with IPv4 dedicated function */
           /* else, check if any access only export matches this client */
           if(export_client_match
-	     (addr, ip6string, clients, pclient_found, EXPORT_OPTION_ACCESS))
+	     (addr, ip6string, clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
             return TRUE;
         }
       if(export_client_matchv6
-	 (&(psockaddr_in6->sin6_addr), clients, pclient_found, EXPORT_OPTION_ACCESS))
+	 (&(psockaddr_in6->sin6_addr), clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
         return TRUE;
     }
 #endif                          /* _USE_TIRPC_IPV6 */
@@ -228,7 +228,7 @@ static int parseAccessParam(char *var_name, char *var_value,
     }
 
   rc = nfs_AddClientsToClientArray( clients, rc,
-				    (char **)client_list, EXPORT_OPTION_ACCESS);
+				    (char **)client_list, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS);
   if(rc != 0)
     {
       err_flag = TRUE;
@@ -268,14 +268,14 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
  if((block = config_FindItemByName(in_config, CONF_STAT_EXPORTER_LABEL)) == NULL)
     {
       /* cannot read item */
-      LogCrit(COMPONENT_INIT, "STAT_EXPORTER: Cannot read item \"%s\" from configuration file",
+      LogCrit(COMPONENT_CONFIG, "STAT_EXPORTER: Cannot read item \"%s\" from configuration file",
               CONF_STAT_EXPORTER_LABEL);
       /* Expected to be a block */
       return ENOENT;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
      {
-       LogCrit(COMPONENT_INIT, "STAT_EXPORTER: Cannot read item \"%s\" from configuration file",
+       LogCrit(COMPONENT_CONFIG, "STAT_EXPORTER: Cannot read item \"%s\" from configuration file",
                CONF_STAT_EXPORTER_LABEL);
       /* Expected to be a block */
        return ENOENT;
@@ -292,7 +292,7 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
 
       if(err)
         {
-          LogCrit(COMPONENT_INIT,
+          LogCrit(COMPONENT_CONFIG,
                   "STAT_EXPORTER: ERROR reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_FS_SPECIFIC);
           return err;
@@ -309,7 +309,7 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
         }
       else
         {
-          LogCrit(COMPONENT_INIT,
+          LogCrit(COMPONENT_CONFIG,
                   "STAT_EXPORTER LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_FS_SPECIFIC);
           return EINVAL;
@@ -603,7 +603,7 @@ void *stat_exporter_thread(void *addr)
 
   if((rc = getaddrinfo(NULL, nfs_param.extern_param.stat_export.export_stat_port, &hints, &servinfo)) != 0)
     {
-      LogCrit(COMPONENT_MAIN, "getaddrinfo: %s\n", gai_strerror(rc));
+      LogCrit(COMPONENT_MAIN, "getaddrinfo: %s", gai_strerror(rc));
       return NULL;
     }
   for(p = servinfo; p != NULL; p = p->ai_next)
@@ -672,3 +672,32 @@ void *stat_exporter_thread(void *addr)
 
   return NULL;
 }                               /* stat_exporter_thread */
+
+void *long_processing_thread(void *addr)
+{
+  nfs_worker_data_t *workers_data = (nfs_worker_data_t *) addr;
+  struct timeval timer_end;
+  struct timeval timer_diff;
+  int i;
+
+  SetNameFunction("long_processing");
+
+  while(1)
+    {
+      sleep(1);
+      gettimeofday(&timer_end, NULL);
+
+      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
+        {
+          if(workers_data[i].timer_start.tv_sec == 0)
+            continue;
+          timer_diff = time_diff(workers_data[i].timer_start, timer_end);
+          if(timer_diff.tv_sec == nfs_param.core_param.long_processing_threshold)
+            LogEvent(COMPONENT_DISPATCH, "Worker#%d: Function %s has been running for %llu.%.6llu seconds",
+                     i, workers_data[i].pfuncdesc->funcname,
+                     (unsigned long long)timer_diff.tv_sec, (unsigned long long)timer_diff.tv_usec);
+        }
+    }
+
+  return NULL;
+}                               /* long_processing_thread */

@@ -319,7 +319,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       return *pstatus;
     }
 
-  LogFullDebug(COMPONENT_CACHE_INODE, "---> Cache_inode_remove : %s", pnode_name->name);
+  LogDebug(COMPONENT_CACHE_INODE, "---> Cache_inode_remove : %s", pnode_name->name);
 
   /* Non-empty directories should not be removed. If entry is of type DIR_CONTINUE, then the directory is not empty */
   if(to_remove_entry->internal_md.type == DIR_CONTINUE)
@@ -407,7 +407,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
             {
               cache_inode_status_t kill_status;
 
-              LogEvent(COMPONENT_CACHE_INODE,
+              LogDebug(COMPONENT_CACHE_INODE,
                   "cache_inode_remove: Stale FSAL FH detected for pentry %p", pentry);
 
               if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
@@ -443,7 +443,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
   cache_inode_remove_cached_dirent(pentry, pnode_name, ht, pclient, &status);
 
   LogFullDebug(COMPONENT_CACHE_INODE,
-                    "cache_inode_remove_cached_dirent: status=%d", status);
+               "cache_inode_remove_cached_dirent: status=%d", status);
 
   /* Update the cached attributes */
   if(pentry->internal_md.type == DIR_BEGINNING)

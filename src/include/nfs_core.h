@@ -40,6 +40,8 @@
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/param.h>
+#include <time.h>
+#include <sys/time.h>
 
 #ifdef _USE_GSSRPC
 #include <gssrpc/rpc.h>
@@ -72,13 +74,16 @@
 #include "nfs_dupreq.h"
 #include "err_LRU_List.h"
 #include "err_HashTable.h"
-#include "err_rpc.h"
 
 #ifdef _USE_NFS4_1
 #include "nfs41_session.h"
 #ifdef _USE_PNFS
 #include "pnfs.h"
 #endif                          /* _USE_PNFS */
+#endif
+
+#ifdef _ERROR_INJECTION
+#include "err_inject.h"
 #endif
 
 /* Maximum thread count */
@@ -303,6 +308,7 @@ typedef struct nfs_core_param__
   unsigned int use_nfs_commit;
   time_t expiration_dupreq;
   unsigned int stats_update_delay;
+  unsigned int long_processing_threshold;
   unsigned int dump_stats_per_client;
   char stats_file_path[MAXPATHLEN];
   char stats_per_client_directory[MAXPATHLEN];
@@ -513,6 +519,10 @@ typedef struct nfs_worker_data__
   unsigned int gc_in_progress;
   unsigned int current_xid;
   fsal_op_context_t thread_fsal_context;
+
+  /* Description of current or most recent function processed and start time (or 0) */
+  const nfs_function_desc_t *pfuncdesc;
+  struct timeval timer_start;
 } nfs_worker_data_t;
 
 typedef struct nfs_admin_data_
@@ -557,6 +567,7 @@ void *worker_thread(void *IndexArg);
 void *rpc_dispatcher_thread(void *arg);
 void *admin_thread(void *arg);
 void *stats_thread(void *IndexArg);
+void *long_processing_thread(void *arg);
 void *stat_exporter_thread(void *IndexArg);
 void *sigmgr_thread(void *arg);
 int stats_snmp(nfs_worker_data_t * workers_data_local);
@@ -833,7 +844,8 @@ void Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig);
 void Svcxprt_copydestroy(register SVCXPRT * xprt);
 SVCXPRT *Svcxprt_copycreate();
 
-int nfs_rpc_get_funcdesc(nfs_request_data_t * preqnfs, nfs_function_desc_t *pfuncdesc);
-int nfs_rpc_get_args(nfs_request_data_t * preqnfs, nfs_function_desc_t *pfuncdesc);
+extern const nfs_function_desc_t *INVALID_FUNCDESC;
+const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t * preqnfs);
+int nfs_rpc_get_args(nfs_request_data_t * preqnfs, const nfs_function_desc_t *pfuncdesc);
 
 #endif                          /* _NFS_CORE_H */

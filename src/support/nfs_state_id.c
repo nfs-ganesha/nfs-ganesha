@@ -143,7 +143,7 @@ unsigned long state_id_rbt_hash_func(hash_parameter_t * p_hparam,
       char str[25];
 
       sprint_mem(str, (char *)buffclef->pdata, 12);
-      LogFullDebug(COMPONENT_SESSIONS, "         ----- state_id_rbt_hash_func : %s", str);
+      LogFullDebug(COMPONENT_STATES, "         ----- state_id_rbt_hash_func : %s", str);
     }
 
   memcpy(&i1, &(buffclef->pdata[0]), sizeof(u_int32_t));
@@ -285,7 +285,7 @@ int nfs4_State_Set(char other[12], cache_inode_state_t * pstate_data)
       char str[25];
 
       sprint_mem(str, (char *)other, 12);
-      LogFullDebug(COMPONENT_SESSIONS, "         ----- SetStateid : %s", str);
+      LogFullDebug(COMPONENT_STATES, "         ----- SetStateid : %s", str);
     }
 
   if((buffkey.pdata = (caddr_t) Mem_Alloc_Label(12, "nfs4_State_Set")) == NULL)
@@ -326,7 +326,7 @@ int nfs4_State_Get(char other[12], cache_inode_state_t * pstate_data)
       char str[25];
 
       sprint_mem(str, (char *)other, 12);
-      LogFullDebug(COMPONENT_SESSIONS, "         ----- GetStateid : %s", str);
+      LogFullDebug(COMPONENT_STATES, "         ----- GetStateid : %s", str);
     }
 
   buffkey.pdata = (caddr_t) other;
@@ -367,7 +367,7 @@ int nfs4_State_Get_Pointer(char other[12], cache_inode_state_t * *pstate_data)
       char str[25];
 
       sprint_mem(str, (char *)other, 12);
-      LogFullDebug(COMPONENT_SESSIONS, "         ----- Get_PointerStateid : %s", str);
+      LogFullDebug(COMPONENT_STATES, "         ----- Get_PointerStateid : %s", str);
     }
 
   buffkey.pdata = (caddr_t) other;
@@ -408,7 +408,7 @@ int nfs4_State_Update(char other[12], cache_inode_state_t * pstate_data)
       char str[25];
 
       sprint_mem(str, (char *)other, 12);
-      LogFullDebug(COMPONENT_SESSIONS, "         ----- UpdateStateid : %s", str);
+      LogFullDebug(COMPONENT_STATES, "         ----- UpdateStateid : %s", str);
     }
 
   buffkey.pdata = (caddr_t) other;
@@ -447,7 +447,7 @@ int nfs4_State_Del(char other[12])
       char str[25];
 
       sprint_mem(str, (char *)other, 12);
-      LogFullDebug(COMPONENT_SESSIONS, "         ----- DelStateid : %s", str);
+      LogFullDebug(COMPONENT_STATES, "         ----- DelStateid : %s", str);
     }
 
   buffkey.pdata = (caddr_t) other;
@@ -490,7 +490,7 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
       char str[25];
 
       sprint_mem(str, (char *)pstate->other, 12);
-      LogFullDebug(COMPONENT_SESSIONS, "         ----- CheckStateid : %s", str);
+      LogFullDebug(COMPONENT_STATES, "         ----- CheckStateid : %s", str);
     }
 
   if(pstate == NULL)
@@ -517,7 +517,7 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
       char str[25];
 
       sprint_mem(str, (char *)pstate->other, 12);
-      LogFullDebug(COMPONENT_SESSIONS, "         ----- CheckStateid state found: %s", str);
+      LogFullDebug(COMPONENT_STATES, "         ----- CheckStateid state found: %s", str);
     }
 
   /* Get the related clientid */

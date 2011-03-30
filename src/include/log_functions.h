@@ -440,7 +440,6 @@ static status_t __attribute__ ((__unused__)) tab_systeme_status[] =
 /* other codes families */
 #define ERR_LRU           10
 #define ERR_HASHTABLE     11
-#define ERR_RPC           12
 #define ERR_FSAL          13
 #define ERR_MFSL          14
 #define ERR_GHOSTFS       15

@@ -1306,7 +1306,7 @@ int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry)
 int nfs4_CreateROOTFH4(nfs_fh4 * fh4p, compound_data_t * data)
 {
   pseudofs_entry_t psfsentry;
-  int i, status = 0;
+  int status = 0;
 
   psfsentry = *(data->pseudofs->reverse_tab[0]);
 
@@ -1324,10 +1324,12 @@ int nfs4_CreateROOTFH4(nfs_fh4 * fh4p, compound_data_t * data)
     }
 
   /* Test */
-  LogFullDebug(COMPONENT_NFS_V4, "File handle = { Length = %d  Val = ", data->rootFH.nfs_fh4_len);
-  for(i = 0; i < data->rootFH.nfs_fh4_len; i++)
-    LogFullDebug(COMPONENT_NFS_V4, "%02X", data->rootFH.nfs_fh4_val[i]);
-  LogFullDebug(COMPONENT_NFS_V4, " } ");
+  if(isFullDebug(COMPONENT_NFS_V4))
+    {
+      char str[LEN_FH_STR];
+      sprint_fhandle4(str, &data->rootFH);
+      LogFullDebug(COMPONENT_NFS_V4, "CREATE ROOT FH: %s", str);
+    }
 
   return NFS4_OK;
 }                               /* nfs4_CreateROOTFH4 */

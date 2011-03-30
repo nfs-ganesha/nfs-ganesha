@@ -131,7 +131,7 @@ static struct tm *Localtime_r(const time_t * p_time, struct tm *p_tm)
 static void init_keys(void)
 {
   if(pthread_key_create(&thread_key, NULL) == -1)
-    LogCrit(COMPONENT_LOG, "init_keys - pthread_key_create returned %d", errno);
+    LogCrit(COMPONENT_LOG, "init_keys - pthread_key_create returned %d (%s)", errno, strerror(errno));
 }                               /* init_keys */
 
 
@@ -149,7 +149,7 @@ static ThreadLogContext_t *Log_GetThreadContext(int ok_errors)
   if(pthread_once(&once_key, init_keys) != 0)
     {
       if (ok_errors)
-        LogCrit(COMPONENT_LOG_EMERG, "Log_GetThreadFunction - pthread_once returned %d", errno);
+        LogCrit(COMPONENT_LOG_EMERG, "Log_GetThreadFunction - pthread_once returned %d (%s)", errno, strerror(errno));
       return NULL;
     }
 
@@ -164,7 +164,7 @@ static ThreadLogContext_t *Log_GetThreadContext(int ok_errors)
       if(p_current_thread_vars == NULL)
         {
           if (ok_errors)
-            LogCrit(COMPONENT_LOG_EMERG, "Log_GetThreadFunction - malloc returned %d", errno);
+            LogCrit(COMPONENT_LOG_EMERG, "Log_GetThreadFunction - malloc returned %d (%s)", errno, strerror(errno));
           return NULL;
         }
 
@@ -278,10 +278,7 @@ static void ArmeSignal(int signal, void (*action) ())
   sigemptyset(&act.sa_mask);
 
   if(sigaction(signal, &act, NULL) == -1)
-    {
-      LogError(COMPONENT_LOG, ERR_SYS, ERR_SIGACTION, errno);
-      LogCrit(COMPONENT_LOG, "Impossible to arm signal %d", signal);
-    }
+    LogCrit(COMPONENT_LOG, "Impossible to arm signal %d, error %d (%s)", signal, errno, strerror(errno));
 }                               /* ArmeSignal */
 
 /*

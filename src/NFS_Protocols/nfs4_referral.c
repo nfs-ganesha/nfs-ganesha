@@ -103,7 +103,7 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
 
   char *ptr = NULL;
 
-  if(!str || !buff)
+  if(!str || !buff || !input_str)
     return 0;
 
   strncpy(str, input_str, MAXPATHLEN);

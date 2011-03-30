@@ -201,7 +201,7 @@ int nfs_ip_name_add(unsigned int ipaddr, char *hostname)
                         resolv_buff, GETHOST_BUF_SZ,
                         &hp, &host_errno ) != 0 ) || (hp == NULL) )
   {
-     LogEvent( COMPONENT_DISPATCH, "Cannot resolve address %u.%u.%u.%u",
+     LogEvent( COMPONENT_DISPATCH, "Cannot resolve address %lu.%lu.%lu.%lu",
                local_ipaddr&0xFF, (local_ipaddr>>8)&0xFF, (local_ipaddr>>16)&0xFF,
                (local_ipaddr>>24)&0xFF );
 
@@ -209,7 +209,7 @@ int nfs_ip_name_add(unsigned int ipaddr, char *hostname)
      return IP_NAME_NETDB_ERROR;
   }
 
-  LogDebug( COMPONENT_DISPATCH, "Inserting %u.%u.%u.%u->%s to addr cache",
+  LogDebug( COMPONENT_DISPATCH, "Inserting %lu.%lu.%lu.%lu->%s to addr cache",
             local_ipaddr&0xFF, (local_ipaddr>>8)&0xFF, (local_ipaddr>>16)&0xFF,
             (local_ipaddr>>24)&0xFF, hp->h_name );
 
@@ -258,7 +258,7 @@ int nfs_ip_name_get(unsigned int ipaddr, char *hostname)
       pnfs_ip_name = (nfs_ip_name_t *) buffval.pdata;
       strncpy(hostname, pnfs_ip_name->hostname, MAXHOSTNAMELEN);
 
-      LogFullDebug( COMPONENT_DISPATCH, "Cache hit for %u.%u.%u.%u->%s",
+      LogFullDebug( COMPONENT_DISPATCH, "Cache hit for %lu.%lu.%lu.%lu->%s",
                     local_ipaddr&0xFF, (local_ipaddr>>8)&0xFF, (local_ipaddr>>16)&0xFF,
                     (local_ipaddr>>24)&0xFF, hostname );
 
@@ -266,7 +266,7 @@ int nfs_ip_name_get(unsigned int ipaddr, char *hostname)
     }
   else
     {
-      LogFullDebug( COMPONENT_DISPATCH, "Cache miss for %u.%u.%u.%u",
+      LogFullDebug( COMPONENT_DISPATCH, "Cache miss for %lu.%lu.%lu.%lu",
                     local_ipaddr&0xFF, (local_ipaddr>>8)&0xFF, (local_ipaddr>>16)&0xFF,
                     (local_ipaddr>>24)&0xFF );
       status = IP_NAME_NOT_FOUND;
@@ -382,7 +382,7 @@ int nfs_ip_name_populate(char *path)
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, label);
           return ID_MAPPER_NOT_FOUND;
         }

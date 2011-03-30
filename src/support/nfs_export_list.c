@@ -238,39 +238,37 @@ exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exp
 
 /**
  *
- * nfs_build_fsal_context: Builds the FSAL context according to the request and the export entry.
+ * get_req_uid_gid: 
  *
- * Builds the FSAL credentials according to the request and the export entry.
+ * 
  *
  * @param ptr_req [IN]  incoming request.
  * @param pexport_client [IN] related export client
  * @param pexport [IN]  related export entry
- * @param pcred   [IN/OUT] initialized credential of caller thread.
+ * @param user_credentials [OUT] Filled in structure with uid and gids
  * 
  * @return TRUE if successful, FALSE otherwise 
  *
  */
-int nfs_build_fsal_context(struct svc_req *ptr_req,
-                           exportlist_client_entry_t * pexport_client,
-                           exportlist_t * pexport, fsal_op_context_t * pcontext)
+int get_req_uid_gid(struct svc_req *ptr_req,
+                    exportlist_client_entry_t * pexport_client,
+                    exportlist_t * pexport, struct user_cred *user_credentials)
 {
   struct authunix_parms *punix_creds = NULL;
 #ifdef _USE_GSSRPC
   struct svc_rpc_gss_data *gd = NULL;
-  gss_buffer_desc oidbuff;
   OM_uint32 maj_stat = 0;
   OM_uint32 min_stat = 0;
   char username[MAXNAMLEN];
   char domainname[MAXNAMLEN];
 #endif
   fsal_status_t fsal_status;
-  uid_t caller_uid = 0;
-  gid_t caller_gid = 0;
-  unsigned int caller_glen = 0;
-  gid_t *caller_garray = NULL;
   unsigned int rpcxid = 0;
 
   char *ptr;
+
+  if (user_credentials == NULL)
+    return FALSE;
 
   rpcxid = get_rpc_xid(ptr_req);
 
@@ -291,10 +289,10 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
       punix_creds = (struct authunix_parms *)ptr_req->rq_clntcred;
 
       /* Get the uid/gid couple */
-      caller_uid = punix_creds->aup_uid;
-      caller_gid = punix_creds->aup_gid;
-      caller_glen = punix_creds->aup_len;
-      caller_garray = punix_creds->aup_gids;
+      user_credentials->caller_uid = punix_creds->aup_uid;
+      user_credentials->caller_gid = punix_creds->aup_gid;
+      user_credentials->caller_glen = punix_creds->aup_len;
+      user_credentials->caller_garray = punix_creds->aup_gids;
 
       break;
 
@@ -308,6 +306,8 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
 
       if(isFullDebug(COMPONENT_RPCSEC_GSS))
         {
+          gss_buffer_desc oidbuff;
+
           LogFullDebug(COMPONENT_RPCSEC_GSS,
                "----> RPCSEC_GSS svc=%u RPCSEC_GSS_SVC_NONE=%u RPCSEC_GSS_SVC_INTEGRITY=%u RPCSEC_GSS_SVC_PRIVACY=%u",
                gd->sec.svc, RPCSEC_GSS_SVC_NONE, RPCSEC_GSS_SVC_INTEGRITY,
@@ -318,19 +318,21 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
                  "----> Client=%s length=%u  Qop=%u established=%u gss_ctx_id=%p|%p",
                  (char *)gd->cname.value, gd->cname.length, gd->established, gd->sec.qop,
                  gd->ctx, ptr);
+
+          if((maj_stat = gss_oid_to_str(&min_stat, gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
+            {
+              LogFullDebug(COMPONENT_DISPATCH, "Error in gss_oid_to_str: %u|%u",
+                           maj_stat, min_stat);
+            }
+          else
+            {
+              LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Client mech=%s len=%u",
+                           (char *)oidbuff.value, oidbuff.length);
+
+              /* Release the string */
+              (void)gss_release_buffer(&min_stat, &oidbuff); 
+            }
        }
-
-      if((maj_stat = gss_oid_to_str(&min_stat, gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
-        {
-          LogCrit(COMPONENT_DISPATCH, "Error in gss_oid_to_str: %u|%u",
-                  maj_stat, min_stat);
-          exit(1);
-        }
-      LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Client mech=%s len=%u",
-                   (char *)oidbuff.value, oidbuff.length);
-
-      /* Je fais le menage derriere moi */
-      (void)gss_release_buffer(&min_stat, &oidbuff);
 
       split_credname(gd->cname, username, domainname);
 
@@ -338,20 +340,20 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
                    username, domainname);
 
       /* Convert to uid */
-      if(!name2uid(username, &caller_uid))
+      if(!name2uid(username, &user_credentials->caller_uid))
         return FALSE;
 
-      if(uidgidmap_get(caller_uid, &caller_gid) != ID_MAPPER_SUCCESS)
+      if(uidgidmap_get(user_credentials->caller_uid, &user_credentials->caller_gid) != ID_MAPPER_SUCCESS)
         {
           LogMajor(COMPONENT_DISPATCH,
                    "NFS_DISPATCH: FAILURE: Could not resolve uidgid map for %u",
-                   caller_uid);
-          caller_gid = -1;
+                   user_credentials->caller_uid);
+          user_credentials->caller_gid = -1;
         }
       LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Uid=%u Gid=%u",
-                   (unsigned int)caller_uid, (unsigned int)caller_gid);
-      caller_glen = 0;
-      caller_garray = 0;
+                   (unsigned int)user_credentials->caller_uid, (unsigned int)user_credentials->caller_gid);
+      user_credentials->caller_glen = 0;
+      user_credentials->caller_garray = 0;
 
       break;
 #endif                          /* _USE_GSSRPC */
@@ -365,34 +367,61 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
 
       break;
     }                           /* switch( ptr_req->rq_cred.oa_flavor ) */
+  return TRUE;
+}
+
+/**
+ *
+ * nfs_build_fsal_context: Builds the FSAL context according to the request and the export entry.
+ *
+ * Builds the FSAL credentials according to the request and the export entry.
+ *
+ * @param ptr_req [IN]  incoming request.
+ * @param pexport_client [IN] related export client
+ * @param pexport [IN]  related export entry
+ * @param pcred   [IN/OUT] initialized credential of caller thread.
+ * @param user_credentials [OUT] Filled in structure with uid and gids                                                                                                            * 
+ * @return TRUE if successful, FALSE otherwise 
+ *
+ */
+int nfs_build_fsal_context(struct svc_req *ptr_req,
+                           exportlist_client_entry_t * pexport_client,
+                           exportlist_t * pexport, fsal_op_context_t * pcontext,
+                           struct user_cred *user_credentials)
+{
+  fsal_status_t fsal_status;
+
+  if (user_credentials == NULL)
+    return FALSE;
 
   /* Do we have root access ? */
-  if((caller_uid == 0) && !(pexport_client->options & EXPORT_OPTION_ROOT))
+  if((user_credentials->caller_uid == 0) && !(pexport_client->options & EXPORT_OPTION_ROOT))
     {
       /* caller_uid = ANON_UID ; */
-      caller_uid = pexport->anonymous_uid;
-      caller_gid = ANON_GID;
+      user_credentials->caller_uid = pexport->anonymous_uid;
+      user_credentials->caller_gid = ANON_GID;
 
       /* No alternate groups for "nobody" */
-      caller_glen = 0 ;
-      caller_garray = NULL ;
+      user_credentials->caller_glen = 0 ;
+      user_credentials->caller_garray = NULL ;
     }
 
   /* Build the credentials */
   fsal_status = FSAL_GetClientContext(pcontext,
                                       &pexport->FS_export_context,
-                                      caller_uid, caller_gid, caller_garray, caller_glen);
+                                      user_credentials->caller_uid, user_credentials->caller_gid,
+                                      user_credentials->caller_garray, user_credentials->caller_glen);
 
   if(FSAL_IS_ERROR(fsal_status))
     {
       LogEvent(COMPONENT_DISPATCH,
                "NFS DISPATCHER: FAILURE: Could not get credentials for (uid=%d,gid=%d), fsal error=(%d,%d)",
-               caller_uid, caller_gid, fsal_status.major, fsal_status.minor);
+               user_credentials->caller_uid, user_credentials->caller_gid, fsal_status.major, fsal_status.minor);
       return FALSE;
     }
   else
     LogDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: FSAL Cred acquired for (uid=%d,gid=%d)",
-             caller_uid, caller_gid);
+             user_credentials->caller_uid, user_credentials->caller_gid);
 
   return TRUE;
 }                               /* nfs_build_fsal_context */

@@ -109,6 +109,17 @@ int nfs_Getattr(nfs_arg_t * parg,
   cache_inode_status_t cache_status;
   int rc = 0;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char str[LEN_FH_STR];
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_getattr2),
+                       &(parg->arg_getattr3.object),
+                       NULL,
+                       str);
+      LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Getattr handle: %s", str);
+    }
+
   if((pentry = nfs_FhandleToCache(preq->rq_vers,
                                   &(parg->arg_getattr2),
                                   &(parg->arg_getattr3.object),

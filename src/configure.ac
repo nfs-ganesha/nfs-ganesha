@@ -280,6 +280,19 @@ fi
 
 AC_SUBST(EXT_LDADD)
 
+GA_ENABLE_AM_CONDITION([error-injection], [enable error injection], [ERROR_INJECTION])
+
+# for using it in Makefiles
+AM_CONDITIONAL(ENABLE_ERROR_INJECTION,    test "$enable_error_injection" = "yes" )
+
+if test "$enable_error_injection" == "yes"; then
+	if test "$enable_snmp_adm" == "yes"; then
+		AC_DEFINE(_ERROR_INJECTION,1,[enable error injection])
+	else
+		AC_MSG_ERROR([enable-snmp-adm is requirered to enable-error-injection])
+	fi
+fi
+
 # statistics exporter thread
 GA_ENABLE_AM_CONDITION([stat-exporter], [export GANESHA NFS request statistics with a dedicated thread and socket], [USE_STAT_EXPORTER])
 if test "$enable_stat_exporter" == "yes"; then

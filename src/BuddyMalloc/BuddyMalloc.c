@@ -364,8 +364,8 @@ static BuddyThreadContext_t *GetThreadContext()
           return NULL;
         }
 
-      LogFullDebug(COMPONENT_MEMALLOC, "Allocating pthread key %p for thread %p",
-                   p_current_thread_vars, (caddr_t)pthread_self());
+      LogDebug(COMPONENT_MEMALLOC, "Allocating pthread key %p for thread %p",
+               p_current_thread_vars, (caddr_t)pthread_self());
 
       /* Clean thread context */
 
@@ -901,8 +901,8 @@ BuddyBlock_t *NewStdPage(BuddyThreadContext_t * context)
 
   p_block = (BuddyBlock_t *) malloc(allocation);
 
-  LogFullDebug(COMPONENT_MEMALLOC, "Memory area allocation for thread %p : ptr=%p ; size=%llu=2^%u",
-               (caddr_t)pthread_self(), p_block, (unsigned long long)allocation, k_size);
+  LogDebug(COMPONENT_MEMALLOC, "Memory area allocation for thread %p : ptr=%p ; size=%llu=2^%u",
+           (caddr_t)pthread_self(), p_block, (unsigned long long)allocation, k_size);
 
   if(!p_block)
     return NULL;
@@ -962,7 +962,7 @@ static void Garbage_StdPages(BuddyThreadContext_t * context,
 
   UpdateStats_RemoveStdPage(context);
 
-  LogFullDebug(COMPONENT_MEMALLOC, "%p: A standard page has been Garbaged", (caddr_t)pthread_self());
+  LogDebug(COMPONENT_MEMALLOC, "%p: A standard page has been Garbaged", (caddr_t)pthread_self());
 
   return;
 
@@ -989,8 +989,8 @@ BUDDY_ADDR_T AllocLargeBlock(BuddyThreadContext_t * context, size_t Size)
 
   p_block = (BuddyBlock_t *) malloc(total_size);
 
-  LogFullDebug(COMPONENT_MEMALLOC, "Memory EXTRA area allocation for thread %p : ptr=%p ; size=%llu",
-               (caddr_t)pthread_self(), p_block, (unsigned long long)total_size);
+  LogDebug(COMPONENT_MEMALLOC, "Memory EXTRA area allocation for thread %p : ptr=%p ; size=%llu",
+           (caddr_t)pthread_self(), p_block, (unsigned long long)total_size);
 
   if(!p_block)
     {
@@ -1061,7 +1061,7 @@ void FreeLargeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_block)
 
   UpdateStats_RemoveExtraPage(context, page_size);
 
-  LogFullDebug(COMPONENT_MEMALLOC, "%p: An extra page has been free (size %zu)", (caddr_t)pthread_self(), page_size);
+  LogDebug(COMPONENT_MEMALLOC, "%p: An extra page has been freed (size %zu)", (caddr_t)pthread_self(), page_size);
 
   return;
 
@@ -1435,7 +1435,7 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
         {
           /* Extra blocks are not allowed */
 
-          LogDebug(COMPONENT_MEMALLOC, "%p:BuddyMalloc(%llu) => BUDDY_ERR_OUTOFMEM (extra_alloc disabled).",
+          LogMajor(COMPONENT_MEMALLOC, "%p:BuddyMalloc(%llu) => BUDDY_ERR_OUTOFMEM (extra_alloc disabled).",
                    (BUDDY_ADDR_T) pthread_self(), (unsigned long long)Size);
 
           context->Errno = BUDDY_ERR_OUTOFMEM;
@@ -1480,7 +1480,7 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
         {
           context->Errno = BUDDY_ERR_MALLOC;
 
-          LogEvent(COMPONENT_MEMALLOC, "BuddyMalloc: NOT ENOUGH MEMORY !!!");
+          LogMajor(COMPONENT_MEMALLOC, "BuddyMalloc: NOT ENOUGH MEMORY !!!");
 
           if(do_exit_on_error)
             exit(1);
@@ -1492,7 +1492,7 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
   else
     {
       /* Out of memory */
-      LogEvent(COMPONENT_MEMALLOC, "%p:BuddyMalloc(%llu) => BUDDY_ERR_OUTOFMEM (on_demand_alloc disabled).",
+      LogMajor(COMPONENT_MEMALLOC, "%p:BuddyMalloc(%llu) => BUDDY_ERR_OUTOFMEM (on_demand_alloc disabled).",
                (BUDDY_ADDR_T) pthread_self(), (unsigned long long)Size);
 
       if(do_exit_on_error)
@@ -1592,6 +1592,35 @@ BUDDY_ADDR_T BuddyMalloc(size_t Size)
 BUDDY_ADDR_T BuddyMallocExit(size_t Size)
 {
   return __BuddyMalloc(Size, TRUE);
+}
+
+/**
+ * BuddyStr_Dup : string duplicator based on buddy system.
+ *
+ * The  BuddyStr_Dup() function returns a pointer to a block of at least
+ * Size bytes suitably aligned (32 or 64bits depending on architectures). 
+ */
+char *BuddyStr_Dup(char * Str)
+{
+  char *NewStr = (char *) BuddyMalloc(strlen(Str)+1);
+  if(NewStr != NULL)
+    strcpy(NewStr, Str);
+  return NewStr;
+}
+
+/**
+ * BuddyStr_Dup_Exit : string duplicator based on buddy system.
+ *
+ * The  BuddyStr_Dup_Exit() function returns a pointer to a block of at least
+ * Size bytes suitably aligned (32 or 64bits depending on architectures). 
+ * If no memory is available, it stops current process.
+ */
+char *BuddyStr_Dup_Exit(char * Str)
+{
+  char *NewStr = (char *) BuddyMallocExit(strlen(Str)+1);
+  if(NewStr != NULL)
+    strcpy(NewStr, Str);
+  return NewStr;
 }
 
 /**
@@ -2271,6 +2300,26 @@ BUDDY_ADDR_T BuddyMalloc_Autolabel(size_t sz,
 {
   BuddySetDebugLabel(file, function, line, str);
   return BuddyMallocExit(sz);
+}
+
+/**
+ * BuddyStr_Dup : string duplicator based on buddy system.
+ *
+ * The  BuddyStr_Dup() function returns a pointer to a block of at least
+ * Size bytes suitably aligned (32 or 64bits depending on architectures). 
+ */
+char *BuddyStr_Dup_Autolabel(char * OldStr,
+                             const char *file,
+                             const char *function,
+                             const unsigned int line,
+                             const char *str)
+{
+  char *NewStr;
+  BuddySetDebugLabel(file, function, line, str);
+  NewStr = (char *) BuddyMallocExit(strlen(OldStr)+1);
+  if(NewStr != NULL)
+    strcpy(NewStr, OldStr);
+  return NewStr;
 }
 
 BUDDY_ADDR_T BuddyCalloc_Autolabel(size_t NumberOfElements, size_t ElementSize,

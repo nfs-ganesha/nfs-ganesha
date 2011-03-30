@@ -61,13 +61,13 @@ static void cache_inode_lock_print(cache_entry_t * pentry)
 {
 
     LogFullDebug(COMPONENT_CACHE_INODE,
-                 "!!! Plein de chose a faire dans cache_inode_lock_print !!!!!!\n");
+                 "!!! Plein de chose a faire dans cache_inode_lock_print !!!!!!");
     return;
 #ifdef BUGAZOMEU
     if((pentry->internal_md.type == REGULAR_FILE) &&
        (piter_state->state_type == CACHE_INODE_STATE_SHARE))
             LogFullDebug(COMPONENT_CACHE_INODE,
-                         "piter_lock=%p next=%p prev=%p offset=%llu length=%llu\n",
+                         "piter_lock=%p next=%p prev=%p offset=%llu length=%llu",
                          piter_state, piter_state->next, piter_state->prev,
                          piter_state->data.lock.offset, piter_state->data.lock.length);
 #endif
@@ -123,7 +123,7 @@ cache_inode_lock_check_conflicting_range(cache_entry_t * pentry,
         }
 
     LogFullDebug(COMPONENT_CACHE_INODE,
-                 "!!!!! Plein de chose a faire dans cache_inode_lock_print !!!!!\n");
+                 "!!!!! Plein de chose a faire dans cache_inode_lock_print !!!!!");
     *pstatus = CACHE_INODE_INVALID_ARGUMENT;
     return *pstatus;
 
@@ -137,7 +137,7 @@ cache_inode_lock_check_conflicting_range(cache_entry_t * pentry,
             LogFullDebug(COMPONENT_CACHE_INODE,
                          "--- check_conflicting_range : offset=%llu length=%llu "
                          "piter_state->offset=%llu piter_state->length=%llu "
-                         "lock_type=%u piter_state->lock_type=%u\n",
+                         "lock_type=%u piter_state->lock_type=%u",
                          offset, length, piter_state->data.lock.offset,
                          piter_state->data.lock.length,
                          lock_type, piter_state->data.lock.lock_type);
@@ -223,7 +223,7 @@ void cache_inode_lock_insert(cache_entry_t * pentry, cache_inode_state_t * pfile
 {
 
     LogFullDebug(COMPONENT_CACHE_INODE,
-                 "!!!!! Plein de chose a faire dans cache_inode_lock_insert !!!!!!\n");
+                 "!!!!! Plein de chose a faire dans cache_inode_lock_insert !!!!!!");
 
     if(pentry == NULL)
         return;
@@ -271,7 +271,7 @@ void cache_inode_lock_remove(cache_entry_t * pentry, cache_inode_client_t * pcli
 {
 
     LogFullDebug(COMPONENT_CACHE_INODE,
-                 "!!!!!!!! Plein de chose a faire dans cache_inode_lock_remove !!!!\n");
+                 "!!!!!!!! Plein de chose a faire dans cache_inode_lock_remove !!!!");
     return;
 }                               /* cache_inode_lock_remove */
 
@@ -309,7 +309,7 @@ cache_inode_status_t cache_inode_lock_create(cache_entry_t * pentry,
     *pstatus = CACHE_INODE_SUCCESS;
 
     LogFullDebug(COMPONENT_CACHE_INODE,
-                 "!!!!!!! Plein de chose a faire dans cache_inode_lock_remove !!!!!!!\n");
+                 "!!!!!!! Plein de chose a faire dans cache_inode_lock_remove !!!!!!!");
     return CACHE_INODE_INVALID_ARGUMENT;
 
 #ifdef BUGAZOMEU

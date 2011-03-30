@@ -89,7 +89,7 @@ int mnt_Dump(nfs_arg_t * parg /* IN     */ ,
              struct svc_req *preq /* IN     */ ,
              nfs_res_t * pres /* OUT    */ )
 {
-  LogFullDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Dump");
+  LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Dump");
 
   /* Get the root of the mount list */
   pres->res_dump = nfs_Get_MountList();

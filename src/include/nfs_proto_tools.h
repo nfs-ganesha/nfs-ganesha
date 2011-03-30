@@ -77,6 +77,12 @@
 uint64_t nfs_htonl64(uint64_t arg64);
 uint64_t nfs_ntohl64(uint64_t arg64);
 
+void nfs_FhandleToStr(u_long     rq_vers,
+                      fhandle2  *pfh2,
+                      nfs_fh3   *pfh3,
+                      nfs_fh4   *pfh4,
+                      char      *str);
+
 cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
                                   fhandle2 * pfh2,
                                   nfs_fh3 * pfh3,

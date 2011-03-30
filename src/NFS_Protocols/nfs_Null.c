@@ -96,7 +96,7 @@ int nfs_Null(nfs_arg_t * parg /* IN     */ ,
              struct svc_req *preq /* IN     */ ,
              nfs_res_t * pres /* OUT    */ )
 {
-  LogFullDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Null");
+  LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Null");
   return NFS_OK;
 }                               /* nfs_Null */
 

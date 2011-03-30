@@ -251,16 +251,14 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
           cache_inode_status_t kill_status;
           fsal_status_t getattr_status;
 
-          LogEvent(COMPONENT_CACHE_INODE,
-              "cache_inode_link: Stale FSAL File Handle detected for at least one in  pentry = %p and pentry = %p",
+          LogEvent(COMPONENT_CACHE_INODE, "cache_inode_link: Stale FSAL File Handle detected for at least one in pentry = %p and pentry = %p",
                pentry_src, pentry_dir_dest);
 
           /* Use FSAL_getattrs to find which entry is staled */
           getattr_status = FSAL_getattrs(&handle_src, pcontext, &link_attributes);
           if(getattr_status.major == ERR_FSAL_ACCESS)
             {
-              LogEvent(COMPONENT_CACHE_INODE,
-                  "cache_inode_link: Stale FSAL File Handle detected for pentry = %p",
+              LogEvent(COMPONENT_CACHE_INODE, "cache_inode_link: Stale FSAL File Handle detected for pentry = %p",
                    pentry_src);
 
               if(cache_inode_kill_entry(pentry_src, ht, pclient, &kill_status) !=
@@ -272,8 +270,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
           getattr_status = FSAL_getattrs(&handle_dest, pcontext, &link_attributes);
           if(getattr_status.major == ERR_FSAL_ACCESS)
             {
-              LogEvent(COMPONENT_CACHE_INODE,
-                  "cache_inode_link: Stale FSAL File Handle detected for pentry = %p",
+              LogEvent(COMPONENT_CACHE_INODE, "cache_inode_link: Stale FSAL File Handle detected for pentry = %p",
                    pentry_dir_dest);
 
               if(cache_inode_kill_entry(pentry_dir_dest, ht, pclient, &kill_status) !=

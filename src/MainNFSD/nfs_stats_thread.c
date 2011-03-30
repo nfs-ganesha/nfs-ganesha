@@ -116,7 +116,7 @@ void *stats_thread(void *addr)
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogCrit(COMPONENT_MAIN, "NFS STATS : Memory manager could not be initialized, exiting...");
+      LogMajor(COMPONENT_MAIN, "NFS STATS : Memory manager could not be initialized, exiting...");
       exit(1);
     }
   LogEvent(COMPONENT_MAIN, "NFS STATS : Memory manager successfully initialized");
