@@ -170,8 +170,9 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
 
 }                               /* stat_export_check_access */
 
-static int parseAccessParam(char *var_name, char *var_value,
-                            exportlist_client_t *clients) {
+static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
+					     exportlist_client_t *clients)
+{
   int rc, err_flag = FALSE;
   char *expended_node_list;
 
@@ -307,8 +308,8 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
 
       if(!STRCMP(key_name, "Access"))
         {
-          parseAccessParam(key_name, key_value,
-                           &(out_parameter->stat_export.allowed_clients));
+	  parseAccessParam_for_statexporter(key_name, key_value,
+					    &(out_parameter->stat_export.allowed_clients));
         }
       else if(!STRCMP(key_name, "Port"))
         {

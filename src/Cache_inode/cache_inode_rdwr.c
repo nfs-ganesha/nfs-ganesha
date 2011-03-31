@@ -102,6 +102,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
   cache_content_io_direction_t io_direction;
   cache_content_status_t cache_content_status;
   fsal_status_t fsal_status;
+  fsal_status_t fsal_status_for_sync;
   fsal_openflags_t openflags;
   fsal_size_t io_size;
   fsal_attrib_list_t post_write_attr;

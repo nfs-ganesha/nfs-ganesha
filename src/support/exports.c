@@ -617,7 +617,7 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
   LogWarn(COMPONENT_CONFIG,            \
           "NFS READ_EXPORT: WARNING: %s defined twice !!! (ignored)", _str_ )
 
-static int parseAccessParam(char *var_name, char *var_value,
+int parseAccessParam(char *var_name, char *var_value,
 			    exportlist_t *p_entry, int access_option) {
   int rc, err_flag = FALSE;
   char *expended_node_list;
@@ -745,7 +745,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->MaxOffsetWrite = (fsal_off_t) 0;
   p_entry->MaxOffsetRead = (fsal_off_t) 0;
   p_entry->MaxCacheSize = (fsal_off_t) 0;
-  p_entry->use_commit = FALSE;
+  p_entry->use_commit = TRUE;
   p_entry->use_ganesha_write_buffer = FALSE;
 
   /* by default, we support auth_none and auth_sys */
@@ -2378,10 +2378,13 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
   char ipstring[MAXHOSTNAMELEN];
   char ip6string[MAXHOSTNAMELEN];
 
-  if(proc_makes_write && (pexport->access_type == ACCESSTYPE_RO))
-    return EXPORT_WRITE_ATTEMPT_WHEN_RO;
-  else if(proc_makes_write && (pexport->access_type == ACCESSTYPE_MDONLY_RO))
-    return EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO;
+  if (pexport != NULL)
+    if (pexport->new_access_list_version)
+      pexport->access_type = ACCESSTYPE_RW;
+    else if(proc_makes_write && (pexport->access_type == ACCESSTYPE_RO))
+      return EXPORT_WRITE_ATTEMPT_WHEN_RO;
+    else if(proc_makes_write && (pexport->access_type == ACCESSTYPE_MDONLY_RO))
+      return EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO;
 
   memset(ten_bytes_all_0, 0, 10);
 
@@ -2415,9 +2418,6 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
           rc = nfs_ip_stats_incr(ht_ip_stats, addr, nfs_prog, mnt_prog, ptr_req);
       }
 
-  if (pexport->new_access_list_version)
-    pexport->access_type = ACCESSTYPE_RW;
-
 #ifdef _USE_TIRPC_IPV6
   if(psockaddr_in->sin_family == AF_INET)
     {
@@ -2437,7 +2437,10 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
       if((user_credentials->caller_uid == 0) &&
          (export_client_match(addr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_ROOT)))
         {
-          return EXPORT_PERMISSION_GRANTED;
+          if (pexport->access_type == ACCESSTYPE_MDONLY_RO || pexport->access_type == ACCESSTYPE_MDONLY)
+            return EXPORT_MDONLY_GRANTED;
+          else 
+            return EXPORT_PERMISSION_GRANTED;
         }
       /* else, check if any access only export matches this client */
       if(proc_makes_write) {
@@ -2457,7 +2460,10 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
         if (export_client_match(addr, ipstring,
                                 &(pexport->clients), pclient_found, EXPORT_OPTION_READ_ACCESS))
           {
-            return EXPORT_PERMISSION_GRANTED;
+            if (pexport->access_type == ACCESSTYPE_MDONLY_RO || pexport->access_type == ACCESSTYPE_MDONLY)
+              return EXPORT_MDONLY_GRANTED;
+            else
+              return EXPORT_PERMISSION_GRANTED;
           }
         else if ( pexport->new_access_list_version && export_client_match(addr, ipstring, 
                                      &(pexport->clients), pclient_found, EXPORT_OPTION_MD_READ_ACCESS))
