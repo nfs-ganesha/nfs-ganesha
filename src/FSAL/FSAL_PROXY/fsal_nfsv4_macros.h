@@ -260,30 +260,26 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                                                                      \
 } while ( 0 )
 
-#define CheapRecovery() exit( 1 ) 
-#define COMPOUNDV4_EXECUTE( pcontext, argcompound, rescompound, rc )                \
-do {                                                                                \
-  int __renew_rc = 0 ;                                                              \
-  rc = -1 ;                                                                         \
-  do {                                                                              \
-  if( __renew_rc == 0 )                                                             \
-      {                                                                             \
-        if( FSAL_proxy_change_user( pcontext ) == NULL ) break  ;                   \
-        if( ( rc = clnt_call( pcontext->rpc_client, NFSPROC4_COMPOUND,              \
-                              (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argcompound,  \
-                              (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&rescompound,  \
-                              timeout ) )  == RPC_SUCCESS )                         \
-            {                                                                       \
-              if( rescompound.status == NFS4ERR_STALE_CLIENTID ) CheapRecovery();   \
-              break ;                                                               \
-            }                                                                       \
-       }                                                                            \
-  sleep( pcontext->retry_sleeptime ) ;                                              \
-  LogEvent(COMPONENT_FSAL, "Reconnecting to the remote server.." ) ;                \
-  pthread_mutex_lock( &pcontext->lock ) ;                                           \
-  __renew_rc = fsal_internal_ClientReconnect( pcontext ) ;                          \
-  pthread_mutex_unlock( &pcontext->lock ) ;                                         \
-  } while( 1  ) ;                                                                   \
+#define COMPOUNDV4_EXECUTE( pcontext, argcompound, rescompound, rc )                      \
+do {                                                                                      \
+  int __renew_rc = 0 ;                                                                    \
+  rc = -1 ;                                                                               \
+  do {                                                                                    \
+  if( __renew_rc == 0 )                                                                   \
+      {                                                                                   \
+        if( FSAL_proxy_change_user( pcontext ) == NULL ) break  ;                         \
+        if( ( rc = clnt_call( pcontext->rpc_client, NFSPROC4_COMPOUND,                    \
+                              (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argcompound,        \
+                              (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&rescompound,        \
+                              timeout ) ) == RPC_SUCCESS )                                \
+              break ;                                                                     \
+       }                                                                                  \
+  LogEvent(COMPONENT_FSAL, "Reconnecting to the remote server.." ) ;                      \
+  pthread_mutex_lock( &pcontext->lock ) ;                                                 \
+  __renew_rc = fsal_internal_ClientReconnect( pcontext ) ;                                \
+  pthread_mutex_unlock( &pcontext->lock ) ;                                               \
+  sleep( pcontext->retry_sleeptime ) ;                                                    \
+  } while( 1  ) ;                                                                         \
 }  while( 0 )
 
 #define COMPOUNDV4_EXECUTE_SIMPLE( pcontext, argcompound, rescompound )   \

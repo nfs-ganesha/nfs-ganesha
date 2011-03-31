@@ -143,7 +143,9 @@ typedef struct fsal_op_context__
   unsigned int use_privileged_client_port ;
   char srv_proto[MAXNAMLEN];
   clientid4 clientid;
+  time_t    clientid_renewed ;
   CLIENT *rpc_client;
+  int socket ;
   pthread_mutex_t lock;
   proxyfsal_handle_t openfh_wd_handle;
   time_t last_lease_renewal;
