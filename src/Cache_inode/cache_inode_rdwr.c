@@ -256,8 +256,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
               /* Data cache gc has removed this entry */
               if(cache_content_new_entry(pentry,
                                          NULL,
-                                         (cache_content_client_t *)
-                                         pclient->pcontent_client, RENEW_ENTRY, pcontext,
+                                         (cache_content_client_t *)pclient->pcontent_client, 
+                                         RENEW_ENTRY, pcontext,
                                          &cache_content_status) == NULL)
                 {
                   /* Entry could not be recoverd, cache_content_status contains an error, let it be managed by the next block */

@@ -288,7 +288,7 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
   if(how == FORCE_FROM_FSAL)
     LogFullDebug(COMPONENT_FSAL,"FORCE FROM FSAL");
   else
-    LogFullDebug(COMPONENT_FSAL,"FORCE FROM FSAL PAS ACTIVE");
+    LogFullDebug(COMPONENT_FSAL,"FORCE FROM FSAL INACTIVE");
 
 
   if((how != FORCE_FROM_FSAL)
