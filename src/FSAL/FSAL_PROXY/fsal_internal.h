@@ -132,6 +132,7 @@ int proxy_Fattr_To_FSAL_dynamic_fsinfo(fsal_dynamicfsinfo_t * pdynamicinfo,
 
 fsal_status_t FSAL_proxy_setclientid(fsal_op_context_t * p_context);
 fsal_status_t FSAL_proxy_setclientid_force(fsal_op_context_t * p_context);
+fsal_status_t FSAL_proxy_setclientid_renego(fsal_op_context_t * p_context);
 
 int FSAL_proxy_set_hldir(fsal_op_context_t * p_thr_context, char *hl_path);
 int fsal_internal_ClientReconnect(fsal_op_context_t * p_thr_context);

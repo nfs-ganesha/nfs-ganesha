@@ -272,16 +272,9 @@ do {                                                                            
                               (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argcompound,        \
                               (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&rescompound,        \
                               timeout ) ) == RPC_SUCCESS )                                \
-            {                                                                             \
-              if( rescompound.status == NFS4ERR_STALE_CLIENTID )                          \
-                  {                                                                       \
-                      printf( "===> NFS4ERR_STALE_CLIENTID occurred\n" ) ;                \
-                  }                                                                       \
               break ;                                                                     \
-            }                                                                             \
        }                                                                                  \
   LogEvent(COMPONENT_FSAL, "Reconnecting to the remote server.." ) ;                      \
-  printf( "Reconnecting to the remote server..\n" ) ;                                     \
   pthread_mutex_lock( &pcontext->lock ) ;                                                 \
   __renew_rc = fsal_internal_ClientReconnect( pcontext ) ;                                \
   pthread_mutex_unlock( &pcontext->lock ) ;                                               \

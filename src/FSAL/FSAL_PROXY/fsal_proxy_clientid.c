@@ -48,13 +48,42 @@ extern buddy_parameter_t default_buddy_parameter;
 #endif
 
 clientid4 fsal_clientid;
+time_t     clientid_renewed ;
 pthread_mutex_t fsal_clientid_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t fsal_clientid_mutex_renew = PTHREAD_MUTEX_INITIALIZER;
 unsigned int done = 0;
 
 /**
+ * FSAL_proxy_setclientid_renego:
+ *
+ * \param p_context (input):
+ *        Authentication context for the operation (user,...).
+ *
+ * \return Major error codes :
+ *        - ERR_FSAL_NO_ERROR     (no error)
+ *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
+ *        - Other error codes can be returned :
+ *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
+ */
+fsal_status_t FSAL_proxy_setclientid_renego(proxyfsal_op_context_t * p_context)
+{
+  time_t now = time( NULL ) ;
+
+  /* The first to come is the only one to do the clientid renegociation */ 
+  if( ( p_context->clientid_renewed <  now ) && (p_context->clientid == fsal_clientid ) )
+    return FSAL_proxy_setclientid_force( p_context ) ;
+  else
+   {
+	p_context->clientid = fsal_clientid ;
+	p_context->clientid_renewed = clientid_renewed ;
+        
+	Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
+   }
+} /* FSAL_proxy_setclientid_renego */
+
+/**
  * FSAL_proxy_setclientid_force:
- * Client ID negociation, step 1
+ * Client ID negociation 
  *
  * \param p_context (input):
  *        Authentication context for the operation (user,...).
@@ -84,7 +113,7 @@ fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_context)
   clientid4 resultclientid;
   struct timeval timeout = TIMEOUTRPC;
 
-  printf( "==> Renegociating NFSv4 ClientId \n" ) ;
+  LogEvent( COMPONENT_FSAL, "Negociating a new ClientId with the remote server" ) ;
 
   /* sanity checks.
    */
@@ -186,6 +215,7 @@ fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_context)
   /* Keep the confirmed client id */
   fsal_clientid =
       argnfs4.argarray.argarray_val[0].nfs_argop4_u.opsetclientid_confirm.clientid;
+  clientid_renewed = time( NULL ) ;
 
   V(fsal_clientid_mutex_renew);
 
@@ -236,6 +266,7 @@ fsal_status_t FSAL_proxy_setclientid(proxyfsal_op_context_t * p_context)
   V(fsal_clientid_mutex);
 
   p_context->clientid = fsal_clientid;
+  p_context->clientid_renewed = clientid_renewed ;
   p_context->last_lease_renewal = 0;    /* Needs to be renewed */
   
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
