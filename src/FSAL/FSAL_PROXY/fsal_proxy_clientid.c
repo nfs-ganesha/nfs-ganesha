@@ -48,12 +48,13 @@ extern buddy_parameter_t default_buddy_parameter;
 #endif
 
 clientid4 fsal_clientid;
+time_t     clientid_renewed ;
 pthread_mutex_t fsal_clientid_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t fsal_clientid_mutex_renew = PTHREAD_MUTEX_INITIALIZER;
 unsigned int done = 0;
 
 /**
- * FSAL_proxy_setclientid:
- * Client ID negociation, step 1
+ * FSAL_proxy_setclientid_renego:
  *
  * \param p_context (input):
  *        Authentication context for the operation (user,...).
@@ -64,7 +65,36 @@ unsigned int done = 0;
  *        - Other error codes can be returned :
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_proxy_setclientid(proxyfsal_op_context_t * p_context)
+fsal_status_t FSAL_proxy_setclientid_renego(proxyfsal_op_context_t * p_context)
+{
+  time_t now = time( NULL ) ;
+
+  /* The first to come is the only one to do the clientid renegociation */ 
+  if( ( p_context->clientid_renewed <  now ) && (p_context->clientid == fsal_clientid ) )
+    return FSAL_proxy_setclientid_force( p_context ) ;
+  else
+   {
+	p_context->clientid = fsal_clientid ;
+	p_context->clientid_renewed = clientid_renewed ;
+        
+	Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
+   }
+} /* FSAL_proxy_setclientid_renego */
+
+/**
+ * FSAL_proxy_setclientid_force:
+ * Client ID negociation 
+ *
+ * \param p_context (input):
+ *        Authentication context for the operation (user,...).
+ *
+ * \return Major error codes :
+ *        - ERR_FSAL_NO_ERROR     (no error)
+ *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
+ *        - Other error codes can be returned :
+ *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
+ */
+fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_context)
 {
   int rc;
   fsal_status_t fsal_status;
@@ -83,111 +113,111 @@ fsal_status_t FSAL_proxy_setclientid(proxyfsal_op_context_t * p_context)
   clientid4 resultclientid;
   struct timeval timeout = TIMEOUTRPC;
 
+  LogEvent( COMPONENT_FSAL, "Negociating a new ClientId with the remote server" ) ;
+
   /* sanity checks.
    */
   if(!p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
 
   /* Client id negociation is to be done only one time for the whole FSAL */
-  P(fsal_clientid_mutex);
-  if(done == 0)
-    {
-      /* Setup results structures */
-      argnfs4.argarray.argarray_val = argoparray;
-      resnfs4.resarray.resarray_val = resoparray;
-      argnfs4.minorversion = 0;
-      argnfs4.tag.utf8string_val = NULL;
-      argnfs4.tag.utf8string_len = 0;
-      argnfs4.argarray.argarray_len = 0;
+  P(fsal_clientid_mutex_renew);
 
-      snprintf(clientid_name, MAXNAMLEN, "GANESHA NFSv4 Proxy Pid=%u", getpid());
-      nfsclientid.id.id_len = strlen(clientid_name);
-      nfsclientid.id.id_val = clientid_name;
-      snprintf(nfsclientid.verifier, NFS4_VERIFIER_SIZE, "%x", (int)ServerBootTime);
+  /* Setup results structures */
+  argnfs4.argarray.argarray_val = argoparray;
+  resnfs4.resarray.resarray_val = resoparray;
+  argnfs4.minorversion = 0;
+  argnfs4.tag.utf8string_val = NULL;
+  argnfs4.tag.utf8string_len = 0;
+  argnfs4.argarray.argarray_len = 0;
 
-      cbproxy.cb_program = 0;
-      strncpy(cbnetid, "tcp", MAXNAMLEN);
-      strncpy(cbaddr, "127.0.0.1", MAXNAMLEN);
+  snprintf(clientid_name, MAXNAMLEN, "GANESHA NFSv4 Proxy Pid=%u", getpid());
+  nfsclientid.id.id_len = strlen(clientid_name);
+  nfsclientid.id.id_val = clientid_name;
+  snprintf(nfsclientid.verifier, NFS4_VERIFIER_SIZE, "%x", (int)ServerBootTime);
+
+  cbproxy.cb_program = 0;
+  strncpy(cbnetid, "tcp", MAXNAMLEN);
+  strncpy(cbaddr, "127.0.0.1", MAXNAMLEN);
 #ifdef _USE_NFS4_1
-      cbproxy.cb_location.na_r_netid = cbnetid;
-      cbproxy.cb_location.na_r_addr = cbaddr;
+  cbproxy.cb_location.na_r_netid = cbnetid;
+  cbproxy.cb_location.na_r_addr = cbaddr;
 #else
-      cbproxy.cb_location.r_netid = cbnetid;
-      cbproxy.cb_location.r_addr = cbaddr;
+  cbproxy.cb_location.r_netid = cbnetid;
+  cbproxy.cb_location.r_addr = cbaddr;
 #endif
 
-      COMPOUNDV4_ARG_ADD_OP_SETCLIENTID(argnfs4, nfsclientid, cbproxy);
+  COMPOUNDV4_ARG_ADD_OP_SETCLIENTID(argnfs4, nfsclientid, cbproxy);
 
-      TakeTokenFSCall();
+  TakeTokenFSCall();
 
-      p_context->user_credential.user = 0;
-      p_context->user_credential.group = 0;
-      p_context->user_credential.nbgroups = 0;
+  p_context->user_credential.user = 0;
+  p_context->user_credential.group = 0;
+  p_context->user_credential.nbgroups = 0;
 
-      /* Call the NFSv4 function */
-      COMPOUNDV4_EXECUTE(p_context, argnfs4, resnfs4, rc);
-      if(rc != RPC_SUCCESS)
-        {
-          ReleaseTokenFSCall();
-
-          V(fsal_clientid_mutex);
-
-          Return(ERR_FSAL_IO, rc, INDEX_FSAL_unlink);
-        }
-
+  /* Call the NFSv4 function */
+  rc = COMPOUNDV4_EXECUTE_SIMPLE(p_context, argnfs4, resnfs4);
+  if(rc != RPC_SUCCESS)
+    {
       ReleaseTokenFSCall();
 
-      if(resnfs4.status != NFS4_OK)
-        {
-          V(fsal_clientid_mutex);
-          return fsal_internal_proxy_error_convert(resnfs4.status,
-                                                   INDEX_FSAL_InitClientContext);
-        }
+      V(fsal_clientid_mutex_renew);
 
-      resultclientid =
-          resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.
-          resok4.clientid;
+      Return(ERR_FSAL_IO, rc, INDEX_FSAL_unlink);
+    }
 
-      /* Step 2: Confirm the client id */
-      argnfs4.minorversion = 0;
-      argnfs4.tag.utf8string_val = NULL;
-      argnfs4.tag.utf8string_len = 0;
-      argnfs4.argarray.argarray_len = 0;
+  ReleaseTokenFSCall();
 
-      argnfs4.argarray.argarray_val[0].argop = NFS4_OP_SETCLIENTID_CONFIRM;
-      argnfs4.argarray.argarray_val[0].nfs_argop4_u.opsetclientid_confirm.clientid =
-          resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.
-          resok4.clientid;
-      memcpy((char *)argnfs4.argarray.argarray_val[0].nfs_argop4_u.opsetclientid_confirm.
-             setclientid_confirm,
-             (char *)resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.
-             SETCLIENTID4res_u.resok4.setclientid_confirm, NFS4_VERIFIER_SIZE);
-      argnfs4.argarray.argarray_len = 1;
+  if(resnfs4.status != NFS4_OK)
+    {
+      V(fsal_clientid_mutex_renew);
+      return fsal_internal_proxy_error_convert(resnfs4.status,
+                                               INDEX_FSAL_InitClientContext);
+    }
 
-      /* Call the NFSv4 function */
-      COMPOUNDV4_EXECUTE(p_context, argnfs4, resnfs4, rc);
-      if(rc != RPC_SUCCESS)
-        {
-          ReleaseTokenFSCall();
+  resultclientid =
+      resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.
+      resok4.clientid;
 
-          V(fsal_clientid_mutex);
+  /* Step 2: Confirm the client id */
+  argnfs4.minorversion = 0;
+  argnfs4.tag.utf8string_val = NULL;
+  argnfs4.tag.utf8string_len = 0;
+  argnfs4.argarray.argarray_len = 0;
 
-          Return(ERR_FSAL_IO, rc, INDEX_FSAL_unlink);
-        }
+  argnfs4.argarray.argarray_val[0].argop = NFS4_OP_SETCLIENTID_CONFIRM;
+  argnfs4.argarray.argarray_val[0].nfs_argop4_u.opsetclientid_confirm.clientid =
+      resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.
+      resok4.clientid;
+  memcpy((char *)argnfs4.argarray.argarray_val[0].nfs_argop4_u.opsetclientid_confirm.
+         setclientid_confirm,
+         (char *)resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.
+         SETCLIENTID4res_u.resok4.setclientid_confirm, NFS4_VERIFIER_SIZE);
+  argnfs4.argarray.argarray_len = 1;
 
+  /* Call the NFSv4 function */
+  rc = COMPOUNDV4_EXECUTE_SIMPLE(p_context, argnfs4, resnfs4);
+  if(rc != RPC_SUCCESS)
+    {
       ReleaseTokenFSCall();
 
-      if(resnfs4.status != NFS4_OK)
-        return fsal_internal_proxy_error_convert(resnfs4.status,
-                                                 INDEX_FSAL_InitClientContext);
+      V(fsal_clientid_mutex_renew);
 
-      /* Keep the confirmed client id */
-      fsal_clientid =
-          argnfs4.argarray.argarray_val[0].nfs_argop4_u.opsetclientid_confirm.clientid;
+      Return(ERR_FSAL_IO, rc, INDEX_FSAL_unlink);
+    }
 
-      done = 1;
-    }                           /* if ( done == 0 ) */
-  V(fsal_clientid_mutex);
+  ReleaseTokenFSCall();
+
+  if(resnfs4.status != NFS4_OK)
+    return fsal_internal_proxy_error_convert(resnfs4.status,
+                                             INDEX_FSAL_InitClientContext);
+
+  /* Keep the confirmed client id */
+  fsal_clientid =
+      argnfs4.argarray.argarray_val[0].nfs_argop4_u.opsetclientid_confirm.clientid;
+  clientid_renewed = time( NULL ) ;
+
+  V(fsal_clientid_mutex_renew);
 
   p_context->clientid = fsal_clientid;
   p_context->last_lease_renewal = 0;    /* Needs to be renewed */
@@ -196,6 +226,50 @@ fsal_status_t FSAL_proxy_setclientid(proxyfsal_op_context_t * p_context)
   fsal_status.minor = 0;
 
   return fsal_status;
+}                               /* FSAL_proxy_setclientid_force */
+
+/**
+ * FSAL_proxy_setclientid:
+ * Client ID negociation, step 1
+ *
+ * \param p_context (input):
+ *        Authentication context for the operation (user,...).
+ *
+ * \return Major error codes :
+ *        - ERR_FSAL_NO_ERROR     (no error)
+ *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
+ *        - Other error codes can be returned :
+ *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
+ */
+fsal_status_t FSAL_proxy_setclientid(proxyfsal_op_context_t * p_context)
+{
+  fsal_status_t fsal_status ;
+
+  /* sanity checks.
+   */
+  if(!p_context)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
+
+  P(fsal_clientid_mutex);
+  if(done == 0)
+    {
+      fsal_status = FSAL_proxy_setclientid_force( p_context ) ;
+
+      done = 1 ;
+      V(fsal_clientid_mutex);
+
+      p_context->clientid = fsal_clientid;
+      p_context->last_lease_renewal = 0;    /* Needs to be renewed */
+
+      return fsal_status;
+    }
+  V(fsal_clientid_mutex);
+
+  p_context->clientid = fsal_clientid;
+  p_context->clientid_renewed = clientid_renewed ;
+  p_context->last_lease_renewal = 0;    /* Needs to be renewed */
+  
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
 }                               /* FSAL_proxy_setclientid */
 
 /**
