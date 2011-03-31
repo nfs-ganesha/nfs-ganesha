@@ -1210,7 +1210,6 @@ int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context)
   struct sockaddr_in addr_rpc;
   fsal_status_t fsal_status;
 
-  clnt_destroy(p_thr_context->rpc_client);
 
   memset(&addr_rpc, 0, sizeof(addr_rpc));
   addr_rpc.sin_port = p_thr_context->srv_port;
@@ -1225,6 +1224,9 @@ int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context)
     LogMajor( COMPONENT_FSAL,
               "FSAL RECONNECT : got POSIX error %u while closing socket in fsal_internal_ClientReconnect", errno ) ;
   
+  // clnt_destroy(p_thr_context->rpc_client);
+  // clnt_destroy makes the server segfaults if no server exists on the other side
+
   if(!strcmp(p_thr_context->srv_proto, "udp"))
     {
       if( ( p_thr_context->socket = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP ) ) < 0)
