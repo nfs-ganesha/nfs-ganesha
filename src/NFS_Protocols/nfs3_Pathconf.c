@@ -111,7 +111,8 @@ int nfs3_Pathconf(nfs_arg_t * parg,
     {
       char str[LEN_FH_STR];
       sprint_fhandle3(str, &(parg->arg_pathconf3.object));
-      LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs3_Pathconf handle: %s", str);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs3_Pathconf handle: %s", str);
     }
 
   /* to avoid setting it on each error case */

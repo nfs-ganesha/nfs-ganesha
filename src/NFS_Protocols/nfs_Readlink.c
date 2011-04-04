@@ -117,7 +117,8 @@ int nfs_Readlink(nfs_arg_t * parg,
                        &(parg->arg_readlink3.symlink),
                        NULL,
                        str);
-      LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Readlink handle: %s", str);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Readlink handle: %s", str);
     }
 
   if(preq->rq_vers == NFS_V3)

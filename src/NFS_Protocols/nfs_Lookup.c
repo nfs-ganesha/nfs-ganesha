@@ -133,7 +133,8 @@ int nfs_Lookup(nfs_arg_t * parg,
                        &(parg->arg_lookup3.what.dir),
                        NULL,
                        str);
-      LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Lookup handle: %s name: %s",
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Lookup handle: %s name: %s",
                str, strpath);
     }
 
@@ -271,14 +272,13 @@ int nfs_Lookup(nfs_arg_t * parg,
     }
 
   /* if( ( cache_status = cache_inode_error_convert... */
-  /* If we are here, there was an error */
-  if(nfs_RetryableError(cache_status))
-    {
-      return NFS_REQ_DROP;
-    }
 
   if(cache_status != CACHE_INODE_SUCCESS)
     {
+      /* If we are here, there was an error */
+      if(nfs_RetryableError(cache_status))
+        return NFS_REQ_DROP;
+
       nfs_SetFailedStatus(pcontext, pexport,
                           preq->rq_vers,
                           cache_status,

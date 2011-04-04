@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 #ifdef HAVE_CONFIG_H
@@ -134,7 +134,8 @@ void *TEST1(void *arg)
   int i, rc;
   string_info strings[NB_STR];
 
-  LogTest("%d:BuddyInit(%llu)=%d", th, MEM_SIZE, rc = BuddyInit(&parameter));
+  LogTest("%d:BuddyInit(%llu)=%d",
+          th, MEM_SIZE, rc = BuddyInit(&parameter));
 
   if(rc)
     exit(1);
@@ -152,8 +153,8 @@ void *TEST1(void *arg)
 
       if(!strings[i].str)
         {
-          LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %lld : %d *****", th,
-                 (long long int)len, BuddyErrno);
+          LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %lld : %d *****",
+                  th, (long long int)len, BuddyErrno);
           strings[i].len = 0;
           continue;
         }
@@ -175,7 +176,8 @@ void *TEST1(void *arg)
   for(i = 0; i < NB_STR; i++)
     {
       if(isFullDebug(COMPONENT_MEMALLOC))
-        LogTest("%d>%d:%d:%s", th, strings[i].len, strlen(strings[i].str), strings[i].str);
+        LogTest("%d>%d:%d:%s",
+                th, strings[i].len, strlen(strings[i].str), strings[i].str);
       if(strings[i].len - 1 != (int)strlen(strings[i].str))
         LogTest("************ INTEGRITY ERROR !!! ************");
 
@@ -217,7 +219,8 @@ void *TEST2(void *arg)
   struct timeval tv1, tv2, tv3;
   size_t total;
 
-  LogTest("%d:BuddyInit(%llu)=%d", th, MEM_SIZE, rc = BuddyInit(&parameter));
+  LogTest("%d:BuddyInit(%llu)=%d",
+          th, MEM_SIZE, rc = BuddyInit(&parameter));
 
   if(rc)
     exit(1);
@@ -240,8 +243,8 @@ void *TEST2(void *arg)
 
       if(!ptr)
         {
-          LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu : %d *****", th,
-                 (unsigned long long)len, BuddyErrno);
+          LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu : %d *****",
+                  th, (unsigned long long)len, BuddyErrno);
 
           /* Final config */
           BuddyDumpMem(stdout);
@@ -260,7 +263,8 @@ void *TEST2(void *arg)
 
   tv3 = time_diff(tv1, tv2);
 
-  LogTest("%d: %d Malloc/Free in %lu.%.6lu s", th, NB_LOOP2, tv3.tv_sec, tv3.tv_usec);
+  LogTest("%d: %d Malloc/Free in %lu.%.6lu s",
+          th, NB_LOOP2, tv3.tv_sec, tv3.tv_usec);
 
   LogTest("BUDDY_ERRNO=%d", BuddyErrno);
 
@@ -311,8 +315,8 @@ void *TEST3(void *arg)
 
       if(!ptr)
         {
-          LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu :%d *****", th,
-                 (unsigned long long)len, BuddyErrno);
+          LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu :%d *****",
+                  th, (unsigned long long)len, BuddyErrno);
           break;
         }
 
@@ -365,7 +369,7 @@ void *TEST4(void *arg)
   char *new_pointer[NB_SIMULTANEOUS];
 
   LogTest("%d:BuddyInit(%llu)=%d", th, MEM_SIZE, rc =
-         BuddyInit(&parameter_realloc_small));
+          BuddyInit(&parameter_realloc_small));
 
   if(rc)
     exit(1);
@@ -378,8 +382,8 @@ void *TEST4(void *arg)
 
       if(!pointer[j])
         {
-          LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu :%d *****", th,
-                 (unsigned long long)current, BuddyErrno);
+          LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu :%d *****",
+                  th, (unsigned long long)current, BuddyErrno);
           BuddyDumpMem(stdout);
 #ifdef _DEBUG_MEMLEAKS
           DisplayMemoryMap(stdout);
@@ -415,8 +419,8 @@ void *TEST4(void *arg)
 
           if(!new_pointer[j])
             {
-              LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu :%d *****", th,
-                     (unsigned long long)current, BuddyErrno);
+              LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu :%d *****",
+                      th, (unsigned long long)current, BuddyErrno);
               BuddyDumpMem(stdout);
 #ifdef _DEBUG_MEMLEAKS
               DisplayMemoryMap(stdout);
@@ -430,8 +434,8 @@ void *TEST4(void *arg)
             {
               if(new_pointer[j][i] != (char)(i % 256))
                 {
-                  LogTest("%d:**** INTEGRITY ERROR : ptr[%d] != %d *****", th, i,
-                         i % 256);
+                  LogTest("%d:**** INTEGRITY ERROR : ptr[%d] != %d *****",
+                          th, i, i % 256);
                 }
             }
 
@@ -478,7 +482,8 @@ void *TEST5(void *arg)
   int i, rc;
   string_info strings[NB_STR];
 
-  LogTest("%d:BuddyInit(%llu)=%d", th, MEM_SIZE, rc = BuddyInit(&parameter));
+  LogTest("%d:BuddyInit(%llu)=%d",
+          th, MEM_SIZE, rc = BuddyInit(&parameter));
 
   if(rc)
     exit(1);
@@ -496,8 +501,8 @@ void *TEST5(void *arg)
 
       if(!strings[i].str)
         {
-          LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %d : %d *****", th, len,
-                 BuddyErrno);
+          LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %d : %d *****",
+                  th, len, BuddyErrno);
           strings[i].len = 0;
           continue;
         }
@@ -509,13 +514,15 @@ void *TEST5(void *arg)
           /* verifies that it was NULL */
           if(strings[i].str[j])
             {
-              LogTest("%d:**** MEMSET ERROR : string[%d].str[%d] != 0 *****", th, i, j);
+              LogTest("%d:**** MEMSET ERROR : string[%d].str[%d] != 0 *****",
+                      th, i, j);
             }
           strings[i].str[j] = '0' + j;
         }
 
       if(strings[i].str[j])
-        LogTest("%d:**** MEMSET ERROR : string[%d].str[%d] != 0 *****", th, i, j);
+        LogTest("%d:**** MEMSET ERROR : string[%d].str[%d] != 0 *****",
+                th, i, j);
       strings[i].str[j] = '\0';
 
       usleep(1000);             /* for mixing threads actions */
@@ -529,7 +536,8 @@ void *TEST5(void *arg)
   for(i = 0; i < NB_STR; i++)
     {
       if(isFullDebug(COMPONENT_MEMALLOC))
-        LogTest("%d>%d:%d:%s", th, strings[i].len, strlen(strings[i].str), strings[i].str);
+        LogTest("%d>%d:%d:%s",
+                th, strings[i].len, strlen(strings[i].str), strings[i].str);
       if(strings[i].len - 1 != (int)strlen(strings[i].str))
         LogTest("************ INTEGRITY ERROR !!! ************");
 
@@ -557,8 +565,8 @@ void *TEST5(void *arg)
 
       if(!strings[i].str)
         {
-          LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %d : %d *****", th, len,
-                 BuddyErrno);
+          LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %d : %d *****",
+                  th, len, BuddyErrno);
           strings[i].len = 0;
           continue;
         }
@@ -570,13 +578,15 @@ void *TEST5(void *arg)
           /* verifies that it was NULL */
           if(strings[i].str[j])
             {
-              LogTest("%d:**** MEMSET ERROR : string[%d].str[%d] != 0 *****", th, i, j);
+              LogTest("%d:**** MEMSET ERROR : string[%d].str[%d] != 0 *****",
+                      th, i, j);
             }
           strings[i].str[j] = '0' + j;
         }
 
       if(strings[i].str[j])
-        LogTest("%d:**** MEMSET ERROR : string[%d].str[%d] != 0 *****", th, i, j);
+        LogTest("%d:**** MEMSET ERROR : string[%d].str[%d] != 0 *****",
+                th, i, j);
       strings[i].str[j] = '\0';
 
       usleep(1000);             /* for mixing threads actions */
@@ -590,7 +600,8 @@ void *TEST5(void *arg)
   for(i = 0; i < NB_STR; i++)
     {
       if(isFullDebug(COMPONENT_MEMALLOC))
-        LogTest("%d>%d:%d:%s", th, strings[i].len, strlen(strings[i].str), strings[i].str);
+        LogTest("%d>%d:%d:%s",
+                th, strings[i].len, strlen(strings[i].str), strings[i].str);
       if(strings[i].len - 1 != (int)strlen(strings[i].str))
         LogTest("************ INTEGRITY ERROR !!! ************");
 
@@ -639,7 +650,8 @@ void *TEST6(void *arg)
 
   size_t total = 0;
 
-  LogTest("%d:BuddyInit(%llu)=%d", th, MEM_SIZE, rc = BuddyInit(&parameter_realloc));
+  LogTest("%d:BuddyInit(%llu)=%d",
+          th, MEM_SIZE, rc = BuddyInit(&parameter_realloc));
 
   if(rc)
     exit(1);
@@ -663,8 +675,8 @@ void *TEST6(void *arg)
 
       if(!ptr)
         {
-          LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu :%d *****", th,
-                 (unsigned long long)len, BuddyErrno);
+          LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu :%d *****",
+                  th, (unsigned long long)len, BuddyErrno);
           exit(1);
         }
 
@@ -716,7 +728,8 @@ void *TEST7(void *arg)
 
   print_mallinfo();
 
-  LogTest("%d:BuddyInit(%llu)=%d", th, MEM_SIZE, rc = BuddyInit(&parameter_realloc));
+  LogTest("%d:BuddyInit(%llu)=%d",
+          th, MEM_SIZE, rc = BuddyInit(&parameter_realloc));
 
   if(rc)
     exit(1);
@@ -751,8 +764,8 @@ void *TEST7(void *arg)
 
           if(!ptr)
             {
-              LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu :%d *****", th,
-                     (unsigned long long)len, BuddyErrno);
+              LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu :%d *****",
+                      th, (unsigned long long)len, BuddyErrno);
               exit(1);
             }
 
@@ -762,7 +775,8 @@ void *TEST7(void *arg)
       else
         {
           if(isFullDebug(COMPONENT_MEMALLOC))
-            LogTest("---------- BuddyFree( %p ) ---------", table_alloc[index]);
+            LogTest("---------- BuddyFree( %p ) ---------",
+                    table_alloc[index]);
 
           /* The slot is not empty, we free it. */
 
@@ -885,8 +899,8 @@ void *TEST8(void *arg)
 
           if(!ptr)
             {
-              LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu :%d *****", th,
-                     (unsigned long long)len, BuddyErrno);
+              LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %llu :%d *****",
+                      th, (unsigned long long)len, BuddyErrno);
               exit(1);
             }
 
@@ -896,7 +910,8 @@ void *TEST8(void *arg)
       else
         {
           if(isFullDebug(COMPONENT_MEMALLOC))
-            LogTest("---------- BuddyFree( %p ) ---------", table_alloc[index]);
+            LogTest("---------- BuddyFree( %p ) ---------",
+                    table_alloc[index]);
 
           /* The slot is not empty, we free it. */
 
@@ -917,7 +932,8 @@ void *TEST8(void *arg)
       BuddyGetStats(&stats);
 
       if(isFullDebug(COMPONENT_MEMALLOC))
-        LogTest("%d;%lu;%lu;%u;%u;", th, stats.StdMemSpace, stats.StdUsedSpace,
+        LogTest("%d;%lu;%lu;%u;%u;",
+                th, stats.StdMemSpace, stats.StdUsedSpace,
                 stats.NbStdPages, stats.NbStdUsed);
       else
         if((stats.NbStdPages != last_pages) || (stats.NbStdUsed != last_used))
@@ -975,8 +991,8 @@ void *TEST9(void *arg)
 
       if(!strings[i].str)
         {
-          LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %d : %d *****", th, len,
-                 BuddyErrno);
+          LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %d : %d *****",
+                  th, len, BuddyErrno);
           strings[i].len = 0;
           continue;
         }
@@ -1038,7 +1054,8 @@ void *TESTA(void *arg)
   size_t total = MEM_SIZE / 10;
   int nloop, rc;
 
-  LogTest("%d:BuddyInit(%llu)=%d", th, MEM_SIZE, rc = BuddyInit(&parameter_realloc));
+  LogTest("%d:BuddyInit(%llu)=%d",
+          th, MEM_SIZE, rc = BuddyInit(&parameter_realloc));
 
   for(nloop = 0; nloop < NB_LOOPA; nloop++)
     {
@@ -1068,7 +1085,8 @@ void *TESTA(void *arg)
 
       tab_alloc_testA[slot] = BuddyMalloc(len);
 
-      LogTest("Thread %d allocated slot %u = %p", th, slot, tab_alloc_testA[slot]);
+      LogTest("Thread %d allocated slot %u = %p",
+              th, slot, tab_alloc_testA[slot]);
 
       /* unlock the table */
       V(testA_mutex);
@@ -1097,7 +1115,8 @@ void *TESTA(void *arg)
         }
       while(1);
 
-      LogTest("Thread %d frees slot %u = %p", th, slot, tab_alloc_testA[slot]);
+      LogTest("Thread %d frees slot %u = %p",
+              th, slot, tab_alloc_testA[slot]);
 
       BuddyFree(tab_alloc_testA[slot]);
 
@@ -1117,7 +1136,7 @@ void *TESTA(void *arg)
         LogTest("ERROR in BuddyDestroy: %d", rc );
   else
         LogTest("All resources released successfully");
-  
+
   return NULL;
 
 }
@@ -1133,7 +1152,8 @@ void *TESTB(void *arg)
 
   caddr_t pointer, p1, p2;
 
-  LogTest("%d:BuddyInit(%llu)=%d", th, MEM_SIZE, rc = BuddyInit(&parameter));
+  LogTest("%d:BuddyInit(%llu)=%d",
+          th, MEM_SIZE, rc = BuddyInit(&parameter));
 
   /* tests on a good adress */
 

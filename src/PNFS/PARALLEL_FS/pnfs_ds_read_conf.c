@@ -89,8 +89,9 @@ int nfs_read_conf_pnfs_ds_conf(config_item_t subblock,
               /* This is a serveur name that is to be resolved. Use gethostbyname */
               if((hp = gethostbyname(key_value)) == NULL)
                 {
-                  LogCrit(COMPONENT_CONFIG, "PNFS LOAD PARAMETER: ERROR: Unexpected value for %s",
-                             key_name);
+                  LogCrit(COMPONENT_CONFIG,
+                          "PNFS LOAD PARAMETER: ERROR: Unexpected value for %s",
+                          key_name);
                   return -1;
                 }
               memcpy(&pds_conf->ipaddr, (char *)hp->h_addr, hp->h_length);
@@ -127,7 +128,8 @@ int nfs_read_conf_pnfs_ds_conf(config_item_t subblock,
       else
         {
           LogCrit(COMPONENT_CONFIG,
-                  "Unknown or unsettable key: %s (item %s)", key_name, CONF_LABEL_PNFS);
+                  "Unknown or unsettable key: %s (item %s)",
+                  key_name, CONF_LABEL_PNFS);
           return -1;
         }
     }                           /* for */
@@ -156,13 +158,15 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
   /* Get the config BLOCK */
   if((block = config_FindItemByName_CheckUnique(in_config, CONF_LABEL_PNFS, &unique)) == NULL)
     {
-      LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file: %s",
+      LogCrit(COMPONENT_CONFIG,
+              "Cannot read item \"%s\" from configuration file: %s",
               CONF_LABEL_PNFS, config_GetErrorMsg() );
       return 1;
     }
   else if (!unique)
   {
-      LogCrit(COMPONENT_CONFIG, "Only a single \"%s\" block is expected in config file: %s",
+      LogCrit(COMPONENT_CONFIG,
+              "Only a single \"%s\" block is expected in config file: %s",
               CONF_LABEL_PNFS, config_GetErrorMsg() );
       return -1;
   }

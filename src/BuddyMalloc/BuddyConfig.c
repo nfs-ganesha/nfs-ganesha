@@ -88,13 +88,15 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
 
   if(block == NULL)
     {
-      LogCrit(COMPONENT_MEMALLOC, "BUDDY LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
+      LogCrit(COMPONENT_MEMALLOC,
+              "BUDDY LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
               CONF_LABEL_BUDDY);
       return BUDDY_ERR_ENOENT;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
-      LogCrit(COMPONENT_MEMALLOC, "BUDDY LOAD PARAMETER: Item \"%s\" is expected to be a block",
+      LogCrit(COMPONENT_MEMALLOC,
+              "BUDDY LOAD PARAMETER: Item \"%s\" is expected to be a block",
               CONF_LABEL_BUDDY);
       return BUDDY_ERR_EINVAL;
     }

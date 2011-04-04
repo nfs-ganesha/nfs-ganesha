@@ -287,7 +287,8 @@ int main(int argc, char *argv[])
                 astrval + STRSIZE * i, rc);
     }
   MesureTemps(&fin, &debut);
-  LogTest("Added %d entries in %s seconds", MAXTEST, ConvertiTempsChaine(fin, NULL));
+  LogTest("Added %d entries in %s seconds",
+          MAXTEST, ConvertiTempsChaine(fin, NULL));
   LogTest("====================================================");
 
   HashTable_Log(COMPONENT_HASHTABLE, ht);
@@ -358,8 +359,8 @@ int main(int argc, char *argv[])
           hrc = do_set(ht, key, val);
 
           if(hrc != expected_rc)
-            LogTest(">>>> ERROR: set  %d %d: %d != %d (expected)", key, val, hrc,
-                   expected_rc);
+            LogTest(">>>> ERROR: set  %d %d: %d != %d (expected)",
+                    key, val, hrc, expected_rc);
           else
             LogTest(">>>> OK set  %d %d", key, val);
           break;
@@ -371,7 +372,8 @@ int main(int argc, char *argv[])
           hrc = do_test(ht, key);
 
           if(hrc != expected_rc)
-            LogTest(">>>> ERROR: test %d : %d != %d (expected)", key, hrc, expected_rc);
+            LogTest(">>>> ERROR: test %d : %d != %d (expected)",
+                    key, hrc, expected_rc);
           else
             LogTest(">>>> OK test %d ", key);
           break;
@@ -383,8 +385,8 @@ int main(int argc, char *argv[])
           hrc = do_new(ht, key, val);
 
           if(hrc != expected_rc)
-            LogTest(">>>> ERROR: new  %d %d: %d != %d (expected)", key, val, hrc,
-                   expected_rc);
+            LogTest(">>>> ERROR: new  %d %d: %d != %d (expected)",
+                    key, val, hrc, expected_rc);
           else
             LogTest(">>>> OK new  %d %d", key, val);
           break;
@@ -396,16 +398,15 @@ int main(int argc, char *argv[])
           hrc = do_get(ht, key, &readval);
 
           if(hrc != expected_rc)
-            LogTest(">>>> ERROR: get  %d %d: %d != %d (expected)", key, val, hrc,
-                   expected_rc);
+            LogTest(">>>> ERROR: get  %d %d: %d != %d (expected)",
+                    key, val, hrc, expected_rc);
           else
             {
               if(hrc == HASHTABLE_SUCCESS)
                 {
                   if(val != readval)
-                    LogTest
-                        (">>>> ERROR: get %d Bad read value : %d != %d (expected)",
-                         key, readval, val);
+                    LogTest(">>>> ERROR: get %d Bad read value : %d != %d (expected)",
+                            key, readval, val);
                   else
                     LogTest(">>>> OK get  %d %d", key, val);
                 }
@@ -419,7 +420,8 @@ int main(int argc, char *argv[])
           hrc = do_del(ht, key);
 
           if(hrc != expected_rc)
-            LogTest(">>>> ERROR: del  %d  %d != %d (expected)", key, hrc, expected_rc);
+            LogTest(">>>> ERROR: del  %d  %d != %d (expected)",
+                    key, hrc, expected_rc);
           else
             LogTest(">>>> OK del  %d %d", key, val);
 

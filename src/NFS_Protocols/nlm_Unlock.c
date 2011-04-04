@@ -94,8 +94,12 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
   char buffer[1024];
 
   netobj_to_string(&arg->cookie, buffer, 1024);
-  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm4_Unlock svid=%d off=%llx len=%llx cookie=%s",
-           (int) arg->alock.svid, (unsigned long long) arg->alock.l_offset, (unsigned long long) arg->alock.l_len, buffer);
+  LogDebug(COMPONENT_NLM,
+           "REQUEST PROCESSING: Calling nlm4_Unlock svid=%d off=%llx len=%llx cookie=%s",
+           (int) arg->alock.svid,
+           (unsigned long long) arg->alock.l_offset,
+           (unsigned long long) arg->alock.l_len,
+           buffer);
 
   copy_netobj(&pres->res_nlm4test.cookie, &arg->cookie);
   if(in_nlm_grace_period())
@@ -142,12 +146,14 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
   if(!nlm_entry)
     {
       pres->res_nlm4.stat.stat = NLM4_GRANTED;
-      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock not found returning %s anyway",
+      LogDebug(COMPONENT_NLM,
+               "REQUEST RESULT: nlm4_Unlock not found returning %s anyway",
                lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
-  LogFullDebug(COMPONENT_NLM, "nlm4_Unlock nlm_entry %p, pentry %p pclient %p",
-                  nlm_entry, nlm_entry->pentry, nlm_entry->pclient);
+  LogFullDebug(COMPONENT_NLM,
+               "nlm4_Unlock nlm_entry %p, pentry %p pclient %p",
+               nlm_entry, nlm_entry->pentry, nlm_entry->pclient);
   lck_state = nlm_lock_entry_get_state(nlm_entry);
   pres->res_nlm4.stat.stat = NLM4_GRANTED;
   lck_cnt = nlm_delete_lock_entry(&(arg->alock));
@@ -172,7 +178,8 @@ static void nlm4_unlock_message_resp(void *arg)
     {
       char buffer[1024];
       netobj_to_string(&pres->pres.res_nlm4test.cookie, buffer, 1024);
-      LogFullDebug(COMPONENT_NLM, "nlm4_unlock_message_resp calling nlm_send_async cookie=%s status=%s",
+      LogFullDebug(COMPONENT_NLM,
+                   "nlm4_unlock_message_resp calling nlm_send_async cookie=%s status=%s",
                    buffer, lock_result_str(pres->pres.res_nlm4.stat.stat));
     }
   nlm_send_async(NLMPROC4_UNLOCK_RES, pres->caller_name, &(pres->pres), NULL);

@@ -367,7 +367,8 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
       break;
 
     case CACHE_INODE_SUCCESS:
-      /* LogCrit(COMPONENT_NFSPROTO, "Possible implementation error: CACHE_INODE_SUCCESS managed as an error" ) ; */
+      LogCrit(COMPONENT_NFSPROTO,
+              "Possible implementation error: CACHE_INODE_SUCCESS managed as an error");
       return FALSE;
       break;
 
@@ -404,6 +405,7 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
     case CACHE_INODE_FSAL_ERR_SEC:
     case CACHE_INODE_QUOTA_EXCEEDED:
     case CACHE_INODE_NOT_SUPPORTED:
+    case CACHE_INODE_NAME_TOO_LONG:
       /* Non retryable error, return error to client */
       return FALSE;
       break;
@@ -1565,7 +1567,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 #endif
 
         default:
-          LogFullDebug(COMPONENT_NFS_V4, " unsupported value for attributes bitmap = %u", attribute_to_set);
+          LogFullDebug(COMPONENT_NFS_V4,
+                       " unsupported value for attributes bitmap = %u", attribute_to_set);
 
           op_attr_success = 0;
           break;
@@ -1634,28 +1637,36 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
 
   if(psattr->mode.set_it == TRUE)
     {
-      LogFullDebug(COMPONENT_NFSPROTO, "nfs3_Sattr_To_FSALattr: mode = %o", psattr->mode.set_mode3_u.mode);
+      LogFullDebug(COMPONENT_NFSPROTO,
+                   "nfs3_Sattr_To_FSALattr: mode = %o",
+                   psattr->mode.set_mode3_u.mode);
       pFSAL_attr->mode = unix2fsal_mode(psattr->mode.set_mode3_u.mode);
       pFSAL_attr->asked_attributes |= FSAL_ATTR_MODE;
     }
 
   if(psattr->uid.set_it == TRUE)
     {
-      LogFullDebug(COMPONENT_NFSPROTO, "nfs3_Sattr_To_FSALattr: uid = %d", psattr->uid.set_uid3_u.uid);
+      LogFullDebug(COMPONENT_NFSPROTO,
+                   "nfs3_Sattr_To_FSALattr: uid = %d",
+                   psattr->uid.set_uid3_u.uid);
       pFSAL_attr->owner = psattr->uid.set_uid3_u.uid;
       pFSAL_attr->asked_attributes |= FSAL_ATTR_OWNER;
     }
 
   if(psattr->gid.set_it == TRUE)
     {
-      LogFullDebug(COMPONENT_NFSPROTO, "nfs3_Sattr_To_FSALattr: gid = %d", psattr->gid.set_gid3_u.gid);
+      LogFullDebug(COMPONENT_NFSPROTO,
+                   "nfs3_Sattr_To_FSALattr: gid = %d",
+                   psattr->gid.set_gid3_u.gid);
       pFSAL_attr->group = psattr->gid.set_gid3_u.gid;
       pFSAL_attr->asked_attributes |= FSAL_ATTR_GROUP;
     }
 
   if(psattr->size.set_it == TRUE)
     {
-      LogFullDebug(COMPONENT_NFSPROTO, "nfs3_Sattr_To_FSALattr: size = %lld", psattr->size.set_size3_u.size);
+      LogFullDebug(COMPONENT_NFSPROTO,
+                   "nfs3_Sattr_To_FSALattr: size = %lld",
+                   psattr->size.set_size3_u.size);
       pFSAL_attr->filesize = (fsal_size_t) psattr->size.set_size3_u.size;
       pFSAL_attr->spaceused = (fsal_size_t) psattr->size.set_size3_u.size;
       /* Both FSAL_ATTR_SIZE and FSAL_ATTR_SPACEUSED are to be managed */
@@ -1665,7 +1676,8 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
 
   if(psattr->atime.set_it != DONT_CHANGE)
     {
-      LogFullDebug(COMPONENT_NFSPROTO, "nfs3_Sattr_To_FSALattr: set=%d atime = %d,%d",
+      LogFullDebug(COMPONENT_NFSPROTO,
+                   "nfs3_Sattr_To_FSALattr: set=%d atime = %d,%d",
                    psattr->atime.set_it, psattr->atime.set_atime_u.atime.seconds,
                    psattr->atime.set_atime_u.atime.nseconds);
       if(psattr->atime.set_it == SET_TO_CLIENT_TIME)
@@ -1686,7 +1698,8 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
 
   if(psattr->mtime.set_it != DONT_CHANGE)
     {
-      LogFullDebug(COMPONENT_NFSPROTO, "nfs3_Sattr_To_FSALattr: set=%d mtime = %d,%d",
+      LogFullDebug(COMPONENT_NFSPROTO,
+                   "nfs3_Sattr_To_FSALattr: set=%d mtime = %d,%d",
                    psattr->atime.set_it, psattr->mtime.set_mtime_u.mtime.seconds,
                    psattr->mtime.set_mtime_u.mtime.nseconds);
       if(psattr->mtime.set_it == SET_TO_CLIENT_TIME)
@@ -1901,11 +1914,13 @@ void nfs4_stringid_split(char *buff, char *uidname, char *domainname)
     if(*c == '@')
       break;
 
-  strcpy(uidname, buff);
+  strncpy(uidname, buff, i);
   uidname[i] = '\0';
   strcpy(domainname, c);
 
-  LogFullDebug(COMPONENT_NFS_V4, "buff = #%s#    uid = #%s#   domain = #%s#", buff, uidname, domainname);
+  LogFullDebug(COMPONENT_NFS_V4,
+               "buff = #%s#    uid = #%s#   domain = #%s#",
+               buff, uidname, domainname);
 }                               /* nfs4_stringid_split */
 
 /**
@@ -2522,7 +2537,8 @@ int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap )
                  pbitmap->bitmap4_len, pbitmap->bitmap4_val[0],
                  pbitmap->bitmap4_val[1]);
   else
-    LogFullDebug(COMPONENT_NFS_V4, "Bitmap: Len = %u ... ", pbitmap->bitmap4_len);
+    LogFullDebug(COMPONENT_NFS_V4, "Bitmap: Len = %u ... ",
+                 pbitmap->bitmap4_len);
 
   bout.bitmap4_val[0] = 0 ;
   bout.bitmap4_val[1] = 0 ;
@@ -2585,7 +2601,8 @@ int nfs4_Fattr_Supported(fattr4 * Fattr)
         }
 #endif
 
-      LogFullDebug(COMPONENT_NFS_V4, "nfs4_Fattr_Supported  ==============> %s supported flag=%u | ",
+      LogFullDebug(COMPONENT_NFS_V4,
+                   "nfs4_Fattr_Supported  ==============> %s supported flag=%u | ",
                    fattr4tab[attrmasklist[i]].name, fattr4tab[attrmasklist[i]].supported);
 
       if(!fattr4tab[attrmasklist[i]].supported)
@@ -2632,8 +2649,10 @@ int nfs4_Fattr_Supported_Bitmap(bitmap4 * pbitmap)
         }
 #endif
       
-      LogFullDebug(COMPONENT_NFS_V4, "nfs4_Fattr_Supported  ==============> %s supported flag=%u",
-                   fattr4tab[attrmasklist[i]].name, fattr4tab[attrmasklist[i]].supported);
+      LogFullDebug(COMPONENT_NFS_V4,
+                   "nfs4_Fattr_Supported  ==============> %s supported flag=%u",
+                   fattr4tab[attrmasklist[i]].name,
+                   fattr4tab[attrmasklist[i]].supported);
       if(!fattr4tab[attrmasklist[i]].supported)
         return 0;
     }
@@ -2703,7 +2722,9 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
     {
       attribute_to_set = attrmasklist1[i];
 
-      LogFullDebug(COMPONENT_NFS_V4, "nfs4_Fattr_cmp ==============> %s", fattr4tab[attribute_to_set].name);
+      LogFullDebug(COMPONENT_NFS_V4,
+                   "nfs4_Fattr_cmp ==============> %s",
+                   fattr4tab[attribute_to_set].name);
 
       switch (attribute_to_set)
         {
@@ -2860,7 +2881,8 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
   /* Convert the attribute bitmap to an attribute list */
   nfs4_bitmap4_to_list(&(Fattr->attrmask), &attrmasklen, attrmasklist);
 
-  LogFullDebug(COMPONENT_NFS_V4, "   nfs4_bitmap4_to_list ====> attrmasklen = %d", attrmasklen);
+  LogFullDebug(COMPONENT_NFS_V4,
+               "   nfs4_bitmap4_to_list ====> attrmasklen = %d", attrmasklen);
 
   /* Init */
   pFSAL_attr->asked_attributes = 0;
@@ -2878,11 +2900,14 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
           /* Erroneous value... skip */
           continue;
         }
-      LogFullDebug(COMPONENT_NFS_V4, "=================> nfs4_Fattr_To_FSAL_attr: i=%u attr=%u", i,
+      LogFullDebug(COMPONENT_NFS_V4,
+                   "=================> nfs4_Fattr_To_FSAL_attr: i=%u attr=%u", i,
                    attrmasklist[i]);
-      LogFullDebug(COMPONENT_NFS_V4, "Flag for Operation = %d|%d is ON,  name  = %s  reply_size = %d",
+      LogFullDebug(COMPONENT_NFS_V4,
+                   "Flag for Operation = %d|%d is ON,  name  = %s  reply_size = %d",
                    attrmasklist[i], fattr4tab[attribute_to_set].val,
-                   fattr4tab[attribute_to_set].name, fattr4tab[attribute_to_set].size_fattr4);
+                   fattr4tab[attribute_to_set].name,
+                   fattr4tab[attribute_to_set].size_fattr4);
 
       switch (attribute_to_set)
         {
@@ -2976,7 +3001,8 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_SIZE;
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  LogFullDebug(COMPONENT_NFS_V4, "      SATTR: size seen %zu", (size_t)pFSAL_attr->filesize);
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "      SATTR: size seen %zu", (size_t)pFSAL_attr->filesize);
           break;
 
         case FATTR4_MODE:
@@ -2989,7 +3015,8 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_MODE;
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          LogFullDebug(COMPONENT_NFS_V4, "      SATTR: On voit le mode 0%o", pFSAL_attr->mode);
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "      SATTR: On voit le mode 0%o", pFSAL_attr->mode);
           break;
 
         case FATTR4_OWNER:
@@ -3013,8 +3040,10 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
           utf82uid(&utf8buffer, &(pFSAL_attr->owner));
           pFSAL_attr->asked_attributes |= FSAL_ATTR_OWNER;
 
-          LogFullDebug(COMPONENT_NFS_V4, "      SATTR: On voit le owner %s len = %d", buffer, len);
-          LogFullDebug(COMPONENT_NFS_V4, "      SATTR: On voit le owner %d", pFSAL_attr->owner);
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "      SATTR: On voit le owner %s len = %d", buffer, len);
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "      SATTR: On voit le owner %d", pFSAL_attr->owner);
           break;
 
         case FATTR4_OWNER_GROUP:
@@ -3038,8 +3067,10 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
           utf82gid(&utf8buffer, &(pFSAL_attr->group));
           pFSAL_attr->asked_attributes |= FSAL_ATTR_GROUP;
 
-          LogFullDebug(COMPONENT_NFS_V4, "      SATTR: On voit le owner_group %s len = %d", buffer, len);
-          LogFullDebug(COMPONENT_NFS_V4, "      SATTR: On voit le owner_group %d", pFSAL_attr->group);
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "      SATTR: On voit le owner_group %s len = %d", buffer, len);
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "      SATTR: On voit le owner_group %d", pFSAL_attr->group);
           break;
 
         case FATTR4_CHANGE:
@@ -3191,7 +3222,8 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
           len = ntohl(len);
           LastOffset += sizeof(u_int);
           LastOffset += len;
-          LogFullDebug(COMPONENT_NFS_V4, "     SATTR: On a demande le filehandle len =%u", len);
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "     SATTR: On a demande le filehandle len =%u", len);
           break;
 
         case FATTR4_RDATTR_ERROR:
@@ -3204,7 +3236,8 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
           break;
 
         default:
-          LogFullDebug(COMPONENT_NFS_V4, "      SATTR: Attribut no supporte %d name=%s",
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "      SATTR: Attribut no supporte %d name=%s",
                        attribute_to_set, fattr4tab[attribute_to_set].name);
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           /* return 0 ; *//* Should not stop processing */
@@ -3305,6 +3338,10 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       nfserror = NFS4ERR_IO;
       break;
 
+     case CACHE_INODE_NAME_TOO_LONG:
+      nfserror = NFS4ERR_NAMETOOLONG;
+      break;
+
     case CACHE_INODE_DEAD_ENTRY:
     case CACHE_INODE_FSAL_ESTALE:
       nfserror = NFS4ERR_STALE;
@@ -3365,7 +3402,9 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
     case CACHE_INODE_INSERT_ERROR:
     case CACHE_INODE_LRU_ERROR:
     case CACHE_INODE_HASH_SET_ERROR:
-      LogCrit(COMPONENT_NFSPROTO, "Error %u converted to NFS3ERR_IO but was set non-retryable", error);
+      LogCrit(COMPONENT_NFSPROTO,
+              "Error %u converted to NFS3ERR_IO but was set non-retryable",
+              error);
       nfserror = NFS3ERR_IO;
       break;
 
@@ -3376,7 +3415,8 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
     case CACHE_INODE_FSAL_ERROR:
     case CACHE_INODE_CACHE_CONTENT_ERROR:
                                          /** @todo: Check if this works by making stress tests */
-      LogCrit(COMPONENT_NFSPROTO, "Error CACHE_INODE_FSAL_ERROR converted to NFS3ERR_IO but was set non-retryable");
+      LogCrit(COMPONENT_NFSPROTO,
+              "Error CACHE_INODE_FSAL_ERROR converted to NFS3ERR_IO but was set non-retryable");
       nfserror = NFS3ERR_IO;
       break;
 
@@ -3439,12 +3479,18 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
       break;
 
     case CACHE_INODE_IO_ERROR:
-	LogCrit(COMPONENT_NFSPROTO, "Error CACHE_INODE_IO_ERROR converted to NFS3ERR_IO but was set non-retryable");
+        LogCrit(COMPONENT_NFSPROTO,
+                "Error CACHE_INODE_IO_ERROR converted to NFS3ERR_IO but was set non-retryable");
       nfserror = NFS3ERR_IO;
       break;
 
+    case CACHE_INODE_NAME_TOO_LONG:
+      nfserror = NFS3ERR_NAMETOOLONG;
+      break;
+
     default:                   /* Should not occur */
-	LogDebug(COMPONENT_NFSPROTO, "Line %u should never be reached in nfs3_Errno for cache_status=%u",
+        LogDebug(COMPONENT_NFSPROTO,
+                 "Line %u should never be reached in nfs3_Errno for cache_status=%u",
                  __LINE__, error);
       nfserror = NFS3ERR_INVAL;
       break;
@@ -3486,7 +3532,9 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
     case CACHE_INODE_LRU_ERROR:
     case CACHE_INODE_HASH_SET_ERROR:
     case CACHE_INODE_INVALID_ARGUMENT:
-      LogCrit(COMPONENT_NFSPROTO,"Error %u converted to NFSERR_IO but was set non-retryable", error);
+      LogCrit(COMPONENT_NFSPROTO,
+              "Error %u converted to NFSERR_IO but was set non-retryable",
+              error);
       nfserror = NFSERR_IO;
       break;
 
@@ -3499,7 +3547,8 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
       break;
 
     case CACHE_INODE_FSAL_ERROR:
-      LogCrit(COMPONENT_NFSPROTO, "Error CACHE_INODE_FSAL_ERROR converted to NFSERR_IO but was set non-retryable");
+      LogCrit(COMPONENT_NFSPROTO,
+              "Error CACHE_INODE_FSAL_ERROR converted to NFSERR_IO but was set non-retryable");
       nfserror = NFSERR_IO;
       break;
 
@@ -3541,12 +3590,18 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
       break;
 
     case CACHE_INODE_IO_ERROR:
-      LogCrit(COMPONENT_NFSPROTO, "Error CACHE_INODE_IO_ERROR converted to NFSERR_IO but was set non-retryable");
+      LogCrit(COMPONENT_NFSPROTO,
+              "Error CACHE_INODE_IO_ERROR converted to NFSERR_IO but was set non-retryable");
       nfserror = NFSERR_IO;
       break;
 
+    case CACHE_INODE_NAME_TOO_LONG:
+      nfserror = NFSERR_NAMETOOLONG;
+      break;
+
     default:                   /* Should not occur */
-      LogDebug(COMPONENT_NFSPROTO, "Line %u should never be reached in nfs2_Errno", __LINE__);
+      LogDebug(COMPONENT_NFSPROTO,
+               "Line %u should never be reached in nfs2_Errno", __LINE__);
       nfserror = NFSERR_IO;
       break;
     }

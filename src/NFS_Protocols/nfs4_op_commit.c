@@ -105,8 +105,9 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   resp->resop = NFS4_OP_COMMIT;
   res_COMMIT4.status = NFS4_OK;
 
-  LogFullDebug(COMPONENT_NFS_V4, "      COMMIT4: Demande de commit sur offset = %"PRIu64", size = %"PRIu32,
-         arg_COMMIT4.offset, (uint32_t)arg_COMMIT4.count);
+  LogFullDebug(COMPONENT_NFS_V4,
+               "      COMMIT4: Demande de commit sur offset = %"PRIu64", size = %"PRIu32,
+               arg_COMMIT4.offset, (uint32_t)arg_COMMIT4.count);
 
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))

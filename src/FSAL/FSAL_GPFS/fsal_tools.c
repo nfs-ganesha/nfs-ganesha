@@ -464,13 +464,15 @@ fsal_status_t GPFSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
   if(block == NULL)
     {
-      LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
+      LogCrit(COMPONENT_CONFIG,
+              "FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
               CONF_LABEL_FSAL);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
-      LogCrit(COMPONENT_CONFIG,"FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
+      LogCrit(COMPONENT_CONFIG,
+              "FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
               CONF_LABEL_FSAL);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
@@ -500,7 +502,8 @@ fsal_status_t GPFSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
           if(DebugLevel == -1)
             {
-              LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: ERROR: Invalid debug level name: \"%s\".",
+              LogCrit(COMPONENT_CONFIG,
+                      "FSAL LOAD PARAMETER: ERROR: Invalid debug level name: \"%s\".",
                       key_value);
               ReturnCode(ERR_FSAL_INVAL, -1);
             }
@@ -566,13 +569,15 @@ fsal_status_t GPFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
   /* cannot read item */
   if(block == NULL)
     {
-      LogCrit(COMPONENT_CONFIG,"FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
+      LogCrit(COMPONENT_CONFIG,
+              "FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
               CONF_LABEL_FS_COMMON);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
-      LogCrit(COMPONENT_CONFIG,"FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
+      LogCrit(COMPONENT_CONFIG,
+              "FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
               CONF_LABEL_FS_COMMON);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
@@ -774,13 +779,15 @@ fsal_status_t GPFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
   /* cannot read item */
   if(block == NULL)
     {
-      LogCrit(COMPONENT_CONFIG,"FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
+      LogCrit(COMPONENT_CONFIG,
+              "FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
               CONF_LABEL_FS_SPECIFIC);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
-      LogCrit(COMPONENT_CONFIG,"FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
+      LogCrit(COMPONENT_CONFIG,
+              "FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
               CONF_LABEL_FS_SPECIFIC);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }

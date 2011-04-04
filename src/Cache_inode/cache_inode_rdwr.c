@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -67,13 +67,13 @@
  * Reads/Writes through the cache layer.
  *
  * @param pentry [IN] entry in cache inode layer whose content is to be accessed.
- * @param read_or_write [IN] a flag of type cache_content_io_direction_t to tell if a read or write is to be done. 
+ * @param read_or_write [IN] a flag of type cache_content_io_direction_t to tell if a read or write is to be done.
  * @param seek_descriptor [IN] absolute position (in the FSAL file) where the IO will be done.
- * @param buffer_size [IN] size of the buffer pointed by parameter 'buffer'. 
+ * @param buffer_size [IN] size of the buffer pointed by parameter 'buffer'.
  * @param pio_size [OUT] the size of the io that was successfully made.
  * @param pfsal_attr [OUT] the FSAL attributes after the operation.
  * @param buffer write:[IN] read:[OUT] the buffer for the data.
- * @param ht [INOUT] the hashtable used for managing the cache. 
+ * @param ht [INOUT] the hashtable used for managing the cache.
  * @param pclient [IN]  ressource allocated by the client for the nfs management.
  * @param pcontext [IN] fsal context for the operation.
  * @param stable[IN] if FALSE, data will be written to unstable storage (for implementing write/commit)
@@ -263,8 +263,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                 {
                   /* Entry could not be recoverd, cache_content_status contains an error, let it be managed by the next block */
                   LogCrit(COMPONENT_CACHE_INODE,
-                                    "Read/Write Operation through cache failed with status %d (renew process failed)",
-                                    cache_content_status);
+                          "Read/Write Operation through cache failed with status %d (renew process failed)",
+                          cache_content_status);
 
 		  /** @todo exit on error here */
 
@@ -272,8 +272,9 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
               else
                 {
                   /* Entry was successfully renewed */
-                  LogEvent(COMPONENT_CACHE_INODE, "----> File Content Entry %p was successfully renewed",
-                             pentry);
+                  LogInfo(COMPONENT_CACHE_INODE,
+                          "----> File Content Entry %p was successfully renewed",
+                          pentry);
 
                   /* Try to access the content of the file again */
                   cache_content_rdwr(pentry->object.file.pentry_content,
@@ -287,7 +288,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                                      (cache_content_client_t *) pclient->pcontent_client,
                                      pcontext, &cache_content_status);
 
-                  /* No management of cache_content_status in case of failure, this will be done 
+                  /* No management of cache_content_status in case of failure, this will be done
                    * within the next block */
                 }
 
@@ -300,8 +301,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
               V_w(&pentry->lock);
 
               LogCrit(COMPONENT_CACHE_INODE,
-                                "Read/Write Operation through cache failed with status %d",
-                                cache_content_status);
+                      "Read/Write Operation through cache failed with status %d",
+                      cache_content_status);
 
               /* stats */
               pclient->stat.func_stats.nb_err_unrecover[statindex] += 1;
@@ -315,8 +316,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                        seek_descriptor->offset);
 
           LogFullDebug(COMPONENT_CACHE_INODE,
-                       "cache_inode_rdwr: INODE  AFTER : IO Size = %llu %llu", io_size,
-                       *pio_size);
+                       "cache_inode_rdwr: INODE  AFTER : IO Size = %llu %llu",
+                       io_size, *pio_size);
 
           /* Use information from the buffstat to update the file metadata */
           pentry->object.file.attributes.filesize = buffstat.st_size;
@@ -383,8 +384,9 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                 fsal_status = FSAL_sync(&(pentry->object.file.open_fd.fd));
 #endif
                 if(FSAL_IS_ERROR(fsal_status))
-                  LogMajor(COMPONENT_CACHE_INODE, "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
-                           fsal_status_for_sync.major);
+                  LogMajor(COMPONENT_CACHE_INODE,
+                           "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
+                           fsal_status.major);
               }
 
               break;
@@ -401,9 +403,10 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
             {
 
               if(fsal_status.major == ERR_FSAL_DELAY)
-                LogEvent(COMPONENT_CACHE_INODE, "cache_inode_rdwr: FSAL_write returned EBUSY");
+                LogEvent(COMPONENT_CACHE_INODE,
+                         "cache_inode_rdwr: FSAL_write returned EBUSY");
               else
-                LogDebug(COMPONENT_CACHE_INODE, 
+                LogDebug(COMPONENT_CACHE_INODE,
                          "cache_inode_rdwr: fsal_status.major = %d",
                          fsal_status.major);
 
@@ -411,8 +414,9 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                  && (pentry->object.file.open_fd.fileno != 0))
                 {
 
-                  LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_rdwr: CLOSING pentry %p: fd=%d", pentry,
-                               pentry->object.file.open_fd.fileno);
+                  LogFullDebug(COMPONENT_CACHE_INODE,
+                               "cache_inode_rdwr: CLOSING pentry %p: fd=%d",
+                               pentry, pentry->object.file.open_fd.fileno);
 
 #ifdef _USE_MFSL
                   MFSL_close(&(pentry->object.file.open_fd.mfsl_fd), &pclient->mfsl_context, NULL);
@@ -462,11 +466,11 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 
           if(read_or_write == CACHE_INODE_WRITE)
             {
-              /* Do a getattr in order to have update information on filesize 
+              /* Do a getattr in order to have update information on filesize
                * This query is done directly on FSAL (object is not data cached), and result
                * will be propagated to cache Inode */
 
-              /* WARNING: This operation is to be done AFTER FSAL_close (some FSAL, like POSIX, 
+              /* WARNING: This operation is to be done AFTER FSAL_close (some FSAL, like POSIX,
                * may not flush data until the file is closed */
 
               /*post_write_attr.asked_attributes =  pclient->attrmask ; */

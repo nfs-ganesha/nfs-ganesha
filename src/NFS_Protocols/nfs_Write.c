@@ -149,8 +149,12 @@ int nfs_Write(nfs_arg_t * parg,
                        &(parg->arg_write3.file),
                        NULL,
                        str);
-      LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Write handle: %s start: %llx len: %llx %s",
-               str, (unsigned long long) offset, (unsigned long long) size, stables);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Write handle: %s start: %llx len: %llx %s",
+               str,
+               (unsigned long long) offset,
+               (unsigned long long) size,
+               stables);
     }
 
   cache_content_policy_data_t datapol;
@@ -301,7 +305,8 @@ int nfs_Write(nfs_arg_t * parg,
    */
   if((pexport->options & EXPORT_OPTION_MAXOFFSETWRITE) == EXPORT_OPTION_MAXOFFSETWRITE)
     {
-      LogFullDebug(COMPONENT_NFSPROTO, "-----> Write offset=%llu count=%llu MaxOffSet=%llu",
+      LogFullDebug(COMPONENT_NFSPROTO,
+                   "-----> Write offset=%llu count=%llu MaxOffSet=%llu",
                    (unsigned long long) offset,
                    (unsigned long long) size,
                    (unsigned long long) pexport->MaxOffsetWrite);
@@ -467,7 +472,8 @@ int nfs_Write(nfs_arg_t * parg,
         }
     }
 
-  LogFullDebug(COMPONENT_NFSPROTO, "---> failed write: cache_status=%d", cache_status);
+  LogFullDebug(COMPONENT_NFSPROTO,
+               "---> failed write: cache_status=%d", cache_status);
 
   /* If we are here, there was an error */
   if(nfs_RetryableError(cache_status))

@@ -42,6 +42,7 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          ../include/nfs_proto_functions.h   \
                          ../include/nfs_proto_tools.h       \
                          ../include/nfs_stat.h              \
+                         ../include/err_inject.h            \
                          ../include/stuff_alloc.h
 
 if USE_NLM
@@ -50,6 +51,10 @@ endif
 
 if USE_NFS4_1
 libsupport_la_SOURCES += nfs_session_id.c 
+endif
+
+if ERROR_INJECTION
+libsupport_la_SOURCES += err_inject.c
 endif
 
 

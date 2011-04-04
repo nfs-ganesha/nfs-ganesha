@@ -128,7 +128,8 @@ cache_inode_commit(cache_entry_t * pentry,
       fsal_status = FSAL_sync(&(pentry->object.file.open_fd.fd));
 #endif
       if(FSAL_IS_ERROR(fsal_status)) {
-        LogMajor(COMPONENT_CACHE_INODE, "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
+        LogMajor(COMPONENT_CACHE_INODE,
+                 "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
                  fsal_status.major);
 
         V_w(&pentry->lock);
@@ -144,7 +145,8 @@ cache_inode_commit(cache_entry_t * pentry,
       if(cache_inode_close(pentry, pclient, pstatus) != CACHE_INODE_SUCCESS)
         {
           LogEvent(COMPONENT_CACHE_INODE,
-                   "cache_inode_rdwr: cache_inode_close = %d", *pstatus);
+                   "cache_inode_rdwr: cache_inode_close = %d",
+                   *pstatus);
           
           V_w(&pentry->lock);
           

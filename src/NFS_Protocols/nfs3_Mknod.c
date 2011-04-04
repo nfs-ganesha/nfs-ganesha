@@ -119,7 +119,8 @@ int nfs3_Mknod(nfs_arg_t * parg,
     {
       char str[LEN_FH_STR];
       sprint_fhandle3(str, &(parg->arg_mknod3.where.dir));
-      LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs3_Mknod handle: %s name: %s",
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs3_Mknod handle: %s name: %s",
                str, parg->arg_mknod3.where.name);
     }
 

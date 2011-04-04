@@ -146,7 +146,8 @@ int nfs_Link(nfs_arg_t * parg,
                        &(parg->arg_link3.link.dir),
                        NULL,
                        strto);
-      LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Link handle: %s to handle: %s name: %s",
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Link handle: %s to handle: %s name: %s",
                strfrom, strto, str_link_name);
     }
 

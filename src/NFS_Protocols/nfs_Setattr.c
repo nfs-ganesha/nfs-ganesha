@@ -121,7 +121,8 @@ int nfs_Setattr(nfs_arg_t * parg,
                        &(parg->arg_setattr3.object),
                        NULL,
                        str);
-      LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Setattr handle: %s", str);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Setattr handle: %s", str);
     }
 
   if(preq->rq_vers == NFS_V3)

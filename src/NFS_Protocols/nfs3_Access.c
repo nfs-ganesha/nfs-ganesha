@@ -111,7 +111,8 @@ int nfs3_Access(nfs_arg_t * parg,
     {
       char str[LEN_FH_STR];
       sprint_fhandle3(str, &(parg->arg_access3.object));
-      LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs3_Access handle: %s", str);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs3_Access handle: %s", str);
     }
 
   /* Is this a xattr FH ? */

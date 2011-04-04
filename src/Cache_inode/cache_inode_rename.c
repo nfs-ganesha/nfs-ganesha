@@ -212,8 +212,9 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
 
       if(*pstatus != CACHE_INODE_FSAL_ESTALE)
         LogDebug(COMPONENT_CACHE_INODE,
-                 "Rename (%p,%s)->(%p,%s) : source doesn't exist", pentry_dirsrc,
-                 poldname->name, pentry_dirdest, pnewname->name);
+                 "Rename (%p,%s)->(%p,%s) : source doesn't exist",
+                 pentry_dirsrc, poldname->name,
+                 pentry_dirdest, pnewname->name);
       else
         LogDebug(COMPONENT_CACHE_INODE, "Rename : stale source");
 
@@ -446,32 +447,37 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
           cache_inode_status_t kill_status;
           fsal_status_t getattr_status;
 
-          LogEvent(COMPONENT_CACHE_INODE, "cache_inode_rename: Stale FSAL File Handle detected for at least one in  pentry = %p and pentry = %p",
+          LogEvent(COMPONENT_CACHE_INODE,
+                   "cache_inode_rename: Stale FSAL File Handle detected for at least one in  pentry = %p and pentry = %p",
                    pentry_dirsrc, pentry_dirdest);
 
           /* Use FSAL_getattrs to find which entry is staled */
           getattr_status = FSAL_getattrs(phandle_dirsrc, pcontext, &attrlookup);
           if(getattr_status.major == ERR_FSAL_ACCESS)
             {
-              LogEvent(COMPONENT_CACHE_INODE, "cache_inode_rename: Stale FSAL File Handle detected for pentry = %p",
+              LogEvent(COMPONENT_CACHE_INODE,
+                       "cache_inode_rename: Stale FSAL File Handle detected for pentry = %p",
                        pentry_dirsrc);
 
               if(cache_inode_kill_entry(pentry_dirsrc, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
-                LogCrit(COMPONENT_CACHE_INODE, "cache_inode_rename: Could not kill entry %p, status = %u",
-                           pentry_dirsrc, kill_status);
+                LogCrit(COMPONENT_CACHE_INODE,
+                        "cache_inode_rename: Could not kill entry %p, status = %u",
+                        pentry_dirsrc, kill_status);
             }
 
           getattr_status = FSAL_getattrs(phandle_dirdest, pcontext, &attrlookup);
           if(getattr_status.major == ERR_FSAL_ACCESS)
             {
-              LogEvent(COMPONENT_CACHE_INODE, "cache_inode_rename: Stale FSAL File Handle detected for pentry = %p",
+              LogEvent(COMPONENT_CACHE_INODE,
+                       "cache_inode_rename: Stale FSAL File Handle detected for pentry = %p",
                        pentry_dirdest);
 
               if(cache_inode_kill_entry(pentry_dirdest, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
-                LogCrit(COMPONENT_CACHE_INODE,"cache_inode_rename: Could not kill entry %p, status = %u",
-                           pentry_dirdest, kill_status);
+                LogCrit(COMPONENT_CACHE_INODE,
+                        "cache_inode_rename: Could not kill entry %p, status = %u",
+                        pentry_dirdest, kill_status);
             }
 
           *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -520,8 +526,9 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
   else
     {
       LogDebug(COMPONENT_CACHE_INODE,
-               "Rename (%p,%s)->(%p,%s) : moving entry", pentry_dirsrc,
-               poldname->name, pentry_dirdest, pnewname->name);
+               "Rename (%p,%s)->(%p,%s) : moving entry",
+               pentry_dirsrc, poldname->name,
+               pentry_dirdest, pnewname->name);
 
       /* Add the new entry */
       status = cache_inode_add_cached_dirent(pentry_dirdest,

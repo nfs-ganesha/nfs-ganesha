@@ -158,7 +158,8 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
          arg_PUTFH4.object.nfs_fh4_len);
 
   nfs4_sprint_fhandle(&arg_PUTFH4.object, outstr);
-  LogDebug(COMPONENT_NFS_V4, "NFS4_OP_PUTFH CURRENTFH BEFORE: File handle = %s", outstr);
+  LogDebug(COMPONENT_NFS_V4,
+           "NFS4_OP_PUTFH CURRENTFH BEFORE: File handle = %s", outstr);
 
   /* If the filehandle is not pseudo hs file handle, get the entry related to it, otherwise use fake values */
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))

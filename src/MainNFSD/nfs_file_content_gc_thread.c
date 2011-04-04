@@ -140,7 +140,8 @@ int file_content_gc_manage_entry(LRU_entry_t * plru_entry, void *addparam)
                                                  &cache_content_status)) !=
      CACHE_CONTENT_SUCCESS)
     {
-      LogCrit(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : /!\\ Can't flush %s : error %d",
+      LogCrit(COMPONENT_MAIN,
+              "NFS FILE CONTENT GARBAGE COLLECTION : /!\\ Can't flush %s : error %d",
               pentry->local_fs_entry.cache_path_data, cache_content_status);
     }
 
@@ -166,8 +167,10 @@ void *file_content_gc_thread(void *IndexArg)
 
   SetNameFunction("file_content_gc_thread");
 
-  LogEvent(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : Starting GC thread");
-  LogDebug(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : my pthread id is %p",
+  LogEvent(COMPONENT_MAIN,
+           "NFS FILE CONTENT GARBAGE COLLECTION : Starting GC thread");
+  LogDebug(COMPONENT_MAIN,
+           "NFS FILE CONTENT GARBAGE COLLECTION : my pthread id is %p",
            (caddr_t) pthread_self());
 
   while(1)
@@ -175,7 +178,8 @@ void *file_content_gc_thread(void *IndexArg)
       /* Sleep until some work is to be done */
       sleep(nfs_param.cache_layers_param.dcgcpol.run_interval);
 
-      LogEvent(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : awakening...");
+      LogEvent(COMPONENT_MAIN,
+               "NFS FILE CONTENT GARBAGE COLLECTION : awakening...");
       for(pexport = nfs_param.pexportlist; pexport != NULL; pexport = pexport->next)
         {
           if(pexport->options & EXPORT_OPTION_USE_DATACACHE)
@@ -234,7 +238,8 @@ void *file_content_gc_thread(void *IndexArg)
 	    strncpy(logfile_arg, "STDOUTLOG", MAXPATHLEN);
 	    break;
 	  default:
-	    LogCrit(COMPONENT_MAIN, "Could not figure out the proper -L option for emergency cache flush thread.");
+	    LogCrit(COMPONENT_MAIN,
+	            "Could not figure out the proper -L option for emergency cache flush thread.");
 	  }
       else
 	strncpy(logfile_arg, fcc_log_path, MAXPATHLEN); /* config variable */
@@ -253,10 +258,12 @@ void *file_content_gc_thread(void *IndexArg)
         strncat(command, " -S 3", 2 * MAXPATHLEN);      /* Sync Only */
 
       if((command_stream = popen(command, "r")) == NULL)
-        LogCrit(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : /!\\ Cannot lauch command %s",
+        LogCrit(COMPONENT_MAIN,
+                "NFS FILE CONTENT GARBAGE COLLECTION : /!\\ Cannot lauch command %s",
                 command);
       else
-        LogEvent(COMPONENT_MAIN, "NFS FILE CONTENT GARBAGE COLLECTION : I launched command %s",
+        LogEvent(COMPONENT_MAIN,
+                 "NFS FILE CONTENT GARBAGE COLLECTION : I launched command %s",
                  command);
 
       pclose(command_stream);

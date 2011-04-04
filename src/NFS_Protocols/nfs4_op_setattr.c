@@ -203,11 +203,10 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
                  && ((data->pexport->options & EXPORT_OPTION_NOSGID) ==
                      EXPORT_OPTION_NOSGID)))
             {
-              LogEvent(COMPONENT_NFS_V4,
-                                "Setattr denied because setuid or setgid bit is disabled in configuration file."
-                                " setuid=%d, setgid=%d",
-                                sattr.mode & FSAL_MODE_SUID ? 1 : 0,
-                                sattr.mode & FSAL_MODE_SGID ? 1 : 0);
+              LogInfo(COMPONENT_NFS_V4,
+                      "Setattr denied because setuid or setgid bit is disabled in configuration file. setuid=%d, setgid=%d",
+                      sattr.mode & FSAL_MODE_SUID ? 1 : 0,
+                      sattr.mode & FSAL_MODE_SGID ? 1 : 0);
               res_SETATTR4.status = NFS4ERR_PERM;
               return res_SETATTR4.status;
             }

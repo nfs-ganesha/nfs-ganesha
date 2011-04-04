@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  *
  * \file    cache_inode_open_close.c
@@ -185,7 +185,8 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
 #endif
       pentry->object.file.open_fd.openflags = openflags;
 
-      LogDebug(COMPONENT_CACHE_INODE, "cache_inode_open: pentry %p: lastop=0, fileno = %d, openflags = %d",
+      LogDebug(COMPONENT_CACHE_INODE,
+               "cache_inode_open: pentry %p: lastop=0, fileno = %d, openflags = %d",
                pentry, pentry->object.file.open_fd.fileno, (int) openflags);
     }
 
@@ -198,7 +199,8 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
     {
       if(cache_inode_gc_fd(pclient, pstatus) != CACHE_INODE_SUCCESS)
         {
-          LogCrit(COMPONENT_CACHE_INODE_GC, "FAILURE performing FD garbage collection");
+          LogCrit(COMPONENT_CACHE_INODE_GC,
+                  "FAILURE performing FD garbage collection");
           return *pstatus;
         }
     }
@@ -218,7 +220,7 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
  * @param pname       [IN]  name of the file to be opened in the parent directory
  * @param pentry_file [IN]  file entry to be opened
  * @param pclient     [IN]  ressource allocated by the client for the nfs management.
- * @param openflags   [IN]  flags to be used to open the file 
+ * @param openflags   [IN]  flags to be used to open the file
  * @param pcontent    [IN]  FSAL operation context
  * @pstatus           [OUT] returned status.
  *
@@ -286,7 +288,8 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
   if(pentry_file->object.file.open_fd.last_op == 0
      || pentry_file->object.file.open_fd.fileno == 0)
     {
-      LogDebug(COMPONENT_FSAL, "cache_inode_open_by_name: pentry %p: lastop=0", pentry_file);
+      LogDebug(COMPONENT_FSAL,
+               "cache_inode_open_by_name: pentry %p: lastop=0", pentry_file);
 
       /* Keep coherency with the cache_content */
       if(pentry_file->object.file.pentry_content != NULL)
@@ -367,8 +370,9 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
       pentry_file->object.file.open_fd.last_op = time(NULL);
       pentry_file->object.file.open_fd.openflags = openflags;
 
-      LogDebug(COMPONENT_FSAL, "cache_inode_open_by_name: pentry %p: fd=%u", pentry_file,
-             pentry_file->object.file.open_fd.fileno);
+      LogDebug(COMPONENT_FSAL,
+               "cache_inode_open_by_name: pentry %p: fd=%u",
+               pentry_file, pentry_file->object.file.open_fd.fileno);
 
     }
 
@@ -381,7 +385,8 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
     {
       if(cache_inode_gc_fd(pclient, pstatus) != CACHE_INODE_SUCCESS)
         {
-          LogCrit(COMPONENT_CACHE_INODE_GC, "FAILURE performing FD garbage collection");
+          LogCrit(COMPONENT_CACHE_INODE_GC,
+                  "FAILURE performing FD garbage collection");
           return *pstatus;
         }
     }
@@ -434,9 +439,10 @@ cache_inode_status_t cache_inode_close(cache_entry_t * pentry,
      (pentry->object.file.open_fd.fileno > (int)(pclient->max_fd_per_thread)))
     {
 
-      LogDebug(COMPONENT_CACHE_INODE, "cache_inode_close: pentry %p, fileno = %d, lastop=%d ago",
-             pentry, pentry->object.file.open_fd.fileno,
-             (int)(time(NULL) - pentry->object.file.open_fd.last_op));
+      LogDebug(COMPONENT_CACHE_INODE,
+               "cache_inode_close: pentry %p, fileno = %d, lastop=%d ago",
+               pentry, pentry->object.file.open_fd.fileno,
+               (int)(time(NULL) - pentry->object.file.open_fd.last_op));
 
 #ifdef _USE_MFSL
       fsal_status = MFSL_close(&(pentry->object.file.open_fd.mfsl_fd), &pclient->mfsl_context, NULL);

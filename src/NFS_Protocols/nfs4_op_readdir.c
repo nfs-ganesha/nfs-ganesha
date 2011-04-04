@@ -163,8 +163,9 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
   estimated_num_entries = maxcount / sizeof(entry4);    /* Estimated_num_entries is probably far too big */
 
   LogFullDebug(COMPONENT_NFS_V4,
-      "--- nfs4_op_readdir ---> dircount=%lu maxcount=%lu arg_cookie=%"PRIu64" cookie=%d estimated_num_entries=%u",
-       dircount, maxcount, arg_READDIR4.cookie, cookie, estimated_num_entries);
+               "--- nfs4_op_readdir ---> dircount=%lu maxcount=%lu arg_cookie=%"
+               PRIu64" cookie=%d estimated_num_entries=%u",
+               dircount, maxcount, arg_READDIR4.cookie, cookie, estimated_num_entries);
 
   /* Do not use a cookie of 1 or 2 (reserved values) */
   if(cookie == 1 || cookie == 2)
@@ -303,8 +304,9 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
           else
             entry_nfs_array[i].cookie = end_cookie + 2;
 
-          LogFullDebug(COMPONENT_NFS_V4, " === nfs4_op_readdir ===>   i=%d name=%s cookie=%"PRIu64,
-                 i, dirent_array[i].name.name, entry_nfs_array[i].cookie);
+          LogFullDebug(COMPONENT_NFS_V4,
+                       " === nfs4_op_readdir ===>   i=%d name=%s cookie=%"PRIu64,
+                       i, dirent_array[i].name.name, entry_nfs_array[i].cookie);
 
           /* Get the pentry for the object's attributes and filehandle */
           if((pentry = cache_inode_lookup(dir_pentry,

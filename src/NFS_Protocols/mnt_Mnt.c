@@ -126,7 +126,8 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
 
   if(parg->arg_mnt == NULL)
     {
-      LogCrit(COMPONENT_NFSPROTO, "MOUNT: NULL path passed as Mount argument !!!");
+      LogCrit(COMPONENT_NFSPROTO,
+              "MOUNT: NULL path passed as Mount argument !!!");
       return NFS_REQ_DROP;
     }
 
@@ -178,7 +179,8 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
 
   if(!p_current_item)
     {
-      LogCrit(COMPONENT_NFSPROTO, "MOUNT: Export entry %s not found", exportPath);
+      LogCrit(COMPONENT_NFSPROTO, "MOUNT: Export entry %s not found",
+              exportPath);
 
       /* entry not found. */
       /* @todo : not MNT3ERR_NOENT => ok */
@@ -242,7 +244,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
         }
 
       LogEvent(COMPONENT_NFSPROTO,
-           "MOUNT: Performance warning: Export entry is not cached");
+               "MOUNT: Performance warning: Export entry is not cached");
       if(FSAL_IS_ERROR(FSAL_lookupPath(&fsal_path, pcontext, pfsal_handle, NULL)))
         {
           switch (preq->rq_vers)

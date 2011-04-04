@@ -195,7 +195,8 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                         pentry =
                             pentry_parent->object.dir_begin.pdir_data->dir_entries[i].
                             pentry;
-                        LogFullDebug(COMPONENT_CACHE_INODE, "Cache Hit detected (dir_begin)");
+                        LogFullDebug(COMPONENT_CACHE_INODE,
+                                     "Cache Hit detected (dir_begin)");
                         break;
                       }
                 }
@@ -223,7 +224,8 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                         /* Entry was found */
                         pentry =
                             pdir_chain->object.dir_cont.pdir_data->dir_entries[i].pentry;
-                        LogFullDebug(COMPONENT_CACHE_INODE, "Cache Hit detected (dir_cont)");
+                        LogFullDebug(COMPONENT_CACHE_INODE,
+                                     "Cache Hit detected (dir_cont)");
                         break;
                       }
                 }
@@ -281,8 +283,8 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
           else
             {
               LogDebug(COMPONENT_CACHE_INODE,
-                              "cache_inode_lookup chose to bypass FSAL and trusted his cache for name=%s",
-                              pname->name);
+                       "cache_inode_lookup chose to bypass FSAL and trusted his cache for name=%s",
+                       pname->name);
               fsal_status.major = ERR_FSAL_NOENT;
               fsal_status.minor = ENOENT;
             }
@@ -306,14 +308,15 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                 {
                   cache_inode_status_t kill_status;
 
-                  LogEvent(COMPONENT_CACHE_INODE, "cache_inode_lookup: Stale FSAL File Handle detected for pentry = %p",
-                       pentry_parent);
+                  LogEvent(COMPONENT_CACHE_INODE,
+                           "cache_inode_lookup: Stale FSAL File Handle detected for pentry = %p",
+                           pentry_parent);
 
                   if(cache_inode_kill_entry(pentry_parent, ht, pclient, &kill_status) !=
                      CACHE_INODE_SUCCESS)
                     LogCrit(COMPONENT_CACHE_INODE,
-                        "cache_inode_pentry_parent: Could not kill entry %p, status = %u",
-                         pentry_parent, kill_status);
+                            "cache_inode_pentry_parent: Could not kill entry %p, status = %u",
+                            pentry_parent, kill_status);
 
                   *pstatus = CACHE_INODE_FSAL_ESTALE;
                 }
@@ -349,14 +352,15 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                     {
                       cache_inode_status_t kill_status;
 
-                      LogEvent(COMPONENT_CACHE_INODE, "cache_inode_lookup: Stale FSAL File Handle detected for pentry = %p",
-                           pentry_parent);
+                      LogEvent(COMPONENT_CACHE_INODE,
+                               "cache_inode_lookup: Stale FSAL File Handle detected for pentry = %p",
+                               pentry_parent);
 
                       if(cache_inode_kill_entry(pentry_parent, ht, pclient, &kill_status)
                          != CACHE_INODE_SUCCESS)
                         LogCrit(COMPONENT_CACHE_INODE,
-                            "cache_inode_pentry_parent: Could not kill entry %p, status = %u",
-                             pentry_parent, kill_status);
+                                "cache_inode_pentry_parent: Could not kill entry %p, status = %u",
+                                pentry_parent, kill_status);
 
                       *pstatus = CACHE_INODE_FSAL_ESTALE;
                     }

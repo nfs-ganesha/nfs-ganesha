@@ -309,15 +309,15 @@ int get_req_uid_gid(struct svc_req *ptr_req,
           gss_buffer_desc oidbuff;
 
           LogFullDebug(COMPONENT_RPCSEC_GSS,
-               "----> RPCSEC_GSS svc=%u RPCSEC_GSS_SVC_NONE=%u RPCSEC_GSS_SVC_INTEGRITY=%u RPCSEC_GSS_SVC_PRIVACY=%u",
-               gd->sec.svc, RPCSEC_GSS_SVC_NONE, RPCSEC_GSS_SVC_INTEGRITY,
-               RPCSEC_GSS_SVC_PRIVACY);
+                       "----> RPCSEC_GSS svc=%u RPCSEC_GSS_SVC_NONE=%u RPCSEC_GSS_SVC_INTEGRITY=%u RPCSEC_GSS_SVC_PRIVACY=%u",
+                       gd->sec.svc, RPCSEC_GSS_SVC_NONE, RPCSEC_GSS_SVC_INTEGRITY,
+                       RPCSEC_GSS_SVC_PRIVACY);
 
           memcpy(&ptr, (void *)gd->ctx + 4, 4);
           LogFullDebug(COMPONENT_RPCSEC_GSS,
-                 "----> Client=%s length=%u  Qop=%u established=%u gss_ctx_id=%p|%p",
-                 (char *)gd->cname.value, gd->cname.length, gd->established, gd->sec.qop,
-                 gd->ctx, ptr);
+                       "----> Client=%s length=%u  Qop=%u established=%u gss_ctx_id=%p|%p",
+                       (char *)gd->cname.value, gd->cname.length, gd->established, gd->sec.qop,
+                       gd->ctx, ptr);
 
           if((maj_stat = gss_oid_to_str(&min_stat, gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
             {
@@ -416,11 +416,13 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
     {
       LogEvent(COMPONENT_DISPATCH,
                "NFS DISPATCHER: FAILURE: Could not get credentials for (uid=%d,gid=%d), fsal error=(%d,%d)",
-               user_credentials->caller_uid, user_credentials->caller_gid, fsal_status.major, fsal_status.minor);
+               user_credentials->caller_uid, user_credentials->caller_gid,
+               fsal_status.major, fsal_status.minor);
       return FALSE;
     }
   else
-    LogDebug(COMPONENT_DISPATCH, "NFS DISPATCHER: FSAL Cred acquired for (uid=%d,gid=%d)",
+    LogDebug(COMPONENT_DISPATCH,
+             "NFS DISPATCHER: FSAL Cred acquired for (uid=%d,gid=%d)",
              user_credentials->caller_uid, user_credentials->caller_gid);
 
   return TRUE;

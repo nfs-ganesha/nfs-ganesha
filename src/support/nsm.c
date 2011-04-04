@@ -48,7 +48,8 @@ int nsm_monitor(char *host)
   clnt = clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
   if(!clnt)
     {
-      LogDebug(COMPONENT_NLM, "nsm_monitor can not monitor %s clnt_create returned NULL",
+      LogDebug(COMPONENT_NLM,
+               "nsm_monitor can not monitor %s clnt_create returned NULL",
                host);
       free(nsm_mon.mon_id.mon_name);
       free(nsm_mon.mon_id.my_id.my_name);
@@ -60,7 +61,8 @@ int nsm_monitor(char *host)
                   (xdrproc_t) xdr_sm_stat_res, (caddr_t) & res, tout);
   if(ret != RPC_SUCCESS)
     {
-      LogDebug(COMPONENT_NLM, "nsm_monitor can not monitor %s SM_MON ret %d",
+      LogDebug(COMPONENT_NLM,
+               "nsm_monitor can not monitor %s SM_MON ret %d",
                host, ret);
       free(nsm_mon.mon_id.mon_name);
       free(nsm_mon.mon_id.my_id.my_name);
@@ -69,7 +71,8 @@ int nsm_monitor(char *host)
     }
   if(res.res_stat != STAT_SUCC)
     {
-      LogDebug(COMPONENT_NLM, "nsm_monitor can not monitor %s SM_MON status %d",
+      LogDebug(COMPONENT_NLM,
+               "nsm_monitor can not monitor %s SM_MON status %d",
                host, res.res_stat);
       free(nsm_mon.mon_id.mon_name);
       free(nsm_mon.mon_id.my_id.my_name);
