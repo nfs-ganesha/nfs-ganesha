@@ -442,7 +442,3 @@
           dropped, causing client to infinite retry
 	- Add a new tool to find all the instances of LogXXX
 	- New LogInfo and LogWarn log level
-	- 
-
-        
-	
