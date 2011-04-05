@@ -1,7 +1,6 @@
 /*
  *
  * Copyright CEA/DAM/DIF  (2011)
- * contributor : bharrosh@panasas.com
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,18 +20,16 @@
  */
 
 /**
- * \file    pnfs.h
- * \author  $Author: Boaz $
- * \date    $Date: 2010/01/27 12:44:15 $
- * \brief   Management of the pNFS features.
+ * \file    fsal_pnfs_types.h
+ * \brief   Management of the pNFS features: FSAL/PNFS types.
  *
- * pnfs.h : Management of the pNFS features.
+ * fsal_pnfs_types.h : Management of the pNFS features: FSAL/PNFS types.
  *
  *
  */
 
-#ifndef _PNFS_H
-#define _PNFS_H
+#ifndef _FSAL_PNFS_TYPES_H
+#define _FSAL_PNFS_TYPES_H
 
 /* FIXME: These are all wrongly ganesha name-conventioned and definitions.
  * Will fix in next iterations.
@@ -65,34 +62,34 @@ typedef fsal_handle_t fsal_pnfs_file_t
 
 
 /* Basic pnfs in-memory types */
-struct pnfs_lo_segment {
+struct fsal_pnfs_lo_segment {
 	u32 lo_type;
 	u32 io_mode;
 	u64 offset;
 	u64 len;
 };
 
-struct pnfs_deviceid {
+struct fsal_pnfs_deviceid {
 	u64	sbid;			/* FSAL export_root unique ID */
 	u64	devid;			/* export_root-wide unique device ID */
 };
 
 /* LAYOUT GET OPERATION */
-struct pnfs_layoutget_arg {
+struct fsal_pnfs_layoutget_arg {
 	u64			lga_minlength;	/* minimum bytes requested */
 	u64			lga_sbid;	/* FSAL use this as the sbid
 						 * part of the device ID
 						 */
 };
 
-struct pnfs_layoutget_res {
+struct fsal_pnfs_layoutget_res {
 	/* request/response: At input this contains the Client's preferred range.
 	 * On return contains the range given. It should contain at least
 	 * offset..offset+lga_minlength.
 	 * io_mode: read maybe promoted to read/write
 	 * lo_type: Is the format of the layout that will be returned in @xdr.
 	 */
-	struct pnfs_lo_segment	lgr_seg;
+	struct fsal_pnfs_lo_segment	lgr_seg;
 
 	/* Should layout be returned before CLOSE */
 	bool			lgr_return_on_close;
@@ -104,22 +101,22 @@ struct pnfs_layoutget_res {
 };
 
 /* LAYOUT_COMMIT OPERATION */
-struct pnfs_layoutcommit_arg {
-	struct pnfs_lo_segment	lca_seg;
+struct fsal_pnfs_layoutcommit_arg {
+	struct fsal_pnfs_lo_segment	lca_seg;
 	u32			lca_reclaim;
 	u32			lca_newoffset;
 	u64			lca_last_wr; /* The highest byte written by client */
 	struct nfstime4		lca_mtime;   /* last modification time */
 };
 
-struct pnfs_layoutcommit_res {
+struct fsal_pnfs_layoutcommit_res {
 	u32			lcr_size_chg;	/* boolean is lcr_newsize set */
 	u64			lcr_newsize;	/* The new current file size */
 };
 
 
 /* LAYOUT_RETURN OPERATION */
-struct pnfs_layoutreturn_arg {
+struct fsal_pnfs_layoutreturn_arg {
 	/* The byte range and io_mode returned */
 	const struct pnfs_lo_segment lra_seg;
 	/* This cookie was handed out by the pnfs_layout_get call
@@ -135,40 +132,5 @@ struct pnfs_layoutreturn_arg {
 	/* The layout list of this file is now empty */
 	bool lra_is_last;
 };
-/* CB_LAYOUTRECALL facility implemented by NFS-GANESHA */
 
-/* TODO: this enum is from the nfs std */
-enum cb_recall_type {
-	CBT_FILE,
-	CBT_ALL,
-	CBT_ANY,
-};
-
-enum CBRL_ret {
-	CBRL_OK = 0, CBRL_NOT_FOUND,
-	CBRL_PROGRESS_MADE, CBRL_ENOMEM, CBRL_ERROR,
-};
-
-enum CBRL_search_flags {
-	SF_SINGLE_CLIENT = 0,
-	SF_ALL_CLIENTS_BUT = 1,
-	SF_SIMULATE_ONLY = 2,
-};
-
-struct cb_layoutrecall_arg {
-	enum recall_type 	cb_type;
-	struct pnfs_lo_segment	cb_seg;
-	nfs_client_id		cb_client;
-	pnfs_file_t		cb_file;
-	int 			cb_search_flags;
-	void 			*cb_recall_cookie;
-};
-
-/** pnfs_cb_layout_recall: filesystems which need to LAYOUT_RECALL an outstanding
-list of LAYOUTS, do to clients access conflicts or error conditions.
- */
-enum CBRL_ret pnfs_cb_layout_recall(fsal_pnfs_context_t fsal,
-				    struct cb_layoutrecall_arg *args);
-
-
-#endif                          /* _PNFS_H */
+#endif                          /* _FSAL_PNFS_TYPES_H */

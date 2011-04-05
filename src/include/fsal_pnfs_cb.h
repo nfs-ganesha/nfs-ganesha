@@ -1,7 +1,6 @@
 /*
  *
  * Copyright CEA/DAM/DIF  (2011)
- * contributor : bharrosh@panasas.com
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,18 +20,16 @@
  */
 
 /**
- * \file    pnfs.h
- * \author  $Author: Boaz $
- * \date    $Date: 2010/01/27 12:44:15 $
- * \brief   Management of the pNFS features.
+ * \file    fsal_pnfs_cb.h
+ * \brief   Management of the pNFS features: CB functions.
  *
- * pnfs.h : Management of the pNFS features.
+ * fsal_pnfs_cb.h : Management of the pNFS features: CB functions.
  *
  *
  */
 
-#ifndef _PNFS_H
-#define _PNFS_H
+#ifndef _FSAL_PNFS_CB_H
+#define _FSAL_PNFS_CB_H
 
 /* FIXME: These are all wrongly ganesha name-conventioned and definitions.
  * Will fix in next iterations.
@@ -171,4 +168,4 @@ enum CBRL_ret pnfs_cb_layout_recall(fsal_pnfs_context_t fsal,
 				    struct cb_layoutrecall_arg *args);
 
 
-#endif                          /* _PNFS_H */
+#endif                          /* _FSAL_PNFS_CB_H */
