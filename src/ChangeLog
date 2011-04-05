@@ -438,6 +438,11 @@
 	- FSAL_PROXY: the FSAL is no able to deal correctly when the remote server restarts
 	- Data Cache : a set of flushers threads has been added to the daemon, making it possible to 
           run the flush operations internally and no more as an external command.
+	- Bug Fix: FSAL error was not converted into a Cache_inode error, and thus was 
+          dropped, causing client to infinite retry
+	- Add a new tool to find all the instances of LogXXX
+	- New LogInfo and LogWarn log level
+	- 
 
         
 	
