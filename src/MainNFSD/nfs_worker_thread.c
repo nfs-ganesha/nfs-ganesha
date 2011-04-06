@@ -801,9 +801,9 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
           if(svc_sendreply
              (ptr_svc, pworker_data->pfuncdesc->xdr_encode_func, (caddr_t) & res_nfs) == FALSE)
             {
-              LogEvent(COMPONENT_DISPATCH,
+              LogDebug(COMPONENT_DISPATCH,
                        "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply");
-              svcerr_decode(ptr_svc);
+              svcerr_systemerr(ptr_svc);
             }
 
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
@@ -1235,9 +1235,9 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       /* encoding the result on xdr output */
       if(svc_sendreply(ptr_svc, pworker_data->pfuncdesc->xdr_encode_func, (caddr_t) & res_nfs) == FALSE)
         {
-          LogEvent(COMPONENT_DISPATCH,
+          LogDebug(COMPONENT_DISPATCH,
                    "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply");
-          svcerr_decode(ptr_svc);
+          svcerr_systemerr(ptr_svc);
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
           V(mutex_cond_xprt[ptr_svc->xp_fd]);
 #else
