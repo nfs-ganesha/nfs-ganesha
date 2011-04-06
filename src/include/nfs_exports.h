@@ -177,6 +177,7 @@ typedef struct exportlist__
   fsal_handle_t *proot_handle;  /* FSAL handle for the root of the file system */
 
   uid_t anonymous_uid;          /* root uid when no root access is available   */
+  gid_t anonymous_gid;          /* root uid when no root access is available   */
   unsigned int options;         /* avail. mnt options */
 
   unsigned char seckey[EXPORT_KEY_SIZE];        /* Checksum for FH validity */

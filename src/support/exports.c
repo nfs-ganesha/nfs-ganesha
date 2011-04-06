@@ -106,7 +106,8 @@ cache_content_client_t recover_datacache_client;
 #define CONF_EXPORT_MD_RO_ACCESS       "MDONLY_RO_Access"
 #define CONF_EXPORT_PSEUDO             "Pseudo"
 #define CONF_EXPORT_ACCESSTYPE         "Access_Type"
-#define CONF_EXPORT_ANON_ROOT          "Anonymous_root_uid"
+#define CONF_EXPORT_ANON_USER          "Anonymous_root_uid"
+#define CONF_EXPORT_ANON_GROUP         "Anonymous_gid"
 #define CONF_EXPORT_NFS_PROTO          "NFS_Protocols"
 #define CONF_EXPORT_TRANS_PROTO        "Transport_Protocols"
 #define CONF_EXPORT_SECTYPE            "SecType"
@@ -140,7 +141,7 @@ cache_content_client_t recover_datacache_client;
 
 #define FLAG_EXPORT_PSEUDO          0x00000010
 #define FLAG_EXPORT_ACCESSTYPE      0x00000020
-#define FLAG_EXPORT_ANON_ROOT       0x00000040
+#define FLAG_EXPORT_ANON_USER       0x00000040
 #define FLAG_EXPORT_NFS_PROTO       0x00000080
 #define FLAG_EXPORT_TRANS_PROTO     0x00000100
 #define FLAG_EXPORT_SECTYPE         0x00000200
@@ -162,6 +163,7 @@ cache_content_client_t recover_datacache_client;
 #define FLAG_EXPORT_USE_PNFS        0x02000000
 #define FLAG_EXPORT_ACCESS_LIST     0x04000000
 #define FLAG_EXPORT_ACCESSTYPE_LIST 0x08000000
+#define FLAG_EXPORT_ANON_GROUP      0x10000000
 
 /* limites for nfs_ParseConfLine */
 /* Used in BuildExportEntry() */
@@ -742,6 +744,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->clients.num_clients = 0;
   p_entry->access_type = ACCESSTYPE_RW;
   p_entry->anonymous_uid = (uid_t) ANON_UID;
+  p_entry->anonymous_gid = (gid_t) ANON_GID;
   p_entry->MaxOffsetWrite = (fsal_off_t) 0;
   p_entry->MaxOffsetRead = (fsal_off_t) 0;
   p_entry->MaxCacheSize = (fsal_off_t) 0;
@@ -1165,16 +1168,16 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_TRANS_PROTO;
 
         }
-      else if(!STRCMP(var_name, CONF_EXPORT_ANON_ROOT))
+      else if(!STRCMP(var_name, CONF_EXPORT_ANON_USER))
         {
 
           long int anon_uid;
           char *end_ptr;
 
           /* check if it has not already been set */
-          if((set_options & FLAG_EXPORT_ANON_ROOT) == FLAG_EXPORT_ANON_ROOT)
+          if((set_options & FLAG_EXPORT_ANON_USER) == FLAG_EXPORT_ANON_USER)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_ANON_ROOT);
+              DEFINED_TWICE_WARNING(CONF_EXPORT_ANON_USER);
               continue;
             }
 
@@ -1186,7 +1189,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid Anonymous_root_uid: \"%s\"",
+                      "NFS READ_EXPORT: ERROR: Invalid Anonymous_uid: \"%s\"",
                       var_value);
               err_flag = TRUE;
               continue;
@@ -1196,7 +1199,41 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           p_entry->anonymous_uid = (uid_t) anon_uid;
 
-          set_options |= FLAG_EXPORT_ANON_ROOT;
+          set_options |= FLAG_EXPORT_ANON_USER;
+
+        }
+      else if(!STRCMP(var_name, CONF_EXPORT_ANON_GROUP))
+        {
+
+          long int anon_gid;
+          char *end_ptr;
+
+          /* check if it has not already been set */
+          if((set_options & FLAG_EXPORT_ANON_GROUP) == FLAG_EXPORT_ANON_GROUP)
+            {
+              DEFINED_TWICE_WARNING(CONF_EXPORT_ANON_GROUP);
+              continue;
+            }
+
+          /* parse and check anon_uid */
+          errno = 0;
+
+          anon_gid = strtol(var_value, &end_ptr, 10);
+
+          if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ_EXPORT: ERROR: Invalid Anonymous_gid: \"%s\"",
+                      var_value);
+              err_flag = TRUE;
+              continue;
+            }
+
+          /* set anon_uid */
+
+          p_entry->anonymous_gid = (gid_t) anon_gid;
+
+          set_options |= FLAG_EXPORT_ANON_GROUP;
 
         }
       else if(!STRCMP(var_name, CONF_EXPORT_SECTYPE))
