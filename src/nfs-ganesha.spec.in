@@ -530,7 +530,7 @@ chkconfig --add nfs-ganesha-zfs
 
 
 %changelog
-* Mon Apr  4 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.0.5-1
+* Wed Apr  6 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.0.5-1
 - Using function daemon() to start the daemon in a cleaner way
 - Using gethostbyaddr_r to avoid contention when resolving address in nfs_ip_name.c
 - pNFS/file support has been added for LUSTRE
@@ -538,6 +538,9 @@ chkconfig --add nfs-ganesha-zfs
 - "stable_how" flag management has been remade in deep, including a new FSAL_sync call to every FSAL
 - FSAL_PROXY: the FSAL is no able to deal correctly when the remote server restarts
 - Data Cache : a set of flushers threads has been added to the daemon, making it possible to run the flush operations internally 
+- Bug Fix: FSAL error was not converted into a Cache_inode error, and thus was  dropped, causing client to infinite retry
+- Add a new tool to find all the instances of LogXXX
+- New LogInfo and LogWarn log level
 
 * Tue Jan 25 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.0.4-1
 - init.d scripts are now closer to LSB requirements
