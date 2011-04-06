@@ -65,6 +65,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <gpfs_fcntl.h>
 
 /*
  * labels in the config file
@@ -93,11 +94,13 @@
 
 #define OPENHANDLE_HANDLE_LEN 40
 #define OPENHANDLE_DRIVER_MAGIC     'O'
-#define OPENHANDLE_NAME_TO_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 0, struct name_handle_arg)
-#define OPENHANDLE_OPEN_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 1, struct open_arg)
-#define OPENHANDLE_LINK_BY_FD     _IOWR(OPENHANDLE_DRIVER_MAGIC, 2, struct link_arg)
-#define OPENHANDLE_READLINK_BY_FD _IOWR(OPENHANDLE_DRIVER_MAGIC, 3, struct readlink_arg)
-#define OPENHANDLE_STAT_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 4, struct stat_arg)
+#ifndef _USE_GPFS_INTERFACE
+#define KM_OPENHANDLE_NAME_TO_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 0, struct name_handle_arg)
+#define KM_OPENHANDLE_OPEN_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 1, struct open_arg)
+#define KM_OPENHANDLE_LINK_BY_FD     _IOWR(OPENHANDLE_DRIVER_MAGIC, 2, struct link_arg)
+#define KM_OPENHANDLE_READLINK_BY_FD _IOWR(OPENHANDLE_DRIVER_MAGIC, 3, struct readlink_arg)
+#define KM_OPENHANDLE_STAT_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 4, struct stat_arg)
+#endif // _USE_GPFS_INTERFACE
 #define OPENHANDLE_OFFSET_OF_FILEID (2 * sizeof(int))
 
 /**
@@ -116,6 +119,7 @@ struct file_handle
   unsigned char f_handle[OPENHANDLE_HANDLE_LEN];
 };
 
+#ifndef _USE_GPFS_INTERFACE
 /**
  * name_handle_arg: 
  * 
@@ -130,7 +134,7 @@ struct file_handle
  * descriptor.
  *
  */
-
+#if 0
 struct name_handle_arg
 {
   int dfd;
@@ -167,6 +171,8 @@ struct stat_arg
     struct file_handle *handle;
     struct stat64 *buf;
 };
+#endif
+#endif // _USE_GPFS_INTERFACE
 
 /** end of open by handle structures */
 
@@ -208,7 +214,6 @@ typedef struct
   /* Warning: This string is not currently filled in or used. */
   char mount_point[FSAL_MAX_PATH_LEN];
 
-  int open_by_handle_fd;
   int mount_root_fd;
   fsal_handle_t mount_root_handle;
   unsigned int fsid[2];
@@ -227,7 +232,7 @@ typedef struct
 
 typedef struct 
 {
-  char gpfs_mount_point[MAXPATHLEN];
+  int  use_kernel_module_interface;
   char open_by_handle_dev_file[MAXPATHLEN];
 } gpfsfs_specific_initinfo_t;
 

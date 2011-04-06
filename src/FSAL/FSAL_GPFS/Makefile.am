@@ -31,6 +31,7 @@ libfsalgpfs_la_SOURCES = fsal_access.c fsal_compat.c fsal_context.c	\
 	../../include/err_fsal.h					\
 	../../include/FSAL/FSAL_GPFS/fsal_types.h
 
+libfsalgpfs_la_LIBADD = -lgpfs
 
 new: clean all
 
