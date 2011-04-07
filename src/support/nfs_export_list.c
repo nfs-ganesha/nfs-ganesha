@@ -395,9 +395,11 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
     return FALSE;
 
   /* Do we have root access ? */
-  if((user_credentials->caller_uid == 0) && !(pexport_client->options & EXPORT_OPTION_ROOT))
+  /* Are we squashing _all_ users to the anonymous uid/gid ? */
+  if( ((user_credentials->caller_uid == 0)
+       && !(pexport_client->options & EXPORT_OPTION_ROOT))
+      || pexport->all_anonymous == TRUE)
     {
-      /* caller_uid = ANON_UID ; */
       user_credentials->caller_uid = pexport->anonymous_uid;
       user_credentials->caller_gid = pexport->anonymous_gid;
 
