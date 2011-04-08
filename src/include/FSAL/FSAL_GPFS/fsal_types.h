@@ -65,7 +65,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <gpfs_fcntl.h>
+#include <gpfs_nfs.h>
 
 /*
  * labels in the config file
