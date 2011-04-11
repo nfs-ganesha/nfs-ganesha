@@ -442,3 +442,7 @@
           dropped, causing client to infinite retry
 	- Add a new tool to find all the instances of LogXXX
 	- New LogInfo and LogWarn log level
+
+1.0.6   -
+        - Bug Fix: Bad memset in FSAL_HPSS::HPSSFSAL_lookup. Result was a segfault at init.
+

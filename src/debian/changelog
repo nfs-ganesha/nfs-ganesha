@@ -1,3 +1,8 @@
+nfs-ganesha (1.0.6-1) stable; urgency=low
+ * Bug Fix : bad memset in FSAL_HPSS:fsal_lookup.c
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Mon, 11 Apr 2011 12:36:00 +0200
+
 nfs-ganesha (1.0.5-1) stable; urgency=low
   * Using function daemon() to start the daemon in a cleaner way
   * Using gethostbyaddr_r to avoid contention when resolving address in
