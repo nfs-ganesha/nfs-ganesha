@@ -2,8 +2,16 @@ nfs-ganesha (1.0.5-1) stable; urgency=low
   * Using function daemon() to start the daemon in a cleaner way
   * Using gethostbyaddr_r to avoid contention when resolving address in
     nfs_ip_name.c
+  * pNFS/file support has been added for LUSTRE
+  * pNFS related sources were reorganized with a design closer to what is done with FSAL/MFSL
+  * "stable_how" flag management has been remade in deep, including a new FSAL_sync call to every FSAL
+  * FSAL_PROXY: the FSAL is no able to deal correctly when the remote server restarts
+  * Data Cache : a set of flushers threads has been added to the daemon, making it possible to run the flush operations internally 
+  * Bug Fix: FSAL error was not converted into a Cache_inode error, and thus was  dropped, causing client to infinite retry
+  * Add a new tool to find all the instances of LogXXX
+  * New LogInfo and LogWarn log level
 
- -- Philippe Deniel <philippe.deniel@cea.fr>  Mon, 31 Jan 2011 10:10:00 +0200
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Mon,  6 Apr 2011 12:36:00 +0200
 
 nfs-ganesha (1.0.4-1) stable; urgency=low
   * init.d scripts are now closer to LSB requirements

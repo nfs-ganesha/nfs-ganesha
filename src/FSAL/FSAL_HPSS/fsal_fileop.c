@@ -508,7 +508,7 @@ fsal_status_t HPSSFSAL_sync(hpssfsal_file_t * p_file_descriptor       /* IN */)
   if(rc)
     {
       LogEvent(COMPONENT_FSAL, "Error in fsync operation");
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_sync);
+      Return(hpss2fsal_error(errsv), errsv, INDEX_FSAL_sync);
     }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync);
