@@ -23,7 +23,7 @@
 # source function library
 . /etc/init.d/functions
 
-PATHPROG=/usr/bin/gpfs.ganesha.nfsd 
+PATHPROG=/usr/bin/gpfs.ganesha.nfsd
 LOGFILE=/var/log/nfs-ganesha.log
 #LOGFILE=SYSLOG
 #LOGFILE=STDERR
@@ -97,40 +97,40 @@ start() {
 		RETVAL=1
 		failure
 	        echo
-	        return $RETVAL	    
+	        return $RETVAL
 	fi
 
-	# Load the open-by-handle module
-	result=`modprobe open-by-handle`
-	if [ $result ]; then
-	        echo "Could not load the open-by-handle module. Make sure it is installed."
-		echo "Message returned from modprobe: $result"
-	        RETVAL=1
-	        failure
-	        echo
-	        return $RETVAL
-	fi;
+	# # Load the open-by-handle module
+	# result=`modprobe open-by-handle`
+	# if [ $result ]; then
+	#         echo "Could not load the open-by-handle module. Make sure it is installed."
+	# 	echo "Message returned from modprobe: $result"
+	#         RETVAL=1
+	#         failure
+	#         echo
+	#         return $RETVAL
+	# fi;
 
-	# Make sure open-by-handle loaded properly and give it time if needed
-	result=`grep openhandle_dev /proc/devices`
-	counter=0
-	while [ true ]; do
-	    if [[ ! $result ]]; then
-		if [ $counter -eq 10 ]; then
-    	                echo "Could not load the open-by-handle module. Make sure it is installed."
-			RETVAL=1
-			failure
-			echo
-			return $RETVAL
-		else
-			sleep .1
-			let counter+=1
-			result=`grep openhandle_dev /proc/devices`
-		fi
-	    else
-	        break
-	    fi
-	done
+	# # Make sure open-by-handle loaded properly and give it time if needed
+	# result=`grep openhandle_dev /proc/devices`
+	# counter=0
+	# while [ true ]; do
+	#     if [[ ! $result ]]; then
+	# 	if [ $counter -eq 10 ]; then
+    	#                 echo "Could not load the open-by-handle module. Make sure it is installed."
+	# 		RETVAL=1
+	# 		failure
+	# 		echo
+	# 		return $RETVAL
+	# 	else
+	# 		sleep .1
+	# 		counter = $counter + 1
+	# 		result=`grep openhandle_dev /proc/devices`
+	# 	fi
+	#     else
+	#         break
+	#     fi
+	# done
 
 	# start the statd daemon
 	echo -n $"Starting statd: "
@@ -167,10 +167,10 @@ start() {
         echo  -n $"Starting $prog: "
 	daemon $PATHPROG $OPTIONS
 	RETVAL=$?
-	
-        # Sleeping here gives Ganesha an adequate amount of time to 
+
+        # Sleeping here gives Ganesha an adequate amount of time to
         # initialize the server and fail if anything goes wrong.
-        # Without this sleep and the server will be in the midst of 
+        # Without this sleep and the server will be in the midst of
         # initializing. It may fail immediately after this script runs.
 	sleep 2
 
@@ -183,7 +183,7 @@ start() {
 	fi
 	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/gpfs.ganesha.nfsd
 
-        echo 
+        echo
         return $RETVAL
 }
 
@@ -224,37 +224,37 @@ stop() {
 		 fi
 	done
 
-	# Unload open-by-handle module
-	result=`rmmod open_by_handle`
-	if [ $result ]; then
-	        echo "GPFS Ganesha stopped but failed to unload open-by-handle module."
-	        echo "Message printed by rmmod: $result"
-                RETVAL=1
-                failure
-		echo
-		return $RETVAL	    
-	fi
+	# # Unload open-by-handle module
+	# result=`rmmod open_by_handle`
+	# if [ $result ]; then
+	#         echo "GPFS Ganesha stopped but failed to unload open-by-handle module."
+	#         echo "Message printed by rmmod: $result"
+        #         RETVAL=1
+        #         failure
+	# 	echo
+	# 	return $RETVAL
+	# fi
 
-	# Wait until the module has unloaded
-	result=`grep openhandle_dev /proc/devices`
-	counter=0
-	while [ true ]; do
-	    if [[ $result ]]; then
-		if [ $counter -eq 10 ]; then
-    	                echo "Could not unload the open-by-handle module."
-			RETVAL=1
-			failure
-			echo
-			return $RETVAL
-		else
-			sleep .1
-			let counter+=1
-			result=`grep openhandle_dev /proc/devices`
-		fi
-	    else
-	        break
-	    fi
-	done
+	# # Wait until the module has unloaded
+	# result=`grep openhandle_dev /proc/devices`
+	# counter=0
+	# while [ true ]; do
+	#     if [[ $result ]]; then
+	# 	if [ $counter -eq 10 ]; then
+    	#                 echo "Could not unload the open-by-handle module."
+	# 		RETVAL=1
+	# 		failure
+	# 		echo
+	# 		return $RETVAL
+	# 	else
+	# 		sleep .1
+	# 		let counter+=1
+	# 		result=`grep openhandle_dev /proc/devices`
+	# 	fi
+	#     else
+	#         break
+	#     fi
+	# done
 	sleep 1
         echo
         return $RETVAL
@@ -292,15 +292,15 @@ ganesha_status() {
     if [ -n "$RQUOTAD" ] ; then
     	status rpc.rquotad
     fi
-    if grep -q openhandle_dev /proc/devices; then
-	    echo "Open-by-handle module is loaded."
-	    if [ ! $RETVAL -eq 1 ]; then
-		RETVAL=0
-	    fi
-    else
-	    echo "Open-by-handle module is not loaded."	
-	    RETVAL=1
-    fi
+    # if grep -q openhandle_dev /proc/devices; then
+    # 	    echo "Open-by-handle module is loaded."
+    # 	    if [ ! $RETVAL -eq 1 ]; then
+    # 		RETVAL=0
+    # 	    fi
+    # else
+    # 	    echo "Open-by-handle module is not loaded."
+    # 	    RETVAL=1
+    # fi
     return $RETVAL
 }
 
