@@ -1821,7 +1821,7 @@ void *worker_thread(void *IndexArg)
         {
           /* Failed init */
           LogMajor(COMPONENT_DISPATCH,
-                   "NFS  WORKER #%d: Error regreshing MFSL context", index);
+                   "NFS  WORKER #%lu: Error regreshing MFSL context", index);
           exit(1);
         }
 

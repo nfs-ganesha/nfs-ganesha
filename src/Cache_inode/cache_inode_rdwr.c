@@ -266,8 +266,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                           "Read/Write Operation through cache failed with status %d (renew process failed)",
                           cache_content_status);
 
-		  /** @todo exit on error here */
-
+		  /* Will go to the end of the function on the error clause with cache_content_status describing the error */
                 }
               else
                 {

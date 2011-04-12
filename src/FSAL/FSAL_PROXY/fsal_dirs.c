@@ -168,7 +168,7 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
      Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
    }
 
-  LogFullDebug(COMPONENT_FSAL, "---> Readdir Offset=%llu sizeof(entry4)=%u sizeof(fsal_dirent_t)=%u \n",
+  LogFullDebug(COMPONENT_FSAL, "---> Readdir Offset=%llu sizeof(entry4)=%lu sizeof(fsal_dirent_t)=%lu \n",
                (unsigned long long)start_position.data, sizeof(entry4), sizeof(fsal_dirent_t));
 
   /* >> retrieve root handle filehandle here << */
