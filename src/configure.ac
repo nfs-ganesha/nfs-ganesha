@@ -525,8 +525,23 @@ case $FSAL in
                 ;;
 	GPFS)
 		AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
+		AC_CHECK_HEADERS([gpfs_nfs.h], [], [AC_MSG_ERROR(missing gpfs include files)])
+		AC_CHECK_DECL([gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs_ganesha function)], [[#include <gpfs_nfs.h>]])
+		AC_CHECK_DECLS([OPENHANDLE_NAME_TO_HANDLE, OPENHANDLE_OPEN_BY_HANDLE, OPENHANDLE_LINK_BY_FD,
+		                OPENHANDLE_READLINK_BY_FD, OPENHANDLE_STAT_BY_HANDLE],
+		               [],
+		               [AC_MSG_ERROR(missing Open By Handle function)],
+		               [[#include <gpfs_nfs.h>]])
+		if [[  $PNFS != "NONE" ]] ; then
+			AC_CHECK_DECLS([OPENHANDLE_LAYOUT_TYPE, OPENHANDLE_GET_DEVICEINFO, OPENHANDLE_GET_DEVICEITER,
+			                OPENHANDLE_LAYOUT_GET, OPENHANDLE_LAYOUT_RETURN],
+			               [],
+			               [AC_MSG_ERROR(missing Layout function)],
+			               [[#include <gpfs_nfs.h>]])
+		fi
+		AC_CHECK_LIB([gpfs], [gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs library)])
 		FSAL_CFLAGS=
-                FSAL_LDFLAGS=""
+		FSAL_LDFLAGS=""
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_GPFS/libfsalgpfs.la"
 		FS_NAME="gpfs"
 		;;
