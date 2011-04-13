@@ -315,7 +315,7 @@ int get_req_uid_gid(struct svc_req *ptr_req,
 
           memcpy(&ptr, (void *)gd->ctx + 4, 4);
           LogFullDebug(COMPONENT_RPCSEC_GSS,
-                       "----> Client=%s length=%u  Qop=%u established=%u gss_ctx_id=%p|%p",
+                       "----> Client=%s length=%lu  Qop=%u established=%u gss_ctx_id=%p|%p",
                        (char *)gd->cname.value, gd->cname.length, gd->established, gd->sec.qop,
                        gd->ctx, ptr);
 
@@ -326,7 +326,7 @@ int get_req_uid_gid(struct svc_req *ptr_req,
             }
           else
             {
-              LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Client mech=%s len=%u",
+              LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Client mech=%s len=%lu",
                            (char *)oidbuff.value, oidbuff.length);
 
               /* Release the string */

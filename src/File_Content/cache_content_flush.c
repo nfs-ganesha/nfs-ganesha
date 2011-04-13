@@ -102,7 +102,7 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
       *pstatus = CACHE_CONTENT_BAD_CACHE_INODE_ENTRY;
 
       LogMajor(COMPONENT_CACHE_CONTENT,
-                        "cache_content_new_entry: cannot get handle");
+                        "cache_content_flush: cannot get handle");
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_FLUSH] += 1;
 
@@ -249,7 +249,7 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
       *pstatus = CACHE_CONTENT_BAD_CACHE_INODE_ENTRY;
 
       LogMajor(COMPONENT_CACHE_CONTENT,
-                        "cache_content_new_entry: cannot get handle");
+                        "cache_content_refresh: cannot get handle");
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_REFRESH] += 1;
 
@@ -276,7 +276,7 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
       *pstatus = CACHE_CONTENT_FSAL_ERROR;
 
       LogMajor(COMPONENT_CACHE_CONTENT,
-                        "cache_content_new_entry: could'nt stat on %s, errno=%u(%s)",
+                        "cache_content_refresh: could'nt stat on %s, errno=%u(%s)",
                         pentry->local_fs_entry.cache_path_data, errno, strerror(errno));
 
       /* stat */

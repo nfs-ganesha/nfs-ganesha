@@ -530,6 +530,8 @@ chkconfig --add nfs-ganesha-zfs
 
 
 %changelog
+* Mon Apr 11 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.0.6-1
+- Bug Fix : bad memset in FSAL_HPSS:fsal_lookup.c
 * Wed Apr  6 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.0.5-1
 - Using function daemon() to start the daemon in a cleaner way
 - Using gethostbyaddr_r to avoid contention when resolving address in nfs_ip_name.c
