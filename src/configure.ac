@@ -225,12 +225,6 @@ fi
 AM_CONDITIONAL(USE_DS, test "$enable_ds" = "yes")
 
 
-# IPv6
-GA_ENABLE_AM_CONDITION([ipv6],[enable IPv6 support (via IPv6)], [USE_TIRPC_IPV6])
-
-if test "$enable_ipv6" == "yes"; then 
-	AC_DEFINE(_USE_TIRPC_IPV6,1,[enable IPv6 support via TIRPC])
-fi
 
 # libnfsidmap
 GA_DISABLE_AM_CONDITION([nfsidmap],[disable the use of libnfsidmap], [USE_NO_NFSIDMAP])
@@ -358,6 +352,15 @@ AM_CONDITIONAL(USE_GSSRPC, test "$RPCAL" = "GSSRPC" )
 AM_CONDITIONAL(USE_TIRPC,  test "$RPCAL" = "TIRPC" )
 AM_CONDITIONAL(USE_ONCRPC, test "$RPCAL" = "ONCRPC" )
 
+# IPv6
+GA_ENABLE_AM_CONDITION([ipv6],[enable IPv6 support (via IPv6)], [USE_TIRPC_IPV6])
+
+if test "$enable_ipv6" == "yes"; then 
+	AC_DEFINE(_USE_TIRPC_IPV6,1,[enable IPv6 support via TIRPC])
+	if test "$RPCAL" != "TIRPC" ; then
+		AC_MSG_ERROR([IPv6 support is available only when --with-rpcal=TIRPC is used])
+	fi
+fi
 
 # PNFS switch argument (default is nothing)
 AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|SPNFS_LIKE|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
