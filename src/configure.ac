@@ -787,6 +787,10 @@ AC_CONFIG_FILES([include/Makefile
 		 MFSL/MFSL_AIO/Makefile                 
 		 MFSL/MFSL_PNFS_FILE/Makefile                 
 		 MFSL/MFSL_PROXY_RPCSECGSS/Makefile                 
+                 RPCAL/Makefile
+                 RPCAL/ONCRPC/Makefile
+                 RPCAL/GSSRPC/Makefile
+                 RPCAL/TIRPC/Makefile
                  MainNFSD/Makefile
                  cmdline_tools/Makefile
                  shell/Makefile
