@@ -183,15 +183,6 @@ GA_PROG_NETSNMP_CONFIG
 
 # Features options
 
-# RPSEC_GSS from krb5 distribution
-GA_ENABLE_AM_CONDITION([gssrpc],[enable GSSRPC security management (from MIT kerberos implementation)],[USE_GSSRPC])
-
-if test "$enable_gssrpc" == "yes"; then
-        AC_DEFINE(_USE_GSSRPC,1,[enable security management with GSSRPC])
-	# ==> Add here libraries needed for GSSRPC
-        AC_CHECK_LIB([gssapi_krb5], [gss_import_name], [AC_DEFINE( _HAVE_GSSAPI,1,[enable GSSAPI support] ) ], [AC_MSG_ERROR( [GSSAPI could not be found...] ) ] )
-        AC_CHECK_LIB([gssrpc], [gssrpc_authunix_create_default], [AC_DEFINE( _HAVE_GSSRPC,1,[enable GSSRPC support] ) ], [AC_MSG_ERROR( [GSSRPC_KRB5 could not be found...] ) ] )
-fi
 
 # Build FSAL's dynamic lib
 GA_ENABLE_AM_CONDITION([buildsharedfsal],[when enable, build the FSAL as both static and dynamic library],[BUILD_SHARED_FSAL])
@@ -233,15 +224,6 @@ if test "$enable_ds" == "yes"; then
 fi
 AM_CONDITIONAL(USE_DS, test "$enable_ds" = "yes")
 
-
-
-# TI-RPC
-GA_ENABLE_AM_CONDITION([tirpc],[enable TIRPC support],[USE_TIRPC])
-
-if test "$enable_tirpc" == "yes"; then
-	AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
-	AC_CHECK_LIB([tirpc], [svc_tli_create], [AC_DEFINE( _HAVE_TIRPC,1,[enable TIRPC support] ) ], [AC_MSG_ERROR( [TI-RPC could not be found...] ) ] )
-fi
 
 # IPv6
 GA_ENABLE_AM_CONDITION([ipv6],[enable IPv6 support (via IPv6)], [USE_TIRPC_IPV6])
@@ -368,6 +350,14 @@ AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  
 
 AM_CONDITIONAL(USE_NFS4_1, test "$NFS4_MINOR" = "1")
 AM_CONDITIONAL(USE_NFS4_0, test "$NFS4_MINOR" = "0")
+
+# RPCAL switch argument (default is ONCRPC)
+AC_ARG_WITH( [rpcal], AS_HELP_STRING([--with-rpcal=ONCRPC|GSSRPC|TIRPC (default=ONCRPC)], [specify the type of RPCAL to be used] ), 
+              RPCAL="$withval", RPCAL="ONCRPC")
+AM_CONDITIONAL(USE_GSSRPC, test "$RPCAL" = "GSSRPC" )
+AM_CONDITIONAL(USE_TIRPC,  test "$RPCAL" = "TIRPC" )
+AM_CONDITIONAL(USE_ONCRPC, test "$RPCAL" = "ONCRPC" )
+
 
 # PNFS switch argument (default is nothing)
 AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|SPNFS_LIKE|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
@@ -649,6 +639,26 @@ case $MFSL in
 		;;
 	*)
 		AC_MSG_ERROR([This MFSL is not supported yet])
+	
+esac
+
+case $RPCAL in
+	"ONCRPC")
+		;;
+	"GSSRPC")
+                AC_DEFINE(_USE_GSSRPC,1,[enable security management with GSSRPC])
+	        # ==> Add here libraries needed for GSSRPC
+                AC_CHECK_LIB([gssapi_krb5], [gss_import_name], [AC_DEFINE( _HAVE_GSSAPI,1,[enable GSSAPI support] ) ], 	
+			     [AC_MSG_ERROR( [GSSAPI could not be found...] ) ] )
+                AC_CHECK_LIB([gssrpc], [gssrpc_authunix_create_default], [AC_DEFINE( _HAVE_GSSRPC,1,[enable GSSRPC support] ) ], 
+			      [AC_MSG_ERROR( [GSSRPC_KRB5 could not be found...] ) ] )
+		;;
+	"TIRPC")
+	        AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
+	        AC_CHECK_LIB([tirpc], [svc_tli_create], [AC_DEFINE( _HAVE_TIRPC,1,[enable TIRPC support] ) ], [AC_MSG_ERROR( [TI-RPC could not be found...] ) ] )
+		;;
+	*)
+		AC_MSG_ERROR([This RPCAL is not supported])
 	
 esac
 
