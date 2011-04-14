@@ -57,10 +57,22 @@ if ERROR_INJECTION
 libsupport_la_SOURCES += err_inject.c
 endif
 
+TESTS = $(check_SCRIPTS)
+
+check_SCRIPTS = test_libsupport_nlm.sh
+
+check_PROGRAMS                  = test_support
+
+test_support_SOURCES    	= test_support.c
+test_support_LDADD    	= libsupport.la ../Log/liblog.la ../NFS_Protocols/libnfsproto.la ../BuddyMalloc/libBuddyMalloc.la ../XDR/libnfs_mnt_xdr.la
+
 
 new: clean all 
 
 doc:
 	doxygen ./doxygen.conf
 	rep=`grep OUTPUT_DIRECTORY doxygen.conf | grep share  | awk -F '=' '{print $$2;}'` ; cd $$rep/latex ; make
+
+testrunner:  $(check_PROGRAMS)
+	../tools/maketest -x support -f ./maketest.conf > ../testres-xml/support.xml
 
