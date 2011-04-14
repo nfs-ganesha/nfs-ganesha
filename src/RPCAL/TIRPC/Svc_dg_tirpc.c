@@ -57,7 +57,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <netconfig.h>
-#include <netdir.h>
+//#include <netdir.h>
 #include <err.h>
 
 #include <rpc/rpc.h>

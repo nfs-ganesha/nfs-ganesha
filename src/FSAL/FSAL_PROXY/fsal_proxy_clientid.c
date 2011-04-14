@@ -355,7 +355,7 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
       if(resnfs4.status != NFS4_OK)
         LogCrit(COMPONENT_FSAL,
                 "FSAL_PROXY: /!\\ NFSv4 error %u occured when trying to new clienitf %llu",
-                resnfs4.status, fsal_clientid);
+                resnfs4.status, (long long unsigned int)fsal_clientid);
 
     }                           /* while( 1 ) */
 }                               /* FSAL_proxy_clientid_renewer_thread */

@@ -524,16 +524,16 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
 
       memcpy(&buff64, gc->gc_ctx.value, gc->gc_ctx.length);
       LogFullDebug(COMPONENT_RPCSEC_GSS,
-                   "Call to Gssrpc__svcauth_gss ----> Client=%s length=%u (GD: established=%u ctx=%llx) (RQ:sock=%u) (GC: Proc=%u Svc=%u ctx=%u|%llx)",
+                   "Call to Gssrpc__svcauth_gss ----> Client=%s length=%lu (GD: established=%u ctx=%llx) (RQ:sock=%u) (GC: Proc=%u Svc=%u ctx=%lu|%llx)",
                    (char *)gd->cname.value,
                    gd->cname.length,
                    gd->established,
-                   buff64_2,
+                   (long long unsigned int)buff64_2,
                    rqst->rq_xprt->xp_sock,
                    gc->gc_proc,
                    gc->gc_svc,
                    gc->gc_ctx.length,
-                   buff64);
+                   (long long unsigned int)buff64);
     }
 
   retstat = AUTH_FAILED;
@@ -601,7 +601,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
 
       memcpy(&buff64, gr.gr_ctx.value, gr.gr_ctx.length);
       LogFullDebug(COMPONENT_RPCSEC_GSS,
-                   "Call to Gssrpc__svcauth_gss ----> Client=%s length=%u (GD: established=%u) (RQ:sock=%u) (GR: maj=%u min=%u ctx=%u|0x%llx)",
+                   "Call to Gssrpc__svcauth_gss ----> Client=%s length=%lu (GD: established=%u) (RQ:sock=%u) (GR: maj=%u min=%u ctx=%lu|0x%llx)",
                    (char *)gd->cname.value,
                    gd->cname.length,
                    gd->established,
@@ -609,7 +609,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
                    gr.gr_major,
                    gr.gr_minor,
                    gr.gr_ctx.length,
-                   buff64);
+                   (long long unsigned int)buff64);
 
       call_stat = svc_sendreply(rqst->rq_xprt, xdr_rpc_gss_init_res, (caddr_t) & gr);
 
@@ -626,11 +626,11 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
           memcpy((char *)&gss_ctx_data, (char *)gd->ctx, sizeof(gss_ctx_data));
           if(!Gss_ctx_Hash_Set(&gss_ctx_data, gd))
             LogCrit(COMPONENT_RPCSEC_GSS,
-                    "Could not add context 0x%llx to hashtable",  buff64);
+                    "Could not add context 0x%llx to hashtable", (long long unsigned int)buff64);
           else
             LogFullDebug(COMPONENT_RPCSEC_GSS,
                          "Call to Gssrpc_svcauth_gss : gss context 0x%llx added to hash",
-                         buff64);
+                         (long long unsigned int)buff64);
         }
 
       break;

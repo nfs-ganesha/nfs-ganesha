@@ -59,7 +59,6 @@ typedef int cache_content_status_t;
 typedef struct cache_content_gc_policy__
 {
   time_t lifetime;
-  time_t inactivity_before_flush;
   time_t emergency_grace_delay;
   unsigned int run_interval;
   unsigned int nb_call_before_gc;

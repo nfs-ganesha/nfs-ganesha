@@ -2479,7 +2479,7 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
   else
     {
       psockaddr_in6 = (struct sockaddr_in6 *)pssaddr;
-      if(isFulldebug(COMPONENT_DISPATCH))
+     // if(isFulldebug(COMPONENT_DISPATCH))
         {
           char txtaddrv6[100];
 
@@ -2501,7 +2501,7 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
                  (char *)&two_bytes_all_1, 2))
         {
           /* Convert IP address into a string for wild character access checks. */
-          inet_ntop(psockaddr_in->sin6_family, &psockaddr_in->sin6_addr,
+          inet_ntop(psockaddr_in6->sin6_family, &psockaddr_in6->sin6_addr,
                     ip6string, INET6_ADDRSTRLEN);
           if(ip6string == NULL)
             {
