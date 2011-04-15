@@ -129,11 +129,12 @@ int test_access(char *addr, char *hostname,
   return export_check_result;
 }
 
-void expected(int expected_result, int export_check_result) {
+int expected(int expected_result, int export_check_result) {
   if (export_check_result == expected_result)
-    return;
-  else
+    return 0;
+  else {
       printf("\tFAIL: ");
+  }
   
   if (export_check_result == EXPORT_PERMISSION_DENIED)
     {
@@ -184,6 +185,7 @@ void expected(int expected_result, int export_check_result) {
     {
       printf("Not sure what to expect\n");
     }
+  return 1;
 }
 
 int predict(char *addr, char *hostname, int root, int read, int write,
@@ -306,7 +308,8 @@ int main(int argc, char *argv[])
   exportlist_t pexport;
   int root, read, write, mdonly_read, mdonly_write,
     root_user, uid, operation, export_check_result,
-    predicted_result, mount, nonroot, accesstype;
+    predicted_result, mount, nonroot, accesstype,
+    return_status=0;
   bool_t proc_makes_write;
   char *ip = "192.0.2.10";
   //  char *match_str = "192.0.2.10";
@@ -376,7 +379,8 @@ int main(int argc, char *argv[])
 					       mdonly_read, mdonly_write, uid, operation);
 		    
 		    /* report on what was expected vs what we received */
-		    expected(predicted_result, export_check_result);
+		    if (expected(predicted_result, export_check_result) == 1)
+		      return_status = 1;
 		  }
             }
   
@@ -453,8 +457,17 @@ int main(int argc, char *argv[])
 					       accesstype, uid, operation);
 	      
 	      /* report on what was expected vs what we received */
-	      expected(predicted_result, export_check_result);
+	      if (expected(predicted_result, export_check_result) == 1)
+		return_status = 1;
 	    }
       }
-  return 0;
+
+  printf("----------------------------------------------------\n");
+  if (!return_status)
+    printf("ALL ACCESS LIST TYPE TESTS COMPLETED SUCCESSFULLY!!\n");
+  else
+    printf("ACCESS LIST TYPE TESTS FAILED!!\n");
+  printf("----------------------------------------------------\n");
+
+  return return_status;
 }

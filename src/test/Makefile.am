@@ -1,5 +1,7 @@
 noinst_LTLIBRARIES            = liboutils_profiling.la 
 
+TESTS = $(check_PROGRAMS)
+
 check_PROGRAMS                = test_access_list_types test_anon_support test_mesure_temps test_glist
 
 liboutils_profiling_la_SOURCES = MesureTemps.c ../include/MesureTemps.h
