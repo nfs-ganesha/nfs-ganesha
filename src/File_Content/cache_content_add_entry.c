@@ -189,7 +189,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
   pfc_pentry->local_fs_entry.opened_file.last_op = 0;
 
   /* Dump the inode entry to the index file */
-  if(cache_inode_dump_content(pfc_pentry->local_fs_entry.cache_path_index, pentry_inode)
+  if(cache_inode_dump_content(pfc_pentry->local_fs_entry.cache_path_index, pentry_inode) 
      != CACHE_INODE_SUCCESS)
     {
       ReleaseToPool(pfc_pentry, &pclient->content_pool);

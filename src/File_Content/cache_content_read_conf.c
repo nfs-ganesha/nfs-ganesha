@@ -282,10 +282,6 @@ cache_content_status_t cache_content_read_conf_gc_policy(config_file_t in_config
         {
           ppolicy->lifetime = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "Inactivity_Before_Flush"))
-        {
-          ppolicy->inactivity_before_flush = atoi(key_value);
-        }
       else if(!strcasecmp(key_name, "Runtime_Interval"))
         {
           ppolicy->run_interval = atoi(key_value);

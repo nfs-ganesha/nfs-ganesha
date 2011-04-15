@@ -267,7 +267,7 @@ cache_content_status_t cache_content_rdwr(cache_content_entry_t * pentry,
       *pstatus = CACHE_CONTENT_BAD_CACHE_INODE_ENTRY;
 
       LogMajor(COMPONENT_CACHE_CONTENT,
-                        "cache_content_new_entry: cannot get handle");
+                        "cache_content_rdwr: cannot get handle");
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[statindex] += 1;
 

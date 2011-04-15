@@ -1142,7 +1142,7 @@ int nfs_Init_svc()
 
           /* Trying to acquire a credentials for checking name's validity */
           if(!Svcauth_gss_acquire_cred())
-            {`
+            {
           LogCrit(COMPONENT_DISPATCH,
                   "NFS EXIT: Cannot acquire credentials for principal %s",
                   nfs_param.krb5_param.principal);

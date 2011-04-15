@@ -3287,7 +3287,6 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       nfserror = NFS4ERR_INVAL;
       break;
 
-    case CACHE_INODE_FSAL_ERROR:
     case CACHE_INODE_INVALID_ARGUMENT:
       nfserror = NFS4ERR_PERM;
       break;
@@ -3308,6 +3307,7 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       nfserror = NFS4ERR_NOENT;
       break;
 
+    case CACHE_INODE_FSAL_ERROR:
     case CACHE_INODE_INSERT_ERROR:
     case CACHE_INODE_LRU_ERROR:
     case CACHE_INODE_HASH_SET_ERROR:
