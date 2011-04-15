@@ -63,4 +63,5 @@ test_mesure_temps_LDADD      = liboutils_profiling.la
 
 test_glist_SOURCES           = test_glist.c 
 
-
+check-am-local:
+	make -C $(top_builddir)
