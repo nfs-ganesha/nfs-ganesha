@@ -79,6 +79,8 @@ pthread_mutex_t *mutex_cond_xprt;
 pthread_cond_t *condvar_xprt;
 int *etat_xprt;
 
+SVCXPRT **Xports;
+
 extern rw_lock_t Svc_fd_lock;
 extern fd_set Svc_fdset;
 
@@ -446,7 +448,7 @@ struct rpc_msg *msg;
 
   if((rc =
       fridgethr_get(&sockmgr_thrid, rpc_tcp_socket_manager_thread,
-                     (void *)(newxprt->xp_fd))) != 0)
+                     (void *)((unsigned long)newxprt->xp_fd))) != 0)
     return FALSE;
 
   return (FALSE);               /* there is never an rpc msg to be processed */
@@ -878,3 +880,55 @@ bool_t __svc_clean_idle(fd_set * fds, int timeout, bool_t cleanblock)
   V_w(&Svc_fd_lock);
   return ncleaned > 0 ? TRUE : FALSE;
 }
+
+/*
+ * Create a copy of xprt. Currently, sendsize and recvsize of XDR is
+ * hard-coded. This should be fixed.
+ */
+SVCXPRT *Svcxprt_copycreate()
+{
+  register SVCXPRT *xprt;
+  register struct cf_conn *cd;
+
+  xprt = (SVCXPRT *) Mem_Alloc(sizeof(SVCXPRT));
+  if(xprt == (SVCXPRT *) NULL)
+    {
+      goto done;
+    }
+
+  cd = (struct cf_conn *) Mem_Alloc(sizeof(struct cf_conn));
+  if(cd == (struct cf_conn *) NULL)
+    {
+      Mem_Free((char *)xprt);
+      xprt = (SVCXPRT *) NULL;
+      goto done;
+    }
+
+  cd->strm_stat = XPRT_IDLE;
+  xdrrec_create(&(cd->xdrs), 32768, 32768, (caddr_t) xprt, Read_vc, Write_vc);
+
+  xprt->xp_p1 = (caddr_t) cd;
+  xprt->xp_verf.oa_base = cd->verf_body;
+
+  done:
+    return (xprt);
+ }
+
+/*
+ * Duplicate xprt from original to copy.
+ */
+void Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
+{
+  register struct cf_conn *cd_copy = (struct cf_conn *)(xprt_copy->xp_p1);
+  register struct cf_conn *cd_orig = (struct cf_conn *)(xprt_orig->xp_p1);
+
+  memcpy(xprt_copy, xprt_orig, sizeof(SVCXPRT));
+  xprt_copy->xp_p1 = (caddr_t) cd_copy;
+  xprt_copy->xp_verf.oa_base = cd_copy->verf_body;
+
+  cd_copy->strm_stat = cd_orig->strm_stat;
+  cd_copy->x_id = cd_orig->x_id;
+  memcpy(cd_copy->verf_body, cd_orig->verf_body, MAX_AUTH_BYTES);
+}
+
+

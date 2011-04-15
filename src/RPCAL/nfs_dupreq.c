@@ -287,7 +287,7 @@ int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt,
   dupreq_entry_t *dupreq;
 
   /* Get the socket address for the key */
-  phostaddr = svc_getcaller(xprt);
+  phostaddr = (struct sockaddr_in *)svc_getcaller(xprt);
   memcpy((char *)&pdupkey.addr, (char *)phostaddr,
          sizeof(pdupkey.addr));
   pdupkey.xid = xid;
@@ -563,7 +563,7 @@ int nfs_dupreq_add_not_finished(long xid,
     return DUPREQ_INSERT_MALLOC_ERROR;
 
   /* Get the socket address for the key */
-  phostaddr = svc_getcaller(xprt);
+  phostaddr = (struct sockaddr_in *)svc_getcaller(xprt);
   memcpy((char *)&pdupkey->addr, (char *)phostaddr,
          sizeof(pdupkey->addr));
 
@@ -665,7 +665,7 @@ int nfs_dupreq_finish(long xid,
   dupreq_key_t pdupkey;
 
   /* Get the socket address for the key */
-  phostaddr = svc_getcaller(xprt);
+  phostaddr = (struct sockaddr_in *)svc_getcaller(xprt);
   memcpy((char *)&pdupkey.addr, (char *)phostaddr,
          sizeof(pdupkey.addr));
   pdupkey.xid = xid;
@@ -717,7 +717,7 @@ nfs_res_t nfs_dupreq_get(long xid, struct svc_req *ptr_req, SVCXPRT *xprt, int *
   dupreq_key_t pdupkey;
 
   /* Get the socket address for the key */
-  phostaddr = svc_getcaller(xprt);
+  phostaddr = (struct sockaddr_in *)svc_getcaller(xprt);
   memcpy((char *)&pdupkey.addr, (char *)phostaddr,
          sizeof(pdupkey.addr));
   pdupkey.xid = xid;

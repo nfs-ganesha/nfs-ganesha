@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
   int root, read, write, mdonly_read, mdonly_write,
     root_user, uid, operation, export_check_result,
     predicted_result, mount, nonroot, accesstype,
-    squashall, gid;
+    squashall, gid, return_status=0;
   bool_t proc_makes_write;
   char *ip = "192.0.2.10";
   //  char *match_str = "192.0.2.10";
@@ -230,19 +230,31 @@ int main(int argc, char *argv[])
                       user_credentials = test_access(ip, hostname, ht_ip_stats, ip_stats_pool,
                                                         &pexport, uid, gid, operation);
                       if (user_credentials.caller_uid == INVALID_UID || user_credentials.caller_gid == INVALID_GID)
-                        printf(" ... FAIL - INVALID uid/gid\n");
+			{
+			  printf(" ... FAIL - INVALID uid/gid\n");
+			  return_status = 1;
+			}
                       else if (squashall && (user_credentials.caller_uid != ANON_UID || user_credentials.caller_gid != ANON_GID))
-                        printf(" ... FAIL [%d,%d] - uid/gid should be anonymous when squashall is activated.\n",
-			       user_credentials.caller_uid, user_credentials.caller_gid);
+			{
+			  printf(" ... FAIL [%d,%d] - uid/gid should be anonymous when squashall is activated.\n",
+				 user_credentials.caller_uid, user_credentials.caller_gid);
+			  return_status = 1;
+			}
                       else if (operation != MOUNT && !squashall && uid == 0 && !root &&
                                (read || write || mdonly_read || mdonly_write) &&
                                (user_credentials.caller_uid != ANON_UID || user_credentials.caller_gid != ANON_GID))
-                        printf(" ... FAIL [%d,%d] - Root user should be anonymous when access is obtained through nonroot client entry.\n",
-			       user_credentials.caller_uid, user_credentials.caller_gid);
+			{
+			  printf(" ... FAIL [%d,%d] - Root user should be anonymous when access is obtained through nonroot client entry.\n",
+				 user_credentials.caller_uid, user_credentials.caller_gid);
+			  return_status = 1;
+			}
                       else if (operation != MOUNT && !squashall && uid == 0 && root &&
 			       (user_credentials.caller_uid == ANON_UID || user_credentials.caller_gid == ANON_GID))
-                        printf(" ... FAIL [%d,%d] - Root user should not be anonymous when access is obtained through root client entry.\n",
-			       user_credentials.caller_uid, user_credentials.caller_gid);
+			{
+			  printf(" ... FAIL [%d,%d] - Root user should not be anonymous when access is obtained through root client entry.\n",
+				 user_credentials.caller_uid, user_credentials.caller_gid);
+			  return_status = 1;
+			}
                       else
                         printf(" ... PASS\n");
                     }
@@ -331,21 +343,40 @@ int main(int argc, char *argv[])
 		  else if (operation == WRITE && accesstype == MDONLY_WRITE)
 		    printf(" ... PASS - uid/gid doesn't matter when access is denied\n");
                   else if (user_credentials.caller_uid == INVALID_UID || user_credentials.caller_gid == INVALID_GID)
-                    printf(" ... FAIL INVALID uid/gid\n");
+		    {
+		      printf(" ... FAIL INVALID uid/gid\n");
+		      return_status = 1;
+		    }
                   else if (squashall && (user_credentials.caller_uid != ANON_UID || user_credentials.caller_gid != ANON_GID))
-                    printf(" ... FAIL [%d,%d] Squash all was active but uid/gid was not anonymous.\n",
-			   user_credentials.caller_uid, user_credentials.caller_gid);
+		    {
+		      printf(" ... FAIL [%d,%d] Squash all was active but uid/gid was not anonymous.\n",
+			     user_credentials.caller_uid, user_credentials.caller_gid);
+		      return_status = 1;
+		    }
                   else if (!squashall && uid == 0 && !root && nonroot &&
 			   (user_credentials.caller_uid != ANON_UID || user_credentials.caller_gid != ANON_GID))
-                    printf(" ... FAIL [%d,%d] Root user gained access through nonroot client entry, should be anonymous.\n",
-			   user_credentials.caller_uid, user_credentials.caller_gid);
+		    {
+		      printf(" ... FAIL [%d,%d] Root user gained access through nonroot client entry, should be anonymous.\n",
+			     user_credentials.caller_uid, user_credentials.caller_gid);
+		      return_status = 1;
+		    }
                   else if (!squashall && uid == 0 && root &&
 			   (user_credentials.caller_uid == ANON_UID || user_credentials.caller_gid == ANON_GID))
-                    printf(" ... FAIL [%d,%d] Root user gained permission through root client entry, should not be anonymous.\n",
-			   user_credentials.caller_uid, user_credentials.caller_gid);
+		    {
+		      printf(" ... FAIL [%d,%d] Root user gained permission through root client entry, should not be anonymous.\n",
+			     user_credentials.caller_uid, user_credentials.caller_gid);
+		      return_status = 1;
+		    }
                   else
                     printf(" ... PASS\n");
                 }
           }
-  return 0;
+
+  printf("----------------------------------------------------\n");
+  if (!return_status)
+    printf("ALL ANONYMOUS SUPPORT TESTS COMPLETED SUCCESSFULLY!!\n");
+  else
+    printf("ANONYMOUS SUPPORT TESTS FAILED!!\n");
+  printf("----------------------------------------------------\n");
+  return return_status;
 }

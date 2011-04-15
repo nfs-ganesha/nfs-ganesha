@@ -168,7 +168,7 @@ fsal_status_t HPSSFSAL_lookup(hpssfsal_handle_t * parent_directory_handle,      
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_lookup);
 
       /* set output handle */
-      memset( (char *)&(object_handle), 0, sizeof( hpssfsal_handle_t ) ) ;
+      memset( (char *)object_handle, 0, sizeof( hpssfsal_handle_t ) ) ;
       object_handle->data.obj_type = hpss2fsal_type(obj_hdl.Type);
       object_handle->data.ns_handle = obj_hdl;
 
