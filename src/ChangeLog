@@ -445,4 +445,5 @@
 
 1.0.6   -
         - Bug Fix: Bad memset in FSAL_HPSS::HPSSFSAL_lookup. Result was a segfault at init.
+	- Code reorganization : subdirectory RPCAL has been added
 
