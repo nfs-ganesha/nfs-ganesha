@@ -31,10 +31,35 @@
 #ifndef _FSAL_PNFS_TYPES_H
 #define _FSAL_PNFS_TYPES_H
 
+/** PNFS layout mode */
+typedef enum fsal_iomode__
+{
+  FSAL_IOMODE_READ       = 1,
+  FSAL_IOMODE_READ_WRITE = 2,
+  FSAL_IOMODE_ANY        = 3,
+  FSAL_IOMODE_WRITE      = 4 
+} fsal_iomode_t ;
+
+typedef enum fsal_layout_type__
+{
+  FSAL_LAYOUT_FILES = 0x1,
+  FSAL_LAYOUT_OSD   = 0x2,
+  FSAL_LAYOUT_BLOCK = 0x3
+} fsal_layout_type_t ;
+
+typedef struct fsal_layout__ /** @todo : make a better definition of this */
+{
+   unsigned int length ;
+   char data[1024] ;
+} fsal_layout_t ;
+
+typedef fsal_handle_t fsal_pnfs_file_t ;
+
 /* FIXME: These are all wrongly ganesha name-conventioned and definitions.
  * Will fix in next iterations.
  */
 
+#if 0
 /* Philippe: xdr.h (attached) introduces the xdr_stream_t struct and proposed
              helpers that facilitate in xdr encoding decoding.
              I'm putting this one just to make things easier on the eye,
@@ -51,30 +76,6 @@
  */
 typedef fsal_op_context_t fsal_pnfs_context_t
 
-/* It is assumed that a pnfs_file_t has a back pointer to it's
-   parent fsal_pnfs_context_t.
-*/
-typedef fsal_handle_t fsal_pnfs_file_t
-
-/* This is the main switch. If false returned, Ganesha will not enable pnfs
- * export extensions.
- */
-
-
-/* Basic pnfs in-memory types */
-struct fsal_pnfs_lo_segment {
-	u32 lo_type;
-	u32 io_mode;
-	u64 offset;
-	u64 len;
-};
-
-struct fsal_pnfs_deviceid {
-	u64	sbid;			/* FSAL export_root unique ID */
-	u64	devid;			/* export_root-wide unique device ID */
-};
-
-/* LAYOUT GET OPERATION */
 struct fsal_pnfs_layoutget_arg {
 	u64			lga_minlength;	/* minimum bytes requested */
 	u64			lga_sbid;	/* FSAL use this as the sbid
@@ -132,5 +133,7 @@ struct fsal_pnfs_layoutreturn_arg {
 	/* The layout list of this file is now empty */
 	bool lra_is_last;
 };
+
+#endif
 
 #endif                          /* _FSAL_PNFS_TYPES_H */

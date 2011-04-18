@@ -164,7 +164,7 @@ typedef struct fsal_time__
 } fsal_time_t;       /**< time */
 
 /** Behavior for init values */
-typedef enum fsal_initflag_t
+typedef enum fsal_initflag__
 {
   FSAL_INIT_FS_DEFAULT = 0,     /**< keep FS default value */
   FSAL_INIT_FORCE_VALUE,        /**< force a value */

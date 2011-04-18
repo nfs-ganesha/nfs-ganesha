@@ -57,6 +57,8 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "fsal_types.h"
+#include "fsal_pnfs.h"
+#include "fsal_pnfs_types.h"
 #include "log_macros.h"
 #include "config_parsing.h"
 #include "nfs23.h"
@@ -123,11 +125,11 @@ typedef union pnfs_file__
 } pnfs_file_t;
 #endif
 
-int pnfs_service_getdevicelist( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout) ;
-int pnfs_service_getdeviceinfo( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout) ;
-int pnfs_service_layoutcommit( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout)  ;
-int pnfs_service_layoutreturn( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout)  ;
-int pnfs_service_layoutget( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout)     ;
+nfsstat4 pnfs_service_getdevicelist( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout) ;
+nfsstat4 pnfs_service_getdeviceinfo( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout) ;
+nfsstat4 pnfs_service_layoutcommit( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout)  ;
+nfsstat4 pnfs_service_layoutreturn( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout)  ;
+nfsstat4 pnfs_service_layoutget( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout)     ;
 
 
 #endif                          /* _PNFS_H */

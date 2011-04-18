@@ -20,6 +20,7 @@
 #include <signal.h>
 
 #include "stuff_alloc.h"
+#include "nfs4.h"
 
 #ifdef _USE_GSSRPC
 #include <gssrpc/rpc.h>
@@ -44,7 +45,7 @@
  *
  */
 
-int pnfs_lustre_encode_layoutget( char * buffin, unsigned int * plenin, char *buff, unsigned int *plen)
+nfsstat4 pnfs_lustre_encode_layoutget( char * buffin, unsigned int * plenin, char *buff, unsigned int *plen)
 {
   unsigned int offset = 0;
   uint32_t int32 = 0;

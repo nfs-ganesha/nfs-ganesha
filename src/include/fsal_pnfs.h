@@ -41,7 +41,7 @@
 
 #include "fsal_pnfs_types.h"
 
-bool FSAL_is_pnfs_enabled(fsal_pnfs_context_t context);
+// bool FSAL_is_pnfs_enabled(fsal_pnfs_context_t context);
 
 /** FSAL_pnfs_layout_get: Retrieve and encode a layout for pnfs_file_t, onto the xdr
  *                  stream.
@@ -67,10 +67,19 @@ bool FSAL_is_pnfs_enabled(fsal_pnfs_context_t context);
  *           pnfs_blocks_encode_layout(), or pnfs_objects_encode_layout()
  *           with the passed xdr, and a FSAL supplied layout information.
  */
-enum nfsstat4 FSAL_pnfs_layout_get (pnfs_file_t *file, xdr_stream_t *xdr,
-			       const struct pnfs_layoutget_arg *arg,
-			       struct pnfs_layoutget_res *res);
+//enum nfsstat4 __FSAL_pnfs_layout_get (pnfs_file_t *file, xdr_stream_t *xdr,
+//			       const struct pnfs_layoutget_arg *arg,
+//				struct pnfs_layoutget_res *res);
 
+fsal_status_t FSAL_pnfs_layout_get( fsal_pnfs_file_t  * pfsal_pnfs_file, /* IN */ 
+				    fsal_iomode_t       iomode,       /* IN */
+				    fsal_off_t          offset,       /* IN */
+				    fsal_size_t         length,       /* IN */
+				    fsal_size_t         minlength,    /* IN */
+				    fsal_layout_t     * pfsal_layout, /* INOUT */
+				    fsal_op_context_t * pcontext ) ;  /* IN */
+
+#if 0
 /*TODO: Support return of multple segments, @res will be an array with an
  *      additional array_size returned.
  */
@@ -112,6 +121,7 @@ enum nfsstat4 FSAL_pnfs_layout_commit (pnfs_file_t *file, xdr_stream_t *xdr,
 enum nfsstat4 FSAL_pnfs_layout_return (pnfs_file_t *file, xdr_stream_t *xdr,
 				      const struct pnfs_layoutreturn_arg *args);
 
+#endif
 
 #endif /* _FSAL_PNFS_H */
 
