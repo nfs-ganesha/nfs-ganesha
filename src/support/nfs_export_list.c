@@ -370,10 +370,13 @@ int get_req_uid_gid(struct svc_req *ptr_req,
   return TRUE;
 }
 
-void nfs_check_anon(exportlist_client_entry_t * pexport_client,
-                    exportlist_t * pexport,
-                    struct user_cred *user_credentials)
+int nfs_check_anon(exportlist_client_entry_t * pexport_client,
+		   exportlist_t * pexport,
+		   struct user_cred *user_credentials)
 {
+  if (user_credentials == NULL)
+    return FALSE;
+
   /* Do we have root access ? */
   /* Are we squashing _all_ users to the anonymous uid/gid ? */
   if( ((user_credentials->caller_uid == 0)
@@ -387,6 +390,8 @@ void nfs_check_anon(exportlist_client_entry_t * pexport_client,
       user_credentials->caller_glen = 0 ;
       user_credentials->caller_garray = NULL ;
     }
+
+  return TRUE;
 }
 
 /**
