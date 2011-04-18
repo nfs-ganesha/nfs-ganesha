@@ -64,6 +64,10 @@ if USE_NLM
 noinst_HEADERS += nlm4.h nlm_util.h nlm_list.h 
 endif
 
+if USE_PNFS
+noinst_HEADERS +=  fsal_pnfs.h fsal_pnfs_types.h
+endif 
+
 if USE_FSAL_FUSE
 include_HEADERS = ganesha_fuse_wrap.h
 endif
