@@ -369,6 +369,8 @@ AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|SPNFS_LIKE|NONE (de
 AM_CONDITIONAL(USE_PNFS_NONE, 		test "$PNFS" = "NONE" )
 AM_CONDITIONAL(USE_PNFS_PARALLEL_FS,	test "$PNFS" = "PARALLEL_FS" )
 AM_CONDITIONAL(USE_PNFS_SPNFS_LIKE, 	test "$PNFS" = "SPNFS_LIKE" )
+AM_CONDITIONAL(USE_PNFS_OSD, 	        test "$PNFS" = "OSD" )
+AM_CONDITIONAL(USE_PNFS_BLOCK, 	        test "$PNFS" = "BLOCK" )
 
 AM_CONDITIONAL(USE_PNFS,                 test "$PNFS" != "NONE" ) 
 
@@ -676,6 +678,16 @@ case $PNFS in
 	"SPNFS_LIKE")
 		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
 		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable spnfsd-like NFSv4.1/pNFS support])
+		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		;;
+	"OSD")
+		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
+		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable OSD based NFSv4.1/pNFS support])
+		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		;;
+	"BLOCK")
+		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
+		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable Block Device based NFSv4.1/pNFS support])
 		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
 		;;
 	*)
