@@ -8,16 +8,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  *
  */
 
@@ -35,10 +35,10 @@
 #include <strings.h>
 
 #include "stuff_alloc.h"
-#include "nlm_list.h"
+#include "nfs_proto_functions.h"
+#include "nlm_util.h"
 #include "nlm_async.h"
 #include "nlm4.h"
-#include "nfs_proto_functions.h"
 
 static pthread_t nlm_async_thread;
 static pthread_mutex_t nlm_async_queue_mutex;
@@ -53,6 +53,59 @@ typedef struct
   void *arg;
   struct glist_head glist;
 } nlm_queue_t;
+
+nlm_async_res_t *nlm_build_async_res_nlm4(char *caller_name, nfs_res_t * pres)
+{
+  nlm_async_res_t *arg;
+  arg = (nlm_async_res_t *) Mem_Alloc(sizeof(nlm_async_res_t));
+  if(arg != NULL)
+    {
+      arg->caller_name = Str_Dup(caller_name);
+      if(arg->caller_name == NULL)
+        {
+          Mem_Free(arg);
+          return NULL;
+        }
+      memcpy(&(arg->pres), pres, sizeof(nfs_res_t));
+      if(!copy_netobj(&arg->pres.res_nlm4.cookie, &pres->res_nlm4.cookie))
+        {
+          Mem_Free(arg);
+          return NULL;
+        }
+   }
+  return arg;
+}
+
+nlm_async_res_t *nlm_build_async_res_nlm4test(char *caller_name, nfs_res_t * pres)
+{
+  nlm_async_res_t *arg;
+  arg = (nlm_async_res_t *) Mem_Alloc(sizeof(nlm_async_res_t));
+  if(arg != NULL)
+    {
+      arg->caller_name = Str_Dup(caller_name);
+      if(arg->caller_name == NULL)
+        {
+          Mem_Free(arg);
+          return NULL;
+        }
+      memcpy(&(arg->pres), pres, sizeof(nfs_res_t));
+      if(!copy_netobj(&arg->pres.res_nlm4test.cookie, &pres->res_nlm4test.cookie))
+        {
+          Mem_Free(arg);
+          return NULL;
+        }
+      else if(pres->res_nlm4test.test_stat.stat == NLM4_DENIED)
+        {
+          if(!copy_netobj(&arg->pres.res_nlm4test.test_stat.nlm4_testrply_u.holder.oh, &pres->res_nlm4test.test_stat.nlm4_testrply_u.holder.oh))
+            {
+              netobj_free(&arg->pres.res_nlm4test.cookie);
+              Mem_Free(arg);
+              return NULL;
+            }
+        }
+   }
+  return arg;
+}
 
 /* Execute a func from the async queue */
 void *nlm_async_func(void *argp)
@@ -70,12 +123,15 @@ void *nlm_async_func(void *argp)
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogMajor(COMPONENT_NLM, "NLM async thread: Memory manager could not be initialized, exiting...");
+      LogMajor(COMPONENT_NLM,
+               "NLM async thread: Memory manager could not be initialized, exiting...");
       exit(1);
     }
-  LogEvent(COMPONENT_NLM, "NLM async thread: Memory manager successfully initialized");
+  LogInfo(COMPONENT_NLM,
+          "NLM async thread: Memory manager successfully initialized");
 #endif
-  LogFullDebug(COMPONENT_NLM, "NLM async thread: my pthread id is %p",
+  LogFullDebug(COMPONENT_NLM,
+               "NLM async thread: my pthread id is %p",
                (caddr_t) pthread_self());
 
   while(1)
@@ -86,7 +142,9 @@ void *nlm_async_func(void *argp)
           gettimeofday(&now, NULL);
           timeout.tv_sec = 10 + now.tv_sec;
           timeout.tv_nsec = 0;
+          LogFullDebug(COMPONENT_NLM, "nlm_async_thread waiting...");
           pthread_cond_timedwait(&nlm_async_queue_cond, &nlm_async_queue_mutex, &timeout);
+          LogFullDebug(COMPONENT_NLM, "nlm_async_thread woke up");
         }
       init_glist(&nlm_async_tmp_queue);
       /* Collect all the work items and add it to the temp
@@ -95,6 +153,7 @@ void *nlm_async_func(void *argp)
        */
       glist_for_each_safe(glist, glistn, &nlm_async_queue)
       {
+        entry = glist_entry(glist, nlm_queue_t, glist);
         glist_del(glist);
         glist_add(&nlm_async_tmp_queue, glist);
 
@@ -121,6 +180,7 @@ void nlm_async_callback(nlm_callback_func * func, void *arg)
   q->func = func;
   q->arg = arg;
 
+  LogFullDebug(COMPONENT_NLM, "nlm_async_callback %p:%p", func, arg);
   pthread_mutex_lock(&nlm_async_queue_mutex);
   glist_add_tail(&nlm_async_queue, &q->glist);
   pthread_cond_signal(&nlm_async_queue_cond);
@@ -209,7 +269,9 @@ int nlm_send_async(int proc, char *host, void *inarg, void *key)
     retval = RPC_SUCCESS;
   else if(retval != RPC_SUCCESS)
     {
-      LogMajor(COMPONENT_NLM, "%s: Client procedure call %d failed with return code %d", __func__, proc, retval);
+      LogMajor(COMPONENT_NLM,
+               "%s: Client procedure call %d failed with return code %d",
+               __func__, proc, retval);
       pthread_mutex_lock(&nlm_async_resp_mutex);
       resp_key = NULL;
       pthread_mutex_unlock(&nlm_async_resp_mutex);
@@ -223,16 +285,19 @@ int nlm_send_async(int proc, char *host, void *inarg, void *key)
       gettimeofday(&now, NULL);
       timeout.tv_sec = 5 + start.tv_sec;
       timeout.tv_nsec = 0;
-      LogFullDebug(COMPONENT_NLM, "nlm_send_async about to wait for signal for key %p", resp_key);
+      LogFullDebug(COMPONENT_NLM,
+                   "nlm_send_async about to wait for signal for key %p",
+                   resp_key);
       while(resp_key != NULL && now.tv_sec < (start.tv_sec + 5))
         {
           int rc = pthread_cond_timedwait(&nlm_async_resp_cond, &nlm_async_resp_mutex, &timeout);
-          LogFullDebug(COMPONENT_NLM, "pthread_cond_timedwait returned %d", rc);
+          LogFullDebug(COMPONENT_NLM,
+                       "pthread_cond_timedwait returned %d", rc);
           gettimeofday(&now, NULL);
         }
       LogFullDebug(COMPONENT_NLM, "nlm_send_async done waiting");
-      pthread_mutex_unlock(&nlm_async_resp_mutex);
     }
+  pthread_mutex_unlock(&nlm_async_resp_mutex);
 
   clnt_destroy(clnt);
   return retval;
@@ -245,11 +310,13 @@ void nlm_signal_async_resp(void *key)
     {
       resp_key = NULL;
       pthread_cond_signal(&nlm_async_resp_cond);
-      LogFullDebug(COMPONENT_NLM, "nlm_signal_async_resp signaled condition variable");
+      LogFullDebug(COMPONENT_NLM,
+                   "nlm_signal_async_resp signaled condition variable");
     }
   else
     {
-      LogFullDebug(COMPONENT_NLM, "nlm_signal_async_resp didn't signal condition variable");
+      LogFullDebug(COMPONENT_NLM,
+                   "nlm_signal_async_resp didn't signal condition variable");
     }
   pthread_mutex_unlock(&nlm_async_resp_mutex);
 }

@@ -120,6 +120,37 @@ int nfs_Link(nfs_arg_t * parg,
   short to_exportid;
   short from_exportid;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char strto[LEN_FH_STR], strfrom[LEN_FH_STR];
+
+      switch (preq->rq_vers)
+        {
+        case NFS_V2:
+            str_link_name = parg->arg_link2.to.name;
+            break;
+
+        case NFS_V3:
+            str_link_name = parg->arg_link3.link.name;
+            break;
+        }
+
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_link2.from),
+                       &(parg->arg_link3.file),
+                       NULL,
+                       strfrom);
+
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_link2.to.dir),
+                       &(parg->arg_link3.link.dir),
+                       NULL,
+                       strto);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Link handle: %s to handle: %s name: %s",
+               strfrom, strto, str_link_name);
+    }
+
   if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */

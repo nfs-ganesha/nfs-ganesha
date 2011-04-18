@@ -109,6 +109,18 @@ int nfs_Getattr(nfs_arg_t * parg,
   cache_inode_status_t cache_status;
   int rc = 0;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char str[LEN_FH_STR];
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_getattr2),
+                       &(parg->arg_getattr3.object),
+                       NULL,
+                       str);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Getattr handle: %s", str);
+    }
+
   if((pentry = nfs_FhandleToCache(preq->rq_vers,
                                   &(parg->arg_getattr2),
                                   &(parg->arg_getattr3.object),
@@ -118,14 +130,16 @@ int nfs_Getattr(nfs_arg_t * parg,
                                   NULL, &attr, pcontext, pclient, ht, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
-      LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr returning %d", rc);
+      LogFullDebug(COMPONENT_NFSPROTO,
+                   "nfs_Getattr returning %d", rc);
       return rc;
     }
 
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_getattr3.object))))
     {
       rc = nfs3_Getattr_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
-      LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr returning %d from nfs3_Getattr_Xattr", rc);
+      LogFullDebug(COMPONENT_NFSPROTO,
+                   "nfs_Getattr returning %d from nfs3_Getattr_Xattr", rc);
       return rc;
     }
 
@@ -156,7 +170,8 @@ int nfs_Getattr(nfs_arg_t * parg,
                                   &pres->res_attr2.status,
                                   &pres->res_getattr3.status,
                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-              LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr set failed status v2");
+              LogFullDebug(COMPONENT_NFSPROTO,
+                           "nfs_Getattr set failed status v2");
               return NFS_REQ_OK;
             }
           pres->res_attr2.status = NFS_OK;
@@ -174,7 +189,8 @@ int nfs_Getattr(nfs_arg_t * parg,
                                   &pres->res_getattr3.status,
                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
-              LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr set failed status v3");
+              LogFullDebug(COMPONENT_NFSPROTO,
+                           "nfs_Getattr set failed status v3");
               return NFS_REQ_OK;
             }
           pres->res_getattr3.status = NFS3_OK;

@@ -129,7 +129,11 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
                              fsal_handle_t * phandle, fattr4 * Fattr);
 int proxy_Fattr_To_FSAL_dynamic_fsinfo(fsal_dynamicfsinfo_t * pdynamicinfo,
                                        fattr4 * Fattr);
+
 fsal_status_t FSAL_proxy_setclientid(fsal_op_context_t * p_context);
+fsal_status_t FSAL_proxy_setclientid_force(fsal_op_context_t * p_context);
+fsal_status_t FSAL_proxy_setclientid_renego(fsal_op_context_t * p_context);
+
 int FSAL_proxy_set_hldir(fsal_op_context_t * p_thr_context, char *hl_path);
 int fsal_internal_ClientReconnect(fsal_op_context_t * p_thr_context);
 fsal_status_t FSAL_proxy_open_confirm(fsal_file_t * pfd);

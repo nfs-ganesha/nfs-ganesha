@@ -603,6 +603,7 @@ typedef union cache_inode_create_arg__
 #define CACHE_INODE_NOT_SUPPORTED         33
 #define CACHE_INODE_STATE_ERROR           34
 #define CACHE_INODE_FSAL_DELAY            35
+#define CACHE_INODE_NAME_TOO_LONG         36
 
 const char *cache_inode_err_str(int err);
 

@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -28,7 +28,7 @@
  * \author  $Author: deniel $
  * \date    $Date: 2006/01/24 11:43:05 $
  * \version $Revision: 1.50 $
- * \brief   Reads the content of a directory. 
+ * \brief   Reads the content of a directory.
  *
  * cache_inode_readdir.c : Reads the content of a directory. Contains also the needed function for directory browsing.
  *
@@ -61,15 +61,15 @@
  * cache_inode_operate_cached_dirent: locates a dirent in the cached dirent, and perform an operation on it.
  *
  * Looks up for an dirent in the cached dirent. Thus function searches only in the entries
- * listed in the dir_entries array. Some entries may be missing but existing and not be cached (it no 
+ * listed in the dir_entries array. Some entries may be missing but existing and not be cached (it no
  * readdir was never performed on the entry for example. This function provides a way to operate on the dirent.
  *
- * @param pentry_parent [IN] directory entry to be looked. 
+ * @param pentry_parent [IN] directory entry to be looked.
  * @param name [IN] name for the searched entry.
  * @param newname [IN] newname if function is used to rename a dirent
- * @param dirent_op [IN] operation (ADD, LOOKUP or REMOVE) to do on the dirent if found. 
- * @pstatus [OUT] returned status. 
- * 
+ * @param dirent_op [IN] operation (ADD, LOOKUP or REMOVE) to do on the dirent if found.
+ * @pstatus [OUT] returned status.
+ *
  * @return the found entry if its exists and NULL if it is not in the dirent arrays. REMOVE always returns NULL.
  *
  */
@@ -108,11 +108,12 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
           for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
             {
 
-              LogFullDebug(COMPONENT_NFS_READDIR, "DIR_BEGINNING %d | %d | %s | %s",
-                     pdir_chain->object.dir_begin.pdir_data->dir_entries[i].active,
-                     pdir_chain->object.dir_begin.pdir_data->dir_entries[i].pentry->
-                     internal_md.valid_state, pname->name,
-                     pdir_chain->object.dir_begin.pdir_data->dir_entries[i].name.name);
+              LogFullDebug(COMPONENT_NFS_READDIR,
+                           "DIR_BEGINNING %d | %d | %s | %s",
+                           pdir_chain->object.dir_begin.pdir_data->dir_entries[i].active,
+                           pdir_chain->object.dir_begin.pdir_data->dir_entries[i].pentry->
+                           internal_md.valid_state, pname->name,
+                           pdir_chain->object.dir_begin.pdir_data->dir_entries[i].name.name);
 
               if(pdir_chain->object.dir_begin.pdir_data->dir_entries[i].active == VALID
                  && pdir_chain->object.dir_begin.pdir_data->dir_entries[i].pentry->
@@ -149,10 +150,10 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
           for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
             {
               /*
-                 printf( "DIR_CONTINUE %d | %d | %s | %s\n", 
-                 pdir_chain->object.dir_cont.pdir_data->dir_entries[i].active, 
-                 pdir_chain->object.dir_cont.pdir_data->dir_entries[i].pentry->internal_md.valid_state, 
-                 name.name, 
+                 printf( "DIR_CONTINUE %d | %d | %s | %s\n",
+                 pdir_chain->object.dir_cont.pdir_data->dir_entries[i].active,
+                 pdir_chain->object.dir_cont.pdir_data->dir_entries[i].pentry->internal_md.valid_state,
+                 name.name,
                  pdir_chain->object.dir_cont.pdir_data->dir_entries[i].name.name ) ; */
 
               if(pdir_chain->object.dir_cont.pdir_data->dir_entries[i].active == VALID &&
@@ -193,7 +194,7 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
       switch (dirent_op)
         {
         case CACHE_INODE_DIRENT_OP_REMOVE:
-          /* Related DIR_BEGINNING or DIR_CONTINUE is pointed by pdir_chain, entry is the i-th is dir_entries 
+          /* Related DIR_BEGINNING or DIR_CONTINUE is pointed by pdir_chain, entry is the i-th is dir_entries
            * The dirent entry is removed by being set invalid */
 
           if(pdir_chain->internal_md.type == DIR_BEGINNING)
@@ -258,13 +259,13 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
  * cache_inode_lookup_cached_dirent: looks up for an dirent in the cached dirent.
  *
  * Looks up for an dirent in the cached dirent. Thus function searches only in the entries
- * listed in the dir_entries array. Some entries may be missing but existing and not be cached (it no 
+ * listed in the dir_entries array. Some entries may be missing but existing and not be cached (it no
  * readdir was never performed on the entry for example.
  *
- * @param pentry_parent [IN] directory entry to be looked. 
+ * @param pentry_parent [IN] directory entry to be looked.
  * @param name [IN] name for the searched entry.
  * @pstatus [OUT] returned status. CACHE_INODE_SUCCESS=entry found, CACHE_INODE_NOT_FOUND=entry is not in the dirent
- * 
+ *
  * @return the found entry if its exists and NULL if it is not in the dirent arrays.
  *
  */
@@ -294,13 +295,13 @@ cache_entry_t *cache_inode_lookup_cached_dirent(cache_entry_t * pentry_parent,
  * Adds a directory entry to a cached directory. This is use when creating a new entry
  * through nfs and keep it to the cache. It also allocates and caches the entry.
  * This function can be call iteratively, within a loop (like what is done in cache_inode_readdir_populate).
- * In this case, pentry_parent should be set to the value returned in *pentry_next. 
+ * In this case, pentry_parent should be set to the value returned in *pentry_next.
  * This function should never be used for managing a junction.
  *
  * @param pentry_parent [INOUT] cache entry representing the directory to be managed.
  * @param name          [IN]    name of the entry to add.
  * @param pentry_added  [IN]    the pentry added to the dirent array
- * @param pentry_next   [OUT]   the next pentry to use for next call. 
+ * @param pentry_next   [OUT]   the next pentry to use for next call.
  * @param ht            [IN]    hash table used for the cache, unused in this call.
  * @param pclient       [INOUT] ressource allocated by the client for the nfs management.
  * @param pstatus       [OUT]   returned status.
@@ -412,8 +413,8 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pentry_parent
       else
         {
           /* entry not found */
-	  LogCrit(COMPONENT_CACHE_INODE, 
-              "cache_inode_add_cached_dirent: Critical Warning: a non-directory type has been detected in a dir_chain !!!");
+          LogCrit(COMPONENT_CACHE_INODE,
+                  "cache_inode_add_cached_dirent: Critical Warning: a non-directory type has been detected in a dir_chain !!!");
           *pstatus = CACHE_INODE_BAD_TYPE;
           return *pstatus;
         }
@@ -427,8 +428,8 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pentry_parent
       /* Pointer pentry is NULL, a new entry DIR_CONTINUE is required */
 
       /* There may be previously invalidated dirents, in this case pdir_cont already exists
-       * we won't allocate new things in this case and reuse the old ones 
-       * This case is identified by pdir_chain->object.*.pdir_cont != NULL 
+       * we won't allocate new things in this case and reuse the old ones
+       * This case is identified by pdir_chain->object.*.pdir_cont != NULL
        */
       switch (pdir_chain->internal_md.type)
         {
@@ -704,10 +705,10 @@ cache_inode_status_t cache_inode_remove_cached_dirent(cache_entry_t * pentry_par
  *
  * fully reads a directory in FSAL and caches the related entries. No MT safety managed here !!
  *
- * @param pentry [IN]  entry for the parent directory to be read. This must be a DIR_BEGINNING 
+ * @param pentry [IN]  entry for the parent directory to be read. This must be a DIR_BEGINNING
  * @param ht [IN] hash table used for the cache, unused in this call.
  * @param pclient [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext [IN] FSAL credentials 
+ * @param pcontext [IN] FSAL credentials
  * @param pstatus [OUT] returned status.
  *
  */
@@ -790,13 +791,14 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
           cache_inode_status_t kill_status;
 
           LogEvent(COMPONENT_CACHE_INODE,
-              "cache_inode_readdir: Stale FSAL File Handle detected for pentry = %p",
-               pentry_dir);
+                   "cache_inode_readdir: Stale FSAL File Handle detected for pentry = %p",
+                   pentry_dir);
 
           if(cache_inode_kill_entry(pentry_dir, ht, pclient, &kill_status) !=
              CACHE_INODE_SUCCESS)
-            LogCrit(COMPONENT_CACHE_INODE,"cache_inode_readdir: Could not kill entry %p, status = %u",
-                       pentry_dir, kill_status);
+            LogCrit(COMPONENT_CACHE_INODE,
+                    "cache_inode_readdir: Could not kill entry %p, status = %u",
+                    pentry_dir, kill_status);
 
           *pstatus = CACHE_INODE_FSAL_ESTALE;
         }
@@ -835,15 +837,15 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
       for(iter = 0; iter < nbfound; iter++)
         {
           LogFullDebug(COMPONENT_NFS_READDIR,
-                            "cache readdir populate found entry %s",
-                            array_dirent[iter].name.name);
+                       "cache readdir populate found entry %s",
+                       array_dirent[iter].name.name);
 
           /* It is not needed to cache '.' and '..' */
           if(!FSAL_namecmp(&(array_dirent[iter].name), (fsal_name_t *) & FSAL_DOT) ||
              !FSAL_namecmp(&(array_dirent[iter].name), (fsal_name_t *) & FSAL_DOT_DOT))
             {
               LogFullDebug(COMPONENT_NFS_READDIR,
-                                "cache readdir populate : do not cache . and ..");
+                           "cache readdir populate : do not cache . and ..");
               continue;
             }
 
@@ -876,14 +878,15 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
                     {
                       cache_inode_status_t kill_status;
 
-		      LogEvent(COMPONENT_CACHE_INODE, "cache_inode_readdir: Stale FSAL File Handle detected for pentry = %p",
-                           pentry_dir);
+                      LogEvent(COMPONENT_CACHE_INODE,
+                               "cache_inode_readdir: Stale FSAL File Handle detected for pentry = %p",
+                               pentry_dir);
 
                       if(cache_inode_kill_entry(pentry_dir, ht, pclient, &kill_status) !=
                          CACHE_INODE_SUCCESS)
                         LogCrit(COMPONENT_CACHE_INODE,
-                            "cache_inode_readdir: Could not kill entry %p, status = %u",
-                             pentry_dir, kill_status);
+                                "cache_inode_readdir: Could not kill entry %p, status = %u",
+                                pentry_dir, kill_status);
 
                       *pstatus = CACHE_INODE_FSAL_ESTALE;
                     }
@@ -941,7 +944,7 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
 /**
  *
  * cache_inode_readdir: Reads partially a directory.
- * 
+ *
  * Looks up for a name in a directory indicated by a cached entry. The directory should have been cached before.
  * This is the only function in the cache_inode_readdir.c file that manages MT safety on a dir chain.
  *
@@ -949,12 +952,12 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
  * @param cookie [IN] cookie for the readdir operation (basically the offset).
  * @param nbwanted [IN] Maximum number of directory entries wanted.
  * @param peod_met [OUT] A flag to know if end of directory was met during this call.
- * @param dirent_array [OUT] the resulting array of found directory entries. 
+ * @param dirent_array [OUT] the resulting array of found directory entries.
  * @param ht [IN] hash table used for the cache, unused in this call.
  * @param pclient [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext [IN] FSAL credentials 
+ * @param pcontext [IN] FSAL credentials
  * @param pstatus [OUT] returned status.
- * 
+ *
  * @return CACHE_INODE_SUCCESS if operation is a success \n
  * @return CACHE_INODE_BAD_TYPE if entry is not related to a directory\n
  * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
@@ -985,20 +988,23 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* end cookie initial value is the begin cookie */
-  LogFullDebug(COMPONENT_NFS_READDIR,"--> Cache_inode_readdir: setting pend_cookie to cookie=%u", cookie);
+  LogFullDebug(COMPONENT_NFS_READDIR,
+               "--> Cache_inode_readdir: setting pend_cookie to cookie=%u",
+               cookie);
   *pend_cookie = cookie;
 
   /* stats */
   pclient->stat.nb_call_total += 1;
   pclient->stat.func_stats.nb_call[CACHE_INODE_READDIR] += 1;
 
-  LogFullDebug(COMPONENT_NFS_READDIR, "--> Cache_inode_readdir: parameters are cookie=%u nbwanted=%u", cookie,
-         nbwanted);
+  LogFullDebug(COMPONENT_NFS_READDIR,
+               "--> Cache_inode_readdir: parameters are cookie=%u nbwanted=%u",
+               cookie, nbwanted);
 
   /* Sanity check */
   if(nbwanted == 0)
     {
-      /* Asking for nothing is not a crime !!!!! 
+      /* Asking for nothing is not a crime !!!!!
        * build a 'dummy' return in this case */
       *pstatus = CACHE_INODE_SUCCESS;
       *pnbfound = 0;
@@ -1074,7 +1080,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
       /* DIR_CONTINUE */
       tstflag = dir_pentry->object.dir_cont.pdir_begin->object.dir_begin.has_been_readdir;
 
-      /* This test should see that "tstflag" is not CACHE_INODE_YES for a DIR_CONTINUE (if a DIR_CONTINUE exists, then 
+      /* This test should see that "tstflag" is not CACHE_INODE_YES for a DIR_CONTINUE (if a DIR_CONTINUE exists, then
        * it means that dir_chain was populated and this means a former call to cache_inode_readdir_populate. Later evolution
        * of the code could make 'has_been_readdir' returned from CACHE_INODE_YES to CACHE_INODE_NO during garbagge collection.
        * In this case, the following lines wil become necessary, but for now they are just here as 'defensive coding' */
@@ -1104,10 +1110,10 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
   /* Downgrade Writer lock to a reader one */
   rw_lock_downgrade(&dir_pentry->lock);
 
-  /* Now go through the pdir_chain for filling in dirent_array 
+  /* Now go through the pdir_chain for filling in dirent_array
    * the first cookie is parameter 'cookie'
    * number of entries queried is set by parameter 'nbwanted'
-   * number of found entries before eod is return is '*pnbfound' 
+   * number of found entries before eod is return is '*pnbfound'
    * '*peod_met' is set if end of directory is encountered */
 
   /* Now, we can fill in the dirent array */
@@ -1131,7 +1137,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
       if(pentry_to_read->internal_md.type == DIR_BEGINNING)
         {
           /* if cookie - first_pentry_cookie is bigger than  CHILDREN_ARRAY_SIZE
-           * then the provided cookie was far too big for this pdir_chain. The 
+           * then the provided cookie was far too big for this pdir_chain. The
            * client to cache_inode tried to read beyond the end of directory.
            * In this case, return that EOD was met, but no entries found. */
 
@@ -1148,8 +1154,9 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
               V_r(&dir_pentry->lock);
 
               LogFullDebug(COMPONENT_NFS_READDIR,
-                  "Big input cookie found in cache_inode_readdir (DIR_BEGIN) : pentry=%p cookie=%d first_pentry_cookie=%d nbdirchain=%d",
-                   pentry_to_read, cookie, first_pentry_cookie, nbdirchain);
+                           "Big input cookie found in cache_inode_readdir (DIR_BEGIN) : pentry=%p cookie=%d first_pentry_cookie=%d nbdirchain=%d",
+                           pentry_to_read, cookie,
+                           first_pentry_cookie, nbdirchain);
 
               /* Set the returned values */
               *pnbfound = 0;
@@ -1171,9 +1178,10 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
 
               /* OPeration is a success */
               *pstatus = CACHE_INODE_SUCCESS;
-              LogFullDebug(COMPONENT_NFS_READDIR, 
-                  "Trouble found in cache_inode_readdir (DIR_CONTINUE) : pentry=%p cookie=%d first_pentry_cookie=%d nbdirchain=%d",
-                   pentry_to_read, cookie, first_pentry_cookie, nbdirchain);
+              LogFullDebug(COMPONENT_NFS_READDIR,
+                           "Trouble found in cache_inode_readdir (DIR_CONTINUE) : pentry=%p cookie=%d first_pentry_cookie=%d nbdirchain=%d",
+                           pentry_to_read, cookie,
+                           first_pentry_cookie, nbdirchain);
               /* Set the returned values */
               *pnbfound = 0;
               *pend_cookie = cookie;
@@ -1193,9 +1201,9 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
 
     }                           /* while */
 
-  LogFullDebug(COMPONENT_NFS_READDIR, 
-      "About to readdir in  cache_inode_readdir: pentry=%p cookie=%d first_pentry_cookie=%d nbdirchain=%d",
-       pentry_to_read, cookie, first_pentry_cookie, nbdirchain);
+  LogFullDebug(COMPONENT_NFS_READDIR,
+               "About to readdir in  cache_inode_readdir: pentry=%p cookie=%d first_pentry_cookie=%d nbdirchain=%d",
+               pentry_to_read, cookie, first_pentry_cookie, nbdirchain);
 
   /* Get prepaired for readdir */
 
@@ -1214,9 +1222,10 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
                                                                           CHILDREN_ARRAY_SIZE];
               cookie_array[i] = cookie_iter;
 
-              LogFullDebug(COMPONENT_NFS_READDIR,"--> Cache_inode_readdir: Found slot with file named %s, cookie_array[i]=%u",
-                     pentry_to_read->object.dir_begin.pdir_data->dir_entries[cookie_iter % CHILDREN_ARRAY_SIZE].
-                     name.name, cookie_iter);
+              LogFullDebug(COMPONENT_NFS_READDIR,
+                           "--> Cache_inode_readdir: Found slot with file named %s, cookie_array[i]=%u",
+                           pentry_to_read->object.dir_begin.pdir_data->dir_entries[cookie_iter % CHILDREN_ARRAY_SIZE].
+                           name.name, cookie_iter);
 
               /* Step to next iter */
               *pnbfound += 1;
@@ -1235,9 +1244,10 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
                                                                          CHILDREN_ARRAY_SIZE];
               cookie_array[i] = cookie_iter;
 
-              LogFullDebug(COMPONENT_NFS_READDIR,"--> Cache_inode_readdir: Found slot with file named %s, cookie_array[i]=%u",
-                     pentry_to_read->object.dir_cont.pdir_data->dir_entries[cookie_iter % CHILDREN_ARRAY_SIZE].
-                     name.name, cookie_iter);
+              LogFullDebug(COMPONENT_NFS_READDIR,
+                           "--> Cache_inode_readdir: Found slot with file named %s, cookie_array[i]=%u",
+                           pentry_to_read->object.dir_cont.pdir_data->dir_entries[cookie_iter % CHILDREN_ARRAY_SIZE].
+                           name.name, cookie_iter);
 
               /* Step to next iter */
               *pnbfound += 1;
@@ -1248,7 +1258,9 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
 
       /* Loop at next entry in dirent array */
       cookie_iter += 1;
-      LogFullDebug(COMPONENT_NFS_READDIR,"--> Cache_inode_readdir: setting pend_cookie to cookie_iter=%u", cookie_iter);
+      LogFullDebug(COMPONENT_NFS_READDIR,
+                   "--> Cache_inode_readdir: setting pend_cookie to cookie_iter=%u",
+                   cookie_iter);
       *pend_cookie = cookie_iter;
 
       if((cookie_iter % CHILDREN_ARRAY_SIZE) == 0)

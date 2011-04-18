@@ -123,7 +123,8 @@ static void operate_on_sigterm()
 {
   static int once = 0 ;
 
-  LogEvent(COMPONENT_MAIN, "SIGTERM_HANDLER: Received SIGTERM.... initiating daemon shutdown");
+  LogEvent(COMPONENT_MAIN,
+           "SIGTERM_HANDLER: Received SIGTERM.... initiating daemon shutdown");
 
   if( once == 0 )
    {
@@ -134,24 +135,28 @@ static void operate_on_sigterm()
 
 static void operate_on_sighup()
 {
-  LogEvent(COMPONENT_MAIN, "SIGHUP_HANDLER: Received SIGHUP.... initiating export list reload");
+  LogEvent(COMPONENT_MAIN,
+           "SIGHUP_HANDLER: Received SIGHUP.... initiating export list reload");
 
   admin_replace_exports();
 }                               /* action_sigsigh */
 
 static void operate_on_sigusr1()
 {
-  LogEvent(COMPONENT_MAIN, "SIGUSR1_HANDLER: Received SIGUSR1.... signal will be managed");
+  LogEvent(COMPONENT_MAIN,
+           "SIGUSR1_HANDLER: Received SIGUSR1.... signal will be managed");
 
   /* Set variable force_flush_by_signal that is used in file content cache gc thread */
   if(force_flush_by_signal)
     {
-      LogEvent(COMPONENT_MAIN, "SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
+      LogEvent(COMPONENT_MAIN,
+               "SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
       force_flush_by_signal = FALSE;
     }
   else
     {
-      LogEvent(COMPONENT_MAIN, "SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
+      LogEvent(COMPONENT_MAIN,
+               "SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
       force_flush_by_signal = TRUE;
     }
 }                               /* action_sigusr1 */
@@ -217,7 +222,6 @@ int nfs_prereq_init(char *program_name, char *host_name, int debug_level, char *
   AddFamilyError(ERR_POSIX, "POSIX Errors", tab_systeme_status);
   AddFamilyError(ERR_LRU, "LRU related Errors", tab_errctx_LRU);
   AddFamilyError(ERR_HASHTABLE, "HashTable related Errors", tab_errctx_hash);
-  AddFamilyError(ERR_RPC, "RPC related Errors", tab_error_rpc);
   AddFamilyError(ERR_FSAL, "FSAL related Errors", tab_errstatus_FSAL);
   AddFamilyError(ERR_CACHE_INODE, "Cache Inode related Errors",
                  tab_errstatus_cache_inode);
@@ -262,6 +266,7 @@ int nfs_print_param_config(nfs_parameter_t * p_nfs_param)
   printf("\tNb_Max_Fd = %d ; \n", p_nfs_param->core_param.nb_max_fd);
   printf("\tStats_File_Path = %s ; \n", p_nfs_param->core_param.stats_file_path);
   printf("\tStats_Update_Delay = %d ; \n", p_nfs_param->core_param.stats_update_delay);
+  printf("\tLong_Processing_Threshold = %d ; \n", p_nfs_param->core_param.long_processing_threshold);
   printf("\tTCP_Fridge_Expiration_Delay = %d ; \n", p_nfs_param->core_param.tcp_fridge_expiration_delay);
   printf("\tStats_Per_Client_Directory = %s ; \n",
          p_nfs_param->core_param.stats_per_client_directory);
@@ -316,6 +321,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->core_param.core_dump_size = 0;
   p_nfs_param->core_param.nb_max_fd = -1;       /* Use OS's default */
   p_nfs_param->core_param.stats_update_delay = 60;
+  p_nfs_param->core_param.long_processing_threshold = 10; /* seconds */
   p_nfs_param->core_param.tcp_fridge_expiration_delay = -1;
 /* only NFSv4 is supported for the FSAL_PROXY */
 #if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
@@ -616,7 +622,6 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
 
   /* Data cache parameters: Garbage collection policy */
   p_nfs_param->cache_layers_param.dcgcpol.lifetime = -1;        /* No gc */
-  p_nfs_param->cache_layers_param.dcgcpol.inactivity_before_flush = -1; /* No Flush */
   p_nfs_param->cache_layers_param.dcgcpol.hwmark_df = 99;
   p_nfs_param->cache_layers_param.dcgcpol.lwmark_df = 98;
   p_nfs_param->cache_layers_param.dcgcpol.run_interval = 3600;  /* 1h */
@@ -684,8 +689,8 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 
   if(!config_struct)
     {
-      LogMajor(COMPONENT_INIT, "Error while parsing %s: %s", config_file,
-	       config_GetErrorMsg());
+      LogMajor(COMPONENT_INIT, "Error while parsing %s: %s",
+               config_file, config_GetErrorMsg());
       exit(1);
     }
 #ifndef _NO_BUDDY_SYSTEM
@@ -696,25 +701,28 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 
   if(rc == 0)
     LogDebug(COMPONENT_INIT,
-                    "Worker's Buddy parameters read from config file");
+             "Worker's Buddy parameters read from config file");
   else if(rc == BUDDY_ERR_ENOENT)
-    LogDebug(COMPONENT_INIT, "No Buddy parameters found in config file, using default");
+    LogDebug(COMPONENT_INIT,
+             "No Buddy parameters found in config file, using default");
   else
     {
-      LogCrit(COMPONENT_INIT, "Error while parsing Buddy parameters");
+      LogCrit(COMPONENT_INIT,
+              "Error while parsing Buddy parameters");
       return -1;
     }
 
   rc = Buddy_load_parameter_from_conf(config_struct, &p_nfs_param->buddy_param_tcp_mgr);
   if(rc == 0)
     LogDebug(COMPONENT_INIT,
-                    "Tcp Mgr's Buddy parameters read from config file");
+             "Tcp Mgr's Buddy parameters read from config file");
   else if(rc == BUDDY_ERR_ENOENT)
     LogDebug(COMPONENT_INIT,
 	     "No Buddy parameters found in config file, using default");
   else
     {
-      LogCrit(COMPONENT_INIT, "Error while parsing Buddy parameters");
+      LogCrit(COMPONENT_INIT,
+              "Error while parsing Buddy parameters");
       return -1;
     }
 
@@ -731,7 +739,8 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
   /* Core parameters */
   if((rc = nfs_read_core_conf(config_struct, &p_nfs_param->core_param)) < 0)
     {
-      LogCrit(COMPONENT_INIT, "Error while parsing core configuration");
+      LogCrit(COMPONENT_INIT,
+              "Error while parsing core configuration");
       return -1;
     }
   else
@@ -742,7 +751,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
              "No core configuration found in config file, using default");
       else
         LogDebug(COMPONENT_INIT,
-                        "core configuration read from config file");
+                 "core configuration read from config file");
     }
 
   /* Load FSAL configuration from parsed file */
@@ -761,7 +770,8 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         }
     }
   else
-    LogDebug(COMPONENT_INIT, "FSAL parameters read from config file");
+    LogDebug(COMPONENT_INIT,
+             "FSAL parameters read from config file");
 
   /* Load FSAL configuration from parsed file */
   fsal_status =
@@ -773,14 +783,15 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 		 "No FS common configuration found in config file, using default");
       else
         {
-          LogCrit(COMPONENT_INIT, "Error while parsing FS common configuration");
+          LogCrit(COMPONENT_INIT,
+                  "Error while parsing FS common configuration");
           LogError(COMPONENT_INIT, ERR_FSAL, fsal_status.major, fsal_status.minor);
           return -1;
         }
     }
   else
     LogDebug(COMPONENT_INIT,
-                    "FS comon configuration read from config file");
+             "FS comon configuration read from config file");
 
   /* Load FSAL configuration from parsed file */
   fsal_status =
@@ -792,14 +803,15 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 		 "No FS specific configuration found in config file, using default");
       else
         {
-          LogCrit(COMPONENT_INIT, "Error while parsing FS specific configuration");
+          LogCrit(COMPONENT_INIT,
+                  "Error while parsing FS specific configuration");
           LogError(COMPONENT_INIT, ERR_FSAL, fsal_status.major, fsal_status.minor);
           return -1;
         }
     }
   else
     LogDebug(COMPONENT_INIT,
-                    "FS specific configuration read from config file");
+             "FS specific configuration read from config file");
 
 #ifdef _USE_MFSL
   /* Load FSAL configuration from parsed file */
@@ -808,7 +820,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
     {
       if(fsal_status.major == ERR_FSAL_NOENT)
         LogDebug(COMPONENT_INIT,
-	    "No MFSL parameters found in config file, using default");
+	         "No MFSL parameters found in config file, using default");
       else
         {
           LogCrit(COMPONENT_INIT, "Error while parsing MFSL parameters");
@@ -817,13 +829,15 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         }
     }
   else
-    LogDebug(COMPONENT_INIT, "MFSL parameters read from config file");
+    LogDebug(COMPONENT_INIT,
+             "MFSL parameters read from config file");
 #endif                          /* _USE_MFSL */
 
   /* Workers parameters */
   if((rc = nfs_read_worker_conf(config_struct, &p_nfs_param->worker_param)) < 0)
     {
-      LogCrit(COMPONENT_INIT, "Error while parsing workers configuration");
+      LogCrit(COMPONENT_INIT,
+              "Error while parsing workers configuration");
       return -1;
     }
   else
@@ -834,7 +848,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 		 "No workers configuration found in config file, using default");
       else
         LogDebug(COMPONENT_INIT,
-                        "workers configuration read from config file");
+                 "workers configuration read from config file");
     }
 
   /* Worker parameters : dupreq hash table */
@@ -852,13 +866,14 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 		 "No duplicate request hash table configuration found in config file, using default");
       else
         LogDebug(COMPONENT_INIT,
-                        "duplicate request hash table configuration read from config file");
+                 "duplicate request hash table configuration read from config file");
     }
 
   /* Worker paramters: ip/name hash table and expiration for each entry */
   if((rc = nfs_read_ip_name_conf(config_struct, &p_nfs_param->ip_name_param)) < 0)
     {
-      LogCrit(COMPONENT_INIT, "Error while parsing IP/name configuration");
+      LogCrit(COMPONENT_INIT,
+              "Error while parsing IP/name configuration");
       return -1;
     }
   else
@@ -869,7 +884,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 		 "No IP/name configuration found in config file, using default");
       else
         LogDebug(COMPONENT_INIT,
-                        "IP/name configuration read from config file");
+                 "IP/name configuration read from config file");
     }
 
   /* Worker paramters: uid_mapper hash table, same config for uid and uname resolution */
@@ -877,7 +892,8 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
      || ((rc = nfs_read_uidmap_conf(config_struct, &p_nfs_param->unamemap_cache_param)) <
          0))
     {
-      LogCrit(COMPONENT_INIT, "Error while parsing UID_MAPPER configuration");
+      LogCrit(COMPONENT_INIT,
+              "Error while parsing UID_MAPPER configuration");
       return -1;
     }
   else
@@ -888,7 +904,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 		 "No UID_MAPPER configuration found in config file, using default");
       else
         LogDebug(COMPONENT_INIT,
-                        "UID_MAPPER configuration read from config file");
+                 "UID_MAPPER configuration read from config file");
     }
 
   /* Worker paramters: gid_mapper hash table, same config for gid and gname resolution */
@@ -896,7 +912,8 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
      || ((rc = nfs_read_gidmap_conf(config_struct, &p_nfs_param->gnamemap_cache_param)) <
          0))
     {
-      LogCrit(COMPONENT_INIT, "Error while parsing GID_MAPPER configuration");
+      LogCrit(COMPONENT_INIT,
+              "Error while parsing GID_MAPPER configuration");
       return -1;
     }
   else
@@ -913,7 +930,8 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
   /* Worker paramters: client_id hash table */
   if((rc = nfs_read_client_id_conf(config_struct, &p_nfs_param->client_id_param)) < 0)
     {
-      LogCrit(COMPONENT_INIT, "Error while parsing Client id configuration");
+      LogCrit(COMPONENT_INIT,
+              "Error while parsing Client id configuration");
       return -1;
     }
   else
@@ -921,7 +939,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
       /* No such stanza in configuration file */
       if(rc == 1)
         LogDebug(COMPONENT_INIT,
-		   "No Client id configuration found in config file, using default");
+		 "No Client id configuration found in config file, using default");
       else
         LogDebug(COMPONENT_INIT,
 		 "Client id configuration read from config file");
@@ -930,7 +948,8 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
   /* Worker paramters: state_id hash table */
   if((rc = nfs_read_state_id_conf(config_struct, &p_nfs_param->state_id_param)) < 0)
     {
-      LogCrit(COMPONENT_INIT, "Error while parsing State id configuration");
+      LogCrit(COMPONENT_INIT,
+              "Error while parsing State id configuration");
       return -1;
     }
   else
@@ -948,7 +967,8 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
   /* Worker paramters: session_id hash table */
   if((rc = nfs_read_session_id_conf(config_struct, &p_nfs_param->session_id_param)) < 0)
     {
-      LogCrit(COMPONENT_INIT, "Error while parsing session id configuration");
+      LogCrit(COMPONENT_INIT,
+              "Error while parsing session id configuration");
       return -1;
     }
   else
@@ -966,7 +986,8 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
   /* Worker paramters: pNFS specific config */
   if((rc = nfs_read_pnfs_conf(config_struct, &p_nfs_param->pnfs_param)) < 0)
     {
-      LogCrit(COMPONENT_INIT, "Error while parsing pNFS configuration");
+      LogCrit(COMPONENT_INIT,
+              "Error while parsing pNFS configuration");
       return -1;
     }
   else
@@ -974,7 +995,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
       /* No such stanza in configuration file */
       if(rc == 1)
         LogDebug(COMPONENT_INIT,
-		   "No pNFS configuration found in config file, using default");
+		 "No pNFS configuration found in config file, using default");
       else
         LogDebug(COMPONENT_INIT,
 		 "pNFS configuration read from config file");
@@ -1004,18 +1025,19 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
   /* NFSv4 specific configuration */
   if((rc = nfs_read_version4_conf(config_struct, &p_nfs_param->nfsv4_param)) < 0)
     {
-      LogCrit(COMPONENT_INIT, "Error while parsing NFSv4 specific configuration");
+      LogCrit(COMPONENT_INIT,
+              "Error while parsing NFSv4 specific configuration");
       return -1;
     }
   else
     {
       /* No such stanza in configuration file */
       if(rc == 1)
-        LogDebug
-            (COMPONENT_INIT, "No NFSv4 specific configuration found in config file, using default");
+        LogDebug(COMPONENT_INIT,
+                 "No NFSv4 specific configuration found in config file, using default");
       else
         LogDebug(COMPONENT_INIT,
-                        "NFSv4 specific configuration read from config file");
+                 "NFSv4 specific configuration read from config file");
     }
 
   /* Cache inode parameters : hash table */
@@ -1025,18 +1047,18 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
                                            cache_param)) != CACHE_INODE_SUCCESS)
     {
       if(cache_inode_status == CACHE_INODE_NOT_FOUND)
-        LogDebug
-            (COMPONENT_INIT, "No Cache Inode Hash Table configuration found, using default");
+        LogDebug(COMPONENT_INIT,
+                 "No Cache Inode Hash Table configuration found, using default");
       else
         {
-          LogCrit
-              (COMPONENT_INIT, "Error while parsing Cache Inode Hash Table configuration");
+          LogCrit(COMPONENT_INIT,
+                  "Error while parsing Cache Inode Hash Table configuration");
           return -1;
         }
     }
   else
     LogDebug(COMPONENT_INIT,
-                    "Cache Inode Hash Table configuration read from config file");
+             "Cache Inode Hash Table configuration read from config file");
 
   /* Cache inode parameters : Garbage collection policy */
   if((cache_inode_status =
@@ -1045,18 +1067,18 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
      CACHE_INODE_SUCCESS)
     {
       if(cache_inode_status == CACHE_INODE_NOT_FOUND)
-        LogDebug
-            (COMPONENT_INIT, "No Cache Inode Garbage Collection Policy configuration found, using default");
+        LogDebug(COMPONENT_INIT,
+                 "No Cache Inode Garbage Collection Policy configuration found, using default");
       else
         {
-          LogCrit
-              (COMPONENT_INIT, "Error while parsing Cache Inode Garbage Collection Policy configuration");
+          LogCrit(COMPONENT_INIT,
+                  "Error while parsing Cache Inode Garbage Collection Policy configuration");
           return -1;
         }
     }
   else
     LogDebug(COMPONENT_INIT,
-                    "Cache Inode Garbage Collection Policy configuration read from config file");
+             "Cache Inode Garbage Collection Policy configuration read from config file");
 
   /* Cache inode client parameters */
   if((cache_inode_status = cache_inode_read_conf_client_parameter(config_struct,
@@ -1066,17 +1088,18 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
      != CACHE_INODE_SUCCESS)
     {
       if(cache_inode_status == CACHE_INODE_NOT_FOUND)
-        LogDebug
-            (COMPONENT_INIT, "No Cache Inode Client configuration found, using default");
+        LogDebug(COMPONENT_INIT,
+                 "No Cache Inode Client configuration found, using default");
       else
         {
-          LogCrit(COMPONENT_INIT, "Error while parsing Cache Inode Client configuration");
+          LogCrit(COMPONENT_INIT,
+                  "Error while parsing Cache Inode Client configuration");
           return 1;
         }
     }
   else
     LogDebug(COMPONENT_INIT,
-                    "Cache Inode Client configuration read from config file");
+             "Cache Inode Client configuration read from config file");
 
   /* Data cache client parameters */
   if((cache_content_status = cache_content_read_conf_client_parameter(config_struct,
@@ -1086,18 +1109,18 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
      != CACHE_CONTENT_SUCCESS)
     {
       if(cache_content_status == CACHE_CONTENT_NOT_FOUND)
-        LogDebug
-            (COMPONENT_INIT, "No Cache Content Client configuration found, using default");
+        LogDebug(COMPONENT_INIT,
+                 "No Cache Content Client configuration found, using default");
       else
         {
-          LogCrit
-              (COMPONENT_INIT, "Error while parsing Cache Content Client configuration");
+          LogCrit(COMPONENT_INIT,
+                  "Error while parsing Cache Content Client configuration");
           return -1;
         }
     }
   else
     LogDebug(COMPONENT_INIT,
-                    "Cache Content Client configuration read from config file");
+             "Cache Content Client configuration read from config file");
 
   if((cache_content_status =
       cache_content_read_conf_gc_policy(config_struct,
@@ -1105,40 +1128,43 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
      CACHE_CONTENT_SUCCESS)
     {
       if(cache_content_status == CACHE_CONTENT_NOT_FOUND)
-        LogDebug
-            (COMPONENT_INIT, "No File Content Garbage Collection Policy configuration found, using default");
+        LogDebug(COMPONENT_INIT,
+                 "No File Content Garbage Collection Policy configuration found, using default");
       else
         {
-          LogCrit
-              (COMPONENT_INIT, "Error while parsing File Content Garbage Collection Policy configuration");
+          LogCrit(COMPONENT_INIT,
+                  "Error while parsing File Content Garbage Collection Policy configuration");
           return -1;
         }
     }
   else
     LogDebug(COMPONENT_INIT,
-                    "File Content Garbage Collection Policy configuration read from config file");
+             "File Content Garbage Collection Policy configuration read from config file");
 
 #ifdef _SNMP_ADM_ACTIVE
   if(get_snmpadm_conf(config_struct, &p_nfs_param->extern_param) != 0)
     {
-      LogCrit(COMPONENT_INIT, "Error loading SNMP_ADM configuration");
+      LogCrit(COMPONENT_INIT,
+              "Error loading SNMP_ADM configuration");
       return -1;
     }
   else
     {
       LogDebug(COMPONENT_INIT,
-                      "snmp_adm configuration read from config file");
+               "snmp_adm configuration read from config file");
     }
 #endif                          /* _SNMP_ADM_ACTIVE */
 
 #ifdef _USE_STAT_EXPORTER
   if(get_stat_exporter_conf(config_struct, &p_nfs_param->extern_param) != 0)
     {
-      LogCrit(COMPONENT_INIT, "Error loading STAT_EXPORTER configuration");
+      LogCrit(COMPONENT_INIT,
+              "Error loading STAT_EXPORTER configuration");
       return -1;
     }
   else
-      LogDebug(COMPONENT_INIT, "STAT_EXPORTER configuration read from config file");
+      LogDebug(COMPONENT_INIT,
+               "STAT_EXPORTER configuration read from config file");
 #endif                          /* _USE_STAT_EXPORTER */
 
   /* Load export entries from parsed file
@@ -1148,12 +1174,14 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 
   if(rc < 0)
     {
-      LogCrit(COMPONENT_INIT, "Error while parsing export entries");
+      LogCrit(COMPONENT_INIT,
+              "Error while parsing export entries");
       return -1;
     }
   else if(rc == 0)
     {
-      LogCrit(COMPONENT_INIT, "No export entries found in configuration file !!!");
+      LogCrit(COMPONENT_INIT,
+              "No export entries found in configuration file !!!");
 #ifndef _USE_FUSE
       return -1;
 #endif
@@ -1180,26 +1208,29 @@ int nfs_check_param_consistency(nfs_parameter_t * p_nfs_param)
 
   if(p_nfs_param->core_param.nb_worker <= 0)
     {
-      LogCrit(COMPONENT_INIT, "BAD PARAMETER: There must be more than %d workers",
-                 p_nfs_param->core_param.nb_worker);
+      LogCrit(COMPONENT_INIT,
+              "BAD PARAMETER: There must be more than %d workers",
+              p_nfs_param->core_param.nb_worker);
       return 1;
     }
 
   if(p_nfs_param->core_param.nb_worker > NB_MAX_WORKER_THREAD)
     {
-      LogCrit(COMPONENT_INIT, "BAD PARAMETER: number of workers is limited to %d",
-                 NB_MAX_WORKER_THREAD);
+      LogCrit(COMPONENT_INIT,
+              "BAD PARAMETER: number of workers is limited to %d",
+              NB_MAX_WORKER_THREAD);
       return 1;
     }
 
   if(p_nfs_param->worker_param.nb_before_gc <
      p_nfs_param->worker_param.lru_param.nb_entry_prealloc / 2)
     {
-      LogCrit(COMPONENT_INIT, "BAD PARAMETER: worker_param.nb_before_gc is too small: %d",
-                 p_nfs_param->worker_param.nb_before_gc);
-      LogCrit
-          (COMPONENT_INIT, "BAD PARAMETER: It should be at least half of worker_param.lru_param.nb_entry_prealloc = %d",
-           p_nfs_param->worker_param.lru_param.nb_entry_prealloc);
+      LogCrit(COMPONENT_INIT,
+              "BAD PARAMETER: worker_param.nb_before_gc is too small: %d",
+              p_nfs_param->worker_param.nb_before_gc);
+      LogCrit(COMPONENT_INIT,
+              "BAD PARAMETER: It should be at least half of worker_param.lru_param.nb_entry_prealloc = %d",
+              p_nfs_param->worker_param.lru_param.nb_entry_prealloc);
 
       return 1;
     }
@@ -1207,39 +1238,39 @@ int nfs_check_param_consistency(nfs_parameter_t * p_nfs_param)
   if(p_nfs_param->dupreq_param.hash_param.nb_node_prealloc <
      p_nfs_param->worker_param.lru_dupreq.nb_entry_prealloc)
     {
-      LogCrit
-          (COMPONENT_INIT, "BAD PARAMETER(dupreq): nb_node_prealloc = %d should be greater than nb_entry_prealloc = %d",
-           p_nfs_param->dupreq_param.hash_param.nb_node_prealloc,
-           p_nfs_param->worker_param.lru_dupreq.nb_entry_prealloc);
+      LogCrit(COMPONENT_INIT,
+              "BAD PARAMETER(dupreq): nb_node_prealloc = %d should be greater than nb_entry_prealloc = %d",
+              p_nfs_param->dupreq_param.hash_param.nb_node_prealloc,
+              p_nfs_param->worker_param.lru_dupreq.nb_entry_prealloc);
       return 1;
     }
 #ifdef _USE_MFSL_ASYNC
   if(p_nfs_param->cache_layers_param.cache_inode_client_param.expire_type_attr != CACHE_INODE_EXPIRE_NEVER)
     {
-      LogCrit
-          (COMPONENT_INIT, "BAD PARAMETER (Cache_Inode): Attr_Expiration_Time should be Never when used with MFSL_ASYNC");
+      LogCrit(COMPONENT_INIT,
+              "BAD PARAMETER (Cache_Inode): Attr_Expiration_Time should be Never when used with MFSL_ASYNC");
       return 1;
     }
 
   if(p_nfs_param->cache_layers_param.cache_inode_client_param.expire_type_dirent != CACHE_INODE_EXPIRE_NEVER)
     {
-      LogCrit
-          (COMPONENT_INIT, "BAD PARAMETER (Cache_Inode): Directory_Expiration_Time should be Never when used with MFSL_ASYNC");
+      LogCrit(COMPONENT_INIT,
+              "BAD PARAMETER (Cache_Inode): Directory_Expiration_Time should be Never when used with MFSL_ASYNC");
       return 1;
     }
 
   if(p_nfs_param->cache_layers_param.cache_inode_client_param.expire_type_link != CACHE_INODE_EXPIRE_NEVER)
     {
-      LogCrit
-          (COMPONENT_INIT, "BAD PARAMETER (Cache_Inode): Symlink_Expiration_Time should be Never when used with MFSL_ASYNC");
+      LogCrit(COMPONENT_INIT,
+              "BAD PARAMETER (Cache_Inode): Symlink_Expiration_Time should be Never when used with MFSL_ASYNC");
       return 1;
     }
 
   if(p_nfs_param->cache_layers_param.cache_inode_client_param.getattr_dir_invalidation !=
      0)
     {
-      LogCrit
-          (COMPONENT_INIT, "BAD PARAMETER (Cache_Inode): Use_Getattr_Directory_Invalidation should be NO when used with MFSL_ASYNC");
+      LogCrit(COMPONENT_INIT,
+              "BAD PARAMETER (Cache_Inode): Use_Getattr_Directory_Invalidation should be NO when used with MFSL_ASYNC");
       return 1;
     }
 #endif                          /* _USE_MFSL_ASYNC */
@@ -1360,15 +1391,15 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
   /* Initialisation of Threads's fridge */
   if( fridgethr_init() != 0 )
    {
-     LogCrit( COMPONENT_INIT, "can't run fridgethr_init... exiting");
-     exit( 1 ) ;
+     LogCrit(COMPONENT_INIT, "can't run fridgethr_init... exiting");
+     exit(1);
    }
 
   /* Starting the thread dedicated to signal handling */
   if( ( rc = pthread_create( &sigmgr_thrid, &attr_thr, sigmgr_thread, (void *)NULL ) ) != 0 )
    {
-     LogError( COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc ) ;
-     exit( 1 ) ;
+     LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
+     exit(1);
    }
 
   /* Starting all of the worker thread */
@@ -1412,6 +1443,17 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
   LogEvent(COMPONENT_INIT, "statistics thread was started successfully");
 
 #ifdef _USE_STAT_EXPORTER
+
+  /* Starting the long processing threshold thread */
+  if((rc =
+      pthread_create(&stat_thrid, &attr_thr, long_processing_thread, (void *)workers_data)) != 0)
+    {
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
+      exit(1);
+    }
+  LogEvent(COMPONENT_INIT,
+           "long processing threshold thread was started successfully");
+
   /* Starting the stat exporter thread */
   if((rc =
       pthread_create(&stat_exporter_thrid, &attr_thr, stat_exporter_thread, (void *)workers_data)) != 0)
@@ -1419,7 +1461,9 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
       LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, "statistics exporter thread was started successfully");
+  LogEvent(COMPONENT_INIT,
+           "statistics exporter thread was started successfully");
+
 #endif      /*  _USE_STAT_EXPORTER */
 
   if(pnfs_param->cache_layers_param.dcgcpol.run_interval != 0)
@@ -1432,7 +1476,8 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
           LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
           exit(1);
         }
-      LogEvent(COMPONENT_INIT, "file content gc thread was started successfully");
+      LogEvent(COMPONENT_INIT,
+               "file content gc thread was started successfully");
     }
 
 }                               /* nfs_Start_threads */
@@ -1469,10 +1514,10 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   if(FSAL_IS_ERROR(fsal_status))
     {
       /* Failed init */
-      LogMajor(COMPONENT_INIT, "NFS_INIT: FSAL library could not be initialized");
+      LogMajor(COMPONENT_INIT, "FSAL library could not be initialized");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, "NFS_INIT: FSAL library  successfully initialized");
+  LogInfo(COMPONENT_INIT, "FSAL library  successfully initialized");
 
 #ifdef _USE_MFSL
   /* MFSL Initialisation */
@@ -1480,21 +1525,22 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   if(FSAL_IS_ERROR(fsal_status))
     {
       /* Failed init */
-      LogMajor(COMPONENT_INIT, "NFS_INIT: MFSL library could not be initialized");
+      LogMajor(COMPONENT_INIT, "MFSL library could not be initialized");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, "NFS_INIT: MFSL library  successfully initialized");
+  LogInfo(COMPONENT_INIT, "MFSL library  successfully initialized");
 #endif
 
   /* Cache Inode Initialisation */
   if((ht =
       cache_inode_init(nfs_param.cache_layers_param.cache_param, &cache_status)) == NULL)
     {
-      LogMajor(COMPONENT_INIT, "NFS_INIT: Cache Inode Layer could not be initialized, cache_status=%d",
-                 cache_status);
+      LogMajor(COMPONENT_INIT,
+               "Cache Inode Layer could not be initialized, cache_status=%d",
+               cache_status);
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, "NFS_INIT: Cache Inode library successfully initialized");
+  LogInfo(COMPONENT_INIT, "Cache Inode library successfully initialized");
 
   /* Set the cache inode GC policy */
   cache_inode_set_gc_policy(nfs_param.cache_layers_param.gcpol);
@@ -1524,16 +1570,16 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
         {
           if(log_sperror_gss
              (GssError, "krb5_gss_register_acceptor_identity", gss_status, 0) == TRUE)
-            LogCrit(COMPONENT_INIT, "NFS_INIT: Error setting krb5 keytab to value %s: %s",
+            LogCrit(COMPONENT_INIT, "Error setting krb5 keytab to value %s: %s",
                        nfs_param.krb5_param.keytab, GssError);
           else
-            LogCrit
-                (COMPONENT_INIT, "NFS_INIT: Error setting krb5 keytab to value: non-translatable error");
+            LogCrit(COMPONENT_INIT,
+                    "Error setting krb5 keytab to value: non-translatable error");
 
           exit(1);
         }
-      LogEvent(COMPONENT_INIT, "NFS_INIT: krb5 keytab path successfully set to %s",
-                      nfs_param.krb5_param.keytab);
+      LogInfo(COMPONENT_INIT, "krb5 keytab path successfully set to %s",
+              nfs_param.krb5_param.keytab);
 #endif
 #endif
 
@@ -1548,34 +1594,33 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                                      &gss_service_name)) != GSS_S_COMPLETE)
         {
           if(log_sperror_gss(GssError, "gss_import_name", maj_stat, min_stat) == TRUE)
-            LogCrit(COMPONENT_INIT, "NFS_INIT: Error importing gss principal %s: %s",
+            LogCrit(COMPONENT_INIT, "Error importing gss principal %s: %s",
                        nfs_param.krb5_param.principal, GssError);
           else
-            LogCrit
-                (COMPONENT_INIT, "NFS_INIT: Error importing gss principal %s: non-translatable error",
-                 nfs_param.krb5_param.principal);
+            LogCrit(COMPONENT_INIT,
+                    "Error importing gss principal %s: non-translatable error",
+                     nfs_param.krb5_param.principal);
 
           exit(1);
         }
-      LogEvent(COMPONENT_INIT,  "NFS_INIT: gss principal %s successfully set",
-                      nfs_param.krb5_param.principal);
+      LogInfo(COMPONENT_INIT,  "gss principal %s successfully set",
+              nfs_param.krb5_param.principal);
 
       /* Set the principal to GSSRPC */
       if(!Svcauth_gss_set_svc_name(gss_service_name))
         {
-          LogCrit(COMPONENT_INIT, "NFS_INIT: Impossible to set gss principal to GSSRPC");
+          LogCrit(COMPONENT_INIT, "Impossible to set gss principal to GSSRPC");
           exit(1);
         }
 
       /* Init the HashTable */
       if(Gss_ctx_Hash_Init(nfs_param.krb5_param) == -1)
         {
-          LogCrit(COMPONENT_INIT, "NFS_INIT: Impossible to init GSS CTX cache");
+          LogCrit(COMPONENT_INIT, "Impossible to init GSS CTX cache");
           exit(1);
         }
       else
-        LogEvent(COMPONENT_INIT, 
-                        "NFS_INIT: Gss Context Cache successfully initialized");
+        LogInfo(COMPONENT_INIT, "Gss Context Cache successfully initialized");
 #endif                          /* _USE_GSSRPC */
 
 #ifdef HAVE_KRB5
@@ -1587,10 +1632,10 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   /* RPC Initialisation */
   if(nfs_Init_svc() != 0)
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing RPC server ressources");
+      LogCrit(COMPONENT_INIT, "Error while initializing RPC server ressources");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT,  "NFS_INIT: RPC ressources successfully initialized");
+  LogInfo(COMPONENT_INIT,  "RPC ressources successfully initialized");
 
   /* Worker initialisation */
   if((workers_data =
@@ -1606,10 +1651,10 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
   if(nfs_Init_gc_counter() != 0)
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing worker gc counter");
+      LogCrit(COMPONENT_INIT, "Error while initializing worker gc counter");
       exit(1);
     }
-  LogDebug(COMPONENT_INIT, "NFS_INIT: worker gc counter successfully initialized");
+  LogDebug(COMPONENT_INIT, "worker gc counter successfully initialized");
 
   LogDebug(COMPONENT_INIT, "Initializing workers data structure");
 
@@ -1620,7 +1665,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       /* Fill in workers fields (semaphores and other stangenesses */
       if(nfs_Init_worker_data(&(workers_data[i])) != 0)
         {
-          LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing worker data #%d", i);
+          LogCrit(COMPONENT_INIT, "Error while initializing worker data #%d",
+                  i);
           exit(1);
         }
 
@@ -1635,7 +1681,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       ht_ip_stats[i] = nfs_Init_ip_stats(nfs_param.ip_stats_param);
       if(ht_ip_stats[i] == NULL)
         {
-          LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing IP/stats cache #%d", i);
+          LogCrit(COMPONENT_INIT, "Error while initializing IP/stats cache #%d",
+                  i);
           exit(1);
         }
       workers_data[i].ht_ip_stats = ht_ip_stats[i];
@@ -1649,7 +1696,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                
       if(!IsPoolPreallocated(&workers_data[i].request_pool))
         {
-          LogCrit(COMPONENT_INIT, "NFS_INIT: Error while allocating request data pool #%d", i);
+          LogCrit(COMPONENT_INIT,
+                  "Error while allocating request data pool #%d", i);
           LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
@@ -1662,7 +1710,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
       if(!IsPoolPreallocated(&workers_data[i].dupreq_pool))
         {
-          LogCrit(COMPONENT_INIT, "NFS_INIT: Error while allocating duplicate request pool #%d", i);
+          LogCrit(COMPONENT_INIT,
+                  "Error while allocating duplicate request pool #%d", i);
           LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
@@ -1675,7 +1724,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
       if(!IsPoolPreallocated(&workers_data[i].ip_stats_pool))
         {
-          LogCrit(COMPONENT_INIT, "NFS_INIT: Error while allocating IP stats cache pool #%d", i);
+          LogCrit(COMPONENT_INIT,
+                  "Error while allocating IP stats cache pool #%d", i);
           LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
           exit(1);
         }
@@ -1686,7 +1736,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                nfs_client_id_t, NULL, NULL);
       NamePool(&workers_data[i].clientid_pool, "Client ID Pool %d", i);
 
-      LogDebug(COMPONENT_INIT, "NFS_INIT: worker data #%d successfully initialized", i);
+      LogDebug(COMPONENT_INIT, "worker data #%d successfully initialized", i);
     }                           /* for i */
 
   /* Admin initialisation */
@@ -1700,7 +1750,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
   if (nfs_Init_admin_data(admin_data) != 0)
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing admin thread");
+      LogCrit(COMPONENT_INIT, "Error while initializing admin thread");
       exit(1);
     }
 
@@ -1712,120 +1762,140 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   nfs_reset_stats();
 
   /* Creates the pseudo fs */
-  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building pseudo fs");
+  LogDebug(COMPONENT_INIT, "Now building pseudo fs");
   if((rc = nfs4_ExportToPseudoFS(nfs_param.pexportlist)) != 0)
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error %d while initializing NFSv4 pseudo file system", rc);
+      LogCrit(COMPONENT_INIT,
+              "Error %d while initializing NFSv4 pseudo file system", rc);
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, 
-                  "NFS_INIT: NFSv4 pseudo file system successfully initialized");
+  LogInfo(COMPONENT_INIT,
+          "NFSv4 pseudo file system successfully initialized");
 
   /* Init duplicate request cache */
-  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building duplicate request hash table cache");
+  LogDebug(COMPONENT_INIT, "Now building duplicate request hash table cache");
   if((rc = nfs_Init_dupreq(nfs_param.dupreq_param)) != DUPREQ_SUCCESS)
     {
-      LogCrit
-          (COMPONENT_INIT, "NFS_INIT: Error %d while initializing duplicate request hash table cache",
-           rc);
+      LogCrit(COMPONENT_INIT,
+              "Error %d while initializing duplicate request hash table cache",
+              rc);
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, 
-                  "NFS_INIT: duplicate request hash table cache successfully initialized");
+  LogInfo(COMPONENT_INIT,
+          "duplicate request hash table cache successfully initialized");
 
   /* Init the IP/name cache */
-  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building IP/name cache");
+  LogDebug(COMPONENT_INIT, "Now building IP/name cache");
   if(nfs_Init_ip_name(nfs_param.ip_name_param) != IP_NAME_SUCCESS)
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing IP/name cache");
+      LogCrit(COMPONENT_INIT,
+              "Error while initializing IP/name cache");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT,  "NFS_INIT: IP/name cache successfully initialized");
+  LogInfo(COMPONENT_INIT,
+          "IP/name cache successfully initialized");
 
   /* Init the UID_MAPPER cache */
-  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building UID_MAPPER cache");
+  LogDebug(COMPONENT_INIT, "Now building UID_MAPPER cache");
   if((idmap_uid_init(nfs_param.uidmap_cache_param) != ID_MAPPER_SUCCESS) ||
      (idmap_uname_init(nfs_param.unamemap_cache_param) != ID_MAPPER_SUCCESS))
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing UID_MAPPER cache");
+      LogCrit(COMPONENT_INIT,
+              "Error while initializing UID_MAPPER cache");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT,  "NFS_INIT: UID_MAPPER cache successfully initialized");
+  LogInfo(COMPONENT_INIT,
+          "UID_MAPPER cache successfully initialized");
 
   /* Init the UIDGID MAPPER Cache */
   LogDebug(COMPONENT_INIT,
-                  "NFS_INIT: Now building UIDGID MAPPER Cache (for RPCSEC_GSS)");
+           "Now building UIDGID MAPPER Cache (for RPCSEC_GSS)");
   if(uidgidmap_init(nfs_param.uidgidmap_cache_param) != ID_MAPPER_SUCCESS)
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing UIDGID_MAPPER cache");
+      LogCrit(COMPONENT_INIT,
+              "Error while initializing UIDGID_MAPPER cache");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT,  "NFS_INIT: UIDGID_MAPPER cache successfully initialized");
+  LogInfo(COMPONENT_INIT,
+          "UIDGID_MAPPER cache successfully initialized");
 
   /* Init the GID_MAPPER cache */
-  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building GID_MAPPER cache");
+  LogDebug(COMPONENT_INIT, "Now building GID_MAPPER cache");
   if((idmap_gid_init(nfs_param.gidmap_cache_param) != ID_MAPPER_SUCCESS) ||
      (idmap_gname_init(nfs_param.gnamemap_cache_param) != ID_MAPPER_SUCCESS))
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing GID_MAPPER cache");
+      LogCrit(COMPONENT_INIT,
+              "Error while initializing GID_MAPPER cache");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT,  "NFS_INIT: GID_MAPPER cache successfully initialized");
+  LogInfo(COMPONENT_INIT,
+          "GID_MAPPER cache successfully initialized");
 
   /* Init the NFSv4 Clientid cache */
-  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 clientid cache");
+  LogDebug(COMPONENT_INIT, "Now building NFSv4 clientid cache");
   if(nfs_Init_client_id(nfs_param.client_id_param) != CLIENT_ID_SUCCESS)
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing NFSv4 clientid cache");
+      LogCrit(COMPONENT_INIT,
+              "Error while initializing NFSv4 clientid cache");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT,  "NFS_INIT: NFSv4 clientid cache successfully initialized");
+  LogInfo(COMPONENT_INIT,
+          "NFSv4 clientid cache successfully initialized");
 
   /* Init the NFSv4 Clientid cache */
-  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 clientid cache reverse");
+  LogDebug(COMPONENT_INIT, "Now building NFSv4 clientid cache reverse");
   if(nfs_Init_client_id_reverse(nfs_param.client_id_param) != CLIENT_ID_SUCCESS)
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing NFSv4 clientid cache reverse");
+      LogCrit(COMPONENT_INIT,
+              "Error while initializing NFSv4 clientid cache reverse");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, 
-                  "NFS_INIT: NFSv4 clientid cache reverse successfully initialized");
+  LogInfo(COMPONENT_INIT,
+          "NFSv4 clientid cache reverse successfully initialized");
 
   /* Init The NFSv4 State id cache */
-  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 State Id cache");
+  LogDebug(COMPONENT_INIT, "Now building NFSv4 State Id cache");
   if(nfs4_Init_state_id(nfs_param.state_id_param) != 0)
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing NFSv4 State Id cache");
+      LogCrit(COMPONENT_INIT,
+              "Error while initializing NFSv4 State Id cache");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, "NFS_INIT: NFSv4 State Id cache successfully initialized");
+  LogInfo(COMPONENT_INIT,
+          "NFSv4 State Id cache successfully initialized");
 
   /* Init The NFSv4 Open Owner cache */
-  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 Open Owner cache");
+  LogDebug(COMPONENT_INIT, "Now building NFSv4 Open Owner cache");
   if(nfs4_Init_open_owner(nfs_param.open_owner_param) != 0)
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing NFSv4 Open Owner cache");
+      LogCrit(COMPONENT_INIT,
+              "Error while initializing NFSv4 Open Owner cache");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, "NFS_INIT: NFSv4 Open Owner cache successfully initialized");
+  LogInfo(COMPONENT_INIT,
+          "NFSv4 Open Owner cache successfully initialized");
 
 #ifdef _USE_NFS4_1
-  LogDebug(COMPONENT_INIT, "NFS_INIT: Now building NFSv4 Session Id cache");
+  LogDebug(COMPONENT_INIT, "Now building NFSv4 Session Id cache");
   if(nfs41_Init_session_id(nfs_param.session_id_param) != 0)
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error while initializing NFSv4 Session Id cache");
+      LogCrit(COMPONENT_INIT,
+              "Error while initializing NFSv4 Session Id cache");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT,  "NFS_INIT: NFSv4 Session Id cache successfully initialized");
+  LogInfo(COMPONENT_INIT,
+          "NFSv4 Session Id cache successfully initialized");
 #endif
 
   /* Create the root entries for each exported FS */
   if((rc = nfs_export_create_root_entry(nfs_param.pexportlist, ht)) != TRUE)
     {
-      LogCrit(COMPONENT_INIT, "NFS_INIT: Error initializing Cache Inode root entries, exiting...");
+      LogCrit(COMPONENT_INIT,
+              "Error initializing Cache Inode root entries, exiting...");
       exit(1);
     }
-  LogEvent(COMPONENT_INIT, "NFS_INIT: Cache Inode root entries successfully created");
+  LogInfo(COMPONENT_INIT,
+          "Cache Inode root entries successfully created");
 
   /* Spawns service threads */
   nfs_Start_threads(&nfs_param);
@@ -1876,11 +1946,12 @@ static void nfs_Start_file_content_flushers(unsigned int nb_threads)
           exit(1);
         }
       else
-        LogEvent(COMPONENT_INIT, "datacache flusher #%lu started", i);
+        LogInfo(COMPONENT_INIT, "datacache flusher #%lu started", i);
 
     }
-  LogEvent(COMPONENT_INIT, "%u datacache flushers threads were started successfully",
-             nb_threads);
+  LogInfo(COMPONENT_INIT,
+          "%u datacache flushers threads were started successfully",
+          nb_threads);
 
 }                               /* nfs_Start_file_content_flushers */
 
@@ -1970,15 +2041,15 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
   if(nfs_param.core_param.core_dump_size != -1)
     {
       LogDebug(COMPONENT_INIT, "I set the core size rlimit to %ld",
-                 nfs_param.core_param.core_dump_size);
+               nfs_param.core_param.core_dump_size);
       ulimit_data.rlim_cur = nfs_param.core_param.core_dump_size;
       ulimit_data.rlim_max = nfs_param.core_param.core_dump_size;
 
       if(setrlimit(RLIMIT_CORE, &ulimit_data) != 0)
         {
           LogError(COMPONENT_INIT, ERR_SYS, ERR_SETRLIMIT, errno);
-          LogCrit(COMPONENT_INIT, "/!\\ | Impossible to set RLIMIT_CORE to %ld",
-                     nfs_param.core_param.core_dump_size);
+          LogCrit(COMPONENT_INIT, "Impossible to set RLIMIT_CORE to %ld",
+                  nfs_param.core_param.core_dump_size);
         }
     }
 
@@ -1993,11 +2064,11 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
       if(setrlimit(RLIMIT_NOFILE, &ulimit_data) != 0)
         {
           LogError(COMPONENT_INIT, ERR_SYS, ERR_SETRLIMIT, errno);
-          LogCrit(COMPONENT_INIT, "/!\\ | Impossible to set RLIMIT_NOFILE to %d",
+          LogCrit(COMPONENT_INIT, "Impossible to set RLIMIT_NOFILE to %d",
                   nfs_param.core_param.nb_max_fd);
         }
       else
-        LogEvent(COMPONENT_INIT, "Setting RLIMIT_NOFILE to %d",
+        LogDebug(COMPONENT_INIT, "Setting RLIMIT_NOFILE to %d",
                  nfs_param.core_param.nb_max_fd);
     }
   else
@@ -2005,11 +2076,12 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
       if(getrlimit(RLIMIT_NOFILE, &ulimit_data) != 0)
         {
           LogError(COMPONENT_INIT, ERR_SYS, ERR_SETRLIMIT, errno);
-          LogMajor(COMPONENT_INIT, "/!\\ | Impossible to get RLIMIT_NOFILE");
+          LogMajor(COMPONENT_INIT, "Impossible to get RLIMIT_NOFILE");
           exit(1);
         }
       nfs_param.core_param.nb_max_fd = ulimit_data.rlim_cur;
-      LogEvent(COMPONENT_INIT, "RLIMIT_NOFILE was cur %d max %d", (int)ulimit_data.rlim_cur, (int)ulimit_data.rlim_max);
+      LogDebug(COMPONENT_INIT, "RLIMIT_NOFILE was cur %d max %d",
+               (int)ulimit_data.rlim_cur, (int)ulimit_data.rlim_max);
     }
 
   /* Allocate the directories for the datacache */
@@ -2018,12 +2090,12 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
                                        cache_content_client_param.cache_dir,
                                        &content_status) != CACHE_CONTENT_SUCCESS)
     {
-      LogCrit
-          (COMPONENT_INIT, "File Content Cache directories could not be allocated, exiting...");
+      LogCrit(COMPONENT_INIT,
+              "File Content Cache directories could not be allocated, exiting...");
       exit(1);
     }
   else
-    LogEvent(COMPONENT_INIT, "File Content Cache directory initialized");
+    LogInfo(COMPONENT_INIT, "File Content Cache directory initialized");
 
   /* Print the worker parameters in log */
   Print_param_worker_in_log(&(nfs_param.worker_param));
@@ -2059,9 +2131,12 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
           exit(0);
         }
 
-      LogEvent(COMPONENT_INIT, "--------------------------------------------------");
-      LogEvent(COMPONENT_INIT, "    NFS SERVER STARTED IN EMERGENCY FLUSH MODE");
-      LogEvent(COMPONENT_INIT, "--------------------------------------------------");
+      LogEvent(COMPONENT_INIT,
+               "--------------------------------------------------");
+      LogEvent(COMPONENT_INIT,
+               "    NFS SERVER STARTED IN EMERGENCY FLUSH MODE");
+      LogEvent(COMPONENT_INIT,
+               "--------------------------------------------------");
 
       /* The number of flusher sould be less than FSAL::max_fs_calls to avoid deadlocks */
       if(nfs_param.fsal_param.fsal_info.max_fs_calls > 0)
@@ -2070,9 +2145,9 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
             {
               p_start_info->nb_flush_threads =
                   nfs_param.fsal_param.fsal_info.max_fs_calls;
-              LogCrit
-                  (COMPONENT_INIT, "/!\\ Too much flushers, there should be less flushers than FSAL::max_fs_calls. Using %u threads instead",
-                   nfs_param.fsal_param.fsal_info.max_fs_calls);
+              LogCrit(COMPONENT_INIT,
+                      "Too much flushers, there should be less flushers than FSAL::max_fs_calls. Using %u threads instead",
+                      nfs_param.fsal_param.fsal_info.max_fs_calls);
             }
         }
 
@@ -2094,13 +2169,18 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
           LogDebug(COMPONENT_INIT, "Flusher #%u terminated", i);
         }
 
-      LogDebug(COMPONENT_INIT, "Nbr files flushed sucessfully: %u", nb_flushed);
-      LogDebug(COMPONENT_INIT, "Nbr files too young          : %u", nb_too_young);
-      LogDebug(COMPONENT_INIT, "Nbr flush errors             : %u", nb_errors);
-      LogDebug(COMPONENT_INIT, "Orphan entries removed       : %u", nb_orphans);
+      LogDebug(COMPONENT_INIT, "Nbr files flushed sucessfully: %u",
+               nb_flushed);
+      LogDebug(COMPONENT_INIT, "Nbr files too young          : %u",
+               nb_too_young);
+      LogDebug(COMPONENT_INIT, "Nbr flush errors             : %u",
+               nb_errors);
+      LogDebug(COMPONENT_INIT, "Orphan entries removed       : %u",
+               nb_orphans);
 
       /* Tell the admin that flush is done */
-      LogEvent(COMPONENT_INIT, "Flush of the data cache is done, nfs daemon will now exit");
+      LogEvent(COMPONENT_INIT,
+               "Flush of the data cache is done, nfs daemon will now exit");
     }
   else
     {
@@ -2120,7 +2200,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
       else
         {
           LogDebug(COMPONENT_INIT, "Populating UID_MAPPER with file %s",
-                     nfs_param.uidmap_cache_param.mapfile);
+                   nfs_param.uidmap_cache_param.mapfile);
           if(idmap_populate(nfs_param.uidmap_cache_param.mapfile, UIDMAP_TYPE) !=
              ID_MAPPER_SUCCESS)
             LogDebug(COMPONENT_INIT, "UID_MAPPER was NOT populated");
@@ -2133,7 +2213,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
       else
         {
           LogDebug(COMPONENT_INIT, "Populating GID_MAPPER with file %s",
-                     nfs_param.uidmap_cache_param.mapfile);
+                   nfs_param.uidmap_cache_param.mapfile);
           if(idmap_populate(nfs_param.gidmap_cache_param.mapfile, GIDMAP_TYPE) !=
              ID_MAPPER_SUCCESS)
             LogDebug(COMPONENT_INIT, "GID_MAPPER was NOT populated");
@@ -2145,7 +2225,8 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
         }
       else
         {
-          LogDebug(COMPONENT_INIT, "Populating IP_NAME with file %s", nfs_param.ip_name_param.mapfile);
+          LogDebug(COMPONENT_INIT, "Populating IP_NAME with file %s",
+                   nfs_param.ip_name_param.mapfile);
           if(nfs_ip_name_populate(nfs_param.ip_name_param.mapfile) != IP_NAME_SUCCESS)
             LogDebug(COMPONENT_INIT, "IP_NAME was NOT populated");
         }
@@ -2153,19 +2234,23 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
       /* Wait for the threads to complete their init step */
       sleep(2);
 
-      LogEvent(COMPONENT_INIT, "-------------------------------------------------");
-      LogEvent(COMPONENT_INIT, "             NFS SERVER INITIALIZED");
-      LogEvent(COMPONENT_INIT, "-------------------------------------------------");
+      LogEvent(COMPONENT_INIT,
+               "-------------------------------------------------");
+      LogEvent(COMPONENT_INIT,
+               "             NFS SERVER INITIALIZED");
+      LogEvent(COMPONENT_INIT,
+               "-------------------------------------------------");
 
       /* Wait for dispatcher to exit */
       pthread_join(rpc_dispatcher_thrid, NULL);
 
-      LogEvent
-          (COMPONENT_INIT, "NFS EXIT: rpc dispatcher thread has exited and was joined, nfs daemon exiting...");
+      LogInfo(COMPONENT_INIT,
+              "NFS EXIT: rpc dispatcher thread has exited and was joined, nfs daemon exiting...");
     }
 
   /* Regular exit */
-  LogEvent(COMPONENT_INIT, "NFS EXIT: regular exit, nfs daemon will stop immediately");
+  LogEvent(COMPONENT_INIT,
+           "NFS EXIT: regular exit, nfs daemon will stop immediately");
   exit(0);
 
   return 0;
@@ -2189,13 +2274,15 @@ void nfs_stop()
   st = MFSL_terminate();
 
   if(FSAL_IS_ERROR(st))
-    LogEvent(COMPONENT_INIT, "NFS EXIT: ERROR %d.%d while synchonizing MFSL", st.major, st.minor);
+    LogCrit(COMPONENT_INIT, "NFS EXIT: ERROR %d.%d while synchonizing MFSL",
+            st.major, st.minor);
 #endif
 
   st = FSAL_terminate();
 
   if(FSAL_IS_ERROR(st))
-    LogEvent(COMPONENT_INIT, "NFS EXIT: ERROR %d.%d while synchonizing FSAL", st.major, st.minor);
+    LogCrit(COMPONENT_INIT, "NFS EXIT: ERROR %d.%d while synchonizing FSAL",
+            st.major, st.minor);
 
   LogEvent(COMPONENT_INIT, "NFS EXIT: regular exit");
   exit(0);

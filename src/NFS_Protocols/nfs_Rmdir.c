@@ -115,6 +115,30 @@ int nfs_Rmdir(nfs_arg_t * parg /* IN  */ ,
   fsal_name_t name;
   char *dir_name = NULL;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char str[LEN_FH_STR];
+
+      switch (preq->rq_vers)
+        {
+        case NFS_V2:
+          dir_name = parg->arg_rmdir2.name;
+          break;
+        case NFS_V3:
+          dir_name = parg->arg_rmdir3.object.name;
+          break;
+        }
+
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_rmdir2.dir),
+                       &(parg->arg_rmdir3.object.dir),
+                       NULL,
+                       str);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Rmdir handle: %s name: %s",
+               str, dir_name);
+    }
+
   if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */

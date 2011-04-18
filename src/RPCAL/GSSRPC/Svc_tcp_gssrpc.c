@@ -36,6 +36,8 @@
 #endif
 
 #include "log_macros.h"
+#include   "stuff_alloc.h"
+
 int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
 
 /*
@@ -79,6 +81,7 @@ void Xprt_unregister(SVCXPRT * xprt);
 pthread_mutex_t *mutex_cond_xprt;
 pthread_cond_t *condvar_xprt;
 int *etat_xprt;
+extern SVCXPRT ** Xports ;
 
 /*
  * Ops vector for TCP/IP based rpc service handle
@@ -256,7 +259,7 @@ static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
   xprt->xp_ops = &Svctcp_op;    /* truely deals with calls */
   xprt->xp_port = 0;            /* this is a connection, not a rendezvouser */
   xprt->xp_sock = fd;
-  Xports[sock] = xprt;
+  Xports[fd] = xprt;
  done:
   return (xprt);
 }
@@ -307,7 +310,7 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt, struct rpc_msg *msg)
 
   if((rc =
       fridgethr_get(&sockmgr_thrid, rpc_tcp_socket_manager_thread,
-                     (void *)(xprt->xp_sock))) != 0)
+                     (void *)((unsigned long)xprt->xp_sock))) != 0)
     {
       return FALSE;
     }
@@ -519,3 +522,55 @@ static bool_t Abortx_freeargs(SVCXPRT * xprt, xdrproc_t proc, void *info)
 {
   return Abortx();
 }
+
+/*
+ * Create a copy of xprt. Currently, sendsize and recvsize of XDR is
+ * hard-coded. This should be fixed.
+ */
+SVCXPRT *Svcxprt_copycreate()
+{
+  register SVCXPRT *xprt;
+  register struct tcp_conn *cd;
+
+  xprt = (SVCXPRT *) Mem_Alloc(sizeof(SVCXPRT));
+  if(xprt == (SVCXPRT *) NULL)
+    {
+      goto done;
+    }
+
+  cd = (struct tcp_conn *) Mem_Alloc(sizeof(struct tcp_conn));
+  if(cd == (struct tcp_conn *) NULL)
+    {
+      Mem_Free((char *)xprt);
+      xprt = (SVCXPRT *) NULL;
+      goto done;
+    }
+
+  cd->strm_stat = XPRT_IDLE;
+  xdrrec_create(&(cd->xdrs), 32768, 32768, (caddr_t) xprt, Readtcp, Writetcp);
+
+  xprt->xp_p1 = (caddr_t) cd;
+  xprt->xp_verf.oa_base = cd->verf_body;
+
+  done:
+    return (xprt);
+ }
+
+/*
+ * Duplicate xprt from original to copy.
+ */
+void Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
+{
+  register struct tcp_conn *cd_copy = (struct tcp_conn *)(xprt_copy->xp_p1);
+  register struct tcp_conn *cd_orig = (struct tcp_conn *)(xprt_orig->xp_p1);
+
+  memcpy(xprt_copy, xprt_orig, sizeof(SVCXPRT));
+  xprt_copy->xp_p1 = (caddr_t) cd_copy;
+  xprt_copy->xp_verf.oa_base = cd_copy->verf_body;
+
+  cd_copy->strm_stat = cd_orig->strm_stat;
+  cd_copy->x_id = cd_orig->x_id;
+  memcpy(cd_copy->verf_body, cd_orig->verf_body, MAX_AUTH_BYTES);
+}
+
+

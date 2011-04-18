@@ -103,6 +103,14 @@ int nfs3_Fsinfo(nfs_arg_t * parg,
   cache_inode_fsal_data_t fsal_data;
   fsal_attrib_list_t attr;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char str[LEN_FH_STR];
+      sprint_fhandle3(str, &(parg->arg_fsinfo3.fsroot));
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs3_Fsinfo handle: %s", str);
+    }
+
   /* to avoid setting it on each error case */
   pres->res_fsinfo3.FSINFO3res_u.resfail.obj_attributes.attributes_follow = FALSE;
 
@@ -146,12 +154,20 @@ int nfs3_Fsinfo(nfs_arg_t * parg,
   FSINFO_FIELD.time_delta.seconds = 1;
   FSINFO_FIELD.time_delta.nseconds = 0;
 
-  LogFullDebug(COMPONENT_NFSPROTO, "rtmax = %d | rtpref = %d | trmult = %d",
-         FSINFO_FIELD.rtmax, FSINFO_FIELD.rtpref, FSINFO_FIELD.rtmult = DEV_BSIZE);
-  LogFullDebug(COMPONENT_NFSPROTO, "wtmax = %d | wtpref = %d | wrmult = %d",
-         FSINFO_FIELD.wtmax, FSINFO_FIELD.wtpref, FSINFO_FIELD.wtmult = DEV_BSIZE);
-  LogFullDebug(COMPONENT_NFSPROTO, "dtpref = %d | maxfilesize = %llu ", FSINFO_FIELD.dtpref,
-         FSINFO_FIELD.maxfilesize);
+  LogFullDebug(COMPONENT_NFSPROTO,
+               "rtmax = %d | rtpref = %d | trmult = %d",
+               FSINFO_FIELD.rtmax,
+               FSINFO_FIELD.rtpref,
+               FSINFO_FIELD.rtmult);
+  LogFullDebug(COMPONENT_NFSPROTO,
+               "wtmax = %d | wtpref = %d | wrmult = %d",
+               FSINFO_FIELD.wtmax,
+               FSINFO_FIELD.wtpref,
+               FSINFO_FIELD.wtmult);
+  LogFullDebug(COMPONENT_NFSPROTO,
+               "dtpref = %d | maxfilesize = %llu ",
+               FSINFO_FIELD.dtpref,
+               FSINFO_FIELD.maxfilesize);
 
   /*
    * Allow all kinds of operations to be performed on the server

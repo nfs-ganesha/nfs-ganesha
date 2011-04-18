@@ -117,8 +117,32 @@ int nfs_Read(nfs_arg_t * parg,
   caddr_t data = NULL;
   cache_inode_file_type_t filetype;
   fsal_boolean_t eof_met;
-
   cache_content_policy_data_t datapol;
+
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char str[LEN_FH_STR];
+
+      switch (preq->rq_vers)
+        {
+        case NFS_V2:
+          offset = parg->arg_read2.offset;
+          size = parg->arg_read2.count;
+          break;
+        case NFS_V3:
+          offset = parg->arg_read3.offset;
+          size = parg->arg_read3.count;
+        }
+
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_read2.file),
+                       &(parg->arg_read3.file),
+                       NULL,
+                       str);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Read handle: %s start: %llx len: %llx",
+               str, (unsigned long long) offset, (unsigned long long) size);
+    }
 
   datapol.UseMaxCacheSize = FALSE;
 
@@ -214,61 +238,64 @@ int nfs_Read(nfs_arg_t * parg,
     case NFS_V3:
       offset = parg->arg_read3.offset;
       size = parg->arg_read3.count;
-
-      LogFullDebug(COMPONENT_NFSPROTO, "-----> Read offset=%lld count=%u MaxOffSet=%"PRId64, parg->arg_read3.offset,
-             parg->arg_read3.count, pexport->MaxOffsetRead);
-
-      /* 
-       * do not exceed maxium READ/WRITE offset if set 
-       */
-      if((pexport->options & EXPORT_OPTION_MAXOFFSETREAD) == EXPORT_OPTION_MAXOFFSETREAD)
-        if((fsal_off_t) (offset + size) > pexport->MaxOffsetRead)
-          {
-
-            LogEvent(COMPONENT_NFSPROTO,
-                              "NFS READ: A client tryed to violate max file size %"PRId64" for exportid #%hu",
-                              pexport->MaxOffsetRead, pexport->id);
-
-            switch (preq->rq_vers)
-              {
-              case NFS_V2:
-                pres->res_attr2.status = NFSERR_DQUOT;
-                break;
-
-              case NFS_V3:
-                pres->res_read3.status = NFS3ERR_INVAL;
-                break;
-              }
-
-            nfs_SetFailedStatus(pcontext, pexport,
-                                preq->rq_vers,
-                                cache_status,
-                                &pres->res_read2.status,
-                                &pres->res_read3.status,
-                                pentry,
-                                &(pres->res_read3.READ3res_u.resfail.file_attributes),
-                                NULL, NULL, NULL, NULL, NULL, NULL);
-
-            return NFS_REQ_OK;
-
-          }
-
-      /*
-       * We should not exceed the FSINFO rtmax field for
-       * the size 
-       */
-      if(((pexport->options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD) &&
-         size > pexport->MaxRead)
-        {
-          /*
-           * The client asked for too much, normally
-           * this should not happen because the client
-           * is calling nfs_Fsinfo at mount time and so
-           * is aware of the server maximum write size 
-           */
-          size = pexport->MaxRead;
-        }
       break;
+    }
+
+  /* 
+   * do not exceed maxium READ offset if set 
+   */
+  if((pexport->options & EXPORT_OPTION_MAXOFFSETREAD) == EXPORT_OPTION_MAXOFFSETREAD)
+    {
+      LogFullDebug(COMPONENT_NFSPROTO,
+                   "-----> Read offset=%llu count=%llu MaxOffSet=%llu",
+                   (unsigned long long) offset,
+                   (unsigned long long) size,
+                   (unsigned long long) pexport->MaxOffsetRead);
+
+      if((fsal_off_t) (offset + size) > pexport->MaxOffsetRead)
+        {
+          LogEvent(COMPONENT_NFSPROTO,
+                   "NFS READ: A client tryed to violate max file size %llu for exportid #%hu",
+                   (unsigned long long) pexport->MaxOffsetRead, pexport->id);
+
+          switch (preq->rq_vers)
+            {
+            case NFS_V2:
+              pres->res_attr2.status = NFSERR_DQUOT;
+              break;
+
+            case NFS_V3:
+              pres->res_read3.status = NFS3ERR_INVAL;
+              break;
+            }
+
+          nfs_SetFailedStatus(pcontext, pexport,
+                              preq->rq_vers,
+                              cache_status,
+                              &pres->res_read2.status,
+                              &pres->res_read3.status,
+                              pentry,
+                              &(pres->res_read3.READ3res_u.resfail.file_attributes),
+                              NULL, NULL, NULL, NULL, NULL, NULL);
+
+          return NFS_REQ_OK;
+        }
+    }
+
+  /*
+   * We should not exceed the FSINFO rtmax field for
+   * the size 
+   */
+  if(((pexport->options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD) &&
+     size > pexport->MaxRead)
+    {
+      /*
+       * The client asked for too much, normally
+       * this should not happen because the client
+       * is calling nfs_Fsinfo at mount time and so
+       * is aware of the server maximum write size 
+       */
+      size = pexport->MaxRead;
     }
 
   if(size == 0)

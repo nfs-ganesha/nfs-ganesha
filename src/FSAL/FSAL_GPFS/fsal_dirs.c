@@ -241,8 +241,9 @@ fsal_status_t GPFSFSAL_readdir(gpfsfsal_dir_t * p_dir_descriptor,       /* IN */
                                                     /** @todo not used for the moment. Waiting for information on symlink management */
           bpos += dp->d_reclen;
 
-          /* LogFullDebug(COMPONENT_FSAL,"\tino=%8ld|%8lx off=%d|%x reclen=%d|%x name=%s|%d\n", dp->d_ino, dp->d_ino, (int)dp->d_off, (int)dp->d_off, 
-             dp->d_reclen, dp->d_reclen, dp->d_name, (int)dp->d_name[0]  ) ; */
+          /* LogFullDebug(COMPONENT_FSAL,
+                          "\tino=%8ld|%8lx off=%d|%x reclen=%d|%x name=%s|%d", dp->d_ino, dp->d_ino, (int)dp->d_off, (int)dp->d_off, 
+                          dp->d_reclen, dp->d_reclen, dp->d_name, (int)dp->d_name[0]  ) ; */
 
           if(!(*p_nb_entries < max_dir_entries))
             break;

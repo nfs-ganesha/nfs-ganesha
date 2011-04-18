@@ -107,6 +107,14 @@ int nfs3_Access(nfs_arg_t * parg,
   cache_inode_fsal_data_t fsal_data;
   fsal_attrib_list_t attr;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char str[LEN_FH_STR];
+      sprint_fhandle3(str, &(parg->arg_access3.object));
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs3_Access handle: %s", str);
+    }
+
   /* Is this a xattr FH ? */
   if(nfs3_Is_Fh_Xattr(&(parg->arg_access3.object)))
     return nfs3_Access_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);

@@ -174,14 +174,16 @@ int main(int argc, char *argv[])
       buffval.pdata = strtab[i];
 
       rc = HashTable_Set(ht, &buffkey, &buffval);
-      LogFullDebug(COMPONENT_HASHTABLE,"Added %s , %d , return = %d", strtab[i], i, rc);
+      LogFullDebug(COMPONENT_HASHTABLE,
+                   "Added %s , %d , return = %d", strtab[i], i, rc);
     }
 
   MesureTemps(&fin, &debut);
   LogTest("Time to insert %d entries: %s", MAXTEST,
-         ConvertiTempsChaine(fin, NULL));
+          ConvertiTempsChaine(fin, NULL));
 
-  LogFullDebug(COMPONENT_HASHTABLE, "-----------------------------------------");
+  LogFullDebug(COMPONENT_HASHTABLE,
+               "-----------------------------------------");
   HashTable_Log(COMPONENT_HASHTABLE,ht);
 
   LogTest("=========================================");
@@ -225,7 +227,8 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-  LogTest("----> retrieved value = len %zu ; val = %s", buffval.len, buffval.pdata);
+  LogTest("----> retrieved value = len %zu ; val = %s",
+          buffval.len, buffval.pdata);
   val = atoi(buffval.pdata);
 
   if(val != critere_recherche)
@@ -245,7 +248,9 @@ int main(int argc, char *argv[])
       buffkey2.pdata = tmpstr;
 
       rc = HashTable_Get(ht, &buffkey2, &buffval2);
-      LogFullDebug(COMPONENT_HASHTABLE,"\tPlaying key = %s  --> %s", buffkey2.pdata, buffval2.pdata);
+      LogFullDebug(COMPONENT_HASHTABLE,
+                   "\tPlaying key = %s  --> %s",
+                   buffkey2.pdata, buffval2.pdata);
       if(rc != HASHTABLE_SUCCESS)
         {
           LogTest("Error reading %d = %d", i, rc);
@@ -255,7 +260,7 @@ int main(int argc, char *argv[])
     }
   MesureTemps(&fin, &debut);
   LogTest("Time to read %d elements = %s", MAXGET,
-         ConvertiTempsChaine(fin, NULL));
+          ConvertiTempsChaine(fin, NULL));
 
   LogTest("-----------------------------------------");
 
@@ -294,9 +299,8 @@ int main(int argc, char *argv[])
   buffkey.pdata = tmpstr;
 
   rc = HashTable_Get(ht, &buffkey, &buffval);
-  LogTest
-      ("Recovery of the %d key (erased) (must return HASH_ERROR_NO_SUCH_KEY) = %d --> %d",
-       critere_recherche, HASHTABLE_ERROR_NO_SUCH_KEY, rc);
+  LogTest("Recovery of the %d key (erased) (must return HASH_ERROR_NO_SUCH_KEY) = %d --> %d",
+          critere_recherche, HASHTABLE_ERROR_NO_SUCH_KEY, rc);
 
   if(rc != HASHTABLE_ERROR_NO_SUCH_KEY)
     {
@@ -305,9 +309,9 @@ int main(int argc, char *argv[])
     }
   LogTest("-----------------------------------------");
 
-  LogTest
-      ("Destruction of %d items, taken at random (well if you want ... I use srandom)",
-       MAXDESTROY);
+  LogTest("Destruction of %d items, taken at random (well if you want ... I use srandom)",
+          MAXDESTROY);
+
   srandom(getpid());
   random_val = random() % MAXTEST;
 
@@ -347,7 +351,7 @@ int main(int argc, char *argv[])
     }
   MesureTemps(&fin, &debut);
   LogTest("Time to delete %d elements = %s", MAXDESTROY,
-         ConvertiTempsChaine(fin, NULL));
+          ConvertiTempsChaine(fin, NULL));
 
   LogTest("-----------------------------------------");
 
@@ -365,7 +369,7 @@ int main(int argc, char *argv[])
     }
   MesureTemps(&fin, &debut);
   LogTest("Tie to read %d elements = %s", MAXGET,
-         ConvertiTempsChaine(fin, NULL));
+          ConvertiTempsChaine(fin, NULL));
 
   LogTest("-----------------------------------------");
   LogTest("Writing a duplicate key ");
@@ -374,7 +378,7 @@ int main(int argc, char *argv[])
   buffkey.pdata = tmpstr;
   rc = HashTable_Test_And_Set(ht, &buffkey, &buffval, HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
   LogTest("The value should be HASHTABLE_ERROR_KEY_ALREADY_EXISTS  = %d --> %d",
-         HASHTABLE_ERROR_KEY_ALREADY_EXISTS, rc);
+          HASHTABLE_ERROR_KEY_ALREADY_EXISTS, rc);
   if(rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
     {
       LogTest("Test FAILED: duplicate key");
@@ -390,21 +394,20 @@ int main(int argc, char *argv[])
   LogTest(" Number of entries = %d", statistiques.dynamic.nb_entries);
 
   LogTest("   Successful operations  : Set = %d,  Get = %d,  Del = %d,  Test = %d",
-         statistiques.dynamic.ok.nb_set, statistiques.dynamic.ok.nb_get,
-         statistiques.dynamic.ok.nb_del, statistiques.dynamic.ok.nb_test);
+          statistiques.dynamic.ok.nb_set, statistiques.dynamic.ok.nb_get,
+          statistiques.dynamic.ok.nb_del, statistiques.dynamic.ok.nb_test);
 
   LogTest("   Failed operations : Set = %d,  Get = %d,  Del = %d,  Test = %d",
-         statistiques.dynamic.err.nb_set, statistiques.dynamic.err.nb_get,
-         statistiques.dynamic.err.nb_del, statistiques.dynamic.err.nb_test);
+          statistiques.dynamic.err.nb_set, statistiques.dynamic.err.nb_get,
+          statistiques.dynamic.err.nb_del, statistiques.dynamic.err.nb_test);
 
   LogTest("   Operations 'NotFound': Set = %d,  Get = %d,  Del = %d,  Test = %d",
-         statistiques.dynamic.notfound.nb_set, statistiques.dynamic.notfound.nb_get,
-         statistiques.dynamic.notfound.nb_del, statistiques.dynamic.notfound.nb_test);
+          statistiques.dynamic.notfound.nb_set, statistiques.dynamic.notfound.nb_get,
+          statistiques.dynamic.notfound.nb_del, statistiques.dynamic.notfound.nb_test);
 
-  LogTest
-      ("  Calculated statistics: min_rbt_node = %d,  max_rbt_node = %d,  average_rbt_node = %d",
-       statistiques.computed.min_rbt_num_node, statistiques.computed.max_rbt_num_node,
-       statistiques.computed.average_rbt_num_node);
+  LogTest("  Calculated statistics: min_rbt_node = %d,  max_rbt_node = %d,  average_rbt_node = %d",
+          statistiques.computed.min_rbt_num_node, statistiques.computed.max_rbt_num_node,
+          statistiques.computed.average_rbt_num_node);
 
   /* Test sur la pertinence des valeurs de statistiques */
   if(statistiques.dynamic.ok.nb_set != MAXTEST)

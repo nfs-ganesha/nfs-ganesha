@@ -212,8 +212,8 @@ int main(int argc, char *argv[])
           hrc = do_invalidate(plru, key);
 
           if(hrc != expected_rc)
-            LogTest(">>>> ERREUR: invalidate  %d : %d != %d (expected)", key, hrc,
-                   expected_rc);
+            LogTest(">>>> ERREUR: invalidate  %d : %d != %d (expected)",
+                    key, hrc, expected_rc);
           else
             LogTest(">>>> OK invalidate %d", key);
           break;

@@ -426,8 +426,6 @@ fsal_status_t GPFSFSAL_link(gpfsfsal_handle_t * p_target_handle,        /* IN */
   if(!global_fs_info.link_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
 
-/*  LogDebug(COMPONENT_FSAL, "linking %#llx:%#x:%#x to %#llx:%#x:%#x/%s \n", */
-
   /* get the target handle access by fid */
   TakeTokenFSCall();
   status = fsal_internal_handle2fd(p_context, p_target_handle, &srcfd, O_RDONLY);
@@ -566,7 +564,8 @@ fsal_status_t GPFSFSAL_mknode(gpfsfsal_handle_t * parentdir_handle,     /* IN */
       break;
 
     default:
-      LogMajor(COMPONENT_FSAL, "Invalid node type in FSAL_mknode: %d", nodetype);
+      LogMajor(COMPONENT_FSAL,
+               "Invalid node type in FSAL_mknode: %d", nodetype);
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_mknode);
     }
 

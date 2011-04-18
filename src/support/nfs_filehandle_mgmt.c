@@ -146,7 +146,7 @@ int nfs4_FhandleToFSAL(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
   file_handle_v4_t *pfile_handle;
   unsigned long long checksum;
 
-  print_fhandle4(COMPONENT_FILEHANDLE, *pfh4);
+  print_fhandle4(COMPONENT_FILEHANDLE, pfh4);
 
   /* Verify the len */
   if(pfh4->nfs_fh4_len != sizeof(file_handle_v4_t))
@@ -189,7 +189,7 @@ int nfs3_FhandleToFSAL(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
   fsal_status_t fsal_status;
   file_handle_v3_t *pfile_handle;
 
-  print_fhandle3(COMPONENT_FILEHANDLE, *pfh3);
+  print_fhandle3(COMPONENT_FILEHANDLE, pfh3);
 
   /* Verify the len */
   if(pfh3->data.data_len != sizeof(file_handle_v3_t))
@@ -230,7 +230,7 @@ int nfs2_FhandleToFSAL(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
 
   /* Cast the fh as a non opaque structure */
   pfile_handle = (file_handle_v2_t *) pfh2;
-  print_fhandle2(COMPONENT_FILEHANDLE, *pfh2);
+  print_fhandle2(COMPONENT_FILEHANDLE, pfh2);
 
   /* Fill in the fs opaque part */
   fsal_status =
@@ -265,6 +265,7 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
 
   /* zero-ification of the buffer to be used as handle */
   memset(pfh4->nfs_fh4_val, 0, sizeof(file_handle_v4_t));
+  memset((caddr_t) &file_handle, 0, sizeof(file_handle_v4_t));
 
   /* Fill in the fs opaque part */
   fsal_status =
@@ -285,7 +286,7 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
   /* if FH expires, set it there */
   if(nfs_param.nfsv4_param.fh_expire == TRUE)
     {
-      LogFullDebug(COMPONENT_NFS_V4, "Un fh expirable a ete cree");
+      LogFullDebug(COMPONENT_NFS_V4, "An expireable file handle was created.");
       file_handle.srvboot_time = ServerBootTime;
     }
   else
@@ -330,7 +331,7 @@ int nfs3_FSALToFhandle(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
 
   /* zero-ification of the buffer to be used as handle */
   memset(pfh3->data.data_val, 0, NFS3_FHSIZE);
-  memset((caddr_t) & file_handle, 0, sizeof(file_handle_v3_t));
+  memset((caddr_t) &file_handle, 0, sizeof(file_handle_v3_t));
 
   /* Fill in the fs opaque part */
   fsal_status =
@@ -351,7 +352,7 @@ int nfs3_FSALToFhandle(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
   /* Set the data */
   memcpy(pfh3->data.data_val, &file_handle, sizeof(file_handle_v3_t));
 
-  print_fhandle3(COMPONENT_FILEHANDLE, *pfh3);
+  print_fhandle3(COMPONENT_FILEHANDLE, pfh3);
 
   return 1;
 }                               /* nfs3_FSALToFhandle */
@@ -379,6 +380,7 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
 
   /* zero-ification of the buffer to be used as handle */
   memset(pfh2, 0, NFS2_FHSIZE);
+  memset((caddr_t) &file_handle, 0, sizeof(file_handle_v2_t));
 
   /* Fill in the fs opaque part */
   fsal_status =
@@ -396,7 +398,7 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
   /* Set the data */
   memcpy((caddr_t) pfh2, &file_handle, sizeof(file_handle_v2_t));
 
-  print_fhandle2(COMPONENT_FILEHANDLE, *pfh2);
+  print_fhandle2(COMPONENT_FILEHANDLE, pfh2);
 
   return 1;
 }                               /* nfs2_FSALToFhandle */
@@ -658,7 +660,7 @@ int nfs4_Is_Fh_Referral(nfs_fh4 * pfh)
  * @return nothing (void function).
  *
  */
-void print_fhandle2(log_components_t component, fhandle2 fh)
+void print_fhandle2(log_components_t component, fhandle2 *fh)
 {
   if(isFullDebug(component))
     {
@@ -669,7 +671,7 @@ void print_fhandle2(log_components_t component, fhandle2 fh)
     }
 }                               /* print_fhandle2 */
 
-void sprint_fhandle2(char *str, fhandle2 fh)
+void sprint_fhandle2(char *str, fhandle2 *fh)
 {
   char *tmp = str +  sprintf(str, "File Handle V2: ");
 
@@ -687,7 +689,7 @@ void sprint_fhandle2(char *str, fhandle2 fh)
  * @return nothing (void function).
  *
  */
-void print_fhandle3(log_components_t component, nfs_fh3 fh)
+void print_fhandle3(log_components_t component, nfs_fh3 *fh)
 {
   if(isFullDebug(component))
     {
@@ -698,11 +700,11 @@ void print_fhandle3(log_components_t component, nfs_fh3 fh)
     }
 }                               /* print_fhandle3 */
 
-void sprint_fhandle3(char *str, nfs_fh3 fh)
+void sprint_fhandle3(char *str, nfs_fh3 *fh)
 {
-  char *tmp = str + sprintf(str, "File Handle V3: Len=%u ", fh.data.data_len);
+  char *tmp = str + sprintf(str, "File Handle V3: Len=%u ", fh->data.data_len);
 
-  sprint_mem(tmp, (char *)fh.data.data_val, fh.data.data_len);
+  sprint_mem(tmp, fh->data.data_val, fh->data.data_len);
 }                               /* sprint_fhandle3 */
 
 /**
@@ -716,7 +718,7 @@ void sprint_fhandle3(char *str, nfs_fh3 fh)
  * @return nothing (void function).
  *
  */
-void print_fhandle4(log_components_t component, nfs_fh4 fh)
+void print_fhandle4(log_components_t component, nfs_fh4 *fh)
 {
   if(isFullDebug(component))
     {
@@ -727,11 +729,11 @@ void print_fhandle4(log_components_t component, nfs_fh4 fh)
     }
 }                               /* print_fhandle4 */
 
-void sprint_fhandle4(char *str, nfs_fh4 fh)
+void sprint_fhandle4(char *str, nfs_fh4 *fh)
 {
-  char *tmp = str + sprintf(str, "File Handle V4: Len=%u ", fh.nfs_fh4_len);
+  char *tmp = str + sprintf(str, "File Handle V4: Len=%u ", fh->nfs_fh4_len);
 
-  sprint_mem(tmp, (char *)fh.nfs_fh4_val, fh.nfs_fh4_len);
+  sprint_mem(tmp, fh->nfs_fh4_val, fh->nfs_fh4_len);
 }                               /* sprint_fhandle4 */
 
 /**
@@ -789,16 +791,16 @@ void print_compound_fh(log_components_t component, compound_data_t * data)
   char str[LEN_FH_STR];
 
   
-  sprint_fhandle4(str, data->currentFH);
+  sprint_fhandle4(str, &data->currentFH);
   LogFullDebug(component, "Current FH  %s", str);
 
-  sprint_fhandle4(str, data->savedFH);
+  sprint_fhandle4(str, &data->savedFH);
   LogFullDebug(component, "Saved FH    %s", str);
 
-  sprint_fhandle4(str, data->publicFH);
+  sprint_fhandle4(str, &data->publicFH);
   LogFullDebug(component, "Public FH   %s", str);
 
-  sprint_fhandle4(str, data->rootFH);
+  sprint_fhandle4(str, &data->rootFH);
   LogFullDebug(component, "Root FH     %s", str);
 }                               /* print_compoud_fh */
 

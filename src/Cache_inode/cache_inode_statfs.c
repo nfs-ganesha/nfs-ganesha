@@ -115,11 +115,11 @@ cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
       return *pstatus;
     }
   LogFullDebug(COMPONENT_CACHE_INODE,
-      "-- cache_inode_statfs --> pdynamicinfo->total_bytes = %llu pdynamicinfo->free_bytes = %llu pdynamicinfo->avail_bytes = %llu\n",
+      "-- cache_inode_statfs --> pdynamicinfo->total_bytes = %llu pdynamicinfo->free_bytes = %llu pdynamicinfo->avail_bytes = %llu",
        pdynamicinfo->total_bytes, pdynamicinfo->free_bytes, pdynamicinfo->avail_bytes);
 
   LogFullDebug(COMPONENT_CACHE_INODE,
-      "-- cache_inode_statfs --> dynamicinfo.total_files = %llu dynamicinfo.free_files = %llu dynamicinfo.avail_files = %llu\n",
+      "-- cache_inode_statfs --> dynamicinfo.total_files = %llu dynamicinfo.free_files = %llu dynamicinfo.avail_files = %llu",
        pdynamicinfo->total_files, pdynamicinfo->free_files, pdynamicinfo->avail_files);
   return CACHE_INODE_SUCCESS;
 }                               /* cache_inode_get */

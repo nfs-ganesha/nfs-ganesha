@@ -121,6 +121,30 @@ int nfs_Create(nfs_arg_t * parg,
   cache_inode_file_type_t parent_filetype;
   fsal_handle_t *pfsal_handle;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char str[LEN_FH_STR];
+
+      switch (preq->rq_vers)
+        {
+        case NFS_V2:
+          str_file_name = parg->arg_create2.where.name;
+          break;
+        case NFS_V3:
+          str_file_name = parg->arg_create3.where.name;
+          break;
+        }
+
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_create2.where.dir),
+                       &(parg->arg_create3.where.dir),
+                       NULL,
+                       str);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Create handle: %s name: %s",
+               str, str_file_name);
+    }
+
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_create3.where.dir))))
     {
       return nfs3_Create_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);

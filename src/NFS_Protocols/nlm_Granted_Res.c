@@ -88,7 +88,8 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
   char buffer[1024];
 
   netobj_to_string(&arg->cookie, buffer, 1024);
-  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Granted_Res cookie=%s", buffer);
+  LogDebug(COMPONENT_NLM,
+           "REQUEST PROCESSING: Calling nlm_Granted_Res cookie=%s", buffer);
 
   nlm_entry = nlm_find_lock_entry_by_cookie(&arg->cookie);
   LogDebug(COMPONENT_NLM, "nlm4_Granted_Res found lock entry %p", nlm_entry);
@@ -97,7 +98,8 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
 
   if(arg->stat.stat == NLM4_DENIED_GRACE_PERIOD)
     {
-      LogMajor(COMPONENT_NLM, "Granted call failed due to client grace period, Retrying...");
+      LogMajor(COMPONENT_NLM,
+               "Granted call failed due to client grace period, Retrying...");
 
       /*
        * nlm_resend_grant_msg will drop the lock entry ref count

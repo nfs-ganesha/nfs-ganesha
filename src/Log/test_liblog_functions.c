@@ -59,7 +59,8 @@ void TestAlways(int expect, char *buff, log_components_t component, char *string
   LogAlways(component, "%s", string);
   if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
     {
-      LogTest("FAILURE: %s produced \"%s\" expected \"%s\"", string, buff, compare);
+      LogTest("FAILURE: %s produced \"%s\" expected \"%s\"",
+              string, buff, compare);
       exit(1);
     }
   LogTest("SUCCESS: %s produced \"%s\"", string, buff);
@@ -73,7 +74,8 @@ void TestMajor(int expect, char *buff, log_components_t component, char *string)
   LogMajor(component, "%s", string);
   if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
     {
-      LogTest("FAILURE: %s produced \"%s\" expected \"%s\"", string, buff, compare);
+      LogTest("FAILURE: %s produced \"%s\" expected \"%s\"",
+              string, buff, compare);
       exit(1);
     }
   if (expect)
@@ -90,7 +92,8 @@ void TestCrit(int expect, char *buff, log_components_t component, char *string)
   LogCrit(component, "%s", string);
   if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
     {
-      LogTest("FAILURE: %s produced \"%s\" expected \"%s\"", string, buff, compare);
+      LogTest("FAILURE: %s produced \"%s\" expected \"%s\"",
+              string, buff, compare);
       exit(1);
     }
   if (expect)
@@ -107,7 +110,8 @@ void TestEvent(int expect, char *buff, log_components_t component, char *string)
   LogEvent(component, "%s", string);
   if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
     {
-      LogTest("FAILURE: %s produced \"%s\" expected \"%s\"", string, buff, compare);
+      LogTest("FAILURE: %s produced \"%s\" expected \"%s\"",
+              string, buff, compare);
       exit(1);
     }
   if (expect)
@@ -124,7 +128,8 @@ void TestDebug(int expect, char *buff, log_components_t component, char *string)
   LogDebug(component, "%s", string);
   if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
     {
-      LogTest("FAILURE: %s produced \"%s\" expected \"%s\"", string, buff, compare);
+      LogTest("FAILURE: %s produced \"%s\" expected \"%s\"",
+              string, buff, compare);
       exit(1);
     }
   if (expect)
@@ -141,7 +146,8 @@ void TestFullDebug(int expect, char *buff, log_components_t component, char *str
   LogFullDebug(component, "%s", string);
   if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
     {
-      LogTest("FAILURE: %s produced \"%s\" expected \"%s\"", string, buff, compare);
+      LogTest("FAILURE: %s produced \"%s\" expected \"%s\"",
+              string, buff, compare);
       exit(1);
     }
   if (expect)
@@ -197,7 +203,8 @@ int Test1(char *str, char *file)
 
   LogTest("Test ERR_DUMMY");
   LogTest("A numerical error : error %%d = %%J%%R, in ERR_DUMMY_2 %%J%%R");
-  log_snprintf(tempstr, sizeof(tempstr), "A numerical error : error %d = %J%R, in ERR_DUMMY_2 %J%R",
+  log_snprintf(tempstr, sizeof(tempstr),
+               "A numerical error : error %d = %J%R, in ERR_DUMMY_2 %J%R",
                ERR_SIGACTION, ERR_SYS, ERR_SIGACTION, ERR_DUMMY, ERR_DUMMY_2);
   LogTest("%s", tempstr);
   LogTest("A numerical error : error %d = %J%R, in ERR_DUMMY_1 %J%R",
@@ -210,13 +217,15 @@ int Test1(char *str, char *file)
       int j;
       if (strcmp(tabLogLevel[i].str, ReturnLevelInt(i)) != 0)
         {
-          LogTest("FAILURE: Log level %d did not convert to %s, it converted to %s", i, tabLogLevel[i].str, ReturnLevelInt(i));
+          LogTest("FAILURE: Log level %d did not convert to %s, it converted to %s",
+                  i, tabLogLevel[i].str, ReturnLevelInt(i));
           exit(1);
         }
       j = ReturnLevelAscii(tabLogLevel[i].str);
       if (j != i)
         {
-          LogTest("FAILURE: Log level %s did not convert to %d, it converted to %d", tabLogLevel[i].str, i, j);
+          LogTest("FAILURE: Log level %s did not convert to %d, it converted to %d",
+                  tabLogLevel[i].str, i, j);
           exit(1);
         }
     }
@@ -228,8 +237,10 @@ int Test1(char *str, char *file)
   LogTest("\nTesting LogError function");
   LogError(COMPONENT_CONFIG, ERR_SYS, ERR_MALLOC, EINVAL);
   LogTest("\nTesting possible environment variable");
-  LogTest("COMPONENT_MEMCORRUPT debug level is %s", ReturnLevelInt(LogComponents[COMPONENT_MEMCORRUPT].comp_log_level));
-  LogFullDebug(COMPONENT_MEMCORRUPT, "This should appear if environment is set properly");
+  LogTest("COMPONENT_MEMCORRUPT debug level is %s",
+          ReturnLevelInt(LogComponents[COMPONENT_MEMCORRUPT].comp_log_level));
+  LogFullDebug(COMPONENT_MEMCORRUPT,
+               "This should appear if environment is set properly");
 
   LogTest("------------------------------------------------------");
   LogTest("Send some messages to various files");
@@ -434,7 +445,7 @@ void Test2()
   TestFormat("%td %s", (char *) &n1 - (char *) &n2, "extra");
   TestFormat("%zd %s", sizeof(int), "extra");
 
-  /* 
+  /*
    * Ganesha can't properly support the $ parameter index tag, so don't bother testing, even if it does work
    * when the indices are in ascending order.
   TestFormat("%1$08x", 6);
@@ -516,8 +527,10 @@ int main(int argc, char *argv[])
           SetDefaultLogging("TEST");
           InitLogging();
           AddFamilyError(ERR_POSIX, "POSIX Errors", tab_systeme_status);
-          LogTest("AddFamilyError = %d", AddFamilyError(ERR_DUMMY, "Family Dummy", tab_test_err));
-          LogTest("The family which was added is %s", ReturnNameFamilyError(ERR_DUMMY));
+          LogTest("AddFamilyError = %d",
+                  AddFamilyError(ERR_DUMMY, "Family Dummy", tab_test_err));
+          LogTest("The family which was added is %s",
+                  ReturnNameFamilyError(ERR_DUMMY));
 
           run_Tests(TRUE,  "monothread", str, file);
         }
@@ -538,8 +551,10 @@ int main(int argc, char *argv[])
           SetDefaultLogging("STDOUT");
           InitLogging();
           AddFamilyError(ERR_POSIX, "POSIX Errors", tab_systeme_status);
-          LogTest("AddFamilyError = %d", AddFamilyError(ERR_DUMMY, "Family Dummy", tab_test_err));
-          LogTest("The family which was added is %s", ReturnNameFamilyError(ERR_DUMMY));
+          LogTest("AddFamilyError = %d",
+                  AddFamilyError(ERR_DUMMY, "Family Dummy", tab_test_err));
+          LogTest("The family which was added is %s",
+                  ReturnNameFamilyError(ERR_DUMMY));
 
           /* creation of attributes */
           for(th_index = 0; th_index < NB_THREADS; th_index++)

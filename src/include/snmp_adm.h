@@ -35,8 +35,12 @@ enum
 {
   STAT_OID,
   LOG_OID,
+#ifdef _ERROR_INJECTION
+  INJECT_OID,
+#endif
   CONF_OID,
-  PROC_OID
+  PROC_OID,
+  NUM_BRANCH
 };
 
 /** Enum of available type number */

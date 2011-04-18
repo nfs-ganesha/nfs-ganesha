@@ -95,27 +95,28 @@ int mnt_Umnt(nfs_arg_t * parg /* IN     */ ,
 {
   char *hostname;
 
-  LogFullDebug(COMPONENT_NFSPROTO,
-                    "REQUEST PROCESSING: Calling mnt_Umnt");
+  LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Umnt path %s",
+           parg->arg_mnt);
 
   /* @todo: BUGAZOMEU; seul AUTHUNIX est supporte */
   hostname = ((struct authunix_parms *)(preq->rq_clntcred))->aup_machname;
 
   if(hostname == NULL)
     {
-      LogCrit(COMPONENT_NFSPROTO,
-                        "/!\\ | UMOUNT: NULL passed as Umount argument !!!");
+      LogCrit(COMPONENT_NFSPROTO, "NULL passed as Umount argument !!!");
       return NFS_REQ_DROP;
     }
 
-  /* BUGAZOMEU: pas de verif sur le path */
+  /* TODO: this should actually process the path also.
+   * nfs_Remove_MountList_Entry() will need updating also.
+   */
   if(!nfs_Remove_MountList_Entry(hostname, NULL))
     {
       LogCrit(COMPONENT_NFSPROTO,
-                   "UMOUNT: /!\\ | Cannot remove mount entry for client %s", hostname);
+              "UMOUNT: Cannot remove mount entry for client %s", hostname);
     }
-  LogEvent(COMPONENT_NFSPROTO,
-                    "UMOUNT: Client %s was removed from mount list", hostname);
+  LogInfo(COMPONENT_NFSPROTO,
+          "UMOUNT: Client %s was removed from mount list", hostname);
 
   return NFS_REQ_OK;
 }                               /* mnt_Umnt */

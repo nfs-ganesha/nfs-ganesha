@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -83,11 +83,11 @@
  * Implements the NFS PROC CREATE function (for V2 and V3).
  *
  * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
+ * @param pexport [IN]    pointer to nfs export list
  * @param pcontext   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
  * @param ht      [INOUT] cache inode hash table
- * @param preq    [IN]    pointer to SVC request related to this call 
+ * @param preq    [IN]    pointer to SVC request related to this call
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
  * @return NFS_REQ_OK if successfull \n
@@ -133,6 +133,21 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
   fsal_handle_t *pfsal_handle = NULL;
   entry_name_array_item_t *entry_name_array = NULL;
   fh3_buffer_item_t *fh3_array = NULL;
+  entryplus3 reference_entry;
+  READDIRPLUS3resok reference_reply;
+
+  if(isDebug(COMPONENT_NFSPROTO) || isDebug(COMPONENT_NFS_READDIR))
+    {
+      char str[LEN_FH_STR];
+      log_components_t component;
+      sprint_fhandle3(str, &(parg->arg_readdirplus3.dir));
+      if(isDebug(COMPONENT_NFSPROTO))
+        component = COMPONENT_NFSPROTO;
+      else
+        component = COMPONENT_NFS_READDIR;
+      LogDebug(component,
+               "REQUEST PROCESSING: Calling nfs3_Readdirplus handle: %s", str);
+    }
 
   /* to avoid setting it on each error case */
   pres->res_readdir3.READDIR3res_u.resfail.dir_attributes.attributes_follow = FALSE;
@@ -140,12 +155,22 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
   dircount = parg->arg_readdirplus3.dircount;
   maxcount = parg->arg_readdirplus3.maxcount;
   begin_cookie = (unsigned int)parg->arg_readdirplus3.cookie;
-  space_used = sizeof(READDIRPLUS3resok);
-  estimated_num_entries = dircount / sizeof(entryplus3);
 
+  /* FIXME: This calculation over estimates the number of bytes that 
+   * READDIRPLUS3resok will use on the wire by 4 bytes on x86_64. */
+  space_used = sizeof(reference_reply.dir_attributes.attributes_follow) +
+    sizeof(reference_reply.dir_attributes.post_op_attr_u.attributes) +
+    sizeof(reference_reply.cookieverf) +
+    sizeof(reference_reply.reply.eof);
+
+  estimated_num_entries =
+    (dircount - space_used + sizeof(entry3 *))
+    / (sizeof(entry3) - sizeof(char *)*2);
+  //  estimated_num_entries *= 4;
   LogFullDebug(COMPONENT_NFS_READDIR,
-      "---> nfs3_Readdirplus: dircount=%lu  maxcount=%lu  begin_cookie=%u  space_used=%lu  estimated_num_entries=%lu",
-       dircount, maxcount, begin_cookie, space_used, estimated_num_entries);
+               "nfs3_Readdirplus: dircount=%lu  maxcount=%lu  begin_cookie=%u  space_used=%lu  estimated_num_entries=%lu",
+               dircount, maxcount, begin_cookie,
+               space_used, estimated_num_entries);
 
   /* Is this a xattr FH ? */
   if(nfs3_Is_Fh_Xattr(&(parg->arg_readdirplus3.dir)))
@@ -185,7 +210,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
    * returned to the client         This value is the mtime of
    * the directory. If verifier is unused (as in many NFS
    * Servers) then only a set of zeros is returned (trivial
-   * value) 
+   * value)
    */
 
   if(pexport->UseCookieVerifier)
@@ -193,14 +218,14 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 
   /*
    * nothing to do if != 0 because the area is already full of
-   * zero 
+   * zero
    */
 
   if(pexport->UseCookieVerifier && (begin_cookie != 0))
     {
       /*
        * Not the first call, so we have to check the cookie
-       * verifier 
+       * verifier
        */
       if(memcmp(cookie_verifier, parg->arg_readdirplus3.cookieverf, NFS3_COOKIEVERFSIZE)
          != 0)
@@ -259,12 +284,13 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                          ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
       LogFullDebug(COMPONENT_NFS_READDIR,
-          "-- Readdirplus3 -> Call to cache_inode_readdir( cookie=%d, asked=%lu ) -> num_entries = %u",
-           cache_inode_cookie, asked_num_entries, num_entries);
+                   "Readdirplus3 -> Call to cache_inode_readdir( cookie=%d, asked=%lu ) -> num_entries = %u",
+                   cache_inode_cookie, asked_num_entries, num_entries);
 
       if(eod_met == END_OF_DIR)
         {
-          LogFullDebug(COMPONENT_NFS_READDIR, "+++++++++++++++++++++++++++++++++++++++++> EOD MET ");
+          LogFullDebug(COMPONENT_NFS_READDIR,
+                       "+++++++++++++++++++++++++++++++++++++++++> EOD MET ");
         }
 
       /* If nothing was found, return nothing, but if cookie=0, we should return . and .. */
@@ -393,10 +419,10 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                                       reply.entries[0].name_attributes));
 
                   LogFullDebug(COMPONENT_NFS_READDIR,
-                      "-- Readdirplus3 -> i=0 num_entries=%d space_used=%lu maxcount=%lu Name=. FileId=%016llx Cookie=%llu",
-                       num_entries, space_used, maxcount,
-                       RES_READDIRPLUS_REPLY.entries[0].fileid,
-                       RES_READDIRPLUS_REPLY.entries[0].cookie);
+                               "Readdirplus3 -> i=0 num_entries=%d space_used=%lu maxcount=%lu Name=. FileId=%016llx Cookie=%llu",
+                               num_entries, space_used, maxcount,
+                               RES_READDIRPLUS_REPLY.entries[0].fileid,
+                               RES_READDIRPLUS_REPLY.entries[0].cookie);
 
                   delta += 1;
                 }
@@ -486,10 +512,10 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                                       reply.entries[delta].name_attributes));
 
                   LogFullDebug(COMPONENT_NFS_READDIR,
-                      "-- Readdirplus3 -> i=%d num_entries=%d space_used=%lu maxcount=%lu Name=.. FileId=%016llx Cookie=%llu",
-                       delta, num_entries, space_used, maxcount,
-                       RES_READDIRPLUS_REPLY.entries[delta].fileid,
-                       RES_READDIRPLUS_REPLY.entries[delta].cookie);
+                               "Readdirplus3 -> i=%d num_entries=%d space_used=%lu maxcount=%lu Name=.. FileId=%016llx Cookie=%llu",
+                               delta, num_entries, space_used, maxcount,
+                               RES_READDIRPLUS_REPLY.entries[delta].fileid,
+                               RES_READDIRPLUS_REPLY.entries[delta].cookie);
                 }
               RES_READDIRPLUS_REPLY.entries[0].nextentry =
                   &(RES_READDIRPLUS_REPLY.entries[delta]);
@@ -502,24 +528,43 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 
               delta += 1;
             }
+
           /* if( begin_cookie == 0 ) */
           for(i = delta; i < num_entries + delta; i++)
             {
               unsigned long needed;
 
-              /* dircount is the size without the FH and attributes overhead, so entry3 is used intead of entryplus3 */
+              /* maxcount is the size with the FH and attributes overhead,
+	       * so entryplus3 is used instead of entry3. The data structures
+	       * in nfs23.h have funny padding depending on the arch (32 or 64).
+	       * We can't get an accurate estimate by simply using
+	       * sizeof(entryplus3). */
+	      /* FIXME: There is still a 4 byte over estimate here on x86_64. */
               needed =
-                  sizeof(entry3) + ((strlen(dirent_array[i - delta].name.name) + 3) & ~3);
+		sizeof(reference_entry.fileid) +
+		sizeof(reference_entry.cookie) +
+		sizeof(reference_entry.name_attributes.attributes_follow) +
+		sizeof(reference_entry.name_attributes.post_op_attr_u.attributes) +
+		sizeof(reference_entry.name_handle.handle_follows) +
+		sizeof(reference_entry.name_handle.post_op_fh3_u.handle.data.data_len) +
+		+ 4 /* value follows field */
+		+ NFS3_FHSIZE
+		+ ((strlen(dirent_array[i - delta].name.name) + 3) & ~3);
 
-              /* LogFullDebug(COMPONENT_NFS_READDIR, "==============> i=%d sizeof(entryplus3)=%d needed=%d space_used=%d maxcount=%d num_entries=%d asked_num_entries=%d",
-                 i, sizeof( entryplus3 ), needed, space_used, maxcount, num_entries, asked_num_entries ) ; */
+	      /* if delta == 1 or 2, then "." and ".." have already been added
+	       * to the readdirplus reply. */
+	      if (i == delta) {
+		needed += needed*delta /* size of a dir entry in reply */
+		  - ((strlen(dirent_array[i - delta].name.name) + 3) & ~3)*delta /* size of filename for current entry */
+		  + 4*delta; /* size of "." and ".." filenames in reply */
+	      }
+
               if((space_used += needed) > maxcount)
                 {
-                  if(i == delta)
+		  /* If delta != 0, then we already added "." or ".." to the reply. */
+                  if(i == delta && delta == 0)
                     {
-                      /*
-                       * Not enough room to make even a single reply 
-                       */
+                      /* Not enough room to make even a single reply */
                       Mem_Free((char *)dirent_array);
                       Mem_Free((char *)cookie_array);
                       Mem_Free((char *)entry_name_array);
@@ -558,8 +603,10 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                             FSAL_MAX_NAME_LEN);
               RES_READDIRPLUS_REPLY.entries[i].name = entry_name_array[i];
 
-              LogFullDebug(COMPONENT_NFS_READDIR, "-- Readdirplus3 -> i=%u num_entries=%u delta=%u num_entries + delta - 1=%u end_cookie=%u",
-                           i, num_entries, delta, num_entries + delta - 1, end_cookie);
+              LogFullDebug(COMPONENT_NFS_READDIR,
+                           "Readdirplus3 -> i=%u num_entries=%u delta=%u num_entries + delta - 1=%u end_cookie=%u",
+                           i, num_entries, delta, num_entries + delta - 1,
+                           end_cookie);
               if(i != num_entries + delta - 1)
                 RES_READDIRPLUS_REPLY.entries[i].cookie = cookie_array[i + 1 - delta] + 2;
               else
@@ -600,11 +647,11 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                                   entries[i].name_attributes));
 
               LogFullDebug(COMPONENT_NFS_READDIR,
-                  "-- Readdirplus3 -> i=%d num_entries=%d needed=%lu space_used=%lu maxcount=%lu Name=%s FileId=%016llx Cookie=%llu",
-                   i, num_entries, needed, space_used, maxcount,
-                   dirent_array[i - delta].name.name,
-                   RES_READDIRPLUS_REPLY.entries[i].fileid,
-                   RES_READDIRPLUS_REPLY.entries[i].cookie);
+                           "Readdirplus3 -> i=%d num_entries=%d needed=%lu space_used=%lu maxcount=%lu Name=%s FileId=%016llx Cookie=%llu",
+                           i, num_entries, needed, space_used, maxcount,
+                           dirent_array[i - delta].name.name,
+                           RES_READDIRPLUS_REPLY.entries[i].fileid,
+                           RES_READDIRPLUS_REPLY.entries[i].cookie);
 
               RES_READDIRPLUS_REPLY.entries[i].nextentry = NULL;
               if(i != 0)
@@ -630,7 +677,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
         {
           /* End of directory */
           LogFullDebug(COMPONENT_NFS_READDIR,
-              "============================================================> EOD MET !!!!!!");
+                       "============================================================> EOD MET !!!!!!");
           pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof = TRUE;
         }
       else
@@ -643,7 +690,8 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
       memcpy(pres->res_readdirplus3.READDIRPLUS3res_u.resok.cookieverf, cookie_verifier,
              sizeof(cookieverf3));
 
-      LogFullDebug(COMPONENT_NFS_READDIR,"============================================================");
+      LogFullDebug(COMPONENT_NFS_READDIR,
+                   "============================================================");
 
       /* Free the memory */
       Mem_Free((char *)dirent_array);
@@ -679,9 +727,9 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 
 /**
  * nfs3_Readdirplus_Free: Frees the result structure allocated for nfs3_Readdirplus.
- * 
+ *
  * Frees the result structure allocated for nfs3_Readdirplus.
- * 
+ *
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */

@@ -298,14 +298,16 @@ void ShowAllContext()
       total += context->Stats.TotalMemSpace;
       used += context->Stats.StdUsedSpace + context->Stats.ExtraMemSpace;
       count++;
-      LogDebug(COMPONENT_MEMALLOC, "Context for thread %s (%p) Total Mem Space: %lld MB Used: %lld MB",
+      LogDebug(COMPONENT_MEMALLOC,
+               "Context for thread %s (%p) Total Mem Space: %lld MB Used: %lld MB",
                context->label_thread,
                (caddr_t)context->OwnerThread,
                (unsigned long long) context->Stats.TotalMemSpace / 1024 / 1024,
                (unsigned long long) (context->Stats.StdUsedSpace + context->Stats.ExtraMemSpace) / 1024 / 1024);
     }
 
-  LogDebug(COMPONENT_MEMALLOC, "%d threads, Total Mem Space: %lld MB, Total Used: %lld MB",
+  LogDebug(COMPONENT_MEMALLOC,
+           "%d threads, Total Mem Space: %lld MB, Total Used: %lld MB",
            count, (unsigned long long) total / 1024 / 1024, (unsigned long long) used / 1024 / 1024);
   V(ContextListMutex);
 #endif
@@ -325,7 +327,8 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT;
 static void init_keys(void)
 {
   if(pthread_key_create(&thread_key, NULL) == -1)
-    LogMajor(COMPONENT_MEMALLOC, "Error %d creating pthread key for thread %p : %s",
+    LogMajor(COMPONENT_MEMALLOC,
+             "Error %d creating pthread key for thread %p : %s",
              errno, (BUDDY_ADDR_T) pthread_self(), strerror(errno));
 
   return;
@@ -342,7 +345,8 @@ static BuddyThreadContext_t *GetThreadContext()
   /* first, we init the keys if this is the first time */
   if(pthread_once(&once_key, init_keys) != 0)
     {
-      LogMajor(COMPONENT_MEMALLOC, "Error %d calling pthread_once for thread %p : %s",
+      LogMajor(COMPONENT_MEMALLOC,
+               "Error %d calling pthread_once for thread %p : %s",
                errno, (BUDDY_ADDR_T) pthread_self(), strerror(errno));
       return NULL;
     }
@@ -359,13 +363,15 @@ static BuddyThreadContext_t *GetThreadContext()
       /* panic !!! */
       if(p_current_thread_vars == NULL)
         {
-          LogMajor(COMPONENT_MEMALLOC, "%p:BuddyMalloc: Not enough memory",
+          LogMajor(COMPONENT_MEMALLOC,
+                   "%p:BuddyMalloc: Not enough memory",
                    (BUDDY_ADDR_T) pthread_self());
           return NULL;
         }
 
-      LogFullDebug(COMPONENT_MEMALLOC, "Allocating pthread key %p for thread %p",
-                   p_current_thread_vars, (caddr_t)pthread_self());
+      LogDebug(COMPONENT_MEMALLOC,
+               "Allocating pthread key %p for thread %p",
+               p_current_thread_vars, (caddr_t)pthread_self());
 
       /* Clean thread context */
 
@@ -559,7 +565,8 @@ void log_bad_block(const char *label, BuddyThreadContext_t *context, BuddyBlock_
                    guilt_block->Header.label_func,
                    guilt_block->Header.label_user_defined);
     else
-      LogFullDebug(COMPONENT_MEMALLOC, "%s block %p, previous Block none???",
+      LogFullDebug(COMPONENT_MEMALLOC,
+                   "%s block %p, previous Block none???",
                    label, block);
   }
   #else
@@ -610,7 +617,8 @@ static void Insert_FreeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_bu
       p_buddyblock->Content.FreeBlockInfo.PrevBlock = NULL;
     }
 
-  LogFullDebug(COMPONENT_MEMALLOC, "%p: @%p inserted to tab[%u] (prev=%p, next =%p)",
+  LogFullDebug(COMPONENT_MEMALLOC,
+               "%p: @%p inserted to tab[%u] (prev=%p, next =%p)",
                (BUDDY_ADDR_T) pthread_self(),
                p_buddyblock, p_buddyblock->Header.StdInfo.k_size,
                p_buddyblock->Content.FreeBlockInfo.PrevBlock,
@@ -655,7 +663,8 @@ static void Remove_FreeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_bu
   p_buddyblock->Content.FreeBlockInfo.PrevBlock = NULL;
   p_buddyblock->Content.FreeBlockInfo.NextBlock = NULL;
 
-  LogFullDebug(COMPONENT_MEMALLOC, "%p: @%p removed from tab[%u] (prev=%p, next =%p)",
+  LogFullDebug(COMPONENT_MEMALLOC,
+               "%p: @%p removed from tab[%u] (prev=%p, next =%p)",
                (BUDDY_ADDR_T) pthread_self(),
                p_buddyblock, p_buddyblock->Header.StdInfo.k_size, prev, next);
 
@@ -681,7 +690,9 @@ static BuddyBlock_t *Get_BuddyBlock(BuddyThreadContext_t * context,
 
   Offset_buddy = Offset_block ^ (1 << k);
 
-  LogFullDebug(COMPONENT_MEMALLOC, "buddy(%08tx,%u,%08X)=%08tx", Offset_block, k, 1 << k, Offset_buddy);
+  LogFullDebug(COMPONENT_MEMALLOC,
+               "buddy(%08tx,%u,%08X)=%08tx",
+               Offset_block, k, 1 << k, Offset_buddy);
 
   return (BuddyBlock_t *) (Offset_buddy + BaseAddr);
 
@@ -901,8 +912,9 @@ BuddyBlock_t *NewStdPage(BuddyThreadContext_t * context)
 
   p_block = (BuddyBlock_t *) malloc(allocation);
 
-  LogFullDebug(COMPONENT_MEMALLOC, "Memory area allocation for thread %p : ptr=%p ; size=%llu=2^%u",
-               (caddr_t)pthread_self(), p_block, (unsigned long long)allocation, k_size);
+  LogDebug(COMPONENT_MEMALLOC,
+           "Memory area allocation for thread %p : ptr=%p ; size=%llu=2^%u",
+           (caddr_t)pthread_self(), p_block, (unsigned long long)allocation, k_size);
 
   if(!p_block)
     return NULL;
@@ -962,7 +974,9 @@ static void Garbage_StdPages(BuddyThreadContext_t * context,
 
   UpdateStats_RemoveStdPage(context);
 
-  LogFullDebug(COMPONENT_MEMALLOC, "%p: A standard page has been Garbaged", (caddr_t)pthread_self());
+  LogDebug(COMPONENT_MEMALLOC,
+           "%p: A standard page has been Garbaged",
+           (caddr_t)pthread_self());
 
   return;
 
@@ -989,8 +1003,9 @@ BUDDY_ADDR_T AllocLargeBlock(BuddyThreadContext_t * context, size_t Size)
 
   p_block = (BuddyBlock_t *) malloc(total_size);
 
-  LogFullDebug(COMPONENT_MEMALLOC, "Memory EXTRA area allocation for thread %p : ptr=%p ; size=%llu",
-               (caddr_t)pthread_self(), p_block, (unsigned long long)total_size);
+  LogDebug(COMPONENT_MEMALLOC,
+           "Memory EXTRA area allocation for thread %p : ptr=%p ; size=%llu",
+           (caddr_t)pthread_self(), p_block, (unsigned long long)total_size);
 
   if(!p_block)
     {
@@ -1061,7 +1076,9 @@ void FreeLargeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_block)
 
   UpdateStats_RemoveExtraPage(context, page_size);
 
-  LogFullDebug(COMPONENT_MEMALLOC, "%p: An extra page has been free (size %zu)", (caddr_t)pthread_self(), page_size);
+  LogDebug(COMPONENT_MEMALLOC,
+           "%p: An extra page has been freed (size %zu)",
+           (caddr_t)pthread_self(), page_size);
 
   return;
 
@@ -1094,7 +1111,8 @@ static void CheckBlocksToBeFreed(BuddyThreadContext_t * context, int do_lock)
       if(p_block_to_free == NULL)
         break;
 
-      LogFullDebug(COMPONENT_MEMALLOC, "blocks %p has been released by foreign thread",
+      LogFullDebug(COMPONENT_MEMALLOC,
+                   "blocks %p has been released by foreign thread",
                    p_block_to_free);
 
       __BuddyFree(context, p_block_to_free);
@@ -1130,8 +1148,7 @@ static int TryContextCleanup(BuddyThreadContext_t * context)
                 LogCrit(COMPONENT_MEMALLOC,
                         "largest free page is not a root page?!" );
                 LogEvent(COMPONENT_MEMALLOC,
-                         "thread page size=2^%u, block size=2^%u, "
-                         "block base area=%p (size=2^%u), block addr=%p",
+                         "thread page size=2^%u, block size=2^%u, block base area=%p (size=2^%u), block addr=%p",
                          context->k_size, p_block->Header.StdInfo.k_size,
                          p_block->Header.Base_ptr,
                          p_block->Header.StdInfo.Base_kSize,
@@ -1140,7 +1157,8 @@ static int TryContextCleanup(BuddyThreadContext_t * context)
               }
 
             /* We can free this page */
-            LogFullDebug(COMPONENT_MEMALLOC, "Releasing memory page at address %p, size=2^%u",
+            LogFullDebug(COMPONENT_MEMALLOC,
+                         "Releasing memory page at address %p, size=2^%u",
                          p_block, p_block->Header.StdInfo.k_size );
             Remove_FreeBlock(context, p_block);
             free(p_block);
@@ -1221,7 +1239,8 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
 
   if(!context)
     {
-      LogCrit(COMPONENT_MEMALLOC, "Buddy Malloc thread context could not be allocated for thread %p",
+      LogCrit(COMPONENT_MEMALLOC,
+              "Buddy Malloc thread context could not be allocated for thread %p",
               (caddr_t)pthread_self());
       ShowAllContext();
       return BUDDY_ERR_MALLOC;
@@ -1231,7 +1250,8 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
 
   if(context->initialized)
     {
-      LogCrit(COMPONENT_MEMALLOC, "The memory descriptor is already initialized for thread %p.",
+      LogCrit(COMPONENT_MEMALLOC,
+              "The memory descriptor is already initialized for thread %p.",
               (caddr_t)pthread_self());
       ShowAllContext();
       return BUDDY_ERR_ALREADYINIT;
@@ -1300,7 +1320,8 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
 #ifndef _MONOTHREAD_MEMALLOC
   if(pthread_mutex_init(&context->ToBeFreed_mutex, NULL) != 0)
     {
-      LogCrit(COMPONENT_MEMALLOC, "BuddyInit could not initialize ToBeFreed_mutex for thread %p",
+      LogCrit(COMPONENT_MEMALLOC,
+              "BuddyInit could not initialize ToBeFreed_mutex for thread %p",
               (caddr_t)pthread_self());
       ShowAllContext();
       return BUDDY_ERR_EINVAL;
@@ -1318,18 +1339,21 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
 
   p_block = NewStdPage(context);
 
-  LogFullDebug(COMPONENT_MEMALLOC, "sizeof header = %zu, size_header64 = %zu", sizeof(BuddyHeader_t),
-               size_header64);
+  LogFullDebug(COMPONENT_MEMALLOC,
+               "sizeof header = %zu, size_header64 = %zu",
+               sizeof(BuddyHeader_t), size_header64);
 
   if(p_block)
     {
-      LogDebug(COMPONENT_MEMALLOC, "BuddyInit successful for thread %p",
+      LogDebug(COMPONENT_MEMALLOC,
+               "BuddyInit successful for thread %p",
                (caddr_t)pthread_self());
       return BUDDY_SUCCESS;
     }
   else
     {
-      LogCrit(COMPONENT_MEMALLOC, "BuddyInit could not allocate a page for thread %p",
+      LogCrit(COMPONENT_MEMALLOC,
+              "BuddyInit could not allocate a page for thread %p",
               (caddr_t)pthread_self());
       ShowAllContext();
       return BUDDY_ERR_MALLOC;
@@ -1435,7 +1459,8 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
         {
           /* Extra blocks are not allowed */
 
-          LogDebug(COMPONENT_MEMALLOC, "%p:BuddyMalloc(%llu) => BUDDY_ERR_OUTOFMEM (extra_alloc disabled).",
+          LogMajor(COMPONENT_MEMALLOC,
+                   "%p:BuddyMalloc(%llu) => BUDDY_ERR_OUTOFMEM (extra_alloc disabled).",
                    (BUDDY_ADDR_T) pthread_self(), (unsigned long long)Size);
 
           context->Errno = BUDDY_ERR_OUTOFMEM;
@@ -1458,7 +1483,9 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
       actlog2++;
     }
 
-  LogFullDebug(COMPONENT_MEMALLOC, "To alloc %llu (2^%u) we have to alloc 2^%u", (unsigned long long)Size, sizelog2, actlog2);
+  LogFullDebug(COMPONENT_MEMALLOC,
+               "To alloc %llu (2^%u) we have to alloc 2^%u",
+               (unsigned long long)Size, sizelog2, actlog2);
 
   if(actlog2 < BUDDY_MAX_LOG2_SIZE)
     {
@@ -1480,7 +1507,7 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
         {
           context->Errno = BUDDY_ERR_MALLOC;
 
-          LogEvent(COMPONENT_MEMALLOC, "BuddyMalloc: NOT ENOUGH MEMORY !!!");
+          LogMajor(COMPONENT_MEMALLOC, "BuddyMalloc: NOT ENOUGH MEMORY !!!");
 
           if(do_exit_on_error)
             exit(1);
@@ -1492,7 +1519,8 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
   else
     {
       /* Out of memory */
-      LogEvent(COMPONENT_MEMALLOC, "%p:BuddyMalloc(%llu) => BUDDY_ERR_OUTOFMEM (on_demand_alloc disabled).",
+      LogMajor(COMPONENT_MEMALLOC,
+               "%p:BuddyMalloc(%llu) => BUDDY_ERR_OUTOFMEM (on_demand_alloc disabled).",
                (BUDDY_ADDR_T) pthread_self(), (unsigned long long)Size);
 
       if(do_exit_on_error)
@@ -1575,8 +1603,11 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
   /* update stats to remember we use this amount of memory */
   UpdateStats_UseStdMemSpace(context, allocation);
 
-  LogFullDebug(COMPONENT_MEMALLOC, "%p:BuddyMalloc(%llu) => %p", (BUDDY_ADDR_T) pthread_self(),
-               (unsigned long long)Size, p_block->Content.UserSpace);
+  LogFullDebug(COMPONENT_MEMALLOC,
+               "%p:BuddyMalloc(%llu) => %p",
+               (BUDDY_ADDR_T) pthread_self(),
+               (unsigned long long)Size,
+               p_block->Content.UserSpace);
 
 
   /* returns the userspace aligned on 64 bits */
@@ -1592,6 +1623,35 @@ BUDDY_ADDR_T BuddyMalloc(size_t Size)
 BUDDY_ADDR_T BuddyMallocExit(size_t Size)
 {
   return __BuddyMalloc(Size, TRUE);
+}
+
+/**
+ * BuddyStr_Dup : string duplicator based on buddy system.
+ *
+ * The  BuddyStr_Dup() function returns a pointer to a block of at least
+ * Size bytes suitably aligned (32 or 64bits depending on architectures).
+ */
+char *BuddyStr_Dup(char * Str)
+{
+  char *NewStr = (char *) BuddyMalloc(strlen(Str)+1);
+  if(NewStr != NULL)
+    strcpy(NewStr, Str);
+  return NewStr;
+}
+
+/**
+ * BuddyStr_Dup_Exit : string duplicator based on buddy system.
+ *
+ * The  BuddyStr_Dup_Exit() function returns a pointer to a block of at least
+ * Size bytes suitably aligned (32 or 64bits depending on architectures).
+ * If no memory is available, it stops current process.
+ */
+char *BuddyStr_Dup_Exit(char * Str)
+{
+  char *NewStr = (char *) BuddyMallocExit(strlen(Str)+1);
+  if(NewStr != NULL)
+    strcpy(NewStr, Str);
+  return NewStr;
 }
 
 /**
@@ -1640,7 +1700,9 @@ static void __BuddyFree(BuddyThreadContext_t * context, BuddyBlock_t * p_block)
 
       p_buddy = Get_BuddyBlock(context, p_block_tmp);
 
-      LogFullDebug(COMPONENT_MEMALLOC, "%p:Buddy( %p,%u ) = ( %p ,%u )=>%s", (BUDDY_ADDR_T) pthread_self(),
+      LogFullDebug(COMPONENT_MEMALLOC,
+                   "%p:Buddy( %p,%u ) = ( %p ,%u )=>%s",
+                   (BUDDY_ADDR_T) pthread_self(),
                    p_block_tmp, p_block_tmp->Header.StdInfo.k_size, p_buddy,
                    p_buddy->Header.StdInfo.k_size,
                    (p_buddy->Header.status ? "RESERV" : " FREE "));
@@ -1653,7 +1715,9 @@ static void __BuddyFree(BuddyThreadContext_t * context, BuddyBlock_t * p_block)
       /* The buddy can be merged */
       Remove_FreeBlock(context, p_buddy);
 
-      LogFullDebug(COMPONENT_MEMALLOC, "%p:Merging %p with %p (sizes 2^%.2u)", (BUDDY_ADDR_T) pthread_self(),
+      LogFullDebug(COMPONENT_MEMALLOC,
+                   "%p:Merging %p with %p (sizes 2^%.2u)",
+                   (BUDDY_ADDR_T) pthread_self(),
                    p_buddy, p_block_tmp, p_block_tmp->Header.StdInfo.k_size);
 
       /* the address of the merged blockset is the smallest
@@ -1701,7 +1765,9 @@ void BuddyFree(BUDDY_ADDR_T ptr)
 
   BuddyThreadContext_t *context;
 
-  LogFullDebug(COMPONENT_MEMALLOC, "%p:BuddyFree(%p)", (BUDDY_ADDR_T) pthread_self(), ptr);
+  LogFullDebug(COMPONENT_MEMALLOC,
+               "%p:BuddyFree(%p)",
+               (BUDDY_ADDR_T) pthread_self(), ptr);
 
   /* Nothing appends if ptr is NULL. */
   if(!ptr)
@@ -1757,8 +1823,7 @@ void BuddyFree(BUDDY_ADDR_T ptr)
   /* is it already free ? */
   if(p_block->Header.status == FREE_BLOCK)
     {
-      LogEvent(COMPONENT_MEMALLOC,
-               "WARNING : double free detected for %p", ptr);
+      LogWarn(COMPONENT_MEMALLOC, "Double free detected for %p", ptr);
       return;
     }
 
@@ -1827,7 +1892,9 @@ BUDDY_ADDR_T BuddyRealloc(BUDDY_ADDR_T ptr, size_t Size)
   BuddyBlock_t *p_block;
   BuddyThreadContext_t *context;
 
-  LogFullDebug(COMPONENT_MEMALLOC, "%p:BuddyRealloc(%p,%llu)", (BUDDY_ADDR_T) pthread_self(), ptr,
+  LogFullDebug(COMPONENT_MEMALLOC,
+               "%p:BuddyRealloc(%p,%llu)",
+               (BUDDY_ADDR_T) pthread_self(), ptr,
                (unsigned long long)Size);
 
   /*  If ptr is NULL, the call is equivalent to malloc(size) */
@@ -1880,7 +1947,9 @@ BUDDY_ADDR_T BuddyRealloc(BUDDY_ADDR_T ptr, size_t Size)
   if(IS_EXTRA_BLOCK(p_block))
     {
 
-      LogFullDebug(COMPONENT_MEMALLOC, "%p:Copying %zu bytes from @%p to @%p->@%p", (BUDDY_ADDR_T) pthread_self(),
+      LogFullDebug(COMPONENT_MEMALLOC,
+                   "%p:Copying %zu bytes from @%p to @%p->@%p",
+                   (BUDDY_ADDR_T) pthread_self(),
                    p_block->Header.ExtraInfo - size_header64, ptr, new_ptr,
                    new_ptr + p_block->Header.ExtraInfo - size_header64);
 
@@ -1890,7 +1959,9 @@ BUDDY_ADDR_T BuddyRealloc(BUDDY_ADDR_T ptr, size_t Size)
   else
     {
 
-      LogFullDebug(COMPONENT_MEMALLOC, "%p:Copying %zu bytes from @%p to @%p->@%p", (BUDDY_ADDR_T) pthread_self(),
+      LogFullDebug(COMPONENT_MEMALLOC,
+                   "%p:Copying %zu bytes from @%p to @%p->@%p",
+                   (BUDDY_ADDR_T) pthread_self(),
                    (1 << p_block->Header.StdInfo.k_size) - size_header64, ptr, new_ptr,
                    new_ptr + (1 << p_block->Header.StdInfo.k_size) - size_header64);
 
@@ -1921,7 +1992,9 @@ BUDDY_ADDR_T BuddyCalloc(size_t NumberOfElements, size_t ElementSize)
   if(!ptr)
     return NULL;
 
-  LogFullDebug(COMPONENT_MEMALLOC, "%p:Setting %zu bytes from @%p to 0", (BUDDY_ADDR_T) pthread_self(),
+  LogFullDebug(COMPONENT_MEMALLOC,
+               "%p:Setting %zu bytes from @%p to 0",
+               (BUDDY_ADDR_T) pthread_self(),
                NumberOfElements * ElementSize, ptr);
   memset(ptr, 0, NumberOfElements * ElementSize);
 
@@ -2273,6 +2346,26 @@ BUDDY_ADDR_T BuddyMalloc_Autolabel(size_t sz,
   return BuddyMallocExit(sz);
 }
 
+/**
+ * BuddyStr_Dup : string duplicator based on buddy system.
+ *
+ * The  BuddyStr_Dup() function returns a pointer to a block of at least
+ * Size bytes suitably aligned (32 or 64bits depending on architectures).
+ */
+char *BuddyStr_Dup_Autolabel(char * OldStr,
+                             const char *file,
+                             const char *function,
+                             const unsigned int line,
+                             const char *str)
+{
+  char *NewStr;
+  BuddySetDebugLabel(file, function, line, str);
+  NewStr = (char *) BuddyMallocExit(strlen(OldStr)+1);
+  if(NewStr != NULL)
+    strcpy(NewStr, OldStr);
+  return NewStr;
+}
+
 BUDDY_ADDR_T BuddyCalloc_Autolabel(size_t NumberOfElements, size_t ElementSize,
                                    const char *file,
                                    const char *function,
@@ -2502,16 +2595,21 @@ static void hash_label_display(label_info_list_t * label_hash[], unsigned int ha
 
   if(isFullDebug(COMPONENT_FSAL))
     {
-      LogFullDebug(COMPONENT_MEMLEAKS,"%-*s | %-*s | %5s | %-*s | %s", max_file, "file", max_func, "function",
-                "line", max_descr, "description", "count");
+      LogFullDebug(COMPONENT_MEMLEAKS,
+                   "%-*s | %-*s | %5s | %-*s | %s",
+                   max_file, "file",
+                   max_func, "function",
+                   "line", max_descr, "description", "count");
 
       for(i = 0; i < hash_sz; i++)
         {
           for(p_curr = label_hash[i]; p_curr != NULL; p_curr = p_curr->next)
             {
-              LogFullDebug(COMPONENT_MEMLEAKS,"%-*s | %-*s | %5u | %-*s | %u", max_file, p_curr->file, max_func,
-                        p_curr->func, p_curr->line, max_descr, p_curr->user_label,
-                        p_curr->count);
+              LogFullDebug(COMPONENT_MEMLEAKS,
+                           "%-*s | %-*s | %5u | %-*s | %u",
+                           max_file, p_curr->file, max_func,
+                           p_curr->func, p_curr->line, max_descr, p_curr->user_label,
+                           p_curr->count);
             }
         }
     }
@@ -2523,7 +2621,7 @@ static void hash_label_display(label_info_list_t * label_hash[], unsigned int ha
  */
 void BuddyLabelsSummary()
 {
-#define LBL_HASH_SZ	127
+#define LBL_HASH_SZ 127
   label_info_list_t *label_hash[LBL_HASH_SZ];
   BuddyThreadContext_t *context;
   BuddyBlockPtr_t p_curr_block;
@@ -2866,19 +2964,19 @@ int _BuddyCheck(BUDDY_ADDR_T ptr)
   /* is it already free ? */
   if(p_block->Header.status == FREE_BLOCK)
     {
-      LogEvent(COMPONENT_MEMALLOC,
-               "BuddyCheck: WARNING: block %p is already free or has been set to 0",
-               ptr);
+      LogWarn(COMPONENT_MEMALLOC,
+              "BuddyCheck: Block %p is already free or has been set to 0",
+              ptr);
       log_bad_block("BuddyCheck:", context, p_block, 1, 1);
       return 0;
     }
 
   if(p_block->Header.OwnerThread != pthread_self())
     {
-      LogEvent(COMPONENT_MEMALLOC,
-               "BuddyCheck: WARNING: block %p has been allocated by another thread !!!! (%p<>%p)",
-               p_block, (BUDDY_ADDR_T) p_block->Header.OwnerThread,
-               (BUDDY_ADDR_T) pthread_self());
+      LogWarn(COMPONENT_MEMALLOC,
+              "BuddyCheck: Block %p has been allocated by another thread !!!! (%p<>%p)",
+              p_block, (BUDDY_ADDR_T) p_block->Header.OwnerThread,
+              (BUDDY_ADDR_T) pthread_self());
       log_bad_block("BuddyCheck:", context, p_block, 1, 1);
       return 0;
     }

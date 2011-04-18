@@ -183,7 +183,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_CREATE4.status;
     }
 
-  if(utf82str(name.name, &arg_CREATE4.objname) == -1)
+  if(utf82str(name.name, sizeof(name.name), &arg_CREATE4.objname) == -1)
     {
       res_CREATE4.status = NFS4ERR_INVAL;
       return res_CREATE4.status;
@@ -269,7 +269,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       else
         {
           if(utf82str
-             (create_arg.link_content.path,
+             (create_arg.link_content.path, sizeof(create_arg.link_content.path),
               &arg_CREATE4.objtype.createtype4_u.linkdata) == -1)
             {
               res_CREATE4.status = NFS4ERR_INVAL;
@@ -522,10 +522,11 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Operation is supposed to be atomic .... */
   res_CREATE4.CREATE4res_u.resok4.cinfo.atomic = TRUE;
 
-  LogFullDebug(COMPONENT_NFS_V4, "           CREATE CINFO before = %"PRIu64"  after = %"PRIu64"  atomic = %d",
-         res_CREATE4.CREATE4res_u.resok4.cinfo.before,
-         res_CREATE4.CREATE4res_u.resok4.cinfo.after,
-         res_CREATE4.CREATE4res_u.resok4.cinfo.atomic);
+  LogFullDebug(COMPONENT_NFS_V4,
+               "CREATE CINFO before = %"PRIu64"  after = %"PRIu64"  atomic = %d",
+               res_CREATE4.CREATE4res_u.resok4.cinfo.before,
+               res_CREATE4.CREATE4res_u.resok4.cinfo.after,
+               res_CREATE4.CREATE4res_u.resok4.cinfo.atomic);
 
   /* @todo : BUGAZOMEU: fair ele free dans cette fonction */
 

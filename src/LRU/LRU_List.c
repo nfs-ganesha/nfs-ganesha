@@ -199,8 +199,9 @@ LRU_entry_t *LRU_new_entry(LRU_list_t * plru, LRU_status_t * pstatus)
 {
   LRU_entry_t *new_entry = NULL;
 
-  LogDebug(COMPONENT_LRU, "==> LRU_new_entry: nb_entry = %d nb_entry_prealloc = %d", plru->nb_entry,
-         plru->parameter.nb_entry_prealloc);
+  LogDebug(COMPONENT_LRU,
+           "==> LRU_new_entry: nb_entry = %d nb_entry_prealloc = %d",
+           plru->nb_entry, plru->parameter.nb_entry_prealloc);
 
   GetFromPool(new_entry, &plru->lru_entry_pool, LRU_entry_t);
   if(new_entry == NULL)
@@ -287,7 +288,9 @@ int LRU_gc_invalid(LRU_list_t * plru, void *cleanparam)
           if(pentry->next != NULL)
             pentry->next->prev = pentry->prev;
           else
-            LogDebug(COMPONENT_LRU, "SHOULD Never appear  !!!! line %d file %s", __LINE__, __FILE__);
+            LogCrit(COMPONENT_LRU,
+                    "SHOULD Never appear  !!!! line %d file %s",
+                    __LINE__, __FILE__);
           plru->nb_entry -= 1;
           plru->nb_invalid -= 1;
 
@@ -427,7 +430,9 @@ void LRU_Print(LRU_list_t * plru)
   for(pentry = plru->LRU; pentry != NULL; pentry = pentry->next)
     {
       plru->parameter.entry_to_str(pentry->buffdata, dispdata);
-      LogFullDebug(COMPONENT_LRU, "Entry value = %s, valid_state = %d", dispdata, pentry->valid_state);
+      LogFullDebug(COMPONENT_LRU,
+                   "Entry value = %s, valid_state = %d",
+                   dispdata, pentry->valid_state);
     }
   LogFullDebug(COMPONENT_LRU, "-----------------------------------------");
 }                               /* LRU_Print */

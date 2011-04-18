@@ -66,7 +66,6 @@ extern nfs_parameter_t nfs_param;
 
 #define _PATH_IDMAPDCONF     "/etc/idmapd.conf"
 #define NFS4_MAX_DOMAIN_LEN 512
-#define NFSIDMAP_VERBOSITY 99
 
 typedef void (*nfs4_idmap_log_function_t) (const char *, ...);
 
@@ -83,22 +82,10 @@ void nfs4_set_debug(int dbg_level, nfs4_idmap_log_function_t dbg_logfunc);
 char idmap_domain[NFS4_MAX_DOMAIN_LEN];
 static int nfsidmap_conf_read = FALSE;
 
-void nfsidmap_logger(const char *str, ...)
-{
-  va_list arg;
-  va_start(arg, str);
-  LogDebug(COMPONENT_IDMAPPER, "nfsidmap_logger: ");
-  vprintf(str, arg);
-  va_end(arg);
-}
-
 int nfsidmap_set_conf()
 {
   if(!nfsidmap_conf_read)
     {
-
-      /* nfs4_set_debug(NFSIDMAP_VERBOSITY,&nfsidmap_logger); */
-
       if(nfs4_init_name_mapping(_PATH_IDMAPDCONF))
         return 0;
 
@@ -126,31 +113,57 @@ int nfsidmap_set_conf()
 int uid2name(char *name, uid_t * puid)
 {
   char fqname[MAXNAMLEN];
+
 #ifdef _USE_NFSIDMAP
+
+  int rc;
+
   if(!nfsidmap_set_conf())
-    return 0;
+    {
+      LogCrit(COMPONENT_IDMAPPER,
+              "uid2name: nfsidmap_set_conf failed");
+      return 0;
+    }
 
   if(unamemap_get(*puid, name) == ID_MAPPER_SUCCESS)
     {
+      LogFullDebug(COMPONENT_IDMAPPER,
+                   "uid2name: unamemap_get uid %d returned %s",
+                   *puid, name);
       return 1;
     }
   else
     {
-      if(!nfsidmap_set_conf())
-        return 0;
-
-      if(nfs4_uid_to_name(*puid, idmap_domain, name, MAXNAMLEN))
-        return 0;
+      rc = nfs4_uid_to_name(*puid, idmap_domain, name, MAXNAMLEN);
+      if(rc != 0)
+        {
+          LogDebug(COMPONENT_IDMAPPER,
+                   "uid2name: nfs4_uid_to_name %d returned %d (%s)",
+                   *puid, -rc, strerror(-rc));
+          return 0;
+        }
 
       strncpy(fqname, name, MAXNAMLEN);
       if(strchr(name, '@') == NULL)
         {
+          LogFullDebug(COMPONENT_IDMAPPER,
+                       "uid2name: adding domain %s",
+                       idmap_domain);
           sprintf(fqname, "%s@%s", name, idmap_domain);
           strncpy(name, fqname, MAXNAMLEN);
         }
 
+      LogFullDebug(COMPONENT_IDMAPPER,
+                   "uid2name: nfs4_uid_to_name uid %d returned %s",
+                   *puid, name);
+
       if(uidmap_add(fqname, *puid) != ID_MAPPER_SUCCESS)
-        return 0;
+        {
+          LogCrit(COMPONENT_IDMAPPER,
+                  "uid2name: uidmap_add %s %d failed",
+                  fqname, *puid);
+          return 0;
+        }
     }
   return 1;
 
@@ -161,6 +174,9 @@ int uid2name(char *name, uid_t * puid)
 
   if(unamemap_get(*puid, name) == ID_MAPPER_SUCCESS)
     {
+      LogFullDebug(COMPONENT_IDMAPPER,
+                   "uid2name: unamemap_get uid %d returned %s",
+                   *puid, name);
       return 1;
     }
   else
@@ -171,12 +187,26 @@ int uid2name(char *name, uid_t * puid)
       if((getpwuid_r(*puid, &p, buff, MAXPATHLEN, &pp) != 0) ||
 	 (pp == NULL))
 #endif                          /* _SOLARIS */
-        return 0;
+        {
+          LogFullDebug(COMPONENT_IDMAPPER,
+                       "uid2name: getpwuid_r %d failed",
+                       *puid);
+          return 0;
+        }
 
       strncpy(name, p.pw_name, MAXNAMLEN);
-      if(uidmap_add(name, *puid) != ID_MAPPER_SUCCESS)
-        return 0;
 
+      LogFullDebug(COMPONENT_IDMAPPER,
+                   "uid2name: getpwuid_r uid %d returned %s",
+                   *puid, name);
+
+      if(uidmap_add(name, *puid) != ID_MAPPER_SUCCESS)
+        {
+          LogCrit(COMPONENT_IDMAPPER,
+                  "uid2name: uidmap_add %s %d failed",
+                  name, *puid);
+          return 0;
+        }
     }
 
   return 1;
@@ -204,12 +234,16 @@ int name2uid(char *name, uid_t * puid)
   gid_t gss_gid;
   uid_t gss_uid;
   char fqname[MAXNAMLEN];
+  int rc;
 
   /* NFsv4 specific features: RPCSEC_GSS will provide user like nfs/<host>
    * choice is made to map them to root */
   if(!strncmp(name, "nfs/", 4))
     {
       /* This is a "root" request made from the hostbased nfs principal, use root */
+      LogFullDebug(COMPONENT_IDMAPPER,
+                   "name2uid: mapping %s to root (uid = 0)",
+                   name);
       *puid = 0;
 
       return 1;
@@ -217,32 +251,67 @@ int name2uid(char *name, uid_t * puid)
 
   if(uidmap_get(name, (unsigned long *)&uid) == ID_MAPPER_SUCCESS)
     {
+      LogFullDebug(COMPONENT_IDMAPPER,
+                   "name2uid: uidmap_get mapped %s to uid= %d",
+                   name, uid);
       *puid = uid;
     }
   else
     {
 #ifdef _USE_NFSIDMAP
       if(!nfsidmap_set_conf())
-        return 0;
+        {
+          LogCrit(COMPONENT_IDMAPPER,
+                  "name2uid: nfsidmap_set_conf failed");
+          return 0;
+        }
 
       /* obtain fully qualified name */
-      strncpy(fqname, name, MAXNAMLEN - 1);
       if(strchr(name, '@') == NULL)
         sprintf(fqname, "%s@%s", name, idmap_domain);
+      else
+        strncpy(fqname, name, MAXNAMLEN - 1);
 
-      if(nfs4_name_to_uid(fqname, puid))
-        return 0;
+      rc = nfs4_name_to_uid(fqname, puid);
+      if(rc)
+        {
+          LogFullDebug(COMPONENT_IDMAPPER,
+                       "name2uid: nfs4_name_to_uid %s failed %d (%s)",
+                       fqname, -rc, strerror(-rc));
+          return 0;
+        }
+
+      LogFullDebug(COMPONENT_IDMAPPER,
+                   "name2uid: nfs4_name_to_uid %s returned %d",
+                   fqname, *puid);
 
       if(uidmap_add(fqname, *puid) != ID_MAPPER_SUCCESS)
-        return 0;
+        {
+          LogCrit(COMPONENT_IDMAPPER,
+                  "name2uid: uidmap_add %s %d failed",
+                  fqname, *puid);
+          return 0;
+        }
 
 #ifdef _USE_GSSRPC
       /* nfs4_gss_princ_to_ids required to extract uid/gid from gss creds
        * XXX: currently uses unqualified name as per libnfsidmap comments */
-      if(nfs4_gss_princ_to_ids("krb5", name, &gss_uid, &gss_gid))
-        return 0;
+      rc = nfs4_gss_princ_to_ids("krb5", name, &gss_uid, &gss_gid);
+      if(rc)
+        {
+          LogFullDebug(COMPONENT_IDMAPPER,
+                       "name2uid: nfs4_gss_princ_to_ids %s failed %d (%s)",
+                       name, -rc, strerror(-rc));
+          return 0;
+        }
+
       if(uidgidmap_add(gss_uid, gss_gid) != ID_MAPPER_SUCCESS)
-        return 0;
+        {
+          LogCrit(COMPONENT_IDMAPPER,
+                  "name2uid: uidgidmap_add gss_uid %d gss_gid %d failed",
+                  gss_uid, gss_gid);
+          return 0;
+        }
 #endif                          /* _USE_GSSRPC */
 
 #else                           /* _USE_NFSIDMAP */
@@ -253,6 +322,9 @@ int name2uid(char *name, uid_t * puid)
       if(getpwnam_r(name, &passwd, buff, MAXPATHLEN, &ppasswd) != 0)
 #endif                          /* _SOLARIS */
         {
+          LogFullDebug(COMPONENT_IDMAPPER,
+                       "name2uid: getpwnam_r %s failed",
+                       name);
           *puid = -1;
           return 0;
         }
@@ -261,10 +333,20 @@ int name2uid(char *name, uid_t * puid)
           *puid = passwd.pw_uid;
 #ifdef _USE_GSSRPC
           if(uidgidmap_add(passwd.pw_uid, passwd.pw_gid) != ID_MAPPER_SUCCESS)
-            return 0;
+            {
+              LogCrit(COMPONENT_IDMAPPER,
+                      "name2uid: uidgidmap_add gss_uid %d gss_gid %d failed",
+                      gss_uid, gss_gid);
+              return 0;
+            }
 #endif                          /* _USE_GSSRPC */
           if(uidmap_add(name, passwd.pw_uid) != ID_MAPPER_SUCCESS)
-            return 0;
+            {
+              LogCrit(COMPONENT_IDMAPPER,
+                      "name2uid: uidmap_add %s %d failed",
+                      name, passwd.pw_uid);
+              return 0;
+            }
 
         }
 #endif                          /* _USE_NFSIDMAP */
@@ -291,21 +373,44 @@ int gid2name(char *name, gid_t * pgid)
   struct group *pg;
   char buff[MAXPATHLEN];
 #ifdef _USE_NFSIDMAP
+  int rc;
 
   if(gnamemap_get(*pgid, name) == ID_MAPPER_SUCCESS)
     {
+      LogFullDebug(COMPONENT_IDMAPPER,
+                   "gid2name: unamemap_get gid %d returned %s",
+                   *pgid, name);
       return 1;
     }
   else
     {
       if(!nfsidmap_set_conf())
-        return 0;
+        {
+          LogCrit(COMPONENT_IDMAPPER,
+                  "gid2name: nfsidmap_set_conf failed");
+          return 0;
+        }
 
-      if(nfs4_gid_to_name(*pgid, idmap_domain, name, MAXNAMLEN))
-        return 0;
+      rc = nfs4_gid_to_name(*pgid, idmap_domain, name, MAXNAMLEN);
+      if(rc != 0)
+        {
+          LogDebug(COMPONENT_IDMAPPER,
+                   "gid2name: nfs4_gid_to_name %d returned %d (%s)",
+                   *pgid, -rc, strerror(-rc));
+          return 0;
+        }
+
+      LogFullDebug(COMPONENT_IDMAPPER,
+                   "gid2name: nfs4_gid_to_name gid %d returned %s",
+                   *pgid, name);
 
       if(gidmap_add(name, *pgid) != ID_MAPPER_SUCCESS)
-        return 0;
+        {
+          LogCrit(COMPONENT_IDMAPPER,
+                  "gid2name: gidmap_add %s %d failed",
+                  name, *pgid);
+          return 0;
+        }
     }
 
   return 1;
@@ -313,6 +418,9 @@ int gid2name(char *name, gid_t * pgid)
 #else
   if(gnamemap_get(*pgid, name) == ID_MAPPER_SUCCESS)
     {
+      LogFullDebug(COMPONENT_IDMAPPER,
+                   "gid2name: gnamemap_get gid %d returned %s",
+                   *pgid, name);
       return 1;
     }
   else
@@ -323,12 +431,26 @@ int gid2name(char *name, gid_t * pgid)
       if((getgrgid_r(*pgid, &g, buff, MAXPATHLEN, &pg) != 0) ||
 	 (pg == NULL))
 #endif                          /* _SOLARIS */
-        return 0;
+        {
+          LogFullDebug(COMPONENT_IDMAPPER,
+                       "gid2name: getgrgid_r %d failed",
+                       *pgid);
+          return 0;
+        }
 
       strncpy(name, g.gr_name, MAXNAMLEN);
-      if(gidmap_add(name, *pgid) != ID_MAPPER_SUCCESS)
-        return 0;
 
+      LogFullDebug(COMPONENT_IDMAPPER,
+                   "gid2name: getgrgid_r gid %d returned %s",
+                   *pgid, name);
+
+      if(gidmap_add(name, *pgid) != ID_MAPPER_SUCCESS)
+        {
+          LogCrit(COMPONENT_IDMAPPER,
+                  "gid2name: gidmap_add %s %d failed",
+                  name, *pgid);
+          return 0;
+        }
     }
 
   return 1;
@@ -353,22 +475,45 @@ int name2gid(char *name, gid_t * pgid)
   struct group *pg = NULL;
   static char buff[MAXPATHLEN]; /* Working area for getgrnam_r */
   gid_t gid;
+  int rc;
 
   if(gidmap_get(name, (unsigned long *)&gid) == ID_MAPPER_SUCCESS)
     {
+      LogFullDebug(COMPONENT_IDMAPPER,
+                   "name2gid: gidmap_get mapped %s to gid= %d",
+                   name, gid);
       *pgid = gid;
     }
   else
     {
 #ifdef _USE_NFSIDMAP
       if(!nfsidmap_set_conf())
-        return 0;
+        {
+          LogCrit(COMPONENT_IDMAPPER,
+                  "name2gid: nfsidmap_set_conf failed");
+          return 0;
+        }
 
-      if(nfs4_name_to_gid(name, pgid))
-        return 0;
+      rc = nfs4_name_to_gid(name, pgid);
+      if(rc)
+        {
+          LogFullDebug(COMPONENT_IDMAPPER,
+                       "name2gid: nfs4_name_to_gid %s failed %d (%s)",
+                       name, -rc, strerror(-rc));
+          return 0;
+        }
+
+      LogFullDebug(COMPONENT_IDMAPPER,
+                   "name2gid: nfs4_name_to_gid %s returned %d",
+                   name, *pgid);
 
       if(gidmap_add(name, *pgid) != ID_MAPPER_SUCCESS)
-        return 0;
+        {
+          LogCrit(COMPONENT_IDMAPPER,
+                  "name2gid: gidmap_add %s %d failed",
+                  name, *pgid);
+          return 0;
+        }
 
 #else
 
@@ -378,6 +523,9 @@ int name2gid(char *name, gid_t * pgid)
       if(getgrnam_r(name, &g, buff, MAXPATHLEN, &pg) != 0)
 #endif
         {
+          LogFullDebug(COMPONENT_IDMAPPER,
+                       "name2gid: getgrnam_r %s failed",
+                       name);
           *pgid = -1;
           return 0;
         }
@@ -386,7 +534,12 @@ int name2gid(char *name, gid_t * pgid)
           *pgid = g.gr_gid;
 
           if(gidmap_add(name, g.gr_gid) != ID_MAPPER_SUCCESS)
-            return 0;
+            {
+              LogCrit(COMPONENT_IDMAPPER,
+                      "name2gid: gidmap_add %s %d failed",
+                      name, g.gr_gid);
+              return 0;
+            }
 
         }
 #endif                          /* _USE_NFSIDMAP */
@@ -410,16 +563,22 @@ int uid2str(uid_t uid, char *str)
 {
   char buffer[MAXNAMLEN];
   uid_t local_uid = uid;
+  int rc;
 
   if(uid2name(buffer, &local_uid) == 0)
     return -1;
-    
-#ifndef _USE_NFSIDMAP
-  return sprintf(str, "%s@%s", buffer, nfs_param.nfsv4_param.domainname);
-#else
 
-  return sprintf(str, "%s", buffer);
+#ifndef _USE_NFSIDMAP
+  rc = sprintf(str, "%s@%s", buffer, nfs_param.nfsv4_param.domainname);
+#else
+  rc = sprintf(str, "%s", buffer);
 #endif
+
+  LogDebug(COMPONENT_IDMAPPER,
+           "uid2str %d returning %s",
+           uid, str);
+
+  return rc;
 }                               /* uid2utf8 */
 
 /**
@@ -438,16 +597,22 @@ int gid2str(gid_t gid, char *str)
 {
   char buffer[MAXNAMLEN];
   gid_t local_gid = gid;
+  int rc;
 
   if(gid2name(buffer, &local_gid) == 0)
     return -1;
 
 #ifndef _USE_NFSIDMAP
-  return sprintf(str, "%s@%s", buffer, nfs_param.nfsv4_param.domainname);
+  rc = sprintf(str, "%s@%s", buffer, nfs_param.nfsv4_param.domainname);
 #else
-
-  return sprintf(str, "%s", buffer);
+  rc = sprintf(str, "%s", buffer);
 #endif
+
+  LogDebug(COMPONENT_IDMAPPER,
+           "gid2str %d returning %s",
+           gid, str);
+
+  return rc;
 }                               /* gid2str */
 
 /**
@@ -516,24 +681,27 @@ int gid2utf8(gid_t gid, utf8string * utf8str)
 
 /**
  *
- *  utf82gid: converts a utf8 string descriptor to a uid .
+ *  utf82uid: converts a utf8 string descriptor to a uid .
  *
  * Converts a utf8 string descriptor to a uid.
  *
  * @param utf8str [IN]  group's name as UTF8 string.
  * @param Uid     [OUT] pointer to the computed uid.
  *
- * @return 0 if successful, 0 otherwise.
+ * @return 0 if successful, -1 otherwise.
  */
 int utf82uid(utf8string * utf8str, uid_t * Uid)
 {
   char buff[2 * MAXNAMLEN];
   char uidname[MAXNAMLEN];
   char domainname[MAXNAMLEN];
+  int  rc;
 
   if(utf8str->utf8string_len == 0)
     {
-      *Uid = -1;                /* Nobofy */
+      *Uid = -1;                /* Nobody */
+      LogCrit(COMPONENT_IDMAPPER,
+              "utf82uid: empty user name");
       return -1;
     }
 
@@ -547,7 +715,17 @@ int utf82uid(utf8string * utf8str, uid_t * Uid)
   strncpy(uidname, buff, MAXNAMLEN);
 #endif
 
-  name2uid(uidname, Uid);
+  rc = name2uid(uidname, Uid);
+
+  if(rc == 0)
+    {
+      *Uid = -1;                /* Nobody */
+      return -1;
+    }
+
+  LogDebug(COMPONENT_IDMAPPER,
+           "utf82uid: Mapped %s to uid = %d",
+           buff, *Uid);
 
   return 0;
 }                               /* utf82uid */
@@ -568,10 +746,13 @@ int utf82gid(utf8string * utf8str, gid_t * Gid)
   char buff[2 * MAXNAMLEN];
   char gidname[MAXNAMLEN];
   char domainname[MAXNAMLEN];
+  int  rc;
 
   if(utf8str->utf8string_len == 0)
     {
       *Gid = -1;                /* Nobody */
+      LogCrit(COMPONENT_IDMAPPER,
+              "utf82gid: empty group name");
       return 0;
     }
 
@@ -585,7 +766,17 @@ int utf82gid(utf8string * utf8str, gid_t * Gid)
   strncpy(gidname, buff, MAXNAMLEN);
 #endif
 
-  name2gid(gidname, Gid);
+  rc = name2gid(gidname, Gid);
+
+  if(rc == 0)
+    {
+      *Gid = -1;                /* Nobody */
+      return 0;
+    }
+
+  LogDebug(COMPONENT_IDMAPPER,
+           "utf82gid: Mapped %s to gid = %d",
+           buff, *Gid);
 
   return 0;
 }                               /* utf82gid */

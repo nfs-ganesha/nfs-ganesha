@@ -79,8 +79,8 @@ extern nfs_parameter_t nfs_param;
 extern nfs_parameter_t nfs_param;
 
 int stat_export_check_access(struct sockaddr_storage *pssaddr,
-			     exportlist_client_t *clients,
-			     exportlist_client_entry_t * pclient_found)
+                             exportlist_client_t *clients,
+                             exportlist_client_entry_t * pclient_found)
 {
   int rc;
   unsigned int addr;
@@ -110,11 +110,12 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
                 ipstring, INET_ADDRSTRLEN);
       if(ipstring == NULL)
         {
-          LogCrit(COMPONENT_MAIN, "Error: Could not convert the IPv4 address to a character string.");
+          LogCrit(COMPONENT_MAIN,
+                  "Error: Could not convert the IPv4 address to a character string.");
           return FALSE;
         }
       if(export_client_match
-	 (addr, ipstring, clients, pclient_found, EXPORT_OPTION_ACCESS))
+         (addr, ipstring, clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
         return TRUE;
 #ifdef _USE_TIRPC_IPV6
     }
@@ -127,7 +128,8 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
 
           inet_ntop(psockaddr_in6->sin6_family,
                     psockaddr_in6->sin6_addr.s6_addr, txtaddrv6, 100);
-          LogFullDebug(COMPONENT_MAIN, "Client has IPv6 adress = %s\n", txtaddrv6);
+          LogFullDebug(COMPONENT_MAIN,
+                       "Client has IPv6 adress = %s", txtaddrv6);
         }
       /* If the client socket is IPv4, then it is wrapped into a   ::ffff:a.b.c.d IPv6 address. We check this here
        * This kind of adress is shaped like this:
@@ -146,7 +148,7 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
           if(ip6string == NULL)
             {
               LogCrit(COMPONENT_MAIN,
-                   "Error: Could not convert the IPv6 address to a character string.");
+                      "Error: Could not convert the IPv6 address to a character string.");
               return FALSE;
             }
           /* This is an IPv4 address mapped to an IPv6 one. Extract the IPv4 address and proceed with IPv4 autentication */
@@ -155,11 +157,11 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
           /* Proceed with IPv4 dedicated function */
           /* else, check if any access only export matches this client */
           if(export_client_match
-	     (addr, ip6string, clients, pclient_found, EXPORT_OPTION_ACCESS))
+             (addr, ip6string, clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
             return TRUE;
         }
       if(export_client_matchv6
-	 (&(psockaddr_in6->sin6_addr), clients, pclient_found, EXPORT_OPTION_ACCESS))
+         (&(psockaddr_in6->sin6_addr), clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
         return TRUE;
     }
 #endif                          /* _USE_TIRPC_IPV6 */
@@ -168,8 +170,9 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
 
 }                               /* stat_export_check_access */
 
-static int parseAccessParam(char *var_name, char *var_value,
-			    exportlist_client_t *clients) {
+static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
+					     exportlist_client_t *clients)
+{
   int rc, err_flag = FALSE;
   char *expended_node_list;
 
@@ -186,16 +189,17 @@ static int parseAccessParam(char *var_name, char *var_value,
     {
       err_flag = TRUE;
       LogCrit(COMPONENT_CONFIG,
-	      "STAT_EXPORT_ACCESS: ERROR: Invalid format for client list in EXPORT::%s definition",
-	      var_name);
+              "STAT_EXPORT_ACCESS: ERROR: Invalid format for client list in EXPORT::%s definition",
+              var_name);
 
       return -1;
     }
   else if(count > EXPORT_MAX_CLIENTS)
     {
       err_flag = TRUE;
-      LogCrit(COMPONENT_CONFIG, "STAT_EXPORT_ACCESS: ERROR: Client list too long (%d>%d)",
-	      count, EXPORT_MAX_CLIENTS);
+      LogCrit(COMPONENT_CONFIG,
+              "STAT_EXPORT_ACCESS: ERROR: Client list too long (%d>%d)",
+              count, EXPORT_MAX_CLIENTS);
       return -1;
     }
 
@@ -210,7 +214,7 @@ static int parseAccessParam(char *var_name, char *var_value,
    * Search for coma-separated list of hosts, networks and netgroups
    */
   rc = nfs_ParseConfLine(client_list, count,
-			 expended_node_list, find_comma, find_endLine);
+                         expended_node_list, find_comma, find_endLine);
 
   /* free the buffer the nodelist module has allocated */
   free(expended_node_list);
@@ -218,26 +222,28 @@ static int parseAccessParam(char *var_name, char *var_value,
   if(rc < 0)
     {
       err_flag = TRUE;
-      LogCrit(COMPONENT_CONFIG, "STAT_EXPORT_ACCESS: ERROR: Client list too long (>%d)", count);
+      LogCrit(COMPONENT_CONFIG,
+              "STAT_EXPORT_ACCESS: ERROR: Client list too long (>%d)", count);
 
       /* free client strings */
       for(idx = 0; idx < count; idx++)
-	Mem_Free((caddr_t) client_list[idx]);
+        Mem_Free((caddr_t) client_list[idx]);
 
       return rc;
     }
 
   rc = nfs_AddClientsToClientArray( clients, rc,
-				    (char **)client_list, EXPORT_OPTION_ACCESS);
+                                    (char **)client_list, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS);
   if(rc != 0)
     {
       err_flag = TRUE;
-      LogCrit(COMPONENT_CONFIG, "STAT_EXPORT_ACCESS: ERROR: Invalid client found in \"%s\"",
-	      var_value);
+      LogCrit(COMPONENT_CONFIG,
+              "STAT_EXPORT_ACCESS: ERROR: Invalid client found in \"%s\"",
+              var_value);
 
       /* free client strings */
       for(idx = 0; idx < count; idx++)
-	Mem_Free((caddr_t) client_list[idx]);
+        Mem_Free((caddr_t) client_list[idx]);
 
       return rc;
     }
@@ -268,14 +274,16 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
  if((block = config_FindItemByName(in_config, CONF_STAT_EXPORTER_LABEL)) == NULL)
     {
       /* cannot read item */
-      LogCrit(COMPONENT_INIT, "STAT_EXPORTER: Cannot read item \"%s\" from configuration file",
+      LogCrit(COMPONENT_CONFIG,
+              "STAT_EXPORTER: Cannot read item \"%s\" from configuration file",
               CONF_STAT_EXPORTER_LABEL);
       /* Expected to be a block */
       return ENOENT;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
      {
-       LogCrit(COMPONENT_INIT, "STAT_EXPORTER: Cannot read item \"%s\" from configuration file",
+       LogCrit(COMPONENT_CONFIG,
+               "STAT_EXPORTER: Cannot read item \"%s\" from configuration file",
                CONF_STAT_EXPORTER_LABEL);
       /* Expected to be a block */
        return ENOENT;
@@ -292,7 +300,7 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
 
       if(err)
         {
-          LogCrit(COMPONENT_INIT,
+          LogCrit(COMPONENT_CONFIG,
                   "STAT_EXPORTER: ERROR reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_FS_SPECIFIC);
           return err;
@@ -300,16 +308,16 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
 
       if(!STRCMP(key_name, "Access"))
         {
-	  parseAccessParam(key_name, key_value,
-			   &(out_parameter->stat_export.allowed_clients));
+	  parseAccessParam_for_statexporter(key_name, key_value,
+					    &(out_parameter->stat_export.allowed_clients));
         }
       else if(!STRCMP(key_name, "Port"))
         {
-	  strncpy(out_parameter->stat_export.export_stat_port, key_value, MAXPORTLEN);
+          strncpy(out_parameter->stat_export.export_stat_port, key_value, MAXPORTLEN);
         }
       else
         {
-          LogCrit(COMPONENT_INIT,
+          LogCrit(COMPONENT_CONFIG,
                   "STAT_EXPORTER LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_FS_SPECIFIC);
           return EINVAL;
@@ -473,7 +481,7 @@ int merge_nfs_stats(char *stat_buf, nfs_stat_client_req_t *stat_client_req,
 
       default:
         // TODO: Invalid NFS version handling
-	LogCrit(COMPONENT_MAIN, "Error: Invalid NFS version.");
+        LogCrit(COMPONENT_MAIN, "Error: Invalid NFS version.");
       break;
     }
 
@@ -506,9 +514,9 @@ int merge_nfs_stats(char *stat_buf, nfs_stat_client_req_t *stat_client_req,
 
       default:
         // TODO: Invalid stat type handling
-	LogCrit(COMPONENT_MAIN, "Error: Invalid stat type.");
+        LogCrit(COMPONENT_MAIN, "Error: Invalid stat type.");
       break;
-	}
+        }
 
   return rc;
 }
@@ -603,7 +611,7 @@ void *stat_exporter_thread(void *addr)
 
   if((rc = getaddrinfo(NULL, nfs_param.extern_param.stat_export.export_stat_port, &hints, &servinfo)) != 0)
     {
-      LogCrit(COMPONENT_MAIN, "getaddrinfo: %s\n", gai_strerror(rc));
+      LogCrit(COMPONENT_MAIN, "getaddrinfo: %s", gai_strerror(rc));
       return NULL;
     }
   for(p = servinfo; p != NULL; p = p->ai_next)
@@ -611,21 +619,21 @@ void *stat_exporter_thread(void *addr)
       if((sockfd = socket(p->ai_family, p->ai_socktype,
                           p->ai_protocol)) == -1)
         {
-	  LogError(COMPONENT_MAIN, ERR_SYS, errno, sockfd);
+          LogError(COMPONENT_MAIN, ERR_SYS, errno, sockfd);
           continue;
         }
 
       if((rc = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
-			  sizeof(int))) == -1)
+                          sizeof(int))) == -1)
         {
-	  LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
+          LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
           return NULL;
         }
 
       if((rc = bind(sockfd, p->ai_addr, p->ai_addrlen)) == -1)
         {
           close(sockfd);
-	  LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
+          LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
           continue;
         }
 
@@ -644,7 +652,7 @@ void *stat_exporter_thread(void *addr)
       LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
       return NULL;
     }
-  LogEvent(COMPONENT_MAIN, "Stat export server: Waiting for connections...");
+  LogInfo(COMPONENT_MAIN, "Stat export server: Waiting for connections...");
 
   while(1)
     {
@@ -652,23 +660,54 @@ void *stat_exporter_thread(void *addr)
       new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
       if(new_fd == -1)
         {
-	  LogError(COMPONENT_MAIN, ERR_SYS, errno, new_fd);
+          LogError(COMPONENT_MAIN, ERR_SYS, errno, new_fd);
           continue;
         }
 
       inet_ntop(their_addr.ss_family,
-		get_in_addr((struct sockaddr *)&their_addr),
-		s, sizeof s);
+                get_in_addr((struct sockaddr *)&their_addr),
+                s, sizeof s);
 
       if (stat_export_check_access(&their_addr,
-				   &(nfs_param.extern_param.stat_export.allowed_clients),
-				   &pclient_found)) {
-	LogDebug(COMPONENT_MAIN, "Stat export server: Access granted to %s", s);
-	process_stat_request(addr, new_fd);
+                                   &(nfs_param.extern_param.stat_export.allowed_clients),
+                                   &pclient_found)) {
+        LogDebug(COMPONENT_MAIN, "Stat export server: Access granted to %s", s);
+        process_stat_request(addr, new_fd);
       } else {
-	LogEvent(COMPONENT_MAIN, "Stat export server: Access denied to %s", s);
+        LogWarn(COMPONENT_MAIN, "Stat export server: Access denied to %s", s);
       }
     }                           /* while ( 1 ) */
 
   return NULL;
 }                               /* stat_exporter_thread */
+
+void *long_processing_thread(void *addr)
+{
+  nfs_worker_data_t *workers_data = (nfs_worker_data_t *) addr;
+  struct timeval timer_end;
+  struct timeval timer_diff;
+  int i;
+
+  SetNameFunction("long_processing");
+
+  while(1)
+    {
+      sleep(1);
+      gettimeofday(&timer_end, NULL);
+
+      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
+        {
+          if(workers_data[i].timer_start.tv_sec == 0)
+            continue;
+          timer_diff = time_diff(workers_data[i].timer_start, timer_end);
+          if(timer_diff.tv_sec == nfs_param.core_param.long_processing_threshold)
+            LogEvent(COMPONENT_DISPATCH,
+                     "Worker#%d: Function %s has been running for %llu.%.6llu seconds",
+                     i, workers_data[i].pfuncdesc->funcname,
+                     (unsigned long long)timer_diff.tv_sec,
+                     (unsigned long long)timer_diff.tv_usec);
+        }
+    }
+
+  return NULL;
+}                               /* long_processing_thread */

@@ -566,7 +566,7 @@ int fsal_internal_proxy_fsal_utf8_2_path(fsal_path_t * ppath, utf8string * utf8s
   if(ppath == NULL || utf8str == NULL)
     return FALSE;
 
-  if(utf82str(tmpstr, utf8str) == -1)
+  if(utf82str(tmpstr, sizeof(tmpstr), utf8str) == -1)
     return FALSE;
 
   fsal_status = FSAL_str2path(tmpstr, FSAL_MAX_PATH_LEN, ppath);
@@ -596,7 +596,7 @@ int fsal_internal_proxy_fsal_utf8_2_name(fsal_name_t * pname, utf8string * utf8s
   if(pname == NULL || utf8str == NULL)
     return FALSE;
 
-  if(utf82str(tmpstr, utf8str) == -1)
+  if(utf82str(tmpstr, sizeof(tmpstr), utf8str) == -1)
     return FALSE;
 
   fsal_status = FSAL_str2name(tmpstr, FSAL_MAX_NAME_LEN, pname);
@@ -1205,13 +1205,11 @@ fsal_status_t fsal_internal_set_auth_gss(proxyfsal_op_context_t * p_thr_context)
  */
 int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context)
 {
-  int sock;
   int rc;
   struct timeval timeout = TIMEOUTRPC;
   struct sockaddr_in addr_rpc;
   fsal_status_t fsal_status;
 
-  clnt_destroy(p_thr_context->rpc_client);
 
   memset(&addr_rpc, 0, sizeof(addr_rpc));
   addr_rpc.sin_port = p_thr_context->srv_port;
@@ -1219,9 +1217,19 @@ int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context)
   addr_rpc.sin_addr.s_addr = p_thr_context->srv_addr;
   int priv_port = 0 ;
 
+  LogEvent( COMPONENT_FSAL, "Remote server lost, trying to reconnect to remote server" ) ;
+
+  /* First of all, close the formerly opened socket that is now useless */
+  if( close( p_thr_context->socket ) == -1 )
+    LogMajor( COMPONENT_FSAL,
+              "FSAL RECONNECT : got POSIX error %u while closing socket in fsal_internal_ClientReconnect", errno ) ;
+  
+  // clnt_destroy(p_thr_context->rpc_client);
+  // clnt_destroy makes the server segfaults if no server exists on the other side
+
   if(!strcmp(p_thr_context->srv_proto, "udp"))
     {
-      if((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+      if( ( p_thr_context->socket = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP ) ) < 0)
         return -1;
 
       if((p_thr_context->rpc_client = clntudp_bufcreate(&addr_rpc,
@@ -1230,10 +1238,9 @@ int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context)
                                                         (struct timeval)
                                                         {
                                                         25, 0},
-                                                        &sock,
+                                                        &p_thr_context->socket,
                                                         p_thr_context->srv_sendsize,
-                                                        p_thr_context->srv_recvsize)) ==
-         NULL)
+                                                        p_thr_context->srv_recvsize)) == NULL )
         {
 
           LogCrit(COMPONENT_FSAL,
@@ -1251,7 +1258,7 @@ int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context)
     {
       if( p_thr_context->use_privileged_client_port  == TRUE )
        {
-	  if( (sock = rresvport( &priv_port ) ) < 0 )
+	  if( (p_thr_context->socket = rresvport( &priv_port ) ) < 0 )
            {
             LogCrit(COMPONENT_FSAL, "FSAL RECONNECT: cannot get a privilegeed tcp socket");
             return -1;
@@ -1259,14 +1266,14 @@ int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context)
        }
       else
        {
-        if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+        if((p_thr_context->socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
           {
             LogCrit(COMPONENT_FSAL, "FSAL RECONNECT: cannot create a tcp socket");
             return -1;
           }
        }
 
-      if(connect(sock, (struct sockaddr *)&addr_rpc, sizeof(addr_rpc)) < 0)
+      if(connect(p_thr_context->socket, (struct sockaddr *)&addr_rpc, sizeof(addr_rpc)) < 0)
         {
           LogCrit(COMPONENT_FSAL, "FSAL RECONNECT : Cannot connect to server addr=%u.%u.%u.%u port=%u",
                   (ntohl(p_thr_context->srv_addr) & 0xFF000000) >> 24,
@@ -1281,7 +1288,7 @@ int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context)
       if((p_thr_context->rpc_client = clnttcp_create(&addr_rpc,
                                                      p_thr_context->srv_prognum,
                                                      FSAL_PROXY_NFS_V4,
-                                                     &sock,
+                                                     &p_thr_context->socket,
                                                      p_thr_context->srv_sendsize,
                                                      p_thr_context->srv_recvsize)) ==
          NULL)
@@ -1323,7 +1330,7 @@ int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context)
       return -1;
     }
 
-  fsal_status = FSAL_proxy_setclientid(p_thr_context);
+  fsal_status = FSAL_proxy_setclientid_renego(p_thr_context);
   if(FSAL_IS_ERROR(fsal_status))
     return -1;
 

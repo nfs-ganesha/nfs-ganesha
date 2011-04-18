@@ -113,6 +113,18 @@ int nfs_Setattr(nfs_arg_t * parg,
   int rc;
   int do_trunc = FALSE;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char str[LEN_FH_STR];
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_setattr2.file),
+                       &(parg->arg_setattr3.object),
+                       NULL,
+                       str);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Setattr handle: %s", str);
+    }
+
   if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */

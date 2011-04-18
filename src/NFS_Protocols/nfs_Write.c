@@ -122,6 +122,41 @@ int nfs_Write(nfs_arg_t * parg,
   fsal_boolean_t eof_met;
   uint64_t stable_flag = FSAL_SAFE_WRITE_TO_FS;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char str[LEN_FH_STR], *stables;
+
+      switch (preq->rq_vers)
+        {
+        case NFS_V2:
+          offset = parg->arg_write2.offset;
+          size = parg->arg_write2.data.nfsdata2_len;
+          stables = "FILE_SYNC";
+          break;
+        case NFS_V3:
+          offset = parg->arg_write3.offset;
+          size = parg->arg_write3.count;
+          switch (parg->arg_write3.stable)
+            {
+              case UNSTABLE:  stables = "UNSTABLE"; break;
+              case DATA_SYNC: stables = "DATA_SYNC"; break;
+              case FILE_SYNC: stables = "FILE_SYNC"; break;
+            }
+        }
+
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_write2.file),
+                       &(parg->arg_write3.file),
+                       NULL,
+                       str);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Write handle: %s start: %llx len: %llx %s",
+               str,
+               (unsigned long long) offset,
+               (unsigned long long) size,
+               stables);
+    }
+
   cache_content_policy_data_t datapol;
 
   datapol.UseMaxCacheSize = FALSE;
@@ -260,64 +295,66 @@ int nfs_Write(nfs_arg_t * parg,
         {
           stable_flag = FSAL_SAFE_WRITE_TO_FS;
         }
-
-      LogFullDebug(COMPONENT_NFSPROTO, "----> Write offset=%lld count=%u", parg->arg_write3.offset,
-             parg->arg_write3.count);
-
-      /*
-       * do not exceed maxium READ/WRITE offset if set
-       */
-      if((pexport->options & EXPORT_OPTION_MAXOFFSETWRITE) ==
-         EXPORT_OPTION_MAXOFFSETWRITE)
-        if((fsal_off_t) (size + offset) > pexport->MaxOffsetWrite)
-          {
-
-            LogEvent(COMPONENT_NFSPROTO,
-                              "NFS WRITE: A client tryed to violate max file size %"PRId64" for exportid #%hu",
-                              pexport->MaxOffsetWrite, pexport->id);
-
-            switch (preq->rq_vers)
-              {
-              case NFS_V2:
-                pres->res_attr2.status = NFSERR_DQUOT;
-                break;
-
-              case NFS_V3:
-                pres->res_write3.status = NFS3ERR_DQUOT;
-                break;
-              }
-
-            nfs_SetFailedStatus(pcontext, pexport,
-                                preq->rq_vers,
-                                cache_status,
-                                &pres->res_attr2.status,
-                                &pres->res_write3.status,
-                                NULL, NULL,
-                                pentry,
-                                ppre_attr,
-                                &(pres->res_write3.WRITE3res_u.resfail.file_wcc),
-                                NULL, NULL, NULL);
-
-            return NFS_REQ_OK;
-
-          }
-
-      /*
-       * We should take care not to exceed FSINFO wtmax
-       * field for the size 
-       */
-      if(((pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE) &&
-         size > pexport->MaxWrite)
-        {
-          /*
-           * The client asked for too much data, we
-           * must restrict him 
-           */
-          size = pexport->MaxWrite;
-        }
       data = parg->arg_write3.data.data_val;
       stable = parg->arg_write3.stable;
       break;
+    }
+
+  /* 
+   * do not exceed maxium WRITE offset if set 
+   */
+  if((pexport->options & EXPORT_OPTION_MAXOFFSETWRITE) == EXPORT_OPTION_MAXOFFSETWRITE)
+    {
+      LogFullDebug(COMPONENT_NFSPROTO,
+                   "-----> Write offset=%llu count=%llu MaxOffSet=%llu",
+                   (unsigned long long) offset,
+                   (unsigned long long) size,
+                   (unsigned long long) pexport->MaxOffsetWrite);
+
+      if((fsal_off_t) (offset + size) > pexport->MaxOffsetWrite)
+        {
+          LogEvent(COMPONENT_NFSPROTO,
+                   "NFS WRITE: A client tryed to violate max file size %llu for exportid #%hu",
+                   (unsigned long long) pexport->MaxOffsetWrite, pexport->id);
+
+          switch (preq->rq_vers)
+            {
+            case NFS_V2:
+              pres->res_attr2.status = NFSERR_DQUOT;
+              break;
+
+            case NFS_V3:
+              pres->res_write3.status = NFS3ERR_INVAL;
+              break;
+            }
+
+          nfs_SetFailedStatus(pcontext, pexport,
+                              preq->rq_vers,
+                              cache_status,
+                              &pres->res_attr2.status,
+                              &pres->res_write3.status,
+                              NULL, NULL,
+                              pentry,
+                              ppre_attr,
+                              &(pres->res_write3.WRITE3res_u.resfail.file_wcc),
+                              NULL, NULL, NULL);
+
+          return NFS_REQ_OK;
+        }
+    }
+
+  /*
+   * We should take care not to exceed FSINFO wtmax
+   * field for the size 
+   */
+  if(((pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE) &&
+     size > pexport->MaxWrite)
+    {
+      /*
+       * The client asked for too much data, we
+       * must restrict him 
+       */
+      size = pexport->MaxWrite;
     }
 
   if(size == 0)
@@ -435,7 +472,8 @@ int nfs_Write(nfs_arg_t * parg,
         }
     }
 
-  LogFullDebug(COMPONENT_NFSPROTO, "---> failed write: cache_status=%d", cache_status);
+  LogFullDebug(COMPONENT_NFSPROTO,
+               "---> failed write: cache_status=%d", cache_status);
 
   /* If we are here, there was an error */
   if(nfs_RetryableError(cache_status))

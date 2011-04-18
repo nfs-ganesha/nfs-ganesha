@@ -75,18 +75,24 @@ static log_level_t __attribute__ ((__unused__)) tabLogLevel[] =
 #define NIV_CRIT       2
   {
   NIV_CRIT, "NIV_CRIT", LOG_ERR},
-#define NIV_EVENT      3
+#define NIV_WARN      3
+  {
+  NIV_WARN, "NIV_WARN", LOG_WARNING},
+#define NIV_EVENT      4
   {
   NIV_EVENT, "NIV_EVENT", LOG_NOTICE},
-#define NIV_DEBUG      4
+#define NIV_INFO       5
+  {
+  NIV_INFO, "NIV_INFO", LOG_INFO},
+#define NIV_DEBUG      6
   {
   NIV_DEBUG, "NIV_DEBUG", LOG_DEBUG},
-#define NIV_FULL_DEBUG 5
+#define NIV_FULL_DEBUG 7
   {
   NIV_FULL_DEBUG, "NIV_FULL_DEBUG", LOG_DEBUG}
 };
 
-#define NB_LOG_LEVEL 6
+#define NB_LOG_LEVEL 8
 #define NIV_MAJOR NIV_MAJ
 
 /*
@@ -440,7 +446,6 @@ static status_t __attribute__ ((__unused__)) tab_systeme_status[] =
 /* other codes families */
 #define ERR_LRU           10
 #define ERR_HASHTABLE     11
-#define ERR_RPC           12
 #define ERR_FSAL          13
 #define ERR_MFSL          14
 #define ERR_GHOSTFS       15

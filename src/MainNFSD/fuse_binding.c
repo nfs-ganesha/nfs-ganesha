@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -97,17 +97,20 @@ char usage[] =
 
 static void action_sigusr1(int sig)
 {
-  LogEvent(COMPONENT_MAIN, "NFS_MAIN_SIGUSR1_HANDLER: Receveid SIGUSR1.... signal will be managed");
+  LogEvent(COMPONENT_MAIN,
+           "NFS_MAIN_SIGUSR1_HANDLER: Receveid SIGUSR1.... signal will be managed");
 
   /* Set variable force_flush_by_signal that is used in file content cache gc thread */
   if(force_flush_by_signal)
     {
-      LogEvent(COMPONENT_MAIN, "NFS_MAIN_SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
+      LogEvent(COMPONENT_MAIN,
+               "NFS_MAIN_SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
       force_flush_by_signal = FALSE;
     }
   else
     {
-      LogEvent(COMPONENT_MAIN, "NFS_MAIN_SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
+      LogEvent(COMPONENT_MAIN,
+               "NFS_MAIN_SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
       force_flush_by_signal = TRUE;
     }
 }                               /* action_sigusr1 */
@@ -115,11 +118,11 @@ static void action_sigusr1(int sig)
 /**
  * main: simply the main function.
  *
- * The 'main' function as in every C program. 
- * 
+ * The 'main' function as in every C program.
+ *
  * @param argc number of arguments
  * @param argv array of arguments
- * 
+ *
  * @return status to calling program by calling the exit(3C) function.
  *
  */
@@ -257,7 +260,8 @@ int ganefuse_main(int argc, char *argv[],
 
   if(nfs_prereq_init(exec_name, host_name, debug_level, log_path))
     {
-      LogCrit(COMPONENT_MAIN, "NFS MAIN: Error initializing NFSd prerequisites");
+      LogCrit(COMPONENT_MAIN,
+              "NFS MAIN: Error initializing NFSd prerequisites");
       exit(1);
     }
 
@@ -270,7 +274,8 @@ int ganefuse_main(int argc, char *argv[],
         case -1:
           /* Fork failed */
           LogError(COMPONENT_MAIN, ERR_SYS, ERR_FORK, errno);
-          LogCrit(COMPONENT_MAIN, "Could nout start nfs daemon, exiting...");
+          LogCrit(COMPONENT_MAIN,
+                  "Could nout start nfs daemon, exiting...");
           exit(1);
 
         case 0:
@@ -279,14 +284,16 @@ int ganefuse_main(int argc, char *argv[],
           if(setsid() == -1)
             {
               LogError(COMPONENT_MAIN, ERR_SYS, ERR_SETSID, errno);
-              LogCrit(COMPONENT_MAIN, "Could nout start nfs daemon, exiting...");
+              LogCrit(COMPONENT_MAIN,
+                      "Could nout start nfs daemon, exiting...");
               exit(1);
             }
           break;
 
         default:
           /* This code is within the father, it is useless, it must die */
-          LogFullDebug(COMPONENT_MAIN, "Starting a son of pid %d\n", son_pid);
+          LogFullDebug(COMPONENT_MAIN,
+                       "Starting a son of pid %d\n", son_pid);
           exit(0);
           break;
         }
@@ -298,7 +305,8 @@ int ganefuse_main(int argc, char *argv[],
   /* Get the FSAL consts */
   FSAL_LoadConsts();
 
-  LogEvent(COMPONENT_MAIN, ">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
+  LogEvent(COMPONENT_MAIN,
+           ">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
            FSAL_GetFSName());
 
   /* Set the signal handler */
@@ -311,7 +319,8 @@ int ganefuse_main(int argc, char *argv[],
       exit(1);
     }
   else
-    LogEvent(COMPONENT_MAIN, "Signal SIGUSR1 (force flush) is ready to be used");
+    LogEvent(COMPONENT_MAIN,
+             "Signal SIGUSR1 (force flush) is ready to be used");
 
   memset(&nfs_param, 0, sizeof(nfs_param));
 
@@ -319,7 +328,8 @@ int ganefuse_main(int argc, char *argv[],
 
   if(nfs_set_param_default(&nfs_param))
     {
-      LogCrit(COMPONENT_MAIN, "NFS MAIN: Error setting default parameters.");
+      LogCrit(COMPONENT_MAIN,
+              "NFS MAIN: Error setting default parameters.");
       exit(1);
     }
   /* return all errors */
@@ -332,7 +342,8 @@ int ganefuse_main(int argc, char *argv[],
     {
       if(nfs_set_param_from_conf(&nfs_param, &nfs_start_info, config_path))
         {
-          LogCrit(COMPONENT_MAIN, "NFS MAIN: Error parsing configuration file.");
+          LogCrit(COMPONENT_MAIN,
+                  "NFS MAIN: Error parsing configuration file.");
           exit(1);
         }
     }
@@ -356,7 +367,8 @@ int ganefuse_main(int argc, char *argv[],
       nfs_param.pexportlist = BuildDefaultExport();
       if(nfs_param.pexportlist == NULL)
         {
-          LogCrit(COMPONENT_MAIN, "NFS MAIN: Could not create export entry for '/'");
+          LogCrit(COMPONENT_MAIN,
+                  "NFS MAIN: Could not create export entry for '/'");
           exit(1);
         }
     }
@@ -369,8 +381,9 @@ int ganefuse_main(int argc, char *argv[],
 
   if(nfs_check_param_consistency(&nfs_param))
     {
-      LogMajor(COMPONENT_MAIN, "NFS MAIN: Inconsistent parameters found");
-      LogMajor(COMPONENT_MAIN, 
+      LogMajor(COMPONENT_MAIN,
+               "NFS MAIN: Inconsistent parameters found");
+      LogMajor(COMPONENT_MAIN,
                "MAJOR WARNING: /!\\ | Bad Parameters could have significant impact on the daemon behavior");
       exit(1);
     }

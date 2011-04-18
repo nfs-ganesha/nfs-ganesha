@@ -124,6 +124,23 @@ int nfs_Readdir(nfs_arg_t * parg,
   unsigned int delta = 0;
   unsigned int i = 0;
 
+  if(isDebug(COMPONENT_NFSPROTO) || isDebug(COMPONENT_NFS_READDIR))
+    {
+      char str[LEN_FH_STR];
+      log_components_t component;
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_readdir2.dir),
+                       &(parg->arg_readdir3.dir),
+                       NULL,
+                       str);
+      if(isDebug(COMPONENT_NFSPROTO))
+        component = COMPONENT_NFSPROTO;
+      else
+        component = COMPONENT_NFS_READDIR;
+      LogDebug(component,
+               "REQUEST PROCESSING: Calling nfs_Readdir handle: %s", str);
+    }
+
   if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */
@@ -156,8 +173,9 @@ int nfs_Readdir(nfs_arg_t * parg,
       space_used = sizeof(READDIR2resok);
       estimated_num_entries = count / sizeof(entry2);
 
-      LogFullDebug(COMPONENT_NFS_READDIR, "-- Readdir2 -> count=%lu  cookie = %u  estimated_num_entries=%lu", count,
-             cookie, estimated_num_entries);
+      LogFullDebug(COMPONENT_NFS_READDIR,
+                   "-- Readdir2 -> count=%lu  cookie = %u  estimated_num_entries=%lu", count,
+                   cookie, estimated_num_entries);
 
       if(estimated_num_entries == 0)
         {
@@ -175,8 +193,8 @@ int nfs_Readdir(nfs_arg_t * parg,
         estimated_num_entries = count / sizeof(entry3);
 
         LogFullDebug(COMPONENT_NFS_READDIR,
-            "---> nfs3_Readdir: count=%lu  cookie=%u  space_used=%lu  estimated_num_entries=%lu",
-             count, cookie, space_used, estimated_num_entries);
+                     "---> nfs3_Readdir: count=%lu  cookie=%u  space_used=%lu  estimated_num_entries=%lu",
+                     count, cookie, space_used, estimated_num_entries);
 
         if(estimated_num_entries == 0)
           {
@@ -344,12 +362,13 @@ int nfs_Readdir(nfs_arg_t * parg,
     {
 
       LogFullDebug(COMPONENT_NFS_READDIR,
-          "-- Readdir -> Call to cache_inode_readdir( cookie=%d, asked=%lu ) -> num_entries = %u",
-           cache_inode_cookie, asked_num_entries, num_entries);
+                   "-- Readdir -> Call to cache_inode_readdir( cookie=%d, asked=%lu ) -> num_entries = %u",
+                   cache_inode_cookie, asked_num_entries, num_entries);
 
       if(eod_met == END_OF_DIR)
         {
-          LogFullDebug(COMPONENT_NFS_READDIR, "+++++++++++++++++++++++++++++++++++++++++> EOD MET ");
+          LogFullDebug(COMPONENT_NFS_READDIR,
+                       "+++++++++++++++++++++++++++++++++++++++++> EOD MET ");
         }
 
       /* If nothing was found, return nothing, but if cookie <= 1, we should return . and .. */

@@ -284,13 +284,17 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
       /* What kind of open is it ? */
       LogFullDebug(COMPONENT_NFS_V4,
-           "     OPEN: Claim type = %d   Open Type = %d  Share Deny = %d   Share Access = %d ",
-           arg_OPEN4.claim.claim, arg_OPEN4.openhow.opentype, arg_OPEN4.share_deny,
-           arg_OPEN4.share_access);
+                   "     OPEN: Claim type = %d   Open Type = %d  Share Deny = %d   Share Access = %d ",
+                   arg_OPEN4.claim.claim,
+                   arg_OPEN4.openhow.opentype,
+                   arg_OPEN4.share_deny,
+                   arg_OPEN4.share_access);
 
 
       /* It this a known client id ? */
-      LogDebug(COMPONENT_NFS_V4, "OPEN Client id = %llx", (long long unsigned int)arg_OPEN4.owner.clientid);
+      LogDebug(COMPONENT_NFS_V4,
+               "OPEN Client id = %llx",
+               (long long unsigned int)arg_OPEN4.owner.clientid);
 
       /* Is this open_owner known ? */
       if(!nfs_convert_open_owner(&arg_OPEN4.owner, &owner_name))
@@ -687,7 +691,9 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
             }
 
           /*  if( cache_status != CACHE_INODE_NOT_FOUND ), if file already exists basically */
-          LogFullDebug(COMPONENT_NFS_V4, "    OPEN open.how = %d", arg_OPEN4.openhow.openflag4_u.how.mode);
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "    OPEN open.how = %d",
+                       arg_OPEN4.openhow.openflag4_u.how.mode);
 
           create_arg.use_pnfs = FALSE;
 #ifdef _USE_PNFS

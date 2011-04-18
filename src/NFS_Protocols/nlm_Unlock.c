@@ -61,6 +61,7 @@
 #include "mount.h"
 #include "nfs_proto_functions.h"
 #include "nlm_util.h"
+#include "nlm_async.h"
 
 /**
  * nlm4_Unlock: Set a range lock
@@ -90,10 +91,17 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
   nlm_lock_entry_t *nlm_entry;
   cache_inode_status_t cache_status;
   cache_inode_fsal_data_t fsal_data;
+  char buffer[1024];
 
-  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm4_Unlock svid=%d off=%llx len=%llx",
-           (int) arg->alock.svid, (unsigned long long) arg->alock.l_offset, (unsigned long long) arg->alock.l_len);
+  netobj_to_string(&arg->cookie, buffer, 1024);
+  LogDebug(COMPONENT_NLM,
+           "REQUEST PROCESSING: Calling nlm4_Unlock svid=%d off=%llx len=%llx cookie=%s",
+           (int) arg->alock.svid,
+           (unsigned long long) arg->alock.l_offset,
+           (unsigned long long) arg->alock.l_len,
+           buffer);
 
+  copy_netobj(&pres->res_nlm4test.cookie, &arg->cookie);
   if(in_nlm_grace_period())
     {
       pres->res_nlm4test.test_stat.stat = NLM4_DENIED_GRACE_PERIOD;
@@ -138,12 +146,14 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
   if(!nlm_entry)
     {
       pres->res_nlm4.stat.stat = NLM4_GRANTED;
-      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock not found returning %s anyway",
+      LogDebug(COMPONENT_NLM,
+               "REQUEST RESULT: nlm4_Unlock not found returning %s anyway",
                lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
-  LogFullDebug(COMPONENT_NLM, "nlm4_Unlock nlm_entry %p, pentry %p pclient %p\n",
-                  nlm_entry, nlm_entry->pentry, nlm_entry->pclient);
+  LogFullDebug(COMPONENT_NLM,
+               "nlm4_Unlock nlm_entry %p, pentry %p pclient %p",
+               nlm_entry, nlm_entry->pentry, nlm_entry->pclient);
   lck_state = nlm_lock_entry_get_state(nlm_entry);
   pres->res_nlm4.stat.stat = NLM4_GRANTED;
   lck_cnt = nlm_delete_lock_entry(&(arg->alock));
@@ -160,6 +170,54 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
   return NFS_REQ_OK;
 }
 
+static void nlm4_unlock_message_resp(void *arg)
+{
+  nlm_async_res_t *pres = arg;
+
+  if(isFullDebug(COMPONENT_NLM))
+    {
+      char buffer[1024];
+      netobj_to_string(&pres->pres.res_nlm4test.cookie, buffer, 1024);
+      LogFullDebug(COMPONENT_NLM,
+                   "nlm4_unlock_message_resp calling nlm_send_async cookie=%s status=%s",
+                   buffer, lock_result_str(pres->pres.res_nlm4.stat.stat));
+    }
+  nlm_send_async(NLMPROC4_UNLOCK_RES, pres->caller_name, &(pres->pres), NULL);
+  nlm4_Unlock_Free(&pres->pres);
+  Mem_Free(pres->caller_name);
+  Mem_Free(pres);
+}
+
+/**
+ * nlm4_Unlock_Message: Unlock Message
+ *
+ *  @param parg        [IN]
+ *  @param pexportlist [IN]
+ *  @param pcontextp   [IN]
+ *  @param pclient     [INOUT]
+ *  @param ht          [INOUT]
+ *  @param preq        [IN]
+ *  @param pres        [OUT]
+ *
+ */
+int nlm4_Unlock_Message(nfs_arg_t * parg /* IN     */ ,
+                        exportlist_t * pexport /* IN     */ ,
+                        fsal_op_context_t * pcontext /* IN     */ ,
+                        cache_inode_client_t * pclient /* INOUT  */ ,
+                        hash_table_t * ht /* INOUT  */ ,
+                        struct svc_req *preq /* IN     */ ,
+                        nfs_res_t * pres /* OUT    */ )
+{
+  nlm_async_res_t *arg;
+  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Unlock_Message");
+  nlm4_Unlock(parg, pexport, pcontext, pclient, ht, preq, pres);
+
+  arg = nlm_build_async_res_nlm4(parg->arg_nlm4_unlock.alock.caller_name, pres);
+  if(arg != NULL)
+    nlm_async_callback(nlm4_unlock_message_resp, arg);
+  return NFS_REQ_DROP;
+}
+
 /**
  * nlm4_Unlock_Free: Frees the result structure allocated for nlm4_Unlock
  *
@@ -170,5 +228,6 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
  */
 void nlm4_Unlock_Free(nfs_res_t * pres)
 {
+  netobj_free(&pres->res_nlm4test.cookie);
   return;
 }

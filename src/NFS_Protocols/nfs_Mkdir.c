@@ -118,6 +118,30 @@ int nfs_Mkdir(nfs_arg_t * parg,
   cache_inode_status_t cache_status;
   cache_inode_status_t cache_status_lookup;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char str[LEN_FH_STR];
+
+      switch (preq->rq_vers)
+        {
+        case NFS_V2:
+          str_dir_name = parg->arg_mkdir2.where.name;
+          break;
+        case NFS_V3:
+          str_dir_name = parg->arg_mkdir3.where.name;
+          break;
+        }
+
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_mkdir2.where.dir),
+                       &(parg->arg_mkdir3.where.dir),
+                       NULL,
+                       str);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Mkdir handle: %s name: %s",
+               str, str_dir_name);
+    }
+
   if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */

@@ -118,22 +118,21 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
   fsal_path_t fsal_path;
   unsigned int bytag = FALSE;
 
-  LogFullDebug(COMPONENT_NFSPROTO,
-               "REQUEST PROCESSING: Calling mnt_Mnt, version %u", (unsigned int)preq->rq_vers);
+  LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Mnt path=%s",
+           parg->arg_mnt);
 
   /* Paranoid command to clean the result struct. */
   memset(pres, 0, sizeof(nfs_res_t));
 
   if(parg->arg_mnt == NULL)
     {
-      LogCrit(COMPONENT_NFSPROTO, "MOUNT: NULL path passed as Mount argument !!!");
+      LogCrit(COMPONENT_NFSPROTO,
+              "MOUNT: NULL path passed as Mount argument !!!");
       return NFS_REQ_DROP;
     }
 
   /* Retrieving arguments */
   strncpy(exportPath, parg->arg_mnt, MNTPATHLEN + 1);
-
-  LogFullDebug(COMPONENT_NFSPROTO, "MOUNT: Asked path=%s", exportPath);
 
   /*
    * Find the export for the dirname (using as well Path or Tag ) 
@@ -180,7 +179,8 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
 
   if(!p_current_item)
     {
-      LogCrit(COMPONENT_NFSPROTO, "MOUNT: Export entry %s not found", exportPath);
+      LogCrit(COMPONENT_NFSPROTO, "MOUNT: Export entry %s not found",
+              exportPath);
 
       /* entry not found. */
       /* @todo : not MNT3ERR_NOENT => ok */
@@ -196,7 +196,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
         }
       return NFS_REQ_OK;
     }
-  LogEvent(COMPONENT_NFSPROTO,
+  LogDebug(COMPONENT_NFSPROTO,
            "MOUNT: Export entry Path=%s Tag=%s matches %s, export_id=%u",
            exported_path, p_current_item->FS_tag, exportPath,
            p_current_item->id);
@@ -244,7 +244,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
         }
 
       LogEvent(COMPONENT_NFSPROTO,
-           "MOUNT: Performance warning: Export entry is not cached");
+               "MOUNT: Performance warning: Export entry is not cached");
       if(FSAL_IS_ERROR(FSAL_lookupPath(&fsal_path, pcontext, pfsal_handle, NULL)))
         {
           switch (preq->rq_vers)
@@ -315,7 +315,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
         }
 #endif
 
-      LogEvent(COMPONENT_NFSPROTO,
+      LogDebug(COMPONENT_NFSPROTO,
                "MOUNT: Entry support %d different flavours", index_auth);
 
 #define RES_MOUNTINFO pres->res_mnt3.mountres3_u.mountinfo
@@ -335,14 +335,12 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
   if(!nfs_Add_MountList_Entry(hostname, exportPath))
     {
       LogCrit(COMPONENT_NFSPROTO,
-                   "MOUNT: /!\\ | Error when adding entry (%s,%s) to the mount list",
-                   hostname, exportPath);
-      LogCrit(COMPONENT_NFSPROTO,
-                   "MOUNT: /!\\ | Mount command will be successfull anyway");
+              "MOUNT: Error when adding entry (%s,%s) to the mount list, Mount command will be successfull anyway",
+              hostname, exportPath);
     }
   else
     LogFullDebug(COMPONENT_NFSPROTO,
-                      "MOUNT: mount list entry (%s,%s) added", hostname, exportPath);
+                 "MOUNT: mount list entry (%s,%s) added", hostname, exportPath);
 
   return NFS_REQ_OK;
 

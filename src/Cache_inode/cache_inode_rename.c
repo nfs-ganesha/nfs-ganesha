@@ -211,11 +211,12 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
         }
 
       if(*pstatus != CACHE_INODE_FSAL_ESTALE)
-        LogFullDebug(COMPONENT_CACHE_INODE,
-                          "Rename (%p,%s)->(%p,%s) : source doesn't exist", pentry_dirsrc,
-                          poldname->name, pentry_dirdest, pnewname->name);
+        LogDebug(COMPONENT_CACHE_INODE,
+                 "Rename (%p,%s)->(%p,%s) : source doesn't exist",
+                 pentry_dirsrc, poldname->name,
+                 pentry_dirdest, pnewname->name);
       else
-        LogFullDebug(COMPONENT_CACHE_INODE, "Rename : stale source");
+        LogDebug(COMPONENT_CACHE_INODE, "Rename : stale source");
 
       return *pstatus;
     }
@@ -229,9 +230,9 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
                                                        pcontext, pstatus)) != NULL)
     {
 
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                        "Rename (%p,%s)->(%p,%s) : destination already exists",
-                        pentry_dirsrc, poldname->name, pentry_dirdest, pnewname->name);
+      LogDebug(COMPONENT_CACHE_INODE,
+               "Rename (%p,%s)->(%p,%s) : destination already exists",
+               pentry_dirsrc, poldname->name, pentry_dirdest, pnewname->name);
 
       /* If the already existing object is a directory, source object should ne a directory */
       if(pentry_lookup_dest->internal_md.type == DIR_BEGINNING &&
@@ -281,10 +282,10 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
               V_w(&pentry_dirdest->lock);
             }
 
-          LogFullDebug(COMPONENT_CACHE_INODE,
-                            "Rename (%p,%s)->(%p,%s) : rename the object on itself",
-                            pentry_dirsrc, poldname->name, pentry_dirdest,
-                            pnewname->name);
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "Rename (%p,%s)->(%p,%s) : rename the object on itself",
+                   pentry_dirsrc, poldname->name, pentry_dirdest,
+                   pnewname->name);
 
           return *pstatus;
         }
@@ -303,10 +304,10 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
               V_w(&pentry_dirdest->lock);
             }
 
-          LogFullDebug(COMPONENT_CACHE_INODE,
-                            "Rename (%p,%s)->(%p,%s) : destination is a non-empty directory",
-                            pentry_dirsrc, poldname->name, pentry_dirdest,
-                            pnewname->name);
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "Rename (%p,%s)->(%p,%s) : destination is a non-empty directory",
+                   pentry_dirsrc, poldname->name, pentry_dirdest,
+                   pnewname->name);
           return *pstatus;
         }
 
@@ -334,8 +335,8 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
     {
       if(*pstatus == CACHE_INODE_FSAL_ESTALE)
         {
-          LogFullDebug(COMPONENT_CACHE_INODE,
-                            "Rename : stale destnation");
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "Rename : stale destnation");
 
           V_w(&pentry_dirsrc->lock);
           if(pentry_dirsrc != pentry_dirdest)
@@ -447,34 +448,36 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
           fsal_status_t getattr_status;
 
           LogEvent(COMPONENT_CACHE_INODE,
-              "cache_inode_rename: Stale FSAL File Handle detected for at least one in  pentry = %p and pentry = %p",
-               pentry_dirsrc, pentry_dirdest);
+                   "cache_inode_rename: Stale FSAL File Handle detected for at least one in  pentry = %p and pentry = %p",
+                   pentry_dirsrc, pentry_dirdest);
 
           /* Use FSAL_getattrs to find which entry is staled */
           getattr_status = FSAL_getattrs(phandle_dirsrc, pcontext, &attrlookup);
           if(getattr_status.major == ERR_FSAL_ACCESS)
             {
               LogEvent(COMPONENT_CACHE_INODE,
-                  "cache_inode_rename: Stale FSAL File Handle detected for pentry = %p",
-                   pentry_dirsrc);
+                       "cache_inode_rename: Stale FSAL File Handle detected for pentry = %p",
+                       pentry_dirsrc);
 
               if(cache_inode_kill_entry(pentry_dirsrc, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
-                LogCrit(COMPONENT_CACHE_INODE, "cache_inode_rename: Could not kill entry %p, status = %u",
-                           pentry_dirsrc, kill_status);
+                LogCrit(COMPONENT_CACHE_INODE,
+                        "cache_inode_rename: Could not kill entry %p, status = %u",
+                        pentry_dirsrc, kill_status);
             }
 
           getattr_status = FSAL_getattrs(phandle_dirdest, pcontext, &attrlookup);
           if(getattr_status.major == ERR_FSAL_ACCESS)
             {
               LogEvent(COMPONENT_CACHE_INODE,
-                  "cache_inode_rename: Stale FSAL File Handle detected for pentry = %p",
-                   pentry_dirdest);
+                       "cache_inode_rename: Stale FSAL File Handle detected for pentry = %p",
+                       pentry_dirdest);
 
               if(cache_inode_kill_entry(pentry_dirdest, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
-                LogCrit(COMPONENT_CACHE_INODE,"cache_inode_rename: Could not kill entry %p, status = %u",
-                           pentry_dirdest, kill_status);
+                LogCrit(COMPONENT_CACHE_INODE,
+                        "cache_inode_rename: Could not kill entry %p, status = %u",
+                        pentry_dirdest, kill_status);
             }
 
           *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -502,9 +505,9 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
        * cache_inode_rename_dirent is used instead of adding/removing dirent. This limits
        * the use of resource in this case */
 
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                        "Rename (%p,%s)->(%p,%s) : source and target directory are the same",
-                        pentry_dirsrc, poldname->name, pentry_dirdest, pnewname->name);
+      LogDebug(COMPONENT_CACHE_INODE,
+               "Rename (%p,%s)->(%p,%s) : source and target directory are the same",
+               pentry_dirsrc, poldname->name, pentry_dirdest, pnewname->name);
 
       status = cache_inode_rename_cached_dirent(pentry_dirdest,
                                                 poldname, pnewname, ht, pclient, pstatus);
@@ -522,9 +525,10 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
     }
   else
     {
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                        "Rename (%p,%s)->(%p,%s) : moving entry", pentry_dirsrc,
-                        poldname->name, pentry_dirdest, pnewname->name);
+      LogDebug(COMPONENT_CACHE_INODE,
+               "Rename (%p,%s)->(%p,%s) : moving entry",
+               pentry_dirsrc, poldname->name,
+               pentry_dirdest, pnewname->name);
 
       /* Add the new entry */
       status = cache_inode_add_cached_dirent(pentry_dirdest,

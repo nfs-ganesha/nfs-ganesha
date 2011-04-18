@@ -109,8 +109,11 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
   res_SETCLIENTID_CONFIRM4.status = NFS4_OK;
   clientid = arg_SETCLIENTID_CONFIRM4.clientid;
 
-  LogDebug(COMPONENT_NFS_V4, "SETCLIENTID_CONFIRM clientid = %"PRIx64, clientid);
-  /* LogDebug(COMPONENT_NFS_V4, "SETCLIENTID_CONFIRM Verifier = #%s#", arg_SETCLIENTID_CONFIRM4.setclientid_confirm ) ; */
+  LogDebug(COMPONENT_NFS_V4,
+           "SETCLIENTID_CONFIRM clientid = %"PRIx64, clientid);
+  /* LogDebug(COMPONENT_NFS_V4,
+              "SETCLIENTID_CONFIRM Verifier = #%s#",
+              arg_SETCLIENTID_CONFIRM4.setclientid_confirm ) ; */
 
   /* Does this id already exists ? */
   if(nfs_client_id_get(clientid, &nfs_clientid) == CLIENT_ID_SUCCESS)
@@ -135,8 +138,8 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
           if(nfs_clientid.confirmed == REBOOTED_CLIENT_ID)
             {
               LogDebug(COMPONENT_NFS_V4,
-                              "SETCLIENTID_CONFIRM clientid = %"PRIx64", client was rebooted, getting ride of old state from previous client instance",
-                              clientid);
+                       "SETCLIENTID_CONFIRM clientid = %"PRIx64", client was rebooted, getting ride of old state from previous client instance",
+                       clientid);
             }
 
           /* Regular situation, set the client id confirmed and returns */

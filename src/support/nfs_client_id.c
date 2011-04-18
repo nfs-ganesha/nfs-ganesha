@@ -311,12 +311,16 @@ int nfs_client_id_add(clientid4 clientid,
       HASHTABLE_SET_HOW_SET_OVERWRITE) != HASHTABLE_SUCCESS)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
-  if(isFullDebug(COMPONENT_CLIENT_ID_COMPUTE)) {
-    LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE, "-=-=-=-=-=-=-=-=-=-> ht_client_id ");
-    HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE, ht_client_id);
-    LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE, "-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse ");
-    HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id_reverse);
-  }
+  if(isFullDebug(COMPONENT_CLIENT_ID_COMPUTE))
+    {
+      LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,
+                   "-=-=-=-=-=-=-=-=-=-> ht_client_id ");
+      HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE, ht_client_id);
+      LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,
+                   "-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse ");
+      HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id_reverse);
+    }
+
   return CLIENT_ID_SUCCESS;
 }                               /* nfs_client_id_add */
 
@@ -424,12 +428,15 @@ int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res)
 
       *client_id_res = *pnfs_client_id;
       status = CLIENT_ID_SUCCESS;
-      if(isFullDebug(COMPONENT_CLIENT_ID_COMPUTE)) {
-	LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,"-=-=-=-=-=-=-=-=-=-> ht_client_id ");
-	HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id);
-	LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,"-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse ");
-	HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id_reverse);
-      }
+      if(isFullDebug(COMPONENT_CLIENT_ID_COMPUTE))
+        {
+          LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,
+                       "-=-=-=-=-=-=-=-=-=-> ht_client_id ");
+          HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id);
+          LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,
+                       "-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse ");
+          HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id_reverse);
+        }
     }
   else
     {
@@ -464,12 +471,15 @@ int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id
       *ppclient_id_res = (nfs_client_id_t *) buffval.pdata;
 
       status = CLIENT_ID_SUCCESS;
-      if(isFullDebug(COMPONENT_CLIENT_ID_COMPUTE)) {
-	LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,"-=-=-=-=-=-=-=-=-=-> ht_client_id ");
-	HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id);
-	LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,"-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse ");
-	HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id_reverse);
-      }
+      if(isFullDebug(COMPONENT_CLIENT_ID_COMPUTE))
+        {
+          LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,
+                       "-=-=-=-=-=-=-=-=-=-> ht_client_id ");
+          HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id);
+          LogFullDebug(COMPONENT_CLIENT_ID_COMPUTE,
+                       "-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse ");
+          HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id_reverse);
+        }
     }
   else
     {

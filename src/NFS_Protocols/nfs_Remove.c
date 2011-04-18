@@ -118,6 +118,30 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
   char *file_name = NULL;
   fsal_name_t name;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char str[LEN_FH_STR];
+
+      switch (preq->rq_vers)
+        {
+        case NFS_V2:
+          file_name = parg->arg_remove2.name;
+          break;
+        case NFS_V3:
+          file_name = parg->arg_remove3.object.name;
+          break;
+        }
+
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_create2.where.dir),
+                       &(parg->arg_create3.where.dir),
+                       NULL,
+                       str);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Remove handle: %s name: %s",
+               str, file_name);
+    }
+
   if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */
@@ -128,11 +152,11 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
 
   /* Convert file handle into a pentry */
   if((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
-                                         &(parg->arg_readlink2),
-                                         &(parg->arg_readlink3.symlink),
+                                         &(parg->arg_remove2.dir),
+                                         &(parg->arg_remove3.object.dir),
                                          NULL,
-                                         &(pres->res_readlink2.status),
-                                         &(pres->res_readlink3.status),
+                                         &(pres->res_dirop2.status),
+                                         &(pres->res_remove3.status),
                                          NULL,
                                          &pre_parent_attr,
                                          pcontext, pclient, ht, &rc)) == NULL)
@@ -141,7 +165,7 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
       return rc;
     }
 
-  if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_readlink3.symlink))))
+  if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_remove3.object.dir))))
     return nfs3_Remove_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
 
   /* get directory attributes before action (for V3 reply) */
@@ -224,7 +248,9 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
                   return NFS_REQ_OK;
                 }
 
-              LogFullDebug(COMPONENT_NFSPROTO, "==== NFS REMOVE ====> Trying to remove file %s", name.name);
+              LogFullDebug(COMPONENT_NFSPROTO,
+                           "==== NFS REMOVE ====> Trying to remove file %s",
+                           name.name);
 
               /*
                * Remove the entry. 

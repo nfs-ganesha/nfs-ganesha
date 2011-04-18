@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -114,7 +114,8 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
 
   SetNameFunction(function_name);
 
-  LogDebug(COMPONENT_MAIN, "NFS DATACACHE FLUSHER THREAD #%u : Starting",
+  LogDebug(COMPONENT_MAIN,
+           "NFS DATACACHE FLUSHER THREAD #%u : Starting",
            p_flush_data->thread_index);
 
 #ifndef _NO_BUDDY_SYSTEM
@@ -126,13 +127,15 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
               p_flush_data->thread_index);
       exit(1);
     }
-  LogEvent(COMPONENT_MAIN, "NFS DATACACHE FLUSHER THREAD #%u : Memory manager successfully initialized",
-           p_flush_data->thread_index);
+  LogInfo(COMPONENT_MAIN,
+          "NFS DATACACHE FLUSHER THREAD #%u : Memory manager successfully initialized",
+          p_flush_data->thread_index);
 #endif
 
   /* Initialisation of credential for current thread */
-  LogEvent(COMPONENT_MAIN, "NFS DATACACHE FLUSHER THREAD #%u : Initialization of thread's credential",
-           p_flush_data->thread_index);
+  LogInfo(COMPONENT_MAIN,
+          "NFS DATACACHE FLUSHER THREAD #%u : Initialization of thread's credential",
+          p_flush_data->thread_index);
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&(fsal_context[p_flush_data->thread_index]))))
     {
       /* Failed init */
@@ -148,7 +151,9 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
 
       if(pexport->options & EXPORT_OPTION_USE_DATACACHE)
         {
-          LogEvent(COMPONENT_MAIN, "Starting flush on Export Entry #%u", pexport->id);
+          LogEvent(COMPONENT_MAIN,
+                   "Starting flush on Export Entry #%u",
+                   pexport->id);
 
           fsal_status =
               FSAL_GetClientContext(&(fsal_context[p_flush_data->thread_index]),
@@ -158,7 +163,7 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
             LogError(COMPONENT_MAIN, ERR_FSAL, fsal_status.major, fsal_status.minor);
 
 #ifdef _USE_XFS
-	  /* Export Context is required for FSAL_XFS to work properly (it set the XFS fshandle) */
+          /* Export Context is required for FSAL_XFS to work properly (it set the XFS fshandle) */
           fsal_status = FSAL_str2path( pexport->dirname, strlen( pexport->dirname )   , &export_path ) ;
           if(FSAL_IS_ERROR(fsal_status))
             LogError(COMPONENT_MAIN, ERR_FSAL, fsal_status.major, fsal_status.minor);
@@ -185,11 +190,13 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
                                            &(fsal_context[p_flush_data->thread_index]),
                                            &content_status) != CACHE_CONTENT_SUCCESS)
             {
-              LogCrit(COMPONENT_MAIN,"Flush on Export Entry #%u failed", pexport->id);
+              LogCrit(COMPONENT_MAIN,
+                      "Flush on Export Entry #%u failed", pexport->id);
             }
           else
             {
-              LogEvent(COMPONENT_MAIN,"Flush on Export Entry #%u is ok", pexport->id);
+              LogEvent(COMPONENT_MAIN,
+                       "Flush on Export Entry #%u is ok", pexport->id);
 
               /* XXX: for now, all cached data are put in the export directory (with export_id=0)
                * Thus, we don't need to have a flush for each export_id.
@@ -200,7 +207,9 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
 
         }
       else
-        LogEvent(COMPONENT_MAIN,"Export Entry #%u is not data cached, skipping..", pexport->id);
+        LogEvent(COMPONENT_MAIN,
+                 "Export Entry #%u is not data cached, skipping..",
+                 pexport->id);
     }
 
   /* Tell the admin that flush is done */

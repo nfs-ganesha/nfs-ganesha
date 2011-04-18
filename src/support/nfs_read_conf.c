@@ -9,16 +9,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -115,9 +115,9 @@
 /**
  *
  * nfs_read_worker_conf: read the configuration ite; for the worker theads.
- * 
+ *
  * Reads the configuration ite; for the worker theads.
- * 
+ *
  * @param in_config [IN] configuration file handle
  * @param pparam [OUT] read parameters
  *
@@ -140,12 +140,17 @@ int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * ppara
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_WORKER)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_NFS_WORKER  ) ; */
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file",
+               CONF_LABEL_NFS_WORKER);
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
+      LogCrit(COMPONENT_CONFIG,
+              "Item \"%s\" is expected to be a block",
+              CONF_LABEL_NFS_WORKER);
       return 1;
     }
 
@@ -214,9 +219,9 @@ int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * ppara
 /**
  *
  * nfs_read_core_conf: read the configuration ite; for the worker theads.
- * 
+ *
  * Reads the configuration ite; for the worker theads.
- * 
+ *
  * @param in_config [IN] configuration file handle
  * @param pparam [OUT] read parameters
  *
@@ -239,12 +244,17 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_CORE)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_NFS_CORE  ) ; */
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file",
+               CONF_LABEL_NFS_CORE);
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
+      LogDebug(COMPONENT_CONFIG,
+               "Item \"%s\" is expected to be a block",
+               CONF_LABEL_NFS_CORE);
       return 1;
     }
 
@@ -333,7 +343,8 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
 
           if(count < 0)
             {
-              LogCrit(COMPONENT_CONFIG, "NFS_Protocols list too long (>%d)",
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS_Protocols list too long (>%d)",
                       MAX_NFSPROTO);
 
               /* free sec strings */
@@ -417,6 +428,10 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->stats_update_delay = atoi(key_value);
         }
+      else if(!strcasecmp(key_name, "Long_Processing_Threshold"))
+        {
+          pparam->long_processing_threshold = atoi(key_value);
+        }
       else if(!strcasecmp( key_name, "TCP_Fridge_Expiration_Delay" ) )
         {
           pparam->tcp_fridge_expiration_delay = atoi(key_value);
@@ -449,9 +464,9 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
 /**
  *
  * nfs_read_dupreq_hash_conf: reads the configuration for the hash in Duplicate Request layer.
- * 
+ *
  * Reads the configuration for the hash in Duplicate Request layer
- * 
+ *
  * @param in_config [IN] configuration file handle
  * @param pparam [OUT] read parameters
  *
@@ -475,12 +490,17 @@ int nfs_read_dupreq_hash_conf(config_file_t in_config,
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_DUPREQ)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_NFS_DUPREQ ) ; */
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file",
+               CONF_LABEL_NFS_DUPREQ);
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
+      LogDebug(COMPONENT_CONFIG,
+               "Item \"%s\" is expected to be a block",
+               CONF_LABEL_NFS_DUPREQ);
       return 1;
     }
 
@@ -528,9 +548,9 @@ int nfs_read_dupreq_hash_conf(config_file_t in_config,
 /**
  *
  * nfs_read_ip_name_conf: reads the configuration for the IP/name.
- * 
+ *
  * Reads the configuration for the IP/name.
- * 
+ *
  * @param in_config [IN] configuration file handle
  * @param pparam [OUT] read parameters
  *
@@ -553,12 +573,15 @@ int nfs_read_ip_name_conf(config_file_t in_config, nfs_ip_name_parameter_t * ppa
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_IP_NAME)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_NFS_IP_NAME ) ; */
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file", CONF_LABEL_NFS_IP_NAME);
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
+      LogDebug(COMPONENT_CONFIG,
+               "Item \"%s\" is expected to be a block", CONF_LABEL_NFS_IP_NAME);
       return 1;
     }
 
@@ -639,7 +662,8 @@ int nfs_read_client_id_conf(config_file_t in_config, nfs_client_id_parameter_t *
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_CLIENT_ID)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_CLIENT_ID ) ; */
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file", CONF_LABEL_CLIENT_ID);
       return 1;
     }
 
@@ -712,7 +736,8 @@ int nfs_read_state_id_conf(config_file_t in_config, nfs_state_id_parameter_t * p
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_STATE_ID)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_STATE_ID ) ; */
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file", CONF_LABEL_STATE_ID);
       return 1;
     }
 
@@ -774,8 +799,8 @@ int nfs_read_session_id_conf(config_file_t in_config, nfs_session_id_parameter_t
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_SESSION_ID)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file",
-              CONF_LABEL_STATE_ID); */
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file", CONF_LABEL_STATE_ID);
       return 1;
     }
 
@@ -850,12 +875,17 @@ int nfs_read_uidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_UID_MAPPER)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_CLIENT_ID ) ; */
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file",
+               CONF_LABEL_CLIENT_ID);
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
+      LogDebug(COMPONENT_CONFIG,
+               "Item \"%s\" is expected to be a block",
+               CONF_LABEL_CLIENT_ID);
       return 1;
     }
 
@@ -932,12 +962,17 @@ int nfs_read_gidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_GID_MAPPER)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_CLIENT_ID ) ; */
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file",
+               CONF_LABEL_CLIENT_ID);
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
+      LogDebug(COMPONENT_CONFIG,
+               "Item \"%s\" is expected to be a block",
+               CONF_LABEL_CLIENT_ID);
       return 1;
     }
 
@@ -1014,12 +1049,17 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_KRB5)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_NFS_KRB5 ) ; */
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file",
+               CONF_LABEL_NFS_KRB5);
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
+      LogDebug(COMPONENT_CONFIG,
+               "Item \"%s\" is expected to be a block",
+               CONF_LABEL_NFS_KRB5);
       return 1;
     }
 
@@ -1092,12 +1132,17 @@ int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * p
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_NFS_VERSION4)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_NFS_VERSION4 ) ; */
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file",
+               CONF_LABEL_NFS_VERSION4);
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
+      LogDebug(COMPONENT_CONFIG,
+               "Item \"%s\" is expected to be a block",
+               CONF_LABEL_NFS_VERSION4);
       return 1;
     }
 
@@ -1165,17 +1210,21 @@ int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * p
  * prints the nfs worker parameter structure into the logfile
  *
  * @param pparam Pointer to the nfs worker parameter
- * 
+ *
  * @return none (void function)
  *
  */
 void Print_param_worker_in_log(nfs_worker_parameter_t * pparam)
 {
-  LogEvent(COMPONENT_INIT, "NFS PARAM : worker_param.lru_param.nb_entry_prealloc = %d",
-             pparam->lru_param.nb_entry_prealloc);
-  LogEvent(COMPONENT_INIT, "NFS PARAM : worker_param.nb_pending_prealloc = %d",
-             pparam->nb_pending_prealloc);
-  LogEvent(COMPONENT_INIT, "NFS PARAM : worker_param.nb_before_gc = %d", pparam->nb_before_gc);
+  LogInfo(COMPONENT_INIT,
+          "NFS PARAM : worker_param.lru_param.nb_entry_prealloc = %d",
+          pparam->lru_param.nb_entry_prealloc);
+  LogInfo(COMPONENT_INIT,
+          "NFS PARAM : worker_param.nb_pending_prealloc = %d",
+          pparam->nb_pending_prealloc);
+  LogInfo(COMPONENT_INIT,
+          "NFS PARAM : worker_param.nb_before_gc = %d",
+          pparam->nb_before_gc);
 }                               /* Print_param_worker_in_log */
 
 /**
@@ -1185,13 +1234,15 @@ void Print_param_worker_in_log(nfs_worker_parameter_t * pparam)
  * prints the nfs parameter structure into the logfile
  *
  * @param pparam Pointer to the nfs parameter
- * 
+ *
  * @return none (void function)
  *
  */
 void Print_param_in_log(nfs_parameter_t * pparam)
 {
-  LogEvent(COMPONENT_INIT, "NFS PARAM : core_param.nb_worker = %d", pparam->core_param.nb_worker);
+  LogInfo(COMPONENT_INIT,
+          "NFS PARAM : core_param.nb_worker = %d",
+          pparam->core_param.nb_worker);
   Print_param_worker_in_log(&(pparam->worker_param));
 }                               /* Print_param_in_log */
 
@@ -1214,20 +1265,26 @@ int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib)
 
   if(!config_struct)
     {
-      LogCrit(COMPONENT_CONFIG, "NFS STARTUP: Error while parsing %s: %s", configPath,
-                 config_GetErrorMsg());
+      LogMajor(COMPONENT_CONFIG,
+               "NFS STARTUP: Error while parsing %s: %s",
+               configPath, config_GetErrorMsg());
       exit(1);
     }
 
   /* Get the config BLOCK */
   if((block = config_FindItemByName(config_struct, CONF_LABEL_NFS_CORE)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_NFS_CORE  ) ; */
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file",
+               CONF_LABEL_NFS_CORE);
       return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
+      LogDebug(COMPONENT_CONFIG,
+               "Item \"%s\" is expected to be a block",
+               CONF_LABEL_NFS_CORE);
       return 1;
     }
 

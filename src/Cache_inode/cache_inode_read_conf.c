@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -60,10 +60,10 @@
 
 /**
  *
- * cache_inode_read_conf_hash_parameter: read the configuration for the hash in Cache_inode layer. 
- * 
+ * cache_inode_read_conf_hash_parameter: read the configuration for the hash in Cache_inode layer.
+ *
  * Reads the configuration for the hash in Cache_inode layer.
- * 
+ *
  * @param in_config [IN] configuration file handle
  * @param pparam [OUT] read parameters
  *
@@ -88,12 +88,17 @@ cache_inode_status_t cache_inode_read_conf_hash_parameter(config_file_t in_confi
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_CACHE_INODE_HASH)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_CACHE_INODE_HASH ) ; */
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file",
+               CONF_LABEL_CACHE_INODE_HASH);
       return CACHE_INODE_NOT_FOUND;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
+      LogCrit(COMPONENT_CONFIG,
+              "Item \"%s\" is expected to be a block",
+              CONF_LABEL_CACHE_INODE_HASH);
       return CACHE_INODE_INVALID_ARGUMENT;
     }
 
@@ -187,9 +192,9 @@ void cache_inode_expire_to_str(cache_inode_expire_type_t type, time_t value, cha
 /**
  *
  * cache_inode_read_conf_client_parameter: read the configuration for a client to Cache inode layer.
- * 
+ *
  * Reads the configuration for a client to Cache inode layer (typically a worker thread).
- * 
+ *
  * @param in_config [IN] configuration file handle
  * @param pparam [OUT] read parameters
  *
@@ -217,12 +222,17 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_CACHE_INODE_CLIENT)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_CACHE_INODE_CLIENT ) ; */
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file",
+               CONF_LABEL_CACHE_INODE_CLIENT);
       return CACHE_INODE_NOT_FOUND;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
+      LogCrit(COMPONENT_CONFIG,
+              "Item \"%s\" is expected to be a block",
+              CONF_LABEL_CACHE_INODE_CLIENT);
       return CACHE_INODE_INVALID_ARGUMENT;
     }
 
@@ -322,8 +332,8 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
           if(DebugLevel == -1)
             {
               LogDebug(COMPONENT_CACHE_INODE,
-                  "cache_inode_read_conf: ERROR: Invalid debug level name: \"%s\".",
-                   key_value);
+                       "cache_inode_read_conf: ERROR: Invalid debug level name: \"%s\".",
+                       key_value);
               return CACHE_INODE_INVALID_ARGUMENT;
             }
         }
@@ -355,9 +365,9 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
 /**
  *
  * cache_inode_read_conf_gc_policy: read the garbage collection policy in configuration file.
- * 
+ *
  * Reads the garbage collection policy in configuration file.
- * 
+ *
  * @param in_config [IN] configuration file handle
  * @param pparam [OUT] read parameters
  *
@@ -381,12 +391,17 @@ cache_inode_status_t cache_inode_read_conf_gc_policy(config_file_t in_config,
   /* Get the config BLOCK */
   if((block = config_FindItemByName(in_config, CONF_LABEL_CACHE_INODE_GCPOL)) == NULL)
     {
-      /* LogCrit(COMPONENT_CONFIG, "Cannot read item \"%s\" from configuration file", CONF_LABEL_CACHE_INODE_GCPOL ) ; */
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file",
+               CONF_LABEL_CACHE_INODE_GCPOL);
       return CACHE_INODE_NOT_FOUND;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
+      LogCrit(COMPONENT_CONFIG,
+              "Item \"%s\" is expected to be a block",
+              CONF_LABEL_CACHE_INODE_GCPOL);
       return CACHE_INODE_INVALID_ARGUMENT;
     }
 
@@ -446,10 +461,10 @@ cache_inode_status_t cache_inode_read_conf_gc_policy(config_file_t in_config,
 
 /**
  *
- * cache_inode_print_conf_gc_policy: prints the garbage collection policy. 
- * 
+ * cache_inode_print_conf_gc_policy: prints the garbage collection policy.
+ *
  * Prints the garbage collection policy in configuration file.
- * 
+ *
  * @param output [IN] a descriptor to the IO for printing the data.
  * @param param [IN] structure to be printed.
  *
@@ -469,9 +484,9 @@ void cache_inode_print_conf_hash_parameter(FILE * output, cache_inode_parameter_
 /**
  *
  * cache_inode_print_conf_client_parameter: prints the client parameter.
- * 
+ *
  * Prints the client parameters.
- * 
+ *
  * @param output [IN] a descriptor to the IO for printing the data.
  * @param param [IN] structure to be printed.
  *
@@ -504,9 +519,9 @@ void cache_inode_print_conf_client_parameter(FILE * output,
 /**
  *
  * cache_inode_print_gc_pol: prints the garbage collection policy.
- * 
+ *
  * Prints the garbage collection policy.
- * 
+ *
  * @param output [IN] a descriptor to the IO for printing the data.
  * @param param [IN] structure to be printed.
  *

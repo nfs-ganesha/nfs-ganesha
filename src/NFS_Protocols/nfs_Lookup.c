@@ -113,6 +113,31 @@ int nfs_Lookup(nfs_arg_t * parg,
   fsal_handle_t *pfsal_handle;
   int rc;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char str[LEN_FH_STR];
+
+      switch (preq->rq_vers)
+        {
+        case NFS_V2:
+          strpath = parg->arg_lookup2.name;
+          break;
+
+        case NFS_V3:
+          strpath = parg->arg_lookup3.what.name;
+          break;
+        }
+
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_lookup2.dir),
+                       &(parg->arg_lookup3.what.dir),
+                       NULL,
+                       str);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Lookup handle: %s name: %s",
+               str, strpath);
+    }
+
   if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */
@@ -247,14 +272,13 @@ int nfs_Lookup(nfs_arg_t * parg,
     }
 
   /* if( ( cache_status = cache_inode_error_convert... */
-  /* If we are here, there was an error */
-  if(nfs_RetryableError(cache_status))
-    {
-      return NFS_REQ_DROP;
-    }
 
   if(cache_status != CACHE_INODE_SUCCESS)
     {
+      /* If we are here, there was an error */
+      if(nfs_RetryableError(cache_status))
+        return NFS_REQ_DROP;
+
       nfs_SetFailedStatus(pcontext, pexport,
                           preq->rq_vers,
                           cache_status,

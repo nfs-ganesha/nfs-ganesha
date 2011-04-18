@@ -454,7 +454,8 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
 
   for(i = 0; i < hparam.index_size; i++)
     {
-      LogFullDebug(COMPONENT_HASHTABLE, "HASH TABLE PREALLOC: Allocating %d new nodes\n",
+      LogFullDebug(COMPONENT_HASHTABLE,
+                   "HASH TABLE PREALLOC: Allocating %d new nodes",
                    hparam.nb_node_prealloc);
 
       /* Allocate a group of nodes to be managed by the RB Tree. */
@@ -514,7 +515,7 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
  * @param buffval a pointeur to an object of type hash_buffer_t which describe the value location in memory.
  * @param how a switch to tell if the entry is to be tested or overwritten or not
  *
- * @return HASHTABLE_SUCCESS if successfull\n.
+ * @return HASHTABLE_SUCCESS if successfull.
  * @return HASHTABLE_INSERT_MALLOC_ERROR if an error occured during the insertion process.
  *
  * @see HashTable_Get
@@ -552,8 +553,9 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
    }
 
   tete_rbt = &(ht->array_rbt[hashval]);
-  LogFullDebug(COMPONENT_HASHTABLE,"Key = %p   Value = %p  hashval = %u  rbt_value = %x", buffkey->pdata,
-         buffval->pdata, hashval, rbt_value);
+  LogFullDebug(COMPONENT_HASHTABLE,
+               "Key = %p   Value = %p  hashval = %u  rbt_value = %x",
+               buffkey->pdata, buffval->pdata, hashval, rbt_value);
 
   /* acquire mutex for protection */
   P_w(&(ht->array_lock[hashval]));
@@ -577,8 +579,9 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
       qn = pn;
       pdata = RBT_OPAQ(qn);
 
-      LogFullDebug(COMPONENT_HASHTABLE,"Ecrasement d'une ancienne entree (k=%p,v=%p)", buffkey->pdata,
-             buffval->pdata);
+      LogFullDebug(COMPONENT_HASHTABLE,
+                   "Ecrasement d'une ancienne entree (k=%p,v=%p)",
+                   buffkey->pdata, buffval->pdata);
 
     }
   else
@@ -616,8 +619,9 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
       RBT_VALUE(qn) = rbt_value;
       RBT_INSERT(tete_rbt, qn, pn);
 
-      LogFullDebug(COMPONENT_HASHTABLE,"Creation d'une nouvelle entree (k=%p,v=%p), qn=%p, pdata=%p",
-             buffkey->pdata, buffval->pdata, qn, RBT_OPAQ(qn));
+      LogFullDebug(COMPONENT_HASHTABLE,
+                   "Creation d'une nouvelle entree (k=%p,v=%p), qn=%p, pdata=%p",
+                   buffkey->pdata, buffval->pdata, qn, RBT_OPAQ(qn));
     }
 
   pdata->buffval.pdata = buffval->pdata;
@@ -645,7 +649,7 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
  * @param buffkey a pointeur to an object of type hash_buffer_t which describe the key location in memory.
  * @param buffval a pointeur to an object of type hash_buffer_t which describe the value location in memory.
  *
- * @return HASHTABLE_SUCCESS if successfull\n.
+ * @return HASHTABLE_SUCCESS if successfull.
  * @return HASHTABLE_ERROR_NO_SUCH_KEY is the key was not found.
  *
  * @see HashTable_Set
@@ -715,7 +719,7 @@ int HashTable_Get(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * bu
  * @param buffkey a pointeur to an object of type hash_buffer_t which describe the key location in memory.
  * @param pusedbuffkeydata the key data buffer that was associated with this entry. Not considered if equal to NULL.
  *
- * @return HASHTABLE_SUCCESS if successfull\n.
+ * @return HASHTABLE_SUCCESS if successfull.
  * @return HASHTABLE_ERROR_NO_SUCH_KEY is the key was not found.
  *
  * @see HashTable_Set
@@ -930,8 +934,8 @@ void HashTable_Log(log_components_t component, hash_table_t * ht)
     return;
 
   LogFullDebug(COMPONENT_HASHTABLE,
-      "The hash has %d nodes (this number MUST be a prime integer for performance's issues)",
-       ht->parameter.index_size);
+               "The hash has %d nodes (this number MUST be a prime integer for performance's issues)",
+                ht->parameter.index_size);
 
   for(i = 0; i < ht->parameter.index_size; i++)
     nb_entries += ht->stat_dynamic[i].nb_entries;
@@ -941,8 +945,9 @@ void HashTable_Log(log_components_t component, hash_table_t * ht)
   for(i = 0; i < ht->parameter.index_size; i++)
     {
       tete_rbt = &((ht->array_rbt)[i]);
-      LogFullDebug(COMPONENT_HASHTABLE,"The node in position %d contains:  %d entries ", i,
-             tete_rbt->rbt_num_node);
+      LogFullDebug(COMPONENT_HASHTABLE,
+                   "The node in position %d contains:  %d entries ",
+                   i, tete_rbt->rbt_num_node);
       RBT_LOOP(tete_rbt, it)
       {
         pdata = (hash_data_t *) it->rbt_opaq;
@@ -955,7 +960,9 @@ void HashTable_Log(log_components_t component, hash_table_t * ht)
          {
            if( (*(ht->parameter.hash_func_both))( &ht->parameter, &(pdata->buffkey), (uint32_t *)&hashval, (uint32_t *)&rbtval ) == 0 ) 
 	     {
-               LogCrit(COMPONENT_HASHTABLE,"Possible implementation error at line %u file %s", __LINE__, __FILE__ ) ;
+               LogCrit(COMPONENT_HASHTABLE,
+                       "Possible implementation error at line %u file %s",
+                       __LINE__, __FILE__ ) ;
                hashval = 0 ;
                rbtval = 0 ;
              }
@@ -966,11 +973,11 @@ void HashTable_Log(log_components_t component, hash_table_t * ht)
             rbtval = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, &(pdata->buffkey));
           }
 
-        LogFullDebug(component, "%s => %s; hashval=%lu rbtval=%lu\n ", dispkey, dispval, hashval, rbtval);
+        LogFullDebug(component, "%s => %s; hashval=%lu rbtval=%lu ",
+                     dispkey, dispval, hashval, rbtval);
         RBT_INCREMENT(it);
       }
     }
-  printf("\n");
 }                               /* HashTable_Print */
 
 /**

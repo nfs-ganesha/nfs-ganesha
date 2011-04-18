@@ -69,7 +69,8 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
   /* sanity check */
   if((p_export_context == NULL) || (p_export_path == NULL))
     {
-      LogCrit(COMPONENT_FSAL, "NULL mandatory argument passed to %s()", __FUNCTION__);
+      LogCrit(COMPONENT_FSAL,
+              "NULL mandatory argument passed to %s()", __FUNCTION__);
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
     }
 
@@ -89,7 +90,8 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
   rc = statfs(p_export_path->path, &stat_buf);
   if(rc)
     {
-      LogFullDebug(COMPONENT_FSAL, "statfs call failed on file %s: %d\n", p_export_path->path, rc);
+      LogMajor(COMPONENT_FSAL,
+               "statfs call failed on file %s: %d", p_export_path->path, rc);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
   p_export_context->fsid[0] = stat_buf.f_fsid.__val[0];
@@ -106,8 +108,8 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
       close(open_by_handle_fd);
       close(p_export_context->mount_root_fd);
       LogMajor(COMPONENT_FSAL,
-               "FSAL BUILD EXPORT CONTEXT: ERROR: Conversion from gpfs"
-               "filesystem root path to handle failed : %d", status.minor);
+               "FSAL BUILD EXPORT CONTEXT: ERROR: Conversion from gpfs filesystem root path to handle failed : %d",
+               status.minor);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
 
@@ -140,7 +142,8 @@ fsal_status_t GPFSFSAL_CleanUpExportContext(gpfsfsal_export_context_t * p_export
 {
   if(p_export_context == NULL) 
   {
-    LogCrit(COMPONENT_FSAL, "NULL mandatory argument passed to %s()", __FUNCTION__);
+    LogCrit(COMPONENT_FSAL,
+            "NULL mandatory argument passed to %s()", __FUNCTION__);
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_CleanUpExportContext);
   }
   
@@ -210,7 +213,8 @@ fsal_status_t GPFSFSAL_GetClientContext(gpfsfsal_op_context_t * p_thr_context,  
       /* traces: prints p_credential structure */
       LogFullDebug(COMPONENT_FSAL, "credential modified:");
       LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
-                   p_thr_context->credential.user, p_thr_context->credential.group);
+                   p_thr_context->credential.user,
+                   p_thr_context->credential.group);
 
       for(i = 0; i < p_thr_context->credential.nbgroups; i++)
         LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",

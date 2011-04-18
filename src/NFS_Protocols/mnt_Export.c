@@ -116,7 +116,7 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
 
   unsigned int i;
 
-  LogFullDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Export");
+  LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Export");
 
   /* paranoid command, to avoid parasites in the result structure. */
   memset(pres, 0, sizeof(nfs_res_t));
@@ -138,9 +138,9 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
       /* we set the export path */
 
       LogFullDebug(COMPONENT_NFSPROTO,
-                        "MNT_EXPORT: Export entry: %s | Numclients: %d | PtrClients: %p",
-                        p_current_item->fullpath, p_current_item->clients.num_clients,
-                        p_current_item->clients.clientarray);
+                   "MNT_EXPORT: Export entry: %s | Numclients: %d | PtrClients: %p",
+                   p_current_item->fullpath, p_current_item->clients.num_clients,
+                   p_current_item->clients.clientarray);
 
       buffsize = strlen(p_current_item->fullpath) + 1;
 
@@ -264,8 +264,8 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
                   /* @todo : Mem_Free allocated resources */
 
                   LogCrit(COMPONENT_NFSPROTO,
-                                    "MNT_EXPORT: Unknown export entry type: %d",
-                                    p_clients->clientarray[i].type);
+                          "MNT_EXPORT: Unknown export entry type: %d",
+                          p_clients->clientarray[i].type);
 
                   new_expnode->ex_groups[i].gr_name = NULL;
 

@@ -109,6 +109,18 @@ int nfs_Readlink(nfs_arg_t * parg,
   fsal_path_t symlink_data;
   char *ptr = NULL;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char str[LEN_FH_STR];
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_readlink2),
+                       &(parg->arg_readlink3.symlink),
+                       NULL,
+                       str);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Readlink handle: %s", str);
+    }
+
   if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */

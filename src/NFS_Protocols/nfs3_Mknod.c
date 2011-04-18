@@ -115,6 +115,15 @@ int nfs3_Mknod(nfs_arg_t * parg,
   cache_inode_create_arg_t create_arg;
   fsal_handle_t *pfsal_handle;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char str[LEN_FH_STR];
+      sprint_fhandle3(str, &(parg->arg_mknod3.where.dir));
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs3_Mknod handle: %s name: %s",
+               str, parg->arg_mknod3.where.name);
+    }
+
   /* to avoid setting them on each error case */
 
   pres->res_mknod3.MKNOD3res_u.resfail.dir_wcc.before.attributes_follow = FALSE;

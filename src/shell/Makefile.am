@@ -62,6 +62,7 @@ __FS_NAME__ganeshell_SOURCES    = Getopt.c                            \
                                   ../include/nfs23.h                  \
                                   ../include/nfs4.h                   \
                                   ../include/nfs_core.h               \
+                                  ../include/err_inject.h             \
                                   ../include/nfs_file_handle.h        \
                                   ../include/nfs_proto_functions.h    \
                                   ../include/nfs_proto_tools.h        \

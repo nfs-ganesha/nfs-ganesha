@@ -57,6 +57,7 @@ struct prealloc_pool;
 #define Mem_Free( a )                   free( a )
 #define Mem_Free_Label( a, lbl )        free( a )
 #define Mem_Errno                       errno
+#define Str_Dup( a )                    strdup( a )
 
 #define GetPreferedPool( _n, _s )  (_n)
 
@@ -73,6 +74,8 @@ struct prealloc_pool;
 #  define Mem_Realloc_Label( p, s, lbl)   BuddyRealloc_Autolabel( (caddr_t)(p), s, __FILE__, __FUNCTION__, __LINE__, lbl )
 #  define Mem_Free( a )                   BuddyFree_Autolabel( (caddr_t) (a), __FILE__, __FUNCTION__, __LINE__, "BuddyFree" )
 #  define Mem_Free_Label( a, lbl )        BuddyFree_Autolabel( (caddr_t) (a), __FILE__, __FUNCTION__, __LINE__, lbl )
+#  define Str_Dup( a )                    BuddyStr_Dup_Autolabel( a , __FILE__, __FUNCTION__, __LINE__, "BuddyMalloc" )
+#  define Str_Dup_Label( a, lbl )         BuddyStr_Dup_Autolabel( a , __FILE__, __FUNCTION__, __LINE__, lbl )
 #else
 #  define Mem_Alloc( a )                  BuddyMallocExit( a )
 #  define Mem_Calloc( s1, s2 )            BuddyCalloc( s1, s2 )
@@ -82,6 +85,8 @@ struct prealloc_pool;
 #  define Mem_Realloc_Label( p, s, lbl)   BuddyRealloc( (caddr_t)(p), s )
 #  define Mem_Free( a )                   BuddyFree( (caddr_t) (a) )
 #  define Mem_Free_Label( a, lbl )        BuddyFree( (caddr_t) (a) )
+#  define Str_Dup( a )                    BuddyStr_Dup_Exit( a )
+#  define Str_Dup_Label( a, lbl )         BuddyStr_Dup_Exit( a )
 #endif
 
 #define Mem_Errno            BuddyErrno

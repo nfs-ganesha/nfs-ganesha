@@ -85,7 +85,7 @@ int rquota_getactivequota(nfs_arg_t * parg /* IN     */ ,
                           nfs_res_t * pres /* OUT    */ )
 {
   LogFullDebug(COMPONENT_NFSPROTO,
-                    "REQUEST PROCESSING: Calling getactivequota_Null");
+               "REQUEST PROCESSING: Calling rquota_getactivequota");
   /* 0 is success */
   return 0;
 }

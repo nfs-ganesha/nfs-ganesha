@@ -66,7 +66,6 @@
 
 #include "err_LRU_List.h"
 #include "err_HashTable.h"
-#include "err_rpc.h"
 
 #define  NFS4_ATTRVALS_BUFFLEN  1024
 
@@ -1240,10 +1239,6 @@ void nlm4_Lock_Free(nfs_res_t * pres);
 void nlm4_Cancel_Free(nfs_res_t * pres);
 void nlm4_Unlock_Free(nfs_res_t * pres);
 void nlm4_Sm_Notify_Free(nfs_res_t * pres);
-void nlm4_Test_Message_Free(nfs_res_t * pres);
-void nlm4_Cancel_Message_Free(nfs_res_t * pres);
-void nlm4_Lock_Message_Free(nfs_res_t * pres);
-void nlm4_Unlock_Message_Free(nfs_res_t * pres);
 void nlm4_Granted_Res_Free(nfs_res_t * pres);
 
 void rquota_Null_Free(nfs_res_t * pres);
@@ -1383,7 +1378,9 @@ int name2uid(char *name, uid_t * puid);
 int gid2name(char *name, gid_t * pgid);
 int name2gid(char *name, gid_t * pgid);
 
-int utf82str(char *str, utf8string * utf8str);
+void free_utf8(utf8string * utf8str);
+int utf8dup(utf8string * newstr, utf8string * oldstr);
+int utf82str(char *str, int size, utf8string * utf8str);
 int str2utf8(char *str, utf8string * utf8str);
 
 int uid2utf8(uid_t uid, utf8string * utf8str);

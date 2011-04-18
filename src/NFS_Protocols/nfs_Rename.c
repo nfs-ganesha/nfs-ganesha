@@ -127,6 +127,39 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
   cache_inode_file_type_t parent_filetype;
   cache_inode_file_type_t new_parent_filetype;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char strto[LEN_FH_STR], strfrom[LEN_FH_STR];
+
+      switch (preq->rq_vers)
+        {
+        case NFS_V2:
+            str_entry_name = parg->arg_rename2.from.name;
+            str_new_entry_name = parg->arg_rename2.to.name;
+            break;
+
+        case NFS_V3:
+            str_entry_name = parg->arg_rename3.from.name;
+            str_new_entry_name = parg->arg_rename3.to.name;
+            break;
+        }
+
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_rename2.from.dir),
+                       &(parg->arg_rename3.from.dir),
+                       NULL,
+                       strfrom);
+
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_rename2.to.dir),
+                       &(parg->arg_rename3.to.dir),
+                       NULL,
+                       strto);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Rename from handle: %s name %s to handle: %s name: %s",
+               strfrom, str_entry_name, strto, str_new_entry_name);
+    }
+
   if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */

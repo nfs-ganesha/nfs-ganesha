@@ -93,6 +93,9 @@ int rquota_getquota(nfs_arg_t * parg /* IN     */ ,
   int quota_id;
   char work[MAXPATHLEN];
 
+  LogFullDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling rquota_getquota");
+
   if(preq->rq_vers == EXT_RQUOTAVERS)
     {
       quota_type = parg->arg_ext_rquota_getquota.gqa_type;

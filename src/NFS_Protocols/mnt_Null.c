@@ -95,8 +95,7 @@ int mnt_Null(nfs_arg_t * parg /* IN     */ ,
              struct svc_req *preq /* IN     */ ,
              nfs_res_t * pres /* OUT    */ )
 {
-  LogFullDebug(COMPONENT_NFSPROTO,
-                    "REQUEST PROCESSING: Calling mnt_Null");
+  LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Null");
   return MNT3_OK;
 }                               /* mnt_Null */
 

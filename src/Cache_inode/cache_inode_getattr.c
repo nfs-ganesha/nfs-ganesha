@@ -91,8 +91,8 @@ cache_inode_getattr(cache_entry_t * pentry,
        ht == NULL || pclient == NULL || pcontext == NULL)
         {
             *pstatus = CACHE_INODE_INVALID_ARGUMENT;
-            LogFullDebug(COMPONENT_CACHE_INODE,
-                         "cache_inode_getattr: returning CACHE_INODE_INVALID_ARGUMENT because of bad arg");
+            LogDebug(COMPONENT_CACHE_INODE,
+                     "cache_inode_getattr: returning CACHE_INODE_INVALID_ARGUMENT because of bad arg");
             return *pstatus;
         }
 
@@ -163,27 +163,30 @@ cache_inode_getattr(cache_entry_t * pentry,
              * An error occured when trying to get
              * the attributes, they have to be renewed
              */
+#ifdef _USE_MFSL
+            fsal_status = FSAL_getattrs_descriptor(&(cache_inode_fd(pentry)->fsal_file), pfsal_handle, pcontext, pattr);
+#else
             fsal_status = FSAL_getattrs_descriptor(cache_inode_fd(pentry), pfsal_handle, pcontext, pattr);
+#endif
             if(FSAL_IS_ERROR(fsal_status))
                 {
                     *pstatus = cache_inode_error_convert(fsal_status);
+                    
                     V_r(&pentry->lock);
 
                     if(fsal_status.major == ERR_FSAL_STALE)
                         {
                             cache_inode_status_t kill_status;
 
-                            LogDebug(COMPONENT_CACHE_INODE,
-                                     "cache_inode_getattr: Stale FSAL File "
-                                     "Handle detected for pentry = %p",
+                            LogEvent(COMPONENT_CACHE_INODE,
+                                     "cache_inode_getattr: Stale FSAL File Handle detected for pentry = %p",
                                      pentry);
 
                             cache_inode_kill_entry(pentry, ht,
                                                    pclient, &kill_status);
                             if(kill_status != CACHE_INODE_SUCCESS)
                                 LogCrit(COMPONENT_CACHE_INODE,
-                                        "cache_inode_getattr: Could not kill "
-                                        "entry %p, status = %u",
+                                        "cache_inode_getattr: Could not kill entry %p, status = %u",
                                         pentry, kill_status);
 
                             *pstatus = CACHE_INODE_FSAL_ESTALE;
@@ -191,9 +194,9 @@ cache_inode_getattr(cache_entry_t * pentry,
 
                     /* stat */
                     inc_func_err_unrecover(pclient, CACHE_INODE_GETATTR);
-                    LogFullDebug(COMPONENT_CACHE_INODE,
-                                 "cache_inode_getattr: returning %d(%s) from FSAL_getattrs",
-                                 *pstatus, cache_inode_err_str(*pstatus));
+                    LogDebug(COMPONENT_CACHE_INODE,
+                             "cache_inode_getattr: returning %d(%s) from FSAL_getattrs_descriptor",
+                             *pstatus, cache_inode_err_str(*pstatus));
                     return *pstatus;
                 }
 

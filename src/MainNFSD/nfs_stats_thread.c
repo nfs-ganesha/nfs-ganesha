@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8: 
+ * vim:expandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -9,16 +9,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -116,23 +116,27 @@ void *stats_thread(void *addr)
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogCrit(COMPONENT_MAIN, "NFS STATS : Memory manager could not be initialized, exiting...");
+      LogMajor(COMPONENT_MAIN,
+               "NFS STATS : Memory manager could not be initialized, exiting...");
       exit(1);
     }
-  LogEvent(COMPONENT_MAIN, "NFS STATS : Memory manager successfully initialized");
+  LogInfo(COMPONENT_MAIN,
+          "NFS STATS : Memory manager successfully initialized");
 #endif
 
   /* Open the stats file, in append mode */
   if((stats_file = fopen(nfs_param.core_param.stats_file_path, "a")) == NULL)
     {
-      LogCrit(COMPONENT_MAIN, "NFS STATS : Could not open stats file %s, no stats will be made...",
+      LogCrit(COMPONENT_MAIN,
+              "NFS STATS : Could not open stats file %s, no stats will be made...",
               nfs_param.core_param.stats_file_path);
       return NULL;
     }
 
   if(stat(nfs_param.core_param.stats_file_path, &statref) != 0)
     {
-      LogCrit(COMPONENT_MAIN, "NFS STATS : Could not get inode for %s, no stats will be made...",
+      LogCrit(COMPONENT_MAIN,
+              "NFS STATS : Could not get inode for %s, no stats will be made...",
               nfs_param.core_param.stats_file_path);
       fclose(stats_file);
       return NULL;
@@ -141,9 +145,11 @@ void *stats_thread(void *addr)
 #ifdef _SNMP_ADM_ACTIVE
   /* start snmp library */
   if(stats_snmp(workers_data) == 0)
-    LogEvent(COMPONENT_MAIN, "NFS STATS: SNMP stats service was started successfully");
+    LogInfo(COMPONENT_MAIN,
+            "NFS STATS: SNMP stats service was started successfully");
   else
-    LogCrit(COMPONENT_MAIN, "NFS STATS: ERROR starting SNMP stats export thread");
+    LogCrit(COMPONENT_MAIN,
+            "NFS STATS: ERROR starting SNMP stats export thread");
 #endif /*_SNMP_ADM_ACTIVE*/
 
   while(1)
@@ -152,7 +158,7 @@ void *stats_thread(void *addr)
       sleep(nfs_param.core_param.stats_update_delay);
 
       /* Debug trace */
-      LogEvent(COMPONENT_MAIN, "NFS STATS : now dumping stats");
+      LogInfo(COMPONENT_MAIN, "NFS STATS : now dumping stats");
 
       /* Stats main loop */
       if(stat(nfs_param.core_param.stats_file_path, &stattest) == 0)
@@ -170,13 +176,13 @@ void *stats_thread(void *addr)
       if(reopen_stats == TRUE)
         {
           /* Stats file has changed */
-          LogEvent(COMPONENT_MAIN, 
+          LogEvent(COMPONENT_MAIN,
                    "NFS STATS : stats file has changed or was removed, I close and reopen it");
           fflush(stats_file);
           fclose(stats_file);
           if((stats_file = fopen(nfs_param.core_param.stats_file_path, "a")) == NULL)
             {
-              LogCrit(COMPONENT_MAIN, 
+              LogCrit(COMPONENT_MAIN,
                       "NFS STATS : Could not open stats file %s, no further stats will be made...",
                       nfs_param.core_param.stats_file_path);
               return NULL;

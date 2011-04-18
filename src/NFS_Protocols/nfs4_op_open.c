@@ -281,12 +281,16 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
       /* What kind of open is it ? */
       LogFullDebug(COMPONENT_NFS_V4,
-          "     OPEN: Claim type = %d   Open Type = %d  Share Deny = %d   Share Access = %d ",
-           arg_OPEN4.claim.claim, arg_OPEN4.openhow.opentype, arg_OPEN4.share_deny,
-           arg_OPEN4.share_access);
+                   "     OPEN: Claim type = %d   Open Type = %d  Share Deny = %d   Share Access = %d ",
+                   arg_OPEN4.claim.claim,
+                   arg_OPEN4.openhow.opentype,
+                   arg_OPEN4.share_deny,
+                   arg_OPEN4.share_access);
 
       /* It this a known client id ? */
-      LogDebug(COMPONENT_NFS_V4, "OPEN Client id = %"PRIx64, arg_OPEN4.owner.clientid);
+      LogDebug(COMPONENT_NFS_V4,
+               "OPEN Client id = %"PRIx64,
+               arg_OPEN4.owner.clientid);
       if(nfs_client_id_get(arg_OPEN4.owner.clientid, &nfs_clientid) != CLIENT_ID_SUCCESS)
         {
           res_OPEN4.status = NFS4ERR_STALE_CLIENTID;
@@ -345,8 +349,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       else
         {
           LogFullDebug(COMPONENT_NFS_V4,
-                          "A previously known open_owner is used :#%s# seqid=%u arg_OPEN4.seqid=%u",
-                          powner->owner_val, powner->seqid, arg_OPEN4.seqid);
+                       "A previously known open_owner is used :#%s# seqid=%u arg_OPEN4.seqid=%u",
+                       powner->owner_val, powner->seqid, arg_OPEN4.seqid);
 
           //printf( "A previously known open_owner is used :#%s# seqid=%u arg_OPEN4.seqid=%u", 
           //               powner->owner_val, powner->seqid, arg_OPEN4.seqid ) ;
@@ -354,7 +358,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           if(arg_OPEN4.seqid == 0)
             {
               LogDebug(COMPONENT_NFS_V4,
-                              "Previously known open_owner is used with seqid=0, ask the client to confirm it again");
+                       "Previously known open_owner is used with seqid=0, ask the client to confirm it again");
               powner->seqid = 0;
               powner->confirmed = FALSE;
             }
@@ -744,7 +748,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
             }
 
           /*  if( cache_status != CACHE_INODE_NOT_FOUND ), if file already exists basically */
-          LogFullDebug(COMPONENT_NFS_V4, "    OPEN open.how = %d", arg_OPEN4.openhow.openflag4_u.how.mode);
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "    OPEN open.how = %d",
+                       arg_OPEN4.openhow.openflag4_u.how.mode);
 
           /* Create the file, if we reach this point, it does not exist, we can create it */
           if((pentry_newfile = cache_inode_create(pentry_parent,

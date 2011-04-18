@@ -13,6 +13,7 @@ libidmap_la_SOURCES = idmapper.c                   \
                       ../include/log_functions.h   \
                       ../include/stuff_alloc.h     \
                       ../include/nfs_core.h        \
+                      ../include/err_inject.h      \
                       ../include/config_parsing.h
 
 

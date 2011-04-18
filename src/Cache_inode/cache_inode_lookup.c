@@ -109,7 +109,23 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
 
   /* Get lock on the pentry */
   if(use_mutex == TRUE)
-    P_r(&pentry_parent->lock);
+    P_w(&pentry_parent->lock);
+
+  cache_status = cache_inode_renew_entry(pentry_parent, pattr, ht,
+                                         pclient, pcontext, pstatus);
+  if(cache_status != CACHE_INODE_SUCCESS)
+      {
+          V_w(&pentry_parent->lock);
+          inc_func_err_retryable(pclient, CACHE_INODE_GETATTR);
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "cache_inode_lookup: returning %d(%s) from cache_inode_renew_entry",
+                       *pstatus, cache_inode_err_str(*pstatus));
+          return NULL;
+      }
+
+  /* RW Lock goes for writer to reader */
+  if(use_mutex == TRUE)
+    rw_lock_downgrade(&pentry_parent->lock);
 
   if(pentry_parent->internal_md.type != DIR_BEGINNING &&
      pentry_parent->internal_md.type != DIR_CONTINUE)
@@ -179,7 +195,8 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                         pentry =
                             pentry_parent->object.dir_begin.pdir_data->dir_entries[i].
                             pentry;
-                        LogDebug(COMPONENT_CACHE_INODE, "Cache Hit detected (dir_begin)");
+                        LogFullDebug(COMPONENT_CACHE_INODE,
+                                     "Cache Hit detected (dir_begin)");
                         break;
                       }
                 }
@@ -207,7 +224,8 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                         /* Entry was found */
                         pentry =
                             pdir_chain->object.dir_cont.pdir_data->dir_entries[i].pentry;
-                        LogFullDebug(COMPONENT_CACHE_INODE, "Cache Hit detected (dir_cont)");
+                        LogFullDebug(COMPONENT_CACHE_INODE,
+                                     "Cache Hit detected (dir_cont)");
                         break;
                       }
                 }
@@ -265,8 +283,8 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
           else
             {
               LogDebug(COMPONENT_CACHE_INODE,
-                              "cache_inode_lookup chose to bypass FSAL and trusted his cache for name=%s",
-                              pname->name);
+                       "cache_inode_lookup chose to bypass FSAL and trusted his cache for name=%s",
+                       pname->name);
               fsal_status.major = ERR_FSAL_NOENT;
               fsal_status.minor = ENOENT;
             }
@@ -291,14 +309,14 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                   cache_inode_status_t kill_status;
 
                   LogEvent(COMPONENT_CACHE_INODE,
-                      "cache_inode_lookup: Stale FSAL File Handle detected for pentry = %p",
-                       pentry_parent);
+                           "cache_inode_lookup: Stale FSAL File Handle detected for pentry = %p",
+                           pentry_parent);
 
                   if(cache_inode_kill_entry(pentry_parent, ht, pclient, &kill_status) !=
                      CACHE_INODE_SUCCESS)
                     LogCrit(COMPONENT_CACHE_INODE,
-                        "cache_inode_pentry_parent: Could not kill entry %p, status = %u",
-                         pentry_parent, kill_status);
+                            "cache_inode_pentry_parent: Could not kill entry %p, status = %u",
+                            pentry_parent, kill_status);
 
                   *pstatus = CACHE_INODE_FSAL_ESTALE;
                 }
@@ -335,14 +353,14 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                       cache_inode_status_t kill_status;
 
                       LogEvent(COMPONENT_CACHE_INODE,
-                          "cache_inode_lookup: Stale FSAL File Handle detected for pentry = %p",
-                           pentry_parent);
+                               "cache_inode_lookup: Stale FSAL File Handle detected for pentry = %p",
+                               pentry_parent);
 
                       if(cache_inode_kill_entry(pentry_parent, ht, pclient, &kill_status)
                          != CACHE_INODE_SUCCESS)
                         LogCrit(COMPONENT_CACHE_INODE,
-                            "cache_inode_pentry_parent: Could not kill entry %p, status = %u",
-                             pentry_parent, kill_status);
+                                "cache_inode_pentry_parent: Could not kill entry %p, status = %u",
+                                pentry_parent, kill_status);
 
                       *pstatus = CACHE_INODE_FSAL_ESTALE;
                     }

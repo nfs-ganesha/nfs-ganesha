@@ -146,7 +146,6 @@
 
 #include "err_LRU_List.h"
 #include "err_HashTable.h"
-#include "err_rpc.h"
 
 #define  NFS4_ATTRVALS_BUFFLEN  1024
 
@@ -930,7 +929,7 @@ int nfs4_Fattr_To_fsal_attr(fsal_attrib_list_t * pattr, fattr4 * Fattr,
  *  nfs4_list_to_bitmap4  - convert a list of attributes to an attributes's bitmap
  */
 
-int utf82str(char *str, utf8string * utf8str);
+int utf82str(char *str, int size, utf8string * utf8str);
 int str2utf8(char *str, utf8string * utf8str);
 
 int uid2utf8(uid_t uid, utf8string * utf8str);

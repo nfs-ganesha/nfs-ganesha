@@ -9,16 +9,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -103,7 +103,7 @@ int cache_inode_state_conflict(cache_inode_state_t * pstate,
 
     case CACHE_INODE_STATE_DELEG:
     default:
-      /* Not yet implemented for now, answer TRUE to 
+      /* Not yet implemented for now, answer TRUE to
        * avoid weird behavior */
       rc = TRUE;
       break;
@@ -114,9 +114,9 @@ int cache_inode_state_conflict(cache_inode_state_t * pstate,
 
 /**
  *
- * cache_inode_add_state: adds a new state to a file pentry 
+ * cache_inode_add_state: adds a new state to a file pentry
  *
- * Adds a new state to a file pentry 
+ * Adds a new state to a file pentry
  *
  * @param pentry        [INOUT] cache entry to operate on
  * @param state_type    [IN]    state to be defined
@@ -125,7 +125,7 @@ int cache_inode_state_conflict(cache_inode_state_t * pstate,
  * @param pclient       [INOUT] cache inode client to be used
  * @param pcontext      [IN]    FSAL credentials
  * @param ppstate       [OUT]   pointer to a pointer to the new state
- * @param pstatus       [OUT]   returned status 
+ * @param pstatus       [OUT]   returned status
  *
  * @return the same as *pstatus
  *
@@ -174,7 +174,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
   if(pnew_state == NULL)
     {
       LogDebug(COMPONENT_CACHE_INODE,
-                        "Can't allocate a new file state from cache pool");
+               "Can't allocate a new file state from cache pool");
       *pstatus = CACHE_INODE_MALLOC_ERROR;
 
       /* stat */
@@ -197,7 +197,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
                                   pcontext, powner_input, pnew_state->stateid_other))
         {
           LogDebug(COMPONENT_CACHE_INODE,
-                       "Can't create a new state id for the pentry %p (A)", pentry);
+                   "Can't create a new state id for the pentry %p (A)", pentry);
           *pstatus = CACHE_INODE_STATE_ERROR;
 
           /* stat */
@@ -236,8 +236,8 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
       if(conflict_found == TRUE)
         {
           LogDebug(COMPONENT_CACHE_INODE,
-                            "new state conflicts with another state for pentry %p",
-                            pentry);
+                   "new state conflicts with another state for pentry %p",
+                   pentry);
           *pstatus = CACHE_INODE_STATE_CONFLICT;
 
           /* stat */
@@ -258,7 +258,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
          (pentry, pcontext, powner_input, pnew_state->stateid_other))
         {
           LogDebug(COMPONENT_CACHE_INODE,
-                            "Can't create a new state id for the pentry %p (E)", pentry);
+                   "Can't create a new state id for the pentry %p (E)", pentry);
           *pstatus = CACHE_INODE_STATE_ERROR;
 
           /* stat */
@@ -285,7 +285,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
   if(!nfs4_State_Set(pnew_state->stateid_other, pnew_state))
     {
       LogDebug(COMPONENT_CACHE_INODE,
-                        "Can't create a new state id for the pentry %p (F)", pentry);
+               "Can't create a new state id for the pentry %p (F)", pentry);
       *pstatus = CACHE_INODE_STATE_ERROR;
 
       /* stat */
@@ -304,7 +304,8 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
 
   if (isFullDebug(COMPONENT_STATES)) {
     sprint_mem(debug_str, (char *)pnew_state->stateid_other, 12);
-    LogFullDebug(COMPONENT_STATES,"cache_inode_add_state : %s", debug_str);
+    LogDebug(COMPONENT_STATES,
+             "cache_inode_add_state : %s", debug_str);
   }
   V_w(&pentry->lock);
 
@@ -320,7 +321,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
  * @param other     [IN]    stateid.other used as hash key
  * @param ppstate   [OUT]   pointer to the pointer to the new state
  * @param pclient   [INOUT] related cache inode client
- * @param pstatus   [OUT]   returned status 
+ * @param pstatus   [OUT]   returned status
  *
  * @return the same as *pstatus
  *
@@ -351,7 +352,8 @@ cache_inode_status_t cache_inode_get_state(char other[12],
 
   /* Sanity check, mostly for debug */
   if(memcmp(other, (*ppstate)->stateid_other, 12))
-    LogFullDebug(COMPONENT_STATES, "-------------> Warning !!!! Stateid(other) differs !!!!!!");
+    LogDebug(COMPONENT_STATES,
+             "-------------> Warning !!!! Stateid(other) differs !!!!!!");
 
   *pstatus = CACHE_INODE_SUCCESS;
   return *pstatus;
@@ -365,7 +367,7 @@ cache_inode_status_t cache_inode_get_state(char other[12],
  *
  * @param pstate   [OUT]   pointer to the new state
  * @param pclient  [INOUT] related cache inode client
- * @param pstatus  [OUT]   returned status 
+ * @param pstatus  [OUT]   returned status
  *
  * @return the same as *pstatus
  *
@@ -406,7 +408,7 @@ cache_inode_status_t cache_inode_update_state(cache_inode_state_t * pstate,
  * @param other    [IN]    stateid.other used as hash key
  * @param pstate   [OUT]   pointer to the new state
  * @param pclient  [INOUT] related cache inode client
- * @param pstatus  [OUT]   returned status 
+ * @param pstatus  [OUT]   returned status
  *
  * @return the same as *pstatus
  *
@@ -506,7 +508,7 @@ cache_inode_status_t cache_inode_del_state_by_key(char other[12],
  *
  * @param pstate   [OUT]   pointer to the new state
  * @param pclient  [INOUT] related cache inode client
- * @param pstatus  [OUT]   returned status 
+ * @param pstatus  [OUT]   returned status
  *
  * @return the same as *pstatus
  *
@@ -531,7 +533,7 @@ cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
 
   if (isFullDebug(COMPONENT_STATES)) {
     sprint_mem(str, (char *)pstate->stateid_other, 12);
-    LogFullDebug(COMPONENT_STATES,"cache_inode_del_state : %s", str);
+    LogDebug(COMPONENT_STATES, "cache_inode_del_state : %s", str);
   }
 
   /* Does this state exists ? */
@@ -645,7 +647,7 @@ cache_inode_status_t cache_inode_state_iterate(cache_entry_t * pentry,
                                      (caddr_t) & fileid_digest)))
     {
       LogDebug(COMPONENT_CACHE_INODE,
-                        "Can't create a new state id for the pentry %p (F)", pentry);
+               "Can't create a new state id for the pentry %p (F)", pentry);
       *pstatus = CACHE_INODE_STATE_ERROR;
 
       return *pstatus;
@@ -665,8 +667,8 @@ cache_inode_status_t cache_inode_state_iterate(cache_entry_t * pentry,
       if(previous_pstate->pentry != pentry)
         {
           LogDebug(COMPONENT_CACHE_INODE,
-                            "Bad previous pstate: related to pentry %p, not to %p",
-                            previous_pstate->pentry, pentry);
+                   "Bad previous pstate: related to pentry %p, not to %p",
+                   previous_pstate->pentry, pentry);
 
           *pstatus = CACHE_INODE_STATE_ERROR;
 

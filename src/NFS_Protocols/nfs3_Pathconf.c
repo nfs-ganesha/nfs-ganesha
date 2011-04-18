@@ -107,11 +107,19 @@ int nfs3_Pathconf(nfs_arg_t * parg,
   fsal_staticfsinfo_t staticinfo;
   fsal_dynamicfsinfo_t dynamicinfo;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char str[LEN_FH_STR];
+      sprint_fhandle3(str, &(parg->arg_pathconf3.object));
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs3_Pathconf handle: %s", str);
+    }
+
   /* to avoid setting it on each error case */
   pres->res_pathconf3.PATHCONF3res_u.resfail.obj_attributes.attributes_follow = FALSE;
 
   /* Convert file handle into a fsal_handle */
-  if(nfs3_FhandleToFSAL(&(parg->arg_access3.object), &fsal_data.handle, pcontext) == 0)
+  if(nfs3_FhandleToFSAL(&(parg->arg_pathconf3.object), &fsal_data.handle, pcontext) == 0)
     return NFS_REQ_DROP;
 
   /* Set cookie to zero */

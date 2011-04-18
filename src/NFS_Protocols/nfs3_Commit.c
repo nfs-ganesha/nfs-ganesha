@@ -108,6 +108,14 @@ int nfs3_Commit(nfs_arg_t * parg,
   fsal_attrib_list_t *ppre_attr;
   uint64_t typeofcommit;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char str[LEN_FH_STR];
+      sprint_fhandle3(str, &(parg->arg_commit3.file));
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs3_Commit handle: %s", str);
+    }
+
   /* to avoid setting it on each error case */
   pres->res_commit3.COMMIT3res_u.resfail.file_wcc.before.attributes_follow = FALSE;
   pres->res_commit3.COMMIT3res_u.resfail.file_wcc.after.attributes_follow = FALSE;

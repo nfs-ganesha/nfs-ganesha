@@ -96,7 +96,6 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
 {
   fsal_attrib_list_t attr;
   cache_inode_status_t cache_status;
-  int cpt;
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getattr";
 
   /* This is a NFS4_OP_GETTAR */
@@ -131,11 +130,12 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_getattr_xattr(op, data, resp);
 
-  LogFullDebug(COMPONENT_NFS_V4, "CURRENT FH: NFS4_OP_GETATTR = { Length = %d  Val = ",
-         data->currentFH.nfs_fh4_len);
-  for(cpt = 0; cpt < data->currentFH.nfs_fh4_len; cpt++)
-    LogFullDebug(COMPONENT_NFS_V4, "%02X", data->currentFH.nfs_fh4_val[cpt]);
-  LogFullDebug(COMPONENT_NFS_V4, " } ");
+  if(isFullDebug(COMPONENT_NFS_V4))
+    {
+      char str[LEN_FH_STR];
+      sprint_fhandle4(str, &data->currentFH);
+      LogFullDebug(COMPONENT_NFS_V4, "NFS4_OP_GETATTR: Current FH %s", str);
+    }
 
   /* Sanity check: if no attributes are wanted, nothing is to be done.
    * In this case NFS4_OK is to be returned */

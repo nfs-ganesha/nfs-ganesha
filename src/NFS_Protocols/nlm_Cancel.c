@@ -60,6 +60,7 @@
 #include "mount.h"
 #include "nfs_proto_functions.h"
 #include "nlm_util.h"
+#include "nlm_async.h"
 
 static void do_cancel_lock(nlm_lock_entry_t * nlm_entry)
 {
@@ -94,13 +95,27 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
   nlm_lock_entry_t *nlm_entry;
   cache_inode_status_t cache_status;
   cache_inode_fsal_data_t fsal_data;
+  char buffer[1024];
 
-  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm4_Cancel svid=%d off=%llx len=%llx",
-           (int) arg->alock.svid, (unsigned long long) arg->alock.l_offset, (unsigned long long) arg->alock.l_len);
+  netobj_to_string(&arg->cookie, buffer, 1024);
+  LogDebug(COMPONENT_NLM,
+           "REQUEST PROCESSING: Calling nlm4_Cancel svid=%d off=%llx len=%llx cookie=%s",
+           (int) arg->alock.svid,
+           (unsigned long long) arg->alock.l_offset,
+           (unsigned long long) arg->alock.l_len,
+           buffer);
+
+  if(!copy_netobj(&pres->res_nlm4test.cookie, &arg->cookie))
+    {
+      pres->res_nlm4.stat.stat = NLM4_FAILED;
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Test %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
+      return NFS_REQ_OK;
+    }
 
   if(in_nlm_grace_period())
     {
-      pres->res_nlm4test.test_stat.stat = NLM4_DENIED_GRACE_PERIOD;
+      pres->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
       LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Cancel %s",
                lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
@@ -144,6 +159,56 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
   return NFS_REQ_OK;
 }                               /* nlm4_Cancel */
 
+static void nlm4_cancel_message_resp(void *arg)
+{
+  nlm_async_res_t *pres = arg;
+
+  if(isFullDebug(COMPONENT_NLM))
+    {
+      char buffer[1024];
+      netobj_to_string(&pres->pres.res_nlm4test.cookie, buffer, 1024);
+      LogFullDebug(COMPONENT_NLM,
+                   "nlm4_cancel_message_resp calling nlm_send_async cookie=%s status=%s",
+                   buffer, lock_result_str(pres->pres.res_nlm4.stat.stat));
+    }
+  nlm_send_async(NLMPROC4_CANCEL_RES, pres->caller_name, &(pres->pres), NULL);
+  nlm4_Cancel_Free(&pres->pres);
+  Mem_Free(pres->caller_name);
+  Mem_Free(pres);
+}
+
+/* Asynchronous Message Entry Point */
+
+/**
+ * nlm4_Cancel_Message: Cancel Lock Message
+ *
+ *  @param parg        [IN]
+ *  @param pexportlist [IN]
+ *  @param pcontextp   [IN]
+ *  @param pclient     [INOUT]
+ *  @param ht          [INOUT]
+ *  @param preq        [IN]
+ *  @param pres        [OUT]
+ *
+ */
+int nlm4_Cancel_Message(nfs_arg_t * parg /* IN     */ ,
+                        exportlist_t * pexport /* IN     */ ,
+                        fsal_op_context_t * pcontext /* IN     */ ,
+                        cache_inode_client_t * pclient /* INOUT  */ ,
+                        hash_table_t * ht /* INOUT  */ ,
+                        struct svc_req *preq /* IN     */ ,
+                        nfs_res_t * pres /* OUT    */ )
+{
+  nlm_async_res_t *arg;
+  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Cancel_Message");
+  nlm4_Cancel(parg, pexport, pcontext, pclient, ht, preq, pres);
+  arg = nlm_build_async_res_nlm4(parg->arg_nlm4_cancel.alock.caller_name, pres);
+  if(arg != NULL)
+    nlm_async_callback(nlm4_cancel_message_resp, arg);
+
+  return NFS_REQ_DROP;
+}
+
 /**
  * nlm4_Lock_Free: Frees the result structure allocated for nlm4_Lock
  *
@@ -154,5 +219,6 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
  */
 void nlm4_Cancel_Free(nfs_res_t * pres)
 {
+  netobj_free(&pres->res_nlm4test.cookie);
   return;
 }                               /* nlm4_Cancel_Free */

@@ -124,6 +124,32 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
   cache_inode_status_t cache_status_parent;
   fsal_handle_t *pfsal_handle;
 
+  if(isDebug(COMPONENT_NFSPROTO))
+    {
+      char str[LEN_FH_STR];
+
+      switch (preq->rq_vers)
+        {
+        case NFS_V2:
+          str_symlink_name = parg->arg_symlink2.from.name;
+          str_target_path = parg->arg_symlink2.to;
+          break;
+        case NFS_V3:
+          str_symlink_name = parg->arg_symlink3.where.name;
+          str_target_path = parg->arg_symlink3.symlink.symlink_data;
+          break;
+        }
+
+      nfs_FhandleToStr(preq->rq_vers,
+                       &(parg->arg_symlink2.from.dir),
+                       &(parg->arg_symlink3.where.dir),
+                       NULL,
+                       str);
+      LogDebug(COMPONENT_NFSPROTO,
+               "REQUEST PROCESSING: Calling nfs_Symlink handle: %s name: %s target: %s",
+               str, str_symlink_name, str_target_path);
+    }
+
   if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */

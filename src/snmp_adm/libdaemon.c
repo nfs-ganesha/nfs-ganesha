@@ -165,15 +165,20 @@ static int register_meta(oid * myoid, int len, char *name, char *desc,
   return err1 != MIB_REGISTERED_OK || err2 != MIB_REGISTERED_OK;
 }
 
+int branch_num[NUM_BRANCH];
+
 /* fill a oid with root|prod_id|stat_num
  * len value is the oid length from root to the name|desc level +1.
  */
 static void get_oid(oid * myoid, int branch, size_t * plen)
 {
   /* id of the object,
-     increamented after each record */
+     incremented after each record */
   static int stat_num = 0;
   static int log_num  = 0;
+#ifdef _ERROR_INJECTION
+  static int inject_num = 0;
+#endif
   static int conf_num = 0;
   static int proc_num = 0;
 
@@ -182,21 +187,31 @@ static void get_oid(oid * myoid, int branch, size_t * plen)
 
   myoid[(*plen)++] = product_id;
   myoid[(*plen)++] = branch;
-  if(branch == STAT_OID)
-    myoid[(*plen)++] = stat_num++;
-  else if(branch == LOG_OID)
-    myoid[(*plen)++] = log_num++;
-  else if(branch == CONF_OID)
-    myoid[(*plen)++] = conf_num++;
-  else if(branch == PROC_OID)
-    myoid[(*plen)++] = proc_num++;
-
+  myoid[(*plen)++] = branch_num[branch]++;
   (*plen)++;
 
 /* output : oid=$(ROOT).prodId.stat.stat_num.***.***.***  
                  <-------------- len ---------->
 		 <---------- MAX_OID_LEN ---------->
 */
+}
+
+static const char *branch_to_str(int branch)
+{
+  static char bstr[12];
+  switch(branch)
+    {
+      case STAT_OID:   return "stat";
+      case LOG_OID:    return "log";
+#ifdef _ERROR_INJECTION
+      case INJECT_OID: return "inject";
+#endif
+      case CONF_OID:   return "conf";
+      case PROC_OID:   return "proc";
+      default:
+        snprintf(bstr, sizeof(bstr), "%d", branch);
+        return bstr;
+     }
 }
 
 /* register a scalar in the tree */
@@ -489,12 +504,11 @@ int snmp_adm_register_scalars(int branch, register_scal * tab, int len)
       if(err)
         {
           snmp_adm_log("ERROR registering %s %s",
-                       ((branch == CONF_OID) ? "conf " : "stat "), tab[i].label);
+                       branch_to_str(branch), tab[i].label);
           return 1;
         }
       else
-        snmp_adm_log("register %s %s", ((branch == CONF_OID) ? "conf " : "stat "),
-                     tab[i].label);
+        snmp_adm_log("register %s %s", branch_to_str(branch), tab[i].label);
     }
   registered = 1;
   return 0;
@@ -520,11 +534,11 @@ int snmp_adm_register_get_set_function(int branch, register_get_set * tab, int l
       if(err)
         {
           snmp_adm_log("ERROR registering getset %s %s",
-                       ((branch == CONF_OID) ? "conf " : "stat "), tab[i].label);
+                       branch_to_str(branch), tab[i].label);
           return 1;
         }
       else
-        snmp_adm_log("register getset %s %s", ((branch == CONF_OID) ? "conf " : "stat "),
+        snmp_adm_log("register getset %s %s", branch_to_str(branch), 
                      tab[i].label);
 
     }
