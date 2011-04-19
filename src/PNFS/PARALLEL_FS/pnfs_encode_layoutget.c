@@ -119,3 +119,10 @@ nfsstat4 pnfs_lustre_layoutget( char * buffin, unsigned int * plenin, char *buff
 
   return NFS4_OK ;
 }                               /* pnfs_lustre_layoutget */
+
+nfsstat4 __pnfs_lustre_layoutget( nfs_fh4         * pnfsfh4,
+				  LAYOUTGET4args  * playoutgetargs,
+				  LAYOUTGET4res   * playoutgetres )
+{
+  return NFS4_OK ;
+}                               /* pnfs_lustre_layoutget */

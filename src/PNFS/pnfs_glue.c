@@ -50,6 +50,34 @@ nfsstat4 pnfs_terminate()
 {
    return ;
 }
+
+/* Forthcoming functions */
+
+nfsstat4 pnfs_getdevicelist( GETDEVICELIST4args * pargs, GETDEVICELIST4res * pres ) 
+{
+   return NFS4_OK ;
+}
+
+nfsstat4 pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs, GETDEVICEINFO4res * pres ) 
+{
+   return NFS4_OK ;
+}
+
+nfsstat4 pnfs_layoutget( nfs_fh4 * pnfsfh4, LAYOUTGET4args * pargs, LAYOUTGET4res * pres ) 
+{
+   return __pnfs_lustre_layoutget(  pnfsfh4, pargs, pres ) ;
+}
+
+nfsstat4 pnfs_layoutcommit( nfs_fh4 * pnfsfh4, LAYOUTCOMMIT4args * pargs, LAYOUTCOMMIT4res * pres ) 
+{
+   return NFS4_OK ;
+}
+
+nfsstat4 pnfs_layoutreturn( LAYOUTRETURN4args * pargs, LAYOUTRETURN4res * pres ) 
+{
+   return NFS4_OK ;
+}
+
  
 #endif
 

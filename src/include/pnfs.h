@@ -123,5 +123,21 @@ nfsstat4 pnfs_service_layoutcommit( char * buffin, unsigned int * plenin, char *
 nfsstat4 pnfs_service_layoutreturn( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout)  ;
 nfsstat4 pnfs_service_layoutget( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout)     ;
 
+nfsstat4 pnfs_getdevicelist( GETDEVICELIST4args * pargs, 
+			     GETDEVICELIST4res  * pres ) ;
+
+nfsstat4 pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs, 
+			     GETDEVICEINFO4res  * pres ) ;
+
+nfsstat4 pnfs_layoutcommit( nfs_fh4           * pnfsfh4, 
+			    LAYOUTCOMMIT4args * pargs, 
+			    LAYOUTCOMMIT4res  * pres ) ;
+
+nfsstat4 pnfs_layoutget( nfs_fh4        * pnfsfh4, 
+			 LAYOUTGET4args * pargs, 
+			 LAYOUTGET4res  * pres ) ;
+
+nfsstat4 pnfs_layoutreturn( LAYOUTRETURN4args * pargs, 
+			    LAYOUTRETURN4res  * pres ) ; 
 
 #endif                          /* _PNFS_H */

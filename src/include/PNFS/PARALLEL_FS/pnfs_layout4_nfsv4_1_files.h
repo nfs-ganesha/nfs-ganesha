@@ -126,4 +126,22 @@ typedef struct nfs_fh4 fsal_pnfs_file_t ;
 /* Mandatory functions */
 nfsstat4 pnfs_lustre_getdeviceinfo(char *buff, unsigned int *plen);
 nfsstat4 pnfs_lustre_layoutget( char * buffin, unsigned int *plenin,  char *buffout, unsigned int *plenout);
+
+nfsstat4 __pnfs_lustre_getdevicelist( GETDEVICELIST4args * pargs, 
+				      GETDEVICELIST4res  * pres ) ;
+
+nfsstat4 __pnfs_lustre_getdeviceinfo( GETDEVICEINFO4args * pargs,
+				      GETDEVICEINFO4res  * pres ) ;
+
+nfsstat4 __pnfs_lustre_layoutcommit( nfs_fh4 * pnfsfh4, 
+				     LAYOUTCOMMIT4args * pargs, 
+				     LAYOUTCOMMIT4res  * pres ) ;
+
+nfsstat4 __pnfs_lustre_layoutget( nfs_fh4 * pnfsfh4, 
+				  LAYOUTGET4args * pargs, 
+				  LAYOUTGET4res  * pres ) ;
+
+nfsstat4 __pnfs_lustre_layoutreturn( LAYOUTRETURN4args * pargs, 
+				     LAYOUTRETURN4res  * pres ) ; 
+
 #endif                          /* _PNFS_LAYOUT4_NFSV4_1_FILES_H */
