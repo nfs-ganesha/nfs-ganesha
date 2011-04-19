@@ -41,8 +41,6 @@
 
 #include "fsal_pnfs_types.h"
 
-// bool FSAL_is_pnfs_enabled(fsal_pnfs_context_t context);
-
 /** FSAL_pnfs_layout_get: Retrieve and encode a layout for pnfs_file_t, onto the xdr
  *                  stream.
  * Return one of the following nfs errors:
@@ -79,6 +77,39 @@ fsal_status_t FSAL_pnfs_layout_get( fsal_pnfs_file_t  * pfsal_pnfs_file, /* IN *
 				    fsal_layout_t     * pfsal_layout, /* INOUT */
 				    fsal_op_context_t * pcontext ) ;  /* IN */
 
+/** FSAL_pnfs_layout_commit: Commit meta-data changes to file
+ *	@xdr: In blocks and objects contains the type-specific commit info.
+ *	@arg: The passed in parameters (See struct pnfs_layoutcommit_arg)
+ *	@res: The returned information (See struct pnfs_layoutcommit_res)
+ *
+ * Return: one of the appropriate nfs errors.
+ * Comments: In some files-layout systems where the DSs are set to return
+ *           S_FILE_SYNC for the WRITE operation, or when the COMMIT is through
+ *           the MDS, this function may be empty.
+ */
+fsal_status_t  FSAL_pnfs_layout_commit( fsal_pnfs_file_t          * pfsal_pnfs_file,       /* INOUT */
+					fsal_layout_t             * pfsal_layout,          /* INOUT */
+				        fsal_time_t                 suggested_time_modify, /* IN */
+					fsal_layout_update_data_t * pfsal_lyout_update,    /* IN */
+					fsal_size_t               * pnewsize,              /* OUT */
+					fsal_op_context_t         * pcontext ) ;           /* IN */
+
+/** FSAL_pnfs_layout_return: Client Returns the layout
+ *
+ *	Or a return is simulated by NFS-GANESHA.
+ *
+ *	@xdr: In blocks and objects contains the type-specific return info.
+ *	@arg: The passed in parameters (See struct pnfs_layoutreturn_arg)
+ */
+fsal_status_t FSAL_pnfs_layout_return ( fsal_pnfs_file_t          * pfsal_pnfs_file,       /* IN */
+                                        fsal_layout_t             * parray_layout,         /* IN */
+	 			        unsigned int                len_parray_layout,     /* IN */
+				        fsal_layout_return_data_t * parray_layout_return,  /* OUT */
+				        unsigned int              * plen_layout_return,    /* OUT */
+				        fsal_op_context_t         * pcontext ) ;           /* IN */
+
+
+
 #if 0
 /*TODO: Support return of multple segments, @res will be an array with an
  *      additional array_size returned.
@@ -97,29 +128,6 @@ enum nfsstat4 FSAL_pnfs_get_device_info (fsal_pnfs_context_t, xdr_stream_t *xdr,
 				   u32 layout_type,
 				   const struct pnfs_deviceid *did);
 
-/** FSAL_pnfs_layout_commit: Commit meta-data changes to file
- *	@xdr: In blocks and objects contains the type-specific commit info.
- *	@arg: The passed in parameters (See struct pnfs_layoutcommit_arg)
- *	@res: The returned information (See struct pnfs_layoutcommit_res)
- *
- * Return: one of the appropriate nfs errors.
- * Comments: In some files-layout systems where the DSs are set to return
- *           S_FILE_SYNC for the WRITE operation, or when the COMMIT is through
- *           the MDS, this function may be empty.
- */
-enum nfsstat4 FSAL_pnfs_layout_commit (pnfs_file_t *file, xdr_stream_t *xdr,
-				  const struct pnfs_layoutcommit_arg *args,
-				  struct pnfs_layoutcommit_res *res);
-
-/** FSAL_pnfs_layout_return: Client Returns the layout
- *
- *	Or a return is simulated by NFS-GANESHA.
- *
- *	@xdr: In blocks and objects contains the type-specific return info.
- *	@arg: The passed in parameters (See struct pnfs_layoutreturn_arg)
- */
-enum nfsstat4 FSAL_pnfs_layout_return (pnfs_file_t *file, xdr_stream_t *xdr,
-				      const struct pnfs_layoutreturn_arg *args);
 
 #endif
 

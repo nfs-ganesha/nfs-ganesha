@@ -53,6 +53,18 @@ typedef struct fsal_layout__ /** @todo : make a better definition of this */
    char data[1024] ;
 } fsal_layout_t ;
 
+typedef struct fsal_layout_update__ /** @todo : make a better definition of this */
+{
+   unsigned int length ;
+   char data[1024] ;
+} fsal_layout_update_data_t ;
+
+typedef struct fsal_layout_return__ /** @todo : make a better definition of this */
+{
+   unsigned int length ;
+   char data[1024] ;
+} fsal_layout_return_data_t ;
+
 typedef fsal_handle_t fsal_pnfs_file_t ;
 
 /* FIXME: These are all wrongly ganesha name-conventioned and definitions.
@@ -60,29 +72,6 @@ typedef fsal_handle_t fsal_pnfs_file_t ;
  */
 
 #if 0
-/* Philippe: xdr.h (attached) introduces the xdr_stream_t struct and proposed
-             helpers that facilitate in xdr encoding decoding.
-             I'm putting this one just to make things easier on the eye,
-             and it's what we are used too in Kernel. I think this thing can
-             be good down the line when we want to support aio type of scattered
-             dynamic XDR memory allocations. See at xdr.h for proposed helpers
-             that facilitate in xdr encoding decoding.
- */
-#include <xdr.h>
-
-/* Philippe: I'm using fsal_pnfs_context_t below to mean the "super_block" or
- *	     "export_root" It's the same one that was received in create or
- *	     open.
- */
-typedef fsal_op_context_t fsal_pnfs_context_t
-
-struct fsal_pnfs_layoutget_arg {
-	u64			lga_minlength;	/* minimum bytes requested */
-	u64			lga_sbid;	/* FSAL use this as the sbid
-						 * part of the device ID
-						 */
-};
-
 struct fsal_pnfs_layoutget_res {
 	/* request/response: At input this contains the Client's preferred range.
 	 * On return contains the range given. It should contain at least

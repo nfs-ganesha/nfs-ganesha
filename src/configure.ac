@@ -806,6 +806,7 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_SNMP/Makefile
 		 FSAL/FSAL_FUSELIKE/Makefile
 		 FSAL/FSAL_LUSTRE/Makefile
+		 FSAL/FSAL_LUSTRE/PNFS/Makefile
 		 FSAL/FSAL_XFS/Makefile
 		 FSAL/FSAL_GPFS/Makefile
                  FSAL/FSAL_ZFS/Makefile
