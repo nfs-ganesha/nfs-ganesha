@@ -30,10 +30,12 @@
 
 //#include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
 #include "pnfs.h"
+#include "fsal.h"
+#include "fsal_pnfs.h"
 
 /**
  *
- * pnfs_encode_layoutget: encodes the loc_body_val structure in LAYOUTGET.
+ * pnfs_lustre_layoutget: fills in and encodes the loc_body_val structure in LAYOUTGET.
  *
  * Encodes the loc_body_val structure in layoutget.
  *
@@ -45,7 +47,7 @@
  *
  */
 
-nfsstat4 pnfs_lustre_encode_layoutget( char * buffin, unsigned int * plenin, char *buff, unsigned int *plen)
+nfsstat4 pnfs_lustre_layoutget( char * buffin, unsigned int * plenin, char *buff, unsigned int *plen)
 {
   unsigned int offset = 0;
   uint32_t int32 = 0;
@@ -55,6 +57,8 @@ nfsstat4 pnfs_lustre_encode_layoutget( char * buffin, unsigned int * plenin, cha
   unsigned int i;
 
   unsigned int stripe = 1 ;
+
+  /** @todo It should be better to use xdr_nfsv4_1_file_layout4 on a xdrmem stream */
 
   /* nfl_deviceid */
   memset(deviceid, 0, NFS4_DEVICEID4_SIZE);
@@ -114,4 +118,4 @@ nfsstat4 pnfs_lustre_encode_layoutget( char * buffin, unsigned int * plenin, cha
     }                           /* for */
 
   return NFS4_OK ;
-}                               /* pnfs_ds_encode_layoutget */
+}                               /* pnfs_lustre_layoutget */

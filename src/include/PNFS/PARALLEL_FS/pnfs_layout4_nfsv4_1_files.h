@@ -103,9 +103,27 @@ typedef struct pnfs_layoutfile_hints__
 {
   int nothing_right_now ;
 } pnfs_ds_hints_t ;
+typedef struct fsal_layout__ /** @todo : make a better definition of this */
+{
+   unsigned int length ;
+   char data[1024] ;
+} fsal_layout_t ;
+
+typedef struct fsal_layout_update__ /** @todo : make a better definition of this */
+{
+   unsigned int length ;
+   char data[1024] ;
+} fsal_layout_update_data_t ;
+
+typedef struct fsal_layout_return__ /** @todo : make a better definition of this */
+{
+   unsigned int length ;
+   char data[1024] ;
+} fsal_layout_return_data_t ;
+
+typedef struct nfs_fh4 fsal_pnfs_file_t ;
 
 /* Mandatory functions */
-
-int pnfs_lustre_encode_getdeviceinfo(char *buff, unsigned int *plen);
-nfsstat4 pnfs_lustre_encode_layoutget( char * buffin, unsigned int *plenin,  char *buffout, unsigned int *plenout);
+nfsstat4 pnfs_lustre_getdeviceinfo(char *buff, unsigned int *plen);
+nfsstat4 pnfs_lustre_layoutget( char * buffin, unsigned int *plenin,  char *buffout, unsigned int *plenout);
 #endif                          /* _PNFS_LAYOUT4_NFSV4_1_FILES_H */

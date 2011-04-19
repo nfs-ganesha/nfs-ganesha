@@ -31,6 +31,14 @@
 #ifndef _FSAL_PNFS_TYPES_H
 #define _FSAL_PNFS_TYPES_H
 
+#ifdef _USE_PNFS_PARALLEL_FS 
+#include "PNFS/PARALLEL_FS/pnfs_layout4_nfsv4_1_files.h"
+#endif
+
+#ifdef _USE_PNFS_SPNFS_LIKE
+#include "PNFS/SPNFS_LIKE/pnfs_layout4_nfsv4_1_files.h"
+#endif
+
 /** PNFS layout mode */
 typedef enum fsal_iomode__
 {
@@ -47,25 +55,6 @@ typedef enum fsal_layout_type__
   FSAL_LAYOUT_BLOCK = 0x3
 } fsal_layout_type_t ;
 
-typedef struct fsal_layout__ /** @todo : make a better definition of this */
-{
-   unsigned int length ;
-   char data[1024] ;
-} fsal_layout_t ;
-
-typedef struct fsal_layout_update__ /** @todo : make a better definition of this */
-{
-   unsigned int length ;
-   char data[1024] ;
-} fsal_layout_update_data_t ;
-
-typedef struct fsal_layout_return__ /** @todo : make a better definition of this */
-{
-   unsigned int length ;
-   char data[1024] ;
-} fsal_layout_return_data_t ;
-
-typedef fsal_handle_t fsal_pnfs_file_t ;
 
 /* FIXME: These are all wrongly ganesha name-conventioned and definitions.
  * Will fix in next iterations.

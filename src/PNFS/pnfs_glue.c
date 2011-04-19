@@ -22,12 +22,12 @@ nfsstat4 pnfs_service_getdevicelist( char * buffin, unsigned int * plenin, char 
 
 nfsstat4 pnfs_service_getdeviceinfo( char * buffin, unsigned int * plenin, char *buff, unsigned int *plen)
 {
-   return pnfs_lustre_encode_getdeviceinfo( buff, plen) ;
+   return pnfs_lustre_getdeviceinfo( buff, plen) ;
 }
 
 nfsstat4 pnfs_service_layoutget( char *buffin, unsigned int *plenin, char *buffout, unsigned int *plenout)
 {
-   return pnfs_lustre_encode_layoutget(  buffin, plenin, buffout, plenout ) ;
+   return pnfs_lustre_layoutget(  buffin, plenin, buffout, plenout ) ;
 }
 
 nfsstat4 pnfs_service_layoutcommit( char * buffin, unsigned int * plenin, char * buff, unsigned int * plen ) 
