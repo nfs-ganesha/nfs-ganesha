@@ -1,6 +1,6 @@
 SEC_LIB_FLAGS = 
-SVC_FLAGS = -I/usr/include/tirpc
-SVC_LIB_FLAGS = -ltirpc
+# SVC_FLAGS = -I/usr/include/tirpc
+# SVC_LIB_FLAGS = -ltirpc
 AM_CFLAGS = -Wimplicit $(DLOPEN_FLAGS)  $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS)
 
 noinst_LTLIBRARIES = librpcalcore.la

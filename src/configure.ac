@@ -26,6 +26,7 @@ AC_PROG_LIBTOOL
 # Checks for programs.
 AC_PROG_YACC
 AC_PROG_LEX
+PKG_PROG_PKG_CONFIG
 
 if test "${ac_cv_prog_YACC+set}" != "set"; then
 	AC_MSG_ERROR([Yacc, Bison or an equivalent tool is needed: check you have installed it on your system])
@@ -49,7 +50,7 @@ GA_PROG_DOXYGEN
 # define everything necessary for accessing large files (64bits offset)
 AC_SYS_LARGEFILE
 
-CFLAGS="$CFLAGS -D_REENTRANT"
+CFLAGS="$CFLAGS -D_REENTRANT -D_FOOOOOO"
 
 # Version number for shared object
 LIBVERSION=`echo $VERSION | sed -e 's/\./:/g'`
@@ -657,8 +658,17 @@ case $RPCAL in
 			      [AC_MSG_ERROR( [GSSRPC_KRB5 could not be found...] ) ] )
 		;;
 	"TIRPC")
-	        AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
-	        AC_CHECK_LIB([tirpc], [svc_tli_create], [AC_DEFINE( _HAVE_TIRPC,1,[enable TIRPC support] ) ], [AC_MSG_ERROR( [TI-RPC could not be found...] ) ] )
+                PKG_CHECK_MODULES(TIRPC, libtirpc, 
+                  [
+                        AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
+                        AC_DEFINE( _HAVE_TIRPC,1,[enable TIRPC support])
+                        CFLAGS="$TIRPC_CFLAGS $CFLAGS"
+                        LIBS="$LIBS $TIRPC_LIBS"
+                  ],
+                  [
+                        AC_MSG_ERROR( [TI-RPC could not be found...] ) 
+                  ]
+                )
 		;;
 	*)
 		AC_MSG_ERROR([This RPCAL is not supported])
@@ -715,6 +725,7 @@ if [[ $FSAL == "HPSS" ]] ; then
   fi
 fi
 
+AC_SUBST(CFLAGS)
 AC_SUBST(FSAL_CFLAGS)
 AC_SUBST(FSAL_LDFLAGS)
 AC_SUBST(FSAL_LIB)
