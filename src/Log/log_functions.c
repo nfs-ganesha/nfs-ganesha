@@ -531,7 +531,13 @@ static int DisplayLogPath_valist(char *path, log_components_t component, char *f
 #else
       if((fd = open(path, O_WRONLY | O_NONBLOCK | O_APPEND | O_CREAT, masque_log)) != -1)
         {
-          write(fd, tampon, strlen(tampon));
+          if(write(fd, tampon, strlen(tampon)) < strlen(tampon)) 
+          {
+            fprintf(stderr, "Error: couldn't complete write to the log file, ensure disk has not filled up");
+            close(fd); 
+            return ERR_FICHIER_LOG;
+          }
+          
           /* fermeture du fichier */
           close(fd);
           return SUCCES;

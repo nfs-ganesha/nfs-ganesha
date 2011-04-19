@@ -1458,6 +1458,7 @@ cache_inode_status_t cache_inode_dump_content(char *path, cache_entry_t * pentry
 cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pentry)
 {
   FILE *stream = NULL;
+  int rc;
 
   char buff[CACHE_INODE_DUMP_LEN+1];
 
@@ -1469,18 +1470,19 @@ cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pent
   pentry->internal_md.type = REGULAR_FILE;
   pentry->internal_md.valid_state = VALID;
 
+  /* BUG: what happens if the fscanf's fail? */
   /* Read the information */
   #define XSTR(s) STR(s)
   #define STR(s) #s
-  fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+  rc = fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
   pentry->internal_md.read_time = atoi(buff);
 
-  fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+  rc = fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
   pentry->internal_md.mod_time = atoi(buff);
 
-  fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+  rc = fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
 
-  fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
+  rc = fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
   #undef STR
   #undef XSTR
 

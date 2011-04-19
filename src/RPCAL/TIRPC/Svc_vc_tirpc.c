@@ -263,7 +263,7 @@ u_int recvsize;
     }
   else
     {
-      memcpy(&sin6, &ss, sizeof(ss));
+      memcpy(&sin6, &ss, sizeof(sin6));
     }
   ret->xp_rtaddr.maxlen = ret->xp_rtaddr.len = sizeof(ss);
   ret->xp_rtaddr.buf = Mem_Alloc((size_t) sizeof(ss));

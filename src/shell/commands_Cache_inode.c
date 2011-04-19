@@ -475,7 +475,7 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
 
       /* adds /name at the end of the path */
       strncat(tmp_path, "/", FSAL_MAX_PATH_LEN);
-      strncat(tmp_path, next_name, FSAL_MAX_PATH_LEN);
+      strncat(tmp_path, next_name, FSAL_MAX_PATH_LEN - strlen(tmp_path));
 
       /* updates cursors */
       if(!last)
@@ -765,9 +765,9 @@ int fn_Cache_inode_cache_init(int argc, /* IN : number of args in argv */
   int option;
   char *filename = NULL;
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_init[] =
+  const char help_init[] =
       "usage: init_cache [options] <ganesha_config_file>\n"
       "options :\n" "\t-h print this help\n" "\t-v verbose mode\n";
 
@@ -875,7 +875,7 @@ int fn_Cache_inode_cd(int argc, /* IN : number of args in argv */
 
   cmdCacheInode_thr_info_t *context;
 
-  static char help_cd[] = "usage: cd <path>\n";
+  const char help_cd[] = "usage: cd <path>\n";
 
   if(!cache_init)
     {
@@ -932,9 +932,9 @@ int fn_Cache_inode_stat(int argc,       /* IN : number of args in argv */
                         char **argv,    /* IN : arg list               */
                         FILE * output)  /* IN : output stream          */
 {
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_stat[] = "usage: stat [-h][-v] <file>\n";
+  const char help_stat[] = "usage: stat [-h][-v] <file>\n";
 
   char glob_path[FSAL_MAX_PATH_LEN];
   cache_entry_t *pentry_stat = NULL;
@@ -1034,9 +1034,9 @@ int fn_Cache_inode_gc(int argc, /* IN : number of args in argv */
                       char **argv,      /* IN : arg list               */
                       FILE * output)    /* IN : output stream          */
 {
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_gc[] = "usage: gc \n"
+  const char help_gc[] = "usage: gc \n"
       "options :\n"
       "\t-h print this help\n"
       "   The gc policy used is defined in the configuration file\n";
@@ -1134,8 +1134,8 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
   char glob_path[FSAL_MAX_PATH_LEN];
   fsal_handle_t *pfsal_handle = NULL;
 
-  static char format[] = "hvdlLSHz";
-  static char help_ls[] = "usage: ls [options]\n"
+  char format[] = "hvdlLSHz";
+  const char help_ls[] = "usage: ls [options]\n"
       "options :\n"
       "\t-h print this help\n"
       "\t-v verbose mode\n"
@@ -1599,9 +1599,9 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
                          FILE * output /* IN : output stream          */ )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_mkdir[] =
+  const char help_mkdir[] =
       "usage: mkdir [-h][-v] <path> [mode]\n"
       "       path: parent directory where the directory is to be created\n"
       "       name: name of the directory is to be created\n"
@@ -1788,9 +1788,9 @@ int fn_Cache_inode_link(int argc,       /* IN : number of args in argv */
                         FILE * output /* IN : output stream          */ )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_hardlink[] =
+  const char help_hardlink[] =
       "hardlink: create a hard link.\n"
       "usage: hardlink [-h][-v] <target> <new_path>\n"
       "       target: path of an existing file.\n"
@@ -1933,9 +1933,9 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
                       FILE * output /* IN : output stream          */ )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_ln[] =
+  const char help_ln[] =
       "usage: ln [-h][-v] <link_content> <link_path>\n"
       "       link_content: content of the symbolic link to be created\n"
       "       link_path: path of the symbolic link to be created\n";
@@ -2087,9 +2087,9 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
                           FILE * output /* IN : output stream          */ )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_create[] =
+  const char help_create[] =
       "usage: create [-h][-v] <path> [mode]\n"
       "       path: path of the file to be created\n"
       "       mode: octal mode for the directory to be created (ex: 644)\n";
@@ -2274,9 +2274,9 @@ int fn_Cache_inode_rename(int argc,     /* IN : number of args in argv */
                           char **argv,  /* IN : arg list               */
                           FILE * output /* IN : output stream          */ )
 {
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_rename[] = "usage: rename [-h][-v] <src> <dest>\n";
+  const char help_rename[] = "usage: rename [-h][-v] <src> <dest>\n";
 
   char src_glob_path[FSAL_MAX_PATH_LEN];
   char tgt_glob_path[FSAL_MAX_PATH_LEN];
@@ -2439,9 +2439,9 @@ int fn_Cache_inode_unlink(int argc,     /* IN : number of args in argv */
                           FILE * output /* IN : output stream          */ )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_ln[] = "usage: ln [-h][-v] <path>\n";
+  const char help_ln[] = "usage: ln [-h][-v] <path>\n";
 
   char glob_path[FSAL_MAX_PATH_LEN];
   cache_entry_t *new_hdl;
@@ -2580,9 +2580,9 @@ int fn_Cache_inode_setattr(int argc,    /* IN : number of args in argv */
                            FILE * output /* IN : output stream          */ )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_setattr[] =
+  const char help_setattr[] =
       "usage: setattr [-h][-v] <path> <attr>=<value>,<attr>=<value>,...\n";
 
   char glob_path[FSAL_MAX_PATH_LEN];    /* absolute path of the object */
@@ -2766,9 +2766,9 @@ int fn_Cache_inode_access(int argc,     /* IN : number of args in argv */
                           FILE * output /* IN : output stream          */ )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_access[] =
+  const char help_access[] =
       "usage: access [-h][-v] <rights> <path>\n"
       "\n"
       "   -h : print this help\n"
@@ -2938,9 +2938,9 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
                               char **argv,      /* IN : arg list               */
                               FILE * output /* IN : output stream          */ )
 {
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_data_cache[] =
+  const char help_data_cache[] =
       "usage: data_cache [-h][-v]  <path>\n"
       "\n" "   -h : print this help\n" "   -v : verbose mode\n";
 
@@ -3081,9 +3081,9 @@ int fn_Cache_inode_release_cache(int argc,      /* IN : number of args in argv *
                                  char **argv,   /* IN : arg list               */
                                  FILE * output /* IN : output stream          */ )
 {
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_release_cache[] =
+  const char help_release_cache[] =
       "usage: release_cache [-h][-v]  <path>\n"
       "\n" "   -h : print this help\n" "   -v : verbose mode\n";
 
@@ -3193,9 +3193,9 @@ int fn_Cache_inode_recover_cache(int argc,      /* IN : number of args in argv *
                                  char **argv,   /* IN : arg list               */
                                  FILE * output /* IN : output stream          */ )
 {
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_recover_cache[] =
+  const char help_recover_cache[] =
       "usage: recover_cache [-h][-v]  <path>\n"
       "\n" "   -h : print this help\n" "   -v : verbose mode\n";
 
@@ -3292,9 +3292,9 @@ int fn_Cache_inode_refresh_cache(int argc,      /* IN : number of args in argv *
                                  char **argv,   /* IN : arg list               */
                                  FILE * output /* IN : output stream          */ )
 {
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_refresh_cache[] =
+  const char help_refresh_cache[] =
       "usage: refresh_cache [-h][-v]  <path>\n"
       "\n" "   -h : print this help\n" "   -v : verbose mode\n";
 
@@ -3413,9 +3413,9 @@ int fn_Cache_inode_flush_cache(int argc,        /* IN : number of args in argv *
                                char **argv,     /* IN : arg list               */
                                FILE * output /* IN : output stream          */ )
 {
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_flush_cache[] =
+  const char help_flush_cache[] =
       "usage: flush_cache [-h][-v]  <path>\n"
       "\n" "   -h : print this help\n" "   -v : verbose mode\n";
 
@@ -3533,7 +3533,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
                         char **argv,    /* IN : arg list               */
                         FILE * output /* IN : output stream          */ )
 {
-  static char format[] = "hvAXB:s:";
+  char format[] = "hvAXB:s:";
   int rc, option;
 
   int err_flag = 0;
@@ -3574,7 +3574,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
   struct timeval timer_stop;
   struct timeval timer_diff;
 
-  static char help_read[] =
+  const char help_read[] =
       "Usage:\n"
       "  read [-h][-v][-A][-X] [-B <block_size> ] [ -s <seek_type>,<offset> ]  { <total_bytes> | all } filename\n"
       "Options:\n"
@@ -3957,7 +3957,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
                          char **argv,   /* IN : arg list               */
                          FILE * output /* IN : output stream          */ )
 {
-  static char format[] = "hvs:N:A:X:";
+  char format[] = "hvs:N:A:X:";
 
   int rc, option;
   int err_flag = 0;
@@ -4001,7 +4001,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
 
   char *file = NULL;            /* the relative path to the object */
 
-  static char help_write[] =
+  const char help_write[] =
       "Usage:\n"
       "  write [-h][-v] [ -s <seek_type>,<offset> ]  [-N <nb_times>] -A <ascii_string> filename\n"
       "  write [-h][-v] [ -s <seek_type>,<offset> ]  [-N <nb_times>] -X <hexa_data> filename\n"
@@ -4407,7 +4407,7 @@ int fn_Cache_inode_su(int argc, /* IN : number of args in argv */
   gid_t groups_tab[MAX_GRPS];
   int nb_grp;
 
-  static char help_su[] = "usage: su <uid>\n";
+  const char help_su[] = "usage: su <uid>\n";
 
   cmdCacheInode_thr_info_t *context;
 
@@ -4500,7 +4500,7 @@ int fn_Cache_inode_open_by_name(int argc,       /* IN : number of args in argv *
 
   cmdCacheInode_thr_info_t *context;
 
-  static char help_cd[] = "usage: open_by_name <path> \n";
+  const char help_cd[] = "usage: open_by_name <path> \n";
 
   if(!cache_init)
     {
@@ -4566,9 +4566,9 @@ int fn_Cache_inode_close(int argc,      /* IN : number of args in argv */
                          char **argv,   /* IN : arg list               */
                          FILE * output /* IN : output stream          */ )
 {
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_flush_cache[] =
+  const char help_flush_cache[] =
       "usage: flush_close [-h][-v]  <path>\n"
       "\n" "   -h : print this help\n" "   -v : verbose mode\n";
 
