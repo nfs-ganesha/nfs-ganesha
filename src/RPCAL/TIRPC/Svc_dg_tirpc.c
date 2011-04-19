@@ -359,15 +359,6 @@ SVCXPRT *xprt;
 
 #define	SPARSENESS 4            /* 75% sparse */
 
-#define	ALLOC(type, size)	\
-	(type *) Mem_Alloc((sizeof (type) * (size)))
-
-#define	MEMZERO(addr, type, size)	 \
-	(void) memset((void *) (addr), 0, sizeof (type) * (int) (size))
-
-#define	FREE(addr, type, size)	\
-	Mem_Free((addr))
-
 /*
  * An entry in the cache
  */
@@ -438,7 +429,7 @@ u_int size;
       V(dupreq_lock);
       return (0);
     }
-  uc = ALLOC(struct cl_cache, 1);
+  uc = (struct cl_cache *) Mem_Alloc(sizeof(struct cl_cache));
   if(uc == NULL)
     {
       warnx(cache_enable_str, alloc_err, " ");
@@ -447,25 +438,25 @@ u_int size;
     }
   uc->uc_size = size;
   uc->uc_nextvictim = 0;
-  uc->uc_entries = ALLOC(cache_ptr, size * SPARSENESS);
+  uc->uc_entries = (cache_ptr *) Mem_Alloc(sizeof(cache_ptr) * size * SPARSENESS);
   if(uc->uc_entries == NULL)
     {
       warnx(cache_enable_str, alloc_err, "data");
-      FREE(uc, struct cl_cache, 1);
+      Mem_Free(uc);
       V(dupreq_lock);
       return (0);
     }
-  MEMZERO(uc->uc_entries, cache_ptr, size * SPARSENESS);
-  uc->uc_fifo = ALLOC(cache_ptr, size);
+  memset(uc->uc_entries, 0, sizeof(cache_ptr) * size * SPARSENESS);
+  uc->uc_fifo = (cache_ptr *) Mem_Alloc(sizeof(cache_ptr) * size);
   if(uc->uc_fifo == NULL)
     {
       warnx(cache_enable_str, alloc_err, "fifo");
-      FREE(uc->uc_entries, cache_ptr, size * SPARSENESS);
-      FREE(uc, struct cl_cache, 1);
+      Mem_Free(uc->uc_entries);
+      Mem_Free(uc);
       V(dupreq_lock);
       return (0);
     }
-  MEMZERO(uc->uc_fifo, cache_ptr, size);
+  memset(uc->uc_fifo, 0, sizeof(cache_ptr) * size);
   su->su_cache = (char *)(void *)uc;
   V(dupreq_lock);
   return (1);
@@ -518,7 +509,7 @@ size_t replylen;
     }
   else
     {
-      victim = ALLOC(struct cache_node, 1);
+      victim = (struct cache_node *)Mem_Alloc(sizeof(struct cache_node));
       if(victim == NULL)
         {
           warnx(cache_set_str, cache_set_err2);
@@ -529,7 +520,7 @@ size_t replylen;
       if(newbuf == NULL)
         {
           warnx(cache_set_str, cache_set_err3);
-          FREE(victim, struct cache_node, 1);
+          Mem_Free(victim);
           V(dupreq_lock);
           return;
         }
@@ -564,7 +555,7 @@ size_t replylen;
   victim->cache_vers = uc->uc_vers;
   victim->cache_prog = uc->uc_prog;
   victim->cache_addr = xprt->xp_rtaddr;
-  victim->cache_addr.buf = ALLOC(char, xprt->xp_rtaddr.len);
+  victim->cache_addr.buf = (char *) Mem_Alloc(xprt->xp_rtaddr.len);
   (void)memcpy(victim->cache_addr.buf, xprt->xp_rtaddr.buf, (size_t) xprt->xp_rtaddr.len);
   loc = CACHE_LOC(xprt, victim->cache_xid);
   victim->cache_next = uc->uc_entries[loc];

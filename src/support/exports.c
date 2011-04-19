@@ -1201,9 +1201,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if((set_options & FLAG_EXPORT_ANON_USER) == FLAG_EXPORT_ANON_USER)
             {
-              LogWarn(COMPONENT_CONFIG,            \
-                      "NFS READ_EXPORT: WARNING: %s already defined by %s !!! (ignored)",
-                      FLAG_EXPORT_ANON_ROOT, FLAG_EXPORT_ANON_USER );
+              DEFINED_TWICE_WARNING(CONF_EXPORT_ANON_ROOT);
               continue;
             }
 
@@ -1241,9 +1239,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           if((set_options & FLAG_EXPORT_ANON_ROOT) == FLAG_EXPORT_ANON_ROOT)
             {
-              LogWarn(COMPONENT_CONFIG,            \
-                      "NFS READ_EXPORT: WARNING: %s already defined by %s !!! (ignored)",
-                      FLAG_EXPORT_ANON_USER, FLAG_EXPORT_ANON_ROOT );
+              DEFINED_TWICE_WARNING(CONF_EXPORT_ANON_ROOT);
               continue;
             }
 
