@@ -312,6 +312,9 @@ GA_ENABLE_FLAG(  [debug-symbols],	 [include debug symbols to binaries (-g option
 # enable code profiling
 GA_ENABLE_FLAG( [profiling], [turn on code profiling (-g and -pg)], [-g -pg] )
 
+# enable code profiling
+GA_ENABLE_FLAG( [strict-compile], [turn on strict compiler flags], [-Werror -Wimplicit -Wformat -Wmissing-braces] )
+
 # makes it possible to add some extra include dir
 
 AC_ARG_WITH( [extra-includedir], AS_HELP_STRING([--with-extra-includedir=<path>], [Alternative path to include files] ),
