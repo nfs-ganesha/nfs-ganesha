@@ -4,7 +4,7 @@
 AC_PREREQ(2.59)
 AC_INIT( [nfs-ganesha], [1.0.6], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 
-AC_SUBST(RELEASE, [0-pnfs])
+AC_SUBST(RELEASE, [0])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
