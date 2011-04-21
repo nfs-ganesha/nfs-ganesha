@@ -8,6 +8,8 @@
  * \brief   encode the addr_body_val structure in GETDEVICEINFO
  *
  */
+
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -16,21 +18,42 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
+#include <stdio.h>
 #include <string.h>
-#include <signal.h>
-
-#include "stuff_alloc.h"
-
+#include <pthread.h>
+#include <fcntl.h>
+#include <sys/file.h>           /* for having FNDELAY */
+#include "HashData.h"
+#include "HashTable.h"
 #ifdef _USE_GSSRPC
+#include <gssrpc/types.h>
 #include <gssrpc/rpc.h>
+#include <gssrpc/auth.h>
+#include <gssrpc/pmap_clnt.h>
 #else
+#include <rpc/types.h>
 #include <rpc/rpc.h>
+#include <rpc/auth.h>
+#include <rpc/pmap_clnt.h>
 #endif
 
-//#include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
-#include "pnfs.h"
+#include "log_macros.h"
+#include "stuff_alloc.h"
+#include "nfs23.h"
+#include "nfs4.h"
+#include "mount.h"
 #include "nfs_core.h"
-
+#include "fsal.h"
+#include "fsal_types.h"
+#include "fsal_pnfs.h"
+#include "fsal_pnfs_types.h"
+#include "cache_inode.h"
+#include "cache_content.h"
+#include "nfs_exports.h"
+#include "nfs_creds.h"
+#include "nfs_proto_functions.h"
+#include "nfs_file_handle.h"
+#include "nfs_tools.h"
 /**
  *
  * pnfs_ds_encode_getdeviceinfo: encodes the addr_body_val structure in GETDEVICEINFO.

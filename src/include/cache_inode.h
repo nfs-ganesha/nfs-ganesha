@@ -70,10 +70,6 @@
 #ifdef _USE_NFS4_1
 #include "nfs41_session.h"
 
-#ifdef _USE_PNFS
-#include "pnfs.h"
-#endif                          /* _USE_PNFS */
-
 #endif                          /* _USE_NFS4_1 */
 
 /* Some habits concerning mutex management */
@@ -337,11 +333,7 @@ typedef struct cache_inode_deleg__
 typedef struct cache_inode_layout__
 {
 #ifdef _USE_PNFS
-  layouttype4 layout_type;
-  layoutiomode4 iomode;
-  offset4 offset;
-  length4 length;
-  length4 minlength;
+  int nothing; /** @todo Add fsal_layout structure here */
 #else
   int nothing;
 #endif

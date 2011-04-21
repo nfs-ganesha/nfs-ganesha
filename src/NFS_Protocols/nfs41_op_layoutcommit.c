@@ -100,6 +100,7 @@ int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
 {
   cache_inode_status_t cache_status;
   fsal_attrib_list_t fsal_attr;
+  nfsstat4 rc ; 
 
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutcommit";
   /* Lock are not supported */
@@ -161,10 +162,13 @@ int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
       return res_LAYOUTCOMMIT4.locr_status;
     }
 
-  /* For the moment, returns no new size */
-  res_LAYOUTCOMMIT4.LAYOUTCOMMIT4res_u.locr_resok4.locr_newsize.ns_sizechanged = TRUE;
-  res_LAYOUTCOMMIT4.LAYOUTCOMMIT4res_u.locr_resok4.locr_newsize.newsize4_u.ns_size = arg_LAYOUTCOMMIT4.loca_length ;
-
+  /* Call pNFS service function */
+  if( ( rc = pnfs_layoutcommit( &arg_LAYOUTCOMMIT4, data, &res_LAYOUTCOMMIT4 ) ) != NFS4_OK )
+    {
+      res_LAYOUTCOMMIT4.locr_status = rc ;
+      return res_LAYOUTCOMMIT4.locr_status;
+    }
+   
   res_LAYOUTCOMMIT4.locr_status = NFS4_OK;
 
   return res_LAYOUTCOMMIT4.locr_status;

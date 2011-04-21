@@ -55,15 +55,13 @@
 #include "LRU_List.h"
 #include "HashData.h"
 #include "HashTable.h"
-#include "fsal.h"
-#include "fsal_types.h"
-#include "fsal_pnfs.h"
-#include "fsal_pnfs_types.h"
 #include "log_macros.h"
 #include "config_parsing.h"
 #include "nfs23.h"
 #include "nfs4.h"
 
+#include "fsal_pnfs.h"
+#
 typedef union pnfs_parameter__
 {
   pnfs_layoutfile_parameter_t layoutfile;
@@ -129,15 +127,16 @@ nfsstat4 pnfs_getdevicelist( GETDEVICELIST4args * pargs,
 nfsstat4 pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs, 
 			     GETDEVICEINFO4res  * pres ) ;
 
-nfsstat4 pnfs_layoutcommit( nfs_fh4           * pnfsfh4, 
-			    LAYOUTCOMMIT4args * pargs, 
+nfsstat4 pnfs_layoutcommit( LAYOUTCOMMIT4args * pargs, 
+			    compound_data_t * data,
 			    LAYOUTCOMMIT4res  * pres ) ;
 
-nfsstat4 pnfs_layoutget( nfs_fh4        * pnfsfh4, 
-			 LAYOUTGET4args * pargs, 
-			 LAYOUTGET4res  * pres ) ;
+nfsstat4 pnfs_layoutget( LAYOUTGET4args  * pargs, 
+			 compound_data_t * data,
+			 LAYOUTGET4res   * pres ) ;
 
 nfsstat4 pnfs_layoutreturn( LAYOUTRETURN4args * pargs, 
+			    compound_data_t * data,
 			    LAYOUTRETURN4res  * pres ) ; 
 
 #endif                          /* _PNFS_H */

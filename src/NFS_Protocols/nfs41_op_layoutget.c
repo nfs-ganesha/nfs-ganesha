@@ -220,11 +220,13 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
 
   /* Add a pstate */
   candidate_type = CACHE_INODE_STATE_LAYOUT;
+#if 0
   candidate_data.layout.layout_type = arg_LAYOUTGET4.loga_layout_type;
   candidate_data.layout.iomode = arg_LAYOUTGET4.loga_iomode;
   candidate_data.layout.offset = arg_LAYOUTGET4.loga_offset;
   candidate_data.layout.length = arg_LAYOUTGET4.loga_length;
   candidate_data.layout.minlength = arg_LAYOUTGET4.loga_minlength;
+#endif
 
   /* Add the lock state to the lock table */
   if(cache_inode_add_state(data->current_entry,
@@ -268,8 +270,8 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
   lenbuffin = data->currentFH.nfs_fh4_len ;
 
   
-  if( ( rc = pnfs_layoutget( &data->currentFH, 
-                             &arg_LAYOUTGET4, 
+  if( ( rc = pnfs_layoutget( &arg_LAYOUTGET4, 
+			     data,
                              &res_LAYOUTGET4 ) ) != NFS4_OK )
     {
        res_LAYOUTGET4.logr_status = rc ;
