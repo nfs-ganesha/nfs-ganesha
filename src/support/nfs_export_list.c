@@ -370,6 +370,30 @@ int get_req_uid_gid(struct svc_req *ptr_req,
   return TRUE;
 }
 
+int nfs_check_anon(exportlist_client_entry_t * pexport_client,
+		   exportlist_t * pexport,
+		   struct user_cred *user_credentials)
+{
+  if (user_credentials == NULL)
+    return FALSE;
+
+  /* Do we have root access ? */
+  /* Are we squashing _all_ users to the anonymous uid/gid ? */
+  if( ((user_credentials->caller_uid == 0)
+       && !(pexport_client->options & EXPORT_OPTION_ROOT))
+      || pexport->all_anonymous == TRUE)
+    {
+      user_credentials->caller_uid = pexport->anonymous_uid;
+      user_credentials->caller_gid = pexport->anonymous_gid;
+      
+      /* No alternate groups for "nobody" */
+      user_credentials->caller_glen = 0 ;
+      user_credentials->caller_garray = NULL ;
+    }
+
+  return TRUE;
+}
+
 /**
  *
  * nfs_build_fsal_context: Builds the FSAL context according to the request and the export entry.
@@ -380,7 +404,8 @@ int get_req_uid_gid(struct svc_req *ptr_req,
  * @param pexport_client [IN] related export client
  * @param pexport [IN]  related export entry
  * @param pcred   [IN/OUT] initialized credential of caller thread.
- * @param user_credentials [OUT] Filled in structure with uid and gids                                                                                                            * 
+ * @param user_credentials [OUT] Filled in structure with uid and gids
+ * 
  * @return TRUE if successful, FALSE otherwise 
  *
  */
@@ -393,18 +418,6 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
 
   if (user_credentials == NULL)
     return FALSE;
-
-  /* Do we have root access ? */
-  if((user_credentials->caller_uid == 0) && !(pexport_client->options & EXPORT_OPTION_ROOT))
-    {
-      /* caller_uid = ANON_UID ; */
-      user_credentials->caller_uid = pexport->anonymous_uid;
-      user_credentials->caller_gid = ANON_GID;
-
-      /* No alternate groups for "nobody" */
-      user_credentials->caller_glen = 0 ;
-      user_credentials->caller_garray = NULL ;
-    }
 
   /* Build the credentials */
   fsal_status = FSAL_GetClientContext(pcontext,

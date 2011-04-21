@@ -801,9 +801,9 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
           if(svc_sendreply
              (ptr_svc, pworker_data->pfuncdesc->xdr_encode_func, (caddr_t) & res_nfs) == FALSE)
             {
-              LogEvent(COMPONENT_DISPATCH,
+              LogDebug(COMPONENT_DISPATCH,
                        "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply");
-              svcerr_decode(ptr_svc);
+              svcerr_systemerr(ptr_svc);
             }
 
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
@@ -1128,12 +1128,15 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
     {
       LogFullDebug(COMPONENT_DISPATCH,
                    "nfs_export_check_access() reported PERMISSION GRANTED.");
+
       /* Do the authentication stuff, if needed */
       if(pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_CRED)
         {
-          if(nfs_build_fsal_context
-             (ptr_req, &related_client, pexport,
-              &pworker_data->thread_fsal_context, &user_credentials) == FALSE)
+	  /* Swap the anonymous uid/gid if the user should be anonymous */
+          if(nfs_check_anon(&related_client, pexport, &user_credentials) == FALSE
+	     || nfs_build_fsal_context(ptr_req, &related_client, pexport,
+				       &pworker_data->thread_fsal_context,
+				       &user_credentials) == FALSE)
             {
               svcerr_auth(ptr_svc, AUTH_TOOWEAK);
               pworker_data->current_xid = 0;    /* No more xid managed */
@@ -1235,9 +1238,9 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       /* encoding the result on xdr output */
       if(svc_sendreply(ptr_svc, pworker_data->pfuncdesc->xdr_encode_func, (caddr_t) & res_nfs) == FALSE)
         {
-          LogEvent(COMPONENT_DISPATCH,
+          LogDebug(COMPONENT_DISPATCH,
                    "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply");
-          svcerr_decode(ptr_svc);
+          svcerr_systemerr(ptr_svc);
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
           V(mutex_cond_xprt[ptr_svc->xp_fd]);
 #else

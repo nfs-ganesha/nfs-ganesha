@@ -1799,7 +1799,7 @@ int shellcmd_if(int argc,       /* IN : number of args in argv */
   int index_cmd2 = -1;
   int longueur_cmd2 = -1;
 
-  static char *help_if =
+  const char *help_if =
       "Usage: if command0 ? command1 [: command2]\n"
       "   Execute command1 if command0 returns a null status.\n"
       "   Else, execute command2 (if any).\n"
@@ -1853,7 +1853,7 @@ int shellcmd_if(int argc,       /* IN : number of args in argv */
 
   if((longueur_test <= 0) || (longueur_cmd1 <= 0))
     {
-      fprintf(output, help_if);
+      fprintf(output, help_if, NULL);
       return SHELL_SYNTAX_ERROR;
     }
 
@@ -2116,7 +2116,7 @@ int shellcmd_time(int argc,     /* IN : number of args in argv */
     )
 {
 
-  static char *help_time =
+  const char help_time[] =
       "Usage: time command [args ...]\n"
       "   Measure the time for executing a command.\n" "Ex: time shell ls\n";
 

@@ -580,7 +580,7 @@ int fn_rpc_init(int argc,       /* IN : number of args in argv */
   char *proto = "";
   int port = 0;
 
-  static char help_rpc_init[] =
+  const char help_rpc_init[] =
       "usage: rpc_init [options] <hostname> <program_version> <protocol> [<port>]\n"
       "<hostname> : name, localhost, machine.mondomaine.com ...\n"
       "<program> : nfs2 / nfs3 / mount1 / mount3\n"
@@ -1098,7 +1098,7 @@ int nfs_remote_solvepath(shell_fh3_t * p_mounted_path_hdl,      /* IN - handle o
 
       /* adds /name at the end of the path */
       strncat(tmp_path, "/", FSAL_MAX_PATH_LEN);
-      strncat(tmp_path, next_name, FSAL_MAX_PATH_LEN);
+      strncat(tmp_path, next_name, FSAL_MAX_PATH_LEN - strlen(tmp_path));
 
       /* updates cursors */
       if(!last)
@@ -2103,7 +2103,7 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
   char glob_path[NFS2_MAXPATHLEN];
 
   static char format[] = "hvdlSHz";
-  static char help_ls[] = "usage: ls [options] [name|path]\n"
+  const char help_ls[] = "usage: ls [options] [name|path]\n"
       "options :\n"
       "\t-h print this help\n"
       "\t-v verbose mode\n"
@@ -2395,7 +2395,7 @@ int fn_nfs_remote_cd(int argc,  /* IN : number of args in argv */
     )
 {
 
-  static char help_cd[] = "usage: cd <path>\n";
+  const char help_cd[] = "usage: cd <path>\n";
 
   char glob_path[NFS2_MAXPATHLEN];
   shell_fh3_t new_hdl;
@@ -2471,7 +2471,7 @@ int fn_nfs_remote_create(int argc,      /* IN : number of args in argv */
 {
   static char format[] = "hv";
 
-  static char help_create[] =
+  const char help_create[] =
       "usage: create [-h][-v] <path> <mode>\n"
       "       path: path of the file to be created\n"
       "       mode: octal mode for the directory to be created (ex: 644)\n";
@@ -2587,7 +2587,7 @@ int fn_nfs_remote_mkdir(int argc,       /* IN : number of args in argv */
 {
   static char format[] = "hv";
 
-  static char help_mkdir[] =
+  const char help_mkdir[] =
       "usage: mkdir [-h][-v] <path> <mode>\n"
       "       path: path of the directory to be created\n"
       "       mode: octal mode for the dir to be created (ex: 755)\n";
@@ -2704,7 +2704,7 @@ int fn_nfs_remote_unlink(int argc,      /* IN : number of args in argv */
 {
   static char format[] = "hv";
 
-  static char help_unlink[] =
+  const char help_unlink[] =
       "usage: unlink [-h][-v] <path>\n"
       "       path: path of the directory to be unlinkd\n";
 
@@ -2832,7 +2832,7 @@ int fn_nfs_remote_setattr(int argc,     /* IN : number of args in argv */
 
   static char format[] = "hv";
 
-  static char help_setattr[] =
+  const char help_setattr[] =
       "usage: setattr [-h][-v] <path> <attr>=<value>,<attr>=<value>,...\n"
       "       where <attr> can be :\n"
       "          mode(octal value),\n"
@@ -2949,7 +2949,7 @@ int fn_nfs_remote_rename(int argc,      /* IN : number of args in argv */
 
   static char format[] = "hv";
 
-  static char help_rename[] = "usage: rename [-h][-v] <src> <dest>\n";
+  const char help_rename[] = "usage: rename [-h][-v] <src> <dest>\n";
 
   char src_glob_path[NFS2_MAXPATHLEN];
   char tgt_glob_path[NFS2_MAXPATHLEN];
@@ -3076,7 +3076,7 @@ int fn_nfs_remote_hardlink(int argc,    /* IN : number of args in argv */
 
   static char format[] = "hv";
 
-  static char help_hardlink[] =
+  const char help_hardlink[] =
       "hardlink: create a hard link.\n"
       "usage: hardlink [-h][-v] <target> <new_path>\n"
       "       target: path of an existing file.\n"
@@ -3202,7 +3202,7 @@ int fn_nfs_remote_ln(int argc,  /* IN : number of args in argv */
 
   static char format[] = "hv";
 
-  static char help_ln[] =
+  const char help_ln[] =
       "ln: create a symbolic link.\n"
       "usage: ln [-h][-v] <link_content> <link_path>\n"
       "       link_content: content of the symbolic link to be created\n"
@@ -3337,7 +3337,7 @@ int fn_nfs_remote_stat(int argc,        /* IN : number of args in argv */
   char glob_path[NFS2_MAXPATHLEN];
 
   static char format[] = "hvHz";
-  static char help_stat[] = "usage: stat [options] <path>\n"
+  const char help_stat[] = "usage: stat [options] <path>\n"
       "options :\n"
       "\t-h print this help\n"
       "\t-v verbose mode\n"
@@ -3482,7 +3482,7 @@ int fn_nfs_remote_su(int argc,  /* IN : number of args in argv */
   gid_t groups_tab[MAX_GRPS];
   int nb_grp;
 
-  static char help_su[] = "usage: su <uid>\n";
+  const char help_su[] = "usage: su <uid>\n";
 
   prog_vers_client_def_t *clnts = progvers_clnts;
   AUTH *auth;

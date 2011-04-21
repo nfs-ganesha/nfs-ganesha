@@ -154,6 +154,17 @@ char *concat(char *str1, char *str2, size_t max_len);
 void print_fsal_status(FILE * output, fsal_status_t status);
 
 /**
+ * fsal_status_to_string:
+ * this function converts an fsal_status_t to a a string buffer
+ *
+ * \param output (in char *) The output where the status is to be printed.
+ * \param status (in status) The status to be printed.
+ *
+ * \return Nothing.
+ */
+void fsal_status_to_string(char * output, fsal_status_t status);
+
+/**
  * print_fsal_attrib_mask:
  * Print an fsal_attrib_mask_t to a given output file.
  *

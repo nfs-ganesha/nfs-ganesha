@@ -26,6 +26,7 @@ AC_PROG_LIBTOOL
 # Checks for programs.
 AC_PROG_YACC
 AC_PROG_LEX
+PKG_PROG_PKG_CONFIG
 
 if test "${ac_cv_prog_YACC+set}" != "set"; then
 	AC_MSG_ERROR([Yacc, Bison or an equivalent tool is needed: check you have installed it on your system])
@@ -310,6 +311,9 @@ GA_ENABLE_FLAG(  [debug-symbols],	 [include debug symbols to binaries (-g option
 
 # enable code profiling
 GA_ENABLE_FLAG( [profiling], [turn on code profiling (-g and -pg)], [-g -pg] )
+
+# enable code profiling
+GA_ENABLE_FLAG( [strict-compile], [turn on strict compiler flags], [-Werror -Wimplicit -Wformat -Wmissing-braces] )
 
 # makes it possible to add some extra include dir
 
@@ -657,8 +661,17 @@ case $RPCAL in
 			      [AC_MSG_ERROR( [GSSRPC_KRB5 could not be found...] ) ] )
 		;;
 	"TIRPC")
-	        AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
-	        AC_CHECK_LIB([tirpc], [svc_tli_create], [AC_DEFINE( _HAVE_TIRPC,1,[enable TIRPC support] ) ], [AC_MSG_ERROR( [TI-RPC could not be found...] ) ] )
+                PKG_CHECK_MODULES(TIRPC, libtirpc, 
+                  [
+                        AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
+                        AC_DEFINE( _HAVE_TIRPC,1,[enable TIRPC support])
+                        CFLAGS="$TIRPC_CFLAGS $CFLAGS"
+                        LIBS="$LIBS $TIRPC_LIBS"
+                  ],
+                  [
+                        AC_MSG_ERROR( [TI-RPC could not be found...] ) 
+                  ]
+                )
 		;;
 	*)
 		AC_MSG_ERROR([This RPCAL is not supported])
@@ -715,6 +728,7 @@ if [[ $FSAL == "HPSS" ]] ; then
   fi
 fi
 
+AC_SUBST(CFLAGS)
 AC_SUBST(FSAL_CFLAGS)
 AC_SUBST(FSAL_LDFLAGS)
 AC_SUBST(FSAL_LIB)
