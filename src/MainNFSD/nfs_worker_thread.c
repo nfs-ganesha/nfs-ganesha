@@ -1216,6 +1216,18 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                "Drop request rpc_xid=%u, program %u, version %u, function %u",
                rpcxid, (int)ptr_req->rq_prog,
                (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
+
+      /* If the request is not normally cached, then the entry will be removed
+       * later. We only remove a reply that is normally cached that has been
+       * dropped. */
+      if(do_dupreq_cache)
+        if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
+                              &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+          {
+            LogCrit(COMPONENT_DISPATCH,
+                    "Attempt to delete duplicate request failed on line %d",
+                    __LINE__);
+          }
     }
   else
     {
@@ -1298,7 +1310,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   /* Free the reply.
    * This should not be done if the request is dupreq cached because this will
    * mark the dupreq cached info eligible for being reuse by other requests */
-
   if(!do_dupreq_cache)
     {
       if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
@@ -1334,6 +1345,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
     nb_iter_memleaks += 1;
 #endif
 
+  /* By now the dupreq cache entry should have been completed w/ a request that is reusable
+   * or the dupreq cache entry should have been removed. */
   return;
 }                               /* nfs_rpc_execute */
 
