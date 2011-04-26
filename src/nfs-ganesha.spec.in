@@ -273,7 +273,7 @@ mkdir -p $RPM_BUILD_ROOT%{_bindir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/pkgconfig
 
-install -m 644 sample_config/logrotate_ganesha                 $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/ganesha
+install -m 644 config_samples/logrotate_ganesha                 $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/ganesha
 
 make install DESTDIR=$RPM_BUILD_ROOT sysconfdir=/etc/ganesha
 
