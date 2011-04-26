@@ -9,7 +9,7 @@ AC_SUBST(RELEASE, [0])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/SNMP/PROXY/HPSS/FUSELIKE/LUSTRE/XFS/GPFS/ZFS .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod),  Early pNFS (alpha) ])
+AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/SNMP/PROXY/HPSS/FUSELIKE/LUSTRE/XFS/GPFS/ZFS/VFS .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod),  Early pNFS (alpha) ])
 
 # Init Automake
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
@@ -321,7 +321,7 @@ if test "${with_extra_includedir+set}" == "set"; then
 fi
 
 # FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|ZFS|DYNFSAL (default=PROXY)],[specify the type of filesystem to be exported] ),
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|DYNFSAL (default=PROXY)],[specify the type of filesystem to be exported] ),
 	     FSAL="$withval", FSAL="PROXY")
 
 # exporting USE_FSAL_... for conditional compilation
@@ -337,6 +337,7 @@ AM_CONDITIONAL(USE_FSAL_GPFS,     test "$FSAL" = "GPFS")
 AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
 AM_CONDITIONAL(SHARED_FSAL,       test "$FSAL" = "DYNFSAL")
 AM_CONDITIONAL(USE_FSAL_ZFS,      test "$FSAL" = "ZFS")
+AM_CONDITIONAL(USE_FSAL_VFS,      test "$FSAL" = "VFS")
 
 # NFSv4.0 NFSv4.1 switch
 AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  (default=0)], [specify if server support NFSv4 or NFSv4.1] ),
@@ -522,6 +523,23 @@ case $FSAL in
                 FSAL_LDFLAGS=""
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_GPFS/libfsalgpfs.la"
 		FS_NAME="gpfs"
+		;;
+	VFS)
+		AC_DEFINE([_USE_VFS], 1, [GANESHA exports VFS Filesystem (kernel is >= 2.6.39])
+		FSAL_CFLAGS=
+                FSAL_LDFLAGS=""
+		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_VFS/libfsalvfs.la"
+		FS_NAME="vfs"
+		# Check for kernel version (should be at least 2.6.39)
+		if test `uname -r |cut -d. -f1` -lt 2 ; then
+		 AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
+                fi
+		if test `uname -r |cut -d. -f2` -lt 6 ; then 
+		 AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
+		fi
+		if test `uname -r |cut -d. -f3 | cut -d- -f1` -lt 39 ; then
+		 AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
+		fi
 		;;
         ZFS)
                 AC_DEFINE([_USE_ZFS], 1, [GANESHA exports ZFS Filesystem])
@@ -745,6 +763,7 @@ AC_CONFIG_FILES([include/Makefile
                  include/FSAL/FSAL_XFS/Makefile
                  include/FSAL/FSAL_GPFS/Makefile
                  include/FSAL/FSAL_ZFS/Makefile
+                 include/FSAL/FSAL_VFS/Makefile
                  include/FSAL/FSAL_TEMPLATE/Makefile
                  include/FSAL/FSAL_GHOST_FS/Makefile
                  include/MFSL/Makefile
@@ -793,6 +812,7 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_XFS/Makefile
 		 FSAL/FSAL_GPFS/Makefile
                  FSAL/FSAL_ZFS/Makefile
+                 FSAL/FSAL_VFS/Makefile
 		 FSAL/FSAL_TEMPLATE/Makefile
 		 MFSL/Makefile
 		 MFSL/MFSL_NULL/Makefile                 
