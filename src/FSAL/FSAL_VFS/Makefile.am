@@ -1,4 +1,3 @@
-SUBDIRS = kernel
 
 EXTRA_DIST = kernel/2.6.18/handle_ioctl.c				\
 	kernel/2.6.18/open_by_handle.c kernel/2.6.18/Makefile		\

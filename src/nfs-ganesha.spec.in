@@ -26,6 +26,13 @@ BuildRequires:  mysql-libs >= 5.0
 %global _use_internal_dependency_generator 0
 BuildRequires: kernel-devel
 %endif
+%if %{?_with_vfs:1}%{!?_with_vfs:0}
+# we have to be really specific on kernel version
+# because we are packaging a module
+%global _use_internal_dependency_generator 0
+BuildRequires: kernel-devel >= 2.6.39
+Requires: kernel >= 2.6.39
+%endif
 BuildRequires: flex
 BuildRequires: bison
 BuildRequires: gcc
@@ -115,6 +122,20 @@ NFS-GANESHA is a NFS Server running in user space with a large cache.
 It comes with various back-end modules to support different file systems and
 name-spaces. This package provides support for NFS-GANESHA used on top of GPFS.
 %endif
+
+%if %{?_with_vfs:1}%{!?_with_vfs:0}
+%package vfs
+Summary: The NFS-GANESHA server compiled for use with GPFS
+Group: Applications/System
+Requires: %{name}-common = %{version}-%{release}
+
+%description vfs
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for NFS-GANESHA used on top of VFS.
+This feature requires a kernel higher than 2.6.39
+%endif
+
 
 %if %{?_with_posix:1}%{!?_with_posix:0}
 %package posix
@@ -360,6 +381,15 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha*
 %endif
 
+%if %{?_with_vfs:1}%{!?_with_vfs:0}
+%files vfs
+%defattr(-,root,root,-)
+%{_bindir}/vfs.ganesha.*
+%{_bindir}/vfs.ganeshell
+%{_sysconfdir}/init.d/nfs-ganesha-vfs
+%config(noreplace) %{_sysconfdir}/ganesha/vfs.ganesha*
+%endif
+
 
 %if %{?_with_lustre:1}%{!?_with_lustre:0}
 %files lustre
@@ -480,6 +510,15 @@ if [ -x "/sbin/weak-modules" ]; then
     cat /var/run/nfs-ganesha-gpfs.modules | /sbin/weak-modules --remove-modules
 fi
 rm -f /var/run/nfs-ganesha-gpfs.modules
+%endif
+
+%if %{?_with_vfs:1}%{!?_with_vfs:0}
+%preun vfs
+chkconfig --del nfs-ganesha-vfs
+
+%post vfs
+chkconfig --add nfs-ganesha-vfs
+
 %endif
 
 %if %{?_with_lustre:1}%{!?_with_lustre:0}
