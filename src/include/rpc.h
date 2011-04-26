@@ -5,6 +5,8 @@
 #define GANESHA_RPC_H
 
 #ifdef _USE_GSSRPC
+oops
+int foo;
 #include <gssrpc/rpc.h>
 #include <gssrpc/types.h>
 #include <gssrpc/svc.h>
@@ -16,10 +18,18 @@
 #include <tirpc/rpc/types.h>
 #include <tirpc/rpc/pmap_clnt.h>
 #else
+oops
+int foo;
 #include <rpc/rpc.h>
 #include </rpc/types.h>
 #include <rpc/svc.h>
 #include <rpc/pmap_clnt.h>
 #endif
+#endif
+
+#ifdef _USE_TIRPC
+#define xdr_uint16_t xdr_u_int16_t
+#define xdr_uint32_t xdr_u_int32_t
+#define xdr_uint64_t xdr_u_int64_t
 #endif
 #endif

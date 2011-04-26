@@ -60,7 +60,7 @@
 //#include <netdir.h>
 #include <err.h>
 
-#include <rpc/rpc.h>
+#include "rpc.h"
 #include <rpc/svc_dg.h>
 #include <Rpc_com_tirpc.h>
 #include "RW_Lock.h"

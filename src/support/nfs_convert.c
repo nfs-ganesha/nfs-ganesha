@@ -46,22 +46,7 @@
 #endif
 
 #include <string.h>
-#ifdef _USE_GSSRPC
-#include <gssapi/gssapi.h>
-#ifdef HAVE_KRB5
-#include <gssapi/gssapi_krb5.h>
-#endif
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "nfs_core.h"
 #include "nfs_tools.h"
 #include "mount.h"
