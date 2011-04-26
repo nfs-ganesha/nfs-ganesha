@@ -1,6 +1,8 @@
 /* This is a central clearing house for RPC definitions. Nothing
    should included anything related to RPC except this file */
 
+#include "config.h"
+
 #ifndef GANESHA_RPC_H
 #define GANESHA_RPC_H
 
