@@ -4,18 +4,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#ifdef _USE_GSSRPC
-#include <gssapi/gssapi.h>
-#include <gssapi/gssapi_krb5.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/types.h>
-#include <rpc/svc.h>
-#endif
-
+#include "rpc.h"
 #include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>              /* for having MAXHOSTNAMELEN */
 #include "stuff_alloc.h"

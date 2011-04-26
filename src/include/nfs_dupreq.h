@@ -38,18 +38,7 @@
 #ifndef _NFS_DUPREQ_H
 #define _NFS_DUPREQ_H
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/types.h>
-#include <rpc/svc.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #ifdef _SOLARIS
 #ifndef _USE_SNMP
 typedef unsigned long u_long;

@@ -40,16 +40,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/types.h>
-#include <rpc/svc.h>
-#endif
-
+#include "rpc.h"
 #ifdef _USE_GSSRPC
 #include <gssapi/gssapi.h>
 #include <gssapi/gssapi_krb5.h>
