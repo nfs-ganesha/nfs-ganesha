@@ -16,19 +16,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include <sys/resource.h>       /* for having setrlimit */
 #include <signal.h>             /* for sigaction */
-#ifdef _USE_GSSRPC
-#include <gssapi/gssapi.h>
-#ifdef HAVE_KRB5
-#include <gssapi/gssapi_krb5.h> /* For krb5_gss_register_acceptor_identity */
-#endif                          /* HAVE_KRB5 */
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#include <rpc/pmap_clnt.h>
-#endif
+#include "rpc.h"
 #include "log_functions.h"
 #include "stuff_alloc.h"
 #include "fsal.h"

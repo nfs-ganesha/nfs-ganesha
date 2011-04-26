@@ -4,9 +4,9 @@
 #ifndef GANESHA_RPC_H
 #define GANESHA_RPC_H
 
+#include "config.h"
+
 #ifdef _USE_GSSRPC
-oops
-int foo;
 #include <gssrpc/rpc.h>
 #include <gssrpc/types.h>
 #include <gssrpc/svc.h>
@@ -18,10 +18,8 @@ int foo;
 #include <tirpc/rpc/types.h>
 #include <tirpc/rpc/pmap_clnt.h>
 #else
-oops
-int foo;
 #include <rpc/rpc.h>
-#include </rpc/types.h>
+#include <rpc/types.h>
 #include <rpc/svc.h>
 #include <rpc/pmap_clnt.h>
 #endif

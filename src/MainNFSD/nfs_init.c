@@ -39,19 +39,7 @@
 #include "solaris_port.h"
 #endif
 
-#ifdef _USE_GSSRPC
-#ifdef HAVE_KRB5
-#include <gssapi/gssapi_krb5.h> /* For krb5_gss_register_acceptor_identity */
-#endif
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "nfs_init.h"
 #include "stuff_alloc.h"
 #include "log_macros.h"

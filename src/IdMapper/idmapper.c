@@ -41,14 +41,7 @@
 #include "solaris_port.h"
 #endif
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#endif
-
+#include "rpc.h"
 #include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs_tools.h"
