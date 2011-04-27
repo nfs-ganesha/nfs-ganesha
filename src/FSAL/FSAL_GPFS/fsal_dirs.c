@@ -47,7 +47,7 @@ fsal_status_t GPFSFSAL_opendir(gpfsfsal_handle_t * p_dir_handle,        /* IN */
                            fsal_attrib_list_t * p_dir_attributes        /* [ IN/OUT ] */
     )
 {
-  int rc, errsv;
+  int errsv, rc;
   fsal_status_t status;
 
   struct stat buffstat;
@@ -75,11 +75,12 @@ fsal_status_t GPFSFSAL_opendir(gpfsfsal_handle_t * p_dir_handle,        /* IN */
 
   if(rc != 0)
     {
+      errsv = errno;
       close(p_dir_descriptor->fd);
       if(rc == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_opendir);
+        Return(ERR_FSAL_STALE, errno, INDEX_FSAL_opendir);
       else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_opendir);
+        Return(posix2fsal_error(errno), errno, INDEX_FSAL_opendir);
     }
 
   /* Test access rights for this directory */
@@ -173,7 +174,7 @@ fsal_status_t GPFSFSAL_readdir(gpfsfsal_dir_t * p_dir_descriptor,       /* IN */
   char d_type;
   struct stat buffstat;
 
-  int errsv = 0, rc = 0;
+  int rc = 0;
 
   memset(buff, 0, BUF_SIZE);
   memset(&entry_name, 0, sizeof(fsal_name_t));
