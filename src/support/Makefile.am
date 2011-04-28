@@ -45,6 +45,8 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          ../include/err_inject.h            \
                          ../include/stuff_alloc.h
 
+libsupport_la_LIBADD         =   ../RPCAL/librpcal.la 
+
 if USE_NLM
 libsupport_la_SOURCES += nlm_util.c nlm_async.c nsm.c
 endif
@@ -56,6 +58,8 @@ endif
 if ERROR_INJECTION
 libsupport_la_SOURCES += err_inject.c
 endif
+
+libsupport_la_DEPENDENCIES = $(libsupport_la_SOURCES) $(libsupport_la_LIBADD)
 
 
 new: clean all 

@@ -497,7 +497,7 @@ typedef struct nfs_worker_data__
 
   nfs_worker_stat_t stats;
   unsigned int passcounter;
-  struct sockaddr_storage hostaddr;
+  sockaddr_t hostaddr;
   int is_ready;
   unsigned int gc_in_progress;
   unsigned int current_xid;

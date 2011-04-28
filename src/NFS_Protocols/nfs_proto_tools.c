@@ -3654,6 +3654,8 @@ int nfs4_MakeCred(compound_data_t * data)
       == FALSE)
     return NFS4ERR_WRONGSEC;
 
+  LogFullDebug(COMPONENT_DISPATCH,
+               "nfs4_MakeCred about to call nfs_export_check_access");
   if(nfs_export_check_access(&pworker->hostaddr,
                              data->reqp,
                              data->pexport,

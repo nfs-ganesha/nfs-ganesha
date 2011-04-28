@@ -481,49 +481,6 @@ unsigned long dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * 
   return (((unsigned long)pdupkey->xid + addr_hash)^(pdupkey->checksum)) % p_hparam->index_size;
 }                               /* dupreq_rbt_hash_func */
 
-#ifdef _USE_TIRPC
-int cmp_sockaddr(struct sockaddr_storage *addr_1, struct sockaddr_storage *addr_2)
-#else
-int cmp_sockaddr(struct sockaddr_in *addr_1, struct sockaddr_in *addr_2)
-#endif
-{
-#ifdef _USE_TIRPC
-  if(addr_1->ss_family != addr_2->ss_family)
-    return 0;
-#else
-  if(addr_1->sa_family != addr_2->sa_family)
-    return 0;
-#endif  
-
-#ifdef _USE_TIRPC
-  switch (addr_1->ss_family)
-#else
-  switch (addr_1->sa_family)
-#endif
-    {
-      case AF_INET:
-        {
-          struct sockaddr_in *paddr1 = (struct sockaddr_in *)addr_1;
-          struct sockaddr_in *paddr2 = (struct sockaddr_in *)addr_2;
-
-          return (paddr1->sin_addr.s_addr == paddr2->sin_addr.s_addr
-                  && paddr1->sin_port == paddr2->sin_port);
-        }
-#ifdef _USE_TIRPC
-      case AF_INET6:
-        {
-          struct sockaddr_in6 *paddr1 = (struct sockaddr_in6 *)addr_1;
-          struct sockaddr_in6 *paddr2 = (struct sockaddr_in6 *)addr_2;
-
-          return (paddr1->sin6_addr.s6_addr == paddr2->sin6_addr.s6_addr
-                  && paddr1->sin6_port == paddr2->sin6_port);
-        }
-#endif
-      default:
-        return 0;
-    }
-}
-
 /**
  *
  * compare_req: compares the xid, ip, and port stored in the key buffers.
@@ -547,7 +504,7 @@ int compare_req(hash_buffer_t * buff1, hash_buffer_t * buff2)
 
   if (key1->xid != key2->xid)
     return 1;
-  if (cmp_sockaddr(&key1->addr, &key2->addr) == 0)
+  if (cmp_sockaddr(&key1->addr, &key2->addr, CHECK_PORT) == 0)
     return 1;
   if (key1->checksum != key2->checksum)
     return 1;

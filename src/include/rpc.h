@@ -48,16 +48,16 @@ typedef struct sockaddr_in sockaddr_t
 #endif
 
 #ifdef _USE_TIRPC
-void Svc_dg_soft_destroy(SVCXPRT * xport);
-struct netconfig *getnetconfigent(const char *netid);
-void freenetconfigent(struct netconfig *);
-SVCXPRT *Svc_vc_create(int, u_int, u_int);
-SVCXPRT *Svc_dg_create(int, u_int, u_int);
+extern void Svc_dg_soft_destroy(SVCXPRT * xport);
+extern struct netconfig *getnetconfigent(const char *netid);
+extern void freenetconfigent(struct netconfig *);
+extern SVCXPRT *Svc_vc_create(int, u_int, u_int);
+extern SVCXPRT *Svc_dg_create(int, u_int, u_int);
 #else
-void Svcudp_soft_destroy(SVCXPRT * xprt);
-SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize);
-SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz);
-bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*dispatch) (),
+extern void Svcudp_soft_destroy(SVCXPRT * xprt);
+extern SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize);
+extern SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz);
+extern bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*dispatch) (),
                     int protocol);
 #endif                          /* _USE_TIRPC */
 
@@ -67,7 +67,15 @@ extern rw_lock_t Svc_lock;
 extern rw_lock_t Svc_fd_lock;
 #endif
 
-int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt);
-void sprint_sockaddr(sockaddr_t *addr, char *buf, int len);
+extern int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt);
+extern void sprint_sockaddr(sockaddr_t *addr, char *buf, int len);
+extern void sprint_sockip(sockaddr_t *addr, char *buf, int len);
+extern int get_port(sockaddr_t *addr);
+
+#define IGNORE_PORT 1
+#define CHECK_PORT 0
+extern int cmp_sockaddr(sockaddr_t *addr_1,
+                        sockaddr_t *addr_2,
+                        int ignore_port);
 
 #endif
