@@ -39,19 +39,7 @@
 #include "solaris_port.h"
 #endif
 
-#ifdef _USE_GSSRPC
-#ifdef HAVE_KRB5
-#include <gssapi/gssapi_krb5.h> /* For krb5_gss_register_acceptor_identity */
-#endif
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "nfs_init.h"
 #include "stuff_alloc.h"
 #include "log_macros.h"
@@ -389,8 +377,8 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->dupreq_param.hash_param.hash_func_key = dupreq_value_hash_func;
   p_nfs_param->dupreq_param.hash_param.hash_func_rbt = dupreq_rbt_hash_func;
   p_nfs_param->dupreq_param.hash_param.compare_key = compare_req;
-  p_nfs_param->dupreq_param.hash_param.key_to_str = display_xid;
-  p_nfs_param->dupreq_param.hash_param.val_to_str = display_xid;
+  p_nfs_param->dupreq_param.hash_param.key_to_str = display_req_key;
+  p_nfs_param->dupreq_param.hash_param.val_to_str = display_req_val;
   p_nfs_param->dupreq_param.hash_param.name = "Duplicate Request Cache";
 
   /*  Worker parameters : IP/name hash table */

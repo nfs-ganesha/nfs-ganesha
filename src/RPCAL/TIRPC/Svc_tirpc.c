@@ -68,8 +68,9 @@
 fd_set Svc_fdset;
 SVCXPRT **Xports;
 
-extern rw_lock_t Svc_lock;
-extern rw_lock_t Svc_fd_lock;
+rw_lock_t Svc_lock;
+rw_lock_t Svc_fd_lock;
+
 /*
  * The services list
  * Each entry represents a set of procedures (an rpc program).

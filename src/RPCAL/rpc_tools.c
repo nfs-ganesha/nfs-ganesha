@@ -1,0 +1,155 @@
+/*
+ * vim:expandtab:shiftwidth=8:tabstop=8:
+ *
+ * Copyright CEA/DAM/DIF  (2008)
+ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
+ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * ---------------------------------------
+ */
+
+/**
+ * \file    rpc_tools.c
+ * \author  $Author: ffilz $
+ * \date    $Date: 2006/01/20 07:39:22 $
+ * \version $Revision: 1.14 $
+ * \brief   Some tools very usefull in the nfs protocol implementation.
+ *
+ * rpc_tools.c : Some tools very usefull in the nfs protocol implementation
+ *
+ *
+ */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef _SOLARIS
+#include "solaris_port.h"
+#endif
+
+#include <stdio.h>
+#include <sys/types.h>
+#include <ctype.h>              /* for having isalnum */
+#include <stdlib.h>             /* for having atoi */
+#include <dirent.h>             /* for having MAXNAMLEN */
+#include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <string.h>
+#include <pthread.h>
+#include <fcntl.h>
+#include <sys/file.h>           /* for having FNDELAY */
+#include <pwd.h>
+#include <grp.h>
+
+#ifdef _USE_GSSRPC
+#include <gssrpc/rpc.h>
+#include <gssrpc/svc.h>
+#include <gssrpc/pmap_clnt.h>
+#else
+#include <rpc/rpc.h>
+#include <rpc/svc.h>
+#include <rpc/pmap_clnt.h>
+#endif
+
+#include "LRU_List.h"
+#include "HashData.h"
+#include "HashTable.h"
+#include "log_macros.h"
+#include "nfs_core.h"
+#include "nfs23.h"
+#include "nfs4.h"
+#include "fsal.h"
+#include "stuff_alloc.h"
+#include "nfs_tools.h"
+#include "nfs_exports.h"
+#include "nfs_file_handle.h"
+#include "nfs_dupreq.h"
+
+/**
+ *
+ * copy_xprt_addr: copies and transport address into an address field.
+ *
+ * copies and transport address into an address field.
+ *
+ * @param addr [OUT] address field to fill in.
+ * @param xprt [IN]  transport to get address from.
+ *
+ * @return 0 if ok, other values mean an error.
+ *
+ */
+int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt)
+#ifdef _USE_TIRPC
+{
+  struct netbuf *phostaddr = svc_getcaller_netbuf(xprt);
+  if(phostaddr->len > sizeof(sockaddr_t) || phostaddr->buf == NULL)
+    return 0;
+  memcpy(addr, phostaddr->buf, phostaddr->len);
+  return 1;
+}
+#else
+{
+  struct sockaddr_in *phostaddr = svc_getcaller(xprt);
+
+  memcpy(addr, phostaddr, sizeof(sockaddr_t);
+  return 1;
+}
+#endif
+
+void sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
+{
+  const char *name = NULL;
+  int port, alen;
+
+  buf[0] = '\0';
+
+#ifdef _USE_TIRPC
+  switch(addr->ss_family)
+    {
+      case AF_INET:
+        name = inet_ntop(addr->ss_family, &(((struct sockaddr_in *)addr)->sin_addr), buf, len);
+        port = ntohs(((struct sockaddr_in *)addr)->sin_port);
+        break;
+      case AF_INET6:
+        name = inet_ntop(addr->ss_family, &(((struct sockaddr_in6 *)addr)->sin6_addr), buf, len);
+        port = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
+        alen = strlen(buf);
+        break;
+      case AF_LOCAL:
+        strncpy(buf, ((struct sockaddr_un *)addr)->sun_path, len);
+        alen = strlen(buf);
+        name = buf;
+        port = -1;
+      default:
+        port = -1;
+    }
+#else
+  name = inet_ntop(addr->ss_family, &addr->sin_addr), buf, len);
+  port = ntohs(addr->sin_port);
+#endif
+
+  alen = strlen(buf);
+
+  if(name == NULL)
+    {
+      strncpy(buf, "<unknown>", len);
+      port = -1;
+    }
+
+  if(port >= 0 && alen < len)
+    snprintf(buf + alen, len - alen, ":%d", port);
+}

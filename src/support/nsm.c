@@ -22,6 +22,7 @@
  *
  */
 
+#include "config.h"
 #include "rpc.h"
 #include "nsm.h"
 #include "nlm4.h"
