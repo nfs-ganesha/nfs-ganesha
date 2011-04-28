@@ -56,6 +56,43 @@
 #include <pthread.h>
 #include <string.h>
 
+char *cache_inode_function_names[] = {
+  "cache_inode_access",
+  "cache_inode_getattr",
+  "cache_inode_mkdir",
+  "cache_inode_remove",
+  "cache_inode_statfs",
+  "cache_inode_link",
+  "cache_inode_readdir",
+  "cache_inode_rename",
+  "cache_inode_symlink",
+  "cache_inode_create",
+  "cache_inode_lookup",
+  "cache_inode_lookupp",
+  "cache_inode_readlink",
+  "cache_inode_truncate",
+  "cache_inode_get",
+  "cache_inode_release",
+  "cache_inode_setattr",
+  "cache_inode_new_entry",
+  "cache_inode_read_data",
+  "cache_inode_write_data",
+  "cache_inode_add_data_cache",
+  "cache_inode_release_data_cache",
+  "cache_inode_renew_entry",
+  "cache_inode_lock_create",
+  "cache_inode_lock",
+  "cache_inode_locku",
+  "cache_inode_lockt",
+  "cache_inode_add_state",
+  "cache_inode_add_state",
+  "cache_inode_get_state",
+  "cache_inode_set_state",
+  "cache_inode_update_state",
+  "cache_inode_state_del_all",
+  "cache_inode_commit"
+};
+
 const char *cache_inode_err_str(int err)
 {
   switch(err)

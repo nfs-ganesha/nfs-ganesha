@@ -42,6 +42,36 @@ static int config_ok = 0;
 
 static nfs_worker_data_t *workers_data;
 
+char *nfsv2_function_names[] = {
+  "NFSv2_null", "NFSv2_getattr", "NFSv2_setattr", "NFSv2_root",
+  "NFSv2_lookup", "NFSv2_readlink", "NFSv2_read", "NFSv2_writecache",
+  "NFSv2_write", "NFSv2_create", "NFSv2_remove", "NFSv2_rename",
+  "NFSv2_link", "NFSv2_symlink", "NFSv2_mkdir", "NFSv2_rmdir",
+  "NFSv2_readdir", "NFSv2_statfs"
+};
+
+char *nfsv3_function_names[] = {
+  "NFSv3_null", "NFSv3_getattr", "NFSv3_setattr", "NFSv3_lookup",
+  "NFSv3_access", "NFSv3_readlink", "NFSv3_read", "NFSv3_write",
+  "NFSv3_create", "NFSv3_mkdir", "NFSv3_symlink", "NFSv3_mknod",
+  "NFSv3_remove", "NFSv3_rmdir", "NFSv3_rename", "NFSv3_link",
+  "NFSv3_readdir", "NFSv3_readdirplus", "NFSv3_fsstat",
+  "NFSv3_fsinfo", "NFSv3_pathconf", "NFSv3_commit"
+};
+
+char *nfsv4_function_names[] = {
+  "NFSv4_null", "NFSv4_compound"
+};
+
+char *mnt_function_names[] = {
+  "MNT_null", "MNT_mount", "MNT_dump", "MNT_umount", "MNT_umountall", "MNT_export"
+};
+
+char *rquota_functions_names[] = {
+  "rquota_Null", "rquota_getquota", "rquota_getquotaspecific", "rquota_setquota",
+  "rquota_setquotaspecific"
+};
+
 #ifndef _NO_BUDDY_SYSTEM
 buddy_stats_t global_buddy_stat;
 #endif
