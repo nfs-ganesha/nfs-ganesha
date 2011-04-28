@@ -243,6 +243,8 @@ static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 #include "FSAL/FSAL_XFS/fsal_types.h"
 #elif defined ( _USE_GPFS )
 #include "FSAL/FSAL_GPFS/fsal_types.h"
+#elif defined ( _USE_VFS )
+#include "FSAL/FSAL_VFS/fsal_types.h"
 #elif defined ( _USE_ZFS )
 #include "FSAL/FSAL_ZFS/fsal_types.h"
 #elif defined ( _USE_TEMPLATE ) /* <- place here your own define */

@@ -53,18 +53,18 @@ int nfs_ip_name_add(unsigned int ipaddr, char *hostname);
 int nfs_ip_name_remove(int ipaddr);
 
 int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
-                     unsigned int ipaddr, struct prealloc_pool *ip_stats_pool);
+                     sockaddr_t * ipaddr, struct prealloc_pool *ip_stats_pool);
 
 int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
-                      unsigned int ipaddr,
+                      sockaddr_t * ipaddr,
                       unsigned int nfs_prog,
                       unsigned int mnt_prog, struct svc_req *ptr_req);
 
 int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
-                     unsigned int ipaddr, nfs_ip_stats_t ** pnfs_ip_stats);
+                     sockaddr_t * ipaddr, nfs_ip_stats_t ** pnfs_ip_stats);
 
 int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
-                        int ipaddr, struct prealloc_pool *ip_stats_pool);
+                        sockaddr_t * ipaddr, struct prealloc_pool *ip_stats_pool);
 void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
                        unsigned int nb_worker, char *path_stat);
 

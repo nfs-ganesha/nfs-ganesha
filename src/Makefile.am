@@ -20,6 +20,7 @@ SUBDIRS = include             \
           RPCAL               \
           NFS_Protocols       \
           PNFS                \
+          RPCAL               \
           support             \
           IdMapper            \
           snmp_adm            \
@@ -169,6 +170,7 @@ EXTRA_DIST=nfs-ganesha.spec           \
            nfs-ganesha.lustre.init    \
            nfs-ganesha.xfs.init       \
            nfs-ganesha.gpfs.init      \
+           nfs-ganesha.vfs.init       \
            nfs-ganesha.hpss.init      \
            nfs-ganesha.proxy.init     \
            nfs-ganesha.snmp.init      \

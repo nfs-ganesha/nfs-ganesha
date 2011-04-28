@@ -174,12 +174,12 @@ int display_ip_stats(hash_buffer_t * pbuff, char *str)
  */
 
 int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
-                     unsigned int ipaddr, struct prealloc_pool *ip_stats_pool)
+                     sockaddr_t * ipaddr, struct prealloc_pool *ip_stats_pool)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
   nfs_ip_stats_t *pnfs_ip_stats = NULL;
-  unsigned long int local_ipaddr = ipaddr;
+  sockaddr_t *pipaddr = NULL;
 
   /* Do nothing if configuration disables IP_Stats */
   if(nfs_param.core_param.dump_stats_per_client == 0)
@@ -191,10 +191,18 @@ int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
   if(pnfs_ip_stats == NULL)
     return IP_STATS_INSERT_MALLOC_ERROR;
 
+  if((pipaddr = (sockaddr_t *) Mem_Alloc(sizeof(sockaddr_t))) == NULL) 
+    {
+      ReleaseToPool(pnfs_ip_stats, ip_stats_pool);
+      return IP_STATS_INSERT_MALLOC_ERROR;
+    }
+
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this, 
    * this also means that buffkey->len will be 0 */
-  buffkey.pdata = (caddr_t) local_ipaddr;
-  buffkey.len = 0;
+  memcpy(pipaddr, ipaddr, sizeof(sockaddr_t));
+ 
+  buffkey.pdata = (caddr_t) pipaddr;
+  buffkey.len = sizeof(sockaddr_t);
 
   /* I build the data with the request pointer that should be in state 'IN USE' */
   pnfs_ip_stats->nb_call = 0;
@@ -230,18 +238,17 @@ int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
  *
  */
 int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
-                      unsigned int ipaddr,
+                      sockaddr_t * ipaddr,
                       unsigned int nfs_prog,
                       unsigned int mnt_prog, struct svc_req *ptr_req)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
   int status;
-  unsigned long int local_ipaddr = ipaddr;
   nfs_ip_stats_t *pnfs_ip_stats;
 
-  buffkey.pdata = (caddr_t) local_ipaddr;
-  buffkey.len = 0;
+  buffkey.pdata = (caddr_t) ipaddr;
+  buffkey.len = sizeof(sockaddr_t);
 
   /* Do nothing if configuration disables IP_Stats */
   if(nfs_param.core_param.dump_stats_per_client == 0)
@@ -296,6 +303,7 @@ int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
   return status;
 }                               /* nfs_ip_stats_incr */
 
+
 /**
  *
  * nfs_ip_stats_get: gets the stats value.
@@ -308,15 +316,14 @@ int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
  *
  */
 int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
-                     unsigned int ipaddr, nfs_ip_stats_t ** pnfs_ip_stats)
+                     sockaddr_t * ipaddr, nfs_ip_stats_t ** pnfs_ip_stats)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
-  unsigned long int local_ipaddr = ipaddr;
   int status;
 
-  buffkey.pdata = (caddr_t) local_ipaddr;
-  buffkey.len = 0;
+  buffkey.pdata = (caddr_t) ipaddr;
+  buffkey.len = sizeof(sockaddr_t);
 
   /* Do nothing if configuration disables IP_Stats */
   if(nfs_param.core_param.dump_stats_per_client == 0)
@@ -348,24 +355,23 @@ int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
  *
  */
 int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
-                        int ipaddr, struct prealloc_pool *ip_stats_pool)
+                        sockaddr_t * ipaddr, struct prealloc_pool *ip_stats_pool)
 {
-  hash_buffer_t buffkey, old_value;
+  hash_buffer_t buffkey, old_key, old_value;
   int status = IP_STATS_SUCCESS;
   nfs_ip_stats_t *pnfs_ip_stats = NULL;
-  unsigned long int long_ipaddr;
+  sockaddr_t *pipaddr = NULL;
 
-  long_ipaddr = (unsigned long int)ipaddr;
-
-  buffkey.pdata = (caddr_t) long_ipaddr;
-  buffkey.len = 0;
+  buffkey.pdata = (caddr_t) ipaddr;
+  buffkey.len = sizeof(sockaddr_t);
 
   /* Do nothing if configuration disables IP_Stats */
   if(nfs_param.core_param.dump_stats_per_client == 0)
     return IP_STATS_SUCCESS;
 
-  if(HashTable_Del(ht_ip_stats, &buffkey, NULL, &old_value) == HASHTABLE_SUCCESS)
+  if(HashTable_Del(ht_ip_stats, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
     {
+      Mem_Free((sockaddr_t *) old_key.pdata);
       pnfs_ip_stats = (nfs_ip_stats_t *) old_value.pdata;
       ReleaseToPool(pnfs_ip_stats, ip_stats_pool);
     }
@@ -422,8 +428,10 @@ void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
   unsigned int k = 0;
   nfs_ip_stats_t *pnfs_ip_stats[NB_MAX_WORKER_THREAD];
   nfs_ip_stats_t ip_stats_aggreg;
+  // enough to hold an IPv4 or IPv6 address as a string
+  char ipaddrbuf[40];
   char ifpathdump[MAXPATHLEN];
-  unsigned long int ipaddr;
+  sockaddr_t * ipaddr;
   time_t current_time;
   struct tm current_time_struct;
   char strdate[1024];
@@ -453,16 +461,11 @@ void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
       {
         pdata = (hash_data_t *) it->rbt_opaq;
 
-        ipaddr = (unsigned long int)pdata->buffkey.pdata;
+        ipaddr = (sockaddr_t *) pdata->buffkey.pdata;
 
-        snprintf(ifpathdump,
-                 MAXPATHLEN,
-                 "%s/stats_nfs-0x%x=%u.%u.%u.%u",
-                 path_stat,
-                 ntohl(ipaddr),
-                 (ntohl(ipaddr) & 0xFF000000) >> 24,
-                 (ntohl(ipaddr) & 0x00FF0000) >> 16,
-                 (ntohl(ipaddr) & 0x0000FF00) >> 8, (ntohl(ipaddr) & 0x000000FF));
+        sprint_sockaddr(ipaddr, ipaddrbuf, sizeof(ipaddrbuf));
+
+        snprintf(ifpathdump, MAXPATHLEN, "%s/stats_nfs-%s", path_stat, ipaddrbuf);
 
         if((flushipstat = fopen(ifpathdump, "a")) == NULL)
           return;

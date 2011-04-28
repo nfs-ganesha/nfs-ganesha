@@ -2498,7 +2498,6 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
           return EXPORT_PERMISSION_DENIED;
         }
     }
-#ifdef XXX_USE_IPSTATS
 #ifdef _USE_TIPRC_IPV6
   if(hostaddr->ss_family == AF_INET)
 #endif
@@ -2510,7 +2509,6 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
         if(nfs_ip_stats_add(ht_ip_stats, hostaddr, ip_stats_pool) == IP_STATS_SUCCESS)
           rc = nfs_ip_stats_incr(ht_ip_stats, hostaddr, nfs_prog, mnt_prog, ptr_req);
       }
-#endif
 
 #ifdef _USE_TIRPC_IPV6
   if(hostaddr->ss_family == AF_INET)
