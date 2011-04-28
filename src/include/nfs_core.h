@@ -202,12 +202,6 @@ typedef enum nfs_clientid_confirm_state__
 #define V( sem ) pthread_mutex_unlock( &sem )
 #endif
 
-#ifdef _USE_TIRPC
-void Svc_dg_soft_destroy(SVCXPRT * xport);
-#else
-void Svcudp_soft_destroy(SVCXPRT * xprt);
-#endif                          /* _USE_TIRPC */
-
 #ifdef _USE_GSSRPC
 bool_t Svcauth_gss_import_name(char *service);
 bool_t Svcauth_gss_acquire_cred(void);
@@ -628,8 +622,9 @@ void Print_param_in_log(nfs_parameter_t * pparam);
 
 void nfs_reset_stats(void);
 
-int display_xid(hash_buffer_t * pbuff, char *str);
-int compare_xid(hash_buffer_t * buff1, hash_buffer_t * buff2);
+int display_req_key(hash_buffer_t * pbuff, char *str);
+int display_req_val(hash_buffer_t * pbuff, char *str);
+int compare_req(hash_buffer_t * buff1, hash_buffer_t * buff2);
 
 int print_entry_dupreq(LRU_data_t data, char *str);
 int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam);
@@ -820,7 +815,6 @@ hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param);
 int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param);
 
 void socket_setoptions(int socketFd);
-int cmp_sockaddr(struct sockaddr *addr_1, struct sockaddr *addr_2);
 
 #ifdef _USE_GSSRPC
 unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);

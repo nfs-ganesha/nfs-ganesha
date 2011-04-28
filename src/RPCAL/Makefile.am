@@ -16,6 +16,7 @@ librpcal_la_LIBADD = ONCRPC/librpcalcore.la
 endif
 
 librpcal_la_SOURCES = nfs_dupreq.c \
+                      rpc_tools.c \
                       ../include/nfs_dupreq.h
 
 librpcal_la_DEPENDENCIES = $(librpcal_la_SOURCES)  $(librpcal_la_LIBADD)

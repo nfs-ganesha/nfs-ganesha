@@ -96,6 +96,17 @@ extern nfs_function_desc_t rquota2_func_desc[];
 /* Structure used for duplicated request cache */
 hash_table_t *ht_dupreq;
 
+void LogDupReq(const char *label, sockaddr_t *addr, long xid, u_long rq_prog)
+{
+  char namebuf[512];
+
+  sprint_sockaddr(addr, namebuf, sizeof(namebuf));
+
+  LogFullDebug(COMPONENT_DUPREQ,
+               "%s addr=%s xid=%ld rq_prog=%ld",
+               label, namebuf, xid, rq_prog);
+}
+
 /**
  *
  * get_rpc_xid: extract the transfer Id from a RPC request.
@@ -281,49 +292,37 @@ int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt,
 
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
-
-  struct sockaddr_in *phostaddr;
-  dupreq_key_t pdupkey;
-  dupreq_entry_t *dupreq;
+  dupreq_key_t dupkey;
+  dupreq_entry_t *pdupreq;
 
   /* Get the socket address for the key */
-  phostaddr = (struct sockaddr_in *)svc_getcaller(xprt);
-  memcpy((char *)&pdupkey.addr, (char *)phostaddr,
-         sizeof(pdupkey.addr));
-  pdupkey.xid = xid;
-  /* Checksum the request */
-  pdupkey.checksum = 0;
+  if(copy_xprt_addr(&dupkey.addr, xprt) == 0)
+    return DUPREQ_NOT_FOUND;
+
+  dupkey.xid = xid;
+  dupkey.checksum = 0;
+
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
    * this also means that buffkey->len will be 0 */
-  buffkey.pdata = (caddr_t) &pdupkey;
+  buffkey.pdata = (caddr_t) &dupkey;
   buffkey.len = sizeof(dupreq_key_t);
 
   if(HashTable_Get(ht_dupreq, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
+      pdupreq = (dupreq_entry_t *) buffval.pdata;
+
       /* reset timestamp */
-      ((dupreq_entry_t *) buffval.pdata)->timestamp = time(NULL);
+      pdupreq->timestamp = time(NULL);
 
       status = DUPREQ_SUCCESS;
-      dupreq = (dupreq_entry_t *) buffval.pdata;
-      LogDebug(COMPONENT_DUPREQ,
-               "Hit in the dupreq cache for xid=%ld addr=%d",
-               xid, phostaddr->sin_addr.s_addr);
     }
   else {
     return DUPREQ_NOT_FOUND;
   }
 
-  LogFullDebug(COMPONENT_DUPREQ,
-               "REMOVING ip= %d.%d.%d.%d port=%d xid=%ld rq_prog=%ld",
-               (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
-               (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
-               (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,
-               (ntohl(phostaddr->sin_addr.s_addr) & 0x000000FF),
-               phostaddr->sin_port,
-               xid,
-               dupreq->rq_prog);
+  LogDupReq("REMOVING", &pdupreq->addr, pdupreq->xid, pdupreq->rq_prog);
 
-  status = _remove_dupreq(&buffkey, dupreq, dupreq_pool, ! NFS_REQ_OK);
+  status = _remove_dupreq(&buffkey, pdupreq, dupreq_pool, ! NFS_REQ_OK);
   return status;
 }
 
@@ -345,25 +344,19 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
   nfs_function_desc_t funcdesc;
   struct prealloc_pool *dupreq_pool = (struct prealloc_pool *) addparam;
   dupreq_entry_t *pdupreq = (dupreq_entry_t *) (pentry->buffdata.pdata);
-  int rc;
-
-  struct sockaddr_in *phostaddr;
-  dupreq_key_t pdupkey;
+  dupreq_key_t dupkey;
 
   /* Get the socket address for the key */
-  memcpy((char *)&pdupkey.addr, (char *)&pdupreq->addr, sizeof(pdupkey.addr));
-  pdupkey.xid = pdupreq->xid;
-  /* Checksum the request */
-  pdupkey.checksum = pdupreq->checksum;
+  memcpy((char *)&dupkey.addr, (char *)&pdupreq->addr, sizeof(dupkey.addr));
+  dupkey.xid = pdupreq->xid;
+  dupkey.checksum = pdupreq->checksum;
 
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
    * this also means that buffkey->len will be 0 */
-  buffkey.pdata = (caddr_t) &pdupkey;
+  buffkey.pdata = (caddr_t) &dupkey;
   buffkey.len = sizeof(dupreq_key_t);
 
-  LogDebug(COMPONENT_DUPREQ,
-           "Garbage collection on xid=%ld",
-           pdupreq->xid);
+  LogDupReq("Garbage collection on", &pdupreq->addr, pdupreq->xid, pdupreq->rq_prog);
 
   return _remove_dupreq(&buffkey, pdupreq, dupreq_pool, NFS_REQ_OK);
 }                               /* clean_entry_dupreq */
@@ -386,28 +379,46 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
 unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
                                      hash_buffer_t * buffclef)
 {
-  dupreq_key_t *key = (dupreq_key_t *)(buffclef->pdata);
-  unsigned long addr_hash = 0;
+  dupreq_key_t *pdupkey = (dupreq_key_t *)(buffclef->pdata);
+  unsigned long addr_hash;
   int port;
 
-  if(key->addr.sa_family == AF_INET)
+#ifdef _USE_TIRPC
+  switch (pdupkey->addr.ss_family)
     {
-      addr_hash += ((struct sockaddr_in *)&key->addr)->sin_addr.s_addr;
-      port = ((struct sockaddr_in *)&key->addr)->sin_port;
-      addr_hash ^= (port<<16);
-    }
-#ifdef _USE_TIRPC_IPV6
-  else if(key->addr.sa_family == AF_INET)
-    {
-      //      addr_hash += ((struct sockaddr_in6 *)key->addr)->sin6_addr.s6_addr;
-      //      addr_hash += ((struct sockaddr_in6 *)key->addr)->sin6_port;
-    }
-#endif                          /* _USE_TIRPC_IPV6 */
-  else
-      LogCrit(COMPONENT_DUPREQ,
-              "Could not determine whether dupreq entry used a IPV4 or IPV6 address.");
+      case AF_INET:
+        {
+          struct sockaddr_in *paddr = (struct sockaddr_in *)&pdupkey->addr;
 
-  return (((unsigned long)key->xid + addr_hash)^(key->checksum)) % p_hparam->index_size;
+          addr_hash = paddr->sin_addr.s_addr;
+          port = paddr->sin_port;
+          addr_hash ^= (port<<16);
+          break;
+        }
+      case AF_INET6:
+        {
+          struct sockaddr_in6 *paddr = (struct sockaddr_in6 *)&pdupkey->addr;
+
+          addr_hash = paddr->sin6_addr.s6_addr32[0] ^
+                      paddr->sin6_addr.s6_addr32[1] ^
+                      paddr->sin6_addr.s6_addr32[2] ^
+                      paddr->sin6_addr.s6_addr32[3];
+          port = paddr->sin6_port;
+          addr_hash ^= (port<<16);
+          break;
+        }
+      default:
+        LogCrit(COMPONENT_DUPREQ,
+                "Could not determine whether dupreq entry used a IPV4 or IPV6 address family=%d.",
+                pdupkey->addr.ss_family);
+    }
+#else
+  addr_hash = pdupkey->addr.sin_addr.s_addr;
+  port = pdupkey->addr.sin_port;
+  addr_hash ^= (port<<16);
+#endif
+
+  return (((unsigned long)pdupkey->xid + addr_hash)^(pdupkey->checksum)) % p_hparam->index_size;
 }                               /*  dupreq_value_hash_func */
 
 /**
@@ -428,29 +439,90 @@ unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
  */
 unsigned long dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef)
 {
-  dupreq_key_t *key = (dupreq_key_t *)(buffclef->pdata);
-  unsigned long addr_hash = 0;
+  dupreq_key_t *pdupkey = (dupreq_key_t *)(buffclef->pdata);
+  unsigned long addr_hash;
   int port;
 
-  if(key->addr.sa_family == AF_INET)
+#ifdef _USE_TIRPC
+  switch (pdupkey->addr.ss_family)
     {
-      addr_hash += ((struct sockaddr_in *)&key->addr)->sin_addr.s_addr;
-      port = ((struct sockaddr_in *)&key->addr)->sin_port;
-      addr_hash ^= (port<<16);
-    }
-#ifdef _USE_TIRPC_IPV6
-  else if(key->addr.sa_family == AF_INET)
-    {
-      //      addr_hash += ((struct sockaddr_in6 *)key->addr)->sin6_addr.s6_addr;
-      //      addr_hash += ((struct sockaddr_in6 *)key->addr)->sin6_port;
-    }
-#endif                          /* _USE_TIRPC_IPV6 */
-  else
-      LogCrit(COMPONENT_DUPREQ,
-              "Could not determine whether dupreq entry used a IPV4 or IPV6 address.");
+      case AF_INET:
+        {
+          struct sockaddr_in *paddr = (struct sockaddr_in *)&pdupkey->addr;
 
-  return ((unsigned long)key->xid + addr_hash)^(key->checksum);
+          addr_hash = paddr->sin_addr.s_addr;
+          port = paddr->sin_port;
+          addr_hash ^= (port<<16);
+          break;
+        }
+      case AF_INET6:
+        {
+          struct sockaddr_in6 *paddr = (struct sockaddr_in6 *)&pdupkey->addr;
+
+          addr_hash = paddr->sin6_addr.s6_addr32[0] ^
+                      paddr->sin6_addr.s6_addr32[1] ^
+                      paddr->sin6_addr.s6_addr32[2] ^
+                      paddr->sin6_addr.s6_addr32[3];
+          port = paddr->sin6_port;
+          addr_hash ^= (port<<16);
+          break;
+        }
+      default:
+        LogCrit(COMPONENT_DUPREQ,
+                "Could not determine whether dupreq entry used a IPV4 or IPV6 address family=%d.",
+                (int)pdupkey->addr.ss_family);
+    }
+#else
+  addr_hash = pdupkey->addr.sin_addr.s_addr;
+  port = pdupkey->addr.sin_port;
+  addr_hash ^= (port<<16);
+#endif
+
+  return (((unsigned long)pdupkey->xid + addr_hash)^(pdupkey->checksum)) % p_hparam->index_size;
 }                               /* dupreq_rbt_hash_func */
+
+#ifdef _USE_TIRPC
+int cmp_sockaddr(struct sockaddr_storage *addr_1, struct sockaddr_storage *addr_2)
+#else
+int cmp_sockaddr(struct sockaddr_in *addr_1, struct sockaddr_in *addr_2)
+#endif
+{
+#ifdef _USE_TIRPC
+  if(addr_1->ss_family != addr_2->ss_family)
+    return 0;
+#else
+  if(addr_1->sa_family != addr_2->sa_family)
+    return 0;
+#endif  
+
+#ifdef _USE_TIRPC
+  switch (addr_1->ss_family)
+#else
+  switch (addr_1->sa_family)
+#endif
+    {
+      case AF_INET:
+        {
+          struct sockaddr_in *paddr1 = (struct sockaddr_in *)addr_1;
+          struct sockaddr_in *paddr2 = (struct sockaddr_in *)addr_2;
+
+          return (paddr1->sin_addr.s_addr == paddr2->sin_addr.s_addr
+                  && paddr1->sin_port == paddr2->sin_port);
+        }
+#ifdef _USE_TIRPC
+      case AF_INET6:
+        {
+          struct sockaddr_in6 *paddr1 = (struct sockaddr_in6 *)addr_1;
+          struct sockaddr_in6 *paddr2 = (struct sockaddr_in6 *)addr_2;
+
+          return (paddr1->sin6_addr.s6_addr == paddr2->sin6_addr.s6_addr
+                  && paddr1->sin6_port == paddr2->sin6_port);
+        }
+#endif
+      default:
+        return 0;
+    }
+}
 
 /**
  *
@@ -484,9 +556,9 @@ int compare_req(hash_buffer_t * buff1, hash_buffer_t * buff2)
 
 /**
  *
- * display_xid: displays the xid stored in the buffer.
+ * display_req_key: displays the key stored in the buffer.
  *
- * displays the xid stored in the buffer. This function is to be used as 'key_to_str' field in
+ * displays the key stored in the buffer. This function is to be used as 'key_to_str' field in
  * the hashtable storing the nfs duplicated requests.
  *
  * @param buff1 [IN]  buffer to display
@@ -495,12 +567,132 @@ int compare_req(hash_buffer_t * buff1, hash_buffer_t * buff2)
  * @return number of character written.
  *
  */
-int display_xid(hash_buffer_t * pbuff, char *str)
+int display_req_key(hash_buffer_t * pbuff, char *str)
 {
-  long xid = (long)(pbuff->pdata);
+  dupreq_key_t *pdupkey = (dupreq_key_t *)(pbuff->pdata);
 
-  return sprintf(str, "%lX", xid);
+#ifdef _USE_TIRPC
+  char namebuf[INET6_ADDRSTRLEN];
+  const char *name = NULL;
+  char portbuf[16];
+
+  switch(pdupkey->addr.ss_family)
+    {
+      case AF_INET:
+        {
+          struct sockaddr_in *paddr = (struct sockaddr_in *)&pdupkey->addr;
+
+          name = inet_ntop(pdupkey->addr.ss_family, &paddr->sin_addr, namebuf, sizeof(namebuf));
+          sprintf(portbuf, "%u", paddr->sin_port);
+          break;
+        }
+      case AF_INET6:
+        {
+          struct sockaddr_in6 *paddr = (struct sockaddr_in6 *)&pdupkey->addr;
+
+          name = inet_ntop(pdupkey->addr.ss_family, &paddr->sin6_addr, namebuf, sizeof(namebuf));
+          sprintf(portbuf, "%u", paddr->sin6_port);
+          break;
+        }
+      case AF_LOCAL:
+        {
+          struct sockaddr_un *paddr = (struct sockaddr_un *)&pdupkey->addr;
+
+          name = paddr->sun_path;
+          sprintf(portbuf, "n/a");
+        }
+      default:
+        sprintf(portbuf, "n/a");
+    }
+  if(name == NULL)
+    {
+      sprintf(namebuf, "<unknown>");
+      name = namebuf;
+    }
+  return sprintf("ip=%s port=%s xid=%ld checksum=%d",
+                 name, portbuf, pdupkey->xid, pdupkey->checksum);
 }
+#else
+  return sprintf("ip=%d.%d.%d.%d port=%d xid=%ld rq_prog=%ld checksum=%d",
+                 (ntohl(pdupkey->addr.sin_addr.s_addr) & 0xFF000000) >> 24,
+                 (ntohl(pdupkey->addr.sin_addr.s_addr) & 0x00FF0000) >> 16,
+                 (ntohl(pdupkey->addr.sin_addr.s_addr) & 0x0000FF00) >> 8,
+                 (ntohl(pdupkey->addr.sin_addr.s_addr) & 0x000000FF),
+                 pdupkey->addr.sin_port,
+                 pdupkey->xid,
+                 pdupkey->checksum);
+}
+#endif
+
+/**
+ *
+ * display_req_val: displays the value stored in the buffer.
+ *
+ * displays the value stored in the buffer. This function is to be used as 'val_to_str' field in
+ * the hashtable storing the nfs duplicated requests.
+ *
+ * @param buff1 [IN]  buffer to display
+ * @param buff2 [OUT] output string
+ *
+ * @return number of character written.
+ *
+ */
+int display_req_val(hash_buffer_t * pbuff, char *str)
+{
+  dupreq_entry_t *pdupreq = (dupreq_entry_t *)(pbuff->pdata);
+
+#ifdef _USE_TIRPC
+  char namebuf[INET6_ADDRSTRLEN];
+  const char *name = NULL;
+  char portbuf[16];
+
+  switch(pdupreq->addr.ss_family)
+    {
+      case AF_INET:
+        {
+          struct sockaddr_in *paddr = (struct sockaddr_in *)&pdupreq->addr;
+
+          name = inet_ntop(pdupreq->addr.ss_family, &paddr->sin_addr, namebuf, sizeof(namebuf));
+          sprintf(portbuf, "%u", paddr->sin_port);
+          break;
+        }
+      case AF_INET6:
+        {
+          struct sockaddr_in6 *paddr = (struct sockaddr_in6 *)&pdupreq->addr;
+
+          name = inet_ntop(pdupreq->addr.ss_family, &paddr->sin6_addr, namebuf, sizeof(namebuf));
+          sprintf(portbuf, "%u", paddr->sin6_port);
+          break;
+        }
+      case AF_LOCAL:
+        {
+          struct sockaddr_un *paddr = (struct sockaddr_un *)&pdupreq->addr;
+
+          name = paddr->sun_path;
+          sprintf(portbuf, "n/a");
+        }
+      default:
+        sprintf(portbuf, "n/a");
+    }
+  if(name == NULL)
+    {
+      sprintf(namebuf, "<unknown>");
+      name = namebuf;
+    }
+  return sprintf("ip=%s port=%s xid=%ld checksum=%d",
+                 name, portbuf, pdupreq->xid, pdupreq->checksum);
+}
+#else
+  return sprintf("ip=%d.%d.%d.%d port=%d xid=%ld rq_prog=%ld checksum=%d",
+                 (ntohl(pdupreq->addr.sin_addr.s_addr) & 0xFF000000) >> 24,
+                 (ntohl(pdupreq->addr.sin_addr.s_addr) & 0x00FF0000) >> 16,
+                 (ntohl(pdupreq->addr.sin_addr.s_addr) & 0x0000FF00) >> 8,
+                 (ntohl(pdupreq->addr.sin_addr.s_addr) & 0x000000FF),
+                 pdupreq->addr.sin_port,
+                 pdupreq->xid,
+                 pdupreq->checksum);
+}
+#endif
 
 /**
  *
@@ -549,28 +741,35 @@ int nfs_dupreq_add_not_finished(long xid,
   hash_buffer_t buffval;
   hash_buffer_t buffdata;
   dupreq_entry_t *pdupreq = NULL;
-  int status;
-
-  struct sockaddr_in *phostaddr;
+  int status = 0;
   dupreq_key_t *pdupkey = NULL;
-
+  
   /* Entry to be cached */
   GetFromPool(pdupreq, dupreq_pool, dupreq_entry_t);
   if(pdupreq == NULL)
     return DUPREQ_INSERT_MALLOC_ERROR;
 
   if((pdupkey = (dupreq_key_t *) Mem_Alloc(sizeof(dupreq_key_t))) == NULL)
-    return DUPREQ_INSERT_MALLOC_ERROR;
+    {
+      ReleaseToPool(pdupreq, dupreq_pool);
+      return DUPREQ_INSERT_MALLOC_ERROR;
+    }
 
-  /* Get the socket address for the key */
-  phostaddr = (struct sockaddr_in *)svc_getcaller(xprt);
-  memcpy((char *)&pdupkey->addr, (char *)phostaddr,
-         sizeof(pdupkey->addr));
+  /* Get the socket address for the key and the request */
+  if(copy_xprt_addr(&pdupkey->addr, xprt) == 0 ||
+     copy_xprt_addr(&pdupreq->addr, xprt) == 0)
+    {
+      Mem_Free(pdupkey);
+      ReleaseToPool(pdupreq, dupreq_pool);
+      return DUPREQ_INSERT_MALLOC_ERROR;
+    }
 
   pdupkey->xid = xid;
+  pdupreq->xid = xid;
 
   /* Checksum the request */
   pdupkey->checksum = 0;
+  pdupreq->checksum = 0;
 
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
    * this also means that buffkey->len will be 0 */
@@ -578,10 +777,6 @@ int nfs_dupreq_add_not_finished(long xid,
   buffkey.len = sizeof(dupreq_key_t);
 
   /* I build the data with the request pointer that should be in state 'IN USE' */
-  pdupreq->xid = pdupkey->xid;
-  memcpy((char *)&pdupreq->addr, (char *)&pdupkey->addr,
-        sizeof(pdupkey->addr));
-  pdupreq->checksum = pdupkey->checksum;
   pdupreq->rq_prog = ptr_req->rq_prog;
   pdupreq->rq_vers = ptr_req->rq_vers;
   pdupreq->rq_proc = ptr_req->rq_proc;
@@ -590,15 +785,7 @@ int nfs_dupreq_add_not_finished(long xid,
   buffdata.pdata = (caddr_t) pdupreq;
   buffdata.len = sizeof(dupreq_entry_t);
 
-  LogFullDebug(COMPONENT_DUPREQ,
-               "TEST_AND_SET ip= %d.%d.%d.%d port=%d xid=%ld rq_prog=%ld",
-               (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
-               (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
-               (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,
-               (ntohl(phostaddr->sin_addr.s_addr) & 0x000000FF),
-               phostaddr->sin_port,
-               xid,
-               pdupreq->rq_prog);
+  LogDupReq("Add Not Finished", &pdupreq->addr, pdupreq->xid, pdupreq->rq_prog);
 
   status = HashTable_Test_And_Set(ht_dupreq, &buffkey, &buffdata,
                                   HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
@@ -660,31 +847,34 @@ int nfs_dupreq_finish(long xid,
   nfs_res_t res_nfs;
   LRU_entry_t *pentry = NULL;
   LRU_status_t lru_status;
-
-  struct sockaddr_in *phostaddr;
-  dupreq_key_t pdupkey;
+  dupreq_key_t dupkey;
+  dupreq_entry_t *pdupreq;
 
   /* Get the socket address for the key */
-  phostaddr = (struct sockaddr_in *)svc_getcaller(xprt);
-  memcpy((char *)&pdupkey.addr, (char *)phostaddr,
-         sizeof(pdupkey.addr));
-  pdupkey.xid = xid;
-  /* Checksum the request */
-  pdupkey.checksum = 0;
+  if(copy_xprt_addr(&dupkey.addr, xprt) == 0)
+    return DUPREQ_NOT_FOUND;
+
+  dupkey.xid = xid;
+  dupkey.checksum = 0;
+
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
    * this also means that buffkey->len will be 0 */
-  buffkey.pdata = (caddr_t) &pdupkey;
+  buffkey.pdata = (caddr_t) &dupkey;
   buffkey.len = sizeof(dupreq_key_t);
   if(HashTable_Get(ht_dupreq, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     return DUPREQ_NOT_FOUND;
 
-  LogDebug(COMPONENT_DUPREQ, "Hit in the dupreq cache for xid=%ld", xid);
+  pdupreq = (dupreq_entry_t *)buffval.pdata;
 
-  P(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
-  ((dupreq_entry_t *)buffval.pdata)->res_nfs = *p_res_nfs;
-  ((dupreq_entry_t *)buffval.pdata)->timestamp = time(NULL);
-  ((dupreq_entry_t *)buffval.pdata)->processing = 0;
-  V(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
+  LogDupReq("Finish", &pdupreq->addr, pdupreq->xid, pdupreq->rq_prog);
+
+  P(pdupreq->dupreq_mutex);
+
+  pdupreq->res_nfs = *p_res_nfs;
+  pdupreq->timestamp = time(NULL);
+  pdupreq->processing = 0;
+
+  V(pdupreq->dupreq_mutex);
 
   /* Add it to lru list */
   if((pentry = LRU_new_entry(lru_dupreq, &lru_status)) == NULL)
@@ -712,41 +902,38 @@ nfs_res_t nfs_dupreq_get(long xid, struct svc_req *ptr_req, SVCXPRT *xprt, int *
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
   nfs_res_t res_nfs;
-
-  struct sockaddr_in *phostaddr;
-  dupreq_key_t pdupkey;
+  dupreq_key_t dupkey;
 
   /* Get the socket address for the key */
-  phostaddr = (struct sockaddr_in *)svc_getcaller(xprt);
-  memcpy((char *)&pdupkey.addr, (char *)phostaddr,
-         sizeof(pdupkey.addr));
-  pdupkey.xid = xid;
-  /* Checksum the request */
-  pdupkey.checksum = 0;
+  if(copy_xprt_addr(&dupkey.addr, xprt) == 0)
+    {
+      *pstatus = DUPREQ_NOT_FOUND;
+      memset(&res_nfs, 0, sizeof(res_nfs));
+      return res_nfs;
+    }
+
+  dupkey.xid = xid;
+  dupkey.checksum = 0;
+
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
    * this also means that buffkey->len will be 0 */
-  buffkey.pdata = (caddr_t) &pdupkey;
+  buffkey.pdata = (caddr_t) &dupkey;
   buffkey.len = sizeof(dupreq_key_t);
   if(HashTable_Get(ht_dupreq, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
+      dupreq_entry_t *pdupreq = (dupreq_entry_t *)buffval.pdata;
       /* reset timestamp */
-      ((dupreq_entry_t *) buffval.pdata)->timestamp = time(NULL);
+      pdupreq->timestamp = time(NULL);
 
       *pstatus = DUPREQ_SUCCESS;
-      res_nfs = ((dupreq_entry_t *) buffval.pdata)->res_nfs;
-      LogDebug(COMPONENT_DUPREQ, "Hit in the dupreq cache for xid=%ld", xid);
+      res_nfs = pdupreq->res_nfs;
+      LogDupReq("Hit in the dupreq cache for", &pdupreq->addr, pdupreq->xid, pdupreq->rq_prog);
     }
-  else {
-    LogFullDebug(COMPONENT_DUPREQ,
-                 "Failed to get dupreq entry: ip= %d.%d.%d.%d port=%d xid=%ld",
-                 (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
-                 (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
-                 (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,
-                 (ntohl(phostaddr->sin_addr.s_addr) & 0x000000FF),
-                 phostaddr->sin_port,
-                 xid);
+  else
+    {
+      LogDupReq("Failed to get dupreq entry", &dupkey.addr, dupkey.xid, ptr_req->rq_prog);
       *pstatus = DUPREQ_NOT_FOUND;
-  }
+    }
   return res_nfs;
 }                               /* nfs_dupreq_get */
 

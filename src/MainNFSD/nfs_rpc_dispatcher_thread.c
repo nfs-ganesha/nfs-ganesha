@@ -74,18 +74,6 @@
 #define __FDS_BITS(set) ((set)->fds_bits)
 #endif
 
-#ifdef _USE_TIRPC
-struct netconfig *getnetconfigent(const char *netid);
-void freenetconfigent(struct netconfig *);
-SVCXPRT *Svc_vc_create(int, u_int, u_int);
-SVCXPRT *Svc_dg_create(int, u_int, u_int);
-#else
-SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize);
-SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz);
-bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*dispatch) (),
-                    int protocol);
-#endif
-
 void socket_setoptions(int socketFd);
 
 #define NULL_SVC ((struct svc_callout *)0)
@@ -97,12 +85,6 @@ extern nfs_parameter_t nfs_param;
 struct svc_rpc_gss_data **TabGssData;
 #endif
 extern hash_table_t *ht_dupreq; /* duplicate request hash */
-
-#if _USE_TIRPC
-/* public data : */
-rw_lock_t Svc_lock;
-rw_lock_t Svc_fd_lock;
-#endif
 
 /* These two variables keep state of the thread that gc at this time */
 unsigned int nb_current_gc_workers;
@@ -1796,9 +1778,6 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
   register long mask, *maskp;
   register int sock;
   char *cred_area;
-  struct sockaddr_in *pdead_caller = NULL;
-  char dead_caller[MAXNAMLEN];
-
   LRU_entry_t *pentry = NULL;
   LRU_status_t status;
   nfs_request_data_t *pnfsreq = NULL;
@@ -1836,15 +1815,9 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                        "CRITICAL ERROR: Couldn't choose a worker ! Exiting...");
               exit(1);
             }
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
           LogFullDebug(COMPONENT_DISPATCH,
                        "Use request from spool #%d, xprt->xp_sock=%d",
-                       worker_index, xprt->xp_fd);
-#else
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Use request from spool #%d, xprt->xp_sock=%d",
-                       worker_index, xprt->xp_sock);
-#endif
+                       worker_index, xprt->XP_SOCK);
 
           /* Get a pnfsreq from the worker's pool */
           P(workers_data[worker_index].request_pool_mutex);
@@ -1994,33 +1967,18 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
               stat = SVC_STAT(pnfsreq->xprt);
               if(stat == XPRT_DIED)
                 {
-#ifndef _USE_TIRPC
-                  if((pdead_caller = svc_getcaller(pnfsreq->xprt)) != NULL)
-                    {
-                      snprintf(dead_caller, MAXNAMLEN, "0x%x=%d.%d.%d.%d",
-                               ntohl(pdead_caller->sin_addr.s_addr),
-                               (ntohl(pdead_caller->sin_addr.s_addr) & 0xFF000000) >> 24,
-                               (ntohl(pdead_caller->sin_addr.s_addr) & 0x00FF0000) >> 16,
-                               (ntohl(pdead_caller->sin_addr.s_addr) & 0x0000FF00) >> 8,
-                               (ntohl(pdead_caller->sin_addr.s_addr) & 0x000000FF));
-                    }
+                  sockaddr_t addr;
+                  char addrbuf[512];
+                  if(copy_xprt_addr(&addr, pnfsreq->xprt) == 1)
+                    sprint_sockaddr(&addr, addrbuf, sizeof(addrbuf));
                   else
-#endif                          /* _USE_TIRPC */
-                    strncpy(dead_caller, "unresolved", MAXNAMLEN);
+                    sprintf(addrbuf, "<unresolved>");
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
                   LogDebug(COMPONENT_DISPATCH,
                            "A client disappeared... socket=%d, addr=%s",
-                           pnfsreq->xprt->xp_fd, dead_caller);
-                  if(Xports[pnfsreq->xprt->xp_fd] != NULL)
-                    SVC_DESTROY(Xports[pnfsreq->xprt->xp_fd]);
-#else
-                  LogDebug(COMPONENT_DISPATCH,
-                           "A client disappeared... socket=%d, addr=%s",
-                           pnfsreq->xprt->xp_sock, dead_caller);
-                  if(Xports[pnfsreq->xprt->xp_sock] != NULL)
-                    SVC_DESTROY(Xports[pnfsreq->xprt->xp_sock]);
-#endif
+                           pnfsreq->xprt->XP_SOCK, addrbuf);
+                  if(Xports[pnfsreq->xprt->XP_SOCK] != NULL)
+                    SVC_DESTROY(Xports[pnfsreq->xprt->XP_SOCK]);
 
                   P(workers_data[worker_index].request_pool_mutex);
                   ReleaseToPool(pnfsreq, &workers_data[worker_index].request_pool);
@@ -2031,11 +1989,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                 {
                   LogDebug(COMPONENT_DISPATCH,
                            "Client on socket %d has status XPRT_MOREREQS",
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-                           pnfsreq->xprt->xp_fd);
-#else
-                           pnfsreq->xprt->xp_sock);
-#endif
+                           pnfsreq->xprt->XP_SOCK);
                 }
 
               /* Release the entry */

@@ -377,8 +377,8 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->dupreq_param.hash_param.hash_func_key = dupreq_value_hash_func;
   p_nfs_param->dupreq_param.hash_param.hash_func_rbt = dupreq_rbt_hash_func;
   p_nfs_param->dupreq_param.hash_param.compare_key = compare_req;
-  p_nfs_param->dupreq_param.hash_param.key_to_str = display_xid;
-  p_nfs_param->dupreq_param.hash_param.val_to_str = display_xid;
+  p_nfs_param->dupreq_param.hash_param.key_to_str = display_req_key;
+  p_nfs_param->dupreq_param.hash_param.val_to_str = display_req_val;
   p_nfs_param->dupreq_param.hash_param.name = "Duplicate Request Cache";
 
   /*  Worker parameters : IP/name hash table */

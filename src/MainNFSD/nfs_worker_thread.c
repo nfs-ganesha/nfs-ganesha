@@ -377,12 +377,6 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 
 #endif
 
-#ifdef _USE_TIRPC
-void Svc_dg_soft_destroy(register SVCXPRT * xprt);
-#else
-void Svcudp_soft_destroy(register SVCXPRT * xprt);
-#endif
-
 /**
  * nfs_Cleanup_request_data: clean the data associated with a request
  *
@@ -644,15 +638,9 @@ int nfs_rpc_get_args(nfs_request_data_t * preqnfs, const nfs_function_desc_t *pf
 
   memset(parg_nfs, 0, sizeof(nfs_arg_t));
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
   LogFullDebug(COMPONENT_DISPATCH,
-               "Before svc_getargs on socket %u, xprt=%p",
-               ptr_svc->xp_fd, ptr_svc);
-#else
-  LogFullDebug(COMPONENT_DISPATCH,
-               "Before svc_getargs on socket %u, xprt=%p",
-               ptr_svc->xp_sock, ptr_svc);
-#endif
+               "Before svc_getargs on socket %d, xprt=%p",
+               ptr_svc->XP_SOCK, ptr_svc);
 
   if(svc_getargs(ptr_svc, pfuncdesc->xdr_decode_func, (caddr_t) parg_nfs) == FALSE)
     {
@@ -691,18 +679,9 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   struct svc_req *ptr_req = &preqnfs->req;
   SVCXPRT *ptr_svc = preqnfs->xprt;
   nfs_stat_type_t stat_type;
-  struct sockaddr_in hostaddr;
-  struct sockaddr_in *phostaddr;
-
-  struct sockaddr_in *tmp_childaddr;
-#ifdef _USE_TIRPC_IPV6
-  struct sockaddr_in6 *tmp_hostaddr_inet6;
-  struct sockaddr_in6 *tmp_childaddr_inet6;
-#endif                          /* _USE_TIRPC_IPV6 */
-
-#ifdef _USE_TIRPC
-  struct netbuf *pnetbuf;
-#endif
+  sockaddr_t hostaddr;
+  char addrbuf[512];
+  int port;
   int rc;
   int do_dupreq_cache;
   int status;
@@ -747,8 +726,27 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         return;
     }
 
+  if(copy_xprt_addr(&hostaddr, ptr_svc) == 0)
+    return;
+#ifdef _USE_TIRPC
+  switch(hostaddr.ss_family)
+    {
+      case AF_INET:
+        port = ntohs(((struct sockaddr_in *)&hostaddr)->sin_port);
+        break;
+      case AF_INET6:
+        port = ntohs(((struct sockaddr_in6 *)&hostaddr)->sin6_port);
+        break;
+      default:
+        port = -1;
+    }
+#else
+  port = ntohs(hostaddr.sin_port);
+#endif
+  sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
   rpcxid = get_rpc_xid(ptr_req);
-  LogFullDebug(COMPONENT_DISPATCH, "NFS DISPATCH: Request has xid=%u", rpcxid);
+
+  LogFullDebug(COMPONENT_DISPATCH, "NFS DISPATCH: Request from %s has xid=%u", addrbuf, rpcxid);
   do_dupreq_cache = pworker_data->pfuncdesc->dispatch_behaviour & CAN_BE_DUP;
   LogFullDebug(COMPONENT_DISPATCH, "do_dupreq_cache = %d", do_dupreq_cache);
   status = nfs_dupreq_add_not_finished(rpcxid,
@@ -771,21 +769,12 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                        "NFS DISPATCHER: DupReq Cache Hit: using previous reply, rpcxid=%u",
                        rpcxid);
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
           LogFullDebug(COMPONENT_DISPATCH,
-                       "Before svc_sendreply on socket %u (dup req)",
-                       ptr_svc->xp_fd);
-#else
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Before svc_sendreply on socket %u (dup req)",
-                       ptr_svc->xp_sock);
-#endif
+                       "Before svc_sendreply on socket %d (dup req)",
+                       ptr_svc->XP_SOCK);
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-          P(mutex_cond_xprt[ptr_svc->xp_fd]);
-#else
-          P(mutex_cond_xprt[ptr_svc->xp_sock]);
-#endif
+          P(mutex_cond_xprt[ptr_svc->XP_SOCK]);
+
           if(svc_sendreply
              (ptr_svc, pworker_data->pfuncdesc->xdr_encode_func, (caddr_t) & res_nfs) == FALSE)
             {
@@ -794,21 +783,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
               svcerr_systemerr(ptr_svc);
             }
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-          V(mutex_cond_xprt[ptr_svc->xp_fd]);
-#else
-          V(mutex_cond_xprt[ptr_svc->xp_sock]);
-#endif
+          V(mutex_cond_xprt[ptr_svc->XP_SOCK]);
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
           LogFullDebug(COMPONENT_DISPATCH,
-                       "After svc_sendreply on socket %u (dup req)",
-                       ptr_svc->xp_fd);
-#else
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "After svc_sendreply on socket %u (dup req)",
-                       ptr_svc->xp_sock);
-#endif
+                       "After svc_sendreply on socket %d (dup req)",
+                       ptr_svc->XP_SOCK);
           return;
         }
       else
@@ -905,12 +884,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                   char dumpfh[1024];
                   /* Reject the request for authentication reason (incompatible file handle) */
                   LogMajor(COMPONENT_DISPATCH,
-                           "Host 0x%x = %d.%d.%d.%d has badly formed file handle, vers=%d, proc=%d FH=%s",
-                           ntohs(hostaddr.sin_addr.s_addr),
-                           (ntohl(hostaddr.sin_addr.s_addr) & 0xFF000000) >> 24,
-                           (ntohl(hostaddr.sin_addr.s_addr) & 0x00FF0000) >> 16,
-                           (ntohl(hostaddr.sin_addr.s_addr) & 0x0000FF00) >> 8,
-                           (ntohl(hostaddr.sin_addr.s_addr) & 0x000000FF),
+                           "Host %s has badly formed file handle, vers=%d, proc=%d FH=%s",
+                           addrbuf,
                            (int)ptr_req->rq_vers, (int)ptr_req->rq_proc, dumpfh);
                   svcerr_auth(ptr_svc, AUTH_FAILED);
                   if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
@@ -929,12 +904,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                   char dumpfh[1024];
                   /* Reject the request for authentication reason (incompatible file handle) */
                   LogMajor(COMPONENT_DISPATCH,
-                           "Host 0x%x = %d.%d.%d.%d has badly formed file handle, vers=%d, proc=%d FH=%s",
-                           ntohs(hostaddr.sin_addr.s_addr),
-                           (ntohl(hostaddr.sin_addr.s_addr) & 0xFF000000) >> 24,
-                           (ntohl(hostaddr.sin_addr.s_addr) & 0x00FF0000) >> 16,
-                           (ntohl(hostaddr.sin_addr.s_addr) & 0x0000FF00) >> 8,
-                           (ntohl(hostaddr.sin_addr.s_addr) & 0x000000FF),
+                           "Host %s has badly formed file handle, vers=%d, proc=%d FH=%s",
+                           addrbuf,
                            (int)ptr_req->rq_vers, (int)ptr_req->rq_proc, dumpfh);
                   svcerr_auth(ptr_svc, AUTH_FAILED);
 
@@ -992,31 +963,15 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
    * It is now time for checking if export list allows the machine to perform the request
    */
 
-  /* Ask the RPC layer for the adresse of the machine */
-#ifdef _USE_TIRPC
-  /*
-   * In tirpc svc_getcaller is deprecated and replaced by
-   * svc_getrpccaller().
-   * svc_getrpccaller return a struct netbuf (see rpc/types.h) instead
-   * of a struct sockaddr_in directly.
-   */
-  pnetbuf = svc_getrpccaller(ptr_svc);
-  memcpy((char *)&pworker_data->hostaddr, (char *)pnetbuf->buf, pnetbuf->len);
-#else
-  phostaddr = svc_getcaller(ptr_svc);
-  memcpy((char *)&pworker_data->hostaddr, (char *)phostaddr,
-         sizeof(pworker_data->hostaddr));
-#endif
-
   /* Check if client is using a privileged port, but only for NFS protocol */
   if(ptr_req->rq_prog == nfs_param.core_param.nfs_program && ptr_req->rq_proc != 0)
     {
       if((pexport->options & EXPORT_OPTION_PRIVILEGED_PORT) &&
-         (ntohs(hostaddr.sin_port) >= IPPORT_RESERVED))
+         (port >= IPPORT_RESERVED))
         {
           LogInfo(COMPONENT_DISPATCH,
                   "Port %d is too high for this export entry, rejecting client",
-                  hostaddr.sin_port);
+                  port);
           svcerr_auth(ptr_svc, AUTH_TOOWEAK);
           pworker_data->current_xid = 0;    /* No more xid managed */
 
@@ -1062,12 +1017,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   if (export_check_result == EXPORT_PERMISSION_DENIED)
     {
       LogInfo(COMPONENT_DISPATCH,
-              "Host 0x%x = %d.%d.%d.%d is not allowed to access this export entry, vers=%d, proc=%d",
-              ntohs(phostaddr->sin_addr.s_addr),
-              (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
-              (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
-              (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,
-              (ntohl(phostaddr->sin_addr.s_addr) & 0x000000FF),
+              "Host %s is not allowed to access this export entry, vers=%d, proc=%d",
+              addrbuf,
               (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
       svcerr_auth( ptr_svc, AUTH_TOOWEAK );
       pworker_data->current_xid = 0;        /* No more xid managed */
@@ -1219,21 +1170,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
     }
   else
     {
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
       LogFullDebug(COMPONENT_DISPATCH,
-                   "Before svc_sendreply on socket %u",
-                   ptr_svc->xp_fd);
-#else
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Before svc_sendreply on socket %u",
-                   ptr_svc->xp_sock);
-#endif
+                   "Before svc_sendreply on socket %d",
+                   ptr_svc->XP_SOCK);
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-      P(mutex_cond_xprt[ptr_svc->xp_fd]);
-#else
-      P(mutex_cond_xprt[ptr_svc->xp_sock]);
-#endif
+      P(mutex_cond_xprt[ptr_svc->XP_SOCK]);
 
       /* encoding the result on xdr output */
       if(svc_sendreply(ptr_svc, pworker_data->pfuncdesc->xdr_encode_func, (caddr_t) & res_nfs) == FALSE)
@@ -1241,11 +1182,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
           LogDebug(COMPONENT_DISPATCH,
                    "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply");
           svcerr_systemerr(ptr_svc);
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-          V(mutex_cond_xprt[ptr_svc->xp_fd]);
-#else
-          V(mutex_cond_xprt[ptr_svc->xp_sock]);
-#endif
+
+          V(mutex_cond_xprt[ptr_svc->XP_SOCK]);
 
           if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
                                 &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
@@ -1257,21 +1195,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
           return;
         }
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-      V(mutex_cond_xprt[ptr_svc->xp_fd]);
-#else
-      V(mutex_cond_xprt[ptr_svc->xp_sock]);
-#endif
+      V(mutex_cond_xprt[ptr_svc->XP_SOCK]);
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
       LogFullDebug(COMPONENT_DISPATCH,
-                   "After svc_sendreply on socket %u",
-                   ptr_svc->xp_fd);
-#else
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "After svc_sendreply on socket %u",
-                   ptr_svc->xp_sock);
-#endif
+                   "After svc_sendreply on socket %d",
+                   ptr_svc->XP_SOCK);
 
       /* Mark request as finished */
       LogFullDebug(COMPONENT_DUPREQ, "YES?: %d", do_dupreq_cache);
@@ -1623,21 +1551,12 @@ void *worker_thread(void *IndexArg)
                    index, pmydata->pending_request->nb_entry,
                    pmydata->pending_request->nb_invalid);
 
-#if defined(_USE_TIRPC) || defined( _FREEBSD )
-      if(pnfsreq->xprt->xp_fd == 0)
-      {
-        LogFullDebug(COMPONENT_DISPATCH,
-                     "NFS WORKER #%lu:No RPC management, xp_fd==0",
-                     index);
-      }
-#else
-      if(pnfsreq->xprt->xp_sock == 0)
+      if(pnfsreq->xprt->XP_SOCK == 0)
       {
         LogFullDebug(COMPONENT_DISPATCH,
                      "NFS WORKER #%lu:No RPC management, xp_sock==0",
                      index);
       }
-#endif
       else
         {
           /* Set pointers */
