@@ -2442,7 +2442,7 @@ int export_client_matchv6(struct in6_addr *paddrv6,
  *
  */
 
-int nfs_export_check_access(struct sockaddr_storage *pssaddr,
+int nfs_export_check_access(sockaddr_t *pssaddr,
                             struct svc_req *ptr_req,
                             exportlist_t * pexport,
                             unsigned int nfs_prog,
@@ -2461,7 +2461,7 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
 #endif
   static char ten_bytes_all_0[10];
   static unsigned two_bytes_all_1 = 0xFFFF;
-  char ipstring[MAXHOSTNAMELEN];
+  char ipstring[512];
   char ip6string[MAXHOSTNAMELEN];
 
   if (pexport != NULL)
@@ -2475,22 +2475,39 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
   memset(ten_bytes_all_0, 0, 10);
 
   psockaddr_in = (struct sockaddr_in *)pssaddr;
-  addr = psockaddr_in->sin_addr.s_addr;
-
+  //addr = psockaddr_in->sin_addr.s_addr;
+  ipstring[0] = '\0';
+  sprint_sockaddr(pssaddr, ipstring, sizeof(ipstring));
+  LogFullDebug(COMPONENT_DISPATCH,
+               "nfs_export_check_access for address %s (addr=%d)",
+               ipstring, addr);
+  
   /* For now, no matching client is found */
   memset(pclient_found, 0, sizeof(exportlist_client_entry_t));
 
   /* PROC NULL is always authorized, in all protocols */
   if(ptr_req->rq_proc == 0)
-    return EXPORT_PERMISSION_GRANTED;
+    {
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Granted NULL proc");
+      return EXPORT_PERMISSION_GRANTED;
+    }
 
   /* If mount protocol is called, just check that AUTH_NONE is not used */
   if(ptr_req->rq_prog == mnt_prog)
     {
       if(ptr_req->rq_cred.oa_flavor != AUTH_NONE)
-        return EXPORT_PERMISSION_GRANTED;
+        {
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "Granted mnt_prog");
+          return EXPORT_PERMISSION_GRANTED;
+        }
       else
-        return EXPORT_PERMISSION_DENIED;
+        {
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "Denied mnt_prog because it used AUTH_NONE");
+          return EXPORT_PERMISSION_DENIED;
+        }
     }
 #ifdef _USE_TIPRC_IPV6
   if(psockaddr_in->sin_family == AF_INET)
@@ -2524,15 +2541,25 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
          (export_client_match(addr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_ROOT)))
         {
           if (pexport->access_type == ACCESSTYPE_MDONLY_RO || pexport->access_type == ACCESSTYPE_MDONLY)
-            return EXPORT_MDONLY_GRANTED;
-          else 
-            return EXPORT_PERMISSION_GRANTED;
+            {
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "Granted MDONLY for root");
+              return EXPORT_MDONLY_GRANTED;
+            }
+          else
+            { 
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "Root not granted export permission");
+              return EXPORT_PERMISSION_GRANTED;
+            }
         }
       /* else, check if any access only export matches this client */
       if(proc_makes_write) {
         if (export_client_match(addr, ipstring, 
                                 &(pexport->clients), pclient_found, EXPORT_OPTION_WRITE_ACCESS))
           {
+            LogFullDebug(COMPONENT_DISPATCH,
+                         "Write permission to export granted");
             return EXPORT_PERMISSION_GRANTED;
           }
         else if ( pexport->new_access_list_version && export_client_match(addr, ipstring, 
@@ -2540,6 +2567,8 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
                                      &(pexport->clients), pclient_found, EXPORT_OPTION_MD_WRITE_ACCESS))
           {
             pexport->access_type = ACCESSTYPE_MDONLY;
+            LogFullDebug(COMPONENT_DISPATCH,
+                         "MDONLY export permission granted");
             return EXPORT_MDONLY_GRANTED;
           }
       } else { /* request will not write anything */
@@ -2547,17 +2576,29 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
                                 &(pexport->clients), pclient_found, EXPORT_OPTION_READ_ACCESS))
           {
             if (pexport->access_type == ACCESSTYPE_MDONLY_RO || pexport->access_type == ACCESSTYPE_MDONLY)
-              return EXPORT_MDONLY_GRANTED;
+              {
+                LogFullDebug(COMPONENT_DISPATCH,
+                             "MDONLY export permission granted - no write");
+                return EXPORT_MDONLY_GRANTED;
+              }
             else
-              return EXPORT_PERMISSION_GRANTED;
+              {
+                LogFullDebug(COMPONENT_DISPATCH,
+                             "Read export permission granted");
+                return EXPORT_PERMISSION_GRANTED;
+              }
           }
         else if ( pexport->new_access_list_version && export_client_match(addr, ipstring, 
                                      &(pexport->clients), pclient_found, EXPORT_OPTION_MD_READ_ACCESS))
           {
             pexport->access_type = ACCESSTYPE_MDONLY_RO;
+            LogFullDebug(COMPONENT_DISPATCH,
+                         "MDONLY export permission granted new access list");
             return EXPORT_MDONLY_GRANTED;
           }
       }
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "export permission denied");
       return EXPORT_PERMISSION_DENIED;
       
 #ifdef _USE_TIRPC_IPV6
@@ -2659,6 +2700,8 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
 #endif                          /* _USE_TIRPC_IPV6 */
   
   /* If this point is reached, no matching entry was found */
+  LogFullDebug(COMPONENT_DISPATCH,
+               "export permission denied - no matching entry");
   return EXPORT_PERMISSION_DENIED;
   
 }                               /* nfs_export_check_access */

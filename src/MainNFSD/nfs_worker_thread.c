@@ -728,21 +728,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 
   if(copy_xprt_addr(&hostaddr, ptr_svc) == 0)
     return;
-#ifdef _USE_TIRPC
-  switch(hostaddr.ss_family)
-    {
-      case AF_INET:
-        port = ntohs(((struct sockaddr_in *)&hostaddr)->sin_port);
-        break;
-      case AF_INET6:
-        port = ntohs(((struct sockaddr_in6 *)&hostaddr)->sin6_port);
-        break;
-      default:
-        port = -1;
-    }
-#else
-  port = ntohs(hostaddr.sin_port);
-#endif
+  port = get_port(&hostaddr);
   sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
   rpcxid = get_rpc_xid(ptr_req);
 
@@ -962,6 +948,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   /*
    * It is now time for checking if export list allows the machine to perform the request
    */
+  pworker_data->hostaddr = hostaddr;
 
   /* Check if client is using a privileged port, but only for NFS protocol */
   if(ptr_req->rq_prog == nfs_param.core_param.nfs_program && ptr_req->rq_proc != 0)
@@ -1004,6 +991,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }
     }
 
+  LogFullDebug(COMPONENT_DISPATCH,
+               "nfs_rpc_execute about to call nfs_export_check_access");
   export_check_result = nfs_export_check_access(&pworker_data->hostaddr,
                                                 ptr_req,
                                                 pexport,

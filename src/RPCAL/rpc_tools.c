@@ -127,11 +127,9 @@ void sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
       case AF_INET6:
         name = inet_ntop(addr->ss_family, &(((struct sockaddr_in6 *)addr)->sin6_addr), buf, len);
         port = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
-        alen = strlen(buf);
         break;
       case AF_LOCAL:
         strncpy(buf, ((struct sockaddr_un *)addr)->sun_path, len);
-        alen = strlen(buf);
         name = buf;
         port = -1;
       default:
@@ -152,4 +150,91 @@ void sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
 
   if(port >= 0 && alen < len)
     snprintf(buf + alen, len - alen, ":%d", port);
+}
+
+void sprint_sockip(sockaddr_t *addr, char *buf, int len)
+{
+  const char *name = NULL;
+
+  buf[0] = '\0';
+
+#ifdef _USE_TIRPC
+  switch(addr->ss_family)
+    {
+      case AF_INET:
+        name = inet_ntop(addr->ss_family, &(((struct sockaddr_in *)addr)->sin_addr), buf, len);
+        break;
+      case AF_INET6:
+        name = inet_ntop(addr->ss_family, &(((struct sockaddr_in6 *)addr)->sin6_addr), buf, len);
+        break;
+      case AF_LOCAL:
+        strncpy(buf, ((struct sockaddr_un *)addr)->sun_path, len);
+        name = buf;
+    }
+#else
+  name = inet_ntop(addr->ss_family, &addr->sin_addr), buf, len);
+#endif
+
+  if(name == NULL)
+    {
+      strncpy(buf, "<unknown>", len);
+    }
+}
+
+int cmp_sockaddr(sockaddr_t *addr_1,
+                 sockaddr_t *addr_2,
+                 int ignore_port)
+{
+#ifdef _USE_TIRPC
+  if(addr_1->ss_family != addr_2->ss_family)
+    return 0;
+#else
+  if(addr_1->sa_family != addr_2->sa_family)
+    return 0;
+#endif  
+
+#ifdef _USE_TIRPC
+  switch (addr_1->ss_family)
+#else
+  switch (addr_1->sa_family)
+#endif
+    {
+      case AF_INET:
+        {
+          struct sockaddr_in *paddr1 = (struct sockaddr_in *)addr_1;
+          struct sockaddr_in *paddr2 = (struct sockaddr_in *)addr_2;
+
+          return (paddr1->sin_addr.s_addr == paddr2->sin_addr.s_addr
+                  && (ignore_port || paddr1->sin_port == paddr2->sin_port));
+        }
+#ifdef _USE_TIRPC
+      case AF_INET6:
+        {
+          struct sockaddr_in6 *paddr1 = (struct sockaddr_in6 *)addr_1;
+          struct sockaddr_in6 *paddr2 = (struct sockaddr_in6 *)addr_2;
+
+          return (paddr1->sin6_addr.s6_addr == paddr2->sin6_addr.s6_addr
+                  && (ignore_port || paddr1->sin6_port == paddr2->sin6_port));
+        }
+#endif
+      default:
+        return 0;
+    }
+}
+
+int get_port(sockaddr_t *addr)
+{
+#ifdef _USE_TIRPC
+  switch(addr->ss_family)
+    {
+      case AF_INET:
+        return ntohs(((struct sockaddr_in *)addr)->sin_port);
+      case AF_INET6:
+        return ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
+      default:
+        return -1;
+    }
+#else
+  return ntohs(addr->sin_port);
+#endif
 }
