@@ -19,10 +19,10 @@ SUBDIRS = include             \
           XDR                 \
           NFS_Protocols       \
           PNFS                \
+          RPCAL               \
           support             \
           IdMapper            \
           snmp_adm            \
-          RPCAL               \
           MainNFSD            \
           cmdline_tools       \
           shell               \

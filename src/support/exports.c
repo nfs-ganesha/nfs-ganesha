@@ -2474,8 +2474,6 @@ int nfs_export_check_access(sockaddr_t *pssaddr,
 
   memset(ten_bytes_all_0, 0, 10);
 
-  psockaddr_in = (struct sockaddr_in *)pssaddr;
-  //addr = psockaddr_in->sin_addr.s_addr;
   ipstring[0] = '\0';
   sprint_sockaddr(pssaddr, ipstring, sizeof(ipstring));
   LogFullDebug(COMPONENT_DISPATCH,
@@ -2509,16 +2507,14 @@ int nfs_export_check_access(sockaddr_t *pssaddr,
           return EXPORT_PERMISSION_DENIED;
         }
     }
-#ifdef _USE_TIPRC_IPV6
-  if(psockaddr_in->sin_family == AF_INET)
-#endif
+  
     /* Increment the stats per client address (for IPv4 Only) */
     if((rc =
-        nfs_ip_stats_incr(ht_ip_stats, addr, nfs_prog, mnt_prog,
+        nfs_ip_stats_incr(ht_ip_stats, pssaddr, nfs_prog, mnt_prog,
                           ptr_req)) == IP_STATS_NOT_FOUND)
       {
-        if(nfs_ip_stats_add(ht_ip_stats, addr, ip_stats_pool) == IP_STATS_SUCCESS)
-          rc = nfs_ip_stats_incr(ht_ip_stats, addr, nfs_prog, mnt_prog, ptr_req);
+        if(nfs_ip_stats_add(ht_ip_stats, pssaddr, ip_stats_pool) == IP_STATS_SUCCESS)
+          rc = nfs_ip_stats_incr(ht_ip_stats, pssaddr, nfs_prog, mnt_prog, ptr_req);
       }
 
 #ifdef _USE_TIRPC_IPV6
