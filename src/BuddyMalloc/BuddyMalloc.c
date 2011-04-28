@@ -585,6 +585,7 @@ int isBadMagicNumber(const char *label, BuddyThreadContext_t *context, BuddyBloc
                "%s block %p has been overwritten or is not a buddy block (Magic number %08X<>%08X)",
                label, block, block->Header.MagicNumber, MagicNumber);
       log_bad_block(label, context, block, do_guilt, do_guilt);
+      return 1;
     }
   else
     return 0;
@@ -1832,7 +1833,6 @@ void BuddyFree(BUDDY_ADDR_T ptr)
   if(p_block->Header.OwnerThread != pthread_self())
     {
 #ifndef _MONOTHREAD_MEMALLOC
-      pthread_t owner_id = p_block->Header.OwnerThread;
 
       /* alias */
       BuddyThreadContext_t *owner_context = p_block->Header.OwnerThreadContext;
@@ -2008,8 +2008,6 @@ BUDDY_ADDR_T BuddyCalloc(size_t NumberOfElements, size_t ElementSize)
 int BuddyDestroy()
 {
   BuddyThreadContext_t *context;
-  BuddyBlock_t *p_block;
-  unsigned int i;
   int rc;
 
   /* Ensure thread safety. */
@@ -2497,15 +2495,15 @@ static unsigned int hash_label(const char *file, const char *func,
   const char *str;
 
   str = file;
-  while(c = *str++)
+  while((c = *str++))
     hash = ((hash << 5) + hash) + c;
 
   str = func;
-  while(c = *str++)
+  while((c = *str++))
     hash = ((hash << 5) + hash) + c;
 
   str = label;
-  while(c = *str++)
+  while((c = *str++))
     hash = ((hash << 5) + hash) + c;
 
   hash = (hash ^ line) % hash_sz;

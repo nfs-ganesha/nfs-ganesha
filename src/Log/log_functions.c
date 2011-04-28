@@ -452,6 +452,7 @@ static int DisplayLogSyslog_valist(log_components_t component, int level, char *
   return 1 ;
 } /* DisplayLogSyslog_valist */
 
+#if 0
 static int DisplayLogFd_valist(int fd, log_components_t component, char *format, va_list arguments)
 {
   char tampon[STR_LEN_TXT];
@@ -459,6 +460,7 @@ static int DisplayLogFd_valist(int fd, log_components_t component, char *format,
   DisplayLogString_valist(tampon, component, format, arguments);
   return write(fd, tampon, strlen(tampon));
 }                               /* DisplayLogFd_valist */
+#endif
 
 static int DisplayLogFlux_valist(FILE * flux, log_components_t component, char *format, va_list arguments)
 {
@@ -482,7 +484,7 @@ static int DisplayTest_valist(log_components_t component, char *format, va_list 
 
 static int DisplayBuffer_valist(char *buffer, log_components_t component, char *format, va_list arguments)
 {
-  log_vsnprintf(buffer, STR_LEN_TXT, format, arguments);
+  return log_vsnprintf(buffer, STR_LEN_TXT, format, arguments);
 }
 
 static int DisplayLogPath_valist(char *path, log_components_t component, char *format, va_list arguments)
@@ -1587,7 +1589,6 @@ static int isValidLogPath(char *pathname)
   char tempname[MAXPATHLEN];
 
   char *directory_name;
-  struct stat *buf;
   int rc;
 
   strncpy(tempname, pathname, MAXPATHLEN);
@@ -1685,8 +1686,8 @@ int SetComponentLogFile(log_components_t component, char *name)
         }
       }
 
-  changed = newtype != LogComponents[component].comp_log_type ||
-            newtype == FILELOG && strcmp(name, LogComponents[component].comp_log_file) != 0;
+  changed = (newtype != LogComponents[component].comp_log_type) ||
+            (newtype == FILELOG && strcmp(name, LogComponents[component].comp_log_file) != 0);
 
   if (component != COMPONENT_LOG && changed)
     LogChanges("Changing log destination for %s from %s to %s",
