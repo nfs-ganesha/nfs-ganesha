@@ -37,13 +37,30 @@
 /**
  * build the export entry
  */
-fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_context, /* OUT */
+fsal_status_t VFSFSAL_BuildExportContext(vfsfsal_export_context_t * p_export_context, /* OUT */
                                       fsal_path_t * p_export_path,      /* IN */
                                       char *fs_specific_options /* IN */
     )
 {
+  /* Get the mount point for this lustre FS,
+   * so it can be used for building .lustre/fid paths.
+   */
+
+  FILE *fp;
+  struct mntent *p_mnt;
+  struct stat pathstat;
+
+  char rpath[MAXPATHLEN];
+  char mntdir[MAXPATHLEN];
+  char fs_spec[MAXPATHLEN];
+
+  char type[256];
+
+  size_t pathlen, outlen;
   int rc, fd;
 
+  char *handle;
+  size_t handle_len = 0;
   struct statfs stat_buf;
 
   fsal_status_t status;
@@ -57,13 +74,13 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
     }
 
-  /* save file descriptor to root of GPFS share */
+  /* save file descriptor to root of VFS share */
   fd = open(p_export_path->path, O_RDONLY | O_DIRECTORY);
   if(fd < 0)
     {
       close(open_by_handle_fd);
       LogMajor(COMPONENT_FSAL,
-               "FSAL BUILD EXPORT CONTEXT: ERROR: Could not open GPFS mount point %s: rc = %d",
+               "FSAL BUILD EXPORT CONTEXT: ERROR: Could not open VFS mount point %s: rc = %d",
                p_export_path->path, errno);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
@@ -80,7 +97,7 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
   p_export_context->fsid[0] = stat_buf.f_fsid.__val[0];
   p_export_context->fsid[1] = stat_buf.f_fsid.__val[1];
 
-  /* save file handle to root of GPFS share */
+  /* save file handle to root of VFS share */
   op_context.export_context = p_export_context;
   // op_context.credential = ???
   status = fsal_internal_get_handle(&op_context,
@@ -91,7 +108,7 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
       close(open_by_handle_fd);
       close(p_export_context->mount_root_fd);
       LogMajor(COMPONENT_FSAL,
-               "FSAL BUILD EXPORT CONTEXT: ERROR: Conversion from gpfs filesystem root path to handle failed : %d",
+               "FSAL BUILD EXPORT CONTEXT: ERROR: Conversion from vfs filesystem root path to handle failed : %d",
                status.minor);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
@@ -99,7 +116,7 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 }
 
-fsal_status_t GPFSFSAL_InitClientContext(gpfsfsal_op_context_t * p_thr_context)
+fsal_status_t VFSFSAL_InitClientContext(vfsfsal_op_context_t * p_thr_context)
 {
 
   /* sanity check */
@@ -118,10 +135,10 @@ fsal_status_t GPFSFSAL_InitClientContext(gpfsfsal_op_context_t * p_thr_context)
  * this will clean up and state in an export that was created during
  * the BuildExportContext phase.  For many FSALs this may be a noop.
  *
- * \param p_export_context (in, gpfsfsal_export_context_t)
+ * \param p_export_context (in, vfsfsal_export_context_t)
  */
 
-fsal_status_t GPFSFSAL_CleanUpExportContext(gpfsfsal_export_context_t * p_export_context) 
+fsal_status_t VFSFSAL_CleanUpExportContext(vfsfsal_export_context_t * p_export_context) 
 {
   if(p_export_context == NULL) 
   {
@@ -158,8 +175,8 @@ fsal_status_t GPFSFSAL_CleanUpExportContext(gpfsfsal_export_context_t * p_export
  *      - ERR_FSAL_SERVERFAULT : unexpected error.
  */
 
-fsal_status_t GPFSFSAL_GetClientContext(gpfsfsal_op_context_t * p_thr_context,  /* IN/OUT  */
-                                    gpfsfsal_export_context_t * p_export_context,   /* IN */
+fsal_status_t VFSFSAL_GetClientContext(vfsfsal_op_context_t * p_thr_context,  /* IN/OUT  */
+                                    vfsfsal_export_context_t * p_export_context,   /* IN */
                                     fsal_uid_t uid,     /* IN */
                                     fsal_gid_t gid,     /* IN */
                                     fsal_gid_t * alt_groups,    /* IN */

@@ -41,13 +41,13 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_opendir(gpfsfsal_handle_t * p_dir_handle,        /* IN */
-                           gpfsfsal_op_context_t * p_context,       /* IN */
-                           gpfsfsal_dir_t * p_dir_descriptor,       /* OUT */
+fsal_status_t VFSFSAL_opendir(vfsfsal_handle_t * p_dir_handle,        /* IN */
+                           vfsfsal_op_context_t * p_context,       /* IN */
+                           vfsfsal_dir_t * p_dir_descriptor,       /* OUT */
                            fsal_attrib_list_t * p_dir_attributes        /* [ IN/OUT ] */
     )
 {
-  int errsv, rc;
+  int rc, errsv;
   fsal_status_t status;
 
   struct stat buffstat;
@@ -75,12 +75,11 @@ fsal_status_t GPFSFSAL_opendir(gpfsfsal_handle_t * p_dir_handle,        /* IN */
 
   if(rc != 0)
     {
-      errsv = errno;
       close(p_dir_descriptor->fd);
       if(rc == ENOENT)
-        Return(ERR_FSAL_STALE, errno, INDEX_FSAL_opendir);
+        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_opendir);
       else
-        Return(posix2fsal_error(errno), errno, INDEX_FSAL_opendir);
+        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_opendir);
     }
 
   /* Test access rights for this directory */
@@ -153,12 +152,12 @@ struct linux_dirent
 
 #define BUF_SIZE 1024
 
-fsal_status_t GPFSFSAL_readdir(gpfsfsal_dir_t * p_dir_descriptor,       /* IN */
-                           gpfsfsal_cookie_t start_position,        /* IN */
+fsal_status_t VFSFSAL_readdir(vfsfsal_dir_t * p_dir_descriptor,       /* IN */
+                           vfsfsal_cookie_t start_position,        /* IN */
                            fsal_attrib_mask_t get_attr_mask,    /* IN */
                            fsal_mdsize_t buffersize,    /* IN */
                            fsal_dirent_t * p_pdirent,   /* OUT */
-                           gpfsfsal_cookie_t * p_end_position,      /* OUT */
+                           vfsfsal_cookie_t * p_end_position,      /* OUT */
                            fsal_count_t * p_nb_entries, /* OUT */
                            fsal_boolean_t * p_end_of_dir        /* OUT */
     )
@@ -174,7 +173,7 @@ fsal_status_t GPFSFSAL_readdir(gpfsfsal_dir_t * p_dir_descriptor,       /* IN */
   char d_type;
   struct stat buffstat;
 
-  int rc = 0;
+  int errsv = 0, rc = 0;
 
   memset(buff, 0, BUF_SIZE);
   memset(&entry_name, 0, sizeof(fsal_name_t));
@@ -327,7 +326,7 @@ fsal_status_t GPFSFSAL_readdir(gpfsfsal_dir_t * p_dir_descriptor,       /* IN */
             {
               p_pdirent[*p_nb_entries].attributes.asked_attributes = get_attr_mask;
 
-              st = GPFSFSAL_getattrs(&(p_pdirent[*p_nb_entries].handle),
+              st = VFSFSAL_getattrs(&(p_pdirent[*p_nb_entries].handle),
                                  &p_dir_descriptor->context,
                                  &p_pdirent[*p_nb_entries].attributes);
               if(FSAL_IS_ERROR(st))
@@ -363,7 +362,7 @@ fsal_status_t GPFSFSAL_readdir(gpfsfsal_dir_t * p_dir_descriptor,       /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_closedir(gpfsfsal_dir_t * p_dir_descriptor       /* IN */
+fsal_status_t VFSFSAL_closedir(vfsfsal_dir_t * p_dir_descriptor       /* IN */
     )
 {
 
