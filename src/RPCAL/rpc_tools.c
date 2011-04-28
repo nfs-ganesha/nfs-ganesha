@@ -110,7 +110,7 @@ int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt)
 }
 #endif
 
-void sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
+int sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
 {
   const char *name = NULL;
   int port, alen;
@@ -145,14 +145,15 @@ void sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
   if(name == NULL)
     {
       strncpy(buf, "<unknown>", len);
-      port = -1;
+      return 0;
     }
 
   if(port >= 0 && alen < len)
     snprintf(buf + alen, len - alen, ":%d", port);
+  return 1;
 }
 
-void sprint_sockip(sockaddr_t *addr, char *buf, int len)
+int sprint_sockip(sockaddr_t *addr, char *buf, int len)
 {
   const char *name = NULL;
 
@@ -178,7 +179,9 @@ void sprint_sockip(sockaddr_t *addr, char *buf, int len)
   if(name == NULL)
     {
       strncpy(buf, "<unknown>", len);
+      return 0;
     }
+  return 1;
 }
 
 int cmp_sockaddr(sockaddr_t *addr_1,
@@ -220,6 +223,18 @@ int cmp_sockaddr(sockaddr_t *addr_1,
       default:
         return 0;
     }
+}
+
+in_addr_t get_in_addr(sockaddr_t *addr)
+{
+#ifdef _USE_TIRPC
+  if(addr->ss_family == AF_INET)
+    return ((struct sockaddr_in *)addr)->sin_addr.s_addr;
+  else
+    return 0;
+#else
+  return addr->sin_addr.s_addr;
+#endif
 }
 
 int get_port(sockaddr_t *addr)

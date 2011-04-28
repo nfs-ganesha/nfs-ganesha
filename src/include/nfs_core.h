@@ -210,12 +210,6 @@ void Xprt_register(SVCXPRT * xprt);
 void Xprt_unregister(SVCXPRT * xprt);
 
 
-/* Declare the various RPC transport dynamic arrays */
-extern SVCXPRT         **Xports;
-extern pthread_mutex_t  *mutex_cond_xprt;
-extern pthread_cond_t   *condvar_xprt;
-extern int              *etat_xprt;
-
 /* The default attribute mask for NFSv2/NFSv3 */
 #define FSAL_ATTR_MASK_V2_V3   ( FSAL_ATTRS_MANDATORY | FSAL_ATTR_MODE     | FSAL_ATTR_FILEID | \
                                  FSAL_ATTR_FSID       | FSAL_ATTR_NUMLINKS | FSAL_ATTR_OWNER  | \
@@ -600,7 +594,7 @@ int parseAccessParam(char *var_name, char *var_value,
                      exportlist_t *p_entry, int access_option);
 
 /* Checks an access list for a specific client */
-int export_client_match(unsigned int addr,
+int export_client_match(sockaddr_t *hostaddr,
                         char *ipstring,
                         exportlist_client_t *clients,
                         exportlist_client_entry_t * pclient_found,

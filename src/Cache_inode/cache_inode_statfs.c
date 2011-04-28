@@ -49,7 +49,6 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"

@@ -1159,11 +1159,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
     }
   else
     {
+      P(mutex_cond_xprt[ptr_svc->XP_SOCK]);
+
       LogFullDebug(COMPONENT_DISPATCH,
                    "Before svc_sendreply on socket %d",
                    ptr_svc->XP_SOCK);
-
-      P(mutex_cond_xprt[ptr_svc->XP_SOCK]);
 
       /* encoding the result on xdr output */
       if(svc_sendreply(ptr_svc, pworker_data->pfuncdesc->xdr_encode_func, (caddr_t) & res_nfs) == FALSE)
@@ -1184,11 +1184,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
           return;
         }
 
-      V(mutex_cond_xprt[ptr_svc->XP_SOCK]);
-
       LogFullDebug(COMPONENT_DISPATCH,
                    "After svc_sendreply on socket %d",
                    ptr_svc->XP_SOCK);
+
+      V(mutex_cond_xprt[ptr_svc->XP_SOCK]);
 
       /* Mark request as finished */
       LogFullDebug(COMPONENT_DUPREQ, "YES?: %d", do_dupreq_cache);

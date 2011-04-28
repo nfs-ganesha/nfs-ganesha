@@ -1,8 +1,6 @@
 /* This is a central clearing house for RPC definitions. Nothing
    should included anything related to RPC except this file */
 
-#include "config.h"
-
 #ifndef GANESHA_RPC_H
 #define GANESHA_RPC_H
 
@@ -61,21 +59,30 @@ extern bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*disp
                     int protocol);
 #endif                          /* _USE_TIRPC */
 
-#if _USE_TIRPC
+#ifdef _USE_TIRPC
 /* public data : */
 extern rw_lock_t Svc_lock;
 extern rw_lock_t Svc_fd_lock;
 #endif
 
+/* Declare the various RPC transport dynamic arrays */
+extern SVCXPRT         **Xports;
+extern pthread_mutex_t  *mutex_cond_xprt;
+extern pthread_cond_t   *condvar_xprt;
+extern int              *etat_xprt;
+
 extern int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt);
-extern void sprint_sockaddr(sockaddr_t *addr, char *buf, int len);
-extern void sprint_sockip(sockaddr_t *addr, char *buf, int len);
-extern int get_port(sockaddr_t *addr);
+extern int sprint_sockaddr(sockaddr_t *addr, char *buf, int len);
+extern int sprint_sockip(sockaddr_t *addr, char *buf, int len);
 
 #define IGNORE_PORT 1
 #define CHECK_PORT 0
 extern int cmp_sockaddr(sockaddr_t *addr_1,
                         sockaddr_t *addr_2,
                         int ignore_port);
+
+
+extern in_addr_t get_in_addr(sockaddr_t *addr);
+extern int get_port(sockaddr_t *addr);
 
 #endif

@@ -442,7 +442,8 @@ struct rpc_msg *msg;
     return FALSE;
 
   /* Init the mutex */
-  memset(&mutex_cond_xprt[newxprt->xp_fd], 0, sizeof(pthread_mutex_t));
+  if(pthread_cond_init(&condvar_xprt[xprt->xp_fd], NULL) != 0)
+    return FALSE;
 
   etat_xprt[newxprt->xp_fd] = 0;
 

@@ -357,7 +357,7 @@ cache_content_status_t cache_content_prepare_directories(exportlist_t * pexportl
                                                          cache_content_status_t *
                                                          pstatus);
 
-int nfs_export_check_access(sockaddr_t *pssaddr,
+int nfs_export_check_access(sockaddr_t *hostaddr,
                             struct svc_req *ptr_req,
                             exportlist_t * pexport,
                             unsigned int nfs_prog,

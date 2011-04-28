@@ -17,12 +17,12 @@ SUBDIRS = include             \
           File_Content        \
           File_Content_Policy \
           XDR                 \
+          RPCAL               \
           NFS_Protocols       \
           PNFS                \
           support             \
           IdMapper            \
           snmp_adm            \
-          RPCAL               \
           MainNFSD            \
           cmdline_tools       \
           shell               \
