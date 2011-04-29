@@ -110,6 +110,62 @@ int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt)
 }
 #endif
 
+ 
+/**
+ *
+ * hash_sockaddr: create a hash value based on the sockaddr_t structure
+ *
+ * This creates a native pointer size (unsigned long int) hash value
+ * from the sockaddr_t structure. It supports both IPv4 and IPv6,
+ * other types can be added in time.
+ *
+ * @param addr [IN] sockaddr_t address to hash
+ * @param xprt [IN]  transport to get address from.
+ *
+ * @return hash value
+ *
+ */
+unsigned long hash_sockaddr(sockaddr_t *addr)
+{
+  unsigned long addr_hash = 0;
+  int port;
+#ifdef _USE_TIRPC
+  switch(addr->ss_family)
+    {
+      case AF_INET:
+        {
+          struct sockaddr_in *paddr = (struct sockaddr_in *)addr;
+          addr_hash = paddr->sin_addr.s_addr;
+          port = paddr->sin_port;
+          addr_hash ^= (port<<16);
+          break;
+        }
+      case AF_INET6:
+        {
+          struct sockaddr_in6 *paddr = (struct sockaddr_in6 *)addr;
+
+          addr_hash = paddr->sin6_addr.s6_addr32[0] ^
+                      paddr->sin6_addr.s6_addr32[1] ^
+                      paddr->sin6_addr.s6_addr32[2] ^
+                      paddr->sin6_addr.s6_addr32[3];
+          port = paddr->sin6_port;
+          addr_hash ^= (port<<16);
+          break;
+        }
+      default:
+        LogCrit(COMPONENT_DUPREQ,
+                "Could not determine whether dupreq entry used a IPV4 or IPV6 address family=%d.",
+                addr->ss_family);
+    }
+#else
+  addr_hash = addr->sin_addr.s_addr;
+  port = addr->sin_port;
+  addr_hash ^= (port<<16);
+#endif
+  
+  return addr_hash;
+}
+
 int sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
 {
   const char *name = NULL;

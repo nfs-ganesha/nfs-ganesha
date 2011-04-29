@@ -73,6 +73,7 @@ extern int              *etat_xprt;
 
 extern int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt);
 extern int sprint_sockaddr(sockaddr_t *addr, char *buf, int len);
+extern unsigned long hash_sockaddr(sockaddr_t *addr);
 extern int sprint_sockip(sockaddr_t *addr, char *buf, int len);
 
 #define IGNORE_PORT 1
