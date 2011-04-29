@@ -288,7 +288,6 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
                       cache_inode_client_t * pclient,
                       hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
 {
-  cache_inode_file_type_t filetype;
   fsal_attrib_list_t attr;
   int rc;
   cache_inode_status_t cache_status;
