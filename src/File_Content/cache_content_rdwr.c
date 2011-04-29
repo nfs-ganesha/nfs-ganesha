@@ -314,9 +314,8 @@ cache_content_status_t cache_content_rdwr(cache_content_entry_t * pentry,
     }
 
   /* Perform the IO through the cache */
-  switch (read_or_write)
+  if(read_or_write == CACHE_CONTENT_READ)
     {
-    case CACHE_CONTENT_READ:
       /* The file content was completely read before the IO. The read operation is fully done locally */
       if((iosize_after =
           pread(pentry->local_fs_entry.opened_file.local_fd, buffer, iosize_before,
@@ -349,9 +348,9 @@ cache_content_status_t cache_content_rdwr(cache_content_entry_t * pentry,
           else
             *p_fsal_eof = FALSE;
         }
-      break;
-
-    case CACHE_CONTENT_WRITE:
+    }
+  else
+    {
       /* The io is done on the cache before being flushed to the FSAL */
       if((iosize_after =
           pwrite(pentry->local_fs_entry.opened_file.local_fd, buffer, iosize_before,
@@ -373,8 +372,6 @@ cache_content_status_t cache_content_rdwr(cache_content_entry_t * pentry,
         }
 
       /* p_fsal_eof has no meaning here, it is unused */
-
-      break;
     }
 
   /* close the local fd */

@@ -1144,6 +1144,7 @@ void cache_inode_get_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
     case CHARACTER_FILE:
       *pattr = pentry->object.special_obj.attributes;
       break;
+
     case UNASSIGNED:
     case RECYCLED:
       memset(pattr, 0, sizeof(fsal_attrib_list_t));

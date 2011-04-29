@@ -57,21 +57,21 @@
 #include <pthread.h>
 #include <string.h>
 
+#ifdef BUGAZOMEU
 static void cache_inode_lock_print(cache_entry_t * pentry)
 {
 
     LogFullDebug(COMPONENT_CACHE_INODE,
                  "!!! Plein de chose a faire dans cache_inode_lock_print !!!!!!");
     return;
-#ifdef BUGAZOMEU
     if((pentry->internal_md.type == REGULAR_FILE) &&
        (piter_state->state_type == CACHE_INODE_STATE_SHARE))
             LogFullDebug(COMPONENT_CACHE_INODE,
                          "piter_lock=%p next=%p prev=%p offset=%llu length=%llu",
                          piter_state, piter_state->next, piter_state->prev,
                          piter_state->data.lock.offset, piter_state->data.lock.length);
-#endif
 }
+#endif
 
 /**
  *
