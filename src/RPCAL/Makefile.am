@@ -1,4 +1,11 @@
 noinst_LTLIBRARIES = librpcal.la
+check_PROGRAMS = test_rpctools
+
+TESTS = test_rpctools
+
+test_rpctools_SOURCES = test_rpctools.c
+test_rpctools_LDADD = librpcal.la
+
 
 if USE_GSSRPC
 SUBDIRS = GSSRPC

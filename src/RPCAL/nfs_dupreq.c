@@ -367,44 +367,7 @@ unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
                                      hash_buffer_t * buffclef)
 {
   dupreq_key_t *pdupkey = (dupreq_key_t *)(buffclef->pdata);
-  unsigned long addr_hash;
-  int port;
-
-#ifdef _USE_TIRPC
-  switch (pdupkey->addr.ss_family)
-    {
-      case AF_INET:
-        {
-          struct sockaddr_in *paddr = (struct sockaddr_in *)&pdupkey->addr;
-
-          addr_hash = paddr->sin_addr.s_addr;
-          port = paddr->sin_port;
-          addr_hash ^= (port<<16);
-          break;
-        }
-      case AF_INET6:
-        {
-          struct sockaddr_in6 *paddr = (struct sockaddr_in6 *)&pdupkey->addr;
-
-          addr_hash = paddr->sin6_addr.s6_addr32[0] ^
-                      paddr->sin6_addr.s6_addr32[1] ^
-                      paddr->sin6_addr.s6_addr32[2] ^
-                      paddr->sin6_addr.s6_addr32[3];
-          port = paddr->sin6_port;
-          addr_hash ^= (port<<16);
-          break;
-        }
-      default:
-        LogCrit(COMPONENT_DUPREQ,
-                "Could not determine whether dupreq entry used a IPV4 or IPV6 address family=%d.",
-                pdupkey->addr.ss_family);
-        addr_hash = 0;
-    }
-#else
-  addr_hash = pdupkey->addr.sin_addr.s_addr;
-  port = pdupkey->addr.sin_port;
-  addr_hash ^= (port<<16);
-#endif
+  unsigned long addr_hash = hash_sockaddr((sockaddr_t *) &pdupkey->addr);
 
   return (((unsigned long)pdupkey->xid + addr_hash)^(pdupkey->checksum)) % p_hparam->index_size;
 }                               /*  dupreq_value_hash_func */
@@ -428,6 +391,7 @@ unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef)
 {
   dupreq_key_t *pdupkey = (dupreq_key_t *)(buffclef->pdata);
+<<<<<<< HEAD
   unsigned long addr_hash;
   int port;
 
@@ -466,6 +430,9 @@ unsigned long dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * 
   port = pdupkey->addr.sin_port;
   addr_hash ^= (port<<16);
 #endif
+=======
+  unsigned long addr_hash = hash_sockaddr((sockaddr_t *) &pdupkey->addr);
+>>>>>>> ebc2121f1c088be635c4aa7056d97e53b1f27307
 
   return (((unsigned long)pdupkey->xid + addr_hash)^(pdupkey->checksum)) % p_hparam->index_size;
 }                               /* dupreq_rbt_hash_func */

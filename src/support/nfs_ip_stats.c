@@ -87,7 +87,7 @@ extern nfs_parameter_t nfs_param;
 unsigned long int ip_stats_value_hash_func(hash_parameter_t * p_hparam,
                                            hash_buffer_t * buffclef)
 {
-  return (unsigned long int)(buffclef->pdata) % p_hparam->index_size;
+  return hash_sockaddr((sockaddr_t *)buffclef->pdata) % p_hparam->index_size;
 }                               /*  ip_stats_value_hash_func */
 
 /**
@@ -109,9 +109,8 @@ unsigned long int ip_stats_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long int ip_stats_rbt_hash_func(hash_parameter_t * p_hparam,
                                          hash_buffer_t * buffclef)
 {
-  /* We use the Xid as the rbt value */
-  return (unsigned long int)(buffclef->pdata);
-}                               /* ip_stats_rbt_hash_func */
+  return hash_sockaddr((sockaddr_t *)buffclef->pdata);
+}
 
 /**
  *
@@ -128,9 +127,7 @@ unsigned long int ip_stats_rbt_hash_func(hash_parameter_t * p_hparam,
  */
 int compare_ip_stats(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  unsigned long int xid1 = (unsigned long int)(buff1->pdata);
-  unsigned long int xid2 = (unsigned long int)(buff2->pdata);
-  return (xid1 == xid2) ? 0 : 1;
+  return (cmp_sockaddr((sockaddr_t *)(buff1->pdata), (sockaddr_t *)(buff2->pdata), 1) != 0) ? 0 : 1;
 }                               /* compare_xid */
 
 /**

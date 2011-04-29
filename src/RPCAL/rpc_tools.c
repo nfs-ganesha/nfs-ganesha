@@ -110,6 +110,60 @@ int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt)
 }
 #endif
 
+ 
+/**
+ *
+ * hash_sockaddr: create a hash value based on the sockaddr_t structure
+ *
+ * This creates a native pointer size (unsigned long int) hash value
+ * from the sockaddr_t structure. It supports both IPv4 and IPv6,
+ * other types can be added in time.
+ *
+ * @param addr [IN] sockaddr_t address to hash
+ * @param xprt [IN]  transport to get address from.
+ *
+ * @return hash value
+ *
+ */
+unsigned long hash_sockaddr(sockaddr_t *addr)
+{
+  unsigned long addr_hash = 0;
+  int port;
+#ifdef _USE_TIRPC
+  switch(addr->ss_family)
+    {
+      case AF_INET:
+        {
+          struct sockaddr_in *paddr = (struct sockaddr_in *)addr;
+          addr_hash = paddr->sin_addr.s_addr;
+          port = paddr->sin_port;
+          addr_hash ^= (port<<16);
+          break;
+        }
+      case AF_INET6:
+        {
+          struct sockaddr_in6 *paddr = (struct sockaddr_in6 *)addr;
+
+          addr_hash = paddr->sin6_addr.s6_addr32[0] ^
+                      paddr->sin6_addr.s6_addr32[1] ^
+                      paddr->sin6_addr.s6_addr32[2] ^
+                      paddr->sin6_addr.s6_addr32[3];
+          port = paddr->sin6_port;
+          addr_hash ^= (port<<16);
+          break;
+        }
+      default:
+        break;
+    }
+#else
+  addr_hash = addr->sin_addr.s_addr;
+  port = addr->sin_port;
+  addr_hash ^= (port<<16);
+#endif
+  
+  return addr_hash;
+}
+
 int sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
 {
   const char *name = NULL;
@@ -157,7 +211,7 @@ int sprint_sockip(sockaddr_t *addr, char *buf, int len)
 {
   const char *name = NULL;
 
-  buf[0] = '\0';
+  memset(buf, 0, len);
 
 #ifdef _USE_TIRPC
   switch(addr->ss_family)
@@ -184,6 +238,18 @@ int sprint_sockip(sockaddr_t *addr, char *buf, int len)
   return 1;
 }
 
+/**
+ *
+ * cmp_sockaddr: compare 2 sockaddrs, including ports
+ *
+ * @param addr_1 [IN] first address
+ * @param addr_2 [IN] second address
+ * @param ignore_port [IN] 1 if you want to ignore port 
+ *       comparison, 0 if you need port comparisons
+ *
+ * @return 1 if addresses match, 0 if they don't
+ *
+ */
 int cmp_sockaddr(sockaddr_t *addr_1,
                  sockaddr_t *addr_2,
                  int ignore_port)
@@ -216,8 +282,11 @@ int cmp_sockaddr(sockaddr_t *addr_1,
           struct sockaddr_in6 *paddr1 = (struct sockaddr_in6 *)addr_1;
           struct sockaddr_in6 *paddr2 = (struct sockaddr_in6 *)addr_2;
 
-          return (paddr1->sin6_addr.s6_addr == paddr2->sin6_addr.s6_addr
-                  && (ignore_port || paddr1->sin6_port == paddr2->sin6_port));
+          return (memcmp(
+                         paddr1->sin6_addr.s6_addr, 
+                         paddr2->sin6_addr.s6_addr,
+                         sizeof(paddr2->sin6_addr.s6_addr)) == 0)
+                  && (ignore_port || paddr1->sin6_port == paddr2->sin6_port);
         }
 #endif
       default:
