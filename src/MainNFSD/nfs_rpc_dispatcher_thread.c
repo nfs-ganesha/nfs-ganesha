@@ -70,21 +70,8 @@
 #include "nfs_stat.h"
 #include "SemN.h"
 
-#ifdef _APPLE
-#define __FDS_BITS(set) ((set)->fds_bits)
-#endif
-
-void socket_setoptions(int socketFd);
-
-#define NULL_SVC ((struct svc_callout *)0)
-
-extern fd_set Svc_fdset;
 extern nfs_worker_data_t *workers_data;
 extern nfs_parameter_t nfs_param;
-#ifdef _RPCSEC_GS_64_INSTALLED
-struct svc_rpc_gss_data **TabGssData;
-#endif
-extern hash_table_t *ht_dupreq; /* duplicate request hash */
 
 /* These two variables keep state of the thread that gc at this time */
 unsigned int nb_current_gc_workers;
@@ -173,8 +160,6 @@ int nfs_Init_svc()
 #endif
   struct sockaddr_in sinaddr_nfs;
   struct sockaddr_in sinaddr_mnt;
-  struct sockaddr_in sinaddr_nlm;
-  struct sockaddr_in sinaddr_rquota;
 #ifdef _USE_TIRPC_IPV6
   struct sockaddr_in6 sinaddr_nfs_udp6;
   struct sockaddr_in6 sinaddr_mnt_udp6;
@@ -199,13 +184,22 @@ int nfs_Init_svc()
   int nb_svc_mnt_ok = 0;
   int nb_svc_nlm_ok = 0;
   int nb_svc_rquota_ok = 0;
+
+#ifdef _USE_NLM
+  struct sockaddr_in sinaddr_nlm;
+#endif /* _USE_NLM */
+
+#ifdef _USE_QUOTA
+  struct sockaddr_in sinaddr_rquota;
+#endif /* _USE_QUOTA */
+
 #ifdef _USE_GSSRPC
   OM_uint32 maj_stat;
   OM_uint32 min_stat;
   char GssError[1024];
   gss_cred_id_t test_gss_cred = NULL;
   gss_name_t imported_name = NULL;
-#endif
+#endif /* _USE_GSSRPC */
   int num_sock = nfs_param.core_param.nb_max_fd;
 
   /* Initialize all the sockets to -1 because it makes some code later easier */
@@ -223,9 +217,11 @@ int nfs_Init_svc()
 
   /* Allocate resources that are based on the maximum number of open file descriptors */
   Xports = (SVCXPRT **) Mem_Alloc_Label(num_sock * sizeof(SVCXPRT *), "Xports array");
+  memset(Xports, 0, num_sock * sizeof(SVCXPRT *));
   mutex_cond_xprt = (pthread_mutex_t *) Mem_Alloc_Label(num_sock * sizeof(pthread_mutex_t ), "mutex_cond_xprt array");
+  memset(mutex_cond_xprt, 0, num_sock * sizeof(pthread_mutex_t ));
   condvar_xprt = (pthread_cond_t *) Mem_Alloc_Label(num_sock * sizeof(pthread_cond_t ), "condvar_xprt array");
-  etat_xprt = (int *) Mem_Alloc_Label(num_sock * sizeof(int), "etat_xprt array");
+  memset(condvar_xprt, 0, num_sock * sizeof(pthread_cond_t ));
   FD_ZERO(&Svc_fdset);
 
 #ifdef _USE_TIRPC
@@ -1672,7 +1668,6 @@ static unsigned int select_worker_queue()
 {
   #define NO_VALUE_CHOOSEN  1000000
   unsigned int worker_index = NO_VALUE_CHOOSEN;
-  unsigned int min_number_pending = NO_VALUE_CHOOSEN;
   unsigned int avg_number_pending = NO_VALUE_CHOOSEN;
   unsigned int total_number_pending = 0;
 

@@ -66,7 +66,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <rpc/rpc.h>
+#include "rpc.h"
 #include <Rpc_com_tirpc.h>
 #include "stuff_alloc.h"
 #include "RW_Lock.h"
@@ -77,15 +77,11 @@ int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) 
 
 pthread_mutex_t *mutex_cond_xprt;
 pthread_cond_t *condvar_xprt;
-int *etat_xprt;
 
 SVCXPRT **Xports;
 
 extern rw_lock_t Svc_fd_lock;
-extern fd_set Svc_fdset;
 
-extern void Xprt_register(SVCXPRT *);
-extern void Xprt_unregister(SVCXPRT *);
 extern void *rpc_tcp_socket_manager_thread(void *Arg);
 
 static SVCXPRT *Makefd_xprt(int, u_int, u_int);
@@ -125,18 +121,6 @@ struct cf_conn
   struct timeval last_recv_time;
 };
 
-static void map_ipv4_to_ipv6(sin, sin6)
-struct sockaddr_in *sin;
-struct sockaddr_in6 *sin6;
-{
-  sin6->sin6_family = AF_INET6;
-  sin6->sin6_port = sin->sin_port;
-  sin6->sin6_addr.s6_addr32[0] = 0;
-  sin6->sin6_addr.s6_addr32[1] = 0;
-  sin6->sin6_addr.s6_addr32[2] = htonl(0xffff);
-  sin6->sin6_addr.s6_addr32[3] = *(uint32_t *) & sin->sin_addr;
-}
-
 /*
  * Usage:
  *	xprt = svc_vc_create(sock, send_buf_size, recv_buf_size);
@@ -158,7 +142,7 @@ int fd;
 u_int sendsize;
 u_int recvsize;
 {
-  SVCXPRT *xprt;
+  SVCXPRT *xprt = NULL;
   struct cf_rendezvous *r = NULL;
   struct __rpc_sockinfo si;
   struct sockaddr_storage sslocal;
@@ -181,10 +165,8 @@ u_int recvsize;
       warnx("Svc_vc_create: out of memory");
       goto cleanup_svc_vc_create;
     }
-  xprt->xp_tp = NULL;
+  memset(xprt, 0, sizeof(SVCXPRT));
   xprt->xp_p1 = r;
-  xprt->xp_p2 = NULL;
-  xprt->xp_p3 = NULL;
   xprt->xp_verf = _null_auth;
   Svc_vc_rendezvous_ops(xprt);
   xprt->xp_port = (u_short) - 1;        /* It is the rendezvouser */
@@ -208,89 +190,19 @@ u_int recvsize;
   memcpy(xprt->xp_ltaddr.buf, &sslocal, (size_t) sizeof(sslocal));
   xprt->xp_rtaddr.maxlen = sizeof(struct sockaddr_storage);
 
-  Xprt_register(xprt);
+  if(Xprt_register(xprt) == FALSE)
+    {
+      warnx("Svc_vc_create: Xprt_register failed");
+      goto cleanup_svc_vc_create;
+    }
 
   return (xprt);
  cleanup_svc_vc_create:
   if(r != NULL)
     Mem_Free(r);
+  if(xprt != NULL)
+    Mem_Free(xprt);
   return (NULL);
-}
-
-/*
- * Like svtcp_create(), except the routine takes any *open* UNIX file
- * descriptor as its first input.
- */
-SVCXPRT *Svc_fd_create(fd, sendsize, recvsize)
-int fd;
-u_int sendsize;
-u_int recvsize;
-{
-  struct sockaddr_storage ss;
-  struct sockaddr_in6 sin6;
-  socklen_t slen;
-  SVCXPRT *ret;
-
-  assert(fd != -1);
-
-  ret = Makefd_xprt(fd, sendsize, recvsize);
-  if(ret == NULL)
-    return NULL;
-
-  slen = sizeof(struct sockaddr_storage);
-  if(getsockname(fd, (struct sockaddr *)(void *)&ss, &slen) < 0)
-    {
-      warnx("Svc_fd_create: could not retrieve local addr");
-      goto freedata;
-    }
-  ret->xp_ltaddr.maxlen = ret->xp_ltaddr.len = sizeof(ss);
-  ret->xp_ltaddr.buf = Mem_Alloc((size_t) sizeof(ss));
-  if(ret->xp_ltaddr.buf == NULL)
-    {
-      warnx("Svc_fd_create: no mem for local addr");
-      goto freedata;
-    }
-  memcpy(ret->xp_ltaddr.buf, &ss, (size_t) sizeof(ss));
-  slen = sizeof(struct sockaddr_storage);
-  if(getpeername(fd, (struct sockaddr *)(void *)&ss, &slen) < 0)
-    {
-      warnx("Svc_fd_create: could not retrieve remote addr");
-      goto freedata;
-    }
-  if(ss.ss_family == AF_INET)
-    {
-      map_ipv4_to_ipv6((struct sockaddr_in *)&ss, &sin6);
-    }
-  else
-    {
-      memcpy(&sin6, &ss, sizeof(sin6));
-    }
-  ret->xp_rtaddr.maxlen = ret->xp_rtaddr.len = sizeof(ss);
-  ret->xp_rtaddr.buf = Mem_Alloc((size_t) sizeof(ss));
-  if(ret->xp_rtaddr.buf == NULL)
-    {
-      warnx("Svc_fd_create: no mem for local addr");
-      goto freedata;
-    }
-  if(ss.ss_family == AF_INET)
-    memcpy(ret->xp_rtaddr.buf, &ss, (size_t) sizeof(ss));
-  else
-    memcpy(ret->xp_rtaddr.buf, &sin6, (size_t) sizeof(ss));
-#ifdef PORTMAP
-  if(sin6.sin6_family == AF_INET6 || sin6.sin6_family == AF_LOCAL)
-    {
-      memcpy(&ret->xp_raddr, ret->xp_rtaddr.buf, sizeof(struct sockaddr_in6));
-      ret->xp_addrlen = sizeof(struct sockaddr_in6);
-    }
-#endif                          /* PORTMAP */
-
-  return ret;
-
- freedata:
-  if(ret->xp_ltaddr.buf != NULL)
-    Mem_Free(ret->xp_ltaddr.buf);
-
-  return NULL;
 }
 
 static SVCXPRT *Makefd_xprt(fd, sendsize, recvsize)
@@ -307,19 +219,14 @@ u_int recvsize;
 
   xprt = (SVCXPRT *) Mem_Alloc(sizeof(SVCXPRT));
   if(xprt == NULL)
-    {
-      warnx("svc_vc: Makefd_xprt: out of memory");
-      goto done;
-    }
+    goto fail;
+
   memset(xprt, 0, sizeof *xprt);
+
   cd = (struct cf_conn *)Mem_Alloc(sizeof(struct cf_conn));
   if(cd == NULL)
-    {
-      warnx("svc_tcp: Makefd_xprt: out of memory");
-      Mem_Free(xprt);
-      xprt = NULL;
-      goto done;
-    }
+    goto fail;
+
   cd->strm_stat = XPRT_IDLE;
   xdrrec_create(&(cd->xdrs), sendsize, recvsize, xprt, Read_vc, Write_vc);
   xprt->xp_p1 = cd;
@@ -330,9 +237,18 @@ u_int recvsize;
   if(__rpc_fd2sockinfo(fd, &si) && __rpc_sockinfo2netid(&si, &netid))
     xprt->xp_netid = strdup(netid);
 
-  Xprt_register(xprt);
- done:
+  if(Xprt_register(xprt) == FALSE)
+    goto fail;
+  
   return (xprt);
+ 
+ fail:
+  warnx("svc_tcp: Makefd_xprt: out of memory");
+  if(xprt != NULL)
+    Mem_Free(xprt);
+  if(cd != NULL)
+    Mem_Free(cd);
+  return NULL;
 }
 
  /*ARGSUSED*/ static bool_t Rendezvous_request(xprt, msg)
@@ -343,7 +259,6 @@ struct rpc_msg *msg;
   struct cf_rendezvous *r;
   struct cf_conn *cd;
   struct sockaddr_storage addr;
-  struct sockaddr_in6 sin6;
   socklen_t len;
   struct __rpc_sockinfo si;
   SVCXPRT *newxprt;
@@ -360,10 +275,6 @@ struct rpc_msg *msg;
   len = sizeof(struct sockaddr_storage);
   if((sock = accept(xprt->xp_fd, (struct sockaddr *)(void *)&addr, &len)) < 0)
     {
-      LogCrit(COMPONENT_DISPATCH,
-              "Error in accept xp_fd=%u line=%u file=%s, errno=%u (%s)",
-              xprt->xp_fd, __LINE__, __FILE__,
-              errno, strerror(errno));
       if(errno == EINTR)
         goto again;
       /*
@@ -376,32 +287,27 @@ struct rpc_msg *msg;
           __svc_clean_idle(&cleanfds, 0, FALSE);
           goto again;
         }
+      LogCrit(COMPONENT_DISPATCH,
+              "Error in accept xp_fd=%u, errno=%u (%s)",
+              xprt->xp_fd,
+              errno, strerror(errno));
       return (FALSE);
     }
+
   /*
    * make a new transporter (re-uses xprt)
    */
-
   newxprt = Makefd_xprt(sock, r->sendsize, r->recvsize);
-  if(addr.ss_family == AF_INET)
-    {
-      map_ipv4_to_ipv6((struct sockaddr_in *)&addr, &sin6);
-    }
-  else
-    {
-      memcpy(&sin6, &addr, len);
-    }
+
   newxprt->xp_rtaddr.buf = Mem_Alloc(len);
   if(newxprt->xp_rtaddr.buf == NULL)
     return (FALSE);
 
-  if(addr.ss_family == AF_INET)
-    memcpy(newxprt->xp_rtaddr.buf, &addr, len);
-  else
-    memcpy(newxprt->xp_rtaddr.buf, &sin6, len);
+  memcpy(newxprt->xp_rtaddr.buf, &addr, len);
   newxprt->xp_rtaddr.maxlen = newxprt->xp_rtaddr.len = len;
+
 #ifdef PORTMAP
-  if(sin6.sin6_family == AF_INET6 || sin6.sin6_family == AF_LOCAL)
+  if(addr.ss_family == AF_INET6 || addr.ss_family == AF_LOCAL)
     {
       memcpy(&newxprt->xp_raddr, newxprt->xp_rtaddr.buf, sizeof(struct sockaddr_in6));
       newxprt->xp_addrlen = sizeof(struct sockaddr_in6);
@@ -438,15 +344,6 @@ struct rpc_msg *msg;
 
   FD_CLR(newxprt->xp_fd, &Svc_fdset);
 
-  if(pthread_cond_init(&condvar_xprt[newxprt->xp_fd], NULL) != 0)
-    return FALSE;
-
-  /* Init the mutex */
-  if(pthread_cond_init(&condvar_xprt[xprt->xp_fd], NULL) != 0)
-    return FALSE;
-
-  etat_xprt[newxprt->xp_fd] = 0;
-
   if((rc =
       fridgethr_get(&sockmgr_thrid, rpc_tcp_socket_manager_thread,
                      (void *)((unsigned long)newxprt->xp_fd))) != 0)
@@ -455,7 +352,7 @@ struct rpc_msg *msg;
   return (FALSE);               /* there is never an rpc msg to be processed */
 }
 
- /*ARGSUSED*/ static enum xprt_stat Rendezvous_stat(xprt)
+/*ARGSUSED*/ static enum xprt_stat Rendezvous_stat(xprt)
 SVCXPRT *xprt;
 {
 
@@ -499,9 +396,9 @@ SVCXPRT *xprt;
   if(xprt->xp_ltaddr.buf)
     Mem_Free(xprt->xp_ltaddr.buf);
   if(xprt->xp_tp)
-    free(xprt->xp_tp);
+    Mem_Free(xprt->xp_tp);
   if(xprt->xp_netid)
-    free(xprt->xp_netid);
+    Mem_Free(xprt->xp_netid);
   Mem_Free(xprt);
 }
 

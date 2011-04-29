@@ -41,7 +41,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <rpc/rpc.h>
 #include <rpc/nettype.h>
 #include <stdio.h>
 #include <errno.h>
@@ -54,7 +53,7 @@
 #include "config.h"
 #endif
 
-#include <rpc/rpc.h>
+#include "rpc.h"
 #include <Rpc_com_tirpc.h>
 #include <getpeereid.h>
 #include "stuff_alloc.h"
@@ -302,8 +301,8 @@ u_int recvsz;                   /* Max recvsize */
 
   if(nconf)
     {
-      xprt->xp_netid = strdup(nconf->nc_netid);
-      xprt->xp_tp = strdup(nconf->nc_device);
+      xprt->xp_netid = Str_Dup(nconf->nc_netid);
+      xprt->xp_tp = Str_Dup(nconf->nc_device);
     }
   return (xprt);
 

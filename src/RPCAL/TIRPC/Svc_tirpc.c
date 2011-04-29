@@ -48,7 +48,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <rpc/rpc.h>
+#include "rpc.h"
 #ifdef PORTMAP
 #include <rpc/pmap_clnt.h>
 #endif                          /* PORTMAP */
@@ -71,30 +71,12 @@ SVCXPRT **Xports;
 rw_lock_t Svc_lock;
 rw_lock_t Svc_fd_lock;
 
-/*
- * The services list
- * Each entry represents a set of procedures (an rpc program).
- * The dispatch routine takes request structs and runs the
- * apropriate procedure.
- */
-static struct svc_callout
-{
-  struct svc_callout *sc_next;
-  rpcprog_t sc_prog;
-  rpcvers_t sc_vers;
-  char *sc_netid;
-  void (*sc_dispatch) (struct svc_req *, SVCXPRT *);
-} *svc_head;
-
-static struct svc_callout *Svc_find(rpcprog_t, rpcvers_t, struct svc_callout **, char *);
-static void __Xprt_do_unregister(SVCXPRT * xprt, bool_t dolock);
-
 /* ***************  SVCXPRT related stuff **************** */
 
 /*
  * Activate a transport handle.
  */
-void Xprt_register(xprt)
+int Xprt_register(xprt)
 SVCXPRT *xprt;
 {
   int sock;
@@ -103,24 +85,28 @@ SVCXPRT *xprt;
 
   sock = xprt->xp_fd;
 
+  if(pthread_cond_init(&condvar_xprt[xprt->xp_fd], NULL) != 0)
+    return FALSE;
+
+  /* Init the mutex */
+  if(pthread_mutex_init(&mutex_cond_xprt[xprt->xp_fd], NULL) != 0)
+    {
+      pthread_cond_destroy(&condvar_xprt[xprt->xp_fd]);
+      return FALSE;
+    }
+
   P_w(&Svc_fd_lock);
   if(sock < FD_SETSIZE)
     {
-      Xports[sock] = xprt;
       FD_SET(sock, &Svc_fdset);
       svc_maxfd = max(svc_maxfd, sock);
     }
+
   V_w(&Svc_fd_lock);
-}
 
-void Xprt_unregister(SVCXPRT * xprt)
-{
-  __Xprt_do_unregister(xprt, TRUE);
-}
+  Xports[sock] = xprt;
 
-void __Xprt_unregister_unlocked(SVCXPRT * xprt)
-{
-  __Xprt_do_unregister(xprt, FALSE);
+  return TRUE;
 }
 
 /*
@@ -139,25 +125,83 @@ bool_t dolock;
   if(dolock)
     P_w(&Svc_fd_lock);
 
-  if((sock < FD_SETSIZE) && (Xports[sock] == xprt))
+  if(Xports[sock] == xprt)
     {
       Xports[sock] = NULL;
-      FD_CLR(sock, &Svc_fdset);
-      if(sock >= svc_maxfd)
+
+      if(sock < FD_SETSIZE)
         {
-          for(svc_maxfd--; svc_maxfd >= 0; svc_maxfd--)
-            if(Xports[svc_maxfd])
-              break;
+          FD_CLR(sock, &Svc_fdset);
+          if(sock >= svc_maxfd)
+            {
+              for(svc_maxfd--; svc_maxfd >= 0; svc_maxfd--)
+                if(Xports[svc_maxfd])
+                  break;
+            }
         }
+      pthread_cond_destroy(&condvar_xprt[xprt->xp_fd]);
+      pthread_mutex_destroy(&mutex_cond_xprt[xprt->xp_fd]);
     }
 
   if(dolock)
     V_w(&Svc_fd_lock);
 }
 
+void Xprt_unregister(SVCXPRT * xprt)
+{
+  __Xprt_do_unregister(xprt, TRUE);
+}
+
+void __Xprt_unregister_unlocked(SVCXPRT * xprt)
+{
+  __Xprt_do_unregister(xprt, FALSE);
+}
+
 /* ********************** CALLOUT list related stuff ************* */
 
 #ifdef PORTMAP
+/*
+ * The services list
+ * Each entry represents a set of procedures (an rpc program).
+ * The dispatch routine takes request structs and runs the
+ * apropriate procedure.
+ */
+static struct svc_callout
+{
+  struct svc_callout *sc_next;
+  rpcprog_t sc_prog;
+  rpcvers_t sc_vers;
+  char *sc_netid;
+  void (*sc_dispatch) (struct svc_req *, SVCXPRT *);
+} *svc_head;
+
+
+/*
+ * Search the callout list for a program number, return the callout
+ * struct.
+ */
+static struct svc_callout *Svc_find(prog, vers, prev, netid)
+rpcprog_t prog;
+rpcvers_t vers;
+struct svc_callout **prev;
+char *netid;
+{
+  struct svc_callout *s, *p;
+
+  assert(prev != NULL);
+
+  p = NULL;
+  for(s = svc_head; s != NULL; s = s->sc_next)
+    {
+      if(((s->sc_prog == prog) && (s->sc_vers == vers)) &&
+         ((netid == NULL) || (s->sc_netid == NULL) || (strcmp(netid, s->sc_netid) == 0)))
+        break;
+      p = s;
+    }
+  *prev = p;
+  return (s);
+}
+
 /*
  * Add a service program to the callout list.
  * The dispatch routine will be called when a rpc request for this
@@ -227,29 +271,3 @@ u_long vers;
   (void)pmap_unset(prog, vers);
 }
 #endif                          /* PORTMAP */
-
-/*
- * Search the callout list for a program number, return the callout
- * struct.
- */
-static struct svc_callout *Svc_find(prog, vers, prev, netid)
-rpcprog_t prog;
-rpcvers_t vers;
-struct svc_callout **prev;
-char *netid;
-{
-  struct svc_callout *s, *p;
-
-  assert(prev != NULL);
-
-  p = NULL;
-  for(s = svc_head; s != NULL; s = s->sc_next)
-    {
-      if(((s->sc_prog == prog) && (s->sc_vers == vers)) &&
-         ((netid == NULL) || (s->sc_netid == NULL) || (strcmp(netid, s->sc_netid) == 0)))
-        break;
-      p = s;
-    }
-  *prev = p;
-  return (s);
-}

@@ -75,12 +75,8 @@ extern errno;
 #define SVCAUTH_DESTROY(auth) \
      ((*((auth)->svc_ah_ops->svc_ah_destroy))(auth))
 
-void Xprt_register(SVCXPRT * xprt);
-void Xprt_unregister(SVCXPRT * xprt);
-
 pthread_mutex_t *mutex_cond_xprt;
 pthread_cond_t *condvar_xprt;
-int *etat_xprt;
 extern SVCXPRT ** Xports ;
 
 /*
@@ -265,7 +261,6 @@ static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
 }
 
 void *rpc_tcp_socket_manager_thread(void *Arg);
-extern fd_set Svc_fdset;
 
 static bool_t Rendezvous_request(register SVCXPRT * xprt, struct rpc_msg *msg)
 {
@@ -305,8 +300,6 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt, struct rpc_msg *msg)
 
   if(pthread_mutex_init(&mutex_cond_xprt[xprt->xp_sock], NULL) != 0)
     return FALSE;
-
-  etat_xprt[xprt->xp_sock] = 0;
 
   if((rc =
       fridgethr_get(&sockmgr_thrid, rpc_tcp_socket_manager_thread,

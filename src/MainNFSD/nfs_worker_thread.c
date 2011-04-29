@@ -69,10 +69,6 @@
 #include "nfs_stat.h"
 #include "SemN.h"
 
-#define NULL_SVC ((struct svc_callout *)0)
-#define SVCAUTH_PRIVATE(auth) \
-        ((struct svc_rpc_gss_data *)(auth)->svc_ah_private)
-
 enum auth_stat _authenticate(register struct svc_req *rqst, struct rpc_msg *msg);
 #ifdef _USE_GSSRPC
 enum auth_stat Rpcsecgss__authenticate(register struct svc_req *rqst, struct rpc_msg *msg,
@@ -667,7 +663,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                             nfs_worker_data_t * pworker_data)
 {
   unsigned int rpcxid = 0;
-  nfs_function_desc_t funcdesc;
   unsigned int export_check_result;
 
   exportlist_t *pexport = NULL;
@@ -685,7 +680,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   int rc;
   int do_dupreq_cache;
   int status;
-  unsigned int i;
   exportlist_client_entry_t related_client;
   struct user_cred user_credentials;
 
@@ -1051,6 +1045,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       /* If not EXPORT_PERMISSION_GRANTED, then we are all out of options! */
       LogMajor(COMPONENT_DISPATCH,
                "nfs_export_check_access() returned none of the expected flags. This is an unexpected state!");
+      rc = NFS_REQ_DROP;
     }
   else  /* export_check_result == EXPORT_PERMISSION_GRANTED is TRUE */
     {
@@ -1348,7 +1343,6 @@ void *worker_thread(void *IndexArg)
   char thr_name[128];
   char auth_str[AUTH_STR_LEN];
   bool_t no_dispatch = FALSE;
-  fsal_status_t fsal_status;
 #ifdef _USE_GSSRPC
   struct rpc_gss_cred *gc;
 #endif

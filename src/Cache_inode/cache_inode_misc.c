@@ -1144,7 +1144,11 @@ void cache_inode_get_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
     case CHARACTER_FILE:
       *pattr = pentry->object.special_obj.attributes;
       break;
-
+    case UNASSIGNED:
+    case RECYCLED:
+      memset(pattr, 0, sizeof(fsal_attrib_list_t));
+      LogFullDebug(COMPONENT_CACHE_INODE,
+                   "Unexpected UNNASIGNED or RECYLCED type in cache_inode_get_attributes");
     }
 }                               /* cache_inode_get_attributes */
 
@@ -1190,6 +1194,11 @@ void cache_inode_set_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
     case BLOCK_FILE:
     case CHARACTER_FILE:
       pentry->object.special_obj.attributes = *pattr;
+      break;
+    case UNASSIGNED:
+    case RECYCLED:
+      LogFullDebug(COMPONENT_CACHE_INODE,
+                   "Unexpected UNNASIGNED or RECYLCED type in cache_inode_set_attributes");
       break;
     }
 }                               /* cache_inode_set_attributes */

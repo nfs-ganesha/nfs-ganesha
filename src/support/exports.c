@@ -264,8 +264,10 @@ static struct hostent *nfs_LookupHostAddr(char *host)
   unsigned long hostaddr;
   int length = sizeof(hostaddr);
 
+#ifdef _USE_TIRPC_IPV6
   struct sockaddr_storage addrv6;
   struct sockaddr_in6 *paddrv6 = (struct sockaddr_in6 *)&addrv6;
+#endif
 
   /* First try gethhostbyname */
   if((output = gethostbyname(host)) == NULL)
@@ -585,17 +587,6 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
                                       int new_clients_number,
                                       char **new_clients_name, int option)
 {
-  int i = 0;
-  int j = 0;
-  unsigned int l = 0;
-  char *client_hostname;
-  struct hostent *hostEntry;
-  exportlist_client_entry_t *p_clients;
-  int is_wildcarded_host = FALSE;
-  unsigned long netMask;
-  unsigned long netAddr;
-  int error;
-
   /*
    * Notifying the export list structure that another option is to be
    * handled
@@ -727,21 +718,15 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   if(p_entry == NULL)
     return Mem_Errno;
 
+  memset(p_entry, 0, sizeof(exportlist_t));
+
   /** @todo set default values here */
 
-  p_entry->next = NULL;
-  p_entry->options = 0;
   p_entry->status = EXPORTLIST_OK;
-  p_entry->clients.num_clients = 0;
   p_entry->access_type = ACCESSTYPE_RW;
   p_entry->anonymous_uid = (uid_t) ANON_UID;
   p_entry->anonymous_gid = (gid_t) ANON_GID;
-  p_entry->all_anonymous = FALSE;
-  p_entry->MaxOffsetWrite = (fsal_off_t) 0;
-  p_entry->MaxOffsetRead = (fsal_off_t) 0;
-  p_entry->MaxCacheSize = (fsal_off_t) 0;
   p_entry->use_commit = TRUE;
-  p_entry->use_ganesha_write_buffer = FALSE;
 
   /* by default, we support auth_none and auth_sys */
   p_entry->options |= EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
@@ -763,9 +748,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->PrefWrite = (fsal_size_t) 16384;
   p_entry->PrefRead = (fsal_size_t) 16384;
   p_entry->PrefReaddir = (fsal_size_t) 16384;
-
-  strcpy(p_entry->FS_specific, "");
-  strcpy(p_entry->FS_tag, "");
 
   /* parse options for this export entry */
 
@@ -2375,8 +2357,6 @@ int export_client_matchv6(struct in6_addr *paddrv6,
 			  unsigned int export_option)
 {
   unsigned int i;
-  int rc;
-  char hostname[MAXHOSTNAMELEN];
 
   if(export_option & EXPORT_OPTION_ROOT)
     LogFullDebug(COMPONENT_DISPATCH,
@@ -2459,12 +2439,14 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
   int ipvalid;
 
   if (pexport != NULL)
-    if (pexport->new_access_list_version)
-      pexport->access_type = ACCESSTYPE_RW;
-    else if(proc_makes_write && (pexport->access_type == ACCESSTYPE_RO))
-      return EXPORT_WRITE_ATTEMPT_WHEN_RO;
-    else if(proc_makes_write && (pexport->access_type == ACCESSTYPE_MDONLY_RO))
-      return EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO;
+    {
+      if (pexport->new_access_list_version)
+        pexport->access_type = ACCESSTYPE_RW;
+      else if(proc_makes_write && (pexport->access_type == ACCESSTYPE_RO))
+        return EXPORT_WRITE_ATTEMPT_WHEN_RO;
+      else if(proc_makes_write && (pexport->access_type == ACCESSTYPE_MDONLY_RO))
+        return EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO;
+    }
 
   ipstring[0] = '\0';
   ipvalid = sprint_sockip(hostaddr, ipstring, sizeof(ipstring));
@@ -2945,8 +2927,6 @@ int CleanUpExportContext(fsal_export_context_t * p_export_context)
 /* Frees current export entry and returns next export entry. */
 exportlist_t *RemoveExportEntry(exportlist_t * exportEntry)
 {
-
-  int rc;
   exportlist_t *next;
 
   if (exportEntry == NULL)

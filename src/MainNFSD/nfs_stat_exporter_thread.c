@@ -415,7 +415,7 @@ int write_stats(char *stat_buf, int num_cmds, char **function_names, nfs_request
 
 
       /* Extract call name from function name. */
-      name = strdup(function_names[i]);
+      name = Str_Dup(function_names[i]);
       ver = strtok_r(name, "_", &saveptr);
       call = strtok_r(NULL, "_", &saveptr);
 
@@ -430,7 +430,7 @@ int write_stats(char *stat_buf, int num_cmds, char **function_names, nfs_request
           offset += 1;
         }
 
-      free(name);
+      Mem_Free(name);
     }
 
   return rc;

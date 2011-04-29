@@ -85,8 +85,6 @@ static int cache_get(SVCXPRT *, struct rpc_msg *, char **, size_t *);
 static void cache_set(SVCXPRT *, size_t);
 int Svc_dg_enablecache(SVCXPRT *, u_int);
 
-extern void Xprt_register(SVCXPRT *);
-extern void Xprt_unregister(SVCXPRT *);
 /*
  * Usage:
  *	xprt = svc_dg_create(sock, sendsize, recvsize);
@@ -100,8 +98,6 @@ static const char svc_dg_str[] = "svc_dg_create: %s";
 static const char svc_dg_err1[] = "could not get transport information";
 static const char svc_dg_err2[] = " transport does not support data transfer";
 static const char __no_mem_str[] = "out of memory";
-
-extern fd_set Svc_fdset;
 
 SVCXPRT *Svc_dg_create(fd, sendsize, recvsize)
 int fd;
@@ -158,16 +154,18 @@ u_int recvsize;
   xprt->xp_ltaddr.len = slen;
   memcpy(xprt->xp_ltaddr.buf, &ss, slen);
 
-  Xprt_register(xprt);
+  if(Xprt_register(xprt) == FALSE)
+    goto freedata;
+
   return (xprt);
  freedata:
   (void)warnx(svc_dg_str, __no_mem_str);
   if(xprt)
-    {
-      if(su)
-        (void)Mem_Free(su);
-      (void)Mem_Free(xprt);
-    }
+    (void)Mem_Free(xprt);
+  if(su)
+    (void)Mem_Free(su);
+  if(rpc_buffer(xprt))
+    (void)Mem_Free(rpc_buffer(xprt));
   return (NULL);
 }
 
@@ -289,7 +287,7 @@ SVCXPRT *xprt;
   if(xprt->xp_ltaddr.buf)
     (void)Mem_Free(xprt->xp_ltaddr.buf);
   if(xprt->xp_tp)
-    (void)free(xprt->xp_tp);
+    (void)Mem_Free(xprt->xp_tp);
   (void)Mem_Free(xprt);
 }
 
@@ -309,7 +307,7 @@ SVCXPRT *xprt;
   if(xprt->xp_ltaddr.buf)
     (void)Mem_Free(xprt->xp_ltaddr.buf);
   if(xprt->xp_tp)
-    (void)free(xprt->xp_tp);
+    (void)Mem_Free(xprt->xp_tp);
   (void)Mem_Free(xprt);
 }
 
@@ -534,7 +532,8 @@ size_t replylen;
       struct netconfig *nconf;
       char *uaddr;
 
-      if(nconf = getnetconfigent(xprt->xp_netid))
+      nconf = getnetconfigent(xprt->xp_netid);
+      if(nconf)
         {
           uaddr = taddr2uaddr(nconf, &xprt->xp_rtaddr);
           freenetconfigent(nconf);
@@ -596,7 +595,8 @@ size_t *replylenp;
               struct netconfig *nconf;
               char *uaddr;
 
-              if(nconf = getnetconfigent(xprt->xp_netid))
+              nconf = getnetconfigent(xprt->xp_netid);
+              if(nconf)
                 {
                   uaddr = taddr2uaddr(nconf, &xprt->xp_rtaddr);
                   freenetconfigent(nconf);

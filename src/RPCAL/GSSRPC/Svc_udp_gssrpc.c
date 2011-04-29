@@ -79,9 +79,6 @@ static bool_t Svcudp_getargs(SVCXPRT *, xdrproc_t, void *);
 static bool_t Svcudp_freeargs(SVCXPRT *, xdrproc_t, void *);
 static void Svcudp_destroy(SVCXPRT *);
 
-void Xprt_register(SVCXPRT * xprt);
-void Xprt_unregister(SVCXPRT * xprt);
-
 static struct xp_ops Svcudp_op = {
   Svcudp_recv,
   Svcudp_stat,

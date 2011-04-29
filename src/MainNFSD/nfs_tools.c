@@ -183,23 +183,3 @@ int lru_data_clean_entry(LRU_entry_t * entry, void *adddata)
 {
   return 0;
 }                               /* lru_data_clean_entry */
-
-void socket_setoptions(int socketFd)
-{
-  unsigned int SbMax = (1 << 30);       /* 1GB */
-
-  while(SbMax > 1048576)
-    {
-      if((setsockopt(socketFd, SOL_SOCKET, SO_SNDBUF, (char *)&SbMax, sizeof(SbMax)) < 0)
-         || (setsockopt(socketFd, SOL_SOCKET, SO_RCVBUF, (char *)&SbMax, sizeof(SbMax)) <
-             0))
-        {
-          SbMax >>= 1;          /* SbMax = SbMax/2 */
-          continue;
-        }
-
-      break;
-    }
-
-  return;
-}                               /* socket_setoptions_ctrl */

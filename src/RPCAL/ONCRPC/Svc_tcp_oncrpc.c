@@ -43,17 +43,11 @@ typedef unsigned int u_int32_t;
 #define MAX(a, b)     ((a > b) ? a : b)
 #endif
 
-void Xprt_register(SVCXPRT * xprt);
-void Xprt_unregister(SVCXPRT * xprt);
-
-void socket_setoptions(int socketFd);
-
 int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
 bool_t svcauth_wrap_dummy(XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr);
 
 pthread_mutex_t *mutex_cond_xprt;
 pthread_cond_t *condvar_xprt;
-int *etat_xprt;
 
 #define SVCAUTH_WRAP(auth, xdrs, xfunc, xwhere) svcauth_wrap_dummy( xdrs, xfunc, xwhere)
 #define SVCAUTH_UNWRAP(auth, xdrs, xfunc, xwhere) svcauth_wrap_dummy( xdrs, xfunc, xwhere)
@@ -337,7 +331,6 @@ void print_xdrrec_fbtbc(char *tag, SVCXPRT * xprt)
 }
 
 void *rpc_tcp_socket_manager_thread(void *Arg);
-extern fd_set Svc_fdset;
 
 static bool_t Rendezvous_request(register SVCXPRT * xprt)
 {
@@ -373,32 +366,16 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt)
   memcpy(&(xprt->xp_raddr), &addr, sizeof(addr));
   xprt->xp_addrlen = len;
 
-#ifdef _FREEBSD
-  if(pthread_cond_init(&condvar_xprt[xprt->xp_fd], NULL) != 0)
+  if(pthread_cond_init(&condvar_xprt[xprt->XP_SOCK], NULL) != 0)
     return FALSE;
 
-  if(pthread_mutex_init(&mutex_cond_xprt[xprt->xp_fd], NULL) != 0)
+  if(pthread_mutex_init(&mutex_cond_xprt[xprt->XP_SOCK], NULL) != 0)
     return FALSE;
-  etat_xprt[xprt->xp_fd] = 0;
 
   if((rc =
 	fridgethr_get( &sockmgr_thrid, rpc_tcp_socket_manager_thread,
-                     (void *)((unsigned long)xprt->xp_fd))) != 0 )
+                     (void *)((unsigned long)xprt->XP_SOCK))) != 0 )
     return FALSE;
-#else
-  if(pthread_cond_init(&condvar_xprt[xprt->xp_sock], NULL) != 0)
-    return FALSE;
-
-  if(pthread_mutex_init(&mutex_cond_xprt[xprt->xp_sock], NULL) != 0)
-    return FALSE;
-  etat_xprt[xprt->xp_sock] = 0;
-
-  if((rc =
-	fridgethr_get( &sockmgr_thrid, rpc_tcp_socket_manager_thread,
-                     (void *)((unsigned long)xprt->xp_sock))) != 0 )
-    return FALSE;
-
-#endif
 
   return (FALSE);               /* there is never an rpc msg to be processed */
 }

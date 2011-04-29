@@ -202,14 +202,6 @@ typedef enum nfs_clientid_confirm_state__
 #define V( sem ) pthread_mutex_unlock( &sem )
 #endif
 
-#ifdef _USE_GSSRPC
-bool_t Svcauth_gss_import_name(char *service);
-bool_t Svcauth_gss_acquire_cred(void);
-#endif
-void Xprt_register(SVCXPRT * xprt);
-void Xprt_unregister(SVCXPRT * xprt);
-
-
 /* The default attribute mask for NFSv2/NFSv3 */
 #define FSAL_ATTR_MASK_V2_V3   ( FSAL_ATTRS_MANDATORY | FSAL_ATTR_MODE     | FSAL_ATTR_FILEID | \
                                  FSAL_ATTR_FSID       | FSAL_ATTR_NUMLINKS | FSAL_ATTR_OWNER  | \
@@ -807,8 +799,6 @@ void nfs41_Session_PrintAll(void);
 int nfs_Init_ip_name(nfs_ip_name_parameter_t param);
 hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param);
 int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param);
-
-void socket_setoptions(int socketFd);
 
 #ifdef _USE_GSSRPC
 unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);

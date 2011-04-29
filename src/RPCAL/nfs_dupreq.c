@@ -56,16 +56,7 @@
 #include <pwd.h>
 #include <grp.h>
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "LRU_List.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -182,7 +173,7 @@ static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
                           struct prealloc_pool *dupreq_pool, int nfs_req_status)
 {
   int rc;
-  nfs_function_desc_t funcdesc;
+  nfs_function_desc_t funcdesc = nfs2_func_desc[0];
 
   rc = HashTable_Del(ht_dupreq, buffkey, NULL, NULL);
 
@@ -214,8 +205,6 @@ static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
           LogMajor(COMPONENT_DUPREQ,
                    "NFS Protocol version %d unknown in dupreq_gc",
                    (int)pdupreq->rq_vers);
-          funcdesc = nfs2_func_desc[0]; /* free function for PROC_NULL does nothing */
-          break;
         }
     }
   else if(pdupreq->rq_prog == nfs_param.core_param.mnt_program)
@@ -236,7 +225,6 @@ static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
                    "MOUNT Protocol version %d unknown in dupreq_gc",
                    (int)pdupreq->rq_vers);
           break;
-
         }                       /* switch( pdupreq->vers ) */
     }
 #ifdef _USE_NLM
@@ -341,7 +329,6 @@ int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt,
 int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
 {
   hash_buffer_t buffkey;
-  nfs_function_desc_t funcdesc;
   struct prealloc_pool *dupreq_pool = (struct prealloc_pool *) addparam;
   dupreq_entry_t *pdupreq = (dupreq_entry_t *) (pentry->buffdata.pdata);
   dupreq_key_t dupkey;
@@ -411,6 +398,7 @@ unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
         LogCrit(COMPONENT_DUPREQ,
                 "Could not determine whether dupreq entry used a IPV4 or IPV6 address family=%d.",
                 pdupkey->addr.ss_family);
+        addr_hash = 0;
     }
 #else
   addr_hash = pdupkey->addr.sin_addr.s_addr;
@@ -471,6 +459,7 @@ unsigned long dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * 
         LogCrit(COMPONENT_DUPREQ,
                 "Could not determine whether dupreq entry used a IPV4 or IPV6 address family=%d.",
                 (int)pdupkey->addr.ss_family);
+        addr_hash = 0;
     }
 #else
   addr_hash = pdupkey->addr.sin_addr.s_addr;
@@ -801,7 +790,6 @@ int nfs_dupreq_finish(long xid,
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
-  nfs_res_t res_nfs;
   LRU_entry_t *pentry = NULL;
   LRU_status_t lru_status;
   dupreq_key_t dupkey;

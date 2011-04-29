@@ -32,6 +32,11 @@
 #define xdr_uint64_t xdr_u_int64_t
 #endif
 
+void socket_setoptions(int socketFd);
+
+#ifdef _APPLE
+#define __FDS_BITS(set) ((set)->fds_bits)
+#endif
 
 #ifdef _USE_TIRPC
 typedef struct sockaddr_storage sockaddr_t;
@@ -59,17 +64,26 @@ extern bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*disp
                     int protocol);
 #endif                          /* _USE_TIRPC */
 
+extern int Xprt_register(SVCXPRT * xprt);
+extern void Xprt_unregister(SVCXPRT * xprt);
+
+#ifdef _USE_GSSRPC
+bool_t Svcauth_gss_import_name(char *service);
+bool_t Svcauth_gss_acquire_cred(void);
+#endif
+
 #ifdef _USE_TIRPC
 /* public data : */
 extern rw_lock_t Svc_lock;
 extern rw_lock_t Svc_fd_lock;
 #endif
 
+extern fd_set Svc_fdset;
+
 /* Declare the various RPC transport dynamic arrays */
 extern SVCXPRT         **Xports;
 extern pthread_mutex_t  *mutex_cond_xprt;
 extern pthread_cond_t   *condvar_xprt;
-extern int              *etat_xprt;
 
 extern int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt);
 extern int sprint_sockaddr(sockaddr_t *addr, char *buf, int len);
