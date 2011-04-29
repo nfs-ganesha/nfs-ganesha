@@ -211,7 +211,7 @@ int sprint_sockip(sockaddr_t *addr, char *buf, int len)
 {
   const char *name = NULL;
 
-  buf[0] = '\0';
+  memset(buf, 0, len);
 
 #ifdef _USE_TIRPC
   switch(addr->ss_family)
@@ -238,6 +238,18 @@ int sprint_sockip(sockaddr_t *addr, char *buf, int len)
   return 1;
 }
 
+/**
+ *
+ * cmp_sockaddr: compare 2 sockaddrs, including ports
+ *
+ * @param addr_1 [IN] first address
+ * @param addr_2 [IN] second address
+ * @param ignore_port [IN] 1 if you want to ignore port 
+ *       comparison, 0 if you need port comparisons
+ *
+ * @return 1 if addresses match, 0 if they don't
+ *
+ */
 int cmp_sockaddr(sockaddr_t *addr_1,
                  sockaddr_t *addr_2,
                  int ignore_port)
@@ -270,8 +282,11 @@ int cmp_sockaddr(sockaddr_t *addr_1,
           struct sockaddr_in6 *paddr1 = (struct sockaddr_in6 *)addr_1;
           struct sockaddr_in6 *paddr2 = (struct sockaddr_in6 *)addr_2;
 
-          return (paddr1->sin6_addr.s6_addr == paddr2->sin6_addr.s6_addr
-                  && (ignore_port || paddr1->sin6_port == paddr2->sin6_port));
+          return (memcmp(
+                         paddr1->sin6_addr.s6_addr, 
+                         paddr2->sin6_addr.s6_addr,
+                         sizeof(paddr2->sin6_addr.s6_addr)) == 0)
+                  && (ignore_port || paddr1->sin6_port == paddr2->sin6_port);
         }
 #endif
       default:

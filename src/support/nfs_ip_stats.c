@@ -127,7 +127,7 @@ unsigned long int ip_stats_rbt_hash_func(hash_parameter_t * p_hparam,
  */
 int compare_ip_stats(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  return (cmp_sockaddr((sockaddr_t *)(buff1->pdata), (sockaddr_t *)(buff2->pdata), 1) == 0) ? 0 : 1;
+  return (cmp_sockaddr((sockaddr_t *)(buff1->pdata), (sockaddr_t *)(buff2->pdata), 1) != 0) ? 0 : 1;
 }                               /* compare_xid */
 
 /**
