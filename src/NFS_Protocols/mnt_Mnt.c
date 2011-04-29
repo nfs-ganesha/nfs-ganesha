@@ -101,7 +101,6 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
   char tmplist_path[MAXPATHLEN];
   char tmpexport_path[MAXPATHLEN];
   char *hostname;
-  fsal_handle_t res_handle;
   fsal_path_t fsal_path;
   unsigned int bytag = FALSE;
 

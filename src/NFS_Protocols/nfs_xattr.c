@@ -570,9 +570,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
   unsigned long dircount;
   unsigned long maxcount;
   fsal_attrib_list_t dir_attr;
-  fsal_attrib_list_t entry_attr;
   unsigned int begin_cookie;
-  unsigned int end_cookie;
   unsigned int xattr_cookie;
   cookieverf3 cookie_verifier;
   file_handle_v3_t *pfile_handle = NULL;
@@ -583,10 +581,8 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
   unsigned long space_used;
   unsigned long estimated_num_entries;
   unsigned long asked_num_entries;
-  cache_inode_file_type_t dir_filetype;
   unsigned int eod_met;
   cache_inode_status_t cache_status;
-  cache_inode_status_t cache_status_gethandle;
   fsal_handle_t *pfsal_handle = NULL;
   fsal_status_t fsal_status;
   entry_name_array_item_t *entry_name_array = NULL;
@@ -902,7 +898,6 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
   fsal_status_t fsal_status;
   file_handle_v3_t *p_handle_out;
   unsigned int attr_id;
-  struct timeval tv;
   int rc;
   char empty_buff[16] = "";
   /* alias to clear code */
@@ -1014,16 +1009,8 @@ int nfs3_Write_Xattr(nfs_arg_t * parg,
   fsal_attrib_list_t attr_attrs;
   int rc;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-  cache_content_status_t content_status;
-  fsal_seek_t seek_descriptor;
-  fsal_size_t size = 0;
-  fsal_size_t written_size;
   fsal_off_t offset = 0;
   fsal_status_t fsal_status;
-  caddr_t data = NULL;
-  enum stable_how stable;       /* NFS V3 storage stability, see RFC1813 page 50 */
-  cache_inode_file_type_t filetype;
-  fsal_boolean_t eof_met;
   file_handle_v3_t *pfile_handle = NULL;
   fsal_handle_t *pfsal_handle = NULL;
   unsigned int xattr_id = 0;
@@ -1132,8 +1119,6 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
   fsal_attrib_list_t attr, xattr_attrs;
   int rc;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-  cache_content_status_t content_status;
-  fsal_seek_t seek_descriptor;
   fsal_size_t size = 0;
   size_t size_returned = 0;
   fsal_off_t offset = 0;
@@ -1269,9 +1254,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
   unsigned long dircount;
   unsigned long maxcount;
   fsal_attrib_list_t dir_attr;
-  fsal_attrib_list_t entry_attr;
   unsigned int begin_cookie;
-  unsigned int end_cookie;
   unsigned int xattr_cookie;
   cookieverf3 cookie_verifier;
   file_handle_v3_t *pfile_handle = NULL;
@@ -1282,10 +1265,8 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
   unsigned long space_used;
   unsigned long estimated_num_entries;
   unsigned long asked_num_entries;
-  cache_inode_file_type_t dir_filetype;
   unsigned int eod_met;
   cache_inode_status_t cache_status;
-  cache_inode_status_t cache_status_gethandle;
   fsal_handle_t *pfsal_handle = NULL;
   fsal_status_t fsal_status;
   entry_name_array_item_t *entry_name_array = NULL;

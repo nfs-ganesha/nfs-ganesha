@@ -512,7 +512,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   fattr4_time_create time_create;
   fattr4_maxfilesize max_filesize;
   fattr4_supported_attrs supported_attrs;
-  fattr4_fs_locations fs_locations;
   fattr4_maxread maxread;
   fattr4_maxwrite maxwrite;
   fattr4_maxname maxname;
@@ -521,7 +520,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   fattr4_aclsupport aclsupport;
   fattr4_acl acl;
   fattr4_mimetype mimetype;
-  fattr4_mounted_on_fileid mounted_on_fileid;
   fattr4_rdattr_error rdattr_error;
   fattr4_quota_avail_hard quota_avail_hard;
   fattr4_quota_avail_soft quota_avail_soft;
@@ -568,9 +566,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   int statfscalled = 0;
   fsal_staticfsinfo_t staticinfo;
   fsal_dynamicfsinfo_t dynamicinfo;
-
-  fsal_handle_t fsal_handle;
-  fsal_status_t fsal_status;
 
   /* basic init */
   memset(attrvalsBuffer, 0, NFS4_ATTRVALS_BUFFLEN);
@@ -2512,7 +2507,6 @@ int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap )
 {
   uint_t i = 0;
   uint_t val = 0;
-  uint_t index = 0;
   uint_t offset = 0;
 
   uint32_t bitmap_val[2] ;
