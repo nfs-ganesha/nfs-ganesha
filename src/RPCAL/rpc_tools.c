@@ -153,9 +153,7 @@ unsigned long hash_sockaddr(sockaddr_t *addr)
           break;
         }
       default:
-        LogCrit(COMPONENT_DUPREQ,
-                "Could not determine whether dupreq entry used a IPV4 or IPV6 address family=%d.",
-                addr->ss_family);
+        break;
     }
 #else
   addr_hash = addr->sin_addr.s_addr;
