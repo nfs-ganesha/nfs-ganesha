@@ -1179,9 +1179,7 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
     }
 
   /* UTF8 strings may not end with \0, but they carry their length */
-  strncpy(strname, arg_LOOKUP4.objname.utf8string_val,
-          arg_LOOKUP4.objname.utf8string_len);
-  strname[arg_LOOKUP4.objname.utf8string_len] = '\0';
+  utf82str(strname, sizeof(strname), &arg_LOOKUP4.objname);
 
   /* Build the FSAL name */
   if((cache_status = cache_inode_error_convert(FSAL_str2name(strname,
@@ -1351,11 +1349,11 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
       res_READDIR4.status = NFS4ERR_TOOSMALL;
       return res_READDIR4.status;
     }
-  /* Cookie verifier has the value of the Server Boot Time for pseudo fs */
 
+  /* Cookie verifier has the value of the Server Boot Time for pseudo fs */
+  memset(cookie_verifier, 0, NFS4_VERIFIER_SIZE);
 #ifdef _WITH_COOKIE_VERIFIER
   /* BUGAZOMEU: management of the cookie verifier */
-  memset(cookie_verifier, 0, NFS4_VERIFIER_SIZE);
   if(NFS_SpecificConfig.UseCookieVerf == 1)
     {
       memcpy(cookie_verifier, &ServerBootTime, sizeof(ServerBootTime));
@@ -1523,9 +1521,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
     }
 
   /* UTF8 strings may not end with \0, but they carry their length */
-  strncpy(strname, arg_OPEN4.claim.open_claim4_u.file.utf8string_val,
-          arg_OPEN4.claim.open_claim4_u.file.utf8string_len);
-  strname[arg_OPEN4.claim.open_claim4_u.file.utf8string_len] = '\0';
+  utf82str(strname, sizeof(strname), &arg_OPEN4.claim.open_claim4_u.file);
 
   /* Build the FSAL name */
   if((cache_status = cache_inode_error_convert(FSAL_str2name(strname,

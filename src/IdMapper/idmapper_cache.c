@@ -293,7 +293,7 @@ int idmap_compute_hash_value(char *name, uint32_t * phashval)
 {
    uint32_t res ;
   
-   res = HashTable_hash_buff( name, strlen( name ) ) ;
+   res = Lookup3_hash_buff( name, strlen( name ) ) ;
 
     return (int)res ;
 }

@@ -104,7 +104,7 @@ int nfs_Mkdir(nfs_arg_t * parg,
   cache_inode_file_type_t parent_filetype;
   fsal_handle_t *pfsal_handle;
   fsal_name_t dir_name;
-  cache_inode_status_t cache_status;
+  cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   cache_inode_status_t cache_status_lookup;
 
   if(isDebug(COMPONENT_NFSPROTO))

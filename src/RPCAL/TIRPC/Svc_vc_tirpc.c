@@ -211,7 +211,7 @@ u_int sendsize;
 u_int recvsize;
 {
   SVCXPRT *xprt;
-  struct cf_conn *cd;
+  struct cf_conn *cd = NULL;
   const char *netid;
   struct __rpc_sockinfo si;
 

@@ -713,8 +713,7 @@ int utf82uid(utf8string * utf8str, uid_t * Uid)
       return -1;
     }
 
-  strncpy(buff, utf8str->utf8string_val, utf8str->utf8string_len);
-  buff[utf8str->utf8string_len] = '\0';
+  utf82str(buff, sizeof(buff), utf8str);
 
 #ifndef _USE_NFSIDMAP
   /* User is shown as a string 'user@domain', remove it if libnfsidmap is not used */
@@ -766,8 +765,7 @@ int utf82gid(utf8string * utf8str, gid_t * Gid)
       return 0;
     }
 
-  strncpy(buff, utf8str->utf8string_val, utf8str->utf8string_len);
-  buff[utf8str->utf8string_len] = '\0';
+  utf82str(buff, sizeof(buff), utf8str);
 
 #ifndef _USE_NFSIDMAP
   /* Group is shown as a string 'group@domain' , remove it if libnfsidmap is not used */

@@ -1514,8 +1514,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_LOOKUP;
 
   /* UTF8 strings may not end with \0, but they carry their length */
-  strncpy(name, arg_LOOKUP4.objname.utf8string_val, arg_LOOKUP4.objname.utf8string_len);
-  name[arg_LOOKUP4.objname.utf8string_len] = '\0';
+  utf82str(name, sizeof(name), &arg_LOOKUP4.objname);
 
   /* Get the pseudo fs entry related to the file handle */
   if(!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
@@ -1989,9 +1988,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
     }
 
   /* Cookie verifier has the value of the Server Boot Time for pseudo fs */
+  memset(cookie_verifier, 0, NFS4_VERIFIER_SIZE);
 #ifdef _WITH_COOKIE_VERIFIER
   /* BUGAZOMEU: management of the cookie verifier */
-  memset(cookie_verifier, 0, NFS4_VERIFIER_SIZE);
   if(NFS_SpecificConfig.UseCookieVerf == 1)
     {
       memcpy(cookie_verifier, &ServerBootTime, sizeof(ServerBootTime));

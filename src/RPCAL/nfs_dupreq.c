@@ -473,6 +473,7 @@ int display_req_key(hash_buffer_t * pbuff, char *str)
 
           name = paddr->sun_path;
           sprintf(portbuf, "n/a");
+          break;
         }
       default:
         sprintf(portbuf, "n/a");
@@ -543,6 +544,7 @@ int display_req_val(hash_buffer_t * pbuff, char *str)
 
           name = paddr->sun_path;
           sprintf(portbuf, "n/a");
+          break;
         }
       default:
         sprintf(portbuf, "n/a");
@@ -776,11 +778,12 @@ nfs_res_t nfs_dupreq_get(long xid, struct svc_req *ptr_req, SVCXPRT *xprt, int *
   nfs_res_t res_nfs;
   dupreq_key_t dupkey;
 
+  memset(&res_nfs, 0, sizeof(res_nfs));
+
   /* Get the socket address for the key */
   if(copy_xprt_addr(&dupkey.addr, xprt) == 0)
     {
       *pstatus = DUPREQ_NOT_FOUND;
-      memset(&res_nfs, 0, sizeof(res_nfs));
       return res_nfs;
     }
 
