@@ -77,11 +77,8 @@ fsal_status_t GPFSFSAL_lookup(gpfsfsal_handle_t * p_parent_directory_handle,    
   int rc, errsv;
   fsal_status_t status;
   struct stat buffstat;
-  fsal_path_t pathfsal;
-
   int parentfd;
   int objectfd;
-  int errsrv;
 
   /* sanity checks
    * note : object_attributes is optionnal
@@ -130,7 +127,7 @@ fsal_status_t GPFSFSAL_lookup(gpfsfsal_handle_t * p_parent_directory_handle,    
   /* get directory metadata */
   TakeTokenFSCall();
   rc = fstat(parentfd, &buffstat);
-  errsrv = errno;
+  errsv = errno;
   ReleaseTokenFSCall();
 
   if(rc)
@@ -175,13 +172,13 @@ fsal_status_t GPFSFSAL_lookup(gpfsfsal_handle_t * p_parent_directory_handle,    
   /* get file handle, it it exists */
   TakeTokenFSCall();
   objectfd = openat(parentfd, p_filename->name, O_RDONLY, 0600);
-  errsrv = errno;
+  errsv = errno;
   ReleaseTokenFSCall();
 
   if(objectfd < 0)
     {
       close(parentfd);
-      Return(posix2fsal_error(errsrv), errsrv, INDEX_FSAL_lookup);
+      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_lookup);
     }
 
   /* This might be a race, but it's the best we can currently do */

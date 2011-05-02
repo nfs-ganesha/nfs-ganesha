@@ -537,7 +537,6 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 fsal_status_t fsal_internal_handle2fd(fsal_op_context_t * p_context,
                                       fsal_handle_t * phandle, int *pfd, int oflags)
 {
-  int rc = 0;
   int dirfd = 0;
   fsal_status_t status;
 
@@ -611,7 +610,6 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
 {
   int rc;
   struct name_handle_arg harg;
-  int objectfd;
 
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -653,7 +651,6 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
 {
   int rc;
   struct name_handle_arg harg;
-  int objectfd;
 
   if(!p_handle || !p_fsalname)
     ReturnCode(ERR_FSAL_FAULT, 0);
