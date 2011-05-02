@@ -357,7 +357,6 @@ int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
   hash_buffer_t buffkey, old_key, old_value;
   int status = IP_STATS_SUCCESS;
   nfs_ip_stats_t *pnfs_ip_stats = NULL;
-  sockaddr_t *pipaddr = NULL;
 
   buffkey.pdata = (caddr_t) ipaddr;
   buffkey.len = sizeof(sockaddr_t);

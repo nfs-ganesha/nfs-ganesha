@@ -485,7 +485,6 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
                        clientid4 clientid)
 {
   u_int16_t time_digest = 0;
-  u_int16_t counter_digest = 0;
   cache_inode_state_t state;
   nfs_client_id_t nfs_clientid;
 

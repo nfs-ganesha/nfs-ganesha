@@ -95,7 +95,7 @@ int nfs_Create(nfs_arg_t * parg,
 
   char *str_file_name = NULL;
   fsal_name_t file_name;
-  fsal_accessmode_t mode;
+  fsal_accessmode_t mode = 0;
   cache_entry_t *file_pentry = NULL;
   cache_entry_t *parent_pentry = NULL;
   int rc;

@@ -96,8 +96,8 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
 
   unsigned int i = 0;
 
-  bitmap4 RdAttrErrorBitmap;
-  attrlist4 RdAttrErrorVals;
+  bitmap4 RdAttrErrorBitmap = { 1, (uint32_t *) "\0\0\0\b" };   /* 0xB = 11 = FATTR4_RDATTR_ERROR */
+  attrlist4 RdAttrErrorVals = { 0, NULL };      /* Nothing to be seen here */
 
   resp->resop = NFS4_OP_READDIR;
   res_READDIR4.status = NFS4_OK;

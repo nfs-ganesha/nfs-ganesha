@@ -220,12 +220,16 @@ int uid2name(char *name, uid_t * puid)
  */
 int name2uid(char *name, uid_t * puid)
 {
+#ifndef _USE_NFSIDMAP
   struct passwd passwd;
   struct passwd *ppasswd;
   char buff[MAXPATHLEN];
+#endif
   uid_t uid;
+#ifdef _USE_GSSRPC
   gid_t gss_gid;
   uid_t gss_uid;
+#endif
   char fqname[MAXNAMLEN];
   int rc;
 
@@ -362,9 +366,14 @@ int name2uid(char *name, uid_t * puid)
  */
 int gid2name(char *name, gid_t * pgid)
 {
+#ifndef _USE_NFSIDMAP
   struct group g;
-  struct group *pg;
-  char buff[MAXPATHLEN];
+#ifndef _SOLARIS
+  struct group *pg = NULL;
+#endif
+  static char buff[MAXPATHLEN]; /* Working area for getgrnam_r */
+#endif
+
 #ifdef _USE_NFSIDMAP
   int rc;
 
@@ -464,9 +473,13 @@ int gid2name(char *name, gid_t * pgid)
  */
 int name2gid(char *name, gid_t * pgid)
 {
+#ifndef _USE_NFSIDMAP
   struct group g;
+#ifndef _SOLARIS
   struct group *pg = NULL;
+#endif
   static char buff[MAXPATHLEN]; /* Working area for getgrnam_r */
+#endif
   gid_t gid;
   int rc;
 
@@ -687,7 +700,9 @@ int utf82uid(utf8string * utf8str, uid_t * Uid)
 {
   char buff[2 * MAXNAMLEN];
   char uidname[MAXNAMLEN];
+#ifndef _USE_NFSIDMAP
   char domainname[MAXNAMLEN];
+#endif
   int  rc;
 
   if(utf8str->utf8string_len == 0)
@@ -738,7 +753,9 @@ int utf82gid(utf8string * utf8str, gid_t * Gid)
 {
   char buff[2 * MAXNAMLEN];
   char gidname[MAXNAMLEN];
+#ifndef _USE_NFSIDMAP
   char domainname[MAXNAMLEN];
+#endif
   int  rc;
 
   if(utf8str->utf8string_len == 0)

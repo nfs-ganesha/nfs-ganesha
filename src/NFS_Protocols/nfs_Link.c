@@ -106,8 +106,8 @@ int nfs_Link(nfs_arg_t * parg,
   fsal_attrib_list_t attr_parent_after;
   cache_inode_file_type_t parent_filetype;
   cache_inode_file_type_t target_filetype;
-  short to_exportid;
-  short from_exportid;
+  short to_exportid = 0;
+  short from_exportid = 0;
 
   if(isDebug(COMPONENT_NFSPROTO))
     {

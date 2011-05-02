@@ -169,7 +169,6 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
 
 static void nlm4_lock_message_resp(void *arg)
 {
-  int proc;
   nlm_async_res_t *pres = arg;
 
   if(isFullDebug(COMPONENT_NLM))

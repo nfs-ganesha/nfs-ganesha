@@ -94,7 +94,7 @@ int nfs_Readdir(nfs_arg_t * parg,
   cache_entry_t *pentry_dot_dot = NULL;
   unsigned long count = 0;
   fsal_attrib_list_t dir_attr;
-  unsigned int cookie;
+  unsigned int cookie = 0;
   unsigned int cache_inode_cookie;
   unsigned int end_cookie;
   cache_inode_dir_entry_t *dirent_array;
@@ -441,7 +441,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                       RES_READDIR2_OK.entries[0].name = entry_name_array[0];
                       strcpy(RES_READDIR2_OK.entries[0].name, ".");
 
-                      *((int *)RES_READDIR2_OK.entries[0].cookie) = 1;
+                      *(int *)(RES_READDIR2_OK.entries[0].cookie) = 1;
 
                       /* pointer to next entry ( if any ) */
 

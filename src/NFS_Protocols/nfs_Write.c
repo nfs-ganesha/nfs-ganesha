@@ -113,7 +113,7 @@ int nfs_Write(nfs_arg_t * parg,
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
-      char str[LEN_FH_STR], *stables;
+      char str[LEN_FH_STR], *stables = "";
 
       switch (preq->rq_vers)
         {

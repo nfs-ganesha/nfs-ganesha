@@ -241,17 +241,15 @@ int get_req_uid_gid(struct svc_req *ptr_req,
                     exportlist_t * pexport, struct user_cred *user_credentials)
 {
   struct authunix_parms *punix_creds = NULL;
+  unsigned int rpcxid = 0;
 #ifdef _USE_GSSRPC
   struct svc_rpc_gss_data *gd = NULL;
   OM_uint32 maj_stat = 0;
   OM_uint32 min_stat = 0;
   char username[MAXNAMLEN];
   char domainname[MAXNAMLEN];
-#endif
-  fsal_status_t fsal_status;
-  unsigned int rpcxid = 0;
-
   char *ptr;
+#endif
 
   if (user_credentials == NULL)
     return FALSE;

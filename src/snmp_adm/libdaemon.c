@@ -52,7 +52,6 @@ static void *pool(void *v)
     {
       agent_check_and_process(1);       /* 0 == don't block */
     }
-  return 0;
 }
 
 /**
@@ -124,7 +123,6 @@ static int get_conf_from_env()
  */
 static register_info *new_register(char *label, char *desc, int type, int reg_len)
 {
-  register_info *save;
   register_info *new = malloc(sizeof(register_info));
 
   /*fill the struct */
@@ -165,6 +163,7 @@ static int register_meta(oid * myoid, int len, char *name, char *desc,
   return err1 != MIB_REGISTERED_OK || err2 != MIB_REGISTERED_OK;
 }
 
+/* id of the object, incremented after each record */
 int branch_num[NUM_BRANCH];
 
 /* fill a oid with root|prod_id|stat_num
@@ -172,16 +171,6 @@ int branch_num[NUM_BRANCH];
  */
 static void get_oid(oid * myoid, int branch, size_t * plen)
 {
-  /* id of the object,
-     incremented after each record */
-  static int stat_num = 0;
-  static int log_num  = 0;
-#ifdef _ERROR_INJECTION
-  static int inject_num = 0;
-#endif
-  static int conf_num = 0;
-  static int proc_num = 0;
-
   *plen = root_oid_len;
   memcpy(myoid, root_oid, sizeof(oid) * root_oid_len);
 
@@ -190,7 +179,7 @@ static void get_oid(oid * myoid, int branch, size_t * plen)
   myoid[(*plen)++] = branch_num[branch]++;
   (*plen)++;
 
-/* output : oid=$(ROOT).prodId.stat.stat_num.***.***.***  
+/* output : oid=$(ROOT).prodId.stat.branch_num[branch].***.***.***  
                  <-------------- len ---------->
 		 <---------- MAX_OID_LEN ---------->
 */
@@ -217,7 +206,7 @@ static const char *branch_to_str(int branch)
 /* register a scalar in the tree */
 static int register_scal_instance(int type, const register_scal * instance)
 {
-  int err1, err2;
+  int err1, err2 = 0;
   register_info *info;
 
   oid myoid[MAX_OID_LEN];
@@ -255,7 +244,7 @@ static int register_scal_instance(int type, const register_scal * instance)
 /* register a getset in the tree */
 static int register_get_set_instance(int branch, const register_get_set * instance)
 {
-  int err1, err2;
+  int err1, err2 = 0;
   register_info *info;
   get_set_info *gs_info;
 

@@ -284,7 +284,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       }
 
   /* Do not read more than FATTR4_MAXREAD */
-  if((data->pexport->options & EXPORT_OPTION_MAXREAD == EXPORT_OPTION_MAXREAD) &&
+  if((data->pexport->options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD &&
      size > data->pexport->MaxRead)
     {
       /* the client asked for too much data, 
