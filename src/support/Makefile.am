@@ -1,5 +1,11 @@
 AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
+check_PROGRAMS = test_nfs_ip_stats
+
+test_nfs_ip_stats_SOURCES = test_nfs_ip_stats.c
+test_nfs_ip_stats_LDADD = libsupport.la ../HashTable/libhashtable.la ../BuddyMalloc/libBuddyMalloc.la ../Log/liblog.la ../RW_Lock/librwlock.la
+
+TESTS = test_nfs_ip_stats
 
 noinst_LTLIBRARIES            = libsupport.la
 

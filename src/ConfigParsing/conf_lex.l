@@ -1,4 +1,7 @@
 %{
+
+#pragma GCC diagnostic ignored "-Wunused-value"
+
 #include "config.h"
 #include "analyse.h"
 #include "conf_yacc.h"

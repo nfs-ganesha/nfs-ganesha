@@ -83,8 +83,7 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
                              exportlist_client_entry_t * pclient_found)
 {
   int rc;
-  unsigned int addr;
-  struct sockaddr_in *psockaddr_in;
+  sockaddr_t *psockaddr_in;
 #ifdef _USE_TIRPC_IPV6
   struct sockaddr_in6 *psockaddr_in6;
 #endif
@@ -95,8 +94,7 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
 
   memset(ten_bytes_all_0, 0, 10);
 
-  psockaddr_in = (struct sockaddr_in *)pssaddr;
-  addr = psockaddr_in->sin_addr.s_addr;
+  psockaddr_in = (sockaddr_t *)pssaddr;
 
   /* For now, no matching client is found */
   memset(pclient_found, 0, sizeof(exportlist_client_entry_t));
@@ -106,8 +104,7 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
     {
 #endif                          /* _USE_TIRPC_IPV6 */
       /* Convert IP address into a string for wild character access checks. */
-      inet_ntop(psockaddr_in->sin_family, &psockaddr_in->sin_addr,
-                ipstring, INET_ADDRSTRLEN);
+      sprint_sockip(psockaddr_in, ipstring, sizeof(ipstring));
       if(ipstring == NULL)
         {
           LogCrit(COMPONENT_MAIN,
@@ -115,7 +112,7 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
           return FALSE;
         }
       if(export_client_match
-         (addr, ipstring, clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
+         (psockaddr_in, ipstring, clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
         return TRUE;
 #ifdef _USE_TIRPC_IPV6
     }
@@ -324,13 +321,6 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
         }
     }
   return 0;
-}
-
-void *get_in_addr(struct sockaddr *sa)
-{
-  if(sa->sa_family == AF_INET)
-    return &(((struct sockaddr_in*)sa)->sin_addr);
-  return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
 int merge_stats(nfs_request_stat_item_t *global_stat_items,
