@@ -41,7 +41,7 @@ void socket_setoptions(int socketFd);
 #ifdef _USE_TIRPC
 typedef struct sockaddr_storage sockaddr_t;
 #else
-typedef struct sockaddr_in sockaddr_t
+typedef struct sockaddr_in sockaddr_t;
 #endif
 
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
@@ -56,6 +56,8 @@ extern struct netconfig *getnetconfigent(const char *netid);
 extern void freenetconfigent(struct netconfig *);
 extern SVCXPRT *Svc_vc_create(int, u_int, u_int);
 extern SVCXPRT *Svc_dg_create(int, u_int, u_int);
+extern int Xprt_register(SVCXPRT * xprt);
+extern void Xprt_unregister(SVCXPRT * xprt);
 #else
 extern void Svcudp_soft_destroy(SVCXPRT * xprt);
 extern SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize);
@@ -64,8 +66,6 @@ extern bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*disp
                     int protocol);
 #endif                          /* _USE_TIRPC */
 
-extern int Xprt_register(SVCXPRT * xprt);
-extern void Xprt_unregister(SVCXPRT * xprt);
 
 #ifdef _USE_GSSRPC
 bool_t Svcauth_gss_import_name(char *service);

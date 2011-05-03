@@ -105,7 +105,7 @@ int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt)
 {
   struct sockaddr_in *phostaddr = svc_getcaller(xprt);
 
-  memcpy(addr, phostaddr, sizeof(sockaddr_t);
+  memcpy(addr, phostaddr, sizeof(sockaddr_t));
   return 1;
 }
 #endif
@@ -190,7 +190,7 @@ int sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
         port = -1;
     }
 #else
-  name = inet_ntop(addr->ss_family, &addr->sin_addr), buf, len);
+  name = inet_ntop(addr->sin_family, &addr->sin_addr, buf, len);
   port = ntohs(addr->sin_port);
 #endif
 
@@ -227,7 +227,7 @@ int sprint_sockip(sockaddr_t *addr, char *buf, int len)
         name = buf;
     }
 #else
-  name = inet_ntop(addr->ss_family, &addr->sin_addr), buf, len);
+  name = inet_ntop(addr->sin_family, &addr->sin_addr, buf, len);
 #endif
 
   if(name == NULL)
@@ -258,14 +258,14 @@ int cmp_sockaddr(sockaddr_t *addr_1,
   if(addr_1->ss_family != addr_2->ss_family)
     return 0;
 #else
-  if(addr_1->sa_family != addr_2->sa_family)
+  if(addr_1->sin_family != addr_2->sin_family)
     return 0;
 #endif  
 
 #ifdef _USE_TIRPC
   switch (addr_1->ss_family)
 #else
-  switch (addr_1->sa_family)
+  switch (addr_1->sin_family)
 #endif
     {
       case AF_INET:
