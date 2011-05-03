@@ -142,7 +142,7 @@ iterators invalidated are those referring to the deleted node.
     struct rbt_node *__x;						\
     do {								\
       __x = (__node);							\
-    } while (((__node) = (__node)->parent) && ((__node)->next == __x));	\
+    } while ((((__node) = (__node)->parent)) && ((__node)->next == __x));	\
   }									\
 }
 
@@ -156,7 +156,7 @@ iterators invalidated are those referring to the deleted node.
     struct rbt_node *__x;						\
     do {								\
       __x = (__node);							\
-    } while (((__node) = (__node)->parent) && ((__node)->left == __x));	\
+    } while ((((__node) = (__node)->parent)) && ((__node)->left == __x));	\
   }									\
 }
 
@@ -186,7 +186,7 @@ iterators invalidated are those referring to the deleted node.
 {									\
   struct rbt_node *__yy;						\
   __yy = (__xx)->next;							\
-  if ((__xx)->next = __yy->left) {					\
+  if (((__xx)->next = __yy->left)) {					\
     __yy->left->parent = (__xx);					\
     __yy->left->anchor = &(__xx)->next;					\
   }									\
@@ -202,7 +202,7 @@ iterators invalidated are those referring to the deleted node.
 {									\
   struct rbt_node *__yy;						\
   __yy = (__xx)->left;							\
-  if ((__xx)->left = __yy->next) {					\
+  if (((__xx)->left = __yy->next)) {					\
     __yy->next->parent = (__xx);					\
     __yy->next->anchor = &(__xx)->left;					\
   }									\
@@ -552,14 +552,14 @@ iterators invalidated are those referring to the deleted node.
     } else {								\
       (__node) = __x;							\
       while (__x) {							\
-        while (__x = __x->left) {					\
+        while ((__x = __x->left)) {					\
           if (__x->rbt_value < (__val))					\
             break;							\
           (__node) = __x;						\
         }								\
         if (__x == 0)							\
           break;							\
-        while (__x = __x->next) {					\
+        while ((__x = __x->next)) {					\
           if (__x->rbt_value == (__val)) {				\
             (__node) = __x;						\
             break;							\
