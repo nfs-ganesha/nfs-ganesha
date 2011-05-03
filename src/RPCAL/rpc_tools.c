@@ -186,6 +186,7 @@ int sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
         strncpy(buf, ((struct sockaddr_un *)addr)->sun_path, len);
         name = buf;
         port = -1;
+        break;
       default:
         port = -1;
     }

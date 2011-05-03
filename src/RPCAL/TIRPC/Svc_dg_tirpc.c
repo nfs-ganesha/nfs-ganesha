@@ -162,12 +162,12 @@ u_int recvsize;
   return (xprt);
  freedata:
   (void)warnx(svc_dg_str, __no_mem_str);
+  if(xprt && rpc_buffer(xprt))
+    (void)Mem_Free(rpc_buffer(xprt));
   if(xprt)
     (void)Mem_Free(xprt);
   if(su)
     (void)Mem_Free(su);
-  if(rpc_buffer(xprt))
-    (void)Mem_Free(rpc_buffer(xprt));
   return (NULL);
 }
 

@@ -2505,6 +2505,13 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
           return EXPORT_PERMISSION_DENIED;
         }
 
+      if(pexport == NULL)
+        {
+          LogCrit(COMPONENT_DISPATCH,
+                  "Error: no export to verify permissions against.");
+          return EXPORT_PERMISSION_DENIED;
+        }
+
       /* check if any root access export matches this client */
       if(user_credentials->caller_uid == 0)
         {

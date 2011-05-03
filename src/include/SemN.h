@@ -36,8 +36,8 @@ int semaphore_init(semaphore_t * sem, int value);
 int semaphore_destroy(semaphore_t * sem);
 
 /** Takes a token. */
-int semaphore_P(semaphore_t * sem);
+void semaphore_P(semaphore_t * sem);
 /** Give back a token. */
-int semaphore_V(semaphore_t * sem);
+void semaphore_V(semaphore_t * sem);
 
 #endif

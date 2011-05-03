@@ -103,12 +103,8 @@ int semaphore_destroy(semaphore_t * sem)
 
 }
 
-int semaphore_P(semaphore_t * sem)
+void semaphore_P(semaphore_t * sem)
 {
-
-  if(!sem)
-    return EINVAL;
-
   /* enters into the critical section */
   pthread_mutex_lock(&sem->mutex);
 
@@ -119,12 +115,10 @@ int semaphore_P(semaphore_t * sem)
 
   /* leaves the critical section */
   pthread_mutex_unlock(&sem->mutex);
-
 }
 
-int semaphore_V(semaphore_t * sem)
+void semaphore_V(semaphore_t * sem)
 {
-
   /* enters into the critical section */
   pthread_mutex_lock(&sem->mutex);
 
@@ -136,5 +130,4 @@ int semaphore_V(semaphore_t * sem)
 
   /* leaves the critical section */
   pthread_mutex_unlock(&sem->mutex);
-
 }
