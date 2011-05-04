@@ -367,7 +367,7 @@ unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
                                      hash_buffer_t * buffclef)
 {
   dupreq_key_t *pdupkey = (dupreq_key_t *)(buffclef->pdata);
-  unsigned long addr_hash = hash_sockaddr((sockaddr_t *) &pdupkey->addr);
+  unsigned long addr_hash = hash_sockaddr((sockaddr_t *) &pdupkey->addr, CHECK_PORT);
 
   return (((unsigned long)pdupkey->xid + addr_hash)^(pdupkey->checksum)) % p_hparam->index_size;
 }                               /*  dupreq_value_hash_func */
@@ -392,7 +392,7 @@ unsigned long dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * 
 {
   dupreq_key_t *pdupkey = (dupreq_key_t *)(buffclef->pdata);
 
-  unsigned long addr_hash = hash_sockaddr((sockaddr_t *) &pdupkey->addr);
+  unsigned long addr_hash = hash_sockaddr((sockaddr_t *) &pdupkey->addr, CHECK_PORT);
 
   return (((unsigned long)pdupkey->xid + addr_hash)^(pdupkey->checksum)) % p_hparam->index_size;
 }                               /* dupreq_rbt_hash_func */

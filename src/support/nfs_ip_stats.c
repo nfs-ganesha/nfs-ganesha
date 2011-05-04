@@ -87,7 +87,7 @@ extern nfs_parameter_t nfs_param;
 unsigned long int ip_stats_value_hash_func(hash_parameter_t * p_hparam,
                                            hash_buffer_t * buffclef)
 {
-  return hash_sockaddr((sockaddr_t *)buffclef->pdata) % p_hparam->index_size;
+  return hash_sockaddr((sockaddr_t *)buffclef->pdata, 1) % p_hparam->index_size;
 }                               /*  ip_stats_value_hash_func */
 
 /**
@@ -109,7 +109,7 @@ unsigned long int ip_stats_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long int ip_stats_rbt_hash_func(hash_parameter_t * p_hparam,
                                          hash_buffer_t * buffclef)
 {
-  return hash_sockaddr((sockaddr_t *)buffclef->pdata);
+  return hash_sockaddr((sockaddr_t *)buffclef->pdata, 1);
 }
 
 /**

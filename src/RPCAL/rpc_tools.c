@@ -125,7 +125,7 @@ int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt)
  * @return hash value
  *
  */
-unsigned long hash_sockaddr(sockaddr_t *addr)
+unsigned long hash_sockaddr(sockaddr_t *addr, int ignore_port)
 {
   unsigned long addr_hash = 0;
   int port;
@@ -136,8 +136,11 @@ unsigned long hash_sockaddr(sockaddr_t *addr)
         {
           struct sockaddr_in *paddr = (struct sockaddr_in *)addr;
           addr_hash = paddr->sin_addr.s_addr;
-          port = paddr->sin_port;
-          addr_hash ^= (port<<16);
+          if (ignore_port == 0) 
+          {
+            port = paddr->sin_port;
+            addr_hash ^= (port<<16);
+          }
           break;
         }
       case AF_INET6:
@@ -148,8 +151,11 @@ unsigned long hash_sockaddr(sockaddr_t *addr)
                       paddr->sin6_addr.s6_addr32[1] ^
                       paddr->sin6_addr.s6_addr32[2] ^
                       paddr->sin6_addr.s6_addr32[3];
-          port = paddr->sin6_port;
-          addr_hash ^= (port<<16);
+          if (ignore_port == 0) 
+          {
+            port = paddr->sin6_port;
+            addr_hash ^= (port<<16);
+          }
           break;
         }
       default:

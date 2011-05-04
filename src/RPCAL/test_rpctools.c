@@ -63,18 +63,18 @@ void ipv4check() {
     // printf("Value = %lu\n", hash_sockaddr(&ipv4a));
     // printf("Value = %lu\n", hash_sockaddr(&ipv4b));
     // printf("Value = %lu\n", hash_sockaddr(&ipv4c));
-    EQUALS(hash_sockaddr(&ipv4a), 151325194, "ipv4a doesn't hash as expected");
-    EQUALS(hash_sockaddr(&ipv4b), 151259658, "ipv4b doesn't hash as expected");
-    EQUALS(hash_sockaddr(&ipv4c), 168102410, "ipv4c doesn't hash as expected");
+    EQUALS(hash_sockaddr(&ipv4a, 0), 151325194, "ipv4a doesn't hash as expected");
+    EQUALS(hash_sockaddr(&ipv4b, 0), 151259658, "ipv4b doesn't hash as expected");
+    EQUALS(hash_sockaddr(&ipv4c, 0), 168102410, "ipv4c doesn't hash as expected");
 }
 
 void ipv6check() {
     /* printf("Value = %lu\n", hash_sockaddr(&ipv6a)); */
     /* printf("Value = %lu\n", hash_sockaddr(&ipv6b)); */
     /* printf("Value = %lu\n", hash_sockaddr(&ipv6c)); */
-    EQUALS(hash_sockaddr(&ipv6a), 150995232, "ipv6a doesn't hash as expected");
-    EQUALS(hash_sockaddr(&ipv6b), 151060768, "ipv6b doesn't hash as expected");
-    EQUALS(hash_sockaddr(&ipv6c), 150998560, "ipv6c doesn't hash as expected");
+    EQUALS(hash_sockaddr(&ipv6a, 0), 150995232, "ipv6a doesn't hash as expected");
+    EQUALS(hash_sockaddr(&ipv6b, 0), 151060768, "ipv6b doesn't hash as expected");
+    EQUALS(hash_sockaddr(&ipv6c, 0), 150998560, "ipv6c doesn't hash as expected");
 }
 
 void ipv4print() {
