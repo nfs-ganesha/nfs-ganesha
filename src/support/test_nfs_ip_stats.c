@@ -6,6 +6,7 @@
 #include "stuff_alloc.h"
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
 #include "../MainNFSD/nfs_init.h"
 
 hash_table_t * ipstats;
@@ -79,12 +80,12 @@ void init()
     NamePool(ip_stats_pool, "IP Stats Cache Pool");
 
     create_ipv4("10.10.5.1", 2048, (struct sockaddr_in * ) &ipv4a);
-    create_ipv4("10.10.5.1", 2049, (struct sockaddr_in * ) &ipv4b);
+    //    create_ipv4("10.10.5.1", 2049, (struct sockaddr_in * ) &ipv4b);
     create_ipv4("10.10.5.2", 2048, (struct sockaddr_in * ) &ipv4c);
 
 #ifdef _USE_TIRPC
     create_ipv6("2001::1", 2048, (struct sockaddr_in6 *) &ipv6a);
-    create_ipv6("2001::1", 2049, (struct sockaddr_in6 *) &ipv6b);
+    // create_ipv6("2001::1", 2049, (struct sockaddr_in6 *) &ipv6b);
     create_ipv6("2001::f:1", 2048, (struct sockaddr_in6 *) &ipv6c);
 #endif    
 
@@ -94,7 +95,7 @@ void test_not_found()
 {
     nfs_ip_stats_t * out;
     EQUALS(nfs_ip_stats_get(ipstats, &ipv4a, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv4a yet");
-    EQUALS(nfs_ip_stats_get(ipstats, &ipv4b, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv4b yet");
+    // EQUALS(nfs_ip_stats_get(ipstats, &ipv4b, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv4b yet");
     EQUALS(nfs_ip_stats_get(ipstats, &ipv4c, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv4c yet");
 }
 
@@ -102,7 +103,7 @@ void test_not_found_bc()
 {
     nfs_ip_stats_t * out;
     EQUALS(nfs_ip_stats_get(ipstats, &ipv4a, &out), IP_STATS_SUCCESS, "There should be an ipv4a");
-    EQUALS(nfs_ip_stats_get(ipstats, &ipv4b, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv4b yet");
+    // EQUALS(nfs_ip_stats_get(ipstats, &ipv4b, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv4b yet");
     EQUALS(nfs_ip_stats_get(ipstats, &ipv4c, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv4c yet");
 }
 
@@ -110,7 +111,7 @@ void test_not_found_c()
 {
     nfs_ip_stats_t * out;
     EQUALS(nfs_ip_stats_get(ipstats, &ipv4a, &out), IP_STATS_SUCCESS, "There should be an ipv4a");
-    EQUALS(nfs_ip_stats_get(ipstats, &ipv4b, &out), IP_STATS_SUCCESS, "There should be an ipv4b");
+    // EQUALS(nfs_ip_stats_get(ipstats, &ipv4b, &out), IP_STATS_SUCCESS, "There should be an ipv4b");
     EQUALS(nfs_ip_stats_get(ipstats, &ipv4c, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv4c yet");
 }
 
@@ -118,22 +119,22 @@ void test_not_found_none()
 {
     nfs_ip_stats_t * out;
     EQUALS(nfs_ip_stats_get(ipstats, &ipv4a, &out), IP_STATS_SUCCESS, "There should be an ipv4a");
-    EQUALS(nfs_ip_stats_get(ipstats, &ipv4b, &out), IP_STATS_SUCCESS, "There should be an ipv4b");
+    // EQUALS(nfs_ip_stats_get(ipstats, &ipv4b, &out), IP_STATS_SUCCESS, "There should be an ipv4b");
     EQUALS(nfs_ip_stats_get(ipstats, &ipv4c, &out), IP_STATS_SUCCESS, "There should be an ipv4c");
 }
 
 
 void test_add() 
 {
-    int rc = nfs_ip_stats_add(ipstats, &ipv4a, &ip_stats_pool);
+    int rc = nfs_ip_stats_add(ipstats, &ipv4a, ip_stats_pool);
     EQUALS(rc, IP_STATS_SUCCESS, "Can't add ipv4a, rc = %d", rc);
     test_not_found_bc();
 
-    rc = nfs_ip_stats_add(ipstats, &ipv4b, &ip_stats_pool);
-    EQUALS(rc, IP_STATS_SUCCESS, "Can't add ipv4b");
-    test_not_found_c();
+    /* rc = nfs_ip_stats_add(ipstats, &ipv4b, &ip_stats_pool); */
+    /* EQUALS(rc, IP_STATS_SUCCESS, "Can't add ipv4b"); */
+    /* test_not_found_c(); */
 
-    rc = nfs_ip_stats_add(ipstats, &ipv4c, &ip_stats_pool);
+    rc = nfs_ip_stats_add(ipstats, &ipv4c, ip_stats_pool);
     EQUALS(rc, IP_STATS_SUCCESS, "Can't add ipv4c");
     test_not_found_none();
 }
