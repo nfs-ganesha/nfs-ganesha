@@ -8,6 +8,9 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include "../MainNFSD/nfs_init.h"
+#include "nfs23.h"
+
+#define MOUNT_PROGRAM 100005
 
 hash_table_t * ipstats;
 nfs_parameter_t nfs_param;
@@ -48,6 +51,14 @@ void create_ipv6(char * ip, int port, struct sockaddr_in6 * addr)
     addr->sin6_family = AF_INET6;
     addr->sin6_port = port;
     inet_pton(AF_INET6, ip, &(addr->sin6_addr.s6_addr));
+}
+
+void create_svc_req(struct svc_req *req, rpcvers_t ver, rpcprog_t prog, rpcproc_t proc)
+{
+    memset(req, 0, sizeof(struct svc_req));
+    req->rq_prog = prog;
+    req->rq_vers = ver;
+    req->rq_proc = proc;
 }
 
 void nfs_set_ip_stats_param_default()
@@ -139,11 +150,35 @@ void test_add()
     test_not_found_none();
 }
 
+void test_incr()
+{
+    struct svc_req req;
+    int i = 0;
+
+    create_svc_req(&req, NFS_V3, NFS_PROGRAM, NFSPROC3_GETATTR);
+    
+    for (i = 0; i < 10; i++) 
+    {
+        nfs_ip_stats_incr(ipstats, &ipv4a, NFS_PROGRAM, MOUNT_PROGRAM, &req);
+    }
+
+    create_svc_req(&req, NFS_V3, NFS_PROGRAM, NFSPROC3_READ);
+    for (i = 0; i < 5; i++) {
+        nfs_ip_stats_incr(ipstats, &ipv4a, NFS_PROGRAM, MOUNT_PROGRAM, &req);
+    }
+
+    create_svc_req(&req, NFS_V3, NFS_PROGRAM, NFSPROC3_READDIRPLUS);
+    for (i = 0; i < 7; i++) {
+        nfs_ip_stats_incr(ipstats, &ipv4a, NFS_PROGRAM, MOUNT_PROGRAM, &req);
+    }
+}
+
 int main()
 {
     init();
     test_not_found();
     test_add();
+    test_incr();
 
 
     return 0;
