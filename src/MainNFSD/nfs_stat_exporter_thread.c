@@ -62,6 +62,7 @@
 #include "nodelist.h"
 #include "stuff_alloc.h"
 #include "fsal.h"
+#include "rpc.h"
 
 extern nfs_parameter_t nfs_param;
 
@@ -82,17 +83,15 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
                              exportlist_client_t *clients,
                              exportlist_client_entry_t * pclient_found)
 {
-  int rc;
   sockaddr_t *psockaddr_in;
 #ifdef _USE_TIRPC_IPV6
   struct sockaddr_in6 *psockaddr_in6;
-#endif
   static char ten_bytes_all_0[10];
   static unsigned two_bytes_all_1 = 0xFFFF;
-  char ipstring[MAXHOSTNAMELEN];
   char ip6string[MAXHOSTNAMELEN];
-
   memset(ten_bytes_all_0, 0, 10);
+#endif
+  char ipstring[MAXHOSTNAMELEN];
 
   psockaddr_in = (sockaddr_t *)pssaddr;
 
@@ -258,7 +257,6 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
 int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t * out_parameter)
 {
   int err;
-  int blk_index;
   int var_max, var_index;
   char *key_name;
   char *key_value;
@@ -384,8 +382,8 @@ int write_stats(char *stat_buf, int num_cmds, char **function_names, nfs_request
   unsigned int i = 0;
   unsigned int tot_calls =0, tot_latency = 0;
   unsigned int tot_await_time = 0;
-  float tot_latency_ms;
-  float tot_await_time_ms;
+  float tot_latency_ms = 0;
+  float tot_await_time_ms = 0;
   char *name = NULL;
   char *ver = NULL;
   char *call = NULL;
@@ -654,9 +652,7 @@ void *stat_exporter_thread(void *addr)
           continue;
         }
 
-      inet_ntop(their_addr.ss_family,
-                get_in_addr((struct sockaddr *)&their_addr),
-                s, sizeof s);
+      sprint_sockip((sockaddr_t *)&their_addr, s, sizeof s);
 
       if (stat_export_check_access(&their_addr,
                                    &(nfs_param.extern_param.stat_export.allowed_clients),
