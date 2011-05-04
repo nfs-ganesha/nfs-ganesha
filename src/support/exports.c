@@ -2376,6 +2376,7 @@ int export_client_matchv6(struct in6_addr *paddrv6,
        * Also make sure we aren't looking at a root client entry when we're not root. */
       if(((clients->clientarray[i].options & export_option) == 0) ||
          ((clients->clientarray[i].options & EXPORT_OPTION_ROOT) != (export_option & EXPORT_OPTION_ROOT)))
+        continue;
 
       switch (clients->clientarray[i].type)
         {
@@ -2394,6 +2395,7 @@ int export_client_matchv6(struct in6_addr *paddrv6,
               *pclient_found = clients->clientarray[i];
               return TRUE;
             }
+          break;
 
         default:
           return FALSE;         /* Should never occurs */
@@ -2723,7 +2725,7 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
  */
 int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 {
-  exportlist_t *pcurrent = NULL;
+  exportlist_t *pcurrent;
   cache_inode_status_t cache_status;
 #ifdef _CRASH_RECOVERY_AT_STARTUP
   cache_content_status_t cache_content_status;
@@ -2733,8 +2735,8 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
   fsal_handle_t fsal_handle;
   fsal_path_t exportpath_fsal;
   fsal_mdsize_t strsize = MNTPATHLEN + 1;
-  cache_entry_t *pentry = NULL;
-  fsal_staticfsinfo_t *pstaticinfo = NULL;
+  cache_entry_t *pentry;
+  fsal_staticfsinfo_t *pstaticinfo;
   fsal_op_context_t context;
 
       /* setting the 'small_client' structure */

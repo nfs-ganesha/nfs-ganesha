@@ -1665,7 +1665,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       workers_data[i].ht = ht;
 
       sprintf(name, "IP Stats for worker %d", i);
-      nfs_param.ip_stats_param.hash_param.name = name;
+      nfs_param.ip_stats_param.hash_param.name = Str_Dup(name);
       ht_ip_stats[i] = nfs_Init_ip_stats(nfs_param.ip_stats_param);
       if(ht_ip_stats[i] == NULL)
         {
@@ -2181,7 +2181,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
 #endif
 
       /* Populate the ID_MAPPER file with mapping file if needed */
-      if(!strncmp(nfs_param.uidmap_cache_param.mapfile, "", MAXPATHLEN))
+      if(nfs_param.uidmap_cache_param.mapfile[0] == '\0')
         {
           LogDebug(COMPONENT_INIT, "No Uid Map file is used");
         }
@@ -2194,7 +2194,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
             LogDebug(COMPONENT_INIT, "UID_MAPPER was NOT populated");
         }
 
-      if(!strncmp(nfs_param.gidmap_cache_param.mapfile, "", MAXPATHLEN))
+      if(nfs_param.gidmap_cache_param.mapfile[0] == '\0')
         {
           LogDebug(COMPONENT_INIT, "No Gid Map file is used");
         }
@@ -2207,7 +2207,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
             LogDebug(COMPONENT_INIT, "GID_MAPPER was NOT populated");
         }
 
-      if(!strncmp(nfs_param.ip_name_param.mapfile, "", MAXPATHLEN))
+      if(nfs_param.ip_name_param.mapfile[0] == '\0')
         {
           LogDebug(COMPONENT_INIT, "No Hosts Map file is used");
         }

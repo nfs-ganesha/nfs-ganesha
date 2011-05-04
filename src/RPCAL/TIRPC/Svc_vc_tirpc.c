@@ -328,7 +328,7 @@ struct rpc_msg *msg;
 
   if(cd->maxrec != 0)
     {
-      flags = fcntl(sock, F_GETFL, 0);
+      flags = fcntl(sock, F_GETFL);
       if(flags == -1)
         return (FALSE);
       /*if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) == -1)
